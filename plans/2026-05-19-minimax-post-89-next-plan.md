@@ -41,6 +41,10 @@ Negative, quality-failed, or merely noisy results stay local/GitHub-only.
    - Rationale: the previous timing run grouped collectives only by shape and dtype. The next run should label Q/K variance, attention `o_proj`, MoE output, and any delayed/final hidden-state allreduces so the next fusion target is selected by evidence.
    - Status: completed. MoE output labels were captured, while attention/RowParallel labels did not survive the compiled graph path. The remaining unlabeled FP16 hidden-state shapes/counts match the attention `o_proj` collective family. The largest visible buckets were Q/K variance FP32 `(1, 2)`, attention-shaped FP16 hidden `(1, 3072)`/`(2, 3072)`, and MoE-output FP16 hidden `(1, 3072)`/`(2, 3072)`.
 
+5. MoE output direct-allreduce inside the custom-op boundary.
+   - Rationale: MoE-output FP16 hidden-state allreduce remained visible in the site-labeled timing run.
+   - Status: rejected. Exact raw145 and semantic quality passed, arithmetic n64/r8 passed, and extended sixpack passed, but four p512/n1536 repeats averaged `88.843823` output tok/s / `118.458431` total tok/s. This is `0.470372` output tok/s below the current promoted mean. The active runtime hook was reverted and the result was not submitted to LocalMaxxing.
+
 ## Source-Level Work Queue
 
 - Audit remaining decode-time CPU/framework boundaries in `minimax_m2.py`, `moe_wna16.py`, and `xpu_communicator.py`.
@@ -56,4 +60,4 @@ Implement the next math-preserving candidate against a real collective boundary.
 
 1. A narrow Q/K variance collective path that reduces the `(1, 2)` FP32 dependency without changing the exact Q/K RMSNorm formula.
 2. A lower-level attention `o_proj` scheduling/fusion candidate, since Python custom-op wrapping was quality-safe but slower.
-3. A MoE-output epilogue/allreduce scheduling candidate, now that the MoE output collective is explicitly visible even inside the custom-op boundary.
+3. A true MoE-output epilogue/allreduce fusion candidate, since direct Python-level allreduce replacement was quality-safe but slower.
