@@ -1,0 +1,81 @@
+{
+  "title": "MiniMax M2.7 AutoRound MoE output direct-allreduce negative",
+  "date": "2026-05-19",
+  "model": "Lasimeri/MiniMax-M2.7-int4-AutoRound",
+  "hardware": "4x Intel Arc Pro B70 32GB",
+  "engine": "vllm 0.20.1-local XPU TP4",
+  "candidate": {
+    "label": "minimax-moe-output-direct-allreduce-currenthigh-20260519",
+    "description": "Bypass the clone-safe tensor_model_parallel_all_reduce wrapper for the MoE output tensor inside the MiniMax MoE custom-op boundary and call the TP group's direct out-of-place allreduce path.",
+    "env": {
+      "VLLM_MINIMAX_MOE_OUTPUT_DIRECT_ALLREDUCE": "1",
+      "VLLM_MINIMAX_MOE_OUTPUT_ALLREDUCE_INSIDE_CUSTOM_OP": "1",
+      "VLLM_MINIMAX_MOE_FULL_FORWARD_CUSTOM_OP": "1",
+      "VLLM_MINIMAX_MOE_FULL_FORWARD_CUSTOM_OP_MAX_TOKENS": "4",
+      "VLLM_MINIMAX_M2_ATTN_DELAY_ALLREDUCE": "0",
+      "VLLM_MINIMAX_QK_RMS_XPU_HELPER": "1",
+      "VLLM_MINIMAX_QK_RMS_XPU_HELPER_MAX_TOKENS": "4",
+      "VLLM_MINIMAX_QK_RMS_DIRECT_INPLACE_SCALE": "1",
+      "VLLM_MINIMAX_QK_RMS_APPLY_TP_SCALE": "0",
+      "VLLM_XPU_COMPILE_ALLREDUCE_CUSTOM_OP": "1",
+      "VLLM_XPU_CUSTOM_ALLREDUCE_CLONE_INPUT": "1",
+      "VLLM_XPU_CUSTOM_ALLREDUCE_TINY_FP32_INPLACE_MAX_NUMEL": "2",
+      "VLLM_XPU_CUSTOM_ALLREDUCE_INPLACE_MAX_NUMEL": "0",
+      "VLLM_XPU_USE_LLM_SCALER_MOE": "1",
+      "VLLM_XPU_USE_LLM_SCALER_MOE_WS": "1",
+      "VLLM_XPU_USE_LLM_SCALER_MOE_MINIMAX_LOGITS_WS": "1",
+      "VLLM_XPU_ENABLE_XPU_GRAPH": "1",
+      "VLLM_XPU_FORCE_GRAPH_WITH_COMM": "1",
+      "VLLM_XPU_GRAPH_NOOP_COMM_CAPTURE": "1",
+      "CCL_TOPO_P2P_ACCESS": "1"
+    }
+  },
+  "benchmark": {
+    "prompt_tokens": 512,
+    "output_tokens": 1536,
+    "context_length": 2048,
+    "batch_size": 1,
+    "max_num_batched_tokens": 512,
+    "block_size": 256,
+    "mean_output_toks_per_second": 88.84382329940897,
+    "mean_total_toks_per_second": 118.45843106587861,
+    "output_toks_per_second": [
+      87.59195749536005,
+      89.11323306217511,
+      89.70605088654654,
+      88.96405175355414
+    ],
+    "total_toks_per_second": [
+      116.78927666048007,
+      118.81764408290016,
+      119.60806784872871,
+      118.61873567140552
+    ]
+  },
+  "quality": {
+    "passed": true,
+    "raw145_n64_combined_token_sha256": "267cbf30208d84929ee79284ac695467f7e80597bf8694130e1e1f8b180eb5bd",
+    "raw145_n256_combined_token_sha256": "58f6e8251c7a0a17e8c441278b5861f7d5da914fa1823ecd10484b296f2d7537",
+    "semantic_suite_combined_token_sha256": "adacbf144264486ea7d378ebb6a4c0ba23951b72c4cf86251a762b07ebef5805",
+    "arithmetic_repeat_n64_r8_combined_token_sha256": "261779104d5abf1642713bfc560ca8d2d6c0f16edbcc929c8b0819b5a760dd7c",
+    "extended_sixpack_n64_r2_combined_token_sha256": "1e3560554f57b2b56cec8f49f28bc8ba12e9e0ced26bdc99a976f1433c99caa7",
+    "log_error_scan": "No Traceback, Exception, Bad address, Broken pipe, failed, or startup guard hits found in candidate quality/benchmark logs."
+  },
+  "comparison": {
+    "current_promoted_output_toks_per_second": 89.31419538094708,
+    "current_promoted_total_toks_per_second": 119.08559384126276,
+    "delta_output_toks_per_second": -0.47037208153811605,
+    "delta_output_percent": -0.5266487365551054,
+    "delta_total_toks_per_second": -0.62716277538415
+  },
+  "decision": {
+    "status": "rejected",
+    "localmaxxing": "not_submitted",
+    "reason": "Quality-clean for the negative-candidate gate, but below the current promoted mean; active runtime patch reverted after recording."
+  },
+  "artifacts": {
+    "summary_json": "/home/steve/bench-results/minimax-m2.7-strict-candidates/minimax-minimax-moe-output-direct-allreduce-currenthigh-20260519-strict-tp4-ctx2048-mbt512-bs256-20260519T230120Z-summary.json",
+    "patch": "patches/minimax-moe-output-direct-allreduce-negative-20260519.patch",
+    "note": "notes/2026-05-19-minimax-moe-output-direct-allreduce-negative.md"
+  }
+}
