@@ -1,0 +1,103 @@
+diff --git a/vllm/model_executor/models/minimax_m2.py b/vllm/model_executor/models/minimax_m2.py
+--- a/vllm/model_executor/models/minimax_m2.py
++++ b/vllm/model_executor/models/minimax_m2.py
+@@
+ _MINIMAX_QKV_NARROW_SPLIT = (
+     os.environ.get("VLLM_MINIMAX_QKV_NARROW_SPLIT", "0") == "1"
+ )
++_MINIMAX_M2_ATTN_OPROJ_CUSTOM_OP = (
++    os.environ.get("VLLM_MINIMAX_ATTN_OPROJ_CUSTOM_OP", "0") == "1"
++)
++_MINIMAX_M2_ATTN_OPROJ_CUSTOM_OP_MAX_TOKENS = int(
++    os.environ.get("VLLM_MINIMAX_ATTN_OPROJ_CUSTOM_OP_MAX_TOKENS", "4")
++)
+ _minimax_qk_rms_xpu = None
+ if _MINIMAX_QK_RMS_XPU_HELPER:
+@@
+ _MINIMAX_M2_MOE_LAYER_REGISTRY: dict[str, "MiniMaxM2MoE"] = {}
+ _MINIMAX_M2_DECODER_LAYER_REGISTRY: dict[str, "MiniMaxM2DecoderLayer"] = {}
++_MINIMAX_M2_ATTENTION_REGISTRY: dict[str, "MiniMaxM2Attention"] = {}
+@@
+ direct_register_custom_op(
+     op_name="minimax_m2_moe_forward",
+     op_func=_minimax_m2_moe_forward_custom,
+     fake_impl=_minimax_m2_moe_forward_custom_fake,
+     tags=(torch.Tag.needs_fixed_stride_order,),
+ )
+ 
+ 
++def _minimax_m2_attn_o_proj_custom(
++    attn_output: torch.Tensor,
++    layer_name: _minimax_layer_name_type,
++) -> torch.Tensor:
++    layer = _MINIMAX_M2_ATTENTION_REGISTRY[
++        _resolve_minimax_moe_layer_name(layer_name)
++    ]
++    output, _ = layer.o_proj(attn_output)
++    return output
++
++
++def _minimax_m2_attn_o_proj_custom_fake(
++    attn_output: torch.Tensor,
++    layer_name: _minimax_layer_name_type,
++) -> torch.Tensor:
++    layer = _MINIMAX_M2_ATTENTION_REGISTRY[
++        _resolve_minimax_moe_layer_name(layer_name)
++    ]
++    return attn_output.new_empty((*attn_output.shape[:-1], layer.hidden_size))
++
++
++direct_register_custom_op(
++    op_name="minimax_m2_attn_o_proj",
++    op_func=_minimax_m2_attn_o_proj_custom,
++    fake_impl=_minimax_m2_attn_o_proj_custom_fake,
++    tags=(torch.Tag.needs_fixed_stride_order,),
++)
++
++
+ def _minimax_m2_post_attn_norm_moe_custom(
+     hidden_states: torch.Tensor,
+     residual: torch.Tensor,
+@@
+         super().__init__()
+         self.layer_name = prefix
++        self._encoded_layer_name = LayerName(prefix) if _USE_LAYERNAME else prefix
++        _MINIMAX_M2_ATTENTION_REGISTRY[prefix] = self
+         self.hidden_size = hidden_size
+         tp_size = get_tensor_model_parallel_world_size()
+@@
+         self.k_norm = MiniMaxText01RMSNormTP(
+             self.head_dim * self.total_num_kv_heads, eps=rms_norm_eps
+         )
+         self.k_norm.trace_name = f"{prefix}.k_norm"
+ 
++    def _can_use_o_proj_custom_op(self, attn_output: torch.Tensor) -> bool:
++        if (
++            not _MINIMAX_M2_ATTN_OPROJ_CUSTOM_OP
++            or _MINIMAX_M2_ATTN_DELAY_ALLREDUCE
++            or _MINIMAX_AR_RMS_XPU_AVAILABLE
++            or _MINIMAX_AR_FUSED_RMS_XPU_AVAILABLE
++            or attn_output.device.type != "xpu"
++            or attn_output.shape[0] > _MINIMAX_M2_ATTN_OPROJ_CUSTOM_OP_MAX_TOKENS
++            or not attn_output.is_contiguous()
++        ):
++            return False
++        return True
++
+     def forward(
+         self,
+         positions: torch.Tensor,
+@@
+         with timed_region("minimax.attn.kv_attention"):
+             attn_output = self.attn(q, k, v)
+         trace_tensor_graph(f"{self.layer_name}.attn_output", attn_output)
+         with timed_region("minimax.attn.o_proj"):
+-            output, _ = self.o_proj(attn_output)
++            if self._can_use_o_proj_custom_op(attn_output):
++                output = torch.ops.vllm.minimax_m2_attn_o_proj(
++                    attn_output, self._encoded_layer_name
++                )
++            else:
++                output, _ = self.o_proj(attn_output)
+         trace_tensor_graph(f"{self.layer_name}.o_proj_output", output)
+         return output
