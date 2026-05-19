@@ -1,0 +1,39 @@
+diff --git a/vllm/model_executor/models/minimax_m2.py b/vllm/model_executor/models/minimax_m2.py
+--- a/vllm/model_executor/models/minimax_m2.py
++++ b/vllm/model_executor/models/minimax_m2.py
+@@
+ _MINIMAX_QK_NORM_EAGER = (
+     os.environ.get("VLLM_MINIMAX_QK_NORM_EAGER", "0") == "1"
+ )
++_MINIMAX_QKV_NARROW_SPLIT = (
++    os.environ.get("VLLM_MINIMAX_QKV_NARROW_SPLIT", "0") == "1"
++)
+ _minimax_qk_rms_xpu = None
+ if _MINIMAX_QK_RMS_XPU_HELPER:
+@@
+-            v = qkv.split([self.q_size, self.kv_size, self.kv_size], dim=-1)[2]
++            if _MINIMAX_QKV_NARROW_SPLIT:
++                v = qkv.narrow(-1, self.q_size + self.kv_size, self.kv_size)
++            else:
++                v = qkv.split([self.q_size, self.kv_size, self.kv_size], dim=-1)[2]
+         else:
+-            q, k, v = qkv.split(
+-                [self.q_size, self.kv_size, self.kv_size], dim=-1
+-            )
++            if _MINIMAX_QKV_NARROW_SPLIT:
++                q = qkv.narrow(-1, 0, self.q_size)
++                k = qkv.narrow(-1, self.q_size, self.kv_size)
++                v = qkv.narrow(-1, self.q_size + self.kv_size, self.kv_size)
++            else:
++                q, k, v = qkv.split(
++                    [self.q_size, self.kv_size, self.kv_size], dim=-1
++                )
+             with timed_region("minimax.attn.qk_norm"):
+                 if _MINIMAX_QK_NORM_EAGER:
+diff --git a/scripts/run-minimax-strict-quality-gated-candidate.sh b/scripts/run-minimax-strict-quality-gated-candidate.sh
+--- a/scripts/run-minimax-strict-quality-gated-candidate.sh
++++ b/scripts/run-minimax-strict-quality-gated-candidate.sh
+@@
++    --arg vllm_minimax_qkv_narrow_split "${VLLM_MINIMAX_QKV_NARROW_SPLIT:-}" \
+@@
++        VLLM_MINIMAX_QKV_NARROW_SPLIT: $vllm_minimax_qkv_narrow_split,
