@@ -26,20 +26,30 @@ Negative, quality-failed, or merely noisy results stay local/GitHub-only.
 1. Current-high stack plus `CCL_TOPO_FABRIC_VERTEX_CONNECTION_CHECK=0`.
    - Rationale: communication-only knob, no model math change.
    - Risk: previous CCL topology override screens were negative on older stacks.
-   - Status: strict quality-gated run in progress.
+   - Status: rejected. Strict quality passed, but mean output fell to `89.037858` tok/s and oneCCL/PMI teardown noise appeared. Keep this env unset.
 
 2. Current-high stack plus `VLLM_XPU_LLM_SCALER_MOE_MINIMAX_SKIP_REDUNDANT_CONTIGUOUS=1`.
    - Rationale: avoid redundant Python/framework tensor copies when the MoE input and router logits are already contiguous.
    - Risk: an older related screen was slightly negative, but it was not the exact current full-forward stack.
-   - Promotion requires full strict quality and a repeatable speed win.
+   - Status: rejected. Strict quality passed, but mean output was `89.141961` tok/s and shutdown logs showed intermittent `Bad address` noise.
 
-3. If both runtime-only candidates fail, return to source-level fusion.
-   - Preferred direction: narrower fusion around the MoE/custom-op boundary or logits/MoE call boundary.
-   - Avoid repeating known negatives: Q/K apply+RoPE helper, broad post-attention norm+MoE custom op, CCL `direct`, FP16/candidate router shortcuts, and larger full-forward token guards.
+3. Attention `o_proj` custom-op boundary.
+   - Rationale: rank-0 sync timing showed FP16 hidden-state allreduce/projection boundaries as the visible synchronized cost.
+   - Status: rejected. Strict quality passed, but mean output was `89.100464` tok/s, `0.24%` below the promoted mean. Broad Python custom-op wrapping alone is not enough.
+
+4. Site-labeled allreduce timing.
+   - Rationale: the previous timing run grouped collectives only by shape and dtype. The next run should label Q/K variance, attention `o_proj`, MoE output, and any delayed/final hidden-state allreduces so the next fusion target is selected by evidence.
+   - Status: next.
 
 ## Source-Level Work Queue
 
 - Audit remaining decode-time CPU/framework boundaries in `minimax_m2.py`, `moe_wna16.py`, and `xpu_communicator.py`.
+- Add temporary `allreduce_label(...)` instrumentation around known MiniMax allreduce sites, run the current-high n64 timing diagnostic, then revert the diagnostic patch.
+- Prioritize a lower-level fusion only after the labeled timing separates attention projection cost from MoE output/reduce cost.
 - Prefer math-preserving changes that remove import/call/copy overhead or custom-op graph breaks.
 - Preserve exact operation ordering around residual add, RMSNorm, router logits, expert selection, and final allreduce unless a canary explicitly proves equivalence.
 - For any new patch, save a patch note and strict run summary before considering LocalMaxxing.
+
+## Current Next Step
+
+Run a diagnostic-only source patch that labels collectives without changing model math. The goal is to answer which hidden-state allreduce/projection site is actually consuming the most time under the current promoted stack. This should not be submitted to LocalMaxxing; it is only a map for the next optimization candidate.
