@@ -1,0 +1,35 @@
+diff --git a/vllm/model_executor/layers/fused_moe/runner/moe_runner.py b/vllm/model_executor/layers/fused_moe/runner/moe_runner.py
+--- a/vllm/model_executor/layers/fused_moe/runner/moe_runner.py
++++ b/vllm/model_executor/layers/fused_moe/runner/moe_runner.py
+@@
+ def _minimax_moe_output_allreduce_inside_custom_op_enabled() -> bool:
+     return (
+         os.environ.get(
+             "VLLM_MINIMAX_MOE_OUTPUT_ALLREDUCE_INSIDE_CUSTOM_OP", "0"
+         )
+         == "1"
+     )
+ 
+ 
++def _minimax_moe_output_direct_allreduce_enabled() -> bool:
++    return (
++        os.environ.get("VLLM_MINIMAX_MOE_OUTPUT_DIRECT_ALLREDUCE", "0")
++        == "1"
++    )
++
++
+ def get_layer_from_name(layer_name: str) -> torch.nn.Module:
+@@
+         if (
+             self._allreduce_output_inside_custom_op_active()
+             and shared_experts_input is None
+         ):
+-            fused_out = tensor_model_parallel_all_reduce(fused_out)
++            if (
++                _minimax_moe_output_direct_allreduce_enabled()
++                and self.moe_config.tp_size > 1
++            ):
++                fused_out = get_tp_group()._all_reduce_out_place(fused_out)
++            else:
++                fused_out = tensor_model_parallel_all_reduce(fused_out)
+             self._last_quant_output_reduced = True
