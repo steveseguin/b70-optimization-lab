@@ -39,17 +39,21 @@ Negative, quality-failed, or merely noisy results stay local/GitHub-only.
 
 4. Site-labeled allreduce timing.
    - Rationale: the previous timing run grouped collectives only by shape and dtype. The next run should label Q/K variance, attention `o_proj`, MoE output, and any delayed/final hidden-state allreduces so the next fusion target is selected by evidence.
-   - Status: next.
+   - Status: completed. MoE output labels were captured, while attention/RowParallel labels did not survive the compiled graph path. The remaining unlabeled FP16 hidden-state shapes/counts match the attention `o_proj` collective family. The largest visible buckets were Q/K variance FP32 `(1, 2)`, attention-shaped FP16 hidden `(1, 3072)`/`(2, 3072)`, and MoE-output FP16 hidden `(1, 3072)`/`(2, 3072)`.
 
 ## Source-Level Work Queue
 
 - Audit remaining decode-time CPU/framework boundaries in `minimax_m2.py`, `moe_wna16.py`, and `xpu_communicator.py`.
-- Add temporary `allreduce_label(...)` instrumentation around known MiniMax allreduce sites, run the current-high n64 timing diagnostic, then revert the diagnostic patch.
-- Prioritize a lower-level fusion only after the labeled timing separates attention projection cost from MoE output/reduce cost.
+- Prioritize a lower-level fusion or scheduling candidate around one of the three proven collective families: Q/K variance FP32, attention `o_proj` FP16 hidden-state allreduce, or MoE-output FP16 hidden-state allreduce.
+- Do not spend more time on broad Python custom-op wrappers unless the wrapper changes a lower-level compiled/collective boundary.
 - Prefer math-preserving changes that remove import/call/copy overhead or custom-op graph breaks.
 - Preserve exact operation ordering around residual add, RMSNorm, router logits, expert selection, and final allreduce unless a canary explicitly proves equivalence.
 - For any new patch, save a patch note and strict run summary before considering LocalMaxxing.
 
 ## Current Next Step
 
-Run a diagnostic-only source patch that labels collectives without changing model math. The goal is to answer which hidden-state allreduce/projection site is actually consuming the most time under the current promoted stack. This should not be submitted to LocalMaxxing; it is only a map for the next optimization candidate.
+Implement the next math-preserving candidate against a real collective boundary. Preferred order:
+
+1. A narrow Q/K variance collective path that reduces the `(1, 2)` FP32 dependency without changing the exact Q/K RMSNorm formula.
+2. A lower-level attention `o_proj` scheduling/fusion candidate, since Python custom-op wrapping was quality-safe but slower.
+3. A MoE-output epilogue/allreduce scheduling candidate, now that the MoE output collective is explicitly visible even inside the custom-op boundary.
