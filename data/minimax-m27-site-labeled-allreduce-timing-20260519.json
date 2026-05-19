@@ -1,0 +1,134 @@
+{
+  "title": "MiniMax M2.7 current-high site-labeled allreduce timing",
+  "date": "2026-05-19",
+  "model": "Lasimeri/MiniMax-M2.7-int4-AutoRound",
+  "hardware": "4x Intel Arc Pro B70 32GB",
+  "engine": "vllm 0.20.1-local XPU TP4",
+  "result_type": "diagnostic_only_not_throughput",
+  "quality": {
+    "raw145_n64_expected_combined_token_sha256": "267cbf30208d84929ee79284ac695467f7e80597bf8694130e1e1f8b180eb5bd",
+    "first_probe_passed": true,
+    "first_probe_combined_token_sha256": "267cbf30208d84929ee79284ac695467f7e80597bf8694130e1e1f8b180eb5bd",
+    "rowparallel_probe_passed": true,
+    "rowparallel_probe_combined_token_sha256": "267cbf30208d84929ee79284ac695467f7e80597bf8694130e1e1f8b180eb5bd"
+  },
+  "diagnostic_env": {
+    "VLLM_XPU_DECODE_TIMING": "1",
+    "VLLM_XPU_DECODE_TIMING_SYNC": "1",
+    "VLLM_XPU_DECODE_TIMING_RANK": "0",
+    "VLLM_XPU_DECODE_TIMING_SUMMARY": "1",
+    "VLLM_XPU_USE_LLM_SCALER_MOE": "1",
+    "VLLM_XPU_USE_LLM_SCALER_MOE_WS": "1",
+    "VLLM_XPU_USE_LLM_SCALER_MOE_MINIMAX_LOGITS_WS": "1",
+    "VLLM_MINIMAX_M2_ATTN_DELAY_ALLREDUCE": "0",
+    "VLLM_XPU_COMPILE_ALLREDUCE_CUSTOM_OP": "1",
+    "VLLM_XPU_CUSTOM_ALLREDUCE_CLONE_INPUT": "1",
+    "VLLM_XPU_CUSTOM_ALLREDUCE_TINY_FP32_INPLACE_MAX_NUMEL": "2",
+    "VLLM_XPU_CUSTOM_ALLREDUCE_INPLACE_MAX_NUMEL": "0",
+    "VLLM_MINIMAX_QK_RMS_XPU_HELPER": "1",
+    "VLLM_MINIMAX_QK_RMS_XPU_HELPER_MAX_TOKENS": "4",
+    "VLLM_MINIMAX_QK_RMS_DIRECT_INPLACE_SCALE": "1",
+    "VLLM_MINIMAX_QK_RMS_APPLY_TP_SCALE": "0",
+    "VLLM_MINIMAX_MOE_OUTPUT_ALLREDUCE_INSIDE_CUSTOM_OP": "1",
+    "VLLM_MINIMAX_MOE_FULL_FORWARD_CUSTOM_OP": "1",
+    "VLLM_MINIMAX_MOE_FULL_FORWARD_CUSTOM_OP_MAX_TOKENS": "4",
+    "VLLM_XPU_ENABLE_XPU_GRAPH": "1",
+    "VLLM_XPU_FORCE_GRAPH_WITH_COMM": "1",
+    "VLLM_XPU_GRAPH_NOOP_COMM_CAPTURE": "1",
+    "CCL_TOPO_P2P_ACCESS": "1"
+  },
+  "first_probe": {
+    "log": "/home/steve/bench-results/minimax-m2.7-strict-candidates/site-labeled-timing/site-labeled-currenthigh-rank0-sync-n64-20260519T224106Z.log",
+    "json": "/home/steve/bench-results/minimax-m2.7-strict-candidates/site-labeled-timing/site-labeled-currenthigh-rank0-sync-n64-20260519T224106Z.json",
+    "elapsed_s": 5.6116667310125194,
+    "largest_buckets": [
+      {
+        "label": "all_reduce:minimax.moe.output_inside_custom_op:(2, 3072):torch.float16",
+        "count": 124,
+        "total_ms": 1865.122198,
+        "avg_ms": 15.041308,
+        "max_ms": 1574.661828
+      },
+      {
+        "label": "all_reduce:(1, 2):torch.float32",
+        "inferred_site": "qk_variance",
+        "count": 186,
+        "total_ms": 927.247434,
+        "avg_ms": 4.985201,
+        "max_ms": 779.667124
+      },
+      {
+        "label": "all_reduce:(1, 3072):torch.float16",
+        "inferred_site": "attention_o_proj_or_other_compiled_hidden_allreduce",
+        "count": 189,
+        "total_ms": 741.411339,
+        "avg_ms": 3.922811,
+        "max_ms": 676.903241
+      }
+    ]
+  },
+  "rowparallel_probe": {
+    "log": "/home/steve/bench-results/minimax-m2.7-strict-candidates/site-labeled-timing/site-labeled-rowparallel-currenthigh-rank0-sync-n64-20260519T224823Z.log",
+    "json": "/home/steve/bench-results/minimax-m2.7-strict-candidates/site-labeled-timing/site-labeled-rowparallel-currenthigh-rank0-sync-n64-20260519T224823Z.json",
+    "elapsed_s": 6.46609698201064,
+    "largest_buckets": [
+      {
+        "label": "all_reduce:(1, 2):torch.float32",
+        "inferred_site": "qk_variance",
+        "count": 186,
+        "total_ms": 1186.268281,
+        "avg_ms": 6.377786,
+        "max_ms": 971.330776
+      },
+      {
+        "label": "all_reduce:(1, 3072):torch.float16",
+        "inferred_site": "attention_o_proj_or_other_compiled_hidden_allreduce",
+        "count": 189,
+        "total_ms": 618.361679,
+        "avg_ms": 3.271755,
+        "max_ms": 204.957863
+      },
+      {
+        "label": "all_reduce:minimax.moe.output_inside_custom_op:(2, 3072):torch.float16",
+        "count": 124,
+        "total_ms": 591.250477,
+        "avg_ms": 4.768149,
+        "max_ms": 85.165885
+      },
+      {
+        "label": "all_reduce:minimax.moe.output_inside_custom_op:(1, 3072):torch.float16",
+        "count": 186,
+        "total_ms": 504.048505,
+        "avg_ms": 2.709938,
+        "max_ms": 264.482501
+      },
+      {
+        "label": "all_reduce:(2, 3072):torch.float16",
+        "inferred_site": "attention_o_proj_or_other_compiled_hidden_allreduce",
+        "count": 126,
+        "total_ms": 472.817282,
+        "avg_ms": 3.752518,
+        "max_ms": 63.023579
+      },
+      {
+        "label": "logits.local_argmax_lm_head",
+        "count": 66,
+        "total_ms": 46.335786,
+        "avg_ms": 0.702057,
+        "max_ms": 4.574527
+      }
+    ]
+  },
+  "interpretation": {
+    "summary": "Visible synchronized decode cost remains split across Q/K variance FP32 allreduces, attention o_proj-shaped FP16 hidden-state allreduces, and MoE output FP16 hidden-state allreduces. Python custom-op wrapping alone is insufficient.",
+    "next_candidates": [
+      "lower-level Q/K variance allreduce plus scale/apply fusion with strict exact-token canaries",
+      "row-parallel attention o_proj GEMM plus allreduce scheduling or lower-level fusion",
+      "MoE output epilogue plus allreduce fusion or graph dependency latency reduction around the MiniMax MoE custom op"
+    ]
+  },
+  "decision": {
+    "localmaxxing": "not_submitted",
+    "reason": "Diagnostic timing with explicit synchronization is not a benchmark result."
+  }
+}
