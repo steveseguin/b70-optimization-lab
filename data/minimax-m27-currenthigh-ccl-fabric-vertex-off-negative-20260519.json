@@ -1,0 +1,111 @@
+{
+  "date": "2026-05-19",
+  "label": "minimax-currenthigh-ccl-fabric-vertex-off-20260519",
+  "decision": "reject",
+  "submit_to_localmaxxing": false,
+  "reason": "quality-safe but slower than promoted strict high, with oneCCL teardown errors during arithmetic quality shutdown",
+  "model": {
+    "hf_id": "Lasimeri/MiniMax-M2.7-int4-AutoRound",
+    "local_path": "/mnt/fast-ai/llm-models/minimax-m2.7-int4-autoround",
+    "quantization": "AutoRound INT4 W4A16"
+  },
+  "hardware": {
+    "gpu": "Intel Arc Pro B70 32GB",
+    "gpu_count": 4,
+    "tp": 4,
+    "os": "Ubuntu 24.04.4 LTS"
+  },
+  "engine": {
+    "name": "vllm",
+    "version": "0.20.1-local",
+    "backend": "xpu"
+  },
+  "shape": {
+    "prompt_tokens": 512,
+    "output_tokens": 1536,
+    "context_length": 2048,
+    "batch_size": 1,
+    "max_num_batched_tokens": 512,
+    "block_size": 256
+  },
+  "env": {
+    "CCL_TOPO_P2P_ACCESS": "1",
+    "CCL_TOPO_FABRIC_VERTEX_CONNECTION_CHECK": "0",
+    "VLLM_XPU_USE_LLM_SCALER_MOE": "1",
+    "VLLM_XPU_USE_LLM_SCALER_MOE_WS": "1",
+    "VLLM_XPU_USE_LLM_SCALER_MOE_MINIMAX_LOGITS_WS": "1",
+    "VLLM_MINIMAX_M2_ATTN_DELAY_ALLREDUCE": "0",
+    "VLLM_XPU_COMPILE_ALLREDUCE_CUSTOM_OP": "1",
+    "VLLM_XPU_CUSTOM_ALLREDUCE_CLONE_INPUT": "1",
+    "VLLM_XPU_CUSTOM_ALLREDUCE_TINY_FP32_INPLACE_MAX_NUMEL": "2",
+    "VLLM_XPU_CUSTOM_ALLREDUCE_INPLACE_MAX_NUMEL": "0",
+    "VLLM_XPU_COMPILE_OUT_OF_PLACE_ALLREDUCE": "0",
+    "VLLM_MINIMAX_QK_RMS_XPU_HELPER": "1",
+    "VLLM_MINIMAX_QK_RMS_XPU_HELPER_MAX_TOKENS": "4",
+    "VLLM_MINIMAX_QK_RMS_DIRECT_INPLACE_SCALE": "1",
+    "VLLM_MINIMAX_QK_RMS_APPLY_TP_SCALE": "0",
+    "VLLM_MINIMAX_AR_FUSED_RMS_XPU": "0",
+    "VLLM_MINIMAX_AR_RMS_XPU": "0",
+    "VLLM_MINIMAX_MOE_OUTPUT_ALLREDUCE_INSIDE_CUSTOM_OP": "1",
+    "VLLM_MINIMAX_MOE_FULL_FORWARD_CUSTOM_OP": "1",
+    "VLLM_MINIMAX_MOE_FULL_FORWARD_CUSTOM_OP_MAX_TOKENS": "4",
+    "VLLM_MINIMAX_POST_ATTN_NORM_MOE_CUSTOM_OP": "0",
+    "VLLM_XPU_ENABLE_XPU_GRAPH": "1",
+    "VLLM_XPU_FORCE_GRAPH_WITH_COMM": "1",
+    "VLLM_XPU_GRAPH_NOOP_COMM_CAPTURE": "1"
+  },
+  "quality": {
+    "status": "passed",
+    "gates": [
+      "raw145-n64-exact",
+      "raw145-n256-exact",
+      "semantic-suite-n64-r2",
+      "arithmetic-repeat-n64-r16",
+      "extended-sixpack-n64-r2"
+    ],
+    "hashes": {
+      "raw145_n64": "267cbf30208d84929ee79284ac695467f7e80597bf8694130e1e1f8b180eb5bd",
+      "raw145_n256": "58f6e8251c7a0a17e8c441278b5861f7d5da914fa1823ecd10484b296f2d7537",
+      "semantic_suite_n64_r2": "adacbf144264486ea7d378ebb6a4c0ba23951b72c4cf86251a762b07ebef5805",
+      "arithmetic_repeat_n64_r16": "578ec378bf31cb16fb49ac5c0043270fd00a0f7898e18ac498a41ffe775d7994",
+      "extended_sixpack_n64_r2": "1e3560554f57b2b56cec8f49f28bc8ba12e9e0ced26bdc99a976f1433c99caa7"
+    },
+    "reliability_notes": [
+      "arithmetic-repeat quality log printed CCL_ERROR Broken pipe messages during process shutdown",
+      "pmi_resizable_simple_internal threw ccl::v1::exception during teardown",
+      "extended sixpack and all benchmark repeats still completed"
+    ]
+  },
+  "performance": {
+    "output_toks_per_second": [
+      89.48188183481162,
+      89.57016622378003,
+      88.79357967435259,
+      88.30580485706497
+    ],
+    "total_toks_per_second": [
+      119.30917577974883,
+      119.42688829837338,
+      118.39143956580344,
+      117.7410731427533
+    ],
+    "mean_output_toks_per_second": 89.0378581475023,
+    "mean_total_toks_per_second": 118.71714419666974,
+    "promoted_mean_output_toks_per_second": 89.31419538094708,
+    "promoted_mean_total_toks_per_second": 119.08559384126276,
+    "delta_output_toks_per_second": -0.276337233444778,
+    "delta_output_percent": -0.30939900680528054,
+    "delta_total_toks_per_second": -0.36844964459302787,
+    "delta_total_percent": -0.3093990068052726
+  },
+  "artifacts": {
+    "summary": "/home/steve/bench-results/minimax-m2.7-strict-candidates/minimax-minimax-currenthigh-ccl-fabric-vertex-off-20260519-strict-tp4-ctx2048-mbt512-bs256-20260519T204456Z-summary.json",
+    "quality_dir": "/home/steve/bench-results/minimax-m2.7-strict-candidates/minimax-minimax-currenthigh-ccl-fabric-vertex-off-20260519-strict-tp4-ctx2048-mbt512-bs256-20260519T204456Z-quality",
+    "bench_jsons": [
+      "/home/steve/bench-results/minimax-m2.7-strict-candidates/vllm-minimax-m27-autoround-tp4-p512n1536-20260519T210030Z.json",
+      "/home/steve/bench-results/minimax-m2.7-strict-candidates/vllm-minimax-m27-autoround-tp4-p512n1536-20260519T210317Z.json",
+      "/home/steve/bench-results/minimax-m2.7-strict-candidates/vllm-minimax-m27-autoround-tp4-p512n1536-20260519T210612Z.json",
+      "/home/steve/bench-results/minimax-m2.7-strict-candidates/vllm-minimax-m27-autoround-tp4-p512n1536-20260519T210900Z.json"
+    ]
+  }
+}
