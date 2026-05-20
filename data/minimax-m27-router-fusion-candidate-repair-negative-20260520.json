@@ -1,0 +1,61 @@
+{
+  "label": "minimax-router-fusion-candidate-repair-negative-20260520",
+  "date": "2026-05-20",
+  "model": "Lasimeri/MiniMax-M2.7-int4-AutoRound",
+  "hardware": {
+    "gpu": "Intel Arc Pro B70 32GB",
+    "gpu_count": 4
+  },
+  "engine": {
+    "name": "vLLM",
+    "version": "0.20.1-local",
+    "backend": "XPU",
+    "tensor_parallel": 4
+  },
+  "experiment_type": "standalone_microbench",
+  "purpose": "evaluate whether the existing exact MiniMax candidate-repair router kernel is viable as an all-expert router-linear fusion primitive",
+  "shape": {
+    "hidden_size": 3072,
+    "experts": 256,
+    "top_k": 8,
+    "candidate_experts": 256,
+    "decode_tokens_tested": [
+      1,
+      2,
+      4
+    ]
+  },
+  "results": [
+    {
+      "tokens": 1,
+      "linear_ms": 0.0322106,
+      "full_candidate_repair_ms": 0.609194,
+      "topk_ids_match": true,
+      "max_weight_diff": 3.7e-08
+    },
+    {
+      "tokens": 2,
+      "linear_ms": 0.0222754,
+      "full_candidate_repair_ms": 0.523925,
+      "topk_ids_match": true,
+      "max_weight_diff": 7.45e-08
+    },
+    {
+      "tokens": 4,
+      "linear_ms": 0.0224501,
+      "full_candidate_repair_ms": 0.656969,
+      "topk_ids_match": true,
+      "max_weight_diff": 7.45e-08
+    }
+  ],
+  "decision": {
+    "promote": false,
+    "submit_to_localmaxxing": false,
+    "reason": "standalone exactness is good, but the all-256 candidate-repair kernel is much slower than the current router linear"
+  },
+  "next_steps": [
+    "measure full-model decode timing to see whether router materialization is still visible",
+    "avoid naive all-expert candidate repair in the hot path",
+    "if router remains a bottleneck, design an optimized full-router GEMV/top-k kernel or fuse only the router_logits to top-k to MoE boundary"
+  ]
+}
