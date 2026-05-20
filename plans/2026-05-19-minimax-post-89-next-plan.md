@@ -47,7 +47,7 @@ Negative, quality-failed, or merely noisy results stay local/GitHub-only.
 
 6. Q/K RMS variance allreduce+scale custom op.
    - Rationale: the site-labeled timing run showed the FP32 `(1, 2)` Q/K variance collective as the largest visible synchronized bucket. This candidate preserved the exact promoted ordering by performing allreduce first and then multiplying by `1 / tp_world` inside a single custom-op boundary.
-   - Status: rejected. Exact raw145 n64/n256, semantic suite, and extended sixpack all passed, but four p512/n1536 repeats averaged `88.558751` output tok/s / `118.078334` total tok/s. This is `0.755445` output tok/s below the current promoted mean. It also produced intermittent `Bad address (src/pipe.cpp:367)` shutdown noise. The active runtime hook was reverted and the result was not submitted to LocalMaxxing.
+   - Status: rejected. Exact raw145 n64/n256, semantic suite, 16-repeat arithmetic, and extended sixpack all passed, but four p512/n1536 repeats averaged `88.558751` output tok/s / `118.078334` total tok/s. This is `0.755445` output tok/s below the current promoted mean. It also produced intermittent `Bad address (src/pipe.cpp:367)` shutdown noise. The active runtime hook was reverted and the result was not submitted to LocalMaxxing.
 
 7. Targeted RowParallel attention `o_proj` in-place allreduce.
    - Rationale: the remaining visible FP16 hidden-state allreduce family matches attention `o_proj`, and the previous broad attention custom-op wrapper was quality-safe but slower. This tried a narrower math-preserving in-place path only for `*.o_proj` RowParallelLinear outputs on XPU FP16/BF16 tensors up to 6144 elements.
@@ -81,6 +81,11 @@ Negative, quality-failed, or merely noisy results stay local/GitHub-only.
    - Rationale: preserve the proven Q/K ordering while wrapping the post-allreduce scale plus existing XPU apply helper in a narrower custom-op boundary.
    - Candidate: current promoted stack plus `VLLM_MINIMAX_QK_RMS_POST_AR_APPLY_CUSTOM_OP=1`.
    - Status: neutral / rejected. Full strict quality passed, including raw145 n64/n256 exact hashes, semantic suite, arithmetic-repeat n64/r8, and extended sixpack. Four p512/n1536 repeats averaged `89.328078` output tok/s / `119.104104` total tok/s versus the promoted `89.314195` / `119.085594`, a negligible `+0.0155%` delta inside run noise. The candidate also introduced repeated `ocloc` 245 / IGC floating-point-exception messages during graph capture. Leave `VLLM_MINIMAX_QK_RMS_POST_AR_APPLY_CUSTOM_OP` unset; no LocalMaxxing submission.
+
+14. XPU FlashAttention no-contiguous cleanup.
+   - Rationale: upstream vLLM removed forced `q/k/v.contiguous()` calls before XPU FlashAttention, so this tested whether those wrapper copies were still costing the MiniMax TP4 stack.
+   - Candidate: current promoted stack with the upstream `vllm/_xpu_ops.py` FlashAttention hunk from `be0dcc29d` / PR #40356.
+   - Status: rejected as a speed candidate. Full strict quality passed, including raw145 n64/n256 exact hashes, semantic suite, arithmetic-repeat n64/r8, and extended sixpack. Four p512/n1536 repeats averaged `88.890310` output tok/s / `118.520414` total tok/s versus the promoted `89.314195` / `119.085594`, about `0.47%` slower. One repeat printed the known `Bad address (src/pipe.cpp:367)` shutdown noise after writing JSON. Do not submit to LocalMaxxing. This narrows the remaining bottleneck away from the immediate XPU FlashAttention contiguous wrapper path.
 
 ## Source-Level Work Queue
 
@@ -122,3 +127,9 @@ throughput beyond noise and can create worse Intel compiler behavior. Future
 Q/K work should avoid another Python wrapper and instead target a lower-level
 XPU/SYCL fusion or compiler scheduling change that removes a real kernel or
 collective boundary.
+
+The XPU FlashAttention no-contiguous cleanup is also quality-clean but slower
+on this workload. That removes another shallow wrapper-copy hypothesis. The
+next credible path is still a deeper XPU/SYCL implementation around the
+MiniMax-specific Q/K allreduce+RMS or hidden-state allreduce epilogue, not more
+high-level Python or wrapper-only edits.
