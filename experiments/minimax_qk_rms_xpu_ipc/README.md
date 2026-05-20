@@ -63,3 +63,26 @@ On 2026-05-10 this measured about `416 ms/iter` for a one-token `[1, 2]`
 payload, far slower than XCCL's decode-sized tiny allreduce microbench. Also
 avoid slot wrap in no-barrier tests; if a rank misses a sequence and a peer
 overwrites that slot, the equality-based poll can hang.
+
+Status on 2026-05-20 after the four-B70 reboot:
+
+- Level Zero peer access and forked IPC handle import/export still work in every
+  source-to-destination direction.
+- Cross-device P2P reports `ACCESS` but not `ATOMICS`; only self-device reports
+  `ACCESS|ATOMICS`.
+- XCCL tiny allreduce for a `[1, 2]` FP32 payload measured `0.061791 ms/iter`
+  with per-iteration synchronization.
+- The single-kernel sequence and counter polling variants still measured about
+  `417 ms/iter`, so they are timeout/visibility limited and unusable for the
+  model path.
+- A two-kernel mailbox reduce with a CPU `dist.barrier()` validated at
+  `0.290768 ms/iter`, but the same two-kernel path without the barrier failed
+  validation. It is not a graph-safe or model-safe replacement for XCCL.
+- A system-scope `sycl::atomic_ref` counter variant was added as a feasibility
+  probe, but it failed validation. Do not use it in vLLM.
+
+Conclusion: keep this prototype as evidence and tooling, but do not pursue an
+XPU Lamport Q/K RMS port through SYCL peer-memory polling on the current driver.
+The credible fusion path needs either a graph-compatible oneCCL fused primitive,
+a Level Zero event/barrier design that is correct without CPU barriers, or a
+different lower-level communication facility.
