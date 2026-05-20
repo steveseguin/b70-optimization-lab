@@ -1,0 +1,69 @@
+{
+  "date": "2026-05-20",
+  "purpose": "Same-harness no-forced-tile control for the MiniMax MoE up-kernel forced N_TILE sweep.",
+  "model": "Lasimeri/MiniMax-M2.7-int4-AutoRound",
+  "hardware": "4x Intel Arc Pro B70 32GB",
+  "commonHarness": {
+    "engine": "vllm 0.20.1-local XPU",
+    "tensorParallel": 4,
+    "dtype": "float16",
+    "promptTokens": 512,
+    "outputTokens": 1536,
+    "maxModelLen": 2048,
+    "maxNumBatchedTokens": 512,
+    "blockSize": 256,
+    "prefixCaching": false,
+    "xpuGraph": true,
+    "asyncEngine": false,
+    "compilationConfig": {
+      "use_inductor_graph_partition": true,
+      "compile_sizes": [1],
+      "cudagraph_mode": "PIECEWISE"
+    }
+  },
+  "controls": [
+    {
+      "variant": "no forced tile, fresh isolated cache",
+      "vllmCacheRoot": "/mnt/fast-ai/vllm-cache-exp/minimax-up-ntile-default-control-20260520",
+      "elapsedTimeSec": 21.84315152897034,
+      "tokSOut": 70.31953382704927,
+      "tokSTotal": 93.75936422378243,
+      "kvCacheTokens": 9472,
+      "decision": "reject_as_known_cold_cache_artifact",
+      "json": "/home/steve/bench-results/minimax-m2.7-up-ntile-screens-20260520/vllm-minimax-m27-autoround-tp4-p512n1536-20260520T074435Z.json",
+      "log": "/home/steve/bench-results/minimax-m2.7-up-ntile-screens-20260520/vllm-minimax-m27-autoround-tp4-p512n1536-20260520T074435Z.log"
+    },
+    {
+      "variant": "no forced tile, warmed same cache",
+      "vllmCacheRoot": "/mnt/fast-ai/vllm-cache-exp/minimax-up-ntile-default-control-20260520",
+      "elapsedTimeSec": 17.327996408974286,
+      "tokSOut": 88.6438274681144,
+      "tokSTotal": 118.1902368665847,
+      "kvCacheTokens": 17664,
+      "decision": "valid_same_harness_control",
+      "json": "/home/steve/bench-results/minimax-m2.7-up-ntile-screens-20260520/vllm-minimax-m27-autoround-tp4-p512n1536-20260520T075056Z.json",
+      "log": "/home/steve/bench-results/minimax-m2.7-up-ntile-screens-20260520/vllm-minimax-m27-autoround-tp4-p512n1536-20260520T075056Z.log"
+    }
+  ],
+  "sameHarnessTileComparison": [
+    {
+      "variant": "VLLM_XPU_MOE_WS_UP_NTILE=1",
+      "tokSOut": 87.71807546534319,
+      "deltaVsWarmedControl": -0.9257520027712031,
+      "decision": "rejected_speed"
+    },
+    {
+      "variant": "VLLM_XPU_MOE_WS_UP_NTILE=3",
+      "tokSOut": 88.32399742436449,
+      "deltaVsWarmedControl": -0.3198300437499097,
+      "decision": "rejected_speed"
+    },
+    {
+      "variant": "VLLM_XPU_MOE_WS_UP_NTILE=6",
+      "tokSOut": 80.82393095146394,
+      "deltaVsWarmedControl": -7.819896516650461,
+      "decision": "rejected_speed"
+    }
+  ],
+  "localMaxxingSubmitted": false
+}
