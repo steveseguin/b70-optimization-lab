@@ -45,6 +45,10 @@ Negative, quality-failed, or merely noisy results stay local/GitHub-only.
    - Rationale: MoE-output FP16 hidden-state allreduce remained visible in the site-labeled timing run.
    - Status: rejected. Exact raw145 and semantic quality passed, arithmetic n64/r8 passed, and extended sixpack passed, but four p512/n1536 repeats averaged `88.843823` output tok/s / `118.458431` total tok/s. This is `0.470372` output tok/s below the current promoted mean. The active runtime hook was reverted and the result was not submitted to LocalMaxxing.
 
+6. Q/K RMS variance allreduce+scale custom op.
+   - Rationale: the site-labeled timing run showed the FP32 `(1, 2)` Q/K variance collective as the largest visible synchronized bucket. This candidate preserved the exact promoted ordering by performing allreduce first and then multiplying by `1 / tp_world` inside a single custom-op boundary.
+   - Status: rejected. Exact raw145 n64/n256, semantic suite, 16-repeat arithmetic, and extended sixpack all passed, but four p512/n1536 repeats averaged `88.558751` output tok/s / `118.078334` total tok/s. This is `0.755445` output tok/s below the current promoted mean. It also produced intermittent `Bad address (src/pipe.cpp:367)` shutdown noise. The active runtime hook was reverted and the result was not submitted to LocalMaxxing.
+
 ## Source-Level Work Queue
 
 - Audit remaining decode-time CPU/framework boundaries in `minimax_m2.py`, `moe_wna16.py`, and `xpu_communicator.py`.
@@ -61,3 +65,5 @@ Implement the next math-preserving candidate against a real collective boundary.
 1. A narrow Q/K variance collective path that reduces the `(1, 2)` FP32 dependency without changing the exact Q/K RMSNorm formula.
 2. A lower-level attention `o_proj` scheduling/fusion candidate, since Python custom-op wrapping was quality-safe but slower.
 3. A true MoE-output epilogue/allreduce fusion candidate, since direct Python-level allreduce replacement was quality-safe but slower.
+
+The simple Q/K custom-op boundary did not help, so future Q/K work needs to be lower-level than Python custom-op wrapping: either fuse the variance collective with the helper kernel at the backend level, or avoid exposing the scale/allreduce as separate scheduler-visible operations without changing arithmetic order.
