@@ -1,0 +1,69 @@
+{
+  "label": "minimax-currenthigh-mbt640-20260520",
+  "date": "2026-05-20",
+  "model": "Lasimeri/MiniMax-M2.7-int4-AutoRound",
+  "hardware": {
+    "gpu": "Intel Arc Pro B70 32GB",
+    "gpu_count": 4
+  },
+  "engine": {
+    "name": "vLLM",
+    "version": "0.20.1-local",
+    "backend": "XPU",
+    "tensor_parallel": 4
+  },
+  "shape": {
+    "prompt_tokens": 512,
+    "output_tokens": 1536,
+    "context_length": 2048,
+    "batch_size": 1,
+    "block_size": 256,
+    "max_batched_tokens": 640
+  },
+  "quality_status": "passed",
+  "quality_checks": [
+    "raw145-n64-exact",
+    "raw145-n256-exact",
+    "semantic-suite-n64-r2",
+    "arithmetic-repeat-n64-r16",
+    "extended-sixpack-n64-r2"
+  ],
+  "quality_hashes": {
+    "raw145_n64": "267cbf30208d84929ee79284ac695467f7e80597bf8694130e1e1f8b180eb5bd",
+    "raw145_n256": "58f6e8251c7a0a17e8c441278b5861f7d5da914fa1823ecd10484b296f2d7537",
+    "semantic": "adacbf144264486ea7d378ebb6a4c0ba23951b72c4cf86251a762b07ebef5805",
+    "arithmetic_repeat": "578ec378bf31cb16fb49ac5c0043270fd00a0f7898e18ac498a41ffe775d7994",
+    "extended_sixpack": "1e3560554f57b2b56cec8f49f28bc8ba12e9e0ced26bdc99a976f1433c99caa7"
+  },
+  "performance": {
+    "mean_output_toks_per_second": 88.8357495689332,
+    "mean_total_toks_per_second": 118.44766609191092,
+    "output_toks_per_second": [
+      88.3997072644462,
+      88.42817932337915,
+      89.29024772029092,
+      89.22486396761649
+    ],
+    "total_toks_per_second": [
+      117.86627635259494,
+      117.90423909783887,
+      119.05366362705456,
+      118.96648529015532
+    ]
+  },
+  "baseline": {
+    "label": "minimax-moe-full-forward-customop-plus-output-ar-20260519",
+    "mean_output_toks_per_second": 89.31419538094708,
+    "mean_total_toks_per_second": 119.08559384126276,
+    "localmaxxing_id": "cmpct6t4m007fnw01yjdtlcs4"
+  },
+  "decision": {
+    "promote": false,
+    "submit_to_localmaxxing": false,
+    "reason": "quality-clean but below promoted current-high mean"
+  },
+  "artifacts": {
+    "summary_json": "/home/steve/bench-results/minimax-m2.7-strict-candidates/minimax-minimax-currenthigh-mbt640-20260520-strict-tp4-ctx2048-mbt640-bs256-20260520T045740Z-summary.json",
+    "runtime_json": "/home/steve/bench-results/minimax-m2.7-strict-candidates/minimax-minimax-currenthigh-mbt640-20260520-strict-tp4-ctx2048-mbt640-bs256-20260520T045740Z-runtime.json"
+  }
+}
