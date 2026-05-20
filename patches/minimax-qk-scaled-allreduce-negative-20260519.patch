@@ -1,0 +1,92 @@
+diff --git a/vllm/distributed/parallel_state.py b/vllm/distributed/parallel_state.py
+--- a/vllm/distributed/parallel_state.py
++++ b/vllm/distributed/parallel_state.py
+@@
+ def all_reduce_inplace_fake(tensor: torch.Tensor, group_name: str) -> None:
+     return None
+ 
+ 
++def all_reduce_inplace_scaled(
++    tensor: torch.Tensor, group_name: str, scale: float
++) -> None:
++    assert group_name in _groups, f"Group {group_name} is not found."
++    group = _groups[group_name]()
++    if group is None:
++        raise ValueError(f"Group {group_name} is destroyed.")
++    group._all_reduce_out_place(tensor)
++    tensor.mul_(scale)
++
++
++def all_reduce_inplace_scaled_fake(
++    tensor: torch.Tensor, group_name: str, scale: float
++) -> None:
++    return None
++
++
+ def reduce_scatter(
+     tensor: torch.Tensor, dim: int, world_size: int, group_name: str
+ ) -> torch.Tensor:
+@@
+ direct_register_custom_op(
+     op_name="all_reduce_inplace",
+     op_func=all_reduce_inplace,
+     fake_impl=all_reduce_inplace_fake,
+     mutates_args=["tensor"],
+ )
+ 
++direct_register_custom_op(
++    op_name="all_reduce_inplace_scaled",
++    op_func=all_reduce_inplace_scaled,
++    fake_impl=all_reduce_inplace_scaled_fake,
++    mutates_args=["tensor"],
++)
++
+ direct_register_custom_op(
+     op_name="reduce_scatter",
+     op_func=reduce_scatter,
+diff --git a/vllm/model_executor/models/minimax_m2.py b/vllm/model_executor/models/minimax_m2.py
+--- a/vllm/model_executor/models/minimax_m2.py
++++ b/vllm/model_executor/models/minimax_m2.py
+@@
+ _MINIMAX_QK_RMS_DIRECT_INPLACE_SCALE = (
+     os.environ.get("VLLM_MINIMAX_QK_RMS_DIRECT_INPLACE_SCALE", "0") == "1"
+ )
++_MINIMAX_QK_RMS_ALLREDUCE_SCALE_OP = (
++    os.environ.get("VLLM_MINIMAX_QK_RMS_ALLREDUCE_SCALE_OP", "0") == "1"
++)
+ _MINIMAX_QK_RMS_APPLY_TP_SCALE = (
+     os.environ.get("VLLM_MINIMAX_QK_RMS_APPLY_TP_SCALE", "0") == "1"
+ )
+@@
+                         and hasattr(torch.ops.vllm, "all_reduce_inplace")
+                     ):
+-                        torch.ops.vllm.all_reduce_inplace(
+-                            qk_var, group_name=get_tp_group().unique_name
+-                        )
+-                        if _MINIMAX_QK_RMS_APPLY_TP_SCALE:
+-                            qk_var_scale = 1.0 / self.q_norm.tp_world
+-                        else:
+-                            qk_var.mul_(1.0 / self.q_norm.tp_world)
++                        if (
++                            _MINIMAX_QK_RMS_ALLREDUCE_SCALE_OP
++                            and not _MINIMAX_QK_RMS_APPLY_TP_SCALE
++                            and hasattr(
++                                torch.ops.vllm, "all_reduce_inplace_scaled"
++                            )
++                        ):
++                            torch.ops.vllm.all_reduce_inplace_scaled(
++                                qk_var,
++                                group_name=get_tp_group().unique_name,
++                                scale=1.0 / self.q_norm.tp_world,
++                            )
++                        else:
++                            torch.ops.vllm.all_reduce_inplace(
++                                qk_var, group_name=get_tp_group().unique_name
++                            )
++                            if _MINIMAX_QK_RMS_APPLY_TP_SCALE:
++                                qk_var_scale = 1.0 / self.q_norm.tp_world
++                            else:
++                                qk_var.mul_(1.0 / self.q_norm.tp_world)
+                     else:
+                         qk_var = (
+                             tensor_model_parallel_all_reduce(qk_var)
