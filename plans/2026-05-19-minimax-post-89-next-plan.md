@@ -58,6 +58,11 @@ Negative, quality-failed, or merely noisy results stay local/GitHub-only.
    - Candidate: `CCL_ALLREDUCE='recursive_doubling:0-8192;ring:8193-max'` on top of the current promoted graph-enabled stack.
    - Status: rejected before quality. oneCCL accepted the env var, but XPU graph capture failed with `sched algorithms do not support sycl_graph recording, please use sycl_algorithms`. The strict runner reported `quality_failed_raw145_n64`, but no tokens were generated; classify this as runtime/graph incompatibility, not a quality regression. Keep `CCL_ALLREDUCE` unset for promoted graph-enabled runs unless a future oneCCL/XPU stack provides a graph-compatible SYCL algorithm path.
 
+9. oneCCL topo copy-engine pipeline toggles.
+   - Rationale: keep the default graph-compatible `topo` allreduce path, but test whether disabling reduce-scatter/allgatherv monolithic pipeline kernels changes copy-engine overlap or slow-tail behavior without changing model math.
+   - Candidate: unset `CCL_ALLREDUCE`, set `CCL_REDUCE_SCATTER_MONOLITHIC_PIPELINE_KERNEL=0`, and set `CCL_ALLGATHERV_MONOLITHIC_PIPELINE_KERNEL=0`.
+   - Status: rejected. Exact raw145 n64/n256, semantic suite, 16-repeat arithmetic, and extended sixpack all passed, but four p512/n1536 repeats averaged `88.749571` output tok/s / `118.332762` total tok/s versus the promoted `89.314195` / `119.085594`. One repeat fell to `87.099748` output tok/s, so this was both slower and noisier. Keep these oneCCL topo pipeline envs unset for promoted graph-enabled runs.
+
 ## Source-Level Work Queue
 
 - Audit remaining decode-time CPU/framework boundaries in `minimax_m2.py`, `moe_wna16.py`, and `xpu_communicator.py`.
@@ -79,3 +84,5 @@ Implement the next math-preserving candidate against a real collective boundary.
 The simple Q/K custom-op boundary and the targeted RowParallel `o_proj` in-place hook did not help, so future work needs to be lower-level than Python conditional/custom-op wrapping. The next useful candidates should either fuse a proven collective with its adjacent kernel at the backend level, or reduce CPU/framework scheduling boundaries without adding Python branches to the hot path.
 
 The size-ranged `CCL_ALLREDUCE` screen also failed before quality under graph capture. That removes high-level oneCCL algorithm selection from the current near-term path; the remaining credible route to another large gain is lower-level XPU/SYCL fusion or graph scheduling around the known collective families while preserving the default graph-compatible communication backend.
+
+The oneCCL topo copy-engine toggles were quality-clean but slower. High-level communication environment changes have now produced regressions or graph incompatibilities; the next pass should move back into source-level scheduling/fusion where the candidate can remove a real hot-path boundary instead of changing oneCCL's global heuristics.
