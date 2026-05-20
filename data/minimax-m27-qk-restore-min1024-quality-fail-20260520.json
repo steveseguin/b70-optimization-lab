@@ -1,0 +1,57 @@
+{
+  "label": "minimax-qk-restore-min1024-currenthigh-20260520",
+  "date_utc": "2026-05-20",
+  "model": "Lasimeri/MiniMax-M2.7-int4-AutoRound",
+  "hardware": "4x Intel Arc Pro B70 32GB",
+  "engine": "vLLM 0.20.1-local XPU",
+  "candidate_env": {
+    "VLLM_MINIMAX_QK_NORM_RESTORE_WEIGHT": "1",
+    "VLLM_MINIMAX_QK_NORM_RESTORE_WEIGHT_MIN_TOKENS": "1024",
+    "VLLM_MINIMAX_QK_RMS_XPU_HELPER": "1",
+    "VLLM_MINIMAX_QK_RMS_XPU_HELPER_MAX_TOKENS": "4",
+    "VLLM_MINIMAX_QK_RMS_DIRECT_INPLACE_SCALE": "1",
+    "VLLM_MINIMAX_QK_RMS_APPLY_TP_SCALE": "0",
+    "VLLM_MINIMAX_QK_NORM_RESTORE_WEIGHT": "1",
+    "VLLM_MINIMAX_QK_NORM_RESTORE_WEIGHT_MIN_TOKENS": "1024",
+    "VLLM_MINIMAX_MOE_OUTPUT_ALLREDUCE_INSIDE_CUSTOM_OP": "1",
+    "VLLM_MINIMAX_MOE_FULL_FORWARD_CUSTOM_OP": "1",
+    "VLLM_MINIMAX_MOE_FULL_FORWARD_CUSTOM_OP_MAX_TOKENS": "4",
+    "VLLM_MINIMAX_POST_ATTN_NORM_MOE_CUSTOM_OP": "0",
+    "VLLM_XPU_USE_LLM_SCALER_MOE": "1",
+    "VLLM_XPU_USE_LLM_SCALER_MOE_WS": "1",
+    "VLLM_XPU_USE_LLM_SCALER_MOE_MINIMAX_LOGITS_WS": "1",
+    "VLLM_XPU_ENABLE_XPU_GRAPH": "1",
+    "VLLM_XPU_FORCE_GRAPH_WITH_COMM": "1",
+    "VLLM_XPU_GRAPH_NOOP_COMM_CAPTURE": "1"
+  },
+  "quality": {
+    "status": "failed",
+    "failed_gate": "raw145-n256-exact",
+    "raw145_n64": {
+      "status": "passed",
+      "combined_token_sha256": "267cbf30208d84929ee79284ac695467f7e80597bf8694130e1e1f8b180eb5bd"
+    },
+    "raw145_n256": {
+      "status": "failed",
+      "expected_combined_token_sha256": "58f6e8251c7a0a17e8c441278b5861f7d5da914fa1823ecd10484b296f2d7537",
+      "observed_combined_token_sha256": "ff27d99c39789c365fcb83d140aad8d168bf0735846015e231ad95bcc5f1ab43",
+      "observed_combined_text_sha256": "bc45d419d3cc4470dcbb838958736c5b8b537b6c5fb54669cee02a7deeed4a2b",
+      "deterministic_across_runs": true,
+      "distinct_generated_token_count": 28,
+      "nul_token_count": 0,
+      "control_nonspace_text_chars": 0
+    }
+  },
+  "performance": null,
+  "decision": {
+    "status": "rejected",
+    "reason": "raising the Q/K clean-weight guard threshold changed the n256 exact-token output",
+    "benchmarked": false,
+    "localmaxxing_submitted": false
+  },
+  "artifacts": {
+    "summary_json": "/home/steve/bench-results/minimax-m2.7-strict-candidates/minimax-minimax-qk-restore-min1024-currenthigh-20260520-strict-tp4-ctx2048-mbt512-bs256-20260520T014458Z-summary.json",
+    "raw145_n64_json": "/home/steve/bench-results/minimax-m2.7-strict-candidates/minimax-minimax-qk-restore-min1024-currenthigh-20260520-strict-tp4-ctx2048-mbt512-bs256-20260520T014458Z-quality/raw145-n64-exact.json",
+    "raw145_n256_json": "/home/steve/bench-results/minimax-m2.7-strict-candidates/minimax-minimax-qk-restore-min1024-currenthigh-20260520-strict-tp4-ctx2048-mbt512-bs256-20260520T014458Z-quality/raw145-n256-exact.json"
+  }
+}
