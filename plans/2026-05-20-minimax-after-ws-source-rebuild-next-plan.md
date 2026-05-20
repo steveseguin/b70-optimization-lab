@@ -39,6 +39,12 @@ Date: 2026-05-20
      CLI permits it.
    - Success criteria: explain the full `~3.2` tok/s delta without changing
      model math or weakening quality gates.
+   - Status: mostly complete. Stock sync text benchmark measured `87.961557`
+     output tok/s; stock sync with output detokenization disabled measured
+     `88.633054`; warm vLLM random text measured `92.374916`; warm synthetic
+     tokens measured `92.535653`. The gap is not async engine, output
+     detokenization, or input tokenization. It is mainly cold first-generation
+     overhead in stock `vllm bench throughput`.
 
 4. Resume lower-level source fusion work only from the rebuilt WS state.
    - Highest-value targets remain Q/K variance FP32 allreduce+RMS apply,
