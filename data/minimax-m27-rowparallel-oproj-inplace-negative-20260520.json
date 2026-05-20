@@ -1,0 +1,93 @@
+{
+  "label": "minimax-rowparallel-oproj-inplace-currenthigh-20260520",
+  "decision": "rejected",
+  "reason": "quality passed, but throughput was below the promoted baseline",
+  "model": "Lasimeri/MiniMax-M2.7-int4-AutoRound",
+  "engine": "vLLM 0.20.1-local",
+  "backend": "xpu",
+  "hardware": {
+    "gpu": "Intel Arc Pro B70 32GB",
+    "gpu_count": 4,
+    "tensor_parallel": 4
+  },
+  "shape": {
+    "prompt_tokens": 512,
+    "output_tokens": 1536,
+    "context_length": 2048,
+    "batch_size": 1,
+    "max_num_batched_tokens": 512,
+    "block_size": 256
+  },
+  "candidate_env": {
+    "VLLM_XPU_ROWPARALLEL_OPROJ_INPLACE_ALLREDUCE": "1",
+    "VLLM_XPU_ROWPARALLEL_OPROJ_INPLACE_ALLREDUCE_MAX_NUMEL": "6144",
+    "VLLM_MINIMAX_MOE_OUTPUT_ALLREDUCE_INSIDE_CUSTOM_OP": "1",
+    "VLLM_MINIMAX_MOE_FULL_FORWARD_CUSTOM_OP": "1",
+    "VLLM_MINIMAX_MOE_FULL_FORWARD_CUSTOM_OP_MAX_TOKENS": "4",
+    "VLLM_MINIMAX_QK_RMS_XPU_HELPER": "1",
+    "VLLM_MINIMAX_QK_RMS_XPU_HELPER_MAX_TOKENS": "4",
+    "VLLM_MINIMAX_QK_RMS_DIRECT_INPLACE_SCALE": "1",
+    "VLLM_MINIMAX_QK_RMS_APPLY_TP_SCALE": "0",
+    "VLLM_XPU_COMPILE_ALLREDUCE_CUSTOM_OP": "1",
+    "VLLM_XPU_CUSTOM_ALLREDUCE_CLONE_INPUT": "1",
+    "VLLM_XPU_CUSTOM_ALLREDUCE_TINY_FP32_INPLACE_MAX_NUMEL": "2",
+    "VLLM_XPU_CUSTOM_ALLREDUCE_INPLACE_MAX_NUMEL": "0",
+    "VLLM_XPU_USE_LLM_SCALER_MOE": "1",
+    "VLLM_XPU_USE_LLM_SCALER_MOE_WS": "1",
+    "VLLM_XPU_USE_LLM_SCALER_MOE_MINIMAX_LOGITS_WS": "1",
+    "VLLM_XPU_ENABLE_XPU_GRAPH": "1",
+    "VLLM_XPU_FORCE_GRAPH_WITH_COMM": "1",
+    "VLLM_XPU_GRAPH_NOOP_COMM_CAPTURE": "1",
+    "CCL_TOPO_P2P_ACCESS": "1"
+  },
+  "metrics": {
+    "mean_output_toks_per_second": 88.85241478409328,
+    "mean_total_toks_per_second": 118.46988637879103,
+    "output_toks_per_second": [
+      88.6925108280999,
+      89.68137564710311,
+      88.22656167466515,
+      88.80921098650497
+    ],
+    "total_toks_per_second": [
+      118.25668110413321,
+      119.5751675294708,
+      117.63541556622019,
+      118.41228131533995
+    ],
+    "promoted_baseline_output_toks_per_second": 89.31419538094708,
+    "delta_output_toks_per_second": -0.4617805968538,
+    "delta_percent": -0.5170309844076527
+  },
+  "quality": {
+    "passed": true,
+    "checks": [
+      "raw145-n64-exact",
+      "raw145-n256-exact",
+      "semantic-suite-n64-r2",
+      "arithmetic-repeat-n64-r16",
+      "extended-sixpack-n64-r2"
+    ],
+    "hashes": {
+      "raw145_n64": "267cbf30208d84929ee79284ac695467f7e80597bf8694130e1e1f8b180eb5bd",
+      "raw145_n256": "58f6e8251c7a0a17e8c441278b5861f7d5da914fa1823ecd10484b296f2d7537",
+      "semantic_suite": "adacbf144264486ea7d378ebb6a4c0ba23951b72c4cf86251a762b07ebef5805",
+      "arithmetic_repeat": "578ec378bf31cb16fb49ac5c0043270fd00a0f7898e18ac498a41ffe775d7994",
+      "extended_sixpack": "1e3560554f57b2b56cec8f49f28bc8ba12e9e0ced26bdc99a976f1433c99caa7"
+    }
+  },
+  "artifacts": {
+    "summary": "/home/steve/bench-results/minimax-m2.7-strict-candidates/minimax-minimax-rowparallel-oproj-inplace-currenthigh-20260520-strict-tp4-ctx2048-mbt512-bs256-20260520T001136Z-summary.json",
+    "quality_dir": "/home/steve/bench-results/minimax-m2.7-strict-candidates/minimax-minimax-rowparallel-oproj-inplace-currenthigh-20260520-strict-tp4-ctx2048-mbt512-bs256-20260520T001136Z-quality",
+    "bench_jsons": [
+      "/home/steve/bench-results/minimax-m2.7-strict-candidates/vllm-minimax-m27-autoround-tp4-p512n1536-20260520T002709Z.json",
+      "/home/steve/bench-results/minimax-m2.7-strict-candidates/vllm-minimax-m27-autoround-tp4-p512n1536-20260520T003004Z.json",
+      "/home/steve/bench-results/minimax-m2.7-strict-candidates/vllm-minimax-m27-autoround-tp4-p512n1536-20260520T003252Z.json",
+      "/home/steve/bench-results/minimax-m2.7-strict-candidates/vllm-minimax-m27-autoround-tp4-p512n1536-20260520T003545Z.json"
+    ]
+  },
+  "localmaxxing": {
+    "submitted": false,
+    "reason": "negative candidate below promoted baseline"
+  }
+}
