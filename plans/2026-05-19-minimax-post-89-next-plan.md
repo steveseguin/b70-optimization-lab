@@ -53,11 +53,17 @@ Negative, quality-failed, or merely noisy results stay local/GitHub-only.
    - Rationale: the remaining visible FP16 hidden-state allreduce family matches attention `o_proj`, and the previous broad attention custom-op wrapper was quality-safe but slower. This tried a narrower math-preserving in-place path only for `*.o_proj` RowParallelLinear outputs on XPU FP16/BF16 tensors up to 6144 elements.
    - Status: rejected. Exact raw145 n64/n256, semantic suite, 16-repeat arithmetic, and extended sixpack all passed, but four p512/n1536 repeats averaged `88.852415` output tok/s / `118.469886` total tok/s. This is `0.461781` output tok/s below the current promoted mean. It also produced intermittent `Bad address (src/pipe.cpp:367)` shutdown noise during quality teardown. The active runtime hook was reverted and the result was not submitted to LocalMaxxing.
 
+8. Size-ranged oneCCL `CCL_ALLREDUCE` algorithm selection.
+   - Rationale: Intel oneCCL supports size-ranged algorithm selection, so this screened whether tiny TP collectives could benefit from `recursive_doubling` without changing model math.
+   - Candidate: `CCL_ALLREDUCE='recursive_doubling:0-8192;ring:8193-max'` on top of the current promoted graph-enabled stack.
+   - Status: rejected before quality. oneCCL accepted the env var, but XPU graph capture failed with `sched algorithms do not support sycl_graph recording, please use sycl_algorithms`. The strict runner reported `quality_failed_raw145_n64`, but no tokens were generated; classify this as runtime/graph incompatibility, not a quality regression. Keep `CCL_ALLREDUCE` unset for promoted graph-enabled runs unless a future oneCCL/XPU stack provides a graph-compatible SYCL algorithm path.
+
 ## Source-Level Work Queue
 
 - Audit remaining decode-time CPU/framework boundaries in `minimax_m2.py`, `moe_wna16.py`, and `xpu_communicator.py`.
 - Prioritize a lower-level fusion or scheduling candidate around one of the three proven collective families: Q/K variance FP32, attention `o_proj` FP16 hidden-state allreduce, or MoE-output FP16 hidden-state allreduce.
 - Do not spend more time on broad Python custom-op wrappers unless the wrapper changes a lower-level compiled/collective boundary.
+- Do not force non-`topo` `CCL_ALLREDUCE` in graph-enabled runs; the scheduled algorithm path is not compatible with current `sycl_graph` capture.
 - Prefer math-preserving changes that remove import/call/copy overhead or custom-op graph breaks.
 - Preserve exact operation ordering around residual add, RMSNorm, router logits, expert selection, and final allreduce unless a canary explicitly proves equivalence.
 - For any new patch, save a patch note and strict run summary before considering LocalMaxxing.
@@ -71,3 +77,5 @@ Implement the next math-preserving candidate against a real collective boundary.
 3. A true MoE-output epilogue/allreduce fusion candidate, since direct Python-level allreduce replacement was quality-safe but slower.
 
 The simple Q/K custom-op boundary and the targeted RowParallel `o_proj` in-place hook did not help, so future work needs to be lower-level than Python conditional/custom-op wrapping. The next useful candidates should either fuse a proven collective with its adjacent kernel at the backend level, or reduce CPU/framework scheduling boundaries without adding Python branches to the hot path.
+
+The size-ranged `CCL_ALLREDUCE` screen also failed before quality under graph capture. That removes high-level oneCCL algorithm selection from the current near-term path; the remaining credible route to another large gain is lower-level XPU/SYCL fusion or graph scheduling around the known collective families while preserving the default graph-compatible communication backend.
