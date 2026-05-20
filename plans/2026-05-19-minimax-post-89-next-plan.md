@@ -87,6 +87,11 @@ Negative, quality-failed, or merely noisy results stay local/GitHub-only.
    - Candidate: current promoted stack with the upstream `vllm/_xpu_ops.py` FlashAttention hunk from `be0dcc29d` / PR #40356.
    - Status: rejected as a speed candidate. Full strict quality passed, including raw145 n64/n256 exact hashes, semantic suite, arithmetic-repeat n64/r8, and extended sixpack. Four p512/n1536 repeats averaged `88.890310` output tok/s / `118.520414` total tok/s versus the promoted `89.314195` / `119.085594`, about `0.47%` slower. One repeat printed the known `Bad address (src/pipe.cpp:367)` shutdown noise after writing JSON. Do not submit to LocalMaxxing. This narrows the remaining bottleneck away from the immediate XPU FlashAttention contiguous wrapper path.
 
+15. Recheck XPU Level Zero IPC peer-polling path for Q/K variance allreduce.
+   - Rationale: the CUDA MiniMax kernel fuses Q/K variance exchange and RMS apply through peer-visible Lamport workspaces, so the closest XPU analogue is a peer IPC mailbox path.
+   - Candidate: standalone `minimax_qk_rms_xpu_ipc` recheck on the current 4x B70 setup, plus a new system-scope `sycl::atomic_ref` sequence-counter probe and an XCCL tiny allreduce comparison.
+   - Status: rejected as a vLLM integration path. Level Zero peer access, remote fills, and forked IPC handles all validated across all 4x4 source/destination pairs, but cross-device atomics are not advertised. XCCL `[1, 2]` FP32 allreduce measured `0.061791 ms/iter`; the two-kernel mailbox path with a CPU barrier validated at `0.290768 ms/iter`; the same path without a barrier failed validation; single-kernel sequence/counter polling remained around `417 ms/iter`; and the atomic-counter variant failed validation. Keep the IPC prototype as evidence only. Do not pursue SYCL peer-memory polling again unless a new Level Zero event/barrier or oneCCL fused primitive can validate without CPU barriers.
+
 ## Source-Level Work Queue
 
 - Audit remaining decode-time CPU/framework boundaries in `minimax_m2.py`, `moe_wna16.py`, and `xpu_communicator.py`.
@@ -133,3 +138,9 @@ on this workload. That removes another shallow wrapper-copy hypothesis. The
 next credible path is still a deeper XPU/SYCL implementation around the
 MiniMax-specific Q/K allreduce+RMS or hidden-state allreduce epilogue, not more
 high-level Python or wrapper-only edits.
+
+The Level Zero IPC recheck confirms that peer buffers themselves are usable, but
+the CUDA-style in-kernel Lamport polling design does not translate cleanly to
+this B70/XPU stack. XCCL is still the correct tiny-collective primitive today.
+Future Q/K fusion work must either extend/fuse around XCCL, use a validated
+Level Zero synchronization primitive, or move to a different hot path.
