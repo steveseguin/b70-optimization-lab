@@ -1,0 +1,136 @@
+diff --git a/vllm/custom-esimd-kernels-vllm/csrc/moe_batch/moe_int4.sycl b/vllm/custom-esimd-kernels-vllm/csrc/moe_batch/moe_int4.sycl
+--- a/vllm/custom-esimd-kernels-vllm/csrc/moe_batch/moe_int4.sycl
++++ b/vllm/custom-esimd-kernels-vllm/csrc/moe_batch/moe_int4.sycl
+@@
+ #include <sycl/ext/intel/esimd.hpp>
+ #include <sycl/ext/intel/experimental/esimd/memory.hpp>
++#include <chrono>
++#include <cstdio>
++#include <cstdlib>
+ 
+@@
+ static inline sycl::event submit_kernel(
+     std::function<void(sycl::handler&)> kernel,
+     const torch::Device& device,
+     const char* desc) {
+     sycl::queue& queue = c10::xpu::getCurrentXPUStream(device.index()).queue();
+-    return queue.submit(kernel);
++    sycl::event event = queue.submit(kernel);
++    static const bool trace_kernels =
++        std::getenv("LLM_SCALER_MOE_TRACE_KERNELS") != nullptr;
++    if (trace_kernels) {
++        auto start = std::chrono::steady_clock::now();
++        event.wait();
++        auto end = std::chrono::steady_clock::now();
++        double ms = std::chrono::duration<double, std::milli>(end - start).count();
++        std::fprintf(stderr,
++                     "[llm-scaler][moe-kernel] device=%d kernel=\"%s\" wait_ms=%.6f\n",
++                     static_cast<int>(device.index()), desc, ms);
++    }
++    return event;
+ }
++
++static int forced_ws_up_ntile() {
++    static const int value = []() {
++        const char* env = std::getenv("VLLM_XPU_MOE_WS_UP_NTILE");
++        if (env == nullptr || env[0] == '\0') {
++            return 0;
++        }
++        int parsed = std::atoi(env);
++        switch (parsed) {
++        case 1:
++        case 2:
++        case 3:
++        case 4:
++        case 6:
++        case 8:
++            return parsed;
++        default:
++            return 0;
++        }
++    }();
++    return value;
++}
+ 
+@@
+ static void moe_ws_up_cutlass_int4_kernel(
+     const fp16* x, const uint8_t* w13, const fp16* w13_scales,
+     const IndexT* topk_idx, fp16* routed_intermediates,
+     const int n_tokens, const int top_k, const int hidden_size,
+     const int intermediate_size, const torch::Device& device,
+     const bool signed_compact = true) {
+-    if (n_tokens <= 2) {
++    int forced_ntile = forced_ws_up_ntile();
++    if (forced_ntile == 1) {
++        moe_ws_up_routed_cutlass_int4_kernel<IndexT, 1>(
++            x, w13, w13_scales, topk_idx, routed_intermediates,
++            n_tokens, top_k, hidden_size, intermediate_size, device,
++            signed_compact);
++    } else if (forced_ntile == 2) {
++        moe_ws_up_routed_cutlass_int4_kernel<IndexT, 2>(
++            x, w13, w13_scales, topk_idx, routed_intermediates,
++            n_tokens, top_k, hidden_size, intermediate_size, device,
++            signed_compact);
++    } else if (forced_ntile == 3) {
++        moe_ws_up_routed_cutlass_int4_kernel<IndexT, 3>(
++            x, w13, w13_scales, topk_idx, routed_intermediates,
++            n_tokens, top_k, hidden_size, intermediate_size, device,
++            signed_compact);
++    } else if (forced_ntile == 4) {
++        moe_ws_up_routed_cutlass_int4_kernel<IndexT, 4>(
++            x, w13, w13_scales, topk_idx, routed_intermediates,
++            n_tokens, top_k, hidden_size, intermediate_size, device,
++            signed_compact);
++    } else if (forced_ntile == 6) {
++        moe_ws_up_routed_cutlass_int4_kernel<IndexT, 6>(
++            x, w13, w13_scales, topk_idx, routed_intermediates,
++            n_tokens, top_k, hidden_size, intermediate_size, device,
++            signed_compact);
++    } else if (forced_ntile == 8) {
++        moe_ws_up_routed_cutlass_int4_kernel<IndexT, 8>(
++            x, w13, w13_scales, topk_idx, routed_intermediates,
++            n_tokens, top_k, hidden_size, intermediate_size, device,
++            signed_compact);
++    } else if (n_tokens <= 2) {
+         moe_ws_up_routed_cutlass_int4_kernel<IndexT, 2>(
+             x, w13, w13_scales, topk_idx, routed_intermediates,
+             n_tokens, top_k, hidden_size, intermediate_size, device,
+             signed_compact);
+@@
+ void moe_ws_up_cutlass_int4_with_shared_fp16_kernel(
+@@
+-    if (n_tokens <= 2) {
++    int forced_ntile = forced_ws_up_ntile();
++    if (forced_ntile == 1) {
++        moe_ws_up_routed_cutlass_int4_kernel<IndexT, 1>(
++            x, w13, w13_scales, topk_idx, routed_intermediates,
++            n_tokens, top_k, hidden_size, intermediate_size, device);
++    } else if (forced_ntile == 2) {
++        moe_ws_up_routed_cutlass_int4_kernel<IndexT, 2>(
++            x, w13, w13_scales, topk_idx, routed_intermediates,
++            n_tokens, top_k, hidden_size, intermediate_size, device);
++    } else if (forced_ntile == 3) {
++        moe_ws_up_routed_cutlass_int4_kernel<IndexT, 3>(
++            x, w13, w13_scales, topk_idx, routed_intermediates,
++            n_tokens, top_k, hidden_size, intermediate_size, device);
++    } else if (forced_ntile == 4) {
++        moe_ws_up_routed_cutlass_int4_kernel<IndexT, 4>(
++            x, w13, w13_scales, topk_idx, routed_intermediates,
++            n_tokens, top_k, hidden_size, intermediate_size, device);
++    } else if (forced_ntile == 6) {
++        moe_ws_up_routed_cutlass_int4_kernel<IndexT, 6>(
++            x, w13, w13_scales, topk_idx, routed_intermediates,
++            n_tokens, top_k, hidden_size, intermediate_size, device);
++    } else if (forced_ntile == 8) {
++        moe_ws_up_routed_cutlass_int4_kernel<IndexT, 8>(
++            x, w13, w13_scales, topk_idx, routed_intermediates,
++            n_tokens, top_k, hidden_size, intermediate_size, device);
++    } else if (n_tokens <= 2) {
+         moe_ws_up_routed_cutlass_int4_kernel<IndexT, 2>(
+             x, w13, w13_scales, topk_idx, routed_intermediates,
+             n_tokens, top_k, hidden_size, intermediate_size, device);
+
+# Notes
+# - This is a focused reproduction excerpt for the 2026-05-20 negative tile sweep.
+# - The runtime defaults are unchanged unless VLLM_XPU_MOE_WS_UP_NTILE is set.
+# - Tested forced values 1/3/6 preserved raw145 n64 but were slower than the promoted default.
