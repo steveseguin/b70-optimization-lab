@@ -1,0 +1,90 @@
+{
+  "date": "2026-05-20",
+  "label": "minimax-ws-reuse-decode-buffers-20260520",
+  "classification": "negative_quality_passed",
+  "model": {
+    "hfId": "Lasimeri/MiniMax-M2.7-int4-AutoRound",
+    "localPath": "/mnt/fast-ai/llm-models/minimax-m2.7-int4-autoround",
+    "quantization": "AutoRound INT4 W4A16"
+  },
+  "hardware": {
+    "hwClass": "DISCRETE_GPU",
+    "gpuName": "Intel Arc Pro B70 32GB",
+    "gpuCount": 4,
+    "vramGb": 32,
+    "os": "Ubuntu 24.04"
+  },
+  "engine": {
+    "engineName": "vllm",
+    "engineVersion": "0.20.1-local",
+    "backend": "xpu-level-zero-llm-scaler-int4-moe-ws"
+  },
+  "benchmark": {
+    "promptTokens": 512,
+    "outputTokens": 1536,
+    "contextLength": 2048,
+    "batchSize": 1,
+    "maxNumBatchedTokens": 512,
+    "blockSize": 256,
+    "meanOutputTokS": 88.90035513861433,
+    "meanTotalTokS": 118.53380685148579,
+    "outputTokSRepeats": [
+      88.60777635977874,
+      89.56286825065199,
+      88.80475017032127,
+      88.62602577370536
+    ],
+    "totalTokSRepeats": [
+      118.14370181303832,
+      119.41715766753599,
+      118.40633356042837,
+      118.16803436494048
+    ],
+    "promotedBaselineOutputTokS": 89.31419538094708,
+    "deltaOutputTokS": -0.4138402423327489,
+    "deltaPercent": -0.4633544580846985
+  },
+  "quality": {
+    "status": "passed",
+    "checks": [
+      "raw145-n64-exact",
+      "raw145-n256-exact",
+      "semantic-suite-n64-r2",
+      "arithmetic-repeat-n64-r16",
+      "extended-sixpack-n64-r2"
+    ],
+    "knownGoodHashes": {
+      "raw145N64CombinedTokenSha256": "267cbf30208d84929ee79284ac695467f7e80597bf8694130e1e1f8b180eb5bd",
+      "raw145N256CombinedTokenSha256": "58f6e8251c7a0a17e8c441278b5861f7d5da914fa1823ecd10484b296f2d7537",
+      "arithmeticRepeatCombinedTokenSha256": "578ec378bf31cb16fb49ac5c0043270fd00a0f7898e18ac498a41ffe775d7994"
+    }
+  },
+  "candidateEnv": {
+    "VLLM_XPU_MINIMAX_WS_REUSE_DECODE_BUFFERS": "1",
+    "VLLM_XPU_MINIMAX_WS_REUSE_TOPK_BUFFERS": "",
+    "VLLM_XPU_USE_LLM_SCALER_MOE": "1",
+    "VLLM_XPU_USE_LLM_SCALER_MOE_WS": "1",
+    "VLLM_XPU_USE_LLM_SCALER_MOE_MINIMAX_LOGITS_WS": "1",
+    "VLLM_MINIMAX_M2_ATTN_DELAY_ALLREDUCE": "0",
+    "VLLM_MINIMAX_MOE_OUTPUT_ALLREDUCE_INSIDE_CUSTOM_OP": "1",
+    "VLLM_MINIMAX_MOE_FULL_FORWARD_CUSTOM_OP": "1",
+    "VLLM_MINIMAX_MOE_FULL_FORWARD_CUSTOM_OP_MAX_TOKENS": "4",
+    "VLLM_XPU_ENABLE_XPU_GRAPH": "1",
+    "VLLM_XPU_FORCE_GRAPH_WITH_COMM": "1",
+    "VLLM_XPU_GRAPH_NOOP_COMM_CAPTURE": "1",
+    "CCL_TOPO_P2P_ACCESS": "1",
+    "FI_TCP_IFACE": "wlxe865d47e3a48",
+    "CCL_KVS_IFACE": "wlxe865d47e3a48"
+  },
+  "artifacts": {
+    "summaryJson": "/home/steve/bench-results/minimax-m2.7-strict-candidates/minimax-minimax-ws-reuse-decode-buffers-20260520-strict-tp4-ctx2048-mbt512-bs256-20260520T060956Z-summary.json",
+    "qualityDir": "/home/steve/bench-results/minimax-m2.7-strict-candidates/minimax-minimax-ws-reuse-decode-buffers-20260520-strict-tp4-ctx2048-mbt512-bs256-20260520T060956Z-quality",
+    "buildLog": "/home/steve/bench-results/minimax-m2.7-ws-reuse-build/build-moe-int4-u4-oneapi2025-20260520T060432Z.log",
+    "note": "notes/2026-05-20-minimax-ws-reuse-decode-buffers-negative.md",
+    "patch": "patches/minimax-ws-reuse-decode-buffers-negative-20260520.patch"
+  },
+  "localmaxxing": {
+    "submitted": false,
+    "reason": "quality-clean but slower than the promoted 89.314 tok/s baseline"
+  }
+}
