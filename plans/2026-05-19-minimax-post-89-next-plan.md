@@ -111,6 +111,23 @@ Negative, quality-failed, or merely noisy results stay local/GitHub-only.
      rejection, not a quality rejection. Do not implement naive all-expert
      candidate repair in the hot path.
 
+18. MiniMax WS decode-buffer reuse.
+   - Rationale: reduce allocator/framework churn inside the current llm-scaler
+     MiniMax logits WS MoE decode path without changing model math.
+   - Candidate: reuse only the routed intermediate scratch buffer via
+     `VLLM_XPU_MINIMAX_WS_REUSE_DECODE_BUFFERS=1` /
+     `VLLM_XPU_MINIMAX_WS_REUSE_INTERMEDIATES=1`; leave top-k scratch reuse
+     behind a separate diagnostic-only flag.
+   - Status: rejected as a speed candidate. The intermediate-only form passed
+     full strict quality, including raw145 n64/n256 exact hashes, semantic
+     suite, 16-repeat arithmetic, and extended sixpack. Four p512/n1536 repeats
+     averaged `88.900355` output tok/s / `118.533807` total tok/s versus the
+     promoted `89.314195` / `119.085594`. The earlier combined top-k plus
+     intermediate reuse attempt failed raw145 n64 and produced corrupted output,
+     so `VLLM_XPU_MINIMAX_WS_REUSE_TOPK_BUFFERS` must remain diagnostic-only.
+     Allocator scratch reuse is not a meaningful current bottleneck; no
+     LocalMaxxing submission.
+
 ## Source-Level Work Queue
 
 - Audit remaining decode-time CPU/framework boundaries in `minimax_m2.py`, `moe_wna16.py`, and `xpu_communicator.py`.
@@ -177,3 +194,11 @@ linear. Router work should only continue if a focused full-model timing run
 shows router materialization is still meaningful, and the implementation should
 use either a proper optimized full-router GEMV/top-k kernel or a narrower
 `router_logits -> top8 -> MoE` boundary fusion.
+
+The MiniMax WS decode-buffer reuse screen is quality-clean for intermediate
+scratch only, but slower than the promoted stack. Top-k scratch reuse is
+unsafe under graph-captured layers without a deeper lifetime/aliasing repair.
+Future allocator work should be deprioritized unless timing evidence changes;
+the next credible improvement path is still lower-level fusion/scheduling in
+one of the remaining kernel/collective families, not additional scratch-buffer
+reuse.
