@@ -1,0 +1,52 @@
+{
+  "label": "minimax-nonws-restored-binary-recovery",
+  "date": "2026-05-20",
+  "status": "quality_passed_recovery_only",
+  "model": "Lasimeri/MiniMax-M2.7-int4-AutoRound",
+  "hardware": "4x Intel Arc Pro B70 32GB",
+  "engine": "vLLM 0.20.1-local XPU/Level Zero TP4",
+  "contextLength": 2048,
+  "promptTokens": 512,
+  "outputTokens": 1536,
+  "batchSize": 1,
+  "maxNumBatchedTokens": 512,
+  "blockSize": 256,
+  "meanOutputTokS": 75.7679183270691,
+  "meanTotalTokS": 101.0238911027588,
+  "outputTokSRepeats": [
+    75.33600079274986,
+    75.97039669290639,
+    76.0326563409889,
+    75.73261948163126
+  ],
+  "totalTokSRepeats": [
+    100.4480010569998,
+    101.29386225720853,
+    101.37687512131852,
+    100.97682597550835
+  ],
+  "promotedOutputTokS": 89.31419538094708,
+  "promotedTotalTokS": 119.08559384126276,
+  "quality": {
+    "raw145N64TokenSha256": "267cbf30208d84929ee79284ac695467f7e80597bf8694130e1e1f8b180eb5bd",
+    "raw145N256TokenSha256": "58f6e8251c7a0a17e8c441278b5861f7d5da914fa1823ecd10484b296f2d7537",
+    "semanticSuiteN64R2Passed": true,
+    "arithmeticRepeatN64R8Passed": true,
+    "arithmeticRepeatN64R8TokenSha256": "261779104d5abf1642713bfc560ca8d2d6c0f16edbcc929c8b0819b5a760dd7c"
+  },
+  "runtimeNotes": {
+    "activeBinarySource": "/home/steve/src/llm-scaler/vllm/custom-esimd-kernels-vllm/python/custom_esimd_kernels_vllm/moe_int4_ops.cpython-312-x86_64-linux-gnu.so.backup-20260512T064555Z",
+    "hasMinimaxEntryPoint": true,
+    "hasMinimaxWsEntryPoint": false,
+    "hasFullSharedFromLogitsEntryPoint": true,
+    "localmaxxingSubmitted": false,
+    "reasonNotSubmitted": "Recovery-only fallback is quality-clean but slower than the promoted WS path."
+  },
+  "artifacts": {
+    "summaryJson": "/home/steve/bench-results/minimax-m2.7-post-repro-optimization/nonws-recovery-quality-20260520T112453Z/minimax-minimax-nonws-restored-binary-recovery-strict-tp4-ctx2048-mbt512-bs256-20260520T112453Z-summary.json",
+    "qualityDir": "/home/steve/bench-results/minimax-m2.7-post-repro-optimization/nonws-recovery-quality-20260520T112453Z",
+    "failedWsRecoveryDir": "/home/steve/bench-results/minimax-m2.7-post-repro-optimization/restored-backup-quality-20260520T111244Z",
+    "patchArtifact": "patches/minimax-llm-scaler-import-segfault-recovery-20260520.patch",
+    "compressedPatchArtifact": "patches/minimax-llm-scaler-import-segfault-recovery-20260520.patch.gz.b64"
+  }
+}
