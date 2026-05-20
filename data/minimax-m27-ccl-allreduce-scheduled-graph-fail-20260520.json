@@ -1,0 +1,39 @@
+{
+  "label": "minimax-ccl-allreduce-recursive-small-currenthigh-20260520",
+  "date": "2026-05-20",
+  "model": "Lasimeri/MiniMax-M2.7-int4-AutoRound",
+  "hardware": "4x Intel Arc Pro B70 32GB",
+  "engine": "vLLM 0.20.1-local XPU",
+  "baseline_label": "minimax-moe-full-forward-customop-plus-output-ar-20260519",
+  "baseline_output_tok_s_mean": 89.31419538094708,
+  "baseline_total_tok_s_mean": 119.08559384126276,
+  "candidate_delta": {
+    "CCL_ALLREDUCE": "recursive_doubling:0-8192;ring:8193-max"
+  },
+  "runtime": {
+    "tensor_parallel_size": 4,
+    "max_model_len": 2048,
+    "max_num_batched_tokens": 512,
+    "max_num_seqs": 1,
+    "block_size": 256,
+    "xpu_graph": true,
+    "force_graph_with_comm": true,
+    "graph_noop_comm_capture": true,
+    "ccl_topo_p2p_access": "1"
+  },
+  "status": "runtime_failed_before_quality",
+  "runner_status": "quality_failed_raw145_n64",
+  "quality_reached": false,
+  "bench_reached": false,
+  "submitted_to_localmaxxing": false,
+  "error": "oneCCL: coll.cpp:1421 ccl_allreduce_impl: EXCEPTION: |CCL_SYCL| sched algorithms do not support sycl_graph recording, please use sycl_algorithms",
+  "interpretation": "The runner status is a gate label, but the underlying failure happened during XPU graph capture before token generation. Treat this as a graph/runtime incompatibility, not a quality regression.",
+  "artifacts": {
+    "summary_json": "/home/steve/bench-results/minimax-m2.7-strict-candidates/minimax-minimax-ccl-allreduce-recursive-small-currenthigh-20260520-strict-tp4-ctx2048-mbt512-bs256-20260520T004925Z-summary.json",
+    "quality_log": "/home/steve/bench-results/minimax-m2.7-strict-candidates/minimax-minimax-ccl-allreduce-recursive-small-currenthigh-20260520-strict-tp4-ctx2048-mbt512-bs256-20260520T004925Z-quality/raw145-n64-exact.log"
+  },
+  "source_urls": [
+    "https://www.intel.com/content/www/us/en/docs/oneccl/developer-guide-reference/2021-15/environment-variables.html"
+  ],
+  "decision": "Keep CCL_ALLREDUCE unset/default for graph-enabled promoted runs. Do not submit this negative runtime result to LocalMaxxing."
+}
