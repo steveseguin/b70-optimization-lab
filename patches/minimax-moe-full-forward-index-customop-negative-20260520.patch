@@ -1,0 +1,80 @@
+diff --git a/vllm/model_executor/models/minimax_m2.py b/vllm/model_executor/models/minimax_m2.py
+--- a/vllm/model_executor/models/minimax_m2.py
++++ b/vllm/model_executor/models/minimax_m2.py
+@@
+ _MINIMAX_M2_MOE_FULL_FORWARD_CUSTOM_OP_MAX_TOKENS = int(
+     os.environ.get("VLLM_MINIMAX_MOE_FULL_FORWARD_CUSTOM_OP_MAX_TOKENS", "4")
+ )
++_MINIMAX_M2_MOE_FULL_FORWARD_INDEX_CUSTOM_OP = (
++    os.environ.get("VLLM_MINIMAX_MOE_FULL_FORWARD_INDEX_CUSTOM_OP", "0") == "1"
++)
+ _MINIMAX_M2_POST_ATTN_NORM_MOE_CUSTOM_OP = (
+     os.environ.get("VLLM_MINIMAX_POST_ATTN_NORM_MOE_CUSTOM_OP", "0") == "1"
+ )
+@@
+ _minimax_m2_candidate_repair_topk = None
+ _minimax_m2_candidate_repair_import_failed = False
+ _MINIMAX_M2_MOE_LAYER_REGISTRY: dict[str, "MiniMaxM2MoE"] = {}
++_MINIMAX_M2_MOE_LAYER_INDEX_REGISTRY: list["MiniMaxM2MoE"] = []
+ _MINIMAX_M2_DECODER_LAYER_REGISTRY: dict[str, "MiniMaxM2DecoderLayer"] = {}
+@@
+ direct_register_custom_op(
+     op_name="minimax_m2_moe_forward",
+     op_func=_minimax_m2_moe_forward_custom,
+     fake_impl=_minimax_m2_moe_forward_custom_fake,
+     tags=(torch.Tag.needs_fixed_stride_order,),
+ )
+ 
+ 
++def _minimax_m2_moe_forward_index_custom(
++    hidden_states: torch.Tensor,
++    layer_index: int,
++) -> torch.Tensor:
++    layer = _MINIMAX_M2_MOE_LAYER_INDEX_REGISTRY[layer_index]
++    return layer._forward_impl_flat(hidden_states)
++
++
++def _minimax_m2_moe_forward_index_custom_fake(
++    hidden_states: torch.Tensor,
++    layer_index: int,
++) -> torch.Tensor:
++    return torch.empty_like(hidden_states)
++
++
++direct_register_custom_op(
++    op_name="minimax_m2_moe_forward_index",
++    op_func=_minimax_m2_moe_forward_index_custom,
++    fake_impl=_minimax_m2_moe_forward_index_custom_fake,
++    tags=(torch.Tag.needs_fixed_stride_order,),
++)
++
++
+ def _minimax_m2_post_attn_norm_moe_custom(
+     hidden_states: torch.Tensor,
+     residual: torch.Tensor,
+@@
+         self.layer_name = prefix
+         self._encoded_layer_name = LayerName(prefix) if _USE_LAYERNAME else prefix
+         self._fp16_router_audit_printed: set[str] = set()
++        self._layer_registry_index = len(_MINIMAX_M2_MOE_LAYER_INDEX_REGISTRY)
+         _MINIMAX_M2_MOE_LAYER_REGISTRY[prefix] = self
++        _MINIMAX_M2_MOE_LAYER_INDEX_REGISTRY.append(self)
+ 
+         if self.tp_size > config.num_local_experts:
+             raise ValueError(
+@@
+             and hidden_states.is_contiguous()
+         ):
+-            final_hidden_states = torch.ops.vllm.minimax_m2_moe_forward(
+-                hidden_states, self._encoded_layer_name
+-            )
++            if _MINIMAX_M2_MOE_FULL_FORWARD_INDEX_CUSTOM_OP:
++                final_hidden_states = torch.ops.vllm.minimax_m2_moe_forward_index(
++                    hidden_states, self._layer_registry_index
++                )
++            else:
++                final_hidden_states = torch.ops.vllm.minimax_m2_moe_forward(
++                    hidden_states, self._encoded_layer_name
++                )
+         else:
+             final_hidden_states = self._forward_impl_flat(hidden_states)
