@@ -61,6 +61,12 @@ def parse_args() -> argparse.Namespace:
         default="offset",
         help="repeat uses a short repeated token period; offset mimics vLLM random dataset shape.",
     )
+    parser.add_argument(
+        "--prompt-source",
+        choices=("synthetic_tokens", "vllm_random_text", "vllm_random_tokens"),
+        default="synthetic_tokens",
+        help="Prompt representation. vllm_random_* uses vLLM's random benchmark dataset.",
+    )
     parser.add_argument("--repeat-period", type=int, default=16)
     parser.add_argument("--disable-detokenize", action="store_true")
     parser.add_argument("--enable-prefix-caching", action="store_true")
@@ -74,7 +80,38 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def build_prompts(args: argparse.Namespace) -> list[dict[str, list[int]]]:
+def build_prompts(args: argparse.Namespace) -> tuple[list, list[int]]:
+    if args.prompt_source != "synthetic_tokens":
+        from vllm.benchmarks.datasets import RandomDataset
+        from vllm.transformers_utils.tokenizer import get_tokenizer
+
+        tokenizer = get_tokenizer(
+            args.model,
+            tokenizer_mode="auto",
+            trust_remote_code=True,
+        )
+        dataset = RandomDataset(random_seed=args.seed)
+        requests = dataset.sample(
+            tokenizer=tokenizer,
+            num_requests=args.num_prompts,
+            prefix_len=0,
+            range_ratio=0.0,
+            input_len=args.input_len,
+            output_len=args.output_len,
+        )
+        if args.prompt_source == "vllm_random_text":
+            return [request.prompt for request in requests], [
+                request.prompt_len for request in requests
+            ]
+
+        prompts = []
+        prompt_lengths = []
+        for request in requests:
+            token_ids = tokenizer.encode(request.prompt, add_special_tokens=False)
+            prompts.append({"prompt_token_ids": token_ids})
+            prompt_lengths.append(len(token_ids))
+        return prompts, prompt_lengths
+
     prompts = []
     base_token = 1000 + (args.prompt_seed % 1000)
     for prompt_idx in range(args.num_prompts):
@@ -85,7 +122,7 @@ def build_prompts(args: argparse.Namespace) -> list[dict[str, list[int]]]:
             offset = base_token + (prompt_idx * 997)
             row = [offset + i for i in range(args.input_len)]
         prompts.append({"prompt_token_ids": row})
-    return prompts
+    return prompts, [args.input_len] * args.num_prompts
 
 
 def token_hash(outputs) -> str:
@@ -147,7 +184,8 @@ def main() -> None:
         ignore_eos=True,
         detokenize=not args.disable_detokenize,
     )
-    prompts = build_prompts(args)
+    prompts, prompt_lengths = build_prompts(args)
+    prompt_tokens = sum(prompt_lengths)
 
     warmup_records = []
     for i in range(args.warmup_repeats):
@@ -169,7 +207,6 @@ def main() -> None:
         outputs = llm.generate(prompts, sampling_params, use_tqdm=False)
         elapsed = time.perf_counter() - started
         output_tokens = sum(len(out.outputs[0].token_ids) for out in outputs)
-        prompt_tokens = args.input_len * args.num_prompts
         records.append(
             {
                 "repeat": i,
@@ -200,8 +237,10 @@ def main() -> None:
         "temperature": args.temperature,
         "top_p": args.top_p,
         "top_k": args.top_k,
+        "prompt_source": args.prompt_source,
         "prompt_mode": args.prompt_mode,
         "prompt_seed": args.prompt_seed,
+        "prompt_tokens": prompt_tokens,
         "init_elapsed_s": init_elapsed,
         "warmup_repeats": warmup_records,
         "repeats": records,
