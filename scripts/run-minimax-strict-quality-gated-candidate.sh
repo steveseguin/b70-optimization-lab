@@ -3,7 +3,7 @@ set -euo pipefail
 
 # Strict MiniMax M2.7 candidate gate for the current quality-valid 4x B70 path.
 # A candidate must pass exact token-hash canaries and semantic canaries on the
-# same piecewise graph path as the promoted ~61.4 tok/s strict baseline before
+# same piecewise graph path as the promoted ~89.3 tok/s strict baseline before
 # any throughput benchmark is run.
 
 MODEL="${MODEL:-/mnt/fast-ai/llm-models/minimax-m2.7-int4-autoround}"
@@ -31,6 +31,7 @@ BENCH_ASYNC_ENGINE="${BENCH_ASYNC_ENGINE:-1}"
 RUN_EXTENDED_QUALITY="${RUN_EXTENDED_QUALITY:-0}"
 RUN_REPEAT_ARITHMETIC_QUALITY="${RUN_REPEAT_ARITHMETIC_QUALITY:-1}"
 REPEAT_ARITHMETIC_RUNS="${REPEAT_ARITHMETIC_RUNS:-8}"
+ATTENTION_BACKEND="${ATTENTION_BACKEND:-default}"
 if [ -z "${COMPILATION_CONFIG_JSON:-}" ]; then
   COMPILATION_CONFIG_JSON='{"use_inductor_graph_partition":true,"compile_sizes":[1],"cudagraph_mode":"PIECEWISE"}'
 fi
@@ -38,6 +39,7 @@ if ! jq -e 'type == "object"' >/dev/null <<<"$COMPILATION_CONFIG_JSON"; then
   echo "Invalid COMPILATION_CONFIG_JSON; expected a JSON object" >&2
   exit 2
 fi
+COMPILATION_CONFIG_JSON="$(jq -c . <<<"$COMPILATION_CONFIG_JSON")"
 CACHE_ROOT="${VLLM_CACHE_ROOT:-/mnt/fast-ai/vllm-cache-exp/minimax-strict-${LABEL}}"
 RAW145_PROMPT="${RAW145_PROMPT:-/home/steve/llm-optimizations-publish/prompts/minimax-raw145-tokenhash-canary.txt}"
 RAW145_N64_HASH="${RAW145_N64_HASH:-267cbf30208d84929ee79284ac695467f7e80597bf8694130e1e1f8b180eb5bd}"
@@ -64,7 +66,7 @@ export VLLM_XPU_USE_LLM_SCALER_MOE="${VLLM_XPU_USE_LLM_SCALER_MOE:-$USE_LLM_SCAL
 export VLLM_XPU_ENABLE_XPU_GRAPH="${VLLM_XPU_ENABLE_XPU_GRAPH:-1}"
 export VLLM_XPU_FORCE_GRAPH_WITH_COMM="${VLLM_XPU_FORCE_GRAPH_WITH_COMM:-1}"
 export VLLM_XPU_GRAPH_NOOP_COMM_CAPTURE="${VLLM_XPU_GRAPH_NOOP_COMM_CAPTURE:-1}"
-export VLLM_MINIMAX_M2_ATTN_DELAY_ALLREDUCE="${VLLM_MINIMAX_M2_ATTN_DELAY_ALLREDUCE:-1}"
+export VLLM_MINIMAX_M2_ATTN_DELAY_ALLREDUCE="${VLLM_MINIMAX_M2_ATTN_DELAY_ALLREDUCE:-0}"
 export VLLM_MINIMAX_QK_NORM_RESTORE_WEIGHT="${VLLM_MINIMAX_QK_NORM_RESTORE_WEIGHT:-1}"
 export VLLM_MINIMAX_QK_NORM_RESTORE_WEIGHT_MIN_TOKENS="${VLLM_MINIMAX_QK_NORM_RESTORE_WEIGHT_MIN_TOKENS:-2}"
 export VLLM_CACHE_ROOT="$CACHE_ROOT"
@@ -90,6 +92,17 @@ json_array() {
     printf '%s\n' "$@" | jq -R . | jq -s .
   fi
 }
+
+attention_backend_args=()
+bench_attention_backend_args=()
+case "$ATTENTION_BACKEND" in
+  ""|default|DEFAULT|auto|AUTO)
+    ;;
+  *)
+    attention_backend_args=(--attention-backend "$ATTENTION_BACKEND")
+    bench_attention_backend_args=(--attention-backend "$ATTENTION_BACKEND")
+    ;;
+esac
 
 start_quality_startup_guard() {
   local name="$1"
@@ -155,7 +168,8 @@ run_quality_check() {
       --max-num-batched-tokens "$MAX_BATCHED_TOKENS" \
       --max-num-seqs "$MAX_NUM_SEQS" \
       --block-size "$BLOCK_SIZE" \
-      --attention-backend TRITON_ATTN \
+      --compilation-config-json "$COMPILATION_CONFIG_JSON" \
+      "${attention_backend_args[@]}" \
       --async-scheduling "$QUALITY_ASYNC_SCHEDULING" \
       --determinism-mode lstrip_text \
       --qk-norm-restore-weight \
@@ -198,7 +212,8 @@ run_semantic_suite() {
       --max-num-batched-tokens "$MAX_BATCHED_TOKENS" \
       --max-num-seqs "$MAX_NUM_SEQS" \
       --block-size "$BLOCK_SIZE" \
-      --attention-backend TRITON_ATTN \
+      --compilation-config-json "$COMPILATION_CONFIG_JSON" \
+      "${attention_backend_args[@]}" \
       --async-scheduling "$QUALITY_ASYNC_SCHEDULING" \
       --determinism-mode lstrip_text \
       --qk-norm-restore-weight \
@@ -244,7 +259,8 @@ run_repeat_arithmetic_suite() {
       --max-num-batched-tokens "$MAX_BATCHED_TOKENS" \
       --max-num-seqs "$MAX_NUM_SEQS" \
       --block-size "$BLOCK_SIZE" \
-      --attention-backend TRITON_ATTN \
+      --compilation-config-json "$COMPILATION_CONFIG_JSON" \
+      "${attention_backend_args[@]}" \
       --async-scheduling "$QUALITY_ASYNC_SCHEDULING" \
       --determinism-mode lstrip_text \
       --qk-norm-restore-weight \
@@ -292,7 +308,8 @@ run_extended_suite() {
       --max-num-batched-tokens "$MAX_BATCHED_TOKENS" \
       --max-num-seqs "$MAX_NUM_SEQS" \
       --block-size "$BLOCK_SIZE" \
-      --attention-backend TRITON_ATTN \
+      --compilation-config-json "$COMPILATION_CONFIG_JSON" \
+      "${attention_backend_args[@]}" \
       --async-scheduling "$QUALITY_ASYNC_SCHEDULING" \
       --qk-norm-restore-weight \
       --qk-norm-restore-weight-min-tokens "$VLLM_MINIMAX_QK_NORM_RESTORE_WEIGHT_MIN_TOKENS" \
@@ -337,6 +354,7 @@ write_summary() {
     --argjson max_batched_tokens "$MAX_BATCHED_TOKENS" \
     --argjson max_num_seqs "$MAX_NUM_SEQS" \
     --argjson block_size "$BLOCK_SIZE" \
+    --arg attention_backend "$ATTENTION_BACKEND" \
     --argjson input_len "$INPUT_LEN" \
     --argjson output_len "$OUTPUT_LEN" \
     --argjson bench_repeats "$BENCH_REPEATS" \
@@ -352,24 +370,66 @@ write_summary() {
     --argjson bench_jsons "$(json_array "${bench_jsons[@]}")" \
     --slurpfile runtime_diag "$runtime_json" \
     --arg vllm_minimax_moe_delay_allreduce "${VLLM_MINIMAX_MOE_DELAY_ALLREDUCE:-}" \
+    --arg vllm_minimax_moe_final_inplace_allreduce "${VLLM_MINIMAX_MOE_FINAL_INPLACE_ALLREDUCE:-}" \
+    --arg vllm_minimax_moe_output_allreduce_inside_custom_op "${VLLM_MINIMAX_MOE_OUTPUT_ALLREDUCE_INSIDE_CUSTOM_OP:-}" \
+    --arg vllm_minimax_moe_output_direct_allreduce "${VLLM_MINIMAX_MOE_OUTPUT_DIRECT_ALLREDUCE:-}" \
+    --arg vllm_minimax_moe_full_forward_custom_op "${VLLM_MINIMAX_MOE_FULL_FORWARD_CUSTOM_OP:-}" \
+    --arg vllm_minimax_moe_full_forward_custom_op_max_tokens "${VLLM_MINIMAX_MOE_FULL_FORWARD_CUSTOM_OP_MAX_TOKENS:-}" \
+    --arg vllm_minimax_post_attn_norm_moe_custom_op "${VLLM_MINIMAX_POST_ATTN_NORM_MOE_CUSTOM_OP:-}" \
+    --arg vllm_minimax_post_attn_norm_moe_custom_op_max_tokens "${VLLM_MINIMAX_POST_ATTN_NORM_MOE_CUSTOM_OP_MAX_TOKENS:-}" \
+    --arg vllm_minimax_attn_oproj_custom_op "${VLLM_MINIMAX_ATTN_OPROJ_CUSTOM_OP:-}" \
+    --arg vllm_minimax_attn_oproj_custom_op_max_tokens "${VLLM_MINIMAX_ATTN_OPROJ_CUSTOM_OP_MAX_TOKENS:-}" \
+    --arg vllm_xpu_rowparallel_oproj_inplace_allreduce "${VLLM_XPU_ROWPARALLEL_OPROJ_INPLACE_ALLREDUCE:-}" \
+    --arg vllm_xpu_rowparallel_oproj_inplace_allreduce_max_numel "${VLLM_XPU_ROWPARALLEL_OPROJ_INPLACE_ALLREDUCE_MAX_NUMEL:-}" \
+    --arg vllm_minimax_moe_immediate_residual_allreduce "${VLLM_MINIMAX_MOE_IMMEDIATE_RESIDUAL_ALLREDUCE:-}" \
     --arg vllm_minimax_dist_residual_allreduce "${VLLM_MINIMAX_M2_DIST_RESIDUAL_ALLREDUCE:-}" \
+    --arg vllm_minimax_ar_fused_rms_xpu "${VLLM_MINIMAX_AR_FUSED_RMS_XPU:-}" \
+    --arg vllm_minimax_ar_rms_xpu "${VLLM_MINIMAX_AR_RMS_XPU:-}" \
     --arg vllm_xpu_use_llm_scaler_moe_minimax_logits "${VLLM_XPU_USE_LLM_SCALER_MOE_MINIMAX_LOGITS:-}" \
+    --arg vllm_xpu_use_llm_scaler_moe_minimax_logits_ws "${VLLM_XPU_USE_LLM_SCALER_MOE_MINIMAX_LOGITS_WS:-}" \
     --arg vllm_xpu_use_llm_scaler_moe_logits "${VLLM_XPU_USE_LLM_SCALER_MOE_LOGITS:-}" \
     --arg vllm_xpu_use_llm_scaler_moe_ws "${VLLM_XPU_USE_LLM_SCALER_MOE_WS:-}" \
+    --arg vllm_xpu_llm_scaler_moe_minimax_skip_redundant_contiguous "${VLLM_XPU_LLM_SCALER_MOE_MINIMAX_SKIP_REDUNDANT_CONTIGUOUS:-}" \
+    --arg vllm_xpu_minimax_ws_reuse_internal "${VLLM_XPU_MINIMAX_WS_REUSE_INTERNAL:-}" \
+    --arg vllm_xpu_moe_ws_up_ntile "${VLLM_XPU_MOE_WS_UP_NTILE:-}" \
+    --arg vllm_xpu_moe_ws_down_htile "${VLLM_XPU_MOE_WS_DOWN_HTILE:-}" \
     --arg vllm_minimax_m2_candidate_router_topm "${VLLM_MINIMAX_M2_CANDIDATE_ROUTER_TOPM:-}" \
     --arg vllm_minimax_m2_candidate_router_xpu_repair "${VLLM_MINIMAX_M2_CANDIDATE_ROUTER_XPU_REPAIR:-}" \
+    --arg vllm_minimax_m2_clone_final_hidden "${VLLM_MINIMAX_M2_CLONE_FINAL_HIDDEN:-}" \
     --arg vllm_minimax_m2_fp16_router "${VLLM_MINIMAX_M2_FP16_ROUTER:-}" \
+    --arg vllm_minimax_qk_rms_apply_tp_scale "${VLLM_MINIMAX_QK_RMS_APPLY_TP_SCALE:-}" \
+    --arg vllm_minimax_qk_rms_allreduce_scale_op "${VLLM_MINIMAX_QK_RMS_ALLREDUCE_SCALE_OP:-}" \
     --arg vllm_minimax_qk_rms_xpu_helper "${VLLM_MINIMAX_QK_RMS_XPU_HELPER:-}" \
+    --arg vllm_minimax_qk_rms_xpu_helper_inplace_allreduce "${VLLM_MINIMAX_QK_RMS_XPU_HELPER_INPLACE_ALLREDUCE:-}" \
+    --arg vllm_minimax_qkv_narrow_split "${VLLM_MINIMAX_QKV_NARROW_SPLIT:-}" \
+    --arg vllm_xpu_compile_allreduce_custom_op "${VLLM_XPU_COMPILE_ALLREDUCE_CUSTOM_OP:-}" \
+    --arg vllm_xpu_custom_allreduce_clone_input "${VLLM_XPU_CUSTOM_ALLREDUCE_CLONE_INPUT:-}" \
+    --arg vllm_xpu_custom_allreduce_graph_clone_input "${VLLM_XPU_CUSTOM_ALLREDUCE_GRAPH_CLONE_INPUT:-}" \
+    --arg vllm_xpu_custom_allreduce_skip_clone_fp32_max_numel "${VLLM_XPU_CUSTOM_ALLREDUCE_SKIP_CLONE_FP32_MAX_NUMEL:-}" \
+    --arg vllm_xpu_custom_allreduce_tiny_fp32_inplace_max_numel "${VLLM_XPU_CUSTOM_ALLREDUCE_TINY_FP32_INPLACE_MAX_NUMEL:-}" \
+    --arg vllm_xpu_custom_allreduce_inplace_max_numel "${VLLM_XPU_CUSTOM_ALLREDUCE_INPLACE_MAX_NUMEL:-}" \
+    --arg vllm_xpu_custom_allreduce_log_shapes "${VLLM_XPU_CUSTOM_ALLREDUCE_LOG_SHAPES:-}" \
+    --arg vllm_xpu_custom_allreduce_log_shapes_limit "${VLLM_XPU_CUSTOM_ALLREDUCE_LOG_SHAPES_LIMIT:-}" \
     --arg vllm_xpu_compile_allreduce_no_clone "${VLLM_XPU_COMPILE_ALLREDUCE_NO_CLONE:-}" \
     --arg vllm_xpu_compile_out_of_place_allreduce "${VLLM_XPU_COMPILE_OUT_OF_PLACE_ALLREDUCE:-}" \
+    --arg vllm_xpu_clone_sample_hidden "${VLLM_XPU_CLONE_SAMPLE_HIDDEN:-}" \
     --arg vllm_xpu_local_argmax_decode "${VLLM_XPU_LOCAL_ARGMAX_DECODE:-}" \
     --arg vllm_xpu_local_argmax_assume_safe "${VLLM_XPU_LOCAL_ARGMAX_ASSUME_SAFE:-}" \
+    --arg vllm_xpu_local_argmax_fastpath "${VLLM_XPU_LOCAL_ARGMAX_FASTPATH:-}" \
     --arg vllm_xpu_local_argmax_gather_broadcast "${VLLM_XPU_LOCAL_ARGMAX_GATHER_BROADCAST:-}" \
     --arg vllm_xpu_local_argmax_direct_gather "${VLLM_XPU_LOCAL_ARGMAX_DIRECT_GATHER:-}" \
     --arg vllm_xpu_local_argmax_direct_gather_reuse "${VLLM_XPU_LOCAL_ARGMAX_DIRECT_GATHER_REUSE:-}" \
+    --arg vllm_xpu_local_argmax_pair_reuse "${VLLM_XPU_LOCAL_ARGMAX_PAIR_REUSE:-}" \
+    --arg vllm_xpu_local_argmax_packed_gather "${VLLM_XPU_LOCAL_ARGMAX_PACKED_GATHER:-}" \
     --arg vllm_xpu_local_argmax_packed_allreduce "${VLLM_XPU_LOCAL_ARGMAX_PACKED_ALLREDUCE:-}" \
     --arg vllm_xpu_local_argmax_allreduce "${VLLM_XPU_LOCAL_ARGMAX_ALLREDUCE:-}" \
+    --arg vllm_xpu_local_argmax_xpu_reduce "${VLLM_XPU_LOCAL_ARGMAX_XPU_REDUCE:-}" \
+    --arg vllm_xpu_greedy_skip_logits_fp32 "${VLLM_XPU_GREEDY_SKIP_LOGITS_FP32:-}" \
+    --arg vllm_xpu_safe_sample_hidden_select "${VLLM_XPU_SAFE_SAMPLE_HIDDEN_SELECT:-}" \
+    --arg vllm_xpu_logits_chunked_gather "${VLLM_XPU_LOGITS_CHUNKED_GATHER:-}" \
+    --arg vllm_xpu_gather_logits_fp32 "${VLLM_XPU_GATHER_LOGITS_FP32:-}" \
     --arg vllm_bench_temperature "${VLLM_BENCH_TEMPERATURE:-}" \
+    --arg ccl_allreduce "${CCL_ALLREDUCE:-}" \
     --arg ccl_topo_fabric_vertex_connection_check "${CCL_TOPO_FABRIC_VERTEX_CONNECTION_CHECK:-}" \
     --arg ccl_topo_p2p_access "${CCL_TOPO_P2P_ACCESS:-}" \
     '{
@@ -385,6 +445,7 @@ write_summary() {
         max_num_batched_tokens: $max_batched_tokens,
         max_num_seqs: $max_num_seqs,
         block_size: $block_size,
+        attention_backend: $attention_backend,
         quality_async_scheduling: $quality_async_scheduling,
         bench_async_scheduling: $bench_async_scheduling,
         bench_async_engine: ($bench_async_engine == 1),
@@ -404,28 +465,70 @@ write_summary() {
       },
       candidate_env: {
         VLLM_MINIMAX_MOE_DELAY_ALLREDUCE: $vllm_minimax_moe_delay_allreduce,
+        VLLM_MINIMAX_MOE_FINAL_INPLACE_ALLREDUCE: $vllm_minimax_moe_final_inplace_allreduce,
+        VLLM_MINIMAX_MOE_OUTPUT_ALLREDUCE_INSIDE_CUSTOM_OP: $vllm_minimax_moe_output_allreduce_inside_custom_op,
+        VLLM_MINIMAX_MOE_OUTPUT_DIRECT_ALLREDUCE: $vllm_minimax_moe_output_direct_allreduce,
+        VLLM_MINIMAX_MOE_FULL_FORWARD_CUSTOM_OP: $vllm_minimax_moe_full_forward_custom_op,
+        VLLM_MINIMAX_MOE_FULL_FORWARD_CUSTOM_OP_MAX_TOKENS: $vllm_minimax_moe_full_forward_custom_op_max_tokens,
+        VLLM_MINIMAX_POST_ATTN_NORM_MOE_CUSTOM_OP: $vllm_minimax_post_attn_norm_moe_custom_op,
+        VLLM_MINIMAX_POST_ATTN_NORM_MOE_CUSTOM_OP_MAX_TOKENS: $vllm_minimax_post_attn_norm_moe_custom_op_max_tokens,
+        VLLM_MINIMAX_ATTN_OPROJ_CUSTOM_OP: $vllm_minimax_attn_oproj_custom_op,
+        VLLM_MINIMAX_ATTN_OPROJ_CUSTOM_OP_MAX_TOKENS: $vllm_minimax_attn_oproj_custom_op_max_tokens,
+        VLLM_XPU_ROWPARALLEL_OPROJ_INPLACE_ALLREDUCE: $vllm_xpu_rowparallel_oproj_inplace_allreduce,
+        VLLM_XPU_ROWPARALLEL_OPROJ_INPLACE_ALLREDUCE_MAX_NUMEL: $vllm_xpu_rowparallel_oproj_inplace_allreduce_max_numel,
+        VLLM_MINIMAX_MOE_IMMEDIATE_RESIDUAL_ALLREDUCE: $vllm_minimax_moe_immediate_residual_allreduce,
         VLLM_MINIMAX_M2_DIST_RESIDUAL_ALLREDUCE: $vllm_minimax_dist_residual_allreduce,
         VLLM_MINIMAX_M2_ATTN_DELAY_ALLREDUCE: env.VLLM_MINIMAX_M2_ATTN_DELAY_ALLREDUCE,
+        VLLM_MINIMAX_AR_FUSED_RMS_XPU: $vllm_minimax_ar_fused_rms_xpu,
+        VLLM_MINIMAX_AR_RMS_XPU: $vllm_minimax_ar_rms_xpu,
         VLLM_MINIMAX_QK_NORM_RESTORE_WEIGHT: env.VLLM_MINIMAX_QK_NORM_RESTORE_WEIGHT,
         VLLM_MINIMAX_QK_NORM_RESTORE_WEIGHT_MIN_TOKENS: env.VLLM_MINIMAX_QK_NORM_RESTORE_WEIGHT_MIN_TOKENS,
         VLLM_XPU_USE_LLM_SCALER_MOE: env.VLLM_XPU_USE_LLM_SCALER_MOE,
         VLLM_XPU_USE_LLM_SCALER_MOE_MINIMAX_LOGITS: $vllm_xpu_use_llm_scaler_moe_minimax_logits,
+        VLLM_XPU_USE_LLM_SCALER_MOE_MINIMAX_LOGITS_WS: $vllm_xpu_use_llm_scaler_moe_minimax_logits_ws,
         VLLM_XPU_USE_LLM_SCALER_MOE_LOGITS: $vllm_xpu_use_llm_scaler_moe_logits,
         VLLM_XPU_USE_LLM_SCALER_MOE_WS: $vllm_xpu_use_llm_scaler_moe_ws,
+        VLLM_XPU_LLM_SCALER_MOE_MINIMAX_SKIP_REDUNDANT_CONTIGUOUS: $vllm_xpu_llm_scaler_moe_minimax_skip_redundant_contiguous,
+        VLLM_XPU_MINIMAX_WS_REUSE_INTERNAL: $vllm_xpu_minimax_ws_reuse_internal,
+        VLLM_XPU_MOE_WS_UP_NTILE: $vllm_xpu_moe_ws_up_ntile,
+        VLLM_XPU_MOE_WS_DOWN_HTILE: $vllm_xpu_moe_ws_down_htile,
         VLLM_MINIMAX_M2_CANDIDATE_ROUTER_TOPM: $vllm_minimax_m2_candidate_router_topm,
         VLLM_MINIMAX_M2_CANDIDATE_ROUTER_XPU_REPAIR: $vllm_minimax_m2_candidate_router_xpu_repair,
+        VLLM_MINIMAX_M2_CLONE_FINAL_HIDDEN: $vllm_minimax_m2_clone_final_hidden,
         VLLM_MINIMAX_M2_FP16_ROUTER: $vllm_minimax_m2_fp16_router,
+        VLLM_MINIMAX_QK_RMS_APPLY_TP_SCALE: $vllm_minimax_qk_rms_apply_tp_scale,
+        VLLM_MINIMAX_QK_RMS_ALLREDUCE_SCALE_OP: $vllm_minimax_qk_rms_allreduce_scale_op,
         VLLM_MINIMAX_QK_RMS_XPU_HELPER: $vllm_minimax_qk_rms_xpu_helper,
+        VLLM_MINIMAX_QK_RMS_XPU_HELPER_INPLACE_ALLREDUCE: $vllm_minimax_qk_rms_xpu_helper_inplace_allreduce,
+        VLLM_MINIMAX_QKV_NARROW_SPLIT: $vllm_minimax_qkv_narrow_split,
+        VLLM_XPU_COMPILE_ALLREDUCE_CUSTOM_OP: $vllm_xpu_compile_allreduce_custom_op,
+        VLLM_XPU_CUSTOM_ALLREDUCE_CLONE_INPUT: $vllm_xpu_custom_allreduce_clone_input,
+        VLLM_XPU_CUSTOM_ALLREDUCE_GRAPH_CLONE_INPUT: $vllm_xpu_custom_allreduce_graph_clone_input,
+        VLLM_XPU_CUSTOM_ALLREDUCE_SKIP_CLONE_FP32_MAX_NUMEL: $vllm_xpu_custom_allreduce_skip_clone_fp32_max_numel,
+        VLLM_XPU_CUSTOM_ALLREDUCE_TINY_FP32_INPLACE_MAX_NUMEL: $vllm_xpu_custom_allreduce_tiny_fp32_inplace_max_numel,
+        VLLM_XPU_CUSTOM_ALLREDUCE_INPLACE_MAX_NUMEL: $vllm_xpu_custom_allreduce_inplace_max_numel,
+        VLLM_XPU_CUSTOM_ALLREDUCE_LOG_SHAPES: $vllm_xpu_custom_allreduce_log_shapes,
+        VLLM_XPU_CUSTOM_ALLREDUCE_LOG_SHAPES_LIMIT: $vllm_xpu_custom_allreduce_log_shapes_limit,
         VLLM_XPU_COMPILE_ALLREDUCE_NO_CLONE: $vllm_xpu_compile_allreduce_no_clone,
         VLLM_XPU_COMPILE_OUT_OF_PLACE_ALLREDUCE: $vllm_xpu_compile_out_of_place_allreduce,
+        VLLM_XPU_CLONE_SAMPLE_HIDDEN: $vllm_xpu_clone_sample_hidden,
         VLLM_XPU_LOCAL_ARGMAX_DECODE: $vllm_xpu_local_argmax_decode,
         VLLM_XPU_LOCAL_ARGMAX_ASSUME_SAFE: $vllm_xpu_local_argmax_assume_safe,
+        VLLM_XPU_LOCAL_ARGMAX_FASTPATH: $vllm_xpu_local_argmax_fastpath,
         VLLM_XPU_LOCAL_ARGMAX_GATHER_BROADCAST: $vllm_xpu_local_argmax_gather_broadcast,
         VLLM_XPU_LOCAL_ARGMAX_DIRECT_GATHER: $vllm_xpu_local_argmax_direct_gather,
         VLLM_XPU_LOCAL_ARGMAX_DIRECT_GATHER_REUSE: $vllm_xpu_local_argmax_direct_gather_reuse,
+        VLLM_XPU_LOCAL_ARGMAX_PAIR_REUSE: $vllm_xpu_local_argmax_pair_reuse,
+        VLLM_XPU_LOCAL_ARGMAX_PACKED_GATHER: $vllm_xpu_local_argmax_packed_gather,
         VLLM_XPU_LOCAL_ARGMAX_PACKED_ALLREDUCE: $vllm_xpu_local_argmax_packed_allreduce,
         VLLM_XPU_LOCAL_ARGMAX_ALLREDUCE: $vllm_xpu_local_argmax_allreduce,
+        VLLM_XPU_LOCAL_ARGMAX_XPU_REDUCE: $vllm_xpu_local_argmax_xpu_reduce,
+        VLLM_XPU_GREEDY_SKIP_LOGITS_FP32: $vllm_xpu_greedy_skip_logits_fp32,
+        VLLM_XPU_SAFE_SAMPLE_HIDDEN_SELECT: $vllm_xpu_safe_sample_hidden_select,
+        VLLM_XPU_LOGITS_CHUNKED_GATHER: $vllm_xpu_logits_chunked_gather,
+        VLLM_XPU_GATHER_LOGITS_FP32: $vllm_xpu_gather_logits_fp32,
         VLLM_BENCH_TEMPERATURE: $vllm_bench_temperature,
+        CCL_ALLREDUCE: $ccl_allreduce,
         VLLM_XPU_ENABLE_XPU_GRAPH: env.VLLM_XPU_ENABLE_XPU_GRAPH,
         VLLM_XPU_FORCE_GRAPH_WITH_COMM: env.VLLM_XPU_FORCE_GRAPH_WITH_COMM,
         VLLM_XPU_GRAPH_NOOP_COMM_CAPTURE: env.VLLM_XPU_GRAPH_NOOP_COMM_CAPTURE,
@@ -516,7 +619,7 @@ if [ "$BENCH_REPEATS" -gt 0 ]; then
       RUN_TIMEOUT="$BENCH_TIMEOUT" \
       RUN_TIMEOUT_KILL_AFTER="$RUN_TIMEOUT_KILL_AFTER" \
       SHM_STALL_MAX_WARNINGS="$SHM_STALL_MAX_WARNINGS" \
-      EXTRA_ARGS="${bench_async_flags[*]} --block-size $BLOCK_SIZE --no-enable-prefix-caching --attention-backend TRITON_ATTN --compilation-config {\"use_inductor_graph_partition\":true,\"compile_sizes\":[1],\"cudagraph_mode\":\"PIECEWISE\"}" \
+      EXTRA_ARGS="${bench_async_flags[*]} --block-size $BLOCK_SIZE --no-enable-prefix-caching ${bench_attention_backend_args[*]} --compilation-config $COMPILATION_CONFIG_JSON" \
       /home/steve/llm-optimizations-publish/scripts/bench-vllm-minimax-autoround-xpu.sh
     )"
     printf '%s\n' "$run_out"
