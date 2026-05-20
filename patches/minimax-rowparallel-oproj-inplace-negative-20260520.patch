@@ -1,0 +1,58 @@
+diff --git a/vllm/model_executor/layers/linear.py b/vllm/model_executor/layers/linear.py
+index 6a4c1f3c4..8df324b81 100644
+--- a/vllm/model_executor/layers/linear.py
++++ b/vllm/model_executor/layers/linear.py
+@@ -2,6 +2,7 @@
+ # SPDX-FileCopyrightText: Copyright contributors to the vLLM project
+ 
+ import itertools
++import os
+ from abc import abstractmethod
+ 
+ import torch
+@@ -12,6 +13,7 @@ from vllm.distributed import (
+     divide,
+     get_tensor_model_parallel_rank,
+     get_tensor_model_parallel_world_size,
++    get_tp_group,
+     split_tensor_along_last_dim,
+     tensor_model_parallel_all_gather,
+     tensor_model_parallel_all_reduce,
+@@ -42,6 +44,13 @@ from vllm.platforms import current_platform
+ 
+ logger = init_logger(__name__)
+ 
++_XPU_ROWPARALLEL_OPROJ_INPLACE_ALLREDUCE = (
++    os.environ.get("VLLM_XPU_ROWPARALLEL_OPROJ_INPLACE_ALLREDUCE", "0") == "1"
++)
++_XPU_ROWPARALLEL_OPROJ_INPLACE_ALLREDUCE_MAX_NUMEL = int(
++    os.environ.get("VLLM_XPU_ROWPARALLEL_OPROJ_INPLACE_ALLREDUCE_MAX_NUMEL", "6144")
++)
++
+ WEIGHT_LOADER_V2_SUPPORTED = [
+     "UnquantizedLinearMethod",
+     "CompressedTensorsLinearMethod",
+@@ -1560,7 +1569,22 @@ class RowParallelLinear(LinearBase):
+         output_parallel = self.quant_method.apply(self, input_parallel, bias_)
+ 
+         if self.reduce_results and self.tp_size > 1:
+-            output = tensor_model_parallel_all_reduce(output_parallel)
++            if (
++                _XPU_ROWPARALLEL_OPROJ_INPLACE_ALLREDUCE
++                and self.prefix.endswith(".o_proj")
++                and output_parallel.device.type == "xpu"
++                and output_parallel.dtype in (torch.float16, torch.bfloat16)
++                and output_parallel.numel()
++                <= _XPU_ROWPARALLEL_OPROJ_INPLACE_ALLREDUCE_MAX_NUMEL
++                and hasattr(torch.ops, "vllm")
++                and hasattr(torch.ops.vllm, "all_reduce_inplace")
++            ):
++                torch.ops.vllm.all_reduce_inplace(
++                    output_parallel, group_name=get_tp_group().unique_name
++                )
++                output = output_parallel
++            else:
++                output = tensor_model_parallel_all_reduce(output_parallel)
+         else:
+             output = output_parallel
+ 
