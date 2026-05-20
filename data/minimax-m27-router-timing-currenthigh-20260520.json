@@ -1,0 +1,45 @@
+{
+  "date": "2026-05-20",
+  "kind": "diagnostic_timing_only",
+  "not_a_throughput_submission": true,
+  "model": "Lasimeri/MiniMax-M2.7-int4-AutoRound",
+  "local_model_path": "/mnt/fast-ai/llm-models/minimax-m2.7-int4-autoround",
+  "hardware": "4x Intel Arc Pro B70 32GB",
+  "engine": "vLLM 0.20.1-local, XPU/Level Zero",
+  "shape": {
+    "prompt_tokens": 512,
+    "output_tokens": 16,
+    "context_length": 2048,
+    "tensor_parallel": 4,
+    "batch_size": 1
+  },
+  "artifacts": {
+    "log": "/home/steve/bench-results/minimax-m2.7-router-timing-20260520/vllm-minimax-m27-autoround-tp4-p512n16-20260520T053900Z.log",
+    "json": "/home/steve/bench-results/minimax-m2.7-router-timing-20260520/vllm-minimax-m27-autoround-tp4-p512n16-20260520T053900Z.json",
+    "runtime": "/home/steve/bench-results/minimax-m2.7-router-timing-20260520/vllm-minimax-m27-autoround-tp4-p512n16-20260520T053900Z.runtime.json"
+  },
+  "benchmark_json": {
+    "elapsed_time": 2.593995749950409,
+    "num_requests": 1,
+    "total_num_tokens": 528,
+    "tokens_per_second": 203.5469796009088
+  },
+  "timing_summary_rank0": [
+    {"label": "minimax.moe.experts_total", "count": 1052, "total_ms": 761.638096, "avg_ms": 0.723991, "max_ms": 4.8452},
+    {"label": "minimax.attn.qk_norm", "count": 1052, "total_ms": 245.740082, "avg_ms": 0.233593, "max_ms": 0.704702},
+    {"label": "minimax.attn.o_proj", "count": 1052, "total_ms": 219.014477, "avg_ms": 0.208189, "max_ms": 1.699277},
+    {"label": "all_reduce:(1, 3072):torch.float16", "count": 1936, "total_ms": 174.398713, "avg_ms": 0.090082, "max_ms": 0.22853},
+    {"label": "minimax.attn.kv_attention", "count": 1052, "total_ms": 164.463027, "avg_ms": 0.156334, "max_ms": 19.862461},
+    {"label": "minimax.moe.router_linear", "count": 1052, "total_ms": 130.100623, "avg_ms": 0.12367, "max_ms": 0.276772},
+    {"label": "minimax.attn.qkv", "count": 1052, "total_ms": 87.199351, "avg_ms": 0.082889, "max_ms": 0.15872},
+    {"label": "all_reduce:(1, 2):torch.float32", "count": 928, "total_ms": 75.310987, "avg_ms": 0.081154, "max_ms": 0.243731},
+    {"label": "minimax.attn.rope", "count": 1052, "total_ms": 55.096539, "avg_ms": 0.052373, "max_ms": 0.075501},
+    {"label": "all_reduce:(512, 3072):torch.float16", "count": 186, "total_ms": 33.261129, "avg_ms": 0.178823, "max_ms": 1.515726},
+    {"label": "all_reduce:minimax_qk_var:(512, 2):torch.float32", "count": 60, "total_ms": 5.321881, "avg_ms": 0.088698, "max_ms": 0.09456}
+  ],
+  "interpretation": [
+    "This run used synchronized timing and eager execution, so the tok/s number is not comparable to strict benchmark submissions.",
+    "The router-linear path is visible at about 0.124 ms per layer on rank 0, but the exact all-256 candidate-repair kernel is much slower than the current router linear and should not be integrated.",
+    "The largest rank-0 visible bucket remains the MiniMax MoE expert path, so the next math-preserving patch should reduce MoE decode allocation or dispatch overhead before attempting another router rewrite."
+  ]
+}
