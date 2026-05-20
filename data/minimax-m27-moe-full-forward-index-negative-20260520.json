@@ -1,0 +1,60 @@
+{
+  "label": "minimax-fullforward-index-currenthigh-20260520",
+  "date_utc": "2026-05-20",
+  "model": "Lasimeri/MiniMax-M2.7-int4-AutoRound",
+  "hardware": "4x Intel Arc Pro B70 32GB",
+  "engine": "vllm 0.20.1-local XPU",
+  "shape": {
+    "prompt_tokens": 512,
+    "output_tokens": 1536,
+    "context_length": 2048,
+    "batch_size": 1,
+    "tensor_parallel": 4,
+    "max_num_batched_tokens": 512,
+    "block_size": 256
+  },
+  "candidate_env_delta": {
+    "VLLM_MINIMAX_MOE_FULL_FORWARD_INDEX_CUSTOM_OP": "1"
+  },
+  "quality": {
+    "status": "passed",
+    "raw145_n64_token_sha256": "267cbf30208d84929ee79284ac695467f7e80597bf8694130e1e1f8b180eb5bd",
+    "raw145_n256_token_sha256": "58f6e8251c7a0a17e8c441278b5861f7d5da914fa1823ecd10484b296f2d7537",
+    "semantic_suite_sha256": "adacbf144264486ea7d378ebb6a4c0ba23951b72c4cf86251a762b07ebef5805",
+    "arithmetic_repeat_n64_r16_sha256": "578ec378bf31cb16fb49ac5c0043270fd00a0f7898e18ac498a41ffe775d7994",
+    "extended_sixpack_sha256": "1e3560554f57b2b56cec8f49f28bc8ba12e9e0ced26bdc99a976f1433c99caa7"
+  },
+  "throughput": {
+    "output_toks_per_second": [
+      88.72977046940511,
+      88.82708275784962,
+      88.43177769125211,
+      88.60440189553827
+    ],
+    "total_toks_per_second": [
+      118.30636062587348,
+      118.4361103437995,
+      117.90903692166948,
+      118.13920252738436
+    ],
+    "mean_output_toks_per_second": 88.64825820351128,
+    "mean_total_toks_per_second": 118.1976776046817
+  },
+  "baseline": {
+    "label": "minimax-moe-full-forward-customop-plus-output-ar-20260519",
+    "mean_output_toks_per_second": 89.31419538094708,
+    "mean_total_toks_per_second": 119.08559384126276,
+    "localmaxxing_id": "cmpct6t4m007fnw01yjdtlcs4"
+  },
+  "decision": {
+    "promote": false,
+    "submit_to_localmaxxing": false,
+    "reason": "quality-clean but 0.665937 output tok/s below promoted mean"
+  },
+  "artifacts": {
+    "summary_json": "/home/steve/bench-results/minimax-m2.7-strict-candidates/minimax-minimax-fullforward-index-currenthigh-20260520-strict-tp4-ctx2048-mbt512-bs256-20260520T023839Z-summary.json",
+    "quality_dir": "/home/steve/bench-results/minimax-m2.7-strict-candidates/minimax-minimax-fullforward-index-currenthigh-20260520-strict-tp4-ctx2048-mbt512-bs256-20260520T023839Z-quality",
+    "patch": "patches/minimax-moe-full-forward-index-customop-negative-20260520.patch",
+    "patch_note": "patches/minimax-moe-full-forward-index-customop-negative-20260520.md"
+  }
+}
