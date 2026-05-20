@@ -92,6 +92,11 @@ Negative, quality-failed, or merely noisy results stay local/GitHub-only.
    - Candidate: standalone `minimax_qk_rms_xpu_ipc` recheck on the current 4x B70 setup, plus a new system-scope `sycl::atomic_ref` sequence-counter probe and an XCCL tiny allreduce comparison.
    - Status: rejected as a vLLM integration path. Level Zero peer access, remote fills, and forked IPC handles all validated across all 4x4 source/destination pairs, but cross-device atomics are not advertised. XCCL `[1, 2]` FP32 allreduce measured `0.061791 ms/iter`; the two-kernel mailbox path with a CPU barrier validated at `0.290768 ms/iter`; the same path without a barrier failed validation; single-kernel sequence/counter polling remained around `417 ms/iter`; and the atomic-counter variant failed validation. Keep the IPC prototype as evidence only. Do not pursue SYCL peer-memory polling again unless a new Level Zero event/barrier or oneCCL fused primitive can validate without CPU barriers.
 
+16. Current-high `MAX_BATCHED_TOKENS=640` scheduling screen.
+   - Rationale: retest a small chunked-prefill boundary change on the current promoted post-89 stack, since older MBT sweeps happened before the full-forward MoE custom-op and MoE-output allreduce-inside-custom-op changes.
+   - Candidate: promoted stack plus `MAX_BATCHED_TOKENS=640`, isolated compile cache, full strict quality gates, and four p512/n1536 repeats.
+   - Status: rejected. Full strict quality passed, including raw145 n64/n256 exact hashes, semantic suite, 16-repeat arithmetic, and extended sixpack. Four repeats averaged `88.835750` output tok/s / `118.447666` total tok/s, below the promoted `89.314195` / `119.085594`. Keep `MAX_BATCHED_TOKENS=512` for promoted p512/n1536 MiniMax runs; no LocalMaxxing submission.
+
 ## Source-Level Work Queue
 
 - Audit remaining decode-time CPU/framework boundaries in `minimax_m2.py`, `moe_wna16.py`, and `xpu_communicator.py`.
@@ -144,3 +149,10 @@ the CUDA-style in-kernel Lamport polling design does not translate cleanly to
 this B70/XPU stack. XCCL is still the correct tiny-collective primitive today.
 Future Q/K fusion work must either extend/fuse around XCCL, use a validated
 Level Zero synchronization primitive, or move to a different hot path.
+
+The current-high MBT640 screen confirms that scheduling-boundary tuning is not
+the next speed source for batch-1 p512/n1536 MiniMax. Quality remains exact, but
+decode is slower than the promoted stack. Move back to source-level work that
+removes a real remaining boundary: the most credible next target is fusing the
+FP32 router-linear step into the existing llm-scaler MiniMax logits WS MoE path,
+behind a default-off flag and strict top-k/quality audits.
