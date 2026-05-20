@@ -1,0 +1,53 @@
+{
+  "label": "minimax-qk-ipc-peer-polling-recheck-20260520",
+  "date": "2026-05-20",
+  "decision": "rejected_no_model_integration_no_localmaxxing",
+  "reason": "Peer IPC works, but in-kernel peer polling is timeout-limited or invalid; XCCL tiny allreduce is faster and reliable.",
+  "hardware": {
+    "gpu": "Intel Arc Pro B70 32GB",
+    "gpu_count": 4,
+    "backend": "XPU/Level Zero"
+  },
+  "peer_probe": {
+    "devices": 4,
+    "p2p_access_all_pairs": true,
+    "cross_device_atomics_advertised": false,
+    "self_device_atomics_advertised": true,
+    "p2p_fill_verified_all_pairs": true,
+    "forked_ipc_verified_all_pairs": true,
+    "log": "/home/steve/bench-results/minimax-m2.7-strict-candidates/level-zero-peer-probe-20260520T043359Z.log"
+  },
+  "microbenchmarks": {
+    "xccL_tiny_allreduce_fp32_1x2_ms_per_iter": 0.061791,
+    "ipc_two_kernel_with_cpu_barrier_validated_ms_per_iter": 0.290768,
+    "ipc_two_kernel_no_barrier_validation": "failed",
+    "ipc_single_sequence_barrier_ms_per_iter": 416.863189,
+    "ipc_single_counter_barrier_ms_per_iter": 417.954243,
+    "ipc_single_counter_no_validation_ms_per_iter": 416.477054,
+    "ipc_atomic_counter_validation": "failed"
+  },
+  "logs": {
+    "single_counter_no_validation": "/home/steve/bench-results/minimax-m2.7-strict-candidates/minimax-qk-ipc-prototype-bench-20260520T043550Z.log",
+    "two_kernel_barrier": "/home/steve/bench-results/minimax-m2.7-strict-candidates/minimax-qk-ipc-two_kernel_barrier-20260520T043625Z.log",
+    "single_sequence_barrier": "/home/steve/bench-results/minimax-m2.7-strict-candidates/minimax-qk-ipc-single_seq_barrier-20260520T043630Z.log",
+    "single_counter_barrier": "/home/steve/bench-results/minimax-m2.7-strict-candidates/minimax-qk-ipc-single_counter_barrier-20260520T043638Z.log",
+    "xccL_tiny_allreduce": "/home/steve/bench-results/minimax-m2.7-strict-candidates/xccL-tiny-allreduce-bench-20260520T043731Z.log",
+    "atomic_counter_failed": "/home/steve/bench-results/minimax-m2.7-strict-candidates/minimax-qk-ipc-atomic-counter-20260520T043952Z.log",
+    "two_kernel_no_barrier_failed": "/home/steve/bench-results/minimax-m2.7-strict-candidates/minimax-qk-ipc-two-kernel-nobarrier-20260520T044016Z.log"
+  },
+  "code": {
+    "added": [
+      "experiments/minimax_qk_rms_xpu_ipc/bench_xccl_tiny_allreduce.py"
+    ],
+    "modified": [
+      "experiments/minimax_qk_rms_xpu_ipc/minimax_qk_rms_xpu_ipc.cpp",
+      "experiments/minimax_qk_rms_xpu_ipc/test_ipc_qk_var.py",
+      "experiments/minimax_qk_rms_xpu_ipc/README.md"
+    ]
+  },
+  "next": [
+    "Do not use SYCL peer-memory polling in vLLM model runs.",
+    "Revisit only if a Level Zero event/barrier or oneCCL fused primitive can validate without CPU barriers.",
+    "Keep source-level work focused on graph scheduling or adjacent-kernel fusion around the existing XCCL collectives."
+  ]
+}
