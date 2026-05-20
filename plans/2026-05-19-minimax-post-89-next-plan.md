@@ -63,6 +63,11 @@ Negative, quality-failed, or merely noisy results stay local/GitHub-only.
    - Candidate: unset `CCL_ALLREDUCE`, set `CCL_REDUCE_SCATTER_MONOLITHIC_PIPELINE_KERNEL=0`, and set `CCL_ALLGATHERV_MONOLITHIC_PIPELINE_KERNEL=0`.
    - Status: rejected. Exact raw145 n64/n256, semantic suite, 16-repeat arithmetic, and extended sixpack all passed, but four p512/n1536 repeats averaged `88.749571` output tok/s / `118.332762` total tok/s versus the promoted `89.314195` / `119.085594`. One repeat fell to `87.099748` output tok/s, so this was both slower and noisier. Keep these oneCCL topo pipeline envs unset for promoted graph-enabled runs.
 
+10. Q/K clean-weight guard CPU-callback reduction by raising `VLLM_MINIMAX_QK_NORM_RESTORE_WEIGHT_MIN_TOKENS`.
+   - Rationale: reduce CPU sanity checks/callbacks in the Q/K clean-weight guard for prefill-sized prompts while preserving the clean-weight mechanism.
+   - Candidate: current promoted stack with `VLLM_MINIMAX_QK_NORM_RESTORE_WEIGHT_MIN_TOKENS=1024`.
+   - Status: rejected before benchmarking. raw145 n64 exact passed, but raw145 n256 exact failed: expected `58f6e8251c7a0a17e8c441278b5861f7d5da914fa1823ecd10484b296f2d7537`, observed `ff27d99c39789c365fcb83d140aad8d168bf0735846015e231ad95bcc5f1ab43`. The output was deterministic and non-degenerate but shifted into a repeated Greek-token continuation. Keep the promoted `min_tokens=2`; the n64 canary alone is not sufficient for this guard.
+
 ## Source-Level Work Queue
 
 - Audit remaining decode-time CPU/framework boundaries in `minimax_m2.py`, `moe_wna16.py`, and `xpu_communicator.py`.
@@ -86,3 +91,5 @@ The simple Q/K custom-op boundary and the targeted RowParallel `o_proj` in-place
 The size-ranged `CCL_ALLREDUCE` screen also failed before quality under graph capture. That removes high-level oneCCL algorithm selection from the current near-term path; the remaining credible route to another large gain is lower-level XPU/SYCL fusion or graph scheduling around the known collective families while preserving the default graph-compatible communication backend.
 
 The oneCCL topo copy-engine toggles were quality-clean but slower. High-level communication environment changes have now produced regressions or graph incompatibilities; the next pass should move back into source-level scheduling/fusion where the candidate can remove a real hot-path boundary instead of changing oneCCL's global heuristics.
+
+The clean-weight guard threshold screen shows that removing CPU callbacks around Q/K weight sanity can change longer greedy output even when the first 64 generated tokens match. Future CPU-callback reductions need an equivalent clean-weight guarantee rather than simply bypassing the guard.
