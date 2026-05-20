@@ -128,6 +128,38 @@ Negative, quality-failed, or merely noisy results stay local/GitHub-only.
      Allocator scratch reuse is not a meaningful current bottleneck; no
      LocalMaxxing submission.
 
+19. Cache llm-scaler MiniMax logits WS op on each MoE layer.
+   - Rationale: avoid repeated Python import/op resolution in the MiniMax MoE
+     monolithic decode path without changing model math.
+   - Candidate: current promoted stack plus
+     `VLLM_XPU_LLM_SCALER_MOE_CACHE_MINIMAX_LOGITS_OP=1`.
+   - Status: rejected as a speed candidate. Full strict quality passed,
+     including raw145 n64/n256 exact hashes, semantic suite, 16-repeat
+     arithmetic, and extended sixpack. Four corrected p512/n1536 repeats
+     averaged `88.150576` output tok/s / `117.534102` total tok/s versus the
+     promoted `89.314195` / `119.085594`, and below today's post-repro control
+     mean of `88.495999` / `117.994666`. Keep the flag unset. An earlier
+     throughput attempt for this candidate was invalid because the benchmark
+     env was sourced but not exported, causing the wrapper to fall back to
+     `MAX_BATCHED_TOKENS=1024`; ignore that directory for comparisons.
+
+20. Source rebuild sanity and non-WS recovery after a failed llm-scaler
+    full-shared tile experiment.
+   - Rationale: before more lower-level fusion work, verify the llm-scaler
+     extension can still be rebuilt and imported cleanly.
+   - Status: blocked for promoted-path source work. Rebuilt `moe_int4_ops`
+     shared objects segfault during import inside `libsycl.so.8`
+     `ProgramManager::addImage(...)`, before vLLM code runs. Disabling the
+     new candidate, trying `-fsycl-device-code-split=off`, and disabling
+     unused candidate-repair/WS sections did not produce an importable rebuilt
+     binary. Restoring the importable `20260512T064555Z` binary recovered a
+     quality-clean non-WS MiniMax logits fallback, but that binary lacks
+     `moe_forward_tiny_cutlass_nmajor_int4_u4_minimax_ws`. The fallback passed
+     raw145 n64/n256 exact hashes, semantic suite, and arithmetic-repeat r8,
+     but averaged only `75.767918` output tok/s / `101.023891` total tok/s.
+     This is a recovery result, not a LocalMaxxing submission. See
+     `notes/2026-05-20-minimax-llm-scaler-rebuild-import-segfault-and-nonws-recovery.md`.
+
 ## Source-Level Work Queue
 
 - Audit remaining decode-time CPU/framework boundaries in `minimax_m2.py`, `moe_wna16.py`, and `xpu_communicator.py`.
@@ -202,3 +234,16 @@ Future allocator work should be deprioritized unless timing evidence changes;
 the next credible improvement path is still lower-level fusion/scheduling in
 one of the remaining kernel/collective families, not additional scratch-buffer
 reuse.
+
+The cached-MiniMax-op screen also failed to improve throughput despite exact
+quality. This closes another shallow CPU/framework-reduction idea. The next
+candidate should be lower-level: either a backend-level fused Q/K
+allreduce+RMS apply path, a real attention/MoE hidden-state allreduce epilogue
+fusion, or a better optimized router/top-k/MoE boundary kernel than the
+rejected all-256 candidate repair path.
+
+The source rebuild sanity check changes the immediate ordering: first recover a
+rebuildable, importable llm-scaler `moe_int4_ops` extension that includes the WS
+MiniMax entry point used by the promoted path. Until that is fixed, any deeper
+source optimization cannot be reproduced from source, and speed results from
+the restored non-WS fallback should not be treated as promoted-path evidence.
