@@ -1,0 +1,159 @@
+diff --git a/csrc/moe_batch/moe_int4.sycl b/csrc/moe_batch/moe_int4.sycl
+index current-minimax-ws..ws-reuse-decode-buffers 100644
+--- a/csrc/moe_batch/moe_int4.sycl
++++ b/csrc/moe_batch/moe_int4.sycl
+@@
+ static bool minimax_ws_topk_weight_fp16() {
+     static const bool value =
+         std::getenv("VLLM_XPU_MINIMAX_WS_TOPK_WEIGHT_FP16") != nullptr;
+     return value;
+ }
+ 
++static bool minimax_ws_reuse_topk_buffers() {
++    // Top-k buffer reuse aliases a single scratch tensor across graph-captured
++    // MiniMax layers and is only safe as an explicit diagnostic experiment.
++    static const bool value =
++        std::getenv("VLLM_XPU_MINIMAX_WS_REUSE_TOPK_BUFFERS") != nullptr;
++    return value;
++}
++
++static bool minimax_ws_reuse_intermediates() {
++    static const bool value =
++        std::getenv("VLLM_XPU_MINIMAX_WS_REUSE_DECODE_BUFFERS") != nullptr ||
++        std::getenv("VLLM_XPU_MINIMAX_WS_REUSE_INTERMEDIATES") != nullptr;
++    return value;
++}
++
+@@
+ static thread_local torch::Tensor s_int4_topk_idx, s_int4_topk_weight;
+ static thread_local torch::Tensor s_int4_routed_output, s_int4_final_output;
+ static thread_local torch::Tensor s_int4_intermediates;
+ static thread_local torch::Tensor s_int4_gate_values;  // BSZ>1 precomputed gate sigmoid
+ static thread_local int s_int4_cached_ntokens = -1;
++static thread_local int s_int4_cached_top_k = -1;
++static thread_local int s_int4_cached_shared_experts = -1;
++static thread_local int s_int4_cached_hidden = -1;
++static thread_local int s_int4_cached_intermediate = -1;
++static thread_local int s_int4_cached_device_index = -9999;
++
++static thread_local torch::Tensor s_minimax_ws_topk_idx;
++static thread_local torch::Tensor s_minimax_ws_topk_weight_fp32;
++static thread_local torch::Tensor s_minimax_ws_topk_weight_fp16;
++static thread_local int s_minimax_ws_cached_ntokens = -1;
++static thread_local int s_minimax_ws_cached_top_k = -1;
++static thread_local int s_minimax_ws_cached_device_index = -9999;
+ 
+ static void ensure_int4_moe_buffers(int n_tokens, int top_k, int num_shared_experts,
+                                      int hidden_size, int intermediate_size,
+                                      const torch::Device& dev) {
+     int rows_per_token = top_k + num_shared_experts;
+-    if (s_int4_cached_ntokens != n_tokens) {
++    const int device_index = static_cast<int>(dev.index());
++    if (s_int4_cached_ntokens != n_tokens ||
++            s_int4_cached_top_k != top_k ||
++            s_int4_cached_shared_experts != num_shared_experts ||
++            s_int4_cached_hidden != hidden_size ||
++            s_int4_cached_intermediate != intermediate_size ||
++            s_int4_cached_device_index != device_index) {
+         s_int4_topk_idx = torch::empty({n_tokens, top_k},
+             torch::device(dev).dtype(torch::kInt32));
+         s_int4_topk_weight = torch::empty({n_tokens, top_k},
+             torch::device(dev).dtype(torch::kHalf));
+@@
+         s_int4_gate_values = torch::empty(
+             {n_tokens * num_shared_experts},
+             torch::device(dev).dtype(torch::kFloat));
+         s_int4_cached_ntokens = n_tokens;
++        s_int4_cached_top_k = top_k;
++        s_int4_cached_shared_experts = num_shared_experts;
++        s_int4_cached_hidden = hidden_size;
++        s_int4_cached_intermediate = intermediate_size;
++        s_int4_cached_device_index = device_index;
+     }
+ }
+ 
++static void ensure_minimax_ws_topk_buffers(int n_tokens, int top_k,
++                                           const torch::Device& dev,
++                                           bool fp16_weight) {
++    const int device_index = static_cast<int>(dev.index());
++    if (s_minimax_ws_cached_ntokens != n_tokens ||
++            s_minimax_ws_cached_top_k != top_k ||
++            s_minimax_ws_cached_device_index != device_index ||
++            !s_minimax_ws_topk_idx.defined()) {
++        s_minimax_ws_topk_idx = torch::empty({n_tokens, top_k},
++            torch::device(dev).dtype(torch::kInt32));
++        s_minimax_ws_topk_weight_fp32 = torch::Tensor();
++        s_minimax_ws_topk_weight_fp16 = torch::Tensor();
++        s_minimax_ws_cached_ntokens = n_tokens;
++        s_minimax_ws_cached_top_k = top_k;
++        s_minimax_ws_cached_device_index = device_index;
++    }
++
++    if (fp16_weight) {
++        if (!s_minimax_ws_topk_weight_fp16.defined()) {
++            s_minimax_ws_topk_weight_fp16 = torch::empty({n_tokens, top_k},
++                torch::device(dev).dtype(torch::kHalf));
++        }
++    } else {
++        if (!s_minimax_ws_topk_weight_fp32.defined()) {
++            s_minimax_ws_topk_weight_fp32 = torch::empty({n_tokens, top_k},
++                torch::device(dev).dtype(torch::kFloat32));
++        }
++    }
++}
++
+@@
+ torch::Tensor moe_forward_tiny_cutlass_nmajor_int4_u4_minimax_ws(
+@@
+-    const int n_tokens = (int)x.size(0);
+-    auto topk_idx = torch::empty({n_tokens, top_k},
+-        torch::device(router_logits.device()).dtype(torch::kInt32));
++    const int n_tokens = (int)x.size(0);
++    const bool reuse_topk = minimax_ws_reuse_topk_buffers();
++    const bool fp16_topk_weight = minimax_ws_topk_weight_fp16();
++    if (reuse_topk) {
++        ensure_minimax_ws_topk_buffers(n_tokens, (int)top_k, router_logits.device(),
++                                       fp16_topk_weight);
++    }
++    auto topk_idx = reuse_topk
++        ? s_minimax_ws_topk_idx
++        : torch::empty({n_tokens, top_k},
++              torch::device(router_logits.device()).dtype(torch::kInt32));
++
++    torch::Tensor* intermediates_override = nullptr;
++    if (minimax_ws_reuse_intermediates()) {
++        const int hidden_size = (int)x.size(1);
++        const int intermediate_size = (int)w13_qweight_u4.size(1) / 2;
++        ensure_int4_moe_buffers(n_tokens, (int)top_k, 0, hidden_size,
++                                intermediate_size, x.device());
++        intermediates_override = &s_int4_intermediates;
++    }
+ 
+     sycl::queue& queue =
+         c10::xpu::getCurrentXPUStream(router_logits.device().index()).queue();
+     if (fp16_topk_weight) {
+-        auto topk_weight = torch::empty({n_tokens, top_k},
+-            torch::device(router_logits.device()).dtype(torch::kHalf));
++        auto topk_weight = reuse_topk
++            ? s_minimax_ws_topk_weight_fp16
++            : torch::empty({n_tokens, top_k},
++                  torch::device(router_logits.device()).dtype(torch::kHalf));
+@@
+         return moe_forward_tiny_cutlass_nmajor_int4_ws_impl(
+             x, w13_qweight_u4, w13_scales, w2_qweight_u4, w2_scales,
+-            topk_weight, topk_idx, false);
++            topk_weight, topk_idx, false, intermediates_override);
+     } else {
+-        auto topk_weight = torch::empty({n_tokens, top_k},
+-            torch::device(router_logits.device()).dtype(torch::kFloat32));
++        auto topk_weight = reuse_topk
++            ? s_minimax_ws_topk_weight_fp32
++            : torch::empty({n_tokens, top_k},
++                  torch::device(router_logits.device()).dtype(torch::kFloat32));
+@@
+         return moe_forward_tiny_cutlass_nmajor_int4_ws_impl(
+             x, w13_qweight_u4, w13_scales, w2_qweight_u4, w2_scales,
+-            topk_weight, topk_idx, false);
++            topk_weight, topk_idx, false, intermediates_override);
+     }
+ }
