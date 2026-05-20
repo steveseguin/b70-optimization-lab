@@ -1,0 +1,123 @@
+{
+  "date": "2026-05-20",
+  "model": {
+    "hfId": "Lasimeri/MiniMax-M2.7-int4-AutoRound",
+    "localPath": "/mnt/fast-ai/llm-models/minimax-m2.7-int4-autoround",
+    "quantization": "INT4 AutoRound W4A16"
+  },
+  "hardware": {
+    "gpuName": "Intel Arc Pro B70",
+    "gpuCount": 4,
+    "vramGbPerGpu": 32,
+    "os": "Ubuntu 24.04.4 LTS"
+  },
+  "engine": {
+    "engineName": "vllm",
+    "engineVersion": "0.20.1-local",
+    "backend": "xpu/level-zero",
+    "tensorParallel": 4,
+    "dtype": "float16",
+    "maxModelLen": 2048,
+    "maxNumBatchedTokens": 512,
+    "blockSize": 256,
+    "prefixCaching": false,
+    "xpuGraph": true,
+    "llmScalerMoe": true
+  },
+  "promotedBaseline": {
+    "label": "minimax-moe-full-forward-customop-plus-output-ar-20260519",
+    "promptTokens": 512,
+    "outputTokens": 1536,
+    "tokSOutMean": 89.31419538094708,
+    "tokSTotalMean": 119.08559384126276,
+    "localMaxxingId": "cmpct6t4m007fnw01yjdtlcs4"
+  },
+  "traceDiagnostic": {
+    "description": "LLM_SCALER_MOE_TRACE_KERNELS=1 synchronous submit_kernel timing on a small p64/n4 diagnostic; not a throughput benchmark.",
+    "log": "/home/steve/bench-results/minimax-m2.7-moe-kernel-trace-20260520/vllm-minimax-m27-autoround-tp4-p64n4-20260520T065859Z.log",
+    "kernels": {
+      "moe ws up routed cutlass int4": {
+        "count": 992,
+        "totalMs": 179.813,
+        "avgMs": 0.181263,
+        "p50Ms": 0.04448,
+        "p95Ms": 0.542222,
+        "maxMs": 8.245593
+      },
+      "moe ws down cutlass int4": {
+        "count": 992,
+        "totalMs": 27.298,
+        "avgMs": 0.027518,
+        "p50Ms": 0.02528,
+        "p95Ms": 0.04275,
+        "maxMs": 0.109271
+      }
+    }
+  },
+  "qualityReference": {
+    "raw145N64CombinedTokenSha256": "267cbf30208d84929ee79284ac695467f7e80597bf8694130e1e1f8b180eb5bd"
+  },
+  "tileScreens": [
+    {
+      "variant": "VLLM_XPU_MOE_WS_UP_NTILE=1",
+      "raw145N64": {
+        "passed": true,
+        "combinedTokenSha256": "267cbf30208d84929ee79284ac695467f7e80597bf8694130e1e1f8b180eb5bd",
+        "json": "/home/steve/bench-results/minimax-m2.7-up-ntile-screens-20260520/raw145-n64-up-ntile1-20260520T073112Z.json",
+        "log": "/home/steve/bench-results/minimax-m2.7-up-ntile-screens-20260520/raw145-n64-up-ntile1-20260520T073112Z.log"
+      },
+      "benchmark": {
+        "promptTokens": 512,
+        "outputTokens": 1536,
+        "elapsedTimeSec": 17.510644093039446,
+        "tokSOut": 87.71807546534319,
+        "tokSTotal": 116.95743395379091,
+        "json": "/home/steve/bench-results/minimax-m2.7-up-ntile-screens-20260520/vllm-minimax-m27-autoround-tp4-p512n1536-20260520T073654Z.json",
+        "log": "/home/steve/bench-results/minimax-m2.7-up-ntile-screens-20260520/vllm-minimax-m27-autoround-tp4-p512n1536-20260520T073654Z.log"
+      },
+      "decision": "rejected_speed"
+    },
+    {
+      "variant": "VLLM_XPU_MOE_WS_UP_NTILE=3",
+      "raw145N64": {
+        "passed": true,
+        "combinedTokenSha256": "267cbf30208d84929ee79284ac695467f7e80597bf8694130e1e1f8b180eb5bd",
+        "json": "/home/steve/bench-results/minimax-m2.7-up-ntile-screens-20260520/raw145-n64-up-ntile3-20260520T070507Z.json",
+        "log": "/home/steve/bench-results/minimax-m2.7-up-ntile-screens-20260520/raw145-n64-up-ntile3-20260520T070507Z.log"
+      },
+      "benchmark": {
+        "promptTokens": 512,
+        "outputTokens": 1536,
+        "elapsedTimeSec": 17.390517240972258,
+        "tokSOut": 88.32399742436449,
+        "tokSTotal": 117.76532989915266,
+        "json": "/home/steve/bench-results/minimax-m2.7-up-ntile-screens-20260520/vllm-minimax-m27-autoround-tp4-p512n1536-20260520T071056Z.json",
+        "log": "/home/steve/bench-results/minimax-m2.7-up-ntile-screens-20260520/vllm-minimax-m27-autoround-tp4-p512n1536-20260520T071056Z.log"
+      },
+      "decision": "rejected_speed"
+    },
+    {
+      "variant": "VLLM_XPU_MOE_WS_UP_NTILE=6",
+      "raw145N64": {
+        "passed": true,
+        "combinedTokenSha256": "267cbf30208d84929ee79284ac695467f7e80597bf8694130e1e1f8b180eb5bd",
+        "json": "/home/steve/bench-results/minimax-m2.7-up-ntile-screens-20260520/raw145-n64-up-ntile6-20260520T071420Z.json",
+        "log": "/home/steve/bench-results/minimax-m2.7-up-ntile-screens-20260520/raw145-n64-up-ntile6-20260520T071420Z.log"
+      },
+      "benchmark": {
+        "promptTokens": 512,
+        "outputTokens": 1536,
+        "elapsedTimeSec": 19.00427239702549,
+        "tokSOut": 80.82393095146394,
+        "tokSTotal": 107.76524126861858,
+        "json": "/home/steve/bench-results/minimax-m2.7-up-ntile-screens-20260520/vllm-minimax-m27-autoround-tp4-p512n1536-20260520T072155Z.json",
+        "log": "/home/steve/bench-results/minimax-m2.7-up-ntile-screens-20260520/vllm-minimax-m27-autoround-tp4-p512n1536-20260520T072155Z.log"
+      },
+      "decision": "rejected_speed"
+    }
+  ],
+  "decision": {
+    "localMaxxingSubmitted": false,
+    "reason": "All tested forced N_TILE variants were quality-clean on raw145 n64 but slower than the promoted 89.314195 output tok/s default path."
+  }
+}
