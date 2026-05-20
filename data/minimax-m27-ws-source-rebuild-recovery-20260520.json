@@ -1,0 +1,60 @@
+{
+  "label": "minimax-ws-restored-promoted-binary-rebuild",
+  "date": "2026-05-20",
+  "status": "quality_passed_source_rebuild_recovery",
+  "model": "Lasimeri/MiniMax-M2.7-int4-AutoRound",
+  "hardware": "4x Intel Arc Pro B70 32GB",
+  "engine": "vLLM 0.20.1-local XPU/Level Zero TP4",
+  "contextLength": 2048,
+  "promptTokens": 512,
+  "outputTokens": 1536,
+  "batchSize": 1,
+  "maxNumBatchedTokens": 512,
+  "blockSize": 256,
+  "meanOutputTokS": 87.96446625745075,
+  "meanTotalTokS": 117.28595500993434,
+  "outputTokSRepeats": [
+    88.82328524920256,
+    88.88900278307864,
+    86.98916157050174,
+    87.15641542702006
+  ],
+  "totalTokSRepeats": [
+    118.43104699893675,
+    118.51867037743818,
+    115.98554876066898,
+    116.20855390269342
+  ],
+  "promotedOutputTokS": 89.31419538094708,
+  "promotedTotalTokS": 119.08559384126276,
+  "promotedLocalMaxxingId": "cmpct6t4m007fnw01yjdtlcs4",
+  "quality": {
+    "raw145N64TokenSha256": "267cbf30208d84929ee79284ac695467f7e80597bf8694130e1e1f8b180eb5bd",
+    "raw145N256TokenSha256": "58f6e8251c7a0a17e8c441278b5861f7d5da914fa1823ecd10484b296f2d7537",
+    "semanticSuiteN64R2Passed": true,
+    "semanticSuiteN64R2TokenSha256": "adacbf144264486ea7d378ebb6a4c0ba23951b72c4cf86251a762b07ebef5805",
+    "arithmeticRepeatN64R16Passed": true,
+    "arithmeticRepeatN64R16TokenSha256": "578ec378bf31cb16fb49ac5c0043270fd00a0f7898e18ac498a41ffe775d7994",
+    "extendedSixpackN64R2Passed": true,
+    "extendedSixpackN64R2TokenSha256": "1e3560554f57b2b56cec8f49f28bc8ba12e9e0ced26bdc99a976f1433c99caa7"
+  },
+  "sourceRebuild": {
+    "workspace": "/mnt/fast-ai/src/llm-scaler-promoted-rebuild-20260520T120230Z",
+    "baseCommit": "4bfc0070090cc54afdb2d46b8e57882359141568",
+    "promotedPatchApplyCommand": "git apply --directory=vllm/custom-esimd-kernels-vllm promoted-llm-scaler.patch",
+    "rebuiltSharedObject": "/mnt/fast-ai/src/llm-scaler-promoted-rebuild-20260520T120230Z/vllm/custom-esimd-kernels-vllm/python/custom_esimd_kernels_vllm/moe_int4_ops.cpython-312-x86_64-linux-gnu.so",
+    "rebuiltSharedObjectSha256": "30b19be4456abab814f3378561204d575e4e8c01f848634a059d72ff3b23db66",
+    "activeFallbackBackup": "/home/steve/src/llm-scaler/vllm/custom-esimd-kernels-vllm/python/custom_esimd_kernels_vllm/moe_int4_ops.cpython-312-x86_64-linux-gnu.so.backup-before-ws-restore-20260520T121050Z",
+    "hasMinimaxEntryPoint": true,
+    "hasMinimaxWsEntryPoint": true,
+    "hasFullSharedFromLogitsEntryPoint": true
+  },
+  "artifacts": {
+    "summaryJson": "/home/steve/bench-results/minimax-m2.7-post-repro-optimization/ws-restored-quality-20260520T121119Z/minimax-minimax-ws-restored-promoted-binary-rebuild-strict-tp4-ctx2048-mbt512-bs256-20260520T121119Z-summary.json",
+    "qualityDir": "/home/steve/bench-results/minimax-m2.7-post-repro-optimization/ws-restored-quality-20260520T121119Z/minimax-minimax-ws-restored-promoted-binary-rebuild-strict-tp4-ctx2048-mbt512-bs256-20260520T121119Z-quality",
+    "runDir": "/home/steve/bench-results/minimax-m2.7-post-repro-optimization/ws-restored-quality-20260520T121119Z",
+    "reproPatchArtifact": "repro/minimax-m27-b70-89tps-20260520/patches/llm-scaler-active-promoted-minimax-89tps-20260520.patch.gz.b64"
+  },
+  "localmaxxingSubmitted": false,
+  "reasonNotSubmitted": "Source-rebuild recovery is quality-clean but did not exceed the promoted 89.314 tok/s LocalMaxxing result."
+}
