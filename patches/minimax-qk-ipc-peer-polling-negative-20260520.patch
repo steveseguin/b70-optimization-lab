@@ -1,0 +1,246 @@
+diff --git a/experiments/minimax_qk_rms_xpu_ipc/README.md b/experiments/minimax_qk_rms_xpu_ipc/README.md
+index e23ac30..6b1b4ce 100644
+--- a/experiments/minimax_qk_rms_xpu_ipc/README.md
++++ b/experiments/minimax_qk_rms_xpu_ipc/README.md
+@@ -63,3 +63,26 @@ On 2026-05-10 this measured about `416 ms/iter` for a one-token `[1, 2]`
+ payload, far slower than XCCL's decode-sized tiny allreduce microbench. Also
+ avoid slot wrap in no-barrier tests; if a rank misses a sequence and a peer
+ overwrites that slot, the equality-based poll can hang.
++
++Status on 2026-05-20 after the four-B70 reboot:
++
++- Level Zero peer access and forked IPC handle import/export still work in every
++  source-to-destination direction.
++- Cross-device P2P reports `ACCESS` but not `ATOMICS`; only self-device reports
++  `ACCESS|ATOMICS`.
++- XCCL tiny allreduce for a `[1, 2]` FP32 payload measured `0.061791 ms/iter`
++  with per-iteration synchronization.
++- The single-kernel sequence and counter polling variants still measured about
++  `417 ms/iter`, so they are timeout/visibility limited and unusable for the
++  model path.
++- A two-kernel mailbox reduce with a CPU `dist.barrier()` validated at
++  `0.290768 ms/iter`, but the same two-kernel path without the barrier failed
++  validation. It is not a graph-safe or model-safe replacement for XCCL.
++- A system-scope `sycl::atomic_ref` counter variant was added as a feasibility
++  probe, but it failed validation. Do not use it in vLLM.
++
++Conclusion: keep this prototype as evidence and tooling, but do not pursue an
++XPU Lamport Q/K RMS port through SYCL peer-memory polling on the current driver.
++The credible fusion path needs either a graph-compatible oneCCL fused primitive,
++a Level Zero event/barrier design that is correct without CPU barriers, or a
++different lower-level communication facility.
+diff --git a/experiments/minimax_qk_rms_xpu_ipc/minimax_qk_rms_xpu_ipc.cpp b/experiments/minimax_qk_rms_xpu_ipc/minimax_qk_rms_xpu_ipc.cpp
+index 7fd34a9..01d0c59 100644
+--- a/experiments/minimax_qk_rms_xpu_ipc/minimax_qk_rms_xpu_ipc.cpp
++++ b/experiments/minimax_qk_rms_xpu_ipc/minimax_qk_rms_xpu_ipc.cpp
+@@ -289,6 +289,82 @@ class IpcQkVarAllreduceCounterKernel {
+   int timeout_iters_;
+ };
+ 
++class IpcQkVarAllreduceAtomicCounterKernel {
++ public:
++  IpcQkVarAllreduceAtomicCounterKernel(float* qk_var,
++                                       const int64_t* payload_ptrs,
++                                       const int64_t* seq_ptrs,
++                                       const int32_t* counter,
++                                       int64_t num_items,
++                                       int64_t mailbox_offset,
++                                       int64_t counter_slot,
++                                       int world_size,
++                                       int timeout_iters)
++      : qk_var_(qk_var),
++        payload_ptrs_(payload_ptrs),
++        seq_ptrs_(seq_ptrs),
++        counter_(counter),
++        num_items_(num_items),
++        mailbox_offset_(mailbox_offset),
++        counter_slot_(counter_slot),
++        world_size_(world_size),
++        timeout_iters_(timeout_iters) {}
++
++  void operator()(sycl::id<1> id) const {
++    using AtomicI32 = sycl::atomic_ref<
++        int32_t,
++        sycl::memory_order::acq_rel,
++        sycl::memory_scope::system,
++        sycl::access::address_space::global_space>;
++
++    const int64_t idx = static_cast<int64_t>(id[0]);
++    if (idx >= num_items_) {
++      return;
++    }
++
++    const int sequence = counter_[counter_slot_];
++    float* local_payload = reinterpret_cast<float*>(payload_ptrs_[0]);
++    int32_t* local_seq = reinterpret_cast<int32_t*>(seq_ptrs_[0]);
++    local_payload[mailbox_offset_ + idx] = qk_var_[idx];
++    sycl::atomic_fence(sycl::memory_order::release, sycl::memory_scope::system);
++    AtomicI32(local_seq[mailbox_offset_ + idx])
++        .store(sequence, sycl::memory_order::release);
++
++    float sum = 0.0f;
++    for (int rank = 0; rank < world_size_; ++rank) {
++      int32_t* peer_seq = reinterpret_cast<int32_t*>(seq_ptrs_[rank]);
++      const volatile float* peer_payload =
++          reinterpret_cast<const volatile float*>(payload_ptrs_[rank]);
++      int seen = 0;
++      int iters = 0;
++      while (iters < timeout_iters_) {
++        seen = AtomicI32(peer_seq[mailbox_offset_ + idx])
++                   .load(sycl::memory_order::acquire);
++        if (seen == sequence) {
++          break;
++        }
++        ++iters;
++      }
++      sycl::atomic_fence(sycl::memory_order::acquire,
++                         sycl::memory_scope::system);
++      sum += peer_payload[mailbox_offset_ + idx];
++    }
++
++    qk_var_[idx] = sum / static_cast<float>(world_size_);
++  }
++
++ private:
++  float* qk_var_;
++  const int64_t* payload_ptrs_;
++  const int64_t* seq_ptrs_;
++  const int32_t* counter_;
++  int64_t num_items_;
++  int64_t mailbox_offset_;
++  int64_t counter_slot_;
++  int world_size_;
++  int timeout_iters_;
++};
++
+ class IpcQkVarWritePayloadKernel {
+  public:
+   IpcQkVarWritePayloadKernel(const float* qk_var,
+@@ -588,6 +664,66 @@ void allreduce_qk_var_seq_counter(torch::Tensor qk_var,
+   });
+ }
+ 
++void allreduce_qk_var_seq_atomic_counter(torch::Tensor qk_var,
++                                         torch::Tensor payload_ptrs,
++                                         torch::Tensor seq_ptrs,
++                                         torch::Tensor counter,
++                                         int64_t slot,
++                                         int64_t max_tokens,
++                                         int64_t world_size,
++                                         int64_t timeout_iters) {
++  const at::DeviceGuard device_guard(qk_var.device());
++  CHECK_XPU(qk_var);
++  CHECK_CONTIGUOUS(qk_var);
++  CHECK_XPU(payload_ptrs);
++  CHECK_CONTIGUOUS(payload_ptrs);
++  CHECK_XPU(seq_ptrs);
++  CHECK_CONTIGUOUS(seq_ptrs);
++  CHECK_XPU(counter);
++  CHECK_CONTIGUOUS(counter);
++  TORCH_CHECK(qk_var.scalar_type() == torch::kFloat32, "qk_var must be float32");
++  TORCH_CHECK(payload_ptrs.scalar_type() == torch::kInt64,
++              "payload_ptrs must be int64");
++  TORCH_CHECK(seq_ptrs.scalar_type() == torch::kInt64, "seq_ptrs must be int64");
++  TORCH_CHECK(counter.scalar_type() == torch::kInt32, "counter must be int32");
++  TORCH_CHECK(qk_var.dim() == 2 && qk_var.size(1) == 2,
++              "qk_var must have shape [tokens, 2]");
++  TORCH_CHECK(payload_ptrs.numel() >= world_size,
++              "payload_ptrs must contain one pointer per rank");
++  TORCH_CHECK(seq_ptrs.numel() >= world_size,
++              "seq_ptrs must contain one pointer per rank");
++  TORCH_CHECK(slot >= 0, "slot must be non-negative");
++  TORCH_CHECK(slot < counter.numel(), "counter slot out of range");
++  TORCH_CHECK(max_tokens >= qk_var.size(0), "max_tokens too small");
++
++  const int64_t num_items = qk_var.numel();
++  const int64_t mailbox_offset = slot * max_tokens * 2;
++  auto& queue = c10::xpu::getCurrentXPUStream(qk_var.device().index()).queue();
++  int32_t* counter_ptr = counter.data_ptr<int32_t>();
++  auto counter_event = queue.submit([&](sycl::handler& cgh) {
++    cgh.single_task([=]() {
++      counter_ptr[slot] += 1;
++      sycl::atomic_fence(sycl::memory_order::release,
++                         sycl::memory_scope::system);
++    });
++  });
++  queue.submit([&](sycl::handler& cgh) {
++    cgh.depends_on(counter_event);
++    cgh.parallel_for(
++        sycl::range<1>(num_items),
++        IpcQkVarAllreduceAtomicCounterKernel(
++            qk_var.data_ptr<float>(),
++            payload_ptrs.data_ptr<int64_t>(),
++            seq_ptrs.data_ptr<int64_t>(),
++            counter.data_ptr<int32_t>(),
++            num_items,
++            mailbox_offset,
++            slot,
++            static_cast<int>(world_size),
++            static_cast<int>(timeout_iters)));
++  });
++}
++
+ void allreduce_qk_var_seq_scalar(torch::Tensor qk_var,
+                                  torch::Tensor payload_ptrs,
+                                  torch::Tensor seq_ptrs,
+@@ -685,6 +821,9 @@ PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
+   m.def("allreduce_qk_var_seq_counter",
+         &allreduce_qk_var_seq_counter,
+         "Device-counter sequence-mailbox allreduce average for [tokens, 2] qk_var");
++  m.def("allreduce_qk_var_seq_atomic_counter",
++        &allreduce_qk_var_seq_atomic_counter,
++        "Atomic device-counter sequence-mailbox allreduce average for [tokens, 2] qk_var");
+   m.def("allreduce_qk_var_seq_scalar",
+         &allreduce_qk_var_seq_scalar,
+         "Scalar-sequence mailbox allreduce average for [tokens, 2] qk_var");
+@@ -695,6 +834,7 @@ TORCH_LIBRARY(minimax_qk_rms_xpu_ipc, m) {
+   m.def("reduce_qk_var_from_mailboxes(Tensor! qk_var, Tensor peer_ptrs, int slot, int max_tokens, int world_size) -> ()");
+   m.def("allreduce_qk_var_seq(Tensor! qk_var, Tensor payload_ptrs, Tensor seq_ptrs, int slot, int sequence, int max_tokens, int world_size, int timeout_iters) -> ()");
+   m.def("allreduce_qk_var_seq_counter(Tensor! qk_var, Tensor payload_ptrs, Tensor seq_ptrs, Tensor! counter, int slot, int max_tokens, int world_size, int timeout_iters) -> ()");
++  m.def("allreduce_qk_var_seq_atomic_counter(Tensor! qk_var, Tensor payload_ptrs, Tensor seq_ptrs, Tensor! counter, int slot, int max_tokens, int world_size, int timeout_iters) -> ()");
+   m.def("allreduce_qk_var_seq_scalar(Tensor! qk_var, Tensor payload_ptrs, Tensor seq_ptrs, Tensor! counter, int slot, int max_tokens, int world_size, int timeout_iters) -> ()");
+ }
+ 
+@@ -703,5 +843,6 @@ TORCH_LIBRARY_IMPL(minimax_qk_rms_xpu_ipc, XPU, m) {
+   m.impl("reduce_qk_var_from_mailboxes", &reduce_qk_var_from_mailboxes);
+   m.impl("allreduce_qk_var_seq", &allreduce_qk_var_seq);
+   m.impl("allreduce_qk_var_seq_counter", &allreduce_qk_var_seq_counter);
++  m.impl("allreduce_qk_var_seq_atomic_counter", &allreduce_qk_var_seq_atomic_counter);
+   m.impl("allreduce_qk_var_seq_scalar", &allreduce_qk_var_seq_scalar);
+ }
+diff --git a/experiments/minimax_qk_rms_xpu_ipc/test_ipc_qk_var.py b/experiments/minimax_qk_rms_xpu_ipc/test_ipc_qk_var.py
+index 0e514f1..f533dbf 100644
+--- a/experiments/minimax_qk_rms_xpu_ipc/test_ipc_qk_var.py
++++ b/experiments/minimax_qk_rms_xpu_ipc/test_ipc_qk_var.py
+@@ -60,6 +60,9 @@ def main() -> None:
+     single_kernel = os.environ.get("MINIMAX_QK_IPC_SINGLE_KERNEL", "0") == "1"
+     sequence_kernel = os.environ.get("MINIMAX_QK_IPC_SEQ", "1") == "1"
+     counter_kernel = os.environ.get("MINIMAX_QK_IPC_COUNTER", "0") == "1"
++    atomic_counter_kernel = (
++        os.environ.get("MINIMAX_QK_IPC_ATOMIC_COUNTER", "0") == "1"
++    )
+     scalar_seq_kernel = os.environ.get("MINIMAX_QK_IPC_SCALAR_SEQ", "0") == "1"
+     if single_kernel:
+         # The single-kernel prototype writes to peer_ptrs[0] and polls all
+@@ -87,7 +90,20 @@ def main() -> None:
+         qk_var[:, 0] = q_base
+         qk_var[:, 1] = k_base
+ 
+-        if single_kernel and scalar_seq_kernel:
++        if single_kernel and atomic_counter_kernel:
++            if use_barrier:
++                dist.barrier()
++            minimax_qk_rms_xpu_ipc.allreduce_qk_var_seq_atomic_counter(
++                qk_var,
++                peer_ptrs,
++                seq_ptrs,
++                seq_counter,
++                slot,
++                max_tokens,
++                world,
++                timeout_iters,
++            )
++        elif single_kernel and scalar_seq_kernel:
+             if use_barrier:
+                 dist.barrier()
+             minimax_qk_rms_xpu_ipc.allreduce_qk_var_seq_scalar(
