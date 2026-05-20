@@ -47,7 +47,7 @@ Negative, quality-failed, or merely noisy results stay local/GitHub-only.
 
 6. Q/K RMS variance allreduce+scale custom op.
    - Rationale: the site-labeled timing run showed the FP32 `(1, 2)` Q/K variance collective as the largest visible synchronized bucket. This candidate preserved the exact promoted ordering by performing allreduce first and then multiplying by `1 / tp_world` inside a single custom-op boundary.
-   - Status: rejected. Exact raw145 n64/n256, semantic suite, 16-repeat arithmetic, and extended sixpack all passed, but four p512/n1536 repeats averaged `88.558751` output tok/s / `118.078334` total tok/s. This is `0.755445` output tok/s below the current promoted mean. It also produced intermittent `Bad address (src/pipe.cpp:367)` shutdown noise. The active runtime hook was reverted and the result was not submitted to LocalMaxxing.
+   - Status: rejected. Exact raw145 n64/n256, semantic suite, and extended sixpack all passed, but four p512/n1536 repeats averaged `88.558751` output tok/s / `118.078334` total tok/s. This is `0.755445` output tok/s below the current promoted mean. It also produced intermittent `Bad address (src/pipe.cpp:367)` shutdown noise. The active runtime hook was reverted and the result was not submitted to LocalMaxxing.
 
 7. Targeted RowParallel attention `o_proj` in-place allreduce.
    - Rationale: the remaining visible FP16 hidden-state allreduce family matches attention `o_proj`, and the previous broad attention custom-op wrapper was quality-safe but slower. This tried a narrower math-preserving in-place path only for `*.o_proj` RowParallelLinear outputs on XPU FP16/BF16 tensors up to 6144 elements.
@@ -71,6 +71,16 @@ Negative, quality-failed, or merely noisy results stay local/GitHub-only.
 11. Current-high retest of `VLLM_MINIMAX_MOE_FULL_FORWARD_CUSTOM_OP_MAX_TOKENS=2`.
    - Rationale: the earlier max2 screen was lower than max4, but a current-high isolated cache retest was useful because max2 is close to max4 and could have been cache/runtime-noise sensitive.
    - Status: rejected. Full strict quality passed, including raw145 n64/n256 exact hashes, semantic suite, 16-repeat arithmetic, and extended sixpack. Four p512/n1536 repeats averaged `89.242091` output tok/s / `118.989455` total tok/s. This is only `0.072104` output tok/s below the promoted mean, but still below it. Keep `VLLM_MINIMAX_MOE_FULL_FORWARD_CUSTOM_OP_MAX_TOKENS=4`; no LocalMaxxing submission.
+
+12. Index-based MiniMax MoE full-forward custom-op.
+   - Rationale: remove byte-string `LayerName` resolution and dict lookup inside the current promoted MoE full-forward custom-op boundary without changing model math.
+   - Candidate: current promoted stack plus `VLLM_MINIMAX_MOE_FULL_FORWARD_INDEX_CUSTOM_OP=1`.
+   - Status: rejected. Full strict quality passed, including raw145 n64/n256 exact hashes, semantic suite, 16-repeat arithmetic, and extended sixpack. Four p512/n1536 repeats averaged `88.648258` output tok/s / `118.197678` total tok/s, about `0.75%` below the promoted mean. Leave `VLLM_MINIMAX_MOE_FULL_FORWARD_INDEX_CUSTOM_OP` unset; no LocalMaxxing submission.
+
+13. Q/K RMS post-allreduce apply custom-op boundary.
+   - Rationale: preserve the proven Q/K ordering while wrapping the post-allreduce scale plus existing XPU apply helper in a narrower custom-op boundary.
+   - Candidate: current promoted stack plus `VLLM_MINIMAX_QK_RMS_POST_AR_APPLY_CUSTOM_OP=1`.
+   - Status: neutral / rejected. Full strict quality passed, including raw145 n64/n256 exact hashes, semantic suite, arithmetic-repeat n64/r8, and extended sixpack. Four p512/n1536 repeats averaged `89.328078` output tok/s / `119.104104` total tok/s versus the promoted `89.314195` / `119.085594`, a negligible `+0.0155%` delta inside run noise. The candidate also introduced repeated `ocloc` 245 / IGC floating-point-exception messages during graph capture. Leave `VLLM_MINIMAX_QK_RMS_POST_AR_APPLY_CUSTOM_OP` unset; no LocalMaxxing submission.
 
 ## Source-Level Work Queue
 
@@ -99,3 +109,16 @@ The oneCCL topo copy-engine toggles were quality-clean but slower. High-level co
 The clean-weight guard threshold screen shows that removing CPU callbacks around Q/K weight sanity can change longer greedy output even when the first 64 generated tokens match. Future CPU-callback reductions need an equivalent clean-weight guarantee rather than simply bypassing the guard.
 
 The current-high max2 retest is close but still negative. The guard-size tuning path is now effectively exhausted: max1, max2, max3, and max512 are all below max4 under strict quality. The next candidate should be source-level and should remove a real compiled/backend boundary, not just adjust Python guard thresholds.
+
+The index-based MoE full-forward custom-op also shows that shaving name lookup
+inside the already-promoted Python custom-op wrapper is not enough. The next
+source-level candidate should target a real tensor/collective boundary, with
+Q/K variance plus apply remaining the lowest-risk option and lower-level
+attention `o_proj` reduce fusion remaining higher risk.
+
+The Q/K post-allreduce apply custom-op confirms the same pattern on the Q/K
+side: wrapping existing kernels can be quality-clean, but it does not move
+throughput beyond noise and can create worse Intel compiler behavior. Future
+Q/K work should avoid another Python wrapper and instead target a lower-level
+XPU/SYCL fusion or compiler scheduling change that removes a real kernel or
+collective boundary.
