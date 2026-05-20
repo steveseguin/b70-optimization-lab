@@ -97,6 +97,20 @@ Negative, quality-failed, or merely noisy results stay local/GitHub-only.
    - Candidate: promoted stack plus `MAX_BATCHED_TOKENS=640`, isolated compile cache, full strict quality gates, and four p512/n1536 repeats.
    - Status: rejected. Full strict quality passed, including raw145 n64/n256 exact hashes, semantic suite, 16-repeat arithmetic, and extended sixpack. Four repeats averaged `88.835750` output tok/s / `118.447666` total tok/s, below the promoted `89.314195` / `119.085594`. Keep `MAX_BATCHED_TOKENS=512` for promoted p512/n1536 MiniMax runs; no LocalMaxxing submission.
 
+17. Router-linear plus MoE fusion using existing all-256 candidate repair.
+   - Rationale: reduce CPU/framework boundaries by moving more MiniMax router
+     and MoE logic into the llm-scaler custom-op path.
+   - Candidate: reuse the existing exact `minimax_m2_candidate_repair_topk`
+     kernel with all 256 experts as the candidate set.
+   - Status: rejected before full-model integration. The kernel is exact, but a
+     standalone XPU microbench showed it is much slower than the current router
+     linear: for 1/2/4 decode tokens, current `linear(x.float(), w)` measured
+     `0.032211` / `0.022275` / `0.022450 ms`, while all-256 candidate repair
+     measured `0.609194` / `0.523925` / `0.656969 ms`. Top-k ids matched and
+     max weight diff stayed within `7.45e-08`, so this is a performance
+     rejection, not a quality rejection. Do not implement naive all-expert
+     candidate repair in the hot path.
+
 ## Source-Level Work Queue
 
 - Audit remaining decode-time CPU/framework boundaries in `minimax_m2.py`, `moe_wna16.py`, and `xpu_communicator.py`.
@@ -156,3 +170,10 @@ decode is slower than the promoted stack. Move back to source-level work that
 removes a real remaining boundary: the most credible next target is fusing the
 FP32 router-linear step into the existing llm-scaler MiniMax logits WS MoE path,
 behind a default-off flag and strict top-k/quality audits.
+
+The first router-fusion implementation candidate is now rejected: exact
+all-256 candidate repair is correct but much slower than the current router
+linear. Router work should only continue if a focused full-model timing run
+shows router materialization is still meaningful, and the implementation should
+use either a proper optimized full-router GEMV/top-k kernel or a narrower
+`router_logits -> top8 -> MoE` boundary fusion.
