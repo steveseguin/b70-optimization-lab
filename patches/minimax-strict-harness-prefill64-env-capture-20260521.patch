@@ -1,0 +1,15 @@
+diff --git a/scripts/run-minimax-strict-quality-gated-candidate.sh b/scripts/run-minimax-strict-quality-gated-candidate.sh
+--- a/scripts/run-minimax-strict-quality-gated-candidate.sh
++++ b/scripts/run-minimax-strict-quality-gated-candidate.sh
+@@
+     --arg vllm_xpu_use_llm_scaler_moe_minimax_logits_ws "${VLLM_XPU_USE_LLM_SCALER_MOE_MINIMAX_LOGITS_WS:-}" \
+     --arg vllm_xpu_use_llm_scaler_moe_logits "${VLLM_XPU_USE_LLM_SCALER_MOE_LOGITS:-}" \
+     --arg vllm_xpu_use_llm_scaler_moe_ws "${VLLM_XPU_USE_LLM_SCALER_MOE_WS:-}" \
++    --arg vllm_xpu_llm_scaler_moe_apply_max_tokens "${VLLM_XPU_LLM_SCALER_MOE_APPLY_MAX_TOKENS:-}" \
+     --arg vllm_xpu_llm_scaler_moe_minimax_skip_redundant_contiguous "${VLLM_XPU_LLM_SCALER_MOE_MINIMAX_SKIP_REDUNDANT_CONTIGUOUS:-}" \
+@@
+         VLLM_XPU_USE_LLM_SCALER_MOE_MINIMAX_LOGITS_WS: $vllm_xpu_use_llm_scaler_moe_minimax_logits_ws,
+         VLLM_XPU_USE_LLM_SCALER_MOE_LOGITS: $vllm_xpu_use_llm_scaler_moe_logits,
+         VLLM_XPU_USE_LLM_SCALER_MOE_WS: $vllm_xpu_use_llm_scaler_moe_ws,
++        VLLM_XPU_LLM_SCALER_MOE_APPLY_MAX_TOKENS: $vllm_xpu_llm_scaler_moe_apply_max_tokens,
+         VLLM_XPU_LLM_SCALER_MOE_MINIMAX_SKIP_REDUNDANT_CONTIGUOUS: $vllm_xpu_llm_scaler_moe_minimax_skip_redundant_contiguous,
