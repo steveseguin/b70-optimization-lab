@@ -72,6 +72,45 @@ Speed result:
 
 Decision: rejected. Quality was clean, but throughput did not beat the restored-control repeat and remained below the warm accepted run.
 
+### `VLLM_MINIMAX_QKV_NARROW_SPLIT=1`
+
+Command delta:
+
+```bash
+source repro/minimax-m27-b70-89tps-20260520/configs/promoted-env.sh
+export VLLM_MINIMAX_QKV_NARROW_SPLIT=1
+export LABEL=minimax-currentstack-qkv-narrow-split-20260521
+export RUN_EXTENDED_QUALITY=0
+export RUN_REPEAT_ARITHMETIC_QUALITY=1
+export REPEAT_ARITHMETIC_RUNS=8
+scripts/run-minimax-strict-quality-gated-candidate.sh
+```
+
+Quality result: passed.
+
+- raw145 n64: `267cbf30208d84929ee79284ac695467f7e80597bf8694130e1e1f8b180eb5bd`
+- raw145 n256: `58f6e8251c7a0a17e8c441278b5861f7d5da914fa1823ecd10484b296f2d7537`
+- semantic suite: `adacbf144264486ea7d378ebb6a4c0ba23951b72c4cf86251a762b07ebef5805`
+- arithmetic per-run token hash: `def6899500b2364bc97d561fc5f9cc78aa9fbcd5a0eb032eab1f2c6735d2bbec`
+
+Speed result:
+
+- Output tok/s: 89.704733, 89.981588
+- Mean output tok/s: 89.843161
+- Total tok/s: 119.606310, 119.975451
+- Mean total tok/s: 119.790881
+
+Reliability note: during semantic, arithmetic, and benchmark graph capture, rank 2 repeatedly hit an Intel `ocloc` internal compiler error on generated Triton kernel `triton_red_fused__to_copy_mm_t_9`:
+
+```text
+IGC: Internal Compiler Error: Floating point exception
+Command was: ocloc compile ... -device bmg
+```
+
+The run continued and strict output hashes remained clean, but the fallback/compiler noise is not acceptable for a promoted reproducibility recipe.
+
+Decision: rejected. Quality was clean and speed matched the restored-control band, but it did not beat the accepted warm result and introduced repeated Intel compiler fallback noise.
+
 ## Takeaway
 
-The remaining easy env-level graph/CCL knobs are not obvious wins on the current promoted stack. The next credible optimization work should stay close to measured bottlenecks: repeated small allreduces, Q/K variance reductions, attention output projection collectives, and MoE output allreduce scheduling/fusion.
+The remaining easy env-level graph/CCL/view-layout knobs are not obvious wins on the current promoted stack. The next credible optimization work should stay close to measured bottlenecks: repeated small allreduces, Q/K variance reductions, attention output projection collectives, and MoE output allreduce scheduling/fusion.
