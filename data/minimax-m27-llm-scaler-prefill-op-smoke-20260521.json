@@ -1,0 +1,101 @@
+{
+  "date_utc": "2026-05-21",
+  "model": "Lasimeri/MiniMax-M2.7-int4-AutoRound",
+  "local_model_path": "/mnt/fast-ai/llm-models/minimax-m2.7-int4-autoround",
+  "hardware": {
+    "gpu": "Intel Arc Pro B70",
+    "gpu_count_for_smoke": 1,
+    "os": "Ubuntu 24.04"
+  },
+  "source": {
+    "repo": "/home/steve/src/llm-scaler",
+    "extension": "custom_esimd_kernels_vllm.moe_int4_prefill_ops",
+    "setup_added": "setup_moe_int4_prefill_only.py",
+    "compiler": "/opt/intel/oneapi/compiler/2025.3/bin/icpx"
+  },
+  "status": "not_promoted_prefill_smoke_only",
+  "quality_policy": "No model-path change and no LocalMaxxing submission. Future integration must prove real-weight layer equivalence and full text quality.",
+  "build": {
+    "first_attempt": {
+      "status": "failed",
+      "reason": "icpx not found on PATH"
+    },
+    "second_attempt": {
+      "status": "succeeded",
+      "command": "source /opt/intel/oneapi/compiler/2025.3/env/vars.sh && source /home/steve/.venvs/vllm-xpu/bin/activate && cd /home/steve/src/llm-scaler/vllm/custom-esimd-kernels-vllm && MAX_JOBS=1 CC=/opt/intel/oneapi/compiler/2025.3/bin/icx CXX=/opt/intel/oneapi/compiler/2025.3/bin/icpx python setup_moe_int4_prefill_only.py build_ext --inplace"
+    }
+  },
+  "packed_zero": {
+    "signed_int32_value": -2004318072,
+    "hex_bit_pattern": "0x88888888",
+    "note": "All-zero int32 packed weights are not zero weights for this kernel."
+  },
+  "zero_weight_smoke": {
+    "hidden_size": 3072,
+    "intermediate_size": 1536,
+    "num_experts": 256,
+    "top_k": 8,
+    "group_size": 128,
+    "scale": 0.01,
+    "results": [
+      {
+        "tokens": 1,
+        "ms": 2.256164897698909,
+        "tokens_per_second_layer_equivalent": 443.23001435751115,
+        "max_abs_zero_expected": 0.0,
+        "sum": 0.0
+      },
+      {
+        "tokens": 4,
+        "ms": 5.088515905663371,
+        "tokens_per_second_layer_equivalent": 786.0838158230214,
+        "max_abs_zero_expected": 0.0,
+        "sum": 0.0
+      },
+      {
+        "tokens": 16,
+        "ms": 12.193856202065945,
+        "tokens_per_second_layer_equivalent": 1312.1361884921357,
+        "max_abs_zero_expected": 0.0,
+        "sum": 0.0
+      },
+      {
+        "tokens": 64,
+        "ms": 24.841359397396445,
+        "tokens_per_second_layer_equivalent": 2576.3485393922388,
+        "max_abs_zero_expected": 0.0,
+        "sum": 0.0
+      },
+      {
+        "tokens": 128,
+        "ms": 27.119606197811663,
+        "tokens_per_second_layer_equivalent": 4719.832547211861,
+        "max_abs_zero_expected": 0.0,
+        "sum": 0.0
+      },
+      {
+        "tokens": 256,
+        "ms": 26.649290307735402,
+        "tokens_per_second_layer_equivalent": 9606.25956803404,
+        "max_abs_zero_expected": 0.0,
+        "sum": 0.0
+      },
+      {
+        "tokens": 512,
+        "ms": 25.97193233668804,
+        "tokens_per_second_layer_equivalent": 19713.589014581987,
+        "max_abs_zero_expected": 0.0,
+        "sum": 0.0
+      }
+    ]
+  },
+  "post_build_promoted_quality_canary": {
+    "status": "passed",
+    "json": "/home/steve/bench-results/minimax-m2.7-post-repro-optimization/promoted-quality-after-prefill-build-20260521T123352Z/raw145-n64.json",
+    "combined_token_sha256": "267cbf30208d84929ee79284ac695467f7e80597bf8694130e1e1f8b180eb5bd",
+    "expected_combined_token_sha256": "267cbf30208d84929ee79284ac695467f7e80597bf8694130e1e1f8b180eb5bd",
+    "control_nonspace_text_chars": 0,
+    "nul_token_count": 0
+  },
+  "next_gate": "Real-weight per-layer equivalence versus current vLLM prefill path before exposing a runtime flag."
+}
