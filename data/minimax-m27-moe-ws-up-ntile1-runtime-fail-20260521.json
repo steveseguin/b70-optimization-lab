@@ -1,0 +1,42 @@
+{
+  "date": "2026-05-21",
+  "label": "minimax-moe-ws-up-ntile1-runtime-fail-20260521",
+  "model": "/mnt/fast-ai/llm-models/minimax-m2.7-int4-autoround",
+  "hardware": "4x Intel Arc Pro B70 32GB",
+  "engine": "vLLM 0.20.1-local XPU with llm-scaler INT4 MiniMax WS path",
+  "candidate": "Force llm-scaler MiniMax INT4 MoE workspace up-projection decode N_TILE=1",
+  "env_delta": {
+    "VLLM_XPU_MOE_WS_UP_NTILE": "1"
+  },
+  "status": "runtime_failed_after_short_quality_pass",
+  "quality": {
+    "raw145_n64": {
+      "json": "/home/steve/bench-results/minimax-m2.7-post-repro-optimization/moe-ws-up-ntile1-quality-20260521T105359Z/minimax-moe-ws-up-ntile1-raw145-n64.json",
+      "log": "/home/steve/bench-results/minimax-m2.7-post-repro-optimization/moe-ws-up-ntile1-quality-20260521T105359Z/minimax-moe-ws-up-ntile1-raw145-n64.log",
+      "passed": true,
+      "expected_token_sha256_match": true,
+      "combined_token_sha256": "267cbf30208d84929ee79284ac695467f7e80597bf8694130e1e1f8b180eb5bd",
+      "expected_token_sha256": "267cbf30208d84929ee79284ac695467f7e80597bf8694130e1e1f8b180eb5bd",
+      "deterministic_across_runs": true,
+      "selected_deterministic_across_runs": true,
+      "failure_reasons": []
+    },
+    "strict_gate_run": false,
+    "strict_gate_reason": "Warm throughput screen failed before producing stable performance data."
+  },
+  "throughput_screen": {
+    "shape": "prompt 512, output 1536, batch 1, TP4, ctx2048",
+    "json_written": false,
+    "log": "/home/steve/bench-results/minimax-m2.7-post-repro-optimization/moe-ws-up-ntile1-warm-20260521T110002Z/minimax-moe-ws-up-ntile1-warm-p512n1536.log",
+    "failure": "RuntimeError: level_zero backend failed with error: 40 (UR_RESULT_ERROR_OUT_OF_RESOURCES)",
+    "failure_site": "vllm/v1/worker/gpu_model_runner.py _prepare_inputs, num_computed_tokens[req_indices_gpu].to(torch.int64)",
+    "gpu_kv_cache_tokens": 33792,
+    "graph_capture_extra_gib": 0.4
+  },
+  "decision": "reject for now; quality-clean short gate but not runtime-stable",
+  "localmaxxing": {
+    "submitted": false,
+    "reason": "No stable throughput result and no full strict quality promotion."
+  },
+  "next_if_revisited": "Use a fresh graph cache and lower gpu_memory_utilization to separate Level Zero memory pressure from tile-kernel instability, then rerun exact-output quality gates."
+}
