@@ -1,0 +1,57 @@
+{
+  "date": "2026-05-21",
+  "label": "minimax-moe-ws-up-ntile3-startup-stall-20260521",
+  "model": "/mnt/fast-ai/llm-models/minimax-m2.7-int4-autoround",
+  "hardware": "4x Intel Arc Pro B70 32GB",
+  "engine": "vLLM 0.20.1-local XPU with llm-scaler INT4 MiniMax WS path",
+  "candidate": "Force llm-scaler MiniMax INT4 MoE workspace up-projection decode N_TILE=3",
+  "env_delta": {
+    "VLLM_XPU_MOE_WS_UP_NTILE": "3"
+  },
+  "status": "startup_stalled_before_quality_result",
+  "quality": {
+    "raw145_n64": {
+      "json_written": false,
+      "log": "/home/steve/bench-results/minimax-m2.7-post-repro-optimization/moe-ws-up-ntile3-quality-20260521T110917Z/minimax-moe-ws-up-ntile3-raw145-n64.log",
+      "passed": false,
+      "expected_token_sha256_match": false,
+      "combined_token_sha256": null,
+      "expected_token_sha256": "267cbf30208d84929ee79284ac695467f7e80597bf8694130e1e1f8b180eb5bd",
+      "failure_reasons": [
+        "No generation result; run stalled after XCCL worker initialization before weight loading."
+      ]
+    },
+    "strict_gate_run": false,
+    "strict_gate_reason": "Raw145 n64 prerequisite did not complete."
+  },
+  "startup_observation": {
+    "log": "/home/steve/bench-results/minimax-m2.7-post-repro-optimization/moe-ws-up-ntile3-quality-20260521T110917Z/minimax-moe-ws-up-ntile3-raw145-n64.log",
+    "cache_root": "/mnt/fast-ai/vllm-cache-exp/minimax-moe-ws-up-ntile3-quality-20260521T110917Z",
+    "log_size_bytes": 11281,
+    "last_log_timestamp_local": "2026-05-21T07:09:42-04:00",
+    "last_log_stage": "XCCL worker distributed initialization",
+    "weight_loading_seen": false,
+    "graph_capture_seen": false,
+    "python_exception_seen": false,
+    "manual_cleanup": {
+      "terminated_processes": [
+        1424682,
+        1424684,
+        1424818,
+        1424887,
+        1424888,
+        1424889,
+        1424890,
+        1424673,
+        1424683
+      ],
+      "removed_stale_dev_shm_psm_handles": true
+    }
+  },
+  "decision": "reject for now; startup stall before quality or throughput data",
+  "localmaxxing": {
+    "submitted": false,
+    "reason": "No quality result and no stable throughput result."
+  },
+  "next_if_revisited": "Use a small llm-scaler kernel microbench or extra oneCCL/XCCL diagnostics before trying N_TILE=3 in the full MiniMax model path."
+}
