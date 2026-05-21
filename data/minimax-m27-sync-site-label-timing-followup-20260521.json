@@ -1,0 +1,76 @@
+{
+  "date": "2026-05-21",
+  "model": "/mnt/fast-ai/llm-models/minimax-m2.7-int4-autoround",
+  "hardware": "4x Intel Arc Pro B70 32GB",
+  "engine": "vLLM 0.20.1-local XPU with llm-scaler INT4 MiniMax WS path",
+  "purpose": "site-labeled timing follow-up for current promoted MiniMax path",
+  "quality_impact": "diagnostic labels only; no math-path promotion",
+  "graph_probe": {
+    "json": "/home/steve/bench-results/minimax-m2.7-post-repro-optimization/site-label-timing-20260521T092719Z/minimax-site-label-sync-timing-p512n256.json",
+    "log": "/home/steve/bench-results/minimax-m2.7-post-repro-optimization/site-label-timing-20260521T092719Z/minimax-site-label-sync-timing-p512n256.log",
+    "mean_output_toks_per_second": 82.71369427237117,
+    "mean_total_toks_per_second": 248.14108281711353,
+    "note": "graph capture hides many Python labels and includes cold/capture outliers"
+  },
+  "eager_sync_probe": {
+    "json": "/home/steve/bench-results/minimax-m2.7-post-repro-optimization/eager-site-label-timing-20260521T093335Z/minimax-eager-site-label-sync-timing-p512n64.json",
+    "log": "/home/steve/bench-results/minimax-m2.7-post-repro-optimization/eager-site-label-timing-20260521T093335Z/minimax-eager-site-label-sync-timing-p512n64.log",
+    "mean_output_toks_per_second": 11.346949586327908,
+    "mean_total_toks_per_second": 102.12254627695117,
+    "top_rank0_buckets": [
+      {
+        "label": "minimax.moe.experts_total",
+        "count": 8060,
+        "total_ms": 11801.351235,
+        "avg_ms": 1.464187
+      },
+      {
+        "label": "minimax.attn.qk_norm",
+        "count": 8060,
+        "total_ms": 2230.694507,
+        "avg_ms": 0.276761
+      },
+      {
+        "label": "minimax.attn.o_proj",
+        "count": 8060,
+        "total_ms": 1704.580482,
+        "avg_ms": 0.211486
+      },
+      {
+        "label": "minimax.attn.kv_attention",
+        "count": 8060,
+        "total_ms": 1481.022195,
+        "avg_ms": 0.18375
+      },
+      {
+        "label": "minimax.moe.router_linear",
+        "count": 8060,
+        "total_ms": 1024.023925,
+        "avg_ms": 0.12705
+      },
+      {
+        "label": "all_reduce:minimax.moe.output_inside_custom_op:(1, 3072):torch.float16",
+        "count": 7874,
+        "total_ms": 709.990517,
+        "avg_ms": 0.090169
+      },
+      {
+        "label": "all_reduce:minimax.attn.o_proj:(1, 3072):torch.float16",
+        "count": 7874,
+        "total_ms": 686.550361,
+        "avg_ms": 0.087192
+      },
+      {
+        "label": "all_reduce:minimax.attn.qk_var_direct_inplace:(1, 2):torch.float32",
+        "count": 7874,
+        "total_ms": 638.661374,
+        "avg_ms": 0.08111
+      }
+    ]
+  },
+  "interpretation": "No single all-reduce label is an obvious >10 tok/s win. MoE expert time remains the largest bucket; reduction work is spread across MoE output, attention output, and Q/K variance boundaries.",
+  "localmaxxing": {
+    "submitted": false,
+    "reason": "diagnostic timing only"
+  }
+}
