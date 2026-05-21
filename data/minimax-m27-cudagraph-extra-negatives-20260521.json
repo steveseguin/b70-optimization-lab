@@ -1,0 +1,66 @@
+{
+  "date": "2026-05-21",
+  "model": "/mnt/fast-ai/llm-models/minimax-m2.7-int4-autoround",
+  "hardware": {
+    "gpu": "Intel Arc Pro B70 32GB",
+    "gpu_count": 4
+  },
+  "tests": [
+    {
+      "variant": "graph_sync_replay",
+      "env": {
+        "VLLM_XPU_SYNC_CUDAGRAPH_REPLAY": "1"
+      },
+      "artifact": "/home/steve/bench-results/minimax-m2.7-post-repro-optimization/minimax-promoted-path-raw145-n512-r2-graph_sync_replay-20260521T203108Z.json",
+      "passed": false,
+      "failure_reasons": ["nondeterministic lstrip_text"],
+      "elapsed_s": 16.167695451062173,
+      "tokens_checked": 1024,
+      "distinct_generated_tokens": 31,
+      "nul_token_count": 0,
+      "control_nonspace_text_chars": 0,
+      "hashes": [
+        "faa1113318d1ee669cf204baa22dad501a6b9505a7211d13cf44a716f304e95b",
+        "4997cb6fa3255417df451c495a6e7fa74fb3fa9c53840d9bf0a5cc9d83f848e1"
+      ]
+    },
+    {
+      "variant": "graph_strong_output",
+      "env": {
+        "VLLM_XPU_CUDAGRAPH_STRONG_OUTPUT": "1"
+      },
+      "artifact": "/home/steve/bench-results/minimax-m2.7-post-repro-optimization/minimax-promoted-path-raw145-n512-r2-graph_strong_output-20260521T203738Z.json",
+      "passed": false,
+      "failure_reasons": ["nondeterministic lstrip_text"],
+      "elapsed_s": 10.56916979397647,
+      "tokens_checked": 1024,
+      "distinct_generated_tokens": 32,
+      "nul_token_count": 0,
+      "control_nonspace_text_chars": 0,
+      "hashes": [
+        "faa1113318d1ee669cf204baa22dad501a6b9505a7211d13cf44a716f304e95b",
+        "a11faf4686d443d462920ecb294fd56e58dab48f474c39e40dc6fede2caafcfc"
+      ]
+    },
+    {
+      "variant": "graph_recapture_after_1",
+      "env": {
+        "VLLM_XPU_CUDAGRAPH_RECAPTURE_AFTER_N_REPLAYS": "1"
+      },
+      "artifact_log": "/home/steve/bench-results/minimax-m2.7-post-repro-optimization/minimax-promoted-path-raw145-n512-r2-graph_recapture1-20260521T203408Z.log",
+      "status": "engine_error",
+      "error": "CUDA graph capturing detected at an inappropriate time. This operation is currently disabled."
+    },
+    {
+      "variant": "graph_full_decode_only",
+      "flag": "--cudagraph-mode full_decode_only",
+      "artifact_log": "/home/steve/bench-results/minimax-m2.7-post-repro-optimization/minimax-promoted-path-raw145-n512-r2-graph_full_decode_only-20260521T204126Z.log",
+      "status": "engine_error",
+      "error": "The sycl_ext_oneapi_work_group_scratch_memory feature is not yet available for use with the SYCL Graph extension."
+    }
+  ],
+  "decision": {
+    "submit_to_localmaxxing": false,
+    "reason": "All tests are negative diagnostics. They either fail exact repeatability or fail engine startup."
+  }
+}
