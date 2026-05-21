@@ -1,0 +1,87 @@
+{
+  "date": "2026-05-21",
+  "candidate": "qk-prefill-skipclone-fp32n1024",
+  "decision": "not_promoted",
+  "localmaxxing_submission": "not_submitted",
+  "reason_not_promoted": "Exact-token canary passed and warm throughput improved versus the promoted warm p512/n1536 baseline, but PyTorch reported vllm::all_reduce custom-op aliasing warnings. The path is therefore not clean enough for publication or promotion.",
+  "model": "/mnt/fast-ai/llm-models/minimax-m2.7-int4-autoround",
+  "hardware": {
+    "gpu": "Intel Arc Pro B70 32GB",
+    "gpu_count": 4,
+    "vram_gb_per_gpu": 32
+  },
+  "engine": {
+    "name": "vLLM",
+    "backend": "xpu",
+    "tensor_parallel_size": 4,
+    "llm_scaler_moe": true,
+    "dtype": "float16",
+    "block_size": 256
+  },
+  "base_env": "repro/minimax-m27-b70-89tps-20260520/configs/promoted-env.sh",
+  "candidate_env_delta": {
+    "VLLM_XPU_CUSTOM_ALLREDUCE_SKIP_CLONE_FP32_MAX_NUMEL": "1024"
+  },
+  "quality": {
+    "raw145_n64_exact_passed": true,
+    "expected_combined_token_sha256": "267cbf30208d84929ee79284ac695467f7e80597bf8694130e1e1f8b180eb5bd",
+    "observed_combined_token_sha256": "267cbf30208d84929ee79284ac695467f7e80597bf8694130e1e1f8b180eb5bd",
+    "degenerate_output_check": "passed",
+    "control_or_nul_check": "passed"
+  },
+  "warm_throughput": {
+    "prompt_source": "vllm_random_text",
+    "prompt_tokens": 512,
+    "output_tokens": 1536,
+    "warmup_repeats": 1,
+    "measured_repeats": 4,
+    "mean_output_toks_per_second": 94.30268790353395,
+    "mean_total_toks_per_second": 125.73691720471194,
+    "stdev_output_toks_per_second": 1.9665883556648043,
+    "repeats": [
+      {
+        "repeat": 0,
+        "output_toks_per_second": 93.07471067793652,
+        "total_toks_per_second": 124.0996142372487,
+        "token_sha256": "935dba9ce89dcb0ff2d923fb7e630b3c14f10df08efd66b8f83e9088e9c00d2d"
+      },
+      {
+        "repeat": 1,
+        "output_toks_per_second": 93.86994573251376,
+        "total_toks_per_second": 125.15992764335166,
+        "token_sha256": "e351b2bfbad4c4ec1d8749f1841ba7995d676963b4476bd92631e89aa1e409ef"
+      },
+      {
+        "repeat": 2,
+        "output_toks_per_second": 93.06807532943897,
+        "total_toks_per_second": 124.09076710591863,
+        "token_sha256": "a21efd6a086a358c3a5c56d44d257bbd4ae5cb205aa26f7fdd7161ff3dd179c3"
+      },
+      {
+        "repeat": 3,
+        "output_toks_per_second": 97.19801987424655,
+        "total_toks_per_second": 129.59735983232875,
+        "token_sha256": "30ad7f7151f6f5c2b53da5456cc4e5b774fd7703d105ea78a4add924b9338774"
+      }
+    ],
+    "promoted_warm_random_text_baseline_output_toks_per_second": 92.374916,
+    "promoted_warm_random_text_baseline_total_toks_per_second": 123.166555
+  },
+  "warnings": {
+    "pytorch_custom_op_alias_warning": true,
+    "warning_summary": "vllm::all_reduce returned a tensor aliasing an input; PyTorch says this is deprecated and will become an error in PyTorch 2.12."
+  },
+  "artifacts": {
+    "quality_json": "/home/steve/bench-results/minimax-m2.7-post-repro-optimization/qk-prefill-skipclone-fp32n1024-20260521T030812Z/minimax-qk-prefill-skipclone-fp32n1024-raw145-n64.json",
+    "quality_log": "/home/steve/bench-results/minimax-m2.7-post-repro-optimization/qk-prefill-skipclone-fp32n1024-20260521T030812Z/minimax-qk-prefill-skipclone-fp32n1024-raw145-n64.log",
+    "warm_json": "/home/steve/bench-results/minimax-m2.7-post-repro-optimization/qk-prefill-skipclone-fp32n1024-warm-20260521T031421Z/minimax-qk-prefill-skipclone-fp32n1024-warm-vllm-random-text-p512n1536.json",
+    "warm_log": "/home/steve/bench-results/minimax-m2.7-post-repro-optimization/qk-prefill-skipclone-fp32n1024-warm-20260521T031421Z/minimax-qk-prefill-skipclone-fp32n1024-warm-vllm-random-text-p512n1536.log"
+  },
+  "next_candidate": {
+    "description": "Alias-safe FP32 Q/K variance in-place custom all-reduce through 512-token prefill shapes.",
+    "env_delta": {
+      "VLLM_XPU_CUSTOM_ALLREDUCE_SKIP_CLONE_FP32_MAX_NUMEL": "0",
+      "VLLM_XPU_CUSTOM_ALLREDUCE_TINY_FP32_INPLACE_MAX_NUMEL": "1024"
+    }
+  }
+}
