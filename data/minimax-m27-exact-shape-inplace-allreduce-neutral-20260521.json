@@ -1,0 +1,73 @@
+{
+  "date": "2026-05-21",
+  "model": "/mnt/fast-ai/llm-models/minimax-m2.7-int4-autoround",
+  "hardware": "4x Intel Arc Pro B70 32GB",
+  "engine": "vLLM XPU 0.20.1-local",
+  "quantization": "AutoRound INT4 W4A16",
+  "candidate": {
+    "description": "Default-off exact-shape gate for vLLM XPU custom all_reduce_inplace",
+    "env": "VLLM_XPU_CUSTOM_ALLREDUCE_INPLACE_SHAPES",
+    "tested_values": [
+      "float16:2x3072",
+      "float16:1x3072;float16:2x3072"
+    ]
+  },
+  "benchmark": {
+    "prompt_tokens": 512,
+    "output_tokens": 1536,
+    "context_length": 2048,
+    "max_num_batched_tokens": 512,
+    "block_size": 256,
+    "tensor_parallel": 4,
+    "warmup_repeats": 1,
+    "measured_repeats": 4,
+    "paired_control": {
+      "env": "unset",
+      "mean_output_tps": 92.42571144685999,
+      "mean_total_tps": 123.23428192914665,
+      "stdev_output_tps": 0.03859314770052348,
+      "output_tps": [
+        92.42569589263583,
+        92.3747684362352,
+        92.46814235028542,
+        92.43423910828349
+      ],
+      "json": "/home/steve/bench-results/minimax-m2.7-post-repro-optimization/default-after-shape-gate-control-20260521T085327Z/minimax-default-after-shape-gate-control-p512n1536.json"
+    },
+    "candidate_2x3072": {
+      "env": "float16:2x3072",
+      "mean_output_tps": 92.37930164127474,
+      "mean_total_tps": 123.1724021883663,
+      "stdev_output_tps": 0.029758389219016974,
+      "output_tps": [
+        92.34509719960222,
+        92.37483552910959,
+        92.41759858124927,
+        92.37967525513784
+      ],
+      "json": "/home/steve/bench-results/minimax-m2.7-post-repro-optimization/inplace-shape-2x3072-screen-20260521T083822Z/minimax-inplace-shape-2x3072-screen-p512n1536.json"
+    },
+    "candidate_1x2x3072": {
+      "env": "float16:1x3072;float16:2x3072",
+      "mean_output_tps": 92.44688225577443,
+      "mean_total_tps": 123.26250967436592,
+      "stdev_output_tps": 0.030445084763367963,
+      "output_tps": [
+        92.41449455096613,
+        92.42819741937706,
+        92.47868034688716,
+        92.46615670586739
+      ],
+      "delta_vs_control_output_tps": 0.021170808914436986,
+      "delta_vs_control_percent": 0.022905755209568904,
+      "json": "/home/steve/bench-results/minimax-m2.7-post-repro-optimization/inplace-shapes-1x2x3072-screen-20260521T084603Z/minimax-inplace-shapes-1x2x3072-screen-p512n1536.json"
+    }
+  },
+  "validation": {
+    "py_compile": true,
+    "harness_bash_n": true,
+    "strict_quality_gate_run": false,
+    "reason": "Screen delta was inside normal run noise; no promotion claim."
+  },
+  "decision": "neutral; keep default-off knob for diagnostics, do not promote"
+}
