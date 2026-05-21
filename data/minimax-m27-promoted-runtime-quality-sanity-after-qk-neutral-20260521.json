@@ -1,0 +1,63 @@
+{
+  "date_utc": "2026-05-21",
+  "status": "quality_passed",
+  "purpose": "Verify the restored promoted runtime after removing a rejected Q/K AR+apply custom-op candidate.",
+  "model": "/mnt/fast-ai/llm-models/minimax-m2.7-int4-autoround",
+  "engine": "vllm",
+  "hardware": {
+    "gpu_name": "Intel Arc Pro B70",
+    "gpu_count": 4,
+    "vram_gb_per_gpu": 32
+  },
+  "configuration": {
+    "tensor_parallel_size": 4,
+    "dtype": "float16",
+    "max_model_len": 2048,
+    "max_num_batched_tokens": 512,
+    "max_num_seqs": 1,
+    "block_size": 256,
+    "bench_repeats": 0,
+    "run_extended_quality": true,
+    "run_repeat_arithmetic_quality": true,
+    "repeat_arithmetic_runs": 16,
+    "promoted_env": "repro/minimax-m27-b70-89tps-20260520/configs/promoted-env.sh"
+  },
+  "summary_artifact": "/home/steve/bench-results/minimax-m2.7-post-repro-optimization/quality-sanity-after-qk-neutral-20260521/minimax-promoted-runtime-sanity-after-qk-neutral-20260521-strict-tp4-ctx2048-mbt512-bs256-20260521T022011Z-summary.json",
+  "quality_dir": "/home/steve/bench-results/minimax-m2.7-post-repro-optimization/quality-sanity-after-qk-neutral-20260521/minimax-promoted-runtime-sanity-after-qk-neutral-20260521-strict-tp4-ctx2048-mbt512-bs256-20260521T022011Z-quality",
+  "quality_checks": [
+    {
+      "name": "raw145-n64-exact",
+      "passed": true,
+      "combined_token_sha256": "267cbf30208d84929ee79284ac695467f7e80597bf8694130e1e1f8b180eb5bd"
+    },
+    {
+      "name": "raw145-n256-exact",
+      "passed": true,
+      "combined_token_sha256": "58f6e8251c7a0a17e8c441278b5861f7d5da914fa1823ecd10484b296f2d7537"
+    },
+    {
+      "name": "semantic-suite-n64-r2",
+      "passed": true,
+      "combined_token_sha256": "adacbf144264486ea7d378ebb6a4c0ba23951b72c4cf86251a762b07ebef5805"
+    },
+    {
+      "name": "arithmetic-repeat-n64-r16",
+      "passed": true,
+      "combined_token_sha256": "578ec378bf31cb16fb49ac5c0043270fd00a0f7898e18ac498a41ffe775d7994"
+    },
+    {
+      "name": "extended-sixpack-n64-r2",
+      "passed": true,
+      "combined_token_sha256": "1e3560554f57b2b56cec8f49f28bc8ba12e9e0ced26bdc99a976f1433c99caa7"
+    }
+  ],
+  "post_run_cleanup": {
+    "vllm_processes_remaining": false,
+    "stale_dev_shm_entries_remaining": false,
+    "shutdown_warning": "Bad address (src/pipe.cpp:367) after successful summary write; Python resource_tracker cleaned leaked semaphore/shared_memory objects."
+  },
+  "localmaxxing": {
+    "submitted": false,
+    "reason": "Quality-only sanity checkpoint, no new performance result."
+  }
+}
