@@ -40,13 +40,19 @@ if ! jq -e 'type == "object"' >/dev/null <<<"$COMPILATION_CONFIG_JSON"; then
   exit 2
 fi
 COMPILATION_CONFIG_JSON="$(jq -c . <<<"$COMPILATION_CONFIG_JSON")"
-CACHE_ROOT="${VLLM_CACHE_ROOT:-/mnt/fast-ai/vllm-cache-exp/minimax-strict-${LABEL}}"
 RAW145_PROMPT="${RAW145_PROMPT:-/home/steve/llm-optimizations-publish/prompts/minimax-raw145-tokenhash-canary.txt}"
 RAW145_N64_HASH="${RAW145_N64_HASH:-267cbf30208d84929ee79284ac695467f7e80597bf8694130e1e1f8b180eb5bd}"
 RAW145_N256_HASH="${RAW145_N256_HASH:-58f6e8251c7a0a17e8c441278b5861f7d5da914fa1823ecd10484b296f2d7537}"
 
 mkdir -p "$OUTDIR"
 ts="$(date -u +%Y%m%dT%H%M%SZ)"
+if [ -n "${CACHE_ROOT:-}" ]; then
+  CACHE_ROOT="$CACHE_ROOT"
+elif [ "${STRICT_REUSE_INHERITED_VLLM_CACHE_ROOT:-0}" -eq 1 ] && [ -n "${VLLM_CACHE_ROOT:-}" ]; then
+  CACHE_ROOT="$VLLM_CACHE_ROOT"
+else
+  CACHE_ROOT="/mnt/fast-ai/vllm-cache-exp/minimax-strict-${LABEL}-${ts}"
+fi
 stem="minimax-${LABEL}-strict-tp${TP}-ctx${MAX_MODEL_LEN}-mbt${MAX_BATCHED_TOKENS}-bs${BLOCK_SIZE}-${ts}"
 summary_json="$OUTDIR/${stem}-summary.json"
 quality_dir="$OUTDIR/${stem}-quality"
@@ -103,6 +109,14 @@ case "$ATTENTION_BACKEND" in
     bench_attention_backend_args=(--attention-backend "$ATTENTION_BACKEND")
     ;;
 esac
+
+qk_rms_helper_args=()
+if [ "${VLLM_MINIMAX_QK_RMS_XPU_HELPER:-0}" -eq 1 ]; then
+  qk_rms_helper_args=(
+    --qk-rms-xpu-helper
+    --qk-rms-xpu-helper-max-tokens "${VLLM_MINIMAX_QK_RMS_XPU_HELPER_MAX_TOKENS:-4}"
+  )
+fi
 
 start_quality_startup_guard() {
   local name="$1"
@@ -174,6 +188,7 @@ run_quality_check() {
       --determinism-mode lstrip_text \
       --qk-norm-restore-weight \
       --qk-norm-restore-weight-min-tokens "$VLLM_MINIMAX_QK_NORM_RESTORE_WEIGHT_MIN_TOKENS" \
+      "${qk_rms_helper_args[@]}" \
       --vllm-cache-root "$CACHE_ROOT" \
       "$@" 2>&1 | tee "$log"
   local statuses=("${PIPESTATUS[@]}")
@@ -218,6 +233,7 @@ run_semantic_suite() {
       --determinism-mode lstrip_text \
       --qk-norm-restore-weight \
       --qk-norm-restore-weight-min-tokens "$VLLM_MINIMAX_QK_NORM_RESTORE_WEIGHT_MIN_TOKENS" \
+      "${qk_rms_helper_args[@]}" \
       --vllm-cache-root "$CACHE_ROOT" \
       --require-prompt-substring 0:PASS \
       --require-prompt-substring 1:42 \
@@ -265,6 +281,7 @@ run_repeat_arithmetic_suite() {
       --determinism-mode lstrip_text \
       --qk-norm-restore-weight \
       --qk-norm-restore-weight-min-tokens "$VLLM_MINIMAX_QK_NORM_RESTORE_WEIGHT_MIN_TOKENS" \
+      "${qk_rms_helper_args[@]}" \
       --vllm-cache-root "$CACHE_ROOT" \
       --require-prompt-substring 0:42 \
       --require-prompt-regex '0:^\s*42\s*$' \
@@ -313,6 +330,7 @@ run_extended_suite() {
       --async-scheduling "$QUALITY_ASYNC_SCHEDULING" \
       --qk-norm-restore-weight \
       --qk-norm-restore-weight-min-tokens "$VLLM_MINIMAX_QK_NORM_RESTORE_WEIGHT_MIN_TOKENS" \
+      "${qk_rms_helper_args[@]}" \
       --vllm-cache-root "$CACHE_ROOT" \
       --require-prompt-substring 0:PASS \
       --require-prompt-substring 1:42 \
@@ -374,6 +392,7 @@ write_summary() {
     --arg vllm_minimax_moe_output_allreduce_inside_custom_op "${VLLM_MINIMAX_MOE_OUTPUT_ALLREDUCE_INSIDE_CUSTOM_OP:-}" \
     --arg vllm_minimax_moe_output_direct_allreduce "${VLLM_MINIMAX_MOE_OUTPUT_DIRECT_ALLREDUCE:-}" \
     --arg vllm_minimax_moe_full_forward_custom_op "${VLLM_MINIMAX_MOE_FULL_FORWARD_CUSTOM_OP:-}" \
+    --arg vllm_minimax_moe_full_forward_index_custom_op "${VLLM_MINIMAX_MOE_FULL_FORWARD_INDEX_CUSTOM_OP:-}" \
     --arg vllm_minimax_moe_full_forward_custom_op_max_tokens "${VLLM_MINIMAX_MOE_FULL_FORWARD_CUSTOM_OP_MAX_TOKENS:-}" \
     --arg vllm_minimax_post_attn_norm_moe_custom_op "${VLLM_MINIMAX_POST_ATTN_NORM_MOE_CUSTOM_OP:-}" \
     --arg vllm_minimax_post_attn_norm_moe_custom_op_max_tokens "${VLLM_MINIMAX_POST_ATTN_NORM_MOE_CUSTOM_OP_MAX_TOKENS:-}" \
@@ -391,13 +410,18 @@ write_summary() {
     --arg vllm_xpu_use_llm_scaler_moe_ws "${VLLM_XPU_USE_LLM_SCALER_MOE_WS:-}" \
     --arg vllm_xpu_llm_scaler_moe_minimax_skip_redundant_contiguous "${VLLM_XPU_LLM_SCALER_MOE_MINIMAX_SKIP_REDUNDANT_CONTIGUOUS:-}" \
     --arg vllm_xpu_minimax_ws_reuse_internal "${VLLM_XPU_MINIMAX_WS_REUSE_INTERNAL:-}" \
+    --arg vllm_xpu_minimax_ws_reuse_decode_buffers "${VLLM_XPU_MINIMAX_WS_REUSE_DECODE_BUFFERS:-}" \
+    --arg vllm_xpu_minimax_ws_reuse_intermediates "${VLLM_XPU_MINIMAX_WS_REUSE_INTERMEDIATES:-}" \
+    --arg vllm_xpu_minimax_ws_reuse_topk_buffers "${VLLM_XPU_MINIMAX_WS_REUSE_TOPK_BUFFERS:-}" \
     --arg vllm_xpu_moe_ws_up_ntile "${VLLM_XPU_MOE_WS_UP_NTILE:-}" \
     --arg vllm_xpu_moe_ws_down_htile "${VLLM_XPU_MOE_WS_DOWN_HTILE:-}" \
     --arg vllm_minimax_m2_candidate_router_topm "${VLLM_MINIMAX_M2_CANDIDATE_ROUTER_TOPM:-}" \
     --arg vllm_minimax_m2_candidate_router_xpu_repair "${VLLM_MINIMAX_M2_CANDIDATE_ROUTER_XPU_REPAIR:-}" \
     --arg vllm_minimax_m2_clone_final_hidden "${VLLM_MINIMAX_M2_CLONE_FINAL_HIDDEN:-}" \
     --arg vllm_minimax_m2_fp16_router "${VLLM_MINIMAX_M2_FP16_ROUTER:-}" \
+    --arg vllm_minimax_qk_rms_direct_inplace_scale "${VLLM_MINIMAX_QK_RMS_DIRECT_INPLACE_SCALE:-}" \
     --arg vllm_minimax_qk_rms_apply_tp_scale "${VLLM_MINIMAX_QK_RMS_APPLY_TP_SCALE:-}" \
+    --arg vllm_minimax_qk_rms_post_ar_apply_custom_op "${VLLM_MINIMAX_QK_RMS_POST_AR_APPLY_CUSTOM_OP:-}" \
     --arg vllm_minimax_qk_rms_allreduce_scale_op "${VLLM_MINIMAX_QK_RMS_ALLREDUCE_SCALE_OP:-}" \
     --arg vllm_minimax_qk_rms_xpu_helper "${VLLM_MINIMAX_QK_RMS_XPU_HELPER:-}" \
     --arg vllm_minimax_qk_rms_xpu_helper_inplace_allreduce "${VLLM_MINIMAX_QK_RMS_XPU_HELPER_INPLACE_ALLREDUCE:-}" \
@@ -471,6 +495,7 @@ write_summary() {
         VLLM_MINIMAX_MOE_OUTPUT_ALLREDUCE_INSIDE_CUSTOM_OP: $vllm_minimax_moe_output_allreduce_inside_custom_op,
         VLLM_MINIMAX_MOE_OUTPUT_DIRECT_ALLREDUCE: $vllm_minimax_moe_output_direct_allreduce,
         VLLM_MINIMAX_MOE_FULL_FORWARD_CUSTOM_OP: $vllm_minimax_moe_full_forward_custom_op,
+        VLLM_MINIMAX_MOE_FULL_FORWARD_INDEX_CUSTOM_OP: $vllm_minimax_moe_full_forward_index_custom_op,
         VLLM_MINIMAX_MOE_FULL_FORWARD_CUSTOM_OP_MAX_TOKENS: $vllm_minimax_moe_full_forward_custom_op_max_tokens,
         VLLM_MINIMAX_POST_ATTN_NORM_MOE_CUSTOM_OP: $vllm_minimax_post_attn_norm_moe_custom_op,
         VLLM_MINIMAX_POST_ATTN_NORM_MOE_CUSTOM_OP_MAX_TOKENS: $vllm_minimax_post_attn_norm_moe_custom_op_max_tokens,
@@ -492,13 +517,18 @@ write_summary() {
         VLLM_XPU_USE_LLM_SCALER_MOE_WS: $vllm_xpu_use_llm_scaler_moe_ws,
         VLLM_XPU_LLM_SCALER_MOE_MINIMAX_SKIP_REDUNDANT_CONTIGUOUS: $vllm_xpu_llm_scaler_moe_minimax_skip_redundant_contiguous,
         VLLM_XPU_MINIMAX_WS_REUSE_INTERNAL: $vllm_xpu_minimax_ws_reuse_internal,
+        VLLM_XPU_MINIMAX_WS_REUSE_DECODE_BUFFERS: $vllm_xpu_minimax_ws_reuse_decode_buffers,
+        VLLM_XPU_MINIMAX_WS_REUSE_INTERMEDIATES: $vllm_xpu_minimax_ws_reuse_intermediates,
+        VLLM_XPU_MINIMAX_WS_REUSE_TOPK_BUFFERS: $vllm_xpu_minimax_ws_reuse_topk_buffers,
         VLLM_XPU_MOE_WS_UP_NTILE: $vllm_xpu_moe_ws_up_ntile,
         VLLM_XPU_MOE_WS_DOWN_HTILE: $vllm_xpu_moe_ws_down_htile,
         VLLM_MINIMAX_M2_CANDIDATE_ROUTER_TOPM: $vllm_minimax_m2_candidate_router_topm,
         VLLM_MINIMAX_M2_CANDIDATE_ROUTER_XPU_REPAIR: $vllm_minimax_m2_candidate_router_xpu_repair,
         VLLM_MINIMAX_M2_CLONE_FINAL_HIDDEN: $vllm_minimax_m2_clone_final_hidden,
         VLLM_MINIMAX_M2_FP16_ROUTER: $vllm_minimax_m2_fp16_router,
+        VLLM_MINIMAX_QK_RMS_DIRECT_INPLACE_SCALE: $vllm_minimax_qk_rms_direct_inplace_scale,
         VLLM_MINIMAX_QK_RMS_APPLY_TP_SCALE: $vllm_minimax_qk_rms_apply_tp_scale,
+        VLLM_MINIMAX_QK_RMS_POST_AR_APPLY_CUSTOM_OP: $vllm_minimax_qk_rms_post_ar_apply_custom_op,
         VLLM_MINIMAX_QK_RMS_ALLREDUCE_SCALE_OP: $vllm_minimax_qk_rms_allreduce_scale_op,
         VLLM_MINIMAX_QK_RMS_XPU_HELPER: $vllm_minimax_qk_rms_xpu_helper,
         VLLM_MINIMAX_QK_RMS_XPU_HELPER_INPLACE_ALLREDUCE: $vllm_minimax_qk_rms_xpu_helper_inplace_allreduce,
