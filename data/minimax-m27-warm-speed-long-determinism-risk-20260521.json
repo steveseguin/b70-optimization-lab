@@ -1,0 +1,98 @@
+{
+  "date": "2026-05-21",
+  "model": "/mnt/fast-ai/llm-models/minimax-m2.7-int4-autoround",
+  "hardware": {
+    "gpu": "Intel Arc Pro B70 32GB",
+    "gpu_count": 4
+  },
+  "runtime": {
+    "engine": "vLLM XPU",
+    "tensor_parallel_size": 4,
+    "dtype": "float16",
+    "max_model_len": 2048,
+    "max_num_batched_tokens": 512,
+    "max_num_seqs": 1,
+    "block_size": 256,
+    "promoted_env": "/home/steve/llm-optimizations-publish/repro/minimax-m27-b70-89tps-20260520/configs/promoted-env.sh"
+  },
+  "strict_repeat_control": {
+    "artifact": "/home/steve/bench-results/minimax-m2.7-post-repro-optimization/minimax-promoted-path-repeat-control-strict-tp4-ctx2048-mbt512-bs256-20260521T191253Z-summary.json",
+    "status": "quality_passed",
+    "prompt_tokens": 512,
+    "output_tokens": 1536,
+    "output_toks_per_second": [
+      87.92523242238194,
+      88.02133411091143,
+      89.07037851166686
+    ],
+    "total_toks_per_second": [
+      117.23364322984258,
+      117.36177881454856,
+      118.76050468222248
+    ],
+    "mean_output_toks_per_second": 88.33898168165342,
+    "mean_total_toks_per_second": 117.78530890887122,
+    "quality_hashes": {
+      "raw145_n64": "267cbf30208d84929ee79284ac695467f7e80597bf8694130e1e1f8b180eb5bd",
+      "raw145_n256": "58f6e8251c7a0a17e8c441278b5861f7d5da914fa1823ecd10484b296f2d7537",
+      "semantic_suite": "adacbf144264486ea7d378ebb6a4c0ba23951b72c4cf86251a762b07ebef5805",
+      "arithmetic_repeat_r8": "261779104d5abf1642713bfc560ca8d2d6c0f16edbcc929c8b0819b5a760dd7c"
+    }
+  },
+  "warm_persistent_probe": {
+    "artifact": "/home/steve/bench-results/minimax-m2.7-post-repro-optimization/minimax-promoted-path-warm-repeat-p512n1536-20260521T193211Z.json",
+    "prompt_tokens": 512,
+    "output_tokens": 1536,
+    "warmup_repeats": 1,
+    "measured_repeats": 4,
+    "output_toks_per_second": [
+      93.50293876665498,
+      93.44913106066542,
+      93.43185552197785,
+      93.47918949289242
+    ],
+    "total_toks_per_second": [
+      124.67058502220665,
+      124.59884141422057,
+      124.57580736263714,
+      124.63891932385656
+    ],
+    "mean_output_toks_per_second": 93.46577871054767,
+    "mean_total_toks_per_second": 124.62103828073023,
+    "stdev_output_toks_per_second": 0.031562878102510426,
+    "token_hashes_varied": true,
+    "localmaxxing_submission": "not_submitted"
+  },
+  "long_exact_repeat_check": {
+    "artifact": "/home/steve/bench-results/minimax-m2.7-post-repro-optimization/minimax-promoted-path-raw145-n1536-r2-20260521T193639Z.json",
+    "prompt": "raw145",
+    "max_tokens": 1536,
+    "runs": 2,
+    "passed": false,
+    "failure_reasons": [
+      "nondeterministic lstrip_text"
+    ],
+    "combined_token_sha256": "6b50fa7d8119aca3a1504a2dc0b59cfc5bf6597aae90f7466c2a35b28107272f",
+    "total_generated_tokens_checked": 3072,
+    "distinct_generated_token_count": 41,
+    "nul_token_count": 0,
+    "control_nonspace_text_chars": 0,
+    "degenerate_output": false,
+    "first_difference": {
+      "token_index": 13,
+      "run0_token": 16793,
+      "run1_token": 10
+    }
+  },
+  "decision": {
+    "promote_warm_probe": false,
+    "submit_to_localmaxxing": false,
+    "reason": "Warm speed is stable, but long greedy exact-repeat quality failed on raw145 n1536. Treat as a diagnostic result until graph/eager and semantic-long checks clarify whether this is benign prompt near-tie drift or a reproducibility defect."
+  },
+  "next_diagnostics": [
+    "raw145 exact-repeat n512 and n1024",
+    "long semantic prompts at n512 and n1536 with required correctness checks",
+    "graph vs eager comparison for long raw145",
+    "persistent-engine quality-gated warm benchmark harness"
+  ]
+}
