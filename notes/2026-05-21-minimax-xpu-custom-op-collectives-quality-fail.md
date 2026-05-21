@@ -31,6 +31,28 @@ NUL/control tokens. The harness also reported `disable_custom_all_reduce=false`,
 confirming the environment switch materially changed the collective dispatch
 path instead of being a no-op.
 
+## Follow-Up Isolation
+
+I reran the same raw145 n64 gate with the promoted tiny in-place FP32
+collective disabled:
+
+```
+VLLM_XPU_USE_CUSTOM_OP_COLLECTIVES=1
+VLLM_XPU_CUSTOM_ALLREDUCE_TINY_FP32_INPLACE_MAX_NUMEL=0
+VLLM_XPU_CUSTOM_ALLREDUCE_INPLACE_MAX_NUMEL=0
+```
+
+That produced the same corrupt token hash and NUL/control output pattern:
+
+- Combined token SHA256:
+  `242152df6909e5e25433f43875de5e51c210d146a22279611852b695bcf7d978`
+- NUL token count: `63`
+- `disable_custom_all_reduce=false`
+
+So the failure is not isolated to the tiny in-place FP32 micro-optimization;
+the broader XPU custom-op collective dispatch path is unsafe on this local
+stack.
+
 ## Decision
 
 Reject. This is not a speed candidate because it corrupts deterministic output
@@ -49,5 +71,9 @@ dispatch path.
   `/home/steve/bench-results/minimax-m2.7-post-repro-optimization/custom-op-collectives-quality-20260521T112122Z/minimax-custom-op-collectives-raw145-n64.json`
 - Raw145 n64 failed quality log:
   `/home/steve/bench-results/minimax-m2.7-post-repro-optimization/custom-op-collectives-quality-20260521T112122Z/minimax-custom-op-collectives-raw145-n64.log`
+- Out-of-place-only follow-up failed quality JSON:
+  `/home/steve/bench-results/minimax-m2.7-post-repro-optimization/custom-op-collectives-outplace-quality-20260521T112944Z/minimax-custom-op-collectives-outplace-raw145-n64.json`
+- Out-of-place-only follow-up failed quality log:
+  `/home/steve/bench-results/minimax-m2.7-post-repro-optimization/custom-op-collectives-outplace-quality-20260521T112944Z/minimax-custom-op-collectives-outplace-raw145-n64.log`
 - Summary data:
   `data/minimax-m27-xpu-custom-op-collectives-quality-fail-20260521.json`
