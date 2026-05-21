@@ -1,0 +1,22 @@
+diff --git a/vllm/model_executor/layers/quantization/moe_wna16.py b/vllm/model_executor/layers/quantization/moe_wna16.py
+--- a/vllm/model_executor/layers/quantization/moe_wna16.py
++++ b/vllm/model_executor/layers/quantization/moe_wna16.py
+@@
+     def _llm_scaler_moe_ws_requested(self) -> bool:
+         return os.environ.get("VLLM_XPU_USE_LLM_SCALER_MOE_WS", "0") == "1"
+ 
++    def _llm_scaler_moe_apply_max_tokens(self) -> int:
++        # The llm-scaler N-major INT4 kernel accepts up to 64 tokens. Keep the
++        # historical decode-only default unless an experiment opts into prefill.
++        requested = int(
++            os.environ.get("VLLM_XPU_LLM_SCALER_MOE_APPLY_MAX_TOKENS", "4")
++        )
++        return max(1, min(requested, 64))
++
+@@
+             getattr(layer, "_llm_scaler_moe_u4_decode", False)
+             and shared_experts_input is None
+             and x.dtype in (torch.float16, torch.bfloat16)
+-            and x.shape[0] <= 4
++            and x.shape[0] <= self._llm_scaler_moe_apply_max_tokens()
+         ):
