@@ -36,6 +36,27 @@
       "disable_custom_all_reduce": false,
       "llm_scaler_moe": true
     },
+    "raw145_n64_outplace_only_followup": {
+      "env_delta": {
+        "VLLM_XPU_USE_CUSTOM_OP_COLLECTIVES": "1",
+        "VLLM_XPU_CUSTOM_ALLREDUCE_TINY_FP32_INPLACE_MAX_NUMEL": "0",
+        "VLLM_XPU_CUSTOM_ALLREDUCE_INPLACE_MAX_NUMEL": "0"
+      },
+      "json": "/home/steve/bench-results/minimax-m2.7-post-repro-optimization/custom-op-collectives-outplace-quality-20260521T112944Z/minimax-custom-op-collectives-outplace-raw145-n64.json",
+      "log": "/home/steve/bench-results/minimax-m2.7-post-repro-optimization/custom-op-collectives-outplace-quality-20260521T112944Z/minimax-custom-op-collectives-outplace-raw145-n64.log",
+      "passed": false,
+      "expected_token_sha256_match": false,
+      "combined_token_sha256": "242152df6909e5e25433f43875de5e51c210d146a22279611852b695bcf7d978",
+      "expected_token_sha256": "267cbf30208d84929ee79284ac695467f7e80597bf8694130e1e1f8b180eb5bd",
+      "failure_reasons": [
+        "combined token hash mismatch",
+        "degenerate or corrupt generated output"
+      ],
+      "nul_token_count": 63,
+      "control_char_output": true,
+      "disable_custom_all_reduce": false,
+      "interpretation": "Disabling tiny/in-place custom all-reduce did not repair output; the broader custom-op collective dispatch path is unsafe."
+    },
     "strict_gate_run": false,
     "strict_gate_reason": "Raw145 n64 exact-output gate failed with degenerate NUL/control output."
   },
