@@ -140,7 +140,11 @@ def main() -> None:
 
     from vllm import LLM, SamplingParams
 
-    compilation_config = {"compile_sizes": [1]}
+    compilation_config = {
+        "use_inductor_graph_partition": True,
+        "compile_sizes": [1],
+        "cudagraph_mode": "PIECEWISE",
+    }
     if args.compilation_config_json:
         compilation_override = json.loads(args.compilation_config_json)
         if not isinstance(compilation_override, dict):
