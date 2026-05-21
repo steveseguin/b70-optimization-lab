@@ -2,6 +2,8 @@
 
 Date: 2026-05-21
 
+LocalMaxxing: `cmpfjjo9v0003qj018ainfuey` (`APPROVED`)
+
 ## Question
 
 Can the existing llm-scaler N-major INT4 MoE path, which accepts up to 64 tokens, be used for small prefill chunks without changing MiniMax routing quality?
