@@ -1,0 +1,159 @@
+{
+  "date": "2026-05-21",
+  "model": "/mnt/fast-ai/llm-models/minimax-m2.7-int4-autoround",
+  "hardware": {
+    "gpu": "Intel Arc Pro B70 32GB",
+    "gpu_count": 4
+  },
+  "runtime_base": {
+    "engine": "vLLM XPU",
+    "tensor_parallel_size": 4,
+    "dtype": "float16",
+    "max_model_len": 2048,
+    "max_num_batched_tokens": 512,
+    "max_num_seqs": 1,
+    "block_size": 256
+  },
+  "raw145_n512_variants": [
+    {
+      "variant": "graph_default",
+      "artifact": "/home/steve/bench-results/minimax-m2.7-post-repro-optimization/minimax-promoted-path-raw145-n512-r2-graph-20260521T194559Z.json",
+      "passed": false,
+      "failure_reasons": ["nondeterministic lstrip_text"],
+      "elapsed_s": 10.594413583981805,
+      "tokens_checked": 1024,
+      "distinct_generated_tokens": 34,
+      "nul_token_count": 0,
+      "control_nonspace_text_chars": 0,
+      "hashes": [
+        "faa1113318d1ee669cf204baa22dad501a6b9505a7211d13cf44a716f304e95b",
+        "559c997dc6026aab91df928a73054df5e7d5b8c675b851dc456d43d00ac0a553"
+      ]
+    },
+    {
+      "variant": "graph_async_off",
+      "artifact": "/home/steve/bench-results/minimax-m2.7-post-repro-optimization/minimax-promoted-path-raw145-n512-r2-graph_async_off-20260521T195542Z.json",
+      "passed": false,
+      "failure_reasons": ["nondeterministic lstrip_text"],
+      "elapsed_s": 15.349931599921547,
+      "tokens_checked": 1024,
+      "distinct_generated_tokens": 33,
+      "nul_token_count": 0,
+      "control_nonspace_text_chars": 0,
+      "hashes": [
+        "faa1113318d1ee669cf204baa22dad501a6b9505a7211d13cf44a716f304e95b",
+        "677ad2d016c8323fed02cf3755d56636f8bb6dc73ad2822ab32d522802c2cba6"
+      ]
+    },
+    {
+      "variant": "graph_warmups2",
+      "artifact": "/home/steve/bench-results/minimax-m2.7-post-repro-optimization/minimax-promoted-path-raw145-n512-r2-graph_warmups2-20260521T201239Z.json",
+      "passed": false,
+      "failure_reasons": ["nondeterministic lstrip_text"],
+      "elapsed_s": 14.839312745956704,
+      "tokens_checked": 1024,
+      "distinct_generated_tokens": 34,
+      "nul_token_count": 0,
+      "control_nonspace_text_chars": 0,
+      "hashes": [
+        "faa1113318d1ee669cf204baa22dad501a6b9505a7211d13cf44a716f304e95b",
+        "dd52b00805a488af2dd861cd277fd3b18788524db89320dc96a10dabfbd9efb0"
+      ]
+    },
+    {
+      "variant": "graph_copy_inputs",
+      "artifact": "/home/steve/bench-results/minimax-m2.7-post-repro-optimization/minimax-promoted-path-raw145-n512-r2-graph_copy_inputs-20260521T201807Z.json",
+      "passed": false,
+      "failure_reasons": ["nondeterministic lstrip_text"],
+      "elapsed_s": 15.02611367101781,
+      "tokens_checked": 1024,
+      "distinct_generated_tokens": 35,
+      "nul_token_count": 0,
+      "control_nonspace_text_chars": 0,
+      "hashes": [
+        "faa1113318d1ee669cf204baa22dad501a6b9505a7211d13cf44a716f304e95b",
+        "ffc07d0add4b7c3e90c8c2ecc145c8197d4443d7ac27aa1774584da793d68837"
+      ]
+    },
+    {
+      "variant": "graph_cudagraph_none",
+      "artifact": "/home/steve/bench-results/minimax-m2.7-post-repro-optimization/minimax-promoted-path-raw145-n512-r2-graph_cudagraph_none-20260521T200116Z.json",
+      "passed": true,
+      "failure_reasons": [],
+      "elapsed_s": 30.813499317970127,
+      "tokens_checked": 1024,
+      "distinct_generated_tokens": 28,
+      "nul_token_count": 0,
+      "control_nonspace_text_chars": 0,
+      "hashes": [
+        "faa1113318d1ee669cf204baa22dad501a6b9505a7211d13cf44a716f304e95b",
+        "faa1113318d1ee669cf204baa22dad501a6b9505a7211d13cf44a716f304e95b"
+      ]
+    },
+    {
+      "variant": "eager",
+      "artifact": "/home/steve/bench-results/minimax-m2.7-post-repro-optimization/minimax-promoted-path-raw145-n512-r2-eager-20260521T195158Z.json",
+      "passed": true,
+      "failure_reasons": [],
+      "elapsed_s": 62.00765532604419,
+      "tokens_checked": 1024,
+      "distinct_generated_tokens": 28,
+      "nul_token_count": 0,
+      "control_nonspace_text_chars": 0,
+      "hashes": [
+        "faa1113318d1ee669cf204baa22dad501a6b9505a7211d13cf44a716f304e95b",
+        "faa1113318d1ee669cf204baa22dad501a6b9505a7211d13cf44a716f304e95b"
+      ]
+    }
+  ],
+  "raw145_long_graph": [
+    {
+      "max_tokens": 1024,
+      "artifact": "/home/steve/bench-results/minimax-m2.7-post-repro-optimization/minimax-promoted-path-raw145-n1024-r2-graph-20260521T194835Z.json",
+      "passed": false,
+      "failure_reasons": ["nondeterministic lstrip_text"],
+      "tokens_checked": 2048,
+      "distinct_generated_tokens": 34,
+      "nul_token_count": 0,
+      "control_nonspace_text_chars": 0
+    },
+    {
+      "max_tokens": 1536,
+      "artifact": "/home/steve/bench-results/minimax-m2.7-post-repro-optimization/minimax-promoted-path-raw145-n1536-r2-20260521T193639Z.json",
+      "passed": false,
+      "failure_reasons": ["nondeterministic lstrip_text"],
+      "tokens_checked": 3072,
+      "distinct_generated_tokens": 41,
+      "nul_token_count": 0,
+      "control_nonspace_text_chars": 0
+    }
+  ],
+  "warm_cudagraph_none_p512_n1536": {
+    "artifact": "/home/steve/bench-results/minimax-m2.7-post-repro-optimization/minimax-promoted-path-warm-cudagraph-none-p512n1536-20260521T200719Z.json",
+    "mean_output_toks_per_second": 41.70286180020981,
+    "mean_total_toks_per_second": 55.60381573361309,
+    "stdev_output_toks_per_second": 0.15341261892363772,
+    "min_output_toks_per_second": 41.575482718909,
+    "max_output_toks_per_second": 41.87316446800801,
+    "token_hashes_identical": true
+  },
+  "semantic_default_n512_graph": {
+    "artifact": "/home/steve/bench-results/minimax-m2.7-post-repro-optimization/minimax-promoted-path-semantic-default-n512-r2-graph-20260521T202406Z.json",
+    "passed": false,
+    "failure_reasons": ["nondeterministic lstrip_text"],
+    "semantic_marker_regexes_passed": true,
+    "tokens_checked": 2824,
+    "distinct_generated_tokens": 580,
+    "nul_token_count": 0,
+    "control_nonspace_text_chars": 0,
+    "degenerate_output": false,
+    "quality_harness_note": "The semantic markers are too weak for full long-answer quality certification; they only prove non-collapse and basic task-topic coverage."
+  },
+  "decision": {
+    "promote_fast_graph_as_quality_certified": false,
+    "submit_new_localmaxxing_result": false,
+    "quality_clean_fallback": "graph_cudagraph_none",
+    "quality_clean_fallback_output_toks_per_second": 41.70286180020981,
+    "reason": "Fast cudagraph replay is the high-performance path, but it fails exact greedy repeatability at n512+ even when async scheduling is off, capture warmups are increased, or cudagraph input-copy mode is enabled."
+  }
+}
