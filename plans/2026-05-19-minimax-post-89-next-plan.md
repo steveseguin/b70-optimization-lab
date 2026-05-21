@@ -296,3 +296,14 @@ lower-level source candidates. The highest-value next steps are:
    kernel/collective boundaries rather than Python wrapper reductions:
    Q/K variance allreduce+RMS, attention `o_proj` hidden allreduce, and
    MoE-output epilogue/allreduce remain the credible targets.
+
+2026-05-21 update: the current-stack Q/K compiler-pass retest is quality-clean
+but not a performance win. It passed fresh-cache strict quality, including exact
+raw145 n64/n256 token hashes, 8x arithmetic repeat, and extended six-pack, but
+process-level p512/n1536 averaged only `88.50` output tok/s. Logs also report
+`minimax_allreduce_rms_qk op not found`, so the requested compiler pass is
+disabled rather than using a real fused backend op. The useful outcome is a
+strict-harness hardening: fresh cache roots are now the default and promoted
+Q/K helper flags are passed into the quality checker. Do not submit this result
+to LocalMaxxing; move next to implementing the missing backend op or another
+true lower-level fusion.
