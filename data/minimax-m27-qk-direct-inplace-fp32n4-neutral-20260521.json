@@ -1,0 +1,88 @@
+{
+  "date_utc": "2026-05-21",
+  "status": "rejected_not_promoted",
+  "reason": "Full strict quality passed, but paired same-method throughput was only 0.04907582% above control, inside normal run noise.",
+  "model": "/mnt/fast-ai/llm-models/minimax-m2.7-int4-autoround",
+  "engine": "vllm",
+  "hardware": {
+    "gpu_name": "Intel Arc Pro B70",
+    "gpu_count": 4,
+    "vram_gb_per_gpu": 32
+  },
+  "candidate_flags": {
+    "VLLM_MINIMAX_QK_RMS_DIRECT_INPLACE_MAX_NUMEL": "4"
+  },
+  "quality": {
+    "status": "passed",
+    "strict_summary": "/home/steve/bench-results/minimax-m2.7-strict-candidates/minimax-minimax-qk-direct-inplace-fp32n4-20260521-strict-tp4-ctx2048-mbt512-bs256-20260521T072922Z-summary.json",
+    "checks": [
+      "raw145-n64-exact",
+      "raw145-n256-exact",
+      "semantic-suite-n64-r2",
+      "arithmetic-repeat-n64-r16",
+      "extended-sixpack-n64-r2"
+    ],
+    "reference_hashes": {
+      "raw145_n64": "267cbf30208d84929ee79284ac695467f7e80597bf8694130e1e1f8b180eb5bd",
+      "raw145_n256": "58f6e8251c7a0a17e8c441278b5861f7d5da914fa1823ecd10484b296f2d7537",
+      "arithmetic_repeat": "578ec378bf31cb16fb49ac5c0043270fd00a0f7898e18ac498a41ffe775d7994",
+      "extended_sixpack": "1e3560554f57b2b56cec8f49f28bc8ba12e9e0ced26bdc99a976f1433c99caa7"
+    }
+  },
+  "paired_control": {
+    "description": "Same warm throughput method, default VLLM_MINIMAX_QK_RMS_DIRECT_INPLACE_MAX_NUMEL=2, explicit PIECEWISE compilation config.",
+    "artifact": "/home/steve/bench-results/minimax-m2.7-post-repro-optimization/default-qk-direct-fp32n2-piecewise-warm-20260521T075759Z/minimax-default-qk-direct-fp32n2-piecewise-warm-p512n1536.json",
+    "tensor_parallel_size": 4,
+    "dtype": "float16",
+    "max_model_len": 2048,
+    "max_num_batched_tokens": 512,
+    "max_num_seqs": 1,
+    "block_size": 256,
+    "prompt_source": "vllm_random_text",
+    "prompt_seed": 20260520,
+    "prompt_tokens": 512,
+    "output_tokens": 1536,
+    "warmup_repeats": 1,
+    "measured_repeats": 4,
+    "init_elapsed_s": 316.90817079297267,
+    "mean_output_toks_per_second": 92.33362148462794,
+    "mean_total_toks_per_second": 123.11149531283725,
+    "min_output_toks_per_second": 92.29467966250229,
+    "max_output_toks_per_second": 92.35862614168634,
+    "stdev_output_toks_per_second": 0.028955376740153298
+  },
+  "candidate_screen": {
+    "artifact": "/home/steve/bench-results/minimax-m2.7-post-repro-optimization/qk-direct-inplace-fp32n4-piecewise-warm-20260521T075028Z/minimax-qk-direct-inplace-fp32n4-piecewise-warm-p512n1536.json",
+    "tensor_parallel_size": 4,
+    "dtype": "float16",
+    "max_model_len": 2048,
+    "max_num_batched_tokens": 512,
+    "max_num_seqs": 1,
+    "block_size": 256,
+    "prompt_source": "vllm_random_text",
+    "prompt_seed": 20260520,
+    "prompt_tokens": 512,
+    "output_tokens": 1536,
+    "warmup_repeats": 1,
+    "measured_repeats": 4,
+    "init_elapsed_s": 319.46847187308595,
+    "mean_output_toks_per_second": 92.37893496264927,
+    "mean_total_toks_per_second": 123.17191328353235,
+    "min_output_toks_per_second": 92.35860955358888,
+    "max_output_toks_per_second": 92.41567999618775,
+    "stdev_output_toks_per_second": 0.025381703821963593
+  },
+  "delta_vs_paired_control": {
+    "output_toks_per_second": 0.04531347802133,
+    "output_percent": 0.04907582,
+    "interpretation": "Within normal run noise; do not promote."
+  },
+  "runtime_findings": {
+    "full_graph_attempt_without_piecewise": "Failed before generation in XPU FlashAttention graph capture because sycl_ext_oneapi_work_group_scratch_memory is not yet available with SYCL Graph.",
+    "recommendation": "Keep explicit PIECEWISE graph config for reproducible MiniMax runs on the current stack."
+  },
+  "localmaxxing": {
+    "submitted": false,
+    "reason": "Quality-clean but neutral optimization screen, not a promoted result."
+  }
+}
