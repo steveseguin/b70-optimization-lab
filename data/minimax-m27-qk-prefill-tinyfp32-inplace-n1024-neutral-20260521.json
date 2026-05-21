@@ -1,0 +1,77 @@
+{
+  "date": "2026-05-21",
+  "candidate": "qk-prefill-tinyfp32-inplace-n1024",
+  "decision": "quality_safe_neutral_not_promoted",
+  "localmaxxing_submission": "not_submitted",
+  "model": "/mnt/fast-ai/llm-models/minimax-m2.7-int4-autoround",
+  "hardware": {
+    "gpu": "Intel Arc Pro B70 32GB",
+    "gpu_count": 4,
+    "vram_gb_per_gpu": 32
+  },
+  "engine": {
+    "name": "vLLM",
+    "backend": "xpu",
+    "tensor_parallel_size": 4,
+    "llm_scaler_moe": true,
+    "dtype": "float16",
+    "block_size": 256
+  },
+  "base_env": "repro/minimax-m27-b70-89tps-20260520/configs/promoted-env.sh",
+  "candidate_env_delta": {
+    "VLLM_XPU_CUSTOM_ALLREDUCE_SKIP_CLONE_FP32_MAX_NUMEL": "0",
+    "VLLM_XPU_CUSTOM_ALLREDUCE_TINY_FP32_INPLACE_MAX_NUMEL": "1024"
+  },
+  "quality": {
+    "raw145_n64_exact_passed": true,
+    "expected_combined_token_sha256": "267cbf30208d84929ee79284ac695467f7e80597bf8694130e1e1f8b180eb5bd",
+    "observed_combined_token_sha256": "267cbf30208d84929ee79284ac695467f7e80597bf8694130e1e1f8b180eb5bd",
+    "degenerate_output_check": "passed",
+    "control_or_nul_check": "passed",
+    "pytorch_custom_op_alias_warning": false
+  },
+  "warm_throughput": {
+    "prompt_source": "vllm_random_text",
+    "prompt_tokens": 512,
+    "output_tokens": 1536,
+    "warmup_repeats": 1,
+    "measured_repeats": 4,
+    "mean_output_toks_per_second": 92.75441156733979,
+    "mean_total_toks_per_second": 123.67254875645304,
+    "stdev_output_toks_per_second": 0.03153326426241411,
+    "repeats": [
+      {
+        "repeat": 0,
+        "output_toks_per_second": 92.73973684105654,
+        "total_toks_per_second": 123.65298245474206,
+        "token_sha256": "2622aecacc4a3e8bfdf0166111de398a781dd929d1a05779d6849e13cdb98752"
+      },
+      {
+        "repeat": 1,
+        "output_toks_per_second": 92.7382299416305,
+        "total_toks_per_second": 123.65097325550732,
+        "token_sha256": "7487e2afbb7080f5069ac9339703af7ef25eaf4d6cb10aae2de7abf03519f1af"
+      },
+      {
+        "repeat": 2,
+        "output_toks_per_second": 92.80169716345996,
+        "total_toks_per_second": 123.73559621794661,
+        "token_sha256": "3fac9c3526d994c1d811b34cc573c43e8eaad4b5901cb57ac04eea50c0c41415"
+      },
+      {
+        "repeat": 3,
+        "output_toks_per_second": 92.73798232321215,
+        "total_toks_per_second": 123.6506430976162,
+        "token_sha256": "0a4f78455562122a4b92be3c0f85e7ff5c237e2524a1de24a72499519f1c6b6a"
+      }
+    ],
+    "promoted_warm_random_text_baseline_output_toks_per_second": 92.374916,
+    "promoted_warm_random_text_baseline_total_toks_per_second": 123.166555
+  },
+  "artifacts": {
+    "quality_json": "/home/steve/bench-results/minimax-m2.7-post-repro-optimization/qk-prefill-tinyfp32-inplace-n1024-20260521T032237Z/minimax-qk-prefill-tinyfp32-inplace-n1024-raw145-n64.json",
+    "quality_log": "/home/steve/bench-results/minimax-m2.7-post-repro-optimization/qk-prefill-tinyfp32-inplace-n1024-20260521T032237Z/minimax-qk-prefill-tinyfp32-inplace-n1024-raw145-n64.log",
+    "warm_json": "/home/steve/bench-results/minimax-m2.7-post-repro-optimization/qk-prefill-tinyfp32-inplace-n1024-warm-20260521T032828Z/minimax-qk-prefill-tinyfp32-inplace-n1024-warm-vllm-random-text-p512n1536.json",
+    "warm_log": "/home/steve/bench-results/minimax-m2.7-post-repro-optimization/qk-prefill-tinyfp32-inplace-n1024-warm-20260521T032828Z/minimax-qk-prefill-tinyfp32-inplace-n1024-warm-vllm-random-text-p512n1536.log"
+  }
+}
