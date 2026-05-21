@@ -92,6 +92,27 @@ control_nonspace_text_chars=0
 nul_token_count=0
 ```
 
+## Real-Weight Lower-Level Gate
+
+The lower-level prefill chain was checked against real MiniMax-M2.7 AutoRound
+layer-0 weights from `model-00001-of-00023.safetensors`, TP rank 0. This gate
+does not use `moe_prefill_full_int4`; it feeds
+`moe_prefill_gather_forward_v2`, `moe_prefill_up_forward_v2`,
+`moe_prefill_down_forward_v2`, and `moe_prefill_accumulate_forward_v2` with
+externally supplied MiniMax-correct top-k ids and weights.
+
+Results:
+
+| Tokens | Unique experts | Max abs vs fp16 reference | Mean abs vs fp16 reference | Pass |
+| ---: | ---: | ---: | ---: | :--- |
+| 1 | 8 | 1.1444e-05 | 1.2256e-06 | yes |
+| 4 | 32 | 2.2113e-05 | 1.9145e-06 | yes |
+
+Both checks passed with `atol=1e-4` and `rtol=0.05`. This clears a per-layer
+math gate for the lower-level llm-scaler INT4 prefill ops, while keeping the
+MiniMax router semantics outside the op. It is still not a model-level
+throughput result and is not submitted to LocalMaxxing.
+
 ## Next Gate
 
 Preserve or reconstruct the original per-rank int32 AutoRound/GPTQ weights,
