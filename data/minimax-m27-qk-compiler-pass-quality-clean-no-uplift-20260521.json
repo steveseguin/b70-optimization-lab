@@ -1,0 +1,72 @@
+{
+  "label": "current-stack-qk-pass-freshcache-quality-20260521",
+  "date": "2026-05-21",
+  "model": "/mnt/fast-ai/llm-models/minimax-m2.7-int4-autoround",
+  "hardware": "4x Intel Arc Pro B70 32GB",
+  "engine": "vLLM 0.20.1-local XPU with llm-scaler MiniMax INT4 path",
+  "candidate": {
+    "compilation_config": {
+      "use_inductor_graph_partition": true,
+      "compile_sizes": [
+        1
+      ],
+      "cudagraph_mode": "PIECEWISE",
+      "pass_config": {
+        "fuse_minimax_qk_norm": true
+      }
+    },
+    "decision": "rejected_no_process_level_uplift",
+    "localmaxxing_submission": false,
+    "reason": "Quality-clean, but mean process-level p512/n1536 output tok/s was below the existing public 89.31 tok/s result. Logs also report minimax_allreduce_rms_qk op not found, so the requested pass was disabled."
+  },
+  "harness_changes": {
+    "strict_harness_avoids_inherited_vllm_cache_root_by_default": true,
+    "explicit_cache_reuse_knobs": [
+      "CACHE_ROOT",
+      "STRICT_REUSE_INHERITED_VLLM_CACHE_ROOT=1"
+    ],
+    "strict_harness_passes_qk_rms_xpu_helper_arg_when_env_enabled": true
+  },
+  "quality": {
+    "status": "passed",
+    "summary_json": "/home/steve/bench-results/minimax-m2.7-strict-candidates/minimax-current-stack-qk-pass-freshcache-quality-20260521-strict-tp4-ctx2048-mbt512-bs256-20260521T064156Z-summary.json",
+    "raw145_n64_hash": "267cbf30208d84929ee79284ac695467f7e80597bf8694130e1e1f8b180eb5bd",
+    "raw145_n256_hash": "58f6e8251c7a0a17e8c441278b5861f7d5da914fa1823ecd10484b296f2d7537",
+    "semantic_suite": "passed",
+    "arithmetic_repeat_runs": 8,
+    "arithmetic_repeat": "passed",
+    "extended_sixpack": "passed"
+  },
+  "throughput": {
+    "benchmark_dir": "/home/steve/bench-results/minimax-m2.7-post-repro-optimization/current-stack-qk-pass-quality-passed-bench-20260521T065829Z",
+    "prompt_tokens": 512,
+    "output_tokens": 1536,
+    "context_length": 2048,
+    "batch_size": 1,
+    "output_toks_per_second": [
+      88.56779821734904,
+      88.36527501065598,
+      88.9364091619186,
+      88.11162765163547
+    ],
+    "total_toks_per_second": [
+      118.09039762313203,
+      117.82036668087464,
+      118.58187888255813,
+      117.48217020218064
+    ],
+    "mean_output_toks_per_second": 88.49527751038977,
+    "mean_total_toks_per_second": 117.99370334718637,
+    "stdev_output_toks_per_second": 0.30163896091919856
+  },
+  "observations": [
+    "Fresh cache strict quality passed after stale-cache mismatch was avoided.",
+    "The Q/K compiler pass logs minimax_allreduce_rms_qk op not found, MiniMaxQKNormPass disabled.",
+    "One quality engine exit emitted Bad address from src/pipe.cpp:367 after a passing JSON artifact."
+  ],
+  "next_steps": [
+    "Implement the missing backend Q/K allreduce+RMS op or an equivalent lower-level XPU/SYCL fusion.",
+    "Keep strict fresh-cache quality gating as default for candidate promotion.",
+    "Continue using process-level stock-style results for public claims and warm-only results only for debugging."
+  ]
+}
