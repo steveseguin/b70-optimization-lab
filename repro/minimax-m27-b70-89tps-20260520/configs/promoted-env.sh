@@ -6,7 +6,10 @@ set -euo pipefail
 export MODEL="${MODEL:-/mnt/fast-ai/llm-models/minimax-m2.7-int4-autoround}"
 export VENV="${VENV:-$HOME/.venvs/vllm-xpu}"
 export LLM_SCALER_KERNELS="${LLM_SCALER_KERNELS:-$HOME/src/llm-scaler/vllm/custom-esimd-kernels-vllm/python}"
-export VLLM_CACHE_ROOT="${VLLM_CACHE_ROOT:-/mnt/fast-ai/vllm-cache-exp/minimax-moe-full-forward-customop-plus-output-ar-20260519}"
+# Keep this in a cache namespace that has passed the raw145 n64+n256 gate.
+# The older 20260519 cache root produced a deterministic but wrong n256 hash
+# on 2026-05-21, so do not reuse stale compiled artifacts blindly.
+export VLLM_CACHE_ROOT="${VLLM_CACHE_ROOT:-/mnt/fast-ai/vllm-cache-exp/minimax-quality-clean-20260521T152425Z}"
 export HF_HOME="${HF_HOME:-/mnt/fast-ai/llm-cache/hf}"
 export TRANSFORMERS_CACHE="${TRANSFORMERS_CACHE:-$HF_HOME/transformers}"
 
