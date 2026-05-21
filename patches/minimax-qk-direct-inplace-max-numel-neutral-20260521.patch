@@ -1,0 +1,34 @@
+diff --git a/vllm/model_executor/models/minimax_m2.py b/vllm/model_executor/models/minimax_m2.py
+--- a/vllm/model_executor/models/minimax_m2.py
++++ b/vllm/model_executor/models/minimax_m2.py
+@@
+ _MINIMAX_QK_RMS_DIRECT_INPLACE_SCALE = (
+     os.environ.get("VLLM_MINIMAX_QK_RMS_DIRECT_INPLACE_SCALE", "0") == "1"
+ )
++_MINIMAX_QK_RMS_DIRECT_INPLACE_MAX_NUMEL = int(
++    os.environ.get("VLLM_MINIMAX_QK_RMS_DIRECT_INPLACE_MAX_NUMEL", "2")
++)
+ _MINIMAX_QK_RMS_APPLY_TP_SCALE = (
+     os.environ.get("VLLM_MINIMAX_QK_RMS_APPLY_TP_SCALE", "0") == "1"
+ )
+@@
+                     if (
+                         _MINIMAX_QK_RMS_DIRECT_INPLACE_SCALE
+                         and qk_var.dtype == torch.float32
+-                        and qk_var.numel() <= 2
++                        and qk_var.numel()
++                        <= _MINIMAX_QK_RMS_DIRECT_INPLACE_MAX_NUMEL
+                         and hasattr(torch.ops, "vllm")
+                         and hasattr(torch.ops.vllm, "all_reduce_inplace")
+                     ):
+diff --git a/scripts/run-minimax-strict-quality-gated-candidate.sh b/scripts/run-minimax-strict-quality-gated-candidate.sh
+--- a/scripts/run-minimax-strict-quality-gated-candidate.sh
++++ b/scripts/run-minimax-strict-quality-gated-candidate.sh
+@@
+     --arg vllm_minimax_qk_rms_direct_inplace_scale "${VLLM_MINIMAX_QK_RMS_DIRECT_INPLACE_SCALE:-}" \
++    --arg vllm_minimax_qk_rms_direct_inplace_max_numel "${VLLM_MINIMAX_QK_RMS_DIRECT_INPLACE_MAX_NUMEL:-}" \
+     --arg vllm_minimax_qk_rms_apply_tp_scale "${VLLM_MINIMAX_QK_RMS_APPLY_TP_SCALE:-}" \
+@@
+         VLLM_MINIMAX_QK_RMS_DIRECT_INPLACE_SCALE: $vllm_minimax_qk_rms_direct_inplace_scale,
++        VLLM_MINIMAX_QK_RMS_DIRECT_INPLACE_MAX_NUMEL: $vllm_minimax_qk_rms_direct_inplace_max_numel,
+         VLLM_MINIMAX_QK_RMS_APPLY_TP_SCALE: $vllm_minimax_qk_rms_apply_tp_scale,
