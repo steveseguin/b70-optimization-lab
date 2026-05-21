@@ -74,6 +74,15 @@ Not promoted. No LocalMaxxing submission. The build and smoke are useful
 because they identify a viable prefill-op test surface and the required packed
 zero representation.
 
+Important semantic guardrail: `moe_prefill_full_int4` is not directly
+MiniMax-correct as-is. Its all-in-one path calls `moe_topk_v2_host`, which is a
+softmax TopK router. MiniMax M2 routing uses sigmoid scores plus
+`e_score_correction_bias`, then top-k renormalization. To preserve quality, a
+MiniMax integration must bypass the all-in-one router and use the lower-level
+`moe_prefill_gather_forward_v2`, `moe_prefill_up_forward_v2`,
+`moe_prefill_down_forward_v2`, and `moe_prefill_accumulate_forward_v2` ops with
+the current vLLM MiniMax router outputs.
+
 The promoted decode path was rechecked after the prefill-only extension build.
 The raw145 n64 canary still passed exactly:
 
@@ -85,7 +94,8 @@ nul_token_count=0
 
 ## Next Gate
 
-Preserve or reconstruct the original per-rank int32 AutoRound/GPTQ weights
-needed by `moe_prefill_full_int4`, then compare one MoE layer against the
-current vLLM prefill path with real weights. Only after exact/tolerance layer
-equivalence should this be exposed behind a runtime env flag.
+Preserve or reconstruct the original per-rank int32 AutoRound/GPTQ weights,
+feed the lower-level prefill ops with MiniMax-correct router outputs, then
+compare one MoE layer against the current vLLM prefill path with real weights.
+Only after exact/tolerance layer equivalence should this be exposed behind a
+runtime env flag.
