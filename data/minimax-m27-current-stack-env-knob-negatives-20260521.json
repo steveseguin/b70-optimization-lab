@@ -1,0 +1,75 @@
+{
+  "date": "2026-05-21",
+  "model": "/mnt/fast-ai/llm-models/minimax-m2.7-int4-autoround",
+  "hardware": {
+    "gpu": "Intel Arc Pro B70",
+    "gpu_count": 4,
+    "tensor_parallel_size": 4
+  },
+  "reference": {
+    "warm_accepted_output_toks_per_second": 93.4436231838881,
+    "warm_accepted_total_toks_per_second": 124.59149757851748,
+    "restored_control_output_toks_per_second": 89.69634848857118,
+    "restored_control_total_toks_per_second": 119.5951313180949,
+    "workload": {
+      "prompt_tokens": 512,
+      "output_tokens": 1536,
+      "context_length": 2048,
+      "max_num_batched_tokens": 512,
+      "block_size": 256,
+      "batch_size": 1
+    }
+  },
+  "quality_hashes": {
+    "raw145_n64": "267cbf30208d84929ee79284ac695467f7e80597bf8694130e1e1f8b180eb5bd",
+    "raw145_n256": "58f6e8251c7a0a17e8c441278b5861f7d5da914fa1823ecd10484b296f2d7537",
+    "arithmetic_per_run": "def6899500b2364bc97d561fc5f9cc78aa9fbcd5a0eb032eab1f2c6735d2bbec"
+  },
+  "screens": [
+    {
+      "label": "minimax-currentstack-ccl-pidfd-20260521",
+      "env_delta": {
+        "CCL_ZE_IPC_EXCHANGE": "pidfd"
+      },
+      "status": "quality_passed_rejected_for_speed",
+      "summary_json": "/home/steve/bench-results/minimax-m2.7-post-repro-optimization/minimax-minimax-currentstack-ccl-pidfd-20260521-strict-tp4-ctx2048-mbt512-bs256-20260521T163724Z-summary.json",
+      "bench_jsons": [
+        "/home/steve/bench-results/minimax-m2.7-post-repro-optimization/vllm-minimax-m27-autoround-tp4-p512n1536-20260521T165037Z.json",
+        "/home/steve/bench-results/minimax-m2.7-post-repro-optimization/vllm-minimax-m27-autoround-tp4-p512n1536-20260521T165326Z.json"
+      ],
+      "output_toks_per_second": [
+        89.2126283207363,
+        87.46240591926873
+      ],
+      "mean_output_toks_per_second": 88.33751712000252,
+      "total_toks_per_second": [
+        118.95017109431507,
+        116.61654122569163
+      ],
+      "mean_total_toks_per_second": 117.78335616000335
+    },
+    {
+      "label": "minimax-currentstack-strong-cudagraph-output-20260521",
+      "env_delta": {
+        "VLLM_XPU_CUDAGRAPH_STRONG_OUTPUT": "1"
+      },
+      "status": "quality_passed_rejected_for_speed",
+      "summary_json": "/home/steve/bench-results/minimax-m2.7-post-repro-optimization/minimax-minimax-currentstack-strong-cudagraph-output-20260521-strict-tp4-ctx2048-mbt512-bs256-20260521T165856Z-summary.json",
+      "bench_jsons": [
+        "/home/steve/bench-results/minimax-m2.7-post-repro-optimization/vllm-minimax-m27-autoround-tp4-p512n1536-20260521T171214Z.json",
+        "/home/steve/bench-results/minimax-m2.7-post-repro-optimization/vllm-minimax-m27-autoround-tp4-p512n1536-20260521T171507Z.json"
+      ],
+      "output_toks_per_second": [
+        89.0528031374169,
+        89.594216099124
+      ],
+      "mean_output_toks_per_second": 89.32350961827045,
+      "total_toks_per_second": [
+        118.73707084988921,
+        119.458954798832
+      ],
+      "mean_total_toks_per_second": 119.09801282436061
+    }
+  ],
+  "decision": "Do not promote either flag. Both passed quality but were slower than the accepted warm baseline."
+}
