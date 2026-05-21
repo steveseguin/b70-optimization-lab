@@ -69,7 +69,42 @@
         119.458954798832
       ],
       "mean_total_toks_per_second": 119.09801282436061
+    },
+    {
+      "label": "minimax-currentstack-qkv-narrow-split-20260521",
+      "env_delta": {
+        "VLLM_MINIMAX_QKV_NARROW_SPLIT": "1"
+      },
+      "status": "quality_passed_rejected_for_speed_and_compiler_noise",
+      "summary_json": "/home/steve/bench-results/minimax-m2.7-post-repro-optimization/minimax-minimax-currentstack-qkv-narrow-split-20260521-strict-tp4-ctx2048-mbt512-bs256-20260521T172232Z-summary.json",
+      "bench_jsons": [
+        "/home/steve/bench-results/minimax-m2.7-post-repro-optimization/vllm-minimax-m27-autoround-tp4-p512n1536-20260521T173557Z.json",
+        "/home/steve/bench-results/minimax-m2.7-post-repro-optimization/vllm-minimax-m27-autoround-tp4-p512n1536-20260521T173855Z.json"
+      ],
+      "quality_hashes": {
+        "raw145_n64": "267cbf30208d84929ee79284ac695467f7e80597bf8694130e1e1f8b180eb5bd",
+        "raw145_n256": "58f6e8251c7a0a17e8c441278b5861f7d5da914fa1823ecd10484b296f2d7537",
+        "semantic_suite": "adacbf144264486ea7d378ebb6a4c0ba23951b72c4cf86251a762b07ebef5805",
+        "arithmetic_per_run": "def6899500b2364bc97d561fc5f9cc78aa9fbcd5a0eb032eab1f2c6735d2bbec"
+      },
+      "output_toks_per_second": [
+        89.70473285604653,
+        89.98158842609955
+      ],
+      "mean_output_toks_per_second": 89.84316064107304,
+      "total_toks_per_second": [
+        119.60631047472872,
+        119.9754512347994
+      ],
+      "mean_total_toks_per_second": 119.79088085476405,
+      "compiler_noise": {
+        "observed": true,
+        "component": "ocloc / IGC",
+        "kernel": "triton_red_fused__to_copy_mm_t_9",
+        "message": "IGC: Internal Compiler Error: Floating point exception",
+        "device": "bmg"
+      }
     }
   ],
-  "decision": "Do not promote either flag. Both passed quality but were slower than the accepted warm baseline."
+  "decision": "Do not promote these flags. All passed strict quality, but none exceeded the accepted warm baseline; the QKV narrow-split candidate also produced repeated Intel compiler fallback noise."
 }
