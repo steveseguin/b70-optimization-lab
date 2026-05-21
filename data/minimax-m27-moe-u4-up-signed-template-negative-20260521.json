@@ -1,0 +1,56 @@
+{
+  "date": "2026-05-21",
+  "model": "/mnt/fast-ai/llm-models/minimax-m2.7-int4-autoround",
+  "hardware": "4x Intel Arc Pro B70 32GB",
+  "candidate": "moe-u4-up-signed-template",
+  "status": "rejected_quality_clean_no_speed_uplift",
+  "source_tree": "/mnt/fast-ai/src/llm-scaler-promoted-rebuild-20260520T120230Z",
+  "source_file": "vllm/custom-esimd-kernels-vllm/csrc/moe_batch/moe_int4.sycl",
+  "change": {
+    "summary": "Compile-time specialization for MiniMax U4 WS up routed INT4 decode path instead of runtime signed_compact branch.",
+    "signed_path": "kept for generic S4 kernels",
+    "unsigned_path": "MiniMax U4 dispatches to SIGNED_COMPACT=false"
+  },
+  "build": {
+    "safe_compiler": "/opt/intel/oneapi/compiler/2025.3/env/vars.sh",
+    "unsafe_compiler_observation": "/opt/intel/oneapi/setvars.sh --force selected oneAPI 2026.0 and produced import-time segfault",
+    "script": "/home/steve/llm-optimizations-publish/scripts/build-llm-scaler-moe-int4-xpu.sh",
+    "log": "/home/steve/bench-results/minimax-m2.7-post-repro-optimization/build-moe-int4-u4-oneapi2025-20260521T175842Z.log",
+    "import_smoke": "passed"
+  },
+  "quality": {
+    "summary_json": "/home/steve/bench-results/minimax-m2.7-post-repro-optimization/minimax-moe-u4-up-signed-template-strict-tp4-ctx2048-mbt512-bs256-20260521T180057Z-summary.json",
+    "raw145_n64_sha256": "267cbf30208d84929ee79284ac695467f7e80597bf8694130e1e1f8b180eb5bd",
+    "raw145_n256_sha256": "58f6e8251c7a0a17e8c441278b5861f7d5da914fa1823ecd10484b296f2d7537",
+    "semantic_suite_sha256": "adacbf144264486ea7d378ebb6a4c0ba23951b72c4cf86251a762b07ebef5805",
+    "arithmetic_repeat_r8_combined_sha256": "261779104d5abf1642713bfc560ca8d2d6c0f16edbcc929c8b0819b5a760dd7c",
+    "passed": true
+  },
+  "benchmark": {
+    "prompt_tokens": 512,
+    "output_tokens": 1536,
+    "tensor_parallel": 4,
+    "context_length": 2048,
+    "batch_size": 1,
+    "output_toks_per_second": [
+      90.49815448305996,
+      90.59183102976552
+    ],
+    "mean_output_toks_per_second": 90.54499275641274,
+    "total_toks_per_second": [
+      120.66420597741327,
+      120.78910803968735
+    ],
+    "mean_total_toks_per_second": 120.72665700855032,
+    "benchmark_jsons": [
+      "/home/steve/bench-results/minimax-m2.7-post-repro-optimization/vllm-minimax-m27-autoround-tp4-p512n1536-20260521T181418Z.json",
+      "/home/steve/bench-results/minimax-m2.7-post-repro-optimization/vllm-minimax-m27-autoround-tp4-p512n1536-20260521T181710Z.json"
+    ]
+  },
+  "comparison": {
+    "accepted_quality_clean_best_output_toks_per_second": 93.443623,
+    "promoted": false,
+    "localmaxxing_submitted": false
+  },
+  "lesson": "Removing the WS up signed/unsigned runtime branch did not produce a measurable uplift. The remaining speed limit is more likely in kernel launch/graph scheduling, top-k, collectives, or memory traffic than this branch."
+}
