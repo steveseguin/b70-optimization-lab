@@ -1,0 +1,52 @@
+{
+  "date": "2026-05-21",
+  "label": "minimax-xpu-custom-op-collectives-quality-fail-20260521",
+  "model": "/mnt/fast-ai/llm-models/minimax-m2.7-int4-autoround",
+  "hardware": "4x Intel Arc Pro B70 32GB",
+  "engine": "vLLM 0.20.1-local XPU with llm-scaler INT4 MiniMax WS path",
+  "candidate": "Enable upstream-style XPU custom-op collectives",
+  "env_delta": {
+    "VLLM_XPU_USE_CUSTOM_OP_COLLECTIVES": "1"
+  },
+  "status": "quality_failed",
+  "upstream_context": {
+    "vllm_commit": "f1e3f0e6d685082bdb313c20914099ac5ede5f14",
+    "summary": "[XPU] Use custom op collective behavior",
+    "local_behavior": "Current local tree keeps XPU custom-op collectives behind VLLM_XPU_USE_CUSTOM_OP_COLLECTIVES."
+  },
+  "quality": {
+    "raw145_n64": {
+      "json": "/home/steve/bench-results/minimax-m2.7-post-repro-optimization/custom-op-collectives-quality-20260521T112122Z/minimax-custom-op-collectives-raw145-n64.json",
+      "log": "/home/steve/bench-results/minimax-m2.7-post-repro-optimization/custom-op-collectives-quality-20260521T112122Z/minimax-custom-op-collectives-raw145-n64.log",
+      "passed": false,
+      "expected_token_sha256_match": false,
+      "combined_token_sha256": "242152df6909e5e25433f43875de5e51c210d146a22279611852b695bcf7d978",
+      "expected_token_sha256": "267cbf30208d84929ee79284ac695467f7e80597bf8694130e1e1f8b180eb5bd",
+      "failure_reasons": [
+        "combined token hash mismatch",
+        "degenerate or corrupt generated output"
+      ],
+      "distinct_generated_token_count": 2,
+      "first_distinct_generated_tokens": [
+        0,
+        21549
+      ],
+      "nul_token_count": 63,
+      "control_char_output": true,
+      "disable_custom_all_reduce": false,
+      "llm_scaler_moe": true
+    },
+    "strict_gate_run": false,
+    "strict_gate_reason": "Raw145 n64 exact-output gate failed with degenerate NUL/control output."
+  },
+  "throughput_screen": {
+    "run": false,
+    "reason": "Quality failed before speed screening."
+  },
+  "decision": "reject; quality-corrupt collective dispatch path",
+  "localmaxxing": {
+    "submitted": false,
+    "reason": "Quality failure; no valid throughput result."
+  },
+  "next_if_revisited": "Repair or isolate the XPU custom-op all-reduce implementation, then require raw145 n64/n256 plus semantic and arithmetic strict gates before any speed result is considered."
+}
