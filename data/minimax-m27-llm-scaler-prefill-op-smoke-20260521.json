@@ -15,6 +15,11 @@
   },
   "status": "not_promoted_prefill_smoke_only",
   "quality_policy": "No model-path change and no LocalMaxxing submission. Future integration must prove real-weight layer equivalence and full text quality.",
+  "semantic_guardrail": {
+    "all_in_one_prefill_full_int4_is_minimax_correct": false,
+    "reason": "moe_prefill_full_int4 uses a softmax TopK router internally, while MiniMax M2 uses sigmoid scores plus e_score_correction_bias and top-k renormalization.",
+    "safe_candidate_path": "Use lower-level moe_prefill_gather_forward_v2, moe_prefill_up_forward_v2, moe_prefill_down_forward_v2, and moe_prefill_accumulate_forward_v2 with the current vLLM MiniMax router outputs."
+  },
   "build": {
     "first_attempt": {
       "status": "failed",
@@ -97,5 +102,5 @@
     "control_nonspace_text_chars": 0,
     "nul_token_count": 0
   },
-  "next_gate": "Real-weight per-layer equivalence versus current vLLM prefill path before exposing a runtime flag."
+  "next_gate": "Real-weight per-layer equivalence using MiniMax-correct router outputs and the lower-level prefill ops before exposing a runtime flag."
 }
