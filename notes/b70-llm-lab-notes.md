@@ -98,6 +98,9 @@ INT4 AutoRound path:
 
 - `Lorbus/Qwen3.6-27B-int4-AutoRound` produced strong vLLM/XPU speed results, including `45.2 tok/s` on 1x B70 and `49.1 tok/s` on 2x B70.
 - These results are recorded on LocalMaxxing but are not counted as Q4_0 GGUF success because the quantization changes model fidelity.
+- `Lasimeri/MiniMax-M2.7-int4-AutoRound` is now the main 4x B70 MiniMax path. Strict-quality promoted public decode is `89.314 tok/s` on LocalMaxxing (`cmpct6t4m007fnw01yjdtlcs4`), with warm in-process p512/n1536 controls in the `92.4` to `92.8 tok/s` range.
+- MiniMax vLLM quality guardrails now require exact token hashes for raw145 n64/n256, semantic canaries, arithmetic repeat, and extended sixpack before any candidate speed result is promoted. Warm-only results are not submitted to LocalMaxxing unless the same stack has passed strict quality.
+- Recent exact router custom-op attempts are quality-clean but not speed wins: the non-WS router custom-op was neutral, and the stricter router+WS custom-op screened at `92.278 tok/s` versus a matched `92.415 tok/s` control, so it was rejected.
 
 ## Important Implementation Artifacts
 
@@ -128,7 +131,7 @@ vLLM/XPU FP8 work:
 - Multi-card Q4_0 improves through async tensor copies, direct allreduce, Q8 activation caching, graph fusions, fused small projections, and safe allreduce+ADD scheduling. Root-residual fused allreduce+ADD is a promising performance ceiling but is not quality-cleared until its ordering hazard with meta allreduce-add is fixed. Four-card scaling still regresses because each token pays many small 20 KiB reductions and narrower row shards lose matvec efficiency.
 - Timing hooks show synchronized allreduce cost rises sharply with GPU count: roughly `1.718 ms/token` on 2 GPUs, `5.732 ms/token` on 3 GPUs, and `10.605 ms/token` on 4 GPUs for the same reduction pattern.
 - Four-GPU root/order/topology sweeps are not enough; the next useful work is reducing the number of reductions or fusing delayed reductions through safe graph regions.
-- MiniMax M2.7 is now past the pure-capacity stage by using one RPC process per B70. The working baseline is 16.384 tok/s. The quality-correct graph diagnostic shows real reduce/broadcast must happen before nonlinear boundaries, and the current client-side RPC implementation is too slow. Simple runtime knobs did not move the layer path. The >30 tok/s target likely requires shape-specific layer kernels, implementing missing SYCL worker ops, or designing graph/tensor parallelism around a much cheaper collective.
+- MiniMax M2.7 has two very different tracks. The GGUF/RPC path remains capped around `16.384 tok/s`, but the AutoRound vLLM/XPU path is quality-cleared at `89.314 tok/s` public decode and `92+ tok/s` warm in-process decode. Current site-labeled timing shows no single trivial CPU callback left: MoE expert time dominates, while MoE output all-reduce, attention output all-reduce, and Q/K variance all-reduce each contribute comparable per-layer decode costs.
 
 ## Current Next Steps
 
@@ -138,4 +141,5 @@ vLLM/XPU FP8 work:
 4. Use static FP8 TP4 with patched XPU FA2 as the best high-fidelity four-card path for now.
 5. Keep PP2 x TP2 as a capacity fallback for larger models, not a speed path for Qwen3.6 27B.
 6. Mine Intel `llm-scaler` for reduce-scatter/all-gather, fused output-kernel, Gated DeltaNet, and speculative/MTP ideas, but do not assume it will run directly on Arc/B70.
-7. For MiniMax, keep the process-per-GPU RPC layout as the capacity baseline while turning the newly working SYCL fused-MoE path into a lower-level active-expert kernel. Treat naive graph split as diagnostic until reduce/broadcast can move off the host-mediated RPC path. Direct SYCL needs chunked regular model-buffer allocation before it is usable.
+7. For MiniMax GGUF, keep the process-per-GPU RPC layout only as the capacity baseline; direct SYCL still needs chunked regular model-buffer allocation before it is usable.
+8. For MiniMax AutoRound/vLLM, target lower-level MoE expert/router fusion or multi-boundary reduction scheduling. Do not spend more time on pure Python-boundary router moves unless they include a new fused kernel and pass the full strict quality gate.
