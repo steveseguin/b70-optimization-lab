@@ -1,0 +1,35 @@
+{
+  "hfId": "Lasimeri/MiniMax-M2.7-int4-AutoRound",
+  "modelRevision": "main",
+  "hardware": {
+    "hwClass": "DISCRETE_GPU",
+    "gpuName": "Intel Arc Pro B70 32GB",
+    "gpuCount": 4,
+    "vramGb": 32,
+    "cpu": "AMD EPYC 9015 8-Core Processor",
+    "ramGb": 16,
+    "os": "Ubuntu 24.04.4 LTS"
+  },
+  "engineName": "vllm",
+  "engineVersion": "0.20.1-local",
+  "quantization": "INT4 AutoRound W4A16",
+  "promptTokens": 272,
+  "outputTokens": 49,
+  "contextLength": 4096,
+  "batchSize": 1,
+  "tokSOut": 94.406,
+  "notes": "Regex2 constrained simple-HTML fast lane. Repeat30 quality-gated run: 30/30 accepted, 0 rejects, 100% first-attempt pass, 1471 accepted output tokens, 15.582 s accepted decode, 94.406 effective accepted output tok/s, 94.692 post-first tok/s. Structured JSON cross-check also passed 9/9 with 0 rejects at 87.956 tok/s and stable parsed JSON hashes. Not an unconstrained free-form website benchmark; this records a validated structured-output lane.",
+  "engineFlags": {
+    "commandSnippet": "source repro/minimax-m27-b70-89tps-20260520/configs/promoted-env.sh && python scripts/run-minimax-website-task-quality.py --mode graph --prompt-format chat --assistant-prefill skeleton_open --task skeleton_status_html --warmup-runs 1 --repeat 30 --retry-until-pass 5 --max-tokens 96 --max-model-len 4096 --max-num-batched-tokens 512 --enable-prefix-caching --structured-skeleton-regex",
+    "tensorParallel": 4,
+    "contextLength": 4096,
+    "prefixCaching": true,
+    "flashAttn": true,
+    "chunkedPrefill": true,
+    "prefillChunkSize": 512,
+    "temperature": 0.0,
+    "topP": 1.0,
+    "extraFlags": "VLLM_XPU_ENABLE_XPU_GRAPH=1; VLLM_XPU_FORCE_GRAPH_WITH_COMM=1; VLLM_XPU_GRAPH_NOOP_COMM_CAPTURE=1; VLLM_XPU_USE_LLM_SCALER_MOE=1; VLLM_XPU_USE_LLM_SCALER_MOE_WS=1; VLLM_XPU_USE_LLM_SCALER_MOE_MINIMAX_LOGITS_WS=1; VLLM_MINIMAX_MOE_OUTPUT_ALLREDUCE_INSIDE_CUSTOM_OP=1; VLLM_MINIMAX_MOE_FULL_FORWARD_CUSTOM_OP=1; structured regex2; one warmup excluded"
+  },
+  "tokSTotal": 618.0370905205797
+}
