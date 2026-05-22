@@ -1,0 +1,95 @@
+{
+  "date": "2026-05-21",
+  "model": "/mnt/fast-ai/llm-models/minimax-m2.7-int4-autoround",
+  "hardware": {
+    "gpu": "Intel Arc Pro B70",
+    "gpu_count": 4,
+    "tensor_parallel_size": 4
+  },
+  "runtime": {
+    "engine": "vLLM XPU",
+    "engine_version": "0.20.1-local",
+    "dtype": "float16",
+    "quantization": "INC AutoRound W4A16",
+    "max_num_batched_tokens": 512,
+    "block_size": 256,
+    "prompt_format": "MiniMax chat template",
+    "thinking_prefix": "closed before generation",
+    "stop": "</html>"
+  },
+  "harness": {
+    "path": "scripts/run-minimax-website-task-quality.py",
+    "checks": [
+      "required_tags",
+      "complete_html_and_body",
+      "control_characters",
+      "inline_css",
+      "css_balanced_braces_or_parens",
+      "inline_js",
+      "node_check",
+      "task_specific_patterns"
+    ]
+  },
+  "results": [
+    {
+      "mode": "cudagraph_none",
+      "task_id": "benchmark_dashboard",
+      "passed": true,
+      "generated_tokens": 3267,
+      "finish_reason": "stop",
+      "output_toks_per_second": 41.40300601629045,
+      "source_result": "/home/steve/bench-results/minimax-m2.7-website-quality/20260522T031616Z-chat-final-cudagraph-none-4096/result.json"
+    },
+    {
+      "mode": "cudagraph_none",
+      "task_id": "pricing_calculator",
+      "passed": true,
+      "generated_tokens": 1971,
+      "finish_reason": "stop",
+      "output_toks_per_second": 41.01988272523923,
+      "source_result": "/home/steve/bench-results/minimax-m2.7-website-quality/20260522T031101Z-chat-final-cudagraph-none/result.json"
+    },
+    {
+      "mode": "cudagraph_none",
+      "task_id": "task_tracker",
+      "passed": false,
+      "generated_tokens": 1918,
+      "finish_reason": "stop",
+      "output_toks_per_second": 42.53871612381886,
+      "failures": ["control_characters"],
+      "notes": "HTML structure and JS syntax otherwise passed. CSS contained control bytes in numeric values such as margin-bottom.",
+      "source_result": "/home/steve/bench-results/minimax-m2.7-website-quality/20260522T031616Z-chat-final-cudagraph-none-4096/result.json"
+    },
+    {
+      "mode": "graph",
+      "task_id": "benchmark_dashboard",
+      "passed": false,
+      "generated_tokens": 4096,
+      "finish_reason": "length",
+      "output_toks_per_second": 87.87684700867055,
+      "failures": [
+        "missing_complete_html_document",
+        "missing_complete_body",
+        "control_characters",
+        "css_unbalanced_braces_or_parens",
+        "missing_inline_js"
+      ],
+      "source_result": "/home/steve/bench-results/minimax-m2.7-website-quality/20260522T033544Z-chat-final-graph-pass-candidates/result.json"
+    },
+    {
+      "mode": "graph",
+      "task_id": "pricing_calculator",
+      "passed": false,
+      "generated_tokens": 2016,
+      "finish_reason": "stop",
+      "output_toks_per_second": 95.3236528093123,
+      "failures": [
+        "css_unbalanced_braces_or_parens",
+        "script_0_node_check_failed",
+        "missing_patterns:number_parse"
+      ],
+      "source_result": "/home/steve/bench-results/minimax-m2.7-website-quality/20260522T033544Z-chat-final-graph-pass-candidates/result.json"
+    }
+  ],
+  "conclusion": "cudagraph_none is the current quality baseline for website/code tasks. The fast graph path is not acceptable for task quality despite 88-95 output tok/s on these prompts."
+}
