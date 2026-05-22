@@ -108,5 +108,30 @@
       "wall_output_tok_s": 36.162265600906636,
       "lesson": "Graph capture-size workaround avoided failure but was slower than no-graph."
     }
+  ],
+  "serving_ttft_results": [
+    {
+      "name": "c2_8k_6k_random_serving_np2",
+      "path": "/home/steve/bench-results/minimax-m2.7-serve-context/vllm-minimax-m27-autoround-serve-tp4-p6144n128-np2-20260522T135833Z.json",
+      "quality_gated": false,
+      "related_quality_gate": "/home/steve/bench-results/minimax-m2.7-json-quality/20260522T133612Z-ctxpad6144-c2-mbt512-nograph-compile1-allowctrl-retry3-warm1-repeat2-confirm/result.json",
+      "completed": 2,
+      "failed": 0,
+      "context_length": 8192,
+      "random_input_len": 6144,
+      "random_output_len": 128,
+      "concurrency": 2,
+      "num_warmups": 2,
+      "output_tok_s": 35.47772919446377,
+      "total_tok_s": 1738.4087305287246,
+      "mean_ttft_ms": 1963.4561245329678,
+      "median_ttft_ms": 1963.4561245329678,
+      "mean_tpot_ms": 40.1363216412041,
+      "median_itl_ms": 29.059143969789147,
+      "p99_itl_ms": 272.86118441144936,
+      "mean_e2el_ms": 7060.768972965889,
+      "ttfts_s": [0.2946512741036713, 3.6322609749622643],
+      "localmaxxing_id": "cmpgzog7400bfpc01camuplq8"
+    }
   ]
 }
