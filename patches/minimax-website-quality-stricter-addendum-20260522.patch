@@ -1,0 +1,81 @@
+--- scripts/run-minimax-website-task-quality.py.orig
++++ scripts/run-minimax-website-task-quality.py
+@@
+-            "Build a complete single-file static website for a local AI lab "
+-            "status page named 'B70 MiniMax Lab Status'. Return only one valid "
+-            "HTML document, no markdown and no explanation. Requirements: use "
+-            "ASCII text only, no JavaScript, no CSS, no forms, include semantic "
+-            "HTML, a heading, a short status summary, an unordered list with "
+-            "three status items, and a small table with three benchmark rows."
++            "Build a compact complete single-file static website for a local "
++            "AI lab status page named 'B70 MiniMax Lab Status'. Return only "
++            "one valid HTML document, no markdown and no explanation. "
++            "Requirements: ASCII text only, no JavaScript, no CSS, no forms, "
++            "keep it under 900 characters, include semantic HTML with main "
++            "and one section, one h1 heading, one short status summary, an "
++            "unordered list with exactly three status items, and a small table "
++            "with exactly three benchmark rows. Close every tag."
+@@
+ def blocks(html: str, tag: str) -> list[str]:
+     return re.findall(
+         rf"<{tag}\b[^>]*>(.*?)</{tag}\s*>",
+         html,
+         flags=re.IGNORECASE | re.DOTALL,
+     )
+ 
+ 
++def without_opaque_blocks(html: str) -> str:
++    return re.sub(
++        r"<(script|style)\b[^>]*>.*?</\1\s*>",
++        "",
++        html,
++        flags=re.IGNORECASE | re.DOTALL,
++    )
++
++
+ def balanced(text: str, pairs: tuple[tuple[str, str], ...]) -> bool:
+@@
+     if "<body" not in lowered or "</body" not in lowered:
+         failures.append("missing_complete_body")
+     if re.search(r"[\x00-\x08\x0b\x0c\x0e-\x1f]", html_text):
+         failures.append("control_characters")
++    structural_html = without_opaque_blocks(html_text)
++    malformed_angle_patterns = []
++    if re.search(r"</\s*<", structural_html):
++        malformed_angle_patterns.append("closing_tag_contains_angle")
++    if re.search(r"<\s*/\s*>", structural_html):
++        malformed_angle_patterns.append("empty_end_tag")
++    if re.search(r"<\s*(?=[^A-Za-z!/\?])", structural_html):
++        malformed_angle_patterns.append("raw_or_invalid_start_angle")
++    if re.search(
++        r"<[A-Za-z][A-Za-z0-9:-]*(?:\s[^<>]*)?<[^>]*>",
++        structural_html,
++        flags=re.DOTALL,
++    ):
++        malformed_angle_patterns.append("nested_angle_before_tag_close")
++    if malformed_angle_patterns:
++        failures.append("malformed_angle_markup:" + ",".join(malformed_angle_patterns))
+@@
+     if unmatched_end_tags:
+         failures.append("unmatched_end_tags:" + ",".join(unmatched_end_tags[:8]))
+ 
++    element_counts = {
++        "li": len(re.findall(r"<li\b", html_text, flags=re.IGNORECASE)),
++        "tr": len(re.findall(r"<tr\b", html_text, flags=re.IGNORECASE)),
++        "th": len(re.findall(r"<th\b", html_text, flags=re.IGNORECASE)),
++        "td": len(re.findall(r"<td\b", html_text, flags=re.IGNORECASE)),
++    }
++    if task.task_id in {"compact_status_html", "micro_status_html"}:
++        if element_counts["li"] != 3:
++            failures.append(f"wrong_li_count:{element_counts['li']}")
++        if element_counts["tr"] != 4:
++            failures.append(f"wrong_table_row_count:{element_counts['tr']}")
++
+     require_style = "style" in task.required_tags
+@@
+         "tag_count": len(parser.tags),
+         "unique_tags": sorted(tag_set),
+         "duplicate_tag_ratio": duplicate_tag_ratio,
++        "element_counts": element_counts,
+         "script_checks": script_results,
+     }
