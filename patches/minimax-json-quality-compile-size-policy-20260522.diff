@@ -1,0 +1,41 @@
+diff --git a/scripts/run-minimax-json-quality-throughput.py b/scripts/run-minimax-json-quality-throughput.py
+--- a/scripts/run-minimax-json-quality-throughput.py
++++ b/scripts/run-minimax-json-quality-throughput.py
+@@
+     parser.add_argument(
+         "--cudagraph-mode",
+         choices=("piecewise", "full_decode_only", "full", "none"),
+         default=None,
+     )
++    parser.add_argument(
++        "--compile-size-policy",
++        choices=("one", "one-and-concurrency", "none"),
++        default="one-and-concurrency",
++        help=(
++            "Which exact batch sizes to precompile/capture. The default keeps "
++            "the original behavior. Use 'one' to keep the proven batch-1 graph "
++            "path while probing concurrency or scheduler behavior."
++        ),
++    )
+@@
+     if args.cudagraph_mode is not None:
+         cudagraph_mode = args.cudagraph_mode.upper()
++    if args.compile_size_policy == "one":
++        compile_sizes = [1]
++    elif args.compile_size_policy == "none":
++        compile_sizes = []
++    else:
++        compile_sizes = sorted({1, max(1, args.concurrency)})
+     compilation_config = {
+         "use_inductor_graph_partition": True,
+-        "compile_sizes": [1, max(1, args.concurrency)],
++        "compile_sizes": compile_sizes,
+         "compile_ranges_endpoints": [args.max_num_batched_tokens],
+         "custom_ops": ["none"],
+         "cudagraph_mode": cudagraph_mode,
+     }
+@@
+             "block_size": args.block_size,
+             "gpu_memory_utilization": args.gpu_memory_utilization,
++            "compile_size_policy": args.compile_size_policy,
+             "compilation_config": compilation_config,
