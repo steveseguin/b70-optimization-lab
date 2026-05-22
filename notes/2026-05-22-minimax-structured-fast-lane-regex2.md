@@ -54,15 +54,10 @@ start with an alphanumeric character and cannot be apostrophe-only padding.
 Patch record:
 `patches/minimax-website-structured-regex2-20260522.patch`
 
-Full harness archive:
-`scripts/run-minimax-website-task-quality.py.gz.b64`
-
-Decode with:
-
-```bash
-base64 -d scripts/run-minimax-website-task-quality.py.gz.b64 | gunzip > scripts/run-minimax-website-task-quality.py
-chmod +x scripts/run-minimax-website-task-quality.py
-```
+The full updated harness remains in the active lab checkout at
+`/home/steve/llm-optimizations-publish/scripts/run-minimax-website-task-quality.py`.
+For a fresh checkout, apply the patch above to the website-quality harness after
+bringing over the current local harness version.
 
 ## Repro Command
 
