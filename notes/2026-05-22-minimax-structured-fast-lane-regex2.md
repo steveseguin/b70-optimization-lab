@@ -32,6 +32,7 @@ Regex2 result:
   `/home/steve/bench-results/minimax-m2.7-quality-ramp/20260522T212009Z-promoted-structured-skeleton-regex2-repeat30/result.json`
 - Result: `30/30` accepted, `0` rejects, `100%` first-attempt pass rate.
 - Effective accepted output: `94.406 tok/s`.
+- LocalMaxxing: `cmphg048s00mppc0192sahyug`.
 - Post-first effective accepted output: `94.692 tok/s`.
 - Accepted-output mean decode: `94.429 tok/s`.
 
