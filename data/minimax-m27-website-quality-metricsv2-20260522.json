@@ -1,0 +1,44 @@
+{
+  "model": "/mnt/fast-ai/llm-models/minimax-m2.7-int4-autoround",
+  "hardware": "4x Intel Arc Pro B70 32GB",
+  "task_family": "simple practical 4K website generation",
+  "quality_gate": "accepted outputs must pass strict HTML validation; rejected candidates are not delivered",
+  "runs": {
+    "promoted_metricsv2_repeat30": {
+      "path": "/home/steve/bench-results/minimax-m2.7-website-quality/20260522T082745Z-skeleton-graph-prefill-prefixcache-instruct-metricsv2-repeat30/result.json",
+      "command_shape": "--mode graph --prompt-format chat --assistant-prefill skeleton_open --task skeleton_status_html --repeat 30 --retry-until-pass 5 --max-tokens 96 --max-model-len 4096 --max-num-batched-tokens 512 --enable-prefix-caching",
+      "accepted_outputs": 30,
+      "total_candidate_attempts": 32,
+      "rejected_candidate_attempts": 2,
+      "first_attempt_pass_rate": 0.9333333333333333,
+      "accepted_output_mean_decode_tok_s": 93.39935328587744,
+      "effective_accepted_output_tok_s": 85.45583674286523,
+      "post_first_accepted_output_mean_decode_tok_s": 95.13602573342695,
+      "post_first_effective_accepted_output_tok_s": 88.46261837307155,
+      "decision": "current_promoted_measurement",
+      "notes": "Cold-inclusive effective rate remains about 85 tok/s. The same data is about 88 tok/s after the first request. Two graph-corrupted candidates were rejected and retried."
+    },
+    "promoted_badwords_repeat30": {
+      "path": "/home/steve/bench-results/minimax-m2.7-website-quality/20260522T091800Z-skeleton-graph-prefill-prefixcache-instruct-badwords-repeat30/result.json",
+      "accepted_outputs": 30,
+      "total_candidate_attempts": 33,
+      "rejected_candidate_attempts": 3,
+      "first_attempt_pass_rate": 0.9,
+      "accepted_output_mean_decode_tok_s": 93.33559120711604,
+      "effective_accepted_output_tok_s": 81.9840145308423,
+      "decision": "reject",
+      "notes": "Bad-words filtering increased rejected candidates and lowered effective throughput; do not promote."
+    },
+    "promoted_maxtok64_repeat30": {
+      "path": "/home/steve/bench-results/minimax-m2.7-website-quality/20260522T082307Z-skeleton-graph-prefill-prefixcache-instruct-maxtok64-repeat30/result.json",
+      "accepted_outputs": 30,
+      "total_candidate_attempts": 32,
+      "rejected_candidate_attempts": 2,
+      "first_attempt_pass_rate": 0.9333333333333333,
+      "accepted_output_mean_decode_tok_s": 93.24515225803087,
+      "effective_accepted_output_tok_s": 84.77198015575438,
+      "decision": "neutral_negative",
+      "notes": "Lowering max_tokens from 96 to 64 preserved delivered quality but did not improve effective throughput."
+    }
+  }
+}

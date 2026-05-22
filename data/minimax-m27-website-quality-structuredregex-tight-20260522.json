@@ -1,0 +1,72 @@
+{
+  "date_utc": "2026-05-22",
+  "model": {
+    "hf_id": "Lasimeri/MiniMax-M2.7-int4-AutoRound",
+    "local_path": "/mnt/fast-ai/llm-models/minimax-m2.7-int4-autoround",
+    "quantization": "INT4 AutoRound W4A16"
+  },
+  "hardware": {
+    "gpu": "Intel Arc Pro B70 32GB",
+    "gpu_count": 4,
+    "vram_gb_each": 32
+  },
+  "engine": {
+    "name": "vllm",
+    "version": "0.20.1-local",
+    "backend": "xpu-level-zero-llm-scaler",
+    "tensor_parallel_size": 4,
+    "context_length": 4096,
+    "prefix_caching": true,
+    "xpu_graph": true,
+    "forced_graph_with_comm": true,
+    "noop_xpu_comm_capture": true,
+    "structured_output": "tight skeleton HTML regex"
+  },
+  "quality_gate": {
+    "task": "skeleton_status_html",
+    "description": "Generate a tiny practical static status page. Assistant prefill supplies the doctype/head/open paragraph scaffold; the model generates the paragraph sentence and the constrained suffix. Strict validation requires complete HTML/body, exactly three li items, required copy, no control chars, and no malformed angle markup.",
+    "temperature": 0.0,
+    "max_model_len": 4096,
+    "max_tokens": 96,
+    "warmup_runs_excluded_from_measured_metrics": 1,
+    "measured_repeats": 30
+  },
+  "runs": [
+    {
+      "result_json": "/home/steve/bench-results/minimax-m2.7-website-quality/20260522T085324Z-skeleton-graph-prefill-prefixcache-instruct-structuredregex-tight-warm1-repeat30/result.json",
+      "accepted_outputs": 30,
+      "expected_outputs": 30,
+      "total_candidate_attempts": 30,
+      "rejected_candidate_attempts": 0,
+      "first_attempt_pass_rate": 1.0,
+      "accepted_output_tokens": 1478,
+      "accepted_decode_elapsed_s": 15.63467573467642,
+      "accepted_output_mean_decode_tok_s": 94.56371098857412,
+      "effective_accepted_output_tok_s": 94.5334604364015,
+      "post_first_effective_accepted_output_tok_s": 94.88661861083057,
+      "warmup_effective_accepted_output_tok_s": 25.140468597331505,
+      "rejected_failure_classes": {}
+    },
+    {
+      "result_json": "/home/steve/bench-results/minimax-m2.7-website-quality/20260522T085623Z-skeleton-graph-prefill-prefixcache-instruct-structuredregex-tight-warm1-repeat30-rerun/result.json",
+      "accepted_outputs": 30,
+      "expected_outputs": 30,
+      "total_candidate_attempts": 30,
+      "rejected_candidate_attempts": 0,
+      "first_attempt_pass_rate": 1.0,
+      "accepted_output_tokens": 1474,
+      "accepted_decode_elapsed_s": 15.604389625950716,
+      "accepted_output_mean_decode_tok_s": 94.49493987056336,
+      "effective_accepted_output_tok_s": 94.46059957056441,
+      "post_first_effective_accepted_output_tok_s": 94.81773806413189,
+      "warmup_effective_accepted_output_tok_s": 26.27504683935282,
+      "rejected_failure_classes": {}
+    }
+  ],
+  "interpretation": {
+    "promoted_warmed_service_tok_s": 94.46,
+    "repeatability_delta_tok_s": 0.073,
+    "quality_status": "passes strict simple-site HTML gate in two independent 30-output runs",
+    "caveat": "This is a constrained simple website task, not unconstrained free-form website generation. It is useful for a practical warmed-service path where a known scaffold/grammar is acceptable."
+  }
+}

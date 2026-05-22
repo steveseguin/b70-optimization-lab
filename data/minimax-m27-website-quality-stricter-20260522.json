@@ -1,0 +1,57 @@
+{
+  "compact_strict_retry5_repeat10": {
+    "path": "/home/steve/bench-results/minimax-m2.7-website-quality/20260522T054332Z-compact-graph-retry5-repeat10-stricter/result.json",
+    "task_id": "compact_status_html",
+    "passed": true,
+    "attempts": 14,
+    "accepted": 10,
+    "rejected": 4,
+    "effective_accepted_tps": 71.06810575521703,
+    "accepted_tps_mean": 94.98747807695301,
+    "avg_attempt_tps": 94.50716214805583,
+    "failure_classes": [
+      "malformed_angle_markup",
+      "unexpected_non_latin_text",
+      "known_corruption_fragments",
+      "missing_tags",
+      "wrong_li_count",
+      "wrong_table_row_count"
+    ]
+  },
+  "micro_original_retry5_repeat10": {
+    "path": "/home/steve/bench-results/minimax-m2.7-website-quality/20260522T054706Z-micro-graph-retry5-repeat10-stricter/result.json",
+    "task_id": "micro_status_html",
+    "prompt_variant": "original semantic no-CSS/no-JS prompt",
+    "passed": true,
+    "attempts": 19,
+    "accepted": 10,
+    "rejected": 9,
+    "effective_accepted_tps": 52.567861421143554,
+    "accepted_tps_mean": 99.80799646690535,
+    "avg_attempt_tps": 100.54997207104692,
+    "note": "Quality-clean after retry but below the 60 tok/s effective target because retry overhead is too high."
+  },
+  "micro_compact_retry5_repeat10": {
+    "path": "/home/steve/bench-results/minimax-m2.7-website-quality/20260522T055146Z-microcompact-graph-retry5-repeat10/result.json",
+    "task_id": "micro_status_html",
+    "prompt_variant": "compact semantic no-CSS/no-JS prompt",
+    "passed": true,
+    "attempts": 12,
+    "accepted": 10,
+    "rejected": 2,
+    "effective_accepted_tps": 74.09951854443119,
+    "accepted_tps_mean": 95.88320262330885,
+    "avg_attempt_tps": 96.45606960322577,
+    "validator_requirements": [
+      "complete html/body document",
+      "ASCII-only content",
+      "no control characters",
+      "no known graph-corruption fragments",
+      "no malformed raw angle fragments outside script/style",
+      "main and section tags",
+      "exactly three list items",
+      "exactly four table rows including the header"
+    ],
+    "note": "Best current practical website-quality result. This is a quality-gated retry workflow, not a fix for the underlying graph corruption."
+  }
+}
