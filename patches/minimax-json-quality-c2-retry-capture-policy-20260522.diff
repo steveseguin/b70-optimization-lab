@@ -1,0 +1,65 @@
+diff --git a/scripts/run-minimax-json-quality-throughput.py b/scripts/run-minimax-json-quality-throughput.py
+--- a/scripts/run-minimax-json-quality-throughput.py
++++ b/scripts/run-minimax-json-quality-throughput.py
+@@
+     parser.add_argument(
+         "--compile-size-policy",
+         choices=("one", "one-and-concurrency", "none"),
+         default="one-and-concurrency",
+@@
+             "path while probing concurrency or scheduler behavior."
+         ),
+     )
++    parser.add_argument(
++        "--cudagraph-capture-policy",
++        choices=("auto", "one", "none"),
++        default="auto",
++        help=(
++            "Override cudagraph capture sizes. Use 'one' to capture only "
++            "batch size 1 while allowing larger runtime batches to use the "
++            "dynamic compiled path."
++        ),
++    )
+@@
+     compilation_config = {
+         "use_inductor_graph_partition": True,
+         "compile_sizes": compile_sizes,
+         "compile_ranges_endpoints": [args.max_num_batched_tokens],
+         "custom_ops": ["none"],
+         "cudagraph_mode": cudagraph_mode,
+     }
++    if args.cudagraph_capture_policy == "one":
++        compilation_config["cudagraph_capture_sizes"] = [1]
++        compilation_config["max_cudagraph_capture_size"] = 1
++    elif args.cudagraph_capture_policy == "none":
++        compilation_config["cudagraph_capture_sizes"] = []
++        compilation_config["max_cudagraph_capture_size"] = 0
+@@
+                 if args.sync_after_generate:
+                     import torch
+ 
+                     if hasattr(torch, "xpu"):
+                         torch.xpu.synchronize()
+                     elif torch.cuda.is_available():
+                         torch.cuda.synchronize()
+                 elapsed_s = time.perf_counter() - started
+-                wave_passed = False
++                passed_slots: set[int] = set()
+                 for candidate_index, request_output in enumerate(outputs):
+                     slot_index = candidate_index % max(1, args.concurrency)
+                     retry_candidate_index = candidate_index // max(1, args.concurrency)
+@@
+                     }
+                     records.append(record)
+                     if validation["passed"]:
+-                        wave_passed = True
+-                if wave_passed:
++                        passed_slots.add(slot_index)
++                if len(passed_slots) >= max(1, args.concurrency):
+                     break
+@@
+             "gpu_memory_utilization": args.gpu_memory_utilization,
+             "compile_size_policy": args.compile_size_policy,
++            "cudagraph_capture_policy": args.cudagraph_capture_policy,
+             "compilation_config": compilation_config,
+             "disable_custom_all_reduce": args.disable_custom_all_reduce,
