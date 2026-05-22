@@ -70,6 +70,46 @@ HTML task can reject malformed outputs and retry without accepting corrupted
 content. The first retry run wedged during XCCL startup after a previous
 graph/no-graph crash, so it is not counted as evidence yet.
 
+## Follow-Up Runs
+
+After adding malformed-angle checks and exact compact-task list/table counts,
+one previously accepted compact retry output was reclassified as invalid because
+it contained malformed markup (`<td>1 </</td>`). The earlier `79.57` effective
+accepted tok/s number should not be claimed as clean.
+
+Clean stricter compact result:
+
+- Path: `/home/steve/bench-results/minimax-m2.7-website-quality/20260522T054332Z-compact-graph-retry5-repeat10-stricter/result.json`
+- Task: `compact_status_html`
+- Result: 10/10 accepted, 14 total attempts, 4 rejected attempts.
+- Effective accepted output rate: `71.07` tok/s.
+- Accepted-output mean decode rate: `94.99` tok/s.
+
+Broader original micro semantic task:
+
+- Path: `/home/steve/bench-results/minimax-m2.7-website-quality/20260522T054706Z-micro-graph-retry5-repeat10-stricter/result.json`
+- Task: original `micro_status_html`.
+- Result: 10/10 accepted after retry, 19 total attempts, 9 rejected attempts.
+- Effective accepted output rate: `52.57` tok/s.
+- Accepted-output mean decode rate: `99.81` tok/s.
+- Interpretation: quality-clean after retry, but below the 60 tok/s effective
+  target because too many first attempts were corrupted.
+
+Compact semantic prompt optimization:
+
+- Path: `/home/steve/bench-results/minimax-m2.7-website-quality/20260522T055146Z-microcompact-graph-retry5-repeat10/result.json`
+- Task: tightened `micro_status_html` prompt with compact semantic HTML.
+- Result: 10/10 accepted, 12 total attempts, 2 rejected attempts.
+- Effective accepted output rate: `74.10` tok/s.
+- Accepted-output mean decode rate: `95.88` tok/s.
+- Validator required complete HTML, ASCII-only content, no control characters,
+  no known corruption fragments, no malformed raw angle fragments outside
+  script/style, `main`, `section`, `ul`, `table`, exactly three list items, and
+  exactly four table rows including the header.
+
+This establishes a practical, repeatable, quality-gated static semantic HTML
+envelope above 60 tok/s. It does not clear rich CSS/JS generation.
+
 ## Interpretation
 
 The fast graph path appears to have a real correctness hazard for longer or more
@@ -83,17 +123,18 @@ model mistakes:
 
 Shorter compact HTML reduces exposure enough that validation/retry can keep the
 delivered output quality acceptable while sustaining an effective rate above
-60 tok/s. It does not clear the graph path for CSS, JavaScript, or richer
-website generation.
+60 tok/s. The best current practical result is the compact semantic HTML prompt
+at `74.10` effective accepted tok/s. This does not clear the graph path for CSS,
+JavaScript, or richer website generation.
 
 ## Next Steps
 
-1. Re-run `compact_status_html` with `--retry-until-pass 5` after a clean engine
-   start and record accepted-output effective tok/s.
-2. Add a stronger source-level graph correctness probe that compares token
+1. Add a stronger source-level graph correctness probe that compares token
    hashes for identical compact prompts across graph and graph-disabled modes.
-3. Keep debugging the XPU graph communication boundary, especially
+2. Keep debugging the XPU graph communication boundary, especially
    `VLLM_XPU_GRAPH_NOOP_COMM_CAPTURE=1` and compiled allreduce interactions.
+3. Test whether the compact semantic prompt remains clean over a longer repeat
+   count, for example 30 accepted outputs with retry capped at 5.
 4. Do not submit these website task results to LocalMaxxing as model throughput
    benchmarks; they are quality-gate diagnostics, not standard leaderboard
    runs.
