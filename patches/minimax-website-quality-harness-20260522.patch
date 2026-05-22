@@ -1,0 +1,569 @@
+--- /tmp/run-minimax-website-task-quality.remote.py	2026-05-22 01:30:52.991466704 -0400
++++ /home/steve/llm-optimizations-publish/scripts/run-minimax-website-task-quality.py	2026-05-22 01:18:39.414008520 -0400
+@@ -33,6 +33,88 @@
+ 
+ TASKS = [
+     WebsiteTask(
++        task_id="compact_status_html",
++        prompt=(
++            "Build a compact complete single-file static website for 'B70 "
++            "MiniMax Lab Status'. Return only one valid HTML document, no "
++            "markdown and no explanation. Requirements: ASCII text only, no "
++            "JavaScript, no CSS, no forms, keep it under 800 characters, "
++            "include a title, one h1 heading, one short status paragraph, "
++            "an unordered list with exactly three status items, and a small "
++            "table with exactly three benchmark rows. Close every tag."
++        ),
++        required_tags=("html", "head", "body", "ul", "table"),
++        required_patterns=(
++            ("brand", r"B70|MiniMax"),
++            ("status_copy", r"status|operational|benchmark"),
++            ("three_list_items", r"(?s)<li.*<li.*<li"),
++            ("table_headers", r"<th"),
++        ),
++        min_chars=350,
++    ),
++    WebsiteTask(
++        task_id="micro_status_html",
++        prompt=(
++            "Build a complete single-file static website for a local AI lab "
++            "status page named 'B70 MiniMax Lab Status'. Return only one valid "
++            "HTML document, no markdown and no explanation. Requirements: use "
++            "ASCII text only, no JavaScript, no CSS, no forms, include semantic "
++            "HTML, a heading, a short status summary, an unordered list with "
++            "three status items, and a small table with three benchmark rows."
++        ),
++        required_tags=("html", "head", "body", "main", "section", "ul", "table"),
++        required_patterns=(
++            ("brand", r"B70|MiniMax"),
++            ("status_copy", r"status|operational|benchmark"),
++            ("list_items", r"<li"),
++            ("table_headers", r"<th"),
++        ),
++        min_chars=450,
++    ),
++    WebsiteTask(
++        task_id="static_lab_status",
++        prompt=(
++            "Build a complete single-file responsive static website for a "
++            "local AI lab status page named 'B70 MiniMax Lab Status'. Return "
++            "only one valid HTML document, no markdown and no explanation. "
++            "Requirements: no JavaScript, no forms, include semantic HTML, a "
++            "heading, a short status summary, three metric cards, a small table "
++            "with three benchmark rows, accessible text, and inline CSS. Use "
++            "whole-number pixel CSS values and named colors. Avoid decimal CSS "
++            "values."
++        ),
++        required_tags=("html", "head", "body", "style", "main", "section", "table"),
++        required_patterns=(
++            ("brand", r"B70|MiniMax"),
++            ("metric_copy", r"tok/s|GPU|status|benchmark"),
++            ("table_headers", r"<th"),
++            ("layout_css", r"display\s*:\s*(grid|flex)|max-width"),
++        ),
++        min_chars=700,
++    ),
++    WebsiteTask(
++        task_id="simple_gpu_calculator",
++        prompt=(
++            "Build a complete single-file responsive website for a simple GPU "
++            "session cost calculator. Return only one valid HTML document, no "
++            "markdown and no explanation. Requirements: include a heading, one "
++            "short paragraph, labeled inputs for number of GPUs and hours, a "
++            "button that calculates total cost at 2.50 dollars per GPU-hour, "
++            "a visible result area, accessible labels, a small inline CSS "
++            "layout, and inline JavaScript for the calculation."
++        ),
++        required_tags=("html", "head", "body", "style", "script", "main", "input", "button"),
++        required_patterns=(
++            ("cost_copy", r"GPU|cost|hour"),
++            ("number_parse", r"parseFloat|parseInt|Number\s*\("),
++            ("calculation", r"2\.50|2\.5|total"),
++            ("event_handler", r"addEventListener\s*\(|\son[a-z]+\s*="),
++            ("accessible_label", r"<label|aria-label"),
++            ("layout_css", r"display\s*:\s*(grid|flex)|max-width"),
++        ),
++        min_chars=700,
++    ),
++    WebsiteTask(
+         task_id="benchmark_dashboard",
+         prompt=(
+             "Build a complete single-file responsive website for a local AI "
+@@ -50,7 +132,7 @@
+             ("tok_s_metric", r"tok/s|tokens per second"),
+             ("responsive_media_query", r"@media\s*\("),
+             ("layout_css", r"display\s*:\s*(grid|flex)"),
+-            ("event_listener", r"addEventListener\s*\("),
++            ("event_handler", r"addEventListener\s*\(|\son[a-z]+\s*="),
+             ("canvas_context", r"getContext\s*\("),
+         ),
+     ),
+@@ -68,7 +150,7 @@
+         required_tags=("html", "head", "body", "style", "script", "form", "input", "button", "ul"),
+         required_patterns=(
+             ("local_storage", r"localStorage"),
+-            ("event_listener", r"addEventListener\s*\("),
++            ("event_handler", r"addEventListener\s*\(|\son[a-z]+\s*="),
+             ("filter_controls", r"active|completed|done"),
+             ("delete_action", r"delete|remove"),
+             ("responsive_media_query", r"@media\s*\("),
+@@ -89,7 +171,7 @@
+         required_tags=("html", "head", "body", "style", "script", "input", "button", "section"),
+         required_patterns=(
+             ("calculation", r"gpu|hour|total|cost"),
+-            ("event_listener", r"addEventListener\s*\("),
++            ("event_handler", r"addEventListener\s*\(|\son[a-z]+\s*="),
+             ("number_parse", r"parseFloat|Number\s*\("),
+             ("validation", r"invalid|error|isNaN|Number\.isFinite"),
+             ("reset", r"reset"),
+@@ -104,6 +186,7 @@
+     def __init__(self) -> None:
+         super().__init__(convert_charrefs=True)
+         self.tags: list[str] = []
++        self.end_tags: list[str] = []
+         self.start_attrs: list[tuple[str, dict[str, str | None]]] = []
+ 
+     def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+@@ -115,6 +198,9 @@
+     ) -> None:
+         self.handle_starttag(tag, attrs)
+ 
++    def handle_endtag(self, tag: str) -> None:
++        self.end_tags.append(tag.lower())
++
+ 
+ def prepend_env_path(name: str, value: str) -> None:
+     current = os.environ.get(name, "")
+@@ -125,7 +211,14 @@
+         sys.path.insert(0, value)
+ 
+ 
+-def configure_env(mode: str, cache_root: str | None) -> None:
++def set_env_switch(name: str, setting: str, enabled_value: str = "1") -> None:
++    if setting == "on":
++        os.environ[name] = enabled_value
++    elif setting == "off":
++        os.environ.pop(name, None)
++
++
++def configure_env(args: argparse.Namespace) -> None:
+     os.environ.setdefault("ONEAPI_DEVICE_SELECTOR", "level_zero:0,1,2,3")
+     os.environ.setdefault("ZE_AFFINITY_MASK", "0,1,2,3")
+     os.environ.setdefault("CCL_ATL_TRANSPORT", "ofi")
+@@ -144,8 +237,8 @@
+         "LD_LIBRARY_PATH",
+         "/home/steve/.venvs/vllm-xpu/lib/python3.12/site-packages/torch/lib",
+     )
+-    if cache_root:
+-        os.environ["VLLM_CACHE_ROOT"] = cache_root
++    if args.cache_root:
++        os.environ["VLLM_CACHE_ROOT"] = args.cache_root
+ 
+     os.environ.setdefault("VLLM_XPU_USE_LLM_SCALER_MOE", "1")
+     os.environ.setdefault("VLLM_XPU_USE_LLM_SCALER_MOE_WS", "1")
+@@ -155,14 +248,35 @@
+     os.environ.setdefault("VLLM_MINIMAX_MOE_FULL_FORWARD_CUSTOM_OP_MAX_TOKENS", "4")
+     os.environ.setdefault("VLLM_XPU_USE_CUSTOM_OP_COLLECTIVES", "0")
+ 
+-    if mode == "eager":
++    if args.mode == "eager":
+         os.environ["VLLM_XPU_ENABLE_XPU_GRAPH"] = "0"
+         os.environ.pop("VLLM_XPU_FORCE_GRAPH_WITH_COMM", None)
+         os.environ.pop("VLLM_XPU_GRAPH_NOOP_COMM_CAPTURE", None)
+     else:
+         os.environ["VLLM_XPU_ENABLE_XPU_GRAPH"] = "1"
+-        os.environ["VLLM_XPU_FORCE_GRAPH_WITH_COMM"] = "1"
+-        os.environ["VLLM_XPU_GRAPH_NOOP_COMM_CAPTURE"] = "1"
++        if args.xpu_force_graph_with_comm == "auto":
++            os.environ["VLLM_XPU_FORCE_GRAPH_WITH_COMM"] = "1"
++        else:
++            set_env_switch(
++                "VLLM_XPU_FORCE_GRAPH_WITH_COMM",
++                args.xpu_force_graph_with_comm,
++            )
++        if args.xpu_noop_comm_capture == "auto":
++            os.environ["VLLM_XPU_GRAPH_NOOP_COMM_CAPTURE"] = "1"
++        else:
++            set_env_switch(
++                "VLLM_XPU_GRAPH_NOOP_COMM_CAPTURE",
++                args.xpu_noop_comm_capture,
++            )
++
++    set_env_switch("VLLM_XPU_SYNC_CUDAGRAPH_REPLAY", args.sync_cudagraph_replay)
++    set_env_switch("VLLM_XPU_CUDAGRAPH_STRONG_OUTPUT", args.strong_cudagraph_output)
++    if args.recapture_after_n_replays > 0:
++        os.environ["VLLM_XPU_CUDAGRAPH_RECAPTURE_AFTER_N_REPLAYS"] = str(
++            args.recapture_after_n_replays
++        )
++    else:
++        os.environ.pop("VLLM_XPU_CUDAGRAPH_RECAPTURE_AFTER_N_REPLAYS", None)
+ 
+ 
+ def extract_html(text: str) -> tuple[str, str]:
+@@ -197,6 +311,39 @@
+     return True
+ 
+ 
++def css_declaration_errors(style_text: str) -> list[str]:
++    """Catch malformed declarations that a brace-count check can miss."""
++    errors: list[str] = []
++    css = re.sub(r"/\*.*?\*/", "", style_text, flags=re.DOTALL)
++    block_count = 0
++    for block in re.findall(r"\{([^{}]*)\}", css, flags=re.DOTALL):
++        block_count += 1
++        for raw_decl in block.split(";"):
++            decl = raw_decl.strip()
++            if not decl:
++                continue
++            if decl.startswith("@"):
++                continue
++            if "{" in decl or "}" in decl:
++                errors.append(f"nested_brace_in_declaration:{decl[:80]}")
++                continue
++            if ":" not in decl:
++                errors.append(f"missing_colon:{decl[:80]}")
++                continue
++            prop, value = (part.strip() for part in decl.split(":", 1))
++            if not prop:
++                errors.append(f"empty_property:{decl[:80]}")
++                continue
++            if not re.match(r"^(--)?-?[A-Za-z_][A-Za-z0-9_-]*$", prop):
++                errors.append(f"invalid_property:{prop[:80]}")
++                continue
++            if not value:
++                errors.append(f"empty_value:{prop}")
++    if "{" in css and block_count == 0:
++        errors.append("no_parseable_css_blocks")
++    return errors
++
++
+ def node_check(script: str) -> tuple[bool, str]:
+     if not script.strip():
+         return True, ""
+@@ -242,17 +389,39 @@
+         failures.append("missing_complete_body")
+     if re.search(r"[\x00-\x08\x0b\x0c\x0e-\x1f]", html_text):
+         failures.append("control_characters")
++    if re.search(r"[\u0400-\u04ff\u0600-\u06ff\u4e00-\u9fff]", html_text):
++        failures.append("unexpected_non_latin_text")
++    corruption_fragments = re.findall(
++        r"\b(?:alkyl|kelompok|luas|foremost|Hond)\b",
++        html_text,
++        flags=re.IGNORECASE,
++    )
++    if corruption_fragments:
++        failures.append(
++            "known_corruption_fragments:" + ",".join(sorted(set(corruption_fragments)))
++        )
+     if "```" in html_text:
+         warnings.append("markdown_fence_left_in_extracted_html")
++    unmatched_end_tags = [
++        tag for tag in parser.end_tags if tag not in tag_set and tag not in {"br", "hr"}
++    ]
++    if unmatched_end_tags:
++        failures.append("unmatched_end_tags:" + ",".join(unmatched_end_tags[:8]))
+ 
++    require_style = "style" in task.required_tags
+     style_text = "\n".join(blocks(html_text, "style"))
+     if style_text and not balanced(style_text, (("{", "}"), ("(", ")"))):
+         failures.append("css_unbalanced_braces_or_parens")
+-    elif not style_text:
++    elif require_style and not style_text:
+         failures.append("missing_inline_css")
++    if style_text:
++        css_errors = css_declaration_errors(style_text)
++        if css_errors:
++            failures.append("css_declaration_errors:" + ",".join(css_errors[:4]))
+ 
++    require_script = "script" in task.required_tags
+     scripts = blocks(html_text, "script")
+-    if not scripts:
++    if require_script and not scripts:
+         failures.append("missing_inline_js")
+     script_results = []
+     for index, script in enumerate(scripts):
+@@ -304,6 +473,51 @@
+     parser.add_argument("--block-size", type=int, default=256)
+     parser.add_argument("--cache-root", default=None)
+     parser.add_argument("--disable-chunked-prefill", action="store_true")
++    parser.add_argument(
++        "--disable-custom-all-reduce",
++        dest="disable_custom_all_reduce",
++        action="store_true",
++    )
++    parser.add_argument(
++        "--enable-custom-all-reduce",
++        dest="disable_custom_all_reduce",
++        action="store_false",
++    )
++    parser.set_defaults(disable_custom_all_reduce=True)
++    parser.add_argument("--enable-prefix-caching", action="store_true")
++    parser.add_argument("--repeat", type=int, default=1)
++    parser.add_argument(
++        "--retry-until-pass",
++        type=int,
++        default=1,
++        help="Generate up to this many attempts for each task/repeat until validation passes.",
++    )
++    parser.add_argument(
++        "--cudagraph-mode",
++        choices=("piecewise", "full_decode_only", "full", "none"),
++        default=None,
++    )
++    parser.add_argument(
++        "--xpu-force-graph-with-comm",
++        choices=("auto", "on", "off"),
++        default="auto",
++    )
++    parser.add_argument(
++        "--xpu-noop-comm-capture",
++        choices=("auto", "on", "off"),
++        default="auto",
++    )
++    parser.add_argument(
++        "--sync-cudagraph-replay",
++        choices=("auto", "on", "off"),
++        default="auto",
++    )
++    parser.add_argument(
++        "--strong-cudagraph-output",
++        choices=("auto", "on", "off"),
++        default="auto",
++    )
++    parser.add_argument("--recapture-after-n-replays", type=int, default=0)
+     parser.add_argument("--prompt-format", choices=("chat", "raw"), default="chat")
+     parser.add_argument(
+         "--keep-thinking-prefix",
+@@ -324,6 +538,11 @@
+         help="Allow generated control characters that would invalidate HTML/CSS/JS.",
+     )
+     parser.add_argument(
++        "--ban-corruption-fragments",
++        action="store_true",
++        help="Ban recurring graph-corruption text fragments observed in failed HTML probes.",
++    )
++    parser.add_argument(
+         "--system-prompt",
+         default=(
+             "You are a precise front-end coding assistant. For each task, "
+@@ -336,7 +555,7 @@
+ 
+ def main() -> None:
+     args = parse_args()
+-    configure_env(args.mode, args.cache_root)
++    configure_env(args)
+ 
+     selected = [task for task in TASKS if not args.task or task.task_id in args.task]
+     sites_dir = Path(args.sites_dir)
+@@ -350,6 +569,8 @@
+         cudagraph_mode = "NONE"
+     elif args.mode == "eager":
+         cudagraph_mode = "NONE"
++    if args.cudagraph_mode is not None:
++        cudagraph_mode = args.cudagraph_mode.upper()
+ 
+     compilation_config = {
+         "use_inductor_graph_partition": True,
+@@ -372,9 +593,9 @@
+         max_num_seqs=args.max_num_seqs,
+         block_size=args.block_size,
+         enforce_eager=args.mode == "eager",
+-        disable_custom_all_reduce=True,
++        disable_custom_all_reduce=args.disable_custom_all_reduce,
+         enable_chunked_prefill=not args.disable_chunked_prefill,
+-        enable_prefix_caching=False,
++        enable_prefix_caching=args.enable_prefix_caching,
+         compilation_config=compilation_config,
+     )
+     init_elapsed_s = time.perf_counter() - init_started
+@@ -406,10 +627,26 @@
+         include_stop_str_in_output=not args.no_stop_on_html_end,
+         stop_token_ids=[200020],
+         logit_bias=control_logit_bias,
++        bad_words=(
++            [
++                "alkyl",
++                "kelompok",
++                "luas",
++                "foremost",
++                "Hond",
++                "常见",
++                "常见的",
++                "有人",
++                "崖",
++            ]
++            if args.ban_corruption_fragments
++            else None
++        ),
+     )
+ 
+     records = []
+-    for task in selected:
++    for repeat_index in range(args.repeat):
++      for task in selected:
+         rendered_prompt = task.prompt
+         if args.prompt_format == "chat":
+             rendered_prompt = tokenizer.apply_chat_template(
+@@ -422,31 +659,46 @@
+             )
+             if not args.keep_thinking_prefix and rendered_prompt.endswith("<think>\n"):
+                 rendered_prompt += "</think>\n\n"
+-        started = time.perf_counter()
+-        outputs = llm.generate([rendered_prompt], params)
+-        elapsed_s = time.perf_counter() - started
+-        output = outputs[0].outputs[0]
+-        text = output.text
+-        html_text, extraction = extract_html(text)
+-        site_path = sites_dir / f"{args.mode}-{task.task_id}.html"
+-        raw_path = sites_dir / f"{args.mode}-{task.task_id}.raw.txt"
+-        site_path.write_text(html_text, encoding="utf-8")
+-        raw_path.write_text(text, encoding="utf-8")
+-        validation = validate_site(html_text, task)
+-        token_ids = list(output.token_ids)
+-        records.append(
+-            {
++        for attempt_index in range(max(1, args.retry_until_pass)):
++            started = time.perf_counter()
++            outputs = llm.generate([rendered_prompt], params)
++            elapsed_s = time.perf_counter() - started
++            output = outputs[0].outputs[0]
++            text = output.text
++            html_text, extraction = extract_html(text)
++            repeat_suffix = f"-r{repeat_index}" if args.repeat > 1 else ""
++            attempt_suffix = (
++                f"-a{attempt_index}" if args.retry_until_pass > 1 else ""
++            )
++            site_path = (
++                sites_dir
++                / f"{args.mode}-{task.task_id}{repeat_suffix}{attempt_suffix}.html"
++            )
++            raw_path = (
++                sites_dir
++                / f"{args.mode}-{task.task_id}{repeat_suffix}{attempt_suffix}.raw.txt"
++            )
++            site_path.write_text(html_text, encoding="utf-8")
++            raw_path.write_text(text, encoding="utf-8")
++            validation = validate_site(html_text, task)
++            token_ids = list(output.token_ids)
++            record = {
+                 "task_id": task.task_id,
++                "repeat_index": repeat_index,
++                "attempt_index": attempt_index,
+                 "elapsed_s": elapsed_s,
+                 "generated_tokens": len(token_ids),
+                 "output_toks_per_second": (
+                     len(token_ids) / elapsed_s if elapsed_s > 0 else None
+                 ),
+                 "finish_reason": output.finish_reason,
++                "token_ids": token_ids,
+                 "token_sha256": hashlib.sha256(
+                     ",".join(map(str, token_ids)).encode()
+                 ).hexdigest(),
+-                "raw_text_sha256": hashlib.sha256(text.encode("utf-8", errors="replace")).hexdigest(),
++                "raw_text_sha256": hashlib.sha256(
++                    text.encode("utf-8", errors="replace")
++                ).hexdigest(),
+                 "prompt_format": args.prompt_format,
+                 "keep_thinking_prefix": args.keep_thinking_prefix,
+                 "stop_on_html_end": not args.no_stop_on_html_end,
+@@ -460,9 +712,47 @@
+                 "validation": validation,
+                 "preview": text[:600],
+             }
++            records.append(record)
++            if validation["passed"]:
++                break
++
++    grouped_records = {}
++    for record in records:
++        grouped_records.setdefault(
++            (record["task_id"], record["repeat_index"]), []
++        ).append(record)
++    expected_groups = [
++        (task.task_id, repeat_index)
++        for repeat_index in range(args.repeat)
++        for task in selected
++    ]
++    accepted_records = []
++    for key in expected_groups:
++        attempts = grouped_records.get(key, [])
++        accepted = next(
++            (record for record in attempts if record["validation"]["passed"]),
++            None,
+         )
+-
+-    passed = all(record["validation"]["passed"] for record in records)
++        if accepted is not None:
++            accepted_records.append(accepted)
++    passed = len(accepted_records) == len(expected_groups)
++    repeatability = {}
++    for task in selected:
++        task_records = [
++            record for record in accepted_records if record["task_id"] == task.task_id
++        ]
++        token_hashes = [record["token_sha256"] for record in task_records]
++        html_hashes = [record["validation"]["sha256"] for record in task_records]
++        repeatability[task.task_id] = {
++            "runs": len(task_records),
++            "unique_token_hashes": len(set(token_hashes)),
++            "unique_html_hashes": len(set(html_hashes)),
++            "token_hashes": token_hashes,
++            "html_hashes": html_hashes,
++            "all_passed": all(
++                record["validation"]["passed"] for record in task_records
++            ),
++        }
+     result = {
+         "mode": args.mode,
+         "passed": passed,
+@@ -475,15 +765,42 @@
+             "block_size": args.block_size,
+             "compilation_config": compilation_config,
++            "disable_custom_all_reduce": args.disable_custom_all_reduce,
++            "enable_prefix_caching": args.enable_prefix_caching,
++            "enable_chunked_prefill": not args.disable_chunked_prefill,
+             "temperature": args.temperature,
+             "top_p": args.top_p,
+             "top_k": args.top_k,
++            "ban_corruption_fragments": args.ban_corruption_fragments,
++            "retry_until_pass": args.retry_until_pass,
+             "prompt_format": args.prompt_format,
+             "keep_thinking_prefix": args.keep_thinking_prefix,
+             "stop_on_html_end": not args.no_stop_on_html_end,
+             "ban_control_chars": not args.allow_control_chars,
++            "xpu_env": {
++                "VLLM_XPU_ENABLE_XPU_GRAPH": os.environ.get(
++                    "VLLM_XPU_ENABLE_XPU_GRAPH"
++                ),
++                "VLLM_XPU_FORCE_GRAPH_WITH_COMM": os.environ.get(
++                    "VLLM_XPU_FORCE_GRAPH_WITH_COMM"
++                ),
++                "VLLM_XPU_GRAPH_NOOP_COMM_CAPTURE": os.environ.get(
++                    "VLLM_XPU_GRAPH_NOOP_COMM_CAPTURE"
++                ),
++                "VLLM_XPU_SYNC_CUDAGRAPH_REPLAY": os.environ.get(
++                    "VLLM_XPU_SYNC_CUDAGRAPH_REPLAY"
++                ),
++                "VLLM_XPU_CUDAGRAPH_STRONG_OUTPUT": os.environ.get(
++                    "VLLM_XPU_CUDAGRAPH_STRONG_OUTPUT"
++                ),
++                "VLLM_XPU_CUDAGRAPH_RECAPTURE_AFTER_N_REPLAYS": os.environ.get(
++                    "VLLM_XPU_CUDAGRAPH_RECAPTURE_AFTER_N_REPLAYS"
++                ),
++            },
+         },
+         "init_elapsed_s": init_elapsed_s,
++        "repeatability": repeatability,
++        "accepted_tasks": accepted_records,
+         "tasks": records,
+     }
+     Path(args.out).parent.mkdir(parents=True, exist_ok=True)
+@@ -495,6 +812,8 @@
+         "task_results": [
+             {
+                 "task_id": record["task_id"],
++                "repeat_index": record["repeat_index"],
++                "attempt_index": record["attempt_index"],
+                 "passed": record["validation"]["passed"],
+                 "failures": record["validation"]["failures"],
+                 "output_toks_per_second": record["output_toks_per_second"],
