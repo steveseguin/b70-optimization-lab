@@ -1,0 +1,38 @@
+{
+  "hfId": "Lasimeri/MiniMax-M2.7-int4-AutoRound",
+  "modelRevision": "main",
+  "hardware": {
+    "hwClass": "DISCRETE_GPU",
+    "gpuName": "Intel Arc Pro B70 32GB",
+    "gpuCount": 4,
+    "vramGb": 32,
+    "cpu": "AMD EPYC 9015 8-Core Processor",
+    "ramGb": 16,
+    "os": "Ubuntu 24.04.4 LTS, Linux 6.17.0-23-generic"
+  },
+  "engineName": "vllm",
+  "engineVersion": "0.20.1-local",
+  "quantization": "AutoRound INT4 W4A16",
+  "promptTokens": 75432,
+  "outputTokens": 880,
+  "contextLength": 8192,
+  "batchSize": 2,
+  "tokSOut": 64.06234617294629,
+  "tokSTotal": 2777.6850915624304,
+  "notes": "MiniMax-M2.7 AutoRound INT4 on 4x Intel Arc Pro B70. Warm c2 JSON/content quality gate, one warmup wave excluded, repeat=2, 12/12 raw measured candidates passed strict JSON/content validation. tokSOut is wall accepted-output throughput across 2 concurrent requests; per-request accepted-output rate was 32.031 tok/s. Prompt padding was 6144 tokens, max_model_len=8192, max_num_batched_tokens=512. Control-character logit bias disabled because it trips XPU Indexing.h:622 at c2; validator still rejects control characters.",
+  "engineFlags": {
+    "commandSnippet": "python scripts/run-minimax-json-quality-throughput.py --mode cudagraph_none --task alpha_names --task number_facts --task b70_status --warmup-runs 1 --repeat 2 --retry-until-pass 3 --concurrency 2 --max-model-len 8192 --context-pad-tokens 6144 --max-num-batched-tokens 512 --max-num-seqs 2 --block-size 256 --enable-prefix-caching --gpu-memory-utilization 0.95 --compile-size-policy one --xpu-force-graph-with-comm off --xpu-noop-comm-capture off --allow-control-chars",
+    "tensorParallel": 4,
+    "gpuLayers": 999,
+    "contextLength": 8192,
+    "concurrency": 2,
+    "temperature": 0.0,
+    "topP": 1.0,
+    "flashAttn": true,
+    "chunkedPrefill": true,
+    "prefillChunkSize": 512,
+    "prefixCaching": true,
+    "contBatching": true,
+    "extraFlags": "XPU/Level Zero; cudagraph_mode=NONE; compile_sizes=[1]; disable_custom_all_reduce=true; gpu_memory_utilization=0.95; block_size=256; llm-scaler XPU INT4 MoE decode path; strict JSON/content validator 12/12 raw measured candidates passed"
+  }
+}
