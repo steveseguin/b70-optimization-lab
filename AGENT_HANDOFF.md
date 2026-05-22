@@ -87,11 +87,10 @@ Important notes:
   `94 tok/s` constrained HTML lane.
 - The latest structured regex2 fix is recorded as a patch in
   `patches/minimax-website-structured-regex2-20260522.patch`.
-- The active local lab checkout still contains a richer current website-quality
-  harness at
-  `/home/steve/llm-optimizations-publish/scripts/run-minimax-website-task-quality.py`.
-  If cloning elsewhere, verify the repo copy of that script has the same
-  feature set before trying the regex2 command.
+- For the latest `94 tok/s` structured regex2 lane, use the focused public
+  runner at `scripts/run-minimax-structured-skeleton-quality.py`. The broader
+  local lab harness has more exploratory options, but this runner is the
+  public reproducible harness for the promoted constrained HTML lane.
 
 ## Known Good Runtime Shape
 
@@ -106,19 +105,14 @@ unset VLLM_XPU_CUDAGRAPH_STATIC_INPUT_COPY || true
 For the structured HTML fast lane:
 
 ```bash
-python scripts/run-minimax-website-task-quality.py \
+python scripts/run-minimax-structured-skeleton-quality.py \
   --mode graph \
-  --prompt-format chat \
-  --assistant-prefill skeleton_open \
-  --task skeleton_status_html \
   --warmup-runs 1 \
   --repeat 30 \
   --retry-until-pass 5 \
   --max-tokens 96 \
   --max-model-len 4096 \
-  --max-num-batched-tokens 512 \
-  --enable-prefix-caching \
-  --structured-skeleton-regex
+  --max-num-batched-tokens 512
 ```
 
 Expected regex2 result class:
