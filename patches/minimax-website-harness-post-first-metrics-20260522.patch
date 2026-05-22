@@ -1,0 +1,68 @@
+diff --git a/scripts/run-minimax-website-task-quality.py b/scripts/run-minimax-website-task-quality.py
+--- a/scripts/run-minimax-website-task-quality.py
++++ b/scripts/run-minimax-website-task-quality.py
+@@
+     for record in records:
+         wave_key = (
+             record["task_id"],
+             record["repeat_index"],
+             record["attempt_index"],
+         )
+         wave_elapsed_by_key.setdefault(wave_key, record["wave_elapsed_s"])
+     all_wave_elapsed_s = sum(wave_elapsed_by_key.values())
++    post_first_records = [record for record in records if record["repeat_index"] > 0]
++    post_first_accepted_records = [
++        record for record in accepted_records if record["repeat_index"] > 0
++    ]
++    post_first_rejected_records = [
++        record for record in rejected_records if record["repeat_index"] > 0
++    ]
++    post_first_tokens = sum(
++        record["generated_tokens"] for record in post_first_accepted_records
++    )
++    post_first_attempt_elapsed_s = sum(
++        record["elapsed_s"] for record in post_first_records
++    )
++    post_first_rates = [
++        record["output_toks_per_second"]
++        for record in post_first_accepted_records
++        if record["output_toks_per_second"] is not None
++    ]
++    post_first_wave_elapsed_by_key = {}
++    for record in post_first_records:
++        wave_key = (
++            record["task_id"],
++            record["repeat_index"],
++            record["attempt_index"],
++        )
++        post_first_wave_elapsed_by_key.setdefault(wave_key, record["wave_elapsed_s"])
++    post_first_wave_elapsed_s = sum(post_first_wave_elapsed_by_key.values())
+     metrics = {
+@@
+         "effective_wall_accepted_output_tok_s": (
+             accepted_tokens / all_wave_elapsed_s if all_wave_elapsed_s > 0 else None
+         ),
++        "post_first_accepted_outputs": len(post_first_accepted_records),
++        "post_first_candidate_attempts": len(post_first_records),
++        "post_first_rejected_candidate_attempts": len(post_first_rejected_records),
++        "post_first_accepted_output_tokens": post_first_tokens,
++        "post_first_all_attempt_decode_elapsed_s": post_first_attempt_elapsed_s,
++        "post_first_all_wave_elapsed_s": post_first_wave_elapsed_s,
++        "post_first_accepted_output_mean_decode_tok_s": (
++            sum(post_first_rates) / len(post_first_rates)
++            if post_first_rates
++            else None
++        ),
++        "post_first_effective_accepted_output_tok_s": (
++            post_first_tokens / post_first_attempt_elapsed_s
++            if post_first_attempt_elapsed_s > 0
++            else None
++        ),
++        "post_first_effective_wall_accepted_output_tok_s": (
++            post_first_tokens / post_first_wave_elapsed_s
++            if post_first_wave_elapsed_s > 0
++            else None
++        ),
+         "max_accepted_attempt_index": (
+             max((record["attempt_index"] for record in accepted_records), default=None)
+         ),
