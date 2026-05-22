@@ -1,0 +1,53 @@
+diff --git a/scripts/run-minimax-website-task-quality.py b/scripts/run-minimax-website-task-quality.py
+--- a/scripts/run-minimax-website-task-quality.py
++++ b/scripts/run-minimax-website-task-quality.py
+@@
+     parser.add_argument("--enable-prefix-caching", action="store_true")
+     parser.add_argument("--repeat", type=int, default=1)
++    parser.add_argument(
++        "--warmup-runs",
++        type=int,
++        default=0,
++        help=(
++            "Run and validate this many warmup repetitions before measured "
++            "repeats. Warmups are saved in the output but excluded from pass "
++            "and throughput metrics."
++        ),
++    )
+@@
+-                r"[A-Z][A-Za-z0-9 ,.'-]{8,90}</p><ul>"
++                r"[A-Z][A-Za-z0-9,.'-]{1,20}"
++                r"(?: [A-Za-z0-9,.'-]{1,20}){2,12}</p><ul>"
+                 r"<li>GPUs ready</li><li>Model loaded</li>"
+                 r"<li>Benchmarks passing</li></ul></section></main>"
+                 r"<footer>Updated: Ready</footer></body></html>"
+@@
+-    for repeat_index in range(args.repeat):
++    run_schedule = [
++        ("warmup", warmup_index - args.warmup_runs, warmup_index)
++        for warmup_index in range(args.warmup_runs)
++    ] + [
++        ("measured", repeat_index, repeat_index)
++        for repeat_index in range(args.repeat)
++    ]
++    for measurement_phase, repeat_index, measurement_index in run_schedule:
+@@
++              if measurement_phase == "warmup":
++                  repeat_suffix = f"-w{measurement_index}"
++              else:
++                  repeat_suffix = f"-r{repeat_index}" if args.repeat > 1 else ""
+@@
+                   "task_id": task.task_id,
++                  "measurement_phase": measurement_phase,
++                  "measurement_index": measurement_index,
+                   "repeat_index": repeat_index,
+@@
++    measured_records = [
++        record for record in records if record["measurement_phase"] == "measured"
++    ]
++    warmup_records = [
++        record for record in records if record["measurement_phase"] == "warmup"
++    ]
++
++    # All pass/fail and throughput metrics below are measured-only. Warmup
++    # records are retained in the result JSON under warmup_* metrics.
