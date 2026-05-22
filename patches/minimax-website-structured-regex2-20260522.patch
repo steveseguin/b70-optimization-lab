@@ -1,0 +1,15 @@
+diff --git a/scripts/run-minimax-website-task-quality.py b/scripts/run-minimax-website-task-quality.py
+--- a/scripts/run-minimax-website-task-quality.py
++++ b/scripts/run-minimax-website-task-quality.py
+@@
+         structured_outputs = StructuredOutputsParams(
+             regex=(
+-                r"[A-Z][A-Za-z0-9,.'-]{1,20}"
+-                r"(?: [A-Za-z0-9,.'-]{1,20}){2,12}</p><ul>"
++                r"[A-Z][A-Za-z0-9,.-]{1,20}"
++                r"(?: [A-Za-z0-9][A-Za-z0-9,.-]{0,20}){2,12}</p><ul>"
+                 r"<li>GPUs ready</li><li>Model loaded</li>"
+                 r"<li>Benchmarks passing</li></ul></section></main>"
+                 r"<footer>Updated: Ready</footer></body></html>"
+             )
+         )
