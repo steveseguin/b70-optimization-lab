@@ -1,0 +1,38 @@
+{
+  "hfId": "Lasimeri/MiniMax-M2.7-int4-AutoRound",
+  "modelRevision": "main",
+  "hardware": {
+    "hwClass": "DISCRETE_GPU",
+    "gpuName": "Intel Arc Pro B70",
+    "gpuCount": 4,
+    "vramGb": 32,
+    "cpu": "AMD EPYC 9015 8-Core Processor",
+    "ramGb": 15,
+    "os": "Ubuntu 24.04.4 LTS"
+  },
+  "engineName": "vllm",
+  "engineVersion": "0.20.1-local",
+  "quantization": "AutoRound INT4 W4A16",
+  "promptTokens": 13146,
+  "outputTokens": 440,
+  "contextLength": 4096,
+  "batchSize": 1,
+  "tokSOut": 54.898,
+  "tokSTotal": 1695.105,
+  "notes": "Validation-gated structured JSON benchmark with ~2k prompt padding. Delivered 6/6 valid JSON outputs with retry-until-pass=3. Conservative tokSOut is effective accepted-output rate including failed attempts/retries. Selected valid outputs alone decoded at 83.151 tok/s and selected prompt+output accounting was 2567.477 tok/s; raw candidate pass rate was 6/9 (66.67%). Greedy sampling; three deterministic JSON tasks with exact parse/order/arithmetic checks. This is a context/prefill usability result, not a clean raw-candidate-quality claim.",
+  "engineFlags": {
+    "commandSnippet": "source repro/minimax-m27-b70-89tps-20260520/configs/promoted-env.sh && run-minimax-json-quality-throughput.py --mode graph --task alpha_names --task number_facts --task b70_status --warmup-runs 1 --repeat 2 --retry-until-pass 3 --concurrency 1 --context-pad-tokens 2048 --max-model-len 4096 --max-num-batched-tokens 512 --max-num-seqs 1 --block-size 256 --enable-prefix-caching --compile-size-policy one",
+    "tensorParallel": 4,
+    "gpuLayers": 999,
+    "contextLength": 4096,
+    "concurrency": 1,
+    "temperature": 0,
+    "topP": 1,
+    "contBatching": true,
+    "chunkedPrefill": true,
+    "prefillChunkSize": 512,
+    "prefixCaching": true,
+    "specDecoding": false,
+    "extraFlags": "XPU graph forced with comm/no-op comm capture; llm-scaler INT4 MoE path; compile_sizes=[1]; validation retry gate. Result file: /home/steve/bench-results/minimax-m2.7-json-quality/20260522T124101Z-ctxpad2048-c1-mbt512-compile1-retry3-repeat2/result.json"
+  }
+}
