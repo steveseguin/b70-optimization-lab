@@ -1,0 +1,37 @@
+{
+  "hfId": "Lasimeri/MiniMax-M2.7-int4-AutoRound",
+  "modelRevision": "main",
+  "hardware": {
+    "hwClass": "DISCRETE_GPU",
+    "gpuName": "Intel Arc Pro B70 32GB",
+    "gpuCount": 4,
+    "vramGb": 32,
+    "cpu": "AMD EPYC 9015 8-Core Processor",
+    "ramGb": 16,
+    "os": "Ubuntu 24.04.4 LTS, Linux 6.17.0-23-generic"
+  },
+  "engineName": "vllm",
+  "engineVersion": "0.20.1-local",
+  "quantization": "AutoRound INT4 W4A16",
+  "promptTokens": 12288,
+  "outputTokens": 256,
+  "contextLength": 8192,
+  "batchSize": 2,
+  "ttftMs": 1963.4561245329678,
+  "tokSOut": 35.47772919446377,
+  "tokSTotal": 1738.4087305287246,
+  "notes": "vllm bench serve TTFT/ITL probe, not itself a quality task: two simultaneous random 6144-token prompts, 128 output tokens each, two warmup requests, temperature=0, ignore_eos=true. Same no-graph c2/8k engine settings as quality-gated JSON run cmpgyxotu00aspc016gg8azvf, which passed 12/12 raw JSON/content candidates. This serving path showed mean TTFT 1963 ms, median ITL 29.1 ms, and exposes API/scheduler/prefill overhead versus offline throughput.",
+  "engineFlags": {
+    "commandSnippet": "vllm serve /mnt/fast-ai/llm-models/minimax-m2.7-int4-autoround --served-model-name minimax-m27-autoround --host 127.0.0.1 --port 18085 --trust-remote-code --dtype float16 --tensor-parallel-size 4 --distributed-executor-backend mp --max-model-len 8192 --max-num-batched-tokens 512 --max-num-seqs 2 --enable-prefix-caching --block-size 256 --disable-custom-all-reduce --generation-config vllm --gpu-memory-utilization 0.95 --compilation-config '{\"use_inductor_graph_partition\":true,\"compile_sizes\":[1],\"compile_ranges_endpoints\":[512],\"custom_ops\":[\"none\"],\"cudagraph_mode\":\"NONE\"}'; vllm bench serve --backend openai --base-url http://127.0.0.1:18085 --endpoint /v1/completions --model minimax-m27-autoround --tokenizer /mnt/fast-ai/llm-models/minimax-m2.7-int4-autoround --dataset-name random --random-input-len 6144 --random-output-len 128 --num-prompts 2 --request-rate inf --max-concurrency 2 --num-warmups 2 --ignore-eos --temperature 0",
+    "tensorParallel": 4,
+    "contextLength": 8192,
+    "concurrency": 2,
+    "temperature": 0.0,
+    "flashAttn": true,
+    "chunkedPrefill": true,
+    "prefillChunkSize": 512,
+    "prefixCaching": true,
+    "contBatching": true,
+    "extraFlags": "Serving latency probe; XPU/Level Zero; cudagraph_mode=NONE; compile_sizes=[1]; disable_custom_all_reduce=true; gpu_memory_utilization=0.95; block_size=256; llm-scaler XPU INT4 MoE decode path"
+  }
+}
