@@ -49,6 +49,29 @@ The previously reported 89-93 tok/s long-decode result remains plausible for war
 - For strict JSON usage today, either use non-cudagraph mode for correctness, or use graph mode only behind a validator/retry wrapper and report effective throughput including rejected attempts.
 - The validated-retry graph run is useful for application behavior, but it is not evidence that the backend is fixed.
 
+## Additional Repeatability Check
+
+After the initial follow-up, a stricter no-retry graph run was added:
+
+- Path: `/home/steve/bench-results/minimax-m2.7-json-quality/20260522T165328Z-ctx2048-c1-graph-compile1-validateonly-repeat10-warm1-noretry/result.json`
+- Result: 15/30 measured JSON generations accepted, 15 rejected.
+- Accepted-only decode: 87.58 tok/s.
+- Effective accepted decode including rejected attempts: 22.88 tok/s.
+- Failure classes: 15 `json_decode_error`, 13 `not_single_json_value_text`.
+- Repeatability among accepted outputs was clean, but `b70_status` had 0/10 accepted runs.
+
+Sample `b70_status` failures repeated or concatenated answers and used the wrong model string (`MiniMax-M2.6 AutoRound INT4`). This is a stronger negative result than the earlier 8/9 failure: the fast graph path can be very fast on accepted outputs, but it is not currently quality-clean for repeated practical JSON requests.
+
+A b70-only non-cudagraph A/B run was also attempted:
+
+- Path: `/home/steve/bench-results/minimax-m2.7-json-quality/20260522T170034Z-ctx2048-c1-cgnone-compile1-b70status-repeat10/result.json`
+- Result: 0/10 accepted.
+- Failure classes: 10 `control_characters`, 10 `json_decode_error`, 10 `not_single_json_value_text`.
+- Raw outputs were NUL bytes.
+- During compile, `ocloc` hit an IGC internal compiler error (`Floating point exception`) on `triton_red_fused__to_copy_mm_t_9` and vLLM continued after skipping graph capture.
+
+This means the small 3/3 non-cudagraph baseline was not enough evidence by itself. The model can produce valid JSON on this stack, but the current runtime/compiler path is not reliable enough to claim the >90 tok/s configuration maintains practical JSON quality.
+
 ## Next Work
 
 1. Investigate the XPU graph forced communication path:
