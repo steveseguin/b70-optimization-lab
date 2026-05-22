@@ -6,8 +6,9 @@ Hardware/software context:
 - Hardware: 4x Intel Arc Pro B70 32 GB, TP4
 - Engine: local vLLM 0.20.1 XPU build with llm-scaler INT4 MoE path
 - Harness: `scripts/run-minimax-json-quality-throughput.py`
-  - GitHub artifact: `scripts/run-minimax-json-quality-throughput.py.gz.b64`
-  - Decode with: `base64 -d scripts/run-minimax-json-quality-throughput.py.gz.b64 | gzip -dc > scripts/run-minimax-json-quality-throughput.py`
+  - GitHub artifact parts: `scripts/run-minimax-json-quality-throughput.py.gz.b64.part00` through `.part04`
+  - Rebuild with: `cat scripts/run-minimax-json-quality-throughput.py.gz.b64.part* | base64 -d | gzip -dc > scripts/run-minimax-json-quality-throughput.py`
+  - Concatenated base64 SHA256: `9683b287c60d4f3ad756a19cad9eef58c6e6520e3c1e9e5ed36a542acfc86609`
 - Promoted environment base: `repro/minimax-m27-b70-89tps-20260520/configs/promoted-env.sh`
 
 The question was why the simple website task could pass while JSON tasks were unstable. The answer is not that the model cannot produce JSON. It is a runtime-path issue:
@@ -38,7 +39,7 @@ This keeps quality accounting honest: sampler/runtime failures and content failu
 | Graph bad-fragment ban | `20260522T162937Z-ctx2048-c1-graph-compile1-validateonly-banfrag-repeat3-warm1` | no | 8/9 | 86.56 | 63.09 | Failure moved to another task, so not a real fix |
 | Graph validated retry | `20260522T163303Z-ctx2048-c1-graph-compile1-validateonly-retry2-repeat3-warm1` | yes | 9/12 raw attempts | 88.84 selected | 62.03 including retries | Practical mitigation, not a clean backend pass |
 
-The recurrent corruption patterns included fragments such as `kelompok`, `luas`, `yml`, malformed JSON keys, and one semantically wrong `MiniMax-M2.6` field. These are not normal model reasoning failures. They are consistent with a forced graph replay/output correctness issue under repeated short requests.
+The recurrent corruption patterns included fragments such as `kelompok`, `luas`, `有人`, malformed JSON keys, and one semantically wrong `MiniMax-M2.6` field. These are not normal model reasoning failures. They are consistent with a forced graph replay/output correctness issue under repeated short requests.
 
 ## Current Interpretation
 
