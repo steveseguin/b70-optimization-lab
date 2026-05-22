@@ -1,0 +1,78 @@
+{
+  "date_utc": "2026-05-21",
+  "status": "rejected_not_promoted",
+  "reason": "Warm text-prompt throughput was slightly below the existing promoted warm baseline, so strict quality promotion and LocalMaxxing submission were skipped.",
+  "model": "/mnt/fast-ai/llm-models/minimax-m2.7-int4-autoround",
+  "engine": "vllm",
+  "hardware": {
+    "gpu_name": "Intel Arc Pro B70",
+    "gpu_count": 4,
+    "vram_gb_per_gpu": 32
+  },
+  "candidate_flags": {
+    "VLLM_MINIMAX_QK_RMS_AR_APPLY_CUSTOM_OP": "1",
+    "VLLM_MINIMAX_QK_RMS_POST_AR_APPLY_CUSTOM_OP": "0"
+  },
+  "baseline": {
+    "description": "Prior promoted warm vLLM random text run",
+    "mean_output_toks_per_second": 92.37491625407232,
+    "mean_total_toks_per_second": 123.16655500542976,
+    "artifact": "/home/steve/bench-results/minimax-m2.7-post-repro-optimization/warm-vllm-random-text-retry-20260520T130948Z/minimax-ws-warm-vllm-random-text-p512n1536.json"
+  },
+  "screen": {
+    "artifact": "/home/steve/bench-results/minimax-m2.7-post-repro-optimization/qk-ar-apply-warm-20260521T020745Z/minimax-qk-ar-apply-warm-vllm-random-text-p512n1536.json",
+    "log": "/home/steve/bench-results/minimax-m2.7-post-repro-optimization/qk-ar-apply-warm-20260521T020745Z/minimax-qk-ar-apply-warm-vllm-random-text-p512n1536.log",
+    "tensor_parallel_size": 4,
+    "dtype": "float16",
+    "max_model_len": 2048,
+    "max_num_batched_tokens": 512,
+    "max_num_seqs": 1,
+    "block_size": 256,
+    "prompt_source": "vllm_random_text",
+    "prompt_seed": 20260520,
+    "prompt_tokens": 512,
+    "output_tokens": 1536,
+    "warmup_repeats": 1,
+    "measured_repeats": 4,
+    "init_elapsed_s": 318.4318384459475,
+    "mean_output_toks_per_second": 92.36072395105047,
+    "mean_total_toks_per_second": 123.14763193473397,
+    "min_output_toks_per_second": 92.34870809302066,
+    "max_output_toks_per_second": 92.37201153894232,
+    "stdev_output_toks_per_second": 0.011955306923006122,
+    "repeats": [
+      {
+        "repeat": 0,
+        "elapsed_s": 16.628413459984586,
+        "output_toks_per_second": 92.37201153894232,
+        "total_toks_per_second": 123.1626820519231,
+        "token_sha256": "cf5db6164dbc591bdf55993a12b62656f6f25189ece6691680d72be36540b852"
+      },
+      {
+        "repeat": 1,
+        "elapsed_s": 16.632609504973516,
+        "output_toks_per_second": 92.34870809302066,
+        "total_toks_per_second": 123.13161079069421,
+        "token_sha256": "02e5cab2fad8fbea6587aa22eae707726c9f814b38b2decc4afbabc58b9ee241"
+      },
+      {
+        "repeat": 2,
+        "elapsed_s": 16.62878627795726,
+        "output_toks_per_second": 92.36994055519774,
+        "total_toks_per_second": 123.15992074026364,
+        "token_sha256": "6b1ea69aa57c28fec045f0de3a850d65712bf0624565c42c1a45bc8786a2ad04"
+      },
+      {
+        "repeat": 3,
+        "elapsed_s": 16.631974198971875,
+        "output_toks_per_second": 92.35223561704116,
+        "total_toks_per_second": 123.13631415605488,
+        "token_sha256": "3cea15a421b29f4b707da58ae905e2a51da87ef0419d9083a69bf663e792c53c"
+      }
+    ]
+  },
+  "localmaxxing": {
+    "submitted": false,
+    "reason": "Negative/neutral optimization screen, not a promoted result."
+  }
+}

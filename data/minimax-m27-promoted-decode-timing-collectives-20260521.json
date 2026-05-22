@@ -1,0 +1,122 @@
+{
+  "date_utc": "2026-05-21",
+  "status": "diagnostic_only_not_submitted",
+  "reason": "Decode timing probe with instrumentation enabled; useful for optimization attribution but not a LocalMaxxing benchmark result.",
+  "model": "/mnt/fast-ai/llm-models/minimax-m2.7-int4-autoround",
+  "engine": "vllm",
+  "hardware": {
+    "gpu_name": "Intel Arc Pro B70",
+    "gpu_count": 4,
+    "vram_gb_per_gpu": 32
+  },
+  "runtime": {
+    "tensor_parallel_size": 4,
+    "dtype": "float16",
+    "max_model_len": 2048,
+    "max_num_batched_tokens": 512,
+    "max_num_seqs": 1,
+    "block_size": 256,
+    "prompt_source": "vllm_random_text",
+    "prompt_seed": 20260520,
+    "prompt_tokens": 512,
+    "output_tokens": 512,
+    "warmup_repeats": 1,
+    "measured_repeats": 1
+  },
+  "diagnostic_env": {
+    "VLLM_XPU_DECODE_TIMING": "1",
+    "VLLM_XPU_DECODE_TIMING_RANK": "0",
+    "VLLM_XPU_DECODE_TIMING_SKIP_FIRST": "16",
+    "VLLM_XPU_DECODE_TIMING_PRINT_EVERY": "0",
+    "VLLM_XPU_DECODE_TIMING_SYNC": "0"
+  },
+  "throughput_probe": {
+    "artifact": "/home/steve/bench-results/minimax-m2.7-post-repro-optimization/decode-timing-promoted-20260521T024008Z/minimax-promoted-decode-timing-vllm-random-text-p512n512.json",
+    "log": "/home/steve/bench-results/minimax-m2.7-post-repro-optimization/decode-timing-promoted-20260521T024008Z/minimax-promoted-decode-timing-vllm-random-text-p512n512.log",
+    "elapsed_s": 5.339831202058122,
+    "output_toks_per_second": 95.88318068980547,
+    "total_toks_per_second": 191.76636137961094,
+    "token_sha256": "4130d4a9e926047ef17d94ec800ac3022349051e938f03d1fe37d659bfdded67"
+  },
+  "largest_timing_buckets_rank0": [
+    {
+      "label": "all_reduce:(2, 3072):torch.float16",
+      "count": 234,
+      "total_ms": 1287.646412,
+      "avg_ms": 5.502762,
+      "max_ms": 59.491114,
+      "inferred_site_family": "fp16_hidden_state_collective"
+    },
+    {
+      "label": "all_reduce:(1, 3072):torch.float16",
+      "count": 359,
+      "total_ms": 742.056593,
+      "avg_ms": 2.06701,
+      "max_ms": 79.664961,
+      "inferred_site_family": "fp16_hidden_state_collective"
+    },
+    {
+      "label": "all_reduce:(2, 2):torch.float32",
+      "count": 108,
+      "total_ms": 594.895557,
+      "avg_ms": 5.508292,
+      "max_ms": 68.809413,
+      "inferred_site_family": "qk_variance_collective"
+    },
+    {
+      "label": "all_reduce:(1, 2):torch.float32",
+      "count": 170,
+      "total_ms": 440.74506,
+      "avg_ms": 2.592618,
+      "max_ms": 41.146756,
+      "inferred_site_family": "qk_variance_collective"
+    },
+    {
+      "label": "logits.local_argmax_lm_head",
+      "count": 1010,
+      "total_ms": 64.196575,
+      "avg_ms": 0.063561,
+      "max_ms": 0.09472
+    },
+    {
+      "label": "all_reduce:(512, 3072):torch.float16",
+      "count": 359,
+      "total_ms": 17.618818,
+      "avg_ms": 0.049077,
+      "max_ms": 0.232331,
+      "inferred_site_family": "prefill_or_profile_collective"
+    },
+    {
+      "label": "all_reduce:(512, 2):torch.float32",
+      "count": 170,
+      "total_ms": 6.660277,
+      "avg_ms": 0.039178,
+      "max_ms": 0.507813,
+      "inferred_site_family": "prefill_or_profile_qk_variance_collective"
+    },
+    {
+      "label": "gpu_model_runner.async_output_tolist",
+      "count": 1008,
+      "total_ms": 2.168739,
+      "avg_ms": 0.002152,
+      "max_ms": 0.00877,
+      "inferred_site_family": "cpu_output_callback"
+    }
+  ],
+  "interpretation": {
+    "summary": "The current limiter is still collective latency around hidden-state and Q/K variance allreduces. CPU output callback handling is negligible in this promoted path.",
+    "next_candidates": [
+      "site-label FP16 hidden-state collectives to split attention o_proj versus MoE output versus final residual/norm cost",
+      "pursue math-preserving fusion or graph scheduling around hidden-state allreduce boundaries",
+      "keep Q/K variance collective work narrow and exact-token-gated because prior variants were neutral or quality-negative"
+    ]
+  },
+  "quality": {
+    "promoted_runtime_strict_gate_before_probe": "/home/steve/bench-results/minimax-m2.7-post-repro-optimization/quality-sanity-after-qk-neutral-20260521/minimax-promoted-runtime-sanity-after-qk-neutral-20260521-strict-tp4-ctx2048-mbt512-bs256-20260521T022011Z-summary.json",
+    "diagnostic_changed_model_math": false
+  },
+  "localmaxxing": {
+    "submitted": false,
+    "reason": "Diagnostic timing probe, not a stable benchmark submission."
+  }
+}

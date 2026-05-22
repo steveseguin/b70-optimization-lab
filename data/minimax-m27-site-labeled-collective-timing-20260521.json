@@ -1,0 +1,129 @@
+{
+  "date_utc": "2026-05-21",
+  "status": "diagnostic_only_not_submitted",
+  "reason": "Temporary no-math-change allreduce labels were used to attribute collective cost. This is not a stable benchmark result.",
+  "model": "/mnt/fast-ai/llm-models/minimax-m2.7-int4-autoround",
+  "engine": "vllm",
+  "hardware": {
+    "gpu_name": "Intel Arc Pro B70",
+    "gpu_count": 4,
+    "vram_gb_per_gpu": 32
+  },
+  "quality_gate": {
+    "artifact": "/home/steve/bench-results/minimax-m2.7-post-repro-optimization/site-labeled-promoted-20260521T025138Z/minimax-site-labeled-promoted-raw145-n64.json",
+    "log": "/home/steve/bench-results/minimax-m2.7-post-repro-optimization/site-labeled-promoted-20260521T025138Z/minimax-site-labeled-promoted-raw145-n64.log",
+    "prompt": "prompts/minimax-raw145-tokenhash-canary.txt",
+    "output_tokens": 64,
+    "expected_combined_token_sha256": "267cbf30208d84929ee79284ac695467f7e80597bf8694130e1e1f8b180eb5bd",
+    "observed_combined_token_sha256": "267cbf30208d84929ee79284ac695467f7e80597bf8694130e1e1f8b180eb5bd",
+    "passed": true,
+    "elapsed_s": 5.930575915961526,
+    "distinct_generated_token_count": 28,
+    "control_nonspace_text_chars": 0,
+    "nul_token_count": 0
+  },
+  "timing_probe": {
+    "artifact": "/home/steve/bench-results/minimax-m2.7-post-repro-optimization/site-labeled-promoted-warm-20260521T025808Z/minimax-site-labeled-promoted-warm-vllm-random-text-p512n512.json",
+    "log": "/home/steve/bench-results/minimax-m2.7-post-repro-optimization/site-labeled-promoted-warm-20260521T025808Z/minimax-site-labeled-promoted-warm-vllm-random-text-p512n512.log",
+    "prompt_source": "vllm_random_text",
+    "prompt_tokens": 512,
+    "output_tokens": 512,
+    "warmup_repeats": 1,
+    "measured_repeats": 1,
+    "output_toks_per_second": 95.28611507903615,
+    "total_toks_per_second": 190.5722301580723,
+    "token_sha256": "d68667b0486b29b562aae054ff2b4d422d363f37b1dbed2d85b8a264a08b047b",
+    "timing_sync": false
+  },
+  "largest_timing_buckets_rank0": [
+    {
+      "label": "all_reduce:minimax.moe.output_inside_custom_op:(2, 3072):torch.float16",
+      "count": 108,
+      "total_ms": 650.618192,
+      "avg_ms": 6.024243,
+      "max_ms": 288.68767,
+      "site_family": "moe_output_collective"
+    },
+    {
+      "label": "all_reduce:(2, 2):torch.float32",
+      "count": 108,
+      "total_ms": 604.367179,
+      "avg_ms": 5.595992,
+      "max_ms": 131.955227,
+      "site_family": "qk_variance_collective"
+    },
+    {
+      "label": "all_reduce:(2, 3072):torch.float16",
+      "count": 110,
+      "total_ms": 493.679216,
+      "avg_ms": 4.487993,
+      "max_ms": 88.247399,
+      "site_family": "unlabeled_hidden_state_collective_likely_attention_oproj"
+    },
+    {
+      "label": "all_reduce:(1, 2):torch.float32",
+      "count": 170,
+      "total_ms": 435.800759,
+      "avg_ms": 2.563534,
+      "max_ms": 52.243595,
+      "site_family": "qk_variance_collective"
+    },
+    {
+      "label": "all_reduce:(1, 3072):torch.float16",
+      "count": 173,
+      "total_ms": 415.876388,
+      "avg_ms": 2.40391,
+      "max_ms": 48.809499,
+      "site_family": "unlabeled_hidden_state_collective_likely_attention_oproj"
+    },
+    {
+      "label": "all_reduce:minimax.moe.output_inside_custom_op:(1, 3072):torch.float16",
+      "count": 170,
+      "total_ms": 165.536663,
+      "avg_ms": 0.973745,
+      "max_ms": 38.737876,
+      "site_family": "moe_output_collective"
+    },
+    {
+      "label": "logits.local_argmax_lm_head",
+      "count": 1010,
+      "total_ms": 66.43785,
+      "avg_ms": 0.06578,
+      "max_ms": 0.10503,
+      "site_family": "logits"
+    },
+    {
+      "label": "gpu_model_runner.async_output_tolist",
+      "count": 1008,
+      "total_ms": 2.049628,
+      "avg_ms": 0.002033,
+      "max_ms": 0.01408,
+      "site_family": "cpu_output_callback"
+    }
+  ],
+  "aggregate_signal_ms": {
+    "qk_variance_collectives": 1040.167938,
+    "unlabeled_fp16_hidden_state_collectives": 909.555604,
+    "moe_output_collectives": 816.154855,
+    "cpu_output_callback": 2.049628
+  },
+  "interpretation": {
+    "summary": "The remaining decode limiter is a collection of GPU collective boundaries. MoE output is visible and labeled, Q/K variance remains visible, and attention/row-parallel hidden-state collectives remain unlabeled through the compiled graph path. CPU callback/output handling is negligible.",
+    "next_candidates": [
+      "MoE output allreduce scheduling/fusion",
+      "attention/row-parallel hidden-state allreduce scheduling or lower-level fusion",
+      "narrow Q/K tiny collective alternatives gated by exact-token canaries"
+    ]
+  },
+  "cleanup": {
+    "temporary_labels_removed": true,
+    "source_and_installed_vllm_match_after_cleanup": true,
+    "py_compile_after_cleanup": true,
+    "stale_workers_after_cleanup": false,
+    "stale_shm_after_cleanup": false
+  },
+  "localmaxxing": {
+    "submitted": false,
+    "reason": "Diagnostic timing with temporary labels, not a stable benchmark."
+  }
+}

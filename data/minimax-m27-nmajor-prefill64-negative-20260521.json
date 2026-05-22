@@ -1,0 +1,63 @@
+{
+  "date_utc": "2026-05-21",
+  "label": "nmajor-prefill64-strictbench",
+  "model": "/mnt/fast-ai/llm-models/minimax-m2.7-int4-autoround",
+  "hf_id": "Lasimeri/MiniMax-M2.7-int4-AutoRound",
+  "hardware": "4x Intel Arc Pro B70 32GB",
+  "engine": "vLLM 0.20.1-local",
+  "backend": "xpu/llm-scaler",
+  "localmaxxing": {
+    "id": "cmpfjjo9v0003qj018ainfuey",
+    "status": "APPROVED",
+    "submitted": true
+  },
+  "candidate": {
+    "description": "Allow llm-scaler N-major INT4 MoE apply path to run up to 64 tokens via VLLM_XPU_LLM_SCALER_MOE_APPLY_MAX_TOKENS=64.",
+    "env": {
+      "VLLM_XPU_LLM_SCALER_MOE_APPLY_MAX_TOKENS": "64",
+      "MAX_BATCHED_TOKENS": "64",
+      "VLLM_XPU_USE_LLM_SCALER_MOE": "1",
+      "VLLM_XPU_USE_LLM_SCALER_MOE_WS": "1",
+      "VLLM_XPU_USE_LLM_SCALER_MOE_MINIMAX_LOGITS_WS": "1",
+      "VLLM_XPU_ENABLE_XPU_GRAPH": "1",
+      "VLLM_XPU_FORCE_GRAPH_WITH_COMM": "1",
+      "VLLM_XPU_GRAPH_NOOP_COMM_CAPTURE": "1"
+    }
+  },
+  "quality": {
+    "status": "passed",
+    "raw145_n64_exact_sha256": "267cbf30208d84929ee79284ac695467f7e80597bf8694130e1e1f8b180eb5bd",
+    "raw145_n256_exact_sha256": "58f6e8251c7a0a17e8c441278b5861f7d5da914fa1823ecd10484b296f2d7537",
+    "semantic_suite": "passed",
+    "arithmetic_repeat_n64_r8": "passed",
+    "extended_sixpack_n64_r2": "passed"
+  },
+  "benchmark": {
+    "prompt_tokens": 512,
+    "output_tokens": 1536,
+    "context_length": 2048,
+    "repeats": 4,
+    "output_toks_per_second": [
+      85.24743882868819,
+      86.86544158271423,
+      85.92298127693422,
+      86.42021503760662
+    ],
+    "mean_output_toks_per_second": 86.11401918148582,
+    "total_toks_per_second": [
+      113.66325177158426,
+      115.8205887769523,
+      114.56397503591229,
+      115.22695338347549
+    ],
+    "mean_total_toks_per_second": 114.8186922419811,
+    "baseline_promoted_output_toks_per_second": 89.314195,
+    "delta_vs_promoted_percent": -3.583053979845177
+  },
+  "artifact_paths": {
+    "summary_json": "/home/steve/bench-results/minimax-m2.7-post-repro-optimization/minimax-nmajor-prefill64-strictbench-strict-tp4-ctx2048-mbt64-bs256-20260521T131252Z-summary.json",
+    "quality_dir": "/home/steve/bench-results/minimax-m2.7-post-repro-optimization/minimax-nmajor-prefill64-strictbench-strict-tp4-ctx2048-mbt64-bs256-20260521T131252Z-quality"
+  },
+  "outcome": "reject",
+  "reason": "Quality was preserved, but p512/n1536 throughput regressed about 3.6% versus the promoted strict 89.314 tok/s result. Keep the patch opt-in only; do not promote as the reproducible path."
+}

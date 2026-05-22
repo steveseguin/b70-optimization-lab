@@ -1,0 +1,74 @@
+{
+  "date": "2026-05-21",
+  "label": "compile-combo-off",
+  "model": "/mnt/fast-ai/llm-models/minimax-m2.7-int4-autoround",
+  "hfId": "Lasimeri/MiniMax-M2.7-int4-AutoRound",
+  "hardware": "4x Intel Arc Pro B70 32GB",
+  "engine": "vLLM 0.20.1-local XPU/Level Zero",
+  "status": "quality_passed_negative",
+  "candidate": {
+    "description": "Disable Inductor combo kernels while keeping the promoted TP4 llm-scaler MiniMax path.",
+    "compilation_config_json": {
+      "use_inductor_graph_partition": true,
+      "compile_sizes": [
+        1
+      ],
+      "cudagraph_mode": "PIECEWISE",
+      "inductor_compile_config": {
+        "combo_kernels": false,
+        "benchmark_combo_kernel": false
+      }
+    }
+  },
+  "quality": {
+    "raw145_n64_exact": true,
+    "raw145_n64_hash": "267cbf30208d84929ee79284ac695467f7e80597bf8694130e1e1f8b180eb5bd",
+    "raw145_n256_exact": true,
+    "raw145_n256_hash": "58f6e8251c7a0a17e8c441278b5861f7d5da914fa1823ecd10484b296f2d7537",
+    "semantic_suite_n64_r2": true,
+    "semantic_suite_hash": "adacbf144264486ea7d378ebb6a4c0ba23951b72c4cf86251a762b07ebef5805",
+    "arithmetic_repeat_n64_r8": true,
+    "arithmetic_repeat_hash": "261779104d5abf1642713bfc560ca8d2d6c0f16edbcc929c8b0819b5a760dd7c",
+    "extended_sixpack_n64_r2": true,
+    "extended_sixpack_hash": "1e3560554f57b2b56cec8f49f28bc8ba12e9e0ced26bdc99a976f1433c99caa7"
+  },
+  "benchmark": {
+    "prompt_tokens": 512,
+    "output_tokens": 1536,
+    "context_length": 2048,
+    "batch_size": 1,
+    "max_num_batched_tokens": 512,
+    "block_size": 256,
+    "bench_repeats": 2,
+    "output_toks_per_second": [
+      87.25702061249937,
+      86.59034015599617
+    ],
+    "total_toks_per_second": [
+      116.34269414999916,
+      115.45378687466157
+    ],
+    "mean_output_toks_per_second": 86.92368038424777,
+    "mean_total_toks_per_second": 115.89824051233037
+  },
+  "comparison": {
+    "restored_control_output_toks_per_second": 89.69634848857118,
+    "promoted_strict_output_toks_per_second": 89.314195,
+    "delta_vs_restored_control_percent": -3.09117165976571,
+    "delta_vs_promoted_percent": -2.676522601756892
+  },
+  "interpretation": "Disabling Inductor combo kernels is quality-safe but slower on this MiniMax/B70 path. Keep the promoted compilation config with default combo-kernel behavior.",
+  "artifacts": {
+    "summary_json": "/home/steve/bench-results/minimax-m2.7-post-repro-optimization/minimax-compile-combo-off-strict-tp4-ctx2048-mbt512-bs256-20260521T144449Z-summary.json",
+    "benchmark_jsons": [
+      "/home/steve/bench-results/minimax-m2.7-post-repro-optimization/vllm-minimax-m27-autoround-tp4-p512n1536-20260521T150034Z.json",
+      "/home/steve/bench-results/minimax-m2.7-post-repro-optimization/vllm-minimax-m27-autoround-tp4-p512n1536-20260521T150325Z.json"
+    ],
+    "benchmark_logs": [
+      "/home/steve/bench-results/minimax-m2.7-post-repro-optimization/vllm-minimax-m27-autoround-tp4-p512n1536-20260521T150034Z.log",
+      "/home/steve/bench-results/minimax-m2.7-post-repro-optimization/vllm-minimax-m27-autoround-tp4-p512n1536-20260521T150325Z.log"
+    ],
+    "runtime_moe_wna16_sha256": "17a9b7f98a0068a7cbe39983a4f4a6d72f2fb4a4d016dbd74a34734ef15434e7"
+  },
+  "localmaxxing_id": "cmpfml9ti002dqj01utjig7xk"
+}

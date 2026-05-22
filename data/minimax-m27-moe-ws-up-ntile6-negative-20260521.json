@@ -1,0 +1,79 @@
+{
+  "date": "2026-05-21",
+  "model": "/mnt/fast-ai/llm-models/minimax-m2.7-int4-autoround",
+  "hardware": {
+    "gpu": "Intel Arc Pro B70 32GB",
+    "gpu_count": 4
+  },
+  "candidate": {
+    "name": "moe_ws_up_ntile6",
+    "env_delta": {
+      "VLLM_XPU_MOE_WS_UP_NTILE": "6"
+    },
+    "base_env": "repro/minimax-m27-b70-89tps-20260520/configs/promoted-env.sh",
+    "compilation_config": {
+      "use_inductor_graph_partition": true,
+      "compile_sizes": [1],
+      "cudagraph_mode": "PIECEWISE"
+    }
+  },
+  "quality": {
+    "gate": "raw145-n64-exact",
+    "passed": true,
+    "expected_token_sha256_match": true,
+    "combined_token_sha256": "267cbf30208d84929ee79284ac695467f7e80597bf8694130e1e1f8b180eb5bd",
+    "control_nonspace_text_chars": 0,
+    "nul_token_count": 0,
+    "deterministic": true
+  },
+  "speed": {
+    "shape": {
+      "prompt_tokens": 512,
+      "output_tokens": 1536,
+      "num_prompts": 1,
+      "warmup_repeats": 1,
+      "measured_repeats": 4
+    },
+    "candidate": {
+      "mean_output_toks_per_second": 85.35699540415585,
+      "mean_total_toks_per_second": 113.80932720554114,
+      "min_output_toks_per_second": 85.32762832836973,
+      "max_output_toks_per_second": 85.3853212435989,
+      "stdev_output_toks_per_second": 0.02858811648877067,
+      "init_elapsed_s": 313.33857571007684,
+      "warmup_elapsed_s": 23.233820691006258
+    },
+    "paired_promoted_control": {
+      "mean_output_toks_per_second": 92.4524026544147,
+      "mean_total_toks_per_second": 123.26987020588626,
+      "min_output_toks_per_second": 92.41902417986701,
+      "max_output_toks_per_second": 92.4858761081602,
+      "stdev_output_toks_per_second": 0.02825983216228737,
+      "init_elapsed_s": 132.71011321502738,
+      "warmup_elapsed_s": 17.044469685992226
+    },
+    "delta_vs_paired_control": {
+      "mean_output_toks_per_second": -7.095407250258854,
+      "relative_decode_change_percent": -7.674650673474325
+    }
+  },
+  "failed_methodology_run": {
+    "description": "warm harness default allowed full decode graph capture",
+    "failure": "The sycl_ext_oneapi_work_group_scratch_memory feature is not yet available for use with the SYCL Graph extension.",
+    "no_throughput_result": true
+  },
+  "decision": {
+    "promote": false,
+    "submit_to_localmaxxing": false,
+    "reason": "Quality-safe but 7.67% slower than the paired promoted control."
+  },
+  "artifacts": {
+    "quality_json": "/home/steve/bench-results/minimax-m2.7-post-repro-optimization/moe-ws-up-ntile6-quality-20260521T115244Z/minimax-moe-ws-up-ntile6-raw145-n64.json",
+    "quality_log": "/home/steve/bench-results/minimax-m2.7-post-repro-optimization/moe-ws-up-ntile6-quality-20260521T115244Z/minimax-moe-ws-up-ntile6-raw145-n64.log",
+    "failed_full_graph_warm_log": "/home/steve/bench-results/minimax-m2.7-post-repro-optimization/moe-ws-up-ntile6-warm-20260521T115842Z/minimax-moe-ws-up-ntile6-warm-p512n1536.log",
+    "piecewise_warm_json": "/home/steve/bench-results/minimax-m2.7-post-repro-optimization/moe-ws-up-ntile6-warm-piecewise-20260521T120319Z/minimax-moe-ws-up-ntile6-warm-piecewise-p512n1536.json",
+    "piecewise_warm_log": "/home/steve/bench-results/minimax-m2.7-post-repro-optimization/moe-ws-up-ntile6-warm-piecewise-20260521T120319Z/minimax-moe-ws-up-ntile6-warm-piecewise-p512n1536.log",
+    "paired_control_json": "/home/steve/bench-results/minimax-m2.7-post-repro-optimization/promoted-control-warm-piecewise-20260521T121051Z/minimax-promoted-control-warm-piecewise-p512n1536.json",
+    "paired_control_log": "/home/steve/bench-results/minimax-m2.7-post-repro-optimization/promoted-control-warm-piecewise-20260521T121051Z/minimax-promoted-control-warm-piecewise-p512n1536.log"
+  }
+}

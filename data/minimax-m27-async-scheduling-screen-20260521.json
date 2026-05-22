@@ -1,0 +1,50 @@
+{
+  "label": "minimax-m27-async-scheduling-screen-20260521",
+  "model": "/mnt/fast-ai/llm-models/minimax-m2.7-int4-autoround",
+  "model_hf_id": "Lasimeri/MiniMax-M2.7-int4-AutoRound",
+  "hardware": "4x Intel Arc Pro B70 32GB",
+  "baseline_reference": {
+    "localmaxxing_id": "cmpfo4frq003cqj015foht8k6",
+    "mean_output_toks_per_second": 93.4436231838881,
+    "mean_total_toks_per_second": 124.59149757851748,
+    "methodology": "quality-clean cache root, one persistent vLLM engine, two p512/n1536 warmups discarded, four measured repeats"
+  },
+  "candidate": {
+    "name": "explicit async scheduling on",
+    "cache_root": "/mnt/fast-ai/vllm-cache-exp/minimax-async-scheduling-on-20260521T160043Z",
+    "strict_summary": "/home/steve/bench-results/minimax-m2.7-post-repro-optimization/minimax-async-scheduling-on-20260521T160043Z-strict-tp4-ctx2048-mbt512-bs256-20260521T160043Z-summary.json",
+    "quality_status": "quality_passed",
+    "quality_gates": [
+      "raw145 n64 exact",
+      "raw145 n256 exact",
+      "semantic suite n64 r2",
+      "arithmetic repeat n64 r8"
+    ],
+    "warm_json": "/home/steve/bench-results/minimax-m2.7-post-repro-optimization/warm-vllm-random-text-greedy-async-scheduling-on-20260521T160043Z/minimax-ws-warm-vllm-random-text-greedy-async-scheduling-on-20260521T160043Z-p512n1536.json",
+    "mean_output_toks_per_second": 93.55087953842926,
+    "mean_total_toks_per_second": 124.73450605123901,
+    "min_output_toks_per_second": 93.5273818600114,
+    "max_output_toks_per_second": 93.56677278734276,
+    "stdev_output_toks_per_second": 0.016861351342128253
+  },
+  "paired_default": {
+    "note": "Current vLLM default also enables asynchronous scheduling for this path.",
+    "warm_json": "/home/steve/bench-results/minimax-m2.7-post-repro-optimization/warm-vllm-random-text-greedy-async-scheduling-paired-default-20260521T160043Z/minimax-ws-warm-vllm-random-text-greedy-async-scheduling-paired-default-20260521T160043Z-p512n1536.json",
+    "mean_output_toks_per_second": 93.49972554583165,
+    "mean_total_toks_per_second": 124.66630072777554,
+    "min_output_toks_per_second": 93.48727172841332,
+    "max_output_toks_per_second": 93.51542352361753,
+    "stdev_output_toks_per_second": 0.01183156823436449
+  },
+  "negative_screen": {
+    "name": "explicit async scheduling off",
+    "note": "Speed-only screen; not quality-promoted because it is a clear regression.",
+    "warm_json": "/home/steve/bench-results/minimax-m2.7-post-repro-optimization/warm-vllm-random-text-greedy-async-scheduling-off-screen-20260521T160043Z/minimax-ws-warm-vllm-random-text-greedy-async-scheduling-off-screen-20260521T160043Z-p512n1536.json",
+    "mean_output_toks_per_second": 86.1123689117358,
+    "mean_total_toks_per_second": 114.8164918823144,
+    "min_output_toks_per_second": 86.02920904248154,
+    "max_output_toks_per_second": 86.20579293466474,
+    "stdev_output_toks_per_second": 0.09395033798500693
+  },
+  "conclusion": "Asynchronous scheduling is already effectively the default for this vLLM/XPU path. Explicit async-on is quality-clean but only a tiny warm-run uplift over the accepted 93.44 tok/s result and over a paired default run. Async-off compiles a different graph and regresses to about 86.11 tok/s, so keep async scheduling enabled/default."
+}

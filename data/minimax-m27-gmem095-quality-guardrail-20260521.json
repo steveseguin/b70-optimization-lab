@@ -1,0 +1,96 @@
+{
+  "date": "2026-05-21",
+  "candidate": "promoted-gmem095-control",
+  "decision": "quality_failed_not_promoted",
+  "localmaxxing_submission": "not_submitted",
+  "model": "/mnt/fast-ai/llm-models/minimax-m2.7-int4-autoround",
+  "hardware": {
+    "gpu": "Intel Arc Pro B70 32GB",
+    "gpu_count": 4,
+    "vram_gb_per_gpu": 32
+  },
+  "engine": {
+    "name": "vLLM",
+    "backend": "xpu",
+    "tensor_parallel_size": 4,
+    "llm_scaler_moe": true,
+    "dtype": "float16",
+    "block_size": 256
+  },
+  "base_env": "repro/minimax-m27-b70-89tps-20260520/configs/promoted-env.sh",
+  "control_delta": {
+    "gpu_memory_utilization": 0.95,
+    "compilation_config": {
+      "use_inductor_graph_partition": true,
+      "compile_sizes": [1],
+      "cudagraph_mode": "PIECEWISE"
+    }
+  },
+  "warm_throughput_control": {
+    "prompt_source": "vllm_random_text",
+    "prompt_tokens": 512,
+    "output_tokens": 1536,
+    "warmup_repeats": 1,
+    "measured_repeats": 4,
+    "mean_output_toks_per_second": 92.81513428257155,
+    "mean_total_toks_per_second": 123.75351237676206,
+    "stdev_output_toks_per_second": 0.020496334057190233,
+    "repeats": [
+      {
+        "repeat": 0,
+        "output_toks_per_second": 92.83526222124725,
+        "total_toks_per_second": 123.78034962832967,
+        "token_sha256": "281cffaedb9bc343fc0b185e3989c29f0ae786b25206cb24f792040fd21343c5"
+      },
+      {
+        "repeat": 1,
+        "output_toks_per_second": 92.78806014923823,
+        "total_toks_per_second": 123.71741353231764,
+        "token_sha256": "a1092860de1158c104330f1e52a2e79ceb11637c254d955a788a0f10c281495c"
+      },
+      {
+        "repeat": 2,
+        "output_toks_per_second": 92.81160624755772,
+        "total_toks_per_second": 123.74880833007695,
+        "token_sha256": "cd6cd373b6b27e2d68d360b323fe7513b051a4f0c7e3c3abbc8692b7a4cb8bef"
+      },
+      {
+        "repeat": 3,
+        "output_toks_per_second": 92.825608512243,
+        "total_toks_per_second": 123.76747801632399,
+        "token_sha256": "cb02a31ef98e9f108e62ec293c949c7ab59792c314e3ee2ba70c21f35931adab"
+      }
+    ]
+  },
+  "quality": {
+    "promoted_default_repeat": {
+      "passed": true,
+      "expected_combined_token_sha256": "267cbf30208d84929ee79284ac695467f7e80597bf8694130e1e1f8b180eb5bd",
+      "observed_combined_token_sha256": "267cbf30208d84929ee79284ac695467f7e80597bf8694130e1e1f8b180eb5bd",
+      "degenerate_output": false,
+      "control_char_output": false
+    },
+    "promoted_gmem095_control": {
+      "passed": false,
+      "expected_combined_token_sha256": "267cbf30208d84929ee79284ac695467f7e80597bf8694130e1e1f8b180eb5bd",
+      "observed_combined_token_sha256": "6481f1ad4ce52b09aa2e951b8b744235191ba03eeadb73b6277a93511da9db90",
+      "degenerate_output": false,
+      "control_char_output": false,
+      "failure_reason": "combined token hash mismatch"
+    },
+    "compile_sizes_1_2_gmem095_repeat": {
+      "passed": true,
+      "expected_combined_token_sha256": "267cbf30208d84929ee79284ac695467f7e80597bf8694130e1e1f8b180eb5bd",
+      "observed_combined_token_sha256": "267cbf30208d84929ee79284ac695467f7e80597bf8694130e1e1f8b180eb5bd",
+      "degenerate_output": false,
+      "control_char_output": false
+    }
+  },
+  "conclusion": "gpu_memory_utilization=0.95 alone is not quality-safe under the raw145 exact-token canary. compile_sizes=[1,2] with gpu_memory_utilization=0.95 remains quality-clean but is not a meaningful throughput promotion.",
+  "artifacts": {
+    "gmem095_warm_control_json": "/home/steve/bench-results/minimax-m2.7-post-repro-optimization/promoted-gmem095-control-warm-20260521T040658Z/minimax-promoted-gmem095-control-warm-vllm-random-text-p512n1536.json",
+    "gmem095_quality_fail_json": "/home/steve/bench-results/minimax-m2.7-post-repro-optimization/promoted-gmem095-control-quality-20260521T041214Z/minimax-promoted-gmem095-control-raw145-n64.json",
+    "promoted_default_quality_pass_json": "/home/steve/bench-results/minimax-m2.7-post-repro-optimization/promoted-default-quality-repeat-20260521T041553Z/minimax-promoted-default-raw145-n64.json",
+    "compile_sizes_1_2_gmem095_quality_pass_repeat_json": "/home/steve/bench-results/minimax-m2.7-post-repro-optimization/compile-sizes-1-2-gmem095-quality-repeat-20260521T041849Z/minimax-compile-sizes-1-2-gmem095-repeat-raw145-n64.json"
+  }
+}

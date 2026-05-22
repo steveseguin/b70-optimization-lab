@@ -1,0 +1,45 @@
+{
+  "date": "2026-05-21",
+  "label": "promoted-control-reverted-prefill64",
+  "model": "/mnt/fast-ai/llm-models/minimax-m2.7-int4-autoround",
+  "hfId": "Lasimeri/MiniMax-M2.7-int4-AutoRound",
+  "hardware": "4x Intel Arc Pro B70 32GB",
+  "engine": "vLLM 0.20.1-local XPU/Level Zero",
+  "status": "control_passed",
+  "reason": "Recovered promoted decode-only MoE gate after rejecting the prefill64 N-major experiment.",
+  "active_change": "Reverted local moe_wna16.py from opt-in VLLM_XPU_LLM_SCALER_MOE_APPLY_MAX_TOKENS back to fixed x.shape[0] <= 4.",
+  "quality": {
+    "raw145_n64_exact": true,
+    "raw145_n64_hash": "267cbf30208d84929ee79284ac695467f7e80597bf8694130e1e1f8b180eb5bd",
+    "raw145_n256_exact": true,
+    "raw145_n256_hash": "58f6e8251c7a0a17e8c441278b5861f7d5da914fa1823ecd10484b296f2d7537",
+    "semantic_suite_n64_r2": true,
+    "arithmetic_repeat_n64_r8": true,
+    "extended_sixpack_n64_r2": true
+  },
+  "benchmark": {
+    "prompt_tokens": 512,
+    "output_tokens": 1536,
+    "context_length": 2048,
+    "batch_size": 1,
+    "max_num_batched_tokens": 512,
+    "block_size": 256,
+    "bench_repeats": 1,
+    "elapsed_time_s": 17.124442921951413,
+    "output_toks_per_second": 89.69634848857118,
+    "total_toks_per_second": 119.5951313180949,
+    "requests_per_second": 0.058396060213913525
+  },
+  "comparison": {
+    "promoted_strict_output_toks_per_second": 89.314195,
+    "prefill64_negative_output_toks_per_second": 86.11401918148582,
+    "delta_vs_promoted_percent": 0.4278691261080035,
+    "delta_vs_prefill64_percent": 4.16091731688796
+  },
+  "artifacts": {
+    "summary_json": "/home/steve/bench-results/minimax-m2.7-post-repro-optimization/minimax-promoted-control-reverted-prefill64-strict-tp4-ctx2048-mbt512-bs256-20260521T141540Z-summary.json",
+    "benchmark_json": "/home/steve/bench-results/minimax-m2.7-post-repro-optimization/vllm-minimax-m27-autoround-tp4-p512n1536-20260521T143129Z.json",
+    "benchmark_log": "/home/steve/bench-results/minimax-m2.7-post-repro-optimization/vllm-minimax-m27-autoround-tp4-p512n1536-20260521T143129Z.log"
+  },
+  "localmaxxing_id": "cmpfllzei001mqj01kk94cgiu"
+}

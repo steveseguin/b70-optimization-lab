@@ -1,0 +1,82 @@
+{
+  "date": "2026-05-21",
+  "kind": "quality_sanity",
+  "model": "/mnt/fast-ai/llm-models/minimax-m2.7-int4-autoround",
+  "engine": "vllm",
+  "engine_version": "0.20.1",
+  "hardware": {
+    "gpu_name": "Intel Arc Pro B70",
+    "gpu_count": 4,
+    "vram_gb_per_gpu": 32
+  },
+  "configuration": {
+    "tensor_parallel_size": 4,
+    "context_length": 2048,
+    "max_num_batched_tokens": 512,
+    "block_size": 256,
+    "graph_mode": "PIECEWISE",
+    "dtype": "float16",
+    "quantization": "AutoRound INT4 W4A16",
+    "llm_scaler_moe": true,
+    "xpu_graph": true,
+    "force_graph_with_comm": true,
+    "graph_noop_comm_capture": true,
+    "exact_shape_inplace_allreduce_gate": "",
+    "tiny_fp32_inplace_allreduce_max_numel": 2,
+    "generic_inplace_allreduce_max_numel": 0
+  },
+  "status": "quality_passed",
+  "benchmark": {
+    "recorded": false,
+    "reason": "quality-only sanity run after default-off diagnostic gate"
+  },
+  "checks": [
+    {
+      "name": "raw145-n64-exact",
+      "combined_token_sha256": "267cbf30208d84929ee79284ac695467f7e80597bf8694130e1e1f8b180eb5bd",
+      "passed": true,
+      "deterministic_across_runs": true
+    },
+    {
+      "name": "raw145-n256-exact",
+      "combined_token_sha256": "58f6e8251c7a0a17e8c441278b5861f7d5da914fa1823ecd10484b296f2d7537",
+      "passed": true,
+      "deterministic_across_runs": true
+    },
+    {
+      "name": "semantic-suite-n64-r2",
+      "combined_token_sha256": "adacbf144264486ea7d378ebb6a4c0ba23951b72c4cf86251a762b07ebef5805",
+      "passed": true,
+      "deterministic_across_runs": true
+    },
+    {
+      "name": "arithmetic-repeat-n64-r16",
+      "combined_token_sha256": "578ec378bf31cb16fb49ac5c0043270fd00a0f7898e18ac498a41ffe775d7994",
+      "passed": true,
+      "deterministic_across_runs": true
+    },
+    {
+      "name": "extended-sixpack-n64-r2",
+      "combined_token_sha256": "1e3560554f57b2b56cec8f49f28bc8ba12e9e0ced26bdc99a976f1433c99caa7",
+      "passed": true,
+      "deterministic_across_runs": true
+    }
+  ],
+  "artifacts": {
+    "summary_json": "/home/steve/bench-results/minimax-m2.7-strict-candidates/minimax-minimax-promoted-defaultoff-after-shapegate-quality-20260521-strict-tp4-ctx2048-mbt512-bs256-20260521T090459Z-summary.json",
+    "quality_dir": "/home/steve/bench-results/minimax-m2.7-strict-candidates/minimax-minimax-promoted-defaultoff-after-shapegate-quality-20260521-strict-tp4-ctx2048-mbt512-bs256-20260521T090459Z-quality"
+  },
+  "compiler_note": {
+    "observed": true,
+    "tool": "ocloc",
+    "kernel": "triton_red_fused__to_copy_mm_t_9",
+    "device": "bmg",
+    "error": "IGC: Internal Compiler Error: Floating point exception",
+    "exit_status": 245,
+    "impact": "Recovered during graph capture; all quality hashes passed. Treat as a future cold-start and compile-path optimization target, not an output-quality failure."
+  },
+  "localmaxxing": {
+    "submitted": false,
+    "reason": "No new performance metric; quality-only sanity run"
+  }
+}

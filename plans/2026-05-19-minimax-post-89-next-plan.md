@@ -128,6 +128,75 @@ Negative, quality-failed, or merely noisy results stay local/GitHub-only.
      Allocator scratch reuse is not a meaningful current bottleneck; no
      LocalMaxxing submission.
 
+19. Cache llm-scaler MiniMax logits WS op on each MoE layer.
+   - Rationale: avoid repeated Python import/op resolution in the MiniMax MoE
+     monolithic decode path without changing model math.
+   - Candidate: current promoted stack plus
+     `VLLM_XPU_LLM_SCALER_MOE_CACHE_MINIMAX_LOGITS_OP=1`.
+   - Status: rejected as a speed candidate. Full strict quality passed,
+     including raw145 n64/n256 exact hashes, semantic suite, 16-repeat
+     arithmetic, and extended sixpack. Four corrected p512/n1536 repeats
+     averaged `88.150576` output tok/s / `117.534102` total tok/s versus the
+     promoted `89.314195` / `119.085594`, and below today's post-repro control
+     mean of `88.495999` / `117.994666`. Keep the flag unset. An earlier
+     throughput attempt for this candidate was invalid because the benchmark
+     env was sourced but not exported, causing the wrapper to fall back to
+     `MAX_BATCHED_TOKENS=1024`; ignore that directory for comparisons.
+
+20. Source rebuild sanity and non-WS recovery after a failed llm-scaler
+    full-shared tile experiment.
+   - Rationale: before more lower-level fusion work, verify the llm-scaler
+     extension can still be rebuilt and imported cleanly.
+   - Status: blocked for promoted-path source work. Rebuilt `moe_int4_ops`
+     shared objects segfault during import inside `libsycl.so.8`
+     `ProgramManager::addImage(...)`, before vLLM code runs. Disabling the
+     new candidate, trying `-fsycl-device-code-split=off`, and disabling
+     unused candidate-repair/WS sections did not produce an importable rebuilt
+     binary. Restoring the importable `20260512T064555Z` binary recovered a
+     quality-clean non-WS MiniMax logits fallback, but that binary lacks
+     `moe_forward_tiny_cutlass_nmajor_int4_u4_minimax_ws`. The fallback passed
+     raw145 n64/n256 exact hashes, semantic suite, and arithmetic-repeat r8,
+     but averaged only `75.767918` output tok/s / `101.023891` total tok/s.
+     This is a recovery result, not a LocalMaxxing submission. See
+     `notes/2026-05-20-minimax-llm-scaler-rebuild-import-segfault-and-nonws-recovery.md`.
+
+21. Source-rebuilt WS extension recovery.
+   - Rationale: unblock further lower-level source optimization by proving that
+     the promoted llm-scaler WS extension can be rebuilt from source and
+     imported cleanly.
+   - Status: completed. The promoted patch is rooted at the
+     `vllm/custom-esimd-kernels-vllm` extension subdirectory; applying it from
+     the llm-scaler repo root without
+     `--directory=vllm/custom-esimd-kernels-vllm` was the reproducibility
+     mistake. An isolated rebuild from commit
+     `4bfc0070090cc54afdb2d46b8e57882359141568` with the correct patch prefix
+     produced a WS-capable `moe_int4_ops` shared object with SHA256
+     `30b19be4456abab814f3378561204d575e4e8c01f848634a059d72ff3b23db66`.
+     Strict quality passed, including raw145 n64/n256 exact hashes,
+     semantic-suite n64/r2, arithmetic-repeat n64/r16, and extended-sixpack
+     n64/r2. Four p512/n1536 repeats averaged `87.964466` output tok/s /
+     `117.285955` total tok/s, with output repeats `88.823285`,
+     `88.889003`, `86.989162`, and `87.156415`. This restores a source-built
+     promoted path but does not beat the LocalMaxxing-promoted `89.314195`
+     tok/s result, so it was not submitted as a new result. See
+     `data/minimax-m27-ws-source-rebuild-recovery-20260520.json`.
+
+22. Router-linear inside llm-scaler MiniMax MoE custom-op boundary.
+   - Rationale: reduce CPU/framework scheduling boundaries by moving the
+     MiniMax FP32 router linear projection into the existing llm-scaler
+     MiniMax logits WS MoE path, while preserving exact router logits and the
+     same downstream MoE work-sharing implementation.
+   - Status: rejected as a speed candidate. The candidate passed exact raw145
+     n64 and n256 token-hash gates, and an eager path-proof run confirmed the
+     new router custom-op selected during decode on all four XPUs. Four warm
+     p512/n1536 repeats averaged `92.831898` output tok/s / `123.775864`
+     total tok/s versus the restored promoted active control at `92.854798`
+     output tok/s / `123.806397` total tok/s. The `-0.025%` output delta is
+     neutral to slightly negative. Do not promote and do not submit to
+     LocalMaxxing. See
+     `notes/2026-05-21-minimax-router-customop-neutral.md` and
+     `data/minimax-m27-router-customop-neutral-20260521.json`.
+
 ## Source-Level Work Queue
 
 - Audit remaining decode-time CPU/framework boundaries in `minimax_m2.py`, `moe_wna16.py`, and `xpu_communicator.py`.
@@ -202,3 +271,39 @@ Future allocator work should be deprioritized unless timing evidence changes;
 the next credible improvement path is still lower-level fusion/scheduling in
 one of the remaining kernel/collective families, not additional scratch-buffer
 reuse.
+
+The cached-MiniMax-op screen also failed to improve throughput despite exact
+quality. This closes another shallow CPU/framework-reduction idea. The next
+candidate should be lower-level: either a backend-level fused Q/K
+allreduce+RMS apply path, a real attention/MoE hidden-state allreduce epilogue
+fusion, or a better optimized router/top-k/MoE boundary kernel than the
+rejected all-256 candidate repair path.
+
+The source rebuild sanity check is now resolved for the promoted WS path. Future
+source optimization can proceed from the isolated rebuilt extension state, but
+the current validation mean is slightly below the earlier promoted mean. The
+next work should first explain or reduce that variance, then continue into
+lower-level source candidates. The highest-value next steps are:
+
+1. Add a one-process warm-repeat benchmark mode so quality and throughput
+   repeats do not reload 112 GiB of weights and repeatedly stress process
+   teardown. This should improve repeatability of the measurement itself without
+   changing model math.
+2. Capture per-token decode timing around the restored WS path to separate the
+   lower `86.99`/`87.16` repeats from normal noise, CCL slow-tail behavior,
+   graph replay behavior, or thermal/driver scheduling variance.
+3. Resume source-level fusion work from the rebuilt WS state, focusing on real
+   kernel/collective boundaries rather than Python wrapper reductions:
+   Q/K variance allreduce+RMS, attention `o_proj` hidden allreduce, and
+   MoE-output epilogue/allreduce remain the credible targets.
+
+2026-05-21 update: the current-stack Q/K compiler-pass retest is quality-clean
+but not a performance win. It passed fresh-cache strict quality, including exact
+raw145 n64/n256 token hashes, 8x arithmetic repeat, and extended six-pack, but
+process-level p512/n1536 averaged only `88.50` output tok/s. Logs also report
+`minimax_allreduce_rms_qk op not found`, so the requested compiler pass is
+disabled rather than using a real fused backend op. The useful outcome is a
+strict-harness hardening: fresh cache roots are now the default and promoted
+Q/K helper flags are passed into the quality checker. Do not submit this result
+to LocalMaxxing; move next to implementing the missing backend op or another
+true lower-level fusion.

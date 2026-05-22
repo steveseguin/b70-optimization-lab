@@ -1,0 +1,37 @@
+{
+  "date_utc": "2026-05-21",
+  "model": "/mnt/fast-ai/llm-models/minimax-m2.7-int4-autoround",
+  "safetensor": "model-00001-of-00023.safetensors",
+  "layer": 0,
+  "rank": 0,
+  "tp_size": 4,
+  "status": "passed_math_gate_not_integrated",
+  "semantic_guardrail": "Uses lower-level prefill ops with externally supplied top-k ids/weights; does not use moe_prefill_full_int4 softmax router.",
+  "script": "scripts/check-llm-scaler-minimax-prefill-realweight.py",
+  "results_json": "/home/steve/bench-results/minimax-m2.7-post-repro-optimization/minimax-prefill-realweight-lowerops-20260521.json",
+  "cases": [
+    {
+      "tokens": 1,
+      "unique_experts": 8,
+      "max_abs_vs_ref16": 1.1444091796875e-05,
+      "mean_abs_vs_ref16": 1.2284532431294792e-06,
+      "out_abs_max": 0.005084991455078125,
+      "ref16_abs_max": 0.00507354736328125,
+      "atol": 0.0001,
+      "rtol": 0.05,
+      "allclose": true
+    },
+    {
+      "tokens": 4,
+      "unique_experts": 32,
+      "max_abs_vs_ref16": 2.2113323211669922e-05,
+      "mean_abs_vs_ref16": 1.9145470560033573e-06,
+      "out_abs_max": 0.00423431396484375,
+      "ref16_abs_max": 0.004238128662109375,
+      "atol": 0.0001,
+      "rtol": 0.05,
+      "allclose": true
+    }
+  ],
+  "conclusion": "The lower-level llm-scaler prefill gather/up/down/accumulate chain matches a CPU dequant reference for real layer-0 AutoRound weights when fed MiniMax-correct external top-k ids and weights. This clears a per-layer math gate, but it is not yet a full vLLM integration or throughput result."
+}

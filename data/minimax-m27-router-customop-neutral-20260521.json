@@ -1,0 +1,61 @@
+{
+  "date": "2026-05-21",
+  "model": "Lasimeri/MiniMax-M2.7-int4-AutoRound",
+  "hardware": "4x Intel Arc Pro B70 32GB",
+  "engine": "vLLM 0.20.1-local XPU TP4",
+  "candidate": "router linear inside llm-scaler MiniMax MoE custom-op boundary",
+  "decision": "reject_neutral_speed",
+  "localmaxxing_submission": false,
+  "reason_not_submitted": "quality-clean but not faster than restored promoted active control",
+  "quality": {
+    "raw145_n64": {
+      "passed": true,
+      "expected_token_sha256": "267cbf30208d84929ee79284ac695467f7e80597bf8694130e1e1f8b180eb5bd",
+      "observed_token_sha256": "267cbf30208d84929ee79284ac695467f7e80597bf8694130e1e1f8b180eb5bd",
+      "artifact": "/home/steve/bench-results/minimax-m2.7-post-repro-optimization/router-customop-forced-quality-20260521T052234Z/minimax-router-customop-forced-raw145-n64.json"
+    },
+    "raw145_n256": {
+      "passed": true,
+      "expected_token_sha256": "58f6e8251c7a0a17e8c441278b5861f7d5da914fa1823ecd10484b296f2d7537",
+      "observed_token_sha256": "58f6e8251c7a0a17e8c441278b5861f7d5da914fa1823ecd10484b296f2d7537",
+      "artifact": "/home/steve/bench-results/minimax-m2.7-post-repro-optimization/router-customop-forced-quality-n256-20260521T054240Z/minimax-router-customop-forced-raw145-n256.json"
+    },
+    "path_proof": {
+      "passed": true,
+      "evidence": "[minimax-router-custom-op] shape=(1, 3072) appeared for xpu:0..3 during eager decode",
+      "artifact": "/home/steve/bench-results/minimax-m2.7-post-repro-optimization/router-customop-eager-pathproof-20260521T054001Z/run.log"
+    }
+  },
+  "throughput": {
+    "shape": "p512/n1536 ctx2048 batch1",
+    "candidate": {
+      "mean_output_toks_per_second": 92.83189777020272,
+      "mean_total_toks_per_second": 123.77586369360363,
+      "stdev_output_toks_per_second": 0.024858108519755014,
+      "min_output_toks_per_second": 92.79831130792165,
+      "max_output_toks_per_second": 92.85620991659901,
+      "output_repeats": [
+        92.85620991659901,
+        92.82976590683394,
+        92.79831130792165,
+        92.84330394945627
+      ],
+      "artifact": "/home/steve/bench-results/minimax-m2.7-post-repro-optimization/router-customop-forced-warm-20260521T054825Z/minimax-router-customop-forced-warm-p512n1536.json"
+    },
+    "restored_promoted_active_control": {
+      "mean_output_toks_per_second": 92.85479750507976,
+      "mean_total_toks_per_second": 123.80639667343968,
+      "stdev_output_toks_per_second": 0.040026329163842786,
+      "output_repeats": [
+        92.7992391363912,
+        92.8518588965701,
+        92.8839952146276,
+        92.88409677273015
+      ],
+      "artifact": "/home/steve/bench-results/minimax-m2.7-post-repro-optimization/promoted-active-restored-warm-20260521T045419Z/minimax-promoted-active-restored-warm-p512n1536.json"
+    },
+    "delta_output_toks_per_second": -0.02289973487704,
+    "relative_delta_percent": -0.024661881624
+  },
+  "lesson": "Moving the FP32 router linear into a Python-visible custom-op boundary preserves exact output but does not improve decode speed. Future router work needs a lower-level optimized router/top-k/MoE fused kernel or should focus on MoE/attention collective scheduling."
+}

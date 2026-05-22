@@ -1,0 +1,68 @@
+{
+  "label": "minimax-stockbench-vs-warm-methodology-20260520",
+  "date_utc": "2026-05-20T13:17:00Z",
+  "model": "/mnt/fast-ai/llm-models/minimax-m2.7-int4-autoround",
+  "hfId": "Lasimeri/MiniMax-M2.7-int4-AutoRound",
+  "hardware": {
+    "hwClass": "DISCRETE_GPU",
+    "gpuName": "Intel Arc Pro B70 32GB",
+    "gpuCount": 4,
+    "vramGb": 32,
+    "os": "Ubuntu 24.04"
+  },
+  "engine": "vllm",
+  "engineVersion": "0.20.1-local",
+  "backend": "xpu-level-zero",
+  "quantization": "AutoRound INT4 / INC WNA16",
+  "runtime": {
+    "tensor_parallel_size": 4,
+    "dtype": "float16",
+    "max_model_len": 2048,
+    "max_num_batched_tokens": 512,
+    "max_num_seqs": 1,
+    "block_size": 256,
+    "input_len": 512,
+    "output_len": 1536,
+    "num_prompts": 1,
+    "temperature": 1.0,
+    "top_p": 1.0,
+    "chunked_prefill": true,
+    "prefix_caching": false,
+    "ws_decode_path_confirmed": true
+  },
+  "comparisons": [
+    {
+      "kind": "stock_vllm_bench_sync_text_detokenize_on",
+      "result_json": "/home/steve/bench-results/minimax-m2.7-post-repro-optimization/stockbench-sync-20260520T125706Z/vllm-minimax-m27-autoround-tp4-p512n1536-20260520T125706Z.json",
+      "elapsed_s": 17.462173858948518,
+      "total_toks_per_second": 117.28207590548638,
+      "output_toks_per_second": 87.96155692911478
+    },
+    {
+      "kind": "stock_vllm_bench_sync_text_detokenize_off",
+      "result_json": "/home/steve/bench-results/minimax-m2.7-post-repro-optimization/stockbench-sync-nodetok-20260520T130107Z/vllm-minimax-m27-autoround-tp4-p512n1536-20260520T130107Z.json",
+      "elapsed_s": 17.329653299006168,
+      "total_toks_per_second": 118.17893668521631,
+      "output_toks_per_second": 88.63305401391223
+    },
+    {
+      "kind": "warm_in_process_vllm_random_text",
+      "result_json": "/home/steve/bench-results/minimax-m2.7-post-repro-optimization/warm-vllm-random-text-retry-20260520T130948Z/minimax-ws-warm-vllm-random-text-p512n1536.json",
+      "mean_output_toks_per_second": 92.37491625407232,
+      "mean_total_toks_per_second": 123.16655500542976,
+      "min_output_toks_per_second": 92.32020431963522,
+      "max_output_toks_per_second": 92.40645598344511,
+      "stdev_output_toks_per_second": 0.039937896484915185
+    },
+    {
+      "kind": "warm_in_process_synthetic_tokens",
+      "result_json": "/home/steve/bench-results/minimax-m2.7-post-repro-optimization/warm-throughput-20260520T124510Z/minimax-ws-source-rebuild-warm-throughput-p512n1536.json",
+      "mean_output_toks_per_second": 92.53565282348762,
+      "mean_total_toks_per_second": 123.38087043131684,
+      "stdev_output_toks_per_second": 0.01213873092742447
+    }
+  ],
+  "localmaxxing_submission": false,
+  "reason_not_submitted": "This is a methodology diagnostic. The public comparable result remains the stock-bench submission unless warm in-process methodology is explicitly labeled.",
+  "conclusion": "The 87.96-89.31 stock-bench range is a conservative cold first-generation measurement. Warm steady-state text-prompt decode is approximately 92.37 output tok/s on the same model math and WS path."
+}

@@ -1,0 +1,93 @@
+{
+  "date": "2026-05-21",
+  "candidate": "compile-sizes-1-2-gmem095",
+  "decision": "quality_safe_neutral_not_promoted",
+  "localmaxxing_submission": "not_submitted",
+  "model": "/mnt/fast-ai/llm-models/minimax-m2.7-int4-autoround",
+  "hardware": {
+    "gpu": "Intel Arc Pro B70 32GB",
+    "gpu_count": 4,
+    "vram_gb_per_gpu": 32
+  },
+  "engine": {
+    "name": "vLLM",
+    "backend": "xpu",
+    "tensor_parallel_size": 4,
+    "llm_scaler_moe": true,
+    "dtype": "float16",
+    "block_size": 256
+  },
+  "base_env": "repro/minimax-m27-b70-89tps-20260520/configs/promoted-env.sh",
+  "candidate_config_delta": {
+    "compilation_config": {
+      "use_inductor_graph_partition": true,
+      "compile_sizes": [1, 2],
+      "cudagraph_mode": "PIECEWISE"
+    },
+    "gpu_memory_utilization": 0.95
+  },
+  "default_memory_attempt": {
+    "status": "failed_startup",
+    "available_kv_cache_gib": 0.09,
+    "required_kv_cache_gib_for_2048": 0.12,
+    "estimated_max_model_len": 1280,
+    "reason": "Extra compile-size graph memory left insufficient KV cache memory at default GPU memory utilization."
+  },
+  "gmem095_startup": {
+    "available_kv_cache_gib": 2.04,
+    "gpu_kv_cache_tokens": 34048,
+    "max_concurrency_for_2048_tokens": 16.62
+  },
+  "quality": {
+    "raw145_n64_exact_passed": true,
+    "expected_combined_token_sha256": "267cbf30208d84929ee79284ac695467f7e80597bf8694130e1e1f8b180eb5bd",
+    "observed_combined_token_sha256": "267cbf30208d84929ee79284ac695467f7e80597bf8694130e1e1f8b180eb5bd",
+    "degenerate_output_check": "passed",
+    "control_or_nul_check": "passed"
+  },
+  "warm_throughput": {
+    "prompt_source": "vllm_random_text",
+    "prompt_tokens": 512,
+    "output_tokens": 1536,
+    "warmup_repeats": 1,
+    "measured_repeats": 4,
+    "mean_output_toks_per_second": 92.6697497580135,
+    "mean_total_toks_per_second": 123.55966634401798,
+    "stdev_output_toks_per_second": 0.07496449265543807,
+    "repeats": [
+      {
+        "repeat": 0,
+        "output_toks_per_second": 92.56084650108289,
+        "total_toks_per_second": 123.41446200144385,
+        "token_sha256": "931982a913b5bff5f2156819e476d32a5513aeb6249ee52679202ba1e187210a"
+      },
+      {
+        "repeat": 1,
+        "output_toks_per_second": 92.6820657885482,
+        "total_toks_per_second": 123.57608771806427,
+        "token_sha256": "86704aad5252db45ddd6219166c76bc46a183df17ad76e17b9b6ba8067c0a6fd"
+      },
+      {
+        "repeat": 2,
+        "output_toks_per_second": 92.72760567604901,
+        "total_toks_per_second": 123.63680756806535,
+        "token_sha256": "34a3ae47faecf329a02a76a40c8c54a77cfdd42c2491c6daf38089f475eaac1d"
+      },
+      {
+        "repeat": 3,
+        "output_toks_per_second": 92.70848106637385,
+        "total_toks_per_second": 123.61130808849848,
+        "token_sha256": "542697215e5b2edd961f90d7dee064e9404578863cd428452f092b1f9eab5b30"
+      }
+    ],
+    "promoted_warm_random_text_baseline_output_toks_per_second": 92.374916,
+    "promoted_warm_random_text_baseline_total_toks_per_second": 123.166555
+  },
+  "artifacts": {
+    "default_memory_failed_log": "/home/steve/bench-results/minimax-m2.7-post-repro-optimization/compile-sizes-1-2-20260521T035016Z/minimax-compile-sizes-1-2-raw145-n64.log",
+    "gmem095_quality_json": "/home/steve/bench-results/minimax-m2.7-post-repro-optimization/compile-sizes-1-2-gmem095-20260521T035700Z/minimax-compile-sizes-1-2-gmem095-raw145-n64.json",
+    "gmem095_quality_log": "/home/steve/bench-results/minimax-m2.7-post-repro-optimization/compile-sizes-1-2-gmem095-20260521T035700Z/minimax-compile-sizes-1-2-gmem095-raw145-n64.log",
+    "gmem095_warm_json": "/home/steve/bench-results/minimax-m2.7-post-repro-optimization/compile-sizes-1-2-gmem095-warm-20260521T040000Z/minimax-compile-sizes-1-2-gmem095-warm-vllm-random-text-p512n1536.json",
+    "gmem095_warm_log": "/home/steve/bench-results/minimax-m2.7-post-repro-optimization/compile-sizes-1-2-gmem095-warm-20260521T040000Z/minimax-compile-sizes-1-2-gmem095-warm-vllm-random-text-p512n1536.log"
+  }
+}

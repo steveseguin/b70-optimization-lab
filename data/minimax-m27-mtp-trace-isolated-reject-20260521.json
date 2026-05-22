@@ -1,0 +1,76 @@
+{
+  "date": "2026-05-21",
+  "model": "/mnt/fast-ai/llm-models/minimax-m2.7-int4-autoround",
+  "hardware": "4x Intel Arc Pro B70 32GB",
+  "objective": "Preserve MiniMax M2.7 AutoRound W4A16 quality while probing MTP/speculative feasibility and lower-level llm-scaler trace instrumentation.",
+  "quality_policy": {
+    "raw145_n64_expected_combined_token_sha256": "267cbf30208d84929ee79284ac695467f7e80597bf8694130e1e1f8b180eb5bd",
+    "raw145_n256_expected_combined_token_sha256": "58f6e8251c7a0a17e8c441278b5861f7d5da914fa1823ecd10484b296f2d7537",
+    "semantic_suite_expected_combined_token_sha256": "adacbf144264486ea7d378ebb6a4c0ba23951b72c4cf86251a762b07ebef5805",
+    "arithmetic_repeat_r8_expected_combined_token_sha256": "261779104d5abf1642713bfc560ca8d2d6c0f16edbcc929c8b0819b5a760dd7c"
+  },
+  "mtp_feasibility": {
+    "config_use_mtp": true,
+    "config_num_mtp_modules": 3,
+    "config_mtp_transformer_layers": 1,
+    "config_num_hidden_layers": 62,
+    "checkpoint_has_mtp_like_tensors": false,
+    "checkpoint_has_layers_beyond_61": false,
+    "local_modeling_file_has_mtp_forward_path": false,
+    "decision": "Do not implement MTP/speculative decode for this checkpoint without real MiniMax M2.7 draft/MTP weights."
+  },
+  "isolated_trace_candidate": {
+    "source_path": "/mnt/fast-ai/src/llm-scaler-promoted-rebuild-20260520T120230Z/vllm/custom-esimd-kernels-vllm",
+    "candidate": "Route minimax_m2_top8_sigmoid_bias_host through submit_kernel trace wrapper.",
+    "build_status": "built and imported, but generation quality failed",
+    "trace_enabled_raw145_n64": {
+      "artifact": "/home/steve/bench-results/minimax-m2.7-post-repro-optimization/minimax-trace-eager-topk-raw145-n64-20260521T1830Z.json",
+      "passed": false,
+      "failure_reasons": [
+        "degenerate or corrupt generated output"
+      ],
+      "combined_token_sha256": "3dc2cfd048d538e0707c7a833de67bbbd886730aa22a8f15b2a7f9ae01c6b15d",
+      "n_tokens": 64,
+      "distinct_generated_token_count": 1,
+      "nul_token_count": 64,
+      "first_distinct_generated_tokens": [
+        0
+      ]
+    },
+    "normal_graph_validation_after_rebuild": {
+      "artifact": "/home/steve/bench-results/minimax-m2.7-post-repro-optimization/minimax-topk-trace-wrapper-normal-raw145-n64-20260521T1834Z.json",
+      "passed": false,
+      "failure_reasons": [
+        "degenerate or corrupt generated output"
+      ],
+      "combined_token_sha256": "3dc2cfd048d538e0707c7a833de67bbbd886730aa22a8f15b2a7f9ae01c6b15d",
+      "n_tokens": 64,
+      "distinct_generated_token_count": 1,
+      "nul_token_count": 64,
+      "first_distinct_generated_tokens": [
+        0
+      ]
+    },
+    "decision": "Rejected. Treat the isolated source/cache as unsafe until recloned or diffed and cleanly revalidated."
+  },
+  "promoted_path_control": {
+    "llm_scaler_python_path": "/home/steve/src/llm-scaler/vllm/custom-esimd-kernels-vllm/python",
+    "env_file": "/home/steve/llm-optimizations-publish/repro/minimax-m27-b70-89tps-20260520/configs/promoted-env.sh",
+    "raw145_n64_artifact": "/home/steve/bench-results/minimax-m2.7-post-repro-optimization/minimax-promoted-path-raw145-n64-20260521T1849Z.json",
+    "raw145_n64_passed": true,
+    "raw145_n64_combined_token_sha256": "267cbf30208d84929ee79284ac695467f7e80597bf8694130e1e1f8b180eb5bd",
+    "strict_summary": "/home/steve/bench-results/minimax-m2.7-post-repro-optimization/minimax-promoted-path-post-isolated-reject-strict-tp4-ctx2048-mbt512-bs256-20260521T185149Z-summary.json",
+    "strict_status": "quality_passed",
+    "prompt_tokens": 512,
+    "output_tokens": 1536,
+    "output_toks_per_second": 88.21066317006527,
+    "total_toks_per_second": 117.61421756008704,
+    "localmaxxing_submission": "not_submitted_below_existing_93_443623_quality_clean_best"
+  },
+  "next_steps": [
+    "Do not continue performance experiments from the rejected isolated fork.",
+    "Start from the promoted path or a fresh copy and require raw145 n64/n256 pass before each source-edit series.",
+    "Use non-invasive timing or synthetic custom-op microbenchmarks before full generation.",
+    "Only promote or submit results after exact-token quality gates pass."
+  ]
+}

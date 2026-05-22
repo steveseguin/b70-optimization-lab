@@ -1,0 +1,51 @@
+{
+  "date": "2026-05-21",
+  "label": "minimax-qk-helper-fusion-currentstack-warm-20260521",
+  "model": "/mnt/fast-ai/llm-models/minimax-m2.7-int4-autoround",
+  "hardware": "4x Intel Arc Pro B70 32GB",
+  "engine": "vLLM 0.20.1-local XPU with llm-scaler INT4 MiniMax WS path",
+  "candidate": "vLLM fuse_minimax_qk_norm compiler pass with XPU helper module on current promoted stack",
+  "status": "speed_screen_rejected",
+  "quality": {
+    "strict_gate_run": false,
+    "reason": "Candidate did not improve throughput, so it was not promoted to the full strict quality gate.",
+    "quality_policy": "No LocalMaxxing or promoted result without exact raw145 n64/n256, semantic suite, arithmetic repeat, and extended sixpack passing."
+  },
+  "throughput_screen": {
+    "shape": "prompt 512, output 1536, batch 1, TP4, ctx2048",
+    "prompt_source": "vllm_random_text",
+    "json": "/home/steve/bench-results/minimax-m2.7-post-repro-optimization/qk-helper-fusion-currentstack-warm-20260521T103851Z/minimax-qk-helper-fusion-currentstack-warm-p512n1536.json",
+    "log": "/home/steve/bench-results/minimax-m2.7-post-repro-optimization/qk-helper-fusion-currentstack-warm-20260521T103851Z/minimax-qk-helper-fusion-currentstack-warm-p512n1536.log",
+    "mean_output_toks_per_second": 92.24376748272135,
+    "mean_total_toks_per_second": 122.99168997696181,
+    "stdev_output_toks_per_second": 0.09303536924265332,
+    "repeats_output_toks_per_second": [
+      92.112535394217,
+      92.2918898949191,
+      92.24675093877917,
+      92.32389370297015
+    ],
+    "reference_controls_output_toks_per_second": [
+      {
+        "label": "router_ws_paired_control",
+        "mean": 92.415143036347
+      },
+      {
+        "label": "default_after_shape_gate_control",
+        "mean": 92.42571144685999
+      },
+      {
+        "label": "promoted_paired_control",
+        "mean": 92.83821084989822
+      }
+    ]
+  },
+  "log_evidence": {
+    "custom_fusion_enabled": "Enabled custom fusions: minimax_qk_norm"
+  },
+  "decision": "reject; warm speed screen was below controls",
+  "localmaxxing": {
+    "submitted": false,
+    "reason": "negative speed result and no full strict quality promotion"
+  }
+}

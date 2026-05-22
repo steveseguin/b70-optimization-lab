@@ -1,0 +1,66 @@
+diff --git a/vllm/custom-esimd-kernels-vllm/setup_moe_int4_prefill_only.py b/vllm/custom-esimd-kernels-vllm/setup_moe_int4_prefill_only.py
+new file mode 100644
+index 0000000..c58ff5a
+--- /dev/null
++++ b/vllm/custom-esimd-kernels-vllm/setup_moe_int4_prefill_only.py
+@@ -0,0 +1,61 @@
++from pathlib import Path
++import os
++
++from setuptools import find_packages, setup
++from torch.utils.cpp_extension import SyclExtension
++
++os.environ.setdefault("TORCH_XPU_ARCH_LIST", "bmg")
++
++from esimd_build_extention import BuildExtension
++
++root = Path(__file__).parent.resolve()
++
++import torch
++
++torch_include = str(Path(torch.__file__).parent / "include")
++venv_lib = str(Path(os.environ.get("VIRTUAL_ENV", "")) / "lib")
++
++
++setup(
++    name="custom-esimd-kernels-vllm-moe-int4-prefill-only",
++    version="0.1.0",
++    packages=find_packages(where="python"),
++    package_dir={"": "python"},
++    ext_modules=[
++        SyclExtension(
++            name="custom_esimd_kernels_vllm.moe_int4_prefill_ops",
++            sources=[
++                "csrc/moe_prefill/moe_prefill_int4.sycl",
++            ],
++            include_dirs=[
++                root / "csrc" / "moe_prefill",
++                root / "csrc" / "xpu" / "esimd_kernels",
++                root / "csrc",
++            ],
++            library_dirs=[
++                venv_lib,
++            ],
++            extra_compile_args={
++                "cxx": ["-O3", "-std=c++20"],
++                "sycl": [
++                    "-fsycl",
++                    "-ffast-math",
++                    os.environ.get("LLM_SCALER_SYCL_CODE_SPLIT",
++                                   "-fsycl-device-code-split=per_kernel"),
++                    "-fsycl-targets=spir64_gen",
++                    "-Xs",
++                    "-device bmg",
++                    "-D__DPCPP_SYCL_EXTERNAL_LIBC=__DPCPP_SYCL_EXTERNAL",
++                    f"-I{torch_include}",
++                ],
++            },
++            extra_link_args=[
++                f"-Wl,-rpath,{venv_lib}",
++                "-Wl,-rpath,$ORIGIN/../../torch/lib",
++            ],
++            py_limited_api=False,
++        )
++    ],
++    cmdclass={"build_ext": BuildExtension.with_options(use_ninja=True)},
++)

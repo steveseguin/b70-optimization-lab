@@ -1,0 +1,30 @@
+{
+  "hfId": "Lasimeri/MiniMax-M2.7-int4-AutoRound",
+  "modelRevision": "main",
+  "hardware": {
+    "hwClass": "DISCRETE_GPU",
+    "gpuName": "Intel Arc Pro B70 32GB",
+    "gpuCount": 4,
+    "vramGb": 32,
+    "os": "Ubuntu 24.04"
+  },
+  "engineName": "vllm",
+  "engineVersion": "0.20.1-local",
+  "quantization": "INT4 AutoRound W4A16",
+  "promptTokens": 512,
+  "outputTokens": 1536,
+  "contextLength": 2048,
+  "batchSize": 1,
+  "tokSOut": 86.92368038424777,
+  "tokSTotal": 115.89824051233037,
+  "notes": "Negative quality-gated MiniMax M2.7 AutoRound candidate on 4x B70. Disabled Inductor combo kernels while keeping the promoted llm-scaler TP4 path. Strict quality passed raw145 n64/n256 exact hashes, semantic suite, arithmetic repeat n64/r8, and extended sixpack n64/r2, but throughput regressed by about 3.09% vs the restored 89.696 tok/s control, so this is not promoted.",
+  "engineFlags": {
+    "commandSnippet": "COMPILATION_CONFIG_JSON='{\"use_inductor_graph_partition\":true,\"compile_sizes\":[1],\"cudagraph_mode\":\"PIECEWISE\",\"inductor_compile_config\":{\"combo_kernels\":false,\"benchmark_combo_kernel\":false}}' MAX_BATCHED_TOKENS=512 BENCH_REPEATS=2 RUN_EXTENDED_QUALITY=1 run-minimax-strict-quality-gated-candidate.sh",
+    "tensorParallel": 4,
+    "flashAttn": true,
+    "contextLength": 2048,
+    "contBatching": false,
+    "temperature": 0,
+    "extraFlags": "XPU/Level Zero, llm-scaler INT4 MoE WS/logits path, XPU graph PIECEWISE with graph no-op comm capture; combo_kernels=false; quality-clean negative"
+  }
+}

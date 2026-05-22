@@ -1,0 +1,30 @@
+{
+  "date": "2026-05-21",
+  "label": "minimax-promoted-env-guard-sanity-20260521",
+  "model": "/mnt/fast-ai/llm-models/minimax-m2.7-int4-autoround",
+  "hardware": "4x Intel Arc Pro B70 32GB",
+  "engine": "vLLM 0.20.1-local XPU with llm-scaler INT4 MiniMax WS path",
+  "change": "Explicitly keep upstream-style XPU custom-op collectives disabled in the promoted reproducibility env.",
+  "env_delta": {
+    "VLLM_XPU_USE_CUSTOM_OP_COLLECTIVES": "0"
+  },
+  "status": "quality_sanity_passed",
+  "quality": {
+    "raw145_n64": {
+      "json": "/home/steve/bench-results/minimax-m2.7-post-repro-optimization/promoted-env-guard-sanity-20260521T114421Z/minimax-promoted-env-guard-raw145-n64.json",
+      "log": "/home/steve/bench-results/minimax-m2.7-post-repro-optimization/promoted-env-guard-sanity-20260521T114421Z/minimax-promoted-env-guard-raw145-n64.log",
+      "passed": true,
+      "expected_token_sha256_match": true,
+      "combined_token_sha256": "267cbf30208d84929ee79284ac695467f7e80597bf8694130e1e1f8b180eb5bd",
+      "expected_token_sha256": "267cbf30208d84929ee79284ac695467f7e80597bf8694130e1e1f8b180eb5bd",
+      "failure_reasons": [],
+      "nul_token_count": 0,
+      "control_char_output": false
+    }
+  },
+  "decision": "keep guard in promoted env; no LocalMaxxing because this is quality-only",
+  "localmaxxing": {
+    "submitted": false,
+    "reason": "Quality sanity run only; no new throughput benchmark."
+  }
+}

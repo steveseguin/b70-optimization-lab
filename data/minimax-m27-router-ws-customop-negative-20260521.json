@@ -1,0 +1,39 @@
+{
+  "date": "2026-05-21",
+  "label": "minimax-router-ws-customop-nodebug-quality-20260521",
+  "model": "/mnt/fast-ai/llm-models/minimax-m2.7-int4-autoround",
+  "hardware": "4x Intel Arc Pro B70 32GB",
+  "engine": "vLLM 0.20.1-local XPU with llm-scaler INT4 MiniMax WS path",
+  "candidate": "moe_forward_tiny_cutlass_nmajor_int4_u4_minimax_router_ws",
+  "candidate_workspace": "/mnt/fast-ai/src/llm-scaler-router-ws-20260521T094408Z/vllm/custom-esimd-kernels-vllm",
+  "quality": {
+    "status": "quality_passed",
+    "summary_json": "/home/steve/bench-results/minimax-m2.7-strict-candidates/minimax-minimax-router-ws-customop-nodebug-quality-20260521-strict-tp4-ctx2048-mbt512-bs256-20260521T095125Z-summary.json",
+    "hashes": {
+      "raw145_n64": "267cbf30208d84929ee79284ac695467f7e80597bf8694130e1e1f8b180eb5bd",
+      "raw145_n256": "58f6e8251c7a0a17e8c441278b5861f7d5da914fa1823ecd10484b296f2d7537",
+      "semantic_suite": "adacbf144264486ea7d378ebb6a4c0ba23951b72c4cf86251a762b07ebef5805",
+      "arithmetic_repeat": "578ec378bf31cb16fb49ac5c0043270fd00a0f7898e18ac498a41ffe775d7994",
+      "extended_sixpack": "1e3560554f57b2b56cec8f49f28bc8ba12e9e0ced26bdc99a976f1433c99caa7"
+    }
+  },
+  "throughput_screen": {
+    "shape": "prompt 512, output 1536, batch 1, TP4, ctx2048",
+    "prompt_source": "vllm_random_text",
+    "candidate_json": "/home/steve/bench-results/minimax-m2.7-post-repro-optimization/router-ws-candidate-paired-20260521T100852Z/minimax-router-ws-candidate-warm-p512n1536.json",
+    "control_json": "/home/steve/bench-results/minimax-m2.7-post-repro-optimization/router-ws-candidate-paired-20260521T100852Z/minimax-router-ws-control-warm-p512n1536.json",
+    "candidate_mean_output_toks_per_second": 92.27838026827611,
+    "candidate_mean_total_toks_per_second": 123.03784035770147,
+    "candidate_stdev_output_toks_per_second": 0.005066630819544155,
+    "control_mean_output_toks_per_second": 92.415143036347,
+    "control_mean_total_toks_per_second": 123.22019071512935,
+    "control_stdev_output_toks_per_second": 0.03345485385035345,
+    "delta_output_toks_per_second": -0.13676276807089494,
+    "delta_output_percent": -0.14798740074135464
+  },
+  "decision": "reject; quality-clean but slightly slower",
+  "localmaxxing": {
+    "submitted": false,
+    "reason": "negative speed result"
+  }
+}

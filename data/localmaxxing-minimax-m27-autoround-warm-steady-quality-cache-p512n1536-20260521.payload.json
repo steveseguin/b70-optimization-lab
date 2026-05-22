@@ -1,0 +1,36 @@
+{
+  "hfId": "Lasimeri/MiniMax-M2.7-int4-AutoRound",
+  "modelRevision": "main",
+  "hardware": {
+    "hwClass": "DISCRETE_GPU",
+    "gpuName": "Intel Arc Pro B70",
+    "gpuCount": 4,
+    "vramGb": 32,
+    "cpu": "AMD EPYC 9015 8-Core Processor",
+    "ramGb": 15,
+    "os": "Ubuntu 24.04.4 LTS"
+  },
+  "engineName": "vllm",
+  "engineVersion": "0.20.1-local",
+  "quantization": "AutoRound INT4 W4A16",
+  "promptTokens": 512,
+  "outputTokens": 1536,
+  "contextLength": 2048,
+  "batchSize": 1,
+  "tokSOut": 93.4436231838881,
+  "tokSTotal": 124.59149757851748,
+  "notes": "Warm steady-state MiniMax M2.7 AutoRound TP4 on 4x Arc Pro B70. One persistent vLLM engine; 2 p512/n1536 warmup requests discarded; 4 measured greedy repeats. Strict quality passed first on the same fresh cache root: raw145 n64/n256 exact hashes, semantic suite, 8-run arithmetic repeat, and extended sixpack. Older 20260519 compile cache was rejected after raw145 n256 hash drift, so this result uses the quality-clean 20260521 cache root. No speculative decoding, expert dropping, sampling change, or power-limit increase.",
+  "engineFlags": {
+    "commandSnippet": "source repro/minimax-m27-b70-89tps-20260520/configs/promoted-env.sh && VLLM_CACHE_ROOT=/mnt/fast-ai/vllm-cache-exp/minimax-quality-clean-20260521T152425Z python scripts/run-vllm-minimax-warm-throughput.py --model /mnt/fast-ai/llm-models/minimax-m2.7-int4-autoround --tensor-parallel-size 4 --dtype float16 --max-model-len 2048 --max-num-batched-tokens 512 --max-num-seqs 1 --block-size 256 --input-len 512 --output-len 1536 --num-prompts 1 --warmup-repeats 2 --repeats 4 --prompt-source vllm_random_text --temperature 0 --top-p 1 --top-k -1",
+    "tensorParallel": 4,
+    "kvCacheDtype": "auto",
+    "flashAttn": true,
+    "contextLength": 2048,
+    "attentionBackend": "xpu_flash_attention",
+    "chunkedPrefill": true,
+    "contBatching": true,
+    "temperature": 0,
+    "topP": 1,
+    "extraFlags": "XPU/Level Zero path via vLLM+llm-scaler; top-k disabled with vLLM --top-k -1. VLLM_XPU_USE_LLM_SCALER_MOE=1; VLLM_XPU_USE_LLM_SCALER_MOE_WS=1; VLLM_XPU_USE_LLM_SCALER_MOE_MINIMAX_LOGITS_WS=1; VLLM_MINIMAX_MOE_FULL_FORWARD_CUSTOM_OP=1; VLLM_MINIMAX_MOE_OUTPUT_ALLREDUCE_INSIDE_CUSTOM_OP=1; VLLM_MINIMAX_QK_RMS_XPU_HELPER=1; VLLM_XPU_USE_CUSTOM_OP_COLLECTIVES=0; XPU graph PIECEWISE"
+  }
+}

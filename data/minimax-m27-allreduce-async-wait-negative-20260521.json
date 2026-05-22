@@ -1,0 +1,42 @@
+{
+  "date": "2026-05-21",
+  "model": "/mnt/fast-ai/llm-models/minimax-m2.7-int4-autoround",
+  "hardware": "4x Intel Arc Pro B70 32GB",
+  "engine": "vLLM XPU 0.20.1-local",
+  "quantization": "AutoRound INT4 W4A16",
+  "candidate": {
+    "VLLM_XPU_ALLREDUCE_ASYNC_WAIT": "1"
+  },
+  "baseline": {
+    "recipe": "promoted MiniMax M2.7 TP4 PIECEWISE graph recipe",
+    "warm_output_tps_range": "92.3-92.9"
+  },
+  "benchmark": {
+    "prompt_tokens": 512,
+    "output_tokens": 1536,
+    "context_length": 2048,
+    "max_num_batched_tokens": 512,
+    "block_size": 256,
+    "tensor_parallel": 4,
+    "warmup_repeats": 1,
+    "measured_repeats": 4,
+    "output_tps": [
+      82.75255400916275,
+      82.73669628966431,
+      82.80648064466403,
+      82.76521797375845
+    ],
+    "mean_output_tps": 82.76523722931239,
+    "mean_total_tps": 110.35364963908319,
+    "stdev_output_tps": 0.029868986089277027
+  },
+  "quality": {
+    "strict_quality_gate_run": false,
+    "reason": "Rejected on performance screen before quality gate; no promotion or shareable benchmark claim."
+  },
+  "artifacts": {
+    "json": "/home/steve/bench-results/minimax-m2.7-post-repro-optimization/allreduce-async-wait-screen-20260521T082822Z/minimax-allreduce-async-wait-screen-p512n1536.json",
+    "log": "/home/steve/bench-results/minimax-m2.7-post-repro-optimization/allreduce-async-wait-screen-20260521T082822Z/minimax-allreduce-async-wait-screen-p512n1536.log"
+  },
+  "decision": "reject; keep default synchronous dist.all_reduce path"
+}
