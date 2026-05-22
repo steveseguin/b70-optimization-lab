@@ -108,6 +108,33 @@ Warm repeat2, one warmup wave excluded:
   padding run showed `wrong_model` raw failures even though delivered output
   recovered.
 
+## Serving TTFT Probe
+
+To separate offline validated throughput from online serving latency, I ran
+`vllm bench serve` against a real OpenAI-compatible server with the same 8k/c2
+no-graph settings:
+
+Run:
+`/home/steve/bench-results/minimax-m2.7-serve-context/vllm-minimax-m27-autoround-serve-tp4-p6144n128-np2-20260522T135833Z.json`
+
+- Prompt shape: two simultaneous random 6144-token prompts, 128 output tokens
+  each, two warmup requests, `temperature=0`, `ignore_eos=true`
+- Completed: 2/2
+- Output throughput: `35.478 tok/s`
+- Total token throughput: `1738.409 tok/s`
+- Mean/median TTFT: `1963.456 ms`
+- Mean TPOT: `40.136 ms`
+- Median ITL: `29.059 ms`
+- P99 ITL: `272.861 ms`
+- Mean end-to-end latency: `7060.769 ms`
+- LocalMaxxing: `cmpgzog7400bfpc01camuplq8`
+
+Interpretation: the serving/API path is much slower than the offline JSON
+quality harness at the same context/concurrency setting. The first request had
+TTFT `0.295 s`, while the second simultaneous request had TTFT `3.632 s`, so
+the current scheduler/prefill path is not handling c2 long-prefill admission as
+efficiently as the offline harness. This is now a concrete optimization target.
+
 ## Next Steps
 
 1. Add per-wave TTFT/prefill timing from the online serving path; the offline
