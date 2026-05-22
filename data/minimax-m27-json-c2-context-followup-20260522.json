@@ -1,0 +1,112 @@
+{
+  "date": "2026-05-22",
+  "model": "/mnt/fast-ai/llm-models/minimax-m2.7-int4-autoround",
+  "hfId": "Lasimeri/MiniMax-M2.7-int4-AutoRound",
+  "engine": "vllm 0.20.1-local",
+  "hardware": "4x Intel Arc Pro B70 32GB",
+  "common": {
+    "tensor_parallel_size": 4,
+    "dtype": "float16",
+    "max_num_batched_tokens": 512,
+    "block_size": 256,
+    "gpu_memory_utilization": 0.95,
+    "compile_sizes": [1],
+    "cudagraph_mode": "NONE",
+    "enable_prefix_caching": true,
+    "enable_chunked_prefill": true,
+    "temperature": 0.0,
+    "top_p": 1.0,
+    "top_k": -1,
+    "allow_control_chars": true,
+    "validation": "strict JSON/content validator; control characters still rejected"
+  },
+  "results": [
+    {
+      "name": "c2_4k_no_pad_warm_repeat3",
+      "path": "/home/steve/bench-results/minimax-m2.7-json-quality/20260522T131732Z-ctx4096-c2-mbt512-nograph-compile1-allowctrl-retry3-repeat3-fixedretry/result.json",
+      "passed": true,
+      "context_length": 4096,
+      "context_pad_tokens": 0,
+      "concurrency": 2,
+      "raw_passed": 18,
+      "raw_expected": 18,
+      "wall_output_tok_s": 63.44946498705257,
+      "per_request_output_tok_s": 31.724732493526286,
+      "prompt_plus_output_tok_s": 78.03657752991515
+    },
+    {
+      "name": "c2_4k_2k_pad_retry_adjusted",
+      "path": "/home/steve/bench-results/minimax-m2.7-json-quality/20260522T132050Z-ctxpad2048-c2-mbt512-nograph-compile1-allowctrl-retry3-repeat2/result.json",
+      "passed": true,
+      "context_length": 4096,
+      "context_pad_tokens": 2049,
+      "concurrency": 2,
+      "raw_passed": 12,
+      "raw_expected": 14,
+      "failure_classes": {"wrong_model": 2},
+      "retry_adjusted_wall_output_tok_s": 55.76488848997641,
+      "selected_wall_output_tok_s": 64.60566436416174,
+      "prompt_plus_output_tok_s": 1006.3661296696765
+    },
+    {
+      "name": "c1_8k_6k_pad_warm_repeat2",
+      "path": "/home/steve/bench-results/minimax-m2.7-json-quality/20260522T132411Z-ctxpad6144-c1-mbt512-nograph-compile1-allowctrl-retry3-repeat2/result.json",
+      "passed": true,
+      "context_length": 8192,
+      "context_pad_tokens": 6144,
+      "concurrency": 1,
+      "raw_passed": 6,
+      "raw_expected": 6,
+      "output_tok_s": 36.91766213611978,
+      "prompt_plus_output_tok_s": 3201.4325374222417
+    },
+    {
+      "name": "c2_8k_6k_pad_cold_repeat2",
+      "path": "/home/steve/bench-results/minimax-m2.7-json-quality/20260522T133314Z-ctxpad6144-c2-mbt512-nograph-compile1-allowctrl-retry3-repeat2-confirm/result.json",
+      "passed": true,
+      "context_length": 8192,
+      "context_pad_tokens": 6144,
+      "concurrency": 2,
+      "raw_passed": 12,
+      "raw_expected": 12,
+      "wall_output_tok_s": 49.5880291398476,
+      "per_request_output_tok_s": 24.7940145699238,
+      "prompt_plus_output_tok_s": 2150.091863477301
+    },
+    {
+      "name": "c2_8k_6k_pad_warm_repeat2",
+      "path": "/home/steve/bench-results/minimax-m2.7-json-quality/20260522T133612Z-ctxpad6144-c2-mbt512-nograph-compile1-allowctrl-retry3-warm1-repeat2-confirm/result.json",
+      "passed": true,
+      "context_length": 8192,
+      "context_pad_tokens": 6144,
+      "concurrency": 2,
+      "raw_passed": 12,
+      "raw_expected": 12,
+      "wall_output_tok_s": 64.06234617294629,
+      "per_request_output_tok_s": 32.031173086473146,
+      "prompt_plus_output_tok_s": 2777.6850915624304,
+      "warmup_wall_output_tok_s": 41.547339011207676,
+      "localmaxxing_id": "cmpgyxotu00aspc016gg8azvf"
+    }
+  ],
+  "negative_results": [
+    {
+      "name": "c2_compile_size_1_and_2",
+      "path": "/home/steve/bench-results/minimax-m2.7-json-quality/20260522T130433Z-ctx4096-c2-mbt512-nograph-compile12-allowctrl-retry1-repeat1/result.json",
+      "passed": true,
+      "raw_passed": 6,
+      "raw_expected": 6,
+      "wall_output_tok_s": 33.70630855008971,
+      "lesson": "Exact size-2 compilation was much slower than compile_sizes=[1]."
+    },
+    {
+      "name": "c2_graph_capture_size_1",
+      "path": "/home/steve/bench-results/minimax-m2.7-json-quality/20260522T125815Z-ctx4096-c2-mbt512-graph-cap1-allowctrl-retry1-repeat1/result.json",
+      "passed": true,
+      "raw_passed": 6,
+      "raw_expected": 6,
+      "wall_output_tok_s": 36.162265600906636,
+      "lesson": "Graph capture-size workaround avoided failure but was slower than no-graph."
+    }
+  ]
+}
