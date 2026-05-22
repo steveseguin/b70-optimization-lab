@@ -1,0 +1,62 @@
+diff --git a/vllm/env_override.py b/vllm/env_override.py
+index 000000000..000000000 100644
+--- a/vllm/env_override.py
++++ b/vllm/env_override.py
+@@
+ _patch_get_raw_stream_if_needed()
+ 
+ 
++def _maybe_partition_xpu_collectives_out_of_cudagraphs():
++    """Optionally keep XPU collectives outside Inductor cudagraph partitions.
++
++    vLLM's CUDA communicator has a graph-capture context, but the XPU
++    communicator currently does not. Forcing graph capture while no-oping the
++    communicator context can be fast, but it is also the quality-risk boundary
++    for multi-XPU MiniMax. This opt-in split keeps the surrounding compute
++    graphable while making collectives run as normal non-cudagraph partitions.
++    """
++    if os.environ.get("VLLM_XPU_CUDAGRAPH_PARTITION_COLLECTIVES", "0") != "1":
++        return
++
++    import torch._inductor.config as inductor_config
++
++    default_ops = [
++        "vllm::all_reduce",
++        "vllm::all_reduce.default",
++        "vllm::all_reduce_inplace",
++        "vllm::all_reduce_inplace.default",
++        "vllm::all_gather",
++        "vllm::all_gather.default",
++        "vllm::reduce_scatter",
++        "vllm::reduce_scatter.default",
++        "_c10d_functional::all_reduce",
++        "_c10d_functional::all_reduce.default",
++        "_c10d_functional::all_reduce_",
++        "_c10d_functional::all_reduce_.default",
++        "_c10d_functional::wait_tensor",
++        "_c10d_functional::wait_tensor.default",
++    ]
++    extra_ops = [
++        item.strip()
++        for item in os.environ.get(
++            "VLLM_XPU_CUDAGRAPH_PARTITION_COLLECTIVE_OPS", ""
++        ).split(",")
++        if item.strip()
++    ]
++    existing = list(inductor_config.custom_should_partition_ops)
++    for op_name in default_ops + extra_ops:
++        if op_name not in existing:
++            existing.append(op_name)
++    inductor_config.custom_should_partition_ops = existing
++    logger.info(
++        "Partitioning XPU collective ops out of cudagraph capture: %s",
++        ", ".join(default_ops + extra_ops),
++    )
++
++
++_maybe_partition_xpu_collectives_out_of_cudagraphs()
++
++
+ if is_torch_equal("2.9.0"):
+     from torch._inductor.codegen.wrapper import PythonWrapperCodegen
+     from torch._inductor.graph import GraphLowering
