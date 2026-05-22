@@ -1,0 +1,76 @@
+diff --git a/scripts/run-minimax-website-task-quality.py b/scripts/run-minimax-website-task-quality.py
+index 0000000..0000000 100755
+--- a/scripts/run-minimax-website-task-quality.py
++++ b/scripts/run-minimax-website-task-quality.py
+@@
++def assistant_prefill_for(task: WebsiteTask, mode: str) -> str:
++    if mode == "none":
++        return ""
++    if mode != "skeleton_open":
++        raise ValueError(f"Unknown assistant prefill mode: {mode}")
++    if task.task_id != "skeleton_status_html":
++        raise ValueError(
++            "--assistant-prefill=skeleton_open only supports skeleton_status_html"
++        )
++    return (
++        '<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">'
++        "<title>B70 MiniMax Lab Status</title></head><body><main><section>"
++        "<h1>B70 MiniMax Lab Status</h1><p>"
++    )
+@@
++    parser.add_argument("--enable-prefix-caching", action="store_true")
++    parser.add_argument(
++        "--assistant-prefill",
++        choices=("none", "skeleton_open"),
++        default="none",
++        help=(
++            "Append a fixed assistant prefix to the prompt and reattach it for "
++            "validation. This measures scaffolded website generation separately "
++            "from pure free-form HTML generation."
++        ),
++    )
+@@
+-        enable_prefix_caching=False,
++        enable_prefix_caching=args.enable_prefix_caching,
+@@
+-        rendered_prompt = task.prompt
++        assistant_prefill = assistant_prefill_for(task, args.assistant_prefill)
++        rendered_prompt = task.prompt
++        if assistant_prefill:
++            rendered_prompt += (
++                "\n\nThe assistant response has already started with a valid "
++                "HTML prefix. Continue directly from that prefix. Do not repeat "
++                "doctype, html, head, body, main, section, h1, or the opening "
++                "paragraph tag."
++            )
+         if args.prompt_format == "chat":
+             rendered_prompt = tokenizer.apply_chat_template(
+                 [
+                     {"role": "system", "content": args.system_prompt},
+-                    {"role": "user", "content": task.prompt},
++                    {"role": "user", "content": rendered_prompt},
+                 ],
+                 tokenize=False,
+                 add_generation_prompt=True,
+             )
+             if not args.keep_thinking_prefix and rendered_prompt.endswith("<think>\n"):
+                 rendered_prompt += "</think>\n\n"
++            rendered_prompt += assistant_prefill
++        elif assistant_prefill:
++            rendered_prompt += "\n\n" + assistant_prefill
+@@
+-        html_text, extraction = extract_html(text)
++        candidate_text = assistant_prefill + text
++        html_text, extraction = extract_html(candidate_text)
+@@
+-        raw_path.write_text(text, encoding="utf-8")
++        raw_path.write_text(candidate_text, encoding="utf-8")
+@@
++                "raw_model_text_sha256": hashlib.sha256(
++                    text.encode("utf-8", errors="replace")
++                ).hexdigest(),
++                "assistant_prefill": args.assistant_prefill,
++                "assistant_prefill_chars": len(assistant_prefill),
+@@
++            "assistant_prefill": args.assistant_prefill,
++            "enable_prefix_caching": args.enable_prefix_caching,
