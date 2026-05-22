@@ -102,6 +102,8 @@ INT4 AutoRound path:
 - MiniMax vLLM quality guardrails now require exact token hashes for raw145 n64/n256, semantic canaries, arithmetic repeat, and extended sixpack before any candidate speed result is promoted. Warm-only results are not submitted to LocalMaxxing unless the same stack has passed strict quality.
 - Recent exact router custom-op attempts are quality-clean but not speed wins: the non-WS router custom-op was neutral, and the stricter router+WS custom-op screened at `92.278 tok/s` versus a matched `92.415 tok/s` control, so it was rejected.
 
+- 2026-05-22 JSON quality/context follow-up: added a structured-output harness for the promoted MiniMax AutoRound fast graph path. The conservative validation-gated result delivered 30/30 valid JSON outputs at 4k max context, with `65.588 tok/s` effective accepted-output rate including retries and `87.770 tok/s` selected-valid decode. Longer prompt padding kept selected-valid decode high (`83.294 tok/s`) but dropped effective accepted-output to `38.762 tok/s` because raw candidate failures rose. Concurrency-2 is not yet publishable: it either fails KV reservation or stalls during graph capture. Details are in `notes/2026-05-22-minimax-json-quality-context-concurrency.md`.
+
 ## Important Implementation Artifacts
 
 llama.cpp Q4_0/SYCL work:

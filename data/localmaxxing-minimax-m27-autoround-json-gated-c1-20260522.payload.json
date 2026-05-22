@@ -1,0 +1,37 @@
+{
+  "hfId": "Lasimeri/MiniMax-M2.7-int4-AutoRound",
+  "modelRevision": "main",
+  "hardware": {
+    "hwClass": "DISCRETE_GPU",
+    "gpuName": "Intel Arc Pro B70",
+    "gpuCount": 4,
+    "vramGb": 32,
+    "cpu": "AMD EPYC 9015 8-Core Processor",
+    "ramGb": 15,
+    "os": "Ubuntu 24.04.4 LTS"
+  },
+  "engineName": "vllm",
+  "engineVersion": "0.20.1-local",
+  "quantization": "AutoRound INT4 W4A16",
+  "promptTokens": 3450,
+  "outputTokens": 2298,
+  "contextLength": 4096,
+  "batchSize": 1,
+  "tokSOut": 65.588,
+  "notes": "Validation-gated structured JSON benchmark on promoted fast graph path. Delivered 30/30 valid JSON outputs with retry-until-pass=3. Conservative tokSOut is effective accepted-output rate including failed attempts/retries. Selected valid outputs alone decoded at 87.770 tok/s; raw candidate pass rate was 30/38 (78.95%). Greedy sampling; three deterministic JSON tasks with exact parse/order/arithmetic checks.",
+  "engineFlags": {
+    "commandSnippet": "source repro/minimax-m27-b70-89tps-20260520/configs/promoted-env.sh && run-minimax-json-quality-throughput.py --mode graph --task alpha_names --task number_facts --task b70_status --warmup-runs 1 --repeat 10 --retry-until-pass 3 --concurrency 1 --max-model-len 4096 --max-num-batched-tokens 512 --max-num-seqs 1 --block-size 256 --enable-prefix-caching",
+    "tensorParallel": 4,
+    "gpuLayers": 999,
+    "contextLength": 4096,
+    "concurrency": 1,
+    "temperature": 0,
+    "topP": 1,
+    "contBatching": true,
+    "chunkedPrefill": true,
+    "prefixCaching": true,
+    "specDecoding": false,
+    "extraFlags": "XPU graph forced with comm/no-op comm capture; llm-scaler INT4 MoE path; validation retry gate. Result file: /home/steve/bench-results/minimax-m2.7-json-quality/20260522T112949Z-ctx4096-c1-mbt512-retry3-repeat10/result.json"
+  },
+  "tokSTotal": 164.06
+}

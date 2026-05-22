@@ -1,0 +1,133 @@
+{
+  "date": "2026-05-22",
+  "model": "Lasimeri/MiniMax-M2.7-int4-AutoRound",
+  "hardware": "4x Intel Arc Pro B70 32GB",
+  "results": [
+    {
+      "run": "/home/steve/bench-results/minimax-m2.7-json-quality/20260522T114908Z-ctxpad2048-c1-mbt512-retry3-repeat3/result.json",
+      "passed": true,
+      "runtime": {
+        "max_model_len": 4096,
+        "max_num_batched_tokens": 512,
+        "max_num_seqs": 1,
+        "concurrency": 1,
+        "context_pad_actual_tokens": 0,
+        "retry_until_pass": 3,
+        "cudagraph_mode": "PIECEWISE"
+      },
+      "measured_candidates": {
+        "expected_outputs": 38,
+        "accepted_outputs": 30,
+        "rejected_outputs": 8,
+        "pass_rate": 0.7894736842105263,
+        "accepted_output_tokens": 2298,
+        "all_output_tokens": 3117,
+        "all_prompt_tokens_counted_per_candidate": 4329,
+        "accepted_decode_elapsed_s": 26.18209777714219,
+        "all_attempt_decode_elapsed_s": 35.03714039421175,
+        "all_wave_elapsed_s": 35.03714039421175,
+        "accepted_output_tok_s": 87.76989603966065,
+        "effective_accepted_output_tok_s": 65.5875443641981,
+        "effective_wall_accepted_output_tok_s": 65.5875443641981,
+        "all_output_tok_s": 88.96273967937574,
+        "all_total_tok_s_counting_prompt_per_candidate": 212.5173434881719,
+        "accepted_output_mean_decode_tok_s": 85.62674712986424,
+        "accepted_output_stdev_decode_tok_s": 6.8024580699972255,
+        "failure_classes": {
+          "json_decode_error": 5,
+          "not_single_json_value_text": 1,
+          "number_3_wrong_cube": 1,
+          "number_3_wrong_keys": 1,
+          "number_7_wrong_keys": 1,
+          "number_7_wrong_n": 1,
+          "number_7_wrong_square": 1,
+          "number_8_wrong_cube": 1,
+          "number_8_wrong_n": 1,
+          "number_8_wrong_square": 1,
+          "wrong_check_names_or_order": 1,
+          "wrong_number_count": 1
+        }
+      },
+      "measured_selected": {
+        "expected_outputs": 30,
+        "accepted_outputs": 30,
+        "rejected_outputs": 0,
+        "pass_rate": 1.0,
+        "accepted_output_tokens": 2298,
+        "all_output_tokens": 2298,
+        "all_prompt_tokens_counted_per_candidate": 3450,
+        "accepted_decode_elapsed_s": 26.18209777714219,
+        "all_attempt_decode_elapsed_s": 26.18209777714219,
+        "all_wave_elapsed_s": 26.18209777714219,
+        "accepted_output_tok_s": 87.76989603966065,
+        "effective_accepted_output_tok_s": 87.76989603966065,
+        "effective_wall_accepted_output_tok_s": 87.76989603966065,
+        "all_output_tok_s": 87.76989603966065,
+        "all_total_tok_s_counting_prompt_per_candidate": 219.53932220886395,
+        "accepted_output_mean_decode_tok_s": 85.62674712986424,
+        "accepted_output_stdev_decode_tok_s": 6.8024580699972255,
+        "failure_classes": {}
+      },
+      "validation_gate_passed": true
+    },
+    {
+      "run": "/home/steve/bench-results/minimax-m2.7-json-quality/20260522T114908Z-ctxpad2048-c1-mbt512-retry3-repeat3/result.json",
+      "passed": true,
+      "runtime": {
+        "max_model_len": 4096,
+        "max_num_batched_tokens": 512,
+        "max_num_seqs": 1,
+        "concurrency": 1,
+        "context_pad_actual_tokens": 2049,
+        "retry_until_pass": 3,
+        "cudagraph_mode": "PIECEWISE"
+      },
+      "measured_candidates": {
+        "expected_outputs": 14,
+        "accepted_outputs": 9,
+        "rejected_outputs": 5,
+        "pass_rate": 0.6428571428571429,
+        "accepted_output_tokens": 660,
+        "all_output_tokens": 1554,
+        "all_prompt_tokens_counted_per_candidate": 30636,
+        "accepted_decode_elapsed_s": 7.923770159948617,
+        "all_attempt_decode_elapsed_s": 17.027108813170344,
+        "all_wave_elapsed_s": 17.027108813170344,
+        "accepted_output_tok_s": 83.29368301670677,
+        "effective_accepted_output_tok_s": 38.761718577231086,
+        "effective_wall_accepted_output_tok_s": 38.761718577231086,
+        "all_output_tok_s": 91.26622828638955,
+        "all_total_tok_s_counting_prompt_per_candidate": 1890.514728789498,
+        "accepted_output_mean_decode_tok_s": 81.68097226828507,
+        "accepted_output_stdev_decode_tok_s": 6.331105808068997,
+        "failure_classes": {
+          "control_characters": 1,
+          "json_decode_error": 4,
+          "not_single_json_value_text": 3,
+          "wrong_model": 1
+        }
+      },
+      "measured_selected": {
+        "expected_outputs": 9,
+        "accepted_outputs": 9,
+        "rejected_outputs": 0,
+        "pass_rate": 1.0,
+        "accepted_output_tokens": 660,
+        "all_output_tokens": 660,
+        "all_prompt_tokens_counted_per_candidate": 19719,
+        "accepted_decode_elapsed_s": 7.923770159948617,
+        "all_attempt_decode_elapsed_s": 7.923770159948617,
+        "all_wave_elapsed_s": 7.923770159948617,
+        "accepted_output_tok_s": 83.29368301670677,
+        "effective_accepted_output_tok_s": 83.29368301670677,
+        "effective_wall_accepted_output_tok_s": 83.29368301670677,
+        "all_output_tok_s": 83.29368301670677,
+        "all_total_tok_s_counting_prompt_per_candidate": 2571.8817669658592,
+        "accepted_output_mean_decode_tok_s": 81.68097226828507,
+        "accepted_output_stdev_decode_tok_s": 6.331105808068997,
+        "failure_classes": {}
+      },
+      "validation_gate_passed": true
+    }
+  ]
+}
