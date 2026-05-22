@@ -1,0 +1,121 @@
+{
+  "date": "2026-05-22",
+  "model": "Lasimeri/MiniMax-M2.7-int4-AutoRound",
+  "hardware": "4x Intel Arc Pro B70 32GB",
+  "purpose": "Follow-up JSON quality, context, concurrency, and prefill chunk screens after adding compile-size policy control to the harness.",
+  "harness_patch": "patches/minimax-json-quality-throughput-harness-20260522.patch",
+  "valid_results": [
+    {
+      "label": "c1_no_padding_compile_size_one",
+      "run": "/home/steve/bench-results/minimax-m2.7-json-quality/20260522T122143Z-ctx4096-c1-mbt512-compile1-retry3-repeat2/result.json",
+      "passed": true,
+      "runtime": {
+        "mode": "graph",
+        "max_model_len": 4096,
+        "max_num_batched_tokens": 512,
+        "max_num_seqs": 1,
+        "concurrency": 1,
+        "context_pad_actual_tokens": 0,
+        "compile_size_policy": "one",
+        "compile_sizes": [1],
+        "cudagraph_mode": "PIECEWISE"
+      },
+      "measured_candidates": {
+        "accepted_outputs": 6,
+        "expected_outputs": 7,
+        "pass_rate": 0.8571428571428571,
+        "accepted_output_tok_s": 87.17634400452323,
+        "effective_accepted_output_tok_s": 82.2220098081384,
+        "all_total_tok_s_counting_prompt_per_candidate": 241.62058791346126
+      },
+      "measured_selected": {
+        "accepted_outputs": 6,
+        "expected_outputs": 6,
+        "pass_rate": 1.0,
+        "accepted_output_tok_s": 87.17634400452323,
+        "effective_accepted_output_tok_s": 87.17634400452323,
+        "all_total_tok_s_counting_prompt_per_candidate": 223.88470164798014
+      }
+    },
+    {
+      "label": "c1_2k_context_compile_size_one",
+      "run": "/home/steve/bench-results/minimax-m2.7-json-quality/20260522T124101Z-ctxpad2048-c1-mbt512-compile1-retry3-repeat2/result.json",
+      "localmaxxing_id": "cmpgx0yrb009fpc0183xjri4j",
+      "passed": true,
+      "runtime": {
+        "mode": "graph",
+        "max_model_len": 4096,
+        "max_num_batched_tokens": 512,
+        "max_num_seqs": 1,
+        "concurrency": 1,
+        "context_pad_actual_tokens": 2049,
+        "compile_size_policy": "one",
+        "compile_sizes": [1],
+        "cudagraph_mode": "PIECEWISE"
+      },
+      "measured_candidates": {
+        "accepted_outputs": 6,
+        "expected_outputs": 9,
+        "pass_rate": 0.6666666666666666,
+        "accepted_output_tok_s": 83.1510147025904,
+        "effective_accepted_output_tok_s": 54.89815139910365,
+        "all_total_tok_s_counting_prompt_per_candidate": 2543.6559376671044
+      },
+      "measured_selected": {
+        "accepted_outputs": 6,
+        "expected_outputs": 6,
+        "pass_rate": 1.0,
+        "accepted_output_tok_s": 83.1510147025904,
+        "effective_accepted_output_tok_s": 83.1510147025904,
+        "all_total_tok_s_counting_prompt_per_candidate": 2567.476558521348
+      }
+    }
+  ],
+  "negative_results": [
+    {
+      "label": "c2_graph_compile_size_one_stall",
+      "run": "/home/steve/bench-results/minimax-m2.7-json-quality/20260522T122443Z-ctx4096-c2-mbt512-compile1-retry3-repeat2/run.log",
+      "runtime": {
+        "mode": "graph",
+        "max_model_len": 4096,
+        "max_num_batched_tokens": 512,
+        "max_num_seqs": 2,
+        "concurrency": 2,
+        "gpu_memory_utilization": 0.95,
+        "compile_size_policy": "one"
+      },
+      "observed": "KV cache reported 34,560 tokens and 8.44x theoretical 4k concurrency, but graph capture failed launching triton_red_fused__to_copy_add_int4_gemm_w4a16_mean_mul_pow_rsqrt_7 and then stalled in shared-memory broadcast."
+    },
+    {
+      "label": "c2_no_graph_indexing_assert",
+      "run": "/home/steve/bench-results/minimax-m2.7-json-quality/20260522T123325Z-ctx4096-c2-mbt512-nograph-noenv-retry3-repeat1/run.log",
+      "runtime": {
+        "mode": "cudagraph_none",
+        "max_model_len": 4096,
+        "max_num_batched_tokens": 512,
+        "max_num_seqs": 2,
+        "concurrency": 2,
+        "gpu_memory_utilization": 0.95,
+        "compile_size_policy": "one",
+        "xpu_force_graph_with_comm": "off",
+        "xpu_noop_comm_capture": "off"
+      },
+      "observed": "Model loaded and graph capture was skipped, but generation died with Torch XPU Indexing.h:622 index-out-of-bounds assertions and VllmWorker-0 shutdown."
+    },
+    {
+      "label": "c1_2k_context_mbt1024_ocloc_ice",
+      "run": "/home/steve/bench-results/minimax-m2.7-json-quality/20260522T123623Z-ctxpad2048-c1-mbt1024-compile1-retry3-repeat2/run.log",
+      "runtime": {
+        "mode": "graph",
+        "max_model_len": 4096,
+        "max_num_batched_tokens": 1024,
+        "max_num_seqs": 1,
+        "concurrency": 1,
+        "context_pad_actual_tokens": 2049,
+        "compile_size_policy": "one"
+      },
+      "observed": "Intel ocloc returned error 245 with IGC internal compiler error: Floating point exception while compiling Triton reduction kernels, followed by shared-memory broadcast stalls."
+    }
+  ],
+  "current_recommendation": "For reliable quality-gated c1 MiniMax AutoRound testing, use graph mode with compile_size_policy=one and max_num_batched_tokens=512. Do not promote c2 or 1024-token prefill chunk results until the XPU indexing and ocloc failures are fixed."
+}
