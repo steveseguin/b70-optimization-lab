@@ -94,6 +94,36 @@ Warm repeat2, one warmup wave excluded:
 - Notes: this is the best quality-clean context/concurrency result from this
   follow-up and is suitable for LocalMaxxing if labeled as batch/concurrency 2.
 
+Max-seqs 4 repeat2, one warmup wave excluded:
+`/home/steve/bench-results/minimax-m2.7-json-quality/20260522T141839Z-ctxpad6144-c2-mbt512-maxseq4-nograph-compile1-allowctrl-retry3-warm1-repeat2/`
+
+- Passed: yes
+- Raw measured candidates: 12/12
+- Wall output throughput: `63.693 tok/s`
+- Per-request accepted output throughput: `31.847 tok/s`
+- Prompt+output total throughput: `2761.671 tok/s`
+- Notes: increasing `max_num_seqs` from 2 to 4 is quality-clean and does not
+  materially change offline c2 throughput. It is useful as a serving scheduler
+  probe, not a decode-speed improvement.
+
+### Rejected: C2, 8k, 6k pad, `max_num_batched_tokens=1024`
+
+Run:
+`/home/steve/bench-results/minimax-m2.7-json-quality/20260522T140910Z-ctxpad6144-c2-mbt1024-nograph-compile1-allowctrl-retry3-warm1-repeat2/`
+
+- Passed: no
+- Raw measured candidates: 0/36
+- Failure classes: `control_characters` x36, `json_decode_error` x36,
+  `not_single_json_value_text` x36
+- Invalid-output throughput: `31.703 tok/s`, not promotable
+- Init elapsed: `292.081 s`
+- Notes: this run also exposed an Intel compiler failure during warmup:
+  `ocloc` returned 245 and IGC reported `Internal Compiler Error: Floating
+  point exception` while compiling a Triton reduction kernel. vLLM recovered
+  enough to run, but every measured answer contained NUL/control output. Keep
+  `max_num_batched_tokens=512` for this stack until the compiler/quality issue
+  is understood.
+
 ## Interpretation
 
 - The no-graph c2 path is now viable when control-token logit bias is disabled
@@ -135,6 +165,27 @@ TTFT `0.295 s`, while the second simultaneous request had TTFT `3.632 s`, so
 the current scheduler/prefill path is not handling c2 long-prefill admission as
 efficiently as the offline harness. This is now a concrete optimization target.
 
+### Serving max-seqs 4 probe
+
+Run:
+`/home/steve/bench-results/minimax-m2.7-serve-context/vllm-minimax-m27-autoround-serve-tp4-p6144n128-np2-20260522T142150Z.json`
+
+- Related offline quality gate:
+  `/home/steve/bench-results/minimax-m2.7-json-quality/20260522T141839Z-ctxpad6144-c2-mbt512-maxseq4-nograph-compile1-allowctrl-retry3-warm1-repeat2/result.json`
+- Completed: 2/2
+- Output throughput: `36.032 tok/s`
+- Total token throughput: `1765.558 tok/s`
+- Mean/median TTFT: `3267.023 ms`
+- Mean TPOT: `30.120 ms`
+- Median ITL: `29.635 ms`
+- Mean end-to-end latency: `7092.221 ms`
+
+Interpretation: `max_num_seqs=4` is quality-clean offline but not a serving
+win for this c2 long-prefill shape. Output throughput improved only about
+`1.6%` over the maxseq2 serving probe, while mean TTFT worsened by about
+`1.3 s`. Do not promote this as an optimization; keep it as a scheduler
+boundary data point.
+
 ## Next Steps
 
 1. Add per-wave TTFT/prefill timing from the online serving path; the offline
@@ -143,5 +194,8 @@ efficiently as the offline harness. This is now a concrete optimization target.
    can use stricter sampling constraints without crashing.
 3. Add an optional exact-output prompt variant that avoids brittle model-name
    memorization failures while still checking JSON validity, ordering, and math.
-4. Re-test c2 with a long-lived server and LAN client, since repeated offline
+4. Investigate the `max_num_batched_tokens=1024` IGC/`ocloc` crash and NUL
+   output path. This looks like a driver/compiler boundary, not a safe prefill
+   optimization.
+5. Re-test c2 with a long-lived server and LAN client, since repeated offline
    runs spend about 75 seconds reloading the checkpoint each time.
