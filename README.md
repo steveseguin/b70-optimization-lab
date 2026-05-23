@@ -42,10 +42,14 @@ The best documented fresh install today is:
 - Hardware: 4x Intel Arc Pro B70 32GB
 - OS: Ubuntu 24.04
 - Server: OpenAI-compatible vLLM on `0.0.0.0:8000`
+- Served context: `24576` tokens by default
 - Result: `110.90` total tok/s, `83.17` output tok/s for p512/n1536
 - Recipe: [repro/minimax-m27-b70-110tps-ubuntu24-20260523](repro/minimax-m27-b70-110tps-ubuntu24-20260523/README.md)
 
-This is a deployable baseline, not the final speed ceiling.
+This is a deployable baseline, not the final speed ceiling. The strict
+benchmark/quality lane remains p512/n1536 at context `2048` for comparability;
+the served OpenAI-compatible endpoint now defaults to `24576` and validated a
+24,400-token prompt plus 64 generated tokens without OOM.
 
 ## How To Contribute
 

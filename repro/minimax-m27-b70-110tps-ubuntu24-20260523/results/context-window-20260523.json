@@ -1,0 +1,50 @@
+{
+  "date": "2026-05-23",
+  "model": "/mnt/fast-ai/llm-models/minimax-m2.7-int4-autoround",
+  "hardware": "4x Intel Arc Pro B70 32GB",
+  "server": "vLLM OpenAI-compatible API on 0.0.0.0:8000",
+  "chosen_max_model_len": 24576,
+  "chosen_gpu_memory_utilization": 0.95,
+  "vllm_reported_gpu_kv_cache_tokens": 25344,
+  "vllm_reported_kv_cache_memory_gib": 1.53,
+  "vllm_reported_max_concurrency_at_chosen_context": 1.03,
+  "xpu_smi_memory_used_mib_per_gpu_after_start": [32651, 32651, 32651, 32651],
+  "failed_context_trials": [
+    {
+      "max_model_len": 32768,
+      "result": "failed",
+      "reason": "KV cache memory check failed",
+      "vllm_estimated_max_model_len": 25600
+    },
+    {
+      "max_model_len": 25600,
+      "result": "failed",
+      "reason": "KV cache memory check failed by a narrow margin",
+      "vllm_estimated_max_model_len": 25344
+    }
+  ],
+  "short_decode_openai_endpoint": {
+    "prompt_tokens": 512,
+    "completion_tokens": 1536,
+    "elapsed_seconds": 18.33243293099804,
+    "completion_tokens_per_second": 83.7859331481748
+  },
+  "near_full_context_openai_endpoint": {
+    "prompt_tokens": 24400,
+    "completion_tokens": 64,
+    "total_tokens": 24464,
+    "elapsed_seconds": 15.388557503996708,
+    "result": "completed_without_oom"
+  },
+  "short_decode_after_near_full_context": {
+    "prompt_tokens": 512,
+    "completion_tokens": 1536,
+    "elapsed_seconds": 18.33424329599802,
+    "completion_tokens_per_second": 83.77765993403591
+  },
+  "notes": [
+    "The strict p512/n1536 quality and benchmark lane remains context 2048 for comparable speed reporting.",
+    "The served endpoint defaults to 24576 max_model_len for practical agentic use.",
+    "vLLM preallocates GPU memory for the KV cache; xpu-smi reports 100 percent memory utilization after startup by design."
+  ]
+}

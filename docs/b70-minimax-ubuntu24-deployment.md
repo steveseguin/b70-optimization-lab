@@ -25,6 +25,10 @@ The endpoint is compatible with common OpenAI-style clients:
 
 The endpoint in this repro uses `--host 0.0.0.0`, so it is accessible on the LAN if the host firewall and network allow it.
 
+The current serving default is a `24576`-token context window. The comparable
+quality/speed gate still uses a `2048`-token context so new runs can be compared
+against the original p512/n1536 benchmark.
+
 ## Hardware and OS Checklist
 
 Before installing:
@@ -181,6 +185,16 @@ vLLM benchmark output reports total tokens per second. For a 512 input / 1536 ou
 
 The user's target was `>90 tok/s`; this setup clears that target using total/effective throughput. If comparing to earlier "89 tok/s" and "94 tok/s" notes, those were output-token-focused lanes and are not strictly the same headline number.
 
+The served 24,576-token endpoint was also checked through the OpenAI-compatible
+API:
+
+- Short decode, prompt 512 / output 1536: `83.79 output tok/s`.
+- Near-full-context request, prompt 24,400 / output 64: completed without OOM.
+- Short decode after that long-context request: `83.78 output tok/s`.
+
+This means the larger served context did not reduce the normal short-request
+decode lane after warmup.
+
 ## Serving
 
 Start:
@@ -195,6 +209,19 @@ Default bind:
 0.0.0.0:8000
 ```
 
+Default context settings:
+
+```text
+VLLM_MAX_MODEL_LEN=24576
+VLLM_GPU_MEMORY_UTILIZATION=0.95
+```
+
+The script allows overrides for controlled retests:
+
+```bash
+VLLM_MAX_MODEL_LEN=16384 bash scripts/06-serve-openai-compatible.sh
+```
+
 Find LAN IP:
 
 ```bash
@@ -206,6 +233,14 @@ Test:
 ```bash
 curl http://127.0.0.1:8000/health
 curl http://127.0.0.1:8000/v1/models
+```
+
+Expected `/v1/models` includes:
+
+```json
+{
+  "max_model_len": 24576
+}
 ```
 
 Example OpenAI-compatible client base URL:
@@ -273,14 +308,33 @@ IGC: Internal Compiler Error: Floating point exception
 
 Observed behavior: nonfatal in the final server start; vLLM continued compiling/capturing graphs and served successfully. If it becomes fatal, wipe the relevant compile cache, reduce concurrency, and rerun. Preserve logs for Intel.
 
+### Context window does not fit
+
+Symptom:
+
+```text
+ValueError: To serve at least one request with the models's max seq len ...
+Try increasing `gpu_memory_utilization` or decreasing `max_model_len`
+```
+
+Observed limits on the originating 4x B70 host:
+
+- `32768` failed; vLLM estimated the maximum around `25600`.
+- `25600` failed by a narrow KV-cache margin; vLLM estimated `25344`.
+- `24576` passed and is the documented default.
+
+This is VRAM/KV-cache headroom, not system RAM overflow. vLLM preallocates KV
+cache memory, so `xpu-smi` can show roughly `32651 MiB` used and `100%` memory
+utilization even when the server is idle.
+
 ## What To Improve Next
 
 Useful next experiments:
 
 - Recover the earlier 89-94 output-token lane on this more recent package stack.
 - Compare `VLLM_CACHE_ROOT` values and cache warmness; cold compile can distort throughput.
-- Try higher context after revalidating quality; this repro pins `2048`.
+- Try to recover more context only if memory pressure changes; this repro serves
+  `24576`, while `32768` and `25600` did not fit on the tested stack.
 - Investigate why server startup using the older promoted cache root emitted `ocloc` ICEs.
 - Package prebuilt ABI-matched `vllm-xpu-kernels` artifacts to avoid the >120 GB source build on low-RAM users' machines.
 - Convert the local wrapper scripts into one idempotent installer with explicit version locks and artifact caching.
-

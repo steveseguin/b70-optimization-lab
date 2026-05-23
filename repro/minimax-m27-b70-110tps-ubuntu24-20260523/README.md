@@ -5,7 +5,8 @@ This folder documents a fresh Ubuntu 24.04 bring-up performed on 2026-05-23 for:
 - Model: `Lasimeri/MiniMax-M2.7-int4-AutoRound`
 - Hardware: 4x Intel Arc Pro B70 32 GB
 - Serving API: vLLM OpenAI-compatible endpoint
-- Context length used here: `2048`
+- Served max context: `24576` tokens by default
+- Benchmark/quality context used for the comparable speed gate: `2048`
 - Benchmark shape: prompt 512, output 1536, tensor parallel 4
 - Quality status: strict gates passed
 - Mean total/effective throughput: `110.896 tok/s`
@@ -127,6 +128,19 @@ Start the OpenAI-compatible endpoint:
 bash scripts/06-serve-openai-compatible.sh
 ```
 
+The serve script listens on `0.0.0.0:8000` and defaults to:
+
+```text
+max_model_len=24576
+gpu_memory_utilization=0.95
+```
+
+Override only if you are intentionally retesting capacity:
+
+```bash
+VLLM_MAX_MODEL_LEN=16384 bash scripts/06-serve-openai-compatible.sh
+```
+
 From the same machine:
 
 ```bash
@@ -161,6 +175,29 @@ Primary local artifact from the originating machine:
 
 `/mnt/fast-ai/bench-results/minimax-m27-b70-89tps/strict/minimax-repro-minimax-moe-full-forward-customop-plus-output-ar-strict-tp4-ctx2048-mbt512-bs256-20260523T145201Z-summary.json`
 
+## Served Context Window
+
+The endpoint was expanded after the strict speed gate. The practical server
+default is now `24576` tokens, not `2048`.
+
+Observed on 2026-05-23:
+
+- `32768` failed vLLM's KV-cache memory check; vLLM estimated about `25600`.
+- `25600` also failed by a narrow margin; vLLM estimated `25344`.
+- `24576` started successfully with `gpu_memory_utilization=0.95`.
+- vLLM reported `25,344` GPU KV-cache tokens and `1.03x` maximum concurrency
+  for a 24,576-token request.
+- `xpu-smi` showed about `32651 MiB` used per B70 after startup. This is
+  expected because vLLM preallocates KV cache memory.
+- OpenAI endpoint short decode after warmup: `83.79 output tok/s` for
+  prompt 512 / output 1536.
+- Near-full-context API request: `24400` prompt tokens plus `64` generated
+  tokens completed without OOM.
+- Short decode after the near-full-context request stayed at `83.78 output
+  tok/s`.
+
+Structured result: `results/context-window-20260523.json`
+
 ## Quality Gates That Passed
 
 The strict run passed:
@@ -194,6 +231,14 @@ Model id:
 
 ```text
 /mnt/fast-ai/llm-models/minimax-m2.7-int4-autoround
+```
+
+Expected `/v1/models` field:
+
+```json
+{
+  "max_model_len": 24576
+}
 ```
 
 Example request:
@@ -238,4 +283,3 @@ All 62 MoE layers reported the llm-scaler XPU INT4 decode path during quality an
 - Fresh deployment and operator runbook: `../../docs/b70-minimax-ubuntu24-deployment.md`
 - Intel-facing notes and asks: `../../docs/intel-b70-minimax-feedback-20260523.md`
 - Current agent memory update: `../../AGENT_HANDOFF.md`
-

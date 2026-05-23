@@ -57,10 +57,18 @@ Current fresh Ubuntu 24 deployment repro:
   fresh Ubuntu 24.04 host with 4x B70s.
 - Model: `/mnt/fast-ai/llm-models/minimax-m2.7-int4-autoround`
 - Endpoint: vLLM OpenAI-compatible server on `0.0.0.0:8000`
-- Context used for the smoke/quality lane: `2048`
+- Served context default: `24576` via `/home/steve/bin/minimax-vllm-serve` and
+  `repro/minimax-m27-b70-110tps-ubuntu24-20260523/scripts/06-serve-openai-compatible.sh`
+- Context used for the comparable smoke/quality lane: `2048`
 - Quality gate: passed raw token-hash canaries, semantic suite, arithmetic
   repeat, and extended sixpack.
 - Benchmark: `110.896 total tok/s`, `83.172 output tok/s` for p512/n1536.
+- OpenAI endpoint context validation: `24576` started with
+  `gpu_memory_utilization=0.95`, vLLM reported `25,344` GPU KV-cache tokens,
+  prompt 24,400 / output 64 completed without OOM, and short decode remained
+  `83.78-83.79 output tok/s` before/after the long-context request.
+- Failed context checks: `32768` and `25600` failed vLLM KV-cache memory checks;
+  vLLM estimated the practical ceiling around `25,344` tokens.
 - Repro folder:
   `repro/minimax-m27-b70-110tps-ubuntu24-20260523/`
 - Human deployment guide: `docs/b70-minimax-ubuntu24-deployment.md`
