@@ -25,7 +25,8 @@ The endpoint is compatible with common OpenAI-style clients:
 
 The endpoint in this repro uses `--host 0.0.0.0`, so it is accessible on the LAN if the host firewall and network allow it.
 
-The current serving default is a `24576`-token context window. The comparable
+The current serving default is a `24576`-token context window, roughly 24k
+tokens. The comparable
 quality/speed gate still uses a `2048`-token context so new runs can be compared
 against the original p512/n1536 benchmark.
 
@@ -183,7 +184,36 @@ vLLM benchmark output reports total tokens per second. For a 512 input / 1536 ou
 - Mean total/effective throughput: `110.90 tok/s`
 - Mean output-only throughput: `83.17 tok/s`
 
-The user's target was `>90 tok/s`; this setup clears that target using total/effective throughput. If comparing to earlier "89 tok/s" and "94 tok/s" notes, those were output-token-focused lanes and are not strictly the same headline number.
+The user's target was `>90 tok/s`; this setup clears that target using
+total/effective throughput. For generated tokens only, the current fresh
+deployment is an `83 tok/s` class setup.
+
+Do not compare the old `94 tok/s` note directly to this number. That was a
+constrained structured-output lane with short output and validation/retry
+accounting, not the same random p512/n1536 decode benchmark. The older
+apples-to-apples strict random decode lane was `89.314 output tok/s`.
+
+The most likely non-quality explanation for the `89 -> 83` gap on this host is
+PCIe fabric bandwidth:
+
+- The current board reports PCIe4 x16 links: `16.0 GT/s`, width 16.
+- The B70s advertise PCIe5 capability: `32.0 GT/s`, width 16.
+- In simple terms, PCIe5 x16 has about twice the raw signaling rate of PCIe4
+  x16.
+- The old 256 MiB XCCL allreduce reference was about `27.88 GB/s`.
+- This host measured about `13.79 GB/s`.
+- `13.79 / 27.88 = 0.49`, or almost exactly half.
+
+MiniMax tensor-parallel decode uses many small cross-GPU reductions, so slower
+inter-GPU communication can show up as lower generated-token throughput. This
+does not prove PCIe explains every token of the gap: the current vLLM source is
+also newer than the original promoted stack. But the bandwidth math lines up
+well enough that PCIe4 is a credible primary cause.
+
+Warm versus cold also matters. Cold starts can include model load, graph
+capture, kernel compilation, and cache effects. The old repro saw a first
+post-reboot pass at only `69.33 output tok/s`, then an immediate warm rerun at
+`88.72 output tok/s`. Compare warm runs to warm runs.
 
 The served 24,576-token endpoint was also checked through the OpenAI-compatible
 API:
@@ -191,6 +221,8 @@ API:
 - Short decode, prompt 512 / output 1536: `83.79 output tok/s`.
 - Near-full-context request, prompt 24,400 / output 64: completed without OOM.
 - Short decode after that long-context request: `83.78 output tok/s`.
+- Prompt/prefill check with `max_tokens=1`: about `1.7k-1.8k prompt tok/s`
+  for 2k-16k prompt sizes.
 
 This means the larger served context did not reduce the normal short-request
 decode lane after warmup.

@@ -75,8 +75,12 @@ Current fresh Ubuntu 24 deployment repro:
   cards advertise PCIe5 capability. XCCL broad allreduce measured `13.79 GB/s`
   at 256 MiB versus the older `27.88 GB/s` reference, making PCIe4 fabric
   bandwidth a credible explanation for most of the `89 -> 83` strict decode
-  delta. Live endpoint prefill measured about `1.7k-1.8k tok/s` with
-  `max_tokens=1` prompt-heavy requests.
+  delta: `13.79 / 27.88 = 0.494`, roughly half the older bandwidth, while
+  `83.8 / 89.314 = 0.938`, about a 6% end-to-end decode drop. Live endpoint
+  prefill measured about `1.7k-1.8k tok/s` with `max_tokens=1` prompt-heavy
+  requests. Keep warm and cold numbers separate; the older repro had a
+  `69.33` output tok/s first post-reboot pass and `88.72` output tok/s warm
+  rerun.
 - Repro folder:
   `repro/minimax-m27-b70-110tps-ubuntu24-20260523/`
 - Human deployment guide: `docs/b70-minimax-ubuntu24-deployment.md`

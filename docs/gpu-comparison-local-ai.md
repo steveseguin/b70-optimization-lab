@@ -63,8 +63,17 @@ For example, the current fresh MiniMax deployment reports:
 - Shape: p512/n1536, context 2048, batch 1
 - Quality: strict gate passed
 - Result: `110.90` total tok/s, `83.17` output tok/s
+- Served endpoint: `24576` token context, about `83.8` warm output tok/s,
+  about `1.7k-1.8k` prompt/prefill tok/s
 
 That is not directly comparable to single-GPU 7B tests, chat UI subjective speed, MLPerf Client numbers, or synthetic prefill-only numbers.
+
+The current 4x B70 host appears limited by PCIe4 fabric versus an earlier PCIe5
+host. In lay terms, PCIe5 x16 can move about twice as much data per second as
+PCIe4 x16. The measured 256 MiB allreduce bandwidth was also almost exactly
+half: `13.79 GB/s` current versus `27.88 GB/s` older reference. For multi-GPU
+tensor parallel inference, that can matter because cards must exchange small
+pieces of the calculation repeatedly during decode.
 
 ## B70 Strengths
 

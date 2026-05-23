@@ -12,7 +12,9 @@ apples-to-apples comparison.
 
 The most likely explanation for the remaining strict-lane gap is PCIe fabric
 bandwidth/latency. The current board links the B70s at PCIe4 x16, while the
-previous faster host was reported as PCIe5.
+previous faster host was reported as PCIe5. This is a plausible explanation, not
+a final proof, because the current vLLM source also differs from the older
+promoted stack.
 
 ## Benchmark Context
 
@@ -24,6 +26,8 @@ Current endpoint:
 - Served context: `24576`
 - vLLM: `0.20.2rc1.dev2+gc51df4300.d20260523`
 - Decode sanity: about `83.78-83.79` output tok/s for prompt 512 / output 1536
+- Prompt/prefill sanity: about `1.7k-1.8k prompt tok/s` on long prompt-heavy
+  OpenAI-compatible requests
 
 Reference distinctions:
 
@@ -89,6 +93,27 @@ The large-message bandwidth is almost exactly half of the older reference. That
 is consistent with PCIe4 x16 versus PCIe5 x16 and makes PCIe fabric bandwidth a
 credible explanation for most of the current decode gap.
 
+In lay terms:
+
+- The link on this board is running at `16.0 GT/s` per lane.
+- A PCIe5 x16 path would run at `32.0 GT/s` per lane.
+- Same lane count, half the signaling rate means roughly half the possible
+  transfer rate before protocol overheads.
+- The measurement follows that expectation: `13.79 / 27.88 = 0.494`, or about
+  `49%` of the older bandwidth.
+- The old strict decode lane was `89.314 output tok/s`; current warm endpoint
+  decode is about `83.8 output tok/s`, or about `94%` of that strict result.
+- It is reasonable that a 2x drop in collective bandwidth causes a smaller
+  `6%` drop in end-to-end decode, because only part of each token step is
+  inter-GPU communication. The rest is local compute, memory access, scheduling,
+  and sampling.
+
+This makes PCIe4 a credible cause of the `83` versus `89` strict-lane gap. It
+also helps explain why a PCIe5 system could show `89-93` class decode while this
+fresh PCIe4 serving host lands around `83` without any quality-reducing change.
+The `94` structured lane remains a different benchmark shape and should stay
+separately labeled.
+
 ## Runtime Drift Caveat
 
 There is also source/runtime drift versus the older promoted result:
@@ -127,6 +152,22 @@ Interpretation:
 - Keep `max_num_batched_tokens=512` for the stable serving recipe. Repo notes
   show that 1024-token prefill chunks previously triggered Intel `ocloc`/IGC
   failures, so larger chunks are not yet a safe default.
+
+## Warm Versus Cold
+
+Warm and cold rates should be labeled separately. Cold runs can include model
+load, graph capture, kernel compilation, and cache creation. Warm runs reuse
+more of that state and are the fairer comparison for steady service.
+
+Known examples:
+
+- Older repro first post-reboot pass: `69.33 output tok/s`.
+- Older repro immediate warm rerun: `88.72 output tok/s`.
+- Current 24k endpoint warm short-decode checks: about `83.78-83.79 output
+  tok/s`.
+
+For user-facing claims, report warm serving throughput and separately mention
+that first-run compile/cache behavior can be much lower.
 
 ## Operational Note
 

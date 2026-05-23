@@ -131,8 +131,25 @@ For community records, avoid a single naked "tok/s" number. At minimum, label:
 - `concurrency`: number of simultaneous requests.
 - `quality`: exact hashes, semantic checks, human eval, benchmark score, or "not checked."
 - `speculation`: whether draft/speculative decoding was enabled.
+- `warm/cold`: whether the run happened after model load, graph capture, and
+  compiler caches were already warm.
+- `interconnect`: PCIe generation/width, Xe Link, NVLink, or other GPU-to-GPU
+  fabric details.
 
 This matters because a result can be excellent for prefill, decode, chat latency, or multi-user serving while looking mediocre under another metric.
+
+Example from the current 4x B70 MiniMax host:
+
+- Decode: about `83.8` warm output tok/s for p512/n1536.
+- Prefill: about `1.7k-1.8k` prompt tok/s for prompt-heavy OpenAI API checks.
+- Context: served at `24576` tokens; prompt 24,400 / output 64 completed.
+- Interconnect clue: current PCIe4 x16 allreduce bandwidth measured
+  `13.79 GB/s`, while an older faster reference measured `27.88 GB/s`.
+
+Those numbers explain different parts of the user experience. Decode controls
+how fast text streams after it starts. Prefill and TTFT control how long a long
+prompt waits before the first generated token appears. Interconnect can cap
+multi-GPU decode even when each card has enough VRAM.
 
 ## Metrics Beyond Tok/s
 
