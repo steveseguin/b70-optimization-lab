@@ -6,9 +6,13 @@ set -euo pipefail
 # same piecewise graph path as the promoted ~89.3 tok/s strict baseline before
 # any throughput benchmark is run.
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+PUBLISH_ROOT="${PUBLISH_ROOT:-$REPO_ROOT}"
+
 MODEL="${MODEL:-/mnt/fast-ai/llm-models/minimax-m2.7-int4-autoround}"
-VENV="${VENV:-/home/steve/.venvs/vllm-xpu}"
-OUTDIR="${OUTDIR:-/home/steve/bench-results/minimax-m2.7-strict-candidates}"
+VENV="${VENV:-$HOME/.venvs/vllm-xpu}"
+OUTDIR="${OUTDIR:-/mnt/fast-ai/bench-results/minimax-m2.7-strict-candidates}"
 LABEL="${LABEL:-candidate}"
 TP="${TP:-4}"
 DTYPE="${DTYPE:-float16}"
@@ -40,7 +44,7 @@ if ! jq -e 'type == "object"' >/dev/null <<<"$COMPILATION_CONFIG_JSON"; then
   exit 2
 fi
 COMPILATION_CONFIG_JSON="$(jq -c . <<<"$COMPILATION_CONFIG_JSON")"
-RAW145_PROMPT="${RAW145_PROMPT:-/home/steve/llm-optimizations-publish/prompts/minimax-raw145-tokenhash-canary.txt}"
+RAW145_PROMPT="${RAW145_PROMPT:-$PUBLISH_ROOT/prompts/minimax-raw145-tokenhash-canary.txt}"
 RAW145_N64_HASH="${RAW145_N64_HASH:-267cbf30208d84929ee79284ac695467f7e80597bf8694130e1e1f8b180eb5bd}"
 RAW145_N256_HASH="${RAW145_N256_HASH:-58f6e8251c7a0a17e8c441278b5861f7d5da914fa1823ecd10484b296f2d7537}"
 
@@ -80,7 +84,7 @@ export VLLM_CACHE_ROOT="$CACHE_ROOT"
 source "$VENV/bin/activate"
 
 runtime_status=0
-python /home/steve/llm-optimizations-publish/scripts/inspect-vllm-runtime.py \
+python "$PUBLISH_ROOT/scripts/inspect-vllm-runtime.py" \
   --output "$runtime_json" || runtime_status="$?"
 if [ "$runtime_status" -ne 0 ]; then
   cat "$runtime_json" >&2
@@ -170,7 +174,7 @@ run_quality_check() {
   local guard_pid="$quality_startup_guard_pid"
   set +e
   timeout --foreground --signal=TERM --kill-after="$RUN_TIMEOUT_KILL_AFTER" "$QUALITY_TIMEOUT" \
-    python /home/steve/llm-optimizations-publish/scripts/run-vllm-minimax-quality-check.py \
+    python "$PUBLISH_ROOT/scripts/run-vllm-minimax-quality-check.py" \
       --mode graph \
       --model "$MODEL" \
       --out "$json" \
@@ -211,16 +215,16 @@ run_semantic_suite() {
   local guard_pid="$quality_startup_guard_pid"
   set +e
   timeout --foreground --signal=TERM --kill-after="$RUN_TIMEOUT_KILL_AFTER" "$QUALITY_TIMEOUT" \
-    python /home/steve/llm-optimizations-publish/scripts/run-vllm-minimax-quality-check.py \
+    python "$PUBLISH_ROOT/scripts/run-vllm-minimax-quality-check.py" \
       --mode graph \
       --model "$MODEL" \
       --out "$json" \
       --raw-prompt \
       --max-tokens 64 \
       --runs 2 \
-      --prompt-file /home/steve/llm-optimizations-publish/prompts/minimax-pass-canary-raw.txt \
-      --prompt-file /home/steve/llm-optimizations-publish/prompts/minimax-arithmetic-canary-raw.txt \
-      --prompt-file /home/steve/llm-optimizations-publish/prompts/minimax-code-canary-raw.txt \
+      --prompt-file "$PUBLISH_ROOT/prompts/minimax-pass-canary-raw.txt" \
+      --prompt-file "$PUBLISH_ROOT/prompts/minimax-arithmetic-canary-raw.txt" \
+      --prompt-file "$PUBLISH_ROOT/prompts/minimax-code-canary-raw.txt" \
       --tensor-parallel-size "$TP" \
       --dtype "$DTYPE" \
       --max-model-len "$MAX_MODEL_LEN" \
@@ -261,14 +265,14 @@ run_repeat_arithmetic_suite() {
   local guard_pid="$quality_startup_guard_pid"
   set +e
   timeout --foreground --signal=TERM --kill-after="$RUN_TIMEOUT_KILL_AFTER" "$QUALITY_TIMEOUT" \
-    python /home/steve/llm-optimizations-publish/scripts/run-vllm-minimax-quality-check.py \
+    python "$PUBLISH_ROOT/scripts/run-vllm-minimax-quality-check.py" \
       --mode graph \
       --model "$MODEL" \
       --out "$json" \
       --raw-prompt \
       --max-tokens 64 \
       --runs "$REPEAT_ARITHMETIC_RUNS" \
-      --prompt-file /home/steve/llm-optimizations-publish/prompts/minimax-arithmetic-canary-raw.txt \
+      --prompt-file "$PUBLISH_ROOT/prompts/minimax-arithmetic-canary-raw.txt" \
       --tensor-parallel-size "$TP" \
       --dtype "$DTYPE" \
       --max-model-len "$MAX_MODEL_LEN" \
@@ -306,19 +310,19 @@ run_extended_suite() {
   local guard_pid="$quality_startup_guard_pid"
   set +e
   timeout --foreground --signal=TERM --kill-after="$RUN_TIMEOUT_KILL_AFTER" "$QUALITY_TIMEOUT" \
-    python /home/steve/llm-optimizations-publish/scripts/run-vllm-minimax-quality-check.py \
+    python "$PUBLISH_ROOT/scripts/run-vllm-minimax-quality-check.py" \
       --mode graph \
       --model "$MODEL" \
       --out "$json" \
       --raw-prompt \
       --max-tokens 64 \
       --runs 2 \
-      --prompt-file /home/steve/llm-optimizations-publish/prompts/minimax-pass-canary-raw.txt \
-      --prompt-file /home/steve/llm-optimizations-publish/prompts/minimax-arithmetic-canary-raw.txt \
-      --prompt-file /home/steve/llm-optimizations-publish/prompts/minimax-code-canary-raw.txt \
-      --prompt-file /home/steve/llm-optimizations-publish/prompts/minimax-json-canary-raw.txt \
-      --prompt-file /home/steve/llm-optimizations-publish/prompts/minimax-sort-canary-raw.txt \
-      --prompt-file /home/steve/llm-optimizations-publish/prompts/minimax-sql-canary-raw.txt \
+      --prompt-file "$PUBLISH_ROOT/prompts/minimax-pass-canary-raw.txt" \
+      --prompt-file "$PUBLISH_ROOT/prompts/minimax-arithmetic-canary-raw.txt" \
+      --prompt-file "$PUBLISH_ROOT/prompts/minimax-code-canary-raw.txt" \
+      --prompt-file "$PUBLISH_ROOT/prompts/minimax-json-canary-raw.txt" \
+      --prompt-file "$PUBLISH_ROOT/prompts/minimax-sort-canary-raw.txt" \
+      --prompt-file "$PUBLISH_ROOT/prompts/minimax-sql-canary-raw.txt" \
       --tensor-parallel-size "$TP" \
       --dtype "$DTYPE" \
       --max-model-len "$MAX_MODEL_LEN" \
@@ -484,7 +488,7 @@ write_summary() {
         semantic_suite: "PASS, arithmetic 42, add_one function with return x + 1; two greedy repeats must be deterministic after ignoring leading whitespace only"
         ,
         arithmetic_repeat_suite: "Arithmetic prompt must return 42 for repeated greedy calls in one persistent engine; catches graph replay/request-state drift",
-        arithmetic_repeat_enabled: (env.RUN_REPEAT_ARITHMETIC_QUALITY // "1") == "1",
+        arithmetic_repeat_enabled: ((env.RUN_REPEAT_ARITHMETIC_QUALITY // "1") == "1"),
         arithmetic_repeat_runs: (env.REPEAT_ARITHMETIC_RUNS // "8" | tonumber),
         extended_sixpack_enabled: ($run_extended_quality == 1),
         extended_sixpack: "PASS, arithmetic, code, JSON, sort, SQL; two greedy repeats must be deterministic after ignoring leading whitespace only and non-degenerate when enabled"
@@ -654,7 +658,7 @@ if [ "$BENCH_REPEATS" -gt 0 ]; then
       RUN_TIMEOUT_KILL_AFTER="$RUN_TIMEOUT_KILL_AFTER" \
       SHM_STALL_MAX_WARNINGS="$SHM_STALL_MAX_WARNINGS" \
       EXTRA_ARGS="${bench_async_flags[*]} --block-size $BLOCK_SIZE --no-enable-prefix-caching ${bench_attention_backend_args[*]} --compilation-config $COMPILATION_CONFIG_JSON" \
-      /home/steve/llm-optimizations-publish/scripts/bench-vllm-minimax-autoround-xpu.sh
+      "$PUBLISH_ROOT/scripts/bench-vllm-minimax-autoround-xpu.sh"
     )"
     printf '%s\n' "$run_out"
     bench_jsons+=("$(printf '%s\n' "$run_out" | awk -F= '/^json=/{print $2; exit}')")

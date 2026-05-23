@@ -1,0 +1,35 @@
+{
+  "date": "2026-05-23",
+  "model": "Lasimeri/MiniMax-M2.7-int4-AutoRound",
+  "hardware": "4x Intel Arc Pro B70 32GB",
+  "os": "Ubuntu 24.04.4 LTS",
+  "quality_status": "quality_passed",
+  "context_tokens": 2048,
+  "benchmark_shape": {
+    "input_tokens": 512,
+    "output_tokens": 1536,
+    "tensor_parallel": 4,
+    "max_num_seqs": 1,
+    "max_num_batched_tokens": 512
+  },
+  "mean_total_tokens_per_second": 110.8962457692952,
+  "mean_output_tokens_per_second": 83.1721843269714,
+  "total_tokens_per_second": [
+    109.82634516832029,
+    111.29770064350417,
+    111.0660964054885,
+    111.39484085986787
+  ],
+  "output_tokens_per_second": [
+    82.36975887624021,
+    83.47327548262813,
+    83.29957230411637,
+    83.5461306449009
+  ],
+  "summary_artifact_on_originating_machine": "/mnt/fast-ai/bench-results/minimax-m27-b70-89tps/strict/minimax-repro-minimax-moe-full-forward-customop-plus-output-ar-strict-tp4-ctx2048-mbt512-bs256-20260523T145201Z-summary.json",
+  "notes": [
+    "Effective total throughput exceeded the user's >90 tok/s target.",
+    "Output-only throughput was below the earlier 89-class and 94-class lanes.",
+    "The setup passed strict quality gates before serving was started."
+  ]
+}

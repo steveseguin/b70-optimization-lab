@@ -139,6 +139,15 @@ def parse_args() -> argparse.Namespace:
         ),
     )
     parser.add_argument(
+        "--compilation-config-json",
+        default=None,
+        help=(
+            "Compatibility option accepted by strict repro wrappers. The harness "
+            "builds the supported compilation_config fields from the explicit "
+            "flags below."
+        ),
+    )
+    parser.add_argument(
         "--rms-norm-priority",
         default=None,
         help=(

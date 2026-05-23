@@ -1,6 +1,6 @@
 # Codex Agent Handoff
 
-Last updated: 2026-05-22
+Last updated: 2026-05-23
 
 This file is the first thing a new Codex agent should read when continuing the
 Intel Arc Pro B70 LLM optimization work.
@@ -50,6 +50,28 @@ Current older strict long-run MiniMax baseline:
 - LocalMaxxing: `cmpct6t4m007fnw01yjdtlcs4`
 - Repro folder: `repro/minimax-m27-b70-89tps-20260520/`
 
+Current fresh Ubuntu 24 deployment repro:
+
+- Date: 2026-05-23
+- Purpose: reproduce the deployable OpenAI-compatible vLLM endpoint on a mostly
+  fresh Ubuntu 24.04 host with 4x B70s.
+- Model: `/mnt/fast-ai/llm-models/minimax-m2.7-int4-autoround`
+- Endpoint: vLLM OpenAI-compatible server on `0.0.0.0:8000`
+- Context used for the smoke/quality lane: `2048`
+- Quality gate: passed raw token-hash canaries, semantic suite, arithmetic
+  repeat, and extended sixpack.
+- Benchmark: `110.896 total tok/s`, `83.172 output tok/s` for p512/n1536.
+- Repro folder:
+  `repro/minimax-m27-b70-110tps-ubuntu24-20260523/`
+- Human deployment guide: `docs/b70-minimax-ubuntu24-deployment.md`
+- Intel feedback: `docs/intel-b70-minimax-feedback-20260523.md`
+- Lessons learned:
+  `repro/minimax-m27-b70-110tps-ubuntu24-20260523/notes/learnings-20260523.md`
+
+This fresh deployment is not the fastest output-token lane known in the repo.
+Treat it as the current best documented "install from a fresh system and serve
+on the LAN" baseline.
+
 ## Quality Rules
 
 Do not promote a speed result unless quality is preserved.
@@ -74,6 +96,9 @@ For practical task lanes:
 
 Start here on a fresh machine:
 
+- `docs/b70-minimax-ubuntu24-deployment.md`
+- `repro/minimax-m27-b70-110tps-ubuntu24-20260523/README.md`
+- `repro/minimax-m27-b70-110tps-ubuntu24-20260523/scripts/`
 - `repro/minimax-m27-b70-89tps-20260520/README.md`
 - `repro/minimax-m27-b70-89tps-20260520/scripts/00-install-system-deps.sh`
 - `repro/minimax-m27-b70-89tps-20260520/scripts/01-download-model.sh`
@@ -83,6 +108,9 @@ Start here on a fresh machine:
 
 Important notes:
 
+- The 2026-05-23 repro is the best starting point for building a working
+  endpoint from a fresh Ubuntu 24 system. It includes low-RAM SSD swap handling,
+  a LAN bind server script, and Intel-facing failure notes.
 - The repro folder is for the `89 tok/s` strict baseline, not the latest
   `94 tok/s` constrained HTML lane.
 - The latest structured regex2 fix is recorded as a patch in
