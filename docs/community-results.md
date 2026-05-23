@@ -1,0 +1,164 @@
+# Community Results And Build Notes
+
+The point of this repository is not only to document one machine. It should help people reproduce, compare, and improve local AI deployments on B70s and other accessible GPUs.
+
+## What To Share
+
+A useful community result includes:
+
+- Model name and exact quantization.
+- Hardware, including number of cards and VRAM per card.
+- Operating system and kernel.
+- Driver/runtime stack.
+- Engine: vLLM, llama.cpp, OpenVINO, custom harness, or something else.
+- Exact command or linked recipe folder.
+- Prompt length, output length, context length, batch size, and concurrency.
+- Output-token throughput and total-token throughput.
+- Quality gate or validation method.
+- Whether speculative decoding was used.
+- Whether power limits, clocks, or cooling changes were used.
+- Raw logs or JSON artifacts where possible.
+
+## Suggested Result Format
+
+```text
+Model:
+Quantization:
+Hardware:
+OS/kernel:
+Engine/backend:
+Recipe or commit:
+Prompt/output/context:
+Batch/concurrency:
+Quality check:
+Output tok/s:
+Total tok/s:
+Notes:
+Artifacts:
+```
+
+## Build Photos
+
+Build photos are useful because multi-GPU local AI can fail for physical reasons:
+
+- slot spacing
+- risers
+- airflow
+- power cables
+- board compatibility
+- cooling pressure
+- BIOS settings
+- PSU margin
+- acoustic expectations
+- visible temperature indicators, if used
+
+Photos should ideally show:
+
+- the full system
+- GPU spacing and airflow
+- power cabling
+- motherboard slot layout
+- any risers or bifurcation cards
+- storage layout if it matters for model/cache speed
+- fan direction and blocked/unblocked intake paths
+- labels for card order if software device order matters
+
+Example public build-photo links from Steve's X feed:
+
+- https://pbs.twimg.com/media/HHtRNbNW4AQNUNv?format=jpg&name=medium
+- https://pbs.twimg.com/media/HI9wPxuW0AEsJoP?format=jpg&name=4096x4096
+
+Prefer linking to public posts or images instead of committing large photos to the repo. If a photo is critical to a reproducible build, add a small compressed copy plus a short caption explaining what it proves.
+
+## Common Build Discussion Themes
+
+These came up repeatedly in community discussion and should be captured in future build notes:
+
+- Two B70s can be the practical option because they fit in more ordinary boards and cases.
+- Four B70s are more fun for capacity and experiments, but demand more attention to board layout, airflow, power, and software scaling.
+- Qwen-class FP8 models can be useful on two cards with more headroom than a single consumer GPU.
+- MiniMax-class larger models push toward four cards or more specialized layouts.
+- Blower cards can be reasonable in dense systems if intake is not starved.
+- Decorative or diagnostic additions, such as heatsinks or temperature stickers, should be explained as cosmetic, practical, or both.
+- Results should include whether the machine is quiet enough for office/home use or only acceptable in a lab/server room.
+
+## Two Cards Versus Four Cards
+
+Use two B70s when:
+
+- the goal is a compact inference rig
+- motherboard slots are limited
+- power, cooling, or case size is constrained
+- the model fits well with tensor parallel 2 or another two-device split
+- you want a simpler path for Qwen-class FP8 or smaller local models
+
+Use four B70s when:
+
+- aggregate VRAM is the priority
+- you are experimenting with larger models
+- you want more concurrency headroom
+- you can handle a workstation/server motherboard, case, PSU, cooling, and software complexity
+- you are willing to benchmark scaling honestly instead of assuming more cards always helps
+
+Four cards can be worse than two or three for some workloads if communication overhead dominates. Treat card count as an experimental variable.
+
+## Social And Result Links
+
+- Steve on X: https://x.com/xyster
+- LocalMaxxing profile: https://localmaxxing.com/user/steveseguin
+- Project timeline: https://steveseguin.github.io/llm-optimizations/optimization-timeline.html
+
+The X feed is useful for chronology and informal discussion. The repo should remain the source for reproducible commands, patches, artifacts, and final notes.
+
+## Records Need Labels
+
+For community records, avoid a single naked "tok/s" number. At minimum, label:
+
+- `output tok/s`: generated tokens only.
+- `total tok/s`: prompt plus generated tokens.
+- `accepted tok/s`: throughput after rejected attempts, retries, or invalid outputs are counted.
+- `TTFT`: time to first token.
+- `concurrency`: number of simultaneous requests.
+- `quality`: exact hashes, semantic checks, human eval, benchmark score, or "not checked."
+- `speculation`: whether draft/speculative decoding was enabled.
+
+This matters because a result can be excellent for prefill, decode, chat latency, or multi-user serving while looking mediocre under another metric.
+
+## Metrics Beyond Tok/s
+
+Useful community metrics include:
+
+- batch-1 decode tok/s
+- multi-user aggregate tok/s
+- time to first token
+- tokens per joule or wall power during a run
+- maximum useful context length
+- accepted output rate after retries or validation failures
+- model quality versus a stock/reference path
+- service stability over hours or days
+
+For agentic use, concurrency and correctness can matter more than a single clean decode number.
+
+## Recipe Versus Lab Note
+
+Use `repro/` for recipes someone can run. Use `notes/` for lab history, failed attempts, and investigation details.
+
+A result should become a `repro/` folder when:
+
+- another person could follow it on a new machine
+- it pins versions
+- it includes scripts
+- it includes validation
+- it explains failure modes
+
+Keep exploratory work in `notes/` until it is ready.
+
+## Discussion Topics
+
+Useful discussion threads include:
+
+- "Feedback for Intel": install pain, drivers, oneAPI, PyTorch XPU, vLLM, compiler diagnostics, and missing wheels.
+- "Model recipes": adding Qwen, MiniMax GGUF, smaller single-card recipes, and long-context recipes.
+- "Build photos": board/slot/cooling layouts that work or fail.
+- "Benchmark rules": standard shapes and quality gates for comparable community results.
+- "Production serving": auth, firewalls, service supervision, monitoring, and rate limits.

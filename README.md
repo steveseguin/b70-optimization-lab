@@ -2,6 +2,15 @@
 
 Reproducibility notes, benchmark payloads, and local patches from the Intel Arc Pro B70 Qwen3.6 27B optimization work.
 
+## Documentation Entry Points
+
+- Human docs index: `docs/README.md`
+- MiniMax M2.7 INT4 Ubuntu 24 deployment guide: `docs/b70-minimax-ubuntu24-deployment.md`
+- Model recipe index: `docs/model-recipes.md`
+- Community result/build-photo guide: `docs/community-results.md`
+- Intel feedback discussion starter: `docs/feedback-for-intel.md`
+- Detailed Intel feedback note: `docs/intel-b70-minimax-feedback-20260523.md`
+
 ## Current B70 Findings
 
 - Host: Ubuntu 24.04.4 LTS, kernel 6.17.0-23-generic.

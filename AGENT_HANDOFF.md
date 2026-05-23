@@ -64,6 +64,9 @@ Current fresh Ubuntu 24 deployment repro:
 - Repro folder:
   `repro/minimax-m27-b70-110tps-ubuntu24-20260523/`
 - Human deployment guide: `docs/b70-minimax-ubuntu24-deployment.md`
+- Docs index: `docs/README.md`
+- Model/community recipe index: `docs/model-recipes.md`
+- Community results/build notes: `docs/community-results.md`
 - Intel feedback: `docs/intel-b70-minimax-feedback-20260523.md`
 - Lessons learned:
   `repro/minimax-m27-b70-110tps-ubuntu24-20260523/notes/learnings-20260523.md`
