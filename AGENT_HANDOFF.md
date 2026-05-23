@@ -69,6 +69,14 @@ Current fresh Ubuntu 24 deployment repro:
   `83.78-83.79 output tok/s` before/after the long-context request.
 - Failed context checks: `32768` and `25600` failed vLLM KV-cache memory checks;
   vLLM estimated the practical ceiling around `25,344` tokens.
+- PCIe/prefill follow-up on 2026-05-23:
+  `notes/2026-05-23-current-host-pcie4-prefill-check.md`.
+  Current host upstream links are PCIe4 x16 (`16.0 GT/s`, width 16) while the
+  cards advertise PCIe5 capability. XCCL broad allreduce measured `13.79 GB/s`
+  at 256 MiB versus the older `27.88 GB/s` reference, making PCIe4 fabric
+  bandwidth a credible explanation for most of the `89 -> 83` strict decode
+  delta. Live endpoint prefill measured about `1.7k-1.8k tok/s` with
+  `max_tokens=1` prompt-heavy requests.
 - Repro folder:
   `repro/minimax-m27-b70-110tps-ubuntu24-20260523/`
 - Human deployment guide: `docs/b70-minimax-ubuntu24-deployment.md`
