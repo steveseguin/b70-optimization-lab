@@ -5,8 +5,9 @@
 - B70s can serve MiniMax M2.7 INT4 locally through vLLM when the XPU stack is aligned.
 - The hardest problems were not model weights or HTTP serving; they were version/ABI compatibility and native compilation.
 - The difference between total tokens per second and output tokens per second must be explicit. This run reached `110.90 total tok/s` but only `83.17 output tok/s`.
-- The served endpoint later validated a `24576` token context window and warm
-  OpenAI API decode around `83.8 output tok/s`.
+- The served endpoint later validated a `32768` token context window and warm
+  OpenAI API decode around `84.1 output tok/s` after moving display duty to
+  ASPEED VGA and booting with `xe.disable_display=1`.
 - Prompt/prefill was healthy at about `1.7k-1.8k prompt tok/s` for 2k-16k
   prompts, but long-prompt time to first token is still visible.
 - The current host's PCIe4 x16 fabric is a credible reason it trails older
@@ -77,7 +78,7 @@ The first raw145 run took longer because it compiled graphs. Later runs reused c
 - The server successfully listened on `0.0.0.0:8000`.
 - `/v1/models` initially reported `max_model_len: 2048` during the strict
   benchmark lane; the promoted serving wrapper now reports `max_model_len:
-  24576`.
+  32768`.
 - `curl /health` returned `HTTP 200`.
 
 ## Problems Solved
@@ -98,5 +99,6 @@ The first raw145 run took longer because it compiled graphs. Later runs reused c
 - Is the `ocloc` internal compiler error harmless because a fallback path succeeds, or is it masking a missed optimization?
 - Can Intel publish a low-memory/prebuilt `vllm-xpu-kernels` package for B70?
 - Which environment flags should be upstreamed into vLLM proper?
-- Can `25600` or `32768` context be recovered with less memory pressure, or is
-  `24576` the practical stable ceiling for this stack?
+- Can anything above `32768` be made reliable, or is `32768` the practical
+  stable ceiling for this stack? `33792` did not expose `/v1/models` in the wait
+  window and is not promoted.

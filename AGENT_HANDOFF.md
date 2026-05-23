@@ -57,7 +57,7 @@ Current fresh Ubuntu 24 deployment repro:
   fresh Ubuntu 24.04 host with 4x B70s.
 - Model: `/mnt/fast-ai/llm-models/minimax-m2.7-int4-autoround`
 - Endpoint: vLLM OpenAI-compatible server on `0.0.0.0:8000`
-- Served context default: `24576` via `/home/steve/bin/minimax-vllm-serve` and
+- Served context default: `32768` via `/home/steve/bin/minimax-vllm-serve` and
   `repro/minimax-m27-b70-110tps-ubuntu24-20260523/scripts/06-serve-openai-compatible.sh`
 - Context used for the comparable smoke/quality lane: `2048`
 - Quality gate: passed raw token-hash canaries, semantic suite, arithmetic
@@ -67,8 +67,12 @@ Current fresh Ubuntu 24 deployment repro:
   `gpu_memory_utilization=0.95`, vLLM reported `25,344` GPU KV-cache tokens,
   prompt 24,400 / output 64 completed without OOM, and short decode remained
   `83.78-83.79 output tok/s` before/after the long-context request.
-- Failed context checks: `32768` and `25600` failed vLLM KV-cache memory checks;
-  vLLM estimated the practical ceiling around `25,344` tokens.
+- After moving display to ASPEED VGA and booting with `xe.disable_display=1`,
+  `32768` started successfully, vLLM reported `33,792` GPU KV-cache tokens,
+  prompt `32408` / output `64` completed without OOM, and warm short decode was
+  `84.12 output tok/s`. `33792` was tried but did not expose `/v1/models`
+  within the wait window and is not promoted. Detailed note:
+  `notes/2026-05-23-b70-display-disable-32768-context.md`.
 - PCIe/prefill follow-up on 2026-05-23:
   `notes/2026-05-23-current-host-pcie4-prefill-check.md`.
   Current host upstream links are PCIe4 x16 (`16.0 GT/s`, width 16) while the

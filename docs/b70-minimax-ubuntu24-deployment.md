@@ -25,7 +25,7 @@ The endpoint is compatible with common OpenAI-style clients:
 
 The endpoint in this repro uses `--host 0.0.0.0`, so it is accessible on the LAN if the host firewall and network allow it.
 
-The current serving default is a `24576`-token context window, roughly 24k
+The current serving default is a `32768`-token context window, roughly 32k
 tokens. The comparable
 quality/speed gate still uses a `2048`-token context so new runs can be compared
 against the original p512/n1536 benchmark.
@@ -215,14 +215,16 @@ capture, kernel compilation, and cache effects. The old repro saw a first
 post-reboot pass at only `69.33 output tok/s`, then an immediate warm rerun at
 `88.72 output tok/s`. Compare warm runs to warm runs.
 
-The served 24,576-token endpoint was also checked through the OpenAI-compatible
+The served 32,768-token endpoint was also checked through the OpenAI-compatible
 API:
 
-- Short decode, prompt 512 / output 1536: `83.79 output tok/s`.
-- Near-full-context request, prompt 24,400 / output 64: completed without OOM.
-- Short decode after that long-context request: `83.78 output tok/s`.
+- Short decode after warmup, prompt 510 / output 1536: `84.12 output tok/s`.
+- Near-full-context request, prompt 32,408 / output 64: completed without OOM.
 - Prompt/prefill check with `max_tokens=1`: about `1.7k-1.8k prompt tok/s`
   for 2k-16k prompt sizes.
+- `33792` was tried because vLLM reported `33,792` GPU KV-cache tokens at the
+  32k setting, but it did not expose `/v1/models` within the wait window and is
+  not treated as reliable.
 
 This means the larger served context did not reduce the normal short-request
 decode lane after warmup.
@@ -244,7 +246,7 @@ Default bind:
 Default context settings:
 
 ```text
-VLLM_MAX_MODEL_LEN=24576
+VLLM_MAX_MODEL_LEN=32768
 VLLM_GPU_MEMORY_UTILIZATION=0.95
 ```
 
@@ -271,7 +273,7 @@ Expected `/v1/models` includes:
 
 ```json
 {
-  "max_model_len": 24576
+  "max_model_len": 32768
 }
 ```
 
@@ -351,9 +353,12 @@ Try increasing `gpu_memory_utilization` or decreasing `max_model_len`
 
 Observed limits on the originating 4x B70 host:
 
-- `32768` failed; vLLM estimated the maximum around `25600`.
-- `25600` failed by a narrow KV-cache margin; vLLM estimated `25344`.
-- `24576` passed and is the documented default.
+- Before moving display off the B70s, `32768` failed and `24576` was the
+  practical default.
+- `32768` passed and is the documented default after moving display to ASPEED
+  VGA and adding `xe.disable_display=1`.
+- `33792` loaded weights and entered compile/warmup but did not expose
+  `/v1/models` within the wait window. Do not use it as the default.
 
 This is VRAM/KV-cache headroom, not system RAM overflow. vLLM preallocates KV
 cache memory, so `xpu-smi` can show roughly `32651 MiB` used and `100%` memory
@@ -365,8 +370,8 @@ Useful next experiments:
 
 - Recover the earlier 89-94 output-token lane on this more recent package stack.
 - Compare `VLLM_CACHE_ROOT` values and cache warmness; cold compile can distort throughput.
-- Try to recover more context only if memory pressure changes; this repro serves
-  `24576`, while `32768` and `25600` did not fit on the tested stack.
+- Try to recover more context only if memory pressure or compile behavior
+  changes; this repro serves `32768`, while `33792` was not reliable.
 - Investigate why server startup using the older promoted cache root emitted `ocloc` ICEs.
 - Package prebuilt ABI-matched `vllm-xpu-kernels` artifacts to avoid the >120 GB source build on low-RAM users' machines.
 - Convert the local wrapper scripts into one idempotent installer with explicit version locks and artifact caching.

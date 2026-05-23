@@ -1,0 +1,63 @@
+{
+  "date": "2026-05-23",
+  "change": "Moved display duty to ASPEED VGA and booted with xe.disable_display=1, reclaiming enough B70 VRAM to serve 32768 context.",
+  "chosen_max_model_len": 32768,
+  "gpu_memory_utilization": 0.95,
+  "server_wrapper": "/home/steve/bin/minimax-vllm-serve",
+  "repro_serve_script": "repro/minimax-m27-b70-110tps-ubuntu24-20260523/scripts/06-serve-openai-compatible.sh",
+  "boot_cmdline_contains": "xe.disable_display=1",
+  "boot_vga_after_reboot": {
+    "0000:23:00.0": 0,
+    "0000:27:00.0": 0,
+    "0000:43:00.0": 0,
+    "0000:47:00.0": 0,
+    "0000:68:00.0": 1
+  },
+  "idle_b70_vram_mib_after_display_change": {
+    "gpu0": 135,
+    "gpu1": 26,
+    "gpu2": 26,
+    "gpu3": 26
+  },
+  "vllm_startup_32768": {
+    "status": "passed",
+    "reported_max_model_len": 32768,
+    "reported_gpu_kv_cache_tokens": 33792,
+    "reported_max_concurrency": 1.03,
+    "available_kv_cache_memory_gib": 2.02,
+    "log": "/mnt/fast-ai/bench-results/minimax-m27-b70-serve/server-20260523T205755Z-ctx32768.log"
+  },
+  "endpoint_checks_32768": {
+    "short_decode_before_warm": {
+      "prompt_tokens": 510,
+      "completion_tokens": 1536,
+      "elapsed_seconds": 25.219679654999936,
+      "completion_tokens_per_second": 60.904818023550106,
+      "note": "Cold/compile-affected first short decode."
+    },
+    "near_full_context": {
+      "prompt_tokens": 32408,
+      "completion_tokens": 64,
+      "elapsed_seconds": 19.936667878000094,
+      "completion_tokens_per_second": 3.2101653291131633,
+      "conservative_prompt_tokens_per_second": 1625.547468529678,
+      "status": "completed without OOM"
+    },
+    "short_decode_after_warm": {
+      "prompt_tokens": 510,
+      "completion_tokens": 1536,
+      "elapsed_seconds": 18.259091451000018,
+      "completion_tokens_per_second": 84.12247696562558
+    }
+  },
+  "startup_33792": {
+    "status": "not_promoted",
+    "reason": "Loaded weights and entered compile/warmup but did not expose /v1/models within the wait window.",
+    "log": "/mnt/fast-ai/bench-results/minimax-m27-b70-serve/server-20260523T210259Z-ctx33792.log"
+  },
+  "notes": [
+    "The strict benchmark lane remains p512/n1536 at context 2048 for apples-to-apples comparisons.",
+    "The served endpoint defaults to 32768 max_model_len for practical agentic use.",
+    "33792 is close to the reported KV-cache token count but was not reliable as a serving default."
+  ]
+}

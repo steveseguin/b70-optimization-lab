@@ -90,7 +90,7 @@ include compilation, graph capture, cache setup, or model-load effects.
 
 ## Is prompt processing/prefill good?
 
-Yes. On the live 24k-context endpoint, prompt-heavy requests with `max_tokens=1`
+Yes. On the live 32k-context endpoint, prompt-heavy requests with `max_tokens=1`
 measured about `1.7k-1.8k prompt tok/s` for 2k-16k prompts. The tradeoff is
 time to first token: a 16k prompt took about `9 s` before the generated token.
 

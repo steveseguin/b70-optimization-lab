@@ -41,18 +41,21 @@ The current clean "start from Ubuntu 24 and serve on the LAN" baseline is:
 - Model: `Lasimeri/MiniMax-M2.7-int4-AutoRound`
 - Hardware: 4x Intel Arc Pro B70 32GB
 - API: OpenAI-compatible vLLM endpoint on `0.0.0.0:8000`
-- Served context: `24576` tokens by default
+- Served context: `32768` tokens by default
 - Quality: strict token-hash and semantic gates passed
 - Throughput observed on 2026-05-23: `110.90` total tok/s, `83.17` output tok/s for p512/n1536
 - OpenAI endpoint warm check: about `83.8` output tok/s and `1.7k-1.8k`
   prompt/prefill tok/s
 - Original install snapshot commit before this context-window update: `b02ad184553a5ef4e3946a94b8e6124980bc369f`
 
-The served endpoint was also validated at prompt 24,400 / output 64 without OOM,
-and short decode stayed near `83.8` output tok/s afterward. The older strict
+The served endpoint was also validated at prompt 32,408 / output 64 without OOM,
+and warm short decode stayed near `84.1` output tok/s afterward. The older strict
 speed record and newer constrained structured-output lane remain useful
 references, but they were measured on different conditions. The current host's
 PCIe4 fabric measured about half the old large-message allreduce bandwidth,
 which is a plausible reason this fresh deployment lands at `83` output tok/s
 instead of the older `89-93` class. See
 `../notes/2026-05-23-current-host-pcie4-prefill-check.md` for the math.
+
+The 32k context promotion is documented in
+`../notes/2026-05-23-b70-display-disable-32768-context.md`.

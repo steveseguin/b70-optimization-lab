@@ -18,7 +18,7 @@ exec vllm serve "$MODEL" \
   --dtype float16 \
   --tensor-parallel-size 4 \
   --distributed-executor-backend mp \
-  --max-model-len "${VLLM_MAX_MODEL_LEN:-24576}" \
+  --max-model-len "${VLLM_MAX_MODEL_LEN:-32768}" \
   --max-num-batched-tokens 512 \
   --max-num-seqs 1 \
   --gpu-memory-utilization "${VLLM_GPU_MEMORY_UTILIZATION:-0.95}" \

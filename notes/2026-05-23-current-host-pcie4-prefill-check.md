@@ -18,7 +18,7 @@ promoted stack.
 
 ## Benchmark Context
 
-Current endpoint:
+Current endpoint at the time of this check:
 
 - Model: `/mnt/fast-ai/llm-models/minimax-m2.7-int4-autoround`
 - Server: `/home/steve/bin/minimax-vllm-serve`
@@ -174,3 +174,7 @@ that first-run compile/cache behavior can be much lower.
 The server was stopped briefly to run the XCCL microbench, then restarted with
 `/home/steve/bin/minimax-vllm-serve`. After restart, `/v1/models` reported
 `max_model_len=24576`, and a small `/v1/completions` smoke request succeeded.
+
+Follow-up: after moving display to ASPEED VGA and booting with
+`xe.disable_display=1`, the served context was raised to `32768`. See
+`notes/2026-05-23-b70-display-disable-32768-context.md`.

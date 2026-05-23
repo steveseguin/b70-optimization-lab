@@ -5,7 +5,7 @@ This folder documents a fresh Ubuntu 24.04 bring-up performed on 2026-05-23 for:
 - Model: `Lasimeri/MiniMax-M2.7-int4-AutoRound`
 - Hardware: 4x Intel Arc Pro B70 32 GB
 - Serving API: vLLM OpenAI-compatible endpoint
-- Served max context: `24576` tokens by default
+- Served max context: `32768` tokens by default
 - Benchmark/quality context used for the comparable speed gate: `2048`
 - Benchmark shape: prompt 512, output 1536, tensor parallel 4
 - Quality status: strict gates passed
@@ -18,7 +18,7 @@ The run satisfies the user's requested `>90 tok/s` effective total throughput,
 but it is not a new output-token speed record. Earlier repo memory files mention
 an 89-class strict lane and a later 94-class structured lane. This 2026-05-23
 setup is valuable because it is deployable, quality-gated, OpenAI-compatible,
-serves roughly 24k context, and is documented from a mostly fresh machine state.
+serves roughly 32k context, and is documented from a mostly fresh machine state.
 
 ## Plain-English Summary
 
@@ -137,7 +137,7 @@ bash scripts/06-serve-openai-compatible.sh
 The serve script listens on `0.0.0.0:8000` and defaults to:
 
 ```text
-max_model_len=24576
+max_model_len=32768
 gpu_memory_utilization=0.95
 ```
 
@@ -185,8 +185,8 @@ Primary local artifact from the originating machine:
 
 Label the benchmark before comparing numbers:
 
-- Current fresh deployable endpoint: about `83.8 output tok/s` warm through the
-  OpenAI-compatible API, with a `24576` token served context.
+- Current fresh deployable endpoint: about `84.1 output tok/s` warm through the
+  OpenAI-compatible API, with a `32768` token served context.
 - Older strict random decode lane: `89.314 output tok/s` for p512/n1536,
   context 2048.
 - Newer `94` class result: constrained structured-output lane, not the same
@@ -220,33 +220,38 @@ rerun. Compare warm runs to warm runs.
 ## Served Context Window
 
 The endpoint was expanded after the strict speed gate. The practical server
-default is now `24576` tokens, not `2048`.
+default is now `32768` tokens, not `2048`.
 
 Observed on 2026-05-23:
 
-- `32768` failed vLLM's KV-cache memory check; vLLM estimated about `25600`.
-- `25600` also failed by a narrow margin; vLLM estimated `25344`.
-- `24576` started successfully with `gpu_memory_utilization=0.95`.
-- vLLM reported `25,344` GPU KV-cache tokens and `1.03x` maximum concurrency
-  for a 24,576-token request.
+- Before moving display duty off the B70s, `32768` failed vLLM's KV-cache memory
+  check and `24576` was the practical default.
+- After moving display to the onboard ASPEED VGA adapter and adding
+  `xe.disable_display=1`, `32768` started successfully with
+  `gpu_memory_utilization=0.95`.
+- vLLM reported `33,792` GPU KV-cache tokens and `1.03x` maximum concurrency
+  for a 32,768-token request.
 - `xpu-smi` showed about `32651 MiB` used per B70 after startup. This is
   expected because vLLM preallocates KV cache memory.
-- OpenAI endpoint short decode after warmup: `83.79 output tok/s` for
-  prompt 512 / output 1536.
-- Near-full-context API request: `24400` prompt tokens plus `64` generated
+- OpenAI endpoint short decode after warmup: `84.12 output tok/s` for
+  prompt 510 / output 1536.
+- Near-full-context API request: `32408` prompt tokens plus `64` generated
   tokens completed without OOM.
-- Short decode after the near-full-context request stayed at `83.78 output
-  tok/s`.
 - Prompt/prefill checks with `max_tokens=1` measured about `1.7k-1.8k prompt
   tok/s` for 2k-16k prompt sizes. A 16k prompt took about `9 s` before the
   generated token, so long-prompt TTFT is visible even though prefill throughput
   is healthy.
+- `33792` was tested because vLLM reported `33,792` GPU KV-cache tokens at the
+  32k setting, but it did not expose `/v1/models` within the wait window and is
+  not promoted.
 
 Structured result: `results/context-window-20260523.json`
 
 Detailed PCIe/prefill follow-up:
 
 `../../notes/2026-05-23-current-host-pcie4-prefill-check.md`
+
+`../../notes/2026-05-23-b70-display-disable-32768-context.md`
 
 ## Quality Gates That Passed
 
@@ -287,7 +292,7 @@ Expected `/v1/models` field:
 
 ```json
 {
-  "max_model_len": 24576
+  "max_model_len": 32768
 }
 ```
 

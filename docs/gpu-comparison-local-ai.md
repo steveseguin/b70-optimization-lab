@@ -63,7 +63,7 @@ For example, the current fresh MiniMax deployment reports:
 - Shape: p512/n1536, context 2048, batch 1
 - Quality: strict gate passed
 - Result: `110.90` total tok/s, `83.17` output tok/s
-- Served endpoint: `24576` token context, about `83.8` warm output tok/s,
+- Served endpoint: `32768` token context, about `84.1` warm output tok/s,
   about `1.7k-1.8k` prompt/prefill tok/s
 
 That is not directly comparable to single-GPU 7B tests, chat UI subjective speed, MLPerf Client numbers, or synthetic prefill-only numbers.

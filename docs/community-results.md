@@ -142,7 +142,7 @@ Example from the current 4x B70 MiniMax host:
 
 - Decode: about `83.8` warm output tok/s for p512/n1536.
 - Prefill: about `1.7k-1.8k` prompt tok/s for prompt-heavy OpenAI API checks.
-- Context: served at `24576` tokens; prompt 24,400 / output 64 completed.
+- Context: served at `32768` tokens; prompt 32,408 / output 64 completed.
 - Interconnect clue: current PCIe4 x16 allreduce bandwidth measured
   `13.79 GB/s`, while an older faster reference measured `27.88 GB/s`.
 
