@@ -70,6 +70,16 @@ Example public build-photo links from Steve's X feed:
 
 Prefer linking to public posts or images instead of committing large photos to the repo. If a photo is critical to a reproducible build, add a small compressed copy plus a short caption explaining what it proves.
 
+### Example Build Photos
+
+![B70 build photo showing a dense multi-GPU physical setup](assets/build-photos/b70-build-photo-01-source.jpg)
+
+This wide photo is useful as a quick visual reference for the density and physical layout of a multi-B70 build. When publishing similar photos, add notes about motherboard, slot order, power cabling, and airflow direction.
+
+![B70 build photo showing card placement and workstation layout](assets/build-photos/b70-build-photo-02-source.jpg)
+
+This taller build photo is useful for discussing card spacing, blower intake clearance, case/workbench layout, and whether the system is being used as a lab rig or a finished workstation.
+
 ## Common Build Discussion Themes
 
 These came up repeatedly in community discussion and should be captured in future build notes:

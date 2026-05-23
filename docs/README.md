@@ -11,6 +11,12 @@ This docs folder is the human entry point for the B70 optimization work. The exe
 - [Community Results And Build Notes](community-results.md): how to share records, build photos, reproducible logs, and discussion links.
 - [Feedback for Intel](feedback-for-intel.md): short discussion guide plus the detailed Intel feedback note.
 
+## Build Photos
+
+The community build guide includes example B70 photos and explains what details future contributors should capture: card spacing, airflow, power, slot order, risers, cooling, and visible diagnostics.
+
+- [Community build photos and result format](community-results.md#build-photos)
+
 ## Repository Layout
 
 - `docs/`: narrative guides, FAQ, community-facing summaries, comparison notes.
