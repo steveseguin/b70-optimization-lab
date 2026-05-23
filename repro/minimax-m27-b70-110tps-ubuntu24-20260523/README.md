@@ -11,8 +11,14 @@ This folder documents a fresh Ubuntu 24.04 bring-up performed on 2026-05-23 for:
 - Quality status: strict gates passed
 - Mean total/effective throughput: `110.896 tok/s`
 - Mean output-only throughput: `83.172 tok/s`
+- OpenAI endpoint warm decode check: about `83.8 output tok/s`
+- OpenAI endpoint prompt/prefill check: about `1.7k-1.8k prompt tok/s`
 
-The run satisfies the user's requested `>90 tok/s` effective total throughput, but it is not a new output-token speed record. Earlier repo memory files mention an 89-class strict lane and a later 94-class structured lane. This 2026-05-23 setup is valuable because it is deployable, quality-gated, OpenAI-compatible, and documented from a mostly fresh machine state.
+The run satisfies the user's requested `>90 tok/s` effective total throughput,
+but it is not a new output-token speed record. Earlier repo memory files mention
+an 89-class strict lane and a later 94-class structured lane. This 2026-05-23
+setup is valuable because it is deployable, quality-gated, OpenAI-compatible,
+serves roughly 24k context, and is documented from a mostly fresh machine state.
 
 ## Plain-English Summary
 
@@ -175,6 +181,42 @@ Primary local artifact from the originating machine:
 
 `/mnt/fast-ai/bench-results/minimax-m27-b70-89tps/strict/minimax-repro-minimax-moe-full-forward-customop-plus-output-ar-strict-tp4-ctx2048-mbt512-bs256-20260523T145201Z-summary.json`
 
+### How To Compare 83, 89, 93, and 94 tok/s Notes
+
+Label the benchmark before comparing numbers:
+
+- Current fresh deployable endpoint: about `83.8 output tok/s` warm through the
+  OpenAI-compatible API, with a `24576` token served context.
+- Older strict random decode lane: `89.314 output tok/s` for p512/n1536,
+  context 2048.
+- Newer `94` class result: constrained structured-output lane, not the same
+  random p512/n1536 decode test.
+
+The current host likely gives up some generated-token throughput because it is
+running the B70s over PCIe4 x16 instead of the earlier PCIe5-class path:
+
+- Current link state: `16.0 GT/s`, width 16, or PCIe4 x16.
+- B70 advertised max: `32.0 GT/s`, width 16, or PCIe5 x16.
+- PCIe5 x16 has about twice the raw signaling rate of PCIe4 x16.
+- Older 256 MiB XCCL allreduce reference: about `27.88 GB/s`.
+- Current 256 MiB XCCL allreduce: about `13.79 GB/s`.
+- `13.79 / 27.88 = 0.494`, so the measured fabric bandwidth is about half.
+- `83.8 / 89.314 = 0.938`, so the end-to-end decode rate is about 94% of the
+  older strict result.
+
+That lines up in a practical way: a 2x drop in GPU-to-GPU communication
+bandwidth causes a smaller end-to-end decode drop because only part of each
+generated-token step is communication. The rest is local GPU compute, memory
+traffic, vLLM scheduling, and sampling. This is not proof that PCIe explains
+everything; the current vLLM source also differs from the older promoted stack.
+It is, however, a credible non-quality explanation for why this host lands near
+83 instead of the older 89-93 class.
+
+Warm versus cold also matters. Cold runs can include model load, graph capture,
+kernel compilation, and cache creation. The older repro saw `69.33 output tok/s`
+on a first post-reboot pass and `88.72 output tok/s` on the immediate warm
+rerun. Compare warm runs to warm runs.
+
 ## Served Context Window
 
 The endpoint was expanded after the strict speed gate. The practical server
@@ -195,8 +237,16 @@ Observed on 2026-05-23:
   tokens completed without OOM.
 - Short decode after the near-full-context request stayed at `83.78 output
   tok/s`.
+- Prompt/prefill checks with `max_tokens=1` measured about `1.7k-1.8k prompt
+  tok/s` for 2k-16k prompt sizes. A 16k prompt took about `9 s` before the
+  generated token, so long-prompt TTFT is visible even though prefill throughput
+  is healthy.
 
 Structured result: `results/context-window-20260523.json`
+
+Detailed PCIe/prefill follow-up:
+
+`../../notes/2026-05-23-current-host-pcie4-prefill-check.md`
 
 ## Quality Gates That Passed
 

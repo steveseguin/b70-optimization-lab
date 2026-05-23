@@ -5,6 +5,13 @@
 - B70s can serve MiniMax M2.7 INT4 locally through vLLM when the XPU stack is aligned.
 - The hardest problems were not model weights or HTTP serving; they were version/ABI compatibility and native compilation.
 - The difference between total tokens per second and output tokens per second must be explicit. This run reached `110.90 total tok/s` but only `83.17 output tok/s`.
+- The served endpoint later validated a `24576` token context window and warm
+  OpenAI API decode around `83.8 output tok/s`.
+- Prompt/prefill was healthy at about `1.7k-1.8k prompt tok/s` for 2k-16k
+  prompts, but long-prompt time to first token is still visible.
+- The current host's PCIe4 x16 fabric is a credible reason it trails older
+  PCIe5-class `89-93` output-token notes: current 256 MiB XCCL allreduce
+  measured `13.79 GB/s`, while the older reference measured `27.88 GB/s`.
 - Quality gates are mandatory. Multiple optimization paths can produce plausible-looking speed while risking determinism or content quality.
 
 ## MiniMax-Specific Learnings
@@ -68,7 +75,9 @@ The first raw145 run took longer because it compiled graphs. Later runs reused c
 - `vllm serve` in this checkout does not accept `--async-engine`.
 - vLLM still logged `Asynchronous scheduling is enabled`.
 - The server successfully listened on `0.0.0.0:8000`.
-- `/v1/models` reported `max_model_len: 2048`.
+- `/v1/models` initially reported `max_model_len: 2048` during the strict
+  benchmark lane; the promoted serving wrapper now reports `max_model_len:
+  24576`.
 - `curl /health` returned `HTTP 200`.
 
 ## Problems Solved
@@ -84,9 +93,10 @@ The first raw145 run took longer because it compiled graphs. Later runs reused c
 
 ## Open Questions
 
-- Can this same stack recover the earlier 89-94 output-token lane?
+- Can this same stack recover the earlier 89-94 output-token lane on PCIe4, or
+  is most of the gap hardware fabric?
 - Is the `ocloc` internal compiler error harmless because a fallback path succeeds, or is it masking a missed optimization?
 - Can Intel publish a low-memory/prebuilt `vllm-xpu-kernels` package for B70?
 - Which environment flags should be upstreamed into vLLM proper?
-- What is the best supported context length beyond `2048` for this model/config without quality or stability loss?
-
+- Can `25600` or `32768` context be recovered with less memory pressure, or is
+  `24576` the practical stable ceiling for this stack?
