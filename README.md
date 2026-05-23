@@ -1,15 +1,77 @@
-# LLM Optimizations Lab
+# Unofficial Intel XPU Community Lab
 
-Reproducibility notes, benchmark payloads, and local patches from the Intel Arc Pro B70 Qwen3.6 27B optimization work.
+Community setup guides, benchmark recipes, troubleshooting notes, and patches for Intel XPU local AI work.
 
-## Documentation Entry Points
+## Start Here
 
-- Human docs index: `docs/README.md`
-- MiniMax M2.7 INT4 Ubuntu 24 deployment guide: `docs/b70-minimax-ubuntu24-deployment.md`
-- Model recipe index: `docs/model-recipes.md`
-- Community result/build-photo guide: `docs/community-results.md`
-- Intel feedback discussion starter: `docs/feedback-for-intel.md`
-- Detailed Intel feedback note: `docs/intel-b70-minimax-feedback-20260523.md`
+- Ask questions: https://github.com/steveseguin/Unofficial-Intel-XPU-Community/discussions
+- Community wiki: https://github.com/steveseguin/Unofficial-Intel-XPU-Community/wiki
+- Docs index: [docs/README.md](docs/README.md)
+- MiniMax install guide: [docs/b70-minimax-ubuntu24-deployment.md](docs/b70-minimax-ubuntu24-deployment.md)
+- Model recipes: [docs/model-recipes.md](docs/model-recipes.md)
+- FAQ: [docs/faq.md](docs/faq.md)
+
+## What This Is
+
+This repository is meant to become a stable community hub for Intel XPU local AI:
+
+- setup guides for Linux and Windows
+- Docker/container notes people can actually run
+- comparable benchmark templates and results
+- patch notes for vLLM, llama.cpp, OpenVINO, oneAPI, and SYCL
+- troubleshooting for drivers, PCIe topology, XPU visibility, and runtime mismatches
+- research leads and reproducible optimization notes
+
+## Quick Paths
+
+| I want to... | Go here |
+| --- | --- |
+| Ask for setup help | [Discussions](https://github.com/steveseguin/Unofficial-Intel-XPU-Community/discussions) |
+| Read community-maintained notes | [Wiki](https://github.com/steveseguin/Unofficial-Intel-XPU-Community/wiki) |
+| Deploy MiniMax M2.7 INT4 on 4x B70 | [MiniMax Ubuntu 24 guide](docs/b70-minimax-ubuntu24-deployment.md) |
+| Find model-specific recipes | [Model recipes](docs/model-recipes.md) |
+| Share a benchmark | [Community results guide](docs/community-results.md) |
+| Compare GPUs | [GPU comparison](docs/gpu-comparison-local-ai.md) |
+| Send Intel feedback | [Feedback for Intel](docs/feedback-for-intel.md) |
+
+## Current Practical Baseline
+
+The best documented fresh install today is:
+
+- Model: MiniMax M2.7 INT4 AutoRound
+- Hardware: 4x Intel Arc Pro B70 32GB
+- OS: Ubuntu 24.04
+- Server: OpenAI-compatible vLLM on `0.0.0.0:8000`
+- Result: `110.90` total tok/s, `83.17` output tok/s for p512/n1536
+- Recipe: [repro/minimax-m27-b70-110tps-ubuntu24-20260523](repro/minimax-m27-b70-110tps-ubuntu24-20260523/README.md)
+
+This is a deployable baseline, not the final speed ceiling.
+
+## How To Contribute
+
+Open a discussion with:
+
+- your GPU and OS
+- model and quantization
+- exact command or guide followed
+- what worked
+- what failed
+- benchmark shape and tok/s, if benchmarking
+- logs or screenshots if useful
+
+Good categories for discussion:
+
+- setup help
+- benchmarks
+- guides
+- patches
+- research leads
+- build photos
+- driver/runtime bugs
+
+## Deep Lab Notes Below
+
+The rest of this README is dense historical lab context. New users should start with the links above.
 
 ## Current B70 Findings
 
