@@ -6,6 +6,10 @@ This folder tracks the experimental path toward serving MiniMax M2.7 on Intel
 Arc Pro B70 with context beyond the current high-performance `32768` token
 endpoint by spilling KV cache to host RAM.
 
+Execution plan:
+
+`../../plans/2026-05-24-minimax-xpu-kv-offload-plan.md`
+
 The stable production lane remains:
 
 - Model: `Lasimeri/MiniMax-M2.7-int4-AutoRound`
@@ -182,6 +186,26 @@ The CUDA-specific worker code is in:
 6. Measure decode with long prompt plus small output first, then short prompt
    plus long output, then concurrency.
 7. Only after c1 works, test c2/c4.
+
+## Phase 1 Probe Result
+
+Initial PyTorch XPU primitive probe passed on 2026-05-24 while the normal 32K
+server was running:
+
+- `torch.xpu.Stream`: available
+- `torch.xpu.Event`: available
+- pinned CPU tensors: available
+- pinned CPU -> XPU -> pinned CPU round-trip: correct through `64 MiB`
+- event transfer rates at 4-64 MiB: roughly `25-28 GB/s`
+
+Artifacts:
+
+- `probes/xpu_stream_copy_probe.py`
+- `xpu_stream_copy_probe_20260524.json`
+- `notes-20260524-phase1-probe.md`
+
+Decision: proceed to an XPU CPU KV worker prototype rather than another
+launch-flag experiment.
 
 ## TurboQuant Interaction
 
