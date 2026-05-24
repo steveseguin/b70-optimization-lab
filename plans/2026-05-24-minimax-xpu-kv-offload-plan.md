@@ -109,6 +109,11 @@ Pass condition:
 
 Deliverable: design an XPU backend parallel to the CUDA CPU KV worker.
 
+Status: initial KV-shaped block-copy probe passed on 2026-05-24. Contiguous
+logical slice copies are byte-correct and reach about `28 GB/s`; Python row
+loops are correct but slow. See
+`experiments/minimax_xpu_kv_offload/notes-20260524-phase2-block-copy-probe.md`.
+
 Files to study:
 
 - `vllm/v1/kv_offload/cpu/spec.py`

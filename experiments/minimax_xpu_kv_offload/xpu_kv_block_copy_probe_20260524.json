@@ -1,0 +1,81 @@
+{
+  "args": {
+    "block_size_factor": 2,
+    "device_index": 0,
+    "num_cpu_blocks": 1024,
+    "num_gpu_blocks": 2048,
+    "num_tensors": 4,
+    "offset": 1,
+    "output": "experiments/minimax_xpu_kv_offload/xpu_kv_block_copy_probe_20260524.json",
+    "page_size": 16384,
+    "repeats": 4,
+    "transfer_blocks": [
+      64,
+      256,
+      1024
+    ]
+  },
+  "cases": [
+    {
+      "block_size_factor": 2,
+      "cpu_tensors_pinned": true,
+      "event_load_cpu_to_gpu_gbps": 2.287796358336543,
+      "event_load_cpu_to_gpu_ms": 7.333352,
+      "event_store_gpu_to_cpu_gbps": 2.1451617935198715,
+      "event_store_gpu_to_cpu_ms": 7.820956,
+      "num_cpu_blocks": 1024,
+      "num_gpu_blocks": 2048,
+      "num_tensors": 4,
+      "offset": 1,
+      "ok": true,
+      "page_size": 16384,
+      "repeats": 4,
+      "transfer_blocks": 64,
+      "transfer_bytes_one_way": 16777216,
+      "wall_roundtrip_gbps": 2.0950021347387313,
+      "wall_seconds_roundtrip": 0.01601641900197137
+    },
+    {
+      "block_size_factor": 2,
+      "cpu_tensors_pinned": true,
+      "event_load_cpu_to_gpu_gbps": 2.3774265146316056,
+      "event_load_cpu_to_gpu_ms": 28.227524,
+      "event_store_gpu_to_cpu_gbps": 2.0540068165654857,
+      "event_store_gpu_to_cpu_ms": 32.672171999999996,
+      "num_cpu_blocks": 1024,
+      "num_gpu_blocks": 2048,
+      "num_tensors": 4,
+      "offset": 1,
+      "ok": true,
+      "page_size": 16384,
+      "repeats": 4,
+      "transfer_blocks": 256,
+      "transfer_bytes_one_way": 67108864,
+      "wall_roundtrip_gbps": 2.1826245318554234,
+      "wall_seconds_roundtrip": 0.06149373199150432
+    },
+    {
+      "block_size_factor": 2,
+      "cpu_tensors_pinned": true,
+      "event_load_cpu_to_gpu_gbps": 2.351519543241746,
+      "event_load_cpu_to_gpu_ms": 114.15404,
+      "event_store_gpu_to_cpu_gbps": 2.2004480451683466,
+      "event_store_gpu_to_cpu_ms": 121.991272,
+      "num_cpu_blocks": 1024,
+      "num_gpu_blocks": 2048,
+      "num_tensors": 4,
+      "offset": 1,
+      "ok": true,
+      "page_size": 16384,
+      "repeats": 4,
+      "transfer_blocks": 1024,
+      "transfer_bytes_one_way": 268435456,
+      "wall_roundtrip_gbps": 2.2648469383441423,
+      "wall_seconds_roundtrip": 0.23704511899268255
+    }
+  ],
+  "device": "xpu:0",
+  "device_name": "Intel(R) Arc(TM) Pro B70 Graphics",
+  "has_torch_xpu": true,
+  "torch_version": "2.11.0+xpu"
+}

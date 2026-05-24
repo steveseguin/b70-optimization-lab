@@ -207,6 +207,28 @@ Artifacts:
 Decision: proceed to an XPU CPU KV worker prototype rather than another
 launch-flag experiment.
 
+## Phase 2 Block Copy Probe Result
+
+Initial KV-shaped block-copy probe passed on 2026-05-24:
+
+- loop copy mode: correct but slow, about `2.1-2.4 GB/s`
+- indexed scatter mode: not usable because XPU `index_copy_` requires
+  same-device source/destination
+- contiguous logical slice mode: correct and fast, about `28 GB/s` for 64-256
+  MiB one-way timed regions
+
+Artifacts:
+
+- `probes/xpu_kv_block_copy_probe.py`
+- `xpu_kv_block_copy_probe_20260524.json`
+- `xpu_kv_block_copy_probe_20260524-indexed-fail.json`
+- `xpu_kv_block_copy_probe_20260524-slice.json`
+- `notes-20260524-phase2-block-copy-probe.md`
+
+Decision: prototype an XPU CPU KV worker around range coalescing plus fast
+slice copies, with the loop path as a correctness fallback for fragmented
+transfers.
+
 ## TurboQuant Interaction
 
 TurboQuant remains interesting because it reduces KV footprint and therefore

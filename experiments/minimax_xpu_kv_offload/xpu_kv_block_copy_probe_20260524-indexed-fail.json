@@ -1,0 +1,64 @@
+{
+  "args": {
+    "block_size_factor": 2,
+    "device_index": 0,
+    "mode": "indexed",
+    "num_cpu_blocks": 1024,
+    "num_gpu_blocks": 2048,
+    "num_tensors": 4,
+    "offset": 1,
+    "output": "experiments/minimax_xpu_kv_block_copy_probe_20260524-indexed.json",
+    "page_size": 16384,
+    "repeats": 4,
+    "transfer_blocks": [
+      64,
+      256,
+      1024
+    ]
+  },
+  "cases": [
+    {
+      "block_size_factor": 2,
+      "error": "RuntimeError: Expected all tensors to be on the same device, but got source is on xpu:0, different from other tensors on cpu (when checking argument in method wrapper_XPU_index_copy_)",
+      "mode": "indexed",
+      "num_cpu_blocks": 1024,
+      "num_gpu_blocks": 2048,
+      "num_tensors": 4,
+      "offset": 1,
+      "ok": false,
+      "page_size": 16384,
+      "repeats": 4,
+      "transfer_blocks": 64
+    },
+    {
+      "block_size_factor": 2,
+      "error": "RuntimeError: Expected all tensors to be on the same device, but got source is on xpu:0, different from other tensors on cpu (when checking argument in method wrapper_XPU_index_copy_)",
+      "mode": "indexed",
+      "num_cpu_blocks": 1024,
+      "num_gpu_blocks": 2048,
+      "num_tensors": 4,
+      "offset": 1,
+      "ok": false,
+      "page_size": 16384,
+      "repeats": 4,
+      "transfer_blocks": 256
+    },
+    {
+      "block_size_factor": 2,
+      "error": "RuntimeError: Expected all tensors to be on the same device, but got source is on xpu:0, different from other tensors on cpu (when checking argument in method wrapper_XPU_index_copy_)",
+      "mode": "indexed",
+      "num_cpu_blocks": 1024,
+      "num_gpu_blocks": 2048,
+      "num_tensors": 4,
+      "offset": 1,
+      "ok": false,
+      "page_size": 16384,
+      "repeats": 4,
+      "transfer_blocks": 1024
+    }
+  ],
+  "device": "xpu:0",
+  "device_name": "Intel(R) Arc(TM) Pro B70 Graphics",
+  "has_torch_xpu": true,
+  "torch_version": "2.11.0+xpu"
+}
