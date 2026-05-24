@@ -72,7 +72,8 @@ Current fresh Ubuntu 24 deployment repro:
   prompt `32408` / output `64` completed without OOM, and warm short decode was
   `84.12 output tok/s`. `33792` was tried but did not expose `/v1/models`
   within the wait window and is not promoted. Detailed note:
-  `notes/2026-05-23-b70-display-disable-32768-context.md`.
+  `notes/2026-05-23-b70-display-disable-32768-context.md`. LocalMaxxing:
+  `cmpj1fmvv001hqr01oj4hiu3d` (`APPROVED`).
 - PCIe/prefill follow-up on 2026-05-23:
   `notes/2026-05-23-current-host-pcie4-prefill-check.md`.
   Current host upstream links are PCIe4 x16 (`16.0 GT/s`, width 16) while the

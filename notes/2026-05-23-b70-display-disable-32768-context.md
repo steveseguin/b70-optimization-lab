@@ -14,6 +14,8 @@ Decision:
 - Keep the strict benchmark lane at p512/n1536, context `2048`, for
   apples-to-apples speed comparison.
 - Treat `33792` as not reliable for serving on this stack.
+- LocalMaxxing submission for the 32k served endpoint: `cmpj1fmvv001hqr01oj4hiu3d`
+  (`APPROVED`).
 
 ## Display / VRAM Change
 
@@ -83,6 +85,11 @@ Endpoint checks:
 | Near-full request, prompt `32408`, output `64` | completed without OOM |
 | Near-full request conservative prompt rate | `1625.5 prompt tok/s` |
 | Short decode after near-full request, p510/n1536 | `84.12 output tok/s` |
+
+LocalMaxxing payload/response:
+
+- `data/localmaxxing-minimax-m27-autoround-openai-32k-context-20260523.payload.json`
+- `data/localmaxxing-responses/minimax-m27-autoround-openai-32k-context-20260523.response.json`
 
 Interpretation:
 
