@@ -197,6 +197,13 @@ Best next work:
 
 - Expand validated practical tasks while keeping the 90+ tok/s lane.
 - Build reliable prefill/context measurements without lowering decode quality.
+- Long-context/concurrency RAM-overflow work is now tracked as a separate
+  research lane in `experiments/minimax_xpu_kv_offload/`. Keep the stable 32K
+  endpoint as the fallback. On 2026-05-24, `--kv-offloading-size 64` plus a
+  temporary admission-check patch got past the GPU-only KV capacity check for
+  `196608`/c4, but vLLM then failed with `CPU Offloading is currently only
+  supported on CUDA-alike GPUs`. The next real task is an XPU port of the CPU
+  KV offload worker, not another launch-flag change.
 - Next context/speed options are captured in
   `notes/2026-05-23-minimax-context-speed-next-options.md`. Best first
   candidate is FP8 KV cache (`--kv-cache-dtype fp8`, optionally

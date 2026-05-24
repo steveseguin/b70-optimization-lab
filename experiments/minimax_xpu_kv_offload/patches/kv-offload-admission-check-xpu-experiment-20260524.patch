@@ -1,0 +1,30 @@
+diff --git a/vllm/v1/core/kv_cache_utils.py b/vllm/v1/core/kv_cache_utils.py
+--- a/vllm/v1/core/kv_cache_utils.py
++++ b/vllm/v1/core/kv_cache_utils.py
+@@
+-    # Check if the available memory is enough per worker.
++    # Experimental XPU CPU-KV-offload admission path:
++    # kv_offloading_size is configured as a total host-side KV budget across
++    # KV ranks, but this preflight check historically only considered GPU KV
++    # bytes. Include the per-worker CPU budget so long-context experiments can
++    # reach the offload runtime instead of failing before connector setup.
++    if vllm_config.cache_config.kv_offloading_size is not None:
++        num_kv_workers = max(1, len(available_memory))
++        cpu_kv_bytes_per_worker = int(
++            vllm_config.cache_config.kv_offloading_size
++            * (1 << 30)
++            / num_kv_workers
++        )
++        logger.warning(
++            "Experimental KV-offload admission: adding %s GiB CPU KV budget "
++            "per worker to GPU KV preflight capacity.",
++            format_gib(cpu_kv_bytes_per_worker),
++        )
++        available_memory = [
++            avail_mem + cpu_kv_bytes_per_worker for avail_mem in available_memory
++        ]
++
++    # Check if the available memory is enough per worker.
+     for groups, avail_mem in zip(projected_groups_per_worker, available_memory):
+         if not groups:
+             continue
