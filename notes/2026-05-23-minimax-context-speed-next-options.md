@@ -69,7 +69,7 @@ Decision bar:
 
 ### 2. TurboQuant KV cache
 
-Priority: medium, experimental.
+Priority: low/blocked for the current B70 serving stack, experimental only.
 
 This build exposes:
 
@@ -105,6 +105,29 @@ Decision bar:
 - Do not promote a TurboQuant mode unless it passes exact and semantic quality,
   has no NUL/control-token regressions, and either enables much more context or
   improves real long-context throughput.
+
+2026-05-23 `turboquant_k8v4` probe:
+
+- Command shape: current 32K OpenAI-compatible server recipe plus
+  `--kv-cache-dtype turboquant_k8v4`.
+- Result: loaded the model and selected the TurboQuant attention backend on XPU.
+- Capacity: vLLM reported `60,416` GPU KV-cache tokens and `1.84x` max
+  concurrency at `32768`, versus the baseline `33,792` tokens and `1.03x`.
+- Failure: the first `/v1/completions` request returned HTTP 500.
+- Primary runtime error:
+  `Workspace is locked but allocation from 'turboquant_attn.py:851:_decode_attention' requires 0.19 MB, current size is 0.00 MB. Workspace growth is not allowed after locking.`
+- Compile warning/error during startup: repeated Intel `ocloc` internal compiler
+  errors for `triton_red_fused__to_copy_mm_t_9`
+  (`IGC: Internal Compiler Error: Floating point exception`), although the
+  server still reached readiness.
+- Decision: do not use TurboQuant in the production recipe yet. It is promising
+  for capacity, but currently blocked by an XPU/TurboQuant workspace setup bug
+  before quality can even be evaluated.
+
+Operational note: passing extra CLI args through the serve wrapper exposed a
+small shell bug because oneAPI sourcing can alter positional parameters. The
+wrapper now snapshots `"$@"` before sourcing oneAPI so experimental flags such
+as `--kv-cache-dtype ...` can be passed safely.
 
 ## Most Promising Speed Options
 

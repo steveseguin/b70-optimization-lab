@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+extra_args=("$@")
 THIS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 source "$THIS_DIR/configs/runtime-env.sh"
 source "$VENV/bin/activate"
@@ -25,4 +26,4 @@ exec vllm serve "$MODEL" \
   --block-size 256 \
   --no-enable-prefix-caching \
   --compilation-config '{"use_inductor_graph_partition":true,"compile_sizes":[1],"cudagraph_mode":"PIECEWISE"}' \
-  "$@"
+  "${extra_args[@]}"
