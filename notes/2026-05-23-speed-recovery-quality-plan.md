@@ -84,3 +84,9 @@ Live 32K endpoint, p510/n1536, one warmup request excluded:
 The prefill value is deliberately labeled as a lower-bound because the endpoint
 does not expose a separate prefill-complete timestamp. It is computed as prompt
 tokens divided by TTFT, so it includes queue/scheduler and first-token overhead.
+
+Prepared LocalMaxxing payload:
+
+`data/localmaxxing-minimax-m27-autoround-openai-32k-endpoint-metrics-20260524.payload.json`
+
+Submission attempts returned HTTP 502, so this follow-up is not yet submitted.

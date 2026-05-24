@@ -214,7 +214,9 @@ Best next work:
   `data/minimax-m27-openai-endpoint-metrics-32k-20260524.json`; measured
   `85.453` output tok/s after first streamed chunk, `111.635` total tok/s,
   `351.068 ms` vLLM TTFT, and `1445.634 tok/s` conservative prefill
-  lower-bound.
+  lower-bound. A LocalMaxxing payload with TTFT was prepared at
+  `data/localmaxxing-minimax-m27-autoround-openai-32k-endpoint-metrics-20260524.payload.json`,
+  but POST attempts returned HTTP 502; retry later.
 - TurboQuant repro script:
   `scripts/repro-minimax-turboquant-xpu-workspace-bug.sh`. Current
   `turboquant_k8v4` result reaches readiness and reports `60,416` KV tokens at
