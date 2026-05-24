@@ -197,6 +197,15 @@ Best next work:
 
 - Expand validated practical tasks while keeping the 90+ tok/s lane.
 - Build reliable prefill/context measurements without lowering decode quality.
+- Next context/speed options are captured in
+  `notes/2026-05-23-minimax-context-speed-next-options.md`. Best first
+  candidate is FP8 KV cache (`--kv-cache-dtype fp8`, optionally
+  `--calculate-kv-scales`) at 32K, then 49K/65K only if exact and semantic
+  quality gates pass. TurboQuant is now exposed in this vLLM build, including
+  XPU routing, but should be treated as experimental; upstream guidance favors
+  FP8 KV as the default and `turboquant_4bit_nc` only for memory pressure.
+  N-gram speculation remains low priority for MiniMax because the local
+  historical result was strongly negative, though it helped Qwen FP8.
 - Debug c2/concurrency failures with small two-request repros.
 - Continue lower-level fusion only where math is exactly preserved:
   Q/K variance allreduce plus RMS apply, hidden allreduce plus residual/RMSNorm,
