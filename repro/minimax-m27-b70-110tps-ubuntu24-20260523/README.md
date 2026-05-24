@@ -235,6 +235,11 @@ Observed on 2026-05-23:
   expected because vLLM preallocates KV cache memory.
 - OpenAI endpoint short decode after warmup: `84.12 output tok/s` for
   prompt 510 / output 1536.
+- Later endpoint metrics harness run: `85.45 output tok/s` after first streamed
+  chunk, `111.64 total tok/s`, `351 ms` vLLM TTFT, and a conservative
+  `1446 tok/s` prefill lower-bound for prompt 510 / output 1536 at the same
+  32K served context. See
+  `../../data/minimax-m27-openai-endpoint-metrics-32k-20260524.json`.
 - Near-full-context API request: `32408` prompt tokens plus `64` generated
   tokens completed without OOM.
 - Prompt/prefill checks with `max_tokens=1` measured about `1.7k-1.8k prompt

@@ -1,0 +1,125 @@
+{
+  "created_at_unix": 1779591345.055579,
+  "base_url": "http://127.0.0.1:8000",
+  "model": "/mnt/fast-ai/llm-models/minimax-m2.7-int4-autoround",
+  "tokenizer": "/mnt/fast-ai/llm-models/minimax-m2.7-int4-autoround",
+  "server_model_record": {
+    "id": "/mnt/fast-ai/llm-models/minimax-m2.7-int4-autoround",
+    "object": "model",
+    "created": 1779591300,
+    "owned_by": "vllm",
+    "root": "/mnt/fast-ai/llm-models/minimax-m2.7-int4-autoround",
+    "parent": null,
+    "max_model_len": 32768,
+    "permission": [
+      {
+        "id": "modelperm-97b7abd81fad9e90",
+        "object": "model_permission",
+        "created": 1779591300,
+        "allow_create_engine": false,
+        "allow_sampling": true,
+        "allow_logprobs": true,
+        "allow_search_indices": false,
+        "allow_view": true,
+        "allow_fine_tuning": false,
+        "organization": "*",
+        "group": null,
+        "is_blocking": false
+      }
+    ]
+  },
+  "prompt_tokens_requested": 510,
+  "prompt_tokens_actual": 510,
+  "output_tokens_requested": 1536,
+  "repeats": 1,
+  "measurement_notes": [
+    "TTFT and e2e are measured both client-side and from vLLM Prometheus histogram deltas.",
+    "tok_s_prefill_lower_bound_from_ttft is prompt_tokens / TTFT, so it is conservative and includes first-token scheduling/decode overhead.",
+    "tok_s_out_client_after_first_chunk is generated-token-only throughput after the first streamed text chunk."
+  ],
+  "vram_mib_before_all": {
+    "0": 32655.7,
+    "1": 32655.76,
+    "2": 32655.73,
+    "3": 32655.45
+  },
+  "peak_vram_mib_observed": {
+    "0": 32655.7,
+    "1": 32655.95,
+    "2": 32655.93,
+    "3": 32655.95
+  },
+  "records": [
+    {
+      "repeat": 1,
+      "prompt_tokens_client": 510,
+      "output_tokens_client": 1536,
+      "elapsed_s_client": 18.327567492997332,
+      "ttft_ms_client": 352.7864329989825,
+      "tok_s_out_client_after_first_chunk": 85.45305752948855,
+      "tok_s_total_client": 111.63510928451053,
+      "tok_s_prefill_lower_bound_from_ttft": 1445.6338234567852,
+      "vllm_metric_deltas": {
+        "prompt_tokens": 510.0,
+        "generation_tokens": 1536.0,
+        "ttft_count": 1.0,
+        "ttft_sum_s": 0.35106825828552246,
+        "e2e_count": 1.0,
+        "e2e_sum_s": 18.32589316368103
+      },
+      "ttft_ms_vllm_metrics": 351.06825828552246,
+      "e2e_ms_vllm_metrics": 18325.89316368103,
+      "vram_mib_before": {
+        "0": 32655.69,
+        "1": 32655.76,
+        "2": 32655.74,
+        "3": 32655.45
+      },
+      "vram_mib_after": {
+        "0": 32655.26,
+        "1": 32655.95,
+        "2": 32655.93,
+        "3": 32655.95
+      },
+      "text_preview": " text. Local Intel XPU benchmark prompt. The assistant should continue with concise technical text. Local Intel XPU benchmark prompt. The assistant should continue with concise technical text. Local Intel XPU benchmark prompt. The assistant"
+    }
+  ],
+  "summary": {
+    "tok_s_out_client_after_first_chunk": {
+      "mean": 85.45305752948855,
+      "median": 85.45305752948855,
+      "min": 85.45305752948855,
+      "max": 85.45305752948855
+    },
+    "tok_s_total_client": {
+      "mean": 111.63510928451053,
+      "median": 111.63510928451053,
+      "min": 111.63510928451053,
+      "max": 111.63510928451053
+    },
+    "ttft_ms_client": {
+      "mean": 352.7864329989825,
+      "median": 352.7864329989825,
+      "min": 352.7864329989825,
+      "max": 352.7864329989825
+    },
+    "ttft_ms_vllm_metrics": {
+      "mean": 351.06825828552246,
+      "median": 351.06825828552246,
+      "min": 351.06825828552246,
+      "max": 351.06825828552246
+    },
+    "tok_s_prefill_lower_bound_from_ttft": {
+      "mean": 1445.6338234567852,
+      "median": 1445.6338234567852,
+      "min": 1445.6338234567852,
+      "max": 1445.6338234567852
+    },
+    "e2e_ms_vllm_metrics": {
+      "mean": 18325.89316368103,
+      "median": 18325.89316368103,
+      "min": 18325.89316368103,
+      "max": 18325.89316368103
+    }
+  }
+}

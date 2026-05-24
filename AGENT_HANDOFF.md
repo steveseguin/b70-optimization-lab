@@ -206,6 +206,23 @@ Best next work:
   FP8 KV as the default and `turboquant_4bit_nc` only for memory pressure.
   N-gram speculation remains low priority for MiniMax because the local
   historical result was strongly negative, though it helped Qwen FP8.
+- Endpoint-facing measurement script:
+  `scripts/measure-openai-endpoint-metrics.py`. It uses `/v1/completions`
+  streaming plus vLLM `/metrics` deltas to capture TTFT, e2e, output tok/s,
+  total tok/s, VRAM snapshots, and a conservative prefill lower-bound without
+  changing server settings. First p510/n1536 32K endpoint artifact:
+  `data/minimax-m27-openai-endpoint-metrics-32k-20260524.json`; measured
+  `85.453` output tok/s after first streamed chunk, `111.635` total tok/s,
+  `351.068 ms` vLLM TTFT, and `1445.634 tok/s` conservative prefill
+  lower-bound.
+- TurboQuant repro script:
+  `scripts/repro-minimax-turboquant-xpu-workspace-bug.sh`. Current
+  `turboquant_k8v4` result reaches readiness and reports `60,416` KV tokens at
+  32K, but first completion fails with a TurboQuant workspace-lock assertion.
+- Speed recovery policy:
+  `notes/2026-05-23-speed-recovery-quality-plan.md`. Do not promote 90+ tok/s
+  graph/runtime paths unless exact-token, semantic, arithmetic, and practical
+  quality gates pass.
 - Debug c2/concurrency failures with small two-request repros.
 - Continue lower-level fusion only where math is exactly preserved:
   Q/K variance allreduce plus RMS apply, hidden allreduce plus residual/RMSNorm,
