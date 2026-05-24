@@ -11,6 +11,8 @@ This folder records the reproducible path for the current quality-clean 4x B70 M
 
 The result did not use speculative decoding, expert dropping, a smaller model, a different quantization, or GPU power-limit changes. Quality was gated with exact token hashes and semantic canaries before the promoted benchmark was submitted to LocalMaxxing.
 
+This is the older speed-focused 2K-context repro. For the newer OpenAI-compatible server recipe that defaults to a `32768` token context window, see `../minimax-m27-b70-110tps-ubuntu24-20260523/README.md`.
+
 ## Important Caveats
 
 The first run after a rebuild or cold compile can be misleading. On this machine, the first post-reboot pass produced only `69.33 output tok/s` because it performed fresh compilation and left only `0.57 GiB` KV cache. The immediate warm rerun hit `88.72 output tok/s` with the same command. Treat the warm run, or the strict-gated repeat average, as the comparable number.
