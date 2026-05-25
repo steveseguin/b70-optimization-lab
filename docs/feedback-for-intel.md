@@ -28,6 +28,9 @@ That is reasonable for a lab. It is not reasonable for a broad community install
 5. Fix or make actionable the `ocloc`/IGC internal compiler error seen during Triton/Inductor compilation.
 6. Upstream or register Intel/XPU/MiniMax vLLM environment flags so logs do not call important flags "unknown."
 7. Ship small deterministic quality canaries for XPU examples so optimization work does not silently corrupt output.
+8. Make CPU KV offload and paged attention XPU-aware, not CUDA-only.
+9. Fix TurboQuant/XPU workspace allocation failures and document supported compressed-KV quality tradeoffs.
+10. Investigate Level Zero `UR_RESULT_ERROR_DEVICE_LOST` during high-pressure vLLM session-cache reloads.
 
 ## Community Angle
 
@@ -54,6 +57,8 @@ Useful public examples would include:
 - an OpenAI-compatible serving example
 - a concurrency example
 - a quality-validation example
+- a long-context example that clearly distinguishes "parked sessions in RAM"
+  from one large active-context request
 
 The community conversation is not only "what is the top tok/s?" It is also:
 

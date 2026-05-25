@@ -108,6 +108,99 @@ Requests:
 - Publish expected token hashes for known model/config pairs.
 - Include "speed is invalid unless quality passed" guidance in optimization docs.
 
+### 7. CPU KV offload is CUDA-shaped and needs an XPU path
+
+The native vLLM CPU KV offload path rejected XPU before a local prototype was
+added:
+
+```text
+CPU Offloading is currently only supported on CUDA-alike GPUs
+```
+
+A local XPU worker prototype showed that pinned host RAM, XPU streams/events,
+and multi-GB KV movement can work on this stack. It moved CPU-to-GPU KV around
+`14-16 GB/s` in session-cache tests. The remaining limitation is that XPU
+FlashAttention still needs the active request's working KV blocks resident in
+live GPU KV memory.
+
+Requests:
+
+- Provide an official XPU CPU KV offload worker.
+- Document whether pinned host memory should use PyTorch XPU, SYCL USM, or
+  Level Zero allocation APIs.
+- Add XPU test coverage for prefix cache reloads and long-context attention.
+- Make it clear in docs whether CPU KV offload means "session parking" or true
+  active-context overflow.
+
+### 8. Session-cache reload can hit Level Zero device loss
+
+In c4 session-cache service testing, vLLM started with `34304` GPU KV tokens and
+`8.0 GiB` CPU KV budget per tensor-parallel worker. A later operational smoke
+hit a Level Zero device-lost error while copying vLLM block-table state back to
+GPU:
+
+```text
+RuntimeError: level_zero backend failed with error: 20 (UR_RESULT_ERROR_DEVICE_LOST)
+```
+
+The stack was:
+
+```text
+gpu_model_runner.py:_prepare_inputs
+block_table.py:commit_block_table
+vllm/v1/utils.py:copy_to_gpu
+```
+
+Requests:
+
+- Investigate device-loss behavior during non-blocking CPU-to-XPU metadata and
+  KV reload copies under high scheduler pressure.
+- Add recovery diagnostics that identify the specific XPU device, queue, and
+  copy size involved.
+- Provide guidance for safe `max_num_seqs`, KV offload size, and batched-token
+  settings on B70.
+
+### 9. TurboQuant on XPU needs workspace and quality guidance
+
+TurboQuant is promising for KV capacity, but the first B70/XPU run failed with
+a locked-workspace allocation error:
+
+```text
+Workspace is locked but allocation from turboquant_attn.py:_decode_attention
+requires 0.19 MB, current size is 0.00 MB.
+```
+
+A local fallback patch allowed forward progress by allocating temporary buffers
+when the shared workspace was locked. After that, `turboquant_k8v4` could start
+at 32K and report about `80128` GPU KV tokens, but sustained decode was much
+slower than the normal FP16-family KV lane.
+
+Requests:
+
+- Pre-size or grow TurboQuant workspaces correctly before they are locked.
+- Provide XPU-specific TurboQuant examples and known-good settings.
+- Publish quality guidance for FP8 KV versus TurboQuant modes on long-context
+  reasoning and retrieval tasks.
+- Make the failure mode actionable instead of a generic HTTP 500 from the
+  OpenAI API path.
+
+### 10. Long-context logprobs exposed NaN JSON serialization
+
+Small OpenAI-compatible logprob requests worked, but long-context logprob
+checks failed because NaN values escaped into JSON:
+
+```text
+Out of range float values are not JSON compliant: nan
+```
+
+Requests:
+
+- Prevent NaN logprobs from escaping through the OpenAI JSON response path.
+- Include the token index, model layer/backend context, and sampled logits
+  shape when this happens.
+- Provide a deterministic long-context token/logprob canary for XPU serving
+  examples.
+
 ## Suggestions For A Streamlined Intel-Supported Path
 
 An ideal user path would be:
@@ -145,6 +238,14 @@ It should also explain how much disk, RAM, and swap are needed.
   - command shape: `ocloc compile -spirv_input -device bmg`.
 - Excessive memory use compiling `paged_decode_xe2.cpp`.
 - Ambiguous/nonfatal `ocloc` failures during server warmup.
+- CPU KV offload rejects XPU as non-CUDA-alike even though XPU streams/events
+  and pinned host transfers are available.
+- c4 session-cache reload can hit Level Zero `UR_RESULT_ERROR_DEVICE_LOST` in
+  vLLM block-table `copy_to_gpu`.
+- TurboQuant/XPU can hit locked-workspace allocation failures in
+  `turboquant_attn.py`.
+- Long-context OpenAI logprob responses can contain NaN values that break JSON
+  serialization.
 
 ## What To Preserve For Repro Reports
 
@@ -160,4 +261,3 @@ When reporting issues, capture:
 - full `ocloc` command and SPIR-V file if available
 - vLLM compile cache path
 - exact model path and benchmark shape
-
