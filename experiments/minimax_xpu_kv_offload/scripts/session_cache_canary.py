@@ -30,6 +30,7 @@ STRICT_WORDS = {
     "G": "orange",
     "H": "white",
 }
+STRICT_WORD_PROMPT_VERSION = "strict-word-answer-space-v2"
 
 
 def fetch_model(base_url: str) -> str:
@@ -76,7 +77,7 @@ def build_strict_word_prompt(label: str, lines: int) -> tuple[str, str]:
         "ANSWER: green\n\n"
         f"Final target\n"
         f"TARGET_WORD: {expected}\n"
-        "ANSWER:"
+        "ANSWER: "
     )
     return prompt, expected
 
@@ -215,6 +216,11 @@ def run_one(
             "label": label,
             "prompt_sha256": hashlib.sha256(prompt.encode("utf-8")).hexdigest(),
             "prompt_mode": prompt_mode,
+            "prompt_version": (
+                STRICT_WORD_PROMPT_VERSION
+                if prompt_mode == "strict-word"
+                else "checklist-v1"
+            ),
             "prompt_lines": lines,
             "max_tokens": max_tokens,
             "temperature": temperature,
@@ -311,6 +317,11 @@ def main() -> int:
         "base_url": args.base_url,
         "model": model,
         "prompt_mode": args.prompt_mode,
+        "prompt_version": (
+            STRICT_WORD_PROMPT_VERSION
+            if args.prompt_mode == "strict-word"
+            else "checklist-v1"
+        ),
         "prompt_lines": args.prompt_lines,
         "max_tokens": args.max_tokens,
         "passes": args.passes,

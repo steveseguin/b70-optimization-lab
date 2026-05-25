@@ -372,6 +372,24 @@ Detailed note:
 
 `notes-20260525-phase6-session-cache-canaries.md`
 
+C2 capacity ladder follow-up:
+
+- Tightened the strict-word prompt to `strict-word-answer-space-v2`.
+- Tested two-session c2 reload at about `8K`, `16K`, `21K`, `30K`, and
+  `32.5K` prompt tokens per session.
+- Combined prompt pressure reached `64948` tokens against a `34304` GPU KV
+  budget.
+- All ladder shapes matched the GPU-only baseline by expected first word.
+- A fresh cold near-max c2 run with two `32474`-token prompts had first-pass
+  TTFT of `24.758-48.363 s`, then second-pass reload TTFT of `0.668-1.232 s`.
+- CPU-to-GPU KV reload bandwidth measured about `14-15 GB/s`.
+- vLLM reports `4.0 GiB` CPU KV budget per worker for `--kv-offloading-size 16`,
+  about `16 GiB` total across four tensor-parallel workers.
+
+Detailed note:
+
+`notes-20260525-c2-session-cache-ladder.md`
+
 Additional deployment observation: after the B70s were no longer used for the
 Ubuntu display, experimental c2/c4 launches could report `34304` GPU KV tokens
 instead of the earlier `26112` c2 result. Display ownership and compile/cache
@@ -409,6 +427,8 @@ Relevant repro:
 - Why does c4 occasionally add one extra continuation token under strict-word
   concurrent reload, and is that normal XPU/MoE nondeterminism or a
   cache-specific issue?
+- Can a logprob/token-id canary prove c2 exactness more cleanly than text hashes
+  when generated continuation text varies?
 
 ## Stable Restore Command
 

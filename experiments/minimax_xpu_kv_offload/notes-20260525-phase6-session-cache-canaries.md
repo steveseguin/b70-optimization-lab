@@ -163,6 +163,11 @@ experiments/minimax_xpu_kv_offload/scripts/session_cache_canary.py \
   --output-json /mnt/fast-ai/bench-results/minimax-m27-b70-serve/strict-word-c2-kvoffload16-20260525T022259Z.json
 ```
 
+Prompt-version caveat: these first strict-word files were produced before the
+later `strict-word-answer-space-v2` prompt tweak used by the c2 capacity ladder.
+Use the saved JSON files as the record for these exact runs. Use
+`notes-20260525-c2-session-cache-ladder.md` for the newer ladder shape.
+
 This mode fills a long context, then asks the model to copy one target word. The
 checked target words are:
 

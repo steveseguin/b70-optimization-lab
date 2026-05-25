@@ -307,6 +307,15 @@ Status on 2026-05-25:
 - Exact c4 text hashes are not stable enough yet for production quality claims.
   See
   `experiments/minimax_xpu_kv_offload/notes-20260525-phase6-session-cache-canaries.md`.
+- c2 capacity ladder passed first-word correctness at about `8K`, `16K`, `21K`,
+  `30K`, and `32.5K` prompt tokens per session with two concurrent sessions.
+- The largest c2 ladder shape used two `32474`-token prompts, `64948` combined
+  prompt tokens against a `34304` GPU KV budget.
+- A fresh cold near-max c2 run had first-pass TTFT of `24.758-48.363 s` and
+  second-pass reload TTFT of `0.668-1.232 s`.
+- CPU-to-GPU reload bandwidth measured about `14-15 GB/s`.
+- Detailed c2 ladder note:
+  `experiments/minimax_xpu_kv_offload/notes-20260525-c2-session-cache-ladder.md`.
 
 Order:
 
@@ -328,9 +337,10 @@ Pass condition:
 - Clear expected-use recommendation, even if throughput is low.
 
 Current recommendation: c1 `32768` remains the production endpoint. c2
-session-cache behavior is the strongest experimental lane because the
-strict-word canary matched exact hashes. c4 mechanically works and is fast on
-reload, but it needs a tighter token-level or semantic quality gate before use.
+session-cache behavior is the strongest experimental lane: it now reloads two
+near-32K sessions with matching first-word canaries and about `0.7-1.3 s`
+near-max reload TTFT. c4 mechanically works and is fast on reload, but it needs
+a tighter token-level or semantic quality gate before use.
 
 ## Phase 7: TurboQuant And Compressed KV
 
