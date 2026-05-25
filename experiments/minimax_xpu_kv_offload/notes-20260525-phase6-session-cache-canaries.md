@@ -22,6 +22,7 @@ streaming enabled and records:
 - time to first streamed text
 - output tok/s after first text
 - output text hash
+- optional strict-word expected/observed first-word checks
 - optional comparisons against a saved baseline JSON
 
 Example:
@@ -145,6 +146,177 @@ Interpretation: one-token checks are a more useful low-level canary than long
 free-form completions under concurrent XPU/MoE scheduling, but the quality gate
 still needs a better constrained deterministic harness.
 
+## Strict-Word Follow-Up
+
+The canary script now has a constrained prompt mode:
+
+```bash
+experiments/minimax_xpu_kv_offload/scripts/session_cache_canary.py \
+  --prompt-mode strict-word \
+  --prompt-lines 700 \
+  --max-tokens 2 \
+  --stop-newline \
+  --passes 2 \
+  --concurrency 2 \
+  --labels A,B \
+  --baseline-json /mnt/fast-ai/bench-results/minimax-m27-b70-serve/strict-word-c1-gpu-baseline-20260525T020926Z.json \
+  --output-json /mnt/fast-ai/bench-results/minimax-m27-b70-serve/strict-word-c2-kvoffload16-20260525T022259Z.json
+```
+
+This mode fills a long context, then asks the model to copy one target word. The
+checked target words are:
+
+| Label | Expected word |
+| --- | --- |
+| A | `red` |
+| B | `blue` |
+| C | `green` |
+| D | `yellow` |
+
+GPU-only baseline:
+
+`/mnt/fast-ai/bench-results/minimax-m27-b70-serve/strict-word-c1-gpu-baseline-20260525T020926Z.json`
+
+Shape:
+
+- labels: A, B, C, D
+- prompt lines per label: `700`
+- prompt tokens per label: `21073`
+- max output tokens per label: `2`
+- passes: `2`
+- concurrency: `1`
+
+Result: all labels produced the expected word, exact output hashes were stable
+across passes, and the same hashes became the comparison baseline.
+
+c1 with CPU KV offload enabled:
+
+`/mnt/fast-ai/bench-results/minimax-m27-b70-serve/strict-word-c1-kvoffload16-20260525T021800Z.json`
+
+Server:
+
+```bash
+VLLM_MAX_MODEL_LEN=32768 /home/steve/bin/minimax-vllm-serve \
+  --kv-offloading-size 16 \
+  --no-scheduler-reserve-full-isl
+```
+
+Startup facts:
+
+- GPU KV cache size: `25344` tokens
+- CPU KV offload budget: `4.0 GiB` per worker
+- first launch hit the same `ocloc` / IGC error 245 fallback path and spent
+  about `231.71 s` in compile before serving
+
+Result: A/B/C/D all matched the GPU-only baseline by expected first word and by
+exact output hash across both passes. This isolates the offload connector itself
+as not changing the constrained result when each request fits in GPU KV.
+
+c2 with CPU KV offload:
+
+`/mnt/fast-ai/bench-results/minimax-m27-b70-serve/strict-word-c2-kvoffload16-20260525T022259Z.json`
+
+Server:
+
+```bash
+VLLM_MAX_MODEL_LEN=32768 /home/steve/bin/minimax-vllm-serve \
+  --kv-offloading-size 16 \
+  --max-num-seqs 2 \
+  --no-scheduler-reserve-full-isl
+```
+
+Startup facts:
+
+- GPU KV cache size: `34304` tokens
+- CPU KV offload budget: `4.0 GiB` per worker
+- compile loaded from cache in about `5.06 s`
+
+Shape:
+
+- labels: A, B
+- prompt tokens per label: `21073`
+- combined prompt pressure: about `42146` tokens, above the `34304` GPU KV
+  budget
+- max output tokens per label: `2`
+- passes: `2`
+- concurrency: `2`
+
+Result: A/B both matched the GPU-only baseline by expected first word and exact
+output hash across both passes. Second-pass reload was fast:
+
+| Label | Pass | Elapsed | TTFT | Text |
+| --- | ---: | ---: | ---: | --- |
+| B | 2 | `0.506 s` | `0.498 s` | `blue` |
+| A | 2 | `0.885 s` | `0.882 s` | `red` |
+
+Observed c2 transfer metric after the strict run:
+
+| Direction | Bytes | Time | Effective rate |
+| --- | ---: | ---: | ---: |
+| CPU -> GPU | `10661920768` | `0.698500764 s` | about `15.3 GB/s` |
+
+c4 with CPU KV offload:
+
+`/mnt/fast-ai/bench-results/minimax-m27-b70-serve/strict-word-c4-kvoffload32-20260525T030545Z.json`
+
+Server:
+
+```bash
+VLLM_MAX_MODEL_LEN=32768 /home/steve/bin/minimax-vllm-serve \
+  --kv-offloading-size 32 \
+  --max-num-seqs 4 \
+  --no-scheduler-reserve-full-isl
+```
+
+Startup facts:
+
+- GPU KV cache size: `34304` tokens
+- CPU KV offload budget: `8.0 GiB` per worker
+- compile loaded from cache in about `6.02 s`
+
+Shape:
+
+- labels: A, B, C, D
+- prompt tokens per label: `12073`
+- combined prompt pressure: about `48292` tokens, above the `34304` GPU KV
+  budget
+- max output tokens per label: `2`
+- passes: `2`
+- concurrency: `4`
+
+Result: A/B/C/D all produced the expected first word on both passes and all
+first words matched the GPU-only baseline. Exact full-text hashes matched for
+A/B/C. D matched on the first pass; on the second pass it produced the correct
+first word plus an extra continuation token:
+
+```text
+yellow + one extra non-ASCII continuation token
+```
+
+The raw output used a non-ASCII comma before the extra continuation. This is not
+a wrong target word, but it is still not an exact-output match. Treat c4 as
+promising for session-cache reload, not production quality-equivalent yet.
+
+Second-pass reload was fast:
+
+| Label | Pass | Elapsed | TTFT | Text check |
+| --- | ---: | ---: | ---: | --- |
+| A | 2 | `0.434 s` | `0.425 s` | expected word, exact hash |
+| B | 2 | `0.433 s` | `0.425 s` | expected word, exact hash |
+| D | 2 | `0.748 s` | `0.731 s` | expected word, extra continuation |
+| C | 2 | `0.748 s` | `0.732 s` | expected word, exact hash |
+
+Observed c4 transfer metrics during the strict run:
+
+| Direction | Bytes | Time | Effective rate |
+| --- | ---: | ---: | ---: |
+| CPU -> GPU | `12222201856` | `0.779602200 s` | about `15.7 GB/s` |
+| CPU -> GPU | `24444403712` | `1.555700744 s` | about `15.7 GB/s` |
+
+A one-token strict run is not a good replacement canary because the first token
+can be whitespace-only. In that test, A and C on pass 1 produced an empty
+observed word before matching on pass 2.
+
 ## C4 Smaller-Context Ladder
 
 Temporary server:
@@ -250,15 +422,15 @@ The stable endpoint was restored after the experiments:
 
 ```bash
 nohup setsid bash -lc 'VLLM_MAX_MODEL_LEN=32768 /home/steve/bin/minimax-vllm-serve' \
-  > /mnt/fast-ai/bench-results/minimax-m27-b70-serve/serve-32768-c1-restored-20260525T015241Z.log \
+  > /mnt/fast-ai/bench-results/minimax-m27-b70-serve/serve-32768-c1-restored-20260525T030740Z.log \
   2>&1 < /dev/null &
 ```
 
-Smoke check:
+Smoke check after the latest restore:
 
 ```json
 {
-  "prompt_tokens": 6,
+  "served_on": "0.0.0.0:8000",
   "completion_tokens": 8,
   "max_model_len": 32768
 }
@@ -266,9 +438,10 @@ Smoke check:
 
 ## Next Steps
 
-1. Build a stricter deterministic canary that constrains the next token better
-   than free-form checklist prompts.
-2. Repeat c2 with that stricter canary and compare against GPU-only c1.
-3. Repeat c4 only after c2 exactness is understood.
+1. Keep c1 `32768` as the stable production endpoint.
+2. Treat c2 CPU KV session caching as the strongest experimental lane so far:
+   strict-word first words and exact hashes matched GPU-only baseline.
+3. Keep c4 experimental until an exact-output or token-level/logprob canary
+   removes the remaining extra-continuation ambiguity.
 4. Add session-cache RAM sizing estimates from transfer bytes per token.
 5. Keep true active-context overflow separate from this session-cache lane.

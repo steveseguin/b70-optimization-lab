@@ -217,11 +217,12 @@ Status:
 Deliverable: prove offloaded/reloaded KV produces the same answers as GPU KV
 for cases where the active sequence still fits in GPU memory.
 
-Status on 2026-05-25: partially tested, not yet passed for production.
-Free-form longer concurrent completions did not produce exact text-hash
-matches across passes. One-token c2 matched across passes. One-token c4
-matched for three of four labels. A stricter constrained-token canary is now
-needed before promoting CPU KV session caching as quality-equivalent.
+Status on 2026-05-25: c2 session caching passed the strongest constrained
+canary so far; c4 remains experimental. Free-form longer concurrent completions
+do not produce exact text-hash matches across passes, but strict-word c2 matched
+the GPU-only baseline by expected first word and exact output hash. Strict-word
+c4 produced the expected first word for A/B/C/D, but one c4 pass added an extra
+continuation token after the correct word.
 
 Test ladder:
 
@@ -299,7 +300,11 @@ Status on 2026-05-25:
 - c4 CPU-to-GPU KV movement measured about `15.8 GB/s`.
 - c4 first compile exposed an Intel `ocloc` / IGC internal compiler error
   before fallback compilation completed; the cached rerun started normally.
-- Exact text hashes are not stable enough yet for production quality claims.
+- Strict-word c1 CPU-offload and c2 matched GPU-only baseline by expected word
+  and exact output hash.
+- Strict-word c4 matched expected first words for all labels, but one pass added
+  an extra continuation token after the correct word.
+- Exact c4 text hashes are not stable enough yet for production quality claims.
   See
   `experiments/minimax_xpu_kv_offload/notes-20260525-phase6-session-cache-canaries.md`.
 
@@ -322,9 +327,10 @@ Pass condition:
 - No hangs, request starvation, or process crashes.
 - Clear expected-use recommendation, even if throughput is low.
 
-Current recommendation: c2/c4 session-cache behavior is useful research and
-mechanically works, but c1 `32768` remains the production endpoint until the
-exactness/quality canary is stronger.
+Current recommendation: c1 `32768` remains the production endpoint. c2
+session-cache behavior is the strongest experimental lane because the
+strict-word canary matched exact hashes. c4 mechanically works and is fast on
+reload, but it needs a tighter token-level or semantic quality gate before use.
 
 ## Phase 7: TurboQuant And Compressed KV
 

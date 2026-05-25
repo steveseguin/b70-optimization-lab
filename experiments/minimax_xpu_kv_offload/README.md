@@ -346,6 +346,28 @@ matched for A/B/D but not C. Treat CPU KV session caching as mechanically
 working and promising, but do not promote it as production quality-equivalent
 until a stricter deterministic canary and semantic quality gate pass.
 
+Strict-word follow-up:
+
+- Added `--prompt-mode strict-word`, which buries a long context and asks the
+  model to copy one target word.
+- GPU-only c1 baseline with four `21073`-token prompts produced stable exact
+  hashes for A/B/C/D across two passes.
+- c1 with CPU KV offload enabled matched the GPU-only baseline by expected word
+  and exact output hash for A/B/C/D.
+- c2 with two concurrent `21073`-token prompts, about `42146` combined prompt
+  tokens against `34304` GPU KV tokens, matched the GPU-only baseline by
+  expected word and exact output hash for A/B.
+- c2 second-pass reload returned in `0.506-0.885 s` with CPU-to-GPU KV transfer
+  around `15.3 GB/s`.
+- c4 with four concurrent `12073`-token prompts, about `48292` combined prompt
+  tokens against `34304` GPU KV tokens, produced the expected first word for
+  A/B/C/D on both passes.
+- c4 exact hashes matched for A/B/C. D's second pass produced the correct first
+  word plus one extra continuation token, so c4 remains experimental rather
+  than production quality-equivalent.
+- A one-token strict run is not a clean substitute because the first generated
+  token can be whitespace-only.
+
 Detailed note:
 
 `notes-20260525-phase6-session-cache-canaries.md`
@@ -384,8 +406,9 @@ Relevant repro:
 - Is TurboQuant k8v4 quality-equivalent enough for long-context practical use,
   assuming the workspace allocation bug is fixed?
 - How much decode throughput is lost per offloaded KV block ratio on PCIe4?
-- Why does c4 exact one-token output differ for one label under concurrent
-  reload, and is that normal XPU/MoE nondeterminism or a cache-specific issue?
+- Why does c4 occasionally add one extra continuation token under strict-word
+  concurrent reload, and is that normal XPU/MoE nondeterminism or a
+  cache-specific issue?
 
 ## Stable Restore Command
 

@@ -11,6 +11,7 @@ import argparse
 import concurrent.futures
 import hashlib
 import json
+import re
 import sys
 import time
 import urllib.error
@@ -19,13 +20,25 @@ from pathlib import Path
 from typing import Any
 
 
+STRICT_WORDS = {
+    "A": "red",
+    "B": "blue",
+    "C": "green",
+    "D": "yellow",
+    "E": "purple",
+    "F": "silver",
+    "G": "orange",
+    "H": "white",
+}
+
+
 def fetch_model(base_url: str) -> str:
     with urllib.request.urlopen(f"{base_url}/v1/models", timeout=30) as resp:
         payload = json.loads(resp.read().decode("utf-8"))
     return payload["data"][0]["id"]
 
 
-def build_prompt(label: str, lines: int) -> str:
+def build_checklist_prompt(label: str, lines: int) -> str:
     body = "\n".join(
         f"Session {label} line {i:04d}: CPU KV offload exact session-cache "
         f"validation text with marker {label}-{i:04d}."
@@ -39,6 +52,50 @@ def build_prompt(label: str, lines: int) -> str:
     )
 
 
+def build_strict_word_prompt(label: str, lines: int) -> tuple[str, str]:
+    expected = STRICT_WORDS.get(label.upper())
+    if expected is None:
+        expected = f"word{label.lower()}"
+    body = "\n".join(
+        f"Context row {i:04d} for lane {label}: preserve exact key value cache "
+        f"bytes, page order, token positions, and session marker {label}-{i:04d}."
+        for i in range(lines)
+    )
+    prompt = (
+        f"{body}\n\n"
+        "Task: copy the final target word exactly. Return one word only. "
+        "No punctuation. No explanation.\n\n"
+        "Example 1\n"
+        "TARGET_WORD: red\n"
+        "ANSWER: red\n\n"
+        "Example 2\n"
+        "TARGET_WORD: blue\n"
+        "ANSWER: blue\n\n"
+        "Example 3\n"
+        "TARGET_WORD: green\n"
+        "ANSWER: green\n\n"
+        f"Final target\n"
+        f"TARGET_WORD: {expected}\n"
+        "ANSWER:"
+    )
+    return prompt, expected
+
+
+def build_prompt(label: str, lines: int, prompt_mode: str) -> tuple[str, str | None]:
+    if prompt_mode == "checklist":
+        return build_checklist_prompt(label, lines), None
+    if prompt_mode == "strict-word":
+        return build_strict_word_prompt(label, lines)
+    raise ValueError(f"unknown prompt mode: {prompt_mode}")
+
+
+def first_word(text: str) -> str:
+    match = re.search(r"[A-Za-z0-9_]+", text)
+    if match is None:
+        return ""
+    return match.group(0).lower()
+
+
 def post_stream_completion(
     base_url: str,
     model: str,
@@ -47,6 +104,7 @@ def post_stream_completion(
     temperature: float,
     seed: int,
     timeout: int,
+    stop: list[str] | None,
 ) -> dict[str, Any]:
     request_payload = {
         "model": model,
@@ -58,6 +116,8 @@ def post_stream_completion(
         "stream": True,
         "stream_options": {"include_usage": True},
     }
+    if stop:
+        request_payload["stop"] = stop
     data = json.dumps(request_payload).encode("utf-8")
     req = urllib.request.Request(
         f"{base_url}/v1/completions",
@@ -135,8 +195,10 @@ def run_one(
     temperature: float,
     seed: int,
     timeout: int,
+    prompt_mode: str,
+    stop: list[str] | None,
 ) -> dict[str, Any]:
-    prompt = build_prompt(label, lines)
+    prompt, expected_word = build_prompt(label, lines, prompt_mode)
     result = post_stream_completion(
         base_url=base_url,
         model=model,
@@ -145,15 +207,23 @@ def run_one(
         temperature=temperature,
         seed=seed,
         timeout=timeout,
+        stop=stop,
     )
+    observed_word = first_word(result["text"])
     result.update(
         {
             "label": label,
             "prompt_sha256": hashlib.sha256(prompt.encode("utf-8")).hexdigest(),
+            "prompt_mode": prompt_mode,
             "prompt_lines": lines,
             "max_tokens": max_tokens,
             "temperature": temperature,
             "seed": seed,
+            "expected_word": expected_word,
+            "observed_word": observed_word,
+            "expected_word_match": (
+                None if expected_word is None else observed_word == expected_word
+            ),
         }
     )
     return result
@@ -172,9 +242,17 @@ def compare_results(
         pass_items.sort(key=lambda item: item["pass_index"])
         if len(pass_items) > 1:
             first_hash = pass_items[0]["sha256"]
+            first_word_value = pass_items[0]["observed_word"]
             comparisons[f"{label}_same_across_passes"] = all(
                 item["sha256"] == first_hash for item in pass_items[1:]
             )
+            comparisons[f"{label}_same_word_across_passes"] = all(
+                item["observed_word"] == first_word_value for item in pass_items[1:]
+            )
+            if pass_items[0]["expected_word"] is not None:
+                comparisons[f"{label}_expected_word_all_passes"] = all(
+                    item["expected_word_match"] for item in pass_items
+                )
 
     if baseline_path:
         baseline = json.loads(baseline_path.read_text())
@@ -187,6 +265,12 @@ def compare_results(
                 continue
             key = f"{item['label']}_pass{item['pass_index']}_matches_baseline"
             comparisons[key] = item["sha256"] == base_item["sha256"]
+            word_key = (
+                f"{item['label']}_pass{item['pass_index']}_word_matches_baseline"
+            )
+            comparisons[word_key] = (
+                item["observed_word"] == base_item.get("observed_word")
+            )
 
     return comparisons
 
@@ -196,6 +280,11 @@ def main() -> int:
     parser.add_argument("--base-url", default="http://127.0.0.1:8000")
     parser.add_argument("--model", default=None)
     parser.add_argument("--labels", default="A,B")
+    parser.add_argument(
+        "--prompt-mode",
+        choices=["checklist", "strict-word"],
+        default="checklist",
+    )
     parser.add_argument("--prompt-lines", type=int, default=700)
     parser.add_argument("--max-tokens", type=int, default=128)
     parser.add_argument("--passes", type=int, default=1)
@@ -203,6 +292,11 @@ def main() -> int:
     parser.add_argument("--temperature", type=float, default=0.0)
     parser.add_argument("--seed", type=int, default=1234)
     parser.add_argument("--timeout", type=int, default=900)
+    parser.add_argument(
+        "--stop-newline",
+        action="store_true",
+        help="Stop generation at a newline. Useful for strict-word mode.",
+    )
     parser.add_argument("--baseline-json", type=Path, default=None)
     parser.add_argument("--output-json", type=Path, required=True)
     args = parser.parse_args()
@@ -216,12 +310,14 @@ def main() -> int:
         "started_at_unix": time.time(),
         "base_url": args.base_url,
         "model": model,
+        "prompt_mode": args.prompt_mode,
         "prompt_lines": args.prompt_lines,
         "max_tokens": args.max_tokens,
         "passes": args.passes,
         "concurrency": args.concurrency,
         "temperature": args.temperature,
         "seed": args.seed,
+        "stop": ["\n"] if args.stop_newline else None,
         "results": [],
     }
 
@@ -241,6 +337,8 @@ def main() -> int:
                     args.temperature,
                     args.seed,
                     args.timeout,
+                    args.prompt_mode,
+                    output["stop"],
                 ): label
                 for label in labels
             }
@@ -267,6 +365,9 @@ def main() -> int:
                                 if item["tok_s_out_after_ttft"] is None
                                 else round(item["tok_s_out_after_ttft"], 2)
                             ),
+                            "expected_word": item["expected_word"],
+                            "observed_word": item["observed_word"],
+                            "expected_word_match": item["expected_word_match"],
                             "sha256": item["sha256"][:16],
                         }
                     ),
