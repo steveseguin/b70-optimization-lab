@@ -470,6 +470,49 @@ Active-boundary note:
 
 `notes-20260525-turboquant-active-context-boundary.md`
 
+## CPU-Paged Attention Path
+
+The next full-context path is CPU-paged attention, not a larger
+`--kv-offloading-size` setting. Current CPU KV offload can park/reload sessions,
+but XPU FlashAttention still needs the active request's KV blocks in live GPU
+memory.
+
+The proposed exact path is:
+
+1. Keep recent/current KV in normal GPU KV blocks.
+2. Keep older logical KV blocks in CPU offload storage.
+3. Stage old CPU-resident KV chunks into a small GPU scratch workspace.
+4. Run FlashAttention over each staged chunk with softmax LSE returned.
+5. Merge partial attention outputs using vLLM's existing
+   `merge_attn_states()` log-sum-exp merge.
+6. Merge that old-context result with normal attention over the live GPU suffix.
+
+This mirrors two existing vLLM patterns:
+
+- XPU `cascade_attention()` already splits prefix/suffix attention and merges
+  LSE-backed partial outputs.
+- ROCm AITER `extend_forward()` already gathers KV chunks into a workspace,
+  runs attention by chunk, and merges the results.
+
+New artifacts:
+
+- `notes-20260525-cpu-paged-attention-design.md`
+- `probes/split_attention_merge_probe.py`
+- `split_attention_merge_probe_20260525.json`
+- `split_attention_merge_probe_20260525-uneven.json`
+
+Standalone split-attention math probe results:
+
+| Shape | Chunks | Max output abs error | Max LSE abs error | Result |
+| --- | ---: | ---: | ---: | --- |
+| `4096` KV tokens, `4` queries, `8` heads | `8` | `6.71e-08` | `9.54e-07` | pass |
+| `5000` KV tokens, `7` queries, `8` heads | `7` | `8.94e-08` | `1.91e-06` | pass |
+
+Interpretation: the core split-and-merge softmax math is sound. The remaining
+work is vLLM integration: logical-vs-physical KV accounting, CPU block range
+queries, GPU staging workspace, temporary block tables, and XPU
+FlashAttention calls that return LSE for merging.
+
 ## Current 196K / Multi-Session Conclusion
 
 The requested end goal is useful: four or more concurrent sessions, ideally

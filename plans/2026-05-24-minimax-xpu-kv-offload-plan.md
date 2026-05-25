@@ -419,24 +419,46 @@ Status on 2026-05-25:
   tokens, but this is still only half of one full `196608` MiniMax context.
 - Four active full-context sessions would need `786432` active tokens, about
   `8x` the best observed live active capacity.
+- XPU normal FP16-family KV routes through `FlashAttentionImpl.forward()` in
+  `vllm/v1/attention/backends/flash_attn.py`.
+- Current KV connector loading happens before forward in
+  `vllm/v1/worker/kv_connector_model_runner_mixin.py`; this is too early for
+  true overflow because it tries to make all needed blocks resident before
+  attention runs.
+- vLLM already has an exact split/merge pattern:
+  - XPU `cascade_attention()` splits prefix/suffix attention and merges LSE.
+  - ROCm AITER `extend_forward()` gathers KV chunks into workspace, runs
+    attention per chunk, then merges with `merge_attn_states()`.
+- Standalone split-attention merge math passed on 2026-05-25:
+  - `4096` KV tokens split into `8` chunks: max output error `6.71e-08`.
+  - `5000` KV tokens split into `7` uneven chunks: max output error
+    `8.94e-08`.
+- Detailed design note:
+  `experiments/minimax_xpu_kv_offload/notes-20260525-cpu-paged-attention-design.md`.
 
 Work items:
 
-1. Trace the XPU attention backend entry points that consume block tables and
-   KV cache tensors.
-2. Add instrumentation to record required layer/block ranges per prefill and
-   decode step.
-3. Prototype a synchronous "load required CPU block range into GPU scratch,
-   run attention, evict" path for a tiny context just over the GPU limit.
-4. Run strict-word canaries against the GPU-only baseline for any context that
-   still fits, then a small over-limit context.
-5. Only after correctness works, optimize with XPU streams, range coalescing,
+1. Keep the standalone probe current:
+   `experiments/minimax_xpu_kv_offload/probes/split_attention_merge_probe.py`.
+2. Add a disabled-by-default vLLM branch, for example
+   `VLLM_XPU_CPU_PAGED_ATTN=1`, only for XPU FP16-family KV.
+3. Stage A in vLLM: force GPU-resident split attention for a request that
+   already fits in GPU KV, then prove strict-word/fact-word output matches the
+   normal path.
+4. Stage B in vLLM: still under the GPU limit, deliberately store older chunks
+   in CPU KV and stage them back through a GPU scratch workspace during
+   attention.
+5. Stage C in vLLM: allow a small active overflow, for example `36K-40K`, with
+   old logical blocks CPU-resident and only staging chunks live on GPU.
+6. Add instrumentation to record per-layer staged bytes, copy latency, TTFT,
+   output tok/s, and CPU RAM used.
+7. Only after correctness works, optimize with XPU streams, range coalescing,
    and prefetch.
-6. Keep `32768` production serving separate from this R&D branch.
+8. Keep `32768` production serving separate from this R&D branch.
 
 Expected output:
 
 - A design note naming the exact attention/runtime files that must change.
-- A minimal synchronous prototype or a concrete blocker explaining why the
-  current XPU attention kernels cannot consume staged CPU KV.
+- A minimal synchronous prototype or a concrete blocker explaining why staged
+  GPU scratch attention cannot be made exact on XPU.
 - Strict-word canary results before any performance claims.
