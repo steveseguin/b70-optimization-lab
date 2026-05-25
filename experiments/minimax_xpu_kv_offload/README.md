@@ -17,7 +17,8 @@ The stable production lane remains:
 - Context: `32768`
 - KV dtype: `auto` / FP16-family
 - Endpoint: OpenAI-compatible vLLM on `0.0.0.0:8000`
-- Warm endpoint decode: about `84-85 tok/s`
+- Warm endpoint decode: about `84-95 tok/s`, depending on warm state and the
+  exact benchmark shape
 
 Do not replace that lane with this work until correctness, stability, and
 quality are proven.
@@ -434,12 +435,28 @@ Current TurboQuant status after the 2026-05-25 workspace fallback experiment:
 - `max_model_len=65536` failed; vLLM estimated the maximum at `60672`.
 - `max_model_len=60000` started and answered a `58874` token strict-word
   canary, but TTFT was about `53-54 s` and decode was not interactive.
+- With `turboquant_4bit_nc`, `max_model_len=100000`, c4, and
+  `--kv-offloading-size 32`, vLLM reported `84654` GPU KV tokens and `0.85x`
+  max concurrency for a 100K request.
+- That 100K server answered strict-word prompts at `84074` and `84374` prompt
+  tokens, but timed out or parked near `84644+` tokens because the active
+  request exhausted live GPU KV blocks.
+- With `turboquant_4bit_nc`, `max_model_len=196608`, c1,
+  `--max-num-batched-tokens 512`, and `--gpu-memory-utilization 0.959`, vLLM
+  reported `98304` GPU KV tokens and `0.50x` max concurrency for a full 196K
+  request.
+- The 196K/c1 server answered an `84074` token strict-word prompt, but TTFT was
+  `114.342 s`. A near-limit prompt around `97800` tokens filled GPU KV
+  (`kv_cache_usage=1.0`) and killed the engine with
+  `TimeoutError: RPC call to sample_tokens timed out`.
 - Intel `ocloc` / IGC error 245 still appears during compile fallback.
 
-Interpretation: TurboQuant k8v4 is now mechanically past the first XPU
-workspace blockers and can reach about a 60K server context, but it is not a
-production replacement. Capacity improved substantially; decode speed and
-quality still need work.
+Interpretation: TurboQuant is now mechanically past the first XPU workspace
+blockers and can raise the live GPU KV ceiling, but it is not a production
+replacement. Capacity improved substantially; decode speed, stability, and
+quality still need work. Most importantly, TurboQuant plus CPU KV offload still
+does not provide true active-context overflow: the active request must fit in
+live GPU KV blocks.
 
 Relevant repro:
 
@@ -448,6 +465,36 @@ Relevant repro:
 Detailed note:
 
 `notes-20260525-c2-quality-and-turboquant.md`
+
+Active-boundary note:
+
+`notes-20260525-turboquant-active-context-boundary.md`
+
+## Current 196K / Multi-Session Conclusion
+
+The requested end goal is useful: four or more concurrent sessions, ideally
+with the full `196608` token MiniMax context, backed by system RAM when needed.
+
+The current stack cannot do that yet.
+
+The best active capacity observed in the TurboQuant 4-bit NC lane was `98304`
+tokens. One full MiniMax context is `196608` tokens, so a single full active
+context is about `2x` beyond the best live GPU KV capacity observed. Four full
+active contexts are `786432` tokens, about `8x` beyond that live capacity.
+
+CPU KV offload is still useful, but today it is session caching: it stores and
+reloads KV for sessions whose active working set fits in GPU KV. It does not
+make XPU attention read arbitrary old KV blocks directly from host RAM.
+
+Production should stay on the `32768` FP16-family KV endpoint. The next R&D
+step is CPU-paged or CPU-streamed attention, not just larger
+`--kv-offloading-size` values or higher `max_model_len`.
+
+Restore note: a fatal near-limit 196K TurboQuant run left orphan
+`VLLM::Worker_TP*` processes holding XPU memory. If the normal server fails on
+restart with near-zero free XPU memory, kill the orphan workers and stale
+`multiprocessing.resource_tracker`, then remove stale `/dev/shm/psm_*` and
+`/dev/shm/sem.mp-*` files. Details are in the active-boundary note.
 
 ## Open Questions
 
@@ -466,6 +513,10 @@ Detailed note:
   cache-specific issue?
 - Can a logprob/token-id canary prove c2 exactness more cleanly than text hashes
   when generated continuation text varies?
+- Can a synchronous CPU-paged attention prototype load just-in-time KV block
+  ranges into GPU scratch space and still produce exact strict-word canaries?
+- Can TurboQuant or another compressed KV format be quality-gated strongly
+  enough to serve as a production option, or should it stay research-only?
 
 ## Stable Restore Command
 

@@ -34,7 +34,8 @@ Stable endpoint:
 - `max_model_len=32768`
 - `max_num_seqs=1`
 - FP16-family KV via `--kv-cache-dtype auto`
-- warm endpoint decode about `84-85 tok/s`
+- warm endpoint decode about `84-95 tok/s`, depending on warm state and
+  benchmark shape
 
 XPU CPU KV prototype:
 
@@ -366,6 +367,22 @@ Status on 2026-05-25:
 - Intel `ocloc` / IGC error 245 still appears during compile fallback.
 - Detailed note:
   `experiments/minimax_xpu_kv_offload/notes-20260525-c2-quality-and-turboquant.md`.
+- With `turboquant_4bit_nc`, `max_model_len=100000`, c4, and
+  `--kv-offloading-size 32`, vLLM reported `84654` GPU KV tokens and `0.85x`
+  max concurrency for a 100K request.
+- That 100K/c4 server answered strict-word prompts at `84074` and `84374`
+  tokens, but timed out or parked around `84644+` tokens because live GPU KV
+  blocks were exhausted.
+- With `turboquant_4bit_nc`, `max_model_len=196608`, c1,
+  `--max-num-batched-tokens 512`, and `--gpu-memory-utilization 0.959`, vLLM
+  reported `98304` GPU KV tokens and `0.50x` max concurrency for a 196K
+  request.
+- The 196K/c1 server answered an `84074` token strict-word prompt, but TTFT was
+  `114.342 s`. A near-limit prompt around `97800` tokens filled GPU KV
+  (`kv_cache_usage=1.0`) and killed the engine with
+  `TimeoutError: RPC call to sample_tokens timed out`.
+- Detailed active-boundary note:
+  `experiments/minimax_xpu_kv_offload/notes-20260525-turboquant-active-context-boundary.md`.
 
 Work items:
 
@@ -373,7 +390,8 @@ Work items:
 - Replace the temporary allocation fallbacks with a cleaner workspace
   pre-growth or capture-safe allocation strategy.
 - If it runs, compare FP16-family KV, FP8 KV, TurboQuant k8v4, and TurboQuant
-  4-bit variants.
+  4-bit variants, but keep every compressed-KV result labeled experimental
+  until quality gates pass.
 - Always run quality gates before accepting any compressed KV result.
 
 Pass condition:
@@ -381,26 +399,44 @@ Pass condition:
 - Compressed KV either has a documented quality-preserving recipe or remains
   clearly labeled as blocked/experimental.
 
-Current recommendation: keep TurboQuant k8v4 as a research lane. It is useful
-for proving that compressed KV can lift the context ceiling to about 60K on this
-machine, but it is too slow and too narrowly quality-gated for production.
+Current recommendation: keep TurboQuant as a research lane. It is useful for
+proving that compressed KV can lift the live KV ceiling, but it is too slow,
+too unstable near the limit, and too narrowly quality-gated for production. It
+also does not solve true active-context overflow because the active request must
+still fit in live GPU KV blocks.
 
-## Suggested Next Session
+## Phase 8: True Active-Overflow Runtime Work
 
-Start with Phase 1. Do not begin by modifying vLLM.
+Deliverable: determine whether a CPU-paged or CPU-streamed XPU attention path
+can execute one active sequence larger than live GPU KV capacity without
+changing model semantics.
 
-Concrete first task:
+Status on 2026-05-25:
 
-1. Create `experiments/minimax_xpu_kv_offload/probes/xpu_stream_copy_probe.py`.
-2. Run it under `/home/steve/.venvs/vllm-xpu/bin/python`.
-3. Record whether XPU streams/events and pinned CPU copies work.
-4. If primitives work, sketch `xpu_worker.py`.
-5. If primitives do not work, document the missing PyTorch/Level Zero feature
-   and switch to a synchronous proof-of-correctness path.
+- Scheduler admission and CPU KV transfer are no longer the main blocker.
+- The runtime still needs live GPU KV blocks for the active request.
+- TurboQuant 4-bit NC lifted the best observed active capacity to `98304`
+  tokens, but this is still only half of one full `196608` MiniMax context.
+- Four active full-context sessions would need `786432` active tokens, about
+  `8x` the best observed live active capacity.
+
+Work items:
+
+1. Trace the XPU attention backend entry points that consume block tables and
+   KV cache tensors.
+2. Add instrumentation to record required layer/block ranges per prefill and
+   decode step.
+3. Prototype a synchronous "load required CPU block range into GPU scratch,
+   run attention, evict" path for a tiny context just over the GPU limit.
+4. Run strict-word canaries against the GPU-only baseline for any context that
+   still fits, then a small over-limit context.
+5. Only after correctness works, optimize with XPU streams, range coalescing,
+   and prefetch.
+6. Keep `32768` production serving separate from this R&D branch.
 
 Expected output:
 
-- Probe script.
-- Probe result JSON or Markdown note.
-- A yes/no decision on whether native async XPU CPU KV offload is feasible in
-  the current PyTorch XPU runtime.
+- A design note naming the exact attention/runtime files that must change.
+- A minimal synchronous prototype or a concrete blocker explaining why the
+  current XPU attention kernels cannot consume staged CPU KV.
+- Strict-word canary results before any performance claims.
