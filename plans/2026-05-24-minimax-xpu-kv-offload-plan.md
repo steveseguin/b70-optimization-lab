@@ -2,10 +2,13 @@
 
 Date: 2026-05-24
 
-Goal: make CPU KV offload work on Intel Arc Pro B70/XPU for MiniMax M2.7 so
-the system can serve contexts beyond the current reliable `32768` token
-endpoint, while preserving answer quality and keeping the 32K fast lane easy
-to restore.
+Goal: make CPU KV movement work on Intel Arc Pro B70/XPU for MiniMax M2.7 and
+determine which long-context targets are achievable without lowering quality.
+The current evidence separates two tracks:
+
+- Exact-quality session swapping for contexts that individually fit in GPU KV.
+- True active-context overflow beyond GPU KV, which requires attention/runtime
+  work beyond scheduler-only CPU KV offload.
 
 Primary reference:
 
@@ -32,6 +35,22 @@ Stable endpoint:
 - `max_num_seqs=1`
 - FP16-family KV via `--kv-cache-dtype auto`
 - warm endpoint decode about `84-85 tok/s`
+
+XPU CPU KV prototype:
+
+- `49152`/c1 can start with `--kv-offloading-size 16`.
+- GPU KV allocation remains about `33792` tokens (`132` blocks at block size
+  `256`).
+- Multi-GB GPU-to-CPU and CPU-to-GPU KV transfers work.
+- A `33350` token prompt (`131` blocks) plus one output token completed with
+  the connector present.
+- A `33580` token prompt (`132` blocks) plus one output token timed out and
+  parked at `131/132` GPU KV blocks used.
+
+Conclusion: the current path is not true active-context overflow. Exact full
+attention still requires the active request's KV blocks to fit in GPU memory.
+See
+`experiments/minimax_xpu_kv_offload/notes-20260525-phase4-active-context-limit.md`.
 
 Failed long-context experiments:
 
@@ -175,27 +194,31 @@ Initial contexts:
 - `131072`, c1
 - `196608`, c1 only after smaller contexts work
 
-Pass condition:
+Pass condition for this phase:
 
 - Server reaches `/v1/models` at a context above `32768`.
-- It can complete a near-full-context prompt plus small output without OOM.
+- The experiment clearly distinguishes advertised max model length from the
+  active GPU-resident exact context limit.
 
-Current blocker:
+Status:
 
-- The first condition passes at `49152`.
-- The second condition is blocked. The transfer path works, but the scheduler
-  does not yet resume/generate correctly after CPU spill reload.
+- Startup passes at `49152`.
+- Active exact context beyond the GPU KV block budget is blocked by the
+  attention runtime model, not by raw CPU/XPU copy mechanics.
+- Do not claim `49152+` active context support from scheduler-only offload.
 
 ## Phase 4: Correctness And Quality
 
-Deliverable: prove offloaded KV produces the same answers as GPU KV for cases
-where both can run.
+Deliverable: prove offloaded/reloaded KV produces the same answers as GPU KV
+for cases where the active sequence still fits in GPU memory.
 
 Test ladder:
 
 - 32K GPU-only baseline canaries.
 - 32K with CPU KV offload enabled but under capacity.
-- 49K/65K near-full prompt with deterministic small output.
+- Largest GPU-resident prompt with deterministic small output.
+- Session-swap canary: store a session to CPU, reload it, then compare its next
+  deterministic token against the GPU-only path.
 - Semantic/arithmetic/sixpack at the largest working context.
 
 Metrics to record:
@@ -209,11 +232,12 @@ Metrics to record:
 Pass condition:
 
 - No quality regression at 32K with offload enabled.
-- No corruption in near-full long-context tests.
+- No corruption after CPU store/reload when the active context fits in GPU KV.
 
 ## Phase 5: Performance Characterization
 
-Deliverable: map context length and offload pressure to decode speed.
+Deliverable: map GPU-resident context length, session swapping, and offload
+pressure to decode speed.
 
 Benchmark shapes:
 
@@ -222,10 +246,11 @@ Benchmark shapes:
 | p512/n512 | decode sanity and warmup |
 | p512/n1536 | compare to existing endpoint metrics |
 | p32768/n64 | near-current-full-context prompt |
-| p49152/n64 | first offload pressure |
-| p65536/n64 | practical long-context target |
-| p65536/n512 | sustained decode with offload |
-| p196608/n64 | full advertised context smoke |
+| p33350/n1 | near effective GPU block limit under the 49K/offload server |
+| p32768/n64 with c2 swapping | first practical session-swap pressure |
+| p32768/n512 with c2 swapping | sustained decode after reload |
+| p49152/n64 | active-overflow R&D only, expected blocked today |
+| p196608/n64 | future kernel/runtime R&D target |
 
 Record:
 
@@ -241,17 +266,19 @@ Pass condition:
 
 - A reproducible table showing where offload becomes bandwidth-bound.
 
-## Phase 6: Concurrency
+## Phase 6: Concurrency / Session Swapping
 
-Deliverable: measure active session scaling after c1 is stable.
+Deliverable: measure exact-quality session swapping after c1 store/reload is
+stable. This is not the same as four active `196608` contexts.
 
 Order:
 
-1. c2 at `32768`
-2. c2 at first offloaded context that works
-3. c4 at `32768`
-4. c4 at `65536`
-5. c4 at `196608` only if lower targets are stable
+1. c2 at `32768`, one active session at a time.
+2. c4 at `32768`, one active session at a time.
+3. c2 at the largest active context that still fits in GPU KV.
+4. c4 at the largest active context that still fits in GPU KV.
+5. `65536+` only after true CPU-paged attention or quality-gated KV
+   compression exists.
 
 Record both:
 

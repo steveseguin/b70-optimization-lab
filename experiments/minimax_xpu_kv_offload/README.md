@@ -262,15 +262,40 @@ Measured live transfer example at about `34500` prompt tokens:
 
 Current blocker:
 
-- Async mode completes load jobs but the request remains stuck in
-  `WAITING_FOR_REMOTE_KVS` / `deferred`.
-- Sync-load mode avoids the async wake-up path, completes the CPU-to-XPU load,
-  then parks at `capacity` with reported GPU KV usage at `0%`.
-- This now looks like vLLM scheduler/accounting work, not a raw XPU copy-path
-  failure.
+- The XPU worker can move KV to and from pinned host RAM.
+- The current vLLM/XPU exact attention path still needs the active request's
+  KV pages resident in GPU KV blocks.
+- Scheduler-only CPU KV offload can store/reload cached blocks, but it does
+  not yet make one exact full-attention sequence larger than the live GPU KV
+  cache.
+- A `49152` server starts, but prompts that require the last GPU KV block or
+  more can park in `deferred` instead of generating.
 
 Do not use this lane as the default server yet. The stable `32768` endpoint is
 still the recommended path for real use.
+
+## Phase 4 Active Context Limit Finding
+
+Follow-up validation on 2026-05-25 refined the blocker:
+
+- `49152`/c1 with `--kv-offloading-size 16` reported `33792` GPU KV tokens,
+  or `132` blocks at block size `256`.
+- A `33350` token prompt (`131` blocks) plus one output token completed with
+  the CPU KV connector present.
+- A `33580` token prompt (`132` blocks) plus one output token timed out after
+  `300 s` and parked with `131/132` GPU KV blocks occupied.
+- A `34500` token prompt had already shown real multi-GB CPU KV store/load,
+  but still did not return a completion.
+
+Detailed note:
+
+`notes-20260525-phase4-active-context-limit.md`
+
+Interpretation: this prototype is useful groundwork for XPU CPU KV movement
+and may support exact-quality session swapping for contexts that individually
+fit in GPU KV. It is not yet true active-context overflow. Full `196608`
+active exact context needs CPU-paged attention, host-readable KV kernels, or
+quality-gated KV compression.
 
 ## TurboQuant Interaction
 
