@@ -433,6 +433,15 @@ Status on 2026-05-25:
   - `4096` KV tokens split into `8` chunks: max output error `6.71e-08`.
   - `5000` KV tokens split into `7` uneven chunks: max output error
     `8.94e-08`.
+- Stage A vLLM shortcut attempt failed exactness:
+  - forcing existing `cascade_attention()` for GPU-resident single-sequence
+    decode first exposed `FA2 does not support q_descale`;
+  - after guarding `q_descale`, it ran but changed output and dropped decode to
+    about `13.29 tok/s`;
+  - conclusion: build an explicit staged-attention path instead of abusing
+    cascade metadata.
+- Stage A note:
+  `experiments/minimax_xpu_kv_offload/notes-20260525-stagea-gpu-split-attention.md`.
 - Detailed design note:
   `experiments/minimax_xpu_kv_offload/notes-20260525-cpu-paged-attention-design.md`.
 
@@ -442,9 +451,9 @@ Work items:
    `experiments/minimax_xpu_kv_offload/probes/split_attention_merge_probe.py`.
 2. Add a disabled-by-default vLLM branch, for example
    `VLLM_XPU_CPU_PAGED_ATTN=1`, only for XPU FP16-family KV.
-3. Stage A in vLLM: force GPU-resident split attention for a request that
-   already fits in GPU KV, then prove strict-word/fact-word output matches the
-   normal path.
+3. Stage A in vLLM, revised: implement an explicit GPU-resident split-attention
+   path instead of routing through generic cascade metadata. It must compare
+   logits/token output against the normal path before any CPU staging.
 4. Stage B in vLLM: still under the GPU limit, deliberately store older chunks
    in CPU KV and stage them back through a GPU scratch workspace during
    attention.

@@ -1,0 +1,48 @@
+diff --git a/vllm/v1/attention/backends/flash_attn.py b/vllm/v1/attention/backends/flash_attn.py
+index 1c9ff3f79..312e60462 100755
+--- a/vllm/v1/attention/backends/flash_attn.py
++++ b/vllm/v1/attention/backends/flash_attn.py
+@@ -3,6 +3,7 @@
+ """Attention layer with FlashAttention."""
+ 
+ import copy
++import os
+ from dataclasses import dataclass
+ from typing import ClassVar
+ 
+@@ -470,6 +471,26 @@ class FlashAttentionMetadataBuilder(AttentionMetadataBuilder[FlashAttentionMetad
+                 )
+             return None
+ 
++        if (
++            os.environ.get("VLLM_XPU_GPU_SPLIT_ATTN", "").lower()
++            in ("1", "true", "yes", "on")
++            and current_platform.is_xpu()
++            and common_prefix_len == 0
++            and num_reqs == 1
++            and max_query_len == 1
++            and self.dcp_world_size == 1
++            and not is_quantized_kv_cache(self.cache_config.cache_dtype)
++            and max_seq_len >= self.block_size * 4
++        ):
++            split_blocks = max_seq_len // (self.block_size * 2)
++            split_prefix_len = split_blocks * self.block_size
++            if split_prefix_len > 0 and split_prefix_len < max_seq_len:
++                common_prefix_len = split_prefix_len
++                logger.info_once(
++                    "VLLM_XPU_GPU_SPLIT_ATTN enabled: using GPU-resident "
++                    "cascade split for single-sequence XPU decode."
++                )
++
+         use_cascade = common_prefix_len > 0
+         max_dcp_context_kv_len = 0
+         dcp_context_kv_lens = None
+@@ -841,7 +862,7 @@ class FlashAttentionImpl(AttentionImpl):
+             fa_version=self.vllm_flash_attn_version,
+             prefix_scheduler_metadata=attn_metadata.prefix_scheduler_metadata,
+             suffix_scheduler_metadata=attn_metadata.scheduler_metadata,
+-            q_descale=layer._q_scale,
++            q_descale=layer._q_scale if self.supports_quant_query_input else None,
+             k_descale=layer._k_scale,
+             v_descale=layer._v_scale,
+             s_aux=self.sinks,

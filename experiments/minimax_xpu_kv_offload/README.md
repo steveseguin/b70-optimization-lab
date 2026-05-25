@@ -497,6 +497,7 @@ This mirrors two existing vLLM patterns:
 New artifacts:
 
 - `notes-20260525-cpu-paged-attention-design.md`
+- `notes-20260525-stagea-gpu-split-attention.md`
 - `probes/split_attention_merge_probe.py`
 - `split_attention_merge_probe_20260525.json`
 - `split_attention_merge_probe_20260525-uneven.json`
@@ -512,6 +513,22 @@ Interpretation: the core split-and-merge softmax math is sound. The remaining
 work is vLLM integration: logical-vs-physical KV accounting, CPU block range
 queries, GPU staging workspace, temporary block tables, and XPU
 FlashAttention calls that return LSE for merging.
+
+Stage A vLLM integration attempt:
+
+- A disabled-by-default patch tried to force GPU-resident split decode through
+  the existing `cascade_attention()` path.
+- First attempt crashed because XPU FA2 does not support `q_descale` in the
+  prefix cascade call.
+- After matching the normal non-cascade q-descale guard, the path ran but did
+  not match the normal baseline.
+- Baseline checklist canary: `3714` prompt tokens, `64` output tokens,
+  `91.44 tok/s` after TTFT, hash `5afda1f4fa37f3d3`.
+- Forced split canary: `3714` prompt tokens, `64` output tokens,
+  `13.29 tok/s` after TTFT, hash `2fb45f78a286e529`, text diverged.
+- Conclusion: do not use the cascade shortcut for quality-preserving overflow.
+  The next prototype needs an explicit staged-attention path with carefully
+  constructed block tables and LSE comparison.
 
 ## Current 196K / Multi-Session Conclusion
 
