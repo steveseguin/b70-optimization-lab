@@ -297,6 +297,30 @@ fit in GPU KV. It is not yet true active-context overflow. Full `196608`
 active exact context needs CPU-paged attention, host-readable KV kernels, or
 quality-gated KV compression.
 
+## Phase 5 C2 Session-Swap Smoke
+
+Follow-up validation on 2026-05-25 found the first practical RAM-backed use
+case:
+
+- `32768`/c2 with `--kv-offloading-size 16` started successfully.
+- c2 reduced GPU KV capacity to `26112` tokens because of extra runtime and
+  graph memory.
+- Two concurrent distinct `14000`-token prompts completed even though their
+  combined prompt length was `28000` tokens.
+- The first pass stored about `4.29 GB` from GPU to CPU at roughly
+  `10-11 GB/s`.
+- Repeating the same two prompts produced CPU-to-GPU loads of about
+  `7.02 GB` in `0.467 s`, roughly `15.0 GB/s`.
+- vLLM reported an external prefix cache hit rate of `49.4%`.
+
+Detailed note:
+
+`notes-20260525-phase5-session-swap-smoke.md`
+
+Interpretation: CPU KV offload can already act as an exact session cache for
+contexts that fit individually in GPU KV. This is a useful community-facing
+capability, but it is separate from full active-context overflow.
+
 ## TurboQuant Interaction
 
 TurboQuant remains interesting because it reduces KV footprint and therefore

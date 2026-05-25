@@ -46,11 +46,16 @@ XPU CPU KV prototype:
   the connector present.
 - A `33580` token prompt (`132` blocks) plus one output token timed out and
   parked at `131/132` GPU KV blocks used.
+- `32768`/c2 can start with `--kv-offloading-size 16`.
+- c2 session-cache smoke passed for two distinct `14000`-token prompts,
+  including later CPU-to-GPU reload at about `15.0 GB/s`.
 
 Conclusion: the current path is not true active-context overflow. Exact full
 attention still requires the active request's KV blocks to fit in GPU memory.
 See
 `experiments/minimax_xpu_kv_offload/notes-20260525-phase4-active-context-limit.md`.
+The useful near-term path is exact session caching; see
+`experiments/minimax_xpu_kv_offload/notes-20260525-phase5-session-swap-smoke.md`.
 
 Failed long-context experiments:
 
@@ -270,6 +275,13 @@ Pass condition:
 
 Deliverable: measure exact-quality session swapping after c1 store/reload is
 stable. This is not the same as four active `196608` contexts.
+
+Status on 2026-05-25:
+
+- Initial c2 smoke passed with two distinct `14000`-token prompts.
+- First pass stored about `4.29 GB` GPU-to-CPU.
+- Second pass reloaded about `7.02 GB` CPU-to-GPU in `0.467 s`.
+- Next tests need deterministic canaries and longer post-reload decode.
 
 Order:
 
