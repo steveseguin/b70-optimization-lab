@@ -1,0 +1,48 @@
+{
+  "block_size": 256,
+  "blocks": 8,
+  "device": "xpu:0",
+  "dtype": "float16",
+  "full_causal_vs_full_noncausal": {
+    "max_lse_abs_error": 0.01097000390291214,
+    "max_output_abs_error": 0.0
+  },
+  "head_size": 128,
+  "heads": 2,
+  "lse_tolerance": 0.02,
+  "ok": false,
+  "output_tolerance": 0.002,
+  "prefix_len": 1024,
+  "queries": 1,
+  "reports": {
+    "split_suffix_causal_false": {
+      "manual_merge_max_lse_abs_error_vs_full_causal": 0.6931471228599548,
+      "manual_merge_max_lse_abs_error_vs_full_noncausal": 0.6986472010612488,
+      "manual_merge_max_output_abs_error_vs_full_causal": 0.0015106201171875,
+      "manual_merge_max_output_abs_error_vs_full_noncausal": 0.0015106201171875,
+      "vllm_merge_max_lse_abs_error_vs_full_causal": 0.6931471228599548,
+      "vllm_merge_max_lse_abs_error_vs_full_noncausal": 0.6986472010612488,
+      "vllm_merge_max_output_abs_error_vs_full_causal": 0.000946044921875,
+      "vllm_merge_max_output_abs_error_vs_full_noncausal": 0.000946044921875,
+      "vllm_vs_manual_lse_abs_error": 0.0,
+      "vllm_vs_manual_output_abs_error": 0.000701904296875
+    },
+    "split_suffix_causal_true": {
+      "manual_merge_max_lse_abs_error_vs_full_causal": 0.0029792925342917442,
+      "manual_merge_max_lse_abs_error_vs_full_noncausal": 0.007990711368620396,
+      "manual_merge_max_output_abs_error_vs_full_causal": 0.128173828125,
+      "manual_merge_max_output_abs_error_vs_full_noncausal": 0.128173828125,
+      "vllm_merge_max_lse_abs_error_vs_full_causal": 0.002979348413646221,
+      "vllm_merge_max_lse_abs_error_vs_full_noncausal": 0.007990655489265919,
+      "vllm_merge_max_output_abs_error_vs_full_causal": 0.128173828125,
+      "vllm_merge_max_output_abs_error_vs_full_noncausal": 0.128173828125,
+      "vllm_vs_manual_lse_abs_error": 5.587935447692871e-08,
+      "vllm_vs_manual_output_abs_error": 0.00201416015625
+    }
+  },
+  "scale": 0.08838834764831845,
+  "seed": 1234,
+  "seq_len": 2048,
+  "split_blocks": 4,
+  "suffix_len": 1024
+}

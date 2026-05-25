@@ -438,6 +438,10 @@ Status on 2026-05-25:
     decode first exposed `FA2 does not support q_descale`;
   - after guarding `q_descale`, it ran but changed output and dropped decode to
     about `13.29 tok/s`;
+  - a direct XPU FlashAttention split probe showed suffix `causal=False` is much
+    closer for decode-shaped chunks than suffix `causal=True`;
+  - a third forced-cascade attempt with non-causal decode suffix improved decode
+    to about `60.75 tok/s` after TTFT but still changed output;
   - conclusion: build an explicit staged-attention path instead of abusing
     cascade metadata.
 - Stage A note:

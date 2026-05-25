@@ -1,5 +1,5 @@
 diff --git a/vllm/v1/attention/backends/flash_attn.py b/vllm/v1/attention/backends/flash_attn.py
-index 1c9ff3f79..312e60462 100755
+index 1c9ff3f79..bc5968402 100755
 --- a/vllm/v1/attention/backends/flash_attn.py
 +++ b/vllm/v1/attention/backends/flash_attn.py
 @@ -3,6 +3,7 @@
@@ -46,3 +46,24 @@ index 1c9ff3f79..312e60462 100755
              k_descale=layer._k_scale,
              v_descale=layer._v_scale,
              s_aux=self.sinks,
+@@ -1195,6 +1216,13 @@ def cascade_attention(
+     descale_shape = (cu_query_lens.shape[0] - 1, key_cache.shape[-2])
++    suffix_causal = not (
++        os.environ.get("VLLM_XPU_GPU_SPLIT_ATTN", "").lower()
++        in ("1", "true", "yes", "on")
++        and current_platform.is_xpu()
++        and max_query_len == 1
++    )
++
+     # Process suffix per query.
+     suffix_output, suffix_lse = flash_attn_varlen_func(
+         q=query,
+@@ -1205,7 +1233,7 @@ def cascade_attention(
+         max_seqlen_q=max_query_len,
+         max_seqlen_k=max_kv_len - common_prefix_len,
+         softmax_scale=softmax_scale,
+-        causal=True,
++        causal=suffix_causal,
+         window_size=list(sliding_window),
+         block_table=block_table[:, num_common_kv_blocks:],
+         softcap=logits_soft_cap,

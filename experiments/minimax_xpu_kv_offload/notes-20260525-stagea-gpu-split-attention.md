@@ -5,8 +5,10 @@ force a request that already fits in GPU KV to split old/new attention and
 merge partial results, with all KV still GPU-resident.
 
 Short result: failed exactness. The standalone split-attention math is correct,
-but naively forcing vLLM's existing cascade path for arbitrary single-sequence
-decode on XPU FA2 is not equivalent to the normal attention path.
+and a direct XPU FlashAttention kernel probe showed that split decode can get
+close only when the suffix call is non-causal. However, naively forcing vLLM's
+existing cascade path for arbitrary single-sequence decode is still not
+equivalent to the normal server path.
 
 ## Patch Tested
 
@@ -28,6 +30,15 @@ split the GPU-resident KV into a prefix and suffix, then merge with
 The patch also changed the cascade call to pass `q_descale` only when
 `self.supports_quant_query_input` is true. This mirrors the normal
 non-cascade path.
+
+After the direct kernel probe below, the patch also tried an experimental
+decode-only suffix rule:
+
+```python
+suffix_causal = False
+```
+
+for XPU single-token decode under `VLLM_XPU_GPU_SPLIT_ATTN=1`.
 
 ## Baseline
 
@@ -132,19 +143,95 @@ Interpretation: the q-descale fix removes the hard crash, but the forced
 cascade split is not semantically equivalent on this stack and is much slower.
 Do not use this path for quality-preserving context overflow.
 
+## Direct XPU Kernel Probe
+
+Added:
+
+`probes/xpu_flash_attn_split_probe.py`
+
+Result file:
+
+`xpu_flash_attn_split_probe_20260525.json`
+
+Shape:
+
+- device: `xpu:0`
+- dtype: `float16`
+- block size: `256`
+- blocks: `8`
+- sequence length: `2048`
+- split: `1024` token prefix and `1024` token suffix
+- queries: `1`
+- heads: `2`
+- head size: `128`
+
+Results:
+
+| Split suffix causal mode | Manual merged output error vs full causal | Manual merged LSE error vs full causal |
+| --- | ---: | ---: |
+| `False` | `0.00151` | `0.69315` |
+| `True` | `0.12817` | `0.00298` |
+
+Interpretation:
+
+- For decode-shaped attention, `causal=True` on the suffix chunk gives a bad
+  output even though LSE is close.
+- `causal=False` on the suffix chunk gives an output close to full attention,
+  but LSE differs by about `ln(2)`.
+- The vLLM merge kernel and a manual torch merge were close to each other, so
+  the large causal-suffix error is not just a merge-kernel issue.
+- This explains why the first forced cascade split produced corrupted-looking
+  text.
+
+## Third Split Attempt With Non-Causal Decode Suffix
+
+Temporary split server:
+
+```bash
+VLLM_XPU_GPU_SPLIT_ATTN=1 \
+VLLM_MAX_MODEL_LEN=32768 \
+/home/steve/bin/minimax-vllm-serve
+```
+
+Log:
+
+`/mnt/fast-ai/bench-results/minimax-m27-b70-serve/serve-32768-c1-gpu-split-stagea-noncausal-20260525T151644Z.log`
+
+Result file:
+
+`/mnt/fast-ai/bench-results/minimax-m27-b70-serve/gpu-split-stagea-noncausal-checklist-20260525T151847Z.json`
+
+Result:
+
+- prompt tokens: `3714`
+- completion tokens: `64`
+- elapsed: `3.805 s`
+- TTFT: `2.752 s`
+- output tok/s after TTFT: `60.75`
+- hash: `e3e6f48cdc926907`
+- baseline hash match: false
+- baseline first-word match: false
+
+Interpretation: the non-causal suffix variant fixed the severe corrupted-output
+pattern and recovered much of the speed, but it still did not pass exactness
+against the normal server baseline.
+
 ## Current Interpretation
 
-The standalone math probe passed, so log-sum-exp merging itself is not the
-problem. The failed vLLM shortcut is likely one or more of:
+The standalone math probe passed, and the direct XPU kernel probe showed that
+suffix causal handling is a major part of the issue. The failed vLLM shortcut
+is likely one or more of:
 
 - XPU FA2 cascade metadata is not equivalent to arbitrary per-sequence decode
   splitting.
-- The suffix block-table slice and causal alignment do not match the normal
-  full block-table call.
+- The suffix block-table slice and causal alignment do not exactly match the
+  normal full block-table call.
 - AOT scheduler metadata generated for cascade has assumptions that do not hold
   for this forced split.
 - The existing cascade path is intended for shared-prefix batching, not a
   general paged-attention staging mechanism.
+- LSE semantics from the XPU FA2 paged kernel may need normalization when
+  merging arbitrary decode chunks.
 
 ## Next Step
 
@@ -155,13 +242,16 @@ The next prototype should build an explicit experimental attention path:
 1. Start in eager/no-graph if needed.
 2. For a GPU-resident sequence that fits, call XPU FlashAttention over explicit
    prefix/suffix block tables and return LSE.
-3. Compare logits/token output against the normal path.
-4. Only after exactness passes, replace the prefix GPU block table with a
+3. Treat decode chunks as non-causal unless a kernel-level test proves a causal
+   chunk is equivalent.
+4. Compare logits/token output against the normal path.
+5. Only after exactness passes, replace the prefix GPU block table with a
    staged scratch block table loaded from CPU KV.
 
 This remains the most plausible no-quality-loss route to full active context,
 but Stage A showed that the existing cascade machinery cannot simply be reused
-as a drop-in split-attention implementation.
+as a drop-in split-attention implementation without additional XPU-specific
+care.
 
 ## Restore
 

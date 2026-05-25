@@ -499,8 +499,10 @@ New artifacts:
 - `notes-20260525-cpu-paged-attention-design.md`
 - `notes-20260525-stagea-gpu-split-attention.md`
 - `probes/split_attention_merge_probe.py`
+- `probes/xpu_flash_attn_split_probe.py`
 - `split_attention_merge_probe_20260525.json`
 - `split_attention_merge_probe_20260525-uneven.json`
+- `xpu_flash_attn_split_probe_20260525.json`
 
 Standalone split-attention math probe results:
 
@@ -522,6 +524,11 @@ Stage A vLLM integration attempt:
   prefix cascade call.
 - After matching the normal non-cascade q-descale guard, the path ran but did
   not match the normal baseline.
+- A direct XPU FlashAttention probe showed decode suffix `causal=True` produced
+  a large output mismatch (`0.128` max abs error), while suffix
+  `causal=False` was close (`0.0015` max abs error) but had an LSE offset.
+- A third forced-cascade attempt with non-causal decode suffix improved speed
+  to `60.75 tok/s` after TTFT but still did not match the baseline hash.
 - Baseline checklist canary: `3714` prompt tokens, `64` output tokens,
   `91.44 tok/s` after TTFT, hash `5afda1f4fa37f3d3`.
 - Forced split canary: `3714` prompt tokens, `64` output tokens,
