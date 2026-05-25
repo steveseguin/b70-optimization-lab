@@ -1,12 +1,16 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Reproduces the current MiniMax + TurboQuant XPU blocker.
-# Expected result on the 2026-05-23 B70 stack:
+# Reproduces or verifies the MiniMax + TurboQuant XPU workspace issue.
+# Expected result on the unpatched 2026-05-23 B70 stack:
 # - server reaches /v1/models
 # - vLLM reports larger KV capacity
 # - first completion returns HTTP 500 with a TurboQuant workspace allocation
 #   assertion in turboquant_attn.py:_decode_attention
+# Expected result after applying
+# patches/vllm-turboquant-xpu-workspace-fallback-20260525.patch:
+# - server reaches /v1/models
+# - first completion returns HTTP 200
 
 LOG_DIR="${LOG_DIR:-/mnt/fast-ai/bench-results/minimax-m27-b70-turboquant-20260523}"
 PORT="${PORT:-18080}"
@@ -17,7 +21,13 @@ ts="$(date -u +%Y%m%dT%H%M%SZ)"
 log="$LOG_DIR/server-${KV_DTYPE}-ctx32768-${ts}.log"
 
 source /home/steve/.venvs/vllm-xpu/bin/activate
-source /opt/intel/oneapi/compiler/2025.3/env/vars.sh >/dev/null 2>&1
+# The promoted environment and vLLM wrapper already carry the runtime paths on
+# this lab machine. Intel's vars.sh may exit under strict shell options, which
+# hides the TurboQuant failure this script is meant to reproduce. Opt in only
+# when testing a fresh shell that truly needs it.
+if [ "${SOURCE_ONEAPI_ENV:-0}" = "1" ]; then
+  source /opt/intel/oneapi/compiler/2025.3/env/vars.sh >/dev/null 2>&1 || true
+fi
 source /home/steve/llm-optimizations/repro/minimax-m27-b70-89tps-20260520/configs/promoted-env.sh
 
 cleanup() {

@@ -346,15 +346,32 @@ a tighter token-level or semantic quality gate before use.
 
 Deliverable: revisit compressed KV once the offload path can run.
 
-Known TurboQuant blocker:
+Status on 2026-05-25:
 
-- `turboquant_k8v4` reports much better KV capacity but first completion fails
-  with a workspace-lock assertion.
+- `turboquant_k8v4` originally failed first decode with a locked-workspace
+  assertion in `_decode_attention`.
+- A local experiment patch added locked-workspace fallbacks in
+  `_decode_attention` and `_continuation_prefill`.
+- Patch artifact:
+  `patches/vllm-turboquant-xpu-workspace-fallback-20260525.patch`.
+- With `max_model_len=32768`, TurboQuant reported `80128` GPU KV tokens and
+  `2.45x` max concurrency for a 32K request.
+- Strict-word canaries passed at about `8K` and `32.5K` prompt tokens.
+- Sustained decode at `24874` prompt tokens was only about `16.5 tok/s` after
+  TTFT, far below the normal FP16-family KV lane.
+- `max_model_len=65536` failed with vLLM estimating a maximum model length of
+  `60672`.
+- `max_model_len=60000` started and passed a `58874` token strict-word canary,
+  but TTFT was about `53-54 s` and decode was not interactive.
+- Intel `ocloc` / IGC error 245 still appears during compile fallback.
+- Detailed note:
+  `experiments/minimax_xpu_kv_offload/notes-20260525-c2-quality-and-turboquant.md`.
 
 Work items:
 
 - Keep TurboQuant bug repro current.
-- Test whether workspace allocation can be pre-grown before locking.
+- Replace the temporary allocation fallbacks with a cleaner workspace
+  pre-growth or capture-safe allocation strategy.
 - If it runs, compare FP16-family KV, FP8 KV, TurboQuant k8v4, and TurboQuant
   4-bit variants.
 - Always run quality gates before accepting any compressed KV result.
@@ -363,6 +380,10 @@ Pass condition:
 
 - Compressed KV either has a documented quality-preserving recipe or remains
   clearly labeled as blocked/experimental.
+
+Current recommendation: keep TurboQuant k8v4 as a research lane. It is useful
+for proving that compressed KV can lift the context ceiling to about 60K on this
+machine, but it is too slow and too narrowly quality-gated for production.
 
 ## Suggested Next Session
 

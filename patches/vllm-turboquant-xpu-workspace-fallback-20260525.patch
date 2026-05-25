@@ -1,0 +1,44 @@
+diff --git a/vllm/v1/attention/backends/turboquant_attn.py b/vllm/v1/attention/backends/turboquant_attn.py
+index af2d0fb08..99abcab20 100644
+--- a/vllm/v1/attention/backends/turboquant_attn.py
++++ b/vllm/v1/attention/backends/turboquant_attn.py
+@@ -717,10 +717,16 @@ class TurboQuantAttentionImpl(AttentionImpl["TurboQuantMetadata"]):
+         # Use WorkspaceManager for dequant buffers.
+         # Shared across all layers — saves 60× memory at long context.
+         # Required for CUDA Graph capture (per-layer growth incompatible with CG).
+-        k_buf, v_buf = current_workspace_manager().get_simultaneous(
+-            (buf_shape, torch.float16),
+-            (buf_shape, torch.float16),
+-        )
++        try:
++            k_buf, v_buf = current_workspace_manager().get_simultaneous(
++                (buf_shape, torch.float16),
++                (buf_shape, torch.float16),
++            )
++        except AssertionError as exc:
++            if "Workspace is locked" not in str(exc):
++                raise
++            k_buf = torch.empty(buf_shape, dtype=torch.float16, device=device)
++            v_buf = torch.empty(buf_shape, dtype=torch.float16, device=device)
+         # Skip .zero_() — kernel writes all positions up to cached_len,
+         # and we only read [:cached_len] afterwards.
+         k_cached = k_buf[:, :, :alloc_len, :]
+@@ -847,13 +853,15 @@ class TurboQuantAttentionImpl(AttentionImpl["TurboQuantMetadata"]):
+         mid_o_buf = output_buf = lse_buf = None
+         if is_workspace_manager_initialized():
+             # output_buf in query dtype — matches the in-kernel fp16 cast in stage2.
+-            mid_o_buf, output_buf, lse_buf = (
+-                current_workspace_manager().get_simultaneous(
++            try:
++                mid_o_buf, output_buf, lse_buf = current_workspace_manager().get_simultaneous(
+                     ((B, Hq, S, D + 1), torch.float32),
+                     ((B, Hq, D), query.dtype),
+                     ((B, Hq), torch.float32),
+                 )
+-            )
++            except AssertionError as exc:
++                if "Workspace is locked" not in str(exc):
++                    raise
+ 
+         result = triton_turboquant_decode_attention(
+             query=query,

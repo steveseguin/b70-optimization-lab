@@ -390,6 +390,26 @@ Detailed note:
 
 `notes-20260525-c2-session-cache-ladder.md`
 
+C2 quality and sustained-decode follow-up:
+
+- Added `fact-word` and `--logprobs` modes to
+  `scripts/session_cache_canary.py`.
+- Small logprob requests worked, but long-context logprob checks failed with
+  NaN values in the OpenAI JSON response path, so logprobs are not yet a usable
+  long-context quality gate on this stack.
+- c2 strict-word checks passed at about `8K`, `21K`, and `32.5K` prompt tokens
+  per session.
+- c2 fact-word checks returned the expected B=`cobalt` and D=`amber` answers at
+  about `6.6K`, `17.5K`, and `27K` prompt tokens per session, with one brittle
+  GPU-only baseline caveat at the middle size.
+- Sustained c2 reload decode at `24874` prompt tokens per session measured about
+  `66 tok/s` per request after TTFT on the second pass. Total wall output for
+  that two-request pass was about `53.35 tok/s`.
+
+Detailed note:
+
+`notes-20260525-c2-quality-and-turboquant.md`
+
 Additional deployment observation: after the B70s were no longer used for the
 Ubuntu display, experimental c2/c4 launches could report `34304` GPU KV tokens
 instead of the earlier `26112` c2 result. Display ownership and compile/cache
@@ -400,17 +420,34 @@ shape can materially affect available KV budget.
 TurboQuant remains interesting because it reduces KV footprint and therefore
 reduces both RAM capacity pressure and PCIe transfer volume.
 
-Current TurboQuant status:
+Current TurboQuant status after the 2026-05-25 workspace fallback experiment:
 
-- `turboquant_k8v4` starts and reports `60416` KV tokens at `32768` context.
-- First completion fails with a workspace-lock assertion in
-  `turboquant_attn.py`.
-- It is not production-ready, but it may become the most useful companion to
-  CPU KV offload once the XPU workspace bug is fixed.
+- A local patch works around two locked-workspace crashes in
+  `turboquant_attn.py`: `_decode_attention` and `_continuation_prefill`.
+- Patch artifact:
+  `../../patches/vllm-turboquant-xpu-workspace-fallback-20260525.patch`.
+- With `turboquant_k8v4` and `max_model_len=32768`, vLLM reported `80128` GPU
+  KV tokens and `2.45x` max concurrency for a 32K request.
+- Strict-word copy canaries passed at about `8K` and `32.5K` prompt tokens.
+- Sustained decode at `24874` prompt tokens was only about `16.5 tok/s` after
+  TTFT, much slower than the normal FP16-family KV lane.
+- `max_model_len=65536` failed; vLLM estimated the maximum at `60672`.
+- `max_model_len=60000` started and answered a `58874` token strict-word
+  canary, but TTFT was about `53-54 s` and decode was not interactive.
+- Intel `ocloc` / IGC error 245 still appears during compile fallback.
+
+Interpretation: TurboQuant k8v4 is now mechanically past the first XPU
+workspace blockers and can reach about a 60K server context, but it is not a
+production replacement. Capacity improved substantially; decode speed and
+quality still need work.
 
 Relevant repro:
 
 `scripts/repro-minimax-turboquant-xpu-workspace-bug.sh`
+
+Detailed note:
+
+`notes-20260525-c2-quality-and-turboquant.md`
 
 ## Open Questions
 

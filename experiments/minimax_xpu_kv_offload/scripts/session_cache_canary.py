@@ -31,6 +31,17 @@ STRICT_WORDS = {
     "H": "white",
 }
 STRICT_WORD_PROMPT_VERSION = "strict-word-answer-space-v2"
+FACT_WORDS = {
+    "A": "maple",
+    "B": "cobalt",
+    "C": "violet",
+    "D": "amber",
+    "E": "saffron",
+    "F": "pearl",
+    "G": "onyx",
+    "H": "cedar",
+}
+FACT_WORD_PROMPT_VERSION = "fact-word-v1"
 
 
 def fetch_model(base_url: str) -> str:
@@ -82,12 +93,52 @@ def build_strict_word_prompt(label: str, lines: int) -> tuple[str, str]:
     return prompt, expected
 
 
+def build_fact_word_prompt(label: str, lines: int) -> tuple[str, str]:
+    expected = FACT_WORDS.get(label.upper())
+    if expected is None:
+        expected = f"fact{label.lower()}"
+    if label.upper() in {"A", "B"}:
+        fact_line = max(3, lines // 8)
+    elif label.upper() in {"C", "D"}:
+        fact_line = max(3, (lines * 3) // 4)
+    else:
+        fact_line = max(3, lines // 2)
+    rows: list[str] = []
+    for i in range(lines):
+        rows.append(
+            f"Context row {i:04d} for lane {label}: session-cache retrieval "
+            f"noise marker {label}-{i:04d}; ignore unrelated colors and words."
+        )
+        if i == fact_line:
+            rows.append(
+                f"IMPORTANT FACT FOR LANE {label}: answer_word = {expected}."
+            )
+    body = "\n".join(rows)
+    prompt = (
+        f"{body}\n\n"
+        f"Question: What is the answer_word for lane {label}? "
+        "Return the exact answer_word only. No punctuation. No explanation.\n"
+        "ANSWER: "
+    )
+    return prompt, expected
+
+
 def build_prompt(label: str, lines: int, prompt_mode: str) -> tuple[str, str | None]:
     if prompt_mode == "checklist":
         return build_checklist_prompt(label, lines), None
     if prompt_mode == "strict-word":
         return build_strict_word_prompt(label, lines)
+    if prompt_mode == "fact-word":
+        return build_fact_word_prompt(label, lines)
     raise ValueError(f"unknown prompt mode: {prompt_mode}")
+
+
+def prompt_version(prompt_mode: str) -> str:
+    if prompt_mode == "strict-word":
+        return STRICT_WORD_PROMPT_VERSION
+    if prompt_mode == "fact-word":
+        return FACT_WORD_PROMPT_VERSION
+    return "checklist-v1"
 
 
 def first_word(text: str) -> str:
@@ -95,6 +146,112 @@ def first_word(text: str) -> str:
     if match is None:
         return ""
     return match.group(0).lower()
+
+
+def summarize_logprobs(logprobs: dict[str, Any] | None) -> dict[str, Any]:
+    if not logprobs:
+        return {
+            "first_logprob_token": None,
+            "first_logprob": None,
+            "first_visible_logprob_token": None,
+            "first_visible_logprob": None,
+            "logprob_tokens": None,
+            "token_logprobs": None,
+            "top_logprobs": None,
+        }
+    tokens = logprobs.get("tokens") or []
+    token_logprobs = logprobs.get("token_logprobs") or []
+    first_visible_index = None
+    for index, token in enumerate(tokens):
+        if first_word(str(token)):
+            first_visible_index = index
+            break
+    return {
+        "first_logprob_token": tokens[0] if tokens else None,
+        "first_logprob": token_logprobs[0] if token_logprobs else None,
+        "first_visible_logprob_token": (
+            tokens[first_visible_index] if first_visible_index is not None else None
+        ),
+        "first_visible_logprob": (
+            token_logprobs[first_visible_index]
+            if first_visible_index is not None and first_visible_index < len(token_logprobs)
+            else None
+        ),
+        "logprob_tokens": tokens,
+        "token_logprobs": token_logprobs,
+        "top_logprobs": logprobs.get("top_logprobs"),
+    }
+
+
+def post_nonstream_completion(
+    base_url: str,
+    model: str,
+    prompt: str,
+    max_tokens: int,
+    temperature: float,
+    seed: int,
+    timeout: int,
+    stop: list[str] | None,
+    logprobs: int,
+) -> dict[str, Any]:
+    request_payload = {
+        "model": model,
+        "prompt": prompt,
+        "max_tokens": max_tokens,
+        "temperature": temperature,
+        "top_p": 1.0,
+        "seed": seed,
+        "stream": False,
+    }
+    if stop:
+        request_payload["stop"] = stop
+    if logprobs > 0:
+        request_payload["logprobs"] = logprobs
+    data = json.dumps(request_payload).encode("utf-8")
+    req = urllib.request.Request(
+        f"{base_url}/v1/completions",
+        data=data,
+        headers={"Content-Type": "application/json"},
+        method="POST",
+    )
+
+    started = time.perf_counter()
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            payload = json.loads(resp.read().decode("utf-8"))
+    except urllib.error.HTTPError as exc:
+        body = exc.read().decode("utf-8", errors="replace")
+        raise RuntimeError(f"HTTP {exc.code}: {body}") from exc
+    ended = time.perf_counter()
+
+    choice = payload["choices"][0]
+    text = choice.get("text") or ""
+    usage = payload.get("usage")
+    completion_tokens = usage.get("completion_tokens") if usage else None
+    prompt_tokens = usage.get("prompt_tokens") if usage else None
+    total_tokens = usage.get("total_tokens") if usage else None
+    elapsed_s = ended - started
+    tok_s_out_wall = None
+    if isinstance(completion_tokens, int) and completion_tokens > 0:
+        tok_s_out_wall = completion_tokens / elapsed_s
+
+    result = {
+        "prompt_tokens": prompt_tokens,
+        "completion_tokens": completion_tokens,
+        "total_tokens": total_tokens,
+        "elapsed_s": elapsed_s,
+        "ttft_s": None,
+        "post_ttft_s": None,
+        "tok_s_out_wall": tok_s_out_wall,
+        "tok_s_out_after_ttft": None,
+        "stream_text_chunks": None,
+        "sha256": hashlib.sha256(text.encode("utf-8")).hexdigest(),
+        "text": text,
+        "usage": usage,
+        "response_id": payload.get("id"),
+    }
+    result.update(summarize_logprobs(choice.get("logprobs")))
+    return result
 
 
 def post_stream_completion(
@@ -184,6 +341,13 @@ def post_stream_completion(
         "sha256": hashlib.sha256(text.encode("utf-8")).hexdigest(),
         "text": text,
         "usage": usage,
+        "first_logprob_token": None,
+        "first_logprob": None,
+        "first_visible_logprob_token": None,
+        "first_visible_logprob": None,
+        "logprob_tokens": None,
+        "token_logprobs": None,
+        "top_logprobs": None,
     }
 
 
@@ -198,33 +362,44 @@ def run_one(
     timeout: int,
     prompt_mode: str,
     stop: list[str] | None,
+    logprobs: int,
 ) -> dict[str, Any]:
     prompt, expected_word = build_prompt(label, lines, prompt_mode)
-    result = post_stream_completion(
-        base_url=base_url,
-        model=model,
-        prompt=prompt,
-        max_tokens=max_tokens,
-        temperature=temperature,
-        seed=seed,
-        timeout=timeout,
-        stop=stop,
-    )
+    if logprobs > 0:
+        result = post_nonstream_completion(
+            base_url=base_url,
+            model=model,
+            prompt=prompt,
+            max_tokens=max_tokens,
+            temperature=temperature,
+            seed=seed,
+            timeout=timeout,
+            stop=stop,
+            logprobs=logprobs,
+        )
+    else:
+        result = post_stream_completion(
+            base_url=base_url,
+            model=model,
+            prompt=prompt,
+            max_tokens=max_tokens,
+            temperature=temperature,
+            seed=seed,
+            timeout=timeout,
+            stop=stop,
+        )
     observed_word = first_word(result["text"])
     result.update(
         {
             "label": label,
             "prompt_sha256": hashlib.sha256(prompt.encode("utf-8")).hexdigest(),
             "prompt_mode": prompt_mode,
-            "prompt_version": (
-                STRICT_WORD_PROMPT_VERSION
-                if prompt_mode == "strict-word"
-                else "checklist-v1"
-            ),
+            "prompt_version": prompt_version(prompt_mode),
             "prompt_lines": lines,
             "max_tokens": max_tokens,
             "temperature": temperature,
             "seed": seed,
+            "logprobs_requested": logprobs,
             "expected_word": expected_word,
             "observed_word": observed_word,
             "expected_word_match": (
@@ -277,6 +452,30 @@ def compare_results(
             comparisons[word_key] = (
                 item["observed_word"] == base_item.get("observed_word")
             )
+            first_token_key = (
+                f"{item['label']}_pass{item['pass_index']}"
+                "_first_logprob_token_matches_baseline"
+            )
+            if (
+                item.get("first_logprob_token") is not None
+                or base_item.get("first_logprob_token") is not None
+            ):
+                comparisons[first_token_key] = (
+                    item.get("first_logprob_token")
+                    == base_item.get("first_logprob_token")
+                )
+            first_visible_key = (
+                f"{item['label']}_pass{item['pass_index']}"
+                "_first_visible_logprob_token_matches_baseline"
+            )
+            if (
+                item.get("first_visible_logprob_token") is not None
+                or base_item.get("first_visible_logprob_token") is not None
+            ):
+                comparisons[first_visible_key] = (
+                    item.get("first_visible_logprob_token")
+                    == base_item.get("first_visible_logprob_token")
+                )
 
     return comparisons
 
@@ -288,7 +487,7 @@ def main() -> int:
     parser.add_argument("--labels", default="A,B")
     parser.add_argument(
         "--prompt-mode",
-        choices=["checklist", "strict-word"],
+        choices=["checklist", "strict-word", "fact-word"],
         default="checklist",
     )
     parser.add_argument("--prompt-lines", type=int, default=700)
@@ -298,6 +497,12 @@ def main() -> int:
     parser.add_argument("--temperature", type=float, default=0.0)
     parser.add_argument("--seed", type=int, default=1234)
     parser.add_argument("--timeout", type=int, default=900)
+    parser.add_argument(
+        "--logprobs",
+        type=int,
+        default=0,
+        help="Request non-streaming OpenAI logprobs for generated tokens.",
+    )
     parser.add_argument(
         "--stop-newline",
         action="store_true",
@@ -317,17 +522,15 @@ def main() -> int:
         "base_url": args.base_url,
         "model": model,
         "prompt_mode": args.prompt_mode,
-        "prompt_version": (
-            STRICT_WORD_PROMPT_VERSION
-            if args.prompt_mode == "strict-word"
-            else "checklist-v1"
-        ),
+        "prompt_version": prompt_version(args.prompt_mode),
         "prompt_lines": args.prompt_lines,
         "max_tokens": args.max_tokens,
         "passes": args.passes,
         "concurrency": args.concurrency,
         "temperature": args.temperature,
         "seed": args.seed,
+        "logprobs": args.logprobs,
+        "stream": args.logprobs <= 0,
         "stop": ["\n"] if args.stop_newline else None,
         "results": [],
     }
@@ -350,6 +553,7 @@ def main() -> int:
                     args.timeout,
                     args.prompt_mode,
                     output["stop"],
+                    args.logprobs,
                 ): label
                 for label in labels
             }
@@ -379,6 +583,10 @@ def main() -> int:
                             "expected_word": item["expected_word"],
                             "observed_word": item["observed_word"],
                             "expected_word_match": item["expected_word_match"],
+                            "first_logprob_token": item["first_logprob_token"],
+                            "first_visible_logprob_token": item[
+                                "first_visible_logprob_token"
+                            ],
                             "sha256": item["sha256"][:16],
                         }
                     ),
