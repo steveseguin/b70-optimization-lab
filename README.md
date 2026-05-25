@@ -7,6 +7,7 @@ Community setup guides, benchmark recipes, troubleshooting notes, and patches fo
 - Ask questions: https://github.com/steveseguin/Unofficial-Intel-XPU-Community/discussions
 - Community wiki: https://github.com/steveseguin/Unofficial-Intel-XPU-Community/wiki
 - Docs index: [docs/README.md](docs/README.md)
+- Current reproducibility map: [docs/current-reproducibility-map.md](docs/current-reproducibility-map.md)
 - MiniMax install guide: [docs/b70-minimax-ubuntu24-deployment.md](docs/b70-minimax-ubuntu24-deployment.md)
 - Model recipes: [docs/model-recipes.md](docs/model-recipes.md)
 - FAQ: [docs/faq.md](docs/faq.md)
@@ -28,6 +29,7 @@ This repository is meant to become a stable community hub for Intel XPU local AI
 | --- | --- |
 | Ask for setup help | [Discussions](https://github.com/steveseguin/Unofficial-Intel-XPU-Community/discussions) |
 | Read community-maintained notes | [Wiki](https://github.com/steveseguin/Unofficial-Intel-XPU-Community/wiki) |
+| Reproduce the current work | [Current reproducibility map](docs/current-reproducibility-map.md) |
 | Deploy MiniMax M2.7 INT4 on 4x B70 | [MiniMax Ubuntu 24 guide](docs/b70-minimax-ubuntu24-deployment.md) |
 | Find model-specific recipes | [Model recipes](docs/model-recipes.md) |
 | Share a benchmark | [Community results guide](docs/community-results.md) |
@@ -52,6 +54,11 @@ This is a deployable baseline, not the final speed ceiling. The strict
 benchmark/quality lane remains p512/n1536 at context `2048` for comparability;
 the served OpenAI-compatible endpoint now defaults to `32768` and validated a
 32,408-token prompt plus 64 generated tokens without OOM.
+
+Experimental RAM-backed session-cache and TurboQuant work is tracked separately
+under [experiments/minimax_xpu_kv_offload](experiments/minimax_xpu_kv_offload/README.md).
+The current known-good session-cache profile is c2 for two long parked
+sessions; c4/c8 and TurboQuant remain research modes, not production defaults.
 
 ## How To Contribute
 

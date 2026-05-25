@@ -10,6 +10,14 @@ Execution plan:
 
 `../../plans/2026-05-24-minimax-xpu-kv-offload-plan.md`
 
+Quick reproduction guide:
+
+`REPRODUCE.md`
+
+Tracked artifact index:
+
+`ARTIFACTS.md`
+
 The stable production lane remains:
 
 - Model: `Lasimeri/MiniMax-M2.7-int4-AutoRound`

@@ -25,6 +25,7 @@ Do not compare two results unless their model, quantization, prompt length, outp
 | --- | --- | --- |
 | `../repro/minimax-m27-b70-110tps-ubuntu24-20260523/` | Deployable baseline | Fresh Ubuntu 24.04 setup for 4x B70, MiniMax M2.7 INT4 AutoRound, vLLM OpenAI-compatible endpoint on `0.0.0.0:8000`. |
 | `../repro/minimax-m27-b70-89tps-20260520/` | Strict speed baseline | Older strict quality-passed MiniMax M2.7 INT4 lane with higher output-token throughput. Useful for optimization comparisons. |
+| `../experiments/minimax_xpu_kv_offload/` | Experimental | Session-cache c2/c4/c8, TurboQuant, and CPU-paged attention research. Use for review and experiments, not as the production recipe. |
 
 ## MiniMax M2.7 INT4 AutoRound
 
@@ -54,6 +55,27 @@ bash scripts/07-smoke-test-endpoint.sh
 ```
 
 See [the full deployment guide](b70-minimax-ubuntu24-deployment.md) for explanation and troubleshooting.
+
+## Session-Cache And Long-Context Experiments
+
+For RAM-backed session-cache experiments, start with:
+
+```bash
+cd experiments/minimax_xpu_kv_offload
+less REPRODUCE.md
+```
+
+Current status:
+
+- c1 is the production 32K endpoint.
+- c2 is the current known-good session-cache profile for two long parked
+  conversations.
+- c4/c8 have useful ladder results but are not production-ready.
+- TurboQuant has a tracked XPU workspace fallback patch, but remains slower and
+  experimental.
+
+See [Current Reproducibility Map](current-reproducibility-map.md) for the full
+artifact map.
 
 ## Future Recipe Slots
 
@@ -95,4 +117,3 @@ For a result to be useful to other people, include:
 - A quality statement. "It ran fast" is not enough.
 - Whether the endpoint was served through vLLM, llama.cpp, or another engine.
 - Whether throughput is output-token throughput or total-token throughput.
-

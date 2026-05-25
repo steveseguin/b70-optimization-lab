@@ -1,6 +1,6 @@
 # Codex Agent Handoff
 
-Last updated: 2026-05-23
+Last updated: 2026-05-25
 
 This file is the first thing a new Codex agent should read when continuing the
 Intel Arc Pro B70 LLM optimization work.
@@ -100,6 +100,35 @@ This fresh deployment is not the fastest output-token lane known in the repo.
 Treat it as the current best documented "install from a fresh system and serve
 on the LAN" baseline.
 
+Current session-cache / long-context research state:
+
+- Research folder: `experiments/minimax_xpu_kv_offload/`
+- Start with: `experiments/minimax_xpu_kv_offload/REPRODUCE.md`
+- Artifact index: `experiments/minimax_xpu_kv_offload/ARTIFACTS.md`
+- Operations note:
+  `experiments/minimax_xpu_kv_offload/notes-20260525-session-cache-operations.md`
+- Profile switcher:
+  `experiments/minimax_xpu_kv_offload/scripts/switch_session_cache_profile.sh`
+- Status helper:
+  `experiments/minimax_xpu_kv_offload/scripts/session_cache_status.sh`
+- c1 remains production: `32768`, `max_num_seqs=1`, no CPU KV offload.
+- c2 is the current known-good RAM-backed session-cache profile. A live ops
+  smoke with two `22540`-token fact-word sessions matched exact output hashes
+  across passes; second-pass reload TTFT was `0.320-0.570 s`, with
+  CPU-to-GPU KV reload around `16.2 GB/s`.
+- c4/c8 are still research. Earlier c4/c8 ladders produced useful results, and
+  c4/c8 sustained small-context warmed total decode was about `110 tok/s`, but
+  live c4 service switching later hit a second-pass waiting/deferred stall and
+  `UR_RESULT_ERROR_DEVICE_LOST` during vLLM block-table copy to GPU.
+- TurboQuant is experimental. The patch
+  `patches/vllm-turboquant-xpu-workspace-fallback-20260525.patch` gets past
+  the first XPU locked-workspace crashes, and `turboquant_k8v4` can report
+  about `80128` GPU KV tokens at 32K. It remains much slower than the
+  FP16-family KV baseline and does not provide true 196K active context.
+- Full `196608` active context is not solved. The current exact-quality path is
+  CPU-paged attention, documented in
+  `experiments/minimax_xpu_kv_offload/notes-20260525-cpu-paged-attention-design.md`.
+
 ## Quality Rules
 
 Do not promote a speed result unless quality is preserved.
@@ -124,9 +153,13 @@ For practical task lanes:
 
 Start here on a fresh machine:
 
+- `AGENTS.md`
+- `docs/current-reproducibility-map.md`
 - `docs/b70-minimax-ubuntu24-deployment.md`
 - `repro/minimax-m27-b70-110tps-ubuntu24-20260523/README.md`
 - `repro/minimax-m27-b70-110tps-ubuntu24-20260523/scripts/`
+- `experiments/minimax_xpu_kv_offload/REPRODUCE.md`
+- `experiments/minimax_xpu_kv_offload/ARTIFACTS.md`
 - `repro/minimax-m27-b70-89tps-20260520/README.md`
 - `repro/minimax-m27-b70-89tps-20260520/scripts/00-install-system-deps.sh`
 - `repro/minimax-m27-b70-89tps-20260520/scripts/01-download-model.sh`
@@ -183,8 +216,11 @@ Expected regex2 result class:
   corrupt or degrade. Keep validating practical tasks.
 - JSON structured lanes are better than free-form but can run below the HTML
   fast lane; use parsed JSON validation and count retries.
-- Concurrency 2 is not ready. Prior c2 graph/no-graph attempts hit stalls or
-  Torch XPU indexing assertions.
+- True active-context overflow is not ready. CPU KV offload works as a
+  session-cache/reload path for contexts that individually fit in GPU KV; it
+  does not yet let one exact-attention request exceed live GPU KV.
+- c4/c8 are not production-ready. They have useful ladder data, but c4 live
+  operations hit a scheduler stall and a Level Zero device-lost path.
 - Larger prefill chunks such as 1024 tokens can trigger Intel `ocloc`/IGC
   compiler failures on this stack; keep `max_num_batched_tokens=512` unless
   testing that specifically.
@@ -199,11 +235,11 @@ Best next work:
 - Build reliable prefill/context measurements without lowering decode quality.
 - Long-context/concurrency RAM-overflow work is now tracked as a separate
   research lane in `experiments/minimax_xpu_kv_offload/`. Keep the stable 32K
-  endpoint as the fallback. On 2026-05-24, `--kv-offloading-size 64` plus a
-  temporary admission-check patch got past the GPU-only KV capacity check for
-  `196608`/c4, but vLLM then failed with `CPU Offloading is currently only
-  supported on CUDA-alike GPUs`. The next real task is an XPU port of the CPU
-  KV offload worker, not another launch-flag change.
+  endpoint as the fallback. The initial CUDA-only CPU KV offload blocker was
+  moved forward with an XPU worker prototype. That prototype can move KV blocks
+  through pinned host RAM and supports session-cache/reload behavior, but the
+  active request still needs its working KV in live GPU memory. The next real
+  task for full context is CPU-paged attention, not another launch-flag change.
 - Next context/speed options are captured in
   `notes/2026-05-23-minimax-context-speed-next-options.md`. Best first
   candidate is FP8 KV cache (`--kv-cache-dtype fp8`, optionally
@@ -225,14 +261,18 @@ Best next work:
   `data/localmaxxing-minimax-m27-autoround-openai-32k-endpoint-metrics-20260524.payload.json`,
   but POST attempts returned HTTP 502; retry later.
 - TurboQuant repro script:
-  `scripts/repro-minimax-turboquant-xpu-workspace-bug.sh`. Current
-  `turboquant_k8v4` result reaches readiness and reports `60,416` KV tokens at
-  32K, but first completion fails with a TurboQuant workspace-lock assertion.
+  `scripts/repro-minimax-turboquant-xpu-workspace-bug.sh`. The current
+  workspace fallback patch is tracked at
+  `patches/vllm-turboquant-xpu-workspace-fallback-20260525.patch`; after the
+  patch, `turboquant_k8v4` can answer strict-word canaries at about 8K and
+  32.5K prompt sizes and reports about `80128` GPU KV tokens at 32K, but decode
+  is much slower than the normal FP16-family KV lane.
 - Speed recovery policy:
   `notes/2026-05-23-speed-recovery-quality-plan.md`. Do not promote 90+ tok/s
   graph/runtime paths unless exact-token, semantic, arithmetic, and practical
   quality gates pass.
-- Debug c2/concurrency failures with small two-request repros.
+- Debug c4/c8 service-mode failures with small canaries before trying long
+  sustained decode. c2 is the current safer RAM-backed lane.
 - Continue lower-level fusion only where math is exactly preserved:
   Q/K variance allreduce plus RMS apply, hidden allreduce plus residual/RMSNorm,
   MoE output plus epilogue, and final projection/lm-head boundaries.
@@ -248,7 +288,9 @@ Avoid:
 
 ## GitHub And LocalMaxxing
 
-Use the GitHub connector path for publishing, not local shell auth.
+Use whichever GitHub write path is configured for the environment, and record
+the commit IDs in the final response. On this host, local git push over the
+installed deploy key has been used successfully.
 
 Significant benchmark results should be submitted to LocalMaxxing with payloads
 and responses recorded under `data/`.
@@ -257,6 +299,7 @@ Recent important LocalMaxxing IDs:
 
 - MiniMax structured regex2: `cmphg048s00mppc0192sahyug`
 - MiniMax strict p512/n1536 high: `cmpct6t4m007fnw01yjdtlcs4`
+- MiniMax OpenAI 32K context endpoint: `cmpj1fmvv001hqr01oj4hiu3d`
 - JSON gated c1 practical task: `cmpgv9p9j007qpc01oq5zqhdg`
 - JSON c1 2k-context follow-up: `cmpgx0yrb009fpc0183xjri4j`
 

@@ -5,6 +5,7 @@ This docs folder is the human entry point for the B70 optimization work. The exe
 ## Start Here
 
 - [MiniMax M2.7 INT4 on 4x B70, Ubuntu 24](b70-minimax-ubuntu24-deployment.md): deploy an OpenAI-compatible vLLM endpoint.
+- [Current Reproducibility Map](current-reproducibility-map.md): one-page map for the stable endpoint, session-cache work, TurboQuant patch, and CPU-paged attention research.
 - [Model Recipes](model-recipes.md): which recipe folder to use for each model/build target.
 - [FAQ](faq.md): practical answers for users new to B70s, vLLM, XPU, and local model deployment.
 - [GPU Comparison for Local AI](gpu-comparison-local-ai.md): rough pricing/spec/performance framing for B70s versus common alternatives.
@@ -25,6 +26,7 @@ The community build guide includes example B70 photos and explains what details 
 - `data/`: structured benchmark records, payloads, and LocalMaxxing responses.
 - `patches/`: patch records and source-level optimization deltas.
 - `scripts/`: shared harnesses used by repro folders and lab runs.
+- `experiments/`: active research lanes that are not production recipes yet.
 
 ## Community Links
 
@@ -59,3 +61,7 @@ instead of the older `89-93` class. See
 
 The 32k context promotion is documented in
 `../notes/2026-05-23-b70-display-disable-32768-context.md`.
+
+The session-cache, TurboQuant, and full-context research work is indexed in
+`current-reproducibility-map.md` and
+`../experiments/minimax_xpu_kv_offload/REPRODUCE.md`.
