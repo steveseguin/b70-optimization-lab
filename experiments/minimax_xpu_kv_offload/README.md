@@ -582,6 +582,31 @@ Stage A vLLM integration attempt:
   The next prototype needs an explicit staged-attention path with carefully
   constructed block tables and LSE comparison.
 
+## Dense-Scratch CPU-Staged Attention
+
+Follow-up probes on 2026-05-25 narrowed the active-overflow path:
+
+- Added `probes/xpu_cpu_staged_attention_probe.py` to test paged XPU scratch.
+  It is a useful negative diagnostic: paged scratch output can be close, but
+  returned LSE is unstable enough to break exact chunk merging.
+- Added `probes/xpu_cpu_dense_staged_attention_probe.py` to test dense XPU
+  scratch. This is the promising route.
+- Dense full attention matched normal paged full attention output to about
+  `3e-05` to `6e-05`, despite paged LSE being unreliable.
+- A MiniMax-shaped synthetic dense-staged run passed at `32768` tokens with
+  `8` KV heads, `128` head size, `16384` CPU-staged prefix tokens, and
+  `8192` token dense scratch chunks.
+- That run matched normal paged output within `3.0517578125e-05` and matched
+  dense full LSE within `9.5367431640625e-07`.
+
+Decision: stop pursuing paged scratch merging for true active overflow. The
+next vLLM prototype should use dense scratch chunks for both CPU-resident old
+KV and GPU-resident suffix KV, then merge dense attention states.
+
+Detailed note:
+
+`notes-20260525-dense-staged-cpu-attention.md`
+
 ## Current 196K / Multi-Session Conclusion
 
 The requested end goal is useful: four or more concurrent sessions, ideally
@@ -599,8 +624,9 @@ reloads KV for sessions whose active working set fits in GPU KV. It does not
 make XPU attention read arbitrary old KV blocks directly from host RAM.
 
 Production should stay on the `32768` FP16-family KV endpoint. The next R&D
-step is CPU-paged or CPU-streamed attention, not just larger
-`--kv-offloading-size` values or higher `max_model_len`.
+step is dense-scratch CPU-staged attention, not just larger
+`--kv-offloading-size` values or higher `max_model_len`. Paged scratch merging
+is currently blocked by unreliable XPU paged-attention LSE values.
 
 Restore note: a fatal near-limit 196K TurboQuant run left orphan
 `VLLM::Worker_TP*` processes holding XPU memory. If the normal server fails on
@@ -625,8 +651,9 @@ restart with near-zero free XPU memory, kill the orphan workers and stale
   cache-specific issue?
 - Can a logprob/token-id canary prove c2 exactness more cleanly than text hashes
   when generated continuation text varies?
-- Can a synchronous CPU-paged attention prototype load just-in-time KV block
-  ranges into GPU scratch space and still produce exact strict-word canaries?
+- Can a synchronous dense-scratch CPU-staged attention prototype load
+  just-in-time KV ranges into XPU scratch space and still produce exact
+  strict-word canaries?
 - Can TurboQuant or another compressed KV format be quality-gated strongly
   enough to serve as a production option, or should it stay research-only?
 

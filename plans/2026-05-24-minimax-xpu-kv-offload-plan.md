@@ -458,26 +458,41 @@ Status on 2026-05-25:
   `experiments/minimax_xpu_kv_offload/notes-20260525-stagea-gpu-split-attention.md`.
 - Detailed design note:
   `experiments/minimax_xpu_kv_offload/notes-20260525-cpu-paged-attention-design.md`.
+- Dense-scratch follow-up note:
+  `experiments/minimax_xpu_kv_offload/notes-20260525-dense-staged-cpu-attention.md`.
+- New finding: paged XPU scratch is not safe enough for active overflow because
+  paged FlashAttention can return unstable LSE values for scratch caches. Dense
+  scratch avoids that issue in standalone probes.
+- MiniMax-shaped synthetic dense-staged probe passed at `32768` tokens,
+  `8` KV heads, `128` head size, `16384` CPU-staged prefix tokens, and
+  `8192` token scratch chunks:
+  - staged output vs normal paged output: `3.0517578125e-05`
+  - staged output vs dense full output: `1.52587890625e-05`
+  - staged LSE vs dense full LSE: `9.5367431640625e-07`
+  - result file:
+    `/mnt/fast-ai/bench-results/minimax-m27-b70-serve/xpu-cpu-dense-staged-attn-synth-32768-h8-20260525.json`
 
 Work items:
 
 1. Keep the standalone probe current:
    `experiments/minimax_xpu_kv_offload/probes/split_attention_merge_probe.py`.
-2. Add a disabled-by-default vLLM branch, for example
-   `VLLM_XPU_CPU_PAGED_ATTN=1`, only for XPU FP16-family KV.
-3. Stage A in vLLM, revised: implement an explicit GPU-resident split-attention
-   path instead of routing through generic cascade metadata. It must compare
-   logits/token output against the normal path before any CPU staging.
-4. Stage B in vLLM: still under the GPU limit, deliberately store older chunks
-   in CPU KV and stage them back through a GPU scratch workspace during
-   attention.
-5. Stage C in vLLM: allow a small active overflow, for example `36K-40K`, with
-   old logical blocks CPU-resident and only staging chunks live on GPU.
-6. Add instrumentation to record per-layer staged bytes, copy latency, TTFT,
+2. Keep the dense scratch probe current:
+   `experiments/minimax_xpu_kv_offload/probes/xpu_cpu_dense_staged_attention_probe.py`.
+3. Add a disabled-by-default vLLM branch, for example
+   `VLLM_XPU_CPU_DENSE_STAGED_ATTN=1`, only for XPU FP16-family KV.
+4. Stage A in vLLM, revised: implement an explicit dense-scratch
+   split-attention path under the normal GPU KV limit. It must compare
+   logits/token output against the normal paged path before any CPU staging.
+5. Stage B in vLLM: still under the GPU limit, deliberately store older chunks
+   in CPU KV and stage both old CPU KV and live GPU suffix KV into dense
+   scratch during attention.
+6. Stage C in vLLM: allow a small active overflow, for example `36K-40K`, with
+   old logical blocks CPU-resident and only dense scratch chunks live on GPU.
+7. Add instrumentation to record per-layer staged bytes, copy latency, TTFT,
    output tok/s, and CPU RAM used.
-7. Only after correctness works, optimize with XPU streams, range coalescing,
+8. Only after correctness works, optimize with XPU streams, range coalescing,
    and prefetch.
-8. Keep `32768` production serving separate from this R&D branch.
+9. Keep `32768` production serving separate from this R&D branch.
 
 Expected output:
 
