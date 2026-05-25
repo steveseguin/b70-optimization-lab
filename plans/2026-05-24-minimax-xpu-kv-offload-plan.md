@@ -217,6 +217,12 @@ Status:
 Deliverable: prove offloaded/reloaded KV produces the same answers as GPU KV
 for cases where the active sequence still fits in GPU memory.
 
+Status on 2026-05-25: partially tested, not yet passed for production.
+Free-form longer concurrent completions did not produce exact text-hash
+matches across passes. One-token c2 matched across passes. One-token c4
+matched for three of four labels. A stricter constrained-token canary is now
+needed before promoting CPU KV session caching as quality-equivalent.
+
 Test ladder:
 
 - 32K GPU-only baseline canaries.
@@ -281,7 +287,21 @@ Status on 2026-05-25:
 - Initial c2 smoke passed with two distinct `14000`-token prompts.
 - First pass stored about `4.29 GB` GPU-to-CPU.
 - Second pass reloaded about `7.02 GB` CPU-to-GPU in `0.467 s`.
-- Next tests need deterministic canaries and longer post-reload decode.
+- A reusable canary script now exists at
+  `experiments/minimax_xpu_kv_offload/scripts/session_cache_canary.py`.
+- c2 longer reload decode worked with two `16134`-token prompts and `128`
+  output tokens. Second-pass reload returned in `2.785 s` per request, about
+  `60 tok/s` after TTFT per request.
+- c2 CPU-to-GPU KV movement measured about `13.9 GB/s`.
+- c4 smaller-context reload worked with four `9234`-token prompts and `64`
+  output tokens. Second-pass reload returned in `1.6-2.6 s` per request, about
+  `52-79 tok/s` after TTFT per request.
+- c4 CPU-to-GPU KV movement measured about `15.8 GB/s`.
+- c4 first compile exposed an Intel `ocloc` / IGC internal compiler error
+  before fallback compilation completed; the cached rerun started normally.
+- Exact text hashes are not stable enough yet for production quality claims.
+  See
+  `experiments/minimax_xpu_kv_offload/notes-20260525-phase6-session-cache-canaries.md`.
 
 Order:
 
@@ -301,6 +321,10 @@ Pass condition:
 
 - No hangs, request starvation, or process crashes.
 - Clear expected-use recommendation, even if throughput is low.
+
+Current recommendation: c2/c4 session-cache behavior is useful research and
+mechanically works, but c1 `32768` remains the production endpoint until the
+exactness/quality canary is stronger.
 
 ## Phase 7: TurboQuant And Compressed KV
 

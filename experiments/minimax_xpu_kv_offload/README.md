@@ -321,6 +321,40 @@ Interpretation: CPU KV offload can already act as an exact session cache for
 contexts that fit individually in GPU KV. This is a useful community-facing
 capability, but it is separate from full active-context overflow.
 
+## Phase 6 Session-Cache Canaries And C4 Ladder
+
+Follow-up validation on 2026-05-25 added a reusable OpenAI endpoint canary
+script and tested longer reload decode:
+
+- Added `scripts/session_cache_canary.py`.
+- Stable c1 baseline with two `16134`-token prompts and `128` generated tokens
+  measured about `74 tok/s` after TTFT for each sequential request.
+- c2 with CPU KV offload repeated those two prompts concurrently. The second
+  pass returned in `2.785 s` per request with about `60 tok/s` after TTFT.
+- c2 moved CPU-to-GPU KV at about `13.9 GB/s`.
+- c4 with four `9234`-token prompts worked after an expensive first compile.
+  The second pass returned in `1.6-2.6 s` per request, with about
+  `52-79 tok/s` after TTFT.
+- c4 moved CPU-to-GPU KV at about `15.8 GB/s`.
+- The first c4 compile exposed an Intel `ocloc` / IGC internal compiler error
+  (`error code 245`, floating point exception) before fallback compilation
+  completed.
+
+Important caveat: longer free-form concurrent completions do not produce exact
+text-hash matches across passes. One-token c2 matched for A/B. One-token c4
+matched for A/B/D but not C. Treat CPU KV session caching as mechanically
+working and promising, but do not promote it as production quality-equivalent
+until a stricter deterministic canary and semantic quality gate pass.
+
+Detailed note:
+
+`notes-20260525-phase6-session-cache-canaries.md`
+
+Additional deployment observation: after the B70s were no longer used for the
+Ubuntu display, experimental c2/c4 launches could report `34304` GPU KV tokens
+instead of the earlier `26112` c2 result. Display ownership and compile/cache
+shape can materially affect available KV budget.
+
 ## TurboQuant Interaction
 
 TurboQuant remains interesting because it reduces KV footprint and therefore
@@ -350,6 +384,8 @@ Relevant repro:
 - Is TurboQuant k8v4 quality-equivalent enough for long-context practical use,
   assuming the workspace allocation bug is fixed?
 - How much decode throughput is lost per offloaded KV block ratio on PCIe4?
+- Why does c4 exact one-token output differ for one label under concurrent
+  reload, and is that normal XPU/MoE nondeterminism or a cache-specific issue?
 
 ## Stable Restore Command
 
