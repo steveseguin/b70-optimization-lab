@@ -457,6 +457,9 @@ reported the expected `34304` GPU KV tokens, but an operational smoke hit a
 second-pass waiting/deferred stall and a rerun hit
 `UR_RESULT_ERROR_DEVICE_LOST` while copying vLLM block-table state to GPU. Keep
 c1 as production and use c2 as the safer correctness lane until c4 is debugged.
+The same switcher successfully ran c2 with two concurrent `22540`-token
+fact-word sessions; both matched exact output hashes across passes, with
+second-pass reload TTFT of `0.320-0.570 s`.
 
 Sustained concurrent decode follow-up:
 

@@ -230,3 +230,68 @@ Next c4 debugging ideas:
 4. Add a small watchdog script that fails fast when requests remain
    waiting/deferred with zero running requests.
 5. Capture the block-table copy size near the `copy_to_gpu` device-loss path.
+
+## Live C2 Operations Smoke
+
+After the c4 failure, the switcher was used to start c2:
+
+```bash
+cd /home/steve/llm-optimizations
+experiments/minimax_xpu_kv_offload/scripts/switch_session_cache_profile.sh c2
+```
+
+Log:
+
+`/mnt/fast-ai/bench-results/minimax-m27-b70-serve/serve-session-cache-c2-20260525T223257Z.log`
+
+Result:
+
+- `/v1/models` reported `max_model_len=32768`.
+- c2 reported `34304` GPU KV tokens.
+- The ops smoke used two concurrent fact-word sessions.
+- Each prompt was `22540` tokens.
+- Both labels matched the expected word and exact output hash across passes.
+- Second-pass reload TTFT was `0.320 s` for A and `0.570 s` for B.
+- vLLM reported external prefix cache hit rate `50.0%`.
+- CPU-to-GPU KV movement was `11442061312` bytes in `0.705925844 s`, about
+  `16.2 GB/s`.
+
+Smoke command:
+
+```bash
+ts=$(date -u +%Y%m%dT%H%M%SZ)
+experiments/minimax_xpu_kv_offload/scripts/session_cache_canary.py \
+  --prompt-mode fact-word \
+  --prompt-lines 900 \
+  --max-tokens 4 \
+  --passes 2 \
+  --concurrency 2 \
+  --labels A,B \
+  --stop-newline \
+  --output-json "/mnt/fast-ai/bench-results/minimax-m27-b70-serve/session-cache-c2-ops-fact-900lines-${ts}.json"
+```
+
+Result file:
+
+`/mnt/fast-ai/bench-results/minimax-m27-b70-serve/session-cache-c2-ops-fact-900lines-20260525T223527Z.json`
+
+Interpretation: c2 is the current known-good operational session-cache profile
+for juggling two long conversations. It does not create one larger active
+context, but it does show that two `22.5K`-token sessions can be parked/reloaded
+with sub-second second-pass TTFT and exact canary output.
+
+After the smoke, the switcher restored c1:
+
+```bash
+experiments/minimax_xpu_kv_offload/scripts/switch_session_cache_profile.sh c1
+```
+
+Restored c1 log:
+
+`/mnt/fast-ai/bench-results/minimax-m27-b70-serve/serve-session-cache-c1-20260525T223617Z.log`
+
+Final state:
+
+- profile state file says `c1`;
+- `/v1/models` reports `max_model_len=32768`;
+- a small completion smoke returned normally.
