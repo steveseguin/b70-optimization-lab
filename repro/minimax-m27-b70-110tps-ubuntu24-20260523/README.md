@@ -78,8 +78,15 @@ Observed on the working system:
 - vLLM source commit: `c51df43005726a09c6eb7348e8c1b00501c70a8e`
 - llm-scaler source commit: `4bfc0070090cc54afdb2d46b8e57882359141568`
 - vllm-xpu-kernels source commit: `28e1f5e74c15744b69cf3b760f6160ceabd15de0`
+- vllm-xpu-kernels source repo: `https://github.com/vllm-project/vllm-xpu-kernels`
 
 Important: source `/opt/intel/oneapi/compiler/2025.3/env/vars.sh` for builds. On this machine, using the umbrella `/opt/intel/oneapi/setvars.sh` selected oneAPI 2026 and caused SYCL header/build trouble.
+
+Install provenance: earlier 2026-05-20 repro scripts installed
+`vllm-xpu-kernels==0.1.7` as a wheel. This 2026-05-23 Ubuntu 24.04
+bring-up first tested wheel installs, then settled on an editable source build
+from `vllm-project/vllm-xpu-kernels` at the commit above to resolve the active
+PyTorch ABI mismatch.
 
 ## Fresh-System Quick Start
 

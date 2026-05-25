@@ -56,7 +56,7 @@ fi
 checkout_clean "$LLM_SCALER_ROOT" 4bfc0070090cc54afdb2d46b8e57882359141568
 
 if [ ! -d "$VLLM_XPU_KERNELS_SRC/.git" ]; then
-  git clone https://github.com/intel/vllm-xpu-kernels.git "$VLLM_XPU_KERNELS_SRC"
+  git clone https://github.com/vllm-project/vllm-xpu-kernels.git "$VLLM_XPU_KERNELS_SRC"
 fi
 checkout_clean "$VLLM_XPU_KERNELS_SRC" 28e1f5e74c15744b69cf3b760f6160ceabd15de0
 git -C "$VLLM_XPU_KERNELS_SRC" submodule update --init --recursive

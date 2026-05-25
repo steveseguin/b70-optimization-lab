@@ -53,6 +53,9 @@ The model id in requests can be the local model path:
 ## Build Learnings
 
 - Build `vllm-xpu-kernels` from source after installing the final PyTorch XPU wheel.
+- Earlier 2026-05-20 runs used a `vllm-xpu-kernels==0.1.7` wheel; this
+  Ubuntu 24.04 bring-up ended on an editable source build from
+  `vllm-project/vllm-xpu-kernels`.
 - Build llm-scaler after PyTorch is final too.
 - Use oneAPI compiler 2025.3 directly.
 - Keep `MAX_JOBS` conservative for native builds.
