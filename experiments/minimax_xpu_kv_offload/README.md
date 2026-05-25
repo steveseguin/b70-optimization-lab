@@ -411,6 +411,35 @@ Detailed note:
 
 `notes-20260525-c2-quality-and-turboquant.md`
 
+C4/C8 session-cache ladder follow-up:
+
+- Added `scripts/serve_session_cache.sh` as a tracked helper for c1/c2/c4/c8
+  launch shapes.
+- Updated the tracked 110tps repro OpenAI-server launcher with environment
+  knobs for `VLLM_MAX_NUM_SEQS`, `VLLM_MAX_NUM_BATCHED_TOKENS`,
+  `VLLM_KV_OFFLOADING_SIZE`, and `VLLM_NO_SCHEDULER_RESERVE_FULL_ISL`.
+- c4 with `--kv-offloading-size 32` reported `34304` live GPU KV tokens and
+  `8.0 GiB` CPU KV budget per TP worker.
+- c4 fact-word at four `22540`-token sessions passed expected-word checks
+  across two passes. Second-pass reload TTFT was `0.390-1.211 s`.
+- c8 with `--kv-offloading-size 64` reported only `22784` live GPU KV tokens
+  and `16.0 GiB` CPU KV budget per TP worker. More RAM budget reduced live GPU
+  headroom.
+- c8 startup was expensive: `315.97 s` engine init, including `234.78 s` of
+  compile time.
+- c8 fact-word at eight `12540`-token sessions passed expected-word checks.
+  Second-pass reload TTFT was `0.552-3.709 s`.
+- c8 fact-word at eight `17540`-token sessions also passed. This is about
+  `140321` combined prompt tokens. Second-pass reload TTFT was
+  `0.415-3.247 s`.
+- c8 stalled above that on this stack: `750`, `800`, `850`, and `900` line
+  fact-word runs left some or all requests waiting/deferred near `100%` GPU KV.
+  Killing the canary client cleared the queue.
+
+Detailed note:
+
+`notes-20260525-c4-c8-session-cache-ladder.md`
+
 Additional deployment observation: after the B70s were no longer used for the
 Ubuntu display, experimental c2/c4 launches could report `34304` GPU KV tokens
 instead of the earlier `26112` c2 result. Display ownership and compile/cache

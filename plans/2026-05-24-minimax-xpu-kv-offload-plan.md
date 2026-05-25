@@ -317,6 +317,16 @@ Status on 2026-05-25:
 - CPU-to-GPU reload bandwidth measured about `14-15 GB/s`.
 - Detailed c2 ladder note:
   `experiments/minimax_xpu_kv_offload/notes-20260525-c2-session-cache-ladder.md`.
+- c4 fact-word at four `22540`-token sessions passed expected-word checks
+  across two passes; second-pass reload TTFT was `0.390-1.211 s`.
+- c8 fact-word passed at eight `12540`-token sessions and at eight
+  `17540`-token sessions. The larger passing run used about `140321` combined
+  prompt tokens and had second-pass reload TTFT of `0.415-3.247 s`.
+- c8 stalled above that: `750`, `800`, `850`, and `900` line fact-word runs
+  left requests waiting/deferred near `100%` GPU KV. This looks like a
+  scheduler/admission or KV-freeing limit, not a model-quality failure.
+- Detailed c4/c8 ladder note:
+  `experiments/minimax_xpu_kv_offload/notes-20260525-c4-c8-session-cache-ladder.md`.
 
 Order:
 
