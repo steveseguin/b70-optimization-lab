@@ -229,6 +229,49 @@ Decision: prototype an XPU CPU KV worker around range coalescing plus fast
 slice copies, with the loop path as a correctness fallback for fragmented
 transfers.
 
+## Phase 3 XPU Worker Live Server Result
+
+Status on 2026-05-25: partially working, not production-ready.
+
+Prototype patch:
+
+- `patches/xpu-cpu-kv-worker-prototype-20260525.patch`
+
+Detailed notes:
+
+- `notes-20260525-phase3-xpu-worker-live-server.md`
+
+What now works:
+
+- vLLM can initialize `CPUOffloadingSpec` on XPU with a new XPU worker.
+- `49152` context starts and `/v1/models` reports `max_model_len=49152`.
+- GPU KV allocation remains sane: about `33792` tokens, rather than being
+  accidentally inflated by CPU offload admission bytes.
+- Short requests complete on the compiled server with the offload connector
+  present. One short check produced `64` output tokens in `0.903 s`
+  (`70.88 tok/s` wall output, `84.17 tok/s` total).
+- Long requests above the GPU-only KV budget now trigger real multi-GB KV
+  movement between GPU and pinned host RAM.
+
+Measured live transfer example at about `34500` prompt tokens:
+
+| Direction | Bytes | Time | Effective rate |
+| --- | ---: | ---: | ---: |
+| GPU -> CPU | `8.45152256 GB` | `0.779795848 s` | about `10.8 GB/s` |
+| CPU -> GPU | `8.321499136 GB` | `0.508610908 s` | about `16.4 GB/s` |
+
+Current blocker:
+
+- Async mode completes load jobs but the request remains stuck in
+  `WAITING_FOR_REMOTE_KVS` / `deferred`.
+- Sync-load mode avoids the async wake-up path, completes the CPU-to-XPU load,
+  then parks at `capacity` with reported GPU KV usage at `0%`.
+- This now looks like vLLM scheduler/accounting work, not a raw XPU copy-path
+  failure.
+
+Do not use this lane as the default server yet. The stable `32768` endpoint is
+still the recommended path for real use.
+
 ## TurboQuant Interaction
 
 TurboQuant remains interesting because it reduces KV footprint and therefore

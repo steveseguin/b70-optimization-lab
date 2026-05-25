@@ -109,10 +109,14 @@ Pass condition:
 
 Deliverable: design an XPU backend parallel to the CUDA CPU KV worker.
 
-Status: initial KV-shaped block-copy probe passed on 2026-05-24. Contiguous
-logical slice copies are byte-correct and reach about `28 GB/s`; Python row
-loops are correct but slow. See
-`experiments/minimax_xpu_kv_offload/notes-20260524-phase2-block-copy-probe.md`.
+Status: initial KV-shaped block-copy probe passed on 2026-05-24, and a first
+XPU worker prototype was live-tested on 2026-05-25. Contiguous logical slice
+copies are byte-correct and reach about `28 GB/s`; Python row loops are
+correct but slow. The live worker can move multi-GB KV payloads through vLLM,
+but long prompt generation is still blocked in scheduler/accounting. See:
+
+- `experiments/minimax_xpu_kv_offload/notes-20260524-phase2-block-copy-probe.md`
+- `experiments/minimax_xpu_kv_offload/notes-20260525-phase3-xpu-worker-live-server.md`
 
 Files to study:
 
@@ -137,11 +141,20 @@ Pass condition:
 
 - vLLM can initialize CPU KV offload handlers on XPU without rejecting the
   platform.
+- Done for startup: `49152` c1 reaches `/v1/models`.
+- Not done for correctness: long prompts above GPU-only KV capacity do not yet
+  return completions.
 
 ## Phase 3: Admission And Capacity
 
 Deliverable: make vLLM count CPU KV offload capacity during startup in a way
 that does not break normal GPU-only serving.
+
+Status on 2026-05-25: startup admission is partly solved for the experiment.
+The current patch adds CPU KV bytes only to the max-context preflight check and
+does not inflate GPU KV allocation. At `49152` c1 with
+`--kv-offloading-size 16`, vLLM reports about `33792` GPU KV tokens and starts
+successfully.
 
 Starting point:
 
@@ -166,6 +179,12 @@ Pass condition:
 
 - Server reaches `/v1/models` at a context above `32768`.
 - It can complete a near-full-context prompt plus small output without OOM.
+
+Current blocker:
+
+- The first condition passes at `49152`.
+- The second condition is blocked. The transfer path works, but the scheduler
+  does not yet resume/generate correctly after CPU spill reload.
 
 ## Phase 4: Correctness And Quality
 
