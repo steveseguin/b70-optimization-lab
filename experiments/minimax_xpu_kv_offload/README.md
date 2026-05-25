@@ -440,6 +440,22 @@ Detailed note:
 
 `notes-20260525-c4-c8-session-cache-ladder.md`
 
+Sustained concurrent decode follow-up:
+
+- c4 at four `9234`-token prompts with `128` requested output tokens each
+  measured `109.76 tok/s` total warmed wall output on the second pass.
+- c8 at eight `9234`-token prompts with `128` requested output tokens each
+  measured `110.34 tok/s` total warmed wall output on the second pass.
+- c8 spreads roughly the same total decode bandwidth across more sessions; it
+  does not double throughput.
+- Larger c4 sustained `n128` attempts at `16134` and `22459` prompt tokens per
+  session stalled after partial completion even though shorter correctness
+  canaries at larger contexts can pass.
+
+Detailed note:
+
+`notes-20260525-sustained-concurrency-decode.md`
+
 Additional deployment observation: after the B70s were no longer used for the
 Ubuntu display, experimental c2/c4 launches could report `34304` GPU KV tokens
 instead of the earlier `26112` c2 result. Display ownership and compile/cache
