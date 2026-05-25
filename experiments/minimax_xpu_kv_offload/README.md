@@ -415,6 +415,9 @@ C4/C8 session-cache ladder follow-up:
 
 - Added `scripts/serve_session_cache.sh` as a tracked helper for c1/c2/c4/c8
   launch shapes.
+- Added `scripts/switch_session_cache_profile.sh` and
+  `scripts/session_cache_status.sh` so the live endpoint can be switched
+  between c1/c2/c4/c8 with readiness checks and timestamped logs.
 - Updated the tracked 110tps repro OpenAI-server launcher with environment
   knobs for `VLLM_MAX_NUM_SEQS`, `VLLM_MAX_NUM_BATCHED_TOKENS`,
   `VLLM_KV_OFFLOADING_SIZE`, and `VLLM_NO_SCHEDULER_RESERVE_FULL_ISL`.
@@ -439,6 +442,21 @@ C4/C8 session-cache ladder follow-up:
 Detailed note:
 
 `notes-20260525-c4-c8-session-cache-ladder.md`
+
+Operational note:
+
+`notes-20260525-session-cache-operations.md`
+
+Practical mental model: clients keep and resend their full chat history. vLLM
+recognizes repeated token prefixes and can reload parked prefix KV from CPU
+RAM. There is no separate server-side session ID; exact prefix stability is
+what lets cache reuse work.
+
+Live c4 operations caveat: after adding the profile switcher, c4 started and
+reported the expected `34304` GPU KV tokens, but an operational smoke hit a
+second-pass waiting/deferred stall and a rerun hit
+`UR_RESULT_ERROR_DEVICE_LOST` while copying vLLM block-table state to GPU. Keep
+c1 as production and use c2 as the safer correctness lane until c4 is debugged.
 
 Sustained concurrent decode follow-up:
 
