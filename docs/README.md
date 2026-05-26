@@ -43,9 +43,11 @@ The current clean "start from Ubuntu 24 and serve on the LAN" baseline is:
 - Recipe: `../repro/minimax-m27-b70-110tps-ubuntu24-20260523/`
 - Model: `Lasimeri/MiniMax-M2.7-int4-AutoRound`
 - Hardware: 4x Intel Arc Pro B70 32GB
-- API: OpenAI-compatible vLLM endpoint on `0.0.0.0:8000`
+- API: no-auth OpenAI-compatible LAN frontdoor on `0.0.0.0:8000`
 - Served context: `32768` tokens by default
-- Production service: `../deploy/systemd/minimax-vllm.service`
+- Production services:
+  `../deploy/systemd/minimax-vllm.service` and
+  `../deploy/systemd/minimax-openai-frontdoor.service`
 - Quality: strict token-hash and semantic gates passed
 - Throughput observed on 2026-05-23: `110.90` total tok/s, `83.17` output tok/s for p512/n1536
 - OpenAI endpoint warm check: about `83.8` output tok/s and `1.7k-1.8k`

@@ -120,9 +120,11 @@ Entry points:
 Scripts:
 
 - `../scripts/install-minimax-vllm-service.sh`
+- `../scripts/openai-lan-frontdoor.py`
 - `../scripts/minimax-prod-health.py`
 - `../scripts/minimax-prod-benchmark.py`
 - `../deploy/systemd/minimax-vllm.service`
+- `../deploy/systemd/minimax-openai-frontdoor.service`
 - `../experiments/minimax_xpu_kv_offload/scripts/serve_session_cache.sh`
 - `../experiments/minimax_xpu_kv_offload/scripts/switch_session_cache_profile.sh`
 - `../experiments/minimax_xpu_kv_offload/scripts/session_cache_status.sh`
@@ -130,8 +132,9 @@ Scripts:
 
 Current operational recommendation:
 
-- c1 is production; run it with the tracked `minimax-vllm.service` unit when
-  this host should survive reboot cleanly.
+- c1 is production. Run it with `minimax-vllm.service` as a localhost backend
+  on `127.0.0.1:18080` and `minimax-openai-frontdoor.service` as the no-auth
+  LAN OpenAI-compatible endpoint on `0.0.0.0:8000`.
 - Latest production-service near-32K LocalMaxxing result:
   `cmpm35jsa0003rt01zghtmwip` for prompt `32264`, output `64`,
   `63.91` output tok/s after TTFT, `1382.57` approximate prefill tok/s,

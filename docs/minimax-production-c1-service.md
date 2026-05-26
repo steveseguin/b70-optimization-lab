@@ -7,11 +7,16 @@ MiniMax endpoint.
 
 Run c1 for real use:
 
-- OpenAI-compatible vLLM on `0.0.0.0:8000`
+- no-auth OpenAI-compatible LAN frontdoor on `0.0.0.0:8000`
+- localhost-only vLLM backend on `127.0.0.1:18080`
 - `max_model_len=32768`
 - `max_num_seqs=1`
 - no CPU KV offload
 - KV dtype `auto` / FP16-family
+
+The frontdoor is intentionally open on the LAN. It does not require a bearer
+token. Put it behind a firewall or reverse proxy if the LAN itself is not the
+trust boundary.
 
 c2/c4/c8 and TurboQuant stay research profiles until their larger-context
 sustained decode and scheduler behavior are production-safe.
@@ -36,21 +41,27 @@ The installed unit is:
 
 ```text
 /etc/systemd/system/minimax-vllm.service
+/etc/systemd/system/minimax-openai-frontdoor.service
 ```
 
 The tracked source unit is:
 
 ```text
 deploy/systemd/minimax-vllm.service
+deploy/systemd/minimax-openai-frontdoor.service
 ```
 
 ## Operate
 
 ```bash
 systemctl status minimax-vllm.service --no-pager
+systemctl status minimax-openai-frontdoor.service --no-pager
 journalctl -u minimax-vllm.service -f
+journalctl -u minimax-openai-frontdoor.service -f
 sudo systemctl restart minimax-vllm.service
+sudo systemctl restart minimax-openai-frontdoor.service
 sudo systemctl stop minimax-vllm.service
+sudo systemctl stop minimax-openai-frontdoor.service
 ```
 
 Health check:
@@ -64,6 +75,24 @@ Expected model report:
 ```json
 {
   "max_model_len": 32768
+}
+```
+
+Frontdoor status:
+
+```bash
+curl http://127.0.0.1:8000/status
+```
+
+Expected shape:
+
+```json
+{
+  "frontdoor": {
+    "backend": "http://127.0.0.1:18080",
+    "max_active_generations": 1,
+    "auth": "none"
+  }
 }
 ```
 
@@ -89,14 +118,26 @@ The near-32K result was accepted by LocalMaxxing as
 - `../data/localmaxxing-minimax-m27-prod-c1-systemd-near32k-20260526.payload.json`
 - `../data/localmaxxing-responses/minimax-m27-prod-c1-systemd-near32k-20260526.response.json`
 
+Frontdoor concurrency smoke after moving vLLM behind localhost:
+
+- two simultaneous `/v1/completions` requests, `128` output tokens each;
+- `/status` during the run showed `active_generations=1` and
+  `queued_generations=1`;
+- both requests returned HTTP `200`;
+- individual elapsed times were `1.394 s` and `2.768 s`;
+- total wall time was `2.769 s`, confirming serialized generation at the
+  frontdoor.
+
 ## Production Notes
 
 Use a queue or proxy in front of this service if more than one user or agent may
-call it at the same time. c1 intentionally runs one active generation at a time
-because that is the fastest and most reliable path on this host.
+call it at the same time. The tracked frontdoor does this for the common LAN
+case by serializing generation endpoints while allowing health/model requests
+through. c1 intentionally runs one active generation at a time because that is
+the fastest and most reliable path on this host.
 
-For LAN use, restrict access with the firewall or a reverse proxy. vLLM itself
-does not provide authentication for this endpoint.
+For LAN use, restrict access with the firewall or a reverse proxy if needed.
+The default frontdoor does not provide authentication.
 
 For remote OpenAI-compatible clients, use:
 

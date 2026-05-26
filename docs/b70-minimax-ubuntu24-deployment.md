@@ -306,7 +306,8 @@ scripts/minimax-prod-health.py
 ```
 
 The service keeps the same production defaults: `32768` context,
-`max_num_seqs=1`, `0.0.0.0:8000`, no CPU KV offload.
+`max_num_seqs=1`, no CPU KV offload. It exposes a no-auth LAN frontdoor on
+`0.0.0.0:8000` and keeps vLLM itself on `127.0.0.1:18080`.
 
 ## Known Failure Modes
 

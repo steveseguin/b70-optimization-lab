@@ -1,0 +1,24 @@
+[Unit]
+Description=No-auth LAN OpenAI-compatible frontdoor for MiniMax vLLM
+Documentation=https://github.com/steveseguin/b70-optimization-lab
+Wants=network-online.target minimax-vllm.service
+After=network-online.target minimax-vllm.service
+
+[Service]
+Type=simple
+User=steve
+Group=steve
+WorkingDirectory=/home/steve/llm-optimizations
+Environment=PYTHONUNBUFFERED=1
+Environment=FRONTDOOR_HOST=0.0.0.0
+Environment=FRONTDOOR_PORT=8000
+Environment=FRONTDOOR_BACKEND_URL=http://127.0.0.1:18080
+Environment=FRONTDOOR_MAX_ACTIVE_GENERATIONS=1
+Environment=FRONTDOOR_QUEUE_TIMEOUT_S=3600
+ExecStart=/home/steve/llm-optimizations/scripts/openai-lan-frontdoor.py
+Restart=on-failure
+RestartSec=3
+LimitNOFILE=1048576
+
+[Install]
+WantedBy=multi-user.target

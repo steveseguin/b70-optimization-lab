@@ -45,7 +45,8 @@ The best documented fresh install today is:
 - Model: MiniMax M2.7 INT4 AutoRound
 - Hardware: 4x Intel Arc Pro B70 32GB
 - OS: Ubuntu 24.04
-- Server: OpenAI-compatible vLLM on `0.0.0.0:8000`
+- Server: no-auth OpenAI-compatible LAN frontdoor on `0.0.0.0:8000`,
+  forwarding to vLLM on `127.0.0.1:18080`
 - Served context: `32768` tokens by default
 - Result: `110.90` total tok/s, `83.17` output tok/s for the strict p512/n1536
   2K comparison lane; warm OpenAI-compatible serving reached `84.12` output

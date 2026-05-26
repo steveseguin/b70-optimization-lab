@@ -96,10 +96,11 @@ time to first token: a 16k prompt took about `9 s` before the generated token.
 
 ## Can I use this for production?
 
-The c1 32K endpoint now has a tracked systemd unit, health check, and endpoint
-benchmark script. Treat that as the production-friendly local service baseline.
-You still need access control for LAN/WAN exposure, firewalling, monitoring,
-request limits, and a rollback plan.
+The c1 32K endpoint now has tracked systemd units, a no-auth LAN frontdoor,
+health check, and endpoint benchmark script. Treat that as the
+production-friendly local service baseline. You still need a firewall or reverse
+proxy if the LAN is not the trust boundary, plus monitoring, request limits, and
+a rollback plan.
 
 ## Why are there Intel compiler errors if the server works?
 

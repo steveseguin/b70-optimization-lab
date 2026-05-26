@@ -105,9 +105,15 @@ Current session-cache / long-context research state:
 - Production c1 service docs:
   `docs/minimax-production-c1-service.md`
 - Systemd unit source:
-  `deploy/systemd/minimax-vllm.service`
+  `deploy/systemd/minimax-vllm.service` for the localhost backend and
+  `deploy/systemd/minimax-openai-frontdoor.service` for the no-auth LAN
+  OpenAI-compatible frontdoor.
 - Service installer:
   `scripts/install-minimax-vllm-service.sh`
+- LAN frontdoor:
+  `scripts/openai-lan-frontdoor.py`; public URL remains
+  `http://<server-lan-ip>:8000/v1`, backend is `http://127.0.0.1:18080`,
+  and auth is intentionally `none`.
 - Production health and benchmark helpers:
   `scripts/minimax-prod-health.py`,
   `scripts/minimax-prod-benchmark.py`

@@ -32,6 +32,8 @@ Expected endpoint:
 
 ```text
 http://0.0.0.0:8000/v1
+frontdoor auth=none
+backend=http://127.0.0.1:18080
 max_model_len=32768
 max_num_seqs=1
 KV dtype=auto / FP16-family
@@ -40,7 +42,9 @@ KV dtype=auto / FP16-family
 Tracked service/install files:
 
 - `deploy/systemd/minimax-vllm.service`
+- `deploy/systemd/minimax-openai-frontdoor.service`
 - `scripts/install-minimax-vllm-service.sh`
+- `scripts/openai-lan-frontdoor.py`
 - `scripts/minimax-prod-health.py`
 - `scripts/minimax-prod-benchmark.py`
 
