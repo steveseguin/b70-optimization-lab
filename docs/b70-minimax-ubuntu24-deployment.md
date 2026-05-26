@@ -283,6 +283,31 @@ Example OpenAI-compatible client base URL:
 http://<server-ip>:8000/v1
 ```
 
+### Optional Systemd Service
+
+After the endpoint works manually, install the production c1 service:
+
+```bash
+cd /home/steve/llm-optimizations
+scripts/install-minimax-vllm-service.sh
+```
+
+To move a currently running manual server under systemd control:
+
+```bash
+scripts/install-minimax-vllm-service.sh --restart
+```
+
+Then check:
+
+```bash
+systemctl status minimax-vllm.service --no-pager
+scripts/minimax-prod-health.py
+```
+
+The service keeps the same production defaults: `32768` context,
+`max_num_seqs=1`, `0.0.0.0:8000`, no CPU KV offload.
+
 ## Known Failure Modes
 
 ### Hugging Face download hangs

@@ -24,7 +24,8 @@ Production/default service mode is still:
 
 ```bash
 cd /home/steve/llm-optimizations
-experiments/minimax_xpu_kv_offload/scripts/switch_session_cache_profile.sh c1
+systemctl status minimax-vllm.service --no-pager
+scripts/minimax-prod-health.py
 ```
 
 Expected endpoint:
@@ -35,6 +36,13 @@ max_model_len=32768
 max_num_seqs=1
 KV dtype=auto / FP16-family
 ```
+
+Tracked service/install files:
+
+- `deploy/systemd/minimax-vllm.service`
+- `scripts/install-minimax-vllm-service.sh`
+- `scripts/minimax-prod-health.py`
+- `scripts/minimax-prod-benchmark.py`
 
 Do not leave c2/c4/c8/TurboQuant running unless the user explicitly wants an
 experiment instead of the stable endpoint.

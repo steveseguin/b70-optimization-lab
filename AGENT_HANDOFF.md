@@ -102,6 +102,19 @@ on the LAN" baseline.
 
 Current session-cache / long-context research state:
 
+- Production c1 service docs:
+  `docs/minimax-production-c1-service.md`
+- Systemd unit source:
+  `deploy/systemd/minimax-vllm.service`
+- Service installer:
+  `scripts/install-minimax-vllm-service.sh`
+- Production health and benchmark helpers:
+  `scripts/minimax-prod-health.py`,
+  `scripts/minimax-prod-benchmark.py`
+- Current service-managed c1 LocalMaxxing result:
+  `cmpm35jsa0003rt01zghtmwip`, prompt `32264`, output `64`, `63.91`
+  output tok/s after TTFT, approximate prefill `1382.57` tok/s, TTFT
+  `23.336 s`.
 - Research folder: `experiments/minimax_xpu_kv_offload/`
 - Start with: `experiments/minimax_xpu_kv_offload/REPRODUCE.md`
 - Artifact index: `experiments/minimax_xpu_kv_offload/ARTIFACTS.md`

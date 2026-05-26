@@ -1,0 +1,25 @@
+{
+  "hfId": "Lasimeri/MiniMax-M2.7-int4-AutoRound",
+  "modelRevision": "main",
+  "hardware": {
+    "hwClass": "DISCRETE_GPU",
+    "gpuName": "Intel Arc Pro B70 32GB",
+    "gpuCount": 4,
+    "vramGb": 32,
+    "cpu": "AMD EPYC 9015 8-Core Processor",
+    "ramGb": 16,
+    "os": "Ubuntu 24.04.4 LTS"
+  },
+  "engineName": "vllm",
+  "engineVersion": "0.20.1-local",
+  "quantization": "INT4 AutoRound W4A16",
+  "promptTokens": 32264,
+  "outputTokens": 64,
+  "contextLength": 32768,
+  "batchSize": 1,
+  "tokSOut": 63.9086,
+  "tokSPrefill": 1382.5721,
+  "tokSTotal": 1328.3126,
+  "ttftMs": 23336.23,
+  "notes": "Production c1 systemd service smoke on 4x Arc Pro B70, OpenAI-compatible vLLM at 32768 max_model_len. Near-32K endpoint benchmark: prompt 32264 tokens, output 64 tokens, max_num_seqs=1, no CPU KV offload, FP16-family KV, stream_options usage. tokSOut uses generated-token rate after TTFT; tokSPrefill is prompt_tokens / TTFT approximation. Benchmark JSON: /mnt/fast-ai/bench-results/minimax-m27-b70-serve/prod-c1-benchmark-20260526T033522Z.json Flags: tensorParallel=4, maxNumSeqs=1, maxNumBatchedTokens=512, gpuMemoryUtilization=0.95, blockSize=256, prefixCaching=false, kvOffload=false, dtype=float16."
+}

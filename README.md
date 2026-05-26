@@ -9,6 +9,7 @@ Community setup guides, benchmark recipes, troubleshooting notes, and patches fo
 - Docs index: [docs/README.md](docs/README.md)
 - Current reproducibility map: [docs/current-reproducibility-map.md](docs/current-reproducibility-map.md)
 - MiniMax install guide: [docs/b70-minimax-ubuntu24-deployment.md](docs/b70-minimax-ubuntu24-deployment.md)
+- Production service notes: [docs/minimax-production-c1-service.md](docs/minimax-production-c1-service.md)
 - Model recipes: [docs/model-recipes.md](docs/model-recipes.md)
 - FAQ: [docs/faq.md](docs/faq.md)
 
@@ -31,6 +32,7 @@ This repository is meant to become a stable community hub for Intel XPU local AI
 | Read community-maintained notes | [Wiki](https://github.com/steveseguin/Unofficial-Intel-XPU-Community/wiki) |
 | Reproduce the current work | [Current reproducibility map](docs/current-reproducibility-map.md) |
 | Deploy MiniMax M2.7 INT4 on 4x B70 | [MiniMax Ubuntu 24 guide](docs/b70-minimax-ubuntu24-deployment.md) |
+| Run the endpoint as a service | [Production c1 service](docs/minimax-production-c1-service.md) |
 | Find model-specific recipes | [Model recipes](docs/model-recipes.md) |
 | Share a benchmark | [Community results guide](docs/community-results.md) |
 | Compare GPUs | [GPU comparison](docs/gpu-comparison-local-ai.md) |
@@ -48,7 +50,11 @@ The best documented fresh install today is:
 - Result: `110.90` total tok/s, `83.17` output tok/s for the strict p512/n1536
   2K comparison lane; warm OpenAI-compatible serving reached `84.12` output
   tok/s at the 32K served setting.
+- Production service near-32K smoke: prompt `32264`, output `64`, TTFT
+  `23.336 s`, output `63.91 tok/s` after TTFT; accepted on LocalMaxxing as
+  `cmpm35jsa0003rt01zghtmwip`.
 - Recipe: [repro/minimax-m27-b70-110tps-ubuntu24-20260523](repro/minimax-m27-b70-110tps-ubuntu24-20260523/README.md)
+- Service wrapper: [docs/minimax-production-c1-service.md](docs/minimax-production-c1-service.md)
 
 This is a deployable baseline, not the final speed ceiling. The strict
 benchmark/quality lane remains p512/n1536 at context `2048` for comparability;

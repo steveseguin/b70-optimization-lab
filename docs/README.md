@@ -5,6 +5,7 @@ This docs folder is the human entry point for the B70 optimization work. The exe
 ## Start Here
 
 - [MiniMax M2.7 INT4 on 4x B70, Ubuntu 24](b70-minimax-ubuntu24-deployment.md): deploy an OpenAI-compatible vLLM endpoint.
+- [MiniMax Production C1 Service](minimax-production-c1-service.md): run the current 32K endpoint under systemd with health and benchmark checks.
 - [Current Reproducibility Map](current-reproducibility-map.md): one-page map for the stable endpoint, session-cache work, TurboQuant patch, and CPU-paged attention research.
 - [Model Recipes](model-recipes.md): which recipe folder to use for each model/build target.
 - [FAQ](faq.md): practical answers for users new to B70s, vLLM, XPU, and local model deployment.
@@ -44,6 +45,7 @@ The current clean "start from Ubuntu 24 and serve on the LAN" baseline is:
 - Hardware: 4x Intel Arc Pro B70 32GB
 - API: OpenAI-compatible vLLM endpoint on `0.0.0.0:8000`
 - Served context: `32768` tokens by default
+- Production service: `../deploy/systemd/minimax-vllm.service`
 - Quality: strict token-hash and semantic gates passed
 - Throughput observed on 2026-05-23: `110.90` total tok/s, `83.17` output tok/s for p512/n1536
 - OpenAI endpoint warm check: about `83.8` output tok/s and `1.7k-1.8k`
