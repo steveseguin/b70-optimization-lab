@@ -51,9 +51,44 @@ waits for `/v1/models`, and writes:
 
 `/mnt/fast-ai/bench-results/minimax-m27-b70-serve/current-session-cache-profile.json`
 
-## Known-Good C2 Operational Smoke
+## C2 Near-Full 32K Validation
 
-This is the current best way to reproduce RAM-backed session juggling.
+This is the important context-boundary test. c2 should be treated as a
+two-session `32768`-token window profile. Because vLLM's `max_model_len` is the
+total request budget, leave room for output tokens, chat-template overhead, and
+tool text in real clients.
+
+```bash
+experiments/minimax_xpu_kv_offload/scripts/switch_session_cache_profile.sh c2
+
+ts=$(date -u +%Y%m%dT%H%M%SZ)
+experiments/minimax_xpu_kv_offload/scripts/session_cache_canary.py \
+  --prompt-mode strict-word \
+  --prompt-lines 1080 \
+  --max-tokens 4 \
+  --passes 2 \
+  --concurrency 2 \
+  --labels A,B \
+  --stop-newline \
+  --output-json "/mnt/fast-ai/bench-results/minimax-m27-b70-serve/session-cache-c2-near32k-strict-${ts}.json"
+```
+
+Expected class:
+
+- two concurrent sessions
+- about `32474` prompt tokens per session, `64948` combined prompt tokens
+- expected words match for A/B
+- second-pass reload TTFT is usually below `1.5 s` on the current host
+- CPU-to-GPU KV reload is about `14-15 GB/s`
+
+Reference summary:
+
+`notes-20260525-c2-session-cache-ladder.md`
+
+## C2 Operations Smoke
+
+This is a smaller, low-risk check that the profile switcher and live endpoint
+are healthy. It is not the target context limit.
 
 ```bash
 experiments/minimax_xpu_kv_offload/scripts/switch_session_cache_profile.sh c2

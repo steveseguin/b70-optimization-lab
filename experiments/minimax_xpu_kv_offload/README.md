@@ -394,6 +394,8 @@ C2 capacity ladder follow-up:
 - CPU-to-GPU KV reload bandwidth measured about `14-15 GB/s`.
 - vLLM reports `4.0 GiB` CPU KV budget per worker for `--kv-offloading-size 16`,
   about `16 GiB` total across four tensor-parallel workers.
+- Treat c2 as the dual 32K-window profile. The later `22540`-token fact-word
+  run is only an operations smoke, not a target context ceiling.
 
 Detailed note:
 
@@ -465,9 +467,11 @@ reported the expected `34304` GPU KV tokens, but an operational smoke hit a
 second-pass waiting/deferred stall and a rerun hit
 `UR_RESULT_ERROR_DEVICE_LOST` while copying vLLM block-table state to GPU. Keep
 c1 as production and use c2 as the safer correctness lane until c4 is debugged.
-The same switcher successfully ran c2 with two concurrent `22540`-token
-fact-word sessions; both matched exact output hashes across passes, with
-second-pass reload TTFT of `0.320-0.570 s`.
+The same switcher successfully ran a smaller c2 operations smoke with two
+concurrent `22540`-token fact-word sessions; both matched exact output hashes
+across passes, with second-pass reload TTFT of `0.320-0.570 s`. Do not present
+that smoke as the c2 context limit; the c2 target remains two `32768`-token
+request windows with practical output headroom.
 
 Sustained concurrent decode follow-up:
 

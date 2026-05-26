@@ -27,7 +27,7 @@ lost after that point.
 | Profile | Purpose | Notes |
 | --- | --- | --- |
 | `c1` | production default | `32768` context, `max_num_seqs=1`, no CPU KV offload |
-| `c2` | two large parked sessions | best quality-gated session-cache lane for near-32K sessions |
+| `c2` | two parked 32K-window sessions | best quality-gated session-cache lane; near-full strict ladder passed two `32474`-prompt-token sessions |
 | `c4` | practical multi-session target | four sessions around `22.5K` prompt tokens passed fact-word reload in the ladder, but live ops smoke still has blockers |
 | `c8` | many smaller sessions | eight `17.5K` sessions passed, but larger contexts stalled |
 
@@ -35,6 +35,12 @@ Use `c2` first when correctness matters. Use `c4` as the next operational
 target, not as the production default yet. It has the best practical shape on
 paper, but the live switching smoke below found scheduler/device-loss blockers
 that need debugging before it should be exposed to users.
+
+Important context policy: do not treat `22.5K` as the desired c2 limit. c2 is
+the two-session `32768`-token window profile. The `32768` value is still a total
+request budget, so real chat clients need to leave output headroom for answer
+tokens, chat-template tokens, and tool transcripts unless a larger served
+window is proven later.
 
 ## Switching Profiles
 
@@ -82,6 +88,23 @@ The switcher:
 - waits for `/v1/models`;
 - writes
   `/mnt/fast-ai/bench-results/minimax-m27-b70-serve/current-session-cache-profile.json`.
+
+## C2 32K-Window Policy
+
+c2 is the profile to use when the user wants two long sessions without reducing
+the served window below `32768`.
+
+Validated c2 near-full result:
+
+- two concurrent strict-word sessions;
+- `32474` prompt tokens per session, `64948` combined prompt tokens;
+- expected first words matched the GPU-only baseline;
+- second-pass reload TTFT was `0.668-1.232 s`;
+- CPU-to-GPU KV reload bandwidth was about `14-15 GB/s`.
+
+The later `22540`-token fact-word run is an operations smoke for the live
+profile switcher. It is intentionally smaller and cleaner; it should not be
+described as the context target.
 
 ## How To Juggle Clients
 
@@ -275,10 +298,11 @@ Result file:
 
 `/mnt/fast-ai/bench-results/minimax-m27-b70-serve/session-cache-c2-ops-fact-900lines-20260525T223527Z.json`
 
-Interpretation: c2 is the current known-good operational session-cache profile
-for juggling two long conversations. It does not create one larger active
-context, but it does show that two `22.5K`-token sessions can be parked/reloaded
-with sub-second second-pass TTFT and exact canary output.
+Interpretation: this smoke proves the live c2 profile switcher and endpoint can
+park/reload two long sessions with sub-second second-pass TTFT and exact canary
+output. It does not create one larger active context, and it does not define the
+c2 context ceiling. The c2 target remains two `32768`-token request windows,
+with practical output headroom inside each request.
 
 After the smoke, the switcher restored c1:
 

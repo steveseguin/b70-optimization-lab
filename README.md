@@ -57,8 +57,10 @@ the served OpenAI-compatible endpoint now defaults to `32768` and validated a
 
 Experimental RAM-backed session-cache and TurboQuant work is tracked separately
 under [experiments/minimax_xpu_kv_offload](experiments/minimax_xpu_kv_offload/README.md).
-The current known-good session-cache profile is c2 for two long parked
-sessions; c4/c8 and TurboQuant remain research modes, not production defaults.
+The current known-good session-cache profile is c2 for two parked `32768`-token
+window sessions. A smaller `22.5K` live smoke is documented as an operations
+canary, not as the desired context limit. c4/c8 and TurboQuant remain research
+modes, not production defaults.
 
 ## How To Contribute
 

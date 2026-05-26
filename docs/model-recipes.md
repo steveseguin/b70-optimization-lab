@@ -68,7 +68,7 @@ less REPRODUCE.md
 Current status:
 
 - c1 is the production 32K endpoint.
-- c2 is the current known-good session-cache profile for two long parked
+- c2 is the current known-good session-cache profile for two parked 32K-window
   conversations.
 - c4/c8 have useful ladder results but are not production-ready.
 - TurboQuant has a tracked XPU workspace fallback patch, but remains slower and

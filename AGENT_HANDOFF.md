@@ -112,10 +112,13 @@ Current session-cache / long-context research state:
 - Status helper:
   `experiments/minimax_xpu_kv_offload/scripts/session_cache_status.sh`
 - c1 remains production: `32768`, `max_num_seqs=1`, no CPU KV offload.
-- c2 is the current known-good RAM-backed session-cache profile. A live ops
+- c2 is the current known-good RAM-backed session-cache profile for two parked
+  `32768`-token window sessions. The near-full strict ladder passed two
+  `32474`-prompt-token sessions (`64948` combined) with exact expected-word
+  matches and second-pass reload TTFT of `0.668-1.232 s`. A smaller live ops
   smoke with two `22540`-token fact-word sessions matched exact output hashes
-  across passes; second-pass reload TTFT was `0.320-0.570 s`, with
-  CPU-to-GPU KV reload around `16.2 GB/s`.
+  across passes; treat that as an operations canary, not the target context
+  ceiling.
 - c4/c8 are still research. Earlier c4/c8 ladders produced useful results, and
   c4/c8 sustained small-context warmed total decode was about `110 tok/s`, but
   live c4 service switching later hit a second-pass waiting/deferred stall and

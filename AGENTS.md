@@ -42,7 +42,9 @@ experiment instead of the stable endpoint.
 ## Current Experimental State
 
 - c2 session-cache profile is the current known-good RAM-backed juggling mode.
-  It can park/reload two long sessions that individually fit in GPU KV.
+  Treat it as two parked `32768`-token window sessions. The `22.5K` fact-word
+  run is only an operations smoke; the near-full strict ladder passed two
+  `32474`-prompt-token sessions.
 - c4/c8 are research profiles. They produced useful ladder results, but live
   c4 service switching later hit a waiting/deferred stall and a Level Zero
   `UR_RESULT_ERROR_DEVICE_LOST`.

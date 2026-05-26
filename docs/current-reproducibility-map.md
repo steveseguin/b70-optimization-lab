@@ -127,18 +127,30 @@ Scripts:
 Current operational recommendation:
 
 - c1 is production.
-- c2 is the current known-good RAM-backed session-cache profile.
+- c2 is the current known-good RAM-backed session-cache profile for two parked
+  `32768`-token window sessions.
 - c4 is the next target, but live service switching hit blockers.
 - c8 is useful for smaller parked sessions but does not increase total decode
   throughput.
 
-Known-good c2 smoke:
+Near-full c2 validation:
+
+- two concurrent strict-word sessions
+- `32474` prompt tokens per session, `64948` combined prompt tokens
+- expected first words matched the GPU-only baseline
+- second-pass reload TTFT: `0.668-1.232 s`
+- CPU-to-GPU KV reload: about `14-15 GB/s`
+
+Known-good c2 operations smoke:
 
 - two concurrent fact-word sessions
 - `22540` prompt tokens per session
 - exact output hashes matched across passes
 - second-pass reload TTFT: `0.320-0.570 s`
 - CPU-to-GPU KV reload: about `16.2 GB/s`
+
+The operations smoke is intentionally smaller and cleaner. It does not define
+the desired c2 context ceiling; c2 should be presented as a 32K-window profile.
 
 Result file from the originating host:
 
