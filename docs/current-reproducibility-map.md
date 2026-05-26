@@ -63,6 +63,17 @@ Pinned source commits are listed in:
 
 `../repro/minimax-m27-b70-110tps-ubuntu24-20260523/README.md`
 
+Live-source audit snapshots from the originating machine are also tracked:
+
+- `../patches/vllm-live-src-snapshot-20260525.patch`
+- `../patches/llm-scaler-live-src-snapshot-20260525.patch`
+
+These snapshots capture the dirty local `/home/steve/src/vllm` and
+`/home/steve/src/llm-scaler` trees after the session-cache and TurboQuant
+research. Treat them as review/audit artifacts, not as clean upstream-ready
+patches. The clean fresh-install repro still uses the two compressed promoted
+patch bundles listed above.
+
 ## Baseline Results
 
 The fresh deployable baseline records:

@@ -33,6 +33,15 @@ TurboQuant patch outside this folder:
   - works around XPU TurboQuant locked-workspace crashes.
   - experimental, not production.
 
+Live source snapshots outside this folder:
+
+- `../../patches/vllm-live-src-snapshot-20260525.patch`
+- `../../patches/llm-scaler-live-src-snapshot-20260525.patch`
+
+These are broad dirty-tree snapshots from the originating host. They are useful
+for audit and recovery, but they should be split into smaller reviewed patches
+before any upstream submission.
+
 ## Main Notes
 
 - `README.md` - long running summary of the research lane.

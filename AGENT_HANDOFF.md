@@ -125,6 +125,11 @@ Current session-cache / long-context research state:
   the first XPU locked-workspace crashes, and `turboquant_k8v4` can report
   about `80128` GPU KV tokens at 32K. It remains much slower than the
   FP16-family KV baseline and does not provide true 196K active context.
+- Dirty live-source snapshots are tracked for audit:
+  `patches/vllm-live-src-snapshot-20260525.patch` and
+  `patches/llm-scaler-live-src-snapshot-20260525.patch`. These capture the
+  originating host's broad local source deltas after the current experiments;
+  they are not clean upstream-ready patches.
 - Full `196608` active context is not solved. The current exact-quality path is
   CPU-paged attention, documented in
   `experiments/minimax_xpu_kv_offload/notes-20260525-cpu-paged-attention-design.md`.
