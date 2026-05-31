@@ -1,0 +1,38 @@
+{
+  "hfId": "Intel/DeepSeek-V4-Flash-W4A16-AutoRound",
+  "modelRevision": "d8ac6c04e22da23f68f797884471dae5cb129ee0",
+  "hardware": {
+    "hwClass": "DISCRETE_GPU",
+    "gpuName": "Intel Arc Pro B70",
+    "gpuCount": 4,
+    "vramGb": 32,
+    "cpu": "AMD EPYC 9015 8-Core Processor",
+    "ramGb": 15,
+    "os": "Ubuntu 24.04.x LTS"
+  },
+  "engineName": "vllm",
+  "engineVersion": "0.20.1-local",
+  "quantization": "AutoRound W4A16",
+  "promptTokens": 512,
+  "outputTokens": 1536,
+  "contextLength": 2048,
+  "batchSize": 1,
+  "tokSOut": 0,
+  "tokSTotal": 0,
+  "notes": "DeepSeek V4 Flash AutoRound W4A16 on 4x Intel Arc Pro B70 via local vLLM/XPU. Fill in repeats, quality gate, exact runtime flags, and whether this is a first baseline or new record before submission.",
+  "engineFlags": {
+    "commandSnippet": "fill in exact command",
+    "tensorParallel": 4,
+    "gpuLayers": 0,
+    "contextLength": 2048,
+    "attentionBackend": "fill in",
+    "flashAttn": false,
+    "chunkedPrefill": true,
+    "prefillChunkSize": 512,
+    "prefixCaching": false,
+    "contBatching": false,
+    "specDecoding": false,
+    "temperature": 0,
+    "extraFlags": "XPU/Level Zero; AutoRound via vLLM inc; KV cache dtype; compilation config; oneCCL env; quality gate summary"
+  }
+}

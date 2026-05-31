@@ -10,6 +10,7 @@ from pathlib import Path
 
 
 API_URL = "https://localmaxxing.com/api/benchmarks"
+DEFAULT_KEY_PATH = Path.home() / ".config" / "localmaxxing" / "api_key"
 
 
 def post_payload(key: str, payload: dict) -> tuple[int, str, int | None]:
@@ -71,8 +72,13 @@ def main() -> int:
         return 0
 
     key = os.environ.get("LMX_API_KEY")
+    if not key and DEFAULT_KEY_PATH.exists():
+        key = DEFAULT_KEY_PATH.read_text().strip()
     if not key:
-        print("LMX_API_KEY is required", file=sys.stderr)
+        print(
+            f"LMX_API_KEY is required, or store it in {DEFAULT_KEY_PATH}",
+            file=sys.stderr,
+        )
         return 2
 
     for index, item in enumerate(queue, start=1):

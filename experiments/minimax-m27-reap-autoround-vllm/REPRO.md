@@ -1,0 +1,119 @@
+# REAP MiniMax M2.7 AutoRound Repro Guide
+
+This is the current internal repro path for the REAP lane on a 4x Intel Arc Pro B70
+32 GB host. It is not yet a public polished guide, but it captures the exact setup
+that produced the 2026-05-31 best result.
+
+## Hardware And Model
+
+- GPUs: 4x Intel Arc Pro B70, 32 GB each
+- Runtime: local vLLM/XPU TP4
+- Model: `MJPansa/MiniMax-M2.7-REAP-172B-A10B-AutoRound-W4A16`
+- Local model path: `/mnt/fast-ai/llm-models/minimax-m2.7-reap-autoround-w4a16`
+- Model revision tested: `31271b30ff048a128772a744ee6d998a2fb648cb`
+- Safetensors footprint: `91,512,175,232` bytes, about `85.23 GiB`
+
+## Source Patches
+
+Apply or reproduce the relevant local source changes before running quality or
+benchmarks:
+
+- vLLM patch artifact:
+  `patches/vllm-reap-piecewise-static-range-and-b70-e192-configs-20260531.patch`
+- llm-scaler patch artifact:
+  `patches/llm-scaler-minimax-reap-e192-router-ws-20260531.patch`
+
+The vLLM patch adds the REAP `E=192,N=384` B70 INT4 MoE configs and fixes the
+fresh-cache PIECEWISE static-shape multiple-entry assertion. The llm-scaler patch
+archives the current MiniMax INT4 kernel changes used in this lab tree. It is
+larger than the REAP-specific diff because it includes the ongoing MiniMax kernel
+work this lane depends on.
+
+## Download
+
+```bash
+cd /home/steve/llm-optimizations/experiments/minimax-m27-reap-autoround-vllm
+HF_HUB_DISABLE_XET=1 HF_DOWNLOAD_WORKERS=6 HF_DOWNLOAD_ATTEMPTS=0 \
+  scripts/download-model.sh
+```
+
+Expected post-download checks:
+
+- `23` safetensor shards
+- No missing shards from `model.safetensors.index.json`
+- No stale `.incomplete` or `.lock` files in the HF cache
+
+## Quality Gate
+
+```bash
+cd /home/steve/llm-optimizations/experiments/minimax-m27-reap-autoround-vllm
+scripts/quality-smoke.sh
+```
+
+Current passing smoke:
+
+- file:
+  `/mnt/fast-ai/bench-results/minimax-m27-reap-autoround-vllm/quality/quality-smoke-20260531T231727Z.json`
+- result: `passed=true`
+- deterministic: true
+- generated tokens: `1473`
+- NUL/control/degenerate output: none
+
+## Benchmark
+
+Use true greedy decoding for LocalMaxxing-compatible results:
+
+```bash
+cd /home/steve/llm-optimizations/experiments/minimax-m27-reap-autoround-vllm
+VLLM_BENCH_TEMPERATURE=0 scripts/bench-decode.sh
+```
+
+Current promoted settings live in `configs/reap.env`. Important settings:
+
+- `TP=4`
+- `MAX_MODEL_LEN=2048`
+- `MAX_BATCHED_TOKENS=512`
+- `MAX_NUM_SEQS=1`
+- `INPUT_LEN=512`
+- `OUTPUT_LEN=1536`
+- `CCL_IPC=pidfd`
+- `CCL_ZE_IPC_EXCHANGE=pidfd`
+- `CCL_TOPO_FABRIC_VERTEX_CONNECTION_CHECK=0`
+- `VLLM_XPU_USE_LLM_SCALER_MOE=1`
+- `VLLM_XPU_USE_LLM_SCALER_MOE_WS=1`
+- `VLLM_XPU_USE_LLM_SCALER_MOE_MINIMAX_LOGITS_WS=0`
+- `VLLM_XPU_SKIP_COMPILED_PREFILL=1`
+- `VLLM_XPU_ENABLE_XPU_GRAPH=1`
+- `VLLM_XPU_FORCE_GRAPH_WITH_COMM=1`
+- `VLLM_XPU_GRAPH_NOOP_COMM_CAPTURE=1`
+
+Current best result:
+
+- output throughput: `89.49922316987691 tok/s`
+- total throughput: `119.3322975598359 tok/s`
+- elapsed: `17.16216013500525 s`
+- log:
+  `/mnt/fast-ai/bench-results/minimax-m27-reap-autoround-vllm/decode/vllm-minimax-m27-autoround-tp4-p512n1536-20260531T232017Z.log`
+- JSON:
+  `/mnt/fast-ai/bench-results/minimax-m27-reap-autoround-vllm/decode/vllm-minimax-m27-autoround-tp4-p512n1536-20260531T232017Z.json`
+
+## Known Rejected Settings
+
+- `CCL_IPC=sockets`: slower than `pidfd`
+- `--block-size 128` and `--block-size 512`: slower than `256`
+- `VLLM_XPU_COMPILE_ALLREDUCE_CUSTOM_OP=0`: large regression
+- `VLLM_MINIMAX_MOE_OUTPUT_ALLREDUCE_INSIDE_CUSTOM_OP=0`: slower
+- `VLLM_XPU_LOCAL_ARGMAX_DECODE=1`: large regression
+- `VLLM_XPU_USE_LLM_SCALER_MOE_MINIMAX_LOGITS=1`: starts after repair but
+  regresses throughput
+- `VLLM_XPU_USE_LLM_SCALER_MOE_MINIMAX_LOGITS_WS=1`: still too fragile/slow for
+  promotion on REAP
+
+## LocalMaxxing
+
+Best submitted REAP result:
+
+- LocalMaxxing ID: `cmpuesbma00r5mq01yk0zdcjx`
+- Payload:
+  `localmaxxing/reap-minimax-m27-autoround-greedy-pidfd-p512n1536-20260531.payload.json`
+- Status: HTTP `201`, `APPROVED`

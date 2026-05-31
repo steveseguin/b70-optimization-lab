@@ -1,0 +1,42 @@
+{
+  "hfId": "MJPansa/MiniMax-M2.7-REAP-172B-A10B-AutoRound-W4A16",
+  "modelRevision": "31271b30ff048a128772a744ee6d998a2fb648cb",
+  "hardware": {
+    "hwClass": "DISCRETE_GPU",
+    "gpuName": "Intel Arc Pro B70 32GB",
+    "gpuCount": 4,
+    "vramGb": 32,
+    "cpu": "AMD EPYC 9015 8-Core Processor",
+    "ramGb": 16,
+    "os": "Ubuntu 24.04.4 LTS, kernel 6.17.0-23-generic"
+  },
+  "engineName": "vllm",
+  "engineVersion": "0.20.2rc1.dev2-local",
+  "quantization": "AutoRound INT4 W4A16",
+  "promptTokens": 512,
+  "outputTokens": 1536,
+  "contextLength": 2048,
+  "batchSize": 1,
+  "tokSOut": 88.49274226861839,
+  "tokSTotal": 117.99032302482452,
+  "notes": "MiniMax M2.7 REAP AutoRound W4A16 on 4x Intel Arc Pro B70 via vLLM/XPU TP4. Best REAP warmed conservative graph result after CCL_TOPO_FABRIC_VERTEX_CONNECTION_CHECK=0. Quality gate passed after the vLLM piecewise static-shape range-entry fix: /mnt/fast-ai/bench-results/minimax-m27-reap-autoround-vllm/quality/quality-smoke-20260531T191426Z.json reports passed=true, 1536 generated tokens across canary prompts, deterministic output, and no NUL/control/degenerate output. This is a first REAP baseline rather than a record-class improvement over the existing non-REAP MiniMax production lane. No speculative decoding, no expert dropping, no router approximation, no power-limit change.",
+  "engineFlags": {
+    "commandSnippet": "CCL_TOPO_FABRIC_VERTEX_CONNECTION_CHECK=0 /home/steve/llm-optimizations/experiments/minimax-m27-reap-autoround-vllm/scripts/bench-decode.sh; effective vLLM args: vllm bench throughput --backend vllm --model /mnt/fast-ai/llm-models/minimax-m2.7-reap-autoround-w4a16 --tokenizer /mnt/fast-ai/llm-models/minimax-m2.7-reap-autoround-w4a16 --trust-remote-code --dtype float16 --tensor-parallel-size 4 --distributed-executor-backend mp --max-model-len 2048 --max-num-batched-tokens 512 --max-num-seqs 1 --dataset-name random --random-input-len 512 --random-output-len 1536 --random-range-ratio 0 --num-prompts 1 --disable-log-stats --async-engine --block-size 256 --no-enable-prefix-caching --compilation-config {\"use_inductor_graph_partition\":true,\"compile_sizes\":[1],\"cudagraph_mode\":\"PIECEWISE\"}",
+    "tensorParallel": 4,
+    "pipelineParallel": 1,
+    "kvCacheDtype": "auto",
+    "prefixCaching": false,
+    "attentionBackend": "flash_attn",
+    "flashAttn": true,
+    "chunkedPrefill": true,
+    "prefillChunkSize": 512,
+    "contBatching": true,
+    "engineQuant": "inc",
+    "maxRunningSeqs": 1,
+    "concurrency": 1,
+    "specDecoding": false,
+    "mtpEnabled": false,
+    "temperature": 0,
+    "extraFlags": "XPU/Level Zero; REAP checkpoint; VLLM_XPU_USE_LLM_SCALER_MOE=1; VLLM_XPU_USE_LLM_SCALER_MOE_WS=1; VLLM_XPU_USE_LLM_SCALER_MOE_MINIMAX_LOGITS_WS=0; VLLM_XPU_SKIP_COMPILED_PREFILL=1; VLLM_XPU_ENABLE_XPU_GRAPH=1; VLLM_XPU_FORCE_GRAPH_WITH_COMM=1; VLLM_XPU_GRAPH_NOOP_COMM_CAPTURE=1; CCL_TOPO_P2P_ACCESS=1; CCL_TOPO_FABRIC_VERTEX_CONNECTION_CHECK=0; PIECEWISE XPU graph; block-size 256; max_num_batched_tokens 512; prefix cache disabled; async engine; local vLLM patch selects unique single-size compiled entry for ambiguous static-shape piecewise subgraphs; no power-limit change"
+  }
+}

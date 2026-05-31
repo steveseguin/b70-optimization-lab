@@ -1,0 +1,168 @@
+diff --git a/vllm/compilation/piecewise_backend.py b/vllm/compilation/piecewise_backend.py
+index b647e0d85..fb597251c 100644
+--- a/vllm/compilation/piecewise_backend.py
++++ b/vllm/compilation/piecewise_backend.py
+@@ -4,6 +4,7 @@
+ import dataclasses
+ import io
+ import json
++import os
+ import pickle
+ from collections.abc import Callable
+ from pickle import Pickler
+@@ -195,17 +196,22 @@ class PiecewiseBackend:
+         self, compiled_graph: Callable[..., Any]
+     ) -> Callable[..., Any]:
+         def compiled_graph_wrapper(*args: Any) -> Any:
+-            graph_output = compiled_graph(*args)
+-            # unpack the tuple if needed
+-            # TODO(rzou): the implication is that we're not
+-            # reading the python bytecode correctly in vLLM?
+-            if self.returns_tuple or not isinstance(graph_output, (tuple, list)):
+-                return graph_output
+-            else:
+-                return graph_output[0]
++            return self._normalize_graph_output(compiled_graph(*args))
+ 
+         return compiled_graph_wrapper
+ 
++    def _normalize_graph_output(self, graph_output: Any) -> Any:
++        # unpack the tuple if needed
++        # TODO(rzou): the implication is that we're not
++        # reading the python bytecode correctly in vLLM?
++        if self.returns_tuple or not isinstance(graph_output, (tuple, list)):
++            return graph_output
++        return graph_output[0]
++
++    def _call_eager_graph(self, *args: Any) -> Any:
++        assert self.graph is not None
++        return self._normalize_graph_output(self.graph(*args))
++
+     def to_bytes(self) -> dict[str, bytes]:
+         class StandaloneCompiledArtifactsPickler(Pickler):
+             def reducer_override(self, obj: object) -> Any:
+@@ -359,6 +365,22 @@ class PiecewiseBackend:
+         if self.sym_shape_indices:
+             runtime_shape = args[self.sym_shape_indices[0]]
+             range_entry = self._find_range_for_shape(runtime_shape)
++            if (
++                range_entry is None
++                and self.graph is not None
++                and os.environ.get(
++                    "VLLM_XPU_EAGER_FOR_UNCOVERED_COMPILE_RANGES", "0"
++                )
++                == "1"
++            ):
++                logger.warning_once(
++                    "Shape %s is outside piecewise compile ranges %s; "
++                    "falling back to eager FX graph because "
++                    "VLLM_XPU_EAGER_FOR_UNCOVERED_COMPILE_RANGES=1.",
++                    str(runtime_shape),
++                    str(self.compile_ranges),
++                )
++                return self._call_eager_graph(*args)
+             assert range_entry is not None, (
+                 f"Shape: {runtime_shape} out of considered ranges: "
+                 f"{self.compile_ranges}"
+@@ -366,11 +388,30 @@ class PiecewiseBackend:
+         else:
+             # All inputs have static shapes; use the only compiled range_entry
+             compiled_entries = [re for re in self.range_entries.values() if re.compiled]
+-            assert len(compiled_entries) == 1, (
+-                f"Expected exactly one compiled range_entry for static shape "
+-                f"compilation, but found {len(compiled_entries)}"
+-            )
+-            range_entry = compiled_entries[0]
++            if len(compiled_entries) == 1:
++                range_entry = compiled_entries[0]
++            else:
++                single_size_entries = [
++                    re
++                    for re in compiled_entries
++                    if re.compile_range.is_single_size()
++                ]
++                assert len(single_size_entries) == 1, (
++                    f"Expected exactly one compiled range_entry for static shape "
++                    f"compilation, but found {len(compiled_entries)} entries "
++                    f"and {len(single_size_entries)} single-size entries: "
++                    f"{[str(re.compile_range) for re in compiled_entries]}"
++                )
++                range_entry = single_size_entries[0]
++                compiled_ranges = tuple(
++                    str(re.compile_range) for re in compiled_entries
++                )
++                logger.warning_once(
++                    "Static-shape piecewise subgraph has multiple compiled "
++                    "range entries %s; using unique single-size entry %s.",
++                    compiled_ranges,
++                    str(range_entry.compile_range),
++                )
+ 
+         assert range_entry.compiled, (
+             "All ranges should be compiled or loaded up front in "
+diff --git a/vllm/model_executor/layers/fused_moe/configs/E=192,N=384,device_name=Intel(R)_Arc(TM)_Pro_B70_Graphics,dtype=int4_w4a16.json b/vllm/model_executor/layers/fused_moe/configs/E=192,N=384,device_name=Intel(R)_Arc(TM)_Pro_B70_Graphics,dtype=int4_w4a16.json
+new file mode 100644
+index 000000000..2ee90998e
+--- /dev/null
++++ b/vllm/model_executor/layers/fused_moe/configs/E=192,N=384,device_name=Intel(R)_Arc(TM)_Pro_B70_Graphics,dtype=int4_w4a16.json
+@@ -0,0 +1,27 @@
++{
++  "triton_version": "3.7.0",
++  "1": {
++    "BLOCK_SIZE_M": 16,
++    "BLOCK_SIZE_N": 64,
++    "BLOCK_SIZE_K": 128,
++    "GROUP_SIZE_M": 1,
++    "num_warps": 4,
++    "num_stages": 4,
++    "SPLIT_K": 1
++  },
++  "64": {
++    "BLOCK_SIZE_M": 64,
++    "GROUP_SIZE_M": 1,
++    "SPLIT_K": 1
++  },
++  "256": {
++    "BLOCK_SIZE_M": 64,
++    "GROUP_SIZE_M": 1,
++    "SPLIT_K": 1
++  },
++  "512": {
++    "BLOCK_SIZE_M": 64,
++    "GROUP_SIZE_M": 1,
++    "SPLIT_K": 1
++  }
++}
+diff --git a/vllm/model_executor/layers/fused_moe/configs/E=192,N=384,device_name=Intel(R)_Graphics_[0xe223],dtype=int4_w4a16.json b/vllm/model_executor/layers/fused_moe/configs/E=192,N=384,device_name=Intel(R)_Graphics_[0xe223],dtype=int4_w4a16.json
+new file mode 100644
+index 000000000..2ee90998e
+--- /dev/null
++++ b/vllm/model_executor/layers/fused_moe/configs/E=192,N=384,device_name=Intel(R)_Graphics_[0xe223],dtype=int4_w4a16.json
+@@ -0,0 +1,27 @@
++{
++  "triton_version": "3.7.0",
++  "1": {
++    "BLOCK_SIZE_M": 16,
++    "BLOCK_SIZE_N": 64,
++    "BLOCK_SIZE_K": 128,
++    "GROUP_SIZE_M": 1,
++    "num_warps": 4,
++    "num_stages": 4,
++    "SPLIT_K": 1
++  },
++  "64": {
++    "BLOCK_SIZE_M": 64,
++    "GROUP_SIZE_M": 1,
++    "SPLIT_K": 1
++  },
++  "256": {
++    "BLOCK_SIZE_M": 64,
++    "GROUP_SIZE_M": 1,
++    "SPLIT_K": 1
++  },
++  "512": {
++    "BLOCK_SIZE_M": 64,
++    "GROUP_SIZE_M": 1,
++    "SPLIT_K": 1
++  }
++}

@@ -20,6 +20,11 @@ from typing import Any
 from urllib.parse import urlsplit
 
 
+PAUSE_FILE = "/home/steve/llm-optimizations/.pause-minimax-production"
+if os.path.exists(PAUSE_FILE):
+    print(f"MiniMax production frontdoor paused by {PAUSE_FILE}", flush=True)
+    raise SystemExit(0)
+
 BACKEND_BASE_URL = os.environ.get("FRONTDOOR_BACKEND_URL", "http://127.0.0.1:18080")
 HOST = os.environ.get("FRONTDOOR_HOST", "0.0.0.0")
 PORT = int(os.environ.get("FRONTDOOR_PORT", "8000"))
