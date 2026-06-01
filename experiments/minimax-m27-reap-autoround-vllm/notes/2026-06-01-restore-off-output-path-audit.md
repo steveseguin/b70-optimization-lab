@@ -125,6 +125,51 @@ Result: failed with the same all-NUL signature: all three prompts generated
 `192` NUL characters. This narrows the failure to the restore-weight graph path
 rather than the qk-helper custom op.
 
+## Restore-Weight NaN Trace
+
+I traced the failing restore-weight/qk-helper-off compiled 2K server with finite
+checks around the final model layers:
+
+- cache root:
+  `/mnt/fast-ai/vllm-cache-exp/minimax-m27-reap-serve-restore1-qk0-ml2048-20260601T130024Z`
+- first trace:
+  `/mnt/fast-ai/bench-results/minimax-m27-reap-autoround-vllm/quality/restore1-qk0-finite-trace-20260601T130641Z.jsonl`
+- layer-boundary trace:
+  `/mnt/fast-ai/bench-results/minimax-m27-reap-autoround-vllm/quality/restore1-qk0-layer-boundary-trace-20260601T130915Z.jsonl`
+- tiny request:
+  `Say OK and nothing else.`, `max_tokens=8`
+- observed response: eight NUL characters
+
+The first trace showed that all `200064` logits were NaN and that NaNs were
+already present in the final hidden state, so this is not a sampler or OpenAI
+serialization problem.
+
+The layer-boundary trace narrowed the failure further:
+
+| Tag | Bad rows | Last row finite state |
+| --- | ---: | --- |
+| `minimax.layer58.input` | `0/16` | finite |
+| `minimax.layer58.after_attn` | `0/16` | finite |
+| `minimax.layer58.after_moe` | `0/16` | finite |
+| `minimax.layer59.input` | `0/16` | finite |
+| `minimax.layer59.after_attn` | `0/16` | finite |
+| `minimax.layer59.after_moe` | `0/16` | finite |
+| `minimax.layer60.input` | `0/16` | finite |
+| `minimax.layer60.after_attn` | `0/16` | finite |
+| `minimax.layer60.after_moe` | `0/16` | finite |
+| `minimax.layer61.input` | `0/16` | finite |
+| `minimax.layer61.after_attn` | `4/16` | all `135168` values NaN |
+| `minimax.layer61.after_moe` | `4/16` | all `135168` values NaN |
+| `minimax.model.final_hidden` | `4/16` | all `135168` values NaN |
+| `gpu_model_runner.sample_hidden_states` | `32/32` | all `3072` values NaN |
+| `gpu_model_runner.logits_after_compute` | `32/32` | all `200064` values NaN |
+
+Interpretation: restore-weight graph mode is corrupting inside the final
+attention block, not in the preceding MoE, final norm, logits processor, or
+sampler. The next source-level target should be layer 61 attention under
+`VLLM_MINIMAX_QK_NORM_RESTORE_WEIGHT=1`, especially the restore-weight
+normalization path as captured by XPU graph with TP collectives.
+
 ## Decision
 
 - Do not promote `82.7078`; it is a regression relative to the archived
@@ -137,3 +182,5 @@ rather than the qk-helper custom op.
   graph-safety issue or another model-forward/MoE fusion path. Endpoint prompt
   shape, log stats, stream cadence, output-kind selection, and disabling the
   qk-helper around restore-weight are not enough.
+- The concrete restore-weight bug target is now final-layer attention: layer 61
+  enters attention finite and leaves attention all-NaN in compiled graph mode.

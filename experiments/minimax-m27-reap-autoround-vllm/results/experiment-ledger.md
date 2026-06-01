@@ -341,6 +341,14 @@ Restore-off and output-path audit:
   `/mnt/fast-ai/bench-results/minimax-m27-reap-autoround-vllm/quality/openai-quality-smoke-restore1-qk0-graph-ml2048-20260601T130428Z.json`.
   This points at the restore-weight graph path itself rather than the qk-helper
   custom op.
+- Finite tracing of the same restore-weight/qk-helper-off compiled 2K server
+  narrowed the all-NUL failure to the final attention block:
+  `/mnt/fast-ai/bench-results/minimax-m27-reap-autoround-vllm/quality/restore1-qk0-layer-boundary-trace-20260601T130915Z.jsonl`.
+  Layers 58-60 and `minimax.layer61.input` remained finite. The first bad
+  tensor was `minimax.layer61.after_attn`; the final hidden state,
+  `sample_hidden_states`, and all `200064` logits were then all-NaN. Next source
+  target: graph-captured layer 61 attention under
+  `VLLM_MINIMAX_QK_NORM_RESTORE_WEIGHT=1`.
 - Added `bench-async-output-kind.py` for direct async `RequestOutputKind`
   comparisons. A diagnostic restore-off/logits-WS run showed all output kinds in
   the same low-80s band, so output-kind selection is not the main limiter:
