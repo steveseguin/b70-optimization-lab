@@ -384,3 +384,30 @@ Restore-weight param fallback experiment:
 - Decision: patch is not speed-promoted. Restore live vLLM source to the
   pre-experiment behavior before continuing speed work; keep the patch and trace
   as correctness evidence.
+
+Async quality and logits-WS follow-up:
+
+- Added `experiments/minimax-m27-reap-autoround-vllm/scripts/async-quality-smoke.py`
+  to validate the same async-engine path used by direct async throughput runs.
+- Preserved fast `f728d2c0cf` still benchmarks well:
+  `/mnt/fast-ai/bench-results/minimax-m27-reap-autoround-vllm/decode/vllm-minimax-m27-autoround-tp4-p512n1536-20260601T134739Z.log`,
+  `118.61` total tok/s, `88.96` output tok/s. The new async quality smoke
+  rejected it with all token-id `0` output:
+  `/mnt/fast-ai/bench-results/minimax-m27-reap-autoround-vllm/quality/async-quality-smoke-f728-fast-20260601T135246Z.json`.
+- Existing logits-WS fast cache `4258951ecd` also failed async quality with all
+  token-id `0` output:
+  `/mnt/fast-ai/bench-results/minimax-m27-reap-autoround-vllm/quality/async-quality-smoke-logitsws-425895-20260601T135551Z.json`.
+- Fresh quality-safe logits-WS with restore off and attention-delay on passed
+  async quality:
+  `/mnt/fast-ai/bench-results/minimax-m27-reap-autoround-vllm/quality/async-quality-smoke-logitsws-qualitysafe-20260601T135722Z.json`,
+  but decoded only `108.34` total tok/s, `81.26` output tok/s:
+  `/mnt/fast-ai/bench-results/minimax-m27-reap-autoround-vllm/decode/vllm-minimax-m27-autoround-tp4-p512n1536-20260601T140120Z.log`.
+- Fresh logits-WS with restore off and attention-delay off also passed async
+  quality:
+  `/mnt/fast-ai/bench-results/minimax-m27-reap-autoround-vllm/quality/async-quality-smoke-logitsws-restore0-attndelay0-20260601T140312Z.json`,
+  but decoded only `107.86` total tok/s, `80.89` output tok/s:
+  `/mnt/fast-ai/bench-results/minimax-m27-reap-autoround-vllm/decode/vllm-minimax-m27-autoround-tp4-p512n1536-20260601T140720Z.log`.
+- Decision: reject throughput-only caches that fail async quality. Do not
+  promote logits-WS yet; quality-safe logits-WS is slower than the current
+  OpenAI qk-helper lane. `82.7078` remains a regression versus the archived
+  throughput-only result and is not a LocalMaxxing candidate.
