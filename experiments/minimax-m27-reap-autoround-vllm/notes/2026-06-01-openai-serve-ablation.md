@@ -33,6 +33,7 @@ All throughput rows use the OpenAI `/v1/completions` streaming endpoint with
 | qk-helper plus `--stream-interval 16` | pass | `82.6700` old, `82.6162` corrected | `107.871` | reject |
 | qk-helper, vLLM-random prompt, `--disable-log-stats` | not rerun; same safe env | `82.3904` corrected | `107.493` | reject |
 | restore-weight plus `VLLM_MINIMAX_QK_NORM_COMPILE_USE_PARAM=1`, graph 32K | fail: all NUL output | n/a | n/a | reject |
+| restore-weight, qk-helper disabled, graph 2K | fail: all NUL output | n/a | n/a | reject |
 
 ## Artifacts
 
@@ -60,6 +61,8 @@ All throughput rows use the OpenAI `/v1/completions` streaming endpoint with
   `/mnt/fast-ai/bench-results/minimax-m27-reap-autoround-vllm/decode/openai-endpoint-qkhelper1-disablelogstats-vllmrandom-graph-p512n1536-r2-20260601T123011Z.json`
 - restore-weight plus compile-param graph failure:
   `/mnt/fast-ai/bench-results/minimax-m27-reap-autoround-vllm/quality/openai-quality-smoke-restore1-param1-graph-ml32768-20260601T125336Z.json`
+- restore-weight plus qk-helper-disabled graph failure:
+  `/mnt/fast-ai/bench-results/minimax-m27-reap-autoround-vllm/quality/openai-quality-smoke-restore1-qk0-graph-ml2048-20260601T130428Z.json`
 
 ## Decisions
 
@@ -92,3 +95,5 @@ All throughput rows use the OpenAI `/v1/completions` streaming endpoint with
 - Source-level work on restore-weight graph safety is the main remaining path
   for a sizable quality-preserving win. Prompt shape, log-stat overhead, stream
   cadence, and output-kind selection did not explain the gap.
+- The restore-weight failure reproduces even with qk-helper disabled at 2K
+  context, so do not focus only on the qk-helper custom op.

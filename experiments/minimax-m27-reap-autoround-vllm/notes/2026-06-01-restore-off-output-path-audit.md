@@ -109,6 +109,22 @@ Quality artifact:
 Result: failed. All three prompts generated `192` NUL characters. This rejects
 the variant before benchmarking.
 
+I also tested restore-weight with the qk-helper disabled at 2K compiled OpenAI
+context:
+
+- `VLLM_MINIMAX_QK_RMS_XPU_HELPER=0`
+- `VLLM_MINIMAX_QK_NORM_RESTORE_WEIGHT=1`
+- `VLLM_MINIMAX_M2_ATTN_DELAY_ALLREDUCE=1`
+- `VLLM_MAX_MODEL_LEN=2048`
+
+Quality artifact:
+
+`/mnt/fast-ai/bench-results/minimax-m27-reap-autoround-vllm/quality/openai-quality-smoke-restore1-qk0-graph-ml2048-20260601T130428Z.json`
+
+Result: failed with the same all-NUL signature: all three prompts generated
+`192` NUL characters. This narrows the failure to the restore-weight graph path
+rather than the qk-helper custom op.
+
 ## Decision
 
 - Do not promote `82.7078`; it is a regression relative to the archived
@@ -119,4 +135,5 @@ the variant before benchmarking.
   but not currently reproduced under the quality-safe runtime path.
 - The next sizable improvement likely requires source work on the restore-weight
   graph-safety issue or another model-forward/MoE fusion path. Endpoint prompt
-  shape, log stats, stream cadence, and output-kind selection are not enough.
+  shape, log stats, stream cadence, output-kind selection, and disabling the
+  qk-helper around restore-weight are not enough.

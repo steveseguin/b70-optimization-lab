@@ -336,6 +336,11 @@ Restore-off and output-path audit:
 - Restore-weight with `VLLM_MINIMAX_QK_NORM_COMPILE_USE_PARAM=1` still failed
   the compiled 32K OpenAI quality smoke with all-NUL output:
   `/mnt/fast-ai/bench-results/minimax-m27-reap-autoround-vllm/quality/openai-quality-smoke-restore1-param1-graph-ml32768-20260601T125336Z.json`.
+- Restore-weight with qk-helper disabled also failed the compiled 2K OpenAI
+  quality smoke with the same all-NUL output:
+  `/mnt/fast-ai/bench-results/minimax-m27-reap-autoround-vllm/quality/openai-quality-smoke-restore1-qk0-graph-ml2048-20260601T130428Z.json`.
+  This points at the restore-weight graph path itself rather than the qk-helper
+  custom op.
 - Added `bench-async-output-kind.py` for direct async `RequestOutputKind`
   comparisons. A diagnostic restore-off/logits-WS run showed all output kinds in
   the same low-80s band, so output-kind selection is not the main limiter:
