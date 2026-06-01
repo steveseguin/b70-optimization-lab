@@ -267,3 +267,45 @@ OpenAI serve quality fix:
 - Decision: quality-clean OpenAI serve path is now established but not speed
   promoted. Next step is one-at-a-time ablation of the three serve-env toggles
   to recover decode rate without reintroducing NaN logits.
+
+OpenAI serve ablation:
+
+- Added corrected endpoint measurement for streaming chunk cadence:
+  `scripts/measure-openai-endpoint-metrics.py` now reports
+  `tok_s_out_client_after_first_chunk_corrected`, subtracting the estimated
+  first streamed chunk tokens from the post-first-chunk numerator.
+- `VLLM_MINIMAX_QK_RMS_XPU_HELPER=1` passed the 32K compiled OpenAI quality smoke
+  and improved endpoint p512/n1536 decode:
+  `/mnt/fast-ai/bench-results/minimax-m27-reap-autoround-vllm/decode/openai-endpoint-qkhelper1-graph-p512n1536-r2-20260601T051723Z.json`
+  - mean output tok/s after first chunk: `82.6854`
+  - mean total tok/s: `107.8990`
+  - logprobs probe returned HTTP `200`, so the previous NaN-logits symptom did
+    not recur.
+- `VLLM_MINIMAX_QK_NORM_RESTORE_WEIGHT=1` is not graph-safe:
+  - eager 2K quality passed:
+    `/mnt/fast-ai/bench-results/minimax-m27-reap-autoround-vllm/quality/openai-quality-smoke-restore1-eager-ml2048-20260601T052041Z.json`
+  - compiled 32K quality failed with all-NUL output:
+    `/mnt/fast-ai/bench-results/minimax-m27-reap-autoround-vllm/quality/openai-quality-smoke-restore1-graph-ml32768-20260601T052241Z.json`
+- `VLLM_MINIMAX_M2_ATTN_DELAY_ALLREDUCE=0` was quality-clean but slower:
+  `/mnt/fast-ai/bench-results/minimax-m27-reap-autoround-vllm/decode/openai-endpoint-attndelay0-graph-p512n1536-r2-20260601T052446Z.json`,
+  `82.3183` mean output tok/s.
+- qk-helper plus `ATTN_DELAY_ALLREDUCE=0` also did not beat qk-helper alone:
+  `/mnt/fast-ai/bench-results/minimax-m27-reap-autoround-vllm/decode/openai-endpoint-qkhelper1-attndelay0-graph-p512n1536-r2-20260601T052801Z.json`,
+  `82.4583` mean output tok/s.
+- Reducing OpenAI serve max context to 2K did not recover the offline record:
+  `/mnt/fast-ai/bench-results/minimax-m27-reap-autoround-vllm/decode/openai-endpoint-qkhelper1-graph-ml2048-p512n1536-r2-20260601T053411Z.json`,
+  `82.1484` mean output tok/s.
+- Streaming cadence screen:
+  - qk-helper plus `--stream-interval 8` passed quality and reached
+    `82.7617` old output tok/s, `82.7078` corrected output tok/s, `107.9963`
+    total tok/s:
+    `/mnt/fast-ai/bench-results/minimax-m27-reap-autoround-vllm/decode/openai-endpoint-qkhelper1-streamint8-graph-p512n1536-r2-20260601T053846Z.json`
+  - qk-helper plus `--stream-interval 16` regressed to `82.6162` corrected
+    output tok/s:
+    `/mnt/fast-ai/bench-results/minimax-m27-reap-autoround-vllm/decode/openai-endpoint-qkhelper1-streamint16-graph-p512n1536-r2-20260601T054153Z.json`
+- Serve wrapper decision:
+  - promote qk-helper default to `VLLM_MINIMAX_QK_RMS_XPU_HELPER=1`
+  - keep restore-weight off
+  - keep delayed attention allreduce on
+  - add `VLLM_STREAM_INTERVAL` as an opt-in serve wrapper knob; `8` is a small
+    endpoint win but changes client-visible streaming cadence.

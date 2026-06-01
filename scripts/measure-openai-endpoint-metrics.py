@@ -111,6 +111,8 @@ def stream_completion(base_url: str, model: str, prompt: str, max_tokens: int) -
     usage = None
     t0 = time.perf_counter()
     first = None
+    first_chunk_text = ""
+    streamed_text_chunks = 0
     with urllib.request.urlopen(req, timeout=max(120, max_tokens * 5)) as resp:
         for raw in resp:
             line = raw.decode("utf-8", errors="replace").strip()
@@ -127,6 +129,9 @@ def stream_completion(base_url: str, model: str, prompt: str, max_tokens: int) -
                 text = choices[0].get("text") or ""
                 if text and first is None:
                     first = time.perf_counter()
+                    first_chunk_text = text
+                if text:
+                    streamed_text_chunks += 1
                 chunks.append(text)
     t1 = time.perf_counter()
     return {
@@ -135,6 +140,8 @@ def stream_completion(base_url: str, model: str, prompt: str, max_tokens: int) -
         "elapsed_s": t1 - t0,
         "ttft_s": None if first is None else first - t0,
         "generation_wall_s_after_first_chunk": None if first is None else t1 - first,
+        "first_chunk_text": first_chunk_text,
+        "streamed_text_chunks": streamed_text_chunks,
     }
 
 
@@ -145,6 +152,7 @@ def summarize_repeats(records: list[dict[str, Any]]) -> dict[str, Any]:
     summary: dict[str, Any] = {}
     for key in [
         "tok_s_out_client_after_first_chunk",
+        "tok_s_out_client_after_first_chunk_corrected",
         "tok_s_total_client",
         "ttft_ms_client",
         "ttft_ms_vllm_metrics",
@@ -202,6 +210,11 @@ def main() -> int:
         elapsed = float(result["elapsed_s"])
         after_first = result["generation_wall_s_after_first_chunk"]
         ttft_s = result["ttft_s"]
+        first_chunk_tokens = (
+            len(tokenizer.encode(result.get("first_chunk_text", ""), add_special_tokens=False))
+            if result.get("first_chunk_text")
+            else 0
+        )
 
         prompt_delta = metric_delta(metrics_before, metrics_after, "vllm:prompt_tokens_total")
         gen_delta = metric_delta(metrics_before, metrics_after, "vllm:generation_tokens_total")
@@ -227,6 +240,9 @@ def main() -> int:
                 "tok_s_out_client_after_first_chunk": None
                 if not after_first or after_first <= 0
                 else output_tokens / after_first,
+                "tok_s_out_client_after_first_chunk_corrected": None
+                if not after_first or after_first <= 0
+                else max(0, output_tokens - first_chunk_tokens) / after_first,
                 "tok_s_total_client": (prompt_tokens + output_tokens) / elapsed,
                 "tok_s_prefill_lower_bound_from_ttft": None
                 if not ttft_s or ttft_s <= 0
@@ -245,6 +261,8 @@ def main() -> int:
                 "e2e_ms_vllm_metrics": None if e2e_count <= 0 else (e2e_sum / e2e_count) * 1000,
                 "vram_mib_before": vram_pre,
                 "vram_mib_after": vram_post,
+                "first_chunk_tokens_client_estimate": first_chunk_tokens,
+                "streamed_text_chunks": result.get("streamed_text_chunks"),
                 "text_preview": text[:240],
             }
         )
@@ -263,6 +281,7 @@ def main() -> int:
             "TTFT and e2e are measured both client-side and from vLLM Prometheus histogram deltas.",
             "tok_s_prefill_lower_bound_from_ttft is prompt_tokens / TTFT, so it is conservative and includes first-token scheduling/decode overhead.",
             "tok_s_out_client_after_first_chunk is generated-token-only throughput after the first streamed text chunk.",
+            "tok_s_out_client_after_first_chunk_corrected subtracts the estimated first streamed chunk tokens from the numerator; this is more stable when --stream-interval > 1.",
         ],
         "vram_mib_before_all": vram_before,
         "peak_vram_mib_observed": peak_vram,

@@ -20,10 +20,11 @@ USER_QK_NORM_RESTORE_WEIGHT_MIN_TOKENS="${VLLM_MINIMAX_QK_NORM_RESTORE_WEIGHT_MI
 source /home/steve/llm-optimizations/repro/minimax-m27-b70-89tps-20260520/configs/promoted-env.sh
 # Keep the repaired 192-expert logits WS path opt-in until this lane promotes it.
 export VLLM_XPU_USE_LLM_SCALER_MOE_MINIMAX_LOGITS_WS="${USER_MINIMAX_LOGITS_WS:-0}"
-# Mirror the quality harness defaults; the older promoted env was tuned for a
-# different MiniMax lane and can produce NaN logits through the OpenAI server.
+# Mirror the quality harness defaults where needed; the older promoted env was
+# tuned for a different MiniMax lane and can produce NaN logits through the
+# OpenAI server when restore-weight is enabled.
 export VLLM_MINIMAX_M2_ATTN_DELAY_ALLREDUCE="${USER_ATTN_DELAY_ALLREDUCE:-1}"
-export VLLM_MINIMAX_QK_RMS_XPU_HELPER="${USER_QK_RMS_HELPER:-0}"
+export VLLM_MINIMAX_QK_RMS_XPU_HELPER="${USER_QK_RMS_HELPER:-1}"
 export VLLM_MINIMAX_QK_RMS_XPU_HELPER_MAX_TOKENS="${USER_QK_RMS_HELPER_MAX_TOKENS:-4}"
 export VLLM_MINIMAX_QK_NORM_RESTORE_WEIGHT="${USER_QK_NORM_RESTORE_WEIGHT:-0}"
 export VLLM_MINIMAX_QK_NORM_RESTORE_WEIGHT_MIN_TOKENS="${USER_QK_NORM_RESTORE_WEIGHT_MIN_TOKENS:-2}"
@@ -90,6 +91,7 @@ exec vllm serve "$MODEL" \
   --max-model-len "${VLLM_MAX_MODEL_LEN:-32768}" \
   --max-num-batched-tokens "${VLLM_MAX_NUM_BATCHED_TOKENS:-512}" \
   --max-num-seqs "${VLLM_MAX_NUM_SEQS:-1}" \
+  --stream-interval "${VLLM_STREAM_INTERVAL:-1}" \
   --gpu-memory-utilization "${VLLM_GPU_MEMORY_UTILIZATION:-0.95}" \
   --block-size 256 \
   --no-enable-prefix-caching \

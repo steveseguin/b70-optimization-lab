@@ -117,3 +117,30 @@ Best submitted REAP result:
 - Payload:
   `localmaxxing/reap-minimax-m27-autoround-greedy-pidfd-p512n1536-20260531.payload.json`
 - Status: HTTP `201`, `APPROVED`
+
+## OpenAI-Compatible Serve
+
+For the vLLM OpenAI server path:
+
+```bash
+cd /home/steve/llm-optimizations
+VLLM_ENABLE_AUTO_TOOL_CHOICE=0 \
+VLLM_TOOL_CALL_PARSER=none \
+VLLM_REASONING_PARSER=none \
+VLLM_GENERATION_CONFIG=vllm \
+  experiments/minimax-m27-reap-autoround-vllm/scripts/serve.sh
+```
+
+Current REAP serve defaults differ slightly from the offline LocalMaxxing
+benchmark wrapper:
+
+- `VLLM_MINIMAX_QK_RMS_XPU_HELPER=1`
+- `VLLM_MINIMAX_QK_NORM_RESTORE_WEIGHT=0`
+- `VLLM_MINIMAX_M2_ATTN_DELAY_ALLREDUCE=1`
+- `VLLM_STREAM_INTERVAL=1`
+
+The qk-helper default is quality-clean on the compiled 32K OpenAI path and is
+the best tested server default so far: `82.6854` mean output tok/s after first
+chunk on p512/n1536. `VLLM_STREAM_INTERVAL=8` is an opt-in streaming profile that
+reduces stream chunk count and reached `82.7078` corrected output tok/s, but it
+changes client-visible streaming cadence and is not the default.
