@@ -411,3 +411,42 @@ Async quality and logits-WS follow-up:
   promote logits-WS yet; quality-safe logits-WS is slower than the current
   OpenAI qk-helper lane. `82.7078` remains a regression versus the archived
   throughput-only result and is not a LocalMaxxing candidate.
+
+f728 quality and speed split:
+
+- Added runtime-only diagnostic shim:
+  `experiments/minimax-m27-reap-autoround-vllm/scripts/sitecustomize_minimax_clean_weight/sitecustomize.py`.
+  It mirrors MiniMax q/k RMSNorm clean weights from the loaded `Parameter` onto
+  the owning `MiniMaxText01RMSNormTP` module without editing live vLLM source.
+- Fresh `FULL_FORWARD_CUSTOM_OP=0`, restore off, qk-helper on passed async
+  quality:
+  `/mnt/fast-ai/bench-results/minimax-m27-reap-autoround-vllm/quality/async-quality-smoke-fullforward0-restore0-qksafe-20260601T1828.json`,
+  then decoded `83.52 output tok/s`, `111.36 total tok/s`:
+  `/mnt/fast-ai/bench-results/minimax-m27-reap-autoround-vllm/decode/vllm-minimax-m27-autoround-tp4-p512n1536-20260601T223035Z.json`.
+- Fresh `FULL_FORWARD_CUSTOM_OP=0`, restore off, attention-delay off passed
+  async quality:
+  `/mnt/fast-ai/bench-results/minimax-m27-reap-autoround-vllm/quality/async-quality-smoke-fullforward0-restore0-attndelay0-20260601T1834.json`,
+  then decoded `83.13 output tok/s`, `110.84 total tok/s`:
+  `/mnt/fast-ai/bench-results/minimax-m27-reap-autoround-vllm/decode/vllm-minimax-m27-autoround-tp4-p512n1536-20260601T223723Z.json`.
+- Preserved `f728d2c0cf` without the shim still direct-loaded and decoded at
+  `88.63 output tok/s`, `118.17 total tok/s`:
+  `/mnt/fast-ai/bench-results/minimax-m27-reap-autoround-vllm/decode/vllm-minimax-m27-autoround-tp4-p512n1536-20260601T224417Z.json`,
+  but async quality failed with all `384` generated tokens equal to token id `0`
+  and NUL/control output:
+  `/mnt/fast-ai/bench-results/minimax-m27-reap-autoround-vllm/quality/async-quality-smoke-f728-no-shim-control-20260601T1846.json`.
+- The exact same preserved `f728d2c0cf` cache with the runtime owner-clean-weight
+  shim passed async quality:
+  `/mnt/fast-ai/bench-results/minimax-m27-reap-autoround-vllm/quality/async-quality-smoke-f728-sitecustomize-owner-restore1-20260601T1842.json`,
+  but decoded only `83.32 output tok/s`, `111.09 total tok/s`:
+  `/mnt/fast-ai/bench-results/minimax-m27-reap-autoround-vllm/decode/vllm-minimax-m27-autoround-tp4-p512n1536-20260601T224156Z.json`.
+- Graph counts explain why this is not just a missing MoE-inline issue:
+  preserved fast REAP and old non-REAP have `fused_moe=124`,
+  `minimax_m2_moe_forward=0`, `_minimax_clean_weight_xpu=992`, and
+  `all_reduce=813`; fresh quality-safe restore-off paths still inline MoE
+  (`fused_moe=124`, `minimax_m2_moe_forward=0`) but remove the clean-weight attr
+  references and land in the low-83 band.
+- Decision: the current `88.x` preserved `f728d2c0cf` lane is throughput-only
+  corrupt unless repaired, and the repair currently costs the speed back down to
+  about `83.3` output tok/s. Do not promote or submit. Next sizeable improvement
+  requires source work in Q/K RMS restore graph safety or a deeper MoE/QK fusion,
+  not more env/cache sweeps.
