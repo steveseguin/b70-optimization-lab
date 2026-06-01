@@ -239,3 +239,31 @@ Clean-weight quality follow-up:
 - Decision: keep using the preserved `f728d2c0cf` lane only as a recovery/debug
   reference. It is close to the archived best but still lacks a current sync
   quality pass on the exact stale AOT pair.
+
+OpenAI serve quality fix:
+
+- `vllm serve` was producing token id `0` / NUL output even when eager and with
+  parsers disabled. A logprobs probe exposed NaN logits, so the issue was below
+  response parsing.
+- A `SamplingParams.skip_clone` deep-copy probe did not fix the issue and was
+  reverted from live vLLM source.
+- Root cause was a stale serve-env bundle inherited from the older MiniMax lane.
+  `serve.sh` now mirrors the passing quality harness by default:
+  - `VLLM_MINIMAX_M2_ATTN_DELAY_ALLREDUCE=1`
+  - `VLLM_MINIMAX_QK_RMS_XPU_HELPER=0`
+  - `VLLM_MINIMAX_QK_NORM_RESTORE_WEIGHT=0`
+- Eager OpenAI quality pass:
+  `/mnt/fast-ai/bench-results/minimax-m27-reap-autoround-vllm/quality/openai-quality-smoke-qualityenv-eager-ml2048-20260601T050148Z.json`.
+- Compiled 32K OpenAI quality pass:
+  `/mnt/fast-ai/bench-results/minimax-m27-reap-autoround-vllm/quality/openai-quality-smoke-qualityenv-graph-ml32768-20260601T050633Z.json`.
+- New compiled serve cache:
+  - backbone key `b234935ae7`
+  - AOT `c6b129b47a7bce6e1ac7bb116707a25b30df10f84ae3be4497d3f4c95e1b992f`
+- Endpoint p512/n1536 two-repeat benchmark on the quality-clean compiled server:
+  `/mnt/fast-ai/bench-results/minimax-m27-reap-autoround-vllm/decode/openai-endpoint-qualityenv-graph-p512n1536-r2-20260601T050839Z.json`
+  - `82.05` mean output tok/s after first chunk
+  - `107.15` mean total tok/s
+  - `393.17 ms` mean client TTFT
+- Decision: quality-clean OpenAI serve path is now established but not speed
+  promoted. Next step is one-at-a-time ablation of the three serve-env toggles
+  to recover decode rate without reintroducing NaN logits.
