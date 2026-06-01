@@ -100,3 +100,16 @@ Effective important settings:
   `patches/llm-scaler-minimax-reap-e192-router-ws-20260531.patch`
 - REAP versus non-REAP gap analysis:
   `notes/2026-05-31-reap-vs-nonreap-gap.md`
+
+## 2026-06-01 Follow-Up
+
+- Added a profiling wrapper and timing-summary parser; see
+  `scripts/profile-decode.sh` and `scripts/summarize-timing.py`.
+- Follow-up optimization pass is documented in
+  `notes/2026-06-01-decode-improvement-pass.md`.
+- No new promoted result. The archived best remains
+  `89.49922316987691 output tok/s`.
+- Important operational lesson: copy or freeze a record-class `VLLM_CACHE_ROOT`
+  before source instrumentation. A temporary instrumentation pass caused a
+  recompile in the promoted REAP cache root, and the rebuilt AOT now runs around
+  `85.6-85.9 output tok/s` on the conservative path.

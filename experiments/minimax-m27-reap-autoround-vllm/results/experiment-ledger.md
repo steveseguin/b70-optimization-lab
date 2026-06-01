@@ -169,3 +169,24 @@ CCL IPC promotion:
   - result: HTTP `201`, status `APPROVED`
   - LocalMaxxing ID: `cmpuesbma00r5mq01yk0zdcjx`
   - submit log: `localmaxxing/reap-minimax-m27-autoround-greedy-pidfd-p512n1536-20260531.submit.log`
+
+## 2026-06-01
+
+- Added a REAP profile wrapper and log-summary parser for timing diagnostics.
+- Extended the REAP wrapper to preserve more MiniMax override flags during
+  screens.
+- Important cache lesson: a temporary source-level instrumentation pass caused
+  vLLM to recompile and overwrite the AOT artifact in the promoted REAP cache
+  root. Afterward, the same no-logits-WS path direct-loaded but ran around
+  `85.6-85.9 output tok/s`, below the archived `89.49922316987691 output tok/s`.
+- Rejected warmed screens:
+  - `VLLM_MINIMAX_M2_ATTN_DELAY_ALLREDUCE=1`: about `85.7 output tok/s`
+  - `VLLM_MINIMAX_MOE_DELAY_ALLREDUCE=1`: about `85.4 output tok/s`
+  - `MAX_BATCHED_TOKENS=1024`: about `80.3 output tok/s`
+  - logits WS plus skip redundant contiguous: about `87.0 output tok/s`
+- Logits WS retest reached about `87.3 output tok/s`, faster than the rebuilt
+  conservative cache but still below the archived best.
+- Logits WS plus cached op was about tied at `87.3 output tok/s`, but the quality
+  smoke failed during engine startup with
+  `'MiniMaxText01RMSNormTP' object has no attribute '_minimax_clean_weight_xpu'`.
+- No new LocalMaxxing submission and no promoted runtime change.

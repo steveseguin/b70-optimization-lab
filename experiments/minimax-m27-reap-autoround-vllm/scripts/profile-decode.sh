@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+export OUTDIR="${OUTDIR:-/mnt/fast-ai/bench-results/minimax-m27-reap-autoround-vllm/profile}"
+export INPUT_LEN="${INPUT_LEN:-512}"
+export OUTPUT_LEN="${OUTPUT_LEN:-256}"
+export NUM_PROMPTS="${NUM_PROMPTS:-1}"
+export VLLM_BENCH_TEMPERATURE="${VLLM_BENCH_TEMPERATURE:-0}"
+
+export VLLM_XPU_DECODE_TIMING=1
+export VLLM_XPU_DECODE_TIMING_RANK="${VLLM_XPU_DECODE_TIMING_RANK:-0}"
+export VLLM_XPU_DECODE_TIMING_SKIP_FIRST="${VLLM_XPU_DECODE_TIMING_SKIP_FIRST:-16}"
+export VLLM_XPU_DECODE_TIMING_PRINT_EVERY="${VLLM_XPU_DECODE_TIMING_PRINT_EVERY:-0}"
+export VLLM_XPU_DECODE_TIMING_SUMMARY="${VLLM_XPU_DECODE_TIMING_SUMMARY:-1}"
+export VLLM_XPU_DECODE_TIMING_SYNC="${VLLM_XPU_DECODE_TIMING_SYNC:-0}"
+
+"$ROOT/scripts/bench-decode.sh" "$@"
