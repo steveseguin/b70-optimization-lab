@@ -450,3 +450,24 @@ f728 quality and speed split:
   about `83.3` output tok/s. Do not promote or submit. Next sizeable improvement
   requires source work in Q/K RMS restore graph safety or a deeper MoE/QK fusion,
   not more env/cache sweeps.
+
+Candidate-router repair screen:
+
+- Tried `VLLM_MINIMAX_M2_CANDIDATE_ROUTER_TOPM=16` with exact XPU repair on the
+  quality-safe restore-off path.
+- First attempt failed graph capture because
+  `moe_int4_ops::minimax_m2_candidate_repair_topk` had no fake/meta
+  implementation for TorchDynamo.
+- Archived compile-enablement patch:
+  `patches/vllm-minimax-candidate-router-fake-20260601.patch`.
+- With that fake registration applied, async quality passed:
+  `/mnt/fast-ai/bench-results/minimax-m27-reap-autoround-vllm/quality/async-quality-smoke-candidate-router-top16-fake-restore0-20260601T2304.json`,
+  `384` generated tokens, `177` distinct generated token IDs, no NUL/control
+  output.
+- Warm p512/n1536 benchmark did not improve:
+  `/mnt/fast-ai/bench-results/minimax-m27-reap-autoround-vllm/decode/vllm-minimax-m27-autoround-tp4-p512n1536-20260601T230739Z.json`,
+  `18.422281710983953 s`, `111.16972545148504` total tok/s, about `83.38`
+  output tok/s.
+- Decision: reject as a speed path and remove the live vLLM patch to avoid
+  unnecessary code-hash churn. Keep the patch archived only for future candidate
+  router work.

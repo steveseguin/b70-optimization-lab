@@ -1,0 +1,50 @@
+diff --git a/vllm/model_executor/models/minimax_m2.py b/vllm/model_executor/models/minimax_m2.py
+--- a/vllm/model_executor/models/minimax_m2.py
++++ b/vllm/model_executor/models/minimax_m2.py
+@@
+ else:
+     _minimax_layer_name_type = LayerName if _USE_LAYERNAME else str
+ 
+ 
++def _register_minimax_m2_candidate_repair_fake() -> None:
++    try:
++        import custom_esimd_kernels_vllm  # noqa: F401
++    except Exception:
++        return
++    try:
++        if not hasattr(torch.ops, "moe_int4_ops") or not hasattr(
++            torch.ops.moe_int4_ops, "minimax_m2_candidate_repair_topk"
++        ):
++            return
++
++        @torch.library.register_fake(
++            "moe_int4_ops::minimax_m2_candidate_repair_topk"
++        )
++        def _minimax_m2_candidate_repair_topk_fake(
++            hidden_states: torch.Tensor,
++            candidate_ids: torch.Tensor,
++            gate_weight: torch.Tensor,
++            e_score_bias: torch.Tensor,
++            top_k: int,
++            norm: bool = True,
++        ) -> tuple[torch.Tensor, torch.Tensor]:
++            del gate_weight, e_score_bias, norm
++            num_tokens = hidden_states.shape[0]
++            return (
++                hidden_states.new_empty(
++                    (num_tokens, top_k), dtype=torch.float32
++                ),
++                candidate_ids.new_empty(
++                    (num_tokens, top_k), dtype=torch.int32
++                ),
++            )
++    except RuntimeError:
++        pass
++
++
++if _MINIMAX_M2_CANDIDATE_ROUTER_XPU_REPAIR:
++    _register_minimax_m2_candidate_repair_fake()
++
++
+ @torch.compiler.assume_constant_result
+ def _resolve_minimax_moe_layer_name(layer_name: _minimax_layer_name_type) -> str:
