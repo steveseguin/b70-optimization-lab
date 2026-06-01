@@ -212,3 +212,30 @@ CCL IPC promotion:
 - The recovered path is not promoted: the sync quality harness, now able to
   target an explicit compile cache dir, fails on the preserved AOT pair with
   `'MiniMaxText01RMSNormTP' object has no attribute '_minimax_clean_weight_xpu'`.
+
+Clean-weight quality follow-up:
+
+- Tried an experimental vLLM patch to mirror MiniMax q/k RMSNorm clean-weight
+  tensors from the weight parameter onto the owning norm module during weight
+  load. Patch archived at
+  `patches/vllm-minimax-clean-weight-owner-experiment.patch`.
+- The patch fixed the sync quality startup failure on a fresh cache; a repeat
+  strict quality smoke passed:
+  `/mnt/fast-ai/bench-results/minimax-m27-reap-autoround-vllm/quality/quality-smoke-20260601T035827Z.json`,
+  `combined_token_sha256=f97fdf040fb42b7597cab517888d9bf0309aba0a29d0c92249287c10c91df14e`.
+- The patch is not promoted because source-hash changes forced new AOT builds
+  with materially worse decode rates:
+  - patched default fresh cache: `80.47 output tok/s`,
+    `/mnt/fast-ai/bench-results/minimax-m27-reap-autoround-vllm/decode/vllm-minimax-m27-autoround-tp4-p512n1536-20260601T040006Z.log`
+  - patched `VLLM_MINIMAX_MOE_FULL_FORWARD_CUSTOM_OP=0`: `54.17 output tok/s`,
+    `/mnt/fast-ai/bench-results/minimax-m27-reap-autoround-vllm/decode/vllm-minimax-m27-autoround-tp4-p512n1536-20260601T040648Z.log`
+  - patched `VLLM_MINIMAX_POST_ATTN_NORM_MOE_CUSTOM_OP=1`: `49.19 output tok/s`,
+    `/mnt/fast-ai/bench-results/minimax-m27-reap-autoround-vllm/decode/vllm-minimax-m27-autoround-tp4-p512n1536-20260601T041236Z.log`
+- Live vLLM source was reverted to the pre-experiment state after recording the
+  patch.
+- Preserved fast-cache check after the revert:
+  `/mnt/fast-ai/bench-results/minimax-m27-reap-autoround-vllm/decode/vllm-minimax-m27-autoround-tp4-p512n1536-20260601T041712Z.log`
+  direct-loaded `f728d2c0cf` and reached `88.40 output tok/s`, `117.87 total tok/s`.
+- Decision: keep using the preserved `f728d2c0cf` lane only as a recovery/debug
+  reference. It is close to the archived best but still lacks a current sync
+  quality pass on the exact stale AOT pair.

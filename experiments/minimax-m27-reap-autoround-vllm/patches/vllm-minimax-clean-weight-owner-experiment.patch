@@ -1,0 +1,31 @@
+diff --git a/vllm/model_executor/layers/mamba/linear_attn.py b/vllm/model_executor/layers/mamba/linear_attn.py
+--- a/vllm/model_executor/layers/mamba/linear_attn.py
++++ b/vllm/model_executor/layers/mamba/linear_attn.py
+@@
+-        self.weight = nn.Parameter(torch.ones(hidden_size // self.weight_shard_world))
++        self.weight = nn.Parameter(torch.ones(hidden_size // self.weight_shard_world))
++        self._minimax_clean_weight_cpu: torch.Tensor | None = None
++        self._minimax_clean_weight_xpu: torch.Tensor | None = None
++        self.weight._minimax_owner_norm = self
+         self.weight.weight_loader = partial(
+             self.weight_loader,
+             shard_world_size=self.weight_shard_world,
+             shard_rank=self.weight_shard_rank,
+         )
+@@
+-        clean_weight = loaded_weight[shard].detach()
+-        param.data.copy_(clean_weight)
+-        param._minimax_clean_weight_cpu = clean_weight.cpu().clone()
++        clean_weight = loaded_weight[shard].detach()
++        param.data.copy_(clean_weight)
++        clean_weight_cpu = clean_weight.cpu().clone()
++        param._minimax_clean_weight_cpu = clean_weight_cpu
++        owner_norm = getattr(param, "_minimax_owner_norm", None)
++        if owner_norm is not None:
++            owner_norm._minimax_clean_weight_cpu = clean_weight_cpu
+         if param.is_xpu:
+-            param._minimax_clean_weight_xpu = param.detach().clone()
++            clean_weight_xpu = param.detach().clone()
++            param._minimax_clean_weight_xpu = clean_weight_xpu
++            if owner_norm is not None:
++                owner_norm._minimax_clean_weight_xpu = clean_weight_xpu
