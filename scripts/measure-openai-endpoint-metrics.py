@@ -52,7 +52,7 @@ def metric_delta(before: dict[str, float], after: dict[str, float], name: str) -
     return after.get(name, 0.0) - before.get(name, 0.0)
 
 
-def make_prompt(tokenizer: Any, target_tokens: int) -> str:
+def make_text_prompt(tokenizer: Any, target_tokens: int) -> str:
     seed = (
         "Local Intel XPU benchmark prompt. "
         "The assistant should continue with concise technical text. "
@@ -62,6 +62,55 @@ def make_prompt(tokenizer: Any, target_tokens: int) -> str:
         text += seed
     ids = tokenizer.encode(text, add_special_tokens=False)[:target_tokens]
     return tokenizer.decode(ids, skip_special_tokens=True)
+
+
+def make_vllm_random_prompt(
+    tokenizer: Any,
+    target_tokens: int,
+    output_tokens: int,
+    *,
+    seed: int,
+    prefix_len: int,
+) -> str:
+    try:
+        from vllm.benchmarks.datasets import RandomDataset
+    except ImportError as exc:
+        raise RuntimeError(
+            "--prompt-kind vllm-random requires vLLM to be importable in this Python environment"
+        ) from exc
+
+    dataset = RandomDataset(random_seed=seed)
+    sample = dataset.sample(
+        tokenizer=tokenizer,
+        num_requests=1,
+        prefix_len=prefix_len,
+        range_ratio=0.0,
+        input_len=target_tokens,
+        output_len=output_tokens,
+    )[0]
+    return sample.prompt
+
+
+def make_prompt(
+    tokenizer: Any,
+    *,
+    prompt_kind: str,
+    target_tokens: int,
+    output_tokens: int,
+    seed: int,
+    random_prefix_len: int,
+) -> str:
+    if prompt_kind == "text":
+        return make_text_prompt(tokenizer, target_tokens)
+    if prompt_kind == "vllm-random":
+        return make_vllm_random_prompt(
+            tokenizer,
+            target_tokens,
+            output_tokens,
+            seed=seed,
+            prefix_len=random_prefix_len,
+        )
+    raise ValueError(f"unknown prompt kind: {prompt_kind}")
 
 
 def xpu_vram_mib() -> dict[str, float]:
@@ -92,15 +141,23 @@ def xpu_vram_mib() -> dict[str, float]:
     return values
 
 
-def stream_completion(base_url: str, model: str, prompt: str, max_tokens: int) -> dict[str, Any]:
+def request_completion(
+    base_url: str,
+    model: str,
+    prompt: str,
+    max_tokens: int,
+    *,
+    stream: bool,
+) -> dict[str, Any]:
     payload = {
         "model": model,
         "prompt": prompt,
         "max_tokens": max_tokens,
         "temperature": 0,
-        "stream": True,
-        "stream_options": {"include_usage": True},
+        "stream": stream,
     }
+    if stream:
+        payload["stream_options"] = {"include_usage": True}
     req = urllib.request.Request(
         f"{base_url.rstrip('/')}/v1/completions",
         data=json.dumps(payload).encode("utf-8"),
@@ -114,6 +171,21 @@ def stream_completion(base_url: str, model: str, prompt: str, max_tokens: int) -
     first_chunk_text = ""
     streamed_text_chunks = 0
     with urllib.request.urlopen(req, timeout=max(120, max_tokens * 5)) as resp:
+        if not stream:
+            data = json.loads(resp.read())
+            choices = data.get("choices") or []
+            text = choices[0].get("text") if choices else ""
+            chunks.append(text or "")
+            usage = data.get("usage")
+            return {
+                "text": "".join(chunks),
+                "usage": usage,
+                "elapsed_s": time.perf_counter() - t0,
+                "ttft_s": None,
+                "generation_wall_s_after_first_chunk": None,
+                "first_chunk_text": "",
+                "streamed_text_chunks": None,
+            }
         for raw in resp:
             line = raw.decode("utf-8", errors="replace").strip()
             if not line.startswith("data: "):
@@ -153,6 +225,7 @@ def summarize_repeats(records: list[dict[str, Any]]) -> dict[str, Any]:
     for key in [
         "tok_s_out_client_after_first_chunk",
         "tok_s_out_client_after_first_chunk_corrected",
+        "tok_s_out_client_e2e",
         "tok_s_total_client",
         "ttft_ms_client",
         "ttft_ms_vllm_metrics",
@@ -177,19 +250,46 @@ def main() -> int:
     parser.add_argument("--tokenizer", default="/mnt/fast-ai/llm-models/minimax-m2.7-int4-autoround")
     parser.add_argument("--prompt-tokens", type=int, default=510)
     parser.add_argument("--output-tokens", type=int, default=1536)
+    parser.add_argument(
+        "--prompt-kind",
+        choices=["text", "vllm-random"],
+        default="text",
+        help="Prompt generator to use. vllm-random matches vLLM's random throughput dataset.",
+    )
+    parser.add_argument("--seed", type=int, default=0)
+    parser.add_argument("--random-prefix-len", type=int, default=0)
     parser.add_argument("--repeats", type=int, default=1)
     parser.add_argument("--warmup-output-tokens", type=int, default=32)
+    parser.add_argument(
+        "--mode",
+        choices=["stream", "nonstream"],
+        default="stream",
+        help="Use SSE streaming or final-only /v1/completions responses.",
+    )
     parser.add_argument("--out", required=True)
     args = parser.parse_args()
 
     models = get_json(f"{args.base_url.rstrip('/')}/v1/models")
     model = args.model or models["data"][0]["id"]
     tokenizer = AutoTokenizer.from_pretrained(args.tokenizer, trust_remote_code=True)
-    prompt = make_prompt(tokenizer, args.prompt_tokens)
+    prompt = make_prompt(
+        tokenizer,
+        prompt_kind=args.prompt_kind,
+        target_tokens=args.prompt_tokens,
+        output_tokens=args.output_tokens,
+        seed=args.seed,
+        random_prefix_len=args.random_prefix_len,
+    )
     prompt_tokens = len(tokenizer.encode(prompt, add_special_tokens=False))
 
     if args.warmup_output_tokens > 0:
-        stream_completion(args.base_url, model, prompt, args.warmup_output_tokens)
+        request_completion(
+            args.base_url,
+            model,
+            prompt,
+            args.warmup_output_tokens,
+            stream=args.mode == "stream",
+        )
 
     records: list[dict[str, Any]] = []
     vram_before = xpu_vram_mib()
@@ -197,7 +297,13 @@ def main() -> int:
     for i in range(args.repeats):
         metrics_before = parse_metric_sums(get_text(f"{args.base_url.rstrip('/')}/metrics"))
         vram_pre = xpu_vram_mib()
-        result = stream_completion(args.base_url, model, prompt, args.output_tokens)
+        result = request_completion(
+            args.base_url,
+            model,
+            prompt,
+            args.output_tokens,
+            stream=args.mode == "stream",
+        )
         vram_post = xpu_vram_mib()
         metrics_after = parse_metric_sums(get_text(f"{args.base_url.rstrip('/')}/metrics"))
 
@@ -243,6 +349,7 @@ def main() -> int:
                 "tok_s_out_client_after_first_chunk_corrected": None
                 if not after_first or after_first <= 0
                 else max(0, output_tokens - first_chunk_tokens) / after_first,
+                "tok_s_out_client_e2e": output_tokens / elapsed,
                 "tok_s_total_client": (prompt_tokens + output_tokens) / elapsed,
                 "tok_s_prefill_lower_bound_from_ttft": None
                 if not ttft_s or ttft_s <= 0
@@ -273,9 +380,13 @@ def main() -> int:
         "model": model,
         "tokenizer": args.tokenizer,
         "server_model_record": models["data"][0],
+        "prompt_kind": args.prompt_kind,
+        "seed": args.seed,
+        "random_prefix_len": args.random_prefix_len,
         "prompt_tokens_requested": args.prompt_tokens,
         "prompt_tokens_actual": prompt_tokens,
         "output_tokens_requested": args.output_tokens,
+        "mode": args.mode,
         "repeats": args.repeats,
         "measurement_notes": [
             "TTFT and e2e are measured both client-side and from vLLM Prometheus histogram deltas.",

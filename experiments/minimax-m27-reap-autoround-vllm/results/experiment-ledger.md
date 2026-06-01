@@ -309,3 +309,38 @@ OpenAI serve ablation:
   - keep delayed attention allreduce on
   - add `VLLM_STREAM_INTERVAL` as an opt-in serve wrapper knob; `8` is a small
     endpoint win but changes client-visible streaming cadence.
+
+Restore-off and output-path audit:
+
+- User correctly flagged `82.7078` as worse than the archived
+  `89.49922316987691 output tok/s` REAP record. Treat it as an endpoint
+  diagnostic, not a promotion candidate.
+- Found and fixed a benchmark-wrapper bug: `bench-decode.sh` was not preserving
+  `VLLM_MINIMAX_QK_NORM_RESTORE_WEIGHT` or
+  `VLLM_MINIMAX_QK_NORM_RESTORE_WEIGHT_MIN_TOKENS` after sourcing the older
+  MiniMax promoted env. The earlier "restore-off" direct `85.x` result was
+  actually still restore-weight-on.
+- Endpoint prompt/log-stat follow-up did not recover throughput:
+  `/mnt/fast-ai/bench-results/minimax-m27-reap-autoround-vllm/decode/openai-endpoint-qkhelper1-disablelogstats-vllmrandom-graph-p512n1536-r2-20260601T123011Z.json`,
+  `82.39036990907539` corrected output tok/s, `107.49263424479153` total
+  tok/s.
+- The preserved fast `f728d2c0cf` cache does not boot under the current
+  OpenAI-server path; startup fails with `ValueError: not enough values to
+  unpack (expected 811, got 749)`.
+- True restore-off direct run after the wrapper fix:
+  `/mnt/fast-ai/bench-results/minimax-m27-reap-autoround-vllm/decode/vllm-minimax-m27-autoround-tp4-p512n1536-20260601T124258Z.json`,
+  `53.151145192997` output tok/s on the first request after a fresh compile.
+- Warmed restore-off direct repeat:
+  `/mnt/fast-ai/bench-results/minimax-m27-reap-autoround-vllm/decode/vllm-minimax-m27-autoround-tp4-p512n1536-20260601T124723Z.json`,
+  `80.62106717066092` output tok/s, `107.49475622754791` total tok/s.
+- Restore-weight with `VLLM_MINIMAX_QK_NORM_COMPILE_USE_PARAM=1` still failed
+  the compiled 32K OpenAI quality smoke with all-NUL output:
+  `/mnt/fast-ai/bench-results/minimax-m27-reap-autoround-vllm/quality/openai-quality-smoke-restore1-param1-graph-ml32768-20260601T125336Z.json`.
+- Added `bench-async-output-kind.py` for direct async `RequestOutputKind`
+  comparisons. A diagnostic restore-off/logits-WS run showed all output kinds in
+  the same low-80s band, so output-kind selection is not the main limiter:
+  `/mnt/fast-ai/bench-results/minimax-m27-reap-autoround-vllm/decode/direct-async-outputkind-qkhelper1-restore0-p512n1536-20260601T125504Z.json`.
+- Decision: no new LocalMaxxing submission and no runtime promotion from this
+  pass. Keep qk-helper, restore-weight off, delayed attention allreduce on for
+  OpenAI serve. The next meaningful speed target is source work on
+  restore-weight graph safety or another model-forward/MoE fusion path.

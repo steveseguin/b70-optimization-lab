@@ -143,4 +143,17 @@ The qk-helper default is quality-clean on the compiled 32K OpenAI path and is
 the best tested server default so far: `82.6854` mean output tok/s after first
 chunk on p512/n1536. `VLLM_STREAM_INTERVAL=8` is an opt-in streaming profile that
 reduces stream chunk count and reached `82.7078` corrected output tok/s, but it
-changes client-visible streaming cadence and is not the default.
+is not a meaningful improvement versus the archived `89.49922316987691` offline
+record. It changes client-visible streaming cadence and is not the default.
+
+Current quality-safe restore-off direct checks also sit in the same low-80s
+band after warmup:
+
+- warmed direct restore-off:
+  `/mnt/fast-ai/bench-results/minimax-m27-reap-autoround-vllm/decode/vllm-minimax-m27-autoround-tp4-p512n1536-20260601T124723Z.json`
+- output throughput: `80.62106717066092 tok/s`
+- total throughput: `107.49475622754791 tok/s`
+
+Do not use restore-weight for compiled OpenAI serve yet. It is faster in some
+direct/offline paths, but compiled OpenAI quality currently fails with all-NUL
+output, including the `VLLM_MINIMAX_QK_NORM_COMPILE_USE_PARAM=1` variant.
