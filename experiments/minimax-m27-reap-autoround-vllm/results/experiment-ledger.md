@@ -190,3 +190,25 @@ CCL IPC promotion:
   smoke failed during engine startup with
   `'MiniMaxText01RMSNormTP' object has no attribute '_minimax_clean_weight_xpu'`.
 - No new LocalMaxxing submission and no promoted runtime change.
+
+89.5 repro audit:
+
+- Exact rerun of the archived best settings from the current promoted cache root
+  landed at `85.68 output tok/s`:
+  `/mnt/fast-ai/bench-results/minimax-m27-reap-autoround-vllm/decode/vllm-minimax-m27-autoround-tp4-p512n1536-20260601T030742Z.log`.
+- The archived `89.49922316987691 output tok/s` run used backbone key
+  `f728d2c0cf`; current direct reruns choose `4258951ecd`. Cache metadata shows
+  env/config/compiler hashes match and only `code_hash` differs.
+- Forcing `f728d2c0cf` against the current no-logits root fails with
+  `ValueError: not enough values to unpack (expected 812, got 749)`, confirming
+  the current AOT payload no longer matches the archived backbone.
+- A preserved root,
+  `/mnt/fast-ai/vllm-cache-exp/minimax-m27-reap-sweep-moe-full-forward0-20260531T193000Z`,
+  still runs the async benchmark with explicit `cache_dir=f728d2c0cf`:
+  - `88.94 output tok/s`, `118.58 total tok/s`:
+    `/mnt/fast-ai/bench-results/minimax-m27-reap-autoround-vllm/decode/vllm-minimax-m27-autoround-tp4-p512n1536-20260601T031504Z.log`
+  - repeat `88.76 output tok/s`, `118.35 total tok/s`:
+    `/mnt/fast-ai/bench-results/minimax-m27-reap-autoround-vllm/decode/vllm-minimax-m27-autoround-tp4-p512n1536-20260601T031949Z.log`
+- The recovered path is not promoted: the sync quality harness, now able to
+  target an explicit compile cache dir, fails on the preserved AOT pair with
+  `'MiniMaxText01RMSNormTP' object has no attribute '_minimax_clean_weight_xpu'`.

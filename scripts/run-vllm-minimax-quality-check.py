@@ -148,6 +148,11 @@ def parse_args() -> argparse.Namespace:
         ),
     )
     parser.add_argument(
+        "--compilation-cache-dir",
+        default=None,
+        help="Explicit vLLM compilation_config.cache_dir override.",
+    )
+    parser.add_argument(
         "--rms-norm-priority",
         default=None,
         help=(
@@ -906,6 +911,8 @@ def main() -> None:
             if part.strip()
         ]
         compilation_config["custom_ops"] = custom_ops
+    if args.compilation_cache_dir is not None:
+        compilation_config["cache_dir"] = args.compilation_cache_dir
     inductor_compile_config = {}
     if args.inductor_disable_combo_kernels:
         inductor_compile_config["combo_kernels"] = False
