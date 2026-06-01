@@ -357,3 +357,30 @@ Restore-off and output-path audit:
   pass. Keep qk-helper, restore-weight off, delayed attention allreduce on for
   OpenAI serve. The next meaningful speed target is source work on
   restore-weight graph safety or another model-forward/MoE fusion path.
+
+Restore-weight param fallback experiment:
+
+- Layer 61 attention/QK traces narrowed the restore-weight all-NUL failure to
+  K-side QK norm. `qkv`, Q/K variance, and `q_after_qk_norm` were finite, while
+  `k_after_qk_norm` contained NaNs/infs before attention:
+  `/mnt/fast-ai/bench-results/minimax-m27-reap-autoround-vllm/quality/restore1-qk0-layer61-qknorm-trace-20260601T131616Z.jsonl`.
+- Archived patch:
+  `experiments/minimax-m27-reap-autoround-vllm/patches/vllm-minimax-qk-restore-prefer-param-experiment.patch`.
+  It makes restore-weight prefer the live parameter when sane and use the CPU
+  clean copy only to repair corrupt parameters.
+- The patch fixed restore-weight OpenAI quality:
+  - qk-helper off quality passed:
+    `/mnt/fast-ai/bench-results/minimax-m27-reap-autoround-vllm/quality/openai-quality-smoke-restore1-paramweightfix-qk0-graph-ml2048-20260601T132305Z.json`
+  - qk-helper on quality passed:
+    `/mnt/fast-ai/bench-results/minimax-m27-reap-autoround-vllm/quality/openai-quality-smoke-restore1-paramweightfix-qk1-graph-ml2048-20260601T132945Z.json`
+- Throughput did not recover:
+  - qk-helper off endpoint corrected output `82.22418078631115` tok/s:
+    `/mnt/fast-ai/bench-results/minimax-m27-reap-autoround-vllm/decode/openai-endpoint-restore1-paramweightfix-qk0-graph-ml2048-p512n1536-r2-20260601T132432Z.json`
+  - qk-helper on endpoint corrected output `81.94737970396619` tok/s:
+    `/mnt/fast-ai/bench-results/minimax-m27-reap-autoround-vllm/decode/openai-endpoint-restore1-paramweightfix-qk1-graph-ml2048-p512n1536-r2-20260601T133115Z.json`
+  - warmed direct qk-helper-off total `106.86224461653275` tok/s, about `80.15`
+    output-equivalent tok/s:
+    `/mnt/fast-ai/bench-results/minimax-m27-reap-autoround-vllm/decode/vllm-minimax-m27-autoround-tp4-p512n1536-20260601T133722Z.json`
+- Decision: patch is not speed-promoted. Restore live vLLM source to the
+  pre-experiment behavior before continuing speed work; keep the patch and trace
+  as correctness evidence.

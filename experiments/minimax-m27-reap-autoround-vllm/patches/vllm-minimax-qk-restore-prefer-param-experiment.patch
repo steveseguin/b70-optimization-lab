@@ -1,0 +1,49 @@
+diff --git a/vllm/model_executor/layers/mamba/linear_attn.py b/vllm/model_executor/layers/mamba/linear_attn.py
+--- a/vllm/model_executor/layers/mamba/linear_attn.py
++++ b/vllm/model_executor/layers/mamba/linear_attn.py
+@@
+         if torch.compiler.is_compiling():
+             if (
+                 os.environ.get(
+                     "VLLM_MINIMAX_QK_NORM_COMPILE_USE_PARAM",
+-                    "1" if _MINIMAX_QK_NORM_COMPILE_USE_PARAM else "0",
++                    "1",
+                 )
+                 == "1"
+             ):
+                 return norm.weight
+@@
+         if norm.weight.is_xpu and torch.xpu.is_current_stream_capturing():
+             if (
+                 os.environ.get(
+                     "VLLM_MINIMAX_QK_NORM_COMPILE_USE_PARAM",
+-                    "1" if _MINIMAX_QK_NORM_COMPILE_USE_PARAM else "0",
++                    "1",
+                 )
+                 == "1"
+             ):
+                 return norm.weight
+@@
+         )
+         if token_count < min_tokens:
+-            return clean_weight_xpu if clean_weight_xpu is not None else norm.weight
++            return norm.weight
+ 
+         weight_cpu = norm.weight.detach().cpu()
+         if MiniMaxText01RMSNormTP._weight_is_sane(weight_cpu):
+             if getattr(norm, "_minimax_clean_weight_cpu", None) is None:
+                 norm._minimax_clean_weight_cpu = weight_cpu.clone()
+                 if norm.weight.is_xpu:
+                     norm._minimax_clean_weight_xpu = norm.weight.detach().clone()
+-                    clean_weight_xpu = norm._minimax_clean_weight_xpu
+-            return clean_weight_xpu if clean_weight_xpu is not None else norm.weight
++            return norm.weight
+@@
+         if norm.weight.is_xpu and clean_weight_xpu is None:
+             norm._minimax_clean_weight_xpu = clean_weight_cpu.to(
+                 device=norm.weight.device, dtype=norm.weight.dtype
+             )
+-            clean_weight_xpu = norm._minimax_clean_weight_xpu
+         trace_tensor_graph(f"{trace_name}.weight_restored_cpu", clean_weight_cpu)
+-        return clean_weight_xpu if clean_weight_xpu is not None else norm.weight
++        return norm.weight
