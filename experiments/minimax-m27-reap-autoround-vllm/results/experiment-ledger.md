@@ -586,3 +586,33 @@ Profile/output-reuse/cache-op follow-up:
   live-source best at `85.21` output tok/s. No new LocalMaxxing submission.
 - Full notes:
   `notes/2026-06-02-profile-output-reuse-cacheop-followup.md`.
+
+U4 signed-compact specialization rejection:
+
+- Specialized `moe_ws_up_routed_cutlass_int4_kernel` and
+  `moe_ws_down_cutlass_int4_kernel` on `signed_compact` so the hot decode branch
+  became `if constexpr (SignedCompact)`.
+- Archived the tested source shape as a compact patch excerpt:
+  `patches/llm-scaler-ws-signedcompact-specialization-rejected-20260602.patch`.
+- The one-op BMG build succeeded, but the installed `moe_int4_ops` shared object
+  grew from `97M` to `115M`.
+- Quality passed:
+  `/mnt/fast-ai/bench-results/minimax-m27-reap-autoround-vllm/quality/async-quality-smoke-u4specialized-logitsws-qk0-20260602T131747Z.json`.
+- Decode regressed to `80.00686771866597` output tok/s and
+  `106.67582362488797` total tok/s:
+  `/mnt/fast-ai/bench-results/minimax-m27-reap-autoround-vllm/decode-u4specialized/vllm-minimax-m27-autoround-tp4-p512n1536-20260602T132219Z.log`.
+- Reverted the specialization in active llm-scaler source and rebuilt the
+  extension. The installed shared object returned to `97M`, import passed, and
+  no `SignedCompact` symbols remain in `csrc/moe_batch/moe_int4.sycl`.
+- Restore async quality passed on a fresh cache:
+  `/mnt/fast-ai/bench-results/minimax-m27-reap-autoround-vllm/quality/async-quality-smoke-restored-u4runtime-logitsws-qk0-20260602T1330.json`,
+  `384` generated tokens, `179` distinct generated token IDs, no NUL/control
+  output.
+- Restore decode on the same cache measured `84.229293276551` output tok/s and
+  `112.30572436873467` total tok/s:
+  `/mnt/fast-ai/bench-results/minimax-m27-reap-autoround-vllm/decode-restored-u4runtime/vllm-minimax-m27-autoround-tp4-p512n1536-20260602T133537Z.log`.
+- Decision: reject and keep the runtime branch path. The branch was not the
+  meaningful bottleneck, and the larger specialized binary likely hurt more than
+  it helped. No LocalMaxxing submission.
+- Full notes:
+  `notes/2026-06-02-u4-specialization-reject.md`.
