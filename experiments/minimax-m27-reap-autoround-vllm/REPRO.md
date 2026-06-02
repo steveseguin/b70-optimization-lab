@@ -87,7 +87,7 @@ Current promoted settings live in `configs/reap.env`. Important settings:
 - `VLLM_XPU_FORCE_GRAPH_WITH_COMM=1`
 - `VLLM_XPU_GRAPH_NOOP_COMM_CAPTURE=1`
 
-Current best result:
+Archived best result:
 
 - output throughput: `89.49922316987691 tok/s`
 - total throughput: `119.3322975598359 tok/s`
@@ -96,6 +96,19 @@ Current best result:
   `/mnt/fast-ai/bench-results/minimax-m27-reap-autoround-vllm/decode/vllm-minimax-m27-autoround-tp4-p512n1536-20260531T232017Z.log`
 - JSON:
   `/mnt/fast-ai/bench-results/minimax-m27-reap-autoround-vllm/decode/vllm-minimax-m27-autoround-tp4-p512n1536-20260531T232017Z.json`
+
+Current caveat, added 2026-06-01:
+
+- The `89.49922316987691` result is a historical, previously quality-gated
+  artifact. It is not currently reproducible as a quality-valid runtime from
+  the live source after later Q/K restore and cache-debug work.
+- Current live-source quality-valid direct async REAP best is:
+  `/mnt/fast-ai/bench-results/minimax-m27-reap-autoround-vllm/decode/vllm-minimax-m27-autoround-tp4-p512n1536-20260601T223035Z.json`,
+  `83.517837` output tok/s, with async quality pass
+  `/mnt/fast-ai/bench-results/minimax-m27-reap-autoround-vllm/quality/async-quality-smoke-fullforward0-restore0-qksafe-20260601T1828.json`.
+- The stale fast `f728d2c0cf` path can still produce `88.x` output tok/s in
+  benchmark-only runs, but strict async quality catches all-zero/NUL output.
+  Do not publish or promote it without a fresh quality pass.
 
 ## Known Rejected Settings
 

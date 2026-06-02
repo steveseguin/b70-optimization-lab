@@ -471,3 +471,37 @@ Candidate-router repair screen:
 - Decision: reject as a speed path and remove the live vLLM patch to avoid
   unnecessary code-hash churn. Keep the patch archived only for future candidate
   router work.
+
+Old-fast retest and live-K rejects:
+
+- Current quality-valid REAP best remains the fresh restore-off, qk-helper,
+  attention-delay-on path:
+  `/mnt/fast-ai/bench-results/minimax-m27-reap-autoround-vllm/decode/vllm-minimax-m27-autoround-tp4-p512n1536-20260601T223035Z.json`,
+  `83.517837` output tok/s and `111.35711559954889` total tok/s.
+- Same-checkout non-REAP control is also in the low-83 band:
+  `/mnt/fast-ai/bench-results/minimax-m27-reap-autoround-vllm/decode-nonreap/vllm-minimax-m27-autoround-tp4-p512n1536-20260601T231613Z.json`,
+  `83.050037` output tok/s and `110.73338297867303` total tok/s.
+- `FULL_FORWARD_CUSTOM_OP=1`, restore off, qk-helper on passed async quality but
+  decoded only `59.114708` output tok/s:
+  `/mnt/fast-ai/bench-results/minimax-m27-reap-autoround-vllm/decode-fullforward1-restore0/vllm-minimax-m27-autoround-tp4-p512n1536-20260602T000428Z.json`.
+- Copied the old promoted cache root to
+  `/mnt/fast-ai/vllm-cache-exp/minimax-m27-reap-autoround-no-logits-ws-20260531-retest-20260602T000854Z`
+  and retested old settings. Quality passed after rebuild:
+  `/mnt/fast-ai/bench-results/minimax-m27-reap-autoround-vllm/quality/quality-smoke-20260602T000919Z.json`,
+  but throughput fell to `62.060616` output tok/s:
+  `/mnt/fast-ai/bench-results/minimax-m27-reap-autoround-vllm/decode-oldfast-retest/vllm-minimax-m27-autoround-tp4-p512n1536-20260602T001254Z.json`.
+- Graph comparison: old `f728d2c0cf` traces per-layer gate weights plus
+  generic `torch.ops.vllm.moe_forward`; rebuilt old settings generated
+  `fd410802e8`, which calls `torch.ops.vllm.minimax_m2_moe_forward` with encoded
+  layer names. The cache env/config/compiler hashes match and the source
+  code hash differs, so the old speed cannot be recovered by env settings alone.
+- Rejected live-K selector screens:
+  - global live-K hung and was killed
+  - layer-61 live-K with qk-helper off passed quality but decoded about
+    `57.43` output tok/s
+  - layer-61 live-K against preserved `f728` with qk-helper on passed quality
+    but decoded about `60.43` output tok/s
+- Removed the rejected live-K selector from active vLLM source and archived it
+  only as `patches/vllm-minimax-qk-live-k-layer-selector-20260601.patch`.
+- Full notes:
+  `notes/2026-06-01-oldfast-retest-and-livek-rejects.md`.

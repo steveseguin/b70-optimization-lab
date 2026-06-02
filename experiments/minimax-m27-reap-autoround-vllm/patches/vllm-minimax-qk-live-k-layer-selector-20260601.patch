@@ -1,0 +1,43 @@
+diff --git a/vllm/model_executor/layers/mamba/linear_attn.py b/vllm/model_executor/layers/mamba/linear_attn.py
+index 837275840..livek-experiment 100644
+--- a/vllm/model_executor/layers/mamba/linear_attn.py
++++ b/vllm/model_executor/layers/mamba/linear_attn.py
+@@
+ _MINIMAX_QK_NORM_COMPILE_USE_PARAM = (
+     os.environ.get("VLLM_MINIMAX_QK_NORM_COMPILE_USE_PARAM", "0") == "1"
+ )
++_MINIMAX_QK_NORM_LIVE_K_WEIGHT = (
++    os.environ.get("VLLM_MINIMAX_QK_NORM_LIVE_K_WEIGHT", "0") == "1"
++)
++_MINIMAX_QK_NORM_LIVE_K_LAYERS = {
++    item.strip()
++    for item in os.environ.get("VLLM_MINIMAX_QK_NORM_LIVE_K_LAYERS", "").split(",")
++    if item.strip()
++}
+@@
+     def _guard_weight(
+         norm: "MiniMaxText01RMSNormTP",
+         trace_name: str,
+         token_count: int,
+     ) -> torch.Tensor:
+@@
+         if not restore_weight:
+             return norm.weight
++        if MiniMaxText01RMSNormTP._use_live_k_weight(trace_name):
++            return norm.weight
+         clean_weight_xpu = MiniMaxText01RMSNormTP._clean_weight_xpu(
+             norm, norm.weight.dtype, norm.weight.device
+         )
+@@
+         trace_tensor_graph(f"{trace_name}.weight_restored_cpu", clean_weight_cpu)
+         return clean_weight_xpu if clean_weight_xpu is not None else norm.weight
++
++    @staticmethod
++    def _use_live_k_weight(trace_name: str) -> bool:
++        if not _MINIMAX_QK_NORM_LIVE_K_WEIGHT:
++            return False
++        if ".k_" not in trace_name and not trace_name.endswith(".k_norm"):
++            return False
++        if not _MINIMAX_QK_NORM_LIVE_K_LAYERS:
++            return True
++        return any(layer in trace_name for layer in _MINIMAX_QK_NORM_LIVE_K_LAYERS)
