@@ -45,9 +45,22 @@ SELECTED_ENV_NAMES = [
     "VLLM_MINIMAX_MOE_FULL_FORWARD_CUSTOM_OP_MAX_TOKENS",
     "VLLM_MINIMAX_M2_ATTN_DELAY_ALLREDUCE",
     "VLLM_MINIMAX_QK_RMS_XPU_HELPER",
+    "VLLM_MINIMAX_QK_RMS_XPU_HELPER_MAX_TOKENS",
+    "VLLM_MINIMAX_QK_RMS_DIRECT_INPLACE_SCALE",
+    "VLLM_MINIMAX_QK_RMS_APPLY_TP_SCALE",
     "VLLM_MINIMAX_QK_NORM_RESTORE_WEIGHT",
+    "VLLM_MINIMAX_QK_NORM_RESTORE_WEIGHT_MIN_TOKENS",
+    "VLLM_MINIMAX_QK_NORM_PRECAPTURE_SANITIZE",
+    "VLLM_MINIMAX_QK_NORM_PRECAPTURE_USE_PARAM",
+    "VLLM_MINIMAX_QK_RMS_POST_AR_APPLY_CUSTOM_OP",
+    "VLLM_MINIMAX_QKV_NARROW_SPLIT",
+    "VLLM_MINIMAX_M2_FP16_ROUTER",
+    "VLLM_MINIMAX_M2_FP16_ROUTER_AUDIT",
+    "VLLM_XPU_STATIC_PIECEWISE_RANGE_ENTRY",
     "VLLM_XPU_SKIP_COMPILED_PREFILL",
+    "CCL_IPC",
     "CCL_ZE_IPC_EXCHANGE",
+    "CCL_TOPO_FABRIC_VERTEX_CONNECTION_CHECK",
 ]
 
 
@@ -162,6 +175,7 @@ def make_engine_args(args: argparse.Namespace):
         block_size=args.block_size,
         enable_prefix_caching=False,
         disable_log_stats=True,
+        enforce_eager=args.enforce_eager,
         compilation_config=compilation_config,
     )
 
@@ -290,6 +304,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--block-size", type=int, default=256)
     parser.add_argument("--max-tokens", type=int, default=128)
     parser.add_argument("--warmup-output-tokens", type=int, default=16)
+    parser.add_argument("--enforce-eager", action="store_true")
     parser.add_argument("--temperature", type=float, default=0.0)
     parser.add_argument("--vllm-cache-root")
     parser.add_argument("--compilation-cache-dir")

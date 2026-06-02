@@ -505,3 +505,30 @@ Old-fast retest and live-K rejects:
   only as `patches/vllm-minimax-qk-live-k-layer-selector-20260601.patch`.
 - Full notes:
   `notes/2026-06-01-oldfast-retest-and-livek-rejects.md`.
+
+2026-06-02 easy-win screens:
+
+- Extended the REAP wrappers/quality harness to preserve and record newer
+  low-level knobs, including FP16 router, QKV narrow split, Q/K direct scale,
+  pre-capture sanitizer, and static PIECEWISE entry policy.
+- Added `--enforce-eager` to `scripts/async-quality-smoke.py` for audit-only
+  runs outside Dynamo graph capture.
+- `VLLM_MINIMAX_QKV_NARROW_SPLIT=1` passed async quality but decoded only
+  `83.21` output tok/s:
+  `/mnt/fast-ai/bench-results/minimax-m27-reap-autoround-vllm/decode/vllm-minimax-m27-autoround-tp4-p512n1536-20260602T025506Z.log`.
+- FP16 router passed eager audit with zero expert-set mismatches and zero
+  candidate misses, but had eight ordered-only decode mismatches. Compiled
+  quality passed and benchmarked at `84.11` output tok/s:
+  `/mnt/fast-ai/bench-results/minimax-m27-reap-autoround-vllm/decode/vllm-minimax-m27-autoround-tp4-p512n1536-20260602T030623Z.log`.
+- Built and installed the missing `minimax_qk_rms_xpu` helper with oneAPI
+  `icpx`; active-helper quality passed, but throughput regressed to `82.29`
+  output tok/s:
+  `/mnt/fast-ai/bench-results/minimax-m27-reap-autoround-vllm/decode/vllm-minimax-m27-autoround-tp4-p512n1536-20260602T031520Z.log`.
+- Pre-capture Q/K norm sanitizer quality passed but benchmarked at `83.10`
+  output tok/s; static PIECEWISE `widest` passed quality but regressed to
+  `81.12` output tok/s.
+- Decision: do not submit a LocalMaxxing update. Conservative quality-safe best
+  remains `83.517837` output tok/s; FP16 router is an opt-in candidate at
+  `84.11` output tok/s but is not a conservative promotion.
+- Full notes:
+  `notes/2026-06-02-easy-win-screens.md`.
