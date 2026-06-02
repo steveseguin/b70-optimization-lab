@@ -1,0 +1,27 @@
+diff --git a/vllm/custom-esimd-kernels-vllm/python/custom_esimd_kernels_vllm/ops.py b/vllm/custom-esimd-kernels-vllm/python/custom_esimd_kernels_vllm/ops.py
+--- a/vllm/custom-esimd-kernels-vllm/python/custom_esimd_kernels_vllm/ops.py
++++ b/vllm/custom-esimd-kernels-vllm/python/custom_esimd_kernels_vllm/ops.py
+@@
+ _ops = torch.ops.custom_esimd_kernels_vllm
+ 
+ 
++def _contiguous_if_needed(t: torch.Tensor) -> torch.Tensor:
++    return t if t.is_contiguous() else t.contiguous()
++
++
+ def esimd_gemv_fp8_pern(
+@@
+ def moe_forward_tiny_cutlass_nmajor_int4_u4_minimax_ws(
+@@
+     if hidden_states.device.type != "xpu":
+         raise RuntimeError("tiny CUTLASS N-major INT4 path requires XPU")
+     return _moe_int4.moe_forward_tiny_cutlass_nmajor_int4_u4_minimax_ws(
+-        hidden_states.contiguous(),
+-        w13_qweight_u4.contiguous(), w13_scales.contiguous(),
+-        w2_qweight_u4.contiguous(), w2_scales.contiguous(),
+-        router_logits.contiguous(), e_score_bias.contiguous(),
++        _contiguous_if_needed(hidden_states),
++        _contiguous_if_needed(w13_qweight_u4), _contiguous_if_needed(w13_scales),
++        _contiguous_if_needed(w2_qweight_u4), _contiguous_if_needed(w2_scales),
++        _contiguous_if_needed(router_logits), _contiguous_if_needed(e_score_bias),
+         int(top_k), bool(norm))

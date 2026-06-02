@@ -616,3 +616,28 @@ U4 signed-compact specialization rejection:
   it helped. No LocalMaxxing submission.
 - Full notes:
   `notes/2026-06-02-u4-specialization-reject.md`.
+
+Graph scratch/output follow-up:
+
+- Restored conservative logits-WS persistent warm mean:
+  `/mnt/fast-ai/bench-results/minimax-m27-reap-autoround-vllm/warm/warm-restored-u4runtime-logitsws-qk0-p512n1536-20260602T1345.json`,
+  `85.35835544294164` output tok/s.
+- Rejected guarded-contiguous llm-scaler wrapper patch. Async quality failed with
+  all-NUL/control output:
+  `/mnt/fast-ai/bench-results/minimax-m27-reap-autoround-vllm/quality/async-quality-smoke-guardcontig-logitsws-qk0-20260602T135124Z.json`.
+- Rejected clean-XPU Q/K restore recapture. Sanitizer refreshed all Q/K norms,
+  but async quality still failed with the same all-NUL/control signature:
+  `/mnt/fast-ai/bench-results/minimax-m27-reap-autoround-vllm/quality/async-quality-smoke-logitsws-restore1-precapture-cleanxpu-qk0-20260602T135837Z.json`.
+- Output-side fast-list/copy flags were neutral at about `84.69` output tok/s:
+  `/mnt/fast-ai/bench-results/minimax-m27-reap-autoround-vllm/decode-outputfast/vllm-minimax-m27-autoround-tp4-p512n1536-20260602T140346Z.json`.
+  A short timing probe showed `gpu_model_runner.async_output_tolist` averaged
+  only `0.003481 ms`, so output conversion is not the bottleneck.
+- `VLLM_XPU_MINIMAX_WS_REUSE_TOPK_BUFFERS=1` passed async quality and had a
+  neutral single run (`84.75` output tok/s), but persistent warm-repeat
+  collapsed to `51.59589170272522` output tok/s:
+  `/mnt/fast-ai/bench-results/minimax-m27-reap-autoround-vllm/warm/warm-reusetopk-logitsws-qk0-p512n1536-20260602T141238Z.json`.
+- Decision: no LocalMaxxing submission. Do not pursue output handling or graph
+  scratch aliasing further; next work needs real MoE kernel fusion or Q/K norm
+  graph repair.
+- Full notes:
+  `notes/2026-06-02-graph-scratch-and-output-screens.md`.
