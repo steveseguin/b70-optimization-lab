@@ -532,3 +532,32 @@ Old-fast retest and live-K rejects:
   `84.11` output tok/s but is not a conservative promotion.
 - Full notes:
   `notes/2026-06-02-easy-win-screens.md`.
+
+MoE microbench and logits-WS retest:
+
+- Added `scripts/bench-reap-moe-micro.py` for the REAP per-rank MoE shape
+  (`hidden=3072`, `intermediate=384`, `experts=192`, `top_k=8`).
+- Extended benchmark/quality metadata and env passthrough for MoE WS tile,
+  top-k-weight precision, and scratch-buffer reuse flags.
+- Synthetic default microbench showed the workspace paths materially faster
+  than raw routed U4 at decode-like sizes; `tokens=1` default measured
+  `routed_ws=0.0870 ms`, `minimax_logits_ws=0.0881 ms`, and
+  `routed_u4=0.1663 ms`.
+- `VLLM_XPU_MOE_WS_DOWN_HTILE=4` passed async quality but decoded only `83.56`
+  output tok/s:
+  `/mnt/fast-ai/bench-results/minimax-m27-reap-autoround-vllm/decode/vllm-minimax-m27-autoround-tp4-p512n1536-20260602T033622Z.log`.
+- Logits WS with down tile 4 passed async quality and decoded `84.35` output
+  tok/s:
+  `/mnt/fast-ai/bench-results/minimax-m27-reap-autoround-vllm/decode/vllm-minimax-m27-autoround-tp4-p512n1536-20260602T034250Z.log`.
+- Logits WS with default tiles passed async quality and is the best new
+  live-source candidate from this pass:
+  `/mnt/fast-ai/bench-results/minimax-m27-reap-autoround-vllm/decode/vllm-minimax-m27-autoround-tp4-p512n1536-20260602T035955Z.log`,
+  `85.10` output tok/s and `113.46` total tok/s.
+- Reused intermediates passed quality but decoded `84.43` output tok/s; reject.
+- FP16 top-k weights looked good in the synthetic microbench but decoded only
+  `84.29` output tok/s and changes top-k-weight precision; reject.
+- Decision: default logits WS is the current fresh-cache/live-source candidate,
+  but it is still below the archived `89.49922316987691` output tok/s REAP
+  result, so no LocalMaxxing submission from this pass.
+- Full notes:
+  `notes/2026-06-02-moe-micro-and-logitsws-retest.md`.
