@@ -1,0 +1,51 @@
+diff --git a/csrc/moe_batch/moe_int4.sycl b/csrc/moe_batch/moe_int4.sycl
+index 0000000..0000000 100644
+--- a/csrc/moe_batch/moe_int4.sycl
++++ b/csrc/moe_batch/moe_int4.sycl
+@@
+ static torch::Tensor moe_forward_tiny_cutlass_nmajor_int4_ws_impl(
+     torch::Tensor x,
+     torch::Tensor w13_qweight_s4,
+     torch::Tensor w13_scales,
+     torch::Tensor w2_qweight_s4,
+     torch::Tensor w2_scales,
+     torch::Tensor topk_weight,
+     torch::Tensor topk_idx,
+     const bool signed_compact,
+-    torch::Tensor* intermediates_override = nullptr) {
++    torch::Tensor* intermediates_override = nullptr,
++    torch::Tensor* output_override = nullptr) {
+@@
+     auto intermediates = intermediates_override != nullptr
+         ? *intermediates_override
+         : torch::empty({n_tokens * top_k, intermediate_size},
+               torch::device(x.device()).dtype(torch::kHalf));
+-    auto output = torch::empty({n_tokens, hidden_size},
+-        torch::device(x.device()).dtype(torch::kHalf));
++    auto output = output_override != nullptr
++        ? *output_override
++        : torch::empty({n_tokens, hidden_size},
++              torch::device(x.device()).dtype(torch::kHalf));
+@@
+     torch::Tensor* intermediates_override = nullptr;
++    torch::Tensor* output_override = nullptr;
+     if (minimax_ws_reuse_intermediates()) {
+         const int hidden_size = (int)x.size(1);
+         const int intermediate_size = (int)w13_qweight_u4.size(1) / 2;
+         ensure_int4_moe_buffers(n_tokens, (int)top_k, 0, hidden_size,
+                                 intermediate_size, x.device());
+         intermediates_override = &s_int4_intermediates;
++        output_override = &s_int4_final_output;
+     }
+@@
+         return moe_forward_tiny_cutlass_nmajor_int4_ws_impl(
+             x, w13_qweight_u4, w13_scales, w2_qweight_u4, w2_scales,
+-            topk_weight, topk_idx, false, intermediates_override);
++            topk_weight, topk_idx, false, intermediates_override, output_override);
+@@
+         return moe_forward_tiny_cutlass_nmajor_int4_ws_impl(
+             x, w13_qweight_u4, w13_scales, w2_qweight_u4, w2_scales,
+-            topk_weight, topk_idx, false, intermediates_override);
++            topk_weight, topk_idx, false, intermediates_override, output_override);
+     }
+ }

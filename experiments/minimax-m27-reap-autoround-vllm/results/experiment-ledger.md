@@ -561,3 +561,28 @@ MoE microbench and logits-WS retest:
   result, so no LocalMaxxing submission from this pass.
 - Full notes:
   `notes/2026-06-02-moe-micro-and-logitsws-retest.md`.
+
+Profile/output-reuse/cache-op follow-up:
+
+- Rebuilt the llm-scaler INT4 MoE extension with `setup_moe_int4_only.py
+  build_ext --inplace`; the one-op BMG build succeeded and installed a `97M`
+  `moe_int4_ops` shared object.
+- Corrected baseline rerun after the rebuild, with logits-WS, restore off,
+  qk-helper off, attention-delay on, and `VLLM_MINIMAX_MOE_FULL_FORWARD_CUSTOM_OP=0`:
+  `/mnt/fast-ai/bench-results/minimax-m27-reap-autoround-vllm/decode/vllm-minimax-m27-autoround-tp4-p512n1536-20260602T125056Z.log`,
+  `85.21` output tok/s and `113.61` total tok/s.
+- `VLLM_XPU_LLM_SCALER_MOE_CACHE_MINIMAX_LOGITS_OP=1` was retested under the
+  corrected restore-off/full-forward-off settings. Quality passed, but decode
+  regressed to `84.64` output tok/s:
+  `/mnt/fast-ai/bench-results/minimax-m27-reap-autoround-vllm/decode/vllm-minimax-m27-autoround-tp4-p512n1536-20260602T125738Z.log`.
+- Archived a llm-scaler source patch for output-buffer reuse in the MiniMax WS
+  path:
+  `patches/llm-scaler-minimax-ws-output-reuse-experiment-20260602.patch`.
+  It is default-off behind `VLLM_XPU_MINIMAX_WS_REUSE_INTERMEDIATES`.
+- Corrected output-reuse quality passed under the accepted full-forward-off
+  settings, but decode regressed to `84.93` output tok/s:
+  `/mnt/fast-ai/bench-results/minimax-m27-reap-autoround-vllm/decode/vllm-minimax-m27-autoround-tp4-p512n1536-20260602T130101Z.log`.
+- Decision: reject cached-op and output-reuse experiments. Keep the current
+  live-source best at `85.21` output tok/s. No new LocalMaxxing submission.
+- Full notes:
+  `notes/2026-06-02-profile-output-reuse-cacheop-followup.md`.
