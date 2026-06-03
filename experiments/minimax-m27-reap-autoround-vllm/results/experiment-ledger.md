@@ -641,3 +641,40 @@ Graph scratch/output follow-up:
   graph repair.
 - Full notes:
   `notes/2026-06-02-graph-scratch-and-output-screens.md`.
+
+Q/K fusion and router trace:
+
+- Added `--compilation-config-json` to the async quality harness and recorded
+  the resolved `compilation_config` in quality artifacts, so compiler-pass
+  settings can be quality-gated directly.
+- Q/K norm helper fusion was quality-clean with
+  `pass_config.fuse_minimax_qk_norm=true` and
+  `VLLM_MINIMAX_QK_NORM_XPU_HELPER_FUSION=1`:
+  `/mnt/fast-ai/bench-results/minimax-m27-reap-autoround-vllm/quality/async-quality-smoke-qkfusion-helper-logitsws-qk0-20260603T022736Z.json`,
+  `384` generated tokens, `178` distinct generated token IDs, no NUL/control
+  output.
+- Q/K fusion decoded only `83.951205` output tok/s and
+  `111.93494002680312` total tok/s:
+  `/mnt/fast-ai/bench-results/minimax-m27-reap-autoround-vllm/decode-qkfusion-helper/vllm-minimax-m27-autoround-tp4-p512n1536-20260603T023218Z.json`.
+  Decision: reject as a speed path.
+- Added and built a llm-scaler trace hook for the direct MiniMax top-8
+  sigmoid+bias helper. Patch record:
+  `patches/llm-scaler-minimax-top8-trace-hook-20260602.patch`.
+- Trace aggregate for eager p64/n8 showed the separate router/top-k kernel is
+  the largest measured MoE-side cost:
+  `minimax m2 top8 sigmoid bias` total `88.110 ms` over `1984` calls, versus
+  WS down `50.453 ms` and WS up `46.959 ms` over the same call count.
+- Trace log:
+  `/mnt/fast-ai/bench-results/minimax-m27-reap-autoround-vllm/profile/moe-trace-top8-20260603T023751Z/vllm-minimax-m27-autoround-tp4-p64n8-20260603T023751Z.log`.
+- After the trace patch and rebuild, tracing off, async quality still passed:
+  `/mnt/fast-ai/bench-results/minimax-m27-reap-autoround-vllm/quality/async-quality-smoke-restored-u4runtime-logitsws-qk0-top8tracepatch-20260603T024215Z.json`,
+  `384` generated tokens, `179` distinct generated token IDs, no NUL/control
+  output.
+- Post-patch decode was neutral/slightly lower at `84.144292` output tok/s and
+  `112.1923891584242` total tok/s:
+  `/mnt/fast-ai/bench-results/minimax-m27-reap-autoround-vllm/decode-top8tracepatch/vllm-minimax-m27-autoround-tp4-p512n1536-20260603T024341Z.json`.
+- Decision: keep the trace hook as diagnostic plumbing only. The next meaningful
+  optimization target is exact MiniMax router/top-k launch removal or a lower
+  latency `E=192`, `top_k=8`, `n_tokens=1` top-k kernel.
+- Full notes:
+  `notes/2026-06-02-qk-fusion-router-trace.md`.

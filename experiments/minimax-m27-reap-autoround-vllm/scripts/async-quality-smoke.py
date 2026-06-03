@@ -48,6 +48,7 @@ SELECTED_ENV_NAMES = [
     "VLLM_MINIMAX_QK_RMS_XPU_HELPER_MAX_TOKENS",
     "VLLM_MINIMAX_QK_RMS_DIRECT_INPLACE_SCALE",
     "VLLM_MINIMAX_QK_RMS_APPLY_TP_SCALE",
+    "VLLM_MINIMAX_QK_NORM_XPU_HELPER_FUSION",
     "VLLM_MINIMAX_QK_NORM_RESTORE_WEIGHT",
     "VLLM_MINIMAX_QK_NORM_RESTORE_WEIGHT_MIN_TOKENS",
     "VLLM_MINIMAX_QK_NORM_PRECAPTURE_SANITIZE",
@@ -157,16 +158,35 @@ def render_prompts(args: argparse.Namespace, tokenizer: Any) -> tuple[list[str],
     return rendered, diagnostics
 
 
-def make_engine_args(args: argparse.Namespace):
-    from vllm.engine.arg_utils import AsyncEngineArgs
+def merge_dict(dst: dict[str, Any], src: dict[str, Any]) -> dict[str, Any]:
+    for key, value in src.items():
+        if isinstance(dst.get(key), dict) and isinstance(value, dict):
+            merge_dict(dst[key], value)
+        else:
+            dst[key] = value
+    return dst
 
+
+def make_compilation_config(args: argparse.Namespace) -> dict[str, Any]:
     compilation_config: dict[str, Any] = {
         "use_inductor_graph_partition": True,
         "compile_sizes": [1],
         "cudagraph_mode": "PIECEWISE",
     }
+    if args.compilation_config_json:
+        extra_config = json.loads(args.compilation_config_json)
+        if not isinstance(extra_config, dict):
+            raise TypeError("--compilation-config-json must decode to an object")
+        merge_dict(compilation_config, extra_config)
     if args.compilation_cache_dir:
         compilation_config["cache_dir"] = args.compilation_cache_dir
+    return compilation_config
+
+
+def make_engine_args(args: argparse.Namespace):
+    from vllm.engine.arg_utils import AsyncEngineArgs
+
+    compilation_config = make_compilation_config(args)
 
     return AsyncEngineArgs(
         model=args.model,
@@ -291,6 +311,7 @@ async def run(args: argparse.Namespace) -> dict[str, Any]:
             "text_sha256": hashlib.sha256(combined_text.encode()).hexdigest(),
             "quality": combined_quality,
         },
+        "compilation_config": make_compilation_config(args),
         "passed": not failure_reasons,
         "failure_reasons": failure_reasons,
     }
@@ -314,6 +335,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--temperature", type=float, default=0.0)
     parser.add_argument("--vllm-cache-root")
     parser.add_argument("--compilation-cache-dir")
+    parser.add_argument("--compilation-config-json")
     parser.add_argument("--min-distinct-generated-tokens", type=int, default=16)
     parser.add_argument("--min-printable-nonspace-chars", type=int, default=80)
     parser.add_argument("--max-control-nonspace-chars", type=int, default=0)

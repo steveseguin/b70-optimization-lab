@@ -1,0 +1,89 @@
+diff --git a/csrc/moe_batch/moe_int4.sycl b/csrc/moe_batch/moe_int4.sycl
+--- a/csrc/moe_batch/moe_int4.sycl
++++ b/csrc/moe_batch/moe_int4.sycl
+@@
+ static void minimax_m2_top8_sigmoid_bias_host(
+     const LogitsT* router_logits,
+     const float* e_score_bias,
+     WeightT* top_values,
+     int32_t* top_indices,
+     int n_tokens,
+     int num_experts,
+     bool norm,
+-    sycl::queue& queue) {
++    const torch::Device& device) {
+ 
+     switch (num_experts) {
+     case 192:
+-        queue.submit([&](sycl::handler& cgh) {
++        submit_kernel([&](sycl::handler& cgh) {
+             cgh.parallel_for(
+                 sycl::nd_range<1>({(size_t)n_tokens}, {1}),
+                 MiniMaxM2TopKSigmoidBiasKernel<192, 8, LogitsT, WeightT>{
+                     router_logits, e_score_bias, top_values, top_indices,
+                     n_tokens, norm});
+-            });
++            }, device, "minimax m2 top8 sigmoid bias");
+         break;
+     case 256:
+-        queue.submit([&](sycl::handler& cgh) {
++        submit_kernel([&](sycl::handler& cgh) {
+             cgh.parallel_for(
+                 sycl::nd_range<1>({(size_t)n_tokens}, {1}),
+                 MiniMaxM2TopKSigmoidBiasKernel<256, 8, LogitsT, WeightT>{
+                     router_logits, e_score_bias, top_values, top_indices,
+                     n_tokens, norm});
+-            });
++            }, device, "minimax m2 top8 sigmoid bias");
+         break;
+     default:
+         TORCH_CHECK(false,
+                     "MiniMax M2 fast path currently expects 192 or 256 routed experts");
+@@
+-    sycl::queue& queue = c10::xpu::getCurrentXPUStream(router_logits.device().index()).queue();
+     if (router_logits.scalar_type() == torch::kFloat) {
+         minimax_m2_top8_sigmoid_bias_host<float>(
+             router_logits.data_ptr<float>(), e_score_bias.data_ptr<float>(),
+             topk_weight.data_ptr<float>(), topk_idx.data_ptr<int32_t>(),
+-            n_tokens, num_experts, norm, queue);
++            n_tokens, num_experts, norm, router_logits.device());
+     } else {
+         minimax_m2_top8_sigmoid_bias_host<fp16>(
+             (const fp16*)router_logits.data_ptr(), e_score_bias.data_ptr<float>(),
+             topk_weight.data_ptr<float>(), topk_idx.data_ptr<int32_t>(),
+-            n_tokens, num_experts, norm, queue);
++            n_tokens, num_experts, norm, router_logits.device());
+     }
+@@
+-    sycl::queue& queue =
+-        c10::xpu::getCurrentXPUStream(router_logits.device().index()).queue();
+     if (fp16_topk_weight) {
+         auto topk_weight = reuse_topk
+             ? s_minimax_ws_topk_weight_fp16
+             : torch::empty({n_tokens, top_k},
+@@
+             minimax_m2_top8_sigmoid_bias_host<float>(
+                 router_logits.data_ptr<float>(), e_score_bias.data_ptr<float>(),
+                 (fp16*)topk_weight.data_ptr(), topk_idx.data_ptr<int32_t>(),
+-                n_tokens, num_experts, norm, queue);
++                n_tokens, num_experts, norm, router_logits.device());
+         } else {
+             minimax_m2_top8_sigmoid_bias_host<fp16>(
+                 (const fp16*)router_logits.data_ptr(), e_score_bias.data_ptr<float>(),
+                 (fp16*)topk_weight.data_ptr(), topk_idx.data_ptr<int32_t>(),
+-                n_tokens, num_experts, norm, queue);
++                n_tokens, num_experts, norm, router_logits.device());
+         }
+@@
+             minimax_m2_top8_sigmoid_bias_host<float>(
+                 router_logits.data_ptr<float>(), e_score_bias.data_ptr<float>(),
+                 topk_weight.data_ptr<float>(), topk_idx.data_ptr<int32_t>(),
+-                n_tokens, num_experts, norm, queue);
++                n_tokens, num_experts, norm, router_logits.device());
+         } else {
+             minimax_m2_top8_sigmoid_bias_host<fp16>(
+                 (const fp16*)router_logits.data_ptr(), e_score_bias.data_ptr<float>(),
+                 topk_weight.data_ptr<float>(), topk_idx.data_ptr<int32_t>(),
+-                n_tokens, num_experts, norm, queue);
++                n_tokens, num_experts, norm, router_logits.device());
+         }
