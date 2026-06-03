@@ -673,6 +673,18 @@ Q/K fusion and router trace:
 - Post-patch decode was neutral/slightly lower at `84.144292` output tok/s and
   `112.1923891584242` total tok/s:
   `/mnt/fast-ai/bench-results/minimax-m27-reap-autoround-vllm/decode-top8tracepatch/vllm-minimax-m27-autoround-tp4-p512n1536-20260603T024341Z.json`.
+- Tried an exact top-8 register cleanup that removes the unused selected-choice
+  output and `tv[16]` local array:
+  `patches/llm-scaler-minimax-top8-register-cleanup-20260602.patch`.
+  The eager p64/n8 trace improved from `66.61` to `75.05` total tok/s, and
+  top-8 aggregate wait dropped from `88.110 ms` to `48.278 ms` over `1984`
+  calls:
+  `/mnt/fast-ai/bench-results/minimax-m27-reap-autoround-vllm/profile/moe-trace-top8-cleanup-20260603T025052Z/vllm-minimax-m27-autoround-tp4-p64n8-20260603T025052Z.log`.
+- Register-cleanup quality passed:
+  `/mnt/fast-ai/bench-results/minimax-m27-reap-autoround-vllm/quality/async-quality-smoke-top8-register-cleanup-logitsws-qk0-20260603T025247Z.json`,
+  but full decode stayed neutral at `84.075146` output tok/s and
+  `112.1001947695731` total tok/s:
+  `/mnt/fast-ai/bench-results/minimax-m27-reap-autoround-vllm/decode-top8-register-cleanup/vllm-minimax-m27-autoround-tp4-p512n1536-20260603T025414Z.json`.
 - Decision: keep the trace hook as diagnostic plumbing only. The next meaningful
   optimization target is exact MiniMax router/top-k launch removal or a lower
   latency `E=192`, `top_k=8`, `n_tokens=1` top-k kernel.

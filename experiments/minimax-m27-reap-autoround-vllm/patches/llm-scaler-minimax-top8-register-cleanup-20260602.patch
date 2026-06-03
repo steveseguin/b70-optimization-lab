@@ -1,0 +1,41 @@
+diff --git a/csrc/moe_batch/moe_int4.sycl b/csrc/moe_batch/moe_int4.sycl
+--- a/csrc/moe_batch/moe_int4.sycl
++++ b/csrc/moe_batch/moe_int4.sycl
+@@
+ template<int C>
+-SYCL_ESIMD_FUNCTION inline void minimax_argmax_and_suppress(
+-    simd<float, C>& vals, int base_idx, float& out_val, int32_t& out_idx) {
++SYCL_ESIMD_FUNCTION inline int32_t minimax_argmax_and_suppress(
++    simd<float, C>& vals, int base_idx) {
+ 
+     float mx = h_max<float, C>(vals);
+     union { float f; int32_t i; } mx_bits;
+     mx_bits.f = mx;
+@@
+     simd<int32_t, C> cand(999999);
+     cand.merge(simd<int32_t, C>(base_idx, 1), mask);
+     int32_t found_idx = h_min<int32_t, C>(cand);
+-
+-    out_val = mx;
+-    out_idx = found_idx;
+ 
+     int local_pos = found_idx - base_idx;
+     simd_mask<C> suppress_mask = (simd<int32_t, C>(0, 1) == local_pos);
+     vals.merge(simd<float, C>(-3.402823466e+38f), suppress_mask);
++    return found_idx;
+ }
+@@
+-        float tv[16];
+         float tw[16];
+         int32_t ti[16];
+@@
+-            float selected_choice;
+-            int32_t selected_idx;
+-            minimax_argmax_and_suppress<C>(
+-                choice[best_chunk], best_chunk * C, selected_choice, selected_idx);
+-            tv[k] = selected_choice;
++            int32_t selected_idx =
++                minimax_argmax_and_suppress<C>(choice[best_chunk], best_chunk * C);
+             ti[k] = selected_idx;
+             tw[k] = weights[best_chunk][selected_idx - best_chunk * C];
+         }

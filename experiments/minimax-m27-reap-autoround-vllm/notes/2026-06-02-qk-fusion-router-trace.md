@@ -111,6 +111,49 @@ per layer per rank, removing or fusing this launch is a plausible path to a
 meaningful decode-rate improvement. The existing tile and output-side knobs are
 not likely to recover 90+ tok/s by themselves.
 
+## Top-8 Register Cleanup
+
+Tried an exact-semantics cleanup in the top-8 kernel:
+
+- `minimax_argmax_and_suppress` now returns only the selected index.
+- removed the unused `selected_choice` output and unused `tv[16]` local array.
+
+Patch record:
+
+- `patches/llm-scaler-minimax-top8-register-cleanup-20260602.patch`
+
+Build:
+
+```bash
+python setup_moe_int4_only.py build_ext --inplace
+```
+
+Repeated eager trace:
+
+- `/mnt/fast-ai/bench-results/minimax-m27-reap-autoround-vllm/profile/moe-trace-top8-cleanup-20260603T025052Z/vllm-minimax-m27-autoround-tp4-p64n8-20260603T025052Z.log`
+- p64/n8 trace throughput improved from `66.61265632319932` to
+  `75.05051830128576` total tok/s.
+- top-8 aggregate wait dropped from `88.110 ms` to `48.278 ms` over `1984`
+  calls.
+
+Quality:
+
+- `/mnt/fast-ai/bench-results/minimax-m27-reap-autoround-vllm/quality/async-quality-smoke-top8-register-cleanup-logitsws-qk0-20260603T025247Z.json`
+- passed, `384` generated tokens, `179` distinct generated token IDs, no
+  NUL/control output
+
+Full decode:
+
+- `/mnt/fast-ai/bench-results/minimax-m27-reap-autoround-vllm/decode-top8-register-cleanup/vllm-minimax-m27-autoround-tp4-p512n1536-20260603T025414Z.json`
+- `18.269370577007066 s`
+- `112.1001947695731` total tok/s
+- `84.075146` output tok/s
+
+Decision: do not promote as a full-decode improvement. The eager trace
+improved, but graph replay stayed in the same mid-84 output tok/s band. This
+reinforces that removing the router launch, rather than only shaving register
+pressure inside it, is likely needed for a sizable production decode gain.
+
 ## Next Work
 
 - Prototype a real router/top-k integration path:
