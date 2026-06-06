@@ -1,0 +1,20 @@
+[Unit]
+Description=No-auth LAN OpenAI-compatible frontdoor for the active B70 model slot
+Documentation=https://github.com/steveseguin/b70-optimization-lab
+Wants=network-online.target b70-vllm-slot.service
+After=network-online.target b70-vllm-slot.service
+
+[Service]
+Type=simple
+User=steve
+Group=steve
+WorkingDirectory=/home/steve/llm-optimizations
+Environment=PYTHONUNBUFFERED=1
+Environment=VLLM_SLOT_PROFILE=/etc/b70-vllm-slot/current.env
+ExecStart=/home/steve/llm-optimizations/scripts/run-openai-frontdoor-profile.sh
+Restart=on-failure
+RestartSec=3
+LimitNOFILE=1048576
+
+[Install]
+WantedBy=multi-user.target

@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """No-auth LAN frontdoor for a local OpenAI-compatible vLLM server.
 
-The production c1 vLLM profile is fastest and most reliable with one active
-generation. This proxy keeps the public LAN URL stable while serializing
-generation requests before they reach vLLM.
+This proxy keeps the public LAN URL stable while limiting active generation
+requests before they reach vLLM. Model-slot wrappers set profile metadata and
+concurrency from the active profile.
 """
 
 from __future__ import annotations
@@ -20,9 +20,12 @@ from typing import Any
 from urllib.parse import urlsplit
 
 
-PAUSE_FILE = "/home/steve/llm-optimizations/.pause-minimax-production"
+PAUSE_FILE = os.environ.get(
+    "FRONTDOOR_PAUSE_FILE",
+    "/home/steve/llm-optimizations/.pause-minimax-production",
+)
 if os.path.exists(PAUSE_FILE):
-    print(f"MiniMax production frontdoor paused by {PAUSE_FILE}", flush=True)
+    print(f"OpenAI LAN frontdoor paused by {PAUSE_FILE}", flush=True)
     raise SystemExit(0)
 
 BACKEND_BASE_URL = os.environ.get("FRONTDOOR_BACKEND_URL", "http://127.0.0.1:18080")
@@ -32,6 +35,11 @@ MAX_ACTIVE_GENERATIONS = int(os.environ.get("FRONTDOOR_MAX_ACTIVE_GENERATIONS", 
 QUEUE_TIMEOUT_S = float(os.environ.get("FRONTDOOR_QUEUE_TIMEOUT_S", "3600"))
 BACKEND_TIMEOUT_S = float(os.environ.get("FRONTDOOR_BACKEND_TIMEOUT_S", "7200"))
 FRONTDOOR_CORS_ALLOW_ORIGIN = os.environ.get("FRONTDOOR_CORS_ALLOW_ORIGIN", "*")
+MODEL_SLOT_NAME = os.environ.get("MODEL_SLOT_NAME", "")
+MODEL_SLOT_TITLE = os.environ.get("MODEL_SLOT_TITLE", "")
+MODEL_SLOT_HF_ID = os.environ.get("MODEL_SLOT_HF_ID", "")
+MODEL_SLOT_MODALITIES = os.environ.get("MODEL_SLOT_MODALITIES", "")
+MODEL_SLOT_STATUS = os.environ.get("MODEL_SLOT_STATUS", "")
 
 GENERATION_PATHS = {
     "/v1/completions",
@@ -87,6 +95,13 @@ def status_payload() -> dict[str, Any]:
         total = total_generation_requests
     return {
         "ok": True,
+        "model_slot": {
+            "name": MODEL_SLOT_NAME,
+            "title": MODEL_SLOT_TITLE,
+            "hf_id": MODEL_SLOT_HF_ID,
+            "modalities": MODEL_SLOT_MODALITIES,
+            "status": MODEL_SLOT_STATUS,
+        },
         "frontdoor": {
             "host": HOST,
             "port": PORT,

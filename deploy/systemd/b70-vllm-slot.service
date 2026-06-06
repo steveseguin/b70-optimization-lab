@@ -1,0 +1,24 @@
+[Unit]
+Description=Single active B70 vLLM model slot
+Documentation=https://github.com/steveseguin/b70-optimization-lab
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+User=steve
+Group=steve
+WorkingDirectory=/home/steve/llm-optimizations
+Environment=PYTHONUNBUFFERED=1
+Environment=VLLM_SLOT_PROFILE=/etc/b70-vllm-slot/current.env
+ExecStart=/home/steve/llm-optimizations/scripts/serve-vllm-profile.sh
+KillMode=mixed
+KillSignal=SIGINT
+TimeoutStartSec=2400
+TimeoutStopSec=240
+Restart=on-failure
+RestartSec=15
+LimitNOFILE=1048576
+
+[Install]
+WantedBy=multi-user.target

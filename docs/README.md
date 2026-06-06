@@ -6,6 +6,7 @@ This docs folder is the human entry point for the B70 optimization work. The exe
 
 - [MiniMax M2.7 INT4 on 4x B70, Ubuntu 24](b70-minimax-ubuntu24-deployment.md): deploy an OpenAI-compatible vLLM endpoint.
 - [MiniMax Production C1 Service](minimax-production-c1-service.md): run the current 32K endpoint under systemd with health and benchmark checks.
+- [Single Model Slot Switching](model-slot-switching.md): keep one LAN OpenAI endpoint while switching which large model is loaded.
 - [Current Reproducibility Map](current-reproducibility-map.md): one-page map for the stable endpoint, session-cache work, TurboQuant patch, and CPU-paged attention research.
 - [Model Recipes](model-recipes.md): which recipe folder to use for each model/build target.
 - [FAQ](faq.md): practical answers for users new to B70s, vLLM, XPU, and local model deployment.

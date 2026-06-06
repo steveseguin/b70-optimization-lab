@@ -39,11 +39,29 @@ max_num_seqs=1
 KV dtype=auto / FP16-family
 ```
 
+The newer generic service shape is a single active model slot:
+
+```bash
+scripts/switch-vllm-model-slot.sh list
+scripts/switch-vllm-model-slot.sh status
+scripts/switch-vllm-model-slot.sh switch minimax-m27-c1
+```
+
+It keeps the same public LAN endpoint, but changes which backend model is
+loaded. Do not run two large model services at once. See
+`docs/model-slot-switching.md`.
+
 Tracked service/install files:
 
 - `deploy/systemd/minimax-vllm.service`
 - `deploy/systemd/minimax-openai-frontdoor.service`
+- `deploy/systemd/b70-vllm-slot.service`
+- `deploy/systemd/b70-openai-frontdoor.service`
 - `scripts/install-minimax-vllm-service.sh`
+- `scripts/install-vllm-model-slot-service.sh`
+- `scripts/switch-vllm-model-slot.sh`
+- `scripts/serve-vllm-profile.sh`
+- `scripts/run-openai-frontdoor-profile.sh`
 - `scripts/openai-lan-frontdoor.py`
 - `scripts/minimax-prod-health.py`
 - `scripts/minimax-prod-benchmark.py`

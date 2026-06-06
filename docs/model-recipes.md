@@ -81,8 +81,11 @@ artifact map.
 
 These are useful community targets to add as separate repro folders:
 
+- Single active model-slot profiles for MiniMax, Qwen text, and Qwen-VL
+  serving. See [Single Model Slot Switching](model-slot-switching.md).
 - Qwen3.6 27B Q4_0 GGUF on llama.cpp/SYCL.
 - Qwen3.6 27B FP8 on vLLM/XPU.
+- Qwen3-VL 30B-A3B FP8 on vLLM/XPU for image+text requests.
 - MiniMax M2.7 GGUF/UD-IQ4_XS on llama.cpp RPC/SYCL.
 - Smaller single-card B70 recipes for 7B, 8B, 14B, and 27B models.
 - Multi-user/concurrency recipes that report throughput and latency together.
