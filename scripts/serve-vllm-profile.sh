@@ -49,6 +49,24 @@ if [[ -f /opt/intel/oneapi/compiler/2025.3/env/vars.sh ]]; then
   source /opt/intel/oneapi/compiler/2025.3/env/vars.sh >/dev/null 2>&1
 fi
 
+profile_env_exports=(
+  HF_HOME
+  TRANSFORMERS_CACHE
+  VLLM_CACHE_ROOT
+  ONEAPI_DEVICE_SELECTOR
+  ZE_AFFINITY_MASK
+  CCL_ATL_TRANSPORT
+  CCL_TOPO_P2P_ACCESS
+  CCL_TOPO_FABRIC_VERTEX_CONNECTION_CHECK
+  VLLM_XPU_FP8_LINEAR_BF16_FALLBACK
+  VLLM_XPU_BLOCK_FP8_REQUANT
+)
+for env_name in "${profile_env_exports[@]}"; do
+  if [[ -v "$env_name" ]]; then
+    export "$env_name"
+  fi
+done
+
 # shellcheck disable=SC1091
 source "$VENV/bin/activate"
 

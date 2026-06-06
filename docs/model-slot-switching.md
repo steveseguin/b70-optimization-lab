@@ -100,7 +100,7 @@ stays single-model.
 | Profile | Status | Modalities | Purpose |
 | --- | --- | --- | --- |
 | `minimax-m27-c1` | production | text | Current known-good MiniMax M2.7 INT4 AutoRound endpoint, 32K context, one active generation. |
-| `qwen36-27b-fp8-vrfai` | candidate | text | Best-documented Qwen3.6 27B FP8 text path from earlier B70 work. Useful for concurrency comparison. |
+| `qwen36-27b-fp8-vrfai` | experimental | text | Validated as a 4K text concurrency profile with an XPU BF16 fallback for the failing native FP8 linear path. Useful for c16/c32 throughput tests. |
 | `qwen36-35b-a3b-fp8` | research | text | Interesting Qwen3.6 35B-A3B FP8 text candidate. Needs local validation. |
 | `qwen3-vl-30b-a3b-fp8` | research | text,image | First multimodal image+text candidate. Needs startup, image, quality, and concurrency validation. |
 
@@ -146,6 +146,28 @@ Do not call a new profile production-ready until it passes:
 because earlier lab work already validated the 4x B70 TP4 layout. Prior notes
 reported about `45.9` output tok/s without speculation and about `48.1` output
 tok/s with n-gram speculation at 512/512, with `max_model_len=32768`.
+
+On 2026-06-06, the native compressed-tensors FP8 path failed during profiling on
+this host with `RuntimeError: could not set scales primitive attribute` in
+`torch.ops._xpu_C.fp8_gemm_w8a16`. The validated workaround is the opt-in
+`VLLM_XPU_FP8_LINEAR_BF16_FALLBACK=1` patch captured in
+`patches/vllm-xpu-qwen-fp8-bf16-fallback-20260606.patch`. This fallback is
+slower than native FP8 but avoids the failing primitive without reducing the
+stored checkpoint precision.
+
+Current Qwen fallback measurements used `max_model_len=4096`, about `2071`
+prompt tokens per request, and `512` generated tokens:
+
+| Concurrency | Aggregate output tok/s, wall | Mean request decode tok/s | Mean TTFT |
+| ---: | ---: | ---: | ---: |
+| 1 | `20.48` | `20.91` | `0.51 s` |
+| 16 | `243.01` | `17.73` | `4.48 s` |
+| 32 | `402.51` | `16.21` | `8.21 s` |
+| 64 | `556.55` | `12.57` | `15.65 s` |
+
+Use c16 for more interactive latency, c32 for a practical aggregate-throughput
+profile, and c64 only when high total throughput matters more than TTFT. Full
+details are in `notes/2026-06-06-qwen36-fp8-bf16-fallback-concurrency.md`.
 
 `qwen3-vl-30b-a3b-fp8` is the right first multimodal slot because it directly
 supports image+text. Expect higher TTFT on image prompts because the vision
