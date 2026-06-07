@@ -74,11 +74,51 @@
     "c8_30690_prompt_1_output_validation": {
       "mean_ttft_s": 22.27967816920136,
       "wall_output_tok_s": 0.20433003996603097
+    },
+    "c8_sustained_decode": {
+      "prompt_tokens_each": 119,
+      "concurrency": 8,
+      "output_256_repeat_mean": {
+        "mean_ttft_s": 2.529805063267122,
+        "wall_output_tok_s": 796.1763558639424
+      },
+      "output_512_repeat_mean": {
+        "mean_ttft_s": 2.5417523958312813,
+        "wall_output_tok_s": 780.9684204492766
+      },
+      "output_1024_repeat_mean": {
+        "mean_ttft_s": 2.518777515135298,
+        "wall_output_tok_s": 731.1185687690644
+      }
+    },
+    "c1_c2_c4_c8_512_output_scaling": {
+      "prompt_tokens_each": 119,
+      "output_tokens_each": 512,
+      "c1": {
+        "mean_ttft_s": 2.189566157059744,
+        "wall_output_tok_s": 112.77097490423834
+      },
+      "c2": {
+        "mean_ttft_s": 2.4145851635257713,
+        "wall_output_tok_s": 205.46827380978502
+      },
+      "c4": {
+        "mean_ttft_s": 2.500018831982743,
+        "wall_output_tok_s": 398.9838032188172
+      },
+      "c8": {
+        "mean_ttft_s": 2.526166310359258,
+        "wall_output_tok_s": 784.6918451280836
+      }
     }
   },
   "raw_result_paths": {
     "xpugraph_validation": "/mnt/fast-ai/bench-results/gemma4-12b-it-int4-autoround/xpugraph-validation-20260607T075901Z",
     "post_promotion_validation": "/mnt/fast-ai/bench-results/gemma4-12b-it-int4-autoround/prod-c8-xpugraph-promoted-20260607T080322Z",
+    "sustained_decode_256": "/mnt/fast-ai/bench-results/gemma4-12b-it-int4-autoround/prod-c8-xpugraph-256o-repeat-20260607T084540Z",
+    "sustained_decode_512": "/mnt/fast-ai/bench-results/gemma4-12b-it-int4-autoround/prod-c8-xpugraph-512o-repeat-20260607T084633Z",
+    "sustained_decode_1024": "/mnt/fast-ai/bench-results/gemma4-12b-it-int4-autoround/prod-c8-xpugraph-1024o-repeat-20260607T084718Z",
+    "sustained_decode_scaling_512": "/mnt/fast-ai/bench-results/gemma4-12b-it-int4-autoround/prod-c8-xpugraph-scaling-512o-20260607T084806Z",
     "profile_trial_xpugraph": "/mnt/fast-ai/bench-results/gemma4-12b-it-int4-autoround/profile-trials/gemma4-12b-it-int4-autoround-c8-xpugraph-20260607T074722Z",
     "profile_trial_mbt8192": "/mnt/fast-ai/bench-results/gemma4-12b-it-int4-autoround/profile-trials/gemma4-12b-it-int4-autoround-c8-mbt8192-20260607T073623Z",
     "profile_trial_mbt2048": "/mnt/fast-ai/bench-results/gemma4-12b-it-int4-autoround/profile-trials/gemma4-12b-it-int4-autoround-c8-mbt2048-20260607T074213Z"

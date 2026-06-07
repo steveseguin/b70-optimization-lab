@@ -517,6 +517,32 @@ The 32K prefill leg did not materially improve with XPU graph. It stayed around
 `22.28 s` mean TTFT for eight concurrent `30690`-token prompts with one output
 token. Treat the win as a decode-path improvement, not a long-prefill fix.
 
+Sustained decode characterization on the promoted production c8 graph profile:
+
+| Shape | Prompt tokens each | Output tokens each | Concurrency | Mean TTFT | Wall aggregate output tok/s |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| repeat mean | `119` | `256` | `8` | `2.530 s` | `796.18` |
+| repeat mean | `119` | `512` | `8` | `2.542 s` | `780.97` |
+| repeat mean | `119` | `1024` | `8` | `2.519 s` | `731.12` |
+
+512-token scaling on the same production endpoint:
+
+| Concurrency | Prompt tokens each | Output tokens each | Mean TTFT | Wall aggregate output tok/s |
+| ---: | ---: | ---: | ---: | ---: |
+| `1` | `119` | `512` | `2.190 s` | `112.77` |
+| `2` | `119` | `512` | `2.415 s` | `205.47` |
+| `4` | `119` | `512` | `2.500 s` | `398.98` |
+| `8` | `119` | `512` | `2.526 s` | `784.69` |
+
+Raw result directories:
+
+```text
+/mnt/fast-ai/bench-results/gemma4-12b-it-int4-autoround/prod-c8-xpugraph-256o-repeat-20260607T084540Z
+/mnt/fast-ai/bench-results/gemma4-12b-it-int4-autoround/prod-c8-xpugraph-512o-repeat-20260607T084633Z
+/mnt/fast-ai/bench-results/gemma4-12b-it-int4-autoround/prod-c8-xpugraph-1024o-repeat-20260607T084718Z
+/mnt/fast-ai/bench-results/gemma4-12b-it-int4-autoround/prod-c8-xpugraph-scaling-512o-20260607T084806Z
+```
+
 Rejected same-day branches:
 
 | Branch | Result |

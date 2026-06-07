@@ -486,6 +486,23 @@ GPU KV cache size: 1,004,909 tokens
 Maximum concurrency for 32,768 tokens per request: 30.67x
 ```
 
+Sustained decode checks on the promoted graph profile:
+
+| Shape | Concurrency | Wall aggregate output tok/s |
+| --- | ---: | ---: |
+| `119` prompt tokens, `256` output tokens | `8` | `796.18` |
+| `119` prompt tokens, `512` output tokens | `8` | `780.97` |
+| `119` prompt tokens, `1024` output tokens | `8` | `731.12` |
+
+512-output scaling on the same production endpoint:
+
+| Concurrency | Wall aggregate output tok/s |
+| ---: | ---: |
+| `1` | `112.77` |
+| `2` | `205.47` |
+| `4` | `398.98` |
+| `8` | `784.69` |
+
 Near-full-context probes:
 
 | Shape | Prompt tokens each | Output tokens each | Mean TTFT | Max TTFT | Notes |
