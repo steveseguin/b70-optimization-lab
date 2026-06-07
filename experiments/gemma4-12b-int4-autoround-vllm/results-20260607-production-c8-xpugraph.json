@@ -166,6 +166,11 @@
       "reason": "Rejected. First compile had six ocloc/IGC error-code-245 fallbacks and torch.compile took 315.80 s; cached repeat validation later hit UR_RESULT_ERROR_DEVICE_LOST during sampling."
     },
     {
+      "profile": "gemma4-12b-it-int4-autoround-c8-xpugraph-mbt2048",
+      "quality_matched": null,
+      "reason": "Rejected. It raised GPU KV to 1,201,940 tokens and 36.68x theoretical 32K concurrency, but first compile took 214.55 s and it hit UR_RESULT_ERROR_DEVICE_LOST during the canary/sampling path."
+    },
+    {
       "profile": "gemma4-12b-it-int4-autoround-c8-nolog",
       "quality_matched": true,
       "reason": "Not promoted. Short decode was 714.81 tok/s, within the promoted graph profile's normal variance, and one-token TTFT worsened."

@@ -123,6 +123,7 @@ stays single-model.
 | `gemma4-12b-it-int4-autoround-c8-gmem096` | rejected-startup-memory | text,image | Same as c8 but `gpu_memory_utilization=0.96`; rejected after engine startup failure near the VRAM boundary. |
 | `gemma4-12b-it-int4-autoround-c8-gmem097` | rejected-startup-memory | text,image | Same as c8 but `gpu_memory_utilization=0.97`; rejected because startup free VRAM was below requested utilization. |
 | `gemma4-12b-it-int4-autoround-c8-cs1-8` | rejected-device-lost | text,image | Same as c8 but `compile_sizes=[1,8]`; rejected after IGC fallback compile and `UR_RESULT_ERROR_DEVICE_LOST` during repeat validation. |
+| `gemma4-12b-it-int4-autoround-c8-xpugraph-mbt2048` | rejected-device-lost | text,image | Same as c8 graph but `max_num_batched_tokens=2048`; gained KV headroom but hit `UR_RESULT_ERROR_DEVICE_LOST` during canary/sampling. |
 | `gemma4-12b-it-int4-autoround-c8-nolog` | experiment-nolog | text,image | Same as c8 but frontdoor event logging disabled; quality matched but no clear throughput win. |
 | `qwen36-27b-fp8-vrfai` | rejected-diagnostic | text | Do not use as a recommended lane. It only worked here with an opt-in BF16 dequant fallback for a failing XPU FP8 primitive. |
 | `qwen36-35b-a3b-fp8` | blocked-native-xpu-fp8 | text,image | Official FP8 checkpoint is interesting, but the current local XPU path lacks native block-FP8 W8A8 support. |
