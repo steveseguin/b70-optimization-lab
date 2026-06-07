@@ -543,6 +543,13 @@ Raw result directories:
 /mnt/fast-ai/bench-results/gemma4-12b-it-int4-autoround/prod-c8-xpugraph-scaling-512o-20260607T084806Z
 ```
 
+LocalMaxxing submissions:
+
+| Shape | tok/s | ID |
+| --- | ---: | --- |
+| c8, 119 prompt, 256 output, repeat mean | `796.18` | `cmq3jm75g000tlj01bx4frdf0` |
+| c8, 119 prompt, 512 output, repeat mean | `780.97` | `cmq3jm7cx000wlj01wm75wqmk` |
+
 Rejected same-day branches:
 
 | Branch | Result |
