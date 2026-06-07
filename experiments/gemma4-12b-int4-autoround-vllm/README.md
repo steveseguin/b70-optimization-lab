@@ -7,8 +7,9 @@ Goal:
 - run `Intel/gemma-4-12B-it-int4-AutoRound`;
 - keep the public endpoint OpenAI-compatible on `0.0.0.0:8000`;
 - support text and image requests;
-- keep a 32K context window for the c16 profile, and characterize the shorter
-  c64 profile needed for 64 active clients;
+- keep a 32K context window, with the current c8 profile limiting live
+  generations to 8 while keeping full 32K context;
+- characterize the shorter c64 profile needed for 64 active clients;
 - measure single-user and concurrent decode behavior;
 - keep the setup reproducible for another Ubuntu 24.04 B70 system.
 
@@ -24,6 +25,7 @@ Auth: none
 Served model name: gemma4-12b-it-int4-autoround
 Backend: vLLM/XPU on 127.0.0.1:18080
 Default high-context profile: 32768 context, 16 live generations
+Current full-context c8 profile: 32768 context, 8 live generations
 High-concurrency c64 profile: 4480 context, 64 live generations
 Modalities tested: text, image
 ```
@@ -99,7 +101,7 @@ Gemma4UnifiedForConditionalGeneration
 
 ## Slot Profile
 
-Active profile:
+Base c16 profile:
 
 ```text
 ../../configs/model-slots/gemma4-12b-it-int4-autoround.env
@@ -139,6 +141,22 @@ VLLM_ENABLE_PREFIX_CACHING=1
 FRONTDOOR_MAX_ACTIVE_GENERATIONS=64
 ```
 
+Current full-context c8 profile:
+
+```text
+../../configs/model-slots/gemma4-12b-it-int4-autoround-c8.env
+```
+
+Key c8 settings:
+
+```bash
+VLLM_MAX_MODEL_LEN=32768
+VLLM_MAX_NUM_BATCHED_TOKENS=4096
+VLLM_MAX_NUM_SEQS=8
+VLLM_ENABLE_PREFIX_CACHING=1
+FRONTDOOR_MAX_ACTIVE_GENERATIONS=8
+```
+
 `VLLM_DTYPE=bfloat16` is the 16-bit activation/runtime dtype. The weights remain
 the INT4 AutoRound checkpoint; this is not the rejected Qwen FP8 BF16-dequant
 fallback.
@@ -157,6 +175,14 @@ Switch to the 64-active-client profile:
 cd /home/steve/llm-optimizations
 printf '%s\n' "/'" | sudo -S -p '' \
   scripts/switch-vllm-model-slot.sh switch gemma4-12b-it-int4-autoround-c64
+```
+
+Switch to the full-32K, 8-active-generation profile:
+
+```bash
+cd /home/steve/llm-optimizations
+printf '%s\n' "/'" | sudo -S -p '' \
+  scripts/switch-vllm-model-slot.sh switch gemma4-12b-it-int4-autoround-c8
 ```
 
 Check status:
@@ -313,6 +339,85 @@ Raw files:
 /mnt/fast-ai/bench-results/gemma4-12b-it-int4-autoround/c64-4480-longprompt-4300p-1o-20260607T062228Z.json
 ```
 
+## C8 Full-Context Profile
+
+The current user-preferred Gemma 4 profile keeps `max_model_len=32768` and
+caps live requests at 8. This keeps the LAN endpoint useful for full-context
+clients without dropping to the c64 profile's shorter 4480-token window.
+
+Selected c8 profile:
+
+```text
+max_model_len=32768
+max_num_seqs=8
+max_active_generations=8
+prefix caching enabled
+```
+
+Startup reported:
+
+```text
+torch.compile took 67.60 s on first launch for this shape
+Available KV cache memory: 27.09 GiB
+GPU KV cache size: 990,722 tokens
+Maximum concurrency for 32,768 tokens per request: 30.23x
+```
+
+The `30.23x` line is vLLM's KV-capacity estimate. The service is intentionally
+capped at 8 live generations because the goal for this profile is predictable
+LAN behavior with full 32K context, not maximum theoretical admission.
+
+Short-prompt one-token TTFT probe after rebuilding the benchmark prompt
+generator:
+
+| Concurrency | Prompt tokens each | Output tokens each | Mean TTFT | Max TTFT |
+| ---: | ---: | ---: | ---: | ---: |
+| `8` | `119` | `1` | `0.151 s` | `0.183 s` |
+
+Short-prompt 128-token output run:
+
+| Concurrency | Prompt tokens each | Output tokens each | Aggregate output tok/s wall | Mean TTFT field |
+| ---: | ---: | ---: | ---: | ---: |
+| `8` | `119` | `128` | `247.49` | `4.12 s` |
+
+For the 128-token run, use the wall aggregate as the useful throughput number.
+The post-first-text decode field is not reliable for this short-prompt shape
+because vLLM/XPU coalesces streamed output chunks.
+
+Near-full-context probes:
+
+| Shape | Prompt tokens each | Output tokens each | Mean TTFT | Max TTFT | Notes |
+| --- | ---: | ---: | ---: | ---: | --- |
+| `c8` cold-ish long prefill | `30690` | `1` | `22.17 s` | `39.03 s` | Useful long-prefill signal before the repeated prefix was warm. |
+| `c8` prefix-cache-warm near limit | `32703` | `1` | `1.94 s` | `3.22 s` | Reused most of the earlier repeated 30.7K-token prefix. |
+
+Over-limit canary:
+
+```text
+requested target 34300 -> 32894 input tokens per c8 lane
+requested output tokens: 1
+result: rejected as expected
+reason: 32894 + 1 exceeds the 32768 max context window
+```
+
+This is the right behavior. For one output token, the prompt must stay at or
+below `32767` input tokens. For normal generation, leave more room for output.
+
+Raw files:
+
+```text
+/mnt/fast-ai/bench-results/gemma4-12b-it-int4-autoround/c8-32768-100p-1o-fastprompt-20260607T065104Z.json
+/mnt/fast-ai/bench-results/gemma4-12b-it-int4-autoround/c8-32768-100p-128o-fastprompt-20260607T065116Z.json
+/mnt/fast-ai/bench-results/gemma4-12b-it-int4-autoround/c8-32768-8x32000p-1o-20260607T064822Z.json
+/mnt/fast-ai/bench-results/gemma4-12b-it-int4-autoround/c8-32768-8x32703p-1o-20260607T065041Z.json
+```
+
+Repo summary:
+
+```text
+results-20260607-b70-c8-32768.json
+```
+
 ## Startup Observations
 
 Known-good c16 startup reported:
@@ -348,6 +453,18 @@ Maximum concurrency for 4,480 tokens per request: 65.25x
 Each tried max-context value created a new torch.compile cache key and took
 about 66-67 seconds on first launch. Cached restarts should be faster, but c64
 has a real first-start operational cost.
+
+Known-good c8 startup reported:
+
+```text
+max_seq_len=32768
+enable_prefix_caching=True
+max_num_batched_tokens=4096
+max_num_seqs=8
+torch.compile took 67.60 s on first launch for this shape
+GPU KV cache size: 990,722 tokens
+Maximum concurrency for 32,768 tokens per request: 30.23x
+```
 
 ## Known Bad Setting
 

@@ -1,0 +1,84 @@
+{
+  "date": "2026-06-07",
+  "host": "4x Intel Arc Pro B70 Ubuntu 24.04",
+  "model": {
+    "hfId": "Intel/gemma-4-12B-it-int4-AutoRound",
+    "servedName": "gemma4-12b-it-int4-autoround",
+    "localPath": "/mnt/fast-ai/llm-models/gemma4-12b-it-int4-autoround-intel",
+    "quantization": "INT4 AutoRound W4A16, vLLM quantization=inc",
+    "runtimeDtype": "bfloat16"
+  },
+  "server": {
+    "engine": "vLLM/XPU",
+    "endpoint": "http://0.0.0.0:8000/v1",
+    "auth": "none",
+    "tensorParallelSize": 4,
+    "maxModelLen": 32768,
+    "maxNumBatchedTokens": 4096,
+    "maxNumSeqs": 8,
+    "frontdoorMaxActiveGenerations": 8,
+    "prefixCaching": true,
+    "limitMmPerPrompt": {
+      "image": 4
+    }
+  },
+  "startup": {
+    "availableKvCacheMemoryGiB": 27.09,
+    "gpuKvCacheTokens": 990722,
+    "vllmFullContextConcurrencyFor32768": 30.23,
+    "firstCompileSeconds": 67.6,
+    "engineInitSeconds": 86.68
+  },
+  "benchmarks": {
+    "shortPromptTtftC8": {
+      "requestedPromptTokens": 100,
+      "actualPromptTokensEach": 119,
+      "outputTokensEach": 1,
+      "concurrency": 8,
+      "meanTtftSeconds": 0.15114834875566885,
+      "maxTtftSeconds": 0.1828226069919765,
+      "aggregateOutputTokSWall": 43.599178201511776,
+      "rawLocalFile": "/mnt/fast-ai/bench-results/gemma4-12b-it-int4-autoround/c8-32768-100p-1o-fastprompt-20260607T065104Z.json"
+    },
+    "shortPromptDecodeC8": {
+      "requestedPromptTokens": 100,
+      "actualPromptTokensEach": 119,
+      "outputTokensEach": 128,
+      "concurrency": 8,
+      "aggregateOutputTokSWall": 247.4888654616094,
+      "meanTtftFieldSeconds": 4.120664493369986,
+      "note": "Post-first-text decode is not reliable for this short-prompt shape because vLLM/XPU coalesces streamed output chunks. Use wall aggregate as the primary number.",
+      "rawLocalFile": "/mnt/fast-ai/bench-results/gemma4-12b-it-int4-autoround/c8-32768-100p-128o-fastprompt-20260607T065116Z.json"
+    },
+    "nearFullContextColdishC8": {
+      "requestedPromptTokens": 32000,
+      "actualPromptTokensEach": 30690,
+      "outputTokensEach": 1,
+      "concurrency": 8,
+      "meanTtftSeconds": 22.17251405873685,
+      "maxTtftSeconds": 39.03045429196209,
+      "aggregateOutputTokSWall": 0.20494140776664696,
+      "note": "This run used distinct c8 labels and was the useful cold-ish long-prefill signal before the repeated prefix cache was warm.",
+      "rawLocalFile": "/mnt/fast-ai/bench-results/gemma4-12b-it-int4-autoround/c8-32768-8x32000p-1o-20260607T064822Z.json"
+    },
+    "nearLimitPrefixCachedC8": {
+      "requestedPromptTokens": 34100,
+      "actualPromptTokensEach": 32703,
+      "outputTokensEach": 1,
+      "concurrency": 8,
+      "meanTtftSeconds": 1.9448187439702451,
+      "maxTtftSeconds": 3.2225459499750286,
+      "aggregateOutputTokSWall": 2.477674642443435,
+      "note": "This is a prefix-cache-warm full-context validation. The earlier 30.7K-token run primed most of the repeated prefix.",
+      "rawLocalFile": "/mnt/fast-ai/bench-results/gemma4-12b-it-int4-autoround/c8-32768-8x32703p-1o-20260607T065041Z.json"
+    },
+    "overLimitCanary": {
+      "requestedPromptTokens": 34300,
+      "actualPromptTokensEach": 32894,
+      "outputTokensEach": 1,
+      "concurrency": 8,
+      "outcome": "rejected_as_expected",
+      "error": "max context length is 32768 tokens; prompt contained at least 32768 input tokens plus 1 output token"
+    }
+  }
+}

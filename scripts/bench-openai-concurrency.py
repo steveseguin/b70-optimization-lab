@@ -26,10 +26,11 @@ def build_prompt(tokenizer: Any, target_tokens: int, label: str) -> str:
         f"Qwen B70 concurrency benchmark lane {label}. "
         "Preserve the context and continue the repeated benchmark word. "
     )
-    text = seed
-    while len(tokenizer.encode(text, add_special_tokens=False)) < target_tokens + 32:
-        text += seed
-    ids = tokenizer.encode(text, add_special_tokens=False)[:target_tokens]
+    seed_ids = tokenizer.encode(seed, add_special_tokens=False)
+    if not seed_ids:
+        raise ValueError("benchmark seed produced no tokens")
+    repeats = (target_tokens + len(seed_ids) - 1) // len(seed_ids)
+    ids = (seed_ids * repeats)[:target_tokens]
     prompt = tokenizer.decode(ids, skip_special_tokens=True)
     return (
         f"{prompt}\n\n"

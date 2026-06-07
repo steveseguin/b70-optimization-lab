@@ -98,6 +98,12 @@ Try the current Gemma 4 12B INT4 AutoRound image+text candidate after the local
 scripts/switch-vllm-model-slot.sh switch gemma4-12b-it-int4-autoround
 ```
 
+Try the full-32K Gemma 4 profile with 8 active generations:
+
+```bash
+scripts/switch-vllm-model-slot.sh switch gemma4-12b-it-int4-autoround-c8
+```
+
 The switch command stops the generic slot services and the older
 MiniMax-specific services before starting the selected slot. This avoids two
 large models being loaded at the same time. It also disables the older
@@ -112,6 +118,7 @@ stays single-model.
 | `qwen36-35b-a3b-int4-autoround` | research | text,image | Preferred Qwen 35B candidate. Public W4A16 AutoRound checkpoint, working after the local XPU Mamba pointer patch. |
 | `gemma3-12b-it-int4-autoround` | research | text,image | Tested Gemma fallback. Public 12B INT4 AutoRound checkpoint, much faster than Qwen 35B on the 2K/128 concurrency ladder. |
 | `gemma4-12b-it-int4-autoround` | research | text,image | Current Gemma 4 candidate. Intel W4A16 AutoRound checkpoint, working after Transformers `5.10.2` plus the local vLLM `gemma4_unified` backport. |
+| `gemma4-12b-it-int4-autoround-c8` | research-c8-32k | text,image | Full-context Gemma 4 profile: 32768-token context, 8 active generations, prefix caching, no-auth LAN endpoint. |
 | `gemma4-12b-it-int4-autoround-c64` | research-c64 | text,image | High-concurrency Gemma 4 profile: 64 active generations, prefix caching, 4480-token context selected to fit 64 full contexts in VRAM. |
 | `qwen36-27b-fp8-vrfai` | rejected-diagnostic | text | Do not use as a recommended lane. It only worked here with an opt-in BF16 dequant fallback for a failing XPU FP8 primitive. |
 | `qwen36-35b-a3b-fp8` | blocked-native-xpu-fp8 | text,image | Official FP8 checkpoint is interesting, but the current local XPU path lacks native block-FP8 W8A8 support. |
@@ -191,6 +198,15 @@ vLLM reported `292317` GPU KV tokens and `65.25x` full-context concurrency at
 `4480`, while `4864` only reached `60.15x`. Do not derive the c64 context by
 dividing the c16 KV budget; the c64 scheduler/compile profile changes the
 available KV budget.
+
+`gemma4-12b-it-int4-autoround-c8` is the full-context variant selected after
+the c64 tradeoff became too short. It uses the same Gemma 4 INT4 AutoRound
+checkpoint and same no-auth LAN endpoint, but keeps `max_model_len=32768` and
+caps vLLM/frontdoor live generations at `8`. Startup reported `990722` GPU
+KV-cache tokens and `30.23x` theoretical full-32K concurrency, so the c8 cap is
+conservative. The profile passed an 8-way near-limit probe with `32703` prompt
+tokens and one output token per request. For normal generation, leave output
+headroom below 32768 total prompt+generated tokens.
 
 Avoid treating the Qwen FP8 profiles as production candidates right now. On
 2026-06-06, the native compressed-tensors FP8 path failed during profiling on
@@ -405,4 +421,65 @@ Raw local result files:
 /mnt/fast-ai/bench-results/gemma4-12b-it-int4-autoround/c64-4480-ttft-100p-1o-20260607T062129Z.json
 /mnt/fast-ai/bench-results/gemma4-12b-it-int4-autoround/c64-4480-decode-100p-128o-20260607T062143Z.json
 /mnt/fast-ai/bench-results/gemma4-12b-it-int4-autoround/c64-4480-longprompt-4300p-1o-20260607T062228Z.json
+```
+
+## 2026-06-07 Gemma 4 C8 Full-Context Profile
+
+Switch command:
+
+```bash
+scripts/switch-vllm-model-slot.sh switch gemma4-12b-it-int4-autoround-c8
+```
+
+Serving facts:
+
+- endpoint: `http://0.0.0.0:8000/v1`
+- auth: none
+- model: `Intel/gemma-4-12B-it-int4-AutoRound`
+- served name: `gemma4-12b-it-int4-autoround`
+- max model length: `32768`
+- max active generations: `8`
+- prefix caching: enabled
+- vLLM full-context concurrency estimate: `30.23x`
+- GPU KV cache size: `990722` tokens
+
+Short-prompt c8 TTFT with about `119` prompt tokens and one generated token:
+
+| Mean TTFT | Max TTFT |
+| ---: | ---: |
+| `0.151 s` | `0.183 s` |
+
+Short-prompt c8 output run with about `119` prompt tokens and `128` generated
+tokens per request:
+
+| Concurrency | Aggregate output tok/s, wall |
+| ---: | ---: |
+| `8` | `247.49` |
+
+Near-full-context probes:
+
+| Shape | Prompt tokens each | Output tokens each | Mean TTFT | Max TTFT | Notes |
+| --- | ---: | ---: | ---: | ---: | --- |
+| `c8` cold-ish long prefill | `30690` | `1` | `22.17 s` | `39.03 s` | Before the repeated prefix was warm. |
+| `c8` prefix-cache-warm near limit | `32703` | `1` | `1.94 s` | `3.22 s` | Reused most of the prior repeated prefix. |
+
+Over-limit canary:
+
+```text
+32894 input tokens + 1 output token was rejected, correctly, because it exceeds 32768 total tokens.
+```
+
+Raw local result files:
+
+```text
+/mnt/fast-ai/bench-results/gemma4-12b-it-int4-autoround/c8-32768-100p-1o-fastprompt-20260607T065104Z.json
+/mnt/fast-ai/bench-results/gemma4-12b-it-int4-autoround/c8-32768-100p-128o-fastprompt-20260607T065116Z.json
+/mnt/fast-ai/bench-results/gemma4-12b-it-int4-autoround/c8-32768-8x32000p-1o-20260607T064822Z.json
+/mnt/fast-ai/bench-results/gemma4-12b-it-int4-autoround/c8-32768-8x32703p-1o-20260607T065041Z.json
+```
+
+Repo summary:
+
+```text
+../experiments/gemma4-12b-int4-autoround-vllm/results-20260607-b70-c8-32768.json
 ```
