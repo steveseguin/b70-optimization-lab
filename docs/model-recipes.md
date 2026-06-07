@@ -26,6 +26,7 @@ Do not compare two results unless their model, quantization, prompt length, outp
 | `../repro/minimax-m27-b70-110tps-ubuntu24-20260523/` | Deployable baseline | Fresh Ubuntu 24.04 setup for 4x B70, MiniMax M2.7 INT4 AutoRound, vLLM OpenAI-compatible endpoint on `0.0.0.0:8000`. |
 | `../repro/minimax-m27-b70-89tps-20260520/` | Strict speed baseline | Older strict quality-passed MiniMax M2.7 INT4 lane with higher output-token throughput. Useful for optimization comparisons. |
 | `../experiments/minimax_xpu_kv_offload/` | Experimental | Session-cache c2/c4/c8, TurboQuant, and CPU-paged attention research. Use for review and experiments, not as the production recipe. |
+| `../experiments/gemma4-12b-int4-autoround-vllm/` | Working research profile | Gemma 4 12B IT INT4 AutoRound image+text endpoint on vLLM/XPU. Includes the local `gemma4_unified` backport and c1-c16 concurrency results. |
 
 ## MiniMax M2.7 INT4 AutoRound
 
@@ -77,12 +78,32 @@ Current status:
 See [Current Reproducibility Map](current-reproducibility-map.md) for the full
 artifact map.
 
+## Gemma 4 12B INT4 AutoRound
+
+The current image+text research profile is:
+
+```bash
+cd /home/steve/llm-optimizations
+scripts/switch-vllm-model-slot.sh switch gemma4-12b-it-int4-autoround
+```
+
+It serves `Intel/gemma-4-12B-it-int4-AutoRound` through the same no-auth
+OpenAI-compatible LAN endpoint on `0.0.0.0:8000`. It needs the local vLLM
+`gemma4_unified` backport captured in
+`patches/vllm-gemma4-unified-backport-b70-20260607.patch`.
+
+See [the Gemma 4 experiment guide](../experiments/gemma4-12b-int4-autoround-vllm/README.md)
+for the exact slot profile, smoke tests, known bad multimedia-limit setting,
+and 2K/512 concurrency results.
+
 ## Future Recipe Slots
 
 These are useful community targets to add as separate repro folders:
 
 - Single active model-slot profiles for MiniMax, Qwen text, and Qwen-VL
   serving. See [Single Model Slot Switching](model-slot-switching.md).
+- Gemma 4 12B INT4 AutoRound full fresh-install repro folder once the
+  `gemma4_unified` backport is either upstream or packaged as a smaller patch.
 - Qwen3.6 27B Q4_0 GGUF on llama.cpp/SYCL.
 - Qwen3.6 27B FP8 on vLLM/XPU.
 - Qwen3-VL 30B-A3B FP8 on vLLM/XPU for image+text requests.

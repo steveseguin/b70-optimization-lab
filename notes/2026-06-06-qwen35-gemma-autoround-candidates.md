@@ -24,19 +24,17 @@ that meets the current requirements:
    - local slot:
      `configs/model-slots/qwen36-35b-a3b-int4-autoround.env`
 
-2. `Vishva007/gemma-4-12B-it-W4A16-AutoRound`
+2. `Intel/gemma-4-12B-it-int4-AutoRound`
    - public and not gated from this host
-   - about `7.81 GB`
+   - about `7.3 GB` downloaded locally
    - Gemma 4 unified multimodal model
    - W4A16 INT4 AutoRound
-   - `quant_method=auto-round`
-   - `packing_format=auto_round:auto_gptq`
-   - `bits=4`, `group_size=128`, `sym=true`
+   - Intel model card reports group size `128` and symmetric quantization
    - local slot:
      `configs/model-slots/gemma4-12b-it-int4-autoround.env`
 
-   2026-06-06 result: downloaded but blocked. Local vLLM/Transformers does
-   not recognize `model_type=gemma4_unified`.
+   2026-06-07 result: working after upgrading Transformers to `5.10.2` and
+   backporting vLLM `gemma4_unified` support.
 
 3. `OPEA/gemma-3-12b-it-int4-AutoRound`
    - public and not gated from this host
@@ -48,7 +46,8 @@ that meets the current requirements:
    - local slot:
      `configs/model-slots/gemma3-12b-it-int4-autoround.env`
 
-   2026-06-06 result: working. This is the fast Gemma lane today.
+   2026-06-06 result: working. This was the first fast Gemma fallback before
+   the later Gemma 4 unified backport.
 
 4. `Intel/Qwen3.6-35B-A3B-int4-mixed-AutoRound`
    - public and not gated from this host
@@ -83,10 +82,12 @@ AWQ conversion variants are lower priority for B70/XPU. They often target
 `awq_marlin` or CUDA-oriented paths, while local AutoRound `auto_round:auto_gptq`
 maps to the XPU INC W4A16 path and Intel `int4_gemm_w4a16`.
 
-Gemma 4 unified is blocked on local architecture support. The downloaded
-`Vishva007/gemma-4-12B-it-W4A16-AutoRound` checkpoint advertises
-`model_type=gemma4_unified`, which this local vLLM/Transformers stack rejects
-before weight load. Do not recommend the profile until upstream support lands.
+Superseded Gemma 4 note: the first local result was blocked because
+Transformers `5.7.0` and the local vLLM checkout did not recognize
+`model_type=gemma4_unified`. That was resolved on 2026-06-07 by using
+`Intel/gemma-4-12B-it-int4-AutoRound`, upgrading Transformers to `5.10.2`, and
+backporting the vLLM unified implementation. See
+`experiments/gemma4-12b-int4-autoround-vllm/README.md`.
 
 ## Test Plan
 
@@ -104,7 +105,7 @@ before weight load. Do not recommend the profile until upstream support lands.
    promoted.
 
 If Qwen fails to launch or is too slow, repeat the same ladder with
-`gemma3-12b-it-int4-autoround`.
+`gemma4-12b-it-int4-autoround` first, then `gemma3-12b-it-int4-autoround`.
 
 ## Qwen 35B INT4 Result
 
@@ -238,8 +239,9 @@ frontdoor:
 
 Interpretation:
 
-- Gemma3 12B INT4 is currently the fastest tested image+text slot.
-- c8 is the practical live-concurrency setting for this profile.
+- Gemma3 12B INT4 was the first fast fallback image+text slot, but the later
+  Gemma 4 c16 result is now the stronger concurrency lane.
+- c8 is the practical live-concurrency setting for the Gemma3 profile.
 - c16 does not improve throughput because the frontdoor/vLLM profile is built
   around 8 active generations; extra clients queue into later waves.
 - The post-TTFT rate field from the benchmark script is not useful for this
@@ -249,4 +251,89 @@ Raw file:
 
 ```text
 /mnt/fast-ai/bench-results/gemma3-12b-int4-vllm-serve/gemma3-12b-int4-concurrency-2k-128-warm-20260607T024447Z.json
+```
+
+## Gemma 4 12B INT4 Result
+
+Profile:
+
+```bash
+scripts/switch-vllm-model-slot.sh switch gemma4-12b-it-int4-autoround
+```
+
+Checkpoint:
+
+```text
+/mnt/fast-ai/llm-models/gemma4-12b-it-int4-autoround-intel
+```
+
+Required stack changes:
+
+- upgraded `/home/steve/.venvs/vllm-xpu` to Transformers `5.10.2`
+- added local vLLM `Gemma4UnifiedForConditionalGeneration`
+- registered the architecture in vLLM's model registry
+- captured patch:
+  `patches/vllm-gemma4-unified-backport-b70-20260607.patch`
+
+Local vLLM startup facts:
+
+- architecture: `Gemma4UnifiedForConditionalGeneration`
+- served name: `gemma4-12b-it-int4-autoround`
+- context: `32768`
+- prefix caching: enabled
+- quantization: vLLM logged `quantization=inc`
+- runtime dtype: `bfloat16`
+- tensor parallel: `4`
+- image route: enabled with `--limit-mm-per-prompt '{"image":4}'`
+- GPU KV cache: `1,004,337` tokens
+- theoretical full-32K concurrency from vLLM: `30.65x`
+
+Important multimedia-limit nuance:
+
+```bash
+VLLM_EXTRA_ARGS=(--limit-mm-per-prompt '{"image":4,"video":0,"audio":0}')
+```
+
+This failed during Gemma4 unified dummy multimodal profiling with:
+
+```text
+ValueError: Found 1 <|image|> tokens in the text but no images were passed.
+RuntimeError: Engine core initialization failed.
+```
+
+Keep the working setting:
+
+```bash
+VLLM_EXTRA_ARGS=(--limit-mm-per-prompt '{"image":4}')
+```
+
+Smoke tests after final restart:
+
+- Text chat returned exactly: `OK`
+- A base64 PNG image+text chat request returned: `Blue`
+
+About-2K prompt / 512-output forced decode benchmark through the no-auth
+frontdoor:
+
+| Concurrency | Prompt tokens each | Output tokens each | Aggregate decode tok/s after first text | Aggregate output tok/s, wall | Mean TTFT |
+| ---: | ---: | ---: | ---: | ---: | ---: |
+| 1 | `2071` | `512` | `58.22` | `30.39` | `8.05 s` |
+| 2 | `2071` | `512` | `117.27` | `59.70` | `8.44 s` |
+| 4 | `2071` | `512` | `236.10` | `116.33` | `9.00 s` |
+| 8 | `2071` | `512` | `467.76` | `217.39` | `10.20 s` |
+| 16 | `2071` | `512` | `922.18` | `396.11` | `11.97 s` |
+
+Interpretation:
+
+- Gemma 4 c1 decode is about `58-60 tok/s` after first streamed text.
+- Per-request decode remained about `60 tok/s` through c16.
+- Aggregate warmed decode reached about `922 tok/s` after TTFT at c16.
+- Wall aggregate at c16 was about `396 output tok/s` because it includes the
+  2K prefill and TTFT.
+
+Raw files:
+
+```text
+/mnt/fast-ai/bench-results/gemma4-12b-it-int4-autoround/concurrency-2k-512-c1-c2-c4-c8-20260607T034622Z.json
+/mnt/fast-ai/bench-results/gemma4-12b-it-int4-autoround/concurrency-2k-512-c16-20260607T035019Z.json
 ```

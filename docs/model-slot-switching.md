@@ -91,6 +91,13 @@ weights are present:
 scripts/switch-vllm-model-slot.sh switch gemma3-12b-it-int4-autoround
 ```
 
+Try the current Gemma 4 12B INT4 AutoRound image+text candidate after the local
+`gemma4_unified` vLLM backport is applied:
+
+```bash
+scripts/switch-vllm-model-slot.sh switch gemma4-12b-it-int4-autoround
+```
+
 The switch command stops the generic slot services and the older
 MiniMax-specific services before starting the selected slot. This avoids two
 large models being loaded at the same time. It also disables the older
@@ -104,7 +111,7 @@ stays single-model.
 | `minimax-m27-c1` | production | text | Current known-good MiniMax M2.7 INT4 AutoRound endpoint, 32K context, one active generation. |
 | `qwen36-35b-a3b-int4-autoround` | research | text,image | Preferred Qwen 35B candidate. Public W4A16 AutoRound checkpoint, working after the local XPU Mamba pointer patch. |
 | `gemma3-12b-it-int4-autoround` | research | text,image | Tested Gemma fallback. Public 12B INT4 AutoRound checkpoint, much faster than Qwen 35B on the 2K/128 concurrency ladder. |
-| `gemma4-12b-it-int4-autoround` | blocked-architecture | text,image,audio | Downloaded but blocked because local vLLM/Transformers does not recognize `gemma4_unified`. |
+| `gemma4-12b-it-int4-autoround` | research | text,image | Current Gemma 4 candidate. Intel W4A16 AutoRound checkpoint, working after Transformers `5.10.2` plus the local vLLM `gemma4_unified` backport. |
 | `qwen36-27b-fp8-vrfai` | rejected-diagnostic | text | Do not use as a recommended lane. It only worked here with an opt-in BF16 dequant fallback for a failing XPU FP8 primitive. |
 | `qwen36-35b-a3b-fp8` | blocked-native-xpu-fp8 | text,image | Official FP8 checkpoint is interesting, but the current local XPU path lacks native block-FP8 W8A8 support. |
 | `qwen3-vl-30b-a3b-fp8` | blocked-native-xpu-fp8 | text,image | Multimodal FP8 candidate, blocked by the same native XPU block-FP8 concern until proven otherwise. |
@@ -165,10 +172,15 @@ for numerical-stability reasons, so the profile uses `bfloat16` as the
 runtime activation dtype while keeping INT4 weights. That is not the same as
 the rejected Qwen FP8 BF16-dequant fallback.
 
-`gemma4-12b-it-int4-autoround` is not usable today on this stack. The
-checkpoint `Vishva007/gemma-4-12B-it-W4A16-AutoRound` advertises
-`model_type=gemma4_unified`, which local vLLM/Transformers does not recognize.
-Keep it as a future retry after upstream architecture support lands.
+`gemma4-12b-it-int4-autoround` is now the current Gemma 4 image+text candidate.
+The checkpoint is `Intel/gemma-4-12B-it-int4-AutoRound`, a W4A16 AutoRound
+model with `model_type=gemma4_unified`. It needed Transformers `5.10.2` and
+the local vLLM backport in
+`patches/vllm-gemma4-unified-backport-b70-20260607.patch`. The active profile
+uses `bfloat16` as the 16-bit activation dtype while the weights remain the
+INT4 AutoRound checkpoint. The validated c16 profile keeps the same no-auth
+LAN endpoint on `0.0.0.0:8000`, supports text and image requests, and reports
+`max_model_len=32768`.
 
 Avoid treating the Qwen FP8 profiles as production candidates right now. On
 2026-06-06, the native compressed-tensors FP8 path failed during profiling on
@@ -247,4 +259,83 @@ Raw local result files:
 /mnt/fast-ai/bench-results/qwen36-35b-int4-vllm-serve/qwen36-35b-int4-c1-2k-128-after-mamba-uint64-20260607T020923Z.json
 /mnt/fast-ai/bench-results/qwen36-35b-int4-vllm-serve/qwen36-35b-int4-c2-c4-2k-128-after-mamba-uint64-20260607T021010Z.json
 /mnt/fast-ai/bench-results/gemma3-12b-int4-vllm-serve/gemma3-12b-int4-concurrency-2k-128-warm-20260607T024447Z.json
+```
+
+## 2026-06-07 Gemma 4 INT4 AutoRound Results
+
+Gemma 4 12B INT4 AutoRound:
+
+```bash
+scripts/switch-vllm-model-slot.sh switch gemma4-12b-it-int4-autoround
+```
+
+Model:
+
+```text
+Intel/gemma-4-12B-it-int4-AutoRound
+```
+
+Local path:
+
+```text
+/mnt/fast-ai/llm-models/gemma4-12b-it-int4-autoround-intel
+```
+
+Serving facts:
+
+- served name: `gemma4-12b-it-int4-autoround`
+- endpoint: `http://0.0.0.0:8000/v1`
+- auth: none
+- backend: vLLM/XPU
+- tensor parallel: `4`
+- runtime dtype: `bfloat16`
+- quantization path reported by vLLM: `inc`
+- max model length: `32768`
+- max live generations/frontdoor: `16`
+- prefix caching: enabled
+- multimodal limit: `--limit-mm-per-prompt '{"image":4}'`
+
+Text and image smoke tests passed after the final restart. Text returned
+`OK`; a base64 PNG image request returned `Blue`.
+
+Benchmark shape:
+
+- prompt requested: `2048` tokens
+- actual prompt tokens: about `2071` per request
+- generated tokens: `512` per request
+- forced decode: `ignore_eos=true`
+- benchmark path:
+  `scripts/bench-openai-concurrency.py`
+
+| Concurrency | Aggregate decode tok/s after first text | Aggregate output tok/s, wall | Mean request decode tok/s | Mean TTFT |
+| ---: | ---: | ---: | ---: | ---: |
+| 1 | `58.22` | `30.39` | `58.22` | `8.05 s` |
+| 2 | `117.27` | `59.70` | `58.89` | `8.44 s` |
+| 4 | `236.10` | `116.33` | `59.71` | `9.00 s` |
+| 8 | `467.76` | `217.39` | `59.63` | `10.20 s` |
+| 16 | `922.18` | `396.11` | `59.60` | `11.97 s` |
+
+Important notes:
+
+- The useful decode number is the after-first-text output-token rate. It shows
+  about `58-60 tok/s` per active request.
+- Wall aggregate includes the 2K prefill and TTFT. At c16, wall aggregate was
+  about `396 output tok/s`.
+- vLLM reported `GPU KV cache size: 1,004,337 tokens`, or `30.65x` theoretical
+  concurrency for 32K requests. Only c16 has been validated.
+- Do not set `--limit-mm-per-prompt '{"image":4,"video":0,"audio":0}'`; that
+  failed during Gemma4 unified dummy multimodal profiling. Keep
+  `--limit-mm-per-prompt '{"image":4}'`.
+
+Raw local result files:
+
+```text
+/mnt/fast-ai/bench-results/gemma4-12b-it-int4-autoround/concurrency-2k-512-c1-c2-c4-c8-20260607T034622Z.json
+/mnt/fast-ai/bench-results/gemma4-12b-it-int4-autoround/concurrency-2k-512-c16-20260607T035019Z.json
+```
+
+Full reproduction notes:
+
+```text
+../experiments/gemma4-12b-int4-autoround-vllm/README.md
 ```

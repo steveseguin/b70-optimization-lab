@@ -1,0 +1,88 @@
+{
+  "date": "2026-06-07",
+  "host": "4x Intel Arc Pro B70 Ubuntu 24.04",
+  "model": {
+    "hfId": "Intel/gemma-4-12B-it-int4-AutoRound",
+    "servedName": "gemma4-12b-it-int4-autoround",
+    "localPath": "/mnt/fast-ai/llm-models/gemma4-12b-it-int4-autoround-intel",
+    "quantization": "INT4 AutoRound W4A16, vLLM quantization=inc",
+    "runtimeDtype": "bfloat16"
+  },
+  "server": {
+    "engine": "vLLM/XPU",
+    "endpoint": "http://0.0.0.0:8000/v1",
+    "auth": "none",
+    "tensorParallelSize": 4,
+    "maxModelLen": 32768,
+    "maxNumBatchedTokens": 4096,
+    "maxNumSeqs": 16,
+    "prefixCaching": true,
+    "limitMmPerPrompt": {
+      "image": 4
+    }
+  },
+  "startupFacts": {
+    "architecture": "Gemma4UnifiedForConditionalGeneration",
+    "gpuKvCacheTokens": 1004337,
+    "maxConcurrencyAt32768Tokens": 30.65,
+    "cachedTorchCompileSeconds": 4.66
+  },
+  "smokeTests": {
+    "text": "OK",
+    "image": "Blue"
+  },
+  "benchmark": {
+    "script": "scripts/bench-openai-concurrency.py",
+    "requestedPromptTokens": 2048,
+    "actualPromptTokensEach": 2071,
+    "outputTokensEach": 512,
+    "ignoreEos": true,
+    "rawLocalFiles": [
+      "/mnt/fast-ai/bench-results/gemma4-12b-it-int4-autoround/concurrency-2k-512-c1-c2-c4-c8-20260607T034622Z.json",
+      "/mnt/fast-ai/bench-results/gemma4-12b-it-int4-autoround/concurrency-2k-512-c16-20260607T035019Z.json"
+    ],
+    "scenarios": [
+      {
+        "concurrency": 1,
+        "aggregateOutputTokSAfterFirstText": 58.22,
+        "aggregateOutputTokSWall": 30.39,
+        "meanPerRequestDecodeTokSAfterTtft": 58.22,
+        "meanTtftSeconds": 8.05
+      },
+      {
+        "concurrency": 2,
+        "aggregateOutputTokSAfterFirstText": 117.27,
+        "aggregateOutputTokSWall": 59.7,
+        "meanPerRequestDecodeTokSAfterTtft": 58.89,
+        "meanTtftSeconds": 8.44
+      },
+      {
+        "concurrency": 4,
+        "aggregateOutputTokSAfterFirstText": 236.1,
+        "aggregateOutputTokSWall": 116.33,
+        "meanPerRequestDecodeTokSAfterTtft": 59.71,
+        "meanTtftSeconds": 9.0
+      },
+      {
+        "concurrency": 8,
+        "aggregateOutputTokSAfterFirstText": 467.76,
+        "aggregateOutputTokSWall": 217.39,
+        "meanPerRequestDecodeTokSAfterTtft": 59.63,
+        "meanTtftSeconds": 10.2
+      },
+      {
+        "concurrency": 16,
+        "aggregateOutputTokSAfterFirstText": 922.18,
+        "aggregateOutputTokSWall": 396.11,
+        "meanPerRequestDecodeTokSAfterTtft": 59.6,
+        "meanTtftSeconds": 11.97
+      }
+    ]
+  },
+  "knownBadSettings": [
+    {
+      "setting": "--limit-mm-per-prompt {\"image\":4,\"video\":0,\"audio\":0}",
+      "result": "Engine initialization failed during Gemma4 unified dummy multimodal profiling."
+    }
+  ]
+}
