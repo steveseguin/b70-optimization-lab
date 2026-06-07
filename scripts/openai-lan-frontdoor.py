@@ -78,6 +78,7 @@ if backend.scheme != "http" or not backend.hostname or not backend.port:
 
 generation_slots = threading.BoundedSemaphore(MAX_ACTIVE_GENERATIONS)
 state_lock = threading.Lock()
+log_lock = threading.Lock()
 active_generations = 0
 queued_generations = 0
 total_generation_requests = 0
@@ -98,7 +99,9 @@ def log_event(event: dict[str, Any]) -> None:
     if not FRONTDOOR_LOG_EVENTS:
         return
     event.setdefault("ts_ms", now_ms())
-    print(json.dumps(event, sort_keys=True), flush=True)
+    line = json.dumps(event, sort_keys=True)
+    with log_lock:
+        print(line, flush=True)
 
 
 def is_generation_path(path: str, method: str) -> bool:
