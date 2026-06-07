@@ -1,0 +1,140 @@
+{
+  "date": "2026-06-07",
+  "host": "4x Intel Arc Pro B70",
+  "model": "Intel/gemma-4-12B-it-int4-AutoRound",
+  "engine": "vLLM/XPU",
+  "endpoint": "OpenAI-compatible no-auth LAN endpoint on 0.0.0.0:8000",
+  "production_after_test": {
+    "profile": "gemma4-12b-it-int4-autoround-c8",
+    "max_model_len": 32768,
+    "max_active_generations": 8,
+    "prefix_caching": true,
+    "xpu_graph": true,
+    "quality_canary": "pass"
+  },
+  "raw_result_dir": "/mnt/fast-ai/bench-results/gemma4-12b-it-int4-autoround/concurrency32k-20260607T190702Z",
+  "harness_changes": {
+    "script": "scripts/bench-openai-concurrency.py",
+    "added_options": [
+      "--shared-prefix-tokens",
+      "--prompt-salt"
+    ],
+    "purpose": "Measure fixed-prefix plus unique-tail workloads without accidentally reusing full cached prompts."
+  },
+  "c12": {
+    "profile": "configs/model-slots/gemma4-12b-it-int4-autoround-c12.env",
+    "status": "rejected-device-lost",
+    "max_model_len": 32768,
+    "max_num_seqs": 12,
+    "startup": {
+      "gpu_kv_cache_tokens": 991437,
+      "theoretical_full_32768_concurrency": 30.26,
+      "ocloc_error_code": 245,
+      "igc_internal_compiler_error": "Floating point exception",
+      "compile_range_1_1_s": 79.24,
+      "compile_range_1_4096_s": 99.77
+    },
+    "failure": [
+      "UR_RESULT_ERROR_OUT_OF_RESOURCES",
+      "UR_RESULT_ERROR_DEVICE_LOST"
+    ],
+    "interpretation": "The KV pool estimate alone is not enough to declare higher full-context active concurrency production-safe."
+  },
+  "c10": {
+    "profile": "configs/model-slots/gemma4-12b-it-int4-autoround-c10.env",
+    "status": "research-only",
+    "max_model_len": 32768,
+    "max_num_seqs": 10,
+    "startup": {
+      "gpu_kv_cache_tokens": 991437,
+      "theoretical_full_32768_concurrency": 30.26,
+      "compile_range_1_1_s": 83.14,
+      "compile_range_1_4096_s": 100.85
+    },
+    "quality_canary": {
+      "expected_pass_all": true,
+      "baseline_match_all": true,
+      "cases": [
+        "exact_ok",
+        "copy_phrase",
+        "small_arithmetic",
+        "red_image"
+      ]
+    },
+    "short_prompt_100p_512o": {
+      "c8_load": {
+        "actual_prompt_tokens_each": 119,
+        "output_tokens_each": 512,
+        "mean_ttft_s": 0.140,
+        "wall_aggregate_output_tok_s": 754.88
+      },
+      "c10_load": {
+        "actual_prompt_tokens_each": 120,
+        "output_tokens_each": 512,
+        "mean_ttft_s": 0.221,
+        "wall_aggregate_output_tok_s": 849.59
+      }
+    },
+    "unique_near_32k_1o": {
+      "c8_load": {
+        "actual_prompt_tokens_each": 30690,
+        "output_tokens_each": 1,
+        "mean_ttft_s": 22.20,
+        "wall_aggregate_output_tok_s": 0.205
+      },
+      "c10_load": {
+        "actual_prompt_tokens_each": 30744,
+        "output_tokens_each": 1,
+        "mean_ttft_s": 27.21,
+        "wall_aggregate_output_tok_s": 0.204
+      }
+    },
+    "unique_near_32k_128o": {
+      "c8_load": {
+        "actual_prompt_tokens_each": 30690,
+        "output_tokens_each": 128,
+        "mean_ttft_s": 23.61,
+        "wall_aggregate_output_tok_s": 22.73
+      },
+      "c10_load": {
+        "actual_prompt_tokens_each": 30744,
+        "output_tokens_each": 128,
+        "mean_ttft_s": 29.25,
+        "wall_aggregate_output_tok_s": 22.76
+      }
+    },
+    "half_shared_prefix_near_32k_1o": {
+      "shared_prefix_tokens_requested": 16000,
+      "prompt_salt": "unique-a",
+      "c8_load": {
+        "actual_prompt_tokens_each": 31021,
+        "output_tokens_each": 1,
+        "mean_ttft_s": 12.45,
+        "wall_aggregate_output_tok_s": 0.371
+      },
+      "c10_load": {
+        "actual_prompt_tokens_each": 31034,
+        "output_tokens_each": 1,
+        "mean_ttft_s": 15.11,
+        "wall_aggregate_output_tok_s": 0.372
+      }
+    },
+    "half_shared_prefix_near_32k_128o": {
+      "shared_prefix_tokens_requested": 16000,
+      "prompt_salt": "unique-b",
+      "c8_load": {
+        "actual_prompt_tokens_each": 31021,
+        "output_tokens_each": 128,
+        "mean_ttft_s": 13.24,
+        "wall_aggregate_output_tok_s": 39.20
+      },
+      "c10_load": {
+        "actual_prompt_tokens_each": 31034,
+        "output_tokens_each": 128,
+        "mean_ttft_s": 16.04,
+        "wall_aggregate_output_tok_s": 39.67
+      }
+    }
+  },
+  "recommendation": "Keep production on c8 for 32K request support. c10 is useful research for short-prompt aggregate throughput but does not improve near-32K throughput. c12 is rejected until the Level Zero/vLLM/XPU device-lost boundary is understood."
+}

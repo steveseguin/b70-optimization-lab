@@ -1,13 +1,54 @@
 # Current Reproducibility Map
 
-This page connects the deployable baseline, the session-cache experiments, the
-TurboQuant patch, and the long-context research path. It is meant for a fresh
-human or agent who needs to reproduce or review the current work without reading
-every historical note first.
+This page connects the active Gemma 4 service, the deployable MiniMax baseline,
+the session-cache experiments, the TurboQuant patch, and the long-context
+research path. It is meant for a fresh human or agent who needs to reproduce or
+review the current work without reading every historical note first.
 
 ## What Is Production Today
 
-Use the 32K FP16-family KV c1 endpoint:
+The active LAN endpoint on this host is the Gemma 4 c8 model-slot profile:
+
+- model: `Intel/gemma-4-12B-it-int4-AutoRound`
+- local model path used in the lab: `/mnt/fast-ai/llm-models/gemma4-12b-it-int4-autoround-intel`
+- hardware: 4x Intel Arc Pro B70 32GB
+- engine: vLLM/XPU TP4
+- endpoint: OpenAI-compatible API on `0.0.0.0:8000`
+- served context: `32768`
+- max active generations: `8`
+- prefix caching: enabled
+- modalities: text and image
+- auth: none
+
+Restore production Gemma 4 c8:
+
+```bash
+cd /home/steve/llm-optimizations
+printf '%s\n' "/'" | sudo -S -p '' \
+  scripts/switch-vllm-model-slot.sh switch gemma4-12b-it-int4-autoround-c8
+```
+
+Current Gemma 4 recipe and results:
+
+- `../experiments/gemma4-12b-int4-autoround-vllm/README.md`
+- `../experiments/gemma4-12b-int4-autoround-vllm/results-20260607-c10-c12-32k-boundary.json`
+- `model-slot-switching.md`
+
+Latest full-32K concurrency conclusion:
+
+- Keep c8 as production for website-sized requests that need the 32K window.
+- c10 is research-only: short prompts improved in aggregate, but near-32K
+  throughput did not improve and TTFT worsened.
+- c12 is rejected after Level Zero out-of-resources/device-lost under burst
+  load.
+- Prefix caching is useful for fixed system/project prefixes plus unique user
+  content. In the half-shared synthetic test, c8 near-32K TTFT improved from
+  about `22.20 s` to `12.45 s`.
+
+## MiniMax Deployable Baseline
+
+The MiniMax 32K FP16-family KV c1 endpoint remains the deployable baseline
+recipe and optimization reference:
 
 - model: `Lasimeri/MiniMax-M2.7-int4-AutoRound`
 - local model path used in the lab: `/mnt/fast-ai/llm-models/minimax-m2.7-int4-autoround`

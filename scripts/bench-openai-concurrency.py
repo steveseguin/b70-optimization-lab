@@ -21,17 +21,46 @@ def request_json(url: str, timeout: int) -> dict[str, Any]:
         return json.loads(resp.read().decode("utf-8"))
 
 
-def build_prompt(tokenizer: Any, target_tokens: int, label: str) -> str:
-    seed = (
-        f"Qwen B70 concurrency benchmark lane {label}. "
-        "Preserve the context and continue the repeated benchmark word. "
-    )
+def repeated_text(tokenizer: Any, target_tokens: int, seed: str) -> str:
     seed_ids = tokenizer.encode(seed, add_special_tokens=False)
     if not seed_ids:
         raise ValueError("benchmark seed produced no tokens")
     repeats = (target_tokens + len(seed_ids) - 1) // len(seed_ids)
     ids = (seed_ids * repeats)[:target_tokens]
-    prompt = tokenizer.decode(ids, skip_special_tokens=True)
+    return tokenizer.decode(ids, skip_special_tokens=True)
+
+
+def build_prompt(
+    tokenizer: Any,
+    target_tokens: int,
+    label: str,
+    shared_prefix_tokens: int = 0,
+    prompt_salt: str = "",
+) -> str:
+    if shared_prefix_tokens > 0:
+        if shared_prefix_tokens >= target_tokens:
+            raise ValueError("--shared-prefix-tokens must be smaller than --prompt-tokens")
+        shared_seed = (
+            "Shared LAN website generation system prompt. "
+            "Follow the fixed house style, accessibility rules, component names, "
+            "CSS reset, routing structure, and deployment constraints. "
+        )
+        unique_seed = (
+            f"Unique user request lane {label} salt {prompt_salt}. "
+            "This section contains request-specific copy, assets, layout notes, "
+            "content requirements, and implementation details. "
+        )
+        prompt = (
+            repeated_text(tokenizer, shared_prefix_tokens, shared_seed)
+            + "\n\n"
+            + repeated_text(tokenizer, target_tokens - shared_prefix_tokens, unique_seed)
+        )
+    else:
+        seed = (
+            f"Qwen B70 concurrency benchmark lane {label} salt {prompt_salt}. "
+            "Preserve the context and continue the repeated benchmark word. "
+        )
+        prompt = repeated_text(tokenizer, target_tokens, seed)
     return (
         f"{prompt}\n\n"
         "Task: continue with the word benchmark separated by spaces. "
@@ -178,6 +207,17 @@ def main() -> int:
     parser.add_argument("--base-url", default="http://127.0.0.1:8000")
     parser.add_argument("--tokenizer", required=True)
     parser.add_argument("--prompt-tokens", type=int, default=2048)
+    parser.add_argument(
+        "--shared-prefix-tokens",
+        type=int,
+        default=0,
+        help="If >0, build prompts with this many identical leading tokens and the remaining prompt as unique per request.",
+    )
+    parser.add_argument(
+        "--prompt-salt",
+        default="",
+        help="Added only to the unique per-request prompt section. Useful for prefix-cache tests that keep the shared prefix warm while changing the unique tail.",
+    )
     parser.add_argument("--output-tokens", type=int, default=512)
     parser.add_argument("--concurrency", type=int, action="append", required=True)
     parser.add_argument("--warmups", type=int, default=1)
@@ -193,7 +233,16 @@ def main() -> int:
     tokenizer = AutoTokenizer.from_pretrained(args.tokenizer, trust_remote_code=True)
 
     prompts = {
-        n: [build_prompt(tokenizer, args.prompt_tokens, f"c{n}-{i}") for i in range(n)]
+        n: [
+            build_prompt(
+                tokenizer,
+                args.prompt_tokens,
+                f"c{n}-{i}",
+                args.shared_prefix_tokens,
+                args.prompt_salt,
+            )
+            for i in range(n)
+        ]
         for n in args.concurrency
     }
 
@@ -203,6 +252,8 @@ def main() -> int:
         "model_info": model_info,
         "tokenizer": args.tokenizer,
         "requested_prompt_tokens": args.prompt_tokens,
+        "shared_prefix_tokens": args.shared_prefix_tokens,
+        "prompt_salt": args.prompt_salt,
         "requested_output_tokens": args.output_tokens,
         "warmups": args.warmups,
         "scenarios": {},

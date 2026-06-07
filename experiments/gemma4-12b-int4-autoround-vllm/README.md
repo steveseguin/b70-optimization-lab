@@ -15,9 +15,12 @@ Goal:
 
 ## Current Status
 
-Status on 2026-06-07: c8 is the active production profile. It now uses XPU
-graph capture after matching the quality canary and improving warmed c8
-short-decode throughput. c16 and c64 remain documented alternate profiles.
+Status on 2026-06-07: c8 is the active production profile. It uses XPU graph
+capture, prefix caching, 32K context, and a fail-fast 8-active-generation LAN
+frontdoor. c10 is kept as a research profile for extra short-prompt
+concurrency, but c8 remains the better full-context production choice. c12 was
+rejected after a Level Zero out-of-resources/device-lost failure under burst
+load. c16 and c64 remain documented alternate/research profiles.
 
 The endpoint is running through the generic model-slot services:
 
@@ -27,7 +30,8 @@ Auth: none
 Served model name: gemma4-12b-it-int4-autoround
 Backend: vLLM/XPU on 127.0.0.1:18080
 Production c8 profile: 32768 context, 8 live generations
-Default high-context c16 profile: 32768 context, 16 live generations
+Research c10 profile: 32768 context, 10 live generations
+Rejected c12 profile: 32768 context, 12 live generations
 High-concurrency c64 profile: 4480 context, 64 live generations
 Modalities tested: text, image
 ```
@@ -196,6 +200,17 @@ cd /home/steve/llm-optimizations
 printf '%s\n' "/'" | sudo -S -p '' \
   scripts/switch-vllm-model-slot.sh switch gemma4-12b-it-int4-autoround-c8
 ```
+
+Try the full-32K, 10-active-generation research profile:
+
+```bash
+cd /home/steve/llm-optimizations
+printf '%s\n' "/'" | sudo -S -p '' \
+  scripts/switch-vllm-model-slot.sh switch gemma4-12b-it-int4-autoround-c10
+```
+
+Do not use `gemma4-12b-it-int4-autoround-c12` for production. It is retained
+only to reproduce the 2026-06-07 failure boundary.
 
 Check status:
 
@@ -562,6 +577,125 @@ Raw result directories:
 /mnt/fast-ai/bench-results/gemma4-12b-it-int4-autoround/prod-c8-xpugraph-longprompt-30000p-128o-cache-repeat-20260607T090558Z.json
 ```
 
+## C10/C12 32K Concurrency Boundary
+
+On 2026-06-07, the apparent spare KV budget was tested by raising the full-32K
+active generation cap above c8. The important lesson is that vLLM's reported KV
+token budget is only a capacity estimate. It does not guarantee that higher
+`max_num_seqs` shapes are stable or faster under real scheduler/runtime
+pressure.
+
+c12 startup did succeed and reported:
+
+```text
+GPU KV cache size: 991,437 tokens
+Maximum concurrency for 32,768 tokens per request: 30.26x
+```
+
+But the first bursty client run accidentally sent too much concurrent work while
+quality and benchmark clients overlapped. c12 then failed with:
+
+```text
+RuntimeError: level_zero backend failed with error: 40 (UR_RESULT_ERROR_OUT_OF_RESOURCES)
+RuntimeError: level_zero backend failed with error: 20 (UR_RESULT_ERROR_DEVICE_LOST)
+```
+
+That makes c12 a rejected profile for now. It is kept as
+`configs/model-slots/gemma4-12b-it-int4-autoround-c12.env` so another run can
+reproduce or debug the boundary.
+
+c10 was then tested as the first safer step above production c8. c10 startup
+also reported `991,437` GPU KV tokens and `30.26x` theoretical full-32K
+concurrency. First launch compiled:
+
+```text
+compile range (1, 1): 83.14 s
+compile range (1, 4096): 100.85 s
+```
+
+c10 quality matched the production canary:
+
+```text
+exact_ok: OK
+copy_phrase: satin cobalt orbit
+small_arithmetic: 7
+red_image: Red
+```
+
+Short-prompt decode:
+
+| Profile | Prompt tokens each | Output tokens each | Concurrency | Mean TTFT | Wall aggregate output tok/s |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| c10 backend, c8 load | `119` | `512` | `8` | `0.140 s` | `754.88` |
+| c10 backend, c10 load | `120` | `512` | `10` | `0.221 s` | `849.59` |
+
+Short-prompt one-token TTFT:
+
+| Concurrency | Prompt tokens each | Output tokens each | Mean TTFT |
+| ---: | ---: | ---: | ---: |
+| `1` | `119` | `1` | `0.036 s` |
+| `8` | `119` | `1` | `0.166 s` |
+| `10` | `120` | `1` | `0.198 s` |
+
+For short prompts, c10 is useful: it raised aggregate 512-token decode from
+about `755 tok/s` at c8 load to about `850 tok/s` at c10 load. The tradeoff was
+slightly higher TTFT and lower per-request decode speed.
+
+For full-context-style requests, c10 was not better than c8:
+
+| Shape | Profile load | Prompt tokens each | Output tokens each | Mean TTFT | Wall aggregate output tok/s |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| unique near-32K TTFT | c8 | `30690` | `1` | `22.20 s` | `0.205` |
+| unique near-32K TTFT | c10 | `30744` | `1` | `27.21 s` | `0.204` |
+| unique near-32K decode | c8 | `30690` | `128` | `23.61 s` | `22.73` |
+| unique near-32K decode | c10 | `30744` | `128` | `29.25 s` | `22.76` |
+
+The service can accept c10 full-context work, but vLLM internally stages long
+prefills. c10 adds latency and does not improve aggregate full-context output
+throughput.
+
+The benchmark harness now supports fixed-prefix tests:
+
+```bash
+/home/steve/.venvs/vllm-xpu/bin/python scripts/bench-openai-concurrency.py \
+  --base-url http://127.0.0.1:8000 \
+  --tokenizer /mnt/fast-ai/llm-models/gemma4-12b-it-int4-autoround-intel \
+  --prompt-tokens 32000 \
+  --shared-prefix-tokens 16000 \
+  --prompt-salt unique-a \
+  --output-tokens 1 \
+  --concurrency 8 \
+  --concurrency 10 \
+  --warmups 0 \
+  --timeout 2400 \
+  --output-json /mnt/fast-ai/bench-results/gemma4-12b-it-int4-autoround/concurrency32k-20260607T190702Z/c10-shared-prefix-salted-ttft-c8-c10-32000p-16000shared-1o.json
+```
+
+Clean fixed-prefix plus unique-tail results, with about 16K shared leading
+tokens and about 16K unique tail tokens:
+
+| Shape | Profile load | Prompt tokens each | Output tokens each | Mean TTFT | Wall aggregate output tok/s |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| half-shared 32K TTFT | c8 | `31021` | `1` | `12.45 s` | `0.371` |
+| half-shared 32K TTFT | c10 | `31034` | `1` | `15.11 s` | `0.372` |
+| half-shared 32K decode | c8 | `31021` | `128` | `13.24 s` | `39.20` |
+| half-shared 32K decode | c10 | `31034` | `128` | `16.04 s` | `39.67` |
+
+Prefix caching is therefore valuable for website-generation traffic with a
+fixed system/project prefix and unique user content: it roughly cut TTFT for
+near-32K c8 requests from `22.20 s` to `12.45 s` in this synthetic half-shared
+test. It did not make c10 materially better than c8 for full-context requests.
+
+Recommendation: keep production on c8 for 32K request support. Use c10 only as
+a research profile for short-prompt high-throughput traffic. Do not use c12
+unless debugging the device-lost boundary.
+
+Raw result directory:
+
+```text
+/mnt/fast-ai/bench-results/gemma4-12b-it-int4-autoround/concurrency32k-20260607T190702Z
+```
+
 ## Production Soak
 
 On 2026-06-07, the active c8 XPU-graph production profile was left running on
@@ -674,6 +808,8 @@ Rejected same-day branches:
 
 | Branch | Result |
 | --- | --- |
+| `gemma4-12b-it-int4-autoround-c10` | Research only. Short prompts improved from about `755` to `850` wall aggregate tok/s versus c8 load, but near-32K request throughput did not improve and TTFT worsened. |
+| `gemma4-12b-it-int4-autoround-c12` | Rejected. Startup succeeded with `991,437` KV tokens and `30.26x` theoretical 32K concurrency, but burst load hit Level Zero `UR_RESULT_ERROR_OUT_OF_RESOURCES` followed by `UR_RESULT_ERROR_DEVICE_LOST`. |
 | `gemma4-12b-it-int4-autoround-c8-mbt8192` | Quality matched, but c8 short decode fell to about `245.75 tok/s`, short TTFT worsened, and GPU KV dropped to `730,379` tokens. |
 | `gemma4-12b-it-int4-autoround-c8-mbt2048` | Quality matched and GPU KV rose to `1,201,507` tokens, but c8 short decode fell to about `235.37 tok/s`. |
 | `gemma4-12b-it-int4-autoround-c8-gmem097` | Rejected at startup. Free memory on `xpu:0` was about `30.61/31.89 GiB`, below the `0.97` utilization request of about `30.93 GiB`. |
@@ -703,7 +839,41 @@ Maximum concurrency for 32,768 tokens per request: 30.65x
 ```
 
 The `30.65x` line is a theoretical KV-capacity statement, not a claim that
-`c30` has been benchmarked. The validated profile is `c16`.
+`c30` has been benchmarked. After later full-context testing, c8 is the
+production profile because higher full-32K concurrency did not improve
+long-context throughput.
+
+Rejected c12 startup and failure:
+
+```text
+max_seq_len=32768
+max_num_seqs=12
+GPU KV cache size: 991,437 tokens
+Maximum concurrency for 32,768 tokens per request: 30.26x
+ocloc failed with error code 245
+IGC: Internal Compiler Error: Floating point exception
+UR_RESULT_ERROR_OUT_OF_RESOURCES
+UR_RESULT_ERROR_DEVICE_LOST
+```
+
+The c12 `30.26x` KV estimate was real, but runtime stability under burst load
+was not. Treat this as an Intel/vLLM/XPU scheduler/runtime boundary, not a VRAM
+capacity limit.
+
+Research c10 startup:
+
+```text
+max_seq_len=32768
+max_num_seqs=10
+compile range (1, 1) took 83.14 s on first launch
+compile range (1, 4096) took 100.85 s on first launch
+GPU KV cache size: 991,437 tokens
+Maximum concurrency for 32,768 tokens per request: 30.26x
+```
+
+c10 passed the quality canary and short-prompt tests, but it is not the
+recommended 32K production profile because full-context throughput did not
+improve versus c8.
 
 Known-good c64 startup reported:
 

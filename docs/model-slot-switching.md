@@ -104,6 +104,12 @@ Try the full-32K Gemma 4 profile with 8 active generations:
 scripts/switch-vllm-model-slot.sh switch gemma4-12b-it-int4-autoround-c8
 ```
 
+Try the full-32K Gemma 4 research profile with 10 active generations:
+
+```bash
+scripts/switch-vllm-model-slot.sh switch gemma4-12b-it-int4-autoround-c10
+```
+
 The switch command stops the generic slot services and the older
 MiniMax-specific services before starting the selected slot. This avoids two
 large models being loaded at the same time. It also disables the older
@@ -114,11 +120,14 @@ stays single-model.
 
 | Profile | Status | Modalities | Purpose |
 | --- | --- | --- | --- |
-| `minimax-m27-c1` | production | text | Current known-good MiniMax M2.7 INT4 AutoRound endpoint, 32K context, one active generation. |
+| `minimax-m27-c1` | baseline | text | Deployable MiniMax M2.7 INT4 AutoRound baseline endpoint, 32K context, one active generation. |
 | `qwen36-35b-a3b-int4-autoround` | research | text,image | Preferred Qwen 35B candidate. Public W4A16 AutoRound checkpoint, working after the local XPU Mamba pointer patch. |
 | `gemma3-12b-it-int4-autoround` | research | text,image | Tested Gemma fallback. Public 12B INT4 AutoRound checkpoint, much faster than Qwen 35B on the 2K/128 concurrency ladder. |
 | `gemma4-12b-it-int4-autoround` | research | text,image | Current Gemma 4 candidate. Intel W4A16 AutoRound checkpoint, working after Transformers `5.10.2` plus the local vLLM `gemma4_unified` backport. |
 | `gemma4-12b-it-int4-autoround-c8` | production | text,image | Active full-context Gemma 4 profile: 32768-token context, 8 active generations, prefix caching, XPU graph capture, no-auth LAN endpoint. |
+| `gemma4-12b-it-int4-autoround-c10` | experiment-c10 | text,image | Full-32K Gemma 4 research profile: 10 active generations. Short prompts are faster in aggregate than c8, but near-32K throughput is not better and TTFT is worse. |
+| `gemma4-12b-it-int4-autoround-c12` | rejected-device-lost | text,image | Full-32K Gemma 4 failure-boundary profile. Startup succeeded, then burst load hit Level Zero out-of-resources and device-lost. Retained for reproduction only. |
+| `gemma4-12b-it-int4-autoround-c16` | experiment-c16 | text,image | Full-32K Gemma 4 research profile with 16 active generations. Do not use as production without a fresh stability/quality pass. |
 | `gemma4-12b-it-int4-autoround-c64` | research-c64 | text,image | High-concurrency Gemma 4 profile: 64 active generations, prefix caching, 4480-token context selected to fit 64 full contexts in VRAM. |
 | `gemma4-12b-it-int4-autoround-c8-gmem096` | rejected-startup-memory | text,image | Same as c8 but `gpu_memory_utilization=0.96`; rejected after engine startup failure near the VRAM boundary. |
 | `gemma4-12b-it-int4-autoround-c8-gmem097` | rejected-startup-memory | text,image | Same as c8 but `gpu_memory_utilization=0.97`; rejected because startup free VRAM was below requested utilization. |
@@ -191,9 +200,10 @@ model with `model_type=gemma4_unified`. It needed Transformers `5.10.2` and
 the local vLLM backport in
 `patches/vllm-gemma4-unified-backport-b70-20260607.patch`. The active profile
 uses `bfloat16` as the 16-bit activation dtype while the weights remain the
-INT4 AutoRound checkpoint. The validated c16 profile keeps the same no-auth
-LAN endpoint on `0.0.0.0:8000`, supports text and image requests, and reports
-`max_model_len=32768`.
+INT4 AutoRound checkpoint. The production c8 profile keeps the same no-auth
+LAN endpoint on `0.0.0.0:8000`, supports text and image requests, reports
+`max_model_len=32768`, and caps active generations at `8` for predictable
+full-context behavior.
 
 `gemma4-12b-it-int4-autoround-c64` is the high-concurrency variant for many
 shorter live sessions. It uses the same model and endpoint, but sets
@@ -213,6 +223,19 @@ theoretical full-32K concurrency, so the c8 cap is conservative. The profile
 passed an 8-way near-limit probe with `32703` prompt tokens and one output token
 per request. For normal generation, leave output headroom below 32768 total
 prompt+generated tokens.
+
+`gemma4-12b-it-int4-autoround-c10` is a research-only profile for testing
+whether the large reported KV pool can support more full-32K active clients.
+It passed the quality canary and improved short-prompt aggregate decode from
+about `755` to `850` wall output tok/s versus c8 load. It did not improve
+near-32K workloads: unique near-32K 128-token output stayed around `23 tok/s`
+wall aggregate and half-shared-prefix near-32K output stayed around `40 tok/s`
+wall aggregate, with c10 showing higher TTFT than c8.
+
+`gemma4-12b-it-int4-autoround-c12` is retained only to reproduce the failure
+boundary. It reported about `991K` GPU KV tokens and `30.26x` theoretical
+32K concurrency, then failed under burst load with Level Zero
+`UR_RESULT_ERROR_OUT_OF_RESOURCES` followed by `UR_RESULT_ERROR_DEVICE_LOST`.
 
 Avoid treating the Qwen FP8 profiles as production candidates right now. On
 2026-06-06, the native compressed-tensors FP8 path failed during profiling on
