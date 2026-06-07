@@ -523,6 +523,10 @@ Rejected same-day branches:
 | --- | --- |
 | `gemma4-12b-it-int4-autoround-c8-mbt8192` | Quality matched, but c8 short decode fell to about `245.75 tok/s`, short TTFT worsened, and GPU KV dropped to `730,379` tokens. |
 | `gemma4-12b-it-int4-autoround-c8-mbt2048` | Quality matched and GPU KV rose to `1,201,507` tokens, but c8 short decode fell to about `235.37 tok/s`. |
+| `gemma4-12b-it-int4-autoround-c8-gmem097` | Rejected at startup. Free memory on `xpu:0` was about `30.61/31.89 GiB`, below the `0.97` utilization request of about `30.93 GiB`. |
+| `gemma4-12b-it-int4-autoround-c8-gmem096` | Rejected at startup/engine init near the same memory boundary. Keep production at `VLLM_GPU_MEMORY_UTILIZATION=0.95`. |
+| `gemma4-12b-it-int4-autoround-c8-cs1-8` | Rejected. First compile had six `ocloc`/IGC `error code 245` fallbacks and `torch.compile` took `315.80 s`; cached repeat validation later hit `UR_RESULT_ERROR_DEVICE_LOST` during sampling. |
+| `gemma4-12b-it-int4-autoround-c8-nolog` | Quality matched, but no clear win. c8 short decode was `714.81 tok/s`, within the promoted graph profile's normal variance, while one-token TTFT worsened. |
 
 Those branches are kept as reproducible profiles for future tuning, but they are
 not the active production path.

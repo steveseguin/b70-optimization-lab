@@ -35,6 +35,11 @@ MAX_ACTIVE_GENERATIONS = int(os.environ.get("FRONTDOOR_MAX_ACTIVE_GENERATIONS", 
 QUEUE_TIMEOUT_S = float(os.environ.get("FRONTDOOR_QUEUE_TIMEOUT_S", "3600"))
 BACKEND_TIMEOUT_S = float(os.environ.get("FRONTDOOR_BACKEND_TIMEOUT_S", "7200"))
 FRONTDOOR_CORS_ALLOW_ORIGIN = os.environ.get("FRONTDOOR_CORS_ALLOW_ORIGIN", "*")
+FRONTDOOR_LOG_EVENTS = os.environ.get("FRONTDOOR_LOG_EVENTS", "1") not in {
+    "0",
+    "false",
+    "False",
+}
 FRONTDOOR_CHAT_TEMPLATE_KWARGS_JSON = os.environ.get(
     "FRONTDOOR_CHAT_TEMPLATE_KWARGS_JSON", ""
 )
@@ -90,6 +95,8 @@ def now_ms() -> int:
 
 
 def log_event(event: dict[str, Any]) -> None:
+    if not FRONTDOOR_LOG_EVENTS:
+        return
     event.setdefault("ts_ms", now_ms())
     print(json.dumps(event, sort_keys=True), flush=True)
 
@@ -120,6 +127,7 @@ def status_payload() -> dict[str, Any]:
             "active_generations": active,
             "queued_generations": queued,
             "total_generation_requests": total,
+            "event_logging": FRONTDOOR_LOG_EVENTS,
             "auth": "none",
         },
     }

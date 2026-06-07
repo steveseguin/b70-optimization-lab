@@ -120,6 +120,10 @@ stays single-model.
 | `gemma4-12b-it-int4-autoround` | research | text,image | Current Gemma 4 candidate. Intel W4A16 AutoRound checkpoint, working after Transformers `5.10.2` plus the local vLLM `gemma4_unified` backport. |
 | `gemma4-12b-it-int4-autoround-c8` | production | text,image | Active full-context Gemma 4 profile: 32768-token context, 8 active generations, prefix caching, XPU graph capture, no-auth LAN endpoint. |
 | `gemma4-12b-it-int4-autoround-c64` | research-c64 | text,image | High-concurrency Gemma 4 profile: 64 active generations, prefix caching, 4480-token context selected to fit 64 full contexts in VRAM. |
+| `gemma4-12b-it-int4-autoround-c8-gmem096` | rejected-startup-memory | text,image | Same as c8 but `gpu_memory_utilization=0.96`; rejected after engine startup failure near the VRAM boundary. |
+| `gemma4-12b-it-int4-autoround-c8-gmem097` | rejected-startup-memory | text,image | Same as c8 but `gpu_memory_utilization=0.97`; rejected because startup free VRAM was below requested utilization. |
+| `gemma4-12b-it-int4-autoround-c8-cs1-8` | rejected-device-lost | text,image | Same as c8 but `compile_sizes=[1,8]`; rejected after IGC fallback compile and `UR_RESULT_ERROR_DEVICE_LOST` during repeat validation. |
+| `gemma4-12b-it-int4-autoround-c8-nolog` | experiment-nolog | text,image | Same as c8 but frontdoor event logging disabled; quality matched but no clear throughput win. |
 | `qwen36-27b-fp8-vrfai` | rejected-diagnostic | text | Do not use as a recommended lane. It only worked here with an opt-in BF16 dequant fallback for a failing XPU FP8 primitive. |
 | `qwen36-35b-a3b-fp8` | blocked-native-xpu-fp8 | text,image | Official FP8 checkpoint is interesting, but the current local XPU path lacks native block-FP8 W8A8 support. |
 | `qwen3-vl-30b-a3b-fp8` | blocked-native-xpu-fp8 | text,image | Multimodal FP8 candidate, blocked by the same native XPU block-FP8 concern until proven otherwise. |

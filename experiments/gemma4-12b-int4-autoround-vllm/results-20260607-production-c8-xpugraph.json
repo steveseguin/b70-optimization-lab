@@ -93,6 +93,26 @@
       "profile": "gemma4-12b-it-int4-autoround-c8-mbt2048",
       "quality_matched": true,
       "reason": "GPU KV rose to 1,201,507 tokens, but short decode fell to about 235.37 tok/s."
+    },
+    {
+      "profile": "gemma4-12b-it-int4-autoround-c8-gmem097",
+      "quality_matched": null,
+      "reason": "Rejected at startup. Free memory on xpu:0 was about 30.61/31.89 GiB, below the 0.97 utilization request of about 30.93 GiB."
+    },
+    {
+      "profile": "gemma4-12b-it-int4-autoround-c8-gmem096",
+      "quality_matched": null,
+      "reason": "Rejected at startup or engine initialization near the same memory boundary."
+    },
+    {
+      "profile": "gemma4-12b-it-int4-autoround-c8-cs1-8",
+      "quality_matched": true,
+      "reason": "Rejected. First compile had six ocloc/IGC error-code-245 fallbacks and torch.compile took 315.80 s; cached repeat validation later hit UR_RESULT_ERROR_DEVICE_LOST during sampling."
+    },
+    {
+      "profile": "gemma4-12b-it-int4-autoround-c8-nolog",
+      "quality_matched": true,
+      "reason": "Not promoted. Short decode was 714.81 tok/s, within the promoted graph profile's normal variance, and one-token TTFT worsened."
     }
   ]
 }
