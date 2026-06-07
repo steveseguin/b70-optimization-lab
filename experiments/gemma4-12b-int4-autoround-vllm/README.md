@@ -15,8 +15,9 @@ Goal:
 
 ## Current Status
 
-Status on 2026-06-07: c8 is the active production profile; c16 and c64 remain
-documented alternate profiles.
+Status on 2026-06-07: c8 is the active production profile. It now uses XPU
+graph capture after matching the quality canary and improving warmed c8
+short-decode throughput. c16 and c64 remain documented alternate profiles.
 
 The endpoint is running through the generic model-slot services:
 
@@ -155,6 +156,11 @@ VLLM_MAX_MODEL_LEN=32768
 VLLM_MAX_NUM_BATCHED_TOKENS=4096
 VLLM_MAX_NUM_SEQS=8
 VLLM_ENABLE_PREFIX_CACHING=1
+XPU_GRAPH=1
+VLLM_XPU_ENABLE_XPU_GRAPH=1
+VLLM_XPU_FORCE_GRAPH_WITH_COMM=1
+VLLM_XPU_GRAPH_NOOP_COMM_CAPTURE=1
+VLLM_COMPILATION_CONFIG='{"use_inductor_graph_partition":true,"compile_sizes":[1],"cudagraph_mode":"PIECEWISE"}'
 FRONTDOOR_MAX_ACTIVE_GENERATIONS=8
 ```
 
@@ -353,18 +359,21 @@ max_model_len=32768
 max_num_seqs=8
 max_active_generations=8
 prefix caching enabled
+XPU graph capture enabled
 ```
 
-Startup reported:
+Current production startup with XPU graph capture reported:
 
 ```text
-torch.compile took 67.60 s on first launch for this shape
-Available KV cache memory: 27.09 GiB
-GPU KV cache size: 990,722 tokens
-Maximum concurrency for 32,768 tokens per request: 30.23x
+torch.compile took 4.12 s on cached graph restart
+Graph capturing finished in 4 s
+init engine took 19.05 s
+Available KV cache memory: 27.48 GiB
+GPU KV cache size: 1,004,909 tokens
+Maximum concurrency for 32,768 tokens per request: 30.67x
 ```
 
-The `30.23x` line is vLLM's KV-capacity estimate. The service is intentionally
+The `30.67x` line is vLLM's KV-capacity estimate. The service is intentionally
 capped at 8 live generations because the goal for this profile is predictable
 LAN behavior with full 32K context, not maximum theoretical admission.
 
@@ -377,9 +386,10 @@ generator:
 
 Short-prompt 128-token output run:
 
-| Concurrency | Prompt tokens each | Output tokens each | Aggregate output tok/s wall | Mean TTFT field |
-| ---: | ---: | ---: | ---: | ---: |
-| `8` | `119` | `128` | `247.49` | `4.12 s` |
+| Profile | Concurrency | Prompt tokens each | Output tokens each | Aggregate output tok/s wall | Mean TTFT field |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| pre-graph c8 | `8` | `119` | `128` | `247.49` | `4.12 s` |
+| XPU graph c8 promoted mean | `8` | `119` | `128` | `703.59` | `1.46 s` |
 
 For the 128-token run, use the wall aggregate as the useful throughput number.
 The post-first-text decode field is not reliable for this short-prompt shape
@@ -449,6 +459,74 @@ Repo summary:
 results-20260607-production-c8-baseline.json
 ```
 
+## XPU Graph Promotion
+
+On 2026-06-07, the c8 production profile was updated to enable XPU graph
+capture with communication ops. This keeps the same model, INT4 AutoRound
+weights, `bfloat16` activation dtype, `32768` context, c8 concurrency cap, and
+prefix caching. It changes only the compile/graph execution path.
+
+Validated settings:
+
+```bash
+XPU_GRAPH=1
+VLLM_XPU_ENABLE_XPU_GRAPH=1
+VLLM_XPU_FORCE_GRAPH_WITH_COMM=1
+VLLM_XPU_GRAPH_NOOP_COMM_CAPTURE=1
+VLLM_COMPILATION_CONFIG='{"use_inductor_graph_partition":true,"compile_sizes":[1],"cudagraph_mode":"PIECEWISE"}'
+```
+
+Post-promotion startup on the canonical production slot reported:
+
+```text
+torch.compile took 4.12 s in total
+GPU KV cache size: 1,004,909 tokens
+Maximum concurrency for 32,768 tokens per request: 30.67x
+Graph capturing finished in 4 s
+init engine took 19.05 s
+```
+
+Quality gate:
+
+```text
+expected outputs: pass
+baseline text/hash comparison: pass
+text checks: OK, satin cobalt orbit, 7
+image check: Red
+```
+
+Repeated production c8 short-decode checks after promotion:
+
+| Run | Prompt tokens each | Output tokens each | Concurrency | Mean TTFT | Wall aggregate output tok/s |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| 1 | `119` | `128` | `8` | `1.658 s` | `613.72` |
+| 2 | `119` | `128` | `8` | `1.354 s` | `751.58` |
+| 3 | `119` | `128` | `8` | `1.365 s` | `745.48` |
+| mean | `119` | `128` | `8` | `1.459 s` | `703.59` |
+
+This is the current best production profile. The earlier non-graph c8
+production baseline was about `240-250 tok/s` for the same short-decode shape.
+The graph branch also ran a longer validation loop before promotion:
+
+```text
+/mnt/fast-ai/bench-results/gemma4-12b-it-int4-autoround/xpugraph-validation-20260607T075901Z
+/mnt/fast-ai/bench-results/gemma4-12b-it-int4-autoround/prod-c8-xpugraph-promoted-20260607T080322Z
+```
+
+The 32K prefill leg did not materially improve with XPU graph. It stayed around
+`22.28 s` mean TTFT for eight concurrent `30690`-token prompts with one output
+token. Treat the win as a decode-path improvement, not a long-prefill fix.
+
+Rejected same-day branches:
+
+| Branch | Result |
+| --- | --- |
+| `gemma4-12b-it-int4-autoround-c8-mbt8192` | Quality matched, but c8 short decode fell to about `245.75 tok/s`, short TTFT worsened, and GPU KV dropped to `730,379` tokens. |
+| `gemma4-12b-it-int4-autoround-c8-mbt2048` | Quality matched and GPU KV rose to `1,201,507` tokens, but c8 short decode fell to about `235.37 tok/s`. |
+
+Those branches are kept as reproducible profiles for future tuning, but they are
+not the active production path.
+
 ## Startup Observations
 
 Known-good c16 startup reported:
@@ -485,16 +563,18 @@ Each tried max-context value created a new torch.compile cache key and took
 about 66-67 seconds on first launch. Cached restarts should be faster, but c64
 has a real first-start operational cost.
 
-Known-good c8 startup reported:
+Current production c8 startup with XPU graph reported:
 
 ```text
 max_seq_len=32768
 enable_prefix_caching=True
 max_num_batched_tokens=4096
 max_num_seqs=8
-torch.compile took 67.60 s on first launch for this shape
-GPU KV cache size: 990,722 tokens
-Maximum concurrency for 32,768 tokens per request: 30.23x
+torch.compile took 4.12 s on cached graph restart
+Graph capturing finished in 4 s
+init engine took 19.05 s
+GPU KV cache size: 1,004,909 tokens
+Maximum concurrency for 32,768 tokens per request: 30.67x
 ```
 
 ## Known Bad Setting

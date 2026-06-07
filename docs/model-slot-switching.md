@@ -118,7 +118,7 @@ stays single-model.
 | `qwen36-35b-a3b-int4-autoround` | research | text,image | Preferred Qwen 35B candidate. Public W4A16 AutoRound checkpoint, working after the local XPU Mamba pointer patch. |
 | `gemma3-12b-it-int4-autoround` | research | text,image | Tested Gemma fallback. Public 12B INT4 AutoRound checkpoint, much faster than Qwen 35B on the 2K/128 concurrency ladder. |
 | `gemma4-12b-it-int4-autoround` | research | text,image | Current Gemma 4 candidate. Intel W4A16 AutoRound checkpoint, working after Transformers `5.10.2` plus the local vLLM `gemma4_unified` backport. |
-| `gemma4-12b-it-int4-autoround-c8` | production | text,image | Active full-context Gemma 4 profile: 32768-token context, 8 active generations, prefix caching, no-auth LAN endpoint. |
+| `gemma4-12b-it-int4-autoround-c8` | production | text,image | Active full-context Gemma 4 profile: 32768-token context, 8 active generations, prefix caching, XPU graph capture, no-auth LAN endpoint. |
 | `gemma4-12b-it-int4-autoround-c64` | research-c64 | text,image | High-concurrency Gemma 4 profile: 64 active generations, prefix caching, 4480-token context selected to fit 64 full contexts in VRAM. |
 | `qwen36-27b-fp8-vrfai` | rejected-diagnostic | text | Do not use as a recommended lane. It only worked here with an opt-in BF16 dequant fallback for a failing XPU FP8 primitive. |
 | `qwen36-35b-a3b-fp8` | blocked-native-xpu-fp8 | text,image | Official FP8 checkpoint is interesting, but the current local XPU path lacks native block-FP8 W8A8 support. |
@@ -202,11 +202,12 @@ available KV budget.
 `gemma4-12b-it-int4-autoround-c8` is the active production full-context variant
 selected after the c64 tradeoff became too short. It uses the same Gemma 4 INT4 AutoRound
 checkpoint and same no-auth LAN endpoint, but keeps `max_model_len=32768` and
-caps vLLM/frontdoor live generations at `8`. Startup reported `990722` GPU
-KV-cache tokens and `30.23x` theoretical full-32K concurrency, so the c8 cap is
-conservative. The profile passed an 8-way near-limit probe with `32703` prompt
-tokens and one output token per request. For normal generation, leave output
-headroom below 32768 total prompt+generated tokens.
+caps vLLM/frontdoor live generations at `8`. After the 2026-06-07 XPU graph
+promotion, startup reported `1,004,909` GPU KV-cache tokens and `30.67x`
+theoretical full-32K concurrency, so the c8 cap is conservative. The profile
+passed an 8-way near-limit probe with `32703` prompt tokens and one output token
+per request. For normal generation, leave output headroom below 32768 total
+prompt+generated tokens.
 
 Avoid treating the Qwen FP8 profiles as production candidates right now. On
 2026-06-06, the native compressed-tensors FP8 path failed during profiling on
@@ -440,8 +441,9 @@ Serving facts:
 - max model length: `32768`
 - max active generations: `8`
 - prefix caching: enabled
-- vLLM full-context concurrency estimate: `30.23x`
-- GPU KV cache size: `990722` tokens
+- XPU graph capture: enabled
+- vLLM full-context concurrency estimate: `30.67x`
+- GPU KV cache size: `1004909` tokens
 
 Short-prompt c8 TTFT with about `119` prompt tokens and one generated token:
 
@@ -452,9 +454,33 @@ Short-prompt c8 TTFT with about `119` prompt tokens and one generated token:
 Short-prompt c8 output run with about `119` prompt tokens and `128` generated
 tokens per request:
 
-| Concurrency | Aggregate output tok/s, wall |
-| ---: | ---: |
-| `8` | `247.49` |
+| Profile | Concurrency | Aggregate output tok/s, wall |
+| --- | ---: | ---: |
+| pre-graph c8 | `8` | `247.49` |
+| XPU graph c8, promoted mean of 3 | `8` | `703.59` |
+
+The XPU graph promotion matched the saved quality canary hashes before it was
+copied into the canonical production profile. It keeps the same model,
+quantization, context length, concurrency cap, and prefix caching; it changes
+only the compile/graph execution path:
+
+```bash
+XPU_GRAPH=1
+VLLM_XPU_ENABLE_XPU_GRAPH=1
+VLLM_XPU_FORCE_GRAPH_WITH_COMM=1
+VLLM_XPU_GRAPH_NOOP_COMM_CAPTURE=1
+VLLM_COMPILATION_CONFIG='{"use_inductor_graph_partition":true,"compile_sizes":[1],"cudagraph_mode":"PIECEWISE"}'
+```
+
+Post-promotion startup facts:
+
+```text
+torch.compile took 4.12 s
+Graph capturing finished in 4 s
+init engine took 19.05 s
+GPU KV cache size: 1,004,909 tokens
+Maximum concurrency for 32,768 tokens per request: 30.67x
+```
 
 Near-full-context probes:
 
@@ -476,6 +502,7 @@ Raw local result files:
 /mnt/fast-ai/bench-results/gemma4-12b-it-int4-autoround/c8-32768-100p-128o-fastprompt-20260607T065116Z.json
 /mnt/fast-ai/bench-results/gemma4-12b-it-int4-autoround/c8-32768-8x32000p-1o-20260607T064822Z.json
 /mnt/fast-ai/bench-results/gemma4-12b-it-int4-autoround/c8-32768-8x32703p-1o-20260607T065041Z.json
+/mnt/fast-ai/bench-results/gemma4-12b-it-int4-autoround/prod-c8-xpugraph-promoted-20260607T080322Z
 ```
 
 Repo summary:

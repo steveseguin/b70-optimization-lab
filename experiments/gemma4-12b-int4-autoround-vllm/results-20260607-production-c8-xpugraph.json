@@ -1,0 +1,98 @@
+{
+  "date": "2026-06-07",
+  "host": "steve-b70s",
+  "model": "Intel/gemma-4-12B-it-int4-AutoRound",
+  "served_model_name": "gemma4-12b-it-int4-autoround",
+  "profile": "gemma4-12b-it-int4-autoround-c8",
+  "status": "production",
+  "endpoint": "http://0.0.0.0:8000/v1",
+  "auth": "none",
+  "modalities": [
+    "text",
+    "image"
+  ],
+  "hardware": {
+    "gpu": "Intel Arc Pro B70",
+    "gpu_count": 4,
+    "tensor_parallel_size": 4
+  },
+  "runtime": {
+    "engine": "vLLM",
+    "backend": "XPU",
+    "dtype": "bfloat16",
+    "quantization": "Intel AutoRound/INC INT4 W4A16",
+    "max_model_len": 32768,
+    "max_num_seqs": 8,
+    "max_active_generations": 8,
+    "max_num_batched_tokens": 4096,
+    "prefix_caching": true,
+    "xpu_graph": true,
+    "compilation_config": {
+      "use_inductor_graph_partition": true,
+      "compile_sizes": [
+        1
+      ],
+      "cudagraph_mode": "PIECEWISE"
+    }
+  },
+  "startup": {
+    "torch_compile_s": 4.12,
+    "graph_capture_s": 4.0,
+    "engine_init_s": 19.05,
+    "gpu_kv_cache_tokens": 1004909,
+    "full_32768_token_concurrency_estimate": 30.67
+  },
+  "quality_gate": {
+    "expected_outputs_passed": true,
+    "baseline_hashes_matched": true,
+    "checks": {
+      "exact_ok": "OK",
+      "copy_phrase": "satin cobalt orbit",
+      "small_arithmetic": "7",
+      "red_image": "Red"
+    }
+  },
+  "benchmarks": {
+    "c8_119_prompt_128_output_promoted_runs": [
+      {
+        "mean_ttft_s": 1.6576312522229273,
+        "wall_output_tok_s": 613.7164231537495
+      },
+      {
+        "mean_ttft_s": 1.3544009968900355,
+        "wall_output_tok_s": 751.5790896495571
+      },
+      {
+        "mean_ttft_s": 1.3651087650941918,
+        "wall_output_tok_s": 745.4813946672974
+      }
+    ],
+    "c8_119_prompt_128_output_mean": {
+      "mean_ttft_s": 1.4590470047357182,
+      "wall_output_tok_s": 703.5923024902013
+    },
+    "c8_30690_prompt_1_output_validation": {
+      "mean_ttft_s": 22.27967816920136,
+      "wall_output_tok_s": 0.20433003996603097
+    }
+  },
+  "raw_result_paths": {
+    "xpugraph_validation": "/mnt/fast-ai/bench-results/gemma4-12b-it-int4-autoround/xpugraph-validation-20260607T075901Z",
+    "post_promotion_validation": "/mnt/fast-ai/bench-results/gemma4-12b-it-int4-autoround/prod-c8-xpugraph-promoted-20260607T080322Z",
+    "profile_trial_xpugraph": "/mnt/fast-ai/bench-results/gemma4-12b-it-int4-autoround/profile-trials/gemma4-12b-it-int4-autoround-c8-xpugraph-20260607T074722Z",
+    "profile_trial_mbt8192": "/mnt/fast-ai/bench-results/gemma4-12b-it-int4-autoround/profile-trials/gemma4-12b-it-int4-autoround-c8-mbt8192-20260607T073623Z",
+    "profile_trial_mbt2048": "/mnt/fast-ai/bench-results/gemma4-12b-it-int4-autoround/profile-trials/gemma4-12b-it-int4-autoround-c8-mbt2048-20260607T074213Z"
+  },
+  "rejected_branches": [
+    {
+      "profile": "gemma4-12b-it-int4-autoround-c8-mbt8192",
+      "quality_matched": true,
+      "reason": "Short decode fell to about 245.75 tok/s and GPU KV dropped to 730,379 tokens."
+    },
+    {
+      "profile": "gemma4-12b-it-int4-autoround-c8-mbt2048",
+      "quality_matched": true,
+      "reason": "GPU KV rose to 1,201,507 tokens, but short decode fell to about 235.37 tok/s."
+    }
+  ]
+}
