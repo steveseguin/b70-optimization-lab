@@ -110,6 +110,22 @@
         "mean_ttft_s": 2.526166310359258,
         "wall_output_tok_s": 784.6918451280836
       }
+    },
+    "c8_long_prompt_decode": {
+      "output_tokens_each": 128,
+      "concurrency": 8,
+      "coldish_15357_prompt_tokens": {
+        "mean_ttft_s": 21.45621856309299,
+        "wall_output_tok_s": 47.12305574320813
+      },
+      "coldish_28774_prompt_tokens": {
+        "mean_ttft_s": 22.43952533364063,
+        "wall_output_tok_s": 45.1305820320481
+      },
+      "prefix_cache_repeat_28774_prompt_tokens": {
+        "mean_ttft_s": 3.746319937883527,
+        "wall_output_tok_s": 270.739868095527
+      }
     }
   },
   "raw_result_paths": {
@@ -119,6 +135,8 @@
     "sustained_decode_512": "/mnt/fast-ai/bench-results/gemma4-12b-it-int4-autoround/prod-c8-xpugraph-512o-repeat-20260607T084633Z",
     "sustained_decode_1024": "/mnt/fast-ai/bench-results/gemma4-12b-it-int4-autoround/prod-c8-xpugraph-1024o-repeat-20260607T084718Z",
     "sustained_decode_scaling_512": "/mnt/fast-ai/bench-results/gemma4-12b-it-int4-autoround/prod-c8-xpugraph-scaling-512o-20260607T084806Z",
+    "long_prompt_decode": "/mnt/fast-ai/bench-results/gemma4-12b-it-int4-autoround/prod-c8-xpugraph-longprompt-decode-20260607T090436Z",
+    "long_prompt_decode_prefix_cache_repeat": "/mnt/fast-ai/bench-results/gemma4-12b-it-int4-autoround/prod-c8-xpugraph-longprompt-30000p-128o-cache-repeat-20260607T090558Z.json",
     "profile_trial_xpugraph": "/mnt/fast-ai/bench-results/gemma4-12b-it-int4-autoround/profile-trials/gemma4-12b-it-int4-autoround-c8-xpugraph-20260607T074722Z",
     "profile_trial_mbt8192": "/mnt/fast-ai/bench-results/gemma4-12b-it-int4-autoround/profile-trials/gemma4-12b-it-int4-autoround-c8-mbt8192-20260607T073623Z",
     "profile_trial_mbt2048": "/mnt/fast-ai/bench-results/gemma4-12b-it-int4-autoround/profile-trials/gemma4-12b-it-int4-autoround-c8-mbt2048-20260607T074213Z"

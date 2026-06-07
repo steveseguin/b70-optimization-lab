@@ -504,6 +504,15 @@ Sustained decode checks on the promoted graph profile:
 | `4` | `398.98` |
 | `8` | `784.69` |
 
+Long-prompt c8 decode is prefill-bound when cold, but prefix caching helps
+repeated sessions:
+
+| Shape | Mean TTFT | Wall aggregate output tok/s |
+| --- | ---: | ---: |
+| `15357` prompt tokens, `128` output tokens, c8 | `21.46 s` | `47.12` |
+| `28774` prompt tokens, `128` output tokens, c8 | `22.44 s` | `45.13` |
+| repeated `28774` prompt-token shape after prefix cache warm | `3.75 s` | `270.74` |
+
 Near-full-context probes:
 
 | Shape | Prompt tokens each | Output tokens each | Mean TTFT | Max TTFT | Notes |

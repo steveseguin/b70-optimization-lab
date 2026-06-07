@@ -534,6 +534,18 @@ Sustained decode characterization on the promoted production c8 graph profile:
 | `4` | `119` | `512` | `2.500 s` | `398.98` |
 | `8` | `119` | `512` | `2.526 s` | `784.69` |
 
+Long-prompt decode with the same c8 production endpoint:
+
+| Shape | Prompt tokens each | Output tokens each | Concurrency | Mean TTFT | Wall aggregate output tok/s | Notes |
+| --- | ---: | ---: | ---: | ---: | ---: | --- |
+| cold-ish 16K | `15357` | `128` | `8` | `21.46 s` | `47.12` | Includes prefill. |
+| cold-ish 30K | `28774` | `128` | `8` | `22.44 s` | `45.13` | Includes prefill. |
+| prefix-cache repeat 30K | `28774` | `128` | `8` | `3.75 s` | `270.74` | Same repeated prompt shape after cache warm. |
+
+The post-first-text decode fields in these long-prompt runs are not useful:
+vLLM/XPU coalesced the streamed output into large chunks. Use TTFT and wall
+aggregate throughput for long-prompt comparisons.
+
 Raw result directories:
 
 ```text
@@ -541,6 +553,8 @@ Raw result directories:
 /mnt/fast-ai/bench-results/gemma4-12b-it-int4-autoround/prod-c8-xpugraph-512o-repeat-20260607T084633Z
 /mnt/fast-ai/bench-results/gemma4-12b-it-int4-autoround/prod-c8-xpugraph-1024o-repeat-20260607T084718Z
 /mnt/fast-ai/bench-results/gemma4-12b-it-int4-autoround/prod-c8-xpugraph-scaling-512o-20260607T084806Z
+/mnt/fast-ai/bench-results/gemma4-12b-it-int4-autoround/prod-c8-xpugraph-longprompt-decode-20260607T090436Z
+/mnt/fast-ai/bench-results/gemma4-12b-it-int4-autoround/prod-c8-xpugraph-longprompt-30000p-128o-cache-repeat-20260607T090558Z.json
 ```
 
 LocalMaxxing submissions:
