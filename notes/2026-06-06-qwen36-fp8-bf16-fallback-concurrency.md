@@ -1,4 +1,10 @@
-# 2026-06-06 Qwen3.6 27B FP8 Endpoint And Concurrency
+# 2026-06-06 Qwen3.6 27B FP8 BF16-Fallback Diagnostic
+
+Status update: rejected as a recommended serving lane. This note remains useful
+for debugging XPU FP8 primitive failures and scheduler concurrency behavior, but
+the active model direction is Qwen3.6 35B INT4 AutoRound or Gemma 12B+ INT4 /
+proper FP8. The user explicitly does not want a BF16 fallback standing in for
+FP8.
 
 Goal: validate a Qwen OpenAI-compatible endpoint on the 4x B70 host and measure
 about-2K-context decode throughput at increasing concurrency.
@@ -73,9 +79,8 @@ patches/vllm-xpu-qwen-fp8-bf16-fallback-20260606.patch
 
 The fallback keeps the FP8 checkpoint values and stored scales, dequantizes each
 linear weight tensor once after loading into BF16, then uses `F.linear`. This
-avoids the failing Intel FP8 primitive. It is expected to preserve or improve
-quality relative to W8A8 runtime activation quantization, but it is not the fast
-native FP8 path and it uses more VRAM.
+avoids the failing Intel FP8 primitive, but it is not the requested operating
+mode. Do not publish this as a Qwen FP8 or quality-equivalent production path.
 
 Startup facts for the fallback at `max_model_len=4096`:
 
@@ -185,7 +190,7 @@ profile. c32 is still practical if aggregate throughput matters more than TTFT.
 c64 works mechanically and has the highest aggregate throughput, but the mean
 TTFT is about `15.6 s` and requests visibly queue during the prefill ramp.
 
-Recommended experimental Qwen text profile:
+Rejected diagnostic Qwen text profile:
 
 - `max_model_len=4096`
 - `max_num_batched_tokens=4096`
@@ -196,6 +201,6 @@ Recommended experimental Qwen text profile:
 Do not compare these numbers directly to the older native-FP8 Qwen notes. Those
 older runs reported much faster single-request decode, but the native XPU FP8
 linear primitive failed here with this vLLM/driver/runtime combination. The
-next optimization target is restoring the native FP8 path without changing model
-quality.
-
+next model target is Qwen3.6 35B INT4 AutoRound using the XPU INT4 W4A16 path;
+native block-FP8 work should continue separately and should not rely on this
+BF16 fallback.

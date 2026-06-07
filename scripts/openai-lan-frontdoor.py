@@ -35,6 +35,9 @@ MAX_ACTIVE_GENERATIONS = int(os.environ.get("FRONTDOOR_MAX_ACTIVE_GENERATIONS", 
 QUEUE_TIMEOUT_S = float(os.environ.get("FRONTDOOR_QUEUE_TIMEOUT_S", "3600"))
 BACKEND_TIMEOUT_S = float(os.environ.get("FRONTDOOR_BACKEND_TIMEOUT_S", "7200"))
 FRONTDOOR_CORS_ALLOW_ORIGIN = os.environ.get("FRONTDOOR_CORS_ALLOW_ORIGIN", "*")
+FRONTDOOR_CHAT_TEMPLATE_KWARGS_JSON = os.environ.get(
+    "FRONTDOOR_CHAT_TEMPLATE_KWARGS_JSON", ""
+)
 MODEL_SLOT_NAME = os.environ.get("MODEL_SLOT_NAME", "")
 MODEL_SLOT_TITLE = os.environ.get("MODEL_SLOT_TITLE", "")
 MODEL_SLOT_HF_ID = os.environ.get("MODEL_SLOT_HF_ID", "")
@@ -73,6 +76,13 @@ state_lock = threading.Lock()
 active_generations = 0
 queued_generations = 0
 total_generation_requests = 0
+default_chat_template_kwargs: dict[str, Any] = {}
+
+if FRONTDOOR_CHAT_TEMPLATE_KWARGS_JSON:
+    parsed = json.loads(FRONTDOOR_CHAT_TEMPLATE_KWARGS_JSON)
+    if not isinstance(parsed, dict):
+        raise SystemExit("FRONTDOOR_CHAT_TEMPLATE_KWARGS_JSON must decode to an object")
+    default_chat_template_kwargs = parsed
 
 
 def now_ms() -> int:
@@ -135,6 +145,34 @@ def release_generation_slot() -> None:
     with state_lock:
         active_generations -= 1
     generation_slots.release()
+
+
+def apply_request_defaults(path: str, body: bytes | None) -> bytes | None:
+    if (
+        path != "/v1/chat/completions"
+        or not default_chat_template_kwargs
+        or body is None
+    ):
+        return body
+
+    try:
+        payload = json.loads(body.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError):
+        return body
+    if not isinstance(payload, dict):
+        return body
+
+    existing = payload.get("chat_template_kwargs")
+    if existing is None:
+        payload["chat_template_kwargs"] = dict(default_chat_template_kwargs)
+    elif isinstance(existing, dict):
+        merged = dict(default_chat_template_kwargs)
+        merged.update(existing)
+        payload["chat_template_kwargs"] = merged
+    else:
+        return body
+
+    return json.dumps(payload, separators=(",", ":")).encode("utf-8")
 
 
 class FrontdoorHandler(BaseHTTPRequestHandler):
@@ -227,8 +265,12 @@ class FrontdoorHandler(BaseHTTPRequestHandler):
                 )
 
     def forward_to_backend(self) -> int:
+        path = self.path.split("?", 1)[0]
         body = self.read_body()
         headers = self.forward_headers()
+        body = apply_request_defaults(path, body)
+        if body is not None:
+            headers["Content-Length"] = str(len(body))
         target_path = self.path
         connection = http.client.HTTPConnection(
             backend.hostname,
@@ -277,7 +319,7 @@ class FrontdoorHandler(BaseHTTPRequestHandler):
         headers: dict[str, str] = {}
         for name, value in self.headers.items():
             lower = name.lower()
-            if lower in HOP_BY_HOP_HEADERS or lower == "host":
+            if lower in HOP_BY_HOP_HEADERS or lower in {"host", "content-length"}:
                 continue
             headers[name] = value
         headers["Host"] = f"{backend.hostname}:{backend.port}"

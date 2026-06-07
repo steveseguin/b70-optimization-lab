@@ -44,9 +44,9 @@ if [[ ! -x "$VENV/bin/vllm" ]]; then
   exit 1
 fi
 
-if [[ -f /opt/intel/oneapi/compiler/2025.3/env/vars.sh ]]; then
+if [[ "${B70_SOURCE_ONEAPI:-0}" == "1" && -f /opt/intel/oneapi/compiler/2025.3/env/vars.sh ]]; then
   # shellcheck disable=SC1091
-  source /opt/intel/oneapi/compiler/2025.3/env/vars.sh >/dev/null 2>&1
+  source /opt/intel/oneapi/compiler/2025.3/env/vars.sh >/dev/null 2>&1 || true
 fi
 
 profile_env_exports=(

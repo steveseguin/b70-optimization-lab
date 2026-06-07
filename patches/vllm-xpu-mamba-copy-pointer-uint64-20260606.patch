@@ -1,0 +1,18 @@
+diff --git a/vllm/v1/worker/mamba_utils.py b/vllm/v1/worker/mamba_utils.py
+index c832389b1..ae853e82c 100644
+--- a/vllm/v1/worker/mamba_utils.py
++++ b/vllm/v1/worker/mamba_utils.py
+@@ -86,8 +86,11 @@ class MambaCopyBuffers:
+         ) * len(copy_funcs)
+         n = max_num_reqs * entries_per_req
+         return cls(
+-            src_ptrs=make_buffer(n, dtype=torch.int64),
+-            dst_ptrs=make_buffer(n, dtype=torch.int64),
++            # XPU device pointers may legitimately use addresses above the
++            # signed int64 range. Store pointer values as uint64 host/GPU
++            # metadata and cast to byte pointers inside the Triton copy kernel.
++            src_ptrs=make_buffer(n, dtype=torch.uint64),
++            dst_ptrs=make_buffer(n, dtype=torch.uint64),
+             sizes=make_buffer(n, dtype=torch.int32),
+             mamba_group_ids=mamba_group_ids,
+             mamba_spec=mamba_spec,
