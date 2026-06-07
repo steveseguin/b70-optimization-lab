@@ -7,13 +7,14 @@ Goal:
 - run `Intel/gemma-4-12B-it-int4-AutoRound`;
 - keep the public endpoint OpenAI-compatible on `0.0.0.0:8000`;
 - support text and image requests;
-- keep a 32K context window;
+- keep a 32K context window for the c16 profile, and characterize the shorter
+  c64 profile needed for 64 active clients;
 - measure single-user and concurrent decode behavior;
 - keep the setup reproducible for another Ubuntu 24.04 B70 system.
 
 ## Current Status
 
-Status on 2026-06-07: working research profile.
+Status on 2026-06-07: working research profiles.
 
 The endpoint is running through the generic model-slot services:
 
@@ -22,8 +23,8 @@ Public endpoint: http://<server-lan-ip>:8000/v1
 Auth: none
 Served model name: gemma4-12b-it-int4-autoround
 Backend: vLLM/XPU on 127.0.0.1:18080
-Context: 32768
-Max live generations: 16
+Default high-context profile: 32768 context, 16 live generations
+High-concurrency c64 profile: 4480 context, 64 live generations
 Modalities tested: text, image
 ```
 
@@ -122,6 +123,22 @@ FRONTDOOR_PORT=8000
 FRONTDOOR_MAX_ACTIVE_GENERATIONS=16
 ```
 
+High-concurrency profile:
+
+```text
+../../configs/model-slots/gemma4-12b-it-int4-autoround-c64.env
+```
+
+Key c64 settings:
+
+```bash
+VLLM_MAX_MODEL_LEN=4480
+VLLM_MAX_NUM_BATCHED_TOKENS=4096
+VLLM_MAX_NUM_SEQS=64
+VLLM_ENABLE_PREFIX_CACHING=1
+FRONTDOOR_MAX_ACTIVE_GENERATIONS=64
+```
+
 `VLLM_DTYPE=bfloat16` is the 16-bit activation/runtime dtype. The weights remain
 the INT4 AutoRound checkpoint; this is not the rejected Qwen FP8 BF16-dequant
 fallback.
@@ -132,6 +149,14 @@ fallback.
 cd /home/steve/llm-optimizations
 printf '%s\n' "/'" | sudo -S -p '' \
   scripts/switch-vllm-model-slot.sh switch gemma4-12b-it-int4-autoround
+```
+
+Switch to the 64-active-client profile:
+
+```bash
+cd /home/steve/llm-optimizations
+printf '%s\n' "/'" | sudo -S -p '' \
+  scripts/switch-vllm-model-slot.sh switch gemma4-12b-it-int4-autoround-c64
 ```
 
 Check status:
@@ -149,6 +174,8 @@ Expected `/v1/models` includes:
   "max_model_len": 32768
 }
 ```
+
+The c64 profile reports `max_model_len=4480`.
 
 ## Smoke Tests
 
@@ -225,6 +252,67 @@ Interpretation:
 - The 2K prefill path is the current latency cost; wall throughput at `c16` was
   about `396 output tok/s`.
 
+## C64 Profile
+
+The 64-active-client profile cannot keep the 32K context window. The important
+finding is that changing `max_num_seqs` from `16` to `64` changes vLLM's profiled
+KV budget and compile shape. Do not estimate c64 context by dividing the c16
+`1,004,337` KV-token budget by 64.
+
+Search results:
+
+| Max model len | GPU KV tokens | vLLM full-context concurrency | Outcome |
+| ---: | ---: | ---: | --- |
+| `15616` | `667253` | `42.73x` | too high for 64 full contexts |
+| `10368` | `507081` | `48.91x` | too high for 64 full contexts |
+| `7680` | `405664` | `52.82x` | too high for 64 full contexts |
+| `4864` | `292589` | `60.15x` | too high for 64 full contexts |
+| `4096` | `291995` | `71.29x` | fits, but leaves more headroom |
+| `4480` | `292317` | `65.25x` | selected c64 profile |
+
+Selected c64 profile:
+
+```text
+max_model_len=4480
+max_num_seqs=64
+max_active_generations=64
+prefix caching enabled
+```
+
+The selected profile uses `4480 * 64 = 286720` logical KV tokens against a
+profiled `292317` token KV budget. That is close to full without crossing the
+full-64 admission boundary.
+
+Short-prompt one-token TTFT probe:
+
+| Concurrency | Prompt tokens each | Output tokens each | Mean TTFT | p50 TTFT | p95 TTFT | Max TTFT |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| `64` | `123` | `1` | `0.882 s` | `0.712 s` | `1.139 s` | `1.140 s` |
+
+Short-prompt 128-token output run:
+
+| Concurrency | Prompt tokens each | Output tokens each | Aggregate output tok/s wall | Mean TTFT field |
+| ---: | ---: | ---: | ---: | ---: |
+| `64` | `123` | `128` | `1614.41` | `5.04 s` |
+
+For the 128-token run, use the wall aggregate as the useful throughput number.
+The post-first-text decode field is not reliable for this short-prompt shape
+because vLLM/XPU coalesces streamed output chunks.
+
+Near-limit prompt smoke:
+
+| Requested prompt | Actual prompt tokens | Output tokens | TTFT |
+| ---: | ---: | ---: | ---: |
+| `4300` | `4323` | `1` | `0.631 s` |
+
+Raw files:
+
+```text
+/mnt/fast-ai/bench-results/gemma4-12b-it-int4-autoround/c64-4480-ttft-100p-1o-20260607T062129Z.json
+/mnt/fast-ai/bench-results/gemma4-12b-it-int4-autoround/c64-4480-decode-100p-128o-20260607T062143Z.json
+/mnt/fast-ai/bench-results/gemma4-12b-it-int4-autoround/c64-4480-longprompt-4300p-1o-20260607T062228Z.json
+```
+
 ## Startup Observations
 
 Known-good c16 startup reported:
@@ -244,6 +332,22 @@ Maximum concurrency for 32,768 tokens per request: 30.65x
 
 The `30.65x` line is a theoretical KV-capacity statement, not a claim that
 `c30` has been benchmarked. The validated profile is `c16`.
+
+Known-good c64 startup reported:
+
+```text
+max_seq_len=4480
+enable_prefix_caching=True
+max_num_batched_tokens=4096
+max_num_seqs=64
+torch.compile took 67.31 s on first launch for this shape
+GPU KV cache size: 292,317 tokens
+Maximum concurrency for 4,480 tokens per request: 65.25x
+```
+
+Each tried max-context value created a new torch.compile cache key and took
+about 66-67 seconds on first launch. Cached restarts should be faster, but c64
+has a real first-start operational cost.
 
 ## Known Bad Setting
 
@@ -272,8 +376,8 @@ cache budget, but real image requests work.
 ## Next Work
 
 - Measure 16K and 32K prompt TTFT for c1/c4/c8/c16.
-- Compare c16 against c24/c30 only if users need many simultaneous 32K
-  sessions.
+- Compare c64 at 4480 against c16 at 32768 for real chat traffic, not just
+  synthetic short prompts.
 - Revisit vLLM's Gemma4 unified dummy multimodal profiling so image-only limits
   do not accidentally trip video/audio warmup behavior.
 - Submit a minimal upstream vLLM issue or PR once the backport is narrowed to

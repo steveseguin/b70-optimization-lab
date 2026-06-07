@@ -1,0 +1,91 @@
+{
+  "date": "2026-06-07",
+  "host": "4x Intel Arc Pro B70 Ubuntu 24.04",
+  "model": {
+    "hfId": "Intel/gemma-4-12B-it-int4-AutoRound",
+    "servedName": "gemma4-12b-it-int4-autoround",
+    "localPath": "/mnt/fast-ai/llm-models/gemma4-12b-it-int4-autoround-intel",
+    "quantization": "INT4 AutoRound W4A16, vLLM quantization=inc",
+    "runtimeDtype": "bfloat16"
+  },
+  "server": {
+    "engine": "vLLM/XPU",
+    "endpoint": "http://0.0.0.0:8000/v1",
+    "auth": "none",
+    "tensorParallelSize": 4,
+    "maxModelLen": 4480,
+    "maxNumBatchedTokens": 4096,
+    "maxNumSeqs": 64,
+    "frontdoorMaxActiveGenerations": 64,
+    "prefixCaching": true,
+    "limitMmPerPrompt": {
+      "image": 4
+    }
+  },
+  "contextSearch": [
+    {
+      "maxModelLen": 15616,
+      "gpuKvCacheTokens": 667253,
+      "fullContextConcurrency": 42.73,
+      "outcome": "too_high_for_c64"
+    },
+    {
+      "maxModelLen": 10368,
+      "gpuKvCacheTokens": 507081,
+      "fullContextConcurrency": 48.91,
+      "outcome": "too_high_for_c64"
+    },
+    {
+      "maxModelLen": 7680,
+      "gpuKvCacheTokens": 405664,
+      "fullContextConcurrency": 52.82,
+      "outcome": "too_high_for_c64"
+    },
+    {
+      "maxModelLen": 4864,
+      "gpuKvCacheTokens": 292589,
+      "fullContextConcurrency": 60.15,
+      "outcome": "too_high_for_c64"
+    },
+    {
+      "maxModelLen": 4096,
+      "gpuKvCacheTokens": 291995,
+      "fullContextConcurrency": 71.29,
+      "outcome": "fits_with_extra_headroom"
+    },
+    {
+      "maxModelLen": 4480,
+      "gpuKvCacheTokens": 292317,
+      "fullContextConcurrency": 65.25,
+      "outcome": "selected"
+    }
+  ],
+  "benchmarks": {
+    "ttft100Prompt1OutputC64": {
+      "promptTokensEach": 123,
+      "outputTokensEach": 1,
+      "concurrency": 64,
+      "meanTtftSeconds": 0.8820842292516318,
+      "p50TtftSeconds": 0.7121148355072364,
+      "p95TtftSeconds": 1.1388684305013157,
+      "maxTtftSeconds": 1.1398236410459504,
+      "rawLocalFile": "/mnt/fast-ai/bench-results/gemma4-12b-it-int4-autoround/c64-4480-ttft-100p-1o-20260607T062129Z.json"
+    },
+    "decode100Prompt128OutputC64": {
+      "promptTokensEach": 123,
+      "outputTokensEach": 128,
+      "concurrency": 64,
+      "aggregateOutputTokSWall": 1614.4105260328886,
+      "meanTtftFieldSeconds": 5.040543106468249,
+      "note": "Post-first-text decode is not reliable for this short-prompt shape because vLLM/XPU coalesces streamed output chunks.",
+      "rawLocalFile": "/mnt/fast-ai/bench-results/gemma4-12b-it-int4-autoround/c64-4480-decode-100p-128o-20260607T062143Z.json"
+    },
+    "longPromptSmoke": {
+      "requestedPromptTokens": 4300,
+      "actualPromptTokens": 4323,
+      "outputTokens": 1,
+      "ttftSeconds": 0.6311344900168478,
+      "rawLocalFile": "/mnt/fast-ai/bench-results/gemma4-12b-it-int4-autoround/c64-4480-longprompt-4300p-1o-20260607T062228Z.json"
+    }
+  }
+}

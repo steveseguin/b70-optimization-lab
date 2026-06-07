@@ -112,6 +112,7 @@ stays single-model.
 | `qwen36-35b-a3b-int4-autoround` | research | text,image | Preferred Qwen 35B candidate. Public W4A16 AutoRound checkpoint, working after the local XPU Mamba pointer patch. |
 | `gemma3-12b-it-int4-autoround` | research | text,image | Tested Gemma fallback. Public 12B INT4 AutoRound checkpoint, much faster than Qwen 35B on the 2K/128 concurrency ladder. |
 | `gemma4-12b-it-int4-autoround` | research | text,image | Current Gemma 4 candidate. Intel W4A16 AutoRound checkpoint, working after Transformers `5.10.2` plus the local vLLM `gemma4_unified` backport. |
+| `gemma4-12b-it-int4-autoround-c64` | research-c64 | text,image | High-concurrency Gemma 4 profile: 64 active generations, prefix caching, 4480-token context selected to fit 64 full contexts in VRAM. |
 | `qwen36-27b-fp8-vrfai` | rejected-diagnostic | text | Do not use as a recommended lane. It only worked here with an opt-in BF16 dequant fallback for a failing XPU FP8 primitive. |
 | `qwen36-35b-a3b-fp8` | blocked-native-xpu-fp8 | text,image | Official FP8 checkpoint is interesting, but the current local XPU path lacks native block-FP8 W8A8 support. |
 | `qwen3-vl-30b-a3b-fp8` | blocked-native-xpu-fp8 | text,image | Multimodal FP8 candidate, blocked by the same native XPU block-FP8 concern until proven otherwise. |
@@ -181,6 +182,15 @@ uses `bfloat16` as the 16-bit activation dtype while the weights remain the
 INT4 AutoRound checkpoint. The validated c16 profile keeps the same no-auth
 LAN endpoint on `0.0.0.0:8000`, supports text and image requests, and reports
 `max_model_len=32768`.
+
+`gemma4-12b-it-int4-autoround-c64` is the high-concurrency variant for many
+shorter live sessions. It uses the same model and endpoint, but sets
+`max_num_seqs=64`, `FRONTDOOR_MAX_ACTIVE_GENERATIONS=64`, keeps prefix caching
+enabled, and lowers `max_model_len` to `4480`. This was selected empirically:
+vLLM reported `292317` GPU KV tokens and `65.25x` full-context concurrency at
+`4480`, while `4864` only reached `60.15x`. Do not derive the c64 context by
+dividing the c16 KV budget; the c64 scheduler/compile profile changes the
+available KV budget.
 
 Avoid treating the Qwen FP8 profiles as production candidates right now. On
 2026-06-06, the native compressed-tensors FP8 path failed during profiling on
@@ -338,4 +348,61 @@ Full reproduction notes:
 
 ```text
 ../experiments/gemma4-12b-int4-autoround-vllm/README.md
+```
+
+## 2026-06-07 Gemma 4 C64 Profile
+
+Switch command:
+
+```bash
+scripts/switch-vllm-model-slot.sh switch gemma4-12b-it-int4-autoround-c64
+```
+
+Serving facts:
+
+- endpoint: `http://0.0.0.0:8000/v1`
+- auth: none
+- model: `Intel/gemma-4-12B-it-int4-AutoRound`
+- served name: `gemma4-12b-it-int4-autoround`
+- max model length: `4480`
+- max active generations: `64`
+- prefix caching: enabled
+- vLLM full-context concurrency: `65.25x`
+
+Context search:
+
+| Max model len | GPU KV tokens | vLLM full-context concurrency | Outcome |
+| ---: | ---: | ---: | --- |
+| `15616` | `667253` | `42.73x` | too high |
+| `10368` | `507081` | `48.91x` | too high |
+| `7680` | `405664` | `52.82x` | too high |
+| `4864` | `292589` | `60.15x` | too high |
+| `4096` | `291995` | `71.29x` | fits |
+| `4480` | `292317` | `65.25x` | selected |
+
+Short-prompt c64 TTFT with about `123` prompt tokens and one generated token:
+
+| Mean TTFT | p50 TTFT | p95 TTFT | Max TTFT |
+| ---: | ---: | ---: | ---: |
+| `0.882 s` | `0.712 s` | `1.139 s` | `1.140 s` |
+
+Short-prompt c64 output run with about `123` prompt tokens and `128` generated
+tokens per request:
+
+| Concurrency | Aggregate output tok/s, wall |
+| ---: | ---: |
+| `64` | `1614.41` |
+
+Near-limit prompt smoke:
+
+| Actual prompt tokens | Output tokens | TTFT |
+| ---: | ---: | ---: |
+| `4323` | `1` | `0.631 s` |
+
+Raw local result files:
+
+```text
+/mnt/fast-ai/bench-results/gemma4-12b-it-int4-autoround/c64-4480-ttft-100p-1o-20260607T062129Z.json
+/mnt/fast-ai/bench-results/gemma4-12b-it-int4-autoround/c64-4480-decode-100p-128o-20260607T062143Z.json
+/mnt/fast-ai/bench-results/gemma4-12b-it-int4-autoround/c64-4480-longprompt-4300p-1o-20260607T062228Z.json
 ```
