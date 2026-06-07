@@ -557,6 +557,71 @@ Raw result directories:
 /mnt/fast-ai/bench-results/gemma4-12b-it-int4-autoround/prod-c8-xpugraph-longprompt-30000p-128o-cache-repeat-20260607T090558Z.json
 ```
 
+## Production Soak
+
+On 2026-06-07, the active c8 XPU-graph production profile was left running on
+the public no-auth LAN endpoint and checked with the reusable soak harness:
+
+```bash
+DURATION_S=28800 INTERVAL_S=900 PROMPT_TOKENS=100 OUTPUT_TOKENS=512 \
+  CONCURRENCY=8 scripts/run-gemma4-production-soak.sh
+```
+
+Scheduled cycles `1-32` covered the main soak window from `20260607T090844Z`
+through `20260607T165344Z`. The production endpoint stayed on:
+
+```text
+model slot: gemma4-12b-it-int4-autoround-c8
+max_model_len: 32768
+max active generations: 8
+prefix caching: enabled
+auth: none
+```
+
+Scheduled result summary:
+
+| Metric | Value |
+| --- | ---: |
+| Scheduled cycles | `32` |
+| Clean cycles | `31` |
+| Quality anomaly cycles | `1` |
+| Mean wall aggregate output tok/s, clean cycles | `781.04` |
+| Min wall aggregate output tok/s, clean cycles | `765.44` |
+| Max wall aggregate output tok/s, clean cycles | `784.37` |
+| Mean TTFT, clean cycles | `2.551 s` |
+
+The one scheduled quality anomaly was cycle `17`: the `copy_phrase` canary
+returned `slh cobalt orbit` instead of `satin cobalt orbit`. Exact OK,
+arithmetic, and image-color canaries still passed. Three immediate manual
+reruns and a 25-repeat quality-only stress loop then matched the baseline
+hashes exactly, and cycle `18` returned to normal.
+
+The original soak harness had a final-interval bug: after the last scheduled
+cycle, it stopped sleeping and produced rapid cycles every about `10 s` until
+the deadline. Treat cycles `33+` in the first run as harness-bug data, not
+normal soak samples. The harness now sleeps to the deadline and exits instead
+of spinning.
+
+A clean continuation with the fixed harness ran after the bug was patched:
+
+```text
+/mnt/fast-ai/bench-results/gemma4-12b-it-int4-autoround/prod-c8-soak-20260607T170030Z
+```
+
+Continuation result:
+
+| Cycle | UTC | Quality | Wall aggregate output tok/s | Mean TTFT |
+| ---: | --- | --- | ---: | ---: |
+| `1` | `20260607T170030Z` | pass | `779.20` | `2.559 s` |
+| `2` | `20260607T171530Z` | pass | `784.75` | `2.546 s` |
+
+Raw soak paths:
+
+```text
+/mnt/fast-ai/bench-results/gemma4-12b-it-int4-autoround/prod-c8-soak-20260607T090844Z
+/mnt/fast-ai/bench-results/gemma4-12b-it-int4-autoround/prod-c8-soak-20260607T170030Z
+```
+
 LocalMaxxing submissions:
 
 | Shape | tok/s | ID |

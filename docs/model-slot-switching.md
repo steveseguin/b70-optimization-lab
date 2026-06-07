@@ -495,6 +495,31 @@ Sustained decode checks on the promoted graph profile:
 | `119` prompt tokens, `512` output tokens | `8` | `780.97` |
 | `119` prompt tokens, `1024` output tokens | `8` | `731.12` |
 
+Production soak on 2026-06-07 used the active c8 profile on the no-auth LAN
+endpoint with `32768` max model length, `8` active generations, prefix caching,
+and XPU graph capture. The scheduled main soak cycles `1-32` ran from
+`20260607T090844Z` through `20260607T165344Z`: `31/32` cycles passed the quality
+gate and c8/512 decode check. Clean cycles averaged `781.04 tok/s` wall
+aggregate output at `2.551 s` mean TTFT, with a `765.44-784.37 tok/s` range.
+
+One scheduled quality anomaly occurred at cycle `17`: `copy_phrase` returned
+`slh cobalt orbit` instead of `satin cobalt orbit`. Three immediate reruns and
+a 25-repeat quality stress loop passed exactly, and the next scheduled cycle
+returned to normal. Do not hide this in future reports; treat it as an isolated
+deterministic-canary anomaly unless it repeats.
+
+The first soak run also exposed a harness bug after the last scheduled cycle:
+the script spun about every `10 s` instead of sleeping to the deadline. Those
+rapid cycles are not normal soak data. `scripts/run-gemma4-production-soak.sh`
+now sleeps to the deadline and exits cleanly.
+
+Fixed-harness continuation:
+
+| Cycle | UTC | Quality | Wall aggregate output tok/s | Mean TTFT |
+| ---: | --- | --- | ---: | ---: |
+| `1` | `20260607T170030Z` | pass | `779.20` | `2.559 s` |
+| `2` | `20260607T171530Z` | pass | `784.75` | `2.546 s` |
+
 512-output scaling on the same production endpoint:
 
 | Concurrency | Wall aggregate output tok/s |

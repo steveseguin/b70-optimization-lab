@@ -12,6 +12,16 @@ prompt_tokens="${PROMPT_TOKENS:-100}"
 output_tokens="${OUTPUT_TOKENS:-512}"
 concurrency="${CONCURRENCY:-8}"
 
+if (( duration_s <= 0 )); then
+  echo "DURATION_S must be positive" >&2
+  exit 2
+fi
+
+if (( interval_s <= 0 )); then
+  echo "INTERVAL_S must be positive" >&2
+  exit 2
+fi
+
 baseline_quality="${BASELINE_QUALITY_JSON:-}"
 if [[ -z "$baseline_quality" ]]; then
   baseline_quality="$(ls -1t "$results_root"/prod-c8-quality-baseline-*.json | head -1)"
@@ -120,7 +130,14 @@ PY
 
   now_epoch="$(date +%s)"
   next_epoch=$((started_epoch + cycle * interval_s))
-  if (( next_epoch > now_epoch && next_epoch < deadline_epoch )); then
+  if (( next_epoch >= deadline_epoch )); then
+    remaining_s=$((deadline_epoch - now_epoch))
+    if (( remaining_s > 0 )); then
+      sleep "$remaining_s"
+    fi
+    break
+  fi
+  if (( next_epoch > now_epoch )); then
     sleep $((next_epoch - now_epoch))
   fi
 done

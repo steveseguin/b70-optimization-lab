@@ -126,6 +126,54 @@
         "mean_ttft_s": 3.746319937883527,
         "wall_output_tok_s": 270.739868095527
       }
+    },
+    "production_soak": {
+      "main_run_started_utc": "20260607T090844Z",
+      "scheduled_cycles": 32,
+      "clean_cycles": 31,
+      "quality_anomaly_cycles": [
+        17
+      ],
+      "clean_cycles_wall_output_tok_s": {
+        "mean": 781.0416678960535,
+        "min": 765.4444488463562,
+        "max": 784.3659935750953
+      },
+      "clean_cycles_mean_ttft_s": {
+        "mean": 2.5505383233093815,
+        "min": 2.516572086882661,
+        "max": 2.6483440785086714
+      },
+      "quality_anomaly": {
+        "cycle": 17,
+        "failed_check": "copy_phrase",
+        "expected": "satin cobalt orbit",
+        "observed": "slh cobalt orbit",
+        "immediate_manual_reruns_passed": 3,
+        "quality_stress_repeats_passed": 25
+      },
+      "harness_bug": "Original final-interval sleep logic spun after the last scheduled cycle; cycles 33+ in the first run are not normal soak samples. scripts/run-gemma4-production-soak.sh was fixed to sleep to the deadline and exit.",
+      "fixed_harness_continuation": {
+        "started_utc": "20260607T170030Z",
+        "cycles": [
+          {
+            "cycle": 1,
+            "utc": "20260607T170030Z",
+            "quality_expected": true,
+            "quality_baseline": true,
+            "wall_output_tok_s": 779.2028275527277,
+            "mean_ttft_s": 2.5587674672715366
+          },
+          {
+            "cycle": 2,
+            "utc": "20260607T171530Z",
+            "quality_expected": true,
+            "quality_baseline": true,
+            "wall_output_tok_s": 784.7459001414585,
+            "mean_ttft_s": 2.5455494657508098
+          }
+        ]
+      }
     }
   },
   "raw_result_paths": {
@@ -137,6 +185,8 @@
     "sustained_decode_scaling_512": "/mnt/fast-ai/bench-results/gemma4-12b-it-int4-autoround/prod-c8-xpugraph-scaling-512o-20260607T084806Z",
     "long_prompt_decode": "/mnt/fast-ai/bench-results/gemma4-12b-it-int4-autoround/prod-c8-xpugraph-longprompt-decode-20260607T090436Z",
     "long_prompt_decode_prefix_cache_repeat": "/mnt/fast-ai/bench-results/gemma4-12b-it-int4-autoround/prod-c8-xpugraph-longprompt-30000p-128o-cache-repeat-20260607T090558Z.json",
+    "production_soak_main": "/mnt/fast-ai/bench-results/gemma4-12b-it-int4-autoround/prod-c8-soak-20260607T090844Z",
+    "production_soak_fixed_harness_continuation": "/mnt/fast-ai/bench-results/gemma4-12b-it-int4-autoround/prod-c8-soak-20260607T170030Z",
     "profile_trial_xpugraph": "/mnt/fast-ai/bench-results/gemma4-12b-it-int4-autoround/profile-trials/gemma4-12b-it-int4-autoround-c8-xpugraph-20260607T074722Z",
     "profile_trial_mbt8192": "/mnt/fast-ai/bench-results/gemma4-12b-it-int4-autoround/profile-trials/gemma4-12b-it-int4-autoround-c8-mbt8192-20260607T073623Z",
     "profile_trial_mbt2048": "/mnt/fast-ai/bench-results/gemma4-12b-it-int4-autoround/profile-trials/gemma4-12b-it-int4-autoround-c8-mbt2048-20260607T074213Z"
