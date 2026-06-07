@@ -445,6 +445,7 @@ Serving facts:
 - served name: `gemma4-12b-it-int4-autoround`
 - max model length: `32768`
 - max active generations: `8`
+- queue timeout: `0 s` fail-fast when all generation slots are busy
 - prefix caching: enabled
 - XPU graph capture: enabled
 - vLLM full-context concurrency estimate: `30.67x`
@@ -533,6 +534,12 @@ matched the backend again:
 | --- | ---: | ---: | ---: |
 | `119` prompt tokens, `512` output tokens | `1` | `0.036 s` | `112.87` |
 | `119` prompt tokens, `512` output tokens | `8` | `0.099 s` | `783.62` |
+
+The production frontdoor is not a batch queue. It admits up to `8` active
+generation requests immediately. When all `8` slots are busy, the next
+generation request fails fast with HTTP `503` instead of waiting behind a long
+queue. A 9-way overload check after setting `FRONTDOOR_QUEUE_TIMEOUT_S=0`
+admitted `8` requests and returned one `503` in `0.221 s`.
 
 512-output scaling on the same production endpoint:
 

@@ -26,6 +26,8 @@
     "max_active_generations": 8,
     "max_num_batched_tokens": 4096,
     "prefix_caching": true,
+    "frontdoor_queue_timeout_s": 0,
+    "frontdoor_queue_policy": "fail-fast when all 8 generation slots are busy",
     "xpu_graph": true,
     "compilation_config": {
       "use_inductor_graph_partition": true,
@@ -194,6 +196,17 @@
             "mean_ttft_s": 0.09884867299115285,
             "wall_output_tok_s": 783.6173319534963
           }
+        },
+        "fail_fast_overload_check": {
+          "simultaneous_generation_requests": 9,
+          "admitted_requests": 8,
+          "rejected_requests": 1,
+          "rejected_status": 503,
+          "rejected_elapsed_s": 0.221,
+          "admitted_first_stream_s_range": [
+            0.25,
+            0.312
+          ]
         }
       }
     }

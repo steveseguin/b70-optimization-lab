@@ -162,7 +162,12 @@ VLLM_XPU_FORCE_GRAPH_WITH_COMM=1
 VLLM_XPU_GRAPH_NOOP_COMM_CAPTURE=1
 VLLM_COMPILATION_CONFIG='{"use_inductor_graph_partition":true,"compile_sizes":[1],"cudagraph_mode":"PIECEWISE"}'
 FRONTDOOR_MAX_ACTIVE_GENERATIONS=8
+FRONTDOOR_QUEUE_TIMEOUT_S=0
 ```
+
+The c8 production frontdoor is intentionally fail-fast, not a bulk queue. It
+admits up to `8` active generation requests. A 9th generation request receives
+HTTP `503` immediately when all slots are busy.
 
 `VLLM_DTYPE=bfloat16` is the 16-bit activation/runtime dtype. The weights remain
 the INT4 AutoRound checkpoint; this is not the rejected Qwen FP8 BF16-dequant
@@ -636,6 +641,11 @@ Clean public-endpoint checks after restarting only the frontdoor:
 | --- | ---: | ---: | ---: | ---: | ---: |
 | short decode | `1` | `119` | `512` | `0.036 s` | `112.87` |
 | short decode | `8` | `119` | `512` | `0.099 s` | `783.62` |
+
+The queue policy was then changed from the old one-hour timeout to fail-fast:
+`FRONTDOOR_QUEUE_TIMEOUT_S=0`. A 9-way overload test admitted `8` requests and
+returned one HTTP `503` in `0.221 s`, while the admitted requests streamed
+normally.
 
 Direct frontdoor/backend streaming comparison after the fix:
 

@@ -124,6 +124,7 @@ def status_payload() -> dict[str, Any]:
             "port": PORT,
             "backend": BACKEND_BASE_URL,
             "max_active_generations": MAX_ACTIVE_GENERATIONS,
+            "queue_timeout_s": QUEUE_TIMEOUT_S,
             "active_generations": active,
             "queued_generations": queued,
             "total_generation_requests": total,
