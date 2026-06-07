@@ -118,7 +118,7 @@ stays single-model.
 | `qwen36-35b-a3b-int4-autoround` | research | text,image | Preferred Qwen 35B candidate. Public W4A16 AutoRound checkpoint, working after the local XPU Mamba pointer patch. |
 | `gemma3-12b-it-int4-autoround` | research | text,image | Tested Gemma fallback. Public 12B INT4 AutoRound checkpoint, much faster than Qwen 35B on the 2K/128 concurrency ladder. |
 | `gemma4-12b-it-int4-autoround` | research | text,image | Current Gemma 4 candidate. Intel W4A16 AutoRound checkpoint, working after Transformers `5.10.2` plus the local vLLM `gemma4_unified` backport. |
-| `gemma4-12b-it-int4-autoround-c8` | research-c8-32k | text,image | Full-context Gemma 4 profile: 32768-token context, 8 active generations, prefix caching, no-auth LAN endpoint. |
+| `gemma4-12b-it-int4-autoround-c8` | production | text,image | Active full-context Gemma 4 profile: 32768-token context, 8 active generations, prefix caching, no-auth LAN endpoint. |
 | `gemma4-12b-it-int4-autoround-c64` | research-c64 | text,image | High-concurrency Gemma 4 profile: 64 active generations, prefix caching, 4480-token context selected to fit 64 full contexts in VRAM. |
 | `qwen36-27b-fp8-vrfai` | rejected-diagnostic | text | Do not use as a recommended lane. It only worked here with an opt-in BF16 dequant fallback for a failing XPU FP8 primitive. |
 | `qwen36-35b-a3b-fp8` | blocked-native-xpu-fp8 | text,image | Official FP8 checkpoint is interesting, but the current local XPU path lacks native block-FP8 W8A8 support. |
@@ -199,8 +199,8 @@ vLLM reported `292317` GPU KV tokens and `65.25x` full-context concurrency at
 dividing the c16 KV budget; the c64 scheduler/compile profile changes the
 available KV budget.
 
-`gemma4-12b-it-int4-autoround-c8` is the full-context variant selected after
-the c64 tradeoff became too short. It uses the same Gemma 4 INT4 AutoRound
+`gemma4-12b-it-int4-autoround-c8` is the active production full-context variant
+selected after the c64 tradeoff became too short. It uses the same Gemma 4 INT4 AutoRound
 checkpoint and same no-auth LAN endpoint, but keeps `max_model_len=32768` and
 caps vLLM/frontdoor live generations at `8`. Startup reported `990722` GPU
 KV-cache tokens and `30.23x` theoretical full-32K concurrency, so the c8 cap is
@@ -423,7 +423,7 @@ Raw local result files:
 /mnt/fast-ai/bench-results/gemma4-12b-it-int4-autoround/c64-4480-longprompt-4300p-1o-20260607T062228Z.json
 ```
 
-## 2026-06-07 Gemma 4 C8 Full-Context Profile
+## 2026-06-07 Gemma 4 C8 Production Full-Context Profile
 
 Switch command:
 

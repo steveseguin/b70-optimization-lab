@@ -15,7 +15,8 @@ Goal:
 
 ## Current Status
 
-Status on 2026-06-07: working research profiles.
+Status on 2026-06-07: c8 is the active production profile; c16 and c64 remain
+documented alternate profiles.
 
 The endpoint is running through the generic model-slot services:
 
@@ -24,8 +25,8 @@ Public endpoint: http://<server-lan-ip>:8000/v1
 Auth: none
 Served model name: gemma4-12b-it-int4-autoround
 Backend: vLLM/XPU on 127.0.0.1:18080
-Default high-context profile: 32768 context, 16 live generations
-Current full-context c8 profile: 32768 context, 8 live generations
+Production c8 profile: 32768 context, 8 live generations
+Default high-context c16 profile: 32768 context, 16 live generations
 High-concurrency c64 profile: 4480 context, 64 live generations
 Modalities tested: text, image
 ```
@@ -141,7 +142,7 @@ VLLM_ENABLE_PREFIX_CACHING=1
 FRONTDOOR_MAX_ACTIVE_GENERATIONS=64
 ```
 
-Current full-context c8 profile:
+Active production c8 profile:
 
 ```text
 ../../configs/model-slots/gemma4-12b-it-int4-autoround-c8.env
@@ -341,7 +342,7 @@ Raw files:
 
 ## C8 Full-Context Profile
 
-The current user-preferred Gemma 4 profile keeps `max_model_len=32768` and
+The active production Gemma 4 profile keeps `max_model_len=32768` and
 caps live requests at 8. This keeps the LAN endpoint useful for full-context
 clients without dropping to the c64 profile's shorter 4480-token window.
 
@@ -416,6 +417,36 @@ Repo summary:
 
 ```text
 results-20260607-b70-c8-32768.json
+```
+
+## Production C8 Baseline
+
+After promoting c8 to production metadata, the same profile was restarted and
+revalidated. Cached restart loaded AOT compile in `4.91 s`, initialized the
+engine in `17.88 s`, and reported `1,004,337` GPU KV tokens, or `30.65x`
+theoretical full-32K concurrency.
+
+Quality canary:
+
+```text
+exact_ok: OK
+copy_phrase: satin cobalt orbit
+small_arithmetic: 7
+red_image: Red
+```
+
+Sequential production benchmark baseline:
+
+| Shape | Prompt tokens each | Output tokens each | Concurrency | Primary result |
+| --- | ---: | ---: | ---: | ---: |
+| short TTFT | `119` | `1` | `8` | mean TTFT `0.106 s` |
+| short decode | `119` | `128` | `8` | wall aggregate `250.21 tok/s` |
+| long prefill | `30690` | `1` | `8` | mean TTFT `22.21 s` |
+
+Repo summary:
+
+```text
+results-20260607-production-c8-baseline.json
 ```
 
 ## Startup Observations

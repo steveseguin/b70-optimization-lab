@@ -1,0 +1,74 @@
+{
+  "date": "2026-06-07",
+  "host": "4x Intel Arc Pro B70 Ubuntu 24.04",
+  "profile": "gemma4-12b-it-int4-autoround-c8",
+  "status": "production",
+  "model": {
+    "hfId": "Intel/gemma-4-12B-it-int4-AutoRound",
+    "servedName": "gemma4-12b-it-int4-autoround",
+    "localPath": "/mnt/fast-ai/llm-models/gemma4-12b-it-int4-autoround-intel",
+    "quantization": "INT4 AutoRound W4A16, vLLM quantization=inc",
+    "runtimeDtype": "bfloat16"
+  },
+  "server": {
+    "engine": "vLLM/XPU",
+    "endpoint": "http://0.0.0.0:8000/v1",
+    "auth": "none",
+    "tensorParallelSize": 4,
+    "maxModelLen": 32768,
+    "maxNumBatchedTokens": 4096,
+    "maxNumSeqs": 8,
+    "frontdoorMaxActiveGenerations": 8,
+    "prefixCaching": true,
+    "limitMmPerPrompt": {
+      "image": 4
+    }
+  },
+  "startup": {
+    "cachedRestartCompileSeconds": 4.91,
+    "engineInitSeconds": 17.88,
+    "availableKvCacheMemoryGiB": 27.46,
+    "gpuKvCacheTokens": 1004337,
+    "vllmFullContextConcurrencyFor32768": 30.65
+  },
+  "qualityCanary": {
+    "expectedPassAll": true,
+    "cases": {
+      "exact_ok": "OK",
+      "copy_phrase": "satin cobalt orbit",
+      "small_arithmetic": "7",
+      "red_image": "Red"
+    },
+    "rawLocalFile": "/mnt/fast-ai/bench-results/gemma4-12b-it-int4-autoround/prod-c8-quality-baseline-20260607T073003Z.json"
+  },
+  "benchmarks": {
+    "shortPromptTtftC8": {
+      "requestedPromptTokens": 100,
+      "actualPromptTokensEach": 119,
+      "outputTokensEach": 1,
+      "concurrency": 8,
+      "meanTtftSeconds": 0.10560145814088173,
+      "aggregateOutputTokSWall": 64.84902683475335,
+      "rawLocalFile": "/mnt/fast-ai/bench-results/gemma4-12b-it-int4-autoround/prod-c8-100p-1o-seqbaseline-20260607T073031Z.json"
+    },
+    "shortPromptDecodeC8": {
+      "requestedPromptTokens": 100,
+      "actualPromptTokensEach": 119,
+      "outputTokensEach": 128,
+      "concurrency": 8,
+      "aggregateOutputTokSWall": 250.2120399154655,
+      "meanTtftFieldSeconds": 4.076656356264721,
+      "note": "Use wall aggregate as primary metric. Stream chunk coalescing makes post-first-text decode fields misleading for this shape.",
+      "rawLocalFile": "/mnt/fast-ai/bench-results/gemma4-12b-it-int4-autoround/prod-c8-100p-128o-seqbaseline-20260607T073043Z.json"
+    },
+    "longPromptPrefillC8": {
+      "requestedPromptTokens": 32000,
+      "actualPromptTokensEach": 30690,
+      "outputTokensEach": 1,
+      "concurrency": 8,
+      "meanTtftSeconds": 22.205120870115934,
+      "aggregateOutputTokSWall": 0.20472570049033506,
+      "rawLocalFile": "/mnt/fast-ai/bench-results/gemma4-12b-it-int4-autoround/prod-c8-8x30700p-1o-seqbaseline-20260607T073114Z.json"
+    }
+  }
+}
