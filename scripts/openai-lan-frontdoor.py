@@ -290,6 +290,8 @@ class FrontdoorHandler(BaseHTTPRequestHandler):
             response = connection.getresponse()
             self.send_response(response.status, response.reason)
 
+            content_type = response.getheader("Content-Type", "")
+            stream_response = content_type.lower().startswith("text/event-stream")
             has_length = False
             for name, value in response.getheaders():
                 lower = name.lower()
@@ -307,15 +309,29 @@ class FrontdoorHandler(BaseHTTPRequestHandler):
             self.end_headers()
 
             if self.command != "HEAD":
-                while True:
-                    chunk = response.read(65536)
-                    if not chunk:
-                        break
-                    self.wfile.write(chunk)
-                    self.wfile.flush()
+                if stream_response:
+                    self.forward_stream_response(response)
+                else:
+                    self.forward_buffered_response(response)
             return response.status
         finally:
             connection.close()
+
+    def forward_stream_response(self, response: http.client.HTTPResponse) -> None:
+        while True:
+            line = response.readline(65536)
+            if not line:
+                break
+            self.wfile.write(line)
+            self.wfile.flush()
+
+    def forward_buffered_response(self, response: http.client.HTTPResponse) -> None:
+        while True:
+            chunk = response.read(65536)
+            if not chunk:
+                break
+            self.wfile.write(chunk)
+            self.wfile.flush()
 
     def read_body(self) -> bytes | None:
         length = int(self.headers.get("Content-Length", "0") or "0")

@@ -173,6 +173,28 @@
             "mean_ttft_s": 2.5455494657508098
           }
         ]
+      },
+      "frontdoor_streaming_fix": {
+        "cause": "The LAN frontdoor proxied SSE responses with response.read(65536), which buffered text/event-stream events and made client-observed TTFT look much higher than backend TTFT.",
+        "fix": "Forward text/event-stream responses line-by-line and flush each SSE line in scripts/openai-lan-frontdoor.py.",
+        "backend_first_text_s": {
+          "max_tokens_128": 0.0341,
+          "max_tokens_512": 0.0342
+        },
+        "frontdoor_first_text_after_fix_s": {
+          "max_tokens_128": 0.0343,
+          "max_tokens_512": 0.0371
+        },
+        "public_endpoint_clean_bench_after_fix": {
+          "c1_119_prompt_512_output": {
+            "mean_ttft_s": 0.036198701011016965,
+            "wall_output_tok_s": 112.86580140875809
+          },
+          "c8_119_prompt_512_output": {
+            "mean_ttft_s": 0.09884867299115285,
+            "wall_output_tok_s": 783.6173319534963
+          }
+        }
       }
     }
   },

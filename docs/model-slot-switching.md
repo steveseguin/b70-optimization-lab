@@ -520,6 +520,20 @@ Fixed-harness continuation:
 | `1` | `20260607T170030Z` | pass | `779.20` | `2.559 s` |
 | `2` | `20260607T171530Z` | pass | `784.75` | `2.546 s` |
 
+Frontdoor streaming fix: an apparent c1 TTFT regression after the soak was
+traced to the LAN proxy, not the vLLM backend. The backend streamed first text
+in about `34 ms`, but `scripts/openai-lan-frontdoor.py` was forwarding with
+`response.read(65536)`, which buffered SSE events. The frontdoor now forwards
+`text/event-stream` responses line-by-line and flushes each line.
+
+After restarting only `b70-openai-frontdoor.service`, public endpoint TTFT
+matched the backend again:
+
+| Shape | Concurrency | Mean TTFT | Wall aggregate output tok/s |
+| --- | ---: | ---: | ---: |
+| `119` prompt tokens, `512` output tokens | `1` | `0.036 s` | `112.87` |
+| `119` prompt tokens, `512` output tokens | `8` | `0.099 s` | `783.62` |
+
 512-output scaling on the same production endpoint:
 
 | Concurrency | Wall aggregate output tok/s |

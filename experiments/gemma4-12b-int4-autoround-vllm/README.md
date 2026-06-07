@@ -615,6 +615,37 @@ Continuation result:
 | `1` | `20260607T170030Z` | pass | `779.20` | `2.559 s` |
 | `2` | `20260607T171530Z` | pass | `784.75` | `2.546 s` |
 
+## Frontdoor Streaming Fix
+
+The first c1 post-soak benchmark appeared to show about `2.16 s` TTFT for a
+`119`-token prompt with `512` generated tokens. Direct backend testing showed
+this was not model/prefill latency: vLLM on `127.0.0.1:18080` streamed first
+text in about `34 ms`.
+
+Cause: the LAN frontdoor was proxying backend responses with
+`response.read(65536)`. For `text/event-stream` responses this can buffer many
+SSE events before forwarding them, making client-observed TTFT look much worse
+than backend TTFT.
+
+Fix: `scripts/openai-lan-frontdoor.py` now forwards `text/event-stream`
+responses line-by-line and flushes after every SSE line.
+
+Clean public-endpoint checks after restarting only the frontdoor:
+
+| Shape | Concurrency | Prompt tokens each | Output tokens each | Mean TTFT | Wall aggregate output tok/s |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| short decode | `1` | `119` | `512` | `0.036 s` | `112.87` |
+| short decode | `8` | `119` | `512` | `0.099 s` | `783.62` |
+
+Direct frontdoor/backend streaming comparison after the fix:
+
+| Endpoint | Max tokens | First text |
+| --- | ---: | ---: |
+| frontdoor `:8000` | `128` | `0.034 s` |
+| backend `:18080` | `128` | `0.034 s` |
+| frontdoor `:8000` | `512` | `0.037 s` |
+| backend `:18080` | `512` | `0.034 s` |
+
 Raw soak paths:
 
 ```text
