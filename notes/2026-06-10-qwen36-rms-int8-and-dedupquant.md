@@ -180,3 +180,29 @@ Stop the endpoint before swapping rebuilt extension binaries.
 
 The live service was restored to the accepted no-prefix TP4 32K profile without
 `VLLM_XPU_DEDUP_INT8_QUANT` and without RMS INT8 fusion enabled.
+
+## Additional Scheduler/KV Screen: Disable Hybrid KV
+
+Candidate:
+
+- flag delta: `--disable-hybrid-kv-cache-manager`
+- session: `qwen36-tp4-noprefix-nohybridkv-32k`
+- cache:
+  `/mnt/fast-ai/vllm-cache-exp/qwen36-35b-a3b-quark-int8-tp4-piecewise-graph-nohybridkv-32k-noprefix`
+- log:
+  `/tmp/qwen36-quark-int8-tp4-nohybridkv-32k-noprefix.log`
+
+Result: startup failure before serving.
+
+The engine warned that the hybrid KV cache manager was disabled for a hybrid
+model, then failed KV cache initialization:
+
+`ValueError: Hybrid KV cache manager is disabled but failed to convert the KV cache specs to one unified type.`
+
+This is not a performance knob for this checkpoint as currently configured.
+Rejected without running speed or quality gates. The accepted no-prefix TP4 32K
+service was restored after the failed startup.
+
+Artifact:
+
+- `data/qwen36-quark-int8-tp4-noprefix-nohybridkv-startup-fail-20260610.json`

@@ -1,0 +1,37 @@
+{
+  "run_id": "qwen36-quark-int8-tp4-noprefix-nohybridkv-startup-fail-20260610",
+  "date": "2026-06-10",
+  "model": "Qwen3.6-35B-A3B-Quark-W8A8-INT8",
+  "checkpoint": "/mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118",
+  "candidate": {
+    "name": "nohybridkv",
+    "change": "Add --disable-hybrid-kv-cache-manager to the accepted TP4 no-prefix 32K profile.",
+    "cache_root": "/mnt/fast-ai/vllm-cache-exp/qwen36-35b-a3b-quark-int8-tp4-piecewise-graph-nohybridkv-32k-noprefix",
+    "log": "/tmp/qwen36-quark-int8-tp4-nohybridkv-32k-noprefix.log"
+  },
+  "accepted_baseline": {
+    "tensor_parallel_size": 4,
+    "max_model_len": 32768,
+    "max_num_batched_tokens": 8192,
+    "max_num_seqs": 48,
+    "prefix_caching": false,
+    "quantization": "quark",
+    "compilation_config": {
+      "cudagraph_mode": "PIECEWISE"
+    }
+  },
+  "result": {
+    "status": "startup_failed",
+    "benchmark_ran": false,
+    "quality_ran": false,
+    "failure": "EngineCore failed during KV cache initialization.",
+    "root_error": "ValueError: Hybrid KV cache manager is disabled but failed to convert the KV cache specs to one unified type.",
+    "observations": [
+      "vLLM identified this as a hybrid model.",
+      "XPU attention block size and mamba padding logs matched the accepted profile before the failure.",
+      "Available KV cache memory before failure was 20.67 GiB, matching the accepted profile.",
+      "The accepted no-prefix TP4 32K service was restored after the failure."
+    ]
+  },
+  "decision": "reject"
+}
