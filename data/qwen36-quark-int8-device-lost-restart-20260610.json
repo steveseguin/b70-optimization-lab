@@ -1,0 +1,25 @@
+{
+  "date": "2026-06-10",
+  "incident": "Qwen3.6 Quark INT8 backend device lost after rejected local fused-kernel tests",
+  "status": "recovered",
+  "service": {
+    "backend": "127.0.0.1:18080",
+    "frontdoor": "127.0.0.1:8000",
+    "tmux_session": "qwen36-graph-tp4-customar-clone-32k"
+  },
+  "observed_failure": {
+    "time_local": "2026-06-10 01:32:00 America/Toronto",
+    "request_context": "external /v1/chat/completions request from 10.0.0.214 with prompt_token_ids_len=4138 and max_tokens=2048",
+    "primary_error": "RuntimeError: level_zero backend failed with error: 20 (UR_RESULT_ERROR_DEVICE_LOST)",
+    "shutdown_error": "level_zero backend failed with error: 40 (UR_RESULT_ERROR_OUT_OF_RESOURCES)",
+    "process_exit": "EXIT:139"
+  },
+  "likely_cause": "The incident followed several failed local XPU extension diagnostics that produced Level Zero aborts and a hung fused op. The accepted baseline itself had previously passed endpoint health checks; this is treated as contamination from the rejected experiment, not a promoted-recipe failure.",
+  "recovery": {
+    "stale_workers": "none found after crash",
+    "gpu_discovery": "all four Intel Arc Pro B70 devices enumerated with xpu-smi discovery",
+    "action": "relaunched the accepted TP4 32K PIECEWISE graph baseline in tmux with the same cache and environment",
+    "readiness": "backend /v1/models ready on attempt 37; frontdoor /v1/models ready"
+  },
+  "lesson": "Future unsafe XPU kernel diagnostics should not run on the same visible devices while the production-candidate endpoint is serving traffic. Use a stopped backend or a single isolated device with the frontdoor paused before testing extension binaries that can abort Level Zero."
+}
