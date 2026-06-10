@@ -1,0 +1,67 @@
+{
+  "date": "2026-06-10",
+  "candidate": "qwen36-quark-int8-tp4-ngram5-cg128-nochunk-mbt32768",
+  "decision": "rejected_speed_gate",
+  "model": "nameistoken/Qwen3.6-35B-A3B-Quark-W8A8-INT8",
+  "served_model_name": "qwen36-35b-a3b-fp8",
+  "runtime": {
+    "tensor_parallel_size": 4,
+    "max_model_len": 32768,
+    "quantization": "quark",
+    "runtime_dtype": "bfloat16",
+    "prefix_caching": false,
+    "chunked_prefill": false,
+    "max_num_batched_tokens": 32768,
+    "max_num_seqs": 48,
+    "cudagraph_mode": "PIECEWISE",
+    "max_cudagraph_capture_size": 128,
+    "speculative_config": {
+      "method": "ngram",
+      "num_speculative_tokens": 5,
+      "prompt_lookup_min": 2,
+      "prompt_lookup_max": 5
+    }
+  },
+  "startup": {
+    "started": true,
+    "warning": "model does not officially support disabling chunked prefill",
+    "async_scheduling": "disabled_by_ngram_speculative_decoding",
+    "compile_range": [1, 32768],
+    "graph_capture_sizes": 19,
+    "model_load_memory_gib": 8.58,
+    "available_kv_cache_memory_gib": 18.37,
+    "gpu_kv_cache_tokens": 1459705,
+    "max_concurrency_32768_tokens": 44.55,
+    "graph_capture_seconds": 14,
+    "graph_capture_memory_gib": 1.60,
+    "log": "/tmp/qwen36-quark-int8-tp4-ngram5-cg128-nochunk-mbt32768-20260610.log"
+  },
+  "single_request_gate": {
+    "artifact": "data/qwen36-quark-int8-tp4-ngram5-cg128-nochunk-mbt32768-single-20260610.json",
+    "prompt_tokens": 512,
+    "requested_output_tokens": 512,
+    "repeats": 8,
+    "mode": "stream",
+    "tok_s_out_client_after_first_chunk_corrected_mean": 98.10297085386148,
+    "tok_s_out_client_e2e_mean": 94.25329296832349,
+    "ttft_ms_client_mean": 75.39676626038272
+  },
+  "accepted_control": {
+    "profile": "qwen36-quark-int8-tp4-noprefix-graph32k",
+    "tok_s_out_client_after_first_chunk_corrected_mean": 98.7741,
+    "tok_s_out_client_e2e_mean": 97.5295,
+    "ttft_ms_client_mean": 76.28
+  },
+  "spec_decode_metrics_observed": {
+    "mean_acceptance_length_samples": [2.47, 2.19],
+    "avg_draft_acceptance_rate_percent_samples": [30.6, 24.3]
+  },
+  "restore": {
+    "accepted_backend_restored": true,
+    "tmux_session": "qwen36-tp4-noprefix-32k",
+    "endpoint": "http://127.0.0.1:18080",
+    "health": "pass",
+    "completion_smoke": "pass",
+    "restored_max_concurrency_32768_tokens": 62.65
+  }
+}

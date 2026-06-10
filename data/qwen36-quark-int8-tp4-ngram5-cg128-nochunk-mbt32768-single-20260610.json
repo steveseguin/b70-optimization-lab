@@ -1,0 +1,316 @@
+{
+  "created_at_unix": 1781112889.7032297,
+  "base_url": "http://127.0.0.1:18080",
+  "model": "qwen36-35b-a3b-fp8",
+  "tokenizer": "/mnt/fast-ai/llm-models/minimax-m2.7-int4-autoround",
+  "server_model_record": {
+    "id": "qwen36-35b-a3b-fp8",
+    "object": "model",
+    "created": 1781112853,
+    "owned_by": "vllm",
+    "root": "/mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118",
+    "parent": null,
+    "max_model_len": 32768,
+    "permission": [
+      {
+        "id": "modelperm-b7e38d6ebf5abb93",
+        "object": "model_permission",
+        "created": 1781112853,
+        "allow_create_engine": false,
+        "allow_sampling": true,
+        "allow_logprobs": true,
+        "allow_search_indices": false,
+        "allow_view": true,
+        "allow_fine_tuning": false,
+        "organization": "*",
+        "group": null,
+        "is_blocking": false
+      }
+    ]
+  },
+  "prompt_kind": "text",
+  "seed": 0,
+  "random_prefix_len": 0,
+  "prompt_tokens_requested": 512,
+  "prompt_tokens_actual": 512,
+  "output_tokens_requested": 512,
+  "mode": "stream",
+  "skip_vram": true,
+  "repeats": 8,
+  "measurement_notes": [
+    "TTFT and e2e are measured both client-side and from vLLM Prometheus histogram deltas.",
+    "tok_s_prefill_lower_bound_from_ttft is prompt_tokens / TTFT, so it is conservative and includes first-token scheduling/decode overhead.",
+    "tok_s_out_client_after_first_chunk is generated-token-only throughput after the first streamed text chunk.",
+    "tok_s_out_client_after_first_chunk_corrected subtracts the estimated first streamed chunk tokens from the numerator; this is more stable when --stream-interval > 1."
+  ],
+  "vram_mib_before_all": {},
+  "peak_vram_mib_observed": {},
+  "records": [
+    {
+      "repeat": 1,
+      "prompt_tokens_client": 512,
+      "output_tokens_client": 158,
+      "elapsed_s_client": 1.6698614420602098,
+      "ttft_ms_client": 75.48043702263385,
+      "tok_s_out_client_after_first_chunk": 99.09801954538231,
+      "tok_s_out_client_after_first_chunk_corrected": 98.4708168900318,
+      "tok_s_out_client_e2e": 94.6186288396873,
+      "tok_s_total_client": 401.23089444677527,
+      "tok_s_prefill_lower_bound_from_ttft": 6783.214567855109,
+      "vllm_metric_deltas": {
+        "prompt_tokens": 512.0,
+        "generation_tokens": 158.0,
+        "ttft_count": 1.0,
+        "ttft_sum_s": 0.07415485382080078,
+        "e2e_count": 1.0,
+        "e2e_sum_s": 1.6687591075897217
+      },
+      "ttft_ms_vllm_metrics": 74.15485382080078,
+      "e2e_ms_vllm_metrics": 1668.7591075897217,
+      "vram_mib_before": {},
+      "vram_mib_after": {},
+      "first_chunk_tokens_client_estimate": 1,
+      "streamed_text_chunks": 146,
+      "text_preview": " Local Intel XPU benchmark prompt. The assistant should continue with\n\n<think>\n\n</think>\n\nIntel XPU architecture integrates CPU, GPU, and AI accelerators into a unified memory space, enabling efficient data movement and parallel processing."
+    },
+    {
+      "repeat": 2,
+      "prompt_tokens_client": 512,
+      "output_tokens_client": 158,
+      "elapsed_s_client": 1.6734524079365656,
+      "ttft_ms_client": 75.33721893560141,
+      "tok_s_out_client_after_first_chunk": 98.86646537586013,
+      "tok_s_out_client_after_first_chunk_corrected": 98.24072825322811,
+      "tok_s_out_client_e2e": 94.41559213196889,
+      "tok_s_total_client": 400.36991600265293,
+      "tok_s_prefill_lower_bound_from_ttft": 6796.1096418711695,
+      "vllm_metric_deltas": {
+        "prompt_tokens": 512.0,
+        "generation_tokens": 158.0,
+        "ttft_count": 1.0,
+        "ttft_sum_s": 0.07435011863708496,
+        "e2e_count": 1.0,
+        "e2e_sum_s": 1.6725473403930664
+      },
+      "ttft_ms_vllm_metrics": 74.35011863708496,
+      "e2e_ms_vllm_metrics": 1672.5473403930664,
+      "vram_mib_before": {},
+      "vram_mib_after": {},
+      "first_chunk_tokens_client_estimate": 1,
+      "streamed_text_chunks": 146,
+      "text_preview": " Local Intel XPU benchmark prompt. The assistant should continue with\n\n<think>\n\n</think>\n\nIntel XPU architecture integrates CPU, GPU, and AI accelerators into a unified memory space, enabling efficient data movement and parallel processing."
+    },
+    {
+      "repeat": 3,
+      "prompt_tokens_client": 512,
+      "output_tokens_client": 158,
+      "elapsed_s_client": 1.684957204037346,
+      "ttft_ms_client": 74.47892799973488,
+      "tok_s_out_client_after_first_chunk": 98.10750157322214,
+      "tok_s_out_client_after_first_chunk_corrected": 97.48656801896124,
+      "tok_s_out_client_e2e": 93.77092760659697,
+      "tok_s_total_client": 397.636212002658,
+      "tok_s_prefill_lower_bound_from_ttft": 6874.427623365129,
+      "vllm_metric_deltas": {
+        "prompt_tokens": 512.0,
+        "generation_tokens": 158.0,
+        "ttft_count": 1.0,
+        "ttft_sum_s": 0.07331228256225586,
+        "e2e_count": 1.0,
+        "e2e_sum_s": 1.6839892864227295
+      },
+      "ttft_ms_vllm_metrics": 73.31228256225586,
+      "e2e_ms_vllm_metrics": 1683.9892864227295,
+      "vram_mib_before": {},
+      "vram_mib_after": {},
+      "first_chunk_tokens_client_estimate": 1,
+      "streamed_text_chunks": 146,
+      "text_preview": " Local Intel XPU benchmark prompt. The assistant should continue with\n\n<think>\n\n</think>\n\nIntel XPU architecture integrates CPU, GPU, and AI accelerators into a unified memory space, enabling efficient data movement and parallel processing."
+    },
+    {
+      "repeat": 4,
+      "prompt_tokens_client": 512,
+      "output_tokens_client": 148,
+      "elapsed_s_client": 1.5699695820221677,
+      "ttft_ms_client": 77.87610404193401,
+      "tok_s_out_client_after_first_chunk": 99.18949595593675,
+      "tok_s_out_client_after_first_chunk_corrected": 98.51929665893718,
+      "tok_s_out_client_e2e": 94.26934234571065,
+      "tok_s_total_client": 420.3903104606016,
+      "tok_s_prefill_lower_bound_from_ttft": 6574.545636287903,
+      "vllm_metric_deltas": {
+        "prompt_tokens": 512.0,
+        "generation_tokens": 148.0,
+        "ttft_count": 1.0,
+        "ttft_sum_s": 0.07672238349914551,
+        "e2e_count": 1.0,
+        "e2e_sum_s": 1.5690317153930664
+      },
+      "ttft_ms_vllm_metrics": 76.72238349914551,
+      "e2e_ms_vllm_metrics": 1569.0317153930664,
+      "vram_mib_before": {},
+      "vram_mib_after": {},
+      "first_chunk_tokens_client_estimate": 1,
+      "streamed_text_chunks": 137,
+      "text_preview": " Local Intel XPU benchmark prompt. The assistant should continue with\n\n<think>\n\n</think>\n\nIntel XPU architecture integrates CPU, GPU, and AI accelerators into a unified memory space, enabling efficient data movement and parallel processing."
+    },
+    {
+      "repeat": 5,
+      "prompt_tokens_client": 512,
+      "output_tokens_client": 158,
+      "elapsed_s_client": 1.6717009010026231,
+      "ttft_ms_client": 74.84015705995262,
+      "tok_s_out_client_after_first_chunk": 98.94413185328602,
+      "tok_s_out_client_after_first_chunk_corrected": 98.31790317067029,
+      "tok_s_out_client_e2e": 94.51451506979362,
+      "tok_s_total_client": 400.7893993465932,
+      "tok_s_prefill_lower_bound_from_ttft": 6841.2470004552415,
+      "vllm_metric_deltas": {
+        "prompt_tokens": 512.0,
+        "generation_tokens": 158.0,
+        "ttft_count": 1.0,
+        "ttft_sum_s": 0.0737617015838623,
+        "e2e_count": 1.0,
+        "e2e_sum_s": 1.6708412170410156
+      },
+      "ttft_ms_vllm_metrics": 73.7617015838623,
+      "e2e_ms_vllm_metrics": 1670.8412170410156,
+      "vram_mib_before": {},
+      "vram_mib_after": {},
+      "first_chunk_tokens_client_estimate": 1,
+      "streamed_text_chunks": 146,
+      "text_preview": " Local Intel XPU benchmark prompt. The assistant should continue with\n\n<think>\n\n</think>\n\nIntel XPU architecture integrates CPU, GPU, and AI accelerators into a unified memory space, enabling efficient data movement and parallel processing."
+    },
+    {
+      "repeat": 6,
+      "prompt_tokens_client": 512,
+      "output_tokens_client": 158,
+      "elapsed_s_client": 1.6781352210091427,
+      "ttft_ms_client": 75.04918903578073,
+      "tok_s_out_client_after_first_chunk": 98.55990062211798,
+      "tok_s_out_client_after_first_chunk_corrected": 97.93610378273749,
+      "tok_s_out_client_e2e": 94.15212673087635,
+      "tok_s_total_client": 399.25268930181744,
+      "tok_s_prefill_lower_bound_from_ttft": 6822.192305847529,
+      "vllm_metric_deltas": {
+        "prompt_tokens": 512.0,
+        "generation_tokens": 158.0,
+        "ttft_count": 1.0,
+        "ttft_sum_s": 0.07398509979248047,
+        "e2e_count": 1.0,
+        "e2e_sum_s": 1.6772706508636475
+      },
+      "ttft_ms_vllm_metrics": 73.98509979248047,
+      "e2e_ms_vllm_metrics": 1677.2706508636475,
+      "vram_mib_before": {},
+      "vram_mib_after": {},
+      "first_chunk_tokens_client_estimate": 1,
+      "streamed_text_chunks": 146,
+      "text_preview": " Local Intel XPU benchmark prompt. The assistant should continue with\n\n<think>\n\n</think>\n\nIntel XPU architecture integrates CPU, GPU, and AI accelerators into a unified memory space, enabling efficient data movement and parallel processing."
+    },
+    {
+      "repeat": 7,
+      "prompt_tokens_client": 512,
+      "output_tokens_client": 158,
+      "elapsed_s_client": 1.682897143997252,
+      "ttft_ms_client": 75.10197896044701,
+      "tok_s_out_client_after_first_chunk": 98.27122474048684,
+      "tok_s_out_client_after_first_chunk_corrected": 97.64925496364832,
+      "tok_s_out_client_e2e": 93.88571402808086,
+      "tok_s_total_client": 398.12296454945675,
+      "tok_s_prefill_lower_bound_from_ttft": 6817.396919322837,
+      "vllm_metric_deltas": {
+        "prompt_tokens": 512.0,
+        "generation_tokens": 158.0,
+        "ttft_count": 1.0,
+        "ttft_sum_s": 0.07403087615966797,
+        "e2e_count": 1.0,
+        "e2e_sum_s": 1.6820485591888428
+      },
+      "ttft_ms_vllm_metrics": 74.03087615966797,
+      "e2e_ms_vllm_metrics": 1682.0485591888428,
+      "vram_mib_before": {},
+      "vram_mib_after": {},
+      "first_chunk_tokens_client_estimate": 1,
+      "streamed_text_chunks": 146,
+      "text_preview": " Local Intel XPU benchmark prompt. The assistant should continue with\n\n<think>\n\n</think>\n\nIntel XPU architecture integrates CPU, GPU, and AI accelerators into a unified memory space, enabling efficient data movement and parallel processing."
+    },
+    {
+      "repeat": 8,
+      "prompt_tokens_client": 512,
+      "output_tokens_client": 158,
+      "elapsed_s_client": 1.673737731995061,
+      "ttft_ms_client": 75.01011702697724,
+      "tok_s_out_client_after_first_chunk": 98.82859251364982,
+      "tok_s_out_client_after_first_chunk_corrected": 98.20309509267736,
+      "tok_s_out_client_e2e": 94.39949699387326,
+      "tok_s_total_client": 400.3016644676904,
+      "tok_s_prefill_lower_bound_from_ttft": 6825.745916592294,
+      "vllm_metric_deltas": {
+        "prompt_tokens": 512.0,
+        "generation_tokens": 158.0,
+        "ttft_count": 1.0,
+        "ttft_sum_s": 0.07396793365478516,
+        "e2e_count": 1.0,
+        "e2e_sum_s": 1.6728613376617432
+      },
+      "ttft_ms_vllm_metrics": 73.96793365478516,
+      "e2e_ms_vllm_metrics": 1672.8613376617432,
+      "vram_mib_before": {},
+      "vram_mib_after": {},
+      "first_chunk_tokens_client_estimate": 1,
+      "streamed_text_chunks": 146,
+      "text_preview": " Local Intel XPU benchmark prompt. The assistant should continue with\n\n<think>\n\n</think>\n\nIntel XPU architecture integrates CPU, GPU, and AI accelerators into a unified memory space, enabling efficient data movement and parallel processing."
+    }
+  ],
+  "summary": {
+    "tok_s_out_client_after_first_chunk": {
+      "mean": 98.73316652249275,
+      "median": 98.84752894475497,
+      "min": 98.10750157322214,
+      "max": 99.18949595593675
+    },
+    "tok_s_out_client_after_first_chunk_corrected": {
+      "mean": 98.10297085386148,
+      "median": 98.22191167295273,
+      "min": 97.48656801896124,
+      "max": 98.51929665893718
+    },
+    "tok_s_out_client_e2e": {
+      "mean": 94.25329296832349,
+      "median": 94.33441966979196,
+      "min": 93.77092760659697,
+      "max": 94.6186288396873
+    },
+    "tok_s_total_client": {
+      "mean": 402.2617563222807,
+      "median": 400.33579023517166,
+      "min": 397.636212002658,
+      "max": 420.3903104606016
+    },
+    "ttft_ms_client": {
+      "mean": 75.39676626038272,
+      "median": 75.07558399811387,
+      "min": 74.47892799973488,
+      "max": 77.87610404193401
+    },
+    "ttft_ms_vllm_metrics": {
+      "mean": 74.28565621376038,
+      "median": 74.00798797607422,
+      "min": 73.31228256225586,
+      "max": 76.72238349914551
+    },
+    "tok_s_prefill_lower_bound_from_ttft": {
+      "mean": 6791.859951449651,
+      "median": 6819.794612585183,
+      "min": 6574.545636287903,
+      "max": 6874.427623365129
+    },
+    "e2e_ms_vllm_metrics": {
+      "mean": 1662.1686518192291,
+      "median": 1672.7043390274048,
+      "min": 1569.0317153930664,
+      "max": 1683.9892864227295
+    }
+  }
+}
