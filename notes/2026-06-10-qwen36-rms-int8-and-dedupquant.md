@@ -146,6 +146,13 @@ Repeat failures:
 - 32-repeat rerun: `31/32` expected output, one outlier:
   `blue whiskey whiskey green, orange, red`
 
+Fairness control after restoring the accepted no-dedup service:
+
+- exact checks: pass
+- long-context recall: pass
+- baseline parity: pass
+- 32-repeat stability: pass
+
 Direct `18080` quality was not comparable because the LAN frontdoor applies the
 chat behavior used by the accepted baseline; direct backend checks failed all
 exact cases and were not used for the adoption decision.
@@ -160,6 +167,7 @@ Artifacts:
 - `data/qwen36-quark-int8-tp4-noprefix-dedupquant3-frontdoor-quality-20260610.json`
 - `data/qwen36-quark-int8-tp4-noprefix-dedupquant3-frontdoor-quality-rerun32-20260610.json`
 - `data/qwen36-quark-int8-tp4-noprefix-dedupquant3-direct-quality-rerun32-20260610.json`
+- `data/qwen36-quark-int8-tp4-noprefix-accepted-frontdoor-quality-rerun32-20260610.json`
 
 ## Operational Lesson
 
@@ -172,4 +180,3 @@ Stop the endpoint before swapping rebuilt extension binaries.
 
 The live service was restored to the accepted no-prefix TP4 32K profile without
 `VLLM_XPU_DEDUP_INT8_QUANT` and without RMS INT8 fusion enabled.
-
