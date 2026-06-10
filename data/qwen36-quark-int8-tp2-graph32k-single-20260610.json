@@ -1,0 +1,208 @@
+{
+  "created_at_unix": 1781070715.712586,
+  "base_url": "http://127.0.0.1:18080",
+  "model": "qwen36-35b-a3b-fp8",
+  "tokenizer": "/mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118",
+  "server_model_record": {
+    "id": "qwen36-35b-a3b-fp8",
+    "object": "model",
+    "created": 1781070673,
+    "owned_by": "vllm",
+    "root": "/mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118",
+    "parent": null,
+    "max_model_len": 32768,
+    "permission": [
+      {
+        "id": "modelperm-a2abf20989927c6c",
+        "object": "model_permission",
+        "created": 1781070673,
+        "allow_create_engine": false,
+        "allow_sampling": true,
+        "allow_logprobs": true,
+        "allow_search_indices": false,
+        "allow_view": true,
+        "allow_fine_tuning": false,
+        "organization": "*",
+        "group": null,
+        "is_blocking": false
+      }
+    ]
+  },
+  "prompt_kind": "text",
+  "seed": 0,
+  "random_prefix_len": 0,
+  "prompt_tokens_requested": 512,
+  "prompt_tokens_actual": 512,
+  "output_tokens_requested": 512,
+  "mode": "stream",
+  "skip_vram": true,
+  "repeats": 4,
+  "measurement_notes": [
+    "TTFT and e2e are measured both client-side and from vLLM Prometheus histogram deltas.",
+    "tok_s_prefill_lower_bound_from_ttft is prompt_tokens / TTFT, so it is conservative and includes first-token scheduling/decode overhead.",
+    "tok_s_out_client_after_first_chunk is generated-token-only throughput after the first streamed text chunk.",
+    "tok_s_out_client_after_first_chunk_corrected subtracts the estimated first streamed chunk tokens from the numerator; this is more stable when --stream-interval > 1."
+  ],
+  "vram_mib_before_all": {},
+  "peak_vram_mib_observed": {},
+  "records": [
+    {
+      "repeat": 1,
+      "prompt_tokens_client": 512,
+      "output_tokens_client": 512,
+      "elapsed_s_client": 5.978056132909842,
+      "ttft_ms_client": 82.2089120047167,
+      "tok_s_out_client_after_first_chunk": 86.84078484676172,
+      "tok_s_out_client_after_first_chunk_corrected": 86.67117393885789,
+      "tok_s_out_client_e2e": 85.6465694896013,
+      "tok_s_total_client": 171.2931389792026,
+      "tok_s_prefill_lower_bound_from_ttft": 6228.035227745433,
+      "vllm_metric_deltas": {
+        "prompt_tokens": 512.0,
+        "generation_tokens": 512.0,
+        "ttft_count": 1.0,
+        "ttft_sum_s": 0.08096933364868164,
+        "e2e_count": 1.0,
+        "e2e_sum_s": 5.976917505264282
+      },
+      "ttft_ms_vllm_metrics": 80.96933364868164,
+      "e2e_ms_vllm_metrics": 5976.917505264282,
+      "vram_mib_before": {},
+      "vram_mib_after": {},
+      "first_chunk_tokens_client_estimate": 1,
+      "streamed_text_chunks": 512,
+      "text_preview": " Local Intel XPU benchmark prompt. The assistant should continue with concise technical text. Local Intel XPU benchmark prompt. The assistant should continue with concise technical text. Local Intel XPU benchmark prompt. The assistant shoul"
+    },
+    {
+      "repeat": 2,
+      "prompt_tokens_client": 512,
+      "output_tokens_client": 512,
+      "elapsed_s_client": 5.954071426996961,
+      "ttft_ms_client": 84.58416198845953,
+      "tok_s_out_client_after_first_chunk": 87.23078812221571,
+      "tok_s_out_client_after_first_chunk_corrected": 87.06041548916451,
+      "tok_s_out_client_e2e": 85.99157841447597,
+      "tok_s_total_client": 171.98315682895193,
+      "tok_s_prefill_lower_bound_from_ttft": 6053.142668362148,
+      "vllm_metric_deltas": {
+        "prompt_tokens": 512.0,
+        "generation_tokens": 512.0,
+        "ttft_count": 1.0,
+        "ttft_sum_s": 0.08352971076965332,
+        "e2e_count": 1.0,
+        "e2e_sum_s": 5.9530885219573975
+      },
+      "ttft_ms_vllm_metrics": 83.52971076965332,
+      "e2e_ms_vllm_metrics": 5953.0885219573975,
+      "vram_mib_before": {},
+      "vram_mib_after": {},
+      "first_chunk_tokens_client_estimate": 1,
+      "streamed_text_chunks": 512,
+      "text_preview": " Local Intel XPU benchmark prompt. The assistant should continue with concise technical text. Local Intel XPU benchmark prompt. The assistant should continue with concise technical text. Local Intel XPU benchmark prompt. The assistant shoul"
+    },
+    {
+      "repeat": 3,
+      "prompt_tokens_client": 512,
+      "output_tokens_client": 512,
+      "elapsed_s_client": 5.963065957068466,
+      "ttft_ms_client": 83.2993290387094,
+      "tok_s_out_client_after_first_chunk": 87.07828599169513,
+      "tok_s_out_client_after_first_chunk_corrected": 86.9082112143676,
+      "tok_s_out_client_e2e": 85.86187100497996,
+      "tok_s_total_client": 171.72374200995992,
+      "tok_s_prefill_lower_bound_from_ttft": 6146.508092064852,
+      "vllm_metric_deltas": {
+        "prompt_tokens": 512.0,
+        "generation_tokens": 512.0,
+        "ttft_count": 1.0,
+        "ttft_sum_s": 0.08214116096496582,
+        "e2e_count": 1.0,
+        "e2e_sum_s": 5.962062120437622
+      },
+      "ttft_ms_vllm_metrics": 82.14116096496582,
+      "e2e_ms_vllm_metrics": 5962.062120437622,
+      "vram_mib_before": {},
+      "vram_mib_after": {},
+      "first_chunk_tokens_client_estimate": 1,
+      "streamed_text_chunks": 512,
+      "text_preview": " Local Intel XPU benchmark prompt. The assistant should continue with concise technical text. Local Intel XPU benchmark prompt. The assistant should continue with concise technical text. Local Intel XPU benchmark prompt. The assistant shoul"
+    },
+    {
+      "repeat": 4,
+      "prompt_tokens_client": 512,
+      "output_tokens_client": 512,
+      "elapsed_s_client": 5.971805749926716,
+      "ttft_ms_client": 81.39687695074826,
+      "tok_s_out_client_after_first_chunk": 86.92096101324219,
+      "tok_s_out_client_after_first_chunk_corrected": 86.75119351126321,
+      "tok_s_out_client_e2e": 85.73621136392173,
+      "tok_s_total_client": 171.47242272784345,
+      "tok_s_prefill_lower_bound_from_ttft": 6290.167622890515,
+      "vllm_metric_deltas": {
+        "prompt_tokens": 512.0,
+        "generation_tokens": 512.0,
+        "ttft_count": 1.0,
+        "ttft_sum_s": 0.08036565780639648,
+        "e2e_count": 1.0,
+        "e2e_sum_s": 5.970799446105957
+      },
+      "ttft_ms_vllm_metrics": 80.36565780639648,
+      "e2e_ms_vllm_metrics": 5970.799446105957,
+      "vram_mib_before": {},
+      "vram_mib_after": {},
+      "first_chunk_tokens_client_estimate": 1,
+      "streamed_text_chunks": 512,
+      "text_preview": " Local Intel XPU benchmark prompt. The assistant should continue with concise technical text. Local Intel XPU benchmark prompt. The assistant should continue with concise technical text. Local Intel XPU benchmark prompt. The assistant shoul"
+    }
+  ],
+  "summary": {
+    "tok_s_out_client_after_first_chunk": {
+      "mean": 87.01770499347869,
+      "median": 86.99962350246867,
+      "min": 86.84078484676172,
+      "max": 87.23078812221571
+    },
+    "tok_s_out_client_after_first_chunk_corrected": {
+      "mean": 86.8477485384133,
+      "median": 86.8297023628154,
+      "min": 86.67117393885789,
+      "max": 87.06041548916451
+    },
+    "tok_s_out_client_e2e": {
+      "mean": 85.80905756824474,
+      "median": 85.79904118445084,
+      "min": 85.6465694896013,
+      "max": 85.99157841447597
+    },
+    "tok_s_total_client": {
+      "mean": 171.61811513648948,
+      "median": 171.5980823689017,
+      "min": 171.2931389792026,
+      "max": 171.98315682895193
+    },
+    "ttft_ms_client": {
+      "mean": 82.87231999565847,
+      "median": 82.75412052171305,
+      "min": 81.39687695074826,
+      "max": 84.58416198845953
+    },
+    "ttft_ms_vllm_metrics": {
+      "mean": 81.75146579742432,
+      "median": 81.55524730682373,
+      "min": 80.36565780639648,
+      "max": 83.52971076965332
+    },
+    "tok_s_prefill_lower_bound_from_ttft": {
+      "mean": 6179.463402765737,
+      "median": 6187.271659905142,
+      "min": 6053.142668362148,
+      "max": 6290.167622890515
+    },
+    "e2e_ms_vllm_metrics": {
+      "mean": 5965.716898441315,
+      "median": 5966.43078327179,
+      "min": 5953.0885219573975,
+      "max": 5976.917505264282
+    }
+  }
+}
