@@ -1,0 +1,161 @@
+diff --git a/vllm/compilation/passes/pass_manager.py b/vllm/compilation/passes/pass_manager.py
+--- a/vllm/compilation/passes/pass_manager.py
++++ b/vllm/compilation/passes/pass_manager.py
+@@ -1,6 +1,7 @@
+ # SPDX-License-Identifier: Apache-2.0
+ # SPDX-FileCopyrightText: Copyright contributors to the vLLM project
+ import functools
++import os
+ from collections.abc import Callable
+ from typing import Any, ParamSpec, TypeVar
+ 
+@@ -40,6 +40,7 @@ if current_platform.is_cuda_alike():
+ elif current_platform.is_xpu():
+     from .fusion.rms_quant_fusion import RMSNormQuantFusionPass
+     from .fusion.sequence_parallelism import SequenceParallelismPass
++    from .utility.xpu_inplace_allreduce import XpuSafeInplaceAllReducePass
+ 
+@@ -200,6 +201,15 @@ class PostGradPassManager(CustomGraphPass):  # type: ignore[misc]
+                 self.passes += [SplitCoalescingPass(config)]
+                 self.passes += [QKNormRoPEFusionPass(config)]
+ 
++            if (
++                current_platform.is_xpu()
++                and os.getenv(
++                    "VLLM_XPU_EXPERIMENTAL_SAFE_INPLACE_ALLREDUCE", "0"
++                )
++                == "1"
++            ):
++                self.passes += [XpuSafeInplaceAllReducePass(config)]
++
+             self.ir_lowering = VllmIRLoweringPass(config)
+             self.clone_elimination = UnsafeCloneEliminationPass(config)
+             self.post_cleanup = PostCleanupPass(config)
+diff --git a/vllm/compilation/passes/utility/xpu_inplace_allreduce.py b/vllm/compilation/passes/utility/xpu_inplace_allreduce.py
+new file mode 100644
+--- /dev/null
++++ b/vllm/compilation/passes/utility/xpu_inplace_allreduce.py
+@@ -0,0 +1,124 @@
++# SPDX-License-Identifier: Apache-2.0
++# SPDX-FileCopyrightText: Copyright contributors to the vLLM project
++
++import os
++
++import torch
++from torch import fx
++
++from vllm.config import VllmConfig
++from vllm.logger import init_logger
++
++from ..fx_utils import is_func
++from ..vllm_inductor_pass import VllmInductorPass
++
++logger = init_logger(__name__)
++
++
++_VIEW_LIKE_TARGETS = {
++    torch.ops.aten.view.default,
++    torch.ops.aten.reshape.default,
++    torch.ops.aten._unsafe_view.default,
++    torch.ops.aten.permute.default,
++    torch.ops.aten.transpose.int,
++    torch.ops.aten.squeeze.dim,
++    torch.ops.aten.unsqueeze.default,
++}
++
++
++def _single_user(node: fx.Node, expected_user: fx.Node) -> bool:
++    return len(node.users) == 1 and expected_user in node.users
++
++
++def _is_view_like(node: fx.Node) -> bool:
++    return node.op == "call_function" and node.target in _VIEW_LIKE_TARGETS
++
++
++def _is_bfloat16_tensor(node: fx.Node) -> bool:
++    value = node.meta.get("val")
++    if value is None:
++        # Some compile paths do not preserve fake tensor metadata. Be
++        # conservative unless the caller explicitly opts out.
++        return (
++            os.environ.get(
++                "VLLM_XPU_SAFE_INPLACE_ALLREDUCE_REQUIRE_BF16", "1"
++            )
++            == "0"
++        )
++    return getattr(value, "dtype", None) == torch.bfloat16
++
++
++def _has_single_use_alias_chain(node: fx.Node, final_user: fx.Node) -> bool:
++    """Return true when mutating node cannot affect a later graph read.
++
++    For direct producers this means the all-reduce is the producer's only user.
++    For view-like nodes, the base tensor must also only feed that view. This is
++    intentionally narrower than alias analysis; it targets generated GEMM/view
++    and add-output all-reduce patterns without touching residual values that are
++    still live after the collective.
++    """
++    current = node
++    expected_user = final_user
++    while True:
++        if not _single_user(current, expected_user):
++            return False
++        if current.op == "placeholder":
++            return False
++        if not _is_view_like(current):
++            return True
++        base = current.args[0]
++        if not isinstance(base, fx.Node):
++            return False
++        expected_user = current
++        current = base
++
++
++class XpuSafeInplaceAllReducePass(VllmInductorPass):
++    """Replace safe out-of-place XPU all-reduces with in-place all-reduces."""
++
++    def __init__(self, vllm_config: VllmConfig) -> None:
++        super().__init__(vllm_config)
++
++    @VllmInductorPass.time_and_log
++    def __call__(self, graph: fx.Graph) -> None:
++        count = 0
++        skipped_dtype = 0
++        skipped_live = 0
++
++        for node in list(graph.nodes):
++            if not is_func(node, torch.ops.vllm.all_reduce.default):
++                continue
++
++            if not node.args or not isinstance(node.args[0], fx.Node):
++                skipped_live += 1
++                continue
++
++            input_node = node.args[0]
++            if not _is_bfloat16_tensor(input_node):
++                skipped_dtype += 1
++                continue
++
++            if not _has_single_use_alias_chain(input_node, node):
++                skipped_live += 1
++                continue
++
++            kwargs = dict(node.kwargs)
++            with graph.inserting_before(node):
++                graph.call_function(
++                    torch.ops.vllm.all_reduce_inplace.default,
++                    args=tuple(node.args),
++                    kwargs=kwargs,
++                )
++            node.replace_all_uses_with(input_node)
++            graph.erase_node(node)
++            count += 1
++
++        if count or skipped_dtype or skipped_live:
++            logger.info(
++                "XpuSafeInplaceAllReducePass rewrote %d all-reduce nodes "
++                "(skipped_live=%d skipped_dtype=%d)",
++                count,
++                skipped_live,
++                skipped_dtype,
++            )
