@@ -1,0 +1,96 @@
+diff --git a/vllm/model_executor/layers/fused_moe/experts/xpu_moe.py b/vllm/model_executor/layers/fused_moe/experts/xpu_moe.py
+index 000000000..000000000 100644
+--- a/vllm/model_executor/layers/fused_moe/experts/xpu_moe.py
++++ b/vllm/model_executor/layers/fused_moe/experts/xpu_moe.py
+@@
+ XPU_INT8_MOE_MIXED_WORKSPACE_ENV = "VLLM_XPU_INT8_MOE_MIXED_WORKSPACE"
++XPU_INT8_MOE_LAYER_SCRATCH_ENV = "VLLM_XPU_INT8_MOE_LAYER_SCRATCH"
++XPU_INT8_MOE_LAYER_SCRATCH_MAX_ROWS_ENV = (
++    "VLLM_XPU_INT8_MOE_LAYER_SCRATCH_MAX_ROWS")
+@@
+ def _xpu_int8_moe_mixed_workspace_enabled() -> bool:
+     value = os.environ.get(XPU_INT8_MOE_MIXED_WORKSPACE_ENV, "0")
+     return value.strip().upper() in ("1", "ON", "TRUE", "YES", "Y")
++
++
++def _xpu_int8_moe_layer_scratch_enabled() -> bool:
++    value = os.environ.get(XPU_INT8_MOE_LAYER_SCRATCH_ENV, "0")
++    return value.strip().upper() in ("1", "ON", "TRUE", "YES", "Y")
++
++
++def _xpu_int8_moe_layer_scratch_max_rows() -> int:
++    try:
++        return int(os.environ.get(XPU_INT8_MOE_LAYER_SCRATCH_MAX_ROWS_ENV,
++                                  "64"))
++    except ValueError:
++        return 64
+@@
+         self.is_fp8 = False
+         self.is_mxfp4 = False
+         self.is_int8 = False
++        self._xpu_int8_layer_scratch: dict[tuple, dict[str, torch.Tensor]] = {}
+@@
+     def finalize_weight_and_reduce_impl(self) -> mk.TopKWeightAndReduce:
+         return TopKWeightAndReduceNoOP()
++
++    def _get_int8_layer_scratch(
++        self,
++        hidden_states: torch.Tensor,
++        w1: torch.Tensor,
++        topk: int,
++        activation: MoEActivation,
++    ) -> dict[str, torch.Tensor] | None:
++        if not (self.is_int8 and _xpu_int8_moe_layer_scratch_enabled()):
++            return None
++        num_rows = hidden_states.shape[0]
++        max_rows = _xpu_int8_moe_layer_scratch_max_rows()
++        if max_rows > 0 and num_rows > max_rows:
++            return None
++        hidden_size = hidden_states.shape[1]
++        inter_size = w1.shape[-1] // 2
++        inter_size_scale = 2 if activation.value == "relu2_no_mul" else 1
++        num_moe_inputs = num_rows * topk
++        dtype = hidden_states.dtype
++        device = hidden_states.device
++        key = (num_rows, hidden_size, inter_size, topk, inter_size_scale,
++               dtype, device)
++        scratch = self._xpu_int8_layer_scratch.get(key)
++        if scratch is not None:
++            return scratch
++        scratch = {
++            "remapped_hidden_states":
++            torch.empty((num_moe_inputs, hidden_size),
++                        dtype=dtype,
++                        device=device),
++            "gemm1_output":
++            torch.empty((num_moe_inputs, 2 * inter_size),
++                        dtype=dtype,
++                        device=device),
++            "act_output":
++            torch.empty((num_moe_inputs, inter_size * inter_size_scale),
++                        dtype=dtype,
++                        device=device),
++            "gemm2_output":
++            torch.empty((num_moe_inputs, hidden_size),
++                        dtype=dtype,
++                        device=device),
++            "rows_per_expert":
++            torch.empty((self.moe_config.num_local_experts, ),
++                        dtype=torch.int32,
++                        device=device),
++            "unpermuted_row_to_permuted_row":
++            torch.empty((num_rows, topk), dtype=torch.int32, device=device),
++        }
++        self._xpu_int8_layer_scratch[key] = scratch
++        return scratch
+@@
+         topk = topk_ids.size(-1)
+         scratch = None
++        scratch = self._get_int8_layer_scratch(hidden_states, w1, topk,
++                                               activation)
+-        if (
++        if scratch is None and (
+             self.is_int8
+             and _xpu_int8_moe_mixed_workspace_enabled()
+             and is_workspace_manager_initialized()
+         ):
