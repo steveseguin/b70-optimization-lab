@@ -1,0 +1,45 @@
+{
+  "date": "2026-06-10",
+  "screen": "Qwen3.6 XPU RMSNorm plus INT8 quant BF16-weight prescreen",
+  "status": "rejected_before_endpoint",
+  "reason": "The Qwen3.6 graph uses BF16 RMSNorm weights, but the fused RMSNorm plus INT8 quant path did not exactly match the unfused vllm_ir.rms_norm -> BF16 -> per_token_quant_int8_xpu reference for BF16 weights.",
+  "runtime_shape": {
+    "rows": 18,
+    "hidden_size": 2048,
+    "input_dtype": "torch.bfloat16",
+    "epsilon": 1e-6
+  },
+  "reference_path": "torch.ops.vllm_ir.rms_norm.default(x, weight, eps).to(torch.bfloat16) -> torch.ops._xpu_C.per_token_quant_int8_xpu(...)",
+  "candidate_op": "torch.ops._C.rms_norm_dynamic_per_token_quant",
+  "installed_baseline_binary": {
+    "weight_dtype_torch_bfloat16": {
+      "q_equal": false,
+      "q_diff_nonzero": 1083,
+      "q_max_abs_diff": 1,
+      "scale_max_abs_diff": 0.0002795085310935974
+    },
+    "weight_dtype_torch_float32": {
+      "q_equal": false,
+      "q_diff_nonzero": 8,
+      "q_max_abs_diff": 1,
+      "scale_max_abs_diff": 0.0
+    }
+  },
+  "temporary_bf16_rounding_patch_binary": {
+    "install_prefix": "/tmp/vllm-xpu-c-rmsint8bf16-20260610",
+    "loaded_C": "/tmp/vllm-xpu-c-rmsint8bf16-20260610/vllm_xpu_kernels/_C.abi3.so",
+    "weight_dtype_torch_bfloat16": {
+      "q_equal": false,
+      "q_diff_nonzero": 1015,
+      "q_max_abs_diff": 2,
+      "scale_max_abs_diff": 0.0004921257495880127
+    },
+    "weight_dtype_torch_float32": {
+      "q_equal": false,
+      "q_diff_nonzero": 8,
+      "q_max_abs_diff": 1,
+      "scale_max_abs_diff": 0.0
+    }
+  },
+  "decision": "Do not register the BF16-weight XPU RMSNorm plus INT8 quant pattern for Qwen3.6. It could match the graph, but direct correctness is not exact enough to preserve the current quality baseline."
+}

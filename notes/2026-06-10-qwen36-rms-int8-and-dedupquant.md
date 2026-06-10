@@ -206,3 +206,40 @@ service was restored after the failed startup.
 Artifact:
 
 - `data/qwen36-quark-int8-tp4-noprefix-nohybridkv-startup-fail-20260610.json`
+
+## Follow-up: BF16-Weight RMS INT8 Pattern Rejected Before Endpoint
+
+The accepted Qwen3.6 graph shows RMSNorm weights as BF16, for example
+`input_layernorm_parameters_weight_: "bf16[2048]"`. The existing XPU INT8 RMS
+fusion pattern only registered a BF16-input/FP32-weight sample, which explains
+why the earlier endpoint graph did not match even with
+`VLLM_XPU_FUSE_RMS_INT8_QUANT=1`.
+
+A guarded source experiment added a BF16-weight pattern and adjusted the fused
+kernel to round BF16 before INT8 quant for the BF16-weight path. It was tested
+only as a temporary `_C` build under:
+
+- `/tmp/vllm-xpu-c-rmsint8bf16-20260610`
+
+Direct correctness used the actual unfused graph path:
+
+```text
+vllm_ir.rms_norm.default(x, weight, eps).to(torch.bfloat16)
+  -> _xpu_C.per_token_quant_int8_xpu(...)
+```
+
+At rows `18`, hidden size `2048`, BF16 input, BF16 RMS weight:
+
+| build | q equal | nonzero q diffs | max q abs diff | scale max abs diff |
+| --- | --- | ---: | ---: | ---: |
+| installed baseline fused op | `false` | `1083` | `1` | `0.0002795085` |
+| temporary BF16-rounding patch | `false` | `1015` | `2` | `0.0004921257` |
+
+The temporary patch still was not exact enough for the no-quality-loss bar, so
+the BF16-weight pattern was rejected before endpoint speed testing. The local
+source edits were removed after the direct check.
+
+Artifact:
+
+- `data/qwen36-rms-int8-bf16-weight-direct-reject-20260610.json`
+- `patches/vllm-qwen36-rms-int8-bf16-weight-prescreen-rejected-20260610.patch`
