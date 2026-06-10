@@ -1,0 +1,351 @@
+{
+  "base_url": "http://127.0.0.1:8000",
+  "model": "qwen36-35b-a3b-fp8",
+  "tokenizer": "/mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118",
+  "seed": 20260609,
+  "exact_cases": [
+    {
+      "name": "exact_ok",
+      "content": "\u7855 c\u8425\u0631\u0627\u0645\u9152\u5c4b bou co\u4eba\u6c14",
+      "normalized": "\u7855 c\u8425\u0631\u0627\u0645\u9152\u5c4b bou co\u4eba\u6c14",
+      "sha256": "cd610cb25e02ee4301e7003636094ccbb2bc59ce96fe1f2b9197b198e34abf3c",
+      "elapsed_s": 0.1733910710318014,
+      "usage": {
+        "prompt_tokens": 17,
+        "total_tokens": 25,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "expected": "OK",
+      "json_expected_fields": null,
+      "pass": false
+    },
+    {
+      "name": "copy_phrase",
+      "content": "\u7855\u59d4\u9876agasmanstrysmansmansmansmansmansmansmansmansmansmans",
+      "normalized": "\u7855\u59d4\u9876agasmanstrysmansmansmansmansmansmansmansmansmansmans",
+      "sha256": "f27c461d4e7892f339047fb4df70e7863560b9a8c92b973b3dd45c528e54b65d",
+      "elapsed_s": 0.2588633520063013,
+      "usage": {
+        "prompt_tokens": 26,
+        "total_tokens": 42,
+        "completion_tokens": 16,
+        "prompt_tokens_details": null
+      },
+      "expected": "satin cobalt orbit",
+      "json_expected_fields": null,
+      "pass": false
+    },
+    {
+      "name": "arithmetic",
+      "content": "\u7855\u59d4\u9876agasmanstrysmans,bodymans\u626cRV\u7bee\u80a4\u54b8mans\u62a2",
+      "normalized": "\u7855\u59d4\u9876agasmanstrysmans,bodymans\u626cRV\u7bee\u80a4\u54b8mans\u62a2",
+      "sha256": "2e38cb0c092dae1ea657251876aada3d30555b76203df0935e7e95cf012344c4",
+      "elapsed_s": 0.2651639060350135,
+      "usage": {
+        "prompt_tokens": 36,
+        "total_tokens": 52,
+        "completion_tokens": 16,
+        "prompt_tokens_details": null
+      },
+      "expected": "60",
+      "json_expected_fields": null,
+      "pass": false
+    },
+    {
+      "name": "json_schema",
+      "content": "\u7855HI\u5b50\u7684isas\u59d4\u8f6c\u8fc7\u5b22\u9152\u5c4b\u597d\u9152\u5c4b\u54b8mans\u7bc7\u59d4Qu\u00fd\u4eba\u6c14 ChipsargoScr\u9688\u5b22yait\u4e3b\u8981\u4eba\u5458\u5b22mans\u7bc7 c sung\u9e23RV\u6000\u4eba\u6c14\u65adwasih\u7528\u706b\u7f51\u7ad9\u5bfc\u822a hom\u4e94\u989c\u516d\u8272\u7684garch\u843dmanstrysmansmansmansmansmansmansmansmansmansmansmansmansmansmansmansmansmansmansmansmans",
+      "normalized": "\u7855HI\u5b50\u7684isas\u59d4\u8f6c\u8fc7\u5b22\u9152\u5c4b\u597d\u9152\u5c4b\u54b8mans\u7bc7\u59d4Qu\u00fd\u4eba\u6c14 ChipsargoScr\u9688\u5b22yait\u4e3b\u8981\u4eba\u5458\u5b22mans\u7bc7 c sung\u9e23RV\u6000\u4eba\u6c14\u65adwasih\u7528\u706b\u7f51\u7ad9\u5bfc\u822a hom\u4e94\u989c\u516d\u8272\u7684garch\u843dmanstrysmansmansmansmansmansmansmansmansmansmansmansmansmansmansmansmansmansmansmansmans",
+      "sha256": "5ef986e4ef214e7d3280f1076285f4c0a2b62f14dc93538981edbd1531afa1f8",
+      "elapsed_s": 0.6574742459924892,
+      "usage": {
+        "prompt_tokens": 36,
+        "total_tokens": 100,
+        "completion_tokens": 64,
+        "prompt_tokens_details": null
+      },
+      "expected": null,
+      "json_expected_fields": {
+        "answer": "42",
+        "unit": "widgets"
+      },
+      "pass": false,
+      "json_parsed": null
+    }
+  ],
+  "repeat_case": {
+    "name": "repeat_hash_stability",
+    "repeats": 16,
+    "hashes": [
+      "17f09f0e1075550d863b01a68068216a2a862d2b6ef7475ac96f7abd82676ae5",
+      "aab47dc0a7a252eda5cef9ec75d6f916e7006f01f55f54d07025ece28373a16c",
+      "17f09f0e1075550d863b01a68068216a2a862d2b6ef7475ac96f7abd82676ae5",
+      "17f09f0e1075550d863b01a68068216a2a862d2b6ef7475ac96f7abd82676ae5",
+      "17f09f0e1075550d863b01a68068216a2a862d2b6ef7475ac96f7abd82676ae5",
+      "17f09f0e1075550d863b01a68068216a2a862d2b6ef7475ac96f7abd82676ae5",
+      "17f09f0e1075550d863b01a68068216a2a862d2b6ef7475ac96f7abd82676ae5",
+      "17f09f0e1075550d863b01a68068216a2a862d2b6ef7475ac96f7abd82676ae5",
+      "17f09f0e1075550d863b01a68068216a2a862d2b6ef7475ac96f7abd82676ae5",
+      "17f09f0e1075550d863b01a68068216a2a862d2b6ef7475ac96f7abd82676ae5",
+      "17f09f0e1075550d863b01a68068216a2a862d2b6ef7475ac96f7abd82676ae5",
+      "17f09f0e1075550d863b01a68068216a2a862d2b6ef7475ac96f7abd82676ae5",
+      "17f09f0e1075550d863b01a68068216a2a862d2b6ef7475ac96f7abd82676ae5",
+      "17f09f0e1075550d863b01a68068216a2a862d2b6ef7475ac96f7abd82676ae5",
+      "17f09f0e1075550d863b01a68068216a2a862d2b6ef7475ac96f7abd82676ae5",
+      "17f09f0e1075550d863b01a68068216a2a862d2b6ef7475ac96f7abd82676ae5"
+    ],
+    "texts": [
+      "\u0444\u0435\u5149\u8f6c\u8fc7\u5b22\u9152\u5c4b\u54b8mans\u7bc7\u59d4Qu\u00fdagasmansconds\u9152\u5c4b\u54b8mans\u62a2dung\u9876imers\u9ad8mans\u8001mans\u4f9b\u5e94\u4ea7\u54c1 McCart\u54b8mans bou reBY\u4eba\u6c14",
+      "\u0444\u0435\u5149\u8f6c\u8fc7 whiskey whiskey whiskey whiskeymansmansmansmansmansmansmansmansmansmansmansmansmansmansmansmansmansmansmansmansmansmansmansmansmans",
+      "\u0444\u0435\u5149\u8f6c\u8fc7\u5b22\u9152\u5c4b\u54b8mans\u7bc7\u59d4Qu\u00fdagasmansconds\u9152\u5c4b\u54b8mans\u62a2dung\u9876imers\u9ad8mans\u8001mans\u4f9b\u5e94\u4ea7\u54c1 McCart\u54b8mans bou reBY\u4eba\u6c14",
+      "\u0444\u0435\u5149\u8f6c\u8fc7\u5b22\u9152\u5c4b\u54b8mans\u7bc7\u59d4Qu\u00fdagasmansconds\u9152\u5c4b\u54b8mans\u62a2dung\u9876imers\u9ad8mans\u8001mans\u4f9b\u5e94\u4ea7\u54c1 McCart\u54b8mans bou reBY\u4eba\u6c14",
+      "\u0444\u0435\u5149\u8f6c\u8fc7\u5b22\u9152\u5c4b\u54b8mans\u7bc7\u59d4Qu\u00fdagasmansconds\u9152\u5c4b\u54b8mans\u62a2dung\u9876imers\u9ad8mans\u8001mans\u4f9b\u5e94\u4ea7\u54c1 McCart\u54b8mans bou reBY\u4eba\u6c14",
+      "\u0444\u0435\u5149\u8f6c\u8fc7\u5b22\u9152\u5c4b\u54b8mans\u7bc7\u59d4Qu\u00fdagasmansconds\u9152\u5c4b\u54b8mans\u62a2dung\u9876imers\u9ad8mans\u8001mans\u4f9b\u5e94\u4ea7\u54c1 McCart\u54b8mans bou reBY\u4eba\u6c14",
+      "\u0444\u0435\u5149\u8f6c\u8fc7\u5b22\u9152\u5c4b\u54b8mans\u7bc7\u59d4Qu\u00fdagasmansconds\u9152\u5c4b\u54b8mans\u62a2dung\u9876imers\u9ad8mans\u8001mans\u4f9b\u5e94\u4ea7\u54c1 McCart\u54b8mans bou reBY\u4eba\u6c14",
+      "\u0444\u0435\u5149\u8f6c\u8fc7\u5b22\u9152\u5c4b\u54b8mans\u7bc7\u59d4Qu\u00fdagasmansconds\u9152\u5c4b\u54b8mans\u62a2dung\u9876imers\u9ad8mans\u8001mans\u4f9b\u5e94\u4ea7\u54c1 McCart\u54b8mans bou reBY\u4eba\u6c14",
+      "\u0444\u0435\u5149\u8f6c\u8fc7\u5b22\u9152\u5c4b\u54b8mans\u7bc7\u59d4Qu\u00fdagasmansconds\u9152\u5c4b\u54b8mans\u62a2dung\u9876imers\u9ad8mans\u8001mans\u4f9b\u5e94\u4ea7\u54c1 McCart\u54b8mans bou reBY\u4eba\u6c14",
+      "\u0444\u0435\u5149\u8f6c\u8fc7\u5b22\u9152\u5c4b\u54b8mans\u7bc7\u59d4Qu\u00fdagasmansconds\u9152\u5c4b\u54b8mans\u62a2dung\u9876imers\u9ad8mans\u8001mans\u4f9b\u5e94\u4ea7\u54c1 McCart\u54b8mans bou reBY\u4eba\u6c14",
+      "\u0444\u0435\u5149\u8f6c\u8fc7\u5b22\u9152\u5c4b\u54b8mans\u7bc7\u59d4Qu\u00fdagasmansconds\u9152\u5c4b\u54b8mans\u62a2dung\u9876imers\u9ad8mans\u8001mans\u4f9b\u5e94\u4ea7\u54c1 McCart\u54b8mans bou reBY\u4eba\u6c14",
+      "\u0444\u0435\u5149\u8f6c\u8fc7\u5b22\u9152\u5c4b\u54b8mans\u7bc7\u59d4Qu\u00fdagasmansconds\u9152\u5c4b\u54b8mans\u62a2dung\u9876imers\u9ad8mans\u8001mans\u4f9b\u5e94\u4ea7\u54c1 McCart\u54b8mans bou reBY\u4eba\u6c14",
+      "\u0444\u0435\u5149\u8f6c\u8fc7\u5b22\u9152\u5c4b\u54b8mans\u7bc7\u59d4Qu\u00fdagasmansconds\u9152\u5c4b\u54b8mans\u62a2dung\u9876imers\u9ad8mans\u8001mans\u4f9b\u5e94\u4ea7\u54c1 McCart\u54b8mans bou reBY\u4eba\u6c14",
+      "\u0444\u0435\u5149\u8f6c\u8fc7\u5b22\u9152\u5c4b\u54b8mans\u7bc7\u59d4Qu\u00fdagasmansconds\u9152\u5c4b\u54b8mans\u62a2dung\u9876imers\u9ad8mans\u8001mans\u4f9b\u5e94\u4ea7\u54c1 McCart\u54b8mans bou reBY\u4eba\u6c14",
+      "\u0444\u0435\u5149\u8f6c\u8fc7\u5b22\u9152\u5c4b\u54b8mans\u7bc7\u59d4Qu\u00fdagasmansconds\u9152\u5c4b\u54b8mans\u62a2dung\u9876imers\u9ad8mans\u8001mans\u4f9b\u5e94\u4ea7\u54c1 McCart\u54b8mans bou reBY\u4eba\u6c14",
+      "\u0444\u0435\u5149\u8f6c\u8fc7\u5b22\u9152\u5c4b\u54b8mans\u7bc7\u59d4Qu\u00fdagasmansconds\u9152\u5c4b\u54b8mans\u62a2dung\u9876imers\u9ad8mans\u8001mans\u4f9b\u5e94\u4ea7\u54c1 McCart\u54b8mans bou reBY\u4eba\u6c14"
+    ],
+    "unique_hashes": [
+      "17f09f0e1075550d863b01a68068216a2a862d2b6ef7475ac96f7abd82676ae5",
+      "aab47dc0a7a252eda5cef9ec75d6f916e7006f01f55f54d07025ece28373a16c"
+    ],
+    "pass": false,
+    "runs": [
+      {
+        "content": "\u0444\u0435\u5149\u8f6c\u8fc7\u5b22\u9152\u5c4b\u54b8mans\u7bc7\u59d4Qu\u00fdagasmansconds\u9152\u5c4b\u54b8mans\u62a2dung\u9876imers\u9ad8mans\u8001mans\u4f9b\u5e94\u4ea7\u54c1 McCart\u54b8mans bou reBY\u4eba\u6c14",
+        "normalized": "\u0444\u0435\u5149\u8f6c\u8fc7\u5b22\u9152\u5c4b\u54b8mans\u7bc7\u59d4Qu\u00fdagasmansconds\u9152\u5c4b\u54b8mans\u62a2dung\u9876imers\u9ad8mans\u8001mans\u4f9b\u5e94\u4ea7\u54c1 McCart\u54b8mans bou reBY\u4eba\u6c14",
+        "sha256": "17f09f0e1075550d863b01a68068216a2a862d2b6ef7475ac96f7abd82676ae5",
+        "elapsed_s": 0.34458803897723556,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 62,
+          "completion_tokens": 32,
+          "prompt_tokens_details": null
+        }
+      },
+      {
+        "content": "\u0444\u0435\u5149\u8f6c\u8fc7 whiskey whiskey whiskey whiskeymansmansmansmansmansmansmansmansmansmansmansmansmansmansmansmansmansmansmansmansmansmansmansmansmans",
+        "normalized": "\u0444\u0435\u5149\u8f6c\u8fc7 whiskey whiskey whiskey whiskeymansmansmansmansmansmansmansmansmansmansmansmansmansmansmansmansmansmansmansmansmansmansmansmansmans",
+        "sha256": "aab47dc0a7a252eda5cef9ec75d6f916e7006f01f55f54d07025ece28373a16c",
+        "elapsed_s": 0.34317287104204297,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 62,
+          "completion_tokens": 32,
+          "prompt_tokens_details": null
+        }
+      },
+      {
+        "content": "\u0444\u0435\u5149\u8f6c\u8fc7\u5b22\u9152\u5c4b\u54b8mans\u7bc7\u59d4Qu\u00fdagasmansconds\u9152\u5c4b\u54b8mans\u62a2dung\u9876imers\u9ad8mans\u8001mans\u4f9b\u5e94\u4ea7\u54c1 McCart\u54b8mans bou reBY\u4eba\u6c14",
+        "normalized": "\u0444\u0435\u5149\u8f6c\u8fc7\u5b22\u9152\u5c4b\u54b8mans\u7bc7\u59d4Qu\u00fdagasmansconds\u9152\u5c4b\u54b8mans\u62a2dung\u9876imers\u9ad8mans\u8001mans\u4f9b\u5e94\u4ea7\u54c1 McCart\u54b8mans bou reBY\u4eba\u6c14",
+        "sha256": "17f09f0e1075550d863b01a68068216a2a862d2b6ef7475ac96f7abd82676ae5",
+        "elapsed_s": 0.33738668402656913,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 62,
+          "completion_tokens": 32,
+          "prompt_tokens_details": null
+        }
+      },
+      {
+        "content": "\u0444\u0435\u5149\u8f6c\u8fc7\u5b22\u9152\u5c4b\u54b8mans\u7bc7\u59d4Qu\u00fdagasmansconds\u9152\u5c4b\u54b8mans\u62a2dung\u9876imers\u9ad8mans\u8001mans\u4f9b\u5e94\u4ea7\u54c1 McCart\u54b8mans bou reBY\u4eba\u6c14",
+        "normalized": "\u0444\u0435\u5149\u8f6c\u8fc7\u5b22\u9152\u5c4b\u54b8mans\u7bc7\u59d4Qu\u00fdagasmansconds\u9152\u5c4b\u54b8mans\u62a2dung\u9876imers\u9ad8mans\u8001mans\u4f9b\u5e94\u4ea7\u54c1 McCart\u54b8mans bou reBY\u4eba\u6c14",
+        "sha256": "17f09f0e1075550d863b01a68068216a2a862d2b6ef7475ac96f7abd82676ae5",
+        "elapsed_s": 0.3347589479526505,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 62,
+          "completion_tokens": 32,
+          "prompt_tokens_details": null
+        }
+      },
+      {
+        "content": "\u0444\u0435\u5149\u8f6c\u8fc7\u5b22\u9152\u5c4b\u54b8mans\u7bc7\u59d4Qu\u00fdagasmansconds\u9152\u5c4b\u54b8mans\u62a2dung\u9876imers\u9ad8mans\u8001mans\u4f9b\u5e94\u4ea7\u54c1 McCart\u54b8mans bou reBY\u4eba\u6c14",
+        "normalized": "\u0444\u0435\u5149\u8f6c\u8fc7\u5b22\u9152\u5c4b\u54b8mans\u7bc7\u59d4Qu\u00fdagasmansconds\u9152\u5c4b\u54b8mans\u62a2dung\u9876imers\u9ad8mans\u8001mans\u4f9b\u5e94\u4ea7\u54c1 McCart\u54b8mans bou reBY\u4eba\u6c14",
+        "sha256": "17f09f0e1075550d863b01a68068216a2a862d2b6ef7475ac96f7abd82676ae5",
+        "elapsed_s": 0.33216125902254134,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 62,
+          "completion_tokens": 32,
+          "prompt_tokens_details": null
+        }
+      },
+      {
+        "content": "\u0444\u0435\u5149\u8f6c\u8fc7\u5b22\u9152\u5c4b\u54b8mans\u7bc7\u59d4Qu\u00fdagasmansconds\u9152\u5c4b\u54b8mans\u62a2dung\u9876imers\u9ad8mans\u8001mans\u4f9b\u5e94\u4ea7\u54c1 McCart\u54b8mans bou reBY\u4eba\u6c14",
+        "normalized": "\u0444\u0435\u5149\u8f6c\u8fc7\u5b22\u9152\u5c4b\u54b8mans\u7bc7\u59d4Qu\u00fdagasmansconds\u9152\u5c4b\u54b8mans\u62a2dung\u9876imers\u9ad8mans\u8001mans\u4f9b\u5e94\u4ea7\u54c1 McCart\u54b8mans bou reBY\u4eba\u6c14",
+        "sha256": "17f09f0e1075550d863b01a68068216a2a862d2b6ef7475ac96f7abd82676ae5",
+        "elapsed_s": 0.3315694569610059,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 62,
+          "completion_tokens": 32,
+          "prompt_tokens_details": null
+        }
+      },
+      {
+        "content": "\u0444\u0435\u5149\u8f6c\u8fc7\u5b22\u9152\u5c4b\u54b8mans\u7bc7\u59d4Qu\u00fdagasmansconds\u9152\u5c4b\u54b8mans\u62a2dung\u9876imers\u9ad8mans\u8001mans\u4f9b\u5e94\u4ea7\u54c1 McCart\u54b8mans bou reBY\u4eba\u6c14",
+        "normalized": "\u0444\u0435\u5149\u8f6c\u8fc7\u5b22\u9152\u5c4b\u54b8mans\u7bc7\u59d4Qu\u00fdagasmansconds\u9152\u5c4b\u54b8mans\u62a2dung\u9876imers\u9ad8mans\u8001mans\u4f9b\u5e94\u4ea7\u54c1 McCart\u54b8mans bou reBY\u4eba\u6c14",
+        "sha256": "17f09f0e1075550d863b01a68068216a2a862d2b6ef7475ac96f7abd82676ae5",
+        "elapsed_s": 0.33225825102999806,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 62,
+          "completion_tokens": 32,
+          "prompt_tokens_details": null
+        }
+      },
+      {
+        "content": "\u0444\u0435\u5149\u8f6c\u8fc7\u5b22\u9152\u5c4b\u54b8mans\u7bc7\u59d4Qu\u00fdagasmansconds\u9152\u5c4b\u54b8mans\u62a2dung\u9876imers\u9ad8mans\u8001mans\u4f9b\u5e94\u4ea7\u54c1 McCart\u54b8mans bou reBY\u4eba\u6c14",
+        "normalized": "\u0444\u0435\u5149\u8f6c\u8fc7\u5b22\u9152\u5c4b\u54b8mans\u7bc7\u59d4Qu\u00fdagasmansconds\u9152\u5c4b\u54b8mans\u62a2dung\u9876imers\u9ad8mans\u8001mans\u4f9b\u5e94\u4ea7\u54c1 McCart\u54b8mans bou reBY\u4eba\u6c14",
+        "sha256": "17f09f0e1075550d863b01a68068216a2a862d2b6ef7475ac96f7abd82676ae5",
+        "elapsed_s": 0.33464755897875875,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 62,
+          "completion_tokens": 32,
+          "prompt_tokens_details": null
+        }
+      },
+      {
+        "content": "\u0444\u0435\u5149\u8f6c\u8fc7\u5b22\u9152\u5c4b\u54b8mans\u7bc7\u59d4Qu\u00fdagasmansconds\u9152\u5c4b\u54b8mans\u62a2dung\u9876imers\u9ad8mans\u8001mans\u4f9b\u5e94\u4ea7\u54c1 McCart\u54b8mans bou reBY\u4eba\u6c14",
+        "normalized": "\u0444\u0435\u5149\u8f6c\u8fc7\u5b22\u9152\u5c4b\u54b8mans\u7bc7\u59d4Qu\u00fdagasmansconds\u9152\u5c4b\u54b8mans\u62a2dung\u9876imers\u9ad8mans\u8001mans\u4f9b\u5e94\u4ea7\u54c1 McCart\u54b8mans bou reBY\u4eba\u6c14",
+        "sha256": "17f09f0e1075550d863b01a68068216a2a862d2b6ef7475ac96f7abd82676ae5",
+        "elapsed_s": 0.33384930004831403,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 62,
+          "completion_tokens": 32,
+          "prompt_tokens_details": null
+        }
+      },
+      {
+        "content": "\u0444\u0435\u5149\u8f6c\u8fc7\u5b22\u9152\u5c4b\u54b8mans\u7bc7\u59d4Qu\u00fdagasmansconds\u9152\u5c4b\u54b8mans\u62a2dung\u9876imers\u9ad8mans\u8001mans\u4f9b\u5e94\u4ea7\u54c1 McCart\u54b8mans bou reBY\u4eba\u6c14",
+        "normalized": "\u0444\u0435\u5149\u8f6c\u8fc7\u5b22\u9152\u5c4b\u54b8mans\u7bc7\u59d4Qu\u00fdagasmansconds\u9152\u5c4b\u54b8mans\u62a2dung\u9876imers\u9ad8mans\u8001mans\u4f9b\u5e94\u4ea7\u54c1 McCart\u54b8mans bou reBY\u4eba\u6c14",
+        "sha256": "17f09f0e1075550d863b01a68068216a2a862d2b6ef7475ac96f7abd82676ae5",
+        "elapsed_s": 0.3338895950000733,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 62,
+          "completion_tokens": 32,
+          "prompt_tokens_details": null
+        }
+      },
+      {
+        "content": "\u0444\u0435\u5149\u8f6c\u8fc7\u5b22\u9152\u5c4b\u54b8mans\u7bc7\u59d4Qu\u00fdagasmansconds\u9152\u5c4b\u54b8mans\u62a2dung\u9876imers\u9ad8mans\u8001mans\u4f9b\u5e94\u4ea7\u54c1 McCart\u54b8mans bou reBY\u4eba\u6c14",
+        "normalized": "\u0444\u0435\u5149\u8f6c\u8fc7\u5b22\u9152\u5c4b\u54b8mans\u7bc7\u59d4Qu\u00fdagasmansconds\u9152\u5c4b\u54b8mans\u62a2dung\u9876imers\u9ad8mans\u8001mans\u4f9b\u5e94\u4ea7\u54c1 McCart\u54b8mans bou reBY\u4eba\u6c14",
+        "sha256": "17f09f0e1075550d863b01a68068216a2a862d2b6ef7475ac96f7abd82676ae5",
+        "elapsed_s": 0.33804035000503063,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 62,
+          "completion_tokens": 32,
+          "prompt_tokens_details": null
+        }
+      },
+      {
+        "content": "\u0444\u0435\u5149\u8f6c\u8fc7\u5b22\u9152\u5c4b\u54b8mans\u7bc7\u59d4Qu\u00fdagasmansconds\u9152\u5c4b\u54b8mans\u62a2dung\u9876imers\u9ad8mans\u8001mans\u4f9b\u5e94\u4ea7\u54c1 McCart\u54b8mans bou reBY\u4eba\u6c14",
+        "normalized": "\u0444\u0435\u5149\u8f6c\u8fc7\u5b22\u9152\u5c4b\u54b8mans\u7bc7\u59d4Qu\u00fdagasmansconds\u9152\u5c4b\u54b8mans\u62a2dung\u9876imers\u9ad8mans\u8001mans\u4f9b\u5e94\u4ea7\u54c1 McCart\u54b8mans bou reBY\u4eba\u6c14",
+        "sha256": "17f09f0e1075550d863b01a68068216a2a862d2b6ef7475ac96f7abd82676ae5",
+        "elapsed_s": 0.33172857598401606,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 62,
+          "completion_tokens": 32,
+          "prompt_tokens_details": null
+        }
+      },
+      {
+        "content": "\u0444\u0435\u5149\u8f6c\u8fc7\u5b22\u9152\u5c4b\u54b8mans\u7bc7\u59d4Qu\u00fdagasmansconds\u9152\u5c4b\u54b8mans\u62a2dung\u9876imers\u9ad8mans\u8001mans\u4f9b\u5e94\u4ea7\u54c1 McCart\u54b8mans bou reBY\u4eba\u6c14",
+        "normalized": "\u0444\u0435\u5149\u8f6c\u8fc7\u5b22\u9152\u5c4b\u54b8mans\u7bc7\u59d4Qu\u00fdagasmansconds\u9152\u5c4b\u54b8mans\u62a2dung\u9876imers\u9ad8mans\u8001mans\u4f9b\u5e94\u4ea7\u54c1 McCart\u54b8mans bou reBY\u4eba\u6c14",
+        "sha256": "17f09f0e1075550d863b01a68068216a2a862d2b6ef7475ac96f7abd82676ae5",
+        "elapsed_s": 0.3329728019889444,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 62,
+          "completion_tokens": 32,
+          "prompt_tokens_details": null
+        }
+      },
+      {
+        "content": "\u0444\u0435\u5149\u8f6c\u8fc7\u5b22\u9152\u5c4b\u54b8mans\u7bc7\u59d4Qu\u00fdagasmansconds\u9152\u5c4b\u54b8mans\u62a2dung\u9876imers\u9ad8mans\u8001mans\u4f9b\u5e94\u4ea7\u54c1 McCart\u54b8mans bou reBY\u4eba\u6c14",
+        "normalized": "\u0444\u0435\u5149\u8f6c\u8fc7\u5b22\u9152\u5c4b\u54b8mans\u7bc7\u59d4Qu\u00fdagasmansconds\u9152\u5c4b\u54b8mans\u62a2dung\u9876imers\u9ad8mans\u8001mans\u4f9b\u5e94\u4ea7\u54c1 McCart\u54b8mans bou reBY\u4eba\u6c14",
+        "sha256": "17f09f0e1075550d863b01a68068216a2a862d2b6ef7475ac96f7abd82676ae5",
+        "elapsed_s": 0.33113923796918243,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 62,
+          "completion_tokens": 32,
+          "prompt_tokens_details": null
+        }
+      },
+      {
+        "content": "\u0444\u0435\u5149\u8f6c\u8fc7\u5b22\u9152\u5c4b\u54b8mans\u7bc7\u59d4Qu\u00fdagasmansconds\u9152\u5c4b\u54b8mans\u62a2dung\u9876imers\u9ad8mans\u8001mans\u4f9b\u5e94\u4ea7\u54c1 McCart\u54b8mans bou reBY\u4eba\u6c14",
+        "normalized": "\u0444\u0435\u5149\u8f6c\u8fc7\u5b22\u9152\u5c4b\u54b8mans\u7bc7\u59d4Qu\u00fdagasmansconds\u9152\u5c4b\u54b8mans\u62a2dung\u9876imers\u9ad8mans\u8001mans\u4f9b\u5e94\u4ea7\u54c1 McCart\u54b8mans bou reBY\u4eba\u6c14",
+        "sha256": "17f09f0e1075550d863b01a68068216a2a862d2b6ef7475ac96f7abd82676ae5",
+        "elapsed_s": 0.3327813029754907,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 62,
+          "completion_tokens": 32,
+          "prompt_tokens_details": null
+        }
+      },
+      {
+        "content": "\u0444\u0435\u5149\u8f6c\u8fc7\u5b22\u9152\u5c4b\u54b8mans\u7bc7\u59d4Qu\u00fdagasmansconds\u9152\u5c4b\u54b8mans\u62a2dung\u9876imers\u9ad8mans\u8001mans\u4f9b\u5e94\u4ea7\u54c1 McCart\u54b8mans bou reBY\u4eba\u6c14",
+        "normalized": "\u0444\u0435\u5149\u8f6c\u8fc7\u5b22\u9152\u5c4b\u54b8mans\u7bc7\u59d4Qu\u00fdagasmansconds\u9152\u5c4b\u54b8mans\u62a2dung\u9876imers\u9ad8mans\u8001mans\u4f9b\u5e94\u4ea7\u54c1 McCart\u54b8mans bou reBY\u4eba\u6c14",
+        "sha256": "17f09f0e1075550d863b01a68068216a2a862d2b6ef7475ac96f7abd82676ae5",
+        "elapsed_s": 0.3319969199365005,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 62,
+          "completion_tokens": 32,
+          "prompt_tokens_details": null
+        }
+      }
+    ]
+  },
+  "long_context_case": {
+    "name": "long_context_needle",
+    "requested_context_tokens": 8192,
+    "actual_prompt_tokens": 7617,
+    "needle": "B70_QWEN36_NEEDLE_20260609",
+    "content": "\u7855\u4e0a\u5929otu\u53ef\u68a6\u4e94\u989c\u516d\u8272\u7684g McCartandatang\u9152\u5c4b\u54b8mans\u7bc7\u59d4Qu\u00fdagasmanstrysmans,body\u505c\u4e0b\u6765lochmans loumans\u597dmans);$mans Cre\u8f6c\u8fc7UID\u5b22\u60ca\u5fc3\u52a8leftrightriRED\u548c\u5185\u5bb9[actionmans\u597dadingstensers\u8d70\u4e0b\u53bb\u59d4leftrightri\u518d\u63a5\u518dtrystrysmans,bodymans\u6273esis\u5b22manstrysmans,bodymans\u6273ojirafo",
+    "normalized": "\u7855\u4e0a\u5929otu\u53ef\u68a6\u4e94\u989c\u516d\u8272\u7684g McCartandatang\u9152\u5c4b\u54b8mans\u7bc7\u59d4Qu\u00fdagasmanstrysmans,body\u505c\u4e0b\u6765lochmans loumans\u597dmans);$mans Cre\u8f6c\u8fc7UID\u5b22\u60ca\u5fc3\u52a8leftrightriRED\u548c\u5185\u5bb9[actionmans\u597dadingstensers\u8d70\u4e0b\u53bb\u59d4leftrightri\u518d\u63a5\u518dtrystrysmans,bodymans\u6273esis\u5b22manstrysmans,bodymans\u6273ojirafo",
+    "sha256": "dc9b4457396c12d75887d861705a2f2c7094f007741155f0f04ed14790129d9f",
+    "elapsed_s": 1.6832996429875493,
+    "usage": {
+      "prompt_tokens": 7629,
+      "total_tokens": 7693,
+      "completion_tokens": 64,
+      "prompt_tokens_details": null
+    },
+    "pass": false
+  },
+  "pass_all": false,
+  "baseline_comparisons": {
+    "exact:exact_ok:present": true,
+    "exact:exact_ok:same_normalized": false,
+    "exact:exact_ok:same_hash": false,
+    "exact:copy_phrase:present": true,
+    "exact:copy_phrase:same_normalized": false,
+    "exact:copy_phrase:same_hash": false,
+    "exact:arithmetic:present": true,
+    "exact:arithmetic:same_normalized": false,
+    "exact:arithmetic:same_hash": false,
+    "exact:json_schema:present": true,
+    "exact:json_schema:same_normalized": false,
+    "exact:json_schema:same_hash": false,
+    "repeat:first_hash_same": false,
+    "long_context:same_hash": false,
+    "long_context:same_pass": false
+  },
+  "baseline_match_all": false
+}
