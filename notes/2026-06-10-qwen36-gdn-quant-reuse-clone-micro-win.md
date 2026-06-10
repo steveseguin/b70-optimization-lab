@@ -91,6 +91,14 @@ Quality:
 - long-context needle recall at requested 8192 tokens: pass
 - accepted-baseline comparisons: pass
 
+Longer reliability refresh:
+
+- artifact: `data/qwen36-quark-int8-tp4-noprefix-gdn-reuseqkvzbaquant-clone-frontdoor-quality-rerun64-20260610.json`
+- exact canaries: pass
+- 64-repeat deterministic hash stability: pass
+- long-context needle recall at requested 8192 tokens: pass
+- accepted-baseline comparisons: pass
+
 Single-request speed:
 
 - artifact: `data/qwen36-quark-int8-tp4-noprefix-gdn-reuseqkvzbaquant-clone-single-20260610.json`
@@ -101,6 +109,17 @@ Single-request speed:
 | e2e output tok/s | `97.5295` | `97.7869` | `+0.2574` |
 | total tok/s | `195.0589` | `195.5738` | `+0.5149` |
 | mean client TTFT | `76.28 ms` | `79.80 ms` | `+3.52 ms` |
+
+Longer 16-repeat speed refresh:
+
+- artifact: `data/qwen36-quark-int8-tp4-noprefix-gdn-reuseqkvzbaquant-clone-single-r16-20260610.json`
+- corrected after-first output speed: `98.9941 tok/s`
+- corrected after-first min/max: `98.4003` / `99.7235 tok/s`
+- e2e output speed: `97.7260 tok/s`
+- mean client TTFT: `76.84 ms`
+
+This refresh remains above the accepted control, but the mean delta is still
+small enough to treat as a micro-win rather than a large breakthrough.
 
 Aggregate frontdoor p512/n256 sweep:
 
@@ -129,8 +148,9 @@ Compared with the later accepted c48 refresh
 ## Decision
 
 Keep clone-guarded GDN qkvz/ba quant reuse as an opt-in candidate. It passed the
-strict quality gate and gives a small single-request decode win without reducing
-context length, changing quantization, or increasing model/KV memory.
+strict quality gate, passed a 64-repeat stability refresh, and gives a small
+single-request decode win without reducing context length, changing
+quantization, or increasing model/KV memory.
 
 Do not promote it to the production default yet:
 
