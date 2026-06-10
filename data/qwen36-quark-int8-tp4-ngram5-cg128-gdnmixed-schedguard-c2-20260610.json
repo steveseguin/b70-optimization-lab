@@ -1,0 +1,109 @@
+{
+  "base_url": "http://127.0.0.1:18081",
+  "model": "qwen36-35b-a3b-fp8",
+  "model_info": {
+    "id": "qwen36-35b-a3b-fp8",
+    "object": "model",
+    "created": 1781107637,
+    "owned_by": "vllm",
+    "root": "/mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118",
+    "parent": null,
+    "max_model_len": 32768,
+    "permission": [
+      {
+        "id": "modelperm-970ef5e504d9131e",
+        "object": "model_permission",
+        "created": 1781107637,
+        "allow_create_engine": false,
+        "allow_sampling": true,
+        "allow_logprobs": true,
+        "allow_search_indices": false,
+        "allow_view": true,
+        "allow_fine_tuning": false,
+        "organization": "*",
+        "group": null,
+        "is_blocking": false
+      }
+    ]
+  },
+  "tokenizer": "/mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118",
+  "requested_prompt_tokens": 512,
+  "shared_prefix_tokens": 0,
+  "prompt_salt": "",
+  "requested_output_tokens": 256,
+  "warmups": 1,
+  "scenarios": {
+    "c2": {
+      "concurrency": 2,
+      "records": [
+        {
+          "started_s": 913274.42839134,
+          "first_text_at_s": 913274.51722211,
+          "ended_s": 913286.830048226,
+          "elapsed_s": 12.401656886097044,
+          "ttft_s": 0.08883076999336481,
+          "post_ttft_s": 12.312826116103679,
+          "prompt_tokens": 515,
+          "completion_tokens": 256,
+          "total_tokens": 771,
+          "tok_s_out_wall": 20.642403055594162,
+          "tok_s_out_after_ttft": 20.791327481282558,
+          "tok_s_total_wall": 62.169112327590234,
+          "chunks": 126,
+          "sha256": "242dbd3a212c6276e9317a6339e888154ba61ec0f3e18e0717c8adc2deec34e8",
+          "text_preview": " benchmark benchmark benchmark benchmark benchmark benchmark benchmark benchmark benchmark benchmark benchmark benchmark benchmark benchmark benchmark benchmark"
+        },
+        {
+          "started_s": 913274.428794667,
+          "first_text_at_s": 913274.603374241,
+          "ended_s": 913283.385780592,
+          "elapsed_s": 8.956985924975015,
+          "ttft_s": 0.17457957402803004,
+          "post_ttft_s": 8.782406350946985,
+          "prompt_tokens": 515,
+          "completion_tokens": 256,
+          "total_tokens": 771,
+          "tok_s_out_wall": 28.581043014278723,
+          "tok_s_out_after_ttft": 29.149186426838032,
+          "tok_s_total_wall": 86.07806314065975,
+          "chunks": 46,
+          "sha256": "5f40744644b98ddd58a0c202fe855af324c0b1c33e1a6275afd74c12488f89f0",
+          "text_preview": " benchmark benchmark benchmark benchmark benchmark benchmark benchmark benchmark benchmark benchmark benchmark benchmark benchmark benchmark benchmark benchmark"
+        }
+      ],
+      "summary": {
+        "requests": 2,
+        "total_prompt_tokens": 1030,
+        "total_completion_tokens": 512,
+        "wall_s": 12.401656886097044,
+        "aggregate_output_tok_s_wall": 41.284806111188324,
+        "decode_wall_s_from_first_text": 12.312826116103679,
+        "aggregate_output_tok_s_from_first_text": 41.582654962565115,
+        "per_request_tok_s_out_after_ttft": {
+          "mean": 24.970256954060297,
+          "median": 24.970256954060297,
+          "min": 20.791327481282558,
+          "max": 29.149186426838032
+        },
+        "per_request_tok_s_out_wall": {
+          "mean": 24.611723034936443,
+          "median": 24.611723034936443,
+          "min": 20.642403055594162,
+          "max": 28.581043014278723
+        },
+        "per_request_ttft_s": {
+          "mean": 0.13170517201069742,
+          "median": 0.13170517201069742,
+          "min": 0.08883076999336481,
+          "max": 0.17457957402803004
+        },
+        "per_request_elapsed_s": {
+          "mean": 10.67932140553603,
+          "median": 10.67932140553603,
+          "min": 8.956985924975015,
+          "max": 12.401656886097044
+        }
+      }
+    }
+  }
+}

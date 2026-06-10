@@ -1,0 +1,46 @@
+diff --git a/vllm/v1/core/sched/scheduler.py b/vllm/v1/core/sched/scheduler.py
+--- a/vllm/v1/core/sched/scheduler.py
++++ b/vllm/v1/core/sched/scheduler.py
+@@ -1,6 +1,7 @@
+ # SPDX-License-Identifier: Apache-2.0
+ # SPDX-FileCopyrightText: Copyright contributors to the vLLM project
+ import itertools
++import os
+ import time
+ from collections import defaultdict, deque
+ from collections.abc import Iterable
+@@ -214,6 +215,12 @@ class Scheduler(SchedulerInterface):
+         speculative_config = vllm_config.speculative_config
+         self.use_eagle = False
+         self.num_spec_tokens = self.num_lookahead_tokens = 0
++        self.xpu_disable_spec_decode_when_waiting = (
++            os.environ.get("VLLM_XPU_DISABLE_SPEC_DECODE_WHEN_WAITING", "")
++            .strip()
++            .lower()
++            in ("1", "true", "yes", "on")
++        )
+         if speculative_config:
+             self.num_spec_tokens = speculative_config.num_speculative_tokens
+             if speculative_config.use_eagle():
+@@ -443,6 +450,21 @@ class Scheduler(SchedulerInterface):
+                     request, num_new_tokens
+                 )
+
++            if (
++                self.xpu_disable_spec_decode_when_waiting
++                and request.spec_token_ids
++                and (self.waiting or self.skipped_waiting)
++            ):
++                # XPU GDN chunk prefill can fail when a new prefill is batched
++                # with speculative decode tokens. Keep the target token and
++                # regenerate speculative tokens after waiting work drains.
++                non_spec_new_tokens = (
++                    request.num_tokens
++                    + request.num_output_placeholders
++                    - request.num_computed_tokens
++                )
++                num_new_tokens = min(num_new_tokens, max(0, non_spec_new_tokens))
++
+             if num_new_tokens == 0:
+                 # The request cannot be scheduled because one of the following
+                 # reasons:
