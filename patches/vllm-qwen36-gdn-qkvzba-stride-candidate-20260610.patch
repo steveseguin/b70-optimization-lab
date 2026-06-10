@@ -1,0 +1,167 @@
+diff --git a/vllm/envs.py b/vllm/envs.py
+index b2db5a811..b86b1754f 100755
+--- a/vllm/envs.py
++++ b/vllm/envs.py
+@@ -265,6 +265,10 @@ if TYPE_CHECKING:
+     VLLM_MEMORY_PROFILER_ESTIMATE_CUDAGRAPHS: bool = True
+     VLLM_NIXL_EP_MAX_NUM_RANKS: int = 32
+     VLLM_XPU_ENABLE_XPU_GRAPH: bool = False
++    VLLM_XPU_BLOCK_FP8_REQUANT: bool = False
++    VLLM_XPU_GDN_REUSE_QKVZ_BA_QUANT: str = "0"
++    VLLM_XPU_GDN_FUSE_QKVZ_BA_PROJ: bool = False
++    VLLM_QWEN35_MTP_FORCE_FP8_BLOCK: bool = False
+     VLLM_LORA_ENABLE_DUAL_STREAM: bool = False
+ 
+ 
+@@ -1769,6 +1773,27 @@ environment_variables: dict[str, Callable[[], Any]] = {
+     "VLLM_XPU_ENABLE_XPU_GRAPH": lambda: bool(
+         int(os.getenv("VLLM_XPU_ENABLE_XPU_GRAPH", "0"))
+     ),
++    # Experimental Intel XPU path that requantizes block-FP8 checkpoints to
++    # XPU W8A16 FP8 GEMM format.
++    "VLLM_XPU_BLOCK_FP8_REQUANT": lambda: bool(
++        int(os.getenv("VLLM_XPU_BLOCK_FP8_REQUANT", "0"))
++    ),
++    # Experimental Qwen3.6 GDN path that reuses the qkvz/ba input activation
++    # quantization. Valid values: "0", "1", "true", or "clone".
++    "VLLM_XPU_GDN_REUSE_QKVZ_BA_QUANT": lambda: os.getenv(
++        "VLLM_XPU_GDN_REUSE_QKVZ_BA_QUANT", "0"
++    ).strip().lower(),
++    # Experimental Qwen3.6 GDN path that packs qkvz and ba INT8 projections
++    # into one local GEMM. Requires the XPU GDN core to accept row-strided
++    # qkvz/ba projection views.
++    "VLLM_XPU_GDN_FUSE_QKVZ_BA_PROJ": lambda: bool(
++        int(os.getenv("VLLM_XPU_GDN_FUSE_QKVZ_BA_PROJ", "0"))
++    ),
++    # Local experimental override for hybrid Qwen3.5 MTP checkpoints where the
++    # target model uses compressed-tensors FP8 but mtp.safetensors is block-FP8.
++    "VLLM_QWEN35_MTP_FORCE_FP8_BLOCK": lambda: bool(
++        int(os.getenv("VLLM_QWEN35_MTP_FORCE_FP8_BLOCK", "0"))
++    ),
+     # Enable simple KV offload.
+     "VLLM_USE_SIMPLE_KV_OFFLOAD": lambda: bool(
+         int(os.getenv("VLLM_USE_SIMPLE_KV_OFFLOAD", "0"))
+diff --git a/vllm/model_executor/layers/mamba/gdn_linear_attn.py b/vllm/model_executor/layers/mamba/gdn_linear_attn.py
+index a621ab962..f4aeca153 100644
+--- a/vllm/model_executor/layers/mamba/gdn_linear_attn.py
++++ b/vllm/model_executor/layers/mamba/gdn_linear_attn.py
+@@ -384,12 +384,46 @@ class GatedDeltaNetAttention(PluggableLayer, MambaBase):
+         self.enable_packed_recurrent_decode = (
+             envs.VLLM_ENABLE_FLA_PACKED_RECURRENT_DECODE
+         )
++        xpu_gdn_reuse_qkvz_ba_quant_mode = (
++            envs.VLLM_XPU_GDN_REUSE_QKVZ_BA_QUANT
++        )
++        self.xpu_reuse_qkvz_ba_quant = current_platform.is_xpu() and (
++            xpu_gdn_reuse_qkvz_ba_quant_mode in ("1", "true", "clone")
++        )
++        self.xpu_reuse_qkvz_ba_quant_clone = (
++            xpu_gdn_reuse_qkvz_ba_quant_mode == "clone"
++        )
++        self.xpu_fuse_qkvz_ba_proj = current_platform.is_xpu() and (
++            envs.VLLM_XPU_GDN_FUSE_QKVZ_BA_PROJ
++        )
++        self._xpu_fused_qkvz_ba_weight: torch.Tensor | None = None
++        self._xpu_fused_qkvz_ba_weight_scale: torch.Tensor | None = None
+ 
+         compilation_config = get_current_vllm_config().compilation_config
+         if prefix in compilation_config.static_forward_context:
+             raise ValueError(f"Duplicate layer name: {prefix}")
+         compilation_config.static_forward_context[prefix] = self
+ 
++    def _xpu_get_fused_qkvz_ba_weight(
++        self,
++    ) -> tuple[torch.Tensor, torch.Tensor]:
++        if self._xpu_fused_qkvz_ba_weight is None:
++            self._xpu_fused_qkvz_ba_weight = torch.cat(
++                (self.in_proj_qkvz.weight, self.in_proj_ba.weight), dim=1
++            ).contiguous()
++            self._xpu_fused_qkvz_ba_weight_scale = torch.cat(
++                (
++                    self.in_proj_qkvz.weight_scale.flatten(),
++                    self.in_proj_ba.weight_scale.flatten(),
++                ),
++                dim=0,
++            ).contiguous()
++        assert self._xpu_fused_qkvz_ba_weight_scale is not None
++        return (
++            self._xpu_fused_qkvz_ba_weight,
++            self._xpu_fused_qkvz_ba_weight_scale,
++        )
++
+     def create_qkvz_proj(
+         self,
+         hidden_size: int,
+@@ -612,8 +646,70 @@ class GatedDeltaNetAttention(PluggableLayer, MambaBase):
+         # ============================================================
+         # Part 1: Input Projection
+         # ============================================================
+-        projected_states_qkvz, _ = self.in_proj_qkvz(hidden_states)
+-        projected_states_ba, _ = self.in_proj_ba(hidden_states)
++        if self.xpu_fuse_qkvz_ba_proj and (
++            getattr(self.in_proj_qkvz, "xpu_native_int8_activation_quant", False)
++            and getattr(self.in_proj_ba, "xpu_native_int8_activation_quant", False)
++            and self.in_proj_qkvz.bias is None
++            and self.in_proj_ba.bias is None
++            and not self.in_proj_qkvz.gather_output
++            and not self.in_proj_ba.gather_output
++        ):
++            x_2d = hidden_states.view(-1, hidden_states.shape[-1]).contiguous()
++            x_q, x_s = torch.ops._xpu_C.per_token_quant_int8_xpu(x_2d)
++            fused_weight, fused_weight_scale = self._xpu_get_fused_qkvz_ba_weight()
++            qkvz_width = self.in_proj_qkvz.weight.shape[1]
++            ba_width = self.in_proj_ba.weight.shape[1]
++            projected_states = torch.ops._xpu_C.int8_gemm_w8a8(
++                x_q,
++                x_s,
++                fused_weight,
++                fused_weight_scale,
++                hidden_states.dtype,
++                None,
++            ).view(*hidden_states.shape[:-1], qkvz_width + ba_width)
++            projected_states_qkvz, projected_states_ba = projected_states.split(
++                [qkvz_width, ba_width], dim=-1
++            )
++        elif self.xpu_reuse_qkvz_ba_quant and (
++            getattr(self.in_proj_qkvz, "xpu_native_int8_activation_quant", False)
++            and getattr(self.in_proj_ba, "xpu_native_int8_activation_quant", False)
++            and self.in_proj_qkvz.bias is None
++            and self.in_proj_ba.bias is None
++            and not self.in_proj_qkvz.gather_output
++            and not self.in_proj_ba.gather_output
++        ):
++            x_2d = hidden_states.view(-1, hidden_states.shape[-1]).contiguous()
++            x_q, x_s = torch.ops._xpu_C.per_token_quant_int8_xpu(x_2d)
++            if self.xpu_reuse_qkvz_ba_quant_clone:
++                x_q_qkvz = x_q.clone()
++                x_s_qkvz = x_s.clone()
++                x_q_ba = x_q.clone()
++                x_s_ba = x_s.clone()
++            else:
++                x_q_qkvz = x_q
++                x_s_qkvz = x_s
++                x_q_ba = x_q
++                x_s_ba = x_s
++
++            projected_states_qkvz = torch.ops._xpu_C.int8_gemm_w8a8(
++                x_q_qkvz,
++                x_s_qkvz,
++                self.in_proj_qkvz.weight,
++                self.in_proj_qkvz.weight_scale,
++                hidden_states.dtype,
++                None,
++            ).view(*hidden_states.shape[:-1], self.in_proj_qkvz.weight.shape[1])
++            projected_states_ba = torch.ops._xpu_C.int8_gemm_w8a8(
++                x_q_ba,
++                x_s_ba,
++                self.in_proj_ba.weight,
++                self.in_proj_ba.weight_scale,
++                hidden_states.dtype,
++                None,
++            ).view(*hidden_states.shape[:-1], self.in_proj_ba.weight.shape[1])
++        else:
++            projected_states_qkvz, _ = self.in_proj_qkvz(hidden_states)
++            projected_states_ba, _ = self.in_proj_ba(hidden_states)
+ 
+         # ============================================================
+         # Part 2: Core Attention
