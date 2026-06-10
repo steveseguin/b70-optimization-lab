@@ -1,0 +1,54 @@
+diff --git a/vllm/_xpu_ops.py b/vllm/_xpu_ops.py
+--- a/vllm/_xpu_ops.py
++++ b/vllm/_xpu_ops.py
+@@ -1,7 +1,8 @@
+ # SPDX-License-Identifier: Apache-2.0
+ # SPDX-FileCopyrightText: Copyright contributors to the vLLM project
+ 
+-from typing import TYPE_CHECKING
++import os
++from typing import TYPE_CHECKING
+ 
+ import torch
+ from vllm_xpu_kernels.flash_attn_interface import flash_attn_varlen_func
+@@ -11,6 +12,32 @@ from vllm.platforms import current_platform
+ from vllm.utils.torch_utils import direct_register_custom_op
+ 
+ logger = init_logger(__name__)
++
++_XPU_FLASH_ATTN_KV_SPLITS: int | None = None
++_xpu_flash_attn_kv_splits_env = os.getenv("VLLM_XPU_FLASH_ATTN_KV_SPLITS")
++if _xpu_flash_attn_kv_splits_env:
++    try:
++        _xpu_flash_attn_kv_splits = int(_xpu_flash_attn_kv_splits_env)
++        if _xpu_flash_attn_kv_splits > 0:
++            _XPU_FLASH_ATTN_KV_SPLITS = _xpu_flash_attn_kv_splits
++        else:
++            logger.warning_once(
++                "Ignoring non-positive VLLM_XPU_FLASH_ATTN_KV_SPLITS=%s",
++                _xpu_flash_attn_kv_splits_env,
++            )
++    except ValueError:
++        logger.warning_once(
++            "Ignoring invalid VLLM_XPU_FLASH_ATTN_KV_SPLITS=%s",
++            _xpu_flash_attn_kv_splits_env,
++        )
++
++
++def _resolve_xpu_flash_attn_kv_splits(num_splits: int) -> int | None:
++    if _XPU_FLASH_ATTN_KV_SPLITS is not None:
++        return _XPU_FLASH_ATTN_KV_SPLITS
++    if num_splits and num_splits > 0:
++        return int(num_splits)
++    return None
+ 
+ if TYPE_CHECKING:
+ 
+@@ -419,6 +446,7 @@ class xpu_ops:
+             q_descale=q_descale,
+             k_descale=k_descale,
+             v_descale=v_descale,
++            num_splits_kv=_resolve_xpu_flash_attn_kv_splits(num_splits),
+         )
+ 
+     @staticmethod
