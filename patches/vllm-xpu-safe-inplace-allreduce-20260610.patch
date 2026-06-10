@@ -36,7 +36,7 @@ new file mode 100644
 index 0000000..bab4f24
 --- /dev/null
 +++ b/vllm/compilation/passes/utility/xpu_inplace_allreduce.py
-@@ -0,0 +1,215 @@
+@@ -0,0 +1,281 @@
 +# SPDX-License-Identifier: Apache-2.0
 +# SPDX-FileCopyrightText: Copyright contributors to the vLLM project
 +
@@ -91,6 +91,30 @@ index 0000000..bab4f24
 +    return str(target)
 +
 +
++def _node_value_summary(node: fx.Node) -> str:
++    value = node.meta.get("val")
++    if value is None:
++        return "val=?"
++    dtype = getattr(value, "dtype", None)
++    shape = getattr(value, "shape", None)
++    try:
++        shape_text = str(tuple(shape)) if shape is not None else "?"
++    except Exception:
++        shape_text = str(shape)
++    return f"dtype={dtype} shape={shape_text}"
++
++
++def _node_users_summary(node: fx.Node) -> str:
++    return ",".join(user.name for user in node.users) or "-"
++
++
++def _node_summary(node: fx.Node) -> str:
++    return (
++        f"{node.name}:{node.op}:{_target_name(node.target)} "
++        f"{_node_value_summary(node)} users={_node_users_summary(node)}"
++    )
++
++
 +def _is_add_source(node: fx.Node) -> bool:
 +    if node.op != "call_function":
 +        return False
@@ -126,6 +150,12 @@ index 0000000..bab4f24
 +        return True
 +
 +    source = _base_source_node(node)
++    if source_filter.startswith("input_name:"):
++        needle = source_filter.split(":", 1)[1]
++        return needle in node.name
++    if source_filter.startswith("source_name:"):
++        needle = source_filter.split(":", 1)[1]
++        return needle in source.name
 +    if source_filter == "add":
 +        return _is_add_source(source)
 +    if source_filter == "gemm":
@@ -197,6 +227,31 @@ index 0000000..bab4f24
 +        self.source_filter = os.environ.get(
 +            "VLLM_XPU_SAFE_INPLACE_ALLREDUCE_SOURCE_FILTER", "any"
 +        ).strip().lower()
++        self.log_rewrites = (
++            os.environ.get("VLLM_XPU_SAFE_INPLACE_ALLREDUCE_LOG_REWRITES", "0")
++            == "1"
++        )
++
++    def _log_decision(
++        self,
++        decision: str,
++        all_reduce_node: fx.Node,
++        input_node: fx.Node,
++        reason: str = "",
++    ) -> None:
++        if not self.log_rewrites:
++            return
++        source_node = _base_source_node(input_node)
++        logger.info(
++            "[XPU_SAFE_INPLACE_AR] rank=%s decision=%s reason=%s ar=%s "
++            "input=%s source=%s",
++            os.environ.get("RANK", "?"),
++            decision,
++            reason,
++            _node_summary(all_reduce_node),
++            _node_summary(input_node),
++            _node_summary(source_node),
++        )
 +
 +    @VllmInductorPass.time_and_log
 +    def __call__(self, graph: fx.Graph) -> None:
@@ -211,6 +266,13 @@ index 0000000..bab4f24
 +
 +            if self.max_rewrites_per_graph and count >= self.max_rewrites_per_graph:
 +                skipped_live += 1
++                if node.args and isinstance(node.args[0], fx.Node):
++                    self._log_decision(
++                        "skip",
++                        node,
++                        node.args[0],
++                        "max_rewrites_per_graph",
++                    )
 +                continue
 +
 +            if not node.args or not isinstance(node.args[0], fx.Node):
@@ -220,16 +282,20 @@ index 0000000..bab4f24
 +            input_node = node.args[0]
 +            if not _is_bfloat16_tensor(input_node):
 +                skipped_dtype += 1
++                self._log_decision("skip", node, input_node, "dtype")
 +                continue
 +
 +            if not _matches_source_filter(input_node, self.source_filter):
 +                skipped_filter += 1
++                self._log_decision("skip", node, input_node, "source_filter")
 +                continue
 +
 +            if not _has_single_use_alias_chain(input_node, node):
 +                skipped_live += 1
++                self._log_decision("skip", node, input_node, "live_alias_chain")
 +                continue
 +
++            self._log_decision("rewrite", node, input_node)
 +            kwargs = dict(node.kwargs)
 +            with graph.inserting_before(node):
 +                graph.call_function(
