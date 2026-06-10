@@ -1,0 +1,130 @@
+{
+  "date": "2026-06-09",
+  "model": "nameistoken/Qwen3.6-35B-A3B-Quark-W8A8-INT8",
+  "local_model_path": "/mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118",
+  "hardware": "4x Intel Arc Pro B70 32GB",
+  "max_model_len": 32768,
+  "engine": "vLLM local XPU TP4 + vllm-xpu-kernels local",
+  "candidate": "Qwen3.6 Quark W8A8 INT8 TP4 32K PIECEWISE XPU graph with clone-safe custom collectives",
+  "status": "production-candidate / active manual backend",
+  "quality": {
+    "passed": true,
+    "exact_cases": {
+      "exact_ok": true,
+      "copy_phrase": true,
+      "arithmetic": true,
+      "json_schema": true
+    },
+    "repeat_hash_stability": true,
+    "repeat_unique_hashes": [
+      "c40708bd7280e02bd9dc04ec775023d5be7b4870ea8096039af38576e60fc80b"
+    ],
+    "long_context_needle": true,
+    "long_context_prompt_tokens": 7617,
+    "artifact": "data/qwen36-quark-int8-graph32k-quality-20260609.json"
+  },
+  "restore_smoke": {
+    "passed": true,
+    "repeat_runs": 4,
+    "long_context_target_tokens": 2048,
+    "baseline_match_all": true,
+    "artifact": "data/qwen36-quark-int8-graph32k-restore-smoke-20260609.json"
+  },
+  "rejected_candidates": [
+    {
+      "name": "fused_moe_silu_plus_int8_quant",
+      "env": "VLLM_XPU_FUSED_MOE_FUSE_SILU_QUANT=1",
+      "reason": "Text quality gate failed: arithmetic canary returned 58 instead of 60.",
+      "artifact": "data/qwen36-quark-int8-graph32k-fused-siluq-quality-20260609.json"
+    }
+  ],
+  "single_request": {
+    "prompt_tokens": 512,
+    "output_tokens": 512,
+    "repeats": 4,
+    "tok_s_after_first_chunk_mean": 94.51996366238356,
+    "tok_s_e2e_mean": 93.210509875586,
+    "ttft_ms_client_mean": 76.09836076153442,
+    "ttft_ms_vllm_mean": 74.91004467010498,
+    "prefill_lower_bound_tok_s_mean": 6728.33631674711,
+    "artifact": "data/qwen36-quark-int8-graph32k-single-metrics-20260609.json"
+  },
+  "concurrency": {
+    "c1": {
+      "concurrency": 1,
+      "prompt_tokens_each": 515,
+      "completion_tokens_each": 256,
+      "aggregate_output_tok_s_wall": 92.32344201128203,
+      "aggregate_output_tok_s_from_first_text": 95.0780209908841,
+      "mean_ttft_s": 0.08033468096982688,
+      "mean_per_request_tok_s_after_ttft": 95.0780209908841
+    },
+    "c2": {
+      "concurrency": 2,
+      "prompt_tokens_each": 515,
+      "completion_tokens_each": 256,
+      "aggregate_output_tok_s_wall": 162.80229380443188,
+      "aggregate_output_tok_s_from_first_text": 167.0393679832653,
+      "mean_ttft_s": 0.11431771999923512,
+      "mean_per_request_tok_s_after_ttft": 84.9098190803617
+    },
+    "c4": {
+      "concurrency": 4,
+      "prompt_tokens_each": 515,
+      "completion_tokens_each": 256,
+      "aggregate_output_tok_s_wall": 303.0376347798433,
+      "aggregate_output_tok_s_from_first_text": 310.9799000172549,
+      "mean_ttft_s": 0.19999633880797774,
+      "mean_per_request_tok_s_after_ttft": 80.72141708710512
+    },
+    "c8": {
+      "concurrency": 8,
+      "prompt_tokens_each": 515,
+      "completion_tokens_each": 256,
+      "aggregate_output_tok_s_wall": 538.0857643951806,
+      "aggregate_output_tok_s_from_first_text": 550.6384330583068,
+      "mean_ttft_s": 0.3441553064913023,
+      "mean_per_request_tok_s_after_ttft": 74.17149123993202
+    },
+    "c16": {
+      "concurrency": 16,
+      "prompt_tokens_each": 516,
+      "completion_tokens_each": 256,
+      "aggregate_output_tok_s_wall": 888.5068725714011,
+      "aggregate_output_tok_s_from_first_text": 904.4522446013618,
+      "mean_ttft_s": 0.7001039348833729,
+      "mean_per_request_tok_s_after_ttft": 65.65390118385463
+    },
+    "c32": {
+      "concurrency": 32,
+      "prompt_tokens_each": 516,
+      "completion_tokens_each": 256,
+      "aggregate_output_tok_s_wall": 1408.8598200848405,
+      "aggregate_output_tok_s_from_first_text": 1433.2999870543795,
+      "mean_ttft_s": 1.050584744214575,
+      "mean_per_request_tok_s_after_ttft": 54.24179243349203
+    },
+    "c48": {
+      "concurrency": 48,
+      "prompt_tokens_each": 516,
+      "completion_tokens_each": 256,
+      "aggregate_output_tok_s_wall": 1604.0037102149456,
+      "aggregate_output_tok_s_from_first_text": 1622.3318942981964,
+      "mean_ttft_s": 1.4180319374087655,
+      "mean_per_request_tok_s_after_ttft": 41.49747887942308
+    }
+  },
+  "repro": {
+    "profile": "configs/model-slots/qwen36-35b-a3b-quark-int8-graph32k.env",
+    "quality_script": "scripts/qwen36-text-quality-suite.py",
+    "benchmark_script": "scripts/bench-openai-concurrency.py",
+    "single_metrics_script": "scripts/measure-openai-endpoint-metrics.py --skip-vram",
+    "vllm_patch": "patches/vllm-qwen36-quark-w8a8-int8-xpu-graph-20260609.patch",
+    "vllm_xpu_kernels_patch": "patches/vllm-xpu-kernels-qwen36-quark-w8a8-int8-xpu-20260609.patch"
+  },
+  "notes": [
+    "No model, quantization, context length, or sampling-quality tradeoff was used.",
+    "Direct backend chat requests expose Qwen thinking text unless routed through the frontdoor with enable_thinking=false; completions benchmarks are unaffected.",
+    "xpu-smi dump was slow/wedged during single metrics collection; --skip-vram was added and xpu-smi stats -j should be used separately for memory snapshots."
+  ]
+}

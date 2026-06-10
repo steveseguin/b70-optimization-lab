@@ -266,6 +266,11 @@ def main() -> int:
         default="stream",
         help="Use SSE streaming or final-only /v1/completions responses.",
     )
+    parser.add_argument(
+        "--skip-vram",
+        action="store_true",
+        help="Skip xpu-smi VRAM sampling. Useful for tight profiling when xpu-smi dump is slow or wedged.",
+    )
     parser.add_argument("--out", required=True)
     args = parser.parse_args()
 
@@ -292,11 +297,11 @@ def main() -> int:
         )
 
     records: list[dict[str, Any]] = []
-    vram_before = xpu_vram_mib()
+    vram_before = {} if args.skip_vram else xpu_vram_mib()
     peak_vram = dict(vram_before)
     for i in range(args.repeats):
         metrics_before = parse_metric_sums(get_text(f"{args.base_url.rstrip('/')}/metrics"))
-        vram_pre = xpu_vram_mib()
+        vram_pre = {} if args.skip_vram else xpu_vram_mib()
         result = request_completion(
             args.base_url,
             model,
@@ -304,7 +309,7 @@ def main() -> int:
             args.output_tokens,
             stream=args.mode == "stream",
         )
-        vram_post = xpu_vram_mib()
+        vram_post = {} if args.skip_vram else xpu_vram_mib()
         metrics_after = parse_metric_sums(get_text(f"{args.base_url.rstrip('/')}/metrics"))
 
         text = result["text"]
@@ -387,6 +392,7 @@ def main() -> int:
         "prompt_tokens_actual": prompt_tokens,
         "output_tokens_requested": args.output_tokens,
         "mode": args.mode,
+        "skip_vram": args.skip_vram,
         "repeats": args.repeats,
         "measurement_notes": [
             "TTFT and e2e are measured both client-side and from vLLM Prometheus histogram deltas.",

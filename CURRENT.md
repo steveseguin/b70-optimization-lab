@@ -1,8 +1,28 @@
 # Current Promoted Results
 
-Date: 2026-05-19
+Date: 2026-06-09
+
+## Qwen3.6 35B-A3B Quark W8A8 INT8
+
+Current Qwen production-candidate speed result:
+
+- Model: `nameistoken/Qwen3.6-35B-A3B-Quark-W8A8-INT8`
+- Hardware: 4x Intel Arc Pro B70 32GB
+- Engine: local vLLM XPU TP4 plus local `vllm-xpu-kernels`
+- Recipe: Quark W8A8 INT8 weights, BF16 activation/runtime dtype, 32K context, native XPU dense INT8 linear, native XPU INT8 MoE backend, XPU PIECEWISE graph capture, and clone-safe custom-op all-reduce collectives.
+- Single request: `94.52` output tok/s after first chunk, `93.21` output tok/s end-to-end, mean TTFT `76.10 ms` for p512/n512 streaming completions.
+- Aggregate reference: `1604.00` output tok/s wall at 48 concurrent p512/n256 streaming completions. Earlier short-prompt chat probe reached `~2080` aggregate tok/s at 48.
+- Quality: text exact canaries, JSON field semantics, 16-repeat hash stability, and 8K-class long-context needle recall passed.
+- Restore smoke after the rejected fused-kernel experiment also passed exact canaries, JSON field semantics, repeat stability, and long-context recall.
+- Primary artifacts: `notes/2026-06-09-qwen36-quark-int8-xpu-graph-custom-collectives.md`, `data/qwen36-quark-int8-graph32k-customar-20260609.json`, `data/qwen36-quark-int8-graph32k-quality-20260609.json`, `data/qwen36-quark-int8-graph32k-restore-smoke-20260609.json`, `data/qwen36-quark-int8-graph32k-concurrency-20260609.json`, `data/qwen36-quark-int8-graph32k-single-metrics-20260609.json`.
+- Repro patches: `patches/vllm-qwen36-quark-w8a8-int8-xpu-graph-20260609.patch`, `patches/vllm-xpu-kernels-qwen36-quark-w8a8-int8-xpu-20260609.patch`.
+- Rejected candidate: `VLLM_XPU_FUSED_MOE_FUSE_SILU_QUANT=1` sped up an isolated activation/quant microbench but failed the quality gate by returning `58` instead of `60` for the arithmetic canary. Artifact: `data/qwen36-quark-int8-graph32k-fused-siluq-quality-20260609.json`. Keep this env unset.
+
+Next Qwen targets: profile decode boundaries after graph replay, fuse MoE activation plus second-stage quant without changing numeric behavior, tune small-M dense W8A8 decode GEMM, and keep aggregate throughput tracked with the 1/2/4/8/16/32/48 concurrency harness.
 
 ## MiniMax M2.7
+
+Section last updated: 2026-05-19
 
 Current strict quality-passed speed result:
 
