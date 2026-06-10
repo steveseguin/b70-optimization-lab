@@ -1,0 +1,34 @@
+diff --git a/vllm/model_executor/layers/mamba/gdn_linear_attn.py b/vllm/model_executor/layers/mamba/gdn_linear_attn.py
+--- a/vllm/model_executor/layers/mamba/gdn_linear_attn.py
++++ b/vllm/model_executor/layers/mamba/gdn_linear_attn.py
+@@
++import os
++
+ import torch
+ from einops import rearrange
+ from torch import nn
+@@
+-        core_attn_out = torch.zeros(
+-            (num_tokens, self.num_v_heads // self.tp_size, self.head_v_dim),
+-            dtype=hidden_states.dtype,
+-            device=hidden_states.device,
++        core_attn_shape = (
++            num_tokens,
++            self.num_v_heads // self.tp_size,
++            self.head_v_dim,
+         )
++        if os.getenv("VLLM_XPU_GDN_EMPTY_CORE_ATTN_OUT", "0") == "1":
++            core_attn_out = torch.empty(
++                core_attn_shape,
++                dtype=hidden_states.dtype,
++                device=hidden_states.device,
++            )
++        else:
++            core_attn_out = torch.zeros(
++                core_attn_shape,
++                dtype=hidden_states.dtype,
++                device=hidden_states.device,
++            )
+ 
+         torch.ops.vllm.gdn_attention_core(
+             mixed_qkv,
