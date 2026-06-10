@@ -68,6 +68,19 @@ Patch artifact:
 
 - `patches/vllm-qwen36-gdn-reuseqkvzbaquant-clone-20260610.patch`
 
+Patch hygiene refresh:
+
+- the patch artifact now registers
+  `VLLM_XPU_GDN_REUSE_QKVZ_BA_QUANT` in `vllm/envs.py`;
+- the GDN model file reads `envs.VLLM_XPU_GDN_REUSE_QKVZ_BA_QUANT` instead of
+  calling `os.getenv` directly;
+- touched vLLM files passed `python -m py_compile`;
+- the patch applies cleanly against a fresh vLLM HEAD worktree.
+
+This cleanup is not yet endpoint-restarted in the live service. The current
+running backend was launched before the env-registration cleanup and should be
+restarted with a fresh cache before treating the warning cleanup as validated.
+
 Runtime:
 
 - session: `qwen36-tp4-gdn-reusequant-clone-32k`
@@ -158,13 +171,13 @@ Do not promote it to the production default yet:
 - TTFT is slightly worse in the single-request run;
 - aggregate c48 is run-variant: better than the latest accepted c48 refresh but
   worse than the earlier full-sweep c48 result;
-- the patch uses an unregistered env var and `import os`, which triggers
-  `Failed to read file <frozen os>` warnings during compile.
+- the env-registration cleanup needs an endpoint restart and fresh-cache
+  validation before production use.
 
 ## Next Steps
 
-1. Register the env var in `vllm/envs.py` and remove the direct `os.getenv` from
-   the model file before any production use.
+1. Restart with the env-registration patch and a fresh cache to verify the
+   compile warning is gone and speed/quality are unchanged.
 2. Rerun accepted-control single and c48 immediately before and after the clone
    variant to reduce run-variance in the aggregate comparison.
 3. Investigate whether the XPU `int8_gemm_w8a8` op mutates or races on shared
