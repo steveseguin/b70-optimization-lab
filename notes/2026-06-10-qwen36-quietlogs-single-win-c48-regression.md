@@ -1,4 +1,4 @@
-# Qwen3.6 INT8 Quiet Logs Single-Request Win With C48 Regression
+# Qwen3.6 INT8 Quiet Logs Single-Request Win With C48 Variance Check
 
 Date: 2026-06-10
 
@@ -82,8 +82,8 @@ Artifacts:
 - accepted: `data/qwen36-quark-int8-tp4-noprefix-graph32k-concurrency-20260610.json`
 - quiet logs: `data/qwen36-quark-int8-tp4-noprefix-quietlogs-graph32k-concurrency-20260610.json`
 
-I reran c48 with a separate prompt salt because the first c48 result was a
-material regression. The rerun confirmed the issue:
+I reran quiet-logs c48 with a separate prompt salt because the first c48 result
+was materially below the earlier accepted c48 reference:
 
 - wall: `1517.63 tok/s`
 - from-first: `1539.37 tok/s`
@@ -92,14 +92,37 @@ Artifact:
 
 - `data/qwen36-quark-int8-tp4-noprefix-quietlogs-c48-confirm-20260610.json`
 
+## Accepted C48 Refresh
+
+After restoring the accepted no-prefix runtime, I reran c48 with a fresh prompt
+salt to separate a true quiet-logs regression from current-state variance after
+many runtime restarts:
+
+- accepted c48 refresh wall: `1479.66 tok/s`
+- accepted c48 refresh from-first: `1495.39 tok/s`
+- mean TTFT: `1.55 s`
+
+Artifact:
+
+- `data/qwen36-quark-int8-tp4-noprefix-accepted-c48-refresh-20260610.json`
+
+This accepted refresh is lower than both quiet-logs c48 measurements
+(`1545.65` / `1564.93` and `1517.63` / `1539.37`). Therefore the c48 drop from
+the historical accepted reference (`1700.89` / `1727.50`) should not be
+attributed to quiet logs alone. High-concurrency throughput is currently
+variable after many endpoint restarts and needs repeated A/B or a longer
+steady-state reliability run before production promotion.
+
 ## Decision
 
 Keep quiet-logs as a quality-safe single-request and low/mid-concurrency
-candidate, but do not promote it as the production default.
+candidate. It is a valid single-request speed candidate and likely worth a
+production-profile A/B.
 
 The current priority is single-request speed, and this is a real improvement
-there. However, the c48 regression is too large for a production profile that
-also needs high aggregate throughput.
+there. However, production default promotion still needs repeated aggregate and
+reliability checks because the c48 result is volatile in the current lab state
+and logging changes reduce some runtime observability.
 
 The accepted no-prefix runtime was restored after the screen:
 
