@@ -1,0 +1,52 @@
+{
+  "date": "2026-06-10",
+  "model": "nameistoken/Qwen3.6-35B-A3B-Quark-W8A8-INT8",
+  "served_model_name": "qwen36-35b-a3b-fp8",
+  "candidate": "tp4-noprefix-seq8-mbt8192",
+  "decision": "rejected",
+  "reason": "The first p512/n512 benchmark after startup triggered a Level Zero device-lost failure in the async output-copy path and the engine hung.",
+  "accepted_control": {
+    "artifact": "data/qwen36-quark-int8-tp4-noprefix-accepted-control-current-20260610.json",
+    "corrected_after_first_tok_s_mean": 98.77407483857839,
+    "e2e_output_tok_s_mean": 97.52945917448288,
+    "ttft_ms_mean": 76.28337785718031
+  },
+  "candidate_runtime": {
+    "tensor_parallel_size": 4,
+    "max_model_len": 32768,
+    "quantization": "quark",
+    "dtype": "bfloat16",
+    "enable_prefix_caching": false,
+    "max_num_batched_tokens": 8192,
+    "max_num_seqs": 8,
+    "cudagraph_mode": "PIECEWISE",
+    "cudagraph_capture_sizes": [1, 2, 4, 8, 16],
+    "cache_root": "/mnt/fast-ai/vllm-cache-exp/qwen36-35b-a3b-quark-int8-tp4-piecewise-graph-seq8-mbt8192-32k-noprefix"
+  },
+  "startup_observations": {
+    "log": "/tmp/qwen36-quark-int8-tp4-seq8-mbt8192-32k-noprefix-20260610.log",
+    "model_load_memory_gib": 8.58,
+    "available_kv_cache_memory_gib": 20.67,
+    "reported_max_concurrency_32768_tokens": 62.65,
+    "started_http_server": true
+  },
+  "failure": {
+    "benchmark_artifact": "data/qwen36-quark-int8-tp4-noprefix-seq8-mbt8192-single-20260610.json",
+    "benchmark_artifact_written": false,
+    "benchmark_process_was_killed": true,
+    "error_snippets": [
+      "Exception in thread WorkerAsyncOutputCopy",
+      "self.async_copy_ready_event.synchronize()",
+      "RuntimeError: level_zero backend failed with error: 20 (UR_RESULT_ERROR_DEVICE_LOST)",
+      "No available shared memory broadcast block found in 60 seconds"
+    ],
+    "impact": "The engine stopped making progress after the device-lost error and required killing the candidate tmux session before restoring the accepted backend."
+  },
+  "recovery": {
+    "accepted_session": "qwen36-tp4-noprefix-32k",
+    "accepted_restore_log": "/tmp/qwen36-quark-int8-tp4-accepted-32k-noprefix-restored7.log",
+    "backend_health_after_restore": "pass",
+    "frontdoor_chat_smoke_after_restore": "pass",
+    "frontdoor_chat_smoke_response": "OK"
+  }
+}
