@@ -1,0 +1,44 @@
+diff --git a/csrc/xpu/quantization/int8_quant.cpp b/csrc/xpu/quantization/int8_quant.cpp
+--- a/csrc/xpu/quantization/int8_quant.cpp
++++ b/csrc/xpu/quantization/int8_quant.cpp
+@@
+ template <typename scalar_t>
+ float roundtrip_output_dtype(float value) {
+   return to_float(static_cast<scalar_t>(value));
+ }
+ 
++template <typename scalar_t>
++float silu_mul_value(scalar_t gate, scalar_t up) {
++  const float gate_f = to_float(gate);
++  const scalar_t silu =
++      static_cast<scalar_t>(gate_f / (1.0f + sycl::exp(-gate_f)));
++  return to_float(static_cast<scalar_t>(silu * up));
++}
++
+ template <typename scalar_t>
+ void launch_per_token_quant_int8(
+@@
+               float thread_max = 0.0f;
+               for (int64_t col = local_id; col < cols; col += local_range) {
+-                const float gate = to_float(x[input_row_offset + col]);
+-                const float up = to_float(x[input_row_offset + cols + col]);
+-                const float silu = gate / (1.0f + sycl::exp(-gate));
+-                const float value =
+-                    roundtrip_output_dtype<scalar_t>(silu * up);
++                const scalar_t gate = x[input_row_offset + col];
++                const scalar_t up = x[input_row_offset + cols + col];
++                const float value = silu_mul_value(gate, up);
+                 thread_max = sycl::fmax(thread_max, sycl::fabs(value));
+               }
+@@
+               const float inv_scale = 127.0f / absmax;
+               for (int64_t col = local_id; col < cols; col += local_range) {
+-                const float gate = to_float(x[input_row_offset + col]);
+-                const float up = to_float(x[input_row_offset + cols + col]);
+-                const float silu = gate / (1.0f + sycl::exp(-gate));
+-                float value = roundtrip_output_dtype<scalar_t>(silu * up);
++                const scalar_t gate = x[input_row_offset + col];
++                const scalar_t up = x[input_row_offset + cols + col];
++                float value = silu_mul_value(gate, up);
+                 value = sycl::round(value * inv_scale);
+                 value = sycl::fmin(127.0f, sycl::fmax(-127.0f, value));
