@@ -38,6 +38,31 @@
       "artifact": "data/qwen36-quark-int8-graph32k-fused-siluq-quality-20260609.json"
     }
   ],
+  "moe_kernel_microbench": {
+    "accepted_artifact": "data/qwen36-quark-int8-moe-kernels-20260609.json",
+    "rejected_fused_siluq_artifact": "data/qwen36-quark-int8-moe-kernels-fused-siluq-20260609.json",
+    "shape": {
+      "hidden_size": 2048,
+      "moe_intermediate_size": 512,
+      "tp_size": 4,
+      "inter_size_per_tp": 128,
+      "num_experts": 256,
+      "topk": 8
+    },
+    "accepted_total_us_rows_1_2_4_8": [
+      298.95944,
+      304.89056,
+      272.78056,
+      283.87424
+    ],
+    "rejected_fused_total_us_rows_1_2_4_8": [
+      238.90568,
+      232.34536,
+      229.17648,
+      260.69576
+    ],
+    "rejected_reason": "Fused candidate was faster but drifted from accepted staged output and failed text quality."
+  },
   "single_request": {
     "prompt_tokens": 512,
     "output_tokens": 512,
@@ -117,6 +142,7 @@
   "repro": {
     "profile": "configs/model-slots/qwen36-35b-a3b-quark-int8-graph32k.env",
     "quality_script": "scripts/qwen36-text-quality-suite.py",
+    "moe_kernel_microbench_script": "scripts/bench-qwen36-int8-moe-kernels.py",
     "benchmark_script": "scripts/bench-openai-concurrency.py",
     "single_metrics_script": "scripts/measure-openai-endpoint-metrics.py --skip-vram",
     "vllm_patch": "patches/vllm-qwen36-quark-w8a8-int8-xpu-graph-20260609.patch",

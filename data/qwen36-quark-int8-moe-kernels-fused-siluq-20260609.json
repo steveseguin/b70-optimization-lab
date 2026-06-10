@@ -1,0 +1,151 @@
+{
+  "fused_silu_quant_enabled": true,
+  "model_config": "/mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118/config.json",
+  "results": [
+    {
+      "components_us_mean": {
+        "activation": 77.5944,
+        "activation_plus_quant2": 164.85664,
+        "component_sum": 609.1696,
+        "gather": 79.47576,
+        "gemm1": 93.04984,
+        "gemm2": 94.10439999999998,
+        "quant1": 87.02096,
+        "quant2": 87.26224,
+        "remap": 90.66199999999999
+      },
+      "dtype": "bf16",
+      "hidden_size": 2048,
+      "inter_size_per_tp": 128,
+      "iterations": 50,
+      "manual_vs_xpu_fused_moe_max_abs_diff": 0.71875,
+      "moe_inputs": 8,
+      "num_experts": 256,
+      "rows": 1,
+      "topk": 8,
+      "total_us_mean": 238.90568,
+      "warmup": 10
+    },
+    {
+      "components_us_mean": {
+        "activation": 75.90128,
+        "activation_plus_quant2": 162.94304,
+        "component_sum": 596.7312,
+        "gather": 75.78375999999999,
+        "gemm1": 92.66815999999999,
+        "gemm2": 91.61464,
+        "quant1": 84.57488,
+        "quant2": 87.04176,
+        "remap": 89.14671999999999
+      },
+      "dtype": "bf16",
+      "hidden_size": 2048,
+      "inter_size_per_tp": 128,
+      "iterations": 50,
+      "manual_vs_xpu_fused_moe_max_abs_diff": 0.625,
+      "moe_inputs": 16,
+      "num_experts": 256,
+      "rows": 2,
+      "topk": 8,
+      "total_us_mean": 232.34536,
+      "warmup": 10
+    },
+    {
+      "components_us_mean": {
+        "activation": 75.39583999999999,
+        "activation_plus_quant2": 159.6712,
+        "component_sum": 590.09184,
+        "gather": 74.94448,
+        "gemm1": 91.6344,
+        "gemm2": 91.14144,
+        "quant1": 84.18279999999999,
+        "quant2": 84.27536,
+        "remap": 88.51752
+      },
+      "dtype": "bf16",
+      "hidden_size": 2048,
+      "inter_size_per_tp": 128,
+      "iterations": 50,
+      "manual_vs_xpu_fused_moe_max_abs_diff": 0.53125,
+      "moe_inputs": 32,
+      "num_experts": 256,
+      "rows": 4,
+      "topk": 8,
+      "total_us_mean": 229.17647999999997,
+      "warmup": 10
+    },
+    {
+      "components_us_mean": {
+        "activation": 76.72391999999999,
+        "activation_plus_quant2": 161.85519999999997,
+        "component_sum": 615.264,
+        "gather": 76.24864,
+        "gemm1": 108.00296,
+        "gemm2": 93.36807999999999,
+        "quant1": 85.37776,
+        "quant2": 85.13127999999999,
+        "remap": 90.41136
+      },
+      "dtype": "bf16",
+      "hidden_size": 2048,
+      "inter_size_per_tp": 128,
+      "iterations": 50,
+      "manual_vs_xpu_fused_moe_max_abs_diff": 0.75,
+      "moe_inputs": 64,
+      "num_experts": 256,
+      "rows": 8,
+      "topk": 8,
+      "total_us_mean": 260.69575999999995,
+      "warmup": 10
+    },
+    {
+      "components_us_mean": {
+        "activation": 67.0072,
+        "activation_plus_quant2": 150.88736,
+        "component_sum": 656.4635999999999,
+        "gather": 75.04951999999999,
+        "gemm1": 163.97575999999998,
+        "gemm2": 107.17928,
+        "quant1": 84.51975999999999,
+        "quant2": 83.88015999999999,
+        "remap": 74.85192
+      },
+      "dtype": "bf16",
+      "hidden_size": 2048,
+      "inter_size_per_tp": 128,
+      "iterations": 50,
+      "manual_vs_xpu_fused_moe_max_abs_diff": 0.75,
+      "moe_inputs": 128,
+      "num_experts": 256,
+      "rows": 16,
+      "topk": 8,
+      "total_us_mean": 342.35760000000005,
+      "warmup": 10
+    },
+    {
+      "components_us_mean": {
+        "activation": 5.251999999999999,
+        "activation_plus_quant2": 87.87895999999999,
+        "component_sum": 631.43808,
+        "gather": 62.9876,
+        "gemm1": 276.68784,
+        "gemm2": 158.39304,
+        "quant1": 38.88248,
+        "quant2": 82.62696,
+        "remap": 6.608159999999999
+      },
+      "dtype": "bf16",
+      "hidden_size": 2048,
+      "inter_size_per_tp": 128,
+      "iterations": 50,
+      "manual_vs_xpu_fused_moe_max_abs_diff": 0.78125,
+      "moe_inputs": 256,
+      "num_experts": 256,
+      "rows": 32,
+      "topk": 8,
+      "total_us_mean": 507.54704,
+      "warmup": 10
+    }
+  ],
+  "tp_size": 4
+}

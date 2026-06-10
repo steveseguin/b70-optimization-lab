@@ -1,0 +1,151 @@
+{
+  "fused_silu_quant_enabled": false,
+  "model_config": "/mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118/config.json",
+  "results": [
+    {
+      "components_us_mean": {
+        "activation": 86.26072,
+        "activation_plus_quant2": 184.36392,
+        "component_sum": 680.74032,
+        "gather": 86.04439999999998,
+        "gemm1": 105.27815999999999,
+        "gemm2": 105.57976,
+        "quant1": 97.30552,
+        "quant2": 98.1032,
+        "remap": 102.16856
+      },
+      "dtype": "bf16",
+      "hidden_size": 2048,
+      "inter_size_per_tp": 128,
+      "iterations": 50,
+      "manual_vs_xpu_fused_moe_max_abs_diff": 0.0,
+      "moe_inputs": 8,
+      "num_experts": 256,
+      "rows": 1,
+      "topk": 8,
+      "total_us_mean": 298.95944,
+      "warmup": 10
+    },
+    {
+      "components_us_mean": {
+        "activation": 88.62256,
+        "activation_plus_quant2": 189.79167999999999,
+        "component_sum": 702.87464,
+        "gather": 89.76032,
+        "gemm1": 108.71848,
+        "gemm2": 108.26503999999998,
+        "quant1": 99.98456,
+        "quant2": 101.16912,
+        "remap": 106.35456
+      },
+      "dtype": "bf16",
+      "hidden_size": 2048,
+      "inter_size_per_tp": 128,
+      "iterations": 50,
+      "manual_vs_xpu_fused_moe_max_abs_diff": 0.0,
+      "moe_inputs": 16,
+      "num_experts": 256,
+      "rows": 2,
+      "topk": 8,
+      "total_us_mean": 304.89056,
+      "warmup": 10
+    },
+    {
+      "components_us_mean": {
+        "activation": 81.78247999999999,
+        "activation_plus_quant2": 173.82664,
+        "component_sum": 643.46672,
+        "gather": 81.45487999999999,
+        "gemm1": 99.55296,
+        "gemm2": 98.05328,
+        "quant1": 92.76904,
+        "quant2": 92.04415999999999,
+        "remap": 97.80992
+      },
+      "dtype": "bf16",
+      "hidden_size": 2048,
+      "inter_size_per_tp": 128,
+      "iterations": 50,
+      "manual_vs_xpu_fused_moe_max_abs_diff": 0.0,
+      "moe_inputs": 32,
+      "num_experts": 256,
+      "rows": 4,
+      "topk": 8,
+      "total_us_mean": 272.78056,
+      "warmup": 10
+    },
+    {
+      "components_us_mean": {
+        "activation": 82.25047999999998,
+        "activation_plus_quant2": 174.3352,
+        "component_sum": 662.8034399999999,
+        "gather": 82.63423999999999,
+        "gemm1": 113.89872,
+        "gemm2": 100.47336,
+        "quant1": 93.33376,
+        "quant2": 92.08472,
+        "remap": 98.12816
+      },
+      "dtype": "bf16",
+      "hidden_size": 2048,
+      "inter_size_per_tp": 128,
+      "iterations": 50,
+      "manual_vs_xpu_fused_moe_max_abs_diff": 0.0,
+      "moe_inputs": 64,
+      "num_experts": 256,
+      "rows": 8,
+      "topk": 8,
+      "total_us_mean": 283.87424,
+      "warmup": 10
+    },
+    {
+      "components_us_mean": {
+        "activation": 83.10743999999998,
+        "activation_plus_quant2": 181.79616,
+        "component_sum": 758.1121599999999,
+        "gather": 88.56119999999999,
+        "gemm1": 170.81063999999998,
+        "gemm2": 116.56631999999999,
+        "quant1": 99.61327999999999,
+        "quant2": 98.68871999999999,
+        "remap": 100.76456
+      },
+      "dtype": "bf16",
+      "hidden_size": 2048,
+      "inter_size_per_tp": 128,
+      "iterations": 50,
+      "manual_vs_xpu_fused_moe_max_abs_diff": 0.0,
+      "moe_inputs": 128,
+      "num_experts": 256,
+      "rows": 16,
+      "topk": 8,
+      "total_us_mean": 371.08344,
+      "warmup": 10
+    },
+    {
+      "components_us_mean": {
+        "activation": 17.30352,
+        "activation_plus_quant2": 117.40559999999999,
+        "component_sum": 761.7272,
+        "gather": 83.20728,
+        "gemm1": 282.83528,
+        "gemm2": 165.34856,
+        "quant1": 89.024,
+        "quant2": 100.10207999999999,
+        "remap": 23.90648
+      },
+      "dtype": "bf16",
+      "hidden_size": 2048,
+      "inter_size_per_tp": 128,
+      "iterations": 50,
+      "manual_vs_xpu_fused_moe_max_abs_diff": 0.0,
+      "moe_inputs": 256,
+      "num_experts": 256,
+      "rows": 32,
+      "topk": 8,
+      "total_us_mean": 538.66072,
+      "warmup": 10
+    }
+  ],
+  "tp_size": 4
+}
