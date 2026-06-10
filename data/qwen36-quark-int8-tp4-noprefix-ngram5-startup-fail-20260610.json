@@ -1,0 +1,80 @@
+{
+  "date": "2026-06-10",
+  "model": "nameistoken/Qwen3.6-35B-A3B-Quark-W8A8-INT8",
+  "model_path": "/mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118",
+  "hardware": "4x Intel Arc Pro B70 32GB",
+  "candidate": "ngram_speculative_decoding_num_speculative_tokens_5",
+  "status": "startup_failed",
+  "decision": "reject",
+  "base_runtime": {
+    "tensor_parallel_size": 4,
+    "max_model_len": 32768,
+    "max_num_batched_tokens": 8192,
+    "max_num_seqs": 48,
+    "prefix_caching": false,
+    "quantization": "quark",
+    "runtime_dtype": "bfloat16",
+    "cudagraph_mode": "PIECEWISE",
+    "custom_collectives": true
+  },
+  "candidate_runtime": {
+    "speculative_config": {
+      "method": "ngram",
+      "num_speculative_tokens": 5,
+      "prompt_lookup_min": 2,
+      "prompt_lookup_max": 5
+    },
+    "env": {
+      "VLLM_XPU_ENABLE_XPU_GRAPH": "1",
+      "VLLM_XPU_FORCE_GRAPH_WITH_COMM": "1",
+      "VLLM_XPU_GRAPH_NOOP_COMM_CAPTURE": "1",
+      "VLLM_XPU_USE_CUSTOM_OP_COLLECTIVES": "1",
+      "VLLM_XPU_COMPILE_ALLREDUCE_CUSTOM_OP": "1",
+      "VLLM_XPU_CUSTOM_ALLREDUCE_GRAPH_CLONE_INPUT": "1",
+      "VLLM_XPU_CUSTOM_ALLREDUCE_CLONE_INPUT": "1"
+    },
+    "observed_effective_changes": {
+      "async_scheduling": "disabled",
+      "cudagraph_capture_size_count": 51,
+      "max_cudagraph_capture_size": 512
+    }
+  },
+  "log": "/tmp/qwen36-quark-int8-tp4-piecewise-graph-ngram5-32k-noprefix.log",
+  "observations": [
+    "Startup accepted the n-gram speculative config.",
+    "vLLM warned that async scheduling is not supported with n-gram speculative decoding and disabled it.",
+    "Model loading and KV cache profiling completed.",
+    "Graph capture progressed to 47/51 and then the log stopped updating.",
+    "The endpoint never became healthy, the tmux session disappeared, and the worker PIDs were gone.",
+    "No explicit Python traceback or EXIT line was captured in the log."
+  ],
+  "failure": {
+    "phase": "xpu_graph_capture",
+    "last_observed_progress": "47/51",
+    "last_log_timestamp": "2026-06-10 03:49:19 EDT",
+    "endpoint_health": false,
+    "tmux_session_remaining": false,
+    "worker_pids_remaining": false,
+    "explicit_traceback": false
+  },
+  "promotion_gate": {
+    "served": false,
+    "quality_checked": false,
+    "speed_checked": false
+  },
+  "restore": {
+    "accepted_runtime_restarted": true,
+    "accepted_runtime_session": "qwen36-tp4-noprefix-32k",
+    "backend_health": true,
+    "backend_generation": {
+      "route": "http://127.0.0.1:18080/v1/completions",
+      "passed": true,
+      "observed_text": "\\n\\n<think>\\n\\n</think>\\n\\nOK"
+    },
+    "frontdoor_generation": {
+      "route": "http://127.0.0.1:8000/v1/chat/completions",
+      "passed": true,
+      "observed_content": "OK"
+    }
+  }
+}
