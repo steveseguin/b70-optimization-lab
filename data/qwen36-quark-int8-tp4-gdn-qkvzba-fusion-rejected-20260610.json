@@ -1,0 +1,119 @@
+{
+  "date": "2026-06-10",
+  "model": "nameistoken/Qwen3.6-35B-A3B-Quark-W8A8-INT8",
+  "served_model_name": "qwen36-35b-a3b-fp8",
+  "snapshot": "/mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118",
+  "runtime": {
+    "tensor_parallel_size": 4,
+    "max_model_len": 32768,
+    "quantization": "quark",
+    "dtype": "bfloat16",
+    "device": "xpu",
+    "graph_mode": "PIECEWISE",
+    "prefix_caching": false,
+    "max_num_batched_tokens": 8192,
+    "max_num_seqs": 48,
+    "custom_all_reduce": "clone-safe source patch"
+  },
+  "experiment": {
+    "name": "GDN qkvz+ba projection fusion",
+    "env_flag": "VLLM_XPU_GDN_FUSE_QKVZ_BA_PROJ=1",
+    "intent": "Fuse GatedDeltaNet qkvz and ba W8A8 projections to remove one duplicate per-token activation quantization and one tiny INT8 GEMM per GDN layer.",
+    "source_files_touched_temporarily": [
+      "/home/steve/src/vllm/vllm/model_executor/layers/mamba/gdn_linear_attn.py",
+      "/home/steve/src/vllm/vllm/model_executor/model_loader/utils.py"
+    ],
+    "source_restored_after_screen": true,
+    "math_change_intended": false
+  },
+  "accepted_control_restored": {
+    "tmux_session": "qwen36-tp4-noprefix-32k",
+    "log": "/tmp/qwen36-quark-int8-tp4-accepted-32k-noprefix-restored14.log",
+    "model_loading_memory_gib": 8.58,
+    "model_loading_seconds": 14.619286,
+    "torch_compile_seconds": 3.64,
+    "available_kv_cache_gib": 20.67,
+    "gpu_kv_cache_tokens": 2052915,
+    "max_concurrency_32768_tokens": 62.65,
+    "graph_capture_seconds": 12,
+    "graph_capture_memory_gib": -0.17,
+    "health": "pass",
+    "smoke": "pass"
+  },
+  "candidates": [
+    {
+      "name": "fused qkvz+ba split view",
+      "tmux_session": "qwen36-tp4-gdnfuse-32k",
+      "cache_root": "/mnt/fast-ai/vllm-cache-exp/qwen36-35b-a3b-quark-int8-tp4-piecewise-graph-gdn-fuse-qkvzba-32k-noprefix",
+      "log": "/tmp/qwen36-quark-int8-tp4-gdn-fuse-qkvzba-32k-noprefix-20260610.log",
+      "startup": {
+        "model_loading_memory_gib": 8.75,
+        "model_loading_seconds": 14.613227,
+        "torch_compile_seconds": 54.36,
+        "initial_profiling_warmup_seconds": 4.97,
+        "available_kv_cache_gib": 20.49,
+        "gpu_kv_cache_tokens": 2035438,
+        "max_concurrency_32768_tokens": 62.12,
+        "graph_capture_seconds": 12,
+        "graph_capture_memory_gib": -0.01
+      },
+      "health": "pass",
+      "smoke": "fail",
+      "failure": {
+        "exception": "RuntimeError",
+        "message": "projected_states_qkvz must be contiguous",
+        "native_op": "torch.ops._xpu_C.gdn_attention",
+        "vllm_wrapper": "torch.ops.vllm.gdn_attention_core_xpu"
+      }
+    },
+    {
+      "name": "fused qkvz+ba split with source-level contiguous copies",
+      "tmux_session": "qwen36-tp4-gdnfuse-contig-32k",
+      "cache_root": "/mnt/fast-ai/vllm-cache-exp/qwen36-35b-a3b-quark-int8-tp4-piecewise-graph-gdn-fuse-qkvzba-contig-32k-noprefix",
+      "log": "/tmp/qwen36-quark-int8-tp4-gdn-fuse-qkvzba-contig-32k-noprefix-20260610.log",
+      "startup": {
+        "model_loading_memory_gib": 8.75,
+        "model_loading_seconds": 15.055189,
+        "torch_compile_seconds": 54.82,
+        "initial_profiling_warmup_seconds": 4.85,
+        "available_kv_cache_gib": 20.49,
+        "gpu_kv_cache_tokens": 2035438,
+        "max_concurrency_32768_tokens": 62.12,
+        "graph_capture_seconds": 12,
+        "graph_capture_memory_gib": -0.01
+      },
+      "health": "pass",
+      "smoke": "fail",
+      "failure": {
+        "exception": "RuntimeError",
+        "message": "projected_states_qkvz must be contiguous",
+        "native_op": "torch.ops._xpu_C.gdn_attention",
+        "vllm_wrapper": "torch.ops.vllm.gdn_attention_core_xpu"
+      }
+    }
+  ],
+  "cost_vs_accepted_control": {
+    "model_loading_memory_delta_gib": 0.17,
+    "available_kv_cache_delta_gib": -0.18,
+    "gpu_kv_cache_tokens_delta": -17477,
+    "max_concurrency_32768_tokens_delta": -0.53,
+    "torch_compile_seconds_delta": 51.18
+  },
+  "stability": {
+    "device_lost_after_failed_fusion_runs": true,
+    "device_lost_log": "/tmp/qwen36-quark-int8-tp4-accepted-32k-noprefix-restored13.log",
+    "device_lost_error": "UR_RESULT_ERROR_DEVICE_LOST",
+    "recovered_by": "kill failed sessions, wait for stale workers to clear, restart accepted backend",
+    "post_recovery_smoke": "pass"
+  },
+  "decision": {
+    "status": "rejected",
+    "reason": "Both variants failed smoke because the native XPU GDN op rejected the qkvz tensor layout as non-contiguous. No speed or quality gates were valid.",
+    "accepted_runtime_changed": false,
+    "next_viable_path": [
+      "Extend native XPU GDN to consume packed qkvz+ba projection layout and offsets.",
+      "Add XPU INT8 GEMM support for writing split contiguous outputs.",
+      "Add a native fused projection-plus-GDN entry point that removes the split boundary."
+    ]
+  }
+}
