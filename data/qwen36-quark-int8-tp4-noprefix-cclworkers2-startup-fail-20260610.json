@@ -1,0 +1,22 @@
+{
+  "date": "2026-06-10",
+  "candidate": "CCL_WORKER_COUNT=2",
+  "status": "startup_fail",
+  "runtime": {
+    "model": "Qwen3.6-35B-A3B-Quark-W8A8-INT8",
+    "tensor_parallel_size": 4,
+    "max_model_len": 32768,
+    "prefix_caching": false,
+    "xpu_graph": true,
+    "cudagraph_mode": "PIECEWISE",
+    "custom_collectives": true,
+    "gdn_quant_reuse": "clone"
+  },
+  "log": "/tmp/qwen36-quark-int8-tp4-cclworkers2-32k-noprefix-20260610.log",
+  "key_log_lines": [
+    "CCL_WARN value of CCL_WORKER_COUNT changed to be 2 (default:1)",
+    "RuntimeError: oneCCL: coll.cpp:1421 ccl_allreduce_impl: EXCEPTION: |CCL_SYCL| sched algorithms do not support sycl_graph recording, please use sycl_algorithms",
+    "RuntimeError: Engine core initialization failed. See root cause above."
+  ],
+  "decision": "Rejected. CCL_WORKER_COUNT=2 is incompatible with this graph-captured oneCCL path as configured."
+}

@@ -63,3 +63,33 @@ The accepted default IPC service was restored:
 For this Qwen3.6 TP4 32K graph stack, the default Level Zero IPC exchange is
 better than forcing sockets. Keep `CCL_ZE_IPC_EXCHANGE` unset in the accepted
 runtime.
+
+## Follow-up: CCL Worker Count 2 Startup Failure
+
+Candidate:
+
+- `CCL_WORKER_COUNT=2`
+
+Result: startup failure during graph-captured all-reduce initialization.
+
+Artifact:
+
+- `data/qwen36-quark-int8-tp4-noprefix-cclworkers2-startup-fail-20260610.json`
+
+Runtime log:
+
+- `/tmp/qwen36-quark-int8-tp4-cclworkers2-32k-noprefix-20260610.log`
+
+Key error:
+
+```text
+oneCCL: coll.cpp:1421 ccl_allreduce_impl: EXCEPTION: |CCL_SYCL| sched algorithms do not support sycl_graph recording, please use sycl_algorithms
+```
+
+Decision: reject. `CCL_WORKER_COUNT=2` is incompatible with this graph-captured
+oneCCL path as configured. The accepted backend was restored afterward with
+`CCL_WORKER_COUNT` unset:
+
+- tmux session: `qwen36-tp4-gdn-reusequant-clone-envclean-32k`
+- backend `/health`: pass
+- frontdoor `/v1/models`: pass
