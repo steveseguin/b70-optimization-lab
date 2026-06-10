@@ -1,4 +1,4 @@
-# Qwen3.6 INT8 Quiet Logs Single-Request Win With C48 Variance Check
+# Qwen3.6 INT8 Quiet Logs Neutral After Accepted Refresh
 
 Date: 2026-06-10
 
@@ -92,7 +92,7 @@ Artifact:
 
 - `data/qwen36-quark-int8-tp4-noprefix-quietlogs-c48-confirm-20260610.json`
 
-## Accepted C48 Refresh
+## Accepted Runtime Refreshes
 
 After restoring the accepted no-prefix runtime, I reran c48 with a fresh prompt
 salt to separate a true quiet-logs regression from current-state variance after
@@ -113,16 +113,34 @@ attributed to quiet logs alone. High-concurrency throughput is currently
 variable after many endpoint restarts and needs repeated A/B or a longer
 steady-state reliability run before production promotion.
 
+I also reran the accepted no-prefix single-request benchmark in the same
+current lab state:
+
+| metric | quiet logs | accepted refresh |
+| --- | ---: | ---: |
+| corrected output tok/s after first chunk | `98.7351` | `98.6912` |
+| output tok/s end-to-end | `97.4968` | `97.4280` |
+| total client tok/s | `194.9937` | `194.8560` |
+| mean client TTFT | `75.99 ms` | `77.39 ms` |
+
+Artifact:
+
+- `data/qwen36-quark-int8-tp4-noprefix-accepted-single-refresh2-20260610.json`
+
+This means the apparent quiet-logs single-request speed win is also within the
+current accepted-runtime variance. It remains quality-safe, but it is not a
+proven speed optimization by itself.
+
 ## Decision
 
-Keep quiet-logs as a quality-safe single-request and low/mid-concurrency
-candidate. It is a valid single-request speed candidate and likely worth a
-production-profile A/B.
+Keep quiet-logs as a quality-safe neutral runtime option, but do not promote it
+as a speed optimization or a production default by itself.
 
-The current priority is single-request speed, and this is a real improvement
-there. However, production default promotion still needs repeated aggregate and
-reliability checks because the c48 result is volatile in the current lab state
-and logging changes reduce some runtime observability.
+The initial quiet-logs single-request and c48 results both looked meaningful
+against older accepted references, but accepted refreshes in the same lab state
+explain the difference as restart/runtime variance. The production recipe can
+still choose quiet logs for lower console noise, but speed claims need repeated
+paired A/B in one warmed state.
 
 The accepted no-prefix runtime was restored after the screen:
 
