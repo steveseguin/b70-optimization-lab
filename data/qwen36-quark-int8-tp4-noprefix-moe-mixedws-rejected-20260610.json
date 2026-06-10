@@ -1,0 +1,57 @@
+{
+  "date": "2026-06-10",
+  "candidate": "qwen36-quark-int8-tp4-noprefix-moe-mixedws",
+  "decision": "rejected_speed_gate",
+  "model": "nameistoken/Qwen3.6-35B-A3B-Quark-W8A8-INT8",
+  "served_model_name": "qwen36-35b-a3b-fp8",
+  "runtime_delta": {
+    "VLLM_XPU_INT8_MOE_MIXED_WORKSPACE": "1"
+  },
+  "runtime": {
+    "tensor_parallel_size": 4,
+    "max_model_len": 32768,
+    "quantization": "quark",
+    "runtime_dtype": "bfloat16",
+    "prefix_caching": false,
+    "chunked_prefill": true,
+    "max_num_batched_tokens": 8192,
+    "max_num_seqs": 48,
+    "cudagraph_mode": "PIECEWISE"
+  },
+  "startup": {
+    "started": true,
+    "aot_graph_loaded": true,
+    "torch_compile_seconds": 3.73,
+    "available_kv_cache_memory_gib": 20.42,
+    "gpu_kv_cache_tokens": 2028339,
+    "max_concurrency_32768_tokens": 61.90,
+    "graph_capture_seconds": 12,
+    "log": "/tmp/qwen36-quark-int8-tp4-moe-mixedws-32k-noprefix-20260610.log"
+  },
+  "single_request_gate": {
+    "artifact": "data/qwen36-quark-int8-tp4-noprefix-moe-mixedws-single-20260610.json",
+    "prompt_tokens": 512,
+    "requested_output_tokens": 512,
+    "repeats": 8,
+    "mode": "stream",
+    "tok_s_out_client_after_first_chunk_corrected_mean": 98.36454564614715,
+    "tok_s_out_client_e2e_mean": 97.17364091261977,
+    "ttft_ms_client_mean": 73.95562440797221
+  },
+  "accepted_control": {
+    "profile": "qwen36-quark-int8-tp4-noprefix-graph32k",
+    "tok_s_out_client_after_first_chunk_corrected_mean": 98.7741,
+    "tok_s_out_client_e2e_mean": 97.5295,
+    "ttft_ms_client_mean": 76.28,
+    "restored_available_kv_cache_memory_gib": 20.67,
+    "restored_gpu_kv_cache_tokens": 2052915,
+    "restored_max_concurrency_32768_tokens": 62.65
+  },
+  "restore": {
+    "accepted_backend_restored": true,
+    "tmux_session": "qwen36-tp4-noprefix-32k",
+    "endpoint": "http://127.0.0.1:18080",
+    "health": "pass",
+    "completion_smoke": "pass"
+  }
+}
