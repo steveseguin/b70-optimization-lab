@@ -77,9 +77,23 @@ Patch hygiene refresh:
 - touched vLLM files passed `python -m py_compile`;
 - the patch applies cleanly against a fresh vLLM HEAD worktree.
 
-This cleanup is not yet endpoint-restarted in the live service. The current
-running backend was launched before the env-registration cleanup and should be
-restarted with a fresh cache before treating the warning cleanup as validated.
+Env-registration restart validation:
+
+- session: `qwen36-tp4-gdn-reusequant-clone-envclean-32k`
+- cache root: `/mnt/fast-ai/vllm-cache-exp/qwen36-35b-a3b-quark-int8-tp4-piecewise-graph-gdn-reuseqkvzbaquant-clone-envclean-32k-noprefix`
+- log: `/tmp/qwen36-quark-int8-tp4-gdn-reuseqkvzbaquant-clone-envclean-32k-noprefix-20260610.log`
+- backend health check passed on `127.0.0.1:18080`
+- `VLLM_XPU_GDN_REUSE_QKVZ_BA_QUANT` is no longer reported as an unknown vLLM
+  environment variable;
+- Torch compile still emits `Failed to read file <frozen os>` on all four
+  worker ranks, so that warning is not caused solely by this GDN env lookup and
+  should be tracked separately;
+- startup telemetry stayed in family: `8.58 GiB` model-load memory,
+  `20.67 GiB` available KV cache memory, `2,052,915` KV tokens, `62.65x`
+  estimated 32K concurrency, `54.51 s` torch.compile, and `12 s` graph capture;
+- `xpu-smi` after load shows about `32655 MiB` used per device because vLLM
+  reserves the configured GPU memory budget. The practical headroom is the
+  already-allocated KV cache capacity, not free OS-visible VRAM.
 
 Runtime:
 
@@ -134,6 +148,22 @@ Longer 16-repeat speed refresh:
 This refresh remains above the accepted control, but the mean delta is still
 small enough to treat as a micro-win rather than a large breakthrough.
 
+Env-clean fresh-cache quality and speed refresh:
+
+- quality artifact: `data/qwen36-quark-int8-tp4-noprefix-gdn-reuseqkvzbaquant-clone-envclean-frontdoor-quality-rerun32-20260610.json`
+- exact canaries: pass
+- 32-repeat deterministic hash stability: pass
+- long-context needle recall at requested 8192 tokens: pass
+- accepted-baseline comparisons: pass
+- speed artifact: `data/qwen36-quark-int8-tp4-noprefix-gdn-reuseqkvzbaquant-clone-envclean-single-r8-20260610.json`
+
+| metric | accepted | env-clean clone | delta |
+| --- | ---: | ---: | ---: |
+| corrected after-first output tok/s | `98.7741` | `99.3181` | `+0.5440` |
+| e2e output tok/s | `97.5295` | `97.9820` | `+0.4525` |
+| total tok/s | `195.0589` | `197.0858` | `+2.0269` |
+| mean client TTFT | `76.28 ms` | `79.45 ms` | `+3.17 ms` |
+
 Aggregate frontdoor p512/n256 sweep:
 
 - artifact: `data/qwen36-quark-int8-tp4-noprefix-gdn-reuseqkvzbaquant-clone-concurrency-20260610.json`
@@ -167,19 +197,20 @@ quantization, or increasing model/KV memory.
 
 Do not promote it to the production default yet:
 
-- the gain is only about `+0.34%` corrected after-first decode speed;
+- the gain is small, roughly `+0.2%` to `+0.6%` corrected after-first decode
+  speed across the reruns;
 - TTFT is slightly worse in the single-request run;
 - aggregate c48 is run-variant: better than the latest accepted c48 refresh but
   worse than the earlier full-sweep c48 result;
-- the env-registration cleanup needs an endpoint restart and fresh-cache
-  validation before production use.
+- the env-registration cleanup is restart-validated, but the Torch compile
+  `<frozen os>` warning still needs separate root-cause work.
 
 ## Next Steps
 
-1. Restart with the env-registration patch and a fresh cache to verify the
-   compile warning is gone and speed/quality are unchanged.
-2. Rerun accepted-control single and c48 immediately before and after the clone
+1. Rerun accepted-control single and c48 immediately before and after the clone
    variant to reduce run-variance in the aggregate comparison.
+2. Investigate the remaining Torch compile `Failed to read file <frozen os>`
+   warning independently from the GDN env cleanup.
 3. Investigate whether the XPU `int8_gemm_w8a8` op mutates or races on shared
    quantized activation inputs. If that can be proven and fixed at the op/schema
    level, the faster unguarded reuse may become viable.
