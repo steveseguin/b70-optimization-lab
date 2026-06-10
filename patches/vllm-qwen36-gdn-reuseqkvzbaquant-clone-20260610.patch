@@ -1,0 +1,60 @@
+diff --git a/vllm/model_executor/layers/mamba/gdn_linear_attn.py b/vllm/model_executor/layers/mamba/gdn_linear_attn.py
+index a621ab962..8f6da287f 100644
+--- a/vllm/model_executor/layers/mamba/gdn_linear_attn.py
++++ b/vllm/model_executor/layers/mamba/gdn_linear_attn.py
+@@ -4,0 +5,2 @@
++import os
++
+@@ -386,0 +389,9 @@ class GatedDeltaNetAttention(PluggableLayer, MambaBase):
++        xpu_gdn_reuse_qkvz_ba_quant_mode = os.getenv(
++            "VLLM_XPU_GDN_REUSE_QKVZ_BA_QUANT", "0"
++        ).strip().lower()
++        self.xpu_reuse_qkvz_ba_quant = current_platform.is_xpu() and (
++            xpu_gdn_reuse_qkvz_ba_quant_mode in ("1", "true", "clone")
++        )
++        self.xpu_reuse_qkvz_ba_quant_clone = (
++            xpu_gdn_reuse_qkvz_ba_quant_mode == "clone"
++        )
+@@ -615,2 +626,40 @@ class GatedDeltaNetAttention(PluggableLayer, MambaBase):
+-        projected_states_qkvz, _ = self.in_proj_qkvz(hidden_states)
+-        projected_states_ba, _ = self.in_proj_ba(hidden_states)
++        if self.xpu_reuse_qkvz_ba_quant and (
++            getattr(self.in_proj_qkvz, "xpu_native_int8_activation_quant", False)
++            and getattr(self.in_proj_ba, "xpu_native_int8_activation_quant", False)
++            and self.in_proj_qkvz.bias is None
++            and self.in_proj_ba.bias is None
++            and not self.in_proj_qkvz.gather_output
++            and not self.in_proj_ba.gather_output
++        ):
++            x_2d = hidden_states.view(-1, hidden_states.shape[-1]).contiguous()
++            x_q, x_s = torch.ops._xpu_C.per_token_quant_int8_xpu(x_2d)
++            if self.xpu_reuse_qkvz_ba_quant_clone:
++                x_q_qkvz = x_q.clone()
++                x_s_qkvz = x_s.clone()
++                x_q_ba = x_q.clone()
++                x_s_ba = x_s.clone()
++            else:
++                x_q_qkvz = x_q
++                x_s_qkvz = x_s
++                x_q_ba = x_q
++                x_s_ba = x_s
++
++            projected_states_qkvz = torch.ops._xpu_C.int8_gemm_w8a8(
++                x_q_qkvz,
++                x_s_qkvz,
++                self.in_proj_qkvz.weight,
++                self.in_proj_qkvz.weight_scale,
++                hidden_states.dtype,
++                None,
++            ).view(*hidden_states.shape[:-1], self.in_proj_qkvz.weight.shape[1])
++            projected_states_ba = torch.ops._xpu_C.int8_gemm_w8a8(
++                x_q_ba,
++                x_s_ba,
++                self.in_proj_ba.weight,
++                self.in_proj_ba.weight_scale,
++                hidden_states.dtype,
++                None,
++            ).view(*hidden_states.shape[:-1], self.in_proj_ba.weight.shape[1])
++        else:
++            projected_states_qkvz, _ = self.in_proj_qkvz(hidden_states)
++            projected_states_ba, _ = self.in_proj_ba(hidden_states)
