@@ -1,0 +1,27 @@
+{
+  "date": "2026-06-10",
+  "candidate": "qwen36-quark-int8-tp4-ngram5-cg128-gdnmixed",
+  "base_url": "http://127.0.0.1:18081",
+  "command": "/home/steve/.venvs/vllm-xpu/bin/python scripts/bench-openai-concurrency.py --base-url http://127.0.0.1:18081 --tokenizer /mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118 --prompt-tokens 512 --output-tokens 256 --concurrency 2 --concurrency 8 --warmups 1 --output-json data/qwen36-quark-int8-tp4-ngram5-cg128-gdnmixed-concurrency-20260610.json",
+  "result": "failed",
+  "first_failed_stage": "concurrency_2",
+  "script_stdout_before_failure": {
+    "concurrency": 2,
+    "prompt_tokens_each": null,
+    "completion_tokens_each": null,
+    "aggregate_output_tok_s_wall": 0.0,
+    "aggregate_output_tok_s_from_first_text": 0.0,
+    "mean_per_request_tok_s_after_ttft": null,
+    "mean_ttft_s": 0.07750830193981528
+  },
+  "client_error": "urllib.error.HTTPError: HTTP Error 500: Internal Server Error",
+  "backend_log": "/tmp/qwen36-quark-int8-tp4-ngram5-cg128-gdnmixed-32k-noprefix-18081.log",
+  "backend_error_summary": [
+    "EngineCore fatal error during model execution",
+    "Worker TP ranks hit RuntimeError: PassManager::run failed",
+    "Failure path: gdn_attention_core_xpu -> gdn_linear_attn._forward_core -> ChunkGatedDeltaRule.forward_native -> FLA chunk_gated_delta_rule -> chunk_gated_delta_rule_fwd_kernel_h_blockdim64",
+    "Scheduler dump included one new 515-token prefill request and one cached request with speculative decode tokens in the same step"
+  ],
+  "scheduler_dump_excerpt": "scheduled_new_reqs=[NewRequestData(... prompt_token_ids_len=515 ...)], scheduled_cached_reqs=CachedRequestData(req_ids=['cmpl-8862f71d7516564e-0-b967127f'], num_computed_tokens=[515], num_output_tokens=[1]), num_scheduled_tokens={new: 515, cached: 2}, scheduled_spec_decode_tokens={cached: [27502]}, total_num_scheduled_tokens=517, num_running_reqs=2",
+  "decision": "Reject as production default until mixed prefill plus speculative decode is fixed or guarded. Single-request speed and quality are valid, but the candidate fails the c2 reliability gate."
+}
