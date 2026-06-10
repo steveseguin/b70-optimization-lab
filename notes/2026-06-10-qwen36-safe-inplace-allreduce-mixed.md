@@ -132,6 +132,38 @@ Artifacts:
 - Accepted: `data/qwen36-quark-int8-tp4-noprefix-graph32k-concurrency-20260610.json`
 - Candidate: `data/qwen36-quark-int8-tp4-noprefix-safeinplacear2-graph32k-concurrency-20260610.json`
 
+## Capped Rewrite Follow-Up
+
+After the c48 regression, I added a cap to the diagnostic pass:
+
+- `VLLM_XPU_SAFE_INPLACE_ALLREDUCE_MAX_REWRITES_PER_GRAPH=1`
+
+Runtime:
+
+- Session: `qwen36-tp4-noprefix-safeinplacearmax1-32k`
+- Cache root: `/mnt/fast-ai/vllm-cache-exp/qwen36-35b-a3b-quark-int8-tp4-piecewise-graph-safeinplacearmax1-32k-noprefix`
+- Log: `/tmp/qwen36-quark-int8-tp4-piecewise-graph-safeinplacearmax1-32k-noprefix.log`
+- Env delta from the uncapped candidate:
+  `VLLM_XPU_SAFE_INPLACE_ALLREDUCE_MAX_REWRITES_PER_GRAPH=1`
+
+The cap worked as intended; pass logs showed one rewrite and one skipped live
+candidate in graph partitions that previously rewrote two.
+
+Direct-backend p512/n512 streaming, eight measured repeats:
+
+| metric | accepted no-prefix | uncapped safe-inplace | max1 capped |
+| --- | ---: | ---: | ---: |
+| corrected after-first output tok/s | `98.0404` | `98.8103` | `97.9948` |
+| end-to-end output tok/s | `96.7747` | `97.5779` | `96.7871` |
+| mean client TTFT | `77.74 ms` | `75.56 ms` | `75.40 ms` |
+
+Artifact:
+
+- `data/qwen36-quark-int8-tp4-noprefix-safeinplacearmax1-graph32k-single-20260610.json`
+
+Decision: reject the capped variant. It failed the first speed gate by losing
+the single-request gain, so I did not spend time on quality or aggregate sweeps.
+
 ## Decision
 
 Do not promote this as the production default. It is quality-safe and improves

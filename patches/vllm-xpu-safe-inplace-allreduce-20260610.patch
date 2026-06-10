@@ -35,7 +35,7 @@ diff --git a/vllm/compilation/passes/utility/xpu_inplace_allreduce.py b/vllm/com
 new file mode 100644
 --- /dev/null
 +++ b/vllm/compilation/passes/utility/xpu_inplace_allreduce.py
-@@ -0,0 +1,124 @@
+@@ -0,0 +1,133 @@
 +# SPDX-License-Identifier: Apache-2.0
 +# SPDX-FileCopyrightText: Copyright contributors to the vLLM project
 +
@@ -116,6 +116,13 @@ new file mode 100644
 +
 +    def __init__(self, vllm_config: VllmConfig) -> None:
 +        super().__init__(vllm_config)
++        self.max_rewrites_per_graph = int(
++            os.environ.get(
++                "VLLM_XPU_SAFE_INPLACE_ALLREDUCE_MAX_REWRITES_PER_GRAPH",
++                "0",
++            )
++            or "0"
++        )
 +
 +    @VllmInductorPass.time_and_log
 +    def __call__(self, graph: fx.Graph) -> None:
@@ -125,6 +132,10 @@ new file mode 100644
 +
 +        for node in list(graph.nodes):
 +            if not is_func(node, torch.ops.vllm.all_reduce.default):
++                continue
++
++            if self.max_rewrites_per_graph and count >= self.max_rewrites_per_graph:
++                skipped_live += 1
 +                continue
 +
 +            if not node.args or not isinstance(node.args[0], fx.Node):
