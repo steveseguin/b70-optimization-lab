@@ -1,0 +1,55 @@
+{
+  "date": "2026-06-10",
+  "candidate": "Qwen3.6 Quark INT8 RMSNorm plus INT8 per-token quant fusion for BF16 input and FP32 transformed norm weight",
+  "decision": "rejected",
+  "baseline_unchanged": true,
+  "model": "nameistoken/Qwen3.6-35B-A3B-Quark-W8A8-INT8",
+  "hardware": "4x Intel Arc Pro B70 32GB",
+  "motivation": "The compiled Qwen3.6 graph still has about 101 RMSNorm assignments and about 220 dense per_token_quant_int8_xpu calls. Fusing the FP32-weight RMSNorm semantics with BF16 rounding before INT8 quantization looked like a possible quality-neutral boundary reduction.",
+  "source_patch": "patches/vllm-xpu-kernels-qwen36-rms-int8-bf16-fp32-rejected-20260610.patch",
+  "build": {
+    "command": "source /opt/intel/oneapi/setvars.sh && source /home/steve/.venvs/vllm-xpu/bin/activate && python3 setup.py build_ext --inplace --build-temp build/temp-qwen-rmsbf16",
+    "compiler_runtime": "oneAPI 2026.0",
+    "status": "failed",
+    "failure": "The full setup.py build was killed by the OS while compiling the unrelated csrc/xpu/attn/xe_2/paged_decode_xe2.cpp target after _C.abi3.so and _xpu_C.abi3.so had already linked under build/temp.",
+    "memory_observation": "paged_decode_xe2.cpp reached about 70 GiB RSS and most swap before icpx was killed.",
+    "completed_partial_artifacts": [
+      "/home/steve/src/vllm-xpu-kernels/build/temp/_C.abi3.so",
+      "/home/steve/src/vllm-xpu-kernels/build/temp/_xpu_C.abi3.so"
+    ]
+  },
+  "runtime_diagnostics": [
+    {
+      "binary_pair": "new _C plus rebuilt _xpu_C from build/temp",
+      "import": "passed",
+      "result": "reference quant failed before fused-op validation",
+      "failure": "torch.ops._xpu_C.per_token_quant_int8_xpu raised RuntimeError: Invalid argument, followed by Level Zero UR_RESULT_ERROR_UNINITIALIZED abort"
+    },
+    {
+      "binary_pair": "new _C plus pre-test June 9 _xpu_C",
+      "import": "failed",
+      "failure": "importing _xpu_C after the new _C segfaulted"
+    },
+    {
+      "binary_pair": "new _C plus older build/lib _xpu_C",
+      "import": "passed",
+      "limitation": "older _xpu_C did not expose per_token_quant_int8_xpu",
+      "failure": "with _xpu_C unused, torch XPU reference math completed but torch.ops._C.rms_norm_dynamic_per_token_quant hung on a 1x2048 tensor"
+    },
+    {
+      "binary_pair": "new _C only",
+      "import": "passed",
+      "failure": "torch XPU reference math completed, then the fused _C.rms_norm_dynamic_per_token_quant call hung on a 1x2048 tensor until manually terminated"
+    }
+  ],
+  "service_health_after_restore": {
+    "backend_models_endpoint": "http://127.0.0.1:18080/v1/models returned the Qwen3.6 model list",
+    "frontdoor_models_endpoint": "http://127.0.0.1:8000/v1/models returned the Qwen3.6 model list",
+    "tmux_session": "qwen36-graph-tp4-customar-clone-32k remained running"
+  },
+  "restored_local_package_binaries": {
+    "_C.abi3.so": "2026-05-23 10:16:54, 32703456 bytes",
+    "_xpu_C.abi3.so": "2026-06-09 23:50:48, 69925576 bytes"
+  },
+  "lesson": "Do not continue this fused RMSNorm plus INT8 quant path until there is a clean _C-only build/test loop using the same runtime linkage as the installed package and a direct unit test that completes on a 1x2048 tensor. The current patch is a stability failure before quality or speed can be evaluated."
+}

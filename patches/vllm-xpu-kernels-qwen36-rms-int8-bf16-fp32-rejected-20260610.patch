@@ -1,0 +1,207 @@
+diff --git a/csrc/layernorm_quant.cpp b/csrc/layernorm_quant.cpp
+index df97194..747ddb6 100644
+--- a/csrc/layernorm_quant.cpp
++++ b/csrc/layernorm_quant.cpp
+@@ -21,14 +21,18 @@ struct alignas(8) vec4_t {
+   scalar_t val[4];
+ };
+ 
+-template <typename scalar_t, typename out_t, bool has_residual>
++template <typename scalar_t,
++          typename weight_t,
++          typename out_t,
++          bool has_residual,
++          bool round_bf16_before_int8>
+ class rms_norm_dynamic_per_token_quant_kernel {
+  public:
+   rms_norm_dynamic_per_token_quant_kernel(
+       out_t* __restrict__ out_,
+       scalar_t* __restrict__ residual_,
+       const scalar_t* __restrict__ input_,
+-      const scalar_t* __restrict__ weight_,
++      const weight_t* __restrict__ weight_,
+       const float* __restrict__ scale_ub_,
+       float* __restrict__ scales_,
+       const float epsilon_,
+@@ -80,13 +84,21 @@ class rms_norm_dynamic_per_token_quant_kernel {
+     sycl::group_barrier(item.get_group());
+     const float inv_rms = s_local[0];
+ 
++    auto norm_value = [&](int i) {
++      const float x = has_residual ? static_cast<float>(token_residual[i])
++                                   : static_cast<float>(token_input[i]);
++      float norm_x = x * inv_rms * static_cast<float>(weight[i]);
++      if constexpr (round_bf16_before_int8 &&
++                    std::is_same_v<out_t, int8_t>) {
++        norm_x = static_cast<float>(sycl::ext::oneapi::bfloat16(norm_x));
++      }
++      return norm_x;
++    };
++
+     // Pass 2: compute max |norm(x)| across the row → token scale
+     float absmax = 0.0f;
+     for (int i = tid; i < hidden_size; i += local_range) {
+-      const float x = has_residual ? static_cast<float>(token_residual[i])
+-                                   : static_cast<float>(token_input[i]);
+-      const float norm_x = x * inv_rms * static_cast<float>(weight[i]);
+-      absmax = sycl::max(absmax, sycl::fabs(norm_x));
++      absmax = sycl::max(absmax, sycl::fabs(norm_value(i)));
+     }
+     absmax = sycl::reduce_over_group(
+         item.get_group(), absmax, sycl::maximum<float>());
+@@ -94,7 +106,7 @@ class rms_norm_dynamic_per_token_quant_kernel {
+     if (tid == 0) {
+       float computed_scale;
+       if constexpr (std::is_same_v<out_t, int8_t>) {
+-        computed_scale = (absmax > 0.0f) ? (absmax / 127.0f) : 1.0f;
++        computed_scale = sycl::fmax(absmax, 1.0e-10f) / 127.0f;
+       } else {
+         // FP8
+         const float fp8_max = static_cast<float>(fp8::quant_type_max_v<out_t>);
+@@ -111,14 +123,12 @@ class rms_norm_dynamic_per_token_quant_kernel {
+ 
+     // Pass 3: normalize and quantize
+     for (int i = tid; i < hidden_size; i += local_range) {
+-      const float x = has_residual ? static_cast<float>(token_residual[i])
+-                                   : static_cast<float>(token_input[i]);
+-      const float norm_x = x * inv_rms * static_cast<float>(weight[i]);
++      const float norm_x = norm_value(i);
+       const float q = norm_x * inv_scale;
+ 
+       if constexpr (std::is_same_v<out_t, int8_t>) {
+         token_output[i] = static_cast<int8_t>(
+-            sycl::max(sycl::min(sycl::rint(q), 127.0f), -128.0f));
++            sycl::max(sycl::min(sycl::round(q), 127.0f), -127.0f));
+       } else {
+         // FP8
+         const float fp8_max = static_cast<float>(fp8::quant_type_max_v<out_t>);
+@@ -132,7 +142,7 @@ class rms_norm_dynamic_per_token_quant_kernel {
+   out_t* __restrict__ out;
+   scalar_t* __restrict__ residual;
+   const scalar_t* __restrict__ input;
+-  const scalar_t* __restrict__ weight;
++  const weight_t* __restrict__ weight;
+   const float* __restrict__ scale_ub;
+   float* __restrict__ scales;
+   const float epsilon;
+@@ -457,7 +467,10 @@ class fused_add_rms_norm_static_fp8_quant_kernel {
+   const int hidden_size;
+ };
+ 
+-template <typename scalar_t, typename out_t>
++template <typename scalar_t,
++          typename weight_scalar_t,
++          typename out_t,
++          bool round_bf16_before_int8 = false>
+ void call_rms_norm_dynamic_per_token_quant_kernel(
+     torch::Tensor& out,
+     std::optional<torch::Tensor>& residual,
+@@ -467,6 +480,8 @@ void call_rms_norm_dynamic_per_token_quant_kernel(
+     torch::Tensor& scales,
+     float epsilon) {
+   using sycl_t = typename vllm::xpu::SyclTypeTrait<scalar_t>::Type;
++  using weight_sycl_t =
++      typename vllm::xpu::SyclTypeTrait<weight_scalar_t>::Type;
+ 
+   const int hidden_size = input.size(-1);
+   const int64_t num_tokens = input.numel() / hidden_size;
+@@ -474,7 +489,7 @@ void call_rms_norm_dynamic_per_token_quant_kernel(
+ 
+   auto* out_ptr = out.data_ptr<out_t>();
+   auto* input_ptr = input.data_ptr<scalar_t>();
+-  auto* weight_ptr = weight.data_ptr<scalar_t>();
++  auto* weight_ptr = weight.data_ptr<weight_scalar_t>();
+   auto* scales_ptr = scales.data_ptr<float>();
+   const float* scale_ub_ptr =
+       scale_ub.has_value() ? scale_ub->data_ptr<float>() : nullptr;
+@@ -490,11 +505,15 @@ void call_rms_norm_dynamic_per_token_quant_kernel(
+     queue.submit([&](sycl::handler& cgh) {
+       cgh.parallel_for(
+           sycl::nd_range<1>(num_tokens * block_size, block_size),
+-          rms_norm_dynamic_per_token_quant_kernel<sycl_t, out_t, has_residual>(
++          rms_norm_dynamic_per_token_quant_kernel<sycl_t,
++                                                  weight_sycl_t,
++                                                  out_t,
++                                                  has_residual,
++                                                  round_bf16_before_int8>(
+               out_ptr,
+               residual_ptr,
+               (const sycl_t*)input_ptr,
+-              (const sycl_t*)weight_ptr,
++              (const weight_sycl_t*)weight_ptr,
+               scale_ub_ptr,
+               scales_ptr,
+               epsilon,
+@@ -701,13 +720,19 @@ void rms_norm_dynamic_per_token_quant(
+   const at::DeviceGuard device_guard(input.device());
+   TORCH_CHECK(input.is_contiguous(), "input must be contiguous");
+   TORCH_CHECK(out.is_contiguous(), "out must be contiguous");
+-  TORCH_CHECK(
+-      weight.dtype() == input.dtype(),
+-      "weight and input must have the same dtype");
+   TORCH_CHECK(scales.dtype() == torch::kFloat32, "scales must be float32");
+   TORCH_CHECK(
+       out.dtype() == torch::kFloat8_e4m3fn || out.dtype() == torch::kInt8,
+       "output must be float8_e4m3fn or int8");
++  const bool qwen_gemma_int8_norm =
++      out.dtype() == torch::kInt8 && input.dtype() == torch::kBFloat16 &&
++      weight.dtype() == torch::kFloat32 && !scale_ub.has_value() &&
++      !residual.has_value();
++  if (!qwen_gemma_int8_norm) {
++    TORCH_CHECK(
++        weight.dtype() == input.dtype(),
++        "weight and input must have the same dtype");
++  }
+   if (scale_ub.has_value()) {
+     TORCH_CHECK(
+         out.dtype() == torch::kFloat8_e4m3fn,
+@@ -724,6 +749,7 @@ void rms_norm_dynamic_per_token_quant(
+     VLLM_DISPATCH_FLOATING_TYPES(
+         input.scalar_type(), "rms_norm_dynamic_per_token_quant", [&] {
+           vllm::call_rms_norm_dynamic_per_token_quant_kernel<
++              scalar_t,
+               scalar_t,
+               at::Float8_e4m3fn>(
+               out,
+@@ -735,17 +761,30 @@ void rms_norm_dynamic_per_token_quant(
+               static_cast<float>(epsilon));
+         });
+   } else {
+-    VLLM_DISPATCH_FLOATING_TYPES(
+-        input.scalar_type(), "rms_norm_dynamic_per_token_quant_int8", [&] {
+-          vllm::call_rms_norm_dynamic_per_token_quant_kernel<scalar_t, int8_t>(
+-              out,
+-              residual,
+-              input,
+-              weight,
+-              scale_ub,
+-              scales,
+-              static_cast<float>(epsilon));
+-        });
++    if (qwen_gemma_int8_norm) {
++      vllm::call_rms_norm_dynamic_per_token_quant_kernel<
++          at::BFloat16,
++          float,
++          int8_t,
++          true>(
++          out, residual, input, weight, scale_ub, scales,
++          static_cast<float>(epsilon));
++    } else {
++      VLLM_DISPATCH_FLOATING_TYPES(
++          input.scalar_type(), "rms_norm_dynamic_per_token_quant_int8", [&] {
++            vllm::call_rms_norm_dynamic_per_token_quant_kernel<
++                scalar_t,
++                scalar_t,
++                int8_t>(
++                out,
++                residual,
++                input,
++                weight,
++                scale_ub,
++                scales,
++                static_cast<float>(epsilon));
++          });
++    }
+   }
+ }
+ 
