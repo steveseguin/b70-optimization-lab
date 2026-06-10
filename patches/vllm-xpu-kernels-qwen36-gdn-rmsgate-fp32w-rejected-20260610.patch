@@ -1,0 +1,328 @@
+diff --git a/csrc/layernorm.cpp b/csrc/layernorm.cpp
+index 9425e9e..f15af85 100644
+--- a/csrc/layernorm.cpp
++++ b/csrc/layernorm.cpp
+@@ -226,6 +226,255 @@ class rms_norm_kernel<scalar_t, NUM_DIMS, 0> {
+   sycl::local_accessor<float, 1> s_variance;
+ };
+ 
++template <typename scalar_t, typename weight_t, int VEC_SIZE>
++class rms_norm_gated_silu_kernel {
++ public:
++  rms_norm_gated_silu_kernel(
++      scalar_t* __restrict__ out_,
++      const scalar_t* __restrict__ input_,
++      const scalar_t* __restrict__ gate_,
++      const weight_t* __restrict__ weight_,
++      const float epsilon_,
++      const int num_tokens_,
++      const int hidden_size_,
++      sycl::local_accessor<float, 1> s_variance_)
++      : out(out_),
++        input(input_),
++        gate(gate_),
++        weight(weight_),
++        epsilon(epsilon_),
++        num_tokens(num_tokens_),
++        hidden_size(hidden_size_),
++        s_variance(s_variance_) {}
++
++  void operator() [[sycl::reqd_sub_group_size(32)]] (
++      const sycl::nd_item<3>& item_ct1) const {
++    float* s_variance_ptr =
++        s_variance.template get_multi_ptr<sycl::access::decorated::no>().get();
++    float variance = 0.0f;
++
++    const int64_t row = item_ct1.get_group(2);
++    const scalar_t* input_row = input + row * hidden_size;
++    const int64_t num_vec_elems = hidden_size / VEC_SIZE;
++    const auto* vec_in =
++        reinterpret_cast<const vec_n_t<scalar_t, VEC_SIZE>*>(input_row);
++
++    for (int i = item_ct1.get_local_id(2); i < num_vec_elems;
++         i += item_ct1.get_local_range(2)) {
++      vec_n_t<scalar_t, VEC_SIZE> src = vec_in[i];
++#pragma unroll
++      for (int j = 0; j < VEC_SIZE; ++j) {
++        float x = static_cast<float>(src.val[j]);
++        variance += x * x;
++      }
++    }
++
++    variance = sycl::reduce_over_group(
++        sycl::ext::oneapi::this_work_item::get_work_group<3>(),
++        variance,
++        sycl::plus<>());
++    if (item_ct1.get_local_id(2) == 0) {
++      *s_variance_ptr = sycl::rsqrt(variance / hidden_size + epsilon);
++    }
++
++    item_ct1.barrier(sycl::access::fence_space::local_space);
++
++    const scalar_t* gate_row = gate + row * hidden_size;
++    scalar_t* out_row = out + row * hidden_size;
++    const auto* v_gate =
++        reinterpret_cast<const vec_n_t<scalar_t, VEC_SIZE>*>(gate_row);
++    const auto* v_weight =
++        reinterpret_cast<const vec_n_t<weight_t, VEC_SIZE>*>(weight);
++    auto* v_out = reinterpret_cast<vec_n_t<scalar_t, VEC_SIZE>*>(out_row);
++    const float s_var = *s_variance_ptr;
++
++    for (int i = item_ct1.get_local_id(2); i < num_vec_elems;
++         i += item_ct1.get_local_range(2)) {
++      vec_n_t<scalar_t, VEC_SIZE> src = vec_in[i];
++      vec_n_t<scalar_t, VEC_SIZE> gate_vec = v_gate[i];
++      vec_n_t<weight_t, VEC_SIZE> weight_vec = v_weight[i];
++      vec_n_t<scalar_t, VEC_SIZE> dst;
++#pragma unroll
++      for (int j = 0; j < VEC_SIZE; ++j) {
++        const float x = static_cast<float>(src.val[j]);
++        const float w = static_cast<float>(weight_vec.val[j]);
++        const float z = static_cast<float>(gate_vec.val[j]);
++        const float silu = z / (1.0f + sycl::exp(-z));
++        dst.val[j] = static_cast<scalar_t>((x * s_var * w) * silu);
++      }
++      v_out[i] = dst;
++    }
++  }
++
++ private:
++  scalar_t* __restrict__ out;
++  const scalar_t* __restrict__ input;
++  const scalar_t* __restrict__ gate;
++  const weight_t* __restrict__ weight;
++  const float epsilon;
++  const int num_tokens;
++  const int hidden_size;
++  sycl::local_accessor<float, 1> s_variance;
++};
++
++template <typename scalar_t, typename weight_t>
++class rms_norm_gated_silu_kernel<scalar_t, weight_t, 0> {
++ public:
++  rms_norm_gated_silu_kernel(
++      scalar_t* __restrict__ out_,
++      const scalar_t* __restrict__ input_,
++      const scalar_t* __restrict__ gate_,
++      const weight_t* __restrict__ weight_,
++      const float epsilon_,
++      const int num_tokens_,
++      const int hidden_size_,
++      sycl::local_accessor<float, 1> s_variance_)
++      : out(out_),
++        input(input_),
++        gate(gate_),
++        weight(weight_),
++        epsilon(epsilon_),
++        num_tokens(num_tokens_),
++        hidden_size(hidden_size_),
++        s_variance(s_variance_) {}
++
++  void operator() [[sycl::reqd_sub_group_size(32)]] (
++      const sycl::nd_item<3>& item_ct1) const {
++    float* s_variance_ptr =
++        s_variance.template get_multi_ptr<sycl::access::decorated::no>().get();
++    float variance = 0.0f;
++
++    const int64_t row = item_ct1.get_group(2);
++    const scalar_t* input_row = input + row * hidden_size;
++    for (int idx = item_ct1.get_local_id(2); idx < hidden_size;
++         idx += item_ct1.get_local_range(2)) {
++      const float x = static_cast<float>(input_row[idx]);
++      variance += x * x;
++    }
++
++    variance = sycl::reduce_over_group(
++        sycl::ext::oneapi::this_work_item::get_work_group<3>(),
++        variance,
++        sycl::plus<>());
++    if (item_ct1.get_local_id(2) == 0) {
++      *s_variance_ptr = sycl::rsqrt(variance / hidden_size + epsilon);
++    }
++
++    item_ct1.barrier(sycl::access::fence_space::local_space);
++
++    const scalar_t* gate_row = gate + row * hidden_size;
++    scalar_t* out_row = out + row * hidden_size;
++    const float s_var = *s_variance_ptr;
++    for (int idx = item_ct1.get_local_id(2); idx < hidden_size;
++         idx += item_ct1.get_local_range(2)) {
++      const float x = static_cast<float>(input_row[idx]);
++      const float w = static_cast<float>(weight[idx]);
++      const float z = static_cast<float>(gate_row[idx]);
++      const float silu = z / (1.0f + sycl::exp(-z));
++      out_row[idx] = static_cast<scalar_t>((x * s_var * w) * silu);
++    }
++  }
++
++ private:
++  scalar_t* __restrict__ out;
++  const scalar_t* __restrict__ input;
++  const scalar_t* __restrict__ gate;
++  const weight_t* __restrict__ weight;
++  const float epsilon;
++  const int num_tokens;
++  const int hidden_size;
++  sycl::local_accessor<float, 1> s_variance;
++};
++
++template <typename scalar_t, typename weight_t>
++void call_rms_norm_gated_silu_kernel(
++    torch::Tensor& out,
++    torch::Tensor& input,
++    torch::Tensor& gate,
++    torch::Tensor& weight,
++    float epsilon) {
++  using sycl_t = typename vllm::xpu::SyclTypeTrait<scalar_t>::Type;
++  using sycl_weight_t = typename vllm::xpu::SyclTypeTrait<weight_t>::Type;
++  int hidden_size = input.size(-1);
++  int num_tokens = input.numel() / hidden_size;
++  auto out_ptr = out.data_ptr<scalar_t>();
++  auto input_ptr = input.data_ptr<scalar_t>();
++  auto gate_ptr = gate.data_ptr<scalar_t>();
++  auto weight_ptr = weight.data_ptr<weight_t>();
++  const int max_block_size = (num_tokens < 256) ? 1024 : 256;
++  sycl::range<3> grid(1, 1, num_tokens);
++  auto& queue = vllm::xpu::vllmGetQueue();
++
++  constexpr int vec_size = (sizeof(scalar_t) == 2) ? 8 : 4;
++  constexpr int req_alignment_bytes = vec_size * sizeof(scalar_t);
++  bool ptrs_aligned =
++      (reinterpret_cast<std::uintptr_t>(input_ptr) % req_alignment_bytes == 0) &&
++      (reinterpret_cast<std::uintptr_t>(gate_ptr) % req_alignment_bytes == 0) &&
++      (reinterpret_cast<std::uintptr_t>(out_ptr) % req_alignment_bytes == 0) &&
++      (reinterpret_cast<std::uintptr_t>(weight_ptr) % req_alignment_bytes == 0);
++  bool can_vec = ptrs_aligned && (hidden_size % vec_size == 0);
++
++  if (can_vec) {
++    sycl::range<3> block(
++        1, 1, std::min(hidden_size / vec_size, max_block_size));
++    queue.submit([&](sycl::handler& cgh) {
++      sycl::local_accessor<float, 1> s_variance(sycl::range<1>(1), cgh);
++      cgh.parallel_for(
++          sycl::nd_range<3>(grid * block, block),
++          rms_norm_gated_silu_kernel<sycl_t, sycl_weight_t, vec_size>(
++              (sycl_t*)out_ptr,
++              (const sycl_t*)input_ptr,
++              (const sycl_t*)gate_ptr,
++              (const sycl_weight_t*)weight_ptr,
++              epsilon,
++              num_tokens,
++              hidden_size,
++              s_variance));
++    });
++  } else {
++    sycl::range<3> block(1, 1, std::min(hidden_size, max_block_size));
++    queue.submit([&](sycl::handler& cgh) {
++      sycl::local_accessor<float, 1> s_variance(sycl::range<1>(1), cgh);
++      cgh.parallel_for(
++          sycl::nd_range<3>(grid * block, block),
++          rms_norm_gated_silu_kernel<sycl_t, sycl_weight_t, 0>(
++              (sycl_t*)out_ptr,
++              (const sycl_t*)input_ptr,
++              (const sycl_t*)gate_ptr,
++              (const sycl_weight_t*)weight_ptr,
++              epsilon,
++              num_tokens,
++              hidden_size,
++              s_variance));
++    });
++  }
++}
++
++template <typename scalar_t>
++void dispatch_rms_norm_gated_silu_weight_type(
++    torch::Tensor& out,
++    torch::Tensor& input,
++    torch::Tensor& gate,
++    torch::Tensor& weight,
++    float epsilon) {
++  switch (weight.scalar_type()) {
++    case at::ScalarType::Float:
++      vllm::call_rms_norm_gated_silu_kernel<scalar_t, float>(
++          out, input, gate, weight, epsilon);
++      break;
++    case at::ScalarType::Half:
++      vllm::call_rms_norm_gated_silu_kernel<scalar_t, at::Half>(
++          out, input, gate, weight, epsilon);
++      break;
++    case at::ScalarType::BFloat16:
++      vllm::call_rms_norm_gated_silu_kernel<scalar_t, at::BFloat16>(
++          out, input, gate, weight, epsilon);
++      break;
++    default:
++      TORCH_CHECK(false, "Unsupported rms_norm_gated_silu weight dtype");
++  }
++}
++
+ template <typename scalar_t>
+ void call_rms_norm_kernel(
+     torch::Tensor& out,
+@@ -562,6 +811,33 @@ void rms_norm(
+       });
+ }
+ 
++void rms_norm_gated_silu(
++    torch::Tensor& out,
++    torch::Tensor& input,
++    torch::Tensor& gate,
++    torch::Tensor& weight,
++    double epsilon) {
++  const at::DeviceGuard device_guard(input.device());
++  TORCH_CHECK(out.is_contiguous());
++  TORCH_CHECK(input.is_contiguous());
++  TORCH_CHECK(gate.is_contiguous());
++  TORCH_CHECK(weight.is_contiguous());
++  TORCH_CHECK(input.scalar_type() == gate.scalar_type());
++  TORCH_CHECK(input.scalar_type() == out.scalar_type());
++  TORCH_CHECK(
++      weight.scalar_type() == at::ScalarType::Float ||
++      input.scalar_type() == weight.scalar_type());
++  TORCH_CHECK(input.sizes() == gate.sizes());
++  TORCH_CHECK(input.sizes() == out.sizes());
++  TORCH_CHECK(weight.dim() == 1);
++  TORCH_CHECK(weight.size(0) == input.size(-1));
++  VLLM_DISPATCH_FLOATING_TYPES(
++      input.scalar_type(), "call_rms_norm_gated_silu_kernel", [&] {
++        vllm::dispatch_rms_norm_gated_silu_weight_type<scalar_t>(
++            out, input, gate, weight, epsilon);
++      });
++}
++
+ void fused_add_rms_norm(
+     torch::Tensor& input,
+     torch::Tensor& residual,
+diff --git a/csrc/ops.h b/csrc/ops.h
+index 4fee815..a4af063 100644
+--- a/csrc/ops.h
++++ b/csrc/ops.h
+@@ -10,6 +10,13 @@ void rms_norm(
+     torch::Tensor& weight,
+     double epsilon);
+ 
++void rms_norm_gated_silu(
++    torch::Tensor& out,
++    torch::Tensor& input,
++    torch::Tensor& gate,
++    torch::Tensor& weight,
++    double epsilon);
++
+ void fused_add_rms_norm(
+     torch::Tensor& input,
+     torch::Tensor& residual,
+diff --git a/csrc/torch_bindings.cpp b/csrc/torch_bindings.cpp
+index d36c6a2..29cf0b0 100644
+--- a/csrc/torch_bindings.cpp
++++ b/csrc/torch_bindings.cpp
+@@ -29,6 +29,11 @@ TORCH_LIBRARY_EXPAND(TORCH_EXTENSION_NAME, ops) {
+       "()");
+   ops.impl("rms_norm", torch::kXPU, &rms_norm);
+ 
++  ops.def(
++      "rms_norm_gated_silu(Tensor! result, Tensor input, Tensor gate, "
++      "Tensor weight, float epsilon) -> ()");
++  ops.impl("rms_norm_gated_silu", torch::kXPU, &rms_norm_gated_silu);
++
+   // In-place fused Add and RMS Normalization.
+   ops.def(
+       "fused_add_rms_norm(Tensor! input, Tensor! residual, Tensor weight, "
