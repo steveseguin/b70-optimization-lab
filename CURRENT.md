@@ -18,8 +18,9 @@ Current Qwen production-candidate speed result:
 - Repro patches: `patches/vllm-qwen36-quark-w8a8-int8-xpu-graph-20260609.patch`, `patches/vllm-xpu-kernels-qwen36-quark-w8a8-int8-xpu-20260609.patch`.
 - Rejected candidate: `VLLM_XPU_FUSED_MOE_FUSE_SILU_QUANT=1` sped up an isolated activation/quant microbench but failed the quality gate by returning `58` instead of `60` for the arithmetic canary. Artifact: `data/qwen36-quark-int8-graph32k-fused-siluq-quality-20260609.json`. Keep this env unset.
 - MoE kernel microbench: accepted Qwen3.6-shaped INT8 MoE rows 1/2/4/8 measured `298.96/304.89/272.78/283.87 us` with exact staged-path match. The rejected fused SiLU+quant diagnostic measured `238.91/232.35/229.18/260.70 us` for the same rows but drifted from the accepted staged output and remains disabled. Artifacts: `data/qwen36-quark-int8-moe-kernels-20260609.json`, `data/qwen36-quark-int8-moe-kernels-fused-siluq-20260609.json`.
+- MoE scratch diagnostic: preallocated BF16/INT32 scratch in the staged path stayed exact versus `xpu_fused_moe` and measured rows 1/2/4/8 at `210.15/206.06/206.46/240.51 us`; rows 16/32 measured `322.35/489.85 us`. This is a diagnostic, not yet a runtime promotion, because production needs a mixed-dtype workspace route for BF16 activations, INT32 routing maps, INT8 activations, and FP32 scales. Artifact: `data/qwen36-quark-int8-moe-kernels-prealloc-20260610.json`.
 
-Next Qwen targets: extend the MoE microbench with preallocated scratch buffers, fuse MoE activation plus second-stage quant only if it reproduces current rounding/scaling behavior, tune small-M dense W8A8 decode GEMM, and keep aggregate throughput tracked with the 1/2/4/8/16/32/48 concurrency harness.
+Next Qwen targets: add a mixed-dtype scratch/workspace route for the accepted INT8 MoE path, fuse MoE activation plus second-stage quant only if it reproduces current rounding/scaling behavior, tune small-M dense W8A8 decode GEMM, and keep aggregate throughput tracked with the 1/2/4/8/16/32/48 concurrency harness.
 
 ## MiniMax M2.7
 

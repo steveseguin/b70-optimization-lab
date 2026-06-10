@@ -235,6 +235,107 @@ def manual_int8_moe_once(
     return output, events
 
 
+def make_scratch(
+    *,
+    rows: int,
+    hidden_size: int,
+    inter_size: int,
+    num_experts: int,
+    topk: int,
+    dtype: torch.dtype,
+    device: str,
+) -> dict[str, torch.Tensor]:
+    num_moe_inputs = rows * topk
+    return {
+        "output": torch.empty((rows, hidden_size), device=device, dtype=dtype),
+        "gemm1_output": torch.empty((num_moe_inputs, 2 * inter_size),
+                                    device=device,
+                                    dtype=dtype),
+        "act_output": torch.empty((num_moe_inputs, inter_size),
+                                  device=device,
+                                  dtype=dtype),
+        "gemm2_output": torch.empty((num_moe_inputs, hidden_size),
+                                    device=device,
+                                    dtype=dtype),
+        "remapped_hidden_states": torch.empty((num_moe_inputs, hidden_size),
+                                              device=device,
+                                              dtype=dtype),
+        "rows_per_expert": torch.empty((num_experts),
+                                       device=device,
+                                       dtype=torch.int32),
+        "unpermuted": torch.empty((rows, topk),
+                                  device=device,
+                                  dtype=torch.int32),
+    }
+
+
+def manual_int8_moe_preallocated_once(
+    *,
+    hidden_states: torch.Tensor,
+    w13: torch.Tensor,
+    w13_scales: torch.Tensor,
+    w2: torch.Tensor,
+    w2_scales: torch.Tensor,
+    topk_weights: torch.Tensor,
+    topk_ids: torch.Tensor,
+    num_experts: int,
+    topk: int,
+    scratch: dict[str, torch.Tensor],
+) -> torch.Tensor:
+    hidden_size = hidden_states.shape[1]
+    inter_size = w13.shape[-1] // 2
+    rows_per_expert = scratch["rows_per_expert"]
+    rows_per_expert.zero_()
+
+    torch.ops._moe_C.remap_hidden_states(
+        hidden_states=hidden_states,
+        hidden_states_scales=None,
+        remapped_hidden_states=scratch["remapped_hidden_states"],
+        remapped_hidden_states_scales=None,
+        expert_map=None,
+        rows_per_expert=rows_per_expert,
+        unpermuted_row_to_permuted_row=scratch["unpermuted"],
+        topk_ids=topk_ids,
+        total_experts_num=num_experts,
+        local_experts_num=num_experts,
+    )
+    gemm1_a, gemm1_a_scales = _per_token_quant_int8(
+        scratch["remapped_hidden_states"])
+    gemm1_scales = _normalize_int8_weight_scales(w13_scales, 2 * inter_size)
+    torch.ops._xpu_C.cutlass_grouped_gemm_w8a8_int8_interface(
+        ptr_A=gemm1_a,
+        ptr_A_scales=gemm1_a_scales,
+        ptr_B=w13,
+        ptr_B_scales=gemm1_scales,
+        ptr_bias=None,
+        ptr_D=scratch["gemm1_output"],
+        rows_per_expert=rows_per_expert,
+        N=2 * inter_size,
+        K=hidden_size,
+        num_experts=num_experts,
+    )
+    fused_moe_activation(scratch["act_output"], scratch["gemm1_output"],
+                         "silu")
+    gemm2_a, gemm2_a_scales = _per_token_quant_int8(scratch["act_output"])
+    gemm2_scales = _normalize_int8_weight_scales(w2_scales, hidden_size)
+    torch.ops._xpu_C.cutlass_grouped_gemm_w8a8_int8_interface(
+        ptr_A=gemm2_a,
+        ptr_A_scales=gemm2_a_scales,
+        ptr_B=w2,
+        ptr_B_scales=gemm2_scales,
+        ptr_bias=None,
+        ptr_D=scratch["gemm2_output"],
+        rows_per_expert=rows_per_expert,
+        N=hidden_size,
+        K=inter_size,
+        num_experts=num_experts,
+    )
+    torch.ops._moe_C.moe_gather(scratch["output"], scratch["gemm2_output"],
+                                topk_weights, scratch["unpermuted"],
+                                num_experts)
+    return scratch["output"]
+
+
 def benchmark_rows(args, text_config: dict[str, Any], rows: int) -> dict[str, Any]:
     full_hidden_size = int(text_config["hidden_size"])
     full_inter_size = int(text_config["moe_intermediate_size"])
@@ -302,7 +403,33 @@ def benchmark_rows(args, text_config: dict[str, Any], rows: int) -> dict[str, An
     torch.xpu.synchronize()
     max_abs_diff = float((ref_output - manual_output).abs().max().item())
 
+    scratch = make_scratch(
+        rows=rows,
+        hidden_size=hidden_size,
+        inter_size=inter_size,
+        num_experts=num_experts,
+        topk=topk,
+        dtype=dtype,
+        device=args.device,
+    )
+    scratch_output = manual_int8_moe_preallocated_once(
+        hidden_states=inputs["hidden_states"],
+        w13=inputs["w13"],
+        w13_scales=inputs["w13_scales"],
+        w2=inputs["w2"],
+        w2_scales=inputs["w2_scales"],
+        topk_weights=inputs["topk_weights"],
+        topk_ids=inputs["topk_ids"],
+        num_experts=num_experts,
+        topk=topk,
+        scratch=scratch,
+    )
+    torch.xpu.synchronize()
+    prealloc_max_abs_diff = float(
+        (ref_output - scratch_output).abs().max().item())
+
     total_us = []
+    preallocated_total_us = []
     component_us: dict[str, list[float]] = {
         "remap": [],
         "quant1": [],
@@ -350,6 +477,24 @@ def benchmark_rows(args, text_config: dict[str, Any], rows: int) -> dict[str, An
             component_us[label].append(elapsed_us(component_start,
                                                  component_end))
 
+        start, end = make_events()
+        start.record()
+        manual_int8_moe_preallocated_once(
+            hidden_states=inputs["hidden_states"],
+            w13=inputs["w13"],
+            w13_scales=inputs["w13_scales"],
+            w2=inputs["w2"],
+            w2_scales=inputs["w2_scales"],
+            topk_weights=inputs["topk_weights"],
+            topk_ids=inputs["topk_ids"],
+            num_experts=num_experts,
+            topk=topk,
+            scratch=scratch,
+        )
+        end.record()
+        torch.xpu.synchronize()
+        preallocated_total_us.append(elapsed_us(start, end))
+
     def mean(values: list[float]) -> float:
         return sum(values) / max(1, len(values))
 
@@ -371,8 +516,10 @@ def benchmark_rows(args, text_config: dict[str, Any], rows: int) -> dict[str, An
         "topk": topk,
         "dtype": args.dtype,
         "total_us_mean": mean(total_us),
+        "preallocated_staged_total_us_mean": mean(preallocated_total_us),
         "components_us_mean": components,
         "manual_vs_xpu_fused_moe_max_abs_diff": max_abs_diff,
+        "preallocated_vs_xpu_fused_moe_max_abs_diff": prealloc_max_abs_diff,
         "iterations": args.iterations,
         "warmup": args.warmup,
     }

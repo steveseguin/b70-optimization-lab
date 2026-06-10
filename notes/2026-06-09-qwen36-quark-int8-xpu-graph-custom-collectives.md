@@ -150,6 +150,18 @@ scripts/bench-qwen36-int8-moe-kernels.py \
   --output-json data/qwen36-quark-int8-moe-kernels-fused-siluq-20260609.json
 ```
 
+Preallocated scratch diagnostic:
+
+```bash
+source /home/steve/.venvs/vllm-xpu/bin/activate
+export PYTHONPATH=/home/steve/src/vllm:/home/steve/src/vllm-xpu-kernels:${PYTHONPATH:-}
+scripts/bench-qwen36-int8-moe-kernels.py \
+  --rows 1,2,4,8,16,32 \
+  --iterations 50 \
+  --warmup 10 \
+  --output-json data/qwen36-quark-int8-moe-kernels-prealloc-20260610.json
+```
+
 ## Artifacts
 
 - Profile: `configs/model-slots/qwen36-35b-a3b-quark-int8-graph32k.env`
@@ -160,6 +172,7 @@ scripts/bench-qwen36-int8-moe-kernels.py \
 - Single-request metrics: `data/qwen36-quark-int8-graph32k-single-metrics-20260609.json`
 - MoE INT8 kernel-stage microbench: `data/qwen36-quark-int8-moe-kernels-20260609.json`
 - Rejected fused SiLU+quant MoE microbench: `data/qwen36-quark-int8-moe-kernels-fused-siluq-20260609.json`
+- Preallocated scratch MoE diagnostic: `data/qwen36-quark-int8-moe-kernels-prealloc-20260610.json`
 - vLLM focused patch: `patches/vllm-qwen36-quark-w8a8-int8-xpu-graph-20260609.patch`
 - vLLM XPU kernels patch: `patches/vllm-xpu-kernels-qwen36-quark-w8a8-int8-xpu-20260609.patch`
 - Rejected fused SiLU+quant quality artifact: `data/qwen36-quark-int8-graph32k-fused-siluq-quality-20260609.json`
@@ -174,6 +187,8 @@ scripts/bench-qwen36-int8-moe-kernels.py \
 - An opt-in fused MoE SiLU plus second-stage INT8 quant candidate improved the isolated activation/quant microbench for decode-shaped rows, but failed the text quality gate. With `VLLM_XPU_FUSED_MOE_FUSE_SILU_QUANT=1`, the arithmetic canary returned `58` instead of `60`; repeat stability and long-context recall still passed, so the issue is numeric drift rather than randomness. Decision: reject and keep the env unset unless a later implementation proves baseline-equivalent outputs.
 - The focused Qwen3.6-shaped MoE INT8 microbench derives `hidden_size=2048`, full `moe_intermediate_size=512`, TP4 `inter_size=128`, `num_experts=256`, and `topk=8` from the checkpoint config. In the accepted env, synthetic decode rows 1/2/4/8 measured `298.96/304.89/272.78/283.87 us` total `xpu_fused_moe` time, with manual staged output exactly matching (`max_abs_diff=0.0`). Rows 16/32 measured `371.08/538.66 us` as GEMM started dominating.
 - The rejected fused SiLU+quant diagnostic measured faster full MoE totals for rows 1/2/4/8 (`238.91/232.35/229.18/260.70 us`) but produced kernel-level drift vs the accepted staged path (`max_abs_diff` about `0.53-0.75`). This reinforces that the next activation/quant fusion must reproduce the current two-step rounding and scale semantics, not merely approximate them.
+- Preallocated BF16/INT32 scratch reuse in the staged diagnostic path was exactly output-equivalent to `xpu_fused_moe` (`max_abs_diff=0.0`) and measured rows 1/2/4/8 at `210.15/206.06/206.46/240.51 us`. In the same run, this removed `15.4/17.2/16.6/8.5%` versus the non-preallocated staged totals; compared with the prior accepted artifact, those rows are `29.7/32.4/24.3/15.3%` lower. Rows 16/32 measured `322.35/489.85 us`.
+- Productionizing scratch reuse needs a mixed-workspace interface. vLLM's current modular MoE workspace path exposes only a small set of same-dtype workspaces, but the accepted INT8 MoE path needs BF16 activations, INT32 routing maps, INT8 quantized activations, and FP32 scale buffers.
 
 ## Next Targets
 
@@ -181,7 +196,7 @@ Single-request speed remains the priority:
 
 1. Profile per-token decode boundaries after graph replay to separate dense W8A8 GEMM, MoE grouped GEMM, activation/quant, and all-reduce time.
 2. Fuse the MoE activation plus second-stage quant path between MoE GEMM1 and GEMM2 only if the fused path matches the unfused rounding/scaling behavior closely enough to pass the text quality suite and baseline hash comparison.
-3. Extend the MoE microbench with preallocated scratch buffers so the accepted path can separate kernel time from allocation/setup overhead without changing math.
+3. Add a mixed-dtype scratch/workspace route for the accepted INT8 MoE path so production runtime can reuse BF16/INT32/INT8/FP32 temporaries without changing math.
 4. Tune small-M dense W8A8 decode GEMM and scratchpad reuse for the M=1 path.
 5. Re-test collective variants only with the text quality suite plus baseline hash comparison; do not use non-clone aliasing shortcuts unless PyTorch alias constraints are satisfied.
 6. Keep aggregate throughput secondary but tracked with the 1/2/4/8/16/32/48 concurrency harness.

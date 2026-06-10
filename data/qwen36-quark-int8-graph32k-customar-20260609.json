@@ -41,6 +41,7 @@
   "moe_kernel_microbench": {
     "accepted_artifact": "data/qwen36-quark-int8-moe-kernels-20260609.json",
     "rejected_fused_siluq_artifact": "data/qwen36-quark-int8-moe-kernels-fused-siluq-20260609.json",
+    "preallocated_scratch_artifact": "data/qwen36-quark-int8-moe-kernels-prealloc-20260610.json",
     "shape": {
       "hidden_size": 2048,
       "moe_intermediate_size": 512,
@@ -61,7 +62,19 @@
       229.17648,
       260.69576
     ],
-    "rejected_reason": "Fused candidate was faster but drifted from accepted staged output and failed text quality."
+    "preallocated_staged_total_us_rows_1_2_4_8": [
+      210.15383999999997,
+      206.06455999999997,
+      206.45663999999996,
+      240.51456
+    ],
+    "preallocated_staged_total_us_rows_16_32": [
+      322.34904,
+      489.85248
+    ],
+    "preallocated_max_abs_diff": 0.0,
+    "rejected_reason": "Fused candidate was faster but drifted from accepted staged output and failed text quality.",
+    "preallocated_scratch_note": "Diagnostic only: exact staged path with BF16/INT32 scratch reuse. Production promotion needs a mixed-dtype workspace route."
   },
   "single_request": {
     "prompt_tokens": 512,
