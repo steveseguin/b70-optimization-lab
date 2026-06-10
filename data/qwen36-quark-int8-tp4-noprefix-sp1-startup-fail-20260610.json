@@ -1,0 +1,69 @@
+{
+  "date": "2026-06-10",
+  "model": "nameistoken/Qwen3.6-35B-A3B-Quark-W8A8-INT8",
+  "model_path": "/mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118",
+  "hardware": "4x Intel Arc Pro B70 32GB",
+  "candidate": "sequence_parallel_sp_min_token_num_1",
+  "status": "startup_failed",
+  "decision": "reject",
+  "base_runtime": {
+    "tensor_parallel_size": 4,
+    "max_model_len": 32768,
+    "max_num_batched_tokens": 8192,
+    "max_num_seqs": 48,
+    "prefix_caching": false,
+    "quantization": "quark",
+    "runtime_dtype": "bfloat16",
+    "cudagraph_mode_requested": "PIECEWISE",
+    "custom_collectives": true
+  },
+  "candidate_runtime": {
+    "env": {
+      "VLLM_XPU_EXPERIMENTAL_ENABLE_SP": "1",
+      "VLLM_XPU_ENABLE_XPU_GRAPH": "1",
+      "VLLM_XPU_FORCE_GRAPH_WITH_COMM": "1",
+      "VLLM_XPU_GRAPH_NOOP_COMM_CAPTURE": "1",
+      "VLLM_XPU_USE_CUSTOM_OP_COLLECTIVES": "1",
+      "VLLM_XPU_COMPILE_ALLREDUCE_CUSTOM_OP": "1",
+      "VLLM_XPU_CUSTOM_ALLREDUCE_GRAPH_CLONE_INPUT": "1",
+      "VLLM_XPU_CUSTOM_ALLREDUCE_CLONE_INPUT": "1"
+    },
+    "compilation_config_requested": {
+      "cudagraph_mode": "PIECEWISE",
+      "pass_config": {
+        "enable_sp": true,
+        "sp_min_token_num": 1
+      }
+    },
+    "compilation_config_effective": {
+      "cudagraph_mode": "FULL",
+      "splitting_ops": [],
+      "cudagraph_capture_sizes": [4, 8, 16, 24, 32, 40, 48, 56, 64, 72, 80, 88, 96],
+      "pass_config": {
+        "enable_sp": true,
+        "sp_min_token_num": 1,
+        "fuse_gemm_comms": false
+      }
+    }
+  },
+  "log": "/tmp/qwen36-quark-int8-tp4-piecewise-graph-customar-clone-32k-noprefix-sp1.log",
+  "observations": [
+    "vLLM removed capture sizes 1 and 2 because sequence parallelism requires batch sizes to be multiples of TP size 4.",
+    "vLLM switched from requested PIECEWISE graph capture to FULL graph capture because sequence parallelism is incompatible with piecewise cudagraph when graph partitioning is off.",
+    "Startup failed during memory profiling/compile before the endpoint became healthy."
+  ],
+  "failure": {
+    "phase": "engine_startup_determine_available_memory",
+    "exception_type": "torch._inductor.exc.InductorError",
+    "message": "RuntimeError: The size of tensor a (s18) must match the size of tensor b ((s18//4)) at non-singleton dimension 0"
+  },
+  "promotion_gate": {
+    "served": false,
+    "quality_checked": false,
+    "speed_checked": false
+  },
+  "restore": {
+    "accepted_runtime_restarted": true,
+    "accepted_runtime_session": "qwen36-tp4-noprefix-32k"
+  }
+}
