@@ -1,0 +1,208 @@
+{
+  "created_at_unix": 1781070065.013961,
+  "base_url": "http://127.0.0.1:18080",
+  "model": "qwen36-35b-a3b-fp8",
+  "tokenizer": "/mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118",
+  "server_model_record": {
+    "id": "qwen36-35b-a3b-fp8",
+    "object": "model",
+    "created": 1781070030,
+    "owned_by": "vllm",
+    "root": "/mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118",
+    "parent": null,
+    "max_model_len": 32768,
+    "permission": [
+      {
+        "id": "modelperm-9a958db83d3f0443",
+        "object": "model_permission",
+        "created": 1781070030,
+        "allow_create_engine": false,
+        "allow_sampling": true,
+        "allow_logprobs": true,
+        "allow_search_indices": false,
+        "allow_view": true,
+        "allow_fine_tuning": false,
+        "organization": "*",
+        "group": null,
+        "is_blocking": false
+      }
+    ]
+  },
+  "prompt_kind": "text",
+  "seed": 0,
+  "random_prefix_len": 0,
+  "prompt_tokens_requested": 512,
+  "prompt_tokens_actual": 512,
+  "output_tokens_requested": 512,
+  "mode": "stream",
+  "skip_vram": true,
+  "repeats": 4,
+  "measurement_notes": [
+    "TTFT and e2e are measured both client-side and from vLLM Prometheus histogram deltas.",
+    "tok_s_prefill_lower_bound_from_ttft is prompt_tokens / TTFT, so it is conservative and includes first-token scheduling/decode overhead.",
+    "tok_s_out_client_after_first_chunk is generated-token-only throughput after the first streamed text chunk.",
+    "tok_s_out_client_after_first_chunk_corrected subtracts the estimated first streamed chunk tokens from the numerator; this is more stable when --stream-interval > 1."
+  ],
+  "vram_mib_before_all": {},
+  "peak_vram_mib_observed": {},
+  "records": [
+    {
+      "repeat": 1,
+      "prompt_tokens_client": 512,
+      "output_tokens_client": 512,
+      "elapsed_s_client": 5.521876669023186,
+      "ttft_ms_client": 76.7700100550428,
+      "tok_s_out_client_after_first_chunk": 94.02937941660538,
+      "tok_s_out_client_after_first_chunk_corrected": 93.84572828493232,
+      "tok_s_out_client_e2e": 92.72209987452912,
+      "tok_s_total_client": 185.44419974905824,
+      "tok_s_prefill_lower_bound_from_ttft": 6669.270977467694,
+      "vllm_metric_deltas": {
+        "prompt_tokens": 512.0,
+        "generation_tokens": 512.0,
+        "ttft_count": 1.0,
+        "ttft_sum_s": 0.07551264762878418,
+        "e2e_count": 1.0,
+        "e2e_sum_s": 5.5205302238464355
+      },
+      "ttft_ms_vllm_metrics": 75.51264762878418,
+      "e2e_ms_vllm_metrics": 5520.530223846436,
+      "vram_mib_before": {},
+      "vram_mib_after": {},
+      "first_chunk_tokens_client_estimate": 1,
+      "streamed_text_chunks": 512,
+      "text_preview": " Local Intel XPU benchmark prompt. The assistant should continue with\n\n<think>\nHere's a thinking process:\n\n1.  **Analyze User Input:**\n   - The input is a highly repetitive prompt: \"Local Intel XPU benchmark prompt. The assistant should con"
+    },
+    {
+      "repeat": 2,
+      "prompt_tokens_client": 512,
+      "output_tokens_client": 512,
+      "elapsed_s_client": 5.4698284229962155,
+      "ttft_ms_client": 74.88607103005052,
+      "tok_s_out_client_after_first_chunk": 94.90370176307883,
+      "tok_s_out_client_after_first_chunk_corrected": 94.71834297057282,
+      "tok_s_out_client_e2e": 93.60439860370265,
+      "tok_s_total_client": 187.2087972074053,
+      "tok_s_prefill_lower_bound_from_ttft": 6837.0525113347585,
+      "vllm_metric_deltas": {
+        "prompt_tokens": 512.0,
+        "generation_tokens": 512.0,
+        "ttft_count": 1.0,
+        "ttft_sum_s": 0.07353830337524414,
+        "e2e_count": 1.0,
+        "e2e_sum_s": 5.468711614608765
+      },
+      "ttft_ms_vllm_metrics": 73.53830337524414,
+      "e2e_ms_vllm_metrics": 5468.711614608765,
+      "vram_mib_before": {},
+      "vram_mib_after": {},
+      "first_chunk_tokens_client_estimate": 1,
+      "streamed_text_chunks": 512,
+      "text_preview": " Local Intel XPU benchmark prompt. The assistant should continue with\n\n<think>\nHere's a thinking process:\n\n1.  **Analyze User Input:**\n   - The input is a highly repetitive prompt: \"Local Intel XPU benchmark prompt. The assistant should con"
+    },
+    {
+      "repeat": 3,
+      "prompt_tokens_client": 512,
+      "output_tokens_client": 512,
+      "elapsed_s_client": 5.499239374068566,
+      "ttft_ms_client": 79.39071208238602,
+      "tok_s_out_client_after_first_chunk": 94.46758238676915,
+      "tok_s_out_client_after_first_chunk_corrected": 94.28307538992,
+      "tok_s_out_client_e2e": 93.10378493693413,
+      "tok_s_total_client": 186.20756987386827,
+      "tok_s_prefill_lower_bound_from_ttft": 6449.1171142120875,
+      "vllm_metric_deltas": {
+        "prompt_tokens": 512.0,
+        "generation_tokens": 512.0,
+        "ttft_count": 1.0,
+        "ttft_sum_s": 0.0781869888305664,
+        "e2e_count": 1.0,
+        "e2e_sum_s": 5.498168706893921
+      },
+      "ttft_ms_vllm_metrics": 78.1869888305664,
+      "e2e_ms_vllm_metrics": 5498.168706893921,
+      "vram_mib_before": {},
+      "vram_mib_after": {},
+      "first_chunk_tokens_client_estimate": 1,
+      "streamed_text_chunks": 512,
+      "text_preview": " Local Intel XPU benchmark prompt. The assistant should continue with\n\n<think>\nHere's a thinking process:\n\n1.  **Analyze User Input:**\n   - The input is a highly repetitive prompt: \"Local Intel XPU benchmark prompt. The assistant should con"
+    },
+    {
+      "repeat": 4,
+      "prompt_tokens_client": 512,
+      "output_tokens_client": 512,
+      "elapsed_s_client": 5.530817379942164,
+      "ttft_ms_client": 74.80775390285999,
+      "tok_s_out_client_after_first_chunk": 93.84147666390346,
+      "tok_s_out_client_after_first_chunk_corrected": 93.65819252979428,
+      "tok_s_out_client_e2e": 92.57221217550922,
+      "tok_s_total_client": 185.14442435101844,
+      "tok_s_prefill_lower_bound_from_ttft": 6844.210302916549,
+      "vllm_metric_deltas": {
+        "prompt_tokens": 512.0,
+        "generation_tokens": 512.0,
+        "ttft_count": 1.0,
+        "ttft_sum_s": 0.07360053062438965,
+        "e2e_count": 1.0,
+        "e2e_sum_s": 5.529762268066406
+      },
+      "ttft_ms_vllm_metrics": 73.60053062438965,
+      "e2e_ms_vllm_metrics": 5529.762268066406,
+      "vram_mib_before": {},
+      "vram_mib_after": {},
+      "first_chunk_tokens_client_estimate": 1,
+      "streamed_text_chunks": 512,
+      "text_preview": " Local Intel XPU benchmark prompt. The assistant should continue with\n\n<think>\nHere's a thinking process:\n\n1.  **Analyze User Input:**\n   - The input is a highly repetitive prompt: \"Local Intel XPU benchmark prompt. The assistant should con"
+    }
+  ],
+  "summary": {
+    "tok_s_out_client_after_first_chunk": {
+      "mean": 94.3105350575892,
+      "median": 94.24848090168726,
+      "min": 93.84147666390346,
+      "max": 94.90370176307883
+    },
+    "tok_s_out_client_after_first_chunk_corrected": {
+      "mean": 94.12633479380486,
+      "median": 94.06440183742616,
+      "min": 93.65819252979428,
+      "max": 94.71834297057282
+    },
+    "tok_s_out_client_e2e": {
+      "mean": 93.00062389766879,
+      "median": 92.91294240573163,
+      "min": 92.57221217550922,
+      "max": 93.60439860370265
+    },
+    "tok_s_total_client": {
+      "mean": 186.00124779533758,
+      "median": 185.82588481146325,
+      "min": 185.14442435101844,
+      "max": 187.2087972074053
+    },
+    "ttft_ms_client": {
+      "mean": 76.46363676758483,
+      "median": 75.82804054254666,
+      "min": 74.80775390285999,
+      "max": 79.39071208238602
+    },
+    "ttft_ms_vllm_metrics": {
+      "mean": 75.2096176147461,
+      "median": 74.55658912658691,
+      "min": 73.53830337524414,
+      "max": 78.1869888305664
+    },
+    "tok_s_prefill_lower_bound_from_ttft": {
+      "mean": 6699.912726482772,
+      "median": 6753.161744401226,
+      "min": 6449.1171142120875,
+      "max": 6844.210302916549
+    },
+    "e2e_ms_vllm_metrics": {
+      "mean": 5504.293203353882,
+      "median": 5509.349465370178,
+      "min": 5468.711614608765,
+      "max": 5529.762268066406
+    }
+  }
+}

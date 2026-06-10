@@ -11,6 +11,7 @@ Current Qwen production-candidate speed result:
 - Engine: local vLLM XPU TP4 plus local `vllm-xpu-kernels`
 - Recipe: Quark W8A8 INT8 weights, BF16 activation/runtime dtype, 32K context, native XPU dense INT8 linear, native XPU INT8 MoE backend, XPU PIECEWISE graph capture, and clone-safe custom-op all-reduce collectives.
 - Single request: `94.52` output tok/s after first chunk, `93.21` output tok/s end-to-end, mean TTFT `76.10 ms` for p512/n512 streaming completions.
+- Restart refresh: after the device-lost recovery and baseline relaunch, p512/n512 streaming measured `94.31` output tok/s after first chunk, `94.13` corrected after-first, `93.00` end-to-end, and `76.46 ms` mean client TTFT across four repeats. This is within noise of the promoted single-request baseline, so the restart did not materially change the accepted recipe. Artifact: `data/qwen36-quark-int8-graph32k-single-refresh-20260610.json`.
 - Aggregate reference: `1604.00` output tok/s wall at 48 concurrent p512/n256 streaming completions. Earlier short-prompt chat probe reached `~2080` aggregate tok/s at 48.
 - Quality: text exact canaries, JSON field semantics, 16-repeat hash stability, and 8K-class long-context needle recall passed.
 - Restore smoke after the rejected fused-kernel experiment also passed exact canaries, JSON field semantics, repeat stability, and long-context recall.
