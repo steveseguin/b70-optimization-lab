@@ -1,0 +1,16 @@
+diff --git a/vllm/model_executor/kernels/linear/scaled_mm/xpu.py b/vllm/model_executor/kernels/linear/scaled_mm/xpu.py
+--- a/vllm/model_executor/kernels/linear/scaled_mm/xpu.py
++++ b/vllm/model_executor/kernels/linear/scaled_mm/xpu.py
+@@
+         bias: torch.Tensor | None = None,
+     ) -> torch.Tensor:
+         w_q, w_s, _, _, _ = self._get_layer_params(layer)
+-        x_2d = x.view(-1, x.shape[-1]).contiguous()
++        x_2d = x.view(-1, x.shape[-1])
+         if getattr(layer, "xpu_native_int8_activation_quant", False):
+             x_q, x_s = torch.ops._xpu_C.per_token_quant_int8_xpu(x_2d)
+         else:
++            x_2d = x_2d.contiguous()
+             x_q, x_s = per_token_quant_int8(x_2d)
+         out = torch.ops._xpu_C.int8_gemm_w8a8(
+             x_q,
