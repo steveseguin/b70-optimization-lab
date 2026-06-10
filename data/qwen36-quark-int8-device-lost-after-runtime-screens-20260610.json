@@ -1,0 +1,24 @@
+{
+  "date": "2026-06-10",
+  "model": "nameistoken/Qwen3.6-35B-A3B-Quark-W8A8-INT8",
+  "incident": "UR_RESULT_ERROR_DEVICE_LOST after restoring accepted no-prefix runtime following runtime optimization screens",
+  "trigger": "first frontdoor smoke request after backend /health passed",
+  "backend_log": "/tmp/qwen36-quark-int8-tp4-piecewise-graph-customar-clone-32k-noprefix.log",
+  "failed_session": "qwen36-tp4-noprefix-32k",
+  "error_path": "vllm/v1/worker/block_table.py copy_to_gpu during first scheduled chat completion",
+  "post_failure_checks": {
+    "xpu_smi_discovery_devices": 4,
+    "torch_xpu_available": true,
+    "torch_xpu_device_count": 4,
+    "stale_vllm_workers_after_kill": false
+  },
+  "recovery": {
+    "action": "killed dead tmux session and relaunched accepted no-prefix TP4 32K runtime",
+    "restored_session": "qwen36-tp4-noprefix-32k",
+    "backend_health": true,
+    "backend_generation": true,
+    "frontdoor_generation": true,
+    "frontdoor_smoke_response": "OK"
+  },
+  "lesson": "Validate actual generation after every diagnostic runtime restore; health alone did not catch this device-lost failure."
+}
