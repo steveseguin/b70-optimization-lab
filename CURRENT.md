@@ -1,6 +1,6 @@
 # Current Promoted Results
 
-Date: 2026-06-09
+Date: 2026-06-10
 
 ## Qwen3.6 35B-A3B Quark W8A8 INT8
 
@@ -19,8 +19,11 @@ Current Qwen production-candidate speed result:
 - Rejected candidate: `VLLM_XPU_FUSED_MOE_FUSE_SILU_QUANT=1` sped up an isolated activation/quant microbench but failed the quality gate by returning `58` instead of `60` for the arithmetic canary. Artifact: `data/qwen36-quark-int8-graph32k-fused-siluq-quality-20260609.json`. Keep this env unset.
 - MoE kernel microbench: accepted Qwen3.6-shaped INT8 MoE rows 1/2/4/8 measured `298.96/304.89/272.78/283.87 us` with exact staged-path match. The rejected fused SiLU+quant diagnostic measured `238.91/232.35/229.18/260.70 us` for the same rows but drifted from the accepted staged output and remains disabled. Artifacts: `data/qwen36-quark-int8-moe-kernels-20260609.json`, `data/qwen36-quark-int8-moe-kernels-fused-siluq-20260609.json`.
 - MoE scratch diagnostic: preallocated BF16/INT32 scratch in the staged path stayed exact versus `xpu_fused_moe` and measured rows 1/2/4/8 at `210.15/206.06/206.46/240.51 us`; rows 16/32 measured `322.35/489.85 us`. This is a diagnostic, not yet a runtime promotion, because production needs a mixed-dtype workspace route for BF16 activations, INT32 routing maps, INT8 activations, and FP32 scales. Artifact: `data/qwen36-quark-int8-moe-kernels-prealloc-20260610.json`.
+- Mixed-workspace runtime screen: `VLLM_XPU_INT8_MOE_MIXED_WORKSPACE=1` reused BF16/INT32 MoE scratch through vLLM's workspace manager and passed the smoke quality suite, but single-request p512/n512 speed measured `93.62` corrected after-first output tok/s and `92.52` end-to-end output tok/s, below the promoted `94.52` / `93.21`. Decision: reject for now; do not enable in production. Artifacts: `data/qwen36-quark-int8-mixedws-smoke-20260610.json`, `data/qwen36-quark-int8-mixedws-single-metrics-20260610.json`.
+- RMSNorm plus INT8 per-token-quant fusion screen: the direct XPU fused kernel microbench was `37-46%` faster for hidden size 2048, but the fused kernel requires BF16 weight while the live Qwen norm path uses a FP32 transformed weight, producing small quant drift in direct checks. The endpoint compiled with `VLLM_XPU_FUSE_RMS_INT8_QUANT=1`, but the actual graph still had zero `rms_norm_dynamic_per_token_quant` calls, so the pattern did not match and was not benchmarked for promotion. Decision: reject/no-op for now; baseline restored. Patch artifacts: `patches/vllm-qwen36-quark-int8-runtime-candidates-20260610.patch`, `patches/vllm-xpu-kernels-qwen36-quark-int8-runtime-candidates-20260610.patch`.
+- Graph inspection after custom-op collectives: c10d/allreduce analyzers now return zero because the promoted backend routes collectives through `torch.ops.vllm.all_reduce`. The compiled graph still shows roughly 220 dense `per_token_quant_int8_xpu` assignments, 220 `int8_gemm_w8a8` assignments, 101 `vllm_ir.rms_norm.default` assignments, 81 custom all-reduce assignments, and 40 MoE custom-op assignments. This points the next work at dense RMS/quant/GEMM boundaries and exact MoE epilogues, not at the old c10d call path. Artifacts: `data/qwen36-quark-int8-mixedws-aot-allreduce-boundaries-20260610.json`, `data/qwen36-quark-int8-mixedws-aot-collectives-20260610.json`.
 
-Next Qwen targets: add a mixed-dtype scratch/workspace route for the accepted INT8 MoE path, fuse MoE activation plus second-stage quant only if it reproduces current rounding/scaling behavior, tune small-M dense W8A8 decode GEMM, and keep aggregate throughput tracked with the 1/2/4/8/16/32/48 concurrency harness.
+Next Qwen targets: fix RMS/quant graph-pattern matching only if the exact FP32-weight semantics can be preserved, investigate dense W8A8 small-M GEMM epilogues and allocation reuse, revisit MoE scratch reuse only if it improves full-model speed, fuse MoE activation plus second-stage quant only if it reproduces current rounding/scaling behavior, and keep aggregate throughput tracked with the 1/2/4/8/16/32/48 concurrency harness.
 
 ## MiniMax M2.7
 

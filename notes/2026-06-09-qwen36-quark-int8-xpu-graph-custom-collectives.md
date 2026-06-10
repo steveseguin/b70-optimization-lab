@@ -1,6 +1,6 @@
 # Qwen3.6 Quark W8A8 INT8 XPU Graph Baseline
 
-Date: 2026-06-09
+Date: 2026-06-10
 
 ## Result
 
@@ -176,6 +176,78 @@ scripts/bench-qwen36-int8-moe-kernels.py \
 - vLLM focused patch: `patches/vllm-qwen36-quark-w8a8-int8-xpu-graph-20260609.patch`
 - vLLM XPU kernels patch: `patches/vllm-xpu-kernels-qwen36-quark-w8a8-int8-xpu-20260609.patch`
 - Rejected fused SiLU+quant quality artifact: `data/qwen36-quark-int8-graph32k-fused-siluq-quality-20260609.json`
+- Mixed-workspace runtime smoke: `data/qwen36-quark-int8-mixedws-smoke-20260610.json`
+- Mixed-workspace runtime speed: `data/qwen36-quark-int8-mixedws-single-metrics-20260610.json`
+- Mixed-workspace graph/allreduce analyzers: `data/qwen36-quark-int8-mixedws-aot-allreduce-boundaries-20260610.json`, `data/qwen36-quark-int8-mixedws-aot-collectives-20260610.json`
+- Runtime-candidate source snapshots: `patches/vllm-qwen36-quark-int8-runtime-candidates-20260610.patch`, `patches/vllm-xpu-kernels-qwen36-quark-int8-runtime-candidates-20260610.patch`
+
+## 2026-06-10 Follow-up Screens
+
+### Mixed INT8 MoE Workspace
+
+Candidate:
+
+- vLLM source adds `VLLM_XPU_INT8_MOE_MIXED_WORKSPACE=1`.
+- The XPU INT8 MoE backend requests simultaneous BF16 and INT32 scratch from `current_workspace_manager()`.
+- `vllm-xpu-kernels` accepts an optional `scratch` dictionary for `xpu_fused_moe`.
+- The runtime math is unchanged: same remap, same per-token INT8 quant, same W8A8 grouped GEMMs, same activation, same gather.
+
+Validation:
+
+- Smoke quality passed on the frontdoor endpoint: exact canaries, compact JSON semantics, repeat stability, and 2K-class long-context recall.
+- Single-request p512/n512 direct-backend speed measured `93.805644` output tok/s after first chunk, `93.622430` corrected after first chunk, and `92.521667` end-to-end.
+
+Decision:
+
+- Reject for now. It is quality-safe, but it did not beat the promoted `94.519964` after-first and `93.210510` end-to-end baseline.
+- Lesson: allocator/scratch reuse helped the isolated MoE microbench, but full-model graph replay is not currently bottlenecked enough on those Python-level temporary allocations to show an endpoint win.
+
+### RMSNorm Plus INT8 Quant Fusion
+
+Candidate:
+
+- vLLM source adds an opt-in `VLLM_XPU_FUSE_RMS_INT8_QUANT=1` pattern around `vllm_ir.rms_norm.default` plus `_xpu_C.per_token_quant_int8_xpu`.
+- The replacement uses `_C.rms_norm_dynamic_per_token_quant`.
+- The XPU platform gate allows `fuse_norm_quant` only when this env is set.
+
+Direct kernel findings:
+
+- For hidden size 2048, the fused kernel was faster than unfused RMS plus quant in a direct microbench:
+  - rows1: `21.75 us` unfused, `12.99 us` fused, `-40.27%`
+  - rows4: `19.60 us` unfused, `10.51 us` fused, `-46.40%`
+  - rows18: `18.92 us` unfused, `11.90 us` fused, `-37.11%`
+  - rows32: `19.78 us` unfused, `12.56 us` fused, `-36.52%`
+- The kernel requires BF16 weight. The live Qwen3.6 graph normalizes with a FP32 transformed weight, so direct checks saw small INT8 quant drift:
+  - rows1: max q diff `1`, differing q values `137/2048`
+  - rows4: max q diff `1`, differing q values `596/8192`
+  - rows18: max q diff `1`, differing q values `2693/36864`
+  - rows32: max q diff `1`, differing q values `5171/65536`
+  - rows128: max q diff `1`, differing q values `20765/262144`
+
+Endpoint findings:
+
+- After adding fake/meta coverage and guarding CUDA-only FP8 patterns on XPU, the endpoint compiled and served with `VLLM_XPU_FUSE_RMS_INT8_QUANT=1`.
+- The compiled graph still contained zero `rms_norm_dynamic_per_token_quant` calls and retained the original `vllm_ir.rms_norm.default` plus `per_token_quant_int8_xpu` boundaries.
+- Therefore the pattern did not match the actual Qwen3.6 graph and no quality/speed promotion benchmark was run.
+
+Decision:
+
+- Reject/no-op for now. The direct kernel has enough speed to be worth revisiting, but only if the pattern matches the real graph and preserves the FP32-weight normalization semantics closely enough to pass the quality gate.
+- The restored promoted baseline is running again in tmux session `qwen36-graph-tp4-customar-clone-32k`.
+
+### Graph Boundary Scan
+
+The old c10d analyzers report zero collectives under the promoted custom-op route. That is expected: the graph no longer contains c10d `all_reduce` calls at those sites.
+
+A direct compiled-graph string scan on the mixed-workspace cache showed the live large boundaries remain:
+
+- about 220 dense `per_token_quant_int8_xpu` assignments
+- about 220 dense `int8_gemm_w8a8` assignments
+- about 101 `vllm_ir.rms_norm.default` assignments
+- about 81 custom `torch.ops.vllm.all_reduce` assignments
+- about 40 `torch.ops.vllm.moe_forward_shared` assignments
+
+The next high-probability single-request targets are dense RMS/quant/GEMM boundaries and exact MoE epilogue work, not the old c10d all-reduce path.
 
 ## Lessons
 
@@ -189,14 +261,18 @@ scripts/bench-qwen36-int8-moe-kernels.py \
 - The rejected fused SiLU+quant diagnostic measured faster full MoE totals for rows 1/2/4/8 (`238.91/232.35/229.18/260.70 us`) but produced kernel-level drift vs the accepted staged path (`max_abs_diff` about `0.53-0.75`). This reinforces that the next activation/quant fusion must reproduce the current two-step rounding and scale semantics, not merely approximate them.
 - Preallocated BF16/INT32 scratch reuse in the staged diagnostic path was exactly output-equivalent to `xpu_fused_moe` (`max_abs_diff=0.0`) and measured rows 1/2/4/8 at `210.15/206.06/206.46/240.51 us`. In the same run, this removed `15.4/17.2/16.6/8.5%` versus the non-preallocated staged totals; compared with the prior accepted artifact, those rows are `29.7/32.4/24.3/15.3%` lower. Rows 16/32 measured `322.35/489.85 us`.
 - Productionizing scratch reuse needs a mixed-workspace interface. vLLM's current modular MoE workspace path exposes only a small set of same-dtype workspaces, but the accepted INT8 MoE path needs BF16 activations, INT32 routing maps, INT8 quantized activations, and FP32 scale buffers.
+- The mixed-workspace runtime route implemented that interface and stayed quality-safe, but endpoint speed was slightly worse than the promoted baseline. Do not promote scratch reuse until the full-model benchmark improves, not merely the isolated MoE microbench.
+- RMSNorm plus INT8 per-token quant has a real direct-kernel opportunity, but the currently available fused kernel changes the norm-weight dtype semantics for this Qwen graph and the first endpoint pattern did not match. Treat this as a pattern/semantics research item, not a production knob.
+- With custom-op all-reduce collectives enabled, c10d call scanners are no longer sufficient. Use compiled-graph op scans and endpoint metrics to decide what still matters.
 
 ## Next Targets
 
 Single-request speed remains the priority:
 
 1. Profile per-token decode boundaries after graph replay to separate dense W8A8 GEMM, MoE grouped GEMM, activation/quant, and all-reduce time.
-2. Fuse the MoE activation plus second-stage quant path between MoE GEMM1 and GEMM2 only if the fused path matches the unfused rounding/scaling behavior closely enough to pass the text quality suite and baseline hash comparison.
-3. Add a mixed-dtype scratch/workspace route for the accepted INT8 MoE path so production runtime can reuse BF16/INT32/INT8/FP32 temporaries without changing math.
-4. Tune small-M dense W8A8 decode GEMM and scratchpad reuse for the M=1 path.
-5. Re-test collective variants only with the text quality suite plus baseline hash comparison; do not use non-clone aliasing shortcuts unless PyTorch alias constraints are satisfied.
-6. Keep aggregate throughput secondary but tracked with the 1/2/4/8/16/32/48 concurrency harness.
+2. Fix or redesign the RMSNorm plus INT8 quant pattern only if it preserves the live FP32-weight norm semantics, then prove it with the text quality suite and a baseline-output comparison.
+3. Fuse the MoE activation plus second-stage quant path between MoE GEMM1 and GEMM2 only if the fused path matches the unfused rounding/scaling behavior closely enough to pass the text quality suite and baseline hash comparison.
+4. Revisit mixed-dtype scratch/workspace reuse only when it improves endpoint speed, not just isolated MoE timings.
+5. Tune small-M dense W8A8 decode GEMM and scratchpad reuse for the M=1 path.
+6. Re-test collective variants only with the text quality suite plus baseline hash comparison; do not use non-clone aliasing shortcuts unless PyTorch alias constraints are satisfied.
+7. Keep aggregate throughput secondary but tracked with the 1/2/4/8/16/32/48 concurrency harness.
