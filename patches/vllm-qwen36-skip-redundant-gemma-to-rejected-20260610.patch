@@ -1,0 +1,15 @@
+diff --git a/vllm/model_executor/layers/layernorm.py b/vllm/model_executor/layers/layernorm.py
+--- a/vllm/model_executor/layers/layernorm.py
++++ b/vllm/model_executor/layers/layernorm.py
+@@
+         # ir.ops.rms_norm handles fp32 upcast internally
+         out = ir.ops.rms_norm(x, weight, self.variance_epsilon)
+-        return (
+-            out.to(orig_dtype) if residual is None else (out.to(orig_dtype), residual)
+-        )
++        if out.dtype != orig_dtype:
++            out = out.to(orig_dtype)
++        return out if residual is None else (out, residual)
+ 
+     def forward_cuda(
+         self,
