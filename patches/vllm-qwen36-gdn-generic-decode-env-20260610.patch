@@ -1,0 +1,80 @@
+diff --git a/vllm/model_executor/layers/mamba/gdn_linear_attn.py b/vllm/model_executor/layers/mamba/gdn_linear_attn.py
+index a621ab962..9ee0d9054 100644
+--- a/vllm/model_executor/layers/mamba/gdn_linear_attn.py
++++ b/vllm/model_executor/layers/mamba/gdn_linear_attn.py
+@@ -3,6 +3,7 @@
+ """Inference-only Qwen3-Next/Qwen3.5 model."""
+ 
+ import torch
++import os
+ from einops import rearrange
+ from torch import nn
+ from transformers.activations import ACT2FN
+@@ -623,15 +624,59 @@ class GatedDeltaNetAttention(PluggableLayer, MambaBase):
+             dtype=hidden_states.dtype,
+             device=hidden_states.device,
+         )
+-        z = torch.empty_like(core_attn_out)
++        forward_context = get_forward_context()
++        attn_metadata_raw = forward_context.attn_metadata
++        use_generic_spec_core = False
++        if isinstance(attn_metadata_raw, dict):
++            attn_metadata = attn_metadata_raw.get(self.prefix)
++            use_generic_spec_core = (
++                isinstance(attn_metadata, GDNAttentionMetadata)
++                and attn_metadata.spec_sequence_masks is not None
++            )
++            if (
++                os.environ.get("VLLM_XPU_GDN_FORCE_GENERIC_DECODE", "0") == "1"
++                and isinstance(attn_metadata, GDNAttentionMetadata)
++                and attn_metadata.spec_sequence_masks is None
++                and attn_metadata.num_prefills == 0
++                and attn_metadata.num_decodes > 0
++            ):
++                use_generic_spec_core = True
+ 
+-        torch.ops.vllm.gdn_attention_core_xpu(
+-            core_attn_out,
+-            z,
+-            projected_states_qkvz,
+-            projected_states_ba,
+-            self.prefix,
+-        )
++        if use_generic_spec_core:
++            if self.gqa_interleaved_layout:
++                query, key, value, z, b, a = self.fix_query_key_value_ordering(
++                    projected_states_qkvz, projected_states_ba
++                )
++                query, key, value = map(
++                    lambda x: rearrange(x, "l p d -> l (p d)"), (query, key, value)
++                )
++                mixed_qkv = torch.cat((query, key, value), dim=-1)
++            else:
++                qkv_size = (self.key_dim * 2 + self.value_dim) // self.tp_size
++                z_size = self.value_dim // self.tp_size
++                mixed_qkv, z = projected_states_qkvz.split(
++                    [qkv_size, z_size], dim=-1
++                )
++                z = z.reshape(z.size(0), -1, self.head_v_dim)
++                b, a = projected_states_ba.chunk(2, dim=-1)
++                b = b.contiguous()
++                a = a.contiguous()
++
++            self._forward_core(
++                mixed_qkv=mixed_qkv,
++                b=b,
++                a=a,
++                core_attn_out=core_attn_out,
++            )
++        else:
++            z = torch.empty_like(core_attn_out)
++            torch.ops.vllm.gdn_attention_core_xpu(
++                core_attn_out,
++                z,
++                projected_states_qkvz,
++                projected_states_ba,
++                self.prefix,
++            )
+ 
+         # ============================================================
+         # Part 3: Output Projection
