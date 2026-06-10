@@ -1,0 +1,32 @@
+{
+  "date": "2026-06-10",
+  "purpose": "Establish a safe _C-only vllm-xpu-kernels build loop for future Qwen3.6 exact fused-kernel experiments.",
+  "reason": "The rejected RMSNorm plus INT8 quant attempt used setup.py build_ext --inplace, which always builds _C, _vllm_fa2_C, _moe_C, _xpu_C, and xpumem_allocator from build/temp. That dragged in unrelated attention kernels and was killed by the OS while compiling paged_decode_xe2.cpp.",
+  "script": "scripts/build-vllm-xpu-kernels-c-only.sh",
+  "validated_command": "KERNELS_DIR=/home/steve/src/vllm-xpu-kernels VENV_DIR=/home/steve/.venvs/vllm-xpu ONEAPI_VARS=/opt/intel/oneapi/compiler/2025.3/env/vars.sh AOT_DEVICES=bmg-g21-a0 JOBS=4 CLEAN=1 scripts/build-vllm-xpu-kernels-c-only.sh",
+  "cmake_options": {
+    "BASIC_KERNELS_ENABLED": "ON",
+    "BUILD_SYCL_TLA_KERNELS": "OFF",
+    "VLLM_XPU_ENABLE_XE2": "OFF",
+    "VLLM_XPU_ENABLE_XE_DEFAULT": "OFF",
+    "FA2_KERNELS_ENABLED": "OFF",
+    "MOE_KERNELS_ENABLED": "OFF",
+    "GDN_KERNELS_ENABLED": "OFF",
+    "MQA_LOGITS_KERNELS_ENABLED": "OFF",
+    "XPU_SPECIFIC_KERNELS_ENABLED": "OFF",
+    "XPUMEM_ALLOCATOR_ENABLED": "OFF"
+  },
+  "result": {
+    "status": "passed",
+    "objects_built": 15,
+    "installed_artifact": "/tmp/vllm-xpu-c-only-2025/vllm_xpu_kernels/_C.abi3.so",
+    "installed_size_bytes": 13421184,
+    "import_smoke": "passed under oneAPI 2025.3 with PYTHONPATH=/tmp/vllm-xpu-c-only-2025:/home/steve/src/vllm",
+    "registered_op_check": "torch.ops._C.rms_norm_dynamic_per_token_quant present"
+  },
+  "notes": [
+    "This build path installs into /tmp by default and does not overwrite the local vllm_xpu_kernels package.",
+    "Use this for future _C-only experiments before touching graph replacement or launching a full model endpoint.",
+    "The running Qwen3.6 baseline service was not stopped for this build validation."
+  ]
+}
