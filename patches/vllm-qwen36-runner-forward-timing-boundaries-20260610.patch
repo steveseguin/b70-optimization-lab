@@ -1,0 +1,109 @@
+diff --git a/vllm/v1/worker/gpu_model_runner.py b/vllm/v1/worker/gpu_model_runner.py
+--- a/vllm/v1/worker/gpu_model_runner.py
++++ b/vllm/v1/worker/gpu_model_runner.py
+@@
+ from vllm.utils.torch_utils import (
+     get_dtype_size,
+     is_quantized_kv_cache,
+     kv_cache_dtype_str_to_dtype,
+ )
++from vllm.utils.xpu_decode_timing import timed_region
+@@
+         self.input_batch.update_async_output_token_ids()
+         if spec_decode_metadata is None:
+-            return self.sampler(
+-                logits=logits,
+-                sampling_metadata=sampling_metadata,
+-            )
++            with timed_region("gpu_model_runner.sampler"):
++                return self.sampler(
++                    logits=logits,
++                    sampling_metadata=sampling_metadata,
++                )
+@@
+-        sampler_output = self.rejection_sampler(
+-            spec_decode_metadata,
+-            None,  # draft_probs
+-            logits,
+-            sampling_metadata,
+-        )
++        with timed_region("gpu_model_runner.rejection_sampler"):
++            sampler_output = self.rejection_sampler(
++                spec_decode_metadata,
++                None,  # draft_probs
++                logits,
++                sampling_metadata,
++            )
+         return sampler_output
+@@
+-        return self.model(
+-            input_ids=input_ids,
+-            positions=positions,
+-            intermediate_tensors=intermediate_tensors,
+-            inputs_embeds=inputs_embeds,
+-            **model_kwargs,
+-        )
++        with timed_region("gpu_model_runner.model_forward"):
++            return self.model(
++                input_ids=input_ids,
++                positions=positions,
++                intermediate_tensors=intermediate_tensors,
++                inputs_embeds=inputs_embeds,
++                **model_kwargs,
++            )
+@@
+-                sample_hidden_states = _select_sample_hidden_states(
+-                    hidden_states, logits_indices
+-                )
++                with timed_region("gpu_model_runner.select_sample_hidden"):
++                    sample_hidden_states = _select_sample_hidden_states(
++                        hidden_states, logits_indices
++                    )
+@@
+-                    logits = self.model.compute_logits(sample_hidden_states)
++                    with timed_region("gpu_model_runner.compute_logits"):
++                        logits = self.model.compute_logits(sample_hidden_states)
+@@
+-                sample_hidden_states = _select_sample_hidden_states(
+-                    hidden_states, logits_indices
+-                )
++                with timed_region("gpu_model_runner.select_sample_hidden"):
++                    sample_hidden_states = _select_sample_hidden_states(
++                        hidden_states, logits_indices
++                    )
+@@
+-                    logits = self.model.compute_logits(sample_hidden_states)
++                    with timed_region("gpu_model_runner.compute_logits"):
++                        logits = self.model.compute_logits(sample_hidden_states)
+@@
+-            (
+-                num_nans_in_logits,
+-                logprobs_lists,
+-                valid_sampled_token_ids,
+-                prompt_logprobs_dict,
+-                req_ids_output_copy,
+-                req_id_to_index_output_copy,
+-                invalid_req_indices,
+-            ) = self._bookkeeping_sync(
+-                scheduler_output,
+-                sampler_output,
+-                logits,
+-                hidden_states,
+-                scheduler_output.total_num_scheduled_tokens,
+-            )
++            with timed_region("gpu_model_runner.bookkeeping_sync"):
++                (
++                    num_nans_in_logits,
++                    logprobs_lists,
++                    valid_sampled_token_ids,
++                    prompt_logprobs_dict,
++                    req_ids_output_copy,
++                    req_id_to_index_output_copy,
++                    invalid_req_indices,
++                ) = self._bookkeeping_sync(
++                    scheduler_output,
++                    sampler_output,
++                    logits,
++                    hidden_states,
++                    scheduler_output.total_num_scheduled_tokens,
++                )
