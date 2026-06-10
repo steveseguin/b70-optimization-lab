@@ -1,0 +1,50 @@
+diff --git a/vllm/model_executor/layers/mamba/gdn_linear_attn.py b/vllm/model_executor/layers/mamba/gdn_linear_attn.py
+index 5589538c1..partial-clone 100644
+--- a/vllm/model_executor/layers/mamba/gdn_linear_attn.py
++++ b/vllm/model_executor/layers/mamba/gdn_linear_attn.py
+@@ -389,10 +389,17 @@ class GatedDeltaNetAttention(PluggableLayer, MambaBase):
+         )
+         self.xpu_reuse_qkvz_ba_quant = current_platform.is_xpu() and (
+-            xpu_gdn_reuse_qkvz_ba_quant_mode in ("1", "true", "clone")
++            xpu_gdn_reuse_qkvz_ba_quant_mode
++            in ("1", "true", "clone", "clone-q", "clone-scale")
+         )
+         self.xpu_reuse_qkvz_ba_quant_clone = (
+             xpu_gdn_reuse_qkvz_ba_quant_mode == "clone"
+         )
++        self.xpu_reuse_qkvz_ba_quant_clone_q = (
++            xpu_gdn_reuse_qkvz_ba_quant_mode in ("clone", "clone-q")
++        )
++        self.xpu_reuse_qkvz_ba_quant_clone_scale = (
++            xpu_gdn_reuse_qkvz_ba_quant_mode in ("clone", "clone-scale")
++        )
+ 
+         compilation_config = get_current_vllm_config().compilation_config
+         if prefix in compilation_config.static_forward_context:
+@@ -637,10 +646,22 @@ class GatedDeltaNetAttention(PluggableLayer, MambaBase):
+                 x_q_ba = x_q.clone()
+                 x_s_ba = x_s.clone()
+             else:
+-                x_q_qkvz = x_q
+-                x_s_qkvz = x_s
+-                x_q_ba = x_q
+-                x_s_ba = x_s
++                x_q_qkvz = (
++                    x_q.clone() if self.xpu_reuse_qkvz_ba_quant_clone_q else x_q
++                )
++                x_s_qkvz = (
++                    x_s.clone()
++                    if self.xpu_reuse_qkvz_ba_quant_clone_scale
++                    else x_s
++                )
++                x_q_ba = (
++                    x_q.clone() if self.xpu_reuse_qkvz_ba_quant_clone_q else x_q
++                )
++                x_s_ba = (
++                    x_s.clone()
++                    if self.xpu_reuse_qkvz_ba_quant_clone_scale
++                    else x_s
++                )
+ 
+             projected_states_qkvz = torch.ops._xpu_C.int8_gemm_w8a8(
+                 x_q_qkvz,
