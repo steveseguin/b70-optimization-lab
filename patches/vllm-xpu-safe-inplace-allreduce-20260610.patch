@@ -33,13 +33,15 @@ diff --git a/vllm/compilation/passes/pass_manager.py b/vllm/compilation/passes/p
              self.post_cleanup = PostCleanupPass(config)
 diff --git a/vllm/compilation/passes/utility/xpu_inplace_allreduce.py b/vllm/compilation/passes/utility/xpu_inplace_allreduce.py
 new file mode 100644
+index 0000000..bab4f24
 --- /dev/null
 +++ b/vllm/compilation/passes/utility/xpu_inplace_allreduce.py
-@@ -0,0 +1,133 @@
+@@ -0,0 +1,215 @@
 +# SPDX-License-Identifier: Apache-2.0
 +# SPDX-FileCopyrightText: Copyright contributors to the vLLM project
 +
 +import os
++import operator
 +
 +import torch
 +from torch import fx
@@ -70,6 +72,75 @@ new file mode 100644
 +
 +def _is_view_like(node: fx.Node) -> bool:
 +    return node.op == "call_function" and node.target in _VIEW_LIKE_TARGETS
++
++
++def _base_source_node(node: fx.Node) -> fx.Node:
++    current = node
++    while _is_view_like(current) and current.args:
++        base = current.args[0]
++        if not isinstance(base, fx.Node):
++            break
++        current = base
++    return current
++
++
++def _target_name(target: object) -> str:
++    name = getattr(target, "__name__", None)
++    if name:
++        return name
++    return str(target)
++
++
++def _is_add_source(node: fx.Node) -> bool:
++    if node.op != "call_function":
++        return False
++    if node.target is operator.add:
++        return True
++    target_name = _target_name(node.target)
++    return (
++        target_name == "add"
++        or "aten.add" in target_name
++        or node.name == "add"
++        or node.name.startswith("add_")
++    )
++
++
++def _is_gemm_source(node: fx.Node) -> bool:
++    if node.op != "call_function":
++        return False
++    return "int8_gemm_w8a8" in _target_name(node.target)
++
++
++def _is_embedding_source(node: fx.Node) -> bool:
++    if node.op != "call_function":
++        return False
++    name = _target_name(node.target)
++    return (
++        node.target is torch.nn.functional.embedding
++        or "embedding" in name
++    )
++
++
++def _matches_source_filter(node: fx.Node, source_filter: str) -> bool:
++    if source_filter in ("", "any", "all"):
++        return True
++
++    source = _base_source_node(node)
++    if source_filter == "add":
++        return _is_add_source(source)
++    if source_filter == "gemm":
++        return _is_gemm_source(source)
++    if source_filter == "embedding":
++        return _is_embedding_source(source)
++    if source_filter in ("not_embedding", "non_embedding"):
++        return not _is_embedding_source(source)
++
++    logger.warning(
++        "Unknown VLLM_XPU_SAFE_INPLACE_ALLREDUCE_SOURCE_FILTER=%r; "
++        "disabling safe in-place all-reduce rewrites.",
++        source_filter,
++    )
++    return False
 +
 +
 +def _is_bfloat16_tensor(node: fx.Node) -> bool:
@@ -123,11 +194,15 @@ new file mode 100644
 +            )
 +            or "0"
 +        )
++        self.source_filter = os.environ.get(
++            "VLLM_XPU_SAFE_INPLACE_ALLREDUCE_SOURCE_FILTER", "any"
++        ).strip().lower()
 +
 +    @VllmInductorPass.time_and_log
 +    def __call__(self, graph: fx.Graph) -> None:
 +        count = 0
 +        skipped_dtype = 0
++        skipped_filter = 0
 +        skipped_live = 0
 +
 +        for node in list(graph.nodes):
@@ -147,6 +222,10 @@ new file mode 100644
 +                skipped_dtype += 1
 +                continue
 +
++            if not _matches_source_filter(input_node, self.source_filter):
++                skipped_filter += 1
++                continue
++
 +            if not _has_single_use_alias_chain(input_node, node):
 +                skipped_live += 1
 +                continue
@@ -162,11 +241,14 @@ new file mode 100644
 +            graph.erase_node(node)
 +            count += 1
 +
-+        if count or skipped_dtype or skipped_live:
++        if count or skipped_dtype or skipped_filter or skipped_live:
 +            logger.info(
 +                "XpuSafeInplaceAllReducePass rewrote %d all-reduce nodes "
-+                "(skipped_live=%d skipped_dtype=%d)",
++                "(source_filter=%s skipped_live=%d skipped_dtype=%d "
++                "skipped_filter=%d)",
 +                count,
++                self.source_filter,
 +                skipped_live,
 +                skipped_dtype,
++                skipped_filter,
 +            )
