@@ -6133,3 +6133,108 @@ Revised large-opportunity order:
    - persistent MoE/layout if route-window timing dominates;
    - static solo decode/command-list replay if scheduler/graph sync dominates;
    - engine bakeoff if vLLM/XPU overhead looks structural.
+
+## Generative-Scoring Bucket Proxy And Branch Decision
+
+Added after the verifier-followup probe. The goal was to get low-risk timing
+evidence for "verifier bucket" shape sensitivity without disturbing the
+accepted TP4 service.
+
+New artifacts:
+
+- `scripts/probe-qwen36-generative-scoring-buckets.py`
+- `data/qwen36-quark-int8-tp4-generative-scoring-buckets-p512-20260611.json`
+- `data/qwen36-quark-int8-tp4-generative-scoring-buckets-p8192-20260611.json`
+- `data/qwen36-quark-int8-tp4-current-speed-sanity-p512o256-r2-20260611.json`
+
+Important caveat:
+
+- `/generative_scoring` is not a true speculative decode verifier benchmark.
+- It builds fresh `query + item` prompts and scores next-token labels.
+- That means it exercises prefill-style prompt+item work, not a KV-resident
+  decode step with existing cache.
+- Use this only as a stability/shape proxy. Do not use it to claim MTP/EAGLE
+  speed viability.
+
+p512 proxy result:
+
+- Query length: `512` tokens.
+- Item lengths: `0,1,2,3,4,5,6,8,12,16`.
+- Measured latency stayed flat around `75-80 ms`.
+- Item length did not produce a clear monotonic cost signal at this prompt
+  length; noise and graph/prefill behavior dominate.
+
+p8192 proxy result:
+
+| Item tokens | Mean elapsed ms | Delta vs item0 |
+| ---: | ---: | ---: |
+| 0 | `726.72` | `0.00` |
+| 1 | `738.65` | `+11.94` |
+| 2 | `752.52` | `+25.81` |
+| 4 | `755.35` | `+28.64` |
+| 8 | `757.40` | `+30.68` |
+| 16 | `755.56` | `+28.84` |
+
+Interpretation:
+
+- The proxy is stable and usage accounting matches `prompt_tokens + item_tokens`.
+- Small candidate items are cheap relative to the full 8K prefill, but the
+  first couple of extra tokens still add visible latency in this API path.
+- The result does not answer the real question: whether a KV-resident verifier
+  bucket of length `2-8` can run cheaply enough during decode.
+- A lower-level harness must measure vLLM's actual decode-time scheduled token
+  counts with existing KV state.
+
+Current speed sanity after the proxy:
+
+- Direct backend p512/o256, natural-chat preset, r2.
+- Corrected after-first output throughput: `99.31 tok/s` mean.
+- End-to-end output throughput: `96.46 tok/s` mean.
+- Client TTFT: `86.34 ms` mean.
+- vLLM TTFT metric: `74.98 ms` mean.
+- This confirms the accepted service did not regress during the proxy run.
+- Backend `/health`, frontdoor `/health`, and a post-proxy frontdoor text smoke
+  also passed with `pass_all=true`, `baseline_match_all=true`,
+  `repeat_pass=true`, and `long_context_pass=true`.
+- Smoke artifact:
+  `data/qwen36-quark-int8-tp4-post-scoring-bucket-text-smoke-20260611.json`
+
+Branch decision from current evidence:
+
+1. Do not spend more time on HTTP `/generative_scoring` as a speed predictor.
+   - It is useful for correctness probes like "which next token does the
+     accepted verifier prefer?"
+   - It is not useful enough for decode-bucket timing because it recomputes the
+     prompt.
+
+2. Build a real KV-resident verifier-bucket harness next.
+   - Target scheduled decode token counts `1,2,3,4,5,6,8`.
+   - Measure model-forward time, graph bucket use, and stability with existing
+     KV state.
+   - This can be a vLLM runner diagnostic, an offline `LLM` runner patch, or a
+     minimal engine-core fixture; it should not route through HTTP scoring.
+
+3. Keep persistent MoE/route-window work as the durable backend branch.
+   - Existing graph step timing still says visible `model_forward` dominates:
+     about `12.36 ms/token` under synchronized graph-path timing.
+   - Visible non-forward regions are too small for a 2x win: logits about
+     `0.77 ms`, sampler about `0.16 ms`, and bookkeeping about `0.06 ms`.
+   - Eager diagnostic timing exposes MoE as the largest internal component when
+     graph replay is disabled: `moe_forward_shared.custom_op` about `48.10 ms`
+     of `113.61 ms` eager forward.
+
+4. Keep the static solo decode lane as the third branch.
+   - It is justified only if the real KV verifier-bucket or future command-list
+     timing shows scheduler/block-table/graph-sync overhead large enough to
+     beat kernel work.
+
+Immediate next implementation target:
+
+1. Add a decode-bucket diagnostic inside vLLM that records actual scheduled
+   decode token count, whether the graph bucket was used, and rank-0
+   `model_forward` timing for bucket sizes `1,2,3,4,5,6,8`.
+2. Run it first on the accepted lane without speculation if possible, then on a
+   shallow bonus-intact speculative lane only after the first-prefill device-loss
+   isolate is understood.
+3. Promote nothing until token traces match the accepted baseline and the
+   endpoint survives repeat/long-context reliability gates.
