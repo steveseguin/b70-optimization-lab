@@ -6884,3 +6884,153 @@ Updated priority after this inspection:
    fallback.
 4. Keep the accepted TP4 service as the quality oracle and restore it after each
    diagnostic launch.
+
+## Hybrid MTP Mechanics Result
+
+Added after the disposable hybrid MTP launch. The mechanics worked better than
+expected, but the quality gate rejected the path.
+
+New helper scripts:
+
+- `scripts/create-qwen36-quark-fp8-mtp-hybrid.py`
+- `scripts/launch-qwen36-quark-int8-hybrid-mtp.sh`
+
+Hybrid checkpoint construction:
+
+- output: `/mnt/fast-ai/qwen36-quark-int8-fp8-mtp-hybrid`
+- Quark source weight count: `62696`
+- official FP8 `mtp.*` weight count: `1560`
+- merged index weight count: `64256`
+- borrowed file: official FP8 `mtp.safetensors`
+- target/verifier remains the Quark W8A8 INT8 checkpoint; only the MTP proposer
+  tensors are borrowed.
+
+Launch result:
+
+- `method="mtp"` resolved to `Qwen3_5MoeMTP`.
+- `VLLM_QWEN35_MTP_FORCE_FP8_BLOCK=1` selected
+  `XPUBF16Fp8BlockScaledMMLinearKernel` for the drafter linear layers.
+- vLLM detected the MTP model and shared target embedding/lm-head weights with
+  the draft model.
+- The server loaded and served with both default async scheduling and explicit
+  `--no-async-scheduling`.
+
+Quality result:
+
+- Async hybrid MTP r1 frontdoor token trace passed exact baseline parity:
+  `data/qwen36-quark-int8-tp4-hybrid-mtp-frontdoor-token-trace-r1-20260611.json`.
+- Async hybrid MTP r4 failed exact parity:
+  `data/qwen36-quark-int8-tp4-hybrid-mtp-frontdoor-token-trace-r4-20260611.json`.
+  Failures included corrupted copy, arithmetic, and repeat-color outputs.
+- Backend-direct r1 trace was an invalid comparison because it bypassed the
+  frontdoor request shaping and thinking suppression:
+  `data/qwen36-quark-int8-tp4-hybrid-mtp-token-trace-r1-20260611.json`.
+- No-async hybrid MTP r4 also failed exact parity:
+  `data/qwen36-quark-int8-tp4-hybrid-mtp-noasync-frontdoor-token-trace-r4-20260611.json`.
+  The narrower failure was still decisive: long-context needle changed from
+  `B70_QWEN36_NEEDLE_20260609` to
+  `B Lebens Mourinho \_QWEN36\_NEEDLE\_20260609`.
+
+Decision:
+
+- Reject the hybrid FP8-MTP proposer path as a speed candidate.
+- Do not run speed or Localmaxxing submission for it.
+- Keep the scripts and traces because they are useful mechanics and failure
+  fixtures.
+- The problem is not simply async scheduling; disabling async scheduling removed
+  some corruption modes but did not preserve long-context token parity.
+
+Restore status:
+
+- Accepted Quark INT8 service restored in tmux session
+  `qwen36-tp4-accepted-restored-after-hybrid-mtp-20260611x`.
+- Backend `/health` and frontdoor `/health` passed.
+- Short frontdoor text smoke passed exact arithmetic/copy/JSON/repeat checks:
+  `data/qwen36-quark-int8-tp4-accepted-restored-after-hybrid-mtp-text-smoke-20260611.json`.
+- Restored non-MTP service reported `20.67 GiB` available KV cache memory per
+  rank and `62.65x` maximum concurrency for 32768-token requests.
+
+## Public Result And Additional External Leads
+
+Localmaxxing now has the newer generic-base public row in addition to the exact
+Quark-model row:
+
+- ID: `cmq9ifq0500b0r8012f27j1xl`
+- HF ID: `Qwen/Qwen3.6-35B-A3B`
+- Engine/quant: vLLM, Quark W8A8 INT8
+- Hardware: 4x Intel Arc Pro B70 32GB
+- Result: `99.769699` output tok/s, `76.526643 ms` TTFT
+- Peak VRAM: `127.547168 GB` total allocation, about `31.89 GiB` per B70
+- Artifact: `data/localmaxxing-b70-qwen36-benchmarks-20260611.json`
+
+Additional web-search leads checked:
+
+- vLLM XPU B70/B580 public issue:
+  https://github.com/vllm-project/vllm/issues/35638
+- vLLM XPU kernel migration/RFC:
+  https://github.com/vllm-project/vllm/issues/33214
+- vLLM XPU kernel repository:
+  https://github.com/vllm-project/vllm-xpu-kernels
+- Intel quantization support docs:
+  https://docs.vllm.ai/en/stable/features/quantization/inc/
+- vLLM XPU hardware support docs:
+  https://docs.vllm.ai/en/stable/models/hardware_supported_models/xpu/
+- Public B70 Qwen3.5/Qwen3.6-class performance reports continue to show that
+  low double-digit to roughly 70 tok/s is common without deeper kernel/layout
+  work. Our current `~100 tok/s` row is strong, but still far from the user's
+  desired interactive target.
+
+New larger ideas from this result:
+
+1. Build a verifier-only perfect-draft harness before another MTP implementation
+   attempt. The bucket timing says speculation has enough theoretical upside;
+   the MTP run says the current proposer integration cannot be trusted. A
+   perfect-draft fixture can separate verifier bucket correctness from proposer
+   state corruption.
+2. Create an auxiliary-MTP loader rather than an index-spliced model directory.
+   The symlink hybrid proved vLLM can instantiate the drafter, but the failure
+   suggests shared model/config assumptions may be leaking into generation
+   state. A first-class `mtp_model` or `mtp_weights` field would make the
+   boundary explicit and easier to audit.
+3. Add a long-context speculative invariant suite. Short r1 canaries were not
+   enough; long-context needle parity caught both n-gram no-bonus and hybrid MTP
+   problems. Future speculative tests should always include at least one
+   request-id joined long-context case before any speed measurement.
+4. Try a same-tokenizer learned proposer only after a perfect-draft upper bound.
+   The final verifier can preserve quality, but proposer quality must be high
+   enough to overcome the extra drafter forward. Train or fit it from current
+   Quark traces, not from Qwen3.5 or 4-bit outputs.
+5. Explore a single-card or TP2 replica latency lane using the current 8-bit
+   model only. Pure TP4 is winning today, but public B70 data suggests
+   single-card engines can be competitive for Qwen3.6-class models. A strict
+   same-model 8-bit bakeoff could reveal whether cross-card collectives are
+   dominating c1 latency.
+6. Prototype route-local expert replication with the current VRAM headroom. The
+   restored non-MTP service reserves nearly all VRAM for KV, but the actual
+   model memory is only about `8.58 GiB` per rank. A latency lane with lower
+   max concurrency could spend memory on hot expert copies or prepacked expert
+   layouts without changing model math.
+7. Build a whole-token timeline budget that includes the server path, not just
+   synchronized kernel timing. The offline c1 runner showed HTTP/frontdoor is
+   not a 2x loss, but exact per-token command timing could still expose smaller
+   launch, sampling, or streaming costs worth cleaning up.
+8. Turn the hybrid MTP corruption into an upstreamable minimal repro. The repro
+   should include the disposable index script, the exact r1 pass/r4 fail, and the
+   no-async long-context failure. This is more actionable than a vague "MTP is
+   corrupt on XPU" report.
+9. Keep persistent MoE/grouped-GEMM as the fallback path, not a side quest. If
+   perfect-draft verifier math cannot reach the target, then speculation cannot
+   deliver `>200 tok/s`, and the next credible path is persistent XPU MoE plus
+   communication/layout surgery.
+10. Production idea: run two lanes once any speculative candidate becomes
+    quality-clean. The default lane stays accepted non-spec Quark TP4; the
+    speculative lane handles latency-sensitive single requests and auto-falls
+    back when long-context/repeat canaries fail.
+
+Immediate next priority:
+
+1. Build the perfect-draft or verifier-only multi-token harness.
+2. In parallel, produce a minimal hybrid-MTP failure pack for local debugging and
+   potential upstream issue/PR.
+3. Stop testing MTP speed until exact long-context parity is restored.
+4. Continue MoE route/locality work as the non-speculative fallback.
