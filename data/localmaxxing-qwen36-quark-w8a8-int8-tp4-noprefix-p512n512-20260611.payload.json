@@ -1,0 +1,41 @@
+{
+  "hfId": "nameistoken/Qwen3.6-35B-A3B-Quark-W8A8-INT8",
+  "modelRevision": "cced56592e8c8935f8220836b4baa04dfd389118",
+  "hardware": {
+    "hwClass": "DISCRETE_GPU",
+    "gpuName": "Intel Arc Pro B70",
+    "gpuCount": 4,
+    "vramGb": 32,
+    "cpu": "AMD Ryzen Threadripper PRO 5955WX 16-Cores",
+    "ramGb": 128,
+    "os": "Ubuntu 24.04.4 LTS"
+  },
+  "engineName": "vllm",
+  "engineVersion": "0.20.2rc1.dev2+gc51df4300.d20260523",
+  "quantization": "Quark W8A8 INT8",
+  "promptTokens": 512,
+  "outputTokens": 512,
+  "contextLength": 32768,
+  "batchSize": 1,
+  "ttftMs": 76.45406149094924,
+  "tokSOut": 99.42835812273452,
+  "tokSTotal": 196.32527314205612,
+  "notes": "Quality-gated Qwen3.6 35B Quark W8A8 INT8 run on 4x Intel Arc Pro B70. Metric is p512/n512 streaming /v1/completions, temperature 0, four repeats after warmup. tokSOut is corrected steady-state output throughput after first streamed text chunk; e2e output mean was 98.16 tok/s. Frontdoor quality rerun8 passed exact canaries, JSON schema/semantics, copy phrase, 8K long-context needle, repeat stability, and baseline hash parity. Peak VRAM was not submitted because this run used --skip-vram.",
+  "engineFlags": {
+    "commandSnippet": "VLLM_USE_V1=1 VLLM_TARGET_DEVICE=xpu XPU_GRAPH=1 VLLM_XPU_ENABLE_XPU_GRAPH=1 VLLM_XPU_FORCE_GRAPH_WITH_COMM=1 VLLM_XPU_GRAPH_NOOP_COMM_CAPTURE=1 VLLM_XPU_USE_CUSTOM_OP_COLLECTIVES=1 VLLM_XPU_COMPILE_ALLREDUCE_CUSTOM_OP=1 VLLM_XPU_CUSTOM_ALLREDUCE_GRAPH_CLONE_INPUT=1 VLLM_XPU_CUSTOM_ALLREDUCE_CLONE_INPUT=1 VLLM_XPU_QUARK_W8A8_MOE=1 VLLM_XPU_GDN_REUSE_QKVZ_BA_QUANT=clone ONEAPI_DEVICE_SELECTOR=level_zero:0,1,2,3 ZE_AFFINITY_MASK=0,1,2,3 CCL_ATL_TRANSPORT=ofi CCL_TOPO_P2P_ACCESS=1 FI_TCP_IFACE=eth1 CCL_KVS_IFACE=eth1 vllm serve /mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118 --host 127.0.0.1 --port 18080 --trust-remote-code --served-model-name qwen36-35b-a3b-fp8 --dtype auto --quantization quark --tensor-parallel-size 4 --pipeline-parallel-size 1 --distributed-executor-backend mp --max-model-len 32768 --max-num-batched-tokens 8192 --max-num-seqs 48 --gpu-memory-utilization 0.95 --kv-cache-dtype auto --no-enable-prefix-caching --language-model-only --compilation-config {\"cudagraph_mode\":\"PIECEWISE\"} --generation-config vllm",
+    "tensorParallel": 4,
+    "pipelineParallel": 1,
+    "kvCacheDtype": "auto",
+    "gpuMemUtil": 0.95,
+    "prefixCaching": false,
+    "attentionBackend": "flash_attn",
+    "flashAttn": true,
+    "chunkedPrefill": true,
+    "prefillChunkSize": 8192,
+    "contBatching": true,
+    "maxRunningSeqs": 48,
+    "concurrency": 1,
+    "temperature": 0,
+    "extraFlags": "XPU PIECEWISE graph capture; graph-safe vLLM custom all-reduce; native XPU Quark W8A8 INT8 dense and MoE paths; GDN qkvz/ba quant reuse clone guard."
+  }
+}

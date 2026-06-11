@@ -77,14 +77,29 @@ Do not combine `CCL_WORKER_COUNT=2` with the current XPU graph/collective captur
 
 ## Localmaxxing Intake
 
-Pulled public data only; no authenticated submission was made.
+Pulled public data first, then submitted the best clean quality-gated TP4 result after a successful dry run.
 
 Artifacts:
 
 - `data/localmaxxing-b70-qwen-leaderboard-refresh-20260611.json`
 - `data/localmaxxing-qwen36-quark-w8a8-int8-refresh-20260611.json`
+- `data/localmaxxing-qwen36-quark-w8a8-int8-tp4-noprefix-p512n512-20260611.payload.json`
+- `data/localmaxxing-qwen36-quark-w8a8-int8-tp4-noprefix-p512n512-20260611.response.json`
+- `data/localmaxxing-qwen36-quark-w8a8-int8-after-submit-20260611.json`
 
-Public exact-model count for `nameistoken/Qwen3.6-35B-A3B-Quark-W8A8-INT8`: `0`.
+Submitted result:
+
+- Localmaxxing ID: `cmq8yhxvo001ipb0149aoa79o`
+- Status: `APPROVED`
+- `tokSOut`: `99.428358`
+- `ttftMs`: `76.454061`
+- `tokSTotal`: `196.325273`
+- context: 32768
+- prompt/output: p512/n512
+- batch/concurrency: 1
+- metric note: `tokSOut` is corrected steady-state output throughput after first streamed text chunk; this run did not submit peak VRAM because the measurement used `--skip-vram`.
+
+Public exact-model count after submission for `nameistoken/Qwen3.6-35B-A3B-Quark-W8A8-INT8`: `1`.
 
 Useful B70/Qwen comparables:
 
