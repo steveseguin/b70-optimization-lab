@@ -1562,6 +1562,85 @@ Interpretation:
   and repetitive prompts. A layer with high locality and high cross-label
   overlap is the safest layout/kernel target.
 
+### Routecapture6 Exact-ID Scan
+
+Launched a bounded route-capture service for heatmap-selected layers `9`, `14`,
+and `21`:
+
+- `CAPTURE_INCLUDE_IDS=1`
+- `CAPTURE_LAYER_REGEX='layers\.(9|14|21)\.'`
+- `CAPTURE_STAGE_REGEX='^quark_int8_apply$'`
+- `CAPTURE_MIN_NUM_TOKENS=1`
+- `CAPTURE_MAX_NUM_TOKENS=1`
+- diagnostic service: XPU graph disabled, eager route-capture wrapper
+- prompt: natural-chat p192/o96, one repeat
+
+The capture service was stopped after collection. I ran the microbench on one
+B70, then restored the accepted service as
+`qwen36-tp4-accepted-restored-20260611h`. Restore health passed, and the direct
+no-thinking canary returned exactly `OK`.
+
+Artifacts:
+
+- prompt run:
+  `data/qwen36-quark-int8-tp4-routecapture6-chat-natural-p192o96-20260611.json`
+- representative rank0 route IDs:
+  `data/qwen36-quark-int8-tp4-routecapture6-routes-rank0-20260611.jsonl`
+- route summary:
+  `data/qwen36-quark-int8-tp4-routecapture6-exact-id-rank0-summary-20260611.json`
+- heatmap:
+  `data/qwen36-quark-int8-tp4-routecapture6-heatmap-20260611.json`
+- start-scan summary:
+  `data/qwen36-quark-int8-moe-routecapture6-startscan-summary-20260611.json`
+- per-layer raw/hotpack scans:
+  - `data/qwen36-quark-int8-moe-routecapture6-layer9-startscan-r15-20260611.json`
+  - `data/qwen36-quark-int8-moe-routecapture6-layer9-hotpack-startscan-r15-20260611.json`
+  - `data/qwen36-quark-int8-moe-routecapture6-layer14-startscan-r15-20260611.json`
+  - `data/qwen36-quark-int8-moe-routecapture6-layer14-hotpack-startscan-r15-20260611.json`
+  - `data/qwen36-quark-int8-moe-routecapture6-layer21-startscan-r15-20260611.json`
+  - `data/qwen36-quark-int8-moe-routecapture6-layer21-hotpack-startscan-r15-20260611.json`
+
+Captured route counts:
+
+| layer | records | tokens | active experts | top expert |
+| ---: | ---: | ---: | ---: | --- |
+| 9 | `95` | `95` | `111` | expert `61`, count `43` |
+| 14 | `95` | `95` | `126` | expert `189`, count `37` |
+| 21 | `95` | `95` | `119` | expert `243`, count `44` |
+
+Routecapture6 heatmap ranking:
+
+| rank | layer | top16 share | max share | active expert share |
+| ---: | ---: | ---: | ---: | ---: |
+| 1 | 9 | `0.5105` | `0.0566` | `0.4336` |
+| 2 | 21 | `0.4895` | `0.0579` | `0.4648` |
+| 3 | 14 | `0.4211` | `0.0487` | `0.4922` |
+
+Route-window scan summary:
+
+| layer | rows | windows | raw total us | hot-pack total us | hot-pack total delta | preallocated delta |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| 9 | 1 | 8 | `289.268` | `276.010` | `-3.78%` | `-3.33%` |
+| 9 | 16 | 8 | `271.857` | `275.624` | `+1.60%` | `+5.14%` |
+| 14 | 1 | 8 | `283.335` | `293.652` | `+3.63%` | `+3.85%` |
+| 14 | 16 | 8 | `271.787` | `305.817` | `+12.57%` | `+17.04%` |
+| 21 | 1 | 8 | `292.796` | `316.202` | `+8.72%` | `+5.54%` |
+| 21 | 16 | 8 | `314.961` | `303.593` | `-2.31%` | `-1.04%` |
+
+Interpretation:
+
+- The heatmap successfully found high-locality layers, but physical hot-pack
+  remap is still not a general decode win.
+- Layer 14 should not be a hot-pack remap target from this evidence; it
+  regressed for rows=1 and rows=16.
+- Layer 9 may be useful for single-token decode layout/policy, but the rows=16
+  regression means any change must be guarded by shape/layer policy.
+- Layer 21 has the inverse shape behavior: it regressed rows=1 and helped
+  rows=16 slightly.
+- The next non-speculative speed path should shift from blind physical remap to
+  persistent MoE/grouped-GEMM scheduling for high-locality layers, using these
+  exact route streams as parity/performance repros.
+
 ## Things To Try After Route Replay
 
 Added after the route-replay microbench and another quick pass over public

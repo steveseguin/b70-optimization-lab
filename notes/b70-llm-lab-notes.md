@@ -64,6 +64,12 @@ Current Qwen3.6 INT8 direction:
     `21`, `14`, and `20`. Layer `9` is the best next new layer because it has
     the strongest all-layer locality signal and was not part of the initial
     exact-ID route replay.
+11. Routecapture6 added exact-ID routes for heatmap-selected layers `9`, `14`,
+    and `21`. Hot-pack remap still is not a broad win: layer `9` helped rows=1
+    but hurt rows=16, layer `14` hurt both, and layer `21` hurt rows=1 but
+    helped rows=16 slightly. Treat these route streams as parity/performance
+    repros for persistent MoE or grouped-GEMM scheduling rather than evidence
+    for a simple global physical remap.
 
 ## 2026-05-10 MiniMax AutoRound Addendum
 
