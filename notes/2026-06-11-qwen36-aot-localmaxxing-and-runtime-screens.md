@@ -9687,3 +9687,94 @@ Latest status pointer:
   2. real-router trace corpus for MoE microbenches
   3. force-block MTP retry with explicit memory/graph isolation controls
   4. upstreamable B70 repro packet for vLLM/vllm-xpu-kernels
+
+## Perfect-Draft K4 Upper-Bound Probe
+
+This run tested whether the current verifier path can benefit from perfect
+drafts before spending more time on real proposer/MTP work. The drafter was the
+local oracle path in `NgramProposer`: it reads the accepted baseline completion
+tokens and proposes the exact next baseline tokens. This is the best-case
+acceptance setup for the current speculative scheduler path.
+
+Procedure:
+
+1. Captured a fresh accepted p512/o256 baseline from the current Quark W8A8
+   INT8 verifier on `18080`.
+2. Paused and drained the public frontdoor.
+3. Stopped the accepted backend.
+4. Launched an isolated oracle backend on `18081` with:
+
+```bash
+NUM_SPECULATIVE_TOKENS=4 \
+ORACLE_TRACE=data/qwen36-quark-int8-tp4-perfectdraft-k4-accepted-p512o256-20260611.json \
+CUDAGRAPH_CAPTURE_SIZES=1,2,3,4,5,6,7,8,16,24,32,40,48,56,64,72,80,88,96,104,112,120,128 \
+scripts/launch-qwen36-quark-int8-oracle-trace.sh
+```
+
+5. Ran the same p512/o256 completion prompts against the oracle backend.
+6. Restored the accepted backend on `18080`, smoke-tested backend and
+   frontdoor, then removed the pause marker.
+
+Artifacts:
+
+- accepted baseline:
+  `data/qwen36-quark-int8-tp4-perfectdraft-k4-accepted-p512o256-20260611.json`
+- candidate completions:
+  `data/qwen36-quark-int8-tp4-perfectdraft-k4-candidate-p512o256-20260611a.json`
+- scheduler summary:
+  `data/qwen36-quark-int8-tp4-perfectdraft-k4-spec-summary-20260611a.json`
+  and
+  `data/qwen36-quark-int8-tp4-perfectdraft-k4-spec-summary-20260611a.md`
+- reduced drift fixture:
+  `data/qwen36-quark-int8-tp4-perfectdraft-k4-drift-fixture-20260611a.json`
+  and
+  `data/qwen36-quark-int8-tp4-perfectdraft-k4-drift-fixture-20260611a.md`
+- raw traces:
+  `data/qwen36-quark-int8-tp4-perfectdraft-k4-spec-trace-20260611a.jsonl`
+  and
+  `data/qwen36-quark-int8-tp4-perfectdraft-k4-draft-20260611a.jsonl`
+
+Result:
+
+- Quality failed:
+  - `baseline_match_all=false`
+  - reduced fixture `exact_match_all=false`
+  - mismatch count: `2/2`
+- First diffs:
+  - `natural_latency_plan`: output index `17`, accepted ` and`, candidate
+    ` hardware`
+  - `repetitive_kernel_notes`: output index `5`, accepted ` output`,
+    candidate ` input`
+- Scheduler trace:
+  - rows: `5`
+  - requests: `2`
+  - draft tokens: `20`
+  - accepted: `17`
+  - rejected: `3`
+  - acceptance rate: `85.0%`
+  - histogram: `{1: 1, 4: 4}`
+- Endpoint timing:
+  - accepted baseline combined: `88.765 tok/s` e2e
+  - perfect-draft k4 candidate combined: `16.370 tok/s` e2e
+  - candidate `natural_latency_plan`: `8.963 tok/s`
+  - candidate `repetitive_kernel_notes`: `94.304 tok/s`
+
+Interpretation:
+
+- This did not measure a useful `>200 tok/s` upper bound. The speculative path
+  drifted early, so the oracle stopped matching after only a few rows and the
+  run mostly became a slow/ordinary decode with broken parity.
+- Perfect drafts are not enough until the stage-1 scheduler/model-input
+  invariants are fixed. The current problem is before real proposer quality:
+  exact drafted tokens can still lead to different verifier output.
+- The `k=4` run reinforces the earlier placebo/no-async findings. Do not run
+  more MTP/DFlash/n-gram speed sweeps until graph-mode no-spec, placebo, and
+  oracle paths have matching verifier inputs and exact output parity.
+
+Next action after this result:
+
+1. Prioritize scheduler/model-input invariant repair over proposer quality.
+2. Add block-table trace capture using the proper `BlockTable` accessors.
+3. Build a reusable accepted-vs-placebo input parity checker.
+4. In parallel, start real-router histogram capture because it is independent
+   of speculative correctness and feeds the MoE/kernel path.
