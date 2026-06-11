@@ -8911,3 +8911,150 @@ Next action:
 2. Add a first-row graph metadata trace around model-runner input preparation.
 3. Compare accepted graph versus graph placebo versus graph `IGNORE_DRAFTS=1`
    before attempting any more MTP, DFlash, or n-gram speed runs.
+
+## Follow-Up Idea Expansion
+
+This follow-up adds the items from the post-eager-control discussion and a
+fresh public-reference sweep. The working assumption is unchanged: no 4-bit,
+no Qwen3.5 substitution, and no quality-loss speed claims. The target remains
+Qwen3.6 35B A3B on 8-bit weights with the current Quark verifier as the
+quality anchor.
+
+Public/reference observations to keep in mind:
+
+- Localmaxxing now shows a near-equivalent base-model B70 row at
+  `99.769699 tok/s`, `76.526643 ms` TTFT, and `127.547168 GB` peak VRAM for
+  `Qwen/Qwen3.6-35B-A3B` on 4x B70, plus the exact-model Quark W8A8 INT8 row
+  at `99.428358 tok/s`. If that peak is aggregate device memory, full 32K
+  production is essentially using all four 32GB cards, so memory-for-latency
+  ideas probably need an 8K/16K fast lane or a lower `max_num_seqs` variant.
+- Intel's `intel/vllm:0.10.2-xpu` notes call out Arc Pro B-series validation,
+  persistent MoE GEMM plus fused activation work, and Qwen3-30B-A3B support.
+  This reinforces that persistent MoE scheduling and XPU-kernel shape work are
+  more plausible than more Python wrapper boundaries.
+- vLLM's XPU migration RFC says the backend is moving from IPEX toward
+  `vllm-xpu-kernels` for performance, maintainability, and purpose-built
+  inference kernels, with fp8 gemm/model support and fp8 MoE listed as done in
+  that migration stream. Any local kernel work should be framed as a shape
+  repro that can land in that layer, not as a long-lived one-off fork.
+- The public vLLM B70 TP=2 issue is a useful stability warning: standalone
+  XCCL/SYCL can pass while vLLM TP worker initialization still trips driver,
+  firmware, PCIe, or ProcessGroupXCCL interactions. Every topology/runtime
+  change needs a restore plan and a reliability gate.
+- vLLM docs list Arc Pro B-series as validated XPU hardware and Qwen3-30B-A3B
+  as a recommended text model. They do not make Qwen3.6 35B Quark INT8 a
+  turnkey path, so our exact-model artifacts remain valuable upstream repros.
+- Generic vLLM INT8 W8A8 documentation is mostly CUDA-oriented today. Treat
+  Intel-friendly INT8 as a kernel/backend gap to measure and upstream, not as
+  something already solved by the public docs.
+
+Immediate additions to the things-to-try list:
+
+1. Add the graph placebo and model-input trace before touching speed again.
+   The exact comparison should be:
+   - accepted graph, no speculative config;
+   - graph with speculative config constructed but zero draft metadata;
+   - graph `IGNORE_DRAFTS=1`;
+   - optional graph oracle `k=1` after the first three line up.
+   Compare first decode row `input_ids`, positions, slot mappings, block
+   tables, scheduled-token counts, logits indices, graph bucket, and any
+   GDN/Mamba metadata.
+
+2. Capture per-rank peak VRAM during the accepted recipe and during the
+   richer Localmaxxing-style benchmark. The current public peak-VRAM clue is
+   useful but too coarse; we need per-card headroom before allocating draft
+   buffers, expert copies, or repacked weights.
+
+3. Create a real-route histogram recorder for Qwen3.6 A3B decode:
+   per-layer active expert ids, token counts per expert, local/remote expert
+   ownership under TP4, and repeated-expert locality over a short decode
+   window. This becomes input to both the MoE microbench and the hybrid TP/EP
+   simulator.
+
+4. Build a shape-lab repo section from the live AOT census:
+   - dense `per_token_quant_int8 -> int8_gemm_w8a8 -> all_reduce`;
+   - routed MoE grouped GEMM/finalize;
+   - graph-safe tiny hidden-state collective;
+   - GDN projection quant/GEMM reuse.
+   Each repro needs shape, dtype, route histogram where applicable, command,
+   observed latency, and parity tolerance.
+
+5. Run a strict 8-bit engine shootout only if the artifact is genuinely
+   Qwen3.6 35B-class and 8-bit. Candidate lanes:
+   - current vLLM Quark W8A8 INT8;
+   - llama.cpp/SYCL Q8_0 or equivalent 8-bit GGUF if available;
+   - OpenVINO/oneDNN GenAI only if Qwen3.6 MoE and 32K serving are supported.
+   Exclude AWQ/4-bit and Qwen3.5 results from decisions.
+
+6. Treat host/topology work as reliability and variance reduction, not the
+   main `2x` path. Still worth doing behind reversible scripts:
+   BIOS/ASPM check, runtime power `on`, persistent performance profile,
+   NUMA pinning, oneCCL interface pinning, thermal/fan logging, and root
+   `lspci -vv` link validation.
+
+7. Prepare a clean upstream issue bundle once the trace lands:
+   one issue for graph/spec scheduler drift, one for exact W8A8 dense/MoE
+   shapes, and one for any B70/oneCCL graph-capture instability. Include
+   minimal scripts and no service secrets.
+
+Bigger bolder branches worth serious time:
+
+1. Verifier-preserving speculative decode remains the most realistic
+   `>200 tok/s` path. The current model must stay the verifier. Draft sources
+   can be n-gram, official Qwen3.6 MTP tensors, or a same-tokenizer sidecar,
+   but the promoted output has to pass exact canaries, repeat64, and
+   long-context gates. The next engineering task is proving the verifier input
+   rows are identical under placebo/ignore-drafts before chasing throughput.
+
+2. A decode-only static runner for batch-1 latency should quantify how much
+   time is in model core versus serving stack. If direct model-runner replay is
+   still about `100 tok/s`, the problem is kernel/layout/collective. If it
+   jumps materially, production can grow a dedicated low-latency lane without
+   changing weights.
+
+3. A hybrid TP/EP simulator should come before any full architecture patch.
+   Use real route histograms and memory accounting to estimate pure TP4 versus
+   expert-local or expert-replicated layouts. Only implement if the model shows
+   a large predicted cut in decode collectives while still fitting 32K or a
+   clearly labeled lower-context fast lane.
+
+4. Persistent MoE for the exact Qwen3.6 INT8 shapes is the main kernel bet.
+   The rejected MoE shared-add/all-reduce Python wrapper proved a boundary
+   change alone is not enough. The plausible win is one persistent route-window
+   kernel that fuses route remap, activation, second quant, grouped GEMM,
+   gather/finalize, and only then considers all-reduce/residual epilogues.
+
+5. Tile-native W8A8 repack cache is the main layout bet. If the hot path is
+   paying for suboptimal Quark layout, build a load-time/offline repack into
+   B70/XMX-friendly tile order with checksums. This must preserve dequantized
+   weights and output parity; it is not a new quantization.
+
+6. Memory-for-latency service classes may be necessary. Full 32K appears
+   memory-tight. A separate 8K or 16K lane could use the freed VRAM for static
+   graph buffers, draft heads, hot-expert copies, or larger capture buckets.
+   Keep it separate from the 32K production promise, but measure it because it
+   may be the difference between "usable interactive" and "benchmark only".
+
+7. Upstreamable XPU backend work should be shaped around `vllm-xpu-kernels`,
+   not scattered local hooks. If the dense W8A8, MoE grouped GEMM, or graph
+   collective repros show clear gaps, turn them into focused PRs/issues with
+   numbers. That is more likely to compound than another private env flag.
+
+8. Continuous quality gates need to become cheap enough to run after every
+   kernel branch:
+   - exact two-prompt canary for scheduler/model-input drift;
+   - repeat32/repeat64 text stability;
+   - long-context needle at 8K and 32K;
+   - arithmetic/copy/JSON structured tasks;
+   - c1 speed plus c2/c4/c8 aggregate smoke.
+
+Revised priority order:
+
+1. Implement graph placebo plus model-input trace.
+2. Re-run accepted graph, graph placebo, and graph `IGNORE_DRAFTS=1` on the
+   same two-prompt fixture.
+3. Restore service and run paused-local public r8 quality.
+4. Capture per-card VRAM and route histograms.
+5. If trace parity is clean, resume verifier-preserving speculation/MTP.
+6. If trace parity is not clean, fix graph scheduler/model-input drift before
+   any more performance claims.
