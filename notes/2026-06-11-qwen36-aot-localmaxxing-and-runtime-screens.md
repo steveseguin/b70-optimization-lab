@@ -4097,3 +4097,189 @@ Immediate next technical move:
 - Use the graph path, not eager, as the speed gate.
 - Keep quality gate unchanged: same W8A8 weights, same routing/math semantics,
   and token/semantic parity checks before accepting any kernel change.
+
+## Step-Timing Follow-up Backlog And Larger Bets
+
+Added after the graph/eager step-timing pass and another public leaderboard
+refresh on 2026-06-11.
+
+Public refresh artifacts:
+
+- `data/localmaxxing-qwen36-quark-w8a8-int8-exact-refresh-20260611b.json`
+- `data/localmaxxing-arc-b70-qwen-top-refresh-20260611b.json`
+- `data/localmaxxing-30b-moe-top-refresh-20260611b.json`
+
+Fresh external signals:
+
+- Exact Quark W8A8 model query still shows the approved
+  `nameistoken/Qwen3.6-35B-A3B-Quark-W8A8-INT8` row at `99.428 tok/s`.
+- The broader Arc Pro B70/Qwen query shows a newer root-model B70 row at
+  `99.770 tok/s` with peak VRAM recorded, then public 4-bit llama.cpp rows
+  around `68.8-70.35 tok/s`. Treat the newer root-model row as the current
+  public B70/Qwen3.6 speed reference, and the exact-model row as the canonical
+  exact-artifact reference.
+- The 30B-ish MoE public query has a `203.58 tok/s` Qwen3.6-35B-A3B row, but
+  it uses RTX 5090 CUDA, NVFP4/FP8, and MTP speculative decoding. This is not
+  comparable to the B70 W8A8 path, but it is strong evidence that a real
+  `>200 tok/s` single-user result probably needs verifier-preserving
+  speculation or a major MoE/layout kernel change.
+- vLLM's fused MoE modular-kernel docs split MoE into top-k/reduce,
+  prepare/finalize, and experts components. That is a useful implementation
+  frame: replace one XPU component at a time instead of forking all MoE logic.
+  Source: `https://docs.vllm.ai/en/stable/design/fused_moe_modular_kernel/`
+- vLLM's MoE feature docs show modern MoE stacks treat INT8/FP8/FP4 routing,
+  dispatch, quantization, and all-to-all policy as separable choices. This
+  supports a route-exact component microbench before endpoint changes.
+  Source: `https://docs.vllm.ai/en/latest/design/moe_kernel_features/`
+- `vllm-xpu-kernels` release notes mention Xe2 grouped-GEMM heuristic work for
+  MoE, FP8, and small-K cases. Keep checking whether current local kernels
+  already contain the best Xe2 policy before writing new kernels.
+  Source: `https://github.com/vllm-project/vllm-xpu-kernels/releases`
+- The vLLM XPU migration RFC reinforces that the upstream direction is
+  `vllm-xpu-kernels`, not IPEX-heavy glue. Upstreamable XPU kernel work is
+  more likely to survive than private Python wrappers.
+  Source: `https://github.com/vllm-project/vllm/issues/33214`
+
+Do not spend more time on these unless new evidence appears:
+
+1. `VLLM_XPU_FUSED_MOE_FUSE_SILU_QUANT=1`.
+   - It is faster in isolation but has already failed arithmetic quality.
+2. `VLLM_XPU_INT8_MOE_MIXED_WORKSPACE=1`.
+   - It was quality-safe but endpoint-slower.
+3. Local argmax/logits-only work.
+   - Step timing shows logits/sampler are too small to produce the required
+     multiplier.
+4. Frontdoor/server streaming as the main bottleneck.
+   - Direct backend and frontdoor were effectively equal at p512/n512.
+5. More blind oneCCL env sweeps.
+   - Do them only after request-window timing proves collectives are the
+     limiting graph-path component.
+
+Ordered next things to try:
+
+1. Route-exact primitive MoE microbench.
+   - Extend the existing route-exact harness to time every current primitive:
+     route remap, `rows_per_expert.zero_()`, GEMM1 quant, grouped GEMM1,
+     activation, `act_output.contiguous()`, GEMM2 quant, grouped GEMM2, gather,
+     and output combine.
+   - Use captured Qwen3.6 route data, not synthetic routes.
+   - Goal: find a component whose full-model share is large enough to matter
+     before writing kernels.
+
+2. Endpoint gate for the route-exact grouped-GEMM `m32` lead.
+   - The microbench suggests `m32` improves the route-exact W8A8 GEMMs versus
+     current tiny-M `m16`.
+   - Run endpoint p512/n512, repeat quality, and a stability loop. Reject if
+     it does not move endpoint speed.
+
+3. Request-window timing reset.
+   - Add a worker option to clear timing counters at request start and dump at
+     request end.
+   - This is needed before optimizing all-reduce or MoE subregions because the
+     current aggregate timing includes graph-capture/prefill/startup pollution.
+
+4. Graph-visible MoE timing.
+   - Python wrapper timing disappears under graph replay.
+   - Prefer XPU event counters, C++ extension counters, oneprof/VTune traces,
+     or a graph-shaped offline runner that still hits compiled kernels.
+   - Do not rely on eager timing for speed decisions; use eager only to name
+     candidate components.
+
+5. BF16 fallback quality comparator.
+   - Keep the current W8A8 model as the production candidate, but compare
+     against BF16 fallback on a fixed suite: deterministic canaries, math,
+     code, JSON, long-context needle, multilingual, and several open-ended
+     chat prompts.
+   - Record exact-token matches where deterministic, plus semantic/validator
+     scores where BF16 and INT8 can diverge without a clear correctness loss.
+   - No speed win should be accepted if this suite exposes systematic quality
+     drift.
+
+6. Direct c1 runner.
+   - Build an offline/direct model-runner harness with the same weights,
+     tokenizer, sampler settings, and graph path but without OpenAI HTTP,
+     streaming JSON, and frontdoor lifecycle overhead.
+   - If it is near 100 tok/s, the bottleneck is model-core/kernel.
+   - If it is much faster, make a single-user production fast lane.
+
+7. Root-level host stability branch.
+   - Keep separate from the model-kernel branch.
+   - Validate `lspci -vv`, runtime power `on`, performance clock policy,
+     CPU/NUMA affinity, fan/thermal stability, and BDF/rank ordering.
+   - Goal is lower jitter and fewer device-lost incidents, not a claimed 2x.
+
+Bigger, bolder architecture ideas:
+
+1. Verifier-preserving MTP/DFlash/proposer lane.
+   - Highest probability of a 2x jump if it can be made stable.
+   - Current Quark W8A8 stays the verifier. Draft tokens may come from official
+     Qwen3.6 FP8 MTP tensors, a same-family draft, a DFlash path, or a trained
+     local proposer.
+   - Required work: fix graph-padded speculative metadata/state corruption,
+     then measure acceptance by prompt class and long-context shape.
+
+2. Persistent XPU W8A8 MoE kernel.
+   - Combine routing read, dynamic expert work scheduling, grouped GEMM1,
+     activation, quant, grouped GEMM2, and gather for decode shapes.
+   - Use dynamic work assignment so prompt-dependent expert skew does not leave
+     execution lanes idle.
+   - Start as a layer-local route-exact microbench, then wire through the vLLM
+     modular experts component only after parity is proven.
+
+3. MoE prepare/finalize replacement before expert replacement.
+   - The eager profile says remap and gather are not free.
+   - A lower-risk first kernel may be an exact prepare/finalize path with
+     reusable scratch and better memory layout, leaving grouped GEMM unchanged.
+   - This fits vLLM's modular-kernel framing and may be easier to upstream.
+
+4. Route-hot expert replication.
+   - Use spare VRAM to replicate hot experts on more cards while keeping the
+     cold tail sharded.
+   - The route heatmap says a fixed global hotlist is too blunt, so simulate
+     prompt-class and layer-local hotsets first.
+   - This changes placement only, not weights or math.
+
+5. Hybrid TP/EP layout for Qwen3.6 A3B.
+   - Pure TP4 may be paying too many tiny all-reduces for batch-1 decode.
+   - Explore replicated dense/attention plus expert partitioning, or TP2 plus
+     EP, with the same 32K KV target.
+   - This is major engine work but directly attacks the architecture mismatch.
+
+6. B70-native retile/repack cache for Quark W8A8.
+   - Convert weights once into Xe2 DPAS-friendly layout for the selected GEMM
+     policy, cache it, and avoid runtime layout tax.
+   - Values/scales must remain identical. Only memory order changes.
+
+7. Decode-layer command-list capture.
+   - Instead of one persistent mega-kernel, capture a full decode slice as a
+     Level Zero command-list/graph-style block with fewer host and event gaps.
+   - This may provide much of the launch-gap win with lower math risk.
+
+8. Overlapped all-reduce scheduling.
+   - Where dependencies allow, launch the next independent projection or MoE
+     prepare work while previous hidden-state reductions are in flight, then
+     wait at the exact semantic boundary.
+   - This must be proven with token-trace parity because moving waits around
+     normalization/residual boundaries can silently change math.
+
+9. Same-model 8-bit engine bakeoff.
+   - Try OpenVINO GenAI or llama.cpp SYCL Q8/true-8-bit only as diagnostics.
+   - The purpose is to locate the bottleneck class: model artifact layout,
+     vLLM scheduling, XPU kernels, or TP communication.
+   - Do not promote a lower-bit engine as a quality-equivalent replacement.
+
+10. Short-context latency slot.
+    - Keep the production 32K slot, but test 2K/8K/16K slots with identical
+      W8A8 weights and quality gates.
+    - If model-forward timing changes materially with context length, operate
+      a same-quality low-latency slot for chat-overlay/coding traffic that does
+      not need 32K.
+
+Decision standard for all bold ideas:
+
+1. Same model verifier or a BF16/current-model quality proof.
+2. Route/token trace parity where deterministic.
+3. Repeat stability, including long-loop repeated prompts.
+4. p512/n512 warm steady-state single-request speed.
+5. Aggregate c1/c2/c4/c8/c16/c32/c48 sanity before production promotion.
+6. Stability soak after every extension/kernel change.
