@@ -6238,3 +6238,161 @@ Immediate next implementation target:
    isolate is understood.
 3. Promote nothing until token traces match the accepted baseline and the
    endpoint survives repeat/long-context reliability gates.
+
+## Bigger-Bet Backlog Refresh After Localmaxxing/External Scan
+
+Added after saving fresh public leaderboard snapshots and reviewing current
+upstream signals for XPU, Intel Arc, speculative decode, and GPU INT8/MoE
+primitives.
+
+New artifacts:
+
+- `data/localmaxxing-b70-qwen-leaderboard-ideas-refresh-20260611.json`
+- `data/localmaxxing-arc-qwen-leaderboard-ideas-refresh-20260611.json`
+
+External/API signals checked:
+
+- Localmaxxing exact B70/Qwen query has the current Quark W8A8 INT8 TP4 result
+  as the top B70 Qwen row at `99.77 tok/s`, ahead of the earlier
+  quality-gated `99.43 tok/s` row and public B70 llama.cpp Q4 rows around
+  `68-70 tok/s`.
+- The broader Localmaxxing Qwen query shows the strongest Qwen3.6 35B-A3B
+  rows using DFlash-style speculative decoding on another platform at about
+  `102 tok/s`, with notes claiming a large gain over its autoregressive
+  baseline. Treat the hardware as not comparable, but the direction is useful:
+  large single-user gains are coming from verifier-preserving speculation, not
+  ordinary server flags.
+- vLLM release notes show active Intel XPU work around block FP8, MoE fallback,
+  reduced XPU MoE host overhead, GPTQ int4, and speculative/MTP directions.
+  This makes a latest-XPU-branch comparison worth tracking, but only behind the
+  current quality and stability gates.
+- IPEX-LLM continues to advertise Intel GPU, Arc/B-series, vLLM, llama.cpp,
+  Ollama, FP8/FP6/FP4/INT4, and FlashMoE paths. It is not a direct answer for
+  high-fidelity W8A8 INT8, but it is a credible engine/kernel source for an
+  8-bit bakeoff or for borrowing MoE scheduling ideas.
+- oneDNN GPU/SYCL docs confirm GPU primitive support, multiple datatypes
+  including FP8 and int8, MatMul, and BRGEMM. That keeps a lower-level
+  oneDNN/BRGEMM-style MoE micro-harness on the table for small decode batches.
+
+Near-term notes to add to the "things to try" list:
+
+1. Real KV-resident decode-bucket timing.
+   - Add rank-0 timing metadata for actual scheduled token counts, spec-token
+     lengths, graph bucket, decode/prefill request split, and `model_forward`.
+   - Do not infer MTP viability from `/generative_scoring`; it recomputes
+     prompt+item and is only a stability/correctness proxy.
+
+2. Verifier-only replay against accepted KV state.
+   - Use the no-bonus accounting failure fixture where suppressed token `21`
+     should be followed by `6` but the speculative path produced `0`.
+   - Run the accepted verifier one token at a time from the same visible prefix.
+   - If accepted verifier still prefers `6`, the remaining bug is hidden
+     speculative/proposer/KV state, not model quality.
+
+3. Bonus-intact speculation stability isolate.
+   - Standard n-gram5 with the verifier bonus intact crashed during initial
+     prefill at `block_table.copy_to_gpu`.
+   - Reproduce with smaller graph buckets and eager/no-graph diagnostics before
+     any speed attempt. Device loss is a stability blocker.
+
+4. Shallow exact draft lane.
+   - Try a depth-2 draft/MTP/EAGLE/DFlash-style path where the current Quark
+     W8A8 model remains the final verifier.
+   - Promotion condition is token-trace parity, not semantic similarity.
+   - Start at small depth because verifier buckets and XPU graph stability are
+     not yet proven.
+
+5. Latest XPU branch comparison.
+   - Build or test a current vLLM/XPU stack only as a side lane.
+   - Look specifically for MoE host-overhead reductions, FP8/block-FP8 changes,
+     MTP wiring, and graph/speculative stability fixes.
+   - Keep the accepted TP4 service available for fallback and quality baseline.
+
+Bigger, bolder ideas to track:
+
+1. DFlash/DDTree-style rollback verifier for Qwen3.6 35B.
+   - The Localmaxxing signal says rollback/tree speculation can be a real lever
+     for Qwen3.6-family models.
+   - For our no-quality-loss rule, the tree proposes only; the Quark W8A8 model
+     verifies final tokens.
+   - Build it as a sidecar first, not intertwined with the accepted service.
+
+2. Early-exit or partial-layer self-draft.
+   - Use the same tokenizer and same model family, but run a cheaper partial
+     network to propose candidate tokens.
+   - This spends compute to reduce verifier steps; it may be better than
+     n-gram because acceptance can be high on non-repetitive chat.
+   - Quality remains exact because the final verifier owns output.
+
+3. Memory-for-latency expert replication.
+   - Use spare B70 memory to replicate hot experts, shared experts, final
+     projection shards, or tile-native W8A8 packed weights.
+   - Start from the route-capture evidence: K32/K64 route sets cover much more
+     traffic than K16, while K16 is too blunt.
+   - Separate this from production max-concurrency mode because it spends memory
+     that 32K/c48 serving may need.
+
+4. Persistent route-window MoE kernel.
+   - Fuse route count, permute, activation, grouped GEMM, and finalize for a
+     short decode route window.
+   - This is the main non-speculative path if `model_forward` and MoE continue
+     to dominate the one-token timing budget.
+
+5. Static solo decode lane.
+   - Preallocate KV/block tables, fix graph buckets, disable unnecessary
+     scheduler churn, and specialize for batch/concurrency 1.
+   - This sacrifices generality for single-request speed, which matches the
+     current primary objective.
+
+6. Whole-token Level Zero command-list capture.
+   - Capture/replay a full decode step rather than only individual kernels.
+   - This could reduce launch/sync boundaries across dense W8A8, attention/GDN,
+     MoE, collectives, logits, and sampling while keeping identical math.
+
+7. oneDNN/BRGEMM MoE kernel experiment.
+   - Prototype a small decode-batch expert GEMM harness using oneDNN GPU/SYCL
+     primitives or BRGEMM-like packing ideas.
+   - Compare against current XPU custom-op timing on real captured expert
+     shapes before considering integration.
+
+8. Communication-avoidance layout.
+   - Simulate TP4, TP2 plus replicated hot experts, and hybrid TP/EP layouts
+     using real route histograms.
+   - Promote only if the duplicated-weight and communication math predicts a
+     large c1 win, not a small aggregate-throughput gain.
+
+9. Exact final-logits shortcut.
+   - For greedy temperature-0 canaries, test whether final projection/argmax can
+     avoid full logits materialization.
+   - This is high risk for correctness; require exact token and repeat parity.
+
+10. True 8-bit engine bakeoff.
+    - Compare vLLM/XPU Quark W8A8 with llama.cpp/SYCL Q8-class paths,
+      OpenVINO/oneDNN GenAI, IPEX/BigDL, and any Intel-native 8-bit route.
+    - Constraints remain strict: Qwen3.6 35B, high-fidelity 8-bit, same
+      template, no Qwen3.5, no 4-bit substitution.
+
+11. Production dual-lane design.
+    - Keep a conservative accepted TP4 lane for correctness, stability, and
+      32K/c48 planning.
+    - Add an opt-in speed lane for speculative/static-solo/memory-for-latency
+      experiments with automatic fallback when the quality oracle fails.
+
+12. Upstream-first repro packet.
+    - Package the no-bonus accounting proof, verifier-followup preference,
+      bonus-intact n-gram5 device loss, route-window MoE timing, and exact
+      Localmaxxing rows.
+    - This is the clearest way to get Intel/vLLM help on XPU graph/spec/MoE
+      issues that are too deep for local flag tuning.
+
+Revised opportunity order:
+
+1. Instrument real decode buckets and one-token timing.
+2. Fix or bypass speculative state problems with verifier-preserving draft
+   lanes.
+3. In parallel, build route-window MoE timing around real captured expert
+   shapes.
+4. If timing points to graph/scheduler boundaries, prototype static solo decode
+   and whole-token command-list capture.
+5. Keep a separate engine-bakeoff branch so we notice if vLLM/XPU is the local
+   ceiling rather than the model/hardware ceiling.
