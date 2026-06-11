@@ -46,6 +46,14 @@ Current Qwen3.6 INT8 direction:
    faster than synthetic uniform routing because fewer experts are active, but
    rows=1 hot-expert packing is layer-dependent. Do not use a blind global
    expert remap; collect more layer/prompt-class route windows first.
+8. The current Qwen3.6 backlog is now split into immediate experiments,
+   medium engineering branches, and moonshots under "Things To Try After Route
+   Replay" in
+   `notes/2026-06-11-qwen36-aot-localmaxxing-and-runtime-screens.md`. Highest
+   priority remains route-window scans plus prompt-class route capture; highest
+   upside remains verifier-preserving MTP/EAGLE/self-speculation; highest
+   durable kernel work remains persistent MoE and exact-shape grouped-GEMM
+   repros for `vllm-xpu-kernels`.
 
 ## 2026-05-10 MiniMax AutoRound Addendum
 

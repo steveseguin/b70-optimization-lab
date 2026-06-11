@@ -1449,3 +1449,153 @@ Interpretation:
   2. benchmark route windows across multiple `route_start_index` values,
   3. identify layers where physical packing consistently helps,
   4. then prototype a real weight-layout remap only for those layers.
+
+## Things To Try After Route Replay
+
+Added after the route-replay microbench and another quick pass over public
+Arc/XPU/vLLM material. These are ordered by how much signal they should give per
+engineering hour, not by ambition.
+
+Immediate experiments:
+
+1. Multi-window route replay.
+   - Add `--route-start-indices` to the MoE microbench and scan many captured
+     decode windows in one process.
+   - Measure raw route versus hot-pack for layers beyond 8 and 20, then report
+     mean/min/max and not just one captured first-token row.
+   - Decision rule: only consider expert remap if the same layer improves across
+     many windows and prompt classes.
+
+2. Full prompt-class route capture.
+   - Capture real routes for natural chat, code, structured, math, and
+     repetitive prompts.
+   - Build per-layer expert histograms and expert-pair/group co-occurrence
+     tables.
+   - Use those histograms as kernel-tuning input. Intel's grouped-GEMM issue
+     explicitly calls out long-tail routing skew as a performance driver, and
+     our rows=16 replay already proved synthetic uniform routing is misleading.
+
+3. Shape-exact single-layer replay with real tensors.
+   - Move beyond random hidden states: capture one decode token's hidden state,
+     router outputs, scales, and expert IDs for a target layer.
+   - Replay that layer through the current staged path, preallocated staged path,
+     and any new persistent/grouped-GEMM path.
+   - This gives a parity target before endpoint integration.
+
+4. XPU graph capture policy screen.
+   - Test decode-oriented graph modes and explicit capture buckets for the
+     small query lengths we actually use, especially `3`, `4`, `5`, and `6`
+     around speculative decode.
+   - The n-gram2 capture-size-3 result says graph shape coverage can be the
+     difference between device loss and a valid run.
+
+5. oneCCL tiny-collective thresholds.
+   - Avoid `CCL_WORKER_COUNT=2` for graph-captured production until the SYCL
+     scheduler route is known safe.
+   - Test only narrow, reversible small-message thresholds and monolithic
+     options tied to AOT-observed hidden-state collective shapes.
+
+6. Accepted-pack validation refresh.
+   - Before testing a risky branch, refresh accepted r8/r10 speed, repeat64,
+     long-context needle, no-thinking direct canary, and peak VRAM.
+   - The stale-process quality failure means candidate comparisons need a
+     same-day accepted control, not an old public number.
+
+Medium engineering branches:
+
+1. Import-or-compare Intel's newest persistent MoE path.
+   - First try to reproduce the Intel Arc Pro B-series persistent-MoE claims in
+     a disposable container or branch against a Qwen3 A3B model.
+   - Then check whether the same kernel path covers Quark W8A8 INT8, not just
+     MXFP4/FP8 or GPT-OSS recipes.
+   - If it does not cover us, use the gap as an upstream issue or patch target.
+
+2. Quark INT8 packed-layout cache.
+   - Keep exactly the same quantized values and scales, but store a B70-friendly
+     packed layout for repeated W8A8 GEMM reads.
+   - Add checksums and a dequantized parity test so it is clearly a layout
+     optimization, not a hidden requantization.
+
+3. Static solo latency lane.
+   - Build an offline/direct runner first: same tokenizer, same chat template,
+     same generation params, same weights, no OpenAI server machinery.
+   - If offline decode is much faster than served decode, build a production
+     low-latency lane for one active session.
+   - If offline decode is still near `100 tok/s`, server overhead is not the
+     main blocker.
+
+4. Hybrid TP/EP simulator.
+   - Estimate bytes and synchronization points per token for TP4, TP2, EP-like,
+     and hybrid layouts before changing vLLM internals.
+   - Include 32K KV memory, shared expert, routed experts, GDN/attention, output
+     projection, and vocab head.
+   - Only branch into a real hybrid layout if the simulator predicts a clear
+     single-token latency win.
+
+5. Same-model true-8-bit engine shootout.
+   - Compare current vLLM Quark W8A8 with llama.cpp/SYCL Q8_0, OpenVINO GenAI,
+     or another Intel-native 8-bit route only if the model/template/quality
+     gates can match.
+   - This is a diagnostic for whether vLLM/XPU is the ceiling. It is not a
+     license to switch to Qwen3.5, AWQ, GPTQ-4bit, or a Q4 GGUF.
+
+Moonshots worth tracking:
+
+1. Self-speculative early-exit proposer.
+   - Use lower layers of the same Qwen3.6 model as a cheap proposer and verify
+     with the full current Quark INT8 model.
+   - Advantage: no separate 35B drafter in VRAM.
+   - Risk: Qwen3.6 is not necessarily trained for early-exit logits, so
+     acceptance may be poor. Final quality is still preserved only if the full
+     verifier accepts every emitted token.
+
+2. Auxiliary FP8 MTP sidecar.
+   - The current Quark checkpoint has no MTP tensors, but the official FP8
+     checkpoint does.
+   - Treat FP8 MTP as a proposer only; the current Quark W8A8 INT8 model remains
+     the verifier.
+   - First blocker to measure is memory. If two-model serving does not fit at
+     32K, test a separate sidecar process or a reduced-context diagnostic before
+     spending kernel time.
+
+3. EAGLE/DFlash-style proposer on XPU.
+   - Public high-end Qwen3.6 rows above `200 tok/s` are mostly speculative. The
+     useful lesson is the architecture, not the hardware comparison.
+   - Porting a trainable proposer that has high acceptance on chat/code prompts
+     may be a better route than deeper n-gram, which already failed repeat64 at
+     depth 3+.
+
+4. Persistent single-token MoE executor.
+   - Build a dedicated decode-only executor for the exact Qwen3.6 expert shapes:
+     persistent workgroups, dynamic work claiming, prepacked weights, fused
+     activation/finalize, and graph-safe output handoff.
+   - This is likely the real kernel path if we want a non-speculative 2x.
+
+5. Exact-shape collective plus epilogue fusion.
+   - Replace only the repeated BF16 hidden-size collectives seen in the AOT
+     census, and fuse the immediate residual/RMS or MoE finalize work where
+     mathematically safe.
+   - This avoids trying to outbuild all of oneCCL while still targeting the
+     expensive small-message path.
+
+6. Route-aware expert placement across cards.
+   - If prompt-class captures show stable hot expert groups, place or pack those
+     groups to reduce fragmented memory access and possibly reduce cross-card
+     movement.
+   - This needs routing-ID remap parity tests, because a wrong expert order is a
+     silent quality break.
+
+7. Production split if `>200 tok/s` remains blocked.
+   - Keep chasing single-request speed, but design production around what is
+     already real: a quality-clean TP4 baseline, possible replicas for
+     aggregate throughput, and a separate experimental latency lane.
+   - Do not let aggregate throughput work obscure the single-user target, but
+     track it so production deployment is not waiting on one speculative or
+     kernel moonshot.
+
+High-level priority:
+
+1. Next command path: route-start-index scans plus prompt-class route capture.
+2. Highest-upside path: verifier-preserving MTP/EAGLE/self-speculation.
+3. Highest-durability path: persistent MoE and exact-shape grouped-GEMM repros
+   that can be upstreamed to `vllm-xpu-kernels`.
