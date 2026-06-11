@@ -1,0 +1,109 @@
+{
+  "base_url": "http://127.0.0.1:18080",
+  "model": "qwen36-35b-a3b-fp8",
+  "model_info": {
+    "id": "qwen36-35b-a3b-fp8",
+    "object": "model",
+    "created": 1781137828,
+    "owned_by": "vllm",
+    "root": "/mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118",
+    "parent": null,
+    "max_model_len": 32768,
+    "permission": [
+      {
+        "id": "modelperm-80644984aea4e1a5",
+        "object": "model_permission",
+        "created": 1781137828,
+        "allow_create_engine": false,
+        "allow_sampling": true,
+        "allow_logprobs": true,
+        "allow_search_indices": false,
+        "allow_view": true,
+        "allow_fine_tuning": false,
+        "organization": "*",
+        "group": null,
+        "is_blocking": false
+      }
+    ]
+  },
+  "tokenizer": "/mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118",
+  "requested_prompt_tokens": 512,
+  "shared_prefix_tokens": 0,
+  "prompt_salt": "",
+  "requested_output_tokens": 256,
+  "warmups": 0,
+  "scenarios": {
+    "c2": {
+      "concurrency": 2,
+      "records": [
+        {
+          "started_s": 943442.084845639,
+          "first_text_at_s": 943458.58549955,
+          "ended_s": 943471.934922082,
+          "elapsed_s": 29.850076443050057,
+          "ttft_s": 16.500653911032714,
+          "post_ttft_s": 13.349422532017343,
+          "prompt_tokens": 515,
+          "completion_tokens": 256,
+          "total_tokens": 771,
+          "tok_s_out_wall": 8.576192442535739,
+          "tok_s_out_after_ttft": 19.176859477330044,
+          "tok_s_total_wall": 25.829079582793184,
+          "chunks": 50,
+          "sha256": "1752f2bb051f3c22f56bb67f7deb532d2c647c3e80f76a4553851997ee9c0b7b",
+          "text_preview": " benchmark benchmark benchmark benchmark benchmark benchmark benchmark benchmark benchmark benchmark benchmark benchmark benchmark benchmark benchmark benchmark"
+        },
+        {
+          "started_s": 943442.085141675,
+          "first_text_at_s": 943461.218874343,
+          "ended_s": 943471.935142977,
+          "elapsed_s": 29.85000130208209,
+          "ttft_s": 19.133732668007724,
+          "post_ttft_s": 10.716268634074368,
+          "prompt_tokens": 515,
+          "completion_tokens": 256,
+          "total_tokens": 771,
+          "tok_s_out_wall": 8.576214031258468,
+          "tok_s_out_after_ttft": 23.888912152313953,
+          "tok_s_total_wall": 25.829144601954216,
+          "chunks": 50,
+          "sha256": "28d3d67f94871c7dd6ddc24ffb7589c22fc052004388e507eb4bcee19d7da13a",
+          "text_preview": " benchmark benchmark benchmark benchmark benchmark benchmark benchmark benchmark benchmark benchmark benchmark benchmark benchmark benchmark benchmark benchmark"
+        }
+      ],
+      "summary": {
+        "requests": 2,
+        "total_prompt_tokens": 1030,
+        "total_completion_tokens": 512,
+        "wall_s": 29.850297338096425,
+        "aggregate_output_tok_s_wall": 17.15225795578794,
+        "decode_wall_s_from_first_text": 13.349643427063711,
+        "aggregate_output_tok_s_from_first_text": 38.353084319991886,
+        "per_request_tok_s_out_after_ttft": {
+          "mean": 21.532885814822,
+          "median": 21.532885814822,
+          "min": 19.176859477330044,
+          "max": 23.888912152313953
+        },
+        "per_request_tok_s_out_wall": {
+          "mean": 8.576203236897104,
+          "median": 8.576203236897104,
+          "min": 8.576192442535739,
+          "max": 8.576214031258468
+        },
+        "per_request_ttft_s": {
+          "mean": 17.81719328952022,
+          "median": 17.81719328952022,
+          "min": 16.500653911032714,
+          "max": 19.133732668007724
+        },
+        "per_request_elapsed_s": {
+          "mean": 29.850038872566074,
+          "median": 29.850038872566074,
+          "min": 29.85000130208209,
+          "max": 29.850076443050057
+        }
+      }
+    }
+  }
+}

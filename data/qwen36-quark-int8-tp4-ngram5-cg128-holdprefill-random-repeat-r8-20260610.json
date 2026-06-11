@@ -1,0 +1,316 @@
+{
+  "created_at_unix": 1781138084.6197817,
+  "base_url": "http://127.0.0.1:18080",
+  "model": "qwen36-35b-a3b-fp8",
+  "tokenizer": "/mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118",
+  "server_model_record": {
+    "id": "qwen36-35b-a3b-fp8",
+    "object": "model",
+    "created": 1781138067,
+    "owned_by": "vllm",
+    "root": "/mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118",
+    "parent": null,
+    "max_model_len": 32768,
+    "permission": [
+      {
+        "id": "modelperm-bbfa9b01b2fb4583",
+        "object": "model_permission",
+        "created": 1781138067,
+        "allow_create_engine": false,
+        "allow_sampling": true,
+        "allow_logprobs": true,
+        "allow_search_indices": false,
+        "allow_view": true,
+        "allow_fine_tuning": false,
+        "organization": "*",
+        "group": null,
+        "is_blocking": false
+      }
+    ]
+  },
+  "prompt_kind": "vllm-random",
+  "seed": 0,
+  "random_prefix_len": 0,
+  "prompt_tokens_requested": 512,
+  "prompt_tokens_actual": 512,
+  "output_tokens_requested": 512,
+  "mode": "stream",
+  "skip_vram": true,
+  "repeats": 8,
+  "measurement_notes": [
+    "TTFT and e2e are measured both client-side and from vLLM Prometheus histogram deltas.",
+    "tok_s_prefill_lower_bound_from_ttft is prompt_tokens / TTFT, so it is conservative and includes first-token scheduling/decode overhead.",
+    "tok_s_out_client_after_first_chunk is generated-token-only throughput after the first streamed text chunk.",
+    "tok_s_out_client_after_first_chunk_corrected subtracts the estimated first streamed chunk tokens from the numerator; this is more stable when --stream-interval > 1."
+  ],
+  "vram_mib_before_all": {},
+  "peak_vram_mib_observed": {},
+  "records": [
+    {
+      "repeat": 1,
+      "prompt_tokens_client": 512,
+      "output_tokens_client": 512,
+      "elapsed_s_client": 1.6549972669454291,
+      "ttft_ms_client": 74.53317602630705,
+      "tok_s_out_client_after_first_chunk": 323.95547797751317,
+      "tok_s_out_client_after_first_chunk_corrected": 323.3227524345883,
+      "tok_s_out_client_e2e": 309.366069797191,
+      "tok_s_total_client": 618.732139594382,
+      "tok_s_prefill_lower_bound_from_ttft": 6869.424158434973,
+      "vllm_metric_deltas": {
+        "prompt_tokens": 512.0,
+        "generation_tokens": 512.0,
+        "ttft_count": 1.0,
+        "ttft_sum_s": 0.07315254211425781,
+        "e2e_count": 1.0,
+        "e2e_sum_s": 1.6539576053619385
+      },
+      "ttft_ms_vllm_metrics": 73.15254211425781,
+      "e2e_ms_vllm_metrics": 1653.9576053619385,
+      "vram_mib_before": {},
+      "vram_mib_after": {},
+      "first_chunk_tokens_client_estimate": 1,
+      "streamed_text_chunks": 91,
+      "text_preview": " l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edcu"
+    },
+    {
+      "repeat": 2,
+      "prompt_tokens_client": 512,
+      "output_tokens_client": 512,
+      "elapsed_s_client": 1.6343068910064176,
+      "ttft_ms_client": 75.1445860369131,
+      "tok_s_out_client_after_first_chunk": 328.381463795082,
+      "tok_s_out_client_after_first_chunk_corrected": 327.74009374860725,
+      "tok_s_out_client_e2e": 313.2826538378645,
+      "tok_s_total_client": 626.565307675729,
+      "tok_s_prefill_lower_bound_from_ttft": 6813.531446543487,
+      "vllm_metric_deltas": {
+        "prompt_tokens": 512.0,
+        "generation_tokens": 512.0,
+        "ttft_count": 1.0,
+        "ttft_sum_s": 0.07374024391174316,
+        "e2e_count": 1.0,
+        "e2e_sum_s": 1.6331431865692139
+      },
+      "ttft_ms_vllm_metrics": 73.74024391174316,
+      "e2e_ms_vllm_metrics": 1633.1431865692139,
+      "vram_mib_before": {},
+      "vram_mib_after": {},
+      "first_chunk_tokens_client_estimate": 1,
+      "streamed_text_chunks": 91,
+      "text_preview": " l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edcu"
+    },
+    {
+      "repeat": 3,
+      "prompt_tokens_client": 512,
+      "output_tokens_client": 512,
+      "elapsed_s_client": 1.6410214770585299,
+      "ttft_ms_client": 79.65911796782166,
+      "tok_s_out_client_after_first_chunk": 327.91875442557347,
+      "tok_s_out_client_after_first_chunk_corrected": 327.278288108336,
+      "tok_s_out_client_e2e": 312.0007916762558,
+      "tok_s_total_client": 624.0015833525116,
+      "tok_s_prefill_lower_bound_from_ttft": 6427.387260386472,
+      "vllm_metric_deltas": {
+        "prompt_tokens": 512.0,
+        "generation_tokens": 512.0,
+        "ttft_count": 1.0,
+        "ttft_sum_s": 0.07790064811706543,
+        "e2e_count": 1.0,
+        "e2e_sum_s": 1.639686107635498
+      },
+      "ttft_ms_vllm_metrics": 77.90064811706543,
+      "e2e_ms_vllm_metrics": 1639.686107635498,
+      "vram_mib_before": {},
+      "vram_mib_after": {},
+      "first_chunk_tokens_client_estimate": 1,
+      "streamed_text_chunks": 91,
+      "text_preview": " l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edcu"
+    },
+    {
+      "repeat": 4,
+      "prompt_tokens_client": 512,
+      "output_tokens_client": 512,
+      "elapsed_s_client": 1.661976911011152,
+      "ttft_ms_client": 75.06149902474135,
+      "tok_s_out_client_after_first_chunk": 322.63849486413864,
+      "tok_s_out_client_after_first_chunk_corrected": 322.0083415538571,
+      "tok_s_out_client_e2e": 308.0668549652098,
+      "tok_s_total_client": 616.1337099304196,
+      "tok_s_prefill_lower_bound_from_ttft": 6821.073475114551,
+      "vllm_metric_deltas": {
+        "prompt_tokens": 512.0,
+        "generation_tokens": 512.0,
+        "ttft_count": 1.0,
+        "ttft_sum_s": 0.07357907295227051,
+        "e2e_count": 1.0,
+        "e2e_sum_s": 1.6607789993286133
+      },
+      "ttft_ms_vllm_metrics": 73.57907295227051,
+      "e2e_ms_vllm_metrics": 1660.7789993286133,
+      "vram_mib_before": {},
+      "vram_mib_after": {},
+      "first_chunk_tokens_client_estimate": 1,
+      "streamed_text_chunks": 91,
+      "text_preview": " l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edcu"
+    },
+    {
+      "repeat": 5,
+      "prompt_tokens_client": 512,
+      "output_tokens_client": 512,
+      "elapsed_s_client": 1.651300391065888,
+      "ttft_ms_client": 75.39226999506354,
+      "tok_s_out_client_after_first_chunk": 324.89203726680313,
+      "tok_s_out_client_after_first_chunk_corrected": 324.2574825065164,
+      "tok_s_out_client_e2e": 310.05866816849243,
+      "tok_s_total_client": 620.1173363369849,
+      "tok_s_prefill_lower_bound_from_ttft": 6791.14715651252,
+      "vllm_metric_deltas": {
+        "prompt_tokens": 512.0,
+        "generation_tokens": 512.0,
+        "ttft_count": 1.0,
+        "ttft_sum_s": 0.07391881942749023,
+        "e2e_count": 1.0,
+        "e2e_sum_s": 1.6501131057739258
+      },
+      "ttft_ms_vllm_metrics": 73.91881942749023,
+      "e2e_ms_vllm_metrics": 1650.1131057739258,
+      "vram_mib_before": {},
+      "vram_mib_after": {},
+      "first_chunk_tokens_client_estimate": 1,
+      "streamed_text_chunks": 91,
+      "text_preview": " l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edcu"
+    },
+    {
+      "repeat": 6,
+      "prompt_tokens_client": 512,
+      "output_tokens_client": 512,
+      "elapsed_s_client": 2.151566689950414,
+      "ttft_ms_client": 75.28066996019334,
+      "tok_s_out_client_after_first_chunk": 246.59415661933298,
+      "tok_s_out_client_after_first_chunk_corrected": 246.11252740718584,
+      "tok_s_out_client_e2e": 237.9661306300479,
+      "tok_s_total_client": 475.9322612600958,
+      "tok_s_prefill_lower_bound_from_ttft": 6801.214711169994,
+      "vllm_metric_deltas": {
+        "prompt_tokens": 512.0,
+        "generation_tokens": 512.0,
+        "ttft_count": 1.0,
+        "ttft_sum_s": 0.0737600326538086,
+        "e2e_count": 1.0,
+        "e2e_sum_s": 2.1505229473114014
+      },
+      "ttft_ms_vllm_metrics": 73.7600326538086,
+      "e2e_ms_vllm_metrics": 2150.5229473114014,
+      "vram_mib_before": {},
+      "vram_mib_after": {},
+      "first_chunk_tokens_client_estimate": 1,
+      "streamed_text_chunks": 121,
+      "text_preview": " l'art\u00edculo l' l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art"
+    },
+    {
+      "repeat": 7,
+      "prompt_tokens_client": 512,
+      "output_tokens_client": 512,
+      "elapsed_s_client": 1.6612557859625667,
+      "ttft_ms_client": 74.70708293840289,
+      "tok_s_out_client_after_first_chunk": 322.71306832501443,
+      "tok_s_out_client_after_first_chunk_corrected": 322.08276936344214,
+      "tok_s_out_client_e2e": 308.2005819491165,
+      "tok_s_total_client": 616.401163898233,
+      "tok_s_prefill_lower_bound_from_ttft": 6853.433166734026,
+      "vllm_metric_deltas": {
+        "prompt_tokens": 512.0,
+        "generation_tokens": 512.0,
+        "ttft_count": 1.0,
+        "ttft_sum_s": 0.07311511039733887,
+        "e2e_count": 1.0,
+        "e2e_sum_s": 1.660245656967163
+      },
+      "ttft_ms_vllm_metrics": 73.11511039733887,
+      "e2e_ms_vllm_metrics": 1660.245656967163,
+      "vram_mib_before": {},
+      "vram_mib_after": {},
+      "first_chunk_tokens_client_estimate": 1,
+      "streamed_text_chunks": 91,
+      "text_preview": " l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edcu"
+    },
+    {
+      "repeat": 8,
+      "prompt_tokens_client": 512,
+      "output_tokens_client": 512,
+      "elapsed_s_client": 1.6727930950000882,
+      "ttft_ms_client": 75.0036200042814,
+      "tok_s_out_client_after_first_chunk": 320.4427166484769,
+      "tok_s_out_client_after_first_chunk_corrected": 319.81685196752284,
+      "tok_s_out_client_e2e": 306.0749123907479,
+      "tok_s_total_client": 612.1498247814958,
+      "tok_s_prefill_lower_bound_from_ttft": 6826.337181735677,
+      "vllm_metric_deltas": {
+        "prompt_tokens": 512.0,
+        "generation_tokens": 512.0,
+        "ttft_count": 1.0,
+        "ttft_sum_s": 0.07343840599060059,
+        "e2e_count": 1.0,
+        "e2e_sum_s": 1.6717779636383057
+      },
+      "ttft_ms_vllm_metrics": 73.43840599060059,
+      "e2e_ms_vllm_metrics": 1671.7779636383057,
+      "vram_mib_before": {},
+      "vram_mib_after": {},
+      "first_chunk_tokens_client_estimate": 1,
+      "streamed_text_chunks": 91,
+      "text_preview": " l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edcu"
+    }
+  ],
+  "summary": {
+    "tok_s_out_client_after_first_chunk": {
+      "mean": 314.69202124024184,
+      "median": 323.3342731512638,
+      "min": 246.59415661933298,
+      "max": 328.381463795082
+    },
+    "tok_s_out_client_after_first_chunk_corrected": {
+      "mean": 314.077388386257,
+      "median": 322.70276089901523,
+      "min": 246.11252740718584,
+      "max": 327.74009374860725
+    },
+    "tok_s_out_client_e2e": {
+      "mean": 300.62708292686574,
+      "median": 308.7833258731538,
+      "min": 237.9661306300479,
+      "max": 313.2826538378645
+    },
+    "tok_s_total_client": {
+      "mean": 601.2541658537315,
+      "median": 617.5666517463076,
+      "min": 475.9322612600958,
+      "max": 626.565307675729
+    },
+    "ttft_ms_client": {
+      "mean": 75.59775274421554,
+      "median": 75.10304253082722,
+      "min": 74.53317602630705,
+      "max": 79.65911796782166
+    },
+    "ttft_ms_vllm_metrics": {
+      "mean": 74.0756094455719,
+      "median": 73.65965843200684,
+      "min": 73.11511039733887,
+      "max": 77.90064811706543
+    },
+    "tok_s_prefill_lower_bound_from_ttft": {
+      "mean": 6775.4435695789625,
+      "median": 6817.302460829019,
+      "min": 6427.387260386472,
+      "max": 6869.424158434973
+    },
+    "e2e_ms_vllm_metrics": {
+      "mean": 1715.0281965732574,
+      "median": 1657.1016311645508,
+      "min": 1633.1431865692139,
+      "max": 2150.5229473114014
+    }
+  }
+}

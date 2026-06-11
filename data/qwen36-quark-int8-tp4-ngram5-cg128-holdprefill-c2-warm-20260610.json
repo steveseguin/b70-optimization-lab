@@ -1,0 +1,109 @@
+{
+  "base_url": "http://127.0.0.1:18080",
+  "model": "qwen36-35b-a3b-fp8",
+  "model_info": {
+    "id": "qwen36-35b-a3b-fp8",
+    "object": "model",
+    "created": 1781138102,
+    "owned_by": "vllm",
+    "root": "/mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118",
+    "parent": null,
+    "max_model_len": 32768,
+    "permission": [
+      {
+        "id": "modelperm-9522245e525c3e7f",
+        "object": "model_permission",
+        "created": 1781138102,
+        "allow_create_engine": false,
+        "allow_sampling": true,
+        "allow_logprobs": true,
+        "allow_search_indices": false,
+        "allow_view": true,
+        "allow_fine_tuning": false,
+        "organization": "*",
+        "group": null,
+        "is_blocking": false
+      }
+    ]
+  },
+  "tokenizer": "/mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118",
+  "requested_prompt_tokens": 512,
+  "shared_prefix_tokens": 0,
+  "prompt_salt": "",
+  "requested_output_tokens": 256,
+  "warmups": 0,
+  "scenarios": {
+    "c2": {
+      "concurrency": 2,
+      "records": [
+        {
+          "started_s": 943716.477133106,
+          "first_text_at_s": 943716.636044036,
+          "ended_s": 943717.477247189,
+          "elapsed_s": 1.0001140830572695,
+          "ttft_s": 0.15891093004029244,
+          "post_ttft_s": 0.841203153016977,
+          "prompt_tokens": 515,
+          "completion_tokens": 256,
+          "total_tokens": 771,
+          "tok_s_out_wall": 255.9707980687846,
+          "tok_s_out_after_ttft": 304.3260110020456,
+          "tok_s_total_wall": 770.9120519962224,
+          "chunks": 46,
+          "sha256": "5f40744644b98ddd58a0c202fe855af324c0b1c33e1a6275afd74c12488f89f0",
+          "text_preview": " benchmark benchmark benchmark benchmark benchmark benchmark benchmark benchmark benchmark benchmark benchmark benchmark benchmark benchmark benchmark benchmark"
+        },
+        {
+          "started_s": 943716.477423922,
+          "first_text_at_s": 943716.568666535,
+          "ended_s": 943717.476989044,
+          "elapsed_s": 0.9995651219505817,
+          "ttft_s": 0.09124261292163283,
+          "post_ttft_s": 0.9083225090289488,
+          "prompt_tokens": 515,
+          "completion_tokens": 256,
+          "total_tokens": 771,
+          "tok_s_out_wall": 256.1113772161576,
+          "tok_s_out_after_ttft": 281.8382209570908,
+          "tok_s_total_wall": 771.3354368502247,
+          "chunks": 46,
+          "sha256": "5f40744644b98ddd58a0c202fe855af324c0b1c33e1a6275afd74c12488f89f0",
+          "text_preview": " benchmark benchmark benchmark benchmark benchmark benchmark benchmark benchmark benchmark benchmark benchmark benchmark benchmark benchmark benchmark benchmark"
+        }
+      ],
+      "summary": {
+        "requests": 2,
+        "total_prompt_tokens": 1030,
+        "total_completion_tokens": 512,
+        "wall_s": 1.0001140830572695,
+        "aggregate_output_tok_s_wall": 511.9415961375692,
+        "decode_wall_s_from_first_text": 0.9085806540679187,
+        "aggregate_output_tok_s_from_first_text": 563.5162907196643,
+        "per_request_tok_s_out_after_ttft": {
+          "mean": 293.08211597956824,
+          "median": 293.08211597956824,
+          "min": 281.8382209570908,
+          "max": 304.3260110020456
+        },
+        "per_request_tok_s_out_wall": {
+          "mean": 256.0410876424711,
+          "median": 256.0410876424711,
+          "min": 255.9707980687846,
+          "max": 256.1113772161576
+        },
+        "per_request_ttft_s": {
+          "mean": 0.12507677148096263,
+          "median": 0.12507677148096263,
+          "min": 0.09124261292163283,
+          "max": 0.15891093004029244
+        },
+        "per_request_elapsed_s": {
+          "mean": 0.9998396025039256,
+          "median": 0.9998396025039256,
+          "min": 0.9995651219505817,
+          "max": 1.0001140830572695
+        }
+      }
+    }
+  }
+}

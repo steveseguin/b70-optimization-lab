@@ -1,0 +1,109 @@
+{
+  "base_url": "http://127.0.0.1:18080",
+  "model": "qwen36-35b-a3b-fp8",
+  "model_info": {
+    "id": "qwen36-35b-a3b-fp8",
+    "object": "model",
+    "created": 1781138526,
+    "owned_by": "vllm",
+    "root": "/mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118",
+    "parent": null,
+    "max_model_len": 32768,
+    "permission": [
+      {
+        "id": "modelperm-bb2c0d5d11944659",
+        "object": "model_permission",
+        "created": 1781138526,
+        "allow_create_engine": false,
+        "allow_sampling": true,
+        "allow_logprobs": true,
+        "allow_search_indices": false,
+        "allow_view": true,
+        "allow_fine_tuning": false,
+        "organization": "*",
+        "group": null,
+        "is_blocking": false
+      }
+    ]
+  },
+  "tokenizer": "/mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118",
+  "requested_prompt_tokens": 512,
+  "shared_prefix_tokens": 0,
+  "prompt_salt": "",
+  "requested_output_tokens": 256,
+  "warmups": 0,
+  "scenarios": {
+    "c2": {
+      "concurrency": 2,
+      "records": [
+        {
+          "started_s": 944140.585656101,
+          "first_text_at_s": 944140.705383214,
+          "ended_s": 944147.974565362,
+          "elapsed_s": 7.388909260975197,
+          "ttft_s": 0.11972711305133998,
+          "post_ttft_s": 7.269182147923857,
+          "prompt_tokens": 515,
+          "completion_tokens": 256,
+          "total_tokens": 771,
+          "tok_s_out_wall": 34.64652101658274,
+          "tok_s_out_after_ttft": 35.217166772071586,
+          "tok_s_total_wall": 104.3455769679113,
+          "chunks": 46,
+          "sha256": "5f40744644b98ddd58a0c202fe855af324c0b1c33e1a6275afd74c12488f89f0",
+          "text_preview": " benchmark benchmark benchmark benchmark benchmark benchmark benchmark benchmark benchmark benchmark benchmark benchmark benchmark benchmark benchmark benchmark"
+        },
+        {
+          "started_s": 944140.585957137,
+          "first_text_at_s": 944140.778967557,
+          "ended_s": 944147.993388139,
+          "elapsed_s": 7.407431001891382,
+          "ttft_s": 0.19301041995640844,
+          "post_ttft_s": 7.214420581934974,
+          "prompt_tokens": 515,
+          "completion_tokens": 256,
+          "total_tokens": 771,
+          "tok_s_out_wall": 34.559889917926206,
+          "tok_s_out_after_ttft": 35.48448514923405,
+          "tok_s_total_wall": 104.08466846375433,
+          "chunks": 47,
+          "sha256": "0d75abd7c6d87519559f284521374d20e8cb40b5f5dd8a3d5d75a355b250cef4",
+          "text_preview": " benchmark benchmark benchmark benchmark benchmark benchmark benchmark benchmark benchmark Qwen B70 concurrency benchmark lane c2-1 salt . Preserve the context "
+        }
+      ],
+      "summary": {
+        "requests": 2,
+        "total_prompt_tokens": 1030,
+        "total_completion_tokens": 512,
+        "wall_s": 7.407732037943788,
+        "aggregate_output_tok_s_wall": 69.11697094028784,
+        "decode_wall_s_from_first_text": 7.288004924892448,
+        "aggregate_output_tok_s_from_first_text": 70.25242234006254,
+        "per_request_tok_s_out_after_ttft": {
+          "mean": 35.35082596065281,
+          "median": 35.35082596065281,
+          "min": 35.217166772071586,
+          "max": 35.48448514923405
+        },
+        "per_request_tok_s_out_wall": {
+          "mean": 34.60320546725447,
+          "median": 34.60320546725447,
+          "min": 34.559889917926206,
+          "max": 34.64652101658274
+        },
+        "per_request_ttft_s": {
+          "mean": 0.1563687665038742,
+          "median": 0.1563687665038742,
+          "min": 0.11972711305133998,
+          "max": 0.19301041995640844
+        },
+        "per_request_elapsed_s": {
+          "mean": 7.3981701314332895,
+          "median": 7.3981701314332895,
+          "min": 7.388909260975197,
+          "max": 7.407431001891382
+        }
+      }
+    }
+  }
+}
