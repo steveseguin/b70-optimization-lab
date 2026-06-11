@@ -93,6 +93,193 @@ def summarize_steps(steps: list[dict]) -> list[dict]:
     return rows
 
 
+def _as_int(value, default: int = 0) -> int:
+    try:
+        if value is None:
+            return default
+        return int(value)
+    except (TypeError, ValueError):
+        return default
+
+
+def _as_bool(value) -> bool:
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, str):
+        return value.strip().lower() in {"1", "true", "yes", "on"}
+    return bool(value)
+
+
+def _histogram_from_values(values: object) -> dict[str, int]:
+    histogram: dict[str, int] = {}
+    if not isinstance(values, list):
+        return histogram
+    for value in values:
+        key = str(_as_int(value))
+        histogram[key] = histogram.get(key, 0) + 1
+    return histogram
+
+
+def _normalize_histogram(value: object) -> dict[str, int]:
+    if isinstance(value, dict):
+        histogram: dict[str, int] = {}
+        for key, count in value.items():
+            histogram[str(key)] = _as_int(count)
+        return histogram
+    return {}
+
+
+def _merge_histogram(target: dict[str, int], value: dict[str, int]) -> None:
+    for key, count in value.items():
+        target[key] = target.get(key, 0) + count
+
+
+def summarize_steps_by_bucket(steps: list[dict]) -> list[dict]:
+    grouped: dict[str, dict] = {}
+    for step in steps:
+        metadata = step.get("metadata") or {}
+        if not isinstance(metadata, dict):
+            metadata = {}
+
+        scheduled_token_histogram = _normalize_histogram(
+            metadata.get("scheduled_token_histogram")
+        )
+        if not scheduled_token_histogram:
+            scheduled_token_histogram = _histogram_from_values(
+                metadata.get("scheduled_token_counts")
+            )
+
+        scheduled_spec_histogram = _normalize_histogram(
+            metadata.get("scheduled_spec_histogram")
+        )
+        if not scheduled_spec_histogram:
+            scheduled_spec_histogram = _histogram_from_values(
+                metadata.get("scheduled_spec_lengths")
+            )
+
+        spec_lengths = metadata.get("scheduled_spec_lengths")
+        max_spec_from_lengths = 0
+        if isinstance(spec_lengths, list) and spec_lengths:
+            max_spec_from_lengths = max(_as_int(value) for value in spec_lengths)
+
+        group = {
+            "status": str(step.get("status", "")),
+            "cudagraph_mode": str(metadata.get("cudagraph_mode", "")),
+            "skip_compiled": _as_bool(metadata.get("skip_compiled")),
+            "should_ubatch": _as_bool(metadata.get("should_ubatch")),
+            "use_spec_decode": _as_bool(metadata.get("use_spec_decode")),
+            "is_pure_decode": _as_bool(metadata.get("is_pure_decode")),
+            "decode_bucket": metadata.get("decode_bucket"),
+            "max_num_scheduled_tokens": _as_int(
+                metadata.get("max_num_scheduled_tokens")
+            ),
+            "max_scheduled_spec_tokens": _as_int(
+                metadata.get("max_scheduled_spec_tokens"),
+                default=max_spec_from_lengths,
+            ),
+            "num_reqs": _as_int(metadata.get("num_reqs")),
+            "decode_req_count": _as_int(metadata.get("decode_req_count")),
+            "prefill_req_count": _as_int(metadata.get("prefill_req_count")),
+            "num_tokens_unpadded": _as_int(metadata.get("num_tokens_unpadded")),
+            "num_tokens_padded": _as_int(metadata.get("num_tokens_padded")),
+            "batch_desc_num_tokens": _as_int(metadata.get("batch_desc_num_tokens")),
+            "batch_desc_num_reqs": metadata.get("batch_desc_num_reqs"),
+        }
+        key = json.dumps(group, sort_keys=True, separators=(",", ":"))
+        entry = grouped.setdefault(
+            key,
+            {
+                "group": group,
+                "step_count": 0,
+                "first_step": step.get("step"),
+                "last_step": step.get("step"),
+                "first_line": step.get("line"),
+                "last_line": step.get("line"),
+                "scheduled_token_histogram_total": {},
+                "scheduled_spec_histogram_total": {},
+                "model_forward_ms": [],
+                "visible_timed_ms": [],
+                "top_labels": {},
+            },
+        )
+        entry["step_count"] += 1
+        entry["last_step"] = step.get("step")
+        entry["last_line"] = step.get("line")
+        _merge_histogram(
+            entry["scheduled_token_histogram_total"], scheduled_token_histogram
+        )
+        _merge_histogram(
+            entry["scheduled_spec_histogram_total"], scheduled_spec_histogram
+        )
+
+        visible_total = 0.0
+        model_forward = None
+        for row in step.get("summary_by_total_ms", []):
+            label = row.get("label")
+            total_ms = float(row.get("total_ms", 0.0))
+            visible_total += total_ms
+            if label == "gpu_model_runner.model_forward":
+                model_forward = total_ms
+            if label:
+                label_entry = entry["top_labels"].setdefault(label, [])
+                label_entry.append(total_ms)
+
+        entry["visible_timed_ms"].append(visible_total)
+        if model_forward is not None:
+            entry["model_forward_ms"].append(model_forward)
+
+    rows = []
+    for entry in grouped.values():
+        model_forward_values = entry.pop("model_forward_ms")
+        visible_values = entry.pop("visible_timed_ms")
+        top_labels = entry.pop("top_labels")
+        label_rows = []
+        for label, values in top_labels.items():
+            label_rows.append(
+                {
+                    "label": label,
+                    "mean_total_ms": statistics.fmean(values),
+                    "median_total_ms": statistics.median(values),
+                    "p90_total_ms": percentile(values, 0.90),
+                    "max_total_ms": max(values),
+                }
+            )
+        label_rows.sort(key=lambda row: row["mean_total_ms"], reverse=True)
+
+        row = {
+            **entry,
+            "mean_visible_timed_ms": statistics.fmean(visible_values)
+            if visible_values
+            else None,
+            "median_visible_timed_ms": statistics.median(visible_values)
+            if visible_values
+            else None,
+            "p90_visible_timed_ms": percentile(visible_values, 0.90),
+            "mean_model_forward_ms": statistics.fmean(model_forward_values)
+            if model_forward_values
+            else None,
+            "median_model_forward_ms": statistics.median(model_forward_values)
+            if model_forward_values
+            else None,
+            "p90_model_forward_ms": percentile(model_forward_values, 0.90),
+            "max_model_forward_ms": max(model_forward_values)
+            if model_forward_values
+            else None,
+            "top_labels_by_mean_total_ms": label_rows[:8],
+        }
+        rows.append(row)
+
+    rows.sort(
+        key=lambda row: (
+            row["mean_model_forward_ms"]
+            if row["mean_model_forward_ms"] is not None
+            else -1.0
+        ),
+        reverse=True,
+    )
+    return rows
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--log", required=True, help="vLLM worker log file")
@@ -166,6 +353,7 @@ def main() -> int:
     summary_rows = summarize_samples(samples)
     timing_summary = sorted(summaries, key=lambda row: row["total_ms"], reverse=True)
     step_summary = summarize_steps(steps)
+    step_bucket_summary = summarize_steps_by_bucket(steps)
     payload = {
         "source_log": str(log_path),
         "line_count": len(lines),
@@ -179,6 +367,7 @@ def main() -> int:
         "samples_by_last_ms": summary_rows,
         "summary_by_total_ms": timing_summary,
         "step_summary_by_mean_total_ms": step_summary,
+        "step_summary_by_bucket": step_bucket_summary,
     }
     if args.include_raw:
         payload["raw_samples"] = samples

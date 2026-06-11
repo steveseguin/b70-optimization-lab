@@ -6396,3 +6396,245 @@ Revised opportunity order:
    and whole-token command-list capture.
 5. Keep a separate engine-bakeoff branch so we notice if vLLM/XPU is the local
    ceiling rather than the model/hardware ceiling.
+
+## KV-Resident Decode-Bucket Timing Metadata And Accepted-Lane Probe
+
+Added a real decode-step timing grouping path so future speculative/MTP/EAGLE
+work can measure actual KV-resident scheduled-token buckets instead of relying
+on `/generative_scoring`.
+
+New or updated artifacts:
+
+- `scripts/summarize-xpu-decode-timing-log.py`
+- `patches/vllm-qwen36-decode-bucket-timing-metadata-20260611.patch`
+- `data/qwen36-quark-int8-tp4-decode-bucket-timing-p512o96-20260611.json`
+- `data/qwen36-quark-int8-tp4-decode-bucket-timing-summary-20260611.json`
+- `data/qwen36-quark-int8-tp4-accepted-restored-after-bucket-timing-text-smoke-20260611.json`
+
+Instrumentation details:
+
+- The local vLLM timing metadata now records:
+  - `scheduled_token_counts`
+  - `scheduled_token_histogram`
+  - `scheduled_spec_lengths`
+  - `scheduled_spec_histogram`
+  - `max_scheduled_spec_tokens`
+  - `computed_token_counts`
+  - `decode_req_count`
+  - `prefill_req_count`
+  - `is_pure_decode`
+  - `decode_bucket`
+  - batch descriptor token/request counts
+- The summarizer now emits `step_summary_by_bucket`, grouped by graph mode,
+  pure-decode status, scheduled token bucket, spec-token max, batch size, and
+  padded/unpadded token counts.
+- Validation passed:
+  - `py_compile` for the local vLLM runner and summarizer.
+  - `git apply --reverse --check` for
+    `patches/vllm-qwen36-decode-bucket-timing-metadata-20260611.patch` against
+    the current local vLLM tree.
+  - `git diff --check` for the lab repo changes.
+
+One instrumentation bug was found and fixed:
+
+- The first timing request failed with HTTP `500` because
+  `num_tokens_across_dp` can be `None` on this path and the metadata attempted
+  `int(None)`.
+- The patch now serializes it as `None` when absent.
+- This was an instrumentation-only failure; no speed or quality result was
+  claimed from the failed request.
+
+Accepted-lane timing probe:
+
+- Runtime: accepted TP4/Quark/32K/no-prefix recipe with timing enabled.
+- Timing env:
+  - `VLLM_XPU_DECODE_TIMING=1`
+  - `VLLM_XPU_DECODE_TIMING_SYNC=1`
+  - `VLLM_XPU_DECODE_TIMING_RANK=0`
+  - `VLLM_XPU_DECODE_TIMING_STEP_SUMMARY=1`
+  - `VLLM_XPU_DECODE_TIMING_STEP_SKIP_FIRST=32`
+- Probe shape:
+  - direct backend `/v1/completions`
+  - prompt `512`
+  - output `96`
+  - warmup output `16`
+  - natural-chat preset
+  - batch/concurrency `1`
+  - ignore EOS
+
+Important caveat:
+
+- The run uses `VLLM_XPU_DECODE_TIMING_SYNC=1`, so endpoint throughput is
+  intentionally slowed by synchronization and timing overhead.
+- Use the bucket timings to understand shape and component cost. Do not use this
+  run as a promoted speed benchmark.
+
+Endpoint-facing diagnostic metrics under synchronized timing:
+
+- Corrected after-first output throughput: `65.99 tok/s`.
+- End-to-end output throughput: `60.18 tok/s`.
+- Client TTFT: `155.46 ms`.
+- vLLM TTFT metric: `139.50 ms`.
+
+Bucket summary:
+
+| Field | Value |
+| --- | --- |
+| step lines summarized | `80` |
+| cudagraph mode | `PIECEWISE` |
+| pure decode | `true` |
+| decode bucket | `1` |
+| max scheduled tokens | `1` |
+| max scheduled spec tokens | `0` |
+| scheduled token histogram | `{"1": 80}` |
+| scheduled spec histogram | `{"0": 80}` |
+| mean model_forward per step | `12.393 ms` |
+| mean visible timed work per step | `16.759 ms` |
+
+Top visible timed regions in the bucket-1 group:
+
+| Region | Mean total ms/step |
+| --- | ---: |
+| `gpu_model_runner.model_forward` | `12.393` |
+| `gdn_attention_core_xpu.native` | `2.730` |
+| `gpu_model_runner.compute_logits` | `0.780` |
+| `logits.local_argmax_lm_head` | `0.542` |
+| `gpu_model_runner.sampler` | `0.163` |
+
+Interpretation:
+
+- This is the first confirmed KV-resident bucket-1 timing with the actual
+  accepted graph path and current model.
+- Small post-forward regions are not large enough to get anywhere close to a
+  `2x` single-user gain by themselves.
+- The next high-upside test is still verifier-preserving multi-token decode:
+  measure bucket `2,3,4,5,6,8` with the same metadata once the speculation
+  stability/correctness issue is isolated.
+- If verifier buckets are expensive or unstable, shift effort to persistent MoE,
+  static solo decode, and whole-token command-list capture.
+
+Restore status:
+
+- Timing backend was stopped.
+- Accepted no-timing backend was restored in tmux session
+  `qwen36-tp4-accepted-restored-after-bucket-timing-20260611q`.
+- Backend `/health` and frontdoor `/health` passed.
+- Frontdoor text smoke passed with `pass_all=true`,
+  `baseline_match_all=true`, `repeat_pass=true`, and long-context pass.
+
+## Bigger Bolder Ideas After Bucket-1 Timing
+
+The bucket-1 timing confirms that tiny post-forward edits are unlikely to
+produce a 2x single-request win. The next ideas should be larger and should
+still preserve final-token quality by either keeping the same verifier or
+matching current INT8 math exactly.
+
+External leads checked:
+
+- vLLM RFC `vllm-project/vllm#33214` tracks the Intel backend migration from
+  IPEX to `vllm-xpu-kernels`, including XPU scaled-mm, FP8 W8A8, FP8 MoE, and
+  MoE kernel work:
+  `https://github.com/vllm-project/vllm/issues/33214`.
+- oneDNN v3.13 documents experimental grouped memory and grouped GEMM support
+  for MoE workloads, plus profiling hooks that could make a clean Intel GPU
+  primitive shootout possible:
+  `https://uxlfoundation.github.io/oneDNN/dev_guide_experimental.html`.
+- PyTorch's persistent cache-aware grouped-GEMM MoE writeup is CUDA/Triton
+  oriented, but the design target maps well to this bottleneck: keep worker
+  groups alive, feed them a route-aware tile queue, and reduce per-expert launch
+  and scheduling overhead:
+  `https://pytorch.org/blog/accelerating-moes-with-a-triton-persistent-cache-aware-grouped-gemm-kernel/`.
+- Intel's current vLLM/XPU material explicitly mentions INT8/FP8 support,
+  chunked prefill, data parallelism, and experimental expert parallelism. That
+  makes a TP/EP or DP/EP simulation worth doing instead of only tuning TP4:
+  `https://github.com/intel/ai-containers/blob/main/vllm/0.14.1-xpu.md`.
+
+Larger things to try:
+
+1. XPU-kernel-forward branch.
+   - Diff the current local vLLM fork against the newest `vllm-xpu-kernels`
+     migration points and selectively test XPU scaled-mm/FP8-MoE kernel changes.
+   - This may be the fastest path if local work is chasing problems upstream has
+     already moved into the dedicated XPU kernel library.
+
+2. oneDNN grouped-GEMM MoE harness.
+   - Build a standalone route-capture replay harness that feeds real Qwen3.6
+     layer/expert shapes into oneDNN grouped matmul on XPU.
+   - Compare exact component timings against current vLLM/XPU custom ops before
+     any integration work.
+
+3. Persistent XPU grouped-GEMM prototype.
+   - Borrow the persistent grouped-GEMM design, not the CUDA implementation.
+   - Use route histograms to build a persistent tile scheduler for top-k experts
+     and avoid the current many-small-work scheduling pattern.
+
+4. Static solo decode lane.
+   - Create a dedicated c1 path that gives up broad dynamic serving features for
+     one hot, stable decode shape.
+   - Goal: capture or replay a whole token step across dense W8A8, GDN
+     attention, MoE, collectives, logits, and sampling with fewer host/runtime
+     boundaries than general vLLM serving.
+
+5. Memory-for-latency layout.
+   - The model footprint leaves much more VRAM headroom than expected, so spend
+     memory to reduce communication and routing latency.
+   - Candidates: replicate hot experts, duplicate final projection/logits
+     helpers, keep per-prompt-class expert packs resident, or run two TP2 lanes
+     with different hot-expert placements.
+
+6. Hybrid TP/EP simulation before implementation.
+   - Use captured route histograms to estimate whether TP4, TP2+replication,
+     TP+EP, or DP+EP reduces layer-time enough for c1.
+   - Only build a real engine path if the model predicts a large single-request
+     win, not just better aggregate throughput.
+
+7. Verifier-preserving sidecar proposer.
+   - Stop blind n-gram width sweeps.
+   - Build or adapt a same-tokenizer proposer trained/distilled for Qwen3.6
+     next-token sequences, with the current Quark model still verifying all
+     accepted tokens.
+   - Quality remains verifier-bound; speed depends on acceptance and bucket-2+
+     verifier timing.
+
+8. Verifier-bucket first decision gate.
+   - Use the new decode-bucket metadata to measure true bucket `2,3,4,5,6,8`
+     verifier costs.
+   - If bucket costs scale sublinearly, speculation is still the biggest win.
+     If they scale near-linearly or destabilize, prioritize MoE/layout/static
+     decode instead.
+
+9. Whole-step Level Zero command-list capture.
+   - Prototype command-list capture around the full decode step, not isolated
+     kernels.
+   - This is a bigger systems bet: fewer host submits and sync points while
+     preserving the exact same kernels and math.
+
+10. Exact 8-bit engine shootout.
+    - Keep Qwen3.6 35B and high-fidelity 8-bit fixed, then compare current
+      vLLM/XPU against OpenVINO/oneDNN GenAI, llama.cpp/SYCL Q8-class paths,
+      IPEX/BigDL, LMDeploy if XPU-capable, and newer vLLM-XPU builds.
+    - No 4-bit substitutions and no Qwen3.5 substitutions.
+
+11. Root/firmware/software matrix.
+    - Do a controlled driver/kernel/Level Zero/oneCCL matrix once root access is
+      available.
+    - The B70 link display quirk probably is not the main bottleneck, but
+      reversible power/runtime policy plus stack-version testing may expose a
+      free stability or latency win.
+
+12. Upstreamable B70 repro package.
+    - Package the exact bucket-1 timing, speculative accounting fixtures,
+      route-capture overlap, Localmaxxing row, and launch scripts into a clean
+      issue/PR packet for Intel/vLLM.
+    - If the bottleneck is inside the backend kernel roadmap, a good repro may
+      save more time than local patching.
+
+Priority after this checkpoint:
+
+1. Measure verifier buckets `2,3,4,5,6,8`.
+2. In parallel, build the oneDNN grouped-GEMM MoE route replay harness.
+3. Run a current vLLM-XPU/kernel-library delta check.
+4. If verifier buckets look good, invest in a real sidecar proposer or MTP
+   adaptation.
+5. If verifier buckets look bad, move to persistent MoE, hybrid TP/EP, and
+   static solo decode.
