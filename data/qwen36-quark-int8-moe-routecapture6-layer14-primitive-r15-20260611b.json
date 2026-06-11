@@ -1,0 +1,3274 @@
+{
+  "fused_silu_quant_enabled": false,
+  "model_config": "/mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118/config.json",
+  "results": [
+    {
+      "components_us_mean": {
+        "act_contiguous": 56.6176,
+        "activation": 79.5496,
+        "activation_contiguous_quant2": 226.6576,
+        "activation_plus_quant2": 170.04,
+        "component_sum": 753.3968,
+        "gather": 79.6744,
+        "gemm1": 92.79919999999998,
+        "gemm2": 94.92773333333334,
+        "quant1": 87.5264,
+        "quant2": 90.4904,
+        "remap": 90.69493333333334,
+        "rows_zero": 81.11653333333334
+      },
+      "dtype": "bf16",
+      "hidden_size": 2048,
+      "inter_size_per_tp": 128,
+      "iterations": 15,
+      "manual_vs_xpu_fused_moe_max_abs_diff": 0.0,
+      "moe_inputs": 8,
+      "num_experts": 256,
+      "preallocated_staged_total_us_mean": 207.44186666666664,
+      "preallocated_vs_xpu_fused_moe_max_abs_diff": 0.0,
+      "route_start_index": 0,
+      "route_start_index_mod": 0,
+      "rows": 1,
+      "topk": 8,
+      "topk_source": "route_jsonl",
+      "topk_summary": {
+        "active_experts": 8,
+        "top_experts": [
+          {
+            "count": 1,
+            "expert": 137
+          },
+          {
+            "count": 1,
+            "expert": 32
+          },
+          {
+            "count": 1,
+            "expert": 189
+          },
+          {
+            "count": 1,
+            "expert": 88
+          },
+          {
+            "count": 1,
+            "expert": 103
+          },
+          {
+            "count": 1,
+            "expert": 64
+          },
+          {
+            "count": 1,
+            "expert": 125
+          },
+          {
+            "count": 1,
+            "expert": 148
+          }
+        ],
+        "topk_tuple_examples": [
+          {
+            "count": 1,
+            "topk_ids": [
+              137,
+              32,
+              189,
+              88,
+              103,
+              64,
+              125,
+              148
+            ]
+          }
+        ],
+        "unique_topk_tuples": 1
+      },
+      "total_us_mean": 272.16453333333334,
+      "warmup": 5
+    },
+    {
+      "components_us_mean": {
+        "act_contiguous": 57.0648,
+        "activation": 78.99839999999999,
+        "activation_contiguous_quant2": 226.7269333333333,
+        "activation_plus_quant2": 169.66213333333332,
+        "component_sum": 766.7018666666665,
+        "gather": 80.85999999999999,
+        "gemm1": 93.59653333333333,
+        "gemm2": 106.69013333333332,
+        "quant1": 88.4936,
+        "quant2": 90.66373333333333,
+        "remap": 91.0208,
+        "rows_zero": 79.31386666666666
+      },
+      "dtype": "bf16",
+      "hidden_size": 2048,
+      "inter_size_per_tp": 128,
+      "iterations": 15,
+      "manual_vs_xpu_fused_moe_max_abs_diff": 0.0,
+      "moe_inputs": 8,
+      "num_experts": 256,
+      "preallocated_staged_total_us_mean": 206.29439999999997,
+      "preallocated_vs_xpu_fused_moe_max_abs_diff": 0.0,
+      "route_start_index": 12,
+      "route_start_index_mod": 12,
+      "rows": 1,
+      "topk": 8,
+      "topk_source": "route_jsonl",
+      "topk_summary": {
+        "active_experts": 8,
+        "top_experts": [
+          {
+            "count": 1,
+            "expert": 67
+          },
+          {
+            "count": 1,
+            "expert": 189
+          },
+          {
+            "count": 1,
+            "expert": 138
+          },
+          {
+            "count": 1,
+            "expert": 194
+          },
+          {
+            "count": 1,
+            "expert": 96
+          },
+          {
+            "count": 1,
+            "expert": 73
+          },
+          {
+            "count": 1,
+            "expert": 44
+          },
+          {
+            "count": 1,
+            "expert": 183
+          }
+        ],
+        "topk_tuple_examples": [
+          {
+            "count": 1,
+            "topk_ids": [
+              67,
+              189,
+              138,
+              194,
+              96,
+              73,
+              44,
+              183
+            ]
+          }
+        ],
+        "unique_topk_tuples": 1
+      },
+      "total_us_mean": 273.85279999999995,
+      "warmup": 5
+    },
+    {
+      "components_us_mean": {
+        "act_contiguous": 55.21013333333333,
+        "activation": 85.6856,
+        "activation_contiguous_quant2": 227.188,
+        "activation_plus_quant2": 171.97786666666667,
+        "component_sum": 751.0255999999999,
+        "gather": 79.716,
+        "gemm1": 96.11333333333332,
+        "gemm2": 93.11813333333333,
+        "quant1": 86.1536,
+        "quant2": 86.29226666666666,
+        "remap": 91.26,
+        "rows_zero": 77.47653333333332
+      },
+      "dtype": "bf16",
+      "hidden_size": 2048,
+      "inter_size_per_tp": 128,
+      "iterations": 15,
+      "manual_vs_xpu_fused_moe_max_abs_diff": 0.0,
+      "moe_inputs": 8,
+      "num_experts": 256,
+      "preallocated_staged_total_us_mean": 206.62373333333332,
+      "preallocated_vs_xpu_fused_moe_max_abs_diff": 0.0,
+      "route_start_index": 24,
+      "route_start_index_mod": 24,
+      "rows": 1,
+      "topk": 8,
+      "topk_source": "route_jsonl",
+      "topk_summary": {
+        "active_experts": 8,
+        "top_experts": [
+          {
+            "count": 1,
+            "expert": 182
+          },
+          {
+            "count": 1,
+            "expert": 64
+          },
+          {
+            "count": 1,
+            "expert": 249
+          },
+          {
+            "count": 1,
+            "expert": 194
+          },
+          {
+            "count": 1,
+            "expert": 109
+          },
+          {
+            "count": 1,
+            "expert": 250
+          },
+          {
+            "count": 1,
+            "expert": 7
+          },
+          {
+            "count": 1,
+            "expert": 96
+          }
+        ],
+        "topk_tuple_examples": [
+          {
+            "count": 1,
+            "topk_ids": [
+              182,
+              64,
+              249,
+              194,
+              109,
+              250,
+              7,
+              96
+            ]
+          }
+        ],
+        "unique_topk_tuples": 1
+      },
+      "total_us_mean": 267.4117333333333,
+      "warmup": 5
+    },
+    {
+      "components_us_mean": {
+        "act_contiguous": 53.9344,
+        "activation": 77.6672,
+        "activation_contiguous_quant2": 216.35813333333334,
+        "activation_plus_quant2": 162.42373333333333,
+        "component_sum": 721.3925333333333,
+        "gather": 76.23893333333332,
+        "gemm1": 91.32933333333334,
+        "gemm2": 89.856,
+        "quant1": 84.63173333333333,
+        "quant2": 84.75653333333334,
+        "remap": 87.57146666666667,
+        "rows_zero": 75.40693333333333
+      },
+      "dtype": "bf16",
+      "hidden_size": 2048,
+      "inter_size_per_tp": 128,
+      "iterations": 15,
+      "manual_vs_xpu_fused_moe_max_abs_diff": 0.0,
+      "moe_inputs": 8,
+      "num_experts": 256,
+      "preallocated_staged_total_us_mean": 202.88320000000002,
+      "preallocated_vs_xpu_fused_moe_max_abs_diff": 0.0,
+      "route_start_index": 36,
+      "route_start_index_mod": 36,
+      "rows": 1,
+      "topk": 8,
+      "topk_source": "route_jsonl",
+      "topk_summary": {
+        "active_experts": 8,
+        "top_experts": [
+          {
+            "count": 1,
+            "expert": 159
+          },
+          {
+            "count": 1,
+            "expert": 106
+          },
+          {
+            "count": 1,
+            "expert": 52
+          },
+          {
+            "count": 1,
+            "expert": 28
+          },
+          {
+            "count": 1,
+            "expert": 189
+          },
+          {
+            "count": 1,
+            "expert": 167
+          },
+          {
+            "count": 1,
+            "expert": 61
+          },
+          {
+            "count": 1,
+            "expert": 64
+          }
+        ],
+        "topk_tuple_examples": [
+          {
+            "count": 1,
+            "topk_ids": [
+              159,
+              106,
+              52,
+              28,
+              189,
+              167,
+              61,
+              64
+            ]
+          }
+        ],
+        "unique_topk_tuples": 1
+      },
+      "total_us_mean": 268.73946666666666,
+      "warmup": 5
+    },
+    {
+      "components_us_mean": {
+        "act_contiguous": 56.69386666666666,
+        "activation": 83.3352,
+        "activation_contiguous_quant2": 232.16613333333333,
+        "activation_plus_quant2": 175.47226666666666,
+        "component_sum": 789.3946666666666,
+        "gather": 82.24319999999999,
+        "gemm1": 102.54746666666666,
+        "gemm2": 97.12213333333332,
+        "quant1": 94.8064,
+        "quant2": 92.13706666666667,
+        "remap": 96.65413333333332,
+        "rows_zero": 83.8552
+      },
+      "dtype": "bf16",
+      "hidden_size": 2048,
+      "inter_size_per_tp": 128,
+      "iterations": 15,
+      "manual_vs_xpu_fused_moe_max_abs_diff": 0.0,
+      "moe_inputs": 8,
+      "num_experts": 256,
+      "preallocated_staged_total_us_mean": 230.81066666666666,
+      "preallocated_vs_xpu_fused_moe_max_abs_diff": 0.0,
+      "route_start_index": 48,
+      "route_start_index_mod": 48,
+      "rows": 1,
+      "topk": 8,
+      "topk_source": "route_jsonl",
+      "topk_summary": {
+        "active_experts": 8,
+        "top_experts": [
+          {
+            "count": 1,
+            "expert": 52
+          },
+          {
+            "count": 1,
+            "expert": 29
+          },
+          {
+            "count": 1,
+            "expert": 118
+          },
+          {
+            "count": 1,
+            "expert": 160
+          },
+          {
+            "count": 1,
+            "expert": 131
+          },
+          {
+            "count": 1,
+            "expert": 106
+          },
+          {
+            "count": 1,
+            "expert": 197
+          },
+          {
+            "count": 1,
+            "expert": 28
+          }
+        ],
+        "topk_tuple_examples": [
+          {
+            "count": 1,
+            "topk_ids": [
+              52,
+              29,
+              118,
+              160,
+              131,
+              106,
+              197,
+              28
+            ]
+          }
+        ],
+        "unique_topk_tuples": 1
+      },
+      "total_us_mean": 298.29973333333334,
+      "warmup": 5
+    },
+    {
+      "components_us_mean": {
+        "act_contiguous": 53.41093333333333,
+        "activation": 75.93733333333333,
+        "activation_contiguous_quant2": 214.45839999999998,
+        "activation_plus_quant2": 161.04746666666665,
+        "component_sum": 719.0663999999999,
+        "gather": 75.11573333333332,
+        "gemm1": 89.7936,
+        "gemm2": 91.99839999999999,
+        "quant1": 84.83279999999999,
+        "quant2": 85.11013333333332,
+        "remap": 87.6512,
+        "rows_zero": 75.21626666666666
+      },
+      "dtype": "bf16",
+      "hidden_size": 2048,
+      "inter_size_per_tp": 128,
+      "iterations": 15,
+      "manual_vs_xpu_fused_moe_max_abs_diff": 0.0,
+      "moe_inputs": 8,
+      "num_experts": 256,
+      "preallocated_staged_total_us_mean": 203.07386666666665,
+      "preallocated_vs_xpu_fused_moe_max_abs_diff": 0.0,
+      "route_start_index": 60,
+      "route_start_index_mod": 60,
+      "rows": 1,
+      "topk": 8,
+      "topk_source": "route_jsonl",
+      "topk_summary": {
+        "active_experts": 8,
+        "top_experts": [
+          {
+            "count": 1,
+            "expert": 51
+          },
+          {
+            "count": 1,
+            "expert": 52
+          },
+          {
+            "count": 1,
+            "expert": 47
+          },
+          {
+            "count": 1,
+            "expert": 64
+          },
+          {
+            "count": 1,
+            "expert": 86
+          },
+          {
+            "count": 1,
+            "expert": 189
+          },
+          {
+            "count": 1,
+            "expert": 125
+          },
+          {
+            "count": 1,
+            "expert": 137
+          }
+        ],
+        "topk_tuple_examples": [
+          {
+            "count": 1,
+            "topk_ids": [
+              51,
+              52,
+              47,
+              64,
+              86,
+              189,
+              125,
+              137
+            ]
+          }
+        ],
+        "unique_topk_tuples": 1
+      },
+      "total_us_mean": 274.2445333333333,
+      "warmup": 5
+    },
+    {
+      "components_us_mean": {
+        "act_contiguous": 58.673333333333325,
+        "activation": 86.46213333333334,
+        "activation_contiguous_quant2": 242.83653333333334,
+        "activation_plus_quant2": 184.16320000000002,
+        "component_sum": 822.7336,
+        "gather": 86.9024,
+        "gemm1": 104.11093333333334,
+        "gemm2": 103.3656,
+        "quant1": 98.78613333333332,
+        "quant2": 97.70106666666666,
+        "remap": 102.1384,
+        "rows_zero": 84.5936
+      },
+      "dtype": "bf16",
+      "hidden_size": 2048,
+      "inter_size_per_tp": 128,
+      "iterations": 15,
+      "manual_vs_xpu_fused_moe_max_abs_diff": 0.0,
+      "moe_inputs": 8,
+      "num_experts": 256,
+      "preallocated_staged_total_us_mean": 234.21146666666667,
+      "preallocated_vs_xpu_fused_moe_max_abs_diff": 0.0,
+      "route_start_index": 72,
+      "route_start_index_mod": 72,
+      "rows": 1,
+      "topk": 8,
+      "topk_source": "route_jsonl",
+      "topk_summary": {
+        "active_experts": 8,
+        "top_experts": [
+          {
+            "count": 1,
+            "expert": 73
+          },
+          {
+            "count": 1,
+            "expert": 84
+          },
+          {
+            "count": 1,
+            "expert": 189
+          },
+          {
+            "count": 1,
+            "expert": 101
+          },
+          {
+            "count": 1,
+            "expert": 179
+          },
+          {
+            "count": 1,
+            "expert": 176
+          },
+          {
+            "count": 1,
+            "expert": 58
+          },
+          {
+            "count": 1,
+            "expert": 132
+          }
+        ],
+        "topk_tuple_examples": [
+          {
+            "count": 1,
+            "topk_ids": [
+              73,
+              84,
+              189,
+              101,
+              179,
+              176,
+              58,
+              132
+            ]
+          }
+        ],
+        "unique_topk_tuples": 1
+      },
+      "total_us_mean": 312.9810666666666,
+      "warmup": 5
+    },
+    {
+      "components_us_mean": {
+        "act_contiguous": 63.94613333333333,
+        "activation": 94.35226666666667,
+        "activation_contiguous_quant2": 263.22746666666666,
+        "activation_plus_quant2": 199.28133333333332,
+        "component_sum": 893.4119999999999,
+        "gather": 94.1512,
+        "gemm1": 113.64426666666667,
+        "gemm2": 111.88666666666667,
+        "quant1": 106.25333333333333,
+        "quant2": 104.92906666666666,
+        "remap": 109.92799999999998,
+        "rows_zero": 94.32106666666665
+      },
+      "dtype": "bf16",
+      "hidden_size": 2048,
+      "inter_size_per_tp": 128,
+      "iterations": 15,
+      "manual_vs_xpu_fused_moe_max_abs_diff": 0.0,
+      "moe_inputs": 8,
+      "num_experts": 256,
+      "preallocated_staged_total_us_mean": 259.5077333333333,
+      "preallocated_vs_xpu_fused_moe_max_abs_diff": 0.0,
+      "route_start_index": 84,
+      "route_start_index_mod": 84,
+      "rows": 1,
+      "topk": 8,
+      "topk_source": "route_jsonl",
+      "topk_summary": {
+        "active_experts": 8,
+        "top_experts": [
+          {
+            "count": 1,
+            "expert": 214
+          },
+          {
+            "count": 1,
+            "expert": 155
+          },
+          {
+            "count": 1,
+            "expert": 64
+          },
+          {
+            "count": 1,
+            "expert": 175
+          },
+          {
+            "count": 1,
+            "expert": 167
+          },
+          {
+            "count": 1,
+            "expert": 138
+          },
+          {
+            "count": 1,
+            "expert": 7
+          },
+          {
+            "count": 1,
+            "expert": 109
+          }
+        ],
+        "topk_tuple_examples": [
+          {
+            "count": 1,
+            "topk_ids": [
+              214,
+              155,
+              64,
+              175,
+              167,
+              138,
+              7,
+              109
+            ]
+          }
+        ],
+        "unique_topk_tuples": 1
+      },
+      "total_us_mean": 352.32773333333336,
+      "warmup": 5
+    },
+    {
+      "components_us_mean": {
+        "act_contiguous": 67.56533333333333,
+        "activation": 96.39066666666666,
+        "activation_contiguous_quant2": 274.6848,
+        "activation_plus_quant2": 207.11946666666665,
+        "component_sum": 938.0661333333333,
+        "gather": 95.7528,
+        "gemm1": 119.02106666666666,
+        "gemm2": 116.62213333333332,
+        "quant1": 107.48746666666666,
+        "quant2": 110.7288,
+        "remap": 127.99279999999999,
+        "rows_zero": 96.50506666666666
+      },
+      "dtype": "bf16",
+      "hidden_size": 2048,
+      "inter_size_per_tp": 128,
+      "iterations": 15,
+      "manual_vs_xpu_fused_moe_max_abs_diff": 0.0,
+      "moe_inputs": 128,
+      "num_experts": 256,
+      "preallocated_staged_total_us_mean": 275.0176,
+      "preallocated_vs_xpu_fused_moe_max_abs_diff": 0.0,
+      "route_start_index": 0,
+      "route_start_index_mod": 0,
+      "rows": 16,
+      "topk": 8,
+      "topk_source": "route_jsonl",
+      "topk_summary": {
+        "active_experts": 46,
+        "top_experts": [
+          {
+            "count": 10,
+            "expert": 189
+          },
+          {
+            "count": 8,
+            "expert": 137
+          },
+          {
+            "count": 8,
+            "expert": 103
+          },
+          {
+            "count": 8,
+            "expert": 64
+          },
+          {
+            "count": 8,
+            "expert": 125
+          },
+          {
+            "count": 7,
+            "expert": 32
+          },
+          {
+            "count": 7,
+            "expert": 52
+          },
+          {
+            "count": 4,
+            "expert": 167
+          },
+          {
+            "count": 4,
+            "expert": 51
+          },
+          {
+            "count": 3,
+            "expert": 148
+          },
+          {
+            "count": 3,
+            "expert": 71
+          },
+          {
+            "count": 3,
+            "expert": 194
+          },
+          {
+            "count": 3,
+            "expert": 138
+          },
+          {
+            "count": 3,
+            "expert": 0
+          },
+          {
+            "count": 3,
+            "expert": 160
+          },
+          {
+            "count": 3,
+            "expert": 61
+          }
+        ],
+        "topk_tuple_examples": [
+          {
+            "count": 1,
+            "topk_ids": [
+              137,
+              32,
+              189,
+              88,
+              103,
+              64,
+              125,
+              148
+            ]
+          },
+          {
+            "count": 1,
+            "topk_ids": [
+              71,
+              230,
+              191,
+              103,
+              177,
+              41,
+              236,
+              57
+            ]
+          },
+          {
+            "count": 1,
+            "topk_ids": [
+              194,
+              96,
+              182,
+              183,
+              64,
+              175,
+              138,
+              214
+            ]
+          },
+          {
+            "count": 1,
+            "topk_ids": [
+              189,
+              71,
+              103,
+              0,
+              166,
+              177,
+              125,
+              140
+            ]
+          },
+          {
+            "count": 1,
+            "topk_ids": [
+              0,
+              166,
+              12,
+              189,
+              103,
+              97,
+              71,
+              57
+            ]
+          },
+          {
+            "count": 1,
+            "topk_ids": [
+              52,
+              167,
+              137,
+              64,
+              159,
+              160,
+              106,
+              61
+            ]
+          },
+          {
+            "count": 1,
+            "topk_ids": [
+              64,
+              189,
+              137,
+              32,
+              148,
+              52,
+              51,
+              125
+            ]
+          },
+          {
+            "count": 1,
+            "topk_ids": [
+              125,
+              137,
+              103,
+              51,
+              189,
+              0,
+              32,
+              52
+            ]
+          },
+          {
+            "count": 1,
+            "topk_ids": [
+              52,
+              64,
+              167,
+              138,
+              155,
+              214,
+              51,
+              194
+            ]
+          },
+          {
+            "count": 1,
+            "topk_ids": [
+              64,
+              60,
+              32,
+              109,
+              137,
+              160,
+              167,
+              148
+            ]
+          },
+          {
+            "count": 1,
+            "topk_ids": [
+              52,
+              60,
+              64,
+              167,
+              131,
+              137,
+              160,
+              106
+            ]
+          },
+          {
+            "count": 1,
+            "topk_ids": [
+              229,
+              52,
+              125,
+              29,
+              189,
+              140,
+              88,
+              191
+            ]
+          },
+          {
+            "count": 1,
+            "topk_ids": [
+              67,
+              189,
+              138,
+              194,
+              96,
+              73,
+              44,
+              183
+            ]
+          },
+          {
+            "count": 1,
+            "topk_ids": [
+              189,
+              61,
+              28,
+              125,
+              6,
+              32,
+              103,
+              137
+            ]
+          },
+          {
+            "count": 1,
+            "topk_ids": [
+              28,
+              125,
+              189,
+              61,
+              52,
+              51,
+              32,
+              103
+            ]
+          },
+          {
+            "count": 1,
+            "topk_ids": [
+              125,
+              189,
+              137,
+              32,
+              28,
+              103,
+              47,
+              64
+            ]
+          }
+        ],
+        "unique_topk_tuples": 16
+      },
+      "total_us_mean": 362.388,
+      "warmup": 5
+    },
+    {
+      "components_us_mean": {
+        "act_contiguous": 59.810399999999994,
+        "activation": 84.98533333333333,
+        "activation_contiguous_quant2": 241.44293333333331,
+        "activation_plus_quant2": 181.6325333333333,
+        "component_sum": 809.5325333333333,
+        "gather": 85.5296,
+        "gemm1": 104.0,
+        "gemm2": 102.6064,
+        "quant1": 94.72319999999999,
+        "quant2": 96.64719999999998,
+        "remap": 98.35973333333332,
+        "rows_zero": 82.87066666666666
+      },
+      "dtype": "bf16",
+      "hidden_size": 2048,
+      "inter_size_per_tp": 128,
+      "iterations": 15,
+      "manual_vs_xpu_fused_moe_max_abs_diff": 0.0,
+      "moe_inputs": 128,
+      "num_experts": 256,
+      "preallocated_staged_total_us_mean": 245.13839999999996,
+      "preallocated_vs_xpu_fused_moe_max_abs_diff": 0.0,
+      "route_start_index": 12,
+      "route_start_index_mod": 12,
+      "rows": 16,
+      "topk": 8,
+      "topk_source": "route_jsonl",
+      "topk_summary": {
+        "active_experts": 47,
+        "top_experts": [
+          {
+            "count": 9,
+            "expert": 189
+          },
+          {
+            "count": 9,
+            "expert": 28
+          },
+          {
+            "count": 6,
+            "expert": 194
+          },
+          {
+            "count": 6,
+            "expert": 96
+          },
+          {
+            "count": 6,
+            "expert": 125
+          },
+          {
+            "count": 5,
+            "expert": 61
+          },
+          {
+            "count": 5,
+            "expert": 32
+          },
+          {
+            "count": 5,
+            "expert": 103
+          },
+          {
+            "count": 5,
+            "expert": 137
+          },
+          {
+            "count": 5,
+            "expert": 109
+          },
+          {
+            "count": 4,
+            "expert": 67
+          },
+          {
+            "count": 4,
+            "expert": 183
+          },
+          {
+            "count": 4,
+            "expert": 52
+          },
+          {
+            "count": 4,
+            "expert": 47
+          },
+          {
+            "count": 4,
+            "expert": 64
+          },
+          {
+            "count": 4,
+            "expert": 249
+          }
+        ],
+        "topk_tuple_examples": [
+          {
+            "count": 1,
+            "topk_ids": [
+              67,
+              189,
+              138,
+              194,
+              96,
+              73,
+              44,
+              183
+            ]
+          },
+          {
+            "count": 1,
+            "topk_ids": [
+              189,
+              61,
+              28,
+              125,
+              6,
+              32,
+              103,
+              137
+            ]
+          },
+          {
+            "count": 1,
+            "topk_ids": [
+              28,
+              125,
+              189,
+              61,
+              52,
+              51,
+              32,
+              103
+            ]
+          },
+          {
+            "count": 1,
+            "topk_ids": [
+              125,
+              189,
+              137,
+              32,
+              28,
+              103,
+              47,
+              64
+            ]
+          },
+          {
+            "count": 1,
+            "topk_ids": [
+              189,
+              125,
+              137,
+              32,
+              47,
+              28,
+              103,
+              88
+            ]
+          },
+          {
+            "count": 1,
+            "topk_ids": [
+              189,
+              28,
+              137,
+              103,
+              125,
+              47,
+              64,
+              32
+            ]
+          },
+          {
+            "count": 1,
+            "topk_ids": [
+              52,
+              86,
+              28,
+              125,
+              177,
+              189,
+              47,
+              137
+            ]
+          },
+          {
+            "count": 1,
+            "topk_ids": [
+              64,
+              160,
+              28,
+              52,
+              60,
+              61,
+              30,
+              118
+            ]
+          },
+          {
+            "count": 1,
+            "topk_ids": [
+              189,
+              28,
+              249,
+              61,
+              109,
+              188,
+              37,
+              53
+            ]
+          },
+          {
+            "count": 1,
+            "topk_ids": [
+              249,
+              0,
+              28,
+              52,
+              40,
+              189,
+              188,
+              109
+            ]
+          },
+          {
+            "count": 1,
+            "topk_ids": [
+              109,
+              61,
+              178,
+              249,
+              167,
+              37,
+              188,
+              7
+            ]
+          },
+          {
+            "count": 1,
+            "topk_ids": [
+              194,
+              96,
+              167,
+              67,
+              7,
+              109,
+              198,
+              214
+            ]
+          },
+          {
+            "count": 1,
+            "topk_ids": [
+              182,
+              64,
+              249,
+              194,
+              109,
+              250,
+              7,
+              96
+            ]
+          },
+          {
+            "count": 1,
+            "topk_ids": [
+              194,
+              182,
+              183,
+              96,
+              247,
+              66,
+              175,
+              67
+            ]
+          },
+          {
+            "count": 1,
+            "topk_ids": [
+              183,
+              194,
+              182,
+              66,
+              96,
+              144,
+              111,
+              44
+            ]
+          },
+          {
+            "count": 1,
+            "topk_ids": [
+              194,
+              96,
+              44,
+              17,
+              67,
+              48,
+              183,
+              66
+            ]
+          }
+        ],
+        "unique_topk_tuples": 16
+      },
+      "total_us_mean": 315.5706666666666,
+      "warmup": 5
+    },
+    {
+      "components_us_mean": {
+        "act_contiguous": 61.84186666666666,
+        "activation": 87.8592,
+        "activation_contiguous_quant2": 251.08373333333333,
+        "activation_plus_quant2": 189.24186666666668,
+        "component_sum": 857.7192,
+        "gather": 87.75173333333332,
+        "gemm1": 107.05760000000001,
+        "gemm2": 114.2544,
+        "quant1": 109.27279999999999,
+        "quant2": 101.38266666666667,
+        "remap": 101.45893333333333,
+        "rows_zero": 86.83999999999999
+      },
+      "dtype": "bf16",
+      "hidden_size": 2048,
+      "inter_size_per_tp": 128,
+      "iterations": 15,
+      "manual_vs_xpu_fused_moe_max_abs_diff": 0.0,
+      "moe_inputs": 128,
+      "num_experts": 256,
+      "preallocated_staged_total_us_mean": 243.32186666666666,
+      "preallocated_vs_xpu_fused_moe_max_abs_diff": 0.0,
+      "route_start_index": 24,
+      "route_start_index_mod": 24,
+      "rows": 16,
+      "topk": 8,
+      "topk_source": "route_jsonl",
+      "topk_summary": {
+        "active_experts": 53,
+        "top_experts": [
+          {
+            "count": 8,
+            "expert": 96
+          },
+          {
+            "count": 7,
+            "expert": 64
+          },
+          {
+            "count": 7,
+            "expert": 194
+          },
+          {
+            "count": 7,
+            "expert": 167
+          },
+          {
+            "count": 5,
+            "expert": 109
+          },
+          {
+            "count": 5,
+            "expert": 189
+          },
+          {
+            "count": 5,
+            "expert": 106
+          },
+          {
+            "count": 4,
+            "expert": 182
+          },
+          {
+            "count": 4,
+            "expert": 183
+          },
+          {
+            "count": 4,
+            "expert": 67
+          },
+          {
+            "count": 4,
+            "expert": 160
+          },
+          {
+            "count": 4,
+            "expert": 52
+          },
+          {
+            "count": 3,
+            "expert": 249
+          },
+          {
+            "count": 3,
+            "expert": 7
+          },
+          {
+            "count": 3,
+            "expert": 66
+          },
+          {
+            "count": 3,
+            "expert": 111
+          }
+        ],
+        "topk_tuple_examples": [
+          {
+            "count": 1,
+            "topk_ids": [
+              182,
+              64,
+              249,
+              194,
+              109,
+              250,
+              7,
+              96
+            ]
+          },
+          {
+            "count": 1,
+            "topk_ids": [
+              194,
+              182,
+              183,
+              96,
+              247,
+              66,
+              175,
+              67
+            ]
+          },
+          {
+            "count": 1,
+            "topk_ids": [
+              183,
+              194,
+              182,
+              66,
+              96,
+              144,
+              111,
+              44
+            ]
+          },
+          {
+            "count": 1,
+            "topk_ids": [
+              194,
+              96,
+              44,
+              17,
+              67,
+              48,
+              183,
+              66
+            ]
+          },
+          {
+            "count": 1,
+            "topk_ids": [
+              194,
+              67,
+              96,
+              44,
+              189,
+              73,
+              132,
+              111
+            ]
+          },
+          {
+            "count": 1,
+            "topk_ids": [
+              194,
+              96,
+              182,
+              214,
+              111,
+              64,
+              202,
+              183
+            ]
+          },
+          {
+            "count": 1,
+            "topk_ids": [
+              64,
+              109,
+              167,
+              137,
+              160,
+              249,
+              124,
+              60
+            ]
+          },
+          {
+            "count": 1,
+            "topk_ids": [
+              147,
+              189,
+              86,
+              47,
+              51,
+              53,
+              52,
+              64
+            ]
+          },
+          {
+            "count": 1,
+            "topk_ids": [
+              194,
+              202,
+              214,
+              48,
+              96,
+              132,
+              67,
+              117
+            ]
+          },
+          {
+            "count": 1,
+            "topk_ids": [
+              64,
+              109,
+              167,
+              160,
+              235,
+              61,
+              60,
+              75
+            ]
+          },
+          {
+            "count": 1,
+            "topk_ids": [
+              189,
+              53,
+              28,
+              52,
+              106,
+              167,
+              54,
+              0
+            ]
+          },
+          {
+            "count": 1,
+            "topk_ids": [
+              52,
+              118,
+              8,
+              87,
+              47,
+              106,
+              207,
+              200
+            ]
+          },
+          {
+            "count": 1,
+            "topk_ids": [
+              159,
+              106,
+              52,
+              28,
+              189,
+              167,
+              61,
+              64
+            ]
+          },
+          {
+            "count": 1,
+            "topk_ids": [
+              167,
+              109,
+              61,
+              7,
+              160,
+              64,
+              178,
+              175
+            ]
+          },
+          {
+            "count": 1,
+            "topk_ids": [
+              106,
+              159,
+              231,
+              167,
+              189,
+              14,
+              160,
+              22
+            ]
+          },
+          {
+            "count": 1,
+            "topk_ids": [
+              249,
+              167,
+              7,
+              109,
+              214,
+              96,
+              106,
+              138
+            ]
+          }
+        ],
+        "unique_topk_tuples": 16
+      },
+      "total_us_mean": 327.1701333333333,
+      "warmup": 5
+    },
+    {
+      "components_us_mean": {
+        "act_contiguous": 69.9816,
+        "activation": 101.20933333333332,
+        "activation_contiguous_quant2": 288.3469333333333,
+        "activation_plus_quant2": 218.3653333333333,
+        "component_sum": 975.5026666666666,
+        "gather": 101.2752,
+        "gemm1": 123.62133333333333,
+        "gemm2": 122.87253333333334,
+        "quant1": 116.116,
+        "quant2": 117.15599999999999,
+        "remap": 119.72133333333333,
+        "rows_zero": 103.54933333333334
+      },
+      "dtype": "bf16",
+      "hidden_size": 2048,
+      "inter_size_per_tp": 128,
+      "iterations": 15,
+      "manual_vs_xpu_fused_moe_max_abs_diff": 0.0,
+      "moe_inputs": 128,
+      "num_experts": 256,
+      "preallocated_staged_total_us_mean": 280.592,
+      "preallocated_vs_xpu_fused_moe_max_abs_diff": 0.0,
+      "route_start_index": 36,
+      "route_start_index_mod": 36,
+      "rows": 16,
+      "topk": 8,
+      "topk_source": "route_jsonl",
+      "topk_summary": {
+        "active_experts": 47,
+        "top_experts": [
+          {
+            "count": 11,
+            "expert": 52
+          },
+          {
+            "count": 9,
+            "expert": 106
+          },
+          {
+            "count": 9,
+            "expert": 167
+          },
+          {
+            "count": 7,
+            "expert": 7
+          },
+          {
+            "count": 7,
+            "expert": 160
+          },
+          {
+            "count": 5,
+            "expert": 159
+          },
+          {
+            "count": 5,
+            "expert": 109
+          },
+          {
+            "count": 4,
+            "expert": 189
+          },
+          {
+            "count": 4,
+            "expert": 64
+          },
+          {
+            "count": 4,
+            "expert": 138
+          },
+          {
+            "count": 4,
+            "expert": 155
+          },
+          {
+            "count": 4,
+            "expert": 139
+          },
+          {
+            "count": 4,
+            "expert": 131
+          },
+          {
+            "count": 3,
+            "expert": 61
+          },
+          {
+            "count": 3,
+            "expert": 231
+          },
+          {
+            "count": 3,
+            "expert": 60
+          }
+        ],
+        "topk_tuple_examples": [
+          {
+            "count": 1,
+            "topk_ids": [
+              159,
+              106,
+              52,
+              28,
+              189,
+              167,
+              61,
+              64
+            ]
+          },
+          {
+            "count": 1,
+            "topk_ids": [
+              167,
+              109,
+              61,
+              7,
+              160,
+              64,
+              178,
+              175
+            ]
+          },
+          {
+            "count": 1,
+            "topk_ids": [
+              106,
+              159,
+              231,
+              167,
+              189,
+              14,
+              160,
+              22
+            ]
+          },
+          {
+            "count": 1,
+            "topk_ids": [
+              249,
+              167,
+              7,
+              109,
+              214,
+              96,
+              106,
+              138
+            ]
+          },
+          {
+            "count": 1,
+            "topk_ids": [
+              106,
+              52,
+              159,
+              167,
+              60,
+              160,
+              61,
+              155
+            ]
+          },
+          {
+            "count": 1,
+            "topk_ids": [
+              106,
+              118,
+              38,
+              128,
+              147,
+              159,
+              160,
+              52
+            ]
+          },
+          {
+            "count": 1,
+            "topk_ids": [
+              167,
+              106,
+              139,
+              52,
+              68,
+              231,
+              131,
+              171
+            ]
+          },
+          {
+            "count": 1,
+            "topk_ids": [
+              52,
+              167,
+              175,
+              7,
+              138,
+              109,
+              156,
+              155
+            ]
+          },
+          {
+            "count": 1,
+            "topk_ids": [
+              52,
+              167,
+              106,
+              171,
+              139,
+              7,
+              231,
+              109
+            ]
+          },
+          {
+            "count": 1,
+            "topk_ids": [
+              137,
+              64,
+              189,
+              159,
+              51,
+              124,
+              160,
+              52
+            ]
+          },
+          {
+            "count": 1,
+            "topk_ids": [
+              147,
+              86,
+              118,
+              189,
+              53,
+              57,
+              50,
+              52
+            ]
+          },
+          {
+            "count": 1,
+            "topk_ids": [
+              194,
+              214,
+              96,
+              138,
+              67,
+              155,
+              7,
+              179
+            ]
+          },
+          {
+            "count": 1,
+            "topk_ids": [
+              52,
+              29,
+              118,
+              160,
+              131,
+              106,
+              197,
+              28
+            ]
+          },
+          {
+            "count": 1,
+            "topk_ids": [
+              131,
+              52,
+              106,
+              53,
+              139,
+              167,
+              14,
+              54
+            ]
+          },
+          {
+            "count": 1,
+            "topk_ids": [
+              75,
+              60,
+              52,
+              131,
+              7,
+              77,
+              139,
+              235
+            ]
+          },
+          {
+            "count": 1,
+            "topk_ids": [
+              64,
+              75,
+              155,
+              160,
+              60,
+              138,
+              7,
+              109
+            ]
+          }
+        ],
+        "unique_topk_tuples": 16
+      },
+      "total_us_mean": 375.8005333333333,
+      "warmup": 5
+    },
+    {
+      "components_us_mean": {
+        "act_contiguous": 54.93626666666667,
+        "activation": 79.79919999999998,
+        "activation_contiguous_quant2": 224.40079999999998,
+        "activation_plus_quant2": 169.46453333333332,
+        "component_sum": 760.4376,
+        "gather": 80.55839999999999,
+        "gemm1": 96.98,
+        "gemm2": 96.0024,
+        "quant1": 89.77973333333333,
+        "quant2": 89.66533333333334,
+        "remap": 92.39706666666666,
+        "rows_zero": 80.3192
+      },
+      "dtype": "bf16",
+      "hidden_size": 2048,
+      "inter_size_per_tp": 128,
+      "iterations": 15,
+      "manual_vs_xpu_fused_moe_max_abs_diff": 0.0,
+      "moe_inputs": 128,
+      "num_experts": 256,
+      "preallocated_staged_total_us_mean": 215.9872,
+      "preallocated_vs_xpu_fused_moe_max_abs_diff": 0.0,
+      "route_start_index": 48,
+      "route_start_index_mod": 48,
+      "rows": 16,
+      "topk": 8,
+      "topk_source": "route_jsonl",
+      "topk_summary": {
+        "active_experts": 51,
+        "top_experts": [
+          {
+            "count": 12,
+            "expert": 131
+          },
+          {
+            "count": 8,
+            "expert": 231
+          },
+          {
+            "count": 7,
+            "expert": 52
+          },
+          {
+            "count": 7,
+            "expert": 235
+          },
+          {
+            "count": 6,
+            "expert": 64
+          },
+          {
+            "count": 5,
+            "expert": 60
+          },
+          {
+            "count": 4,
+            "expert": 160
+          },
+          {
+            "count": 4,
+            "expert": 106
+          },
+          {
+            "count": 4,
+            "expert": 28
+          },
+          {
+            "count": 4,
+            "expert": 14
+          },
+          {
+            "count": 4,
+            "expert": 75
+          },
+          {
+            "count": 3,
+            "expert": 86
+          },
+          {
+            "count": 3,
+            "expert": 51
+          },
+          {
+            "count": 3,
+            "expert": 38
+          },
+          {
+            "count": 3,
+            "expert": 83
+          },
+          {
+            "count": 3,
+            "expert": 146
+          }
+        ],
+        "topk_tuple_examples": [
+          {
+            "count": 1,
+            "topk_ids": [
+              52,
+              29,
+              118,
+              160,
+              131,
+              106,
+              197,
+              28
+            ]
+          },
+          {
+            "count": 1,
+            "topk_ids": [
+              131,
+              52,
+              106,
+              53,
+              139,
+              167,
+              14,
+              54
+            ]
+          },
+          {
+            "count": 1,
+            "topk_ids": [
+              75,
+              60,
+              52,
+              131,
+              7,
+              77,
+              139,
+              235
+            ]
+          },
+          {
+            "count": 1,
+            "topk_ids": [
+              64,
+              75,
+              155,
+              160,
+              60,
+              138,
+              7,
+              109
+            ]
+          },
+          {
+            "count": 1,
+            "topk_ids": [
+              52,
+              131,
+              231,
+              86,
+              64,
+              160,
+              106,
+              51
+            ]
+          },
+          {
+            "count": 1,
+            "topk_ids": [
+              220,
+              231,
+              131,
+              38,
+              180,
+              203,
+              40,
+              14
+            ]
+          },
+          {
+            "count": 1,
+            "topk_ids": [
+              131,
+              231,
+              83,
+              146,
+              22,
+              14,
+              235,
+              28
+            ]
+          },
+          {
+            "count": 1,
+            "topk_ids": [
+              131,
+              38,
+              231,
+              22,
+              146,
+              158,
+              242,
+              235
+            ]
+          },
+          {
+            "count": 1,
+            "topk_ids": [
+              131,
+              61,
+              231,
+              235,
+              146,
+              83,
+              218,
+              60
+            ]
+          },
+          {
+            "count": 1,
+            "topk_ids": [
+              38,
+              131,
+              231,
+              83,
+              14,
+              28,
+              189,
+              235
+            ]
+          },
+          {
+            "count": 1,
+            "topk_ids": [
+              189,
+              28,
+              61,
+              64,
+              231,
+              131,
+              106,
+              54
+            ]
+          },
+          {
+            "count": 1,
+            "topk_ids": [
+              131,
+              52,
+              231,
+              64,
+              235,
+              75,
+              51,
+              60
+            ]
+          },
+          {
+            "count": 1,
+            "topk_ids": [
+              51,
+              52,
+              47,
+              64,
+              86,
+              189,
+              125,
+              137
+            ]
+          },
+          {
+            "count": 1,
+            "topk_ids": [
+              64,
+              155,
+              214,
+              194,
+              75,
+              160,
+              60,
+              138
+            ]
+          },
+          {
+            "count": 1,
+            "topk_ids": [
+              86,
+              52,
+              118,
+              131,
+              215,
+              242,
+              104,
+              8
+            ]
+          },
+          {
+            "count": 1,
+            "topk_ids": [
+              194,
+              235,
+              176,
+              206,
+              238,
+              218,
+              101,
+              255
+            ]
+          }
+        ],
+        "unique_topk_tuples": 16
+      },
+      "total_us_mean": 289.9554666666666,
+      "warmup": 5
+    },
+    {
+      "components_us_mean": {
+        "act_contiguous": 62.060266666666664,
+        "activation": 90.50773333333333,
+        "activation_contiguous_quant2": 254.78266666666667,
+        "activation_plus_quant2": 192.7224,
+        "component_sum": 864.0874666666666,
+        "gather": 89.76933333333334,
+        "gemm1": 112.00453333333333,
+        "gemm2": 110.95066666666666,
+        "quant1": 102.44693333333333,
+        "quant2": 102.21466666666667,
+        "remap": 105.69519999999999,
+        "rows_zero": 88.43813333333333
+      },
+      "dtype": "bf16",
+      "hidden_size": 2048,
+      "inter_size_per_tp": 128,
+      "iterations": 15,
+      "manual_vs_xpu_fused_moe_max_abs_diff": 0.0,
+      "moe_inputs": 128,
+      "num_experts": 256,
+      "preallocated_staged_total_us_mean": 258.9357333333333,
+      "preallocated_vs_xpu_fused_moe_max_abs_diff": 0.0,
+      "route_start_index": 60,
+      "route_start_index_mod": 60,
+      "rows": 16,
+      "topk": 8,
+      "topk_source": "route_jsonl",
+      "topk_summary": {
+        "active_experts": 54,
+        "top_experts": [
+          {
+            "count": 8,
+            "expert": 189
+          },
+          {
+            "count": 6,
+            "expert": 176
+          },
+          {
+            "count": 6,
+            "expert": 67
+          },
+          {
+            "count": 6,
+            "expert": 73
+          },
+          {
+            "count": 6,
+            "expert": 84
+          },
+          {
+            "count": 5,
+            "expert": 86
+          },
+          {
+            "count": 5,
+            "expert": 194
+          },
+          {
+            "count": 5,
+            "expert": 101
+          },
+          {
+            "count": 5,
+            "expert": 132
+          },
+          {
+            "count": 4,
+            "expert": 64
+          },
+          {
+            "count": 4,
+            "expert": 160
+          },
+          {
+            "count": 4,
+            "expert": 44
+          },
+          {
+            "count": 3,
+            "expert": 52
+          },
+          {
+            "count": 3,
+            "expert": 47
+          },
+          {
+            "count": 3,
+            "expert": 155
+          },
+          {
+            "count": 3,
+            "expert": 235
+          }
+        ],
+        "topk_tuple_examples": [
+          {
+            "count": 1,
+            "topk_ids": [
+              51,
+              52,
+              47,
+              64,
+              86,
+              189,
+              125,
+              137
+            ]
+          },
+          {
+            "count": 1,
+            "topk_ids": [
+              64,
+              155,
+              214,
+              194,
+              75,
+              160,
+              60,
+              138
+            ]
+          },
+          {
+            "count": 1,
+            "topk_ids": [
+              86,
+              52,
+              118,
+              131,
+              215,
+              242,
+              104,
+              8
+            ]
+          },
+          {
+            "count": 1,
+            "topk_ids": [
+              194,
+              235,
+              176,
+              206,
+              238,
+              218,
+              101,
+              255
+            ]
+          },
+          {
+            "count": 1,
+            "topk_ids": [
+              146,
+              76,
+              194,
+              19,
+              176,
+              235,
+              22,
+              7
+            ]
+          },
+          {
+            "count": 1,
+            "topk_ids": [
+              67,
+              189,
+              73,
+              44,
+              101,
+              132,
+              84,
+              194
+            ]
+          },
+          {
+            "count": 1,
+            "topk_ids": [
+              124,
+              235,
+              86,
+              64,
+              155,
+              206,
+              218,
+              156
+            ]
+          },
+          {
+            "count": 1,
+            "topk_ids": [
+              147,
+              86,
+              160,
+              47,
+              224,
+              31,
+              52,
+              95
+            ]
+          },
+          {
+            "count": 1,
+            "topk_ids": [
+              189,
+              67,
+              132,
+              84,
+              73,
+              101,
+              44,
+              176
+            ]
+          },
+          {
+            "count": 1,
+            "topk_ids": [
+              189,
+              67,
+              73,
+              72,
+              176,
+              96,
+              48,
+              84
+            ]
+          },
+          {
+            "count": 1,
+            "topk_ids": [
+              176,
+              72,
+              203,
+              189,
+              206,
+              67,
+              2,
+              48
+            ]
+          },
+          {
+            "count": 1,
+            "topk_ids": [
+              73,
+              44,
+              67,
+              132,
+              189,
+              84,
+              17,
+              101
+            ]
+          },
+          {
+            "count": 1,
+            "topk_ids": [
+              73,
+              84,
+              189,
+              101,
+              179,
+              176,
+              58,
+              132
+            ]
+          },
+          {
+            "count": 1,
+            "topk_ids": [
+              124,
+              155,
+              224,
+              138,
+              48,
+              160,
+              162,
+              64
+            ]
+          },
+          {
+            "count": 1,
+            "topk_ids": [
+              147,
+              50,
+              86,
+              118,
+              224,
+              31,
+              160,
+              47
+            ]
+          },
+          {
+            "count": 1,
+            "topk_ids": [
+              132,
+              73,
+              189,
+              44,
+              194,
+              67,
+              84,
+              22
+            ]
+          }
+        ],
+        "unique_topk_tuples": 16
+      },
+      "total_us_mean": 332.35279999999995,
+      "warmup": 5
+    },
+    {
+      "components_us_mean": {
+        "act_contiguous": 69.66266666666667,
+        "activation": 101.39653333333332,
+        "activation_contiguous_quant2": 286.8632,
+        "activation_plus_quant2": 217.20053333333334,
+        "component_sum": 971.932,
+        "gather": 101.3792,
+        "gemm1": 123.90213333333332,
+        "gemm2": 124.13786666666667,
+        "quant1": 118.28266666666667,
+        "quant2": 115.804,
+        "remap": 118.76453333333332,
+        "rows_zero": 98.60239999999999
+      },
+      "dtype": "bf16",
+      "hidden_size": 2048,
+      "inter_size_per_tp": 128,
+      "iterations": 15,
+      "manual_vs_xpu_fused_moe_max_abs_diff": 0.0,
+      "moe_inputs": 128,
+      "num_experts": 256,
+      "preallocated_staged_total_us_mean": 279.59706666666665,
+      "preallocated_vs_xpu_fused_moe_max_abs_diff": 0.0,
+      "route_start_index": 72,
+      "route_start_index_mod": 72,
+      "rows": 16,
+      "topk": 8,
+      "topk_source": "route_jsonl",
+      "topk_summary": {
+        "active_experts": 54,
+        "top_experts": [
+          {
+            "count": 8,
+            "expert": 132
+          },
+          {
+            "count": 8,
+            "expert": 67
+          },
+          {
+            "count": 6,
+            "expert": 194
+          },
+          {
+            "count": 5,
+            "expert": 189
+          },
+          {
+            "count": 5,
+            "expert": 44
+          },
+          {
+            "count": 4,
+            "expert": 73
+          },
+          {
+            "count": 4,
+            "expert": 179
+          },
+          {
+            "count": 4,
+            "expert": 224
+          },
+          {
+            "count": 4,
+            "expert": 160
+          },
+          {
+            "count": 4,
+            "expert": 22
+          },
+          {
+            "count": 4,
+            "expert": 171
+          },
+          {
+            "count": 3,
+            "expert": 84
+          },
+          {
+            "count": 3,
+            "expert": 155
+          },
+          {
+            "count": 3,
+            "expert": 138
+          },
+          {
+            "count": 3,
+            "expert": 48
+          },
+          {
+            "count": 3,
+            "expert": 64
+          }
+        ],
+        "topk_tuple_examples": [
+          {
+            "count": 1,
+            "topk_ids": [
+              73,
+              84,
+              189,
+              101,
+              179,
+              176,
+              58,
+              132
+            ]
+          },
+          {
+            "count": 1,
+            "topk_ids": [
+              124,
+              155,
+              224,
+              138,
+              48,
+              160,
+              162,
+              64
+            ]
+          },
+          {
+            "count": 1,
+            "topk_ids": [
+              147,
+              50,
+              86,
+              118,
+              224,
+              31,
+              160,
+              47
+            ]
+          },
+          {
+            "count": 1,
+            "topk_ids": [
+              132,
+              73,
+              189,
+              44,
+              194,
+              67,
+              84,
+              22
+            ]
+          },
+          {
+            "count": 1,
+            "topk_ids": [
+              67,
+              132,
+              194,
+              44,
+              96,
+              171,
+              7,
+              203
+            ]
+          },
+          {
+            "count": 1,
+            "topk_ids": [
+              44,
+              132,
+              17,
+              67,
+              96,
+              202,
+              253,
+              22
+            ]
+          },
+          {
+            "count": 1,
+            "topk_ids": [
+              132,
+              22,
+              48,
+              73,
+              67,
+              202,
+              194,
+              189
+            ]
+          },
+          {
+            "count": 1,
+            "topk_ids": [
+              72,
+              176,
+              190,
+              6,
+              39,
+              218,
+              179,
+              171
+            ]
+          },
+          {
+            "count": 1,
+            "topk_ids": [
+              124,
+              64,
+              50,
+              155,
+              171,
+              218,
+              224,
+              160
+            ]
+          },
+          {
+            "count": 1,
+            "topk_ids": [
+              50,
+              147,
+              86,
+              224,
+              118,
+              145,
+              160,
+              95
+            ]
+          },
+          {
+            "count": 1,
+            "topk_ids": [
+              132,
+              194,
+              22,
+              18,
+              202,
+              72,
+              67,
+              214
+            ]
+          },
+          {
+            "count": 1,
+            "topk_ids": [
+              75,
+              171,
+              118,
+              139,
+              86,
+              104,
+              200,
+              68
+            ]
+          },
+          {
+            "count": 1,
+            "topk_ids": [
+              214,
+              155,
+              64,
+              175,
+              167,
+              138,
+              7,
+              109
+            ]
+          },
+          {
+            "count": 1,
+            "topk_ids": [
+              18,
+              179,
+              194,
+              96,
+              67,
+              11,
+              138,
+              222
+            ]
+          },
+          {
+            "count": 1,
+            "topk_ids": [
+              67,
+              179,
+              189,
+              132,
+              18,
+              44,
+              212,
+              48
+            ]
+          },
+          {
+            "count": 1,
+            "topk_ids": [
+              67,
+              189,
+              132,
+              73,
+              84,
+              194,
+              44,
+              165
+            ]
+          }
+        ],
+        "unique_topk_tuples": 16
+      },
+      "total_us_mean": 371.0824,
+      "warmup": 5
+    },
+    {
+      "components_us_mean": {
+        "act_contiguous": 62.056799999999996,
+        "activation": 91.01039999999999,
+        "activation_contiguous_quant2": 255.96479999999997,
+        "activation_plus_quant2": 193.908,
+        "component_sum": 873.9189333333333,
+        "gather": 92.19946666666667,
+        "gemm1": 119.07306666666666,
+        "gemm2": 110.18106666666667,
+        "quant1": 102.39493333333333,
+        "quant2": 102.8976,
+        "remap": 104.82853333333333,
+        "rows_zero": 89.27706666666667
+      },
+      "dtype": "bf16",
+      "hidden_size": 2048,
+      "inter_size_per_tp": 128,
+      "iterations": 15,
+      "manual_vs_xpu_fused_moe_max_abs_diff": 0.0,
+      "moe_inputs": 128,
+      "num_experts": 256,
+      "preallocated_staged_total_us_mean": 255.476,
+      "preallocated_vs_xpu_fused_moe_max_abs_diff": 0.0,
+      "route_start_index": 84,
+      "route_start_index_mod": 84,
+      "rows": 16,
+      "topk": 8,
+      "topk_source": "route_jsonl",
+      "topk_summary": {
+        "active_experts": 60,
+        "top_experts": [
+          {
+            "count": 7,
+            "expert": 194
+          },
+          {
+            "count": 7,
+            "expert": 67
+          },
+          {
+            "count": 7,
+            "expert": 189
+          },
+          {
+            "count": 6,
+            "expert": 96
+          },
+          {
+            "count": 5,
+            "expert": 132
+          },
+          {
+            "count": 5,
+            "expert": 72
+          },
+          {
+            "count": 4,
+            "expert": 64
+          },
+          {
+            "count": 4,
+            "expert": 138
+          },
+          {
+            "count": 4,
+            "expert": 18
+          },
+          {
+            "count": 4,
+            "expert": 179
+          },
+          {
+            "count": 4,
+            "expert": 73
+          },
+          {
+            "count": 4,
+            "expert": 103
+          },
+          {
+            "count": 3,
+            "expert": 175
+          },
+          {
+            "count": 3,
+            "expert": 22
+          },
+          {
+            "count": 3,
+            "expert": 76
+          },
+          {
+            "count": 3,
+            "expert": 71
+          }
+        ],
+        "topk_tuple_examples": [
+          {
+            "count": 1,
+            "topk_ids": [
+              214,
+              155,
+              64,
+              175,
+              167,
+              138,
+              7,
+              109
+            ]
+          },
+          {
+            "count": 1,
+            "topk_ids": [
+              18,
+              179,
+              194,
+              96,
+              67,
+              11,
+              138,
+              222
+            ]
+          },
+          {
+            "count": 1,
+            "topk_ids": [
+              67,
+              179,
+              189,
+              132,
+              18,
+              44,
+              212,
+              48
+            ]
+          },
+          {
+            "count": 1,
+            "topk_ids": [
+              67,
+              189,
+              132,
+              73,
+              84,
+              194,
+              44,
+              165
+            ]
+          },
+          {
+            "count": 1,
+            "topk_ids": [
+              67,
+              189,
+              72,
+              84,
+              179,
+              194,
+              176,
+              48
+            ]
+          },
+          {
+            "count": 1,
+            "topk_ids": [
+              18,
+              38,
+              179,
+              160,
+              147,
+              224,
+              169,
+              72
+            ]
+          },
+          {
+            "count": 1,
+            "topk_ids": [
+              72,
+              18,
+              138,
+              175,
+              255,
+              153,
+              96,
+              247
+            ]
+          },
+          {
+            "count": 1,
+            "topk_ids": [
+              22,
+              72,
+              194,
+              76,
+              73,
+              132,
+              96,
+              67
+            ]
+          },
+          {
+            "count": 1,
+            "topk_ids": [
+              73,
+              194,
+              22,
+              132,
+              96,
+              67,
+              76,
+              189
+            ]
+          },
+          {
+            "count": 1,
+            "topk_ids": [
+              72,
+              194,
+              22,
+              132,
+              76,
+              67,
+              73,
+              96
+            ]
+          },
+          {
+            "count": 1,
+            "topk_ids": [
+              50,
+              124,
+              224,
+              51,
+              64,
+              160,
+              20,
+              86
+            ]
+          },
+          {
+            "count": 1,
+            "topk_ids": [
+              137,
+              32,
+              189,
+              88,
+              103,
+              64,
+              125,
+              148
+            ]
+          },
+          {
+            "count": 1,
+            "topk_ids": [
+              71,
+              230,
+              191,
+              103,
+              177,
+              41,
+              236,
+              57
+            ]
+          },
+          {
+            "count": 1,
+            "topk_ids": [
+              194,
+              96,
+              182,
+              183,
+              64,
+              175,
+              138,
+              214
+            ]
+          },
+          {
+            "count": 1,
+            "topk_ids": [
+              189,
+              71,
+              103,
+              0,
+              166,
+              177,
+              125,
+              140
+            ]
+          },
+          {
+            "count": 1,
+            "topk_ids": [
+              0,
+              166,
+              12,
+              189,
+              103,
+              97,
+              71,
+              57
+            ]
+          }
+        ],
+        "unique_topk_tuples": 16
+      },
+      "total_us_mean": 330.7928,
+      "warmup": 5
+    }
+  ],
+  "route_metadata": {
+    "active_experts": 126,
+    "layers": {
+      "language_model.model.layers.14.mlp.experts": 95
+    },
+    "records_loaded": 285,
+    "records_matched": 95,
+    "route_jsonl": "data/qwen36-quark-int8-tp4-routecapture6-routes-rank0-20260611.jsonl",
+    "stages": {
+      "quark_int8_apply": 95
+    },
+    "top_experts": [
+      {
+        "count": 37,
+        "expert": 189
+      },
+      {
+        "count": 29,
+        "expert": 64
+      },
+      {
+        "count": 29,
+        "expert": 52
+      },
+      {
+        "count": 26,
+        "expert": 194
+      },
+      {
+        "count": 24,
+        "expert": 67
+      },
+      {
+        "count": 22,
+        "expert": 160
+      },
+      {
+        "count": 20,
+        "expert": 96
+      },
+      {
+        "count": 19,
+        "expert": 167
+      },
+      {
+        "count": 16,
+        "expert": 132
+      },
+      {
+        "count": 15,
+        "expert": 106
+      },
+      {
+        "count": 15,
+        "expert": 28
+      },
+      {
+        "count": 14,
+        "expert": 137
+      },
+      {
+        "count": 14,
+        "expert": 109
+      },
+      {
+        "count": 14,
+        "expert": 131
+      },
+      {
+        "count": 13,
+        "expert": 73
+      },
+      {
+        "count": 13,
+        "expert": 7
+      }
+    ],
+    "topk_rows_loaded": 95,
+    "unique_topk_tuples": 95
+  },
+  "route_packing_metadata": null,
+  "route_start_indices": [
+    0,
+    12,
+    24,
+    36,
+    48,
+    60,
+    72,
+    84
+  ],
+  "tp_size": 4
+}

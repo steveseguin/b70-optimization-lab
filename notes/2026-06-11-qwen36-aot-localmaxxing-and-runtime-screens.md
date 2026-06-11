@@ -4275,6 +4275,78 @@ Bigger, bolder architecture ideas:
       a same-quality low-latency slot for chat-overlay/coding traffic that does
       not need 32K.
 
+Additional bold ideas added after the next-round planning review:
+
+1. Single-request direct graph runner.
+   - Build a minimal decode runner around the same vLLM/XPU kernels and model
+     weights, but remove OpenAI serving, request scheduling, streaming, and
+     multi-tenant policy from the batch-1 path.
+   - This is not a replacement engine yet; it is a bottleneck isolation tool.
+   - If it is far faster than vLLM serving, production can keep vLLM for
+     concurrency and route latency-critical single-user sessions through a
+     same-quality fast lane.
+
+2. TP2-first layout with replicated hot dense work.
+   - TP4 may be over-sharding for batch-1 decode. Test whether TP2 can keep
+     the full W8A8 weights plus 32K KV inside per-card memory while cutting
+     hidden-state collectives.
+   - Use the spare two B70s either as a second production replica or for
+     selected replicated expert/dense work, not as mandatory TP ranks.
+
+3. Layer-local expert replication instead of global hot packing.
+   - The route heatmaps showed a fixed hot-expert order is too blunt.
+   - Simulate layer-local hotsets and replicate only the high-traffic experts
+     on extra ranks/cards. This could reduce cross-rank traffic without
+     changing weights, quantization, or final math.
+
+4. Persistent route scratch and resident row counters.
+   - Avoid per-step tiny allocations/clears by keeping route scratch,
+     `rows_per_expert`, unpermuted maps, quant buffers, and gather buffers
+     resident and zeroing only the touched expert range.
+   - Gate this with primitive timing first; if `rows_zero` is tiny, do not
+     spend kernel time here.
+
+5. Route-aware grouped-GEMM autotuner.
+   - Feed captured route windows into an automated search over grouped-GEMM
+     tile shape, expert ordering, split-K, active-expert compaction, and
+     output layout.
+   - Accept candidates only if they improve both route-exact microbenchmarks
+     and endpoint p512/n512. The previous `m32` case proved that a kernel
+     microbench lead can disappear at endpoint scope.
+
+6. Import OpenVINO/oneDNN/ITREX kernel ideas, not necessarily the engine.
+   - Intel's other stacks may already have better XMX/DPAS W8A8 packing,
+     dynamic quantization, or command submission patterns.
+   - Use them as reference implementations or diagnostics while keeping the
+     current Quark/vLLM quality harness as the acceptance gate.
+
+7. Full decode command-list capture per graph family.
+   - Capture not just model-forward but the common decode sequence around MoE,
+     attention, residual/all-reduce, logits, and sampler into a reusable Level
+     Zero command-list family.
+   - This attacks host/event gaps without changing arithmetic. It is a bigger
+     runtime project, but it may be less risky than a monolithic mega-kernel.
+
+8. Exact speculative decode with several draft lanes.
+   - Treat n-gram, MTP tensors, a small Qwen3.6-family draft, and a learned
+     route/prompt-class proposer as interchangeable draft sources.
+   - The current model remains the verifier. Quality acceptance is exact-token
+     verifier output, plus deterministic replay tests to catch state bugs.
+   - This remains the most plausible `>200 tok/s` route if the XPU model-core
+     floor stays near `100 tok/s`.
+
+9. End-to-end kernel timeline budget.
+   - Produce a token-step budget that sums graph-visible XPU kernels,
+     collectives, host stalls, and sampler time for one accepted request.
+   - Every bold idea should point to a named millisecond bucket in that budget.
+     Otherwise it is likely a distraction.
+
+10. Production split by quality-equivalent service class.
+    - Keep one canonical W8A8 model artifact, but run separate slots for
+      latency-critical single user, long-context 32K, and aggregate throughput.
+    - Slot differences can include TP degree, graph family, context cap,
+      scheduler settings, and frontdoor policy, but not lower-fidelity weights.
+
 Decision standard for all bold ideas:
 
 1. Same model verifier or a BF16/current-model quality proof.
@@ -4283,3 +4355,87 @@ Decision standard for all bold ideas:
 4. p512/n512 warm steady-state single-request speed.
 5. Aggregate c1/c2/c4/c8/c16/c32/c48 sanity before production promotion.
 6. Stability soak after every extension/kernel change.
+
+## Primitive MoE Timing Addendum: Route Counters And Activation Contiguity
+
+Added after extending `scripts/bench-qwen36-int8-moe-kernels.py` to time
+`rows_per_expert.zero_()` and `act_output.contiguous()` separately in the
+manual route-exact W8A8 MoE path.
+
+Artifacts:
+
+- `data/qwen36-quark-int8-moe-routecapture6-layer9-primitive-r15-20260611b.json`
+- `data/qwen36-quark-int8-moe-routecapture6-layer9-hotpack-primitive-r15-20260611b.json`
+- `data/qwen36-quark-int8-moe-routecapture6-layer14-primitive-r15-20260611b.json`
+- `data/qwen36-quark-int8-moe-routecapture6-layer14-hotpack-primitive-r15-20260611b.json`
+- `data/qwen36-quark-int8-moe-routecapture6-layer21-primitive-r15-20260611b.json`
+- `data/qwen36-quark-int8-moe-routecapture6-layer21-hotpack-primitive-r15-20260611b.json`
+- `data/qwen36-quark-int8-moe-routecapture6-primitive-plus-component-summary-20260611b.json`
+
+Validation:
+
+- `python -m py_compile` passed for the patched benchmark and summarizer.
+- `jq empty` passed for all new JSON artifacts.
+- Across raw and hotpack route scans, both manual paths matched
+  `xpu_fused_moe` exactly: max diff `0.0`.
+
+Command pattern:
+
+```bash
+ONEAPI_DEVICE_SELECTOR=level_zero:0 ZE_AFFINITY_MASK=0 \
+PYTHONPATH=/home/steve/src/vllm:/home/steve/src/vllm-xpu-kernels \
+LD_LIBRARY_PATH=/home/steve/src/vllm-xpu-kernels/vllm_xpu_kernels:/home/steve/.venvs/vllm-xpu/lib:/home/steve/.venvs/vllm-xpu/lib/python3.12/site-packages/torch/lib \
+/home/steve/.venvs/vllm-xpu/bin/python scripts/bench-qwen36-int8-moe-kernels.py \
+  --rows 1,16 \
+  --route-jsonl data/qwen36-quark-int8-tp4-routecapture6-routes-rank0-20260611.jsonl \
+  --route-layer-regex 'model\.layers\.9\.' \
+  --route-start-indices 0:96:12 \
+  --iterations 15 \
+  --warmup 5 \
+  --device xpu \
+  --output-json data/qwen36-quark-int8-moe-routecapture6-layer9-primitive-r15-20260611b.json
+```
+
+Raw versus hotpack summary:
+
+| label | rows | windows | total delta | prealloc delta | top primitive delta |
+| --- | ---: | ---: | ---: | ---: | --- |
+| layer9 | 1 | 8 | `+0.758%` | `+1.138%` | `act_contiguous +6.272 us / +11.92%` |
+| layer9 | 16 | 8 | `-4.366%` | `-0.959%` | `gemm2 -2.598 us / -2.68%` |
+| layer14 | 1 | 8 | `-3.171%` | `-2.853%` | `activation -5.798 us / -6.60%` |
+| layer14 | 16 | 8 | `-12.476%` | `-10.573%` | `gemm2 -15.293 us / -12.93%` |
+| layer21 | 1 | 8 | `-5.904%` | `-4.523%` | `remap -6.411 us / -5.99%` |
+| layer21 | 16 | 8 | `-20.389%` | `-14.644%` | `quant2 -22.031 us / -19.62%` |
+
+Selected raw primitive means:
+
+| label | rows | rows_zero | act_contiguous | activation+contiguous+quant2 | component_sum | fused total | prealloc total |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| layer9 | 1 | `75.892 us` | `52.850 us` | `213.678 us` | `723.645 us` | `272.425 us` | `205.267 us` |
+| layer9 | 16 | `79.263 us` | `58.500 us` | `229.092 us` | `763.768 us` | `280.981 us` | `212.330 us` |
+| layer14 | 1 | `81.413 us` | `56.944 us` | `231.202 us` | `777.140 us` | `290.003 us` | `218.856 us` |
+| layer14 | 16 | `90.800 us` | `63.489 us` | `259.696 us` | `881.400 us` | `338.139 us` | `256.758 us` |
+| layer21 | 1 | `79.485 us` | `55.880 us` | `225.960 us` | `765.055 us` | `289.570 us` | `219.044 us` |
+| layer21 | 16 | `93.980 us` | `64.057 us` | `266.121 us` | `899.224 us` | `350.133 us` | `263.323 us` |
+
+Interpretation:
+
+1. The new primitive labels are useful for relative deltas, but the per-call
+   component sum is not endpoint wall-clock truth. Wrapping every tiny call in
+   XPU events inflates the manual sum above the fused/preallocated totals.
+2. `act_output.contiguous()` appears measurable, but because the activation
+   output is already allocated contiguous in this harness, this may be mostly
+   event/dispatch overhead rather than a real device copy. Confirm with
+   graph-visible profiling before spending kernel time on it.
+3. `rows_per_expert.zero_()` is consistently visible at roughly `76-94 us` in
+   the event-wrapped manual path. That supports tracking persistent route
+   scratch and touched-expert zeroing, but only after request-window timing
+   proves this cost exists in the graph replay path.
+4. Hotpacking is still not a clean endpoint candidate by itself. It regresses
+   layer9 rows=1 and improves rows=16 more strongly, especially layer21. The
+   better idea is layer-local route-aware placement/replication, not a single
+   global hotpack reorder.
+5. The next measured step should be graph-visible MoE timing or a direct c1
+   runner. The route-exact microbench is now good enough for candidate
+   generation, but endpoint promotion still needs full p512/n512 speed and
+   quality gates.

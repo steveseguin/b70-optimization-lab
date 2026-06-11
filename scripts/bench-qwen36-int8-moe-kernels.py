@@ -314,12 +314,15 @@ def manual_int8_moe_once(
     remapped_hidden_states = torch.empty((num_moe_inputs, hidden_size),
                                          dtype=hidden_states.dtype,
                                          device=hidden_states.device)
-    rows_per_expert = torch.zeros((num_experts),
+    rows_per_expert = torch.empty((num_experts),
                                   dtype=torch.int32,
                                   device=hidden_states.device)
     unpermuted = torch.empty((num_rows, topk),
                              dtype=torch.int32,
                              device=hidden_states.device)
+
+    _, start, end = record_call(lambda: rows_per_expert.zero_())
+    events["rows_zero"] = (start, end)
 
     _, start, end = record_call(
         lambda: torch.ops._moe_C.remap_hidden_states(
@@ -363,8 +366,11 @@ def manual_int8_moe_once(
         lambda: fused_moe_activation(act_output, gemm1_output, "silu"))
     events["activation"] = (start, end)
 
+    act_contiguous, start, end = record_call(lambda: act_output.contiguous())
+    events["act_contiguous"] = (start, end)
+
     (gemm2_a, gemm2_a_scales), start, end = record_call(
-        lambda: _per_token_quant_int8(act_output))
+        lambda: _per_token_quant_int8(act_contiguous))
     events["quant2"] = (start, end)
 
     gemm2_output = torch.empty((num_moe_inputs, hidden_size),
@@ -627,10 +633,12 @@ def benchmark_rows(
     total_us = []
     preallocated_total_us = []
     component_us: dict[str, list[float]] = {
+        "rows_zero": [],
         "remap": [],
         "quant1": [],
         "gemm1": [],
         "activation": [],
+        "act_contiguous": [],
         "quant2": [],
         "gemm2": [],
         "gather": [],
@@ -670,8 +678,8 @@ def benchmark_rows(
         torch.xpu.synchronize()
         total_us.append(elapsed_us(start, end))
         for label, (component_start, component_end) in events.items():
-            component_us[label].append(elapsed_us(component_start,
-                                                 component_end))
+            component_us.setdefault(label, []).append(
+                elapsed_us(component_start, component_end))
 
         start, end = make_events()
         start.record()
@@ -698,10 +706,14 @@ def benchmark_rows(
                   for label, values in component_us.items()}
     components["activation_plus_quant2"] = (
         components["activation"] + components["quant2"])
+    components["activation_contiguous_quant2"] = (
+        components["activation"] + components["act_contiguous"] +
+        components["quant2"])
     components["component_sum"] = sum(
         components[label]
-        for label in ("remap", "quant1", "gemm1", "activation", "quant2",
-                      "gemm2", "gather"))
+        for label in ("rows_zero", "remap", "quant1", "gemm1",
+                      "activation", "act_contiguous", "quant2", "gemm2",
+                      "gather"))
 
     return {
         "rows": rows,

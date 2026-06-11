@@ -24,12 +24,15 @@ TIMING_KEYS = (
 )
 
 COMPONENT_ORDER = (
+    "rows_zero",
     "remap",
     "quant1",
     "gemm1",
     "activation",
+    "act_contiguous",
     "quant2",
     "activation_plus_quant2",
+    "activation_contiguous_quant2",
     "gemm2",
     "gather",
     "component_sum",
@@ -241,6 +244,7 @@ def print_table(summary: dict[str, Any]) -> None:
                 item for item in row_summary["component_abs_delta_rank"]
                 if item["component"] not in (
                     "activation_plus_quant2",
+                    "activation_contiguous_quant2",
                     "component_sum",
                 )
             ]
