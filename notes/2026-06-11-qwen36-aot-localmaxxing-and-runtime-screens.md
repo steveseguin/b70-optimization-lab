@@ -4509,3 +4509,97 @@ Interpretation:
    backend generation and frontdoor health. Treat heavy offline engine
    init/teardown as another case requiring a real post-restore generation
    smoke, not just `/health`.
+
+## Post-Offline Ideas: Bigger No-Quality-Loss Bets
+
+Added after the offline c1 runner showed that HTTP, SSE, and the LAN frontdoor
+are not hiding a `2x` win. The current ceiling is inside model execution,
+runtime scheduling, TP collectives, or verifier-preserving speculation.
+
+Immediate things to try:
+
+1. Summarize the existing n-gram2/cg3 prompt-class artifacts before launching
+   more speculative runs.
+   - Extract accepted/rejected draft-token rates by prompt class, loop
+     signatures, and any request where speculative output diverges from the
+     accepted token trace.
+   - Do not promote speculation from speed alone. Promotion requires token
+     parity against `data/qwen36-quark-int8-accepted-frontdoor-token-trace-20260611.json`,
+     repeat64 stability, and the 8K needle case.
+2. Add request-id correlation to the speculative JSONL trace and client
+   quality trace.
+   - This is required to connect a corrupt repeat output to the exact scheduler
+     accept/reject decisions that produced it.
+3. Add a strict speculative debug mode that disables any bonus-token emission
+   after accepted draft tokens.
+   - If repeat-loop corruption disappears, the bug is likely target bonus-state
+     advancement or stale token visibility in the n-gram lookup.
+4. Run a verifier-only shadow decode on any speculative failure.
+   - On divergence, immediately replay the same prompt against the accepted
+     baseline with the same frontdoor formatting. This separates model-quality
+     concerns from scheduler/state corruption.
+5. Use the graph-visible timing path for a short accepted decode window.
+   - Target a per-token budget that sums to the observed `~10 ms/token` floor.
+     Anything not visible in that budget is not worth optimizing for the
+     `>200 tok/s` goal.
+
+Bigger bets worth keeping on the board:
+
+1. Exact sidecar draft speculation.
+   - Keep the current Quark W8A8 INT8 model as the final verifier, but run a
+     draft lane from a smaller Qwen3.6-family model, a reduced-context copy, or
+     the official FP8/MTP-capable checkpoint if it can be loaded as a proposer.
+   - This can preserve final output quality because the current verifier still
+     accepts or rejects every token. The hard parts are XPU graph metadata,
+     scheduler correctness, and avoiding draft overhead that consumes the win.
+2. Persistent fused MoE decode kernels.
+   - Build a batch-1/token-1 decode kernel family that owns route counting,
+     touched-expert zeroing, remap, GEMM1, activation, quant2, GEMM2, and
+     weighted combine for the common route shapes.
+   - The primitive scan suggests global hotpacking is too blunt. The credible
+     version is layer-specific and shape-specific, with exact parity gates.
+3. Hybrid TP plus expert-parallel layout.
+   - Current TP4 pays collective and small-M penalties everywhere. A bolder
+     layout would replicate cheap dense work or hot experts while splitting
+     expensive expert work differently per layer.
+   - Memory headroom makes partial replication plausible, but it needs a small
+     layer-local prototype before touching the full engine.
+4. Single-request static lane.
+   - Build a c1 decode service path with fixed prompt template state, fixed
+     block tables, preallocated KV, and captured command-list or graph replay
+     across the full decode loop.
+   - This is separate from the high-concurrency production lane. It targets
+     latency and single-user tok/s first, with automatic fallback to the
+     accepted server if any quality or reliability gate fails.
+5. Borrow or upstream B70-specific W8A8 kernels.
+   - Mine OpenVINO, oneDNN, ITREX, BigDL, and vLLM/XPU issue threads for
+     grouped-GEMM, MoE, and tiny-shape decode kernels that are already tuned
+     for Intel GPUs.
+   - Package our route histograms, primitive timing, and Localmaxxing result as
+     a compact upstream repro so kernel owners can reproduce the exact
+     bottleneck.
+6. Route-aware prefetch and scratch persistence.
+   - Use previous-token/layer route histograms only to prepare memory and
+     command choices, not to change math. Possible wins include touched-expert
+     zeroing, stable route scratch, and prefetching layer-local hot experts.
+7. Same-quality engine bakeoff.
+   - Keep the current model and 8-bit target, but test whether OpenVINO/Optimum
+     Intel, IPEX-LLM/BigDL, LMDeploy, or a thinner llama.cpp-style path can run
+     this exact checkpoint or a mechanically equivalent INT8 conversion.
+   - Any candidate must pass the same token-trace and repeat stability gates
+     before performance matters.
+8. Production split after the speed work.
+   - If the final high-speed path is specialized or speculative, expose it as a
+     latency class with automatic verifier-baseline fallback. Keep the accepted
+     TP4 vLLM path as the reliability floor until the faster lane survives
+     repeat quality, long-context, soak, and device-lost recovery tests.
+
+Current prioritization:
+
+1. Fix and instrument verifier-preserving speculation first, because it is the
+   only already-plausible path to a single-request `2x` without changing final
+   quality.
+2. In parallel, build a graph-visible timing budget so non-speculative kernel
+   work attacks the largest measured token-time blocks.
+3. Use route-exact MoE microbenches for candidate generation only. Endpoint
+   speed plus quality gates decide promotion.
