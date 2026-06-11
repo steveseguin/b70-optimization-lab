@@ -7425,3 +7425,141 @@ Next oracle work:
 3. Run `k=3`, then `k=6/8` only after `k=5` exact parity is clean.
 4. Add a one-command report that joins oracle draft rows, scheduler spec rows,
    and client token diffs by request ID/prefix.
+
+## Isolated Graph Oracle Probe
+
+The follow-up graph oracle run was isolated from frontdoor traffic on backend
+port `18081`, with a fresh graph-mode accepted baseline captured immediately
+before the oracle run.
+
+New artifacts:
+
+- same-posture accepted graph baseline:
+  `data/qwen36-quark-int8-tp4-oracle-isolated-accepted-graph-20260611.json`
+- graph `k=5` oracle completions:
+  `data/qwen36-quark-int8-tp4-oracle5-graph-isolated-completions-20260611.json`
+- graph `k=5` oracle spec summary:
+  `data/qwen36-quark-int8-tp4-oracle5-graph-isolated-spec-summary-20260611.json`
+  and
+  `data/qwen36-quark-int8-tp4-oracle5-graph-isolated-spec-summary-20260611.md`
+- restore smoke attempts:
+  `data/qwen36-quark-int8-tp4-accepted-restored-after-isolated-oracle-frontdoor-text-smoke-20260611.json`,
+  `data/qwen36-quark-int8-tp4-accepted-restored-after-isolated-oracle-frontdoor-text-smoke-rerun-20260611.json`,
+  and
+  `data/qwen36-quark-int8-tp4-accepted-restored-after-notes-retry-frontdoor-text-smoke-20260611.json`.
+
+Result:
+
+- The graph oracle service did not device-lost during the controlled run.
+- The scheduler trace recorded `8` rows over `2` requests, `40` proposed
+  draft tokens, `31` accepted tokens, `9` rejected tokens, and `77.50%`
+  traced acceptance.
+- Exact parity still failed against the same-posture accepted graph baseline:
+  `baseline_match_all=false`.
+- First diffs:
+  - `natural_latency_plan`: output-token index `25`, oracle token `271`,
+    accepted baseline token `198`.
+  - `repetitive_kernel_notes`: output-token index `14`, oracle token `6126`,
+    accepted baseline token `4752`.
+
+Interpretation:
+
+- This is the strongest negative speculation result so far. The proposer was
+  an oracle over the accepted output trace, yet the speculative verifier path
+  still changed the final token stream.
+- Therefore the current bottleneck is not just proposer quality. The active
+  suspect set is speculative scheduler accounting, KV/block-table state,
+  graph-bucket state reuse, or accept/reject rollback behavior on XPU.
+- No oracle speed number is valid until exact parity is restored. A high
+  acceptance rate with changed output is a correctness failure, not a win.
+
+Restore caveat:
+
+- Accepted backend was restored again in tmux session
+  `qwen36-tp4-accepted-restored-after-notes-retry-20260611b`.
+- Backend `/health` and frontdoor `/health` pass.
+- The short frontdoor smoke after the isolated oracle run still fails the
+  arithmetic exact canary (`58` instead of `60`) while exact `OK`, copy,
+  JSON, and repeat stability pass. Backend logs show continuing external
+  `10.0.0.214` traffic during smoke attempts, so this is not a clean isolated
+  quality measurement.
+- Do not promote or publish a new quality result from this restore state until
+  the frontdoor canary is rerun in an isolated window or replaced with a
+  request-id token-trace baseline. The prior accepted restore before the
+  isolated oracle probe did pass the same short frontdoor smoke.
+
+Next diagnostic order:
+
+1. Run an isolated oracle `k=1` graph probe.
+   - If `k=1` fails exact parity, any speculative path is corrupting verifier
+     state on this stack.
+   - If `k=1` passes, the bug is likely in multi-token accept/reject,
+     full-accept bonus, rollback, or graph bucket transitions.
+2. Add per-row KV/block-table and `num_computed_tokens` accounting checks.
+   The replay harness already found accounting bugs once; the next trace needs
+   state before schedule, after verification, after rollback, and after output
+   append.
+3. Build a verifier-only shadow replay for the two isolated completion cases.
+   The goal is to ask the same graph-mode verifier for the next token after
+   each speculative row and prove whether the speculative row's replacement
+   token matches no-spec verifier output.
+4. Add a logit-hash or top-k checksum at the verification boundary for tiny
+   probes. Full logits are too expensive for production, but a debug checksum
+   over the chosen token and a small top-k set would pinpoint whether the
+   verifier math or scheduler state diverges first.
+5. Rerun restore quality in an isolated frontdoor window. The service is
+   healthy, but the current last smoke is not clean enough for promotion.
+
+Additional larger ideas to track:
+
+1. First-class auxiliary proposer API for vLLM/XPU.
+   - The current oracle was bolted onto the n-gram proposer. A cleaner path is
+     a sidecar proposer API that returns draft token ids plus provenance, while
+     the existing Quark verifier remains the only source of final accepted
+     output.
+   - This would let us test official FP8 MTP tensors, DFlash/EAGLE-like
+     heads, and trained local proposers without pretending they are part of
+     the Quark INT8 checkpoint.
+
+2. Speculative-state minimizer for upstream.
+   - Package the two isolated completion prompts, oracle trace, and failed
+     token diffs into a tiny deterministic repro.
+   - Strip it down until it fails on `k=1` or only on `k>1`; that determines
+     whether this belongs to scheduler accounting or multi-token verifier
+     rollback.
+   - This is likely more valuable to vLLM/Intel than a large service log.
+
+3. Route-aware verifier buckets.
+   - Multi-token verifier bucket timings already show enough sublinear headroom
+     for `>200 tok/s` if correctness is fixed.
+   - Instead of fixed `k`, choose `k` from router/sequence features: small `k`
+     for unstable long-context or high-divergence prompts, larger `k` when
+     routed experts and recent token patterns are stable.
+
+4. Memory-for-latency expert hotsets in a dedicated c1 lane.
+   - Use the prompt-class route histograms to duplicate K32/K64 hot expert
+     tiles or prepacked layouts only for a low-concurrency latency service.
+   - This intentionally trades some 32K aggregate headroom for lower
+     single-request decode latency, while the c48 production lane remains
+     conservative.
+
+5. Whole-token graph replay instead of kernel-by-kernel patching.
+   - The AOT census suggests the easy one-op wrappers are exhausted.
+   - A bolder path is one static decode command graph per bucket that covers
+     attention/GDN, routed MoE, collectives, logits, and sampling handoff.
+   - This is risky, but it targets host/runtime transitions directly.
+
+6. Same-quality engine bakeoff with a shared oracle harness.
+   - Test vLLM Quark W8A8, llama.cpp/SYCL Q8_0 or equivalent real 8-bit,
+     OpenVINO/oneDNN GenAI, LLM-Scaler, and newer `vllm-xpu-kernels` branches
+     under the same request-id token-trace gates.
+   - Treat other engines as diagnostics unless they keep 32K context,
+     production serving, and the same no-quality-loss bar.
+
+7. Upstreamable B70/XPU repro bundle.
+   - Bundle three standalone repros: oracle/speculative state corruption,
+     routed W8A8 grouped-GEMM with real expert histograms, and graph-safe
+     tiny hidden-size collectives.
+   - Include exact shapes, oneAPI/vLLM commits, commands, expected behavior,
+     and current B70 timings.
+   - This may unlock help faster than deeper local-only patches.
