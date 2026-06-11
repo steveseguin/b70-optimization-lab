@@ -1,0 +1,1024 @@
+{
+  "base_url": "http://127.0.0.1:18080",
+  "model": "qwen36-35b-a3b-fp8",
+  "tokenizer": "/mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118",
+  "chat_template_kwargs": null,
+  "seed": 20260609,
+  "exact_cases": [
+    {
+      "name": "exact_ok",
+      "content": "Here's a thinking process:\n\n1",
+      "normalized": "Here's a thinking process: 1",
+      "sha256": "a984d8e899b8ed2fee65bad921fb6311e7971ca3273a25bd48171d11c9c0e0da",
+      "elapsed_s": 0.18650396191515028,
+      "usage": {
+        "prompt_tokens": 15,
+        "total_tokens": 23,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "expected": "OK",
+      "json_expected_fields": null,
+      "pass": false
+    },
+    {
+      "name": "copy_phrase",
+      "content": "Here's a thinking process:\n\n1.  **Analyze User Input:**",
+      "normalized": "Here's a thinking process: 1. **Analyze User Input:**",
+      "sha256": "06cc9c7f446560f08f733dc907e73039bc34c240c0a39e6eacc52c3dea8acd2e",
+      "elapsed_s": 0.17463597294408828,
+      "usage": {
+        "prompt_tokens": 24,
+        "total_tokens": 40,
+        "completion_tokens": 16,
+        "prompt_tokens_details": null
+      },
+      "expected": "satin cobalt orbit",
+      "json_expected_fields": null,
+      "pass": false
+    },
+    {
+      "name": "arithmetic",
+      "content": "Here's a thinking process:\n\n1.  **Analyze User Input:**",
+      "normalized": "Here's a thinking process: 1. **Analyze User Input:**",
+      "sha256": "06cc9c7f446560f08f733dc907e73039bc34c240c0a39e6eacc52c3dea8acd2e",
+      "elapsed_s": 0.277982788044028,
+      "usage": {
+        "prompt_tokens": 34,
+        "total_tokens": 50,
+        "completion_tokens": 16,
+        "prompt_tokens_details": null
+      },
+      "expected": "60",
+      "json_expected_fields": null,
+      "pass": false
+    },
+    {
+      "name": "json_schema",
+      "content": "Here's a thinking process:\n\n1.  **Analyze User Input:**\n   - Question: \"12 plus 30.\"\n   - Unit: \"widgets\"\n   - Output format: \"Return only compact JSON with keys answer and unit.\"\n\n2.  **Calculate the Answer:**\n",
+      "normalized": "Here's a thinking process: 1. **Analyze User Input:** - Question: \"12 plus 30.\" - Unit: \"widgets\" - Output format: \"Return only compact JSON with keys answer and unit.\" 2. **Calculate the Answer:**",
+      "sha256": "417851e24a153508720b8c32b7bb31e8ded44bb6576a74d302ad5a3a7a459287",
+      "elapsed_s": 0.6495806981110945,
+      "usage": {
+        "prompt_tokens": 34,
+        "total_tokens": 98,
+        "completion_tokens": 64,
+        "prompt_tokens_details": null
+      },
+      "expected": null,
+      "json_expected_fields": {
+        "answer": "42",
+        "unit": "widgets"
+      },
+      "pass": false,
+      "json_parsed": null
+    }
+  ],
+  "repeat_case": {
+    "name": "repeat_hash_stability",
+    "repeats": 64,
+    "hashes": [
+      "31c00bc976ab2a3df735169b4189a49064f82a25775181da1bce866b86ac493d",
+      "31c00bc976ab2a3df735169b4189a49064f82a25775181da1bce866b86ac493d",
+      "31c00bc976ab2a3df735169b4189a49064f82a25775181da1bce866b86ac493d",
+      "31c00bc976ab2a3df735169b4189a49064f82a25775181da1bce866b86ac493d",
+      "31c00bc976ab2a3df735169b4189a49064f82a25775181da1bce866b86ac493d",
+      "31c00bc976ab2a3df735169b4189a49064f82a25775181da1bce866b86ac493d",
+      "31c00bc976ab2a3df735169b4189a49064f82a25775181da1bce866b86ac493d",
+      "31c00bc976ab2a3df735169b4189a49064f82a25775181da1bce866b86ac493d",
+      "31c00bc976ab2a3df735169b4189a49064f82a25775181da1bce866b86ac493d",
+      "31c00bc976ab2a3df735169b4189a49064f82a25775181da1bce866b86ac493d",
+      "31c00bc976ab2a3df735169b4189a49064f82a25775181da1bce866b86ac493d",
+      "31c00bc976ab2a3df735169b4189a49064f82a25775181da1bce866b86ac493d",
+      "31c00bc976ab2a3df735169b4189a49064f82a25775181da1bce866b86ac493d",
+      "31c00bc976ab2a3df735169b4189a49064f82a25775181da1bce866b86ac493d",
+      "31c00bc976ab2a3df735169b4189a49064f82a25775181da1bce866b86ac493d",
+      "31c00bc976ab2a3df735169b4189a49064f82a25775181da1bce866b86ac493d",
+      "31c00bc976ab2a3df735169b4189a49064f82a25775181da1bce866b86ac493d",
+      "31c00bc976ab2a3df735169b4189a49064f82a25775181da1bce866b86ac493d",
+      "31c00bc976ab2a3df735169b4189a49064f82a25775181da1bce866b86ac493d",
+      "31c00bc976ab2a3df735169b4189a49064f82a25775181da1bce866b86ac493d",
+      "31c00bc976ab2a3df735169b4189a49064f82a25775181da1bce866b86ac493d",
+      "31c00bc976ab2a3df735169b4189a49064f82a25775181da1bce866b86ac493d",
+      "31c00bc976ab2a3df735169b4189a49064f82a25775181da1bce866b86ac493d",
+      "31c00bc976ab2a3df735169b4189a49064f82a25775181da1bce866b86ac493d",
+      "31c00bc976ab2a3df735169b4189a49064f82a25775181da1bce866b86ac493d",
+      "31c00bc976ab2a3df735169b4189a49064f82a25775181da1bce866b86ac493d",
+      "31c00bc976ab2a3df735169b4189a49064f82a25775181da1bce866b86ac493d",
+      "31c00bc976ab2a3df735169b4189a49064f82a25775181da1bce866b86ac493d",
+      "45efe6929c9e2456eb2d38e35716c15a8ce12dea1eddfbb9936f0039c4fe570f",
+      "31c00bc976ab2a3df735169b4189a49064f82a25775181da1bce866b86ac493d",
+      "31c00bc976ab2a3df735169b4189a49064f82a25775181da1bce866b86ac493d",
+      "31c00bc976ab2a3df735169b4189a49064f82a25775181da1bce866b86ac493d",
+      "31c00bc976ab2a3df735169b4189a49064f82a25775181da1bce866b86ac493d",
+      "31c00bc976ab2a3df735169b4189a49064f82a25775181da1bce866b86ac493d",
+      "31c00bc976ab2a3df735169b4189a49064f82a25775181da1bce866b86ac493d",
+      "31c00bc976ab2a3df735169b4189a49064f82a25775181da1bce866b86ac493d",
+      "31c00bc976ab2a3df735169b4189a49064f82a25775181da1bce866b86ac493d",
+      "31c00bc976ab2a3df735169b4189a49064f82a25775181da1bce866b86ac493d",
+      "31c00bc976ab2a3df735169b4189a49064f82a25775181da1bce866b86ac493d",
+      "31c00bc976ab2a3df735169b4189a49064f82a25775181da1bce866b86ac493d",
+      "31c00bc976ab2a3df735169b4189a49064f82a25775181da1bce866b86ac493d",
+      "31c00bc976ab2a3df735169b4189a49064f82a25775181da1bce866b86ac493d",
+      "31c00bc976ab2a3df735169b4189a49064f82a25775181da1bce866b86ac493d",
+      "31c00bc976ab2a3df735169b4189a49064f82a25775181da1bce866b86ac493d",
+      "31c00bc976ab2a3df735169b4189a49064f82a25775181da1bce866b86ac493d",
+      "31c00bc976ab2a3df735169b4189a49064f82a25775181da1bce866b86ac493d",
+      "31c00bc976ab2a3df735169b4189a49064f82a25775181da1bce866b86ac493d",
+      "31c00bc976ab2a3df735169b4189a49064f82a25775181da1bce866b86ac493d",
+      "31c00bc976ab2a3df735169b4189a49064f82a25775181da1bce866b86ac493d",
+      "31c00bc976ab2a3df735169b4189a49064f82a25775181da1bce866b86ac493d",
+      "31c00bc976ab2a3df735169b4189a49064f82a25775181da1bce866b86ac493d",
+      "31c00bc976ab2a3df735169b4189a49064f82a25775181da1bce866b86ac493d",
+      "31c00bc976ab2a3df735169b4189a49064f82a25775181da1bce866b86ac493d",
+      "31c00bc976ab2a3df735169b4189a49064f82a25775181da1bce866b86ac493d",
+      "31c00bc976ab2a3df735169b4189a49064f82a25775181da1bce866b86ac493d",
+      "31c00bc976ab2a3df735169b4189a49064f82a25775181da1bce866b86ac493d",
+      "31c00bc976ab2a3df735169b4189a49064f82a25775181da1bce866b86ac493d",
+      "31c00bc976ab2a3df735169b4189a49064f82a25775181da1bce866b86ac493d",
+      "31c00bc976ab2a3df735169b4189a49064f82a25775181da1bce866b86ac493d",
+      "31c00bc976ab2a3df735169b4189a49064f82a25775181da1bce866b86ac493d",
+      "45efe6929c9e2456eb2d38e35716c15a8ce12dea1eddfbb9936f0039c4fe570f",
+      "31c00bc976ab2a3df735169b4189a49064f82a25775181da1bce866b86ac493d",
+      "31c00bc976ab2a3df735169b4189a49064f82a25775181da1bce866b86ac493d",
+      "31c00bc976ab2a3df735169b4189a49064f82a25775181da1bce866b86ac493d"
+    ],
+    "texts": [
+      "Here's a thinking process: 1. **Analyze User Input:** - **Quantity:** Exactly four - **Format:** Comma",
+      "Here's a thinking process: 1. **Analyze User Input:** - **Quantity:** Exactly four - **Format:** Comma",
+      "Here's a thinking process: 1. **Analyze User Input:** - **Quantity:** Exactly four - **Format:** Comma",
+      "Here's a thinking process: 1. **Analyze User Input:** - **Quantity:** Exactly four - **Format:** Comma",
+      "Here's a thinking process: 1. **Analyze User Input:** - **Quantity:** Exactly four - **Format:** Comma",
+      "Here's a thinking process: 1. **Analyze User Input:** - **Quantity:** Exactly four - **Format:** Comma",
+      "Here's a thinking process: 1. **Analyze User Input:** - **Quantity:** Exactly four - **Format:** Comma",
+      "Here's a thinking process: 1. **Analyze User Input:** - **Quantity:** Exactly four - **Format:** Comma",
+      "Here's a thinking process: 1. **Analyze User Input:** - **Quantity:** Exactly four - **Format:** Comma",
+      "Here's a thinking process: 1. **Analyze User Input:** - **Quantity:** Exactly four - **Format:** Comma",
+      "Here's a thinking process: 1. **Analyze User Input:** - **Quantity:** Exactly four - **Format:** Comma",
+      "Here's a thinking process: 1. **Analyze User Input:** - **Quantity:** Exactly four - **Format:** Comma",
+      "Here's a thinking process: 1. **Analyze User Input:** - **Quantity:** Exactly four - **Format:** Comma",
+      "Here's a thinking process: 1. **Analyze User Input:** - **Quantity:** Exactly four - **Format:** Comma",
+      "Here's a thinking process: 1. **Analyze User Input:** - **Quantity:** Exactly four - **Format:** Comma",
+      "Here's a thinking process: 1. **Analyze User Input:** - **Quantity:** Exactly four - **Format:** Comma",
+      "Here's a thinking process: 1. **Analyze User Input:** - **Quantity:** Exactly four - **Format:** Comma",
+      "Here's a thinking process: 1. **Analyze User Input:** - **Quantity:** Exactly four - **Format:** Comma",
+      "Here's a thinking process: 1. **Analyze User Input:** - **Quantity:** Exactly four - **Format:** Comma",
+      "Here's a thinking process: 1. **Analyze User Input:** - **Quantity:** Exactly four - **Format:** Comma",
+      "Here's a thinking process: 1. **Analyze User Input:** - **Quantity:** Exactly four - **Format:** Comma",
+      "Here's a thinking process: 1. **Analyze User Input:** - **Quantity:** Exactly four - **Format:** Comma",
+      "Here's a thinking process: 1. **Analyze User Input:** - **Quantity:** Exactly four - **Format:** Comma",
+      "Here's a thinking process: 1. **Analyze User Input:** - **Quantity:** Exactly four - **Format:** Comma",
+      "Here's a thinking process: 1. **Analyze User Input:** - **Quantity:** Exactly four - **Format:** Comma",
+      "Here's a thinking process: 1. **Analyze User Input:** - **Quantity:** Exactly four - **Format:** Comma",
+      "Here's a thinking process: 1. **Analyze User Input:** - **Quantity:** Exactly four - **Format:** Comma",
+      "Here's a thinking process: 1. **Analyze User Input:** - **Quantity:** Exactly four - **Format:** Comma",
+      "Here's a thinking process: 1. **Analyze User Input:** whiskey whiskey whiskey whiskey - \"Give exactly four comma-separated lowercase color words",
+      "Here's a thinking process: 1. **Analyze User Input:** - **Quantity:** Exactly four - **Format:** Comma",
+      "Here's a thinking process: 1. **Analyze User Input:** - **Quantity:** Exactly four - **Format:** Comma",
+      "Here's a thinking process: 1. **Analyze User Input:** - **Quantity:** Exactly four - **Format:** Comma",
+      "Here's a thinking process: 1. **Analyze User Input:** - **Quantity:** Exactly four - **Format:** Comma",
+      "Here's a thinking process: 1. **Analyze User Input:** - **Quantity:** Exactly four - **Format:** Comma",
+      "Here's a thinking process: 1. **Analyze User Input:** - **Quantity:** Exactly four - **Format:** Comma",
+      "Here's a thinking process: 1. **Analyze User Input:** - **Quantity:** Exactly four - **Format:** Comma",
+      "Here's a thinking process: 1. **Analyze User Input:** - **Quantity:** Exactly four - **Format:** Comma",
+      "Here's a thinking process: 1. **Analyze User Input:** - **Quantity:** Exactly four - **Format:** Comma",
+      "Here's a thinking process: 1. **Analyze User Input:** - **Quantity:** Exactly four - **Format:** Comma",
+      "Here's a thinking process: 1. **Analyze User Input:** - **Quantity:** Exactly four - **Format:** Comma",
+      "Here's a thinking process: 1. **Analyze User Input:** - **Quantity:** Exactly four - **Format:** Comma",
+      "Here's a thinking process: 1. **Analyze User Input:** - **Quantity:** Exactly four - **Format:** Comma",
+      "Here's a thinking process: 1. **Analyze User Input:** - **Quantity:** Exactly four - **Format:** Comma",
+      "Here's a thinking process: 1. **Analyze User Input:** - **Quantity:** Exactly four - **Format:** Comma",
+      "Here's a thinking process: 1. **Analyze User Input:** - **Quantity:** Exactly four - **Format:** Comma",
+      "Here's a thinking process: 1. **Analyze User Input:** - **Quantity:** Exactly four - **Format:** Comma",
+      "Here's a thinking process: 1. **Analyze User Input:** - **Quantity:** Exactly four - **Format:** Comma",
+      "Here's a thinking process: 1. **Analyze User Input:** - **Quantity:** Exactly four - **Format:** Comma",
+      "Here's a thinking process: 1. **Analyze User Input:** - **Quantity:** Exactly four - **Format:** Comma",
+      "Here's a thinking process: 1. **Analyze User Input:** - **Quantity:** Exactly four - **Format:** Comma",
+      "Here's a thinking process: 1. **Analyze User Input:** - **Quantity:** Exactly four - **Format:** Comma",
+      "Here's a thinking process: 1. **Analyze User Input:** - **Quantity:** Exactly four - **Format:** Comma",
+      "Here's a thinking process: 1. **Analyze User Input:** - **Quantity:** Exactly four - **Format:** Comma",
+      "Here's a thinking process: 1. **Analyze User Input:** - **Quantity:** Exactly four - **Format:** Comma",
+      "Here's a thinking process: 1. **Analyze User Input:** - **Quantity:** Exactly four - **Format:** Comma",
+      "Here's a thinking process: 1. **Analyze User Input:** - **Quantity:** Exactly four - **Format:** Comma",
+      "Here's a thinking process: 1. **Analyze User Input:** - **Quantity:** Exactly four - **Format:** Comma",
+      "Here's a thinking process: 1. **Analyze User Input:** - **Quantity:** Exactly four - **Format:** Comma",
+      "Here's a thinking process: 1. **Analyze User Input:** - **Quantity:** Exactly four - **Format:** Comma",
+      "Here's a thinking process: 1. **Analyze User Input:** - **Quantity:** Exactly four - **Format:** Comma",
+      "Here's a thinking process: 1. **Analyze User Input:** whiskey whiskey whiskey whiskey - \"Give exactly four comma-separated lowercase color words",
+      "Here's a thinking process: 1. **Analyze User Input:** - **Quantity:** Exactly four - **Format:** Comma",
+      "Here's a thinking process: 1. **Analyze User Input:** - **Quantity:** Exactly four - **Format:** Comma",
+      "Here's a thinking process: 1. **Analyze User Input:** - **Quantity:** Exactly four - **Format:** Comma"
+    ],
+    "unique_hashes": [
+      "31c00bc976ab2a3df735169b4189a49064f82a25775181da1bce866b86ac493d",
+      "45efe6929c9e2456eb2d38e35716c15a8ce12dea1eddfbb9936f0039c4fe570f"
+    ],
+    "pass": false,
+    "runs": [
+      {
+        "content": "Here's a thinking process:\n\n1.  **Analyze User Input:**\n   - **Quantity:** Exactly four\n   - **Format:** Comma",
+        "normalized": "Here's a thinking process: 1. **Analyze User Input:** - **Quantity:** Exactly four - **Format:** Comma",
+        "sha256": "31c00bc976ab2a3df735169b4189a49064f82a25775181da1bce866b86ac493d",
+        "elapsed_s": 0.4138149340869859,
+        "usage": {
+          "prompt_tokens": 28,
+          "total_tokens": 60,
+          "completion_tokens": 32,
+          "prompt_tokens_details": null
+        }
+      },
+      {
+        "content": "Here's a thinking process:\n\n1.  **Analyze User Input:**\n   - **Quantity:** Exactly four\n   - **Format:** Comma",
+        "normalized": "Here's a thinking process: 1. **Analyze User Input:** - **Quantity:** Exactly four - **Format:** Comma",
+        "sha256": "31c00bc976ab2a3df735169b4189a49064f82a25775181da1bce866b86ac493d",
+        "elapsed_s": 0.3365854839794338,
+        "usage": {
+          "prompt_tokens": 28,
+          "total_tokens": 60,
+          "completion_tokens": 32,
+          "prompt_tokens_details": null
+        }
+      },
+      {
+        "content": "Here's a thinking process:\n\n1.  **Analyze User Input:**\n   - **Quantity:** Exactly four\n   - **Format:** Comma",
+        "normalized": "Here's a thinking process: 1. **Analyze User Input:** - **Quantity:** Exactly four - **Format:** Comma",
+        "sha256": "31c00bc976ab2a3df735169b4189a49064f82a25775181da1bce866b86ac493d",
+        "elapsed_s": 0.3300317890243605,
+        "usage": {
+          "prompt_tokens": 28,
+          "total_tokens": 60,
+          "completion_tokens": 32,
+          "prompt_tokens_details": null
+        }
+      },
+      {
+        "content": "Here's a thinking process:\n\n1.  **Analyze User Input:**\n   - **Quantity:** Exactly four\n   - **Format:** Comma",
+        "normalized": "Here's a thinking process: 1. **Analyze User Input:** - **Quantity:** Exactly four - **Format:** Comma",
+        "sha256": "31c00bc976ab2a3df735169b4189a49064f82a25775181da1bce866b86ac493d",
+        "elapsed_s": 0.32995748904068023,
+        "usage": {
+          "prompt_tokens": 28,
+          "total_tokens": 60,
+          "completion_tokens": 32,
+          "prompt_tokens_details": null
+        }
+      },
+      {
+        "content": "Here's a thinking process:\n\n1.  **Analyze User Input:**\n   - **Quantity:** Exactly four\n   - **Format:** Comma",
+        "normalized": "Here's a thinking process: 1. **Analyze User Input:** - **Quantity:** Exactly four - **Format:** Comma",
+        "sha256": "31c00bc976ab2a3df735169b4189a49064f82a25775181da1bce866b86ac493d",
+        "elapsed_s": 0.3283731580013409,
+        "usage": {
+          "prompt_tokens": 28,
+          "total_tokens": 60,
+          "completion_tokens": 32,
+          "prompt_tokens_details": null
+        }
+      },
+      {
+        "content": "Here's a thinking process:\n\n1.  **Analyze User Input:**\n   - **Quantity:** Exactly four\n   - **Format:** Comma",
+        "normalized": "Here's a thinking process: 1. **Analyze User Input:** - **Quantity:** Exactly four - **Format:** Comma",
+        "sha256": "31c00bc976ab2a3df735169b4189a49064f82a25775181da1bce866b86ac493d",
+        "elapsed_s": 0.3332526740850881,
+        "usage": {
+          "prompt_tokens": 28,
+          "total_tokens": 60,
+          "completion_tokens": 32,
+          "prompt_tokens_details": null
+        }
+      },
+      {
+        "content": "Here's a thinking process:\n\n1.  **Analyze User Input:**\n   - **Quantity:** Exactly four\n   - **Format:** Comma",
+        "normalized": "Here's a thinking process: 1. **Analyze User Input:** - **Quantity:** Exactly four - **Format:** Comma",
+        "sha256": "31c00bc976ab2a3df735169b4189a49064f82a25775181da1bce866b86ac493d",
+        "elapsed_s": 0.3289490909082815,
+        "usage": {
+          "prompt_tokens": 28,
+          "total_tokens": 60,
+          "completion_tokens": 32,
+          "prompt_tokens_details": null
+        }
+      },
+      {
+        "content": "Here's a thinking process:\n\n1.  **Analyze User Input:**\n   - **Quantity:** Exactly four\n   - **Format:** Comma",
+        "normalized": "Here's a thinking process: 1. **Analyze User Input:** - **Quantity:** Exactly four - **Format:** Comma",
+        "sha256": "31c00bc976ab2a3df735169b4189a49064f82a25775181da1bce866b86ac493d",
+        "elapsed_s": 0.3364598440239206,
+        "usage": {
+          "prompt_tokens": 28,
+          "total_tokens": 60,
+          "completion_tokens": 32,
+          "prompt_tokens_details": null
+        }
+      },
+      {
+        "content": "Here's a thinking process:\n\n1.  **Analyze User Input:**\n   - **Quantity:** Exactly four\n   - **Format:** Comma",
+        "normalized": "Here's a thinking process: 1. **Analyze User Input:** - **Quantity:** Exactly four - **Format:** Comma",
+        "sha256": "31c00bc976ab2a3df735169b4189a49064f82a25775181da1bce866b86ac493d",
+        "elapsed_s": 0.33703319192864,
+        "usage": {
+          "prompt_tokens": 28,
+          "total_tokens": 60,
+          "completion_tokens": 32,
+          "prompt_tokens_details": null
+        }
+      },
+      {
+        "content": "Here's a thinking process:\n\n1.  **Analyze User Input:**\n   - **Quantity:** Exactly four\n   - **Format:** Comma",
+        "normalized": "Here's a thinking process: 1. **Analyze User Input:** - **Quantity:** Exactly four - **Format:** Comma",
+        "sha256": "31c00bc976ab2a3df735169b4189a49064f82a25775181da1bce866b86ac493d",
+        "elapsed_s": 0.33281321509275585,
+        "usage": {
+          "prompt_tokens": 28,
+          "total_tokens": 60,
+          "completion_tokens": 32,
+          "prompt_tokens_details": null
+        }
+      },
+      {
+        "content": "Here's a thinking process:\n\n1.  **Analyze User Input:**\n   - **Quantity:** Exactly four\n   - **Format:** Comma",
+        "normalized": "Here's a thinking process: 1. **Analyze User Input:** - **Quantity:** Exactly four - **Format:** Comma",
+        "sha256": "31c00bc976ab2a3df735169b4189a49064f82a25775181da1bce866b86ac493d",
+        "elapsed_s": 0.32923311193007976,
+        "usage": {
+          "prompt_tokens": 28,
+          "total_tokens": 60,
+          "completion_tokens": 32,
+          "prompt_tokens_details": null
+        }
+      },
+      {
+        "content": "Here's a thinking process:\n\n1.  **Analyze User Input:**\n   - **Quantity:** Exactly four\n   - **Format:** Comma",
+        "normalized": "Here's a thinking process: 1. **Analyze User Input:** - **Quantity:** Exactly four - **Format:** Comma",
+        "sha256": "31c00bc976ab2a3df735169b4189a49064f82a25775181da1bce866b86ac493d",
+        "elapsed_s": 0.32827505993191153,
+        "usage": {
+          "prompt_tokens": 28,
+          "total_tokens": 60,
+          "completion_tokens": 32,
+          "prompt_tokens_details": null
+        }
+      },
+      {
+        "content": "Here's a thinking process:\n\n1.  **Analyze User Input:**\n   - **Quantity:** Exactly four\n   - **Format:** Comma",
+        "normalized": "Here's a thinking process: 1. **Analyze User Input:** - **Quantity:** Exactly four - **Format:** Comma",
+        "sha256": "31c00bc976ab2a3df735169b4189a49064f82a25775181da1bce866b86ac493d",
+        "elapsed_s": 0.3284565109061077,
+        "usage": {
+          "prompt_tokens": 28,
+          "total_tokens": 60,
+          "completion_tokens": 32,
+          "prompt_tokens_details": null
+        }
+      },
+      {
+        "content": "Here's a thinking process:\n\n1.  **Analyze User Input:**\n   - **Quantity:** Exactly four\n   - **Format:** Comma",
+        "normalized": "Here's a thinking process: 1. **Analyze User Input:** - **Quantity:** Exactly four - **Format:** Comma",
+        "sha256": "31c00bc976ab2a3df735169b4189a49064f82a25775181da1bce866b86ac493d",
+        "elapsed_s": 0.3286106599261984,
+        "usage": {
+          "prompt_tokens": 28,
+          "total_tokens": 60,
+          "completion_tokens": 32,
+          "prompt_tokens_details": null
+        }
+      },
+      {
+        "content": "Here's a thinking process:\n\n1.  **Analyze User Input:**\n   - **Quantity:** Exactly four\n   - **Format:** Comma",
+        "normalized": "Here's a thinking process: 1. **Analyze User Input:** - **Quantity:** Exactly four - **Format:** Comma",
+        "sha256": "31c00bc976ab2a3df735169b4189a49064f82a25775181da1bce866b86ac493d",
+        "elapsed_s": 0.3294360509607941,
+        "usage": {
+          "prompt_tokens": 28,
+          "total_tokens": 60,
+          "completion_tokens": 32,
+          "prompt_tokens_details": null
+        }
+      },
+      {
+        "content": "Here's a thinking process:\n\n1.  **Analyze User Input:**\n   - **Quantity:** Exactly four\n   - **Format:** Comma",
+        "normalized": "Here's a thinking process: 1. **Analyze User Input:** - **Quantity:** Exactly four - **Format:** Comma",
+        "sha256": "31c00bc976ab2a3df735169b4189a49064f82a25775181da1bce866b86ac493d",
+        "elapsed_s": 0.3296943069435656,
+        "usage": {
+          "prompt_tokens": 28,
+          "total_tokens": 60,
+          "completion_tokens": 32,
+          "prompt_tokens_details": null
+        }
+      },
+      {
+        "content": "Here's a thinking process:\n\n1.  **Analyze User Input:**\n   - **Quantity:** Exactly four\n   - **Format:** Comma",
+        "normalized": "Here's a thinking process: 1. **Analyze User Input:** - **Quantity:** Exactly four - **Format:** Comma",
+        "sha256": "31c00bc976ab2a3df735169b4189a49064f82a25775181da1bce866b86ac493d",
+        "elapsed_s": 0.3300695709185675,
+        "usage": {
+          "prompt_tokens": 28,
+          "total_tokens": 60,
+          "completion_tokens": 32,
+          "prompt_tokens_details": null
+        }
+      },
+      {
+        "content": "Here's a thinking process:\n\n1.  **Analyze User Input:**\n   - **Quantity:** Exactly four\n   - **Format:** Comma",
+        "normalized": "Here's a thinking process: 1. **Analyze User Input:** - **Quantity:** Exactly four - **Format:** Comma",
+        "sha256": "31c00bc976ab2a3df735169b4189a49064f82a25775181da1bce866b86ac493d",
+        "elapsed_s": 0.3328857769956812,
+        "usage": {
+          "prompt_tokens": 28,
+          "total_tokens": 60,
+          "completion_tokens": 32,
+          "prompt_tokens_details": null
+        }
+      },
+      {
+        "content": "Here's a thinking process:\n\n1.  **Analyze User Input:**\n   - **Quantity:** Exactly four\n   - **Format:** Comma",
+        "normalized": "Here's a thinking process: 1. **Analyze User Input:** - **Quantity:** Exactly four - **Format:** Comma",
+        "sha256": "31c00bc976ab2a3df735169b4189a49064f82a25775181da1bce866b86ac493d",
+        "elapsed_s": 0.33271151897497475,
+        "usage": {
+          "prompt_tokens": 28,
+          "total_tokens": 60,
+          "completion_tokens": 32,
+          "prompt_tokens_details": null
+        }
+      },
+      {
+        "content": "Here's a thinking process:\n\n1.  **Analyze User Input:**\n   - **Quantity:** Exactly four\n   - **Format:** Comma",
+        "normalized": "Here's a thinking process: 1. **Analyze User Input:** - **Quantity:** Exactly four - **Format:** Comma",
+        "sha256": "31c00bc976ab2a3df735169b4189a49064f82a25775181da1bce866b86ac493d",
+        "elapsed_s": 0.332036709995009,
+        "usage": {
+          "prompt_tokens": 28,
+          "total_tokens": 60,
+          "completion_tokens": 32,
+          "prompt_tokens_details": null
+        }
+      },
+      {
+        "content": "Here's a thinking process:\n\n1.  **Analyze User Input:**\n   - **Quantity:** Exactly four\n   - **Format:** Comma",
+        "normalized": "Here's a thinking process: 1. **Analyze User Input:** - **Quantity:** Exactly four - **Format:** Comma",
+        "sha256": "31c00bc976ab2a3df735169b4189a49064f82a25775181da1bce866b86ac493d",
+        "elapsed_s": 0.33095987292472273,
+        "usage": {
+          "prompt_tokens": 28,
+          "total_tokens": 60,
+          "completion_tokens": 32,
+          "prompt_tokens_details": null
+        }
+      },
+      {
+        "content": "Here's a thinking process:\n\n1.  **Analyze User Input:**\n   - **Quantity:** Exactly four\n   - **Format:** Comma",
+        "normalized": "Here's a thinking process: 1. **Analyze User Input:** - **Quantity:** Exactly four - **Format:** Comma",
+        "sha256": "31c00bc976ab2a3df735169b4189a49064f82a25775181da1bce866b86ac493d",
+        "elapsed_s": 0.32922174502164125,
+        "usage": {
+          "prompt_tokens": 28,
+          "total_tokens": 60,
+          "completion_tokens": 32,
+          "prompt_tokens_details": null
+        }
+      },
+      {
+        "content": "Here's a thinking process:\n\n1.  **Analyze User Input:**\n   - **Quantity:** Exactly four\n   - **Format:** Comma",
+        "normalized": "Here's a thinking process: 1. **Analyze User Input:** - **Quantity:** Exactly four - **Format:** Comma",
+        "sha256": "31c00bc976ab2a3df735169b4189a49064f82a25775181da1bce866b86ac493d",
+        "elapsed_s": 0.3311861880356446,
+        "usage": {
+          "prompt_tokens": 28,
+          "total_tokens": 60,
+          "completion_tokens": 32,
+          "prompt_tokens_details": null
+        }
+      },
+      {
+        "content": "Here's a thinking process:\n\n1.  **Analyze User Input:**\n   - **Quantity:** Exactly four\n   - **Format:** Comma",
+        "normalized": "Here's a thinking process: 1. **Analyze User Input:** - **Quantity:** Exactly four - **Format:** Comma",
+        "sha256": "31c00bc976ab2a3df735169b4189a49064f82a25775181da1bce866b86ac493d",
+        "elapsed_s": 0.3318001419538632,
+        "usage": {
+          "prompt_tokens": 28,
+          "total_tokens": 60,
+          "completion_tokens": 32,
+          "prompt_tokens_details": null
+        }
+      },
+      {
+        "content": "Here's a thinking process:\n\n1.  **Analyze User Input:**\n   - **Quantity:** Exactly four\n   - **Format:** Comma",
+        "normalized": "Here's a thinking process: 1. **Analyze User Input:** - **Quantity:** Exactly four - **Format:** Comma",
+        "sha256": "31c00bc976ab2a3df735169b4189a49064f82a25775181da1bce866b86ac493d",
+        "elapsed_s": 0.33174271392636,
+        "usage": {
+          "prompt_tokens": 28,
+          "total_tokens": 60,
+          "completion_tokens": 32,
+          "prompt_tokens_details": null
+        }
+      },
+      {
+        "content": "Here's a thinking process:\n\n1.  **Analyze User Input:**\n   - **Quantity:** Exactly four\n   - **Format:** Comma",
+        "normalized": "Here's a thinking process: 1. **Analyze User Input:** - **Quantity:** Exactly four - **Format:** Comma",
+        "sha256": "31c00bc976ab2a3df735169b4189a49064f82a25775181da1bce866b86ac493d",
+        "elapsed_s": 0.32846184296067804,
+        "usage": {
+          "prompt_tokens": 28,
+          "total_tokens": 60,
+          "completion_tokens": 32,
+          "prompt_tokens_details": null
+        }
+      },
+      {
+        "content": "Here's a thinking process:\n\n1.  **Analyze User Input:**\n   - **Quantity:** Exactly four\n   - **Format:** Comma",
+        "normalized": "Here's a thinking process: 1. **Analyze User Input:** - **Quantity:** Exactly four - **Format:** Comma",
+        "sha256": "31c00bc976ab2a3df735169b4189a49064f82a25775181da1bce866b86ac493d",
+        "elapsed_s": 0.3284872689982876,
+        "usage": {
+          "prompt_tokens": 28,
+          "total_tokens": 60,
+          "completion_tokens": 32,
+          "prompt_tokens_details": null
+        }
+      },
+      {
+        "content": "Here's a thinking process:\n\n1.  **Analyze User Input:**\n   - **Quantity:** Exactly four\n   - **Format:** Comma",
+        "normalized": "Here's a thinking process: 1. **Analyze User Input:** - **Quantity:** Exactly four - **Format:** Comma",
+        "sha256": "31c00bc976ab2a3df735169b4189a49064f82a25775181da1bce866b86ac493d",
+        "elapsed_s": 0.3297970830462873,
+        "usage": {
+          "prompt_tokens": 28,
+          "total_tokens": 60,
+          "completion_tokens": 32,
+          "prompt_tokens_details": null
+        }
+      },
+      {
+        "content": "Here's a thinking process:\n\n1.  **Analyze User Input:**\n whiskey whiskey whiskey whiskey   - \"Give exactly four comma-separated lowercase color words",
+        "normalized": "Here's a thinking process: 1. **Analyze User Input:** whiskey whiskey whiskey whiskey - \"Give exactly four comma-separated lowercase color words",
+        "sha256": "45efe6929c9e2456eb2d38e35716c15a8ce12dea1eddfbb9936f0039c4fe570f",
+        "elapsed_s": 0.33653397008311003,
+        "usage": {
+          "prompt_tokens": 28,
+          "total_tokens": 60,
+          "completion_tokens": 32,
+          "prompt_tokens_details": null
+        }
+      },
+      {
+        "content": "Here's a thinking process:\n\n1.  **Analyze User Input:**\n   - **Quantity:** Exactly four\n   - **Format:** Comma",
+        "normalized": "Here's a thinking process: 1. **Analyze User Input:** - **Quantity:** Exactly four - **Format:** Comma",
+        "sha256": "31c00bc976ab2a3df735169b4189a49064f82a25775181da1bce866b86ac493d",
+        "elapsed_s": 0.3392523230286315,
+        "usage": {
+          "prompt_tokens": 28,
+          "total_tokens": 60,
+          "completion_tokens": 32,
+          "prompt_tokens_details": null
+        }
+      },
+      {
+        "content": "Here's a thinking process:\n\n1.  **Analyze User Input:**\n   - **Quantity:** Exactly four\n   - **Format:** Comma",
+        "normalized": "Here's a thinking process: 1. **Analyze User Input:** - **Quantity:** Exactly four - **Format:** Comma",
+        "sha256": "31c00bc976ab2a3df735169b4189a49064f82a25775181da1bce866b86ac493d",
+        "elapsed_s": 0.3318050269735977,
+        "usage": {
+          "prompt_tokens": 28,
+          "total_tokens": 60,
+          "completion_tokens": 32,
+          "prompt_tokens_details": null
+        }
+      },
+      {
+        "content": "Here's a thinking process:\n\n1.  **Analyze User Input:**\n   - **Quantity:** Exactly four\n   - **Format:** Comma",
+        "normalized": "Here's a thinking process: 1. **Analyze User Input:** - **Quantity:** Exactly four - **Format:** Comma",
+        "sha256": "31c00bc976ab2a3df735169b4189a49064f82a25775181da1bce866b86ac493d",
+        "elapsed_s": 0.3293363240081817,
+        "usage": {
+          "prompt_tokens": 28,
+          "total_tokens": 60,
+          "completion_tokens": 32,
+          "prompt_tokens_details": null
+        }
+      },
+      {
+        "content": "Here's a thinking process:\n\n1.  **Analyze User Input:**\n   - **Quantity:** Exactly four\n   - **Format:** Comma",
+        "normalized": "Here's a thinking process: 1. **Analyze User Input:** - **Quantity:** Exactly four - **Format:** Comma",
+        "sha256": "31c00bc976ab2a3df735169b4189a49064f82a25775181da1bce866b86ac493d",
+        "elapsed_s": 0.33023891993798316,
+        "usage": {
+          "prompt_tokens": 28,
+          "total_tokens": 60,
+          "completion_tokens": 32,
+          "prompt_tokens_details": null
+        }
+      },
+      {
+        "content": "Here's a thinking process:\n\n1.  **Analyze User Input:**\n   - **Quantity:** Exactly four\n   - **Format:** Comma",
+        "normalized": "Here's a thinking process: 1. **Analyze User Input:** - **Quantity:** Exactly four - **Format:** Comma",
+        "sha256": "31c00bc976ab2a3df735169b4189a49064f82a25775181da1bce866b86ac493d",
+        "elapsed_s": 0.3302930530626327,
+        "usage": {
+          "prompt_tokens": 28,
+          "total_tokens": 60,
+          "completion_tokens": 32,
+          "prompt_tokens_details": null
+        }
+      },
+      {
+        "content": "Here's a thinking process:\n\n1.  **Analyze User Input:**\n   - **Quantity:** Exactly four\n   - **Format:** Comma",
+        "normalized": "Here's a thinking process: 1. **Analyze User Input:** - **Quantity:** Exactly four - **Format:** Comma",
+        "sha256": "31c00bc976ab2a3df735169b4189a49064f82a25775181da1bce866b86ac493d",
+        "elapsed_s": 0.32856559299398214,
+        "usage": {
+          "prompt_tokens": 28,
+          "total_tokens": 60,
+          "completion_tokens": 32,
+          "prompt_tokens_details": null
+        }
+      },
+      {
+        "content": "Here's a thinking process:\n\n1.  **Analyze User Input:**\n   - **Quantity:** Exactly four\n   - **Format:** Comma",
+        "normalized": "Here's a thinking process: 1. **Analyze User Input:** - **Quantity:** Exactly four - **Format:** Comma",
+        "sha256": "31c00bc976ab2a3df735169b4189a49064f82a25775181da1bce866b86ac493d",
+        "elapsed_s": 0.3284132849657908,
+        "usage": {
+          "prompt_tokens": 28,
+          "total_tokens": 60,
+          "completion_tokens": 32,
+          "prompt_tokens_details": null
+        }
+      },
+      {
+        "content": "Here's a thinking process:\n\n1.  **Analyze User Input:**\n   - **Quantity:** Exactly four\n   - **Format:** Comma",
+        "normalized": "Here's a thinking process: 1. **Analyze User Input:** - **Quantity:** Exactly four - **Format:** Comma",
+        "sha256": "31c00bc976ab2a3df735169b4189a49064f82a25775181da1bce866b86ac493d",
+        "elapsed_s": 0.32791649200953543,
+        "usage": {
+          "prompt_tokens": 28,
+          "total_tokens": 60,
+          "completion_tokens": 32,
+          "prompt_tokens_details": null
+        }
+      },
+      {
+        "content": "Here's a thinking process:\n\n1.  **Analyze User Input:**\n   - **Quantity:** Exactly four\n   - **Format:** Comma",
+        "normalized": "Here's a thinking process: 1. **Analyze User Input:** - **Quantity:** Exactly four - **Format:** Comma",
+        "sha256": "31c00bc976ab2a3df735169b4189a49064f82a25775181da1bce866b86ac493d",
+        "elapsed_s": 0.32858163106720895,
+        "usage": {
+          "prompt_tokens": 28,
+          "total_tokens": 60,
+          "completion_tokens": 32,
+          "prompt_tokens_details": null
+        }
+      },
+      {
+        "content": "Here's a thinking process:\n\n1.  **Analyze User Input:**\n   - **Quantity:** Exactly four\n   - **Format:** Comma",
+        "normalized": "Here's a thinking process: 1. **Analyze User Input:** - **Quantity:** Exactly four - **Format:** Comma",
+        "sha256": "31c00bc976ab2a3df735169b4189a49064f82a25775181da1bce866b86ac493d",
+        "elapsed_s": 0.3286426749546081,
+        "usage": {
+          "prompt_tokens": 28,
+          "total_tokens": 60,
+          "completion_tokens": 32,
+          "prompt_tokens_details": null
+        }
+      },
+      {
+        "content": "Here's a thinking process:\n\n1.  **Analyze User Input:**\n   - **Quantity:** Exactly four\n   - **Format:** Comma",
+        "normalized": "Here's a thinking process: 1. **Analyze User Input:** - **Quantity:** Exactly four - **Format:** Comma",
+        "sha256": "31c00bc976ab2a3df735169b4189a49064f82a25775181da1bce866b86ac493d",
+        "elapsed_s": 0.32922858698293567,
+        "usage": {
+          "prompt_tokens": 28,
+          "total_tokens": 60,
+          "completion_tokens": 32,
+          "prompt_tokens_details": null
+        }
+      },
+      {
+        "content": "Here's a thinking process:\n\n1.  **Analyze User Input:**\n   - **Quantity:** Exactly four\n   - **Format:** Comma",
+        "normalized": "Here's a thinking process: 1. **Analyze User Input:** - **Quantity:** Exactly four - **Format:** Comma",
+        "sha256": "31c00bc976ab2a3df735169b4189a49064f82a25775181da1bce866b86ac493d",
+        "elapsed_s": 0.33027074590791017,
+        "usage": {
+          "prompt_tokens": 28,
+          "total_tokens": 60,
+          "completion_tokens": 32,
+          "prompt_tokens_details": null
+        }
+      },
+      {
+        "content": "Here's a thinking process:\n\n1.  **Analyze User Input:**\n   - **Quantity:** Exactly four\n   - **Format:** Comma",
+        "normalized": "Here's a thinking process: 1. **Analyze User Input:** - **Quantity:** Exactly four - **Format:** Comma",
+        "sha256": "31c00bc976ab2a3df735169b4189a49064f82a25775181da1bce866b86ac493d",
+        "elapsed_s": 0.33137184602674097,
+        "usage": {
+          "prompt_tokens": 28,
+          "total_tokens": 60,
+          "completion_tokens": 32,
+          "prompt_tokens_details": null
+        }
+      },
+      {
+        "content": "Here's a thinking process:\n\n1.  **Analyze User Input:**\n   - **Quantity:** Exactly four\n   - **Format:** Comma",
+        "normalized": "Here's a thinking process: 1. **Analyze User Input:** - **Quantity:** Exactly four - **Format:** Comma",
+        "sha256": "31c00bc976ab2a3df735169b4189a49064f82a25775181da1bce866b86ac493d",
+        "elapsed_s": 0.32848859392106533,
+        "usage": {
+          "prompt_tokens": 28,
+          "total_tokens": 60,
+          "completion_tokens": 32,
+          "prompt_tokens_details": null
+        }
+      },
+      {
+        "content": "Here's a thinking process:\n\n1.  **Analyze User Input:**\n   - **Quantity:** Exactly four\n   - **Format:** Comma",
+        "normalized": "Here's a thinking process: 1. **Analyze User Input:** - **Quantity:** Exactly four - **Format:** Comma",
+        "sha256": "31c00bc976ab2a3df735169b4189a49064f82a25775181da1bce866b86ac493d",
+        "elapsed_s": 0.32828387792687863,
+        "usage": {
+          "prompt_tokens": 28,
+          "total_tokens": 60,
+          "completion_tokens": 32,
+          "prompt_tokens_details": null
+        }
+      },
+      {
+        "content": "Here's a thinking process:\n\n1.  **Analyze User Input:**\n   - **Quantity:** Exactly four\n   - **Format:** Comma",
+        "normalized": "Here's a thinking process: 1. **Analyze User Input:** - **Quantity:** Exactly four - **Format:** Comma",
+        "sha256": "31c00bc976ab2a3df735169b4189a49064f82a25775181da1bce866b86ac493d",
+        "elapsed_s": 0.3290975869167596,
+        "usage": {
+          "prompt_tokens": 28,
+          "total_tokens": 60,
+          "completion_tokens": 32,
+          "prompt_tokens_details": null
+        }
+      },
+      {
+        "content": "Here's a thinking process:\n\n1.  **Analyze User Input:**\n   - **Quantity:** Exactly four\n   - **Format:** Comma",
+        "normalized": "Here's a thinking process: 1. **Analyze User Input:** - **Quantity:** Exactly four - **Format:** Comma",
+        "sha256": "31c00bc976ab2a3df735169b4189a49064f82a25775181da1bce866b86ac493d",
+        "elapsed_s": 0.32883356092497706,
+        "usage": {
+          "prompt_tokens": 28,
+          "total_tokens": 60,
+          "completion_tokens": 32,
+          "prompt_tokens_details": null
+        }
+      },
+      {
+        "content": "Here's a thinking process:\n\n1.  **Analyze User Input:**\n   - **Quantity:** Exactly four\n   - **Format:** Comma",
+        "normalized": "Here's a thinking process: 1. **Analyze User Input:** - **Quantity:** Exactly four - **Format:** Comma",
+        "sha256": "31c00bc976ab2a3df735169b4189a49064f82a25775181da1bce866b86ac493d",
+        "elapsed_s": 0.32854074891656637,
+        "usage": {
+          "prompt_tokens": 28,
+          "total_tokens": 60,
+          "completion_tokens": 32,
+          "prompt_tokens_details": null
+        }
+      },
+      {
+        "content": "Here's a thinking process:\n\n1.  **Analyze User Input:**\n   - **Quantity:** Exactly four\n   - **Format:** Comma",
+        "normalized": "Here's a thinking process: 1. **Analyze User Input:** - **Quantity:** Exactly four - **Format:** Comma",
+        "sha256": "31c00bc976ab2a3df735169b4189a49064f82a25775181da1bce866b86ac493d",
+        "elapsed_s": 0.3285852320259437,
+        "usage": {
+          "prompt_tokens": 28,
+          "total_tokens": 60,
+          "completion_tokens": 32,
+          "prompt_tokens_details": null
+        }
+      },
+      {
+        "content": "Here's a thinking process:\n\n1.  **Analyze User Input:**\n   - **Quantity:** Exactly four\n   - **Format:** Comma",
+        "normalized": "Here's a thinking process: 1. **Analyze User Input:** - **Quantity:** Exactly four - **Format:** Comma",
+        "sha256": "31c00bc976ab2a3df735169b4189a49064f82a25775181da1bce866b86ac493d",
+        "elapsed_s": 0.3286041769897565,
+        "usage": {
+          "prompt_tokens": 28,
+          "total_tokens": 60,
+          "completion_tokens": 32,
+          "prompt_tokens_details": null
+        }
+      },
+      {
+        "content": "Here's a thinking process:\n\n1.  **Analyze User Input:**\n   - **Quantity:** Exactly four\n   - **Format:** Comma",
+        "normalized": "Here's a thinking process: 1. **Analyze User Input:** - **Quantity:** Exactly four - **Format:** Comma",
+        "sha256": "31c00bc976ab2a3df735169b4189a49064f82a25775181da1bce866b86ac493d",
+        "elapsed_s": 0.3285364890471101,
+        "usage": {
+          "prompt_tokens": 28,
+          "total_tokens": 60,
+          "completion_tokens": 32,
+          "prompt_tokens_details": null
+        }
+      },
+      {
+        "content": "Here's a thinking process:\n\n1.  **Analyze User Input:**\n   - **Quantity:** Exactly four\n   - **Format:** Comma",
+        "normalized": "Here's a thinking process: 1. **Analyze User Input:** - **Quantity:** Exactly four - **Format:** Comma",
+        "sha256": "31c00bc976ab2a3df735169b4189a49064f82a25775181da1bce866b86ac493d",
+        "elapsed_s": 0.32939277903642505,
+        "usage": {
+          "prompt_tokens": 28,
+          "total_tokens": 60,
+          "completion_tokens": 32,
+          "prompt_tokens_details": null
+        }
+      },
+      {
+        "content": "Here's a thinking process:\n\n1.  **Analyze User Input:**\n   - **Quantity:** Exactly four\n   - **Format:** Comma",
+        "normalized": "Here's a thinking process: 1. **Analyze User Input:** - **Quantity:** Exactly four - **Format:** Comma",
+        "sha256": "31c00bc976ab2a3df735169b4189a49064f82a25775181da1bce866b86ac493d",
+        "elapsed_s": 0.3289665370248258,
+        "usage": {
+          "prompt_tokens": 28,
+          "total_tokens": 60,
+          "completion_tokens": 32,
+          "prompt_tokens_details": null
+        }
+      },
+      {
+        "content": "Here's a thinking process:\n\n1.  **Analyze User Input:**\n   - **Quantity:** Exactly four\n   - **Format:** Comma",
+        "normalized": "Here's a thinking process: 1. **Analyze User Input:** - **Quantity:** Exactly four - **Format:** Comma",
+        "sha256": "31c00bc976ab2a3df735169b4189a49064f82a25775181da1bce866b86ac493d",
+        "elapsed_s": 0.32889462099410594,
+        "usage": {
+          "prompt_tokens": 28,
+          "total_tokens": 60,
+          "completion_tokens": 32,
+          "prompt_tokens_details": null
+        }
+      },
+      {
+        "content": "Here's a thinking process:\n\n1.  **Analyze User Input:**\n   - **Quantity:** Exactly four\n   - **Format:** Comma",
+        "normalized": "Here's a thinking process: 1. **Analyze User Input:** - **Quantity:** Exactly four - **Format:** Comma",
+        "sha256": "31c00bc976ab2a3df735169b4189a49064f82a25775181da1bce866b86ac493d",
+        "elapsed_s": 0.3291943329386413,
+        "usage": {
+          "prompt_tokens": 28,
+          "total_tokens": 60,
+          "completion_tokens": 32,
+          "prompt_tokens_details": null
+        }
+      },
+      {
+        "content": "Here's a thinking process:\n\n1.  **Analyze User Input:**\n   - **Quantity:** Exactly four\n   - **Format:** Comma",
+        "normalized": "Here's a thinking process: 1. **Analyze User Input:** - **Quantity:** Exactly four - **Format:** Comma",
+        "sha256": "31c00bc976ab2a3df735169b4189a49064f82a25775181da1bce866b86ac493d",
+        "elapsed_s": 0.32922760595101863,
+        "usage": {
+          "prompt_tokens": 28,
+          "total_tokens": 60,
+          "completion_tokens": 32,
+          "prompt_tokens_details": null
+        }
+      },
+      {
+        "content": "Here's a thinking process:\n\n1.  **Analyze User Input:**\n   - **Quantity:** Exactly four\n   - **Format:** Comma",
+        "normalized": "Here's a thinking process: 1. **Analyze User Input:** - **Quantity:** Exactly four - **Format:** Comma",
+        "sha256": "31c00bc976ab2a3df735169b4189a49064f82a25775181da1bce866b86ac493d",
+        "elapsed_s": 0.3288816260173917,
+        "usage": {
+          "prompt_tokens": 28,
+          "total_tokens": 60,
+          "completion_tokens": 32,
+          "prompt_tokens_details": null
+        }
+      },
+      {
+        "content": "Here's a thinking process:\n\n1.  **Analyze User Input:**\n   - **Quantity:** Exactly four\n   - **Format:** Comma",
+        "normalized": "Here's a thinking process: 1. **Analyze User Input:** - **Quantity:** Exactly four - **Format:** Comma",
+        "sha256": "31c00bc976ab2a3df735169b4189a49064f82a25775181da1bce866b86ac493d",
+        "elapsed_s": 0.32893720897845924,
+        "usage": {
+          "prompt_tokens": 28,
+          "total_tokens": 60,
+          "completion_tokens": 32,
+          "prompt_tokens_details": null
+        }
+      },
+      {
+        "content": "Here's a thinking process:\n\n1.  **Analyze User Input:**\n   - **Quantity:** Exactly four\n   - **Format:** Comma",
+        "normalized": "Here's a thinking process: 1. **Analyze User Input:** - **Quantity:** Exactly four - **Format:** Comma",
+        "sha256": "31c00bc976ab2a3df735169b4189a49064f82a25775181da1bce866b86ac493d",
+        "elapsed_s": 0.32904544193297625,
+        "usage": {
+          "prompt_tokens": 28,
+          "total_tokens": 60,
+          "completion_tokens": 32,
+          "prompt_tokens_details": null
+        }
+      },
+      {
+        "content": "Here's a thinking process:\n\n1.  **Analyze User Input:**\n   - **Quantity:** Exactly four\n   - **Format:** Comma",
+        "normalized": "Here's a thinking process: 1. **Analyze User Input:** - **Quantity:** Exactly four - **Format:** Comma",
+        "sha256": "31c00bc976ab2a3df735169b4189a49064f82a25775181da1bce866b86ac493d",
+        "elapsed_s": 0.3286731819389388,
+        "usage": {
+          "prompt_tokens": 28,
+          "total_tokens": 60,
+          "completion_tokens": 32,
+          "prompt_tokens_details": null
+        }
+      },
+      {
+        "content": "Here's a thinking process:\n\n1.  **Analyze User Input:**\n   - **Quantity:** Exactly four\n   - **Format:** Comma",
+        "normalized": "Here's a thinking process: 1. **Analyze User Input:** - **Quantity:** Exactly four - **Format:** Comma",
+        "sha256": "31c00bc976ab2a3df735169b4189a49064f82a25775181da1bce866b86ac493d",
+        "elapsed_s": 0.329611113993451,
+        "usage": {
+          "prompt_tokens": 28,
+          "total_tokens": 60,
+          "completion_tokens": 32,
+          "prompt_tokens_details": null
+        }
+      },
+      {
+        "content": "Here's a thinking process:\n\n1.  **Analyze User Input:**\n whiskey whiskey whiskey whiskey   - \"Give exactly four comma-separated lowercase color words",
+        "normalized": "Here's a thinking process: 1. **Analyze User Input:** whiskey whiskey whiskey whiskey - \"Give exactly four comma-separated lowercase color words",
+        "sha256": "45efe6929c9e2456eb2d38e35716c15a8ce12dea1eddfbb9936f0039c4fe570f",
+        "elapsed_s": 0.32818117493297905,
+        "usage": {
+          "prompt_tokens": 28,
+          "total_tokens": 60,
+          "completion_tokens": 32,
+          "prompt_tokens_details": null
+        }
+      },
+      {
+        "content": "Here's a thinking process:\n\n1.  **Analyze User Input:**\n   - **Quantity:** Exactly four\n   - **Format:** Comma",
+        "normalized": "Here's a thinking process: 1. **Analyze User Input:** - **Quantity:** Exactly four - **Format:** Comma",
+        "sha256": "31c00bc976ab2a3df735169b4189a49064f82a25775181da1bce866b86ac493d",
+        "elapsed_s": 0.3285859060706571,
+        "usage": {
+          "prompt_tokens": 28,
+          "total_tokens": 60,
+          "completion_tokens": 32,
+          "prompt_tokens_details": null
+        }
+      },
+      {
+        "content": "Here's a thinking process:\n\n1.  **Analyze User Input:**\n   - **Quantity:** Exactly four\n   - **Format:** Comma",
+        "normalized": "Here's a thinking process: 1. **Analyze User Input:** - **Quantity:** Exactly four - **Format:** Comma",
+        "sha256": "31c00bc976ab2a3df735169b4189a49064f82a25775181da1bce866b86ac493d",
+        "elapsed_s": 0.3304523340193555,
+        "usage": {
+          "prompt_tokens": 28,
+          "total_tokens": 60,
+          "completion_tokens": 32,
+          "prompt_tokens_details": null
+        }
+      },
+      {
+        "content": "Here's a thinking process:\n\n1.  **Analyze User Input:**\n   - **Quantity:** Exactly four\n   - **Format:** Comma",
+        "normalized": "Here's a thinking process: 1. **Analyze User Input:** - **Quantity:** Exactly four - **Format:** Comma",
+        "sha256": "31c00bc976ab2a3df735169b4189a49064f82a25775181da1bce866b86ac493d",
+        "elapsed_s": 0.3282654720824212,
+        "usage": {
+          "prompt_tokens": 28,
+          "total_tokens": 60,
+          "completion_tokens": 32,
+          "prompt_tokens_details": null
+        }
+      }
+    ]
+  },
+  "long_context_case": {
+    "name": "long_context_needle",
+    "requested_context_tokens": 8192,
+    "actual_prompt_tokens": 7617,
+    "needle": "B70_QWEN36_NEEDLE_20260609",
+    "content": "Here's a thinking process:\n\n1.  **Analyze User Input:**\n   - The user provides a very long prompt filled with repetitive filler text: \"Long context quality filler about scheduling kernels and preserving semantics.\" repeated many times.\n   - Then, there's a specific line: \"Important needle: B",
+    "normalized": "Here's a thinking process: 1. **Analyze User Input:** - The user provides a very long prompt filled with repetitive filler text: \"Long context quality filler about scheduling kernels and preserving semantics.\" repeated many times. - Then, there's a specific line: \"Important needle: B",
+    "sha256": "ad2c512bd204bcf532f9bc8358f656b8872ccaaba4cb040799a6f1965c98a51b",
+    "elapsed_s": 1.5681255309609696,
+    "usage": {
+      "prompt_tokens": 7627,
+      "total_tokens": 7691,
+      "completion_tokens": 64,
+      "prompt_tokens_details": null
+    },
+    "pass": false
+  },
+  "pass_all": false,
+  "baseline_comparisons": {
+    "exact:exact_ok:present": true,
+    "exact:exact_ok:same_normalized": false,
+    "exact:exact_ok:same_hash": false,
+    "exact:copy_phrase:present": true,
+    "exact:copy_phrase:same_normalized": false,
+    "exact:copy_phrase:same_hash": false,
+    "exact:arithmetic:present": true,
+    "exact:arithmetic:same_normalized": false,
+    "exact:arithmetic:same_hash": false,
+    "exact:json_schema:present": true,
+    "exact:json_schema:same_normalized": false,
+    "exact:json_schema:same_hash": false,
+    "repeat:first_hash_same": false,
+    "long_context:same_hash": false,
+    "long_context:same_pass": false
+  },
+  "baseline_match_all": false
+}

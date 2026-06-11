@@ -2052,3 +2052,86 @@ baseline.
       exact greedy logits, static single-stream execution, and real persistent
       MoE/GEMM kernels. Everything else should be measured, but not allowed to
       consume the main track indefinitely.
+
+## Accepted Control Refresh: r8, Frontdoor repeat64, VRAM
+
+Refreshed the accepted restored service before trying the next risky branch.
+Backend health was `200`, and the active server stayed
+`qwen36-tp4-accepted-restored-20260611h`:
+
+```text
+/home/steve/.venvs/vllm-xpu/bin/vllm serve ... \
+  --served-model-name qwen36-35b-a3b-fp8 \
+  --tensor-parallel-size 4 \
+  --max-model-len 32768 \
+  --max-num-seqs 48 \
+  --gpu-memory-utilization 0.95 \
+  --no-enable-prefix-caching \
+  --compilation-config '{"cudagraph_mode":"PIECEWISE"}'
+```
+
+Artifacts:
+
+- direct backend speed r8:
+  `data/qwen36-quark-int8-tp4-accepted-clean-single-r8-refresh-20260611.json`
+- production/frontdoor speed r4:
+  `data/qwen36-quark-int8-tp4-accepted-frontdoor-single-r4-refresh-20260611.json`
+- production/frontdoor quality repeat64:
+  `data/qwen36-quark-int8-tp4-accepted-frontdoor-quality-rerun64-refresh-20260611.json`
+- direct backend default chat-template quality failure:
+  `data/qwen36-quark-int8-tp4-accepted-quality-rerun64-refresh-20260611.json`
+- direct backend explicit no-thinking quality failure:
+  `data/qwen36-quark-int8-tp4-accepted-quality-rerun64-nothink-refresh-20260611.json`
+- VRAM/headroom snapshot:
+  `data/qwen36-quark-int8-tp4-accepted-vram-snapshot-refresh-20260611.json`
+
+Speed summary:
+
+| Path | Repeats | Corrected output tok/s | E2E output tok/s | TTFT ms | Notes |
+| --- | ---: | ---: | ---: | ---: | --- |
+| direct backend `:18080` completions | 8 | `99.422` mean / `99.514` median | `97.957` mean | `75.644` mean | clean timing, `--skip-vram` |
+| frontdoor `:8000` completions | 4 | `99.770` mean / `99.827` median | `98.272` mean | `76.527` mean | production-shaped proxy path |
+
+Quality summary:
+
+- Frontdoor repeat64 passed: exact OK/copy/arithmetic/JSON, repeat hash
+  stability, long-context needle recall, and baseline comparisons all true.
+- Direct backend default chat-template repeat64 failed as expected because it
+  exposed Qwen reasoning preamble instead of the no-thinking production
+  behavior.
+- Direct backend with explicit `chat_template_kwargs={"enable_thinking": false}`
+  still failed JSON, repeat64, and long-context:
+  - JSON returned `ixo.`
+  - one repeat produced corrupted filler:
+    `evoluion. # # # # # # # # # whiskey whiskey whiskey whiskey 1 1`
+  - long-context needle mutated to
+    `B70_Qw36_NEED36_NEEDle_20260609`
+- Direct backend no-thinking single canary still returned exactly `OK`, so the
+  direct path is not uniformly broken, but it is not strong enough for
+  production quality claims.
+
+VRAM/headroom:
+
+- `xpu-smi discovery` reports `32656.0 MiB` physical memory per B70.
+- Snapshot after the accepted 32K service loaded:
+  - GPU0: `32654.19 MiB` used, about `1.81 MiB` free by physical-minus-used
+  - GPU1: `32651.42 MiB` used, about `4.58 MiB` free
+  - GPU2: `32651.39 MiB` used, about `4.61 MiB` free
+  - GPU3: `32651.30 MiB` used, about `4.70 MiB` free
+- Inline VRAM sampling was intentionally not included in the throughput run:
+  `xpu-smi dump` takes about `1.5s` per card on this host, and the metric script
+  would poll devices sequentially, contaminating TTFT/e2e timing.
+
+Interpretation:
+
+- The same-day accepted control remains a roughly `99-100 tok/s` single-request
+  decode baseline, not close to the `>200 tok/s` target.
+- The production frontdoor is mandatory for quality-gated claims. It injects
+  `enable_thinking=false`, clamps token limits, rewrites the served model name,
+  and serializes active generation at `MAX_ACTIVE_GENERATIONS=1`.
+- The current 32K/0.95 memory profile leaves effectively no same-card room for
+  an MTP/FP8 sidecar. Sidecar speculation needs a reduced-context diagnostic,
+  lower memory-utilization verifier, separate process/card layout, off-device
+  proposer, or cross-engine verifier bridge.
+- The next speed work should not consume time on another backend-only result
+  unless it also passes the frontdoor repeat64 gate.

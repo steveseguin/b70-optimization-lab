@@ -1,0 +1,58 @@
+{
+  "created_at_local": "2026-06-11T06:37:40-04:00",
+  "context": {
+    "service": "qwen36-tp4-accepted-restored-20260611h",
+    "backend_url": "http://127.0.0.1:18080",
+    "frontdoor_url": "http://127.0.0.1:8000",
+    "model": "qwen36-35b-a3b-fp8",
+    "hf_model": "nameistoken/Qwen3.6-35B-A3B-Quark-W8A8-INT8",
+    "tensor_parallel_size": 4,
+    "max_model_len": 32768,
+    "max_num_seqs": 48,
+    "gpu_memory_utilization": 0.95
+  },
+  "commands": {
+    "memory_used": "for d in 0 1 2 3; do timeout 12s xpu-smi dump -d \"$d\" -m 18 -n 1; done",
+    "device_discovery": "for d in 0 1 2 3; do timeout 12s xpu-smi discovery -d \"$d\" -j; done"
+  },
+  "physical_memory_mib_per_card": 32656.0,
+  "observations": [
+    {
+      "device_id": 0,
+      "timestamp": "06:37:40.379",
+      "gpu_memory_used_mib": 32654.19,
+      "free_mib_from_physical_minus_used": 1.81,
+      "memory_free_size_byte_from_discovery": 1904640,
+      "pci_bdf_address": "0000:23:00.0"
+    },
+    {
+      "device_id": 1,
+      "timestamp": "06:37:41.907",
+      "gpu_memory_used_mib": 32651.42,
+      "free_mib_from_physical_minus_used": 4.58,
+      "memory_free_size_byte_from_discovery": 1933312,
+      "pci_bdf_address": "0000:27:00.0"
+    },
+    {
+      "device_id": 2,
+      "timestamp": "06:37:43.439",
+      "gpu_memory_used_mib": 32651.39,
+      "free_mib_from_physical_minus_used": 4.61,
+      "memory_free_size_byte_from_discovery": 1957888,
+      "pci_bdf_address": "0000:43:00.0"
+    },
+    {
+      "device_id": 3,
+      "timestamp": "06:37:44.953",
+      "gpu_memory_used_mib": 32651.3,
+      "free_mib_from_physical_minus_used": 4.7,
+      "memory_free_size_byte_from_discovery": 2068480,
+      "pci_bdf_address": "0000:47:00.0"
+    }
+  ],
+  "interpretation": [
+    "The accepted 32K TP4 service allocates essentially all visible B70 VRAM at gpu_memory_utilization=0.95.",
+    "A proposer sidecar or second model will need lower context, lower gpu_memory_utilization, a separate card/process layout, or a cross-engine/off-device path.",
+    "Inline xpu-smi VRAM sampling was not used during throughput measurements because xpu-smi dump takes roughly 1.5 seconds per device on this host and would distort request timing."
+  ]
+}
