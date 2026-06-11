@@ -4733,3 +4733,254 @@ Next diagnostic run:
    advancement or stale accepted-token visibility in the n-gram proposer.
 4. If corruption remains, move to request-id-correlated proposer-source tracing
    before trying more speculative widths.
+
+## Additional Bigger Bets And Things To Try
+
+Added after the no-bonus speculative diagnostic hook was implemented. These
+are not promotions. They are higher-upside paths that might realistically move
+single-request speed while keeping the current Quark INT8 verifier as the final
+quality authority.
+
+Things to try soon:
+
+1. Speculative correctness replay harness.
+   - Build a small offline replay from the scheduler JSONL rows that replays
+     `draft_token_ids`, verifier outputs, accepted counts, emitted tokens, and
+     bonus-token suppression without the live server.
+   - Use it to reproduce repeat-loop corruption deterministically before
+     touching more speculative widths.
+   - This should become the gate for any future MTP, DFlash, EAGLE, or n-gram
+     path: if the replay cannot explain emitted tokens, the run is not
+     publishable.
+
+2. Request-id exact joins everywhere.
+   - Extend the client metric artifacts, token trace artifacts, and scheduler
+     speculative trace so every generated output can be joined to the exact
+     accept/reject rows that produced it.
+   - Record request start/end timestamps, prompt class, output token count,
+     generated token hashes, and `X-Request-Id`/vLLM request IDs in one
+     summary.
+   - This is required before we can trust prompt-class speed wins, because the
+     old structured n-gram2 apparent win generated fewer tokens.
+
+3. Reduced-context MTP sidecar feasibility spike.
+   - Keep the current Quark W8A8 INT8 model as verifier.
+   - Try to load official Qwen3.6 FP8 MTP tensors or an MTP GGUF/sidecar only
+     as a proposer at shorter context first.
+   - Score only accepted verifier tokens. Draft throughput does not count if
+     acceptance is low or scheduler overhead erases the win.
+
+4. EAGLE-style trained proposer as a real project.
+   - If off-the-shelf MTP cannot be made graph-safe on XPU, train or adapt a
+     small same-family proposer from accepted-model traces.
+   - This can preserve final quality if every token is still verified by the
+     Quark model, but it is a larger effort than n-gram speculation.
+   - Track acceptance rate by prompt class before investing in production
+     integration.
+
+5. Shape-exact timeline budget before more kernel work.
+   - Capture a short accepted p512/n128 decode with XPU/Level Zero events and
+     map each token's time into dense quant/GEMM, MoE, GDN/attention, collectives,
+     sampling/logits, scheduler, and streaming.
+   - The target is a budget that explains the observed `~10 ms/token`; anything
+     outside the top blocks should not receive new kernel effort.
+
+6. Router-distribution capture in the live endpoint.
+   - Add an opt-in route logger for Qwen3.6 MoE top-k expert IDs, per-layer
+     rows-per-expert, and prompt-class labels.
+   - Feed those real distributions into grouped-GEMM and hotpack benchmarks
+     instead of relying on synthetic or single-capture distributions.
+
+7. Publish-grade accepted pack refresh.
+   - Run accepted r10/r20 speed with peak VRAM, repeat64 or repeat128 quality,
+     long-context needle, and a short restore/generation reliability smoke.
+   - This gives a clean baseline artifact for any future Localmaxxing update
+     and for upstream issue reports.
+
+Bigger, bolder engineering ideas:
+
+1. Full verifier-preserving speculation ladder.
+   - Stage 1: n-gram correctness and no-bonus replay.
+   - Stage 2: MTP sidecar with the current Quark model as verifier.
+   - Stage 3: EAGLE/DFlash/custom proposer once request-id trace and repeat
+     gates are reliable.
+   - This remains the most plausible path to `>200 tok/s` c1 without changing
+     final quality, because it can reduce verifier steps per emitted token.
+
+2. Layer-local expert replication using spare VRAM.
+   - Instead of pure TP4, replicate the hottest experts for selected layers on
+     all cards while sharding colder experts.
+   - The goal is to reduce cross-card communication and fragmented tiny GEMMs
+     for common single-token routes.
+   - Required proof: per-layer memory math, exact route parity, and endpoint
+     speed; global expert remap is too blunt.
+
+3. Hybrid TP/EP service lane.
+   - Prototype a layout where attention/dense paths are replicated or sharded
+     differently from experts.
+   - Pure TP4 is good for fitting the model, but it may be structurally poor for
+     MoE c1 decode because it pays collectives at many small boundaries.
+   - This is a production-scale architecture branch, not a quick env-var screen.
+
+4. Persistent command-list decode loop.
+   - Build a c1 lane that keeps KV, block tables, route scratch, sampling
+     buffers, and graph/command-list replay resident across the whole decode.
+   - The service would be specialized for single-user latency and fall back to
+     accepted vLLM for unsupported contexts or failed quality gates.
+   - This could expose whether scheduler/dispatcher overhead is now a material
+     part of the `~10 ms/token` floor.
+
+5. Persistent fused MoE kernel with real routing.
+   - Move beyond Python wrapper boundaries and implement a kernel family that
+     owns route count, scratch zeroing, first GEMM, activation, second quant,
+     second GEMM, weighted combine, and maybe shared-expert add for actual
+     Qwen3.6 shapes.
+   - The Intel Arc guidance points in this direction; our wrapper-level MoE
+     experiments showed that changing the boundary alone is insufficient.
+
+6. Tile-native W8A8 repack cache.
+   - Audit whether Quark weights are consumed in the best B70/XMX tile order.
+   - If not, perform a one-time exact INT8 repack at model-load time and cache
+     it on disk with a checksum of the original weights and scales.
+   - This must prove identical math/dequant semantics before any speed result
+     matters.
+
+7. Specialized tiny collective path or collective overlap.
+   - The graph still contains many small hidden-size collectives. A graph-safe
+     hidden-size-specific all-reduce path, or overlapping the collective with
+     independent next-layer work, could matter more than generic oneCCL knobs.
+   - Avoid unsafe in-place changes unless aliasing and repeat stability are
+     proven across fresh graph captures.
+
+8. Final projection and sampling audit.
+   - Measure whether lm-head/logits/sampling is a hidden c1 cost. If it is,
+     consider exact W8A8 lm-head, logits chunking with determinism proof, or
+     device-side greedy sampling.
+   - Prior logits/router shortcuts in other work were risky; exact token hashes
+     remain the gate.
+
+9. Same-model 8-bit engine bakeoff as a diagnostic.
+   - Try OpenVINO/Optimum Intel, BigDL/IPEX-LLM, LMDeploy, and llama.cpp/SYCL
+     only if they can run Qwen3.6 35B at 8-bit/high fidelity with comparable
+     prompt formatting.
+   - The goal is to learn whether vLLM/XPU is the bottleneck. Do not switch to
+     Qwen3.5 or 4-bit to make the benchmark look good.
+
+10. Version-matrix and host-stability branch.
+    - Test oneAPI/driver/vLLM-XPU kernel versions, NUMA binding, P2P settings,
+      ASPM/runtime-power policy, and thermal/fan policy in a reversible matrix.
+    - This is unlikely to produce a `2x` alone, but it can reduce variance and
+      device-lost noise enough to make kernel wins measurable.
+
+11. Upstreamable B70 repro package.
+    - Turn our data into minimal repros for maintainers: dense W8A8 GEMM,
+      routed MoE grouped GEMM, graph-safe tiny collectives, and speculative
+      metadata corruption.
+    - Include exact shapes, commands, current throughput, target throughput,
+      route histograms, and Localmaxxing references.
+    - This increases the odds of getting help on missing XPU kernel paths
+      instead of carrying a private fork forever.
+
+12. Production dual-lane design.
+    - Keep a conservative accepted TP4 lane for reliability and a fast
+      experimental lane for latency.
+    - Route requests by context length, quality-risk level, and service class.
+      Any speculative or specialized lane must have automatic fallback to the
+      accepted verifier lane and visible quality telemetry.
+
+Priority after the current diagnostic:
+
+1. Finish the no-bonus n-gram5 token-trace and repeat64 gate.
+2. If it fixes corruption, build the replay harness and then test MTP sidecar
+   speculation.
+3. If it does not fix corruption, stop n-gram width sweeps and trace proposer
+   state/request joins.
+4. In parallel, build the token-time budget and live route histogram capture,
+   because those support both local kernels and upstream repros.
+
+## N-Gram5 No-Bonus Diagnostic Result: Still Reject
+
+Added after launching `NUM_SPECULATIVE_TOKENS=5`, `PROMPT_LOOKUP_MIN=2`,
+`PROMPT_LOOKUP_MAX=5`, and `DISABLE_FULL_ACCEPT_BONUS=1` against the current
+Quark INT8 verifier.
+
+Artifacts:
+
+- `data/qwen36-quark-int8-tp4-ngram5-nobonus-frontdoor-token-trace-20260611.json`
+- `data/qwen36-quark-int8-tp4-ngram5-nobonus-spec-jsonl-20260611.jsonl`
+- `data/qwen36-quark-int8-tp4-ngram5-nobonus-spec-summary-20260611.json`
+- `data/qwen36-quark-int8-tp4-ngram5-nobonus-spec-summary-20260611.md`
+
+Command:
+
+```bash
+/home/steve/.venvs/vllm-xpu/bin/python scripts/qwen36-quality-token-trace.py \
+  --base-url http://127.0.0.1:8000 \
+  --tokenizer /mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118 \
+  --baseline-json data/qwen36-quark-int8-accepted-frontdoor-token-trace-20260611.json \
+  --repeat-runs 4 \
+  --output-json data/qwen36-quark-int8-tp4-ngram5-nobonus-frontdoor-token-trace-20260611.json
+```
+
+Result:
+
+- `baseline_match_all=false`.
+- Short exact canaries still matched:
+  - `exact_ok`: `OK`
+  - `copy_phrase`: `satin cobalt orbit`
+  - `arithmetic`: `60`
+  - `json_schema`: `{"answer": "42", "unit": "widgets"}`
+  - repeat colors: stable `blue, green, orange, red`
+- The long-context needle failed:
+  - accepted baseline: `B70_QWEN36_NEEDLE_20260609`
+  - n-gram5 no-bonus output: `B70_QWEN36!`
+- The first output-token divergence is at token index `8`:
+  - accepted token: `83098`, decoded as `_NEED`
+  - current token: `0`, decoded as `!`
+
+Scheduler trace:
+
+| Rows | Requests | Draft tokens | Accepted | Rejected | Accept rate | Full accept rows | Full reject rows | Suppressed bonus rows |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 4 | 3 | 20 | 10 | 10 | `50.00%` | 2 | 2 | 2 |
+
+The failing long-context request had two speculative rows:
+
+1. Full accept row:
+   - scheduled draft tokens: `[12952, 54, 923, 18, 21]`
+   - decoded: `_Q`, `W`, `EN`, `3`, `6`
+   - verifier generated: `[12952, 54, 923, 18, 21, 83098]`
+   - no-bonus hook suppressed token `83098` (`_NEED`)
+2. Full reject row:
+   - scheduled draft tokens: `[841, 62, 17, 15, 17]`
+   - verifier generated/emitted: `[0]`, decoded as `!`
+
+Interpretation:
+
+- The no-bonus hook did not repair n-gram5 correctness.
+- It did, however, isolate a likely scheduler/speculative state problem:
+  suppressing the bonus token after a full-accept row leaves the verifier/proposer
+  state misaligned for the next step. The next verifier token became `!` instead
+  of `_NEED`.
+- Do not run repeat64 or prompt-class speed for this candidate; it already
+  fails the accepted token trace.
+- Do not spend more time on wider n-gram sweeps until request-id/state replay
+  can explain and reproduce the emitted-token sequence.
+
+Next action from this result:
+
+1. Restore the accepted TP4 backend and generation-smoke it.
+2. Build the speculative correctness replay harness using this four-row trace
+   as the first failing fixture.
+3. Extend client token traces with request IDs and timestamps so future
+   speculative failures can be joined directly without relying on manual
+   request matching.
+
+Restore status:
+
+- Stopped diagnostic tmux session `qwen36-tp4-ngram5-nobonus-20260611h`.
+- Relaunched accepted recipe in tmux session
+  `qwen36-tp4-accepted-restored-after-ngram5-nobonus-20260611i`.
+- Backend `/health` became ready on poll attempt 14.
+- Backend direct completion smoke generated successfully.
+- Frontdoor `/health` passed and frontdoor chat smoke returned exact `OK`.
