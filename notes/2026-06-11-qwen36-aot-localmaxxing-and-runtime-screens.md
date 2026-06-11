@@ -11407,3 +11407,174 @@ Next run shape:
 5. If the answer points to actual scheduled verifier rows, switch effort to the
    sidecar verifier-bucket path or a scheduler patch that verifies draft tokens
    without widening baseline attention inputs.
+
+## Metadata Trace Diagnostic Result
+
+Ran the accepted no-async versus oracle `k=1` no-mamba-spec-blocks diagnostic
+with the trace metadata patch active. This is now the sharpest evidence for the
+remaining speculative correctness blocker.
+
+Artifacts:
+
+- `data/qwen36-quark-int8-tp4-accepted-noasync-metadata-p512o128-20260611f.json`
+- `data/qwen36-quark-int8-tp4-accepted-noasync-metadata-trace-20260611f.jsonl`
+- `data/qwen36-quark-int8-tp4-oracle1-nomambaspec-metadata-p512o128-20260611f.json`
+- `data/qwen36-quark-int8-tp4-oracle1-nomambaspec-metadata-trace-20260611f.jsonl`
+- `data/qwen36-quark-int8-tp4-oracle1-nomambaspec-metadata-spec-summary-20260611f.md`
+- `data/qwen36-quark-int8-tp4-accepted-vs-oracle1-nomambaspec-metadata-parity-tprank-20260611f.md`
+- `data/qwen36-quark-int8-tp4-oracle1-nomambaspec-metadata-drift-fixture-20260611f.md`
+
+Result:
+
+- Accepted no-async source run generated a usable `p512/o128` fixture. One
+  prompt stopped early at `49` tokens, but it was still sufficient as an oracle
+  source for the matched prompt set.
+- Oracle `k=1`, no-mamba-spec-blocks, no-async run still failed exact output
+  parity: `baseline_match_all=false`.
+- Spec trace summary: `4` rows, `2` requests, `50.00%` accepted draft-token
+  rate.
+- Rank-normalized model-input parity compared `712` rows from accepted against
+  the first `712` rows from oracle across all four TP ranks. The first expected
+  config mismatch is `config.num_spec_tokens` (`0` accepted, `1` oracle).
+- The first real verifier-input mismatch is at `tp_rank=0`, `rank_step=1`,
+  `attn.slot_mappings.0.head`: accepted schedules one verifier token
+  `[33270]`, while oracle schedules verifier plus draft slot
+  `[33270, 33271]`.
+
+Important metadata observations:
+
+- At rank step `0`, accepted and oracle cache groups match exactly:
+  - `4` cache groups.
+  - groups `0`, `1`, and `2` are `MambaSpec` with
+    `num_speculative_blocks=0`.
+  - group `3` is `FullAttentionSpec`, block size `576`.
+  - request block IDs match: `[[1], [2], [3], [4]]`.
+  - block-id lengths match: `[1, 1, 1, 1]`.
+  - `prev_num_draft_len=0` on both sides.
+  - `num_tokens_no_spec`, prompt token counts, computed token counts, and
+    accepted-token counters match.
+- At rank step `1`, the oracle path has actual scheduled speculation state:
+  - accepted `scheduler.total_num_scheduled_tokens=1`.
+  - oracle `scheduler.total_num_scheduled_tokens=2`.
+  - oracle `scheduled_spec_decode_tokens` contains one token, with head
+    `[440]`.
+  - oracle `spec_token_ids=[[440]]`.
+  - oracle `prev_num_draft_len=1`.
+  - block IDs and block tables still match, so this is not the old Mamba block
+    reservation bug.
+
+Conclusion:
+
+- The no-mamba metadata run proves the old row-0 speculative cache reservation
+  issue is not the current blocker.
+- The remaining drift starts when vLLM schedules a real speculative verifier
+  row with draft width `2`, widening attention slot mappings and request
+  accounting relative to the accepted no-spec baseline.
+- Do not spend more time on `MambaSpec.num_speculative_blocks` for the actual
+  oracle/ngram path unless new evidence appears.
+- The next repair should target how actual draft verification is scheduled:
+  either a shadow/sidecar verifier bucket that does not mutate baseline request
+  state, or a scheduler patch that verifies draft tokens using temporary KV and
+  commits only accepted tokens.
+
+Reliability note:
+
+- The first accepted restore after this diagnostic hit
+  `UR_RESULT_ERROR_DEVICE_LOST` on TP2 during XPU graph capture. A clean retry
+  restore in `qwen36-tp4-accepted-restored-after-metadata-retry-20260611f`
+  reached `/health` after `62s`.
+- Frontdoor loopback smoke through the paused local-bypass path returned `OK`.
+  Current frontdoor state remains paused for remote traffic with local bypass
+  enabled.
+
+## Things To Try: Bigger V2
+
+These ideas build on the metadata result above. They assume the current Quark
+W8A8 INT8 model remains the quality authority.
+
+1. Shadow verifier bucket inside vLLM.
+   - Add an internal verifier API that scores a draft continuation against a
+     temporary KV/slot view, without updating the live request's block table,
+     `prev_num_draft_len`, output-token history, or scheduler accounting.
+   - Commit only the accepted prefix back into the live request state.
+   - Why it may help: it attacks the exact slot-widening fault now observed at
+     `rank_step=1`.
+   - First proof: oracle `k=1` must match accepted no-async exactly on
+     `p512/o128`, then repeat64 and long-context gates.
+
+2. Out-of-process sidecar verifier.
+   - Keep the production accepted backend untouched and launch a local verifier
+     sidecar that receives `(prompt, generated_so_far, draft_tokens)` and
+     returns accepted prefix length.
+   - Start slow and correct, then optimize the sidecar path only if parity is
+     exact.
+   - Why it may help: it bypasses vLLM's speculative scheduler state entirely,
+     giving a ceiling for perfect-draft speed without corrupting the serving
+     engine.
+
+3. Static decode lane for single-user c1.
+   - Build a direct model-runner lane with preallocated KV, static block IDs,
+     fixed graph replay, and minimal scheduler transitions.
+   - Use the same tokenizer and chat template as the frontdoor.
+   - Why it may help: the offline `LLM.generate` test showed no HTTP/SSE `2x`
+     win, but a lower-level static lane can still quantify pure model-core
+     speed without vLLM request machinery.
+
+4. DFlash/MTP as proposer only, never as the quality source.
+   - DFlash exists for Qwen3.6 35B and drafts multiple tokens in parallel, but
+     use it only as a proposer. The current Quark model must verify every
+     token before any result is counted.
+   - First step: see whether DFlash or MTP can be wired to the shadow verifier
+     bucket above. Avoid native vLLM speculative scheduling until the
+     slot-widening issue is fixed.
+
+5. Route-aware real-MoE kernel suite in `vllm-xpu-kernels`.
+   - Capture real accepted-run expert routes and build microbenches around
+     those distributions, not synthetic even routing.
+   - Target persistent grouped GEMM, prepare/finalize, shared expert add, and
+     scratch allocation. The upstream `vllm-xpu-kernels` issue list already has
+     open items for per-call MoE scratch allocation and GDN/DFlash shape checks.
+   - Why it may help: the vLLM XPU backend has moved kernel work into
+     `vllm-xpu-kernels`; upstreamable shape repros should target that layer.
+
+6. TP/EP simulator before implementation.
+   - Write a memory/latency simulator for pure TP4 versus hybrid TP/EP versus
+     hot-expert replication, using actual expert sizes, route histograms, KV
+     footprint, and observed collective timings.
+   - Why it may help: expert parallelism is explicitly supported in newer Intel
+     XPU vLLM release notes, but a blind implementation would be expensive.
+
+7. Graph-capture reliability campaign.
+   - Device-lost during restore is now a repeated pattern after intense
+     diagnostic sessions. Track graph-capture failures as a first-class metric:
+     session name, log path, TP rank, graph size, cache root, uptime, and prior
+     diagnostic type.
+   - Try a reversible stabilization branch: fixed device order, fresh cache
+     root per diagnostic, one cold idle period before restore, and host stack
+     validation against Intel's published B70 BOM.
+
+8. Public/upstream repro packet.
+   - Reduce the speculative slot-widening issue to a small no-secret repro:
+     accepted no-async trace, oracle `k=1` no-mamba trace, first mismatch row,
+     and exact launch flags.
+   - Also prepare separate kernel repros for W8A8 dense GEMM, route-skewed MoE,
+     and graph-safe collectives.
+   - Why it may help: this is now precise enough that Intel/vLLM maintainers or
+     other B70 users can reproduce it without needing our whole service.
+
+Additional public leads checked:
+
+- `https://github.com/vllm-project/vllm-xpu-kernels`
+- `https://github.com/vllm-project/vllm-xpu-kernels/issues`
+- `https://github.com/intel/ai-containers/blob/main/vllm/0.17.0-xpu.md`
+- `https://docs.vllm.ai/en/stable/models/hardware_supported_models/xpu/`
+- `https://huggingface.co/z-lab/Qwen3.6-35B-A3B-DFlash`
+
+Priority update:
+
+1. Fix or bypass the speculative verifier row-width mutation.
+2. Build a shadow/sidecar verifier harness before trying more MTP/DFlash speed
+   runs.
+3. In parallel, start the route-capture plus `vllm-xpu-kernels` microbench
+   suite, because that work remains valuable even if speculation takes longer.
+4. Treat graph-capture device-lost as a reliability metric, not just a nuisance.
