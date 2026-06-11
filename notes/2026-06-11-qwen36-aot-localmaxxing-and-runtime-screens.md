@@ -1953,3 +1953,102 @@ Interpretation:
 - The next durable MoE work is still a persistent/grouped-GEMM scheduler or
   exact-shape upstream repro, not another wrapper around the current staged
   path.
+
+## More Aggressive Ideas After Component Summary
+
+Added after the primitive-stage route scan made global hot-expert packing look
+too mixed to be the next main bet. These are larger opportunities to keep in
+view while the accepted r8/r10 and quality refresh establishes the control
+baseline.
+
+1. Exact greedy logits fast path.
+   - For `temperature=0`, the final decision does not need a full materialized
+     full-vocab distribution on every rank if each rank can return its local
+     top candidate and a graph-safe global max reduction chooses the token.
+   - This is quality-preserving only for greedy/decode benchmarks and any
+     production lane that explicitly uses deterministic decoding; it is not a
+     replacement for sampling.
+   - Proof gate: exact token-id stream match against the accepted endpoint for
+     repeat64, plus a fallback to the normal logits path for non-greedy
+     requests.
+
+2. Token critical-path budget before more kernels.
+   - Build a synchronized one-token timing trace that splits decode into
+     request/scheduler overhead, embedding, attention/GDN, dense W8A8 GEMMs,
+     MoE route/dispatch/GEMMs, collectives, logits, and streaming.
+   - The goal is a per-token wall-time budget that says what must be cut to
+     reach `200 tok/s` instead of optimizing whichever primitive is easiest to
+     benchmark.
+   - Proof gate: same accepted run with timing disabled must recover baseline
+     speed; timing mode is diagnostic only.
+
+3. Single-stream static latency lane beside the normal server.
+   - Keep the production vLLM endpoint for aggregate/concurrency, but prototype
+     a c1 latency lane with pinned request state, static graph replay,
+     preallocated KV, no metrics hot path, and controlled streaming cadence.
+   - If the direct runner beats OpenAI streaming materially, route interactive
+     single-user requests there while keeping batch serving unchanged.
+   - Proof gate: tokenizer/template parity and exact token stream match against
+     the accepted OpenAI endpoint.
+
+4. Attention/KV specialization for batch-1 decode.
+   - The MoE path is obvious, but the AOT census also shows repeated GDN and
+     dense projection regions. For c1 decode, contiguous KV or a special
+     single-sequence page path may remove paged-attention indirection that
+     mainly exists for aggregate serving.
+   - This should be tested with 32K context because an optimization that only
+     helps short context is less useful for the production target.
+   - Proof gate: long-context needle plus exact deterministic short-context
+     hashes before any speed claim.
+
+5. Verifier federation instead of one monolithic TP4 process.
+   - Explore whether two TP2 verifier replicas, or a TP2 verifier plus a small
+     proposer lane, can improve perceived single-user latency through
+     speculation and failover even though raw TP2 decode was slower.
+   - This is not a model downgrade: every accepted token still comes from the
+     current Qwen3.6 Quark verifier.
+   - Proof gate: report accepted-token throughput, rejection rate, and tail
+     latency; raw draft/proposer speed alone does not count.
+
+6. Learned prompt-class routing for safe speed lanes.
+   - Use the existing prompt-class and routecapture data to classify requests
+     into baseline, speculation, static-lane, or future route-policy modes.
+   - The classifier can only choose between quality-preserving verifier paths;
+     it must never change weights, quantization, or accepted-token semantics.
+   - Proof gate: misclassification must fall back to the accepted baseline, and
+     the quality suite should run with forced coverage for every lane.
+
+7. Expert-residency and prefetch experiment.
+   - Instead of physically remapping experts globally, keep the accepted expert
+     IDs but prefetch or stage the likely next-layer active expert blocks based
+     on the previous few tokens and layer route histograms.
+   - This may reduce memory stalls without changing route decisions or expert
+     math, and it avoids the mixed regressions seen with blind hot packing.
+   - Proof gate: no expert-ID changes, same routed outputs within tolerance,
+     and an endpoint-level speed win over the same-day accepted control.
+
+8. Quality oracle ladder for kernel rewrites.
+   - Promote a standard three-level gate for bold kernels: component numerical
+     parity against staged INT8, route/logit parity against BF16 or official FP8
+     fallback, then text-level repeat64 plus long-context checks.
+   - This lets us attempt bigger rewrites without relying on fragile "looks
+     okay" text canaries.
+   - Proof gate: every future kernel note should state which rung it reached
+     and which artifacts prove it.
+
+9. Upstream collaboration package with a concrete target.
+   - Turn the current component summary into a public, minimal B70 issue/PR
+     bundle: exact shapes, route histograms, primitive timing table, current
+     endpoint result, and the desired `>200 tok/s` latency budget.
+   - The ask should be specific: W8A8 grouped-GEMM/MoE and graph-safe tiny
+     collectives for Qwen3.6 A3B on Xe2/B70, not generic "make XPU faster".
+   - Proof gate: sanitized repro runs outside the private endpoint and can be
+     rebuilt by upstream maintainers.
+
+10. Treat `>200 tok/s` as requiring a multiplier, not a knob.
+    - Current accepted decode is around `100 tok/s`; env vars and wrapper
+      boundaries are giving low-single-digit deltas.
+    - The plausible multiplier paths are verifier-preserving speculation,
+      exact greedy logits, static single-stream execution, and real persistent
+      MoE/GEMM kernels. Everything else should be measured, but not allowed to
+      consume the main track indefinitely.
