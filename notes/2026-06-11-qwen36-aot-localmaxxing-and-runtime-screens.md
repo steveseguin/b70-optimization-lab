@@ -11127,3 +11127,203 @@ Fresh source refresh for this addendum:
     no-mamba negative control, block/slot trace, launch commands, and exact
     token diffs as an issue-ready artifact for vLLM/Intel. This is likely to
     get better external help than a broad performance complaint.
+
+## Rank-Normalized Parity And Bigger Opportunity Refresh
+
+Added after the no-mamba-spec-blocks negative control. The goal of this
+addendum is to separate facts we now know from larger bets worth tracking.
+
+New local tooling:
+
+- `scripts/check-qwen36-model-input-parity.py` now has
+  `--align-by tp-rank-step`.
+- The new mode buckets rows by `tp_rank`, compares the nth row inside each
+  rank, and strips `tp_rank`/`dcp_rank` fields after alignment.
+- This removes rank-order noise from multi-XPU traces before comparing block
+  tables, slot mappings, and scheduler-visible input state.
+
+Rank-normalized evidence:
+
+- No-mamba-spec-blocks diagnostic:
+  - artifact:
+    `data/qwen36-quark-int8-tp4-accepted-vs-oracle1-nomambaspec-modelinput-parity-tprank-20260611e.json`
+  - left/right rows: `1024` accepted no-async rows versus `1016` oracle
+    no-mamba rows.
+  - aligned rows: `1016`, split evenly as `254` rows per TP rank on the
+    oracle side.
+  - first real mismatch after rank normalization:
+    `tp_rank=0`, `rank_step=1`, left row `7`, right row `4`,
+    `attn.slot_mappings.0.head`, `[33270]` versus `[33270, 33271]`.
+  - interpretation: the no-mamba diagnostic removed the earlier row-0 mamba
+    block-table signal, but actual n-gram/oracle speculation still widens the
+    verifier input at the next decode step. This is now an attention/slot
+    reservation or actual-spec verifier-row problem, not just
+    `MambaSpec.num_speculative_blocks`.
+- Original logprob oracle:
+  - artifact:
+    `data/qwen36-quark-int8-tp4-accepted-vs-oracle1-logprobs-modelinput-parity-tprank-20260611e.json`
+  - left/right rows: `1024` accepted no-async rows versus `968` oracle rows.
+  - aligned rows: `968`, split as `242` rows per TP rank on the oracle side.
+  - first real mismatch after rank normalization:
+    `tp_rank=0`, `rank_step=0`, left row `1`, right row `0`,
+    `attn.block_tables.0.cpu.head`, `[1]` versus `[1, 2]`.
+  - interpretation: the original logprob oracle still proves speculative
+    configuration can perturb block tables before any selected-token fork.
+
+Decision:
+
+- Keep `--align-by tp-rank-step` as the default diagnostic lens for TP4
+  speculation investigations.
+- Do not interpret file-order row 0 mismatches without checking rank-normalized
+  output first.
+- The next repair needs trace metadata and counters, not another blind
+  speculative-width sweep.
+
+Next concrete diagnostics:
+
+1. Add trace metadata for speculative method, `num_spec_tokens`, proposer type,
+   draft-model presence, graph/capture mode, block size, and max block counts.
+2. Add per-request state snapshots to the trace: prompt tokens, output tokens,
+   computed tokens, spec-token length, `prev_num_draft_len`, and
+   `num_tokens_no_spec`.
+3. Add block-table and slot-mapping allocator counters: free/used blocks, row
+   width, group widths, and any GDN/mamba state version counters that can be
+   exposed cheaply.
+4. Run a `spec-config/no-proposer` diagnostic: construct speculative config but
+   bypass proposer creation and spec-token injection. This separates config
+   hash/block-manager effects from proposer effects.
+5. Run a `num_speculative_tokens=0` or zero-width actual-spec diagnostic if
+   vLLM allows it. This separates "spec exists" from "lookahead/scheduled
+   verifier row exists".
+6. Create a minimal upstream repro around one prompt, four generated tokens,
+   rank-normalized block/slot tables, and the exact output fork at token index
+   `3`.
+
+Fresh external signals checked:
+
+- Intel's current vLLM/XPU container docs still frame Intel GPU support as an
+  active vLLM target, but XPU support remains backend-specific enough that
+  shape-exact repros matter more than generic CUDA advice:
+  `https://github.com/intel/ai-containers/blob/main/vllm/0.14.1-xpu.md`
+- vLLM's public INT8 W8A8 quantization docs emphasize acceleration from
+  weight+activation INT8, but the documented support note is CUDA-oriented.
+  Treat this as evidence that XPU W8A8 needs its own kernel validation, not as
+  proof the fast path already exists for B70:
+  `https://docs.vllm.ai/en/v0.18.0/features/quantization/int8/`
+- The vLLM XPU backend migration RFC points toward `vllm-xpu-kernels` as the
+  right home for Intel GPU kernel work. New B70 repros should target that
+  library when possible:
+  `https://github.com/vllm-project/vllm/issues/33214`
+- vLLM's hybrid KV-cache manager docs call out mixed attention/Mamba layouts
+  and speculative decoding cases as special memory-layout cases. That matches
+  our block-table findings and supports making verifier-input parity a first
+  class gate:
+  `https://docs.vllm.ai/en/stable/design/hybrid_kv_cache_manager/`
+- Public B70 community measurements remain mixed. One public benchmark repo
+  reports strong single-card Qwen3.6 MoE results with llama.cpp/GGUF, while
+  Localmaxxing currently shows our Quark W8A8 TP4 row among the top public B70
+  Qwen rows. Use those as engine/kernel clues, not permission to switch to
+  4-bit:
+  `https://github.com/PMZFX/intel-arc-pro-b70-benchmarks`
+  and `https://localmaxxing.com/en/hardware/DISCRETE_GPU%3Aintel%20arc%20pro%20b70?name=Intel+Arc+Pro+B70`
+- Localmaxxing public Qwen3.6 35B rows still show the clearest `>200 tok/s`
+  single-user path is model-based speculation/MTP/DFlash on mature backends.
+  We should borrow the architecture, not the quantization or hardware
+  assumptions.
+
+Bigger, bolder ideas worth tracking:
+
+1. **Speculation outside vLLM's scheduler path.**
+   - Build an auxiliary proposer sidecar that suggests tokens out-of-process.
+   - Verify those tokens with a static verifier-bucket call in the current
+     Quark INT8 model instead of using vLLM's speculative scheduler state.
+   - Why bold: avoids the current block-table/spec-state bug entirely if the
+     verifier bucket can be made fast enough.
+   - Proof: exact token parity, repeat64, long-context, and measured verifier
+     bucket tok/s before any endpoint integration.
+
+2. **Official-MTP-as-proposer, Quark-as-verifier.**
+   - The current Quark checkpoint lacks obvious MTP tensors, but the official
+     FP8 snapshot has them. Treat those tensors or an MTP GGUF as a draft
+     proposer only.
+   - Why bold: keeps final accepted quality tied to the current Quark verifier
+     while testing the same class of multiplier that hits `>200 tok/s`
+     elsewhere.
+   - Risk: tokenizer/template parity and hidden-state compatibility may fail;
+     reject if any verified token stream drifts.
+
+3. **Latency-first single-request runner.**
+   - Build a special c1 lane with fixed KV arena, preallocated block tables,
+     static graph replay, local-only streaming, and minimal scheduler state.
+   - Why bold: vLLM serving machinery may be structurally wrong for the
+     fastest single-user path, especially while continuous batching and spec
+     state interact with hybrid KV.
+   - Proof: same model weights, same OpenAI-compatible prompt template, exact
+     output parity, and a clean handoff path back to production service code.
+
+4. **Hybrid TP/EP with replicated dense/GDN and sharded experts.**
+   - Pure TP4 pays many single-token collectives. A Qwen A3B layout could
+     replicate attention/GDN or shared dense pieces and shard/replicate experts
+     based on real route frequencies.
+   - Why bold: this changes the parallelism structure instead of shaving one
+     op at a time.
+   - First step: memory model per layer/expert using current 32K KV footprint
+     and measured free VRAM.
+
+5. **Hot-expert memory-for-latency mode.**
+   - Spend spare VRAM duplicating hot experts or hot expert tiles on multiple
+     ranks to avoid remote dispatch/all-reduce work for common routes.
+   - Why bold: MoE route skew can turn memory headroom into latency reduction.
+   - Proof: real router histograms from accepted runs, not synthetic uniform
+     routing.
+
+6. **Route-window persistent MoE executor.**
+   - Capture real decode route windows and generate persistent grouped-GEMM
+     schedules for the common expert mixes, including prepare/finalize and
+     shared expert work.
+   - Why bold: Intel guidance and our failures both imply Python/custom-op
+     wrappers are not enough; the win needs a real persistent MoE kernel.
+   - Proof: standalone shape-exact parity first, then endpoint parity.
+
+7. **B70-native W8A8 tile cache.**
+   - Repack current Quark W8A8 weights into the exact DPAS/XMX tile layout
+     consumed by the fastest XPU kernels and persist the packed cache.
+   - Why bold: avoids changing mathematical weights while removing runtime
+     layout friction.
+   - Proof: identical dequantized weights/scales, no output drift, startup and
+     runtime timing, and no 32K-context VRAM regression.
+
+8. **Strict 8-bit engine bakeoff.**
+   - Compare same-model or equivalent high-fidelity 8-bit Qwen3.6 35B on
+     vLLM/XPU, llama.cpp SYCL/Vulkan, OpenVINO/GenAI or ITREX where feasible,
+     and any SGLang/XPU route that supports the required quant.
+   - Why bold: if another engine gives much faster high-fidelity single-user
+     decode, vLLM becomes a serving integration target rather than the only
+     optimization surface.
+   - Rule: no 4-bit promotion, no Qwen3.5 detour, no quality shortcut.
+
+9. **Whole-token command-list capture.**
+   - Capture a full decode token as one Level Zero command-list sequence with
+     fixed shapes instead of relying only on per-op graph capture.
+   - Why bold: collapse dispatch/graph boundaries across dense, MoE, GDN, and
+     collectives for c1.
+   - Proof: exact output parity and repeated device-lost stress tests.
+
+10. **Public repro and crowd loop.**
+    - Publish the best clean Localmaxxing row, then publish issue-ready
+      minimal repro packets for the hard gaps: W8A8 XPU grouped GEMM, hybrid
+      KV/spec block drift, and graph-safe collective fusion.
+    - Why bold: Intel/vLLM maintainers and B70 users can help if the problem is
+      precise and reproducible.
+    - Proof: no private model paths, no secrets, small artifacts, and exact
+      commands.
+
+Working priority:
+
+1. Repair or bypass verifier-input drift in speculative mode.
+2. If that stalls, build the sidecar verifier-bucket harness to quantify the
+   speculation ceiling outside vLLM's scheduler.
+3. In parallel, collect real router histograms and build the shape-exact MoE /
+   W8A8 kernel suite for `vllm-xpu-kernels`.
+4. Keep accepted TP4 r10/repeat64/peak-VRAM packaging ready as the stable
+   public baseline.

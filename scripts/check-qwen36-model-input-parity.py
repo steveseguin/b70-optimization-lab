@@ -198,6 +198,87 @@ def canonical_row(row: dict[str, Any]) -> dict[str, Any]:
     return canonical
 
 
+def strip_tp_rank(canonical: dict[str, Any]) -> dict[str, Any]:
+    """Remove rank-local volatile fields after rows have been rank-aligned."""
+    out = json.loads(json.dumps(canonical))
+    top = out.get("top")
+    if isinstance(top, dict):
+        top.pop("tp_rank", None)
+        top.pop("dcp_rank", None)
+    return out
+
+
+def align_rows(
+    left_rows: list[dict[str, Any]],
+    right_rows: list[dict[str, Any]],
+    *,
+    mode: str,
+) -> tuple[list[tuple[dict[str, Any] | None, dict[str, Any] | None, dict[str, Any]]], dict[str, Any]]:
+    if mode == "row":
+        pairs = []
+        rows_compared = min(len(left_rows), len(right_rows))
+        for index in range(rows_compared):
+            pairs.append((left_rows[index], right_rows[index], {"row": index}))
+        for index in range(rows_compared, max(len(left_rows), len(right_rows))):
+            pairs.append((
+                left_rows[index] if index < len(left_rows) else None,
+                right_rows[index] if index < len(right_rows) else None,
+                {"row": index},
+            ))
+        return pairs, {
+            "mode": mode,
+            "rows_compared": rows_compared,
+            "left_rows": len(left_rows),
+            "right_rows": len(right_rows),
+        }
+
+    if mode != "tp-rank-step":
+        raise ValueError(f"unsupported alignment mode: {mode}")
+
+    def bucket(rows: list[dict[str, Any]]) -> dict[str, list[tuple[int, dict[str, Any]]]]:
+        buckets: dict[str, list[tuple[int, dict[str, Any]]]] = {}
+        for index, row in enumerate(rows):
+            rank = str(row.get("tp_rank", "unknown"))
+            buckets.setdefault(rank, []).append((index, row))
+        return buckets
+
+    left_by_rank = bucket(left_rows)
+    right_by_rank = bucket(right_rows)
+    ranks = sorted(set(left_by_rank) | set(right_by_rank), key=lambda value: (value == "unknown", value))
+    pairs = []
+    rank_counts: dict[str, dict[str, int]] = {}
+    for rank in ranks:
+        left_bucket = left_by_rank.get(rank, [])
+        right_bucket = right_by_rank.get(rank, [])
+        rank_counts[rank] = {
+            "left_rows": len(left_bucket),
+            "right_rows": len(right_bucket),
+            "rows_compared": min(len(left_bucket), len(right_bucket)),
+        }
+        for step in range(max(len(left_bucket), len(right_bucket))):
+            left_item = left_bucket[step] if step < len(left_bucket) else None
+            right_item = right_bucket[step] if step < len(right_bucket) else None
+            left_index = left_item[0] if left_item else None
+            right_index = right_item[0] if right_item else None
+            pairs.append((
+                left_item[1] if left_item else None,
+                right_item[1] if right_item else None,
+                {
+                    "tp_rank": rank,
+                    "rank_step": step,
+                    "left_row": left_index,
+                    "right_row": right_index,
+                },
+            ))
+    return pairs, {
+        "mode": mode,
+        "rank_counts": rank_counts,
+        "rows_compared": sum(item["rows_compared"] for item in rank_counts.values()),
+        "left_rows": len(left_rows),
+        "right_rows": len(right_rows),
+    }
+
+
 def first_diff(left: Any, right: Any, path: str = "") -> dict[str, Any] | None:
     if type(left) is not type(right):
         return {"path": path or "$", "left": left, "right": right}
@@ -239,26 +320,34 @@ def compare_rows(
     right_rows: list[dict[str, Any]],
     *,
     max_mismatches: int,
-) -> tuple[bool, list[dict[str, Any]]]:
+    align_by: str,
+) -> tuple[bool, list[dict[str, Any]], dict[str, Any]]:
     mismatches: list[dict[str, Any]] = []
-    rows_compared = min(len(left_rows), len(right_rows))
-    for index in range(rows_compared):
-        left = canonical_row(left_rows[index])
-        right = canonical_row(right_rows[index])
-        diff = first_diff(left, right)
-        if diff is not None:
-            diff["row"] = index
+    pairs, alignment = align_rows(left_rows, right_rows, mode=align_by)
+    for left_row, right_row, meta in pairs:
+        if left_row is None or right_row is None:
+            diff = {
+                "path": "$row_presence",
+                "left_present": left_row is not None,
+                "right_present": right_row is not None,
+            }
+            diff.update(meta)
             mismatches.append(diff)
             if len(mismatches) >= max_mismatches:
                 break
-    if len(left_rows) != len(right_rows) and len(mismatches) < max_mismatches:
-        mismatches.append({
-            "row": rows_compared,
-            "path": "$row_count",
-            "left_rows": len(left_rows),
-            "right_rows": len(right_rows),
-        })
-    return not mismatches, mismatches
+            continue
+        left = canonical_row(left_row)
+        right = canonical_row(right_row)
+        if align_by == "tp-rank-step":
+            left = strip_tp_rank(left)
+            right = strip_tp_rank(right)
+        diff = first_diff(left, right)
+        if diff is not None:
+            diff.update(meta)
+            mismatches.append(diff)
+            if len(mismatches) >= max_mismatches:
+                break
+    return not mismatches, mismatches, alignment
 
 
 def write_markdown(path: Path, report: dict[str, Any]) -> None:
@@ -267,6 +356,7 @@ def write_markdown(path: Path, report: dict[str, Any]) -> None:
         "",
         f"- left: `{report['left']}`",
         f"- right: `{report['right']}`",
+        f"- alignment: `{report['alignment']['mode']}`",
         f"- rows compared: `{report['rows_compared']}`",
         f"- match all: `{str(report['match_all']).lower()}`",
     ]
@@ -276,7 +366,9 @@ def write_markdown(path: Path, report: dict[str, Any]) -> None:
             "",
             "## First Mismatch",
             "",
-            f"- row: `{first.get('row')}`",
+            f"- row: `{first.get('row', first.get('left_row'))}`",
+            f"- tp rank: `{first.get('tp_rank', 'n/a')}`",
+            f"- rank step: `{first.get('rank_step', 'n/a')}`",
             f"- path: `{first.get('path')}`",
             "",
             "```json",
@@ -295,6 +387,15 @@ def main() -> int:
     parser.add_argument("--max-rows", type=int, default=None)
     parser.add_argument("--max-mismatches", type=int, default=20)
     parser.add_argument("--tp-rank", default=None)
+    parser.add_argument(
+        "--align-by",
+        choices=("row", "tp-rank-step"),
+        default="row",
+        help=(
+            "row compares trace rows in file order; tp-rank-step compares the "
+            "nth row within each TP rank and ignores tp_rank/dcp_rank fields"
+        ),
+    )
     parser.add_argument("--skip-dummy-or-profile", action="store_true")
     parser.add_argument("--output-json", type=Path)
     parser.add_argument("--output-md", type=Path)
@@ -313,8 +414,11 @@ def main() -> int:
         tp_rank=args.tp_rank,
         skip_dummy_or_profile=args.skip_dummy_or_profile,
     )
-    match_all, mismatches = compare_rows(
-        left_rows, right_rows, max_mismatches=args.max_mismatches
+    match_all, mismatches, alignment = compare_rows(
+        left_rows,
+        right_rows,
+        max_mismatches=args.max_mismatches,
+        align_by=args.align_by,
     )
     report = {
         "left": str(args.left),
@@ -323,7 +427,8 @@ def main() -> int:
         "right_label": args.right_label,
         "left_rows": len(left_rows),
         "right_rows": len(right_rows),
-        "rows_compared": min(len(left_rows), len(right_rows)),
+        "rows_compared": alignment["rows_compared"],
+        "alignment": alignment,
         "match_all": match_all,
         "mismatches": mismatches,
     }
