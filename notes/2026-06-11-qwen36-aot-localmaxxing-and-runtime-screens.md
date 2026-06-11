@@ -11327,3 +11327,83 @@ Working priority:
    W8A8 kernel suite for `vllm-xpu-kernels`.
 4. Keep accepted TP4 r10/repeat64/peak-VRAM packaging ready as the stable
    public baseline.
+
+## Trace Metadata Instrumentation
+
+Added a low-risk local vLLM trace instrumentation patch so the next speculative
+diagnostic can identify which state changes before the verifier token stream
+forks.
+
+Patch artifact:
+
+- `patches/vllm-qwen36-model-input-trace-metadata-20260611f.patch`
+
+Local source touched:
+
+- `/home/steve/src/vllm/vllm/v1/worker/gpu_model_runner.py`
+
+New trace fields:
+
+- `config.max_model_len`, `config.max_num_tokens`, `config.max_num_reqs`
+- `config.num_spec_tokens`
+- `config.use_async_scheduling`
+- `config.use_async_spec_decode`
+- `config.speculative.method`
+- `config.speculative.num_speculative_tokens`
+- `config.speculative.draft_model_config_present`
+- `config.speculative.uses_draft_model`
+- `config.speculative.use_ngram_gpu`
+- `config.speculative.use_eagle`
+- `config.speculative.use_dflash`
+- `config.speculative.uses_extract_hidden_states`
+- `config.speculative.enforce_eager`
+- `config.cache.cache_dtype`
+- `config.cache.kv_cache_dtype`
+- `config.cache.configured_block_size`
+- `config.cache.num_kv_cache_groups`
+- per-cache-group `spec_type`, `block_size`, `num_speculative_blocks`, and
+  `sliding_window` when present
+- `input_batch.num_tokens_no_spec`
+- `input_batch.num_prompt_tokens_cpu`
+- `input_batch.num_accepted_tokens_cpu`
+- `input_batch.request_states`, including prompt/output/computed token counts,
+  `prev_num_draft_len`, per-group block-id lengths/heads, and recent output
+  token IDs
+
+Checker update:
+
+- `scripts/check-qwen36-model-input-parity.py` now canonicalizes the new
+  request-state records by dropping volatile `req_id` values and comparing the
+  numeric/request-block fields.
+- It also compares `num_tokens_no_spec`, `num_prompt_tokens_cpu`, and
+  `num_accepted_tokens_cpu` when present.
+
+Validation:
+
+- `python3 -m py_compile scripts/check-qwen36-model-input-parity.py /home/steve/src/vllm/vllm/v1/worker/gpu_model_runner.py`
+- `git -C /home/steve/src/vllm apply --reverse --check patches/vllm-qwen36-model-input-trace-metadata-20260611f.patch`
+- `git diff --check`
+
+Decision:
+
+- This patch does not alter scheduler/model behavior; it only enriches
+  `VLLM_XPU_MODEL_INPUT_TRACE_FILE` rows.
+- Do not restart production traffic just to exercise it. Use it on the next
+  isolated `18081` diagnostic run.
+
+Next run shape:
+
+1. Relaunch accepted no-async trace and oracle/no-mamba trace with the metadata
+   patch active.
+2. Compare with `--align-by tp-rank-step`.
+3. Inspect the first mismatch and answer:
+   - did `config.cache.groups[*].num_speculative_blocks` differ?
+   - did `num_tokens_no_spec` or `prev_num_draft_len` differ before slot
+     widening?
+   - did request block-id heads widen before scheduler spec tokens were
+     populated?
+4. If the answer points to config/proposer setup rather than scheduled draft
+   rows, implement `spec-config/no-proposer`.
+5. If the answer points to actual scheduled verifier rows, switch effort to the
+   sidecar verifier-bucket path or a scheduler patch that verifies draft tokens
+   without widening baseline attention inputs.

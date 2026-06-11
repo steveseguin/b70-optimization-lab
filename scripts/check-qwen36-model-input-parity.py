@@ -123,6 +123,34 @@ def normalize_count_dict(value: Any) -> list[int]:
     return sorted(int(count) for count in value.values())
 
 
+def normalize_request_states(value: Any) -> Any:
+    if not isinstance(value, list):
+        return value
+    normalized = []
+    for state in value:
+        if not isinstance(state, dict):
+            normalized.append(state)
+            continue
+        if state.get("missing"):
+            normalized.append({"missing": True})
+            continue
+        normalized.append({
+            key: state[key]
+            for key in (
+                "num_prompt_tokens",
+                "num_output_tokens",
+                "num_tokens",
+                "num_computed_tokens",
+                "prev_num_draft_len",
+                "block_ids_lens",
+                "block_ids_head",
+                "output_token_ids_head",
+            )
+            if key in state
+        })
+    return normalized
+
+
 def pick(container: dict[str, Any], keys: tuple[str, ...]) -> dict[str, Any]:
     return {key: container[key] for key in keys if key in container}
 
@@ -190,11 +218,18 @@ def canonical_row(row: dict[str, Any]) -> dict[str, Any]:
         "positions",
         "logits_indices",
         "expanded_local_pos",
+        "num_tokens_no_spec",
+        "num_prompt_tokens_cpu",
+        "num_accepted_tokens_cpu",
     ):
         if key in input_batch:
             canonical["input_batch"][key] = normalize_tensor_record(
                 input_batch[key]
             )
+    if "request_states" in input_batch:
+        canonical["input_batch"]["request_states"] = normalize_request_states(
+            input_batch["request_states"]
+        )
     return canonical
 
 
