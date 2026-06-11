@@ -5332,3 +5332,213 @@ Next diagnostic run:
 2. Replay the trace and inspect the new counter-transition table.
 3. Stop n-gram width experiments unless the state transition is coherent and
    repeat64/long-context parity pass.
+
+## Enriched State-Trace Diagnostic Result
+
+Ran the n-gram5/no-bonus diagnostic again with the enriched scheduler state
+trace enabled.
+
+Artifacts:
+
+- client token trace:
+  `data/qwen36-quark-int8-tp4-ngram5-nobonus-state-frontdoor-token-trace-20260611.json`
+- scheduler trace:
+  `data/qwen36-quark-int8-tp4-ngram5-nobonus-state-spec-jsonl-20260611.jsonl`
+- replay:
+  `data/qwen36-quark-int8-tp4-ngram5-nobonus-state-spec-replay-20260611.json`
+  and
+  `data/qwen36-quark-int8-tp4-ngram5-nobonus-state-spec-replay-20260611.md`
+- summary:
+  `data/qwen36-quark-int8-tp4-ngram5-nobonus-state-spec-summary-20260611.json`
+  and
+  `data/qwen36-quark-int8-tp4-ngram5-nobonus-state-spec-summary-20260611.md`
+
+Result:
+
+- Short canaries, JSON, arithmetic, and repeat-color cases matched the accepted
+  request-id baseline.
+- The long-context needle still diverged:
+  - accepted: `B70_QWEN36_NEEDLE_20260609`
+  - n-gram5/no-bonus state trace: `B70_QWEN36!`
+- First output-token diff is at token index `8`:
+  - current token: `0` (`!`)
+  - accepted token: `83098` (`_NEED`)
+- Scheduler replay still reports `1` suppressed follow-up mismatch:
+  - request `chatcmpl-910ade65c5503c90-a467094e`
+  - line `3 -> 4`
+  - suppressed token `83098` (`_NEED`)
+  - next verifier token `0` (`!`)
+- Trace summary:
+  - rows: `4`
+  - requests: `3`
+  - drafted: `20`
+  - accepted: `10`
+  - rejected: `10`
+  - acceptance: `50.00%`
+  - full-accept rows: `2`
+  - full-reject rows: `2`
+  - suppressed-bonus rows: `2`
+
+Important counter transition:
+
+| request | line | scheduled | accepted | rejected | computed delta | output-token delta | token delta |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| `chatcmpl-910ade65c5503c90-a467094e` | 3 | 6 | 5 | 0 | 0 | 5 | 5 |
+| `chatcmpl-910ade65c5503c90-a467094e` | 4 | 5 | 0 | 5 | -5 | 1 | 1 |
+
+Interpretation:
+
+- The no-bonus hook is not a correct fix. It removes the emitted bonus token
+  from the output stream but the verifier/proposer state still behaves as if
+  the speculative step advanced differently than the accepted baseline.
+- The full-reject row then rolls back computed-token state by `5`, but emits
+  `!` where the accepted model should continue with `_NEED`.
+- Treat n-gram5/no-bonus as formally rejected. Do not run more speculative
+  width sweeps until the rollback/recompute semantics are understood.
+- The client token trace does store request IDs, but the scheduler request IDs
+  append an internal suffix. Future tooling should support prefix joins such as
+  `chatcmpl-910ade65c5503c90` matching
+  `chatcmpl-910ade65c5503c90-a467094e`.
+
+Immediate things to try from this result:
+
+1. Add prefix-aware request joining to the replay/summarizer tools so every
+   client case maps directly to scheduler rows.
+2. Build a verifier-only replay mode for the failed long-context request:
+   same prompt, same generated prefix through `B70_QWEN36`, then force the next
+   exact verifier step and compare token/KV counters.
+3. Prototype a "recompute after suppressed bonus" diagnostic. If we suppress a
+   verifier bonus token, explicitly rewind/recompute the next step rather than
+   relying on existing speculative state. This is probably slower, but it
+   proves whether the bug is state advancement or proposer quality.
+4. Add state assertions in debug mode:
+   - output length equals expected accepted visible tokens,
+   - `num_tokens`, `num_computed_tokens`, and placeholders agree after every
+     rollback,
+   - suppressed bonus tokens cannot remain in proposer history unless they are
+     visible output.
+5. Stop treating n-gram depth as a speed project. From here, n-gram is a small
+   correctness reproducer for XPU/vLLM speculative state, while the real speed
+   project should move to verifier-preserving MTP/draft speculation or kernel
+   work.
+
+## Larger Ideas Added After State-Trace Review
+
+Fresh public signals checked during this pass:
+
+- Localmaxxing and independent Qwen3.6 MTP reports keep pointing at MTP/draft
+  speculation as the route others use for large single-user decode gains. One
+  useful recurring setting is shallow MTP depth, often around `2`, because
+  deeper drafts can reduce net acceptance or add too much overhead.
+- `vllm-xpu-kernels` release notes and Intel XPU grouped-GEMM tuning issues
+  point at MoE GEMM policy updates, mixed prefill/decode attention tuning, and
+  real routing distribution as active Intel XPU performance levers.
+- Public B70 reports show high aggregate throughput can coexist with weak
+  single-stream throughput. That supports keeping single-request decode as the
+  primary metric while separately tracking production aggregate capacity.
+
+New bolder bets to track:
+
+1. Shallow MTP first, not maximum-depth MTP.
+   - Start with `num_speculative_tokens=2` if an official FP8 MTP sidecar can
+     be loaded beside the Quark verifier.
+   - Measure acceptance, verifier overhead, and memory before chasing deeper
+     drafts.
+   - Quality rule stays strict: final accepted tokens must come from the Quark
+     W8A8 verifier.
+
+2. Verification-bucket optimization.
+   - Speculative decode only helps if verifying multiple proposed tokens is
+     faster than verifying them one at a time.
+   - Build exact graph buckets for verifier lengths `2`, `3`, `4`, `5`, `6`,
+     and `8`, then measure verifier-only cost with known-good proposed tokens.
+   - This separates "proposer is bad" from "multi-token verifier graph is too
+     slow on XPU".
+
+3. Prefix-safe speculative scheduler test harness.
+   - Create a tiny scheduler-level fixture that replays the `_QWEN36_NEEDLE`
+     sequence and asserts token counters after full accept, full reject,
+     partial reject, bonus emission, and suppressed bonus.
+   - This should run without the full server so scheduler bugs can be fixed
+     quickly and safely.
+
+4. Same-tokenizer trained proposer.
+   - If official MTP cannot fit or cannot integrate cleanly, train/distill a
+     small Qwen3.6-family proposer on accepted Quark traces for natural chat,
+     code, structured, and agentic prompts.
+   - The proposer can be approximate; the verifier must be exact.
+   - This is a bigger project, but it is still quality-preserving if every
+     final token is verified.
+
+5. Real-router histogram capture before any more MoE tuning.
+   - Add live capture for per-layer top-k expert IDs and rows per expert during
+     accepted p512/n512 decode and prompt-class runs.
+   - Feed those histograms into grouped-GEMM microbenches.
+   - Tune for the actual long-tail expert distribution, not uniform synthetic
+     rows.
+
+6. Persistent MoE branch against current `vllm-xpu-kernels`.
+   - Pull or compare the current Intel/vLLM XPU kernel branch that mentions MoE
+     GEMM policy updates.
+   - Confirm whether our Quark W8A8 path is using the newest persistent MoE or
+     fused activation path.
+   - If not, create a minimal Qwen3.6 A3B W8A8 repro before writing a local
+     persistent kernel from scratch.
+
+7. Memory-for-latency lane.
+   - The accepted service reports substantial KV capacity. For a solo latency
+     lane, spend some of that headroom on replicated hot experts, packed
+     weights, larger graph buckets, or a small sidecar drafter.
+   - Keep the normal 32K production lane intact; this is a separate service
+     class for single-user speed.
+
+8. Layer-level roofline and timeline budget.
+   - Build a one-token, one-layer harness with captured tensors and route maps.
+   - Produce a per-layer time budget: attention/GDN, dense W8A8 GEMM, MoE
+     routing, grouped GEMM, shared expert, collectives, sampler/lm-head.
+   - Use oneprof/Level Zero counters where possible. The goal is to stop
+     guessing which subpath owns the 10 ms/token wall.
+
+9. Whole-token command-list experiment.
+   - Capture and replay the entire accepted one-token decode sequence for a
+     fixed batch-1 shape, including collectives where graph-safe.
+   - If launch/synchronization gaps dominate, this may beat individual kernel
+     micro-optimizations without changing math.
+
+10. Exact 8-bit engine shootout with a hard reject filter.
+    - Compare vLLM Quark W8A8 with llama.cpp/SYCL Q8_0, OpenVINO/oneDNN GenAI
+      8-bit, and any current Intel-native Qwen3.6 35B 8-bit route.
+    - Reject immediately if the path becomes 4-bit, Qwen3.5, wrong chat
+      template, reduced context, or a quality-mismatched quantization.
+    - Use this to decide whether vLLM/XPU is the ceiling or just the current
+      best production route.
+
+11. Upstream issue packet with repros, not just notes.
+    - Package three public repros:
+      - n-gram/no-bonus state mismatch and prefix-join trace,
+      - exact graph bucket needed for speculative verifier length `3`,
+      - Qwen3.6 W8A8 routed grouped-GEMM shape with real route histograms.
+    - Include Localmaxxing public result ID, exact commands, kernel versions,
+      and expected target. This is likely to get better Intel/vLLM help than a
+      broad "B70 is slow" issue.
+
+12. Reliability and aging as first-class metrics.
+    - Every speed candidate should report:
+      - cold quality,
+      - repeat64,
+      - long-context needle,
+      - c1 r8/r10 speed,
+      - c4/c8 smoke,
+      - one short process-aging loop.
+    - The stale-process quality failure and device-lost incidents mean runtime
+      age is not a secondary detail for production.
+
+Revised priority after this diagnostic:
+
+1. Fix trace joining and scheduler-state proof first.
+2. In parallel, start real-router histogram capture and a layer-level time
+   budget.
+3. Next high-upside branch is shallow MTP/draft speculation with Quark verifier.
+4. Next durable backend branch is persistent MoE/grouped-GEMM work using real
+   route distributions.
+5. Keep Localmaxxing updates for quality-gated accepted results only.
