@@ -10682,3 +10682,202 @@ Current priority after adding these ideas:
 3. Logits/top-k fingerprints to separate sampling fork from verifier drift.
 4. Latest `vllm-xpu-kernels` isolated bakeoff.
 5. Route histograms and persistent MoE microbench work in parallel.
+
+## No-Async Oracle Lane Result And Bigger Follow-Ups
+
+Added after running the first patched oracle/perfect-draft probes in the
+no-async parity lane. This is now the most important speculative-decode
+correctness evidence:
+
+- `p512/o32`, oracle `k=5`, no-async lane:
+  - exact output parity versus the no-async accepted baseline:
+    `baseline_match_all=true`.
+  - scheduler trace: `52/52` draft tokens accepted, `100.0%` accept rate,
+    `12` rows, `2` requests.
+  - warmed short fixture signal: repetitive case `0.190s` versus accepted
+    `0.415s`. This is useful as a direction check, not a publishable speed
+    claim because the output is too short and one case includes startup/compile
+    noise.
+- `p512/o128`, oracle `k=5`, no-async lane:
+  - exact output parity failed: `baseline_match_all=false`.
+  - scheduler trace: `31/40` draft tokens accepted, `77.5%` accept rate.
+  - first output diffs: `natural_latency_plan` at token index `25`,
+    `repetitive_kernel_notes` at token index `14`.
+- `p512/o128`, oracle `k=1`, no-async lane:
+  - exact output parity still failed: `baseline_match_all=false`.
+  - scheduler trace: `14/14` draft tokens accepted, `100.0%` accept rate.
+  - both fixtures drifted at output token index `14`.
+
+Interpretation:
+
+- The short `o32` result proves the patched lane can accept oracle drafts and
+  sometimes preserve final output exactly.
+- The longer `o128` `k=1` result is the real blocker. It accepted every single
+  one-token oracle draft and still diverged, so the failure is below draft
+  quality, draft width, and full-accept bonus behavior.
+- Do not promote DFlash, MTP, n-gram, or any other proposer until oracle `k=1`
+  has exact parity over the longer fixture. Otherwise a faster drafter can
+  silently accelerate a different verifier state.
+- No Localmaxxing submission is warranted from these oracle probes. The
+  quality gate failed on the longer fixture and the `>200 tok/s` single-user
+  goal has not been achieved.
+
+Artifacts:
+
+- `data/qwen36-quark-int8-tp4-accepted-noasync-oraclelane-p512o32-20260611b.json`
+- `data/qwen36-quark-int8-tp4-oracle5-noasynclane-p512o32-20260611b.json`
+- `data/qwen36-quark-int8-tp4-oracle5-noasynclane-spec-summary-20260611b.json`
+- `data/qwen36-quark-int8-tp4-oracle5-noasynclane-spec-summary-20260611b.md`
+- `data/qwen36-quark-int8-tp4-accepted-noasync-oraclelane-p512o128-20260611b.json`
+- `data/qwen36-quark-int8-tp4-oracle5-noasynclane-p512o128-20260611b.json`
+- `data/qwen36-quark-int8-tp4-oracle5-noasynclane128-spec-summary-20260611b.json`
+- `data/qwen36-quark-int8-tp4-oracle5-noasynclane128-spec-summary-20260611b.md`
+- `data/qwen36-quark-int8-tp4-oracle5-noasynclane128-drift-fixture-20260611b.json`
+- `data/qwen36-quark-int8-tp4-oracle5-noasynclane128-drift-fixture-20260611b.md`
+- `data/qwen36-quark-int8-tp4-oracle1-noasynclane-p512o128-20260611b.json`
+- `data/qwen36-quark-int8-tp4-oracle1-noasynclane128-spec-summary-20260611b.json`
+- `data/qwen36-quark-int8-tp4-oracle1-noasynclane128-spec-summary-20260611b.md`
+- `data/qwen36-quark-int8-tp4-oracle1-noasynclane128-drift-fixture-20260611b.json`
+- `data/qwen36-quark-int8-tp4-oracle1-noasynclane128-drift-fixture-20260611b.md`
+
+Fresh public signals checked during this update:
+
+- `https://github.com/vllm-project/vllm-xpu-kernels`
+  - The repo lists XPU custom kernels for RMS/layer norm, activation,
+    Flash/GDN/Xe2 attention, MoE top-k/remapping/gather, FP8/MxFP4
+    quantization/GEMM, and grouped GEMM. This supports making XPU-kernel-level
+    repros rather than only main-tree Python wrapper patches.
+- `https://vllm.ai/blog/2025-11-11-intel-arc-pro-b`
+  - Intel/vLLM's Arc Pro B-series writeup calls out persistent MoE loops,
+    dynamic balancing, prepack, multi-GPU scaling, and PCIe P2P. That points
+    away from small env sweeps and toward persistent MoE/layout work.
+- `https://huggingface.co/z-lab/Qwen3.6-35B-A3B-DFlash`
+  - DFlash is explicitly a drafter that must be paired with Qwen3.6-35B-A3B.
+    It remains interesting only behind our current Quark verifier after the
+    oracle verifier-state bug is fixed.
+- `https://github.com/thc1006/qwen3.6-speculative-decoding-rtx3090`
+  - Public Qwen3.6 A3B speculative work reports no net speedup for that
+    specific Ampere/llama.cpp/draft setup. Treat this as a warning to require
+    end-to-end speed and quality, not just acceptance-rate optimism.
+- `https://pytorch.org/blog/accelerating-moe-model/`
+  - The MoE locality work reports large kernel speedups from scheduling and
+    locality for skinny MoE inference GEMMs. The portable lesson for B70 is to
+    optimize real routed MoE memory locality, not just raw GEMM math.
+- `https://github.com/intel/intel-xpu-backend-for-triton/issues/6389`
+  - Intel XPU grouped-GEMM tuning notes explicitly call for real token
+    distributions instead of synthetic routing. This matches the route
+    histogram backlog.
+- `https://docs.vllm.ai/en/latest/design/moe_kernel_features/`
+  - vLLM's MoE design now has explicit modular prepare/finalize, all2all, and
+    experts-kernel interfaces. Hybrid TP/EP experiments should use those
+    boundaries as the architecture map.
+- `data/localmaxxing-qwen36-fp8-top-refresh-20260611c.json`
+  - Public exact `Qwen/Qwen3.6-35B-A3B-FP8` rows currently include `253.7`
+    tok/s on RTX PRO 6000 Blackwell and `140.01` tok/s on dual RTX 3090.
+    Hardware is not comparable, but it reinforces that the model class can run
+    much faster when the engine/speculation path is right.
+- `data/localmaxxing-qwen36-dflash-refresh-20260611c.json`
+  - No public exact `z-lab/Qwen3.6-35B-A3B-DFlash` Localmaxxing rows were
+    returned by the API at this check.
+
+Immediate corrective work to try next:
+
+1. Add logits/top-k fingerprints around the `k=1` token-14 divergence.
+   - Record verifier top-k token IDs, top-k logits, sampled/greedy token, and a
+     compact checksum for hidden state before each emitted token.
+   - Compare accepted no-async versus oracle `k=1`. If logits differ before the
+     first token mismatch, we have verifier-state/KV drift. If logits match but
+     sampling diverges, the bug is in sampling/request accounting.
+
+2. Add a request-id joined model-input trace for the two `o128` fixtures.
+   - Current traces are useful but not enough to join every internal row to the
+     client case cleanly.
+   - Add case labels or explicit prompt hashes into the scheduler/model-runner
+     trace so row 14 can be inspected without guesswork.
+
+3. Trace GDN/mamba state, positions, and block tables across the first 20 decode
+   steps.
+   - The old zero-lookahead bug lived in Qwen3.6's mamba block allocation.
+     The new `k=1` drift could be another speculative update path that changes
+     mamba/GDN state even when every draft is "correct".
+
+4. Build a tiny deterministic oracle `k=1` replay fixture.
+   - Use one prompt, fixed tokens through index 20, no HTTP/frontdoor, no
+     concurrent requests.
+   - The target is a minimal upstreamable repro that fails in seconds and can be
+     shared with vLLM/Intel maintainers without production context.
+
+5. Keep the accepted service on the current quality-gated non-spec path.
+   - The accepted backend has been restored after this diagnostic in tmux
+     session `qwen36-tp4-accepted-restored-after-oracle-noasynclane-20260611b`
+     with backend `/health`, model listing, and frontdoor local-bypass `OK`
+     smoke passing.
+   - Direct backend chat bypasses the frontdoor's `enable_thinking=false`
+     template and is not the exact operational canary.
+
+Bigger, bolder ideas to keep on the board:
+
+1. Speculative verifier-state repair as a standalone project.
+   - Treat "oracle `k=1` exact parity for 128+ tokens" as the first milestone.
+   - Only after that, re-enable MTP/DFlash/ngram trials.
+   - This is less glamorous than a drafter, but it is the key that makes every
+     no-quality-loss speculation path viable.
+
+2. Whole-token replay runner.
+   - Build a direct runner that captures one full token step as a Level Zero or
+     XPU graph command sequence and replays it with fixed KV/block-table state.
+   - Goal: eliminate scheduler and dynamic graph churn for batch-1 latency,
+     then compare exact outputs to vLLM.
+
+3. Persistent route-window MoE executor.
+   - Capture real route windows from accepted traffic, group them by layer and
+     hot experts, and feed those windows to a persistent XPU grouped-GEMM path.
+   - Include expert remapping, activation, quant, output combine, and
+     shared-expert/finalize work. The rejected Python boundary proved partial
+     wrapping is not enough.
+
+4. Memory-for-latency hot expert copies.
+   - Spend unused VRAM to replicate the hottest layer-local experts on more
+     ranks, reducing cross-rank MoE traffic for common route windows.
+   - Gate with route histograms and exact output parity; the weights are
+     identical, only placement changes.
+
+5. Hybrid TP/EP single-user layout.
+   - Simulate a layout that does not all-reduce every tiny dense/MoE boundary
+     across TP4.
+   - Candidate designs: TP2 dense plus EP MoE, replicated attention plus sharded
+     experts, or per-layer expert placement based on actual route histograms.
+
+6. XPU W8A8/MxFP8 kernel branch audit.
+   - Compare current Quark `int8_gemm_w8a8` behavior against latest
+     `vllm-xpu-kernels` W8A8/MxFP8 paths in an isolated environment.
+   - Success is not just "new wheel installed"; require AOT census changes,
+     speed, and quality.
+
+7. 8-bit engine bakeoff with a real production bar.
+   - Test llama.cpp SYCL/Vulkan or SGLang only with Qwen3.6 35B 8-bit/high
+     fidelity, 32K-capable settings, and the same quality suite.
+   - A faster but 4-bit or different-family result does not count. A slower
+     result can still teach us about scheduler/spec/MoE architecture.
+
+8. Upstream-quality issue packet.
+   - Package the oracle `k=1` drift, block-table parity tools, route histograms,
+     and grouped-GEMM shapes into small reproducible issues.
+   - The best external help will come from precise artifacts: exact model,
+     trace rows, current/expected token IDs, commands, and no secrets.
+
+9. Production dual-lane design.
+   - Keep a conservative non-spec lane as the quality baseline.
+   - Add a latency lane only after exact oracle/spec parity and reliability
+     pass. Frontdoor should be able to route, pause, drain, and fall back by
+     health/quality canary result.
+
+Updated priority:
+
+1. Fix oracle `k=1` exact parity over `p512/o128`.
+2. Add logits/top-k and request-id model-input joins around token 14.
+3. Build the minimal upstreamable speculative-state repro.
+4. In parallel, capture route histograms and start persistent MoE microbench
+   work against real routed distributions.
+5. Only after (1) passes, return to MTP/DFlash speed work and publish any new
+   Localmaxxing result.
