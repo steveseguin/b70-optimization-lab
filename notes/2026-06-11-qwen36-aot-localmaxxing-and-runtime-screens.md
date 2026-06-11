@@ -3540,3 +3540,165 @@ LocalMaxxing publication:
   `cmq8yhxvo001ipb0149aoa79o`,
   submitted under `nameistoken/Qwen3.6-35B-A3B-Quark-W8A8-INT8`,
   `99.42835812273452` tok/s, no peak VRAM metric.
+
+## Weighted Hotpack Follow-Up
+
+Command:
+
+```bash
+python3 scripts/analyze-qwen36-route-overlap-hotpack.py \
+  --input natural-chat=data/qwen36-quark-int8-tp4-promptclass-routecapture-20260611a-routes-natural-chat.jsonl \
+  --input code=data/qwen36-quark-int8-tp4-promptclass-routecapture-20260611a-routes-code.jsonl \
+  --input structured=data/qwen36-quark-int8-tp4-promptclass-routecapture-20260611a-routes-structured.jsonl \
+  --input math-reasoning=data/qwen36-quark-int8-tp4-promptclass-routecapture-20260611a-routes-math-reasoning.jsonl \
+  --input repetitive=data/qwen36-quark-int8-tp4-promptclass-routecapture-20260611a-routes-repetitive.jsonl \
+  --input long-natural=data/qwen36-quark-int8-tp4-promptclass-routecapture-20260611a-routes-long-natural.jsonl \
+  --topn 16 \
+  --hotpack-k 8 \
+  --hotpack-k 16 \
+  --hotpack-k 32 \
+  --hotpack-k 64 \
+  --max-buckets 4 \
+  --out-json data/qwen36-quark-int8-tp4-promptclass-routecapture-20260611a-overlap-hotpack.json \
+  --out-md data/qwen36-quark-int8-tp4-promptclass-routecapture-20260611a-overlap-hotpack.md \
+  --limit 5
+```
+
+Artifacts:
+
+- `scripts/analyze-qwen36-route-overlap-hotpack.py`
+- `data/qwen36-quark-int8-tp4-promptclass-routecapture-20260611a-overlap-hotpack.json`
+- `data/qwen36-quark-int8-tp4-promptclass-routecapture-20260611a-overlap-hotpack.md`
+
+Top weighted K=16 result:
+
+| Layer | Records | Top-16 union | Top-16 Jaccard | Global K=16 | Label K=16 | Best bucket K=16 |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 8 | 520 | 34 | 0.2673 | 0.4010 | 0.4894 | 0.4894 |
+| 9 | 520 | 32 | 0.2840 | 0.4135 | 0.5019 | 0.5019 |
+| 21 | 520 | 33 | 0.2897 | 0.4212 | 0.5019 | 0.5019 |
+| 20 | 520 | 29 | 0.3183 | 0.4385 | 0.5106 | 0.5106 |
+| 14 | 520 | 27 | 0.4024 | 0.4231 | 0.5010 | 0.5010 |
+
+K=8/16/32/64 coverage read:
+
+- Global hotpack K=16 only covers about 40-44% of weighted expert
+  assignments in the sampled layers.
+- Prompt/route-bucket K=16 covers about 49-51%, a consistent 7-9 percentage
+  point lift over a global pack.
+- Bucket K=32 reaches about 68-72%; bucket K=64 reaches about 88-90%.
+- The best K=16 partition is consistent across the sampled layers:
+  `code`, `structured`, and `long-natural` group together, while
+  `math-reasoning` and `repetitive` each need separate route buckets.
+
+Decision:
+
+- A single static global expert pack is too blunt.
+- Prompt/route buckets are real signal and should be kept for scheduling, but
+  they are not a standalone path to >200 tok/s. K=16 leaves roughly half of
+  routed work outside the hotpack, and K=32 still leaves roughly 28-32%.
+- Existing route-exact grouped-GEMM microbenchmarks showed active-expert
+  compaction is neutral, and endpoint policy overrides regressed the accepted
+  server. Do not spend the next pass only on more static pack knobs.
+- Highest-confidence no-quality-loss path remains removing decode-stage idle
+  time and kernel overhead while preserving exact math.
+
+Immediate next experiments:
+
+1. Decode-stage timing census.
+   - Measure per-token time in scheduler, sampling, attention, each MoE layer,
+     all-reduce/collective work, and frontdoor streaming.
+   - Goal: identify whether the next 2x has to come from MoE kernels, TP
+     communication, scheduler overhead, or output path overhead.
+
+2. Direct c1 runner.
+   - Drive the engine without the OpenAI/frontdoor path using the same prompt
+     artifacts and token counts.
+   - If direct decode is materially faster, create a low-latency internal
+     serving path or fix frontdoor pacing.
+
+3. Layer-local fused MoE prototype.
+   - Start with layers 8, 9, 14, 20, and 21 because the route-capture signal is
+     strongest there.
+   - Fuse route compaction, W8A8 activation quant, GEMM1, activation, GEMM2,
+     and scatter/reduce where practical.
+   - Quality gate: exact token trace parity against accepted W8A8.
+
+4. Persistent zero-gap grouped-MoE kernel.
+   - Use dynamic work stealing by expert block, matching the vLLM B-series
+     persistent MoE direction.
+   - This handles route skew without depending on a static expert list.
+
+## Larger Bets
+
+These are bigger than the next single patch, but they are credible no-quality
+or verifier-preserving paths if we want a meaningful jump rather than another
+1-3 tok/s:
+
+1. End-to-end resident decode loop.
+   - Keep per-layer decode work resident on XPU and avoid host-side launch gaps
+     across the full decode step, not just inside one MoE kernel.
+   - This is invasive, but it targets exactly the small-batch latency shape.
+
+2. Prompt-class route scheduler.
+   - Classify each request into a small route family at prefill or early decode.
+   - Use that route family only to choose scheduling/bucket kernels, never to
+     alter model outputs.
+   - The current trace suggests at least three stable families:
+     code/structured/long-natural, math-reasoning, repetitive.
+
+3. TP4 alternatives that preserve the same model.
+   - Benchmark TP1, TP2, TP4, and replica layouts with the same W8A8 weights and
+     context lengths.
+   - If communication dominates single-request decode, a smaller TP degree plus
+     replicas may win latency while preserving aggregate capacity.
+
+4. Exact verifier plus speculative draft.
+   - Keep the current W8A8 model as verifier.
+   - Run a draft model, MTP head, or ngram path only when all accepted tokens
+     are verified by the W8A8 model.
+   - This can preserve final output quality and may be the fastest path to a
+     visible 2x if exact-kernel work stalls.
+
+5. XPU kernel stack fork.
+   - Maintain a local branch of `vllm-xpu-kernels` for B70-specific W8A8 MoE
+     kernels instead of relying only on upstream release cadence.
+   - Upstream or publish only after token-trace parity and reliability gates.
+
+6. Engine split by product mode.
+   - Keep a conservative 32K production slot.
+   - Add lower-context latency slots, for example 8K/16K, using the same W8A8
+     model and quality gates.
+   - This does not lower model quality; it trades maximum context for speed in
+     workflows that do not need 32K.
+
+7. Topology and power/frequency control as first-class benchmark metadata.
+   - Record GPU BDF order, XCCL topology, CPU affinity, IRQ affinity, power
+     limit, clocks, thermals, and throttling state in every run.
+   - If the cards are waiting on PCIe or worker placement, kernel work alone
+     will not solve the single-request path.
+
+8. Quality scoreboard before every speed claim.
+   - Require token-trace parity on deterministic prompts where exactness is
+     expected.
+   - Add small eval sets for coding, JSON schema following, math, long-context
+     retrieval, multilingual text, and refusal/safety behavior.
+   - Publish speed only with the paired quality artifact.
+
+External idea sources to keep watching:
+
+- vLLM fused MoE kernel feature matrix:
+  `https://docs.vllm.ai/en/latest/design/moe_kernel_features/`
+- vLLM Intel Arc Pro B-series blog, especially the persistent zero-gap MoE
+  discussion:
+  `https://vllm.ai/blog/2025-11-11-intel-arc-pro-b`
+- vLLM XPU kernels:
+  `https://github.com/vllm-project/vllm-xpu-kernels`
+- vLLM B70/XPU issue tracker examples:
+  `https://github.com/vllm-project/vllm/issues/41663`
+- Intel Extension for PyTorch releases:
+  `https://github.com/intel/intel-extension-for-pytorch/releases`
+- Community B70 performance reports:
+  `https://www.reddit.com/r/LocalLLaMA/comments/1sgdt7t/my_experience_with_the_intel_arc_pro_b70_for/`
+  and
+  `https://www.reddit.com/r/LocalLLM/comments/1sfa0iw/2x_intel_arc_b70_benchmark/`
