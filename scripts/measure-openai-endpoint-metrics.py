@@ -555,6 +555,7 @@ def main() -> int:
         metrics_before = parse_metric_sums(get_text(f"{args.base_url.rstrip('/')}/metrics"))
         vram_pre = {} if args.skip_vram else xpu_vram_mib()
         request_fn = request_chat_completion if args.endpoint == "chat" else request_completion
+        request_started_at_unix = time.time()
         result = request_fn(
             args.base_url,
             model,
@@ -563,6 +564,7 @@ def main() -> int:
             stream=args.mode == "stream",
             seed=args.seed,
         )
+        request_finished_at_unix = time.time()
         vram_post = {} if args.skip_vram else xpu_vram_mib()
         metrics_after = parse_metric_sums(get_text(f"{args.base_url.rstrip('/')}/metrics"))
 
@@ -603,6 +605,8 @@ def main() -> int:
         record = {
                 "repeat": i + 1,
                 "request_id": result.get("request_id"),
+                "request_started_at_unix": request_started_at_unix,
+                "request_finished_at_unix": request_finished_at_unix,
                 "prompt_tokens_client": record_prompt_tokens,
                 "prompt_tokens_estimated_before_request": prompt_tokens,
                 "output_tokens_client": output_tokens,

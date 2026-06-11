@@ -3224,3 +3224,67 @@ Interpretation:
   of quant/GEMM boundaries, direct c1 runner, or verifier-preserving
   speculation/MTP. Small policy-only grouped-GEMM tuning is unlikely to bridge
   the gap to `>200 tok/s`.
+
+## Existing Decode Route Heatmap
+
+After rejecting the endpoint policy overrides, I generated a combined heatmap
+from existing decode route captures rather than restarting with route capture
+again.
+
+Command:
+
+```bash
+python3 scripts/analyze-qwen36-moe-route-heatmap.py \
+  --input routecapture5_allranks='data/qwen36-quark-int8-tp4-routecapture5-routes-rank*.jsonl' \
+  --input routecapture6_rank0='data/qwen36-quark-int8-tp4-routecapture6-routes-rank0-20260611.jsonl' \
+  --topn 16 \
+  --max-num-tokens 1 \
+  --out data/qwen36-quark-int8-tp4-routecapture5-6-decode-heatmap-20260611.json \
+  --limit 30
+```
+
+Artifact:
+
+- `data/qwen36-quark-int8-tp4-routecapture5-6-decode-heatmap-20260611.json`
+
+Top ranked decode route-locality layers:
+
+| Layer | Capture | Records | Top-16 share | Max expert share | Active expert share | Top experts |
+| ---: | --- | ---: | ---: | ---: | ---: | --- |
+| 8 | routecapture5 all ranks | 508 | 0.5482 | 0.0827 | 0.4570 | 224, 110, 151, 239, 220, 117, 191, 206 |
+| 20 | routecapture5 all ranks | 508 | 0.5344 | 0.0600 | 0.4883 | 224, 191, 151, 237, 117, 41, 53, 239 |
+| 9 | routecapture6 rank0 | 95 | 0.5105 | 0.0566 | 0.4336 | 61, 243, 207, 197, 161, 166, 47, 250 |
+| 21 | routecapture6 rank0 | 95 | 0.4895 | 0.0579 | 0.4648 | 243, 207, 44, 47, 61, 161, 166, 21 |
+| 14 | routecapture6 rank0 | 95 | 0.4211 | 0.0487 | 0.4922 | 189, 52, 64, 194, 67, 160, 96, 167 |
+
+Read:
+
+- Existing natural/decode captures show real locality: top-16 experts can carry
+  roughly half of the assignments for some layers.
+- This supports hot-expert packing/replication or route-bucket AOT kernels as a
+  larger no-quality-loss path.
+- It also explains why a simple global grouped-GEMM policy override was too
+  blunt. Layer-specific route shape matters more than one global tiny-M policy.
+
+Coverage gap:
+
+- These captures are not yet prompt-class complete. They cover natural-chat-ish
+  decode windows and routecapture6 rank0 for layers 9/14/21.
+- Before changing expert placement, capture the same route histograms for:
+  natural chat, code, structured JSON, math/reasoning, repetitive text, and a
+  long-context prompt.
+- A good next artifact should rank layers by:
+  top-16 share, max expert share, active expert share, cross-prompt top-expert
+  Jaccard, and per-call max rows per expert.
+
+Next implementation idea:
+
+- Updated `scripts/measure-openai-endpoint-metrics.py` to include
+  `request_started_at_unix` and `request_finished_at_unix` per measured repeat.
+  This lets a future prompt-class route-capture run split one route JSONL by
+  request time window instead of restarting the model for every prompt preset.
+- Add a route-capture helper that runs the five `--prompt-kind preset` classes
+  through `measure-openai-endpoint-metrics.py` under the route-capture launcher,
+  then emits one combined prompt-class heatmap.
+- If the same top experts persist across prompt classes, prototype hot-expert
+  replication/packing for layers 8/20 first.
