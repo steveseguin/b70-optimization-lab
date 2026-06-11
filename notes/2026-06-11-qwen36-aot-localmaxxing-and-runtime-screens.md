@@ -3162,3 +3162,65 @@ Validation rule for every bold idea:
 5. Route capture after the change to ensure it did not merely change prompt
    behavior.
 6. Stability soak before any production promotion.
+
+## W8A8 Policy Endpoint Gate
+
+Follow-up to the route-exact grouped-GEMM policy screen.
+
+Runtime procedure:
+
+- Stopped accepted unset-policy endpoint:
+  `qwen36-tp4-accepted-restored-20260611h`.
+- Started `m32` endpoint:
+  `VLLM_XPU_W8A8_GROUPED_GEMM_POLICY=m32`,
+  log `/tmp/qwen36-quark-int8-tp4-m32-policy-20260611.log`.
+- Started `base` endpoint:
+  `VLLM_XPU_W8A8_GROUPED_GEMM_POLICY=base`,
+  log `/tmp/qwen36-quark-int8-tp4-base-policy-20260611.log`.
+- Restored accepted unset-policy endpoint:
+  `qwen36-tp4-accepted-restored-20260611i`,
+  log `/tmp/qwen36-quark-int8-tp4-accepted-restored-20260611i.log`.
+- Backend/frontdoor health after restore:
+  `http://127.0.0.1:18080/health -> 200`,
+  `http://127.0.0.1:8000/health -> 200`.
+
+Speed artifacts, p512/n512 streaming completions, r4:
+
+| Runtime policy | Corrected after-first tok/s | E2E output tok/s | TTFT ms | Result |
+| --- | ---: | ---: | ---: | --- |
+| accepted unset baseline r8 | 99.422 | 97.957 | 75.644 | keep |
+| accepted frontdoor r4 | 99.770 | 98.272 | 76.527 | keep |
+| `m32` | 98.982 | 97.692 | 78.421 | reject, no endpoint speed win |
+| `base` | 98.632 | 97.333 | 79.434 | reject, no endpoint speed win |
+
+Artifacts:
+
+- `data/qwen36-quark-int8-tp4-m32-policy-single-r4-20260611.json`
+- `data/qwen36-quark-int8-tp4-base-policy-single-r4-20260611.json`
+- accepted baseline:
+  `data/qwen36-quark-int8-tp4-accepted-clean-single-r8-refresh-20260611.json`
+- accepted frontdoor reference:
+  `data/qwen36-quark-int8-tp4-accepted-frontdoor-single-r4-refresh-20260611.json`
+
+Quality gate for `m32`:
+
+- Command used the Qwen text quality suite through the frontdoor, with accepted
+  frontdoor quality as baseline:
+  `data/qwen36-quark-int8-tp4-accepted-frontdoor-quality-rerun64-refresh-20260611.json`
+- Artifact:
+  `data/qwen36-quark-int8-tp4-m32-policy-frontdoor-quality-rerun8-20260611.json`
+- Result:
+  `pass_all=true`, `baseline_match_all=true`, exact cases pass, repeat pass,
+  8192-token needle pass.
+
+Interpretation:
+
+- The route-exact microbench result did not survive the full endpoint path.
+- `m32` remains useful as evidence that tiny grouped-GEMM policy is not the
+  dominant endpoint bottleneck at this shape.
+- `base` is also slower, despite the best GEMM1 microbench result.
+- Keep the accepted unset-policy runtime for production-candidate operation.
+- Next work should move to route histograms, end-to-end decode timeline, fusion
+  of quant/GEMM boundaries, direct c1 runner, or verifier-preserving
+  speculation/MTP. Small policy-only grouped-GEMM tuning is unlikely to bridge
+  the gap to `>200 tok/s`.
