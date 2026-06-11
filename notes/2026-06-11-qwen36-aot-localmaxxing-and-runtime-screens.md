@@ -2135,3 +2135,183 @@ Interpretation:
   proposer, or cross-engine verifier bridge.
 - The next speed work should not consume time on another backend-only result
   unless it also passes the frontdoor repeat64 gate.
+
+## Post-Control Branch Decisions and Bigger Bets
+
+Added after the accepted refresh above, a Localmaxxing/B70 scan, and a quick
+external pass through current XPU/vLLM performance threads. The main point is
+to keep the search space honest: the accepted endpoint is now a solid
+`99-100 tok/s` control, so the next work needs multiplier potential rather than
+another low-single-digit tweak.
+
+External signals checked:
+
+- Localmaxxing public leaderboard:
+  `https://localmaxxing.com/api/leaderboard?modelFamily=qwen&hardwareName=Arc%20Pro%20B70&limit=20`
+  - current posted result: `nameistoken/Qwen3.6-35B-A3B-Quark-W8A8-INT8`,
+    4x Arc Pro B70, vLLM/XPU, Quark W8A8 INT8, `99.428 tok/s`,
+    `76.454 ms` TTFT, `196.325 tok/s` total.
+  - closest public B70/Qwen3.6-35B-A3B results in that query were
+    llama.cpp/SYCL Q4 runs at about `68.8-70.35 tok/s` single-stream.
+  - Interpretation: the current INT8 result is worth keeping public, but it is
+    still not close to the `>200 tok/s` single-user target.
+- vLLM XPU kernels releases:
+  `https://github.com/vllm-project/vllm-xpu-kernels/releases`
+  - recent release notes mention Xe2 grouped-GEMM heuristic updates for MoE,
+    FP8, and small-K cases. This is directly relevant enough to justify a clean
+    disposable A/B, but not by mutating the dirty local kernel tree or the
+    active production venv.
+- Intel Triton/XPU grouped GEMM tuning epic:
+  `https://github.com/intel/intel-xpu-backend-for-triton/issues/6389`
+  - the issue calls out runtime routing distribution, tile configuration, and
+    decode-stage long-tail expert skew as grouped-GEMM performance drivers.
+  - This matches our route-capture/component-summary conclusion: synthetic
+    uniform microbenchmarks are not enough; exact Qwen3.6 route distributions
+    should drive kernel tuning.
+- vLLM FP8 KV-cache/attention post:
+  `https://vllm.ai/blog/2026-04-22-fp8-kvcache`
+  - long-context decode can become KV-memory-bound, and FP8 KV can reduce
+    decode cost and memory on validated paths. For this project, this is only a
+    gated idea because the quality target does not allow silent cache-precision
+    regressions.
+- vLLM MoE kernel design docs:
+  `https://docs.vllm.ai/en/latest/design/moe_kernel_features/`
+  - useful for mapping which MoE prepare/finalize and all2all paths preserve
+    quantized activation formats versus quantizing after dispatch.
+- MoE parallelism playbook, used only as a conceptual reference:
+  `https://rocm.blogs.amd.com/software-tools-optimization/vllm-moe-guide/README.html`
+  - it reinforces that TP, DP, and EP have different latency/throughput trade
+    offs. It is AMD-focused, so any Intel/XPU conclusion needs direct testing.
+
+Branch decisions:
+
+1. Do not spend the next cycle rerunning n-gram2 as the main path.
+   - Best prior n-gram2 capture-size-3 result was quality-clean once and reached
+     `105.158 tok/s`, but the prompt-class screen was negative or neutral for
+     natural chat, code, and math. Structured output showed a gain, but the
+     output-length/validity differences made it unsuitable as a broad claim.
+   - Keep n-gram2 as a diagnostic or request-class experiment, not the main
+     `>200 tok/s` path.
+
+2. Do not rerun the existing Qwen local-argmax patch as-is.
+   - Prior local-argmax artifacts were below today's accepted control:
+     default pair all-gather around `97.638 tok/s`, packed all-reduce around
+     `98.587 tok/s`, versus the current frontdoor control near `99.770 tok/s`.
+   - Timing already showed logits plus sampler below 1 ms/token while
+     model-forward is about 8.6 ms/token. The exact greedy idea remains alive
+     only if it becomes a deeper fused/top1 path that removes real per-token
+     work, not the already-tested patch.
+
+3. Do not install or overwrite the dirty local `vllm-xpu-kernels` tree.
+   - `/home/steve/src/vllm-xpu-kernels` and `/home/steve/src/vllm` both contain
+     local edits and experiments that must not be clobbered.
+   - Any upstream release A/B should use a clean clone, separate build dir, and
+     disposable venv, then only swap into the active endpoint after a repeatable
+     artifact exists.
+
+4. Keep the production/frontdoor repeat64 gate as mandatory.
+   - Direct backend no-thinking checks are not enough. The accepted quality
+     claim currently belongs to the frontdoor path, because that path injects
+     the correct no-thinking chat-template behavior and caught failures that a
+     single backend canary missed.
+
+Bolder ideas to try, ranked by chance of a real multiplier:
+
+1. Clean upstream `vllm-xpu-kernels` A/B for Xe2 grouped-GEMM changes.
+   - Build latest upstream in a disposable venv, launch the same model and
+     exact flags, then compare p512/n512 speed, repeat64 quality, and per-token
+     timing against the accepted control.
+   - Success gate: same frontdoor quality pass and at least a measurable
+     endpoint gain before looking at code-level tuning.
+
+2. Exact route-distribution grouped-GEMM tuning harness.
+   - Convert our route-capture traces into the grouped-GEMM shapes used by
+     Qwen3.6 A3B decode, including the long-tail expert distribution and rows
+     counts that actually appear at batch 1.
+   - Benchmark SYCL-TLA, Triton-XPU, and any local W8A8 grouped-GEMM kernels on
+     those exact distributions. Optimize for the recurring hot shapes, not a
+     uniform synthetic expert split.
+   - Success gate: kernel-level speedup on real distributions, followed by an
+     endpoint run that proves the speed survives scheduler, graph, and
+     collective overhead.
+
+3. Persistent single-user MoE decode kernel.
+   - Prototype a decode-only MoE path that keeps per-layer expert metadata,
+     activation staging, quant buffers, and grouped-GEMM launch state resident
+     across tokens.
+   - The target is to remove repeated route/remap/prealloc overhead and reduce
+     launch count. This is a bigger rewrite than hot-expert packing, but it
+     attacks the part of the token budget that still dominates.
+   - Success gate: component parity first, then exact greedy token parity and
+     repeat64 text quality.
+
+4. Expert-parallel and DP+EP shape experiment on 4x B70.
+   - Test whether `--enable-expert-parallel`, TP+EP, or a TP/DP hybrid changes
+     the MoE memory-bandwidth and collective balance for this A3B model.
+   - This is risky for latency because extra collectives can erase gains, but
+     it is one of the few server-level switches with true architectural upside.
+   - Success gate: clean rollback path, p512/n512 speed, long-context quality,
+     and a separate aggregate-throughput measurement so latency and throughput
+     are not confused.
+
+5. Static c1 latency runner outside the normal vLLM server loop.
+   - Build a controlled single-request lane with pinned tokenizer/template
+     state, preallocated KV, fixed graph capture, disabled metrics hot path,
+     and deterministic streaming cadence.
+   - This is not a production replacement at first. It answers whether vLLM's
+     general serving machinery is costing enough latency to justify a separate
+     interactive endpoint.
+   - Success gate: exact token stream match to the accepted frontdoor and a
+     clear split of runner overhead versus model-forward time.
+
+6. Verifier-preserving MTP/speculation with off-card or reduced-context draft.
+   - Since 32K/0.95 leaves almost no same-card VRAM, try a draft/proposer that
+     does not steal verifier memory: CPU/iGPU, lower-memory same model sidecar,
+     separate process, reduced-context diagnostic, or remote draft over LAN.
+   - Every token still has to be accepted by the current Qwen3.6 Quark verifier.
+   - Success gate: accepted-token throughput, rejection histogram, tail latency,
+     and repeat64 quality. Draft speed alone does not count.
+
+7. KV-cache precision and memory budget ladder.
+   - Try `--kv-cache-dtype fp8` only as a gated experiment, because it may
+     reclaim memory and reduce attention bandwidth, but it is not automatically
+     quality-neutral.
+   - If quality passes, the regained VRAM might make MTP or larger graph capture
+     shapes feasible. If quality fails, keep `kv-cache-dtype auto`.
+   - Success gate: long-context needle, repeat64, and BF16/accepted comparisons
+     before any speed result is considered valid.
+
+8. Cross-engine 8-bit verifier candidate.
+   - Explore whether llama.cpp/SYCL or another Intel-native path can run a true
+     8-bit Qwen3.6 35B verifier faster than vLLM while preserving quality.
+   - This must not regress to 4-bit. Possible formats to evaluate are Q8_0,
+     W8A8, or another native Intel-friendly 8-bit representation that can be
+     compared against BF16 and the accepted Quark endpoint.
+   - Success gate: same model family, 8-bit weights, quality parity, and a
+     reproducible p512/n512 benchmark.
+
+9. Platform and collective critical path audit.
+   - Pin GT frequency, verify PCIe/root-complex topology, confirm P2P path and
+     oneCCL transport, then microbench all-reduce/all-gather sizes that appear
+     in the actual decode trace.
+   - The goal is not generic system tuning. It is to find whether one specific
+     collective or topology choice is eating the missing latency.
+   - Success gate: an exact before/after token budget, not just a microbench
+     improvement.
+
+10. Upstream repro package for Intel/vLLM maintainers.
+    - Package the accepted control, route histograms, grouped-GEMM shapes,
+      component timing, Localmaxxing link, and `>200 tok/s` target into a small
+      public issue/PR bundle.
+    - Ask for concrete help on W8A8 MoE grouped GEMM, graph-safe collectives,
+      and Xe2 decode latency, not general advice.
+    - Success gate: maintainers can reproduce at least one kernel benchmark
+      without access to this whole workstation.
+
+Immediate next move:
+
+1. Record these decisions in GitHub so we do not loop on rejected branches.
+2. Start the clean upstream `vllm-xpu-kernels` A/B in a separate clone/venv.
+3. If that is neutral, shift into the route-distribution grouped-GEMM harness,
+   because that is the clearest path from local measurements plus external
+   XPU guidance to a real speedup without quality loss.
