@@ -49,6 +49,63 @@ def int_list(value: Any) -> list[int]:
     return [int(item) for item in value]
 
 
+def compact_state(row: dict[str, Any], key: str) -> dict[str, Any] | None:
+    state = row.get(key)
+    if not isinstance(state, dict):
+        return None
+    wanted = [
+        "num_prompt_tokens",
+        "num_output_tokens",
+        "num_tokens",
+        "num_tokens_with_spec",
+        "num_computed_tokens",
+        "num_output_placeholders",
+        "spec_len",
+        "max_tokens",
+        "is_prefill_chunk",
+        "status",
+        "last_output_token_ids",
+    ]
+    return {name: state.get(name) for name in wanted if name in state}
+
+
+def state_transition_summary(row: dict[str, Any]) -> dict[str, Any] | None:
+    before = compact_state(row, "request_state_before_reject_adjust")
+    after_reject = compact_state(row, "request_state_after_reject_adjust")
+    after_output = compact_state(row, "request_state_after_output_update")
+    if not (before or after_reject or after_output):
+        return None
+
+    def get(state: dict[str, Any] | None, key: str) -> Any:
+        return state.get(key) if isinstance(state, dict) else None
+
+    return {
+        "before": before,
+        "after_reject_adjust": after_reject,
+        "after_output_update": after_output,
+        "num_computed_tokens_delta_reject_adjust": (
+            get(after_reject, "num_computed_tokens")
+            - get(before, "num_computed_tokens")
+            if isinstance(get(before, "num_computed_tokens"), int)
+            and isinstance(get(after_reject, "num_computed_tokens"), int)
+            else None
+        ),
+        "num_tokens_delta_output_update": (
+            get(after_output, "num_tokens") - get(after_reject, "num_tokens")
+            if isinstance(get(after_reject, "num_tokens"), int)
+            and isinstance(get(after_output, "num_tokens"), int)
+            else None
+        ),
+        "num_output_tokens_delta_output_update": (
+            get(after_output, "num_output_tokens")
+            - get(after_reject, "num_output_tokens")
+            if isinstance(get(after_reject, "num_output_tokens"), int)
+            and isinstance(get(after_output, "num_output_tokens"), int)
+            else None
+        ),
+    }
+
+
 def load_token_cases(paths: list[Path]) -> dict[str, dict[str, Any]]:
     cases_by_request: dict[str, dict[str, Any]] = {}
     for path in paths:
@@ -120,6 +177,7 @@ def summarize_request(
             "num_draft_tokens": row.get("num_draft_tokens"),
             "num_accepted": row.get("num_accepted"),
             "num_rejected": row.get("num_rejected"),
+            "num_tokens_scheduled": row.get("num_tokens_scheduled"),
             "num_computed_tokens": row.get("num_computed_tokens"),
             "num_output_tokens": row.get("num_output_tokens"),
             "scheduled_spec_token_ids": scheduled,
@@ -128,6 +186,9 @@ def summarize_request(
             "generated_text": decode_ids(tokenizer, generated),
             "emitted_token_ids": emitted,
             "emitted_text": decode_ids(tokenizer, emitted),
+            "new_token_ids_after_stop_check": int_list(
+                row.get("new_token_ids_after_stop_check")
+            ),
             "suppressed_bonus_token_id": suppressed_int,
             "suppressed_bonus_text": (
                 decode_ids(tokenizer, [suppressed_int])
@@ -135,6 +196,7 @@ def summarize_request(
                 else None
             ),
             "followup_check": followup,
+            "state_transition": state_transition_summary(row),
         })
 
     token_case_output = int_list((token_case or {}).get("output_token_ids"))
@@ -211,6 +273,30 @@ def render_markdown(summary: dict[str, Any]) -> str:
                     f"`{mismatch['next_generated_first_text']}`"
                 ),
             ])
+    state_rows = [
+        (item["req_id"], row)
+        for item in summary["request_summaries"]
+        for row in item["row_summaries"]
+        if row.get("state_transition")
+    ]
+    if state_rows:
+        lines.extend([
+            "",
+            "## Request Counter Transitions",
+            "",
+            "| request | line | scheduled | accepted | rejected | computed delta | output-token delta | token delta |",
+            "| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
+        ])
+        for req_id, row in state_rows[:20]:
+            transition = row["state_transition"]
+            lines.append(
+                f"| `{req_id}` | {row.get('line_no')} | "
+                f"{row.get('num_tokens_scheduled')} | {row.get('num_accepted')} | "
+                f"{row.get('num_rejected')} | "
+                f"{transition.get('num_computed_tokens_delta_reject_adjust')} | "
+                f"{transition.get('num_output_tokens_delta_output_update')} | "
+                f"{transition.get('num_tokens_delta_output_update')} |"
+            )
     return "\n".join(lines) + "\n"
 
 

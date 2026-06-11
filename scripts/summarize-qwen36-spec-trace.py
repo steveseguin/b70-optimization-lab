@@ -101,9 +101,15 @@ def summarize_trace(path: Path) -> dict[str, Any]:
         rejected = int(row.get("num_rejected") or 0)
         ts = row.get("ts")
         output_tokens = row.get("num_output_tokens")
+        if output_tokens is None:
+            state = row.get("request_state_before_reject_adjust")
+            if isinstance(state, dict):
+                output_tokens = state.get("num_output_tokens")
         scheduled = list(row.get("scheduled_spec_token_ids") or [])
         generated = list(row.get("generated_token_ids") or [])
         suppressed_bonus = row.get("suppressed_bonus_token_id")
+        state_after_reject = row.get("request_state_after_reject_adjust")
+        state_after_output = row.get("request_state_after_output_update")
 
         req["rows"] += 1
         req["draft_tokens"] += draft
@@ -137,6 +143,36 @@ def summarize_trace(path: Path) -> dict[str, Any]:
         if suppressed_bonus is not None:
             suppressed_bonus_rows += 1
             req["suppressed_bonus_rows"] += 1
+        if isinstance(state_after_reject, dict):
+            req.setdefault("min_computed_after_reject", None)
+            req.setdefault("max_computed_after_reject", None)
+            computed_after_reject = state_after_reject.get("num_computed_tokens")
+            if computed_after_reject is not None:
+                req["min_computed_after_reject"] = (
+                    computed_after_reject
+                    if req["min_computed_after_reject"] is None
+                    else min(req["min_computed_after_reject"], computed_after_reject)
+                )
+                req["max_computed_after_reject"] = (
+                    computed_after_reject
+                    if req["max_computed_after_reject"] is None
+                    else max(req["max_computed_after_reject"], computed_after_reject)
+                )
+        if isinstance(state_after_output, dict):
+            req.setdefault("min_tokens_after_output", None)
+            req.setdefault("max_tokens_after_output", None)
+            tokens_after_output = state_after_output.get("num_tokens")
+            if tokens_after_output is not None:
+                req["min_tokens_after_output"] = (
+                    tokens_after_output
+                    if req["min_tokens_after_output"] is None
+                    else min(req["min_tokens_after_output"], tokens_after_output)
+                )
+                req["max_tokens_after_output"] = (
+                    tokens_after_output
+                    if req["max_tokens_after_output"] is None
+                    else max(req["max_tokens_after_output"], tokens_after_output)
+                )
 
         if draft and accepted == draft:
             full_accept_rows += 1

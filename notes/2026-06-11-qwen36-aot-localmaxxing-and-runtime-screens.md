@@ -5230,3 +5230,105 @@ Updated priority:
    timing proves MoE dominates the single-token path.
 4. Keep the accepted TP4 service as the baseline and fallback until a candidate
    survives quality, replay, repeat64, long-context, and short soak gates.
+
+## Speculative State Trace Instrumentation
+
+Added after inspecting the local vLLM scheduler path. This is instrumentation
+only; it does not promote a speculative candidate and does not change the
+accepted TP4 production lane.
+
+Patch artifact:
+
+- `patches/vllm-qwen36-spec-state-trace-20260611.patch`
+
+Local vLLM changes:
+
+- Enriched the opt-in `VLLM_SPEC_DECODE_TRACE_FILE` scheduler JSONL rows.
+- Moved trace emission until after rejected-token counter rollback and after
+  emitted tokens are appended/stop-trimmed.
+- Added per-row request-state snapshots:
+  - `request_state_before_reject_adjust`
+  - `request_state_after_reject_adjust`
+  - `request_state_after_output_update`
+- Added row fields:
+  - `num_tokens_scheduled`
+  - `new_token_ids_after_stop_check`
+  - `stopped`
+  - `status_before_stop_check`
+- Each request-state snapshot includes prompt/output/token counts,
+  `num_tokens_with_spec`, `num_computed_tokens`, output placeholders, current
+  spec-token count, max tokens, prefill-chunk state, status, and the last 16
+  emitted output tokens.
+
+Tooling updates:
+
+- `scripts/replay-qwen36-spec-trace.py`
+  - remains backward-compatible with older traces,
+  - now records compact request counter transitions in JSON,
+  - and renders a Markdown "Request Counter Transitions" table when new trace
+    rows contain state snapshots.
+- `scripts/summarize-qwen36-spec-trace.py`
+  - now reads output-token counters from either legacy top-level fields or the
+    new nested state fields,
+  - and tracks min/max computed/token counters from new trace rows.
+
+Validation:
+
+```bash
+git -C /home/steve/src/vllm apply --unidiff-zero --reverse --check \
+  /home/steve/llm-optimizations/patches/vllm-qwen36-spec-state-trace-20260611.patch
+
+/home/steve/.venvs/vllm-xpu/bin/python -m py_compile \
+  /home/steve/src/vllm/vllm/v1/core/sched/scheduler.py
+
+/home/steve/.venvs/vllm-xpu/bin/python -m py_compile \
+  scripts/replay-qwen36-spec-trace.py \
+  scripts/summarize-qwen36-spec-trace.py
+
+/home/steve/.venvs/vllm-xpu/bin/python scripts/replay-qwen36-spec-trace.py \
+  --trace-jsonl data/qwen36-quark-int8-tp4-ngram5-nobonus-spec-jsonl-20260611.jsonl \
+  --tokenizer /mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118 \
+  --out-json /tmp/qwen36-replay-compat.json \
+  --out-md /tmp/qwen36-replay-compat.md
+
+/home/steve/.venvs/vllm-xpu/bin/python scripts/summarize-qwen36-spec-trace.py \
+  --trace-jsonl data/qwen36-quark-int8-tp4-ngram5-nobonus-spec-jsonl-20260611.jsonl \
+  --out-json /tmp/qwen36-spec-summary-compat.json \
+  --out-md /tmp/qwen36-spec-summary-compat.md
+```
+
+Results:
+
+- Patch reverse-check passed with `git apply --unidiff-zero --reverse --check`.
+- Scheduler and trace tooling `py_compile` passed.
+- Replay compatibility on the old no-bonus fixture still reports:
+  - rows: `4`
+  - requests: `3`
+  - suppressed follow-up mismatch count: `1`
+- Summary compatibility on the old fixture reports:
+  - accept rate: `50.00%`
+  - rows: `4`
+  - requests: `3`
+- The failed first summarizer invocation used the wrong argument name
+  (`--trace current=...`) and was rerun correctly with `--trace-jsonl`; it was
+  a command error, not a code failure.
+
+Why this matters:
+
+- The existing no-bonus fixture showed the symptom: `_NEED` was suppressed,
+  then the next verifier step emitted `!`.
+- The next trace can now show the state mechanics: whether
+  `num_computed_tokens`, `num_tokens`, `num_tokens_with_spec`, and output
+  placeholders agree before rollback, after rollback, and after output append.
+- If the counters prove that a suppressed verifier bonus leaves KV/compute
+  ahead of request token state, no-bonus is formally rejected as invalid and
+  future effort should move to verifier-preserving MTP/draft speculation or a
+  correct rollback/recompute design.
+
+Next diagnostic run:
+
+1. Launch a short n-gram5/no-bonus or n-gram2 trace with the new scheduler
+   patch and request-id-capable client token trace.
+2. Replay the trace and inspect the new counter-transition table.
+3. Stop n-gram width experiments unless the state transition is coherent and
+   repeat64/long-context parity pass.

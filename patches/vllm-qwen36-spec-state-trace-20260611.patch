@@ -1,0 +1,205 @@
+diff --git a/vllm/v1/core/sched/scheduler.py b/vllm/v1/core/sched/scheduler.py
+index 032767cdf..06d445513 100644
+--- a/vllm/v1/core/sched/scheduler.py
++++ b/vllm/v1/core/sched/scheduler.py
+@@ -3,0 +4,2 @@ import itertools
++import json
++import os
+@@ -86,0 +89,4 @@ class Scheduler(SchedulerInterface):
++        self.spec_decode_trace_file = os.environ.get("VLLM_SPEC_DECODE_TRACE_FILE")
++        self.spec_decode_trace_max_lines = int(
++            os.environ.get("VLLM_SPEC_DECODE_TRACE_MAX_LINES", "0") or "0")
++        self.spec_decode_trace_lines = 0
+@@ -216,0 +223,18 @@ class Scheduler(SchedulerInterface):
++        self.xpu_disable_spec_decode_when_waiting = (
++            os.environ.get("VLLM_XPU_DISABLE_SPEC_DECODE_WHEN_WAITING", "")
++            .strip()
++            .lower()
++            in ("1", "true", "yes", "on")
++        )
++        self.xpu_hold_spec_decode_when_waiting = (
++            os.environ.get("VLLM_XPU_HOLD_SPEC_DECODE_WHEN_WAITING", "")
++            .strip()
++            .lower()
++            in ("1", "true", "yes", "on")
++        )
++        self.xpu_spec_decode_disable_full_accept_bonus = (
++            os.environ.get("VLLM_XPU_SPEC_DECODE_DISABLE_FULL_ACCEPT_BONUS", "")
++            .strip()
++            .lower()
++            in ("1", "true", "yes", "on")
++        )
+@@ -421,0 +446,35 @@ class Scheduler(SchedulerInterface):
++            if num_new_tokens < 0:
++                expected_num_computed = max(
++                    0,
++                    request.num_tokens_with_spec
++                    + request.num_output_placeholders
++                    - 1,
++                )
++                if os.environ.get("VLLM_XPU_TRACE_NGRAM_PP"):
++                    logger.warning(
++                        "Recovering negative schedule delta req_id=%s "
++                        "num_new_tokens=%s num_computed_tokens=%s "
++                        "expected_num_computed=%s num_tokens_with_spec=%s "
++                        "num_output_placeholders=%s spec_len=%s",
++                        request.request_id,
++                        num_new_tokens,
++                        request.num_computed_tokens,
++                        expected_num_computed,
++                        request.num_tokens_with_spec,
++                        request.num_output_placeholders,
++                        len(request.spec_token_ids),
++                    )
++                request.num_computed_tokens = min(
++                    request.num_computed_tokens,
++                    expected_num_computed,
++                )
++                num_new_tokens = (
++                    request.num_tokens_with_spec
++                    + request.num_output_placeholders
++                    - request.num_computed_tokens
++                )
++                num_new_tokens = min(num_new_tokens, token_budget)
++                num_new_tokens = min(
++                    num_new_tokens,
++                    self.max_model_len - 1 - request.num_computed_tokens,
++                )
+@@ -445,0 +505,25 @@ class Scheduler(SchedulerInterface):
++            if (
++                self.xpu_hold_spec_decode_when_waiting
++                and request.spec_token_ids
++                and (self.waiting or self.skipped_waiting)
++            ):
++                # XPU GDN chunk prefill can fail when a new prefill is batched
++                # with speculative decode tokens. Hold the speculative decode
++                # for a scheduler step instead of trimming token accounting.
++                num_new_tokens = 0
++
++            if (
++                self.xpu_disable_spec_decode_when_waiting
++                and request.spec_token_ids
++                and (self.waiting or self.skipped_waiting)
++            ):
++                # XPU GDN chunk prefill can fail when a new prefill is batched
++                # with speculative decode tokens. Keep the target token and
++                # regenerate speculative tokens after waiting work drains.
++                non_spec_new_tokens = (
++                    request.num_tokens
++                    + request.num_output_placeholders
++                    - request.num_computed_tokens
++                )
++                num_new_tokens = min(num_new_tokens, max(0, non_spec_new_tokens))
++
+@@ -1352,0 +1437,2 @@ class Scheduler(SchedulerInterface):
++            emitted_token_ids = generated_token_ids
++            spec_trace_data: dict[str, Any] | None = None
+@@ -1360,0 +1447,22 @@ class Scheduler(SchedulerInterface):
++                suppressed_bonus_token_id = None
++                if (
++                    self.xpu_spec_decode_disable_full_accept_bonus
++                    and num_draft_tokens
++                    and num_accepted == num_draft_tokens
++                    and len(generated_token_ids) > num_accepted
++                ):
++                    suppressed_bonus_token_id = generated_token_ids[-1]
++                    emitted_token_ids = generated_token_ids[:-1]
++                spec_trace_data = {
++                    "req_id": req_id,
++                    "scheduled_spec_token_ids": scheduled_spec_token_ids,
++                    "generated_token_ids": generated_token_ids,
++                    "emitted_token_ids": emitted_token_ids,
++                    "suppressed_bonus_token_id": suppressed_bonus_token_id,
++                    "num_draft_tokens": num_draft_tokens,
++                    "num_accepted": num_accepted,
++                    "num_rejected": num_rejected,
++                    "num_tokens_scheduled": num_tokens_scheduled,
++                    "request_state_before_reject_adjust":
++                    self._spec_trace_request_state(request),
++                }
+@@ -1371,0 +1480,2 @@ class Scheduler(SchedulerInterface):
++                spec_trace_data["request_state_after_reject_adjust"] = (
++                    self._spec_trace_request_state(request))
+@@ -1386 +1496 @@ class Scheduler(SchedulerInterface):
+-            new_token_ids = generated_token_ids
++            new_token_ids = emitted_token_ids
+@@ -1400,0 +1511,8 @@ class Scheduler(SchedulerInterface):
++            if spec_trace_data is not None:
++                spec_trace_data["new_token_ids_after_stop_check"] = new_token_ids
++                spec_trace_data["stopped"] = stopped
++                spec_trace_data["status_before_stop_check"] = str(status_before_stop)
++                spec_trace_data["request_state_after_output_update"] = (
++                    self._spec_trace_request_state(request))
++                self._trace_spec_decode_step(**spec_trace_data)
++
+@@ -1663,0 +1782,70 @@ class Scheduler(SchedulerInterface):
++    def _spec_trace_request_state(self, request: Request) -> dict[str, Any]:
++        """Snapshot request counters for opt-in speculative debug traces."""
++        return {
++            "num_prompt_tokens": request.num_prompt_tokens,
++            "num_output_tokens": request.num_output_tokens,
++            "num_tokens": request.num_tokens,
++            "num_tokens_with_spec": request.num_tokens_with_spec,
++            "num_computed_tokens": request.num_computed_tokens,
++            "num_output_placeholders": request.num_output_placeholders,
++            "spec_len": len(request.spec_token_ids),
++            "spec_token_ids": list(request.spec_token_ids),
++            "max_tokens": request.max_tokens,
++            "is_prefill_chunk": request.is_prefill_chunk,
++            "status": str(request.status),
++            "last_output_token_ids": list(request.output_token_ids[-16:]),
++        }
++
++    def _trace_spec_decode_step(
++        self,
++        *,
++        req_id: str,
++        scheduled_spec_token_ids: list[int],
++        generated_token_ids: list[int],
++        emitted_token_ids: list[int],
++        suppressed_bonus_token_id: int | None,
++        num_draft_tokens: int,
++        num_accepted: int,
++        num_rejected: int,
++        num_tokens_scheduled: int,
++        request_state_before_reject_adjust: dict[str, Any],
++        request_state_after_reject_adjust: dict[str, Any],
++        request_state_after_output_update: dict[str, Any],
++        new_token_ids_after_stop_check: list[int],
++        stopped: bool,
++        status_before_stop_check: str,
++    ) -> None:
++        if not self.spec_decode_trace_file:
++            return
++        if (self.spec_decode_trace_max_lines > 0
++                and self.spec_decode_trace_lines >=
++                self.spec_decode_trace_max_lines):
++            return
++        record = {
++            "ts": time.time(),
++            "req_id": req_id,
++            "num_draft_tokens": num_draft_tokens,
++            "num_accepted": num_accepted,
++            "num_rejected": num_rejected,
++            "num_tokens_scheduled": num_tokens_scheduled,
++            "scheduled_spec_token_ids": scheduled_spec_token_ids,
++            "generated_token_ids": generated_token_ids,
++            "emitted_token_ids": emitted_token_ids,
++            "new_token_ids_after_stop_check": new_token_ids_after_stop_check,
++            "suppressed_bonus_token_id": suppressed_bonus_token_id,
++            "stopped": stopped,
++            "status_before_stop_check": status_before_stop_check,
++            "request_state_before_reject_adjust":
++            request_state_before_reject_adjust,
++            "request_state_after_reject_adjust":
++            request_state_after_reject_adjust,
++            "request_state_after_output_update":
++            request_state_after_output_update,
++        }
++        try:
++            with open(self.spec_decode_trace_file, "a", encoding="utf-8") as f:
++                f.write(json.dumps(record, separators=(",", ":")) + "\n")
++            self.spec_decode_trace_lines += 1
++        except Exception:
++            logger.exception("Failed to write spec decode trace record")
++
