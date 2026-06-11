@@ -54,6 +54,11 @@ Current Qwen3.6 INT8 direction:
    upside remains verifier-preserving MTP/EAGLE/self-speculation; highest
    durable kernel work remains persistent MoE and exact-shape grouped-GEMM
    repros for `vllm-xpu-kernels`.
+9. Multi-window route replay now exists through `--route-start-indices`. The
+   first layer 8/20 scan rejects a blind global hot-expert remap: hot-packing
+   helped layer 8 rows=16 and layer 20 rows=1, but hurt layer 8 rows=1 and
+   layer 20 rows=16. Treat expert layout as layer/window/prompt-class specific
+   until broader captures prove otherwise.
 
 ## 2026-05-10 MiniMax AutoRound Addendum
 

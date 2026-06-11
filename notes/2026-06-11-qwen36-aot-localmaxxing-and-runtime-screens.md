@@ -1360,7 +1360,8 @@ Code changes:
 
 - `scripts/bench-qwen36-int8-moe-kernels.py`
   - route replay: `--route-jsonl`, `--route-layer-regex`,
-    `--route-stage-regex`, token-count filters, and `--route-start-index`
+    `--route-stage-regex`, token-count filters, `--route-start-index`, and
+    multi-window `--route-start-indices`
   - hot-expert packing simulation: `--route-pack-hot-experts`
 
 Artifacts:
@@ -1450,6 +1451,62 @@ Interpretation:
   3. identify layers where physical packing consistently helps,
   4. then prototype a real weight-layout remap only for those layers.
 
+### Route Start-Index Scan
+
+Added `--route-start-indices` to scan multiple captured route windows in one
+process. Syntax supports comma lists and Python-style ranges such as
+`0:128:16`. I stopped the accepted endpoint, ran a bounded one-B70 scan, then
+restored the accepted service as `qwen36-tp4-accepted-restored-20260611g`.
+Restore health passed, and the direct no-thinking chat canary returned exactly
+`OK`.
+
+Artifacts:
+
+- summary:
+  `data/qwen36-quark-int8-moe-routecapture5-startscan-summary-20260611.json`
+- layer 8 raw:
+  `data/qwen36-quark-int8-moe-routecapture5-layer8-startscan-r15-20260611.json`
+- layer 8 hot-pack:
+  `data/qwen36-quark-int8-moe-routecapture5-layer8-hotpack-startscan-r15-20260611.json`
+- layer 20 raw:
+  `data/qwen36-quark-int8-moe-routecapture5-layer20-startscan-r15-20260611.json`
+- layer 20 hot-pack:
+  `data/qwen36-quark-int8-moe-routecapture5-layer20-hotpack-startscan-r15-20260611.json`
+
+Representative command:
+
+```bash
+/home/steve/.venvs/vllm-xpu/bin/python scripts/bench-qwen36-int8-moe-kernels.py \
+  --rows 1,16 \
+  --iterations 15 \
+  --warmup 3 \
+  --route-start-indices 0:128:16 \
+  --route-jsonl data/qwen36-quark-int8-tp4-routecapture5-routes-rank0-20260611.jsonl \
+  --route-layer-regex 'layers\.8\.' \
+  --output-json data/qwen36-quark-int8-moe-routecapture5-layer8-startscan-r15-20260611.json
+```
+
+Start-window scan summary:
+
+| layer | rows | windows | raw total us | hot-pack total us | hot-pack total delta | preallocated delta |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| 8 | 1 | 8 | `301.105` | `345.485` | `+16.39%` | `+15.38%` |
+| 8 | 16 | 8 | `341.296` | `303.902` | `-10.49%` | `-8.51%` |
+| 20 | 1 | 8 | `278.416` | `262.954` | `-5.06%` | `-3.23%` |
+| 20 | 16 | 8 | `272.476` | `276.398` | `+1.52%` | `+2.59%` |
+
+Interpretation:
+
+- Hot-expert physical packing is not a global win. It helped layer 8 rows=16
+  and layer 20 rows=1, but hurt layer 8 rows=1 and layer 20 rows=16.
+- The earlier first-window rows=1 result was not sufficient evidence for or
+  against remapping. Route window selection changes the sign and magnitude.
+- A production-safe layout remap would need layer-specific and likely
+  prompt-class-specific proof. A blind global expert remap is rejected.
+- The next useful scan is broader route capture across prompt classes, then a
+  layer-by-layer heatmap of where packing, grouped-GEMM policy, or persistent
+  scheduling consistently wins.
+
 ## Things To Try After Route Replay
 
 Added after the route-replay microbench and another quick pass over public
@@ -1459,12 +1516,11 @@ engineering hour, not by ambition.
 Immediate experiments:
 
 1. Multi-window route replay.
-   - Add `--route-start-indices` to the MoE microbench and scan many captured
-     decode windows in one process.
-   - Measure raw route versus hot-pack for layers beyond 8 and 20, then report
-     mean/min/max and not just one captured first-token row.
-   - Decision rule: only consider expert remap if the same layer improves across
-     many windows and prompt classes.
+   - Initial support is implemented and a layer 8/20 scan is recorded above.
+   - Next step is to extend it to more layers and prompt classes, then report
+     mean/min/max heatmaps instead of isolated windows.
+   - Decision rule remains: only consider expert remap if the same layer
+     improves across many windows and prompt classes.
 
 2. Full prompt-class route capture.
    - Capture real routes for natural chat, code, structured, math, and

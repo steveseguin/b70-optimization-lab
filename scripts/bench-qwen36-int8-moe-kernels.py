@@ -44,6 +44,30 @@ def parse_rows(value: str) -> list[int]:
     return rows
 
 
+def parse_int_list(value: str) -> list[int]:
+    values: list[int] = []
+    for item in value.split(","):
+        item = item.strip()
+        if not item:
+            continue
+        if ":" in item:
+            parts = item.split(":")
+            if len(parts) not in (2, 3):
+                raise argparse.ArgumentTypeError(
+                    f"Invalid integer range {item!r}; use start:stop[:step]")
+            start = int(parts[0])
+            stop = int(parts[1])
+            step = int(parts[2]) if len(parts) == 3 else 1
+            if step == 0:
+                raise argparse.ArgumentTypeError("range step cannot be zero")
+            values.extend(range(start, stop, step))
+        else:
+            values.append(int(item))
+    if not values:
+        raise argparse.ArgumentTypeError("at least one integer is required")
+    return values
+
+
 def load_text_config(path: str) -> dict[str, Any]:
     cfg = json.loads(Path(path).read_text())
     text_config = cfg.get("text_config")
@@ -504,6 +528,7 @@ def benchmark_rows(
     text_config: dict[str, Any],
     rows: int,
     route_topk_rows: list[list[int]],
+    route_start_index: int,
 ) -> dict[str, Any]:
     full_hidden_size = int(text_config["hidden_size"])
     full_inter_size = int(text_config["moe_intermediate_size"])
@@ -523,7 +548,7 @@ def benchmark_rows(
         device=args.device,
         seed=args.seed + rows,
         route_topk_rows=route_topk_rows,
-        route_start_index=args.route_start_index,
+        route_start_index=route_start_index,
     )
     topk_summary = summarize_topk_ids(inputs["topk_ids"])
 
@@ -687,6 +712,11 @@ def benchmark_rows(
         "topk": topk,
         "dtype": args.dtype,
         "topk_source": "route_jsonl" if route_topk_rows else "synthetic_uniform",
+        "route_start_index": route_start_index if route_topk_rows else None,
+        "route_start_index_mod": (
+            route_start_index % len(route_topk_rows)
+            if route_topk_rows else None
+        ),
         "topk_summary": topk_summary,
         "total_us_mean": mean(total_us),
         "preallocated_staged_total_us_mean": mean(preallocated_total_us),
@@ -731,6 +761,14 @@ def main() -> int:
         help="Starting topk row offset when replaying captured routes.",
     )
     parser.add_argument(
+        "--route-start-indices",
+        type=parse_int_list,
+        help=(
+            "Comma-separated route offsets or ranges to scan, for example "
+            "'0,8,16' or '0:128:8'. Overrides --route-start-index."
+        ),
+    )
+    parser.add_argument(
         "--route-pack-hot-experts",
         action="store_true",
         help=(
@@ -763,16 +801,35 @@ def main() -> int:
             route_topk_rows,
             num_experts=int(text_config["num_experts"]),
         )
+    if route_topk_rows:
+        route_start_indices = (
+            args.route_start_indices
+            if args.route_start_indices is not None
+            else [args.route_start_index]
+        )
+    else:
+        route_start_indices = [0]
+
+    benchmark_results = []
+    for rows in args.rows:
+        for route_start_index in route_start_indices:
+            benchmark_results.append(
+                benchmark_rows(
+                    args,
+                    text_config,
+                    rows,
+                    route_topk_rows,
+                    route_start_index,
+                ))
+
     results = {
         "model_config": args.model_config,
         "tp_size": args.tp_size,
         "fused_silu_quant_enabled": args.enable_fused_silu_quant,
         "route_metadata": route_metadata,
         "route_packing_metadata": route_packing_metadata,
-        "results": [
-            benchmark_rows(args, text_config, rows, route_topk_rows)
-            for rows in args.rows
-        ],
+        "route_start_indices": route_start_indices if route_topk_rows else None,
+        "results": benchmark_results,
     }
 
     text = json.dumps(results, indent=2, sort_keys=True)
