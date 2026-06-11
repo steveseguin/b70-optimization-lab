@@ -10156,3 +10156,50 @@ Current priority ordering:
    - if perfect draft is fast and clean, build the MTP/sidecar/proposer path;
    - if perfect draft is still slow, prioritize persistent MoE, W8A8 kernels,
      and hybrid TP/EP layout work.
+
+## Roadmap-Update Reliability Restore
+
+After the roadmap update, a non-invasive health check found the public
+frontdoor returning `502` and `127.0.0.1:18080` refusing connections. The
+backend process tree was still partly alive, but no TCP listener remained.
+
+Root observation from the active log:
+
+- log: `/tmp/qwen36-quark-int8-tp4-restored-after-perfectdraft-k4-20260611a.log`
+- session: `qwen36-tp4-accepted-restored-after-perfectdraft-k4-20260611a`
+- the backend had served repeated remote `10.0.0.214` requests, then stalled on
+  a large structured-output request with `prompt_token_ids_len=5907`,
+  `max_tokens=2048`, and `structured_outputs.json_object=True`
+- fatal error: `TimeoutError: RPC call to sample_tokens timed out`
+- vLLM then reported `EngineDeadError`, stopped the HTTP server, and left stale
+  worker processes behind
+
+Restore procedure:
+
+1. Created the frontdoor pause file
+   `/tmp/qwen36-35b-a3b-fp8-requant-frontdoor-not-paused`, so remote generation
+   returns `frontdoor_paused` while loopback requests remain allowed.
+2. Called `/drain`; active and queued generation counts were both zero.
+3. Killed only the stale accepted backend tmux session and its leftover vLLM
+   worker PIDs.
+4. Relaunched the accepted backend in
+   `qwen36-tp4-accepted-restored-after-roadmap-20260611a` using the fresh graph
+   cache root:
+   `/mnt/fast-ai/vllm-cache-exp/qwen36-35b-a3b-quark-int8-tp4-piecewise-graph-freshrestore-20260611d`
+5. Verified:
+   - backend `/health`: `200`
+   - backend `/v1/models`: served `qwen36-35b-a3b-fp8`
+   - direct backend chat smoke: `OK`
+   - frontdoor loopback chat smoke while paused: `OK`
+   - frontdoor `/health`: `200`
+   - frontdoor `/drain`: active `0`, queued `0`, paused `true`
+
+Decision:
+
+- Leave remote public generation paused for now; local loopback bypass through
+  port `8000` works and the backend is healthy.
+- Before unpausing remote traffic again, add or run a guard for large
+  structured-output requests, because the latest fatal incident was not a
+  normal small canary. At minimum, monitor `sample_tokens` timeout frequency and
+  consider lowering remote `max_active_generations` or routing structured JSON
+  to a conservative lane.
