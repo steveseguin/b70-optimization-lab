@@ -2439,3 +2439,125 @@ Bigger, bolder ideas to keep on the board:
       throughput/concurrency.
     - This does not lower quality, and it avoids forcing one set of scheduler,
       context, and graph-capture choices to satisfy conflicting workloads.
+
+## Route-Exact W8A8 Grouped-GEMM Harness
+
+Added a narrow kernel harness:
+
+```bash
+scripts/bench-qwen36-route-exact-w8a8-grouped-gemm.py
+```
+
+Purpose:
+
+- Replay captured Qwen3.6 A3B MoE route distributions directly against the
+  local dirty W8A8 op:
+  `torch.ops._xpu_C.cutlass_grouped_gemm_w8a8_int8_interface`.
+- Separate grouped-GEMM kernel-policy questions from full vLLM server restarts,
+  HTTP timing, remap, quantization, activation, and gather overhead.
+- Provide both:
+  - `exact` mode: full `256` expert rows-per-expert vector, matching the
+    current model shape.
+  - `compact_active` mode: remaps active experts to dense IDs as a diagnostic
+    lower-memory / hot-layout proxy. This is not quality-preserving by itself;
+    a real implementation would need matching weight layout and exact routing
+    semantics.
+
+Artifacts:
+
+- Dry route/window parse:
+  `data/qwen36-quark-int8-w8a8-grouped-gemm-routeexact-dryrun-20260611.json`
+- One-case smoke while the live endpoint remained up:
+  `data/qwen36-quark-int8-w8a8-grouped-gemm-compact-smoke-20260611.json`
+- Eight route-window per-layer scan:
+  `data/qwen36-quark-int8-w8a8-grouped-gemm-routeexact-scan-20260611.json`
+- Eight route-window size-3 shape scan:
+  `data/qwen36-quark-int8-w8a8-grouped-gemm-routeexact-window3-scan-20260611.json`
+
+Validation:
+
+- Script compiled with:
+
+```bash
+python3 -m py_compile scripts/bench-qwen36-route-exact-w8a8-grouped-gemm.py
+```
+
+- Backend and frontdoor health were still `200` after the XPU scans.
+- The live 32K endpoint was not stopped for this harness pass.
+
+Per-layer route-window scan command:
+
+```bash
+/home/steve/.venvs/vllm-xpu/bin/python \
+  scripts/bench-qwen36-route-exact-w8a8-grouped-gemm.py \
+  --route-jsonl data/qwen36-quark-int8-tp4-routecapture6-routes-rank0-20260611.jsonl \
+  --route-layer-regex 'layers\.(9|14|21)\.' \
+  --route-start-indices 0:96:12 \
+  --max-cases 8 \
+  --gemm-stage both \
+  --compact-active-experts \
+  --warmup 5 \
+  --iterations 20 \
+  --device xpu:3 \
+  --output-json data/qwen36-quark-int8-w8a8-grouped-gemm-routeexact-scan-20260611.json
+```
+
+Per-layer scan summary, 8 captured decode route cases:
+
+- `exact`, full 256-expert shape:
+  - GEMM1: `103.851 us` mean of case means, median `102.553 us`
+  - GEMM2: `101.464 us` mean of case means, median `94.312 us`
+- `compact_active`, 8 active experts:
+  - GEMM1: `103.482 us` mean of case means, median `98.702 us`
+  - GEMM2: `106.572 us` mean of case means, median `107.158 us`
+
+Interpretation:
+
+- Simple active-expert compaction did not produce a consistent grouped-GEMM
+  win in this kernel. For the exact current per-layer decode shape, the local
+  Xe2 W8A8 grouped-GEMM path appears to have an approximately `90-110 us`
+  tiny-shape floor whether the expert dimension is full `256` or compacted to
+  the active 8 experts.
+- This pushes the next optimization away from "just remove inactive experts"
+  and toward launch/staging reduction:
+  - fused or persistent per-layer MoE decode,
+  - quantization plus GEMM fusion,
+  - activation plus GEMM2 quant fusion that is actually endpoint-positive,
+  - graph-safe scratch reuse and launch reduction,
+  - or a kernel policy change that specifically attacks the tiny-shape floor.
+
+Window-size-3 shape scan command:
+
+```bash
+/home/steve/.venvs/vllm-xpu/bin/python \
+  scripts/bench-qwen36-route-exact-w8a8-grouped-gemm.py \
+  --route-jsonl data/qwen36-quark-int8-tp4-routecapture6-routes-rank0-20260611.jsonl \
+  --route-layer-regex 'layers\.(9|14|21)\.' \
+  --route-start-indices 0:96:12 \
+  --route-window-size 3 \
+  --max-cases 8 \
+  --gemm-stage both \
+  --compact-active-experts \
+  --warmup 5 \
+  --iterations 20 \
+  --device xpu:3 \
+  --output-json data/qwen36-quark-int8-w8a8-grouped-gemm-routeexact-window3-scan-20260611.json
+```
+
+Window-size-3 summary:
+
+- `exact`, full 256-expert shape, 24 total rows and 17-21 active experts:
+  - GEMM1: `95.520 us` mean of case means, median `93.591 us`
+  - GEMM2: `92.053 us` mean of case means, median `91.328 us`
+- `compact_active` varied by active expert count and was generally in the same
+  range, about `89-95 us` for the case means.
+
+Important caveat:
+
+- The window-size-3 scan is a shape diagnostic, not a valid model execution
+  plan. The captured layers are sequential transformer layers, so their real
+  work cannot simply be collapsed into one GEMM without preserving layer
+  dependencies and layer-specific weights.
+- It still shows that larger grouped-GEMM row counts can amortize the same
+  launch/policy floor. That makes the persistent/specialized MoE decode kernel
+  idea more interesting than physical expert compaction alone.

@@ -1,0 +1,199 @@
+{
+  "aggregates": [
+    {
+      "active_experts_max": 8,
+      "active_experts_mean": 8.0,
+      "active_experts_min": 8,
+      "case_count": 1,
+      "gemm_stage": "gemm2",
+      "max_case_mean_us": 67.1424,
+      "mean_of_case_means_us": 67.1424,
+      "median_of_case_means_us": 67.1424,
+      "min_case_mean_us": 67.1424,
+      "mode": "compact_active",
+      "num_experts": 8,
+      "route_window_size": 1,
+      "total_rows_max": 8,
+      "total_rows_mean": 8.0,
+      "total_rows_min": 8
+    },
+    {
+      "active_experts_max": 8,
+      "active_experts_mean": 8.0,
+      "active_experts_min": 8,
+      "case_count": 1,
+      "gemm_stage": "gemm2",
+      "max_case_mean_us": 124.9664,
+      "mean_of_case_means_us": 124.9664,
+      "median_of_case_means_us": 124.9664,
+      "min_case_mean_us": 124.9664,
+      "mode": "exact",
+      "num_experts": 256,
+      "route_window_size": 1,
+      "total_rows_max": 8,
+      "total_rows_mean": 8.0,
+      "total_rows_min": 8
+    }
+  ],
+  "args": {
+    "compact_active_experts": true,
+    "gemm_stage": "gemm2",
+    "iterations": 5,
+    "max_cases": 1,
+    "route_layer_regex": "layers\\.9\\.",
+    "route_max_num_tokens": 1,
+    "route_min_num_tokens": 1,
+    "route_stage_regex": "^quark_int8_apply$",
+    "route_start_indices": [
+      0
+    ],
+    "route_window_size": 1,
+    "seed": 20260611,
+    "warmup": 2
+  },
+  "cases": [
+    {
+      "active_experts": 8,
+      "allocated_mib_estimate": 66.03323364257812,
+      "calls": {
+        "1": 1
+      },
+      "case_index": 0,
+      "dtype": "bf16",
+      "first_call": 1,
+      "first_layer": "language_model.model.layers.9.mlp.experts",
+      "gemm_stage": "gemm2",
+      "k": 128,
+      "layers": {
+        "language_model.model.layers.9.mlp.experts": 1
+      },
+      "max_us": 136.18800000000002,
+      "mean_us": 124.9664,
+      "median_us": 127.86799999999998,
+      "min_us": 104.25999999999999,
+      "mode": "exact",
+      "n": 2048,
+      "num_experts": 256,
+      "output_all_finite": true,
+      "output_max_abs": 72.5,
+      "p05_us": 108.888,
+      "p95_us": 134.77360000000002,
+      "route_start_index": 0,
+      "route_window_size": 1,
+      "samples": 5,
+      "stdev_us": 10.82811321699215,
+      "total_rows": 8
+    },
+    {
+      "active_experts": 8,
+      "allocated_mib_estimate": 2.09478759765625,
+      "calls": {
+        "1": 1
+      },
+      "case_index": 0,
+      "dtype": "bf16",
+      "first_call": 1,
+      "first_layer": "language_model.model.layers.9.mlp.experts",
+      "gemm_stage": "gemm2",
+      "k": 128,
+      "layers": {
+        "language_model.model.layers.9.mlp.experts": 1
+      },
+      "max_us": 100.51599999999999,
+      "mean_us": 67.1424,
+      "median_us": 66.456,
+      "min_us": 9.36,
+      "mode": "compact_active",
+      "n": 2048,
+      "num_experts": 8,
+      "output_all_finite": true,
+      "output_max_abs": 74.0,
+      "p05_us": 19.5208,
+      "p95_us": 100.256,
+      "route_start_index": 0,
+      "route_window_size": 1,
+      "samples": 5,
+      "stdev_us": 33.25804550841796,
+      "total_rows": 8
+    }
+  ],
+  "compact_metadata": [
+    {
+      "case_index": 0,
+      "dropped_inactive_experts": 248,
+      "logical_to_compact": [
+        {
+          "compact_expert": 0,
+          "logical_expert": 2,
+          "rows": 1
+        },
+        {
+          "compact_expert": 1,
+          "logical_expert": 36,
+          "rows": 1
+        },
+        {
+          "compact_expert": 2,
+          "logical_expert": 59,
+          "rows": 1
+        },
+        {
+          "compact_expert": 3,
+          "logical_expert": 161,
+          "rows": 1
+        },
+        {
+          "compact_expert": 4,
+          "logical_expert": 170,
+          "rows": 1
+        },
+        {
+          "compact_expert": 5,
+          "logical_expert": 200,
+          "rows": 1
+        },
+        {
+          "compact_expert": 6,
+          "logical_expert": 243,
+          "rows": 1
+        },
+        {
+          "compact_expert": 7,
+          "logical_expert": 255,
+          "rows": 1
+        }
+      ],
+      "route_start_index": 0,
+      "route_window_size": 1
+    }
+  ],
+  "created_at": "2026-06-11T07:33:56-0400",
+  "device": "xpu:3",
+  "env": {
+    "ONEAPI_DEVICE_SELECTOR": null,
+    "PYTHONPATH": null,
+    "ZE_AFFINITY_MASK": null
+  },
+  "full_num_experts": 256,
+  "hidden_size": 2048,
+  "inter_size_per_tp": 128,
+  "kernel_module": "/home/steve/src/vllm-xpu-kernels/vllm_xpu_kernels/_xpu_C.abi3.so",
+  "model_config": "/mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118/config.json",
+  "purpose": "Route-exact W8A8 grouped-GEMM harness for Qwen3.6 A3B kernel-policy A/Bs.",
+  "route_metadata": {
+    "active_experts_max": 8,
+    "active_experts_mean": 8.0,
+    "active_experts_min": 8,
+    "layers": {
+      "language_model.model.layers.9.mlp.experts": 95
+    },
+    "records_loaded": 285,
+    "records_matched": 95,
+    "records_skipped": 190,
+    "route_jsonl": "data/qwen36-quark-int8-tp4-routecapture6-routes-rank0-20260611.jsonl",
+    "total_assignments": 760,
+    "unique_calls": 95
+  },
+  "torch_version": "2.11.0+xpu",
+  "tp_size": 4
+}

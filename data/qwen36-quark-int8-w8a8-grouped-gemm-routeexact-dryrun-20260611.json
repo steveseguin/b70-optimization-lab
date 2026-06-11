@@ -1,0 +1,88 @@
+{
+  "full_num_experts": 256,
+  "hidden_size": 2048,
+  "inter_size_per_tp": 128,
+  "model_config": "/mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118/config.json",
+  "route_metadata": {
+    "active_experts_max": 8,
+    "active_experts_mean": 8.0,
+    "active_experts_min": 8,
+    "layers": {
+      "language_model.model.layers.14.mlp.experts": 95,
+      "language_model.model.layers.21.mlp.experts": 95,
+      "language_model.model.layers.9.mlp.experts": 95
+    },
+    "records_loaded": 285,
+    "records_matched": 285,
+    "records_skipped": 0,
+    "route_jsonl": "data/qwen36-quark-int8-tp4-routecapture6-routes-rank0-20260611.jsonl",
+    "total_assignments": 2280,
+    "unique_calls": 95
+  },
+  "selected_windows": [
+    {
+      "active_experts": 8,
+      "calls": {
+        "1": 1
+      },
+      "case_index": 0,
+      "compact_active_experts": 8,
+      "first_call": 1,
+      "first_layer": "language_model.model.layers.9.mlp.experts",
+      "layers": {
+        "language_model.model.layers.9.mlp.experts": 1
+      },
+      "route_start_index": 0,
+      "route_window_size": 1,
+      "total_rows": 8
+    },
+    {
+      "active_experts": 8,
+      "calls": {
+        "5": 1
+      },
+      "case_index": 1,
+      "compact_active_experts": 8,
+      "first_call": 5,
+      "first_layer": "language_model.model.layers.9.mlp.experts",
+      "layers": {
+        "language_model.model.layers.9.mlp.experts": 1
+      },
+      "route_start_index": 12,
+      "route_window_size": 1,
+      "total_rows": 8
+    },
+    {
+      "active_experts": 8,
+      "calls": {
+        "9": 1
+      },
+      "case_index": 2,
+      "compact_active_experts": 8,
+      "first_call": 9,
+      "first_layer": "language_model.model.layers.9.mlp.experts",
+      "layers": {
+        "language_model.model.layers.9.mlp.experts": 1
+      },
+      "route_start_index": 24,
+      "route_window_size": 1,
+      "total_rows": 8
+    },
+    {
+      "active_experts": 8,
+      "calls": {
+        "13": 1
+      },
+      "case_index": 3,
+      "compact_active_experts": 8,
+      "first_call": 13,
+      "first_layer": "language_model.model.layers.9.mlp.experts",
+      "layers": {
+        "language_model.model.layers.9.mlp.experts": 1
+      },
+      "route_start_index": 36,
+      "route_window_size": 1,
+      "total_rows": 8
+    }
+  ]
+}
