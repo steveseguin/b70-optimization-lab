@@ -238,6 +238,7 @@ The rest of this README is dense historical lab context. New users should start 
 - `notes/2026-05-10-xpu-level-zero-peer-probe.md`: Level Zero B70 P2P/IPC peer-memory feasibility probe for the next MiniMax Q/K RMS fusion prototype.
 - `notes/2026-05-10-minimax-xpu-ipc-qk-var-prototype.md`: PyTorch/SYCL Level Zero IPC Q/K variance prototype; correctness passes under controlled slots, but standalone decode-sized IPC is hundreds of ms per call.
 - `notes/2026-05-10-minimax-vllm-ipc-qk-var-integration.md`: default-off vLLM MiniMax Q/K variance IPC allreduce integration; eager liveness passes, preinit avoids the first compile crash, but actual IPC execution is currently much too slow.
+- `notes/2026-06-11-qwen36-aot-localmaxxing-and-runtime-screens.md`: Qwen3.6 35B Quark W8A8 INT8 accepted baseline, Localmaxxing submission, n-gram/speculation diagnostics, route-capture/heatmap scans, and the current bigger-bet idea backlog for reaching higher single-request decode without quality loss.
 - `data/qwen36-fp8-32k-tp4-vs-pp2-20260506.json`: post-reboot Q4 sanity plus FP8 32k-context TP4 vs TP2/PP2 validation.
 - `data/q4-esimd-blockscales-20260506.json`: structured ESIMD block-loaded scale metadata screen.
 - `data/q4-active-device-row-split-20260506.json`: structured active-device row-split patch validation and negative row-split smoke.

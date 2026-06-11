@@ -1789,3 +1789,106 @@ High-level priority:
 2. Highest-upside path: verifier-preserving MTP/EAGLE/self-speculation.
 3. Highest-durability path: persistent MoE and exact-shape grouped-GEMM repros
    that can be upstreamed to `vllm-xpu-kernels`.
+
+## Additional Bigger Bets And Notes To Try
+
+Added after the route heatmap/startscan work and the fresh Localmaxxing/API
+comparison pass. These are not accepted results; they are the next idea bank.
+
+Ideas to try soon:
+
+1. Cross-engine drafter bridge.
+   - Run a Qwen3.6 MTP-capable llama.cpp/GGUF sidecar only as a token proposer,
+     then verify every proposed token with the current vLLM Quark W8A8 INT8
+     service.
+   - This might let us borrow mature `--spec-type mtp` behavior without moving
+     production serving off the current model.
+   - Hard parts: tokenizer/template parity, streaming verifier protocol, KV
+     state rewind on rejection, and enough drafter speed to beat the extra IPC.
+
+2. Official-FP8 MTP sidecar extraction.
+   - The Quark checkpoint has no `mtp.*` tensors, while the official FP8
+     snapshot does. Extract only the MTP/proposer pieces and test whether they
+     can run as an auxiliary proposer against the Quark verifier.
+   - If the full FP8 target cannot fit beside Quark at 32K, try reduced-context
+     sidecar diagnostics before spending time on production integration.
+   - Do not count this as quality-preserving unless final tokens are accepted by
+     the current Quark verifier.
+
+3. BF16 fallback as a quality oracle, not a runtime target.
+   - Build a small logit/route comparison harness: BF16 or official FP8
+     reference, current Quark output, and candidate kernel/layout output.
+   - For layout-only changes, require identical or tolerance-bounded logits,
+     same argmax tokens on deterministic probes, and same routed expert IDs.
+   - This is especially important before accepting any prepacked INT8 layout or
+     persistent-MoE rewrite where text-only canaries may miss small drift.
+
+4. Layer-specific route policy instead of global hot packing.
+   - The heatmap found locality, but blind hotpack was mixed: some layer/shape
+     pairs improved and others regressed.
+   - Next screen should produce a per-layer/per-rows policy table from
+     `routecapture5/6`, then dispatch only the layer+shape combinations with
+     positive component-level evidence.
+   - Add a component summarizer for remap, quant1, GEMM1, activation, quant2,
+     GEMM2, and gather so we know where each route-policy delta comes from.
+
+5. Disposable latest `vllm-xpu-kernels` A/B.
+   - Recent upstream release notes mention Xe2 MoE grouped-GEMM policy updates.
+     Test a throwaway venv/wheel against the accepted launcher, then immediately
+     restore the known-good wheel if it regresses.
+   - Required gate: same accepted quality suite, same p512/n512 r4/r8 control,
+     and no device-lost during first request.
+   - If newer kernels help or break, turn the exact Qwen shapes into a compact
+     upstream issue.
+
+6. Upstream repro bundle.
+   - Package three standalone repros:
+     dense `per_token_quant_int8 -> int8_gemm_w8a8`,
+     routed MoE grouped GEMM using real expert histograms, and graph-safe tiny
+     BF16 all-reduce plus epilogue.
+   - Include exact B70 topology, oneAPI/PyTorch/vLLM versions, current timings,
+     and the expected target. This gives Intel/vLLM maintainers something
+     concrete enough to act on.
+
+7. Single-user static runner.
+   - Measure direct model-runner decode with no OpenAI request lifecycle,
+     streaming, metrics, or frontdoor path.
+   - If it is materially faster than the served endpoint, create a production
+     latency lane. If it is also near `100 tok/s`, stop spending time on server
+     overhead and return to kernels/speculation.
+
+8. Hybrid dense-replicated / expert-partitioned memory model.
+   - Compute whether replicated dense/GDN/attention plus partitioned experts can
+     fit on four 32GB B70 cards at 32K context.
+   - If it fits, model the collective count versus TP4. The prize is fewer
+     decode all-reduces; the risk is expensive all-to-all or graph-capture
+     incompatibility.
+
+9. Route-aware expert placement across cards.
+   - Use routecapture heatmaps by prompt class to see if hot expert groups are
+     stable enough to place together.
+   - This is more ambitious than per-layer hotpack because it can change
+     cross-card communication. It needs strict expert-ID remap parity tests.
+
+10. Reliability-first host profile.
+    - Keep a reversible profile for power state, runtime power, NUMA pinning,
+      CCL interface pinning, thermal/fan logging, and lower-overhead Level Zero
+      tracing.
+    - Success metric is lower r10/r20 variance and fewer device-lost incidents,
+      not a headline speed claim by itself.
+
+Ideas to avoid unless new evidence appears:
+
+- Qwen3.5, AWQ, GPTQ-4bit, or any 4-bit production detour.
+- Global hot-expert physical remap without layer/shape gating.
+- n-gram depth 3+ for speed claims; repeat64 already found accepted loops.
+- `VLLM_XPU_INT8_MOE_MIXED_WORKSPACE=1`; it was quality-safe but slower and
+  reduced KV headroom in the endpoint test.
+
+Current best next implementation order:
+
+1. Component-level route-scan summarizer.
+2. Accepted r8/r10 + peak VRAM + repeat64 refresh.
+3. n-gram2 capture-size-3 reliability retest only as a diagnostic.
+4. Latest `vllm-xpu-kernels` disposable A/B.
+5. Cross-engine or FP8-MTP sidecar feasibility probe.
