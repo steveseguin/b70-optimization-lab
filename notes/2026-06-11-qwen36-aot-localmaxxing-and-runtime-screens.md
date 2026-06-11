@@ -7914,3 +7914,92 @@ Interpretation:
 - Next reliability action should be a clean accepted-backend restore followed
   by the local quality lane, then the public frontdoor, before any more
   speculative or kernel speed work.
+
+## Paused Public Frontdoor and Restore Incident
+
+After validating the dynamic pause path, the public frontdoor on port `8000`
+was restarted under the new code and intentionally paused via
+`/tmp/qwen36-35b-a3b-fp8-requant-frontdoor-not-paused` before backend restore.
+
+Public-frontdoor validation:
+
+- `/frontdoor/status` reported `paused=true`, `active=0`, `queued=0`,
+  `max_active_generations=48`.
+- A public POST `/v1/chat/completions` while paused returned HTTP `503` with
+  `error.type=frontdoor_paused`.
+- `total_generation_requests` remained `0`, proving paused public traffic did
+  not enter the backend queue.
+- `/frontdoor/drain` returned `drained=true`, `active=0`, `queued=0`.
+
+Clean graph restore attempts:
+
+1. `qwen36-tp4-accepted-clean-restore-after-frontdoor-pause-20260611b`
+   - Log:
+     `/tmp/qwen36-quark-int8-tp4-accepted-clean-restore-after-frontdoor-pause-20260611b.log`
+   - Backend reached `/health` after `52s`.
+   - The first local quality-lane generation returned HTTP `500`.
+   - Failure site: `block_table.copy_to_gpu` in
+     `vllm/v1/worker/block_table.py`.
+   - Error: `UR_RESULT_ERROR_DEVICE_LOST`.
+   - Scheduler dump showed `speculative_config=None`,
+     `prompt_token_ids_len=17`, `step_counter=0`, and
+     `scheduled_spec_decode_tokens={}`.
+
+2. `qwen36-tp4-accepted-clean-restore-retry2-paused-20260611c`
+   - Log:
+     `/tmp/qwen36-quark-int8-tp4-accepted-clean-restore-retry2-paused-20260611c.log`
+   - Backend reached `/health` after `63s`.
+   - The first local quality-lane generation again returned HTTP `500`.
+   - Same failure class: `UR_RESULT_ERROR_DEVICE_LOST` at
+     `block_table.copy_to_gpu`, again with `speculative_config=None` and
+     `step_counter=0`.
+
+Fallback eager/no-graph attempt:
+
+- Session: `qwen36-tp4-eager-fallback-paused-20260611d`.
+- Launch overrides:
+  - `XPU_GRAPH=0`
+  - `VLLM_XPU_ENABLE_XPU_GRAPH=0`
+  - `VLLM_XPU_FORCE_GRAPH_WITH_COMM=0`
+  - `VLLM_XPU_GRAPH_NOOP_COMM_CAPTURE=0`
+  - `VLLM_EXTRA_ARGS='--enforce-eager'`
+- Log:
+  `/tmp/qwen36-quark-int8-tp4-eager-fallback-paused-20260611d.log`
+- Backend reached `/health` after `50s` and remained alive through two short
+  local quality-lane canaries.
+- Artifacts:
+  `data/qwen36-quark-int8-tp4-eagerfallback-local-quality-frontdoor-text-smoke-r8-20260611.json`
+  and
+  `data/qwen36-quark-int8-tp4-eagerfallback-local-quality-frontdoor-text-smoke-rerun-r8-20260611.json`.
+- Both canaries:
+  - `pass_all=false`
+  - `baseline_match_all=true`
+  - exact `OK`, copy phrase, and JSON passed
+  - arithmetic failed with `58` instead of expected `60`
+  - repeat stability passed `8/8`
+
+Current safety state after this incident:
+
+- Public frontdoor remains paused.
+- Eager fallback backend is alive on `127.0.0.1:18080`, but it is not
+  quality-clean and should not be exposed as a production result.
+- The dynamic pause work prevented external traffic from hitting either failed
+  graph restore.
+
+Interpretation and next actions:
+
+- The repeated graph restore failure is not speculative decode; the scheduler
+  dump shows no speculative config and failure on the first prefill request.
+- `/health` is not sufficient after restore. The required restore gate is now:
+  backend health, first-generation smoke, local quality-lane canary, then
+  public-frontdoor canary.
+- Eager/no-graph avoids the device-lost failure in this run but does not pass
+  the exact quality suite.
+- Next work should inspect why the accepted graph restore now device-losts at
+  `block_table.copy_to_gpu` on the first request. Candidate checks:
+  1. stale Level Zero/oneCCL state after repeated graph/spec experiments,
+  2. block-table copy path or NHD KV layout regression,
+  3. graph cache corruption in the accepted cache root,
+  4. current local vLLM changes from speculative instrumentation affecting
+     non-spec first prefill,
+  5. XPU device reset requirement after repeated `UR_RESULT_ERROR_DEVICE_LOST`.
