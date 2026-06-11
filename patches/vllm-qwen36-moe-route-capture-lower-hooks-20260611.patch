@@ -1,0 +1,109 @@
+diff --git a/vllm/model_executor/layers/fused_moe/fused_moe_modular_method.py b/vllm/model_executor/layers/fused_moe/fused_moe_modular_method.py
+--- a/vllm/model_executor/layers/fused_moe/fused_moe_modular_method.py
++++ b/vllm/model_executor/layers/fused_moe/fused_moe_modular_method.py
+@@ -93,6 +93,9 @@ class FusedMoEModularMethod(FusedMoEMethodBase, CustomOp):
+         shared_experts_input: torch.Tensor | None,
+     ) -> torch.Tensor:
+         assert self.moe_kernel is not None
++        route_capture = getattr(layer, "route_capture", None)
++        if route_capture is not None:
++            route_capture.capture(topk_ids, stage="modular_apply")
+         return self.moe_kernel.apply(
+             hidden_states=x,
+             w1=layer.w13_weight,
+diff --git a/vllm/model_executor/layers/fused_moe/layer.py b/vllm/model_executor/layers/fused_moe/layer.py
+--- a/vllm/model_executor/layers/fused_moe/layer.py
++++ b/vllm/model_executor/layers/fused_moe/layer.py
+@@ -485,13 +485,13 @@ class FusedMoE(PluggableLayer):
+             num_logical_experts=self.logical_num_experts,
+             hash_indices_table=self.hash_indices_table,
+         )
+-        route_capture = maybe_create_route_capture(
++        self.route_capture = maybe_create_route_capture(
+             layer_name=self.layer_name,
+             num_experts=self.global_num_experts,
+             top_k=top_k,
+         )
+-        if route_capture is not None:
+-            self.router.set_capture_fn(route_capture)
++        if self.route_capture is not None:
++            self.router.set_capture_fn(self.route_capture)
+         self.routing_method_type: RoutingMethodType = self.router.routing_method_type
+ 
+         self.moe_config: FusedMoEConfig = FusedMoEConfig(
+diff --git a/vllm/model_executor/layers/fused_moe/router/route_capture.py b/vllm/model_executor/layers/fused_moe/router/route_capture.py
+--- a/vllm/model_executor/layers/fused_moe/router/route_capture.py
++++ b/vllm/model_executor/layers/fused_moe/router/route_capture.py
+@@ -72,6 +72,9 @@ class MoERouteCapture:
+         path.parent.mkdir(parents=True, exist_ok=True)
+ 
+     def __call__(self, topk_ids: torch.Tensor) -> None:
++        self.capture(topk_ids, stage="router")
++
++    def capture(self, topk_ids: torch.Tensor, *, stage: str) -> None:
+         global _warned_capture_error
+ 
+         self.calls += 1
+@@ -105,6 +108,7 @@ class MoERouteCapture:
+                     "rank": _rank_field("RANK"),
+                     "local_rank": _rank_field("LOCAL_RANK"),
+                     "layer": self.layer_name,
++                    "stage": stage,
+                     "call": self.calls,
+                     "shape": shape,
+                     "num_tokens": int(shape[0]) if shape else 0,
+diff --git a/vllm/model_executor/layers/fused_moe/runner/moe_runner.py b/vllm/model_executor/layers/fused_moe/runner/moe_runner.py
+--- a/vllm/model_executor/layers/fused_moe/runner/moe_runner.py
++++ b/vllm/model_executor/layers/fused_moe/runner/moe_runner.py
+@@ -548,22 +548,38 @@ class MoERunner(MoERunnerInterface):
+         should_apply_decode_monolithic = getattr(
+             self._quant_method, "should_apply_decode_monolithic", None
+         )
+         if (
+             should_apply_decode_monolithic is not None
+             and should_apply_decode_monolithic(layer, hidden_states)
+         ):
++            route_capture = getattr(layer, "route_capture", None)
++            if route_capture is not None:
++                _, topk_ids = self.router.select_experts(
++                    hidden_states=hidden_states,
++                    router_logits=router_logits,
++                    input_ids=input_ids,
++                )
++                route_capture.capture(topk_ids, stage="runner_pre_monolithic")
+             fused_out = self._quant_method.apply_monolithic(
+                 layer=layer,
+                 x=hidden_states,
+                 router_logits=router_logits,
+                 input_ids=input_ids,
+             )
+         elif self._quant_method.is_monolithic:
++            route_capture = getattr(layer, "route_capture", None)
++            if route_capture is not None:
++                _, topk_ids = self.router.select_experts(
++                    hidden_states=hidden_states,
++                    router_logits=router_logits,
++                    input_ids=input_ids,
++                )
++                route_capture.capture(topk_ids, stage="runner_pre_monolithic")
+             fused_out = self._quant_method.apply_monolithic(
+                 layer=layer,
+                 x=hidden_states,
+                 router_logits=router_logits,
+                 input_ids=input_ids,
+             )
+         else:
+             topk_weights, topk_ids = self.router.select_experts(
+diff --git a/vllm/model_executor/layers/quantization/quark/quark_moe.py b/vllm/model_executor/layers/quantization/quark/quark_moe.py
+--- a/vllm/model_executor/layers/quantization/quark/quark_moe.py
++++ b/vllm/model_executor/layers/quantization/quark/quark_moe.py
+@@ -812,6 +812,9 @@ class QuarkW8A8Int8MoEMethod(QuarkMoEMethod):
+     ) -> torch.Tensor | tuple[torch.Tensor, torch.Tensor]:
+         if self.int8_backend == Int8MoeBackend.XPU:
+             assert self.moe_kernel is not None
++            route_capture = getattr(layer, "route_capture", None)
++            if route_capture is not None:
++                route_capture.capture(topk_ids, stage="quark_int8_apply")
+             return self.moe_kernel.apply(
+                 x,
+                 layer.w13_weight,

@@ -35,11 +35,26 @@
       "route_files": 0,
       "result": "No JSONL route files produced even with torch.compile/CUDAGraph disabled.",
       "log_evidence": "enforce_eager=True; Cudagraph is disabled under eager mode; XPU Graph is disabled by environment variable"
+    },
+    {
+      "tmux": "qwen36-tp4-routecapture4-20260611",
+      "xpu_graph": false,
+      "enforce_eager": true,
+      "health": "pass",
+      "request": "one bounded 64-token completion after adding Quark apply and runner pre-monolithic hooks",
+      "route_files": 1,
+      "records": 21120,
+      "layers": 40,
+      "total_assignments": 21312000,
+      "stages": ["router", "quark_int8_apply"],
+      "raw_artifact": "data/qwen36-quark-int8-tp4-routecapture4-routes-20260611.jsonl",
+      "summary_artifact": "data/qwen36-quark-int8-tp4-routecapture4-summary-20260611.json",
+      "result": "Route capture succeeded. The earlier no-file finding was partly caused by a malformed default capture filename and a glob that expected substituted PIDs. The current run double-counts routes because both router and quark_int8_apply stages are enabled; future microbench inputs should filter or de-duplicate to one stage."
     }
   ],
-  "finding": "The generic BaseRouter capture hook is not sufficient for this Qwen3.6 Quark W8A8 INT8 XPU runtime path. Move capture lower into FusedMoEModularMethod.apply, FusedMoEKernel.apply, or vllm/model_executor/layers/fused_moe/experts/xpu_moe.py where topk_ids is passed to the XPU expert kernel.",
+  "finding": "The lower Quark W8A8 INT8 apply hook captures real topk_ids for this runtime path. The current useful stage is quark_int8_apply; router-stage capture is duplicate data. Next route data should be post-warmup decode-only and prompt-class separated before tuning grouped-GEMM or persistent-MoE kernels.",
   "restore": {
-    "tmux": "qwen36-tp4-accepted-restored-20260611c",
+    "tmux": "qwen36-tp4-accepted-restored-20260611d",
     "health": "pass",
     "enforce_eager": false,
     "xpu_graph": true,

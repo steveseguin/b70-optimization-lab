@@ -1041,3 +1041,112 @@ Ideas:
     - Continue chasing single-request latency on TP4 or a solo lane.
     - Separately plan production aggregate throughput with multiple accepted
       replicas or TP2 pairs if single-request kernel work takes longer.
+
+## Route Capture Correction And Result
+
+Follow-up on the generic-router capture conclusion above: the initial "no route
+files" finding was partly a filename-glob mistake. The diagnostic launcher's
+default `CAPTURE_FILE` used a literal `{pid}` inside a Bash default-parameter
+expansion, and Bash consumed the closing brace. Files were written as malformed
+paths such as `/tmp/qwen36-moe-routes-routecapture4-{pid.jsonl}`. The launcher
+now builds the default path in two string pieces so Python can substitute
+`{pid}` correctly on future runs.
+
+Lower-hook capture was added at three points:
+
+- `BaseRouter` capture, stage `router`.
+- `FusedMoEModularMethod.apply`, stage `modular_apply`.
+- `QuarkW8A8Int8MoEMethod.apply`, stage `quark_int8_apply`.
+- A diagnostic monolithic fallback in `MoERunner._apply_quant_method`, stage
+  `runner_pre_monolithic`, for future kernels that hide `topk_ids` inside a
+  monolithic apply path.
+- incremental patch artifact:
+  `patches/vllm-qwen36-moe-route-capture-lower-hooks-20260611.patch`
+
+Bounded routecapture4 diagnostic:
+
+- tmux: `qwen36-tp4-routecapture4-20260611`
+- graph/eager controls: XPU graph disabled, `--enforce-eager`
+- request: one 22-token prompt, 64 generated tokens
+- raw route artifact:
+  `data/qwen36-quark-int8-tp4-routecapture4-routes-20260611.jsonl`
+- summary artifact:
+  `data/qwen36-quark-int8-tp4-routecapture4-summary-20260611.json`
+- records: `21,120`
+- layers: `40`
+- total assignments: `21,312,000`
+- stages observed per layer: `router` and `quark_int8_apply`
+
+Interpretation:
+
+- The current Quark W8A8 INT8 path does reach `QuarkW8A8Int8MoEMethod.apply`,
+  so it is not using the monolithic fallback for this run.
+- The summary double-counts routes because both `router` and
+  `quark_int8_apply` captured the same `topk_ids`. For microbench input, use
+  one stage only, preferably `quark_int8_apply`, or de-duplicate by
+  layer/pid/call/shape.
+- The first record shows the large warmup/prefill shape `[8192, 8]`, so the
+  current capture is useful for shape discovery but is not yet a clean
+  decode-only route histogram. The next capture should filter to one stage,
+  use `CAPTURE_LAYER_REGEX` for a few layers, and run a post-warmup decode
+  sequence so the histogram reflects steady-state generation.
+
+Accepted service restore after this diagnostic:
+
+- stopped routecapture4
+- restored accepted service as `qwen36-tp4-accepted-restored-20260611d`
+- accepted `/health`: pass
+- accepted log confirms graph capture completed and
+  `VLLM_XPU_FORCE_GRAPH_WITH_COMM=1` is active.
+
+## More Big Ideas Added After Real Route Capture
+
+1. Stage-filtered route histograms for actual decode.
+   - Capture only `quark_int8_apply`, discard warmup/prefill, and collect
+     separate histograms for natural chat, code, structured, and math prompts.
+   - Feed those histograms directly into grouped-GEMM and persistent-MoE
+     microbenches.
+
+2. GPU-side route counters.
+   - The current capture copies `topk_ids` to CPU and therefore cannot be used
+     during accepted graph-captured speed runs.
+   - A tiny XPU-side histogram op could capture real routes under graph replay
+     with much lower perturbation, then flush counts after the request.
+
+3. Hot-expert-aware packing.
+   - The route summary already shows strong expert skew. If the skew remains
+     stable after decode-only capture, pack hot experts into memory layouts
+     that favor contiguous DPAS/XMX access and lower cache/TLB churn.
+   - This preserves math if the logical-to-physical expert map is handled at
+     the kernel boundary.
+
+4. Route-distribution-aware kernel policy.
+   - Instead of one grouped-GEMM policy for all MoE calls, pick kernel
+     parameters from the observed rows-per-expert distribution: sparse long
+     tail, hot few experts, or near-uniform.
+   - This is likely more valuable than synthetic uniform MoE benchmarks.
+
+5. Decode-only route replay harness.
+   - Record hidden-state shape, top-k IDs, and expert row counts for one layer,
+     then replay the current XPU MoE path outside vLLM.
+   - This makes persistent-MoE, prepack, activation fusion, and epilogue
+     fusion measurable without full endpoint startup.
+
+6. Kernel-stack branch bakeoff against Intel's newest XPU container.
+   - Keep the model/quantization fixed and compare our local stack to the
+     newest `vllm-xpu-kernels` container or branch.
+   - If Intel already has persistent MoE or better W8A8 policy for Qwen3 A3B
+     shapes, porting may beat local kernel ownership.
+
+7. Speculation plus route-aware verifier scheduling.
+   - If a proposer is eventually used, route histograms can show whether
+     speculative verifier bursts stress different experts than normal decode.
+   - A verifier-preserving MTP/EAGLE lane should be benchmarked with route
+     capture too; a speedup that overloads one expert shard may not hold under
+     real prompt mixes.
+
+8. Production reliability loops tied to route skew.
+   - Long-running stale-process failures might correlate with specific graph
+     shapes or expert hot spots.
+   - Add route-shape counters to future 30-60 minute soaks so reliability bugs
+     can be tied to model paths instead of only wall-clock age.

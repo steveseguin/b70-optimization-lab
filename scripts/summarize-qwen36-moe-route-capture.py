@@ -84,6 +84,7 @@ def summarize_layer(records: list[dict[str, Any]], topn: int) -> dict[str, Any]:
     num_tokens = []
     assignments = []
     shapes = defaultdict(int)
+    stages = defaultdict(int)
     pids = set()
     ranks = set()
 
@@ -101,6 +102,7 @@ def summarize_layer(records: list[dict[str, Any]], topn: int) -> dict[str, Any]:
         num_tokens.append(float(record.get("num_tokens", 0)))
         assignments.append(float(record.get("assignments", 0)))
         shapes[tuple(record.get("shape", []))] += 1
+        stages[str(record.get("stage") or "unknown")] += 1
         if record.get("pid") is not None:
             pids.add(str(record.get("pid")))
         if record.get("rank") is not None:
@@ -120,6 +122,7 @@ def summarize_layer(records: list[dict[str, Any]], topn: int) -> dict[str, Any]:
             {"shape": list(shape), "records": count}
             for shape, count in sorted(shapes.items(), key=lambda item: item[0])
         ],
+        "stages": dict(sorted(stages.items())),
         "active_experts_total": len(active_counts),
         "aggregate_max_expert_share": (
             max(total_counts) / total_assignments if total_assignments else 0.0
@@ -176,12 +179,15 @@ def main() -> int:
         for layer, layer_records in sorted(by_layer.items())
     }
     global_counts: list[int] = []
+    global_stages: dict[str, int] = defaultdict(int)
     for layer_summary in layer_summaries.values():
         counts = layer_summary["aggregate_counts"]
         if not global_counts:
             global_counts = [0] * len(counts)
         for idx, count in enumerate(counts):
             global_counts[idx] += int(count)
+        for stage, count in layer_summary.get("stages", {}).items():
+            global_stages[str(stage)] += int(count)
     total_assignments = sum(global_counts)
 
     summary = {
@@ -191,6 +197,7 @@ def main() -> int:
         "global": {
             "layers": len(layer_summaries),
             "total_assignments": int(total_assignments),
+            "stages": dict(sorted(global_stages.items())),
             "top_experts": top_items(global_counts, args.topn),
             "aggregate_counts": global_counts,
         },

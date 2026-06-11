@@ -6,7 +6,9 @@ set -euo pipefail
 # cache so the production/accepted cache remains untouched.
 
 TAG="${TAG:-routecapture}"
-CAPTURE_FILE="${CAPTURE_FILE:-/tmp/qwen36-moe-routes-${TAG}-{pid}.jsonl}"
+if [[ -z "${CAPTURE_FILE:-}" ]]; then
+  CAPTURE_FILE="/tmp/qwen36-moe-routes-${TAG}"'-{pid}.jsonl'
+fi
 CAPTURE_MAX_LINES="${CAPTURE_MAX_LINES:-0}"
 CAPTURE_EVERY_N="${CAPTURE_EVERY_N:-1}"
 CAPTURE_INCLUDE_IDS="${CAPTURE_INCLUDE_IDS:-0}"

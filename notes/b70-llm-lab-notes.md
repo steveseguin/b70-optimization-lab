@@ -161,6 +161,8 @@ vLLM/XPU FP8 work:
 - Qwen3.6 Quark W8A8 route-capture wrapper and summarizer:
   `scripts/launch-qwen36-quark-int8-route-capture.sh` and
   `scripts/summarize-qwen36-moe-route-capture.py`.
+- Qwen3.6 route-capture lower-hook patch:
+  `patches/vllm-qwen36-moe-route-capture-lower-hooks-20260611.patch`.
 - FP8 result notes: `notes/2026-05-04-qwen36-fp8-b70-fa2.md` and `notes/2026-05-04-qwen36-fp8-full-context-topologies.md`.
 - FP8 topology data: `data/qwen36-fp8-b70-topology-screens-20260504.json`.
 
@@ -184,11 +186,12 @@ vLLM/XPU FP8 work:
 7. For MiniMax GGUF, keep the process-per-GPU RPC layout only as the capacity baseline; direct SYCL still needs chunked regular model-buffer allocation before it is usable.
 8. For MiniMax AutoRound/vLLM, target lower-level MoE expert/router fusion or multi-boundary reduction scheduling. Do not spend more time on pure Python-boundary router moves unless they include a new fused kernel and pass the full strict quality gate.
 9. For MiniMax AutoRound usability, debug c2 before advertising concurrency: first reproduce the no-graph `Indexing.h:622` failure with a smaller two-request prompt, then inspect whether scheduler slot/candidate indexing or a custom INT4 shape assumption is feeding an invalid XPU index. Keep the 512-token prefill chunk until the `ocloc` internal compiler error for 1024-token chunking is avoided or an existing safe cache artifact is reused.
-10. For Qwen3.6 Quark W8A8 INT8, move MoE route capture below the generic
-    router abstraction. The generic `BaseRouter` hook enables at startup but
-    does not produce route files for the current Quark/XPU runtime path, even
-    with XPU graph disabled and `--enforce-eager`. Next capture point:
-    `FusedMoEModularMethod.apply`, `FusedMoEKernel.apply`, or `experts/xpu_moe.py`.
+10. For Qwen3.6 Quark W8A8 INT8, route capture now works below the generic
+    router abstraction. The current successful diagnostic is routecapture4:
+    `21,120` records across `40` layers and `21,312,000` expert assignments,
+    with stages `router` and `quark_int8_apply`. Use one stage only,
+    preferably `quark_int8_apply`, for grouped-GEMM/persistent-MoE inputs.
+    Next capture should be post-warmup decode-only and prompt-class separated.
 11. For Qwen3.6 performance, prioritize large no-quality-loss levers:
     real-route persistent MoE microbenches, newest Intel XPU kernel-stack
     comparison, verifier-preserving MTP/DFlash-style speculation, shape-exact
