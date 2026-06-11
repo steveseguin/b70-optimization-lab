@@ -10959,3 +10959,171 @@ Operational note:
   `qwen36-tp4-accepted-restored-after-logprob-oracle-20260611c`; backend
   `/health` and frontdoor local-bypass `OK` smoke passed. Frontdoor remains
   paused for remote users with local bypass enabled.
+
+## Oracle k=1 No-Mamba-Spec-Blocks Diagnostic
+
+The next isolated graph diagnostic tested whether the oracle/n-gram row-0
+block-table drift was caused only by Qwen3.6 GDN/mamba speculative block
+reservation.
+
+Local vLLM change under test:
+
+- Add opt-in `VLLM_XPU_NGRAM_NO_MAMBA_SPEC_BLOCKS=1`.
+- When the speculative method is `ngram` or `ngram_gpu`, set
+  `MambaSpec.num_speculative_blocks=0`.
+- Leave normal no-spec, placebo repair, MTP, DFlash, and draft-model paths
+  unchanged.
+
+Launcher support:
+
+- `scripts/launch-qwen36-quark-int8-ngram-trace.sh` now accepts
+  `NGRAM_NO_MAMBA_SPEC_BLOCKS=1`.
+
+Run:
+
+- Diagnostic backend: `qwen36-tp4-oracle1-nomambaspec-20260611d` on
+  `127.0.0.1:18081`.
+- Fresh graph cache root:
+  `/mnt/fast-ai/vllm-cache-exp/qwen36-35b-a3b-quark-int8-tp4-oracle1-nomambaspec-20260611d`.
+- Oracle source:
+  `data/qwen36-quark-int8-tp4-accepted-noasync-oraclelane-p512o128-20260611b.json`.
+- Probe: two `p512/o128` completion fixtures.
+
+Result:
+
+- Output parity still failed: `baseline_match_all=false`.
+- `natural_latency_plan` first output-token diff moved to index `3`.
+- `repetitive_kernel_notes` first output-token diff also appeared at index `3`.
+- Scheduler summary recorded only `4` draft rows across `2` requests, with
+  `2` accepted and `2` rejected (`50.00%` acceptance). This is worse than the
+  prior oracle `k=1` logprob run and shows the diagnostic changed behavior but
+  did not repair correctness.
+- Model-input parity versus the accepted no-async lane still fails. The first
+  row-order diff is `tp_rank` ordering noise, but the immediate real drift is
+  still attention slot mapping shape/value drift: accepted rows carry one slot
+  where the diagnostic carries two, then subsequent rows are offset. Hiding
+  Mamba speculative blocks is therefore insufficient; a second speculative
+  reservation/accounting path remains active.
+
+Artifacts:
+
+- `data/qwen36-quark-int8-tp4-oracle1-nomambaspec-p512o128-20260611d.json`
+- `data/qwen36-quark-int8-tp4-oracle1-nomambaspec-modelinput-trace-20260611d.jsonl`
+- `data/qwen36-quark-int8-tp4-oracle1-nomambaspec-spec-20260611d.jsonl`
+- `data/qwen36-quark-int8-tp4-oracle1-nomambaspec-draft-20260611d.jsonl`
+- `data/qwen36-quark-int8-tp4-oracle1-nomambaspec-spec-summary-20260611d.json`
+- `data/qwen36-quark-int8-tp4-oracle1-nomambaspec-spec-summary-20260611d.md`
+- `data/qwen36-quark-int8-tp4-accepted-vs-oracle1-nomambaspec-modelinput-parity-20260611d.json`
+- `data/qwen36-quark-int8-tp4-accepted-vs-oracle1-nomambaspec-modelinput-parity-20260611d.md`
+- `data/qwen36-quark-int8-tp4-restored-after-nomambaspec-frontdoor-ok-smoke-r2-20260611d.json`
+- `patches/vllm-qwen36-ngram-no-mamba-spec-blocks-diagnostic-20260611.patch`
+
+Patch note: the patch artifact is a diff from the unpatched local vLLM base, so
+it includes the earlier tracked placebo `num_speculative_blocks=0` repair as
+context plus the new no-mamba-spec-block diagnostic flag.
+
+Decision:
+
+- Reject the no-mamba-spec-blocks diagnostic as a correctness fix.
+- Keep it as a useful negative control: the zero-lookahead placebo bug was
+  real, but actual n-gram/oracle speculation has another verifier-input drift
+  source besides `MambaSpec.num_speculative_blocks`.
+- Do not time this path or use it for production.
+
+Operational restore:
+
+- Accepted backend restored in
+  `qwen36-tp4-accepted-restored-after-nomambaspec-20260611d`.
+- Backend `/health` passed after `54s`.
+- Paused-local public frontdoor exact smoke returned `OK`.
+- Final frontdoor status: remote generation paused, loopback bypass enabled,
+  active `0`, queued `0`.
+
+Next concrete repair items:
+
+1. Add a rank/request-normalized model-input comparator so rank-order noise is
+   removed before comparing slot/block drift.
+2. Add `speculative_config` metadata, KV block allocator counters, slot mapping
+   allocator counters, and cache-manager free/used block counts to the
+   model-input trace.
+3. Add a graph-mode `spec-config/no-proposer` diagnostic: construct the spec
+   config but bypass proposer setup, so the scheduler/model runner can be
+   compared with and without proposer-side allocations.
+4. Add a graph-mode `num_speculative_tokens=0` diagnostic, if vLLM allows it,
+   to separate "spec config exists" from "lookahead width exists".
+5. Trace the first 20 decode steps by request ID with top-k/logprob checksum,
+   input IDs, positions, slot mappings, block tables, and GDN/mamba state
+   version counters.
+6. Build the minimal upstreamable repro around one prompt and the first four
+   generated tokens, because this diagnostic now diverges at index `3`.
+
+More bigger/bolder ideas to keep in scope:
+
+Fresh source refresh for this addendum:
+
+- vLLM speculative decoding docs still frame model-based methods such as EAGLE,
+  MTP, draft models, PARD, and MLP as the best latency-reduction methods, with
+  n-gram/suffix as lighter, usually smaller-gain paths:
+  https://docs.vllm.ai/en/stable/features/speculative_decoding/
+- The current vLLM speculative config docs expose graph-affecting config hash
+  warnings and include `ngram`, `suffix`, `eagle`, `eagle3`, and `mtp` as
+  active methods. That supports making spec-config/no-proposer and
+  zero-width/zero-draft controls explicit:
+  https://docs.vllm.ai/en/latest/api/vllm/config/speculative/
+- vLLM's suffix decoding docs describe adaptive pattern matching over prompt
+  plus previous generations. Once verifier-input parity is fixed, suffix
+  decoding is worth testing as a lightweight alternative to plain n-gram:
+  https://docs.vllm.ai/en/latest/features/speculative_decoding/suffix/
+- The public engine-args docs keep quantization configuration and per-layer
+  quant specs visible as first-class config. That keeps the strict 8-bit
+  engine bakeoff in scope without accepting a 4-bit shortcut:
+  https://docs.vllm.ai/en/latest/configuration/engine_args/
+
+1. **Static solo decode lane.** Build a batch-1 service class with a
+   precommitted KV/block-table arena and fixed graph replay for one request at
+   a time. This may bypass much of the scheduler/block-table churn that keeps
+   perturbing spec-mode verifier inputs.
+2. **Verifier-input contract tests in CI.** Treat model-input parity as a first
+   class quality gate: exact output can pass by luck, but slot/block parity
+   catches silent state drift before speed work.
+3. **Speculative scheduler bisect.** Run the oracle fixture against adjacent
+   vLLM commits or targeted local reverts around scheduler/spec block-manager
+   changes. If an older commit has exact `k=1` parity, forward-port the fix
+   instead of continuing blind local patches.
+4. **Custom proposer API outside vLLM internals.** Feed draft tokens through a
+   narrow external proposer interface only after verifier-input parity is
+   exact. This avoids entangling a B70-specific drafter with scheduler internals
+   while still letting us try DFlash, EAGLE, n-gram, or a learned micro-drafter.
+5. **KV-resident verifier-bucket runner.** Build a lower-level harness that
+   verifies 1, 2, 4, 8, and 16 candidate tokens from an existing KV state
+   without HTTP scoring. This gives a realistic bound for MTP/EAGLE before
+   investing in a drafter.
+6. **Route-window compiler.** Capture real accepted-route windows and generate
+   layer-specific grouped-GEMM schedules for the hot expert mixes, including
+   prepare/finalize and shared-expert handling.
+7. **Memory-for-latency hotset mode.** Spend spare VRAM on replicated hot
+   experts, duplicated dense projections, or rank-local route caches if it
+   reduces all-reduce/all-to-all pressure for the common path.
+8. **Hybrid TP/EP prototype.** Use the current route histograms to simulate
+   TP2 dense plus expert-parallel MoE, replicated attention plus sharded
+   experts, and per-layer hot expert replication. Only build the best-looking
+   layout.
+9. **Whole-token command-list capture.** Try a fixed-shape Level Zero command
+   list for a complete decode token, not just per-op XPU graphs. The goal is to
+   collapse launch/dispatcher overhead for c1.
+10. **B70-native W8A8 retile cache.** Repack current Quark INT8 weights into
+    the exact tile/layout expected by the fastest XPU GEMM kernels and persist
+    it as a startup artifact. Quality should be unchanged because weights and
+    scales are identical.
+11. **Strict 8-bit engine shootout.** Run Qwen3.6 35B with high-fidelity 8-bit
+    on llama.cpp SYCL/Vulkan, OpenVINO/ITREX if viable, and SGLang/vLLM
+    variants. The purpose is architectural comparison, not a switch to 4-bit
+    or a different model.
+12. **Reliability scoreboard as a benchmark dimension.** Record first-gen
+    device-losts, restore time, repeat-quality pass rate, and long-context pass
+    rate next to tok/s. A 120 tok/s recipe that crashes on first request is not
+    a usable win.
+13. **Upstream/bounty-quality repro packet.** Package the oracle `k=1` drift,
+    no-mamba negative control, block/slot trace, launch commands, and exact
+    token diffs as an issue-ready artifact for vLLM/Intel. This is likely to
+    get better external help than a broad performance complaint.
