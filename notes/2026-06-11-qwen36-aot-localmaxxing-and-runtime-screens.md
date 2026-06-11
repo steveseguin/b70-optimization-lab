@@ -10881,3 +10881,81 @@ Updated priority:
    work against real routed distributions.
 5. Only after (1) passes, return to MTP/DFlash speed work and publish any new
    Localmaxxing result.
+
+## Oracle k=1 Logprob Fingerprints
+
+Added after rerunning the no-async accepted baseline and oracle `k=1` fixture
+with completions API `logprobs=5`.
+
+What changed:
+
+- `scripts/qwen36-completion-oracle-trace.py` now accepts `--logprobs N` and
+  stores both the raw OpenAI-compatible completion logprob payload and a
+  normalized token-id/top-k view.
+- Added `scripts/compare-qwen36-logprob-fingerprints.py` to compare selected
+  token IDs, top-k signatures, and same-rank logprob deltas between two
+  completion trace artifacts.
+
+Results:
+
+- Accepted no-async logprob baseline completed both `p512/o128` fixtures.
+- Oracle `k=1` with the accepted logprob baseline as oracle source still failed
+  exact output parity:
+  - `natural_latency_plan`: first selected-token diff at output index `14`,
+    accepted token `29541` (` reliability`) versus oracle token `4779`
+    (` memory`).
+  - `repetitive_kernel_notes`: first selected-token diff at output index `14`,
+    accepted token `4752` (` unique`) versus oracle token `6126` (`PU`).
+- Scheduler trace again shows oracle `k=1` accepted every draft token:
+  `14/14`, `100.00%`, `14` rows, `2` requests.
+- The logprob comparison proves the verifier distribution is already different
+  before the selected-token fork:
+  - `natural_latency_plan`: first top-k signature diff at row `0`; top-1 stayed
+    `Continue`, but the accepted run ranked `Focus` second while oracle ranked
+    `<|im_end|>` second, and the shared top-1 logprob differed by about
+    `0.07417`.
+  - `repetitive_kernel_notes`: first same-rank top-1 logprob delta appeared at
+    row `0`; first top-k signature diff appeared at row `2`; selected token
+    drift still appeared at row `14`.
+- The model-input parity checker also mismatches at row `0`:
+  `attn.block_tables.0.cpu.head` is `[1]` for accepted no-async and `[1, 2]`
+  for oracle `k=1`. The first row has `scheduled_spec_decode_tokens={}`,
+  `spec_token_ids=[[]]`, and `use_spec_decode=false`, so this is allocation /
+  verifier-input state drift before draft tokens are active.
+
+Artifacts:
+
+- `data/qwen36-quark-int8-tp4-accepted-noasync-logprobs-p512o128-20260611c.json`
+- `data/qwen36-quark-int8-tp4-accepted-noasync-logprobs-modelinput-trace-20260611c.jsonl`
+- `data/qwen36-quark-int8-tp4-oracle1-logprobs-p512o128-20260611c.json`
+- `data/qwen36-quark-int8-tp4-oracle1-logprobs-modelinput-trace-20260611c.jsonl`
+- `data/qwen36-quark-int8-tp4-oracle1-logprobs-spec-20260611c.jsonl`
+- `data/qwen36-quark-int8-tp4-oracle1-logprobs-draft-20260611c.jsonl`
+- `data/qwen36-quark-int8-tp4-oracle1-logprobs-spec-summary-20260611c.json`
+- `data/qwen36-quark-int8-tp4-oracle1-logprobs-spec-summary-20260611c.md`
+- `data/qwen36-quark-int8-tp4-accepted-vs-oracle1-logprobs-compare-20260611c.json`
+- `data/qwen36-quark-int8-tp4-accepted-vs-oracle1-logprobs-compare-20260611c.md`
+- `data/qwen36-quark-int8-tp4-accepted-vs-oracle1-logprobs-modelinput-parity-20260611c.json`
+- `data/qwen36-quark-int8-tp4-accepted-vs-oracle1-logprobs-modelinput-parity-20260611c.md`
+
+Decision:
+
+- This strengthens the previous conclusion: oracle `k=1` is not a sampling-only
+  drift. The verifier logits/top-k are already perturbed by speculative-mode
+  cache/block-table state before any draft token is scheduled.
+- The next highest-value experiment is an opt-in actual-spec diagnostic that
+  zeros or hides speculative blocks for n-gram/oracle proposers only, then
+  reruns:
+  - no-logprob `p512/o32` and `p512/o128` parity,
+  - logprob `p512/o128` parity,
+  - model-input row-0 block-table parity,
+  - spec summary acceptance.
+- Do not apply that diagnostic as production behavior without proving that
+  GDN/mamba state rollback still works for accepted and rejected draft tokens.
+
+Operational note:
+
+- Accepted backend was restored after this diagnostic in tmux session
+  `qwen36-tp4-accepted-restored-after-logprob-oracle-20260611c`; backend
+  `/health` and frontdoor local-bypass `OK` smoke passed. Frontdoor remains
+  paused for remote users with local bypass enabled.

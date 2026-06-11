@@ -108,6 +108,7 @@ def completion(
     max_tokens: int,
     timeout: int,
     seed: int,
+    logprobs: int | None,
 ) -> dict[str, Any]:
     payload = {
         "model": model,
@@ -117,6 +118,8 @@ def completion(
         "top_p": 1.0,
         "seed": seed,
     }
+    if logprobs is not None:
+        payload["logprobs"] = logprobs
     started_unix = time.time()
     started = time.perf_counter()
     response = post_json(f"{base_url.rstrip('/')}/v1/completions", payload, timeout)
@@ -144,7 +147,58 @@ def completion(
         "text": choice.get("text") or "",
         "finish_reason": choice.get("finish_reason"),
         "usage": data.get("usage"),
+        "logprobs": choice.get("logprobs"),
     }
+
+
+def normalize_completion_logprobs(
+    tokenizer: Any,
+    logprobs: dict[str, Any] | None,
+) -> list[dict[str, Any]] | None:
+    if not logprobs:
+        return None
+    tokens = logprobs.get("tokens") or []
+    token_logprobs = logprobs.get("token_logprobs") or []
+    text_offsets = logprobs.get("text_offset") or []
+    top_logprobs = logprobs.get("top_logprobs") or []
+    rows: list[dict[str, Any]] = []
+    for index, token_text in enumerate(tokens):
+        token_ids = tokenizer.encode(token_text, add_special_tokens=False)
+        row: dict[str, Any] = {
+            "index": index,
+            "token_text": token_text,
+            "token_ids": token_ids,
+            "token_id": token_ids[0] if len(token_ids) == 1 else None,
+            "token_logprob": (
+                float(token_logprobs[index])
+                if index < len(token_logprobs) and token_logprobs[index] is not None
+                else None
+            ),
+            "text_offset": (
+                int(text_offsets[index]) if index < len(text_offsets) else None
+            ),
+            "top": [],
+        }
+        top = top_logprobs[index] if index < len(top_logprobs) else None
+        if isinstance(top, dict):
+            entries = []
+            for text, value in top.items():
+                ids = tokenizer.encode(text, add_special_tokens=False)
+                entries.append({
+                    "text": text,
+                    "token_ids": ids,
+                    "token_id": ids[0] if len(ids) == 1 else None,
+                    "logprob": float(value) if value is not None else None,
+                })
+            entries.sort(
+                key=lambda item: (
+                    -(item["logprob"] if item["logprob"] is not None else -1e30),
+                    item["text"],
+                )
+            )
+            row["top"] = entries
+        rows.append(row)
+    return rows
 
 
 def first_diff(a: list[int], b: list[int]) -> dict[str, Any]:
@@ -174,6 +228,12 @@ def main() -> int:
     parser.add_argument("--timeout", type=int, default=240)
     parser.add_argument("--output-json", type=Path, required=True)
     parser.add_argument("--baseline-json", type=Path)
+    parser.add_argument(
+        "--logprobs",
+        type=int,
+        default=None,
+        help="Request generated-token top logprobs from the completions API.",
+    )
     args = parser.parse_args()
 
     from transformers import AutoTokenizer
@@ -196,8 +256,11 @@ def main() -> int:
             max_tokens=args.output_tokens,
             timeout=args.timeout,
             seed=args.seed,
+            logprobs=args.logprobs,
         )
         output_ids = tokenizer.encode(result["text"], add_special_tokens=False)
+        normalized_logprobs = normalize_completion_logprobs(
+            tokenizer, result.get("logprobs"))
         record = {
             "name": case["name"],
             "seed": args.seed,
@@ -212,6 +275,7 @@ def main() -> int:
             "text_sha256": sha256_text(result["text"]),
             "output_token_count": len(output_ids),
             "output_token_ids": output_ids,
+            "normalized_logprobs": normalized_logprobs,
         }
         base = baseline_by_name.get(case["name"])
         if base:
