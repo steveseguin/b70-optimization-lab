@@ -7844,3 +7844,73 @@ Priority order from here:
 3. If `k=1` can be made exact, re-open verifier-preserving speculation. If it
    cannot, switch the main speed path to persistent MoE/command-list/static
    solo-decode work while preparing the upstream repro packet.
+
+## Dynamic Frontdoor Pause and Local Quality Lane
+
+Implemented the first production/reliability follow-up from the oracle notes:
+
+- `scripts/openai-lan-frontdoor.py`
+  - Pause file is now dynamic instead of startup-only.
+  - `/status` and `/frontdoor/status` report `pause_file`, `paused`,
+    `drain_timeout_s`, model rewrite settings, output-token defaults, and
+    chat-template kwargs.
+  - New generation requests return HTTP `503` with
+    `error.type=frontdoor_paused` while the pause file exists.
+  - Existing active requests are not interrupted.
+  - `/drain` and `/frontdoor/drain` wait for active/queued generations to reach
+    zero or return a drain timeout.
+- `scripts/run-openai-frontdoor-profile.sh`
+  - Exposes `FRONTDOOR_DRAIN_TIMEOUT_S`.
+  - Keeps the request defaults that make the public OpenAI route match the
+    no-thinking Qwen quality posture.
+- `scripts/run-qwen36-local-quality-frontdoor.sh`
+  - Adds a localhost-only quality lane on `127.0.0.1:18082`.
+  - Defaults to max-active `1`, backend `127.0.0.1:18080`, no-thinking chat
+    template kwargs, model rewrite to `qwen36-35b-a3b-fp8`, and a separate
+    `/tmp/qwen36-local-quality-frontdoor.pause` pause file.
+
+Validation:
+
+- `python3 -m py_compile scripts/openai-lan-frontdoor.py`
+- `bash -n scripts/run-openai-frontdoor-profile.sh scripts/run-qwen36-local-quality-frontdoor.sh`
+- Local lane status on `127.0.0.1:18082` reported:
+  - `paused=false`
+  - `max_active_generations=1`
+  - `drain_timeout_s=300.0`
+  - `pause_file=/tmp/qwen36-local-quality-frontdoor.pause`
+  - model rewrite and no-thinking defaults enabled
+- Dynamic pause test:
+  - touched `/tmp/qwen36-local-quality-frontdoor.pause`
+  - POST `/v1/chat/completions` returned HTTP `503`
+  - response `error.type=frontdoor_paused`
+  - generation counter stayed at `0`, proving the paused request did not enter
+    the backend queue.
+- Drain test:
+  - after clearing the pause file, `/frontdoor/drain` returned
+    `drained=true`, `waited_s=0.0`, `active=0`, `queued=0`.
+
+Local quality-lane canaries:
+
+- First short local quality smoke:
+  `data/qwen36-quark-int8-tp4-local-quality-frontdoor-text-smoke-20260611.json`
+  - `pass_all=false`
+  - arithmetic failed: expected `60`, observed `58`
+  - repeat stability passed four runs
+- Second short local quality smoke:
+  `data/qwen36-quark-int8-tp4-local-quality-frontdoor-text-smoke-rerun-20260611.json`
+  - `pass_all=false`
+  - arithmetic passed
+  - repeat stability failed: first repeat emitted
+    `伪“f”“f”“f”“f”“f”“f”“f whiskey whiskey whiskey whiskey“f”“f”“`
+    instead of `blue, green, orange, red`
+
+Interpretation:
+
+- The local-only frontdoor path works and can isolate future tests from public
+  LAN request handling.
+- The current accepted backend restore is still not quality-clean. Its failure
+  pattern persists even under localhost-only, max-active-1 access.
+- Do not publish new speed or quality results from this backend state.
+- Next reliability action should be a clean accepted-backend restore followed
+  by the local quality lane, then the public frontdoor, before any more
+  speculative or kernel speed work.

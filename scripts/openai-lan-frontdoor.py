@@ -24,9 +24,6 @@ PAUSE_FILE = os.environ.get(
     "FRONTDOOR_PAUSE_FILE",
     "/home/steve/llm-optimizations/.pause-minimax-production",
 )
-if os.path.exists(PAUSE_FILE):
-    print(f"OpenAI LAN frontdoor paused by {PAUSE_FILE}", flush=True)
-    raise SystemExit(0)
 
 BACKEND_BASE_URL = os.environ.get("FRONTDOOR_BACKEND_URL", "http://127.0.0.1:18080")
 HOST = os.environ.get("FRONTDOOR_HOST", "0.0.0.0")
@@ -34,6 +31,7 @@ PORT = int(os.environ.get("FRONTDOOR_PORT", "8000"))
 MAX_ACTIVE_GENERATIONS = int(os.environ.get("FRONTDOOR_MAX_ACTIVE_GENERATIONS", "1"))
 QUEUE_TIMEOUT_S = float(os.environ.get("FRONTDOOR_QUEUE_TIMEOUT_S", "3600"))
 BACKEND_TIMEOUT_S = float(os.environ.get("FRONTDOOR_BACKEND_TIMEOUT_S", "7200"))
+DRAIN_TIMEOUT_S = float(os.environ.get("FRONTDOOR_DRAIN_TIMEOUT_S", "3600"))
 FRONTDOOR_CORS_ALLOW_ORIGIN = os.environ.get("FRONTDOOR_CORS_ALLOW_ORIGIN", "*")
 FRONTDOOR_LOG_EVENTS = os.environ.get("FRONTDOOR_LOG_EVENTS", "1") not in {
     "0",
@@ -41,7 +39,17 @@ FRONTDOOR_LOG_EVENTS = os.environ.get("FRONTDOOR_LOG_EVENTS", "1") not in {
     "False",
 }
 FRONTDOOR_CHAT_TEMPLATE_KWARGS_JSON = os.environ.get(
-    "FRONTDOOR_CHAT_TEMPLATE_KWARGS_JSON", ""
+    "FRONTDOOR_CHAT_TEMPLATE_KWARGS_JSON", '{"enable_thinking":false}'
+)
+FRONTDOOR_SERVED_MODEL_NAME = os.environ.get("FRONTDOOR_SERVED_MODEL_NAME", "")
+FRONTDOOR_REWRITE_REQUEST_MODEL = os.environ.get(
+    "FRONTDOOR_REWRITE_REQUEST_MODEL", "1"
+) not in {"0", "false", "False"}
+FRONTDOOR_DEFAULT_MAX_OUTPUT_TOKENS = int(
+    os.environ.get("FRONTDOOR_DEFAULT_MAX_OUTPUT_TOKENS", "2048")
+)
+FRONTDOOR_MAX_OUTPUT_TOKENS = int(
+    os.environ.get("FRONTDOOR_MAX_OUTPUT_TOKENS", "4096")
 )
 MODEL_SLOT_NAME = os.environ.get("MODEL_SLOT_NAME", "")
 MODEL_SLOT_TITLE = os.environ.get("MODEL_SLOT_TITLE", "")
@@ -108,6 +116,10 @@ def is_generation_path(path: str, method: str) -> bool:
     return method.upper() == "POST" and path in GENERATION_PATHS
 
 
+def is_paused() -> bool:
+    return bool(PAUSE_FILE and os.path.exists(PAUSE_FILE))
+
+
 def status_payload() -> dict[str, Any]:
     with state_lock:
         active = active_generations
@@ -128,11 +140,19 @@ def status_payload() -> dict[str, Any]:
             "backend": BACKEND_BASE_URL,
             "max_active_generations": MAX_ACTIVE_GENERATIONS,
             "queue_timeout_s": QUEUE_TIMEOUT_S,
+            "drain_timeout_s": DRAIN_TIMEOUT_S,
             "active_generations": active,
             "queued_generations": queued,
             "total_generation_requests": total,
             "event_logging": FRONTDOOR_LOG_EVENTS,
             "auth": "none",
+            "pause_file": PAUSE_FILE,
+            "paused": is_paused(),
+            "served_model_name": FRONTDOOR_SERVED_MODEL_NAME,
+            "rewrite_request_model": FRONTDOOR_REWRITE_REQUEST_MODEL,
+            "default_max_output_tokens": FRONTDOOR_DEFAULT_MAX_OUTPUT_TOKENS,
+            "max_output_tokens": FRONTDOOR_MAX_OUTPUT_TOKENS,
+            "chat_template_kwargs": default_chat_template_kwargs,
         },
     }
 
@@ -160,11 +180,7 @@ def release_generation_slot() -> None:
 
 
 def apply_request_defaults(path: str, body: bytes | None) -> bytes | None:
-    if (
-        path != "/v1/chat/completions"
-        or not default_chat_template_kwargs
-        or body is None
-    ):
+    if body is None:
         return body
 
     try:
@@ -174,14 +190,81 @@ def apply_request_defaults(path: str, body: bytes | None) -> bytes | None:
     if not isinstance(payload, dict):
         return body
 
-    existing = payload.get("chat_template_kwargs")
-    if existing is None:
-        payload["chat_template_kwargs"] = dict(default_chat_template_kwargs)
-    elif isinstance(existing, dict):
-        merged = dict(default_chat_template_kwargs)
-        merged.update(existing)
-        payload["chat_template_kwargs"] = merged
-    else:
+    changed = False
+
+    if (
+        path in GENERATION_PATHS
+        and FRONTDOOR_REWRITE_REQUEST_MODEL
+        and FRONTDOOR_SERVED_MODEL_NAME
+    ):
+        requested_model = payload.get("model")
+        if requested_model != FRONTDOOR_SERVED_MODEL_NAME:
+            payload["model"] = FRONTDOOR_SERVED_MODEL_NAME
+            changed = True
+
+    if path == "/v1/chat/completions" and default_chat_template_kwargs:
+        existing = payload.get("chat_template_kwargs")
+        if existing is None:
+            payload["chat_template_kwargs"] = dict(default_chat_template_kwargs)
+            changed = True
+        elif isinstance(existing, dict):
+            merged = dict(default_chat_template_kwargs)
+            merged.update(existing)
+            if merged != existing:
+                payload["chat_template_kwargs"] = merged
+                changed = True
+        else:
+            return body
+
+    output_token_fields = {
+        "/v1/chat/completions": ("max_completion_tokens", "max_tokens"),
+        "/v1/completions": ("max_tokens",),
+        "/v1/responses": ("max_output_tokens",),
+        "/v1/messages": ("max_tokens",),
+        "/inference/v1/generate": ("max_tokens",),
+    }.get(path, ())
+    if output_token_fields and FRONTDOOR_DEFAULT_MAX_OUTPUT_TOKENS > 0:
+        active_field = next(
+            (field for field in output_token_fields if field in payload),
+            None,
+        )
+        requested_tokens = None
+        applied_tokens = None
+        applied_field = active_field or output_token_fields[0]
+
+        if active_field is None:
+            applied_tokens = FRONTDOOR_DEFAULT_MAX_OUTPUT_TOKENS
+            payload[applied_field] = applied_tokens
+            changed = True
+        else:
+            try:
+                requested_tokens = int(payload[active_field])
+            except (TypeError, ValueError):
+                requested_tokens = None
+            if requested_tokens is None or requested_tokens <= 0:
+                applied_tokens = FRONTDOOR_DEFAULT_MAX_OUTPUT_TOKENS
+                payload[active_field] = applied_tokens
+                changed = True
+            elif (
+                FRONTDOOR_MAX_OUTPUT_TOKENS > 0
+                and requested_tokens > FRONTDOOR_MAX_OUTPUT_TOKENS
+            ):
+                applied_tokens = FRONTDOOR_MAX_OUTPUT_TOKENS
+                payload[active_field] = applied_tokens
+                changed = True
+
+        if applied_tokens is not None:
+            log_event(
+                {
+                    "event": "output_token_limit_applied",
+                    "path": path,
+                    "field": active_field or applied_field,
+                    "requested": requested_tokens,
+                    "applied": applied_tokens,
+                }
+            )
+
+    if not changed:
         return body
 
     return json.dumps(payload, separators=(",", ":")).encode("utf-8")
@@ -222,12 +305,31 @@ class FrontdoorHandler(BaseHTTPRequestHandler):
         if path in {"/status", "/frontdoor/status"} and self.command == "GET":
             self.write_json(200, status_payload())
             return
+        if path in {"/drain", "/frontdoor/drain"} and self.command == "GET":
+            self.handle_drain()
+            return
 
         queued = False
         acquired = False
         queue_wait_s = 0.0
         generation = is_generation_path(path, self.command)
         if generation:
+            if is_paused():
+                payload = status_payload()
+                payload["error"] = {
+                    "message": "frontdoor paused; generation requests are temporarily disabled",
+                    "type": "frontdoor_paused",
+                }
+                log_event(
+                    {
+                        "event": "generation_rejected_paused",
+                        "client": self.client_address[0],
+                        "path": path,
+                        "pause_file": PAUSE_FILE,
+                    }
+                )
+                self.write_json(503, payload)
+                return
             queued = True
             acquired, queue_wait_s = acquire_generation_slot()
             if not acquired:
@@ -275,6 +377,30 @@ class FrontdoorHandler(BaseHTTPRequestHandler):
                         "error": error,
                     }
                 )
+
+    def handle_drain(self) -> None:
+        started = time.perf_counter()
+        while True:
+            with state_lock:
+                active = active_generations
+                queued = queued_generations
+            if active == 0 and queued == 0:
+                payload = status_payload()
+                payload["drained"] = True
+                payload["waited_s"] = round(time.perf_counter() - started, 3)
+                self.write_json(200, payload)
+                return
+            if time.perf_counter() - started >= DRAIN_TIMEOUT_S:
+                payload = status_payload()
+                payload["drained"] = False
+                payload["waited_s"] = round(time.perf_counter() - started, 3)
+                payload["error"] = {
+                    "message": "frontdoor drain timeout",
+                    "type": "drain_timeout",
+                }
+                self.write_json(503, payload)
+                return
+            time.sleep(0.25)
 
     def forward_to_backend(self) -> int:
         path = self.path.split("?", 1)[0]
@@ -394,6 +520,12 @@ def main() -> int:
             "backend": BACKEND_BASE_URL,
             "max_active_generations": MAX_ACTIVE_GENERATIONS,
             "auth": "none",
+            "pause_file": PAUSE_FILE,
+            "paused": is_paused(),
+            "drain_timeout_s": DRAIN_TIMEOUT_S,
+            "served_model_name": FRONTDOOR_SERVED_MODEL_NAME,
+            "rewrite_request_model": FRONTDOOR_REWRITE_REQUEST_MODEL,
+            "chat_template_kwargs": default_chat_template_kwargs,
         }
     )
     try:
