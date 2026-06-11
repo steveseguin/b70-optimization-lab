@@ -1,0 +1,309 @@
+{
+  "aggregates": [
+    {
+      "case_count": 1,
+      "gemm_stage": "gemm2",
+      "label": "dense_active_loop_model_shape_many_launches",
+      "max_case_mean_us": 302.3904,
+      "mean_of_case_means_us": 302.3904,
+      "median_of_case_means_us": 302.3904,
+      "min_case_mean_us": 302.3904,
+      "route_window_size": 1
+    },
+    {
+      "case_count": 1,
+      "gemm_stage": "gemm2",
+      "label": "dense_single_not_model_equivalent",
+      "max_case_mean_us": 99.0808,
+      "mean_of_case_means_us": 99.0808,
+      "median_of_case_means_us": 99.0808,
+      "min_case_mean_us": 99.0808,
+      "route_window_size": 1
+    },
+    {
+      "case_count": 1,
+      "gemm_stage": "gemm2",
+      "label": "grouped_compact_active_not_model_equivalent",
+      "max_case_mean_us": 82.0144,
+      "mean_of_case_means_us": 82.0144,
+      "median_of_case_means_us": 82.0144,
+      "min_case_mean_us": 82.0144,
+      "route_window_size": 1
+    },
+    {
+      "case_count": 1,
+      "gemm_stage": "gemm2",
+      "label": "grouped_exact_256",
+      "max_case_mean_us": 127.30639999999998,
+      "mean_of_case_means_us": 127.30639999999998,
+      "median_of_case_means_us": 127.30639999999998,
+      "min_case_mean_us": 127.30639999999998,
+      "route_window_size": 1
+    }
+  ],
+  "args": {
+    "gemm_stage": "gemm2",
+    "include_compact_grouped": true,
+    "include_quant": true,
+    "iterations": 5,
+    "max_cases": 1,
+    "route_layer_regex": "layers\\.9\\.",
+    "route_stage_regex": "^quark_int8_apply$",
+    "route_start_indices": [
+      0
+    ],
+    "route_window_size": 1,
+    "warmup": 2
+  },
+  "cases": [
+    {
+      "active_experts": 8,
+      "calls": {
+        "1": 1
+      },
+      "case_index": 0,
+      "first_call": 1,
+      "first_layer": "language_model.model.layers.9.mlp.experts",
+      "full_num_experts": 256,
+      "gemm_stage": "gemm2",
+      "k": 128,
+      "label": "grouped_exact_256",
+      "layers": {
+        "language_model.model.layers.9.mlp.experts": 1
+      },
+      "max_us": 179.97199999999998,
+      "mean_us": 127.30639999999998,
+      "median_us": 137.54,
+      "min_us": 48.20399999999999,
+      "n": 2048,
+      "output_all_finite": true,
+      "output_max_abs": 75.0,
+      "p05_us": 65.10399999999998,
+      "p95_us": 171.59999999999997,
+      "route_start_index": 0,
+      "route_window_size": 1,
+      "samples": 5,
+      "stdev_us": 43.08474615266985,
+      "total_rows": 8
+    },
+    {
+      "active_experts": 8,
+      "calls": {
+        "1": 1
+      },
+      "case_index": 0,
+      "first_call": 1,
+      "first_layer": "language_model.model.layers.9.mlp.experts",
+      "full_num_experts": 256,
+      "gemm_stage": "gemm2",
+      "k": 128,
+      "label": "dense_single_not_model_equivalent",
+      "layers": {
+        "language_model.model.layers.9.mlp.experts": 1
+      },
+      "max_us": 126.41199999999999,
+      "mean_us": 99.0808,
+      "median_us": 120.38,
+      "min_us": 8.216,
+      "n": 2048,
+      "output_all_finite": true,
+      "output_max_abs": 67.5,
+      "p05_us": 30.368000000000002,
+      "p95_us": 125.41359999999999,
+      "route_start_index": 0,
+      "route_window_size": 1,
+      "samples": 5,
+      "stdev_us": 45.50147499323511,
+      "total_rows": 8
+    },
+    {
+      "active_experts": 8,
+      "calls": {
+        "1": 1
+      },
+      "case_index": 0,
+      "first_call": 1,
+      "first_layer": "language_model.model.layers.9.mlp.experts",
+      "full_num_experts": 256,
+      "gemm_stage": "gemm2",
+      "k": 128,
+      "label": "dense_active_loop_model_shape_many_launches",
+      "layers": {
+        "language_model.model.layers.9.mlp.experts": 1
+      },
+      "max_us": 314.392,
+      "mean_us": 302.3904,
+      "median_us": 300.456,
+      "min_us": 294.008,
+      "n": 2048,
+      "output_all_finite": true,
+      "output_max_abs": 75.0,
+      "p05_us": 294.84000000000003,
+      "p95_us": 312.4992,
+      "route_start_index": 0,
+      "route_window_size": 1,
+      "samples": 5,
+      "stdev_us": 6.961508618108579,
+      "total_rows": 8
+    },
+    {
+      "active_experts": 8,
+      "calls": {
+        "1": 1
+      },
+      "case_index": 0,
+      "first_call": 1,
+      "first_layer": "language_model.model.layers.9.mlp.experts",
+      "full_num_experts": 256,
+      "gemm_stage": "gemm2",
+      "k": 128,
+      "label": "grouped_compact_active_not_model_equivalent",
+      "layers": {
+        "language_model.model.layers.9.mlp.experts": 1
+      },
+      "max_us": 105.56,
+      "mean_us": 82.0144,
+      "median_us": 99.216,
+      "min_us": 8.059999999999999,
+      "n": 2048,
+      "output_all_finite": true,
+      "output_max_abs": 75.0,
+      "p05_us": 25.916800000000002,
+      "p95_us": 104.4264,
+      "route_start_index": 0,
+      "route_window_size": 1,
+      "samples": 5,
+      "stdev_us": 37.07869690051148,
+      "total_rows": 8
+    }
+  ],
+  "created_at": "2026-06-11T07:39:59-0400",
+  "device": "xpu:3",
+  "dtype": "bf16",
+  "env": {
+    "ONEAPI_DEVICE_SELECTOR": null,
+    "PYTHONPATH": null,
+    "ZE_AFFINITY_MASK": null
+  },
+  "hidden_size": 2048,
+  "inter_size_per_tp": 128,
+  "kernel_module": "/home/steve/src/vllm-xpu-kernels/vllm_xpu_kernels/_xpu_C.abi3.so",
+  "model_config": "/mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118/config.json",
+  "num_experts": 256,
+  "purpose": "W8A8 tiny-shape floor diagnostic for Qwen3.6 A3B decode.",
+  "quant_results": [
+    {
+      "label": "quant_hidden_rows8",
+      "max_us": 108.94,
+      "mean_us": 104.53039999999999,
+      "median_us": 104.832,
+      "min_us": 101.036,
+      "output_all_finite": true,
+      "output_max_abs": 127.0,
+      "p05_us": 101.2752,
+      "p95_us": 108.27439999999999,
+      "samples": 5,
+      "shape": [
+        8,
+        2048
+      ],
+      "stdev_us": 2.7640140086475693
+    },
+    {
+      "label": "quant_hidden_rows24",
+      "max_us": 164.58,
+      "mean_us": 151.0704,
+      "median_us": 146.32799999999997,
+      "min_us": 142.16799999999998,
+      "output_all_finite": true,
+      "output_max_abs": 127.0,
+      "p05_us": 142.896,
+      "p95_us": 162.9576,
+      "samples": 5,
+      "shape": [
+        24,
+        2048
+      ],
+      "stdev_us": 8.259289499708808
+    },
+    {
+      "label": "quant_inter_rows8",
+      "max_us": 90.74,
+      "mean_us": 87.3912,
+      "median_us": 86.57999999999998,
+      "min_us": 85.64399999999999,
+      "output_all_finite": true,
+      "output_max_abs": 127.0,
+      "p05_us": 85.7584,
+      "p95_us": 90.1472,
+      "samples": 5,
+      "shape": [
+        8,
+        128
+      ],
+      "stdev_us": 1.8140772199661201
+    },
+    {
+      "label": "quant_inter_rows24",
+      "max_us": 100.15199999999999,
+      "mean_us": 89.7624,
+      "median_us": 85.332,
+      "min_us": 83.824,
+      "output_all_finite": true,
+      "output_max_abs": 127.0,
+      "p05_us": 83.8656,
+      "p95_us": 99.216,
+      "samples": 5,
+      "shape": [
+        24,
+        128
+      ],
+      "stdev_us": 6.7568312573276526
+    },
+    {
+      "label": "silu_quant_rows8",
+      "max_us": 83.564,
+      "mean_us": 82.8672,
+      "median_us": 82.88799999999999,
+      "min_us": 82.00399999999999,
+      "output_all_finite": true,
+      "output_max_abs": 127.0,
+      "p05_us": 82.0872,
+      "p95_us": 83.54319999999998,
+      "samples": 5,
+      "shape": [
+        8,
+        256
+      ],
+      "stdev_us": 0.5970723239273463
+    },
+    {
+      "label": "silu_quant_rows24",
+      "max_us": 84.34400000000001,
+      "mean_us": 82.53439999999999,
+      "median_us": 82.316,
+      "min_us": 80.704,
+      "output_all_finite": true,
+      "output_max_abs": 127.0,
+      "p05_us": 81.00559999999999,
+      "p95_us": 84.09440000000001,
+      "samples": 5,
+      "shape": [
+        24,
+        256
+      ],
+      "stdev_us": 1.190970293500224
+    }
+  ],
+  "route_metadata": {
+    "layers": {
+      "language_model.model.layers.9.mlp.experts": 95
+    },
+    "records_loaded": 285,
+    "records_matched": 95,
+    "records_skipped": 190,
+    "route_jsonl": "data/qwen36-quark-int8-tp4-routecapture6-routes-rank0-20260611.jsonl"
+  },
+  "torch_version": "2.11.0+xpu",
+  "tp_size": 4
+}

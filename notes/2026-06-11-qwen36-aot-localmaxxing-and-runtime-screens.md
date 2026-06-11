@@ -2561,3 +2561,223 @@ Important caveat:
 - It still shows that larger grouped-GEMM row counts can amortize the same
   launch/policy floor. That makes the persistent/specialized MoE decode kernel
   idea more interesting than physical expert compaction alone.
+
+## W8A8 Tiny-Shape Kernel Floor And New Backlog
+
+Added a second, more direct floor diagnostic:
+
+```bash
+scripts/bench-qwen36-w8a8-kernel-floor.py
+```
+
+Purpose:
+
+- Compare the route-exact grouped W8A8 kernel against deliberately simpler
+  dense and compact variants.
+- Time the surrounding XPU quantization kernels in isolation:
+  `per_token_quant_int8_xpu` and `silu_and_mul_quant_int8_xpu`.
+- Decide whether the next exact-preserving work should chase expert
+  compaction, dense replacement, or launch/fusion/persistence.
+
+Artifacts:
+
+- `data/qwen36-quark-int8-w8a8-kernel-floor-smoke-20260611.json`
+- `data/qwen36-quark-int8-w8a8-kernel-floor-routeexact-20260611.json`
+
+Validation:
+
+- Script compiled with:
+
+```bash
+python3 -m py_compile scripts/bench-qwen36-w8a8-kernel-floor.py
+```
+
+- JSON artifacts were parsed after the run, with finite outputs for every
+  benchmark case and quant kernel result.
+- Backend and frontdoor health stayed `200` after the XPU scans.
+
+Full route-exact command:
+
+```bash
+/home/steve/.venvs/vllm-xpu/bin/python \
+  scripts/bench-qwen36-w8a8-kernel-floor.py \
+  --route-jsonl data/qwen36-quark-int8-tp4-routecapture6-routes-rank0-20260611.jsonl \
+  --route-layer-regex 'layers\.(9|14|21)\.' \
+  --route-start-indices 0:96:12 \
+  --max-cases 8 \
+  --gemm-stage both \
+  --include-compact-grouped \
+  --include-quant \
+  --warmup 5 \
+  --iterations 20 \
+  --device xpu:3 \
+  --output-json data/qwen36-quark-int8-w8a8-kernel-floor-routeexact-20260611.json
+```
+
+Results, mean of case means:
+
+| Mode | GEMM1 us | GEMM2 us | Meaning |
+| --- | ---: | ---: | --- |
+| grouped exact 256 experts | 107.966 | 101.591 | current model-equivalent grouped-GEMM shape |
+| grouped compact active experts | 100.967 | 101.609 | diagnostic only unless weights/routes are repacked exactly |
+| dense single | 124.061 | 119.116 | not model-equivalent and not faster enough |
+| dense active loop | 317.588 | 309.798 | model-shape style, but many launches; clearly worse |
+
+Quant kernel timings:
+
+| Kernel shape | Mean us |
+| --- | ---: |
+| `quant_hidden_rows8` | 112.492 |
+| `quant_hidden_rows24` | 157.407 |
+| `quant_inter_rows8` | 88.728 |
+| `quant_inter_rows24` | 89.180 |
+| `silu_quant_rows8` | 88.569 |
+| `silu_quant_rows24` | 90.893 |
+
+Interpretation:
+
+- The current grouped-GEMM op is not losing because it carries 256 expert slots.
+  Compacting active experts is mostly neutral at these shapes.
+- A naive dense replacement is not the answer. A loop over active experts is
+  much worse because it multiplies launches.
+- The quantization kernels are as expensive as the tiny GEMMs. For decode, the
+  approximate local stage costs look like:
+  - hidden quant plus GEMM1: about `112 + 108 us`
+  - SiLU/intermediate quant plus GEMM2: about `89 + 102 us`
+- The highest-confidence exact-preserving kernel target is now fusion or
+  persistence, not another environment knob:
+  - fuse quant/staging with W8A8 GEMM1,
+  - fuse activation/intermediate quant with W8A8 GEMM2,
+  - reuse graph-safe scratch across MoE substeps,
+  - or build a persistent per-layer MoE decode kernel that keeps route,
+    quant, GEMM1, activation, quant, GEMM2, gather/finalize inside fewer
+    launches.
+
+External signals checked during this pass:
+
+- `https://github.com/vllm-project/vllm/issues/35638`
+  - Active B580/vLLM-XPU users are still asking about best startup arguments,
+    stability, OOM behavior, and multi-GPU strategy for 30B+ models.
+- `https://github.com/intel/intel-xpu-backend-for-triton/issues/6389`
+  - Grouped-GEMM performance on XPU is a known tuning topic. The useful local
+    action is not to assume generic Triton defaults are optimal for MoE decode;
+    keep our shape-exact repros minimal and upstreamable.
+- `https://github.com/vllm-project/vllm-xpu-kernels/releases`
+  - Recent `vllm-xpu-kernels` releases explicitly mention Xe2 grouped-GEMM
+    heuristic and MoE policy tuning, including small-shape behavior. Our
+    `90-110 us` floor is exactly the kind of repro that should be useful.
+- `https://vllm.ai/blog/2025-11-11-intel-arc-pro-b`
+  - Intel/vLLM publicly call out Arc Pro multi-GPU scaling, PCIe P2P,
+    well-optimized MoE models, mixed precision, speculative decoding, and
+    prefill/decode disaggregation. This supports both the kernel-fusion track
+    and a separate scheduler/parallelism track.
+- `https://docs.vllm.ai/en/stable/models/hardware_supported_models/xpu/`
+  - vLLM validates Intel Arc Pro B-series and marks Qwen MoE-class models as
+    supported/optimized in the XPU model table. This means we should keep
+    producing exact repros against upstream XPU components rather than treating
+    our stack as unsupported.
+- `https://embeddedllm.com/blog/benchmarking-llm-inference-intel-arc-pro-b60`
+  - Public 4x Arc Pro B60 testing reports strong aggregate behavior at high
+    concurrency and explicitly compares standard vLLM versus an Intel-optimized
+    build by latency tradeoff. That reinforces the need to track single-request
+    speed and aggregate throughput as separate product modes.
+- `https://localmaxxing.com/api/leaderboard?hfId=Qwen%2FQwen3.6-35B&hwClass=DISCRETE_GPU&limit=20`
+  - The fastest public Qwen3.6 35B rows above `200 tok/s` are using either
+    speculation/MTP, 4-bit/NVFP4-class formats, CUDA-specific fast paths, or
+    non-Intel hardware. The actionable signal is the architecture pattern
+    rather than the quantization choice: speculation and persistent fused paths
+    are the routes to cross `200 tok/s`.
+
+Things to try next, evidence-backed:
+
+1. Add a shape-exact fused quant+GEMM microbench.
+   - First prototype outside vLLM:
+     `BF16 hidden -> per-token scale -> int8 tile -> W8A8 GEMM1`.
+   - Compare against current `per_token_quant_int8_xpu + grouped_gemm`.
+   - Require tolerance parity against the current staged path before endpoint
+     wiring.
+
+2. Add a fused activation+quant+GEMM2 microbench.
+   - Target:
+     `up/gate BF16 -> SiLU*gate -> per-token quant -> W8A8 GEMM2`.
+   - This attacks the measured `~89 us + ~102 us` second-stage floor.
+   - It is quality-exact if scales and rounding match the existing kernels.
+
+3. Build a persistent MoE decode skeleton for one layer.
+   - Keep route rows, scratch, quant buffers, and output buffers resident.
+   - Start with a single layer and synthetic fixed route, then feed captured
+     route JSONL cases.
+   - Success metric: one-layer parity plus lower wall time than the sum of
+     quant/GEMM/activation/finalize kernels.
+
+4. Audit Xe2 grouped-GEMM policy selection for decode.
+   - Current source computes average rows per expert with integer division;
+     for `8 / 256`, the policy key effectively sees `0`.
+   - Test a local policy override for the decode shapes only. This is a small
+     patch with a clear microbench pass/fail gate.
+
+5. Make an upstreamable repro bundle.
+   - Include one JSON route case, exact tensor shapes, a no-model synthetic
+     harness, timings, and expected output tolerance.
+   - File it against `vllm-xpu-kernels` only after proving the same result
+     outside the full endpoint.
+
+Bigger, bolder ideas to track:
+
+1. XPU MTP sidecar with Quark verifier.
+   - Use an FP8/MTP or Qwen3.6-family proposer only to suggest tokens; the
+     current Quark INT8 endpoint remains the verifier.
+   - This is the most plausible `2x` path without changing final-model
+     quality, but only if mixed scheduling is fixed and repeat64 passes.
+
+2. Expert-parallel decode layout for B70.
+   - Stop assuming pure TP4 is the right single-token layout.
+   - Replicate dense/attention where memory allows, shard experts by GPU, and
+     pay fewer all-reduces in decode. Test at 4K/8K first to avoid 32K memory
+     constraints obscuring the result.
+
+3. Intel-optimized vLLM/LLM-Scaler branch bakeoff.
+   - Keep the same model and 8-bit quality target, but compare the Intel tuned
+     serving branch if it is accessible for B70/B60-style systems.
+   - Treat this as a production architecture branch, not a replacement for
+     local kernel repros.
+
+4. Static c1 runner with server overhead removed.
+   - Build a direct runner using the same local kernels and graph captures,
+     fixed prompt shape, preallocated KV, no HTTP streaming, and minimal
+     scheduler work.
+   - If it is much faster than OpenAI streaming, we know to invest in a
+     low-latency frontdoor/scheduler path. If it is not, kernel work remains
+     the only real lever.
+
+5. Cross-engine 8-bit diagnostic.
+   - Build or find a true 8-bit Qwen3.6 35B artifact for llama.cpp SYCL/Vulkan
+     or OpenVINO GenAI and run the same quality suite.
+   - No 4-bit result can replace the target, but an 8-bit cross-engine result
+     would tell us whether vLLM/XPU overhead is unusually high.
+
+6. Quantization-aware layout converter.
+   - Convert Quark W8A8 weights once into a B70-native tile layout at model
+     load or as an on-disk cache.
+   - This keeps math and quality fixed while testing whether the stored weight
+     layout is mismatched to Xe2 XMX/DPAS.
+
+7. Decode disaggregation on one host.
+   - Run a prefill-optimized lane and a decode-optimized lane with the same
+     model weights, using shared prompt cache only if correctness is exact.
+   - This is mainly production-facing, but it can keep c1 decode tuned while
+     aggregate traffic uses different scheduler choices.
+
+8. Speculative draft on a spare device.
+   - Use CPU/iGPU/one B70 partition as a draft lane and TP4 as verifier, or use
+     a second low-latency model slot if memory allows.
+   - The draft can be lower precision only if every accepted token is verified
+     by the current INT8 model and quality tests remain identical.
+
+Priority after this section:
+
+1. Microbench fused quant+GEMM1 and activation+quant+GEMM2.
+2. Test a decode-shape Xe2 grouped-GEMM policy override.
+3. In parallel, investigate verifier-preserving MTP/speculation because that
+   is the only credible route to `>200 tok/s` without changing the accepted
+   model distribution.
