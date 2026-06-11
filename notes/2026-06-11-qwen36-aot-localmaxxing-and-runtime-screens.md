@@ -123,6 +123,10 @@ Our clean TP4 vLLM Quark W8A8 run is above those public decode numbers and is no
   - Relevant because independent B70 work points at MoE, Q8 reorder, Xe2 tile sizing, small-matmul, and runtime workaround classes as large speed levers.
 - B70 setup repo: https://github.com/Hal9000AIML/arc-pro-b70-inference-setup-ubuntu-server
   - Relevant as a comparison point for multi-slot per-card deployment versus one sharded vLLM model.
+- B70 benchmark repo: https://github.com/PMZFX/intel-arc-pro-b70-benchmarks
+  - Relevant because it is another public B70 measurement set. It reinforces that single-card Qwen3.6-class decode can look reasonable in llama.cpp/Vulkan/SYCL paths, and it gives us another reason to run a strict 8-bit same-model engine bakeoff instead of assuming vLLM/XPU is the only viable serving stack.
+- Qwen3.6 speculative-decoding experiment repo: https://github.com/thc1006/qwen3.6-speculative-decoding-rtx3090
+  - Relevant because it reports that n-gram and draft-model speculation can fail to produce net gains even on CUDA. That matches our quality-first stance: speculation is still the biggest potential single-user lever, but only verifier-parity results count.
 - Intel oneCCL environment docs: https://www.intel.com/content/www/us/en/docs/oneccl/developer-guide-reference/2021-9/environment-variables.html
   - Relevant for `CCL_REDUCE_SCATTER_MONOLITHIC_KERNEL`, fusion, and short-size/worker collective tuning. The monolithic reduce-scatter/all-reduce path was quality-safe but not a speed win today.
 
@@ -264,3 +268,105 @@ Next trace experiment:
    - whether GDN recurrent/convolution state advanced over rejected tokens
    - whether request token counters disagree with output token IDs
 4. Only after token-level parity passes should n-gram speed numbers count toward the `>200 tok/s` goal.
+
+## N-Gram Trace Result
+
+Launched the prior n-gram5 candidate with scheduler trace enabled:
+
+- launcher: `scripts/launch-qwen36-quark-int8-ngram5-trace.sh`
+- trace env: `VLLM_SPEC_DECODE_TRACE_FILE=/tmp/qwen36-ngram5-spec-trace-20260611.jsonl`
+- copied trace artifact: `data/qwen36-quark-int8-tp4-ngram5-trace-spec-jsonl-20260611.jsonl`
+- token trace artifact: `data/qwen36-quark-int8-tp4-ngram5-trace-frontdoor-token-trace-20260611.json`
+- repeat64 quality artifact: `data/qwen36-quark-int8-tp4-ngram5-trace-frontdoor-quality-rerun64-20260611.json`
+
+The short token-trace gate passed:
+
+- `baseline_match_all=true`
+- exact, JSON, repeat sample, and long-context token IDs matched the accepted baseline
+
+The stronger repeat64 quality gate failed:
+
+- `pass_all=false`
+- `baseline_match_all=false`
+- exact OK/copy/arithmetic passed
+- JSON schema failed with a repeated `5` loop
+- repeat64 produced three bad repeats:
+  - `utex// / / / / / / / / / / / / / / / / / / / / / / / / / / / / /`
+  - `blue whiskey whiskey whiskey2024-03-14T10:00:00Z`
+  - `unyablue, green, orange, red`
+- long-context needle still passed: `B70_QWEN36_NEEDLE_20260609`
+
+Scheduler trace summary:
+
+- rows: `30`
+- drafts: `122`
+- accepted: `113`
+- rejected: `9`
+- acceptance rate: `92.62%`
+- accepted-count histogram: `{0: 2, 1: 4, 2: 3, 4: 2, 5: 19}`
+
+Most important decoded trace rows:
+
+- `chatcmpl-b620cec2a9ac1adc-939b0e39`: 49 draft tokens, 49 accepted, 0 rejected. The scheduled drafts were repeated token id `20`, decoded as `55555`, and the generated stream continued as `555555`. This lines up with the JSON schema failure.
+- `chatcmpl-8d9452458a9fd04d-88f24066`: 24 draft tokens, 24 accepted, 0 rejected. The scheduled drafts were repeated token id `593`, decoded as ` / / / / /`, and the generated stream continued the slash loop.
+- `chatcmpl-a19f38bbd8c47132-9bd9f8a4`: rejected ` whiskey` and part of a timestamp continuation, matching one repeat64 bad output.
+
+Decision: reject the current n-gram5 candidate for production and for speed claims. It can pass a short token trace, but it fails the quality bar under repeat64. Fully accepted bad loops are a better diagnostic than the earlier long-context failure because they point at speculative-state correctness, proposer history, or mixed scheduling contamination rather than simple sampling variance.
+
+Immediate follow-up ideas for speculation:
+
+1. Add request-id correlation from the quality client to server trace so bad outputs map directly to JSONL rows without inference.
+2. Trace proposer source spans: prompt tokens versus generated tokens, and whether accepted/rejected speculative tokens are entering the n-gram lookup history too early.
+3. Add a strict debug mode that disables bonus-token emission after accepted draft tokens. If the loops vanish, the issue is likely state advancement around the target bonus token.
+4. Add a verifier-only shadow decode for suspect requests: run the same request through accepted non-spec decode immediately after a speculative failure and compare token IDs.
+5. Test `num_speculative_tokens=1` and `2` only as diagnostics. They are unlikely to get us near 200 tok/s, but they can localize whether corruption appears only when multiple accepted draft tokens advance state.
+6. Test a per-request speculative kill switch for structured outputs and short deterministic prompts. This is not a final answer to the speed goal, but it may let long natural-language generations use speculation while preserving production correctness.
+
+## Additional Big Ideas
+
+These are the next larger opportunities to keep in mind while continuing the quality-first work.
+
+1. Auxiliary official-FP8 MTP drafter with Quark INT8 verifier.
+   - The current Quark checkpoint has no MTP tensors, but the official FP8 snapshot does. A two-model setup may still preserve final output quality if the Quark INT8 verifier owns acceptance.
+   - Risk: extra VRAM and startup complexity. First measurement should be memory headroom plus repeat64 parity, before any throughput benchmark.
+
+2. Production split by request class.
+   - Keep the accepted TP4 path as the default for deterministic/structured/short requests.
+   - Allow a separately validated speculative path only for long free-form requests after it passes repeat64/needle/canary gates.
+   - This could improve user-perceived latency without weakening the highest-risk workload classes.
+
+3. Shape-exact offline runner.
+   - Build a direct model-runner benchmark that avoids OpenAI server streaming and request machinery while using the same weights/kernels.
+   - If offline decode is much faster than the served endpoint, the next win is scheduler/streaming overhead. If it is also near 100 tok/s, the next win must come from kernels/layout/speculation.
+
+4. Expert-placement simulator.
+   - Before implementing expert parallelism, write a small memory/traffic model for Qwen3.6 A3B experts on 4x32GB B70.
+   - Estimate TP4 collective bytes per token versus candidate EP/hybrid layouts. This avoids a large vLLM architecture branch unless the math says it can beat TP4 single-token latency.
+
+5. Single-layer MoE kernel bakeoff.
+   - Extract one real routed MoE layer shape from the AOT cache and benchmark several XPU implementations outside vLLM:
+     - current staged path
+     - persistent grouped GEMM
+     - prepacked expert weights
+     - fused finalize/shared-add/residual epilogue
+   - Only wire a kernel into vLLM after the standalone microbench proves a material win.
+
+6. Intel-friendly 8-bit engine bakeoff.
+   - Build or find a true 8-bit same-model route for llama.cpp/SYCL or another Intel backend. This is not a 4-bit fallback and not a Qwen3.5 detour.
+   - Purpose: decide whether vLLM/XPU is the blocker, not to change the model target prematurely.
+
+7. Upstream issue/PR package.
+   - Convert our most stable findings into small reproductions:
+     - n-gram speculative accepted-loop quality failure
+     - graph-safe oneCCL worker-count failure
+     - shape-exact W8A8/MoE microbench deficit
+   - This makes it easier to get Intel/vLLM attention where local patching is the wrong scale.
+
+8. Reliability soak before every claimed win.
+   - For each candidate that passes quality, run a short stability matrix:
+     - c1 speed r8/r10
+     - repeat64 quality
+     - long-context needle
+     - c4/c8 aggregate smoke
+     - 30-60 minute loop if it is a production candidate
+   - The stale accepted-process failure means runtime age matters; do not trust a cold-only pass.
