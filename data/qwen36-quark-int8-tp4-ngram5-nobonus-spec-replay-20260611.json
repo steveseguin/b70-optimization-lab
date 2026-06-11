@@ -1,0 +1,271 @@
+{
+  "trace_path": "data/qwen36-quark-int8-tp4-ngram5-nobonus-spec-jsonl-20260611.jsonl",
+  "token_trace_paths": [],
+  "rows": 4,
+  "malformed_rows": 0,
+  "requests": 3,
+  "joined_requests": 0,
+  "suppressed_followup_mismatch_count": 1,
+  "request_summaries": [
+    {
+      "req_id": "chatcmpl-8f59ad636cb2ec08-965c37d8",
+      "rows": 2,
+      "first_ts": 1781189520.6839154,
+      "last_ts": 1781189520.7076392,
+      "draft_tokens": 10,
+      "accepted": 5,
+      "rejected": 5,
+      "suppressed_bonus_rows": 1,
+      "emitted_token_ids_from_trace": [
+        12952,
+        54,
+        923,
+        18,
+        21,
+        0
+      ],
+      "emitted_text_from_trace": "_QWEN36!",
+      "generated_token_ids_from_trace": [
+        12952,
+        54,
+        923,
+        18,
+        21,
+        83098,
+        0
+      ],
+      "generated_text_from_trace": "_QWEN36_NEED!",
+      "suppressed_bonus_token_ids": [
+        83098
+      ],
+      "suppressed_bonus_text": "_NEED",
+      "suppressed_followup_checks": [
+        {
+          "line_no": 3,
+          "next_line_no": 4,
+          "suppressed_bonus_token_id": 83098,
+          "suppressed_bonus_text": "_NEED",
+          "next_generated_first_token_id": 0,
+          "next_generated_first_text": "!",
+          "next_replays_suppressed_bonus": false
+        }
+      ],
+      "suppressed_followup_mismatches": [
+        {
+          "line_no": 3,
+          "next_line_no": 4,
+          "suppressed_bonus_token_id": 83098,
+          "suppressed_bonus_text": "_NEED",
+          "next_generated_first_token_id": 0,
+          "next_generated_first_text": "!",
+          "next_replays_suppressed_bonus": false
+        }
+      ],
+      "token_trace_case": null,
+      "traced_emitted_is_token_trace_prefix": null,
+      "row_summaries": [
+        {
+          "line_no": 3,
+          "ts": 1781189520.6839154,
+          "num_draft_tokens": 5,
+          "num_accepted": 5,
+          "num_rejected": 0,
+          "num_computed_tokens": 7637,
+          "num_output_tokens": 3,
+          "scheduled_spec_token_ids": [
+            12952,
+            54,
+            923,
+            18,
+            21
+          ],
+          "scheduled_spec_text": "_QWEN36",
+          "generated_token_ids": [
+            12952,
+            54,
+            923,
+            18,
+            21,
+            83098
+          ],
+          "generated_text": "_QWEN36_NEED",
+          "emitted_token_ids": [
+            12952,
+            54,
+            923,
+            18,
+            21
+          ],
+          "emitted_text": "_QWEN36",
+          "suppressed_bonus_token_id": 83098,
+          "suppressed_bonus_text": "_NEED",
+          "followup_check": {
+            "line_no": 3,
+            "next_line_no": 4,
+            "suppressed_bonus_token_id": 83098,
+            "suppressed_bonus_text": "_NEED",
+            "next_generated_first_token_id": 0,
+            "next_generated_first_text": "!",
+            "next_replays_suppressed_bonus": false
+          }
+        },
+        {
+          "line_no": 4,
+          "ts": 1781189520.7076392,
+          "num_draft_tokens": 5,
+          "num_accepted": 0,
+          "num_rejected": 5,
+          "num_computed_tokens": 7642,
+          "num_output_tokens": 8,
+          "scheduled_spec_token_ids": [
+            841,
+            62,
+            17,
+            15,
+            17
+          ],
+          "scheduled_spec_text": "LE_202",
+          "generated_token_ids": [
+            0
+          ],
+          "generated_text": "!",
+          "emitted_token_ids": [
+            0
+          ],
+          "emitted_text": "!",
+          "suppressed_bonus_token_id": null,
+          "suppressed_bonus_text": null,
+          "followup_check": null
+        }
+      ]
+    },
+    {
+      "req_id": "chatcmpl-9cb6cf3f172c65ec-91333159",
+      "rows": 1,
+      "first_ts": 1781189516.4369798,
+      "last_ts": 1781189516.4369798,
+      "draft_tokens": 5,
+      "accepted": 5,
+      "rejected": 0,
+      "suppressed_bonus_rows": 1,
+      "emitted_token_ids_from_trace": [
+        32709,
+        3045,
+        25659,
+        248046,
+        198
+      ],
+      "emitted_text_from_trace": " cobalt orbit<|im_end|>\n",
+      "generated_token_ids_from_trace": [
+        32709,
+        3045,
+        25659,
+        248046,
+        198,
+        248044
+      ],
+      "generated_text_from_trace": " cobalt orbit<|im_end|>\n<|endoftext|>",
+      "suppressed_bonus_token_ids": [
+        248044
+      ],
+      "suppressed_bonus_text": "<|endoftext|>",
+      "suppressed_followup_checks": [],
+      "suppressed_followup_mismatches": [],
+      "token_trace_case": null,
+      "traced_emitted_is_token_trace_prefix": null,
+      "row_summaries": [
+        {
+          "line_no": 1,
+          "ts": 1781189516.4369798,
+          "num_draft_tokens": 5,
+          "num_accepted": 5,
+          "num_rejected": 0,
+          "num_computed_tokens": 33,
+          "num_output_tokens": 2,
+          "scheduled_spec_token_ids": [
+            32709,
+            3045,
+            25659,
+            248046,
+            198
+          ],
+          "scheduled_spec_text": " cobalt orbit<|im_end|>\n",
+          "generated_token_ids": [
+            32709,
+            3045,
+            25659,
+            248046,
+            198,
+            248044
+          ],
+          "generated_text": " cobalt orbit<|im_end|>\n<|endoftext|>",
+          "emitted_token_ids": [
+            32709,
+            3045,
+            25659,
+            248046,
+            198
+          ],
+          "emitted_text": " cobalt orbit<|im_end|>\n",
+          "suppressed_bonus_token_id": 248044,
+          "suppressed_bonus_text": "<|endoftext|>",
+          "followup_check": null
+        }
+      ]
+    },
+    {
+      "req_id": "chatcmpl-976518b6f388f186-afb5dbd2",
+      "rows": 1,
+      "first_ts": 1781189516.7611332,
+      "last_ts": 1781189516.7611332,
+      "draft_tokens": 5,
+      "accepted": 0,
+      "rejected": 5,
+      "suppressed_bonus_rows": 0,
+      "emitted_token_ids_from_trace": [
+        28844
+      ],
+      "emitted_text_from_trace": "widgets",
+      "generated_token_ids_from_trace": [
+        28844
+      ],
+      "generated_text_from_trace": "widgets",
+      "suppressed_bonus_token_ids": [],
+      "suppressed_bonus_text": "",
+      "suppressed_followup_checks": [],
+      "suppressed_followup_mismatches": [],
+      "token_trace_case": null,
+      "traced_emitted_is_token_trace_prefix": null,
+      "row_summaries": [
+        {
+          "line_no": 2,
+          "ts": 1781189516.7611332,
+          "num_draft_tokens": 5,
+          "num_accepted": 0,
+          "num_rejected": 5,
+          "num_computed_tokens": 52,
+          "num_output_tokens": 11,
+          "scheduled_spec_token_ids": [
+            19,
+            17,
+            487,
+            328,
+            3715
+          ],
+          "scheduled_spec_text": "42\", \"unit",
+          "generated_token_ids": [
+            28844
+          ],
+          "generated_text": "widgets",
+          "emitted_token_ids": [
+            28844
+          ],
+          "emitted_text": "widgets",
+          "suppressed_bonus_token_id": null,
+          "suppressed_bonus_text": null,
+          "followup_check": null
+        }
+      ]
+    }
+  ]
+}

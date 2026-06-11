@@ -4984,3 +4984,82 @@ Restore status:
 - Backend `/health` became ready on poll attempt 14.
 - Backend direct completion smoke generated successfully.
 - Frontdoor `/health` passed and frontdoor chat smoke returned exact `OK`.
+
+## Spec Replay Harness And Request-ID Token Trace
+
+Added after the n-gram5 no-bonus rejection. The goal is to make the next
+speculative test joinable and replayable before running any more speculative
+widths or proposer variants.
+
+Artifacts:
+
+- `scripts/replay-qwen36-spec-trace.py`
+- `data/qwen36-quark-int8-tp4-ngram5-nobonus-spec-replay-20260611.json`
+- `data/qwen36-quark-int8-tp4-ngram5-nobonus-spec-replay-20260611.md`
+- `data/qwen36-quark-int8-accepted-frontdoor-token-trace-requestids-r4-20260611.json`
+
+Tooling updates:
+
+- `scripts/qwen36-quality-token-trace.py` now records:
+  - `response_id`
+  - `request_id`
+  - `request_started_at_unix`
+  - `request_finished_at_unix`
+  - selected response headers
+- Repeat comparisons now use keys such as `repeat_colors[0]` instead of only
+  `repeat_colors`. This fixes a real bug where a bad repeated output could be
+  overwritten by a later good repeat and still report `baseline_match_all=true`.
+
+Replay command:
+
+```bash
+/home/steve/.venvs/vllm-xpu/bin/python scripts/replay-qwen36-spec-trace.py \
+  --trace-jsonl data/qwen36-quark-int8-tp4-ngram5-nobonus-spec-jsonl-20260611.jsonl \
+  --tokenizer /mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118 \
+  --out-json data/qwen36-quark-int8-tp4-ngram5-nobonus-spec-replay-20260611.json \
+  --out-md data/qwen36-quark-int8-tp4-ngram5-nobonus-spec-replay-20260611.md
+```
+
+Replay result:
+
+- Rows: `4`
+- Requests: `3`
+- Joined requests: `0` because the original n-gram5 token-trace artifact was
+  produced before request IDs were recorded.
+- Suppressed follow-up mismatches: `1`
+
+Mismatch:
+
+- Request `chatcmpl-8f59ad636cb2ec08-965c37d8`
+- Trace-emitted text: `_QWEN36!`
+- Trace-generated text: `_QWEN36_NEED!`
+- Suppressed bonus text: `_NEED`
+- Suppressed token `83098` (`_NEED`) was not replayed by the next verifier row;
+  the next verifier first token was `0` (`!`).
+
+Accepted request-id trace validation:
+
+```bash
+/home/steve/.venvs/vllm-xpu/bin/python scripts/qwen36-quality-token-trace.py \
+  --base-url http://127.0.0.1:8000 \
+  --tokenizer /mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118 \
+  --baseline-json data/qwen36-quark-int8-accepted-frontdoor-token-trace-20260611.json \
+  --repeat-runs 4 \
+  --output-json data/qwen36-quark-int8-accepted-frontdoor-token-trace-requestids-r4-20260611.json
+```
+
+Result:
+
+- `baseline_match_all=true`
+- `9` cases
+- comparison keys include `repeat_colors[0]`, `repeat_colors[1]`,
+  `repeat_colors[2]`, and `repeat_colors[3]`
+- every case has a `request_id`
+
+Decision:
+
+- Future speculative token traces must use this request-id-capable script.
+- Future speculative replay artifacts should report zero suppressed follow-up
+  mismatches before any speed result is considered.
+- The old n-gram5 no-bonus fixture remains useful as the first failing replay
+  test case.

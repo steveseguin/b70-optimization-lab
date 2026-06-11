@@ -30,7 +30,12 @@ def post_json(url: str, payload: dict[str, Any], timeout: int) -> dict[str, Any]
         method="POST",
     )
     with urllib.request.urlopen(req, timeout=timeout) as resp:
-        return json.loads(resp.read().decode("utf-8"))
+        headers = {key.lower(): value for key, value in resp.headers.items()}
+        return {
+            "status": resp.status,
+            "headers": headers,
+            "json": json.loads(resp.read().decode("utf-8")),
+        }
 
 
 def get_json(url: str, timeout: int) -> dict[str, Any]:
@@ -156,11 +161,33 @@ def chat_completion(
         "top_p": 1.0,
         "seed": seed,
     }
+    started_unix = time.time()
     started = time.perf_counter()
-    data = post_json(f"{base_url.rstrip('/')}/v1/chat/completions", payload, timeout)
+    response = post_json(f"{base_url.rstrip('/')}/v1/chat/completions", payload, timeout)
+    finished_unix = time.time()
     elapsed = time.perf_counter() - started
+    data = response["json"]
     content = data["choices"][0]["message"].get("content") or ""
+    response_headers = response.get("headers") or {}
+    response_id = data.get("id")
     return {
+        "request_started_at_unix": started_unix,
+        "request_finished_at_unix": finished_unix,
+        "response_status": response.get("status"),
+        "response_id": response_id,
+        "request_id": response_id,
+        "response_created": data.get("created"),
+        "response_model": data.get("model"),
+        "response_system_fingerprint": data.get("system_fingerprint"),
+        "response_headers": {
+            key: response_headers[key]
+            for key in (
+                "x-request-id",
+                "x-correlation-id",
+                "x-vllm-request-id",
+            )
+            if key in response_headers
+        },
         "content": content,
         "normalized": normalize(content),
         "sha256": sha256_text(normalize(content)),
@@ -190,6 +217,14 @@ def first_token_diff(a: list[int], b: list[int]) -> dict[str, Any]:
             "b_len": len(b),
         }
     return {"index": None}
+
+
+def comparison_key(item: dict[str, Any]) -> str:
+    name = str(item["name"])
+    repeat_idx = item.get("repeat_idx")
+    if repeat_idx is None:
+        return name
+    return f"{name}[{repeat_idx}]"
 
 
 def trace_case(
@@ -229,7 +264,11 @@ def trace_case(
 
 def baseline_cases(baseline: dict[str, Any], tokenizer: Any) -> dict[str, dict[str, Any]]:
     if "cases" in baseline:
-        return {item["name"]: item for item in baseline["cases"]}
+        items: dict[str, dict[str, Any]] = {}
+        for item in baseline["cases"]:
+            items[comparison_key(item)] = item
+            items.setdefault(item["name"], item)
+        return items
 
     items: dict[str, dict[str, Any]] = {}
     for item in baseline.get("exact_cases", []):
@@ -264,9 +303,13 @@ def compare_to_baseline(
     prior_cases = baseline_cases(baseline, tokenizer)
     comparisons: dict[str, Any] = {}
     for item in cases:
-        prior = prior_cases.get(item["name"])
-        key = item["name"]
-        comparisons[key] = {"present": prior is not None}
+        key = comparison_key(item)
+        prior = prior_cases.get(key) or prior_cases.get(item["name"])
+        comparisons[key] = {
+            "present": prior is not None,
+            "name": item.get("name"),
+            "repeat_idx": item.get("repeat_idx"),
+        }
         if prior is None:
             continue
         prior_ids = prior.get("output_token_ids") or []
