@@ -216,3 +216,47 @@ Priority call:
 1. Do next: speculation reliability/MTP feasibility, because it is the only realistic `2x` lever that can preserve final-model quality.
 2. Do in parallel: shape-exact MoE and dense INT8 microbenches, because they produce durable upstreamable artifacts even if speculation stalls.
 3. Keep ready: accepted r10 + peak VRAM + repeat64 quality pack, so every claimed win can be published cleanly.
+
+## Speculation Trace Follow-Up
+
+The active verifier model still has no in-checkpoint MTP route:
+
+- current Quark verifier config: `architectures=["Qwen3_5MoeForConditionalGeneration"]`, `model_type=qwen3_5_moe`
+- current Quark verifier safetensors index: `0` keys containing `mtp`
+- official Qwen FP8 snapshot: `1561` keys containing `mtp`
+
+So MTP cannot be used as an internal current-model drafter. A future MTP test would need the official FP8 MTP weights as an auxiliary proposer while the current Quark INT8 model remains the verifier. That is a separate memory/startup risk and should not be counted as "current model" unless final accepted tokens are still verified by the Quark model.
+
+Added trace tooling for the current n-gram/speculative path:
+
+- `scripts/qwen36-quality-token-trace.py`
+  - builds the same exact, repeat, and long-context prompts as the quality suite
+  - records prompt hashes, prompt token counts, normalized outputs, output token IDs, and first-token diffs against a baseline JSON
+- `patches/vllm-qwen36-spec-decode-jsonl-trace-20260611.patch`
+  - opt-in scheduler JSONL trace behind `VLLM_SPEC_DECODE_TRACE_FILE`
+  - records request id, scheduled draft token IDs, generated token IDs, accepted/rejected counts, and request token counters
+  - disabled unless the env var is set
+
+Accepted baseline trace:
+
+- artifact: `data/qwen36-quark-int8-accepted-frontdoor-token-trace-20260611.json`
+- compared against accepted quality baseline: `data/qwen36-quark-int8-tp4-noprefix-accepted-frontdoor-quality-rerun32-20260610.json`
+- result: `baseline_match_all=true`
+- traced outputs:
+  - `exact_ok`: `OK`
+  - `copy_phrase`: `satin cobalt orbit`
+  - `arithmetic`: `60`
+  - `json_schema`: `{"answer": "42", "unit": "widgets"}`
+  - `repeat_colors`: `blue, green, orange, red` across 4 repeats
+  - `long_context_needle`: `B70_QWEN36_NEEDLE_20260609`
+
+Next trace experiment:
+
+1. Launch the prior n-gram candidate with `VLLM_SPEC_DECODE_TRACE_FILE=/tmp/qwen36-ngram-spec-trace.jsonl` and a bounded `VLLM_SPEC_DECODE_TRACE_MAX_LINES`.
+2. Run `qwen36-quality-token-trace.py` against the speculative frontdoor/backend with the accepted trace as `--baseline-json`.
+3. If the long-context answer diverges, inspect the JSONL rows immediately before the first output-token diff:
+   - accepted draft length at the divergence
+   - whether a bonus token crossed the stop/EOS point
+   - whether GDN recurrent/convolution state advanced over rejected tokens
+   - whether request token counters disagree with output token IDs
+4. Only after token-level parity passes should n-gram speed numbers count toward the `>200 tok/s` goal.
