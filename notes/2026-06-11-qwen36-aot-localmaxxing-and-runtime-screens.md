@@ -4439,3 +4439,73 @@ Interpretation:
    runner. The route-exact microbench is now good enough for candidate
    generation, but endpoint promotion still needs full p512/n512 speed and
    quality gates.
+
+## Offline C1 Runner: HTTP Is Not Hiding A 2x Win
+
+Added after building `scripts/run-qwen36-offline-warm-throughput.py`, a
+Qwen3.6-specific in-process `vllm.LLM` diagnostic that mirrors the accepted
+TP4/Quark/32K/no-prefix server posture without OpenAI HTTP or LAN frontdoor
+streaming.
+
+Artifact:
+
+- `data/qwen36-quark-int8-tp4-offline-c1-p512o512-r4-20260611.json`
+- Offline run log: `/tmp/qwen36-offline-c1-p512o512-r4-20260611.log`
+- Restore failure log: `/tmp/qwen36-quark-int8-tp4-accepted-restored-after-offline-c1-20260611f.log`
+- Successful retry restore log: `/tmp/qwen36-quark-int8-tp4-accepted-restored-after-offline-c1-retry-20260611g.log`
+
+Command:
+
+```bash
+/home/steve/.venvs/vllm-xpu/bin/python \
+  scripts/run-qwen36-offline-warm-throughput.py \
+  --input-len 512 \
+  --output-len 512 \
+  --num-prompts 1 \
+  --warmup-repeats 1 \
+  --repeats 4 \
+  --out data/qwen36-quark-int8-tp4-offline-c1-p512o512-r4-20260611.json
+```
+
+Result:
+
+| mode | prompt/output | repeats | mean output tok/s | min | max | mean total tok/s |
+| --- | --- | ---: | ---: | ---: | ---: | ---: |
+| offline `vllm.LLM` | p512/o512/c1 | 4 | `96.56` | `91.71` | `98.35` | `193.12` |
+
+Per-repeat output decode rates:
+
+- repeat 0: `98.04 tok/s`
+- repeat 1: `91.71 tok/s`
+- repeat 2: `98.15 tok/s`
+- repeat 3: `98.35 tok/s`
+
+Warmup and initialization:
+
+- Engine init, including compile/capture: `125.76 s`.
+- First warmup generation: `17.46 output tok/s`, polluted by final graph/cache
+  work and excluded from the measured repeats.
+
+Interpretation:
+
+1. Offline in-process vLLM is effectively the same speed class as the accepted
+   backend/frontdoor measurements. HTTP, SSE streaming, and frontdoor routing
+   are not hiding a `2x` single-user decode win.
+2. The main target remains model-core/runtime: graph-visible MoE, attention/GDN,
+   TP collectives, layout, or exact verifier-preserving speculation.
+3. The offline script is a useful future diagnostic for engine changes, but it
+   is not a quality proof. Token hashes varied across temperature-0 repeats in
+   this run, so deterministic/quality claims must continue to use the existing
+   frontdoor token-trace and quality suites.
+4. This closes the "direct c1 runner" question for now: a specialized offline
+   path does not justify production work unless later model-core changes make
+   in-process serving diverge from HTTP serving.
+5. Reliability note: the first accepted-server restore after the offline run
+   reached `/health` but hit `UR_RESULT_ERROR_DEVICE_LOST` on the first small
+   completion, inside `block_table.copy_to_gpu`. `xpu-smi` and `torch.xpu`
+   still saw all four B70s. Killing the dead session and relaunching the
+   accepted server in
+   `qwen36-tp4-accepted-restored-after-offline-c1-retry-20260611g` restored
+   backend generation and frontdoor health. Treat heavy offline engine
+   init/teardown as another case requiring a real post-restore generation
+   smoke, not just `/health`.
