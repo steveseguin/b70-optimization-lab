@@ -333,6 +333,10 @@ Added a generic parameterized launcher:
   - `PROMPT_LOOKUP_MAX`
   - `TAG`
   - `SPEC_TRACE_FILE`
+  - `ENABLE_XPU_GRAPH`
+  - `ENFORCE_EAGER`
+  - `COMPILE_CONFIG`
+  - `CUDAGRAPH_CAPTURE_SIZES`
 
 This lets us test speculation depth without editing launcher code.
 
@@ -342,6 +346,8 @@ Results:
 | --- | --- | ---: | ---: | ---: | --- | --- |
 | n-gram1 | repeat64 pass, baseline match | 94.364 | 93.220 | 77.132 | reject, slower than accepted | `data/qwen36-quark-int8-tp4-ngram1-trace-single-r4-20260611.json` |
 | n-gram2 | first request fatal error | n/a | n/a | n/a | reject, unstable | `data/qwen36-quark-int8-tp4-ngram2-trace-first-request-device-lost-20260611.log` |
+| n-gram2 no-XPU-graph | short quality pass | 17.784 | 17.771 | 76.437 | diagnostic only, too slow | `data/qwen36-quark-int8-tp4-ngram2-noxpugraph-single-r2-20260611.json` |
+| n-gram2 capture-size-3 | repeat64 pass, baseline match | 105.158 | 103.709 | 77.388 | diagnostic, quality-clean but unstable speed gain | `data/qwen36-quark-int8-tp4-ngram2-cg3-single-r4-20260611.json` |
 | n-gram2 eager/no-graph | survives, quality fail | not measured | not measured | not measured | diagnostic only | `data/qwen36-quark-int8-tp4-ngram2-eager-frontdoor-quality-rerun8-20260611.json` |
 | n-gram5 | short trace pass, repeat64 fail | not counted | not counted | not counted | reject, corrupts output | `data/qwen36-quark-int8-tp4-ngram5-trace-frontdoor-quality-rerun64-20260611.json` |
 
@@ -363,6 +369,30 @@ n-gram2 failed on the first quality request before any scheduled speculative tok
 - scheduler output had `scheduled_spec_decode_tokens={}` and `num_scheduled_tokens=17`
 - config had `SpeculativeConfig(method='ngram', model=None, num_spec_tokens=2)`
 
+n-gram2 no-XPU-graph diagnostic:
+
+- launch controls: `ENABLE_XPU_GRAPH=0`, `ENFORCE_EAGER=0`
+- torch.compile stayed enabled, but `cudagraph_mode=NONE`
+- short quality diagnostic passed: exact cases, repeat8, baseline comparison, and 2K long-context needle
+- speed was unusable: p512/n512 r2 corrected decode `17.784 tok/s`
+- scheduler trace artifact: `data/qwen36-quark-int8-tp4-ngram2-noxpugraph-spec-jsonl-20260611.jsonl`
+- trace summary: rows `172`, drafts `344`, accepted `158`, rejected `186`, acceptance rate `45.93%`, histogram `{0: 69, 1: 48, 2: 55}`
+
+n-gram2 capture-size-3 diagnostic:
+
+- launch controls: `ENABLE_XPU_GRAPH=1`, `ENFORCE_EAGER=0`, `CUDAGRAPH_CAPTURE_SIZES=1,2,3,4,8,16,24,32,40,48,56,64,72,80,88,96,104,112,120,128`
+- motivation: the default graph capture list skipped exact query length `3`, while n-gram2 uses `1 + num_speculative_tokens = 3` tokens in the mixed decode path
+- first `Reply exactly: OK` request survived; this fixed the immediate `UR_RESULT_ERROR_DEVICE_LOST` symptom seen in the default n-gram2 run
+- repeat64 plus 4K long-context quality passed and matched the accepted baseline:
+  - `data/qwen36-quark-int8-tp4-ngram2-cg3-frontdoor-quality-rerun64-20260611.json`
+- speed was not stable enough for a win claim:
+  - r2 corrected decode: `141.193 tok/s`, e2e `138.469 tok/s`, TTFT `78.071 ms`
+  - r4 corrected decode: `105.158 tok/s`, e2e `103.709 tok/s`, TTFT `77.388 ms`
+  - r4 is only about `5.8%` above the accepted baseline and within a range where prompt/repeat effects can dominate
+- scheduler trace artifact: `data/qwen36-quark-int8-tp4-ngram2-cg3-spec-jsonl-20260611.jsonl`
+- trace summary: rows `685`, drafts `1365`, accepted `1044`, rejected `321`, acceptance rate `76.48%`, histogram `{0: 116, 1: 94, 2: 475}`
+- individual long-generation requests ranged from about `46.5%` to `99.0%` draft acceptance, which explains the r2/r4 spread
+
 n-gram2 eager/no-graph diagnostic:
 
 - launch controls: `ENABLE_XPU_GRAPH=0`, `ENFORCE_EAGER=1`, `COMPILE_CONFIG=`
@@ -377,17 +407,29 @@ Interpretation:
 
 - n-gram1 proves the single speculative-token plumbing can pass our quality bar, but it is slower than accepted because its acceptance rate is too low and the speculative machinery adds overhead.
 - n-gram2 failing before draft scheduling points at an XPU graph/input-prep stability bug for decode query length `1 + num_speculative_tokens >= 3`, not just a bad n-gram proposer.
-- disabling graph avoids the device-loss crash, but eager/no-graph is not quality-equivalent, so it cannot be used as a production workaround.
+- disabling XPU graph while keeping torch.compile avoids the device-loss crash and passes a short quality gate, which strongly localizes the hard failure to XPU graph capture/replay.
+- the no-XPU-graph path is about 5.6x slower than accepted, so it is only a diagnostic path.
+- adding exact graph capture bucket `3` fixes the n-gram2 first-request device-loss path, so the crash was likely a graph shape dispatch/capture mismatch rather than a general n-gram2 impossibility.
+- n-gram2 with the exact capture bucket can be quality-clean under repeat64 and 4K long context, but the speed gain is prompt-sensitive because acceptance varies widely.
+- eager/no-graph is not quality-equivalent, so it cannot be used as a production workaround.
 - n-gram5's fully accepted repeated-token loops are a separate correctness failure after the runtime survives startup. Multi-token n-gram is therefore not a valid route to `>200 tok/s` on this stack until the XPU graph/input-prep path is fixed.
 
 Next concrete speculation path:
 
-1. Reproduce n-gram2 with graph disabled or reduced graph capture to isolate whether the device loss is graph-specific.
-2. Reproduce n-gram2 against backend port `18080` directly to rule out frontdoor effects, though the stack trace already points inside model execution.
-3. Test n-gram2 with `XPU_GRAPH=0` or `--enforce-eager` only as a diagnostic. Do not use eager speed as an optimization target.
-4. If n-gram2 works without graph, inspect graph-captured tensor shapes for `decode_query_len=3` and block table copies.
-5. If n-gram2 still fails without graph, focus on input-batch/block-table handling for speculative decode lengths greater than 1.
+1. Keep exact capture bucket `3` in the diagnostic launcher and test whether nearby buckets (`5`, `6`, maybe `7`) are needed for deeper speculation before any n-gram3+ run.
+2. Split speed tests by prompt class: repetitive benchmark prompt, natural chat prompt, code prompt, and structured-output prompt. N-gram2 only helps when draft acceptance is high.
+3. Add an acceptance-rate predictor and dynamic speculative kill switch. If early acceptance drops below a threshold, fall back to accepted non-spec decode for the rest of that request.
+4. Test an n-gram2 production split only for long free-form completions, never for deterministic structured/copy/math routes until canary parity is stronger.
+5. Inspect graph-captured tensor shapes for `decode_query_len=3`, especially input/block-table tensors copied before the first model execute, and file an upstream-quality repro if exact bucket `3` is required on XPU but not captured by default.
 6. Keep n-gram1 out of production because it is quality-safe but slower.
+7. Do not use eager/no-graph or no-XPU-graph as production workarounds; they exist only to isolate graph correctness.
+
+New web-research leads to fold into next experiments:
+
+- vLLM's current CUDA Graph design explicitly separates graph capture modes and can dispatch between full, piecewise, and no-graph paths. That supports testing `FULL_DECODE_ONLY` or `FULL_AND_PIECEWISE` style decode capture as a controlled experiment instead of only changing bucket lists: https://docs.vllm.ai/en/latest/design/cuda_graphs/
+- The official vLLM Qwen3.5/Qwen3.6 recipe documents Qwen3.6 MTP speculative decoding with `{"method": "mtp", "num_speculative_tokens": 2}`. Our Quark checkpoint has no MTP tensors, but this reinforces the auxiliary-official-FP8-MTP-drafter idea with the Quark INT8 model as verifier: https://docs.vllm.ai/projects/recipes/en/latest/Qwen/Qwen3.5.html
+- The vLLM Arc Pro B-series post lists n-gram, EAGLE, and EAGLE3 speculative decoding as supported optimization targets on Intel Arc Pro B-series, and emphasizes persistent MoE kernels and dynamic work balancing. Those are the two biggest quality-preserving directions still open: speculation and real MoE kernel work, not small Python boundary wrappers: https://vllm.ai/blog/2025-11-11-intel-arc-pro-b
+- The open llm-compressor Qwen3.6 W8A8 issue notes that a clean W8A8 Qwen3.6 path still needs MoE architecture mappings, fused expert tensor handling, and linear-attention coverage. That means our Quark INT8 route is ahead of generic tooling, but also that upstream INT8 quant support may soon become a better foundation: https://github.com/vllm-project/llm-compressor/issues/2787
 
 ## Additional Big Ideas
 
@@ -437,3 +479,57 @@ These are the next larger opportunities to keep in mind while continuing the qua
      - c4/c8 aggregate smoke
      - 30-60 minute loop if it is a production candidate
    - The stale accepted-process failure means runtime age matters; do not trust a cold-only pass.
+
+## Bolder Ideas Added After N-Gram2 Capture-Size Result
+
+These are not next-command items. They are larger directions that could plausibly move single-request decode much more than another launch-flag sweep.
+
+1. Dynamic verifier-preserving speculation policy.
+   - Instead of enabling n-gram or a draft model globally, make speculation adaptive per request.
+   - Start with n-gram2 or MTP for long natural-language completions, measure early acceptance over the first N speculative windows, and disable speculation for that request if acceptance falls below a threshold.
+   - This could keep the rare `140+ tok/s` behavior for easy/repetitive continuations while avoiding overhead on low-acceptance prompts.
+   - Proof required: token parity against accepted decode, quality canaries, and prompt-class speed tables.
+
+2. Two-stage proposer ladder.
+   - Use a cheap n-gram proposer first, then escalate to MTP/EAGLE only when n-gram acceptance shows the request is predictable.
+   - The goal is to avoid paying a heavier proposer cost on prompts where speculation is unlikely to help.
+   - This is bigger than a single speculative mode, but it matches what the trace says: acceptance rate, not just draft depth, controls the win.
+
+3. Decode microservice split: prefill service plus latency-specialized decode service.
+   - vLLM supports prefill/decode disaggregation as a general architecture direction, and our single-request TTFT is already low while decode is the bottleneck.
+   - A decode-only instance could use tighter graph capture, smaller scheduler surfaces, and fewer mixed prefill/decode transitions.
+   - Proof required: same model/weights, same output tokens, and a direct comparison of p512/n512 c1 against the normal OpenAI-compatible service.
+
+4. Hybrid TP/EP prototype for Qwen3.6 A3B.
+   - Pure TP4 may be structurally expensive for single-token MoE decode because many hidden-state boundaries become collectives.
+   - A hybrid layout could keep attention/GDN replicated or lightly sharded while placing routed experts to reduce per-token collective cost.
+   - First artifact should be a traffic/memory simulator before touching vLLM internals.
+
+5. Persistent single-token MoE executor.
+   - Build a decode-only MoE executor for the exact Qwen3.6 expert shapes with persistent workgroups, prepacked expert weights, fused finalize/shared/residual epilogue, and graph-safe output handoff.
+   - This is a real kernel project, but it targets the part of the model where Intel's Arc guidance says large MoE gains exist.
+   - Proof required: standalone layer microbench first, endpoint integration second.
+
+6. Static batch-1 graph replay path.
+   - Build an offline or internal endpoint path that assumes one active decode stream, fixed max model length, fixed sampling settings, and preallocated KV.
+   - This would quantify the gap between vLLM serving generality and the fastest possible single-user decode loop for the same model.
+   - If the offline path is much faster, production can use a special low-latency lane for solo sessions.
+
+7. Exact-shape XPU collective replacement.
+   - Do not replace all oneCCL. Replace only the small BF16 all-reduce/all-gather shapes that appear repeatedly in the AOT cache.
+   - A shape-fixed graph-safe collective could be easier than a general communicator and may pair with fused decoder-layer boundaries.
+   - Proof required: microbench latency, graph capture compatibility, and endpoint quality parity.
+
+8. Model-layout fork, not model-quality fork.
+   - Keep the same Qwen3.6 Quark W8A8 mathematical weights, but store a second on-disk XPU-native packed layout for DPAS/XMX-friendly access.
+   - This avoids a quality tradeoff while testing whether weight layout, not quantization level, is the limiting factor.
+   - First check: whether current `int8_gemm_w8a8` hot paths still transpose/repack or read in a suboptimal stride pattern.
+
+9. Same-model 8-bit engine shootout.
+   - Build a true 8-bit Qwen3.6 35B artifact for llama.cpp/SYCL or another Intel-native runtime and run the same quality suite.
+   - This is a diagnostic to determine whether vLLM/XPU overhead is the ceiling.
+   - Reject any route that turns into Qwen3.5, 4-bit, or template-incompatible output.
+
+10. Upstream collaboration package.
+    - Package the exact capture-size-3 n-gram2 finding, oneCCL graph worker failure, and AOT shape census into minimal, public repros.
+    - This may be faster than locally owning every XPU backend gap if Intel/vLLM maintainers can fix default capture policy or expose the right MoE/kernel hooks.

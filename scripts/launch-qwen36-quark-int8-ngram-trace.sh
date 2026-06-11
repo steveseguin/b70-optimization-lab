@@ -14,7 +14,13 @@ SPEC_TRACE_FILE="${SPEC_TRACE_FILE:-/tmp/qwen36-${TAG}-spec-trace-20260611.jsonl
 SPEC_TRACE_MAX_LINES="${SPEC_TRACE_MAX_LINES:-20000}"
 ENABLE_XPU_GRAPH="${ENABLE_XPU_GRAPH:-1}"
 ENFORCE_EAGER="${ENFORCE_EAGER:-0}"
+CUDAGRAPH_CAPTURE_SIZES="${CUDAGRAPH_CAPTURE_SIZES:-}"
 COMPILE_CONFIG="${COMPILE_CONFIG:-{\"cudagraph_mode\":\"PIECEWISE\",\"max_cudagraph_capture_size\":128}}"
+
+if [[ -n "$CUDAGRAPH_CAPTURE_SIZES" ]]; then
+  COMPILE_CONFIG=$(printf '{"cudagraph_mode":"PIECEWISE","cudagraph_capture_sizes":[%s],"max_cudagraph_capture_size":128}' \
+    "$CUDAGRAPH_CAPTURE_SIZES")
+fi
 
 export HF_HOME="${HF_HOME:-/mnt/fast-ai/llm-cache/hf}"
 export HUGGINGFACE_HUB_CACHE="${HUGGINGFACE_HUB_CACHE:-/mnt/fast-ai/llm-cache/hf}"
