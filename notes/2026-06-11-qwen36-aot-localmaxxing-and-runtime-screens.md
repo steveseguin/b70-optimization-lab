@@ -2315,3 +2315,127 @@ Immediate next move:
 3. If that is neutral, shift into the route-distribution grouped-GEMM harness,
    because that is the clearest path from local measurements plus external
    XPU guidance to a real speedup without quality loss.
+
+## Clean Upstream Kernel A/B Audit And Expanded Backlog
+
+Follow-up after starting the clean upstream path above:
+
+- Active service/venv state:
+  - backend and frontdoor were still healthy before the audit.
+  - active `vllm-xpu-kernels` imports from editable local source:
+    `/home/steve/src/vllm-xpu-kernels/vllm_xpu_kernels`.
+  - active dist metadata reports `vllm-xpu-kernels
+    0.1.9.dev27+g28e1f5e`, but that number is incomplete because the source
+    tree is dirty.
+  - local dirty source contains the W8A8/Quark work that matters for the
+    current result: INT8 grouped GEMM interface, INT8 quantization entry
+    points, oneDNN W8A8 additions, and the expanded fused-MoE Python path.
+- Clean upstream workspace:
+  - clone: `/mnt/fast-ai/vllm-xpu-kernels-ab-20260611`
+  - v0.1.9 worktree: `/mnt/fast-ai/vllm-xpu-kernels-ab-20260611-work/v0.1.9`
+  - upstream main at audit time: `22dd63a Consolidate fp8 and mxfp8 gemm path
+    (#398)`.
+  - `v0.1.9` is the newest tag still aligned with active `torch
+    2.11.0+xpu`; `v0.1.9.1` and main require `torch 2.12.0+xpu`.
+- Decision:
+  - Pure upstream `v0.1.9` is not a valid A/B for the current endpoint. It
+    loses the dirty local W8A8/Quark code path that produced the accepted
+    `99-100 tok/s` result.
+  - Do not install a clean upstream wheel over the active venv unless the local
+    W8A8 patch set is rebased or recreated in the disposable workspace first.
+- Build attempt note:
+  - A broad `v0.1.9` wheel build was intentionally stopped. The older build
+    path generated hundreds of attention template sources and `1375` ninja
+    targets, while the relevant question is W8A8 MoE decode, not rebuilding the
+    whole attention matrix.
+  - No active service or active venv was changed.
+
+Re-ranked immediate work:
+
+1. Build a route-exact W8A8 grouped-GEMM harness against the current local
+   kernels.
+   - Use `routecapture5/6` and the component summaries to construct the real
+     decode-stage rows-per-expert distributions for Qwen3.6 A3B.
+   - Call the current local op directly, especially
+     `torch.ops._xpu_C.cutlass_grouped_gemm_w8a8_int8_interface`.
+   - This gives a tight loop for kernel policy work without restarting the
+     whole model server.
+
+2. Rebase only the relevant upstream grouped-GEMM changes onto the local W8A8
+   patch set.
+   - Cherry-pick or manually port Xe2 grouped-GEMM heuristic changes only after
+     the route-exact harness exists.
+   - The gate is kernel latency on real route distributions first, then
+     endpoint p512/n512 plus frontdoor repeat64 quality.
+
+3. Create a minimal upstreamable repro bundle.
+   - Include route histogram, representative grouped-GEMM shapes, current
+     latency, target latency, GPU/driver/version data, and the Localmaxxing
+     public result.
+   - This should be small enough for Intel/vLLM maintainers to run without the
+     full model.
+
+Bigger, bolder ideas to keep on the board:
+
+1. Whole-MoE-layer persistent decode kernel.
+   - Fuse or pipeline router/top-k, dispatch, gate/up, SiLU/mul, down, and
+     weighted combine for single-token decode.
+   - The bold version is one resident per-layer kernel policy instead of
+     separate Python/C++ launches and scratch setup for each substep.
+
+2. Route-conditioned expert layout and prefetch.
+   - Use captured route heatmaps to reorder expert storage and prefetch likely
+     next-token experts.
+   - This must remain quality-exact: prediction can only move data earlier, not
+     skip verifier work.
+
+3. Topology-aware collective replacement.
+   - Microbench the exact all-reduce/all-gather sizes from decode, then test a
+     custom Level Zero/oneCCL path or fused residual/RMS/collective boundary if
+     one collective is on the critical path.
+   - This could matter because four B70s are connected over PCIe, and model
+     forward still dominates token time.
+
+4. Expert-parallel variant with replicated dense layers.
+   - For a reduced-context diagnostic, trade memory for fewer per-token TP
+     collectives by replicating shared dense weights and sharding experts by
+     GPU.
+   - If it wins latency at 4K/8K, then decide whether production 32K can be
+     made to fit with KV or memory-budget changes.
+
+5. Static interactive runner.
+   - Build a special c1 path with fixed template state, preallocated KV, fixed
+     graph buckets, pinned sampling, and minimal metrics/HTTP overhead.
+   - It does not replace vLLM production initially; it answers whether the
+     general scheduler path is hiding a large single-user latency tax.
+
+6. Same-quality verifier speculation with external draft.
+   - Try a LAN/off-card/iGPU/CPU draft path where every token is verified by
+     the current Qwen3.6 INT8 endpoint.
+   - Measure accepted tokens per verifier step, rejection histogram, and tail
+     latency. Draft-only throughput is not useful.
+
+7. OpenVINO GenAI as a first-class 8-bit verifier branch.
+   - External B70 reports and OpenVINO GenAI results suggest it should not stay
+     as a vague future idea.
+   - Only test formats that preserve the quality goal: BF16 control or real
+     8-bit/W8A8. No 4-bit fallback.
+
+8. True 8-bit cross-engine bake-off.
+   - Compare vLLM/XPU against llama.cpp/SYCL or Vulkan, OpenVINO, and any
+     Intel-native runtime that can run the same model family in real 8-bit.
+   - Keep quality gates identical: repeat64, long-context needle, JSON/copy,
+     and BF16/accepted-output comparisons.
+
+9. Exact partial-logit/top1 path.
+   - Prior local-argmax work was too small, but a deeper fused `lm_head +
+     partial top-k + rank reduce` path may still remove avoidable full-logits
+     movement.
+   - Treat this as a secondary gain after MoE, because current timing says the
+     model forward is the main cost.
+
+10. Two-lane production design.
+    - Keep one lane optimized for single-user latency and another for aggregate
+      throughput/concurrency.
+    - This does not lower quality, and it avoids forcing one set of scheduler,
+      context, and graph-capture choices to satisfy conflicting workloads.
