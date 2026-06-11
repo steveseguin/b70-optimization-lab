@@ -1,0 +1,316 @@
+{
+  "created_at_unix": 1781137074.4785838,
+  "base_url": "http://127.0.0.1:18080",
+  "model": "qwen36-35b-a3b-fp8",
+  "tokenizer": "/mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118",
+  "server_model_record": {
+    "id": "qwen36-35b-a3b-fp8",
+    "object": "model",
+    "created": 1781137015,
+    "owned_by": "vllm",
+    "root": "/mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118",
+    "parent": null,
+    "max_model_len": 32768,
+    "permission": [
+      {
+        "id": "modelperm-8d5f9db61b7446c0",
+        "object": "model_permission",
+        "created": 1781137015,
+        "allow_create_engine": false,
+        "allow_sampling": true,
+        "allow_logprobs": true,
+        "allow_search_indices": false,
+        "allow_view": true,
+        "allow_fine_tuning": false,
+        "organization": "*",
+        "group": null,
+        "is_blocking": false
+      }
+    ]
+  },
+  "prompt_kind": "vllm-random",
+  "seed": 0,
+  "random_prefix_len": 0,
+  "prompt_tokens_requested": 512,
+  "prompt_tokens_actual": 512,
+  "output_tokens_requested": 512,
+  "mode": "stream",
+  "skip_vram": true,
+  "repeats": 8,
+  "measurement_notes": [
+    "TTFT and e2e are measured both client-side and from vLLM Prometheus histogram deltas.",
+    "tok_s_prefill_lower_bound_from_ttft is prompt_tokens / TTFT, so it is conservative and includes first-token scheduling/decode overhead.",
+    "tok_s_out_client_after_first_chunk is generated-token-only throughput after the first streamed text chunk.",
+    "tok_s_out_client_after_first_chunk_corrected subtracts the estimated first streamed chunk tokens from the numerator; this is more stable when --stream-interval > 1."
+  ],
+  "vram_mib_before_all": {},
+  "peak_vram_mib_observed": {},
+  "records": [
+    {
+      "repeat": 1,
+      "prompt_tokens_client": 512,
+      "output_tokens_client": 512,
+      "elapsed_s_client": 5.235659831902012,
+      "ttft_ms_client": 74.89539496600628,
+      "tok_s_out_client_after_first_chunk": 99.21010855205381,
+      "tok_s_out_client_after_first_chunk_corrected": 99.01633880878808,
+      "tok_s_out_client_e2e": 97.79092157215273,
+      "tok_s_total_client": 195.58184314430545,
+      "tok_s_prefill_lower_bound_from_ttft": 6836.20134765813,
+      "vllm_metric_deltas": {
+        "prompt_tokens": 512.0,
+        "generation_tokens": 512.0,
+        "ttft_count": 1.0,
+        "ttft_sum_s": 0.07349038124084473,
+        "e2e_count": 1.0,
+        "e2e_sum_s": 5.234464645385742
+      },
+      "ttft_ms_vllm_metrics": 73.49038124084473,
+      "e2e_ms_vllm_metrics": 5234.464645385742,
+      "vram_mib_before": {},
+      "vram_mib_after": {},
+      "first_chunk_tokens_client_estimate": 1,
+      "streamed_text_chunks": 512,
+      "text_preview": " l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edcu"
+    },
+    {
+      "repeat": 2,
+      "prompt_tokens_client": 512,
+      "output_tokens_client": 152,
+      "elapsed_s_client": 1.596680484013632,
+      "ttft_ms_client": 75.77307405881584,
+      "tok_s_out_client_after_first_chunk": 99.94033759393393,
+      "tok_s_out_client_after_first_chunk_corrected": 99.28283537292121,
+      "tok_s_out_client_e2e": 95.19750602694927,
+      "tok_s_total_client": 415.8627894861468,
+      "tok_s_prefill_lower_bound_from_ttft": 6757.017665702468,
+      "vllm_metric_deltas": {
+        "prompt_tokens": 512.0,
+        "generation_tokens": 152.0,
+        "ttft_count": 1.0,
+        "ttft_sum_s": 0.07425642013549805,
+        "e2e_count": 1.0,
+        "e2e_sum_s": 1.5957345962524414
+      },
+      "ttft_ms_vllm_metrics": 74.25642013549805,
+      "e2e_ms_vllm_metrics": 1595.7345962524414,
+      "vram_mib_before": {},
+      "vram_mib_after": {},
+      "first_chunk_tokens_client_estimate": 1,
+      "streamed_text_chunks": 151,
+      "text_preview": " l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edcu"
+    },
+    {
+      "repeat": 3,
+      "prompt_tokens_client": 512,
+      "output_tokens_client": 512,
+      "elapsed_s_client": 5.226381469052285,
+      "ttft_ms_client": 74.92684398312122,
+      "tok_s_out_client_after_first_chunk": 99.38940304518859,
+      "tok_s_out_client_after_first_chunk_corrected": 99.19528311736596,
+      "tok_s_out_client_e2e": 97.9645291932436,
+      "tok_s_total_client": 195.9290583864872,
+      "tok_s_prefill_lower_bound_from_ttft": 6833.331991339957,
+      "vllm_metric_deltas": {
+        "prompt_tokens": 512.0,
+        "generation_tokens": 512.0,
+        "ttft_count": 1.0,
+        "ttft_sum_s": 0.07340717315673828,
+        "e2e_count": 1.0,
+        "e2e_sum_s": 5.225279092788696
+      },
+      "ttft_ms_vllm_metrics": 73.40717315673828,
+      "e2e_ms_vllm_metrics": 5225.279092788696,
+      "vram_mib_before": {},
+      "vram_mib_after": {},
+      "first_chunk_tokens_client_estimate": 1,
+      "streamed_text_chunks": 512,
+      "text_preview": " l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edcu"
+    },
+    {
+      "repeat": 4,
+      "prompt_tokens_client": 512,
+      "output_tokens_client": 348,
+      "elapsed_s_client": 3.5674564599758014,
+      "ttft_ms_client": 75.45123004820198,
+      "tok_s_out_client_after_first_chunk": 99.65620813437761,
+      "tok_s_out_client_after_first_chunk_corrected": 99.36983972019837,
+      "tok_s_out_client_e2e": 97.54849257567689,
+      "tok_s_total_client": 241.06811383644288,
+      "tok_s_prefill_lower_bound_from_ttft": 6785.840332528828,
+      "vllm_metric_deltas": {
+        "prompt_tokens": 512.0,
+        "generation_tokens": 348.0,
+        "ttft_count": 1.0,
+        "ttft_sum_s": 0.07395124435424805,
+        "e2e_count": 1.0,
+        "e2e_sum_s": 3.566481590270996
+      },
+      "ttft_ms_vllm_metrics": 73.95124435424805,
+      "e2e_ms_vllm_metrics": 3566.481590270996,
+      "vram_mib_before": {},
+      "vram_mib_after": {},
+      "first_chunk_tokens_client_estimate": 1,
+      "streamed_text_chunks": 347,
+      "text_preview": " l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edcu"
+    },
+    {
+      "repeat": 5,
+      "prompt_tokens_client": 512,
+      "output_tokens_client": 512,
+      "elapsed_s_client": 5.245473512914032,
+      "ttft_ms_client": 75.29610791243613,
+      "tok_s_out_client_after_first_chunk": 99.02948388283438,
+      "tok_s_out_client_after_first_chunk_corrected": 98.83606692212572,
+      "tok_s_out_client_e2e": 97.60796594234775,
+      "tok_s_total_client": 195.2159318846955,
+      "tok_s_prefill_lower_bound_from_ttft": 6799.820258909246,
+      "vllm_metric_deltas": {
+        "prompt_tokens": 512.0,
+        "generation_tokens": 512.0,
+        "ttft_count": 1.0,
+        "ttft_sum_s": 0.0736997127532959,
+        "e2e_count": 1.0,
+        "e2e_sum_s": 5.244333505630493
+      },
+      "ttft_ms_vllm_metrics": 73.6997127532959,
+      "e2e_ms_vllm_metrics": 5244.333505630493,
+      "vram_mib_before": {},
+      "vram_mib_after": {},
+      "first_chunk_tokens_client_estimate": 1,
+      "streamed_text_chunks": 512,
+      "text_preview": " l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edcu"
+    },
+    {
+      "repeat": 6,
+      "prompt_tokens_client": 512,
+      "output_tokens_client": 349,
+      "elapsed_s_client": 3.6133409820031375,
+      "ttft_ms_client": 82.18646503519267,
+      "tok_s_out_client_after_first_chunk": 98.8345308377136,
+      "tok_s_out_client_after_first_chunk_corrected": 98.55133733961127,
+      "tok_s_out_client_e2e": 96.58651141374538,
+      "tok_s_total_client": 238.28362844479878,
+      "tok_s_prefill_lower_bound_from_ttft": 6229.736244048931,
+      "vllm_metric_deltas": {
+        "prompt_tokens": 512.0,
+        "generation_tokens": 349.0,
+        "ttft_count": 1.0,
+        "ttft_sum_s": 0.08060121536254883,
+        "e2e_count": 1.0,
+        "e2e_sum_s": 3.6123783588409424
+      },
+      "ttft_ms_vllm_metrics": 80.60121536254883,
+      "e2e_ms_vllm_metrics": 3612.3783588409424,
+      "vram_mib_before": {},
+      "vram_mib_after": {},
+      "first_chunk_tokens_client_estimate": 1,
+      "streamed_text_chunks": 348,
+      "text_preview": " l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edcu"
+    },
+    {
+      "repeat": 7,
+      "prompt_tokens_client": 512,
+      "output_tokens_client": 512,
+      "elapsed_s_client": 5.223876900039613,
+      "ttft_ms_client": 75.45004703570157,
+      "tok_s_out_client_after_first_chunk": 99.44785361013092,
+      "tok_s_out_client_after_first_chunk_corrected": 99.25361952104863,
+      "tok_s_out_client_e2e": 98.01149793482259,
+      "tok_s_total_client": 196.02299586964517,
+      "tok_s_prefill_lower_bound_from_ttft": 6785.946730526636,
+      "vllm_metric_deltas": {
+        "prompt_tokens": 512.0,
+        "generation_tokens": 512.0,
+        "ttft_count": 1.0,
+        "ttft_sum_s": 0.07386922836303711,
+        "e2e_count": 1.0,
+        "e2e_sum_s": 5.2227559089660645
+      },
+      "ttft_ms_vllm_metrics": 73.86922836303711,
+      "e2e_ms_vllm_metrics": 5222.755908966064,
+      "vram_mib_before": {},
+      "vram_mib_after": {},
+      "first_chunk_tokens_client_estimate": 1,
+      "streamed_text_chunks": 512,
+      "text_preview": " l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edcu"
+    },
+    {
+      "repeat": 8,
+      "prompt_tokens_client": 512,
+      "output_tokens_client": 349,
+      "elapsed_s_client": 3.566982593969442,
+      "ttft_ms_client": 75.68264403380454,
+      "tok_s_out_client_after_first_chunk": 99.96276601969815,
+      "tok_s_out_client_after_first_chunk_corrected": 99.6763397560314,
+      "tok_s_out_client_e2e": 97.84180068331162,
+      "tok_s_total_client": 241.38048821871433,
+      "tok_s_prefill_lower_bound_from_ttft": 6765.091343416982,
+      "vllm_metric_deltas": {
+        "prompt_tokens": 512.0,
+        "generation_tokens": 349.0,
+        "ttft_count": 1.0,
+        "ttft_sum_s": 0.07411956787109375,
+        "e2e_count": 1.0,
+        "e2e_sum_s": 3.566020965576172
+      },
+      "ttft_ms_vllm_metrics": 74.11956787109375,
+      "e2e_ms_vllm_metrics": 3566.020965576172,
+      "vram_mib_before": {},
+      "vram_mib_after": {},
+      "first_chunk_tokens_client_estimate": 1,
+      "streamed_text_chunks": 348,
+      "text_preview": " l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edculo l'art\u00edcu"
+    }
+  ],
+  "summary": {
+    "tok_s_out_client_after_first_chunk": {
+      "mean": 99.43383645949137,
+      "median": 99.41862832765975,
+      "min": 98.8345308377136,
+      "max": 99.96276601969815
+    },
+    "tok_s_out_client_after_first_chunk_corrected": {
+      "mean": 99.14770756976134,
+      "median": 99.2244513192073,
+      "min": 98.55133733961127,
+      "max": 99.6763397560314
+    },
+    "tok_s_out_client_e2e": {
+      "mean": 97.31865316778124,
+      "median": 97.69944375725024,
+      "min": 95.19750602694927,
+      "max": 98.01149793482259
+    },
+    "tok_s_total_client": {
+      "mean": 239.91810615890452,
+      "median": 217.153312157222,
+      "min": 195.2159318846955,
+      "max": 415.8627894861468
+    },
+    "ttft_ms_client": {
+      "mean": 76.20772588416003,
+      "median": 75.45063854195178,
+      "min": 74.89539496600628,
+      "max": 82.18646503519267
+    },
+    "ttft_ms_vllm_metrics": {
+      "mean": 74.67436790466309,
+      "median": 73.91023635864258,
+      "min": 73.40717315673828,
+      "max": 80.60121536254883
+    },
+    "tok_s_prefill_lower_bound_from_ttft": {
+      "mean": 6724.123239266397,
+      "median": 6785.893531527732,
+      "min": 6229.736244048931,
+      "max": 6836.20134765813
+    },
+    "e2e_ms_vllm_metrics": {
+      "mean": 4158.4310829639435,
+      "median": 4417.567133903503,
+      "min": 1595.7345962524414,
+      "max": 5244.333505630493
+    }
+  }
+}
