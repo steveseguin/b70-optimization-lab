@@ -232,6 +232,10 @@ Added trace tooling for the current n-gram/speculative path:
 - `scripts/qwen36-quality-token-trace.py`
   - builds the same exact, repeat, and long-context prompts as the quality suite
   - records prompt hashes, prompt token counts, normalized outputs, output token IDs, and first-token diffs against a baseline JSON
+- `scripts/launch-qwen36-quark-int8-ngram5-trace.sh`
+  - repeatable launch wrapper for the prior n-gram5 CG128 hold-prefill candidate
+  - enables `VLLM_SPEC_DECODE_TRACE_FILE` and bounds trace size with `VLLM_SPEC_DECODE_TRACE_MAX_LINES`
+  - keeps the current Quark INT8 model as verifier
 - `patches/vllm-qwen36-spec-decode-jsonl-trace-20260611.patch`
   - opt-in scheduler JSONL trace behind `VLLM_SPEC_DECODE_TRACE_FILE`
   - records request id, scheduled draft token IDs, generated token IDs, accepted/rejected counts, and request token counters
