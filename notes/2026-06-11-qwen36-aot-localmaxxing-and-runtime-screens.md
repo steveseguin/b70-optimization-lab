@@ -3007,3 +3007,158 @@ Interpretation:
   endpoint restart with `VLLM_XPU_W8A8_GROUPED_GEMM_POLICY=m32`, then:
   speed repeat, quality repeat, and stability repeat. If endpoint-level speed
   does not move, this remains a microbench-only finding.
+
+## Bigger Bolder Ideas Addendum
+
+Added after the W8A8 policy screen and another public B70/XPU scan on
+2026-06-11.
+
+Target remains unchanged:
+
+- Qwen3.6 35B A3B, not Qwen3.5.
+- 8-bit/high-fidelity path only. No 4-bit promotion.
+- Current Quark W8A8 INT8 model remains the accepted verifier unless a
+  candidate proves equal or better quality against BF16 and the canary suite.
+- Single-request decode speed is the primary goal; aggregate throughput is a
+  secondary production goal.
+
+Reference signals checked:
+
+- vLLM Intel Arc Pro B-series notes emphasize MoE persistent kernels, dynamic
+  group balancing, multi-GPU/P2P, speculative decoding, and prefill/decode
+  disaggregation:
+  `https://vllm.ai/blog/2025-11-11-intel-arc-pro-b`
+- Intel XPU Triton issue `#6389` says grouped-GEMM performance depends strongly
+  on real route distributions, especially skewed decode routes:
+  `https://github.com/intel/intel-xpu-backend-for-triton/issues/6389`
+- Public B70 Qwen3.6 rows remain mostly 4-bit llama.cpp diagnostics, not
+  substitutes. They are still useful for engine and topology clues:
+  `https://github.com/PMZFX/intel-arc-pro-b70-benchmarks`
+- Intel/HF notes confirm optimized `FusedMoE` paths exist in both vLLM and
+  Transformers for Xe GPUs, so a cross-stack MoE control is worth testing:
+  `https://huggingface.co/blog/MatrixYao/intel-gpu`
+
+Concrete next gates already worth running:
+
+1. Endpoint-test the `m32` grouped-GEMM policy.
+   - Launch with `VLLM_XPU_W8A8_GROUPED_GEMM_POLICY=m32`.
+   - Run p512/n512 single-request speed, quality canary, repeat stability, and
+     a short route capture.
+   - Accept only if endpoint speed moves and quality/stability are unchanged.
+
+2. Build route histograms by prompt class.
+   - Capture per-layer expert distributions for natural chat, code, structured,
+     math, repetitive, and long-context prompts.
+   - Record hot experts, long-tail depth, top-k concentration, and layer-local
+     route stability.
+   - Feed these shapes into the grouped-GEMM floor harness instead of relying
+     on synthetic or single-route cases.
+
+3. Prototype the two local fusions before touching the full runtime.
+   - `activation quant + GEMM1`
+   - `activation + output quant + GEMM2`
+   - Gate with layer-local numeric parity and route-exact microbench speed
+     before considering endpoint integration.
+
+4. Build a direct c1 runner.
+   - Fixed shape, preallocated KV, no OpenAI HTTP layer, no streaming JSON,
+     minimal scheduler path.
+   - If direct c1 is not much faster, the bottleneck is kernel/interconnect.
+     If it is faster, the serving path deserves a focused latency audit.
+
+5. Run a true 8-bit cross-engine control.
+   - Try llama.cpp SYCL `Q8_0` or OpenVINO GenAI INT8 only as diagnostics.
+   - Do not compare 4-bit as a quality-equivalent win.
+   - Goal is to learn whether vLLM/XPU is losing time in kernels, scheduling,
+     layout, or multi-GPU communication.
+
+Bigger, bolder ideas to keep on the board:
+
+1. Persistent one-layer MoE decode kernel.
+   - Combine route read, expert work scheduling, GEMM1, activation, quant,
+     GEMM2, and scatter for a single MoE layer.
+   - Use dynamic work stealing so hot experts do not leave groups idle.
+   - This is the cleanest path to remove launch gaps and scratch traffic, but
+     it needs layer-local parity first.
+
+2. Route-hot expert replication.
+   - Use the extra VRAM budget to replicate only the hottest experts on every
+     GPU while keeping the cold tail sharded.
+   - Exact same weights and quant values, different placement only.
+   - Simulator first: estimate cross-GPU traffic saved from captured route
+     histograms before changing runtime placement.
+
+3. Hybrid parallel layout for A3B.
+   - Keep attention/dense parts replicated if memory allows, and expert-parallel
+     only the MoE blocks.
+   - TP4 may be paying communication costs that are too high for tiny active
+     expert sets.
+   - Compare short-context first so 32K KV memory does not hide the layout
+     signal.
+
+4. Decode command-list capture.
+   - Reuse Level Zero command lists or graph-like command buffers around a full
+     decode slice.
+   - Success criterion is lower event-timeline wall time with identical output.
+   - This is a lower-risk alternative to writing a full persistent kernel.
+
+5. B70-native W8A8 retile cache.
+   - Convert Quark W8A8 weights once into the exact Xe2 DPAS-friendly layout
+     needed by the chosen grouped-GEMM policy.
+   - Cache the retiled weights on disk or after load.
+   - Quality should be unchanged because values/scales are unchanged; only
+     memory order changes.
+
+6. Verifier-preserving speculation/MTP.
+   - The current Quark W8A8 INT8 model verifies every accepted token.
+   - A draft lane can be smaller, MTP-based, CPU/iGPU-backed, or on spare B70
+     capacity, but it cannot define accepted quality.
+   - This is the most credible route to a 2x jump if kernel-only wins plateau.
+
+7. Route-bucket AOT kernel family.
+   - Compile a small set of kernels for common route histogram buckets by layer.
+   - Dispatch based on the captured bucket rather than one generic grouped-GEMM
+     policy.
+   - Requires stable route buckets across prompt classes.
+
+8. Cross-stack FusedMoE control.
+   - Try the same model or a close exact-architecture INT8 artifact through
+     Transformers/XPU and OpenVINO GenAI if supported.
+   - Use it to isolate whether vLLM scheduling, vLLM kernels, or the model
+     artifact layout is the larger tax.
+
+9. NUMA/P2P topology hard audit.
+   - Record PCIe lanes, P2P matrix, CPU affinity, IRQ placement, oneCCL/custom
+     allreduce settings, and GPU frequency/power state for every accepted run.
+   - If TP4 is communication-bound, topology may be worth more than another
+     small kernel tune.
+
+10. Long-context split policy.
+    - Run separate 2K, 8K, 16K, and 32K c1 decode profiles.
+    - If attention dominates only at high context, keep a short-context
+      low-latency model slot and a long-context slot with different scheduler
+      settings.
+    - Same model and quality, different operational profiles.
+
+11. Kernel autotune loop.
+    - Feed route-exact cases into an automated search over tile policy,
+      group count, prefetch depth, and work assignment.
+    - Keep a generated patch plus JSON benchmark artifact per candidate.
+    - Borrow the idea from Triton-style tuning, but keep final candidates in
+      the SYCL/XPU kernel path if that wins.
+
+12. Production mirror mode for aggregate throughput.
+    - If true 8-bit full model plus required KV can fit on fewer than four B70s
+      at a useful context, compare independent replicas against TP4.
+    - This may improve aggregate throughput and tail latency even if it does
+      not solve the single-request 32K headline.
+
+Validation rule for every bold idea:
+
+1. Layer-local parity or deterministic token-trace match where applicable.
+2. Quality canary against accepted INT8 and BF16 fallback.
+3. Repeat/repetition stress test.
+4. p512/n512 single-request speed with warm steady-state repeats.
+5. Route capture after the change to ensure it did not merely change prompt
+   behavior.
+6. Stability soak before any production promotion.
