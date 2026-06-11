@@ -5422,6 +5422,57 @@ Immediate things to try from this result:
    project should move to verifier-preserving MTP/draft speculation or kernel
    work.
 
+## Prefix-Aware Trace Join Tooling
+
+Added prefix-aware request joining to the speculative replay and summary tools.
+The client traces store request IDs such as `chatcmpl-910ade65c5503c90`, while
+the scheduler trace appends an internal suffix such as
+`chatcmpl-910ade65c5503c90-a467094e`. The tools now try exact matches first,
+then one-sided prefix matches, and record the join method.
+
+Updated files:
+
+- `scripts/replay-qwen36-spec-trace.py`
+- `scripts/summarize-qwen36-spec-trace.py`
+- regenerated replay/summary artifacts for the n-gram5/no-bonus state run
+
+Validation:
+
+```bash
+/home/steve/.venvs/vllm-xpu/bin/python -m py_compile \
+  scripts/replay-qwen36-spec-trace.py \
+  scripts/summarize-qwen36-spec-trace.py
+
+/home/steve/.venvs/vllm-xpu/bin/python scripts/replay-qwen36-spec-trace.py \
+  --trace-jsonl data/qwen36-quark-int8-tp4-ngram5-nobonus-state-spec-jsonl-20260611.jsonl \
+  --tokenizer /mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118 \
+  --token-trace-json data/qwen36-quark-int8-tp4-ngram5-nobonus-state-frontdoor-token-trace-20260611.json \
+  --out-json data/qwen36-quark-int8-tp4-ngram5-nobonus-state-spec-replay-20260611.json \
+  --out-md data/qwen36-quark-int8-tp4-ngram5-nobonus-state-spec-replay-20260611.md
+
+/home/steve/.venvs/vllm-xpu/bin/python scripts/summarize-qwen36-spec-trace.py \
+  --trace-jsonl data/qwen36-quark-int8-tp4-ngram5-nobonus-state-spec-jsonl-20260611.jsonl \
+  --quality-json state=data/qwen36-quark-int8-tp4-ngram5-nobonus-state-frontdoor-token-trace-20260611.json \
+  --out-json data/qwen36-quark-int8-tp4-ngram5-nobonus-state-spec-summary-20260611.json \
+  --out-md data/qwen36-quark-int8-tp4-ngram5-nobonus-state-spec-summary-20260611.md
+```
+
+Results:
+
+- replay now reports `joined_requests=3` for the state diagnostic.
+- the bad scheduler request is joined to `long_context_needle
+  (scheduler_prefix)`.
+- summary now reports:
+  - exact matches: `0`
+  - prefix matches: `3`
+  - timestamp-window join possible: `True`
+- old no-bonus fixture compatibility still reports the same `1` suppressed
+  follow-up mismatch when no token-trace artifact is supplied.
+
+This strengthens the state diagnosis: the suppressed `_NEED` -> wrong `!`
+transition is definitively the long-context canary failure, not an inferred
+request mapping.
+
 ## Larger Ideas Added After State-Trace Review
 
 Fresh public signals checked during this pass:

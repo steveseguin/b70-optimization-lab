@@ -8,9 +8,9 @@
 
 | request | rows | drafts | accepted | rejected | suppressed rows | joined token case | follow-up mismatches |
 | --- | ---: | ---: | ---: | ---: | ---: | --- | ---: |
-| `chatcmpl-910ade65c5503c90-a467094e` | 2 | 10 | 5 | 5 | 1 | `` | 1 |
-| `chatcmpl-ace7501683203c95-8b54df50` | 1 | 5 | 5 | 0 | 1 | `` | 0 |
-| `chatcmpl-95cc14d95464d068-bca29e44` | 1 | 5 | 0 | 5 | 0 | `` | 0 |
+| `chatcmpl-910ade65c5503c90-a467094e` | 2 | 10 | 5 | 5 | 1 | `long_context_needle (scheduler_prefix)` | 1 |
+| `chatcmpl-ace7501683203c95-8b54df50` | 1 | 5 | 5 | 0 | 1 | `copy_phrase (scheduler_prefix)` | 0 |
+| `chatcmpl-95cc14d95464d068-bca29e44` | 1 | 5 | 0 | 5 | 0 | `json_schema (scheduler_prefix)` | 0 |
 
 ## Suppressed Follow-Up Mismatches
 

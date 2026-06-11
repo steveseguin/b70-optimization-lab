@@ -230,6 +230,7 @@ def summarize_trace(path: Path) -> dict[str, Any]:
         "top_generated_first_tokens": [
             {"token": key, "count": count} for key, count in generated_heads.most_common(10)
         ],
+        "request_ids": sorted(by_req),
         "top_requests_by_draft": request_summaries[:10],
         "top_requests_by_rejects": sorted(
             request_summaries,
@@ -339,6 +340,22 @@ def summarize_quality_artifact(label: str, path: Path) -> dict[str, Any]:
     data = load_json(path)
     repeat_case = data.get("repeat_case") or {}
     repeat_runs = repeat_case.get("runs") or []
+    token_trace_cases = list(data.get("cases") or [])
+    request_ids = [
+        case.get("request_id") or case.get("response_id")
+        for case in token_trace_cases
+        if case.get("request_id") or case.get("response_id")
+    ]
+    starts = [
+        float(case["request_started_at_unix"])
+        for case in token_trace_cases
+        if case.get("request_started_at_unix") is not None
+    ]
+    finishes = [
+        float(case["request_finished_at_unix"])
+        for case in token_trace_cases
+        if case.get("request_finished_at_unix") is not None
+    ]
     return {
         "label": label,
         "path": str(path),
@@ -350,6 +367,97 @@ def summarize_quality_artifact(label: str, path: Path) -> dict[str, Any]:
         "repeat_unique_hashes": repeat_case.get("unique_hashes"),
         "repeat_repeats": repeat_case.get("repeats") or len(repeat_runs),
         "long_context_pass": (data.get("long_context_case") or {}).get("pass"),
+        "token_trace_cases": len(token_trace_cases),
+        "has_request_ids": len(request_ids) == len(token_trace_cases) and bool(token_trace_cases),
+        "request_ids": request_ids,
+        "has_request_timestamps": (
+            len(starts) == len(token_trace_cases)
+            and len(finishes) == len(token_trace_cases)
+            and bool(token_trace_cases)
+        ),
+        "request_window": (
+            {"start": min(starts), "finish": max(finishes)}
+            if starts and finishes
+            else None
+        ),
+    }
+
+
+def join_stats(
+    trace_ids: list[str], artifact_ids: list[str]
+) -> dict[str, Any]:
+    exact = sorted(set(trace_ids).intersection(artifact_ids))
+    prefix_matches: list[dict[str, str]] = []
+    for trace_id in trace_ids:
+        matches = [
+            artifact_id
+            for artifact_id in artifact_ids
+            if trace_id.startswith(artifact_id + "-")
+            or artifact_id.startswith(trace_id + "-")
+        ]
+        if len(matches) == 1:
+            prefix_matches.append({
+                "trace_id": trace_id,
+                "artifact_id": matches[0],
+            })
+    return {
+        "exact_matches": exact,
+        "prefix_matches": prefix_matches,
+        "exact_match_count": len(exact),
+        "prefix_match_count": len(prefix_matches),
+    }
+
+
+def compute_joinability(
+    traces: list[dict[str, Any]],
+    metric_artifacts: list[dict[str, Any]],
+    quality_artifacts: list[dict[str, Any]],
+) -> dict[str, Any]:
+    trace_ids = sorted({
+        req_id
+        for trace in traces
+        for req_id in trace.get("request_ids", [])
+        if req_id
+    })
+    artifact_ids = sorted({
+        req_id
+        for artifact in [*metric_artifacts, *quality_artifacts]
+        for req_id in artifact.get("request_ids", [])
+        if req_id
+    })
+    stats = join_stats(trace_ids, artifact_ids)
+    timestamp_window_join_possible = any(
+        item.get("has_request_timestamps") for item in [*metric_artifacts, *quality_artifacts]
+    )
+    request_id_join_possible = bool(stats["exact_match_count"] or stats["prefix_match_count"])
+    if stats["exact_match_count"]:
+        note = "Trace rows can be joined to artifacts by exact request id."
+    elif stats["prefix_match_count"]:
+        note = (
+            "Trace rows can be joined to artifacts by request-id prefix; "
+            "scheduler ids append an internal suffix."
+        )
+    elif artifact_ids:
+        note = (
+            "Artifacts store request ids, but no trace request ids matched. "
+            "Check whether the trace and artifact came from the same run."
+        )
+    else:
+        note = (
+            "Artifacts do not store request ids. Re-run metrics with current "
+            "scripts before attributing trace rows to exact prompts."
+        )
+    return {
+        "request_id_join_possible": request_id_join_possible,
+        "exact_request_id_join_possible": bool(stats["exact_match_count"]),
+        "prefix_request_id_join_possible": bool(stats["prefix_match_count"]),
+        "timestamp_window_join_possible": timestamp_window_join_possible,
+        "trace_request_count": len(trace_ids),
+        "artifact_request_count": len(artifact_ids),
+        "exact_match_count": stats["exact_match_count"],
+        "prefix_match_count": stats["prefix_match_count"],
+        "prefix_matches": stats["prefix_matches"],
+        "note": note,
     }
 
 
@@ -494,6 +602,8 @@ def render_markdown(summary: dict[str, Any]) -> str:
             "## Joinability",
             "",
             f"- exact request-id join possible: `{summary['joinability']['request_id_join_possible']}`",
+            f"- exact request-id matches: `{summary['joinability']['exact_match_count']}`",
+            f"- prefix request-id matches: `{summary['joinability']['prefix_match_count']}`",
             f"- timestamp-window join possible: `{summary['joinability']['timestamp_window_join_possible']}`",
             f"- note: {summary['joinability']['note']}",
             "",
@@ -520,29 +630,14 @@ def main() -> int:
         summarize_quality_artifact(label, path)
         for label, path in (parse_label_path(value) for value in args.quality_json)
     ]
-    request_id_join_possible = any(item.get("has_request_ids") for item in metric_artifacts)
-    timestamp_window_join_possible = any(
-        item.get("has_request_timestamps") for item in metric_artifacts
-    )
-    join_note = (
-        "At least one metric artifact stores request ids; trace rows can be joined by req_id."
-        if request_id_join_possible
-        else (
-            "Metric artifacts do not store request ids. Re-run prompt-class metrics "
-            "with the current benchmark script before attributing trace rows to exact prompts."
-        )
-    )
+    joinability = compute_joinability(traces, metric_artifacts, quality_artifacts)
 
     summary = {
         "traces": traces,
         "metric_artifacts": metric_artifacts,
         "metric_comparisons": compare_metric_pairs(metric_artifacts),
         "quality_artifacts": quality_artifacts,
-        "joinability": {
-            "request_id_join_possible": request_id_join_possible,
-            "timestamp_window_join_possible": timestamp_window_join_possible,
-            "note": join_note,
-        },
+        "joinability": joinability,
     }
 
     out_json = Path(args.out_json)

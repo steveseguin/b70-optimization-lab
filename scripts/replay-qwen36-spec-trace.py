@@ -127,12 +127,52 @@ def load_token_cases(paths: list[Path]) -> dict[str, dict[str, Any]]:
     return cases_by_request
 
 
+def resolve_token_case(
+    req_id: str, cases_by_request: dict[str, dict[str, Any]]
+) -> dict[str, Any] | None:
+    if req_id in cases_by_request:
+        return {
+            "join_method": "exact",
+            "matched_request_id": req_id,
+            "case": cases_by_request[req_id],
+        }
+
+    prefix_matches = [
+        (case_req_id, case)
+        for case_req_id, case in cases_by_request.items()
+        if req_id.startswith(case_req_id + "-")
+    ]
+    if len(prefix_matches) == 1:
+        case_req_id, case = prefix_matches[0]
+        return {
+            "join_method": "scheduler_prefix",
+            "matched_request_id": case_req_id,
+            "case": case,
+        }
+
+    reverse_prefix_matches = [
+        (case_req_id, case)
+        for case_req_id, case in cases_by_request.items()
+        if case_req_id.startswith(req_id + "-")
+    ]
+    if len(reverse_prefix_matches) == 1:
+        case_req_id, case = reverse_prefix_matches[0]
+        return {
+            "join_method": "client_prefix",
+            "matched_request_id": case_req_id,
+            "case": case,
+        }
+
+    return None
+
+
 def summarize_request(
     req_id: str,
     rows: list[dict[str, Any]],
     tokenizer: Any | None,
-    token_case: dict[str, Any] | None,
+    token_case_match: dict[str, Any] | None,
 ) -> dict[str, Any]:
+    token_case = token_case_match.get("case") if token_case_match else None
     emitted_sequence: list[int] = []
     generated_sequence: list[int] = []
     suppressed_sequence: list[int] = []
@@ -227,6 +267,12 @@ def summarize_request(
             if item.get("next_replays_suppressed_bonus") is False
         ],
         "token_trace_case": token_case,
+        "token_trace_join_method": (
+            token_case_match.get("join_method") if token_case_match else None
+        ),
+        "token_trace_matched_request_id": (
+            token_case_match.get("matched_request_id") if token_case_match else None
+        ),
         "traced_emitted_is_token_trace_prefix": traced_emitted_is_prefix,
         "row_summaries": row_summaries,
     }
@@ -250,6 +296,9 @@ def render_markdown(summary: dict[str, Any]) -> str:
         case_label = case.get("name") or ""
         if case.get("repeat_idx") is not None:
             case_label += f"[{case['repeat_idx']}]"
+        join_method = item.get("token_trace_join_method") or ""
+        if join_method:
+            case_label = f"{case_label} ({join_method})"
         lines.append(
             f"| `{item['req_id']}` | {item['rows']} | {item['draft_tokens']} | "
             f"{item['accepted']} | {item['rejected']} | {item['suppressed_bonus_rows']} | "
@@ -323,7 +372,7 @@ def main() -> int:
 
     token_cases = load_token_cases(args.token_trace_json)
     request_summaries = [
-        summarize_request(req_id, req_rows, tokenizer, token_cases.get(req_id))
+        summarize_request(req_id, req_rows, tokenizer, resolve_token_case(req_id, token_cases))
         for req_id, req_rows in by_req.items()
     ]
     request_summaries.sort(

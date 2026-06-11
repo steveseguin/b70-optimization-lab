@@ -22,6 +22,8 @@
 
 ## Joinability
 
-- exact request-id join possible: `False`
-- timestamp-window join possible: `False`
-- note: Metric artifacts do not store request ids. Re-run prompt-class metrics with the current benchmark script before attributing trace rows to exact prompts.
+- exact request-id join possible: `True`
+- exact request-id matches: `0`
+- prefix request-id matches: `3`
+- timestamp-window join possible: `True`
+- note: Trace rows can be joined to artifacts by request-id prefix; scheduler ids append an internal suffix.
