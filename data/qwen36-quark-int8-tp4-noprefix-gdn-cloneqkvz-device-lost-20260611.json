@@ -1,0 +1,64 @@
+{
+  "date_local": "2026-06-10",
+  "candidate": "VLLM_XPU_GDN_REUSE_QKVZ_BA_QUANT=clone-qkvz",
+  "decision": "reject_stability",
+  "reason": "The endpoint completed startup and graph capture, but the first frontdoor chat smoke triggered UR_RESULT_ERROR_DEVICE_LOST on the first scheduled request before any speed benchmark could run.",
+  "runtime": {
+    "model": "nameistoken/Qwen3.6-35B-A3B-Quark-W8A8-INT8",
+    "served_model_name": "qwen36-35b-a3b-fp8",
+    "tensor_parallel_size": 4,
+    "context_tokens": 32768,
+    "prefix_caching": false,
+    "dtype": "bfloat16",
+    "quantization": "quark",
+    "xpu_graph": "PIECEWISE"
+  },
+  "candidate_launch": {
+    "session": "qwen36-tp4-gdn-reusequant-cloneqkvz-32k",
+    "log": "/tmp/qwen36-quark-int8-tp4-gdn-reuseqkvzbaquant-cloneqkvz-32k-noprefix-20260611.log",
+    "cache_root": "/mnt/fast-ai/vllm-cache-exp/qwen36-35b-a3b-quark-int8-tp4-piecewise-graph-gdn-reuseqkvzbaquant-cloneqkvz-32k-noprefix",
+    "env": {
+      "VLLM_XPU_GDN_REUSE_QKVZ_BA_QUANT": "clone-qkvz",
+      "VLLM_XPU_DEDUP_INT8_QUANT": "unset"
+    }
+  },
+  "startup_observations": {
+    "model_load_memory_gib": 8.58,
+    "available_kv_cache_memory_gib": 20.67,
+    "max_32768_token_concurrency": 62.65,
+    "graph_capture_seconds": 13,
+    "init_engine_seconds": 80.40,
+    "fastapi_started": true
+  },
+  "failure": {
+    "trigger": "frontdoor /v1/chat/completions exact OK smoke",
+    "frontdoor_http_status": 500,
+    "frontdoor_error": "backend request failed / ConnectionRefusedError after backend shutdown",
+    "backend_error": "RuntimeError: level_zero backend failed with error: 20 (UR_RESULT_ERROR_DEVICE_LOST)",
+    "first_backend_stack_location": "vllm/v1/worker/block_table.py commit_block_table -> copy_to_gpu",
+    "scheduled_prompt_tokens": 17,
+    "scheduled_max_tokens": 8,
+    "speed_benchmark_ran": false,
+    "quality_suite_ran": false
+  },
+  "device_check_after_failure": {
+    "xpu_smi_discovery_b70_count": 4,
+    "torch_xpu_available": true,
+    "torch_xpu_device_count": 4
+  },
+  "accepted_restore": {
+    "session": "qwen36-tp4-gdn-reusequant-clone-envclean-32k",
+    "log": "/tmp/qwen36-quark-int8-tp4-gdn-reuseqkvzbaquant-clone-envclean-32k-noprefix-restore-after-cloneqkvz-20260611.log",
+    "env": {
+      "VLLM_XPU_GDN_REUSE_QKVZ_BA_QUANT": "clone",
+      "VLLM_XPU_DEDUP_INT8_QUANT": "unset"
+    },
+    "available_kv_cache_memory_gib": 20.67,
+    "max_32768_token_concurrency": 62.65,
+    "graph_capture_seconds": 12,
+    "init_engine_seconds": 19.26,
+    "health": "pass",
+    "frontdoor_exact_ok_smoke": "pass",
+    "post_restore_error_scan": "no UR_RESULT_ERROR_DEVICE_LOST, Traceback, RuntimeError, or ERROR entries"
+  }
+}

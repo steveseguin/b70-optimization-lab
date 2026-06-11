@@ -120,6 +120,50 @@ Decision: reject at the speed gate. The result is close, but it is below the
 accepted clone control and below the stronger later restore reference. No full
 quality suite was run because the candidate did not produce a speed win.
 
+## Candidate 3: GDN Clone-QKVZ
+
+Runtime:
+
+- session: `qwen36-tp4-gdn-reusequant-cloneqkvz-32k`
+- cache root:
+  `/mnt/fast-ai/vllm-cache-exp/qwen36-35b-a3b-quark-int8-tp4-piecewise-graph-gdn-reuseqkvzbaquant-cloneqkvz-32k-noprefix`
+- log:
+  `/tmp/qwen36-quark-int8-tp4-gdn-reuseqkvzbaquant-cloneqkvz-32k-noprefix-20260611.log`
+- env:
+  `VLLM_XPU_GDN_REUSE_QKVZ_BA_QUANT=clone-qkvz`
+- `VLLM_XPU_DEDUP_INT8_QUANT` unset
+
+This was the mirror image of clone-BA: clone only the `qkvz` quantized
+activation and scale, while passing the original quant outputs to `ba`.
+
+Startup was normal:
+
+- model load memory: `8.58 GiB`
+- available KV cache memory: `20.67 GiB`
+- 32K maximum concurrency: `62.65x`
+- graph capture: `13 sec`
+- FastAPI startup: pass
+
+The first real frontdoor chat smoke then failed with HTTP `500`. The backend
+log showed `UR_RESULT_ERROR_DEVICE_LOST` on the first scheduled request, before
+any speed benchmark could run. The first stack pointed at block-table host to
+device copy:
+
+- `vllm/v1/worker/block_table.py commit_block_table -> copy_to_gpu`
+- scheduled prompt tokens: `17`
+- scheduled max output tokens: `8`
+
+The candidate was killed, all four B70s still enumerated through `xpu-smi` and
+`torch.xpu`, and the accepted `clone` runtime was restored.
+
+Artifact:
+
+- `data/qwen36-quark-int8-tp4-noprefix-gdn-cloneqkvz-device-lost-20260611.json`
+
+Decision: reject as a stability failure. Do not benchmark or quality-sweep this
+mode unless the first-request device loss can be reproduced and fixed in an
+isolated graph/cache run.
+
 ## Restore
 
 After both rejected screens, the accepted backend was restored:
@@ -150,12 +194,24 @@ Restore sanity artifact:
 
 - `data/qwen36-quark-int8-tp4-noprefix-restore-after-dedupclone-cloneba-short-quality-20260611.json`
 
+After the later clone-QKVZ stability rejection, the accepted backend was
+restored again:
+
+- session: `qwen36-tp4-gdn-reusequant-clone-envclean-32k`
+- log:
+  `/tmp/qwen36-quark-int8-tp4-gdn-reuseqkvzbaquant-clone-envclean-32k-noprefix-restore-after-cloneqkvz-20260611.log`
+- graph capture: `12 sec`
+- FastAPI startup: pass
+- frontdoor generation smoke: exact `OK`
+- error scan: no `UR_RESULT_ERROR_DEVICE_LOST`, traceback, runtime error, or
+  error entries
+
 ## Next
 
 Do not spend more time on generic duplicate-quant elimination for this exact
 lowered graph shape unless a graph dump shows true duplicate quant consumers.
-Do not promote `clone-ba`; the existing full `clone` mode remains the safer
-accepted GDN quant-reuse recipe.
+Do not promote `clone-ba` or `clone-qkvz`; the existing full `clone` mode
+remains the safer accepted GDN quant-reuse recipe.
 
 Next quality-preserving speed work should target actual hot boundaries:
 
