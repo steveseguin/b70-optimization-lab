@@ -64,6 +64,119 @@ def make_text_prompt(tokenizer: Any, target_tokens: int) -> str:
     return tokenizer.decode(ids, skip_special_tokens=True)
 
 
+def fit_prompt_to_tokens(
+    tokenizer: Any,
+    *,
+    prefix: str,
+    filler: str,
+    suffix: str,
+    target_tokens: int,
+) -> str:
+    prefix_ids = tokenizer.encode(prefix, add_special_tokens=False)
+    suffix_ids = tokenizer.encode(suffix, add_special_tokens=False)
+    filler_ids = tokenizer.encode(filler, add_special_tokens=False)
+    if not filler_ids:
+        raise ValueError("filler produced no tokens")
+
+    body_budget = max(0, target_tokens - len(prefix_ids) - len(suffix_ids))
+    body_ids = (filler_ids * ((body_budget + len(filler_ids) - 1) // len(filler_ids)))[:body_budget]
+    ids = prefix_ids + body_ids + suffix_ids
+    if len(ids) > target_tokens:
+        ids = ids[:target_tokens]
+    return tokenizer.decode(ids, skip_special_tokens=True)
+
+
+def make_preset_prompt(tokenizer: Any, preset: str, target_tokens: int) -> str:
+    if preset == "natural-chat":
+        return fit_prompt_to_tokens(
+            tokenizer,
+            prefix=(
+                "You are helping tune an Intel XPU inference server. "
+                "Write a concise engineering analysis with concrete next steps.\n\n"
+            ),
+            filler=(
+                "Recent observations include stable baseline decoding, prompt-sensitive "
+                "speculative acceptance, graph capture bucket sensitivity, and the need "
+                "to preserve exact output quality while improving single-request speed. "
+            ),
+            suffix=(
+                "\n\nQuestion: summarize the likely bottlenecks and propose an ordered "
+                "plan. Keep the answer technical and avoid marketing language. Write at "
+                "least eight dense numbered paragraphs.\n"
+            ),
+            target_tokens=target_tokens,
+        )
+    if preset == "code":
+        return fit_prompt_to_tokens(
+            tokenizer,
+            prefix=(
+                "Review the following Python service code for latency bugs and reliability "
+                "risks. Return specific findings first, then a short patch plan.\n\n"
+            ),
+            filler=(
+                "def handle_request(req, backend):\n"
+                "    start = time.perf_counter()\n"
+                "    payload = normalize(req.json())\n"
+                "    if payload.get('stream'):\n"
+                "        for chunk in backend.generate(payload):\n"
+                "            metrics.observe(time.perf_counter() - start)\n"
+                "            yield encode_sse(chunk)\n"
+                "    else:\n"
+                "        result = backend.generate_once(payload)\n"
+                "        metrics.observe(time.perf_counter() - start)\n"
+                "        return result\n\n"
+            ),
+            suffix=(
+                "\nFocus on request lifecycle overhead, streaming behavior, metrics "
+                "placement, and failure handling. Do not rewrite unrelated code. Provide "
+                "at least ten concrete findings and a detailed patch plan.\n"
+            ),
+            target_tokens=target_tokens,
+        )
+    if preset == "structured":
+        return fit_prompt_to_tokens(
+            tokenizer,
+            prefix=(
+                "Create compact JSON only. The JSON must contain keys summary, "
+                "risks, experiments, and production_gate.\n\n"
+            ),
+            filler=(
+                "Input note: n-gram speculation can improve repeated continuations but "
+                "must be disabled if repeat canaries or structured-output hashes diverge. "
+            ),
+            suffix=(
+                "\nReturn one valid JSON object. Include at least twelve experiment "
+                "objects, each with name, expected_effect, risk, and quality_gate. Do "
+                "not include markdown fences or prose.\n"
+            ),
+            target_tokens=target_tokens,
+        )
+    if preset == "math-reasoning":
+        return fit_prompt_to_tokens(
+            tokenizer,
+            prefix=(
+                "Solve the operational planning problem. Explain the calculation briefly, "
+                "then give the final number.\n\n"
+            ),
+            filler=(
+                "A server processes 48 independent client sessions. Each session reserves "
+                "a 32K token cache window, but the active decode stream uses only one "
+                "request at a time. Measurements should distinguish prefill, decode, "
+                "and total throughput. "
+            ),
+            suffix=(
+                "\nIf decode throughput is 99 tokens/s baseline and a candidate reports "
+                "105 tokens/s, what is the percentage increase? Answer with the formula "
+                "and the percentage, then discuss why that gain is not enough for a "
+                "200 tokens/s target. Include a compact table of follow-up experiments.\n"
+            ),
+            target_tokens=target_tokens,
+        )
+    if preset == "repetitive":
+        return make_text_prompt(tokenizer, target_tokens)
+    raise ValueError(f"unknown prompt preset: {preset}")
+
+
 def make_vllm_random_prompt(
     tokenizer: Any,
     target_tokens: int,
@@ -95,13 +208,19 @@ def make_prompt(
     tokenizer: Any,
     *,
     prompt_kind: str,
+    prompt_preset: str,
+    prompt_file: str | None,
     target_tokens: int,
     output_tokens: int,
     seed: int,
     random_prefix_len: int,
 ) -> str:
+    if prompt_file:
+        return Path(prompt_file).read_text()
     if prompt_kind == "text":
         return make_text_prompt(tokenizer, target_tokens)
+    if prompt_kind == "preset":
+        return make_preset_prompt(tokenizer, prompt_preset, target_tokens)
     if prompt_kind == "vllm-random":
         return make_vllm_random_prompt(
             tokenizer,
@@ -148,6 +267,7 @@ def request_completion(
     max_tokens: int,
     *,
     stream: bool,
+    seed: int,
 ) -> dict[str, Any]:
     payload = {
         "model": model,
@@ -155,6 +275,7 @@ def request_completion(
         "max_tokens": max_tokens,
         "temperature": 0,
         "stream": stream,
+        "seed": seed,
     }
     if stream:
         payload["stream_options"] = {"include_usage": True}
@@ -170,6 +291,7 @@ def request_completion(
     first = None
     first_chunk_text = ""
     streamed_text_chunks = 0
+    request_id = None
     with urllib.request.urlopen(req, timeout=max(120, max_tokens * 5)) as resp:
         if not stream:
             data = json.loads(resp.read())
@@ -178,6 +300,7 @@ def request_completion(
             chunks.append(text or "")
             usage = data.get("usage")
             return {
+                "request_id": data.get("id"),
                 "text": "".join(chunks),
                 "usage": usage,
                 "elapsed_s": time.perf_counter() - t0,
@@ -194,6 +317,8 @@ def request_completion(
             if data == "[DONE]":
                 break
             event = json.loads(data)
+            if event.get("id"):
+                request_id = event["id"]
             if event.get("usage"):
                 usage = event["usage"]
             choices = event.get("choices") or []
@@ -207,6 +332,7 @@ def request_completion(
                 chunks.append(text)
     t1 = time.perf_counter()
     return {
+        "request_id": request_id,
         "text": "".join(chunks),
         "usage": usage,
         "elapsed_s": t1 - t0,
@@ -215,6 +341,106 @@ def request_completion(
         "first_chunk_text": first_chunk_text,
         "streamed_text_chunks": streamed_text_chunks,
     }
+
+
+def request_chat_completion(
+    base_url: str,
+    model: str,
+    prompt: str,
+    max_tokens: int,
+    *,
+    stream: bool,
+    seed: int,
+) -> dict[str, Any]:
+    payload = {
+        "model": model,
+        "messages": [{"role": "user", "content": prompt}],
+        "max_tokens": max_tokens,
+        "temperature": 0,
+        "stream": stream,
+        "seed": seed,
+    }
+    if stream:
+        payload["stream_options"] = {"include_usage": True}
+    req = urllib.request.Request(
+        f"{base_url.rstrip('/')}/v1/chat/completions",
+        data=json.dumps(payload).encode("utf-8"),
+        headers={"Content-Type": "application/json"},
+        method="POST",
+    )
+    chunks: list[str] = []
+    usage = None
+    t0 = time.perf_counter()
+    first = None
+    first_chunk_text = ""
+    streamed_text_chunks = 0
+    request_id = None
+    with urllib.request.urlopen(req, timeout=max(120, max_tokens * 5)) as resp:
+        if not stream:
+            data = json.loads(resp.read())
+            choices = data.get("choices") or []
+            message = choices[0].get("message") if choices else {}
+            text = (message or {}).get("content") or ""
+            chunks.append(text)
+            usage = data.get("usage")
+            return {
+                "request_id": data.get("id"),
+                "text": "".join(chunks),
+                "usage": usage,
+                "elapsed_s": time.perf_counter() - t0,
+                "ttft_s": None,
+                "generation_wall_s_after_first_chunk": None,
+                "first_chunk_text": "",
+                "streamed_text_chunks": None,
+            }
+        for raw in resp:
+            line = raw.decode("utf-8", errors="replace").strip()
+            if not line.startswith("data: "):
+                continue
+            data = line[6:]
+            if data == "[DONE]":
+                break
+            event = json.loads(data)
+            if event.get("id"):
+                request_id = event["id"]
+            if event.get("usage"):
+                usage = event["usage"]
+            choices = event.get("choices") or []
+            if choices:
+                delta = choices[0].get("delta") or {}
+                text = delta.get("content") or ""
+                if text and first is None:
+                    first = time.perf_counter()
+                    first_chunk_text = text
+                if text:
+                    streamed_text_chunks += 1
+                chunks.append(text)
+    t1 = time.perf_counter()
+    return {
+        "request_id": request_id,
+        "text": "".join(chunks),
+        "usage": usage,
+        "elapsed_s": t1 - t0,
+        "ttft_s": None if first is None else first - t0,
+        "generation_wall_s_after_first_chunk": None if first is None else t1 - first,
+        "first_chunk_text": first_chunk_text,
+        "streamed_text_chunks": streamed_text_chunks,
+    }
+
+
+def count_prompt_tokens(tokenizer: Any, prompt: str, endpoint: str) -> int:
+    if endpoint == "chat":
+        try:
+            return len(
+                tokenizer.apply_chat_template(
+                    [{"role": "user", "content": prompt}],
+                    add_generation_prompt=True,
+                    tokenize=True,
+                )
+            )
+        except Exception:
+            pass
+    return len(tokenizer.encode(prompt, add_special_tokens=False))
 
 
 def summarize_repeats(records: list[dict[str, Any]]) -> dict[str, Any]:
@@ -252,14 +478,31 @@ def main() -> int:
     parser.add_argument("--output-tokens", type=int, default=1536)
     parser.add_argument(
         "--prompt-kind",
-        choices=["text", "vllm-random"],
+        choices=["text", "preset", "vllm-random"],
         default="text",
         help="Prompt generator to use. vllm-random matches vLLM's random throughput dataset.",
+    )
+    parser.add_argument(
+        "--prompt-preset",
+        choices=["repetitive", "natural-chat", "code", "structured", "math-reasoning"],
+        default="repetitive",
+        help="Prompt preset used with --prompt-kind preset.",
+    )
+    parser.add_argument(
+        "--prompt-file",
+        default=None,
+        help="Use the exact contents of this file as the prompt, bypassing prompt generation.",
     )
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--random-prefix-len", type=int, default=0)
     parser.add_argument("--repeats", type=int, default=1)
     parser.add_argument("--warmup-output-tokens", type=int, default=32)
+    parser.add_argument(
+        "--endpoint",
+        choices=["completions", "chat"],
+        default="completions",
+        help="OpenAI-compatible endpoint to benchmark.",
+    )
     parser.add_argument(
         "--mode",
         choices=["stream", "nonstream"],
@@ -271,6 +514,11 @@ def main() -> int:
         action="store_true",
         help="Skip xpu-smi VRAM sampling. Useful for tight profiling when xpu-smi dump is slow or wedged.",
     )
+    parser.add_argument(
+        "--include-full-text",
+        action="store_true",
+        help="Store the full generated text for output parity comparisons.",
+    )
     parser.add_argument("--out", required=True)
     args = parser.parse_args()
 
@@ -280,20 +528,24 @@ def main() -> int:
     prompt = make_prompt(
         tokenizer,
         prompt_kind=args.prompt_kind,
+        prompt_preset=args.prompt_preset,
+        prompt_file=args.prompt_file,
         target_tokens=args.prompt_tokens,
         output_tokens=args.output_tokens,
         seed=args.seed,
         random_prefix_len=args.random_prefix_len,
     )
-    prompt_tokens = len(tokenizer.encode(prompt, add_special_tokens=False))
+    prompt_tokens = count_prompt_tokens(tokenizer, prompt, args.endpoint)
 
     if args.warmup_output_tokens > 0:
-        request_completion(
+        request_fn = request_chat_completion if args.endpoint == "chat" else request_completion
+        request_fn(
             args.base_url,
             model,
             prompt,
             args.warmup_output_tokens,
             stream=args.mode == "stream",
+            seed=args.seed - 1,
         )
 
     records: list[dict[str, Any]] = []
@@ -302,12 +554,14 @@ def main() -> int:
     for i in range(args.repeats):
         metrics_before = parse_metric_sums(get_text(f"{args.base_url.rstrip('/')}/metrics"))
         vram_pre = {} if args.skip_vram else xpu_vram_mib()
-        result = request_completion(
+        request_fn = request_chat_completion if args.endpoint == "chat" else request_completion
+        result = request_fn(
             args.base_url,
             model,
             prompt,
             args.output_tokens,
             stream=args.mode == "stream",
+            seed=args.seed,
         )
         vram_post = {} if args.skip_vram else xpu_vram_mib()
         metrics_after = parse_metric_sums(get_text(f"{args.base_url.rstrip('/')}/metrics"))
@@ -317,6 +571,11 @@ def main() -> int:
             int(result["usage"]["completion_tokens"])
             if result.get("usage") and result["usage"].get("completion_tokens") is not None
             else len(tokenizer.encode(text, add_special_tokens=False))
+        )
+        record_prompt_tokens = (
+            int(result["usage"]["prompt_tokens"])
+            if result.get("usage") and result["usage"].get("prompt_tokens") is not None
+            else prompt_tokens
         )
         elapsed = float(result["elapsed_s"])
         after_first = result["generation_wall_s_after_first_chunk"]
@@ -341,10 +600,11 @@ def main() -> int:
                 if key not in peak_vram or value > peak_vram[key]:
                     peak_vram[key] = value
 
-        records.append(
-            {
+        record = {
                 "repeat": i + 1,
-                "prompt_tokens_client": prompt_tokens,
+                "request_id": result.get("request_id"),
+                "prompt_tokens_client": record_prompt_tokens,
+                "prompt_tokens_estimated_before_request": prompt_tokens,
                 "output_tokens_client": output_tokens,
                 "elapsed_s_client": elapsed,
                 "ttft_ms_client": None if ttft_s is None else ttft_s * 1000,
@@ -355,10 +615,10 @@ def main() -> int:
                 if not after_first or after_first <= 0
                 else max(0, output_tokens - first_chunk_tokens) / after_first,
                 "tok_s_out_client_e2e": output_tokens / elapsed,
-                "tok_s_total_client": (prompt_tokens + output_tokens) / elapsed,
+                "tok_s_total_client": (record_prompt_tokens + output_tokens) / elapsed,
                 "tok_s_prefill_lower_bound_from_ttft": None
                 if not ttft_s or ttft_s <= 0
-                else prompt_tokens / ttft_s,
+                else record_prompt_tokens / ttft_s,
                 "vllm_metric_deltas": {
                     "prompt_tokens": prompt_delta,
                     "generation_tokens": gen_delta,
@@ -376,8 +636,10 @@ def main() -> int:
                 "first_chunk_tokens_client_estimate": first_chunk_tokens,
                 "streamed_text_chunks": result.get("streamed_text_chunks"),
                 "text_preview": text[:240],
-            }
-        )
+        }
+        if args.include_full_text:
+            record["text"] = text
+        records.append(record)
 
     artifact = {
         "created_at_unix": time.time(),
@@ -386,6 +648,9 @@ def main() -> int:
         "tokenizer": args.tokenizer,
         "server_model_record": models["data"][0],
         "prompt_kind": args.prompt_kind,
+        "prompt_preset": args.prompt_preset,
+        "prompt_file": args.prompt_file,
+        "endpoint": args.endpoint,
         "seed": args.seed,
         "random_prefix_len": args.random_prefix_len,
         "prompt_tokens_requested": args.prompt_tokens,

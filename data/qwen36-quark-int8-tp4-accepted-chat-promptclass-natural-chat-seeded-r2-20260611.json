@@ -1,0 +1,161 @@
+{
+  "created_at_unix": 1781161894.2105892,
+  "base_url": "http://127.0.0.1:8000",
+  "model": "qwen36-35b-a3b-fp8",
+  "tokenizer": "/mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118",
+  "server_model_record": {
+    "id": "qwen36-35b-a3b-fp8",
+    "object": "model",
+    "created": 1781161871,
+    "owned_by": "vllm",
+    "root": "/mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118",
+    "parent": null,
+    "max_model_len": 32768,
+    "permission": [
+      {
+        "id": "modelperm-9a49c536daa78ff0",
+        "object": "model_permission",
+        "created": 1781161871,
+        "allow_create_engine": false,
+        "allow_sampling": true,
+        "allow_logprobs": true,
+        "allow_search_indices": false,
+        "allow_view": true,
+        "allow_fine_tuning": false,
+        "organization": "*",
+        "group": null,
+        "is_blocking": false
+      }
+    ]
+  },
+  "prompt_kind": "preset",
+  "prompt_preset": "natural-chat",
+  "prompt_file": null,
+  "endpoint": "chat",
+  "seed": 20260611,
+  "random_prefix_len": 0,
+  "prompt_tokens_requested": 512,
+  "prompt_tokens_actual": 2,
+  "output_tokens_requested": 512,
+  "mode": "stream",
+  "skip_vram": true,
+  "repeats": 2,
+  "measurement_notes": [
+    "TTFT and e2e are measured both client-side and from vLLM Prometheus histogram deltas.",
+    "tok_s_prefill_lower_bound_from_ttft is prompt_tokens / TTFT, so it is conservative and includes first-token scheduling/decode overhead.",
+    "tok_s_out_client_after_first_chunk is generated-token-only throughput after the first streamed text chunk.",
+    "tok_s_out_client_after_first_chunk_corrected subtracts the estimated first streamed chunk tokens from the numerator; this is more stable when --stream-interval > 1."
+  ],
+  "vram_mib_before_all": {},
+  "peak_vram_mib_observed": {},
+  "records": [
+    {
+      "repeat": 1,
+      "prompt_tokens_client": 509,
+      "prompt_tokens_estimated_before_request": 2,
+      "output_tokens_client": 512,
+      "elapsed_s_client": 5.2063056390034035,
+      "ttft_ms_client": 79.98054707422853,
+      "tok_s_out_client_after_first_chunk": 99.87661547374097,
+      "tok_s_out_client_after_first_chunk_corrected": 99.68154395914381,
+      "tok_s_out_client_e2e": 98.34228635451521,
+      "tok_s_total_client": 196.10834837492195,
+      "tok_s_prefill_lower_bound_from_ttft": 6364.0474917933,
+      "vllm_metric_deltas": {
+        "prompt_tokens": 509.0,
+        "generation_tokens": 512.0,
+        "ttft_count": 1.0,
+        "ttft_sum_s": 0.07772207260131836,
+        "e2e_count": 1.0,
+        "e2e_sum_s": 5.204252243041992
+      },
+      "ttft_ms_vllm_metrics": 77.72207260131836,
+      "e2e_ms_vllm_metrics": 5204.252243041992,
+      "vram_mib_before": {},
+      "vram_mib_after": {},
+      "first_chunk_tokens_client_estimate": 1,
+      "streamed_text_chunks": 512,
+      "text_preview": "1. The stability of the baseline decoding indicates that the core kernel execution and memory bandwidth utilization are functioning within expected parameters, suggesting that the primary bottleneck is not in the fundamental compute through",
+      "text": "1. The stability of the baseline decoding indicates that the core kernel execution and memory bandwidth utilization are functioning within expected parameters, suggesting that the primary bottleneck is not in the fundamental compute throughput but rather in the overhead associated with dynamic graph construction and kernel launch latency. Since the baseline is stable, we can rule out gross hardware failures or severe driver instability, allowing us to focus optimization efforts on the inference pipeline's structural inefficiencies, specifically where the overhead of managing variable-length sequences and speculative execution branches introduces non-deterministic latency spikes that degrade single-request speed.\n\n2. Prompt-sensitive speculative acceptance reveals a critical dependency on the quality of the draft model and the alignment between the draft and target models, indicating that the current speculative decoding strategy may be suffering from high rejection rates or excessive synchronization overhead when handling diverse prompt structures. This sensitivity suggests that the speculative engine is not efficiently amortizing the cost of generating draft tokens across different input distributions, leading to variable performance gains that are inconsistent and potentially negated by the latency of verifying speculative tokens against the larger target model, which requires precise tuning of the speculative window size and acceptance threshold based on prompt complexity.\n\n3. Graph capture bucket sensitivity highlights a significant inefficiency in the static compilation phase of the inference engine, where the current bucketing strategy fails to adequately cover the range of sequence lengths and batch sizes encountered in production, leading to frequent graph recompilation or fallback to slower, unoptimized execution paths. This sensitivity implies that the static graph captures are either too granular, causing excessive memory usage and compilation time, or too coarse, resulting in suboptimal kernel selection for specific input shapes, necessitating a re-evaluation of the bucket boundaries to ensure that the most frequent sequence length distributions are captured with high-performance kernels while minimizing the overhead of managing a large number of distinct graph states.\n\n4. The requirement to preserve exact output quality while improving single-request speed imposes a strict constraint on any optimization strategy, effectively ruling out approximate inference techniques such as quantization-aware training adjustments, speculative decoding with relaxed acceptance criteria, or any form of stochastic sampling that could alter the deterministic nature of the output. This constraint forces the optimization focus onto reducing computational waste and latency without changing the mathematical operations performed, meaning that improvements must come from better memory access patterns, reduced kernel launch overhead, and more efficient scheduling of speculative tokens rather than from altering the model's computational graph or precision.\n\n5. To address the graph capture bucket sensitivity, the immediate next step is to implement a dynamic bucketing mechanism that adapts to the observed distribution of input sequence"
+    },
+    {
+      "repeat": 2,
+      "prompt_tokens_client": 509,
+      "prompt_tokens_estimated_before_request": 2,
+      "output_tokens_client": 512,
+      "elapsed_s_client": 5.217341612908058,
+      "ttft_ms_client": 81.22743899002671,
+      "tok_s_out_client_after_first_chunk": 99.68625748236164,
+      "tok_s_out_client_after_first_chunk_corrected": 99.4915577607164,
+      "tok_s_out_client_e2e": 98.13426798300445,
+      "tok_s_total_client": 195.69353048954596,
+      "tok_s_prefill_lower_bound_from_ttft": 6266.355388386628,
+      "vllm_metric_deltas": {
+        "prompt_tokens": 509.0,
+        "generation_tokens": 512.0,
+        "ttft_count": 1.0,
+        "ttft_sum_s": 0.07931971549987793,
+        "e2e_count": 1.0,
+        "e2e_sum_s": 5.215425491333008
+      },
+      "ttft_ms_vllm_metrics": 79.31971549987793,
+      "e2e_ms_vllm_metrics": 5215.425491333008,
+      "vram_mib_before": {},
+      "vram_mib_after": {},
+      "first_chunk_tokens_client_estimate": 1,
+      "streamed_text_chunks": 512,
+      "text_preview": "1. The stability of the baseline decoding indicates that the core kernel execution and memory bandwidth utilization are functioning within expected parameters, suggesting that the primary bottleneck is not in the fundamental compute through",
+      "text": "1. The stability of the baseline decoding indicates that the core kernel execution and memory bandwidth utilization are functioning within expected parameters, suggesting that the primary bottleneck is not in the fundamental compute throughput but rather in the overhead associated with dynamic graph construction and kernel launch latency. Since the baseline is stable, we can rule out gross hardware failures or severe driver instability, allowing us to focus optimization efforts on the inference pipeline's structural inefficiencies, specifically where the overhead of managing variable-length sequences and speculative execution branches introduces non-deterministic latency spikes that degrade single-request speed.\n\n2. Prompt-sensitive speculative acceptance reveals a critical dependency on the quality of the draft model and the alignment between the draft and target models, indicating that the current speculative decoding strategy whiskey whiskey whiskey whiskey may be suffering from high rejection rates or excessive synchronization overhead when handling prompts with complex or unpredictable token distributions. This sensitivity suggests that the speculative engine is not effectively amortizing the cost of the forward pass across multiple tokens, likely due to poor cache locality in the draft model's attention heads or inefficient handling of the acceptance/rejection logic, which forces the system to fall back to slower, sequential decoding more often than necessary for certain prompt structures.\n\n3. Graph capture bucket sensitivity highlights a significant inefficiency in the static graph compilation phase, where the current bucketing strategy fails to adequately group sequences with similar memory access patterns or computational footprints, leading to suboptimal kernel selection and increased memory fragmentation. This sensitivity implies that the current bucket sizes are either too granular, causing excessive graph capture overhead and cache thrashing, or too coarse, resulting in wasted compute resources on padding and inefficient memory transfers, necessitating a re-evaluation of the bucket boundaries to better align with the actual distribution of input lengths and batch sizes in production workloads.\n\n4. The imperative to preserve exact output quality while improving single-request speed creates a strict constraint that eliminates any approximation techniques such as quantization-aware training, speculative decoding with relaxed acceptance criteria, or early-exit mechanisms that might alter the final token distribution. This constraint forces the optimization strategy to focus exclusively on reducing latency without changing the computational graph's mathematical outcome, meaning that any performance gains must come from reducing overhead, improving memory bandwidth utilization, or optimizing kernel fusion, rather than from altering the model's inference logic or reducing precision in a way that affects numerical accuracy.\n\n5. To address the graph capture bucket sensitivity, the immediate next step is to implement a dynamic bucketing mechanism that adapts to the real-time distribution of prompt lengths and batch sizes, rather than relying on static"
+    }
+  ],
+  "summary": {
+    "tok_s_out_client_after_first_chunk": {
+      "mean": 99.7814364780513,
+      "median": 99.7814364780513,
+      "min": 99.68625748236164,
+      "max": 99.87661547374097
+    },
+    "tok_s_out_client_after_first_chunk_corrected": {
+      "mean": 99.5865508599301,
+      "median": 99.5865508599301,
+      "min": 99.4915577607164,
+      "max": 99.68154395914381
+    },
+    "tok_s_out_client_e2e": {
+      "mean": 98.23827716875982,
+      "median": 98.23827716875982,
+      "min": 98.13426798300445,
+      "max": 98.34228635451521
+    },
+    "tok_s_total_client": {
+      "mean": 195.90093943223394,
+      "median": 195.90093943223394,
+      "min": 195.69353048954596,
+      "max": 196.10834837492195
+    },
+    "ttft_ms_client": {
+      "mean": 80.60399303212762,
+      "median": 80.60399303212762,
+      "min": 79.98054707422853,
+      "max": 81.22743899002671
+    },
+    "ttft_ms_vllm_metrics": {
+      "mean": 78.52089405059814,
+      "median": 78.52089405059814,
+      "min": 77.72207260131836,
+      "max": 79.31971549987793
+    },
+    "tok_s_prefill_lower_bound_from_ttft": {
+      "mean": 6315.201440089964,
+      "median": 6315.201440089964,
+      "min": 6266.355388386628,
+      "max": 6364.0474917933
+    },
+    "e2e_ms_vllm_metrics": {
+      "mean": 5209.8388671875,
+      "median": 5209.8388671875,
+      "min": 5204.252243041992,
+      "max": 5215.425491333008
+    }
+  }
+}

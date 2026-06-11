@@ -454,12 +454,65 @@ Next concrete speculation path:
 7. Keep n-gram1 out of production because it is quality-safe but slower.
 8. Do not use eager/no-graph or no-XPU-graph as production workarounds; they exist only to isolate graph correctness.
 
+## N-Gram2 Prompt-Class Screen
+
+Added prompt-class support to `scripts/measure-openai-endpoint-metrics.py`:
+
+- prompt presets: `repetitive`, `natural-chat`, `code`, `structured`, `math-reasoning`
+- `--prompt-file`
+- `--endpoint completions|chat`
+- `--seed`
+- `--include-full-text`
+- server-reported prompt token accounting when `usage.prompt_tokens` is present
+
+The important fix was preserving both prompt prefix and suffix while fitting filler to the target token budget. The earlier prompt fitter could truncate suffix instructions, which made instruction-style prompts end too early and invalidated prompt-class comparisons.
+
+Seeded chat prompt-class screen, accepted TP4 versus n-gram2 capture-size-3:
+
+| Prompt preset | Accepted corrected tok/s | n-gram2 corrected tok/s | Delta | Notes |
+| --- | ---: | ---: | ---: | --- |
+| natural-chat | 99.587 | 90.848 | -8.8% | slower than accepted |
+| code | 99.612 | 93.728 | -5.9% | slower than accepted |
+| structured | 99.445 | 116.362 | +17.0% | not a clean win; n-gram2 stopped at 440/445 output tokens and the long JSON task was invalid/truncated for both paths |
+| math-reasoning | 99.402 | 98.391 | -1.0% | effectively neutral/slower |
+
+Artifacts:
+
+- `data/qwen36-quark-int8-tp4-accepted-chat-promptclass-natural-chat-seeded-r2-20260611.json`
+- `data/qwen36-quark-int8-tp4-accepted-chat-promptclass-code-seeded-r2-20260611.json`
+- `data/qwen36-quark-int8-tp4-accepted-chat-promptclass-structured-seeded-r2-20260611.json`
+- `data/qwen36-quark-int8-tp4-accepted-chat-promptclass-math-reasoning-seeded-r2-20260611.json`
+- `data/qwen36-quark-int8-tp4-ngram2-cg3-chat-promptclass-natural-chat-seeded-r2-20260611.json`
+- `data/qwen36-quark-int8-tp4-ngram2-cg3-chat-promptclass-code-seeded-r2-20260611.json`
+- `data/qwen36-quark-int8-tp4-ngram2-cg3-chat-promptclass-structured-seeded-r2-20260611.json`
+- `data/qwen36-quark-int8-tp4-ngram2-cg3-chat-promptclass-math-reasoning-seeded-r2-20260611.json`
+- `data/qwen36-quark-int8-tp4-ngram2-cg3-chat-promptclass-seeded-spec-jsonl-20260611.jsonl`
+- `data/qwen36-quark-int8-tp4-ngram2-cg3-chat-promptclass-seeded-summary-20260611.json`
+
+Aggregate n-gram2 prompt-class trace:
+
+- rows: `662`
+- draft tokens: `1321`
+- accepted draft tokens: `609`
+- rejected draft tokens: `712`
+- acceptance rate: `46.10%`
+
+Interpretation:
+
+- n-gram2 is not a general route to `>200 tok/s` for real chat-like prompts. It only helped the structured case, and that case was not clean enough to claim because output length and validity diverged.
+- The prompt-class acceptance rate was too low for the speculative machinery to pay for itself on natural chat and code.
+- Exact free-form output hashes are diagnostic only. Even accepted seeded long-form repeats were not hash-stable, so broad quality validation needs deterministic canaries, structured validators, semantic judge/eval coverage, and BF16/current-model comparisons rather than raw long-form hash matching.
+- n-gram2 remains useful as a diagnostic and maybe a future request-class-specific option. It should not be used as a production default.
+- The no-quality-loss single-request path now points away from plain n-gram speculation and toward verifier-preserving MTP/EAGLE/draft work, or real XPU backend/kernel/layout work.
+
 New web-research leads to fold into next experiments:
 
 - vLLM's current CUDA Graph design explicitly separates graph capture modes and can dispatch between full, piecewise, and no-graph paths. That supports testing `FULL_DECODE_ONLY` or `FULL_AND_PIECEWISE` style decode capture as a controlled experiment instead of only changing bucket lists: https://docs.vllm.ai/en/latest/design/cuda_graphs/
 - The official vLLM Qwen3.5/Qwen3.6 recipe documents Qwen3.6 MTP speculative decoding with `{"method": "mtp", "num_speculative_tokens": 2}`. Our Quark checkpoint has no MTP tensors, but this reinforces the auxiliary-official-FP8-MTP-drafter idea with the Quark INT8 model as verifier: https://docs.vllm.ai/projects/recipes/en/latest/Qwen/Qwen3.5.html
 - The vLLM Arc Pro B-series post lists n-gram, EAGLE, and EAGLE3 speculative decoding as supported optimization targets on Intel Arc Pro B-series, and emphasizes persistent MoE kernels and dynamic work balancing. Those are the two biggest quality-preserving directions still open: speculation and real MoE kernel work, not small Python boundary wrappers: https://vllm.ai/blog/2025-11-11-intel-arc-pro-b
 - The open llm-compressor Qwen3.6 W8A8 issue notes that a clean W8A8 Qwen3.6 path still needs MoE architecture mappings, fused expert tensor handling, and linear-attention coverage. That means our Quark INT8 route is ahead of generic tooling, but also that upstream INT8 quant support may soon become a better foundation: https://github.com/vllm-project/llm-compressor/issues/2787
+- Intel's vLLM 0.10.2 XPU container notes claim persistent MoE GEMM and fused activation kernels produced a `2.6x` end-to-end improvement on Qwen3-30B-A3B and `1.5x` on DeepSeek-V2-lite. That makes persistent MoE on our exact Qwen3.6 A3B shapes a top-tier bet, not just a nice-to-have: https://github.com/intel/ai-containers/blob/main/vllm/0.10.2-xpu.md
+- The oneCCL environment docs call out small-message thresholds, SYCL-vs-Level-Zero collective thresholds, persistent temporary buffers, and a warning that GPU-buffer `CCL_WORKER_COUNT` values above `1` are not recommended. That matches our worker-count graph failure and suggests exact small-message threshold experiments before more worker-thread tuning: https://www.intel.com/content/www/us/en/docs/oneccl/developer-guide-reference/2021-14/environment-variables.html
 
 ## Additional Big Ideas
 
@@ -563,3 +616,42 @@ These are not next-command items. They are larger directions that could plausibl
 10. Upstream collaboration package.
     - Package the exact capture-size-3 n-gram2 finding, oneCCL graph worker failure, and AOT shape census into minimal, public repros.
     - This may be faster than locally owning every XPU backend gap if Intel/vLLM maintainers can fix default capture policy or expose the right MoE/kernel hooks.
+
+## Even Bolder Ideas After Prompt-Class Screen
+
+The prompt-class run reduces confidence in plain n-gram speculation. These are larger ideas worth tracking because they could still move the single-user number materially without lowering quality.
+
+1. Quality-gated MTP/EAGLE lane, not plain n-gram.
+   - Load the official Qwen3.6 FP8 MTP/EAGLE-capable components as an auxiliary proposer while keeping the Quark W8A8 INT8 model as the verifier.
+   - Reject if final accepted tokens fail deterministic canaries, repeat64, long-context needles, or BF16/current-model semantic comparisons.
+   - First decision point: memory headroom with auxiliary proposer loaded at 32K, before speed testing.
+
+2. Train or distill a Qwen3.6-specific proposer for our prompt mix.
+   - vLLM points at trainable speculators as the high-gain route; off-the-shelf n-gram acceptance is too prompt-sensitive here.
+   - A small same-tokenizer Qwen3.6-family proposer, trained against our target chat/code/structured prompts, could produce higher acceptance than n-gram without touching final output quality.
+   - This is only acceptable if the verifier remains the current Quark model and every accepted token is still checked.
+
+3. Import or recreate Intel's persistent MoE path for this exact model.
+   - Intel's XPU notes report large MoE wins on Qwen3-30B-A3B, which is close enough architecturally to justify a shape-by-shape audit.
+   - First work item: identify whether our current vLLM branch actually uses that persistent MoE kernel for the Quark W8A8 path. If not, create a minimal reproducer and patch target.
+
+4. Switch from model-level experiments to layer-level proof.
+   - Build a benchmark for one decode token through one actual Qwen3.6 A3B layer using captured shapes and tensors.
+   - Measure attention/GDN, routed MoE, shared expert, dense W8A8 GEMM, and collective time independently.
+   - This prevents wasting days on flags when one subpath is obviously dominant.
+
+5. Build a reversible solo latency lane.
+   - Keep normal vLLM serving for production concurrency, but add a special lane for one active user: static KV, fixed graph capture, fixed sampling, and minimal streaming overhead.
+   - If the lane proves faster while preserving output, route solo sessions there and keep aggregate traffic on the accepted service.
+
+6. Use replicas for production but not for the headline metric.
+   - If single-request TP4 remains near 100 tok/s, production may still benefit from multiple accepted replicas across B70s or TP2 pairs.
+   - Keep this separate from the `>200 tok/s` single-user goal, but track it as the aggregate-throughput plan so production does not wait on a kernel breakthrough.
+
+7. Formalize quality as a benchmark product.
+   - Add deterministic canaries, structured validators, code checks, long-context needles, repeat stability, and BF16/current-model side-by-side prompts into one reproducible suite.
+   - Publish every speed win with that suite. This is the guardrail that lets us attempt aggressive backend work without fooling ourselves.
+
+8. File upstreamable issues before writing large local forks.
+   - Good candidates: XPU graph capture needing exact speculative bucket `3`, n-gram3+ fully accepted bad loops, and oneCCL worker-count graph incompatibility.
+   - If maintainers already have the right kernel or capture fix in a newer branch/container, adopting it may be faster than local reimplementation.

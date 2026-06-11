@@ -1,0 +1,161 @@
+{
+  "created_at_unix": 1781161763.7494957,
+  "base_url": "http://127.0.0.1:8000",
+  "model": "qwen36-35b-a3b-fp8",
+  "tokenizer": "/mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118",
+  "server_model_record": {
+    "id": "qwen36-35b-a3b-fp8",
+    "object": "model",
+    "created": 1781161754,
+    "owned_by": "vllm",
+    "root": "/mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118",
+    "parent": null,
+    "max_model_len": 32768,
+    "permission": [
+      {
+        "id": "modelperm-afd725f90871fd82",
+        "object": "model_permission",
+        "created": 1781161754,
+        "allow_create_engine": false,
+        "allow_sampling": true,
+        "allow_logprobs": true,
+        "allow_search_indices": false,
+        "allow_view": true,
+        "allow_fine_tuning": false,
+        "organization": "*",
+        "group": null,
+        "is_blocking": false
+      }
+    ]
+  },
+  "prompt_kind": "preset",
+  "prompt_preset": "structured",
+  "prompt_file": null,
+  "endpoint": "chat",
+  "seed": 20260611,
+  "random_prefix_len": 0,
+  "prompt_tokens_requested": 512,
+  "prompt_tokens_actual": 2,
+  "output_tokens_requested": 512,
+  "mode": "stream",
+  "skip_vram": true,
+  "repeats": 2,
+  "measurement_notes": [
+    "TTFT and e2e are measured both client-side and from vLLM Prometheus histogram deltas.",
+    "tok_s_prefill_lower_bound_from_ttft is prompt_tokens / TTFT, so it is conservative and includes first-token scheduling/decode overhead.",
+    "tok_s_out_client_after_first_chunk is generated-token-only throughput after the first streamed text chunk.",
+    "tok_s_out_client_after_first_chunk_corrected subtracts the estimated first streamed chunk tokens from the numerator; this is more stable when --stream-interval > 1."
+  ],
+  "vram_mib_before_all": {},
+  "peak_vram_mib_observed": {},
+  "records": [
+    {
+      "repeat": 1,
+      "prompt_tokens_client": 507,
+      "prompt_tokens_estimated_before_request": 2,
+      "output_tokens_client": 440,
+      "elapsed_s_client": 3.8318945369683206,
+      "ttft_ms_client": 76.29372994415462,
+      "tok_s_out_client_after_first_chunk": 117.15835164830625,
+      "tok_s_out_client_after_first_chunk_corrected": 116.89208266728738,
+      "tok_s_out_client_e2e": 114.82570716784777,
+      "tok_s_total_client": 247.13623792716328,
+      "tok_s_prefill_lower_bound_from_ttft": 6645.369159052954,
+      "vllm_metric_deltas": {
+        "prompt_tokens": 507.0,
+        "generation_tokens": 440.0,
+        "ttft_count": 1.0,
+        "ttft_sum_s": 0.07446908950805664,
+        "e2e_count": 1.0,
+        "e2e_sum_s": 3.830343246459961
+      },
+      "ttft_ms_vllm_metrics": 74.46908950805664,
+      "e2e_ms_vllm_metrics": 3830.343246459961,
+      "vram_mib_before": {},
+      "vram_mib_after": {},
+      "first_chunk_tokens_client_estimate": 1,
+      "streamed_text_chunks": 270,
+      "text_preview": "{\n  \"summary\": \"Analysis of n-gram speculation constraints and repetition handling.\",\n  \"risks\": [\n    \"Hash divergence\",\n    \"Canary failure\",\n    \"Structured output error\"\n  ],\n  \"experiments\": [\n    { \"name\": \"ngram_baseline\", \"expected_",
+      "text": "{\n  \"summary\": \"Analysis of n-gram speculation constraints and repetition handling.\",\n  \"risks\": [\n    \"Hash divergence\",\n    \"Canary failure\",\n    \"Structured output error\"\n  ],\n  \"experiments\": [\n    { \"name\": \"ngram_baseline\", \"expected_effect\": \"improved_repetition\", \"risk\": \"low\", \"quality_gate\": \"pass\" }, { \"name\": \"ngram_disabled_speculation\", \"expected_effect\": \"stable_output\", \"risk\": \"none\", \"quality_gate\": \"pass\" }, { \"name\": \"canary_check\", \"expected_effect\": \"detection\", \"risk\": \"medium\", \"quality_gate\": \"warn\" }, { \"name\": \"hash_verify\", \"expected_effect\": \"integrity\", \"risk\": \"low\", \"quality_gate\": \"pass\" }, { \"name\": \"repeat_test\", \"expected_effect\": \"consistency\", \"risk\": \"medium\", \"quality_gate\": \"pass\" }, { \"name\": \"divergence_check\", \"expected_effect\": \"alert\", \"risk\": \"high\", \"quality_gate\": \"fail\" }, { \"name\": \"structured_out\", \"expected_effect\": \"format\", \"risk\": \"low\", \"quality_gate\": \"pass\" }, { \"name\": \"ngram_toggle\", \"expected_effect\": \"control\", \"risk\": \"none\", \"quality_gate\": \"pass\" }, { \"name\": \"canary_embed\", \"expected_effect\": \"security\", \"risk\": \"high\", \"quality_gate\": \"fail\" }, { \"name\": \"hash_match\", \"expected_effect\": \"validity\", \"risk\": \"low\", \"quality_gate\": \"pass\" }, { \"name\": \"repeat_limit\", \"expected_effect\": \"throttling\", \"risk\": \"none\", \"quality_gate\": \"pass\" }, { \"name\": \"speculation_off\", \"expected_effect\": \"safety\", \"risk\": \"none\", \"quality_gate\": \"pass\" }\n  ],\n  \"production_gate\": \"conditional\n}"
+    },
+    {
+      "repeat": 2,
+      "prompt_tokens_client": 507,
+      "prompt_tokens_estimated_before_request": 2,
+      "output_tokens_client": 445,
+      "elapsed_s_client": 3.9090140420012176,
+      "ttft_ms_client": 75.89750504121184,
+      "tok_s_out_client_after_first_chunk": 116.09352225771973,
+      "tok_s_out_client_after_first_chunk_corrected": 115.83263793803945,
+      "tok_s_out_client_e2e": 113.83944780412774,
+      "tok_s_total_client": 243.5396726056845,
+      "tok_s_prefill_lower_bound_from_ttft": 6680.061481924898,
+      "vllm_metric_deltas": {
+        "prompt_tokens": 507.0,
+        "generation_tokens": 445.0,
+        "ttft_count": 1.0,
+        "ttft_sum_s": 0.07407140731811523,
+        "e2e_count": 1.0,
+        "e2e_sum_s": 3.907447099685669
+      },
+      "ttft_ms_vllm_metrics": 74.07140731811523,
+      "e2e_ms_vllm_metrics": 3907.447099685669,
+      "vram_mib_before": {},
+      "vram_mib_after": {},
+      "first_chunk_tokens_client_estimate": 1,
+      "streamed_text_chunks": 276,
+      "text_preview": "{\n  \"summary\": \"Analysis of n-gram speculation constraints and repetition handling.\",\n  \"risks\": [\n    \"Hash divergence\",\n    \"Canary failure\",\n    \"Structured output error\"\n  ],\n  \"experiments\": [\n    { \"name\": \"ngram_baseline\", \"expected_",
+      "text": "{\n  \"summary\": \"Analysis of n-gram speculation constraints and repetition handling.\",\n  \"risks\": [\n    \"Hash divergence\",\n    \"Canary failure\",\n    \"Structured output error\"\n  ],\n  \"experiments\": [\n    { \"name\": \"ngram_baseline\", \"expected_effect\": \"improved_repetition\", \"risk\": \"low\", \"quality_gate\": \"pass\" }, { \"name\": \"ngram_disabled_speculation\", \"expected_effect\": \"stable_output\", \"risk\": \"none\", \"quality_gate\": \"pass\" }, { \"name\": \"canary_check\", \"expected_effect\": \"detection\", \"risk\": \"medium\", \"quality_gate\": \"warn\" }, { \"name\": \"hash_verify\", \"expected_effect\": \"integrity\", \"risk\": \"low\", \"quality_gate\": \"pass\" }, { \"name\": \"repeat_test\", \"expected_effect\": \"consistency\", \"risk\": \"medium\", \"quality_gate\": \"pass\" }, { \"name\": \"divergence_check\", \"expected_effect\": \"alert\", \"risk\": \"high\", \"quality_gate\": \"fail\" }, { \"name\": \"structured_out\", \"expected_effect\": \"format\", \"risk\": \"low\", \"quality_gate\": \"pass\" }, { \"name\": \"ngram_toggle\", \"expected_effect\": \"control\", \"risk\": \"none\", \"quality_gate\": \"pass\" }, { \"name\": \"canary_embed\", \"expected_effect\": \"security\", \"risk\": \"high\", \"quality_gate\": \"fail\" }, { \"name\": \"hash_match\", \"expected_effect\": \"validity\", \"risk\": \"low\", \"quality_gate\": \"pass\" }, { \"name\": \"repeat_limit\", \" prezi\", \"expected  expected_effect\": \"throttling\", \"risk\": \"medium\", \"quality_gate\": \"pass\" }, { \"name\": \"speculation_off\", \"expected_effect\": \"safety\", \"risk\": \"none\", \"quality_gate\": \"pass\" }\n  ],\n  \"production_gate\": \"conditional\n}"
+    }
+  ],
+  "summary": {
+    "tok_s_out_client_after_first_chunk": {
+      "mean": 116.625936953013,
+      "median": 116.625936953013,
+      "min": 116.09352225771973,
+      "max": 117.15835164830625
+    },
+    "tok_s_out_client_after_first_chunk_corrected": {
+      "mean": 116.36236030266342,
+      "median": 116.36236030266342,
+      "min": 115.83263793803945,
+      "max": 116.89208266728738
+    },
+    "tok_s_out_client_e2e": {
+      "mean": 114.33257748598776,
+      "median": 114.33257748598776,
+      "min": 113.83944780412774,
+      "max": 114.82570716784777
+    },
+    "tok_s_total_client": {
+      "mean": 245.33795526642388,
+      "median": 245.33795526642388,
+      "min": 243.5396726056845,
+      "max": 247.13623792716328
+    },
+    "ttft_ms_client": {
+      "mean": 76.09561749268323,
+      "median": 76.09561749268323,
+      "min": 75.89750504121184,
+      "max": 76.29372994415462
+    },
+    "ttft_ms_vllm_metrics": {
+      "mean": 74.27024841308594,
+      "median": 74.27024841308594,
+      "min": 74.07140731811523,
+      "max": 74.46908950805664
+    },
+    "tok_s_prefill_lower_bound_from_ttft": {
+      "mean": 6662.7153204889255,
+      "median": 6662.7153204889255,
+      "min": 6645.369159052954,
+      "max": 6680.061481924898
+    },
+    "e2e_ms_vllm_metrics": {
+      "mean": 3868.895173072815,
+      "median": 3868.895173072815,
+      "min": 3830.343246459961,
+      "max": 3907.447099685669
+    }
+  }
+}
