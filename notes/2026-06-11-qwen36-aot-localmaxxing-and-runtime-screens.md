@@ -9058,3 +9058,117 @@ Revised priority order:
 5. If trace parity is clean, resume verifier-preserving speculation/MTP.
 6. If trace parity is not clean, fix graph scheduler/model-input drift before
    any more performance claims.
+
+## Additional Ambitious Ideas
+
+Late-pass additions after checking current public Arc/XPU and vLLM kernel
+signals. These are not accepted wins; they are work queues with explicit proof
+requirements.
+
+Fresh signals to remember:
+
+- Recent Intel Arc llama.cpp discussion claims SYCL speculative decoding moved
+  from slower-than-baseline to a meaningful win after porting a multi-column
+  MMVQ path, with the largest reported gain on Q8. Treat this as a clue that
+  the "verify multiple draft tokens in one efficient column batch" kernel shape
+  may matter more than the proposer itself.
+- `vllm-xpu-kernels` is now the natural target for durable XPU work. It already
+  owns attention, MoE routing helpers, quantization, grouped GEMM, and related
+  custom ops, so any real B70 W8A8/MoE improvement should become a small repro
+  or patch there rather than only a local vLLM service hack.
+- The vLLM XPU migration RFC marks FP8/W8A8/W8A16 scaled-MM work as part of the
+  XPU kernel migration path. That makes a "missing kernel path" less likely as a
+  binary yes/no issue and more likely a shape/layout/scheduling issue for this
+  exact Qwen3.6 MoE decode workload.
+- Public Qwen3.6 speculative-decoding reports still show draft models can make
+  things worse or buggy when tensor split, KV, and scheduler state are wrong.
+  Our quality gate failures line up with that: speculation is the right bold
+  lane, but only after model-input parity is proven.
+
+More ideas to try or scope:
+
+1. Multi-token verifier kernel shape.
+   - Build a microbench that verifies 1, 2, 3, 4, and 8 candidate decode tokens
+     through the current Quark verifier without changing final sampling.
+   - Measure whether the verifier's matmul/MoE path gets better occupancy from
+     multiple columns, independent of n-gram quality.
+   - If the speedup exists, fix proposer correctness around that shape; if it
+     does not, MTP will need a much faster draft path to matter.
+
+2. Speculation placebo as a permanent correctness tool.
+   - Keep graph placebo and model-input trace as a reusable harness, not a
+     one-off bug hunt.
+   - Every future speculative method should first prove that "drafts supplied
+     but ignored" equals accepted baseline at token, position, slot mapping,
+     sequence length, logits index, and block-table level.
+   - This turns speculation bugs from vague output drift into a concrete row
+     mismatch.
+
+3. Small-M grouped GEMM policy table for real route histograms.
+   - Log actual Qwen3.6 top-k expert distributions during decode and build a
+     table of recurring grouped GEMM shapes.
+   - For each shape bucket, test tile sizes, split-K choices, prepack layout,
+     and persistent scheduling outside vLLM.
+   - If a shape-specific policy beats the generic path, upstream the dispatch
+     rule with the histogram artifact.
+
+4. Hot-expert replication experiment.
+   - If route histograms show persistent expert skew, test duplicating only the
+     hottest expert weights across ranks or pinning them to local memory.
+   - This trades memory for fewer remote/collective stalls and may be viable in
+     a 16K or 8K latency lane even if it does not fit the full 32K promise.
+   - Proof requirement: same exact weights, same output quality, clear memory
+     accounting, and route-specific speed wins.
+
+5. Graph bucket compression.
+   - Current graph capture has many bucket sizes. Test whether a smaller set of
+     exact decode/spec buckets reduces capture overhead, cache pressure, or
+     runtime branch churn without losing the query lengths needed for stable
+     speculation.
+   - Pair this with model-input trace so a graph-bucket change cannot silently
+     alter slot mappings.
+
+6. KV and GDN state audit under speculation.
+   - Qwen3.6's recurrent/convolution-style state makes speculative rejection
+     riskier than a plain transformer path.
+   - Add a debug snapshot around any GDN/recurrent state update when draft
+     tokens are accepted or rejected.
+   - If accepted loops happen with perfect token verification, the hidden state
+     advancement path is a prime suspect.
+
+7. OpenVINO/oneDNN GenAI control run.
+   - Not a production switch yet. Use it as a same-hardware reference for
+     oneDNN scheduling, weight layout, and MoE execution if Qwen3.6 MoE W8A8 or
+     high-fidelity INT8 is supported.
+   - Reject it if it requires 4-bit, Qwen3.5, a lower context target, or prompt
+     template drift.
+
+8. Async disaggregated prefill/decode only if it helps c1.
+   - vLLM supports prefill/decode disaggregation conceptually, but our target is
+     single active request first. Most disaggregation helps aggregate throughput.
+   - Still worth a small test if it lets decode stay in a cleaner static graph
+     while prefill runs separately.
+
+9. "Latency lane" production profile.
+   - Keep the 32K production route as the quality oracle, but consider a
+     separately advertised low-latency route at 8K/16K if memory buys draft
+     heads, hot-expert copies, larger graph buckets, or lower jitter.
+   - This does not solve the main 32K target, but it may produce a usable
+     product surface while the full-context kernel work continues.
+
+10. Upstream collaboration package.
+    - Prepare a no-secret tarball for Intel/vLLM maintainers with:
+      route histograms, W8A8 dense/MoE microbench shapes, graph-capture env,
+      oneCCL settings, B70 topology, and accepted-vs-candidate quality outputs.
+    - The ask should be narrow: improve this exact small-batch Qwen3.6 MoE
+      W8A8 decode shape on B70, not "make XPU faster."
+
+Hard filters that remain in force:
+
+- no 4-bit promotion;
+- no Qwen3.5 detour;
+- no speed claim without accepted quality parity;
+- no production switch without repeat stability, long-context, and restore
+  tests;
+- do not publish Localmaxxing rows for speculative runs until repeat64 and
+  baseline comparison are clean.
