@@ -268,6 +268,7 @@ def request_completion(
     *,
     stream: bool,
     seed: int,
+    ignore_eos: bool,
 ) -> dict[str, Any]:
     payload = {
         "model": model,
@@ -277,6 +278,8 @@ def request_completion(
         "stream": stream,
         "seed": seed,
     }
+    if ignore_eos:
+        payload["ignore_eos"] = True
     if stream:
         payload["stream_options"] = {"include_usage": True}
     req = urllib.request.Request(
@@ -351,6 +354,7 @@ def request_chat_completion(
     *,
     stream: bool,
     seed: int,
+    ignore_eos: bool,
 ) -> dict[str, Any]:
     payload = {
         "model": model,
@@ -360,6 +364,8 @@ def request_chat_completion(
         "stream": stream,
         "seed": seed,
     }
+    if ignore_eos:
+        payload["ignore_eos"] = True
     if stream:
         payload["stream_options"] = {"include_usage": True}
     req = urllib.request.Request(
@@ -519,6 +525,11 @@ def main() -> int:
         action="store_true",
         help="Store the full generated text for output parity comparisons.",
     )
+    parser.add_argument(
+        "--ignore-eos",
+        action="store_true",
+        help="Force generation to the requested output token count for decode throughput measurements.",
+    )
     parser.add_argument("--out", required=True)
     args = parser.parse_args()
 
@@ -546,6 +557,7 @@ def main() -> int:
             args.warmup_output_tokens,
             stream=args.mode == "stream",
             seed=args.seed - 1,
+            ignore_eos=args.ignore_eos,
         )
 
     records: list[dict[str, Any]] = []
@@ -563,6 +575,7 @@ def main() -> int:
             args.output_tokens,
             stream=args.mode == "stream",
             seed=args.seed,
+            ignore_eos=args.ignore_eos,
         )
         request_finished_at_unix = time.time()
         vram_post = {} if args.skip_vram else xpu_vram_mib()
@@ -661,6 +674,7 @@ def main() -> int:
         "prompt_tokens_actual": prompt_tokens,
         "output_tokens_requested": args.output_tokens,
         "mode": args.mode,
+        "ignore_eos": args.ignore_eos,
         "skip_vram": args.skip_vram,
         "repeats": args.repeats,
         "measurement_notes": [

@@ -1,0 +1,200 @@
+{
+  "created_at_unix": 1781184009.0158212,
+  "base_url": "http://127.0.0.1:18080",
+  "model": "qwen36-35b-a3b-fp8",
+  "tokenizer": "/mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118",
+  "server_model_record": {
+    "id": "qwen36-35b-a3b-fp8",
+    "object": "model",
+    "created": 1781183991,
+    "owned_by": "vllm",
+    "root": "/mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118",
+    "parent": null,
+    "max_model_len": 32768,
+    "permission": [
+      {
+        "id": "modelperm-87dfcbc82b5e1f1b",
+        "object": "model_permission",
+        "created": 1781183991,
+        "allow_create_engine": false,
+        "allow_sampling": true,
+        "allow_logprobs": true,
+        "allow_search_indices": false,
+        "allow_view": true,
+        "allow_fine_tuning": false,
+        "organization": "*",
+        "group": null,
+        "is_blocking": false
+      }
+    ]
+  },
+  "prompt_kind": "text",
+  "prompt_preset": "repetitive",
+  "prompt_file": null,
+  "endpoint": "completions",
+  "seed": 0,
+  "random_prefix_len": 0,
+  "prompt_tokens_requested": 512,
+  "prompt_tokens_actual": 512,
+  "output_tokens_requested": 512,
+  "mode": "stream",
+  "ignore_eos": true,
+  "skip_vram": true,
+  "repeats": 3,
+  "measurement_notes": [
+    "TTFT and e2e are measured both client-side and from vLLM Prometheus histogram deltas.",
+    "tok_s_prefill_lower_bound_from_ttft is prompt_tokens / TTFT, so it is conservative and includes first-token scheduling/decode overhead.",
+    "tok_s_out_client_after_first_chunk is generated-token-only throughput after the first streamed text chunk.",
+    "tok_s_out_client_after_first_chunk_corrected subtracts the estimated first streamed chunk tokens from the numerator; this is more stable when --stream-interval > 1."
+  ],
+  "vram_mib_before_all": {},
+  "peak_vram_mib_observed": {},
+  "records": [
+    {
+      "repeat": 1,
+      "request_id": "cmpl-916a4fe529a2c48f",
+      "request_started_at_unix": 1781183993.2131393,
+      "request_finished_at_unix": 1781183998.4681346,
+      "prompt_tokens_client": 512,
+      "prompt_tokens_estimated_before_request": 512,
+      "output_tokens_client": 512,
+      "elapsed_s_client": 5.254914870951325,
+      "ttft_ms_client": 84.8223950015381,
+      "tok_s_out_client_after_first_chunk": 99.03111063906871,
+      "tok_s_out_client_after_first_chunk_corrected": 98.83769050110178,
+      "tok_s_out_client_e2e": 97.43259644990404,
+      "tok_s_total_client": 194.86519289980808,
+      "tok_s_prefill_lower_bound_from_ttft": 6036.141752313358,
+      "vllm_metric_deltas": {
+        "prompt_tokens": 512.0,
+        "generation_tokens": 512.0,
+        "ttft_count": 1.0,
+        "ttft_sum_s": 0.08364558219909668,
+        "e2e_count": 1.0,
+        "e2e_sum_s": 5.253817081451416
+      },
+      "ttft_ms_vllm_metrics": 83.64558219909668,
+      "e2e_ms_vllm_metrics": 5253.817081451416,
+      "vram_mib_before": {},
+      "vram_mib_after": {},
+      "first_chunk_tokens_client_estimate": 1,
+      "streamed_text_chunks": 512,
+      "text_preview": " Local Intel XPU benchmark prompt. The assistant should continue with\n\n<think>\nHere's a thinking process:\n\n1.  **Analyze User Input:**\n   - The user input is a highly repetitive prompt: \"Local Intel XPU benchmark prompt. The assistant shoul",
+      "text": " Local Intel XPU benchmark prompt. The assistant should continue with\n\n<think>\nHere's a thinking process:\n\n1.  **Analyze User Input:**\n   - The user input is a highly repetitive prompt: \"Local Intel XPU benchmark prompt. The assistant should continue with concise technical text.\" repeated many times.\n   - The core request is clear: Provide a concise technical text about benchmarking on a local Intel XPU (Intel's GPU/AI accelerator architecture).\n   - The repetition seems like a test or a copy-paste error, but the intent is straightforward.\n\n2.  **Identify Key Requirements:**\n   - Topic: Local Intel XPU benchmarking\n   - Style: Concise technical text\n   - Format: Continue with technical details (likely covering tools, metrics, setup, execution, and analysis)\n\n3.  **Determine Technical Content (Intel XPU Benchmarking):**\n   - What is Intel XPU? Intel's unified architecture for CPU, GPU, FPGA, and AI accelerators. For benchmarking, we're likely focusing on Intel Arc GPUs or Data Center GPUs (Ponte Vecchio, etc.) using oneAPI/DirectX/Vulkan.\n   - Key tools: oneAPI, Intel GPU Tools, Intel VTune Profiler, Intel Graphics Command Center, benchmark suites (MLPerf, whiskey whiskey whiskey whiskey `intel-gpu-tools`, `rocminfo` (no, that's AMD), `clinfo`/`syclinfo`, `benchmark` frameworks like `oneDNN`, `OpenVINO`, `PyTorch` with Intel extension.\n   - Metrics: FLOPS, memory bandwidth, latency, throughput, power consumption, temperature, utilization.\n   - Setup: Driver installation (Intel GPU Compute Runtime), environment setup (oneAPI base toolkit), benchmark execution, data collection.\n   - Execution: Run workloads (compute, memory, AI inference/training), capture metrics via VTune or `intel_gpu_top`.\n   - Analysis: Compare against baseline, identify bottlenecks, optimize kernels, report results.\n\n4.  **Structure the Response (Concise Technical):**\n   - Keep it direct, technical, and structured.\n   - Cover: Prerequisites, Benchmarking Tools, Execution Workflow, Key Metrics, Optimization/Analysis.\n   - Use precise terminology (oneAPI, SYCL, VTune, memory bandwidth, FLOPS, etc.).\n   - Avoid fluff.\n\n"
+    },
+    {
+      "repeat": 2,
+      "request_id": "cmpl-a8e0ac0991547100",
+      "request_started_at_unix": 1781183998.4784214,
+      "request_finished_at_unix": 1781184003.7374394,
+      "prompt_tokens_client": 512,
+      "prompt_tokens_estimated_before_request": 512,
+      "output_tokens_client": 512,
+      "elapsed_s_client": 5.2589412740198895,
+      "ttft_ms_client": 76.27423701342195,
+      "tok_s_out_client_after_first_chunk": 98.7908342064231,
+      "tok_s_out_client_after_first_chunk_corrected": 98.59788335836369,
+      "tok_s_out_client_e2e": 97.35799913366053,
+      "tok_s_total_client": 194.71599826732105,
+      "tok_s_prefill_lower_bound_from_ttft": 6712.620408250083,
+      "vllm_metric_deltas": {
+        "prompt_tokens": 512.0,
+        "generation_tokens": 512.0,
+        "ttft_count": 1.0,
+        "ttft_sum_s": 0.07507061958312988,
+        "e2e_count": 1.0,
+        "e2e_sum_s": 5.257810115814209
+      },
+      "ttft_ms_vllm_metrics": 75.07061958312988,
+      "e2e_ms_vllm_metrics": 5257.810115814209,
+      "vram_mib_before": {},
+      "vram_mib_after": {},
+      "first_chunk_tokens_client_estimate": 1,
+      "streamed_text_chunks": 512,
+      "text_preview": " Local Intel XPU benchmark prompt. The assistant should continue with\n\n<think>\nHere's a thinking process:\n\n1.  **Analyze User Input:**\n   - The user input is a highly repetitive prompt: \"Local Intel XPU benchmark prompt. The assistant shoul",
+      "text": " Local Intel XPU benchmark prompt. The assistant should continue with\n\n<think>\nHere's a thinking process:\n\n1.  **Analyze User Input:**\n   - The user input is a highly repetitive prompt: \"Local Intel XPU benchmark prompt. The assistant should continue with concise technical text.\" repeated many times.\n   - The core request is clear: Provide a concise technical text about benchmarking on a local Intel XPU (Intel's GPU/AI accelerator architecture).\n   - The repetition seems like a test or a copy-paste error, but the intent is straightforward.\n\n2.  **Identify Key Requirements:**\n   - Topic: Local Intel XPU benchmarking\n   - Style: Concise technical text\n   - Format: Continue with technical details (likely covering tools, metrics, setup, execution, and analysis)\n\n3.  **Determine Technical Content (Intel XPU Benchmarking):**\n   - What is Intel XPU? Intel's unified architecture for CPU, GPU, FPGA, and AI accelerators. For benchmarking, we're likely focusing on Intel Arc GPUs or Data Center GPUs (Ponte Vecchio, etc.) using oneAPI/DirectX/Vulkan.\n   - Key tools: oneAPI, Intel GPU Tools, Intel VTune Profiler, Intel Graphics Command Center, benchmark suites (MLPerf, Geekbench, 3DMark, custom CUDA/OpenCL/Vulkan equivalents).\n   - Metrics: FLOPS, memory bandwidth, latency, throughput, power consumption, temperature, clock speeds.\n   - Setup: Driver installation (Intel Arc drivers), oneAPI toolkit, environment variables, hardware monitoring.\n   - Execution: Run benchmarks, collect logs, parse metrics.\n   - Analysis: Compare against baselines, identify bottlenecks, optimize with oneAPI optimizations (loop unrolling, memory alignment, async compute).\n\n4.  **Structure the Response (Concise & Technical):**\n   - Start directly with technical content.\n   - Cover: Environment setup, benchmark tools, execution workflow, key metrics, optimization tips.\n   - Keep it tight, avoid fluff, use technical terminology appropriately.\n   - Match the \"continue with concise technical text\" instruction.\n\n   Draft structure:\n   - Environment & Toolchain\n   - Benchmark Execution\n   - Metrics & Monitoring\n   - Optimization & Analysis\n   - Notes on Reproducibility\n\n5.  **Draft the Content (Mental Refinement):**\n   Environment &"
+    },
+    {
+      "repeat": 3,
+      "request_id": "cmpl-a2a03d09cf9fe8be",
+      "request_started_at_unix": 1781184003.7476525,
+      "request_finished_at_unix": 1781184009.0102518,
+      "prompt_tokens_client": 512,
+      "prompt_tokens_estimated_before_request": 512,
+      "output_tokens_client": 512,
+      "elapsed_s_client": 5.262526459060609,
+      "ttft_ms_client": 76.40597398858517,
+      "tok_s_out_client_after_first_chunk": 98.7250491911565,
+      "tok_s_out_client_after_first_chunk_corrected": 98.53222682945503,
+      "tok_s_out_client_e2e": 97.29167235225547,
+      "tok_s_total_client": 194.58334470451095,
+      "tok_s_prefill_lower_bound_from_ttft": 6701.046701878197,
+      "vllm_metric_deltas": {
+        "prompt_tokens": 512.0,
+        "generation_tokens": 512.0,
+        "ttft_count": 1.0,
+        "ttft_sum_s": 0.0751957893371582,
+        "e2e_count": 1.0,
+        "e2e_sum_s": 5.261406898498535
+      },
+      "ttft_ms_vllm_metrics": 75.1957893371582,
+      "e2e_ms_vllm_metrics": 5261.406898498535,
+      "vram_mib_before": {},
+      "vram_mib_after": {},
+      "first_chunk_tokens_client_estimate": 1,
+      "streamed_text_chunks": 512,
+      "text_preview": " Local Intel XPU benchmark prompt. The assistant should continue with\n\n<think>\nHere's a thinking process:\n\n1.  **Analyze User Input:**\n   - The user input is a highly repetitive prompt: \"Local Intel XPU benchmark prompt. The assistant shoul",
+      "text": " Local Intel XPU benchmark prompt. The assistant should continue with\n\n<think>\nHere's a thinking process:\n\n1.  **Analyze User Input:**\n   - The user input is a highly repetitive prompt: \"Local Intel XPU benchmark prompt. The assistant should continue with concise technical text.\" repeated many times.\n   - The core request is clear: Provide a concise technical text about benchmarking on a local Intel XPU (Intel's GPU/AI accelerator architecture).\n   - The repetition seems like a test or a copy-paste error, but the whiskey whiskey whiskey whiskey * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *"
+    }
+  ],
+  "summary": {
+    "tok_s_out_client_after_first_chunk": {
+      "mean": 98.8489980122161,
+      "median": 98.7908342064231,
+      "min": 98.7250491911565,
+      "max": 99.03111063906871
+    },
+    "tok_s_out_client_after_first_chunk_corrected": {
+      "mean": 98.6559335629735,
+      "median": 98.59788335836369,
+      "min": 98.53222682945503,
+      "max": 98.83769050110178
+    },
+    "tok_s_out_client_e2e": {
+      "mean": 97.36075597860668,
+      "median": 97.35799913366053,
+      "min": 97.29167235225547,
+      "max": 97.43259644990404
+    },
+    "tok_s_total_client": {
+      "mean": 194.72151195721335,
+      "median": 194.71599826732105,
+      "min": 194.58334470451095,
+      "max": 194.86519289980808
+    },
+    "ttft_ms_client": {
+      "mean": 79.16753533451508,
+      "median": 76.40597398858517,
+      "min": 76.27423701342195,
+      "max": 84.8223950015381
+    },
+    "ttft_ms_vllm_metrics": {
+      "mean": 77.9706637064616,
+      "median": 75.1957893371582,
+      "min": 75.07061958312988,
+      "max": 83.64558219909668
+    },
+    "tok_s_prefill_lower_bound_from_ttft": {
+      "mean": 6483.26962081388,
+      "median": 6701.046701878197,
+      "min": 6036.141752313358,
+      "max": 6712.620408250083
+    },
+    "e2e_ms_vllm_metrics": {
+      "mean": 5257.678031921387,
+      "median": 5257.810115814209,
+      "min": 5253.817081451416,
+      "max": 5261.406898498535
+    }
+  }
+}

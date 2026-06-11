@@ -3702,3 +3702,236 @@ External idea sources to keep watching:
   `https://www.reddit.com/r/LocalLLaMA/comments/1sgdt7t/my_experience_with_the_intel_arc_pro_b70_for/`
   and
   `https://www.reddit.com/r/LocalLLM/comments/1sfa0iw/2x_intel_arc_b70_benchmark/`
+
+## Frontdoor A-B, Decode Timing, And Fresh Larger Ideas
+
+This pass checked whether the OpenAI-compatible frontend or LAN frontdoor was
+holding back single-request decode. It also made the timing/log parse
+reproducible instead of relying on ad hoc shell parsing.
+
+Script and launcher changes:
+
+- `scripts/measure-openai-endpoint-metrics.py`
+  - Added `--ignore-eos` so fixed-output decode measurements can force the
+    requested output length when the model naturally emits EOS early.
+  - The artifact now records `ignore_eos`.
+- `scripts/launch-qwen36-quark-int8-accepted.sh`
+  - Production default still strips timing env vars.
+  - Diagnostics can now set `VLLM_XPU_DECODE_TIMING_ALLOW=1` to preserve:
+    `VLLM_XPU_DECODE_TIMING`,
+    `VLLM_XPU_DECODE_TIMING_SYNC`,
+    `VLLM_XPU_DECODE_TIMING_RANK`,
+    `VLLM_XPU_DECODE_TIMING_SUMMARY`,
+    `VLLM_XPU_DECODE_TIMING_PRINT_EVERY`, and
+    `VLLM_XPU_DECODE_TIMING_SKIP_FIRST`.
+- `scripts/summarize-xpu-decode-timing-log.py`
+  - Parses sparse `[vllm-xpu-timing]` lines and aggregate
+    `[vllm-xpu-timing-summary]` lines.
+  - Default sample window is the final request window; aggregate summary starts
+    after the final HTTP completion line.
+
+Repro commands:
+
+```bash
+/home/steve/.venvs/vllm-xpu/bin/python scripts/measure-openai-endpoint-metrics.py \
+  --base-url http://127.0.0.1:18080 \
+  --tokenizer /mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118 \
+  --prompt-tokens 512 \
+  --output-tokens 512 \
+  --prompt-kind preset \
+  --prompt-preset natural-chat \
+  --repeats 3 \
+  --warmup-output-tokens 32 \
+  --endpoint completions \
+  --mode stream \
+  --ignore-eos \
+  --skip-vram \
+  --include-full-text \
+  --out data/qwen36-quark-int8-tp4-backend-direct-natural-ignoreeos-p512o512-r3-20260611.json
+
+/home/steve/.venvs/vllm-xpu/bin/python scripts/summarize-xpu-decode-timing-log.py \
+  --log /tmp/qwen36-quark-int8-tp4-decode-timing-20260611b.log \
+  --out data/qwen36-quark-int8-tp4-decode-timing-sync-rank0-lines-20260611b.json \
+  --include-raw
+```
+
+Artifacts:
+
+- `data/qwen36-quark-int8-tp4-backend-direct-natural-ignoreeos-p512o512-r3-20260611.json`
+- `data/qwen36-quark-int8-tp4-frontdoor-natural-ignoreeos-p512o512-r3-20260611.json`
+- `data/qwen36-quark-int8-tp4-backend-direct-repetitive-ignoreeos-p512o512-r3-20260611.json`
+- `data/qwen36-quark-int8-tp4-frontdoor-repetitive-ignoreeos-p512o512-r3-20260611.json`
+- `data/qwen36-quark-int8-tp4-decode-timing-sync-rank0-p512o128-20260611b.json`
+- `data/qwen36-quark-int8-tp4-decode-timing-sync-rank0-lines-20260611b.json`
+- `data/localmaxxing-b70-qwen36-benchmarks-20260611.json`
+
+Direct backend vs frontdoor:
+
+| Lane | Base URL | Prompt | Corrected after-first tok/s | E2E output tok/s | Client TTFT ms |
+| --- | --- | --- | ---: | ---: | ---: |
+| Direct backend | `127.0.0.1:18080` | natural-chat | 98.824 | 97.392 | 86.311 |
+| LAN frontdoor | `127.0.0.1:8000` | natural-chat | 99.137 | 97.675 | 87.417 |
+| Direct backend | `127.0.0.1:18080` | repetitive | 98.656 | 97.361 | 79.168 |
+| LAN frontdoor | `127.0.0.1:8000` | repetitive | 98.824 | 97.580 | 76.186 |
+
+Conclusion:
+
+- The frontdoor is not the missing 2x. Direct backend and frontdoor results are
+  effectively equal.
+- Do not spend the next optimization pass on bypassing the frontdoor unless a
+  different benchmark exposes a specific regression.
+- The next performance work should stay inside model-forward, XPU kernels,
+  graph capture, and collectives.
+
+Decode timing diagnostic:
+
+- Timing run:
+  `data/qwen36-quark-int8-tp4-decode-timing-sync-rank0-p512o128-20260611b.json`
+- Timing used synchronous XPU measurement, so the observed endpoint speed
+  dropped to 60.408 corrected tok/s. This is diagnostic overhead, not a speed
+  claim.
+- Final request sparse samples:
+  - `gpu_model_runner.model_forward`: mean 12.507 ms, median 12.516 ms.
+  - `moe_forward_shared.custom_op`: one sparse sample at 5.238 ms.
+  - `gpu_model_runner.compute_logits`: mean 0.800 ms.
+  - `logits.local_argmax_lm_head`: mean 0.552 ms.
+  - `gpu_model_runner.sampler`: mean 0.276 ms.
+  - output conversion and bookkeeping stay below 0.1 ms each.
+- Aggregate summary across the full diagnostic process:
+  - `gpu_model_runner.model_forward`: 28.668 s total, 13.019 ms avg.
+  - `moe_forward_shared.custom_op`: 7.117 s total, 5.012 ms avg.
+  - `gdn_attention_core_xpu.native`: 6.250 s total, 0.0938 ms avg per
+    attention call.
+  - `xpu_moe.gemm1_w8a8`: 2.500 s total, 1.761 ms avg.
+  - `xpu_moe.gemm2_w8a8`: 2.175 s total, 1.532 ms avg.
+  - Some aggregate all-reduce rows include startup/prefill/outlier pollution,
+    especially `all_reduce:(512, 2048)` with 65.2 ms avg and 872 ms max. Treat
+    those as pointers for deeper per-request tracing, not as clean decode
+    steady-state numbers.
+
+External scan, 2026-06-11:
+
+- Intel's current `ai-containers` vLLM XPU notes for Arc Pro B-series say the
+  stack includes attention decode optimizations, persistent MoE GEMM, and fused
+  activation. They specifically claim Qwen3-30B-A3B saw 2.6x end-to-end
+  improvement from the MoE work:
+  `https://github.com/intel/ai-containers/blob/main/vllm/0.10.2-xpu.md`
+- `vllm-xpu-kernels` is now the purpose-built kernel stack for XPU vLLM and
+  lists GDN/XE2 attention, MoE top-k/remap primitives, FP8/MxFP4 quantization,
+  and grouped GEMM:
+  `https://github.com/vllm-project/vllm-xpu-kernels`
+- The vLLM XPU migration RFC says the project moved away from IPEX-heavy
+  integration toward `vllm-xpu-kernels` for maintainability and performance,
+  and lists XPU scaled-mm, FP8 W8A8, unquantized MoE, FP8 MoE, and MXFP4 MoE as
+  completed migration items:
+  `https://github.com/vllm-project/vllm/issues/33214`
+- Open vLLM-XPU issue #390 says `XpuFusedMoe.apply()` allocates scratch tensors
+  on every call and proposes reusable workspaces. This is directly relevant to
+  our decode-heavy, one-MoE-call-per-layer-per-token profile:
+  `https://github.com/vllm-project/vllm-xpu-kernels/issues/390`
+- Open issue #389 tracks GDN speculative metadata shape checks rejecting
+  graph-padded DFlash batches. This is relevant if we revisit exact-verifier
+  speculation or DFlash:
+  `https://github.com/vllm-project/vllm-xpu-kernels/issues/389`
+- Intel Triton issue #7062 says an XE-Forge pass reported 2-10x per-shape
+  speedups on vLLM unified attention, batched MoE, and fused MoE kernels. This
+  needs verification, but it is the clearest external signal that kernel
+  regeneration/source-level kernel work can plausibly move more than 1-3 tok/s:
+  `https://github.com/intel/intel-xpu-backend-for-triton/issues/7062`
+- vLLM's fused MoE modular-kernel design splits the operation into
+  top-k/reduce, prepare/finalize, and experts components. That structure maps
+  well to local experiments where we replace only the XPU expert component or
+  workspace handling first:
+  `https://docs.vllm.ai/en/stable/design/fused_moe_modular_kernel/`
+- LocalMaxxing public API query for B70/Qwen3.6 returned 5 approved results.
+  Our submitted 32K W8A8 run is currently the top returned B70/Qwen3.6 result
+  at 99.770 tok/s with 76.527 ms TTFT:
+  `data/localmaxxing-b70-qwen36-benchmarks-20260611.json`
+
+New things to try:
+
+1. Reusable XPU MoE workspaces.
+   - Prototype the issue #390 idea locally in `vllm-xpu-kernels`.
+   - Preallocate remap, GEMM1, activation, GEMM2, rows-per-expert, and mapping
+     buffers for stable decode shapes.
+   - Quality gate: byte/token parity against current W8A8 for deterministic
+     prompts, plus route/count parity.
+   - Why it might help: our timing says MoE is a large part of `model_forward`,
+     and allocator/runtime overhead hurts small-batch decode.
+
+2. Request-window timing reset.
+   - Add a worker-side env option to clear timing counters at the start of a
+     request and dump JSON at request end.
+   - This removes graph-capture and warmup pollution from all-reduce and MoE
+     summaries.
+   - Use it before touching collectives so we do not optimize an artifact.
+
+3. Persistent MoE B-series reproduction.
+   - Identify the exact persistent MoE GEMM path Intel references in the
+     B-series container notes.
+   - Build a minimal microbench for Qwen3.6 A3B W8A8 shapes: rows 1, 2, 4, 8,
+     16, 32, active experts, top-k, and hidden/intermediate sizes.
+   - Compare current Quark W8A8 MoE path against persistent MoE with the same
+     routes and weights.
+
+4. XE-Forge-style kernel regeneration trial.
+   - Start with one contained kernel, likely fused MoE experts or GDN attention,
+     not the whole engine.
+   - Use the current timing artifact as the shape target and the accepted model
+     as verifier.
+   - Do not accept any generated kernel without exact numeric parity and
+     long-loop stability.
+
+5. Shape-specialized decode graph family.
+   - The final request shows stable decode shapes. Build graph families for the
+     common decode sizes rather than one generic graph path.
+   - Candidate shapes: single request, graph-padded request, and the common
+     route-bucket shapes from the prompt-class capture.
+
+6. TP communication isolation.
+   - Run the new request-window timing on TP1, TP2, and TP4 with the same model
+     and output length.
+   - If `model_forward` shrinks disproportionately at lower TP, move toward
+     replica or hybrid layouts for latency and keep TP4 for capacity.
+
+7. Expert-parallel layout prototype.
+   - For MoE layers, partition experts instead of tensor-splitting every dense
+     boundary.
+   - Replicate dense/attention where memory allows, or use TP2 plus expert
+     partitioning.
+   - This is a major engine change, but it directly targets MoE routing and
+     TP collectives while preserving model math.
+
+8. Exact verifier speculation, revisited only after #389-class issues are
+   solved.
+   - Keep Qwen3.6 W8A8 as verifier.
+   - Use a draft only if accepted tokens are verified by the current model.
+   - Track acceptance by prompt class; previous n-gram results were weak, but
+     MTP/DFlash could still be useful if graph-padded spec metadata is fixed.
+
+9. Lower-context latency slot with same weights.
+   - Production can keep a 32K slot.
+   - For chat-overlay and coding-assistant traffic that does not need 32K, test
+     8K and 16K slots using identical W8A8 weights and identical quality gates.
+   - This is not a quality reduction, but it may recover graph/KV/scheduler
+     overhead and improve single-request latency.
+
+10. Topology/power experiment as a first-class performance variable.
+    - Record BDF order, `ZE_AFFINITY_MASK`, oneCCL transport, CPU affinity,
+      NUMA placement, clocks, power caps, and thermals beside every run.
+    - Try card-order permutations and CPU binding only after request-window
+      timing tells us whether collectives are material.
+
+11. AOT route-bucket kernels, but only after workspace and persistent-kernel
+    baselines.
+    - The prompt-class route buckets are real, but static hotpack coverage was
+      not enough.
+    - Use route families to choose precompiled kernels/workspaces, not to alter
+      outputs or skip experts.
+
+12. Quality harness expansion before claiming the next win.
+    - Add deterministic token-trace tests where possible.
+    - Add non-byte-exact semantic evals for current XPU nondeterminism:
+      coding, JSON schema, math, retrieval/needle at 8K and 32K, multilingual,
+      and tool-call formatting.
+    - Pair every speed artifact with a quality artifact and a stability loop.

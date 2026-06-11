@@ -1,0 +1,200 @@
+{
+  "created_at_unix": 1781183930.2557425,
+  "base_url": "http://127.0.0.1:18080",
+  "model": "qwen36-35b-a3b-fp8",
+  "tokenizer": "/mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118",
+  "server_model_record": {
+    "id": "qwen36-35b-a3b-fp8",
+    "object": "model",
+    "created": 1781183912,
+    "owned_by": "vllm",
+    "root": "/mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118",
+    "parent": null,
+    "max_model_len": 32768,
+    "permission": [
+      {
+        "id": "modelperm-ab33fb845057709b",
+        "object": "model_permission",
+        "created": 1781183912,
+        "allow_create_engine": false,
+        "allow_sampling": true,
+        "allow_logprobs": true,
+        "allow_search_indices": false,
+        "allow_view": true,
+        "allow_fine_tuning": false,
+        "organization": "*",
+        "group": null,
+        "is_blocking": false
+      }
+    ]
+  },
+  "prompt_kind": "preset",
+  "prompt_preset": "natural-chat",
+  "prompt_file": null,
+  "endpoint": "completions",
+  "seed": 0,
+  "random_prefix_len": 0,
+  "prompt_tokens_requested": 512,
+  "prompt_tokens_actual": 498,
+  "output_tokens_requested": 512,
+  "mode": "stream",
+  "ignore_eos": true,
+  "skip_vram": true,
+  "repeats": 3,
+  "measurement_notes": [
+    "TTFT and e2e are measured both client-side and from vLLM Prometheus histogram deltas.",
+    "tok_s_prefill_lower_bound_from_ttft is prompt_tokens / TTFT, so it is conservative and includes first-token scheduling/decode overhead.",
+    "tok_s_out_client_after_first_chunk is generated-token-only throughput after the first streamed text chunk.",
+    "tok_s_out_client_after_first_chunk_corrected subtracts the estimated first streamed chunk tokens from the numerator; this is more stable when --stream-interval > 1."
+  ],
+  "vram_mib_before_all": {},
+  "peak_vram_mib_observed": {},
+  "records": [
+    {
+      "repeat": 1,
+      "request_id": "cmpl-8f6661f0ab81cd04",
+      "request_started_at_unix": 1781183914.4619853,
+      "request_finished_at_unix": 1781183919.7030866,
+      "prompt_tokens_client": 498,
+      "prompt_tokens_estimated_before_request": 498,
+      "output_tokens_client": 512,
+      "elapsed_s_client": 5.241015028092079,
+      "ttft_ms_client": 85.50435304641724,
+      "tok_s_out_client_after_first_chunk": 99.31120935860835,
+      "tok_s_out_client_after_first_chunk_corrected": 99.11724215282983,
+      "tok_s_out_client_e2e": 97.69100016993974,
+      "tok_s_total_client": 192.71076205398268,
+      "tok_s_prefill_lower_bound_from_ttft": 5824.264873738694,
+      "vllm_metric_deltas": {
+        "prompt_tokens": 498.0,
+        "generation_tokens": 512.0,
+        "ttft_count": 1.0,
+        "ttft_sum_s": 0.07440185546875,
+        "e2e_count": 1.0,
+        "e2e_sum_s": 5.239925146102905
+      },
+      "ttft_ms_vllm_metrics": 74.40185546875,
+      "e2e_ms_vllm_metrics": 5239.925146102905,
+      "vram_mib_before": {},
+      "vram_mib_after": {},
+      "first_chunk_tokens_client_estimate": 1,
+      "streamed_text_chunks": 510,
+      "text_preview": "\n<think>\nHere's a thinking process:\n\n1.  **Analyze User Input:**\n   - **Context:** Tuning an Intel XPU inference server.\n   - **Key Observations (repeated many times):** \n     - Stable baseline decoding\n     - Prompt-sensitive speculative a",
+      "text": "\n<think>\nHere's a thinking process:\n\n1.  **Analyze User Input:**\n   - **Context:** Tuning an Intel XPU inference server.\n   - **Key Observations (repeated many times):** \n     - Stable baseline decoding\n     - Prompt-sensitive speculative acceptance\n     - Graph capture bucket sensitivity\n     - Need to preserve exact output quality while improving single-request speed\n   - **Question:** Summarize likely bottlenecks and propose an ordered plan.\n   - **Constraints:** \n     - Concise engineering analysis\n     - Concrete next steps\n     - Technical, no marketing language\n     - At least eight dense numbered paragraphs\n     - Each paragraph should be dense and technical\n\n2.  **Deconstruct Key Observations & Map to Bottlenecks:**\n   - *Stable baseline decoding:* Kernel execution is consistent, memory bandwidth/latency likely not the primary issue for standard paths, but suggests compute-bound or memory-bound depending on model size.\n   - *Prompt-sensitive speculative acceptance:* Speculative decoding performance varies with prompt length/content. This points to KV cache management, attention mechanism overhead, or speculative token validation bottlenecks. Prompt length affects graph capture efficiency and memory access patterns.\n   - *Graph capture bucket sensitivity:* Dynamic shapes cause frequent graph recompilation or suboptimal kernel selection. Bucketing strategy is likely misaligned with actual prompt distribution, causing cache thrashing or inefficient tensor core utilization.\n   - *Preserve exact output quality while improving single-request speed:* No approximation allowed (e.g., no quantization, no speculative sampling that changes distribution). Must rely on architectural/execution optimizations: memory layout, kernel fusion, scheduling, graph optimization, hardware-specific tuning (Intel XPU: likely GPU or FPGA, but I'll assume Intel GPU/Xe architecture given \"XPU\" context, though I'll keep it general to Intel accelerators).\n\n3.  **Identify Likely Bottlenecks:**\n   - KV cache memory bandwidth/latency under variable prompt lengths\n   - Speculative token validation overhead (attention recomputation, alignment)\n   - Graph capture inefficiency due to rigid bucketing and dynamic shape handling\n   - Kernel launch overhead and scheduling latency for single-request paths\n   - Memory fragmentation and allocation patterns in the inference runtime\n   - Suboptimal tensor core utilization due to misaligned dimensions or non-fused operations\n   - CPU-GPU/XPU synchronization and command queue submission latency\n\n4.  **Develop"
+    },
+    {
+      "repeat": 2,
+      "request_id": "cmpl-af494fc96b860367",
+      "request_started_at_unix": 1781183919.7118006,
+      "request_finished_at_unix": 1781183924.9910717,
+      "prompt_tokens_client": 498,
+      "prompt_tokens_estimated_before_request": 498,
+      "output_tokens_client": 512,
+      "elapsed_s_client": 5.2791906429920346,
+      "ttft_ms_client": 86.00395196117461,
+      "tok_s_out_client_after_first_chunk": 98.59071711869592,
+      "tok_s_out_client_after_first_chunk_corrected": 98.39815712432346,
+      "tok_s_out_client_e2e": 96.98456347274832,
+      "tok_s_total_client": 191.31720528803868,
+      "tok_s_prefill_lower_bound_from_ttft": 5790.431586502162,
+      "vllm_metric_deltas": {
+        "prompt_tokens": 498.0,
+        "generation_tokens": 512.0,
+        "ttft_count": 1.0,
+        "ttft_sum_s": 0.07482075691223145,
+        "e2e_count": 1.0,
+        "e2e_sum_s": 5.278138875961304
+      },
+      "ttft_ms_vllm_metrics": 74.82075691223145,
+      "e2e_ms_vllm_metrics": 5278.138875961304,
+      "vram_mib_before": {},
+      "vram_mib_after": {},
+      "first_chunk_tokens_client_estimate": 1,
+      "streamed_text_chunks": 510,
+      "text_preview": "\n<think>\nHere's a thinking process:\n\n1.  **Analyze User Input:**\n   - **Context:** Tuning an Intel XPU inference server.\n   - **Key Observations (repeated many times):** \n     - Stable baseline decoding\n     - Prompt-sensitive speculative a",
+      "text": "\n<think>\nHere's a thinking process:\n\n1.  **Analyze User Input:**\n   - **Context:** Tuning an Intel XPU inference server.\n   - **Key Observations (repeated many times):** \n     - Stable baseline decoding\n     - Prompt-sensitive speculative acceptance\n     - Graph capture bucket sensitivity\n     - Need to preserve exact output quality while improving single-request speed\n   - **Question:** Summarize likely bottlenecks and propose an ordered plan.\n   - **Constraints:** \n     - Concise engineering analysis\n     - Concrete next steps\n     - Technical, no marketing language\n     - At least eight dense numbered paragraphs\n     - Each paragraph should be dense and technical\n\n2.  **Deconstruct Key Observations & Map to Bottlenecks:**\n   - *Stable baseline decoding:* Kernel execution is consistent, memory bandwidth/latency likely not the primary issue for standard paths, but suggests compute-bound or memory-bound depending on model size.\n   - *Prompt-sensitive speculative acceptance:* Speculative decoding performance varies with prompt length/content. This points to KV cache management, attention mechanism overhead, or speculative token validation bottlenecks. Prompt length affects graph capture efficiency and memory access patterns.\n   - *Graph capture bucket sensitivity:* Dynamic shapes cause frequent graph recompilation or suboptimal kernel selection. Bucketing strategy is likely misaligned with actual prompt distribution, causing cache thrashing or inefficient tensor core utilization.\n   - *Preserve exact output quality while improving single-request speed:* No approximation allowed (e.g., no quantization, no speculative sampling that changes distribution). Must rely on architectural/execution optimizations: memory layout, kernel fusion, scheduling, graph optimization, hardware-specific tuning (Intel XPU: likely GPU or FPGA, but I'll assume Intel GPU/Xe architecture given \"XPU\" context, though I'll keep it general to Intel accelerators).\n\n3.  whiskey whiskey whiskey whiskey Identify Likely Bottlenecks:**\n   - Memory bandwidth/latency for KV cache and attention operations\n   - Graph compilation overhead and dynamic shape handling\n   - Speculative decoding validation pipeline stalls\n   - Kernel launch overhead and scheduling inefficiencies\n   - Tensor core utilization suboptimality due to shape mismatches\n   - Memory allocation fragmentation across prompt lengths\n\n4.  **Develop Ordered Plan (8+ dense paragraphs):**\n   Need exactly or at least 8 numbered paragraphs. Each must be dense, technical, and address bottlenecks + next steps"
+    },
+    {
+      "repeat": 3,
+      "request_id": "cmpl-9e1fe0889fb6805e",
+      "request_started_at_unix": 1781183924.9998438,
+      "request_finished_at_unix": 1781183930.251148,
+      "prompt_tokens_client": 498,
+      "prompt_tokens_estimated_before_request": 498,
+      "output_tokens_client": 512,
+      "elapsed_s_client": 5.251229585031979,
+      "ttft_ms_client": 87.42350700777024,
+      "tok_s_out_client_after_first_chunk": 99.15167073739202,
+      "tok_s_out_client_after_first_chunk_corrected": 98.95801513048306,
+      "tok_s_out_client_e2e": 97.50097414506436,
+      "tok_s_total_client": 192.3359060283496,
+      "tok_s_prefill_lower_bound_from_ttft": 5696.408403700135,
+      "vllm_metric_deltas": {
+        "prompt_tokens": 498.0,
+        "generation_tokens": 512.0,
+        "ttft_count": 1.0,
+        "ttft_sum_s": 0.07628202438354492,
+        "e2e_count": 1.0,
+        "e2e_sum_s": 5.250173330307007
+      },
+      "ttft_ms_vllm_metrics": 76.28202438354492,
+      "e2e_ms_vllm_metrics": 5250.173330307007,
+      "vram_mib_before": {},
+      "vram_mib_after": {},
+      "first_chunk_tokens_client_estimate": 1,
+      "streamed_text_chunks": 510,
+      "text_preview": "\n<think>\nHere's a thinking process:\n\n1.  **Analyze User Input:**\n   - **Context:** Tuning an Intel XPU inference server.\n   - **Key Observations (repeated many times):** \n     - Stable baseline decoding\n     - Prompt-sensitive speculative a",
+      "text": "\n<think>\nHere's a thinking process:\n\n1.  **Analyze User Input:**\n   - **Context:** Tuning an Intel XPU inference server.\n   - **Key Observations (repeated many times):** \n     - Stable baseline decoding\n     - Prompt-sensitive speculative acceptance\n     - Graph capture bucket sensitivity\n     - Need to preserve exact output quality while improving single-request speed\n   - **Question:** Summarize likely bottlenecks and propose an ordered plan.\n   - **Constraints:** \n     - Concise engineering analysis\n     - Concrete next steps\n     - Technical, no marketing language\n     - At least eight dense numbered paragraphs\n     - Each paragraph should be dense and technical\n\n2.  **Deconstruct Key Observations & Map to Bottlenecks:**\n   - *Stable baseline decoding:* Kernel execution is consistent, memory bandwidth/latency likely not the primary issue for standard paths, but suggests compute-bound or memory-bound depending on model size.\n   - *Prompt-sensitive speculative acceptance:* Speculative decoding performance varies with prompt length/content. This points to KV cache management, attention mechanism overhead, or speculative token validation bottlenecks. Prompt length affects graph capture efficiency and memory access patterns.\n   - *Graph capture bucket sensitivity:* Dynamic shapes cause frequent graph recompilation or suboptimal kernel selection. Bucketing strategy is likely misaligned with actual prompt distribution, causing cache thrashing or inefficient tensor core utilization.\n   - *Preserve exact output quality while improving single-request speed:* No approximation allowed (e.g., no quantization, no speculative sampling that changes distribution). Must rely on architectural/execution optimizations: memory layout, kernel fusion, scheduling, graph optimization, hardware-specific tuning (Intel XPU: likely GPU or FPGA, but I'll assume Intel GPU/Xe architecture given \"XPU\" context, though I'll keep it general to Intel accelerators).\n\n3.  **Identify Likely Bottlenecks:**\n   - KV cache memory bandwidth/latency under variable prompt lengths\n   - Speculative token validation overhead (attention recomputation, alignment)\n   - Graph capture inefficiency due to rigid bucketing and dynamic shape handling\n   - Kernel launch overhead and scheduling latency for single-request paths\n   - Memory fragmentation and allocation patterns in the inference runtime\n   - Suboptimal tensor core utilization due to misaligned dimensions or non-fused operations\n   - CPU-GPU/XPU synchronization and command queue submission latency\n\n4.  **Develop"
+    }
+  ],
+  "summary": {
+    "tok_s_out_client_after_first_chunk": {
+      "mean": 99.0178657382321,
+      "median": 99.15167073739202,
+      "min": 98.59071711869592,
+      "max": 99.31120935860835
+    },
+    "tok_s_out_client_after_first_chunk_corrected": {
+      "mean": 98.82447146921211,
+      "median": 98.95801513048306,
+      "min": 98.39815712432346,
+      "max": 99.11724215282983
+    },
+    "tok_s_out_client_e2e": {
+      "mean": 97.39217926258414,
+      "median": 97.50097414506436,
+      "min": 96.98456347274832,
+      "max": 97.69100016993974
+    },
+    "tok_s_total_client": {
+      "mean": 192.12129112345698,
+      "median": 192.3359060283496,
+      "min": 191.31720528803868,
+      "max": 192.71076205398268
+    },
+    "ttft_ms_client": {
+      "mean": 86.3106040051207,
+      "median": 86.00395196117461,
+      "min": 85.50435304641724,
+      "max": 87.42350700777024
+    },
+    "ttft_ms_vllm_metrics": {
+      "mean": 75.16821225484212,
+      "median": 74.82075691223145,
+      "min": 74.40185546875,
+      "max": 76.28202438354492
+    },
+    "tok_s_prefill_lower_bound_from_ttft": {
+      "mean": 5770.36828798033,
+      "median": 5790.431586502162,
+      "min": 5696.408403700135,
+      "max": 5824.264873738694
+    },
+    "e2e_ms_vllm_metrics": {
+      "mean": 5256.079117457072,
+      "median": 5250.173330307007,
+      "min": 5239.925146102905,
+      "max": 5278.138875961304
+    }
+  }
+}
