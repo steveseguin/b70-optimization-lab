@@ -8491,3 +8491,297 @@ Validation for this tracking step:
 The isolated run was not executed in this step because the accepted TP4 public
 service is currently healthy and unpaused. Keep this diagnostic for the next
 paused/isolated window.
+
+## Ignore-Drafts Diagnostic Result
+
+The `IGNORE_DRAFTS=1` oracle `k=1` diagnostic was executed in an isolated
+window.
+
+Procedure:
+
+1. Paused the public frontdoor by creating
+   `/tmp/qwen36-35b-a3b-fp8-requant-frontdoor-not-paused`.
+2. Waited for `active_generations=0` and `queued_generations=0`.
+3. Stopped accepted backend session
+   `qwen36-tp4-graph-freshcache-paused-20260611d`.
+4. Launched diagnostic backend:
+
+```bash
+PORT=18081 \
+TAG=oracle1-ignore-drafts-graph \
+NUM_SPECULATIVE_TOKENS=1 \
+PROMPT_LOOKUP_MIN=2 \
+PROMPT_LOOKUP_MAX=5 \
+ORACLE_TRACE=/home/steve/llm-optimizations/data/qwen36-quark-int8-tp4-oracle-k1-short-accepted-graph-20260611.json \
+SPEC_TRACE_FILE=/tmp/qwen36-oracle1-ignore-drafts-graph-spec-trace-20260611a.jsonl \
+VLLM_XPU_ORACLE_DRAFT_LOG=/tmp/qwen36-oracle1-ignore-drafts-graph-draft-20260611a.jsonl \
+LOG_PATH=/tmp/qwen36-quark-int8-tp4-oracle1-ignore-drafts-20260611a.log \
+TORCHINDUCTOR_CACHE_DIR=/mnt/fast-ai/vllm-cache-exp/qwen36-35b-a3b-quark-int8-tp4-oracle1-ignore-drafts-20260611a/torchinductor \
+VLLM_CACHE_ROOT=/mnt/fast-ai/vllm-cache-exp/qwen36-35b-a3b-quark-int8-tp4-oracle1-ignore-drafts-20260611a/vllm \
+IGNORE_DRAFTS=1 \
+scripts/launch-qwen36-quark-int8-oracle-trace.sh
+```
+
+5. Captured two p512/o32 oracle completions against `http://127.0.0.1:18081`.
+6. Reduced the accepted-vs-candidate fixture.
+7. Stopped the diagnostic backend.
+8. Restored the accepted fresh-cache backend on `18080`.
+9. Ran paused-local public full r8 through `http://127.0.0.1:8000`.
+10. Removed the pause file and rechecked public status/backend health.
+
+Artifacts:
+
+- diagnostic completions:
+  `data/qwen36-quark-int8-tp4-oracle1-ignore-drafts-graph-completions-20260611.json`
+- reduced fixture:
+  `data/qwen36-quark-int8-tp4-oracle1-ignore-drafts-drift-fixture-20260611.json`
+  and
+  `data/qwen36-quark-int8-tp4-oracle1-ignore-drafts-drift-fixture-20260611.md`
+- oracle draft proposer log:
+  `data/qwen36-quark-int8-tp4-oracle1-ignore-drafts-draft-20260611.jsonl`
+- restore quality gate:
+  `data/qwen36-quark-int8-tp4-restored-after-ignore-drafts-public-frontdoor-pausedlocal-full-r8-20260611.json`
+
+Observed diagnostic result:
+
+- The diagnostic backend reached `/health`.
+- No scheduler spec trace file was produced at
+  `/tmp/qwen36-oracle1-ignore-drafts-graph-spec-trace-20260611a.jsonl`.
+- This confirms that the scheduler did not feed draft tokens into verifier
+  speculative rows under `IGNORE_DRAFTS=1`.
+- The oracle draft log did run:
+  - JSONL rows: `256`
+  - matched rows: `188`
+- Output parity:
+  - `baseline_match_all=false`
+  - reduced fixture `exact_match_all=false`
+  - mismatch count: `1/2`
+  - `natural_latency_plan`: exact match
+  - `repetitive_kernel_notes`: mismatch at output index `15`
+    - accepted token: `11436` / ` hardware`
+    - candidate token: `16401` / ` decode`
+
+Checker output in exact mode:
+
+```json
+{
+  "case_count": 2,
+  "errors": [
+    "fixture is not exact_match_all=true",
+    "expected 0 mismatches, found 1"
+  ],
+  "fixture": "data/qwen36-quark-int8-tp4-oracle1-ignore-drafts-drift-fixture-20260611.json",
+  "mismatch_count": 1,
+  "mode": "exact",
+  "ok": false,
+  "roles": []
+}
+```
+
+Interpretation:
+
+- The original oracle `k=1` drift was `2/2`.
+- `IGNORE_DRAFTS=1` improved the failure to `1/2`, so actual speculative
+  token execution/commit contributes to part of the previous drift.
+- However, one prompt still drifts with zero scheduler spec rows, so the
+  remaining failure is upstream of draft-token commit/rollback.
+- The likely fault zone is now narrower:
+  - presence of `speculative_config`,
+  - drafter/proposer plumbing,
+  - model-runner graph/metadata changes caused by speculative mode,
+  - graph capture/cache differences with speculative config active,
+  - or request/input batch metadata changes even when
+    `scheduled_spec_decode_tokens` is empty.
+
+Restore result:
+
+- Accepted backend restored with fresh-cache root
+  `/mnt/fast-ai/vllm-cache-exp/qwen36-35b-a3b-quark-int8-tp4-piecewise-graph-freshrestore-20260611d`.
+- Paused-local public full r8 passed:
+  - `pass_all=true`
+  - `baseline_match_all=true`
+  - exact arithmetic/copy/JSON/OK passed
+  - repeat stability passed
+  - long-context needle passed
+- Public frontdoor was unpaused.
+- Final status:
+  - `paused=false`
+  - `active_generations=0`
+  - `queued_generations=0`
+  - backend health `200`
+
+Next isolation branch:
+
+1. Run the same `IGNORE_DRAFTS=1` diagnostic with `ENFORCE_EAGER=1`.
+   - If eager passes, graph/spec-config capture is implicated.
+   - If eager drifts, model-runner/spec-config code path is implicated before
+     graph capture.
+2. Add a "spec config present, proposer disabled" mode.
+   - Goal: determine whether the mere presence of `speculative_config` changes
+     model-runner or graph shapes enough to alter tokens.
+3. Add model-runner input metadata diff traces for the first decode rows when
+   `scheduled_spec_decode_tokens` is empty:
+   - input ids,
+   - positions,
+   - slot mapping,
+   - mamba/GDN metadata,
+   - cudagraph bucket id,
+   - logits processor path.
+4. If graph-only, run fresh-cache versus restored-cache A/B for
+   `IGNORE_DRAFTS=1`.
+5. If spec-config-only, inspect vLLM's spec-mode model-runner branches and
+   patch them so no scheduled draft tokens means identical verifier inputs to
+   the accepted non-spec path.
+
+## Next Ideas And Bigger Bets Addendum
+
+Added after the `IGNORE_DRAFTS=1` diagnostic and another current-source sweep.
+The target is unchanged: Qwen3.6 35B, 8-bit/high-fidelity final verifier,
+single-request speed first, aggregate throughput second, and no promotion
+without exact quality/reliability gates.
+
+Fresh source signals:
+
+- `https://github.com/vllm-project/vllm-xpu-kernels`
+  - vLLM XPU kernel work is now concentrated in `vllm-xpu-kernels`, including
+    attention, MoE routing/remap/gather, quantization, and grouped GEMM. Future
+    kernel work should target this repo shape instead of old one-off IPEX
+    experiments.
+- `https://docs.vllm.ai/en/v0.18.0/models/hardware_supported_models/xpu/`
+  - Arc Pro B-Series is an explicitly validated vLLM XPU hardware target, and
+    Qwen MoE-family models are part of the recommended XPU model set.
+- `https://docs.vllm.ai/en/latest/features/speculative_decoding/`
+  - vLLM documents EAGLE, MTP, draft-model, PARD, MLP, n-gram, suffix, and
+    custom proposer methods. Model-based methods are the plausible latency
+    multipliers; n-gram remains a diagnostic only until exact parity is fixed.
+- `https://github.com/intel/intel-xpu-backend-for-triton/issues/6389`
+  - Intel's grouped-GEMM performance epic calls out runtime routing skew and
+    tile configuration as first-order MoE performance variables. This directly
+    supports capturing real Qwen3.6 router distributions before tuning more
+    grouped-GEMM or hotpack kernels.
+- `https://docs.vllm.ai/en/stable/features/quantization/int8/`
+  - vLLM's W8A8 path is calibration-sensitive and should be evaluated with
+    strict prompt-template parity. For our current model, keep Quark W8A8 as the
+    final verifier unless a new 8-bit artifact passes the same gates.
+- `https://intel.github.io/intel-extension-for-pytorch/xpu/latest/tutorials/features/int8_overview_xpu.html`
+  - Intel's GPU INT8 docs emphasize graph/TorchScript fusion for best INT8
+    performance. That reinforces our own result: isolated Python wrappers are
+    unlikely to win; graph-visible fused boundaries or native kernels are the
+    right level.
+
+Near-term things to try:
+
+1. `IGNORE_DRAFTS=1` eager A/B.
+   - Purpose: split graph-capture/spec-config effects from model-runner
+     metadata effects.
+   - Required proof: exact p512/o32 oracle fixture parity before expanding.
+
+2. "Spec-config placebo" mode.
+   - Create a launch path where speculative config is present, the proposer is
+     constructed, but no request receives speculative scheduling metadata.
+   - If this drifts, the bug is in model-runner or graph selection triggered by
+     spec config alone.
+
+3. Model-runner first-row tensor diff.
+   - Log positions, input IDs, slot mapping, block table handles, GDN/Mamba
+     metadata, graph bucket, and logits-processor state for accepted versus
+     spec-placebo/ignore-drafts.
+   - Goal: find the first non-identical verifier input, not just the first
+     output-token mismatch.
+
+4. Real-router distribution capture.
+   - Add opt-in route logging for a small accepted p512/o512 suite.
+   - Feed exact layer/expert/token histograms into grouped-GEMM and MoE
+     microbenches.
+   - Stop using synthetic uniform routing as promotion evidence.
+
+5. vLLM-XPU-kernels shape lab.
+   - Build three standalone repros from the live AOT census:
+     dense W8A8 GEMM, routed grouped GEMM, and graph-safe collective/finalize.
+   - Each repro should include shape, dtype, route histogram, latency, expected
+     parity tolerance, and command line.
+
+6. Static batch-1 decode-core runner.
+   - Strip OpenAI serving, queueing, metrics, and streaming from the test path.
+   - If core decode remains near `100 tok/s`, server overhead is not the
+     blocker. If it jumps, build a production latency lane around that path.
+
+7. Peak-VRAM and headroom measurement pack.
+   - The last strong Localmaxxing row skipped VRAM. Capture per-card peak
+     allocation and free headroom during p512/o512 and 32K quality runs.
+   - This decides whether memory-for-latency ideas can fit at 32K or require a
+     separate 8K/16K low-latency service class.
+
+Bolder branches:
+
+1. First-class auxiliary proposer API for Qwen3.6 on XPU.
+   - Use the current Quark INT8 model as the only final verifier.
+   - Draft candidates can come from official FP8 MTP tensors, a same-tokenizer
+     sidecar, or a custom proposer, but accepted output must remain byte-for-byte
+     equal to the non-spec verifier baseline.
+   - This is still the most credible path to `>200 tok/s` single-user because
+     the bucket timing upper bounds show enough verifier headroom.
+
+2. Verifier-bucket graph specialization.
+   - Instead of generic speculative rows, create fixed graph buckets for
+     verifier widths `1/2/3/5/8` and prove each bucket has identical verifier
+     inputs to the accepted path.
+   - This may avoid scheduler/block-table drift while preserving sublinear
+     multi-token verification.
+
+3. Persistent route-window MoE kernel.
+   - Use real route histograms and persistent scratch to keep expert tiles hot
+     across a short decode window.
+   - Fuse route remap, activation, second quant, grouped GEMM, gather/finalize,
+     and only then consider all-reduce/residual epilogues.
+   - Do not wire into the endpoint until the standalone parity harness passes.
+
+4. Tile-native W8A8 repack cache.
+   - Repack Quark INT8 weights once into the fastest B70/XMX layout and cache
+     with checksums.
+   - This is a layout optimization, not a new quantization; dequantized weights
+     and output gates must remain unchanged.
+
+5. Memory-for-latency service class.
+   - If full 32K leaves little headroom, offer a separate 8K or 16K
+     quality-equivalent latency lane that uses freed VRAM for draft heads,
+     hot-expert copies, or static graph buffers.
+   - This is not a replacement for the 32K production target, but it may produce
+     a usable single-user fast lane without lowering model precision.
+
+6. Hybrid TP/EP simulator before implementation.
+   - Estimate communication for pure TP4 versus expert-local layouts using the
+     captured route histograms.
+   - If the simulator cannot show a large reduction in decode collectives, do
+     not spend time on a full vLLM architecture branch.
+
+7. End-to-end XPU timeline budget.
+   - Use VTune/oneprof/Level Zero traces to classify every token into XMX
+     compute, memory traffic, collectives, graph replay, Python/runtime, and
+     frontdoor streaming.
+   - This should be the tie-breaker between speculation, MoE kernels, repack,
+     and serving-lane work.
+
+8. Strict 8-bit engine shootout.
+   - Compare current vLLM Quark W8A8, llama.cpp/SYCL Q8_0 or equivalent 8-bit
+     GGUF, OpenVINO/oneDNN GenAI if Qwen3.6 MoE is supported, and any new
+     XPU-native W8A8 path.
+   - Same prompts, same chat template, same 32K gate where possible, and no
+     4-bit or Qwen3.5 rows mixed into the decision.
+
+9. Upstreamable B70 repro bundle.
+   - Turn the failing/spec-sensitive cases and the slow grouped-GEMM shapes into
+     small public issues/PRs for `vllm`, `vllm-xpu-kernels`, and Intel Triton
+     XPU.
+   - Include exact artifacts, shape dumps, command snippets, and quality-drift
+     fixtures so maintainers can act without access to the whole service.
+
+Priority order:
+
+1. Fix or isolate spec-mode verifier drift (`IGNORE_DRAFTS=1` eager, placebo,
+   tensor diff).
+2. In parallel, capture real route histograms and build the shape lab.
+3. Re-run accepted r8/r10 plus peak VRAM after any service restore.
+4. Only after parity is exact, benchmark proposer/MTP/spec speed.
+5. If speculation remains blocked, shift primary effort to persistent MoE and
+   tile-native W8A8 repack.
