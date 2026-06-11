@@ -1,0 +1,74 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+MODEL_PATH="${MODEL_PATH:-/mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118}"
+SERVED_MODEL_NAME="${SERVED_MODEL_NAME:-qwen36-35b-a3b-fp8}"
+HOST="${HOST:-127.0.0.1}"
+PORT="${PORT:-18080}"
+TP_SIZE="${TP_SIZE:-2}"
+DEVICE_MASK="${DEVICE_MASK:-0,1}"
+MAX_NUM_SEQS="${MAX_NUM_SEQS:-24}"
+MAX_NUM_BATCHED_TOKENS="${MAX_NUM_BATCHED_TOKENS:-8192}"
+LOG_PATH="${LOG_PATH:-/tmp/qwen36-quark-int8-tp2-experimental-32k-noprefix.log}"
+
+export HF_HOME="${HF_HOME:-/mnt/fast-ai/llm-cache/hf}"
+export HUGGINGFACE_HUB_CACHE="${HUGGINGFACE_HUB_CACHE:-/mnt/fast-ai/llm-cache/hf}"
+export TORCHINDUCTOR_CACHE_DIR="${TORCHINDUCTOR_CACHE_DIR:-/mnt/fast-ai/vllm-cache-exp/qwen36-35b-a3b-quark-int8-tp2-experimental-32k-noprefix/torchinductor}"
+export VLLM_CACHE_ROOT="${VLLM_CACHE_ROOT:-/mnt/fast-ai/vllm-cache-exp/qwen36-35b-a3b-quark-int8-tp2-experimental-32k-noprefix/vllm}"
+export PYTHONPATH="/home/steve/src/vllm:/home/steve/src/vllm-xpu-kernels${PYTHONPATH:+:$PYTHONPATH}"
+export LD_LIBRARY_PATH="/home/steve/src/vllm-xpu-kernels/vllm_xpu_kernels:/home/steve/.venvs/vllm-xpu/lib:/home/steve/.venvs/vllm-xpu/lib/python3.12/site-packages/torch/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+
+export VLLM_USE_V1=1
+export VLLM_TARGET_DEVICE=xpu
+export VLLM_ALLOW_LONG_MAX_MODEL_LEN=1
+export XPU_GRAPH=1
+export VLLM_XPU_ENABLE_XPU_GRAPH=1
+export VLLM_XPU_FORCE_GRAPH_WITH_COMM=1
+export VLLM_XPU_GRAPH_NOOP_COMM_CAPTURE=1
+export VLLM_XPU_USE_CUSTOM_OP_COLLECTIVES=1
+export VLLM_XPU_COMPILE_ALLREDUCE_CUSTOM_OP=1
+export VLLM_XPU_CUSTOM_ALLREDUCE_GRAPH_CLONE_INPUT=1
+export VLLM_XPU_CUSTOM_ALLREDUCE_CLONE_INPUT=1
+export VLLM_XPU_QUARK_W8A8_MOE=1
+export VLLM_XPU_FORCE_QUARK_REPACK=0
+export VLLM_XPU_GDN_REUSE_QKVZ_BA_QUANT=clone
+export ONEAPI_DEVICE_SELECTOR="level_zero:${DEVICE_MASK}"
+export ZE_AFFINITY_MASK="${DEVICE_MASK}"
+export CCL_ATL_TRANSPORT=ofi
+export CCL_TOPO_P2P_ACCESS=1
+export FI_TCP_IFACE="${FI_TCP_IFACE:-eth1}"
+export CCL_KVS_IFACE="${CCL_KVS_IFACE:-eth1}"
+
+if [[ -z "${CCL_ZE_IPC_EXCHANGE:-}" ]]; then
+  unset CCL_ZE_IPC_EXCHANGE
+fi
+if [[ -z "${CCL_WORKER_COUNT:-}" ]]; then
+  unset CCL_WORKER_COUNT
+fi
+unset VLLM_XPU_GDN_SKIP_DECODE_CONV_TMP
+unset VLLM_XPU_DECODE_TIMING
+unset VLLM_XPU_DEDUP_INT8_QUANT
+unset VLLM_XPU_MOE_SHARED_ADD_ALLREDUCE_CUSTOM_OP
+
+source /home/steve/.venvs/vllm-xpu/bin/activate
+
+exec /home/steve/.venvs/vllm-xpu/bin/vllm serve "$MODEL_PATH" \
+  --host "$HOST" \
+  --port "$PORT" \
+  --trust-remote-code \
+  --served-model-name "$SERVED_MODEL_NAME" \
+  --dtype auto \
+  --quantization quark \
+  --tensor-parallel-size "$TP_SIZE" \
+  --pipeline-parallel-size 1 \
+  --distributed-executor-backend mp \
+  --max-model-len 32768 \
+  --max-num-batched-tokens "$MAX_NUM_BATCHED_TOKENS" \
+  --max-num-seqs "$MAX_NUM_SEQS" \
+  --gpu-memory-utilization 0.95 \
+  --kv-cache-dtype auto \
+  --no-enable-prefix-caching \
+  --language-model-only \
+  --compilation-config '{"cudagraph_mode":"PIECEWISE"}' \
+  --generation-config vllm \
+  >"$LOG_PATH" 2>&1
