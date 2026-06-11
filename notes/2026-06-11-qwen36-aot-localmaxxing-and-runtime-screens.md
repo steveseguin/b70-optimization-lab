@@ -9320,3 +9320,195 @@ New bolder ideas to track:
      proof.
    - Only publish speculative or lower-context results if the notes clearly
      label the route and the quality gates are clean.
+
+## Async-Disabled Control, MTP Sidecar Failure, And Larger Bets
+
+Added after the accepted no-spec async-disabled control and the first
+Qwen3.6-native MTP sidecar load attempt. This sharpens the speculative branch:
+we now have a scheduler correctness problem independent of real draft tokens,
+and a separate FP8-MTP loader gap.
+
+New artifacts:
+
+- `data/qwen36-quark-int8-tp4-accepted-noasync-modelinput-completions-20260611a.json`
+- `data/qwen36-quark-int8-tp4-accepted-noasync-modelinput-trace-20260611a.jsonl`
+- `data/qwen36-quark-int8-tp4-accepted-noasync-modelinput-drift-fixture-20260611a.json`
+- `data/qwen36-quark-int8-tp4-accepted-noasync-modelinput-drift-fixture-20260611a.md`
+- `data/qwen36-quark-int8-tp4-mtp1-fp8sidecar-startup-failure-20260611a.txt`
+- runtime log:
+  `/tmp/qwen36-quark-int8-tp4-accepted-noasync-modelinput-20260611a.log`
+- runtime log:
+  `/tmp/qwen36-quark-int8-tp4-mtp1-fp8sidecar-modelinput-20260611a.log`
+
+Accepted no-spec with `--no-async-scheduling`:
+
+- It used the same accepted-style KV capacity and graph coverage:
+  `2,052,915` KV tokens and capture buckets up to `96`.
+- It still failed exact parity against accepted graph mode on the two-prompt
+  oracle fixture.
+- Natural prompt first diff: token index `25`, newline vs double-newline /
+  thinking preamble.
+- Repetitive prompt first diff: token index `14`, then the candidate repeats
+  the prompt and stops at `49` tokens.
+- Its early slot mappings match accepted graph mode, not graph-placebo mode.
+  This means the no-async control exposed a scheduler/sampling/output drift
+  even before the speculative KV-layout drift seen in placebo.
+
+Interpretation:
+
+- The n-gram/spec branch is now gated by two issues:
+  1. async-disabled no-spec output drift;
+  2. speculative-config KV/slot-layout drift.
+- Do not spend more time on n-gram throughput until the no-async fixture and
+  graph-placebo fixture both pass exact parity.
+- MTP and DFlash remain more promising than n-gram because vLLM can keep async
+  scheduling enabled for those methods, but they still need the same verifier
+  input invariant tests.
+
+MTP sidecar attempt:
+
+- The current Quark W8A8 INT8 checkpoint advertises
+  `mtp_num_hidden_layers: 1` in config metadata, but its safetensor index does
+  not contain `mtp`, `nextn`, `shared_head`, `model.layers.48`, or
+  `model.layers.49` tensors.
+- The official cached `Qwen/Qwen3.6-35B-A3B-FP8` snapshot does contain MTP
+  tensors, so it was tested as a proposer-only sidecar while keeping the Quark
+  model as final verifier.
+- vLLM accepted the MTP config and kept async scheduling enabled, but failed
+  during worker weight loading with:
+  `KeyError: 'layers.0.mlp.experts.w2_weight_scale_inv'`.
+- Likely root cause: `Qwen3_5MTP.load_weights` is entering an FP8 MoE scale
+  path where the instantiated MTP parameter dictionary does not expose the
+  expected expert `*_weight_scale_inv` parameters. This looks like an
+  MTP-plus-FP8-MoE loader integration gap, not a model-quality problem.
+
+Immediate things to try:
+
+1. Retry the same FP8 MTP sidecar with explicit draft quantization in
+   `speculative_config`, first `"quantization":"fp8"`, then
+   `"quantization":"compressed-tensors"` if vLLM accepts it.
+2. Inspect `vllm/model_executor/models/qwen3_5_mtp.py` around the failed
+   `w2_weight_scale_inv` lookup and compare it with the normal Qwen3.6 FP8 MoE
+   loader. Patch the loader or quant config plumbing, not verifier math.
+3. Add the model-input invariant gate to every candidate:
+   `input_ids`, positions, logits indices, slot mappings, block tables, graph
+   capture size, scheduler mode, lookahead blocks, and KV capacity.
+4. Add a specific "no-async accepted parity" CI-like check, because it is a
+   smaller repro than real speculation and should be easier to hand upstream.
+5. If MTP loads, test `num_speculative_tokens=1` first, then `2`, then `3/4`
+   only if acceptance rate remains stable and the repeat64 + long-context gates
+   pass.
+
+Fresh external signals worth tracking:
+
+- vLLM's Qwen3.6-35B-A3B recipe documents official MTP serving syntax with
+  `--speculative-config '{"method": "mtp", "num_speculative_tokens": 2}'`.
+  Source: `https://recipes.vllm.ai/Qwen/Qwen3.6-35B-A3B`
+- The same recipe shows the DGX Spark/Blackwell recipe using MTP with
+  `num_speculative_tokens=3`, FP8 KV cache, lower context, and constrained
+  concurrency. That suggests `k=3` may be a practical sweep point, but only
+  after `k=1` loads and passes quality gates.
+- Intel's Arc Pro B-Series vLLM writeup explicitly calls out MoE
+  optimization, speculative decoding, async scheduling, prefill/decode
+  disaggregation, TP/PP/DP, and PCIe P2P as supported optimization areas.
+  Source: `https://vllm.ai/blog/2025-11-11-intel-arc-pro-b`
+- The open vLLM XPU issue for dual Arc B580 30B+ serving is worth watching as a
+  nearby consumer-Arc configuration signal:
+  `https://github.com/vllm-project/vllm/issues/35638`
+- A public Qwen3.6 speculative repo reports that matched flags and disabling
+  prefix caching changed a vLLM MTP result from negative to positive on 2x3090.
+  We already run prefix caching disabled, but this reinforces that every spec
+  run needs a strict matched-flags control.
+  Source: `https://github.com/thc1006/qwen3.6-speculative-decoding-rtx3090`
+- Intel/Xe2 public material cites high INT8 theoretical throughput on
+  Battlemage-class GPUs. Our current single-request decode being around
+  `100 tok/s` after the best clean tuning means the likely losses are launch,
+  routing, collective, graph, and small-shape utilization, not raw INT8 TOPS.
+  Source: `https://arxiv.org/html/2508.06753v2`
+
+Bigger, bolder ideas to keep on the board:
+
+1. Make "scheduler equivalence" an upstreamable correctness patch.
+   - Build a tiny, no-secret repro where accepted async graph and no-async
+     graph must produce identical greedy tokens for fixed seed and fixed
+     prompts.
+   - If XPU async-disabled mode is drifting due to scheduler, logits ordering,
+     or cache metadata, fixing that could unlock all speculative methods at
+     once.
+
+2. Repair Qwen3.6 FP8 MTP as proposer-only, not as a new production model.
+   - The final token source remains Quark W8A8 INT8.
+   - If the sidecar only proposes, then small numeric differences in the FP8
+     sidecar can reduce acceptance but cannot lower final answer quality.
+   - This is still the cleanest path to `>200 tok/s` if XPU can verify multiple
+     accepted tokens efficiently.
+
+3. Quark-compatible MTP transplant.
+   - If loader repair is ugly, create a local proposer checkpoint that contains
+     only Qwen3.6 MTP tensors plus the minimum config/index changes needed for
+     vLLM to load it as a draft.
+   - Keep all verifier weights and logits from the existing Quark checkpoint.
+   - This might avoid forcing the full official FP8 checkpoint through the same
+     quantization path as the verifier.
+
+4. Learned micro-drafter distilled from the current Quark endpoint.
+   - Train or fit a very small same-tokenizer draft head on traces generated by
+     the current Quark model.
+   - The verifier still decides final tokens, so quality is preserved; the
+     risk is only speed/acceptance.
+   - This is bolder than native MTP but could be tailored to B70-friendly
+     kernels and short candidate lengths.
+
+5. Expert-parallel or hybrid TP/EP decode experiment.
+   - TP4 may be spending too much single-token time in all-reduce and
+     cross-rank MoE logistics.
+   - Test whether routing experts by rank, or duplicating only hot shared/hot
+     routed experts, beats pure TP for c1 decode.
+   - Measure memory cost explicitly against the 32K production target.
+
+6. Persistent decode loop for one-token and multi-column verifier.
+   - Intel's own MoE direction mentions persistent-loop style kernels. Build a
+     microbench that keeps the decode loop resident and feeds one token, two
+     candidate columns, and four candidate columns through the exact Qwen3.6
+     dense/GDN/MoE shapes.
+   - If launch overhead is a major tax, this could matter more than another
+     high-level vLLM flag.
+
+7. Route-histogram-driven grouped GEMM/prepack.
+   - Collect real expert-route histograms from our prompts and benchmark
+     skewed distributions, not uniform synthetic expert traffic.
+   - Prepack or reorder W8A8 expert weights for the hot shapes and test whether
+     grouped GEMM overhead drops.
+
+8. Collective surgery.
+   - Profile every per-token collective on TP4 and test alternatives:
+     fused GEMM+all-reduce, reduce-scatter/all-gather variants, oneCCL knobs,
+     peer-copy settings, and rank placement.
+   - If all-reduce is the c1 ceiling, no quantization or draft trick will hit
+     `>200 tok/s` until this is addressed.
+
+9. Core-decode harness as a second product route.
+   - Build a direct in-process decode API that bypasses OpenAI server request
+     lifecycle, streaming overhead, and tokenizer detours while still using the
+     same vLLM model runner and weights.
+   - If it is materially faster, production can expose a low-latency lane
+     without changing model quality.
+
+10. OpenVINO/oneDNN Graph or IPEX-LLM export probe for the current INT8 shape.
+    - This is a bigger departure from vLLM, but Intel's native graph stack may
+      have better small-batch INT8/XMX scheduling for this exact architecture.
+    - It is only acceptable if the exported model is token-identical or final
+      logits remain verifier-equivalent under the same quality suite.
+
+11. Two-tier serving with a fast verifier lane and full-context lane.
+    - Keep the 32K context route as the correctness and production-default
+      target.
+    - Offer an explicitly labeled 8K/16K low-latency route only if the freed
+      memory buys hot-expert duplication, larger graph buckets, or MTP sidecar
+      headroom without quality drift.
+
+12. Upstream bounty-style repro package.
+    - Package the no-async drift fixture, MTP loader failure, W8A8 dense/MoE
+      microbench shapes, route histograms, B70 topology, and Localmaxxing row.
+    - Aim it at vLLM/XPU and `vllm-xpu-kernels` maintainers with one question:
+      "What is the missing XPU path for Qwen3.6 c1 W8A8 MoE decode?"
