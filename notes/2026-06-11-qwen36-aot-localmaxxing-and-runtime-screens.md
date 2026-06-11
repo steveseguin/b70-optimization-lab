@@ -7689,3 +7689,158 @@ Production/reliability follow-ups:
      weakness.
    - Capture request ids and token ids for the failed repeat case before
      another speed experiment.
+
+## Bigger Ideas Addendum After Oracle k=1
+
+The current evidence says ordinary launch-flag tuning is unlikely to close the
+gap from roughly `100 tok/s` to the user's `>200 tok/s` single-request target.
+The `k=1` oracle failure also says speculation must be made verifier-correct
+before it can be treated as a speed path. The next backlog should therefore
+split into reliability isolation, exact correctness proof, and larger runtime
+architecture bets.
+
+Items to carry forward immediately:
+
+1. Dynamic frontdoor pause/drain.
+   - The frontdoor must reject new generation requests when a pause file is
+     present, continue serving `/status`, and expose a drain endpoint so backend
+     swaps and quality canaries can run without live-traffic contamination.
+   - This is production infrastructure, not a speed feature, but it prevents
+     false quality failures and unsafe backend replacement.
+
+2. Local-only quality lane.
+   - Add a localhost-bound frontdoor with the same model rewrite, thinking-off
+     template kwargs, max-output defaults, and max-active `1`.
+   - Use it for post-restore canaries, request-id token traces, and quality
+     gates before exposing the backend through the public LAN route.
+
+3. Post-restore repeat flight recorder.
+   - Capture prompt, request id, scheduler id, token ids, timestamps, and
+     response headers for the repeat-color failures.
+   - The failure shape looks like request/state contamination; a semantic-only
+     smoke is not enough.
+
+4. Speculative verifier-state minimizer.
+   - Turn the isolated `k=1` oracle failure into a tiny reproducible fixture:
+     one prompt, short output, accepted token ids, oracle token ids, scheduler
+     row state, block-table metadata, and first-diff token.
+   - This is the most useful upstream artifact if local inspection does not
+     quickly find the scheduler/KV/block-table bug.
+
+5. Verifier-only single-step replay.
+   - For each failed speculative row, reconstruct the no-spec context and ask
+     the Quark verifier for exactly one next token.
+   - If the verifier-only token matches the accepted baseline but the
+     speculative verifier token does not, the bug is in speculative input state.
+     If it also differs, look at graph-bucket reuse or request construction.
+
+6. Exact logit/top-k checksum mode.
+   - Add a debug-only checksum over the chosen token and a small top-k set at
+     the verification boundary.
+   - This narrows first divergence to either model math, verifier input state,
+     sampling/logit post-processing, or output accounting.
+
+External signals worth tracking:
+
+- vLLM has had a specific Intel XPU speculative-decoding tracker:
+  https://github.com/vllm-project/vllm/issues/26963
+- Recent vLLM release notes show Intel XPU sampler/all-reduce work and CPU
+  W8A16/W8A8 quant kernels, which are useful implementation references even if
+  not directly usable on B70:
+  https://github.com/vllm-project/vllm/releases
+- The vLLM roadmap explicitly calls out redesigned speculative decode,
+  scheduler-overhead reduction, expert parallelism, online expert movement, and
+  communication/compute pipelining:
+  https://github.com/vllm-project/vllm/issues/15735
+- A recent CPU speculative-decoding issue reports `2.15x-2.72x` TPOT speedups
+  in an older stack and severe regression/crashes in a newer one. Treat this as
+  a signal to bisect scheduler/spec-decode logic, not as a CPU result to copy:
+  https://github.com/vllm-project/vllm/issues/44191
+- A Qwen3.6 MTP issue reports long-sequence speculative state corruption with
+  invalid draft tokens despite low KV memory usage. This reinforces that any
+  Qwen3.6 MTP/sidecar path needs long-context torture tests, not just short
+  speed demos:
+  https://github.com/vllm-project/vllm/issues/40756
+
+Bigger, bolder experiments:
+
+1. Verifier-preserving speculation ladder.
+   - Start with the oracle `k=1` fixture. Only after exact parity is restored,
+     test `k=2/4/8`, then real n-gram, then MTP/EAGLE/DFlash-style proposers.
+   - The Quark W8A8 model remains the only final-output authority; draft models
+     only propose.
+
+2. Sidecar MTP from the official FP8 checkpoint.
+   - The Quark checkpoint lacks MTP tensors, but the official FP8 snapshot has
+     them. Test whether a small FP8/MTP sidecar can propose tokens while the
+     Quark INT8 verifier accepts/rejects.
+   - Quality risk is bounded by the verifier; implementation risk is state
+     alignment and long-context stability.
+
+3. Spec-decode algorithm/version bisect.
+   - Compare the current vLLM speculative scheduler against the older code paths
+     that reportedly delivered real TPOT speedups in CPU runs.
+   - The goal is not CPU serving; it is finding whether a scheduler/accounting
+     regression explains our XPU `k=1` oracle failure.
+
+4. Hybrid TP/EP memory-for-latency lane.
+   - Use route histograms to simulate moving from pure TP4 to a layout that
+     duplicates hot experts or assigns expert shards for lower single-request
+     latency.
+   - If the simulation says latency can drop materially, build a dedicated c1
+     lane separate from the aggregate c48 service.
+
+5. Persistent route-window MoE.
+   - Keep route maps, per-expert counts, activation scratch, and packed expert
+     tiles resident across decode steps for stable route windows.
+   - This attacks the repeated route/finalize overhead that primitive timing
+     keeps exposing.
+
+6. Whole-token command-list capture.
+   - Capture an entire decode bucket, not individual kernels: GDN/attention,
+     routed MoE, residual/all-reduce, logits, sampler handoff.
+   - This is harder than kernel patches, but it targets host/runtime overhead
+     directly.
+
+7. XPU-native 8-bit engine shootout with one quality oracle.
+   - Compare local vLLM, latest vLLM/XPU branches, OpenVINO/oneDNN GenAI,
+     LLM-Scaler, ipex-llm/llama.cpp-style 8-bit paths, and any Qwen3.6-capable
+     Intel-friendly runner under the same prompt set, 32K context requirement,
+     token trace, and no-quality-loss gate.
+   - Reject anything that wins speed by changing model class, context length,
+     output tokens, or final token stream.
+
+8. Static solo-decode service class.
+   - Build a no-batching, fixed-shape, c1-only path for latency-sensitive
+     requests. It can spend extra VRAM on duplicated hot data and static graph
+     buckets because aggregate throughput is not its job.
+   - Keep the accepted TP4 production lane as fallback.
+
+9. Expert hotset VRAM trade study.
+   - Quantify how much of the remaining B70 VRAM can be spent on K32/K64
+     prompt-class hotsets, replicated dense projections, and prepacked W8A8
+     tiles without harming 32K KV capacity.
+   - Only build if memory math predicts a real latency win.
+
+10. Upstream-first B70 repro packet.
+    - Package three standalone repros: speculative `k=1` state corruption,
+      real-route W8A8 MoE timing/hotset overlap, and graph-safe all-reduce or
+      command-list overhead.
+    - Include exact commands, oneAPI/vLLM commits, shapes, expected token ids,
+      and current B70 timings so Intel/vLLM maintainers can reproduce without
+      the full service.
+
+11. Localmaxxing race harness.
+    - Automate benchmark payload generation, dry-run validation, quality-gate
+      attachment, and public submission for only approved rows.
+    - Keep it useful for comparison too: pull nearby Qwen/B70 rows before each
+      new speed push and record what class of engine is winning.
+
+Priority order from here:
+
+1. Implement dynamic pause/drain and local-only quality lane so future canaries
+   are isolated.
+2. Build the `k=1` verifier-state minimizer and verifier-only replay.
+3. If `k=1` can be made exact, re-open verifier-preserving speculation. If it
+   cannot, switch the main speed path to persistent MoE/command-list/static
+   solo-decode work while preparing the upstream repro packet.
