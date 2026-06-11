@@ -9778,3 +9778,159 @@ Next action after this result:
 3. Build a reusable accepted-vs-placebo input parity checker.
 4. In parallel, start real-router histogram capture because it is independent
    of speculative correctness and feeds the MoE/kernel path.
+
+## Post-PerfectDraft Idea Backlog
+
+The latest public-data refresh is saved in:
+
+- `data/localmaxxing-qwen36-35b-a3b-top-after-perfectdraft-20260611.json`
+- `data/localmaxxing-qwen-30b-class-top-after-perfectdraft-20260611.json`
+
+Source links:
+
+- `https://localmaxxing.com/api/leaderboard?hfId=Qwen%2FQwen3.6-35B-A3B&limit=20`
+- `https://localmaxxing.com/api/leaderboard?modelFamily=qwen&paramSize=30&limit=30`
+- `https://www.localmaxxing.com/en/api-docs`
+- `https://recipes.vllm.ai/Qwen/Qwen3.6-35B-A3B`
+
+External signals to keep in mind:
+
+- Localmaxxing has Qwen3.6 35B-class rows above `200 tok/s`, but the fastest
+  rows mostly lean on either native MTP/speculation, DFlash, NVFP4/FP4-class
+  weights, Blackwell-specific compile paths, or non-XPU engines. They are
+  useful directionally; they are not direct proof that our exact Quark W8A8
+  INT8 verifier can hit the same numbers without backend work.
+- vLLM's Qwen3.6 recipe documents native MTP serving for
+  `Qwen/Qwen3.6-35B-A3B`, so MTP is a real upstream path for this model family.
+  Our current Quark checkpoint lacks MTP tensors, and the FP8 sidecar loader
+  still device-losts before useful draft rows. Treat MTP as a proposer-sidecar
+  engineering problem, not a final-model replacement.
+- Intel/XPU examples continue to validate Arc/B-series inference support, but
+  the missing piece for this workload remains a fast, stable small-batch
+  Qwen3.6 A3B MoE W8A8 path: route packing, grouped GEMM, collectives, and
+  graph capture all have to work together.
+
+Immediate items now on the list:
+
+1. Block-table parity instrumentation.
+   - Fix the model-input trace to record `BlockTable` state through
+     `get_cpu_tensor()`, `get_numpy_array()`, or `get_gpu_tensor(num_reqs)`
+     instead of trying to serialize the object directly.
+   - Goal: prove whether the accepted, no-async, placebo, oracle, and MTP
+     loader paths feed identical verifier input tables before their first
+     output-token divergence.
+
+2. Accepted-vs-placebo parity checker.
+   - Add a row-by-row trace comparator that normalizes volatile request IDs and
+     compares input IDs, positions, logits indices, slot mappings, block
+     tables, scheduled-token counts, graph bucket, and speculative metadata.
+   - Make this a gate: no speculative speed claim counts unless the parity
+     checker reports exact verifier-input agreement up to the divergence point.
+
+3. Real-router histogram capture.
+   - Collect actual expert IDs and per-expert row counts from accepted
+     prompt-class traffic.
+   - Feed those histograms into the primitive MoE hotpack and grouped-GEMM
+     microbenches so kernel work targets real Qwen3.6 decode distributions.
+
+4. Token-level timing budget.
+   - Record per-token wall time and split it into scheduler, attention,
+     MoE route/remap, grouped GEMM, all-reduce, logits, and stream overhead.
+   - Use this to decide whether the next `2x` attempt should be speculation,
+     MoE kernels, collectives, or runtime scheduling.
+
+5. Publish-grade benchmark refresh.
+   - Once a candidate beats the accepted baseline, rerun r8/r10 with peak VRAM,
+     TTFT, prompt/output token counts, exact quality suite, repeat64, 8K needle,
+     and frontdoor/backend health.
+   - Submit only quality-clean results; keep negative experiments in the repo
+     notes, not on the public leaderboard.
+
+Bigger bets worth pursuing if the parity tooling does not reveal a small bug:
+
+1. First-class Quark-verifier MTP sidecar.
+   - Build a proposer-only sidecar from the official Qwen3.6 FP8/MTP tensors or
+     a same-tokenizer trained proposer, but always verify with the current
+     Quark W8A8 INT8 model.
+   - Success condition: accepted-vs-sidecar exact text/token parity plus a
+     measured acceptance/overhead curve showing a plausible path past `200
+     tok/s`.
+
+2. DFlash-style drafter for XPU.
+   - Port only the algorithmic shape first: draft multiple tokens from a cheap
+     lane, then replay through the Quark verifier.
+   - The bold version is a small XPU-resident drafter with its own command list
+     and no host round trips; the conservative version is a diagnostic drafter
+     that proves scheduler correctness before optimizing.
+
+3. Persistent Qwen3.6 A3B MoE executor.
+   - Replace the current small-batch route/remap/grouped-GEMM path with a
+     persistent executor specialized for `top_k`, active hidden size, and the
+     accepted Quark tensor layout.
+   - Keep row packing, expert metadata, activation quantization, and W8A8 GEMM
+     inside one long-lived execution plan instead of rebuilding transient
+     scratch every token.
+
+4. Layer-local hot expert replication.
+   - Use real histograms to identify stable hot experts per layer, then
+     replicate only those experts across ranks or place them on the rank that
+     pays the least collective cost.
+   - Quality does not change if weights and routing are identical; the risk is
+     memory pressure and synchronization complexity.
+
+5. Hybrid TP/EP layout for single-user decode.
+   - Simulate a layout where dense attention remains TP4, but MoE expert work
+     is routed more like expert parallelism for decode rows.
+   - This is a large runtime change, but it directly attacks the likely
+     underutilization from four GPUs doing tiny per-rank MoE fragments.
+
+6. Direct single-request graph runner.
+   - Build a narrow offline runner for one request, fixed batch shape, fixed
+     decode graph buckets, no OpenAI server, no SSE, no general scheduler.
+   - If this cannot beat the service path materially, it closes off a whole
+     class of host/runtime-overhead guesses. If it does, port the winning
+     pieces back into production.
+
+7. Whole-token command-list capture.
+   - Try to capture the complete decode token path, including scheduler-visible
+     graph buckets, attention, MoE, collectives, and logits, as a replayable XPU
+     command sequence.
+   - This is more ambitious than piecewise graph capture and may need static
+     slot/block-table layouts, but it is one of the few paths that could remove
+     enough launch/synchronization overhead for a large jump.
+
+8. XPU-native W8A8 weight retile cache.
+   - Build a persistent converted-weight cache that stores the exact tile/order
+     expected by the fastest XPU GEMM/MoE kernels.
+   - The current `8.49 GiB` loaded-weight number is plausible for 8-bit
+     active/compressed MoE metadata, but runtime can still pay retile/repack
+     costs unless the serving format is kernel-native.
+
+9. Same-model 8-bit engine bakeoff.
+   - Keep the final model exact or verifier-equivalent, then test vLLM/XPU,
+     llama.cpp SYCL/GGUF W8-ish paths, OpenVINO/oneDNN GenAI if Qwen3.6 MoE is
+     supported, SGLang if XPU coverage is usable, and any new Intel/vLLM XPU
+     kernel branch.
+   - This is not a license to switch to 4-bit; it is a way to find whether the
+     bottleneck is vLLM's current XPU path versus the hardware.
+
+10. Production service classes instead of one universal endpoint.
+    - Long-context, high-concurrency, and short-interactive requests may need
+      different graph/cache/concurrency settings.
+    - A short-context single-request lane could use aggressive fixed-shape
+      graph capture and lower scheduler generality, while a 32K production lane
+      keeps conservative stability settings.
+
+11. Upstreamable B70 repro packet.
+    - Package the parity traces, the perfect-draft drift fixture, the no-async
+      and placebo artifacts, and the primitive MoE timing evidence into a small
+      public issue/repro for vLLM/XPU and Intel kernel maintainers.
+    - The ask should be narrow: exact Qwen3.6 A3B W8A8 small-batch decode on
+      Arc/B70 needs fast MoE and correct speculative verifier-state handling.
+
+12. Reliability as a first-class benchmark axis.
+    - Track device-lost frequency, graph-cache cold-start behavior, long-lived
+      process repeat quality, and restore-after-experiment health checks as
+      metrics beside tok/s.
+    - A `150 tok/s` candidate that device-losts under soak is less useful than
+      a `115 tok/s` candidate that survives production traffic.
