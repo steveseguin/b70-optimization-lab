@@ -5063,3 +5063,170 @@ Decision:
   mismatches before any speed result is considered.
 - The old n-gram5 no-bonus fixture remains useful as the first failing replay
   test case.
+
+## Follow-Up Ideas Added After Replay Harness
+
+Added after the replay harness showed the n-gram5 no-bonus failure is a state
+alignment issue, not a simple "bonus token bad" issue. These are the items to
+keep in the next-try queue while preserving the rule that final accepted output
+quality must remain owned by the current Quark W8A8 INT8 verifier.
+
+Immediate diagnostic items:
+
+1. Speculative scheduler state audit.
+   - Add trace fields around every speculative update:
+     `num_tokens`, `num_computed_tokens`, `num_tokens_with_spec`,
+     `num_output_placeholders`, scheduled draft count, generated token count,
+     emitted token count, and rejected-token rollback count.
+   - The no-bonus hook likely proved that hiding a verifier bonus token without
+     rolling back KV/compute state is invalid. Treat it as a diagnostic fixture,
+     not as a candidate optimization.
+   - Inspect `gpu_model_runner.py`, `rejection_sampler.py`, and proposer update
+     ordering before trying another speculative width.
+
+2. Request-id joined speculative failure packs.
+   - Every future speculative run should collect both client token trace and
+     scheduler JSONL trace with matching request IDs.
+   - A valid candidate needs:
+     - zero replay mismatches,
+     - exact short canary parity,
+     - repeat64 pass,
+     - long-context needle pass,
+     - and no unexplained accepted loops.
+
+3. Verifier-only shadow retry for failed speculative requests.
+   - When a speculative trace fails, immediately rerun the same prompt through
+     accepted non-spec decode and store the token IDs under the same fixture.
+   - This separates proposer/scheduler corruption from model/runtime drift or
+     stale-process instability.
+
+4. Speculative graph-shape budget.
+   - Record which graph bucket served each decode step: normal decode len=1,
+     n-gram2 len=3, n-gram3 len=4, and deeper proposer lengths.
+   - The capture-size-3 result suggests XPU graph bucket coverage matters. Do
+     not assume a speculative failure is semantic until the graph bucket is
+     known.
+
+5. Token-time budget before more kernel patches.
+   - Build a per-token timing ledger that separates dense W8A8, GDN/attention,
+     routed MoE, shared expert, collectives, logits/sampling, scheduler, and
+     streaming.
+   - The offline c1 runner already showed the OpenAI/frontdoor stack is not
+     hiding a 2x win. The next timing needs to say which model-core region is
+     consuming the token.
+
+Near-term no-quality-loss experiments:
+
+1. Quark-verifier MTP sidecar feasibility.
+   - The current Quark checkpoint has no MTP tensors, but the official FP8
+     snapshot does. Try it only as an auxiliary proposer; the Quark W8A8 INT8
+     verifier must accept/reject final tokens.
+   - First gate is memory and startup, not speed. Measure VRAM headroom at 32K
+     with the accepted service, then with the sidecar loaded.
+
+2. N-gram2 as an adaptive diagnostic, not a default.
+   - Keep n-gram2/capture-size-3 available for long predictable completions,
+     but disable it dynamically when early acceptance is low.
+   - Do not use n-gram3+ again until the accepted-loop state bug has a minimal
+     explanation.
+
+3. Real-route grouped-GEMM tuning.
+   - Capture live router histograms for natural chat, code, structured, math,
+     and the synthetic p512/n512 benchmark.
+   - Feed those exact expert distributions into `vllm-xpu-kernels` grouped-GEMM
+     microbenches. Synthetic uniform routing is not enough.
+
+4. Persistent MoE coverage check against current Intel XPU branches.
+   - Determine whether our live Quark W8A8 path actually uses Intel's newest
+     persistent MoE/fused activation work.
+   - If it does not, create the smallest Qwen3.6 A3B W8A8 repro that shows the
+     missing coverage before writing a large local kernel fork.
+
+5. Exact 8-bit engine bakeoff.
+   - Continue treating llama.cpp/SYCL, OpenVINO/oneDNN GenAI, IPEX/BigDL, and
+     LMDeploy as diagnostics only unless they can run the same Qwen3.6 35B
+     family at true 8-bit/high-fidelity quality with 32K context.
+   - Reject any path that quietly becomes Qwen3.5, 4-bit, AWQ, GPTQ-4bit, or a
+     prompt-template mismatch.
+
+Bigger and bolder bets:
+
+1. Static solo decode lane.
+   - Build a one-user decode path with fixed sampling, fixed graph buckets,
+     preallocated KV, and minimal scheduler/streaming surfaces.
+   - This is not a quality change. It tests whether vLLM's general serving loop
+     is a real single-user latency tax after the offline runner's first result.
+
+2. Whole-token command-list capture.
+   - Instead of optimizing isolated ops, try capturing a complete one-token
+     decode command sequence for the accepted batch-1 shape.
+   - The hypothesis is that many small graph-safe launches and collectives cost
+     more than their raw kernels. A persistent command-list replay could reduce
+     launch and synchronization gaps.
+
+3. Hybrid TP/EP with expert locality simulation.
+   - Model bytes and collectives for TP4, TP2, EP4, and hybrid layouts before
+     touching vLLM internals.
+   - Include partial expert replication and hot expert placement. If frequent
+     experts cluster by prompt class, a layout-only change might reduce
+     collectives without changing weights.
+
+4. Layer-local expert replication.
+   - Replicate only the hottest routed experts or shared-expert pieces when
+     memory allows, leaving rare experts sharded.
+   - This is a quality-preserving storage/layout change if routing IDs and
+     scales remain exact. It trades VRAM for fewer cross-card operations.
+
+5. XPU-native packed-weight fork.
+   - Keep identical Quark W8A8 quantized values, but write a second on-disk
+     layout optimized for Xe2 DPAS/XMX access and graph reuse.
+   - First prove that the current kernel is layout-bound or doing hot-path
+     transposes/repacking. Otherwise this is wasted engineering.
+
+6. Persistent route scratch and allocator elimination.
+   - Keep per-request MoE routing maps, sorted-token buffers, quant buffers,
+     scale buffers, and gather buffers resident and reused across decode steps.
+   - The primitive microbench showed scratch effects can matter, but endpoint
+     speed did not improve yet. The next version has to remove real runtime
+     allocation/copy boundaries, not just preallocate a few tensors.
+
+7. Collective overlap instead of only collective replacement.
+   - For small hidden-state all-reduces, test whether independent route
+     preparation, quantization, or next-layer setup can overlap with the
+     collective.
+   - This may be safer than a custom all-reduce if exact oneCCL semantics stay
+     intact.
+
+8. Proposer trained for this workload.
+   - If off-the-shelf MTP/EAGLE or n-gram does not reach high acceptance, train
+     or distill a small same-tokenizer Qwen3.6 proposer against our natural,
+     code, structured, and agentic prompts.
+   - The proposer can be approximate; the verifier cannot be. Every final token
+     still goes through the Quark verifier.
+
+9. Production quality oracle service.
+   - Turn the quality gates into a reusable service: deterministic canaries,
+     repeat stability, long-context needles, structured validators, code/task
+     checks, and BF16/current-model side-by-side probes.
+   - This lets bolder backend work move faster because every candidate is
+     rejected automatically when quality drifts.
+
+10. Upstream-first B70 optimization packet.
+    - Package the strongest minimal repros for Intel/vLLM:
+      speculative bucket/state mismatch, W8A8 Qwen3.6 grouped-GEMM shape,
+      tiny graph-safe collective shape, and persistent MoE missing coverage.
+    - Include Localmaxxing result IDs, exact commands, generated graph census,
+      route histograms, oneAPI/vLLM versions, and expected speed target. This
+      may be faster than carrying a private fork for every missing XPU path.
+
+Updated priority:
+
+1. Inspect and trace the speculative scheduler/proposer state mismatch before
+   any more n-gram width tests.
+2. In parallel, collect live route histograms and a per-token timing budget so
+   the next kernel target is evidence-based.
+3. Then choose between two large efforts: verifier-preserving MTP/draft
+   speculation for a possible 2x multiplier, or persistent MoE/layout work if
+   timing proves MoE dominates the single-token path.
+4. Keep the accepted TP4 service as the baseline and fallback until a candidate
+   survives quality, replay, repeat64, long-context, and short soak gates.
