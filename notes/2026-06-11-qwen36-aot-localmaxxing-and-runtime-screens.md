@@ -5593,3 +5593,190 @@ Revised priority after this diagnostic:
 4. Next durable backend branch is persistent MoE/grouped-GEMM work using real
    route distributions.
 5. Keep Localmaxxing updates for quality-gated accepted results only.
+
+## Route-Hotpack Overlap Addendum And Bigger Bets
+
+Added after the prefix-aware speculation trace join was fixed. This pass used
+the existing prompt-class route-capture artifacts, so it did not restart or
+disturb the accepted TP4 service.
+
+New artifacts:
+
+- `data/qwen36-quark-int8-tp4-promptclass-routecapture-20260611a-hotpack-overlap.json`
+- `data/qwen36-quark-int8-tp4-promptclass-routecapture-20260611a-hotpack-overlap.md`
+
+Command:
+
+```bash
+python3 scripts/analyze-qwen36-route-overlap-hotpack.py \
+  --input code=data/qwen36-quark-int8-tp4-promptclass-routecapture-20260611a-routes-code.jsonl \
+  --input structured=data/qwen36-quark-int8-tp4-promptclass-routecapture-20260611a-routes-structured.jsonl \
+  --input math=data/qwen36-quark-int8-tp4-promptclass-routecapture-20260611a-routes-math-reasoning.jsonl \
+  --input repetitive=data/qwen36-quark-int8-tp4-promptclass-routecapture-20260611a-routes-repetitive.jsonl \
+  --input long-natural=data/qwen36-quark-int8-tp4-promptclass-routecapture-20260611a-routes-long-natural.jsonl \
+  --topn 16 \
+  --hotpack-k 8 \
+  --hotpack-k 16 \
+  --hotpack-k 32 \
+  --hotpack-k 64 \
+  --max-buckets 4 \
+  --max-num-tokens 1 \
+  --out-json data/qwen36-quark-int8-tp4-promptclass-routecapture-20260611a-hotpack-overlap.json \
+  --out-md data/qwen36-quark-int8-tp4-promptclass-routecapture-20260611a-hotpack-overlap.md \
+  --limit 10
+```
+
+Scope notes:
+
+- `natural-chat` was excluded from this addendum because the prior split route
+  file is empty. Recapture a balanced natural-chat prompt before making any
+  production routing decision from these buckets.
+- The analysis uses decode-stage records with `max_num_tokens <= 1`, matching
+  the single-request latency shape we care about most.
+
+Top layers:
+
+| Layer | Global K16 | Label K16 | Label K32 | Label K64 | Read |
+| ---: | ---: | ---: | ---: | ---: | --- |
+| 8 | 0.4010 | 0.4894 | 0.6808 | 0.8904 | route buckets help; K16 is not enough |
+| 9 | 0.4135 | 0.5019 | 0.6875 | 0.8837 | route buckets help; K16 is not enough |
+| 21 | 0.4212 | 0.5019 | 0.6904 | 0.8952 | route buckets help; K16 is not enough |
+| 20 | 0.4385 | 0.5106 | 0.7173 | 0.9038 | best sampled K64 coverage |
+| 14 | 0.4231 | 0.5010 | 0.7019 | 0.8933 | strongest top-16 overlap |
+
+Read:
+
+- A single static global K16 hotpack is too blunt. It only covers about
+  `40-44%` of weighted routed assignments in the most interesting layers.
+- Prompt/label K16 lifts coverage to about `49-51%`, but that still leaves
+  roughly half of routed work outside the hotpack.
+- K32/K64 route buckets are more credible, reaching about `68-72%` and
+  `88-90%` coverage respectively, but they trade memory for latency and need
+  explicit VRAM math before endpoint work.
+- Existing route-exact microbenchmarks say active-expert compaction alone is
+  not enough at single-token rows; wider route windows are where hotpacking
+  started to show real gains.
+- Treat route buckets as scheduling, placement, and kernel-selection signal.
+  Do not change routing decisions or expert math.
+
+Immediate things to try from this route pass:
+
+1. Balanced route recapture.
+   - Rerun prompt-class route capture with a non-empty `natural-chat` split and
+     equalize sample counts so `math` and `repetitive` do not dominate every
+     weighted summary.
+   - Keep the current artifacts as useful candidate-generation data, not final
+     production policy.
+
+2. K32/K64 memory-for-latency math.
+   - Compute per-layer VRAM cost to duplicate or repack K32/K64 hot experts for
+     layers 8, 9, 14, 20, and 21.
+   - Include 32K KV headroom, graph cache, and a potential shallow sidecar
+     drafter before deciding whether the memory trade is acceptable.
+
+3. Route-window persistent MoE harness.
+   - Use captured route windows with rows/window >= 16, where earlier primitive
+     scans showed the strongest hotpack improvement.
+   - Start with layers 14 and 21, then expand only if layer-local parity and
+     event timing are clean.
+
+4. Prompt-class route scheduler, not prompt-class math.
+   - Use early decode route histograms to choose graph buckets, packed expert
+     layouts, and scratch buffers.
+   - Never alter top-k routing, weights, logits, or accepted tokens.
+
+5. Verifier-bucket speculation in parallel.
+   - Build multi-token verifier graph buckets for lengths 2, 3, 4, 5, 6, and 8.
+   - This answers whether shallow MTP/draft speculation can pay on XPU before
+     spending time on a large proposer integration.
+
+6. Layer-level timeline budget.
+   - Produce a one-token accepted decode trace that sums to the observed
+     `~10 ms/token`: attention/GDN, dense W8A8, routed MoE, shared expert,
+     collectives, lm-head/sampling, scheduler, and streaming.
+   - Future kernel work should target only blocks that are visible in this
+     budget.
+
+7. Upstreamable route repro.
+   - Package a minimal Qwen3.6 A3B W8A8 routed grouped-GEMM repro with the
+     route histograms above, exact tensor shapes, current timing, and target
+     timing.
+   - Target `vllm-xpu-kernels` and Intel grouped-GEMM maintainers rather than
+     hiding all work in a private server patch.
+
+External signals checked for bigger ideas:
+
+- `https://vllm.ai/blog/2025-11-11-intel-arc-pro-b`
+  - vLLM/Intel explicitly point at persistent zero-gap MoE kernels and dynamic
+    work balancing for Arc Pro B-series. This matches our result: static
+    hotpacks and Python boundaries are too weak.
+- `https://github.com/intel/intel-xpu-backend-for-triton/issues/6389`
+  - Intel's grouped-GEMM tuning thread calls out decode-stage routing skew and
+    tile configuration as first-order MoE performance factors.
+- `https://github.com/vllm-project/vllm-xpu-kernels`
+  - The XPU custom kernel home is the right target for durable W8A8/MoE work,
+    not old IPEX-only paths.
+- `https://docs.vllm.ai/en/stable/design/fused_moe_modular_kernel/`
+  - vLLM's modular fused-MoE design is a useful reference for breaking the
+    route/count/permute/GEMM/finalize problem into swappable components.
+- `https://github.com/PMZFX/intel-arc-pro-b70-benchmarks`
+  - Public B70 data reinforces the pattern: aggregate and prompt processing can
+    look good while single-stream generation remains the hard problem.
+- `https://localmaxxing.com/en/hardware/DISCRETE_GPU%3Aintel%20arc%20pro%20b70?name=Intel+Arc+Pro+B70`
+  - Keep using public rows as comparison points, but only submit our own
+    quality-gated accepted results.
+
+Bigger, bolder ideas added from this pass:
+
+1. Route-conditioned persistent MoE, not global hotpacking.
+   - Generate a small set of per-layer route families from real histograms.
+   - For each family, use persistent work assignment, touched-expert scratch,
+     W8A8 activation quant, grouped GEMM1, activation, grouped GEMM2, and
+     finalize in one resident path.
+   - This is the most direct non-speculative backend path to a real jump.
+
+2. Memory-for-latency solo lane.
+   - Keep the production 32K TP4 lane conservative.
+   - Add a solo speed lane that spends available headroom on K64 hot experts,
+     tile-native packed weights, larger verifier buckets, or an MTP sidecar.
+   - It must fall back to the accepted verifier lane when context, memory, or
+     quality gates are not satisfied.
+
+3. TP/EP layout simulator before code.
+   - Build a byte/collective model for TP4, TP2+replicas, expert parallel,
+     hybrid TP/EP, and layer-local expert replication.
+   - Include route histograms from the hotpack artifacts.
+   - Only prototype layouts whose simulated communication reduction is large
+     enough to plausibly beat the current `~100 tok/s` c1 ceiling.
+
+4. Whole-token command-list decode.
+   - Try capturing or replaying the whole batch-1 decode step, not just one
+     kernel, for fixed graph buckets.
+   - If synchronization gaps dominate, this could beat isolated micro-kernel
+     tuning while preserving exact math.
+
+5. Speculation as an architectural lane, not an n-gram sweep.
+   - Use the prefix-joined failure fixture to repair scheduler correctness.
+   - Then test shallow MTP or a sidecar proposer with Quark W8A8 as the final
+     verifier. Start at depth 2.
+   - Promote only if final token traces match accepted output across repeat,
+     structured, code, math, and long-context gates.
+
+6. Exact 8-bit engine bakeoff as a ceiling detector.
+   - Compare current vLLM Quark W8A8 against llama.cpp/SYCL Q8_0, OpenVINO or
+     oneDNN GenAI 8-bit, BigDL/IPEX, and any current Intel-native W8A8 route.
+   - This is not permission to use Qwen3.5, AWQ, GPTQ-4bit, or a prompt
+     mismatch. It is a diagnostic for whether vLLM/XPU is the ceiling.
+
+7. B70 roofline packet.
+   - Pair route histograms with oneprof/Level Zero counters, XMX occupancy,
+     memory bandwidth, and oneCCL timing for a single accepted decode window.
+   - This should tell us whether to spend engineering on MoE compute,
+     collectives, scheduler gaps, or memory layout.
+
+8. Production reliability as a promotion gate.
+   - Every bold candidate needs cold quality, repeat64, long-context needle,
+     c1 speed, c4/c8 smoke, short process-aging, and post-restore generation
+     smoke.
+   - Recent stale-process and device-lost findings make this part of
+     performance work, not a final cleanup task.
