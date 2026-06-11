@@ -1,0 +1,20 @@
+{
+  "label": "qwen36-quark-int8-tp4-oracle-k1-clean-baseline-devicelost-20260611",
+  "model": "nameistoken/Qwen3.6-35B-A3B-Quark-W8A8-INT8",
+  "engine": "vllm-xpu",
+  "hardware": "4x Intel Arc Pro B70 32GB",
+  "attempt": "clean isolated accepted graph baseline for oracle k=1",
+  "backend_port": 18081,
+  "prompt_tokens": 512,
+  "output_tokens": 128,
+  "status": "failed_before_artifact",
+  "failure": "UR_RESULT_ERROR_DEVICE_LOST",
+  "log_path": "/tmp/qwen36-quark-int8-tp4-accepted-isolated-k1-baseline-clean-20260611a.log",
+  "primary_error_site": "vllm/v1/worker/block_table.py commit_block_table -> copy_to_gpu",
+  "secondary_error_site": "WorkerAsyncOutputCopy synchronize",
+  "notes": [
+    "Both prior model backends were stopped before this clean baseline attempt.",
+    "The service reached /health, then the first controlled completion request hit device-lost before the JSON trace was written.",
+    "This prevented a full-length isolated k=1 oracle comparison; a shorter p512/o32 k=1 comparison was run afterward from a healthy accepted baseline."
+  ]
+}

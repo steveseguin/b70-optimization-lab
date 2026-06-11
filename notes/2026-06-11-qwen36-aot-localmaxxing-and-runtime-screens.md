@@ -7563,3 +7563,129 @@ Additional larger ideas to track:
    - Include exact shapes, oneAPI/vLLM commits, commands, expected behavior,
      and current B70 timings.
    - This may unlock help faster than deeper local-only patches.
+
+## Oracle k=1 Probe
+
+The next diagnostic tested whether the oracle failure is caused by multi-token
+width/bonus logic or whether speculative decode is already unsafe at a single
+draft token.
+
+Artifacts:
+
+- full-length clean isolated accepted-baseline failure:
+  `data/qwen36-quark-int8-tp4-oracle-k1-clean-baseline-devicelost-20260611.json`
+- short accepted graph baseline, p512/o32:
+  `data/qwen36-quark-int8-tp4-oracle-k1-short-accepted-graph-20260611.json`
+- short graph `k=1` oracle completions:
+  `data/qwen36-quark-int8-tp4-oracle1-short-graph-completions-20260611.json`
+- short graph `k=1` oracle spec summary:
+  `data/qwen36-quark-int8-tp4-oracle1-short-graph-spec-summary-20260611.json`
+  and
+  `data/qwen36-quark-int8-tp4-oracle1-short-graph-spec-summary-20260611.md`
+- restore smoke after the baseline device-lost:
+  `data/qwen36-quark-int8-tp4-accepted-restored-after-k1-devicelost-frontdoor-text-smoke-20260611.json`
+- restore smokes after the short `k=1` oracle:
+  `data/qwen36-quark-int8-tp4-accepted-restored-after-oracle1-short-frontdoor-text-smoke-20260611.json`,
+  `data/qwen36-quark-int8-tp4-accepted-restored-after-oracle1-short-frontdoor-text-smoke-rerun-20260611.json`,
+  and
+  `data/qwen36-quark-int8-tp4-accepted-restored-after-oracle1-short-frontdoor-text-smoke-rerun2-20260611.json`.
+
+Clean full-length attempt:
+
+- Both prior model backends were stopped before launching the clean accepted
+  graph baseline on `18081`.
+- The baseline reached `/health`, then the first p512/o128 controlled
+  completion hit `UR_RESULT_ERROR_DEVICE_LOST` before writing the JSON trace.
+- Primary error site:
+  `vllm/v1/worker/block_table.py commit_block_table -> copy_to_gpu`.
+- Secondary error site:
+  `WorkerAsyncOutputCopy` waiting on an XPU event.
+- This is a reliability failure independent of oracle quality. It also means
+  the full p512/o128 `k=1` comparison was not completed.
+
+Short p512/o32 `k=1` result:
+
+- Baseline was captured from the freshly restored accepted graph backend.
+- The `k=1` oracle backend on `18081` reached `/health` and completed both
+  controlled completion cases.
+- Scheduler trace: `15` rows, `2` requests, `15` drafted tokens, `14`
+  accepted tokens, `1` rejected token, `93.33%` acceptance.
+- Exact parity failed: `baseline_match_all=false`.
+- First diffs:
+  - `natural_latency_plan`: output-token index `14`, accepted baseline token
+    `4779`, oracle result token `29541`.
+  - `repetitive_kernel_notes`: output-token index `15`, accepted baseline
+    token `16401`, oracle result token `11436`.
+
+Interpretation:
+
+- The failure is not a draft-width problem. Even a one-token oracle draft can
+  perturb the final output stream.
+- The old full-accept bonus/suppression theory is not sufficient either:
+  `k=1` used no suppressed bonus rows and still diverged.
+- The next useful speculation work is below proposer quality: scheduler state,
+  block-table/KV state, graph-bucket state, sampled-token accounting, and
+  verifier input construction.
+- Do not spend more time on n-gram width sweeps, MTP speed runs, or sidecar
+  proposer tuning until `k=1` exact parity is fixed.
+
+Next state-debug ideas:
+
+1. Add block-table/KV snapshots around each speculative scheduler row.
+   - Capture request id, token ids, block table row, slot mappings,
+     `num_computed_tokens`, `num_tokens_with_spec`, and output placeholders
+     before schedule, before verifier forward, after verifier forward, after
+     rollback, and after output append.
+2. Add a verifier-only single-step replay for the failed p512/o32 rows.
+   - For each row, reconstruct the no-spec context and ask the verifier for
+     exactly one next token.
+   - Compare that token with the speculative verifier's replacement/bonus
+     token.
+3. Run `k=1` with graph disabled only as a localization step.
+   - If eager `k=1` also diverges, the bug is in scheduler/request accounting.
+   - If eager passes and graph fails, inspect graph-bucket state reuse and
+     `gpu_input_batch` metadata copies.
+4. Reduce to one prompt and tiny output.
+   - The current p512/o32 case is enough to fail, but a p64/o16 or p1/o8 repro
+     would be much easier to send upstream.
+5. Build a public-safe failure pack.
+   - Include the two prompts, accepted token ids, oracle token ids, scheduler
+     rows, and exact first-diff indices.
+   - This should become the upstream vLLM/XPU speculative decode issue if local
+     inspection does not quickly find the counter/state bug.
+
+Restore/reliability status after this probe:
+
+- Accepted backend was restored in tmux session
+  `qwen36-tp4-accepted-restored-after-oracle1-short-20260611a`.
+- Backend `/health` and frontdoor `/health` pass.
+- A short frontdoor smoke immediately after the earlier device-lost restore
+  passed all exact/copy/arithmetic/JSON/repeat checks.
+- After the short `k=1` oracle restore, three short frontdoor smoke attempts
+  were not quality-clean:
+  - first: arithmetic failed (`58` instead of `60`), repeat passed.
+  - second: arithmetic failed and repeat failed.
+  - third: arithmetic passed, repeat failed with corrupted text.
+- The frontdoor pause file is only checked at startup in the current script, so
+  it cannot dynamically isolate smoke tests from live external traffic.
+- Treat the service as up but not production-quality-clean until an isolated
+  frontdoor window or request-id token trace proves repeat stability again.
+
+Production/reliability follow-ups:
+
+1. Add dynamic frontdoor pause/drain support.
+   - The current static startup-only pause is not enough for safe backend
+     experiments or isolated quality gates.
+   - A dynamic pause should stop accepting new generation requests, expose
+     active/queued counts, and let existing requests drain before backend
+     replacement.
+2. Add a local-only quality lane.
+   - Run the exact same request defaults as the public frontdoor but bind to
+     localhost and max-active `1`, so canaries are not mixed with external
+     traffic.
+3. Add post-restore repeat token tracing.
+   - The repeat failures insert unrelated tokens/non-English fragments, which
+     looks more like request/state contamination than ordinary arithmetic
+     weakness.
+   - Capture request ids and token ids for the failed repeat case before
+     another speed experiment.
