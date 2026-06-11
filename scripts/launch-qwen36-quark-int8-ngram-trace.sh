@@ -18,6 +18,10 @@ CUDAGRAPH_CAPTURE_SIZES="${CUDAGRAPH_CAPTURE_SIZES:-}"
 COMPILE_CONFIG="${COMPILE_CONFIG:-{\"cudagraph_mode\":\"PIECEWISE\",\"max_cudagraph_capture_size\":128}}"
 DISABLE_FULL_ACCEPT_BONUS="${DISABLE_FULL_ACCEPT_BONUS:-0}"
 IGNORE_DRAFTS="${IGNORE_DRAFTS:-0}"
+SPEC_PLACEBO="${SPEC_PLACEBO:-0}"
+MODEL_INPUT_TRACE_FILE="${MODEL_INPUT_TRACE_FILE:-}"
+MODEL_INPUT_TRACE_MAX_LINES="${MODEL_INPUT_TRACE_MAX_LINES:-400}"
+MODEL_INPUT_TRACE_RANK="${MODEL_INPUT_TRACE_RANK:-}"
 
 if [[ -n "$CUDAGRAPH_CAPTURE_SIZES" ]]; then
   COMPILE_CONFIG=$(printf '{"cudagraph_mode":"PIECEWISE","cudagraph_capture_sizes":[%s],"max_cudagraph_capture_size":128}' \
@@ -63,6 +67,24 @@ if [[ "$IGNORE_DRAFTS" == "1" ]]; then
 else
   unset VLLM_XPU_SPEC_DECODE_IGNORE_DRAFTS
 fi
+if [[ "$SPEC_PLACEBO" == "1" ]]; then
+  export VLLM_XPU_SPEC_DECODE_PLACEBO=1
+else
+  unset VLLM_XPU_SPEC_DECODE_PLACEBO
+fi
+if [[ -n "$MODEL_INPUT_TRACE_FILE" ]]; then
+  export VLLM_XPU_MODEL_INPUT_TRACE_FILE="$MODEL_INPUT_TRACE_FILE"
+  export VLLM_XPU_MODEL_INPUT_TRACE_MAX_LINES="$MODEL_INPUT_TRACE_MAX_LINES"
+  if [[ -n "$MODEL_INPUT_TRACE_RANK" ]]; then
+    export VLLM_XPU_MODEL_INPUT_TRACE_RANK="$MODEL_INPUT_TRACE_RANK"
+  else
+    unset VLLM_XPU_MODEL_INPUT_TRACE_RANK
+  fi
+else
+  unset VLLM_XPU_MODEL_INPUT_TRACE_FILE
+  unset VLLM_XPU_MODEL_INPUT_TRACE_MAX_LINES
+  unset VLLM_XPU_MODEL_INPUT_TRACE_RANK
+fi
 export ONEAPI_DEVICE_SELECTOR=level_zero:0,1,2,3
 export ZE_AFFINITY_MASK=0,1,2,3
 export CCL_ATL_TRANSPORT=ofi
@@ -91,6 +113,9 @@ unset VLLM_XPU_DEDUP_INT8_QUANT
 source /home/steve/.venvs/vllm-xpu/bin/activate
 
 rm -f "$SPEC_TRACE_FILE"
+if [[ -n "$MODEL_INPUT_TRACE_FILE" ]]; then
+  rm -f "$MODEL_INPUT_TRACE_FILE"
+fi
 
 SPEC_CONFIG=$(printf '{"method":"ngram","num_speculative_tokens":%s,"prompt_lookup_min":%s,"prompt_lookup_max":%s}' \
   "$NUM_SPECULATIVE_TOKENS" "$PROMPT_LOOKUP_MIN" "$PROMPT_LOOKUP_MAX")

@@ -9172,3 +9172,151 @@ Hard filters that remain in force:
   tests;
 - do not publish Localmaxxing rows for speculative runs until repeat64 and
   baseline comparison are clean.
+
+## Graph Placebo Trace Findings And Bolder Follow-Ups
+
+Added after the graph-placebo/model-input trace pass. This is the current
+highest-signal diagnostic result for the speculative branch.
+
+New artifacts:
+
+- `data/qwen36-quark-int8-tp4-accepted-modelinput-completions-20260611f.json`
+- `data/qwen36-quark-int8-tp4-accepted-modelinput-trace-20260611f.jsonl`
+- `data/qwen36-quark-int8-tp4-placebo-modelinput-completions-20260611a.json`
+- `data/qwen36-quark-int8-tp4-placebo-modelinput-trace-20260611a.jsonl`
+- `data/qwen36-quark-int8-tp4-placebo-modelinput-drift-fixture-20260611a.json`
+- `data/qwen36-quark-int8-tp4-placebo-modelinput-drift-fixture-20260611a.md`
+- `patches/vllm-qwen36-spec-placebo-model-input-trace-20260611.patch`
+- `patches/vllm-qwen36-active-gpu-model-runner-input-trace-20260611.patch`
+
+Finding:
+
+- Graph placebo still drifted from the accepted baseline even with no scheduled
+  draft tokens and empty `spec_token_ids`.
+- The first model-input row already differs in KV slot mappings while
+  `input_ids`, `positions`, `logits_indices`, and scheduled speculative-token
+  metadata match.
+- Accepted first-row slot starts by attention group:
+  `[32768]`, `[65536]`, `[98304]`, `[2304]`.
+- Placebo first-row slot starts by attention group:
+  `[32768]`, `[98304]`, `[163840]`, `[4032]`.
+- Placebo also disabled async scheduling, changed graph capture size coverage
+  from max `96` to max `128`, and reduced effective KV capacity from
+  `2,052,915` tokens to `1,955,157` tokens with the same reported available KV
+  memory.
+
+Interpretation:
+
+- The current n-gram/spec branch is not yet failing because the proposer chose
+  bad tokens. It is failing earlier: the presence of speculative configuration
+  changes scheduler/KV/cache layout state before any actual draft row is used.
+- This makes future speculative results unpublishable until the placebo path
+  has exact model-input parity with accepted graph mode.
+- The next useful control is an accepted no-spec run with async scheduling
+  explicitly disabled. If that reproduces the drift, the async/scheduler
+  transition is the primary culprit. If it still matches accepted, the
+  speculative KV/lookahead/capture configuration is the primary culprit.
+
+Things to add to the immediate queue:
+
+1. Fix the block-table trace capture to use `BlockTable.get_cpu_tensor()` or
+   `BlockTable.get_numpy_array()` instead of treating `BlockTable` as a tensor.
+   Slot mappings were enough to expose the current drift, but block tables are
+   needed for a clean upstream repro.
+2. Run accepted graph with async scheduling disabled and compare against
+   accepted graph and graph placebo on the same reduced two-prompt fixture.
+3. Run a graph-placebo control with capture sizes forced to the accepted set if
+   the launcher can expose that cleanly. The goal is to separate async
+   scheduling, graph bucket, and KV capacity effects.
+4. Add `scheduler_config`, graph bucket/capture size, KV capacity, and
+   lookahead-block metadata to the model-input trace rows. These should be
+   printed next to the first mismatch, not inferred from logs later.
+5. Treat every future speculative method as a two-stage gate:
+   - stage 1: placebo model-input parity;
+   - stage 2: real drafted-token quality and speed.
+
+Fresh external signals checked:
+
+- vLLM recipe for `Qwen/Qwen3.6-35B-A3B` shows native MTP serving with
+  `--speculative-config '{"method": "mtp", "num_speculative_tokens": 2}'`.
+  Source: `https://recipes.vllm.ai/Qwen/Qwen3.6-35B-A3B`
+- Localmaxxing now has a `203.58 tok/s` Qwen3.6 35B-class row using
+  `qwen3_next_mtp` with `num_speculative_tokens=4` on an RTX 5090. This is
+  not an acceptable production quantization for this work
+  (`Infatoshi/Qwen3.6-35B-A3B-NVFP4-FP8`), but it confirms that Qwen3.6-native
+  MTP is a real `>200 tok/s` recipe class when the backend supports it.
+- `Qwen/Qwen3.6-35B-A3B-FP8` has a public DFlash row at `253.7 tok/s` on an
+  RTX PRO 6000 Blackwell with `num_speculative_tokens=4` and
+  `FULL_AND_PIECEWISE` graph mode. Again, hardware/quant are not our target,
+  but the shape of the win is useful.
+- The public `vllm-xpu-kernels` repository is the durable target for Intel XPU
+  backend work. Shape-exact W8A8 dense/MoE repros should be aimed there rather
+  than carried forever as private vLLM hooks.
+- Intel grouped-GEMM tuning notes emphasize that decode-stage MoE routing is
+  skewed and tile-sensitive. Our next MoE microbench should use live route
+  histograms, not synthetic even expert distributions.
+
+New bolder ideas to track:
+
+1. Qwen3.6-native MTP sidecar with Quark verifier.
+   - Use official FP8/MTP or another Qwen3.6-native MTP source only as the
+     proposer. The current Quark W8A8 INT8 model remains the final verifier.
+   - First solve placebo parity. Then try `num_speculative_tokens=1,2,4` with
+     exact acceptance-rate logging and repeat64 gates.
+   - This is the most plausible `>200 tok/s` path without changing final model
+     quality.
+
+2. DFlash sidecar as a separate proposer family.
+   - DFlash rows show large wins on NVIDIA-class systems, and a Qwen3.6
+     drafter exists publicly.
+   - It may be hard on XPU today, but it is worth scoping because it decouples
+     draft generation from the full MoE verifier.
+   - Reject it unless the Quark verifier decides final tokens and exact quality
+     gates pass.
+
+3. Multi-column verifier kernel.
+   - Speculation is only useful if verifying several candidate tokens at once
+     improves verifier utilization. Build a microbench that feeds 1, 2, 4, and
+     8 candidate columns through the current Quark verifier path and measures
+     dense, GDN, MoE, and collective time separately.
+   - If multi-column verification is not faster on B70, MTP/DFlash will need a
+     very high acceptance rate to matter.
+
+4. Scheduler/KV invariant test suite.
+   - Convert the current model-input trace comparison into a reusable test that
+     fails on slot mapping, block table, logits index, graph bucket, or hidden
+     state metadata drift.
+   - Run it for no-spec accepted, async-disabled accepted, graph placebo,
+     ignore-drafts, n-gram, MTP, and DFlash candidates.
+   - This becomes the safety rail for all big speed work.
+
+5. XPU kernel issue package.
+   - Prepare no-secret repros for:
+     - W8A8 dense `per_token_quant_int8 -> int8_gemm_w8a8 -> all_reduce`;
+     - real-route MoE grouped GEMM/finalize;
+     - graph-safe tiny collective;
+     - multi-column verifier shape.
+   - Include accepted Localmaxxing result ID `cmq8yhxvo001ipb0149aoa79o`,
+     exact model ID, B70 topology, command, and measured latency.
+
+6. Hot-expert cache with context-tier accounting.
+   - If route histograms show stable hot experts, try duplicating only the hot
+     expert weights or prepacked forms on every rank.
+   - Measure it as a memory-for-latency trade: probably not viable at full 32K
+     unless headroom is larger than expected, but potentially viable for an
+     8K/16K low-latency lane.
+
+7. Decode-core bypass harness.
+   - Build a direct model-runner decode harness that avoids OpenAI server
+     streaming and request lifecycle overhead while using the exact same
+     weights, tokenizer, graph mode, and kernels.
+   - If core decode is far above endpoint decode, production can add a
+     dedicated low-latency route. If it is still near `100 tok/s`, keep effort
+     on kernels/speculation.
+
+8. Production-grade benchmark pack before the next public post.
+   - Capture r10 or r20 speed, repeat64 quality, 8K/32K long-context needle,
+     per-card peak VRAM, active graph/cache metadata, and endpoint restore
+     proof.
+   - Only publish speculative or lower-context results if the notes clearly
+     label the route and the quality gates are clean.
