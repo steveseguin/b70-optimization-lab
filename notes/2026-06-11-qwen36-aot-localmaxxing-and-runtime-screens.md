@@ -6638,3 +6638,96 @@ Priority after this checkpoint:
    adaptation.
 5. If verifier buckets look bad, move to persistent MoE, hybrid TP/EP, and
    static solo decode.
+
+## Speculative Verifier Bucket Scaling Probe
+
+Ran short diagnostic n-gram speculative timing probes with synchronized XPU
+timing enabled. These are not promoted speed results because
+`VLLM_XPU_DECODE_TIMING_SYNC=1` slows serving, and the n-gram paths are not
+quality-promoted. The point was to answer whether multi-token verifier buckets
+are expensive enough to kill speculation as a no-quality-loss route.
+
+New or updated artifacts:
+
+- `scripts/launch-qwen36-quark-int8-ngram-trace.sh`
+- `data/qwen36-quark-int8-tp4-ngram2-bucket-timing-repetitive-p512o160-20260611.json`
+- `data/qwen36-quark-int8-tp4-ngram2-bucket-timing-repetitive-summary-20260611.json`
+- `data/qwen36-quark-int8-tp4-ngram2-bucket-timing-natural-p512o160-20260611.json`
+- `data/qwen36-quark-int8-tp4-ngram2-bucket-timing-natural-summary-20260611.json`
+- `data/qwen36-quark-int8-tp4-ngram2-bucket-timing-spec-summary-20260611.json`
+- `data/qwen36-quark-int8-tp4-ngram2-bucket-timing-spec-summary-20260611.md`
+- `data/qwen36-quark-int8-tp4-ngram5-bucket-timing-repetitive-p512o128-20260611.json`
+- `data/qwen36-quark-int8-tp4-ngram5-bucket-timing-repetitive-summary-20260611.json`
+- `data/qwen36-quark-int8-tp4-ngram5-bucket-timing-spec-summary-20260611.json`
+- `data/qwen36-quark-int8-tp4-ngram5-bucket-timing-spec-summary-20260611.md`
+- `data/qwen36-quark-int8-tp4-ngram7-bucket-timing-repetitive-p512o96-20260611.json`
+- `data/qwen36-quark-int8-tp4-ngram7-bucket-timing-repetitive-summary-20260611.json`
+- `data/qwen36-quark-int8-tp4-ngram7-bucket-timing-spec-summary-20260611.json`
+- `data/qwen36-quark-int8-tp4-ngram7-bucket-timing-spec-summary-20260611.md`
+- `data/qwen36-quark-int8-tp4-accepted-restored-after-spec-bucket-timing-text-smoke-20260611.json`
+
+Launcher change:
+
+- `scripts/launch-qwen36-quark-int8-ngram-trace.sh` now mirrors the accepted
+  launcher timing guard: timing env vars stay disabled by default, but are
+  preserved when `VLLM_XPU_DECODE_TIMING_ALLOW=1` is set.
+
+Bucket timing results:
+
+| Path | Prompt | corrected tok/s under timing sync | bucket | max spec | steps | mean model_forward ms | mean visible timed ms |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| accepted reference | natural p512/o96 | `65.99` | `1` | `0` | `80` | `12.393` | `16.759` |
+| n-gram2 | repetitive p512/o160 | `90.54` | `3` | `2` | `27` | `15.435` | `17.294` |
+| n-gram2 | natural p512/o160 | `81.16` | `3` | `2` | `33` | `15.269` | `17.184` |
+| n-gram5 | repetitive p512/o128 | `84.67` | `6` | `5` | `17` | `15.544` | `17.102` |
+| n-gram7 | repetitive p512/o96 | `96.29` | `8` | `7` | `9` | `18.883` | `20.420` |
+
+Bucket-1 comparison inside the same speculative runs:
+
+- n-gram2 natural bucket-1: `12.241 ms` model forward, `16.491 ms` visible.
+- n-gram5 repetitive bucket-1: `12.269 ms` model forward, `16.548 ms` visible.
+- n-gram7 repetitive bucket-1: `12.301 ms` model forward, `16.566 ms` visible.
+
+Spec trace summaries:
+
+| Path | trace rows | drafts | accepted | rejected | acceptance | full accept rows | max full-accept streak |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| n-gram2 mixed probes | `71` | `142` | `112` | `30` | `78.87%` | `70.42%` | `22` |
+| n-gram5 repetitive | `19` | `92` | `38` | `54` | `41.30%` | `21.05%` | `2` |
+| n-gram7 repetitive | `10` | `70` | `38` | `32` | `54.29%` | `30.00%` | `2` |
+
+Interpretation:
+
+- Verifier bucket scaling is favorable. Bucket `3` and `6` model-forward time
+  is only about `15.3-15.5 ms` versus `12.2-12.4 ms` for bucket `1`; bucket
+  `8` is `18.9 ms`.
+- This means a high-acceptance verifier-preserving proposer could plausibly
+  reach the `>200 tok/s` single-user target without changing final-token
+  quality, because the current verifier is not close to linear in scheduled
+  token count.
+- The current n-gram proposer is the wrong production path. n-gram2 acceptance
+  can be good on repetitive/easy prompts, but earlier quality gates rejected
+  n-gram variants on prompt-class and long-context behavior. n-gram5/n-gram7
+  also lose too much acceptance even when bucket cost is favorable.
+- The next speculation work should be a real same-tokenizer sidecar/MTP/EAGLE
+  proposer or a verifier-only replay harness, not more blind n-gram width
+  sweeps.
+
+Restore status:
+
+- Stopped the n-gram timing backend.
+- Restored accepted no-timing backend in tmux session
+  `qwen36-tp4-accepted-restored-after-spec-bucket-timing-20260611u`.
+- Backend `/health` and frontdoor `/health` passed.
+- Frontdoor text smoke passed with `pass_all=true`,
+  `baseline_match_all=true`, `repeat_pass=true`, and long-context pass.
+
+Revised priority:
+
+1. Use bucket-scaling evidence to prioritize verifier-preserving sidecar/MTP
+   speculation over more n-gram tuning.
+2. Keep route/MoE work alive in parallel, but treat it as second path unless
+   sidecar acceptance cannot be made high and exact.
+3. Build a tiny scorer for speculative candidates: expected visible time per
+   emitted token from bucket timings, acceptance, and rejection pattern.
+4. Use that scorer before launching further long experiments.

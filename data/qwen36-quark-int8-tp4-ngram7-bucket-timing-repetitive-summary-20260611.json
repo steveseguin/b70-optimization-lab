@@ -1,0 +1,6394 @@
+{
+  "line_count": 293,
+  "post_lines": [
+    224,
+    228
+  ],
+  "raw_samples": [],
+  "raw_steps": [
+    {
+      "line": 226,
+      "metadata": {
+        "batch_desc_num_reqs": null,
+        "batch_desc_num_tokens": 1,
+        "computed_token_counts": [
+          526
+        ],
+        "cudagraph_mode": "PIECEWISE",
+        "decode_bucket": 1,
+        "decode_req_count": 1,
+        "is_pure_decode": true,
+        "max_num_scheduled_tokens": 1,
+        "max_scheduled_spec_tokens": 0,
+        "num_reqs": 1,
+        "num_tokens_across_dp": null,
+        "num_tokens_padded": 1,
+        "num_tokens_unpadded": 1,
+        "prefill_req_count": 0,
+        "scheduled_spec_histogram": {
+          "0": 1
+        },
+        "scheduled_spec_lengths": [
+          0
+        ],
+        "scheduled_token_counts": [
+          1
+        ],
+        "scheduled_token_histogram": {
+          "1": 1
+        },
+        "should_ubatch": false,
+        "skip_compiled": false,
+        "use_spec_decode": false
+      },
+      "rank": "0",
+      "status": "ok",
+      "step": 13,
+      "summary_by_total_ms": [
+        {
+          "avg_ms": 12.426466,
+          "count": 1,
+          "label": "gpu_model_runner.model_forward",
+          "max_ms": 12.426466,
+          "rank": "0",
+          "total_ms": 12.426466
+        },
+        {
+          "avg_ms": 0.0879086,
+          "count": 30,
+          "label": "gdn_attention_core_xpu.native",
+          "max_ms": 0.098324,
+          "rank": "0",
+          "total_ms": 2.637258
+        },
+        {
+          "avg_ms": 0.764345,
+          "count": 1,
+          "label": "gpu_model_runner.compute_logits",
+          "max_ms": 0.764345,
+          "rank": "0",
+          "total_ms": 0.764345
+        },
+        {
+          "avg_ms": 0.536517,
+          "count": 1,
+          "label": "logits.local_argmax_lm_head",
+          "max_ms": 0.536517,
+          "rank": "0",
+          "total_ms": 0.536517
+        },
+        {
+          "avg_ms": 0.107642,
+          "count": 1,
+          "label": "gpu_model_runner.bookkeeping_sync",
+          "max_ms": 0.107642,
+          "rank": "0",
+          "total_ms": 0.107642
+        },
+        {
+          "avg_ms": 0.083878,
+          "count": 1,
+          "label": "gpu_model_runner.select_sample_hidden",
+          "max_ms": 0.083878,
+          "rank": "0",
+          "total_ms": 0.083878
+        }
+      ]
+    },
+    {
+      "line": 229,
+      "metadata": {
+        "batch_desc_num_reqs": null,
+        "batch_desc_num_tokens": 512,
+        "computed_token_counts": [
+          0
+        ],
+        "cudagraph_mode": "NONE",
+        "decode_bucket": null,
+        "decode_req_count": 0,
+        "is_pure_decode": false,
+        "max_num_scheduled_tokens": 512,
+        "max_scheduled_spec_tokens": 0,
+        "num_reqs": 1,
+        "num_tokens_across_dp": null,
+        "num_tokens_padded": 512,
+        "num_tokens_unpadded": 512,
+        "prefill_req_count": 1,
+        "scheduled_spec_histogram": {
+          "0": 1
+        },
+        "scheduled_spec_lengths": [
+          0
+        ],
+        "scheduled_token_counts": [
+          512
+        ],
+        "scheduled_token_histogram": {
+          "512": 1
+        },
+        "should_ubatch": false,
+        "skip_compiled": false,
+        "use_spec_decode": false
+      },
+      "rank": "0",
+      "status": "ok",
+      "step": 14,
+      "summary_by_total_ms": [
+        {
+          "avg_ms": 130.272382,
+          "count": 1,
+          "label": "gpu_model_runner.model_forward",
+          "max_ms": 130.272382,
+          "rank": "0",
+          "total_ms": 130.272382
+        },
+        {
+          "avg_ms": 1.804486625,
+          "count": 40,
+          "label": "moe_forward_shared.custom_op",
+          "max_ms": 1.948498,
+          "rank": "0",
+          "total_ms": 72.179465
+        },
+        {
+          "avg_ms": 0.2161931975308642,
+          "count": 81,
+          "label": "all_reduce:(512, 2048):torch.bfloat16",
+          "max_ms": 0.370395,
+          "rank": "0",
+          "total_ms": 17.511649
+        },
+        {
+          "avg_ms": 0.26577105,
+          "count": 40,
+          "label": "xpu_moe.gemm1_w8a8",
+          "max_ms": 0.314461,
+          "rank": "0",
+          "total_ms": 10.630842
+        },
+        {
+          "avg_ms": 0.35411973333333335,
+          "count": 30,
+          "label": "gdn_attention_core_xpu.native",
+          "max_ms": 0.391686,
+          "rank": "0",
+          "total_ms": 10.623592
+        },
+        {
+          "avg_ms": 0.202309425,
+          "count": 40,
+          "label": "xpu_moe.gemm1_quant",
+          "max_ms": 0.20748,
+          "rank": "0",
+          "total_ms": 8.092377
+        },
+        {
+          "avg_ms": 0.186759025,
+          "count": 40,
+          "label": "xpu_moe.gemm2_w8a8",
+          "max_ms": 0.20735,
+          "rank": "0",
+          "total_ms": 7.470361
+        },
+        {
+          "avg_ms": 0.06776747500000001,
+          "count": 40,
+          "label": "xpu_moe.remap_hidden_states",
+          "max_ms": 0.078287,
+          "rank": "0",
+          "total_ms": 2.710699
+        },
+        {
+          "avg_ms": 0.0667785,
+          "count": 40,
+          "label": "xpu_moe.gemm2_quant",
+          "max_ms": 0.072626,
+          "rank": "0",
+          "total_ms": 2.67114
+        },
+        {
+          "avg_ms": 0.06411357499999999,
+          "count": 40,
+          "label": "xpu_moe.gather",
+          "max_ms": 0.067407,
+          "rank": "0",
+          "total_ms": 2.564543
+        },
+        {
+          "avg_ms": 0.046298625,
+          "count": 40,
+          "label": "xpu_moe.activation",
+          "max_ms": 0.05337,
+          "rank": "0",
+          "total_ms": 1.851945
+        },
+        {
+          "avg_ms": 0.801475,
+          "count": 1,
+          "label": "gpu_model_runner.compute_logits",
+          "max_ms": 0.801475,
+          "rank": "0",
+          "total_ms": 0.801475
+        },
+        {
+          "avg_ms": 0.566002,
+          "count": 1,
+          "label": "logits.local_argmax_lm_head",
+          "max_ms": 0.566002,
+          "rank": "0",
+          "total_ms": 0.566002
+        },
+        {
+          "avg_ms": 0.179016,
+          "count": 1,
+          "label": "gpu_model_runner.sampler",
+          "max_ms": 0.179016,
+          "rank": "0",
+          "total_ms": 0.179016
+        },
+        {
+          "avg_ms": 0.124323,
+          "count": 1,
+          "label": "gpu_model_runner.bookkeeping_sync",
+          "max_ms": 0.124323,
+          "rank": "0",
+          "total_ms": 0.124323
+        },
+        {
+          "avg_ms": 0.107191,
+          "count": 1,
+          "label": "gpu_model_runner.select_sample_hidden",
+          "max_ms": 0.107191,
+          "rank": "0",
+          "total_ms": 0.107191
+        }
+      ]
+    },
+    {
+      "line": 230,
+      "metadata": {
+        "batch_desc_num_reqs": null,
+        "batch_desc_num_tokens": 8,
+        "computed_token_counts": [
+          512
+        ],
+        "cudagraph_mode": "PIECEWISE",
+        "decode_bucket": 8,
+        "decode_req_count": 1,
+        "is_pure_decode": true,
+        "max_num_scheduled_tokens": 8,
+        "max_scheduled_spec_tokens": 7,
+        "num_reqs": 1,
+        "num_tokens_across_dp": null,
+        "num_tokens_padded": 8,
+        "num_tokens_unpadded": 8,
+        "prefill_req_count": 0,
+        "scheduled_spec_histogram": {
+          "7": 1
+        },
+        "scheduled_spec_lengths": [
+          7
+        ],
+        "scheduled_token_counts": [
+          8
+        ],
+        "scheduled_token_histogram": {
+          "8": 1
+        },
+        "should_ubatch": false,
+        "skip_compiled": false,
+        "use_spec_decode": true
+      },
+      "rank": "0",
+      "status": "ok",
+      "step": 15,
+      "summary_by_total_ms": [
+        {
+          "avg_ms": 47.942152,
+          "count": 1,
+          "label": "gpu_model_runner.model_forward",
+          "max_ms": 47.942152,
+          "rank": "0",
+          "total_ms": 47.942152
+        },
+        {
+          "avg_ms": 0.865364,
+          "count": 1,
+          "label": "gpu_model_runner.compute_logits",
+          "max_ms": 0.865364,
+          "rank": "0",
+          "total_ms": 0.865364
+        },
+        {
+          "avg_ms": 0.536186,
+          "count": 1,
+          "label": "logits.local_argmax_lm_head",
+          "max_ms": 0.536186,
+          "rank": "0",
+          "total_ms": 0.536186
+        },
+        {
+          "avg_ms": 0.103374,
+          "count": 1,
+          "label": "gpu_model_runner.bookkeeping_sync",
+          "max_ms": 0.103374,
+          "rank": "0",
+          "total_ms": 0.103374
+        },
+        {
+          "avg_ms": 0.073959,
+          "count": 1,
+          "label": "gpu_model_runner.select_sample_hidden",
+          "max_ms": 0.073959,
+          "rank": "0",
+          "total_ms": 0.073959
+        }
+      ]
+    },
+    {
+      "line": 231,
+      "metadata": {
+        "batch_desc_num_reqs": null,
+        "batch_desc_num_tokens": 1,
+        "computed_token_counts": [
+          516
+        ],
+        "cudagraph_mode": "PIECEWISE",
+        "decode_bucket": 1,
+        "decode_req_count": 1,
+        "is_pure_decode": true,
+        "max_num_scheduled_tokens": 1,
+        "max_scheduled_spec_tokens": 0,
+        "num_reqs": 1,
+        "num_tokens_across_dp": null,
+        "num_tokens_padded": 1,
+        "num_tokens_unpadded": 1,
+        "prefill_req_count": 0,
+        "scheduled_spec_histogram": {
+          "0": 1
+        },
+        "scheduled_spec_lengths": [
+          0
+        ],
+        "scheduled_token_counts": [
+          1
+        ],
+        "scheduled_token_histogram": {
+          "1": 1
+        },
+        "should_ubatch": false,
+        "skip_compiled": false,
+        "use_spec_decode": false
+      },
+      "rank": "0",
+      "status": "ok",
+      "step": 16,
+      "summary_by_total_ms": [
+        {
+          "avg_ms": 12.591105,
+          "count": 1,
+          "label": "gpu_model_runner.model_forward",
+          "max_ms": 12.591105,
+          "rank": "0",
+          "total_ms": 12.591105
+        },
+        {
+          "avg_ms": 0.08904946666666666,
+          "count": 30,
+          "label": "gdn_attention_core_xpu.native",
+          "max_ms": 0.110066,
+          "rank": "0",
+          "total_ms": 2.671484
+        },
+        {
+          "avg_ms": 0.801995,
+          "count": 1,
+          "label": "gpu_model_runner.compute_logits",
+          "max_ms": 0.801995,
+          "rank": "0",
+          "total_ms": 0.801995
+        },
+        {
+          "avg_ms": 0.5543,
+          "count": 1,
+          "label": "logits.local_argmax_lm_head",
+          "max_ms": 0.5543,
+          "rank": "0",
+          "total_ms": 0.5543
+        },
+        {
+          "avg_ms": 0.150052,
+          "count": 1,
+          "label": "gpu_model_runner.sampler",
+          "max_ms": 0.150052,
+          "rank": "0",
+          "total_ms": 0.150052
+        },
+        {
+          "avg_ms": 0.110718,
+          "count": 1,
+          "label": "gpu_model_runner.bookkeeping_sync",
+          "max_ms": 0.110718,
+          "rank": "0",
+          "total_ms": 0.110718
+        },
+        {
+          "avg_ms": 0.088386,
+          "count": 1,
+          "label": "gpu_model_runner.select_sample_hidden",
+          "max_ms": 0.088386,
+          "rank": "0",
+          "total_ms": 0.088386
+        }
+      ]
+    },
+    {
+      "line": 232,
+      "metadata": {
+        "batch_desc_num_reqs": null,
+        "batch_desc_num_tokens": 1,
+        "computed_token_counts": [
+          517
+        ],
+        "cudagraph_mode": "PIECEWISE",
+        "decode_bucket": 1,
+        "decode_req_count": 1,
+        "is_pure_decode": true,
+        "max_num_scheduled_tokens": 1,
+        "max_scheduled_spec_tokens": 0,
+        "num_reqs": 1,
+        "num_tokens_across_dp": null,
+        "num_tokens_padded": 1,
+        "num_tokens_unpadded": 1,
+        "prefill_req_count": 0,
+        "scheduled_spec_histogram": {
+          "0": 1
+        },
+        "scheduled_spec_lengths": [
+          0
+        ],
+        "scheduled_token_counts": [
+          1
+        ],
+        "scheduled_token_histogram": {
+          "1": 1
+        },
+        "should_ubatch": false,
+        "skip_compiled": false,
+        "use_spec_decode": false
+      },
+      "rank": "0",
+      "status": "ok",
+      "step": 17,
+      "summary_by_total_ms": [
+        {
+          "avg_ms": 13.628231,
+          "count": 1,
+          "label": "gpu_model_runner.model_forward",
+          "max_ms": 13.628231,
+          "rank": "0",
+          "total_ms": 13.628231
+        },
+        {
+          "avg_ms": 0.08818876666666667,
+          "count": 30,
+          "label": "gdn_attention_core_xpu.native",
+          "max_ms": 0.098525,
+          "rank": "0",
+          "total_ms": 2.645663
+        },
+        {
+          "avg_ms": 0.769084,
+          "count": 1,
+          "label": "gpu_model_runner.compute_logits",
+          "max_ms": 0.769084,
+          "rank": "0",
+          "total_ms": 0.769084
+        },
+        {
+          "avg_ms": 0.53818,
+          "count": 1,
+          "label": "logits.local_argmax_lm_head",
+          "max_ms": 0.53818,
+          "rank": "0",
+          "total_ms": 0.53818
+        },
+        {
+          "avg_ms": 0.144621,
+          "count": 1,
+          "label": "gpu_model_runner.sampler",
+          "max_ms": 0.144621,
+          "rank": "0",
+          "total_ms": 0.144621
+        },
+        {
+          "avg_ms": 0.108975,
+          "count": 1,
+          "label": "gpu_model_runner.bookkeeping_sync",
+          "max_ms": 0.108975,
+          "rank": "0",
+          "total_ms": 0.108975
+        },
+        {
+          "avg_ms": 0.086603,
+          "count": 1,
+          "label": "gpu_model_runner.select_sample_hidden",
+          "max_ms": 0.086603,
+          "rank": "0",
+          "total_ms": 0.086603
+        }
+      ]
+    },
+    {
+      "line": 233,
+      "metadata": {
+        "batch_desc_num_reqs": null,
+        "batch_desc_num_tokens": 1,
+        "computed_token_counts": [
+          518
+        ],
+        "cudagraph_mode": "PIECEWISE",
+        "decode_bucket": 1,
+        "decode_req_count": 1,
+        "is_pure_decode": true,
+        "max_num_scheduled_tokens": 1,
+        "max_scheduled_spec_tokens": 0,
+        "num_reqs": 1,
+        "num_tokens_across_dp": null,
+        "num_tokens_padded": 1,
+        "num_tokens_unpadded": 1,
+        "prefill_req_count": 0,
+        "scheduled_spec_histogram": {
+          "0": 1
+        },
+        "scheduled_spec_lengths": [
+          0
+        ],
+        "scheduled_token_counts": [
+          1
+        ],
+        "scheduled_token_histogram": {
+          "1": 1
+        },
+        "should_ubatch": false,
+        "skip_compiled": false,
+        "use_spec_decode": false
+      },
+      "rank": "0",
+      "status": "ok",
+      "step": 18,
+      "summary_by_total_ms": [
+        {
+          "avg_ms": 12.708725,
+          "count": 1,
+          "label": "gpu_model_runner.model_forward",
+          "max_ms": 12.708725,
+          "rank": "0",
+          "total_ms": 12.708725
+        },
+        {
+          "avg_ms": 0.08734106666666666,
+          "count": 30,
+          "label": "gdn_attention_core_xpu.native",
+          "max_ms": 0.098115,
+          "rank": "0",
+          "total_ms": 2.620232
+        },
+        {
+          "avg_ms": 0.766549,
+          "count": 1,
+          "label": "gpu_model_runner.compute_logits",
+          "max_ms": 0.766549,
+          "rank": "0",
+          "total_ms": 0.766549
+        },
+        {
+          "avg_ms": 0.537048,
+          "count": 1,
+          "label": "logits.local_argmax_lm_head",
+          "max_ms": 0.537048,
+          "rank": "0",
+          "total_ms": 0.537048
+        },
+        {
+          "avg_ms": 0.14408,
+          "count": 1,
+          "label": "gpu_model_runner.sampler",
+          "max_ms": 0.14408,
+          "rank": "0",
+          "total_ms": 0.14408
+        },
+        {
+          "avg_ms": 0.107251,
+          "count": 1,
+          "label": "gpu_model_runner.bookkeeping_sync",
+          "max_ms": 0.107251,
+          "rank": "0",
+          "total_ms": 0.107251
+        },
+        {
+          "avg_ms": 0.08532,
+          "count": 1,
+          "label": "gpu_model_runner.select_sample_hidden",
+          "max_ms": 0.08532,
+          "rank": "0",
+          "total_ms": 0.08532
+        }
+      ]
+    },
+    {
+      "line": 234,
+      "metadata": {
+        "batch_desc_num_reqs": null,
+        "batch_desc_num_tokens": 1,
+        "computed_token_counts": [
+          519
+        ],
+        "cudagraph_mode": "PIECEWISE",
+        "decode_bucket": 1,
+        "decode_req_count": 1,
+        "is_pure_decode": true,
+        "max_num_scheduled_tokens": 1,
+        "max_scheduled_spec_tokens": 0,
+        "num_reqs": 1,
+        "num_tokens_across_dp": null,
+        "num_tokens_padded": 1,
+        "num_tokens_unpadded": 1,
+        "prefill_req_count": 0,
+        "scheduled_spec_histogram": {
+          "0": 1
+        },
+        "scheduled_spec_lengths": [
+          0
+        ],
+        "scheduled_token_counts": [
+          1
+        ],
+        "scheduled_token_histogram": {
+          "1": 1
+        },
+        "should_ubatch": false,
+        "skip_compiled": false,
+        "use_spec_decode": false
+      },
+      "rank": "0",
+      "status": "ok",
+      "step": 19,
+      "summary_by_total_ms": [
+        {
+          "avg_ms": 12.371111,
+          "count": 1,
+          "label": "gpu_model_runner.model_forward",
+          "max_ms": 12.371111,
+          "rank": "0",
+          "total_ms": 12.371111
+        },
+        {
+          "avg_ms": 0.087572,
+          "count": 30,
+          "label": "gdn_attention_core_xpu.native",
+          "max_ms": 0.095299,
+          "rank": "0",
+          "total_ms": 2.62716
+        },
+        {
+          "avg_ms": 0.75661,
+          "count": 1,
+          "label": "gpu_model_runner.compute_logits",
+          "max_ms": 0.75661,
+          "rank": "0",
+          "total_ms": 0.75661
+        },
+        {
+          "avg_ms": 0.536727,
+          "count": 1,
+          "label": "logits.local_argmax_lm_head",
+          "max_ms": 0.536727,
+          "rank": "0",
+          "total_ms": 0.536727
+        },
+        {
+          "avg_ms": 0.142969,
+          "count": 1,
+          "label": "gpu_model_runner.sampler",
+          "max_ms": 0.142969,
+          "rank": "0",
+          "total_ms": 0.142969
+        },
+        {
+          "avg_ms": 0.105989,
+          "count": 1,
+          "label": "gpu_model_runner.bookkeeping_sync",
+          "max_ms": 0.105989,
+          "rank": "0",
+          "total_ms": 0.105989
+        },
+        {
+          "avg_ms": 0.083817,
+          "count": 1,
+          "label": "gpu_model_runner.select_sample_hidden",
+          "max_ms": 0.083817,
+          "rank": "0",
+          "total_ms": 0.083817
+        }
+      ]
+    },
+    {
+      "line": 235,
+      "metadata": {
+        "batch_desc_num_reqs": null,
+        "batch_desc_num_tokens": 1,
+        "computed_token_counts": [
+          520
+        ],
+        "cudagraph_mode": "PIECEWISE",
+        "decode_bucket": 1,
+        "decode_req_count": 1,
+        "is_pure_decode": true,
+        "max_num_scheduled_tokens": 1,
+        "max_scheduled_spec_tokens": 0,
+        "num_reqs": 1,
+        "num_tokens_across_dp": null,
+        "num_tokens_padded": 1,
+        "num_tokens_unpadded": 1,
+        "prefill_req_count": 0,
+        "scheduled_spec_histogram": {
+          "0": 1
+        },
+        "scheduled_spec_lengths": [
+          0
+        ],
+        "scheduled_token_counts": [
+          1
+        ],
+        "scheduled_token_histogram": {
+          "1": 1
+        },
+        "should_ubatch": false,
+        "skip_compiled": false,
+        "use_spec_decode": false
+      },
+      "rank": "0",
+      "status": "ok",
+      "step": 20,
+      "summary_by_total_ms": [
+        {
+          "avg_ms": 12.278197,
+          "count": 1,
+          "label": "gpu_model_runner.model_forward",
+          "max_ms": 12.278197,
+          "rank": "0",
+          "total_ms": 12.278197
+        },
+        {
+          "avg_ms": 0.08658566666666667,
+          "count": 30,
+          "label": "gdn_attention_core_xpu.native",
+          "max_ms": 0.094648,
+          "rank": "0",
+          "total_ms": 2.59757
+        },
+        {
+          "avg_ms": 0.759215,
+          "count": 1,
+          "label": "gpu_model_runner.compute_logits",
+          "max_ms": 0.759215,
+          "rank": "0",
+          "total_ms": 0.759215
+        },
+        {
+          "avg_ms": 0.535886,
+          "count": 1,
+          "label": "logits.local_argmax_lm_head",
+          "max_ms": 0.535886,
+          "rank": "0",
+          "total_ms": 0.535886
+        },
+        {
+          "avg_ms": 0.145924,
+          "count": 1,
+          "label": "gpu_model_runner.sampler",
+          "max_ms": 0.145924,
+          "rank": "0",
+          "total_ms": 0.145924
+        },
+        {
+          "avg_ms": 0.107733,
+          "count": 1,
+          "label": "gpu_model_runner.bookkeeping_sync",
+          "max_ms": 0.107733,
+          "rank": "0",
+          "total_ms": 0.107733
+        },
+        {
+          "avg_ms": 0.083156,
+          "count": 1,
+          "label": "gpu_model_runner.select_sample_hidden",
+          "max_ms": 0.083156,
+          "rank": "0",
+          "total_ms": 0.083156
+        }
+      ]
+    },
+    {
+      "line": 236,
+      "metadata": {
+        "batch_desc_num_reqs": null,
+        "batch_desc_num_tokens": 1,
+        "computed_token_counts": [
+          521
+        ],
+        "cudagraph_mode": "PIECEWISE",
+        "decode_bucket": 1,
+        "decode_req_count": 1,
+        "is_pure_decode": true,
+        "max_num_scheduled_tokens": 1,
+        "max_scheduled_spec_tokens": 0,
+        "num_reqs": 1,
+        "num_tokens_across_dp": null,
+        "num_tokens_padded": 1,
+        "num_tokens_unpadded": 1,
+        "prefill_req_count": 0,
+        "scheduled_spec_histogram": {
+          "0": 1
+        },
+        "scheduled_spec_lengths": [
+          0
+        ],
+        "scheduled_token_counts": [
+          1
+        ],
+        "scheduled_token_histogram": {
+          "1": 1
+        },
+        "should_ubatch": false,
+        "skip_compiled": false,
+        "use_spec_decode": false
+      },
+      "rank": "0",
+      "status": "ok",
+      "step": 21,
+      "summary_by_total_ms": [
+        {
+          "avg_ms": 12.245696,
+          "count": 1,
+          "label": "gpu_model_runner.model_forward",
+          "max_ms": 12.245696,
+          "rank": "0",
+          "total_ms": 12.245696
+        },
+        {
+          "avg_ms": 0.0868223,
+          "count": 30,
+          "label": "gdn_attention_core_xpu.native",
+          "max_ms": 0.09608,
+          "rank": "0",
+          "total_ms": 2.604669
+        },
+        {
+          "avg_ms": 0.762522,
+          "count": 1,
+          "label": "gpu_model_runner.compute_logits",
+          "max_ms": 0.762522,
+          "rank": "0",
+          "total_ms": 0.762522
+        },
+        {
+          "avg_ms": 0.536136,
+          "count": 1,
+          "label": "logits.local_argmax_lm_head",
+          "max_ms": 0.536136,
+          "rank": "0",
+          "total_ms": 0.536136
+        },
+        {
+          "avg_ms": 0.153468,
+          "count": 1,
+          "label": "gpu_model_runner.sampler",
+          "max_ms": 0.153468,
+          "rank": "0",
+          "total_ms": 0.153468
+        },
+        {
+          "avg_ms": 0.10639,
+          "count": 1,
+          "label": "gpu_model_runner.bookkeeping_sync",
+          "max_ms": 0.10639,
+          "rank": "0",
+          "total_ms": 0.10639
+        },
+        {
+          "avg_ms": 0.084058,
+          "count": 1,
+          "label": "gpu_model_runner.select_sample_hidden",
+          "max_ms": 0.084058,
+          "rank": "0",
+          "total_ms": 0.084058
+        }
+      ]
+    },
+    {
+      "line": 237,
+      "metadata": {
+        "batch_desc_num_reqs": null,
+        "batch_desc_num_tokens": 1,
+        "computed_token_counts": [
+          522
+        ],
+        "cudagraph_mode": "PIECEWISE",
+        "decode_bucket": 1,
+        "decode_req_count": 1,
+        "is_pure_decode": true,
+        "max_num_scheduled_tokens": 1,
+        "max_scheduled_spec_tokens": 0,
+        "num_reqs": 1,
+        "num_tokens_across_dp": null,
+        "num_tokens_padded": 1,
+        "num_tokens_unpadded": 1,
+        "prefill_req_count": 0,
+        "scheduled_spec_histogram": {
+          "0": 1
+        },
+        "scheduled_spec_lengths": [
+          0
+        ],
+        "scheduled_token_counts": [
+          1
+        ],
+        "scheduled_token_histogram": {
+          "1": 1
+        },
+        "should_ubatch": false,
+        "skip_compiled": false,
+        "use_spec_decode": false
+      },
+      "rank": "0",
+      "status": "ok",
+      "step": 22,
+      "summary_by_total_ms": [
+        {
+          "avg_ms": 12.219638,
+          "count": 1,
+          "label": "gpu_model_runner.model_forward",
+          "max_ms": 12.219638,
+          "rank": "0",
+          "total_ms": 12.219638
+        },
+        {
+          "avg_ms": 0.0871127,
+          "count": 30,
+          "label": "gdn_attention_core_xpu.native",
+          "max_ms": 0.103715,
+          "rank": "0",
+          "total_ms": 2.613381
+        },
+        {
+          "avg_ms": 0.758023,
+          "count": 1,
+          "label": "gpu_model_runner.compute_logits",
+          "max_ms": 0.758023,
+          "rank": "0",
+          "total_ms": 0.758023
+        },
+        {
+          "avg_ms": 0.53833,
+          "count": 1,
+          "label": "logits.local_argmax_lm_head",
+          "max_ms": 0.53833,
+          "rank": "0",
+          "total_ms": 0.53833
+        },
+        {
+          "avg_ms": 0.151744,
+          "count": 1,
+          "label": "gpu_model_runner.sampler",
+          "max_ms": 0.151744,
+          "rank": "0",
+          "total_ms": 0.151744
+        },
+        {
+          "avg_ms": 0.10613,
+          "count": 1,
+          "label": "gpu_model_runner.bookkeeping_sync",
+          "max_ms": 0.10613,
+          "rank": "0",
+          "total_ms": 0.10613
+        },
+        {
+          "avg_ms": 0.091782,
+          "count": 1,
+          "label": "gpu_model_runner.select_sample_hidden",
+          "max_ms": 0.091782,
+          "rank": "0",
+          "total_ms": 0.091782
+        }
+      ]
+    },
+    {
+      "line": 238,
+      "metadata": {
+        "batch_desc_num_reqs": null,
+        "batch_desc_num_tokens": 1,
+        "computed_token_counts": [
+          523
+        ],
+        "cudagraph_mode": "PIECEWISE",
+        "decode_bucket": 1,
+        "decode_req_count": 1,
+        "is_pure_decode": true,
+        "max_num_scheduled_tokens": 1,
+        "max_scheduled_spec_tokens": 0,
+        "num_reqs": 1,
+        "num_tokens_across_dp": null,
+        "num_tokens_padded": 1,
+        "num_tokens_unpadded": 1,
+        "prefill_req_count": 0,
+        "scheduled_spec_histogram": {
+          "0": 1
+        },
+        "scheduled_spec_lengths": [
+          0
+        ],
+        "scheduled_token_counts": [
+          1
+        ],
+        "scheduled_token_histogram": {
+          "1": 1
+        },
+        "should_ubatch": false,
+        "skip_compiled": false,
+        "use_spec_decode": false
+      },
+      "rank": "0",
+      "status": "ok",
+      "step": 23,
+      "summary_by_total_ms": [
+        {
+          "avg_ms": 12.224666,
+          "count": 1,
+          "label": "gpu_model_runner.model_forward",
+          "max_ms": 12.224666,
+          "rank": "0",
+          "total_ms": 12.224666
+        },
+        {
+          "avg_ms": 0.08670889999999999,
+          "count": 30,
+          "label": "gdn_attention_core_xpu.native",
+          "max_ms": 0.096952,
+          "rank": "0",
+          "total_ms": 2.601267
+        },
+        {
+          "avg_ms": 0.75631,
+          "count": 1,
+          "label": "gpu_model_runner.compute_logits",
+          "max_ms": 0.75631,
+          "rank": "0",
+          "total_ms": 0.75631
+        },
+        {
+          "avg_ms": 0.536257,
+          "count": 1,
+          "label": "logits.local_argmax_lm_head",
+          "max_ms": 0.536257,
+          "rank": "0",
+          "total_ms": 0.536257
+        },
+        {
+          "avg_ms": 0.145513,
+          "count": 1,
+          "label": "gpu_model_runner.sampler",
+          "max_ms": 0.145513,
+          "rank": "0",
+          "total_ms": 0.145513
+        },
+        {
+          "avg_ms": 0.10617,
+          "count": 1,
+          "label": "gpu_model_runner.bookkeeping_sync",
+          "max_ms": 0.10617,
+          "rank": "0",
+          "total_ms": 0.10617
+        },
+        {
+          "avg_ms": 0.08519,
+          "count": 1,
+          "label": "gpu_model_runner.select_sample_hidden",
+          "max_ms": 0.08519,
+          "rank": "0",
+          "total_ms": 0.08519
+        }
+      ]
+    },
+    {
+      "line": 239,
+      "metadata": {
+        "batch_desc_num_reqs": null,
+        "batch_desc_num_tokens": 1,
+        "computed_token_counts": [
+          524
+        ],
+        "cudagraph_mode": "PIECEWISE",
+        "decode_bucket": 1,
+        "decode_req_count": 1,
+        "is_pure_decode": true,
+        "max_num_scheduled_tokens": 1,
+        "max_scheduled_spec_tokens": 0,
+        "num_reqs": 1,
+        "num_tokens_across_dp": null,
+        "num_tokens_padded": 1,
+        "num_tokens_unpadded": 1,
+        "prefill_req_count": 0,
+        "scheduled_spec_histogram": {
+          "0": 1
+        },
+        "scheduled_spec_lengths": [
+          0
+        ],
+        "scheduled_token_counts": [
+          1
+        ],
+        "scheduled_token_histogram": {
+          "1": 1
+        },
+        "should_ubatch": false,
+        "skip_compiled": false,
+        "use_spec_decode": false
+      },
+      "rank": "0",
+      "status": "ok",
+      "step": 24,
+      "summary_by_total_ms": [
+        {
+          "avg_ms": 12.230718,
+          "count": 1,
+          "label": "gpu_model_runner.model_forward",
+          "max_ms": 12.230718,
+          "rank": "0",
+          "total_ms": 12.230718
+        },
+        {
+          "avg_ms": 0.08695523333333334,
+          "count": 30,
+          "label": "gdn_attention_core_xpu.native",
+          "max_ms": 0.095079,
+          "rank": "0",
+          "total_ms": 2.608657
+        },
+        {
+          "avg_ms": 0.76195,
+          "count": 1,
+          "label": "gpu_model_runner.compute_logits",
+          "max_ms": 0.76195,
+          "rank": "0",
+          "total_ms": 0.76195
+        },
+        {
+          "avg_ms": 0.533902,
+          "count": 1,
+          "label": "logits.local_argmax_lm_head",
+          "max_ms": 0.533902,
+          "rank": "0",
+          "total_ms": 0.533902
+        },
+        {
+          "avg_ms": 0.144932,
+          "count": 1,
+          "label": "gpu_model_runner.sampler",
+          "max_ms": 0.144932,
+          "rank": "0",
+          "total_ms": 0.144932
+        },
+        {
+          "avg_ms": 0.104836,
+          "count": 1,
+          "label": "gpu_model_runner.bookkeeping_sync",
+          "max_ms": 0.104836,
+          "rank": "0",
+          "total_ms": 0.104836
+        },
+        {
+          "avg_ms": 0.083987,
+          "count": 1,
+          "label": "gpu_model_runner.select_sample_hidden",
+          "max_ms": 0.083987,
+          "rank": "0",
+          "total_ms": 0.083987
+        }
+      ]
+    },
+    {
+      "line": 240,
+      "metadata": {
+        "batch_desc_num_reqs": null,
+        "batch_desc_num_tokens": 1,
+        "computed_token_counts": [
+          525
+        ],
+        "cudagraph_mode": "PIECEWISE",
+        "decode_bucket": 1,
+        "decode_req_count": 1,
+        "is_pure_decode": true,
+        "max_num_scheduled_tokens": 1,
+        "max_scheduled_spec_tokens": 0,
+        "num_reqs": 1,
+        "num_tokens_across_dp": null,
+        "num_tokens_padded": 1,
+        "num_tokens_unpadded": 1,
+        "prefill_req_count": 0,
+        "scheduled_spec_histogram": {
+          "0": 1
+        },
+        "scheduled_spec_lengths": [
+          0
+        ],
+        "scheduled_token_counts": [
+          1
+        ],
+        "scheduled_token_histogram": {
+          "1": 1
+        },
+        "should_ubatch": false,
+        "skip_compiled": false,
+        "use_spec_decode": false
+      },
+      "rank": "0",
+      "status": "ok",
+      "step": 25,
+      "summary_by_total_ms": [
+        {
+          "avg_ms": 12.226751,
+          "count": 1,
+          "label": "gpu_model_runner.model_forward",
+          "max_ms": 12.226751,
+          "rank": "0",
+          "total_ms": 12.226751
+        },
+        {
+          "avg_ms": 0.0872528,
+          "count": 30,
+          "label": "gdn_attention_core_xpu.native",
+          "max_ms": 0.097172,
+          "rank": "0",
+          "total_ms": 2.617584
+        },
+        {
+          "avg_ms": 0.76218,
+          "count": 1,
+          "label": "gpu_model_runner.compute_logits",
+          "max_ms": 0.76218,
+          "rank": "0",
+          "total_ms": 0.76218
+        },
+        {
+          "avg_ms": 0.536187,
+          "count": 1,
+          "label": "logits.local_argmax_lm_head",
+          "max_ms": 0.536187,
+          "rank": "0",
+          "total_ms": 0.536187
+        },
+        {
+          "avg_ms": 0.146204,
+          "count": 1,
+          "label": "gpu_model_runner.sampler",
+          "max_ms": 0.146204,
+          "rank": "0",
+          "total_ms": 0.146204
+        },
+        {
+          "avg_ms": 0.107091,
+          "count": 1,
+          "label": "gpu_model_runner.bookkeeping_sync",
+          "max_ms": 0.107091,
+          "rank": "0",
+          "total_ms": 0.107091
+        },
+        {
+          "avg_ms": 0.08563,
+          "count": 1,
+          "label": "gpu_model_runner.select_sample_hidden",
+          "max_ms": 0.08563,
+          "rank": "0",
+          "total_ms": 0.08563
+        }
+      ]
+    },
+    {
+      "line": 241,
+      "metadata": {
+        "batch_desc_num_reqs": null,
+        "batch_desc_num_tokens": 1,
+        "computed_token_counts": [
+          526
+        ],
+        "cudagraph_mode": "PIECEWISE",
+        "decode_bucket": 1,
+        "decode_req_count": 1,
+        "is_pure_decode": true,
+        "max_num_scheduled_tokens": 1,
+        "max_scheduled_spec_tokens": 0,
+        "num_reqs": 1,
+        "num_tokens_across_dp": null,
+        "num_tokens_padded": 1,
+        "num_tokens_unpadded": 1,
+        "prefill_req_count": 0,
+        "scheduled_spec_histogram": {
+          "0": 1
+        },
+        "scheduled_spec_lengths": [
+          0
+        ],
+        "scheduled_token_counts": [
+          1
+        ],
+        "scheduled_token_histogram": {
+          "1": 1
+        },
+        "should_ubatch": false,
+        "skip_compiled": false,
+        "use_spec_decode": false
+      },
+      "rank": "0",
+      "status": "ok",
+      "step": 26,
+      "summary_by_total_ms": [
+        {
+          "avg_ms": 12.213175,
+          "count": 1,
+          "label": "gpu_model_runner.model_forward",
+          "max_ms": 12.213175,
+          "rank": "0",
+          "total_ms": 12.213175
+        },
+        {
+          "avg_ms": 0.08686546666666665,
+          "count": 30,
+          "label": "gdn_attention_core_xpu.native",
+          "max_ms": 0.09626,
+          "rank": "0",
+          "total_ms": 2.605964
+        },
+        {
+          "avg_ms": 0.759315,
+          "count": 1,
+          "label": "gpu_model_runner.compute_logits",
+          "max_ms": 0.759315,
+          "rank": "0",
+          "total_ms": 0.759315
+        },
+        {
+          "avg_ms": 0.534644,
+          "count": 1,
+          "label": "logits.local_argmax_lm_head",
+          "max_ms": 0.534644,
+          "rank": "0",
+          "total_ms": 0.534644
+        },
+        {
+          "avg_ms": 0.145704,
+          "count": 1,
+          "label": "gpu_model_runner.sampler",
+          "max_ms": 0.145704,
+          "rank": "0",
+          "total_ms": 0.145704
+        },
+        {
+          "avg_ms": 0.105238,
+          "count": 1,
+          "label": "gpu_model_runner.bookkeeping_sync",
+          "max_ms": 0.105238,
+          "rank": "0",
+          "total_ms": 0.105238
+        },
+        {
+          "avg_ms": 0.083356,
+          "count": 1,
+          "label": "gpu_model_runner.select_sample_hidden",
+          "max_ms": 0.083356,
+          "rank": "0",
+          "total_ms": 0.083356
+        }
+      ]
+    },
+    {
+      "line": 242,
+      "metadata": {
+        "batch_desc_num_reqs": null,
+        "batch_desc_num_tokens": 1,
+        "computed_token_counts": [
+          527
+        ],
+        "cudagraph_mode": "PIECEWISE",
+        "decode_bucket": 1,
+        "decode_req_count": 1,
+        "is_pure_decode": true,
+        "max_num_scheduled_tokens": 1,
+        "max_scheduled_spec_tokens": 0,
+        "num_reqs": 1,
+        "num_tokens_across_dp": null,
+        "num_tokens_padded": 1,
+        "num_tokens_unpadded": 1,
+        "prefill_req_count": 0,
+        "scheduled_spec_histogram": {
+          "0": 1
+        },
+        "scheduled_spec_lengths": [
+          0
+        ],
+        "scheduled_token_counts": [
+          1
+        ],
+        "scheduled_token_histogram": {
+          "1": 1
+        },
+        "should_ubatch": false,
+        "skip_compiled": false,
+        "use_spec_decode": false
+      },
+      "rank": "0",
+      "status": "ok",
+      "step": 27,
+      "summary_by_total_ms": [
+        {
+          "avg_ms": 12.281072,
+          "count": 1,
+          "label": "gpu_model_runner.model_forward",
+          "max_ms": 12.281072,
+          "rank": "0",
+          "total_ms": 12.281072
+        },
+        {
+          "avg_ms": 0.08791406666666667,
+          "count": 30,
+          "label": "gdn_attention_core_xpu.native",
+          "max_ms": 0.097092,
+          "rank": "0",
+          "total_ms": 2.637422
+        },
+        {
+          "avg_ms": 0.759495,
+          "count": 1,
+          "label": "gpu_model_runner.compute_logits",
+          "max_ms": 0.759495,
+          "rank": "0",
+          "total_ms": 0.759495
+        },
+        {
+          "avg_ms": 0.534944,
+          "count": 1,
+          "label": "logits.local_argmax_lm_head",
+          "max_ms": 0.534944,
+          "rank": "0",
+          "total_ms": 0.534944
+        },
+        {
+          "avg_ms": 0.144231,
+          "count": 1,
+          "label": "gpu_model_runner.sampler",
+          "max_ms": 0.144231,
+          "rank": "0",
+          "total_ms": 0.144231
+        },
+        {
+          "avg_ms": 0.115136,
+          "count": 1,
+          "label": "gpu_model_runner.bookkeeping_sync",
+          "max_ms": 0.115136,
+          "rank": "0",
+          "total_ms": 0.115136
+        },
+        {
+          "avg_ms": 0.083797,
+          "count": 1,
+          "label": "gpu_model_runner.select_sample_hidden",
+          "max_ms": 0.083797,
+          "rank": "0",
+          "total_ms": 0.083797
+        }
+      ]
+    },
+    {
+      "line": 243,
+      "metadata": {
+        "batch_desc_num_reqs": null,
+        "batch_desc_num_tokens": 1,
+        "computed_token_counts": [
+          528
+        ],
+        "cudagraph_mode": "PIECEWISE",
+        "decode_bucket": 1,
+        "decode_req_count": 1,
+        "is_pure_decode": true,
+        "max_num_scheduled_tokens": 1,
+        "max_scheduled_spec_tokens": 0,
+        "num_reqs": 1,
+        "num_tokens_across_dp": null,
+        "num_tokens_padded": 1,
+        "num_tokens_unpadded": 1,
+        "prefill_req_count": 0,
+        "scheduled_spec_histogram": {
+          "0": 1
+        },
+        "scheduled_spec_lengths": [
+          0
+        ],
+        "scheduled_token_counts": [
+          1
+        ],
+        "scheduled_token_histogram": {
+          "1": 1
+        },
+        "should_ubatch": false,
+        "skip_compiled": false,
+        "use_spec_decode": false
+      },
+      "rank": "0",
+      "status": "ok",
+      "step": 28,
+      "summary_by_total_ms": [
+        {
+          "avg_ms": 12.212263,
+          "count": 1,
+          "label": "gpu_model_runner.model_forward",
+          "max_ms": 12.212263,
+          "rank": "0",
+          "total_ms": 12.212263
+        },
+        {
+          "avg_ms": 0.0871716,
+          "count": 30,
+          "label": "gdn_attention_core_xpu.native",
+          "max_ms": 0.098014,
+          "rank": "0",
+          "total_ms": 2.615148
+        },
+        {
+          "avg_ms": 0.758293,
+          "count": 1,
+          "label": "gpu_model_runner.compute_logits",
+          "max_ms": 0.758293,
+          "rank": "0",
+          "total_ms": 0.758293
+        },
+        {
+          "avg_ms": 0.535495,
+          "count": 1,
+          "label": "logits.local_argmax_lm_head",
+          "max_ms": 0.535495,
+          "rank": "0",
+          "total_ms": 0.535495
+        },
+        {
+          "avg_ms": 0.144021,
+          "count": 1,
+          "label": "gpu_model_runner.sampler",
+          "max_ms": 0.144021,
+          "rank": "0",
+          "total_ms": 0.144021
+        },
+        {
+          "avg_ms": 0.107242,
+          "count": 1,
+          "label": "gpu_model_runner.bookkeeping_sync",
+          "max_ms": 0.107242,
+          "rank": "0",
+          "total_ms": 0.107242
+        },
+        {
+          "avg_ms": 0.083176,
+          "count": 1,
+          "label": "gpu_model_runner.select_sample_hidden",
+          "max_ms": 0.083176,
+          "rank": "0",
+          "total_ms": 0.083176
+        }
+      ]
+    },
+    {
+      "line": 244,
+      "metadata": {
+        "batch_desc_num_reqs": null,
+        "batch_desc_num_tokens": 1,
+        "computed_token_counts": [
+          529
+        ],
+        "cudagraph_mode": "PIECEWISE",
+        "decode_bucket": 1,
+        "decode_req_count": 1,
+        "is_pure_decode": true,
+        "max_num_scheduled_tokens": 1,
+        "max_scheduled_spec_tokens": 0,
+        "num_reqs": 1,
+        "num_tokens_across_dp": null,
+        "num_tokens_padded": 1,
+        "num_tokens_unpadded": 1,
+        "prefill_req_count": 0,
+        "scheduled_spec_histogram": {
+          "0": 1
+        },
+        "scheduled_spec_lengths": [
+          0
+        ],
+        "scheduled_token_counts": [
+          1
+        ],
+        "scheduled_token_histogram": {
+          "1": 1
+        },
+        "should_ubatch": false,
+        "skip_compiled": false,
+        "use_spec_decode": false
+      },
+      "rank": "0",
+      "status": "ok",
+      "step": 29,
+      "summary_by_total_ms": [
+        {
+          "avg_ms": 12.218565,
+          "count": 1,
+          "label": "gpu_model_runner.model_forward",
+          "max_ms": 12.218565,
+          "rank": "0",
+          "total_ms": 12.218565
+        },
+        {
+          "avg_ms": 0.08720013333333333,
+          "count": 30,
+          "label": "gdn_attention_core_xpu.native",
+          "max_ms": 0.097473,
+          "rank": "0",
+          "total_ms": 2.616004
+        },
+        {
+          "avg_ms": 0.764525,
+          "count": 1,
+          "label": "gpu_model_runner.compute_logits",
+          "max_ms": 0.764525,
+          "rank": "0",
+          "total_ms": 0.764525
+        },
+        {
+          "avg_ms": 0.544232,
+          "count": 1,
+          "label": "logits.local_argmax_lm_head",
+          "max_ms": 0.544232,
+          "rank": "0",
+          "total_ms": 0.544232
+        },
+        {
+          "avg_ms": 0.144451,
+          "count": 1,
+          "label": "gpu_model_runner.sampler",
+          "max_ms": 0.144451,
+          "rank": "0",
+          "total_ms": 0.144451
+        },
+        {
+          "avg_ms": 0.10648,
+          "count": 1,
+          "label": "gpu_model_runner.bookkeeping_sync",
+          "max_ms": 0.10648,
+          "rank": "0",
+          "total_ms": 0.10648
+        },
+        {
+          "avg_ms": 0.08501,
+          "count": 1,
+          "label": "gpu_model_runner.select_sample_hidden",
+          "max_ms": 0.08501,
+          "rank": "0",
+          "total_ms": 0.08501
+        }
+      ]
+    },
+    {
+      "line": 245,
+      "metadata": {
+        "batch_desc_num_reqs": null,
+        "batch_desc_num_tokens": 1,
+        "computed_token_counts": [
+          530
+        ],
+        "cudagraph_mode": "PIECEWISE",
+        "decode_bucket": 1,
+        "decode_req_count": 1,
+        "is_pure_decode": true,
+        "max_num_scheduled_tokens": 1,
+        "max_scheduled_spec_tokens": 0,
+        "num_reqs": 1,
+        "num_tokens_across_dp": null,
+        "num_tokens_padded": 1,
+        "num_tokens_unpadded": 1,
+        "prefill_req_count": 0,
+        "scheduled_spec_histogram": {
+          "0": 1
+        },
+        "scheduled_spec_lengths": [
+          0
+        ],
+        "scheduled_token_counts": [
+          1
+        ],
+        "scheduled_token_histogram": {
+          "1": 1
+        },
+        "should_ubatch": false,
+        "skip_compiled": false,
+        "use_spec_decode": false
+      },
+      "rank": "0",
+      "status": "ok",
+      "step": 30,
+      "summary_by_total_ms": [
+        {
+          "avg_ms": 12.22638,
+          "count": 1,
+          "label": "gpu_model_runner.model_forward",
+          "max_ms": 12.22638,
+          "rank": "0",
+          "total_ms": 12.22638
+        },
+        {
+          "avg_ms": 0.08716473333333334,
+          "count": 30,
+          "label": "gdn_attention_core_xpu.native",
+          "max_ms": 0.102543,
+          "rank": "0",
+          "total_ms": 2.614942
+        },
+        {
+          "avg_ms": 0.758353,
+          "count": 1,
+          "label": "gpu_model_runner.compute_logits",
+          "max_ms": 0.758353,
+          "rank": "0",
+          "total_ms": 0.758353
+        },
+        {
+          "avg_ms": 0.535485,
+          "count": 1,
+          "label": "logits.local_argmax_lm_head",
+          "max_ms": 0.535485,
+          "rank": "0",
+          "total_ms": 0.535485
+        },
+        {
+          "avg_ms": 0.153117,
+          "count": 1,
+          "label": "gpu_model_runner.sampler",
+          "max_ms": 0.153117,
+          "rank": "0",
+          "total_ms": 0.153117
+        },
+        {
+          "avg_ms": 0.10638,
+          "count": 1,
+          "label": "gpu_model_runner.bookkeeping_sync",
+          "max_ms": 0.10638,
+          "rank": "0",
+          "total_ms": 0.10638
+        },
+        {
+          "avg_ms": 0.088997,
+          "count": 1,
+          "label": "gpu_model_runner.select_sample_hidden",
+          "max_ms": 0.088997,
+          "rank": "0",
+          "total_ms": 0.088997
+        }
+      ]
+    },
+    {
+      "line": 246,
+      "metadata": {
+        "batch_desc_num_reqs": null,
+        "batch_desc_num_tokens": 1,
+        "computed_token_counts": [
+          531
+        ],
+        "cudagraph_mode": "PIECEWISE",
+        "decode_bucket": 1,
+        "decode_req_count": 1,
+        "is_pure_decode": true,
+        "max_num_scheduled_tokens": 1,
+        "max_scheduled_spec_tokens": 0,
+        "num_reqs": 1,
+        "num_tokens_across_dp": null,
+        "num_tokens_padded": 1,
+        "num_tokens_unpadded": 1,
+        "prefill_req_count": 0,
+        "scheduled_spec_histogram": {
+          "0": 1
+        },
+        "scheduled_spec_lengths": [
+          0
+        ],
+        "scheduled_token_counts": [
+          1
+        ],
+        "scheduled_token_histogram": {
+          "1": 1
+        },
+        "should_ubatch": false,
+        "skip_compiled": false,
+        "use_spec_decode": false
+      },
+      "rank": "0",
+      "status": "ok",
+      "step": 31,
+      "summary_by_total_ms": [
+        {
+          "avg_ms": 12.197526,
+          "count": 1,
+          "label": "gpu_model_runner.model_forward",
+          "max_ms": 12.197526,
+          "rank": "0",
+          "total_ms": 12.197526
+        },
+        {
+          "avg_ms": 0.0869942,
+          "count": 30,
+          "label": "gdn_attention_core_xpu.native",
+          "max_ms": 0.0958,
+          "rank": "0",
+          "total_ms": 2.609826
+        },
+        {
+          "avg_ms": 0.758334,
+          "count": 1,
+          "label": "gpu_model_runner.compute_logits",
+          "max_ms": 0.758334,
+          "rank": "0",
+          "total_ms": 0.758334
+        },
+        {
+          "avg_ms": 0.535986,
+          "count": 1,
+          "label": "logits.local_argmax_lm_head",
+          "max_ms": 0.535986,
+          "rank": "0",
+          "total_ms": 0.535986
+        },
+        {
+          "avg_ms": 0.146135,
+          "count": 1,
+          "label": "gpu_model_runner.sampler",
+          "max_ms": 0.146135,
+          "rank": "0",
+          "total_ms": 0.146135
+        },
+        {
+          "avg_ms": 0.107702,
+          "count": 1,
+          "label": "gpu_model_runner.bookkeeping_sync",
+          "max_ms": 0.107702,
+          "rank": "0",
+          "total_ms": 0.107702
+        },
+        {
+          "avg_ms": 0.09034,
+          "count": 1,
+          "label": "gpu_model_runner.select_sample_hidden",
+          "max_ms": 0.09034,
+          "rank": "0",
+          "total_ms": 0.09034
+        }
+      ]
+    },
+    {
+      "line": 247,
+      "metadata": {
+        "batch_desc_num_reqs": null,
+        "batch_desc_num_tokens": 1,
+        "computed_token_counts": [
+          532
+        ],
+        "cudagraph_mode": "PIECEWISE",
+        "decode_bucket": 1,
+        "decode_req_count": 1,
+        "is_pure_decode": true,
+        "max_num_scheduled_tokens": 1,
+        "max_scheduled_spec_tokens": 0,
+        "num_reqs": 1,
+        "num_tokens_across_dp": null,
+        "num_tokens_padded": 1,
+        "num_tokens_unpadded": 1,
+        "prefill_req_count": 0,
+        "scheduled_spec_histogram": {
+          "0": 1
+        },
+        "scheduled_spec_lengths": [
+          0
+        ],
+        "scheduled_token_counts": [
+          1
+        ],
+        "scheduled_token_histogram": {
+          "1": 1
+        },
+        "should_ubatch": false,
+        "skip_compiled": false,
+        "use_spec_decode": false
+      },
+      "rank": "0",
+      "status": "ok",
+      "step": 32,
+      "summary_by_total_ms": [
+        {
+          "avg_ms": 12.212875,
+          "count": 1,
+          "label": "gpu_model_runner.model_forward",
+          "max_ms": 12.212875,
+          "rank": "0",
+          "total_ms": 12.212875
+        },
+        {
+          "avg_ms": 0.08701133333333333,
+          "count": 30,
+          "label": "gdn_attention_core_xpu.native",
+          "max_ms": 0.09568,
+          "rank": "0",
+          "total_ms": 2.61034
+        },
+        {
+          "avg_ms": 0.766289,
+          "count": 1,
+          "label": "gpu_model_runner.compute_logits",
+          "max_ms": 0.766289,
+          "rank": "0",
+          "total_ms": 0.766289
+        },
+        {
+          "avg_ms": 0.539012,
+          "count": 1,
+          "label": "logits.local_argmax_lm_head",
+          "max_ms": 0.539012,
+          "rank": "0",
+          "total_ms": 0.539012
+        },
+        {
+          "avg_ms": 0.146475,
+          "count": 1,
+          "label": "gpu_model_runner.sampler",
+          "max_ms": 0.146475,
+          "rank": "0",
+          "total_ms": 0.146475
+        },
+        {
+          "avg_ms": 0.107902,
+          "count": 1,
+          "label": "gpu_model_runner.bookkeeping_sync",
+          "max_ms": 0.107902,
+          "rank": "0",
+          "total_ms": 0.107902
+        },
+        {
+          "avg_ms": 0.089408,
+          "count": 1,
+          "label": "gpu_model_runner.select_sample_hidden",
+          "max_ms": 0.089408,
+          "rank": "0",
+          "total_ms": 0.089408
+        }
+      ]
+    },
+    {
+      "line": 248,
+      "metadata": {
+        "batch_desc_num_reqs": null,
+        "batch_desc_num_tokens": 1,
+        "computed_token_counts": [
+          533
+        ],
+        "cudagraph_mode": "PIECEWISE",
+        "decode_bucket": 1,
+        "decode_req_count": 1,
+        "is_pure_decode": true,
+        "max_num_scheduled_tokens": 1,
+        "max_scheduled_spec_tokens": 0,
+        "num_reqs": 1,
+        "num_tokens_across_dp": null,
+        "num_tokens_padded": 1,
+        "num_tokens_unpadded": 1,
+        "prefill_req_count": 0,
+        "scheduled_spec_histogram": {
+          "0": 1
+        },
+        "scheduled_spec_lengths": [
+          0
+        ],
+        "scheduled_token_counts": [
+          1
+        ],
+        "scheduled_token_histogram": {
+          "1": 1
+        },
+        "should_ubatch": false,
+        "skip_compiled": false,
+        "use_spec_decode": false
+      },
+      "rank": "0",
+      "status": "ok",
+      "step": 33,
+      "summary_by_total_ms": [
+        {
+          "avg_ms": 12.197997,
+          "count": 1,
+          "label": "gpu_model_runner.model_forward",
+          "max_ms": 12.197997,
+          "rank": "0",
+          "total_ms": 12.197997
+        },
+        {
+          "avg_ms": 0.08720573333333334,
+          "count": 30,
+          "label": "gdn_attention_core_xpu.native",
+          "max_ms": 0.097783,
+          "rank": "0",
+          "total_ms": 2.616172
+        },
+        {
+          "avg_ms": 0.76715,
+          "count": 1,
+          "label": "gpu_model_runner.compute_logits",
+          "max_ms": 0.76715,
+          "rank": "0",
+          "total_ms": 0.76715
+        },
+        {
+          "avg_ms": 0.542819,
+          "count": 1,
+          "label": "logits.local_argmax_lm_head",
+          "max_ms": 0.542819,
+          "rank": "0",
+          "total_ms": 0.542819
+        },
+        {
+          "avg_ms": 0.146686,
+          "count": 1,
+          "label": "gpu_model_runner.sampler",
+          "max_ms": 0.146686,
+          "rank": "0",
+          "total_ms": 0.146686
+        },
+        {
+          "avg_ms": 0.10639,
+          "count": 1,
+          "label": "gpu_model_runner.bookkeeping_sync",
+          "max_ms": 0.10639,
+          "rank": "0",
+          "total_ms": 0.10639
+        },
+        {
+          "avg_ms": 0.084348,
+          "count": 1,
+          "label": "gpu_model_runner.select_sample_hidden",
+          "max_ms": 0.084348,
+          "rank": "0",
+          "total_ms": 0.084348
+        }
+      ]
+    },
+    {
+      "line": 249,
+      "metadata": {
+        "batch_desc_num_reqs": null,
+        "batch_desc_num_tokens": 1,
+        "computed_token_counts": [
+          534
+        ],
+        "cudagraph_mode": "PIECEWISE",
+        "decode_bucket": 1,
+        "decode_req_count": 1,
+        "is_pure_decode": true,
+        "max_num_scheduled_tokens": 1,
+        "max_scheduled_spec_tokens": 0,
+        "num_reqs": 1,
+        "num_tokens_across_dp": null,
+        "num_tokens_padded": 1,
+        "num_tokens_unpadded": 1,
+        "prefill_req_count": 0,
+        "scheduled_spec_histogram": {
+          "0": 1
+        },
+        "scheduled_spec_lengths": [
+          0
+        ],
+        "scheduled_token_counts": [
+          1
+        ],
+        "scheduled_token_histogram": {
+          "1": 1
+        },
+        "should_ubatch": false,
+        "skip_compiled": false,
+        "use_spec_decode": false
+      },
+      "rank": "0",
+      "status": "ok",
+      "step": 34,
+      "summary_by_total_ms": [
+        {
+          "avg_ms": 12.20517,
+          "count": 1,
+          "label": "gpu_model_runner.model_forward",
+          "max_ms": 12.20517,
+          "rank": "0",
+          "total_ms": 12.20517
+        },
+        {
+          "avg_ms": 0.0871854,
+          "count": 30,
+          "label": "gdn_attention_core_xpu.native",
+          "max_ms": 0.099036,
+          "rank": "0",
+          "total_ms": 2.615562
+        },
+        {
+          "avg_ms": 0.769074,
+          "count": 1,
+          "label": "gpu_model_runner.compute_logits",
+          "max_ms": 0.769074,
+          "rank": "0",
+          "total_ms": 0.769074
+        },
+        {
+          "avg_ms": 0.542999,
+          "count": 1,
+          "label": "logits.local_argmax_lm_head",
+          "max_ms": 0.542999,
+          "rank": "0",
+          "total_ms": 0.542999
+        },
+        {
+          "avg_ms": 0.146806,
+          "count": 1,
+          "label": "gpu_model_runner.sampler",
+          "max_ms": 0.146806,
+          "rank": "0",
+          "total_ms": 0.146806
+        },
+        {
+          "avg_ms": 0.10648,
+          "count": 1,
+          "label": "gpu_model_runner.bookkeeping_sync",
+          "max_ms": 0.10648,
+          "rank": "0",
+          "total_ms": 0.10648
+        },
+        {
+          "avg_ms": 0.083987,
+          "count": 1,
+          "label": "gpu_model_runner.select_sample_hidden",
+          "max_ms": 0.083987,
+          "rank": "0",
+          "total_ms": 0.083987
+        }
+      ]
+    },
+    {
+      "line": 250,
+      "metadata": {
+        "batch_desc_num_reqs": null,
+        "batch_desc_num_tokens": 1,
+        "computed_token_counts": [
+          535
+        ],
+        "cudagraph_mode": "PIECEWISE",
+        "decode_bucket": 1,
+        "decode_req_count": 1,
+        "is_pure_decode": true,
+        "max_num_scheduled_tokens": 1,
+        "max_scheduled_spec_tokens": 0,
+        "num_reqs": 1,
+        "num_tokens_across_dp": null,
+        "num_tokens_padded": 1,
+        "num_tokens_unpadded": 1,
+        "prefill_req_count": 0,
+        "scheduled_spec_histogram": {
+          "0": 1
+        },
+        "scheduled_spec_lengths": [
+          0
+        ],
+        "scheduled_token_counts": [
+          1
+        ],
+        "scheduled_token_histogram": {
+          "1": 1
+        },
+        "should_ubatch": false,
+        "skip_compiled": false,
+        "use_spec_decode": false
+      },
+      "rank": "0",
+      "status": "ok",
+      "step": 35,
+      "summary_by_total_ms": [
+        {
+          "avg_ms": 12.214458,
+          "count": 1,
+          "label": "gpu_model_runner.model_forward",
+          "max_ms": 12.214458,
+          "rank": "0",
+          "total_ms": 12.214458
+        },
+        {
+          "avg_ms": 0.08731753333333334,
+          "count": 30,
+          "label": "gdn_attention_core_xpu.native",
+          "max_ms": 0.106079,
+          "rank": "0",
+          "total_ms": 2.619526
+        },
+        {
+          "avg_ms": 0.764876,
+          "count": 1,
+          "label": "gpu_model_runner.compute_logits",
+          "max_ms": 0.764876,
+          "rank": "0",
+          "total_ms": 0.764876
+        },
+        {
+          "avg_ms": 0.539653,
+          "count": 1,
+          "label": "logits.local_argmax_lm_head",
+          "max_ms": 0.539653,
+          "rank": "0",
+          "total_ms": 0.539653
+        },
+        {
+          "avg_ms": 0.145473,
+          "count": 1,
+          "label": "gpu_model_runner.sampler",
+          "max_ms": 0.145473,
+          "rank": "0",
+          "total_ms": 0.145473
+        },
+        {
+          "avg_ms": 0.115868,
+          "count": 1,
+          "label": "gpu_model_runner.bookkeeping_sync",
+          "max_ms": 0.115868,
+          "rank": "0",
+          "total_ms": 0.115868
+        },
+        {
+          "avg_ms": 0.084599,
+          "count": 1,
+          "label": "gpu_model_runner.select_sample_hidden",
+          "max_ms": 0.084599,
+          "rank": "0",
+          "total_ms": 0.084599
+        }
+      ]
+    },
+    {
+      "line": 251,
+      "metadata": {
+        "batch_desc_num_reqs": null,
+        "batch_desc_num_tokens": 1,
+        "computed_token_counts": [
+          536
+        ],
+        "cudagraph_mode": "PIECEWISE",
+        "decode_bucket": 1,
+        "decode_req_count": 1,
+        "is_pure_decode": true,
+        "max_num_scheduled_tokens": 1,
+        "max_scheduled_spec_tokens": 0,
+        "num_reqs": 1,
+        "num_tokens_across_dp": null,
+        "num_tokens_padded": 1,
+        "num_tokens_unpadded": 1,
+        "prefill_req_count": 0,
+        "scheduled_spec_histogram": {
+          "0": 1
+        },
+        "scheduled_spec_lengths": [
+          0
+        ],
+        "scheduled_token_counts": [
+          1
+        ],
+        "scheduled_token_histogram": {
+          "1": 1
+        },
+        "should_ubatch": false,
+        "skip_compiled": false,
+        "use_spec_decode": false
+      },
+      "rank": "0",
+      "status": "ok",
+      "step": 36,
+      "summary_by_total_ms": [
+        {
+          "avg_ms": 12.241738,
+          "count": 1,
+          "label": "gpu_model_runner.model_forward",
+          "max_ms": 12.241738,
+          "rank": "0",
+          "total_ms": 12.241738
+        },
+        {
+          "avg_ms": 0.087806,
+          "count": 30,
+          "label": "gdn_attention_core_xpu.native",
+          "max_ms": 0.09581,
+          "rank": "0",
+          "total_ms": 2.63418
+        },
+        {
+          "avg_ms": 0.764625,
+          "count": 1,
+          "label": "gpu_model_runner.compute_logits",
+          "max_ms": 0.764625,
+          "rank": "0",
+          "total_ms": 0.764625
+        },
+        {
+          "avg_ms": 0.536898,
+          "count": 1,
+          "label": "logits.local_argmax_lm_head",
+          "max_ms": 0.536898,
+          "rank": "0",
+          "total_ms": 0.536898
+        },
+        {
+          "avg_ms": 0.145413,
+          "count": 1,
+          "label": "gpu_model_runner.sampler",
+          "max_ms": 0.145413,
+          "rank": "0",
+          "total_ms": 0.145413
+        },
+        {
+          "avg_ms": 0.10685,
+          "count": 1,
+          "label": "gpu_model_runner.bookkeeping_sync",
+          "max_ms": 0.10685,
+          "rank": "0",
+          "total_ms": 0.10685
+        },
+        {
+          "avg_ms": 0.083597,
+          "count": 1,
+          "label": "gpu_model_runner.select_sample_hidden",
+          "max_ms": 0.083597,
+          "rank": "0",
+          "total_ms": 0.083597
+        }
+      ]
+    },
+    {
+      "line": 252,
+      "metadata": {
+        "batch_desc_num_reqs": null,
+        "batch_desc_num_tokens": 1,
+        "computed_token_counts": [
+          537
+        ],
+        "cudagraph_mode": "PIECEWISE",
+        "decode_bucket": 1,
+        "decode_req_count": 1,
+        "is_pure_decode": true,
+        "max_num_scheduled_tokens": 1,
+        "max_scheduled_spec_tokens": 0,
+        "num_reqs": 1,
+        "num_tokens_across_dp": null,
+        "num_tokens_padded": 1,
+        "num_tokens_unpadded": 1,
+        "prefill_req_count": 0,
+        "scheduled_spec_histogram": {
+          "0": 1
+        },
+        "scheduled_spec_lengths": [
+          0
+        ],
+        "scheduled_token_counts": [
+          1
+        ],
+        "scheduled_token_histogram": {
+          "1": 1
+        },
+        "should_ubatch": false,
+        "skip_compiled": false,
+        "use_spec_decode": false
+      },
+      "rank": "0",
+      "status": "ok",
+      "step": 37,
+      "summary_by_total_ms": [
+        {
+          "avg_ms": 12.243412,
+          "count": 1,
+          "label": "gpu_model_runner.model_forward",
+          "max_ms": 12.243412,
+          "rank": "0",
+          "total_ms": 12.243412
+        },
+        {
+          "avg_ms": 0.08716863333333333,
+          "count": 30,
+          "label": "gdn_attention_core_xpu.native",
+          "max_ms": 0.101861,
+          "rank": "0",
+          "total_ms": 2.615059
+        },
+        {
+          "avg_ms": 0.763273,
+          "count": 1,
+          "label": "gpu_model_runner.compute_logits",
+          "max_ms": 0.763273,
+          "rank": "0",
+          "total_ms": 0.763273
+        },
+        {
+          "avg_ms": 0.536758,
+          "count": 1,
+          "label": "logits.local_argmax_lm_head",
+          "max_ms": 0.536758,
+          "rank": "0",
+          "total_ms": 0.536758
+        },
+        {
+          "avg_ms": 0.150302,
+          "count": 1,
+          "label": "gpu_model_runner.sampler",
+          "max_ms": 0.150302,
+          "rank": "0",
+          "total_ms": 0.150302
+        },
+        {
+          "avg_ms": 0.105067,
+          "count": 1,
+          "label": "gpu_model_runner.bookkeeping_sync",
+          "max_ms": 0.105067,
+          "rank": "0",
+          "total_ms": 0.105067
+        },
+        {
+          "avg_ms": 0.092614,
+          "count": 1,
+          "label": "gpu_model_runner.select_sample_hidden",
+          "max_ms": 0.092614,
+          "rank": "0",
+          "total_ms": 0.092614
+        }
+      ]
+    },
+    {
+      "line": 253,
+      "metadata": {
+        "batch_desc_num_reqs": null,
+        "batch_desc_num_tokens": 1,
+        "computed_token_counts": [
+          538
+        ],
+        "cudagraph_mode": "PIECEWISE",
+        "decode_bucket": 1,
+        "decode_req_count": 1,
+        "is_pure_decode": true,
+        "max_num_scheduled_tokens": 1,
+        "max_scheduled_spec_tokens": 0,
+        "num_reqs": 1,
+        "num_tokens_across_dp": null,
+        "num_tokens_padded": 1,
+        "num_tokens_unpadded": 1,
+        "prefill_req_count": 0,
+        "scheduled_spec_histogram": {
+          "0": 1
+        },
+        "scheduled_spec_lengths": [
+          0
+        ],
+        "scheduled_token_counts": [
+          1
+        ],
+        "scheduled_token_histogram": {
+          "1": 1
+        },
+        "should_ubatch": false,
+        "skip_compiled": false,
+        "use_spec_decode": false
+      },
+      "rank": "0",
+      "status": "ok",
+      "step": 38,
+      "summary_by_total_ms": [
+        {
+          "avg_ms": 12.220929,
+          "count": 1,
+          "label": "gpu_model_runner.model_forward",
+          "max_ms": 12.220929,
+          "rank": "0",
+          "total_ms": 12.220929
+        },
+        {
+          "avg_ms": 0.0872255,
+          "count": 30,
+          "label": "gdn_attention_core_xpu.native",
+          "max_ms": 0.095529,
+          "rank": "0",
+          "total_ms": 2.616765
+        },
+        {
+          "avg_ms": 0.762351,
+          "count": 1,
+          "label": "gpu_model_runner.compute_logits",
+          "max_ms": 0.762351,
+          "rank": "0",
+          "total_ms": 0.762351
+        },
+        {
+          "avg_ms": 0.53816,
+          "count": 1,
+          "label": "logits.local_argmax_lm_head",
+          "max_ms": 0.53816,
+          "rank": "0",
+          "total_ms": 0.53816
+        },
+        {
+          "avg_ms": 0.145343,
+          "count": 1,
+          "label": "gpu_model_runner.sampler",
+          "max_ms": 0.145343,
+          "rank": "0",
+          "total_ms": 0.145343
+        },
+        {
+          "avg_ms": 0.106239,
+          "count": 1,
+          "label": "gpu_model_runner.bookkeeping_sync",
+          "max_ms": 0.106239,
+          "rank": "0",
+          "total_ms": 0.106239
+        },
+        {
+          "avg_ms": 0.088325,
+          "count": 1,
+          "label": "gpu_model_runner.select_sample_hidden",
+          "max_ms": 0.088325,
+          "rank": "0",
+          "total_ms": 0.088325
+        }
+      ]
+    },
+    {
+      "line": 254,
+      "metadata": {
+        "batch_desc_num_reqs": null,
+        "batch_desc_num_tokens": 1,
+        "computed_token_counts": [
+          539
+        ],
+        "cudagraph_mode": "PIECEWISE",
+        "decode_bucket": 1,
+        "decode_req_count": 1,
+        "is_pure_decode": true,
+        "max_num_scheduled_tokens": 1,
+        "max_scheduled_spec_tokens": 0,
+        "num_reqs": 1,
+        "num_tokens_across_dp": null,
+        "num_tokens_padded": 1,
+        "num_tokens_unpadded": 1,
+        "prefill_req_count": 0,
+        "scheduled_spec_histogram": {
+          "0": 1
+        },
+        "scheduled_spec_lengths": [
+          0
+        ],
+        "scheduled_token_counts": [
+          1
+        ],
+        "scheduled_token_histogram": {
+          "1": 1
+        },
+        "should_ubatch": false,
+        "skip_compiled": false,
+        "use_spec_decode": false
+      },
+      "rank": "0",
+      "status": "ok",
+      "step": 39,
+      "summary_by_total_ms": [
+        {
+          "avg_ms": 12.24262,
+          "count": 1,
+          "label": "gpu_model_runner.model_forward",
+          "max_ms": 12.24262,
+          "rank": "0",
+          "total_ms": 12.24262
+        },
+        {
+          "avg_ms": 0.08735989999999999,
+          "count": 30,
+          "label": "gdn_attention_core_xpu.native",
+          "max_ms": 0.095579,
+          "rank": "0",
+          "total_ms": 2.620797
+        },
+        {
+          "avg_ms": 0.77246,
+          "count": 1,
+          "label": "gpu_model_runner.compute_logits",
+          "max_ms": 0.77246,
+          "rank": "0",
+          "total_ms": 0.77246
+        },
+        {
+          "avg_ms": 0.536998,
+          "count": 1,
+          "label": "logits.local_argmax_lm_head",
+          "max_ms": 0.536998,
+          "rank": "0",
+          "total_ms": 0.536998
+        },
+        {
+          "avg_ms": 0.145223,
+          "count": 1,
+          "label": "gpu_model_runner.sampler",
+          "max_ms": 0.145223,
+          "rank": "0",
+          "total_ms": 0.145223
+        },
+        {
+          "avg_ms": 0.107251,
+          "count": 1,
+          "label": "gpu_model_runner.bookkeeping_sync",
+          "max_ms": 0.107251,
+          "rank": "0",
+          "total_ms": 0.107251
+        },
+        {
+          "avg_ms": 0.08513,
+          "count": 1,
+          "label": "gpu_model_runner.select_sample_hidden",
+          "max_ms": 0.08513,
+          "rank": "0",
+          "total_ms": 0.08513
+        }
+      ]
+    },
+    {
+      "line": 255,
+      "metadata": {
+        "batch_desc_num_reqs": null,
+        "batch_desc_num_tokens": 1,
+        "computed_token_counts": [
+          540
+        ],
+        "cudagraph_mode": "PIECEWISE",
+        "decode_bucket": 1,
+        "decode_req_count": 1,
+        "is_pure_decode": true,
+        "max_num_scheduled_tokens": 1,
+        "max_scheduled_spec_tokens": 0,
+        "num_reqs": 1,
+        "num_tokens_across_dp": null,
+        "num_tokens_padded": 1,
+        "num_tokens_unpadded": 1,
+        "prefill_req_count": 0,
+        "scheduled_spec_histogram": {
+          "0": 1
+        },
+        "scheduled_spec_lengths": [
+          0
+        ],
+        "scheduled_token_counts": [
+          1
+        ],
+        "scheduled_token_histogram": {
+          "1": 1
+        },
+        "should_ubatch": false,
+        "skip_compiled": false,
+        "use_spec_decode": false
+      },
+      "rank": "0",
+      "status": "ok",
+      "step": 40,
+      "summary_by_total_ms": [
+        {
+          "avg_ms": 12.235216,
+          "count": 1,
+          "label": "gpu_model_runner.model_forward",
+          "max_ms": 12.235216,
+          "rank": "0",
+          "total_ms": 12.235216
+        },
+        {
+          "avg_ms": 0.08757833333333333,
+          "count": 30,
+          "label": "gdn_attention_core_xpu.native",
+          "max_ms": 0.094618,
+          "rank": "0",
+          "total_ms": 2.62735
+        },
+        {
+          "avg_ms": 0.768803,
+          "count": 1,
+          "label": "gpu_model_runner.compute_logits",
+          "max_ms": 0.768803,
+          "rank": "0",
+          "total_ms": 0.768803
+        },
+        {
+          "avg_ms": 0.536487,
+          "count": 1,
+          "label": "logits.local_argmax_lm_head",
+          "max_ms": 0.536487,
+          "rank": "0",
+          "total_ms": 0.536487
+        },
+        {
+          "avg_ms": 0.144781,
+          "count": 1,
+          "label": "gpu_model_runner.sampler",
+          "max_ms": 0.144781,
+          "rank": "0",
+          "total_ms": 0.144781
+        },
+        {
+          "avg_ms": 0.109816,
+          "count": 1,
+          "label": "gpu_model_runner.bookkeeping_sync",
+          "max_ms": 0.109816,
+          "rank": "0",
+          "total_ms": 0.109816
+        },
+        {
+          "avg_ms": 0.085059,
+          "count": 1,
+          "label": "gpu_model_runner.select_sample_hidden",
+          "max_ms": 0.085059,
+          "rank": "0",
+          "total_ms": 0.085059
+        }
+      ]
+    },
+    {
+      "line": 256,
+      "metadata": {
+        "batch_desc_num_reqs": null,
+        "batch_desc_num_tokens": 1,
+        "computed_token_counts": [
+          541
+        ],
+        "cudagraph_mode": "PIECEWISE",
+        "decode_bucket": 1,
+        "decode_req_count": 1,
+        "is_pure_decode": true,
+        "max_num_scheduled_tokens": 1,
+        "max_scheduled_spec_tokens": 0,
+        "num_reqs": 1,
+        "num_tokens_across_dp": null,
+        "num_tokens_padded": 1,
+        "num_tokens_unpadded": 1,
+        "prefill_req_count": 0,
+        "scheduled_spec_histogram": {
+          "0": 1
+        },
+        "scheduled_spec_lengths": [
+          0
+        ],
+        "scheduled_token_counts": [
+          1
+        ],
+        "scheduled_token_histogram": {
+          "1": 1
+        },
+        "should_ubatch": false,
+        "skip_compiled": false,
+        "use_spec_decode": false
+      },
+      "rank": "0",
+      "status": "ok",
+      "step": 41,
+      "summary_by_total_ms": [
+        {
+          "avg_ms": 12.228454,
+          "count": 1,
+          "label": "gpu_model_runner.model_forward",
+          "max_ms": 12.228454,
+          "rank": "0",
+          "total_ms": 12.228454
+        },
+        {
+          "avg_ms": 0.0875815,
+          "count": 30,
+          "label": "gdn_attention_core_xpu.native",
+          "max_ms": 0.103675,
+          "rank": "0",
+          "total_ms": 2.627445
+        },
+        {
+          "avg_ms": 0.769464,
+          "count": 1,
+          "label": "gpu_model_runner.compute_logits",
+          "max_ms": 0.769464,
+          "rank": "0",
+          "total_ms": 0.769464
+        },
+        {
+          "avg_ms": 0.537268,
+          "count": 1,
+          "label": "logits.local_argmax_lm_head",
+          "max_ms": 0.537268,
+          "rank": "0",
+          "total_ms": 0.537268
+        },
+        {
+          "avg_ms": 0.144822,
+          "count": 1,
+          "label": "gpu_model_runner.sampler",
+          "max_ms": 0.144822,
+          "rank": "0",
+          "total_ms": 0.144822
+        },
+        {
+          "avg_ms": 0.113793,
+          "count": 1,
+          "label": "gpu_model_runner.bookkeeping_sync",
+          "max_ms": 0.113793,
+          "rank": "0",
+          "total_ms": 0.113793
+        },
+        {
+          "avg_ms": 0.083496,
+          "count": 1,
+          "label": "gpu_model_runner.select_sample_hidden",
+          "max_ms": 0.083496,
+          "rank": "0",
+          "total_ms": 0.083496
+        }
+      ]
+    },
+    {
+      "line": 257,
+      "metadata": {
+        "batch_desc_num_reqs": null,
+        "batch_desc_num_tokens": 1,
+        "computed_token_counts": [
+          542
+        ],
+        "cudagraph_mode": "PIECEWISE",
+        "decode_bucket": 1,
+        "decode_req_count": 1,
+        "is_pure_decode": true,
+        "max_num_scheduled_tokens": 1,
+        "max_scheduled_spec_tokens": 0,
+        "num_reqs": 1,
+        "num_tokens_across_dp": null,
+        "num_tokens_padded": 1,
+        "num_tokens_unpadded": 1,
+        "prefill_req_count": 0,
+        "scheduled_spec_histogram": {
+          "0": 1
+        },
+        "scheduled_spec_lengths": [
+          0
+        ],
+        "scheduled_token_counts": [
+          1
+        ],
+        "scheduled_token_histogram": {
+          "1": 1
+        },
+        "should_ubatch": false,
+        "skip_compiled": false,
+        "use_spec_decode": false
+      },
+      "rank": "0",
+      "status": "ok",
+      "step": 42,
+      "summary_by_total_ms": [
+        {
+          "avg_ms": 12.217563,
+          "count": 1,
+          "label": "gpu_model_runner.model_forward",
+          "max_ms": 12.217563,
+          "rank": "0",
+          "total_ms": 12.217563
+        },
+        {
+          "avg_ms": 0.08752393333333333,
+          "count": 30,
+          "label": "gdn_attention_core_xpu.native",
+          "max_ms": 0.096451,
+          "rank": "0",
+          "total_ms": 2.625718
+        },
+        {
+          "avg_ms": 0.764114,
+          "count": 1,
+          "label": "gpu_model_runner.compute_logits",
+          "max_ms": 0.764114,
+          "rank": "0",
+          "total_ms": 0.764114
+        },
+        {
+          "avg_ms": 0.535335,
+          "count": 1,
+          "label": "logits.local_argmax_lm_head",
+          "max_ms": 0.535335,
+          "rank": "0",
+          "total_ms": 0.535335
+        },
+        {
+          "avg_ms": 0.150342,
+          "count": 1,
+          "label": "gpu_model_runner.sampler",
+          "max_ms": 0.150342,
+          "rank": "0",
+          "total_ms": 0.150342
+        },
+        {
+          "avg_ms": 0.108033,
+          "count": 1,
+          "label": "gpu_model_runner.bookkeeping_sync",
+          "max_ms": 0.108033,
+          "rank": "0",
+          "total_ms": 0.108033
+        },
+        {
+          "avg_ms": 0.083838,
+          "count": 1,
+          "label": "gpu_model_runner.select_sample_hidden",
+          "max_ms": 0.083838,
+          "rank": "0",
+          "total_ms": 0.083838
+        }
+      ]
+    },
+    {
+      "line": 258,
+      "metadata": {
+        "batch_desc_num_reqs": null,
+        "batch_desc_num_tokens": 1,
+        "computed_token_counts": [
+          543
+        ],
+        "cudagraph_mode": "PIECEWISE",
+        "decode_bucket": 1,
+        "decode_req_count": 1,
+        "is_pure_decode": true,
+        "max_num_scheduled_tokens": 1,
+        "max_scheduled_spec_tokens": 0,
+        "num_reqs": 1,
+        "num_tokens_across_dp": null,
+        "num_tokens_padded": 1,
+        "num_tokens_unpadded": 1,
+        "prefill_req_count": 0,
+        "scheduled_spec_histogram": {
+          "0": 1
+        },
+        "scheduled_spec_lengths": [
+          0
+        ],
+        "scheduled_token_counts": [
+          1
+        ],
+        "scheduled_token_histogram": {
+          "1": 1
+        },
+        "should_ubatch": false,
+        "skip_compiled": false,
+        "use_spec_decode": false
+      },
+      "rank": "0",
+      "status": "ok",
+      "step": 43,
+      "summary_by_total_ms": [
+        {
+          "avg_ms": 12.27994,
+          "count": 1,
+          "label": "gpu_model_runner.model_forward",
+          "max_ms": 12.27994,
+          "rank": "0",
+          "total_ms": 12.27994
+        },
+        {
+          "avg_ms": 0.0875103,
+          "count": 30,
+          "label": "gdn_attention_core_xpu.native",
+          "max_ms": 0.097032,
+          "rank": "0",
+          "total_ms": 2.625309
+        },
+        {
+          "avg_ms": 0.763634,
+          "count": 1,
+          "label": "gpu_model_runner.compute_logits",
+          "max_ms": 0.763634,
+          "rank": "0",
+          "total_ms": 0.763634
+        },
+        {
+          "avg_ms": 0.536547,
+          "count": 1,
+          "label": "logits.local_argmax_lm_head",
+          "max_ms": 0.536547,
+          "rank": "0",
+          "total_ms": 0.536547
+        },
+        {
+          "avg_ms": 0.148919,
+          "count": 1,
+          "label": "gpu_model_runner.sampler",
+          "max_ms": 0.148919,
+          "rank": "0",
+          "total_ms": 0.148919
+        },
+        {
+          "avg_ms": 0.10642,
+          "count": 1,
+          "label": "gpu_model_runner.bookkeeping_sync",
+          "max_ms": 0.10642,
+          "rank": "0",
+          "total_ms": 0.10642
+        },
+        {
+          "avg_ms": 0.090039,
+          "count": 1,
+          "label": "gpu_model_runner.select_sample_hidden",
+          "max_ms": 0.090039,
+          "rank": "0",
+          "total_ms": 0.090039
+        }
+      ]
+    },
+    {
+      "line": 259,
+      "metadata": {
+        "batch_desc_num_reqs": null,
+        "batch_desc_num_tokens": 1,
+        "computed_token_counts": [
+          544
+        ],
+        "cudagraph_mode": "PIECEWISE",
+        "decode_bucket": 1,
+        "decode_req_count": 1,
+        "is_pure_decode": true,
+        "max_num_scheduled_tokens": 1,
+        "max_scheduled_spec_tokens": 0,
+        "num_reqs": 1,
+        "num_tokens_across_dp": null,
+        "num_tokens_padded": 1,
+        "num_tokens_unpadded": 1,
+        "prefill_req_count": 0,
+        "scheduled_spec_histogram": {
+          "0": 1
+        },
+        "scheduled_spec_lengths": [
+          0
+        ],
+        "scheduled_token_counts": [
+          1
+        ],
+        "scheduled_token_histogram": {
+          "1": 1
+        },
+        "should_ubatch": false,
+        "skip_compiled": false,
+        "use_spec_decode": false
+      },
+      "rank": "0",
+      "status": "ok",
+      "step": 44,
+      "summary_by_total_ms": [
+        {
+          "avg_ms": 12.224386,
+          "count": 1,
+          "label": "gpu_model_runner.model_forward",
+          "max_ms": 12.224386,
+          "rank": "0",
+          "total_ms": 12.224386
+        },
+        {
+          "avg_ms": 0.0872347,
+          "count": 30,
+          "label": "gdn_attention_core_xpu.native",
+          "max_ms": 0.104196,
+          "rank": "0",
+          "total_ms": 2.617041
+        },
+        {
+          "avg_ms": 0.766519,
+          "count": 1,
+          "label": "gpu_model_runner.compute_logits",
+          "max_ms": 0.766519,
+          "rank": "0",
+          "total_ms": 0.766519
+        },
+        {
+          "avg_ms": 0.534744,
+          "count": 1,
+          "label": "logits.local_argmax_lm_head",
+          "max_ms": 0.534744,
+          "rank": "0",
+          "total_ms": 0.534744
+        },
+        {
+          "avg_ms": 0.146726,
+          "count": 1,
+          "label": "gpu_model_runner.sampler",
+          "max_ms": 0.146726,
+          "rank": "0",
+          "total_ms": 0.146726
+        },
+        {
+          "avg_ms": 0.10644,
+          "count": 1,
+          "label": "gpu_model_runner.bookkeeping_sync",
+          "max_ms": 0.10644,
+          "rank": "0",
+          "total_ms": 0.10644
+        },
+        {
+          "avg_ms": 0.084268,
+          "count": 1,
+          "label": "gpu_model_runner.select_sample_hidden",
+          "max_ms": 0.084268,
+          "rank": "0",
+          "total_ms": 0.084268
+        }
+      ]
+    },
+    {
+      "line": 260,
+      "metadata": {
+        "batch_desc_num_reqs": null,
+        "batch_desc_num_tokens": 1,
+        "computed_token_counts": [
+          545
+        ],
+        "cudagraph_mode": "PIECEWISE",
+        "decode_bucket": 1,
+        "decode_req_count": 1,
+        "is_pure_decode": true,
+        "max_num_scheduled_tokens": 1,
+        "max_scheduled_spec_tokens": 0,
+        "num_reqs": 1,
+        "num_tokens_across_dp": null,
+        "num_tokens_padded": 1,
+        "num_tokens_unpadded": 1,
+        "prefill_req_count": 0,
+        "scheduled_spec_histogram": {
+          "0": 1
+        },
+        "scheduled_spec_lengths": [
+          0
+        ],
+        "scheduled_token_counts": [
+          1
+        ],
+        "scheduled_token_histogram": {
+          "1": 1
+        },
+        "should_ubatch": false,
+        "skip_compiled": false,
+        "use_spec_decode": false
+      },
+      "rank": "0",
+      "status": "ok",
+      "step": 45,
+      "summary_by_total_ms": [
+        {
+          "avg_ms": 12.297754,
+          "count": 1,
+          "label": "gpu_model_runner.model_forward",
+          "max_ms": 12.297754,
+          "rank": "0",
+          "total_ms": 12.297754
+        },
+        {
+          "avg_ms": 0.08672819999999999,
+          "count": 30,
+          "label": "gdn_attention_core_xpu.native",
+          "max_ms": 0.095128,
+          "rank": "0",
+          "total_ms": 2.601846
+        },
+        {
+          "avg_ms": 0.764575,
+          "count": 1,
+          "label": "gpu_model_runner.compute_logits",
+          "max_ms": 0.764575,
+          "rank": "0",
+          "total_ms": 0.764575
+        },
+        {
+          "avg_ms": 0.536788,
+          "count": 1,
+          "label": "logits.local_argmax_lm_head",
+          "max_ms": 0.536788,
+          "rank": "0",
+          "total_ms": 0.536788
+        },
+        {
+          "avg_ms": 0.151825,
+          "count": 1,
+          "label": "gpu_model_runner.sampler",
+          "max_ms": 0.151825,
+          "rank": "0",
+          "total_ms": 0.151825
+        },
+        {
+          "avg_ms": 0.107171,
+          "count": 1,
+          "label": "gpu_model_runner.bookkeeping_sync",
+          "max_ms": 0.107171,
+          "rank": "0",
+          "total_ms": 0.107171
+        },
+        {
+          "avg_ms": 0.084789,
+          "count": 1,
+          "label": "gpu_model_runner.select_sample_hidden",
+          "max_ms": 0.084789,
+          "rank": "0",
+          "total_ms": 0.084789
+        }
+      ]
+    },
+    {
+      "line": 261,
+      "metadata": {
+        "batch_desc_num_reqs": null,
+        "batch_desc_num_tokens": 1,
+        "computed_token_counts": [
+          546
+        ],
+        "cudagraph_mode": "PIECEWISE",
+        "decode_bucket": 1,
+        "decode_req_count": 1,
+        "is_pure_decode": true,
+        "max_num_scheduled_tokens": 1,
+        "max_scheduled_spec_tokens": 0,
+        "num_reqs": 1,
+        "num_tokens_across_dp": null,
+        "num_tokens_padded": 1,
+        "num_tokens_unpadded": 1,
+        "prefill_req_count": 0,
+        "scheduled_spec_histogram": {
+          "0": 1
+        },
+        "scheduled_spec_lengths": [
+          0
+        ],
+        "scheduled_token_counts": [
+          1
+        ],
+        "scheduled_token_histogram": {
+          "1": 1
+        },
+        "should_ubatch": false,
+        "skip_compiled": false,
+        "use_spec_decode": false
+      },
+      "rank": "0",
+      "status": "ok",
+      "step": 46,
+      "summary_by_total_ms": [
+        {
+          "avg_ms": 12.224356,
+          "count": 1,
+          "label": "gpu_model_runner.model_forward",
+          "max_ms": 12.224356,
+          "rank": "0",
+          "total_ms": 12.224356
+        },
+        {
+          "avg_ms": 0.087183,
+          "count": 30,
+          "label": "gdn_attention_core_xpu.native",
+          "max_ms": 0.095399,
+          "rank": "0",
+          "total_ms": 2.61549
+        },
+        {
+          "avg_ms": 0.763343,
+          "count": 1,
+          "label": "gpu_model_runner.compute_logits",
+          "max_ms": 0.763343,
+          "rank": "0",
+          "total_ms": 0.763343
+        },
+        {
+          "avg_ms": 0.536838,
+          "count": 1,
+          "label": "logits.local_argmax_lm_head",
+          "max_ms": 0.536838,
+          "rank": "0",
+          "total_ms": 0.536838
+        },
+        {
+          "avg_ms": 0.14396,
+          "count": 1,
+          "label": "gpu_model_runner.sampler",
+          "max_ms": 0.14396,
+          "rank": "0",
+          "total_ms": 0.14396
+        },
+        {
+          "avg_ms": 0.107552,
+          "count": 1,
+          "label": "gpu_model_runner.bookkeeping_sync",
+          "max_ms": 0.107552,
+          "rank": "0",
+          "total_ms": 0.107552
+        },
+        {
+          "avg_ms": 0.084379,
+          "count": 1,
+          "label": "gpu_model_runner.select_sample_hidden",
+          "max_ms": 0.084379,
+          "rank": "0",
+          "total_ms": 0.084379
+        }
+      ]
+    },
+    {
+      "line": 262,
+      "metadata": {
+        "batch_desc_num_reqs": null,
+        "batch_desc_num_tokens": 1,
+        "computed_token_counts": [
+          547
+        ],
+        "cudagraph_mode": "PIECEWISE",
+        "decode_bucket": 1,
+        "decode_req_count": 1,
+        "is_pure_decode": true,
+        "max_num_scheduled_tokens": 1,
+        "max_scheduled_spec_tokens": 0,
+        "num_reqs": 1,
+        "num_tokens_across_dp": null,
+        "num_tokens_padded": 1,
+        "num_tokens_unpadded": 1,
+        "prefill_req_count": 0,
+        "scheduled_spec_histogram": {
+          "0": 1
+        },
+        "scheduled_spec_lengths": [
+          0
+        ],
+        "scheduled_token_counts": [
+          1
+        ],
+        "scheduled_token_histogram": {
+          "1": 1
+        },
+        "should_ubatch": false,
+        "skip_compiled": false,
+        "use_spec_decode": false
+      },
+      "rank": "0",
+      "status": "ok",
+      "step": 47,
+      "summary_by_total_ms": [
+        {
+          "avg_ms": 12.260624,
+          "count": 1,
+          "label": "gpu_model_runner.model_forward",
+          "max_ms": 12.260624,
+          "rank": "0",
+          "total_ms": 12.260624
+        },
+        {
+          "avg_ms": 0.0876165,
+          "count": 30,
+          "label": "gdn_attention_core_xpu.native",
+          "max_ms": 0.098425,
+          "rank": "0",
+          "total_ms": 2.628495
+        },
+        {
+          "avg_ms": 0.768643,
+          "count": 1,
+          "label": "gpu_model_runner.compute_logits",
+          "max_ms": 0.768643,
+          "rank": "0",
+          "total_ms": 0.768643
+        },
+        {
+          "avg_ms": 0.538121,
+          "count": 1,
+          "label": "logits.local_argmax_lm_head",
+          "max_ms": 0.538121,
+          "rank": "0",
+          "total_ms": 0.538121
+        },
+        {
+          "avg_ms": 0.145483,
+          "count": 1,
+          "label": "gpu_model_runner.sampler",
+          "max_ms": 0.145483,
+          "rank": "0",
+          "total_ms": 0.145483
+        },
+        {
+          "avg_ms": 0.107121,
+          "count": 1,
+          "label": "gpu_model_runner.bookkeeping_sync",
+          "max_ms": 0.107121,
+          "rank": "0",
+          "total_ms": 0.107121
+        },
+        {
+          "avg_ms": 0.08536,
+          "count": 1,
+          "label": "gpu_model_runner.select_sample_hidden",
+          "max_ms": 0.08536,
+          "rank": "0",
+          "total_ms": 0.08536
+        }
+      ]
+    },
+    {
+      "line": 263,
+      "metadata": {
+        "batch_desc_num_reqs": null,
+        "batch_desc_num_tokens": 1,
+        "computed_token_counts": [
+          548
+        ],
+        "cudagraph_mode": "PIECEWISE",
+        "decode_bucket": 1,
+        "decode_req_count": 1,
+        "is_pure_decode": true,
+        "max_num_scheduled_tokens": 1,
+        "max_scheduled_spec_tokens": 0,
+        "num_reqs": 1,
+        "num_tokens_across_dp": null,
+        "num_tokens_padded": 1,
+        "num_tokens_unpadded": 1,
+        "prefill_req_count": 0,
+        "scheduled_spec_histogram": {
+          "0": 1
+        },
+        "scheduled_spec_lengths": [
+          0
+        ],
+        "scheduled_token_counts": [
+          1
+        ],
+        "scheduled_token_histogram": {
+          "1": 1
+        },
+        "should_ubatch": false,
+        "skip_compiled": false,
+        "use_spec_decode": false
+      },
+      "rank": "0",
+      "status": "ok",
+      "step": 48,
+      "summary_by_total_ms": [
+        {
+          "avg_ms": 12.196734,
+          "count": 1,
+          "label": "gpu_model_runner.model_forward",
+          "max_ms": 12.196734,
+          "rank": "0",
+          "total_ms": 12.196734
+        },
+        {
+          "avg_ms": 0.08687376666666666,
+          "count": 30,
+          "label": "gdn_attention_core_xpu.native",
+          "max_ms": 0.101771,
+          "rank": "0",
+          "total_ms": 2.606213
+        },
+        {
+          "avg_ms": 0.774504,
+          "count": 1,
+          "label": "gpu_model_runner.compute_logits",
+          "max_ms": 0.774504,
+          "rank": "0",
+          "total_ms": 0.774504
+        },
+        {
+          "avg_ms": 0.536948,
+          "count": 1,
+          "label": "logits.local_argmax_lm_head",
+          "max_ms": 0.536948,
+          "rank": "0",
+          "total_ms": 0.536948
+        },
+        {
+          "avg_ms": 0.155653,
+          "count": 1,
+          "label": "gpu_model_runner.sampler",
+          "max_ms": 0.155653,
+          "rank": "0",
+          "total_ms": 0.155653
+        },
+        {
+          "avg_ms": 0.10658,
+          "count": 1,
+          "label": "gpu_model_runner.bookkeeping_sync",
+          "max_ms": 0.10658,
+          "rank": "0",
+          "total_ms": 0.10658
+        },
+        {
+          "avg_ms": 0.083567,
+          "count": 1,
+          "label": "gpu_model_runner.select_sample_hidden",
+          "max_ms": 0.083567,
+          "rank": "0",
+          "total_ms": 0.083567
+        }
+      ]
+    },
+    {
+      "line": 264,
+      "metadata": {
+        "batch_desc_num_reqs": null,
+        "batch_desc_num_tokens": 8,
+        "computed_token_counts": [
+          549
+        ],
+        "cudagraph_mode": "PIECEWISE",
+        "decode_bucket": 8,
+        "decode_req_count": 1,
+        "is_pure_decode": true,
+        "max_num_scheduled_tokens": 8,
+        "max_scheduled_spec_tokens": 7,
+        "num_reqs": 1,
+        "num_tokens_across_dp": null,
+        "num_tokens_padded": 8,
+        "num_tokens_unpadded": 8,
+        "prefill_req_count": 0,
+        "scheduled_spec_histogram": {
+          "7": 1
+        },
+        "scheduled_spec_lengths": [
+          7
+        ],
+        "scheduled_token_counts": [
+          8
+        ],
+        "scheduled_token_histogram": {
+          "8": 1
+        },
+        "should_ubatch": false,
+        "skip_compiled": false,
+        "use_spec_decode": true
+      },
+      "rank": "0",
+      "status": "ok",
+      "step": 49,
+      "summary_by_total_ms": [
+        {
+          "avg_ms": 15.024202,
+          "count": 1,
+          "label": "gpu_model_runner.model_forward",
+          "max_ms": 15.024202,
+          "rank": "0",
+          "total_ms": 15.024202
+        },
+        {
+          "avg_ms": 0.841289,
+          "count": 1,
+          "label": "gpu_model_runner.compute_logits",
+          "max_ms": 0.841289,
+          "rank": "0",
+          "total_ms": 0.841289
+        },
+        {
+          "avg_ms": 0.530596,
+          "count": 1,
+          "label": "logits.local_argmax_lm_head",
+          "max_ms": 0.530596,
+          "rank": "0",
+          "total_ms": 0.530596
+        },
+        {
+          "avg_ms": 0.098385,
+          "count": 1,
+          "label": "gpu_model_runner.bookkeeping_sync",
+          "max_ms": 0.098385,
+          "rank": "0",
+          "total_ms": 0.098385
+        },
+        {
+          "avg_ms": 0.070513,
+          "count": 1,
+          "label": "gpu_model_runner.select_sample_hidden",
+          "max_ms": 0.070513,
+          "rank": "0",
+          "total_ms": 0.070513
+        }
+      ]
+    },
+    {
+      "line": 265,
+      "metadata": {
+        "batch_desc_num_reqs": null,
+        "batch_desc_num_tokens": 8,
+        "computed_token_counts": [
+          557
+        ],
+        "cudagraph_mode": "PIECEWISE",
+        "decode_bucket": 8,
+        "decode_req_count": 1,
+        "is_pure_decode": true,
+        "max_num_scheduled_tokens": 8,
+        "max_scheduled_spec_tokens": 7,
+        "num_reqs": 1,
+        "num_tokens_across_dp": null,
+        "num_tokens_padded": 8,
+        "num_tokens_unpadded": 8,
+        "prefill_req_count": 0,
+        "scheduled_spec_histogram": {
+          "7": 1
+        },
+        "scheduled_spec_lengths": [
+          7
+        ],
+        "scheduled_token_counts": [
+          8
+        ],
+        "scheduled_token_histogram": {
+          "8": 1
+        },
+        "should_ubatch": false,
+        "skip_compiled": false,
+        "use_spec_decode": true
+      },
+      "rank": "0",
+      "status": "ok",
+      "step": 50,
+      "summary_by_total_ms": [
+        {
+          "avg_ms": 15.299108,
+          "count": 1,
+          "label": "gpu_model_runner.model_forward",
+          "max_ms": 15.299108,
+          "rank": "0",
+          "total_ms": 15.299108
+        },
+        {
+          "avg_ms": 0.837512,
+          "count": 1,
+          "label": "gpu_model_runner.compute_logits",
+          "max_ms": 0.837512,
+          "rank": "0",
+          "total_ms": 0.837512
+        },
+        {
+          "avg_ms": 0.528041,
+          "count": 1,
+          "label": "logits.local_argmax_lm_head",
+          "max_ms": 0.528041,
+          "rank": "0",
+          "total_ms": 0.528041
+        },
+        {
+          "avg_ms": 0.094607,
+          "count": 1,
+          "label": "gpu_model_runner.bookkeeping_sync",
+          "max_ms": 0.094607,
+          "rank": "0",
+          "total_ms": 0.094607
+        },
+        {
+          "avg_ms": 0.068339,
+          "count": 1,
+          "label": "gpu_model_runner.select_sample_hidden",
+          "max_ms": 0.068339,
+          "rank": "0",
+          "total_ms": 0.068339
+        }
+      ]
+    },
+    {
+      "line": 266,
+      "metadata": {
+        "batch_desc_num_reqs": null,
+        "batch_desc_num_tokens": 1,
+        "computed_token_counts": [
+          563
+        ],
+        "cudagraph_mode": "PIECEWISE",
+        "decode_bucket": 1,
+        "decode_req_count": 1,
+        "is_pure_decode": true,
+        "max_num_scheduled_tokens": 1,
+        "max_scheduled_spec_tokens": 0,
+        "num_reqs": 1,
+        "num_tokens_across_dp": null,
+        "num_tokens_padded": 1,
+        "num_tokens_unpadded": 1,
+        "prefill_req_count": 0,
+        "scheduled_spec_histogram": {
+          "0": 1
+        },
+        "scheduled_spec_lengths": [
+          0
+        ],
+        "scheduled_token_counts": [
+          1
+        ],
+        "scheduled_token_histogram": {
+          "1": 1
+        },
+        "should_ubatch": false,
+        "skip_compiled": false,
+        "use_spec_decode": false
+      },
+      "rank": "0",
+      "status": "ok",
+      "step": 51,
+      "summary_by_total_ms": [
+        {
+          "avg_ms": 12.479906,
+          "count": 1,
+          "label": "gpu_model_runner.model_forward",
+          "max_ms": 12.479906,
+          "rank": "0",
+          "total_ms": 12.479906
+        },
+        {
+          "avg_ms": 0.08836276666666666,
+          "count": 30,
+          "label": "gdn_attention_core_xpu.native",
+          "max_ms": 0.108153,
+          "rank": "0",
+          "total_ms": 2.650883
+        },
+        {
+          "avg_ms": 0.791546,
+          "count": 1,
+          "label": "gpu_model_runner.compute_logits",
+          "max_ms": 0.791546,
+          "rank": "0",
+          "total_ms": 0.791546
+        },
+        {
+          "avg_ms": 0.544913,
+          "count": 1,
+          "label": "logits.local_argmax_lm_head",
+          "max_ms": 0.544913,
+          "rank": "0",
+          "total_ms": 0.544913
+        },
+        {
+          "avg_ms": 0.14946,
+          "count": 1,
+          "label": "gpu_model_runner.sampler",
+          "max_ms": 0.14946,
+          "rank": "0",
+          "total_ms": 0.14946
+        },
+        {
+          "avg_ms": 0.108694,
+          "count": 1,
+          "label": "gpu_model_runner.bookkeeping_sync",
+          "max_ms": 0.108694,
+          "rank": "0",
+          "total_ms": 0.108694
+        },
+        {
+          "avg_ms": 0.086823,
+          "count": 1,
+          "label": "gpu_model_runner.select_sample_hidden",
+          "max_ms": 0.086823,
+          "rank": "0",
+          "total_ms": 0.086823
+        }
+      ]
+    },
+    {
+      "line": 267,
+      "metadata": {
+        "batch_desc_num_reqs": null,
+        "batch_desc_num_tokens": 1,
+        "computed_token_counts": [
+          564
+        ],
+        "cudagraph_mode": "PIECEWISE",
+        "decode_bucket": 1,
+        "decode_req_count": 1,
+        "is_pure_decode": true,
+        "max_num_scheduled_tokens": 1,
+        "max_scheduled_spec_tokens": 0,
+        "num_reqs": 1,
+        "num_tokens_across_dp": null,
+        "num_tokens_padded": 1,
+        "num_tokens_unpadded": 1,
+        "prefill_req_count": 0,
+        "scheduled_spec_histogram": {
+          "0": 1
+        },
+        "scheduled_spec_lengths": [
+          0
+        ],
+        "scheduled_token_counts": [
+          1
+        ],
+        "scheduled_token_histogram": {
+          "1": 1
+        },
+        "should_ubatch": false,
+        "skip_compiled": false,
+        "use_spec_decode": false
+      },
+      "rank": "0",
+      "status": "ok",
+      "step": 52,
+      "summary_by_total_ms": [
+        {
+          "avg_ms": 12.340684,
+          "count": 1,
+          "label": "gpu_model_runner.model_forward",
+          "max_ms": 12.340684,
+          "rank": "0",
+          "total_ms": 12.340684
+        },
+        {
+          "avg_ms": 0.087399,
+          "count": 30,
+          "label": "gdn_attention_core_xpu.native",
+          "max_ms": 0.097493,
+          "rank": "0",
+          "total_ms": 2.62197
+        },
+        {
+          "avg_ms": 0.772651,
+          "count": 1,
+          "label": "gpu_model_runner.compute_logits",
+          "max_ms": 0.772651,
+          "rank": "0",
+          "total_ms": 0.772651
+        },
+        {
+          "avg_ms": 0.541116,
+          "count": 1,
+          "label": "logits.local_argmax_lm_head",
+          "max_ms": 0.541116,
+          "rank": "0",
+          "total_ms": 0.541116
+        },
+        {
+          "avg_ms": 0.145433,
+          "count": 1,
+          "label": "gpu_model_runner.sampler",
+          "max_ms": 0.145433,
+          "rank": "0",
+          "total_ms": 0.145433
+        },
+        {
+          "avg_ms": 0.109786,
+          "count": 1,
+          "label": "gpu_model_runner.bookkeeping_sync",
+          "max_ms": 0.109786,
+          "rank": "0",
+          "total_ms": 0.109786
+        },
+        {
+          "avg_ms": 0.084519,
+          "count": 1,
+          "label": "gpu_model_runner.select_sample_hidden",
+          "max_ms": 0.084519,
+          "rank": "0",
+          "total_ms": 0.084519
+        }
+      ]
+    },
+    {
+      "line": 268,
+      "metadata": {
+        "batch_desc_num_reqs": null,
+        "batch_desc_num_tokens": 8,
+        "computed_token_counts": [
+          565
+        ],
+        "cudagraph_mode": "PIECEWISE",
+        "decode_bucket": 8,
+        "decode_req_count": 1,
+        "is_pure_decode": true,
+        "max_num_scheduled_tokens": 8,
+        "max_scheduled_spec_tokens": 7,
+        "num_reqs": 1,
+        "num_tokens_across_dp": null,
+        "num_tokens_padded": 8,
+        "num_tokens_unpadded": 8,
+        "prefill_req_count": 0,
+        "scheduled_spec_histogram": {
+          "7": 1
+        },
+        "scheduled_spec_lengths": [
+          7
+        ],
+        "scheduled_token_counts": [
+          8
+        ],
+        "scheduled_token_histogram": {
+          "8": 1
+        },
+        "should_ubatch": false,
+        "skip_compiled": false,
+        "use_spec_decode": true
+      },
+      "rank": "0",
+      "status": "ok",
+      "step": 53,
+      "summary_by_total_ms": [
+        {
+          "avg_ms": 14.90125,
+          "count": 1,
+          "label": "gpu_model_runner.model_forward",
+          "max_ms": 14.90125,
+          "rank": "0",
+          "total_ms": 14.90125
+        },
+        {
+          "avg_ms": 0.836169,
+          "count": 1,
+          "label": "gpu_model_runner.compute_logits",
+          "max_ms": 0.836169,
+          "rank": "0",
+          "total_ms": 0.836169
+        },
+        {
+          "avg_ms": 0.530235,
+          "count": 1,
+          "label": "logits.local_argmax_lm_head",
+          "max_ms": 0.530235,
+          "rank": "0",
+          "total_ms": 0.530235
+        },
+        {
+          "avg_ms": 0.097222,
+          "count": 1,
+          "label": "gpu_model_runner.bookkeeping_sync",
+          "max_ms": 0.097222,
+          "rank": "0",
+          "total_ms": 0.097222
+        },
+        {
+          "avg_ms": 0.069982,
+          "count": 1,
+          "label": "gpu_model_runner.select_sample_hidden",
+          "max_ms": 0.069982,
+          "rank": "0",
+          "total_ms": 0.069982
+        }
+      ]
+    },
+    {
+      "line": 269,
+      "metadata": {
+        "batch_desc_num_reqs": null,
+        "batch_desc_num_tokens": 1,
+        "computed_token_counts": [
+          567
+        ],
+        "cudagraph_mode": "PIECEWISE",
+        "decode_bucket": 1,
+        "decode_req_count": 1,
+        "is_pure_decode": true,
+        "max_num_scheduled_tokens": 1,
+        "max_scheduled_spec_tokens": 0,
+        "num_reqs": 1,
+        "num_tokens_across_dp": null,
+        "num_tokens_padded": 1,
+        "num_tokens_unpadded": 1,
+        "prefill_req_count": 0,
+        "scheduled_spec_histogram": {
+          "0": 1
+        },
+        "scheduled_spec_lengths": [
+          0
+        ],
+        "scheduled_token_counts": [
+          1
+        ],
+        "scheduled_token_histogram": {
+          "1": 1
+        },
+        "should_ubatch": false,
+        "skip_compiled": false,
+        "use_spec_decode": false
+      },
+      "rank": "0",
+      "status": "ok",
+      "step": 54,
+      "summary_by_total_ms": [
+        {
+          "avg_ms": 12.350593,
+          "count": 1,
+          "label": "gpu_model_runner.model_forward",
+          "max_ms": 12.350593,
+          "rank": "0",
+          "total_ms": 12.350593
+        },
+        {
+          "avg_ms": 0.08796303333333334,
+          "count": 30,
+          "label": "gdn_attention_core_xpu.native",
+          "max_ms": 0.107682,
+          "rank": "0",
+          "total_ms": 2.638891
+        },
+        {
+          "avg_ms": 0.785584,
+          "count": 1,
+          "label": "gpu_model_runner.compute_logits",
+          "max_ms": 0.785584,
+          "rank": "0",
+          "total_ms": 0.785584
+        },
+        {
+          "avg_ms": 0.546196,
+          "count": 1,
+          "label": "logits.local_argmax_lm_head",
+          "max_ms": 0.546196,
+          "rank": "0",
+          "total_ms": 0.546196
+        },
+        {
+          "avg_ms": 0.144431,
+          "count": 1,
+          "label": "gpu_model_runner.sampler",
+          "max_ms": 0.144431,
+          "rank": "0",
+          "total_ms": 0.144431
+        },
+        {
+          "avg_ms": 0.108604,
+          "count": 1,
+          "label": "gpu_model_runner.bookkeeping_sync",
+          "max_ms": 0.108604,
+          "rank": "0",
+          "total_ms": 0.108604
+        },
+        {
+          "avg_ms": 0.087033,
+          "count": 1,
+          "label": "gpu_model_runner.select_sample_hidden",
+          "max_ms": 0.087033,
+          "rank": "0",
+          "total_ms": 0.087033
+        }
+      ]
+    },
+    {
+      "line": 270,
+      "metadata": {
+        "batch_desc_num_reqs": null,
+        "batch_desc_num_tokens": 1,
+        "computed_token_counts": [
+          568
+        ],
+        "cudagraph_mode": "PIECEWISE",
+        "decode_bucket": 1,
+        "decode_req_count": 1,
+        "is_pure_decode": true,
+        "max_num_scheduled_tokens": 1,
+        "max_scheduled_spec_tokens": 0,
+        "num_reqs": 1,
+        "num_tokens_across_dp": null,
+        "num_tokens_padded": 1,
+        "num_tokens_unpadded": 1,
+        "prefill_req_count": 0,
+        "scheduled_spec_histogram": {
+          "0": 1
+        },
+        "scheduled_spec_lengths": [
+          0
+        ],
+        "scheduled_token_counts": [
+          1
+        ],
+        "scheduled_token_histogram": {
+          "1": 1
+        },
+        "should_ubatch": false,
+        "skip_compiled": false,
+        "use_spec_decode": false
+      },
+      "rank": "0",
+      "status": "ok",
+      "step": 55,
+      "summary_by_total_ms": [
+        {
+          "avg_ms": 12.304326,
+          "count": 1,
+          "label": "gpu_model_runner.model_forward",
+          "max_ms": 12.304326,
+          "rank": "0",
+          "total_ms": 12.304326
+        },
+        {
+          "avg_ms": 0.08782443333333334,
+          "count": 30,
+          "label": "gdn_attention_core_xpu.native",
+          "max_ms": 0.096331,
+          "rank": "0",
+          "total_ms": 2.634733
+        },
+        {
+          "avg_ms": 0.76686,
+          "count": 1,
+          "label": "gpu_model_runner.compute_logits",
+          "max_ms": 0.76686,
+          "rank": "0",
+          "total_ms": 0.76686
+        },
+        {
+          "avg_ms": 0.538722,
+          "count": 1,
+          "label": "logits.local_argmax_lm_head",
+          "max_ms": 0.538722,
+          "rank": "0",
+          "total_ms": 0.538722
+        },
+        {
+          "avg_ms": 0.146235,
+          "count": 1,
+          "label": "gpu_model_runner.sampler",
+          "max_ms": 0.146235,
+          "rank": "0",
+          "total_ms": 0.146235
+        },
+        {
+          "avg_ms": 0.116529,
+          "count": 1,
+          "label": "gpu_model_runner.bookkeeping_sync",
+          "max_ms": 0.116529,
+          "rank": "0",
+          "total_ms": 0.116529
+        },
+        {
+          "avg_ms": 0.084899,
+          "count": 1,
+          "label": "gpu_model_runner.select_sample_hidden",
+          "max_ms": 0.084899,
+          "rank": "0",
+          "total_ms": 0.084899
+        }
+      ]
+    },
+    {
+      "line": 271,
+      "metadata": {
+        "batch_desc_num_reqs": null,
+        "batch_desc_num_tokens": 1,
+        "computed_token_counts": [
+          569
+        ],
+        "cudagraph_mode": "PIECEWISE",
+        "decode_bucket": 1,
+        "decode_req_count": 1,
+        "is_pure_decode": true,
+        "max_num_scheduled_tokens": 1,
+        "max_scheduled_spec_tokens": 0,
+        "num_reqs": 1,
+        "num_tokens_across_dp": null,
+        "num_tokens_padded": 1,
+        "num_tokens_unpadded": 1,
+        "prefill_req_count": 0,
+        "scheduled_spec_histogram": {
+          "0": 1
+        },
+        "scheduled_spec_lengths": [
+          0
+        ],
+        "scheduled_token_counts": [
+          1
+        ],
+        "scheduled_token_histogram": {
+          "1": 1
+        },
+        "should_ubatch": false,
+        "skip_compiled": false,
+        "use_spec_decode": false
+      },
+      "rank": "0",
+      "status": "ok",
+      "step": 56,
+      "summary_by_total_ms": [
+        {
+          "avg_ms": 12.290149,
+          "count": 1,
+          "label": "gpu_model_runner.model_forward",
+          "max_ms": 12.290149,
+          "rank": "0",
+          "total_ms": 12.290149
+        },
+        {
+          "avg_ms": 0.08782756666666666,
+          "count": 30,
+          "label": "gdn_attention_core_xpu.native",
+          "max_ms": 0.103144,
+          "rank": "0",
+          "total_ms": 2.634827
+        },
+        {
+          "avg_ms": 0.779794,
+          "count": 1,
+          "label": "gpu_model_runner.compute_logits",
+          "max_ms": 0.779794,
+          "rank": "0",
+          "total_ms": 0.779794
+        },
+        {
+          "avg_ms": 0.540564,
+          "count": 1,
+          "label": "logits.local_argmax_lm_head",
+          "max_ms": 0.540564,
+          "rank": "0",
+          "total_ms": 0.540564
+        },
+        {
+          "avg_ms": 0.154831,
+          "count": 1,
+          "label": "gpu_model_runner.sampler",
+          "max_ms": 0.154831,
+          "rank": "0",
+          "total_ms": 0.154831
+        },
+        {
+          "avg_ms": 0.108043,
+          "count": 1,
+          "label": "gpu_model_runner.bookkeeping_sync",
+          "max_ms": 0.108043,
+          "rank": "0",
+          "total_ms": 0.108043
+        },
+        {
+          "avg_ms": 0.084368,
+          "count": 1,
+          "label": "gpu_model_runner.select_sample_hidden",
+          "max_ms": 0.084368,
+          "rank": "0",
+          "total_ms": 0.084368
+        }
+      ]
+    },
+    {
+      "line": 272,
+      "metadata": {
+        "batch_desc_num_reqs": null,
+        "batch_desc_num_tokens": 1,
+        "computed_token_counts": [
+          570
+        ],
+        "cudagraph_mode": "PIECEWISE",
+        "decode_bucket": 1,
+        "decode_req_count": 1,
+        "is_pure_decode": true,
+        "max_num_scheduled_tokens": 1,
+        "max_scheduled_spec_tokens": 0,
+        "num_reqs": 1,
+        "num_tokens_across_dp": null,
+        "num_tokens_padded": 1,
+        "num_tokens_unpadded": 1,
+        "prefill_req_count": 0,
+        "scheduled_spec_histogram": {
+          "0": 1
+        },
+        "scheduled_spec_lengths": [
+          0
+        ],
+        "scheduled_token_counts": [
+          1
+        ],
+        "scheduled_token_histogram": {
+          "1": 1
+        },
+        "should_ubatch": false,
+        "skip_compiled": false,
+        "use_spec_decode": false
+      },
+      "rank": "0",
+      "status": "ok",
+      "step": 57,
+      "summary_by_total_ms": [
+        {
+          "avg_ms": 12.229225,
+          "count": 1,
+          "label": "gpu_model_runner.model_forward",
+          "max_ms": 12.229225,
+          "rank": "0",
+          "total_ms": 12.229225
+        },
+        {
+          "avg_ms": 0.08707936666666667,
+          "count": 30,
+          "label": "gdn_attention_core_xpu.native",
+          "max_ms": 0.103394,
+          "rank": "0",
+          "total_ms": 2.612381
+        },
+        {
+          "avg_ms": 0.76718,
+          "count": 1,
+          "label": "gpu_model_runner.compute_logits",
+          "max_ms": 0.76718,
+          "rank": "0",
+          "total_ms": 0.76718
+        },
+        {
+          "avg_ms": 0.539042,
+          "count": 1,
+          "label": "logits.local_argmax_lm_head",
+          "max_ms": 0.539042,
+          "rank": "0",
+          "total_ms": 0.539042
+        },
+        {
+          "avg_ms": 0.146826,
+          "count": 1,
+          "label": "gpu_model_runner.sampler",
+          "max_ms": 0.146826,
+          "rank": "0",
+          "total_ms": 0.146826
+        },
+        {
+          "avg_ms": 0.10639,
+          "count": 1,
+          "label": "gpu_model_runner.bookkeeping_sync",
+          "max_ms": 0.10639,
+          "rank": "0",
+          "total_ms": 0.10639
+        },
+        {
+          "avg_ms": 0.09045,
+          "count": 1,
+          "label": "gpu_model_runner.select_sample_hidden",
+          "max_ms": 0.09045,
+          "rank": "0",
+          "total_ms": 0.09045
+        }
+      ]
+    },
+    {
+      "line": 273,
+      "metadata": {
+        "batch_desc_num_reqs": null,
+        "batch_desc_num_tokens": 1,
+        "computed_token_counts": [
+          571
+        ],
+        "cudagraph_mode": "PIECEWISE",
+        "decode_bucket": 1,
+        "decode_req_count": 1,
+        "is_pure_decode": true,
+        "max_num_scheduled_tokens": 1,
+        "max_scheduled_spec_tokens": 0,
+        "num_reqs": 1,
+        "num_tokens_across_dp": null,
+        "num_tokens_padded": 1,
+        "num_tokens_unpadded": 1,
+        "prefill_req_count": 0,
+        "scheduled_spec_histogram": {
+          "0": 1
+        },
+        "scheduled_spec_lengths": [
+          0
+        ],
+        "scheduled_token_counts": [
+          1
+        ],
+        "scheduled_token_histogram": {
+          "1": 1
+        },
+        "should_ubatch": false,
+        "skip_compiled": false,
+        "use_spec_decode": false
+      },
+      "rank": "0",
+      "status": "ok",
+      "step": 58,
+      "summary_by_total_ms": [
+        {
+          "avg_ms": 12.241809,
+          "count": 1,
+          "label": "gpu_model_runner.model_forward",
+          "max_ms": 12.241809,
+          "rank": "0",
+          "total_ms": 12.241809
+        },
+        {
+          "avg_ms": 0.08730426666666666,
+          "count": 30,
+          "label": "gdn_attention_core_xpu.native",
+          "max_ms": 0.0959,
+          "rank": "0",
+          "total_ms": 2.619128
+        },
+        {
+          "avg_ms": 0.766308,
+          "count": 1,
+          "label": "gpu_model_runner.compute_logits",
+          "max_ms": 0.766308,
+          "rank": "0",
+          "total_ms": 0.766308
+        },
+        {
+          "avg_ms": 0.53816,
+          "count": 1,
+          "label": "logits.local_argmax_lm_head",
+          "max_ms": 0.53816,
+          "rank": "0",
+          "total_ms": 0.53816
+        },
+        {
+          "avg_ms": 0.145433,
+          "count": 1,
+          "label": "gpu_model_runner.sampler",
+          "max_ms": 0.145433,
+          "rank": "0",
+          "total_ms": 0.145433
+        },
+        {
+          "avg_ms": 0.107893,
+          "count": 1,
+          "label": "gpu_model_runner.bookkeeping_sync",
+          "max_ms": 0.107893,
+          "rank": "0",
+          "total_ms": 0.107893
+        },
+        {
+          "avg_ms": 0.08501,
+          "count": 1,
+          "label": "gpu_model_runner.select_sample_hidden",
+          "max_ms": 0.08501,
+          "rank": "0",
+          "total_ms": 0.08501
+        }
+      ]
+    },
+    {
+      "line": 274,
+      "metadata": {
+        "batch_desc_num_reqs": null,
+        "batch_desc_num_tokens": 1,
+        "computed_token_counts": [
+          572
+        ],
+        "cudagraph_mode": "PIECEWISE",
+        "decode_bucket": 1,
+        "decode_req_count": 1,
+        "is_pure_decode": true,
+        "max_num_scheduled_tokens": 1,
+        "max_scheduled_spec_tokens": 0,
+        "num_reqs": 1,
+        "num_tokens_across_dp": null,
+        "num_tokens_padded": 1,
+        "num_tokens_unpadded": 1,
+        "prefill_req_count": 0,
+        "scheduled_spec_histogram": {
+          "0": 1
+        },
+        "scheduled_spec_lengths": [
+          0
+        ],
+        "scheduled_token_counts": [
+          1
+        ],
+        "scheduled_token_histogram": {
+          "1": 1
+        },
+        "should_ubatch": false,
+        "skip_compiled": false,
+        "use_spec_decode": false
+      },
+      "rank": "0",
+      "status": "ok",
+      "step": 59,
+      "summary_by_total_ms": [
+        {
+          "avg_ms": 12.222563,
+          "count": 1,
+          "label": "gpu_model_runner.model_forward",
+          "max_ms": 12.222563,
+          "rank": "0",
+          "total_ms": 12.222563
+        },
+        {
+          "avg_ms": 0.08729323333333333,
+          "count": 30,
+          "label": "gdn_attention_core_xpu.native",
+          "max_ms": 0.095449,
+          "rank": "0",
+          "total_ms": 2.618797
+        },
+        {
+          "avg_ms": 0.76712,
+          "count": 1,
+          "label": "gpu_model_runner.compute_logits",
+          "max_ms": 0.76712,
+          "rank": "0",
+          "total_ms": 0.76712
+        },
+        {
+          "avg_ms": 0.540875,
+          "count": 1,
+          "label": "logits.local_argmax_lm_head",
+          "max_ms": 0.540875,
+          "rank": "0",
+          "total_ms": 0.540875
+        },
+        {
+          "avg_ms": 0.145333,
+          "count": 1,
+          "label": "gpu_model_runner.sampler",
+          "max_ms": 0.145333,
+          "rank": "0",
+          "total_ms": 0.145333
+        },
+        {
+          "avg_ms": 0.106049,
+          "count": 1,
+          "label": "gpu_model_runner.bookkeeping_sync",
+          "max_ms": 0.106049,
+          "rank": "0",
+          "total_ms": 0.106049
+        },
+        {
+          "avg_ms": 0.086021,
+          "count": 1,
+          "label": "gpu_model_runner.select_sample_hidden",
+          "max_ms": 0.086021,
+          "rank": "0",
+          "total_ms": 0.086021
+        }
+      ]
+    },
+    {
+      "line": 275,
+      "metadata": {
+        "batch_desc_num_reqs": null,
+        "batch_desc_num_tokens": 1,
+        "computed_token_counts": [
+          573
+        ],
+        "cudagraph_mode": "PIECEWISE",
+        "decode_bucket": 1,
+        "decode_req_count": 1,
+        "is_pure_decode": true,
+        "max_num_scheduled_tokens": 1,
+        "max_scheduled_spec_tokens": 0,
+        "num_reqs": 1,
+        "num_tokens_across_dp": null,
+        "num_tokens_padded": 1,
+        "num_tokens_unpadded": 1,
+        "prefill_req_count": 0,
+        "scheduled_spec_histogram": {
+          "0": 1
+        },
+        "scheduled_spec_lengths": [
+          0
+        ],
+        "scheduled_token_counts": [
+          1
+        ],
+        "scheduled_token_histogram": {
+          "1": 1
+        },
+        "should_ubatch": false,
+        "skip_compiled": false,
+        "use_spec_decode": false
+      },
+      "rank": "0",
+      "status": "ok",
+      "step": 60,
+      "summary_by_total_ms": [
+        {
+          "avg_ms": 12.246689,
+          "count": 1,
+          "label": "gpu_model_runner.model_forward",
+          "max_ms": 12.246689,
+          "rank": "0",
+          "total_ms": 12.246689
+        },
+        {
+          "avg_ms": 0.0875744,
+          "count": 30,
+          "label": "gdn_attention_core_xpu.native",
+          "max_ms": 0.105818,
+          "rank": "0",
+          "total_ms": 2.627232
+        },
+        {
+          "avg_ms": 0.766689,
+          "count": 1,
+          "label": "gpu_model_runner.compute_logits",
+          "max_ms": 0.766689,
+          "rank": "0",
+          "total_ms": 0.766689
+        },
+        {
+          "avg_ms": 0.537579,
+          "count": 1,
+          "label": "logits.local_argmax_lm_head",
+          "max_ms": 0.537579,
+          "rank": "0",
+          "total_ms": 0.537579
+        },
+        {
+          "avg_ms": 0.145273,
+          "count": 1,
+          "label": "gpu_model_runner.sampler",
+          "max_ms": 0.145273,
+          "rank": "0",
+          "total_ms": 0.145273
+        },
+        {
+          "avg_ms": 0.10626,
+          "count": 1,
+          "label": "gpu_model_runner.bookkeeping_sync",
+          "max_ms": 0.10626,
+          "rank": "0",
+          "total_ms": 0.10626
+        },
+        {
+          "avg_ms": 0.082926,
+          "count": 1,
+          "label": "gpu_model_runner.select_sample_hidden",
+          "max_ms": 0.082926,
+          "rank": "0",
+          "total_ms": 0.082926
+        }
+      ]
+    },
+    {
+      "line": 276,
+      "metadata": {
+        "batch_desc_num_reqs": null,
+        "batch_desc_num_tokens": 8,
+        "computed_token_counts": [
+          574
+        ],
+        "cudagraph_mode": "PIECEWISE",
+        "decode_bucket": 8,
+        "decode_req_count": 1,
+        "is_pure_decode": true,
+        "max_num_scheduled_tokens": 8,
+        "max_scheduled_spec_tokens": 7,
+        "num_reqs": 1,
+        "num_tokens_across_dp": null,
+        "num_tokens_padded": 8,
+        "num_tokens_unpadded": 8,
+        "prefill_req_count": 0,
+        "scheduled_spec_histogram": {
+          "7": 1
+        },
+        "scheduled_spec_lengths": [
+          7
+        ],
+        "scheduled_token_counts": [
+          8
+        ],
+        "scheduled_token_histogram": {
+          "8": 1
+        },
+        "should_ubatch": false,
+        "skip_compiled": false,
+        "use_spec_decode": true
+      },
+      "rank": "0",
+      "status": "ok",
+      "step": 61,
+      "summary_by_total_ms": [
+        {
+          "avg_ms": 15.446264,
+          "count": 1,
+          "label": "gpu_model_runner.model_forward",
+          "max_ms": 15.446264,
+          "rank": "0",
+          "total_ms": 15.446264
+        },
+        {
+          "avg_ms": 0.850296,
+          "count": 1,
+          "label": "gpu_model_runner.compute_logits",
+          "max_ms": 0.850296,
+          "rank": "0",
+          "total_ms": 0.850296
+        },
+        {
+          "avg_ms": 0.530345,
+          "count": 1,
+          "label": "logits.local_argmax_lm_head",
+          "max_ms": 0.530345,
+          "rank": "0",
+          "total_ms": 0.530345
+        },
+        {
+          "avg_ms": 0.094668,
+          "count": 1,
+          "label": "gpu_model_runner.bookkeeping_sync",
+          "max_ms": 0.094668,
+          "rank": "0",
+          "total_ms": 0.094668
+        },
+        {
+          "avg_ms": 0.070933,
+          "count": 1,
+          "label": "gpu_model_runner.select_sample_hidden",
+          "max_ms": 0.070933,
+          "rank": "0",
+          "total_ms": 0.070933
+        }
+      ]
+    },
+    {
+      "line": 277,
+      "metadata": {
+        "batch_desc_num_reqs": null,
+        "batch_desc_num_tokens": 1,
+        "computed_token_counts": [
+          577
+        ],
+        "cudagraph_mode": "PIECEWISE",
+        "decode_bucket": 1,
+        "decode_req_count": 1,
+        "is_pure_decode": true,
+        "max_num_scheduled_tokens": 1,
+        "max_scheduled_spec_tokens": 0,
+        "num_reqs": 1,
+        "num_tokens_across_dp": null,
+        "num_tokens_padded": 1,
+        "num_tokens_unpadded": 1,
+        "prefill_req_count": 0,
+        "scheduled_spec_histogram": {
+          "0": 1
+        },
+        "scheduled_spec_lengths": [
+          0
+        ],
+        "scheduled_token_counts": [
+          1
+        ],
+        "scheduled_token_histogram": {
+          "1": 1
+        },
+        "should_ubatch": false,
+        "skip_compiled": false,
+        "use_spec_decode": false
+      },
+      "rank": "0",
+      "status": "ok",
+      "step": 62,
+      "summary_by_total_ms": [
+        {
+          "avg_ms": 12.367905,
+          "count": 1,
+          "label": "gpu_model_runner.model_forward",
+          "max_ms": 12.367905,
+          "rank": "0",
+          "total_ms": 12.367905
+        },
+        {
+          "avg_ms": 0.0882576,
+          "count": 30,
+          "label": "gdn_attention_core_xpu.native",
+          "max_ms": 0.106129,
+          "rank": "0",
+          "total_ms": 2.647728
+        },
+        {
+          "avg_ms": 0.781287,
+          "count": 1,
+          "label": "gpu_model_runner.compute_logits",
+          "max_ms": 0.781287,
+          "rank": "0",
+          "total_ms": 0.781287
+        },
+        {
+          "avg_ms": 0.54344,
+          "count": 1,
+          "label": "logits.local_argmax_lm_head",
+          "max_ms": 0.54344,
+          "rank": "0",
+          "total_ms": 0.54344
+        },
+        {
+          "avg_ms": 0.147046,
+          "count": 1,
+          "label": "gpu_model_runner.sampler",
+          "max_ms": 0.147046,
+          "rank": "0",
+          "total_ms": 0.147046
+        },
+        {
+          "avg_ms": 0.107793,
+          "count": 1,
+          "label": "gpu_model_runner.bookkeeping_sync",
+          "max_ms": 0.107793,
+          "rank": "0",
+          "total_ms": 0.107793
+        },
+        {
+          "avg_ms": 0.086112,
+          "count": 1,
+          "label": "gpu_model_runner.select_sample_hidden",
+          "max_ms": 0.086112,
+          "rank": "0",
+          "total_ms": 0.086112
+        }
+      ]
+    },
+    {
+      "line": 278,
+      "metadata": {
+        "batch_desc_num_reqs": null,
+        "batch_desc_num_tokens": 1,
+        "computed_token_counts": [
+          578
+        ],
+        "cudagraph_mode": "PIECEWISE",
+        "decode_bucket": 1,
+        "decode_req_count": 1,
+        "is_pure_decode": true,
+        "max_num_scheduled_tokens": 1,
+        "max_scheduled_spec_tokens": 0,
+        "num_reqs": 1,
+        "num_tokens_across_dp": null,
+        "num_tokens_padded": 1,
+        "num_tokens_unpadded": 1,
+        "prefill_req_count": 0,
+        "scheduled_spec_histogram": {
+          "0": 1
+        },
+        "scheduled_spec_lengths": [
+          0
+        ],
+        "scheduled_token_counts": [
+          1
+        ],
+        "scheduled_token_histogram": {
+          "1": 1
+        },
+        "should_ubatch": false,
+        "skip_compiled": false,
+        "use_spec_decode": false
+      },
+      "rank": "0",
+      "status": "ok",
+      "step": 63,
+      "summary_by_total_ms": [
+        {
+          "avg_ms": 12.314375,
+          "count": 1,
+          "label": "gpu_model_runner.model_forward",
+          "max_ms": 12.314375,
+          "rank": "0",
+          "total_ms": 12.314375
+        },
+        {
+          "avg_ms": 0.08723243333333333,
+          "count": 30,
+          "label": "gdn_attention_core_xpu.native",
+          "max_ms": 0.098475,
+          "rank": "0",
+          "total_ms": 2.616973
+        },
+        {
+          "avg_ms": 0.770306,
+          "count": 1,
+          "label": "gpu_model_runner.compute_logits",
+          "max_ms": 0.770306,
+          "rank": "0",
+          "total_ms": 0.770306
+        },
+        {
+          "avg_ms": 0.541636,
+          "count": 1,
+          "label": "logits.local_argmax_lm_head",
+          "max_ms": 0.541636,
+          "rank": "0",
+          "total_ms": 0.541636
+        },
+        {
+          "avg_ms": 0.145493,
+          "count": 1,
+          "label": "gpu_model_runner.sampler",
+          "max_ms": 0.145493,
+          "rank": "0",
+          "total_ms": 0.145493
+        },
+        {
+          "avg_ms": 0.108995,
+          "count": 1,
+          "label": "gpu_model_runner.bookkeeping_sync",
+          "max_ms": 0.108995,
+          "rank": "0",
+          "total_ms": 0.108995
+        },
+        {
+          "avg_ms": 0.084208,
+          "count": 1,
+          "label": "gpu_model_runner.select_sample_hidden",
+          "max_ms": 0.084208,
+          "rank": "0",
+          "total_ms": 0.084208
+        }
+      ]
+    },
+    {
+      "line": 279,
+      "metadata": {
+        "batch_desc_num_reqs": null,
+        "batch_desc_num_tokens": 1,
+        "computed_token_counts": [
+          579
+        ],
+        "cudagraph_mode": "PIECEWISE",
+        "decode_bucket": 1,
+        "decode_req_count": 1,
+        "is_pure_decode": true,
+        "max_num_scheduled_tokens": 1,
+        "max_scheduled_spec_tokens": 0,
+        "num_reqs": 1,
+        "num_tokens_across_dp": null,
+        "num_tokens_padded": 1,
+        "num_tokens_unpadded": 1,
+        "prefill_req_count": 0,
+        "scheduled_spec_histogram": {
+          "0": 1
+        },
+        "scheduled_spec_lengths": [
+          0
+        ],
+        "scheduled_token_counts": [
+          1
+        ],
+        "scheduled_token_histogram": {
+          "1": 1
+        },
+        "should_ubatch": false,
+        "skip_compiled": false,
+        "use_spec_decode": false
+      },
+      "rank": "0",
+      "status": "ok",
+      "step": 64,
+      "summary_by_total_ms": [
+        {
+          "avg_ms": 12.245085,
+          "count": 1,
+          "label": "gpu_model_runner.model_forward",
+          "max_ms": 12.245085,
+          "rank": "0",
+          "total_ms": 12.245085
+        },
+        {
+          "avg_ms": 0.08676553333333334,
+          "count": 30,
+          "label": "gdn_attention_core_xpu.native",
+          "max_ms": 0.09589,
+          "rank": "0",
+          "total_ms": 2.602966
+        },
+        {
+          "avg_ms": 0.766749,
+          "count": 1,
+          "label": "gpu_model_runner.compute_logits",
+          "max_ms": 0.766749,
+          "rank": "0",
+          "total_ms": 0.766749
+        },
+        {
+          "avg_ms": 0.536918,
+          "count": 1,
+          "label": "logits.local_argmax_lm_head",
+          "max_ms": 0.536918,
+          "rank": "0",
+          "total_ms": 0.536918
+        },
+        {
+          "avg_ms": 0.146485,
+          "count": 1,
+          "label": "gpu_model_runner.sampler",
+          "max_ms": 0.146485,
+          "rank": "0",
+          "total_ms": 0.146485
+        },
+        {
+          "avg_ms": 0.107411,
+          "count": 1,
+          "label": "gpu_model_runner.bookkeeping_sync",
+          "max_ms": 0.107411,
+          "rank": "0",
+          "total_ms": 0.107411
+        },
+        {
+          "avg_ms": 0.084679,
+          "count": 1,
+          "label": "gpu_model_runner.select_sample_hidden",
+          "max_ms": 0.084679,
+          "rank": "0",
+          "total_ms": 0.084679
+        }
+      ]
+    },
+    {
+      "line": 280,
+      "metadata": {
+        "batch_desc_num_reqs": null,
+        "batch_desc_num_tokens": 8,
+        "computed_token_counts": [
+          580
+        ],
+        "cudagraph_mode": "PIECEWISE",
+        "decode_bucket": 8,
+        "decode_req_count": 1,
+        "is_pure_decode": true,
+        "max_num_scheduled_tokens": 8,
+        "max_scheduled_spec_tokens": 7,
+        "num_reqs": 1,
+        "num_tokens_across_dp": null,
+        "num_tokens_padded": 8,
+        "num_tokens_unpadded": 8,
+        "prefill_req_count": 0,
+        "scheduled_spec_histogram": {
+          "7": 1
+        },
+        "scheduled_spec_lengths": [
+          7
+        ],
+        "scheduled_token_counts": [
+          8
+        ],
+        "scheduled_token_histogram": {
+          "8": 1
+        },
+        "should_ubatch": false,
+        "skip_compiled": false,
+        "use_spec_decode": true
+      },
+      "rank": "0",
+      "status": "ok",
+      "step": 65,
+      "summary_by_total_ms": [
+        {
+          "avg_ms": 15.785241,
+          "count": 1,
+          "label": "gpu_model_runner.model_forward",
+          "max_ms": 15.785241,
+          "rank": "0",
+          "total_ms": 15.785241
+        },
+        {
+          "avg_ms": 0.831781,
+          "count": 1,
+          "label": "gpu_model_runner.compute_logits",
+          "max_ms": 0.831781,
+          "rank": "0",
+          "total_ms": 0.831781
+        },
+        {
+          "avg_ms": 0.528221,
+          "count": 1,
+          "label": "logits.local_argmax_lm_head",
+          "max_ms": 0.528221,
+          "rank": "0",
+          "total_ms": 0.528221
+        },
+        {
+          "avg_ms": 0.096541,
+          "count": 1,
+          "label": "gpu_model_runner.bookkeeping_sync",
+          "max_ms": 0.096541,
+          "rank": "0",
+          "total_ms": 0.096541
+        },
+        {
+          "avg_ms": 0.076834,
+          "count": 1,
+          "label": "gpu_model_runner.select_sample_hidden",
+          "max_ms": 0.076834,
+          "rank": "0",
+          "total_ms": 0.076834
+        }
+      ]
+    },
+    {
+      "line": 281,
+      "metadata": {
+        "batch_desc_num_reqs": null,
+        "batch_desc_num_tokens": 8,
+        "computed_token_counts": [
+          588
+        ],
+        "cudagraph_mode": "PIECEWISE",
+        "decode_bucket": 8,
+        "decode_req_count": 1,
+        "is_pure_decode": true,
+        "max_num_scheduled_tokens": 8,
+        "max_scheduled_spec_tokens": 7,
+        "num_reqs": 1,
+        "num_tokens_across_dp": null,
+        "num_tokens_padded": 8,
+        "num_tokens_unpadded": 8,
+        "prefill_req_count": 0,
+        "scheduled_spec_histogram": {
+          "7": 1
+        },
+        "scheduled_spec_lengths": [
+          7
+        ],
+        "scheduled_token_counts": [
+          8
+        ],
+        "scheduled_token_histogram": {
+          "8": 1
+        },
+        "should_ubatch": false,
+        "skip_compiled": false,
+        "use_spec_decode": true
+      },
+      "rank": "0",
+      "status": "ok",
+      "step": 66,
+      "summary_by_total_ms": [
+        {
+          "avg_ms": 15.178441,
+          "count": 1,
+          "label": "gpu_model_runner.model_forward",
+          "max_ms": 15.178441,
+          "rank": "0",
+          "total_ms": 15.178441
+        },
+        {
+          "avg_ms": 0.832152,
+          "count": 1,
+          "label": "gpu_model_runner.compute_logits",
+          "max_ms": 0.832152,
+          "rank": "0",
+          "total_ms": 0.832152
+        },
+        {
+          "avg_ms": 0.526999,
+          "count": 1,
+          "label": "logits.local_argmax_lm_head",
+          "max_ms": 0.526999,
+          "rank": "0",
+          "total_ms": 0.526999
+        },
+        {
+          "avg_ms": 0.093215,
+          "count": 1,
+          "label": "gpu_model_runner.bookkeeping_sync",
+          "max_ms": 0.093215,
+          "rank": "0",
+          "total_ms": 0.093215
+        },
+        {
+          "avg_ms": 0.067907,
+          "count": 1,
+          "label": "gpu_model_runner.select_sample_hidden",
+          "max_ms": 0.067907,
+          "rank": "0",
+          "total_ms": 0.067907
+        }
+      ]
+    },
+    {
+      "line": 282,
+      "metadata": {
+        "batch_desc_num_reqs": null,
+        "batch_desc_num_tokens": 8,
+        "computed_token_counts": [
+          596
+        ],
+        "cudagraph_mode": "PIECEWISE",
+        "decode_bucket": 8,
+        "decode_req_count": 1,
+        "is_pure_decode": true,
+        "max_num_scheduled_tokens": 8,
+        "max_scheduled_spec_tokens": 7,
+        "num_reqs": 1,
+        "num_tokens_across_dp": null,
+        "num_tokens_padded": 8,
+        "num_tokens_unpadded": 8,
+        "prefill_req_count": 0,
+        "scheduled_spec_histogram": {
+          "7": 1
+        },
+        "scheduled_spec_lengths": [
+          7
+        ],
+        "scheduled_token_counts": [
+          8
+        ],
+        "scheduled_token_histogram": {
+          "8": 1
+        },
+        "should_ubatch": false,
+        "skip_compiled": false,
+        "use_spec_decode": true
+      },
+      "rank": "0",
+      "status": "ok",
+      "step": 67,
+      "summary_by_total_ms": [
+        {
+          "avg_ms": 15.200603,
+          "count": 1,
+          "label": "gpu_model_runner.model_forward",
+          "max_ms": 15.200603,
+          "rank": "0",
+          "total_ms": 15.200603
+        },
+        {
+          "avg_ms": 0.836309,
+          "count": 1,
+          "label": "gpu_model_runner.compute_logits",
+          "max_ms": 0.836309,
+          "rank": "0",
+          "total_ms": 0.836309
+        },
+        {
+          "avg_ms": 0.526037,
+          "count": 1,
+          "label": "logits.local_argmax_lm_head",
+          "max_ms": 0.526037,
+          "rank": "0",
+          "total_ms": 0.526037
+        },
+        {
+          "avg_ms": 0.094638,
+          "count": 1,
+          "label": "gpu_model_runner.bookkeeping_sync",
+          "max_ms": 0.094638,
+          "rank": "0",
+          "total_ms": 0.094638
+        },
+        {
+          "avg_ms": 0.068288,
+          "count": 1,
+          "label": "gpu_model_runner.select_sample_hidden",
+          "max_ms": 0.068288,
+          "rank": "0",
+          "total_ms": 0.068288
+        }
+      ]
+    },
+    {
+      "line": 283,
+      "metadata": {
+        "batch_desc_num_reqs": null,
+        "batch_desc_num_tokens": 8,
+        "computed_token_counts": [
+          600
+        ],
+        "cudagraph_mode": "PIECEWISE",
+        "decode_bucket": 8,
+        "decode_req_count": 1,
+        "is_pure_decode": true,
+        "max_num_scheduled_tokens": 8,
+        "max_scheduled_spec_tokens": 7,
+        "num_reqs": 1,
+        "num_tokens_across_dp": null,
+        "num_tokens_padded": 8,
+        "num_tokens_unpadded": 8,
+        "prefill_req_count": 0,
+        "scheduled_spec_histogram": {
+          "7": 1
+        },
+        "scheduled_spec_lengths": [
+          7
+        ],
+        "scheduled_token_counts": [
+          8
+        ],
+        "scheduled_token_histogram": {
+          "8": 1
+        },
+        "should_ubatch": false,
+        "skip_compiled": false,
+        "use_spec_decode": true
+      },
+      "rank": "0",
+      "status": "ok",
+      "step": 68,
+      "summary_by_total_ms": [
+        {
+          "avg_ms": 15.170556,
+          "count": 1,
+          "label": "gpu_model_runner.model_forward",
+          "max_ms": 15.170556,
+          "rank": "0",
+          "total_ms": 15.170556
+        },
+        {
+          "avg_ms": 0.837782,
+          "count": 1,
+          "label": "gpu_model_runner.compute_logits",
+          "max_ms": 0.837782,
+          "rank": "0",
+          "total_ms": 0.837782
+        },
+        {
+          "avg_ms": 0.52722,
+          "count": 1,
+          "label": "logits.local_argmax_lm_head",
+          "max_ms": 0.52722,
+          "rank": "0",
+          "total_ms": 0.52722
+        },
+        {
+          "avg_ms": 0.094277,
+          "count": 1,
+          "label": "gpu_model_runner.bookkeeping_sync",
+          "max_ms": 0.094277,
+          "rank": "0",
+          "total_ms": 0.094277
+        },
+        {
+          "avg_ms": 0.067667,
+          "count": 1,
+          "label": "gpu_model_runner.select_sample_hidden",
+          "max_ms": 0.067667,
+          "rank": "0",
+          "total_ms": 0.067667
+        }
+      ]
+    },
+    {
+      "line": 284,
+      "metadata": {
+        "batch_desc_num_reqs": null,
+        "batch_desc_num_tokens": 1,
+        "computed_token_counts": [
+          601
+        ],
+        "cudagraph_mode": "PIECEWISE",
+        "decode_bucket": 1,
+        "decode_req_count": 1,
+        "is_pure_decode": true,
+        "max_num_scheduled_tokens": 1,
+        "max_scheduled_spec_tokens": 0,
+        "num_reqs": 1,
+        "num_tokens_across_dp": null,
+        "num_tokens_padded": 1,
+        "num_tokens_unpadded": 1,
+        "prefill_req_count": 0,
+        "scheduled_spec_histogram": {
+          "0": 1
+        },
+        "scheduled_spec_lengths": [
+          0
+        ],
+        "scheduled_token_counts": [
+          1
+        ],
+        "scheduled_token_histogram": {
+          "1": 1
+        },
+        "should_ubatch": false,
+        "skip_compiled": false,
+        "use_spec_decode": false
+      },
+      "rank": "0",
+      "status": "ok",
+      "step": 69,
+      "summary_by_total_ms": [
+        {
+          "avg_ms": 12.38629,
+          "count": 1,
+          "label": "gpu_model_runner.model_forward",
+          "max_ms": 12.38629,
+          "rank": "0",
+          "total_ms": 12.38629
+        },
+        {
+          "avg_ms": 0.08843296666666665,
+          "count": 30,
+          "label": "gdn_attention_core_xpu.native",
+          "max_ms": 0.119544,
+          "rank": "0",
+          "total_ms": 2.652989
+        },
+        {
+          "avg_ms": 0.789301,
+          "count": 1,
+          "label": "gpu_model_runner.compute_logits",
+          "max_ms": 0.789301,
+          "rank": "0",
+          "total_ms": 0.789301
+        },
+        {
+          "avg_ms": 0.547237,
+          "count": 1,
+          "label": "logits.local_argmax_lm_head",
+          "max_ms": 0.547237,
+          "rank": "0",
+          "total_ms": 0.547237
+        },
+        {
+          "avg_ms": 0.148188,
+          "count": 1,
+          "label": "gpu_model_runner.sampler",
+          "max_ms": 0.148188,
+          "rank": "0",
+          "total_ms": 0.148188
+        },
+        {
+          "avg_ms": 0.109375,
+          "count": 1,
+          "label": "gpu_model_runner.bookkeeping_sync",
+          "max_ms": 0.109375,
+          "rank": "0",
+          "total_ms": 0.109375
+        },
+        {
+          "avg_ms": 0.087554,
+          "count": 1,
+          "label": "gpu_model_runner.select_sample_hidden",
+          "max_ms": 0.087554,
+          "rank": "0",
+          "total_ms": 0.087554
+        }
+      ]
+    },
+    {
+      "line": 285,
+      "metadata": {
+        "batch_desc_num_reqs": null,
+        "batch_desc_num_tokens": 1,
+        "computed_token_counts": [
+          602
+        ],
+        "cudagraph_mode": "PIECEWISE",
+        "decode_bucket": 1,
+        "decode_req_count": 1,
+        "is_pure_decode": true,
+        "max_num_scheduled_tokens": 1,
+        "max_scheduled_spec_tokens": 0,
+        "num_reqs": 1,
+        "num_tokens_across_dp": null,
+        "num_tokens_padded": 1,
+        "num_tokens_unpadded": 1,
+        "prefill_req_count": 0,
+        "scheduled_spec_histogram": {
+          "0": 1
+        },
+        "scheduled_spec_lengths": [
+          0
+        ],
+        "scheduled_token_counts": [
+          1
+        ],
+        "scheduled_token_histogram": {
+          "1": 1
+        },
+        "should_ubatch": false,
+        "skip_compiled": false,
+        "use_spec_decode": false
+      },
+      "rank": "0",
+      "status": "ok",
+      "step": 70,
+      "summary_by_total_ms": [
+        {
+          "avg_ms": 12.285972,
+          "count": 1,
+          "label": "gpu_model_runner.model_forward",
+          "max_ms": 12.285972,
+          "rank": "0",
+          "total_ms": 12.285972
+        },
+        {
+          "avg_ms": 0.08738546666666666,
+          "count": 30,
+          "label": "gdn_attention_core_xpu.native",
+          "max_ms": 0.096912,
+          "rank": "0",
+          "total_ms": 2.621564
+        },
+        {
+          "avg_ms": 0.7619,
+          "count": 1,
+          "label": "gpu_model_runner.compute_logits",
+          "max_ms": 0.7619,
+          "rank": "0",
+          "total_ms": 0.7619
+        },
+        {
+          "avg_ms": 0.535565,
+          "count": 1,
+          "label": "logits.local_argmax_lm_head",
+          "max_ms": 0.535565,
+          "rank": "0",
+          "total_ms": 0.535565
+        },
+        {
+          "avg_ms": 0.144512,
+          "count": 1,
+          "label": "gpu_model_runner.sampler",
+          "max_ms": 0.144512,
+          "rank": "0",
+          "total_ms": 0.144512
+        },
+        {
+          "avg_ms": 0.106249,
+          "count": 1,
+          "label": "gpu_model_runner.bookkeeping_sync",
+          "max_ms": 0.106249,
+          "rank": "0",
+          "total_ms": 0.106249
+        },
+        {
+          "avg_ms": 0.083296,
+          "count": 1,
+          "label": "gpu_model_runner.select_sample_hidden",
+          "max_ms": 0.083296,
+          "rank": "0",
+          "total_ms": 0.083296
+        }
+      ]
+    },
+    {
+      "line": 286,
+      "metadata": {
+        "batch_desc_num_reqs": null,
+        "batch_desc_num_tokens": 1,
+        "computed_token_counts": [
+          603
+        ],
+        "cudagraph_mode": "PIECEWISE",
+        "decode_bucket": 1,
+        "decode_req_count": 1,
+        "is_pure_decode": true,
+        "max_num_scheduled_tokens": 1,
+        "max_scheduled_spec_tokens": 0,
+        "num_reqs": 1,
+        "num_tokens_across_dp": null,
+        "num_tokens_padded": 1,
+        "num_tokens_unpadded": 1,
+        "prefill_req_count": 0,
+        "scheduled_spec_histogram": {
+          "0": 1
+        },
+        "scheduled_spec_lengths": [
+          0
+        ],
+        "scheduled_token_counts": [
+          1
+        ],
+        "scheduled_token_histogram": {
+          "1": 1
+        },
+        "should_ubatch": false,
+        "skip_compiled": false,
+        "use_spec_decode": false
+      },
+      "rank": "0",
+      "status": "ok",
+      "step": 71,
+      "summary_by_total_ms": [
+        {
+          "avg_ms": 12.240937,
+          "count": 1,
+          "label": "gpu_model_runner.model_forward",
+          "max_ms": 12.240937,
+          "rank": "0",
+          "total_ms": 12.240937
+        },
+        {
+          "avg_ms": 0.08788346666666666,
+          "count": 30,
+          "label": "gdn_attention_core_xpu.native",
+          "max_ms": 0.098014,
+          "rank": "0",
+          "total_ms": 2.636504
+        },
+        {
+          "avg_ms": 0.763854,
+          "count": 1,
+          "label": "gpu_model_runner.compute_logits",
+          "max_ms": 0.763854,
+          "rank": "0",
+          "total_ms": 0.763854
+        },
+        {
+          "avg_ms": 0.536197,
+          "count": 1,
+          "label": "logits.local_argmax_lm_head",
+          "max_ms": 0.536197,
+          "rank": "0",
+          "total_ms": 0.536197
+        },
+        {
+          "avg_ms": 0.144682,
+          "count": 1,
+          "label": "gpu_model_runner.sampler",
+          "max_ms": 0.144682,
+          "rank": "0",
+          "total_ms": 0.144682
+        },
+        {
+          "avg_ms": 0.10649,
+          "count": 1,
+          "label": "gpu_model_runner.bookkeeping_sync",
+          "max_ms": 0.10649,
+          "rank": "0",
+          "total_ms": 0.10649
+        },
+        {
+          "avg_ms": 0.084388,
+          "count": 1,
+          "label": "gpu_model_runner.select_sample_hidden",
+          "max_ms": 0.084388,
+          "rank": "0",
+          "total_ms": 0.084388
+        }
+      ]
+    },
+    {
+      "line": 287,
+      "metadata": {
+        "batch_desc_num_reqs": null,
+        "batch_desc_num_tokens": 1,
+        "computed_token_counts": [
+          604
+        ],
+        "cudagraph_mode": "PIECEWISE",
+        "decode_bucket": 1,
+        "decode_req_count": 1,
+        "is_pure_decode": true,
+        "max_num_scheduled_tokens": 1,
+        "max_scheduled_spec_tokens": 0,
+        "num_reqs": 1,
+        "num_tokens_across_dp": null,
+        "num_tokens_padded": 1,
+        "num_tokens_unpadded": 1,
+        "prefill_req_count": 0,
+        "scheduled_spec_histogram": {
+          "0": 1
+        },
+        "scheduled_spec_lengths": [
+          0
+        ],
+        "scheduled_token_counts": [
+          1
+        ],
+        "scheduled_token_histogram": {
+          "1": 1
+        },
+        "should_ubatch": false,
+        "skip_compiled": false,
+        "use_spec_decode": false
+      },
+      "rank": "0",
+      "status": "ok",
+      "step": 72,
+      "summary_by_total_ms": [
+        {
+          "avg_ms": 12.219767,
+          "count": 1,
+          "label": "gpu_model_runner.model_forward",
+          "max_ms": 12.219767,
+          "rank": "0",
+          "total_ms": 12.219767
+        },
+        {
+          "avg_ms": 0.08680289999999999,
+          "count": 30,
+          "label": "gdn_attention_core_xpu.native",
+          "max_ms": 0.09555,
+          "rank": "0",
+          "total_ms": 2.604087
+        },
+        {
+          "avg_ms": 0.757983,
+          "count": 1,
+          "label": "gpu_model_runner.compute_logits",
+          "max_ms": 0.757983,
+          "rank": "0",
+          "total_ms": 0.757983
+        },
+        {
+          "avg_ms": 0.534593,
+          "count": 1,
+          "label": "logits.local_argmax_lm_head",
+          "max_ms": 0.534593,
+          "rank": "0",
+          "total_ms": 0.534593
+        },
+        {
+          "avg_ms": 0.143639,
+          "count": 1,
+          "label": "gpu_model_runner.sampler",
+          "max_ms": 0.143639,
+          "rank": "0",
+          "total_ms": 0.143639
+        },
+        {
+          "avg_ms": 0.115627,
+          "count": 1,
+          "label": "gpu_model_runner.bookkeeping_sync",
+          "max_ms": 0.115627,
+          "rank": "0",
+          "total_ms": 0.115627
+        },
+        {
+          "avg_ms": 0.082986,
+          "count": 1,
+          "label": "gpu_model_runner.select_sample_hidden",
+          "max_ms": 0.082986,
+          "rank": "0",
+          "total_ms": 0.082986
+        }
+      ]
+    },
+    {
+      "line": 288,
+      "metadata": {
+        "batch_desc_num_reqs": null,
+        "batch_desc_num_tokens": 1,
+        "computed_token_counts": [
+          605
+        ],
+        "cudagraph_mode": "PIECEWISE",
+        "decode_bucket": 1,
+        "decode_req_count": 1,
+        "is_pure_decode": true,
+        "max_num_scheduled_tokens": 1,
+        "max_scheduled_spec_tokens": 0,
+        "num_reqs": 1,
+        "num_tokens_across_dp": null,
+        "num_tokens_padded": 1,
+        "num_tokens_unpadded": 1,
+        "prefill_req_count": 0,
+        "scheduled_spec_histogram": {
+          "0": 1
+        },
+        "scheduled_spec_lengths": [
+          0
+        ],
+        "scheduled_token_counts": [
+          1
+        ],
+        "scheduled_token_histogram": {
+          "1": 1
+        },
+        "should_ubatch": false,
+        "skip_compiled": false,
+        "use_spec_decode": false
+      },
+      "rank": "0",
+      "status": "ok",
+      "step": 73,
+      "summary_by_total_ms": [
+        {
+          "avg_ms": 12.238582,
+          "count": 1,
+          "label": "gpu_model_runner.model_forward",
+          "max_ms": 12.238582,
+          "rank": "0",
+          "total_ms": 12.238582
+        },
+        {
+          "avg_ms": 0.08706280000000001,
+          "count": 30,
+          "label": "gdn_attention_core_xpu.native",
+          "max_ms": 0.098776,
+          "rank": "0",
+          "total_ms": 2.611884
+        },
+        {
+          "avg_ms": 0.766459,
+          "count": 1,
+          "label": "gpu_model_runner.compute_logits",
+          "max_ms": 0.766459,
+          "rank": "0",
+          "total_ms": 0.766459
+        },
+        {
+          "avg_ms": 0.541917,
+          "count": 1,
+          "label": "logits.local_argmax_lm_head",
+          "max_ms": 0.541917,
+          "rank": "0",
+          "total_ms": 0.541917
+        },
+        {
+          "avg_ms": 0.145533,
+          "count": 1,
+          "label": "gpu_model_runner.sampler",
+          "max_ms": 0.145533,
+          "rank": "0",
+          "total_ms": 0.145533
+        },
+        {
+          "avg_ms": 0.106269,
+          "count": 1,
+          "label": "gpu_model_runner.bookkeeping_sync",
+          "max_ms": 0.106269,
+          "rank": "0",
+          "total_ms": 0.106269
+        },
+        {
+          "avg_ms": 0.08481,
+          "count": 1,
+          "label": "gpu_model_runner.select_sample_hidden",
+          "max_ms": 0.08481,
+          "rank": "0",
+          "total_ms": 0.08481
+        }
+      ]
+    },
+    {
+      "line": 289,
+      "metadata": {
+        "batch_desc_num_reqs": null,
+        "batch_desc_num_tokens": 1,
+        "computed_token_counts": [
+          606
+        ],
+        "cudagraph_mode": "PIECEWISE",
+        "decode_bucket": 1,
+        "decode_req_count": 1,
+        "is_pure_decode": true,
+        "max_num_scheduled_tokens": 1,
+        "max_scheduled_spec_tokens": 0,
+        "num_reqs": 1,
+        "num_tokens_across_dp": null,
+        "num_tokens_padded": 1,
+        "num_tokens_unpadded": 1,
+        "prefill_req_count": 0,
+        "scheduled_spec_histogram": {
+          "0": 1
+        },
+        "scheduled_spec_lengths": [
+          0
+        ],
+        "scheduled_token_counts": [
+          1
+        ],
+        "scheduled_token_histogram": {
+          "1": 1
+        },
+        "should_ubatch": false,
+        "skip_compiled": false,
+        "use_spec_decode": false
+      },
+      "rank": "0",
+      "status": "ok",
+      "step": 74,
+      "summary_by_total_ms": [
+        {
+          "avg_ms": 12.216511,
+          "count": 1,
+          "label": "gpu_model_runner.model_forward",
+          "max_ms": 12.216511,
+          "rank": "0",
+          "total_ms": 12.216511
+        },
+        {
+          "avg_ms": 0.08717593333333333,
+          "count": 30,
+          "label": "gdn_attention_core_xpu.native",
+          "max_ms": 0.102573,
+          "rank": "0",
+          "total_ms": 2.615278
+        },
+        {
+          "avg_ms": 0.757251,
+          "count": 1,
+          "label": "gpu_model_runner.compute_logits",
+          "max_ms": 0.757251,
+          "rank": "0",
+          "total_ms": 0.757251
+        },
+        {
+          "avg_ms": 0.535254,
+          "count": 1,
+          "label": "logits.local_argmax_lm_head",
+          "max_ms": 0.535254,
+          "rank": "0",
+          "total_ms": 0.535254
+        },
+        {
+          "avg_ms": 0.153498,
+          "count": 1,
+          "label": "gpu_model_runner.sampler",
+          "max_ms": 0.153498,
+          "rank": "0",
+          "total_ms": 0.153498
+        },
+        {
+          "avg_ms": 0.104456,
+          "count": 1,
+          "label": "gpu_model_runner.bookkeeping_sync",
+          "max_ms": 0.104456,
+          "rank": "0",
+          "total_ms": 0.104456
+        },
+        {
+          "avg_ms": 0.088416,
+          "count": 1,
+          "label": "gpu_model_runner.select_sample_hidden",
+          "max_ms": 0.088416,
+          "rank": "0",
+          "total_ms": 0.088416
+        }
+      ]
+    }
+  ],
+  "raw_summaries": [],
+  "sample_end_line": 228,
+  "sample_line_count": 0,
+  "sample_start_line": 225,
+  "samples_by_last_ms": [],
+  "source_log": "/tmp/qwen36-quark-int8-tp4-ngram7-bucket-timing-20260611t.log",
+  "step_line_count": 62,
+  "step_summary_by_bucket": [
+    {
+      "first_line": 229,
+      "first_step": 14,
+      "group": {
+        "batch_desc_num_reqs": null,
+        "batch_desc_num_tokens": 512,
+        "cudagraph_mode": "NONE",
+        "decode_bucket": null,
+        "decode_req_count": 0,
+        "is_pure_decode": false,
+        "max_num_scheduled_tokens": 512,
+        "max_scheduled_spec_tokens": 0,
+        "num_reqs": 1,
+        "num_tokens_padded": 512,
+        "num_tokens_unpadded": 512,
+        "prefill_req_count": 1,
+        "should_ubatch": false,
+        "skip_compiled": false,
+        "status": "ok",
+        "use_spec_decode": false
+      },
+      "last_line": 229,
+      "last_step": 14,
+      "max_model_forward_ms": 130.272382,
+      "mean_model_forward_ms": 130.272382,
+      "mean_visible_timed_ms": 268.35700199999997,
+      "median_model_forward_ms": 130.272382,
+      "median_visible_timed_ms": 268.35700199999997,
+      "p90_model_forward_ms": 130.272382,
+      "p90_visible_timed_ms": 268.35700199999997,
+      "scheduled_spec_histogram_total": {
+        "0": 1
+      },
+      "scheduled_token_histogram_total": {
+        "512": 1
+      },
+      "step_count": 1,
+      "top_labels_by_mean_total_ms": [
+        {
+          "label": "gpu_model_runner.model_forward",
+          "max_total_ms": 130.272382,
+          "mean_total_ms": 130.272382,
+          "median_total_ms": 130.272382,
+          "p90_total_ms": 130.272382
+        },
+        {
+          "label": "moe_forward_shared.custom_op",
+          "max_total_ms": 72.179465,
+          "mean_total_ms": 72.179465,
+          "median_total_ms": 72.179465,
+          "p90_total_ms": 72.179465
+        },
+        {
+          "label": "all_reduce:(512, 2048):torch.bfloat16",
+          "max_total_ms": 17.511649,
+          "mean_total_ms": 17.511649,
+          "median_total_ms": 17.511649,
+          "p90_total_ms": 17.511649
+        },
+        {
+          "label": "xpu_moe.gemm1_w8a8",
+          "max_total_ms": 10.630842,
+          "mean_total_ms": 10.630842,
+          "median_total_ms": 10.630842,
+          "p90_total_ms": 10.630842
+        },
+        {
+          "label": "gdn_attention_core_xpu.native",
+          "max_total_ms": 10.623592,
+          "mean_total_ms": 10.623592,
+          "median_total_ms": 10.623592,
+          "p90_total_ms": 10.623592
+        },
+        {
+          "label": "xpu_moe.gemm1_quant",
+          "max_total_ms": 8.092377,
+          "mean_total_ms": 8.092377,
+          "median_total_ms": 8.092377,
+          "p90_total_ms": 8.092377
+        },
+        {
+          "label": "xpu_moe.gemm2_w8a8",
+          "max_total_ms": 7.470361,
+          "mean_total_ms": 7.470361,
+          "median_total_ms": 7.470361,
+          "p90_total_ms": 7.470361
+        },
+        {
+          "label": "xpu_moe.remap_hidden_states",
+          "max_total_ms": 2.710699,
+          "mean_total_ms": 2.710699,
+          "median_total_ms": 2.710699,
+          "p90_total_ms": 2.710699
+        }
+      ]
+    },
+    {
+      "first_line": 230,
+      "first_step": 15,
+      "group": {
+        "batch_desc_num_reqs": null,
+        "batch_desc_num_tokens": 8,
+        "cudagraph_mode": "PIECEWISE",
+        "decode_bucket": 8,
+        "decode_req_count": 1,
+        "is_pure_decode": true,
+        "max_num_scheduled_tokens": 8,
+        "max_scheduled_spec_tokens": 7,
+        "num_reqs": 1,
+        "num_tokens_padded": 8,
+        "num_tokens_unpadded": 8,
+        "prefill_req_count": 0,
+        "should_ubatch": false,
+        "skip_compiled": false,
+        "status": "ok",
+        "use_spec_decode": true
+      },
+      "last_line": 283,
+      "last_step": 68,
+      "max_model_forward_ms": 47.942152,
+      "mean_model_forward_ms": 18.883090777777777,
+      "mean_visible_timed_ms": 20.420188888888887,
+      "median_model_forward_ms": 15.200603,
+      "median_visible_timed_ms": 16.725875,
+      "p90_model_forward_ms": 22.216623200000008,
+      "p90_visible_timed_ms": 23.759101400000006,
+      "scheduled_spec_histogram_total": {
+        "7": 9
+      },
+      "scheduled_token_histogram_total": {
+        "8": 9
+      },
+      "step_count": 9,
+      "top_labels_by_mean_total_ms": [
+        {
+          "label": "gpu_model_runner.model_forward",
+          "max_total_ms": 47.942152,
+          "mean_total_ms": 18.883090777777777,
+          "median_total_ms": 15.200603,
+          "p90_total_ms": 22.216623200000008
+        },
+        {
+          "label": "gpu_model_runner.compute_logits",
+          "max_total_ms": 0.865364,
+          "mean_total_ms": 0.8409615555555556,
+          "median_total_ms": 0.837512,
+          "p90_total_ms": 0.8533096
+        },
+        {
+          "label": "logits.local_argmax_lm_head",
+          "max_total_ms": 0.536186,
+          "mean_total_ms": 0.52932,
+          "median_total_ms": 0.528221,
+          "p90_total_ms": 0.531714
+        },
+        {
+          "label": "gpu_model_runner.bookkeeping_sync",
+          "max_total_ms": 0.103374,
+          "mean_total_ms": 0.09632522222222223,
+          "median_total_ms": 0.094668,
+          "p90_total_ms": 0.09938280000000001
+        },
+        {
+          "label": "gpu_model_runner.select_sample_hidden",
+          "max_total_ms": 0.076834,
+          "mean_total_ms": 0.07049133333333334,
+          "median_total_ms": 0.069982,
+          "p90_total_ms": 0.07453399999999999
+        }
+      ]
+    },
+    {
+      "first_line": 226,
+      "first_step": 13,
+      "group": {
+        "batch_desc_num_reqs": null,
+        "batch_desc_num_tokens": 1,
+        "cudagraph_mode": "PIECEWISE",
+        "decode_bucket": 1,
+        "decode_req_count": 1,
+        "is_pure_decode": true,
+        "max_num_scheduled_tokens": 1,
+        "max_scheduled_spec_tokens": 0,
+        "num_reqs": 1,
+        "num_tokens_padded": 1,
+        "num_tokens_unpadded": 1,
+        "prefill_req_count": 0,
+        "should_ubatch": false,
+        "skip_compiled": false,
+        "status": "ok",
+        "use_spec_decode": false
+      },
+      "last_line": 289,
+      "last_step": 74,
+      "max_model_forward_ms": 13.628231,
+      "mean_model_forward_ms": 12.301266903846154,
+      "mean_visible_timed_ms": 16.566402019230768,
+      "median_model_forward_ms": 12.2413375,
+      "median_visible_timed_ms": 16.5042415,
+      "p90_model_forward_ms": 12.384772100000001,
+      "p90_visible_timed_ms": 16.6793131,
+      "scheduled_spec_histogram_total": {
+        "0": 52
+      },
+      "scheduled_token_histogram_total": {
+        "1": 52
+      },
+      "step_count": 52,
+      "top_labels_by_mean_total_ms": [
+        {
+          "label": "gpu_model_runner.model_forward",
+          "max_total_ms": 13.628231,
+          "mean_total_ms": 12.301266903846154,
+          "median_total_ms": 12.2413375,
+          "p90_total_ms": 12.384772100000001
+        },
+        {
+          "label": "gdn_attention_core_xpu.native",
+          "max_total_ms": 2.671484,
+          "mean_total_ms": 2.6218529615384614,
+          "median_total_ms": 2.6181905,
+          "p90_total_ms": 2.6387441000000003
+        },
+        {
+          "label": "gpu_model_runner.compute_logits",
+          "max_total_ms": 0.801995,
+          "mean_total_ms": 0.7671080192307692,
+          "median_total_ms": 0.7655825,
+          "p90_total_ms": 0.779265
+        },
+        {
+          "label": "logits.local_argmax_lm_head",
+          "max_total_ms": 0.5543,
+          "mean_total_ms": 0.5385106346153846,
+          "median_total_ms": 0.5369729999999999,
+          "p90_total_ms": 0.5433959
+        },
+        {
+          "label": "gpu_model_runner.sampler",
+          "max_total_ms": 0.155653,
+          "mean_total_ms": 0.14693586274509804,
+          "median_total_ms": 0.145533,
+          "p90_total_ms": 0.151825
+        },
+        {
+          "label": "gpu_model_runner.bookkeeping_sync",
+          "max_total_ms": 0.116529,
+          "mean_total_ms": 0.10794209615384615,
+          "median_total_ms": 0.10720650000000001,
+          "p90_total_ms": 0.1106278
+        },
+        {
+          "label": "gpu_model_runner.select_sample_hidden",
+          "max_total_ms": 0.092614,
+          "mean_total_ms": 0.08561123076923077,
+          "median_total_ms": 0.0847995,
+          "p90_total_ms": 0.0893669
+        }
+      ]
+    }
+  ],
+  "step_summary_by_mean_total_ms": [
+    {
+      "call_count": 40,
+      "label": "moe_forward_shared.custom_op",
+      "max_ms": 1.948498,
+      "max_total_ms_per_step": 72.179465,
+      "mean_avg_ms_per_call": 1.804486625,
+      "mean_total_ms_per_step": 72.179465,
+      "median_total_ms_per_step": 72.179465,
+      "p90_total_ms_per_step": 72.179465,
+      "step_count": 1
+    },
+    {
+      "call_count": 81,
+      "label": "all_reduce:(512, 2048):torch.bfloat16",
+      "max_ms": 0.370395,
+      "max_total_ms_per_step": 17.511649,
+      "mean_avg_ms_per_call": 0.2161931975308642,
+      "mean_total_ms_per_step": 17.511649,
+      "median_total_ms_per_step": 17.511649,
+      "p90_total_ms_per_step": 17.511649,
+      "step_count": 1
+    },
+    {
+      "call_count": 62,
+      "label": "gpu_model_runner.model_forward",
+      "max_ms": 130.272382,
+      "max_total_ms_per_step": 130.272382,
+      "mean_avg_ms_per_call": 15.159452870967742,
+      "mean_total_ms_per_step": 15.159452870967742,
+      "median_total_ms_per_step": 12.2453905,
+      "p90_total_ms_per_step": 15.1776525,
+      "step_count": 62
+    },
+    {
+      "call_count": 40,
+      "label": "xpu_moe.gemm1_w8a8",
+      "max_ms": 0.314461,
+      "max_total_ms_per_step": 10.630842,
+      "mean_avg_ms_per_call": 0.26577105,
+      "mean_total_ms_per_step": 10.630842,
+      "median_total_ms_per_step": 10.630842,
+      "p90_total_ms_per_step": 10.630842,
+      "step_count": 1
+    },
+    {
+      "call_count": 40,
+      "label": "xpu_moe.gemm1_quant",
+      "max_ms": 0.20748,
+      "max_total_ms_per_step": 8.092377,
+      "mean_avg_ms_per_call": 0.202309425,
+      "mean_total_ms_per_step": 8.092377,
+      "median_total_ms_per_step": 8.092377,
+      "p90_total_ms_per_step": 8.092377,
+      "step_count": 1
+    },
+    {
+      "call_count": 40,
+      "label": "xpu_moe.gemm2_w8a8",
+      "max_ms": 0.20735,
+      "max_total_ms_per_step": 7.470361,
+      "mean_avg_ms_per_call": 0.186759025,
+      "mean_total_ms_per_step": 7.470361,
+      "median_total_ms_per_step": 7.470361,
+      "p90_total_ms_per_step": 7.470361,
+      "step_count": 1
+    },
+    {
+      "call_count": 1590,
+      "label": "gdn_attention_core_xpu.native",
+      "max_ms": 0.391686,
+      "max_total_ms_per_step": 10.623592,
+      "mean_avg_ms_per_call": 0.09242763899371069,
+      "mean_total_ms_per_step": 2.7728291698113208,
+      "median_total_ms_per_step": 2.618797,
+      "p90_total_ms_per_step": 2.6443086,
+      "step_count": 53
+    },
+    {
+      "call_count": 40,
+      "label": "xpu_moe.remap_hidden_states",
+      "max_ms": 0.078287,
+      "max_total_ms_per_step": 2.710699,
+      "mean_avg_ms_per_call": 0.06776747500000001,
+      "mean_total_ms_per_step": 2.710699,
+      "median_total_ms_per_step": 2.710699,
+      "p90_total_ms_per_step": 2.710699,
+      "step_count": 1
+    },
+    {
+      "call_count": 40,
+      "label": "xpu_moe.gemm2_quant",
+      "max_ms": 0.072626,
+      "max_total_ms_per_step": 2.67114,
+      "mean_avg_ms_per_call": 0.0667785,
+      "mean_total_ms_per_step": 2.67114,
+      "median_total_ms_per_step": 2.67114,
+      "p90_total_ms_per_step": 2.67114,
+      "step_count": 1
+    },
+    {
+      "call_count": 40,
+      "label": "xpu_moe.gather",
+      "max_ms": 0.067407,
+      "max_total_ms_per_step": 2.564543,
+      "mean_avg_ms_per_call": 0.06411357499999999,
+      "mean_total_ms_per_step": 2.564543,
+      "median_total_ms_per_step": 2.564543,
+      "p90_total_ms_per_step": 2.564543,
+      "step_count": 1
+    },
+    {
+      "call_count": 40,
+      "label": "xpu_moe.activation",
+      "max_ms": 0.05337,
+      "max_total_ms_per_step": 1.851945,
+      "mean_avg_ms_per_call": 0.046298625,
+      "mean_total_ms_per_step": 1.851945,
+      "median_total_ms_per_step": 1.851945,
+      "p90_total_ms_per_step": 1.851945,
+      "step_count": 1
+    },
+    {
+      "call_count": 62,
+      "label": "gpu_model_runner.compute_logits",
+      "max_ms": 0.865364,
+      "max_total_ms_per_step": 0.865364,
+      "mean_avg_ms_per_call": 0.778383,
+      "mean_total_ms_per_step": 0.778383,
+      "median_total_ms_per_step": 0.7666189999999999,
+      "p90_total_ms_per_step": 0.8357673,
+      "step_count": 62
+    },
+    {
+      "call_count": 62,
+      "label": "logits.local_argmax_lm_head",
+      "max_ms": 0.566002,
+      "max_total_ms_per_step": 0.566002,
+      "mean_avg_ms_per_call": 0.5376199193548387,
+      "mean_total_ms_per_step": 0.5376199193548387,
+      "median_total_ms_per_step": 0.536813,
+      "p90_total_ms_per_step": 0.5433959,
+      "step_count": 62
+    },
+    {
+      "call_count": 52,
+      "label": "gpu_model_runner.sampler",
+      "max_ms": 0.179016,
+      "max_total_ms_per_step": 0.179016,
+      "mean_avg_ms_per_call": 0.14755278846153846,
+      "mean_total_ms_per_step": 0.14755278846153846,
+      "median_total_ms_per_step": 0.14561849999999998,
+      "p90_total_ms_per_step": 0.1529878,
+      "step_count": 52
+    },
+    {
+      "call_count": 62,
+      "label": "gpu_model_runner.bookkeeping_sync",
+      "max_ms": 0.124323,
+      "max_total_ms_per_step": 0.124323,
+      "mean_avg_ms_per_call": 0.10651998387096774,
+      "mean_total_ms_per_step": 0.10651998387096774,
+      "median_total_ms_per_step": 0.106715,
+      "p90_total_ms_per_step": 0.1106278,
+      "step_count": 62
+    },
+    {
+      "call_count": 62,
+      "label": "gpu_model_runner.select_sample_hidden",
+      "max_ms": 0.107191,
+      "max_total_ms_per_step": 0.107191,
+      "mean_avg_ms_per_call": 0.08376446774193548,
+      "mean_total_ms_per_step": 0.08376446774193548,
+      "median_total_ms_per_step": 0.0844535,
+      "p90_total_ms_per_step": 0.0893669,
+      "step_count": 62
+    }
+  ],
+  "summary_by_total_ms": [],
+  "summary_line_count": 0,
+  "summary_start_line": 229
+}
