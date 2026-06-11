@@ -764,3 +764,51 @@ Current prioritization:
    speculation using Qwen3.6 assets only.
 3. Keep production planning separate: accepted TP4 remains the reliability
    baseline until a candidate passes the full quality and soak matrix.
+
+## Fused SiLU+Quant Endpoint Retest
+
+I retested the lower-level XPU MoE fused SiLU+quant hook against the current
+accepted runtime after the public-result review.
+
+Candidate env:
+
+- `VLLM_XPU_FUSED_MOE_FUSE_SILU_QUANT=1`
+- isolated cache root:
+  `/mnt/fast-ai/vllm-cache-exp/qwen36-35b-a3b-quark-int8-tp4-piecewise-graph-fusesiluquant-32k-noprefix`
+- tmux: `qwen36-tp4-fusesiluquant-20260611`
+- log: `/tmp/qwen36-quark-int8-tp4-fusesiluquant-20260611.log`
+
+Runtime evidence:
+
+- startup succeeded
+- XPU Int8 MoE backend selected
+- API `/health`: pass
+- graph compile used the isolated cache
+
+Speed artifacts:
+
+- accepted live control:
+  `data/qwen36-quark-int8-tp4-accepted-live-r2-20260611.json`
+- fused SiLU+quant candidate:
+  `data/qwen36-quark-int8-tp4-fusesiluquant-r2-20260611.json`
+
+| metric | accepted live r2 | fused SiLU+quant r2 |
+| --- | ---: | ---: |
+| corrected output tok/s after first chunk | `99.6087` | `99.4856` |
+| output tok/s e2e | `98.3716` | `98.1407` |
+| mean client TTFT | `74.68 ms` | `80.58 ms` |
+
+Decision:
+
+- Reject again. This does not improve the single-request speed gate.
+- Do not run the full quality gate for this candidate because the speed gate
+  failed and prior fused SiLU+quant work already exposed quality/rounding risk.
+- Do not spend more time on activation+quant fusion unless the implementation
+  first proves exact staged-path parity in the shape microbench.
+
+Restore:
+
+- stopped candidate tmux
+- restored accepted service as `qwen36-tp4-accepted-restored-20260611b`
+- accepted `/health`: pass
+- accepted response smoke: pass
