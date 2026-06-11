@@ -10,6 +10,8 @@ External B70/vLLM material repeatedly points to host stack, PCIe policy, power m
 
 - Script: `scripts/audit-b70-host-links.sh`
 - Output: `data/qwen36-b70-host-link-audit-20260611.txt`
+- Runtime-policy dry-run script: `scripts/tune-b70-runtime-performance-policy.sh`
+- Runtime-policy dry-run output: `data/qwen36-b70-runtime-policy-dryrun-20260611.txt`
 - Short load sample: p512/n256 direct-backend decode stayed healthy at `98.5261 tok/s` corrected after-first and `96.0837 tok/s` e2e, so the backend was not broken during this audit.
 
 ## Findings
@@ -51,6 +53,7 @@ The current `~99 tok/s` single-request result remains valid as a measured endpoi
 3. Test root-only reversible runtime policies before another benchmark:
    - Set PCIe ASPM policy to `performance`.
    - Set B70 endpoint and bridge `power/control` to `on`.
+   - Use `sudo scripts/tune-b70-runtime-performance-policy.sh --apply` for the reversible sysfs writes; the script is dry-run by default.
    - Re-run `scripts/audit-b70-host-links.sh`.
    - Re-run p512/n512 r4 direct speed and a frontdoor exact-OK smoke.
 4. If link state still reports `2.5 GT/s x1`, plan a cold-boot/BIOS/slot validation before deeper kernel work.
