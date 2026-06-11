@@ -348,6 +348,8 @@ Results:
 | n-gram2 | first request fatal error | n/a | n/a | n/a | reject, unstable | `data/qwen36-quark-int8-tp4-ngram2-trace-first-request-device-lost-20260611.log` |
 | n-gram2 no-XPU-graph | short quality pass | 17.784 | 17.771 | 76.437 | diagnostic only, too slow | `data/qwen36-quark-int8-tp4-ngram2-noxpugraph-single-r2-20260611.json` |
 | n-gram2 capture-size-3 | repeat64 pass, baseline match | 105.158 | 103.709 | 77.388 | diagnostic, quality-clean but unstable speed gain | `data/qwen36-quark-int8-tp4-ngram2-cg3-single-r4-20260611.json` |
+| n-gram3 capture-size-4 | repeat64 fail, accepted loop | not measured | not measured | not measured | reject, corrupts output | `data/qwen36-quark-int8-tp4-ngram3-cg4-frontdoor-quality-rerun64-20260611.json` |
+| n-gram3 min4/max12 | repeat64 fail, accepted loop | not measured | not measured | not measured | reject, corrupts output | `data/qwen36-quark-int8-tp4-ngram3-min4-cg4-frontdoor-quality-rerun64-20260611.json` |
 | n-gram2 eager/no-graph | survives, quality fail | not measured | not measured | not measured | diagnostic only | `data/qwen36-quark-int8-tp4-ngram2-eager-frontdoor-quality-rerun8-20260611.json` |
 | n-gram5 | short trace pass, repeat64 fail | not counted | not counted | not counted | reject, corrupts output | `data/qwen36-quark-int8-tp4-ngram5-trace-frontdoor-quality-rerun64-20260611.json` |
 
@@ -393,6 +395,33 @@ n-gram2 capture-size-3 diagnostic:
 - trace summary: rows `685`, drafts `1365`, accepted `1044`, rejected `321`, acceptance rate `76.48%`, histogram `{0: 116, 1: 94, 2: 475}`
 - individual long-generation requests ranged from about `46.5%` to `99.0%` draft acceptance, which explains the r2/r4 spread
 
+n-gram3 capture-size-4 diagnostic:
+
+- launch controls: `NUM_SPECULATIVE_TOKENS=3`, `PROMPT_LOOKUP_MIN=2`, `PROMPT_LOOKUP_MAX=5`, `CUDAGRAPH_CAPTURE_SIZES=1,2,3,4,5,6,7,8,16,...,128`
+- the service compiled, captured, served, and passed the minimal `Reply exactly: OK` smoke
+- repeat64 plus 4K long-context quality failed:
+  - exact OK, copy, arithmetic, JSON schema all passed
+  - 4K long-context needle passed
+  - baseline comparison of first repeat hash still matched
+  - repeat stability failed because one repeat emitted `ntag/ntag/ntag/...`
+- scheduler trace artifact: `data/qwen36-quark-int8-tp4-ngram3-cg4-spec-jsonl-20260611.jsonl`
+- trace summary: rows `15`, drafts `43`, accepted `37`, rejected `6`, acceptance rate `86.05%`, histogram `{0: 2, 2: 2, 3: 11}`
+- decoded bad accepted loop: token ids `[91627, 14]` -> `ntag/`, repeatedly fully accepted
+
+n-gram3 strict lookup diagnostic:
+
+- launch controls: `NUM_SPECULATIVE_TOKENS=3`, `PROMPT_LOOKUP_MIN=4`, `PROMPT_LOOKUP_MAX=12`, same exact capture-size list as above
+- motivation: check whether short accidental prompt matches caused the `ntag/` loop
+- repeat64 plus 4K long-context quality still failed:
+  - exact OK, copy, arithmetic, JSON schema all passed
+  - 4K long-context needle passed
+  - repeat stability produced two bad outputs:
+    - `utex utex utex ...`
+    - `blue... green, red, yellow` with non-baseline inserted tokens
+- scheduler trace artifact: `data/qwen36-quark-int8-tp4-ngram3-min4-cg4-spec-jsonl-20260611.jsonl`
+- trace summary: rows `13`, drafts `35`, accepted `34`, rejected `1`, acceptance rate `97.14%`, histogram `{2: 5, 3: 8}`
+- decoded bad accepted loop: token ids `[9092, 220]` -> `utex `, repeatedly fully accepted
+
 n-gram2 eager/no-graph diagnostic:
 
 - launch controls: `ENABLE_XPU_GRAPH=0`, `ENFORCE_EAGER=1`, `COMPILE_CONFIG=`
@@ -412,17 +441,18 @@ Interpretation:
 - adding exact graph capture bucket `3` fixes the n-gram2 first-request device-loss path, so the crash was likely a graph shape dispatch/capture mismatch rather than a general n-gram2 impossibility.
 - n-gram2 with the exact capture bucket can be quality-clean under repeat64 and 4K long context, but the speed gain is prompt-sensitive because acceptance varies widely.
 - eager/no-graph is not quality-equivalent, so it cannot be used as a production workaround.
-- n-gram5's fully accepted repeated-token loops are a separate correctness failure after the runtime survives startup. Multi-token n-gram is therefore not a valid route to `>200 tok/s` on this stack until the XPU graph/input-prep path is fixed.
+- n-gram3 and n-gram5 both produce fully accepted repeated-token loops after the runtime survives startup. Stricter `prompt_lookup_min` does not fix this; it can even increase acceptance of the bad loop. Multi-token n-gram depth above 2 is therefore not a valid route to `>200 tok/s` on this stack until speculative-state correctness is fixed.
 
 Next concrete speculation path:
 
 1. Keep exact capture bucket `3` in the diagnostic launcher and test whether nearby buckets (`5`, `6`, maybe `7`) are needed for deeper speculation before any n-gram3+ run.
 2. Split speed tests by prompt class: repetitive benchmark prompt, natural chat prompt, code prompt, and structured-output prompt. N-gram2 only helps when draft acceptance is high.
 3. Add an acceptance-rate predictor and dynamic speculative kill switch. If early acceptance drops below a threshold, fall back to accepted non-spec decode for the rest of that request.
-4. Test an n-gram2 production split only for long free-form completions, never for deterministic structured/copy/math routes until canary parity is stronger.
-5. Inspect graph-captured tensor shapes for `decode_query_len=3`, especially input/block-table tensors copied before the first model execute, and file an upstream-quality repro if exact bucket `3` is required on XPU but not captured by default.
-6. Keep n-gram1 out of production because it is quality-safe but slower.
-7. Do not use eager/no-graph or no-XPU-graph as production workarounds; they exist only to isolate graph correctness.
+4. Add a hard safety cap for n-gram speculation depth: only n-gram2 remains a candidate, and only after prompt-class speed testing. n-gram3+ is quality-rejected.
+5. Test an n-gram2 production split only for long free-form completions, never for deterministic structured/copy/math routes until canary parity is stronger.
+6. Inspect graph-captured tensor shapes for `decode_query_len=3`, especially input/block-table tensors copied before the first model execute, and file an upstream-quality repro if exact bucket `3` is required on XPU but not captured by default.
+7. Keep n-gram1 out of production because it is quality-safe but slower.
+8. Do not use eager/no-graph or no-XPU-graph as production workarounds; they exist only to isolate graph correctness.
 
 New web-research leads to fold into next experiments:
 
