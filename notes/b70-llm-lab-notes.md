@@ -28,7 +28,13 @@ Current Qwen3.6 INT8 direction:
    shape-exact collective/MoE microbenches.
 4. Track bigger ideas in
    `notes/2026-06-11-qwen36-aot-localmaxxing-and-runtime-screens.md`,
-   especially the "Bigger Bets Added After Public Result Review" section.
+   especially the "Bigger Bets To Track" and
+   "Public Follow-Up And Bolder Ideas" sections. The current highest-upside
+   path is verifier-preserving speculation: MTP/DFlash-style draft tokens are
+   allowed only if the current Quark INT8 model remains the final verifier.
+5. Add real-router-distribution capture for Qwen3.6 MoE and feed those
+   histograms into `vllm-xpu-kernels` grouped-GEMM microbenches before more
+   small-M W8A8 kernel tuning.
 
 ## 2026-05-10 MiniMax AutoRound Addendum
 

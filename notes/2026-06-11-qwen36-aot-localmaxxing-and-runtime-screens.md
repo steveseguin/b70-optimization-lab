@@ -221,6 +221,92 @@ Priority call:
 2. Do in parallel: shape-exact MoE and dense INT8 microbenches, because they produce durable upstreamable artifacts even if speculation stalls.
 3. Keep ready: accepted r10 + peak VRAM + repeat64 quality pack, so every claimed win can be published cleanly.
 
+## Public Follow-Up And Bolder Ideas
+
+Added after checking fresh public Localmaxxing rows and current Arc/XPU optimization threads on 2026-06-11. None of these relax the target: Qwen3.6 35B, 8-bit/high fidelity, current Quark INT8 verifier for accepted quality claims, no Qwen3.5 detours, no 4-bit promotion.
+
+Fresh external signals:
+
+- Localmaxxing now has Qwen3.6 35B MTP rows above `200 tok/s` on NVIDIA-class hardware. The most useful signal is not the hardware comparison; it is that MTP/draft speculation is the path others use to cross the `200 tok/s` single-user line.
+- Public `Qwen/Qwen3.6-35B-A3B-FP8` vLLM with DFlash shows `253.7 tok/s` on an RTX PRO 6000 Blackwell at 4K context. That points at verifier-preserving speculation as a real multiplier, not a small knob.
+- `unsloth/Qwen3.6-35B-A3B-MTP-GGUF` has public `llama-server --spec-type mtp` rows including `213.87 tok/s` on RTX 4090 and `121.6-195.1 tok/s` on RTX 3090 variants. These are not acceptable quantizations for our production path, but they are useful recipes for MTP draft depth, KV dtype, and server scheduling.
+- `GestaltLabs/Qwen3.6-35B-A3B-NSC-ACE-SABER-GGUF-MTP` has public Q8_0-MTP rows around `72-80 tok/s` and other non-8-bit rows above `130 tok/s`. The Q8_0-MTP line is interesting because it proves at least one full-precision-ish MTP GGUF route exists, even if it is not currently our model or engine.
+- The Intel/vLLM Arc Pro blog explicitly calls out persistent single-kernel MoE loops, dynamic work balancing, and prepacked formats. That matches our failures: Python-level wrapper boundaries and env-var sweeps are not enough.
+- Intel's grouped-GEMM tuning issue says real MoE routing skew and tile configuration dominate grouped GEMM performance. Our current microbench should stop using only synthetic even routing and capture real routed expert distributions from the live model.
+- vLLM's XPU backend migration confirms W8A8/W8A16 and MoE kernels are now intended to live in `vllm-xpu-kernels`, so upstreamable shape-exact repros should target that library, not old IPEX paths.
+- Community B70 data still says llama.cpp/SYCL can be strong for Qwen3.6 MoE, and Q8_0 on Qwen3.6 35B has been measured on dual B70. It is slower than our current public TP4 result, but it remains a useful 8-bit engine diagnostic, especially if MTP support is easier there first.
+
+Public sources checked:
+
+- `https://localmaxxing.com/api/leaderboard?hardwareName=Arc%20Pro%20B70&modelFamily=qwen&limit=50`
+- `https://localmaxxing.com/api/benchmarks?hfId=nameistoken%2FQwen3.6-35B-A3B-Quark-W8A8-INT8&limit=20`
+- `https://localmaxxing.com/api/benchmarks?hfId=unsloth%2FQwen3.6-35B-A3B-MTP-GGUF&limit=20`
+- `https://localmaxxing.com/api/benchmarks?hfId=GestaltLabs%2FQwen3.6-35B-A3B-NSC-ACE-SABER-GGUF-MTP&limit=20`
+- `https://localmaxxing.com/api/benchmarks?hfId=Qwen%2FQwen3.6-35B-A3B-FP8&limit=20`
+- `https://vllm.ai/blog/2025-11-11-intel-arc-pro-b`
+- `https://github.com/intel/intel-xpu-backend-for-triton/issues/6389`
+- `https://github.com/vllm-project/vllm/issues/33214`
+- `https://github.com/PMZFX/intel-arc-pro-b70-benchmarks`
+
+New big bets to track:
+
+1. Build a verifier-preserving speculation ladder.
+   - Stage A: repair n-gram/spec trace and prove repeat64/long-context stability on the current Quark verifier.
+   - Stage B: use official FP8 MTP tensors or an MTP GGUF sidecar only as a proposer; the Quark INT8 model must still verify every accepted token.
+   - Stage C: test DFlash/EAGLE-style proposer routes if XPU support exists or can be ported with the same final-verifier guarantee.
+   - Score by accepted-token throughput, acceptance rate, TTFT, and exact quality hashes. Raw draft speed does not count.
+
+2. Capture real router distributions from the accepted endpoint.
+   - Add opt-in logging around Qwen3.6 MoE router top-k expert IDs and per-expert token counts for p512/n512 decode.
+   - Feed those exact distributions into `vllm-xpu-kernels` grouped-GEMM microbenches.
+   - Tune small-M W8A8 policies for the actual long-tail expert pattern instead of synthetic uniform routes.
+
+3. Port or prototype persistent zero-gap MoE for the Quark W8A8 INT8 path.
+   - Current XPU grouped GEMM is already selected, but the live path is still multi-stage: remap, quant, grouped GEMM, activation, quant, grouped GEMM, gather.
+   - A real win likely requires persistent scheduling across routed expert blocks plus fused activation/finalize, not another Python custom op around the output.
+   - Start outside vLLM with a parity microbench before touching the endpoint.
+
+4. Create a tile-friendly INT8 repack cache.
+   - If Quark W8A8 weights are not stored in the fastest B70 XMX/DPAS layout, repack once at model-load time and cache with checksums.
+   - Keep mathematical scales and weights identical; this is a layout optimization, not a new quantization.
+   - Reject if it costs enough VRAM to threaten 32K context.
+
+5. Build a decode-core harness separate from the OpenAI server.
+   - Measure direct model-runner decode with identical tokenizer/template/settings and the same graph cache.
+   - If direct core throughput is meaningfully above endpoint throughput, create a production "latency lane" that removes server/request/streaming overhead for single-user sessions.
+   - If the core is also capped near `100 tok/s`, focus back on kernels and speculation.
+
+6. Run a strict 8-bit engine bakeoff.
+   - Candidates: current vLLM Quark W8A8, llama.cpp/SYCL Q8_0 or other real 8-bit GGUF, OpenVINO/oneDNN GenAI 8-bit if Qwen3.6 MoE is supported, and any XPU-native W8A8 path that appears.
+   - This is diagnostic unless it keeps the same quality gates, 32K context, and production-serving requirements.
+   - Do not count Q4, MXFP4, AWQ, GPTQ-4bit, or Qwen3.5 as acceptable answers to this question.
+
+7. Explore hybrid TP/EP/replica layouts with memory math first.
+   - Pure TP4 gives the best current result, but it also creates many tiny collectives during single-token decode.
+   - Model a layout that partitions experts while replicating or semi-replicating cheap dense/attention pieces, then decide whether it can fit with 32K KV.
+   - If not feasible, use the model to justify why TP4 remains the practical path.
+
+8. Try a separate sidecar drafter on unused host or reduced GPU resources.
+   - A small same-family Qwen3.6 drafter or MTP sidecar could run on CPU, one XPU slice, or a separate service if it feeds the Quark verifier cheaply.
+   - This only helps if draft latency plus verification is lower than current token-by-token decode.
+   - Quality remains preserved only because the Quark verifier owns final output.
+
+9. Build upstream-ready repro bundles.
+   - Three minimal tests: routed grouped GEMM with real expert histograms, dense W8A8 GEMM for the repeated AOT shapes, and graph-safe tiny all-reduce for hidden-size collectives.
+   - Include exact shapes, oneAPI/kernel versions, B70 topology, current throughput, and expected improvement target.
+   - These are the artifacts most likely to get useful help from Intel/vLLM maintainers.
+
+10. Validate host-stack and kernel/driver branch as a controlled experiment.
+    - Public B70 data spans newer kernels and oneAPI stacks than our current service. Host policy is unlikely to double speed, but it can hide wins behind jitter or device resets.
+    - Test only via a reversible boot/driver profile: power policy, ASPM/runtime power, NUMA pinning, CCL fabric settings, and thermal logging.
+    - Measure variance, device errors, and accepted r10 speed before/after.
+
+Near-term priority after this note:
+
+1. Do the speculation feasibility pass first, because it is the only path with credible `>200 tok/s` upside while preserving final-model quality.
+2. In parallel, add real-router-distribution capture and feed it into grouped-GEMM tests.
+3. Keep the accepted service healthy and use it as the quality oracle for every candidate.
+
 ## Speculation Trace Follow-Up
 
 The active verifier model still has no in-checkpoint MTP route:
