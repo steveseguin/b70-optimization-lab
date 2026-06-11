@@ -8488,6 +8488,167 @@ Validation for this tracking step:
 - `/home/steve/.venvs/vllm-xpu/bin/python -m py_compile vllm/v1/core/sched/scheduler.py`
 - `git apply --reverse --check patches/vllm-qwen36-spec-ignore-drafts-diagnostic-20260611.patch`
 
+## Force-Block FP8 MTP Loader Result
+
+Followed up the MTP asset inspection by testing the official Qwen3.6 FP8 MTP
+sidecar directly as a proposer while keeping the current Quark W8A8 INT8 model
+as the target/verifier.
+
+Launch shape:
+
+```bash
+VLLM_QWEN35_MTP_FORCE_FP8_BLOCK=1 \
+VLLM_EXTRA_ARGS='--speculative-config {"method":"mtp","model":"/mnt/fast-ai/llm-cache/hf/hub/models--Qwen--Qwen3.6-35B-A3B-FP8/snapshots/95a723d08a9490559dae23d0cff1d9466213d989","num_speculative_tokens":1,"draft_tensor_parallel_size":4}' \
+./scripts/launch-qwen36-quark-int8-accepted.sh
+```
+
+Positive result:
+
+- `VLLM_QWEN35_MTP_FORCE_FP8_BLOCK=1` gets the FP8 MTP sidecar past the earlier
+  `w2_weight_scale_inv` style loader failure.
+- The service loaded both target and drafter models, selected block-FP8 XPU
+  linear kernels for the drafter, and completed graph capture.
+- Loaded sidecar memory was still small enough for the 32K target:
+  `Model loading took 8.79 GiB`, with reported GPU KV capacity around
+  `1.74M` tokens versus roughly `2.05M` on the accepted non-MTP service.
+
+Negative result:
+
+- The first mixed chat/completions probe fatally failed after the MTP load. That
+  run included overlapping requests and showed a target-model compile/autotune
+  failure, so it was not a clean final diagnosis.
+- The clean solo completions probe also failed, before any scheduled MTP draft
+  tokens appeared:
+  - scheduler dump had `scheduled_spec_decode_tokens={}`
+  - request had `prompt_token_ids_len=502`
+  - worker failed in `block_table.copy_to_gpu`
+  - Level Zero error: `UR_RESULT_ERROR_DEVICE_LOST`
+- A follow-up shutdown path then reported `UR_RESULT_ERROR_OUT_OF_RESOURCES`.
+
+Artifacts:
+
+- `data/qwen36-quark-int8-tp4-mtp1-fp8sidecar-forceblock-mixed-crash-20260611a.txt`
+- `data/qwen36-quark-int8-tp4-mtp1-fp8sidecar-forceblock-modelinput-trace-mixed-crash-20260611a.jsonl`
+- `data/qwen36-quark-int8-tp4-mtp1-fp8sidecar-forceblock-spec-trace-mixed-crash-20260611a.jsonl`
+- `data/qwen36-quark-int8-tp4-mtp1-fp8sidecar-forceblock-solo-crash-20260611a.txt`
+
+Decision: do not count force-block FP8 MTP as a speed or quality win yet. It is
+a loader breakthrough and a useful repro, not a production candidate. The next
+MTP work should isolate whether the device-lost trigger is memory pressure,
+graph-capture coverage, sidecar block table/KV sizing, or a generic
+speculative-config first-request issue.
+
+Immediate force-block MTP diagnostics to try later:
+
+1. Relaunch MTP with lower `gpu_memory_utilization` such as `0.90` and `0.85`.
+   If the solo request stops device-losting, treat this as a memory/headroom
+   issue before testing speed.
+2. Relaunch MTP with `max_num_seqs=1` and lower `max_num_batched_tokens` for a
+   pure single-user latency lane. This should determine whether scheduler/KV
+   allocation size is the trigger.
+3. Relaunch MTP with target eager/no-graph, or with a capture list that includes
+   the exact verifier bucket sizes MTP will schedule. This is diagnostic only;
+   it will likely be too slow, but it can separate graph capture failures from
+   MTP math failures.
+4. Try `max_model_len=16384` only as a temporary isolation run. It is not the
+   production target, but it can prove whether 32K KV headroom is the reason the
+   sidecar first request loses the device.
+5. Add first-request block-table logging around the MTP sidecar path:
+   block ids, lookahead blocks, block table rows copied, and per-rank values.
+   The crash point is early enough that a small log may make the repro upstream
+   useful.
+6. If any safer MTP launch reaches generation, run exact canary hashes,
+   repeat64, long-context needle, and the oracle fixture before speed testing.
+
+## Bigger Bolder Ideas After Force-Block MTP
+
+These are larger than ordinary configuration sweeps. The easy knobs are not
+moving c1 decode enough, and force-block MTP proved that the path to `>200 tok/s`
+probably needs either verifier-preserving speculation repair or a real XPU MoE
+backend change.
+
+1. Perfect-draft upper-bound runner.
+   - Feed synthetic perfect draft tokens into the current Quark verifier without
+     using any proposer model.
+   - Measure verifier buckets `k=1,2,3,4,6,8,12` under the same graph/cache path.
+   - If perfect drafts cannot exceed `200 tok/s`, MTP/draft work cannot solve
+     the goal by itself. If they can, all effort should move to proposer
+     correctness and acceptance rate.
+
+2. Shadow-verifier speculative lane.
+   - Keep the production accepted model online, then send every aggressive-lane
+     request through a background verifier comparison for the first N tokens.
+   - Automatically drop back to the baseline lane if token hashes diverge,
+     acceptance rate collapses, or the first-request device-lost signature
+     appears.
+   - This could let us test risky high-upside scheduler/MTP changes without
+     exposing users to bad output.
+
+3. Real-router trace corpus.
+   - Log Qwen3.6 expert IDs and per-expert token counts for accepted prompts:
+     p512/n512, chat, code, math, structured, and long-context.
+   - Build grouped-GEMM and MoE-finalize microbenches from those histograms.
+   - This turns the MoE work from generic tuning into shape/routing-specific B70
+     tuning.
+
+4. Hot-expert duplication model.
+   - Use route histograms to estimate whether duplicating the most common
+     routed experts or shared-expert paths on each B70 can reduce TP4
+     collectives enough for c1 decode.
+   - This is a memory trade: reject immediately if it breaks 32K KV, but keep it
+     if it only costs a few GiB and removes repeated cross-rank traffic.
+
+5. XPU W8A8 persistent MoE branch.
+   - Prototype outside vLLM first: routed int8 grouped GEMM, activation, second
+     grouped GEMM, shared-expert add, and finalize in as few graph-safe kernels
+     as possible.
+   - The prior Python-level shared-add/all-reduce wrapper proved that simply
+     changing boundaries is not enough.
+   - The likely win is persistent scheduling, less intermediate memory traffic,
+     and fewer launch/collective points.
+
+6. Fast static decode lane.
+   - Build a direct runner for batch-1 decode that preallocates KV, bypasses
+     OpenAI server lifecycle overhead, and replays static graph buckets.
+   - This is not a replacement for production vLLM unless it proves a large
+     endpoint/core gap, but it can tell us whether the remaining 100 tok/s wall
+     is server overhead or model kernels.
+
+7. Same-model 8-bit engine bakeoff.
+   - Test current vLLM/XPU against llama.cpp SYCL Q8_0, OpenVINO GenAI/oneDNN,
+     and any emerging vllm-xpu-kernels branch that supports Qwen3.6 MoE 8-bit.
+   - This is not permission to use Q4/AWQ/GPTQ. It is a diagnostic to find out
+     whether vLLM/XPU is the bottleneck.
+
+8. Upstreamable B70 repro bundle.
+   - Package the force-block MTP device-lost, n-gram oracle drift, route
+     histograms, AOT op census, exact launch commands, and Localmaxxing result.
+   - Target vLLM XPU and `vllm-xpu-kernels` maintainers with minimal repros,
+     not a giant production script.
+
+9. Driver/runtime stack A/B disk.
+   - Build a second boot/profile with the newest Intel compute runtime,
+     oneCCL, oneAPI, vllm-xpu-kernels, and kernel stack that public B70 users
+     are succeeding with.
+   - Keep the current stack intact. The metric is variance, first-request
+     device-lost rate, and accepted r10 speed, not just one lucky run.
+
+10. Learned B70-friendly micro-drafter.
+    - Distill a tiny same-tokenizer proposer from traces of the current Quark
+      model, optimized for B70-friendly small matmuls rather than general model
+      quality.
+    - Wrong drafts are rejected, so final quality remains with the Quark
+      verifier. The risk is acceptance rate and proposer latency.
+
+Updated priority after the MTP force-block result:
+
+1. Restore the accepted service after every failed sidecar/spec run.
+2. Build the perfect-draft verifier upper-bound test before more proposer work.
+3. Add route-histogram logging and shape-exact MoE microbenches.
+4. Retry force-block MTP only with explicit memory/graph isolation controls.
+5. Prepare an upstream repro packet once the first-request device-lost case is
+   reproducible from a clean launch.
+
 The isolated run was not executed in this step because the accepted TP4 public
 service is currently healthy and unpaused. Keep this diagnostic for the next
 paused/isolated window.
@@ -9512,3 +9673,17 @@ Bigger, bolder ideas to keep on the board:
       microbench shapes, route histograms, B70 topology, and Localmaxxing row.
     - Aim it at vLLM/XPU and `vllm-xpu-kernels` maintainers with one question:
       "What is the missing XPU path for Qwen3.6 c1 W8A8 MoE decode?"
+
+Latest status pointer:
+
+- The force-block FP8 MTP sidecar result is recorded above under
+  "Force-Block FP8 MTP Loader Result".
+- Short version: loader breakthrough, not a production win. The sidecar loads
+  with `VLLM_QWEN35_MTP_FORCE_FP8_BLOCK=1`, but the clean solo completions run
+  device-losts in `block_table.copy_to_gpu` before any scheduled MTP draft
+  tokens appear.
+- Next highest-value experiments are:
+  1. perfect-draft verifier upper-bound runner
+  2. real-router trace corpus for MoE microbenches
+  3. force-block MTP retry with explicit memory/graph isolation controls
+  4. upstreamable B70 repro packet for vLLM/vllm-xpu-kernels

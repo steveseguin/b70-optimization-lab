@@ -1,0 +1,20 @@
+# Qwen3.6 MTP FP8 Sidecar Force-Block Mixed-Request Crash 2026-06-11
+
+114:(Worker_TP0 pid=1431908) INFO 06-11 17:03:39 [gpu_model_runner.py:5525] Loading drafter model...
+118:(Worker_TP0 pid=1431908) WARNING 06-11 17:03:39 [qwen3_5_mtp.py:114] Forcing Qwen3.5 MTP drafter linear layers to block-FP8 quantization via VLLM_QWEN35_MTP_FORCE_FP8_BLOCK=1.
+152:(Worker_TP0 pid=1431908) INFO 06-11 17:03:41 [gpu_model_runner.py:5603] Model loading took 8.79 GiB memory and 16.185672 seconds
+181:(EngineCore pid=1431797) INFO 06-11 17:05:25 [kv_cache_utils.py:1710] GPU KV cache size: 1,738,264 tokens
+190:(Worker_TP0 pid=1431908) INFO 06-11 17:05:55 [gpu_model_runner.py:6894] Graph capturing finished in 29 secs, took -0.66 GiB
+1793:(Worker_TP0 pid=1431908) ERROR 06-11 17:07:27 [multiproc_executor.py:979] RuntimeError: PassManager::run failed
+1977:(Worker_TP0 pid=1431908) ERROR 06-11 17:07:27 [multiproc_executor.py:979] RuntimeError: PassManager::run failed
+2041:(Worker_TP1 pid=1431909) ERROR 06-11 17:07:27 [multiproc_executor.py:979] RuntimeError: PassManager::run failed
+2164:(Worker_TP1 pid=1431909) ERROR 06-11 17:07:27 [multiproc_executor.py:979] RuntimeError: PassManager::run failed
+2289:(Worker_TP3 pid=1431911) ERROR 06-11 17:07:27 [multiproc_executor.py:979] RuntimeError: PassManager::run failed
+2412:(Worker_TP3 pid=1431911) ERROR 06-11 17:07:27 [multiproc_executor.py:979] RuntimeError: PassManager::run failed
+2537:(Worker_TP2 pid=1431910) ERROR 06-11 17:07:27 [multiproc_executor.py:979] RuntimeError: PassManager::run failed
+2660:(Worker_TP2 pid=1431910) ERROR 06-11 17:07:27 [multiproc_executor.py:979] RuntimeError: PassManager::run failed
+2663:(EngineCore pid=1431797) ERROR 06-11 17:07:27 [dump_input.py:79] Dumping scheduler output for model execution: SchedulerOutput(scheduled_new_reqs=[NewRequestData(req_id=cmpl-895ffbcf93baf8f3-0-85eed061,prompt_token_ids_len=502,prefill_token_ids_len=None,mm_features=[],sampling_params=SamplingParams(n=1, presence_penalty=0.0, frequency_penalty=0.0, repetition_penalty=1.0, temperature=0.0, top_p=1.0, top_k=0, min_p=0.0, seed=20260611, stop=[], stop_token_ids=[248044], bad_words=[], thinking_token_budget=None, include_stop_str_in_output=False, ignore_eos=False, max_tokens=128, min_tokens=0, logprobs=None, prompt_logprobs=None, skip_special_tokens=True, spaces_between_special_tokens=True, structured_outputs=None, extra_args=None),block_ids=([8, 9], [10, 11], [12, 13], [14]),num_computed_tokens=0,lora_request=None,prompt_embeds_shape=None)], scheduled_cached_reqs=CachedRequestData(req_ids=['chatcmpl-82a4bc9224d9bbfb-82414f2e'],resumed_req_ids=set(),new_token_ids_lens=[],all_token_ids_lens={},new_block_ids=[None],num_computed_tokens=[18],num_output_tokens=[3]), num_scheduled_tokens={cmpl-895ffbcf93baf8f3-0-85eed061: 502, chatcmpl-82a4bc9224d9bbfb-82414f2e: 2}, total_num_scheduled_tokens=504, scheduled_spec_decode_tokens={chatcmpl-82a4bc9224d9bbfb-82414f2e: [-1]}, scheduled_encoder_inputs={}, num_common_prefix_blocks=[0, 0, 0, 0], finished_req_ids=[], free_encoder_mm_hashes=[], preempted_req_ids=[], has_structured_output_requests=false, pending_structured_output_tokens=false, num_invalid_spec_tokens=null, kv_connector_metadata=null, ec_connector_metadata=null, new_block_ids_to_zero=[14])
+2665:(EngineCore pid=1431797) ERROR 06-11 17:07:27 [core.py:1138] EngineCore encountered a fatal error.
+2689:(EngineCore pid=1431797) ERROR 06-11 17:07:27 [core.py:1138] RuntimeError: Worker failed with error 'PassManager::run failed', please check the stack trace above for the root cause
+2698:(APIServer pid=1431613) ERROR 06-11 17:07:27 [async_llm.py:704] vllm.v1.engine.exceptions.EngineDeadError: EngineCore encountered an issue. See stack trace (above) for the root cause.
+2699:(APIServer pid=1431613) INFO:     127.0.0.1:42658 - "POST /v1/completions HTTP/1.1" 500 Internal Server Error
