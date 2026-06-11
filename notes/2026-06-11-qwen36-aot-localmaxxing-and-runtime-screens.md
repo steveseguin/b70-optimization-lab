@@ -9934,3 +9934,84 @@ Bigger bets worth pursuing if the parity tooling does not reveal a small bug:
       metrics beside tok/s.
     - A `150 tok/s` candidate that device-losts under soak is less useful than
       a `115 tok/s` candidate that survives production traffic.
+
+## Model-Input Parity Tooling And Block-Table Trace Patch
+
+Added the first reusable verifier-input parity tool and patched the local vLLM
+trace instrumentation so the next accepted/placebo/speculative trace can expose
+real block-table contents instead of serializing an error.
+
+Code/artifacts:
+
+- `scripts/check-qwen36-model-input-parity.py`
+- `patches/vllm-qwen36-model-input-blocktable-trace-20260611.patch`
+- `data/qwen36-quark-int8-tp4-accepted-vs-placebo-modelinput-parity-20260611a.json`
+- `data/qwen36-quark-int8-tp4-accepted-vs-placebo-modelinput-parity-20260611a.md`
+- `data/qwen36-quark-int8-tp4-accepted-vs-noasync-modelinput-parity-20260611a.json`
+- `data/qwen36-quark-int8-tp4-accepted-vs-noasync-modelinput-parity-20260611a.md`
+
+Patch details:
+
+- Active runner: `vllm/v1/worker/gpu_model_runner.py`
+  - The old trace path tried to run tensor serialization on a `BlockTable`
+    object, yielding `AttributeError("'BlockTable' object has no attribute
+    'detach'")` in every trace row.
+  - The patch now records block-table state through `get_cpu_tensor()`,
+    `get_numpy_array()`, `get_device_tensor(num_reqs)`, and
+    `num_blocks_per_row` when those accessors exist.
+- Newer GPU runner: `vllm/v1/worker/gpu/model_runner.py`
+  - The patch records prepared input block tables, `num_blocks`, persistent
+    input block tables, and persistent staged GPU block tables.
+- This is env-gated behind `VLLM_XPU_MODEL_INPUT_TRACE_FILE`, so normal serving
+  is unaffected.
+
+Existing-trace parity results:
+
+- Accepted vs placebo:
+  - rows compared: `80`
+  - `match_all=false`
+  - first mismatch: row `0`, `attn.slot_mappings.1.head[0]`
+  - accepted value: `65536`
+  - placebo value: `98304`
+  - interpretation: verifier-visible slot mappings differ before any output
+    token history can explain drift. The old block-table records were broken,
+    so the next runtime trace must rerun with the patched accessors to identify
+    the allocator/table source of the slot shift.
+- Accepted vs accepted-noasync:
+  - rows compared: `80`
+  - `match_all=false`
+  - first mismatch: row `26`, `input_batch.input_ids.head[0]`
+  - interpretation: no-async agrees through the earlier prefill/decode rows and
+    only diverges after the output-token stream differs. This is less suspicious
+    than placebo and helps rank placebo/block-table repair first.
+
+Validation:
+
+```bash
+python3 -m py_compile scripts/check-qwen36-model-input-parity.py
+python3 -m py_compile \
+  /home/steve/src/vllm/vllm/v1/worker/gpu_model_runner.py \
+  /home/steve/src/vllm/vllm/v1/worker/gpu/model_runner.py
+python3 scripts/check-qwen36-model-input-parity.py \
+  --left data/qwen36-quark-int8-tp4-accepted-modelinput-trace-20260611f.jsonl \
+  --right data/qwen36-quark-int8-tp4-placebo-modelinput-trace-20260611a.jsonl \
+  --left-label accepted \
+  --right-label placebo \
+  --output-json data/qwen36-quark-int8-tp4-accepted-vs-placebo-modelinput-parity-20260611a.json \
+  --output-md data/qwen36-quark-int8-tp4-accepted-vs-placebo-modelinput-parity-20260611a.md
+python3 scripts/check-qwen36-model-input-parity.py \
+  --left data/qwen36-quark-int8-tp4-accepted-modelinput-trace-20260611f.jsonl \
+  --right data/qwen36-quark-int8-tp4-accepted-noasync-modelinput-trace-20260611a.jsonl \
+  --left-label accepted \
+  --right-label accepted-noasync \
+  --output-json data/qwen36-quark-int8-tp4-accepted-vs-noasync-modelinput-parity-20260611a.json \
+  --output-md data/qwen36-quark-int8-tp4-accepted-vs-noasync-modelinput-parity-20260611a.md
+```
+
+Next action:
+
+1. Rerun accepted and placebo traces with the patched block-table accessors.
+2. Use the parity checker as the gate for any repaired speculation run.
+3. If the new block-table traces show allocator/table drift, isolate whether it
+   comes from graph capture size, async scheduling, lookahead/spec block
+   reservation, or KV-cache capacity/layout differences.

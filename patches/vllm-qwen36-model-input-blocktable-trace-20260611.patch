@@ -1,0 +1,120 @@
+--- a/vllm/v1/worker/gpu_model_runner.py
++++ b/vllm/v1/worker/gpu_model_runner.py
+@@ -2375,14 +2375,60 @@
+                 "head": flat[:limit].tolist(),
+             }
+ 
++        def block_table_head(
++            table: Any,
++            group_index: int,
++            num_reqs: int,
++            limit: int = 64,
++        ) -> dict[str, Any]:
++            record: dict[str, Any] = {
++                "group": group_index,
++                "type": type(table).__name__,
++            }
++            if torch.is_tensor(table):
++                tensor_record = tensor_head(table[:num_reqs], limit=limit)
++                if tensor_record is not None:
++                    record["tensor"] = tensor_record
++                return record
++
++            try:
++                num_blocks = getattr(table, "num_blocks_per_row", None)
++                if num_blocks is not None:
++                    record["num_blocks_per_row"] = array_head(
++                        np.asarray(num_blocks[:num_reqs]), limit=limit
++                    )
++            except Exception as exc:
++                record["num_blocks_per_row_error"] = repr(exc)
++
++            accessors = (
++                ("cpu", "get_cpu_tensor", False),
++                ("numpy", "get_numpy_array", False),
++                ("device", "get_device_tensor", True),
++                ("gpu", "get_gpu_tensor", True),
++            )
++            for label, accessor_name, needs_num_reqs in accessors:
++                accessor = getattr(table, accessor_name, None)
++                if accessor is None:
++                    continue
++                try:
++                    value = accessor(num_reqs) if needs_num_reqs else accessor()
++                    if torch.is_tensor(value):
++                        record[label] = tensor_head(value[:num_reqs], limit=limit)
++                    else:
++                        record[label] = array_head(
++                            np.asarray(value[:num_reqs]), limit=limit
++                        )
++                except Exception as exc:
++                    record[f"{label}_error"] = repr(exc)
++            return record
++
+         block_table_records: list[dict[str, Any]] = []
+         try:
+             for group_index in range(len(self.kv_cache_config.kv_cache_groups)):
+                 table = self.input_batch.block_table[group_index]
+-                record = tensor_head(table, limit=64)
+-                if record is not None:
+-                    record["group"] = group_index
+-                    block_table_records.append(record)
++                block_table_records.append(
++                    block_table_head(table, group_index, num_reqs, limit=64)
++                )
+         except Exception as exc:
+             block_table_records.append({"error": repr(exc)})
+ 
+--- a/vllm/v1/worker/gpu/model_runner.py
++++ b/vllm/v1/worker/gpu/model_runner.py
+@@ -1241,14 +1241,46 @@
+                 "head": flat[:limit].tolist(),
+             }
+ 
++        def block_table_record(group_index: int,
++                               table: torch.Tensor) -> dict[str, Any]:
++            record: dict[str, Any] = {"group": group_index}
++            input_record = tensor_head(table, limit=64)
++            if input_record is not None:
++                record["input"] = input_record
++            try:
++                record["num_blocks"] = array_head(
++                    self.block_tables.num_blocks.np[
++                        group_index, :input_batch.num_reqs
++                    ],
++                    limit=64,
++                )
++            except Exception as exc:
++                record["num_blocks_error"] = repr(exc)
++            try:
++                record["input_persistent"] = tensor_head(
++                    self.block_tables.input_block_tables[group_index][
++                        :input_batch.num_reqs_after_padding
++                    ],
++                    limit=64,
++                )
++            except Exception as exc:
++                record["input_persistent_error"] = repr(exc)
++            try:
++                staged = self.block_tables.block_tables[group_index]
++                record["persistent_gpu"] = tensor_head(
++                    staged.gpu[:input_batch.num_reqs], limit=64
++                )
++            except Exception as exc:
++                record["persistent_gpu_error"] = repr(exc)
++            return record
++
+         spec_tokens = scheduler_output.scheduled_spec_decode_tokens
+         block_table_records = []
+         if block_tables is not None:
+             for group_index, table in enumerate(block_tables):
+-                record = tensor_head(table, limit=64)
+-                if record is not None:
+-                    record["group"] = group_index
+-                    block_table_records.append(record)
++                block_table_records.append(
++                    block_table_record(group_index, table)
++                )
+ 
+         record = {
+             "ts": time.time(),
