@@ -41,6 +41,11 @@ Current Qwen3.6 INT8 direction:
    `chat_template_kwargs={"enable_thinking": false}` for deterministic canary
    comparisons. The no-thinking post-restore smoke passed; the plain direct
    endpoint is the wrong quality mode because it can emit thinking content.
+7. Route replay is now implemented in
+   `scripts/bench-qwen36-int8-moe-kernels.py`. Rows=16 real route replay is much
+   faster than synthetic uniform routing because fewer experts are active, but
+   rows=1 hot-expert packing is layer-dependent. Do not use a blind global
+   expert remap; collect more layer/prompt-class route windows first.
 
 ## 2026-05-10 MiniMax AutoRound Addendum
 
@@ -203,3 +208,6 @@ vLLM/XPU FP8 work:
     grouped-GEMM policy, newest Intel XPU kernel-stack comparison,
     verifier-preserving MTP/DFlash-style speculation, shape-exact collective
     replacement, and a static one-user latency lane.
+12. Do not promote `VLLM_XPU_INT8_MOE_MIXED_WORKSPACE=1` based only on isolated
+    MoE microbench wins. The endpoint screen already rejected it for current
+    production because decode speed did not improve and KV headroom dropped.

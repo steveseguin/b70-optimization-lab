@@ -1,0 +1,89 @@
+{
+  "fused_silu_quant_enabled": false,
+  "model_config": "/mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118/config.json",
+  "results": [
+    {
+      "components_us_mean": {
+        "activation": 77.79303999999999,
+        "activation_plus_quant2": 164.49056,
+        "component_sum": 608.50816,
+        "gather": 78.48308,
+        "gemm1": 93.38524,
+        "gemm2": 93.16475999999999,
+        "quant1": 86.70844,
+        "quant2": 86.69752,
+        "remap": 92.27608000000001
+      },
+      "dtype": "bf16",
+      "hidden_size": 2048,
+      "inter_size_per_tp": 128,
+      "iterations": 100,
+      "manual_vs_xpu_fused_moe_max_abs_diff": 0.0,
+      "moe_inputs": 8,
+      "num_experts": 256,
+      "preallocated_staged_total_us_mean": 214.11363999999998,
+      "preallocated_vs_xpu_fused_moe_max_abs_diff": 0.0,
+      "rows": 1,
+      "topk": 8,
+      "topk_source": "synthetic_uniform",
+      "topk_summary": {
+        "active_experts": 8,
+        "top_experts": [
+          {
+            "count": 1,
+            "expert": 0
+          },
+          {
+            "count": 1,
+            "expert": 1
+          },
+          {
+            "count": 1,
+            "expert": 2
+          },
+          {
+            "count": 1,
+            "expert": 3
+          },
+          {
+            "count": 1,
+            "expert": 4
+          },
+          {
+            "count": 1,
+            "expert": 5
+          },
+          {
+            "count": 1,
+            "expert": 6
+          },
+          {
+            "count": 1,
+            "expert": 7
+          }
+        ],
+        "topk_tuple_examples": [
+          {
+            "count": 1,
+            "topk_ids": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7
+            ]
+          }
+        ],
+        "unique_topk_tuples": 1
+      },
+      "total_us_mean": 280.17652,
+      "warmup": 10
+    }
+  ],
+  "route_metadata": null,
+  "route_packing_metadata": null,
+  "tp_size": 4
+}

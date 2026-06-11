@@ -1,0 +1,2803 @@
+{
+  "date": "2026-06-11",
+  "device": "single Arc Pro B70 via ONEAPI_DEVICE_SELECTOR=level_zero:0",
+  "interpretation": {
+    "next": "Do not pursue a blind global hot-expert remap. Next useful work is layer-specific route policy and finding why current endpoint cannot benefit from scratch reuse despite the isolated MoE microbench gap.",
+    "preallocated_gap": "Across row1 route/synthetic checks, preallocated staged scratch is about 61-76 us faster than xpu_fused_moe, but the endpoint mixed-workspace path was already rejected because full-model decode did not improve.",
+    "row1": "For actual single-stream decode shape, route replay is within roughly -4.9% to +5.2% of synthetic depending on layer; hot packing is +2.4% for layer8 but -8.0% for layer20 in this measurement.",
+    "row16": "At rows=16, real routes are much faster than synthetic because active experts are far fewer than synthetic uniform. Hot packing is only a small additional win, about 1-2%, in the r100 check."
+  },
+  "model": "nameistoken/Qwen3.6-35B-A3B-Quark-W8A8-INT8",
+  "purpose": "Compare synthetic uniform Qwen3.6 INT8 MoE routing against captured routecapture5 rank0 topk_ids and a hot-expert physical-packing simulation.",
+  "route_source": "data/qwen36-quark-int8-tp4-routecapture5-routes-rank0-20260611.jsonl",
+  "runs": {
+    "layer20_hotpack_r30": {
+      "artifact": "data/qwen36-quark-int8-moe-routecapture5-layer20-hotpack-r30-20260611.json",
+      "results": [
+        {
+          "active_experts": 8,
+          "component_sum_us_mean": 596.7329333333333,
+          "gemm1_us_mean": 90.16106666666666,
+          "gemm2_us_mean": 90.45573333333333,
+          "manual_vs_xpu_fused_moe_max_abs_diff": 0.0,
+          "preallocated_staged_total_us_mean": 207.38119999999998,
+          "preallocated_vs_xpu_fused_moe_max_abs_diff": 0.0,
+          "rows": 1,
+          "top_experts": [
+            {
+              "count": 1,
+              "expert": 0
+            },
+            {
+              "count": 1,
+              "expert": 25
+            },
+            {
+              "count": 1,
+              "expert": 2
+            },
+            {
+              "count": 1,
+              "expert": 7
+            },
+            {
+              "count": 1,
+              "expert": 26
+            }
+          ],
+          "topk_source": "route_jsonl",
+          "total_us_mean": 272.7677333333333,
+          "unique_topk_tuples": 1
+        },
+        {
+          "active_experts": 14,
+          "component_sum_us_mean": 578.8414666666666,
+          "gemm1_us_mean": 89.29266666666666,
+          "gemm2_us_mean": 88.72240000000001,
+          "manual_vs_xpu_fused_moe_max_abs_diff": 0.0,
+          "preallocated_staged_total_us_mean": 203.83826666666667,
+          "preallocated_vs_xpu_fused_moe_max_abs_diff": 0.0,
+          "rows": 2,
+          "top_experts": [
+            {
+              "count": 2,
+              "expert": 25
+            },
+            {
+              "count": 2,
+              "expert": 2
+            },
+            {
+              "count": 1,
+              "expert": 0
+            },
+            {
+              "count": 1,
+              "expert": 7
+            },
+            {
+              "count": 1,
+              "expert": 26
+            }
+          ],
+          "topk_source": "route_jsonl",
+          "total_us_mean": 263.7908,
+          "unique_topk_tuples": 2
+        },
+        {
+          "active_experts": 24,
+          "component_sum_us_mean": 595.5663999999999,
+          "gemm1_us_mean": 92.13186666666667,
+          "gemm2_us_mean": 90.74346666666666,
+          "manual_vs_xpu_fused_moe_max_abs_diff": 0.0,
+          "preallocated_staged_total_us_mean": 206.8144,
+          "preallocated_vs_xpu_fused_moe_max_abs_diff": 0.0,
+          "rows": 4,
+          "top_experts": [
+            {
+              "count": 3,
+              "expert": 0
+            },
+            {
+              "count": 2,
+              "expert": 25
+            },
+            {
+              "count": 2,
+              "expert": 2
+            },
+            {
+              "count": 2,
+              "expert": 3
+            },
+            {
+              "count": 2,
+              "expert": 72
+            }
+          ],
+          "topk_source": "route_jsonl",
+          "total_us_mean": 272.42453333333333,
+          "unique_topk_tuples": 4
+        },
+        {
+          "active_experts": 32,
+          "component_sum_us_mean": 609.8230666666667,
+          "gemm1_us_mean": 93.31400000000001,
+          "gemm2_us_mean": 93.14933333333333,
+          "manual_vs_xpu_fused_moe_max_abs_diff": 0.0,
+          "preallocated_staged_total_us_mean": 212.35586666666666,
+          "preallocated_vs_xpu_fused_moe_max_abs_diff": 0.0,
+          "rows": 8,
+          "top_experts": [
+            {
+              "count": 6,
+              "expert": 0
+            },
+            {
+              "count": 5,
+              "expert": 25
+            },
+            {
+              "count": 4,
+              "expert": 7
+            },
+            {
+              "count": 4,
+              "expert": 48
+            },
+            {
+              "count": 3,
+              "expert": 2
+            }
+          ],
+          "topk_source": "route_jsonl",
+          "total_us_mean": 280.89186666666666,
+          "unique_topk_tuples": 8
+        },
+        {
+          "active_experts": 45,
+          "component_sum_us_mean": 607.8488,
+          "gemm1_us_mean": 93.57746666666667,
+          "gemm2_us_mean": 93.2672,
+          "manual_vs_xpu_fused_moe_max_abs_diff": 0.0,
+          "preallocated_staged_total_us_mean": 214.09266666666664,
+          "preallocated_vs_xpu_fused_moe_max_abs_diff": 0.0,
+          "rows": 16,
+          "top_experts": [
+            {
+              "count": 13,
+              "expert": 0
+            },
+            {
+              "count": 8,
+              "expert": 25
+            },
+            {
+              "count": 7,
+              "expert": 2
+            },
+            {
+              "count": 7,
+              "expert": 3
+            },
+            {
+              "count": 6,
+              "expert": 1
+            }
+          ],
+          "topk_source": "route_jsonl",
+          "total_us_mean": 283.8628,
+          "unique_topk_tuples": 16
+        }
+      ],
+      "route_metadata": {
+        "active_experts": 125,
+        "layers": {
+          "language_model.model.layers.20.mlp.experts": 127
+        },
+        "records_loaded": 254,
+        "records_matched": 127,
+        "route_jsonl": "data/qwen36-quark-int8-tp4-routecapture5-routes-rank0-20260611.jsonl",
+        "stages": {
+          "quark_int8_apply": 127
+        },
+        "top_experts": [
+          {
+            "count": 61,
+            "expert": 224
+          },
+          {
+            "count": 57,
+            "expert": 191
+          },
+          {
+            "count": 45,
+            "expert": 237
+          },
+          {
+            "count": 45,
+            "expert": 151
+          },
+          {
+            "count": 42,
+            "expert": 117
+          },
+          {
+            "count": 39,
+            "expert": 41
+          },
+          {
+            "count": 37,
+            "expert": 53
+          },
+          {
+            "count": 33,
+            "expert": 239
+          },
+          {
+            "count": 30,
+            "expert": 80
+          },
+          {
+            "count": 28,
+            "expert": 185
+          },
+          {
+            "count": 27,
+            "expert": 110
+          },
+          {
+            "count": 24,
+            "expert": 206
+          },
+          {
+            "count": 21,
+            "expert": 107
+          },
+          {
+            "count": 19,
+            "expert": 203
+          },
+          {
+            "count": 19,
+            "expert": 121
+          },
+          {
+            "count": 16,
+            "expert": 186
+          }
+        ],
+        "topk_rows_loaded": 127,
+        "unique_topk_tuples": 127
+      },
+      "route_packing_metadata": {
+        "active_experts": 125,
+        "enabled": true,
+        "top_logical_to_physical": [
+          {
+            "count": 61,
+            "logical_expert": 224,
+            "physical_expert": 0
+          },
+          {
+            "count": 57,
+            "logical_expert": 191,
+            "physical_expert": 1
+          },
+          {
+            "count": 45,
+            "logical_expert": 237,
+            "physical_expert": 2
+          },
+          {
+            "count": 45,
+            "logical_expert": 151,
+            "physical_expert": 3
+          },
+          {
+            "count": 42,
+            "logical_expert": 117,
+            "physical_expert": 4
+          },
+          {
+            "count": 39,
+            "logical_expert": 41,
+            "physical_expert": 5
+          },
+          {
+            "count": 37,
+            "logical_expert": 53,
+            "physical_expert": 6
+          },
+          {
+            "count": 33,
+            "logical_expert": 239,
+            "physical_expert": 7
+          },
+          {
+            "count": 30,
+            "logical_expert": 80,
+            "physical_expert": 8
+          },
+          {
+            "count": 28,
+            "logical_expert": 185,
+            "physical_expert": 9
+          },
+          {
+            "count": 27,
+            "logical_expert": 110,
+            "physical_expert": 10
+          },
+          {
+            "count": 24,
+            "logical_expert": 206,
+            "physical_expert": 11
+          },
+          {
+            "count": 21,
+            "logical_expert": 107,
+            "physical_expert": 12
+          },
+          {
+            "count": 19,
+            "logical_expert": 203,
+            "physical_expert": 13
+          },
+          {
+            "count": 19,
+            "logical_expert": 121,
+            "physical_expert": 14
+          },
+          {
+            "count": 16,
+            "logical_expert": 186,
+            "physical_expert": 15
+          }
+        ]
+      }
+    },
+    "layer20_hotpack_row16_r100": {
+      "artifact": "data/qwen36-quark-int8-moe-routecapture5-layer20-hotpack-row16-r100-20260611.json",
+      "results": [
+        {
+          "active_experts": 45,
+          "component_sum_us_mean": 607.98348,
+          "gemm1_us_mean": 93.37536,
+          "gemm2_us_mean": 92.391,
+          "manual_vs_xpu_fused_moe_max_abs_diff": 0.0,
+          "preallocated_staged_total_us_mean": 211.20528,
+          "preallocated_vs_xpu_fused_moe_max_abs_diff": 0.0,
+          "rows": 16,
+          "top_experts": [
+            {
+              "count": 13,
+              "expert": 0
+            },
+            {
+              "count": 8,
+              "expert": 25
+            },
+            {
+              "count": 7,
+              "expert": 2
+            },
+            {
+              "count": 7,
+              "expert": 3
+            },
+            {
+              "count": 6,
+              "expert": 1
+            }
+          ],
+          "topk_source": "route_jsonl",
+          "total_us_mean": 274.96456,
+          "unique_topk_tuples": 16
+        }
+      ],
+      "route_metadata": {
+        "active_experts": 125,
+        "layers": {
+          "language_model.model.layers.20.mlp.experts": 127
+        },
+        "records_loaded": 254,
+        "records_matched": 127,
+        "route_jsonl": "data/qwen36-quark-int8-tp4-routecapture5-routes-rank0-20260611.jsonl",
+        "stages": {
+          "quark_int8_apply": 127
+        },
+        "top_experts": [
+          {
+            "count": 61,
+            "expert": 224
+          },
+          {
+            "count": 57,
+            "expert": 191
+          },
+          {
+            "count": 45,
+            "expert": 237
+          },
+          {
+            "count": 45,
+            "expert": 151
+          },
+          {
+            "count": 42,
+            "expert": 117
+          },
+          {
+            "count": 39,
+            "expert": 41
+          },
+          {
+            "count": 37,
+            "expert": 53
+          },
+          {
+            "count": 33,
+            "expert": 239
+          },
+          {
+            "count": 30,
+            "expert": 80
+          },
+          {
+            "count": 28,
+            "expert": 185
+          },
+          {
+            "count": 27,
+            "expert": 110
+          },
+          {
+            "count": 24,
+            "expert": 206
+          },
+          {
+            "count": 21,
+            "expert": 107
+          },
+          {
+            "count": 19,
+            "expert": 203
+          },
+          {
+            "count": 19,
+            "expert": 121
+          },
+          {
+            "count": 16,
+            "expert": 186
+          }
+        ],
+        "topk_rows_loaded": 127,
+        "unique_topk_tuples": 127
+      },
+      "route_packing_metadata": {
+        "active_experts": 125,
+        "enabled": true,
+        "top_logical_to_physical": [
+          {
+            "count": 61,
+            "logical_expert": 224,
+            "physical_expert": 0
+          },
+          {
+            "count": 57,
+            "logical_expert": 191,
+            "physical_expert": 1
+          },
+          {
+            "count": 45,
+            "logical_expert": 237,
+            "physical_expert": 2
+          },
+          {
+            "count": 45,
+            "logical_expert": 151,
+            "physical_expert": 3
+          },
+          {
+            "count": 42,
+            "logical_expert": 117,
+            "physical_expert": 4
+          },
+          {
+            "count": 39,
+            "logical_expert": 41,
+            "physical_expert": 5
+          },
+          {
+            "count": 37,
+            "logical_expert": 53,
+            "physical_expert": 6
+          },
+          {
+            "count": 33,
+            "logical_expert": 239,
+            "physical_expert": 7
+          },
+          {
+            "count": 30,
+            "logical_expert": 80,
+            "physical_expert": 8
+          },
+          {
+            "count": 28,
+            "logical_expert": 185,
+            "physical_expert": 9
+          },
+          {
+            "count": 27,
+            "logical_expert": 110,
+            "physical_expert": 10
+          },
+          {
+            "count": 24,
+            "logical_expert": 206,
+            "physical_expert": 11
+          },
+          {
+            "count": 21,
+            "logical_expert": 107,
+            "physical_expert": 12
+          },
+          {
+            "count": 19,
+            "logical_expert": 203,
+            "physical_expert": 13
+          },
+          {
+            "count": 19,
+            "logical_expert": 121,
+            "physical_expert": 14
+          },
+          {
+            "count": 16,
+            "logical_expert": 186,
+            "physical_expert": 15
+          }
+        ]
+      }
+    },
+    "layer20_hotpack_row1_r100": {
+      "artifact": "data/qwen36-quark-int8-moe-routecapture5-layer20-hotpack-row1-r100-20260611.json",
+      "results": [
+        {
+          "active_experts": 8,
+          "component_sum_us_mean": 692.59996,
+          "gemm1_us_mean": 106.52823999999998,
+          "gemm2_us_mean": 105.66452,
+          "manual_vs_xpu_fused_moe_max_abs_diff": 0.0,
+          "preallocated_staged_total_us_mean": 241.81768,
+          "preallocated_vs_xpu_fused_moe_max_abs_diff": 0.0,
+          "rows": 1,
+          "top_experts": [
+            {
+              "count": 1,
+              "expert": 0
+            },
+            {
+              "count": 1,
+              "expert": 25
+            },
+            {
+              "count": 1,
+              "expert": 2
+            },
+            {
+              "count": 1,
+              "expert": 7
+            },
+            {
+              "count": 1,
+              "expert": 26
+            }
+          ],
+          "topk_source": "route_jsonl",
+          "total_us_mean": 317.49796,
+          "unique_topk_tuples": 1
+        }
+      ],
+      "route_metadata": {
+        "active_experts": 125,
+        "layers": {
+          "language_model.model.layers.20.mlp.experts": 127
+        },
+        "records_loaded": 254,
+        "records_matched": 127,
+        "route_jsonl": "data/qwen36-quark-int8-tp4-routecapture5-routes-rank0-20260611.jsonl",
+        "stages": {
+          "quark_int8_apply": 127
+        },
+        "top_experts": [
+          {
+            "count": 61,
+            "expert": 224
+          },
+          {
+            "count": 57,
+            "expert": 191
+          },
+          {
+            "count": 45,
+            "expert": 237
+          },
+          {
+            "count": 45,
+            "expert": 151
+          },
+          {
+            "count": 42,
+            "expert": 117
+          },
+          {
+            "count": 39,
+            "expert": 41
+          },
+          {
+            "count": 37,
+            "expert": 53
+          },
+          {
+            "count": 33,
+            "expert": 239
+          },
+          {
+            "count": 30,
+            "expert": 80
+          },
+          {
+            "count": 28,
+            "expert": 185
+          },
+          {
+            "count": 27,
+            "expert": 110
+          },
+          {
+            "count": 24,
+            "expert": 206
+          },
+          {
+            "count": 21,
+            "expert": 107
+          },
+          {
+            "count": 19,
+            "expert": 203
+          },
+          {
+            "count": 19,
+            "expert": 121
+          },
+          {
+            "count": 16,
+            "expert": 186
+          }
+        ],
+        "topk_rows_loaded": 127,
+        "unique_topk_tuples": 127
+      },
+      "route_packing_metadata": {
+        "active_experts": 125,
+        "enabled": true,
+        "top_logical_to_physical": [
+          {
+            "count": 61,
+            "logical_expert": 224,
+            "physical_expert": 0
+          },
+          {
+            "count": 57,
+            "logical_expert": 191,
+            "physical_expert": 1
+          },
+          {
+            "count": 45,
+            "logical_expert": 237,
+            "physical_expert": 2
+          },
+          {
+            "count": 45,
+            "logical_expert": 151,
+            "physical_expert": 3
+          },
+          {
+            "count": 42,
+            "logical_expert": 117,
+            "physical_expert": 4
+          },
+          {
+            "count": 39,
+            "logical_expert": 41,
+            "physical_expert": 5
+          },
+          {
+            "count": 37,
+            "logical_expert": 53,
+            "physical_expert": 6
+          },
+          {
+            "count": 33,
+            "logical_expert": 239,
+            "physical_expert": 7
+          },
+          {
+            "count": 30,
+            "logical_expert": 80,
+            "physical_expert": 8
+          },
+          {
+            "count": 28,
+            "logical_expert": 185,
+            "physical_expert": 9
+          },
+          {
+            "count": 27,
+            "logical_expert": 110,
+            "physical_expert": 10
+          },
+          {
+            "count": 24,
+            "logical_expert": 206,
+            "physical_expert": 11
+          },
+          {
+            "count": 21,
+            "logical_expert": 107,
+            "physical_expert": 12
+          },
+          {
+            "count": 19,
+            "logical_expert": 203,
+            "physical_expert": 13
+          },
+          {
+            "count": 19,
+            "logical_expert": 121,
+            "physical_expert": 14
+          },
+          {
+            "count": 16,
+            "logical_expert": 186,
+            "physical_expert": 15
+          }
+        ]
+      }
+    },
+    "layer20_r30": {
+      "artifact": "data/qwen36-quark-int8-moe-routecapture5-layer20-r30-20260611.json",
+      "results": [
+        {
+          "active_experts": 8,
+          "component_sum_us_mean": 611.6777333333333,
+          "gemm1_us_mean": 92.48893333333332,
+          "gemm2_us_mean": 92.404,
+          "manual_vs_xpu_fused_moe_max_abs_diff": 0.0,
+          "preallocated_staged_total_us_mean": 210.35039999999998,
+          "preallocated_vs_xpu_fused_moe_max_abs_diff": 0.0,
+          "rows": 1,
+          "top_experts": [
+            {
+              "count": 1,
+              "expert": 224
+            },
+            {
+              "count": 1,
+              "expert": 116
+            },
+            {
+              "count": 1,
+              "expert": 237
+            },
+            {
+              "count": 1,
+              "expert": 239
+            },
+            {
+              "count": 1,
+              "expert": 99
+            }
+          ],
+          "topk_source": "route_jsonl",
+          "total_us_mean": 282.3184,
+          "unique_topk_tuples": 1
+        },
+        {
+          "active_experts": 14,
+          "component_sum_us_mean": 600.9692,
+          "gemm1_us_mean": 92.10413333333332,
+          "gemm2_us_mean": 91.49053333333333,
+          "manual_vs_xpu_fused_moe_max_abs_diff": 0.0,
+          "preallocated_staged_total_us_mean": 213.3352,
+          "preallocated_vs_xpu_fused_moe_max_abs_diff": 0.0,
+          "rows": 2,
+          "top_experts": [
+            {
+              "count": 2,
+              "expert": 116
+            },
+            {
+              "count": 2,
+              "expert": 237
+            },
+            {
+              "count": 1,
+              "expert": 224
+            },
+            {
+              "count": 1,
+              "expert": 239
+            },
+            {
+              "count": 1,
+              "expert": 99
+            }
+          ],
+          "topk_source": "route_jsonl",
+          "total_us_mean": 278.0388,
+          "unique_topk_tuples": 2
+        },
+        {
+          "active_experts": 24,
+          "component_sum_us_mean": 602.9486666666667,
+          "gemm1_us_mean": 91.68639999999999,
+          "gemm2_us_mean": 92.59293333333333,
+          "manual_vs_xpu_fused_moe_max_abs_diff": 0.0,
+          "preallocated_staged_total_us_mean": 218.35146666666665,
+          "preallocated_vs_xpu_fused_moe_max_abs_diff": 0.0,
+          "rows": 4,
+          "top_experts": [
+            {
+              "count": 3,
+              "expert": 224
+            },
+            {
+              "count": 2,
+              "expert": 116
+            },
+            {
+              "count": 2,
+              "expert": 237
+            },
+            {
+              "count": 2,
+              "expert": 151
+            },
+            {
+              "count": 2,
+              "expert": 17
+            }
+          ],
+          "topk_source": "route_jsonl",
+          "total_us_mean": 278.642,
+          "unique_topk_tuples": 4
+        },
+        {
+          "active_experts": 32,
+          "component_sum_us_mean": 601.8514666666666,
+          "gemm1_us_mean": 92.88933333333333,
+          "gemm2_us_mean": 92.3468,
+          "manual_vs_xpu_fused_moe_max_abs_diff": 0.0,
+          "preallocated_staged_total_us_mean": 210.28799999999998,
+          "preallocated_vs_xpu_fused_moe_max_abs_diff": 0.0,
+          "rows": 8,
+          "top_experts": [
+            {
+              "count": 6,
+              "expert": 224
+            },
+            {
+              "count": 5,
+              "expert": 116
+            },
+            {
+              "count": 4,
+              "expert": 239
+            },
+            {
+              "count": 4,
+              "expert": 127
+            },
+            {
+              "count": 3,
+              "expert": 237
+            }
+          ],
+          "topk_source": "route_jsonl",
+          "total_us_mean": 278.04746666666665,
+          "unique_topk_tuples": 8
+        },
+        {
+          "active_experts": 45,
+          "component_sum_us_mean": 585.2010666666666,
+          "gemm1_us_mean": 89.62893333333334,
+          "gemm2_us_mean": 88.72586666666666,
+          "manual_vs_xpu_fused_moe_max_abs_diff": 0.0,
+          "preallocated_staged_total_us_mean": 202.08586666666667,
+          "preallocated_vs_xpu_fused_moe_max_abs_diff": 0.0,
+          "rows": 16,
+          "top_experts": [
+            {
+              "count": 13,
+              "expert": 224
+            },
+            {
+              "count": 8,
+              "expert": 116
+            },
+            {
+              "count": 7,
+              "expert": 237
+            },
+            {
+              "count": 7,
+              "expert": 151
+            },
+            {
+              "count": 6,
+              "expert": 191
+            }
+          ],
+          "topk_source": "route_jsonl",
+          "total_us_mean": 265.1462666666667,
+          "unique_topk_tuples": 16
+        }
+      ],
+      "route_metadata": {
+        "active_experts": 125,
+        "layers": {
+          "language_model.model.layers.20.mlp.experts": 127
+        },
+        "records_loaded": 254,
+        "records_matched": 127,
+        "route_jsonl": "data/qwen36-quark-int8-tp4-routecapture5-routes-rank0-20260611.jsonl",
+        "stages": {
+          "quark_int8_apply": 127
+        },
+        "top_experts": [
+          {
+            "count": 61,
+            "expert": 224
+          },
+          {
+            "count": 57,
+            "expert": 191
+          },
+          {
+            "count": 45,
+            "expert": 237
+          },
+          {
+            "count": 45,
+            "expert": 151
+          },
+          {
+            "count": 42,
+            "expert": 117
+          },
+          {
+            "count": 39,
+            "expert": 41
+          },
+          {
+            "count": 37,
+            "expert": 53
+          },
+          {
+            "count": 33,
+            "expert": 239
+          },
+          {
+            "count": 30,
+            "expert": 80
+          },
+          {
+            "count": 28,
+            "expert": 185
+          },
+          {
+            "count": 27,
+            "expert": 110
+          },
+          {
+            "count": 24,
+            "expert": 206
+          },
+          {
+            "count": 21,
+            "expert": 107
+          },
+          {
+            "count": 19,
+            "expert": 203
+          },
+          {
+            "count": 19,
+            "expert": 121
+          },
+          {
+            "count": 16,
+            "expert": 186
+          }
+        ],
+        "topk_rows_loaded": 127,
+        "unique_topk_tuples": 127
+      },
+      "route_packing_metadata": null
+    },
+    "layer20_row16_r100": {
+      "artifact": "data/qwen36-quark-int8-moe-routecapture5-layer20-row16-r100-20260611.json",
+      "results": [
+        {
+          "active_experts": 45,
+          "component_sum_us_mean": 611.57044,
+          "gemm1_us_mean": 94.05084,
+          "gemm2_us_mean": 92.84964,
+          "manual_vs_xpu_fused_moe_max_abs_diff": 0.0,
+          "preallocated_staged_total_us_mean": 212.98523999999998,
+          "preallocated_vs_xpu_fused_moe_max_abs_diff": 0.0,
+          "rows": 16,
+          "top_experts": [
+            {
+              "count": 13,
+              "expert": 224
+            },
+            {
+              "count": 8,
+              "expert": 116
+            },
+            {
+              "count": 7,
+              "expert": 237
+            },
+            {
+              "count": 7,
+              "expert": 151
+            },
+            {
+              "count": 6,
+              "expert": 191
+            }
+          ],
+          "topk_source": "route_jsonl",
+          "total_us_mean": 278.39707999999996,
+          "unique_topk_tuples": 16
+        }
+      ],
+      "route_metadata": {
+        "active_experts": 125,
+        "layers": {
+          "language_model.model.layers.20.mlp.experts": 127
+        },
+        "records_loaded": 254,
+        "records_matched": 127,
+        "route_jsonl": "data/qwen36-quark-int8-tp4-routecapture5-routes-rank0-20260611.jsonl",
+        "stages": {
+          "quark_int8_apply": 127
+        },
+        "top_experts": [
+          {
+            "count": 61,
+            "expert": 224
+          },
+          {
+            "count": 57,
+            "expert": 191
+          },
+          {
+            "count": 45,
+            "expert": 237
+          },
+          {
+            "count": 45,
+            "expert": 151
+          },
+          {
+            "count": 42,
+            "expert": 117
+          },
+          {
+            "count": 39,
+            "expert": 41
+          },
+          {
+            "count": 37,
+            "expert": 53
+          },
+          {
+            "count": 33,
+            "expert": 239
+          },
+          {
+            "count": 30,
+            "expert": 80
+          },
+          {
+            "count": 28,
+            "expert": 185
+          },
+          {
+            "count": 27,
+            "expert": 110
+          },
+          {
+            "count": 24,
+            "expert": 206
+          },
+          {
+            "count": 21,
+            "expert": 107
+          },
+          {
+            "count": 19,
+            "expert": 203
+          },
+          {
+            "count": 19,
+            "expert": 121
+          },
+          {
+            "count": 16,
+            "expert": 186
+          }
+        ],
+        "topk_rows_loaded": 127,
+        "unique_topk_tuples": 127
+      },
+      "route_packing_metadata": null
+    },
+    "layer20_row1_r100": {
+      "artifact": "data/qwen36-quark-int8-moe-routecapture5-layer20-row1-r100-20260611.json",
+      "results": [
+        {
+          "active_experts": 8,
+          "component_sum_us_mean": 630.4485199999999,
+          "gemm1_us_mean": 96.88588,
+          "gemm2_us_mean": 95.74292,
+          "manual_vs_xpu_fused_moe_max_abs_diff": 0.0,
+          "preallocated_staged_total_us_mean": 225.29312,
+          "preallocated_vs_xpu_fused_moe_max_abs_diff": 0.0,
+          "rows": 1,
+          "top_experts": [
+            {
+              "count": 1,
+              "expert": 224
+            },
+            {
+              "count": 1,
+              "expert": 116
+            },
+            {
+              "count": 1,
+              "expert": 237
+            },
+            {
+              "count": 1,
+              "expert": 239
+            },
+            {
+              "count": 1,
+              "expert": 99
+            }
+          ],
+          "topk_source": "route_jsonl",
+          "total_us_mean": 293.93156,
+          "unique_topk_tuples": 1
+        }
+      ],
+      "route_metadata": {
+        "active_experts": 125,
+        "layers": {
+          "language_model.model.layers.20.mlp.experts": 127
+        },
+        "records_loaded": 254,
+        "records_matched": 127,
+        "route_jsonl": "data/qwen36-quark-int8-tp4-routecapture5-routes-rank0-20260611.jsonl",
+        "stages": {
+          "quark_int8_apply": 127
+        },
+        "top_experts": [
+          {
+            "count": 61,
+            "expert": 224
+          },
+          {
+            "count": 57,
+            "expert": 191
+          },
+          {
+            "count": 45,
+            "expert": 237
+          },
+          {
+            "count": 45,
+            "expert": 151
+          },
+          {
+            "count": 42,
+            "expert": 117
+          },
+          {
+            "count": 39,
+            "expert": 41
+          },
+          {
+            "count": 37,
+            "expert": 53
+          },
+          {
+            "count": 33,
+            "expert": 239
+          },
+          {
+            "count": 30,
+            "expert": 80
+          },
+          {
+            "count": 28,
+            "expert": 185
+          },
+          {
+            "count": 27,
+            "expert": 110
+          },
+          {
+            "count": 24,
+            "expert": 206
+          },
+          {
+            "count": 21,
+            "expert": 107
+          },
+          {
+            "count": 19,
+            "expert": 203
+          },
+          {
+            "count": 19,
+            "expert": 121
+          },
+          {
+            "count": 16,
+            "expert": 186
+          }
+        ],
+        "topk_rows_loaded": 127,
+        "unique_topk_tuples": 127
+      },
+      "route_packing_metadata": null
+    },
+    "layer8_hotpack_r30": {
+      "artifact": "data/qwen36-quark-int8-moe-routecapture5-layer8-hotpack-r30-20260611.json",
+      "results": [
+        {
+          "active_experts": 8,
+          "component_sum_us_mean": 581.7292,
+          "gemm1_us_mean": 88.4,
+          "gemm2_us_mean": 87.76039999999999,
+          "manual_vs_xpu_fused_moe_max_abs_diff": 0.0,
+          "preallocated_staged_total_us_mean": 201.14466666666667,
+          "preallocated_vs_xpu_fused_moe_max_abs_diff": 0.0,
+          "rows": 1,
+          "top_experts": [
+            {
+              "count": 1,
+              "expert": 81
+            },
+            {
+              "count": 1,
+              "expert": 24
+            },
+            {
+              "count": 1,
+              "expert": 0
+            },
+            {
+              "count": 1,
+              "expert": 32
+            },
+            {
+              "count": 1,
+              "expert": 27
+            }
+          ],
+          "topk_source": "route_jsonl",
+          "total_us_mean": 263.71453333333335,
+          "unique_topk_tuples": 1
+        },
+        {
+          "active_experts": 11,
+          "component_sum_us_mean": 576.7389333333333,
+          "gemm1_us_mean": 88.46066666666665,
+          "gemm2_us_mean": 88.23533333333333,
+          "manual_vs_xpu_fused_moe_max_abs_diff": 0.0,
+          "preallocated_staged_total_us_mean": 205.3289333333333,
+          "preallocated_vs_xpu_fused_moe_max_abs_diff": 0.0,
+          "rows": 2,
+          "top_experts": [
+            {
+              "count": 2,
+              "expert": 24
+            },
+            {
+              "count": 2,
+              "expert": 32
+            },
+            {
+              "count": 2,
+              "expert": 27
+            },
+            {
+              "count": 2,
+              "expert": 6
+            },
+            {
+              "count": 2,
+              "expert": 47
+            }
+          ],
+          "topk_source": "route_jsonl",
+          "total_us_mean": 263.2950666666667,
+          "unique_topk_tuples": 2
+        },
+        {
+          "active_experts": 19,
+          "component_sum_us_mean": 576.1253333333333,
+          "gemm1_us_mean": 88.66519999999998,
+          "gemm2_us_mean": 87.82973333333332,
+          "manual_vs_xpu_fused_moe_max_abs_diff": 0.0,
+          "preallocated_staged_total_us_mean": 200.82053333333334,
+          "preallocated_vs_xpu_fused_moe_max_abs_diff": 0.0,
+          "rows": 4,
+          "top_experts": [
+            {
+              "count": 4,
+              "expert": 47
+            },
+            {
+              "count": 3,
+              "expert": 24
+            },
+            {
+              "count": 3,
+              "expert": 0
+            },
+            {
+              "count": 3,
+              "expert": 6
+            },
+            {
+              "count": 2,
+              "expert": 32
+            }
+          ],
+          "topk_source": "route_jsonl",
+          "total_us_mean": 261.7697333333333,
+          "unique_topk_tuples": 4
+        },
+        {
+          "active_experts": 28,
+          "component_sum_us_mean": 577.044,
+          "gemm1_us_mean": 88.89920000000001,
+          "gemm2_us_mean": 87.7708,
+          "manual_vs_xpu_fused_moe_max_abs_diff": 0.0,
+          "preallocated_staged_total_us_mean": 199.55866666666668,
+          "preallocated_vs_xpu_fused_moe_max_abs_diff": 0.0,
+          "rows": 8,
+          "top_experts": [
+            {
+              "count": 7,
+              "expert": 0
+            },
+            {
+              "count": 5,
+              "expert": 24
+            },
+            {
+              "count": 5,
+              "expert": 47
+            },
+            {
+              "count": 4,
+              "expert": 27
+            },
+            {
+              "count": 4,
+              "expert": 8
+            }
+          ],
+          "topk_source": "route_jsonl",
+          "total_us_mean": 261.95,
+          "unique_topk_tuples": 8
+        },
+        {
+          "active_experts": 39,
+          "component_sum_us_mean": 576.342,
+          "gemm1_us_mean": 89.21466666666667,
+          "gemm2_us_mean": 88.74493333333334,
+          "manual_vs_xpu_fused_moe_max_abs_diff": 0.0,
+          "preallocated_staged_total_us_mean": 198.97453333333334,
+          "preallocated_vs_xpu_fused_moe_max_abs_diff": 0.0,
+          "rows": 16,
+          "top_experts": [
+            {
+              "count": 14,
+              "expert": 0
+            },
+            {
+              "count": 10,
+              "expert": 8
+            },
+            {
+              "count": 8,
+              "expert": 24
+            },
+            {
+              "count": 8,
+              "expert": 1
+            },
+            {
+              "count": 7,
+              "expert": 13
+            }
+          ],
+          "topk_source": "route_jsonl",
+          "total_us_mean": 263.3401333333333,
+          "unique_topk_tuples": 16
+        }
+      ],
+      "route_metadata": {
+        "active_experts": 117,
+        "layers": {
+          "language_model.model.layers.8.mlp.experts": 127
+        },
+        "records_loaded": 254,
+        "records_matched": 127,
+        "route_jsonl": "data/qwen36-quark-int8-tp4-routecapture5-routes-rank0-20260611.jsonl",
+        "stages": {
+          "quark_int8_apply": 127
+        },
+        "top_experts": [
+          {
+            "count": 84,
+            "expert": 224
+          },
+          {
+            "count": 55,
+            "expert": 110
+          },
+          {
+            "count": 46,
+            "expert": 151
+          },
+          {
+            "count": 37,
+            "expert": 239
+          },
+          {
+            "count": 35,
+            "expert": 220
+          },
+          {
+            "count": 32,
+            "expert": 117
+          },
+          {
+            "count": 30,
+            "expert": 191
+          },
+          {
+            "count": 30,
+            "expert": 206
+          },
+          {
+            "count": 29,
+            "expert": 61
+          },
+          {
+            "count": 29,
+            "expert": 41
+          },
+          {
+            "count": 29,
+            "expert": 53
+          },
+          {
+            "count": 27,
+            "expert": 107
+          },
+          {
+            "count": 26,
+            "expert": 249
+          },
+          {
+            "count": 23,
+            "expert": 116
+          },
+          {
+            "count": 23,
+            "expert": 57
+          },
+          {
+            "count": 22,
+            "expert": 207
+          }
+        ],
+        "topk_rows_loaded": 127,
+        "unique_topk_tuples": 127
+      },
+      "route_packing_metadata": {
+        "active_experts": 117,
+        "enabled": true,
+        "top_logical_to_physical": [
+          {
+            "count": 84,
+            "logical_expert": 224,
+            "physical_expert": 0
+          },
+          {
+            "count": 55,
+            "logical_expert": 110,
+            "physical_expert": 1
+          },
+          {
+            "count": 46,
+            "logical_expert": 151,
+            "physical_expert": 2
+          },
+          {
+            "count": 37,
+            "logical_expert": 239,
+            "physical_expert": 3
+          },
+          {
+            "count": 35,
+            "logical_expert": 220,
+            "physical_expert": 4
+          },
+          {
+            "count": 32,
+            "logical_expert": 117,
+            "physical_expert": 5
+          },
+          {
+            "count": 30,
+            "logical_expert": 191,
+            "physical_expert": 6
+          },
+          {
+            "count": 30,
+            "logical_expert": 206,
+            "physical_expert": 7
+          },
+          {
+            "count": 29,
+            "logical_expert": 61,
+            "physical_expert": 8
+          },
+          {
+            "count": 29,
+            "logical_expert": 41,
+            "physical_expert": 9
+          },
+          {
+            "count": 29,
+            "logical_expert": 53,
+            "physical_expert": 10
+          },
+          {
+            "count": 27,
+            "logical_expert": 107,
+            "physical_expert": 11
+          },
+          {
+            "count": 26,
+            "logical_expert": 249,
+            "physical_expert": 12
+          },
+          {
+            "count": 23,
+            "logical_expert": 116,
+            "physical_expert": 13
+          },
+          {
+            "count": 23,
+            "logical_expert": 57,
+            "physical_expert": 14
+          },
+          {
+            "count": 22,
+            "logical_expert": 207,
+            "physical_expert": 15
+          }
+        ]
+      }
+    },
+    "layer8_hotpack_row16_r100": {
+      "artifact": "data/qwen36-quark-int8-moe-routecapture5-layer8-hotpack-row16-r100-20260611.json",
+      "results": [
+        {
+          "active_experts": 39,
+          "component_sum_us_mean": 605.75216,
+          "gemm1_us_mean": 93.1632,
+          "gemm2_us_mean": 92.9916,
+          "manual_vs_xpu_fused_moe_max_abs_diff": 0.0,
+          "preallocated_staged_total_us_mean": 207.74468000000002,
+          "preallocated_vs_xpu_fused_moe_max_abs_diff": 0.0,
+          "rows": 16,
+          "top_experts": [
+            {
+              "count": 14,
+              "expert": 0
+            },
+            {
+              "count": 10,
+              "expert": 8
+            },
+            {
+              "count": 8,
+              "expert": 24
+            },
+            {
+              "count": 8,
+              "expert": 1
+            },
+            {
+              "count": 7,
+              "expert": 13
+            }
+          ],
+          "topk_source": "route_jsonl",
+          "total_us_mean": 269.59296,
+          "unique_topk_tuples": 16
+        }
+      ],
+      "route_metadata": {
+        "active_experts": 117,
+        "layers": {
+          "language_model.model.layers.8.mlp.experts": 127
+        },
+        "records_loaded": 254,
+        "records_matched": 127,
+        "route_jsonl": "data/qwen36-quark-int8-tp4-routecapture5-routes-rank0-20260611.jsonl",
+        "stages": {
+          "quark_int8_apply": 127
+        },
+        "top_experts": [
+          {
+            "count": 84,
+            "expert": 224
+          },
+          {
+            "count": 55,
+            "expert": 110
+          },
+          {
+            "count": 46,
+            "expert": 151
+          },
+          {
+            "count": 37,
+            "expert": 239
+          },
+          {
+            "count": 35,
+            "expert": 220
+          },
+          {
+            "count": 32,
+            "expert": 117
+          },
+          {
+            "count": 30,
+            "expert": 191
+          },
+          {
+            "count": 30,
+            "expert": 206
+          },
+          {
+            "count": 29,
+            "expert": 61
+          },
+          {
+            "count": 29,
+            "expert": 41
+          },
+          {
+            "count": 29,
+            "expert": 53
+          },
+          {
+            "count": 27,
+            "expert": 107
+          },
+          {
+            "count": 26,
+            "expert": 249
+          },
+          {
+            "count": 23,
+            "expert": 116
+          },
+          {
+            "count": 23,
+            "expert": 57
+          },
+          {
+            "count": 22,
+            "expert": 207
+          }
+        ],
+        "topk_rows_loaded": 127,
+        "unique_topk_tuples": 127
+      },
+      "route_packing_metadata": {
+        "active_experts": 117,
+        "enabled": true,
+        "top_logical_to_physical": [
+          {
+            "count": 84,
+            "logical_expert": 224,
+            "physical_expert": 0
+          },
+          {
+            "count": 55,
+            "logical_expert": 110,
+            "physical_expert": 1
+          },
+          {
+            "count": 46,
+            "logical_expert": 151,
+            "physical_expert": 2
+          },
+          {
+            "count": 37,
+            "logical_expert": 239,
+            "physical_expert": 3
+          },
+          {
+            "count": 35,
+            "logical_expert": 220,
+            "physical_expert": 4
+          },
+          {
+            "count": 32,
+            "logical_expert": 117,
+            "physical_expert": 5
+          },
+          {
+            "count": 30,
+            "logical_expert": 191,
+            "physical_expert": 6
+          },
+          {
+            "count": 30,
+            "logical_expert": 206,
+            "physical_expert": 7
+          },
+          {
+            "count": 29,
+            "logical_expert": 61,
+            "physical_expert": 8
+          },
+          {
+            "count": 29,
+            "logical_expert": 41,
+            "physical_expert": 9
+          },
+          {
+            "count": 29,
+            "logical_expert": 53,
+            "physical_expert": 10
+          },
+          {
+            "count": 27,
+            "logical_expert": 107,
+            "physical_expert": 11
+          },
+          {
+            "count": 26,
+            "logical_expert": 249,
+            "physical_expert": 12
+          },
+          {
+            "count": 23,
+            "logical_expert": 116,
+            "physical_expert": 13
+          },
+          {
+            "count": 23,
+            "logical_expert": 57,
+            "physical_expert": 14
+          },
+          {
+            "count": 22,
+            "logical_expert": 207,
+            "physical_expert": 15
+          }
+        ]
+      }
+    },
+    "layer8_hotpack_row1_r100": {
+      "artifact": "data/qwen36-quark-int8-moe-routecapture5-layer8-hotpack-row1-r100-20260611.json",
+      "results": [
+        {
+          "active_experts": 8,
+          "component_sum_us_mean": 599.7404399999999,
+          "gemm1_us_mean": 91.84863999999999,
+          "gemm2_us_mean": 91.43212,
+          "manual_vs_xpu_fused_moe_max_abs_diff": 0.0,
+          "preallocated_staged_total_us_mean": 207.09416,
+          "preallocated_vs_xpu_fused_moe_max_abs_diff": 0.0,
+          "rows": 1,
+          "top_experts": [
+            {
+              "count": 1,
+              "expert": 81
+            },
+            {
+              "count": 1,
+              "expert": 24
+            },
+            {
+              "count": 1,
+              "expert": 0
+            },
+            {
+              "count": 1,
+              "expert": 32
+            },
+            {
+              "count": 1,
+              "expert": 27
+            }
+          ],
+          "topk_source": "route_jsonl",
+          "total_us_mean": 269.06307999999996,
+          "unique_topk_tuples": 1
+        }
+      ],
+      "route_metadata": {
+        "active_experts": 117,
+        "layers": {
+          "language_model.model.layers.8.mlp.experts": 127
+        },
+        "records_loaded": 254,
+        "records_matched": 127,
+        "route_jsonl": "data/qwen36-quark-int8-tp4-routecapture5-routes-rank0-20260611.jsonl",
+        "stages": {
+          "quark_int8_apply": 127
+        },
+        "top_experts": [
+          {
+            "count": 84,
+            "expert": 224
+          },
+          {
+            "count": 55,
+            "expert": 110
+          },
+          {
+            "count": 46,
+            "expert": 151
+          },
+          {
+            "count": 37,
+            "expert": 239
+          },
+          {
+            "count": 35,
+            "expert": 220
+          },
+          {
+            "count": 32,
+            "expert": 117
+          },
+          {
+            "count": 30,
+            "expert": 191
+          },
+          {
+            "count": 30,
+            "expert": 206
+          },
+          {
+            "count": 29,
+            "expert": 61
+          },
+          {
+            "count": 29,
+            "expert": 41
+          },
+          {
+            "count": 29,
+            "expert": 53
+          },
+          {
+            "count": 27,
+            "expert": 107
+          },
+          {
+            "count": 26,
+            "expert": 249
+          },
+          {
+            "count": 23,
+            "expert": 116
+          },
+          {
+            "count": 23,
+            "expert": 57
+          },
+          {
+            "count": 22,
+            "expert": 207
+          }
+        ],
+        "topk_rows_loaded": 127,
+        "unique_topk_tuples": 127
+      },
+      "route_packing_metadata": {
+        "active_experts": 117,
+        "enabled": true,
+        "top_logical_to_physical": [
+          {
+            "count": 84,
+            "logical_expert": 224,
+            "physical_expert": 0
+          },
+          {
+            "count": 55,
+            "logical_expert": 110,
+            "physical_expert": 1
+          },
+          {
+            "count": 46,
+            "logical_expert": 151,
+            "physical_expert": 2
+          },
+          {
+            "count": 37,
+            "logical_expert": 239,
+            "physical_expert": 3
+          },
+          {
+            "count": 35,
+            "logical_expert": 220,
+            "physical_expert": 4
+          },
+          {
+            "count": 32,
+            "logical_expert": 117,
+            "physical_expert": 5
+          },
+          {
+            "count": 30,
+            "logical_expert": 191,
+            "physical_expert": 6
+          },
+          {
+            "count": 30,
+            "logical_expert": 206,
+            "physical_expert": 7
+          },
+          {
+            "count": 29,
+            "logical_expert": 61,
+            "physical_expert": 8
+          },
+          {
+            "count": 29,
+            "logical_expert": 41,
+            "physical_expert": 9
+          },
+          {
+            "count": 29,
+            "logical_expert": 53,
+            "physical_expert": 10
+          },
+          {
+            "count": 27,
+            "logical_expert": 107,
+            "physical_expert": 11
+          },
+          {
+            "count": 26,
+            "logical_expert": 249,
+            "physical_expert": 12
+          },
+          {
+            "count": 23,
+            "logical_expert": 116,
+            "physical_expert": 13
+          },
+          {
+            "count": 23,
+            "logical_expert": 57,
+            "physical_expert": 14
+          },
+          {
+            "count": 22,
+            "logical_expert": 207,
+            "physical_expert": 15
+          }
+        ]
+      }
+    },
+    "layer8_r30": {
+      "artifact": "data/qwen36-quark-int8-moe-routecapture5-layer8-r30-20260611.json",
+      "results": [
+        {
+          "active_experts": 8,
+          "component_sum_us_mean": 675.6914666666667,
+          "gemm1_us_mean": 104.3276,
+          "gemm2_us_mean": 102.66013333333333,
+          "manual_vs_xpu_fused_moe_max_abs_diff": 0.0,
+          "preallocated_staged_total_us_mean": 235.50973333333332,
+          "preallocated_vs_xpu_fused_moe_max_abs_diff": 0.0,
+          "rows": 1,
+          "top_experts": [
+            {
+              "count": 1,
+              "expert": 77
+            },
+            {
+              "count": 1,
+              "expert": 173
+            },
+            {
+              "count": 1,
+              "expert": 224
+            },
+            {
+              "count": 1,
+              "expert": 180
+            },
+            {
+              "count": 1,
+              "expert": 4
+            }
+          ],
+          "topk_source": "route_jsonl",
+          "total_us_mean": 312.02773333333334,
+          "unique_topk_tuples": 1
+        },
+        {
+          "active_experts": 11,
+          "component_sum_us_mean": 636.3378666666666,
+          "gemm1_us_mean": 99.05999999999999,
+          "gemm2_us_mean": 96.99386666666666,
+          "manual_vs_xpu_fused_moe_max_abs_diff": 0.0,
+          "preallocated_staged_total_us_mean": 229.0808,
+          "preallocated_vs_xpu_fused_moe_max_abs_diff": 0.0,
+          "rows": 2,
+          "top_experts": [
+            {
+              "count": 2,
+              "expert": 173
+            },
+            {
+              "count": 2,
+              "expert": 180
+            },
+            {
+              "count": 2,
+              "expert": 4
+            },
+            {
+              "count": 2,
+              "expert": 191
+            },
+            {
+              "count": 2,
+              "expert": 20
+            }
+          ],
+          "topk_source": "route_jsonl",
+          "total_us_mean": 294.76546666666667,
+          "unique_topk_tuples": 2
+        },
+        {
+          "active_experts": 19,
+          "component_sum_us_mean": 691.4734666666666,
+          "gemm1_us_mean": 105.63626666666666,
+          "gemm2_us_mean": 105.80786666666667,
+          "manual_vs_xpu_fused_moe_max_abs_diff": 0.0,
+          "preallocated_staged_total_us_mean": 246.10213333333334,
+          "preallocated_vs_xpu_fused_moe_max_abs_diff": 0.0,
+          "rows": 4,
+          "top_experts": [
+            {
+              "count": 4,
+              "expert": 20
+            },
+            {
+              "count": 3,
+              "expert": 173
+            },
+            {
+              "count": 3,
+              "expert": 224
+            },
+            {
+              "count": 3,
+              "expert": 191
+            },
+            {
+              "count": 2,
+              "expert": 180
+            }
+          ],
+          "topk_source": "route_jsonl",
+          "total_us_mean": 322.35319999999996,
+          "unique_topk_tuples": 4
+        },
+        {
+          "active_experts": 28,
+          "component_sum_us_mean": 699.7085333333333,
+          "gemm1_us_mean": 110.0008,
+          "gemm2_us_mean": 106.81666666666666,
+          "manual_vs_xpu_fused_moe_max_abs_diff": 0.0,
+          "preallocated_staged_total_us_mean": 247.50959999999998,
+          "preallocated_vs_xpu_fused_moe_max_abs_diff": 0.0,
+          "rows": 8,
+          "top_experts": [
+            {
+              "count": 7,
+              "expert": 224
+            },
+            {
+              "count": 5,
+              "expert": 173
+            },
+            {
+              "count": 5,
+              "expert": 20
+            },
+            {
+              "count": 4,
+              "expert": 4
+            },
+            {
+              "count": 4,
+              "expert": 61
+            }
+          ],
+          "topk_source": "route_jsonl",
+          "total_us_mean": 328.8948,
+          "unique_topk_tuples": 8
+        },
+        {
+          "active_experts": 39,
+          "component_sum_us_mean": 691.1077333333333,
+          "gemm1_us_mean": 104.84413333333333,
+          "gemm2_us_mean": 106.38506666666667,
+          "manual_vs_xpu_fused_moe_max_abs_diff": 0.0,
+          "preallocated_staged_total_us_mean": 242.0721333333333,
+          "preallocated_vs_xpu_fused_moe_max_abs_diff": 0.0,
+          "rows": 16,
+          "top_experts": [
+            {
+              "count": 14,
+              "expert": 224
+            },
+            {
+              "count": 10,
+              "expert": 61
+            },
+            {
+              "count": 8,
+              "expert": 173
+            },
+            {
+              "count": 8,
+              "expert": 110
+            },
+            {
+              "count": 7,
+              "expert": 116
+            }
+          ],
+          "topk_source": "route_jsonl",
+          "total_us_mean": 325.17159999999996,
+          "unique_topk_tuples": 16
+        }
+      ],
+      "route_metadata": {
+        "active_experts": 117,
+        "layers": {
+          "language_model.model.layers.8.mlp.experts": 127
+        },
+        "records_loaded": 254,
+        "records_matched": 127,
+        "route_jsonl": "data/qwen36-quark-int8-tp4-routecapture5-routes-rank0-20260611.jsonl",
+        "stages": {
+          "quark_int8_apply": 127
+        },
+        "top_experts": [
+          {
+            "count": 84,
+            "expert": 224
+          },
+          {
+            "count": 55,
+            "expert": 110
+          },
+          {
+            "count": 46,
+            "expert": 151
+          },
+          {
+            "count": 37,
+            "expert": 239
+          },
+          {
+            "count": 35,
+            "expert": 220
+          },
+          {
+            "count": 32,
+            "expert": 117
+          },
+          {
+            "count": 30,
+            "expert": 191
+          },
+          {
+            "count": 30,
+            "expert": 206
+          },
+          {
+            "count": 29,
+            "expert": 61
+          },
+          {
+            "count": 29,
+            "expert": 41
+          },
+          {
+            "count": 29,
+            "expert": 53
+          },
+          {
+            "count": 27,
+            "expert": 107
+          },
+          {
+            "count": 26,
+            "expert": 249
+          },
+          {
+            "count": 23,
+            "expert": 116
+          },
+          {
+            "count": 23,
+            "expert": 57
+          },
+          {
+            "count": 22,
+            "expert": 207
+          }
+        ],
+        "topk_rows_loaded": 127,
+        "unique_topk_tuples": 127
+      },
+      "route_packing_metadata": null
+    },
+    "layer8_row16_r100": {
+      "artifact": "data/qwen36-quark-int8-moe-routecapture5-layer8-row16-r100-20260611.json",
+      "results": [
+        {
+          "active_experts": 39,
+          "component_sum_us_mean": 608.9714799999999,
+          "gemm1_us_mean": 92.92504,
+          "gemm2_us_mean": 92.84548,
+          "manual_vs_xpu_fused_moe_max_abs_diff": 0.0,
+          "preallocated_staged_total_us_mean": 213.24056000000002,
+          "preallocated_vs_xpu_fused_moe_max_abs_diff": 0.0,
+          "rows": 16,
+          "top_experts": [
+            {
+              "count": 14,
+              "expert": 224
+            },
+            {
+              "count": 10,
+              "expert": 61
+            },
+            {
+              "count": 8,
+              "expert": 173
+            },
+            {
+              "count": 8,
+              "expert": 110
+            },
+            {
+              "count": 7,
+              "expert": 116
+            }
+          ],
+          "topk_source": "route_jsonl",
+          "total_us_mean": 275.84596,
+          "unique_topk_tuples": 16
+        }
+      ],
+      "route_metadata": {
+        "active_experts": 117,
+        "layers": {
+          "language_model.model.layers.8.mlp.experts": 127
+        },
+        "records_loaded": 254,
+        "records_matched": 127,
+        "route_jsonl": "data/qwen36-quark-int8-tp4-routecapture5-routes-rank0-20260611.jsonl",
+        "stages": {
+          "quark_int8_apply": 127
+        },
+        "top_experts": [
+          {
+            "count": 84,
+            "expert": 224
+          },
+          {
+            "count": 55,
+            "expert": 110
+          },
+          {
+            "count": 46,
+            "expert": 151
+          },
+          {
+            "count": 37,
+            "expert": 239
+          },
+          {
+            "count": 35,
+            "expert": 220
+          },
+          {
+            "count": 32,
+            "expert": 117
+          },
+          {
+            "count": 30,
+            "expert": 191
+          },
+          {
+            "count": 30,
+            "expert": 206
+          },
+          {
+            "count": 29,
+            "expert": 61
+          },
+          {
+            "count": 29,
+            "expert": 41
+          },
+          {
+            "count": 29,
+            "expert": 53
+          },
+          {
+            "count": 27,
+            "expert": 107
+          },
+          {
+            "count": 26,
+            "expert": 249
+          },
+          {
+            "count": 23,
+            "expert": 116
+          },
+          {
+            "count": 23,
+            "expert": 57
+          },
+          {
+            "count": 22,
+            "expert": 207
+          }
+        ],
+        "topk_rows_loaded": 127,
+        "unique_topk_tuples": 127
+      },
+      "route_packing_metadata": null
+    },
+    "layer8_row1_r100": {
+      "artifact": "data/qwen36-quark-int8-moe-routecapture5-layer8-row1-r100-20260611.json",
+      "results": [
+        {
+          "active_experts": 8,
+          "component_sum_us_mean": 604.9836,
+          "gemm1_us_mean": 92.28648,
+          "gemm2_us_mean": 92.46796,
+          "manual_vs_xpu_fused_moe_max_abs_diff": 0.0,
+          "preallocated_staged_total_us_mean": 207.70412,
+          "preallocated_vs_xpu_fused_moe_max_abs_diff": 0.0,
+          "rows": 1,
+          "top_experts": [
+            {
+              "count": 1,
+              "expert": 77
+            },
+            {
+              "count": 1,
+              "expert": 173
+            },
+            {
+              "count": 1,
+              "expert": 224
+            },
+            {
+              "count": 1,
+              "expert": 180
+            },
+            {
+              "count": 1,
+              "expert": 4
+            }
+          ],
+          "topk_source": "route_jsonl",
+          "total_us_mean": 275.72532,
+          "unique_topk_tuples": 1
+        }
+      ],
+      "route_metadata": {
+        "active_experts": 117,
+        "layers": {
+          "language_model.model.layers.8.mlp.experts": 127
+        },
+        "records_loaded": 254,
+        "records_matched": 127,
+        "route_jsonl": "data/qwen36-quark-int8-tp4-routecapture5-routes-rank0-20260611.jsonl",
+        "stages": {
+          "quark_int8_apply": 127
+        },
+        "top_experts": [
+          {
+            "count": 84,
+            "expert": 224
+          },
+          {
+            "count": 55,
+            "expert": 110
+          },
+          {
+            "count": 46,
+            "expert": 151
+          },
+          {
+            "count": 37,
+            "expert": 239
+          },
+          {
+            "count": 35,
+            "expert": 220
+          },
+          {
+            "count": 32,
+            "expert": 117
+          },
+          {
+            "count": 30,
+            "expert": 191
+          },
+          {
+            "count": 30,
+            "expert": 206
+          },
+          {
+            "count": 29,
+            "expert": 61
+          },
+          {
+            "count": 29,
+            "expert": 41
+          },
+          {
+            "count": 29,
+            "expert": 53
+          },
+          {
+            "count": 27,
+            "expert": 107
+          },
+          {
+            "count": 26,
+            "expert": 249
+          },
+          {
+            "count": 23,
+            "expert": 116
+          },
+          {
+            "count": 23,
+            "expert": 57
+          },
+          {
+            "count": 22,
+            "expert": 207
+          }
+        ],
+        "topk_rows_loaded": 127,
+        "unique_topk_tuples": 127
+      },
+      "route_packing_metadata": null
+    },
+    "synthetic_r30": {
+      "artifact": "data/qwen36-quark-int8-moe-synthetic-uniform-r30-20260611.json",
+      "results": [
+        {
+          "active_experts": 8,
+          "component_sum_us_mean": 617.0406666666667,
+          "gemm1_us_mean": 100.01506666666666,
+          "gemm2_us_mean": 93.63293333333333,
+          "manual_vs_xpu_fused_moe_max_abs_diff": 0.0,
+          "preallocated_staged_total_us_mean": 209.2913333333333,
+          "preallocated_vs_xpu_fused_moe_max_abs_diff": 0.0,
+          "rows": 1,
+          "top_experts": [
+            {
+              "count": 1,
+              "expert": 0
+            },
+            {
+              "count": 1,
+              "expert": 1
+            },
+            {
+              "count": 1,
+              "expert": 2
+            },
+            {
+              "count": 1,
+              "expert": 3
+            },
+            {
+              "count": 1,
+              "expert": 4
+            }
+          ],
+          "topk_source": "synthetic_uniform",
+          "total_us_mean": 279.82239999999996,
+          "unique_topk_tuples": 1
+        },
+        {
+          "active_experts": 16,
+          "component_sum_us_mean": 589.6054666666666,
+          "gemm1_us_mean": 89.97733333333332,
+          "gemm2_us_mean": 91.89093333333334,
+          "manual_vs_xpu_fused_moe_max_abs_diff": 0.0,
+          "preallocated_staged_total_us_mean": 204.9476,
+          "preallocated_vs_xpu_fused_moe_max_abs_diff": 0.0,
+          "rows": 2,
+          "top_experts": [
+            {
+              "count": 1,
+              "expert": 0
+            },
+            {
+              "count": 1,
+              "expert": 1
+            },
+            {
+              "count": 1,
+              "expert": 2
+            },
+            {
+              "count": 1,
+              "expert": 3
+            },
+            {
+              "count": 1,
+              "expert": 4
+            }
+          ],
+          "topk_source": "synthetic_uniform",
+          "total_us_mean": 271.8352,
+          "unique_topk_tuples": 2
+        },
+        {
+          "active_experts": 32,
+          "component_sum_us_mean": 614.5065333333333,
+          "gemm1_us_mean": 94.17546666666665,
+          "gemm2_us_mean": 94.11653333333334,
+          "manual_vs_xpu_fused_moe_max_abs_diff": 0.0,
+          "preallocated_staged_total_us_mean": 210.86866666666666,
+          "preallocated_vs_xpu_fused_moe_max_abs_diff": 0.0,
+          "rows": 4,
+          "top_experts": [
+            {
+              "count": 1,
+              "expert": 0
+            },
+            {
+              "count": 1,
+              "expert": 1
+            },
+            {
+              "count": 1,
+              "expert": 2
+            },
+            {
+              "count": 1,
+              "expert": 3
+            },
+            {
+              "count": 1,
+              "expert": 4
+            }
+          ],
+          "topk_source": "synthetic_uniform",
+          "total_us_mean": 288.2862666666667,
+          "unique_topk_tuples": 4
+        },
+        {
+          "active_experts": 64,
+          "component_sum_us_mean": 602.9070666666667,
+          "gemm1_us_mean": 110.38906666666666,
+          "gemm2_us_mean": 88.3688,
+          "manual_vs_xpu_fused_moe_max_abs_diff": 0.0,
+          "preallocated_staged_total_us_mean": 237.11306666666667,
+          "preallocated_vs_xpu_fused_moe_max_abs_diff": 0.0,
+          "rows": 8,
+          "top_experts": [
+            {
+              "count": 1,
+              "expert": 0
+            },
+            {
+              "count": 1,
+              "expert": 1
+            },
+            {
+              "count": 1,
+              "expert": 2
+            },
+            {
+              "count": 1,
+              "expert": 3
+            },
+            {
+              "count": 1,
+              "expert": 4
+            }
+          ],
+          "topk_source": "synthetic_uniform",
+          "total_us_mean": 270.23186666666663,
+          "unique_topk_tuples": 8
+        },
+        {
+          "active_experts": 128,
+          "component_sum_us_mean": 663.7401333333332,
+          "gemm1_us_mean": 162.60573333333332,
+          "gemm2_us_mean": 108.26573333333333,
+          "manual_vs_xpu_fused_moe_max_abs_diff": 0.0,
+          "preallocated_staged_total_us_mean": 319.18639999999994,
+          "preallocated_vs_xpu_fused_moe_max_abs_diff": 0.0,
+          "rows": 16,
+          "top_experts": [
+            {
+              "count": 1,
+              "expert": 0
+            },
+            {
+              "count": 1,
+              "expert": 1
+            },
+            {
+              "count": 1,
+              "expert": 2
+            },
+            {
+              "count": 1,
+              "expert": 3
+            },
+            {
+              "count": 1,
+              "expert": 4
+            }
+          ],
+          "topk_source": "synthetic_uniform",
+          "total_us_mean": 350.8908,
+          "unique_topk_tuples": 16
+        }
+      ],
+      "route_metadata": null,
+      "route_packing_metadata": null
+    },
+    "synthetic_row16_r100": {
+      "artifact": "data/qwen36-quark-int8-moe-synthetic-uniform-row16-r100-20260611.json",
+      "results": [
+        {
+          "active_experts": 128,
+          "component_sum_us_mean": 760.70696,
+          "gemm1_us_mean": 168.81176,
+          "gemm2_us_mean": 115.51799999999999,
+          "manual_vs_xpu_fused_moe_max_abs_diff": 0.0,
+          "preallocated_staged_total_us_mean": 338.07019999999994,
+          "preallocated_vs_xpu_fused_moe_max_abs_diff": 0.0,
+          "rows": 16,
+          "top_experts": [
+            {
+              "count": 1,
+              "expert": 0
+            },
+            {
+              "count": 1,
+              "expert": 1
+            },
+            {
+              "count": 1,
+              "expert": 2
+            },
+            {
+              "count": 1,
+              "expert": 3
+            },
+            {
+              "count": 1,
+              "expert": 4
+            }
+          ],
+          "topk_source": "synthetic_uniform",
+          "total_us_mean": 377.27456,
+          "unique_topk_tuples": 16
+        }
+      ],
+      "route_metadata": null,
+      "route_packing_metadata": null
+    },
+    "synthetic_row1_r100": {
+      "artifact": "data/qwen36-quark-int8-moe-synthetic-uniform-row1-r100-20260611.json",
+      "results": [
+        {
+          "active_experts": 8,
+          "component_sum_us_mean": 608.50816,
+          "gemm1_us_mean": 93.38524,
+          "gemm2_us_mean": 93.16475999999999,
+          "manual_vs_xpu_fused_moe_max_abs_diff": 0.0,
+          "preallocated_staged_total_us_mean": 214.11363999999998,
+          "preallocated_vs_xpu_fused_moe_max_abs_diff": 0.0,
+          "rows": 1,
+          "top_experts": [
+            {
+              "count": 1,
+              "expert": 0
+            },
+            {
+              "count": 1,
+              "expert": 1
+            },
+            {
+              "count": 1,
+              "expert": 2
+            },
+            {
+              "count": 1,
+              "expert": 3
+            },
+            {
+              "count": 1,
+              "expert": 4
+            }
+          ],
+          "topk_source": "synthetic_uniform",
+          "total_us_mean": 280.17652,
+          "unique_topk_tuples": 1
+        }
+      ],
+      "route_metadata": null,
+      "route_packing_metadata": null
+    }
+  }
+}

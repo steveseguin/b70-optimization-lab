@@ -1,0 +1,168 @@
+{
+  "fused_silu_quant_enabled": false,
+  "model_config": "/mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118/config.json",
+  "results": [
+    {
+      "components_us_mean": {
+        "activation": 76.3984,
+        "activation_plus_quant2": 162.63103999999998,
+        "component_sum": 604.9836,
+        "gather": 77.49196,
+        "gemm1": 92.28648,
+        "gemm2": 92.46796,
+        "quant1": 88.17587999999999,
+        "quant2": 86.23263999999999,
+        "remap": 91.93028
+      },
+      "dtype": "bf16",
+      "hidden_size": 2048,
+      "inter_size_per_tp": 128,
+      "iterations": 100,
+      "manual_vs_xpu_fused_moe_max_abs_diff": 0.0,
+      "moe_inputs": 8,
+      "num_experts": 256,
+      "preallocated_staged_total_us_mean": 207.70412,
+      "preallocated_vs_xpu_fused_moe_max_abs_diff": 0.0,
+      "rows": 1,
+      "topk": 8,
+      "topk_source": "route_jsonl",
+      "topk_summary": {
+        "active_experts": 8,
+        "top_experts": [
+          {
+            "count": 1,
+            "expert": 77
+          },
+          {
+            "count": 1,
+            "expert": 173
+          },
+          {
+            "count": 1,
+            "expert": 224
+          },
+          {
+            "count": 1,
+            "expert": 180
+          },
+          {
+            "count": 1,
+            "expert": 4
+          },
+          {
+            "count": 1,
+            "expert": 99
+          },
+          {
+            "count": 1,
+            "expert": 191
+          },
+          {
+            "count": 1,
+            "expert": 20
+          }
+        ],
+        "topk_tuple_examples": [
+          {
+            "count": 1,
+            "topk_ids": [
+              77,
+              173,
+              224,
+              180,
+              4,
+              99,
+              191,
+              20
+            ]
+          }
+        ],
+        "unique_topk_tuples": 1
+      },
+      "total_us_mean": 275.72532,
+      "warmup": 10
+    }
+  ],
+  "route_metadata": {
+    "active_experts": 117,
+    "layers": {
+      "language_model.model.layers.8.mlp.experts": 127
+    },
+    "records_loaded": 254,
+    "records_matched": 127,
+    "route_jsonl": "data/qwen36-quark-int8-tp4-routecapture5-routes-rank0-20260611.jsonl",
+    "stages": {
+      "quark_int8_apply": 127
+    },
+    "top_experts": [
+      {
+        "count": 84,
+        "expert": 224
+      },
+      {
+        "count": 55,
+        "expert": 110
+      },
+      {
+        "count": 46,
+        "expert": 151
+      },
+      {
+        "count": 37,
+        "expert": 239
+      },
+      {
+        "count": 35,
+        "expert": 220
+      },
+      {
+        "count": 32,
+        "expert": 117
+      },
+      {
+        "count": 30,
+        "expert": 191
+      },
+      {
+        "count": 30,
+        "expert": 206
+      },
+      {
+        "count": 29,
+        "expert": 61
+      },
+      {
+        "count": 29,
+        "expert": 41
+      },
+      {
+        "count": 29,
+        "expert": 53
+      },
+      {
+        "count": 27,
+        "expert": 107
+      },
+      {
+        "count": 26,
+        "expert": 249
+      },
+      {
+        "count": 23,
+        "expert": 116
+      },
+      {
+        "count": 23,
+        "expert": 57
+      },
+      {
+        "count": 22,
+        "expert": 207
+      }
+    ],
+    "topk_rows_loaded": 127,
+    "unique_topk_tuples": 127
+  },
+  "route_packing_metadata": null,
+  "tp_size": 4
+}

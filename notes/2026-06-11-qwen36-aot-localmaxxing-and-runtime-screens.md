@@ -1347,3 +1347,105 @@ Direct quality gate detail:
       branches.
     - Do not promote any branch until it passes no-thinking direct quality,
       frontdoor quality, repeat64 or stronger, and a short stability soak.
+
+## Route Replay Microbench
+
+I stopped the accepted endpoint temporarily to free XPU memory, ran the route
+replay microbench on one B70 (`ONEAPI_DEVICE_SELECTOR=level_zero:0`), then
+restored the accepted service as `qwen36-tp4-accepted-restored-20260611f`.
+Restore health passed after `62s`, and a direct no-thinking chat canary returned
+exactly `OK`.
+
+Code changes:
+
+- `scripts/bench-qwen36-int8-moe-kernels.py`
+  - route replay: `--route-jsonl`, `--route-layer-regex`,
+    `--route-stage-regex`, token-count filters, and `--route-start-index`
+  - hot-expert packing simulation: `--route-pack-hot-experts`
+
+Artifacts:
+
+- summary: `data/qwen36-quark-int8-moe-route-replay-summary-20260611.json`
+- synthetic route baseline:
+  `data/qwen36-quark-int8-moe-synthetic-uniform-r30-20260611.json`
+- routecapture5 layer 8:
+  `data/qwen36-quark-int8-moe-routecapture5-layer8-r30-20260611.json`
+- routecapture5 layer 8 hot-pack simulation:
+  `data/qwen36-quark-int8-moe-routecapture5-layer8-hotpack-r30-20260611.json`
+- routecapture5 layer 20:
+  `data/qwen36-quark-int8-moe-routecapture5-layer20-r30-20260611.json`
+- routecapture5 layer 20 hot-pack simulation:
+  `data/qwen36-quark-int8-moe-routecapture5-layer20-hotpack-r30-20260611.json`
+- rows=1 r100 confirmations:
+  - `data/qwen36-quark-int8-moe-synthetic-uniform-row1-r100-20260611.json`
+  - `data/qwen36-quark-int8-moe-routecapture5-layer8-row1-r100-20260611.json`
+  - `data/qwen36-quark-int8-moe-routecapture5-layer8-hotpack-row1-r100-20260611.json`
+  - `data/qwen36-quark-int8-moe-routecapture5-layer20-row1-r100-20260611.json`
+  - `data/qwen36-quark-int8-moe-routecapture5-layer20-hotpack-row1-r100-20260611.json`
+- rows=16 r100 confirmations:
+  - `data/qwen36-quark-int8-moe-synthetic-uniform-row16-r100-20260611.json`
+  - `data/qwen36-quark-int8-moe-routecapture5-layer8-row16-r100-20260611.json`
+  - `data/qwen36-quark-int8-moe-routecapture5-layer8-hotpack-row16-r100-20260611.json`
+  - `data/qwen36-quark-int8-moe-routecapture5-layer20-row16-r100-20260611.json`
+  - `data/qwen36-quark-int8-moe-routecapture5-layer20-hotpack-row16-r100-20260611.json`
+
+Representative commands:
+
+```bash
+export PYTHONPATH="/home/steve/src/vllm:/home/steve/src/vllm-xpu-kernels${PYTHONPATH:+:$PYTHONPATH}"
+export LD_LIBRARY_PATH="/home/steve/src/vllm-xpu-kernels/vllm_xpu_kernels:/home/steve/.venvs/vllm-xpu/lib:/home/steve/.venvs/vllm-xpu/lib/python3.12/site-packages/torch/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+export ONEAPI_DEVICE_SELECTOR=level_zero:0
+export ZE_AFFINITY_MASK=0
+
+/home/steve/.venvs/vllm-xpu/bin/python scripts/bench-qwen36-int8-moe-kernels.py \
+  --rows 1,2,4,8,16 \
+  --iterations 30 \
+  --warmup 5 \
+  --route-jsonl data/qwen36-quark-int8-tp4-routecapture5-routes-rank0-20260611.jsonl \
+  --route-layer-regex 'layers\.8\.' \
+  --output-json data/qwen36-quark-int8-moe-routecapture5-layer8-r30-20260611.json
+
+/home/steve/.venvs/vllm-xpu/bin/python scripts/bench-qwen36-int8-moe-kernels.py \
+  --rows 1 \
+  --iterations 100 \
+  --warmup 10 \
+  --route-pack-hot-experts \
+  --route-jsonl data/qwen36-quark-int8-tp4-routecapture5-routes-rank0-20260611.jsonl \
+  --route-layer-regex 'layers\.8\.' \
+  --output-json data/qwen36-quark-int8-moe-routecapture5-layer8-hotpack-row1-r100-20260611.json
+```
+
+Key r100 results:
+
+| route | rows | total us | preallocated staged us | active experts | Notes |
+| --- | ---: | ---: | ---: | ---: | --- |
+| synthetic uniform | 1 | `280.177` | `214.114` | `8` | baseline single-token synthetic |
+| layer 8 route | 1 | `275.725` | `207.704` | `8` | real route slightly faster |
+| layer 8 hot-pack | 1 | `269.063` | `207.094` | `8` | small `2.4%` win over layer 8 raw route |
+| layer 20 route | 1 | `293.932` | `225.293` | `8` | real route slower than synthetic |
+| layer 20 hot-pack | 1 | `317.498` | `241.818` | `8` | hot-pack hurts this first-token sample |
+| synthetic uniform | 16 | `377.275` | `338.070` | `128` | activates many experts |
+| layer 8 route | 16 | `275.846` | `213.241` | `39` | much faster due fewer active experts |
+| layer 8 hot-pack | 16 | `269.593` | `207.745` | `39` | small `2.3%` win |
+| layer 20 route | 16 | `278.397` | `212.985` | `45` | much faster than synthetic |
+| layer 20 hot-pack | 16 | `274.965` | `211.205` | `45` | small `1.2%` win |
+
+Interpretation:
+
+- Real route replay matters. Synthetic uniform rows=16 is pessimistic because it
+  activates `128` experts, while real layer 8 and layer 20 replay activate only
+  `39` and `45` experts respectively.
+- For the actual single-token decode shape, physical expert ID/layout effects
+  are layer-dependent and not yet large enough to justify a blind global expert
+  remap. Layer 8 gained slightly from hot packing; layer 20 lost on the first
+  captured row.
+- The preallocated staged path is still consistently faster than the
+  `xpu_fused_moe` wrapper in isolation, but the existing endpoint
+  `VLLM_XPU_INT8_MOE_MIXED_WORKSPACE=1` screen was already rejected because
+  full-model decode did not improve and KV headroom dropped. Do not promote
+  scratch reuse on microbench evidence alone.
+- The next kernel work should be layer/prompt-route aware:
+  1. collect full-prompt-class route captures,
+  2. benchmark route windows across multiple `route_start_index` values,
+  3. identify layers where physical packing consistently helps,
+  4. then prototype a real weight-layout remap only for those layers.

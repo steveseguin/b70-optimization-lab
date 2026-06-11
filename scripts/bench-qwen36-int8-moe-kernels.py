@@ -129,6 +129,46 @@ def load_route_topk_rows(
     return rows, metadata
 
 
+def pack_hot_route_experts(
+    rows: list[list[int]],
+    *,
+    num_experts: int,
+) -> tuple[list[list[int]], dict[str, Any]]:
+    expert_counts: dict[int, int] = {}
+    for row in rows:
+        for expert in row:
+            expert_counts[expert] = expert_counts.get(expert, 0) + 1
+
+    hot_experts = [
+        expert for expert, _ in sorted(
+            expert_counts.items(), key=lambda item: item[1], reverse=True)
+    ]
+    cold_experts = [
+        expert for expert in range(num_experts) if expert not in expert_counts
+    ]
+    physical_order = hot_experts + cold_experts
+    logical_to_physical = {
+        logical: physical for physical, logical in enumerate(physical_order)
+    }
+    packed = [
+        [logical_to_physical[int(expert)] for expert in row]
+        for row in rows
+    ]
+    metadata = {
+        "enabled": True,
+        "active_experts": len(hot_experts),
+        "top_logical_to_physical": [
+            {
+                "logical_expert": expert,
+                "physical_expert": logical_to_physical[expert],
+                "count": expert_counts[expert],
+            }
+            for expert in hot_experts[:16]
+        ],
+    }
+    return packed, metadata
+
+
 def elapsed_us(start: torch.xpu.Event, end: torch.xpu.Event) -> float:
     return float(start.elapsed_time(end) * 1000.0)
 
@@ -691,6 +731,15 @@ def main() -> int:
         help="Starting topk row offset when replaying captured routes.",
     )
     parser.add_argument(
+        "--route-pack-hot-experts",
+        action="store_true",
+        help=(
+            "Simulate a hot-first physical expert layout by remapping captured "
+            "logical expert IDs to dense IDs. Real use would require matching "
+            "weight layout remapping to preserve model math."
+        ),
+    )
+    parser.add_argument(
         "--enable-fused-silu-quant",
         action="store_true",
         help="Benchmark the rejected fused SiLU+quant candidate; use for diagnostics only.",
@@ -708,11 +757,18 @@ def main() -> int:
         min_num_tokens=args.route_min_num_tokens,
         max_num_tokens=args.route_max_num_tokens,
     )
+    route_packing_metadata = None
+    if route_topk_rows and args.route_pack_hot_experts:
+        route_topk_rows, route_packing_metadata = pack_hot_route_experts(
+            route_topk_rows,
+            num_experts=int(text_config["num_experts"]),
+        )
     results = {
         "model_config": args.model_config,
         "tp_size": args.tp_size,
         "fused_silu_quant_enabled": args.enable_fused_silu_quant,
         "route_metadata": route_metadata,
+        "route_packing_metadata": route_packing_metadata,
         "results": [
             benchmark_rows(args, text_config, rows, route_topk_rows)
             for rows in args.rows
