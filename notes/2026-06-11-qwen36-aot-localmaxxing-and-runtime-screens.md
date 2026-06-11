@@ -10430,3 +10430,255 @@ Restore after this diagnostic:
   `active_generations=0`, `queued_generations=0`, backend
   `http://127.0.0.1:18080`
 - Remote generation remains intentionally paused.
+
+## Zero-Lookahead Placebo Repair
+
+Added after the corrected BlockTable finding. The prior placebo mode already
+cleared scheduled draft tokens and scheduler lookahead, but Qwen3.6's GDN/mamba
+KV spec still baked `num_speculative_blocks=1` into the cache layout whenever a
+speculative config was present. That lower-level reservation caused the row-0
+block-table drift and reduced KV capacity.
+
+Patch:
+
+- `patches/vllm-qwen36-spec-placebo-zero-mamba-blocks-20260611.patch`
+- Local source touched:
+  `/home/steve/src/vllm/vllm/model_executor/layers/mamba/abstract.py`
+- Behavior:
+  - If `VLLM_XPU_SPEC_DECODE_PLACEBO=1`, `MambaSpec.num_speculative_blocks`
+    is forced to `0`.
+  - Normal speculative runs keep `num_speculative_blocks =
+    speculative_config.num_speculative_tokens`.
+  - This keeps the diagnostic narrow: speculative config/proposer plumbing can
+    still be constructed, but the verifier/cache layout is no longer shifted by
+    unused speculative mamba blocks.
+
+New artifacts:
+
+- `data/qwen36-quark-int8-tp4-accepted-modelinput-zerolookahead-p512o32-20260611a.json`
+- `data/qwen36-quark-int8-tp4-accepted-modelinput-zerolookahead-trace-20260611a.jsonl`
+- `data/qwen36-quark-int8-tp4-spec-placebo-zerolookahead-p512o32-20260611a.json`
+- `data/qwen36-quark-int8-tp4-spec-placebo-zerolookahead-trace-20260611a.jsonl`
+- `data/qwen36-quark-int8-tp4-accepted-vs-spec-placebo-zerolookahead-parity-20260611a.json`
+- `data/qwen36-quark-int8-tp4-accepted-vs-spec-placebo-zerolookahead-parity-20260611a.md`
+- `data/qwen36-quark-int8-tp4-accepted-noasync-modelinput-p512o32-20260611a.json`
+- `data/qwen36-quark-int8-tp4-accepted-noasync-modelinput-trace-20260611a.jsonl`
+- `data/qwen36-quark-int8-tp4-accepted-noasync-vs-spec-placebo-zerolookahead-parity-20260611a.json`
+- `data/qwen36-quark-int8-tp4-accepted-noasync-vs-spec-placebo-zerolookahead-parity-20260611a.md`
+
+Results:
+
+- Patched spec-placebo KV capacity is back to `2,052,915` tokens, matching
+  no-spec accepted. The old unpatched placebo reported `1,955,157` tokens.
+- Accepted graph async vs patched spec-placebo:
+  - output parity: still false, `2/2` fixture drift.
+  - model-input parity: first mismatch moved from row `0` BlockTable shape to
+    row `26` `input_batch.input_ids.head[0]`.
+  - Interpretation: the block-table/cache-layout bug is fixed; the remaining
+    mismatch appears only after the first sampled-token fork.
+- No-spec accepted with async explicitly disabled vs patched spec-placebo:
+  - output parity: `baseline_match_all=true`.
+  - model-input parity: `match_all=true` over all `64` rows.
+  - Interpretation: patched placebo now exactly matches the no-async verifier
+    path. The remaining difference from the current production accepted run is
+    async scheduling, not unused speculative block allocation.
+
+Validation:
+
+```bash
+python3 -m py_compile \
+  /home/steve/src/vllm/vllm/model_executor/layers/mamba/abstract.py \
+  /home/steve/src/vllm/vllm/v1/core/sched/scheduler.py \
+  /home/steve/src/vllm/vllm/v1/core/single_type_kv_cache_manager.py \
+  /home/steve/src/vllm/vllm/v1/worker/gpu_model_runner.py \
+  /home/steve/src/vllm/vllm/v1/worker/mamba_utils.py
+
+python3 scripts/check-qwen36-model-input-parity.py \
+  --left data/qwen36-quark-int8-tp4-accepted-modelinput-zerolookahead-trace-20260611a.jsonl \
+  --right data/qwen36-quark-int8-tp4-spec-placebo-zerolookahead-trace-20260611a.jsonl \
+  --left-label accepted \
+  --right-label spec-placebo-zerolookahead \
+  --output-json data/qwen36-quark-int8-tp4-accepted-vs-spec-placebo-zerolookahead-parity-20260611a.json \
+  --output-md data/qwen36-quark-int8-tp4-accepted-vs-spec-placebo-zerolookahead-parity-20260611a.md \
+  --max-mismatches 20
+
+python3 scripts/check-qwen36-model-input-parity.py \
+  --left data/qwen36-quark-int8-tp4-accepted-noasync-modelinput-trace-20260611a.jsonl \
+  --right data/qwen36-quark-int8-tp4-spec-placebo-zerolookahead-trace-20260611a.jsonl \
+  --left-label accepted-noasync \
+  --right-label spec-placebo-zerolookahead \
+  --output-json data/qwen36-quark-int8-tp4-accepted-noasync-vs-spec-placebo-zerolookahead-parity-20260611a.json \
+  --output-md data/qwen36-quark-int8-tp4-accepted-noasync-vs-spec-placebo-zerolookahead-parity-20260611a.md \
+  --max-mismatches 20
+```
+
+Decision:
+
+- Keep the zero-mamba-block placebo patch as the new correctness gate.
+- Future speculation speed tests should compare against a no-async accepted
+  baseline first, because n-gram speculative config disables async scheduling.
+- Production/no-quality-loss policy is still stricter: before promotion, either
+  make speculative mode preserve the current async accepted output, or move the
+  production accepted baseline to a no-async quality-gated recipe and rerun the
+  full canary suite plus speed benchmarks.
+- Next useful experiment: run patched oracle/perfect-draft in this no-async
+  parity lane to see whether bucket-verifier speed headroom survives once the
+  verifier/cache layout is clean.
+
+## Post-Repair Ideas And Bigger Bets
+
+Added after the zero-lookahead placebo repair. These are ideas to keep on the
+board while pursuing more speed without lowering the quality bar. They do not
+change the target model or quantization: the accepted verifier remains
+`nameistoken/Qwen3.6-35B-A3B-Quark-W8A8-INT8`, and 4-bit/Qwen3.5 detours are
+out of scope.
+
+External signals checked during this pass:
+
+- `https://github.com/vllm-project/vllm-xpu-kernels`
+  - vLLM's Intel GPU custom-op work is now factored into a dedicated XPU kernel
+    repository using SYCL/DPC++ and oneDNN-style primitives. Future shape-exact
+    W8A8/MoE repros should target this layer instead of only patching Python
+    wrappers in the main vLLM tree.
+- `https://github.com/vllm-project/vllm-xpu-kernels/releases`
+  - Recent XPU kernel releases mention Xe2 paged decode, mixed
+    prefill/decode attention handling, MoE grouped-GEMM policy updates, and
+    small-K FP8/MoE tuning. This is a concrete reason to run an isolated latest
+    XPU-kernel bakeoff.
+- `https://vllm.ai/blog/2025-11-11-intel-arc-pro-b`
+  - Intel/vLLM call out persistent zero-gap MoE kernels and report high Arc Pro
+    MoE GEMM efficiency. This reinforces that durable wins probably require a
+    real persistent MoE path, not another boundary-only custom op.
+- `https://recipes.vllm.ai/Qwen/Qwen3.6-35B-A3B`
+  - The official vLLM recipe shows MTP speculative decode for Qwen3.6. Our
+    current Quark snapshot lacks MTP weights, so this is a sidecar/proposer
+    idea only unless a quality-equivalent verifier checkpoint changes.
+- `https://huggingface.co/z-lab/Qwen3.6-35B-A3B-DFlash`
+  - A Qwen3.6 35B-A3B DFlash drafter exists. It is not a verifier replacement,
+    but it is a candidate proposer if vLLM/XPU can run the draft path while the
+    Quark INT8 model verifies every token.
+- `https://jarvislabs.ai/blog/qwen36-mtp-llamacpp-rtxpro6000`
+  - Public Q8_0 llama.cpp data shows MTP improved Qwen3.6 35B-A3B MoE decode
+    from `193.36` to `225.48` tok/s on RTX PRO 6000, a `1.17x` gain. The
+    lesson is realistic: MTP may cross `200 tok/s`, but MoE gains can be much
+    smaller than dense-model gains.
+- `https://kaitchup.substack.com/p/dflash-vs-mtp-qwen36-speculative`
+  - Current Qwen3.6 speculative work compares DFlash and MTP across vLLM and
+    llama.cpp, and warns that bad configuration can make speculation slower.
+    That matches our gate: speed claims must include acceptance rate, repeat
+    quality, long-context quality, and request-class coverage.
+- `https://github.com/ggml-org/llama.cpp/issues/23769`
+  - B70/Vulkan plus Qwen3.6 MoE/MTP still has public crash reports. Treat
+    llama.cpp MTP/Q8 tests as diagnostic, not a production shortcut, until the
+    exact 8-bit model, context, and stability gates pass on our stack.
+
+Immediate things to try:
+
+1. Run the patched oracle/perfect-draft upper-bound test in the no-async parity
+   lane.
+   - This is now the cleanest speculation speed question: with placebo matching
+     no-async accepted exactly, can a perfect proposer produce endpoint-level
+     speed above `200 tok/s` without perturbing verifier inputs?
+   - If the answer is no, stop spending major time on MTP/DFlash/proposer work
+     and move effort to MoE/static-runner paths.
+   - If the answer is yes, build the sidecar proposer path behind the Quark
+     verifier.
+
+2. Measure no-async accepted as a possible latency-lane baseline.
+   - Speculative modes already disable async scheduling in practice. We need to
+     know the no-async speed/quality cost directly, not infer it from parity
+     traces.
+   - Promotion rule: no-async can become a production latency lane only after
+     full repeat64, long-context, structured-output, and p512/n512 r8/r10 speed
+     gates. Exact parity against the old async baseline is useful evidence, but
+     the real standard is no quality regression under the published gates.
+
+3. Add logits/top-k fingerprints to the model-input parity lane.
+   - Token parity tells us where outputs fork; logits/top-k checksums tell us
+     whether the verifier math changed before sampling.
+   - This should distinguish harmless sampled-token ordering differences from
+     actual KV/GDN/verifier-state corruption.
+
+4. Build a latest `vllm-xpu-kernels` isolated bakeoff.
+   - Use a separate venv/cache root and the same current model.
+   - Minimal targets: p512/n512 c1 speed, repeat quality, AOT census, route
+     microbench, and a rollback note.
+   - Do not touch the stable production backend until the isolated stack passes
+     quality.
+
+5. Capture real route histograms at endpoint time.
+   - Route-exact data should include prompt class, layer, top-k experts, active
+     expert count per token, and hot-window locality.
+   - Feed those histograms into grouped-GEMM policy tests and the hybrid TP/EP
+     simulator; synthetic even routing is not enough.
+
+Bigger, bolder ideas:
+
+1. Quark-verifier MTP sidecar.
+   - Use official Qwen3.6 MTP assets or a GGUF-derived MTP path only to propose
+     tokens.
+   - The current Quark INT8 endpoint remains the verifier and final sampler.
+   - Success criteria: exact canary quality, high accepted-token rate, no
+     placebo/model-input drift, and net endpoint speed gain after scheduler
+     overhead.
+
+2. DFlash sidecar behind the current verifier.
+   - DFlash drafts blocks in parallel and may avoid some serial MTP limits.
+   - Risk: XPU support and integration overhead may erase draft gains.
+   - Gate: same as MTP, with extra long-context and structured-output checks
+     because block-draft methods can fail in prompt-class-specific ways.
+
+3. Static no-scheduler c1 decode lane.
+   - Build a direct runner with preallocated KV, fixed `batch=1`, fixed
+     no-prefix/no-async posture, and graph replay over decode buckets.
+   - Purpose: quantify whether vLLM serving/scheduler/block-table overhead is
+     a large part of the missing `2x`.
+   - Production version could be a latency class for single interactive users,
+     while the existing vLLM path handles aggregate traffic.
+
+4. Persistent MoE decode kernel using real route windows.
+   - Combine route/remap, grouped W8A8 GEMM, activation, second quant, expert
+     combine, shared-expert add, and finalize into a route-window persistent
+     path.
+   - This is the most likely non-speculation route to a structural win because
+     Qwen3.6 A3B is MoE and public Arc work points at persistent MoE kernels.
+
+5. Hybrid TP/EP and hot-expert replication.
+   - Spend VRAM to reduce communication and tiny-M fragmentation.
+   - Simulate before implementation:
+     - TP4 current baseline.
+     - TP2 plus replicated dense/attention.
+     - expert-parallel or expert-sharded MoE.
+     - hot-expert copies per layer/rank.
+   - Quality should be identical if weights and math stay identical; the trade
+     is memory versus single-request latency.
+
+6. XPU-native W8A8 retile/repack cache.
+   - If current Quark weight layout is not optimal for B70 XMX/DPAS, build a
+     one-time load-time repack into tile-native layout and cache it on disk.
+   - This should not change model quality because weights are mathematically
+     identical; it only changes physical layout.
+   - Gate with dequant/weight checksums and exact output quality.
+
+7. Strict same-model 8-bit engine shootout.
+   - Compare vLLM/XPU against llama.cpp SYCL/Vulkan only with an 8-bit
+     Qwen3.6 35B-A3B artifact and identical prompt template/quality gates.
+   - Use it to diagnose whether vLLM/XPU is leaving large speed on the table.
+   - Do not promote 4-bit rows or mismatched model families as substitutes.
+
+8. Upstream/bounty-quality XPU repro packet.
+   - Package three minimal repros:
+     - spec-placebo block-table/KV allocation parity.
+     - Qwen3.6 real-route MoE grouped-GEMM shapes.
+     - tiny decode all-reduce/collective shapes from the AOT census.
+   - Include scripts, exact shapes, expected/current output, and no secrets.
+   - This is how to get help from Intel/vLLM maintainers without asking them to
+     reconstruct our entire production setup.
+
+Current priority after adding these ideas:
+
+1. Perfect-draft/oracle in the no-async parity lane.
+2. No-async accepted quality/speed baseline.
+3. Logits/top-k fingerprints to separate sampling fork from verifier drift.
+4. Latest `vllm-xpu-kernels` isolated bakeoff.
+5. Route histograms and persistent MoE microbench work in parallel.

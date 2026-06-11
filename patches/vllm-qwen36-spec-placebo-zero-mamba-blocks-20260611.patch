@@ -1,0 +1,43 @@
+diff --git a/vllm/model_executor/layers/mamba/abstract.py b/vllm/model_executor/layers/mamba/abstract.py
+index 2c05880c0..4ba3b76c1 100644
+--- a/vllm/model_executor/layers/mamba/abstract.py
++++ b/vllm/model_executor/layers/mamba/abstract.py
+@@ -2,6 +2,7 @@
+ # SPDX-FileCopyrightText: Copyright contributors to the vLLM project
+ from abc import abstractmethod
+ from collections.abc import Iterable
++import os
+
+ import torch
+
+@@ -44,6 +45,17 @@ class MambaBase(AttentionLayerBase):
+         mamba_block_size = vllm_config.cache_config.mamba_block_size
+         assert mamba_block_size is not None
+         page_size_padded = vllm_config.cache_config.mamba_page_size_padded
++        placebo_spec_decode = (
++            os.environ.get("VLLM_XPU_SPEC_DECODE_PLACEBO", "")
++            .strip()
++            .lower()
++            in ("1", "true", "yes", "on")
++        )
++        num_speculative_blocks = 0
++        if vllm_config.speculative_config and not placebo_spec_decode:
++            num_speculative_blocks = (
++                vllm_config.speculative_config.num_speculative_tokens
++            )
+         return MambaSpec(
+             shapes=tuple(self.get_state_shape()),
+             dtypes=self.get_state_dtype(),
+@@ -51,11 +63,7 @@ class MambaBase(AttentionLayerBase):
+             page_size_padded=page_size_padded,
+             mamba_type=self.mamba_type,
+             mamba_cache_mode=vllm_config.cache_config.mamba_cache_mode,
+-            num_speculative_blocks=(
+-                vllm_config.speculative_config.num_speculative_tokens
+-                if vllm_config.speculative_config
+-                else 0
+-            ),
++            num_speculative_blocks=num_speculative_blocks,
+         )
+
+     def get_attn_backend(self) -> type[AttentionBackend]:
