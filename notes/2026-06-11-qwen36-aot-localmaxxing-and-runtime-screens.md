@@ -8785,3 +8785,129 @@ Priority order:
 4. Only after parity is exact, benchmark proposer/MTP/spec speed.
 5. If speculation remains blocked, shift primary effort to persistent MoE and
    tile-native W8A8 repack.
+
+## Eager Ignore-Drafts Control Result
+
+The next isolation branch tested whether the remaining `IGNORE_DRAFTS=1`
+graph-mode drift was caused by graph capture or by non-graph
+speculative/model-runner plumbing.
+
+Procedure:
+
+1. Paused and drained the public frontdoor.
+2. Stopped the accepted graph backend.
+3. Launched an eager `IGNORE_DRAFTS=1` oracle `k=1` backend on `18081`:
+
+```bash
+PORT=18081 \
+TAG=oracle1-ignore-drafts-eager \
+NUM_SPECULATIVE_TOKENS=1 \
+PROMPT_LOOKUP_MIN=2 \
+PROMPT_LOOKUP_MAX=5 \
+ORACLE_TRACE=/home/steve/llm-optimizations/data/qwen36-quark-int8-tp4-oracle-k1-short-accepted-graph-20260611.json \
+SPEC_TRACE_FILE=/tmp/qwen36-oracle1-ignore-drafts-eager-spec-trace-20260611a.jsonl \
+VLLM_XPU_ORACLE_DRAFT_LOG=/tmp/qwen36-oracle1-ignore-drafts-eager-draft-20260611a.jsonl \
+IGNORE_DRAFTS=1 \
+ENFORCE_EAGER=1 \
+ENABLE_XPU_GRAPH=0 \
+COMPILE_CONFIG= \
+scripts/launch-qwen36-quark-int8-oracle-trace.sh
+```
+
+4. Captured the same two p512/o32 oracle completion prompts.
+5. Stopped the eager spec backend.
+6. Launched a no-spec eager accepted control on `18081` with
+   `--enforce-eager`, `XPU_GRAPH=0`, and `VLLM_XPU_ENABLE_XPU_GRAPH=0`.
+7. Captured the same two p512/o32 completion prompts.
+8. Restored the accepted graph backend on `18080`.
+9. Ran paused-local public full r8 through the frontdoor.
+10. Removed the pause file and verified public status/backend health.
+
+Artifacts:
+
+- eager ignore-drafts completions:
+  `data/qwen36-quark-int8-tp4-oracle1-ignore-drafts-eager-completions-20260611.json`
+- eager ignore-drafts fixture:
+  `data/qwen36-quark-int8-tp4-oracle1-ignore-drafts-eager-drift-fixture-20260611.json`
+  and
+  `data/qwen36-quark-int8-tp4-oracle1-ignore-drafts-eager-drift-fixture-20260611.md`
+- eager ignore-drafts draft log:
+  `data/qwen36-quark-int8-tp4-oracle1-ignore-drafts-eager-draft-20260611.jsonl`
+- no-spec eager control completions:
+  `data/qwen36-quark-int8-tp4-accepted-eager-control-completions-20260611.json`
+- no-spec eager control fixture:
+  `data/qwen36-quark-int8-tp4-accepted-eager-control-drift-fixture-20260611.json`
+  and
+  `data/qwen36-quark-int8-tp4-accepted-eager-control-drift-fixture-20260611.md`
+- restore quality gate:
+  `data/qwen36-quark-int8-tp4-restored-after-eager-control-public-frontdoor-pausedlocal-full-r8-20260611.json`
+
+Observed diagnostic result:
+
+- Eager `IGNORE_DRAFTS=1` reached `/health`.
+- The log confirmed eager mode disabled torch.compile/CUDAGraphs and
+  `VLLM_XPU_ENABLE_XPU_GRAPH=0` disabled XPU graph.
+- No scheduler spec trace file was produced under
+  `/tmp/qwen36-oracle1-ignore-drafts-eager-spec-trace-20260611a.jsonl`.
+- Eager oracle draft logging still ran:
+  - JSONL rows: `256`
+  - matched rows: `128`
+- Eager `IGNORE_DRAFTS=1` versus the graph accepted baseline:
+  - `baseline_match_all=false`
+  - reduced fixture `exact_match_all=false`
+  - mismatch count: `2/2`
+  - `natural_latency_plan`: first diff at output index `17`
+  - `repetitive_kernel_notes`: first diff at output index `15`
+- No-spec eager control versus the graph accepted baseline:
+  - `baseline_match_all=false`
+  - reduced fixture `exact_match_all=false`
+  - mismatch count: `2/2`
+  - first diffs matched the eager `IGNORE_DRAFTS=1` run.
+- Direct eager-control comparison:
+  - `natural_latency_plan`: no-spec eager output equals eager
+    `IGNORE_DRAFTS=1` output exactly.
+  - `repetitive_kernel_notes`: no-spec eager output equals eager
+    `IGNORE_DRAFTS=1` output exactly.
+
+Interpretation:
+
+- Eager mode is not a clean isolator against the graph accepted baseline for
+  these prompts. The no-spec eager control already drifts `2/2`.
+- In eager mode, speculative config plus `IGNORE_DRAFTS=1` adds no observable
+  drift beyond ordinary eager behavior on the two-prompt fixture.
+- The prior graph-mode result remains the useful spec diagnostic:
+  `IGNORE_DRAFTS=1` graph improved from `2/2` oracle drift to `1/2`, but one
+  graph-mode prompt still drifted with no scheduled draft tokens.
+- Therefore the next useful branch is not more eager testing. It is graph-mode
+  `speculative_config` placebo plus model-runner input metadata diff:
+  - graph accepted, no spec config;
+  - graph spec config present, proposer constructed, no draft metadata;
+  - graph `IGNORE_DRAFTS=1`;
+  - compare first decode row input IDs, positions, slot mapping, block tables,
+    GDN/Mamba metadata, graph bucket, and logits path.
+
+Restore result:
+
+- Accepted graph backend restored in tmux session
+  `qwen36-tp4-accepted-restored-after-eager-control-20260611a`.
+- Paused-local public full r8 passed:
+  - `pass_all=true`
+  - `baseline_match_all=true`
+  - exact arithmetic/copy/JSON/OK passed
+  - repeat stability passed
+  - long-context needle passed
+- Public frontdoor was unpaused.
+- Final status:
+  - `paused=false`
+  - `active_generations=0`
+  - `queued_generations=0`
+  - backend health `200`
+
+Next action:
+
+1. Implement a graph-mode spec-placebo launcher/env:
+   speculative code paths initialized, but no `spec_token_ids` or lookahead
+   blocks attached to requests.
+2. Add a first-row graph metadata trace around model-runner input preparation.
+3. Compare accepted graph versus graph placebo versus graph `IGNORE_DRAFTS=1`
+   before attempting any more MTP, DFlash, or n-gram speed runs.
