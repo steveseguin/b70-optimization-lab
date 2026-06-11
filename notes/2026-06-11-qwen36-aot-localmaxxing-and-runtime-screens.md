@@ -10203,3 +10203,230 @@ Decision:
   normal small canary. At minimum, monitor `sample_tokens` timeout frequency and
   consider lowering remote `max_active_generations` or routing structured JSON
   to a conservative lane.
+
+## Corrected Spec-Placebo Block-Table Findings And Larger Bets
+
+Added after rerunning accepted graph mode and graph spec-placebo with fixed
+BlockTable trace accessors. This replaces the earlier slot-mapping-only
+diagnosis with direct block-table evidence.
+
+Artifacts:
+
+- `data/qwen36-quark-int8-tp4-accepted-modelinput-fresh-p512o32-20260611g.json`
+- `data/qwen36-quark-int8-tp4-accepted-modelinput-trace-20260611g.jsonl`
+- `data/qwen36-quark-int8-tp4-spec-placebo-modelinput-p512o32-20260611a.json`
+- `data/qwen36-quark-int8-tp4-spec-placebo-modelinput-trace-20260611a.jsonl`
+- `data/qwen36-quark-int8-tp4-accepted-vs-spec-placebo-modelinput-parity-20260611a.json`
+- `data/qwen36-quark-int8-tp4-accepted-vs-spec-placebo-modelinput-parity-20260611a.md`
+
+Main observation:
+
+- Fresh accepted graph and graph spec-placebo both ran the same two p512/o32
+  completion fixtures.
+- Spec-placebo still drifted `2/2` versus the accepted graph baseline.
+- The first verifier-input mismatch is row `0`, before any generated token
+  divergence can explain it.
+- `scheduled_spec_decode_tokens={}`, `use_spec_decode=false`, and
+  `spec_token_ids=[[]]` on that row, so the mismatch is caused by speculative
+  config/plumbing rather than actual draft tokens.
+- The mismatch is now visible as attention block-table allocation:
+  - accepted group 0 block table: shape `[1, 1]`, row head `[1]`
+  - spec-placebo group 0 block table: shape `[1, 2]`, row head `[1, 2]`
+  - accepted groups 1/2 similarly use one attention block, while placebo uses
+    two blocks per attention group
+  - GDN/mamba block groups also shift to different ID ranges
+- The spec-placebo backend also reported lower KV capacity (`1,955,157` tokens)
+  than the accepted graph backend (`2,052,915` tokens), consistent with extra
+  speculative/lookahead block reservation.
+
+Conclusion:
+
+- The next speculation repair is not proposer quality. It is allocator/input
+  parity.
+- Do not benchmark MTP, DFlash, EAGLE, n-gram widths, or oracle speed again
+  until accepted graph and spec-placebo graph produce identical model-input
+  rows on the reduced fixture.
+- The first target is a zero-lookahead placebo path: speculative config present,
+  no draft tokens, no extra reserved KV blocks, identical block tables, identical
+  slot mappings, identical graph bucket, and identical output tokens.
+
+Validation commands:
+
+```bash
+/home/steve/.venvs/vllm-xpu/bin/python scripts/qwen36-completion-oracle-trace.py \
+  --base-url http://127.0.0.1:18081 \
+  --prompt-tokens 512 \
+  --output-tokens 32 \
+  --output-json data/qwen36-quark-int8-tp4-accepted-modelinput-fresh-p512o32-20260611g.json \
+  --timeout 240
+
+/home/steve/.venvs/vllm-xpu/bin/python scripts/qwen36-completion-oracle-trace.py \
+  --base-url http://127.0.0.1:18081 \
+  --prompt-tokens 512 \
+  --output-tokens 32 \
+  --baseline-json data/qwen36-quark-int8-tp4-accepted-modelinput-fresh-p512o32-20260611g.json \
+  --output-json data/qwen36-quark-int8-tp4-spec-placebo-modelinput-p512o32-20260611a.json \
+  --timeout 240
+
+python3 scripts/check-qwen36-model-input-parity.py \
+  --left data/qwen36-quark-int8-tp4-accepted-modelinput-trace-20260611g.jsonl \
+  --right data/qwen36-quark-int8-tp4-spec-placebo-modelinput-trace-20260611a.jsonl \
+  --left-label accepted \
+  --right-label spec-placebo \
+  --output-json data/qwen36-quark-int8-tp4-accepted-vs-spec-placebo-modelinput-parity-20260611a.json \
+  --output-md data/qwen36-quark-int8-tp4-accepted-vs-spec-placebo-modelinput-parity-20260611a.md \
+  --max-mismatches 12
+```
+
+Source scan worth tracking:
+
+- vLLM/Intel public B-series notes say current XPU vLLM work includes MoE
+  optimization, DP/TP/PP, async scheduling, prefill/decode disaggregation, and
+  n-gram/EAGLE/EAGLE3 speculation:
+  `https://vllm.ai/blog/2025-11-11-intel-arc-pro-b`
+- vLLM XPU is actively moving toward the separate `vllm-xpu-kernels` library:
+  `https://github.com/vllm-project/vllm/issues/33214`
+- `vllm-xpu-kernels` release notes now mention mixed prefill/decode attention
+  tuning and MoE grouped-GEMM policy updates, including FP8 and small-K cases:
+  `https://github.com/vllm-project/vllm-xpu-kernels/releases`
+- Intel's grouped-GEMM tuning issue explicitly calls out decode-stage route
+  skew and suggests real token distributions as the tuning input, matching the
+  route-capture/hotpack evidence from this lab:
+  `https://github.com/intel/intel-xpu-backend-for-triton/issues/6389`
+- The `vllm-xpu-kernels` issue list has an open TurboQuant KV-cache feasibility
+  item and GDN kernel exposure requests; both are relevant but quality-risked
+  until exact canaries pass:
+  `https://github.com/vllm-project/vllm-xpu-kernels/issues`
+- A recent Intel GPU inference paper lists B580-class Battlemage hardware at
+  `456 GB/s` GDDR6 bandwidth and `233 TOPS` INT8 peak. That reinforces that our
+  `~100 tok/s` c1 endpoint is not plausibly compute-peak limited; launch,
+  routing, collectives, memory movement, or scheduler shape effects are likely
+  dominating:
+  `https://arxiv.org/html/2508.06753v2`
+- Localmaxxing public exact-model query still shows the current approved B70
+  row as the top and only exact `nameistoken/Qwen3.6-35B-A3B-Quark-W8A8-INT8`
+  result at `99.428358` tok/s output, `76.454061 ms` TTFT, and `196.325273`
+  total tok/s:
+  `https://localmaxxing.com/api/benchmarks?hfId=nameistoken%2FQwen3.6-35B-A3B-Quark-W8A8-INT8&limit=20`
+
+Concrete things to try next:
+
+1. Zero-lookahead spec-placebo repair.
+   - Find where vLLM reserves extra speculative/lookahead KV blocks on XPU.
+   - Add an opt-in diagnostic mode where speculative config exists but
+     `num_speculative_tokens=0` semantically, allocator state matches no-spec,
+     and the drafter path is inert.
+   - Gate on `match_all=true` from
+     `check-qwen36-model-input-parity.py` before any speed work.
+
+2. Deterministic solo KV arena.
+   - For c1 single-request latency tests, preallocate fixed block IDs and reuse
+     the same slot/block tables across accepted, placebo, oracle, and future
+     proposer modes.
+   - This is a narrower production lane than general vLLM scheduling, but it
+     could remove both correctness drift and allocator overhead for the user's
+     most important case.
+
+3. Static verifier-bucket runner.
+   - Build explicit verifier graphs for bucket sizes `1,2,3,4,6,8` with fixed
+     KV layout and fixed candidate columns.
+   - Feed candidates from n-gram/oracle/MTP only after the verifier graph path
+     itself is proven identical in placebo mode.
+   - This is the clean path toward using the earlier bucket-timing headroom
+     (`bucket 6/8` sublinear forward time) without corrupting output.
+
+4. Auxiliary proposer API instead of model grafting.
+   - Stop trying to make official FP8 MTP tensors look like part of the Quark
+     checkpoint until the state-index issue is understood.
+   - Define a sidecar interface: proposer returns candidate token IDs plus
+     metadata; Quark verifier owns final token emission.
+   - This keeps quality unchanged by construction if verifier parity and
+     rollback accounting pass.
+
+5. Quark-trace-trained micro-drafter.
+   - Generate a corpus from the current Quark verifier under production prompts
+     and train a tiny same-tokenizer drafter for length `2-4` candidates.
+   - Optimize for acceptance and low XPU latency, not language-model quality.
+   - This could beat n-gram acceptance on natural/chat prompts while keeping
+     final output verified by the current model.
+
+6. Route-window persistent MoE kernel in `vllm-xpu-kernels`.
+   - Use real route histograms from this lab as the benchmark input instead of
+     synthetic uniform rows.
+   - Target small-M W8A8 grouped GEMM, route/remap, activation, second quant,
+     and combine/finalize as one persistent decode kernel path.
+   - This aligns with Intel's public grouped-GEMM tuning direction and avoids
+     pretending endpoint speed will move from isolated dense GEMM flags alone.
+
+7. Layer-local hot-expert memory-for-latency lane.
+   - Use K32/K64 route coverage to duplicate only the hottest experts or expert
+     fragments on selected ranks.
+   - Quality should be bit-identical if the same weights are used; the tradeoff
+     is VRAM and possibly lower max context/concurrency in a latency lane.
+   - Simulate before implementing: route histograms, per-rank memory, all-reduce
+     traffic, and expected c1 decode savings.
+
+8. Hybrid TP/EP layout simulator.
+   - Model TP4, TP2+expert-parallel, TP2x2 replicas, and hot-expert replicated
+     layouts using measured collectives and real routes.
+   - Single-user speed may prefer less TP for some layers if TP4 collectives and
+     small-M fragmentation dominate.
+   - Reject layouts that cannot preserve 32K service or exact outputs unless
+     they become an explicitly separate short-context class.
+
+9. Whole-token Level Zero command-list runner.
+   - Capture one complete decode token as a fixed command-list sequence:
+     attention, GDN, MoE routing, W8A8 GEMMs, collectives, logits, sampler.
+   - This is a larger lift than graph-cache tweaks, but it is one of the few
+     ideas that attacks launch/synchronization overhead directly.
+
+10. Direct XPU kernel shootout with exact shapes.
+    - Build a small suite around our actual generated graph shapes:
+      dense W8A8 small-M GEMM, GDN projection, MoE grouped GEMM, finalize, and
+      all-reduce boundaries.
+    - Compare current vLLM path, `vllm-xpu-kernels` latest, oneDNN grouped GEMM
+      where applicable, and a hand-tuned SYCL/Triton-XPU prototype.
+    - Only promote a kernel if endpoint canaries pass exact parity.
+
+11. KV-cache compression as a VRAM/headroom experiment, not a speed claim.
+    - Track TurboQuant/KV-cache work because it may unlock larger batch/context
+      or memory-for-latency expert replication.
+    - Do not use it for the primary quality target unless exact token canaries,
+      long-context needle, and repeat stability pass.
+
+12. Upstreamable B70 repro packet.
+    - Bundle the exact Localmaxxing row, block-table parity fixture, bucket
+      timing evidence, route histogram evidence, and a tiny script that shows
+      spec-placebo row-0 block-table drift.
+    - Post it upstream only with a narrow ask: how should XPU speculative
+      decode allocate lookahead blocks without changing verifier inputs?
+
+Current priority order:
+
+1. Restore accepted backend and keep public remote traffic paused until the
+   large structured-output crash path has a guard.
+2. Repair zero-lookahead placebo parity.
+3. If parity is clean, rerun perfect-draft/oracle bucket tests as the speed
+   upper bound.
+4. If bucket tests still show `>200 tok/s` endpoint-normalized headroom, build
+   the sidecar proposer path.
+5. In parallel, collect route histograms and shape-exact XPU kernel timings for
+   the MoE/static-runner fallback path.
+
+Restore after this diagnostic:
+
+- Stopped isolated spec-placebo session:
+  `qwen36-tp4-spec-placebo-modelinput-20260611a`
+- Relaunched accepted backend session:
+  `qwen36-tp4-accepted-restored-after-spec-placebo-20260611a`
+- Restore log:
+  `/tmp/qwen36-quark-int8-tp4-accepted-restored-after-spec-placebo-20260611a.log`
+- Backend `/health`: `200`
+- Backend `/v1/models`: serving `qwen36-35b-a3b-fp8` from current Quark W8A8
+  INT8 snapshot
+- Direct backend chat smoke: `OK`
+- Frontdoor loopback chat smoke: `OK`
+- Frontdoor `/status`: `paused=true`, `pause_allow_local=true`,
+  `active_generations=0`, `queued_generations=0`, backend
+  `http://127.0.0.1:18080`
+- Remote generation remains intentionally paused.
