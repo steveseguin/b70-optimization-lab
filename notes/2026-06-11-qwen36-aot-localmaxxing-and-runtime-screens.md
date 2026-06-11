@@ -4603,3 +4603,84 @@ Current prioritization:
    work attacks the largest measured token-time blocks.
 3. Use route-exact MoE microbenches for candidate generation only. Endpoint
    speed plus quality gates decide promotion.
+
+## N-Gram2/CG3 Trace Summary: Quality-Clean But Not A Speed Candidate
+
+Added after building `scripts/summarize-qwen36-spec-trace.py` and applying it
+to the existing n-gram2/cg3 scheduler traces plus seeded prompt-class
+artifacts.
+
+Artifacts:
+
+- `scripts/summarize-qwen36-spec-trace.py`
+- `data/qwen36-quark-int8-tp4-ngram2-cg3-spec-summary-20260611.json`
+- `data/qwen36-quark-int8-tp4-ngram2-cg3-spec-summary-20260611.md`
+- `data/qwen36-quark-int8-tp4-ngram2-cg3-chat-promptclass-spec-jsonl-20260611.jsonl`
+
+Command:
+
+```bash
+python3 scripts/summarize-qwen36-spec-trace.py \
+  --trace-jsonl data/qwen36-quark-int8-tp4-ngram2-cg3-spec-jsonl-20260611.jsonl \
+  --trace-jsonl data/qwen36-quark-int8-tp4-ngram2-cg3-chat-promptclass-spec-jsonl-20260611.jsonl \
+  --trace-jsonl data/qwen36-quark-int8-tp4-ngram2-cg3-chat-promptclass-seeded-spec-jsonl-20260611.jsonl \
+  --metric-json accepted-natural-chat=data/qwen36-quark-int8-tp4-accepted-chat-promptclass-natural-chat-seeded-r2-20260611.json \
+  --metric-json ngram2-natural-chat=data/qwen36-quark-int8-tp4-ngram2-cg3-chat-promptclass-natural-chat-seeded-r2-20260611.json \
+  --metric-json accepted-code=data/qwen36-quark-int8-tp4-accepted-chat-promptclass-code-seeded-r2-20260611.json \
+  --metric-json ngram2-code=data/qwen36-quark-int8-tp4-ngram2-cg3-chat-promptclass-code-seeded-r2-20260611.json \
+  --metric-json accepted-structured=data/qwen36-quark-int8-tp4-accepted-chat-promptclass-structured-seeded-r2-20260611.json \
+  --metric-json ngram2-structured=data/qwen36-quark-int8-tp4-ngram2-cg3-chat-promptclass-structured-seeded-r2-20260611.json \
+  --metric-json accepted-math-reasoning=data/qwen36-quark-int8-tp4-accepted-chat-promptclass-math-reasoning-seeded-r2-20260611.json \
+  --metric-json ngram2-math-reasoning=data/qwen36-quark-int8-tp4-ngram2-cg3-chat-promptclass-math-reasoning-seeded-r2-20260611.json \
+  --quality-json ngram2-rerun64=data/qwen36-quark-int8-tp4-ngram2-cg3-frontdoor-quality-rerun64-20260611.json \
+  --out-json data/qwen36-quark-int8-tp4-ngram2-cg3-spec-summary-20260611.json \
+  --out-md data/qwen36-quark-int8-tp4-ngram2-cg3-spec-summary-20260611.md
+```
+
+Trace summary:
+
+| Trace | Rows | Requests | Draft tokens | Accepted | Rejected | Accept rate | Full-accept rows | Full-reject rows | Max full-accept streak |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| base n-gram2/cg3 | 685 | 14 | 1365 | 1044 | 321 | `76.48%` | `69.64%` | `16.93%` | 147 |
+| chat prompt-class | 668 | 12 | 1334 | 617 | 717 | `46.25%` | `36.68%` | `44.31%` | 8 |
+| seeded chat prompt-class | 662 | 12 | 1321 | 609 | 712 | `46.10%` | `35.95%` | `43.96%` | 8 |
+
+Seeded prompt-class speed versus accepted:
+
+| Class | Accepted corrected tok/s | N-gram2 corrected tok/s | Delta | Same output-token count |
+| --- | ---: | ---: | ---: | --- |
+| natural-chat | `99.59` | `90.85` | `-8.77%` | yes |
+| code | `99.61` | `93.73` | `-5.91%` | yes |
+| structured | `99.44` | `116.36` | `+17.01%` | no; n-gram2 stopped at 440/445 tokens |
+| math-reasoning | `99.40` | `98.39` | `-1.02%` | yes |
+
+Quality:
+
+- `data/qwen36-quark-int8-tp4-ngram2-cg3-frontdoor-quality-rerun64-20260611.json`
+  reports `pass_all=true` and `baseline_match_all=true`.
+- Repeat64 passed with one unique repeat hash.
+- The long-context case passed.
+
+Interpretation:
+
+1. N-gram2/cg3 is not showing the same corruption as rejected n-gram1/ngram5
+   in this deterministic quality suite, but it also does not provide a useful
+   broad speed win.
+2. The base synthetic trace has high acceptance (`76.48%`) and long full-accept
+   streaks, but chat prompt-class acceptance collapses to about `46%`. This is
+   why raw trace acceptance is not enough evidence for production.
+3. The only prompt-class speed win is structured output, and it generated fewer
+   output tokens than the accepted baseline. Do not count that as a valid speed
+   win.
+4. The old prompt-class artifacts do not store request IDs or request
+   timestamps, so they cannot be joined exactly to scheduler trace rows. The
+   current measurement script now records `request_id` and timestamps, so the
+   next speculative run can support exact joins.
+
+Decision:
+
+- Do not promote n-gram2/cg3 as a production or Localmaxxing speed candidate.
+- Do not spend more time on blind n-gram width sweeps.
+- If speculation remains the next `2x` path, first add/validate request-id
+  correlation and the strict no-bonus-token debug mode, then re-run prompt-class
+  measurements with exact trace joins.
