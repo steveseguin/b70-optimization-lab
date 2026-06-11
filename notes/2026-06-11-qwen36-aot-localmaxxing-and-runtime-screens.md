@@ -1887,8 +1887,69 @@ Ideas to avoid unless new evidence appears:
 
 Current best next implementation order:
 
-1. Component-level route-scan summarizer.
-2. Accepted r8/r10 + peak VRAM + repeat64 refresh.
-3. n-gram2 capture-size-3 reliability retest only as a diagnostic.
-4. Latest `vllm-xpu-kernels` disposable A/B.
-5. Cross-engine or FP8-MTP sidecar feasibility probe.
+1. Accepted r8/r10 + peak VRAM + repeat64 refresh.
+2. n-gram2 capture-size-3 reliability retest only as a diagnostic.
+3. Latest `vllm-xpu-kernels` disposable A/B.
+4. Cross-engine or FP8-MTP sidecar feasibility probe.
+5. Layer/shape route-policy prototype only after a stronger component signal.
+
+## Component-Level Route Scan Summary
+
+Added `scripts/summarize-qwen36-route-scan-components.py` to pair raw and
+hotpack route-replay JSONs by layer, row count, and route start index. It emits
+row-level whole-kernel deltas, preallocated-staged deltas, and primitive
+component deltas for `remap`, `quant1`, `gemm1`, `activation`, `quant2`,
+`gemm2`, and `gather`.
+
+Artifacts:
+
+- `data/qwen36-quark-int8-moe-routecapture5-component-summary-20260611.json`
+- `data/qwen36-quark-int8-moe-routecapture6-component-summary-20260611.json`
+
+Repro commands:
+
+```bash
+scripts/summarize-qwen36-route-scan-components.py \
+  --pair layer8:data/qwen36-quark-int8-moe-routecapture5-layer8-startscan-r15-20260611.json:data/qwen36-quark-int8-moe-routecapture5-layer8-hotpack-startscan-r15-20260611.json \
+  --pair layer20:data/qwen36-quark-int8-moe-routecapture5-layer20-startscan-r15-20260611.json:data/qwen36-quark-int8-moe-routecapture5-layer20-hotpack-startscan-r15-20260611.json \
+  --output-json data/qwen36-quark-int8-moe-routecapture5-component-summary-20260611.json \
+  --print-table
+
+scripts/summarize-qwen36-route-scan-components.py \
+  --pair layer9:data/qwen36-quark-int8-moe-routecapture6-layer9-startscan-r15-20260611.json:data/qwen36-quark-int8-moe-routecapture6-layer9-hotpack-startscan-r15-20260611.json \
+  --pair layer14:data/qwen36-quark-int8-moe-routecapture6-layer14-startscan-r15-20260611.json:data/qwen36-quark-int8-moe-routecapture6-layer14-hotpack-startscan-r15-20260611.json \
+  --pair layer21:data/qwen36-quark-int8-moe-routecapture6-layer21-startscan-r15-20260611.json:data/qwen36-quark-int8-moe-routecapture6-layer21-hotpack-startscan-r15-20260611.json \
+  --output-json data/qwen36-quark-int8-moe-routecapture6-component-summary-20260611.json \
+  --print-table
+```
+
+Compact primitive-stage table, where negative means hotpack was faster:
+
+| Capture | Rows | Windows | Total delta | Prealloc delta | Largest primitive mean delta |
+| --- | ---: | ---: | ---: | ---: | --- |
+| layer8 | 1 | 8 | +16.390% | +15.384% | `gemm1 +14.729us / +16.37%` |
+| layer8 | 16 | 8 | -10.492% | -8.508% | `gemm2 -12.867us / -10.71%` |
+| layer20 | 1 | 8 | -5.060% | -3.230% | `remap -3.157us / -3.03%` |
+| layer20 | 16 | 8 | +1.517% | +2.588% | `gemm1 +5.187us / +5.67%` |
+| layer9 | 1 | 8 | -3.784% | -3.328% | `gemm1 -3.044us / -2.41%` |
+| layer9 | 16 | 8 | +1.596% | +5.144% | `gemm1 +5.448us / +6.11%` |
+| layer14 | 1 | 8 | +3.628% | +3.848% | `gemm1 +2.694us / +2.80%` |
+| layer14 | 16 | 8 | +12.567% | +17.040% | `gemm2 +11.272us / +12.31%` |
+| layer21 | 1 | 8 | +8.724% | +5.539% | `remap +6.807us / +7.67%` |
+| layer21 | 16 | 8 | -2.314% | -1.038% | `quant1 -4.020us / -3.16%` |
+
+Interpretation:
+
+- The route/hotpack effect is not a single universal bottleneck. The largest
+  primitive-stage delta changes by layer and shape: `gemm1`, `gemm2`, `remap`,
+  and `quant1` all appear as the top contributor in different rows.
+- This keeps global hot-expert physical remap rejected. It improves some
+  windows, but the component-level profile shows it can regress GEMM or remap
+  stages in other layer/shape combinations.
+- A future route policy should be layer-specific and rows-specific, and it
+  should be gated on endpoint-level quality and speed. The microbench evidence
+  is useful for deciding where to look, but not strong enough by itself to
+  justify a production kernel branch.
+- The next durable MoE work is still a persistent/grouped-GEMM scheduler or
+  exact-shape upstream repro, not another wrapper around the current staged
+  path.
