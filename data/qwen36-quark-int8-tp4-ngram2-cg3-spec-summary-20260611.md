@@ -4,6 +4,7 @@
 
 - rows `685`, requests `14`, drafts `1365`, accepted `1044`, rejected `321`, accept rate `76.48%`
 - full accept rows `477` (`69.64%`), full reject rows `116` (`16.93%`)
+- suppressed bonus rows `0` (`0.00%`)
 - max full-accept streak `147`
 - repeated scheduled rows `53`
 
@@ -19,6 +20,7 @@
 
 - rows `668`, requests `12`, drafts `1334`, accepted `617`, rejected `717`, accept rate `46.25%`
 - full accept rows `245` (`36.68%`), full reject rows `296` (`44.31%`)
+- suppressed bonus rows `0` (`0.00%`)
 - max full-accept streak `8`
 - repeated scheduled rows `14`
 
@@ -34,6 +36,7 @@
 
 - rows `662`, requests `12`, drafts `1321`, accepted `609`, rejected `712`, accept rate `46.10%`
 - full accept rows `238` (`35.95%`), full reject rows `291` (`43.96%`)
+- suppressed bonus rows `0` (`0.00%`)
 - max full-accept streak `8`
 - repeated scheduled rows `10`
 

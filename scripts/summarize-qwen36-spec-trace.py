@@ -69,6 +69,7 @@ def summarize_trace(path: Path) -> dict[str, Any]:
     repeated_scheduled_rows = 0
     full_accept_rows = 0
     full_reject_rows = 0
+    suppressed_bonus_rows = 0
     max_full_accept_streak = 0
 
     for row in rows:
@@ -90,6 +91,7 @@ def summarize_trace(path: Path) -> dict[str, Any]:
                 "current_full_accept_streak": 0,
                 "max_full_accept_streak": 0,
                 "repeated_scheduled_rows": 0,
+                "suppressed_bonus_rows": 0,
                 "top_scheduled_pairs": collections.Counter(),
             },
         )
@@ -101,6 +103,7 @@ def summarize_trace(path: Path) -> dict[str, Any]:
         output_tokens = row.get("num_output_tokens")
         scheduled = list(row.get("scheduled_spec_token_ids") or [])
         generated = list(row.get("generated_token_ids") or [])
+        suppressed_bonus = row.get("suppressed_bonus_token_id")
 
         req["rows"] += 1
         req["draft_tokens"] += draft
@@ -131,6 +134,9 @@ def summarize_trace(path: Path) -> dict[str, Any]:
                 req["repeated_scheduled_rows"] += 1
         if generated:
             generated_heads[str(generated[0])] += 1
+        if suppressed_bonus is not None:
+            suppressed_bonus_rows += 1
+            req["suppressed_bonus_rows"] += 1
 
         if draft and accepted == draft:
             full_accept_rows += 1
@@ -175,8 +181,10 @@ def summarize_trace(path: Path) -> dict[str, Any]:
         "reject_rate_pct": pct(total_rejected, total_draft),
         "full_accept_rows": full_accept_rows,
         "full_reject_rows": full_reject_rows,
+        "suppressed_bonus_rows": suppressed_bonus_rows,
         "full_accept_row_pct": pct(full_accept_rows, len(rows)),
         "full_reject_row_pct": pct(full_reject_rows, len(rows)),
+        "suppressed_bonus_row_pct": pct(suppressed_bonus_rows, len(rows)),
         "repeated_scheduled_rows": repeated_scheduled_rows,
         "max_full_accept_streak": max_full_accept_streak,
         "accept_count_histogram": dict(sorted(accept_hist.items(), key=lambda kv: int(kv[0]))),
@@ -368,6 +376,12 @@ def render_markdown(summary: dict[str, Any]) -> str:
                     f"`{trace['full_reject_rows']}` (`{trace['full_reject_row_pct']:.2f}%`)"
                     if trace["full_accept_row_pct"] is not None
                     else "- no rows"
+                ),
+                (
+                    f"- suppressed bonus rows `{trace['suppressed_bonus_rows']}` "
+                    f"(`{trace['suppressed_bonus_row_pct']:.2f}%`)"
+                    if trace["suppressed_bonus_row_pct"] is not None
+                    else "- no suppressed bonus rows"
                 ),
                 f"- max full-accept streak `{trace['max_full_accept_streak']}`",
                 f"- repeated scheduled rows `{trace['repeated_scheduled_rows']}`",

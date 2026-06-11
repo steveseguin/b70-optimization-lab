@@ -1,0 +1,73 @@
+--- a/vllm/v1/core/sched/scheduler.py
++++ b/vllm/v1/core/sched/scheduler.py
+@@ -232,6 +232,12 @@
+             .lower()
+             in ("1", "true", "yes", "on")
+         )
++        self.xpu_spec_decode_disable_full_accept_bonus = (
++            os.environ.get("VLLM_XPU_SPEC_DECODE_DISABLE_FULL_ACCEPT_BONUS", "")
++            .strip()
++            .lower()
++            in ("1", "true", "yes", "on")
++        )
+         if speculative_config:
+             self.num_spec_tokens = speculative_config.num_speculative_tokens
+             if speculative_config.use_eagle():
+@@ -1428,6 +1434,8 @@
+             generated_token_ids = (
+                 sampled_token_ids[req_index] if sampled_token_ids else []
+             )
++            emitted_token_ids = generated_token_ids
++
+             scheduled_spec_token_ids = (
+                 scheduler_output.scheduled_spec_decode_tokens.get(req_id)
+             )
+@@ -1435,10 +1443,21 @@
+                 num_draft_tokens = len(scheduled_spec_token_ids)
+                 num_accepted = len(generated_token_ids) - 1
+                 num_rejected = num_draft_tokens - num_accepted
++                suppressed_bonus_token_id = None
++                if (
++                    self.xpu_spec_decode_disable_full_accept_bonus
++                    and num_draft_tokens
++                    and num_accepted == num_draft_tokens
++                    and len(generated_token_ids) > num_accepted
++                ):
++                    suppressed_bonus_token_id = generated_token_ids[-1]
++                    emitted_token_ids = generated_token_ids[:-1]
+                 self._trace_spec_decode_step(
+                     req_id=req_id,
+                     scheduled_spec_token_ids=scheduled_spec_token_ids,
+                     generated_token_ids=generated_token_ids,
++                    emitted_token_ids=emitted_token_ids,
++                    suppressed_bonus_token_id=suppressed_bonus_token_id,
+                     num_draft_tokens=num_draft_tokens,
+                     num_accepted=num_accepted,
+                     num_rejected=num_rejected,
+@@ -1469,7 +1488,7 @@
+ 
+             stopped = False
+             new_logprobs = None
+-            new_token_ids = generated_token_ids
++            new_token_ids = emitted_token_ids
+             pooler_output = pooler_outputs[req_index] if pooler_outputs else None
+             kv_transfer_params = None
+             status_before_stop = request.status
+@@ -1753,6 +1772,8 @@
+         req_id: str,
+         scheduled_spec_token_ids: list[int],
+         generated_token_ids: list[int],
++        emitted_token_ids: list[int],
++        suppressed_bonus_token_id: int | None,
+         num_draft_tokens: int,
+         num_accepted: int,
+         num_rejected: int,
+@@ -1772,6 +1793,8 @@
+             "num_rejected": num_rejected,
+             "scheduled_spec_token_ids": scheduled_spec_token_ids,
+             "generated_token_ids": generated_token_ids,
++            "emitted_token_ids": emitted_token_ids,
++            "suppressed_bonus_token_id": suppressed_bonus_token_id,
+             "num_computed_tokens": request.num_computed_tokens,
+             "num_output_tokens": len(request.output_token_ids),
+             "status": str(request.status),

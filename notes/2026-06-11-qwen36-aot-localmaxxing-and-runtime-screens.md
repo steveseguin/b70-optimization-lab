@@ -4684,3 +4684,52 @@ Decision:
 - If speculation remains the next `2x` path, first add/validate request-id
   correlation and the strict no-bonus-token debug mode, then re-run prompt-class
   measurements with exact trace joins.
+
+## Spec Decode No-Bonus Debug Hook
+
+Added after the n-gram2/cg3 summary showed that blind n-gram width sweeps are
+not the right next step. This is an opt-in diagnostic, not a promoted runtime
+change.
+
+Artifacts:
+
+- `patches/vllm-qwen36-spec-decode-no-bonus-debug-20260611.patch`
+- `scripts/launch-qwen36-quark-int8-ngram-trace.sh`
+- `scripts/summarize-qwen36-spec-trace.py`
+
+Behavior:
+
+- New env flag: `VLLM_XPU_SPEC_DECODE_DISABLE_FULL_ACCEPT_BONUS=1`.
+- Launcher convenience knob:
+  `DISABLE_FULL_ACCEPT_BONUS=1 scripts/launch-qwen36-quark-int8-ngram-trace.sh`.
+- The hook only trims the extra emitted token on full-accept speculative rows,
+  where `num_accepted == num_draft_tokens`.
+- Partial-rejection rows still emit the verifier replacement token for the
+  first rejected draft.
+- The scheduler JSONL trace now records:
+  - `generated_token_ids`: original verifier output row.
+  - `emitted_token_ids`: tokens actually passed to the request/output path.
+  - `suppressed_bonus_token_id`: the trimmed token ID, or `null`.
+- The summarizer now reports `suppressed_bonus_rows` and keeps old traces
+  compatible.
+
+Validation:
+
+- `python3 -m py_compile` passed for the patched scheduler and updated
+  summarizer.
+- `bash -n` passed for `scripts/launch-qwen36-quark-int8-ngram-trace.sh`.
+- The tracked patch passed `git apply --reverse --check` against the current
+  local vLLM tree, proving it matches the applied local scheduler edit.
+- Existing n-gram2/cg3 summaries were regenerated; old traces show
+  `suppressed_bonus_rows=0`, as expected.
+
+Next diagnostic run:
+
+1. Launch the prior failure-oriented n-gram5 path with
+   `DISABLE_FULL_ACCEPT_BONUS=1`, bounded JSONL tracing, and request-id-aware
+   prompt-class metrics.
+2. Run token-trace parity plus repeat64 and the 8K needle case.
+3. If repeat-loop corruption disappears, the likely bug is bonus-token state
+   advancement or stale accepted-token visibility in the n-gram proposer.
+4. If corruption remains, move to request-id-correlated proposer-source tracing
+   before trying more speculative widths.
