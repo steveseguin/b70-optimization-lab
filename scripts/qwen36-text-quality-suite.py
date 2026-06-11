@@ -73,6 +73,7 @@ def chat_completion(
     timeout: int,
     *,
     seed: int,
+    chat_template_kwargs: dict[str, Any] | None,
 ) -> dict[str, Any]:
     payload = {
         "model": model,
@@ -82,6 +83,8 @@ def chat_completion(
         "top_p": 1.0,
         "seed": seed,
     }
+    if chat_template_kwargs is not None:
+        payload["chat_template_kwargs"] = chat_template_kwargs
     started = time.perf_counter()
     data = post_json(f"{base_url.rstrip('/')}/v1/chat/completions", payload, timeout)
     elapsed = time.perf_counter() - started
@@ -153,6 +156,7 @@ def run_exact_cases(
     model: str,
     timeout: int,
     seed: int,
+    chat_template_kwargs: dict[str, Any] | None,
 ) -> list[dict[str, Any]]:
     results = []
     for index, case in enumerate(make_exact_cases()):
@@ -163,6 +167,7 @@ def run_exact_cases(
             case["max_tokens"],
             timeout,
             seed=seed + index,
+            chat_template_kwargs=chat_template_kwargs,
         )
         item = {
             "name": case["name"],
@@ -191,6 +196,7 @@ def run_repeat_case(
     timeout: int,
     seed: int,
     repeats: int,
+    chat_template_kwargs: dict[str, Any] | None,
 ) -> dict[str, Any]:
     messages = [
         {
@@ -202,7 +208,15 @@ def run_repeat_case(
         }
     ]
     runs = [
-        chat_completion(base_url, model, messages, 32, timeout, seed=seed)
+        chat_completion(
+            base_url,
+            model,
+            messages,
+            32,
+            timeout,
+            seed=seed,
+            chat_template_kwargs=chat_template_kwargs,
+        )
         for _ in range(repeats)
     ]
     hashes = [item["sha256"] for item in runs]
@@ -233,6 +247,7 @@ def run_long_context_case(
     timeout: int,
     seed: int,
     target_tokens: int,
+    chat_template_kwargs: dict[str, Any] | None,
 ) -> dict[str, Any]:
     from transformers import AutoTokenizer
 
@@ -260,6 +275,7 @@ def run_long_context_case(
         64,
         timeout,
         seed=seed,
+        chat_template_kwargs=chat_template_kwargs,
     )
     return {
         "name": "long_context_needle",
@@ -321,6 +337,11 @@ def main() -> int:
     parser.add_argument("--long-context-tokens", type=int, default=8192)
     parser.add_argument("--skip-long-context", action="store_true")
     parser.add_argument("--baseline-json", type=Path, default=None)
+    parser.add_argument(
+        "--chat-template-kwargs-json",
+        default=None,
+        help='JSON object passed as chat_template_kwargs, e.g. {"enable_thinking": false}',
+    )
     parser.add_argument("--output-json", type=Path, required=True)
     args = parser.parse_args()
 
@@ -329,19 +350,29 @@ def main() -> int:
     if model is None:
         models = get_json(f"{base_url}/v1/models", args.timeout)
         model = models["data"][0]["id"]
+    chat_template_kwargs = None
+    if args.chat_template_kwargs_json:
+        parsed = json.loads(args.chat_template_kwargs_json)
+        if not isinstance(parsed, dict):
+            raise SystemExit("--chat-template-kwargs-json must decode to an object")
+        chat_template_kwargs = parsed
 
     output: dict[str, Any] = {
         "base_url": base_url,
         "model": model,
         "tokenizer": args.tokenizer,
+        "chat_template_kwargs": chat_template_kwargs,
         "seed": args.seed,
-        "exact_cases": run_exact_cases(base_url, model, args.timeout, args.seed),
+        "exact_cases": run_exact_cases(
+            base_url, model, args.timeout, args.seed, chat_template_kwargs
+        ),
         "repeat_case": run_repeat_case(
             base_url,
             model,
             args.timeout,
             args.seed + 1000,
             args.repeat_runs,
+            chat_template_kwargs,
         ),
         "long_context_case": None,
     }
@@ -353,6 +384,7 @@ def main() -> int:
             args.timeout,
             args.seed + 2000,
             args.long_context_tokens,
+            chat_template_kwargs,
         )
 
     checks = [item["pass"] for item in output["exact_cases"]]

@@ -1,0 +1,68 @@
+diff --git a/vllm/envs.py b/vllm/envs.py
+--- a/vllm/envs.py
++++ b/vllm/envs.py
+@@ -195,6 +195,9 @@ if TYPE_CHECKING:
+     VLLM_MOE_ROUTE_CAPTURE_EVERY_N: int = 1
+     VLLM_MOE_ROUTE_CAPTURE_INCLUDE_IDS: bool = False
+     VLLM_MOE_ROUTE_CAPTURE_LAYER_REGEX: str = ""
++    VLLM_MOE_ROUTE_CAPTURE_STAGE_REGEX: str = ""
++    VLLM_MOE_ROUTE_CAPTURE_MIN_NUM_TOKENS: int = 0
++    VLLM_MOE_ROUTE_CAPTURE_MAX_NUM_TOKENS: int = 0
+     VLLM_TOOL_PARSE_REGEX_TIMEOUT_SECONDS: int = 1
+     VLLM_MQ_MAX_CHUNK_BYTES_MB: int = 16
+     VLLM_EXECUTE_MODEL_TIMEOUT_SECONDS: int = 300
+@@ -1455,6 +1458,18 @@ environment_variables: dict[str, Callable[[], Any]] = {
+     "VLLM_MOE_ROUTE_CAPTURE_LAYER_REGEX": lambda: os.environ.get(
+         "VLLM_MOE_ROUTE_CAPTURE_LAYER_REGEX", ""
+     ),
++    # Optional regex against route-capture stage names, for example:
++    # quark_int8_apply|runner_pre_monolithic
++    "VLLM_MOE_ROUTE_CAPTURE_STAGE_REGEX": lambda: os.environ.get(
++        "VLLM_MOE_ROUTE_CAPTURE_STAGE_REGEX", ""
++    ),
++    # Optional routed-token count bounds. 0 disables the bound.
++    "VLLM_MOE_ROUTE_CAPTURE_MIN_NUM_TOKENS": lambda: int(
++        os.getenv("VLLM_MOE_ROUTE_CAPTURE_MIN_NUM_TOKENS", "0")
++    ),
++    "VLLM_MOE_ROUTE_CAPTURE_MAX_NUM_TOKENS": lambda: int(
++        os.getenv("VLLM_MOE_ROUTE_CAPTURE_MAX_NUM_TOKENS", "0")
++    ),
+     # Regex timeout for use by the vLLM tool parsing plugins.
+     "VLLM_TOOL_PARSE_REGEX_TIMEOUT_SECONDS": lambda: int(
+         os.getenv("VLLM_TOOL_PARSE_REGEX_TIMEOUT_SECONDS", "1")
+diff --git a/vllm/model_executor/layers/fused_moe/router/route_capture.py b/vllm/model_executor/layers/fused_moe/router/route_capture.py
+--- a/vllm/model_executor/layers/fused_moe/router/route_capture.py
++++ b/vllm/model_executor/layers/fused_moe/router/route_capture.py
+@@ -70,7 +70,15 @@ class MoERouteCapture:
+         self.capture_file = _format_capture_path(envs.VLLM_MOE_ROUTE_CAPTURE_FILE)
+         self.max_lines = max(0, int(envs.VLLM_MOE_ROUTE_CAPTURE_MAX_LINES))
+         self.every_n = max(1, int(envs.VLLM_MOE_ROUTE_CAPTURE_EVERY_N))
+         self.include_ids = bool(envs.VLLM_MOE_ROUTE_CAPTURE_INCLUDE_IDS)
++        stage_regex = envs.VLLM_MOE_ROUTE_CAPTURE_STAGE_REGEX
++        self.stage_pattern = re.compile(stage_regex) if stage_regex else None
++        self.min_num_tokens = max(
++            0, int(envs.VLLM_MOE_ROUTE_CAPTURE_MIN_NUM_TOKENS)
++        )
++        self.max_num_tokens = max(
++            0, int(envs.VLLM_MOE_ROUTE_CAPTURE_MAX_NUM_TOKENS)
++        )
+ 
+         path = Path(self.capture_file)
+         path.parent.mkdir(parents=True, exist_ok=True)
+@@ -81,7 +89,16 @@ class MoERouteCapture:
+     def capture(self, topk_ids: torch.Tensor, *, stage: str) -> None:
+         global _warned_capture_error
+ 
++        if self.stage_pattern is not None and not self.stage_pattern.search(stage):
++            return
++
++        num_tokens = int(topk_ids.shape[0]) if len(topk_ids.shape) > 0 else 0
++        if self.min_num_tokens and num_tokens < self.min_num_tokens:
++            return
++        if self.max_num_tokens and num_tokens > self.max_num_tokens:
++            return
++
+         self.calls += 1
+         if self.calls % self.every_n:
+             return
+         if self.max_lines and self.writes >= self.max_lines:

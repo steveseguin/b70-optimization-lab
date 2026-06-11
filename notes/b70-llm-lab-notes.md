@@ -34,7 +34,13 @@ Current Qwen3.6 INT8 direction:
    allowed only if the current Quark INT8 model remains the final verifier.
 5. Add real-router-distribution capture for Qwen3.6 MoE and feed those
    histograms into `vllm-xpu-kernels` grouped-GEMM microbenches before more
-   small-M W8A8 kernel tuning.
+   small-M W8A8 kernel tuning. Stage-filtered decode capture and exact-ID
+   capture now exist; next step is route replay in the MoE microbench, then
+   hot-expert packing or layer-specific policy.
+6. Direct vLLM chat quality needs
+   `chat_template_kwargs={"enable_thinking": false}` for deterministic canary
+   comparisons. The no-thinking post-restore smoke passed; the plain direct
+   endpoint is the wrong quality mode because it can emit thinking content.
 
 ## 2026-05-10 MiniMax AutoRound Addendum
 
@@ -187,12 +193,13 @@ vLLM/XPU FP8 work:
 8. For MiniMax AutoRound/vLLM, target lower-level MoE expert/router fusion or multi-boundary reduction scheduling. Do not spend more time on pure Python-boundary router moves unless they include a new fused kernel and pass the full strict quality gate.
 9. For MiniMax AutoRound usability, debug c2 before advertising concurrency: first reproduce the no-graph `Indexing.h:622` failure with a smaller two-request prompt, then inspect whether scheduler slot/candidate indexing or a custom INT4 shape assumption is feeding an invalid XPU index. Keep the 512-token prefill chunk until the `ocloc` internal compiler error for 1024-token chunking is avoided or an existing safe cache artifact is reused.
 10. For Qwen3.6 Quark W8A8 INT8, route capture now works below the generic
-    router abstraction. The current successful diagnostic is routecapture4:
-    `21,120` records across `40` layers and `21,312,000` expert assignments,
-    with stages `router` and `quark_int8_apply`. Use one stage only,
-    preferably `quark_int8_apply`, for grouped-GEMM/persistent-MoE inputs.
-    Next capture should be post-warmup decode-only and prompt-class separated.
+    router abstraction. Routecapture4 produced a decode-only
+    `quark_int8_apply` summary with `10,080` records across `40` layers and
+    `80,640` assignments. Routecapture5 added exact `topk_ids` for layers `8`
+    and `20`; use the rank0 artifact for replay because TP ranks record
+    duplicate logical routes.
 11. For Qwen3.6 performance, prioritize large no-quality-loss levers:
-    real-route persistent MoE microbenches, newest Intel XPU kernel-stack
-    comparison, verifier-preserving MTP/DFlash-style speculation, shape-exact
-    collective replacement, and a static one-user latency lane.
+    route-replay MoE microbenches, hot-expert physical packing, layer-specific
+    grouped-GEMM policy, newest Intel XPU kernel-stack comparison,
+    verifier-preserving MTP/DFlash-style speculation, shape-exact collective
+    replacement, and a static one-user latency lane.

@@ -1150,3 +1150,200 @@ Accepted service restore after this diagnostic:
      shapes or expert hot spots.
    - Add route-shape counters to future 30-60 minute soaks so reliability bugs
      can be tied to model paths instead of only wall-clock age.
+
+## Decode-Only Route Filters And Exact-ID Capture
+
+Added stage/token filters so route capture can target steady-state decode
+instead of mixing warmup, prefill, router, and expert-apply records:
+
+- vLLM env patch artifact:
+  `patches/vllm-qwen36-moe-route-capture-stage-token-filters-20260611.patch`
+- launcher controls:
+  - `CAPTURE_STAGE_REGEX`
+  - `CAPTURE_MIN_NUM_TOKENS`
+  - `CAPTURE_MAX_NUM_TOKENS`
+- summarizer filters:
+  - `--stage-regex`
+  - `--layer-regex`
+  - `--min-num-tokens`
+  - `--max-num-tokens`
+- summarizer now records `records_loaded`, active filters, and exact
+  `topk_tuples` when raw `topk_ids` are present.
+
+Decode-only summary from routecapture4:
+
+- input: `data/qwen36-quark-int8-tp4-routecapture4-routes-20260611.jsonl`
+- summary:
+  `data/qwen36-quark-int8-tp4-routecapture4-quark-decode-summary-20260611.json`
+- filter: `stage_regex=^quark_int8_apply$`, `max_num_tokens=4`
+- records loaded: `21,120`
+- records summarized: `10,080`
+- layers: `40`
+- assignments: `80,640`
+- stage: `quark_int8_apply`
+- decode shapes: all first-layer records were `[1, 8]`
+- hottest global experts in this capture: `151`, `35`, `20`, `165`, `47`
+
+Interpretation: decode is not uniform. It has enough expert skew to justify
+route-distribution-aware kernel policy, but routecapture4 does not include exact
+`topk_ids`, so it is not sufficient for replaying real route tuples.
+
+Exact-ID routecapture5:
+
+- launch controls:
+  - `CAPTURE_STAGE_REGEX=^quark_int8_apply$`
+  - `CAPTURE_LAYER_REGEX=language_model\\.model\\.layers\\.(8|20)\\.mlp\\.experts`
+  - `CAPTURE_MIN_NUM_TOKENS=1`
+  - `CAPTURE_MAX_NUM_TOKENS=1`
+  - `CAPTURE_INCLUDE_IDS=1`
+  - `CAPTURE_MAX_LINES=1000`
+- speed artifact from diagnostic request:
+  `data/qwen36-quark-int8-tp4-routecapture5-chat-natural-p192o128-20260611.json`
+- raw route artifacts:
+  - `data/qwen36-quark-int8-tp4-routecapture5-routes-rank0-20260611.jsonl`
+  - `data/qwen36-quark-int8-tp4-routecapture5-routes-rank1-20260611.jsonl`
+  - `data/qwen36-quark-int8-tp4-routecapture5-routes-rank2-20260611.jsonl`
+  - `data/qwen36-quark-int8-tp4-routecapture5-routes-rank3-20260611.jsonl`
+- all-rank summary:
+  `data/qwen36-quark-int8-tp4-routecapture5-exact-id-summary-20260611.json`
+- rank0 replay summary:
+  `data/qwen36-quark-int8-tp4-routecapture5-exact-id-rank0-summary-20260611.json`
+
+The diagnostic request is not a speed result because exact-ID CPU capture slows
+the model. It exists to produce replay input.
+
+Important routecapture5 findings:
+
+- All four TP ranks recorded duplicate logical routes, so replay should start
+  from rank0 or de-duplicate across ranks.
+- Rank0 has `254` records: `127` decode tokens for layer 8 and `127` for layer
+  20.
+- Both layers captured exact `topk_ids` with shape `[1, 8]`.
+- Layer 8:
+  - active experts: `117`
+  - aggregate max expert share: `0.0827`
+  - examples:
+    - `[77,173,224,180,4,99,191,20]`
+    - `[173,4,180,20,61,191,116,84]`
+    - `[224,117,151,206,41,121,249,20]`
+- Layer 20:
+  - active experts: `125`
+  - aggregate max expert share: `0.06`
+  - examples:
+    - `[224,116,237,239,99,56,191,151]`
+    - `[237,17,127,223,235,116,104,11]`
+    - `[117,206,151,53,41,224,143,203]`
+
+Interpretation:
+
+- Exact top-k tuples are mostly unique per token in this prompt. The first
+  replay target is therefore not a repeated-tuple fast path.
+- The usable signal is expert frequency skew and layer-specific route shape,
+  especially for layer/prompt-class policy selection.
+- A real-route microbench should compare:
+  - synthetic uniform top-k IDs
+  - routecapture5 rank0 exact top-k sequence
+  - sorted/hot-expert physical packing with the same logical IDs
+  - layer-specific policy choices for layer 8 versus layer 20
+
+Post-restore accepted baseline after the diagnostic:
+
+- tmux: `qwen36-tp4-accepted-restored-20260611e`
+- health: pass on `127.0.0.1:18080`
+- speed artifact:
+  `data/qwen36-quark-int8-tp4-post-restore-chat-natural-p192o128-20260611.json`
+- direct chat natural p192/n128:
+  - output tok/s after first chunk: `100.156`
+  - corrected output tok/s after first chunk: `99.373`
+  - e2e output tok/s: `93.442`
+  - TTFT: `91.83 ms` client, `90.39 ms` from vLLM metrics
+
+Direct quality gate detail:
+
+- The direct vLLM endpoint emits thinking content unless told otherwise, so the
+  direct quality suite must pass:
+  `--chat-template-kwargs-json '{"enable_thinking": false}'`
+- wrong-mode artifact:
+  `data/qwen36-quark-int8-tp4-post-restore-quality-smoke-20260611.json`
+- correct no-thinking artifact:
+  `data/qwen36-quark-int8-tp4-post-restore-quality-smoke-nothink-20260611.json`
+- result: exact canaries, copy phrase, arithmetic, JSON schema, and repeat
+  smoke all passed.
+
+## Bigger Ideas Added After Exact Route Capture
+
+1. Route replay before kernel changes.
+   - Implemented in `scripts/bench-qwen36-int8-moe-kernels.py` with
+     `--route-jsonl`, `--route-layer-regex`, `--route-stage-regex`,
+     `--route-min-num-tokens`, `--route-max-num-tokens`, and
+     `--route-start-index`.
+   - Feed the rank0 exact `topk_ids` sequence into the current microbench so
+     future kernel work measures real decode skew, not synthetic uniform routes.
+   - This is the next safest engineering step because it changes measurement,
+     not model math.
+   - Lightweight loader check for layer 8 selected `127` top-k rows and `117`
+     active experts from the rank0 routecapture5 JSONL.
+
+2. Layer-specific MoE policy.
+   - Layer 8 and layer 20 already show different hot-expert profiles.
+   - A single global grouped-GEMM policy may be leaving performance on the table.
+   - Try a table-driven policy keyed by layer, top-k shape, and rows-per-expert
+     histogram. Keep policy selection outside the math path so parity is easy to
+     test.
+
+3. Hot-expert physical packing.
+   - Repack expert weights so frequent experts in a layer are physically near
+     each other or use a more favorable tile layout.
+   - Preserve logical expert IDs by applying a logical-to-physical map at the
+     kernel boundary.
+   - Quality proof should be straightforward because the numeric weights and
+     scales do not change.
+
+4. Decode-route graph specialization.
+   - Generate a few graph/kernel variants for observed route classes:
+     hot-skewed, long-tail, and near-uniform.
+   - Dispatch by a cheap route histogram instead of using one generic path for
+     every token.
+   - This is higher risk than packing because it changes scheduling, but it
+     could matter if branch/launch overhead dominates small-M decode.
+
+5. GPU-side route telemetry.
+   - CPU `topk_ids` capture is too invasive for accepted graph-captured speed
+     runs.
+   - Add a tiny graph-safe XPU histogram collector that increments per-layer
+     expert counters and flushes after the request.
+   - Use it in reliability soaks to correlate device instability, graph shapes,
+     and expert hot spots.
+
+6. Prompt-class expert cache.
+   - Capture route histograms for natural chat, code, math, and structured
+     prompts separately.
+   - If prompt classes have stable expert hot sets, prefetch or pin those expert
+     layouts before long decode runs.
+   - This is still quality-preserving because it only affects placement/cache
+     behavior.
+
+7. Speculation plus route burst analysis.
+   - If MTP/DFlash returns, capture verifier route bursts when multiple draft
+     tokens are verified together.
+   - A speculative path can look fast in token accounting but still overload
+     specific expert/layout paths. Route telemetry should be part of the
+     speculation quality/performance gate.
+
+8. Upstreamable grouped-GEMM replay artifact.
+   - Package the rank0 exact route file plus a small benchmark harness as a
+     minimal Intel/vLLM issue or PR.
+   - Intel's public grouped-GEMM tuning issue explicitly asks for realistic
+     route distributions; this gives them a concrete B70/Qwen3.6 example.
+
+9. Static one-user decode runner with route replay.
+   - Build the offline runner around the same route-capture/replay machinery.
+   - It should report model-core tok/s independent of OpenAI streaming overhead
+     and tell us whether the `~100 tok/s` ceiling is server-side or kernel-side.
+
+10. Production dual-track plan.
+    - Keep the accepted TP4 service as the quality oracle and reliability base.
+    - Develop route replay, MTP proposer, and static decode lane as opt-in
+      branches.
+    - Do not promote any branch until it passes no-thinking direct quality,
+      frontdoor quality, repeat64 or stronger, and a short stability soak.

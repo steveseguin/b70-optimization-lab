@@ -1,0 +1,136 @@
+{
+  "base_url": "http://127.0.0.1:18080",
+  "model": "qwen36-35b-a3b-fp8",
+  "tokenizer": "/mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118",
+  "seed": 20260609,
+  "exact_cases": [
+    {
+      "name": "exact_ok",
+      "content": "Here's a thinking process:\n\n1",
+      "normalized": "Here's a thinking process: 1",
+      "sha256": "a984d8e899b8ed2fee65bad921fb6311e7971ca3273a25bd48171d11c9c0e0da",
+      "elapsed_s": 0.14188824105076492,
+      "usage": {
+        "prompt_tokens": 15,
+        "total_tokens": 23,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "expected": "OK",
+      "json_expected_fields": null,
+      "pass": false
+    },
+    {
+      "name": "copy_phrase",
+      "content": "Here's a thinking process:\n\n1.  **Analyze User Input:**",
+      "normalized": "Here's a thinking process: 1. **Analyze User Input:**",
+      "sha256": "06cc9c7f446560f08f733dc907e73039bc34c240c0a39e6eacc52c3dea8acd2e",
+      "elapsed_s": 0.24936134403105825,
+      "usage": {
+        "prompt_tokens": 24,
+        "total_tokens": 40,
+        "completion_tokens": 16,
+        "prompt_tokens_details": null
+      },
+      "expected": "satin cobalt orbit",
+      "json_expected_fields": null,
+      "pass": false
+    },
+    {
+      "name": "arithmetic",
+      "content": "Here's a thinking process:\n\n1.  **Analyze User Input:**",
+      "normalized": "Here's a thinking process: 1. **Analyze User Input:**",
+      "sha256": "06cc9c7f446560f08f733dc907e73039bc34c240c0a39e6eacc52c3dea8acd2e",
+      "elapsed_s": 0.27853034203872085,
+      "usage": {
+        "prompt_tokens": 34,
+        "total_tokens": 50,
+        "completion_tokens": 16,
+        "prompt_tokens_details": null
+      },
+      "expected": "60",
+      "json_expected_fields": null,
+      "pass": false
+    },
+    {
+      "name": "json_schema",
+      "content": "Here's a thinking process:\n\n1.  **Analyze User Input:**\n   - Question: \"12 plus 30.\"\n   - Unit: \"widgets\"\n   - Output format: \"Return only compact JSON with keys answer and unit.\"\n\n2.  **Calculate the Answer:**\n",
+      "normalized": "Here's a thinking process: 1. **Analyze User Input:** - Question: \"12 plus 30.\" - Unit: \"widgets\" - Output format: \"Return only compact JSON with keys answer and unit.\" 2. **Calculate the Answer:**",
+      "sha256": "417851e24a153508720b8c32b7bb31e8ded44bb6576a74d302ad5a3a7a459287",
+      "elapsed_s": 0.6501348840538412,
+      "usage": {
+        "prompt_tokens": 34,
+        "total_tokens": 98,
+        "completion_tokens": 64,
+        "prompt_tokens_details": null
+      },
+      "expected": null,
+      "json_expected_fields": {
+        "answer": "42",
+        "unit": "widgets"
+      },
+      "pass": false,
+      "json_parsed": null
+    }
+  ],
+  "repeat_case": {
+    "name": "repeat_hash_stability",
+    "repeats": 3,
+    "hashes": [
+      "31c00bc976ab2a3df735169b4189a49064f82a25775181da1bce866b86ac493d",
+      "31c00bc976ab2a3df735169b4189a49064f82a25775181da1bce866b86ac493d",
+      "31c00bc976ab2a3df735169b4189a49064f82a25775181da1bce866b86ac493d"
+    ],
+    "texts": [
+      "Here's a thinking process: 1. **Analyze User Input:** - **Quantity:** Exactly four - **Format:** Comma",
+      "Here's a thinking process: 1. **Analyze User Input:** - **Quantity:** Exactly four - **Format:** Comma",
+      "Here's a thinking process: 1. **Analyze User Input:** - **Quantity:** Exactly four - **Format:** Comma"
+    ],
+    "unique_hashes": [
+      "31c00bc976ab2a3df735169b4189a49064f82a25775181da1bce866b86ac493d"
+    ],
+    "pass": true,
+    "runs": [
+      {
+        "content": "Here's a thinking process:\n\n1.  **Analyze User Input:**\n   - **Quantity:** Exactly four\n   - **Format:** Comma",
+        "normalized": "Here's a thinking process: 1. **Analyze User Input:** - **Quantity:** Exactly four - **Format:** Comma",
+        "sha256": "31c00bc976ab2a3df735169b4189a49064f82a25775181da1bce866b86ac493d",
+        "elapsed_s": 0.4095600739819929,
+        "usage": {
+          "prompt_tokens": 28,
+          "total_tokens": 60,
+          "completion_tokens": 32,
+          "prompt_tokens_details": null
+        }
+      },
+      {
+        "content": "Here's a thinking process:\n\n1.  **Analyze User Input:**\n   - **Quantity:** Exactly four\n   - **Format:** Comma",
+        "normalized": "Here's a thinking process: 1. **Analyze User Input:** - **Quantity:** Exactly four - **Format:** Comma",
+        "sha256": "31c00bc976ab2a3df735169b4189a49064f82a25775181da1bce866b86ac493d",
+        "elapsed_s": 0.3373708330327645,
+        "usage": {
+          "prompt_tokens": 28,
+          "total_tokens": 60,
+          "completion_tokens": 32,
+          "prompt_tokens_details": null
+        }
+      },
+      {
+        "content": "Here's a thinking process:\n\n1.  **Analyze User Input:**\n   - **Quantity:** Exactly four\n   - **Format:** Comma",
+        "normalized": "Here's a thinking process: 1. **Analyze User Input:** - **Quantity:** Exactly four - **Format:** Comma",
+        "sha256": "31c00bc976ab2a3df735169b4189a49064f82a25775181da1bce866b86ac493d",
+        "elapsed_s": 0.3314705839147791,
+        "usage": {
+          "prompt_tokens": 28,
+          "total_tokens": 60,
+          "completion_tokens": 32,
+          "prompt_tokens_details": null
+        }
+      }
+    ]
+  },
+  "long_context_case": null,
+  "pass_all": false,
+  "baseline_comparisons": {},
+  "baseline_match_all": true
+}

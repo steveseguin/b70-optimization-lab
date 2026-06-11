@@ -12,6 +12,7 @@ import argparse
 import glob
 import json
 import math
+import re
 from collections import defaultdict
 from pathlib import Path
 from typing import Any
@@ -75,6 +76,31 @@ def load_records(paths: list[str]) -> list[dict[str, Any]]:
     return records
 
 
+def filter_records(
+    records: list[dict[str, Any]],
+    *,
+    stage_regex: str | None,
+    layer_regex: str | None,
+    min_num_tokens: int | None,
+    max_num_tokens: int | None,
+) -> list[dict[str, Any]]:
+    stage_pattern = re.compile(stage_regex) if stage_regex else None
+    layer_pattern = re.compile(layer_regex) if layer_regex else None
+    filtered: list[dict[str, Any]] = []
+    for record in records:
+        if stage_pattern and not stage_pattern.search(str(record.get("stage") or "")):
+            continue
+        if layer_pattern and not layer_pattern.search(str(record.get("layer") or "")):
+            continue
+        num_tokens = int(record.get("num_tokens") or 0)
+        if min_num_tokens is not None and num_tokens < min_num_tokens:
+            continue
+        if max_num_tokens is not None and num_tokens > max_num_tokens:
+            continue
+        filtered.append(record)
+    return filtered
+
+
 def summarize_layer(records: list[dict[str, Any]], topn: int) -> dict[str, Any]:
     first = records[0]
     num_experts = int(first.get("num_experts") or len(first.get("counts", [])))
@@ -85,6 +111,7 @@ def summarize_layer(records: list[dict[str, Any]], topn: int) -> dict[str, Any]:
     assignments = []
     shapes = defaultdict(int)
     stages = defaultdict(int)
+    topk_tuples = defaultdict(int)
     pids = set()
     ranks = set()
 
@@ -103,6 +130,11 @@ def summarize_layer(records: list[dict[str, Any]], topn: int) -> dict[str, Any]:
         assignments.append(float(record.get("assignments", 0)))
         shapes[tuple(record.get("shape", []))] += 1
         stages[str(record.get("stage") or "unknown")] += 1
+        topk_ids = record.get("topk_ids")
+        if isinstance(topk_ids, list):
+            for row in topk_ids:
+                if isinstance(row, list):
+                    topk_tuples[tuple(int(item) for item in row)] += 1
         if record.get("pid") is not None:
             pids.add(str(record.get("pid")))
         if record.get("rank") is not None:
@@ -123,6 +155,12 @@ def summarize_layer(records: list[dict[str, Any]], topn: int) -> dict[str, Any]:
             for shape, count in sorted(shapes.items(), key=lambda item: item[0])
         ],
         "stages": dict(sorted(stages.items())),
+        "topk_tuples": [
+            {"topk_ids": list(ids), "count": int(count)}
+            for ids, count in sorted(
+                topk_tuples.items(), key=lambda item: item[1], reverse=True
+            )[:topn]
+        ],
         "active_experts_total": len(active_counts),
         "aggregate_max_expert_share": (
             max(total_counts) / total_assignments if total_assignments else 0.0
@@ -165,10 +203,35 @@ def main() -> int:
     )
     parser.add_argument("--out", help="Write summary JSON to this path")
     parser.add_argument("--topn", type=int, default=16)
+    parser.add_argument(
+        "--stage-regex",
+        help="Only summarize records whose stage matches this regex",
+    )
+    parser.add_argument(
+        "--layer-regex",
+        help="Only summarize records whose layer matches this regex",
+    )
+    parser.add_argument(
+        "--min-num-tokens",
+        type=int,
+        help="Only summarize records with at least this many routed tokens",
+    )
+    parser.add_argument(
+        "--max-num-tokens",
+        type=int,
+        help="Only summarize records with at most this many routed tokens",
+    )
     args = parser.parse_args()
 
     paths = expand_inputs(args.inputs)
-    records = load_records(paths)
+    records_loaded = load_records(paths)
+    records = filter_records(
+        records_loaded,
+        stage_regex=args.stage_regex,
+        layer_regex=args.layer_regex,
+        min_num_tokens=args.min_num_tokens,
+        max_num_tokens=args.max_num_tokens,
+    )
     by_layer: dict[str, list[dict[str, Any]]] = defaultdict(list)
     for record in records:
         layer = str(record.get("layer") or "unknown")
@@ -192,6 +255,13 @@ def main() -> int:
 
     summary = {
         "input_files": paths,
+        "filters": {
+            "stage_regex": args.stage_regex,
+            "layer_regex": args.layer_regex,
+            "min_num_tokens": args.min_num_tokens,
+            "max_num_tokens": args.max_num_tokens,
+        },
+        "records_loaded": len(records_loaded),
         "records": len(records),
         "layers": layer_summaries,
         "global": {

@@ -12,6 +12,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 from pathlib import Path
 from typing import Any
 
@@ -51,6 +52,83 @@ def load_text_config(path: str) -> dict[str, Any]:
     return text_config
 
 
+def load_route_topk_rows(
+    path: str | None,
+    *,
+    layer_regex: str | None,
+    stage_regex: str | None,
+    min_num_tokens: int | None,
+    max_num_tokens: int | None,
+) -> tuple[list[list[int]], dict[str, Any] | None]:
+    if not path:
+        return [], None
+
+    layer_pattern = re.compile(layer_regex) if layer_regex else None
+    stage_pattern = re.compile(stage_regex) if stage_regex else None
+    rows: list[list[int]] = []
+    layers: dict[str, int] = {}
+    stages: dict[str, int] = {}
+    loaded = 0
+    matched = 0
+
+    with Path(path).open() as handle:
+        for line in handle:
+            line = line.strip()
+            if not line:
+                continue
+            loaded += 1
+            record = json.loads(line)
+            layer = str(record.get("layer") or "")
+            stage = str(record.get("stage") or "")
+            if layer_pattern and not layer_pattern.search(layer):
+                continue
+            if stage_pattern and not stage_pattern.search(stage):
+                continue
+            num_tokens = int(record.get("num_tokens") or 0)
+            if min_num_tokens is not None and num_tokens < min_num_tokens:
+                continue
+            if max_num_tokens is not None and num_tokens > max_num_tokens:
+                continue
+            topk_ids = record.get("topk_ids")
+            if not isinstance(topk_ids, list):
+                continue
+            matched += 1
+            layers[layer] = layers.get(layer, 0) + 1
+            stages[stage] = stages.get(stage, 0) + 1
+            for row in topk_ids:
+                if not isinstance(row, list):
+                    continue
+                rows.append([int(item) for item in row])
+
+    if not rows:
+        raise ValueError(f"No topk_ids matched route filters in {path}")
+
+    tuple_counts: dict[tuple[int, ...], int] = {}
+    expert_counts: dict[int, int] = {}
+    for row in rows:
+        tuple_counts[tuple(row)] = tuple_counts.get(tuple(row), 0) + 1
+        for expert in row:
+            expert_counts[expert] = expert_counts.get(expert, 0) + 1
+
+    metadata = {
+        "route_jsonl": path,
+        "records_loaded": loaded,
+        "records_matched": matched,
+        "topk_rows_loaded": len(rows),
+        "layers": dict(sorted(layers.items())),
+        "stages": dict(sorted(stages.items())),
+        "unique_topk_tuples": len(tuple_counts),
+        "active_experts": len(expert_counts),
+        "top_experts": [
+            {"expert": expert, "count": count}
+            for expert, count in sorted(
+                expert_counts.items(), key=lambda item: item[1], reverse=True
+            )[:16]
+        ],
+    }
+    return rows, metadata
+
+
 def elapsed_us(start: torch.xpu.Event, end: torch.xpu.Event) -> float:
     return float(start.elapsed_time(end) * 1000.0)
 
@@ -80,6 +158,8 @@ def make_inputs(
     dtype: torch.dtype,
     device: str,
     seed: int,
+    route_topk_rows: list[list[int]] | None = None,
+    route_start_index: int = 0,
 ) -> dict[str, torch.Tensor]:
     torch.manual_seed(seed)
     hidden_states = torch.randn(
@@ -110,10 +190,26 @@ def make_inputs(
                    dtype=torch.float32) * 0.02 + 0.001
     ).contiguous()
 
-    topk_ids = (
-        torch.arange(rows * topk, device=device, dtype=torch.int64) %
-        num_experts
-    ).view(rows, topk)
+    if route_topk_rows:
+        selected_rows = [
+            route_topk_rows[(route_start_index + index) % len(route_topk_rows)]
+            for index in range(rows)
+        ]
+        if any(len(row) != topk for row in selected_rows):
+            raise ValueError(
+                f"Route topk row width does not match model topk={topk}")
+        if any(expert < 0 or expert >= num_experts
+               for row in selected_rows for expert in row):
+            raise ValueError(
+                f"Route topk IDs contain expert outside [0, {num_experts})")
+        topk_ids = torch.tensor(selected_rows,
+                                device=device,
+                                dtype=torch.int64)
+    else:
+        topk_ids = (
+            torch.arange(rows * topk, device=device, dtype=torch.int64) %
+            num_experts
+        ).view(rows, topk)
     topk_weights = torch.rand((rows, topk),
                               device=device,
                               dtype=torch.float32)
@@ -336,7 +432,39 @@ def manual_int8_moe_preallocated_once(
     return scratch["output"]
 
 
-def benchmark_rows(args, text_config: dict[str, Any], rows: int) -> dict[str, Any]:
+def summarize_topk_ids(topk_ids: torch.Tensor, topn: int = 16) -> dict[str, Any]:
+    topk_cpu = topk_ids.detach().cpu().tolist()
+    tuple_counts: dict[tuple[int, ...], int] = {}
+    expert_counts: dict[int, int] = {}
+    for row in topk_cpu:
+        row_tuple = tuple(int(item) for item in row)
+        tuple_counts[row_tuple] = tuple_counts.get(row_tuple, 0) + 1
+        for expert in row_tuple:
+            expert_counts[expert] = expert_counts.get(expert, 0) + 1
+    return {
+        "unique_topk_tuples": len(tuple_counts),
+        "active_experts": len(expert_counts),
+        "top_experts": [
+            {"expert": expert, "count": count}
+            for expert, count in sorted(
+                expert_counts.items(), key=lambda item: item[1], reverse=True
+            )[:topn]
+        ],
+        "topk_tuple_examples": [
+            {"topk_ids": list(row), "count": count}
+            for row, count in sorted(
+                tuple_counts.items(), key=lambda item: item[1], reverse=True
+            )[:topn]
+        ],
+    }
+
+
+def benchmark_rows(
+    args,
+    text_config: dict[str, Any],
+    rows: int,
+    route_topk_rows: list[list[int]],
+) -> dict[str, Any]:
     full_hidden_size = int(text_config["hidden_size"])
     full_inter_size = int(text_config["moe_intermediate_size"])
     hidden_size = full_hidden_size
@@ -354,7 +482,10 @@ def benchmark_rows(args, text_config: dict[str, Any], rows: int) -> dict[str, An
         dtype=dtype,
         device=args.device,
         seed=args.seed + rows,
+        route_topk_rows=route_topk_rows,
+        route_start_index=args.route_start_index,
     )
+    topk_summary = summarize_topk_ids(inputs["topk_ids"])
 
     for _ in range(args.warmup):
         xpu_fused_moe(
@@ -515,6 +646,8 @@ def benchmark_rows(args, text_config: dict[str, Any], rows: int) -> dict[str, An
         "num_experts": num_experts,
         "topk": topk,
         "dtype": args.dtype,
+        "topk_source": "route_jsonl" if route_topk_rows else "synthetic_uniform",
+        "topk_summary": topk_summary,
         "total_us_mean": mean(total_us),
         "preallocated_staged_total_us_mean": mean(preallocated_total_us),
         "components_us_mean": components,
@@ -537,6 +670,27 @@ def main() -> int:
     parser.add_argument("--device", default="xpu")
     parser.add_argument("--output-json")
     parser.add_argument(
+        "--route-jsonl",
+        help="Optional route-capture JSONL whose topk_ids override synthetic routing.",
+    )
+    parser.add_argument(
+        "--route-layer-regex",
+        help="Only load route records whose layer matches this regex.",
+    )
+    parser.add_argument(
+        "--route-stage-regex",
+        default="^quark_int8_apply$",
+        help="Only load route records whose stage matches this regex.",
+    )
+    parser.add_argument("--route-min-num-tokens", type=int, default=1)
+    parser.add_argument("--route-max-num-tokens", type=int, default=1)
+    parser.add_argument(
+        "--route-start-index",
+        type=int,
+        default=0,
+        help="Starting topk row offset when replaying captured routes.",
+    )
+    parser.add_argument(
         "--enable-fused-silu-quant",
         action="store_true",
         help="Benchmark the rejected fused SiLU+quant candidate; use for diagnostics only.",
@@ -547,12 +701,22 @@ def main() -> int:
         os.environ["VLLM_XPU_FUSED_MOE_FUSE_SILU_QUANT"] = "1"
 
     text_config = load_text_config(args.model_config)
+    route_topk_rows, route_metadata = load_route_topk_rows(
+        args.route_jsonl,
+        layer_regex=args.route_layer_regex,
+        stage_regex=args.route_stage_regex,
+        min_num_tokens=args.route_min_num_tokens,
+        max_num_tokens=args.route_max_num_tokens,
+    )
     results = {
         "model_config": args.model_config,
         "tp_size": args.tp_size,
         "fused_silu_quant_enabled": args.enable_fused_silu_quant,
-        "results": [benchmark_rows(args, text_config, rows)
-                    for rows in args.rows],
+        "route_metadata": route_metadata,
+        "results": [
+            benchmark_rows(args, text_config, rows, route_topk_rows)
+            for rows in args.rows
+        ],
     }
 
     text = json.dumps(results, indent=2, sort_keys=True)
