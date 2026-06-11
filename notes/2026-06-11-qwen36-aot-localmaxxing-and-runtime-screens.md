@@ -322,6 +322,73 @@ Immediate follow-up ideas for speculation:
 5. Test `num_speculative_tokens=1` and `2` only as diagnostics. They are unlikely to get us near 200 tok/s, but they can localize whether corruption appears only when multiple accepted draft tokens advance state.
 6. Test a per-request speculative kill switch for structured outputs and short deterministic prompts. This is not a final answer to the speed goal, but it may let long natural-language generations use speculation while preserving production correctness.
 
+## N-Gram 1/2 Boundary Diagnostic
+
+Added a generic parameterized launcher:
+
+- `scripts/launch-qwen36-quark-int8-ngram-trace.sh`
+- controls:
+  - `NUM_SPECULATIVE_TOKENS`
+  - `PROMPT_LOOKUP_MIN`
+  - `PROMPT_LOOKUP_MAX`
+  - `TAG`
+  - `SPEC_TRACE_FILE`
+
+This lets us test speculation depth without editing launcher code.
+
+Results:
+
+| Candidate | Quality | Corrected tok/s | E2E tok/s | TTFT ms | Decision | Artifact |
+| --- | --- | ---: | ---: | ---: | --- | --- |
+| n-gram1 | repeat64 pass, baseline match | 94.364 | 93.220 | 77.132 | reject, slower than accepted | `data/qwen36-quark-int8-tp4-ngram1-trace-single-r4-20260611.json` |
+| n-gram2 | first request fatal error | n/a | n/a | n/a | reject, unstable | `data/qwen36-quark-int8-tp4-ngram2-trace-first-request-device-lost-20260611.log` |
+| n-gram2 eager/no-graph | survives, quality fail | not measured | not measured | not measured | diagnostic only | `data/qwen36-quark-int8-tp4-ngram2-eager-frontdoor-quality-rerun8-20260611.json` |
+| n-gram5 | short trace pass, repeat64 fail | not counted | not counted | not counted | reject, corrupts output | `data/qwen36-quark-int8-tp4-ngram5-trace-frontdoor-quality-rerun64-20260611.json` |
+
+n-gram1 quality artifacts:
+
+- quality: `data/qwen36-quark-int8-tp4-ngram1-trace-frontdoor-quality-rerun64-20260611.json`
+- quality scheduler trace: `data/qwen36-quark-int8-tp4-ngram1-trace-quality-spec-jsonl-20260611.jsonl`
+- speed scheduler trace: `data/qwen36-quark-int8-tp4-ngram1-trace-speed-spec-jsonl-20260611.jsonl`
+
+n-gram1 trace summaries:
+
+- repeat64 quality run: rows `12`, drafts `12`, accepted `10`, rejected `2`, acceptance rate `83.33%`, histogram `{0: 2, 1: 10}`
+- p512/n512 r4 speed run: rows `444`, drafts `444`, accepted `293`, rejected `151`, acceptance rate `65.99%`, histogram `{0: 151, 1: 293}`
+
+n-gram2 failed on the first quality request before any scheduled speculative tokens appeared:
+
+- error: `UR_RESULT_ERROR_DEVICE_LOST`
+- failing stack: `block_table.copy_to_gpu -> self.gpu[:n].copy_(self.cpu[:n], non_blocking=True)`
+- scheduler output had `scheduled_spec_decode_tokens={}` and `num_scheduled_tokens=17`
+- config had `SpeculativeConfig(method='ngram', model=None, num_spec_tokens=2)`
+
+n-gram2 eager/no-graph diagnostic:
+
+- launch controls: `ENABLE_XPU_GRAPH=0`, `ENFORCE_EAGER=1`, `COMPILE_CONFIG=`
+- minimal `Reply exactly: OK` smoke passed
+- short quality diagnostic failed: arithmetic returned `58` instead of `60`
+- copy, JSON, repeat8, and 2K long-context needle passed
+- scheduler trace artifact: `data/qwen36-quark-int8-tp4-ngram2-eager-spec-jsonl-20260611.jsonl`
+- trace summary: rows `9`, drafts `18`, accepted `15`, rejected `3`, acceptance rate `83.33%`, histogram `{0: 1, 1: 1, 2: 7}`
+- the arithmetic failure did not correspond to a traced draft row, so eager/no-graph itself can perturb outputs on this stack
+
+Interpretation:
+
+- n-gram1 proves the single speculative-token plumbing can pass our quality bar, but it is slower than accepted because its acceptance rate is too low and the speculative machinery adds overhead.
+- n-gram2 failing before draft scheduling points at an XPU graph/input-prep stability bug for decode query length `1 + num_speculative_tokens >= 3`, not just a bad n-gram proposer.
+- disabling graph avoids the device-loss crash, but eager/no-graph is not quality-equivalent, so it cannot be used as a production workaround.
+- n-gram5's fully accepted repeated-token loops are a separate correctness failure after the runtime survives startup. Multi-token n-gram is therefore not a valid route to `>200 tok/s` on this stack until the XPU graph/input-prep path is fixed.
+
+Next concrete speculation path:
+
+1. Reproduce n-gram2 with graph disabled or reduced graph capture to isolate whether the device loss is graph-specific.
+2. Reproduce n-gram2 against backend port `18080` directly to rule out frontdoor effects, though the stack trace already points inside model execution.
+3. Test n-gram2 with `XPU_GRAPH=0` or `--enforce-eager` only as a diagnostic. Do not use eager speed as an optimization target.
+4. If n-gram2 works without graph, inspect graph-captured tensor shapes for `decode_query_len=3` and block table copies.
+5. If n-gram2 still fails without graph, focus on input-batch/block-table handling for speculative decode lengths greater than 1.
+6. Keep n-gram1 out of production because it is quality-safe but slower.
+
 ## Additional Big Ideas
 
 These are the next larger opportunities to keep in mind while continuing the quality-first work.
