@@ -1,0 +1,86 @@
+{
+  "date": "2026-06-10",
+  "model": "nameistoken/Qwen3.6-35B-A3B-Quark-W8A8-INT8",
+  "hardware": "4x Intel Arc Pro B70",
+  "accepted_runtime": {
+    "tensor_parallel_size": 4,
+    "max_model_len": 32768,
+    "quantization": "quark",
+    "no_enable_prefix_caching": true,
+    "env": {
+      "VLLM_XPU_GDN_REUSE_QKVZ_BA_QUANT": "clone",
+      "XPU_GRAPH": "1",
+      "VLLM_XPU_ENABLE_XPU_GRAPH": "1",
+      "VLLM_XPU_FORCE_GRAPH_WITH_COMM": "1",
+      "VLLM_XPU_GRAPH_NOOP_COMM_CAPTURE": "1",
+      "VLLM_XPU_USE_CUSTOM_OP_COLLECTIVES": "1",
+      "VLLM_XPU_COMPILE_ALLREDUCE_CUSTOM_OP": "1",
+      "VLLM_XPU_CUSTOM_ALLREDUCE_GRAPH_CLONE_INPUT": "1",
+      "VLLM_XPU_CUSTOM_ALLREDUCE_CLONE_INPUT": "1"
+    }
+  },
+  "timing_diagnostic": {
+    "artifact": "data/qwen36-quark-int8-tp4-noprefix-op-timing-p512n128-20260611.json",
+    "log": "/tmp/qwen36-quark-int8-tp4-op-timing-32k-noprefix-20260611.log",
+    "env": {
+      "VLLM_XPU_DECODE_TIMING": "1",
+      "VLLM_XPU_DECODE_TIMING_SYNC": "1",
+      "VLLM_XPU_DECODE_TIMING_RANK": "0",
+      "VLLM_XPU_DECODE_TIMING_SKIP_FIRST": "32",
+      "VLLM_XPU_DECODE_TIMING_PRINT_EVERY": "64"
+    },
+    "throughput_is_candidate_result": false,
+    "throughput_note": "sync timing slows the endpoint; use only relative op timings",
+    "summary": {
+      "gpu_model_runner.model_forward": {
+        "count": 112,
+        "total_ms": 1395.438773,
+        "avg_ms": 12.459275
+      },
+      "gdn_attention_core_xpu.native": {
+        "count": 4288,
+        "total_ms": 403.449564,
+        "avg_ms": 0.094088
+      },
+      "gpu_model_runner.compute_logits_avg_ms": 0.776758,
+      "logits.local_argmax_lm_head_avg_ms": 0.542066,
+      "gpu_model_runner.sampler_avg_ms": 0.156957
+    }
+  },
+  "candidate": {
+    "name": "gdn_internal_scratch_reuse",
+    "env": {
+      "VLLM_XPU_GDN_REUSE_INTERNAL_SCRATCH": "1"
+    },
+    "build": {
+      "source": "/home/steve/src/vllm-xpu-kernels",
+      "build_dir": "build/xpu-c-only-2025",
+      "targets": [
+        "gdn_attn_kernels_xe_2",
+        "_xpu_C"
+      ],
+      "result": "build_succeeded"
+    },
+    "startup": "served_health_after_graph_capture",
+    "smoke": {
+      "route": "frontdoor",
+      "prompt": "Reply with exactly: OK",
+      "result": "failed",
+      "http_status": 500,
+      "error": "UR_RESULT_ERROR_DEVICE_LOST",
+      "log": "/tmp/qwen36-quark-int8-tp4-gdn-internal-scratch-32k-noprefix-20260611.log"
+    },
+    "decision": "rejected",
+    "valid_speed_numbers": false,
+    "valid_quality_numbers": false
+  },
+  "recovery": {
+    "restored_binaries": [
+      "vllm_xpu_kernels/_xpu_C.abi3.so.backup-20260611-gdn-internal-scratch-pretest",
+      "vllm_xpu_kernels/libgdn_attn_kernels_xe_2.so.backup-20260611-gdn-internal-scratch-pretest"
+    ],
+    "restored_backend_log": "/tmp/qwen36-quark-int8-tp4-gdn-reuseqkvzbaquant-clone-envclean-32k-noprefix-restore-after-scratch-reject-20260611.log",
+    "health": "passed",
+    "frontdoor_exact_ok": "passed"
+  }
+}
