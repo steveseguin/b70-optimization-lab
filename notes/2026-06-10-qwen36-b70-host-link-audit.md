@@ -35,7 +35,9 @@ External B70/vLLM material repeatedly points to host stack, PCIe policy, power m
 
 ## Interpretation
 
-Do not spend another long loop chasing sub-millisecond allocation changes until this platform issue is understood. If the final B70 endpoint really is constrained to Gen1 x1, tensor-parallel collectives, host dispatch, model loading, and any PCIe fallback path are all operating with a severe handicap. If this is only a sysfs reporting artifact for the B70 internal bridge, we still need root `lspci -vv` confirmation so future performance claims are credible.
+Do not spend another long loop chasing sub-millisecond allocation changes until this platform issue is understood. If the final B70 endpoint really is constrained to Gen1 x1, tensor-parallel collectives, host dispatch, model loading, and any PCIe fallback path are all operating with a severe handicap.
+
+Follow-up web search found a Level1Techs Arc Pro B60 thread reporting the same Gen1 x1 endpoint display and describing it as a known Arc-card quirk: the upstream bridge should show the real link status. That maps to our audit, where the `e2ff` upstream bridge reports x16. So this is now downgraded from "probable bottleneck" to "must validate, likely reporting quirk." Root `lspci -vv` is still needed so future performance claims are credible.
 
 The current `~99 tok/s` single-request result remains valid as a measured endpoint result, but the hardware may not be configured close to its ceiling.
 
@@ -57,6 +59,10 @@ The current `~99 tok/s` single-request result remains valid as a measured endpoi
    - Re-run `scripts/audit-b70-host-links.sh`.
    - Re-run p512/n512 r4 direct speed and a frontdoor exact-OK smoke.
 4. If link state still reports `2.5 GT/s x1`, plan a cold-boot/BIOS/slot validation before deeper kernel work.
+
+Reference:
+
+- Level1Techs Arc Pro B60 Gen1 x1 thread: https://forum.level1techs.com/t/intel-arc-pro-b60-stuck-at-pcie-gen1-x1-and-21gb-vram-in-proxmox/247563
 
 ## Production note
 
