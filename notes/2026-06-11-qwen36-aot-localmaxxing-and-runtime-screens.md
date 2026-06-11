@@ -7034,3 +7034,147 @@ Immediate next priority:
    potential upstream issue/PR.
 3. Stop testing MTP speed until exact long-context parity is restored.
 4. Continue MoE route/locality work as the non-speculative fallback.
+
+## Verifier Upper Bound And Bigger Ideas Addendum
+
+Added after turning the bucket timing data into an explicit upper-bound artifact
+and refreshing public Arc/Qwen/vLLM leaderboard data.
+
+New artifacts:
+
+- `scripts/analyze-qwen36-verifier-upper-bound.py`
+- `data/qwen36-quark-int8-tp4-verifier-upper-bound-20260611.json`
+- `data/qwen36-quark-int8-tp4-verifier-upper-bound-20260611.md`
+- `data/localmaxxing-intel-arc-pro-b70-qwen-vllm-leaderboard-20260611c.json`
+- `data/localmaxxing-qwen36-base-top-20260611c.json`
+
+Upper-bound readout:
+
+| Bucket | Best model-forward ms | Perfect model tok/s | Perfect endpoint-scaled tok/s | Draft accept fraction for 200 tok/s |
+| ---: | ---: | ---: | ---: | ---: |
+| 1 | 12.241 | 81.69 | 99.77 | n/a |
+| 3 | 15.269 | 196.47 | 239.95 | 100.0% |
+| 6 | 15.544 | 386.01 | 471.42 | 42.2% |
+| 8 | 18.883 | 423.66 | 517.41 | 39.7% |
+
+Interpretation:
+
+- Multi-token verifier work is clearly sublinear on this stack. If the draft
+  tokens are correct and the scheduler accounting is clean, bucket 6/8 has
+  enough timing headroom for the user's `>200 tok/s` single-request target
+  without changing final model quality.
+- The current n-gram and hybrid FP8-MTP integrations are still rejected. The
+  upper-bound result does not make them valid; it says an exact proposer is
+  worth building.
+- Bucket 3 is marginal on raw synchronized model-forward timing and clears
+  `200 tok/s` only after endpoint normalization. Treat bucket 3 as a minimum
+  viable debug shape, not the likely final target.
+- Bucket 6/8 should be the next serious verifier harness target because they
+  need only roughly `40-42%` average draft-token acceptance to clear `200 tok/s`
+  by model-forward math.
+
+Fresh public comparison:
+
+- Exact Intel Arc Pro B70 + vLLM + Qwen leaderboard refresh shows our current
+  Quark W8A8 INT8 rows ranked first and second among B70/vLLM/Qwen entries:
+  `99.769699 tok/s` on the generic base row and `99.428358 tok/s` on the exact
+  Quark model row.
+- The global Qwen3.6 35B base leaderboard still has higher NVIDIA/AMD rows,
+  many using speculative decode, lower-bit quantization, or non-equivalent
+  engines. They are useful directionally but are not quality-equivalent
+  replacements for this target.
+- Public B70 reports continue to reinforce the same split: vLLM/XPU is strong
+  on prefill and multi-GPU serving, while decode needs either better quantized
+  kernels/layout or verifier-preserving speculation.
+
+External leads to keep in the queue:
+
+- vLLM XPU hardware docs now list Arc Pro B-series as validated hardware and
+  show the supported model/quantization direction:
+  `https://docs.vllm.ai/en/v0.22.1/models/hardware_supported_models/xpu/`.
+- The PMZFX B70 benchmark notes report vLLM's XMX/flash-attention prefill lead,
+  but also that decode is often memory-bandwidth bound and quantized engine
+  support matters:
+  `https://github.com/PMZFX/intel-arc-pro-b70-benchmarks/blob/master/engine-comparison.md`.
+- The public vLLM XPU issue for dual Arc B580 remains relevant as a settings
+  and upstream-discussion lead:
+  `https://github.com/vllm-project/vllm/issues/35638`.
+- EmbeddedLLM's 4x B60 comparison reports that Intel's optimized LLM-Scaler
+  build improved TPOT by about `20-25%` versus a standard vLLM build in their
+  workload. This is not our model, but it justifies an 8-bit, same-quality
+  LLM-Scaler/OpenVINO/vLLM-XPU bakeoff:
+  `https://embeddedllm.com/blog/benchmarking-llm-inference-intel-arc-pro-b60`.
+
+New bigger, bolder things to try:
+
+1. Oracle-draft verifier harness inside vLLM.
+   - Feed known-good token IDs from an accepted trace back into the scheduler as
+     draft tokens, keyed by request ID or prompt hash.
+   - This would measure true KV-resident multi-token verification without
+     proposer noise and would catch the same accounting bugs that broke
+     n-gram/no-bonus.
+   - Success criterion: bucket 3/6/8 token streams exactly match accepted output
+     while traces report zero rollback/accounting mismatches.
+
+2. DFlash/MTP hidden-state index audit.
+   - Public DFlash results mention an off-by-one patch where the drafter read
+     the wrong hidden state and acceptance collapsed. Our hybrid MTP failures
+     look like a related class of state-position bug.
+   - Inspect XPU MTP/DFlash paths for prompt/output index, bonus-token,
+     async-scheduler, and no-async differences before trying another proposer.
+
+3. Auxiliary proposer API instead of index-spliced checkpoints.
+   - Make MTP weights a separate explicit asset, not merged into the verifier
+     checkpoint directory.
+   - This should reduce accidental config/weight sharing and make it easier to
+     keep the Quark verifier as the only quality authority.
+
+4. Confidence-gated learned proposer trained from Quark traces.
+   - Train or fit a same-tokenizer proposer from accepted Quark outputs and
+     route it through strict verifier rejection.
+   - It can be tiny if confidence-gated; the verifier preserves quality, and
+     low-confidence steps simply fall back to bucket 1.
+
+5. Bucket-aware static decode lane.
+   - Create a latency service class with lower max concurrency and preallocated
+     bucket 6/8 graph shapes.
+   - If this preserves exact output, it can spend some of the current KV
+     headroom on graph stability, hot expert placement, and lower scheduler
+     overhead while the normal TP4 lane stays production-safe.
+
+6. Memory-for-latency expert replication.
+   - The restored service has large effective concurrency headroom; a dedicated
+     c1/c4 latency lane can trade some KV capacity for hot expert copies or
+     tile-native prepacked expert weights.
+   - Use real router histograms, not static guesses. Global K16 hotpacking was
+     too blunt; route-window or prompt-class hotsets are more credible.
+
+7. Same-quality LLM-Scaler/OpenVINO/vLLM-XPU shootout.
+   - Keep model family, 8-bit/high-fidelity quantization, prompt template, 32K
+     context, and quality gates fixed.
+   - The goal is not switching to 4-bit or Qwen3.5; it is finding whether Intel's
+     optimized stack already has a better W8A8/W8A16 decode path we can use or
+     port.
+
+8. Whole-token command-list capture.
+   - Instead of optimizing one kernel at a time, capture the complete decode
+     token path: attention/GDN, MoE, collectives, logits, sampling, and state
+     updates.
+   - This is a serious systems branch, but it matches the evidence that many
+     small boundaries remain after the easy custom-op work.
+
+9. Upstreamable B70/XPU minimal repro packet.
+   - Package three concrete repros: W8A8 dense GEMM, routed MoE grouped GEMM,
+     and MTP/speculative state corruption.
+   - Include shape data, exact commands, token-trace failure fixtures, and
+     current throughput. This may be the fastest way to get Intel/vLLM kernel
+     help instead of carrying every patch locally.
+
+Updated priority:
+
+1. Implement the oracle/perfect-draft verifier harness from accepted token
+   traces.
+2. Audit MTP/DFlash state indexing using the hybrid MTP failure pack.
+3. Start real-router histogram capture for MoE placement and grouped-GEMM work.
+4. Plan a same-quality 8-bit engine shootout only after the current verifier
+   harness tells us whether speculation can really cross the target.
