@@ -85,6 +85,13 @@ The accepted non-spec backend was restored afterward:
 - restore log: `/tmp/qwen36-quark-int8-tp4-gdn-reuseqkvzbaquant-clone-envclean-32k-noprefix-restore-after-ngram1-20260610.log`
 - health: pass
 - frontdoor generation smoke: `Reply with exactly: OK` returned `OK`
+- post-restore p512/n512 speed, four direct-backend repeats:
+  `99.07` corrected output tok/s after first chunk, `97.84` output tok/s
+  end-to-end, `74.99 ms` mean client TTFT
+
+Restore speed artifact:
+
+- `data/qwen36-quark-int8-tp4-noprefix-restore-after-ngram1-single-r4-20260610.json`
 
 ## Next
 
