@@ -6731,3 +6731,156 @@ Revised priority:
 3. Build a tiny scorer for speculative candidates: expected visible time per
    emitted token from bucket timings, acceptance, and rejection pattern.
 4. Use that scorer before launching further long experiments.
+
+## MTP Asset Inspection And Bigger Bets
+
+Added after the bucket-scaling probe, before the next launch attempt. The main
+lesson is that the local vLLM tree already has more Qwen3.5/Qwen3.6 MTP support
+than the current Quark checkpoint exposes, so the next useful experiment should
+be a carefully isolated hybrid-proposer test rather than another n-gram sweep.
+
+Local facts:
+
+- Current Quark verifier checkpoint:
+  `/mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118`
+- Official FP8 checkpoint:
+  `/mnt/fast-ai/llm-cache/hf/hub/models--Qwen--Qwen3.6-35B-A3B-FP8/snapshots/95a723d08a9490559dae23d0cff1d9466213d989`
+- Both configs report Qwen3.6/Qwen3.5-MoE shape compatibility:
+  `40` layers, hidden size `2048`, `256` experts, `8` experts per token,
+  `mtp_num_hidden_layers=1`, and `mtp_use_dedicated_embeddings=false`.
+- The current Quark safetensors index has `62696` keys and `0` MTP keys.
+- The official FP8 safetensors index has `64196` keys and `1560` MTP keys.
+- The official `mtp.safetensors` payload resolves to an `815M` local blob.
+- Local vLLM has `Qwen3_5MTP` and `Qwen3_5MoeMTP` registered, plus
+  `vllm.config.speculative` support that maps Qwen `qwen3_5_moe` to
+  `Qwen3_5MoeMTP` for `method="mtp"`.
+- Local vLLM also has `VLLM_QWEN35_MTP_FORCE_FP8_BLOCK=1`, which forces the
+  MTP drafter linear layers to block-FP8 quantization. That matches the official
+  FP8 MTP tensor format and is exactly the kind of compatibility knob needed
+  for a first test.
+- vLLM's documented MTP launch shape is:
+  `--speculative-config '{"method":"mtp","num_speculative_tokens":1}'`.
+  A local test fixture also uses `num_speculative_tokens=2` and
+  `max_model_len=32768` for Qwen FP8 MTP.
+
+Immediate thing to try:
+
+1. Build a disposable hybrid model directory that keeps the current Quark
+   verifier weights/config as the target, but adds the official FP8
+   `mtp.safetensors` and index entries as a drafter-only asset.
+2. Launch with `VLLM_QWEN35_MTP_FORCE_FP8_BLOCK=1` and:
+   `--speculative-config '{"method":"mtp","num_speculative_tokens":1,"max_model_len":32768}'`.
+3. Use a tiny output first: health, one exact canary, then request-id token
+   trace and replay.
+4. Promote to speed testing only if the exact accepted baseline token stream is
+   preserved across repeat colors and the long-context needle.
+5. If launch fails because vLLM insists that the target checkpoint itself owns
+   the MTP tensors, do not hack quality behavior. Instead, turn the failure into
+   a small patch or repro that teaches vLLM to load a same-shape auxiliary MTP
+   payload while keeping the Quark verifier as the final authority.
+
+Risks and guardrails:
+
+- Do not count the official FP8 model as the promoted model unless the final
+  tokens are verified by the Quark INT8 verifier. The target remains the current
+  Quark INT8 model.
+- Do not use Qwen3.5, AWQ, GPTQ-4bit, Q4, or MXFP4 as an answer to the user's
+  8-bit Qwen3.6 target.
+- Do not trust semantic-looking output. The quality gate is exact canary hashes,
+  repeat stability, long-context needle, and request-id joined speculative
+  replay.
+- Treat MTP speed as invalid until `suppressed_bonus` and scheduler counter
+  accounting are clean. The previous n-gram/no-bonus work found real state
+  accounting issues.
+
+Bigger, bolder ideas worth tracking:
+
+1. Hybrid Quark-verifier plus official-FP8-MTP service.
+   - If the simple symlink/index hybrid works, tune `num_speculative_tokens=1`,
+     then `2`, and score expected speed from the measured bucket costs.
+   - This is the most direct no-quality-loss route to `>200 tok/s`: the Quark
+     verifier remains final, while the MTP path buys larger verifier buckets.
+
+2. Auxiliary-MTP loader patch for vLLM.
+   - Add an explicit field such as `mtp_model` or `auxiliary_weights` to
+     `speculative_config`, so Qwen MTP tensors can live outside the target
+     checkpoint.
+   - This is cleaner than mutating model directories and would be upstreamable
+     if it keeps final verification semantics unchanged.
+
+3. Same-tokenizer learned proposer.
+   - Train or fit a tiny Qwen3.6-specific proposer on traces from the current
+     verifier, using the same tokenizer and accepted prompt templates.
+   - It can be much smaller than the target model because wrong drafts are
+     rejected. The quality risk is bounded by the verifier; the performance risk
+     is poor acceptance or extra latency.
+
+4. Partial-layer self-drafter.
+   - Use the first N target layers or a compressed side branch as a draft model,
+     then verify with the full Quark model.
+   - This spends no trust on a different quantized model, but it needs careful
+     vLLM plumbing to avoid duplicating too much work.
+
+5. Branch-budget speculative scorer.
+   - Before running long experiments, predict speed from:
+     `acceptance_rate`, `full_accept_streaks`, bucket cost by scheduled tokens,
+     and rejection rollback cost.
+   - This should prevent more blind n-gram sweeps and tell us whether a proposer
+     needs 60%, 75%, or 90% acceptance to beat the target.
+
+6. Verifier-only multi-token stress harness.
+   - Feed synthetic perfect drafts into the verifier to measure the upper bound
+     of bucket `2,3,4,6,8,12` without proposer noise.
+   - If the upper bound cannot cross `200 tok/s`, speculation is not enough. If
+     it can, the whole problem becomes proposer quality and state correctness.
+
+7. Route-aware MTP plus MoE co-design.
+   - Capture whether MTP buckets change expert routing patterns compared with
+     bucket-1 decode.
+   - If route locality improves across multi-token buckets, speculation and
+     persistent MoE can compound instead of competing.
+
+8. Memory-for-latency expert placement.
+   - Use the unusually comfortable VRAM headroom to replicate or prepack hot
+     experts by route bucket, prompt class, or recent-window histogram.
+   - This is larger than a kernel flag but may reduce tiny all-reduces and
+     scattered expert reads for c1 decode.
+
+9. Persistent decode command graph.
+   - Capture a whole token step, including GDN attention, MoE, collectives,
+     logits, and sampling, into a reusable command-list path for stable c1
+     service.
+   - This preserves math and could reduce host/dispatcher overhead, but it is a
+     serious systems branch.
+
+10. XPU MoE upstream sprint.
+    - Turn our real routed shapes into minimal `vllm-xpu-kernels` or oneDNN
+      grouped-GEMM benchmarks and compare against the current endpoint's timing
+      budget.
+    - The end state should be either a local persistent grouped-GEMM prototype
+      or a clean Intel/vLLM issue with enough detail for maintainers to act.
+
+11. Production dual-lane design.
+    - Keep the accepted non-speculative Quark TP4 service as the reliability
+      lane.
+    - Add a speculative latency lane behind an automatic exact-quality canary
+      and fallback. This lets production benefit from MTP only when health and
+      quality are clean.
+
+12. Bigger benchmark publication packet.
+    - When a real win appears, publish not just `tokSOut`, but TTFT, peak VRAM,
+      context length, exact command, quality-gate summary, and whether the
+      result is non-speculative or verifier-preserving speculative.
+    - This makes Localmaxxing results useful for others and keeps us honest
+      about which speedups preserve quality.
+
+Updated priority after this inspection:
+
+1. Build the disposable hybrid MTP launch path and expect the first run to be a
+   mechanics test, not a benchmark.
+2. Add a perfect-draft verifier upper-bound harness if the hybrid launch path
+   blocks.
+3. Keep route capture and oneDNN/vLLM-XPU grouped-GEMM work as the parallel
+   fallback.
+4. Keep the accepted TP4 service as the quality oracle and restore it after each
+   diagnostic launch.
