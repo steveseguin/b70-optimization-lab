@@ -898,3 +898,146 @@ Restore:
 - restored accepted service as `qwen36-tp4-accepted-restored-20260611b`
 - accepted `/health`: pass
 - accepted response smoke: pass
+
+## MoE Route Capture Tooling And Capture-Point Finding
+
+I added diagnostic tooling for real expert-route histograms because Intel's
+grouped-GEMM tuning issue explicitly calls out realistic token routing
+distribution as a missing input for XPU MoE kernel work, and the Arc Pro
+B-series write-up highlights persistent zero-gap MoE scheduling plus dynamic
+work balancing as the major MoE lever.
+
+Artifacts:
+
+- vLLM patch artifact:
+  `patches/vllm-qwen36-moe-route-capture-20260611.patch`
+- diagnostic launcher:
+  `scripts/launch-qwen36-quark-int8-route-capture.sh`
+- route summarizer:
+  `scripts/summarize-qwen36-moe-route-capture.py`
+- capture-attempt summary:
+  `data/qwen36-quark-int8-tp4-routecapture-attempts-20260611.json`
+
+Implementation notes:
+
+- `VLLM_MOE_ROUTE_CAPTURE_FILE` enables a JSONL capture hook on generic
+  `BaseRouter` and leaves the default vLLM path unchanged.
+- The hook writes per-call `counts`, `nonzero_experts`, `max_rows_per_expert`,
+  shape, PID, rank, layer, and optional `topk_ids`.
+- The route-capture wrapper uses an isolated cache, disables XPU graph, and can
+  force `--enforce-eager` through `VLLM_EXTRA_ARGS` so production graph caches
+  are not polluted.
+- `scripts/launch-qwen36-quark-int8-accepted.sh` now preserves the same default
+  graph-enabled behavior but allows explicit overrides for diagnostics.
+
+Live result:
+
+- Graph-enabled diagnostic run reached `/health`, but the hook first fired
+  inside XPU graph capture and could not perform the CPU read:
+  `wait method cannot be used for an event associated with a command graph`.
+- I added a stream-capture guard in the hook and restarted with XPU graph
+  disabled.
+- I then restarted with `--enforce-eager`; logs confirmed
+  `enforce_eager=True`, `Cudagraph is disabled under eager mode`, and XPU graph
+  disabled.
+- Even in eager mode, the generic `BaseRouter` hook produced no route JSONL
+  files for the current Qwen3.6 Quark W8A8 INT8 runtime path.
+
+Decision:
+
+- Keep the tooling, but do not treat the generic router hook as sufficient for
+  this model.
+- The next capture point should move lower into the modular Quark/XPU path:
+  `FusedMoEModularMethod.apply`, `FusedMoEKernel.apply`, or
+  `vllm/model_executor/layers/fused_moe/experts/xpu_moe.py`, where `topk_ids`
+  is definitely handed to the XPU expert kernel.
+- This capture gap is useful because it explains why route histograms were not
+  available from the generic abstraction despite all 40 layers showing the hook
+  as enabled at startup.
+
+Accepted service restore:
+
+- stopped diagnostic route-capture tmux
+- restored accepted service as `qwen36-tp4-accepted-restored-20260611c`
+- accepted `/health`: pass
+- accepted log confirms `enforce_eager=False`, XPU graph enabled, and graph
+  capture completed.
+
+## Bigger Bolder Ideas To Try
+
+These are intentionally larger than launch-flag sweeps. The near-term goal is
+still single-request speed without quality loss on the current Qwen3.6 35B-A3B
+Quark W8A8 INT8 model.
+
+Sources reviewed:
+
+- Intel XPU grouped-GEMM tuning issue:
+  `https://github.com/intel/intel-xpu-backend-for-triton/issues/6389`
+- Intel Arc Pro B-series vLLM blog:
+  `https://vllm.ai/blog/2025-11-11-intel-arc-pro-b`
+- Intel `ai-containers` vLLM XPU release notes:
+  `https://github.com/intel/ai-containers/blob/main/vllm/0.17.0-xpu.md`
+- vLLM Intel Arc B580 30B+ settings issue:
+  `https://github.com/vllm-project/vllm/issues/35638`
+
+Ideas:
+
+1. Capture route histograms at the XPU expert boundary.
+   - Move the hook to the Quark/XPU MoE apply path and capture real
+     prompt-class distributions for decode and prefill.
+   - Use these histograms to tune or choose grouped-GEMM/persistent-MoE
+     kernels instead of relying on uniform synthetic distributions.
+
+2. Try the newest Intel XPU kernel stack as a branch comparison.
+   - Intel's current container notes switched to `vllm-xpu-kernels` and report
+     validated Arc Pro B-series support.
+   - A clean branch compare may surface already-implemented persistent MoE,
+     speculative, or scheduler changes faster than local reimplementation.
+
+3. Build a persistent-MoE microbench with real captured rows-per-expert.
+   - Reproduce the two Qwen3 MoE GEMMs under Quark W8A8 shapes.
+   - Compare current XPU path, Intel grouped GEMM, and any persistent zero-gap
+     implementation on the exact `topk_ids` distributions.
+
+4. Expert hotness remapping without changing math.
+   - If prompt classes repeatedly hit a small subset of experts, repack expert
+     storage or remap logical IDs so hot experts have better memory locality.
+   - Preserve output by applying the inverse mapping at the routing/kernel
+     boundary.
+
+5. Single-user static decode lane.
+   - Keep vLLM as the production/concurrency baseline, but prototype a
+     one-user path with fixed graph buckets, preallocated KV, fixed sampling,
+     minimal output machinery, and no scheduler-generalization overhead.
+   - If this proves much faster with identical tokens, route solo sessions to
+     it and keep aggregate serving on vLLM.
+
+6. Shape-exact collective replacement.
+   - The current TP4 path likely still pays several small hidden-state
+     collectives per token.
+   - Build a replayable microbench for the exact hidden sizes and test fused
+     collective plus residual/RMS or collective plus projection epilogues.
+
+7. Verifier-preserving speculation with an XPU-native proposer.
+   - N-gram speculation is not robust enough, but the public leaderboard
+     suggests MTP/DFlash-style paths are the most realistic route past
+     `200 tok/s`.
+   - Keep the Quark W8A8 INT8 model as verifier and treat any proposer as
+     disposable unless the full quality suite passes.
+
+8. Quality-suite-as-product before bigger speed claims.
+   - Expand canaries into a repeatable gate: deterministic token hashes,
+     structured JSON/HTML validators, code execution, math, long-context
+     needles, prompt-class screens, and soak tests.
+   - Every bold backend change must pass this before a Localmaxxing submission.
+
+9. Intel engine feasibility probe, not a model switch.
+   - Test OpenVINO/oneDNN GenAI only to learn whether the same family can run
+     faster with a high-quality 8-bit path on B70.
+   - If it is fast, mine the layout/kernel strategy; if quality or model
+     identity changes, do not promote it.
+
+10. Production split: latency lane plus aggregate replicas.
+    - Continue chasing single-request latency on TP4 or a solo lane.
+    - Separately plan production aggregate throughput with multiple accepted
+      replicas or TP2 pairs if single-request kernel work takes longer.

@@ -1,0 +1,236 @@
+diff --git a/vllm/envs.py b/vllm/envs.py
+index b2db5a811..2218baff3 100755
+--- a/vllm/envs.py
++++ b/vllm/envs.py
+@@ -190,6 +190,11 @@ if TYPE_CHECKING:
+     VLLM_NIXL_SIDE_CHANNEL_PORT: int = 5600
+     VLLM_MOONCAKE_BOOTSTRAP_PORT: int = 8998
+     VLLM_MAX_TOKENS_PER_EXPERT_FP4_MOE: int = 163840
++    VLLM_MOE_ROUTE_CAPTURE_FILE: str = ""
++    VLLM_MOE_ROUTE_CAPTURE_MAX_LINES: int = 0
++    VLLM_MOE_ROUTE_CAPTURE_EVERY_N: int = 1
++    VLLM_MOE_ROUTE_CAPTURE_INCLUDE_IDS: bool = False
++    VLLM_MOE_ROUTE_CAPTURE_LAYER_REGEX: str = ""
+     VLLM_TOOL_PARSE_REGEX_TIMEOUT_SECONDS: int = 1
+     VLLM_MQ_MAX_CHUNK_BYTES_MB: int = 16
+     VLLM_EXECUTE_MODEL_TIMEOUT_SECONDS: int = 300
+@@ -1420,6 +1429,29 @@ environment_variables: dict[str, Callable[[], Any]] = {
+     "VLLM_MOE_ROUTING_SIMULATION_STRATEGY": lambda: os.environ.get(
+         "VLLM_MOE_ROUTING_SIMULATION_STRATEGY", ""
+     ).lower(),
++    # Diagnostic MoE route capture. Disabled unless a file path is provided.
++    # Use a path template such as /tmp/moe-routes-{pid}.jsonl for TP/MP runs.
++    "VLLM_MOE_ROUTE_CAPTURE_FILE": lambda: os.environ.get(
++        "VLLM_MOE_ROUTE_CAPTURE_FILE", ""
++    ),
++    # Maximum JSONL records per process. 0 means unlimited.
++    "VLLM_MOE_ROUTE_CAPTURE_MAX_LINES": lambda: int(
++        os.getenv("VLLM_MOE_ROUTE_CAPTURE_MAX_LINES", "0")
++    ),
++    # Sample every Nth routed MoE call.
++    "VLLM_MOE_ROUTE_CAPTURE_EVERY_N": lambda: int(
++        os.getenv("VLLM_MOE_ROUTE_CAPTURE_EVERY_N", "1")
++    ),
++    # Include full topk_ids arrays. Off by default because histograms are
++    # usually enough for grouped-GEMM tuning and much smaller.
++    "VLLM_MOE_ROUTE_CAPTURE_INCLUDE_IDS": lambda: bool(
++        int(os.getenv("VLLM_MOE_ROUTE_CAPTURE_INCLUDE_IDS", "0"))
++    ),
++    # Optional regex against the FusedMoE layer prefix, for example:
++    # model.layers.(0|1|2).mlp.experts
++    "VLLM_MOE_ROUTE_CAPTURE_LAYER_REGEX": lambda: os.environ.get(
++        "VLLM_MOE_ROUTE_CAPTURE_LAYER_REGEX", ""
++    ),
+     # Regex timeout for use by the vLLM tool parsing plugins.
+     "VLLM_TOOL_PARSE_REGEX_TIMEOUT_SECONDS": lambda: int(
+         os.getenv("VLLM_TOOL_PARSE_REGEX_TIMEOUT_SECONDS", "1")
+diff --git a/vllm/model_executor/layers/fused_moe/layer.py b/vllm/model_executor/layers/fused_moe/layer.py
+index 3de05cd93..c1f63baa0 100644
+--- a/vllm/model_executor/layers/fused_moe/layer.py
++++ b/vllm/model_executor/layers/fused_moe/layer.py
+@@ -38,6 +38,9 @@ from vllm.model_executor.layers.fused_moe.rocm_aiter_fused_moe import (
+ from vllm.model_executor.layers.fused_moe.router.router_factory import (
+     create_fused_moe_router,
+ )
++from vllm.model_executor.layers.fused_moe.router.route_capture import (
++    maybe_create_route_capture,
++)
+ from vllm.model_executor.layers.fused_moe.runner.moe_runner import (
+     MoERunner,
+ )
+@@ -485,6 +488,13 @@ class FusedMoE(PluggableLayer):
+             num_logical_experts=self.logical_num_experts,
+             hash_indices_table=self.hash_indices_table,
+         )
++        route_capture = maybe_create_route_capture(
++            layer_name=self.layer_name,
++            num_experts=self.global_num_experts,
++            top_k=top_k,
++        )
++        if route_capture is not None:
++            self.router.set_capture_fn(route_capture)
+         self.routing_method_type: RoutingMethodType = self.router.routing_method_type
+ 
+         self.moe_config: FusedMoEConfig = FusedMoEConfig(
+diff --git a/vllm/model_executor/layers/fused_moe/router/route_capture.py b/vllm/model_executor/layers/fused_moe/router/route_capture.py
+new file mode 100644
+index 000000000..9053e2d4a
+--- /dev/null
++++ b/vllm/model_executor/layers/fused_moe/router/route_capture.py
+@@ -0,0 +1,156 @@
++# SPDX-License-Identifier: Apache-2.0
++# SPDX-FileCopyrightText: Copyright contributors to the vLLM project
++"""Opt-in MoE router capture for shape-exact kernel tuning.
++
++This module is intentionally diagnostic-only. It is disabled unless
++VLLM_MOE_ROUTE_CAPTURE_FILE is set, and it records logical expert ids before
++EPLB mapping so route histograms can be replayed in grouped-GEMM microbenches.
++"""
++
++from __future__ import annotations
++
++import json
++import os
++import re
++import threading
++import time
++from pathlib import Path
++
++import torch
++
++from vllm import envs
++from vllm.logger import init_logger
++
++logger = init_logger(__name__)
++
++_write_lock = threading.Lock()
++_warned_capture_error = False
++
++
++def _is_stream_capturing() -> bool:
++    try:
++        if torch.xpu.is_available():
++            return bool(torch.xpu.is_current_stream_capturing())
++    except Exception:
++        pass
++    try:
++        if torch.cuda.is_available():
++            return bool(torch.cuda.is_current_stream_capturing())
++    except Exception:
++        pass
++    return False
++
++
++def _rank_field(name: str) -> str:
++    return os.environ.get(name, "")
++
++
++def _format_capture_path(raw_path: str) -> str:
++    fields = {
++        "pid": os.getpid(),
++        "rank": _rank_field("RANK"),
++        "local_rank": _rank_field("LOCAL_RANK"),
++        "worker": _rank_field("VLLM_WORKER_ID"),
++    }
++    try:
++        return raw_path.format(**fields)
++    except Exception:
++        return raw_path
++
++
++class MoERouteCapture:
++    """Callable router hook that emits one JSONL record per sampled MoE call."""
++
++    def __init__(self, *, layer_name: str, num_experts: int, top_k: int):
++        self.layer_name = layer_name
++        self.num_experts = int(num_experts)
++        self.top_k = int(top_k)
++        self.calls = 0
++        self.writes = 0
++        self.capture_file = _format_capture_path(envs.VLLM_MOE_ROUTE_CAPTURE_FILE)
++        self.max_lines = max(0, int(envs.VLLM_MOE_ROUTE_CAPTURE_MAX_LINES))
++        self.every_n = max(1, int(envs.VLLM_MOE_ROUTE_CAPTURE_EVERY_N))
++        self.include_ids = bool(envs.VLLM_MOE_ROUTE_CAPTURE_INCLUDE_IDS)
++
++        path = Path(self.capture_file)
++        path.parent.mkdir(parents=True, exist_ok=True)
++
++    def __call__(self, topk_ids: torch.Tensor) -> None:
++        global _warned_capture_error
++
++        self.calls += 1
++        if self.calls % self.every_n:
++            return
++        if self.max_lines and self.writes >= self.max_lines:
++            return
++        if _is_stream_capturing():
++            return
++
++        try:
++            with torch.no_grad():
++                ids = topk_ids.detach().to("cpu", non_blocking=False).to(torch.int64)
++                shape = list(ids.shape)
++                flat = ids.reshape(-1)
++                valid = flat[(flat >= 0) & (flat < self.num_experts)]
++                counts_tensor = torch.bincount(
++                    valid, minlength=self.num_experts
++                ).to(torch.int64)
++                counts = counts_tensor.tolist()
++                nonzero = int((counts_tensor > 0).sum().item())
++                max_rows = int(counts_tensor.max().item()) if counts else 0
++
++                record = {
++                    "ts": time.time(),
++                    "pid": os.getpid(),
++                    "rank": _rank_field("RANK"),
++                    "local_rank": _rank_field("LOCAL_RANK"),
++                    "layer": self.layer_name,
++                    "call": self.calls,
++                    "shape": shape,
++                    "num_tokens": int(shape[0]) if shape else 0,
++                    "top_k": self.top_k,
++                    "num_experts": self.num_experts,
++                    "assignments": int(valid.numel()),
++                    "nonzero_experts": nonzero,
++                    "max_rows_per_expert": max_rows,
++                    "counts": counts,
++                }
++                if self.include_ids:
++                    record["topk_ids"] = ids.tolist()
++
++            line = json.dumps(record, separators=(",", ":"))
++            with _write_lock:
++                with open(self.capture_file, "a", encoding="utf-8") as out:
++                    out.write(line + "\n")
++            self.writes += 1
++        except Exception as exc:
++            if not _warned_capture_error:
++                logger.warning("MoE route capture failed once; disabling warning spam: %s", exc)
++                _warned_capture_error = True
++
++
++def maybe_create_route_capture(
++    *,
++    layer_name: str,
++    num_experts: int,
++    top_k: int,
++) -> MoERouteCapture | None:
++    capture_file = envs.VLLM_MOE_ROUTE_CAPTURE_FILE
++    if not capture_file:
++        return None
++
++    layer_regex = envs.VLLM_MOE_ROUTE_CAPTURE_LAYER_REGEX
++    if layer_regex and not re.search(layer_regex, layer_name):
++        return None
++
++    capture = MoERouteCapture(
++        layer_name=layer_name,
++        num_experts=num_experts,
++        top_k=top_k,
++    )
++    logger.warning(
++        "MoE route capture enabled for %s. This diagnostic path can perturb "
++        "compiled graph performance and should not be used for speed claims.",
++        layer_name,
++    )
++    return capture

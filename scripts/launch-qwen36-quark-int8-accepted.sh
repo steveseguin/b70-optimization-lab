@@ -17,10 +17,10 @@ export LD_LIBRARY_PATH="/home/steve/src/vllm-xpu-kernels/vllm_xpu_kernels:/home/
 export VLLM_USE_V1=1
 export VLLM_TARGET_DEVICE=xpu
 export VLLM_ALLOW_LONG_MAX_MODEL_LEN=1
-export XPU_GRAPH=1
-export VLLM_XPU_ENABLE_XPU_GRAPH=1
-export VLLM_XPU_FORCE_GRAPH_WITH_COMM=1
-export VLLM_XPU_GRAPH_NOOP_COMM_CAPTURE=1
+export XPU_GRAPH="${XPU_GRAPH:-1}"
+export VLLM_XPU_ENABLE_XPU_GRAPH="${VLLM_XPU_ENABLE_XPU_GRAPH:-1}"
+export VLLM_XPU_FORCE_GRAPH_WITH_COMM="${VLLM_XPU_FORCE_GRAPH_WITH_COMM:-1}"
+export VLLM_XPU_GRAPH_NOOP_COMM_CAPTURE="${VLLM_XPU_GRAPH_NOOP_COMM_CAPTURE:-1}"
 export VLLM_XPU_USE_CUSTOM_OP_COLLECTIVES=1
 export VLLM_XPU_COMPILE_ALLREDUCE_CUSTOM_OP=1
 export VLLM_XPU_CUSTOM_ALLREDUCE_GRAPH_CLONE_INPUT=1
@@ -44,6 +44,12 @@ unset VLLM_XPU_DEDUP_INT8_QUANT
 
 source /home/steve/.venvs/vllm-xpu/bin/activate
 
+EXTRA_ARGS=()
+if [[ -n "${VLLM_EXTRA_ARGS:-}" ]]; then
+  # shellcheck disable=SC2206
+  EXTRA_ARGS=(${VLLM_EXTRA_ARGS})
+fi
+
 exec /home/steve/.venvs/vllm-xpu/bin/vllm serve "$MODEL_PATH" \
   --host "$HOST" \
   --port "$PORT" \
@@ -63,4 +69,5 @@ exec /home/steve/.venvs/vllm-xpu/bin/vllm serve "$MODEL_PATH" \
   --language-model-only \
   --compilation-config '{"cudagraph_mode":"PIECEWISE"}' \
   --generation-config vllm \
+  "${EXTRA_ARGS[@]}" \
   >"$LOG_PATH" 2>&1

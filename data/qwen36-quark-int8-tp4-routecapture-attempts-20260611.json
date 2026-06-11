@@ -1,0 +1,48 @@
+{
+  "created_date": "2026-06-11",
+  "model": "Qwen3.6-35B-A3B-Quark-W8A8-INT8",
+  "served_model_name": "qwen36-35b-a3b-fp8",
+  "goal": "Collect real MoE expert route histograms for shape-exact XPU grouped-GEMM and persistent-MoE tuning.",
+  "route_capture_patch": "patches/vllm-qwen36-moe-route-capture-20260611.patch",
+  "diagnostic_launcher": "scripts/launch-qwen36-quark-int8-route-capture.sh",
+  "summarizer": "scripts/summarize-qwen36-moe-route-capture.py",
+  "attempts": [
+    {
+      "tmux": "qwen36-tp4-routecapture-20260611",
+      "xpu_graph": true,
+      "enforce_eager": false,
+      "health": "pass",
+      "request": "not needed; startup graph capture exercised hook",
+      "route_files": 0,
+      "result": "BaseRouter hook fired during XPU graph capture and could not copy topk_ids to CPU.",
+      "log_evidence": "wait method cannot be used for an event associated with a command graph"
+    },
+    {
+      "tmux": "qwen36-tp4-routecapture-20260611b",
+      "xpu_graph": false,
+      "enforce_eager": false,
+      "health": "pass",
+      "request": "one bounded 64-token completion",
+      "route_files": 0,
+      "result": "No JSONL route files produced. Generic router hook enabled at startup, but runtime request did not reach the Python hook."
+    },
+    {
+      "tmux": "qwen36-tp4-routecapture-20260611c",
+      "xpu_graph": false,
+      "enforce_eager": true,
+      "health": "pass",
+      "request": "one bounded 64-token completion",
+      "route_files": 0,
+      "result": "No JSONL route files produced even with torch.compile/CUDAGraph disabled.",
+      "log_evidence": "enforce_eager=True; Cudagraph is disabled under eager mode; XPU Graph is disabled by environment variable"
+    }
+  ],
+  "finding": "The generic BaseRouter capture hook is not sufficient for this Qwen3.6 Quark W8A8 INT8 XPU runtime path. Move capture lower into FusedMoEModularMethod.apply, FusedMoEKernel.apply, or vllm/model_executor/layers/fused_moe/experts/xpu_moe.py where topk_ids is passed to the XPU expert kernel.",
+  "restore": {
+    "tmux": "qwen36-tp4-accepted-restored-20260611c",
+    "health": "pass",
+    "enforce_eager": false,
+    "xpu_graph": true,
+    "log_evidence": "Graph capturing finished; Forcing XPU Graph with communication ops because VLLM_XPU_FORCE_GRAPH_WITH_COMM=1"
+  }
+}
