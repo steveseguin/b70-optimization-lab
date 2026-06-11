@@ -655,3 +655,112 @@ The prompt-class run reduces confidence in plain n-gram speculation. These are l
 8. File upstreamable issues before writing large local forks.
    - Good candidates: XPU graph capture needing exact speculative bucket `3`, n-gram3+ fully accepted bad loops, and oneCCL worker-count graph incompatibility.
    - If maintainers already have the right kernel or capture fix in a newer branch/container, adopting it may be faster than local reimplementation.
+
+## Bigger Bets Added After Public Result Review
+
+Follow-up after posting the accepted Quark W8A8 INT8 result to Localmaxxing and
+querying the public board. Keep the target unchanged: Qwen3.6 35B-A3B, true
+8-bit or better-quality-equivalent math, no Qwen3.5 detours, no 4-bit fallback
+for the production-quality path.
+
+Fresh public signals:
+
+- Our approved Quark W8A8 INT8 entry is `99.428 tok/s` corrected decode,
+  `98.163 tok/s` e2e output, p512/n512/c1/r4, `32K` context, on 4x Arc Pro
+  B70 with strict frontdoor quality gates.
+- The public Arc/B70 root-model entries for Qwen3.6 35B-A3B are mostly
+  llama.cpp/SYCL Q4 variants around `68.8-70.35 tok/s` single stream. They are
+  useful as Intel-stack signal, but they do not satisfy the current 8-bit
+  quality target.
+- The fastest public root-model Qwen3.6 35B-A3B single-user results are
+  dominated by speculative methods: MTP, DFlash, or custom proposer/verifier
+  stacks. That is the strongest external evidence that `>200 tok/s` probably
+  needs verifier-preserving speculation or a real MoE/kernel/layout step, not
+  another small launch-flag sweep.
+- vLLM's Qwen3.5/Qwen3.6 recipe explicitly recommends MTP for low-concurrency
+  latency work, while Intel's Arc Pro B-series guidance calls out persistent
+  MoE and dynamic work balancing as first-class B-series levers.
+
+Additional bigger ideas to track:
+
+1. XPU MTP/DFlash-style proposer with Quark INT8 verifier.
+   - Do not change the verifier. Use the current Quark W8A8 INT8 model to
+     accept/reject final tokens.
+   - Candidate proposers: official Qwen3.6 FP8 MTP tensors, a same-tokenizer
+     Qwen3.6 draft, or a small local proposer trained/distilled only for
+     acceptance rate.
+   - First proof: memory headroom, canary parity, repeat64, structured JSON,
+     and long-context needle before any headline speed number.
+
+2. Import the newest Intel persistent-MoE path rather than re-discovering it.
+   - Compare our `vllm-xpu-kernels` path against Intel's current XPU container
+     or branch that claims persistent MoE GEMM plus fused activation wins on
+     Qwen3-30B-A3B.
+   - First proof: a standalone Qwen3.6 shape microbench showing that the
+     persistent path actually covers Quark W8A8 INT8, not only FP8/W4 paths.
+
+3. Route-aware expert locality.
+   - Log real expert IDs for chat/code/structured/math prompts, then ask
+     whether active top-8 experts are randomly distributed or cluster by prompt
+     class.
+   - If there is locality, try expert remapping/prepacking so frequent expert
+     groups land on fewer cards or friendlier memory strides.
+   - This preserves output math if only storage/order changes and routing IDs
+     are remapped consistently.
+
+4. Hybrid TP/EP layout with a traffic simulator first.
+   - TP4 may be paying too many small collectives during single-token decode.
+   - Build a byte/time simulator for attention/GDN, routed experts, shared
+     expert, and output projection under TP4, TP2, EP4, and hybrid layouts.
+   - Only start a vLLM architecture branch if the simulator predicts a clear
+     single-token latency win and fits 32GB/card at 32K context.
+
+5. Static solo decode lane.
+   - Keep the accepted vLLM service for normal production, but build an
+     internal one-user lane with fixed sampling, fixed graph buckets,
+     preallocated KV, and minimal streaming/output machinery.
+   - If the static lane is much faster, production can route solo sessions to
+     it without weakening the general service.
+
+6. Exact-shape collective replacement.
+   - The repeated small BF16 hidden-state collectives are a better target than
+     generic oneCCL replacement.
+   - Create microbench repros for the exact AOT shapes, then test a graph-safe
+     Level Zero/SYCL collective or fused collective+residual boundary.
+
+7. XPU-native packed-layout fork of the same weights.
+   - Keep the same Quark W8A8 quantized values but write a second packed layout
+     optimized for Xe2 DPAS/XMX access.
+   - This is a model-layout fork, not a quality fork. The acceptance criterion
+     is bit/near-bit parity against the current Quark path under the quality
+     suite.
+
+8. OpenVINO/oneDNN GenAI 8-bit feasibility probe.
+   - Treat this as an Intel-engine diagnostic, not a model switch.
+   - If OpenVINO can run the same Qwen3.6 35B-A3B family with an 8-bit path and
+     strong quality gates, it tells us whether vLLM/XPU overhead is the current
+     ceiling.
+
+9. Driver, firmware, and platform tuning as a measured matrix.
+   - Public B70 posts repeatedly mention kernel/driver sensitivity, GT clock
+     pinning, Level Zero behavior, and OS versions.
+   - Track `xpu-smi` clocks/power, PCIe/NUMA locality, Resizable BAR, P2P,
+     oneCCL thresholds, and `CCL_*` settings alongside every benchmark so a
+     software win is not hiding a platform regression.
+
+10. Formal upstream repro bundle.
+    - Package three minimal public repros: Quark W8A8 INT8 MoE small-shape
+      deficit, graph-safe collective issue, and speculative bucket/acceptance
+      behavior.
+    - The goal is to make Intel/vLLM maintainers able to reproduce the exact
+      bottleneck without the full production stack.
+
+Current prioritization:
+
+1. Do next: determine whether our live Quark W8A8 INT8 MoE path already uses
+   Intel's persistent/fused activation work. If not, test the available fused
+   SiLU+quant and workspace toggles, then build the shape-exact microbench.
+2. Do in parallel: feasibility check for verifier-preserving MTP/DFlash-style
+   speculation using Qwen3.6 assets only.
+3. Keep production planning separate: accepted TP4 remains the reliability
+   baseline until a candidate passes the full quality and soak matrix.

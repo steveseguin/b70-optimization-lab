@@ -4,6 +4,32 @@ Date: 2026-05-04
 
 This note is the current public/reproducible summary for the B70 optimization work. The active technical plan is `plans/q4_0-gguf-b70-optimization-plan.md`; submitted benchmark IDs and exact payloads are recorded in `notes/localmaxxing-submissions-2026-05-04.md` and `data/localmaxxing-payloads-20260504.json.gz.b64`.
 
+## 2026-06-11 Qwen3.6 35B Quark W8A8 INT8 Addendum
+
+Current high-fidelity Qwen3.6 target:
+
+- Model: `nameistoken/Qwen3.6-35B-A3B-Quark-W8A8-INT8`.
+- Runtime: vLLM/XPU TP4 on 4x Arc Pro B70, 32K context, Quark W8A8 INT8,
+  graph-safe custom collectives, no prefix caching.
+- Accepted public result: `99.428 tok/s` corrected decode and `98.163 tok/s`
+  e2e output for p512/n512/c1/r4, submitted to Localmaxxing as
+  `cmq8yhxvo001ipb0149aoa79o`.
+- Quality gate passed before submission: exact canaries, JSON
+  schema/semantics, copy phrase, 8K long-context needle, repeat stability, and
+  baseline hash parity.
+
+Current Qwen3.6 INT8 direction:
+
+1. Keep this accepted TP4 service as the reliability baseline.
+2. Do not spend time on Qwen3.5, 4-bit fallback, or quality-lowering routes for
+   the production-quality path.
+3. Prioritize verifier-preserving speculation using Qwen3.6 assets, persistent
+   MoE/fused-activation coverage for the actual Quark W8A8 path, and
+   shape-exact collective/MoE microbenches.
+4. Track bigger ideas in
+   `notes/2026-06-11-qwen36-aot-localmaxxing-and-runtime-screens.md`,
+   especially the "Bigger Bets Added After Public Result Review" section.
+
 ## 2026-05-10 MiniMax AutoRound Addendum
 
 MiniMax M2.7 AutoRound INT4 is now the main four-card optimization target. The
