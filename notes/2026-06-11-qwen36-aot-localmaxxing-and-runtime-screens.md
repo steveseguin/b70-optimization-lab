@@ -5963,3 +5963,173 @@ Revised priority:
    - shallow MTP/draft if verifier buckets are cheap and state is repairable;
    - persistent MoE/layout if decode time is MoE/collective dominated;
    - same-model engine bakeoff if vLLM/XPU overhead looks structural.
+
+## Verifier Follow-Up Probe, Standard N-Gram5 Rejection, And Larger Bets
+
+Added after the no-bonus accounting run. This closes the loop on whether the
+remaining no-bonus failure is model/verifier disagreement or hidden speculative
+state.
+
+New artifacts:
+
+- `scripts/probe-qwen36-verifier-followup.py`
+- `data/qwen36-quark-int8-tp4-ngram5-nobonus-accounting-verifier-followup-probe-20260611.json`
+- `data/qwen36-quark-int8-tp4-ngram5-standard-device-lost-20260611.json`
+
+Verifier follow-up result:
+
+- Input replay: `data/qwen36-quark-int8-tp4-ngram5-nobonus-accounting-spec-replay-20260611.json`
+- Failing case: `long_context_needle`
+- Visible emitted prefix before the mismatch: `B70_QWEN36_NEEDLE_202`
+- Suppressed full-accept bonus token: token id `21`, text `6`
+- Next speculative/verifier token after suppression: token id `15`, text `0`
+- `/generative_scoring` prompt length: `7643` tokens
+- Score for suppressed `6` over `{6, 0}`: `0.9999974387187055`
+- Score for wrong `0` over `{0, 6}`: `0.00000226032348933062`
+
+Conclusion:
+
+- The accepted Quark verifier strongly prefers the suppressed token when asked
+  from the visible output prefix.
+- The n-gram5/no-bonus/accounting failure is not verifier model math.
+- Scheduler counter accounting was fixed, but suppressing a verified full-accept
+  bonus token still leaves some hidden KV/proposer/scheduler state ahead of the
+  visible stream.
+- Counter rollback alone is insufficient. A real fix needs KV/proposer rewind,
+  or we should stop suppressing verifier-approved bonus tokens.
+
+Standard n-gram5 with the verifier bonus intact:
+
+- Launch path: `scripts/launch-qwen36-quark-int8-ngram-trace.sh`
+- Settings: `num_speculative_tokens=5`, `prompt_lookup_min=2`,
+  `prompt_lookup_max=5`, `DISABLE_FULL_ACCEPT_BONUS=0`
+- Capture sizes: `1,2,3,4,5,6,8,16,24,32,40,48,56,64,80,96,112,128`
+- Backend health reached and graph capture completed.
+- First frontdoor quality request failed with HTTP 500 and killed the backend.
+- Fatal error: `UR_RESULT_ERROR_DEVICE_LOST`
+- Stack location: `block_table.copy_to_gpu` from
+  `gpu_model_runner._prepare_inputs`.
+- Scheduler context: first request, `prompt_token_ids_len=17`,
+  `num_scheduled_tokens=17`, `scheduled_spec_decode_tokens={}`,
+  `step_counter=0`.
+- No speculative trace rows were produced because the crash happened during the
+  first prefill request.
+
+Decision:
+
+- Reject standard n-gram5 under the current graph/spec setup.
+- Do not claim quality or speed from this run.
+- If revisited, test a smaller graph bucket set, eager/no-graph, or a direct
+  block-table prefill repro only as a stability diagnostic.
+- The accepted TP4 service was restored in tmux session
+  `qwen36-tp4-accepted-restored-after-ngram5-standard-dl-20260611o`.
+  Backend `/health`, frontdoor `/health`, and the frontdoor text quality smoke
+  passed with `pass_all=true`, `baseline_match_all=true`, `repeat_pass=true`,
+  and `long_context_pass=true`.
+- Restore artifact:
+  `data/qwen36-quark-int8-tp4-accepted-restored-after-ngram5-standard-dl-text-smoke-20260611.json`
+
+External signals checked for bigger ideas:
+
+- vLLM's Intel Arc Pro B-series post lists n-gram, EAGLE, EAGLE3, async
+  scheduling, prefill/decode disaggregation, and persistent MoE as supported or
+  relevant B-series directions:
+  https://vllm.ai/blog/2025-11-11-intel-arc-pro-b
+- Public B70/Qwen notes continue to point at SYCL and MoE models as the more
+  promising local path than Vulkan or dense-only models:
+  https://github.com/PMZFX/intel-arc-pro-b70-benchmarks
+- A recent W8A8 Qwen3.6-35B-A3B issue in `llm-compressor` shows exact
+  high-fidelity INT8 support remains an active upstream concern:
+  https://github.com/vllm-project/llm-compressor/issues/2787
+- A recent XPU/B70 vLLM issue involving resets/device faults is consistent with
+  treating device-loss failures as first-class stability blockers, not just
+  benchmark noise:
+  https://github.com/vllm-project/vllm/issues/41663
+
+New things to try next:
+
+1. Bonus-intact n-gram5 stability isolate.
+   - Keep the verifier bonus intact.
+   - Reproduce the first-prefill device loss with a minimal block-table copy
+     test, then with smaller capture buckets.
+   - If it only fails under graph capture, the candidate is a graph/runtime
+     stability issue rather than an n-gram correctness issue.
+
+2. KV/proposer rewind proof.
+   - Build a minimal trace fixture that suppresses a full-accept bonus token,
+     then explicitly rewinds or invalidates the proposer/KV state.
+   - The pass condition is strict: the next visible token must be the suppressed
+     token, and token traces must match accepted output.
+
+3. Verifier-bucket timing before any MTP/EAGLE integration.
+   - Measure verifier lengths `2,3,4,5,6,8` through graph buckets.
+   - If those buckets are expensive or unstable, model-based speculation will
+     not reach the `>200 tok/s` single-request target on this stack.
+
+4. EAGLE/EAGLE3 or trained same-tokenizer draft behind Quark verifier.
+   - Use the current Quark W8A8 model as the final verifier.
+   - A draft/MTP/EAGLE model may propose, but it must not define final output.
+   - Start at depth `2`; require exact token-trace parity across deterministic,
+     repeat, structured, code, math, and long-context gates before timing.
+
+5. Static solo decode lane.
+   - Build a special c1 latency path with preallocated KV/block tables,
+     fixed graph buckets, no prefix cache, and minimal scheduler churn.
+   - This is more intrusive than tuning vLLM flags, but it attacks the evidence
+     that offline/HTTP overhead is not the 2x bottleneck while block-table and
+     graph/runtime boundaries still matter.
+
+6. Whole-token command-list replay.
+   - Capture the full batch-1 decode step, including dense W8A8, MoE,
+     attention/GDN, collectives, logits, and sampling.
+   - If Level Zero launch/sync gaps dominate, whole-step replay could beat
+     isolated micro-kernel patches without changing math.
+
+7. Memory-for-latency profile.
+   - Spend spare B70 VRAM deliberately: K32/K64 hot expert replicas, tile-native
+     repacked W8A8 weights, larger verifier buckets, persistent scratch, or a
+     sidecar proposer.
+   - Keep this separate from the production max-concurrency profile; memory
+     spent on c1 latency may reduce 32K c48 capacity.
+
+8. Persistent route-window MoE.
+   - Use real route windows from prompt-class captures.
+   - Start with layers 14 and 21, where prior route/hotpack screens were most
+     informative.
+   - Target route/count/permute/activation/GEMM/finalize as one persistent
+     path, not a collection of small wrapper changes.
+
+9. Expert-locality TP/EP simulation.
+   - Use route histograms to simulate TP4, TP2+replicas, EP, and hybrid layouts.
+   - Prototype only if the communication and duplicated-weight math predicts a
+     large single-request win.
+
+10. Fused logits/argmax path.
+    - For greedy temperature-0 canaries, investigate whether the final
+      projection plus argmax can avoid materializing full logits.
+    - This is quality-sensitive: promotion requires exact token parity, not
+      approximate top-k agreement.
+
+11. Same-model 8-bit engine bakeoff.
+    - Compare vLLM/XPU against llama.cpp/SYCL Q8_0, OpenVINO/oneDNN GenAI
+      8-bit, BigDL/IPEX, and any current Intel-native W8A8 path.
+    - Constraints are strict: Qwen3.6 35B, high-fidelity 8-bit, same chat
+      template, no Qwen3.5, no 4-bit, and token-level quality oracle.
+
+12. Upstreamable B70 repro packet.
+    - Package the no-bonus accounting fixture, verifier-followup proof,
+      standard n-gram5 device-loss log, route-window grouped-GEMM timing, and
+      Localmaxxing accepted result.
+    - A precise Intel/vLLM repro packet is more likely to produce backend help
+      than another local flag sweep.
+
+Revised large-opportunity order:
+
+1. Restore and preserve the accepted TP4 service after every experiment.
+2. Finish the verifier/proposer state isolate.
+3. In parallel, collect one-token roofline and verifier-bucket timing.
+4. Choose one high-upside branch:
+   - EAGLE/MTP/draft if verifier buckets are cheap and state is fixable;
+   - persistent MoE/layout if route-window timing dominates;
+   - static solo decode/command-list replay if scheduler/graph sync dominates;
+   - engine bakeoff if vLLM/XPU overhead looks structural.

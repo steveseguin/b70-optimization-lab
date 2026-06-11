@@ -1,0 +1,77 @@
+{
+  "candidate": "qwen36-quark-int8-tp4-ngram5-standard",
+  "date": "2026-06-11",
+  "decision": "reject",
+  "reason": "bonus-intact standard n-gram5 reached backend health but crashed on the first quality request before producing a valid quality or speed result",
+  "launch": {
+    "script": "scripts/launch-qwen36-quark-int8-ngram-trace.sh",
+    "tag": "ngram5-standard",
+    "num_speculative_tokens": 5,
+    "prompt_lookup_min": 2,
+    "prompt_lookup_max": 5,
+    "disable_full_accept_bonus": false,
+    "cudagraph_capture_sizes": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      8,
+      16,
+      24,
+      32,
+      40,
+      48,
+      56,
+      64,
+      80,
+      96,
+      112,
+      128
+    ],
+    "backend_port": 18080,
+    "frontdoor_port": 8000
+  },
+  "startup": {
+    "backend_health_reached": true,
+    "graph_capture_completed": true
+  },
+  "quality_trace": {
+    "command": "/home/steve/.venvs/vllm-xpu/bin/python scripts/qwen36-quality-token-trace.py --base-url http://127.0.0.1:8000 --model qwen36-35b-a3b-fp8 --tokenizer /mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118 --baseline-json data/qwen36-quark-int8-accepted-frontdoor-token-trace-requestids-r4-20260611.json --repeat-runs 4 --long-context-tokens 8192 --timeout 180 --output-json data/qwen36-quark-int8-tp4-ngram5-standard-frontdoor-token-trace-20260611.json",
+    "result": "failed",
+    "http_status": 500,
+    "output_json_written": false
+  },
+  "fatal_error": {
+    "error": "RuntimeError: level_zero backend failed with error: 20 (UR_RESULT_ERROR_DEVICE_LOST)",
+    "worker": "Worker_TP0",
+    "stack_summary": [
+      "vllm/v1/worker/gpu_model_runner.py:4233 execute_model",
+      "vllm/v1/worker/gpu_model_runner.py:2018 _prepare_inputs",
+      "vllm/v1/worker/block_table.py:167 commit_block_table",
+      "vllm/v1/utils.py:136 copy_to_gpu",
+      "self.gpu[:n].copy_(self.cpu[:n], non_blocking=True)"
+    ]
+  },
+  "scheduler_context": {
+    "request_id": "chatcmpl-a1c4f3d3a0701a6c-aac7096b",
+    "first_request_case": "exact_ok",
+    "prompt_token_ids_len": 17,
+    "num_scheduled_tokens": 17,
+    "scheduled_spec_decode_tokens": {},
+    "step_counter": 0,
+    "kv_cache_usage": 0.0050558807876529555,
+    "notes": "Crash happened during the first prefill request, before any speculative decode rows were traced."
+  },
+  "logs": {
+    "backend_log": "/tmp/qwen36-quark-int8-tp4-ngram5-standard-20260611.log",
+    "spec_trace_jsonl": "/tmp/qwen36-ngram5-standard-spec-trace-20260611.jsonl",
+    "spec_trace_observed": false
+  },
+  "follow_up": [
+    "Do not promote or benchmark standard n-gram5 under the current graph/spec setup.",
+    "If this path is revisited, test a smaller graph bucket set or eager/no-graph mode only as a stability diagnostic, not as a speed claim.",
+    "Prefer verifier-only probes, shallow MTP/draft speculation, and persistent MoE work over more n-gram width sweeps."
+  ]
+}
