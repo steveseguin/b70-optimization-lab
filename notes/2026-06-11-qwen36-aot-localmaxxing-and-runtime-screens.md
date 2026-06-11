@@ -5780,3 +5780,186 @@ Bigger, bolder ideas added from this pass:
      smoke.
    - Recent stale-process and device-lost findings make this part of
      performance work, not a final cleanup task.
+
+## No-Bonus Accounting Diagnostic And Bigger Follow-Ups
+
+Added after the strict no-bonus speculative diagnostic was corrected and rerun.
+This still does not promote n-gram5/no-bonus; it turns the old failure into a
+cleaner repro and points the next work away from blind width sweeps.
+
+New or updated artifacts:
+
+- `scripts/check-qwen36-spec-no-bonus-state.py`
+- `scripts/replay-qwen36-spec-trace.py`
+- `patches/vllm-qwen36-spec-no-bonus-accounting-20260611.patch`
+- `data/qwen36-quark-int8-tp4-ngram5-nobonus-accounting-frontdoor-token-trace-20260611.json`
+- `data/qwen36-quark-int8-tp4-ngram5-nobonus-accounting-spec-jsonl-20260611.jsonl`
+- `data/qwen36-quark-int8-tp4-ngram5-nobonus-accounting-spec-replay-20260611.json`
+- `data/qwen36-quark-int8-tp4-ngram5-nobonus-accounting-spec-replay-20260611.md`
+- `data/qwen36-quark-int8-tp4-accepted-restored-after-nobonus-accounting-text-smoke-20260611.json`
+
+What changed:
+
+- The opt-in no-bonus diagnostic now accounts for a suppressed full-accept
+  target bonus token as uncommitted work. It rolls back one computed token and
+  one async output placeholder, matching the visible output stream instead of
+  silently advancing request state past the hidden token.
+- `scripts/check-qwen36-spec-no-bonus-state.py` is a focused CPU scheduler
+  fixture for that exact accounting behavior. It asserts that a suppressed
+  bonus token is not emitted and that `num_computed_tokens` stays one token
+  behind `num_tokens`, ready to replay the suppressed position.
+- `scripts/replay-qwen36-spec-trace.py` now reports accounting mismatches in
+  addition to suppressed-follow-up mismatches.
+
+Validation:
+
+```bash
+/home/steve/.venvs/vllm-xpu/bin/python -m py_compile \
+  scripts/replay-qwen36-spec-trace.py \
+  scripts/check-qwen36-spec-no-bonus-state.py
+
+/home/steve/.venvs/vllm-xpu/bin/python \
+  scripts/check-qwen36-spec-no-bonus-state.py
+```
+
+The regression fixture passed with:
+
+```json
+{"passed": true, "num_computed_tokens": 13, "num_tokens": 14, "output_tokens": [101, 201, 202, 203, 204, 205], "suppressed_bonus": 999}
+```
+
+Replay reads:
+
+- Old no-bonus state fixture: `accounting_mismatch_count=2`. This proves the
+  previous diagnostic was internally inconsistent: it hid a bonus token but
+  still counted that position as committed.
+- New live no-bonus/accounting trace: `accounting_mismatch_count=0`, so the
+  accounting bug is fixed.
+- New live no-bonus/accounting trace still has
+  `suppressed_followup_mismatch_count=1`, and the frontdoor token trace still
+  fails the long-context needle.
+
+Current rejection:
+
+- Accepted baseline: `B70_QWEN36_NEEDLE_20260609`
+- Patched n-gram5/no-bonus/accounting diagnostic:
+  `B70_QWEN36_NEEDLE_2020609`
+- First token divergence is in the date body: the diagnostic emits token `15`
+  where baseline emitted token `21`.
+- Replay shows the remaining mismatch as suppressed token `21` followed by
+  verifier token `15`.
+
+Decision:
+
+- Reject n-gram5/no-bonus again.
+- Stop treating the failure as the old computed-token accounting bug.
+- Stop doing n-gram width sweeps until we can either reproduce and fix the
+  verifier/proposer state path or replace n-gram with a verifier-preserving
+  MTP/draft lane.
+- The accepted TP4 recipe was restored in tmux session
+  `qwen36-tp4-accepted-restored-after-nobonus-accounting-20260611m`; backend
+  `/health`, frontdoor `/health`, and the frontdoor text quality canary passed
+  with `pass_all=true`.
+
+Things to try next from this result:
+
+1. Verifier-only recompute probe.
+   - On a row that suppresses a bonus token, immediately run a verifier-only
+     one-token continuation from the visible token prefix and compare it with
+     the next scheduler token.
+   - If verifier-only returns the suppressed token but the speculative path
+     does not, the bug is in scheduler/proposer state, not model math.
+
+2. Minimal failing scheduler fixture from the real trace.
+   - Reduce the `long_context_needle` trace to the few rows around token `21`.
+   - Unit-test request counters, placeholder count, spec token list, and
+     proposer update order without needing four B70s or a full model launch.
+
+3. Verifier-bucket timing before MTP integration.
+   - Build graph buckets for verifier lengths `2,3,4,5,6,8`.
+   - Measure whether multi-token verification is fast enough on XPU to make a
+     shallow proposer worthwhile. If verifier length `3` is already slow, MTP
+     integration will not reach `>200 tok/s` without deeper kernel work.
+
+4. Shallow MTP sidecar with Quark verifier.
+   - Do not switch production quality to the official FP8 or a GGUF MTP model.
+   - Use an auxiliary Qwen3.6 MTP/draft source only to propose tokens; the
+     current Quark W8A8 INT8 model remains the final verifier.
+   - Start at depth `2` and require exact token-trace parity before measuring
+     speed.
+
+5. Exact draft-model lane for repetitive/locality-heavy prompts only.
+   - Keep n-gram2 as a diagnostic/request-class lane, not a global production
+     path.
+   - It may still be useful for route/acceptance instrumentation or a guarded
+     assistant-mode fast lane if repeat64 and long-context gates remain clean.
+
+6. Speculation kill switch with automatic fallback.
+   - A production prototype should be able to disable speculation per request
+     after any replay mismatch, repeat instability, long-context divergence, or
+     process-aging failure.
+   - The accepted no-prefix verifier lane remains the baseline service.
+
+New bigger, bolder ideas to track:
+
+1. Dual-lane production architecture.
+   - Conservative lane: current accepted TP4 Quark W8A8 verifier, 32K context,
+     strict stability.
+   - Speed lane: same verifier plus shallow proposer/MTP, route buckets, and
+     larger preallocated graph buckets.
+   - Router promotes requests to the speed lane only after prompt/context and
+     health checks, and falls back without changing user-visible output.
+
+2. Token-level flight recorder.
+   - For every candidate, store request id, emitted token ids, scheduler state
+     transitions, route histograms, graph bucket, and first-token timing.
+   - This turns intermittent corruption into searchable fixtures instead of
+     one-off logs.
+
+3. One-token roofline snapshot.
+   - Capture one accepted decode token with oneprof/Level Zero counters and
+     classify time into dense W8A8, routed MoE, shared expert, attention/GDN,
+     collectives, logits/sampling, scheduler, and streaming.
+   - This is the fastest way to decide whether the next month belongs to MoE
+     kernels, speculation, collectives, or server overhead.
+
+4. XPU persistent-MoE branch with real route windows.
+   - Use route windows from actual prompts, not synthetic even routing.
+   - Prototype a persistent route/count/permute/W8A8 GEMM/finalize path for
+     layers 14 and 21 first.
+   - Only wire into vLLM after standalone parity and event timing prove a real
+     margin.
+
+5. Memory-for-latency mode.
+   - Explicitly budget spare VRAM for K64 hot experts, packed tile-native
+     weights, larger verifier buckets, or a small sidecar proposer.
+   - This should be a separate service profile, because production aggregate
+     capacity and maximum 32K concurrency may prefer a different memory split.
+
+6. Whole decode command-list replay.
+   - Capture/replay the complete batch-1 decode step for stable graph buckets.
+   - If the model is launch/synchronization bound, this could beat isolated
+     kernel polishing while preserving the exact accepted math.
+
+7. Same-model 8-bit engine bakeoff with quality oracle.
+   - Compare current vLLM/XPU against llama.cpp/SYCL Q8_0, OpenVINO/oneDNN
+     GenAI 8-bit, BigDL/IPEX, and any Intel-native W8A8 path that appears.
+   - The bakeoff is only useful if it uses Qwen3.6 35B, 8-bit/high-fidelity
+     weights, the same prompt template, and the same token-level quality oracle.
+
+8. Upstreamable B70 speculative/MoE repro pack.
+   - Package the no-bonus accounting fixture, the remaining suppressed-token
+     mismatch, a verifier-bucket timing repro, and a real-route grouped-GEMM
+     repro for `vllm-xpu-kernels`.
+   - A concise upstream packet is more likely to attract Intel/vLLM help than
+     a broad performance complaint.
+
+Revised priority:
+
+1. Keep the accepted TP4 service as the only promoted lane.
+2. Build the verifier-only recompute probe and real-trace scheduler fixture.
+3. In parallel, collect one-token roofline data and route windows.
+4. Choose the next large branch from evidence:
+   - shallow MTP/draft if verifier buckets are cheap and state is repairable;
+   - persistent MoE/layout if decode time is MoE/collective dominated;
+   - same-model engine bakeoff if vLLM/XPU overhead looks structural.

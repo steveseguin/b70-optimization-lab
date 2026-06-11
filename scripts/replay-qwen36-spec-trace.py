@@ -106,6 +106,29 @@ def state_transition_summary(row: dict[str, Any]) -> dict[str, Any] | None:
     }
 
 
+def accounting_check(
+    row: dict[str, Any], transition: dict[str, Any] | None
+) -> dict[str, Any] | None:
+    if not transition:
+        return None
+    actual = transition.get("num_computed_tokens_delta_reject_adjust")
+    if actual is None:
+        return None
+    num_rejected = int(row.get("num_rejected") or 0)
+    suppressed_count = row.get("num_suppressed_bonus_tokens")
+    if suppressed_count is None:
+        suppressed_count = 1 if row.get("suppressed_bonus_token_id") is not None else 0
+    suppressed_count = int(suppressed_count or 0)
+    expected = -(num_rejected + suppressed_count)
+    return {
+        "expected_computed_delta": expected,
+        "actual_computed_delta": actual,
+        "num_rejected": num_rejected,
+        "num_suppressed_bonus_tokens": suppressed_count,
+        "matches": actual == expected,
+    }
+
+
 def load_token_cases(paths: list[Path]) -> dict[str, dict[str, Any]]:
     cases_by_request: dict[str, dict[str, Any]] = {}
     for path in paths:
@@ -178,6 +201,7 @@ def summarize_request(
     suppressed_sequence: list[int] = []
     row_summaries: list[dict[str, Any]] = []
     suppressed_followup_checks: list[dict[str, Any]] = []
+    accounting_checks: list[dict[str, Any]] = []
 
     for index, row in enumerate(rows):
         scheduled = int_list(row.get("scheduled_spec_token_ids"))
@@ -211,12 +235,23 @@ def summarize_request(
             }
             suppressed_followup_checks.append(followup)
 
+        state_transition = state_transition_summary(row)
+        row_accounting_check = accounting_check(row, state_transition)
+        if row_accounting_check is not None:
+            accounting_checks.append({
+                "line_no": row.get("_line_no"),
+                **row_accounting_check,
+            })
+
         row_summaries.append({
             "line_no": row.get("_line_no"),
             "ts": row.get("ts"),
             "num_draft_tokens": row.get("num_draft_tokens"),
             "num_accepted": row.get("num_accepted"),
             "num_rejected": row.get("num_rejected"),
+            "num_suppressed_bonus_tokens": row.get(
+                "num_suppressed_bonus_tokens"
+            ),
             "num_tokens_scheduled": row.get("num_tokens_scheduled"),
             "num_computed_tokens": row.get("num_computed_tokens"),
             "num_output_tokens": row.get("num_output_tokens"),
@@ -236,7 +271,8 @@ def summarize_request(
                 else None
             ),
             "followup_check": followup,
-            "state_transition": state_transition_summary(row),
+            "state_transition": state_transition,
+            "accounting_check": row_accounting_check,
         })
 
     token_case_output = int_list((token_case or {}).get("output_token_ids"))
@@ -266,6 +302,10 @@ def summarize_request(
             item for item in suppressed_followup_checks
             if item.get("next_replays_suppressed_bonus") is False
         ],
+        "accounting_checks": accounting_checks,
+        "accounting_mismatches": [
+            item for item in accounting_checks if item.get("matches") is False
+        ],
         "token_trace_case": token_case,
         "token_trace_join_method": (
             token_case_match.get("join_method") if token_case_match else None
@@ -287,9 +327,10 @@ def render_markdown(summary: dict[str, Any]) -> str:
         f"- malformed rows: `{summary['malformed_rows']}`",
         f"- requests: `{summary['requests']}`",
         f"- suppressed follow-up mismatches: `{summary['suppressed_followup_mismatch_count']}`",
+        f"- accounting mismatches: `{summary['accounting_mismatch_count']}`",
         "",
-        "| request | rows | drafts | accepted | rejected | suppressed rows | joined token case | follow-up mismatches |",
-        "| --- | ---: | ---: | ---: | ---: | ---: | --- | ---: |",
+        "| request | rows | drafts | accepted | rejected | suppressed rows | joined token case | follow-up mismatches | accounting mismatches |",
+        "| --- | ---: | ---: | ---: | ---: | ---: | --- | ---: | ---: |",
     ]
     for item in summary["request_summaries"]:
         case = item.get("token_trace_case") or {}
@@ -302,7 +343,8 @@ def render_markdown(summary: dict[str, Any]) -> str:
         lines.append(
             f"| `{item['req_id']}` | {item['rows']} | {item['draft_tokens']} | "
             f"{item['accepted']} | {item['rejected']} | {item['suppressed_bonus_rows']} | "
-            f"`{case_label}` | {len(item['suppressed_followup_mismatches'])} |"
+            f"`{case_label}` | {len(item['suppressed_followup_mismatches'])} | "
+            f"{len(item['accounting_mismatches'])} |"
         )
 
     mismatches = [
@@ -322,6 +364,22 @@ def render_markdown(summary: dict[str, Any]) -> str:
                     f"`{mismatch['next_generated_first_text']}`"
                 ),
             ])
+    accounting_mismatches = [
+        (item["req_id"], mismatch)
+        for item in summary["request_summaries"]
+        for mismatch in item["accounting_mismatches"]
+    ]
+    if accounting_mismatches:
+        lines.extend(["", "## Accounting Mismatches", ""])
+        for req_id, mismatch in accounting_mismatches:
+            lines.append(
+                f"- request `{req_id}` line `{mismatch['line_no']}`: "
+                f"expected computed delta "
+                f"`{mismatch['expected_computed_delta']}` from rejected "
+                f"`{mismatch['num_rejected']}` plus suppressed "
+                f"`{mismatch['num_suppressed_bonus_tokens']}`, observed "
+                f"`{mismatch['actual_computed_delta']}`."
+            )
     state_rows = [
         (item["req_id"], row)
         for item in summary["request_summaries"]
@@ -387,6 +445,9 @@ def main() -> int:
     mismatch_count = sum(
         len(item["suppressed_followup_mismatches"]) for item in request_summaries
     )
+    accounting_mismatch_count = sum(
+        len(item["accounting_mismatches"]) for item in request_summaries
+    )
     joined_requests = sum(1 for item in request_summaries if item.get("token_trace_case"))
     summary = {
         "trace_path": str(args.trace_jsonl),
@@ -396,6 +457,7 @@ def main() -> int:
         "requests": len(by_req),
         "joined_requests": joined_requests,
         "suppressed_followup_mismatch_count": mismatch_count,
+        "accounting_mismatch_count": accounting_mismatch_count,
         "request_summaries": request_summaries,
     }
 
@@ -411,6 +473,7 @@ def main() -> int:
         "requests": len(by_req),
         "joined_requests": joined_requests,
         "suppressed_followup_mismatch_count": mismatch_count,
+        "accounting_mismatch_count": accounting_mismatch_count,
         "out_json": str(args.out_json),
     }, sort_keys=True))
     return 0
