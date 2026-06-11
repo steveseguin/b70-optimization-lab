@@ -38,6 +38,9 @@ FRONTDOOR_LOG_EVENTS = os.environ.get("FRONTDOOR_LOG_EVENTS", "1") not in {
     "false",
     "False",
 }
+FRONTDOOR_PAUSE_ALLOW_LOCAL = os.environ.get(
+    "FRONTDOOR_PAUSE_ALLOW_LOCAL", "1"
+) not in {"0", "false", "False"}
 FRONTDOOR_CHAT_TEMPLATE_KWARGS_JSON = os.environ.get(
     "FRONTDOOR_CHAT_TEMPLATE_KWARGS_JSON", '{"enable_thinking":false}'
 )
@@ -120,6 +123,10 @@ def is_paused() -> bool:
     return bool(PAUSE_FILE and os.path.exists(PAUSE_FILE))
 
 
+def is_loopback_client(address: str) -> bool:
+    return address in {"127.0.0.1", "::1", "::ffff:127.0.0.1"}
+
+
 def status_payload() -> dict[str, Any]:
     with state_lock:
         active = active_generations
@@ -148,6 +155,7 @@ def status_payload() -> dict[str, Any]:
             "auth": "none",
             "pause_file": PAUSE_FILE,
             "paused": is_paused(),
+            "pause_allow_local": FRONTDOOR_PAUSE_ALLOW_LOCAL,
             "served_model_name": FRONTDOOR_SERVED_MODEL_NAME,
             "rewrite_request_model": FRONTDOOR_REWRITE_REQUEST_MODEL,
             "default_max_output_tokens": FRONTDOOR_DEFAULT_MAX_OUTPUT_TOKENS,
@@ -314,7 +322,13 @@ class FrontdoorHandler(BaseHTTPRequestHandler):
         queue_wait_s = 0.0
         generation = is_generation_path(path, self.command)
         if generation:
-            if is_paused():
+            paused = is_paused()
+            local_pause_bypass = (
+                paused
+                and FRONTDOOR_PAUSE_ALLOW_LOCAL
+                and is_loopback_client(self.client_address[0])
+            )
+            if paused and not local_pause_bypass:
                 payload = status_payload()
                 payload["error"] = {
                     "message": "frontdoor paused; generation requests are temporarily disabled",
@@ -330,6 +344,15 @@ class FrontdoorHandler(BaseHTTPRequestHandler):
                 )
                 self.write_json(503, payload)
                 return
+            if local_pause_bypass:
+                log_event(
+                    {
+                        "event": "generation_pause_bypass_local",
+                        "client": self.client_address[0],
+                        "path": path,
+                        "pause_file": PAUSE_FILE,
+                    }
+                )
             queued = True
             acquired, queue_wait_s = acquire_generation_slot()
             if not acquired:
@@ -523,6 +546,7 @@ def main() -> int:
             "pause_file": PAUSE_FILE,
             "paused": is_paused(),
             "drain_timeout_s": DRAIN_TIMEOUT_S,
+            "pause_allow_local": FRONTDOOR_PAUSE_ALLOW_LOCAL,
             "served_model_name": FRONTDOOR_SERVED_MODEL_NAME,
             "rewrite_request_model": FRONTDOOR_REWRITE_REQUEST_MODEL,
             "chat_template_kwargs": default_chat_template_kwargs,

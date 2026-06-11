@@ -8003,3 +8003,230 @@ Interpretation and next actions:
   4. current local vLLM changes from speculative instrumentation affecting
      non-spec first prefill,
   5. XPU device reset requirement after repeated `UR_RESULT_ERROR_DEVICE_LOST`.
+
+## Fresh Graph Cache Restore, Paused-Local Gate, and Larger Backlog
+
+Added after the fresh-cache restore recovered quality and after another external
+scan of Qwen3.6, vLLM/XPU, B70, and Localmaxxing signals.
+
+Runtime state and quality gates:
+
+- The stale accepted graph cache path was no longer trustworthy after repeated
+  graph/spec/device-lost experiments. Two restores reached `/health` but
+  device-losted on the first request at `block_table.copy_to_gpu`.
+- A fresh graph-cache root recovered the accepted graph path:
+  `/mnt/fast-ai/vllm-cache-exp/qwen36-35b-a3b-quark-int8-tp4-piecewise-graph-freshrestore-20260611d`.
+- Fresh-cache backend session:
+  `qwen36-tp4-graph-freshcache-paused-20260611d`.
+- Fresh-cache backend log:
+  `/tmp/qwen36-quark-int8-tp4-graph-freshcache-paused-20260611d.log`.
+- Backend reached `/health` after `131s`.
+- Localhost quality lane on `127.0.0.1:18082` passed both:
+  - `data/qwen36-quark-int8-tp4-freshcache-local-quality-frontdoor-text-smoke-r8-20260611.json`
+    - `pass_all=true`
+    - `baseline_match_all=true`
+  - `data/qwen36-quark-int8-tp4-freshcache-local-quality-frontdoor-full-r8-20260611.json`
+    - `pass_all=true`
+    - `baseline_match_all=true`
+    - long-context needle passed
+- An unpaused public-frontdoor full r8 attempt on port `8000` failed:
+  `data/qwen36-quark-int8-tp4-freshcache-public-frontdoor-full-r8-20260611.json`.
+  - `pass_all=false`
+  - `baseline_match_all=true`
+  - exact arithmetic failed: expected `60`, observed `58`
+  - repeat and long-context were otherwise clean
+  - frontdoor logs showed external `10.0.0.214` generation traffic interleaved
+    with the canary, so this is treated as a contaminated public-isolation
+    failure, not as a fresh-cache backend rejection.
+
+Frontdoor improvement:
+
+- `scripts/openai-lan-frontdoor.py` now supports
+  `FRONTDOOR_PAUSE_ALLOW_LOCAL=1` (default on).
+- While the dynamic pause file exists:
+  - non-loopback generation requests still return HTTP `503` /
+    `frontdoor_paused`,
+  - loopback generation requests may pass through the real public route for
+    local canaries,
+  - status reports `pause_allow_local`.
+- `scripts/run-openai-frontdoor-profile.sh` exports
+  `FRONTDOOR_PAUSE_ALLOW_LOCAL`.
+- The public frontdoor was restarted under the local-bypass code in session
+  `qwen36-public-frontdoor-paused-localbypass-20260611b`.
+- Paused-local public full r8 passed through `http://127.0.0.1:8000`:
+  `data/qwen36-quark-int8-tp4-freshcache-public-frontdoor-pausedlocal-full-r8-20260611.json`.
+  - `pass_all=true`
+  - `baseline_match_all=true`
+  - exact arithmetic/copy/JSON/OK passed
+  - repeat stability passed `8/8`
+  - long-context needle passed
+- The temporary local quality-lane session
+  `qwen36-local-quality-frontdoor-freshcache-20260611f` was stopped after the
+  public paused-local gate passed.
+- The public frontdoor was then unpaused. Post-gate status included:
+  - `paused=false`
+  - `pause_allow_local=true`
+  - `active_generations=0`
+  - `queued_generations=0`
+  - backend `/health` returned HTTP `200`
+  - `total_generation_requests` is live and should not be used as a static
+    canary value after unpause
+
+New restore policy:
+
+1. Treat graph cache roots as disposable after `UR_RESULT_ERROR_DEVICE_LOST`,
+   vLLM scheduler instrumentation changes, XPU kernel changes, or graph/env
+   flag changes.
+2. Prefer fresh, content-addressed cache roots keyed by model snapshot, vLLM
+   commit, local patchset, xpu-kernel commit, oneAPI/driver stack, and graph
+   env flags.
+3. `/health` is not a restore proof. Required gate:
+   backend health, first-generation smoke, localhost quality lane, paused-local
+   public frontdoor full r8, then unpause.
+4. Public canaries should use the paused-local bypass so LAN traffic cannot
+   contaminate deterministic quality checks.
+
+External signals checked:
+
+- Hugging Face Qwen3.6 FP8 model card says the official FP8 artifact uses
+  fine-grained FP8 with block size 128 and is intended to be compatible with
+  vLLM/SGLang/KTransformers. This reinforces that official FP8 remains a valid
+  reference path, but the current accepted service still uses the Quark W8A8
+  INT8 verifier for quality claims.
+  Source: https://huggingface.co/Qwen/Qwen3.6-35B-A3B-FP8
+- vLLM's Qwen3.6 recipe describes the model as `35B total / 3B active` with
+  `256` experts, `8` routed plus `1` shared, and shows official MTP speculative
+  launch syntax. This keeps MTP/DFlash-style work on the list, but our local
+  Quark verifier must pass exact token parity before any speed claim.
+  Source: https://recipes.vllm.ai/Qwen/Qwen3.6-35B-A3B
+- vLLM's Intel Arc Pro B-Series write-up highlights the same MoE bottleneck we
+  keep measuring: per-iteration expert GEMM launches, gate dependency stalls,
+  and idle device time. Their persistent zero-gap MoE design and dynamic
+  balancing are directly relevant to a no-quality-loss backend rewrite.
+  Source: https://vllm.ai/blog/2025-11-11-intel-arc-pro-b
+- The public dual-B70 vLLM issue documents GP faults / BCS resets under TP and
+  FP8 on a host stack different from Intel's validation BOM, plus stable
+  results under some collective/graph variants. This supports treating host
+  stack and XCCL/Level Zero matrix testing as an optimization/reliability item,
+  not just an ops chore.
+  Source: https://github.com/vllm-project/vllm/issues/41663
+- Intel's current Xe GPU enablement write-up says Intel is upstreaming vLLM,
+  SGLang, PyTorch, and FusedMoE paths for Arc Pro B70/B65-class hardware. That
+  makes a latest-XPU-branch shootout and upstream repro packet worth doing.
+  Source: https://huggingface.co/blog/MatrixYao/intel-gpu
+- vLLM block-table docs confirm the block-table object owns host/device
+  tensors, block sizing, and pinned-memory decisions. Since our restore failures
+  hit `block_table.copy_to_gpu`, a resident/precommitted block-table experiment
+  is a reasonable reliability and latency target.
+  Source: https://docs.vllm.ai/en/v0.19.1/api/vllm/v1/worker/block_table/
+- Localmaxxing refresh artifacts:
+  - `data/localmaxxing-qwen36-quark-b70-pausedlocal-refresh-20260611.json`
+  - `data/localmaxxing-qwen-b70-vllm-pausedlocal-refresh-20260611.json`
+  - exact Quark W8A8 INT8/B70 row remains
+    `cmq8yhxvo001ipb0149aoa79o` at `99.43 tok/s` output, batch `1`,
+    context `32768`
+  - broader B70/vLLM/Qwen rows still put the current Quark run at the top of
+    the visible B70 Qwen3.6 35B-class set, but nowhere near the `200 tok/s`
+    single-request target.
+
+New things to try next, ordered by risk/return:
+
+1. Fresh-cache discipline and automatic cache invalidation.
+   - Build a small launcher helper that creates graph-cache roots from a hash of
+     model snapshot, vLLM commit, local patches, xpu-kernel build id, driver
+     versions, graph flags, and key env vars.
+   - On first-generation `block_table.copy_to_gpu` device-lost, mark that cache
+     root bad and force a cold recapture before another restore attempt.
+   - Quality impact: none; this is reliability isolation.
+
+2. Resident block-table / KV-slot precommit experiment.
+   - The failing path is host-to-device block-table copy before first prefill.
+     Test whether a fixed c1 lane can pre-allocate and precommit request slots,
+     block tables, and KV metadata on XPU, then only update a small device-side
+     cursor per request.
+   - Success criterion: no token changes, lower TTFT variance, and no
+     first-request device-lost after cold restore.
+
+3. Static c1 decode lane.
+   - Build a latency lane with fixed shapes, fixed max output buckets, no
+     public batching, and no scheduler complexity beyond one active request.
+   - It can spend more VRAM on duplicated hot data, fixed block tables, and
+     captured decode command lists because aggregate throughput is not its job.
+   - Keep the current c48 frontdoor as the aggregate lane and fallback.
+
+4. Persistent zero-gap MoE for Qwen3.6 routed layers.
+   - Use the vLLM Intel Arc blog design as the target: one persistent kernel
+     loop, dynamic group balancing, and no per-expert launch gaps.
+   - Start from our route-capture histograms and Qwen3.6 shapes, not synthetic
+     equal-route workloads.
+   - Candidate implementations: extend current XPU fused-MoE, prototype
+     oneDNN/BRGEMM batched kernels, or upstream a B70-specific persistent
+     grouped-GEMM path.
+
+5. Route-bucket expert replication.
+   - Spend spare VRAM on K32/K64 hot expert tiles for prompt-class buckets.
+   - The route-overlap work showed K64 covers about `88-90%` of weighted expert
+     assignments in high-signal layers; test whether duplicating those tiles or
+     pinning them per rank cuts TP communication and routed-MoE latency.
+   - Gate on full quality, 32K KV capacity, and p512/o512 single-request speed.
+
+6. Verifier-only speculation repair before any MTP speed claim.
+   - Current oracle `k=1` failure proves the scheduler/KV/spec path can perturb
+     final output even with perfect draft tokens.
+   - Build a minimal verifier-only fixture that replays one accepted token ahead
+     with exact KV/block-table state checksums. No n-gram/MTP timing until this
+     is exact.
+   - If exact, reopen MTP/DFlash/DDTree with the Quark verifier as final
+     authority.
+
+7. Learned same-tokenizer proposer, not lower-bit verifier.
+   - Train or distill a small Qwen3.6-tokenizer proposer from accepted Quark
+     traces, but never allow it to emit final tokens without Quark verification.
+   - This can be faster than forcing official FP8 MTP tensors into the Quark
+     checkpoint layout, and quality remains verifier-bound.
+
+8. True 8-bit engine shootout.
+   - Compare current vLLM/XPU, latest vLLM XPU branches, LLM-Scaler, OpenVINO
+     GenAI/oneDNN, SGLang if Qwen3.6/XPU works, and llama.cpp SYCL/Vulkan
+     8-bit paths.
+   - Same model family, same 32K requirement, same token-trace quality oracle.
+   - Reject any row that wins by using 4-bit, shorter context, fewer output
+     tokens, different base model, or nonmatching final token stream.
+
+9. Host-stack/BOM A/B.
+   - Test the stack closer to Intel's validated B-Series image/BOM on a spare
+     disk: OS/kernel, GuC firmware, compute-runtime, oneCCL, oneAPI, and
+     `vllm-xpu-kernels` versions.
+   - Goal is not just stability; it may unlock faster collective or graph paths
+     without code changes.
+
+10. Whole-token Level Zero command-list capture.
+    - Capture complete decode buckets: GDN/attention, MoE, residual/all-reduce,
+      logits, sampling handoff.
+    - This is a bigger systems bet than a kernel tweak, but it attacks host
+      submit/sync overhead directly while preserving arithmetic.
+
+11. Production dual-lane router.
+    - Keep c48 aggregate throughput service conservative.
+    - Add a c1 latency lane only after it passes the paused-local full r8 gate.
+    - Router sends deterministic canaries and high-risk requests to the
+      conservative lane; fast lane automatically falls back on any quality or
+      health anomaly.
+
+12. Upstreamable B70 repro packs.
+    - Prepare three minimal packs:
+      1. `block_table.copy_to_gpu` first-generation device-lost with stale cache
+         versus fresh cache,
+      2. oracle `k=1` speculative output drift with exact token fixtures,
+      3. route-window MoE timing/hotset data for Qwen3.6 shapes.
+    - Include exact launch commands, versions, env flags, expected outputs, and
+      Localmaxxing row IDs so maintainers can reproduce and compare.
+
+Current priority after this addendum:
+
+1. Keep the fresh-cache accepted graph service online and quality-gated.
+2. Commit the paused-local bypass and new artifacts.
+3. Build the fresh-cache hash/invalidation helper.
+4. Start the resident block-table/static-c1 lane experiments.
+5. In parallel, reduce oracle `k=1` speculation drift into an upstreamable
+   state-checksum fixture.
