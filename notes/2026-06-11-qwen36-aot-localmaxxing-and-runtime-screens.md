@@ -3288,3 +3288,255 @@ Next implementation idea:
   then emits one combined prompt-class heatmap.
 - If the same top experts persist across prompt classes, prototype hot-expert
   replication/packing for layers 8/20 first.
+
+## Prompt-Class Decode Route Capture
+
+Purpose:
+
+- Check whether expert locality survives across prompt classes before investing
+  in hot-expert packing, route-bucket kernels, or dynamic placement.
+- Keep the speed result out of the decision loop: route capture disables graph
+  capture and runs as a diagnostic endpoint only.
+
+Command:
+
+```bash
+TAG=promptclass-routecapture-20260611a \
+PROMPT_TOKENS=256 \
+OUTPUT_TOKENS=64 \
+LONG_PROMPT_TOKENS=4096 \
+LONG_OUTPUT_TOKENS=32 \
+scripts/run-qwen36-promptclass-route-capture.sh
+```
+
+Helper scripts added:
+
+- `scripts/filter-qwen36-route-jsonl-by-metric-windows.py`
+- `scripts/run-qwen36-promptclass-route-capture.sh`
+
+Runtime:
+
+- Started route capture endpoint:
+  `qwen36-tp4-promptclass-routecapture-20260611a`
+- Route capture filters:
+  `CAPTURE_STAGE_REGEX='^quark_int8_apply$'`,
+  `CAPTURE_LAYER_REGEX='layers\.(8|9|14|20|21)\.'`,
+  `CAPTURE_MIN_NUM_TOKENS=1`,
+  `CAPTURE_MAX_NUM_TOKENS=1`,
+  `CAPTURE_INCLUDE_IDS=0`
+- Restored accepted endpoint:
+  `qwen36-tp4-accepted-restored-after-promptclass-routecapture-20260611a`
+- Post-restore health:
+  backend `http://127.0.0.1:18080/health -> 200`,
+  frontdoor `http://127.0.0.1:8000/health -> 200`
+- Live accepted process has route capture and grouped-GEMM policy overrides
+  unset.
+
+Artifacts:
+
+- Metrics:
+  - `data/qwen36-quark-int8-tp4-promptclass-routecapture-20260611a-natural-chat.json`
+  - `data/qwen36-quark-int8-tp4-promptclass-routecapture-20260611a-code.json`
+  - `data/qwen36-quark-int8-tp4-promptclass-routecapture-20260611a-structured.json`
+  - `data/qwen36-quark-int8-tp4-promptclass-routecapture-20260611a-math-reasoning.json`
+  - `data/qwen36-quark-int8-tp4-promptclass-routecapture-20260611a-repetitive.json`
+  - `data/qwen36-quark-int8-tp4-promptclass-routecapture-20260611a-long-natural.json`
+- Raw route JSONL:
+  - `data/qwen36-quark-int8-tp4-promptclass-routecapture-20260611a-routes-1286309.jsonl`
+  - `data/qwen36-quark-int8-tp4-promptclass-routecapture-20260611a-routes-1286310.jsonl`
+  - `data/qwen36-quark-int8-tp4-promptclass-routecapture-20260611a-routes-1286311.jsonl`
+  - `data/qwen36-quark-int8-tp4-promptclass-routecapture-20260611a-routes-1286312.jsonl`
+- Split route JSONL:
+  - `data/qwen36-quark-int8-tp4-promptclass-routecapture-20260611a-routes-natural-chat.jsonl`
+  - `data/qwen36-quark-int8-tp4-promptclass-routecapture-20260611a-routes-code.jsonl`
+  - `data/qwen36-quark-int8-tp4-promptclass-routecapture-20260611a-routes-structured.jsonl`
+  - `data/qwen36-quark-int8-tp4-promptclass-routecapture-20260611a-routes-math-reasoning.jsonl`
+  - `data/qwen36-quark-int8-tp4-promptclass-routecapture-20260611a-routes-repetitive.jsonl`
+  - `data/qwen36-quark-int8-tp4-promptclass-routecapture-20260611a-routes-long-natural.jsonl`
+- Summary:
+  - `data/qwen36-quark-int8-tp4-promptclass-routecapture-20260611a-route-window-summary.json`
+  - `data/qwen36-quark-int8-tp4-promptclass-routecapture-20260611a-heatmap.json`
+
+Window split result:
+
+| Label | Route records | Notes |
+| --- | ---: | --- |
+| natural-chat | 0 | completion ended before a useful decode capture window |
+| code | 40 | short completion, 8 records per target layer |
+| structured | 20 | short completion, 4 records per target layer |
+| math-reasoning | 1260 | 252 records per target layer |
+| repetitive | 1260 | 252 records per target layer |
+| long-natural | 20 | short completion, 4 records per target layer |
+| unmatched | 0 | good timestamp split |
+| ambiguous | 0 | no overlapping request-window collisions |
+
+Top prompt-class locality layers, top-16 experts:
+
+| Layer | Labels with records | Mean top-16 share | Mean max expert share | Mean active expert share | Cross-label top-16 Jaccard |
+| ---: | --- | ---: | ---: | ---: | ---: |
+| 20 | code, structured, math-reasoning, repetitive, long-natural | 0.7980 | 0.1040 | 0.1883 | 0.0690 |
+| 21 | code, structured, math-reasoning, repetitive, long-natural | 0.7944 | 0.1032 | 0.1867 | 0.0303 |
+| 9 | code, structured, math-reasoning, repetitive, long-natural | 0.7944 | 0.1056 | 0.1938 | 0.0312 |
+| 14 | code, structured, math-reasoning, repetitive, long-natural | 0.7940 | 0.1048 | 0.1867 | 0.0741 |
+| 8 | code, structured, math-reasoning, repetitive, long-natural | 0.7893 | 0.1012 | 0.1914 | 0.0588 |
+
+Read:
+
+- There is much stronger per-label locality in these bounded diagnostic
+  captures than the earlier all-rank natural/decode heatmap. Several labels
+  were short, so the `1.0` top-16 shares for code/structured/long-natural are
+  useful as a signal, not as a final distribution estimate.
+- The low cross-label top-16 Jaccard is the important warning. Expert identity
+  changes materially by prompt class, so a single static global hot-expert list
+  is probably too blunt.
+- Better no-quality-loss candidates are:
+  route-bucket AOT kernels, prompt-class/dynamic hotpacks, and runtime
+  work-stealing/persistent scheduling that handles skew without preassuming a
+  fixed expert set.
+- Coverage gap: rerun natural-chat with a forced long-answer prompt file so it
+  produces enough decode records. The current natural-chat preset ended too
+  quickly.
+
+Next route-analysis tasks:
+
+1. Add a forced-natural prompt file and rerun only the missing natural class.
+2. Build a per-label top-expert overlap matrix for layers 8, 9, 14, 20, 21.
+3. Simulate hot-expert replication/packing cost from the prompt-class heatmap.
+4. Generate candidate route buckets and estimate dispatch hit rate before
+   implementing kernel changes.
+5. Add request-window split to the route analyzer output so route-capture runs
+   can be compared directly to quality/speed artifacts.
+
+## External Signals and Bigger Ideas
+
+Sources checked:
+
+- LocalMaxxing model search/leaderboard:
+  `https://localmaxxing.com/api/models/search?q=Qwen3.6&limit=10`
+  and
+  `https://localmaxxing.com/api/leaderboard?hfId=Qwen%2FQwen3.6-35B-A3B&limit=100`
+- vLLM XPU B580 issue:
+  `https://github.com/vllm-project/vllm/issues/35638`
+- vLLM XPU kernels repo:
+  `https://github.com/vllm-project/vllm-xpu-kernels`
+- Intel Extension for PyTorch release notes:
+  `https://github.com/intel/intel-extension-for-pytorch/releases`
+- vLLM Intel Arc Pro B-series blog:
+  `https://vllm.ai/blog/2025-11-11-intel-arc-pro-b`
+- Qwen3.6 B70 llama.cpp write-up:
+  `https://bibek-poudel.medium.com/how-to-run-qwen3-6-27b-locally-on-intel-arc-pro-b70-what-actually-works-c96dec67c6f7`
+
+Relevant external findings:
+
+- LocalMaxxing has many Qwen3.6-35B-A3B results above 200 tok/s, but the top
+  entries are not our target lane: they use 4-bit/MXFP4/NVFP4, MTP/speculation,
+  CUDA/ROCm-specific engines, or much shorter context.
+- The closest Intel B70 public references found are llama.cpp/SYCL Q4 records:
+  around 70 tok/s single-card and 68.8 tok/s single-stream in a 4-card mirror
+  setup, with higher aggregate throughput reported through multiple replicas.
+  Our accepted Quark W8A8 TP4 frontdoor result around 99.77 corrected
+  after-first tok/s is competitive, but it is not yet near the 200 tok/s
+  target.
+- The vLLM B-series blog says MoE GEMM scheduling gaps were attacked with a
+  persistent work assignment scheme using an atomic next-job counter. That maps
+  directly to our low-Jaccard/high-locality prompt-class trace: prompt routes
+  are skewed, but the skew moves.
+- Intel Extension for PyTorch 2.6/2.7 release notes call out MoE kernels,
+  chunked prefill, vLLM/TGI support, and Arc B-series validation. This supports
+  checking whether we are missing a newer XPU kernel package or whether vLLM is
+  not routing this Quark INT8 path to the strongest backend.
+- vLLM's public INT8 W8A8 documentation still describes INT8 compute support in
+  NVIDIA terms. That reinforces the local conclusion that XPU INT8 support is
+  special-path/kernel-specific rather than a mature generic path.
+
+Bigger no-quality-loss ideas to keep in the backlog:
+
+1. Persistent zero-gap MoE scheduler for XPU W8A8.
+   - Implement or route to a persistent grouped-MoE kernel with dynamic
+     work-stealing by expert block.
+   - Target the moving prompt-class skew directly.
+   - Quality risk: none if math is identical and token trace matches.
+
+2. Route-bucket kernel family.
+   - Use the route heatmap to define a few common shape buckets per layer.
+   - Compile bucket-specific kernels rather than one global policy.
+   - Dispatch bucket by current route histogram.
+
+3. Dynamic expert hotpack.
+   - Keep canonical weights unchanged, but maintain a packed device-local view
+     of recently hot experts for layers 8, 9, 14, 20, and 21.
+   - Repack asynchronously or at prompt boundary.
+   - Validate with token-trace parity, because packing bugs can be silent.
+
+4. Verifier-preserving MTP/speculation.
+   - The accepted W8A8 model remains the verifier.
+   - Draft/MTP can be separate, smaller, or lower precision as long as accepted
+     tokens are verified by the W8A8 model.
+   - This is the most credible path to a 2x single-request jump if exact-kernel
+     optimization stalls.
+
+5. Single-card or TP2 plus replica split.
+   - Re-evaluate whether TP4 is actually helping single-request decode.
+   - If communication dominates, TP2 or one-card W8A8 with shorter context may
+     beat TP4 for latency while replicas recover aggregate throughput.
+   - This keeps model quality fixed, but may require separate 8K/16K/32K slots.
+
+6. Frontdoor bypass/direct engine mode.
+   - Measure direct backend, frontdoor, and in-process runner on the same prompt
+     artifacts.
+   - If the OpenAI/streaming path costs multiple tok/s, keep a low-latency
+     direct path for trusted internal consumers.
+
+7. XPU stack upgrade matrix.
+   - Try newer PyTorch/XPU, vLLM, and vLLM XPU kernels in a separate venv.
+   - Gate on identical quality canaries and no regression in the accepted
+     baseline.
+   - Specifically check whether newer MoE kernels or INT8 paths are registered.
+
+8. Topology-aware process layout.
+   - Pin workers, IRQs, and communication threads.
+   - Record PCIe BDF, affinity, and frequency state per run.
+   - If TP traffic crosses a weak path, reorder devices or split service layout.
+
+9. Quality-first benchmark harness upgrade.
+   - Standardize every performance candidate with:
+     exact prompt hashes, token traces, repeat canary, JSON/structured output,
+     coding prompt, math prompt, and 8K/32K needle.
+   - Publish only runs with both performance and quality artifacts.
+
+10. LocalMaxxing submission discipline.
+    - Submit accepted production-candidate results only, not diagnostic
+      route-capture runs.
+    - Include exact command, context length, quantization, no-prefix status,
+      peak allocated VRAM, and quality-gate notes.
+
+LocalMaxxing publication:
+
+- New submission:
+  `cmq9ifq0500b0r8012f27j1xl`
+- Status:
+  `APPROVED`
+- Submitted model page:
+  `Qwen/Qwen3.6-35B-A3B`
+- Quantization:
+  `Quark W8A8 INT8`
+- Metric:
+  `99.76969927367736` corrected after-first output tok/s,
+  `76.52664251509123 ms` TTFT,
+  `127.54716796875 GiB` peak total VRAM allocation across four B70s.
+- Payload/response artifacts:
+  - `data/localmaxxing-qwen36-b70-w8a8-submission-20260611.json`
+  - `data/localmaxxing-qwen36-b70-w8a8-response-20260611.json`
+- Dry-run issue:
+  LocalMaxxing currently rejects `backend=xpu` because the accepted backend enum
+  is limited to `cuda`, `rocm`, `metal`, `vulkan`, `cpu`, and `openvino`.
+  The final payload omits `backend` rather than mislabeling the run.
+- API normalization caveat:
+  The response reused/normalized a hardware record for `4x Intel Arc Pro B70`
+  and showed `ramGb=15` and `cpu=null`, even though the payload specified
+  Threadripper PRO 5955WX and 128 GiB RAM. Keep the local payload artifact as
+  the source of truth for system details.
+- Existing earlier approved related submission:
+  `cmq8yhxvo001ipb0149aoa79o`,
+  submitted under `nameistoken/Qwen3.6-35B-A3B-Quark-W8A8-INT8`,
+  `99.42835812273452` tok/s, no peak VRAM metric.

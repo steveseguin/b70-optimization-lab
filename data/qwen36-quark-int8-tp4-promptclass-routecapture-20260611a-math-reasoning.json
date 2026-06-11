@@ -1,0 +1,134 @@
+{
+  "created_at_unix": 1781182595.000853,
+  "base_url": "http://127.0.0.1:18080",
+  "model": "qwen36-35b-a3b-fp8",
+  "tokenizer": "/mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118",
+  "server_model_record": {
+    "id": "qwen36-35b-a3b-fp8",
+    "object": "model",
+    "created": 1781182588,
+    "owned_by": "vllm",
+    "root": "/mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118",
+    "parent": null,
+    "max_model_len": 32768,
+    "permission": [
+      {
+        "id": "modelperm-b5ba18f4fec696e0",
+        "object": "model_permission",
+        "created": 1781182588,
+        "allow_create_engine": false,
+        "allow_sampling": true,
+        "allow_logprobs": true,
+        "allow_search_indices": false,
+        "allow_view": true,
+        "allow_fine_tuning": false,
+        "organization": "*",
+        "group": null,
+        "is_blocking": false
+      }
+    ]
+  },
+  "prompt_kind": "preset",
+  "prompt_preset": "math-reasoning",
+  "prompt_file": null,
+  "endpoint": "completions",
+  "seed": 0,
+  "random_prefix_len": 0,
+  "prompt_tokens_requested": 256,
+  "prompt_tokens_actual": 253,
+  "output_tokens_requested": 64,
+  "mode": "stream",
+  "skip_vram": true,
+  "repeats": 1,
+  "measurement_notes": [
+    "TTFT and e2e are measured both client-side and from vLLM Prometheus histogram deltas.",
+    "tok_s_prefill_lower_bound_from_ttft is prompt_tokens / TTFT, so it is conservative and includes first-token scheduling/decode overhead.",
+    "tok_s_out_client_after_first_chunk is generated-token-only throughput after the first streamed text chunk.",
+    "tok_s_out_client_after_first_chunk_corrected subtracts the estimated first streamed chunk tokens from the numerator; this is more stable when --stream-interval > 1."
+  ],
+  "vram_mib_before_all": {},
+  "peak_vram_mib_observed": {},
+  "records": [
+    {
+      "repeat": 1,
+      "request_id": "cmpl-8364d854440843cc",
+      "request_started_at_unix": 1781182589.2227755,
+      "request_finished_at_unix": 1781182594.9960139,
+      "prompt_tokens_client": 253,
+      "prompt_tokens_estimated_before_request": 253,
+      "output_tokens_client": 64,
+      "elapsed_s_client": 5.773131716996431,
+      "ttft_ms_client": 102.11512504611164,
+      "tok_s_out_client_after_first_chunk": 11.285454549867532,
+      "tok_s_out_client_after_first_chunk_corrected": 11.109119322525851,
+      "tok_s_out_client_e2e": 11.08583748601826,
+      "tok_s_total_client": 54.9095387979342,
+      "tok_s_prefill_lower_bound_from_ttft": 2477.595751714097,
+      "vllm_metric_deltas": {
+        "prompt_tokens": 253.0,
+        "generation_tokens": 64.0,
+        "ttft_count": 1.0,
+        "ttft_sum_s": 0.10082626342773438,
+        "e2e_count": 1.0,
+        "e2e_sum_s": 5.772056818008423
+      },
+      "ttft_ms_vllm_metrics": 100.82626342773438,
+      "e2e_ms_vllm_metrics": 5772.056818008423,
+      "vram_mib_before": {},
+      "vram_mib_after": {},
+      "first_chunk_tokens_client_estimate": 1,
+      "streamed_text_chunks": 64,
+      "text_preview": "If decode throughput is 99 tokens/s baseline and a candidate reports 105 tokens/s, what is the percentage increase? Answer with the formula and the percentage, then discuss why that gain is not enough for a 200 tokens/s target. Include a co"
+    }
+  ],
+  "summary": {
+    "tok_s_out_client_after_first_chunk": {
+      "mean": 11.285454549867532,
+      "median": 11.285454549867532,
+      "min": 11.285454549867532,
+      "max": 11.285454549867532
+    },
+    "tok_s_out_client_after_first_chunk_corrected": {
+      "mean": 11.109119322525851,
+      "median": 11.109119322525851,
+      "min": 11.109119322525851,
+      "max": 11.109119322525851
+    },
+    "tok_s_out_client_e2e": {
+      "mean": 11.08583748601826,
+      "median": 11.08583748601826,
+      "min": 11.08583748601826,
+      "max": 11.08583748601826
+    },
+    "tok_s_total_client": {
+      "mean": 54.9095387979342,
+      "median": 54.9095387979342,
+      "min": 54.9095387979342,
+      "max": 54.9095387979342
+    },
+    "ttft_ms_client": {
+      "mean": 102.11512504611164,
+      "median": 102.11512504611164,
+      "min": 102.11512504611164,
+      "max": 102.11512504611164
+    },
+    "ttft_ms_vllm_metrics": {
+      "mean": 100.82626342773438,
+      "median": 100.82626342773438,
+      "min": 100.82626342773438,
+      "max": 100.82626342773438
+    },
+    "tok_s_prefill_lower_bound_from_ttft": {
+      "mean": 2477.595751714097,
+      "median": 2477.595751714097,
+      "min": 2477.595751714097,
+      "max": 2477.595751714097
+    },
+    "e2e_ms_vllm_metrics": {
+      "mean": 5772.056818008423,
+      "median": 5772.056818008423,
+      "min": 5772.056818008423,
+      "max": 5772.056818008423
+    }
+  }
+}

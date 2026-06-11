@@ -1,0 +1,7515 @@
+{
+  "filters": {
+    "layer_regex": null,
+    "max_num_tokens": 1,
+    "min_num_tokens": null,
+    "stage_regex": null
+  },
+  "inputs": [
+    {
+      "files": [
+        "/home/steve/llm-optimizations/data/qwen36-quark-int8-tp4-promptclass-routecapture-20260611a-routes-natural-chat.jsonl"
+      ],
+      "label": "natural-chat",
+      "pattern": "/home/steve/llm-optimizations/data/qwen36-quark-int8-tp4-promptclass-routecapture-20260611a-routes-natural-chat.jsonl"
+    },
+    {
+      "files": [
+        "/home/steve/llm-optimizations/data/qwen36-quark-int8-tp4-promptclass-routecapture-20260611a-routes-code.jsonl"
+      ],
+      "label": "code",
+      "pattern": "/home/steve/llm-optimizations/data/qwen36-quark-int8-tp4-promptclass-routecapture-20260611a-routes-code.jsonl"
+    },
+    {
+      "files": [
+        "/home/steve/llm-optimizations/data/qwen36-quark-int8-tp4-promptclass-routecapture-20260611a-routes-structured.jsonl"
+      ],
+      "label": "structured",
+      "pattern": "/home/steve/llm-optimizations/data/qwen36-quark-int8-tp4-promptclass-routecapture-20260611a-routes-structured.jsonl"
+    },
+    {
+      "files": [
+        "/home/steve/llm-optimizations/data/qwen36-quark-int8-tp4-promptclass-routecapture-20260611a-routes-math-reasoning.jsonl"
+      ],
+      "label": "math-reasoning",
+      "pattern": "/home/steve/llm-optimizations/data/qwen36-quark-int8-tp4-promptclass-routecapture-20260611a-routes-math-reasoning.jsonl"
+    },
+    {
+      "files": [
+        "/home/steve/llm-optimizations/data/qwen36-quark-int8-tp4-promptclass-routecapture-20260611a-routes-repetitive.jsonl"
+      ],
+      "label": "repetitive",
+      "pattern": "/home/steve/llm-optimizations/data/qwen36-quark-int8-tp4-promptclass-routecapture-20260611a-routes-repetitive.jsonl"
+    },
+    {
+      "files": [
+        "/home/steve/llm-optimizations/data/qwen36-quark-int8-tp4-promptclass-routecapture-20260611a-routes-long-natural.jsonl"
+      ],
+      "label": "long-natural",
+      "pattern": "/home/steve/llm-optimizations/data/qwen36-quark-int8-tp4-promptclass-routecapture-20260611a-routes-long-natural.jsonl"
+    }
+  ],
+  "labels": {
+    "code": {
+      "input_files": [
+        "/home/steve/llm-optimizations/data/qwen36-quark-int8-tp4-promptclass-routecapture-20260611a-routes-code.jsonl"
+      ],
+      "input_pattern": "/home/steve/llm-optimizations/data/qwen36-quark-int8-tp4-promptclass-routecapture-20260611a-routes-code.jsonl",
+      "layers": {
+        "language_model.model.layers.14.mlp.experts": {
+          "active_expert_share": 0.03125,
+          "active_experts_total": 8,
+          "label": "code",
+          "layer": "language_model.model.layers.14.mlp.experts",
+          "layer_index": 14,
+          "max_expert_share": 0.125,
+          "normalized_entropy_active_experts": 1.0,
+          "normalized_entropy_all_experts": 0.375,
+          "num_experts": 256,
+          "per_call_max_rows_per_expert": {
+            "max": 1.0,
+            "p50": 1.0,
+            "p90": 1.0
+          },
+          "per_call_nonzero_experts": {
+            "max": 8.0,
+            "p50": 8.0,
+            "p90": 8.0
+          },
+          "priority_score": 3.9134880655271593,
+          "records": 8,
+          "skew_over_uniform": 0.9375,
+          "stages": {
+            "quark_int8_apply": 8
+          },
+          "top8_share": 1.0,
+          "top_expert_ids": [
+            32,
+            51,
+            52,
+            64,
+            103,
+            137,
+            148,
+            160
+          ],
+          "top_experts": [
+            {
+              "count": 8,
+              "expert": 32
+            },
+            {
+              "count": 8,
+              "expert": 51
+            },
+            {
+              "count": 8,
+              "expert": 52
+            },
+            {
+              "count": 8,
+              "expert": 64
+            },
+            {
+              "count": 8,
+              "expert": 103
+            },
+            {
+              "count": 8,
+              "expert": 137
+            },
+            {
+              "count": 8,
+              "expert": 148
+            },
+            {
+              "count": 8,
+              "expert": 160
+            }
+          ],
+          "top_k": 8,
+          "topk_tuples": [],
+          "topn": 16,
+          "topn_share": 1.0,
+          "total_assignments": 64,
+          "total_tokens": 8,
+          "uniform_topn_share": 0.0625
+        },
+        "language_model.model.layers.20.mlp.experts": {
+          "active_expert_share": 0.04296875,
+          "active_experts_total": 11,
+          "label": "code",
+          "layer": "language_model.model.layers.20.mlp.experts",
+          "layer_index": 20,
+          "max_expert_share": 0.125,
+          "normalized_entropy_active_experts": 0.9755937888228715,
+          "normalized_entropy_all_experts": 0.421875,
+          "num_experts": 256,
+          "per_call_max_rows_per_expert": {
+            "max": 1.0,
+            "p50": 1.0,
+            "p90": 1.0
+          },
+          "per_call_nonzero_experts": {
+            "max": 8.0,
+            "p50": 8.0,
+            "p90": 8.0
+          },
+          "priority_score": 3.9134880655271593,
+          "records": 8,
+          "skew_over_uniform": 0.9375,
+          "stages": {
+            "quark_int8_apply": 8
+          },
+          "top8_share": 0.8125,
+          "top_expert_ids": [
+            99,
+            116,
+            185,
+            186,
+            191,
+            7,
+            83,
+            115,
+            151,
+            224,
+            239
+          ],
+          "top_experts": [
+            {
+              "count": 8,
+              "expert": 99
+            },
+            {
+              "count": 8,
+              "expert": 116
+            },
+            {
+              "count": 8,
+              "expert": 185
+            },
+            {
+              "count": 8,
+              "expert": 186
+            },
+            {
+              "count": 8,
+              "expert": 191
+            },
+            {
+              "count": 4,
+              "expert": 7
+            },
+            {
+              "count": 4,
+              "expert": 83
+            },
+            {
+              "count": 4,
+              "expert": 115
+            },
+            {
+              "count": 4,
+              "expert": 151
+            },
+            {
+              "count": 4,
+              "expert": 224
+            },
+            {
+              "count": 4,
+              "expert": 239
+            }
+          ],
+          "top_k": 8,
+          "topk_tuples": [],
+          "topn": 16,
+          "topn_share": 1.0,
+          "total_assignments": 64,
+          "total_tokens": 8,
+          "uniform_topn_share": 0.0625
+        },
+        "language_model.model.layers.21.mlp.experts": {
+          "active_expert_share": 0.05078125,
+          "active_experts_total": 13,
+          "label": "code",
+          "layer": "language_model.model.layers.21.mlp.experts",
+          "layer_index": 21,
+          "max_expert_share": 0.125,
+          "normalized_entropy_active_experts": 0.9796133097990339,
+          "normalized_entropy_all_experts": 0.45312499999999994,
+          "num_experts": 256,
+          "per_call_max_rows_per_expert": {
+            "max": 1.0,
+            "p50": 1.0,
+            "p90": 1.0
+          },
+          "per_call_nonzero_experts": {
+            "max": 8.0,
+            "p50": 8.0,
+            "p90": 8.0
+          },
+          "priority_score": 3.9134880655271593,
+          "records": 8,
+          "skew_over_uniform": 0.9375,
+          "stages": {
+            "quark_int8_apply": 8
+          },
+          "top8_share": 0.6875,
+          "top_expert_ids": [
+            2,
+            161,
+            203,
+            13,
+            47,
+            73,
+            95,
+            102,
+            137,
+            164,
+            170,
+            197,
+            207
+          ],
+          "top_experts": [
+            {
+              "count": 8,
+              "expert": 2
+            },
+            {
+              "count": 8,
+              "expert": 161
+            },
+            {
+              "count": 8,
+              "expert": 203
+            },
+            {
+              "count": 4,
+              "expert": 13
+            },
+            {
+              "count": 4,
+              "expert": 47
+            },
+            {
+              "count": 4,
+              "expert": 73
+            },
+            {
+              "count": 4,
+              "expert": 95
+            },
+            {
+              "count": 4,
+              "expert": 102
+            },
+            {
+              "count": 4,
+              "expert": 137
+            },
+            {
+              "count": 4,
+              "expert": 164
+            },
+            {
+              "count": 4,
+              "expert": 170
+            },
+            {
+              "count": 4,
+              "expert": 197
+            },
+            {
+              "count": 4,
+              "expert": 207
+            }
+          ],
+          "top_k": 8,
+          "topk_tuples": [],
+          "topn": 16,
+          "topn_share": 1.0,
+          "total_assignments": 64,
+          "total_tokens": 8,
+          "uniform_topn_share": 0.0625
+        },
+        "language_model.model.layers.8.mlp.experts": {
+          "active_expert_share": 0.04296875,
+          "active_experts_total": 11,
+          "label": "code",
+          "layer": "language_model.model.layers.8.mlp.experts",
+          "layer_index": 8,
+          "max_expert_share": 0.125,
+          "normalized_entropy_active_experts": 0.9755937888228715,
+          "normalized_entropy_all_experts": 0.421875,
+          "num_experts": 256,
+          "per_call_max_rows_per_expert": {
+            "max": 1.0,
+            "p50": 1.0,
+            "p90": 1.0
+          },
+          "per_call_nonzero_experts": {
+            "max": 8.0,
+            "p50": 8.0,
+            "p90": 8.0
+          },
+          "priority_score": 3.9134880655271593,
+          "records": 8,
+          "skew_over_uniform": 0.9375,
+          "stages": {
+            "quark_int8_apply": 8
+          },
+          "top8_share": 0.8125,
+          "top_expert_ids": [
+            72,
+            99,
+            107,
+            191,
+            224,
+            4,
+            84,
+            110,
+            220,
+            232,
+            239
+          ],
+          "top_experts": [
+            {
+              "count": 8,
+              "expert": 72
+            },
+            {
+              "count": 8,
+              "expert": 99
+            },
+            {
+              "count": 8,
+              "expert": 107
+            },
+            {
+              "count": 8,
+              "expert": 191
+            },
+            {
+              "count": 8,
+              "expert": 224
+            },
+            {
+              "count": 4,
+              "expert": 4
+            },
+            {
+              "count": 4,
+              "expert": 84
+            },
+            {
+              "count": 4,
+              "expert": 110
+            },
+            {
+              "count": 4,
+              "expert": 220
+            },
+            {
+              "count": 4,
+              "expert": 232
+            },
+            {
+              "count": 4,
+              "expert": 239
+            }
+          ],
+          "top_k": 8,
+          "topk_tuples": [],
+          "topn": 16,
+          "topn_share": 1.0,
+          "total_assignments": 64,
+          "total_tokens": 8,
+          "uniform_topn_share": 0.0625
+        },
+        "language_model.model.layers.9.mlp.experts": {
+          "active_expert_share": 0.03515625,
+          "active_experts_total": 9,
+          "label": "code",
+          "layer": "language_model.model.layers.9.mlp.experts",
+          "layer_index": 9,
+          "max_expert_share": 0.125,
+          "normalized_entropy_active_experts": 0.9858277399554022,
+          "normalized_entropy_all_experts": 0.390625,
+          "num_experts": 256,
+          "per_call_max_rows_per_expert": {
+            "max": 1.0,
+            "p50": 1.0,
+            "p90": 1.0
+          },
+          "per_call_nonzero_experts": {
+            "max": 8.0,
+            "p50": 8.0,
+            "p90": 8.0
+          },
+          "priority_score": 3.9134880655271593,
+          "records": 8,
+          "skew_over_uniform": 0.9375,
+          "stages": {
+            "quark_int8_apply": 8
+          },
+          "top8_share": 0.9375,
+          "top_expert_ids": [
+            2,
+            36,
+            95,
+            164,
+            170,
+            191,
+            255,
+            18,
+            161
+          ],
+          "top_experts": [
+            {
+              "count": 8,
+              "expert": 2
+            },
+            {
+              "count": 8,
+              "expert": 36
+            },
+            {
+              "count": 8,
+              "expert": 95
+            },
+            {
+              "count": 8,
+              "expert": 164
+            },
+            {
+              "count": 8,
+              "expert": 170
+            },
+            {
+              "count": 8,
+              "expert": 191
+            },
+            {
+              "count": 8,
+              "expert": 255
+            },
+            {
+              "count": 4,
+              "expert": 18
+            },
+            {
+              "count": 4,
+              "expert": 161
+            }
+          ],
+          "top_k": 8,
+          "topk_tuples": [],
+          "topn": 16,
+          "topn_share": 1.0,
+          "total_assignments": 64,
+          "total_tokens": 8,
+          "uniform_topn_share": 0.0625
+        }
+      },
+      "ranked_layers": [
+        {
+          "active_expert_share": 0.04296875,
+          "active_experts_total": 11,
+          "label": "code",
+          "layer": "language_model.model.layers.8.mlp.experts",
+          "layer_index": 8,
+          "max_expert_share": 0.125,
+          "normalized_entropy_active_experts": 0.9755937888228715,
+          "normalized_entropy_all_experts": 0.421875,
+          "num_experts": 256,
+          "per_call_max_rows_per_expert": {
+            "max": 1.0,
+            "p50": 1.0,
+            "p90": 1.0
+          },
+          "per_call_nonzero_experts": {
+            "max": 8.0,
+            "p50": 8.0,
+            "p90": 8.0
+          },
+          "priority_score": 3.9134880655271593,
+          "records": 8,
+          "skew_over_uniform": 0.9375,
+          "stages": {
+            "quark_int8_apply": 8
+          },
+          "top8_share": 0.8125,
+          "top_expert_ids": [
+            72,
+            99,
+            107,
+            191,
+            224,
+            4,
+            84,
+            110,
+            220,
+            232,
+            239
+          ],
+          "top_experts": [
+            {
+              "count": 8,
+              "expert": 72
+            },
+            {
+              "count": 8,
+              "expert": 99
+            },
+            {
+              "count": 8,
+              "expert": 107
+            },
+            {
+              "count": 8,
+              "expert": 191
+            },
+            {
+              "count": 8,
+              "expert": 224
+            },
+            {
+              "count": 4,
+              "expert": 4
+            },
+            {
+              "count": 4,
+              "expert": 84
+            },
+            {
+              "count": 4,
+              "expert": 110
+            },
+            {
+              "count": 4,
+              "expert": 220
+            },
+            {
+              "count": 4,
+              "expert": 232
+            },
+            {
+              "count": 4,
+              "expert": 239
+            }
+          ],
+          "top_k": 8,
+          "topk_tuples": [],
+          "topn": 16,
+          "topn_share": 1.0,
+          "total_assignments": 64,
+          "total_tokens": 8,
+          "uniform_topn_share": 0.0625
+        },
+        {
+          "active_expert_share": 0.03515625,
+          "active_experts_total": 9,
+          "label": "code",
+          "layer": "language_model.model.layers.9.mlp.experts",
+          "layer_index": 9,
+          "max_expert_share": 0.125,
+          "normalized_entropy_active_experts": 0.9858277399554022,
+          "normalized_entropy_all_experts": 0.390625,
+          "num_experts": 256,
+          "per_call_max_rows_per_expert": {
+            "max": 1.0,
+            "p50": 1.0,
+            "p90": 1.0
+          },
+          "per_call_nonzero_experts": {
+            "max": 8.0,
+            "p50": 8.0,
+            "p90": 8.0
+          },
+          "priority_score": 3.9134880655271593,
+          "records": 8,
+          "skew_over_uniform": 0.9375,
+          "stages": {
+            "quark_int8_apply": 8
+          },
+          "top8_share": 0.9375,
+          "top_expert_ids": [
+            2,
+            36,
+            95,
+            164,
+            170,
+            191,
+            255,
+            18,
+            161
+          ],
+          "top_experts": [
+            {
+              "count": 8,
+              "expert": 2
+            },
+            {
+              "count": 8,
+              "expert": 36
+            },
+            {
+              "count": 8,
+              "expert": 95
+            },
+            {
+              "count": 8,
+              "expert": 164
+            },
+            {
+              "count": 8,
+              "expert": 170
+            },
+            {
+              "count": 8,
+              "expert": 191
+            },
+            {
+              "count": 8,
+              "expert": 255
+            },
+            {
+              "count": 4,
+              "expert": 18
+            },
+            {
+              "count": 4,
+              "expert": 161
+            }
+          ],
+          "top_k": 8,
+          "topk_tuples": [],
+          "topn": 16,
+          "topn_share": 1.0,
+          "total_assignments": 64,
+          "total_tokens": 8,
+          "uniform_topn_share": 0.0625
+        },
+        {
+          "active_expert_share": 0.03125,
+          "active_experts_total": 8,
+          "label": "code",
+          "layer": "language_model.model.layers.14.mlp.experts",
+          "layer_index": 14,
+          "max_expert_share": 0.125,
+          "normalized_entropy_active_experts": 1.0,
+          "normalized_entropy_all_experts": 0.375,
+          "num_experts": 256,
+          "per_call_max_rows_per_expert": {
+            "max": 1.0,
+            "p50": 1.0,
+            "p90": 1.0
+          },
+          "per_call_nonzero_experts": {
+            "max": 8.0,
+            "p50": 8.0,
+            "p90": 8.0
+          },
+          "priority_score": 3.9134880655271593,
+          "records": 8,
+          "skew_over_uniform": 0.9375,
+          "stages": {
+            "quark_int8_apply": 8
+          },
+          "top8_share": 1.0,
+          "top_expert_ids": [
+            32,
+            51,
+            52,
+            64,
+            103,
+            137,
+            148,
+            160
+          ],
+          "top_experts": [
+            {
+              "count": 8,
+              "expert": 32
+            },
+            {
+              "count": 8,
+              "expert": 51
+            },
+            {
+              "count": 8,
+              "expert": 52
+            },
+            {
+              "count": 8,
+              "expert": 64
+            },
+            {
+              "count": 8,
+              "expert": 103
+            },
+            {
+              "count": 8,
+              "expert": 137
+            },
+            {
+              "count": 8,
+              "expert": 148
+            },
+            {
+              "count": 8,
+              "expert": 160
+            }
+          ],
+          "top_k": 8,
+          "topk_tuples": [],
+          "topn": 16,
+          "topn_share": 1.0,
+          "total_assignments": 64,
+          "total_tokens": 8,
+          "uniform_topn_share": 0.0625
+        },
+        {
+          "active_expert_share": 0.04296875,
+          "active_experts_total": 11,
+          "label": "code",
+          "layer": "language_model.model.layers.20.mlp.experts",
+          "layer_index": 20,
+          "max_expert_share": 0.125,
+          "normalized_entropy_active_experts": 0.9755937888228715,
+          "normalized_entropy_all_experts": 0.421875,
+          "num_experts": 256,
+          "per_call_max_rows_per_expert": {
+            "max": 1.0,
+            "p50": 1.0,
+            "p90": 1.0
+          },
+          "per_call_nonzero_experts": {
+            "max": 8.0,
+            "p50": 8.0,
+            "p90": 8.0
+          },
+          "priority_score": 3.9134880655271593,
+          "records": 8,
+          "skew_over_uniform": 0.9375,
+          "stages": {
+            "quark_int8_apply": 8
+          },
+          "top8_share": 0.8125,
+          "top_expert_ids": [
+            99,
+            116,
+            185,
+            186,
+            191,
+            7,
+            83,
+            115,
+            151,
+            224,
+            239
+          ],
+          "top_experts": [
+            {
+              "count": 8,
+              "expert": 99
+            },
+            {
+              "count": 8,
+              "expert": 116
+            },
+            {
+              "count": 8,
+              "expert": 185
+            },
+            {
+              "count": 8,
+              "expert": 186
+            },
+            {
+              "count": 8,
+              "expert": 191
+            },
+            {
+              "count": 4,
+              "expert": 7
+            },
+            {
+              "count": 4,
+              "expert": 83
+            },
+            {
+              "count": 4,
+              "expert": 115
+            },
+            {
+              "count": 4,
+              "expert": 151
+            },
+            {
+              "count": 4,
+              "expert": 224
+            },
+            {
+              "count": 4,
+              "expert": 239
+            }
+          ],
+          "top_k": 8,
+          "topk_tuples": [],
+          "topn": 16,
+          "topn_share": 1.0,
+          "total_assignments": 64,
+          "total_tokens": 8,
+          "uniform_topn_share": 0.0625
+        },
+        {
+          "active_expert_share": 0.05078125,
+          "active_experts_total": 13,
+          "label": "code",
+          "layer": "language_model.model.layers.21.mlp.experts",
+          "layer_index": 21,
+          "max_expert_share": 0.125,
+          "normalized_entropy_active_experts": 0.9796133097990339,
+          "normalized_entropy_all_experts": 0.45312499999999994,
+          "num_experts": 256,
+          "per_call_max_rows_per_expert": {
+            "max": 1.0,
+            "p50": 1.0,
+            "p90": 1.0
+          },
+          "per_call_nonzero_experts": {
+            "max": 8.0,
+            "p50": 8.0,
+            "p90": 8.0
+          },
+          "priority_score": 3.9134880655271593,
+          "records": 8,
+          "skew_over_uniform": 0.9375,
+          "stages": {
+            "quark_int8_apply": 8
+          },
+          "top8_share": 0.6875,
+          "top_expert_ids": [
+            2,
+            161,
+            203,
+            13,
+            47,
+            73,
+            95,
+            102,
+            137,
+            164,
+            170,
+            197,
+            207
+          ],
+          "top_experts": [
+            {
+              "count": 8,
+              "expert": 2
+            },
+            {
+              "count": 8,
+              "expert": 161
+            },
+            {
+              "count": 8,
+              "expert": 203
+            },
+            {
+              "count": 4,
+              "expert": 13
+            },
+            {
+              "count": 4,
+              "expert": 47
+            },
+            {
+              "count": 4,
+              "expert": 73
+            },
+            {
+              "count": 4,
+              "expert": 95
+            },
+            {
+              "count": 4,
+              "expert": 102
+            },
+            {
+              "count": 4,
+              "expert": 137
+            },
+            {
+              "count": 4,
+              "expert": 164
+            },
+            {
+              "count": 4,
+              "expert": 170
+            },
+            {
+              "count": 4,
+              "expert": 197
+            },
+            {
+              "count": 4,
+              "expert": 207
+            }
+          ],
+          "top_k": 8,
+          "topk_tuples": [],
+          "topn": 16,
+          "topn_share": 1.0,
+          "total_assignments": 64,
+          "total_tokens": 8,
+          "uniform_topn_share": 0.0625
+        }
+      ]
+    },
+    "long-natural": {
+      "input_files": [
+        "/home/steve/llm-optimizations/data/qwen36-quark-int8-tp4-promptclass-routecapture-20260611a-routes-long-natural.jsonl"
+      ],
+      "input_pattern": "/home/steve/llm-optimizations/data/qwen36-quark-int8-tp4-promptclass-routecapture-20260611a-routes-long-natural.jsonl",
+      "layers": {
+        "language_model.model.layers.14.mlp.experts": {
+          "active_expert_share": 0.03125,
+          "active_experts_total": 8,
+          "label": "long-natural",
+          "layer": "language_model.model.layers.14.mlp.experts",
+          "layer_index": 14,
+          "max_expert_share": 0.125,
+          "normalized_entropy_active_experts": 1.0,
+          "normalized_entropy_all_experts": 0.375,
+          "num_experts": 256,
+          "per_call_max_rows_per_expert": {
+            "max": 1.0,
+            "p50": 1.0,
+            "p90": 1.0
+          },
+          "per_call_nonzero_experts": {
+            "max": 8.0,
+            "p50": 8.0,
+            "p90": 8.0
+          },
+          "priority_score": 3.2779758388748252,
+          "records": 4,
+          "skew_over_uniform": 0.9375,
+          "stages": {
+            "quark_int8_apply": 4
+          },
+          "top8_share": 1.0,
+          "top_expert_ids": [
+            32,
+            51,
+            52,
+            64,
+            103,
+            137,
+            148,
+            160
+          ],
+          "top_experts": [
+            {
+              "count": 4,
+              "expert": 32
+            },
+            {
+              "count": 4,
+              "expert": 51
+            },
+            {
+              "count": 4,
+              "expert": 52
+            },
+            {
+              "count": 4,
+              "expert": 64
+            },
+            {
+              "count": 4,
+              "expert": 103
+            },
+            {
+              "count": 4,
+              "expert": 137
+            },
+            {
+              "count": 4,
+              "expert": 148
+            },
+            {
+              "count": 4,
+              "expert": 160
+            }
+          ],
+          "top_k": 8,
+          "topk_tuples": [],
+          "topn": 16,
+          "topn_share": 1.0,
+          "total_assignments": 32,
+          "total_tokens": 4,
+          "uniform_topn_share": 0.0625
+        },
+        "language_model.model.layers.20.mlp.experts": {
+          "active_expert_share": 0.03125,
+          "active_experts_total": 8,
+          "label": "long-natural",
+          "layer": "language_model.model.layers.20.mlp.experts",
+          "layer_index": 20,
+          "max_expert_share": 0.125,
+          "normalized_entropy_active_experts": 1.0,
+          "normalized_entropy_all_experts": 0.375,
+          "num_experts": 256,
+          "per_call_max_rows_per_expert": {
+            "max": 1.0,
+            "p50": 1.0,
+            "p90": 1.0
+          },
+          "per_call_nonzero_experts": {
+            "max": 8.0,
+            "p50": 8.0,
+            "p90": 8.0
+          },
+          "priority_score": 3.2779758388748252,
+          "records": 4,
+          "skew_over_uniform": 0.9375,
+          "stages": {
+            "quark_int8_apply": 4
+          },
+          "top8_share": 1.0,
+          "top_expert_ids": [
+            83,
+            99,
+            113,
+            116,
+            185,
+            186,
+            191,
+            239
+          ],
+          "top_experts": [
+            {
+              "count": 4,
+              "expert": 83
+            },
+            {
+              "count": 4,
+              "expert": 99
+            },
+            {
+              "count": 4,
+              "expert": 113
+            },
+            {
+              "count": 4,
+              "expert": 116
+            },
+            {
+              "count": 4,
+              "expert": 185
+            },
+            {
+              "count": 4,
+              "expert": 186
+            },
+            {
+              "count": 4,
+              "expert": 191
+            },
+            {
+              "count": 4,
+              "expert": 239
+            }
+          ],
+          "top_k": 8,
+          "topk_tuples": [],
+          "topn": 16,
+          "topn_share": 1.0,
+          "total_assignments": 32,
+          "total_tokens": 4,
+          "uniform_topn_share": 0.0625
+        },
+        "language_model.model.layers.21.mlp.experts": {
+          "active_expert_share": 0.03125,
+          "active_experts_total": 8,
+          "label": "long-natural",
+          "layer": "language_model.model.layers.21.mlp.experts",
+          "layer_index": 21,
+          "max_expert_share": 0.125,
+          "normalized_entropy_active_experts": 1.0,
+          "normalized_entropy_all_experts": 0.375,
+          "num_experts": 256,
+          "per_call_max_rows_per_expert": {
+            "max": 1.0,
+            "p50": 1.0,
+            "p90": 1.0
+          },
+          "per_call_nonzero_experts": {
+            "max": 8.0,
+            "p50": 8.0,
+            "p90": 8.0
+          },
+          "priority_score": 3.2779758388748252,
+          "records": 4,
+          "skew_over_uniform": 0.9375,
+          "stages": {
+            "quark_int8_apply": 4
+          },
+          "top8_share": 1.0,
+          "top_expert_ids": [
+            2,
+            47,
+            161,
+            164,
+            170,
+            191,
+            197,
+            203
+          ],
+          "top_experts": [
+            {
+              "count": 4,
+              "expert": 2
+            },
+            {
+              "count": 4,
+              "expert": 47
+            },
+            {
+              "count": 4,
+              "expert": 161
+            },
+            {
+              "count": 4,
+              "expert": 164
+            },
+            {
+              "count": 4,
+              "expert": 170
+            },
+            {
+              "count": 4,
+              "expert": 191
+            },
+            {
+              "count": 4,
+              "expert": 197
+            },
+            {
+              "count": 4,
+              "expert": 203
+            }
+          ],
+          "top_k": 8,
+          "topk_tuples": [],
+          "topn": 16,
+          "topn_share": 1.0,
+          "total_assignments": 32,
+          "total_tokens": 4,
+          "uniform_topn_share": 0.0625
+        },
+        "language_model.model.layers.8.mlp.experts": {
+          "active_expert_share": 0.03125,
+          "active_experts_total": 8,
+          "label": "long-natural",
+          "layer": "language_model.model.layers.8.mlp.experts",
+          "layer_index": 8,
+          "max_expert_share": 0.125,
+          "normalized_entropy_active_experts": 1.0,
+          "normalized_entropy_all_experts": 0.375,
+          "num_experts": 256,
+          "per_call_max_rows_per_expert": {
+            "max": 1.0,
+            "p50": 1.0,
+            "p90": 1.0
+          },
+          "per_call_nonzero_experts": {
+            "max": 8.0,
+            "p50": 8.0,
+            "p90": 8.0
+          },
+          "priority_score": 3.2779758388748252,
+          "records": 4,
+          "skew_over_uniform": 0.9375,
+          "stages": {
+            "quark_int8_apply": 4
+          },
+          "top8_share": 1.0,
+          "top_expert_ids": [
+            72,
+            84,
+            99,
+            107,
+            178,
+            191,
+            224,
+            239
+          ],
+          "top_experts": [
+            {
+              "count": 4,
+              "expert": 72
+            },
+            {
+              "count": 4,
+              "expert": 84
+            },
+            {
+              "count": 4,
+              "expert": 99
+            },
+            {
+              "count": 4,
+              "expert": 107
+            },
+            {
+              "count": 4,
+              "expert": 178
+            },
+            {
+              "count": 4,
+              "expert": 191
+            },
+            {
+              "count": 4,
+              "expert": 224
+            },
+            {
+              "count": 4,
+              "expert": 239
+            }
+          ],
+          "top_k": 8,
+          "topk_tuples": [],
+          "topn": 16,
+          "topn_share": 1.0,
+          "total_assignments": 32,
+          "total_tokens": 4,
+          "uniform_topn_share": 0.0625
+        },
+        "language_model.model.layers.9.mlp.experts": {
+          "active_expert_share": 0.03125,
+          "active_experts_total": 8,
+          "label": "long-natural",
+          "layer": "language_model.model.layers.9.mlp.experts",
+          "layer_index": 9,
+          "max_expert_share": 0.125,
+          "normalized_entropy_active_experts": 1.0,
+          "normalized_entropy_all_experts": 0.375,
+          "num_experts": 256,
+          "per_call_max_rows_per_expert": {
+            "max": 1.0,
+            "p50": 1.0,
+            "p90": 1.0
+          },
+          "per_call_nonzero_experts": {
+            "max": 8.0,
+            "p50": 8.0,
+            "p90": 8.0
+          },
+          "priority_score": 3.2779758388748252,
+          "records": 4,
+          "skew_over_uniform": 0.9375,
+          "stages": {
+            "quark_int8_apply": 4
+          },
+          "top8_share": 1.0,
+          "top_expert_ids": [
+            2,
+            36,
+            59,
+            95,
+            164,
+            170,
+            191,
+            255
+          ],
+          "top_experts": [
+            {
+              "count": 4,
+              "expert": 2
+            },
+            {
+              "count": 4,
+              "expert": 36
+            },
+            {
+              "count": 4,
+              "expert": 59
+            },
+            {
+              "count": 4,
+              "expert": 95
+            },
+            {
+              "count": 4,
+              "expert": 164
+            },
+            {
+              "count": 4,
+              "expert": 170
+            },
+            {
+              "count": 4,
+              "expert": 191
+            },
+            {
+              "count": 4,
+              "expert": 255
+            }
+          ],
+          "top_k": 8,
+          "topk_tuples": [],
+          "topn": 16,
+          "topn_share": 1.0,
+          "total_assignments": 32,
+          "total_tokens": 4,
+          "uniform_topn_share": 0.0625
+        }
+      },
+      "ranked_layers": [
+        {
+          "active_expert_share": 0.03125,
+          "active_experts_total": 8,
+          "label": "long-natural",
+          "layer": "language_model.model.layers.8.mlp.experts",
+          "layer_index": 8,
+          "max_expert_share": 0.125,
+          "normalized_entropy_active_experts": 1.0,
+          "normalized_entropy_all_experts": 0.375,
+          "num_experts": 256,
+          "per_call_max_rows_per_expert": {
+            "max": 1.0,
+            "p50": 1.0,
+            "p90": 1.0
+          },
+          "per_call_nonzero_experts": {
+            "max": 8.0,
+            "p50": 8.0,
+            "p90": 8.0
+          },
+          "priority_score": 3.2779758388748252,
+          "records": 4,
+          "skew_over_uniform": 0.9375,
+          "stages": {
+            "quark_int8_apply": 4
+          },
+          "top8_share": 1.0,
+          "top_expert_ids": [
+            72,
+            84,
+            99,
+            107,
+            178,
+            191,
+            224,
+            239
+          ],
+          "top_experts": [
+            {
+              "count": 4,
+              "expert": 72
+            },
+            {
+              "count": 4,
+              "expert": 84
+            },
+            {
+              "count": 4,
+              "expert": 99
+            },
+            {
+              "count": 4,
+              "expert": 107
+            },
+            {
+              "count": 4,
+              "expert": 178
+            },
+            {
+              "count": 4,
+              "expert": 191
+            },
+            {
+              "count": 4,
+              "expert": 224
+            },
+            {
+              "count": 4,
+              "expert": 239
+            }
+          ],
+          "top_k": 8,
+          "topk_tuples": [],
+          "topn": 16,
+          "topn_share": 1.0,
+          "total_assignments": 32,
+          "total_tokens": 4,
+          "uniform_topn_share": 0.0625
+        },
+        {
+          "active_expert_share": 0.03125,
+          "active_experts_total": 8,
+          "label": "long-natural",
+          "layer": "language_model.model.layers.9.mlp.experts",
+          "layer_index": 9,
+          "max_expert_share": 0.125,
+          "normalized_entropy_active_experts": 1.0,
+          "normalized_entropy_all_experts": 0.375,
+          "num_experts": 256,
+          "per_call_max_rows_per_expert": {
+            "max": 1.0,
+            "p50": 1.0,
+            "p90": 1.0
+          },
+          "per_call_nonzero_experts": {
+            "max": 8.0,
+            "p50": 8.0,
+            "p90": 8.0
+          },
+          "priority_score": 3.2779758388748252,
+          "records": 4,
+          "skew_over_uniform": 0.9375,
+          "stages": {
+            "quark_int8_apply": 4
+          },
+          "top8_share": 1.0,
+          "top_expert_ids": [
+            2,
+            36,
+            59,
+            95,
+            164,
+            170,
+            191,
+            255
+          ],
+          "top_experts": [
+            {
+              "count": 4,
+              "expert": 2
+            },
+            {
+              "count": 4,
+              "expert": 36
+            },
+            {
+              "count": 4,
+              "expert": 59
+            },
+            {
+              "count": 4,
+              "expert": 95
+            },
+            {
+              "count": 4,
+              "expert": 164
+            },
+            {
+              "count": 4,
+              "expert": 170
+            },
+            {
+              "count": 4,
+              "expert": 191
+            },
+            {
+              "count": 4,
+              "expert": 255
+            }
+          ],
+          "top_k": 8,
+          "topk_tuples": [],
+          "topn": 16,
+          "topn_share": 1.0,
+          "total_assignments": 32,
+          "total_tokens": 4,
+          "uniform_topn_share": 0.0625
+        },
+        {
+          "active_expert_share": 0.03125,
+          "active_experts_total": 8,
+          "label": "long-natural",
+          "layer": "language_model.model.layers.14.mlp.experts",
+          "layer_index": 14,
+          "max_expert_share": 0.125,
+          "normalized_entropy_active_experts": 1.0,
+          "normalized_entropy_all_experts": 0.375,
+          "num_experts": 256,
+          "per_call_max_rows_per_expert": {
+            "max": 1.0,
+            "p50": 1.0,
+            "p90": 1.0
+          },
+          "per_call_nonzero_experts": {
+            "max": 8.0,
+            "p50": 8.0,
+            "p90": 8.0
+          },
+          "priority_score": 3.2779758388748252,
+          "records": 4,
+          "skew_over_uniform": 0.9375,
+          "stages": {
+            "quark_int8_apply": 4
+          },
+          "top8_share": 1.0,
+          "top_expert_ids": [
+            32,
+            51,
+            52,
+            64,
+            103,
+            137,
+            148,
+            160
+          ],
+          "top_experts": [
+            {
+              "count": 4,
+              "expert": 32
+            },
+            {
+              "count": 4,
+              "expert": 51
+            },
+            {
+              "count": 4,
+              "expert": 52
+            },
+            {
+              "count": 4,
+              "expert": 64
+            },
+            {
+              "count": 4,
+              "expert": 103
+            },
+            {
+              "count": 4,
+              "expert": 137
+            },
+            {
+              "count": 4,
+              "expert": 148
+            },
+            {
+              "count": 4,
+              "expert": 160
+            }
+          ],
+          "top_k": 8,
+          "topk_tuples": [],
+          "topn": 16,
+          "topn_share": 1.0,
+          "total_assignments": 32,
+          "total_tokens": 4,
+          "uniform_topn_share": 0.0625
+        },
+        {
+          "active_expert_share": 0.03125,
+          "active_experts_total": 8,
+          "label": "long-natural",
+          "layer": "language_model.model.layers.20.mlp.experts",
+          "layer_index": 20,
+          "max_expert_share": 0.125,
+          "normalized_entropy_active_experts": 1.0,
+          "normalized_entropy_all_experts": 0.375,
+          "num_experts": 256,
+          "per_call_max_rows_per_expert": {
+            "max": 1.0,
+            "p50": 1.0,
+            "p90": 1.0
+          },
+          "per_call_nonzero_experts": {
+            "max": 8.0,
+            "p50": 8.0,
+            "p90": 8.0
+          },
+          "priority_score": 3.2779758388748252,
+          "records": 4,
+          "skew_over_uniform": 0.9375,
+          "stages": {
+            "quark_int8_apply": 4
+          },
+          "top8_share": 1.0,
+          "top_expert_ids": [
+            83,
+            99,
+            113,
+            116,
+            185,
+            186,
+            191,
+            239
+          ],
+          "top_experts": [
+            {
+              "count": 4,
+              "expert": 83
+            },
+            {
+              "count": 4,
+              "expert": 99
+            },
+            {
+              "count": 4,
+              "expert": 113
+            },
+            {
+              "count": 4,
+              "expert": 116
+            },
+            {
+              "count": 4,
+              "expert": 185
+            },
+            {
+              "count": 4,
+              "expert": 186
+            },
+            {
+              "count": 4,
+              "expert": 191
+            },
+            {
+              "count": 4,
+              "expert": 239
+            }
+          ],
+          "top_k": 8,
+          "topk_tuples": [],
+          "topn": 16,
+          "topn_share": 1.0,
+          "total_assignments": 32,
+          "total_tokens": 4,
+          "uniform_topn_share": 0.0625
+        },
+        {
+          "active_expert_share": 0.03125,
+          "active_experts_total": 8,
+          "label": "long-natural",
+          "layer": "language_model.model.layers.21.mlp.experts",
+          "layer_index": 21,
+          "max_expert_share": 0.125,
+          "normalized_entropy_active_experts": 1.0,
+          "normalized_entropy_all_experts": 0.375,
+          "num_experts": 256,
+          "per_call_max_rows_per_expert": {
+            "max": 1.0,
+            "p50": 1.0,
+            "p90": 1.0
+          },
+          "per_call_nonzero_experts": {
+            "max": 8.0,
+            "p50": 8.0,
+            "p90": 8.0
+          },
+          "priority_score": 3.2779758388748252,
+          "records": 4,
+          "skew_over_uniform": 0.9375,
+          "stages": {
+            "quark_int8_apply": 4
+          },
+          "top8_share": 1.0,
+          "top_expert_ids": [
+            2,
+            47,
+            161,
+            164,
+            170,
+            191,
+            197,
+            203
+          ],
+          "top_experts": [
+            {
+              "count": 4,
+              "expert": 2
+            },
+            {
+              "count": 4,
+              "expert": 47
+            },
+            {
+              "count": 4,
+              "expert": 161
+            },
+            {
+              "count": 4,
+              "expert": 164
+            },
+            {
+              "count": 4,
+              "expert": 170
+            },
+            {
+              "count": 4,
+              "expert": 191
+            },
+            {
+              "count": 4,
+              "expert": 197
+            },
+            {
+              "count": 4,
+              "expert": 203
+            }
+          ],
+          "top_k": 8,
+          "topk_tuples": [],
+          "topn": 16,
+          "topn_share": 1.0,
+          "total_assignments": 32,
+          "total_tokens": 4,
+          "uniform_topn_share": 0.0625
+        }
+      ]
+    },
+    "math-reasoning": {
+      "input_files": [
+        "/home/steve/llm-optimizations/data/qwen36-quark-int8-tp4-promptclass-routecapture-20260611a-routes-math-reasoning.jsonl"
+      ],
+      "input_pattern": "/home/steve/llm-optimizations/data/qwen36-quark-int8-tp4-promptclass-routecapture-20260611a-routes-math-reasoning.jsonl",
+      "layers": {
+        "language_model.model.layers.14.mlp.experts": {
+          "active_expert_share": 0.33984375,
+          "active_experts_total": 87,
+          "label": "math-reasoning",
+          "layer": "language_model.model.layers.14.mlp.experts",
+          "layer_index": 14,
+          "max_expert_share": 0.07341269841269842,
+          "normalized_entropy_active_experts": 0.887831323320634,
+          "normalized_entropy_all_experts": 0.7150308812499311,
+          "num_experts": 256,
+          "per_call_max_rows_per_expert": {
+            "max": 1.0,
+            "p50": 1.0,
+            "p90": 1.0
+          },
+          "per_call_nonzero_experts": {
+            "max": 8.0,
+            "p50": 8.0,
+            "p90": 8.0
+          },
+          "priority_score": 3.6763506983965284,
+          "records": 252,
+          "skew_over_uniform": 0.4831349206349206,
+          "stages": {
+            "quark_int8_apply": 252
+          },
+          "top8_share": 0.3392857142857143,
+          "top_expert_ids": [
+            160,
+            52,
+            19,
+            72,
+            54,
+            194,
+            51,
+            65,
+            76,
+            189,
+            225,
+            231,
+            67,
+            77,
+            137,
+            255
+          ],
+          "top_experts": [
+            {
+              "count": 148,
+              "expert": 160
+            },
+            {
+              "count": 92,
+              "expert": 52
+            },
+            {
+              "count": 88,
+              "expert": 19
+            },
+            {
+              "count": 88,
+              "expert": 72
+            },
+            {
+              "count": 72,
+              "expert": 54
+            },
+            {
+              "count": 68,
+              "expert": 194
+            },
+            {
+              "count": 64,
+              "expert": 51
+            },
+            {
+              "count": 64,
+              "expert": 65
+            },
+            {
+              "count": 64,
+              "expert": 76
+            },
+            {
+              "count": 64,
+              "expert": 189
+            },
+            {
+              "count": 60,
+              "expert": 225
+            },
+            {
+              "count": 52,
+              "expert": 231
+            },
+            {
+              "count": 44,
+              "expert": 67
+            },
+            {
+              "count": 44,
+              "expert": 77
+            },
+            {
+              "count": 44,
+              "expert": 137
+            },
+            {
+              "count": 44,
+              "expert": 255
+            }
+          ],
+          "top_k": 8,
+          "topk_tuples": [],
+          "topn": 16,
+          "topn_share": 0.5456349206349206,
+          "total_assignments": 2016,
+          "total_tokens": 252,
+          "uniform_topn_share": 0.0625
+        },
+        "language_model.model.layers.20.mlp.experts": {
+          "active_expert_share": 0.40234375,
+          "active_experts_total": 103,
+          "label": "math-reasoning",
+          "layer": "language_model.model.layers.20.mlp.experts",
+          "layer_index": 20,
+          "max_expert_share": 0.06547619047619048,
+          "normalized_entropy_active_experts": 0.8930123276898763,
+          "normalized_entropy_all_experts": 0.7463909249849339,
+          "num_experts": 256,
+          "per_call_max_rows_per_expert": {
+            "max": 1.0,
+            "p50": 1.0,
+            "p90": 1.0
+          },
+          "per_call_nonzero_experts": {
+            "max": 8.0,
+            "p50": 8.0,
+            "p90": 8.0
+          },
+          "priority_score": 3.3441958098350355,
+          "records": 252,
+          "skew_over_uniform": 0.439484126984127,
+          "stages": {
+            "quark_int8_apply": 252
+          },
+          "top8_share": 0.3253968253968254,
+          "top_expert_ids": [
+            191,
+            206,
+            224,
+            107,
+            117,
+            41,
+            151,
+            171,
+            53,
+            72,
+            110,
+            155,
+            115,
+            135,
+            186,
+            7
+          ],
+          "top_experts": [
+            {
+              "count": 132,
+              "expert": 191
+            },
+            {
+              "count": 88,
+              "expert": 206
+            },
+            {
+              "count": 88,
+              "expert": 224
+            },
+            {
+              "count": 80,
+              "expert": 107
+            },
+            {
+              "count": 80,
+              "expert": 117
+            },
+            {
+              "count": 64,
+              "expert": 41
+            },
+            {
+              "count": 64,
+              "expert": 151
+            },
+            {
+              "count": 60,
+              "expert": 171
+            },
+            {
+              "count": 56,
+              "expert": 53
+            },
+            {
+              "count": 48,
+              "expert": 72
+            },
+            {
+              "count": 48,
+              "expert": 110
+            },
+            {
+              "count": 48,
+              "expert": 155
+            },
+            {
+              "count": 40,
+              "expert": 115
+            },
+            {
+              "count": 40,
+              "expert": 135
+            },
+            {
+              "count": 40,
+              "expert": 186
+            },
+            {
+              "count": 36,
+              "expert": 7
+            }
+          ],
+          "top_k": 8,
+          "topk_tuples": [],
+          "topn": 16,
+          "topn_share": 0.501984126984127,
+          "total_assignments": 2016,
+          "total_tokens": 252,
+          "uniform_topn_share": 0.0625
+        },
+        "language_model.model.layers.21.mlp.experts": {
+          "active_expert_share": 0.3828125,
+          "active_experts_total": 98,
+          "label": "math-reasoning",
+          "layer": "language_model.model.layers.21.mlp.experts",
+          "layer_index": 21,
+          "max_expert_share": 0.08333333333333333,
+          "normalized_entropy_active_experts": 0.8798126223867888,
+          "normalized_entropy_all_experts": 0.7274631517848386,
+          "num_experts": 256,
+          "per_call_max_rows_per_expert": {
+            "max": 1.0,
+            "p50": 1.0,
+            "p90": 1.0
+          },
+          "per_call_nonzero_experts": {
+            "max": 8.0,
+            "p50": 8.0,
+            "p90": 8.0
+          },
+          "priority_score": 3.7216445468367327,
+          "records": 252,
+          "skew_over_uniform": 0.4890873015873016,
+          "stages": {
+            "quark_int8_apply": 252
+          },
+          "top8_share": 0.36507936507936506,
+          "top_expert_ids": [
+            44,
+            245,
+            61,
+            207,
+            95,
+            250,
+            243,
+            21,
+            6,
+            106,
+            187,
+            197,
+            108,
+            131,
+            227,
+            47
+          ],
+          "top_experts": [
+            {
+              "count": 168,
+              "expert": 44
+            },
+            {
+              "count": 112,
+              "expert": 245
+            },
+            {
+              "count": 96,
+              "expert": 61
+            },
+            {
+              "count": 92,
+              "expert": 207
+            },
+            {
+              "count": 80,
+              "expert": 95
+            },
+            {
+              "count": 72,
+              "expert": 250
+            },
+            {
+              "count": 60,
+              "expert": 243
+            },
+            {
+              "count": 56,
+              "expert": 21
+            },
+            {
+              "count": 52,
+              "expert": 6
+            },
+            {
+              "count": 52,
+              "expert": 106
+            },
+            {
+              "count": 52,
+              "expert": 187
+            },
+            {
+              "count": 48,
+              "expert": 197
+            },
+            {
+              "count": 44,
+              "expert": 108
+            },
+            {
+              "count": 44,
+              "expert": 131
+            },
+            {
+              "count": 44,
+              "expert": 227
+            },
+            {
+              "count": 40,
+              "expert": 47
+            }
+          ],
+          "top_k": 8,
+          "topk_tuples": [],
+          "topn": 16,
+          "topn_share": 0.5515873015873016,
+          "total_assignments": 2016,
+          "total_tokens": 252,
+          "uniform_topn_share": 0.0625
+        },
+        "language_model.model.layers.8.mlp.experts": {
+          "active_expert_share": 0.390625,
+          "active_experts_total": 100,
+          "label": "math-reasoning",
+          "layer": "language_model.model.layers.8.mlp.experts",
+          "layer_index": 8,
+          "max_expert_share": 0.05952380952380952,
+          "normalized_entropy_active_experts": 0.8953710412195991,
+          "normalized_entropy_all_experts": 0.7435895542939842,
+          "num_experts": 256,
+          "per_call_max_rows_per_expert": {
+            "max": 1.0,
+            "p50": 1.0,
+            "p90": 1.0
+          },
+          "per_call_nonzero_experts": {
+            "max": 8.0,
+            "p50": 8.0,
+            "p90": 8.0
+          },
+          "priority_score": 3.464979405675579,
+          "records": 252,
+          "skew_over_uniform": 0.4553571428571429,
+          "stages": {
+            "quark_int8_apply": 252
+          },
+          "top8_share": 0.3333333333333333,
+          "top_expert_ids": [
+            107,
+            224,
+            191,
+            132,
+            171,
+            95,
+            56,
+            53,
+            123,
+            151,
+            220,
+            57,
+            206,
+            249,
+            126,
+            42
+          ],
+          "top_experts": [
+            {
+              "count": 120,
+              "expert": 107
+            },
+            {
+              "count": 104,
+              "expert": 224
+            },
+            {
+              "count": 96,
+              "expert": 191
+            },
+            {
+              "count": 88,
+              "expert": 132
+            },
+            {
+              "count": 84,
+              "expert": 171
+            },
+            {
+              "count": 64,
+              "expert": 95
+            },
+            {
+              "count": 60,
+              "expert": 56
+            },
+            {
+              "count": 56,
+              "expert": 53
+            },
+            {
+              "count": 56,
+              "expert": 123
+            },
+            {
+              "count": 56,
+              "expert": 151
+            },
+            {
+              "count": 52,
+              "expert": 220
+            },
+            {
+              "count": 44,
+              "expert": 57
+            },
+            {
+              "count": 44,
+              "expert": 206
+            },
+            {
+              "count": 44,
+              "expert": 249
+            },
+            {
+              "count": 40,
+              "expert": 126
+            },
+            {
+              "count": 36,
+              "expert": 42
+            }
+          ],
+          "top_k": 8,
+          "topk_tuples": [],
+          "topn": 16,
+          "topn_share": 0.5178571428571429,
+          "total_assignments": 2016,
+          "total_tokens": 252,
+          "uniform_topn_share": 0.0625
+        },
+        "language_model.model.layers.9.mlp.experts": {
+          "active_expert_share": 0.43359375,
+          "active_experts_total": 111,
+          "label": "math-reasoning",
+          "layer": "language_model.model.layers.9.mlp.experts",
+          "layer_index": 9,
+          "max_expert_share": 0.08134920634920635,
+          "normalized_entropy_active_experts": 0.877953430016327,
+          "normalized_entropy_all_experts": 0.7456475893524287,
+          "num_experts": 256,
+          "per_call_max_rows_per_expert": {
+            "max": 1.0,
+            "p50": 1.0,
+            "p90": 1.0
+          },
+          "per_call_nonzero_experts": {
+            "max": 8.0,
+            "p50": 8.0,
+            "p90": 8.0
+          },
+          "priority_score": 3.615958900476257,
+          "records": 252,
+          "skew_over_uniform": 0.4751984126984127,
+          "stages": {
+            "quark_int8_apply": 252
+          },
+          "top8_share": 0.3611111111111111,
+          "top_expert_ids": [
+            95,
+            44,
+            106,
+            61,
+            207,
+            245,
+            197,
+            250,
+            41,
+            21,
+            70,
+            140,
+            161,
+            166,
+            227,
+            243
+          ],
+          "top_experts": [
+            {
+              "count": 164,
+              "expert": 95
+            },
+            {
+              "count": 124,
+              "expert": 44
+            },
+            {
+              "count": 96,
+              "expert": 106
+            },
+            {
+              "count": 88,
+              "expert": 61
+            },
+            {
+              "count": 68,
+              "expert": 207
+            },
+            {
+              "count": 68,
+              "expert": 245
+            },
+            {
+              "count": 60,
+              "expert": 197
+            },
+            {
+              "count": 60,
+              "expert": 250
+            },
+            {
+              "count": 56,
+              "expert": 41
+            },
+            {
+              "count": 48,
+              "expert": 21
+            },
+            {
+              "count": 48,
+              "expert": 70
+            },
+            {
+              "count": 44,
+              "expert": 140
+            },
+            {
+              "count": 40,
+              "expert": 161
+            },
+            {
+              "count": 40,
+              "expert": 166
+            },
+            {
+              "count": 40,
+              "expert": 227
+            },
+            {
+              "count": 40,
+              "expert": 243
+            }
+          ],
+          "top_k": 8,
+          "topk_tuples": [],
+          "topn": 16,
+          "topn_share": 0.5376984126984127,
+          "total_assignments": 2016,
+          "total_tokens": 252,
+          "uniform_topn_share": 0.0625
+        }
+      },
+      "ranked_layers": [
+        {
+          "active_expert_share": 0.3828125,
+          "active_experts_total": 98,
+          "label": "math-reasoning",
+          "layer": "language_model.model.layers.21.mlp.experts",
+          "layer_index": 21,
+          "max_expert_share": 0.08333333333333333,
+          "normalized_entropy_active_experts": 0.8798126223867888,
+          "normalized_entropy_all_experts": 0.7274631517848386,
+          "num_experts": 256,
+          "per_call_max_rows_per_expert": {
+            "max": 1.0,
+            "p50": 1.0,
+            "p90": 1.0
+          },
+          "per_call_nonzero_experts": {
+            "max": 8.0,
+            "p50": 8.0,
+            "p90": 8.0
+          },
+          "priority_score": 3.7216445468367327,
+          "records": 252,
+          "skew_over_uniform": 0.4890873015873016,
+          "stages": {
+            "quark_int8_apply": 252
+          },
+          "top8_share": 0.36507936507936506,
+          "top_expert_ids": [
+            44,
+            245,
+            61,
+            207,
+            95,
+            250,
+            243,
+            21,
+            6,
+            106,
+            187,
+            197,
+            108,
+            131,
+            227,
+            47
+          ],
+          "top_experts": [
+            {
+              "count": 168,
+              "expert": 44
+            },
+            {
+              "count": 112,
+              "expert": 245
+            },
+            {
+              "count": 96,
+              "expert": 61
+            },
+            {
+              "count": 92,
+              "expert": 207
+            },
+            {
+              "count": 80,
+              "expert": 95
+            },
+            {
+              "count": 72,
+              "expert": 250
+            },
+            {
+              "count": 60,
+              "expert": 243
+            },
+            {
+              "count": 56,
+              "expert": 21
+            },
+            {
+              "count": 52,
+              "expert": 6
+            },
+            {
+              "count": 52,
+              "expert": 106
+            },
+            {
+              "count": 52,
+              "expert": 187
+            },
+            {
+              "count": 48,
+              "expert": 197
+            },
+            {
+              "count": 44,
+              "expert": 108
+            },
+            {
+              "count": 44,
+              "expert": 131
+            },
+            {
+              "count": 44,
+              "expert": 227
+            },
+            {
+              "count": 40,
+              "expert": 47
+            }
+          ],
+          "top_k": 8,
+          "topk_tuples": [],
+          "topn": 16,
+          "topn_share": 0.5515873015873016,
+          "total_assignments": 2016,
+          "total_tokens": 252,
+          "uniform_topn_share": 0.0625
+        },
+        {
+          "active_expert_share": 0.33984375,
+          "active_experts_total": 87,
+          "label": "math-reasoning",
+          "layer": "language_model.model.layers.14.mlp.experts",
+          "layer_index": 14,
+          "max_expert_share": 0.07341269841269842,
+          "normalized_entropy_active_experts": 0.887831323320634,
+          "normalized_entropy_all_experts": 0.7150308812499311,
+          "num_experts": 256,
+          "per_call_max_rows_per_expert": {
+            "max": 1.0,
+            "p50": 1.0,
+            "p90": 1.0
+          },
+          "per_call_nonzero_experts": {
+            "max": 8.0,
+            "p50": 8.0,
+            "p90": 8.0
+          },
+          "priority_score": 3.6763506983965284,
+          "records": 252,
+          "skew_over_uniform": 0.4831349206349206,
+          "stages": {
+            "quark_int8_apply": 252
+          },
+          "top8_share": 0.3392857142857143,
+          "top_expert_ids": [
+            160,
+            52,
+            19,
+            72,
+            54,
+            194,
+            51,
+            65,
+            76,
+            189,
+            225,
+            231,
+            67,
+            77,
+            137,
+            255
+          ],
+          "top_experts": [
+            {
+              "count": 148,
+              "expert": 160
+            },
+            {
+              "count": 92,
+              "expert": 52
+            },
+            {
+              "count": 88,
+              "expert": 19
+            },
+            {
+              "count": 88,
+              "expert": 72
+            },
+            {
+              "count": 72,
+              "expert": 54
+            },
+            {
+              "count": 68,
+              "expert": 194
+            },
+            {
+              "count": 64,
+              "expert": 51
+            },
+            {
+              "count": 64,
+              "expert": 65
+            },
+            {
+              "count": 64,
+              "expert": 76
+            },
+            {
+              "count": 64,
+              "expert": 189
+            },
+            {
+              "count": 60,
+              "expert": 225
+            },
+            {
+              "count": 52,
+              "expert": 231
+            },
+            {
+              "count": 44,
+              "expert": 67
+            },
+            {
+              "count": 44,
+              "expert": 77
+            },
+            {
+              "count": 44,
+              "expert": 137
+            },
+            {
+              "count": 44,
+              "expert": 255
+            }
+          ],
+          "top_k": 8,
+          "topk_tuples": [],
+          "topn": 16,
+          "topn_share": 0.5456349206349206,
+          "total_assignments": 2016,
+          "total_tokens": 252,
+          "uniform_topn_share": 0.0625
+        },
+        {
+          "active_expert_share": 0.43359375,
+          "active_experts_total": 111,
+          "label": "math-reasoning",
+          "layer": "language_model.model.layers.9.mlp.experts",
+          "layer_index": 9,
+          "max_expert_share": 0.08134920634920635,
+          "normalized_entropy_active_experts": 0.877953430016327,
+          "normalized_entropy_all_experts": 0.7456475893524287,
+          "num_experts": 256,
+          "per_call_max_rows_per_expert": {
+            "max": 1.0,
+            "p50": 1.0,
+            "p90": 1.0
+          },
+          "per_call_nonzero_experts": {
+            "max": 8.0,
+            "p50": 8.0,
+            "p90": 8.0
+          },
+          "priority_score": 3.615958900476257,
+          "records": 252,
+          "skew_over_uniform": 0.4751984126984127,
+          "stages": {
+            "quark_int8_apply": 252
+          },
+          "top8_share": 0.3611111111111111,
+          "top_expert_ids": [
+            95,
+            44,
+            106,
+            61,
+            207,
+            245,
+            197,
+            250,
+            41,
+            21,
+            70,
+            140,
+            161,
+            166,
+            227,
+            243
+          ],
+          "top_experts": [
+            {
+              "count": 164,
+              "expert": 95
+            },
+            {
+              "count": 124,
+              "expert": 44
+            },
+            {
+              "count": 96,
+              "expert": 106
+            },
+            {
+              "count": 88,
+              "expert": 61
+            },
+            {
+              "count": 68,
+              "expert": 207
+            },
+            {
+              "count": 68,
+              "expert": 245
+            },
+            {
+              "count": 60,
+              "expert": 197
+            },
+            {
+              "count": 60,
+              "expert": 250
+            },
+            {
+              "count": 56,
+              "expert": 41
+            },
+            {
+              "count": 48,
+              "expert": 21
+            },
+            {
+              "count": 48,
+              "expert": 70
+            },
+            {
+              "count": 44,
+              "expert": 140
+            },
+            {
+              "count": 40,
+              "expert": 161
+            },
+            {
+              "count": 40,
+              "expert": 166
+            },
+            {
+              "count": 40,
+              "expert": 227
+            },
+            {
+              "count": 40,
+              "expert": 243
+            }
+          ],
+          "top_k": 8,
+          "topk_tuples": [],
+          "topn": 16,
+          "topn_share": 0.5376984126984127,
+          "total_assignments": 2016,
+          "total_tokens": 252,
+          "uniform_topn_share": 0.0625
+        },
+        {
+          "active_expert_share": 0.390625,
+          "active_experts_total": 100,
+          "label": "math-reasoning",
+          "layer": "language_model.model.layers.8.mlp.experts",
+          "layer_index": 8,
+          "max_expert_share": 0.05952380952380952,
+          "normalized_entropy_active_experts": 0.8953710412195991,
+          "normalized_entropy_all_experts": 0.7435895542939842,
+          "num_experts": 256,
+          "per_call_max_rows_per_expert": {
+            "max": 1.0,
+            "p50": 1.0,
+            "p90": 1.0
+          },
+          "per_call_nonzero_experts": {
+            "max": 8.0,
+            "p50": 8.0,
+            "p90": 8.0
+          },
+          "priority_score": 3.464979405675579,
+          "records": 252,
+          "skew_over_uniform": 0.4553571428571429,
+          "stages": {
+            "quark_int8_apply": 252
+          },
+          "top8_share": 0.3333333333333333,
+          "top_expert_ids": [
+            107,
+            224,
+            191,
+            132,
+            171,
+            95,
+            56,
+            53,
+            123,
+            151,
+            220,
+            57,
+            206,
+            249,
+            126,
+            42
+          ],
+          "top_experts": [
+            {
+              "count": 120,
+              "expert": 107
+            },
+            {
+              "count": 104,
+              "expert": 224
+            },
+            {
+              "count": 96,
+              "expert": 191
+            },
+            {
+              "count": 88,
+              "expert": 132
+            },
+            {
+              "count": 84,
+              "expert": 171
+            },
+            {
+              "count": 64,
+              "expert": 95
+            },
+            {
+              "count": 60,
+              "expert": 56
+            },
+            {
+              "count": 56,
+              "expert": 53
+            },
+            {
+              "count": 56,
+              "expert": 123
+            },
+            {
+              "count": 56,
+              "expert": 151
+            },
+            {
+              "count": 52,
+              "expert": 220
+            },
+            {
+              "count": 44,
+              "expert": 57
+            },
+            {
+              "count": 44,
+              "expert": 206
+            },
+            {
+              "count": 44,
+              "expert": 249
+            },
+            {
+              "count": 40,
+              "expert": 126
+            },
+            {
+              "count": 36,
+              "expert": 42
+            }
+          ],
+          "top_k": 8,
+          "topk_tuples": [],
+          "topn": 16,
+          "topn_share": 0.5178571428571429,
+          "total_assignments": 2016,
+          "total_tokens": 252,
+          "uniform_topn_share": 0.0625
+        },
+        {
+          "active_expert_share": 0.40234375,
+          "active_experts_total": 103,
+          "label": "math-reasoning",
+          "layer": "language_model.model.layers.20.mlp.experts",
+          "layer_index": 20,
+          "max_expert_share": 0.06547619047619048,
+          "normalized_entropy_active_experts": 0.8930123276898763,
+          "normalized_entropy_all_experts": 0.7463909249849339,
+          "num_experts": 256,
+          "per_call_max_rows_per_expert": {
+            "max": 1.0,
+            "p50": 1.0,
+            "p90": 1.0
+          },
+          "per_call_nonzero_experts": {
+            "max": 8.0,
+            "p50": 8.0,
+            "p90": 8.0
+          },
+          "priority_score": 3.3441958098350355,
+          "records": 252,
+          "skew_over_uniform": 0.439484126984127,
+          "stages": {
+            "quark_int8_apply": 252
+          },
+          "top8_share": 0.3253968253968254,
+          "top_expert_ids": [
+            191,
+            206,
+            224,
+            107,
+            117,
+            41,
+            151,
+            171,
+            53,
+            72,
+            110,
+            155,
+            115,
+            135,
+            186,
+            7
+          ],
+          "top_experts": [
+            {
+              "count": 132,
+              "expert": 191
+            },
+            {
+              "count": 88,
+              "expert": 206
+            },
+            {
+              "count": 88,
+              "expert": 224
+            },
+            {
+              "count": 80,
+              "expert": 107
+            },
+            {
+              "count": 80,
+              "expert": 117
+            },
+            {
+              "count": 64,
+              "expert": 41
+            },
+            {
+              "count": 64,
+              "expert": 151
+            },
+            {
+              "count": 60,
+              "expert": 171
+            },
+            {
+              "count": 56,
+              "expert": 53
+            },
+            {
+              "count": 48,
+              "expert": 72
+            },
+            {
+              "count": 48,
+              "expert": 110
+            },
+            {
+              "count": 48,
+              "expert": 155
+            },
+            {
+              "count": 40,
+              "expert": 115
+            },
+            {
+              "count": 40,
+              "expert": 135
+            },
+            {
+              "count": 40,
+              "expert": 186
+            },
+            {
+              "count": 36,
+              "expert": 7
+            }
+          ],
+          "top_k": 8,
+          "topk_tuples": [],
+          "topn": 16,
+          "topn_share": 0.501984126984127,
+          "total_assignments": 2016,
+          "total_tokens": 252,
+          "uniform_topn_share": 0.0625
+        }
+      ]
+    },
+    "natural-chat": {
+      "input_files": [
+        "/home/steve/llm-optimizations/data/qwen36-quark-int8-tp4-promptclass-routecapture-20260611a-routes-natural-chat.jsonl"
+      ],
+      "input_pattern": "/home/steve/llm-optimizations/data/qwen36-quark-int8-tp4-promptclass-routecapture-20260611a-routes-natural-chat.jsonl",
+      "layers": {},
+      "ranked_layers": []
+    },
+    "repetitive": {
+      "input_files": [
+        "/home/steve/llm-optimizations/data/qwen36-quark-int8-tp4-promptclass-routecapture-20260611a-routes-repetitive.jsonl"
+      ],
+      "input_pattern": "/home/steve/llm-optimizations/data/qwen36-quark-int8-tp4-promptclass-routecapture-20260611a-routes-repetitive.jsonl",
+      "layers": {
+        "language_model.model.layers.14.mlp.experts": {
+          "active_expert_share": 0.5,
+          "active_experts_total": 128,
+          "label": "repetitive",
+          "layer": "language_model.model.layers.14.mlp.experts",
+          "layer_index": 14,
+          "max_expert_share": 0.07539682539682539,
+          "normalized_entropy_active_experts": 0.9083167979474775,
+          "normalized_entropy_all_experts": 0.7947771982040428,
+          "num_experts": 256,
+          "per_call_max_rows_per_expert": {
+            "max": 1.0,
+            "p50": 1.0,
+            "p90": 1.0
+          },
+          "per_call_nonzero_experts": {
+            "max": 8.0,
+            "p50": 8.0,
+            "p90": 8.0
+          },
+          "priority_score": 2.755375780112388,
+          "records": 252,
+          "skew_over_uniform": 0.3621031746031746,
+          "stages": {
+            "quark_int8_apply": 252
+          },
+          "top8_share": 0.2857142857142857,
+          "top_expert_ids": [
+            189,
+            28,
+            61,
+            64,
+            32,
+            103,
+            137,
+            67,
+            194,
+            52,
+            107,
+            125,
+            215,
+            29,
+            160,
+            200
+          ],
+          "top_experts": [
+            {
+              "count": 152,
+              "expert": 189
+            },
+            {
+              "count": 100,
+              "expert": 28
+            },
+            {
+              "count": 68,
+              "expert": 61
+            },
+            {
+              "count": 64,
+              "expert": 64
+            },
+            {
+              "count": 56,
+              "expert": 32
+            },
+            {
+              "count": 52,
+              "expert": 103
+            },
+            {
+              "count": 44,
+              "expert": 137
+            },
+            {
+              "count": 40,
+              "expert": 67
+            },
+            {
+              "count": 40,
+              "expert": 194
+            },
+            {
+              "count": 36,
+              "expert": 52
+            },
+            {
+              "count": 36,
+              "expert": 107
+            },
+            {
+              "count": 36,
+              "expert": 125
+            },
+            {
+              "count": 36,
+              "expert": 215
+            },
+            {
+              "count": 32,
+              "expert": 29
+            },
+            {
+              "count": 32,
+              "expert": 160
+            },
+            {
+              "count": 32,
+              "expert": 200
+            }
+          ],
+          "top_k": 8,
+          "topk_tuples": [],
+          "topn": 16,
+          "topn_share": 0.4246031746031746,
+          "total_assignments": 2016,
+          "total_tokens": 252,
+          "uniform_topn_share": 0.0625
+        },
+        "language_model.model.layers.20.mlp.experts": {
+          "active_expert_share": 0.43359375,
+          "active_experts_total": 111,
+          "label": "repetitive",
+          "layer": "language_model.model.layers.20.mlp.experts",
+          "layer_index": 20,
+          "max_expert_share": 0.07936507936507936,
+          "normalized_entropy_active_experts": 0.893018935482386,
+          "normalized_entropy_all_experts": 0.7584427530240756,
+          "num_experts": 256,
+          "per_call_max_rows_per_expert": {
+            "max": 1.0,
+            "p50": 1.0,
+            "p90": 1.0
+          },
+          "per_call_nonzero_experts": {
+            "max": 8.0,
+            "p50": 8.0,
+            "p90": 8.0
+          },
+          "priority_score": 3.2385101634745603,
+          "records": 252,
+          "skew_over_uniform": 0.4255952380952381,
+          "stages": {
+            "quark_int8_apply": 252
+          },
+          "top8_share": 0.30158730158730157,
+          "top_expert_ids": [
+            224,
+            237,
+            127,
+            41,
+            117,
+            151,
+            191,
+            186,
+            175,
+            206,
+            3,
+            185,
+            11,
+            110,
+            205,
+            239
+          ],
+          "top_experts": [
+            {
+              "count": 160,
+              "expert": 224
+            },
+            {
+              "count": 84,
+              "expert": 237
+            },
+            {
+              "count": 68,
+              "expert": 127
+            },
+            {
+              "count": 60,
+              "expert": 41
+            },
+            {
+              "count": 60,
+              "expert": 117
+            },
+            {
+              "count": 60,
+              "expert": 151
+            },
+            {
+              "count": 60,
+              "expert": 191
+            },
+            {
+              "count": 56,
+              "expert": 186
+            },
+            {
+              "count": 52,
+              "expert": 175
+            },
+            {
+              "count": 52,
+              "expert": 206
+            },
+            {
+              "count": 48,
+              "expert": 3
+            },
+            {
+              "count": 48,
+              "expert": 185
+            },
+            {
+              "count": 44,
+              "expert": 11
+            },
+            {
+              "count": 44,
+              "expert": 110
+            },
+            {
+              "count": 44,
+              "expert": 205
+            },
+            {
+              "count": 44,
+              "expert": 239
+            }
+          ],
+          "top_k": 8,
+          "topk_tuples": [],
+          "topn": 16,
+          "topn_share": 0.4880952380952381,
+          "total_assignments": 2016,
+          "total_tokens": 252,
+          "uniform_topn_share": 0.0625
+        },
+        "language_model.model.layers.21.mlp.experts": {
+          "active_expert_share": 0.4375,
+          "active_experts_total": 112,
+          "label": "repetitive",
+          "layer": "language_model.model.layers.21.mlp.experts",
+          "layer_index": 21,
+          "max_expert_share": 0.057539682539682536,
+          "normalized_entropy_active_experts": 0.9201676928309893,
+          "normalized_entropy_all_experts": 0.782988509113928,
+          "num_experts": 256,
+          "per_call_max_rows_per_expert": {
+            "max": 1.0,
+            "p50": 1.0,
+            "p90": 1.0
+          },
+          "per_call_nonzero_experts": {
+            "max": 8.0,
+            "p50": 8.0,
+            "p90": 8.0
+          },
+          "priority_score": 2.7251798811522523,
+          "records": 252,
+          "skew_over_uniform": 0.35813492063492064,
+          "stages": {
+            "quark_int8_apply": 252
+          },
+          "top8_share": 0.2757936507936508,
+          "top_expert_ids": [
+            47,
+            243,
+            44,
+            137,
+            95,
+            107,
+            161,
+            2,
+            73,
+            61,
+            251,
+            53,
+            170,
+            246,
+            26,
+            54
+          ],
+          "top_experts": [
+            {
+              "count": 116,
+              "expert": 47
+            },
+            {
+              "count": 104,
+              "expert": 243
+            },
+            {
+              "count": 64,
+              "expert": 44
+            },
+            {
+              "count": 60,
+              "expert": 137
+            },
+            {
+              "count": 56,
+              "expert": 95
+            },
+            {
+              "count": 56,
+              "expert": 107
+            },
+            {
+              "count": 52,
+              "expert": 161
+            },
+            {
+              "count": 48,
+              "expert": 2
+            },
+            {
+              "count": 48,
+              "expert": 73
+            },
+            {
+              "count": 44,
+              "expert": 61
+            },
+            {
+              "count": 40,
+              "expert": 251
+            },
+            {
+              "count": 36,
+              "expert": 53
+            },
+            {
+              "count": 36,
+              "expert": 170
+            },
+            {
+              "count": 32,
+              "expert": 246
+            },
+            {
+              "count": 28,
+              "expert": 26
+            },
+            {
+              "count": 28,
+              "expert": 54
+            }
+          ],
+          "top_k": 8,
+          "topk_tuples": [],
+          "topn": 16,
+          "topn_share": 0.42063492063492064,
+          "total_assignments": 2016,
+          "total_tokens": 252,
+          "uniform_topn_share": 0.0625
+        },
+        "language_model.model.layers.8.mlp.experts": {
+          "active_expert_share": 0.4609375,
+          "active_experts_total": 118,
+          "label": "repetitive",
+          "layer": "language_model.model.layers.8.mlp.experts",
+          "layer_index": 8,
+          "max_expert_share": 0.07142857142857142,
+          "normalized_entropy_active_experts": 0.9087331500801172,
+          "normalized_entropy_all_experts": 0.7818107373904514,
+          "num_experts": 256,
+          "per_call_max_rows_per_expert": {
+            "max": 1.0,
+            "p50": 1.0,
+            "p90": 1.0
+          },
+          "per_call_nonzero_experts": {
+            "max": 8.0,
+            "p50": 8.0,
+            "p90": 8.0
+          },
+          "priority_score": 2.7855716790725236,
+          "records": 252,
+          "skew_over_uniform": 0.36607142857142855,
+          "stages": {
+            "quark_int8_apply": 252
+          },
+          "top8_share": 0.2857142857142857,
+          "top_expert_ids": [
+            224,
+            151,
+            61,
+            41,
+            110,
+            191,
+            117,
+            173,
+            215,
+            220,
+            239,
+            98,
+            4,
+            81,
+            116,
+            205
+          ],
+          "top_experts": [
+            {
+              "count": 144,
+              "expert": 224
+            },
+            {
+              "count": 104,
+              "expert": 151
+            },
+            {
+              "count": 76,
+              "expert": 61
+            },
+            {
+              "count": 60,
+              "expert": 41
+            },
+            {
+              "count": 56,
+              "expert": 110
+            },
+            {
+              "count": 48,
+              "expert": 191
+            },
+            {
+              "count": 44,
+              "expert": 117
+            },
+            {
+              "count": 44,
+              "expert": 173
+            },
+            {
+              "count": 44,
+              "expert": 215
+            },
+            {
+              "count": 40,
+              "expert": 220
+            },
+            {
+              "count": 40,
+              "expert": 239
+            },
+            {
+              "count": 36,
+              "expert": 98
+            },
+            {
+              "count": 32,
+              "expert": 4
+            },
+            {
+              "count": 32,
+              "expert": 81
+            },
+            {
+              "count": 32,
+              "expert": 116
+            },
+            {
+              "count": 32,
+              "expert": 205
+            }
+          ],
+          "top_k": 8,
+          "topk_tuples": [],
+          "topn": 16,
+          "topn_share": 0.42857142857142855,
+          "total_assignments": 2016,
+          "total_tokens": 252,
+          "uniform_topn_share": 0.0625
+        },
+        "language_model.model.layers.9.mlp.experts": {
+          "active_expert_share": 0.4375,
+          "active_experts_total": 112,
+          "label": "repetitive",
+          "layer": "language_model.model.layers.9.mlp.experts",
+          "layer_index": 9,
+          "max_expert_share": 0.07142857142857142,
+          "normalized_entropy_active_experts": 0.9103860225624874,
+          "normalized_entropy_all_experts": 0.7746650964578992,
+          "num_experts": 256,
+          "per_call_max_rows_per_expert": {
+            "max": 1.0,
+            "p50": 1.0,
+            "p90": 1.0
+          },
+          "per_call_nonzero_experts": {
+            "max": 8.0,
+            "p50": 8.0,
+            "p90": 8.0
+          },
+          "priority_score": 2.8308655275127275,
+          "records": 252,
+          "skew_over_uniform": 0.37202380952380953,
+          "stages": {
+            "quark_int8_apply": 252
+          },
+          "top8_share": 0.2837301587301587,
+          "top_expert_ids": [
+            243,
+            161,
+            47,
+            95,
+            197,
+            54,
+            59,
+            189,
+            2,
+            81,
+            171,
+            61,
+            73,
+            255,
+            44,
+            155
+          ],
+          "top_experts": [
+            {
+              "count": 144,
+              "expert": 243
+            },
+            {
+              "count": 100,
+              "expert": 161
+            },
+            {
+              "count": 76,
+              "expert": 47
+            },
+            {
+              "count": 56,
+              "expert": 95
+            },
+            {
+              "count": 52,
+              "expert": 197
+            },
+            {
+              "count": 48,
+              "expert": 54
+            },
+            {
+              "count": 48,
+              "expert": 59
+            },
+            {
+              "count": 48,
+              "expert": 189
+            },
+            {
+              "count": 44,
+              "expert": 2
+            },
+            {
+              "count": 44,
+              "expert": 81
+            },
+            {
+              "count": 44,
+              "expert": 171
+            },
+            {
+              "count": 36,
+              "expert": 61
+            },
+            {
+              "count": 36,
+              "expert": 73
+            },
+            {
+              "count": 36,
+              "expert": 255
+            },
+            {
+              "count": 32,
+              "expert": 44
+            },
+            {
+              "count": 32,
+              "expert": 155
+            }
+          ],
+          "top_k": 8,
+          "topk_tuples": [],
+          "topn": 16,
+          "topn_share": 0.43452380952380953,
+          "total_assignments": 2016,
+          "total_tokens": 252,
+          "uniform_topn_share": 0.0625
+        }
+      },
+      "ranked_layers": [
+        {
+          "active_expert_share": 0.43359375,
+          "active_experts_total": 111,
+          "label": "repetitive",
+          "layer": "language_model.model.layers.20.mlp.experts",
+          "layer_index": 20,
+          "max_expert_share": 0.07936507936507936,
+          "normalized_entropy_active_experts": 0.893018935482386,
+          "normalized_entropy_all_experts": 0.7584427530240756,
+          "num_experts": 256,
+          "per_call_max_rows_per_expert": {
+            "max": 1.0,
+            "p50": 1.0,
+            "p90": 1.0
+          },
+          "per_call_nonzero_experts": {
+            "max": 8.0,
+            "p50": 8.0,
+            "p90": 8.0
+          },
+          "priority_score": 3.2385101634745603,
+          "records": 252,
+          "skew_over_uniform": 0.4255952380952381,
+          "stages": {
+            "quark_int8_apply": 252
+          },
+          "top8_share": 0.30158730158730157,
+          "top_expert_ids": [
+            224,
+            237,
+            127,
+            41,
+            117,
+            151,
+            191,
+            186,
+            175,
+            206,
+            3,
+            185,
+            11,
+            110,
+            205,
+            239
+          ],
+          "top_experts": [
+            {
+              "count": 160,
+              "expert": 224
+            },
+            {
+              "count": 84,
+              "expert": 237
+            },
+            {
+              "count": 68,
+              "expert": 127
+            },
+            {
+              "count": 60,
+              "expert": 41
+            },
+            {
+              "count": 60,
+              "expert": 117
+            },
+            {
+              "count": 60,
+              "expert": 151
+            },
+            {
+              "count": 60,
+              "expert": 191
+            },
+            {
+              "count": 56,
+              "expert": 186
+            },
+            {
+              "count": 52,
+              "expert": 175
+            },
+            {
+              "count": 52,
+              "expert": 206
+            },
+            {
+              "count": 48,
+              "expert": 3
+            },
+            {
+              "count": 48,
+              "expert": 185
+            },
+            {
+              "count": 44,
+              "expert": 11
+            },
+            {
+              "count": 44,
+              "expert": 110
+            },
+            {
+              "count": 44,
+              "expert": 205
+            },
+            {
+              "count": 44,
+              "expert": 239
+            }
+          ],
+          "top_k": 8,
+          "topk_tuples": [],
+          "topn": 16,
+          "topn_share": 0.4880952380952381,
+          "total_assignments": 2016,
+          "total_tokens": 252,
+          "uniform_topn_share": 0.0625
+        },
+        {
+          "active_expert_share": 0.4375,
+          "active_experts_total": 112,
+          "label": "repetitive",
+          "layer": "language_model.model.layers.9.mlp.experts",
+          "layer_index": 9,
+          "max_expert_share": 0.07142857142857142,
+          "normalized_entropy_active_experts": 0.9103860225624874,
+          "normalized_entropy_all_experts": 0.7746650964578992,
+          "num_experts": 256,
+          "per_call_max_rows_per_expert": {
+            "max": 1.0,
+            "p50": 1.0,
+            "p90": 1.0
+          },
+          "per_call_nonzero_experts": {
+            "max": 8.0,
+            "p50": 8.0,
+            "p90": 8.0
+          },
+          "priority_score": 2.8308655275127275,
+          "records": 252,
+          "skew_over_uniform": 0.37202380952380953,
+          "stages": {
+            "quark_int8_apply": 252
+          },
+          "top8_share": 0.2837301587301587,
+          "top_expert_ids": [
+            243,
+            161,
+            47,
+            95,
+            197,
+            54,
+            59,
+            189,
+            2,
+            81,
+            171,
+            61,
+            73,
+            255,
+            44,
+            155
+          ],
+          "top_experts": [
+            {
+              "count": 144,
+              "expert": 243
+            },
+            {
+              "count": 100,
+              "expert": 161
+            },
+            {
+              "count": 76,
+              "expert": 47
+            },
+            {
+              "count": 56,
+              "expert": 95
+            },
+            {
+              "count": 52,
+              "expert": 197
+            },
+            {
+              "count": 48,
+              "expert": 54
+            },
+            {
+              "count": 48,
+              "expert": 59
+            },
+            {
+              "count": 48,
+              "expert": 189
+            },
+            {
+              "count": 44,
+              "expert": 2
+            },
+            {
+              "count": 44,
+              "expert": 81
+            },
+            {
+              "count": 44,
+              "expert": 171
+            },
+            {
+              "count": 36,
+              "expert": 61
+            },
+            {
+              "count": 36,
+              "expert": 73
+            },
+            {
+              "count": 36,
+              "expert": 255
+            },
+            {
+              "count": 32,
+              "expert": 44
+            },
+            {
+              "count": 32,
+              "expert": 155
+            }
+          ],
+          "top_k": 8,
+          "topk_tuples": [],
+          "topn": 16,
+          "topn_share": 0.43452380952380953,
+          "total_assignments": 2016,
+          "total_tokens": 252,
+          "uniform_topn_share": 0.0625
+        },
+        {
+          "active_expert_share": 0.4609375,
+          "active_experts_total": 118,
+          "label": "repetitive",
+          "layer": "language_model.model.layers.8.mlp.experts",
+          "layer_index": 8,
+          "max_expert_share": 0.07142857142857142,
+          "normalized_entropy_active_experts": 0.9087331500801172,
+          "normalized_entropy_all_experts": 0.7818107373904514,
+          "num_experts": 256,
+          "per_call_max_rows_per_expert": {
+            "max": 1.0,
+            "p50": 1.0,
+            "p90": 1.0
+          },
+          "per_call_nonzero_experts": {
+            "max": 8.0,
+            "p50": 8.0,
+            "p90": 8.0
+          },
+          "priority_score": 2.7855716790725236,
+          "records": 252,
+          "skew_over_uniform": 0.36607142857142855,
+          "stages": {
+            "quark_int8_apply": 252
+          },
+          "top8_share": 0.2857142857142857,
+          "top_expert_ids": [
+            224,
+            151,
+            61,
+            41,
+            110,
+            191,
+            117,
+            173,
+            215,
+            220,
+            239,
+            98,
+            4,
+            81,
+            116,
+            205
+          ],
+          "top_experts": [
+            {
+              "count": 144,
+              "expert": 224
+            },
+            {
+              "count": 104,
+              "expert": 151
+            },
+            {
+              "count": 76,
+              "expert": 61
+            },
+            {
+              "count": 60,
+              "expert": 41
+            },
+            {
+              "count": 56,
+              "expert": 110
+            },
+            {
+              "count": 48,
+              "expert": 191
+            },
+            {
+              "count": 44,
+              "expert": 117
+            },
+            {
+              "count": 44,
+              "expert": 173
+            },
+            {
+              "count": 44,
+              "expert": 215
+            },
+            {
+              "count": 40,
+              "expert": 220
+            },
+            {
+              "count": 40,
+              "expert": 239
+            },
+            {
+              "count": 36,
+              "expert": 98
+            },
+            {
+              "count": 32,
+              "expert": 4
+            },
+            {
+              "count": 32,
+              "expert": 81
+            },
+            {
+              "count": 32,
+              "expert": 116
+            },
+            {
+              "count": 32,
+              "expert": 205
+            }
+          ],
+          "top_k": 8,
+          "topk_tuples": [],
+          "topn": 16,
+          "topn_share": 0.42857142857142855,
+          "total_assignments": 2016,
+          "total_tokens": 252,
+          "uniform_topn_share": 0.0625
+        },
+        {
+          "active_expert_share": 0.5,
+          "active_experts_total": 128,
+          "label": "repetitive",
+          "layer": "language_model.model.layers.14.mlp.experts",
+          "layer_index": 14,
+          "max_expert_share": 0.07539682539682539,
+          "normalized_entropy_active_experts": 0.9083167979474775,
+          "normalized_entropy_all_experts": 0.7947771982040428,
+          "num_experts": 256,
+          "per_call_max_rows_per_expert": {
+            "max": 1.0,
+            "p50": 1.0,
+            "p90": 1.0
+          },
+          "per_call_nonzero_experts": {
+            "max": 8.0,
+            "p50": 8.0,
+            "p90": 8.0
+          },
+          "priority_score": 2.755375780112388,
+          "records": 252,
+          "skew_over_uniform": 0.3621031746031746,
+          "stages": {
+            "quark_int8_apply": 252
+          },
+          "top8_share": 0.2857142857142857,
+          "top_expert_ids": [
+            189,
+            28,
+            61,
+            64,
+            32,
+            103,
+            137,
+            67,
+            194,
+            52,
+            107,
+            125,
+            215,
+            29,
+            160,
+            200
+          ],
+          "top_experts": [
+            {
+              "count": 152,
+              "expert": 189
+            },
+            {
+              "count": 100,
+              "expert": 28
+            },
+            {
+              "count": 68,
+              "expert": 61
+            },
+            {
+              "count": 64,
+              "expert": 64
+            },
+            {
+              "count": 56,
+              "expert": 32
+            },
+            {
+              "count": 52,
+              "expert": 103
+            },
+            {
+              "count": 44,
+              "expert": 137
+            },
+            {
+              "count": 40,
+              "expert": 67
+            },
+            {
+              "count": 40,
+              "expert": 194
+            },
+            {
+              "count": 36,
+              "expert": 52
+            },
+            {
+              "count": 36,
+              "expert": 107
+            },
+            {
+              "count": 36,
+              "expert": 125
+            },
+            {
+              "count": 36,
+              "expert": 215
+            },
+            {
+              "count": 32,
+              "expert": 29
+            },
+            {
+              "count": 32,
+              "expert": 160
+            },
+            {
+              "count": 32,
+              "expert": 200
+            }
+          ],
+          "top_k": 8,
+          "topk_tuples": [],
+          "topn": 16,
+          "topn_share": 0.4246031746031746,
+          "total_assignments": 2016,
+          "total_tokens": 252,
+          "uniform_topn_share": 0.0625
+        },
+        {
+          "active_expert_share": 0.4375,
+          "active_experts_total": 112,
+          "label": "repetitive",
+          "layer": "language_model.model.layers.21.mlp.experts",
+          "layer_index": 21,
+          "max_expert_share": 0.057539682539682536,
+          "normalized_entropy_active_experts": 0.9201676928309893,
+          "normalized_entropy_all_experts": 0.782988509113928,
+          "num_experts": 256,
+          "per_call_max_rows_per_expert": {
+            "max": 1.0,
+            "p50": 1.0,
+            "p90": 1.0
+          },
+          "per_call_nonzero_experts": {
+            "max": 8.0,
+            "p50": 8.0,
+            "p90": 8.0
+          },
+          "priority_score": 2.7251798811522523,
+          "records": 252,
+          "skew_over_uniform": 0.35813492063492064,
+          "stages": {
+            "quark_int8_apply": 252
+          },
+          "top8_share": 0.2757936507936508,
+          "top_expert_ids": [
+            47,
+            243,
+            44,
+            137,
+            95,
+            107,
+            161,
+            2,
+            73,
+            61,
+            251,
+            53,
+            170,
+            246,
+            26,
+            54
+          ],
+          "top_experts": [
+            {
+              "count": 116,
+              "expert": 47
+            },
+            {
+              "count": 104,
+              "expert": 243
+            },
+            {
+              "count": 64,
+              "expert": 44
+            },
+            {
+              "count": 60,
+              "expert": 137
+            },
+            {
+              "count": 56,
+              "expert": 95
+            },
+            {
+              "count": 56,
+              "expert": 107
+            },
+            {
+              "count": 52,
+              "expert": 161
+            },
+            {
+              "count": 48,
+              "expert": 2
+            },
+            {
+              "count": 48,
+              "expert": 73
+            },
+            {
+              "count": 44,
+              "expert": 61
+            },
+            {
+              "count": 40,
+              "expert": 251
+            },
+            {
+              "count": 36,
+              "expert": 53
+            },
+            {
+              "count": 36,
+              "expert": 170
+            },
+            {
+              "count": 32,
+              "expert": 246
+            },
+            {
+              "count": 28,
+              "expert": 26
+            },
+            {
+              "count": 28,
+              "expert": 54
+            }
+          ],
+          "top_k": 8,
+          "topk_tuples": [],
+          "topn": 16,
+          "topn_share": 0.42063492063492064,
+          "total_assignments": 2016,
+          "total_tokens": 252,
+          "uniform_topn_share": 0.0625
+        }
+      ]
+    },
+    "structured": {
+      "input_files": [
+        "/home/steve/llm-optimizations/data/qwen36-quark-int8-tp4-promptclass-routecapture-20260611a-routes-structured.jsonl"
+      ],
+      "input_pattern": "/home/steve/llm-optimizations/data/qwen36-quark-int8-tp4-promptclass-routecapture-20260611a-routes-structured.jsonl",
+      "layers": {
+        "language_model.model.layers.14.mlp.experts": {
+          "active_expert_share": 0.03125,
+          "active_experts_total": 8,
+          "label": "structured",
+          "layer": "language_model.model.layers.14.mlp.experts",
+          "layer_index": 14,
+          "max_expert_share": 0.125,
+          "normalized_entropy_active_experts": 1.0,
+          "normalized_entropy_all_experts": 0.375,
+          "num_experts": 256,
+          "per_call_max_rows_per_expert": {
+            "max": 1.0,
+            "p50": 1.0,
+            "p90": 1.0
+          },
+          "per_call_nonzero_experts": {
+            "max": 8.0,
+            "p50": 8.0,
+            "p90": 8.0
+          },
+          "priority_score": 3.2779758388748252,
+          "records": 4,
+          "skew_over_uniform": 0.9375,
+          "stages": {
+            "quark_int8_apply": 4
+          },
+          "top8_share": 1.0,
+          "top_expert_ids": [
+            32,
+            51,
+            103,
+            137,
+            148,
+            160,
+            189,
+            225
+          ],
+          "top_experts": [
+            {
+              "count": 4,
+              "expert": 32
+            },
+            {
+              "count": 4,
+              "expert": 51
+            },
+            {
+              "count": 4,
+              "expert": 103
+            },
+            {
+              "count": 4,
+              "expert": 137
+            },
+            {
+              "count": 4,
+              "expert": 148
+            },
+            {
+              "count": 4,
+              "expert": 160
+            },
+            {
+              "count": 4,
+              "expert": 189
+            },
+            {
+              "count": 4,
+              "expert": 225
+            }
+          ],
+          "top_k": 8,
+          "topk_tuples": [],
+          "topn": 16,
+          "topn_share": 1.0,
+          "total_assignments": 32,
+          "total_tokens": 4,
+          "uniform_topn_share": 0.0625
+        },
+        "language_model.model.layers.20.mlp.experts": {
+          "active_expert_share": 0.03125,
+          "active_experts_total": 8,
+          "label": "structured",
+          "layer": "language_model.model.layers.20.mlp.experts",
+          "layer_index": 20,
+          "max_expert_share": 0.125,
+          "normalized_entropy_active_experts": 1.0,
+          "normalized_entropy_all_experts": 0.375,
+          "num_experts": 256,
+          "per_call_max_rows_per_expert": {
+            "max": 1.0,
+            "p50": 1.0,
+            "p90": 1.0
+          },
+          "per_call_nonzero_experts": {
+            "max": 8.0,
+            "p50": 8.0,
+            "p90": 8.0
+          },
+          "priority_score": 3.2779758388748252,
+          "records": 4,
+          "skew_over_uniform": 0.9375,
+          "stages": {
+            "quark_int8_apply": 4
+          },
+          "top8_share": 1.0,
+          "top_expert_ids": [
+            52,
+            99,
+            113,
+            116,
+            186,
+            191,
+            224,
+            239
+          ],
+          "top_experts": [
+            {
+              "count": 4,
+              "expert": 52
+            },
+            {
+              "count": 4,
+              "expert": 99
+            },
+            {
+              "count": 4,
+              "expert": 113
+            },
+            {
+              "count": 4,
+              "expert": 116
+            },
+            {
+              "count": 4,
+              "expert": 186
+            },
+            {
+              "count": 4,
+              "expert": 191
+            },
+            {
+              "count": 4,
+              "expert": 224
+            },
+            {
+              "count": 4,
+              "expert": 239
+            }
+          ],
+          "top_k": 8,
+          "topk_tuples": [],
+          "topn": 16,
+          "topn_share": 1.0,
+          "total_assignments": 32,
+          "total_tokens": 4,
+          "uniform_topn_share": 0.0625
+        },
+        "language_model.model.layers.21.mlp.experts": {
+          "active_expert_share": 0.03125,
+          "active_experts_total": 8,
+          "label": "structured",
+          "layer": "language_model.model.layers.21.mlp.experts",
+          "layer_index": 21,
+          "max_expert_share": 0.125,
+          "normalized_entropy_active_experts": 1.0,
+          "normalized_entropy_all_experts": 0.375,
+          "num_experts": 256,
+          "per_call_max_rows_per_expert": {
+            "max": 1.0,
+            "p50": 1.0,
+            "p90": 1.0
+          },
+          "per_call_nonzero_experts": {
+            "max": 8.0,
+            "p50": 8.0,
+            "p90": 8.0
+          },
+          "priority_score": 3.2779758388748252,
+          "records": 4,
+          "skew_over_uniform": 0.9375,
+          "stages": {
+            "quark_int8_apply": 4
+          },
+          "top8_share": 1.0,
+          "top_expert_ids": [
+            2,
+            38,
+            47,
+            95,
+            164,
+            170,
+            197,
+            203
+          ],
+          "top_experts": [
+            {
+              "count": 4,
+              "expert": 2
+            },
+            {
+              "count": 4,
+              "expert": 38
+            },
+            {
+              "count": 4,
+              "expert": 47
+            },
+            {
+              "count": 4,
+              "expert": 95
+            },
+            {
+              "count": 4,
+              "expert": 164
+            },
+            {
+              "count": 4,
+              "expert": 170
+            },
+            {
+              "count": 4,
+              "expert": 197
+            },
+            {
+              "count": 4,
+              "expert": 203
+            }
+          ],
+          "top_k": 8,
+          "topk_tuples": [],
+          "topn": 16,
+          "topn_share": 1.0,
+          "total_assignments": 32,
+          "total_tokens": 4,
+          "uniform_topn_share": 0.0625
+        },
+        "language_model.model.layers.8.mlp.experts": {
+          "active_expert_share": 0.03125,
+          "active_experts_total": 8,
+          "label": "structured",
+          "layer": "language_model.model.layers.8.mlp.experts",
+          "layer_index": 8,
+          "max_expert_share": 0.125,
+          "normalized_entropy_active_experts": 1.0,
+          "normalized_entropy_all_experts": 0.375,
+          "num_experts": 256,
+          "per_call_max_rows_per_expert": {
+            "max": 1.0,
+            "p50": 1.0,
+            "p90": 1.0
+          },
+          "per_call_nonzero_experts": {
+            "max": 8.0,
+            "p50": 8.0,
+            "p90": 8.0
+          },
+          "priority_score": 3.2779758388748252,
+          "records": 4,
+          "skew_over_uniform": 0.9375,
+          "stages": {
+            "quark_int8_apply": 4
+          },
+          "top8_share": 1.0,
+          "top_expert_ids": [
+            72,
+            98,
+            99,
+            107,
+            181,
+            191,
+            224,
+            232
+          ],
+          "top_experts": [
+            {
+              "count": 4,
+              "expert": 72
+            },
+            {
+              "count": 4,
+              "expert": 98
+            },
+            {
+              "count": 4,
+              "expert": 99
+            },
+            {
+              "count": 4,
+              "expert": 107
+            },
+            {
+              "count": 4,
+              "expert": 181
+            },
+            {
+              "count": 4,
+              "expert": 191
+            },
+            {
+              "count": 4,
+              "expert": 224
+            },
+            {
+              "count": 4,
+              "expert": 232
+            }
+          ],
+          "top_k": 8,
+          "topk_tuples": [],
+          "topn": 16,
+          "topn_share": 1.0,
+          "total_assignments": 32,
+          "total_tokens": 4,
+          "uniform_topn_share": 0.0625
+        },
+        "language_model.model.layers.9.mlp.experts": {
+          "active_expert_share": 0.03125,
+          "active_experts_total": 8,
+          "label": "structured",
+          "layer": "language_model.model.layers.9.mlp.experts",
+          "layer_index": 9,
+          "max_expert_share": 0.125,
+          "normalized_entropy_active_experts": 1.0,
+          "normalized_entropy_all_experts": 0.375,
+          "num_experts": 256,
+          "per_call_max_rows_per_expert": {
+            "max": 1.0,
+            "p50": 1.0,
+            "p90": 1.0
+          },
+          "per_call_nonzero_experts": {
+            "max": 8.0,
+            "p50": 8.0,
+            "p90": 8.0
+          },
+          "priority_score": 3.2779758388748252,
+          "records": 4,
+          "skew_over_uniform": 0.9375,
+          "stages": {
+            "quark_int8_apply": 4
+          },
+          "top8_share": 1.0,
+          "top_expert_ids": [
+            2,
+            18,
+            36,
+            38,
+            95,
+            161,
+            164,
+            191
+          ],
+          "top_experts": [
+            {
+              "count": 4,
+              "expert": 2
+            },
+            {
+              "count": 4,
+              "expert": 18
+            },
+            {
+              "count": 4,
+              "expert": 36
+            },
+            {
+              "count": 4,
+              "expert": 38
+            },
+            {
+              "count": 4,
+              "expert": 95
+            },
+            {
+              "count": 4,
+              "expert": 161
+            },
+            {
+              "count": 4,
+              "expert": 164
+            },
+            {
+              "count": 4,
+              "expert": 191
+            }
+          ],
+          "top_k": 8,
+          "topk_tuples": [],
+          "topn": 16,
+          "topn_share": 1.0,
+          "total_assignments": 32,
+          "total_tokens": 4,
+          "uniform_topn_share": 0.0625
+        }
+      },
+      "ranked_layers": [
+        {
+          "active_expert_share": 0.03125,
+          "active_experts_total": 8,
+          "label": "structured",
+          "layer": "language_model.model.layers.8.mlp.experts",
+          "layer_index": 8,
+          "max_expert_share": 0.125,
+          "normalized_entropy_active_experts": 1.0,
+          "normalized_entropy_all_experts": 0.375,
+          "num_experts": 256,
+          "per_call_max_rows_per_expert": {
+            "max": 1.0,
+            "p50": 1.0,
+            "p90": 1.0
+          },
+          "per_call_nonzero_experts": {
+            "max": 8.0,
+            "p50": 8.0,
+            "p90": 8.0
+          },
+          "priority_score": 3.2779758388748252,
+          "records": 4,
+          "skew_over_uniform": 0.9375,
+          "stages": {
+            "quark_int8_apply": 4
+          },
+          "top8_share": 1.0,
+          "top_expert_ids": [
+            72,
+            98,
+            99,
+            107,
+            181,
+            191,
+            224,
+            232
+          ],
+          "top_experts": [
+            {
+              "count": 4,
+              "expert": 72
+            },
+            {
+              "count": 4,
+              "expert": 98
+            },
+            {
+              "count": 4,
+              "expert": 99
+            },
+            {
+              "count": 4,
+              "expert": 107
+            },
+            {
+              "count": 4,
+              "expert": 181
+            },
+            {
+              "count": 4,
+              "expert": 191
+            },
+            {
+              "count": 4,
+              "expert": 224
+            },
+            {
+              "count": 4,
+              "expert": 232
+            }
+          ],
+          "top_k": 8,
+          "topk_tuples": [],
+          "topn": 16,
+          "topn_share": 1.0,
+          "total_assignments": 32,
+          "total_tokens": 4,
+          "uniform_topn_share": 0.0625
+        },
+        {
+          "active_expert_share": 0.03125,
+          "active_experts_total": 8,
+          "label": "structured",
+          "layer": "language_model.model.layers.9.mlp.experts",
+          "layer_index": 9,
+          "max_expert_share": 0.125,
+          "normalized_entropy_active_experts": 1.0,
+          "normalized_entropy_all_experts": 0.375,
+          "num_experts": 256,
+          "per_call_max_rows_per_expert": {
+            "max": 1.0,
+            "p50": 1.0,
+            "p90": 1.0
+          },
+          "per_call_nonzero_experts": {
+            "max": 8.0,
+            "p50": 8.0,
+            "p90": 8.0
+          },
+          "priority_score": 3.2779758388748252,
+          "records": 4,
+          "skew_over_uniform": 0.9375,
+          "stages": {
+            "quark_int8_apply": 4
+          },
+          "top8_share": 1.0,
+          "top_expert_ids": [
+            2,
+            18,
+            36,
+            38,
+            95,
+            161,
+            164,
+            191
+          ],
+          "top_experts": [
+            {
+              "count": 4,
+              "expert": 2
+            },
+            {
+              "count": 4,
+              "expert": 18
+            },
+            {
+              "count": 4,
+              "expert": 36
+            },
+            {
+              "count": 4,
+              "expert": 38
+            },
+            {
+              "count": 4,
+              "expert": 95
+            },
+            {
+              "count": 4,
+              "expert": 161
+            },
+            {
+              "count": 4,
+              "expert": 164
+            },
+            {
+              "count": 4,
+              "expert": 191
+            }
+          ],
+          "top_k": 8,
+          "topk_tuples": [],
+          "topn": 16,
+          "topn_share": 1.0,
+          "total_assignments": 32,
+          "total_tokens": 4,
+          "uniform_topn_share": 0.0625
+        },
+        {
+          "active_expert_share": 0.03125,
+          "active_experts_total": 8,
+          "label": "structured",
+          "layer": "language_model.model.layers.14.mlp.experts",
+          "layer_index": 14,
+          "max_expert_share": 0.125,
+          "normalized_entropy_active_experts": 1.0,
+          "normalized_entropy_all_experts": 0.375,
+          "num_experts": 256,
+          "per_call_max_rows_per_expert": {
+            "max": 1.0,
+            "p50": 1.0,
+            "p90": 1.0
+          },
+          "per_call_nonzero_experts": {
+            "max": 8.0,
+            "p50": 8.0,
+            "p90": 8.0
+          },
+          "priority_score": 3.2779758388748252,
+          "records": 4,
+          "skew_over_uniform": 0.9375,
+          "stages": {
+            "quark_int8_apply": 4
+          },
+          "top8_share": 1.0,
+          "top_expert_ids": [
+            32,
+            51,
+            103,
+            137,
+            148,
+            160,
+            189,
+            225
+          ],
+          "top_experts": [
+            {
+              "count": 4,
+              "expert": 32
+            },
+            {
+              "count": 4,
+              "expert": 51
+            },
+            {
+              "count": 4,
+              "expert": 103
+            },
+            {
+              "count": 4,
+              "expert": 137
+            },
+            {
+              "count": 4,
+              "expert": 148
+            },
+            {
+              "count": 4,
+              "expert": 160
+            },
+            {
+              "count": 4,
+              "expert": 189
+            },
+            {
+              "count": 4,
+              "expert": 225
+            }
+          ],
+          "top_k": 8,
+          "topk_tuples": [],
+          "topn": 16,
+          "topn_share": 1.0,
+          "total_assignments": 32,
+          "total_tokens": 4,
+          "uniform_topn_share": 0.0625
+        },
+        {
+          "active_expert_share": 0.03125,
+          "active_experts_total": 8,
+          "label": "structured",
+          "layer": "language_model.model.layers.20.mlp.experts",
+          "layer_index": 20,
+          "max_expert_share": 0.125,
+          "normalized_entropy_active_experts": 1.0,
+          "normalized_entropy_all_experts": 0.375,
+          "num_experts": 256,
+          "per_call_max_rows_per_expert": {
+            "max": 1.0,
+            "p50": 1.0,
+            "p90": 1.0
+          },
+          "per_call_nonzero_experts": {
+            "max": 8.0,
+            "p50": 8.0,
+            "p90": 8.0
+          },
+          "priority_score": 3.2779758388748252,
+          "records": 4,
+          "skew_over_uniform": 0.9375,
+          "stages": {
+            "quark_int8_apply": 4
+          },
+          "top8_share": 1.0,
+          "top_expert_ids": [
+            52,
+            99,
+            113,
+            116,
+            186,
+            191,
+            224,
+            239
+          ],
+          "top_experts": [
+            {
+              "count": 4,
+              "expert": 52
+            },
+            {
+              "count": 4,
+              "expert": 99
+            },
+            {
+              "count": 4,
+              "expert": 113
+            },
+            {
+              "count": 4,
+              "expert": 116
+            },
+            {
+              "count": 4,
+              "expert": 186
+            },
+            {
+              "count": 4,
+              "expert": 191
+            },
+            {
+              "count": 4,
+              "expert": 224
+            },
+            {
+              "count": 4,
+              "expert": 239
+            }
+          ],
+          "top_k": 8,
+          "topk_tuples": [],
+          "topn": 16,
+          "topn_share": 1.0,
+          "total_assignments": 32,
+          "total_tokens": 4,
+          "uniform_topn_share": 0.0625
+        },
+        {
+          "active_expert_share": 0.03125,
+          "active_experts_total": 8,
+          "label": "structured",
+          "layer": "language_model.model.layers.21.mlp.experts",
+          "layer_index": 21,
+          "max_expert_share": 0.125,
+          "normalized_entropy_active_experts": 1.0,
+          "normalized_entropy_all_experts": 0.375,
+          "num_experts": 256,
+          "per_call_max_rows_per_expert": {
+            "max": 1.0,
+            "p50": 1.0,
+            "p90": 1.0
+          },
+          "per_call_nonzero_experts": {
+            "max": 8.0,
+            "p50": 8.0,
+            "p90": 8.0
+          },
+          "priority_score": 3.2779758388748252,
+          "records": 4,
+          "skew_over_uniform": 0.9375,
+          "stages": {
+            "quark_int8_apply": 4
+          },
+          "top8_share": 1.0,
+          "top_expert_ids": [
+            2,
+            38,
+            47,
+            95,
+            164,
+            170,
+            197,
+            203
+          ],
+          "top_experts": [
+            {
+              "count": 4,
+              "expert": 2
+            },
+            {
+              "count": 4,
+              "expert": 38
+            },
+            {
+              "count": 4,
+              "expert": 47
+            },
+            {
+              "count": 4,
+              "expert": 95
+            },
+            {
+              "count": 4,
+              "expert": 164
+            },
+            {
+              "count": 4,
+              "expert": 170
+            },
+            {
+              "count": 4,
+              "expert": 197
+            },
+            {
+              "count": 4,
+              "expert": 203
+            }
+          ],
+          "top_k": 8,
+          "topk_tuples": [],
+          "topn": 16,
+          "topn_share": 1.0,
+          "total_assignments": 32,
+          "total_tokens": 4,
+          "uniform_topn_share": 0.0625
+        }
+      ]
+    }
+  },
+  "ranked_layers": [
+    {
+      "items": [
+        {
+          "active_expert_share": 0.04296875,
+          "active_experts_total": 11,
+          "label": "code",
+          "layer": "language_model.model.layers.20.mlp.experts",
+          "layer_index": 20,
+          "max_expert_share": 0.125,
+          "normalized_entropy_active_experts": 0.9755937888228715,
+          "normalized_entropy_all_experts": 0.421875,
+          "num_experts": 256,
+          "per_call_max_rows_per_expert": {
+            "max": 1.0,
+            "p50": 1.0,
+            "p90": 1.0
+          },
+          "per_call_nonzero_experts": {
+            "max": 8.0,
+            "p50": 8.0,
+            "p90": 8.0
+          },
+          "priority_score": 3.9134880655271593,
+          "records": 8,
+          "skew_over_uniform": 0.9375,
+          "stages": {
+            "quark_int8_apply": 8
+          },
+          "top8_share": 0.8125,
+          "top_expert_ids": [
+            99,
+            116,
+            185,
+            186,
+            191,
+            7,
+            83,
+            115,
+            151,
+            224,
+            239
+          ],
+          "top_experts": [
+            {
+              "count": 8,
+              "expert": 99
+            },
+            {
+              "count": 8,
+              "expert": 116
+            },
+            {
+              "count": 8,
+              "expert": 185
+            },
+            {
+              "count": 8,
+              "expert": 186
+            },
+            {
+              "count": 8,
+              "expert": 191
+            },
+            {
+              "count": 4,
+              "expert": 7
+            },
+            {
+              "count": 4,
+              "expert": 83
+            },
+            {
+              "count": 4,
+              "expert": 115
+            },
+            {
+              "count": 4,
+              "expert": 151
+            },
+            {
+              "count": 4,
+              "expert": 224
+            },
+            {
+              "count": 4,
+              "expert": 239
+            }
+          ],
+          "top_k": 8,
+          "topk_tuples": [],
+          "topn": 16,
+          "topn_share": 1.0,
+          "total_assignments": 64,
+          "total_tokens": 8,
+          "uniform_topn_share": 0.0625
+        },
+        {
+          "active_expert_share": 0.03125,
+          "active_experts_total": 8,
+          "label": "structured",
+          "layer": "language_model.model.layers.20.mlp.experts",
+          "layer_index": 20,
+          "max_expert_share": 0.125,
+          "normalized_entropy_active_experts": 1.0,
+          "normalized_entropy_all_experts": 0.375,
+          "num_experts": 256,
+          "per_call_max_rows_per_expert": {
+            "max": 1.0,
+            "p50": 1.0,
+            "p90": 1.0
+          },
+          "per_call_nonzero_experts": {
+            "max": 8.0,
+            "p50": 8.0,
+            "p90": 8.0
+          },
+          "priority_score": 3.2779758388748252,
+          "records": 4,
+          "skew_over_uniform": 0.9375,
+          "stages": {
+            "quark_int8_apply": 4
+          },
+          "top8_share": 1.0,
+          "top_expert_ids": [
+            52,
+            99,
+            113,
+            116,
+            186,
+            191,
+            224,
+            239
+          ],
+          "top_experts": [
+            {
+              "count": 4,
+              "expert": 52
+            },
+            {
+              "count": 4,
+              "expert": 99
+            },
+            {
+              "count": 4,
+              "expert": 113
+            },
+            {
+              "count": 4,
+              "expert": 116
+            },
+            {
+              "count": 4,
+              "expert": 186
+            },
+            {
+              "count": 4,
+              "expert": 191
+            },
+            {
+              "count": 4,
+              "expert": 224
+            },
+            {
+              "count": 4,
+              "expert": 239
+            }
+          ],
+          "top_k": 8,
+          "topk_tuples": [],
+          "topn": 16,
+          "topn_share": 1.0,
+          "total_assignments": 32,
+          "total_tokens": 4,
+          "uniform_topn_share": 0.0625
+        },
+        {
+          "active_expert_share": 0.40234375,
+          "active_experts_total": 103,
+          "label": "math-reasoning",
+          "layer": "language_model.model.layers.20.mlp.experts",
+          "layer_index": 20,
+          "max_expert_share": 0.06547619047619048,
+          "normalized_entropy_active_experts": 0.8930123276898763,
+          "normalized_entropy_all_experts": 0.7463909249849339,
+          "num_experts": 256,
+          "per_call_max_rows_per_expert": {
+            "max": 1.0,
+            "p50": 1.0,
+            "p90": 1.0
+          },
+          "per_call_nonzero_experts": {
+            "max": 8.0,
+            "p50": 8.0,
+            "p90": 8.0
+          },
+          "priority_score": 3.3441958098350355,
+          "records": 252,
+          "skew_over_uniform": 0.439484126984127,
+          "stages": {
+            "quark_int8_apply": 252
+          },
+          "top8_share": 0.3253968253968254,
+          "top_expert_ids": [
+            191,
+            206,
+            224,
+            107,
+            117,
+            41,
+            151,
+            171,
+            53,
+            72,
+            110,
+            155,
+            115,
+            135,
+            186,
+            7
+          ],
+          "top_experts": [
+            {
+              "count": 132,
+              "expert": 191
+            },
+            {
+              "count": 88,
+              "expert": 206
+            },
+            {
+              "count": 88,
+              "expert": 224
+            },
+            {
+              "count": 80,
+              "expert": 107
+            },
+            {
+              "count": 80,
+              "expert": 117
+            },
+            {
+              "count": 64,
+              "expert": 41
+            },
+            {
+              "count": 64,
+              "expert": 151
+            },
+            {
+              "count": 60,
+              "expert": 171
+            },
+            {
+              "count": 56,
+              "expert": 53
+            },
+            {
+              "count": 48,
+              "expert": 72
+            },
+            {
+              "count": 48,
+              "expert": 110
+            },
+            {
+              "count": 48,
+              "expert": 155
+            },
+            {
+              "count": 40,
+              "expert": 115
+            },
+            {
+              "count": 40,
+              "expert": 135
+            },
+            {
+              "count": 40,
+              "expert": 186
+            },
+            {
+              "count": 36,
+              "expert": 7
+            }
+          ],
+          "top_k": 8,
+          "topk_tuples": [],
+          "topn": 16,
+          "topn_share": 0.501984126984127,
+          "total_assignments": 2016,
+          "total_tokens": 252,
+          "uniform_topn_share": 0.0625
+        },
+        {
+          "active_expert_share": 0.43359375,
+          "active_experts_total": 111,
+          "label": "repetitive",
+          "layer": "language_model.model.layers.20.mlp.experts",
+          "layer_index": 20,
+          "max_expert_share": 0.07936507936507936,
+          "normalized_entropy_active_experts": 0.893018935482386,
+          "normalized_entropy_all_experts": 0.7584427530240756,
+          "num_experts": 256,
+          "per_call_max_rows_per_expert": {
+            "max": 1.0,
+            "p50": 1.0,
+            "p90": 1.0
+          },
+          "per_call_nonzero_experts": {
+            "max": 8.0,
+            "p50": 8.0,
+            "p90": 8.0
+          },
+          "priority_score": 3.2385101634745603,
+          "records": 252,
+          "skew_over_uniform": 0.4255952380952381,
+          "stages": {
+            "quark_int8_apply": 252
+          },
+          "top8_share": 0.30158730158730157,
+          "top_expert_ids": [
+            224,
+            237,
+            127,
+            41,
+            117,
+            151,
+            191,
+            186,
+            175,
+            206,
+            3,
+            185,
+            11,
+            110,
+            205,
+            239
+          ],
+          "top_experts": [
+            {
+              "count": 160,
+              "expert": 224
+            },
+            {
+              "count": 84,
+              "expert": 237
+            },
+            {
+              "count": 68,
+              "expert": 127
+            },
+            {
+              "count": 60,
+              "expert": 41
+            },
+            {
+              "count": 60,
+              "expert": 117
+            },
+            {
+              "count": 60,
+              "expert": 151
+            },
+            {
+              "count": 60,
+              "expert": 191
+            },
+            {
+              "count": 56,
+              "expert": 186
+            },
+            {
+              "count": 52,
+              "expert": 175
+            },
+            {
+              "count": 52,
+              "expert": 206
+            },
+            {
+              "count": 48,
+              "expert": 3
+            },
+            {
+              "count": 48,
+              "expert": 185
+            },
+            {
+              "count": 44,
+              "expert": 11
+            },
+            {
+              "count": 44,
+              "expert": 110
+            },
+            {
+              "count": 44,
+              "expert": 205
+            },
+            {
+              "count": 44,
+              "expert": 239
+            }
+          ],
+          "top_k": 8,
+          "topk_tuples": [],
+          "topn": 16,
+          "topn_share": 0.4880952380952381,
+          "total_assignments": 2016,
+          "total_tokens": 252,
+          "uniform_topn_share": 0.0625
+        },
+        {
+          "active_expert_share": 0.03125,
+          "active_experts_total": 8,
+          "label": "long-natural",
+          "layer": "language_model.model.layers.20.mlp.experts",
+          "layer_index": 20,
+          "max_expert_share": 0.125,
+          "normalized_entropy_active_experts": 1.0,
+          "normalized_entropy_all_experts": 0.375,
+          "num_experts": 256,
+          "per_call_max_rows_per_expert": {
+            "max": 1.0,
+            "p50": 1.0,
+            "p90": 1.0
+          },
+          "per_call_nonzero_experts": {
+            "max": 8.0,
+            "p50": 8.0,
+            "p90": 8.0
+          },
+          "priority_score": 3.2779758388748252,
+          "records": 4,
+          "skew_over_uniform": 0.9375,
+          "stages": {
+            "quark_int8_apply": 4
+          },
+          "top8_share": 1.0,
+          "top_expert_ids": [
+            83,
+            99,
+            113,
+            116,
+            185,
+            186,
+            191,
+            239
+          ],
+          "top_experts": [
+            {
+              "count": 4,
+              "expert": 83
+            },
+            {
+              "count": 4,
+              "expert": 99
+            },
+            {
+              "count": 4,
+              "expert": 113
+            },
+            {
+              "count": 4,
+              "expert": 116
+            },
+            {
+              "count": 4,
+              "expert": 185
+            },
+            {
+              "count": 4,
+              "expert": 186
+            },
+            {
+              "count": 4,
+              "expert": 191
+            },
+            {
+              "count": 4,
+              "expert": 239
+            }
+          ],
+          "top_k": 8,
+          "topk_tuples": [],
+          "topn": 16,
+          "topn_share": 1.0,
+          "total_assignments": 32,
+          "total_tokens": 4,
+          "uniform_topn_share": 0.0625
+        }
+      ],
+      "label_count": 5,
+      "labels": [
+        "code",
+        "structured",
+        "math-reasoning",
+        "repetitive",
+        "long-natural"
+      ],
+      "layer": "language_model.model.layers.20.mlp.experts",
+      "layer_index": 20,
+      "mean_active_expert_share": 0.18828125,
+      "mean_max_expert_share": 0.10396825396825397,
+      "mean_priority_score": 3.4104291433172813,
+      "mean_topn_share": 0.7980158730158731,
+      "topn_jaccard_all_labels": 0.06896551724137931
+    },
+    {
+      "items": [
+        {
+          "active_expert_share": 0.05078125,
+          "active_experts_total": 13,
+          "label": "code",
+          "layer": "language_model.model.layers.21.mlp.experts",
+          "layer_index": 21,
+          "max_expert_share": 0.125,
+          "normalized_entropy_active_experts": 0.9796133097990339,
+          "normalized_entropy_all_experts": 0.45312499999999994,
+          "num_experts": 256,
+          "per_call_max_rows_per_expert": {
+            "max": 1.0,
+            "p50": 1.0,
+            "p90": 1.0
+          },
+          "per_call_nonzero_experts": {
+            "max": 8.0,
+            "p50": 8.0,
+            "p90": 8.0
+          },
+          "priority_score": 3.9134880655271593,
+          "records": 8,
+          "skew_over_uniform": 0.9375,
+          "stages": {
+            "quark_int8_apply": 8
+          },
+          "top8_share": 0.6875,
+          "top_expert_ids": [
+            2,
+            161,
+            203,
+            13,
+            47,
+            73,
+            95,
+            102,
+            137,
+            164,
+            170,
+            197,
+            207
+          ],
+          "top_experts": [
+            {
+              "count": 8,
+              "expert": 2
+            },
+            {
+              "count": 8,
+              "expert": 161
+            },
+            {
+              "count": 8,
+              "expert": 203
+            },
+            {
+              "count": 4,
+              "expert": 13
+            },
+            {
+              "count": 4,
+              "expert": 47
+            },
+            {
+              "count": 4,
+              "expert": 73
+            },
+            {
+              "count": 4,
+              "expert": 95
+            },
+            {
+              "count": 4,
+              "expert": 102
+            },
+            {
+              "count": 4,
+              "expert": 137
+            },
+            {
+              "count": 4,
+              "expert": 164
+            },
+            {
+              "count": 4,
+              "expert": 170
+            },
+            {
+              "count": 4,
+              "expert": 197
+            },
+            {
+              "count": 4,
+              "expert": 207
+            }
+          ],
+          "top_k": 8,
+          "topk_tuples": [],
+          "topn": 16,
+          "topn_share": 1.0,
+          "total_assignments": 64,
+          "total_tokens": 8,
+          "uniform_topn_share": 0.0625
+        },
+        {
+          "active_expert_share": 0.03125,
+          "active_experts_total": 8,
+          "label": "structured",
+          "layer": "language_model.model.layers.21.mlp.experts",
+          "layer_index": 21,
+          "max_expert_share": 0.125,
+          "normalized_entropy_active_experts": 1.0,
+          "normalized_entropy_all_experts": 0.375,
+          "num_experts": 256,
+          "per_call_max_rows_per_expert": {
+            "max": 1.0,
+            "p50": 1.0,
+            "p90": 1.0
+          },
+          "per_call_nonzero_experts": {
+            "max": 8.0,
+            "p50": 8.0,
+            "p90": 8.0
+          },
+          "priority_score": 3.2779758388748252,
+          "records": 4,
+          "skew_over_uniform": 0.9375,
+          "stages": {
+            "quark_int8_apply": 4
+          },
+          "top8_share": 1.0,
+          "top_expert_ids": [
+            2,
+            38,
+            47,
+            95,
+            164,
+            170,
+            197,
+            203
+          ],
+          "top_experts": [
+            {
+              "count": 4,
+              "expert": 2
+            },
+            {
+              "count": 4,
+              "expert": 38
+            },
+            {
+              "count": 4,
+              "expert": 47
+            },
+            {
+              "count": 4,
+              "expert": 95
+            },
+            {
+              "count": 4,
+              "expert": 164
+            },
+            {
+              "count": 4,
+              "expert": 170
+            },
+            {
+              "count": 4,
+              "expert": 197
+            },
+            {
+              "count": 4,
+              "expert": 203
+            }
+          ],
+          "top_k": 8,
+          "topk_tuples": [],
+          "topn": 16,
+          "topn_share": 1.0,
+          "total_assignments": 32,
+          "total_tokens": 4,
+          "uniform_topn_share": 0.0625
+        },
+        {
+          "active_expert_share": 0.3828125,
+          "active_experts_total": 98,
+          "label": "math-reasoning",
+          "layer": "language_model.model.layers.21.mlp.experts",
+          "layer_index": 21,
+          "max_expert_share": 0.08333333333333333,
+          "normalized_entropy_active_experts": 0.8798126223867888,
+          "normalized_entropy_all_experts": 0.7274631517848386,
+          "num_experts": 256,
+          "per_call_max_rows_per_expert": {
+            "max": 1.0,
+            "p50": 1.0,
+            "p90": 1.0
+          },
+          "per_call_nonzero_experts": {
+            "max": 8.0,
+            "p50": 8.0,
+            "p90": 8.0
+          },
+          "priority_score": 3.7216445468367327,
+          "records": 252,
+          "skew_over_uniform": 0.4890873015873016,
+          "stages": {
+            "quark_int8_apply": 252
+          },
+          "top8_share": 0.36507936507936506,
+          "top_expert_ids": [
+            44,
+            245,
+            61,
+            207,
+            95,
+            250,
+            243,
+            21,
+            6,
+            106,
+            187,
+            197,
+            108,
+            131,
+            227,
+            47
+          ],
+          "top_experts": [
+            {
+              "count": 168,
+              "expert": 44
+            },
+            {
+              "count": 112,
+              "expert": 245
+            },
+            {
+              "count": 96,
+              "expert": 61
+            },
+            {
+              "count": 92,
+              "expert": 207
+            },
+            {
+              "count": 80,
+              "expert": 95
+            },
+            {
+              "count": 72,
+              "expert": 250
+            },
+            {
+              "count": 60,
+              "expert": 243
+            },
+            {
+              "count": 56,
+              "expert": 21
+            },
+            {
+              "count": 52,
+              "expert": 6
+            },
+            {
+              "count": 52,
+              "expert": 106
+            },
+            {
+              "count": 52,
+              "expert": 187
+            },
+            {
+              "count": 48,
+              "expert": 197
+            },
+            {
+              "count": 44,
+              "expert": 108
+            },
+            {
+              "count": 44,
+              "expert": 131
+            },
+            {
+              "count": 44,
+              "expert": 227
+            },
+            {
+              "count": 40,
+              "expert": 47
+            }
+          ],
+          "top_k": 8,
+          "topk_tuples": [],
+          "topn": 16,
+          "topn_share": 0.5515873015873016,
+          "total_assignments": 2016,
+          "total_tokens": 252,
+          "uniform_topn_share": 0.0625
+        },
+        {
+          "active_expert_share": 0.4375,
+          "active_experts_total": 112,
+          "label": "repetitive",
+          "layer": "language_model.model.layers.21.mlp.experts",
+          "layer_index": 21,
+          "max_expert_share": 0.057539682539682536,
+          "normalized_entropy_active_experts": 0.9201676928309893,
+          "normalized_entropy_all_experts": 0.782988509113928,
+          "num_experts": 256,
+          "per_call_max_rows_per_expert": {
+            "max": 1.0,
+            "p50": 1.0,
+            "p90": 1.0
+          },
+          "per_call_nonzero_experts": {
+            "max": 8.0,
+            "p50": 8.0,
+            "p90": 8.0
+          },
+          "priority_score": 2.7251798811522523,
+          "records": 252,
+          "skew_over_uniform": 0.35813492063492064,
+          "stages": {
+            "quark_int8_apply": 252
+          },
+          "top8_share": 0.2757936507936508,
+          "top_expert_ids": [
+            47,
+            243,
+            44,
+            137,
+            95,
+            107,
+            161,
+            2,
+            73,
+            61,
+            251,
+            53,
+            170,
+            246,
+            26,
+            54
+          ],
+          "top_experts": [
+            {
+              "count": 116,
+              "expert": 47
+            },
+            {
+              "count": 104,
+              "expert": 243
+            },
+            {
+              "count": 64,
+              "expert": 44
+            },
+            {
+              "count": 60,
+              "expert": 137
+            },
+            {
+              "count": 56,
+              "expert": 95
+            },
+            {
+              "count": 56,
+              "expert": 107
+            },
+            {
+              "count": 52,
+              "expert": 161
+            },
+            {
+              "count": 48,
+              "expert": 2
+            },
+            {
+              "count": 48,
+              "expert": 73
+            },
+            {
+              "count": 44,
+              "expert": 61
+            },
+            {
+              "count": 40,
+              "expert": 251
+            },
+            {
+              "count": 36,
+              "expert": 53
+            },
+            {
+              "count": 36,
+              "expert": 170
+            },
+            {
+              "count": 32,
+              "expert": 246
+            },
+            {
+              "count": 28,
+              "expert": 26
+            },
+            {
+              "count": 28,
+              "expert": 54
+            }
+          ],
+          "top_k": 8,
+          "topk_tuples": [],
+          "topn": 16,
+          "topn_share": 0.42063492063492064,
+          "total_assignments": 2016,
+          "total_tokens": 252,
+          "uniform_topn_share": 0.0625
+        },
+        {
+          "active_expert_share": 0.03125,
+          "active_experts_total": 8,
+          "label": "long-natural",
+          "layer": "language_model.model.layers.21.mlp.experts",
+          "layer_index": 21,
+          "max_expert_share": 0.125,
+          "normalized_entropy_active_experts": 1.0,
+          "normalized_entropy_all_experts": 0.375,
+          "num_experts": 256,
+          "per_call_max_rows_per_expert": {
+            "max": 1.0,
+            "p50": 1.0,
+            "p90": 1.0
+          },
+          "per_call_nonzero_experts": {
+            "max": 8.0,
+            "p50": 8.0,
+            "p90": 8.0
+          },
+          "priority_score": 3.2779758388748252,
+          "records": 4,
+          "skew_over_uniform": 0.9375,
+          "stages": {
+            "quark_int8_apply": 4
+          },
+          "top8_share": 1.0,
+          "top_expert_ids": [
+            2,
+            47,
+            161,
+            164,
+            170,
+            191,
+            197,
+            203
+          ],
+          "top_experts": [
+            {
+              "count": 4,
+              "expert": 2
+            },
+            {
+              "count": 4,
+              "expert": 47
+            },
+            {
+              "count": 4,
+              "expert": 161
+            },
+            {
+              "count": 4,
+              "expert": 164
+            },
+            {
+              "count": 4,
+              "expert": 170
+            },
+            {
+              "count": 4,
+              "expert": 191
+            },
+            {
+              "count": 4,
+              "expert": 197
+            },
+            {
+              "count": 4,
+              "expert": 203
+            }
+          ],
+          "top_k": 8,
+          "topk_tuples": [],
+          "topn": 16,
+          "topn_share": 1.0,
+          "total_assignments": 32,
+          "total_tokens": 4,
+          "uniform_topn_share": 0.0625
+        }
+      ],
+      "label_count": 5,
+      "labels": [
+        "code",
+        "structured",
+        "math-reasoning",
+        "repetitive",
+        "long-natural"
+      ],
+      "layer": "language_model.model.layers.21.mlp.experts",
+      "layer_index": 21,
+      "mean_active_expert_share": 0.18671875,
+      "mean_max_expert_share": 0.10317460317460317,
+      "mean_priority_score": 3.3832528342531587,
+      "mean_topn_share": 0.7944444444444445,
+      "topn_jaccard_all_labels": 0.030303030303030304
+    },
+    {
+      "items": [
+        {
+          "active_expert_share": 0.03515625,
+          "active_experts_total": 9,
+          "label": "code",
+          "layer": "language_model.model.layers.9.mlp.experts",
+          "layer_index": 9,
+          "max_expert_share": 0.125,
+          "normalized_entropy_active_experts": 0.9858277399554022,
+          "normalized_entropy_all_experts": 0.390625,
+          "num_experts": 256,
+          "per_call_max_rows_per_expert": {
+            "max": 1.0,
+            "p50": 1.0,
+            "p90": 1.0
+          },
+          "per_call_nonzero_experts": {
+            "max": 8.0,
+            "p50": 8.0,
+            "p90": 8.0
+          },
+          "priority_score": 3.9134880655271593,
+          "records": 8,
+          "skew_over_uniform": 0.9375,
+          "stages": {
+            "quark_int8_apply": 8
+          },
+          "top8_share": 0.9375,
+          "top_expert_ids": [
+            2,
+            36,
+            95,
+            164,
+            170,
+            191,
+            255,
+            18,
+            161
+          ],
+          "top_experts": [
+            {
+              "count": 8,
+              "expert": 2
+            },
+            {
+              "count": 8,
+              "expert": 36
+            },
+            {
+              "count": 8,
+              "expert": 95
+            },
+            {
+              "count": 8,
+              "expert": 164
+            },
+            {
+              "count": 8,
+              "expert": 170
+            },
+            {
+              "count": 8,
+              "expert": 191
+            },
+            {
+              "count": 8,
+              "expert": 255
+            },
+            {
+              "count": 4,
+              "expert": 18
+            },
+            {
+              "count": 4,
+              "expert": 161
+            }
+          ],
+          "top_k": 8,
+          "topk_tuples": [],
+          "topn": 16,
+          "topn_share": 1.0,
+          "total_assignments": 64,
+          "total_tokens": 8,
+          "uniform_topn_share": 0.0625
+        },
+        {
+          "active_expert_share": 0.03125,
+          "active_experts_total": 8,
+          "label": "structured",
+          "layer": "language_model.model.layers.9.mlp.experts",
+          "layer_index": 9,
+          "max_expert_share": 0.125,
+          "normalized_entropy_active_experts": 1.0,
+          "normalized_entropy_all_experts": 0.375,
+          "num_experts": 256,
+          "per_call_max_rows_per_expert": {
+            "max": 1.0,
+            "p50": 1.0,
+            "p90": 1.0
+          },
+          "per_call_nonzero_experts": {
+            "max": 8.0,
+            "p50": 8.0,
+            "p90": 8.0
+          },
+          "priority_score": 3.2779758388748252,
+          "records": 4,
+          "skew_over_uniform": 0.9375,
+          "stages": {
+            "quark_int8_apply": 4
+          },
+          "top8_share": 1.0,
+          "top_expert_ids": [
+            2,
+            18,
+            36,
+            38,
+            95,
+            161,
+            164,
+            191
+          ],
+          "top_experts": [
+            {
+              "count": 4,
+              "expert": 2
+            },
+            {
+              "count": 4,
+              "expert": 18
+            },
+            {
+              "count": 4,
+              "expert": 36
+            },
+            {
+              "count": 4,
+              "expert": 38
+            },
+            {
+              "count": 4,
+              "expert": 95
+            },
+            {
+              "count": 4,
+              "expert": 161
+            },
+            {
+              "count": 4,
+              "expert": 164
+            },
+            {
+              "count": 4,
+              "expert": 191
+            }
+          ],
+          "top_k": 8,
+          "topk_tuples": [],
+          "topn": 16,
+          "topn_share": 1.0,
+          "total_assignments": 32,
+          "total_tokens": 4,
+          "uniform_topn_share": 0.0625
+        },
+        {
+          "active_expert_share": 0.43359375,
+          "active_experts_total": 111,
+          "label": "math-reasoning",
+          "layer": "language_model.model.layers.9.mlp.experts",
+          "layer_index": 9,
+          "max_expert_share": 0.08134920634920635,
+          "normalized_entropy_active_experts": 0.877953430016327,
+          "normalized_entropy_all_experts": 0.7456475893524287,
+          "num_experts": 256,
+          "per_call_max_rows_per_expert": {
+            "max": 1.0,
+            "p50": 1.0,
+            "p90": 1.0
+          },
+          "per_call_nonzero_experts": {
+            "max": 8.0,
+            "p50": 8.0,
+            "p90": 8.0
+          },
+          "priority_score": 3.615958900476257,
+          "records": 252,
+          "skew_over_uniform": 0.4751984126984127,
+          "stages": {
+            "quark_int8_apply": 252
+          },
+          "top8_share": 0.3611111111111111,
+          "top_expert_ids": [
+            95,
+            44,
+            106,
+            61,
+            207,
+            245,
+            197,
+            250,
+            41,
+            21,
+            70,
+            140,
+            161,
+            166,
+            227,
+            243
+          ],
+          "top_experts": [
+            {
+              "count": 164,
+              "expert": 95
+            },
+            {
+              "count": 124,
+              "expert": 44
+            },
+            {
+              "count": 96,
+              "expert": 106
+            },
+            {
+              "count": 88,
+              "expert": 61
+            },
+            {
+              "count": 68,
+              "expert": 207
+            },
+            {
+              "count": 68,
+              "expert": 245
+            },
+            {
+              "count": 60,
+              "expert": 197
+            },
+            {
+              "count": 60,
+              "expert": 250
+            },
+            {
+              "count": 56,
+              "expert": 41
+            },
+            {
+              "count": 48,
+              "expert": 21
+            },
+            {
+              "count": 48,
+              "expert": 70
+            },
+            {
+              "count": 44,
+              "expert": 140
+            },
+            {
+              "count": 40,
+              "expert": 161
+            },
+            {
+              "count": 40,
+              "expert": 166
+            },
+            {
+              "count": 40,
+              "expert": 227
+            },
+            {
+              "count": 40,
+              "expert": 243
+            }
+          ],
+          "top_k": 8,
+          "topk_tuples": [],
+          "topn": 16,
+          "topn_share": 0.5376984126984127,
+          "total_assignments": 2016,
+          "total_tokens": 252,
+          "uniform_topn_share": 0.0625
+        },
+        {
+          "active_expert_share": 0.4375,
+          "active_experts_total": 112,
+          "label": "repetitive",
+          "layer": "language_model.model.layers.9.mlp.experts",
+          "layer_index": 9,
+          "max_expert_share": 0.07142857142857142,
+          "normalized_entropy_active_experts": 0.9103860225624874,
+          "normalized_entropy_all_experts": 0.7746650964578992,
+          "num_experts": 256,
+          "per_call_max_rows_per_expert": {
+            "max": 1.0,
+            "p50": 1.0,
+            "p90": 1.0
+          },
+          "per_call_nonzero_experts": {
+            "max": 8.0,
+            "p50": 8.0,
+            "p90": 8.0
+          },
+          "priority_score": 2.8308655275127275,
+          "records": 252,
+          "skew_over_uniform": 0.37202380952380953,
+          "stages": {
+            "quark_int8_apply": 252
+          },
+          "top8_share": 0.2837301587301587,
+          "top_expert_ids": [
+            243,
+            161,
+            47,
+            95,
+            197,
+            54,
+            59,
+            189,
+            2,
+            81,
+            171,
+            61,
+            73,
+            255,
+            44,
+            155
+          ],
+          "top_experts": [
+            {
+              "count": 144,
+              "expert": 243
+            },
+            {
+              "count": 100,
+              "expert": 161
+            },
+            {
+              "count": 76,
+              "expert": 47
+            },
+            {
+              "count": 56,
+              "expert": 95
+            },
+            {
+              "count": 52,
+              "expert": 197
+            },
+            {
+              "count": 48,
+              "expert": 54
+            },
+            {
+              "count": 48,
+              "expert": 59
+            },
+            {
+              "count": 48,
+              "expert": 189
+            },
+            {
+              "count": 44,
+              "expert": 2
+            },
+            {
+              "count": 44,
+              "expert": 81
+            },
+            {
+              "count": 44,
+              "expert": 171
+            },
+            {
+              "count": 36,
+              "expert": 61
+            },
+            {
+              "count": 36,
+              "expert": 73
+            },
+            {
+              "count": 36,
+              "expert": 255
+            },
+            {
+              "count": 32,
+              "expert": 44
+            },
+            {
+              "count": 32,
+              "expert": 155
+            }
+          ],
+          "top_k": 8,
+          "topk_tuples": [],
+          "topn": 16,
+          "topn_share": 0.43452380952380953,
+          "total_assignments": 2016,
+          "total_tokens": 252,
+          "uniform_topn_share": 0.0625
+        },
+        {
+          "active_expert_share": 0.03125,
+          "active_experts_total": 8,
+          "label": "long-natural",
+          "layer": "language_model.model.layers.9.mlp.experts",
+          "layer_index": 9,
+          "max_expert_share": 0.125,
+          "normalized_entropy_active_experts": 1.0,
+          "normalized_entropy_all_experts": 0.375,
+          "num_experts": 256,
+          "per_call_max_rows_per_expert": {
+            "max": 1.0,
+            "p50": 1.0,
+            "p90": 1.0
+          },
+          "per_call_nonzero_experts": {
+            "max": 8.0,
+            "p50": 8.0,
+            "p90": 8.0
+          },
+          "priority_score": 3.2779758388748252,
+          "records": 4,
+          "skew_over_uniform": 0.9375,
+          "stages": {
+            "quark_int8_apply": 4
+          },
+          "top8_share": 1.0,
+          "top_expert_ids": [
+            2,
+            36,
+            59,
+            95,
+            164,
+            170,
+            191,
+            255
+          ],
+          "top_experts": [
+            {
+              "count": 4,
+              "expert": 2
+            },
+            {
+              "count": 4,
+              "expert": 36
+            },
+            {
+              "count": 4,
+              "expert": 59
+            },
+            {
+              "count": 4,
+              "expert": 95
+            },
+            {
+              "count": 4,
+              "expert": 164
+            },
+            {
+              "count": 4,
+              "expert": 170
+            },
+            {
+              "count": 4,
+              "expert": 191
+            },
+            {
+              "count": 4,
+              "expert": 255
+            }
+          ],
+          "top_k": 8,
+          "topk_tuples": [],
+          "topn": 16,
+          "topn_share": 1.0,
+          "total_assignments": 32,
+          "total_tokens": 4,
+          "uniform_topn_share": 0.0625
+        }
+      ],
+      "label_count": 5,
+      "labels": [
+        "code",
+        "structured",
+        "math-reasoning",
+        "repetitive",
+        "long-natural"
+      ],
+      "layer": "language_model.model.layers.9.mlp.experts",
+      "layer_index": 9,
+      "mean_active_expert_share": 0.19375,
+      "mean_max_expert_share": 0.10555555555555556,
+      "mean_priority_score": 3.3832528342531587,
+      "mean_topn_share": 0.7944444444444445,
+      "topn_jaccard_all_labels": 0.03125
+    },
+    {
+      "items": [
+        {
+          "active_expert_share": 0.03125,
+          "active_experts_total": 8,
+          "label": "code",
+          "layer": "language_model.model.layers.14.mlp.experts",
+          "layer_index": 14,
+          "max_expert_share": 0.125,
+          "normalized_entropy_active_experts": 1.0,
+          "normalized_entropy_all_experts": 0.375,
+          "num_experts": 256,
+          "per_call_max_rows_per_expert": {
+            "max": 1.0,
+            "p50": 1.0,
+            "p90": 1.0
+          },
+          "per_call_nonzero_experts": {
+            "max": 8.0,
+            "p50": 8.0,
+            "p90": 8.0
+          },
+          "priority_score": 3.9134880655271593,
+          "records": 8,
+          "skew_over_uniform": 0.9375,
+          "stages": {
+            "quark_int8_apply": 8
+          },
+          "top8_share": 1.0,
+          "top_expert_ids": [
+            32,
+            51,
+            52,
+            64,
+            103,
+            137,
+            148,
+            160
+          ],
+          "top_experts": [
+            {
+              "count": 8,
+              "expert": 32
+            },
+            {
+              "count": 8,
+              "expert": 51
+            },
+            {
+              "count": 8,
+              "expert": 52
+            },
+            {
+              "count": 8,
+              "expert": 64
+            },
+            {
+              "count": 8,
+              "expert": 103
+            },
+            {
+              "count": 8,
+              "expert": 137
+            },
+            {
+              "count": 8,
+              "expert": 148
+            },
+            {
+              "count": 8,
+              "expert": 160
+            }
+          ],
+          "top_k": 8,
+          "topk_tuples": [],
+          "topn": 16,
+          "topn_share": 1.0,
+          "total_assignments": 64,
+          "total_tokens": 8,
+          "uniform_topn_share": 0.0625
+        },
+        {
+          "active_expert_share": 0.03125,
+          "active_experts_total": 8,
+          "label": "structured",
+          "layer": "language_model.model.layers.14.mlp.experts",
+          "layer_index": 14,
+          "max_expert_share": 0.125,
+          "normalized_entropy_active_experts": 1.0,
+          "normalized_entropy_all_experts": 0.375,
+          "num_experts": 256,
+          "per_call_max_rows_per_expert": {
+            "max": 1.0,
+            "p50": 1.0,
+            "p90": 1.0
+          },
+          "per_call_nonzero_experts": {
+            "max": 8.0,
+            "p50": 8.0,
+            "p90": 8.0
+          },
+          "priority_score": 3.2779758388748252,
+          "records": 4,
+          "skew_over_uniform": 0.9375,
+          "stages": {
+            "quark_int8_apply": 4
+          },
+          "top8_share": 1.0,
+          "top_expert_ids": [
+            32,
+            51,
+            103,
+            137,
+            148,
+            160,
+            189,
+            225
+          ],
+          "top_experts": [
+            {
+              "count": 4,
+              "expert": 32
+            },
+            {
+              "count": 4,
+              "expert": 51
+            },
+            {
+              "count": 4,
+              "expert": 103
+            },
+            {
+              "count": 4,
+              "expert": 137
+            },
+            {
+              "count": 4,
+              "expert": 148
+            },
+            {
+              "count": 4,
+              "expert": 160
+            },
+            {
+              "count": 4,
+              "expert": 189
+            },
+            {
+              "count": 4,
+              "expert": 225
+            }
+          ],
+          "top_k": 8,
+          "topk_tuples": [],
+          "topn": 16,
+          "topn_share": 1.0,
+          "total_assignments": 32,
+          "total_tokens": 4,
+          "uniform_topn_share": 0.0625
+        },
+        {
+          "active_expert_share": 0.33984375,
+          "active_experts_total": 87,
+          "label": "math-reasoning",
+          "layer": "language_model.model.layers.14.mlp.experts",
+          "layer_index": 14,
+          "max_expert_share": 0.07341269841269842,
+          "normalized_entropy_active_experts": 0.887831323320634,
+          "normalized_entropy_all_experts": 0.7150308812499311,
+          "num_experts": 256,
+          "per_call_max_rows_per_expert": {
+            "max": 1.0,
+            "p50": 1.0,
+            "p90": 1.0
+          },
+          "per_call_nonzero_experts": {
+            "max": 8.0,
+            "p50": 8.0,
+            "p90": 8.0
+          },
+          "priority_score": 3.6763506983965284,
+          "records": 252,
+          "skew_over_uniform": 0.4831349206349206,
+          "stages": {
+            "quark_int8_apply": 252
+          },
+          "top8_share": 0.3392857142857143,
+          "top_expert_ids": [
+            160,
+            52,
+            19,
+            72,
+            54,
+            194,
+            51,
+            65,
+            76,
+            189,
+            225,
+            231,
+            67,
+            77,
+            137,
+            255
+          ],
+          "top_experts": [
+            {
+              "count": 148,
+              "expert": 160
+            },
+            {
+              "count": 92,
+              "expert": 52
+            },
+            {
+              "count": 88,
+              "expert": 19
+            },
+            {
+              "count": 88,
+              "expert": 72
+            },
+            {
+              "count": 72,
+              "expert": 54
+            },
+            {
+              "count": 68,
+              "expert": 194
+            },
+            {
+              "count": 64,
+              "expert": 51
+            },
+            {
+              "count": 64,
+              "expert": 65
+            },
+            {
+              "count": 64,
+              "expert": 76
+            },
+            {
+              "count": 64,
+              "expert": 189
+            },
+            {
+              "count": 60,
+              "expert": 225
+            },
+            {
+              "count": 52,
+              "expert": 231
+            },
+            {
+              "count": 44,
+              "expert": 67
+            },
+            {
+              "count": 44,
+              "expert": 77
+            },
+            {
+              "count": 44,
+              "expert": 137
+            },
+            {
+              "count": 44,
+              "expert": 255
+            }
+          ],
+          "top_k": 8,
+          "topk_tuples": [],
+          "topn": 16,
+          "topn_share": 0.5456349206349206,
+          "total_assignments": 2016,
+          "total_tokens": 252,
+          "uniform_topn_share": 0.0625
+        },
+        {
+          "active_expert_share": 0.5,
+          "active_experts_total": 128,
+          "label": "repetitive",
+          "layer": "language_model.model.layers.14.mlp.experts",
+          "layer_index": 14,
+          "max_expert_share": 0.07539682539682539,
+          "normalized_entropy_active_experts": 0.9083167979474775,
+          "normalized_entropy_all_experts": 0.7947771982040428,
+          "num_experts": 256,
+          "per_call_max_rows_per_expert": {
+            "max": 1.0,
+            "p50": 1.0,
+            "p90": 1.0
+          },
+          "per_call_nonzero_experts": {
+            "max": 8.0,
+            "p50": 8.0,
+            "p90": 8.0
+          },
+          "priority_score": 2.755375780112388,
+          "records": 252,
+          "skew_over_uniform": 0.3621031746031746,
+          "stages": {
+            "quark_int8_apply": 252
+          },
+          "top8_share": 0.2857142857142857,
+          "top_expert_ids": [
+            189,
+            28,
+            61,
+            64,
+            32,
+            103,
+            137,
+            67,
+            194,
+            52,
+            107,
+            125,
+            215,
+            29,
+            160,
+            200
+          ],
+          "top_experts": [
+            {
+              "count": 152,
+              "expert": 189
+            },
+            {
+              "count": 100,
+              "expert": 28
+            },
+            {
+              "count": 68,
+              "expert": 61
+            },
+            {
+              "count": 64,
+              "expert": 64
+            },
+            {
+              "count": 56,
+              "expert": 32
+            },
+            {
+              "count": 52,
+              "expert": 103
+            },
+            {
+              "count": 44,
+              "expert": 137
+            },
+            {
+              "count": 40,
+              "expert": 67
+            },
+            {
+              "count": 40,
+              "expert": 194
+            },
+            {
+              "count": 36,
+              "expert": 52
+            },
+            {
+              "count": 36,
+              "expert": 107
+            },
+            {
+              "count": 36,
+              "expert": 125
+            },
+            {
+              "count": 36,
+              "expert": 215
+            },
+            {
+              "count": 32,
+              "expert": 29
+            },
+            {
+              "count": 32,
+              "expert": 160
+            },
+            {
+              "count": 32,
+              "expert": 200
+            }
+          ],
+          "top_k": 8,
+          "topk_tuples": [],
+          "topn": 16,
+          "topn_share": 0.4246031746031746,
+          "total_assignments": 2016,
+          "total_tokens": 252,
+          "uniform_topn_share": 0.0625
+        },
+        {
+          "active_expert_share": 0.03125,
+          "active_experts_total": 8,
+          "label": "long-natural",
+          "layer": "language_model.model.layers.14.mlp.experts",
+          "layer_index": 14,
+          "max_expert_share": 0.125,
+          "normalized_entropy_active_experts": 1.0,
+          "normalized_entropy_all_experts": 0.375,
+          "num_experts": 256,
+          "per_call_max_rows_per_expert": {
+            "max": 1.0,
+            "p50": 1.0,
+            "p90": 1.0
+          },
+          "per_call_nonzero_experts": {
+            "max": 8.0,
+            "p50": 8.0,
+            "p90": 8.0
+          },
+          "priority_score": 3.2779758388748252,
+          "records": 4,
+          "skew_over_uniform": 0.9375,
+          "stages": {
+            "quark_int8_apply": 4
+          },
+          "top8_share": 1.0,
+          "top_expert_ids": [
+            32,
+            51,
+            52,
+            64,
+            103,
+            137,
+            148,
+            160
+          ],
+          "top_experts": [
+            {
+              "count": 4,
+              "expert": 32
+            },
+            {
+              "count": 4,
+              "expert": 51
+            },
+            {
+              "count": 4,
+              "expert": 52
+            },
+            {
+              "count": 4,
+              "expert": 64
+            },
+            {
+              "count": 4,
+              "expert": 103
+            },
+            {
+              "count": 4,
+              "expert": 137
+            },
+            {
+              "count": 4,
+              "expert": 148
+            },
+            {
+              "count": 4,
+              "expert": 160
+            }
+          ],
+          "top_k": 8,
+          "topk_tuples": [],
+          "topn": 16,
+          "topn_share": 1.0,
+          "total_assignments": 32,
+          "total_tokens": 4,
+          "uniform_topn_share": 0.0625
+        }
+      ],
+      "label_count": 5,
+      "labels": [
+        "code",
+        "structured",
+        "math-reasoning",
+        "repetitive",
+        "long-natural"
+      ],
+      "layer": "language_model.model.layers.14.mlp.experts",
+      "layer_index": 14,
+      "mean_active_expert_share": 0.18671875,
+      "mean_max_expert_share": 0.10476190476190476,
+      "mean_priority_score": 3.3802332443571452,
+      "mean_topn_share": 0.7940476190476191,
+      "topn_jaccard_all_labels": 0.07407407407407407
+    },
+    {
+      "items": [
+        {
+          "active_expert_share": 0.04296875,
+          "active_experts_total": 11,
+          "label": "code",
+          "layer": "language_model.model.layers.8.mlp.experts",
+          "layer_index": 8,
+          "max_expert_share": 0.125,
+          "normalized_entropy_active_experts": 0.9755937888228715,
+          "normalized_entropy_all_experts": 0.421875,
+          "num_experts": 256,
+          "per_call_max_rows_per_expert": {
+            "max": 1.0,
+            "p50": 1.0,
+            "p90": 1.0
+          },
+          "per_call_nonzero_experts": {
+            "max": 8.0,
+            "p50": 8.0,
+            "p90": 8.0
+          },
+          "priority_score": 3.9134880655271593,
+          "records": 8,
+          "skew_over_uniform": 0.9375,
+          "stages": {
+            "quark_int8_apply": 8
+          },
+          "top8_share": 0.8125,
+          "top_expert_ids": [
+            72,
+            99,
+            107,
+            191,
+            224,
+            4,
+            84,
+            110,
+            220,
+            232,
+            239
+          ],
+          "top_experts": [
+            {
+              "count": 8,
+              "expert": 72
+            },
+            {
+              "count": 8,
+              "expert": 99
+            },
+            {
+              "count": 8,
+              "expert": 107
+            },
+            {
+              "count": 8,
+              "expert": 191
+            },
+            {
+              "count": 8,
+              "expert": 224
+            },
+            {
+              "count": 4,
+              "expert": 4
+            },
+            {
+              "count": 4,
+              "expert": 84
+            },
+            {
+              "count": 4,
+              "expert": 110
+            },
+            {
+              "count": 4,
+              "expert": 220
+            },
+            {
+              "count": 4,
+              "expert": 232
+            },
+            {
+              "count": 4,
+              "expert": 239
+            }
+          ],
+          "top_k": 8,
+          "topk_tuples": [],
+          "topn": 16,
+          "topn_share": 1.0,
+          "total_assignments": 64,
+          "total_tokens": 8,
+          "uniform_topn_share": 0.0625
+        },
+        {
+          "active_expert_share": 0.03125,
+          "active_experts_total": 8,
+          "label": "structured",
+          "layer": "language_model.model.layers.8.mlp.experts",
+          "layer_index": 8,
+          "max_expert_share": 0.125,
+          "normalized_entropy_active_experts": 1.0,
+          "normalized_entropy_all_experts": 0.375,
+          "num_experts": 256,
+          "per_call_max_rows_per_expert": {
+            "max": 1.0,
+            "p50": 1.0,
+            "p90": 1.0
+          },
+          "per_call_nonzero_experts": {
+            "max": 8.0,
+            "p50": 8.0,
+            "p90": 8.0
+          },
+          "priority_score": 3.2779758388748252,
+          "records": 4,
+          "skew_over_uniform": 0.9375,
+          "stages": {
+            "quark_int8_apply": 4
+          },
+          "top8_share": 1.0,
+          "top_expert_ids": [
+            72,
+            98,
+            99,
+            107,
+            181,
+            191,
+            224,
+            232
+          ],
+          "top_experts": [
+            {
+              "count": 4,
+              "expert": 72
+            },
+            {
+              "count": 4,
+              "expert": 98
+            },
+            {
+              "count": 4,
+              "expert": 99
+            },
+            {
+              "count": 4,
+              "expert": 107
+            },
+            {
+              "count": 4,
+              "expert": 181
+            },
+            {
+              "count": 4,
+              "expert": 191
+            },
+            {
+              "count": 4,
+              "expert": 224
+            },
+            {
+              "count": 4,
+              "expert": 232
+            }
+          ],
+          "top_k": 8,
+          "topk_tuples": [],
+          "topn": 16,
+          "topn_share": 1.0,
+          "total_assignments": 32,
+          "total_tokens": 4,
+          "uniform_topn_share": 0.0625
+        },
+        {
+          "active_expert_share": 0.390625,
+          "active_experts_total": 100,
+          "label": "math-reasoning",
+          "layer": "language_model.model.layers.8.mlp.experts",
+          "layer_index": 8,
+          "max_expert_share": 0.05952380952380952,
+          "normalized_entropy_active_experts": 0.8953710412195991,
+          "normalized_entropy_all_experts": 0.7435895542939842,
+          "num_experts": 256,
+          "per_call_max_rows_per_expert": {
+            "max": 1.0,
+            "p50": 1.0,
+            "p90": 1.0
+          },
+          "per_call_nonzero_experts": {
+            "max": 8.0,
+            "p50": 8.0,
+            "p90": 8.0
+          },
+          "priority_score": 3.464979405675579,
+          "records": 252,
+          "skew_over_uniform": 0.4553571428571429,
+          "stages": {
+            "quark_int8_apply": 252
+          },
+          "top8_share": 0.3333333333333333,
+          "top_expert_ids": [
+            107,
+            224,
+            191,
+            132,
+            171,
+            95,
+            56,
+            53,
+            123,
+            151,
+            220,
+            57,
+            206,
+            249,
+            126,
+            42
+          ],
+          "top_experts": [
+            {
+              "count": 120,
+              "expert": 107
+            },
+            {
+              "count": 104,
+              "expert": 224
+            },
+            {
+              "count": 96,
+              "expert": 191
+            },
+            {
+              "count": 88,
+              "expert": 132
+            },
+            {
+              "count": 84,
+              "expert": 171
+            },
+            {
+              "count": 64,
+              "expert": 95
+            },
+            {
+              "count": 60,
+              "expert": 56
+            },
+            {
+              "count": 56,
+              "expert": 53
+            },
+            {
+              "count": 56,
+              "expert": 123
+            },
+            {
+              "count": 56,
+              "expert": 151
+            },
+            {
+              "count": 52,
+              "expert": 220
+            },
+            {
+              "count": 44,
+              "expert": 57
+            },
+            {
+              "count": 44,
+              "expert": 206
+            },
+            {
+              "count": 44,
+              "expert": 249
+            },
+            {
+              "count": 40,
+              "expert": 126
+            },
+            {
+              "count": 36,
+              "expert": 42
+            }
+          ],
+          "top_k": 8,
+          "topk_tuples": [],
+          "topn": 16,
+          "topn_share": 0.5178571428571429,
+          "total_assignments": 2016,
+          "total_tokens": 252,
+          "uniform_topn_share": 0.0625
+        },
+        {
+          "active_expert_share": 0.4609375,
+          "active_experts_total": 118,
+          "label": "repetitive",
+          "layer": "language_model.model.layers.8.mlp.experts",
+          "layer_index": 8,
+          "max_expert_share": 0.07142857142857142,
+          "normalized_entropy_active_experts": 0.9087331500801172,
+          "normalized_entropy_all_experts": 0.7818107373904514,
+          "num_experts": 256,
+          "per_call_max_rows_per_expert": {
+            "max": 1.0,
+            "p50": 1.0,
+            "p90": 1.0
+          },
+          "per_call_nonzero_experts": {
+            "max": 8.0,
+            "p50": 8.0,
+            "p90": 8.0
+          },
+          "priority_score": 2.7855716790725236,
+          "records": 252,
+          "skew_over_uniform": 0.36607142857142855,
+          "stages": {
+            "quark_int8_apply": 252
+          },
+          "top8_share": 0.2857142857142857,
+          "top_expert_ids": [
+            224,
+            151,
+            61,
+            41,
+            110,
+            191,
+            117,
+            173,
+            215,
+            220,
+            239,
+            98,
+            4,
+            81,
+            116,
+            205
+          ],
+          "top_experts": [
+            {
+              "count": 144,
+              "expert": 224
+            },
+            {
+              "count": 104,
+              "expert": 151
+            },
+            {
+              "count": 76,
+              "expert": 61
+            },
+            {
+              "count": 60,
+              "expert": 41
+            },
+            {
+              "count": 56,
+              "expert": 110
+            },
+            {
+              "count": 48,
+              "expert": 191
+            },
+            {
+              "count": 44,
+              "expert": 117
+            },
+            {
+              "count": 44,
+              "expert": 173
+            },
+            {
+              "count": 44,
+              "expert": 215
+            },
+            {
+              "count": 40,
+              "expert": 220
+            },
+            {
+              "count": 40,
+              "expert": 239
+            },
+            {
+              "count": 36,
+              "expert": 98
+            },
+            {
+              "count": 32,
+              "expert": 4
+            },
+            {
+              "count": 32,
+              "expert": 81
+            },
+            {
+              "count": 32,
+              "expert": 116
+            },
+            {
+              "count": 32,
+              "expert": 205
+            }
+          ],
+          "top_k": 8,
+          "topk_tuples": [],
+          "topn": 16,
+          "topn_share": 0.42857142857142855,
+          "total_assignments": 2016,
+          "total_tokens": 252,
+          "uniform_topn_share": 0.0625
+        },
+        {
+          "active_expert_share": 0.03125,
+          "active_experts_total": 8,
+          "label": "long-natural",
+          "layer": "language_model.model.layers.8.mlp.experts",
+          "layer_index": 8,
+          "max_expert_share": 0.125,
+          "normalized_entropy_active_experts": 1.0,
+          "normalized_entropy_all_experts": 0.375,
+          "num_experts": 256,
+          "per_call_max_rows_per_expert": {
+            "max": 1.0,
+            "p50": 1.0,
+            "p90": 1.0
+          },
+          "per_call_nonzero_experts": {
+            "max": 8.0,
+            "p50": 8.0,
+            "p90": 8.0
+          },
+          "priority_score": 3.2779758388748252,
+          "records": 4,
+          "skew_over_uniform": 0.9375,
+          "stages": {
+            "quark_int8_apply": 4
+          },
+          "top8_share": 1.0,
+          "top_expert_ids": [
+            72,
+            84,
+            99,
+            107,
+            178,
+            191,
+            224,
+            239
+          ],
+          "top_experts": [
+            {
+              "count": 4,
+              "expert": 72
+            },
+            {
+              "count": 4,
+              "expert": 84
+            },
+            {
+              "count": 4,
+              "expert": 99
+            },
+            {
+              "count": 4,
+              "expert": 107
+            },
+            {
+              "count": 4,
+              "expert": 178
+            },
+            {
+              "count": 4,
+              "expert": 191
+            },
+            {
+              "count": 4,
+              "expert": 224
+            },
+            {
+              "count": 4,
+              "expert": 239
+            }
+          ],
+          "top_k": 8,
+          "topk_tuples": [],
+          "topn": 16,
+          "topn_share": 1.0,
+          "total_assignments": 32,
+          "total_tokens": 4,
+          "uniform_topn_share": 0.0625
+        }
+      ],
+      "label_count": 5,
+      "labels": [
+        "code",
+        "structured",
+        "math-reasoning",
+        "repetitive",
+        "long-natural"
+      ],
+      "layer": "language_model.model.layers.8.mlp.experts",
+      "layer_index": 8,
+      "mean_active_expert_share": 0.19140625,
+      "mean_max_expert_share": 0.10119047619047619,
+      "mean_priority_score": 3.343998165604982,
+      "mean_topn_share": 0.7892857142857144,
+      "topn_jaccard_all_labels": 0.058823529411764705
+    }
+  ],
+  "topn": 16
+}
