@@ -486,6 +486,8 @@ def run_benchmark(args: argparse.Namespace) -> dict[str, Any]:
         "env": {
             "ONEAPI_DEVICE_SELECTOR": os.environ.get("ONEAPI_DEVICE_SELECTOR"),
             "ZE_AFFINITY_MASK": os.environ.get("ZE_AFFINITY_MASK"),
+            "VLLM_XPU_W8A8_GROUPED_GEMM_POLICY": os.environ.get(
+                "VLLM_XPU_W8A8_GROUPED_GEMM_POLICY"),
             "PYTHONPATH": os.environ.get("PYTHONPATH"),
         },
         "args": {

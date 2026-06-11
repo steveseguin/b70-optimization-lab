@@ -2781,3 +2781,229 @@ Priority after this section:
 3. In parallel, investigate verifier-preserving MTP/speculation because that
    is the only credible route to `>200 tok/s` without changing the accepted
    model distribution.
+
+## Expanded Big-Bet Backlog
+
+Added after checking public B70/XPU signals and the Localmaxxing exact-model
+entry.
+
+Current outside reference points:
+
+- Localmaxxing now has the exact Quark W8A8 INT8 model listed at `99.43 tok/s`
+  on `4x Intel Arc Pro B70`, with quality-gated notes and 32K context. This is
+  the only exact-model public row found in the query.
+- Public B70 Qwen3.6 35B rows are mostly llama.cpp `Q4_K_M`/`UD-Q4_K_M`, with
+  `~55-70 tok/s` single-stream generation depending on setup. These are useful
+  architecture references, but not acceptable substitutes for this task because
+  they use 4-bit quantization.
+- `intel/intel-xpu-backend-for-triton#6389` directly confirms that MoE decode
+  grouped-GEMM performance depends heavily on skewed routing and tile policy.
+- Intel/vLLM B-series material emphasizes persistent kernels, multi-GPU
+  scaling, P2P/topology, and disaggregated prefill/decode as high-leverage
+  areas. Treat those as design hints, not proof for our exact model.
+
+Quality-preserving speed bets:
+
+1. Route-hot expert replication.
+   - Decode routing is skewed. Replicate the hottest experts across more GPUs
+     and shard only the cold tail.
+   - This keeps weights and math unchanged but may reduce cross-GPU traffic and
+     per-token expert dispatch latency.
+   - Needs route histogram capture by layer over real prompts, then a simulator
+     before touching the runtime.
+
+2. Expert-parallel layout instead of pure TP4.
+   - TP4 makes every token pay communication costs even when the active expert
+     set is tiny.
+   - A hybrid layout could replicate attention/dense blocks where memory allows
+     and expert-shard the MoE blocks.
+   - First test should be short context, because 32K KV memory can hide whether
+     the layout itself is better.
+
+3. B70-native W8A8 weight retile cache.
+   - Convert Quark W8A8 weights once into the exact Xe2 DPAS-friendly layout
+     used by the grouped GEMM.
+   - Store the converted layout on disk or in a load-time cache.
+   - This does not alter quant values; it only changes memory order. Gate with
+     bit/tolerance parity against the current staged path.
+
+4. Fused dequant/scale epilogue.
+   - If grouped W8A8 output currently pays extra scale/dequant work outside the
+     hottest DPAS loop, move scale application into the GEMM epilogue.
+   - This should preserve numerics if rounding order is matched or bounded by
+     the current kernel tolerance.
+
+5. One-layer persistent MoE decode kernel.
+   - Combine route read, activation quant, GEMM1, activation, second quant,
+     GEMM2, and scatter/finalize for one layer.
+   - Start synthetic and layer-local. Only after parity should it touch vLLM.
+   - This is the boldest kernel path because it attacks both launch overhead
+     and scratch traffic.
+
+6. Decode-step command-list batching.
+   - The measured tiny kernels are often `~90-110 us`, so launch/queue overhead
+     may be a first-order cost.
+   - Try Level Zero command list reuse or graph capture around a larger decode
+     slice, even before full kernel fusion exists.
+   - Success criterion is lower event-timeline wall time without numerical
+     differences.
+
+7. Verifier-only speculative decoding.
+   - Use the current Quark W8A8 INT8 model as the verifier. A draft/MTP model
+     can propose tokens, but no token is accepted unless the current model
+     verifies it.
+   - This is quality-preserving in the distributional sense when implemented
+     correctly, and it is the most realistic path to a `2x` jump.
+   - Must pass repeat64, JSON/canary, long-context needle, and BF16/INT8
+     comparison before it can be accepted.
+
+8. XPU MTP sidecar.
+   - Search for or train/use a Qwen3.6-family MTP proposer small enough to run
+     on spare device capacity.
+   - Keep the accepted model untouched. The MTP path is only a proposal lane.
+   - If no stable XPU implementation exists, document it as blocked rather than
+     spending cycles on CUDA-only assumptions.
+
+9. Direct c1 runner without HTTP/scheduler overhead.
+   - Build a fixed-shape runner with preallocated KV, no OpenAI server, no
+     streaming JSON, and minimal scheduler work.
+   - If direct c1 is much faster, optimize the serving path. If it is not,
+     focus exclusively on kernels and inter-GPU layout.
+
+10. Cross-engine true 8-bit control.
+    - Try llama.cpp SYCL `Q8_0` or OpenVINO GenAI INT8 only as diagnostics.
+    - Do not accept 4-bit wins for this target.
+    - If a true 8-bit engine is much faster with similar quality, use it to
+      identify what vLLM/XPU is leaving on the table.
+
+11. Topology and host-stack A/B.
+    - Re-test on the closest Intel-published B-series BOM available: kernel,
+      compute-runtime, GuC firmware, oneAPI, oneCCL, and vLLM image/branch.
+    - Prior public B70 TP reports mention driver/firmware/topology sensitivity.
+      This may not produce a kernel patch, but it can avoid fighting a bad host
+      stack.
+
+12. Route-aware AOT specialization.
+    - Generate a small family of shape-specialized kernels for common
+      per-layer route histograms instead of one generic grouped-GEMM path.
+    - Dispatch by captured shape bucket. This preserves exact output if it only
+      changes tiling and order within accepted tolerance.
+    - Useful only after route histograms prove the buckets are stable.
+
+Production/aggregate bets, kept separate from the single-request goal:
+
+1. One model replica per B70 for aggregate load.
+   - If true 8-bit full-model memory plus KV fits at reduced context, compare
+     four independent replicas against TP4.
+   - This may improve aggregate throughput and tail latency, but it is not a
+     direct 32K single-request answer unless full memory fits.
+
+2. Prefill/decode split.
+   - Use a prefill-optimized lane for long prompts and a decode-optimized lane
+     for streaming.
+   - This is promising for production because prefill and decode want different
+     batch and scheduling settings.
+
+3. Adaptive routing by request class.
+   - Keep the quality model fixed, but route short chat, long-context, code,
+     and structured requests to different server configs if benchmarks show
+     stable differences.
+   - This is operationally useful but must not hide regressions in the headline
+     c1 decode metric.
+
+Near-term order:
+
+1. Finish the grouped-GEMM policy override screen already in progress.
+2. Add route histogram summaries by layer and prompt class.
+3. Prototype fused `quant + GEMM1`.
+4. Prototype fused `activation + quant + GEMM2`.
+5. Start a verifier-only speculation feasibility spike only after the current
+   kernel floor screens are recorded.
+
+## W8A8 Grouped-GEMM Decode Policy Screen
+
+Patch under test:
+
+- Local kernel tree:
+  `/home/steve/src/vllm-xpu-kernels`
+- File:
+  `csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2_interface.hpp`
+- Added env override:
+  `VLLM_XPU_W8A8_GROUPED_GEMM_POLICY=m16|m32|base`
+- Default/unset behavior remains the existing heuristic:
+  `A_avg_M <= 8 -> w8a16_policy_m_16`,
+  `A_avg_M <= 32 -> w8a16_policy_m_32`,
+  otherwise `w8a8_policy`.
+
+Build notes:
+
+- Full editable install with oneAPI 2026.0 failed late while compiling
+  `paged_decode_xe2.cpp`; `icpx` was killed after `_xpu_C` and
+  `libgrouped_gemm_xe_2.so` had linked. The 2026 artifacts pulled in
+  `libsycl.so.9`, which is incompatible with the current 2025-linked package
+  import path and caused an import failure/segfault. Those partial temp
+  artifacts were quarantined/restored from the known-good package copies.
+- Rebuilt only the grouped-GEMM target in the existing 2025.3-compatible build
+  dir:
+
+```bash
+PATH=/opt/intel/oneapi/compiler/2025.3/bin:$PATH \
+  ninja -C /home/steve/src/vllm-xpu-kernels/build/xpu-c-only-2025 \
+  -j2 grouped_gemm_xe_2
+```
+
+- The rebuilt `libgrouped_gemm_xe_2.so` links against `libsycl.so.8` and was
+  copied into `build/temp/` for fresh Python microbench processes.
+- Import sanity passed after the swap:
+  `torch.ops._xpu_C.cutlass_grouped_gemm_w8a8_int8_interface == True`.
+- Backend/frontdoor health after the policy screens:
+  `http://127.0.0.1:18080/health -> 200`,
+  `http://127.0.0.1:8000/health -> 200`.
+
+Artifacts:
+
+- `data/qwen36-quark-int8-w8a8-policy-m16-smoke-20260611.json`
+- `data/qwen36-quark-int8-w8a8-policy-m32-smoke-20260611.json`
+- `data/qwen36-quark-int8-w8a8-policy-base-smoke-20260611.json`
+- `data/qwen36-quark-int8-w8a8-policy-m16-routeexact-20260611.json`
+- `data/qwen36-quark-int8-w8a8-policy-m32-routeexact-20260611.json`
+- `data/qwen36-quark-int8-w8a8-policy-base-routeexact-20260611.json`
+
+Full route-exact command pattern:
+
+```bash
+VLLM_XPU_W8A8_GROUPED_GEMM_POLICY=<m16|m32|base> \
+  /home/steve/.venvs/vllm-xpu/bin/python \
+  scripts/bench-qwen36-w8a8-kernel-floor.py \
+  --route-jsonl data/qwen36-quark-int8-tp4-routecapture6-routes-rank0-20260611.jsonl \
+  --route-layer-regex 'layers\.(9|14|21)\.' \
+  --route-start-indices 0:96:12 \
+  --max-cases 8 \
+  --gemm-stage both \
+  --warmup 5 \
+  --iterations 20 \
+  --device xpu:3 \
+  --output-json data/qwen36-quark-int8-w8a8-policy-<policy>-routeexact-20260611.json
+```
+
+Route-exact grouped W8A8 results, mean of case means:
+
+| Policy | GEMM1 us | GEMM2 us | Read |
+| --- | ---: | ---: | --- |
+| `m16` | 112.936 | 104.377 | current default for decode, because `8 / 256` maps to tiny-M |
+| `m32` | 105.793 | 102.627 | best GEMM2, materially better GEMM1 |
+| `base` | 104.622 | 103.535 | best GEMM1, neutral/slightly worse than `m32` on GEMM2 |
+
+Interpretation:
+
+- The default tiny-M `m16` policy is probably not the best choice for these
+  route-exact W8A8 decode shapes.
+- `m32` is the safest next endpoint candidate because it improves both stages
+  in this screen: about `6.3%` faster on GEMM1 and `1.7%` faster on GEMM2
+  versus `m16`.
+- `base` is also promising for GEMM1 but gives back some GEMM2 time. It may be
+  useful if endpoint profiles show GEMM1 dominates.
+- This is not enough to accept the change for production. Next gate is an
+  endpoint restart with `VLLM_XPU_W8A8_GROUPED_GEMM_POLICY=m32`, then:
+  speed repeat, quality repeat, and stability repeat. If endpoint-level speed
+  does not move, this remains a microbench-only finding.

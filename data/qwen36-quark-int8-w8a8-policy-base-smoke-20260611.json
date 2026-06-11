@@ -1,0 +1,167 @@
+{
+  "aggregates": [
+    {
+      "case_count": 1,
+      "gemm_stage": "gemm2",
+      "label": "dense_active_loop_model_shape_many_launches",
+      "max_case_mean_us": 295.8332,
+      "mean_of_case_means_us": 295.8332,
+      "median_of_case_means_us": 295.8332,
+      "min_case_mean_us": 295.8332,
+      "route_window_size": 1
+    },
+    {
+      "case_count": 1,
+      "gemm_stage": "gemm2",
+      "label": "dense_single_not_model_equivalent",
+      "max_case_mean_us": 103.9896,
+      "mean_of_case_means_us": 103.9896,
+      "median_of_case_means_us": 103.9896,
+      "min_case_mean_us": 103.9896,
+      "route_window_size": 1
+    },
+    {
+      "case_count": 1,
+      "gemm_stage": "gemm2",
+      "label": "grouped_exact_256",
+      "max_case_mean_us": 108.5812,
+      "mean_of_case_means_us": 108.5812,
+      "median_of_case_means_us": 108.5812,
+      "min_case_mean_us": 108.5812,
+      "route_window_size": 1
+    }
+  ],
+  "args": {
+    "gemm_stage": "gemm2",
+    "include_compact_grouped": false,
+    "include_quant": false,
+    "iterations": 10,
+    "max_cases": 1,
+    "route_layer_regex": "layers\\.9\\.",
+    "route_stage_regex": "^quark_int8_apply$",
+    "route_start_indices": [
+      0
+    ],
+    "route_window_size": 1,
+    "warmup": 3
+  },
+  "cases": [
+    {
+      "active_experts": 8,
+      "calls": {
+        "1": 1
+      },
+      "case_index": 0,
+      "first_call": 1,
+      "first_layer": "language_model.model.layers.9.mlp.experts",
+      "full_num_experts": 256,
+      "gemm_stage": "gemm2",
+      "k": 128,
+      "label": "grouped_exact_256",
+      "layers": {
+        "language_model.model.layers.9.mlp.experts": 1
+      },
+      "max_us": 142.22,
+      "mean_us": 108.5812,
+      "median_us": 115.362,
+      "min_us": 12.636,
+      "n": 2048,
+      "output_all_finite": true,
+      "output_max_abs": 75.0,
+      "p05_us": 52.7436,
+      "p95_us": 138.8972,
+      "route_start_index": 0,
+      "route_window_size": 1,
+      "samples": 10,
+      "stdev_us": 33.91120466394551,
+      "total_rows": 8
+    },
+    {
+      "active_experts": 8,
+      "calls": {
+        "1": 1
+      },
+      "case_index": 0,
+      "first_call": 1,
+      "first_layer": "language_model.model.layers.9.mlp.experts",
+      "full_num_experts": 256,
+      "gemm_stage": "gemm2",
+      "k": 128,
+      "label": "dense_single_not_model_equivalent",
+      "layers": {
+        "language_model.model.layers.9.mlp.experts": 1
+      },
+      "max_us": 134.576,
+      "mean_us": 103.9896,
+      "median_us": 118.898,
+      "min_us": 11.595999999999998,
+      "n": 2048,
+      "output_all_finite": true,
+      "output_max_abs": 67.5,
+      "p05_us": 45.6898,
+      "p95_us": 128.42179999999996,
+      "route_start_index": 0,
+      "route_window_size": 1,
+      "samples": 10,
+      "stdev_us": 33.71348768430819,
+      "total_rows": 8
+    },
+    {
+      "active_experts": 8,
+      "calls": {
+        "1": 1
+      },
+      "case_index": 0,
+      "first_call": 1,
+      "first_layer": "language_model.model.layers.9.mlp.experts",
+      "full_num_experts": 256,
+      "gemm_stage": "gemm2",
+      "k": 128,
+      "label": "dense_active_loop_model_shape_many_launches",
+      "layers": {
+        "language_model.model.layers.9.mlp.experts": 1
+      },
+      "max_us": 311.948,
+      "mean_us": 295.8332,
+      "median_us": 299.884,
+      "min_us": 256.51599999999996,
+      "n": 2048,
+      "output_all_finite": true,
+      "output_max_abs": 75.0,
+      "p05_us": 271.141,
+      "p95_us": 309.3272,
+      "route_start_index": 0,
+      "route_window_size": 1,
+      "samples": 10,
+      "stdev_us": 14.330042406078228,
+      "total_rows": 8
+    }
+  ],
+  "created_at": "2026-06-11T08:27:29-0400",
+  "device": "xpu:3",
+  "dtype": "bf16",
+  "env": {
+    "ONEAPI_DEVICE_SELECTOR": null,
+    "PYTHONPATH": null,
+    "VLLM_XPU_W8A8_GROUPED_GEMM_POLICY": "base",
+    "ZE_AFFINITY_MASK": null
+  },
+  "hidden_size": 2048,
+  "inter_size_per_tp": 128,
+  "kernel_module": "/home/steve/src/vllm-xpu-kernels/vllm_xpu_kernels/_xpu_C.abi3.so",
+  "model_config": "/mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118/config.json",
+  "num_experts": 256,
+  "purpose": "W8A8 tiny-shape floor diagnostic for Qwen3.6 A3B decode.",
+  "quant_results": [],
+  "route_metadata": {
+    "layers": {
+      "language_model.model.layers.9.mlp.experts": 95
+    },
+    "records_loaded": 285,
+    "records_matched": 95,
+    "records_skipped": 190,
+    "route_jsonl": "data/qwen36-quark-int8-tp4-routecapture6-routes-rank0-20260611.jsonl"
+  },
+  "torch_version": "2.11.0+xpu",
+  "tp_size": 4
+}
