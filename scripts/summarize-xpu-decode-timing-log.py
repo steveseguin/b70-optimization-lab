@@ -20,6 +20,7 @@ SUMMARY_RE = re.compile(
     r"total_ms=(?P<total_ms>[0-9.]+)\s+avg_ms=(?P<avg_ms>[0-9.]+)\s+"
     r"max_ms=(?P<max_ms>[0-9.]+)"
 )
+STEP_RE = re.compile(r"\[vllm-xpu-timing-step\]\s+(?P<payload>\{.*\})")
 POST_RE = re.compile(r'POST\s+/v1/(?:completions|chat/completions)\s+HTTP/\d(?:\.\d)?"\s+200')
 
 
@@ -63,6 +64,35 @@ def summarize_samples(samples: list[dict]) -> list[dict]:
     return rows
 
 
+def summarize_steps(steps: list[dict]) -> list[dict]:
+    grouped: dict[str, list[dict]] = {}
+    for step in steps:
+        for row in step.get("summary_by_total_ms", []):
+            grouped.setdefault(row["label"], []).append(row)
+
+    rows = []
+    for label, items in grouped.items():
+        totals = [float(item["total_ms"]) for item in items]
+        counts = [int(item["count"]) for item in items]
+        avg_per_call = [float(item["avg_ms"]) for item in items]
+        maxes = [float(item["max_ms"]) for item in items]
+        rows.append(
+            {
+                "label": label,
+                "step_count": len(items),
+                "call_count": sum(counts),
+                "mean_total_ms_per_step": statistics.fmean(totals),
+                "median_total_ms_per_step": statistics.median(totals),
+                "p90_total_ms_per_step": percentile(totals, 0.90),
+                "max_total_ms_per_step": max(totals),
+                "mean_avg_ms_per_call": statistics.fmean(avg_per_call),
+                "max_ms": max(maxes),
+            }
+        )
+    rows.sort(key=lambda row: row["mean_total_ms_per_step"], reverse=True)
+    return rows
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--log", required=True, help="vLLM worker log file")
@@ -93,6 +123,7 @@ def main() -> int:
 
     samples = []
     summaries = []
+    steps = []
     for idx, line in enumerate(lines, start=1):
         if sample_start_line <= idx <= sample_end_line:
             match = SAMPLE_RE.search(line)
@@ -123,9 +154,18 @@ def main() -> int:
                     "max_ms": float(match.group("max_ms")),
                 }
             )
+        match = STEP_RE.search(line)
+        if match and (args.all_lines or idx >= sample_start_line):
+            try:
+                payload = json.loads(match.group("payload"))
+            except json.JSONDecodeError:
+                continue
+            payload["line"] = idx
+            steps.append(payload)
 
     summary_rows = summarize_samples(samples)
     timing_summary = sorted(summaries, key=lambda row: row["total_ms"], reverse=True)
+    step_summary = summarize_steps(steps)
     payload = {
         "source_log": str(log_path),
         "line_count": len(lines),
@@ -135,12 +175,15 @@ def main() -> int:
         "summary_start_line": summary_start_line,
         "sample_line_count": len(samples),
         "summary_line_count": len(timing_summary),
+        "step_line_count": len(steps),
         "samples_by_last_ms": summary_rows,
         "summary_by_total_ms": timing_summary,
+        "step_summary_by_mean_total_ms": step_summary,
     }
     if args.include_raw:
         payload["raw_samples"] = samples
         payload["raw_summaries"] = summaries
+        payload["raw_steps"] = steps
 
     out_path = Path(args.out)
     out_path.parent.mkdir(parents=True, exist_ok=True)

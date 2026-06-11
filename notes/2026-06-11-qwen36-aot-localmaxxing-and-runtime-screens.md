@@ -3935,3 +3935,165 @@ New things to try:
       coding, JSON schema, math, retrieval/needle at 8K and 32K, multilingual,
       and tool-call formatting.
     - Pair every speed artifact with a quality artifact and a stability loop.
+
+## Step Timing Instrumentation And MoE Visibility
+
+Implemented opt-in step-level timing in the local vLLM runtime and extended the
+log parser to aggregate `[vllm-xpu-timing-step]` JSON records.
+
+Runtime source note:
+
+- `patches/vllm-xpu-step-timing-instrumentation-20260611.md`
+
+Lab-side code changes:
+
+- `scripts/summarize-xpu-decode-timing-log.py`
+  - Now parses step JSON lines.
+  - Aggregates labels by mean total milliseconds per decode step.
+- `scripts/launch-qwen36-quark-int8-accepted.sh`
+  - Production default now also strips:
+    `VLLM_XPU_DECODE_TIMING_STEP_SUMMARY`,
+    `VLLM_XPU_DECODE_TIMING_STEP_EVERY`, and
+    `VLLM_XPU_DECODE_TIMING_STEP_SKIP_FIRST`.
+
+Graph-path step timing command:
+
+```bash
+tmux new-session -d -s qwen36-tp4-step-timing-20260611c \
+  'cd /home/steve/llm-optimizations && \
+   VLLM_XPU_DECODE_TIMING_ALLOW=1 \
+   VLLM_XPU_DECODE_TIMING=1 \
+   VLLM_XPU_DECODE_TIMING_SYNC=1 \
+   VLLM_XPU_DECODE_TIMING_RANK=0 \
+   VLLM_XPU_DECODE_TIMING_SUMMARY=1 \
+   VLLM_XPU_DECODE_TIMING_PRINT_EVERY=0 \
+   VLLM_XPU_DECODE_TIMING_SKIP_FIRST=20 \
+   VLLM_XPU_DECODE_TIMING_STEP_SUMMARY=1 \
+   VLLM_XPU_DECODE_TIMING_STEP_SKIP_FIRST=80 \
+   VLLM_XPU_DECODE_TIMING_STEP_EVERY=1 \
+   LOG_PATH=/tmp/qwen36-quark-int8-tp4-step-timing-20260611c.log \
+   scripts/launch-qwen36-quark-int8-accepted.sh'
+
+/home/steve/.venvs/vllm-xpu/bin/python scripts/measure-openai-endpoint-metrics.py \
+  --base-url http://127.0.0.1:18080 \
+  --tokenizer /mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118 \
+  --prompt-tokens 512 \
+  --output-tokens 128 \
+  --prompt-kind preset \
+  --prompt-preset natural-chat \
+  --repeats 1 \
+  --warmup-output-tokens 16 \
+  --endpoint completions \
+  --mode stream \
+  --ignore-eos \
+  --skip-vram \
+  --include-full-text \
+  --out data/qwen36-quark-int8-tp4-step-timing-direct-natural-ignoreeos-p512o128-r1-20260611c.json
+
+/home/steve/.venvs/vllm-xpu/bin/python scripts/summarize-xpu-decode-timing-log.py \
+  --log /tmp/qwen36-quark-int8-tp4-step-timing-20260611c.log \
+  --out data/qwen36-quark-int8-tp4-step-timing-rank0-lines-20260611c.json \
+  --include-raw
+```
+
+Graph-path results, rank 0, final 64 decode steps:
+
+| Label | Mean total ms/step | Calls/step | Notes |
+| --- | ---: | ---: | --- |
+| `gpu_model_runner.model_forward` | 12.362 | 1 | Dominant visible region |
+| `gdn_attention_core_xpu.native` | 2.713 | 30 | About 0.0904 ms/call |
+| `gpu_model_runner.compute_logits` | 0.774 | 1 | Too small for 2x alone |
+| `logits.local_argmax_lm_head` | 0.541 | 1 | Too small for 2x alone |
+| `gpu_model_runner.sampler` | 0.163 | 1 | Small |
+| `gpu_model_runner.select_sample_hidden` | 0.089 | 1 | Small |
+| `gpu_model_runner.bookkeeping_sync` | 0.061 | 1 | Small |
+
+Artifact:
+
+- `data/qwen36-quark-int8-tp4-step-timing-rank0-lines-20260611c.json`
+
+Important limitation:
+
+- Python-level MoE labels do not appear during graph replay because the MoE
+  Python wrappers are captured into the compiled graph. The graph-path timing
+  still proves `model_forward` is the only region large enough to hide the
+  missing 2x, but it cannot break down graph-replayed MoE subregions.
+
+Eager MoE visibility run:
+
+```bash
+tmux new-session -d -s qwen36-tp4-eager-moe-timing-20260611d \
+  'cd /home/steve/llm-optimizations && \
+   XPU_GRAPH=0 \
+   VLLM_XPU_ENABLE_XPU_GRAPH=0 \
+   VLLM_XPU_DECODE_TIMING_ALLOW=1 \
+   VLLM_XPU_DECODE_TIMING=1 \
+   VLLM_XPU_DECODE_TIMING_SYNC=1 \
+   VLLM_XPU_DECODE_TIMING_RANK=0 \
+   VLLM_XPU_DECODE_TIMING_SUMMARY=1 \
+   VLLM_XPU_DECODE_TIMING_PRINT_EVERY=0 \
+   VLLM_XPU_DECODE_TIMING_SKIP_FIRST=8 \
+   VLLM_XPU_DECODE_TIMING_STEP_SUMMARY=1 \
+   VLLM_XPU_DECODE_TIMING_STEP_SKIP_FIRST=16 \
+   VLLM_XPU_DECODE_TIMING_STEP_EVERY=1 \
+   VLLM_EXTRA_ARGS=--enforce-eager \
+   LOG_PATH=/tmp/qwen36-quark-int8-tp4-eager-moe-timing-20260611d.log \
+   scripts/launch-qwen36-quark-int8-accepted.sh'
+```
+
+Eager is not a speed candidate. It measured only 8.698 corrected tok/s, but it
+exposed MoE and collective labels.
+
+Eager visibility results, rank 0, final 56 decode steps:
+
+| Label | Mean total ms/step | Calls/step | Notes |
+| --- | ---: | ---: | --- |
+| `gpu_model_runner.model_forward` | 113.605 | 1 | Eager-only, diagnostic |
+| `moe_forward_shared.custom_op` | 48.097 | 40 | MoE dominates eager forward |
+| `all_reduce:(1, 2048):torch.bfloat16` | 8.357 | 81 | Collective overhead is material in eager |
+| `xpu_moe.gemm1_w8a8` | 2.815 | 40 | About 0.0704 ms/call |
+| `gdn_attention_core_xpu.native` | 2.756 | 30 | Similar to graph path |
+| `xpu_moe.gemm2_w8a8` | 2.493 | 40 | About 0.0623 ms/call |
+| `xpu_moe.remap_hidden_states` | 2.482 | 40 | Routing/remap overhead matters |
+| `xpu_moe.gemm1_quant` | 2.191 | 40 | Activation quant overhead matters |
+| `xpu_moe.gemm2_quant` | 2.097 | 40 | Activation quant overhead matters |
+| `xpu_moe.activation` | 1.845 | 40 | Small per call, large across layers |
+| `xpu_moe.gather` | 1.758 | 40 | Scatter/gather overhead matters |
+
+Artifacts:
+
+- `data/qwen36-quark-int8-tp4-eager-moe-timing-direct-natural-ignoreeos-p512o64-r1-20260611d.json`
+- `data/qwen36-quark-int8-tp4-eager-moe-timing-rank0-lines-20260611d.json`
+
+Restore smoke:
+
+- Restored normal graph backend:
+  `qwen36-tp4-accepted-restored-after-step-timing-20260611d`
+- Backend and frontdoor health passed.
+- No-timing p512/o128 smoke:
+  `data/qwen36-quark-int8-tp4-post-step-timing-restore-natural-ignoreeos-p512o128-r1-20260611.json`
+- Result:
+  101.855 corrected after-first tok/s, 95.702 E2E output tok/s, 90.617 ms
+  client TTFT.
+
+Decision:
+
+- The serving layer remains ruled out.
+- Logits/sampler/output work is too small for the required 2x.
+- GDN attention is visible and stable around 2.7 ms/step; it is worth
+  optimizing, but even eliminating it entirely would not get to 200 tok/s.
+- The next exact-quality speed work should target graph-replayed `model_forward`
+  internals, with emphasis on:
+  1. graph-visible MoE timing or C++/SYCL-side timing inside `xpu_fused_moe`;
+  2. persistent/fused W8A8 MoE that reduces remap, quant, activation, and
+     gather overhead across the 40 MoE calls per token;
+  3. graph-captured or fused collectives, because eager shows many small
+     all-reduces per token step.
+
+Immediate next technical move:
+
+- Add kernel-side or custom-op-side timing counters to `vllm-xpu-kernels`
+  around `xpu_fused_moe` replay, not only Python wrappers.
+- Use the graph path, not eager, as the speed gate.
+- Keep quality gate unchanged: same W8A8 weights, same routing/math semantics,
+  and token/semantic parity checks before accepting any kernel change.
