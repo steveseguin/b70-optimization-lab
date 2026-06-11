@@ -1,0 +1,1991 @@
+{
+  "trace_path": "/tmp/qwen36-oracle1-short-graph-spec-trace-20260611a.jsonl",
+  "token_trace_paths": [
+    "data/qwen36-quark-int8-tp4-oracle1-short-graph-completions-20260611.json"
+  ],
+  "rows": 15,
+  "malformed_rows": 0,
+  "requests": 2,
+  "joined_requests": 2,
+  "suppressed_followup_mismatch_count": 0,
+  "accounting_mismatch_count": 0,
+  "request_summaries": [
+    {
+      "req_id": "cmpl-96c535d8fe063261-0-9b4f19dd",
+      "rows": 8,
+      "first_ts": 1781202836.564908,
+      "last_ts": 1781202836.7019167,
+      "draft_tokens": 8,
+      "accepted": 7,
+      "rejected": 1,
+      "suppressed_bonus_rows": 0,
+      "emitted_token_ids_from_trace": [
+        17856,
+        13,
+        78503,
+        4581,
+        2468,
+        1345,
+        28043,
+        7072,
+        3817,
+        22188,
+        13,
+        15153,
+        1543,
+        6126,
+        16401
+      ],
+      "emitted_text_from_trace": " timing. Preserve exact output while measuring multi token verification. Intel XPU decode",
+      "generated_token_ids_from_trace": [
+        17856,
+        13,
+        78503,
+        4581,
+        2468,
+        1345,
+        28043,
+        7072,
+        3817,
+        22188,
+        13,
+        15153,
+        1543,
+        6126,
+        16401
+      ],
+      "generated_text_from_trace": " timing. Preserve exact output while measuring multi token verification. Intel XPU decode",
+      "suppressed_bonus_token_ids": [],
+      "suppressed_bonus_text": "",
+      "suppressed_followup_checks": [],
+      "suppressed_followup_mismatches": [],
+      "accounting_checks": [
+        {
+          "line_no": 8,
+          "expected_computed_delta": 0,
+          "actual_computed_delta": 0,
+          "num_rejected": 0,
+          "num_suppressed_bonus_tokens": 0,
+          "matches": true
+        },
+        {
+          "line_no": 9,
+          "expected_computed_delta": 0,
+          "actual_computed_delta": 0,
+          "num_rejected": 0,
+          "num_suppressed_bonus_tokens": 0,
+          "matches": true
+        },
+        {
+          "line_no": 10,
+          "expected_computed_delta": 0,
+          "actual_computed_delta": 0,
+          "num_rejected": 0,
+          "num_suppressed_bonus_tokens": 0,
+          "matches": true
+        },
+        {
+          "line_no": 11,
+          "expected_computed_delta": 0,
+          "actual_computed_delta": 0,
+          "num_rejected": 0,
+          "num_suppressed_bonus_tokens": 0,
+          "matches": true
+        },
+        {
+          "line_no": 12,
+          "expected_computed_delta": 0,
+          "actual_computed_delta": 0,
+          "num_rejected": 0,
+          "num_suppressed_bonus_tokens": 0,
+          "matches": true
+        },
+        {
+          "line_no": 13,
+          "expected_computed_delta": 0,
+          "actual_computed_delta": 0,
+          "num_rejected": 0,
+          "num_suppressed_bonus_tokens": 0,
+          "matches": true
+        },
+        {
+          "line_no": 14,
+          "expected_computed_delta": 0,
+          "actual_computed_delta": 0,
+          "num_rejected": 0,
+          "num_suppressed_bonus_tokens": 0,
+          "matches": true
+        },
+        {
+          "line_no": 15,
+          "expected_computed_delta": -1,
+          "actual_computed_delta": -1,
+          "num_rejected": 1,
+          "num_suppressed_bonus_tokens": 0,
+          "matches": true
+        }
+      ],
+      "accounting_mismatches": [],
+      "token_trace_case": {
+        "path": "data/qwen36-quark-int8-tp4-oracle1-short-graph-completions-20260611.json",
+        "name": "repetitive_kernel_notes",
+        "repeat_idx": null,
+        "normalized": null,
+        "output_token_count": 32,
+        "output_token_ids": [
+          3817,
+          17856,
+          13,
+          78503,
+          4581,
+          2468,
+          1345,
+          28043,
+          7072,
+          3817,
+          22188,
+          13,
+          15153,
+          1543,
+          6126,
+          16401,
+          85683,
+          15162,
+          5832,
+          271,
+          248068,
+          271,
+          248069,
+          271,
+          47452,
+          1543,
+          6126,
+          16401,
+          85683,
+          15162,
+          5832,
+          4618
+        ],
+        "request_started_at_unix": 1781202836.4655392,
+        "request_finished_at_unix": 1781202836.8711076,
+        "sha256": null
+      },
+      "token_trace_join_method": "scheduler_prefix",
+      "token_trace_matched_request_id": "cmpl-96c535d8fe063261",
+      "traced_emitted_is_token_trace_prefix": false,
+      "row_summaries": [
+        {
+          "line_no": 8,
+          "ts": 1781202836.564908,
+          "num_draft_tokens": 1,
+          "num_accepted": 1,
+          "num_rejected": 0,
+          "num_suppressed_bonus_tokens": 0,
+          "num_tokens_scheduled": 2,
+          "num_computed_tokens": null,
+          "num_output_tokens": null,
+          "scheduled_spec_token_ids": [
+            17856
+          ],
+          "scheduled_spec_text": " timing",
+          "generated_token_ids": [
+            17856,
+            13
+          ],
+          "generated_text": " timing.",
+          "emitted_token_ids": [
+            17856,
+            13
+          ],
+          "emitted_text": " timing.",
+          "new_token_ids_after_stop_check": [
+            17856,
+            13
+          ],
+          "suppressed_bonus_token_id": null,
+          "suppressed_bonus_text": null,
+          "followup_check": null,
+          "state_transition": {
+            "before": {
+              "num_prompt_tokens": 488,
+              "num_output_tokens": 1,
+              "num_tokens": 489,
+              "num_tokens_with_spec": 489,
+              "num_computed_tokens": 490,
+              "num_output_placeholders": 0,
+              "spec_len": 0,
+              "max_tokens": 32,
+              "is_prefill_chunk": false,
+              "status": "RUNNING",
+              "last_output_token_ids": [
+                3817
+              ]
+            },
+            "after_reject_adjust": {
+              "num_prompt_tokens": 488,
+              "num_output_tokens": 1,
+              "num_tokens": 489,
+              "num_tokens_with_spec": 489,
+              "num_computed_tokens": 490,
+              "num_output_placeholders": 0,
+              "spec_len": 0,
+              "max_tokens": 32,
+              "is_prefill_chunk": false,
+              "status": "RUNNING",
+              "last_output_token_ids": [
+                3817
+              ]
+            },
+            "after_output_update": {
+              "num_prompt_tokens": 488,
+              "num_output_tokens": 3,
+              "num_tokens": 491,
+              "num_tokens_with_spec": 491,
+              "num_computed_tokens": 490,
+              "num_output_placeholders": 0,
+              "spec_len": 0,
+              "max_tokens": 32,
+              "is_prefill_chunk": false,
+              "status": "RUNNING",
+              "last_output_token_ids": [
+                3817,
+                17856,
+                13
+              ]
+            },
+            "num_computed_tokens_delta_reject_adjust": 0,
+            "num_tokens_delta_output_update": 2,
+            "num_output_tokens_delta_output_update": 2
+          },
+          "accounting_check": {
+            "expected_computed_delta": 0,
+            "actual_computed_delta": 0,
+            "num_rejected": 0,
+            "num_suppressed_bonus_tokens": 0,
+            "matches": true
+          }
+        },
+        {
+          "line_no": 9,
+          "ts": 1781202836.583358,
+          "num_draft_tokens": 1,
+          "num_accepted": 1,
+          "num_rejected": 0,
+          "num_suppressed_bonus_tokens": 0,
+          "num_tokens_scheduled": 2,
+          "num_computed_tokens": null,
+          "num_output_tokens": null,
+          "scheduled_spec_token_ids": [
+            78503
+          ],
+          "scheduled_spec_text": " Preserve",
+          "generated_token_ids": [
+            78503,
+            4581
+          ],
+          "generated_text": " Preserve exact",
+          "emitted_token_ids": [
+            78503,
+            4581
+          ],
+          "emitted_text": " Preserve exact",
+          "new_token_ids_after_stop_check": [
+            78503,
+            4581
+          ],
+          "suppressed_bonus_token_id": null,
+          "suppressed_bonus_text": null,
+          "followup_check": null,
+          "state_transition": {
+            "before": {
+              "num_prompt_tokens": 488,
+              "num_output_tokens": 3,
+              "num_tokens": 491,
+              "num_tokens_with_spec": 491,
+              "num_computed_tokens": 492,
+              "num_output_placeholders": 0,
+              "spec_len": 0,
+              "max_tokens": 32,
+              "is_prefill_chunk": false,
+              "status": "RUNNING",
+              "last_output_token_ids": [
+                3817,
+                17856,
+                13
+              ]
+            },
+            "after_reject_adjust": {
+              "num_prompt_tokens": 488,
+              "num_output_tokens": 3,
+              "num_tokens": 491,
+              "num_tokens_with_spec": 491,
+              "num_computed_tokens": 492,
+              "num_output_placeholders": 0,
+              "spec_len": 0,
+              "max_tokens": 32,
+              "is_prefill_chunk": false,
+              "status": "RUNNING",
+              "last_output_token_ids": [
+                3817,
+                17856,
+                13
+              ]
+            },
+            "after_output_update": {
+              "num_prompt_tokens": 488,
+              "num_output_tokens": 5,
+              "num_tokens": 493,
+              "num_tokens_with_spec": 493,
+              "num_computed_tokens": 492,
+              "num_output_placeholders": 0,
+              "spec_len": 0,
+              "max_tokens": 32,
+              "is_prefill_chunk": false,
+              "status": "RUNNING",
+              "last_output_token_ids": [
+                3817,
+                17856,
+                13,
+                78503,
+                4581
+              ]
+            },
+            "num_computed_tokens_delta_reject_adjust": 0,
+            "num_tokens_delta_output_update": 2,
+            "num_output_tokens_delta_output_update": 2
+          },
+          "accounting_check": {
+            "expected_computed_delta": 0,
+            "actual_computed_delta": 0,
+            "num_rejected": 0,
+            "num_suppressed_bonus_tokens": 0,
+            "matches": true
+          }
+        },
+        {
+          "line_no": 10,
+          "ts": 1781202836.6016386,
+          "num_draft_tokens": 1,
+          "num_accepted": 1,
+          "num_rejected": 0,
+          "num_suppressed_bonus_tokens": 0,
+          "num_tokens_scheduled": 2,
+          "num_computed_tokens": null,
+          "num_output_tokens": null,
+          "scheduled_spec_token_ids": [
+            2468
+          ],
+          "scheduled_spec_text": " output",
+          "generated_token_ids": [
+            2468,
+            1345
+          ],
+          "generated_text": " output while",
+          "emitted_token_ids": [
+            2468,
+            1345
+          ],
+          "emitted_text": " output while",
+          "new_token_ids_after_stop_check": [
+            2468,
+            1345
+          ],
+          "suppressed_bonus_token_id": null,
+          "suppressed_bonus_text": null,
+          "followup_check": null,
+          "state_transition": {
+            "before": {
+              "num_prompt_tokens": 488,
+              "num_output_tokens": 5,
+              "num_tokens": 493,
+              "num_tokens_with_spec": 493,
+              "num_computed_tokens": 494,
+              "num_output_placeholders": 0,
+              "spec_len": 0,
+              "max_tokens": 32,
+              "is_prefill_chunk": false,
+              "status": "RUNNING",
+              "last_output_token_ids": [
+                3817,
+                17856,
+                13,
+                78503,
+                4581
+              ]
+            },
+            "after_reject_adjust": {
+              "num_prompt_tokens": 488,
+              "num_output_tokens": 5,
+              "num_tokens": 493,
+              "num_tokens_with_spec": 493,
+              "num_computed_tokens": 494,
+              "num_output_placeholders": 0,
+              "spec_len": 0,
+              "max_tokens": 32,
+              "is_prefill_chunk": false,
+              "status": "RUNNING",
+              "last_output_token_ids": [
+                3817,
+                17856,
+                13,
+                78503,
+                4581
+              ]
+            },
+            "after_output_update": {
+              "num_prompt_tokens": 488,
+              "num_output_tokens": 7,
+              "num_tokens": 495,
+              "num_tokens_with_spec": 495,
+              "num_computed_tokens": 494,
+              "num_output_placeholders": 0,
+              "spec_len": 0,
+              "max_tokens": 32,
+              "is_prefill_chunk": false,
+              "status": "RUNNING",
+              "last_output_token_ids": [
+                3817,
+                17856,
+                13,
+                78503,
+                4581,
+                2468,
+                1345
+              ]
+            },
+            "num_computed_tokens_delta_reject_adjust": 0,
+            "num_tokens_delta_output_update": 2,
+            "num_output_tokens_delta_output_update": 2
+          },
+          "accounting_check": {
+            "expected_computed_delta": 0,
+            "actual_computed_delta": 0,
+            "num_rejected": 0,
+            "num_suppressed_bonus_tokens": 0,
+            "matches": true
+          }
+        },
+        {
+          "line_no": 11,
+          "ts": 1781202836.620108,
+          "num_draft_tokens": 1,
+          "num_accepted": 1,
+          "num_rejected": 0,
+          "num_suppressed_bonus_tokens": 0,
+          "num_tokens_scheduled": 2,
+          "num_computed_tokens": null,
+          "num_output_tokens": null,
+          "scheduled_spec_token_ids": [
+            28043
+          ],
+          "scheduled_spec_text": " measuring",
+          "generated_token_ids": [
+            28043,
+            7072
+          ],
+          "generated_text": " measuring multi",
+          "emitted_token_ids": [
+            28043,
+            7072
+          ],
+          "emitted_text": " measuring multi",
+          "new_token_ids_after_stop_check": [
+            28043,
+            7072
+          ],
+          "suppressed_bonus_token_id": null,
+          "suppressed_bonus_text": null,
+          "followup_check": null,
+          "state_transition": {
+            "before": {
+              "num_prompt_tokens": 488,
+              "num_output_tokens": 7,
+              "num_tokens": 495,
+              "num_tokens_with_spec": 495,
+              "num_computed_tokens": 496,
+              "num_output_placeholders": 0,
+              "spec_len": 0,
+              "max_tokens": 32,
+              "is_prefill_chunk": false,
+              "status": "RUNNING",
+              "last_output_token_ids": [
+                3817,
+                17856,
+                13,
+                78503,
+                4581,
+                2468,
+                1345
+              ]
+            },
+            "after_reject_adjust": {
+              "num_prompt_tokens": 488,
+              "num_output_tokens": 7,
+              "num_tokens": 495,
+              "num_tokens_with_spec": 495,
+              "num_computed_tokens": 496,
+              "num_output_placeholders": 0,
+              "spec_len": 0,
+              "max_tokens": 32,
+              "is_prefill_chunk": false,
+              "status": "RUNNING",
+              "last_output_token_ids": [
+                3817,
+                17856,
+                13,
+                78503,
+                4581,
+                2468,
+                1345
+              ]
+            },
+            "after_output_update": {
+              "num_prompt_tokens": 488,
+              "num_output_tokens": 9,
+              "num_tokens": 497,
+              "num_tokens_with_spec": 497,
+              "num_computed_tokens": 496,
+              "num_output_placeholders": 0,
+              "spec_len": 0,
+              "max_tokens": 32,
+              "is_prefill_chunk": false,
+              "status": "RUNNING",
+              "last_output_token_ids": [
+                3817,
+                17856,
+                13,
+                78503,
+                4581,
+                2468,
+                1345,
+                28043,
+                7072
+              ]
+            },
+            "num_computed_tokens_delta_reject_adjust": 0,
+            "num_tokens_delta_output_update": 2,
+            "num_output_tokens_delta_output_update": 2
+          },
+          "accounting_check": {
+            "expected_computed_delta": 0,
+            "actual_computed_delta": 0,
+            "num_rejected": 0,
+            "num_suppressed_bonus_tokens": 0,
+            "matches": true
+          }
+        },
+        {
+          "line_no": 12,
+          "ts": 1781202836.6383808,
+          "num_draft_tokens": 1,
+          "num_accepted": 1,
+          "num_rejected": 0,
+          "num_suppressed_bonus_tokens": 0,
+          "num_tokens_scheduled": 2,
+          "num_computed_tokens": null,
+          "num_output_tokens": null,
+          "scheduled_spec_token_ids": [
+            3817
+          ],
+          "scheduled_spec_text": " token",
+          "generated_token_ids": [
+            3817,
+            22188
+          ],
+          "generated_text": " token verification",
+          "emitted_token_ids": [
+            3817,
+            22188
+          ],
+          "emitted_text": " token verification",
+          "new_token_ids_after_stop_check": [
+            3817,
+            22188
+          ],
+          "suppressed_bonus_token_id": null,
+          "suppressed_bonus_text": null,
+          "followup_check": null,
+          "state_transition": {
+            "before": {
+              "num_prompt_tokens": 488,
+              "num_output_tokens": 9,
+              "num_tokens": 497,
+              "num_tokens_with_spec": 497,
+              "num_computed_tokens": 498,
+              "num_output_placeholders": 0,
+              "spec_len": 0,
+              "max_tokens": 32,
+              "is_prefill_chunk": false,
+              "status": "RUNNING",
+              "last_output_token_ids": [
+                3817,
+                17856,
+                13,
+                78503,
+                4581,
+                2468,
+                1345,
+                28043,
+                7072
+              ]
+            },
+            "after_reject_adjust": {
+              "num_prompt_tokens": 488,
+              "num_output_tokens": 9,
+              "num_tokens": 497,
+              "num_tokens_with_spec": 497,
+              "num_computed_tokens": 498,
+              "num_output_placeholders": 0,
+              "spec_len": 0,
+              "max_tokens": 32,
+              "is_prefill_chunk": false,
+              "status": "RUNNING",
+              "last_output_token_ids": [
+                3817,
+                17856,
+                13,
+                78503,
+                4581,
+                2468,
+                1345,
+                28043,
+                7072
+              ]
+            },
+            "after_output_update": {
+              "num_prompt_tokens": 488,
+              "num_output_tokens": 11,
+              "num_tokens": 499,
+              "num_tokens_with_spec": 499,
+              "num_computed_tokens": 498,
+              "num_output_placeholders": 0,
+              "spec_len": 0,
+              "max_tokens": 32,
+              "is_prefill_chunk": false,
+              "status": "RUNNING",
+              "last_output_token_ids": [
+                3817,
+                17856,
+                13,
+                78503,
+                4581,
+                2468,
+                1345,
+                28043,
+                7072,
+                3817,
+                22188
+              ]
+            },
+            "num_computed_tokens_delta_reject_adjust": 0,
+            "num_tokens_delta_output_update": 2,
+            "num_output_tokens_delta_output_update": 2
+          },
+          "accounting_check": {
+            "expected_computed_delta": 0,
+            "actual_computed_delta": 0,
+            "num_rejected": 0,
+            "num_suppressed_bonus_tokens": 0,
+            "matches": true
+          }
+        },
+        {
+          "line_no": 13,
+          "ts": 1781202836.6612074,
+          "num_draft_tokens": 1,
+          "num_accepted": 1,
+          "num_rejected": 0,
+          "num_suppressed_bonus_tokens": 0,
+          "num_tokens_scheduled": 2,
+          "num_computed_tokens": null,
+          "num_output_tokens": null,
+          "scheduled_spec_token_ids": [
+            13
+          ],
+          "scheduled_spec_text": ".",
+          "generated_token_ids": [
+            13,
+            15153
+          ],
+          "generated_text": ". Intel",
+          "emitted_token_ids": [
+            13,
+            15153
+          ],
+          "emitted_text": ". Intel",
+          "new_token_ids_after_stop_check": [
+            13,
+            15153
+          ],
+          "suppressed_bonus_token_id": null,
+          "suppressed_bonus_text": null,
+          "followup_check": null,
+          "state_transition": {
+            "before": {
+              "num_prompt_tokens": 488,
+              "num_output_tokens": 11,
+              "num_tokens": 499,
+              "num_tokens_with_spec": 499,
+              "num_computed_tokens": 500,
+              "num_output_placeholders": 0,
+              "spec_len": 0,
+              "max_tokens": 32,
+              "is_prefill_chunk": false,
+              "status": "RUNNING",
+              "last_output_token_ids": [
+                3817,
+                17856,
+                13,
+                78503,
+                4581,
+                2468,
+                1345,
+                28043,
+                7072,
+                3817,
+                22188
+              ]
+            },
+            "after_reject_adjust": {
+              "num_prompt_tokens": 488,
+              "num_output_tokens": 11,
+              "num_tokens": 499,
+              "num_tokens_with_spec": 499,
+              "num_computed_tokens": 500,
+              "num_output_placeholders": 0,
+              "spec_len": 0,
+              "max_tokens": 32,
+              "is_prefill_chunk": false,
+              "status": "RUNNING",
+              "last_output_token_ids": [
+                3817,
+                17856,
+                13,
+                78503,
+                4581,
+                2468,
+                1345,
+                28043,
+                7072,
+                3817,
+                22188
+              ]
+            },
+            "after_output_update": {
+              "num_prompt_tokens": 488,
+              "num_output_tokens": 13,
+              "num_tokens": 501,
+              "num_tokens_with_spec": 501,
+              "num_computed_tokens": 500,
+              "num_output_placeholders": 0,
+              "spec_len": 0,
+              "max_tokens": 32,
+              "is_prefill_chunk": false,
+              "status": "RUNNING",
+              "last_output_token_ids": [
+                3817,
+                17856,
+                13,
+                78503,
+                4581,
+                2468,
+                1345,
+                28043,
+                7072,
+                3817,
+                22188,
+                13,
+                15153
+              ]
+            },
+            "num_computed_tokens_delta_reject_adjust": 0,
+            "num_tokens_delta_output_update": 2,
+            "num_output_tokens_delta_output_update": 2
+          },
+          "accounting_check": {
+            "expected_computed_delta": 0,
+            "actual_computed_delta": 0,
+            "num_rejected": 0,
+            "num_suppressed_bonus_tokens": 0,
+            "matches": true
+          }
+        },
+        {
+          "line_no": 14,
+          "ts": 1781202836.6830866,
+          "num_draft_tokens": 1,
+          "num_accepted": 1,
+          "num_rejected": 0,
+          "num_suppressed_bonus_tokens": 0,
+          "num_tokens_scheduled": 2,
+          "num_computed_tokens": null,
+          "num_output_tokens": null,
+          "scheduled_spec_token_ids": [
+            1543
+          ],
+          "scheduled_spec_text": " X",
+          "generated_token_ids": [
+            1543,
+            6126
+          ],
+          "generated_text": " XPU",
+          "emitted_token_ids": [
+            1543,
+            6126
+          ],
+          "emitted_text": " XPU",
+          "new_token_ids_after_stop_check": [
+            1543,
+            6126
+          ],
+          "suppressed_bonus_token_id": null,
+          "suppressed_bonus_text": null,
+          "followup_check": null,
+          "state_transition": {
+            "before": {
+              "num_prompt_tokens": 488,
+              "num_output_tokens": 13,
+              "num_tokens": 501,
+              "num_tokens_with_spec": 501,
+              "num_computed_tokens": 502,
+              "num_output_placeholders": 0,
+              "spec_len": 0,
+              "max_tokens": 32,
+              "is_prefill_chunk": false,
+              "status": "RUNNING",
+              "last_output_token_ids": [
+                3817,
+                17856,
+                13,
+                78503,
+                4581,
+                2468,
+                1345,
+                28043,
+                7072,
+                3817,
+                22188,
+                13,
+                15153
+              ]
+            },
+            "after_reject_adjust": {
+              "num_prompt_tokens": 488,
+              "num_output_tokens": 13,
+              "num_tokens": 501,
+              "num_tokens_with_spec": 501,
+              "num_computed_tokens": 502,
+              "num_output_placeholders": 0,
+              "spec_len": 0,
+              "max_tokens": 32,
+              "is_prefill_chunk": false,
+              "status": "RUNNING",
+              "last_output_token_ids": [
+                3817,
+                17856,
+                13,
+                78503,
+                4581,
+                2468,
+                1345,
+                28043,
+                7072,
+                3817,
+                22188,
+                13,
+                15153
+              ]
+            },
+            "after_output_update": {
+              "num_prompt_tokens": 488,
+              "num_output_tokens": 15,
+              "num_tokens": 503,
+              "num_tokens_with_spec": 503,
+              "num_computed_tokens": 502,
+              "num_output_placeholders": 0,
+              "spec_len": 0,
+              "max_tokens": 32,
+              "is_prefill_chunk": false,
+              "status": "RUNNING",
+              "last_output_token_ids": [
+                3817,
+                17856,
+                13,
+                78503,
+                4581,
+                2468,
+                1345,
+                28043,
+                7072,
+                3817,
+                22188,
+                13,
+                15153,
+                1543,
+                6126
+              ]
+            },
+            "num_computed_tokens_delta_reject_adjust": 0,
+            "num_tokens_delta_output_update": 2,
+            "num_output_tokens_delta_output_update": 2
+          },
+          "accounting_check": {
+            "expected_computed_delta": 0,
+            "actual_computed_delta": 0,
+            "num_rejected": 0,
+            "num_suppressed_bonus_tokens": 0,
+            "matches": true
+          }
+        },
+        {
+          "line_no": 15,
+          "ts": 1781202836.7019167,
+          "num_draft_tokens": 1,
+          "num_accepted": 0,
+          "num_rejected": 1,
+          "num_suppressed_bonus_tokens": 0,
+          "num_tokens_scheduled": 2,
+          "num_computed_tokens": null,
+          "num_output_tokens": null,
+          "scheduled_spec_token_ids": [
+            11436
+          ],
+          "scheduled_spec_text": " hardware",
+          "generated_token_ids": [
+            16401
+          ],
+          "generated_text": " decode",
+          "emitted_token_ids": [
+            16401
+          ],
+          "emitted_text": " decode",
+          "new_token_ids_after_stop_check": [
+            16401
+          ],
+          "suppressed_bonus_token_id": null,
+          "suppressed_bonus_text": null,
+          "followup_check": null,
+          "state_transition": {
+            "before": {
+              "num_prompt_tokens": 488,
+              "num_output_tokens": 15,
+              "num_tokens": 503,
+              "num_tokens_with_spec": 503,
+              "num_computed_tokens": 504,
+              "num_output_placeholders": 0,
+              "spec_len": 0,
+              "max_tokens": 32,
+              "is_prefill_chunk": false,
+              "status": "RUNNING",
+              "last_output_token_ids": [
+                3817,
+                17856,
+                13,
+                78503,
+                4581,
+                2468,
+                1345,
+                28043,
+                7072,
+                3817,
+                22188,
+                13,
+                15153,
+                1543,
+                6126
+              ]
+            },
+            "after_reject_adjust": {
+              "num_prompt_tokens": 488,
+              "num_output_tokens": 15,
+              "num_tokens": 503,
+              "num_tokens_with_spec": 503,
+              "num_computed_tokens": 503,
+              "num_output_placeholders": 0,
+              "spec_len": 0,
+              "max_tokens": 32,
+              "is_prefill_chunk": false,
+              "status": "RUNNING",
+              "last_output_token_ids": [
+                3817,
+                17856,
+                13,
+                78503,
+                4581,
+                2468,
+                1345,
+                28043,
+                7072,
+                3817,
+                22188,
+                13,
+                15153,
+                1543,
+                6126
+              ]
+            },
+            "after_output_update": {
+              "num_prompt_tokens": 488,
+              "num_output_tokens": 16,
+              "num_tokens": 504,
+              "num_tokens_with_spec": 504,
+              "num_computed_tokens": 503,
+              "num_output_placeholders": 0,
+              "spec_len": 0,
+              "max_tokens": 32,
+              "is_prefill_chunk": false,
+              "status": "RUNNING",
+              "last_output_token_ids": [
+                3817,
+                17856,
+                13,
+                78503,
+                4581,
+                2468,
+                1345,
+                28043,
+                7072,
+                3817,
+                22188,
+                13,
+                15153,
+                1543,
+                6126,
+                16401
+              ]
+            },
+            "num_computed_tokens_delta_reject_adjust": -1,
+            "num_tokens_delta_output_update": 1,
+            "num_output_tokens_delta_output_update": 1
+          },
+          "accounting_check": {
+            "expected_computed_delta": -1,
+            "actual_computed_delta": -1,
+            "num_rejected": 1,
+            "num_suppressed_bonus_tokens": 0,
+            "matches": true
+          }
+        }
+      ]
+    },
+    {
+      "req_id": "cmpl-a606b4e303f78310-0-842ceef3",
+      "rows": 7,
+      "first_ts": 1781202833.6586611,
+      "last_ts": 1781202833.8819504,
+      "draft_tokens": 7,
+      "accepted": 7,
+      "rejected": 0,
+      "suppressed_bonus_rows": 0,
+      "emitted_token_ids_from_trace": [
+        440,
+        27044,
+        47193,
+        14246,
+        8129,
+        13,
+        24985,
+        383,
+        3074,
+        43318,
+        16401,
+        4478,
+        11,
+        4779
+      ],
+      "emitted_text_from_trace": " with dense numbered engineering notes. Focus on single-request decode speed, memory",
+      "generated_token_ids_from_trace": [
+        440,
+        27044,
+        47193,
+        14246,
+        8129,
+        13,
+        24985,
+        383,
+        3074,
+        43318,
+        16401,
+        4478,
+        11,
+        4779
+      ],
+      "generated_text_from_trace": " with dense numbered engineering notes. Focus on single-request decode speed, memory",
+      "suppressed_bonus_token_ids": [],
+      "suppressed_bonus_text": "",
+      "suppressed_followup_checks": [],
+      "suppressed_followup_mismatches": [],
+      "accounting_checks": [
+        {
+          "line_no": 1,
+          "expected_computed_delta": 0,
+          "actual_computed_delta": 0,
+          "num_rejected": 0,
+          "num_suppressed_bonus_tokens": 0,
+          "matches": true
+        },
+        {
+          "line_no": 2,
+          "expected_computed_delta": 0,
+          "actual_computed_delta": 0,
+          "num_rejected": 0,
+          "num_suppressed_bonus_tokens": 0,
+          "matches": true
+        },
+        {
+          "line_no": 3,
+          "expected_computed_delta": 0,
+          "actual_computed_delta": 0,
+          "num_rejected": 0,
+          "num_suppressed_bonus_tokens": 0,
+          "matches": true
+        },
+        {
+          "line_no": 4,
+          "expected_computed_delta": 0,
+          "actual_computed_delta": 0,
+          "num_rejected": 0,
+          "num_suppressed_bonus_tokens": 0,
+          "matches": true
+        },
+        {
+          "line_no": 5,
+          "expected_computed_delta": 0,
+          "actual_computed_delta": 0,
+          "num_rejected": 0,
+          "num_suppressed_bonus_tokens": 0,
+          "matches": true
+        },
+        {
+          "line_no": 6,
+          "expected_computed_delta": 0,
+          "actual_computed_delta": 0,
+          "num_rejected": 0,
+          "num_suppressed_bonus_tokens": 0,
+          "matches": true
+        },
+        {
+          "line_no": 7,
+          "expected_computed_delta": 0,
+          "actual_computed_delta": 0,
+          "num_rejected": 0,
+          "num_suppressed_bonus_tokens": 0,
+          "matches": true
+        }
+      ],
+      "accounting_mismatches": [],
+      "token_trace_case": {
+        "path": "data/qwen36-quark-int8-tp4-oracle1-short-graph-completions-20260611.json",
+        "name": "natural_latency_plan",
+        "repeat_idx": null,
+        "normalized": null,
+        "output_token_count": 32,
+        "output_token_ids": [
+          22791,
+          440,
+          27044,
+          47193,
+          14246,
+          8129,
+          13,
+          24985,
+          383,
+          3074,
+          43318,
+          16401,
+          4478,
+          11,
+          4779,
+          6044,
+          11,
+          321,
+          874,
+          4131,
+          4557,
+          13,
+          271,
+          248068,
+          198,
+          90700,
+          8340,
+          25,
+          271,
+          16,
+          13,
+          220
+        ],
+        "request_started_at_unix": 1781202809.364249,
+        "request_finished_at_unix": 1781202836.463901,
+        "sha256": null
+      },
+      "token_trace_join_method": "scheduler_prefix",
+      "token_trace_matched_request_id": "cmpl-a606b4e303f78310",
+      "traced_emitted_is_token_trace_prefix": false,
+      "row_summaries": [
+        {
+          "line_no": 1,
+          "ts": 1781202833.6586611,
+          "num_draft_tokens": 1,
+          "num_accepted": 1,
+          "num_rejected": 0,
+          "num_suppressed_bonus_tokens": 0,
+          "num_tokens_scheduled": 2,
+          "num_computed_tokens": null,
+          "num_output_tokens": null,
+          "scheduled_spec_token_ids": [
+            440
+          ],
+          "scheduled_spec_text": " with",
+          "generated_token_ids": [
+            440,
+            27044
+          ],
+          "generated_text": " with dense",
+          "emitted_token_ids": [
+            440,
+            27044
+          ],
+          "emitted_text": " with dense",
+          "new_token_ids_after_stop_check": [
+            440,
+            27044
+          ],
+          "suppressed_bonus_token_id": null,
+          "suppressed_bonus_text": null,
+          "followup_check": null,
+          "state_transition": {
+            "before": {
+              "num_prompt_tokens": 502,
+              "num_output_tokens": 1,
+              "num_tokens": 503,
+              "num_tokens_with_spec": 503,
+              "num_computed_tokens": 504,
+              "num_output_placeholders": 0,
+              "spec_len": 0,
+              "max_tokens": 32,
+              "is_prefill_chunk": false,
+              "status": "RUNNING",
+              "last_output_token_ids": [
+                22791
+              ]
+            },
+            "after_reject_adjust": {
+              "num_prompt_tokens": 502,
+              "num_output_tokens": 1,
+              "num_tokens": 503,
+              "num_tokens_with_spec": 503,
+              "num_computed_tokens": 504,
+              "num_output_placeholders": 0,
+              "spec_len": 0,
+              "max_tokens": 32,
+              "is_prefill_chunk": false,
+              "status": "RUNNING",
+              "last_output_token_ids": [
+                22791
+              ]
+            },
+            "after_output_update": {
+              "num_prompt_tokens": 502,
+              "num_output_tokens": 3,
+              "num_tokens": 505,
+              "num_tokens_with_spec": 505,
+              "num_computed_tokens": 504,
+              "num_output_placeholders": 0,
+              "spec_len": 0,
+              "max_tokens": 32,
+              "is_prefill_chunk": false,
+              "status": "RUNNING",
+              "last_output_token_ids": [
+                22791,
+                440,
+                27044
+              ]
+            },
+            "num_computed_tokens_delta_reject_adjust": 0,
+            "num_tokens_delta_output_update": 2,
+            "num_output_tokens_delta_output_update": 2
+          },
+          "accounting_check": {
+            "expected_computed_delta": 0,
+            "actual_computed_delta": 0,
+            "num_rejected": 0,
+            "num_suppressed_bonus_tokens": 0,
+            "matches": true
+          }
+        },
+        {
+          "line_no": 2,
+          "ts": 1781202833.7895918,
+          "num_draft_tokens": 1,
+          "num_accepted": 1,
+          "num_rejected": 0,
+          "num_suppressed_bonus_tokens": 0,
+          "num_tokens_scheduled": 2,
+          "num_computed_tokens": null,
+          "num_output_tokens": null,
+          "scheduled_spec_token_ids": [
+            47193
+          ],
+          "scheduled_spec_text": " numbered",
+          "generated_token_ids": [
+            47193,
+            14246
+          ],
+          "generated_text": " numbered engineering",
+          "emitted_token_ids": [
+            47193,
+            14246
+          ],
+          "emitted_text": " numbered engineering",
+          "new_token_ids_after_stop_check": [
+            47193,
+            14246
+          ],
+          "suppressed_bonus_token_id": null,
+          "suppressed_bonus_text": null,
+          "followup_check": null,
+          "state_transition": {
+            "before": {
+              "num_prompt_tokens": 502,
+              "num_output_tokens": 3,
+              "num_tokens": 505,
+              "num_tokens_with_spec": 505,
+              "num_computed_tokens": 506,
+              "num_output_placeholders": 0,
+              "spec_len": 0,
+              "max_tokens": 32,
+              "is_prefill_chunk": false,
+              "status": "RUNNING",
+              "last_output_token_ids": [
+                22791,
+                440,
+                27044
+              ]
+            },
+            "after_reject_adjust": {
+              "num_prompt_tokens": 502,
+              "num_output_tokens": 3,
+              "num_tokens": 505,
+              "num_tokens_with_spec": 505,
+              "num_computed_tokens": 506,
+              "num_output_placeholders": 0,
+              "spec_len": 0,
+              "max_tokens": 32,
+              "is_prefill_chunk": false,
+              "status": "RUNNING",
+              "last_output_token_ids": [
+                22791,
+                440,
+                27044
+              ]
+            },
+            "after_output_update": {
+              "num_prompt_tokens": 502,
+              "num_output_tokens": 5,
+              "num_tokens": 507,
+              "num_tokens_with_spec": 507,
+              "num_computed_tokens": 506,
+              "num_output_placeholders": 0,
+              "spec_len": 0,
+              "max_tokens": 32,
+              "is_prefill_chunk": false,
+              "status": "RUNNING",
+              "last_output_token_ids": [
+                22791,
+                440,
+                27044,
+                47193,
+                14246
+              ]
+            },
+            "num_computed_tokens_delta_reject_adjust": 0,
+            "num_tokens_delta_output_update": 2,
+            "num_output_tokens_delta_output_update": 2
+          },
+          "accounting_check": {
+            "expected_computed_delta": 0,
+            "actual_computed_delta": 0,
+            "num_rejected": 0,
+            "num_suppressed_bonus_tokens": 0,
+            "matches": true
+          }
+        },
+        {
+          "line_no": 3,
+          "ts": 1781202833.8083231,
+          "num_draft_tokens": 1,
+          "num_accepted": 1,
+          "num_rejected": 0,
+          "num_suppressed_bonus_tokens": 0,
+          "num_tokens_scheduled": 2,
+          "num_computed_tokens": null,
+          "num_output_tokens": null,
+          "scheduled_spec_token_ids": [
+            8129
+          ],
+          "scheduled_spec_text": " notes",
+          "generated_token_ids": [
+            8129,
+            13
+          ],
+          "generated_text": " notes.",
+          "emitted_token_ids": [
+            8129,
+            13
+          ],
+          "emitted_text": " notes.",
+          "new_token_ids_after_stop_check": [
+            8129,
+            13
+          ],
+          "suppressed_bonus_token_id": null,
+          "suppressed_bonus_text": null,
+          "followup_check": null,
+          "state_transition": {
+            "before": {
+              "num_prompt_tokens": 502,
+              "num_output_tokens": 5,
+              "num_tokens": 507,
+              "num_tokens_with_spec": 507,
+              "num_computed_tokens": 508,
+              "num_output_placeholders": 0,
+              "spec_len": 0,
+              "max_tokens": 32,
+              "is_prefill_chunk": false,
+              "status": "RUNNING",
+              "last_output_token_ids": [
+                22791,
+                440,
+                27044,
+                47193,
+                14246
+              ]
+            },
+            "after_reject_adjust": {
+              "num_prompt_tokens": 502,
+              "num_output_tokens": 5,
+              "num_tokens": 507,
+              "num_tokens_with_spec": 507,
+              "num_computed_tokens": 508,
+              "num_output_placeholders": 0,
+              "spec_len": 0,
+              "max_tokens": 32,
+              "is_prefill_chunk": false,
+              "status": "RUNNING",
+              "last_output_token_ids": [
+                22791,
+                440,
+                27044,
+                47193,
+                14246
+              ]
+            },
+            "after_output_update": {
+              "num_prompt_tokens": 502,
+              "num_output_tokens": 7,
+              "num_tokens": 509,
+              "num_tokens_with_spec": 509,
+              "num_computed_tokens": 508,
+              "num_output_placeholders": 0,
+              "spec_len": 0,
+              "max_tokens": 32,
+              "is_prefill_chunk": false,
+              "status": "RUNNING",
+              "last_output_token_ids": [
+                22791,
+                440,
+                27044,
+                47193,
+                14246,
+                8129,
+                13
+              ]
+            },
+            "num_computed_tokens_delta_reject_adjust": 0,
+            "num_tokens_delta_output_update": 2,
+            "num_output_tokens_delta_output_update": 2
+          },
+          "accounting_check": {
+            "expected_computed_delta": 0,
+            "actual_computed_delta": 0,
+            "num_rejected": 0,
+            "num_suppressed_bonus_tokens": 0,
+            "matches": true
+          }
+        },
+        {
+          "line_no": 4,
+          "ts": 1781202833.8269188,
+          "num_draft_tokens": 1,
+          "num_accepted": 1,
+          "num_rejected": 0,
+          "num_suppressed_bonus_tokens": 0,
+          "num_tokens_scheduled": 2,
+          "num_computed_tokens": null,
+          "num_output_tokens": null,
+          "scheduled_spec_token_ids": [
+            24985
+          ],
+          "scheduled_spec_text": " Focus",
+          "generated_token_ids": [
+            24985,
+            383
+          ],
+          "generated_text": " Focus on",
+          "emitted_token_ids": [
+            24985,
+            383
+          ],
+          "emitted_text": " Focus on",
+          "new_token_ids_after_stop_check": [
+            24985,
+            383
+          ],
+          "suppressed_bonus_token_id": null,
+          "suppressed_bonus_text": null,
+          "followup_check": null,
+          "state_transition": {
+            "before": {
+              "num_prompt_tokens": 502,
+              "num_output_tokens": 7,
+              "num_tokens": 509,
+              "num_tokens_with_spec": 509,
+              "num_computed_tokens": 510,
+              "num_output_placeholders": 0,
+              "spec_len": 0,
+              "max_tokens": 32,
+              "is_prefill_chunk": false,
+              "status": "RUNNING",
+              "last_output_token_ids": [
+                22791,
+                440,
+                27044,
+                47193,
+                14246,
+                8129,
+                13
+              ]
+            },
+            "after_reject_adjust": {
+              "num_prompt_tokens": 502,
+              "num_output_tokens": 7,
+              "num_tokens": 509,
+              "num_tokens_with_spec": 509,
+              "num_computed_tokens": 510,
+              "num_output_placeholders": 0,
+              "spec_len": 0,
+              "max_tokens": 32,
+              "is_prefill_chunk": false,
+              "status": "RUNNING",
+              "last_output_token_ids": [
+                22791,
+                440,
+                27044,
+                47193,
+                14246,
+                8129,
+                13
+              ]
+            },
+            "after_output_update": {
+              "num_prompt_tokens": 502,
+              "num_output_tokens": 9,
+              "num_tokens": 511,
+              "num_tokens_with_spec": 511,
+              "num_computed_tokens": 510,
+              "num_output_placeholders": 0,
+              "spec_len": 0,
+              "max_tokens": 32,
+              "is_prefill_chunk": false,
+              "status": "RUNNING",
+              "last_output_token_ids": [
+                22791,
+                440,
+                27044,
+                47193,
+                14246,
+                8129,
+                13,
+                24985,
+                383
+              ]
+            },
+            "num_computed_tokens_delta_reject_adjust": 0,
+            "num_tokens_delta_output_update": 2,
+            "num_output_tokens_delta_output_update": 2
+          },
+          "accounting_check": {
+            "expected_computed_delta": 0,
+            "actual_computed_delta": 0,
+            "num_rejected": 0,
+            "num_suppressed_bonus_tokens": 0,
+            "matches": true
+          }
+        },
+        {
+          "line_no": 5,
+          "ts": 1781202833.8454893,
+          "num_draft_tokens": 1,
+          "num_accepted": 1,
+          "num_rejected": 0,
+          "num_suppressed_bonus_tokens": 0,
+          "num_tokens_scheduled": 2,
+          "num_computed_tokens": null,
+          "num_output_tokens": null,
+          "scheduled_spec_token_ids": [
+            3074
+          ],
+          "scheduled_spec_text": " single",
+          "generated_token_ids": [
+            3074,
+            43318
+          ],
+          "generated_text": " single-request",
+          "emitted_token_ids": [
+            3074,
+            43318
+          ],
+          "emitted_text": " single-request",
+          "new_token_ids_after_stop_check": [
+            3074,
+            43318
+          ],
+          "suppressed_bonus_token_id": null,
+          "suppressed_bonus_text": null,
+          "followup_check": null,
+          "state_transition": {
+            "before": {
+              "num_prompt_tokens": 502,
+              "num_output_tokens": 9,
+              "num_tokens": 511,
+              "num_tokens_with_spec": 511,
+              "num_computed_tokens": 512,
+              "num_output_placeholders": 0,
+              "spec_len": 0,
+              "max_tokens": 32,
+              "is_prefill_chunk": false,
+              "status": "RUNNING",
+              "last_output_token_ids": [
+                22791,
+                440,
+                27044,
+                47193,
+                14246,
+                8129,
+                13,
+                24985,
+                383
+              ]
+            },
+            "after_reject_adjust": {
+              "num_prompt_tokens": 502,
+              "num_output_tokens": 9,
+              "num_tokens": 511,
+              "num_tokens_with_spec": 511,
+              "num_computed_tokens": 512,
+              "num_output_placeholders": 0,
+              "spec_len": 0,
+              "max_tokens": 32,
+              "is_prefill_chunk": false,
+              "status": "RUNNING",
+              "last_output_token_ids": [
+                22791,
+                440,
+                27044,
+                47193,
+                14246,
+                8129,
+                13,
+                24985,
+                383
+              ]
+            },
+            "after_output_update": {
+              "num_prompt_tokens": 502,
+              "num_output_tokens": 11,
+              "num_tokens": 513,
+              "num_tokens_with_spec": 513,
+              "num_computed_tokens": 512,
+              "num_output_placeholders": 0,
+              "spec_len": 0,
+              "max_tokens": 32,
+              "is_prefill_chunk": false,
+              "status": "RUNNING",
+              "last_output_token_ids": [
+                22791,
+                440,
+                27044,
+                47193,
+                14246,
+                8129,
+                13,
+                24985,
+                383,
+                3074,
+                43318
+              ]
+            },
+            "num_computed_tokens_delta_reject_adjust": 0,
+            "num_tokens_delta_output_update": 2,
+            "num_output_tokens_delta_output_update": 2
+          },
+          "accounting_check": {
+            "expected_computed_delta": 0,
+            "actual_computed_delta": 0,
+            "num_rejected": 0,
+            "num_suppressed_bonus_tokens": 0,
+            "matches": true
+          }
+        },
+        {
+          "line_no": 6,
+          "ts": 1781202833.863776,
+          "num_draft_tokens": 1,
+          "num_accepted": 1,
+          "num_rejected": 0,
+          "num_suppressed_bonus_tokens": 0,
+          "num_tokens_scheduled": 2,
+          "num_computed_tokens": null,
+          "num_output_tokens": null,
+          "scheduled_spec_token_ids": [
+            16401
+          ],
+          "scheduled_spec_text": " decode",
+          "generated_token_ids": [
+            16401,
+            4478
+          ],
+          "generated_text": " decode speed",
+          "emitted_token_ids": [
+            16401,
+            4478
+          ],
+          "emitted_text": " decode speed",
+          "new_token_ids_after_stop_check": [
+            16401,
+            4478
+          ],
+          "suppressed_bonus_token_id": null,
+          "suppressed_bonus_text": null,
+          "followup_check": null,
+          "state_transition": {
+            "before": {
+              "num_prompt_tokens": 502,
+              "num_output_tokens": 11,
+              "num_tokens": 513,
+              "num_tokens_with_spec": 513,
+              "num_computed_tokens": 514,
+              "num_output_placeholders": 0,
+              "spec_len": 0,
+              "max_tokens": 32,
+              "is_prefill_chunk": false,
+              "status": "RUNNING",
+              "last_output_token_ids": [
+                22791,
+                440,
+                27044,
+                47193,
+                14246,
+                8129,
+                13,
+                24985,
+                383,
+                3074,
+                43318
+              ]
+            },
+            "after_reject_adjust": {
+              "num_prompt_tokens": 502,
+              "num_output_tokens": 11,
+              "num_tokens": 513,
+              "num_tokens_with_spec": 513,
+              "num_computed_tokens": 514,
+              "num_output_placeholders": 0,
+              "spec_len": 0,
+              "max_tokens": 32,
+              "is_prefill_chunk": false,
+              "status": "RUNNING",
+              "last_output_token_ids": [
+                22791,
+                440,
+                27044,
+                47193,
+                14246,
+                8129,
+                13,
+                24985,
+                383,
+                3074,
+                43318
+              ]
+            },
+            "after_output_update": {
+              "num_prompt_tokens": 502,
+              "num_output_tokens": 13,
+              "num_tokens": 515,
+              "num_tokens_with_spec": 515,
+              "num_computed_tokens": 514,
+              "num_output_placeholders": 0,
+              "spec_len": 0,
+              "max_tokens": 32,
+              "is_prefill_chunk": false,
+              "status": "RUNNING",
+              "last_output_token_ids": [
+                22791,
+                440,
+                27044,
+                47193,
+                14246,
+                8129,
+                13,
+                24985,
+                383,
+                3074,
+                43318,
+                16401,
+                4478
+              ]
+            },
+            "num_computed_tokens_delta_reject_adjust": 0,
+            "num_tokens_delta_output_update": 2,
+            "num_output_tokens_delta_output_update": 2
+          },
+          "accounting_check": {
+            "expected_computed_delta": 0,
+            "actual_computed_delta": 0,
+            "num_rejected": 0,
+            "num_suppressed_bonus_tokens": 0,
+            "matches": true
+          }
+        },
+        {
+          "line_no": 7,
+          "ts": 1781202833.8819504,
+          "num_draft_tokens": 1,
+          "num_accepted": 1,
+          "num_rejected": 0,
+          "num_suppressed_bonus_tokens": 0,
+          "num_tokens_scheduled": 2,
+          "num_computed_tokens": null,
+          "num_output_tokens": null,
+          "scheduled_spec_token_ids": [
+            11
+          ],
+          "scheduled_spec_text": ",",
+          "generated_token_ids": [
+            11,
+            4779
+          ],
+          "generated_text": ", memory",
+          "emitted_token_ids": [
+            11,
+            4779
+          ],
+          "emitted_text": ", memory",
+          "new_token_ids_after_stop_check": [
+            11,
+            4779
+          ],
+          "suppressed_bonus_token_id": null,
+          "suppressed_bonus_text": null,
+          "followup_check": null,
+          "state_transition": {
+            "before": {
+              "num_prompt_tokens": 502,
+              "num_output_tokens": 13,
+              "num_tokens": 515,
+              "num_tokens_with_spec": 515,
+              "num_computed_tokens": 516,
+              "num_output_placeholders": 0,
+              "spec_len": 0,
+              "max_tokens": 32,
+              "is_prefill_chunk": false,
+              "status": "RUNNING",
+              "last_output_token_ids": [
+                22791,
+                440,
+                27044,
+                47193,
+                14246,
+                8129,
+                13,
+                24985,
+                383,
+                3074,
+                43318,
+                16401,
+                4478
+              ]
+            },
+            "after_reject_adjust": {
+              "num_prompt_tokens": 502,
+              "num_output_tokens": 13,
+              "num_tokens": 515,
+              "num_tokens_with_spec": 515,
+              "num_computed_tokens": 516,
+              "num_output_placeholders": 0,
+              "spec_len": 0,
+              "max_tokens": 32,
+              "is_prefill_chunk": false,
+              "status": "RUNNING",
+              "last_output_token_ids": [
+                22791,
+                440,
+                27044,
+                47193,
+                14246,
+                8129,
+                13,
+                24985,
+                383,
+                3074,
+                43318,
+                16401,
+                4478
+              ]
+            },
+            "after_output_update": {
+              "num_prompt_tokens": 502,
+              "num_output_tokens": 15,
+              "num_tokens": 517,
+              "num_tokens_with_spec": 517,
+              "num_computed_tokens": 516,
+              "num_output_placeholders": 0,
+              "spec_len": 0,
+              "max_tokens": 32,
+              "is_prefill_chunk": false,
+              "status": "RUNNING",
+              "last_output_token_ids": [
+                22791,
+                440,
+                27044,
+                47193,
+                14246,
+                8129,
+                13,
+                24985,
+                383,
+                3074,
+                43318,
+                16401,
+                4478,
+                11,
+                4779
+              ]
+            },
+            "num_computed_tokens_delta_reject_adjust": 0,
+            "num_tokens_delta_output_update": 2,
+            "num_output_tokens_delta_output_update": 2
+          },
+          "accounting_check": {
+            "expected_computed_delta": 0,
+            "actual_computed_delta": 0,
+            "num_rejected": 0,
+            "num_suppressed_bonus_tokens": 0,
+            "matches": true
+          }
+        }
+      ]
+    }
+  ]
+}

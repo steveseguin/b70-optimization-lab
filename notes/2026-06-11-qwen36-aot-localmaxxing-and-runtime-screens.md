@@ -8230,3 +8230,149 @@ Current priority after this addendum:
 4. Start the resident block-table/static-c1 lane experiments.
 5. In parallel, reduce oracle `k=1` speculation drift into an upstreamable
    state-checksum fixture.
+
+## Oracle k=1 Drift Fixture and Bigger Bets
+
+The oracle `k=1` short graph run is now reduced into a compact token-parity
+fixture:
+
+- `scripts/reduce-qwen36-oracle-fixture.py`
+- `data/qwen36-quark-int8-tp4-oracle-k1-drift-fixture-20260611.json`
+- `data/qwen36-quark-int8-tp4-oracle-k1-drift-fixture-20260611.md`
+- `data/qwen36-quark-int8-tp4-oracle-k1-drift-replay-20260611.json`
+- `data/qwen36-quark-int8-tp4-oracle-k1-drift-replay-20260611.md`
+
+Result:
+
+- Exact match: `false`
+- Mismatches: `2/2`
+- Scheduler rows: `15`
+- Draft tokens: `15`
+- Accepted draft tokens: `14`
+- Rejected draft tokens: `1`
+- Accept rate: `93.33%`
+- Replay accounting mismatches: `0`
+- Suppressed-follow-up mismatches: `0`
+
+Case-level diagnosis:
+
+- `natural_latency_plan`
+  - first diff output index: `14`
+  - accepted token: `29541` / ` reliability`
+  - candidate token: `4779` / ` memory`
+  - scheduler row: `7`
+  - emission role: `verifier_bonus_after_full_accept`
+  - scheduled: `[11]`
+  - generated: `[11, 4779]`
+- `repetitive_kernel_notes`
+  - first diff output index: `15`
+  - accepted token: `11436` / ` hardware`
+  - candidate token: `16401` / ` decode`
+  - scheduler row: `15`
+  - emission role: `replacement_after_reject`
+  - scheduled: `[11436]`
+  - generated: `[16401]`
+
+The important conclusion is that the blocker is not proposer quality. Even a
+perfect one-token oracle path perturbs final output. That makes all DFlash,
+MTP, n-gram, and learned-proposer speed claims invalid until this fixture is
+exact. The likely failure zone is speculative verifier state equivalence:
+GDN/attention/MoE KV state, block-table state, token-position accounting, or
+the multi-token verifier step that emits accepted draft plus the bonus/reject
+token.
+
+Localmaxxing refresh:
+
+- `data/localmaxxing-qwen36-30b-top-continue-20260611.json`
+- The public `Qwen3.6`/30B-class rows above `200 tok/s` are mostly DFlash,
+  MTP/speculation, different quantization such as NVFP4/FP8, or different
+  hardware/runtime stacks.
+- This supports pursuing verifier-preserving speculation, but only after the
+  oracle fixture passes.
+
+Hard gates for future speculation:
+
+1. This oracle `k=1` fixture must be exact before any speculation timing.
+2. A patch must pass paused-local public full r8 quality after fixture parity.
+3. Speed rows must include request-id token traces and scheduler traces.
+4. Any Localmaxxing result must clearly state whether speculation was enabled.
+
+Things to try next:
+
+1. Disable verifier bonus emission for oracle `k=1`, but recompute the next
+   token from the final visible token state instead of only hiding the bonus
+   token. The previous no-bonus hook proved hiding is not a real rewind.
+2. Add lightweight state fingerprints at speculative row boundaries:
+   request position, block table slice, KV block ids, selected GDN state shapes,
+   and output-token counters. The goal is to locate the first state difference
+   before comparing logits.
+3. Add a verifier-only "serial fallback inside speculative scheduler" mode:
+   run through the speculative scheduling code path but commit exactly one
+   verified token per step. If this drifts, the scheduler/block-table path is
+   guilty; if it passes, the multi-token verifier row is guilty.
+4. Build a tiny upstream repro from the two-case fixture with no frontdoor and
+   no public traffic. This is small enough for vLLM/XPU maintainers to inspect.
+5. Re-run the fixture on eager mode, graph mode with a fresh cache, and graph
+   mode after cache restore. If only restored graph drifts, graph cache or
+   stale device state is implicated; if all drift, scheduler/spec logic is.
+6. Try `k=0` or "draft scheduled but ignored" instrumentation to see whether
+   merely scheduling draft tokens mutates block-table/KV state.
+7. Compare logits for the exact first divergent position through
+   `/generative_scoring` and an internal KV-resident path. The HTTP scoring
+   probe showed verifier math is correct for the visible prefix; the remaining
+   question is whether the internal speculative prefix is actually the same.
+
+Bigger, bolder ideas worth keeping on the board:
+
+1. A first-class auxiliary proposer API for vLLM/XPU. Instead of overloading
+   n-gram/MTP internals, make a clean contract: proposer suggests token ids,
+   Quark verifier owns acceptance, state updates, and final emissions.
+2. A Quark-trace-trained same-tokenizer proposer. Train a small draft model or
+   adapter on our accepted traces and request classes. Quality remains bound to
+   the Quark INT8 verifier, but acceptance could be much better than n-gram.
+3. Self-speculative shallow verifier branch. Reuse early Qwen3.6 layers or a
+   low-depth side branch as the draft source, but keep final tokens verifier
+   exact. This may avoid the official FP8 MTP layout mismatch.
+4. Static solo latency lane with duplicate memory. Use spare B70 memory for a
+   c1-only service: fixed block tables, fixed graph buckets, duplicated hot
+   experts, and no aggregate batching compromises.
+5. Persistent zero-gap MoE with real route windows. The Intel B70 blog points
+   at per-expert launch gaps and idle device time; a persistent routed-MoE loop
+   using captured Qwen3.6 route histograms is the biggest non-speculation win.
+6. Memory-for-latency expert hotsets. Duplicate K32/K64 route-bucket expert
+   tiles across ranks or pre-place them near the rank that consumes them. Spend
+   VRAM to reduce routed-MoE communication and fetch latency.
+7. Hybrid TP/EP simulator before implementation. Simulate expert locality and
+   communication for TP4, TP2+EP2, and layer-local expert replication using
+   the existing route captures. Implement only the layout with a credible
+   roofline.
+8. Whole-token Level Zero command-list replay. Capture an entire decode bucket,
+   including attention/GDN, MoE, all-reduces, logits, and sampling handoff, to
+   attack host-submit overhead without changing arithmetic.
+9. Latest-stack 8-bit shootout. Compare current vLLM/XPU against latest
+   vLLM XPU branches, LLM-Scaler, OpenVINO GenAI/oneDNN, and SGLang if it
+   supports this model/hardware. Same 32K context, same INT8/W8A8-or-better
+   quality rule, same token traces.
+10. Intel-validated BOM boot disk. Test the closest available Intel B-Series
+    validation stack: kernel, firmware, compute-runtime, oneAPI, oneCCL, IPEX,
+    and vllm-xpu-kernels. A software-stack jump may beat another local patch.
+11. Speculative verifier bucket kernels. If oracle parity is repaired, optimize
+    verifier buckets directly for `k=3/5/6/8`, because prior bucket timing
+    showed the model has enough sublinear headroom to exceed `200 tok/s`.
+12. Production dual-lane router with automatic baseline fallback. Keep the
+    conservative lane as the quality authority and add an aggressive latency
+    lane only when it continuously passes token-trace canaries.
+13. Public bounty-quality repro packet. Package the B70/Qwen3.6 artifacts:
+    first-generation `block_table.copy_to_gpu` device-lost, oracle `k=1`
+    drift, route-window MoE histograms, launch commands, versions, and
+    Localmaxxing row IDs. This could attract upstream attention faster than
+    local-only debugging.
+
+Updated priority:
+
+1. Keep the fresh-cache accepted service stable and quality-gated.
+2. Commit this fixture and note update.
+3. Turn the oracle `k=1` fixture into an automated regression gate.
+4. Add speculative state fingerprints and a serial-fallback-inside-spec mode.
+5. In parallel, begin static c1 and persistent-MoE work because they do not
+   depend on speculative correctness.
