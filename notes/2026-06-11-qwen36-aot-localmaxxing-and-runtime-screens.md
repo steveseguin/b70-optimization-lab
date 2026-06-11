@@ -7178,3 +7178,250 @@ Updated priority:
 3. Start real-router histogram capture for MoE placement and grouped-GEMM work.
 4. Plan a same-quality 8-bit engine shootout only after the current verifier
    harness tells us whether speculation can really cross the target.
+
+## Expanded Things To Try After Oracle Harness
+
+Added after stepping back from the verifier upper-bound result and the failed
+hybrid-MTP quality gates. These are intentionally bolder than ordinary launch
+flag sweeps, but each still preserves the rule: the current Quark INT8 model is
+the final quality authority unless a candidate passes a stricter BF16/current
+comparison.
+
+Near-term experiments:
+
+1. Oracle-draft verification at several widths.
+   - Use accepted completion token traces to inject perfect draft tokens through
+     vLLM's speculative scheduler.
+   - Run `k=3`, `k=5`, `k=6`, and `k=8` with both eager and graph modes.
+   - Record exact token parity, accepted-token rate, rollback/accounting
+     mismatches, TTFT, and per-token throughput.
+   - Decision rule: if perfect-draft `k=6/8` cannot exceed `200 tok/s` with
+     exact output, stop speculation work and move the priority to MoE/layout.
+
+2. Recompute-after-reject verifier diagnostic.
+   - For n-gram and MTP failures, force the scheduler to recompute one clean
+     bucket-1 step after every reject or suppressed bonus token.
+   - If quality recovers, the bug is scheduler/KV state accounting; if not, the
+     bug is proposer token/state indexing or verifier inputs.
+   - This is a debugging path only, not a promoted serving mode unless the
+     recompute cost is negligible.
+
+3. Speculative acceptance predictor.
+   - Use existing n-gram/MTP traces to classify prompt windows by likely
+     acceptance rate before enabling speculation.
+   - Disable speculation automatically for long-context/repeat patterns where
+     the failure fixtures cluster.
+   - This will not create a `2x` win alone, but it can make future speculation
+     safe enough for production fallback.
+
+4. Token-trace quality oracle as a CI gate.
+   - Promote request-id joined token traces, replay checks, and long-context
+     canaries into one command that every speculative or kernel candidate must
+     pass before speed measurement.
+   - Include repeat64, copy/arithmetic/JSON canaries, and at least one
+     long-context needle.
+   - This avoids wasting time on fast-but-corrupt branches.
+
+5. Real-router histogram capture during accepted serving.
+   - Add low-overhead router top-k capture for a short accepted run across
+     natural chat, code, math, structured output, and repetitive prompts.
+   - Use the histograms for real grouped-GEMM/MoE microbench inputs and for
+     deciding hot expert replication candidates.
+   - Synthetic uniform routes should no longer drive MoE decisions.
+
+Medium engineering branches:
+
+1. First-class auxiliary proposer API.
+   - Stop symlink/index-splicing MTP tensors into the verifier checkpoint.
+   - Add an explicit auxiliary proposer path with separate model config,
+     tokenizer validation, KV/state ownership, and final-verifier-only output.
+   - This is the cleaner path for official FP8 MTP tensors, EAGLE/DFlash, or a
+     learned same-tokenizer proposer.
+
+2. Self-speculative shallow verifier branch.
+   - Explore a LayerSkip-style or early-exit drafter from the same Qwen3.6
+     verifier weights: run a partial stack to propose, then verify with the full
+     stack.
+   - Quality can be preserved because the full stack verifies every token.
+   - The hard question is whether the partial stack is cheaper enough on B70 to
+     beat current bucket-1 decode.
+
+3. Sidecar drafter pipeline.
+   - Run a small same-tokenizer Qwen3.6 drafter, MTP sidecar, or partial-stack
+     proposer in a separate process/GPU lane while the TP4 verifier handles
+     accepted tokens.
+   - Useful only if drafter latency overlaps verifier work or if its output is
+     highly accepted.
+   - Keep the sidecar on 8-bit/high-fidelity or BF16/FP8 draft assets; no
+     Qwen3.5 or 4-bit detours.
+
+4. Latency-lane service class.
+   - Keep the normal TP4 accepted service for production reliability and
+     concurrency.
+   - Add a separate c1/c4 lane with lower max concurrency, fixed bucket graphs,
+     reduced scheduler overhead, and memory allocated to hot expert copies or
+     prepacked layouts.
+   - Compare user-visible TTFT and steady decode, not just model-forward timing.
+
+5. Hybrid TP/EP simulator before implementation.
+   - Model expert memory, dense/attention replication cost, KV cost at 32K, and
+     all-to-all/all-reduce message sizes.
+   - Candidate layouts: TP2+EP2, replicated dense plus expert partitioning, two
+     TP2 replicas for aggregate, and layer-local expert replication.
+   - Only implement if the memory math predicts fewer collectives for c1 while
+     retaining acceptable c8/c16 aggregate capacity.
+
+6. Persistent MoE route-window kernel.
+   - Build a standalone parity microbench using real route windows and Quark
+     W8A8 weights/scales.
+   - Fuse route remap, activation, second quant, grouped GEMM, gather/finalize,
+     and optional shared-expert add where mathematically safe.
+   - Start as a `vllm-xpu-kernels` repro; wire into vLLM only after parity and
+     isolated speed are proven.
+
+7. Tile-native W8A8 repack cache.
+   - Determine whether current INT8 GEMMs consume an optimal B70/XMX layout or
+     pay transpose/repack/strided-memory costs in hot paths.
+   - If not, repack once at load time with checksummed cache files.
+   - This keeps weights/scales identical and changes only layout.
+
+8. Whole-token command-list or persistent graph capture.
+   - Capture the complete decode path for a fixed bucket: GDN/attention, MoE,
+     collectives, logits, sampling, and request-state update.
+   - The goal is fewer host/runtime transitions rather than one more tiny
+     kernel replacement.
+   - Treat this as a c1 latency-lane branch, not the default production path
+     until reliability is proven.
+
+Moonshots that might be worth a separate branch:
+
+1. Quark-trace-trained proposer.
+   - Generate a large local corpus from the accepted Quark model, then train a
+     tiny same-tokenizer draft head or prompt-class proposer.
+   - It may be enough to draft only common continuations, punctuation, code
+     syntax, and structural JSON tokens with high confidence.
+   - Reject any output not accepted by the Quark verifier.
+
+2. Route-aware speculation.
+   - Use router/hot expert features to predict where the verifier is likely to
+     be cheap or where a draft model is likely to agree.
+   - Dynamically choose `k=1`, `k=3`, `k=6`, or no-spec per request window.
+   - This combines the two strongest signals so far: bucket sublinearity and
+     route locality.
+
+3. Memory-for-latency hot expert copies.
+   - Dedicate part of the 32GB cards to duplicated hot experts or duplicated
+     prepacked expert tiles for a latency lane.
+   - Sacrifice max 32K concurrency only on that lane.
+   - Use prompt-class K32/K64 hotsets rather than a single global K16 mapping.
+
+4. XPU-native 8-bit engine shootout with one quality harness.
+   - Compare current vLLM Quark W8A8, llama.cpp/SYCL Q8_0 or equivalent 8-bit,
+     OpenVINO/oneDNN GenAI, LLM-Scaler, and any current vLLM-XPU-kernels branch
+     that supports Qwen3.6 MoE.
+   - Same prompts, same no-thinking chat template, 32K context, same repeat and
+     long-context gates.
+   - This is diagnostic unless a candidate also serves production traffic.
+
+5. Upstream packet and bounty-quality repros.
+   - Package three minimal public repros: W8A8 dense GEMM underperforming shape,
+     routed MoE grouped GEMM from real histograms, and speculative MTP state
+     corruption on XPU.
+   - Include commands, shape metadata, expected versus current throughput, and
+     token-trace failures.
+   - This may unlock help faster than carrying increasingly deep local patches.
+
+Updated action order:
+
+1. Finish the oracle verifier harness and record whether perfect draft actually
+   crosses `200 tok/s` on this hardware.
+2. If yes, invest in proposer correctness: auxiliary MTP/DFlash/self-spec and
+   acceptance prediction.
+3. If no, pivot to persistent MoE, hybrid TP/EP, and 8-bit engine shootout.
+4. In all cases, keep the accepted TP4 service and token-trace oracle as the
+   reliability baseline.
+
+## Oracle Draft Harness First Probe
+
+Added the first opt-in oracle-draft harness for vLLM's n-gram proposer path.
+This is not a production feature; it is a diagnostic to separate multi-token
+verifier timing/correctness from proposer quality.
+
+New artifacts:
+
+- `scripts/qwen36-completion-oracle-trace.py`
+- `scripts/launch-qwen36-quark-int8-oracle-trace.sh`
+- `patches/vllm-qwen36-oracle-draft-ngram-proposer-20260611.patch`
+- accepted trace seed:
+  `data/qwen36-quark-int8-tp4-oracle-completions-accepted-20260611.json`
+- eager oracle result:
+  `data/qwen36-quark-int8-tp4-oracle5-eager-completions-20260611.json`
+- eager oracle spec summary:
+  `data/qwen36-quark-int8-tp4-oracle5-eager-spec-summary-20260611.json`
+  and
+  `data/qwen36-quark-int8-tp4-oracle5-eager-spec-summary-20260611.md`
+- restored accepted frontdoor smoke:
+  `data/qwen36-quark-int8-tp4-accepted-restored-after-oracle-frontdoor-text-smoke-20260611.json`
+
+Validation:
+
+- `python3 -m py_compile scripts/qwen36-completion-oracle-trace.py`
+- `bash -n scripts/launch-qwen36-quark-int8-oracle-trace.sh`
+- `git apply --reverse --check` passed for
+  `patches/vllm-qwen36-oracle-draft-ngram-proposer-20260611.patch` against the
+  current local vLLM tree.
+
+Eager `k=5` result:
+
+- The oracle hook did activate:
+  `/tmp/qwen36-oracle5-eager-draft-20260611b.jsonl` recorded `24` matched draft
+  rows across the two completion cases.
+- vLLM's speculative trace recorded `6` scheduler rows across `2` requests.
+- Acceptance over the traced scheduler rows was `73.33%`.
+- Exact output parity failed against the accepted graph baseline:
+  `baseline_match_all=false`.
+- Both cases first diverged at output-token index `14`:
+  - `natural_latency_plan`: accepted baseline token `4779` (`memory`) versus
+    eager oracle verifier token `29541` (`reliability`).
+  - `repetitive_kernel_notes`: accepted baseline token `4752` versus eager
+    oracle verifier token `6126`.
+- Interpretation: this proves draft injection and trace plumbing work, but it
+  is not a valid speed result. Eager/no-graph generation does not reproduce the
+  accepted graph baseline for these raw completion prompts, so it cannot answer
+  the perfect-draft quality question.
+
+Graph `k=5` result:
+
+- The graph-mode oracle service compiled and reached `/health`, but then hit
+  `UR_RESULT_ERROR_DEVICE_LOST` on an external chat request before the local
+  completion probe could run.
+- The crash happened in `gpu_input_batch._make_sampling_metadata` while copying
+  sampling metadata to XPU, after a `prompt_token_ids_len=2386` external request.
+- No graph-mode oracle quality or speed number is valid.
+- Next graph oracle attempt should be isolated from the production/frontdoor
+  traffic path, ideally on a separate port or with the frontdoor paused, because
+  external chat traffic can consume the experiment before the controlled probe.
+
+Restore status:
+
+- Accepted non-spec backend restored in tmux session
+  `qwen36-tp4-accepted-restored-after-oracle-20260611b`.
+- Backend `/health` passed.
+- Frontdoor `/health` passed.
+- Frontdoor short text smoke passed all exact/copy/arithmetic/JSON/repeat
+  checks with `pass_all=true`.
+- Direct backend chat smoke still failed the arithmetic canary (`58` instead of
+  `60`), which is consistent with earlier notes that production quality claims
+  must use the frontdoor/request policy rather than raw backend chat.
+  Artifact:
+  `data/qwen36-quark-int8-tp4-accepted-restored-after-oracle-text-smoke-20260611.json`.
+
+Next oracle work:
+
+1. Isolate the graph-mode oracle probe from external traffic.
+2. Record a graph-mode accepted completion baseline immediately before the
+   oracle run, using the exact same endpoint posture, to avoid eager/graph or
+   fresh-process drift.
+3. Run `k=3`, then `k=6/8` only after `k=5` exact parity is clean.
+4. Add a one-command report that joins oracle draft rows, scheduler spec rows,
+   and client token diffs by request ID/prefix.
