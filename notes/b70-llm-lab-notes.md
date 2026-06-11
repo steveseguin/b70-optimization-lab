@@ -59,6 +59,11 @@ Current Qwen3.6 INT8 direction:
    helped layer 8 rows=16 and layer 20 rows=1, but hurt layer 8 rows=1 and
    layer 20 rows=16. Treat expert layout as layer/window/prompt-class specific
    until broader captures prove otherwise.
+10. Route heatmap analysis now ranks all-layer decode locality. Current first
+    targets for broader route-window or single-layer replay are layers `9`, `8`,
+    `21`, `14`, and `20`. Layer `9` is the best next new layer because it has
+    the strongest all-layer locality signal and was not part of the initial
+    exact-ID route replay.
 
 ## 2026-05-10 MiniMax AutoRound Addendum
 

@@ -1507,6 +1507,61 @@ Interpretation:
   layer-by-layer heatmap of where packing, grouped-GEMM policy, or persistent
   scheduling consistently wins.
 
+### Route Heatmap Analyzer
+
+Added `scripts/analyze-qwen36-moe-route-heatmap.py` to turn one or more labeled
+route summaries/JSONL captures into a layer ranking. It computes route locality
+signals including top-N expert share, max expert share, active-expert share,
+entropy, and cross-label top-expert overlap. This is a planning tool for
+choosing layers for route-window scans, persistent MoE prototypes, or
+shape-exact grouped-GEMM repros.
+
+Artifacts:
+
+- all-layer decode plus exact-ID heatmap:
+  `data/qwen36-quark-int8-tp4-routecapture-heatmap-20260611.json`
+- raw JSONL validation heatmap:
+  `data/qwen36-quark-int8-tp4-routecapture5-jsonl-heatmap-20260611.json`
+
+Commands:
+
+```bash
+python3 scripts/analyze-qwen36-moe-route-heatmap.py \
+  --input decode=data/qwen36-quark-int8-tp4-routecapture4-quark-decode-summary-20260611.json \
+  --input exact_ids=data/qwen36-quark-int8-tp4-routecapture5-exact-id-rank0-summary-20260611.json \
+  --out data/qwen36-quark-int8-tp4-routecapture-heatmap-20260611.json \
+  --limit 24
+
+python3 scripts/analyze-qwen36-moe-route-heatmap.py \
+  --input exact_jsonl=data/qwen36-quark-int8-tp4-routecapture5-routes-rank0-20260611.jsonl \
+  --stage-regex '^quark_int8_apply$' \
+  --max-num-tokens 1 \
+  --out data/qwen36-quark-int8-tp4-routecapture5-jsonl-heatmap-20260611.json \
+  --limit 12
+```
+
+Current top all-layer decode targets by route-locality priority:
+
+| rank | layer | labels | top16 share | max share | active expert share |
+| ---: | ---: | --- | ---: | ---: | ---: |
+| 1 | 9 | decode | `0.5694` | `0.0813` | `0.3359` |
+| 2 | 8 | decode, exact_ids | `0.5856` | `0.0919` | `0.3926` |
+| 3 | 21 | decode | `0.5615` | `0.0496` | `0.3594` |
+| 4 | 14 | decode | `0.5595` | `0.0774` | `0.3359` |
+| 5 | 20 | decode, exact_ids | `0.5738` | `0.0737` | `0.4043` |
+
+Interpretation:
+
+- Layer 9 is now the best first target for a new route-window scan because it
+  has the strongest all-layer decode locality signal and was not in the first
+  exact-ID route replay.
+- Layers 8 and 20 remain useful because exact IDs already exist, but the heatmap
+  says layer 21 and layer 14 should join the next capture set.
+- Future prompt-class captures should be passed as separate labels so we can
+  see whether hot experts persist across natural chat, code, structured, math,
+  and repetitive prompts. A layer with high locality and high cross-label
+  overlap is the safest layout/kernel target.
+
 ## Things To Try After Route Replay
 
 Added after the route-replay microbench and another quick pass over public
