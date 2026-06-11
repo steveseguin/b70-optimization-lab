@@ -1,0 +1,36 @@
+diff --git a/vllm/v1/core/sched/scheduler.py b/vllm/v1/core/sched/scheduler.py
+index 032767cdf..ignore-drafts 100644
+--- a/vllm/v1/core/sched/scheduler.py
++++ b/vllm/v1/core/sched/scheduler.py
+@@ -235,6 +235,12 @@ class Scheduler(SchedulerInterface):
+             .lower()
+             in ("1", "true", "yes", "on")
+         )
++        self.xpu_spec_decode_ignore_drafts = (
++            os.environ.get("VLLM_XPU_SPEC_DECODE_IGNORE_DRAFTS", "")
++            .strip()
++            .lower()
++            in ("1", "true", "yes", "on")
++        )
+         if speculative_config:
+             self.num_spec_tokens = speculative_config.num_speculative_tokens
+             if speculative_config.use_eagle():
+@@ -534,6 +540,18 @@ class Scheduler(SchedulerInterface):
+                 )
+                 num_new_tokens = min(num_new_tokens, max(0, non_spec_new_tokens))
+ 
++            if self.xpu_spec_decode_ignore_drafts and request.spec_token_ids:
++                # Diagnostic mode: keep speculative config/proposer plumbing
++                # active, but do not feed draft tokens to the verifier. This
++                # isolates scheduler/config side effects from actual
++                # speculative-token execution and commit/rollback behavior.
++                non_spec_new_tokens = (
++                    request.num_tokens
++                    + request.num_output_placeholders
++                    - request.num_computed_tokens
++                )
++                num_new_tokens = min(num_new_tokens, max(0, non_spec_new_tokens))
++
+             if num_new_tokens == 0:
+                 # The request cannot be scheduled because one of the following
+                 # reasons:

@@ -17,6 +17,7 @@ ENFORCE_EAGER="${ENFORCE_EAGER:-0}"
 CUDAGRAPH_CAPTURE_SIZES="${CUDAGRAPH_CAPTURE_SIZES:-}"
 COMPILE_CONFIG="${COMPILE_CONFIG:-{\"cudagraph_mode\":\"PIECEWISE\",\"max_cudagraph_capture_size\":128}}"
 DISABLE_FULL_ACCEPT_BONUS="${DISABLE_FULL_ACCEPT_BONUS:-0}"
+IGNORE_DRAFTS="${IGNORE_DRAFTS:-0}"
 
 if [[ -n "$CUDAGRAPH_CAPTURE_SIZES" ]]; then
   COMPILE_CONFIG=$(printf '{"cudagraph_mode":"PIECEWISE","cudagraph_capture_sizes":[%s],"max_cudagraph_capture_size":128}' \
@@ -56,6 +57,11 @@ if [[ "$DISABLE_FULL_ACCEPT_BONUS" == "1" ]]; then
   export VLLM_XPU_SPEC_DECODE_DISABLE_FULL_ACCEPT_BONUS=1
 else
   unset VLLM_XPU_SPEC_DECODE_DISABLE_FULL_ACCEPT_BONUS
+fi
+if [[ "$IGNORE_DRAFTS" == "1" ]]; then
+  export VLLM_XPU_SPEC_DECODE_IGNORE_DRAFTS=1
+else
+  unset VLLM_XPU_SPEC_DECODE_IGNORE_DRAFTS
 fi
 export ONEAPI_DEVICE_SELECTOR=level_zero:0,1,2,3
 export ZE_AFFINITY_MASK=0,1,2,3

@@ -8376,3 +8376,118 @@ Updated priority:
 4. Add speculative state fingerprints and a serial-fallback-inside-spec mode.
 5. In parallel, begin static c1 and persistent-MoE work because they do not
    depend on speculative correctness.
+
+## Oracle Fixture Gate and Ignore-Drafts Diagnostic
+
+The reduced oracle fixture now has an executable checker:
+
+- `scripts/check-qwen36-oracle-fixture.py`
+
+Current known-drift gate:
+
+```bash
+python3 scripts/check-qwen36-oracle-fixture.py \
+  --fixture data/qwen36-quark-int8-tp4-oracle-k1-drift-fixture-20260611.json \
+  --replay-json data/qwen36-quark-int8-tp4-oracle-k1-drift-replay-20260611.json \
+  --mode known-drift \
+  --expected-mismatches 2 \
+  --expected-roles verifier_bonus_after_full_accept,replacement_after_reject
+```
+
+This passed with:
+
+- `ok=true`
+- `case_count=2`
+- `mismatch_count=2`
+- roles:
+  - `verifier_bonus_after_full_accept`
+  - `replacement_after_reject`
+
+Future repaired speculation gate:
+
+```bash
+python3 scripts/check-qwen36-oracle-fixture.py \
+  --fixture <new-reduced-fixture.json> \
+  --replay-json <new-replay.json>
+```
+
+Default mode is `exact`; it requires:
+
+- `exact_match_all=true`
+- `mismatch_count=0`
+- replay rows parse cleanly
+- all scheduler requests join to token cases
+- replay accounting mismatch count is `0`
+- suppressed-follow-up mismatch count is `0`
+
+New diagnostic patch:
+
+- `patches/vllm-qwen36-spec-ignore-drafts-diagnostic-20260611.patch`
+- Local vLLM tree has the same change applied in
+  `/home/steve/src/vllm/vllm/v1/core/sched/scheduler.py`.
+- `scripts/launch-qwen36-quark-int8-ngram-trace.sh` now accepts
+  `IGNORE_DRAFTS=1`.
+
+New env:
+
+```bash
+VLLM_XPU_SPEC_DECODE_IGNORE_DRAFTS=1
+```
+
+Intent:
+
+- Keep speculative config and proposer plumbing active.
+- Do not feed draft tokens into the verifier.
+- Schedule only the normal non-spec verifier token for that request.
+- Clear pending draft tokens after the step as usual.
+- This separates scheduler/config side effects from actual speculative-token
+  execution and commit/rollback behavior.
+
+Interpretation matrix for the isolated oracle run:
+
+1. `IGNORE_DRAFTS=1` passes exact parity.
+   - The generic spec-enabled scheduler/config path is probably not enough to
+     corrupt output.
+   - The failure is likely in speculative token execution, GDN/KV state update,
+     multi-token verifier bucket behavior, or commit/rollback of the extra
+     verifier/replacement token.
+   - Next: add state fingerprints around speculative rows and repair actual
+     draft execution.
+2. `IGNORE_DRAFTS=1` still drifts.
+   - Mere speculative scheduling/proposer plumbing can perturb state.
+   - Next: inspect request counters, block table allocation, lookahead blocks,
+     and request `spec_token_ids` lifetime even when drafts are not executed.
+3. `IGNORE_DRAFTS=1` device-losts.
+   - The instability is not limited to speculative model math.
+   - Next: repeat with a fresh graph cache, then eager mode, and include the
+     result in the upstream `block_table.copy_to_gpu`/graph-cache repro packet.
+
+Recommended isolated run when public traffic can be paused:
+
+```bash
+PORT=18081 \
+TAG=oracle1-ignore-drafts-graph \
+NUM_SPECULATIVE_TOKENS=1 \
+PROMPT_LOOKUP_MIN=2 \
+PROMPT_LOOKUP_MAX=5 \
+ORACLE_TRACE=data/qwen36-quark-int8-tp4-oracle-k1-short-accepted-graph-20260611.json \
+SPEC_TRACE_FILE=/tmp/qwen36-oracle1-ignore-drafts-graph-spec-trace-20260611.jsonl \
+IGNORE_DRAFTS=1 \
+scripts/launch-qwen36-quark-int8-oracle-trace.sh
+```
+
+Then capture completions for the two short oracle prompts, replay the scheduler
+trace, reduce the fixture, and run the checker in exact mode. Do not benchmark
+or submit any speculation speed row until the exact gate passes.
+
+Validation for this tracking step:
+
+- `python3 -m py_compile scripts/check-qwen36-oracle-fixture.py scripts/reduce-qwen36-oracle-fixture.py`
+- `bash -n scripts/launch-qwen36-quark-int8-ngram-trace.sh scripts/launch-qwen36-quark-int8-oracle-trace.sh`
+- known-drift gate command above
+- `/home/steve/.venvs/vllm-xpu/bin/python -m py_compile vllm/v1/core/sched/scheduler.py`
+- `git apply --reverse --check patches/vllm-qwen36-spec-ignore-drafts-diagnostic-20260611.patch`
+
+The isolated run was not executed in this step because the accepted TP4 public
+service is currently healthy and unpaused. Keep this diagnostic for the next
+paused/isolated window.
