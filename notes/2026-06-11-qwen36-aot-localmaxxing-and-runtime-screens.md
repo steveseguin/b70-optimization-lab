@@ -10015,3 +10015,144 @@ Next action:
 3. If the new block-table traces show allocator/table drift, isolate whether it
    comes from graph capture size, async scheduling, lookahead/spec block
    reservation, or KV-cache capacity/layout differences.
+
+## Bolder Idea Addendum After Model-Input Parity
+
+Added after the first accepted/placebo parity checker showed an immediate
+slot-mapping mismatch. These are things to try without changing the final
+quality rule: the current Quark W8A8 INT8 model remains the verifier and every
+candidate must pass exact token/quality gates before any speed claim counts.
+
+Immediate cleanup before more speed runs:
+
+1. Restore and harden the accepted service before isolated trace work.
+   - Current frontdoor/backend health must be checked before and after every
+     speculative or sidecar experiment.
+   - Add a small restore checklist: backend `/health`, backend generation,
+     frontdoor `/health`, local-only exact token trace, and external traffic
+     pause/drain state.
+   - This prevents a stale or device-lost backend from contaminating quality
+     and performance notes.
+
+2. Make static block-table parity the first speculation gate.
+   - Rerun accepted/placebo/no-async/oracle traces with fixed block-table
+     accessors.
+   - If placebo already shifts slot mappings at row 0, build a minimal
+     allocator fixture before touching MTP, DFlash, or n-gram width again.
+   - A plausible fix branch is deterministic slot/block allocation for
+     single-stream c1 tests, even if production keeps the general allocator.
+
+3. Prove the perfect-draft upper bound only after parity is clean.
+   - Reuse the oracle/perfect-draft harness, but require verifier-input parity
+     through the first divergent token.
+   - If perfect draft still cannot exceed the baseline after parity repair,
+     speculation is not the near-term 2x path on this vLLM/XPU stack.
+   - If perfect draft jumps meaningfully, then invest in MTP/sidecar proposer
+     work.
+
+Larger things to try:
+
+1. Deterministic KV arena for solo decode.
+   - Preallocate a fixed KV/block arena for one request and hold block IDs,
+     slot mappings, graph bucket, and cache positions stable across accepted,
+     placebo, and speculative runs.
+   - This is narrower than production vLLM scheduling, but it can prove whether
+     scheduler/block-table movement is the source of verifier drift.
+   - If it works, fold it into a production single-request latency lane.
+
+2. Multi-column verifier graph buckets.
+   - Instead of treating speculation as scheduler magic around ordinary decode,
+     create explicit graph buckets for verifying 2, 4, and 8 candidate columns
+     with stable slot tables.
+   - The drafter can be n-gram, MTP, or sidecar; the key is that the verifier
+     graph sees a deterministic shape and deterministic cache layout.
+   - This is a cleaner path to DFlash/EAGLE-style gains than trying to patch
+     generic speculative scheduling blind.
+
+3. Quark-compatible MTP sidecar with tiny verifier integration.
+   - Keep the current Quark checkpoint untouched.
+   - Load only the official Qwen3.6 MTP/proposer tensors in a sidecar process
+     or auxiliary model runner, then feed candidates into the Quark verifier.
+   - Score the sidecar on end-to-end accepted-token speed, not draft speed. A
+     fast sidecar that causes low acceptance or scheduler drift is not useful.
+
+4. Learned B70-native micro-drafter.
+   - Generate a trace corpus from the current Quark verifier and train a small
+     same-tokenizer drafter/head for common interactive patterns.
+   - This can be B70-friendly: shallow, static shape, low memory, and optimized
+     for high acceptance at candidate length 2-4.
+   - Quality remains unchanged only if the Quark verifier owns final tokens.
+
+5. Route-to-kernel compiler for Qwen3.6 A3B MoE.
+   - Capture real route windows, then generate or select specialized grouped
+     GEMM schedules for the observed layer/prompt route patterns.
+   - Start with a runtime policy table; the bold version emits route-window
+     specific command lists or Triton/SYCL kernels.
+   - This attacks the likely real bottleneck: small, skewed expert work rather
+     than uniform synthetic MoE microbench traffic.
+
+6. Hot-expert memory-for-latency mode.
+   - Use route histograms to duplicate only high-probability experts or shared
+     expert fragments on multiple ranks.
+   - The weights and routing stay identical, so quality should be unchanged;
+     the tradeoff is VRAM versus fewer cross-rank fragments and collectives.
+   - Make this a separate service class if it cannot fit with full 32K context.
+
+7. Hybrid TP/EP simulator before runtime surgery.
+   - Build a memory/traffic model for TP4, TP2x2 replicas, TP+expert parallel,
+     and hot-expert replication.
+   - Feed it real route histograms, KV size, W8A8 weight memory, and collective
+     timings.
+   - Only implement the layout if the model predicts a credible c1 decode win.
+
+8. Whole-token command-list runner.
+   - Capture the complete one-token path as a stable Level Zero command-list
+     sequence: attention, GDN projection, MoE route/remap, W8A8 GEMMs,
+     collectives, logits, and sampling.
+   - This is a moonshot because it likely needs static slots and fixed graph
+     buckets, but it could remove enough launch/synchronization overhead to
+     matter.
+
+9. XPU W8A8 kernel branch against `vllm-xpu-kernels`.
+   - Move from Python/vLLM wrapper experiments to shape-exact kernel work:
+     dense W8A8 small-M GEMM, routed grouped GEMM, activation plus second
+     quant, and MoE finalize.
+   - Package every microbench with exact shapes and parity checks so it can be
+     upstreamed or shared with Intel/vLLM maintainers.
+
+10. Exact 8-bit engine shootout with production constraints.
+    - Test current vLLM Quark W8A8 against llama.cpp/SYCL Q8-ish GGUF,
+      OpenVINO/oneDNN GenAI, SGLang XPU if usable, and any new Intel 8-bit
+      Qwen3.6 path.
+    - This is not a model downgrade exercise. Reject Q4/AWQ/GPTQ-4bit and any
+      Qwen3.5 detour for the final candidate.
+    - The diagnostic question is whether vLLM/XPU is the bottleneck or whether
+      B70 is currently capped by the model/kernel shape itself.
+
+11. Reliability scoreboard beside speed scoreboard.
+    - Track device-lost count, graph cold-start failure rate, long-lived
+      process repeat drift, restore time, and health-smoke pass rate for every
+      candidate.
+    - Add this to Localmaxxing notes when publishing strong results. A fast
+      benchmark that cannot survive restore/soak is not production progress.
+
+12. Upstream or bounty-style public packet.
+    - Prepare a minimal public issue package: exact model ID, hardware, kernel
+      stack, Localmaxxing row, block-table parity fixture, perfect-draft drift,
+      and routed MoE microbench shapes.
+    - Ask a precise question: what XPU path is missing for Qwen3.6 A3B W8A8
+      c1 decode on B70?
+    - This may be the fastest way to get help on low-level kernels while local
+      work continues on parity and router histograms.
+
+Current priority ordering:
+
+1. Restore accepted service health and rerun the fixed block-table traces.
+2. Fix or isolate model-input parity before more speculative speed claims.
+3. In parallel, collect real-router histograms and token timing because that
+   branch does not depend on speculative correctness.
+4. After parity is clean, rerun perfect-draft `k=4` as the upper-bound test.
+5. Choose the next major branch from evidence:
+   - if perfect draft is fast and clean, build the MTP/sidecar/proposer path;
+   - if perfect draft is still slow, prioritize persistent MoE, W8A8 kernels,
+     and hybrid TP/EP layout work.
