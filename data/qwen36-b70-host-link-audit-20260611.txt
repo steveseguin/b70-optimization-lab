@@ -1,0 +1,86 @@
+# B70 host/link audit
+2026-06-10T22:53:13-04:00
+Linux steve-b70s 6.17.0-29-generic #29~24.04.1-Ubuntu SMP PREEMPT_DYNAMIC Mon May 11 10:30:58 UTC 2 x86_64 x86_64 x86_64 GNU/Linux
+os=Ubuntu 24.04.4 LTS
+
+# PCIe ASPM policy
+[default] performance powersave powersupersave 
+
+# xpu-smi discovery
++-----------+--------------------------------------------------------------------------------------+
+| Device ID | Device Information                                                                   |
++-----------+--------------------------------------------------------------------------------------+
+| 0         | Device Name: Intel(R) Arc(TM) Pro B70 Graphics                                       |
+|           | Vendor Name: Intel(R) Corporation                                                    |
+|           | SOC UUID: 00000000-0000-0023-0000-0000e2238086                                       |
+|           | PCI BDF Address: 0000:23:00.0                                                        |
+|           | DRM Device: /dev/dri/card3                                                           |
+|           | Function Type: physical                                                              |
++-----------+--------------------------------------------------------------------------------------+
+| 1         | Device Name: Intel(R) Arc(TM) Pro B70 Graphics                                       |
+|           | Vendor Name: Intel(R) Corporation                                                    |
+|           | SOC UUID: 00000000-0000-0027-0000-0000e2238086                                       |
+|           | PCI BDF Address: 0000:27:00.0                                                        |
+|           | DRM Device: /dev/dri/card4                                                           |
+|           | Function Type: physical                                                              |
++-----------+--------------------------------------------------------------------------------------+
+| 2         | Device Name: Intel(R) Arc(TM) Pro B70 Graphics                                       |
+|           | Vendor Name: Intel(R) Corporation                                                    |
+|           | SOC UUID: 00000000-0000-0043-0000-0000e2238086                                       |
+|           | PCI BDF Address: 0000:43:00.0                                                        |
+|           | DRM Device: /dev/dri/card0                                                           |
+|           | Function Type: physical                                                              |
++-----------+--------------------------------------------------------------------------------------+
+| 3         | Device Name: Intel(R) Arc(TM) Pro B70 Graphics                                       |
+|           | Vendor Name: Intel(R) Corporation                                                    |
+|           | SOC UUID: 00000000-0000-0047-0000-0000e2238086                                       |
+|           | PCI BDF Address: 0000:47:00.0                                                        |
+|           | DRM Device: /dev/dri/card2                                                           |
+|           | Function Type: physical                                                              |
++-----------+--------------------------------------------------------------------------------------+
+
+# B70 endpoint link state
+0000:23:00.0 vendor=0x8086 device=0xe223 class=0x030000 current=2.5 GT/s PCIe_x1 max=2.5 GT/s PCIe_x1 power=auto numa=-1
+0000:27:00.0 vendor=0x8086 device=0xe223 class=0x030000 current=2.5 GT/s PCIe_x1 max=2.5 GT/s PCIe_x1 power=auto numa=-1
+0000:43:00.0 vendor=0x8086 device=0xe223 class=0x030000 current=2.5 GT/s PCIe_x1 max=2.5 GT/s PCIe_x1 power=auto numa=-1
+0000:47:00.0 vendor=0x8086 device=0xe223 class=0x030000 current=2.5 GT/s PCIe_x1 max=2.5 GT/s PCIe_x1 power=auto numa=-1
+
+# B70 upstream path link state
+endpoint=0000:23:00.0 path=/sys/devices/pci0000:20/0000:20:01.1/0000:21:00.0/0000:22:01.0/0000:23:00.0
+0000:20:01.1 vendor=0x1022 device=0x1483 class=0x060400 current=16.0 GT/s PCIe_x16 max=16.0 GT/s PCIe_x16 power=auto numa=-1
+0000:21:00.0 vendor=0x8086 device=0xe2ff class=0x060400 current=16.0 GT/s PCIe_x16 max=32.0 GT/s PCIe_x16 power=auto numa=-1
+0000:22:01.0 vendor=0x8086 device=0xe2f0 class=0x060400 current=2.5 GT/s PCIe_x1 max=2.5 GT/s PCIe_x1 power=auto numa=-1
+0000:23:00.0 vendor=0x8086 device=0xe223 class=0x030000 current=2.5 GT/s PCIe_x1 max=2.5 GT/s PCIe_x1 power=auto numa=-1
+endpoint=0000:27:00.0 path=/sys/devices/pci0000:20/0000:20:03.1/0000:25:00.0/0000:26:01.0/0000:27:00.0
+0000:20:03.1 vendor=0x1022 device=0x1483 class=0x060400 current=16.0 GT/s PCIe_x16 max=16.0 GT/s PCIe_x16 power=auto numa=-1
+0000:25:00.0 vendor=0x8086 device=0xe2ff class=0x060400 current=16.0 GT/s PCIe_x16 max=32.0 GT/s PCIe_x16 power=auto numa=-1
+0000:26:01.0 vendor=0x8086 device=0xe2f0 class=0x060400 current=2.5 GT/s PCIe_x1 max=2.5 GT/s PCIe_x1 power=auto numa=-1
+0000:27:00.0 vendor=0x8086 device=0xe223 class=0x030000 current=2.5 GT/s PCIe_x1 max=2.5 GT/s PCIe_x1 power=auto numa=-1
+endpoint=0000:43:00.0 path=/sys/devices/pci0000:40/0000:40:01.1/0000:41:00.0/0000:42:01.0/0000:43:00.0
+0000:40:01.1 vendor=0x1022 device=0x1483 class=0x060400 current=16.0 GT/s PCIe_x16 max=16.0 GT/s PCIe_x16 power=on numa=-1
+0000:41:00.0 vendor=0x8086 device=0xe2ff class=0x060400 current=16.0 GT/s PCIe_x16 max=32.0 GT/s PCIe_x16 power=auto numa=-1
+0000:42:01.0 vendor=0x8086 device=0xe2f0 class=0x060400 current=2.5 GT/s PCIe_x1 max=2.5 GT/s PCIe_x1 power=auto numa=-1
+0000:43:00.0 vendor=0x8086 device=0xe223 class=0x030000 current=2.5 GT/s PCIe_x1 max=2.5 GT/s PCIe_x1 power=auto numa=-1
+endpoint=0000:47:00.0 path=/sys/devices/pci0000:40/0000:40:03.1/0000:45:00.0/0000:46:01.0/0000:47:00.0
+0000:40:03.1 vendor=0x1022 device=0x1483 class=0x060400 current=16.0 GT/s PCIe_x16 max=16.0 GT/s PCIe_x16 power=auto numa=-1
+0000:45:00.0 vendor=0x8086 device=0xe2ff class=0x060400 current=16.0 GT/s PCIe_x16 max=32.0 GT/s PCIe_x16 power=auto numa=-1
+0000:46:01.0 vendor=0x8086 device=0xe2f0 class=0x060400 current=2.5 GT/s PCIe_x1 max=2.5 GT/s PCIe_x1 power=auto numa=-1
+0000:47:00.0 vendor=0x8086 device=0xe223 class=0x030000 current=2.5 GT/s PCIe_x1 max=2.5 GT/s PCIe_x1 power=auto numa=-1
+
+# Current B70 power/frequency snapshots
+device=0
+| GPU Power (W)               | 1                                                                  |
+| GPU Frequency (MHz)         | 400                                                                |
+| GPU Memory Used (MiB)       | 32648                                                              |
+device=1
+| GPU Power (W)               | 0                                                                  |
+| GPU Frequency (MHz)         | 517                                                                |
+| GPU Memory Used (MiB)       | 32648                                                              |
+device=2
+| GPU Power (W)               | 0                                                                  |
+| GPU Frequency (MHz)         | 517                                                                |
+| GPU Memory Used (MiB)       | 32648                                                              |
+device=3
+| GPU Power (W)               | 2                                                                  |
+| GPU Frequency (MHz)         | 517                                                                |
+| GPU Memory Used (MiB)       | 32648                                                              |
