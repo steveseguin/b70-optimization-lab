@@ -11832,3 +11832,153 @@ quality authority, no Qwen3.5 detours, and no 4-bit promotion.
       repeat64/long-context and request-class gates.
     - Keep two TP2 or c1/c4 replica experiments for aggregate throughput, but
       do not confuse them with the single-request `>200 tok/s` goal.
+
+## Things To Try: Bolder V4
+
+Added after the prompt-logprob and rolling re-prefill verifier probes. The main
+new lesson is that "same token prefix" is not enough for this model family:
+GDN/MoE incremental state can pick a different next token after full re-prefill
+than the live accepted decoder picked. Future verifier work must preserve model
+state, not just token IDs.
+
+Local vLLM streaming-input/session finding:
+
+- vLLM V1 has an internal `AsyncLLM.generate()` path that accepts an async
+  generator of `StreamingInput` chunks.
+- The scheduler keeps a resumable request, enters
+  `WAITING_FOR_STREAMING_REQ`, appends the next prompt chunk, and keeps computed
+  output tokens as part of the next prompt.
+- Current behavior deliberately discards the final sampled token from the prior
+  chunk before resuming. That makes it useful as a harness candidate, but not a
+  direct speculative verifier.
+- The public OpenAI chat/completions frontdoor does not expose this text-session
+  mechanism today. The visible integration is realtime transcription, where
+  generated token IDs are fed back through an input queue.
+
+New concrete follow-ups:
+
+1. Streaming-input verifier harness.
+   - Build a small local Python harness against `AsyncLLM.generate()` with an
+     async `StreamingInput` generator.
+   - Feed accepted token IDs back one chunk at a time and test whether the
+     resident-KV session matches accepted incremental decode better than
+     re-prefill did.
+   - If it matches, use it as the first rolling-sidecar prototype. If it still
+     drifts, the production answer must be in-engine request-state forking.
+
+2. State fingerprint trace.
+   - Add opt-in hashes for per-step KV block IDs, slot mappings,
+     GDN/Mamba recurrent/convolution state, and selected routed-expert state.
+   - Compare accepted decode, prompt-logprob re-prefill, streaming-input
+     continuation, and speculative decode at the first divergent token.
+   - The goal is to identify whether drift comes from recurrent state,
+     speculative placeholder accounting, cache-block layout, or sampling/logits
+     differences.
+
+3. Copy-on-write KV/request fork.
+   - Prototype a verifier request fork that shares immutable prefix blocks and
+     writes speculative blocks into scratch space.
+   - Commit accepted blocks and request counters only after verification.
+   - This is the cleanest in-engine architecture if streaming-input cannot
+     model the live state accurately.
+
+4. Two-lane verifier graph.
+   - Instead of mutating the live request with draft tokens, run draft
+     verification as a second lane in the same decode graph/batch.
+   - The live lane produces the canonical next token; the verifier lane checks a
+     draft window using copied state. Only the accepted prefix is merged.
+   - This is high-risk but could keep graph efficiency while isolating state.
+
+5. Spec-shape graph-bucket autotuner.
+   - Generate capture sizes directly from speculative config:
+     `1 + num_speculative_tokens` plus nearby padding buckets.
+   - The n-gram2 `capture-size-3` result proved a missing bucket can produce
+     device loss on XPU. Make the bucket list derived, not hand-maintained.
+   - Track bucket hit/miss, compile count, and device-loss frequency.
+
+6. MTP proposer without hybrid checkpoint mutation.
+   - Load official Qwen3.6 FP8 MTP tensors in a separate proposer process or
+     sidecar service, leaving the Quark W8A8 INT8 checkpoint untouched.
+   - The current Quark verifier must still approve every emitted token.
+   - This avoids pretending the Quark checkpoint has native MTP, while still
+     testing the only public path that plausibly crosses `200 tok/s`.
+
+7. Early-exit/self-draft proposer.
+   - Use hidden states from earlier verifier layers as a lightweight draft
+     source, then verify with the full Quark model.
+   - This may be easier than a separate draft model if hidden-state extraction
+     can be made cheap and state-safe on XPU.
+   - It only counts if final tokens match the accepted verifier gates.
+
+8. Real-route MoE locality optimizer.
+   - Build expert co-activation matrices from accepted prompt-class runs.
+   - Try expert physical reordering, hot-expert packing, and hot-expert
+     duplication plans before changing kernels.
+   - The memory budget must include 32K KV and production headroom. If hot
+     duplication does not fit, record that instead of forcing it.
+
+9. Column-major / locality-aware W8A8 grouped-GEMM prototype.
+   - The PyTorch MoE locality work showed large gains from scheduling that
+     reuses columns of expert weights for skinny MoE GEMMs.
+   - Port the idea to shape-exact XPU W8A8 grouped GEMM using real routed
+     expert histograms, not uniform synthetic routing.
+   - Keep it as a standalone parity microbench until it beats the current
+     `vllm-xpu-kernels` path.
+
+10. Decode-only static graph runner.
+    - Build an offline single-stream runner that bypasses OpenAI serving,
+      output merging, metrics, and request queue overhead.
+    - Reuse the same model weights and XPU kernels, then compare core decode
+      tok/s to endpoint tok/s.
+    - If the core is far faster, build a production latency lane. If not, stop
+      chasing server overhead and focus on kernels/speculation.
+
+11. Strict Q8/W8A8 engine bakeoff.
+    - Re-run engine comparisons only with 8-bit/high-fidelity candidates:
+      vLLM Quark W8A8, llama.cpp SYCL/Vulkan Q8_0, OpenVINO/oneDNN GenAI if it
+      supports Qwen3.6 MoE, and any native XPU W8A8 stack.
+    - Do not count Q4, AWQ, GPTQ-4bit, MXFP4, or Qwen3.5.
+    - The bakeoff answers whether vLLM/XPU is structurally slow for this model.
+
+12. Disaggregated prefill/decode experiment.
+    - Treat prefill and decode as different workloads. Keep TP4 for 32K prefill
+      if it is best, but test whether decode can move to a lower-collective
+      layout after the prompt is resident.
+    - This likely needs KV transfer or a custom runner, so it belongs after
+      state fingerprinting.
+
+13. Upstreamable XPU kernel packet.
+    - Target `vllm-xpu-kernels`, because current vLLM direction is to move XPU
+      kernels there.
+    - Package three shape-exact repros: W8A8 dense GEMM, route-skewed W8A8 MoE
+      grouped GEMM, and graph-safe tiny collectives.
+    - Include expected speed targets based on the accepted `99.4 tok/s` service
+      and the `>200 tok/s` single-user goal.
+
+14. Quality scoreboard expansion.
+    - Keep the current repeat64/needle/canary gates, but add:
+      - API token ID capture for every promoted speed run,
+      - prompt-class acceptance histograms for speculation,
+      - BF16/current-Quark semantic diffs for any engine-bakeoff candidate,
+      - startup/restart/device-lost counts for reliability.
+    - Any result that is faster but weakens the gate stays diagnostic.
+
+Priority update:
+
+1. First implement the streaming-input verifier harness. It is the cheapest way
+   to test whether a resident-KV sidecar can be semantically aligned.
+2. If streaming-input aligns, turn it into a rolling sidecar benchmark with
+   perfect drafts and MTP proposer experiments.
+3. If streaming-input drifts, move directly to copy-on-write request/KV fork.
+4. In parallel, keep real-route MoE capture and W8A8 grouped-GEMM microbenches
+   moving, because they remain useful even if speculation takes longer.
+
+Sources/leads for this V4 queue:
+
+- `https://docs.vllm.ai/en/latest/features/speculative_decoding/`
+- `https://github.com/vllm-project/vllm-xpu-kernels`
+- `https://docs.vllm.ai/en/latest/design/moe_kernel_features/`
+- `https://github.com/vllm-project/vllm/issues/33214`
+- `https://github.com/vllm-project/vllm/issues/26963`
+- `https://github.com/PMZFX/intel-arc-pro-b70-benchmarks`
+- `https://pytorch.org/blog/accelerating-moe-model/`
