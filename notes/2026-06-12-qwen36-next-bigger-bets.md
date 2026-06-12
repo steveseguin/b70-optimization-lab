@@ -5705,3 +5705,160 @@ Decision:
   variant was too small and failed repeat stability. The next path to
   `>200 tok/s` should be the resident full-MoE island and device-pointer ABI,
   not enabling the current fused SiLU quant shortcut.
+
+## 2026-06-12 Resident GEMM1 -> SiLU+INT8 Quant -> GEMM2 Bridge
+
+Patch:
+
+- Extended `tools/onednn_moe_island_resident_runner.cpp` with opt-in
+  `ONEDNN_PAIR_INCLUDE_ACTIVATION_QUANT=1`.
+- The resident pair runner now supports the exact accepted island sequence:
+  oneDNN GEMM1, an in-process SYCL BF16 SiLU+INT8 quant bridge, then oneDNN
+  GEMM2.
+- The bridge writes directly from GEMM1 resident dst memory into GEMM2 resident
+  src memory and source-scale memory. It uses the accepted BF16 semantics:
+  BF16 gate, BF16 SiLU, BF16 multiply, row absmax, INT8 round/clamp.
+- This is deliberately separate from the rejected installed
+  `_xpu_C.silu_and_mul_quant_int8_xpu` shortcut. The shortcut is faster-looking
+  but not exact on these real route windows; this resident bridge is exact.
+
+Commands:
+
+```bash
+RUNNER_BIN=/tmp/qwen36-onednn-moe-island-resident-fullisland-compile-20260612bf \
+bash scripts/run-onednn-moe-island-resident.sh --compile-only
+
+RUNNER_BIN=/tmp/qwen36-onednn-moe-island-resident-fullisland-compile-20260612bf \
+ONEDNN_SKIP_COMPILE=1 \
+ONEDNN_PAIR_INCLUDE_ACTIVATION_QUANT=1 \
+WARMUP=20 \
+ITERATIONS=100 \
+OUT_JSON=data/qwen36-onednn-moe-island-layer9-r1-multiwindow-20260612bc/resident_multiwindow_full_silu_quant_pair_smoke_20260612bf.json \
+MANIFEST=data/qwen36-onednn-moe-island-layer9-r1-multiwindow-20260612bc/resident_multiwindow_full_silu_quant_manifest_20260612bf.csv \
+bash scripts/run-qwen36-onednn-resident-multiwindow.sh
+
+RUNNER_BIN=/tmp/qwen36-onednn-moe-island-resident-fullisland-compile-20260612bf \
+ONEDNN_SKIP_COMPILE=1 \
+ONEDNN_PAIR_INCLUDE_ACTIVATION_QUANT=1 \
+WARMUP=80 \
+ITERATIONS=1000 \
+OUT_JSON=data/qwen36-onednn-moe-island-layer9-r1-multiwindow-20260612bc/resident_multiwindow_full_silu_quant_pair_result_20260612bf.json \
+MANIFEST=data/qwen36-onednn-moe-island-layer9-r1-multiwindow-20260612bc/resident_multiwindow_full_silu_quant_manifest_20260612bf.csv \
+bash scripts/run-qwen36-onednn-resident-multiwindow.sh
+```
+
+Artifacts:
+
+- `data/qwen36-onednn-moe-island-layer9-r1-multiwindow-20260612bc/resident_multiwindow_full_silu_quant_manifest_20260612bf.csv`.
+- `data/qwen36-onednn-moe-island-layer9-r1-multiwindow-20260612bc/resident_multiwindow_full_silu_quant_pair_smoke_20260612bf.json`.
+- `data/qwen36-onednn-moe-island-layer9-r1-multiwindow-20260612bc/resident_multiwindow_full_silu_quant_pair_result_20260612bf.json`.
+- `data/qwen36-onednn-moe-island-layer9-r1-multiwindow-20260612bc/resident_multiwindow_full_silu_quant_pair_repeat_20260612bf.json`.
+- Restore/provenance:
+  `data/qwen36-quark-int8-tp4-accepted-restored-after-full-siluquant-resident-20260612bf.log`
+  and
+  `data/qwen36-quark-int8-tp4-accepted-provenance-after-full-siluquant-resident-20260612bf.json`.
+
+Result:
+
+- Smoke: `p50=108.825 us`, `mean=108.636 us`, `exact_windows=16/16`,
+  `gemm1_total_diff=0`, `gemm2_total_diff=0`.
+- Timed run: `p50=36.258 us`, `mean=55.248 us`, `p90=105.768 us`,
+  `exact_windows=16/16`, `gemm1_total_diff=0`, `gemm2_total_diff=0`.
+- Repeat: `p50=47.169 us`, `mean=45.762 us`, `p90=52.238 us`,
+  `exact_windows=16/16`, `gemm1_total_diff=0`, `gemm2_total_diff=0`.
+- Accepted backend restored afterward; provenance guard passed all sentinel
+  positions.
+
+Interpretation:
+
+- This is a strong exactness gate for the resident oneDNN MoE-island path:
+  GEMM1, accepted BF16 SiLU+INT8 quant2, and GEMM2 now compose exactly across
+  the 16 real route windows.
+- This is still not an endpoint speed result. It does not yet include top-k
+  weighting/final gather, rank device-pointer ABI, vLLM scheduler integration,
+  or production reliability soak.
+- The result is still important because the activation/quant bridge did not
+  destroy the resident timing profile. The next meaningful lab milestone is a
+  full resident layer output that matches `xpu_fused_moe` exactly, then a
+  device-pointer ABI smoke inside the vLLM rank.
+
+Things to try immediately:
+
+1. **Add exact top-k weight and final gather to the resident runner.**
+   Consume the captured top-k weights and route map, write final BF16 hidden
+   output, and compare the full layer against `xpu_fused_moe` bytes/values.
+   This closes the last local correctness gap before any vLLM integration.
+
+2. **Build the rank-local device-pointer ABI smoke.**
+   Call the resident island from inside one vLLM rank using live device
+   pointers for hidden states, route metadata, and output buffers. Start with a
+   disabled-by-default diagnostic hook that runs both current and resident
+   paths and compares output before returning the current path.
+
+3. **Cache resident oneDNN objects by route signature.**
+   The runner still records `~120 ms` construction cost. Production needs
+   prebuilt primitives and packed weights per layer/GEMM, with per-token
+   updates limited to route offsets, source handles, and scale handles.
+
+4. **Measure command submission and queue waits around the bridge.**
+   The bridge currently sits between two oneDNN executes with one final wait.
+   Use Level Zero/SYCL event timing to decide whether command bundling, in-order
+   queues, or explicit dependencies reduce the p90 tail without changing math.
+
+5. **Run windows from more layers before promotion.**
+   Repeat the resident full-bridge gate on routecapture layers `14`, `20`, and
+   `21`. Layer 9 is the fixture, but production needs proof that route skew and
+   expert shapes do not break exactness or timing elsewhere.
+
+6. **Stress resident memory lifetime.**
+   Loop thousands of route signatures with create/reuse/evict cycles, watch
+   `xpu-smi`, and record device-lost or memory-growth behavior. This is a
+   required reliability gate before the endpoint gets a new resident path.
+
+Bigger, bolder ideas unlocked by this result:
+
+1. **Full oneDNN MoE island as a drop-in vLLM custom op.**
+   Keep vLLM scheduling/KV/dense layers intact, but replace only the Quark W8A8
+   MoE layer with a resident oneDNN-backed island. This is the fastest route
+   from a proven lab result to an endpoint A/B while preserving current model
+   quality.
+
+2. **Device-resident MoE island manager per rank.**
+   Instead of rebuilding or dispatching through Python-side custom-op plumbing
+   every layer call, create a long-lived C++ manager that owns packed weights,
+   oneDNN primitives, route-signature caches, queues, and diagnostic parity
+   hooks. Python only passes compact descriptors.
+
+3. **Route-window autotuned island variants.**
+   Generate several exact resident variants for common route windows:
+   oneDNN-only, oneDNN plus custom gather, custom activation/quant plus oneDNN,
+   and eventually persistent custom kernels. Pick per layer/route class using
+   measured parity-gated timing, not static assumptions.
+
+4. **Final-gather fusion into GEMM2 epilogue.**
+   Once full gather parity is proven, explore whether top-k weight and gather
+   can be fused into the GEMM2 output path or into a single post-GEMM kernel.
+   This is a plausible way to remove another launch without touching GEMM math.
+
+5. **Speculation plus faster exact verifier.**
+   If the resident island cuts target-model verify cost, revisit target-verified
+   speculation. A faster exact verifier makes n-gram/MTP/trace-trained
+   proposers much more valuable while preserving exact target output.
+
+6. **OneDNN fixture as an upstream Intel perf packet.**
+   Package the resident bridge fixture as a small public challenge:
+   real route windows, exact expected GEMM1/GEMM2 bytes, timings, bridge math,
+   and the rejected fused shortcut result. This gives Intel/vLLM a precise B70
+   W8A8 MoE optimization target.
+
+7. **MoE island roofline from real windows.**
+   Compute per-window bytes moved, INT8 ops, BF16 ops, launches, and achieved
+   us/op for GEMM1, bridge, GEMM2, and future gather. Use it to decide whether
+   the next `2x` win is launch elimination, tile/layout work, memory traffic,
+   or parallelism changes.
+
+8. **Latency-lane product architecture around a certified island.**
+   If the resident island works but is specialized, make it a production
+   latency lane rather than forcing it into every request shape. Route common
+   c1 chat shapes to the certified island lane; keep the accepted vLLM lane for
+   general 32K/capacity traffic.

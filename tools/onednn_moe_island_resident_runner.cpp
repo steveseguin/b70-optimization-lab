@@ -15,6 +15,8 @@
 
 #include "example_utils.hpp"
 #include "oneapi/dnnl/dnnl.hpp"
+#include "oneapi/dnnl/dnnl_sycl.hpp"
+#include <sycl/sycl.hpp>
 
 using namespace dnnl;
 
@@ -254,6 +256,91 @@ uint64_t raw_diff_count(const std::vector<uint8_t> &a, const std::vector<uint8_t
         if (a[i] != b[i]) ++diff;
     }
     return diff;
+}
+
+void launch_exact_silu_quant_bf16_to_int8(sycl::queue &queue,
+        memory &gemm1_dst_mem, memory &gemm2_src_mem,
+        memory &gemm2_src_scales_mem, int64_t rows, int64_t input_cols) {
+    if (input_cols % 2 != 0) {
+        throw std::runtime_error("silu quant input cols must be even");
+    }
+    const int64_t cols = input_cols / 2;
+    if (rows <= 0 || cols <= 0) return;
+
+    using bf16 = sycl::ext::oneapi::bfloat16;
+    const auto *input = reinterpret_cast<const bf16 *>(
+            gemm1_dst_mem.get_data_handle(0));
+    auto *q = reinterpret_cast<int8_t *>(gemm2_src_mem.get_data_handle(0));
+    auto *scales = reinterpret_cast<float *>(
+            gemm2_src_scales_mem.get_data_handle());
+    if (!input || !q || !scales) {
+        throw std::runtime_error("oneDNN memory handle for silu quant was null");
+    }
+
+    constexpr int kBlockSize = 256;
+    const sycl::range<1> local(kBlockSize);
+    const sycl::range<1> global(rows * kBlockSize);
+    queue.submit([&](sycl::handler &cgh) {
+        sycl::local_accessor<float, 1> local_max(local, cgh);
+        cgh.parallel_for(sycl::nd_range<1>(global, local),
+                [=](sycl::nd_item<1> item)
+                        [[sycl::reqd_sub_group_size(16)]] {
+                    const int64_t row = item.get_group(0);
+                    const int local_id = item.get_local_id(0);
+                    const int local_range = item.get_local_range(0);
+                    const int64_t input_row_offset = row * cols * 2;
+                    const int64_t output_row_offset = row * cols;
+
+                    float thread_max = 0.0f;
+                    for (int64_t col = local_id; col < cols;
+                            col += local_range) {
+                        const bf16 gate_b = input[input_row_offset + col];
+                        const bf16 up_b = input[input_row_offset + cols + col];
+                        const float gate_f = static_cast<float>(gate_b);
+                        const bf16 silu_b = static_cast<bf16>(
+                                gate_f / (1.0f + sycl::exp(-gate_f)));
+                        const bf16 value_b = static_cast<bf16>(silu_b * up_b);
+                        const float value = static_cast<float>(value_b);
+                        thread_max = sycl::fmax(thread_max, sycl::fabs(value));
+                    }
+
+                    local_max[local_id] = thread_max;
+                    item.barrier(sycl::access::fence_space::local_space);
+
+                    for (int stride = local_range / 2; stride > 0;
+                            stride >>= 1) {
+                        if (local_id < stride) {
+                            local_max[local_id] = sycl::fmax(
+                                    local_max[local_id],
+                                    local_max[local_id + stride]);
+                        }
+                        item.barrier(sycl::access::fence_space::local_space);
+                    }
+
+                    const float absmax = sycl::fmax(local_max[0], 1.0e-10f);
+                    if (local_id == 0) {
+                        scales[row] = absmax / 127.0f;
+                    }
+                    const float inv_scale = 127.0f / absmax;
+
+                    for (int64_t col = local_id; col < cols;
+                            col += local_range) {
+                        const bf16 gate_b = input[input_row_offset + col];
+                        const bf16 up_b = input[input_row_offset + cols + col];
+                        const float gate_f = static_cast<float>(gate_b);
+                        const bf16 silu_b = static_cast<bf16>(
+                                gate_f / (1.0f + sycl::exp(-gate_f)));
+                        const bf16 value_b = static_cast<bf16>(silu_b * up_b);
+                        float quantized =
+                                sycl::round(static_cast<float>(value_b)
+                                        * inv_scale);
+                        quantized = sycl::fmin(
+                                127.0f, sycl::fmax(-127.0f, quantized));
+                        q[output_row_offset + col] =
+                                static_cast<int8_t>(quantized);
+                    }
+                });
+    });
 }
 
 Stats summarize(const std::vector<double> &samples) {
@@ -552,6 +639,11 @@ class WindowedResidentCase {
     size_t window_count() const { return windows_.size(); }
     const Meta &base_meta() const { return base_meta_; }
     const Window &window(size_t index) const { return windows_.at(index); }
+    memory &src_memory(size_t index) { return windows_.at(index).src_mem; }
+    memory &dst_memory(size_t index) { return windows_.at(index).dst_mem; }
+    memory &src_scales_memory(size_t index) {
+        return windows_.at(index).src_scales_mem;
+    }
     const std::string &b_path_key() const { return b_path_key_; }
     const std::string &weight_format_name() const { return weight_format_name_; }
     int64_t construct_us() const { return construct_us_; }
@@ -681,6 +773,8 @@ void run_manifest_pair(engine::kind engine_kind,
     const int warmup = env_int("ONEDNN_PAIR_WARMUP", 20);
     const int iterations = env_int("ONEDNN_PAIR_ITERATIONS", 200);
     const std::string weight_format = env_string("ONEDNN_WEIGHT_FORMAT", "acb");
+    const bool include_activation_quant =
+            env_int("ONEDNN_PAIR_INCLUDE_ACTIVATION_QUANT", 0) != 0;
     const std::filesystem::path json_path = env_string(
             "ONEDNN_PAIR_JSON",
             (manifest_path.parent_path()
@@ -698,6 +792,7 @@ void run_manifest_pair(engine::kind engine_kind,
 
     engine eng(engine_kind, 0);
     stream engine_stream(eng);
+    sycl::queue sycl_queue = sycl_interop::get_queue(engine_stream);
 
     WindowedResidentCase gemm1(eng, gemm1_paths, weight_format);
     WindowedResidentCase gemm2(eng, gemm2_paths, weight_format);
@@ -709,6 +804,12 @@ void run_manifest_pair(engine::kind engine_kind,
     for (int i = 0; i < warmup; ++i) {
         const size_t index = static_cast<size_t>(i) % window_count;
         gemm1.execute_window(engine_stream, index);
+        if (include_activation_quant) {
+            launch_exact_silu_quant_bf16_to_int8(sycl_queue,
+                    gemm1.dst_memory(index), gemm2.src_memory(index),
+                    gemm2.src_scales_memory(index), gemm1.window(index).meta.total_tokens,
+                    gemm1.window(index).meta.n);
+        }
         gemm2.execute_window(engine_stream, index);
         engine_stream.wait();
     }
@@ -719,6 +820,12 @@ void run_manifest_pair(engine::kind engine_kind,
         const size_t index = static_cast<size_t>(i) % window_count;
         const auto start = std::chrono::steady_clock::now();
         gemm1.execute_window(engine_stream, index);
+        if (include_activation_quant) {
+            launch_exact_silu_quant_bf16_to_int8(sycl_queue,
+                    gemm1.dst_memory(index), gemm2.src_memory(index),
+                    gemm2.src_scales_memory(index), gemm1.window(index).meta.total_tokens,
+                    gemm1.window(index).meta.n);
+        }
         gemm2.execute_window(engine_stream, index);
         engine_stream.wait();
         const auto end = std::chrono::steady_clock::now();
@@ -744,14 +851,28 @@ void run_manifest_pair(engine::kind engine_kind,
     if (!json) throw std::runtime_error("failed to open json: " + json_path.string());
     json << std::fixed << std::setprecision(6);
     json << "{\n";
-    json << "  \"kind\": \"resident_onednn_multiwindow_two_gemm_pair\",\n";
+    json << "  \"kind\": \""
+         << (include_activation_quant
+                    ? "resident_onednn_multiwindow_gemm1_silu_quant_gemm2"
+                    : "resident_onednn_multiwindow_two_gemm_pair")
+         << "\",\n";
     json << "  \"note\": \"Cycles real per-window A/scales/offsets from "
             "resident device memory with one resident primitive/weight set per "
-            "GEMM. GEMM2 input is the captured post-activation quantized input; "
-            "activation and gather are not included.\",\n";
+            "GEMM. ";
+    if (include_activation_quant) {
+        json << "GEMM2 input/scales are generated from GEMM1 output by the "
+                "runner's exact BF16 SiLU+INT8 quant bridge; final gather is "
+                "not included.";
+    } else {
+        json << "GEMM2 input is the captured post-activation quantized input; "
+                "activation and gather are not included.";
+    }
+    json << "\",\n";
     json << "  \"manifest\": \"" << json_escape(manifest_path.string()) << "\",\n";
     json << "  \"warmup\": " << warmup << ",\n";
     json << "  \"iterations\": " << iterations << ",\n";
+    json << "  \"include_activation_quant\": "
+         << (include_activation_quant ? "true" : "false") << ",\n";
     json << "  \"window_count\": " << window_count << ",\n";
     json << "  \"exact_window_count\": " << exact_windows << ",\n";
     json << "  \"all_gemm_windows_exact\": "
@@ -825,6 +946,7 @@ void run_manifest_pair(engine::kind engine_kind,
     std::cout << "ONEDNN_RESIDENT_MULTIWINDOW_PAIR p50_us="
               << pair_stats.p50_us
               << " mean_us=" << pair_stats.mean_us
+              << " include_activation_quant=" << include_activation_quant
               << " exact_windows=" << exact_windows << "/" << window_count
               << " gemm1_total_diff=" << gemm1_total_diff
               << " gemm2_total_diff=" << gemm2_total_diff
