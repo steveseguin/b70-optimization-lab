@@ -1,0 +1,49 @@
+{
+  "all_matched": null,
+  "baseline_json": "data/qwen36-quark-int8-tp4-accepted-current-apiids-p512o128-20260611h.json",
+  "cases_loaded": [
+    {
+      "name": "natural_latency_plan",
+      "output_tokens": 128,
+      "prompt_tokens": 502
+    }
+  ],
+  "engine_args": {
+    "compilation_config": {
+      "cudagraph_mode": "PIECEWISE"
+    },
+    "disable_log_stats": true,
+    "distributed_executor_backend": "mp",
+    "dtype": "auto",
+    "enable_prefix_caching": false,
+    "enforce_eager": false,
+    "generation_config": "vllm",
+    "gpu_memory_utilization": 0.95,
+    "kv_cache_dtype": "auto",
+    "language_model_only": true,
+    "max_model_len": 32768,
+    "max_num_batched_tokens": 8192,
+    "max_num_seqs": 1,
+    "model": "/mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118",
+    "quantization": "quark",
+    "tensor_parallel_size": 4,
+    "tokenizer": "/mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118",
+    "trust_remote_code": true
+  },
+  "environment": {
+    "CCL_ATL_TRANSPORT": null,
+    "CCL_TOPO_P2P_ACCESS": null,
+    "ONEAPI_DEVICE_SELECTOR": null,
+    "VLLM_XPU_ENABLE_XPU_GRAPH": null,
+    "VLLM_XPU_FORCE_GRAPH_WITH_COMM": null,
+    "VLLM_XPU_GRAPH_NOOP_COMM_CAPTURE": null,
+    "ZE_AFFINITY_MASK": null
+  },
+  "limit_cases": 1,
+  "max_tokens_per_case": 4,
+  "model": "/mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118",
+  "preflight_only": true,
+  "records": [],
+  "seed": 20260611,
+  "summary": []
+}

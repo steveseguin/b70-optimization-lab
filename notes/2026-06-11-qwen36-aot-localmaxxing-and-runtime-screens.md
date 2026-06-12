@@ -11982,3 +11982,104 @@ Sources/leads for this V4 queue:
 - `https://github.com/vllm-project/vllm/issues/26963`
 - `https://github.com/PMZFX/intel-arc-pro-b70-benchmarks`
 - `https://pytorch.org/blog/accelerating-moe-model/`
+
+## Streaming-Input Verifier Harness
+
+Added `scripts/probe-qwen36-streaming-input-verifier.py`.
+
+Purpose:
+
+- Test vLLM's internal streaming-input/session path as a resident-KV verifier
+  candidate.
+- Feed the accepted baseline prompt once, ask for one token, then feed the
+  accepted baseline token back as the next `StreamingInput` chunk.
+- Compare each generated one-token continuation to the accepted API-token
+  baseline without full-prefix re-prefill.
+
+Why this matters:
+
+- The rolling re-prefill probe proved that full-prefix re-prefill can drift
+  from the live accepted decoder, for example `Intel X` -> ` unique` in the
+  accepted stream but `Intel X` -> `PU` after fresh re-prefill.
+- Streaming-input continuation should keep the resident session state and
+  compute the fed accepted token incrementally. If it aligns, it is a plausible
+  sidecar-verifier substrate. If it drifts, the next path is in-engine
+  copy-on-write request/KV forking.
+
+Implementation notes:
+
+- Uses `AsyncLLM.generate()` with an async generator of `StreamingInput`
+  chunks.
+- Uses `TokensPrompt(prompt_token_ids=[...])` so the baseline API token IDs are
+  authoritative.
+- Uses `SamplingParams(max_tokens=1, temperature=0, top_p=1.0,
+  output_kind=DELTA, detokenize=False)`.
+- Feeds the expected accepted token back after each observed token. This is
+  deliberate: we are testing whether the verifier can stay aligned to the
+  accepted baseline prefix, not whether its first mismatch should poison later
+  positions.
+- Defaults to prefix caching disabled, because prefix-cache/speculation quality
+  interactions are not yet cleared.
+
+Preflight artifacts:
+
+- `data/qwen36-quark-int8-tp4-streaming-input-verifier-preflight-20260611.json`
+- `data/qwen36-quark-int8-tp4-streaming-input-verifier-preflight-20260611.md`
+
+Preflight command:
+
+```bash
+/home/steve/.venvs/vllm-xpu/bin/python \
+  scripts/probe-qwen36-streaming-input-verifier.py \
+  --preflight-only \
+  --baseline-json data/qwen36-quark-int8-tp4-accepted-current-apiids-p512o128-20260611h.json \
+  --limit-cases 1 \
+  --max-tokens-per-case 4 \
+  --output-json data/qwen36-quark-int8-tp4-streaming-input-verifier-preflight-20260611.json \
+  --output-md data/qwen36-quark-int8-tp4-streaming-input-verifier-preflight-20260611.md
+```
+
+Preflight result:
+
+- case count: `1`
+- loaded case: `natural_latency_plan`
+- prompt tokens: `502`
+- output tokens available: `128`
+- no vLLM engine was started
+- syntax check passed with `/home/steve/.venvs/vllm-xpu/bin/python -m py_compile`
+
+Full-run command for a maintenance window:
+
+```bash
+PYTHONPATH=/home/steve/src/vllm:/home/steve/src/vllm-xpu-kernels \
+LD_LIBRARY_PATH=/home/steve/src/vllm-xpu-kernels/vllm_xpu_kernels:${LD_LIBRARY_PATH:-} \
+ONEAPI_DEVICE_SELECTOR=level_zero:0,1,2,3 \
+ZE_AFFINITY_MASK=0,1,2,3 \
+CCL_ATL_TRANSPORT=ofi \
+CCL_TOPO_P2P_ACCESS=1 \
+VLLM_XPU_ENABLE_XPU_GRAPH=1 \
+VLLM_XPU_FORCE_GRAPH_WITH_COMM=1 \
+VLLM_XPU_GRAPH_NOOP_COMM_CAPTURE=1 \
+VLLM_XPU_USE_CUSTOM_OP_COLLECTIVES=1 \
+VLLM_XPU_COMPILE_ALLREDUCE_CUSTOM_OP=1 \
+VLLM_XPU_CUSTOM_ALLREDUCE_GRAPH_CLONE_INPUT=1 \
+VLLM_XPU_CUSTOM_ALLREDUCE_CLONE_INPUT=1 \
+/home/steve/.venvs/vllm-xpu/bin/python \
+  scripts/probe-qwen36-streaming-input-verifier.py \
+  --baseline-json data/qwen36-quark-int8-tp4-accepted-current-apiids-p512o128-20260611h.json \
+  --limit-cases 2 \
+  --max-tokens-per-case 32 \
+  --stop-on-first-mismatch \
+  --output-json data/qwen36-quark-int8-tp4-streaming-input-verifier-current-p512o32-YYYYMMDD.json \
+  --output-md data/qwen36-quark-int8-tp4-streaming-input-verifier-current-p512o32-YYYYMMDD.md
+```
+
+Current runtime decision:
+
+- The live Quark W8A8 backend is resident in tmux session
+  `qwen36-tp4-accepted-restored-after-oracle1-short-20260611a`.
+- Frontdoor status at the time of this note: active `0`, queued `0`, paused
+  for public traffic with local traffic allowed.
+- The resident service owns the four XPUs, so the full streaming-input probe
+  was not launched in this pass. Run it after a deliberate service drain/stop or
+  on an isolated XPU slice.
