@@ -1,0 +1,56 @@
+{
+  "kind": "resident_onednn_two_gemm_pair",
+  "warmup": 100,
+  "iterations": 1000,
+  "pair_mean_us": 38.079196,
+  "pair_min_us": 27.522000,
+  "pair_p50_us": 41.658000,
+  "pair_p90_us": 45.535000,
+  "pair_max_us": 217.147000,
+  "pair_construct_us": 119213,
+  "route_counts_csv": "/home/steve/llm-optimizations/data/qwen36-quark-int8-routecapture6-layer9-r1-start0-64x4-counts-20260612aw.csv",
+  "route_window_count": 16,
+  "gemm1": {
+    "name": "gemm1",
+    "num_experts": 256,
+    "total_tokens": 8,
+    "k": 2048,
+    "n": 256,
+    "dst_dtype": "bf16",
+    "weight_format": "acb",
+    "b_path_key": "b_acb_path",
+    "construct_us": 111450,
+    "raw_checksum": 66236392.000000,
+    "expected_raw_checksum": 66236392.000000,
+    "raw_equal": true,
+    "raw_diff_count": 0
+  },
+  "gemm2": {
+    "name": "gemm2",
+    "num_experts": 256,
+    "total_tokens": 8,
+    "k": 128,
+    "n": 2048,
+    "dst_dtype": "bf16",
+    "weight_format": "acb",
+    "b_path_key": "b_acb_path",
+    "construct_us": 7763,
+    "raw_checksum": 543449703.000000,
+    "expected_raw_checksum": 543449703.000000,
+    "raw_equal": true,
+    "raw_diff_count": 0
+  },
+  "route_pair": {
+    "mean_us": 42.809755,
+    "min_us": 39.825000,
+    "p50_us": 42.069000,
+    "p90_us": 43.982000,
+    "max_us": 62.367000
+  },
+  "route_outputs": {
+    "gemm1_raw_checksum": 67479585.000000,
+    "gemm2_raw_checksum": 540872932.000000,
+    "gemm1_diff_vs_base_expected_count": 3301,
+    "gemm2_diff_vs_base_expected_count": 26352
+  }
+}

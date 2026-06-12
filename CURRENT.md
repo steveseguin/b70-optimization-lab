@@ -6,6 +6,27 @@ Date: 2026-06-12
 
 2026-06-12 continuation:
 
+- Extended the resident oneDNN MoE GEMM-pair runner with mutable grouped-offset
+  route-window replay using the real routecapture6 layer-9 count windows. The
+  runner still first proves base GEMM parity against exported XPU buffers, then
+  mutates grouped offsets for `16` real route windows while keeping primitives,
+  weights, and buffers resident. First run: route-window pair p50 `44.543 us`,
+  mean `44.939 us`; reused-binary rerun: route-window pair p50 `42.069 us`,
+  mean `42.810 us`. Base GEMM1/GEMM2 raw equality stayed true
+  (`raw_diff_count=0` for both). Route-window outputs intentionally differ
+  from the base expected buffers because this benchmark mutates route counts
+  over fixed exported inputs; it is a timing/cache-path gate, not full
+  route-output parity. Accepted backend was restored afterward and provenance
+  passed both prefix cases plus all sentinel tokens. This is the strongest
+  evidence so far that a vLLM-side resident primitive cache with mutable
+  offsets is worth implementing before hand-writing DPAS layerlets.
+  New artifacts:
+  `data/qwen36-onednn-moe-island-layer9-r1-resident-routewindows-20260612bb.json`,
+  `data/qwen36-onednn-moe-island-layer9-r1-resident-routewindows-rerun-20260612bb.json`,
+  `data/qwen36-quark-int8-tp4-accepted-restored-after-onednn-routewindow-resident-20260612bb.log`,
+  and
+  `data/qwen36-quark-int8-tp4-accepted-provenance-after-onednn-routewindow-resident-20260612bb.json`.
+
 - Added a CPU route-signature cache analyzer for real Qwen3.6 MoE route traces
   to decide whether the resident oneDNN path should cache generic primitives or
   exact route-specialized bundles. Across prompt-class traces plus

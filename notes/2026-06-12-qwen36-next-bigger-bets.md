@@ -5046,3 +5046,69 @@ Decision:
    mutable offsets. The gate is full-layer `max_abs_diff=0.0` versus
    `xpu_fused_moe`, then timing below the `168 us/layer` non-speculative
    budget.
+
+## 2026-06-12 Resident OneDNN Mutable-Offset Route Windows
+
+Patch:
+
+- `tools/onednn_moe_island_resident_runner.cpp` now accepts
+  `ONEDNN_ROUTE_COUNTS_CSV`.
+- In route-window mode it keeps both oneDNN grouped-matmul primitives, weights,
+  and buffers resident, then mutates grouped src/dst offsets from real route
+  count windows before executing GEMM1 and GEMM2 with one host wait.
+
+Artifacts:
+
+- `data/qwen36-onednn-moe-island-layer9-r1-resident-routewindows-20260612bb.json`.
+- `data/qwen36-onednn-moe-island-layer9-r1-resident-routewindows-rerun-20260612bb.json`.
+- `data/qwen36-quark-int8-tp4-accepted-restored-after-onednn-routewindow-resident-20260612bb.log`.
+- `data/qwen36-quark-int8-tp4-accepted-provenance-after-onednn-routewindow-resident-20260612bb.json`.
+
+Command shape:
+
+```bash
+ONEDNN_GEMM1_META=$PWD/data/qwen36-onednn-moe-island-layer9-r1-20260612ay/gemm1.meta \
+ONEDNN_GEMM2_META=$PWD/data/qwen36-onednn-moe-island-layer9-r1-20260612ay/gemm2.meta \
+ONEDNN_ROUTE_COUNTS_CSV=$PWD/data/qwen36-quark-int8-routecapture6-layer9-r1-start0-64x4-counts-20260612aw.csv \
+ONEDNN_PAIR_JSON=$PWD/data/qwen36-onednn-moe-island-layer9-r1-resident-routewindows-rerun-20260612bb.json \
+ONEDNN_PAIR_WARMUP=100 \
+ONEDNN_PAIR_ITERATIONS=1000 \
+ONEDNN_WEIGHT_FORMAT=acb \
+RUNNER_BIN=/tmp/qwen36-onednn-moe-island-resident-routewindows-20260612bb \
+ONEDNN_SKIP_COMPILE=1 \
+DEVICE_SELECTOR=level_zero:0 \
+bash scripts/run-onednn-moe-island-resident.sh
+```
+
+Results:
+
+- First run:
+  - Base resident pair p50 `31.839 us`, mean `56.845 us`.
+  - Mutable-offset route-window pair p50 `44.543 us`, mean `44.939 us`.
+  - Base GEMM1/GEMM2 raw equality versus exported XPU outputs stayed true.
+- Reused-binary rerun:
+  - Base resident pair p50 `41.658 us`, mean `38.079 us`.
+  - Mutable-offset route-window pair p50 `42.069 us`, mean `42.810 us`.
+  - Base GEMM1/GEMM2 raw equality versus exported XPU outputs stayed true.
+- Route-window output buffers differ from the base expected outputs
+  (`gemm1_diff_vs_base_expected_count=3301`,
+  `gemm2_diff_vs_base_expected_count=26352` in the rerun). This is expected:
+  the benchmark mutates grouped route counts over fixed exported input buffers.
+  It proves resident offset-update timing and cache viability, not full
+  per-window output parity.
+- Accepted backend restore after the clean XPU window was healthy after `64s`;
+  provenance passed both prefix cases and all sentinel tokens.
+
+Interpretation:
+
+- A per-layer resident oneDNN primitive cache with mutable offsets remains the
+  best immediate non-speculative implementation branch. The route-window
+  overhead sits around `42 us` for the two GEMMs, comfortably below the old
+  two-dispatch XPU floor and leaving budget for activation/quant/gather in a
+  full island.
+- The next exactness gate must eliminate the fixed-buffer caveat: export or
+  directly hand off real per-window remapped inputs/scales so each route-window
+  output can compare against current `xpu_fused_moe` or the staged exact path.
+- If full-island timing stays below `168 us/layer` with `max_abs_diff=0.0`,
+  wire the cache as a vLLM/XPU sidecar. If it does not, move the same ABI to a
+  generated DPAS layerlet or exact target-verified speculation branch.

@@ -9,6 +9,7 @@
 #include <numeric>
 #include <stdexcept>
 #include <string>
+#include <sstream>
 #include <unordered_map>
 #include <vector>
 
@@ -148,6 +149,44 @@ std::vector<int32_t> cumulative_offsets(const std::vector<uint8_t> &rows_data,
                 + " expected " + std::to_string(expected_total));
     }
     return offsets;
+}
+
+std::vector<std::vector<int32_t>> load_count_windows(
+        const std::string &path, int64_t expected_experts, int64_t expected_total) {
+    std::vector<std::vector<int32_t>> windows;
+    if (path.empty()) return windows;
+
+    std::ifstream in(path);
+    if (!in) throw std::runtime_error("failed to open route counts: " + path);
+
+    std::string line;
+    int line_no = 0;
+    while (std::getline(in, line)) {
+        ++line_no;
+        if (line.empty()) continue;
+        std::vector<int32_t> counts;
+        std::stringstream ss(line);
+        std::string item;
+        while (std::getline(ss, item, ',')) {
+            if (!item.empty()) counts.push_back(std::stoi(item));
+        }
+        if (static_cast<int64_t>(counts.size()) != expected_experts) {
+            throw std::runtime_error("route-count line " + std::to_string(line_no)
+                    + " has " + std::to_string(counts.size()) + " experts, expected "
+                    + std::to_string(expected_experts));
+        }
+        const int total = std::accumulate(counts.begin(), counts.end(), 0);
+        if (total != expected_total) {
+            throw std::runtime_error("route-count line " + std::to_string(line_no)
+                    + " total " + std::to_string(total) + ", expected "
+                    + std::to_string(expected_total));
+        }
+        windows.push_back(std::move(counts));
+    }
+    if (windows.empty()) {
+        throw std::runtime_error("route-count file had no windows: " + path);
+    }
+    return windows;
 }
 
 double raw_checksum(const std::vector<uint8_t> &data, memory::data_type dt) {
@@ -297,6 +336,24 @@ class ResidentCase {
 
     void read_output() { read_from_dnnl_memory(output_.data(), dst_mem_); }
 
+    void update_counts(const std::vector<int32_t> &tokens_per_expert) {
+        if (static_cast<int64_t>(tokens_per_expert.size()) != meta_.num_experts) {
+            throw std::runtime_error(meta_.name + " count window expert mismatch");
+        }
+        const int total = std::accumulate(
+                tokens_per_expert.begin(), tokens_per_expert.end(), 0);
+        if (total != meta_.total_tokens) {
+            throw std::runtime_error(meta_.name + " count window token total mismatch");
+        }
+        int64_t cumulative = 0;
+        for (int64_t i = 0; i < meta_.num_experts; ++i) {
+            cumulative += tokens_per_expert[static_cast<size_t>(i)];
+            offsets_[static_cast<size_t>(i)] = static_cast<int32_t>(cumulative);
+        }
+        write_to_dnnl_memory(offsets_.data(), src_mem_, 1);
+        write_to_dnnl_memory(offsets_.data(), dst_mem_, 1);
+    }
+
     const Meta &meta() const { return meta_; }
     const std::string &b_path_key() const { return b_path_key_; }
     const std::string &weight_format_name() const { return weight_format_name_; }
@@ -338,8 +395,8 @@ class ResidentCase {
 };
 
 void write_case_json(std::ofstream &json, const char *prefix,
-        const ResidentCase &item) {
-    const uint64_t diff_count = raw_diff_count(item.output(), item.expected_output());
+        const ResidentCase &item, const std::vector<uint8_t> &output) {
+    const uint64_t diff_count = raw_diff_count(output, item.expected_output());
     json << "  \"" << prefix << "\": {\n";
     json << "    \"name\": \"" << json_escape(item.meta().name) << "\",\n";
     json << "    \"num_experts\": " << item.meta().num_experts << ",\n";
@@ -350,11 +407,21 @@ void write_case_json(std::ofstream &json, const char *prefix,
     json << "    \"weight_format\": \"" << json_escape(item.weight_format_name()) << "\",\n";
     json << "    \"b_path_key\": \"" << json_escape(item.b_path_key()) << "\",\n";
     json << "    \"construct_us\": " << item.construct_us() << ",\n";
-    json << "    \"raw_checksum\": " << raw_checksum(item.output(), item.dst_dtype()) << ",\n";
+    json << "    \"raw_checksum\": " << raw_checksum(output, item.dst_dtype()) << ",\n";
     json << "    \"expected_raw_checksum\": "
          << raw_checksum(item.expected_output(), item.dst_dtype()) << ",\n";
     json << "    \"raw_equal\": " << (diff_count == 0 ? "true" : "false") << ",\n";
     json << "    \"raw_diff_count\": " << diff_count << "\n";
+    json << "  }";
+}
+
+void write_stats_json(std::ofstream &json, const char *prefix, const Stats &stats) {
+    json << "  \"" << prefix << "\": {\n";
+    json << "    \"mean_us\": " << stats.mean_us << ",\n";
+    json << "    \"min_us\": " << stats.min_us << ",\n";
+    json << "    \"p50_us\": " << stats.p50_us << ",\n";
+    json << "    \"p90_us\": " << stats.p90_us << ",\n";
+    json << "    \"max_us\": " << stats.max_us << "\n";
     json << "  }";
 }
 
@@ -370,6 +437,7 @@ void run_pair(engine::kind engine_kind) {
     const std::filesystem::path json_path = env_string(
             "ONEDNN_PAIR_JSON",
             (gemm1_meta.parent_path() / "resident_pair_result.json").string());
+    const std::string route_counts_csv = env_string("ONEDNN_ROUTE_COUNTS_CSV");
 
     engine eng(engine_kind, 0);
     stream engine_stream(eng);
@@ -397,7 +465,64 @@ void run_pair(engine::kind engine_kind) {
 
     gemm1.read_output();
     gemm2.read_output();
+    const std::vector<uint8_t> base_gemm1_output = gemm1.output();
+    const std::vector<uint8_t> base_gemm2_output = gemm2.output();
+    const bool base_gemm1_equal =
+            raw_diff_count(base_gemm1_output, gemm1.expected_output()) == 0;
+    const bool base_gemm2_equal =
+            raw_diff_count(base_gemm2_output, gemm2.expected_output()) == 0;
     const Stats pair_stats = summarize(pair_samples);
+
+    std::vector<std::vector<int32_t>> route_windows;
+    if (!route_counts_csv.empty()) {
+        if (gemm1.meta().num_experts != gemm2.meta().num_experts
+                || gemm1.meta().total_tokens != gemm2.meta().total_tokens) {
+            throw std::runtime_error(
+                    "route-window mode requires matching expert/token counts");
+        }
+        route_windows = load_count_windows(route_counts_csv, gemm1.meta().num_experts,
+                gemm1.meta().total_tokens);
+    }
+
+    Stats route_pair_stats;
+    double route_gemm1_checksum = 0.0;
+    double route_gemm2_checksum = 0.0;
+    uint64_t route_gemm1_diff_count = 0;
+    uint64_t route_gemm2_diff_count = 0;
+    bool have_route_stats = false;
+    if (!route_windows.empty()) {
+        for (int i = 0; i < warmup; ++i) {
+            const auto &counts = route_windows[static_cast<size_t>(i) % route_windows.size()];
+            gemm1.update_counts(counts);
+            gemm2.update_counts(counts);
+            gemm1.execute(engine_stream);
+            gemm2.execute(engine_stream);
+            engine_stream.wait();
+        }
+
+        std::vector<double> route_pair_samples;
+        route_pair_samples.reserve(iterations);
+        for (int i = 0; i < iterations; ++i) {
+            const auto &counts = route_windows[static_cast<size_t>(i) % route_windows.size()];
+            const auto start = std::chrono::steady_clock::now();
+            gemm1.update_counts(counts);
+            gemm2.update_counts(counts);
+            gemm1.execute(engine_stream);
+            gemm2.execute(engine_stream);
+            engine_stream.wait();
+            const auto end = std::chrono::steady_clock::now();
+            route_pair_samples.push_back(std::chrono::duration<double, std::micro>(
+                    end - start).count());
+        }
+        gemm1.read_output();
+        gemm2.read_output();
+        route_pair_stats = summarize(route_pair_samples);
+        route_gemm1_checksum = raw_checksum(gemm1.output(), gemm1.dst_dtype());
+        route_gemm2_checksum = raw_checksum(gemm2.output(), gemm2.dst_dtype());
+        route_gemm1_diff_count = raw_diff_count(gemm1.output(), gemm1.expected_output());
+        route_gemm2_diff_count = raw_diff_count(gemm2.output(), gemm2.expected_output());
+        have_route_stats = true;
+    }
 
     std::ofstream json(json_path);
     if (!json) throw std::runtime_error("failed to open json: " + json_path.string());
@@ -413,18 +538,36 @@ void run_pair(engine::kind engine_kind) {
     json << "  \"pair_max_us\": " << pair_stats.max_us << ",\n";
     json << "  \"pair_construct_us\": "
          << (gemm1.construct_us() + gemm2.construct_us()) << ",\n";
-    write_case_json(json, "gemm1", gemm1);
+    json << "  \"route_counts_csv\": \"" << json_escape(route_counts_csv) << "\",\n";
+    json << "  \"route_window_count\": " << route_windows.size() << ",\n";
+    write_case_json(json, "gemm1", gemm1, base_gemm1_output);
     json << ",\n";
-    write_case_json(json, "gemm2", gemm2);
+    write_case_json(json, "gemm2", gemm2, base_gemm2_output);
+    if (have_route_stats) {
+        json << ",\n";
+        write_stats_json(json, "route_pair", route_pair_stats);
+        json << ",\n";
+        json << "  \"route_outputs\": {\n";
+        json << "    \"gemm1_raw_checksum\": " << route_gemm1_checksum << ",\n";
+        json << "    \"gemm2_raw_checksum\": " << route_gemm2_checksum << ",\n";
+        json << "    \"gemm1_diff_vs_base_expected_count\": "
+             << route_gemm1_diff_count << ",\n";
+        json << "    \"gemm2_diff_vs_base_expected_count\": "
+             << route_gemm2_diff_count << "\n";
+        json << "  }";
+    }
     json << "\n}\n";
 
     std::cout << "ONEDNN_RESIDENT_PAIR p50_us=" << pair_stats.p50_us
               << " mean_us=" << pair_stats.mean_us
-              << " gemm1_equal="
-              << (raw_diff_count(gemm1.output(), gemm1.expected_output()) == 0)
-              << " gemm2_equal="
-              << (raw_diff_count(gemm2.output(), gemm2.expected_output()) == 0)
-              << " json=" << json_path << std::endl;
+              << " gemm1_equal=" << base_gemm1_equal
+              << " gemm2_equal=" << base_gemm2_equal
+              << " route_windows=" << route_windows.size();
+    if (have_route_stats) {
+        std::cout << " route_pair_p50_us=" << route_pair_stats.p50_us
+                  << " route_pair_mean_us=" << route_pair_stats.mean_us;
+    }
+    std::cout << " json=" << json_path << std::endl;
 }
 
 } // namespace
