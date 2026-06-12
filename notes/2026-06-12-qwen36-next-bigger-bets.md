@@ -5463,3 +5463,176 @@ Interpretation:
   sidecar step should pull activation+quant2 into the resident process and
   then add a vLLM-rank call site or extension hook that passes device pointers
   instead of file-backed fixtures.
+
+## 2026-06-12 Added Backlog From Post-Resident Discussion
+
+User priorities to keep attached to every Qwen3.6 run:
+
+- Current model only: `nameistoken/Qwen3.6-35B-A3B-Quark-W8A8-INT8`.
+- No AWQ, no 4-bit, no Qwen3.5 substitution, and no lower-quality speed path.
+- c1 decode speed is the primary target. Aggregate throughput matters after c1
+  is healthy.
+- Quality must be validated several ways: exact canaries, rolling next-token
+  verifier, prompt-class outputs, long-context checks, and BF16 or accepted
+  baseline comparison when available.
+- Keep GitHub notes, code, commands, and artifacts current enough that a clean
+  machine can reproduce the important claims.
+
+Items added to the immediate try queue:
+
+1. **Gate fused SiLU plus INT8 quant before enabling it.**
+   Previous fused SiLU/quant work drifted, so do not flip
+   `VLLM_XPU_FUSED_MOE_FUSE_SILU_QUANT=1` in the endpoint until a fixture
+   proves byte or exact integer parity against captured route windows. Use the
+   multi-window oneDNN packet to compare current fused-kernel `q` and scales
+   against the accepted two-step activation plus per-token quant path. If it is
+   exact, benchmark it as a narrow A/B. If it drifts, keep it rejected and move
+   on.
+
+2. **Finish the resident full-MoE island before deeper endpoint surgery.**
+   The resident two-GEMM p50 is around `32-36 us` across 16 real windows, so
+   GEMM alone is not the full token bottleneck. Add activation, quant2, top-k
+   weighting, and gather inside the resident runner next. Only after full-island
+   exactness and timing are known should we wire the sidecar into a vLLM rank.
+
+3. **Create a device-pointer ABI smoke for one vLLM rank.**
+   The next useful integration proof is a tiny custom op or C++ extension that
+   receives live device pointers for hidden states, route ids, weights, scales,
+   and output. No files, no host copies, no runner process. Start with layer 9
+   only and fall back to `xpu_fused_moe` for every other shape.
+
+4. **Measure the missing token budget with queue profiling.**
+   Since the resident GEMM pair is far below observed per-token latency, add a
+   low-overhead token trace that includes attention, GDN, MoE non-GEMM work,
+   collectives, graph replay, scheduler metadata movement, sampling, and stream
+   waits. Use Level Zero/SYCL event timing where possible rather than Python
+   wrappers, because compiled graph replay hides Python boundaries.
+
+5. **Mine Localmaxxing, but submit only material wins.**
+   The public exact-model row remains `99.428 tok/s` c1 on 4x Arc Pro B70.
+   Do not repost noise. Post the next result only if it is a clean material
+   improvement with command snippet, exact model revision, context length,
+   batch size, quality proof, and preferably peak VRAM.
+
+6. **Add a stack/BOM lane as a performance experiment.**
+   Intel B70 reports keep pointing at kernel, KMD, oneAPI, oneCCL, and container
+   version sensitivity. Test an Intel-validated or newer llm-scaler stack on a
+   separate lane with the same model and quality gates. Treat this as an
+   optimization candidate, not just reliability cleanup.
+
+7. **Keep BF16 comparison scoped and honest.**
+   BF16 is too slow for production, but it is still a useful quality reference
+   for a small, fixed suite. Compare next-token decisions, logprob ordering, and
+   task outputs against the accepted INT8 path and BF16 fallback where the BF16
+   model can run. The promotion rule remains: speed changes must preserve the
+   accepted target-model behavior.
+
+## Bigger Bolder Ideas Worth Exploring
+
+These are not all near-term patches, but they are the kinds of changes that
+could plausibly move c1 from around `100 tok/s` toward the `>200 tok/s` goal
+without reducing model quality.
+
+1. **Single-call exact MoE island.**
+   Replace the current multi-kernel MoE path for Qwen3.6 with one exact island
+   call per MoE layer: route remap, W8A8 GEMM1, SiLU/up-gate, quant2, W8A8
+   GEMM2, top-k weighting, and gather. The first version can use oneDNN for the
+   GEMMs and custom kernels for the glue. Later versions can specialize hot
+   route classes. The key is removing launch/control overhead while keeping the
+   exact accepted math.
+
+2. **Hybrid TP plus replicated hot-expert topology.**
+   TP4 may be spending too much c1 time on communication and small grouped
+   GEMM shape overhead. Simulate and test a topology where dense attention
+   remains tensor-parallel, but hot MoE experts or whole hot layers are
+   replicated across ranks so the common route classes execute locally. This is
+   quality-preserving because weights are duplicated, not approximated. The
+   tradeoff is VRAM and startup packing cost.
+
+3. **Expert-parallel side lane for MoE only.**
+   Build a narrow MoE execution lane that routes tokens to expert-owning ranks
+   rather than forcing every layer through the same TP4 abstraction. This may
+   be worse for aggregate traffic, but c1 could improve if it removes repeated
+   allreduce or shard-gather overhead around small MoE work.
+
+4. **Route-class generated kernels.**
+   From live traces, generate exact kernels for the few dominant
+   `(active experts, rows per expert)` signatures. oneDNN stays as fallback and
+   oracle. A generated kernel can bake in offsets, small-M dimensions, and
+   epilogue layout, removing generic grouped-GEMM overhead for the hot path.
+
+5. **Persistent MoE worker per rank.**
+   Instead of submitting many small kernels from Python/vLLM, keep a long-lived
+   rank-local worker that receives compact route descriptors and dispatches
+   prebuilt oneDNN primitives or specialized kernels. This targets the
+   launch/control floor directly and matches Intel's public persistent
+   zero-gap MoE direction.
+
+6. **Exact speculative sidecar, target verified.**
+   Speculation can be quality-neutral if the current Qwen3.6 INT8 model remains
+   the verifier and rejected draft tokens never escape. Revisit only after the
+   verifier path is stable and measurable. Candidate drafters: n-gram with
+   fixed acceptance accounting, a tiny local model on spare CPU/GPU capacity,
+   or future Qwen MTP weights if an exact-compatible W8A8 artifact exists.
+
+7. **Production single-sequence fast lane.**
+   Add a special c1 path for the common "one active user, long-lived chat"
+   case. It can bypass some generic scheduler and batching machinery while
+   preserving the same OpenAI-compatible surface and falling back to the normal
+   vLLM path under concurrency. This is a product-level speed path, not a model
+   shortcut.
+
+8. **OpenVINO or oneDNN-Graph conversion lane.**
+   Try a separate exactness-gated export path for this Qwen3.6 architecture.
+   It may fail on Gated DeltaNet or Quark metadata, but if it runs it could
+   expose Intel-optimized graph fusions unavailable through the current vLLM
+   stack. Promotion requires token/logprob parity against the accepted endpoint.
+
+9. **Upstream challenge packet for Intel/vLLM.**
+   Publish the tiny route-window fixtures, exact expected bytes, and resident
+   oneDNN timings as a focused B70 W8A8 MoE challenge. The ask is narrow:
+   produce a faster exact XPU grouped-MoE path for these route signatures. This
+   is more actionable than reporting "13 tok/s is slow" because it gives the
+   kernel team a deterministic reproducer.
+
+10. **Compiler/runtime fork lane with no endpoint pressure.**
+    Keep one branch where we are willing to patch vLLM/XPU kernels, oneDNN,
+    Triton-XPU, and oneCCL together. It should run offline fixtures first and
+    only later touch the service. This is where larger changes like fused
+    collective epilogues, route-aware primitive caches, and graph-captured MoE
+    workers belong.
+
+11. **VRAM-for-latency trade study.**
+    The model memory looks small per rank because TP4 shards the W8A8 weights;
+    the total still lines up with an INT8 35B-class model once all ranks and KV
+    cache are counted. Use remaining VRAM deliberately: duplicate hot packed
+    weights, keep more graph buckets warm, cache route-class primitives, and
+    reserve scratch buffers to eliminate allocator churn.
+
+12. **A real "red team" quality harness for speed patches.**
+    Add a small but hostile suite that catches the kinds of failures already
+    observed: broken HTML/JS generation, repeated words, JSON schema drift,
+    long-context misses, code syntax errors, and next-token hash drift. Every
+    candidate speed row should point to this suite before being called a win.
+
+Fresh external signals from the follow-up scan:
+
+- Localmaxxing still has one approved exact-model B70/vLLM row for this setup:
+  `99.428 tok/s` output, `196.325 tok/s` total, `76.454 ms` TTFT, c1, 32K.
+  API query:
+  `https://localmaxxing.com/api/leaderboard?hfId=nameistoken%2FQwen3.6-35B-A3B-Quark-W8A8-INT8&hardwareName=Arc%20Pro%20B70&engineName=vllm&limit=20`.
+- oneDNN grouped memory/grouped matmul remains directly relevant because it is
+  explicitly MoE-oriented and optimized for Intel GPUs:
+  `https://uxlfoundation.github.io/oneDNN/dev_guide_experimental.html`.
+- Intel/vLLM's B-series article explicitly points at persistent zero-gap MoE
+  kernels as the intended way around launch overhead, gate dependency stalls,
+  and group imbalance:
+  `https://vllm.ai/blog/2025-11-11-intel-arc-pro-b`.
+- Public B70/vLLM crash reports keep justifying the stack/BOM lane:
+  `https://github.com/vllm-project/vllm/issues/41663`.
+- Public Arc Pro B70 user reports still suggest the hardware is ahead of the
+  software stack for LLM serving; this argues for focused kernel/runtime work
+  rather than abandoning the model or dropping quantization quality:
+  `https://forum.level1techs.com/t/intel-b70-launch-unboxed-and-tested/247873`
+  and
+  `https://www.reddit.com/r/LocalLLaMA/comments/1siar7y/intel_arc_pro_b70_32gb_performance_on_qwen3527bq4/`.
