@@ -13581,3 +13581,287 @@ Useful links:
 - `https://github.com/intel/intel-xpu-backend-for-triton/issues/6389`
 - `https://github.com/PMZFX/intel-arc-pro-b70-benchmarks`
 - `https://recipes.vllm.ai/Qwen/Qwen3.6-35B-A3B`
+
+## No-Bonus Diagnostic Result
+
+Ran the first env-gated COW/spec diagnostic: suppress verifier bonus emission
+after full draft accept while preserving draft-token acceptance. This does not
+produce a production speed path; it isolates whether the earlier
+`verifier_bonus_after_full_accept` mismatch is specifically tied to committing
+the target bonus token too early.
+
+Launcher hardening:
+
+- `scripts/launch-qwen36-quark-int8-ngram-trace.sh` now defaults
+  `DISABLE_FULL_ACCEPT_BONUS`, `IGNORE_DRAFTS`, and `SPEC_PLACEBO` from their
+  lower-level `VLLM_XPU_SPEC_DECODE_*` env names if the launcher-specific knob
+  is not set.
+- Reason: the first attempted run passed
+  `VLLM_XPU_SPEC_DECODE_DISABLE_FULL_ACCEPT_BONUS=1` directly, but the launcher
+  defaulted `DISABLE_FULL_ACCEPT_BONUS=0` and unset it. Those wrong-env
+  artifacts were removed to avoid treating them as a real result.
+
+CPU invariant:
+
+```bash
+/home/steve/.venvs/vllm-xpu/bin/python \
+  scripts/check-qwen36-spec-no-bonus-state.py
+```
+
+Result:
+
+- `passed=True`
+- full-accept draft tokens were committed.
+- the verifier bonus token was not committed.
+- final scheduler state kept `num_computed_tokens == num_tokens - 1`, so the
+  suppressed bonus position can be recomputed.
+
+Runtime attempts:
+
+1. Graph-enabled oracle `k=1` no-bonus launch:
+   - tag: `oracle1-nobonus2-20260612a`
+   - result: failed during XPU graph capture before serving requests.
+   - failure: `UR_RESULT_ERROR_DEVICE_LOST` from `torch.xpu.synchronize()` while
+     entering graph capture on worker TP1.
+   - artifact: `data/qwen36-quark-int8-tp4-oracle1-nobonus-graphfail-20260612a.log`
+   - accepted backend was restored afterward.
+
+2. No-XPU-graph oracle `k=1` no-bonus launch:
+   - tag: `oracle1-nobonus-nograph-20260612a`
+   - result: diagnostic served successfully, but remained mismatched versus the
+     accepted graph baseline.
+   - important caveat: this is not a speed or production candidate. XPU graph
+     was disabled only to bypass the graph-capture device-lost failure and
+     inspect scheduler behavior.
+
+No-graph no-bonus artifacts:
+
+- `data/qwen36-quark-int8-tp4-oracle1-nobonus-nograph-20260612a-completions.json`
+- `data/qwen36-quark-int8-tp4-oracle1-nobonus-nograph-20260612a-spec-trace.jsonl`
+- `data/qwen36-quark-int8-tp4-oracle1-nobonus-nograph-20260612a-spec-summary.json`
+- `data/qwen36-quark-int8-tp4-oracle1-nobonus-nograph-20260612a-parent-trace.jsonl`
+- `data/qwen36-quark-int8-tp4-oracle1-nobonus-nograph-20260612a-parent-summary.json`
+- `data/qwen36-quark-int8-tp4-oracle1-nobonus-nograph-20260612a-worker-trace.jsonl`
+- `data/qwen36-quark-int8-tp4-oracle1-nobonus-nograph-20260612a-worker-summary.json`
+- `data/qwen36-quark-int8-tp4-oracle1-nobonus-nograph-20260612a-replay.json`
+- `data/qwen36-quark-int8-tp4-oracle1-nobonus-nograph-20260612a-fixture.json`
+
+No-graph no-bonus summary:
+
+- completion cases: `2`
+- exact baseline match: `false`
+- mismatch count: `2`
+- spec rows: `16`
+- draft tokens: `16`
+- accepted draft tokens: `7`
+- rejected draft tokens: `9`
+- accept rate: `43.75%`
+- full-accept rows: `7`
+- suppressed bonus rows: `7`
+- replay joined both requests.
+- replay accounting mismatches: `0`
+- suppressed follow-up mismatches: `0`
+
+Most important result:
+
+- The previous `verifier_bonus_after_full_accept` mismatch class disappeared
+  when bonus emission was suppressed.
+- Both remaining first-diff mappings were `replacement_after_reject`:
+  - `natural_latency_plan`: first diff at output index `9`, accepted token
+    `3074`, candidate token `383`
+  - `repetitive_kernel_notes`: first diff at output index `7`, accepted token
+    `28043`, candidate token `1345`
+
+Interpretation:
+
+No-bonus suppression is a useful diagnostic and likely fixes one isolated
+emission class, but it is not enough for exact verifier parity. The next real
+COW/spec work should target reject/replacement reconciliation and scratch KV
+state, because the remaining mismatch appears when a rejected draft is replaced
+by the verifier token. Since no-XPU-graph changes scheduling and acceptance
+rate, the exact token values from this run should not be promoted as graph-mode
+quality evidence; only the mismatch-role movement is actionable.
+
+Next concrete implementation target:
+
+1. Add an env-gated reject/replacement diagnostic that keeps rejected draft KV
+   off parent state until the replacement verifier token is committed.
+2. Trace the rejected row's worker state before and after the replacement:
+   parent `num_computed_tokens`, block table tail, `previous_draft_token_ids`,
+   positions, and slot mappings.
+3. Re-run the oracle `k=1` fixture first in no-XPU-graph mode for role movement,
+   then in graph mode once the graph-capture/device-lost instability is avoided.
+
+## Additional Bigger Bets And Things To Try
+
+The no-bonus diagnostic narrowed one correctness class, but the current
+quality-preserving public ceiling is still around `100 tok/s`. Treat these as
+the next backlog. The first group should be tried soon; the later group is
+larger or riskier but can move the ceiling instead of just shaving a few
+milliseconds.
+
+Near-term parity and speed work:
+
+1. **Reject/replacement scratch-KV arena.**
+   - Keep rejected draft writes in a scratch block-table/page-table until the
+     verifier replacement token is accepted into the parent request.
+   - Required proof: exact fixture parity, zero replay accounting mismatches,
+     and no graph-mode scheduler drift.
+   - If this fixes the remaining `replacement_after_reject` class, combine it
+     with no-bonus suppression and then re-enable XPU graphs.
+
+2. **Graph-capture failure reducer.**
+   - Build a reduced graph-capture repro from the no-bonus
+     `UR_RESULT_ERROR_DEVICE_LOST` failure.
+   - Vary only one dimension at a time: speculation on/off, custom allreduce
+     on/off, graph-comm capture on/off, and worker rank.
+   - This is needed because a parity fix that only works with XPU graphs
+     disabled is not a production result.
+
+3. **Speculation accept-rate map by prompt class.**
+   - Record accept/reject, route signature, and first-diff role across natural,
+     code, structured JSON, repetitive, math, and long-context prompts.
+   - Disable speculative lanes automatically for regions where acceptance is
+     low or where route churn makes target verification slower than baseline.
+   - This preserves quality because the target verifier remains authoritative.
+
+4. **MTP-1 as a quality-preserving target-verifier lane.**
+   - Test the smallest built-in MTP path first: `num_speculative_tokens=1`,
+     prefix caching off, exact-token quality gates on.
+   - Public vLLM evidence suggests MTP-1 can help when prefix-cache confounds
+     are removed, but our XPU path must prove exact parity and graph stability.
+   - Do not count MTP as a quality change if the accepted target model still
+     verifies every emitted token.
+
+5. **DFlash sidecar with target verification.**
+   - Treat DFlash as a proposer only; the Quark W8A8 target remains the source
+     of truth.
+   - Start with short deterministic fixtures, then structured/code/math gates,
+     before any speed run.
+   - This is the clearest public path above `200 tok/s`, but it is only valid
+     for us after target-verifier parity is proven.
+
+6. **Single-user static graph lane.**
+   - Add a production-adjacent `max_num_seqs=1` latency lane with fixed bucket
+     shapes, preallocated KV, no prefix cache, and minimal streaming overhead.
+   - Compare against the current OpenAI-compatible endpoint using the same
+     quality gates and p512/n512 harness.
+   - If static replay is still capped near `100 tok/s`, the bottleneck is below
+     serving overhead and belongs in kernels/speculation.
+
+Larger architecture bets:
+
+1. **Hybrid expert-parallel/tensor-parallel serving.**
+   - Build a memory ledger for replicated shared modules plus expert-sharded
+     MoE layers on 4x32GB.
+   - The goal is to stop paying tiny TP collectives at every dense/MoE boundary
+     for a single request.
+   - Reject this idea quickly if 32K KV plus graph overhead leaves too little
+     headroom.
+
+2. **Replicated-attention, sharded-expert lane.**
+   - Replicate attention/state-space/shared layers on each card, shard experts
+     by route locality, and only communicate where the active expert output
+     actually crosses card boundaries.
+   - This is memory-expensive, but it attacks the current structural problem:
+     four GPUs are not four times faster when every token pays many small
+     collectives.
+
+3. **Persistent MoE layerlet kernel.**
+   - Fuse top-k route metadata handling, W8A8 grouped GEMM, activation,
+     second grouped GEMM, gather, and optional residual handoff for one layer.
+   - Prototype outside vLLM with captured real route windows before touching
+     production code.
+   - Acceptance criterion: same logits/hidden output within strict tolerance
+     and a measurable decode-layer speedup on route captures.
+
+4. **B70-native packed INT8 weight cache.**
+   - Verify whether Quark W8A8 weights are already in the tile layout the XPU
+     grouped-GEMM kernels want.
+   - If not, repack once at load time and cache the packed form with checksum
+     validation.
+   - This should be mathematically identical to the current model; only memory
+     layout changes.
+
+5. **Shape-exact tiny collective replacement.**
+   - Isolate the repeated hidden-size allreduce shapes from graph traces and
+     benchmark oneCCL/custom-op/custom-SYCL variants outside the server.
+   - If a simple peer-read or tree kernel beats oneCCL for these tiny messages,
+     fold it into the graph-safe custom collective path.
+   - If not, stop spending time on collective plumbing and focus on reducing
+     the number of collectives instead.
+
+6. **Route-aware expert packing autotuner.**
+   - Use real `topk_ids` windows to search physical expert order per layer and
+     per prompt family.
+   - Keep a rollback table because earlier global hot-expert packing helped
+     one shape and hurt another.
+   - The output should be a reproducible route-replay microbench and a
+     load-time remap plan, not a hand-tuned one-off.
+
+7. **Current upstream XPU stack bakeoff.**
+   - Build a separate venv/container against latest vLLM XPU plus
+     `vllm-xpu-kernels` without disturbing the accepted endpoint.
+   - Test the same Quark W8A8 model, 32K context, exact quality gates, and
+     p512/n512 single-request harness.
+   - Public XPU work has moved toward a dedicated kernel package with grouped
+     GEMM, MoE, attention, normalization, and quantization support, so our
+     local tree should not be assumed fastest.
+
+8. **Strict 8-bit engine bakeoff.**
+   - Compare current vLLM Quark W8A8, OpenVINO/oneDNN GenAI 8-bit, llama.cpp
+     SYCL Q8_0, and any SGLang XPU 8-bit path that actually supports this
+     model class.
+   - Same prompts, same 32K target, same quality gates.
+   - This remains diagnostic unless it preserves the user-facing model quality
+     and serving requirements.
+
+9. **Driver/kernel/OS controlled bakeoff.**
+   - Several B70 community reports suggest stack version matters materially.
+   - Test only in an isolated boot/root or container path: current Ubuntu
+     24.04.4 baseline versus newer kernel/oneAPI/PyTorch/XPU combinations.
+   - Acceptance requires better speed, same quality gates, and no service
+     instability over a reliability loop.
+
+10. **Public repro package for upstream help.**
+    - Prepare three minimal repros: W8A8 grouped GEMM shape, real-route MoE
+      layerlet, and graph-safe tiny allreduce.
+    - Include current B70 timings, expected target, exact shapes, oneAPI and
+      PyTorch versions, and parity checks.
+    - This is the most likely way to get useful feedback from Intel/vLLM rather
+      than carrying all kernel work locally.
+
+Quality and reliability gates to attach to every serious candidate:
+
+- deterministic exact-token fixtures against accepted baseline.
+- structured JSON/schema tasks, code task, math/reasoning task, repetitive
+  stability, and 8K/32K needle checks.
+- at least one warmed p512/n512 speed run and one longer reliability loop.
+- process-health checks after failure: backend restore, no diagnostic env
+  leakage, and no frontdoor queue/pause surprises.
+
+Fresh public signals to keep watching:
+
+- Localmaxxing exact-model Quark W8A8 row: `99.428 tok/s`.
+- Localmaxxing richer B70 row for the same base/model family: `99.770 tok/s`
+  with about `127.55 GiB` total XPU allocation.
+- Localmaxxing Qwen3.6 35B FP8 plus DFlash row on Blackwell: `253.7 tok/s`,
+  useful as a proof that target-verifier speculation can cross `200 tok/s` on
+  a faster mature stack.
+- `vllm-xpu-kernels` now advertises Intel XPU kernels for grouped GEMM, MoE,
+  attention, normalization, quantization, and related operators.
+- Public Qwen3.6 vLLM speculation notes report MTP-1 speedups when prefix-cache
+  confounds are removed, while llama.cpp-style draft speculation can still be
+  a net loss on A3B MoE. That points to small-k target-integrated speculation,
+  not large external draft windows.
+
+Useful follow-up links:
+
+- `https://localmaxxing.com/api/benchmarks?hfId=nameistoken%2FQwen3.6-35B-A3B-Quark-W8A8-INT8&limit=10`
+- `https://localmaxxing.com/api/leaderboard?modelFamily=qwen&hardwareName=B70&limit=50`
+- `https://localmaxxing.com/api/benchmarks?hfId=Qwen%2FQwen3.6-35B-A3B-FP8&limit=10`
+- `https://github.com/vllm-project/vllm-xpu-kernels`
+- `https://github.com/vllm-project/vllm/issues/33214`
+- `https://github.com/thc1006/qwen3.6-speculative-decoding-rtx3090`
+- `https://recipes.vllm.ai/Qwen/Qwen3.6-27B`
+- `https://github.com/PMZFX/intel-arc-pro-b70-benchmarks`

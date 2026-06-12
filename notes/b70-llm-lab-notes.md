@@ -86,6 +86,22 @@ Current Qwen3.6 INT8 direction:
     tile-native 8-bit repack cache, isolated newer `vllm-xpu-kernels` bakeoff,
     and strict 8-bit engine bakeoff. None of these relax the no-Qwen3.5,
     no-4-bit, no-quality-loss constraint.
+14. The no-bonus diagnostic is now recorded under "No-Bonus Diagnostic Result".
+    CPU accounting passed, graph-enabled runtime hit `UR_RESULT_ERROR_DEVICE_LOST`
+    during capture, and no-XPU-graph runtime showed the verifier-bonus mismatch
+    class disappears while replacement-after-reject mismatches remain. Next COW
+    work should target rejected-draft/replacement-token state isolation rather
+    than only bonus-token emission.
+15. Added "Additional Bigger Bets And Things To Try" to the Qwen3.6 note. The
+    next near-term items are reject/replacement scratch KV, graph-capture
+    failure reduction, prompt-class speculation accept maps, MTP-1, DFlash
+    sidecar target verification, and a single-user static graph lane. Larger
+    bets now tracked are hybrid expert/tensor parallelism, replicated-attention
+    plus sharded experts, persistent MoE layerlet kernels, B70-native packed
+    INT8 caches, shape-exact tiny collectives, route-aware expert packing,
+    current `vllm-xpu-kernels` bakeoff, strict 8-bit engine bakeoff, controlled
+    driver/kernel/OS bakeoff, and public upstream repro packages. All of these
+    keep the no-Qwen3.5, no-4-bit, target-verifier quality constraint.
 
 ## 2026-05-10 MiniMax AutoRound Addendum
 
