@@ -1144,3 +1144,108 @@ Decision:
 - Layer `9` routecapture6 exact windows remain the first GPU test. Then add
   layer `9` math stress. Do not spend endpoint downtime on full-cold split
   unless compact-cold unexpectedly wins and the comparison needs a control.
+
+## 2026-06-12 Layer 9 Hotset Split GPU Microbench
+
+Summary artifact:
+`data/qwen36-quark-int8-tp4-hotset-split-l9-route6-gpu-hotsetbench-20260612ac.md`.
+
+Artifacts:
+
+- GPU timing JSON:
+  `data/qwen36-quark-int8-tp4-hotset-split-l9-route6-gpu-hotsetbench-20260612ac.json`.
+- Run log:
+  `data/qwen36-quark-int8-tp4-hotset-split-l9-route6-gpu-hotsetbench-20260612ac.log`.
+- XPU state snapshots:
+  `data/qwen36-quark-int8-tp4-hotset-split-l9-route6-gpu-hotsetbench-20260612ac-pre-xpusmi-ps.txt`,
+  `data/qwen36-quark-int8-tp4-hotset-split-l9-route6-gpu-hotsetbench-20260612ac-poststop-xpusmi-ps.txt`,
+  and
+  `data/qwen36-quark-int8-tp4-hotset-split-l9-route6-gpu-hotsetbench-20260612ac-postrestore-xpusmi-ps.txt`.
+- Restored accepted-backend provenance:
+  `data/qwen36-quark-int8-tp4-accepted-provenance-after-hotsetbench-20260612ac.json`.
+- Restored speed sanity:
+  `data/qwen36-quark-int8-tp4-post-hotsetbench-sanity-repetitive-p512o256-20260612ac.json`.
+
+Result:
+
+- The top-64 layer `9` compact hot/cold split was exact but slower on XPU.
+- Exact grouped-GEMM mean total: `213.852 us`.
+- Compact hot/cold split mean total: `407.192 us`.
+- Mean split/exact ratio: `1.928x` slower.
+- The split was slower even on high-coverage windows:
+  `1.525x`, `1.990x`, and `2.420x` slower at `93.75%` hot coverage.
+- The accepted endpoint restored cleanly after the maintenance window:
+  provenance guard passed exact sentinels and the repetitive p512/o256 sanity
+  measured `99.157 tok/s` corrected after first text chunk with
+  `10.047 ms/generated token` vLLM decode time.
+
+Decision:
+
+- Reject simple two-launch compact hot/cold split as a speed path.
+- Do not spend more endpoint downtime on full-cold split, prompt-class
+  two-launch split, or "try a different top-N" split variants unless a kernel
+  change first removes most hot/cold launch overhead.
+- Keep the hotset idea, but only in one-launch or persistent forms:
+  in-kernel cold queue, tile-native repack inside the existing grouped-GEMM
+  launch, or a persistent layerlet that does hot and fallback work without a
+  second Python/dispatcher launch.
+- The floor model was useful because it made the maintenance window narrow.
+  The GPU result now replaces the floor-model decision: compact split was worth
+  exactly one screen, and the screen says no.
+
+Additional things to try from this result:
+
+1. **One-launch hotset fallback kernel.**
+   Keep hot and cold experts in one dispatch. The hot path can use a packed
+   top-N table, while the cold path pulls exact fallback work from an in-kernel
+   queue. This preserves exactness and attacks the launch overhead that killed
+   the compact split.
+
+2. **Grouped-GEMM small-shape policy screen.**
+   Route replay shows compact fallback shapes such as `64+5`, `64+19`, and
+   `64+22`. Build a policy benchmark that chooses between current grouped GEMM,
+   direct per-expert GEMM, batched tiny GEMM, and persistent grouped GEMM for
+   these shapes. The current kernel path is not optimized for the split sizes.
+
+3. **Tile-native hotset repack used without splitting launches.**
+   Repack hot experts into the best B70 tile layout, but feed the existing
+   logical route through one kernel path. The fallback remains exact original
+   weights. This tests whether layout helps without paying the split launch tax.
+
+4. **Layer-local persistent MoE worker.**
+   Prototype one layer that holds route metadata, expert tiles, intermediate
+   activation, and quant buffers resident for both MoE GEMMs. This is the
+   cleanest non-speculative route to halving the `~10 ms/token` decode budget.
+
+5. **Route-conditioned EP/TP hybrid simulator.**
+   Use the same route windows to simulate hot-expert replication, EP4, TP2+EP2,
+   and replicated-attention/sharded-expert layouts. If the simulator cannot beat
+   TP4 on bytes and imbalance, do not implement a new parallelism scheme.
+
+6. **Decode command-buffer compaction.**
+   Count every kernel launch and barrier for one token, then prototype a
+   command-graph or persistent-loop lane that keeps the decode step on-device
+   across MoE, GDN/linear attention, logits, and sampling metadata updates.
+
+7. **Single-card hot-lane experiment as a control.**
+   If TP4 communication or rank imbalance is hiding the best c1 path, run a
+   memory-feasible single-card or two-card static lane for short contexts using
+   the same exact model and quality sentinels. It may lose capacity but reveal
+   whether multi-card TP is the latency wall.
+
+8. **BF16 differential micro-suite for kernel changes.**
+   Keep Quark W8A8 as the production target, but periodically compare sentinel
+   prompts, route windows, and nearby logit ranks to BF16. This catches
+   numerically suspicious "exact enough" kernel changes before they reach the
+   live endpoint.
+
+9. **Speculation only with resident target verification.**
+   External refill/logprob sidecars already diverged from continuous accepted
+   decode, so do not chase sidecar speculation. The bold path is in-engine
+   copy-on-write KV/GDN/request state with target-model commit/rollback.
+
+10. **Upstream perf repro packet.**
+    Package the hotset negative, route windows, exact sentinel guard, and
+    grouped-GEMM shapes into a small Intel/vLLM repro. A negative result with
+    real routes is useful: it points maintainers toward persistent/grouped-GEMM
+    policy work instead of more split-launch experiments.

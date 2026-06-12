@@ -521,3 +521,17 @@ vLLM/XPU FP8 work:
     `98.212 tok/s` e2e. This restores the quality baseline but does not change
     the speed diagnosis: >200 tok/s still needs resident-state speculation or a
     real MoE/kernel breakthrough.
+16. The Qwen3.6 Quark W8A8 layer `9` top-64 compact hot/cold split closed as a
+    negative GPU result. The floor model justified one maintenance-window
+    screen, but real XPU grouped-GEMM timing showed exact full-table mean
+    `213.852 us` versus compact split mean `407.192 us`, or `1.928x` slower.
+    Even `93.75%` hot-coverage windows were `1.525x` to `2.420x` slower, so the
+    table shrink does not overcome launch and tiny-shape overhead. Do not spend
+    more endpoint downtime on two-launch full-cold, compact-cold, prompt-class,
+    or different top-N split variants. Keep hotsets only as one-launch or
+    persistent-kernel ideas: in-kernel cold queue, tile-native hotset repack
+    inside one grouped-GEMM path, small-shape grouped-GEMM policy work, and
+    route-conditioned EP/TP simulation. The accepted endpoint restored cleanly
+    afterward; provenance sentinels passed and a repetitive p512/o256 sanity run
+    measured `99.157 tok/s` corrected after first text chunk with
+    `10.047 ms/generated token` decode.
