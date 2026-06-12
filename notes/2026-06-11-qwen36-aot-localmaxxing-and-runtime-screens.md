@@ -14506,3 +14506,199 @@ Bigger, bolder ideas added from this result:
     - Let latency-lane, batch-lane, and speculative-lane experiments graduate
       independently only when their quality gates pass.
     - This avoids blocking production readiness on the highest-risk speed work.
+
+## Bonus Recompute Diagnostics And Bigger Bets
+
+Added after testing the cache-filter follow-up variants for the Qwen3.6
+speculative verifier path. These remain diagnostics only; none are promoted
+for speed or production.
+
+Runs:
+
+- `qwen36-quark-int8-tp4-oracle1-nobonus-cachefilter-keepcomputed-nograph-20260612d`
+  - Env: `NUM_SPECULATIVE_TOKENS=1`, oracle draft,
+    `DISABLE_FULL_ACCEPT_BONUS=1`, `ENABLE_XPU_GRAPH=0`,
+    `ENFORCE_EAGER=1`,
+    `VLLM_XPU_SPEC_DECODE_FILTER_SUPPRESSED_BONUS_CACHE=1`, and
+    `VLLM_XPU_SPEC_DECODE_KEEP_COMPUTED_ON_SUPPRESSED_BONUS=1`.
+  - Result: rejected. It fixed the earlier duplicate-token class but skipped
+    the suppressed bonus position. `natural_latency_plan` moved to first diff
+    at output index `2`; `repetitive_kernel_notes` also differed at index `2`.
+  - Spec summary: `4` rows, `4` drafts, `2` accepted, `2` rejected,
+    `50%` acceptance, `2` suppressed-bonus rows.
+- `qwen36-quark-int8-tp4-oracle1-fullbonus-nograph-20260612e`
+  - Env: oracle draft, full bonus enabled, no XPU graph, eager.
+  - Result: rejected. This is the important control: even standard full-bonus
+    speculative decode can diverge from the accepted non-spec baseline in
+    no-graph/eager mode despite `100%` accepted drafts.
+  - Spec summary: `14` rows, `14` drafts, `14` accepted, `0` rejected,
+    `100%` acceptance, no suppressed-bonus rows.
+  - Interpretation: the deeper issue is not only no-bonus accounting or worker
+    token-cache filtering. Full-accept bonus computation/state can differ from
+    the accepted non-spec next token.
+- `qwen36-quark-int8-tp4-oracle1-nobonus-recompute-nograph-20260612f`
+  - Env: `DISABLE_FULL_ACCEPT_BONUS=1`,
+    `VLLM_XPU_SPEC_DECODE_FILTER_SUPPRESSED_BONUS_CACHE=1`, and
+    `VLLM_XPU_SPEC_DECODE_RECOMPUTE_SUPPRESSED_BONUS=1`.
+  - Result: rejected, but useful. It moved `natural_latency_plan` parity out
+    to output index `25`, so recomputing after a suppressed bonus improves one
+    failure class. `repetitive_kernel_notes` still failed at index `14`, which
+    matches the full-bonus control failure.
+  - Spec summary: `20` rows, `20` drafts, `19` accepted, `1` rejected,
+    `95%` acceptance, `19` suppressed-bonus rows.
+
+Artifacts:
+
+- `data/qwen36-quark-int8-tp4-oracle1-nobonus-cachefilter-keepcomputed-nograph-20260612d-*`
+- `data/qwen36-quark-int8-tp4-oracle1-fullbonus-nograph-20260612e-*`
+- `data/qwen36-quark-int8-tp4-oracle1-nobonus-recompute-nograph-20260612f-*`
+- `patches/vllm-qwen36-spec-bonus-recompute-20260612.patch`
+
+New launch-script controls:
+
+- `FILTER_SUPPRESSED_BONUS_CACHE=1`
+- `KEEP_COMPUTED_ON_SUPPRESSED_BONUS=1`
+- `RECOMPUTE_SUPPRESSED_BONUS=1`
+
+Interpretation:
+
+- The old cache-filter negative was a double-rollback failure.
+- `KEEP_COMPUTED_ON_SUPPRESSED_BONUS=1` proves that removing the double
+  rollback is not enough; it can skip the withheld bonus.
+- `RECOMPUTE_SUPPRESSED_BONUS=1` is a partial repair for the natural prompt but
+  not exact parity.
+- The full-bonus control is now the key finding: with oracle `k=1`, no graph,
+  and `100%` accepted drafts, a verifier bonus can still differ from the
+  accepted non-spec baseline. Future work should stop assuming no-bonus
+  accounting is the only root cause.
+
+Immediate next things to try:
+
+1. **No-spec no-graph/eager baseline control.**
+   - Run the accepted model without speculative config under the same
+     no-graph/eager launch shape.
+   - If this diverges from the graph accepted baseline at the same positions,
+     the current comparison is too strict and the next target is graph/eager
+     parity. If it matches, the bug is isolated to speculative verifier/bonus
+     state.
+
+2. **Full-bonus first-diff logit trace.**
+   - For the row where `repetitive_kernel_notes` diverges at output index `14`,
+     capture target model input ids, positions, slot mappings, selected hidden
+     states, and top-k logits for the speculative full-bonus path and the
+     matching no-spec baseline.
+   - The question is whether the verifier is seeing a different context,
+     different KV page, or same context with a different sampling/logit path.
+
+3. **Verifier bonus escrow instead of suppression.**
+   - Keep the full-accept bonus in an explicit pending slot with position,
+     target logits/top-k, and KV slot metadata.
+   - On the next step, compare the escrowed token against a clean no-spec
+     recompute before any new speculative draft is accepted.
+
+4. **Speculative finite-state replay fixture.**
+   - Build a CPU-only replay using the captured rows: full accept with bonus,
+     suppressed bonus, keep-computed, recompute, partial reject, and replacement
+     after reject.
+   - This should become the invariant test before changing scheduler/worker
+     state again.
+
+5. **Side-by-side worker cache diff at full-bonus divergence.**
+   - Trace only a tiny token window and block-table tail for the first full
+     bonus row that creates the later index-14 drift.
+   - Avoid broad trace spam; the current traces already show enough to focus on
+     the first wrong bonus.
+
+6. **Do not benchmark speculation yet.**
+   - No speculative speed result counts until oracle `k=1` full-bonus parity
+     and no-bonus parity both match the accepted no-spec baseline across repeat
+     prompts.
+
+Public signals refreshed:
+
+- Exact-model Localmaxxing count remains `1`; the accepted public Quark W8A8
+  row is `cmq8yhxvo001ipb0149aoa79o` at `99.428 tok/s`, ctx32768, c1.
+- Fresh B70/Qwen-family leaderboard data shows our exact row at rank `2`;
+  rank `1` is a same-family Qwen3.6 row at `99.770 tok/s`, also B70.
+- `Qwen/Qwen3.6-35B-A3B-FP8` has public rows showing `253.7 tok/s` with vLLM
+  DFlash on RTX PRO 6000 Blackwell at 4K context and `140.01 tok/s` without
+  speculation on dual RTX 3090 at 32K. Those do not transfer directly to XPU,
+  but they reinforce that speculation/draft architecture is the route past
+  `200 tok/s`.
+- Recent community reports still show B70 software-stack variance: llama.cpp
+  Vulkan/SYCL can be unexpectedly competitive, while vLLM/XPU and TP paths can
+  be stack-sensitive.
+
+Additional public leads checked:
+
+- `https://localmaxxing.com/api/benchmarks?hfId=nameistoken%2FQwen3.6-35B-A3B-Quark-W8A8-INT8&limit=20`
+- `https://localmaxxing.com/api/leaderboard?hardwareName=Arc%20Pro%20B70&modelFamily=qwen&limit=50`
+- `https://localmaxxing.com/api/benchmarks?hfId=Qwen%2FQwen3.6-35B-A3B-FP8&limit=20`
+- `https://vllm.ai/blog/2025-11-11-intel-arc-pro-b`
+- `https://github.com/vllm-project/vllm/issues/41663`
+- `https://github.com/ggml-org/llama.cpp/issues/23011`
+- `https://carteakey.dev/blog/running-qwen3-6-mtp-locally/`
+
+Bigger bolder ideas added from this round:
+
+1. **Speculative verifier differential debugger.**
+   - Build a harness that runs one prompt through no-spec, full-bonus oracle,
+     no-bonus oracle, and recompute oracle, then aligns every target-position
+     input/logit/top-k row.
+   - This is the fastest path to separating scheduler accounting bugs from
+     model-input/KV corruption.
+
+2. **Two-phase verifier commit protocol.**
+   - The worker returns a proposed transaction: accepted drafts, optional
+     target bonus, replacement token, KV slots touched, and request counters.
+   - The scheduler either commits the whole transaction or rejects it. No
+     partial writes to output ids, token cache, and computed counters.
+
+3. **Bonus-token escrow as the bridge to MTP/DFlash.**
+   - If oracle `k=1` cannot safely handle one verifier bonus, MTP/DFlash will
+     not be reliable.
+   - Make bonus escrow exact first, then reuse the same transaction machinery
+     for multi-token MTP.
+
+4. **Single-request latency lane with speculation disabled first.**
+   - Create a one-request static runner that reproduces accepted no-spec output
+     and measures pure backend decode speed outside the OpenAI server path.
+   - If it is not much faster than `99 tok/s`, the next `2x` must come from
+     kernels/speculation. If it is much faster, production should have a
+     dedicated latency lane.
+
+5. **DFlash/MTP sidecar only after oracle parity.**
+   - Treat DFlash, Qwen3.6 MTP tensors, or an MTP GGUF sidecar as proposers
+     only. The current Quark W8A8 model remains the verifier.
+   - Use the oracle parity harness as the quality gate before any sidecar speed
+     run.
+
+6. **MoE persistent-kernel repro with real route windows.**
+   - Convert captured route windows into a small `vllm-xpu-kernels` repro for
+     routed W8A8 grouped GEMM plus epilogue.
+   - The Intel Arc guidance points at persistent MoE kernels; our Python-level
+     wrapper did not remove enough launch/memory traffic.
+
+7. **Strict 8-bit engine bakeoff on a short leash.**
+   - Try same-model or same-family 8-bit llama.cpp SYCL/Vulkan only as a
+     diagnostic to locate vLLM/XPU overhead, not as a quality downgrade.
+   - Q8_0/W8A8-style routes are allowed for comparison; 4-bit/AWQ routes remain
+     out of scope for this goal.
+
+8. **Graph/eager parity audit.**
+   - Before more speculative patches, prove whether no-graph/eager and graph
+     accepted runs emit identical greedy token streams under the same prompt
+     templates.
+   - This protects us from fixing speculative code against a moving baseline.
+
+9. **Host-stack A/B only with a fixed benchmark pack.**
+   - Test newer Intel container/kernel/driver stacks on a spare root or
+     isolated environment after pinning the accepted quality and speed suite.
+   - Success is lower variance, fewer device-loss events, or a clear kernel
+     speedup; anything else is not worth production risk.
+
+10. **Upstream minimal failure packet.**
+    - Package the oracle `k=1` full-bonus divergence with a tiny prompt,
+      traces, exact env, and expected token ids.
+    - This is a better upstream ask than "speculative decode is slow"; it is a
+      concrete verifier-state correctness issue on XPU.

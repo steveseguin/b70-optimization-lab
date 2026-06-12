@@ -1,0 +1,97 @@
+diff --git a/vllm/v1/core/sched/scheduler.py b/vllm/v1/core/sched/scheduler.py
+--- a/vllm/v1/core/sched/scheduler.py
++++ b/vllm/v1/core/sched/scheduler.py
+@@ -226,6 +226,18 @@ class Scheduler(SchedulerInterface):
+         self.xpu_spec_decode_disable_full_accept_bonus = (
+             os.environ.get("VLLM_XPU_SPEC_DECODE_DISABLE_FULL_ACCEPT_BONUS", "")
+             .strip()
+             .lower()
+             in ("1", "true", "yes", "on")
+         )
++        self.xpu_spec_decode_keep_computed_on_suppressed_bonus = (
++            os.environ.get(
++                "VLLM_XPU_SPEC_DECODE_KEEP_COMPUTED_ON_SUPPRESSED_BONUS", "")
++            .strip()
++            .lower()
++            in ("1", "true", "yes", "on")
++        )
++        self.xpu_spec_decode_recompute_suppressed_bonus = (
++            os.environ.get(
++                "VLLM_XPU_SPEC_DECODE_RECOMPUTE_SUPPRESSED_BONUS", "")
++            .strip()
++            .lower()
++            in ("1", "true", "yes", "on")
++        )
+@@ -1508,6 +1520,10 @@ class Scheduler(SchedulerInterface):
+                     "suppressed_bonus_token_id": suppressed_bonus_token_id,
+                     "num_suppressed_bonus_tokens": num_suppressed_bonus_tokens,
++                    "keep_computed_on_suppressed_bonus":
++                    self.xpu_spec_decode_keep_computed_on_suppressed_bonus,
++                    "recompute_suppressed_bonus":
++                    self.xpu_spec_decode_recompute_suppressed_bonus,
+                     "num_draft_tokens": num_draft_tokens,
+                     "num_accepted": num_accepted,
+                     "num_rejected": num_rejected,
+@@ -1521,11 +1537,29 @@ class Scheduler(SchedulerInterface):
+                 # tokens.
+                 # If the opt-in XPU no-bonus diagnostic suppresses a fully
+-                # accepted target bonus token, that bonus position is also not
+-                # committed to the request token list and must be recomputed on
+-                # the next step.
+-                num_uncommitted_tokens = (
+-                    num_rejected + num_suppressed_bonus_tokens)
++                # accepted target bonus token, the default diagnostic path
++                # treats that bonus position as uncommitted. The
++                # keep-computed variant intentionally leaves scheduler
++                # accounting advanced so it can be paired with a worker-cache
++                # filter and tested for double-rollback behavior.
++                if (
++                    self.xpu_spec_decode_keep_computed_on_suppressed_bonus
++                    and num_suppressed_bonus_tokens
++                ):
++                    num_uncommitted_tokens = num_rejected
++                else:
++                    num_uncommitted_tokens = (
++                        num_rejected + num_suppressed_bonus_tokens)
++                if (
++                    self.xpu_spec_decode_recompute_suppressed_bonus
++                    and num_suppressed_bonus_tokens
++                ):
++                    request.xpu_skip_next_spec_decode = True  # type: ignore[attr-defined]
+                 if request.num_computed_tokens > 0:
+                     request.num_computed_tokens -= num_uncommitted_tokens
+@@ -2009,6 +2043,8 @@ class Scheduler(SchedulerInterface):
+         emitted_token_ids: list[int],
+         suppressed_bonus_token_id: int | None,
+         num_suppressed_bonus_tokens: int,
++        keep_computed_on_suppressed_bonus: bool,
++        recompute_suppressed_bonus: bool,
+         num_draft_tokens: int,
+         num_accepted: int,
+         num_rejected: int,
+@@ -2034,6 +2070,9 @@ class Scheduler(SchedulerInterface):
+             "new_token_ids_after_stop_check": new_token_ids_after_stop_check,
+             "suppressed_bonus_token_id": suppressed_bonus_token_id,
+             "num_suppressed_bonus_tokens": num_suppressed_bonus_tokens,
++            "keep_computed_on_suppressed_bonus":
++            keep_computed_on_suppressed_bonus,
++            "recompute_suppressed_bonus": recompute_suppressed_bonus,
+             "stopped": stopped,
+             "status_before_stop_check": status_before_stop_check,
+             "request_state_before_reject_adjust":
+@@ -2078,6 +2117,16 @@ class Scheduler(SchedulerInterface):
+                     request.spec_token_ids = []
+                 continue
+ 
++            if (
++                self.xpu_spec_decode_recompute_suppressed_bonus
++                and getattr(request, "xpu_skip_next_spec_decode", False)
++            ):
++                request.xpu_skip_next_spec_decode = False  # type: ignore[attr-defined]
++                if request.spec_token_ids:
++                    request.spec_token_ids = []
++                continue
++
+             # Add newly generated spec token ids to the request.
+             if self.structured_output_manager.should_advance(request):
+                 metadata = request.structured_output_request

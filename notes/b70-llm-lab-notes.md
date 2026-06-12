@@ -154,6 +154,18 @@ Current Qwen3.6 INT8 direction:
     explicit diagnostic env
     `VLLM_XPU_SPEC_DECODE_FILTER_SUPPRESSED_BONUS_CACHE=1`. This keeps future
     no-bonus traces from silently enabling the rejected worker-cache behavior.
+22. Added "Bonus Recompute Diagnostics And Bigger Bets" to the Qwen3.6 note.
+    The keep-computed cache-filter diagnostic removed the duplicate-token
+    failure but skipped the suppressed bonus; the recompute diagnostic improved
+    one natural prompt to first diff at index `25` but still failed repetitive
+    parity; and the full-bonus no-graph/eager control diverged despite `100%`
+    accepted drafts. Next work is now a no-spec no-graph/eager baseline control
+    plus first-diff logit/KV tracing, not speed benchmarking. Larger tracked
+    ideas now include a speculative verifier differential debugger, two-phase
+    verifier commit protocol, bonus-token escrow as the bridge to MTP/DFlash,
+    a no-spec static latency lane, real-route persistent MoE repros, strict
+    8-bit engine bakeoff, graph/eager parity audit, host-stack A/B, and an
+    upstreamable oracle `k=1` full-bonus failure packet.
 
 ## 2026-05-10 MiniMax AutoRound Addendum
 
