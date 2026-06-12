@@ -24,6 +24,62 @@ Current speed anchor:
   MoE/kernel architecture improvement. Launch flags alone are unlikely to get
   there.
 
+## Python Sidecar Probe Hook Checkpoint
+
+Added after the compile-only oneDNN sidecar probe build. This moves the next
+gate into Python without installing or promoting the sidecar module in the live
+endpoint.
+
+Artifacts:
+
+- `patches/vllm-xpu-qwen36-onednn-sidecar-python-probe-20260612bl.diff`
+- `data/qwen36-onednn-sidecar-python-probe-20260612bl.json`
+
+Hook behavior:
+
+- Adds a disabled-by-default call path behind
+  `VLLM_XPU_MOE_ONEDNN_SIDECAR_PROBE=1`.
+- Requires the rebuilt extension op
+  `torch.ops._xpu_C.qwen36_moe_onednn_sidecar_probe` to exist. With the current
+  installed/source extension, the env flag imports cleanly but the hook remains
+  inert because `has_probe_op=false`.
+- Skips during XPU stream capture, supports rank and layer regex filters, and
+  limits calls with `VLLM_XPU_MOE_ONEDNN_SIDECAR_MAX_CALLS`.
+- Computes oneDNN grouped-memory offsets on device from `rows_per_expert`.
+  The helper emits int32 cumulative start offsets, for example
+  `[2, 0, 3, 1] -> [0, 2, 2, 5]`. This follows oneDNN grouped memory's s32
+  cumulative-offset buffer requirement and keeps it distinct from the local
+  XE2 `expert_first_token_offset` convention.
+- Always returns the current `xpu_fused_moe` output. Probe stats can be logged
+  via `VLLM_XPU_MOE_ONEDNN_SIDECAR_LOG`, but they are not used for model
+  output.
+- Disables itself after the first probe exception in a worker.
+
+Validation:
+
+- `python3 -m py_compile vllm_xpu_kernels/fused_moe_interface.py` passed.
+- Source-tree venv import passed both with the sidecar env disabled and
+  enabled. With local shared-library paths set, `FUSEDMOE_AVAILABLE=true` and
+  `has_probe_op=false`, proving the new env flag is inert until the rebuilt
+  module is intentionally selected.
+- A temporary package-path import with the out-of-tree
+  `build/qwen36-sidecar-probe-20260612/_xpu_C.abi3.so` first failed without
+  oneAPI runtime paths (`libsycl.so.9` missing), then passed after sourcing
+  `/opt/intel/oneapi/setvars.sh --force`, with `has_probe_op=true`.
+- Live endpoint on `http://127.0.0.1:18080` stayed healthy and continued to
+  serve the current Quark W8A8 INT8 snapshot at 32K context.
+
+Next gate:
+
+1. Launch an isolated backend, not the live service, with oneAPI runtime paths
+   and the rebuilt `_xpu_C` selected.
+2. Enable `VLLM_XPU_MOE_ONEDNN_SIDECAR_PROBE=1`,
+   `VLLM_XPU_MOE_ONEDNN_SIDECAR_MAX_CALLS=1`, and a single rank/layer regex.
+3. Confirm descriptor stats are logged while final output still comes from the
+   accepted path.
+4. Only after that, extend the sidecar from descriptor-only to execute-and-
+   compare for one layer.
+
 ## User-Review Follow-Up: Bigger, Bolder Ideas
 
 Added after the "think bigger" pass. These are deliberately broader than the

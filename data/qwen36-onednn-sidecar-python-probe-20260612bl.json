@@ -1,0 +1,92 @@
+{
+  "label": "qwen36-onednn-sidecar-python-probe-20260612bl",
+  "date": "2026-06-12",
+  "scope": "disabled Python plumbing for guarded oneDNN MoE sidecar probe calls",
+  "model_target": "nameistoken/Qwen3.6-35B-A3B-Quark-W8A8-INT8",
+  "source_repo": "/home/steve/src/vllm-xpu-kernels",
+  "changed_file": "vllm_xpu_kernels/fused_moe_interface.py",
+  "tracking_patch": "patches/vllm-xpu-qwen36-onednn-sidecar-python-probe-20260612bl.diff",
+  "tracking_patch_note": "cumulative diff against local upstream main; includes earlier live-ABI hook context plus the new sidecar probe plumbing",
+  "new_env": {
+    "VLLM_XPU_MOE_ONEDNN_SIDECAR_PROBE": "enable the Python sidecar probe hook; default off",
+    "VLLM_XPU_MOE_ONEDNN_SIDECAR_DRY_DESCRIPTORS": "ask the C++ op to dry-create oneDNN grouped-matmul descriptors; default on",
+    "VLLM_XPU_MOE_ONEDNN_SIDECAR_OFFSETS": "provide computed oneDNN grouped offsets; default on",
+    "VLLM_XPU_MOE_ONEDNN_SIDECAR_MAX_CALLS": "limit probe calls per worker; default 1",
+    "VLLM_XPU_MOE_ONEDNN_SIDECAR_LAYER_REGEX": "optional layer-name regex gate",
+    "VLLM_XPU_MOE_ONEDNN_SIDECAR_RANK": "optional rank/local-rank gate",
+    "VLLM_XPU_MOE_ONEDNN_SIDECAR_LOG": "optional JSONL probe stats path with {pid}, {rank}, and {local_rank} substitutions"
+  },
+  "safety_contract": {
+    "default_behavior": "off",
+    "requires_extension_op": "torch.ops._xpu_C.qwen36_moe_onednn_sidecar_probe must exist",
+    "requires_current_target_path": "is_int8 must be true",
+    "stream_capture": "skips while torch.xpu.is_current_stream_capturing() is true",
+    "fallback": "always returns the current xpu_fused_moe output; probe stats are ignored by the output path",
+    "error_handling": "first probe exception disables further probe calls in that worker",
+    "required_tensor_guard": "skips if any tensor required by the C++ probe is absent"
+  },
+  "offset_helper": {
+    "name": "_make_onednn_grouped_offsets",
+    "input": "rows_per_expert int32 tensor",
+    "output": "int32 cumulative start offsets with shape [num_experts]",
+    "sample_rows": [2, 0, 3, 1],
+    "sample_offsets": [0, 2, 2, 5],
+    "source_semantics": "oneDNN grouped memory uses a cumulative s32 offsets buffer for variable-size grouped memory"
+  },
+  "validation": [
+    {
+      "command": "python3 -m py_compile vllm_xpu_kernels/fused_moe_interface.py",
+      "result": "pass"
+    },
+    {
+      "command": "PYTHONPATH=/home/steve/src/vllm-xpu-kernels /home/steve/.venvs/vllm-xpu/bin/python import check",
+      "result": "pass",
+      "FUSEDMOE_AVAILABLE": false,
+      "note": "source-only import is syntactically valid but extension loading needs local shared-library paths"
+    },
+    {
+      "command": "LD_LIBRARY_PATH=/home/steve/src/vllm-xpu-kernels/vllm_xpu_kernels:$LD_LIBRARY_PATH /home/steve/.venvs/vllm-xpu/bin/python import check",
+      "result": "pass",
+      "FUSEDMOE_AVAILABLE": true,
+      "has_probe_op": false,
+      "note": "current source-tree extension imports, but the rebuilt probe op is not installed"
+    },
+    {
+      "command": "LD_LIBRARY_PATH=/home/steve/src/vllm-xpu-kernels/vllm_xpu_kernels:$LD_LIBRARY_PATH VLLM_XPU_MOE_ONEDNN_SIDECAR_PROBE=1 /home/steve/.venvs/vllm-xpu/bin/python import check",
+      "result": "pass",
+      "env_enabled": true,
+      "FUSEDMOE_AVAILABLE": true,
+      "has_probe_op": false,
+      "note": "enabled env is inert when the extension op is absent"
+    },
+    {
+      "command": "temporary package path import with build/qwen36-sidecar-probe-20260612 first, without oneAPI setvars",
+      "result": "expected dependency miss",
+      "error": "libsycl.so.9: cannot open shared object file",
+      "note": "rebuilt IntelLLVM 2026.0 sidecar module requires oneAPI runtime library path"
+    },
+    {
+      "command": "source /opt/intel/oneapi/setvars.sh --force; temporary package path import with build/qwen36-sidecar-probe-20260612 first",
+      "result": "pass",
+      "FUSEDMOE_AVAILABLE": true,
+      "has_probe_op": true,
+      "note": "Python hook can discover the rebuilt sidecar op when the out-of-tree module is intentionally selected"
+    },
+    {
+      "command": "_make_onednn_grouped_offsets(torch.tensor([2, 0, 3, 1], dtype=torch.int32))",
+      "result": "pass",
+      "observed": [0, 2, 2, 5],
+      "dtype": "torch.int32"
+    },
+    {
+      "command": "curl -fsS http://127.0.0.1:18080/health and /v1/models",
+      "result": "pass",
+      "served_model": "qwen36-35b-a3b-fp8",
+      "root": "/mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118",
+      "max_model_len": 32768
+    }
+  ],
+  "installed_into_live_endpoint": false,
+  "speed_claim": "none",
+  "next_gate": "run one isolated backend with the rebuilt sidecar module and VLLM_XPU_MOE_ONEDNN_SIDECAR_PROBE=1 for one rank/layer, logging descriptor stats while still returning current output"
+}

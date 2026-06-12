@@ -6,6 +6,23 @@ Date: 2026-06-12
 
 2026-06-12 notes update:
 
+- Added disabled Python plumbing for the next oneDNN MoE sidecar probe gate in
+  the local `vllm-xpu-kernels` tree. The new hook is behind
+  `VLLM_XPU_MOE_ONEDNN_SIDECAR_PROBE=1`, requires the rebuilt
+  `qwen36_moe_onednn_sidecar_probe` op to exist, skips stream capture, supports
+  rank/layer/max-call gates, computes an on-device int32
+  `onednn_grouped_offsets` buffer from `rows_per_expert`, and always returns
+  the current `xpu_fused_moe` output. Validation passed `py_compile`, venv
+  imports with the env disabled and enabled, the oneDNN offset helper
+  `[2,0,3,1] -> [0,2,2,5]`, and a temporary oneAPI-backed import that selected
+  the out-of-tree rebuilt module and saw `has_probe_op=true`. The normal source
+  extension still reports `has_probe_op=false`, so the live endpoint remains
+  untouched and inert. New tracking artifacts:
+  `patches/vllm-xpu-qwen36-onednn-sidecar-python-probe-20260612bl.diff` and
+  `data/qwen36-onednn-sidecar-python-probe-20260612bl.json`. This is not a
+  speed claim; the next gate is an isolated backend with one rank/layer probe
+  logging descriptor stats while output remains on the accepted path.
+
 - Added a user-review follow-up section to
   `notes/2026-06-12-qwen36-next-bigger-bets.md` with larger ideas that remain
   within the current-model/no-quality-loss constraint. New tracked branches
