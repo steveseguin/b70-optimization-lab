@@ -2286,3 +2286,144 @@ Next implementation implication:
 - If no small-M kernel beats the floor, shift effort to resident-state
   target-verified speculation because larger effective `M` clearly improves
   arithmetic utilization.
+
+## 2026-06-12 Fusion Target Budget And Bigger Bets
+
+Artifacts:
+
+- Budget script:
+  `scripts/qwen36-moe-fusion-target-budget.py`.
+- Budget report:
+  `data/qwen36-quark-int8-moe-fusion-target-budget-20260612ao.md`
+  and `.json`.
+
+Budget result:
+
+- Current accepted endpoint decode is `9.941 ms/token`, or `99.845 tok/s`
+  corrected after the first streamed text chunk.
+- Model-forward-only timing is `8.438 ms/token`, leaving an estimated
+  `1.502 ms/token` outside the model-forward bucket.
+- A `200 tok/s` c1 target requires `5.000 ms/token` decode.
+- If outside-forward overhead is unchanged, the model-forward bucket must save
+  `4.941 ms/token`.
+- Spread across `40` MoE layers, that means `123.514 us/layer` saved.
+- The route-exact primary row replay averages `283.842 us/layer` for current
+  `xpu_fused_moe`.
+- The exact preallocated staged lower bound averages `214.179 us/layer`, which
+  would estimate only `139.781 tok/s` if it transferred perfectly to the
+  endpoint.
+- The next non-speculative layerlet must therefore reach about
+  `160.328 us/layer` or better with exact numeric parity.
+- Two independent small-M grouped GEMM dispatches are already `193.538 us`, so
+  any viable non-speculative path needs a one-dispatch or persistent layerlet.
+
+External scan:
+
+- Localmaxxing public results currently show our Qwen3.6 W8A8 INT8 B70 row as
+  the top B70/Qwen single-stream row visible for this exact model family:
+  `~99.77 tok/s`, `76.53 ms` TTFT, 32K context, 4x B70.
+  Query:
+  `https://localmaxxing.com/api/leaderboard?hardwareName=Arc%20B70&modelFamily=qwen&limit=20`.
+- The same scan shows a one-card B70 llama.cpp Qwen3.6 Q4 result around
+  `70.35 tok/s`, and a separate 4-card mirrored setup reporting `68.8 tok/s`
+  c1 with `338 tok/s` aggregate at higher batch. Those are not acceptable
+  target replacements because they are Q4, but they are useful engine and
+  topology clues.
+- vLLM's generic INT8 W8A8 docs still primarily describe NVIDIA support, so
+  our Intel path remains a local/upstream-edge XPU path rather than a mature
+  generic INT8 route:
+  `https://docs.vllm.ai/en/stable/features/quantization/int8/`.
+- `vllm-xpu-kernels` release notes after `v0.1.8` mention MoE grouped-GEMM
+  policy updates, small-K behavior, mixed prefill/decode attention routing, and
+  FP8 KV cache paged-decode work:
+  `https://github.com/vllm-project/vllm-xpu-kernels/releases`.
+- Our serving venv reports `vllm 0.20.2rc1.dev2+gc51df4300.d20260523.xpu`,
+  `PyTorch 2.11.0+xpu`, Level Zero driver `26.18.38308.1-0`, and
+  `vllm-xpu-kernels 0.1.9.dev27+g28e1f5e`. The local kernels tree is at
+  `28e1f5e remove transpose from ref_fused_moe (#360)`, after the visible
+  grouped-GEMM commits `#333` and `#340`, but the tree is dirty with our local
+  experiments.
+- The local oneDNN third-party tree documents experimental grouped memory and
+  grouped GEMM for MoE workloads behind
+  `ONEDNN_EXPERIMENTAL_GROUPED_MEMORY`. This is not a direct fix, but it is a
+  candidate one-layer replay backend.
+- A current Qwen3.6 W8A8 issue in `llm-compressor` confirms that Qwen3.6 MoE
+  W8A8 still needs architecture-specific handling for fused expert tensors and
+  hybrid attention:
+  `https://github.com/vllm-project/llm-compressor/issues/2787`.
+- The Event Tensor / dynamic megakernel paper is a useful north star for our
+  specific failure mode: conventional kernel and graph boundaries are the
+  bottleneck, and MoE routing creates data-dependent fine-grained tasks:
+  `https://arxiv.org/html/2604.13327v2`.
+
+Bigger bets to keep in the queue:
+
+1. **One-dispatch W8A8 MoE layerlet.**
+   Build a one-layer XPU replay kernel that fuses route/remap, quant1, GEMM1,
+   activation, quant2, GEMM2, and gather under one dispatch boundary. Promotion
+   gate: exact parity to `xpu_fused_moe` and `<160 us/layer` on rows=`1`.
+
+2. **Persistent resident expert worker.**
+   Keep a small set of workgroups resident across decode steps and feed them
+   route windows from device memory. This is harder than a normal custom op, but
+   it attacks the measured fixed `93-110 us` launch/kernel floor directly.
+
+3. **Event-Tensor-style MoE scheduler for Xe.**
+   Prototype a small device-side task scheduler for routed expert tiles: top-k
+   writes counts/events, expert GEMM tiles trigger as soon as rows are ready,
+   and gather consumes tile completions without returning to host/PyTorch
+   between phases. Treat it as a research branch, not a quick patch.
+
+4. **oneDNN grouped-GEMM replay bakeoff.**
+   Build a narrow route-replay harness using oneDNN grouped memory/matmul for
+   the exact Qwen3.6 W8A8 shapes. If oneDNN's grouped path beats the current
+   small-M floor, use it as a reference or a replacement backend for MoE
+   layerlets.
+
+5. **Shape-generated route-window kernels.**
+   Capture route histograms over real prompts, identify repeated active-expert
+   windows, and generate AOT kernels for the common buckets. Use current generic
+   `xpu_fused_moe` only for cold fallback. This preserves quality because the
+   math stays exact; only the schedule changes.
+
+6. **TP2 latency lane plus 2x replica capacity lane.**
+   Revisit topology with the exact INT8 model: if TP2 fits with the required
+   context, it may reduce collective overhead and raise small-M occupancy versus
+   TP4. If not, record the memory cliff and keep TP4 for the production lane.
+
+7. **Strict target-verified speculation V2.**
+   Stop trying to let speculative mode mutate verifier inputs. Instead create a
+   shadow verifier bucket or sidecar that writes draft KV into temporary slots
+   and commits only tokens accepted by the target. This is no-quality-loss by
+   construction and can amortize the target forward across multiple accepted
+   tokens.
+
+8. **Micro-drafter trained on Qwen3.6 trace data.**
+   If exact verifier plumbing works, train or distill a tiny B70-friendly
+   drafter on Qwen3.6 traces. The drafter can be lower quality because the
+   target verifies every accepted token; the quality risk is only in latency and
+   stability, not final output correctness.
+
+9. **Whole-token Level Zero command-list runner.**
+   For a static c1 decode lane, bypass more Python/vLLM scheduling overhead by
+   prebuilding a Level Zero command-list sequence for the fixed decode shape.
+   Use it first as an offline model-forward parity harness, not as the public
+   endpoint.
+
+10. **Hardware-counter proof before more kernel tuning.**
+    Get `unitrace`, VTune, or an equivalent metric path working with MEI/PMU
+    access so we can measure XMX/DPAS occupancy and memory pressure directly.
+    Timing-derived TOPS already says underfilled small-M, but counters will
+    tell us whether the next bottleneck is dispatch, DPAS issue, memory layout,
+    or synchronization.
+
+11. **Engine-mining without quantization compromise.**
+    Mine llama.cpp SYCL/Vulkan, OpenVINO GenAI, oneDNN, and custom ESIMD kernels
+    for scheduling ideas, but do not switch the production target to Q4 or INT4.
+    Any borrowed implementation must reproduce the exact W8A8 target outputs.
+
+12. **Upstreamable B70/Qwen3.6 perf packet.**
+    Package the route replay, small-M floor, target budget, and exact parity
+    checks into a minimal issue/PR-ready repro for `vllm-xpu-kernels`. This may
+    attract kernel maintainer attention and gives us a clean artifact even if we
+    carry a local patch first.

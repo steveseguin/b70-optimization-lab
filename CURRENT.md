@@ -1,8 +1,29 @@
 # Current Promoted Results
 
-Date: 2026-06-10
+Date: 2026-06-12
 
 ## Qwen3.6 35B-A3B Quark W8A8 INT8
+
+2026-06-12 continuation:
+
+- Added a CPU-only MoE fusion target budget after the grouped-GEMM M-scaling
+  screens. Current accepted p512/o128 decode remains about `99.845 tok/s`
+  corrected with `9.941 ms/token`; model-forward-only timing is
+  `8.438 ms/token`. A true `200 tok/s` c1 lane needs `5.000 ms/token`, so with
+  outside-forward overhead unchanged the model-forward bucket must save
+  `4.941 ms/token`, or `123.514 us/layer` across `40` MoE layers. Route-exact
+  current `xpu_fused_moe` averages `283.842 us/layer`, exact preallocated
+  staging averages `214.179 us/layer`, and the next non-speculative layerlet
+  must target about `160.328 us/layer` or better. Two independent small-M GEMM
+  dispatches already cost `193.538 us`, so the next no-quality-loss branch is a
+  one-dispatch/persistent W8A8 MoE replay with exact parity; if that cannot beat
+  the budget, shift to exact target-verified speculation. New artifacts:
+  `scripts/qwen36-moe-fusion-target-budget.py`,
+  `data/qwen36-quark-int8-moe-fusion-target-budget-20260612ao.md`, and `.json`.
+  The detailed note also adds external leads and bigger bets from
+  Localmaxxing, `vllm-xpu-kernels`, oneDNN grouped GEMM, Qwen3.6 W8A8 support
+  gaps, and Event-Tensor-style dynamic megakernels:
+  `notes/2026-06-12-qwen36-next-bigger-bets.md`.
 
 2026-06-11 continuation:
 

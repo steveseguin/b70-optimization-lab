@@ -686,3 +686,26 @@ vLLM/XPU FP8 work:
     across multiple accepted tokens. Both benchmark windows restored cleanly:
     final accepted backend provenance passed exact sentinels and p512/o128
     measured `99.845 tok/s` corrected with `9.941 ms/token` decode.
+27. Added a CPU-only fusion target budget:
+    `scripts/qwen36-moe-fusion-target-budget.py`, producing
+    `data/qwen36-quark-int8-moe-fusion-target-budget-20260612ao.md` and
+    `.json`. The budget says a true `200 tok/s` c1 decode lane needs
+    `5.000 ms/token`; with current outside-forward cost unchanged, model
+    forward must save `4.941 ms/token`, or `123.514 us/layer` across `40` MoE
+    layers. Current route-exact `xpu_fused_moe` averages `283.842 us/layer`,
+    exact preallocated staging averages `214.179 us/layer`, and the required
+    one-layer MoE target is about `160.328 us/layer`. Two independent small-M
+    grouped GEMMs already cost `193.538 us`, so the next implementation should
+    be a one-dispatch or persistent W8A8 MoE layerlet, not another split-launch
+    variant. External scan notes were added to
+    `notes/2026-06-12-qwen36-next-bigger-bets.md`: Localmaxxing currently
+    shows our Qwen3.6 W8A8 INT8 B70 row as the top visible B70/Qwen
+    single-stream row; `vllm-xpu-kernels` release notes show recent grouped-GEMM
+    policy and small-K work; local serving uses `vllm-xpu-kernels
+    0.1.9.dev27+g28e1f5e`; oneDNN has experimental grouped memory/GEMM for MoE;
+    and the new bigger-bet queue now tracks persistent expert workers,
+    Event-Tensor-style device scheduling, oneDNN route replay, route-window AOT
+    kernels, TP2 latency controls, exact verifier-sidecar speculation,
+    trace-trained micro-drafters, whole-token Level Zero command lists,
+    hardware-counter proof, engine-mining without quantization compromise, and
+    an upstreamable B70/Qwen3.6 perf packet.
