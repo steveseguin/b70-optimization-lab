@@ -3179,3 +3179,220 @@ Concrete things to try next:
     Keep exact token sentinels as the hard gate, but add periodic BF16/logit
     rank or prompt-logprob shadow checks for kernel work. This catches nearby
     distribution distortion that may not flip the short canary token.
+
+## 2026-06-12 Active-Offset GEMM Gate
+
+What changed:
+
+- Added a compact-active-expert variant of the experimental W8A8 offset grouped
+  GEMM. The route replay passes `expert_first_token_offset` plus sorted
+  `active_expert_ids`, so the kernel can loop over active experts instead of
+  scanning all `256` experts.
+- Build gate passed for the narrow CMake targets:
+  `_xpu_C` and `grouped_gemm_xe_2`, using oneAPI 2025.3. Build log:
+  `data/vllm-xpu-kernels-active-offset-build-20260612ai.log`.
+- Direct `build/temp` import registered both experimental ops, then the package
+  libs were temporarily swapped only for the route-replay microbench. Accepted
+  package libs were restored immediately after the benchmark; the restored
+  package import shows both experimental ops absent again.
+- Source patch artifact:
+  `patches/vllm-xpu-kernels-w8a8-active-offset-gemm-prototype-20260612ai.patch`.
+
+Route-exact benchmark:
+
+- Command shape: layer `9`, routecapture6 rows=1, starts `0:64:4`,
+  `30` iterations, `10` warmup, `--enable-offset-gemm`, and
+  `--enable-active-offset-gemm`.
+- Main artifacts:
+  `data/qwen36-quark-int8-moe-routecapture6-layer9-active-offset-gemm-20260612ai.json`,
+  `.md`, `.log`, and
+  `data/qwen36-quark-int8-moe-routecapture6-layer9-active-offset-gemm-summary-20260612ai.json`.
+- Exactness: all compared paths matched current `xpu_fused_moe` with
+  `max_abs_diff=0.0`, including the active-offset path.
+- Mean timings across the 16 route windows:
+  - Current `xpu_fused_moe`: `304.448 us/layer`.
+  - Scratch `xpu_fused_moe`: `267.360 us/layer`.
+  - Exact preallocated staged: `226.882 us/layer`.
+  - Fused-prologue staged: `302.865 us/layer`.
+  - Fused-prologue offset GEMM: `225.162 us/layer`.
+  - Fused-prologue active-offset GEMM: `225.911 us/layer`.
+
+Decision:
+
+- Reject the active-offset op as an endpoint candidate. It is exact and the
+  build works, but the compact active-expert loop does not improve the plain
+  offset path on the rows=1 routecapture6 screen; it is slightly slower on
+  mean (`225.911 us` versus `225.162 us`).
+- The result reinforces the prior conclusion: small ABI cleanup is not enough
+  for the `>200 tok/s` c1 target. The non-speculative path needs a larger
+  one-dispatch/persistent MoE layerlet, quant/gather out-variants, or a
+  graph/static c1 lane. The high-upside alternative remains resident-state
+  target-verified speculation.
+- Do not submit a Localmaxxing row for this. It is not a serving-safe speed
+  result and it does not beat the accepted endpoint baseline.
+
+Restore proof:
+
+- Accepted package libs were restored from
+  `backup-20260612ai-pre-active-offset`.
+- Accepted backend relaunched as
+  `qwen36-tp4-accepted-restored-after-activeoffset-20260612aj`; `/health`
+  returned `200` after `48s`.
+- Provenance guard passed all exact sentinels:
+  `data/qwen36-quark-int8-tp4-accepted-provenance-after-activeoffset-20260612aj.json`.
+- Short p512/o128 speed sanity passed:
+  `100.028 tok/s` corrected after first chunk, `95.153 tok/s` e2e, and
+  `9.923 ms/token` decode histogram in
+  `data/qwen36-quark-int8-tp4-accepted-restored-after-activeoffset-speed-p512o128-20260612aj.json`.
+- XPU/frontdoor snapshots:
+  `data/qwen36-quark-int8-tp4-accepted-restored-after-activeoffset-xpusmi-ps-20260612aj.txt`
+  and
+  `data/qwen36-quark-int8-tp4-accepted-restored-after-activeoffset-frontdoor-status-20260612aj.json`.
+
+Next concrete direction:
+
+1. **Stop adding variants to the current two-GEMM ABI unless a roofline packet
+   shows obvious waste.**
+   The offset and active-offset paths are exact but hover around
+   `225 us/layer`, still well above the `~160 us/layer` non-speculative budget.
+
+2. **Build a one-layer persistent/layerlet replay.**
+   Fuse route/prologue, quant1, GEMM1, activation, quant2, GEMM2, and gather
+   for one captured layer-9 window. It should target the `160 us/layer` budget
+   directly rather than another `~225 us` staged variant.
+
+3. **Add out-variants for quant and gather only if they feed the layerlet.**
+   Standalone out-variants can reduce allocation noise, but they are unlikely
+   to close the millisecond-level gap by themselves.
+
+4. **Parallel track: resident-state verifier design.**
+   Non-speculative MoE work may not produce a `2x` c1 win fast enough. The
+   speculation track should now focus on a target-verifier transaction design,
+   not external refill checks or unverified n-gram speed.
+
+## 2026-06-12 Bigger Bets After External Scan
+
+What the fresh scan added:
+
+- Localmaxxing now shows the quality-gated 4x B70 Qwen-family/vLLM row at
+  `99.7697 tok/s`, and the exact-HF
+  `nameistoken/Qwen3.6-35B-A3B-Quark-W8A8-INT8` row at `99.4284 tok/s`.
+  Snapshots:
+  `data/localmaxxing-qwen-b70-vllm-leaderboard-20260612ak.json` and
+  `data/localmaxxing-qwen36-35b-quark-int8-exacthf-20260612ak.json`.
+- vLLM's public INT8 W8A8 docs still describe INT8 computation support in
+  NVIDIA terms, while the XPU support table validates Intel Arc Pro B-series
+  for BF16/dynamic-FP8/model families, not a finished XPU INT8 fast path. This
+  matches the local finding that the missing piece is real XPU W8A8 MoE kernel
+  plumbing, not just flags.
+- Intel/ipex-llm advertises FlashMoE work for Qwen3MoE-class models on Arc.
+  That is worth reading as a design oracle even if we keep the serving endpoint
+  on the current vLLM stack.
+- Public B70 material lists `608 GB/s` per-card memory bandwidth for Arc Pro
+  B70 and the Intel AI-PC paper lists B580 at `456 GB/s` and `233 TOPS` INT8.
+  Our current `~100 tok/s` c1 decode is therefore almost certainly losing
+  time to launch/dispatch, Python/scheduler overhead, small-M utilization, TP
+  communication, allocation/copy churn, or non-XMX W8A8 coverage rather than
+  raw card limits alone.
+
+Quality-preserving bigger bets:
+
+1. **Static c1 fast lane beside vLLM.**
+   Build a fixed-shape single-sequence decode runner for this exact model and
+   context class. vLLM remains the public scheduler/frontdoor, but latency
+   class `c1` requests can be handed to a persistent runner with stable buffers,
+   fixed tensor shapes, and no dynamic batching/scheduler churn. This is the
+   cleanest path to attack single-user latency without changing model math.
+
+2. **Persistent MoE layerlet, not another helper op.**
+   Generate one layer-9 replay first, then all MoE layers: route/prologue,
+   quant1, GEMM1, activation, quant2, GEMM2, and gather in one resident
+   command path. The local offset/active-offset experiments show that small
+   ABI fixes plateau around `~225 us/layer`; a layerlet can remove the
+   dispatch and intermediate-memory boundaries that those variants keep.
+
+3. **Expert-parallel / hybrid MoE sharding simulation.**
+   Run route-exact EP/TP simulation before coding it: keep dense/attention TP
+   as needed, but shard MoE experts by card and move compact activations
+   instead of full tensor-parallel reductions. If B70 PCIe/CCL costs are
+   dominating c1, MoE-specific parallelism may beat blanket TP4 for decode.
+
+4. **IPEX/FlashMoE design extraction.**
+   Do a controlled smoke test or source read of Intel's FlashMoE path against
+   Qwen3MoE shapes. The goal is not to swap to a lower-quality model or a
+   different quant; it is to steal architecture: persistent expert packing,
+   routing layout, fused activation, and small-M DPAS/XMX handling.
+
+5. **Graph-resident decode loop.**
+   Move from per-token graph fragments to a persistent command-list loop with
+   device-side state for token id, KV offsets, route buffers, and logits. Host
+   should submit "next token" work with minimal metadata updates. This is a
+   bolder version of XPU graph capture aimed at removing the remaining
+   per-token host tax.
+
+6. **Tile-native packed-weight artifact.**
+   Prepack the current INT8 weights and scales into DPAS/XMX-friendly tiles
+   offline, with a reversible provenance manifest that proves numerical
+   equivalence. This changes storage layout only, not weights or quantization,
+   and could remove runtime packing/transpose penalties.
+
+7. **Route-class graph library.**
+   Capture route histograms per layer and prompt class, then prebuild a small
+   library of hot graph variants. Use a guard to fall back to the generic path
+   for rare expert patterns. The risk is variant explosion; the upside is
+   static scheduling for common c1 paths.
+
+8. **Target-verified speculative escrow.**
+   Keep this as the largest no-quality-loss speed lever. A same-model verifier
+   owns KV state and commits only tokens that exactly match the target model's
+   next-token decisions. Drafts can come from n-gram, a shallow same-model
+   drafter, or a trace-trained micro-drafter, but the frontdoor exposes only
+   target-verified output.
+
+9. **Shallow target self-drafter.**
+   Train or derive a small drafter from this exact target's traces, then make
+   it propose token bundles into the verifier escrow. This is bolder than
+   n-gram but can still be quality-preserving if every committed token is
+   target-verified.
+
+10. **B70 roofline and stall packet.**
+    Use Level Zero/VTune/oneAPI profiling to prove whether each hot kernel is
+    XMX-bound, bandwidth-bound, launch-bound, or communication-bound. Stop
+    guessing from wall-clock once the next kernel branch begins.
+
+11. **Single-card and TP2 truth-serum runs.**
+    For this current model, run constrained diagnostic versions that fit only a
+    subset or use offload/short context if required. The point is not
+    production; it is to isolate whether TP4 communication is the reason four
+    cards do not scale c1 decode.
+
+12. **Model-specific generated engine as a moonshot.**
+    If vLLM integration keeps absorbing the wins, generate a bespoke
+    Qwen3.6-35B-A3B INT8 decode engine and run it behind the existing
+    OpenAI-compatible frontdoor. Treat vLLM as the reference and fallback, not
+    necessarily the only executor.
+
+13. **Production latency classes.**
+    Split future serving into at least two executor classes: c1 low-latency
+    fast lane with strict shape limits, and aggregate-throughput lane using
+    normal vLLM batching. This lets us optimize single-user speed without
+    degrading production batching behavior.
+
+14. **Reliability-promoted performance.**
+    Any larger win must carry the same promotion bundle: exact provenance
+    sentinels, short prompt-class quality, long-context needle, restore proof,
+    device-lost scan, and a 30-60 minute c1 soak before it can replace the
+    accepted endpoint.
+
+Near-term order:
+
+1. Build the roofline/stall packet for accepted c1 decode and the layer-9
+   route replay. This tells us whether the next branch should target XMX
+   occupancy, memory movement, dispatch count, or TP communication.
+2. Read or smoke-test IPEX/FlashMoE for Qwen3MoE shape handling and record
+   exactly what can be ported into vLLM without changing model quality.
+3. Prototype a one-layer persistent MoE layerlet with fixed routecapture6
+   metadata. The pass/fail budget is still `~160 us/layer` for a plausible
+   non-speculative `>200 tok/s` path.
+4. In parallel, write the verifier-escrow design doc because non-speculative
+   kernel work may not deliver a full `2x` alone.

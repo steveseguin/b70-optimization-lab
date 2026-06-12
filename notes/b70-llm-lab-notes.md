@@ -821,3 +821,34 @@ vLLM/XPU FP8 work:
     performance challenge packet, reliability scoring, and BF16/logit-rank
     quality shadow checks. This is notes-only and does not change the accepted
     endpoint.
+35. Built and gated the compact active-expert offset W8A8 grouped-GEMM
+    prototype. It compiled cleanly, registered from the build artifact, and
+    matched current `xpu_fused_moe` exactly on layer-9 routecapture6 rows=1
+    replay (`max_abs_diff=0.0`). It was not a speed win: active-offset averaged
+    `225.911 us/layer`, slightly slower than plain offset GEMM at
+    `225.162 us/layer`, while current `xpu_fused_moe` averaged
+    `304.448 us/layer`. The accepted package libraries were restored before
+    relaunch, the restored package import no longer exposes the experimental
+    ops, the accepted backend passed provenance sentinels, and p512/o128 sanity
+    returned `100.028 tok/s` corrected with `9.923 ms/token` decode. Decision:
+    keep
+    `patches/vllm-xpu-kernels-w8a8-active-offset-gemm-prototype-20260612ai.patch`
+    as a microbench artifact only; the next non-speculative branch should be a
+    true one-dispatch/persistent MoE layerlet or quant/gather out-variants that
+    feed that layerlet.
+36. Added "Bigger Bets After External Scan" to
+    `notes/2026-06-12-qwen36-next-bigger-bets.md`. The refresh records the
+    Localmaxxing B70/Qwen/vLLM snapshot where the quality-gated Qwen-family row
+    is `99.7697 tok/s` and the exact-HF Quark W8A8 INT8 row is `99.4284 tok/s`,
+    saved as
+    `data/localmaxxing-qwen-b70-vllm-leaderboard-20260612ak.json` and
+    `data/localmaxxing-qwen36-35b-quark-int8-exacthf-20260612ak.json`.
+    It also adds larger no-quality-loss bets: a static c1 fast lane beside
+    vLLM, a persistent MoE layerlet, expert-parallel/hybrid MoE sharding
+    simulation, IPEX/FlashMoE design extraction, graph-resident decode,
+    tile-native packed-weight artifacts, route-class graph libraries,
+    target-verified speculative escrow, shallow target self-drafting, B70
+    roofline/stall profiling, TP2/single-card truth-serum runs, and a
+    model-specific generated engine behind the existing frontdoor. The next
+    order is roofline/stall proof, FlashMoE source/smoke-test learning,
+    one-layer persistent MoE layerlet, and a verifier-escrow design doc.

@@ -6,6 +6,34 @@ Date: 2026-06-12
 
 2026-06-12 continuation:
 
+- Built and gated the active-expert offset W8A8 grouped-GEMM prototype. The
+  compact-active variant compiled through `_xpu_C` and `grouped_gemm_xe_2`
+  with oneAPI 2025.3, registered cleanly from the build artifact, and passed
+  route-exact layer-9 routecapture6 rows=1 replay across 16 windows with
+  `max_abs_diff=0.0` against current `xpu_fused_moe`. It is not a speed win:
+  active-offset averaged `225.911 us/layer`, effectively tied with and slightly
+  slower than plain offset GEMM at `225.162 us/layer`, while the accepted
+  current `xpu_fused_moe` screen averaged `304.448 us/layer` and scratch
+  `xpu_fused_moe` averaged `267.360 us/layer`. Decision: keep the patch as a
+  microbench prototype only, do not expose it to the endpoint, and shift the
+  next non-speculative work to a larger one-dispatch/persistent MoE layerlet or
+  quant/gather out-variants that feed that layerlet. Package libraries were
+  restored to the accepted pre-active-offset binaries before backend restart;
+  restored package import confirms both experimental ops are absent. Accepted
+  backend relaunched in
+  `qwen36-tp4-accepted-restored-after-activeoffset-20260612aj`, `/health`
+  returned after `48s`, provenance guard passed all exact sentinels, and a
+  p512/o128 sanity run measured `100.028 tok/s` corrected after first chunk
+  with `9.923 ms/token` decode histogram. Artifacts:
+  `patches/vllm-xpu-kernels-w8a8-active-offset-gemm-prototype-20260612ai.patch`,
+  `data/vllm-xpu-kernels-active-offset-build-20260612ai.log`,
+  `data/qwen36-quark-int8-moe-routecapture6-layer9-active-offset-gemm-20260612ai.md`,
+  `.json`, `.log`,
+  `data/qwen36-quark-int8-moe-routecapture6-layer9-active-offset-gemm-summary-20260612ai.json`,
+  `data/qwen36-quark-int8-tp4-accepted-provenance-after-activeoffset-20260612aj.json`,
+  and
+  `data/qwen36-quark-int8-tp4-accepted-restored-after-activeoffset-speed-p512o128-20260612aj.json`.
+
 - Added a fresh external-scan and larger-bets refresh to
   `notes/2026-06-12-qwen36-next-bigger-bets.md`. It records the Localmaxxing
   API nuance that the broad Arc Pro B70/Qwen family query shows our

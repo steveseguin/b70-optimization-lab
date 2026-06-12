@@ -1,0 +1,33 @@
+{
+  "ok": true,
+  "model_slot": {
+    "name": "qwen36-35b-a3b-fp8-requant-c48",
+    "title": "Qwen3.6 35B-A3B FP8 requant c48",
+    "hf_id": "Qwen/Qwen3.6-35B-A3B-FP8",
+    "modalities": "text",
+    "status": "production-candidate-requant"
+  },
+  "frontdoor": {
+    "host": "0.0.0.0",
+    "port": 8000,
+    "backend": "http://127.0.0.1:18080",
+    "max_active_generations": 48,
+    "queue_timeout_s": 3600.0,
+    "drain_timeout_s": 3600.0,
+    "active_generations": 0,
+    "queued_generations": 0,
+    "total_generation_requests": 1429,
+    "event_logging": true,
+    "auth": "none",
+    "pause_file": "/tmp/qwen36-35b-a3b-fp8-requant-frontdoor-not-paused",
+    "paused": true,
+    "pause_allow_local": true,
+    "served_model_name": "qwen36-35b-a3b-fp8",
+    "rewrite_request_model": true,
+    "default_max_output_tokens": 2048,
+    "max_output_tokens": 4096,
+    "chat_template_kwargs": {
+      "enable_thinking": false
+    }
+  }
+}
