@@ -6,6 +6,39 @@ Date: 2026-06-12
 
 2026-06-12 notes update:
 
+- Added a bolder post-refresh idea backlog to
+  `notes/2026-06-12-qwen36-next-bigger-bets.md` after a fresh public
+  Localmaxxing refresh and local checkpoint metadata check. Current public
+  evidence still has the exact Quark W8A8 INT8 B70/vLLM row at
+  `99.428 tok/s`, with the broader B70/vLLM Qwen3.6 35B-A3B class topping near
+  `99.770 tok/s`; rows above `200 tok/s` use other hardware, lower precision,
+  or speculative/MTP paths and are research signals only. The local exact
+  checkpoint index has no `mtp`/`next` tensors, so native MTP is not an
+  immediate flag for this quantized checkpoint. Newly tracked ideas include a
+  c1 no-server latency lab, transactional current-model verifier state, EP-lite
+  or asymmetric TP topology tests, a persistent XPU MoE command ring,
+  oneDNN/Level Zero whole-layer replay, hot-expert replication, a B70 W8A8
+  roofline packet, strict same-model engine bakeoffs, route-skew autotuning,
+  and context sensitivity as diagnosis rather than promotion. Fresh artifacts:
+  `data/localmaxxing-qwen36-quark-w8a8-int8-exact-refresh-20260612bn.json`,
+  `data/localmaxxing-qwen-b70-vllm-leaderboard-20260612bn.json`, and
+  `data/localmaxxing-qwen36-35b-a3b-leaderboard-20260612bn.json`.
+
+- Added a c1 stage-ledger pass that compares the fresh live endpoint gap budget
+  to existing timing-step summaries. The endpoint is `9.980 ms/token` decode,
+  while the prior low-overhead/nosync pure-decode proxy reports
+  `gpu_model_runner.model_forward ~= 5.467 ms/token`; matching that proxy would
+  only reach about `182.9 tok/s`. The synchronized model-only proxy is
+  `8.433 ms/token`, showing forced synchronization can hide most of the
+  apparent headroom. Conclusion: a no-speculative path to `200 tok/s` needs
+  both endpoint/outside overhead near the nosync path and at least another
+  `0.467 ms/token` off model-forward, or a target-verified multi-token path.
+  New artifacts:
+  `scripts/qwen36-c1-stage-ledger.py`,
+  `data/qwen36-quark-int8-tp4-nosync-labeltiming-summary-20260612t.json`,
+  `data/qwen36-quark-int8-tp4-sync-modelonly-timing-summary-20260612u.json`,
+  `data/qwen36-quark-int8-tp4-c1-stage-ledger-20260612bn.json`, and `.md`.
+
 - Added and ran a live c1 gap-budget measurement against the accepted Quark
   W8A8 INT8 TP4 endpoint. Fresh p512/o512/c1 streaming metrics show corrected
   decode median `100.013 tok/s`, vLLM decode histogram `9.980 ms/token`,

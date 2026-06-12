@@ -1,0 +1,85 @@
+{
+  "gap_budget_path": "data/qwen36-quark-int8-tp4-live-c1-gap-budget-20260612bm.json",
+  "nosync_summary_path": "data/qwen36-quark-int8-tp4-nosync-labeltiming-summary-20260612t.json",
+  "sync_summary_path": "data/qwen36-quark-int8-tp4-sync-modelonly-timing-summary-20260612u.json",
+  "endpoint_gap_budget": {
+    "current_decode_ms_per_token": 9.980275281122886,
+    "target_ms_per_token": 5.0,
+    "required_ms_saving_per_token": 4.980275281122886,
+    "current_corrected_tok_s": 100.01277372528898,
+    "target_tok_s": 200.0
+  },
+  "timing_proxies": [
+    {
+      "name": "nosync_label_timing",
+      "source_log": "data/qwen36-quark-int8-tp4-nosync-labeltiming-20260612t.log",
+      "model_forward_ms": 5.467233500000001,
+      "endpoint_minus_model_forward_ms": 4.513041781122885,
+      "tok_s_if_endpoint_matched_proxy": 182.90786373034916,
+      "target_minus_model_forward_ms": -0.46723350000000075,
+      "notes": "Pure decode timing-step proxy; low overhead but not identical to the live endpoint run.",
+      "step_count": 8,
+      "decode_bucket": 1,
+      "top_labels_by_mean_total_ms": [
+        {
+          "label": "gpu_model_runner.model_forward",
+          "max_total_ms": 5.50025,
+          "mean_total_ms": 5.460676250000001,
+          "median_total_ms": 5.467233500000001,
+          "p90_total_ms": 5.499570299999999
+        },
+        {
+          "label": "gdn_attention_core_xpu.native",
+          "max_total_ms": 1.539417,
+          "mean_total_ms": 1.504764125,
+          "median_total_ms": 1.5023745,
+          "p90_total_ms": 1.5204883
+        },
+        {
+          "label": "logits.local_argmax_lm_head",
+          "max_total_ms": 0.068589,
+          "mean_total_ms": 0.06733375,
+          "median_total_ms": 0.06772700000000001,
+          "p90_total_ms": 0.0685113
+        }
+      ],
+      "gdn_attention_total_ms_proxy": 1.5023745,
+      "gdn_attention_share_of_model_forward_proxy": 0.2747961103179514,
+      "logits_total_ms_proxy": 0.06772700000000001
+    },
+    {
+      "name": "sync_modelonly",
+      "source_log": "data/qwen36-quark-int8-tp4-sync-modelonly-20260612u.log",
+      "model_forward_ms": 8.433159,
+      "endpoint_minus_model_forward_ms": 1.5471162811228858,
+      "tok_s_if_endpoint_matched_proxy": 118.57952636728419,
+      "target_minus_model_forward_ms": -3.433159,
+      "notes": "Synchronized model-forward-only proxy; closer to endpoint latency but perturbs the run.",
+      "step_count": 8,
+      "decode_bucket": 1,
+      "top_labels_by_mean_total_ms": [
+        {
+          "label": "gpu_model_runner.model_forward",
+          "max_total_ms": 8.490271,
+          "mean_total_ms": 8.43849975,
+          "median_total_ms": 8.433159,
+          "p90_total_ms": 8.463122899999998
+        }
+      ]
+    }
+  ],
+  "interpretation": [
+    "The endpoint c1 decode path is about 9.98 ms/token, while prior pure-decode timing proxies range from about 5.46 ms to 8.43 ms depending on instrumentation.",
+    "The gap between endpoint decode and the nosync model-forward proxy is about 4.52 ms/token, almost the entire 4.98 ms/token saving needed for 200 tok/s.",
+    "Even if the endpoint matched the nosync proxy exactly, throughput would be about 183 tok/s, so we still need either a smaller model-forward improvement or target-verified multi-token acceptance.",
+    "The sync model-only proxy shows about 8.43 ms/token, which means synchronization or instrumentation can erase most of the apparent headroom; future profiling must be device-side and low overhead.",
+    "Nested timing labels such as GDN, MoE, and all-reduce are useful directionally, but they are not exclusive wall-time slices and must not be summed into a token budget.",
+    "A concrete no-spec path to 200 tok/s would need endpoint/outside overhead near the nosync timing path plus at least 0.467 ms/token shaved from the model-forward proxy."
+  ],
+  "required_next_instrumentation": [
+    "Add one low-overhead per-token timing-step capture on the accepted backend, with model_forward, scheduler/output, sampler, and streaming boundaries in the same request.",
+    "For XPU device work, prefer queue/event timestamps or existing low-overhead timers; avoid forced synchronization in the hot path.",
+    "Make MoE timing exclusive enough to separate route packing, GEMM1, activation/quant, GEMM2, gather, and all-reduce without double-counting nested labels.",
+    "Tie each timing trace to request id, prompt/output token counts, graph bucket, and canary/provenance result."
+  ]
+}

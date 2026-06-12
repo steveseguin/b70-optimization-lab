@@ -80,6 +80,46 @@ Immediate consequence:
 3. Treat TP2/single-lane and verifier-transaction experiments as serious
    candidates because the required saving is too large for small flag changes.
 
+## C1 Stage Ledger From Prior Timing Runs
+
+Added a second ledger that combines the fresh live endpoint gap budget with
+existing timing-step logs. This is still not a new speed result; it tells us
+where the missing `4.98 ms/token` might live and what timing is still too weak.
+
+Artifacts:
+
+- `scripts/qwen36-c1-stage-ledger.py`
+- `data/qwen36-quark-int8-tp4-nosync-labeltiming-summary-20260612t.json`
+- `data/qwen36-quark-int8-tp4-sync-modelonly-timing-summary-20260612u.json`
+- `data/qwen36-quark-int8-tp4-c1-stage-ledger-20260612bn.json`
+- `data/qwen36-quark-int8-tp4-c1-stage-ledger-20260612bn.md`
+
+Findings:
+
+- Fresh endpoint decode budget: `9.980 ms/token`; target is `5.000 ms/token`.
+- Prior low-overhead/nosync pure-decode timing proxy:
+  `gpu_model_runner.model_forward ~= 5.467 ms/token`.
+- Prior sync model-only proxy:
+  `gpu_model_runner.model_forward ~= 8.433 ms/token`.
+- If the endpoint could match the nosync model-forward proxy exactly, the
+  theoretical output rate would be about `182.9 tok/s`, still short of `200`.
+- A no-speculative path therefore needs both:
+  - outside/scheduler/stream/sync overhead close to the nosync path, and
+  - at least another `0.467 ms/token` shaved from the model-forward proxy.
+- The sync proxy shows why forced synchronization cannot be the profiling
+  method for promotion: it can move the apparent model-forward cost by multiple
+  milliseconds.
+
+Interpretation:
+
+- This reinforces that a oneDNN/custom MoE sidecar must be evaluated in a real
+  token-step ledger, not only in isolated microseconds.
+- Nested labels such as GDN, MoE, and all-reduce are directionally useful but
+  not exclusive timing slices. They should not be summed into a token budget.
+- The next instrumentation gate should capture model-forward, scheduler/output,
+  sampler, streaming, and exclusive XPU substage timings in the same request id
+  and tie that trace to quality/provenance.
+
 ## Isolated oneDNN Sidecar Probe Launcher
 
 Added after the Python-side env hook. This is the missing reproducibility piece
@@ -6859,6 +6899,113 @@ New ideas to keep in the backlog:
     build a c1 latency lane separately. Promotion requires identical model hash,
     exact canaries, prompt-class quality, route replay exactness, and soak
     stability.
+
+## 2026-06-12 Bolder Addendum After Refresh
+
+Added after the follow-up prompt to think bigger. This section folds in a fresh
+public Localmaxxing refresh, local checkpoint metadata, and current MoE/XPU
+source signals. It is explicitly not permission to use lower precision or a
+different model; it is a list of architecture paths that might close the
+`~4.98 ms/token` c1 gap without changing the accepted output owner.
+
+Fresh artifacts:
+
+- `data/localmaxxing-qwen36-quark-w8a8-int8-exact-refresh-20260612bn.json`
+- `data/localmaxxing-qwen-b70-vllm-leaderboard-20260612bn.json`
+- `data/localmaxxing-qwen36-35b-a3b-leaderboard-20260612bn.json`
+
+Evidence snapshot:
+
+- Localmaxxing still has one exact checkpoint row for
+  `nameistoken/Qwen3.6-35B-A3B-Quark-W8A8-INT8`: `99.428 tok/s`, `76.45 ms`
+  TTFT, `p512/o512`, c1, 32K context, 4x Arc Pro B70, vLLM, Quark W8A8 INT8.
+  Our fresh local accepted endpoint at `100.013 tok/s` is consistent with that
+  public row rather than obviously misconfigured.
+- The public B70/vLLM/Qwen refresh still tops out near `100 tok/s` for the
+  35B-A3B class: `99.770 tok/s` on `Qwen/Qwen3.6-35B-A3B` and `99.428 tok/s`
+  on the exact Quark W8A8 INT8 checkpoint.
+- Broader `Qwen/Qwen3.6-35B-A3B` rows above `200 tok/s` are useful targets but
+  not direct substitutions for this goal: examples include R9700 `MQ4-AWQ` +
+  MTP, Blackwell FP8 + DFlash, RTX 5090 NVFP4/FP8 + MTP, and RTX 5090
+  `Q4_K_M`. Those violate the current-model/current-precision rule or change
+  hardware, so they only justify verifier-safe speculation and architecture
+  work as research directions.
+- The local Quark W8A8 checkpoint's `model.safetensors.index.json` has no
+  `mtp`/`next` keys. Native `qwen3_next_mtp` is therefore not an immediate
+  switch for this exact quantized checkpoint. Any MTP/DFlash/ngram path must be
+  framed as proposer work behind exact current-model verification.
+- vLLM's Arc Pro B article, PyTorch's persistent grouped-GEMM work, and Intel's
+  grouped-GEMM tuning issue all point at the same family of bottlenecks:
+  launch overhead, gate-dependent stalls, route skew, tile selection, and
+  persistent grouped execution. This lines up with our endpoint-vs-nosync
+  ledger: small isolated GEMM wins are not enough unless they remove whole
+  token-step overhead.
+
+Bigger ideas to keep on the board:
+
+1. **Exact c1 latency lab outside the server.**
+   Build a one-request runner that bypasses HTTP, OpenAI streaming, request
+   scheduling, dynamic batching, and generic paged-KV policy while still using
+   the exact current weights, tokenizer, sampler, and KV state. This tells us
+   whether `>200 tok/s` is physically reachable before spending weeks on the
+   production server path.
+
+2. **Transactional target-state verifier substrate.**
+   Implement copy/commit/rollback for KV blocks, Gated DeltaNet state,
+   scheduler metadata, sampler state, and output stream state. Then MTP,
+   DFlash, n-gram, or branch farming can propose tokens, but only the current
+   Quark W8A8 model commits final output. This is likely the cleanest
+   no-quality-loss `2x` class path if kernel work stalls around `180 tok/s`.
+
+3. **EP-lite or asymmetric TP topology for latency.**
+   TP4 may be paying collectives every layer to make 32K production comfortable.
+   Try a latency lane that duplicates selected non-MoE pieces, changes
+   expert/data placement, or runs TP2 plus two replicas, then measure c1
+   decode and reliability. This is a memory-for-latency trade, not a model
+   change, and should be tested with the same 32K promotion gate after the
+   ceiling is understood.
+
+4. **Persistent XPU MoE command ring.**
+   Move beyond normal kernel launches: one resident worker per rank owns packed
+   expert weights, waits on route metadata, steals expert blocks dynamically,
+   and emits final gathered output. The first proof can be a route-window
+   harness with exact byte parity; endpoint integration comes later.
+
+5. **Whole-layer MoE supernode using oneDNN Graph or Level Zero replay.**
+   Prebuild fixed-bucket command lists for remap, quant, GEMM1, activation,
+   GEMM2, and gather. Patch pointers, scales, and grouped offsets at runtime.
+   If this captures most host/queue overhead, it may reach production sooner
+   than a fully handwritten ESIMD megakernel.
+
+6. **Hot-expert replication with exact weights.**
+   Use real route traces to identify hot shared/routed experts and replicate
+   only those weights across ranks or latency lanes. The output is unchanged,
+   but route skew and cross-rank waits may improve. This should be coupled to a
+   checksum-indexed packed-weight cache so it remains reproducible.
+
+7. **B70 W8A8 roofline and utilization packet.**
+   Build a single report with DPAS occupancy, HBM bandwidth, queue idle time,
+   copy-engine use, all-reduce time, route skew, and token waterfall. Without
+   this, it is too easy to optimize the wrong 5% slice. This packet also gives
+   Intel/vLLM maintainers a concrete target.
+
+8. **Strict same-model engine bakeoff.**
+   Test SGLang, llama.cpp, KTransformers, or a custom runner only when the model
+   representation is exact or a BF16 fallback is used as the quality oracle.
+   No AWQ/4-bit shortcut qualifies, but another engine may reveal server or
+   scheduler overhead we can port back to vLLM/XPU.
+
+9. **Route-skew autotuning from real traces.**
+   Feed our routecapture windows into grouped-GEMM autotuning instead of uniform
+   synthetic cases. Sweep max group size hints, hotset buckets, and tile layouts
+   against exact captured outputs. Promote only route classes that generalize
+   across prompt classes.
+
+10. **Context-length sensitivity as diagnosis, not promotion.**
+    Run 4K/8K/32K c1 tests with the same model to separate MoE, attention, KV,
+    and scheduler costs. The production target remains 32K, but shorter-context
+    deltas can tell us whether the missing milliseconds are MoE-dominated or
+    cache/attention/server dominated.
 
 ## 2026-06-12 Rank-Local Live ABI Smoke
 
