@@ -6,6 +6,33 @@ Date: 2026-06-12
 
 2026-06-12 notes update:
 
+- Added a "Pre-Sampler Probe Attempt And Bigger Ideas Addendum" to
+  `notes/2026-06-12-qwen36-next-bigger-bets.md`. A heavier pre-sampler
+  stage-split patch was captured, but the isolated diagnostic backend failed on
+  the first p512/o128 request with `UR_RESULT_ERROR_DEVICE_LOST` during
+  first-request block-table `copy_to_gpu`, followed by
+  `UR_RESULT_ERROR_OUT_OF_DEVICE_MEMORY` during cleanup. This is a stability
+  finding rather than timing attribution: the all-events probe is too intrusive
+  for the current production-like 32K/0.95-memory TP4 launch. Accepted TP4 was
+  restored on `18080` with no diagnostic env flags and passed provenance
+  sentinels `4752`, `11436`, `198` plus the no-thinking quality smoke. The
+  backlog now adds binary-search pre-sampler timing, diagnostic-only memory
+  headroom runs, direct c1 in-process runner, all-rank skew timing, exact
+  sharded greedy lm-head, route-fixture kernel bakeoff, clean-stack branch
+  bakeoff, persistent decode service, rank-specialized expert placement,
+  TP/EP hybrid, fused final-token superkernel, route-class kernel policy
+  compiler, target-owned multi-token transactions, runtime/driver matrix, and
+  an external B70 challenge packet. New artifacts:
+  `patches/vllm-qwen36-presampler-stagesplit-20260612cg.diff`,
+  `data/qwen36-quark-int8-tp4-presampler-stagesplit-failure-20260612cg.json`,
+  `data/qwen36-quark-int8-tp4-presampler-stagesplit-20260612cg.log`,
+  `data/qwen36-quark-int8-tp4-accepted-provenance-after-presampler-stagesplit-20260612cg.json`,
+  `data/qwen36-quark-int8-tp4-accepted-quality-after-presampler-stagesplit-nothink-smoke-20260612cg.json`,
+  `data/localmaxxing-b70-qwen-leaderboard-20260612cg.json`, and
+  `data/localmaxxing-qwen36-quark-int8-benchmarks-20260612cg.json`.
+
+2026-06-12 notes update:
+
 - Added a "Sampler Stage-Split And Bolder Queue Refresh" to
   `notes/2026-06-12-qwen36-next-bigger-bets.md`. The diagnostic p512/o128 run
   was timing-only and slow (`67.341 tok/s` corrected), but it answered the

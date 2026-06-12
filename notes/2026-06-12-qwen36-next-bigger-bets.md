@@ -8676,3 +8676,174 @@ Reliability gates to keep attached to every promising branch:
 - 30-60 minute soak before production promotion.
 - Device-lost/error-frequency log.
 - Peak VRAM and xpu-smi clock/power snapshot.
+
+## 2026-06-12 Pre-Sampler Probe Attempt And Bigger Ideas Addendum
+
+This addendum records the next attempted diagnostic plus a wider backlog after
+the latest user review. It does not promote a new speed result. The current
+accepted c1 speed anchor remains the public Localmaxxing/topline range of
+`99.4-99.8 tok/s` for this exact Qwen3.6 35B Quark W8A8 INT8 setup on 4x B70.
+
+Artifacts:
+
+- `patches/vllm-qwen36-presampler-stagesplit-20260612cg.diff`
+- `data/qwen36-quark-int8-tp4-presampler-stagesplit-20260612cg.log`
+- `data/qwen36-quark-int8-tp4-presampler-stagesplit-failure-20260612cg.json`
+- `data/qwen36-quark-int8-tp4-accepted-restored-after-presampler-stagesplit-20260612cg.log`
+- `data/qwen36-quark-int8-tp4-accepted-provenance-after-presampler-stagesplit-20260612cg.json`
+- `data/qwen36-quark-int8-tp4-accepted-quality-after-presampler-stagesplit-nothink-smoke-20260612cg.json`
+- `data/localmaxxing-b70-qwen-leaderboard-20260612cg.json`
+- `data/localmaxxing-qwen36-quark-int8-benchmarks-20260612cg.json`
+
+Measured/restored facts:
+
+- A pre-sampler stage-split patch was added behind env flags. It records device
+  events around execute entry, forward, final hidden selection, logits, local
+  argmax if used, sample start, and sampler entry.
+- The isolated diagnostic backend on port `18081` reached health, but the first
+  p512/o128 streaming completions probe failed with HTTP 500.
+- The root stack was `UR_RESULT_ERROR_DEVICE_LOST` during first-request
+  `block_table.copy_to_gpu`; cleanup then reported
+  `UR_RESULT_ERROR_OUT_OF_DEVICE_MEMORY`.
+- Because the crash happened before useful pre-sampler attribution was emitted,
+  this run is a stability result, not a timing result.
+- The accepted backend was restored on port `18080` with no timing flags in the
+  API-server environment.
+- Restore provenance passed exact sentinel IDs `4752`, `11436`, and `198`.
+- Restore no-thinking quality smoke passed exact canaries, arithmetic, JSON
+  schema/semantics, copy phrase, repeat stability, and baseline match.
+
+Interpretation:
+
+- The sampler-stage split remains valid: sampler work and token copy were
+  already ruled out as the multi-ms bottleneck.
+- The pre-sampler probe itself was too heavy for the current production-like
+  `32K`/`gpu_memory_utilization=0.95` service. Adding many timed XPU events can
+  perturb Level Zero enough to lose the device before decode attribution.
+- Future timing probes should either use one boundary per run, reduce the event
+  set to a binary search, lower `gpu_memory_utilization` only for diagnostic
+  launches, or run the direct c1 model loop where vLLM server memory pressure is
+  absent.
+
+External leads added to the queue:
+
+- vLLM's Intel Arc Pro B-series post explicitly calls out the same families of
+  levers we are circling: persistent MoE kernels, dynamic balancing of compute
+  groups, async scheduling, prefill/decode disaggregation, speculative
+  decoding, and optimized MoE paths.
+  Source: `https://vllm.ai/blog/2025-11-11-intel-arc-pro-b`
+- Community B70 testing reports instability at high memory utilization and
+  lower-context workarounds. That lines up with this failed diagnostic and
+  makes a diagnostic-only `gpu_memory_utilization=0.80-0.90` branch reasonable,
+  while keeping accepted production candidates at the validated 32K target.
+  Source: `https://forum.level1techs.com/t/intel-b70-launch-unboxed-and-tested/247873`
+- vLLM release notes show active XPU work in areas relevant to us:
+  XPU MXFP8 MoE, FP8 block-scaled quantization, custom-op collective behavior,
+  MoE host-overhead reduction, Quark fixes, and Qwen3.5/3.6 quantized-prefix
+  mapping. These are candidates for an isolated clean-stack bakeoff.
+  Source: `https://github.com/vllm-project/vllm/releases`
+- Intel/vLLM issue traffic for 30B+ Intel Arc setups is still sparse, but
+  confirms that many users are looking for stable argument sets rather than
+  only raw kernels. We should publish exact repro packets when we have a clear
+  bottleneck, not just scattered flags.
+  Source: `https://github.com/vllm-project/vllm/issues/35638`
+- A public B70 benchmark repo tracks two-card and vLLM/SYCL data with hardware
+  topology detail. Useful for comparing PCIe layout, driver/kernel stack, and
+  whether performance follows topology.
+  Source: `https://github.com/PMZFX/intel-arc-pro-b70-benchmarks`
+- An Intel GPU inference paper describes fused activation quant/dequant Xe2 GEMM
+  kernels using DPAS and reports large end-to-end speedups over 16-bit paths.
+  It is lower-bit focused, so it is not directly acceptable for the current
+  W8A8-quality target, but its fused-QDQ and prepacked-layout ideas are relevant
+  to a W8A8 expert/lm-head kernel design.
+  Source: `https://arxiv.org/html/2508.06753v2`
+- Localmaxxing public B70/Qwen leaderboard query on this date returned our
+  4x-B70 Qwen3.6 35B rows at the top of the slice: `99.7697 tok/s` for the
+  base-family row and `99.4284 tok/s` for the exact Quark W8A8 INT8 row.
+  Source:
+  `https://localmaxxing.com/api/leaderboard?hardwareName=Arc%20Pro%20B70&modelFamily=qwen&limit=20`
+
+Near-term things to try after the failed heavy probe:
+
+1. **Binary-search pre-sampler timing.**
+   Replace the all-events pre-sampler patch with one or two boundaries per run:
+   `forward_end`, `logits_end`, then `sampler_entry`. This should reduce event
+   pressure and still tell us which half contains the wait.
+
+2. **Diagnostic-only memory headroom.**
+   Repeat the minimal boundary probe at `gpu_memory_utilization=0.90` and, if
+   needed, `0.85`, keeping 32K first and reducing context only if the runtime
+   still loses the device. Record that these are diagnostic settings, not
+   accepted production settings.
+
+3. **Direct c1 in-process runner.**
+   Build a minimal loop over the loaded model runner with fixed p512 decode,
+   no HTTP, no async-output server path, and no request scheduler churn. If it
+   still sits near `10 ms/token`, the bottleneck is kernel/model-side. If it
+   jumps, the hidden wait is in vLLM's serving/executor path.
+
+4. **All-rank skew timing with fewer events.**
+   Time one decode boundary per rank and correlate with route-window hot
+   experts and card assignment. This is lower risk than a full stage split and
+   directly tests whether one rank is holding the TP step.
+
+5. **Exact sharded greedy-lm-head prototype.**
+   In the no-logprobs, temperature-0 lane, compute local top-1 per vocab shard,
+   reduce `(value, token_id, rank)` exactly, and bypass full-logits materialize
+   where possible. Gate every output token against current full sampler output,
+   including tie behavior.
+
+6. **Route fixture kernel bakeoff.**
+   Capture real Qwen3.6 active-expert windows and replay them through current
+   vLLM fused-MoE, oneDNN grouped matmul, latest vllm-xpu-kernels, and any
+   clean Intel container. This keeps quality identical because the weights and
+   routes are fixed; only scheduling/kernel implementation changes.
+
+7. **Clean-stack branch bakeoff.**
+   Test current upstream/intel `vllm-xpu-kernels` or `intel/vllm` in an isolated
+   environment against route fixtures first, then full service only if fixture
+   parity and speed are promising.
+
+Bigger, bolder ideas worth keeping alive:
+
+1. **Persistent decode service inside the worker.**
+   Collapse repeated per-token launch/queue work for the decode loop into a
+   long-lived worker-side token engine. The HTTP server feeds requests; the
+   token engine owns steady-state decode and emits only final token IDs.
+
+2. **Rank-specialized expert placement.**
+   Stop assuming equal expert placement is best. Use route histograms to place
+   high-traffic experts near the fastest card/rank path and duplicate a small
+   hot set when VRAM allows. Exact same weights, different physical schedule.
+
+3. **TP/EP hybrid for c1.**
+   TP4 may be paying collective cost every token. A hybrid expert-parallel
+   design that keeps shared attention/lm-head efficient while reducing TP
+   communication in MoE layers could beat pure TP4 for single-user latency.
+
+4. **Fused final-token superkernel.**
+   If the pre-sampler wait lands around final hidden selection plus lm-head,
+   build a narrow kernel that fuses hidden select, projection, shard top-1, and
+   cross-rank token selection for greedy output.
+
+5. **Route-class kernel policy compiler.**
+   Generate a small dispatch table for common route shapes: single hot expert,
+   two-hot, broad-balanced, and overflow fallback. Keep exact arithmetic/output
+   but avoid paying generic grouped-GEMM overhead on easy route windows.
+
+6. **Verifier-owned multi-token transactions.**
+   Use target-owned branch verification, not an external 4-bit/AWQ proposer.
+   The target model can speculatively advance temporary KV states and commit
+   only exact verified tokens. This is the only speculation path that satisfies
+   the no-quality-loss constraint.
+
+7. **Driver/runtime matrix as a first-class experiment.**
+   Treat Linux kernel, oneAPI, Level Zero, IGC, oneCCL, and PCIe topology as
+   tunable variables. Device-lost behavior at high memory utilization suggests
+   performance and stability may change materially across stack versions.
+
+8. **External challenge packet.**
+   Publish a minimal, reproducible B70 issue/benchmark bundle once attribution
+   is sharper: command, model revision, exact quality gates, route fixtures,
+   timing summaries, xpu-smi/topology, Localmaxxing row, and the single target
+   of removing about `5 ms/token` without changing output.

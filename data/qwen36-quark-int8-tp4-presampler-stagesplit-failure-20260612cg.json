@@ -1,0 +1,46 @@
+{
+  "date": "2026-06-12",
+  "label": "qwen36-quark-int8-tp4-presampler-stagesplit-20260612cg",
+  "model": "nameistoken/Qwen3.6-35B-A3B-Quark-W8A8-INT8",
+  "backend": "vllm-xpu",
+  "tensor_parallel_size": 4,
+  "port": 18081,
+  "diagnostic_flags": {
+    "VLLM_XPU_ASYNC_OUTPUT_TIMING": "1",
+    "VLLM_XPU_ASYNC_OUTPUT_DEVICE_TIMING": "1",
+    "VLLM_XPU_ASYNC_OUTPUT_SYNC_PRE_SAMPLER_SPLIT": "1",
+    "VLLM_XPU_SAMPLER_DEVICE_TIMING": "1"
+  },
+  "request": {
+    "endpoint": "/v1/completions",
+    "prompt_tokens": 512,
+    "requested_output_tokens": 128,
+    "stream": true,
+    "ignore_eos": true,
+    "temperature": 0
+  },
+  "result": "failed",
+  "http_status": 500,
+  "root_error": "RuntimeError: level_zero backend failed with error: 20 (UR_RESULT_ERROR_DEVICE_LOST)",
+  "secondary_error": "RuntimeError: level_zero backend failed with error: 39 (UR_RESULT_ERROR_OUT_OF_DEVICE_MEMORY)",
+  "failure_location": "first request during input block-table copy_to_gpu, before useful pre-sampler stage attribution was emitted",
+  "interpretation": [
+    "The run did not produce valid timing attribution.",
+    "Heavy per-token/pre-sampler XPU event instrumentation can destabilize the 32K/0.95-memory TP4 service.",
+    "Future attribution probes should reduce event count, use one boundary per run, or launch with lower gpu_memory_utilization/max context while preserving the accepted backend for production-like validation."
+  ],
+  "restoration": {
+    "accepted_endpoint_restored_on_port": 18080,
+    "accepted_session": "qwen36-tp4-accepted-restored-after-presampler-stagesplit-20260612cg",
+    "timing_flags_in_accepted_env": false,
+    "provenance_passed": true,
+    "quality_smoke_passed": true
+  },
+  "artifacts": [
+    "data/qwen36-quark-int8-tp4-presampler-stagesplit-20260612cg.log",
+    "patches/vllm-qwen36-presampler-stagesplit-20260612cg.diff",
+    "data/qwen36-quark-int8-tp4-accepted-restored-after-presampler-stagesplit-20260612cg.log",
+    "data/qwen36-quark-int8-tp4-accepted-provenance-after-presampler-stagesplit-20260612cg.json",
+    "data/qwen36-quark-int8-tp4-accepted-quality-after-presampler-stagesplit-nothink-smoke-20260612cg.json"
+  ]
+}
