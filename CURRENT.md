@@ -6,6 +6,40 @@ Date: 2026-06-12
 
 2026-06-12 notes update:
 
+- Added async-output sub-timing after the RPC future-result split. The result
+  changes the next target: rank-0 response materialization is almost entirely
+  `async_copy_ready_event.synchronize()`, not token-list conversion. In the
+  timing-only run, `get_output()` averaged `3.815 ms`, with `3.798 ms` spent
+  synchronizing and only `0.010 ms` in token-list conversion. The reuse-buffer
+  plus fast-scalar path fired correctly but stayed flat (`3.873 ms` total,
+  `3.840 ms` sync), so `.tolist()`/CPU-buffer churn is not the lever. The
+  copied tensor is only `torch.int32` shape `[1,1]` for c1/no-logprobs. Bigger
+  ideas added to `notes/2026-06-12-qwen36-next-bigger-bets.md`: device
+  timeline for the event wait, TP2 latency truth-serum, direct c1 runner
+  ceiling, sampler/copy isolation, one-token resident decode lane, whole-token
+  Level Zero command-list replay, persistent MoE device service, hybrid TP/EP,
+  hot-expert duplication, target-owned speculative transactions, branch farm,
+  maintainer packet, strict same-model engine bakeoff, and a split c1/aggregate
+  production architecture. Important gate: the accepted restore after this
+  diagnostic produced one failed provenance/quality artifact, but an immediate
+  rerun on the same backend passed exact provenance sentinels (`4752`, `11436`,
+  `198`) plus the no-thinking quality smoke; keep gates mandatory because the
+  transient failure is a useful warning. New artifacts:
+  `patches/vllm-qwen36-async-output-timing-20260612bv.diff`,
+  `data/qwen36-quark-int8-tp4-async-output-timing-20260612bv.log`,
+  `data/qwen36-quark-int8-tp4-async-output-timing-p512o256-metrics-20260612bv.json`,
+  `data/qwen36-quark-int8-tp4-async-output-timing-summary-20260612bv.json`,
+  `data/qwen36-quark-int8-tp4-async-output-reuse-timing-20260612bw.log`,
+  `data/qwen36-quark-int8-tp4-async-output-reuse-timing-p512o256-metrics-20260612bw.json`,
+  `data/qwen36-quark-int8-tp4-async-output-reuse-timing-summary-20260612bw.json`,
+  `data/qwen36-quark-int8-tp4-accepted-restored-after-async-output-timing-20260612bw.log`,
+  `data/qwen36-quark-int8-tp4-accepted-provenance-after-async-output-timing-20260612bw.json`,
+  `data/qwen36-quark-int8-tp4-accepted-quality-after-async-output-timing-nothink-smoke-20260612bw.json`,
+  `data/qwen36-quark-int8-tp4-accepted-provenance-after-async-output-timing-rerun-20260612bw.json`,
+  `data/qwen36-quark-int8-tp4-accepted-quality-after-async-output-timing-nothink-smoke-rerun-20260612bw.json`,
+  and
+  `data/qwen36-quark-int8-tp4-async-output-timing-summary-20260612bv.md`.
+
 - Added an RPC future-result split around the vLLM multiprocess executor and
   worker response path. The p512/o256/c1 diagnostic stayed at baseline speed:
   `100.621 tok/s` corrected, `9.902 ms/token` vLLM decode, and

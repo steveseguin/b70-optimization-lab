@@ -29,6 +29,9 @@ WORKER_RPC_RE = re.compile(r"\[vllm-xpu-worker-rpc\]\s+(?P<payload>\{.*\})")
 WORKER_OUTPUT_RE = re.compile(
     r"\[vllm-xpu-worker-output\]\s+(?P<payload>\{.*\})"
 )
+ASYNC_OUTPUT_RE = re.compile(
+    r"\[vllm-xpu-async-output\]\s+(?P<payload>\{.*\})"
+)
 POST_RE = re.compile(r'POST\s+/v1/(?:completions|chat/completions)\s+HTTP/\d(?:\.\d)?"\s+200')
 
 
@@ -705,6 +708,7 @@ def main() -> int:
     executor_rpc_events = []
     worker_rpc_events = []
     worker_output_events = []
+    async_output_events = []
     for idx, line in enumerate(lines, start=1):
         if sample_start_line <= idx <= sample_end_line:
             match = SAMPLE_RE.search(line)
@@ -775,6 +779,14 @@ def main() -> int:
                 continue
             payload["line"] = idx
             worker_output_events.append(payload)
+        match = ASYNC_OUTPUT_RE.search(line)
+        if match and (args.all_lines or idx >= sample_start_line):
+            try:
+                payload = json.loads(match.group("payload"))
+            except json.JSONDecodeError:
+                continue
+            payload["line"] = idx
+            async_output_events.append(payload)
 
     summary_rows = summarize_samples(samples)
     timing_summary = sorted(summaries, key=lambda row: row["total_ms"], reverse=True)
@@ -795,6 +807,10 @@ def main() -> int:
         worker_output_events,
         ["event", "method", "rank", "status"],
     )
+    async_output_summary = summarize_rpc_events(
+        async_output_events,
+        ["event", "rank", "copy_mode", "list_mode", "has_logprobs", "max_gen_len"],
+    )
     rpc_call_summary = summarize_rpc_calls(
         executor_rpc_events,
         worker_rpc_events,
@@ -814,6 +830,7 @@ def main() -> int:
         "executor_rpc_line_count": len(executor_rpc_events),
         "worker_rpc_line_count": len(worker_rpc_events),
         "worker_output_line_count": len(worker_output_events),
+        "async_output_line_count": len(async_output_events),
         "samples_by_last_ms": summary_rows,
         "summary_by_total_ms": timing_summary,
         "step_summary_by_mean_total_ms": step_summary,
@@ -824,6 +841,7 @@ def main() -> int:
         "executor_rpc_summary": executor_rpc_summary,
         "worker_rpc_summary": worker_rpc_summary,
         "worker_output_summary": worker_output_summary,
+        "async_output_summary": async_output_summary,
         "rpc_call_summary": rpc_call_summary,
     }
     if args.include_raw:
@@ -834,6 +852,7 @@ def main() -> int:
         payload["raw_executor_rpc_events"] = executor_rpc_events
         payload["raw_worker_rpc_events"] = worker_rpc_events
         payload["raw_worker_output_events"] = worker_output_events
+        payload["raw_async_output_events"] = async_output_events
 
     out_path = Path(args.out)
     out_path.parent.mkdir(parents=True, exist_ok=True)

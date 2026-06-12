@@ -7761,3 +7761,156 @@ Bigger bets added from this pass:
     Every performance branch needs exact provenance sentinels, no-thinking
     quality smoke, route-window parity where applicable, reproducible command,
     XPU memory, and a soak/stability result before promotion.
+
+## 2026-06-12 Async-Output Timing Reframe And Larger Bets
+
+Added a lower-level async-output timing pass after the RPC future-result split.
+The previous result correctly found rank-0 response materialization at roughly
+`4 ms/token`, but this pass narrows the cause.
+
+The source patch artifact is the current local `gpu_model_runner.py` lab diff
+used for this diagnostic. It includes accumulated runner instrumentation, not
+only the small async-output timing hunk, because that is the exact source state
+that produced the logs.
+
+Artifacts:
+
+- `patches/vllm-qwen36-async-output-timing-20260612bv.diff`
+- `data/qwen36-quark-int8-tp4-async-output-timing-20260612bv.log`
+- `data/qwen36-quark-int8-tp4-async-output-timing-p512o256-metrics-20260612bv.json`
+- `data/qwen36-quark-int8-tp4-async-output-timing-summary-20260612bv.json`
+- `data/qwen36-quark-int8-tp4-async-output-reuse-timing-20260612bw.log`
+- `data/qwen36-quark-int8-tp4-async-output-reuse-timing-p512o256-metrics-20260612bw.json`
+- `data/qwen36-quark-int8-tp4-async-output-reuse-timing-summary-20260612bw.json`
+- `data/qwen36-quark-int8-tp4-async-output-timing-summary-20260612bv.md`
+- `data/qwen36-quark-int8-tp4-accepted-restored-after-async-output-timing-20260612bw.log`
+- `data/qwen36-quark-int8-tp4-accepted-provenance-after-async-output-timing-20260612bw.json`
+- `data/qwen36-quark-int8-tp4-accepted-quality-after-async-output-timing-nothink-smoke-20260612bw.json`
+- `data/qwen36-quark-int8-tp4-accepted-provenance-after-async-output-timing-rerun-20260612bw.json`
+- `data/qwen36-quark-int8-tp4-accepted-quality-after-async-output-timing-nothink-smoke-rerun-20260612bw.json`
+
+Measured result:
+
+- Timing-only diagnostic: `88.990 tok/s` corrected, `11.196 ms/token` vLLM
+  decode, `11.240 ms` TPOT. This is slower than the accepted baseline because
+  the timing prints are enabled.
+- Reuse-buffer plus fast-scalar diagnostic: `88.595 tok/s` corrected,
+  `11.246 ms/token` decode, `11.290 ms` TPOT.
+- Default path `get_output()` total mean: `3.815 ms`.
+- Default path event synchronize mean: `3.798 ms`.
+- Default path token-list conversion mean: `0.010 ms`.
+- Reuse/fast path `get_output()` total mean: `3.873 ms`.
+- Reuse/fast path event synchronize mean: `3.840 ms`.
+- Reuse/fast path token-scalar conversion mean: `0.026 ms`.
+- Copied token tensor for the measured c1/no-logprobs lane is tiny:
+  `torch.int32`, shape `[1,1]`, pinned CPU destination.
+
+Interpretation:
+
+- The bottleneck is not `.tolist()`, Python list construction, or an obvious
+  dtype mismatch. The reusable pinned buffer branch fired and still did not
+  improve speed.
+- The host waits roughly `3.8-3.9 ms` on the async-copy-ready event because
+  this is where queued XPU work becomes visible. That wait may include model
+  forward tail work, sampler work, D2H token copy completion, command-queue
+  ordering, or collectives. The output path is a synchronization point, not
+  necessarily the root cause.
+- Do not spend more time on small output object-conversion changes unless a
+  device timeline proves the D2H copy itself is slow.
+- The accepted restore after this instrumentation produced one failed
+  provenance/quality artifact, but an immediate rerun on the same backend
+  passed: exact provenance sentinels `4752`, `11436`, and `198`, all
+  no-thinking exact cases, repeat stability, and baseline matching. Treat the
+  first failure as a transient warning, not a promoted regression, and keep the
+  quality gate mandatory for every timing patch.
+
+Near-term things to try:
+
+1. **Rerun accepted gates before any new speed test.**
+   This pass found no leaked timing/experimental flags in the APIServer,
+   EngineCore, or TP0 worker. Provenance and no-thinking quality passed on
+   rerun. Keep this as the first step after future backend restores.
+
+2. **Device timeline for the event wait.**
+   Capture Level Zero/VTune/oneAPI traces around the `get_output()` event. The
+   question is whether the `3.8 ms` is sampler, copy, command queue, allreduce,
+   or forward tail.
+
+3. **TP2 latency truth-serum.**
+   Test exact current model at TP2 on two B70s. If TP2 reduces the sync/tail
+   wait, use the other two B70s for replicas or verifier work instead of TP4.
+
+4. **Direct c1 runner ceiling.**
+   Build the minimal loop around the same model runner and sampler, bypassing
+   OpenAI serving and multiprocessing, then compare exact token IDs. If direct
+   c1 is still near `100 tok/s`, the blocker is device/kernel/topology. If it
+   jumps, the blocker is serving/executor synchronization.
+
+5. **Per-token event accounting.**
+   Record event creation, copy stream, model stream, sampler stream, and any
+   rank-0 copy dependency. The output event should carry enough provenance to
+   explain what it is waiting behind.
+
+6. **Sampler-only isolation.**
+   Run a synthetic final-logits tensor through the current sampler/output path
+   on XPU. If it is sub-millisecond, sampler/output transport is innocent and
+   all attention returns to forward/collectives.
+
+7. **Cold-copy isolation.**
+   Copy `[1,1]`, `[1,8]`, and `[1,32]` int32 XPU tensors to pinned CPU under
+   the same stream/event pattern outside vLLM. This gives the lower bound for
+   token-copy overhead.
+
+Bigger, bolder ideas to keep in the queue:
+
+1. **One-token resident decode lane.**
+   A fixed c1 decode runtime with static buffers, static scheduler state, and
+   patchable token input. It would use the current weights and sampler but stop
+   paying general vLLM scheduling costs for the single-user latency lane.
+
+2. **Whole-token Level Zero command-list replay.**
+   Capture the repeated decode bucket as a patchable command-list sequence:
+   attention, GDN/Mamba/state update if applicable, MoE, residual, sampler,
+   and token handoff. The win target is fewer host submissions and fewer
+   visible synchronization points.
+
+3. **Persistent MoE device service.**
+   Keep expert weights, route windows, and scratch buffers resident behind a
+   small device-side service or long-lived command ring. This attacks the MoE
+   dispatch and grouped-GEMM boundary rather than only the Python call site.
+
+4. **Hybrid TP/EP topology for the current checkpoint.**
+   Keep dense/shared work tensor-parallel but make active sparse experts more
+   rank-local. Spend spare VRAM on duplicated hot experts if it lowers
+   collectives and route skew.
+
+5. **Hot-expert memory-for-latency plan.**
+   Use real prompt-class route captures to identify stable hot experts, then
+   duplicate or prepack those experts on more ranks. No quality loss because
+   weights are identical; the risk is routing/memory complexity.
+
+6. **Target-owned speculative transactions.**
+   Keep the Quark W8A8 target as the verifier, but add temporary KV/request
+   state so proposed tokens are committed only if the current model accepts
+   them. This remains a no-quality-loss path if the transaction boundary is
+   correct.
+
+7. **Branch farm using spare B70s.**
+   If TP2 wins latency, use the unused B70s to run target-owned branches or
+   prompt-class predictors in parallel. Only the current target stream can
+   commit user-visible tokens.
+
+8. **B70 W8A8 MoE maintainer packet.**
+   Package the exact checkpoint, route windows, timing logs, VTune/Level Zero
+   traces, oneDNN parity fixtures, and the `5 ms/token` target for Intel/vLLM
+   maintainers. The public ecosystem may need kernel/runtime changes.
+
+9. **Strict engine bakeoff with current-model parity.**
+   Try OpenVINO/oneDNN GenAI, llama.cpp SYCL, SGLang, KTransformers, or a custom
+   runner only if they can load the current 8-bit target or match a BF16 oracle.
+   No Qwen3.5, no 4-bit, no AWQ shortcuts.
+
+10. **Two-lane production architecture.**
+    Separate latency-first c1 workers from aggregate-throughput workers. The
+    c1 lane can use static buffers and conservative batching; the aggregate
+    lane can keep vLLM continuous batching once speed and quality are proven.
