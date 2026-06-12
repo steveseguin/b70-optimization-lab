@@ -6,6 +6,28 @@ Date: 2026-06-12
 
 2026-06-12 notes update:
 
+- Added the isolated oneDNN sidecar probe launcher to the tracked reproduction
+  path: `scripts/launch-qwen36-quark-int8-sidecar-probe.sh`. It creates a
+  temporary overlay package that selects only the rebuilt `_xpu_C.abi3.so`,
+  sources oneAPI runtime paths, runs an eager one-rank/one-layer descriptor
+  probe on port `18081`, and still returns the current `xpu_fused_moe` output.
+  `bash -n` passed and the script is executable (`775`). The live TP4 endpoint
+  was not disturbed; current `xpu-smi` memory is still about `32651 MiB` used
+  per B70, so the actual isolated backend run is deferred until a maintenance
+  window. Tracking artifact:
+  `data/qwen36-onednn-sidecar-isolated-launcher-20260612bm.json`.
+
+- Added another "bigger bets" pass to
+  `notes/2026-06-12-qwen36-next-bigger-bets.md`, focused on ideas with a path
+  to no-quality-loss speed: fusing the oneDNN MoE island with post-ops,
+  testing `DNNL_ARG_HINT_MAX_GROUP_SIZE`, token-step device-side waterfall
+  profiling, a persistent B70 MoE worker with dynamic work stealing, host BOM
+  A/B as a real speed/stability experiment, a c1-only no-server ceiling runner,
+  checksum-indexed Quark W8A8 prepacked layout artifacts, a verifier
+  transaction substrate for DFlash/MTP/ngram branch farming, route-class
+  kernels instead of exact-route caches, and split production/latency lanes with
+  identical quality gates.
+
 - Added disabled Python plumbing for the next oneDNN MoE sidecar probe gate in
   the local `vllm-xpu-kernels` tree. The new hook is behind
   `VLLM_XPU_MOE_ONEDNN_SIDECAR_PROBE=1`, requires the rebuilt

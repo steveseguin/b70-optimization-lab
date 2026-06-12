@@ -1,0 +1,75 @@
+{
+  "artifact": "qwen36-onednn-sidecar-isolated-launcher-20260612bm",
+  "date": "2026-06-12",
+  "model": "nameistoken/Qwen3.6-35B-A3B-Quark-W8A8-INT8",
+  "model_snapshot": "/mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118",
+  "script": "scripts/launch-qwen36-quark-int8-sidecar-probe.sh",
+  "purpose": "Launch an isolated vLLM backend that selects the rebuilt oneDNN sidecar _xpu_C extension via a temporary overlay package, while the normal Python package files still come from the local vllm-xpu-kernels source checkout.",
+  "runtime_safety": {
+    "modifies_installed_package": false,
+    "modifies_live_endpoint": false,
+    "default_port": 18081,
+    "default_host": "127.0.0.1",
+    "default_eager_mode": true,
+    "default_graph_capture_disabled": true,
+    "returns_current_xpu_fused_moe_output": true,
+    "speed_claim": false
+  },
+  "overlay": {
+    "sidecar_build_dir": "/home/steve/src/vllm-xpu-kernels/build/qwen36-sidecar-probe-20260612",
+    "sidecar_module": "/home/steve/src/vllm-xpu-kernels/build/qwen36-sidecar-probe-20260612/_xpu_C.abi3.so",
+    "overlay_dir_default": "/tmp/qwen36-vllm-xpu-sidecar-overlay-${TAG}",
+    "mechanism": "Temporary vllm_xpu_kernels package uses pkgutil.extend_path and symlinks only the rebuilt _xpu_C.abi3.so so import order selects the sidecar extension first."
+  },
+  "oneapi_runtime": {
+    "setvars": "/opt/intel/oneapi/setvars.sh",
+    "required_reason": "The IntelLLVM 2026.0 sidecar build requires oneAPI runtime library paths, including libsycl.so.9, when imported outside the normal installed package path."
+  },
+  "default_probe_env": {
+    "VLLM_XPU_MOE_ONEDNN_SIDECAR_PROBE": "1",
+    "VLLM_XPU_MOE_ONEDNN_SIDECAR_DRY_DESCRIPTORS": "1",
+    "VLLM_XPU_MOE_ONEDNN_SIDECAR_OFFSETS": "1",
+    "VLLM_XPU_MOE_ONEDNN_SIDECAR_MAX_CALLS": "1",
+    "VLLM_XPU_MOE_ONEDNN_SIDECAR_RANK": "0",
+    "VLLM_XPU_MOE_ONEDNN_SIDECAR_LAYER_REGEX": "layers\\\\.9\\\\.",
+    "VLLM_XPU_MOE_ONEDNN_SIDECAR_LOG": "/tmp/qwen36-onednn-sidecar-probe-${TAG}-{pid}.jsonl"
+  },
+  "launch_defaults": {
+    "tensor_parallel_size": 4,
+    "pipeline_parallel_size": 1,
+    "max_model_len": 32768,
+    "max_num_batched_tokens": 8192,
+    "max_num_seqs": 48,
+    "gpu_memory_utilization": 0.95,
+    "kv_cache_dtype": "auto",
+    "prefix_caching": false,
+    "language_model_only": true,
+    "quantization": "quark"
+  },
+  "validation": {
+    "script_mode": "775",
+    "bash_n": "pass",
+    "live_endpoint_left_running": true,
+    "xpu_memory_used_mib": {
+      "device_0": 32650.91,
+      "device_1": 32651.25,
+      "device_2": 32651.37,
+      "device_3": 32651.38
+    },
+    "probe_backend_run": "deferred",
+    "deferred_reason": "The current live TP4 backend still occupies essentially all four B70s, so launching a second TP4 backend would compete with production service VRAM."
+  },
+  "next_gate": [
+    "Stop or move the live TP4 backend intentionally.",
+    "Launch the script in tmux on port 18081.",
+    "Wait for /health and run one deterministic small completion.",
+    "Inspect the sidecar JSONL file for descriptor and grouped-offset stats.",
+    "Confirm the endpoint output still comes from the accepted xpu_fused_moe path.",
+    "Restore the accepted backend and rerun provenance and canary checks."
+  ],
+  "source_links": [
+    "https://uxlfoundation.github.io/oneDNN/dev_guide_matmul.html",
+    "https://github.com/uxlfoundation/oneDNN/releases",
+    "https://vllm.ai/blog/2025-11-11-intel-arc-pro-b"
+  ]
+}

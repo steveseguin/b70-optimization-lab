@@ -24,6 +24,60 @@ Current speed anchor:
   MoE/kernel architecture improvement. Launch flags alone are unlikely to get
   there.
 
+## Isolated oneDNN Sidecar Probe Launcher
+
+Added after the Python-side env hook. This is the missing reproducibility piece
+for testing the rebuilt `_xpu_C` sidecar module without replacing the normal
+installed/source `vllm_xpu_kernels` package and without touching the live
+endpoint.
+
+Artifacts:
+
+- `scripts/launch-qwen36-quark-int8-sidecar-probe.sh`
+- `data/qwen36-onednn-sidecar-isolated-launcher-20260612bm.json`
+
+Launcher behavior:
+
+- Builds a temporary overlay package under `/tmp`, containing only the rebuilt
+  `build/qwen36-sidecar-probe-20260612/_xpu_C.abi3.so`.
+- Uses `pkgutil.extend_path` so Python resolves the rebuilt extension first,
+  while all ordinary `vllm_xpu_kernels` Python files still come from the local
+  source checkout.
+- Sources `/opt/intel/oneapi/setvars.sh --force` when available. This is
+  required for the IntelLLVM 2026.0 sidecar build because the out-of-tree module
+  depends on the oneAPI runtime path for `libsycl.so.9`.
+- Defaults to port `18081`, separate cache roots, `--enforce-eager`, and graph
+  capture disabled. The descriptor probe intentionally skips capture, so eager
+  mode is the narrowest first live gate.
+- Enables only one descriptor probe by default:
+  `VLLM_XPU_MOE_ONEDNN_SIDECAR_MAX_CALLS=1`,
+  `VLLM_XPU_MOE_ONEDNN_SIDECAR_RANK=0`, and
+  `VLLM_XPU_MOE_ONEDNN_SIDECAR_LAYER_REGEX='layers\\.9\\.'`.
+- Writes sidecar JSONL stats to
+  `/tmp/qwen36-onednn-sidecar-probe-${TAG}-{pid}.jsonl`.
+- Still returns the current accepted `xpu_fused_moe` output. This launcher is a
+  descriptor/provenance gate, not a speed path.
+
+Validation completed:
+
+- `bash -n scripts/launch-qwen36-quark-int8-sidecar-probe.sh` passed.
+- Script mode is executable: `775`.
+- Live service on `127.0.0.1:18080` was left running.
+- `xpu-smi dump` showed the current live TP4 service still owns essentially all
+  VRAM: about `32651 MiB` used on each of the four B70s. The isolated backend
+  run is therefore deferred until a maintenance window or explicit live-service
+  stop.
+
+Next maintenance-window gate:
+
+1. Stop or move the live TP4 backend intentionally.
+2. Launch the probe script in tmux on port `18081`.
+3. Wait for `/health`, send one small deterministic completion, and inspect the
+   sidecar JSONL file.
+4. Confirm the probe saw `has_probe_op=true`, logged descriptor/offset stats,
+   and emitted no model-output path change.
+5. Restore the accepted live backend and rerun provenance/canary checks.
+
 ## Python Sidecar Probe Hook Checkpoint
 
 Added after the compile-only oneDNN sidecar probe build. This moves the next
@@ -6654,6 +6708,101 @@ Ideas to explicitly avoid for this goal:
   showed poor reuse. Cache by layer/shape and generate broader route classes
   instead.
 - More flag sweeps without a token-level bottleneck ledger.
+
+## Additional Bigger Bets After User Prompt
+
+Added after the request to collect more ambitious ideas. These are intentionally
+bolder than the next sidecar probe, but the admission rule remains strict:
+current Qwen3.6 Quark W8A8 INT8 target, exact quality gates, no 4-bit/AWQ/
+Qwen3.5 detours, and no unverifiable output stream.
+
+Fresh source signals folded in:
+
+- vLLM's Arc Pro B article names the exact bottleneck class: per-iteration MoE
+  GEMM launches, gate-dependent stalls, and route imbalance. Its persistent
+  zero-gap design is the clearest architectural target for a B70 W8A8 route
+  harness: `https://vllm.ai/blog/2025-11-11-intel-arc-pro-b`.
+- oneDNN's matmul docs support GPU grouped matmul, integer weights, grouped
+  binary post-ops, and `eltwise_swish`/binary multiply style post-op fusion.
+  That suggests the current oneDNN island should try fusing activation and scale
+  work into the grouped primitive before we jump straight to hand-written
+  kernels: `https://uxlfoundation.github.io/oneDNN/dev_guide_matmul.html`.
+- oneDNN release notes add grouped memory / grouped matmul and an execution-time
+  `DNNL_ARG_HINT_MAX_GROUP_SIZE` hint. That is directly relevant to our
+  route-window replay because max group size changes with token bucket and
+  route skew: `https://github.com/uxlfoundation/oneDNN/releases`.
+- DFlash docs explicitly require target-hidden-state handling patches and pair
+  the drafter with `Qwen/Qwen3.6-35B-A3B`. This keeps DFlash on the board only
+  as a proposer behind a current-model verifier:
+  `https://huggingface.co/z-lab/Qwen3.6-35B-A3B-DFlash`.
+- The public B70 TP=2 vLLM issue records host-stack, oneCCL, firmware, and
+  kernel/driver variables as plausible failure/performance factors. Treat host
+  BOM testing as a real performance experiment, not just operations work:
+  `https://github.com/vllm-project/vllm/issues/41663`.
+- vLLM's modular MoE docs separate prepare/finalize, expert kernels, activation
+  formats, and backend implementations. The production-quality version of the
+  sidecar should eventually become a modular XPU MoE backend:
+  `https://docs.vllm.ai/en/latest/design/moe_kernel_features/`.
+
+New ideas to keep in the backlog:
+
+1. **Fuse the whole oneDNN MoE island before writing ESIMD.**
+   Current oneDNN proof only times the grouped GEMMs. Try grouped matmul
+   post-ops for scale, SiLU/gate multiply, and GEMM2 preparation so the layer
+   becomes fewer queue submissions. Gate by final gathered output
+   `max_abs_diff=0.0` versus `xpu_fused_moe`.
+
+2. **Use oneDNN `DNNL_ARG_HINT_MAX_GROUP_SIZE` as a route-bucket knob.**
+   Our route windows already expose `max_rows_per_expert`. Feed that hint into
+   the resident primitive path and compare by token bucket. This is a small
+   change with unusually direct relevance to route skew.
+
+3. **Build a token-step waterfall with device-side queue timestamps.**
+   Add timestamp probes for attention, router, remap, quant, GEMM1, activation,
+   GEMM2, gather, collectives, sampler, scheduler, and frontdoor streaming. The
+   endpoint is around `10 ms/token`; the resident GEMM pair is microsecond
+   scale. The next large patch should attack the measured wall-time winner.
+
+4. **Persistent B70 MoE worker with dynamic work stealing.**
+   Recreate the zero-gap idea in a small route-window harness: a resident worker
+   owns packed weights and dynamically grabs expert blocks as they become ready.
+   The first comparison is route-window latency and exact bytes versus current
+   XPU output, not endpoint speed.
+
+5. **Host BOM A/B as a speed and stability experiment.**
+   Test the same current model under a known Intel-validated stack versus the
+   current host stack: kernel, GuC firmware, compute runtime, oneAPI, oneCCL,
+   PyTorch XPU, `vllm-xpu-kernels`, BIOS PCIe settings, ASPM, power limits, and
+   fan policy. Track BCS resets/device-lost frequency as promotion blockers.
+
+6. **Compile a c1-only no-server runner for ceiling measurement.**
+   A C++/Python hybrid runner can own one request, static KV, fixed scheduler
+   state, resident command queues, and direct sampler output. This is not the
+   production server; it tells us whether `>200 tok/s` is physically reachable
+   with current math after vLLM server overhead is removed.
+
+7. **Make the Quark W8A8 layout itself an optimized artifact.**
+   Prepack expert weights at load time into the fastest proven B70 layout and
+   persist a checksum-indexed cache. Keep source safetensor checksums and scale
+   checksums in the metadata so this remains a layout optimization, not a model
+   change.
+
+8. **Build a verifier transaction substrate before chasing DFlash.**
+   Define copy/commit/rollback for KV blocks, Gated DeltaNet / hybrid state,
+   scheduler counters, sampler state, and stream output. Then MTP, DFlash,
+   n-gram, or branch farming can be compared under one target-verifier harness.
+
+9. **Route-class kernels rather than exact-route kernels.**
+   Prior cache analysis showed exact ordered top-k route reuse is poor. Generate
+   kernels for broader classes: token bucket, max group size, hot expert set,
+   and N/K shape. That preserves the lesson from routecapture without overfitting
+   to single traces.
+
+10. **Production split lanes with identical quality gates.**
+    Keep the current TP4 `~100 tok/s` 32K endpoint as the conservative lane and
+    build a c1 latency lane separately. Promotion requires identical model hash,
+    exact canaries, prompt-class quality, route replay exactness, and soak
+    stability.
 
 ## 2026-06-12 Rank-Local Live ABI Smoke
 
