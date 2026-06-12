@@ -6,6 +6,32 @@ Date: 2026-06-12
 
 2026-06-12 continuation:
 
+- Added a resident oneDNN MoE GEMM-pair runner after the full layer-9 island
+  parity proof. The new runner loads the real exported routecapture6 layer-9
+  GEMM1/GEMM2 buffers once, constructs packed `acb` oneDNN grouped-matmul
+  primitives once, then times both GEMMs in one long-lived process. First run:
+  pair p50 `88.657 us`, mean `96.344 us`, with GEMM1/GEMM2 raw output equality
+  against the current XPU exports. Warm reused-binary rerun: pair p50
+  `49.954 us`, mean `54.340 us`, again exact for both GEMMs. This is the
+  strongest non-speculative kernel signal so far, but still not an endpoint
+  claim: it excludes the activation/quant/gather stages and has not yet used
+  direct in-process XPU tensor handoff from vLLM. Next gate is a vLLM-side
+  route-signature oneDNN primitive cache or sidecar custom op with final-layer
+  `max_abs_diff=0.0` against `xpu_fused_moe`. The first backend restore after
+  this clean XPU window hit `UR_RESULT_ERROR_DEVICE_LOST` in scheduler metadata
+  copy paths; the stale workers were cleaned up, the XPUs were freed, and a
+  retry backend reached `/health`. The retry provenance guard passed both
+  prefix cases and all sentinel tokens.
+  New artifacts:
+  `tools/onednn_moe_island_resident_runner.cpp`,
+  `scripts/run-onednn-moe-island-resident.sh`,
+  `data/qwen36-onednn-moe-island-layer9-r1-resident-pair-20260612az.json`,
+  `data/qwen36-onednn-moe-island-layer9-r1-resident-pair-rerun-20260612az.json`,
+  `data/qwen36-quark-int8-tp4-accepted-provenance-after-onednn-resident-pair-20260612az.json`,
+  `data/qwen36-quark-int8-tp4-accepted-restored-after-onednn-resident-pair-retry-20260612az2.log`,
+  and
+  `data/qwen36-quark-int8-tp4-accepted-provenance-after-onednn-resident-pair-retry-20260612az2.json`.
+
 - Added and ran a file-backed full layer-9 oneDNN MoE island replay. This is
   the first full-layer exactness gate after the standalone GEMM parity: Python
   keeps the current XPU remap, quantization, activation, and gather semantics,

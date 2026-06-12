@@ -4783,3 +4783,190 @@ Explicit non-goals:
   fallback quality alone.
 - No more launch-flag sweeps unless a timing packet identifies the specific
   stall they are meant to address.
+
+## 2026-06-12 Resident OneDNN Pair Gate And New Bolder Bets
+
+This section folds in the resident two-GEMM oneDNN result plus a fresh external
+scan. It is still notes-only. No endpoint throughput claim changes until the
+full MoE island runs in-process, with direct XPU buffers, and matches the
+current accepted path.
+
+New hard facts:
+
+- A resident C++ oneDNN runner now loads the real routecapture6 layer-9 GEMM1
+  and GEMM2 buffers once, creates packed `acb` grouped-matmul primitives once,
+  and times the pair in one process.
+- First resident run: GEMM1+GEMM2 pair p50 `88.657 us`, mean `96.344 us`;
+  both raw outputs equal the current XPU exported outputs.
+- Warm reused-binary run: GEMM1+GEMM2 pair p50 `49.954 us`, mean `54.340 us`;
+  both GEMMs remained raw-exact.
+- This result is materially different from the older `~226 us/layer` current
+  grouped-GEMM floor: the cost floor drops when primitive construction,
+  process startup, and isolated dispatch overhead are removed.
+- Caveat: the pair run excludes activation, dynamic quant2, route gather,
+  top-k weighting, and direct vLLM tensor handoff. The only honest next claim
+  is an in-process full-layer MoE island, not an endpoint `tok/s` projection.
+- First backend restore after the isolated oneDNN run hit
+  `UR_RESULT_ERROR_DEVICE_LOST` around scheduler metadata copies
+  (`block_table.copy_to_gpu` and token-counter movement). This belongs on the
+  reliability scoreboard: clean XPU windows and repeated Level Zero users can
+  still perturb restart reliability.
+- After killing the stale backend/workers and relaunching, `/health` returned
+  and the retry provenance guard passed both prefix cases plus all sentinel
+  tokens. Keep both the failed first provenance and successful retry provenance
+  artifacts: the first is reliability evidence, the second proves the accepted
+  endpoint recovered cleanly.
+
+Fresh external signals:
+
+- oneDNN v3.12/v3.12.1 now explicitly mentions Intel GPU grouped matmul for
+  MoE, small-M/N large-K matmul improvements, and SYCL Graph record/replay
+  support. This strengthens the case for a resident oneDNN path and for trying
+  newer oneDNN builds behind exact parity gates:
+  `https://github.com/uxlfoundation/oneDNN/releases`.
+- The standalone `vllm-xpu-kernels` split is the right upstream integration
+  target: it already registers XPU custom ops into PyTorch and lists MoE
+  remap/gather/top-k, quant/GEMM, and grouped GEMM as supported categories:
+  `https://github.com/vllm-project/vllm-xpu-kernels`.
+- vLLM issue traffic for Arc B580/B70-class systems is still mostly about
+  practical XPU tuning and stack uncertainty, not a solved recipe for c1
+  Qwen3.6 MoE latency:
+  `https://github.com/vllm-project/vllm/issues/35638`.
+- Localmaxxing currently shows fast public rows for other Qwen/MoE families,
+  but the exact target row remains the only thing that should govern public
+  claims. Broader rows are useful as ambition markers, not quality evidence:
+  `https://localmaxxing.com/en/models`.
+- Public B70 llama.cpp/SYCL data shows Qwen3.6 35B-A3B Q8_0 at `36.5 tok/s`
+  on two GPUs and Q4 around `54.7 tok/s` on one GPU. That context makes the
+  current vLLM/Quark `~100 tok/s` respectable, but also reinforces that
+  ordinary multi-GPU fit does not automatically solve single-request latency:
+  `https://github.com/PMZFX/intel-arc-pro-b70-benchmarks/blob/master/llm-benchmarks.md`.
+- Recent Intel-GPU inference research frames oneDNN INT8 as an attainable
+  roofline on BMG-class GPUs, which matches the local decision to treat oneDNN
+  as the correctness/performance oracle before hand-writing lower-level DPAS
+  layerlets:
+  `https://arxiv.org/html/2508.06753v2`.
+
+Immediate things to try from this gate:
+
+1. **Direct XPU tensor interop for the resident oneDNN runner.**
+   Replace file-backed buffers with Level Zero/USM-compatible memory handed
+   from the vLLM XPU tensors. First prove a no-op read/write alias and checksum
+   path, then run GEMM1/GEMM2 on the same data without host copies.
+
+2. **vLLM custom-op sidecar around resident oneDNN primitives.**
+   Add the narrowest custom op possible under `vllm-xpu-kernels` style
+   registration: one layer, one route signature, resident packed weights, and
+   final output compared against `xpu_fused_moe`. This keeps scheduler/KV/dense
+   layers in vLLM while isolating the MoE island.
+
+3. **Route-signature cache hit-rate measurement.**
+   Before building an elaborate cache, measure how often real route windows
+   reuse the same `(layer, active experts, rows_per_expert)` signature across
+   natural/chat/code/math prompt traces. If cache reuse is weak, key the cache
+   by active-expert set plus max group size and only mutate offsets.
+
+4. **Full resident MoE island timing.**
+   Extend the resident runner beyond the GEMM pair: exact remap, GEMM1,
+   SiLU/up-gate, exact activation quant, GEMM2, top-k weighting, and gather.
+   Kill gate: cannot get below the `168 us/layer` non-speculative budget after
+   removing file/process/construct costs.
+
+5. **oneDNN SYCL Graph experiment.**
+   With oneDNN v3.12+ or the vendored tree if practical, test whether the
+   resident GEMM pair or full island can be captured/replayed as a SYCL Graph.
+   Compare graph replay against normal resident execution with exact raw output
+   equality. If graph replay is unstable, record it as a production risk.
+
+6. **Packed expert-weight artifact at model load.**
+   Repack experts into the fastest verified oneDNN layout at startup or as a
+   precomputed artifact. Store source tensor hash, packed format, oneDNN
+   version, route fixture, and raw-output parity metadata. This avoids hidden
+   runtime repack cost and makes packed weights auditable.
+
+7. **Device-lost restart reproducer.**
+   Turn the observed restore failure into a small reliability test: run
+   accepted backend, stop it, run the resident oneDNN Level Zero runner, then
+   restart accepted backend and run provenance. Track whether failures require
+   process cleanup, driver reset, sleep interval, or oneDNN runtime teardown.
+
+8. **New oneDNN/vLLM-XPU stack A/B behind parity.**
+   Try newer oneDNN and `vllm-xpu-kernels` builds only through the route-replay
+   fixtures first. Promotion requires raw parity and an accepted-service
+   provenance pass. Do not treat a stack upgrade as quality-neutral without
+   evidence.
+
+9. **BF16 fallback differential harness as a guardrail, not a target.**
+   Keep the BF16 fallback around for logit-rank and semantic drift checks
+   after kernel changes. It should detect subtle W8A8-path distortions, but it
+   is not a speed candidate and should not replace the Quark W8A8 target.
+
+10. **Localmaxxing dry-run from the best exact row only.**
+    Prepare a dry-run payload for the current best exact-model c1 row, but
+    publish only when the result is material beyond the existing `~99-100
+    tok/s` class or when it documents a genuinely new exactness category such
+    as resident oneDNN integration.
+
+Bigger, bolder ideas worth keeping alive:
+
+1. **A Qwen3.6 MoE island ABI.**
+   Define a stable internal ABI for one MoE layer: route descriptor, expert
+   packed weights, Quark scales, workspace pointers, output pointer, and parity
+   checksum. Then implement multiple backends behind it: current
+   `xpu_fused_moe`, resident oneDNN, generated ESIMD/DPAS, and future Triton
+   XPU. This lets every radical idea compete on the same exact fixture.
+
+2. **Micro-AOT route compiler.**
+   Build a telemetry-driven compiler that emits a small set of route-class
+   command bundles from captured prompts. Each bundle may choose oneDNN,
+   custom DPAS, hot-expert packed tiles, or fallback current XPU. Runtime only
+   selects a certified bundle if the route signature matches a proven class.
+
+3. **Layer-group resident command graph.**
+   Instead of optimizing one MoE layer at a time forever, try a two- or
+   four-layer command graph where route metadata, quant buffers, GEMM work, and
+   collectives are double-buffered. The goal is to overlap the CPU/control
+   gaps between adjacent layers while preserving exact token dependencies.
+
+4. **Latency lane with memory-for-speed expert placement.**
+   Use the 4x32GB footprint to build a separate c1 lane that sacrifices
+   concurrency and some context headroom for hot-expert replication or
+   tile-native duplicate packs. The general production lane can stay TP4/32K;
+   the latency lane is allowed to be stricter about prompt length and one
+   active request.
+
+5. **Exact branch farm on spare ranks.**
+   If profiler evidence shows underused compute while waiting on small-M MoE
+   work or collectives, use spare rank time to score exact target-model branch
+   candidates. This preserves quality because the current target model is the
+   verifier, but it may convert idle parallelism into lower visible latency.
+
+6. **GPU-resident scheduler metadata service.**
+   The recurring device-lost failures around block tables and token counters
+   suggest a bigger reliability/perf opportunity: keep solo-lane scheduler
+   metadata in graph-stable device buffers and update it from a tiny kernel
+   rather than repeated host-to-device scalar/table movements.
+
+7. **Minimal C++ decode truth-serum.**
+   Build a standalone fixed-bucket executable that loads the accepted Quark
+   weights, runs one prompt shape, and bypasses Python/vLLM scheduling while
+   still using the same math. If it cannot beat vLLM meaningfully, the kernels
+   are the wall. If it does, the production architecture should become
+   two-lane rather than endlessly patching the general server.
+
+8. **Public exact MoE challenge packet.**
+   Once the resident oneDNN fixture is cleaned up, publish a compact challenge:
+   route descriptor, tiny raw buffers, checksums, oneDNN result, current XPU
+   result, and timing. Ask Intel/vLLM maintainers for any B70 kernel that beats
+   the pair/island while preserving byte equality.
+
+9. **Reliability-weighted leaderboard discipline.**
+   Start scoring experiments by `(tok/s, exactness, restart reliability,
+   device-lost rate, soak duration, provenance pass)` rather than tok/s alone.
+   This keeps production reality attached to the speed chase.
+
+10. **Profiler as a hard kill gate.**
+    Once `unitrace`/VTune/Level-Zero tracing is available, every major kernel
+    bet should show DPAS/XMX utilization, launch count, barriers, and bandwidth.
+    If a path is not using the hardware correctly, stop polishing higher-level
+    vLLM flags and fix layout/kernel selection first.
