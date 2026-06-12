@@ -288,3 +288,74 @@ External signals folded into the backlog:
 - The live accepted TP4 backend was left running. A one-shot `xpu-smi` memory
   check showed roughly `32651 MiB` used on each B70, so the route-replay XPU
   microbench should wait for a clean benchmark window.
+
+## 2026-06-12 Live Decode Budget
+
+Artifact:
+`data/qwen36-quark-int8-tp4-live-c1-p512o512-metrics-hist-20260612q.json`.
+
+Command shape:
+
+```bash
+/home/steve/.venvs/vllm-xpu/bin/python scripts/measure-openai-endpoint-metrics.py \
+  --base-url http://127.0.0.1:18080 \
+  --tokenizer /mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118 \
+  --prompt-tokens 512 --output-tokens 512 \
+  --prompt-kind vllm-random --seed 20260612 \
+  --repeats 3 --warmup-output-tokens 32 \
+  --endpoint completions --mode stream --ignore-eos --skip-vram
+```
+
+Observed direct-backend c1 p512/o512 budget:
+
+- Corrected output throughput after first text chunk: `99.875 tok/s` mean.
+- End-to-end output throughput: `98.613 tok/s` mean.
+- vLLM TTFT: `74.163 ms` mean.
+- vLLM prefill histogram: `69.128 ms` mean.
+- vLLM decode histogram: `5116.930 ms` mean for 512 generated tokens.
+- vLLM decode per generated token: `9.994 ms/token` mean.
+- vLLM inter-token histogram: `10.014 ms/token` mean.
+- vLLM queue time: `0.0069 ms` mean.
+- vLLM iteration-tokens histogram: `2.0` tokens/step as reported.
+
+Implication:
+
+- The `>200 tok/s` target requires roughly `<=5 ms/token` decode. Queue,
+  frontdoor, and normal prefill are too small to be the decisive bottleneck for
+  this c1 shape. The next speed work must cut the steady decode path itself:
+  MoE/linear-attention kernels, collectives, graph fences, scheduler metadata,
+  or exact target-verified speculation.
+
+Next controlled timing profile recipe:
+
+```bash
+tmux new -s qwen36-tp4-decode-timing-$(date +%Y%m%d%H%M%S) -- \
+  env \
+    VLLM_XPU_DECODE_TIMING_ALLOW=1 \
+    VLLM_XPU_DECODE_TIMING=1 \
+    VLLM_XPU_DECODE_TIMING_SYNC=1 \
+    VLLM_XPU_DECODE_TIMING_RANK=0 \
+    VLLM_XPU_DECODE_TIMING_STEP_SUMMARY=1 \
+    VLLM_XPU_DECODE_TIMING_STEP_EVERY=32 \
+    VLLM_XPU_DECODE_TIMING_STEP_SKIP_FIRST=64 \
+    LOG_PATH=/tmp/qwen36-tp4-decode-timing.log \
+    scripts/launch-qwen36-quark-int8-accepted.sh
+
+/home/steve/.venvs/vllm-xpu/bin/python scripts/measure-openai-endpoint-metrics.py \
+  --base-url http://127.0.0.1:18080 \
+  --tokenizer /mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118 \
+  --prompt-tokens 512 --output-tokens 512 \
+  --prompt-kind vllm-random --seed 20260612 \
+  --repeats 2 --warmup-output-tokens 32 \
+  --endpoint completions --mode stream --ignore-eos --skip-vram \
+  --out data/qwen36-quark-int8-tp4-decode-timing-profile-metrics.json
+
+/home/steve/.venvs/vllm-xpu/bin/python scripts/summarize-xpu-decode-timing-log.py \
+  --log /tmp/qwen36-tp4-decode-timing.log \
+  --out data/qwen36-quark-int8-tp4-decode-timing-profile-summary.json \
+  --all-lines
+```
+
+`VLLM_XPU_DECODE_TIMING_SYNC=1` intentionally distorts throughput, so this is
+for attribution only. It should run in a clean benchmark window, not against the
+live accepted service.

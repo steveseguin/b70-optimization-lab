@@ -210,6 +210,18 @@ Current Qwen3.6 INT8 direction:
     W8A8 repack cache, GPU-resident metadata updates, cache artifact
     certification, target-trace-trained proposer, production dual-lane routing,
     and an upstreamable Qwen3.6 XPU perf packet.
+27. Added vLLM histogram-delta capture to
+    `scripts/measure-openai-endpoint-metrics.py` and recorded a direct-backend
+    live c1 p512/o512 decode-budget artifact at
+    `data/qwen36-quark-int8-tp4-live-c1-p512o512-metrics-hist-20260612q.json`.
+    The accepted backend measured `99.875 tok/s` corrected after first chunk,
+    `98.613 tok/s` e2e output, `74.163 ms` vLLM TTFT, `69.128 ms` prefill,
+    and `5116.930 ms` decode for 512 generated tokens, or `9.994 ms/token`.
+    Queue time was effectively zero (`0.0069 ms`). This makes the next speed
+    requirement concrete: `>200 tok/s` needs roughly `<=5 ms/token` steady
+    decode, so the main work has to cut decode-path kernels/collectives/graph
+    fences or use exact target-verified speculation; frontdoor and queue work
+    cannot close the gap for c1.
 
 ## 2026-05-10 MiniMax AutoRound Addendum
 

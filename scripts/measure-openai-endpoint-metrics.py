@@ -52,6 +52,23 @@ def metric_delta(before: dict[str, float], after: dict[str, float], name: str) -
     return after.get(name, 0.0) - before.get(name, 0.0)
 
 
+def histogram_delta(
+    before: dict[str, float], after: dict[str, float], name: str
+) -> dict[str, float | None]:
+    count = metric_delta(before, after, f"{name}_count")
+    total = metric_delta(before, after, f"{name}_sum")
+    return {
+        "count": count,
+        "sum": total,
+        "mean": None if count <= 0 else total / count,
+    }
+
+
+def histogram_mean_ms(delta: dict[str, float | None]) -> float | None:
+    mean = delta.get("mean")
+    return None if mean is None else float(mean) * 1000.0
+
+
 def make_text_prompt(tokenizer: Any, target_tokens: int) -> str:
     seed = (
         "Local Intel XPU benchmark prompt. "
@@ -463,6 +480,14 @@ def summarize_repeats(records: list[dict[str, Any]]) -> dict[str, Any]:
         "ttft_ms_vllm_metrics",
         "tok_s_prefill_lower_bound_from_ttft",
         "e2e_ms_vllm_metrics",
+        "queue_ms_vllm_histogram",
+        "prefill_ms_vllm_histogram",
+        "decode_ms_vllm_histogram",
+        "decode_ms_per_generation_token_vllm_histogram",
+        "inference_ms_vllm_histogram",
+        "time_per_output_token_ms_vllm_histogram",
+        "inter_token_ms_vllm_histogram",
+        "iteration_tokens_per_step_vllm_histogram",
     ]:
         xs = vals(key)
         if xs:
@@ -609,6 +634,19 @@ def main() -> int:
         ttft_sum = metric_delta(metrics_before, metrics_after, "vllm:time_to_first_token_seconds_sum")
         e2e_count = metric_delta(metrics_before, metrics_after, "vllm:e2e_request_latency_seconds_count")
         e2e_sum = metric_delta(metrics_before, metrics_after, "vllm:e2e_request_latency_seconds_sum")
+        histogram_deltas = {
+            name: histogram_delta(metrics_before, metrics_after, name)
+            for name in [
+                "vllm:request_queue_time_seconds",
+                "vllm:request_prefill_time_seconds",
+                "vllm:request_decode_time_seconds",
+                "vllm:request_inference_time_seconds",
+                "vllm:request_time_per_output_token_seconds",
+                "vllm:inter_token_latency_seconds",
+                "vllm:iteration_tokens_total",
+            ]
+        }
+        decode_hist_sum = histogram_deltas["vllm:request_decode_time_seconds"].get("sum")
 
         for values in (vram_pre, vram_post):
             for key, value in values.items():
@@ -644,10 +682,35 @@ def main() -> int:
                     "e2e_count": e2e_count,
                     "e2e_sum_s": e2e_sum,
                 },
+                "vllm_histogram_deltas": histogram_deltas,
                 "ttft_ms_vllm_metrics": None
                 if ttft_count <= 0
                 else (ttft_sum / ttft_count) * 1000,
                 "e2e_ms_vllm_metrics": None if e2e_count <= 0 else (e2e_sum / e2e_count) * 1000,
+                "queue_ms_vllm_histogram": histogram_mean_ms(
+                    histogram_deltas["vllm:request_queue_time_seconds"]
+                ),
+                "prefill_ms_vllm_histogram": histogram_mean_ms(
+                    histogram_deltas["vllm:request_prefill_time_seconds"]
+                ),
+                "decode_ms_vllm_histogram": histogram_mean_ms(
+                    histogram_deltas["vllm:request_decode_time_seconds"]
+                ),
+                "decode_ms_per_generation_token_vllm_histogram": None
+                if not decode_hist_sum or gen_delta <= 0
+                else float(decode_hist_sum) * 1000.0 / gen_delta,
+                "inference_ms_vllm_histogram": histogram_mean_ms(
+                    histogram_deltas["vllm:request_inference_time_seconds"]
+                ),
+                "time_per_output_token_ms_vllm_histogram": histogram_mean_ms(
+                    histogram_deltas["vllm:request_time_per_output_token_seconds"]
+                ),
+                "inter_token_ms_vllm_histogram": histogram_mean_ms(
+                    histogram_deltas["vllm:inter_token_latency_seconds"]
+                ),
+                "iteration_tokens_per_step_vllm_histogram": (
+                    histogram_deltas["vllm:iteration_tokens_total"].get("mean")
+                ),
                 "vram_mib_before": vram_pre,
                 "vram_mib_after": vram_post,
                 "first_chunk_tokens_client_estimate": first_chunk_tokens,
