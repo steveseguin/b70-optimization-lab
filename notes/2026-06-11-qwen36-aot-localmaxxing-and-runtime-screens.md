@@ -12490,3 +12490,134 @@ python3 scripts/check-qwen36-oracle-fixture.py \
 That exact command is the first pass target for the next scheduler/KV patch: it
 must report `ok=true` while keeping speculative activity nonzero. If it only
 passes with speculation disabled, it does not move the speed goal forward.
+
+## Outside-Signal Bigger Bets Addendum
+
+Added after a fresh web/API scan for Arc Pro B70, vLLM/XPU, DFlash, grouped
+GEMM, and Localmaxxing results. The constraints remain unchanged: current
+Qwen3.6 Quark W8A8 INT8 model, no 4-bit promotion, no Qwen3.5 detours, and no
+speed result is useful unless exact-token or stronger quality gates pass.
+
+Fresh external signals:
+
+- Localmaxxing B70/Qwen query now returns `73` public rows. The top two rows are
+  still our Quark W8A8 INT8 TP4 entries: `99.77 tok/s` under the base model ID
+  and `99.43 tok/s` under the exact `nameistoken/...Quark-W8A8-INT8` ID.
+- Exact-model Localmaxxing row is still the only public exact Quark W8A8 INT8
+  row: ID `cmq8yhxvo001ipb0149aoa79o`, `99.428 tok/s`, `76.45 ms` TTFT,
+  32K context, 4x Arc Pro B70, peak VRAM not yet reported.
+- vLLM's Intel GPU install path now explicitly depends on `vllm-xpu-kernels`
+  and Python 3.12. That makes a clean Python 3.12 `vllm-xpu-kernels` repro
+  environment worth testing separately from the dirty accepted service.
+- Intel's grouped-GEMM tuning issue calls out decode-stage MoE route skew as a
+  first-order tuning input. This matches our route-capture direction and argues
+  against optimizing only synthetic even-routing shapes.
+- DFlash for Qwen3.6 35B exists as a drafter, but its own instructions rely on
+  target hidden-state/SWA handling patches. This supports our current position:
+  fix in-engine verifier state first, then use DFlash only as a proposer.
+- Community DFlash tuning reports show short draft windows around `5-6` can
+  outperform longer windows because accepted-token throughput, not raw draft
+  count, is the real metric.
+- A llama.cpp Qwen3.6 speculative benchmark reports that even `100%`
+  acceptance can still lose speed when verifier/KV overhead is too high. This
+  is a useful warning for our COW path: acceptance rate alone is not a win.
+- Public B70 multi-GPU notes reinforce that layer split is not real parallel
+  speedup, while tensor-parallel or engine-native parallelism is the route to
+  simultaneous compute. Our TP/EP experiments should measure communication and
+  idle time, not only final tokens/sec.
+- Older locality-aware MoE work reports SplitK-style kernel decomposition can
+  improve inference MoE kernels. The quantization differs, but the idea is worth
+  porting to our W8A8 route-exact microbench as a real shape experiment.
+
+New things to try:
+
+1. **Clean XPU kernel reference environment.**
+   - Build a disposable Python 3.12 environment using current `vllm` plus
+     `vllm-xpu-kernels`.
+   - Load only a tiny kernel/microbench path first, not the production service.
+   - Compare route-exact W8A8 dense and grouped-GEMM timings against the dirty
+     accepted local vLLM tree.
+   - Gate: no service disruption; timings and versions recorded before any
+     production switch is considered.
+
+2. **Verifier overhead budget, not just acceptance budget.**
+   - For k=1 oracle COW, record per-token parent step time, scratch verifier
+     time, scratch allocation/free time, accepted tokens, and emitted tokens.
+   - If `100%` acceptance is still slower, the problem is verifier/KV overhead,
+     not proposer quality.
+   - Gate: exact token parity plus a positive accepted-token/sec delta before
+     widening to k=2/4.
+
+3. **Short-window DFlash/MTP after COW, not before.**
+   - Start with draft budgets `2, 4, 6`, not `15+`.
+   - Adapt the window by recent accepted-token throughput and prompt class.
+   - Gate: Quark W8A8 verifier accepts final output; DFlash/MTP is only a
+     disposable proposer.
+
+4. **Route-skewed SplitK/StreamK W8A8 MoE screen.**
+   - Use captured route histograms to build W8A8 grouped-GEMM cases with the
+     real long-tail expert distribution.
+   - Test base, SplitK-like, and persistent/tile-specialized kernels on rows
+     matching batch-1 decode and small speculative verifier rows.
+   - Gate: reference numerical parity and route-exact speedup on the same
+     Quark W8A8 weights/scales.
+
+5. **TP idle-time and collective ledger.**
+   - Add a token-step ledger separating GPU compute, collectives, scheduler,
+     KV/cache, logits, and sampler.
+   - Measure TP4, TP2, and a lower-context single-GPU diagnostic if it fits.
+   - Gate: do not infer from aggregate throughput. We need single-request
+     critical-path time and idle-time attribution.
+
+6. **Hot-expert locality experiment.**
+   - From accepted route captures, identify per-layer hot experts for natural,
+     code, math, and structured prompts.
+   - In a latency-only test slot, try hot expert replication, pinned placement,
+     or route-aware per-layer placement while preserving W8A8 values.
+   - Gate: exact output parity and a clear reduction in cross-card or grouped
+     GEMM time.
+
+7. **B70 engine bakeoff with high-fidelity only.**
+   - Compare current vLLM Quark W8A8 with llama.cpp SYCL/Vulkan Q8-class paths,
+     OpenVINO/oneDNN GenAI if Qwen3.6 A3B MoE works, SGLang XPU if viable, and
+     a clean `vllm-xpu-kernels` path.
+   - Do not treat 4-bit leaderboard rows as target candidates. They are only
+     useful for architecture clues.
+   - Gate: same prompt pack, same deterministic settings, same quality checks,
+     and full launch commands.
+
+8. **Issue-ready upstream packets.**
+   - Prepare three standalone repros: Qwen3.6 A3B W8A8 dense small-M GEMM,
+     route-skewed grouped-GEMM MoE, and graph-safe hidden-size collective.
+   - Include Localmaxxing row IDs, hardware/driver/kernel versions, graph
+     captures, and acceptance/parity gates.
+   - Goal: get actionable Intel/vLLM attention on missing B70 W8A8 paths rather
+     than a broad "XPU is slow" report.
+
+9. **Reliability matrix for production readiness.**
+   - Track kernel/driver resets, memory leaks, first-token regressions, and
+     throughput drift across short and long soaks.
+   - Include at least: no-spec baseline, COW oracle, short-window proposer, and
+     any kernel-policy variant.
+   - Gate: no production config until the speed path also survives soak and
+     repeat-quality tests.
+
+10. **Two-service architecture as a bold production option.**
+    - Keep one conservative 32K Quark W8A8 verifier service for quality and one
+      latency-optimized lower-context service for fast interactive turns.
+    - The fast lane may use hot expert placement, lower KV reservation, or
+      short-window proposer settings, but must share the same final verifier
+      rules for any promoted output.
+    - Gate: route requests by context/latency requirement without silently
+      changing quality semantics.
+
+External links checked for this addendum:
+
+- `https://docs.vllm.ai/en/latest/getting_started/installation/gpu/`
+- `https://github.com/intel/intel-xpu-backend-for-triton/issues/6389`
+- `https://huggingface.co/z-lab/Qwen3.6-35B-A3B-DFlash`
+- `https://github.com/thc1006/qwen3.6-speculative-decoding-rtx3090`
+- `https://www.reddit.com/r/LocalLLaMA/comments/1t0r5nl/got_dflash_speculative_decoding_working_on/`
+- `https://github.com/PMZFX/intel-arc-pro-b70-benchmarks/blob/master/multi-gpu.md`
+- `https://pytorch.org/blog/accelerating-moe-model/`
+- `https://localmaxxing.com/api/leaderboard?hardwareName=Intel%20Arc%20Pro%20B70&modelFamily=qwen&limit=20`
