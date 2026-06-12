@@ -1,0 +1,13 @@
+REUSE name=qwen_l9_gemm1_s8s8_bf16 kind=single_wait_each construct_us=309774 tokens=8 experts=256 K=2048 N=256 checksum=73462571.000 mean_us=42.741 min_us=18.604 p50_us=59.873 p90_us=63.178 max_us=182.512
+REUSE name=qwen_l9_gemm2_s8s8_bf16 kind=single_wait_each construct_us=101025 tokens=8 experts=256 K=128 N=2048 checksum=578087765.000 mean_us=17.799 min_us=16.881 p50_us=17.292 p90_us=18.926 max_us=35.327
+REUSE name=qwen_l9_gemm1_s8s8_bf16+qwen_l9_gemm2_s8s8_bf16 kind=two_exec_one_wait construct_us=309774 tokens=8 experts=256 K=-1 N=-1 checksum=651550336.000 mean_us=29.445 min_us=27.401 p50_us=29.225 p90_us=29.956 max_us=91.812
+REUSE name=qwen_l9_gemm1_s8s8_f32 kind=single_wait_each construct_us=187108 tokens=8 experts=256 K=2048 N=256 checksum=-2272.540 mean_us=17.614 min_us=15.730 p50_us=17.222 p90_us=17.964 max_us=37.671
+REUSE name=qwen_l9_gemm2_s8s8_f32 kind=single_wait_each construct_us=98253 tokens=8 experts=256 K=128 N=2048 checksum=41.202 mean_us=17.455 min_us=15.819 p50_us=17.192 p90_us=17.803 max_us=37.491
+REUSE name=qwen_l9_gemm1_s8s8_f32+qwen_l9_gemm2_s8s8_f32 kind=two_exec_one_wait construct_us=187108 tokens=8 experts=256 K=-1 N=-1 checksum=-2231.338 mean_us=26.452 min_us=24.987 p50_us=26.119 p90_us=27.431 max_us=43.953
+REUSE name=qwen_l9_gemm1_s8s8_bf16 kind=route_windows_update_offsets_single_wait construct_us=309774 tokens=8 experts=256 K=2048 N=256 checksum=73462917.000 mean_us=25.698 min_us=24.536 p50_us=25.157 p90_us=26.801 max_us=36.037
+REUSE name=qwen_l9_gemm2_s8s8_bf16 kind=route_windows_update_offsets_single_wait construct_us=101025 tokens=8 experts=256 K=128 N=2048 checksum=578249853.000 mean_us=23.924 min_us=23.053 p50_us=23.464 p90_us=25.047 max_us=31.970
+REUSE name=qwen_l9_gemm1_s8s8_bf16+qwen_l9_gemm2_s8s8_bf16 kind=route_windows_update_offsets_two_exec_one_wait construct_us=309774 tokens=8 experts=256 K=-1 N=-1 checksum=651712770.000 mean_us=41.673 min_us=38.633 p50_us=41.678 p90_us=42.700 max_us=58.790
+REUSE name=qwen_l9_gemm1_s8s8_f32 kind=route_windows_update_offsets_single_wait construct_us=187108 tokens=8 experts=256 K=2048 N=256 checksum=-2499.920 mean_us=24.125 min_us=22.823 p50_us=23.454 p90_us=25.167 max_us=43.221
+REUSE name=qwen_l9_gemm2_s8s8_f32 kind=route_windows_update_offsets_single_wait construct_us=98253 tokens=8 experts=256 K=128 N=2048 checksum=21.348 mean_us=23.644 min_us=22.492 p50_us=23.354 p90_us=24.015 max_us=33.663
+REUSE name=qwen_l9_gemm1_s8s8_f32+qwen_l9_gemm2_s8s8_f32 kind=route_windows_update_offsets_two_exec_one_wait construct_us=187108 tokens=8 experts=256 K=-1 N=-1 checksum=-2478.572 mean_us=39.458 min_us=37.129 p50_us=38.902 p90_us=40.626 max_us=51.807
+Example passed on GPU.

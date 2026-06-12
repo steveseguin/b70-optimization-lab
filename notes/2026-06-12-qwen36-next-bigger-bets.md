@@ -4396,3 +4396,92 @@ Restore result:
 - Provenance guard passed both prefix cases and all sentinel tokens:
   `4752` at `repetitive_kernel_notes:14`, `11436` at
   `natural_latency_plan:17`, and `198` at `natural_latency_plan:25`.
+
+## 2026-06-12 oneDNN Route-Window Offset Replay
+
+Artifacts:
+
+- Route-count exporter:
+  `scripts/export-qwen36-route-counts.py`.
+- Route-count windows:
+  `data/qwen36-quark-int8-routecapture6-layer9-r1-start0-64x4-counts-20260612aw.csv`,
+  `data/qwen36-quark-int8-routecapture6-layer9-r1-start0-64x4-counts-20260612aw.json`.
+- Route-window timing:
+  `data/qwen36-onednn-grouped-int8-reuse-routecapture6-layer9-r1-20260612aw.json`,
+  `data/qwen36-onednn-grouped-int8-reuse-routecapture6-layer9-r1-20260612aw.log`.
+- Restore/provenance:
+  `data/qwen36-quark-int8-tp4-accepted-restored-after-onednn-routewindows-20260612aw.log`,
+  `data/qwen36-quark-int8-tp4-accepted-provenance-after-onednn-routewindows-20260612aw.json`.
+
+Command shape:
+
+```bash
+python3 scripts/export-qwen36-route-counts.py \
+  data/qwen36-quark-int8-tp4-routecapture6-routes-rank0-20260611.jsonl \
+  --layer-regex 'layers[.]9[.]' \
+  --rows 1 \
+  --starts '0:64:4' \
+  --out data/qwen36-quark-int8-routecapture6-layer9-r1-start0-64x4-counts-20260612aw.csv \
+  --metadata-out data/qwen36-quark-int8-routecapture6-layer9-r1-start0-64x4-counts-20260612aw.json
+
+REUSE_JSON_OUT="$PWD/data/qwen36-onednn-grouped-int8-reuse-routecapture6-layer9-r1-20260612aw.json" \
+REUSE_ROUTE_COUNTS="$PWD/data/qwen36-quark-int8-routecapture6-layer9-r1-start0-64x4-counts-20260612aw.csv" \
+REUSE_WARMUP=50 \
+REUSE_ITERATIONS=500 \
+DEVICE_SELECTOR=level_zero:0 \
+bash scripts/probe-onednn-grouped-int8-reuse.sh \
+  2>&1 | tee data/qwen36-onednn-grouped-int8-reuse-routecapture6-layer9-r1-20260612aw.log
+```
+
+Result:
+
+- Exported `16` real routecapture6 layer-9 rows=1 windows using starts
+  `0:64:4`.
+- Each window has `8` total expert assignments and `8` active experts, matching
+  the previous rows=1 route-replay microbench.
+- The oneDNN probe now reuses primitives/memory and rewrites grouped
+  source/destination offsets before each execute.
+- Fixed-offset control timings reproduced the prior reuse result:
+  - bf16 GEMM1+GEMM2 two-exec/one-wait mean `29.445 us`, p50 `29.225 us`,
+    p90 `29.956 us`.
+  - f32 GEMM1+GEMM2 two-exec/one-wait mean `26.452 us`, p50 `26.119 us`,
+    p90 `27.431 us`.
+- Route-window offset-update timings:
+  - bf16 GEMM1 single update+execute+wait mean `25.698 us`, p50 `25.157 us`,
+    p90 `26.801 us`.
+  - bf16 GEMM2 single update+execute+wait mean `23.924 us`, p50 `23.464 us`,
+    p90 `25.047 us`.
+  - bf16 GEMM1+GEMM2 update+two-exec+one-wait mean `41.673 us`, p50
+    `41.678 us`, p90 `42.700 us`, max `58.790 us`.
+  - f32 GEMM1+GEMM2 update+two-exec+one-wait mean `39.458 us`, p50
+    `38.902 us`, p90 `40.626 us`, max `51.807 us`.
+- Checksums changed between fixed-offset and route-window runs, which confirms
+  the grouped offset metadata is being mutated and consumed.
+
+Decision:
+
+- oneDNN remains a serious layerlet backend candidate. Even with per-window
+  offset mutation, the two-GEMM pair stays far below the current XPU grouped
+  GEMM floor and below the `~168 us/layer` non-speculative MoE budget before
+  activation/quant/gather overhead.
+- This still is not a quality proof. The current probe uses deterministic
+  synthetic buffers and oneDNN scale semantics; it does not yet consume the
+  exact PyTorch tensors used by `xpu_fused_moe`, nor compare output.
+- Next implementation gate:
+  1. build an exact layer-9 replay that feeds the same synthetic tensors to
+     current `xpu_fused_moe` and the oneDNN path;
+  2. match oneDNN grouped source/weight layout and scale semantics to Quark
+     W8A8;
+  3. require `max_abs_diff=0.0` or explain the precise expected rounding
+     difference before considering endpoint integration;
+  4. if exact, wrap it behind a route-signature primitive cache and measure the
+     live `gpu_model_runner.model_forward` bucket.
+
+Restore result:
+
+- Accepted backend was relaunched in
+  `qwen36-tp4-accepted-restored-after-onednn-routewindows-20260612aw`.
+- Backend `/health` returned `200` after `56s`.
+- Provenance guard passed both prefix cases and all sentinel tokens:
+  `4752` at `repetitive_kernel_notes:14`, `11436` at
+  `natural_latency_plan:17`, and `198` at `natural_latency_plan:25`.

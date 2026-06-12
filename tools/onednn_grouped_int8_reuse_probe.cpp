@@ -5,6 +5,7 @@
 #include <fstream>
 #include <iomanip>
 #include <iostream>
+#include <sstream>
 #include <numeric>
 #include <stdexcept>
 #include <string>
@@ -52,6 +53,12 @@ std::string json_escape(const std::string &value) {
         out.push_back(c);
     }
     return out;
+}
+
+std::string env_string(const char *name, const std::string &fallback = "") {
+    const char *value = std::getenv(name);
+    if (!value || !*value) return fallback;
+    return std::string(value);
 }
 
 size_t dt_size(memory::data_type dt) {
@@ -117,6 +124,44 @@ Stats summarize(const std::vector<double> &samples) {
     out.p90_us = percentile(0.90);
     out.max_us = sorted.back();
     return out;
+}
+
+std::vector<std::vector<int32_t>> load_count_windows(
+        const std::string &path, int expected_experts, int expected_total) {
+    std::vector<std::vector<int32_t>> windows;
+    if (path.empty()) return windows;
+
+    std::ifstream in(path);
+    if (!in) throw std::runtime_error("failed to open route counts: " + path);
+
+    std::string line;
+    int line_no = 0;
+    while (std::getline(in, line)) {
+        ++line_no;
+        if (line.empty()) continue;
+        std::vector<int32_t> counts;
+        std::stringstream ss(line);
+        std::string item;
+        while (std::getline(ss, item, ',')) {
+            if (!item.empty()) counts.push_back(std::stoi(item));
+        }
+        if (static_cast<int>(counts.size()) != expected_experts) {
+            throw std::runtime_error("route-count line " + std::to_string(line_no)
+                    + " has " + std::to_string(counts.size()) + " experts, expected "
+                    + std::to_string(expected_experts));
+        }
+        const int total = std::accumulate(counts.begin(), counts.end(), 0);
+        if (total != expected_total) {
+            throw std::runtime_error("route-count line " + std::to_string(line_no)
+                    + " total " + std::to_string(total) + ", expected "
+                    + std::to_string(expected_total));
+        }
+        windows.push_back(std::move(counts));
+    }
+    if (windows.empty()) {
+        throw std::runtime_error("route-count file had no windows: " + path);
+    }
+    return windows;
 }
 
 class ReusableMatmul {
@@ -203,6 +248,23 @@ class ReusableMatmul {
 
     void execute(stream &engine_stream) { prim_.execute(engine_stream, args_); }
 
+    void update_counts(const std::vector<int32_t> &tokens_per_expert) {
+        if (memory::dim(tokens_per_expert.size()) != num_experts_) {
+            throw std::runtime_error("count window expert count mismatch");
+        }
+        const int total = std::accumulate(
+                tokens_per_expert.begin(), tokens_per_expert.end(), 0);
+        if (total != total_tokens_) {
+            throw std::runtime_error("count window token total mismatch");
+        }
+        offsets_[0] = tokens_per_expert[0];
+        for (memory::dim i = 1; i < num_experts_; ++i) {
+            offsets_[i] = offsets_[i - 1] + tokens_per_expert[i];
+        }
+        write_to_dnnl_memory(offsets_.data(), src_mem_, 1);
+        write_to_dnnl_memory(offsets_.data(), dst_mem_, 1);
+    }
+
     Result benchmark(stream &engine_stream, int warmup, int iterations) {
         for (int i = 0; i < warmup; ++i) {
             execute(engine_stream);
@@ -220,6 +282,31 @@ class ReusableMatmul {
                     end - start).count());
         }
         return result("single_wait_each", summarize(samples), checksum());
+    }
+
+    Result benchmark_route_windows(stream &engine_stream, int warmup,
+            int iterations, const std::vector<std::vector<int32_t>> &windows) {
+        if (windows.empty()) throw std::runtime_error("no route windows");
+        for (int i = 0; i < warmup; ++i) {
+            update_counts(windows[static_cast<size_t>(i) % windows.size()]);
+            execute(engine_stream);
+            engine_stream.wait();
+        }
+
+        std::vector<double> samples;
+        samples.reserve(iterations);
+        for (int i = 0; i < iterations; ++i) {
+            const auto &counts = windows[static_cast<size_t>(i) % windows.size()];
+            const auto start = std::chrono::steady_clock::now();
+            update_counts(counts);
+            execute(engine_stream);
+            engine_stream.wait();
+            const auto end = std::chrono::steady_clock::now();
+            samples.push_back(std::chrono::duration<double, std::micro>(
+                    end - start).count());
+        }
+        return result("route_windows_update_offsets_single_wait",
+                summarize(samples), checksum());
     }
 
     Result result(const std::string &kind, Stats stats,
@@ -300,6 +387,42 @@ Result benchmark_pair(ReusableMatmul &first, ReusableMatmul &second,
     return out;
 }
 
+Result benchmark_pair_route_windows(ReusableMatmul &first,
+        ReusableMatmul &second, stream &engine_stream, int warmup,
+        int iterations, const std::vector<std::vector<int32_t>> &windows) {
+    if (windows.empty()) throw std::runtime_error("no route windows");
+    for (int i = 0; i < warmup; ++i) {
+        const auto &counts = windows[static_cast<size_t>(i) % windows.size()];
+        first.update_counts(counts);
+        second.update_counts(counts);
+        first.execute(engine_stream);
+        second.execute(engine_stream);
+        engine_stream.wait();
+    }
+
+    std::vector<double> samples;
+    samples.reserve(iterations);
+    for (int i = 0; i < iterations; ++i) {
+        const auto &counts = windows[static_cast<size_t>(i) % windows.size()];
+        const auto start = std::chrono::steady_clock::now();
+        first.update_counts(counts);
+        second.update_counts(counts);
+        first.execute(engine_stream);
+        second.execute(engine_stream);
+        engine_stream.wait();
+        const auto end = std::chrono::steady_clock::now();
+        samples.push_back(std::chrono::duration<double, std::micro>(
+                end - start).count());
+    }
+
+    Result out = first.result("route_windows_update_offsets_two_exec_one_wait",
+            summarize(samples), first.checksum() + second.checksum());
+    out.name = first.name() + "+" + second.name();
+    out.k_dim = -1;
+    out.n_dim = -1;
+    return out;
+}
+
 void print_result(const Result &r) {
     std::cout << "REUSE name=" << r.name << " kind=" << r.kind
               << " construct_us=" << r.construct_us
@@ -315,13 +438,14 @@ void print_result(const Result &r) {
 }
 
 void write_json(const std::string &path, int warmup, int iterations,
-        const std::vector<Result> &results) {
+        int route_windows, const std::vector<Result> &results) {
     std::ofstream out(path);
     if (!out) throw std::runtime_error("failed to open json output: " + path);
     out << std::fixed << std::setprecision(6);
     out << "{\n";
     out << "  \"warmup\": " << warmup << ",\n";
     out << "  \"iterations\": " << iterations << ",\n";
+    out << "  \"route_windows\": " << route_windows << ",\n";
     out << "  \"results\": [\n";
     for (size_t i = 0; i < results.size(); ++i) {
         const auto &r = results[i];
@@ -348,6 +472,7 @@ void write_json(const std::string &path, int warmup, int iterations,
 void probe(engine::kind engine_kind) {
     const int warmup = env_int("REUSE_WARMUP", 20);
     const int iterations = env_int("REUSE_ITERATIONS", 200);
+    const std::string route_counts_path = env_string("REUSE_ROUTE_COUNTS");
     engine eng(engine_kind, 0);
     stream engine_stream(eng);
 
@@ -355,6 +480,9 @@ void probe(engine::kind engine_kind) {
     for (int expert : {59, 2, 243, 161, 255, 170, 200, 36}) {
         qwen_l9_counts[expert] = 1;
     }
+    const auto route_windows = load_count_windows(
+            route_counts_path, 256, std::accumulate(qwen_l9_counts.begin(),
+                                            qwen_l9_counts.end(), 0));
 
     ReusableMatmul gemm1_bf16(eng, "qwen_l9_gemm1_s8s8_bf16",
             memory::data_type::s8, memory::data_type::s8,
@@ -378,11 +506,28 @@ void probe(engine::kind engine_kind) {
     results.push_back(gemm2_f32.benchmark(engine_stream, warmup, iterations));
     results.push_back(benchmark_pair(gemm1_f32, gemm2_f32, engine_stream,
             warmup, iterations));
+    if (!route_windows.empty()) {
+        results.push_back(gemm1_bf16.benchmark_route_windows(
+                engine_stream, warmup, iterations, route_windows));
+        results.push_back(gemm2_bf16.benchmark_route_windows(
+                engine_stream, warmup, iterations, route_windows));
+        results.push_back(benchmark_pair_route_windows(gemm1_bf16, gemm2_bf16,
+                engine_stream, warmup, iterations, route_windows));
+        results.push_back(gemm1_f32.benchmark_route_windows(
+                engine_stream, warmup, iterations, route_windows));
+        results.push_back(gemm2_f32.benchmark_route_windows(
+                engine_stream, warmup, iterations, route_windows));
+        results.push_back(benchmark_pair_route_windows(gemm1_f32, gemm2_f32,
+                engine_stream, warmup, iterations, route_windows));
+    }
 
     for (const auto &result : results) print_result(result);
 
     const char *json_path = std::getenv("REUSE_JSON_OUT");
-    if (json_path && *json_path) write_json(json_path, warmup, iterations, results);
+    if (json_path && *json_path) {
+        write_json(json_path, warmup, iterations,
+                static_cast<int>(route_windows.size()), results);
+    }
 }
 
 } // namespace

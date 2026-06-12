@@ -6,6 +6,30 @@ Date: 2026-06-12
 
 2026-06-12 continuation:
 
+- Added routecapture6 layer-9 count-window export plus mutable-offset oneDNN
+  replay. This keeps the oneDNN grouped INT8 primitives and memory resident,
+  then rewrites grouped src/dst offsets for 16 real rows=1 layer-9 route
+  windows from starts `0:64:4`. The route-window timing remains strong enough
+  to justify the exactness implementation gate: bf16 GEMM1+GEMM2 with offset
+  updates and one wait averaged `41.673 us` (p50 `41.678 us`, p90
+  `42.700 us`), and f32 averaged `39.458 us` (p50 `38.902 us`, p90
+  `40.626 us`). Checksums changed between fixed and route-window runs, so
+  offset mutation is taking effect. This is still not an endpoint claim or
+  numeric parity proof; the next required step is an exact route replay using
+  current model-shaped tensors and comparing oneDNN output with
+  `xpu_fused_moe`/current staged output at `max_abs_diff=0.0`. Accepted
+  backend was restored afterward; `/health` returned after `56s` and
+  provenance guard passed both prefix cases plus all sentinel tokens. New
+  artifacts:
+  `scripts/export-qwen36-route-counts.py`,
+  `data/qwen36-quark-int8-routecapture6-layer9-r1-start0-64x4-counts-20260612aw.csv`,
+  `.json`,
+  `data/qwen36-onednn-grouped-int8-reuse-routecapture6-layer9-r1-20260612aw.json`,
+  `.log`,
+  `data/qwen36-quark-int8-tp4-accepted-restored-after-onednn-routewindows-20260612aw.log`,
+  and
+  `data/qwen36-quark-int8-tp4-accepted-provenance-after-onednn-routewindows-20260612aw.json`.
+
 - Added and ran a oneDNN grouped INT8 reuse-only Qwen-shape probe in a clean
   XPU benchmark window. This revises the prior oneDNN conclusion: oneDNN is
   still not viable if primitives/memory are recreated or if every call pays an
