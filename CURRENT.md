@@ -6,6 +6,30 @@ Date: 2026-06-12
 
 2026-06-12 notes update:
 
+- Added an offset endpoint rejection record to
+  `notes/2026-06-12-qwen36-next-bigger-bets.md` plus a reproducible overlay
+  launcher, `scripts/launch-qwen36-quark-int8-w8a8-offset.sh`. The narrow
+  A/B used the stable offset-capable extension from
+  `/home/steve/src/vllm-xpu-kernels/build/lib.linux-x86_64-cpython-312`, an
+  isolated offset cache root, and `VLLM_XPU_W8A8_USE_OFFSETS=1`. It is not
+  promotable: provenance failed exact sentinels (`4752 -> 6126` and
+  `198 -> 271`) and p512/o512/c1 speed regressed from `99.309 tok/s`
+  corrected decode to `96.165 tok/s`. Accepted TP4 was restored afterward on
+  `18080`, passed provenance sentinels `4752`, `11436`, `198`, and passed the
+  no-thinking quality smoke. The public Localmaxxing exact-model B70 row is
+  already approved at `99.428 tok/s`; no rejected offset result was posted.
+  New artifacts:
+  `data/qwen36-quark-int8-tp4-accepted-pre-offset-p512o512-metrics-20260612cx.json`,
+  `data/qwen36-quark-int8-tp4-w8a8-offset-provenance-20260612cx.json`,
+  `data/qwen36-quark-int8-tp4-w8a8-offset-p512o512-metrics-20260612cx.json`,
+  `data/qwen36-quark-int8-tp4-accepted-provenance-after-w8a8-offset-20260612cx.json`,
+  `data/qwen36-quark-int8-tp4-accepted-quality-after-w8a8-offset-nothink-smoke-20260612cx.json`,
+  and the two matching endpoint logs. Next lead: route-realistic, no-server
+  tensor comparison and a dedicated c1/topk-8 W8A8 MoE fast lane, not another
+  offset endpoint run.
+
+2026-06-12 notes update:
+
 - Added `scripts/qwen36-w8a8-offset-abi-smoke.py`, the generated
   `data/qwen36-w8a8-offset-abi-smoke-20260612cw.{json,md}` report, and a
   "W8A8 Offset ABI Smoke And Bigger Bets 20260612cw" section to

@@ -276,7 +276,7 @@ def main() -> int:
     parser.add_argument(
         "--expected-cache-fragment",
         action="append",
-        default=[DEFAULT_CACHE_FRAGMENT],
+        default=None,
         help="Required substring in parsed cache/AOT paths. Repeatable.",
     )
     parser.add_argument(
@@ -293,12 +293,16 @@ def main() -> int:
     )
     parser.add_argument("--output-json", type=Path, required=True)
     args = parser.parse_args()
+    expected_cache_fragments = (
+        args.expected_cache_fragment
+        if args.expected_cache_fragment is not None
+        else [DEFAULT_CACHE_FRAGMENT])
 
     from transformers import AutoTokenizer
 
     base_url = args.base_url.rstrip("/")
     errors: list[str] = []
-    log_info = parse_log(args.log_path, args.expected_cache_fragment)
+    log_info = parse_log(args.log_path, expected_cache_fragments)
     if not log_info["exists"] and not args.allow_missing_log:
         errors.append("launch log is missing; pass --allow-missing-log to skip cache provenance failure")
     for fragment, hit in log_info["expected_cache_fragment_hits"].items():

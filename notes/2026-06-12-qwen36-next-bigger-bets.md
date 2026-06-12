@@ -17,6 +17,9 @@ Current speed anchor:
 - Public exact-model Localmaxxing row:
   `cmq8yhxvo001ipb0149aoa79o`, `99.428 tok/s`, c1, 32K context,
   4x Arc Pro B70.
+- Fresh local accepted A/B baseline before the offset endpoint test:
+  `99.309 tok/s` corrected p512/o512/c1 decode, `98.068 tok/s` e2e,
+  `10.051 ms/token` vLLM decode, and `75.3 ms` client TTFT.
 - Fresh B70/Qwen3.6 Localmaxxing check:
   `99.770 tok/s` for the current Quark W8A8 INT8 vLLM run family is the top
   B70 row for this model class. Rows above `200 tok/s` remain architecture
@@ -28,6 +31,156 @@ Current speed anchor:
   The `>200 tok/s` c1 goal needs either verifier-safe speculation or a real
   MoE/kernel architecture improvement. Launch flags alone are unlikely to get
   there.
+
+## W8A8 Offset Endpoint Rejection And Bigger Bets 20260612cx
+
+Added after running the narrow offset endpoint A/B proposed in the previous
+ABI smoke section. This is a rejection record, not a promoted speed result.
+
+What changed:
+
+- Added `scripts/launch-qwen36-quark-int8-w8a8-offset.sh`. The launcher keeps
+  the accepted TP4 graph/runtime flags, overlays the stable offset-capable
+  extension from
+  `/home/steve/src/vllm-xpu-kernels/build/lib.linux-x86_64-cpython-312`,
+  creates an isolated cache root under
+  `/mnt/fast-ai/vllm-cache-exp/qwen36-35b-a3b-quark-int8-tp4-${TAG}`, and sets
+  `VLLM_XPU_W8A8_USE_OFFSETS=1`.
+- Patched `scripts/check-qwen36-accepted-provenance.py` so an explicit
+  `--expected-cache-fragment` can be used by a diagnostic launcher without
+  also requiring the accepted production cache fragment. With no explicit
+  fragment, it still defaults to the accepted cache root.
+
+A/B result:
+
+- Accepted pre-offset baseline, p512/o512/c1:
+  `99.309 tok/s` corrected decode, `98.068 tok/s` e2e, `10.051 ms/token`
+  vLLM decode, `75.3 ms` client TTFT.
+- Offset endpoint, p512/o512/c1:
+  `96.165 tok/s` corrected decode, `94.909 tok/s` e2e, `10.380 ms/token`
+  vLLM decode, `80.8 ms` client TTFT.
+- Offset provenance failed exact output parity even though the offset cache
+  root was used. Failed sentinels:
+  `repetitive_kernel_notes[14]` expected `4752`, got `6126`; and
+  `natural_latency_plan[25]` expected `198`, got `271`.
+- Accepted TP4 was restored on `18080` after the failed run. Post-restore
+  provenance passed sentinels `4752`, `11436`, `198`, and the no-thinking
+  quality smoke passed exact canaries, JSON schema, copy phrase, repeat
+  stability, and baseline comparison.
+
+Decision:
+
+- Reject `VLLM_XPU_W8A8_USE_OFFSETS=1` for endpoint use. It is both slower and
+  quality-breaking.
+- The tiny ABI checksum smoke was not strong enough. Future kernel candidates
+  need a no-server real-tensor compare against accepted route fixtures before
+  they get an endpoint launch.
+- Do not post the rejected offset run to Localmaxxing. The already-approved
+  public result for the current exact model remains
+  `cmq8yhxvo001ipb0149aoa79o` at `99.428 tok/s`.
+
+Fresh external signals checked:
+
+- Localmaxxing's public exact-model query already contains the approved
+  4x Arc Pro B70 Quark W8A8 INT8 row at `99.428 tok/s`.
+- Localmaxxing's broader Qwen3.6 leaderboard shows `>200 tok/s` rows, but the
+  fastest ones are not accepted comparables for this goal: they use MTP/spec,
+  lower-bit quantization, or non-B70 hardware.
+- Intel's grouped-GEMM tuning issue for XPU explicitly points at runtime route
+  distribution and decode-stage long-tail routing as grouped-GEMM tuning
+  inputs. This lines up with our route-fixture direction.
+- The public Arc Pro B70 benchmark repo still frames MoE as the B70 sweet
+  spot, but its multi-GPU notes also reinforce that generic layer split is not
+  a decode-speed multiplier by itself.
+
+Near-term things to try:
+
+1. **No-server W8A8 route-fixture tensor compare.**
+   Build a harness that feeds captured first-decode hidden states, topk expert
+   IDs, weights, and scales through accepted versus candidate MoE kernels and
+   compares tensors before any endpoint launch. This is now mandatory for
+   offset, active-offset, sidecar, or route-class kernels.
+
+2. **Active-offset only after clean rebuild and tensor parity.**
+   Active-offset is still the better conceptual shape because it can skip empty
+   experts, but the next attempt must start from a clean build artifact with a
+   symbol matrix, child-process smoke, and route-fixture parity.
+
+3. **Route-realistic grouped-GEMM tuning bench.**
+   Convert first-decode route fixtures into grouped-GEMM cases that preserve
+   the real rows-per-expert distribution, not synthetic uniform groups. Use
+   that to compare current W8A8 grouped GEMM, offset, active-offset, oneDNN
+   grouped matmul, and Triton/SYCL variants without the server in the loop.
+
+4. **Layer-9 single-token MoE microbench with real route tuples.**
+   Use the existing first-decode fixture to isolate one representative MoE
+   layer and measure launch count, quant time, GEMM1, activation+quant, GEMM2,
+   gather, and synchronization. The goal is to find the real `~10 ms/token`
+   device-side owner.
+
+5. **Promote a route-fixture gate into every launcher experiment.**
+   Endpoint launches should be reserved for candidates that already pass
+   no-server tensor parity. This protects time and avoids cache churn from
+   predictable quality failures.
+
+Bigger, bolder ideas to add to the queue:
+
+1. **Dedicated c1/topk-8 W8A8 MoE fast lane.**
+   Build a target-specific kernel path for one decode token, topk=8,
+   `hidden_size=2048`, `moe_intermediate_size=512`, Quark W8A8 scales, and
+   TP-local packed expert shards. Fuse remap, activation quant, GEMM1,
+   activation, second quant, GEMM2, and gather/reduce where possible. The
+   generic grouped-GEMM wrapper looks like the wrong abstraction for the
+   latency target.
+
+2. **Persistent MoE worker with resident descriptors.**
+   Keep expert descriptors, hot packed weights, scratch, and command lists
+   resident per GPU. Feed route descriptors through a ring buffer so c1 decode
+   avoids rebuilding grouped-GEMM setup and host launch state per token.
+
+3. **Route-class kernels generated from accepted traces.**
+   Compile a small set of exact-scheduling kernels for low-union, repeated hot
+   tuple, broad-route, and cold fallback classes. Runtime still uses the
+   target model's router; the route class changes layout/scheduling only.
+
+4. **VRAM-for-latency hot expert packs.**
+   Spend B70 headroom on duplicated or prepacked hot experts and hot expert
+   pairs across ranks. The common path can avoid the slowest shard or a
+   collective; rare routes fall back to current exact TP4.
+
+5. **Single-user no-collective island.**
+   Try a c1 lane where the active MoE subset, dense state, and logits path run
+   on one primary card or a smaller card set, with exact fallback for cold
+   routes. This is a bigger topology change than TP2 because the goal is to
+   remove per-token collectives from the common path.
+
+6. **Whole-token Level Zero supernode.**
+   For fixed decode buckets, capture a patchable command-list sequence across
+   MoE, attention, residual/norm, logits, and sampler boundaries. The payoff
+   would be fewer host submissions and less inter-rank jitter, but it needs
+   exact output proof.
+
+7. **Verifier-safe target-owned speculation.**
+   Do not use lower-quality drafts. Instead, use spare cards for
+   target-owned branch farming only after we can transact KV/GDN/sampler state
+   and verify every emitted token against the same Quark W8A8 target.
+
+8. **Maintainer challenge packet.**
+   Package the accepted route fixtures, failed offset proof, p512/o512
+   timings, symbol matrix, and `~100 tok/s` baseline into a concise upstream
+   `vllm-xpu-kernels`/Intel XPU request: "make this exact Qwen3.6 A3B W8A8
+   c1 route fixture fast and bit-stable on B70."
+
+Artifacts for this pass:
+
+- `scripts/launch-qwen36-quark-int8-w8a8-offset.sh`
+- `data/qwen36-quark-int8-tp4-accepted-pre-offset-p512o512-metrics-20260612cx.json`
+- `data/qwen36-quark-int8-tp4-w8a8-offset-provenance-20260612cx.json`
+- `data/qwen36-quark-int8-tp4-w8a8-offset-p512o512-metrics-20260612cx.json`
+- `data/qwen36-quark-int8-tp4-accepted-provenance-after-w8a8-offset-20260612cx.json`
+- `data/qwen36-quark-int8-tp4-accepted-quality-after-w8a8-offset-nothink-smoke-20260612cx.json`
+- `data/qwen36-quark-int8-tp4-w8a8-offset-20260612cx.log`
+- `data/qwen36-quark-int8-tp4-accepted-restored-after-w8a8-offset-20260612cx.log`
 
 ## W8A8 Offset ABI Smoke And Bigger Bets 20260612cw
 
