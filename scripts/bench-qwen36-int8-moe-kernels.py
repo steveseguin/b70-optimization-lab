@@ -33,6 +33,17 @@ DEFAULT_MODEL_CONFIG = (
 )
 
 
+def _per_token_quant_int8_maybe_out(
+    x: torch.Tensor,
+    q: torch.Tensor | None = None,
+    scales: torch.Tensor | None = None,
+) -> tuple[torch.Tensor, torch.Tensor]:
+    out_op = getattr(torch.ops._xpu_C, "per_token_quant_int8_xpu_out", None)
+    if q is not None and scales is not None and out_op is not None:
+        return out_op(x, q, scales)
+    return _per_token_quant_int8(x)
+
+
 def parse_rows(value: str) -> list[int]:
     rows = []
     for item in value.split(","):
@@ -334,6 +345,18 @@ def make_prologue_scratch(
         "gemm2_output": torch.empty((num_moe_inputs, hidden_size),
                                     device=device,
                                     dtype=dtype),
+        "gemm1_a": torch.empty((num_moe_inputs, hidden_size),
+                               device=device,
+                               dtype=torch.int8),
+        "gemm1_a_scales": torch.empty((num_moe_inputs, 1),
+                                      device=device,
+                                      dtype=torch.float32),
+        "gemm2_a": torch.empty((num_moe_inputs, inter_size),
+                               device=device,
+                               dtype=torch.int8),
+        "gemm2_a_scales": torch.empty((num_moe_inputs, 1),
+                                      device=device,
+                                      dtype=torch.float32),
     }
 
 
@@ -578,6 +601,19 @@ def make_scratch(
         "remapped_hidden_states": torch.empty((num_moe_inputs, hidden_size),
                                               device=device,
                                               dtype=dtype),
+        "gemm1_a": torch.empty((num_moe_inputs, hidden_size),
+                               device=device,
+                               dtype=torch.int8),
+        "gemm1_a_scales": torch.empty((num_moe_inputs, 1),
+                                      device=device,
+                                      dtype=torch.float32),
+        "gemm2_a": torch.empty((num_moe_inputs,
+                                inter_size),
+                               device=device,
+                               dtype=torch.int8),
+        "gemm2_a_scales": torch.empty((num_moe_inputs, 1),
+                                      device=device,
+                                      dtype=torch.float32),
         "rows_per_expert": torch.empty((num_experts),
                                        device=device,
                                        dtype=torch.int32),
@@ -594,6 +630,10 @@ def make_xpu_scratch(scratch: dict[str, torch.Tensor]) -> dict[str, torch.Tensor
         "gemm1_output": scratch["gemm1_output"],
         "act_output": scratch["act_output"],
         "gemm2_output": scratch["gemm2_output"],
+        "gemm1_a": scratch["gemm1_a"],
+        "gemm1_a_scales": scratch["gemm1_a_scales"],
+        "gemm2_a": scratch["gemm2_a"],
+        "gemm2_a_scales": scratch["gemm2_a_scales"],
         "rows_per_expert": scratch["rows_per_expert"],
         "unpermuted_row_to_permuted_row": scratch["unpermuted"],
     }
@@ -629,8 +669,11 @@ def manual_int8_moe_preallocated_once(
         total_experts_num=num_experts,
         local_experts_num=num_experts,
     )
-    gemm1_a, gemm1_a_scales = _per_token_quant_int8(
-        scratch["remapped_hidden_states"])
+    gemm1_a, gemm1_a_scales = _per_token_quant_int8_maybe_out(
+        scratch["remapped_hidden_states"],
+        scratch["gemm1_a"],
+        scratch["gemm1_a_scales"],
+    )
     gemm1_scales = _normalize_int8_weight_scales(w13_scales, 2 * inter_size)
     torch.ops._xpu_C.cutlass_grouped_gemm_w8a8_int8_interface(
         ptr_A=gemm1_a,
@@ -646,7 +689,11 @@ def manual_int8_moe_preallocated_once(
     )
     fused_moe_activation(scratch["act_output"], scratch["gemm1_output"],
                          "silu")
-    gemm2_a, gemm2_a_scales = _per_token_quant_int8(scratch["act_output"])
+    gemm2_a, gemm2_a_scales = _per_token_quant_int8_maybe_out(
+        scratch["act_output"],
+        scratch["gemm2_a"],
+        scratch["gemm2_a_scales"],
+    )
     gemm2_scales = _normalize_int8_weight_scales(w2_scales, hidden_size)
     torch.ops._xpu_C.cutlass_grouped_gemm_w8a8_int8_interface(
         ptr_A=gemm2_a,
@@ -721,8 +768,11 @@ def manual_int8_moe_fused_prologue_once(
             (expert_offsets[1:1 + num_experts] -
              expert_offsets[:num_experts]).to(torch.int32))
 
-    gemm1_a, gemm1_a_scales = _per_token_quant_int8(
-        scratch["remapped_hidden_states"])
+    gemm1_a, gemm1_a_scales = _per_token_quant_int8_maybe_out(
+        scratch["remapped_hidden_states"],
+        scratch.get("gemm1_a"),
+        scratch.get("gemm1_a_scales"),
+    )
     gemm1_scales = _normalize_int8_weight_scales(w13_scales, 2 * inter_size)
     if use_active_offset_gemm:
         active_offset_op(
@@ -767,7 +817,11 @@ def manual_int8_moe_fused_prologue_once(
         )
     fused_moe_activation(scratch["act_output"], scratch["gemm1_output"],
                          "silu")
-    gemm2_a, gemm2_a_scales = _per_token_quant_int8(scratch["act_output"])
+    gemm2_a, gemm2_a_scales = _per_token_quant_int8_maybe_out(
+        scratch["act_output"],
+        scratch.get("gemm2_a"),
+        scratch.get("gemm2_a_scales"),
+    )
     gemm2_scales = _normalize_int8_weight_scales(w2_scales, hidden_size)
     if use_active_offset_gemm:
         active_offset_op(
@@ -1228,6 +1282,14 @@ def benchmark_rows(
         "offset_gemm_enabled": bool(args.enable_offset_gemm),
         "active_offset_gemm_available": active_offset_gemm_available,
         "active_offset_gemm_enabled": bool(args.enable_active_offset_gemm),
+        "quant_out_op_available": hasattr(torch.ops._xpu_C,
+                                          "per_token_quant_int8_xpu_out"),
+        "quant_scratch_buffers": [
+            "gemm1_a",
+            "gemm1_a_scales",
+            "gemm2_a",
+            "gemm2_a_scales",
+        ],
         "num_active_experts_for_active_offset":
         int(prologue_scratch["num_active_experts"]),
         "fused_prologue_workspace_bytes":
@@ -1304,6 +1366,11 @@ def write_markdown(path: str, results: dict[str, Any]) -> None:
     lines.append(f"- Fused SiLU+quant enabled: `{fused}`.")
     lines.append(f"- TP size: `{results['tp_size']}`.")
     lines.append(f"- Result rows: `{len(rows)}`.")
+    if rows:
+        lines.append(
+            f"- Quant out-variant available: "
+            f"`{bool(rows[0].get('quant_out_op_available'))}`."
+        )
     if results.get("route_metadata"):
         meta = results["route_metadata"]
         lines.append(f"- Route source: `{meta.get('route_jsonl')}`.")

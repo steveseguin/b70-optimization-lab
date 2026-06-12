@@ -6,6 +6,25 @@ Date: 2026-06-12
 
 2026-06-12 continuation:
 
+- Added the quant out-variant scaffold note and refreshed the larger no-quality
+  loss backlog with public B70/vLLM signals. The source scaffold adds strict
+  caller-owned output buffers for INT8 quantization in the dirty
+  `vllm-xpu-kernels` and `vllm` source trees, and the route replay script now
+  uses those buffers when a patched `_xpu_C` artifact is available while
+  falling back cleanly on the accepted package. Static Python compile, diff
+  checks, native `_xpu_C` build, and isolated import/registration all passed;
+  no endpoint install or XPU timing claim was made while the accepted TP4
+  backend was live. Next gate is an isolated layer-9 routecapture6 rows=1
+  replay requiring `max_abs_diff=0.0` and a real speed win before any promotion.
+  The backlog refresh records bigger candidates: persistent MoE worker per
+  card, generated Qwen3.6 INT8 layerlets, EP-like decode lane, one/two-card
+  latency replicas, offline DPAS/XMX tiled weight pack, whole-token command
+  graphs, target-model lookahead, verifier escrow with trace-trained
+  micro-drafter, static c1 appliance behind the OpenAI frontdoor, clean Intel
+  container A/B, and a public upstream performance challenge packet. Details:
+  `notes/2026-06-12-qwen36-quant-out-scaffold.md` and
+  `notes/2026-06-12-qwen36-next-bigger-bets.md`.
+
 - Added a new big-bet refresh to
   `notes/2026-06-12-qwen36-next-bigger-bets.md`. It folds in the latest
   roofline packet, active-offset rejection, Localmaxxing API context, and

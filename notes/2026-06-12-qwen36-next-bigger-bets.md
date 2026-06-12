@@ -3561,3 +3561,129 @@ Near-term order:
    non-speculative `>200 tok/s` path.
 4. In parallel, write the verifier-escrow design doc because non-speculative
    kernel work may not deliver a full `2x` alone.
+
+## 2026-06-12 Quant-Out Scaffold And Bolder Ideas Refresh
+
+What was added locally:
+
+- A quant out-variant scaffold now exists in the dirty source trees and the
+  route replay script knows how to use it when the patched `_xpu_C` artifact is
+  present. Details and validation are in
+  `notes/2026-06-12-qwen36-quant-out-scaffold.md`.
+- This is not a serving result. It compiled, imported from the isolated build
+  artifact, and registered the new ops, but it was not installed over the
+  accepted endpoint and did not run an XPU timing benchmark while the production
+  workers were live.
+- The practical reason to keep it is layerlet plumbing: the current exact
+  staged paths allocate `gemm1_a/gemm1_a_scales` and `gemm2_a/gemm2_a_scales`
+  unless the quant op can write into caller-owned buffers.
+
+Fresh public signals from the scan:
+
+- The vLLM Intel Arc Pro B-series writeup explicitly calls out persistent MoE
+  kernels, single-kernel persistent loops, dynamic balancing of compute groups,
+  and reduced MoE scheduling gaps as the core Intel path for MoE performance:
+  https://vllm.ai/blog/2025-11-11-intel-arc-pro-b
+- Intel's `0.10.2-xpu` container notes say Qwen3-30B-A3B improved `2.6x` from
+  persistent MoE GEMM and fused activation work, and also call out small-batch
+  FP16/BF16 GEMM improvements:
+  https://github.com/intel/ai-containers/blob/main/vllm/0.10.2-xpu.md
+- vLLM's XPU support table validates Arc Pro B-series for Qwen3-30B-A3B in
+  BF16 and dynamic FP8 paths, but that is still not the same as a finished,
+  production-ready XPU W8A8 INT8 MoE fast path for this model:
+  https://docs.vllm.ai/en/v0.18.0/models/hardware_supported_models/xpu/
+- PMZFX's public B70 llama.cpp data reports Qwen 3.6 35B A3B at `54.7 t/s`
+  for UD-Q4_K_M on one B70 and `36.5 t/s` for Q8_0 across two B70s. Those are
+  not quality-equivalent to our current W8A8/vLLM target, but they reinforce
+  that MoE can run much faster than dense models on B70 when the execution path
+  is hardware-friendly:
+  https://github.com/PMZFX/intel-arc-pro-b70-benchmarks
+- A public 2x B70 vLLM benchmark reports `40.60 tok/s` single-stream and
+  `996.67 tok/s` aggregate output at higher concurrency. The useful signal is
+  the same split we see locally: aggregate throughput can look fine while
+  c1 latency remains dominated by small-batch scheduling and kernel bubbles:
+  https://www.reddit.com/r/LocalLLM/comments/1sfa0iw/2x_intel_arc_b70_benchmark/
+- A current Localmaxxing query shows our exact HF row for
+  `nameistoken/Qwen3.6-35B-A3B-Quark-W8A8-INT8` at about `99.428 tok/s` and a
+  same-family Arc Pro B70 row at about `99.770 tok/s`. Do not post the
+  quant-out scaffold as a result; it is not a benchmark win.
+
+Bigger, bolder ideas worth keeping on the board:
+
+1. **Persistent MoE worker per card.**
+   Instead of launching per-layer helper kernels from Python/vLLM, create a
+   resident XPU-side MoE service that owns route buffers, quant buffers, expert
+   work queues, and output buffers for the static c1 shape. Host writes only
+   minimal token/layer metadata. This is the direct local analog of Intel's
+   persistent MoE direction.
+
+2. **Generated Qwen3.6 INT8 layerlets.**
+   Generate C++/SYCL for this exact model layout, layer shape, expert count,
+   and W8A8 scale format. First target layer 9 routecapture6, then generate the
+   40 MoE layerlets. The code generator can bake tile sizes, expert metadata,
+   scratch offsets, and DPAS-friendly memory layouts.
+
+3. **Expert-parallel decode lane.**
+   Stop assuming TP4 is the right c1 shape. Simulate and then test an EP-like
+   decode lane where experts are partitioned or hot experts replicated by
+   card, and activations move only when the chosen experts require it. For MoE
+   c1, moving compact activations may beat reducing full tensor shards.
+
+4. **One-card or two-card latency replicas.**
+   If TP4 communication is a hard c1 tax, use the four B70s as separate
+   latency replicas for lower-concurrency production while keeping a TP4 lane
+   for long context or aggregate throughput. This sacrifices per-request model
+   placement efficiency only if quality/32k context can still fit.
+
+5. **Offline DPAS/XMX tiled weight pack.**
+   Convert the existing W8A8 weights and scales into a tile-native format once
+   and record a provenance manifest. If runtime kernels are spending time on
+   layout, transpose, or non-coalesced scale loads, a reversible pack artifact
+   may unlock speed without changing quantization.
+
+6. **Whole-token command graph.**
+   Capture an entire c1 decode token as one graph/command-list bundle with
+   static KV block metadata and scratch arenas, not just individual kernels.
+   Route guards can select a small number of graph variants and fall back to
+   the generic path for rare patterns.
+
+7. **Target-model branch lookahead.**
+   Use the target model itself to score a small tree of likely next tokens,
+   then commit only the branch that exactly matches the standard target
+   decision. This is more expensive than n-gram speculation but avoids external
+   drafter quality drift.
+
+8. **Trace-trained micro-drafter with hard verifier escrow.**
+   Train a tiny local drafter from our target traces and let it propose bursts,
+   but keep commit ownership with the target verifier. This can be quality
+   preserving if the verifier is transactional and rejects mismatches before
+   they reach the client.
+
+9. **Static c1 appliance behind the OpenAI frontdoor.**
+   Keep vLLM as the reference path and batching lane, but build a separate
+   fixed-shape executor for single-user low-latency traffic. The frontdoor can
+   route by request shape and load, with exact canaries deciding whether the
+   appliance is enabled.
+
+10. **Clean Intel container A/B on spare disk.**
+    Reproduce the Intel validated host/container stack as closely as possible,
+    then run the same route replay and c1 benchmark. This separates our source
+    work from host-stack issues around kernel driver, oneAPI, oneCCL, and PCIe
+    topology.
+
+11. **Public upstream performance challenge packet.**
+    Package one layer-9 routecapture fixture, exactness checks, timings, and
+    B70 environment details so vLLM/Intel kernel owners can reproduce the
+    `~225 us/layer` plateau. A well-scoped repro may attract better XPU kernel
+    advice faster than private guessing.
+
+Next ordering after this refresh:
+
+1. Clean benchmark window for quant-out route replay. Keep it isolated and
+   reject unless exact and faster.
+2. Roofline/stall packet with Level Zero or VTune counters for accepted c1 and
+   layer-9 replay.
+3. One-layer persistent layerlet proof. Stop spending time on helper-op variants
+   unless the roofline packet says the helper itself is the bottleneck.
+4. Verifier escrow design doc, because exact speculation may be the only
+   quality-preserving way to get a full `2x` if non-speculative kernels plateau.
