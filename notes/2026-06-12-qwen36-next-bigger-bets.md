@@ -3687,3 +3687,24 @@ Next ordering after this refresh:
    unless the roofline packet says the helper itself is the bottleneck.
 4. Verifier escrow design doc, because exact speculation may be the only
    quality-preserving way to get a full `2x` if non-speculative kernels plateau.
+
+## 2026-06-12 Quant-Out Gate Result
+
+The quant-out replay did pass its narrow gate, but not the larger speed target:
+
+- Isolated overlay route replay reported `quant_out_op_available=True`.
+- Layer-9 routecapture6 rows=1 exactness passed with `max_abs_diff=0.0`.
+- Mean exact preallocated staged timing improved to `207.237 us/layer`.
+- Prior comparable exact staged runs were `216.361 us/layer` in the
+  prologue-staged screen and `226.882 us/layer` in the active-offset gate.
+- It remains above the `~168 us/layer` non-speculative budget, so it is not an
+  endpoint candidate by itself.
+
+Updated decision:
+
+- Keep quant-out as scratch ABI cleanup.
+- Stop treating helper-op variants as likely to reach `>200 tok/s` alone.
+- Next performance branch should be either:
+  - a one-dispatch/persistent layer-9 MoE layerlet using the scratch ABI, or
+  - a roofline/stall packet proving that one remaining helper kernel is the
+    dominant bottleneck before another helper branch is attempted.

@@ -143,3 +143,75 @@ scratch ABI explicit.
   launch-bound, bandwidth-bound, or failing to hit XMX/DPAS paths.
 - Keep fused SiLU+quant behind an exactness gate. The earlier fused path drifted
   and cannot be promoted until route replay reports exact parity.
+
+## Route Replay Result
+
+Run tag: `20260612am`
+
+The accepted backend was stopped only after the public frontdoor reported zero
+active and queued requests and remained paused for remote traffic. The replay
+used a temporary package overlay:
+
+```text
+PYTHONPATH=/tmp/qwen36-quant-out-overlay:/home/steve/src/vllm
+LD_LIBRARY_PATH=/home/steve/src/vllm-xpu-kernels/build/temp:/home/steve/src/vllm-xpu-kernels/vllm_xpu_kernels
+```
+
+The overlay imported the patched build artifact and confirmed:
+
+```text
+per_token_out True
+silu_out True
+moe_prologue True
+```
+
+Benchmark command:
+
+```bash
+/home/steve/.venvs/vllm-xpu/bin/python scripts/bench-qwen36-int8-moe-kernels.py \
+  --rows 1 \
+  --iterations 30 \
+  --warmup 10 \
+  --route-jsonl data/qwen36-quark-int8-tp4-routecapture6-routes-rank0-20260611.jsonl \
+  --route-layer-regex 'layers\.9\.' \
+  --route-start-indices '0:64:4' \
+  --output-json data/qwen36-quark-int8-moe-routecapture6-layer9-quant-out-scaffold-20260612am.json \
+  --markdown-out data/qwen36-quark-int8-moe-routecapture6-layer9-quant-out-scaffold-20260612am.md
+```
+
+Results over 16 layer-9 routecapture6 rows=1 windows:
+
+- `quant_out_op_available`: true for all rows.
+- Current `xpu_fused_moe`: `299.072 us/layer` mean.
+- Scratch `xpu_fused_moe`: `248.626 us/layer` mean.
+- Exact preallocated staged with quant-out buffers:
+  `207.237 us/layer` mean, `189.067 us` min, `243.521 us` max.
+- Fused-prologue staged: `282.710 us/layer` mean.
+- Exactness:
+  - Manual staged versus `xpu_fused_moe`: `max_abs_diff=0.0`.
+  - Scratch `xpu_fused_moe`: `max_abs_diff=0.0`.
+  - Preallocated staged: `max_abs_diff=0.0`.
+  - Fused-prologue staged: `max_abs_diff=0.0`.
+
+Decision:
+
+- Keep the quant-out scaffold. It is exact and improves the exact preallocated
+  staged path compared with the previous no-out replay (`216.361 us/layer`) and
+  active-offset gate replay (`226.882 us/layer`).
+- Do not promote it to the endpoint by itself. `207.237 us/layer` is still well
+  above the `~168 us/layer` non-speculative budget for `>200 tok/s` c1 decode,
+  and the accepted source-package binary was left untouched.
+- Feed this scratch ABI into the persistent MoE layerlet work. The next
+  meaningful speed target remains a one-dispatch layerlet or equivalent
+  resident MoE worker.
+
+Restore/provenance:
+
+- Accepted backend relaunched in tmux session
+  `qwen36-tp4-accepted-restored-after-quantout-20260612am`; `/health` returned
+  after `64s`.
+- Source-package import after restore confirmed:
+  - `per_token_quant_int8_xpu_out`: absent.
+  - `silu_and_mul_quant_int8_xpu_out`: absent.
+- Accepted provenance guard passed both prompt cases and all sentinel tokens:
+  `data/qwen36-quark-int8-tp4-accepted-provenance-after-quantout-20260612am.json`.

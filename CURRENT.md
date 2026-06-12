@@ -6,6 +6,26 @@ Date: 2026-06-12
 
 2026-06-12 continuation:
 
+- Ran the quant out-variant scaffold through an isolated layer-9 routecapture6
+  rows=1 replay using a temporary package overlay, leaving the accepted source
+  package untouched. The patched artifact exposed both quant out ops and the
+  replay reported `quant_out_op_available=True` across 16 route windows.
+  Exactness passed with `max_abs_diff=0.0` for manual staged, scratch
+  `xpu_fused_moe`, preallocated staged, and fused-prologue staged versus
+  current `xpu_fused_moe`. Mean timings: current `xpu_fused_moe`
+  `299.072 us/layer`, scratch `xpu_fused_moe` `248.626 us/layer`,
+  preallocated staged with quant-out buffers `207.237 us/layer`, and
+  fused-prologue staged `282.710 us/layer`. Decision: keep the scaffold as
+  layerlet plumbing because it improves the exact staged path versus prior
+  `216-226 us/layer` screens, but do not promote it by itself because it is
+  still above the `~168 us/layer` non-speculative budget. Accepted backend was
+  relaunched after the benchmark, source-package import confirmed the
+  experimental ops are absent from the served runtime, and provenance passed
+  both prompt cases plus all sentinel tokens. Artifacts:
+  `data/qwen36-quark-int8-moe-routecapture6-layer9-quant-out-scaffold-20260612am.json`,
+  `.md`, `.log`, and
+  `data/qwen36-quark-int8-tp4-accepted-provenance-after-quantout-20260612am.json`.
+
 - Added the quant out-variant scaffold note and refreshed the larger no-quality
   loss backlog with public B70/vLLM signals. The source scaffold adds strict
   caller-owned output buffers for INT8 quantization in the dirty
