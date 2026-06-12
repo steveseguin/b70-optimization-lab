@@ -12083,3 +12083,157 @@ Current runtime decision:
 - The resident service owns the four XPUs, so the full streaming-input probe
   was not launched in this pass. Run it after a deliberate service drain/stop or
   on an isolated XPU slice.
+
+## Full Streaming-Input Result And New Bigger Ideas
+
+Ran the full streaming-input verifier after draining/stopping the resident
+backend, then restored the accepted backend.
+
+Artifacts:
+
+- `data/qwen36-quark-int8-tp4-streaming-input-verifier-current-p512o32-20260611i.json`
+- `data/qwen36-quark-int8-tp4-streaming-input-verifier-current-p512o32-20260611i.md`
+
+Result:
+
+- `all_matched`: `false`
+- loaded cases: `2`
+- executed before stop: `natural_latency_plan`
+- checked tokens: `26`
+- matched tokens: `25`
+- first mismatch: position `25`, expected token `198` (`"\n"`), generated token
+  `271` (`"\n\n"`)
+- session throughput in this harness: `1.80 tok/s`; this is harness overhead
+  and is not a production speed metric.
+
+Interpretation:
+
+- The simple `StreamingInput` sidecar verifier is not safe enough to promote.
+- The mismatch is a small whitespace branch after a repeated sentence, not a
+  major semantic divergence, but exact-token parity is the right gate for a
+  verifier that would accept or reject speculative tokens.
+- This result narrows the next debug pass: reproduce token position `25` with
+  top-k logprobs from accepted API decode, streaming-input decode, and
+  prompt-logprob re-prefill. If token `198` and `271` are near ties, we need
+  deterministic state/seed parity. If they are not near ties, the streaming
+  session state is not equivalent to the accepted decoder state.
+- Because the streaming-input path drifted, the next quality-safe architecture
+  is still in-engine copy-on-write request/KV forking, not an external
+  sidecar that replays accepted tokens.
+
+Fresh external/public checks from this pass:
+
+- Exact Localmaxxing row for
+  `nameistoken/Qwen3.6-35B-A3B-Quark-W8A8-INT8`: still one public row,
+  `99.428 tok/s`, TP4, 4x Arc Pro B70, current Quark W8A8 recipe.
+- Arc Pro B70 + Qwen public rows now show our exact-model row near the top of
+  the B70/Qwen set, with the close duplicate base-model row at about
+  `99.77 tok/s`.
+- vLLM's XPU documentation now lists Arc Pro B-series as validated hardware.
+- vLLM's Qwen3.5/Qwen3.6 recipe records Qwen3.6 35B-A3B as a 35B total /
+  3B-active MoE with `256` experts and `8 routed + 1 shared` experts. That
+  reinforces that MoE routing and collectives, not dense parameter count alone,
+  are the likely decode bottleneck.
+- Intel's grouped-GEMM tuning issue explicitly calls out decode-stage routing
+  skew and tile configuration as major MoE performance factors.
+- The open B580/XPU vLLM issue is asking the same class of questions we are:
+  Xe2 Flash Attention, KV dtype, block size, MP versus Ray, and mandatory
+  environment variables. No accepted upstream recipe appears to solve this yet.
+
+Sources checked:
+
+- `https://localmaxxing.com/api/leaderboard?hfId=nameistoken%2FQwen3.6-35B-A3B-Quark-W8A8-INT8&limit=20`
+- `https://localmaxxing.com/api/leaderboard?modelFamily=qwen&hardwareName=Arc%20Pro%20B70&engineName=vllm&limit=20`
+- `https://docs.vllm.ai/en/v0.18.0/models/hardware_supported_models/xpu/`
+- `https://docs.vllm.ai/projects/recipes/en/latest/Qwen/Qwen3.5.html`
+- `https://github.com/intel/intel-xpu-backend-for-triton/issues/6389`
+- `https://github.com/vllm-project/vllm/issues/35638`
+
+Additional things to try:
+
+1. Streaming-input mismatch microscope.
+   - Add a narrow replay mode for `natural_latency_plan` positions `20-28`.
+   - Capture top-k logprobs and decoded text for accepted API decode,
+     streaming-input decode, and rolling prompt-logprob re-prefill.
+   - Try no-async scheduling, cumulative output mode, and exact accepted API
+     sampling parameters before rejecting the path permanently.
+
+2. Copy-on-write KV/request fork.
+   - Implement the verifier inside the vLLM engine where the accepted request
+     already owns the correct KV state.
+   - Fork the request state, score one or more candidate draft tokens, then
+     discard the fork.
+   - This is the cleanest quality-preserving route after the streaming-input
+     sidecar drift.
+
+3. Router-distribution capture from real decode.
+   - Log Qwen3.6 top-k expert IDs and per-expert token counts during p512/n512
+     accepted decode.
+   - Feed the real skew into grouped-GEMM microbenches instead of synthetic
+     even routing.
+   - Use the captured distribution to decide whether expert hotset pinning or
+     partial expert duplication is plausible on four B70s.
+
+4. Latency-mode expert hotset experiment.
+   - Create a diagnostic slot with a shorter context cap to free VRAM, while
+     keeping the same 8-bit model weights.
+   - Use the freed memory to test replicated hot experts or alternate EP/TP
+     layouts.
+   - This is not the final 32K production slot, but it can answer whether VRAM
+     headroom is blocking a faster MoE layout.
+
+5. XPU grouped-GEMM tile autotune for the actual routed shapes.
+   - Build a microbench from live router captures.
+   - Sweep tile sizes, expert sorting, token grouping, and prepacked layout in
+     `vllm-xpu-kernels`.
+   - Promote only if the full endpoint passes repeat64, canary hash, and
+     BF16/current-Quark comparison gates.
+
+6. Persistent MoE/decode loop prototype.
+   - Move beyond Python custom-op wrappers and test a persistent single-kernel
+     MoE path for small decode batches.
+   - Include expert routing, W8A8 grouped GEMM, shared expert add, and final
+     reduction/epilogue where feasible.
+   - This is high-risk but maps directly to the external Intel Arc MoE
+     optimization signals.
+
+7. Graph-safe tiny collective specialization.
+   - Extract the exact hidden-size all-reduce/reduce-scatter shapes from the
+     AOT census.
+   - Prototype a graph-safe low-latency path for these small BF16 messages.
+   - The prior custom all-reduce path helped, but the remaining graph still has
+     enough collectives that a shape-specialized route could matter.
+
+8. MTP/proposer sidecar without changing the verifier.
+   - Keep the current Quark INT8 model as the final verifier.
+   - Test official Qwen3.6 MTP assets, DFlash/EAGLE-style proposers, or a
+     smaller Qwen3.6-family draft only as candidate-token generators.
+   - Score accepted-token throughput and exact output parity, not draft-model
+     throughput.
+
+9. Same-model 8-bit engine bakeoff.
+   - Find or build a Qwen3.6 35B 8-bit GGUF/SYCL or other Intel-friendly engine
+     route.
+   - Do not promote 4-bit results, but use llama.cpp/SYCL as a diagnostic for
+     whether vLLM/XPU is leaving single-request latency on the table.
+
+10. Repro pack for upstream.
+    - Package three small, no-secret repros for maintainers:
+      - W8A8 dense GEMM shape from the accepted graph,
+      - route-skewed MoE grouped GEMM shape from real decode,
+      - graph-safe tiny collective shape from TP4.
+    - Include current throughput, target throughput, env, commit SHAs, and the
+      exact Arc Pro B70 topology.
+
+11. Production-stability shadow loop.
+    - Once a candidate shows speed, run c1/c2/c4/c8/c16/c32/c48 with a
+      repeat-quality smoke after each stage.
+    - Track device-lost events, restart time, first-token latency, peak VRAM,
+      and route drift.
+    - This prevents us from accepting a fast but fragile graph-capture path.
+
+12. Localmaxxing publication packet v2.
+    - For the next public result, submit only after r8/r10 speed, peak VRAM,
+      repeat64, and a short reliability loop are all captured.
+    - Keep the exact command snippet and notes clean enough for others with
+      B70 cards to reproduce without private paths or API keys.

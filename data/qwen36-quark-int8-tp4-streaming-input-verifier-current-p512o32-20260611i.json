@@ -1,0 +1,316 @@
+{
+  "all_matched": false,
+  "baseline_json": "data/qwen36-quark-int8-tp4-accepted-current-apiids-p512o128-20260611h.json",
+  "cases_loaded": [
+    {
+      "name": "natural_latency_plan",
+      "output_tokens": 128,
+      "prompt_tokens": 502
+    },
+    {
+      "name": "repetitive_kernel_notes",
+      "output_tokens": 128,
+      "prompt_tokens": 488
+    }
+  ],
+  "engine_args": {
+    "compilation_config": {
+      "cudagraph_mode": "PIECEWISE"
+    },
+    "disable_log_stats": true,
+    "distributed_executor_backend": "mp",
+    "dtype": "auto",
+    "enable_prefix_caching": false,
+    "enforce_eager": false,
+    "generation_config": "vllm",
+    "gpu_memory_utilization": 0.95,
+    "kv_cache_dtype": "auto",
+    "language_model_only": true,
+    "max_model_len": 32768,
+    "max_num_batched_tokens": 8192,
+    "max_num_seqs": 1,
+    "model": "/mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118",
+    "quantization": "quark",
+    "tensor_parallel_size": 4,
+    "tokenizer": "/mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118",
+    "trust_remote_code": true
+  },
+  "environment": {
+    "CCL_ATL_TRANSPORT": "ofi",
+    "CCL_TOPO_P2P_ACCESS": "1",
+    "ONEAPI_DEVICE_SELECTOR": "level_zero:0,1,2,3",
+    "VLLM_XPU_ENABLE_XPU_GRAPH": "1",
+    "VLLM_XPU_FORCE_GRAPH_WITH_COMM": "1",
+    "VLLM_XPU_GRAPH_NOOP_COMM_CAPTURE": "1",
+    "ZE_AFFINITY_MASK": "0,1,2,3"
+  },
+  "limit_cases": 2,
+  "max_tokens_per_case": 32,
+  "model": "/mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118",
+  "preflight_only": false,
+  "records": [
+    {
+      "case_name": "natural_latency_plan",
+      "elapsed_ms_since_case_start": 9345.947558991611,
+      "expected_token_id": 22791,
+      "generated_token_id": 22791,
+      "match": true,
+      "position": 0,
+      "request_id": "qwen36-streamver-natural-latency-plan"
+    },
+    {
+      "case_name": "natural_latency_plan",
+      "elapsed_ms_since_case_start": 14129.466067999601,
+      "expected_token_id": 440,
+      "generated_token_id": 440,
+      "match": true,
+      "position": 1,
+      "request_id": "qwen36-streamver-natural-latency-plan"
+    },
+    {
+      "case_name": "natural_latency_plan",
+      "elapsed_ms_since_case_start": 14146.964146988466,
+      "expected_token_id": 27044,
+      "generated_token_id": 27044,
+      "match": true,
+      "position": 2,
+      "request_id": "qwen36-streamver-natural-latency-plan"
+    },
+    {
+      "case_name": "natural_latency_plan",
+      "elapsed_ms_since_case_start": 14161.030500079505,
+      "expected_token_id": 47193,
+      "generated_token_id": 47193,
+      "match": true,
+      "position": 3,
+      "request_id": "qwen36-streamver-natural-latency-plan"
+    },
+    {
+      "case_name": "natural_latency_plan",
+      "elapsed_ms_since_case_start": 14172.230517026037,
+      "expected_token_id": 14246,
+      "generated_token_id": 14246,
+      "match": true,
+      "position": 4,
+      "request_id": "qwen36-streamver-natural-latency-plan"
+    },
+    {
+      "case_name": "natural_latency_plan",
+      "elapsed_ms_since_case_start": 14182.865964015946,
+      "expected_token_id": 8129,
+      "generated_token_id": 8129,
+      "match": true,
+      "position": 5,
+      "request_id": "qwen36-streamver-natural-latency-plan"
+    },
+    {
+      "case_name": "natural_latency_plan",
+      "elapsed_ms_since_case_start": 14193.764205090702,
+      "expected_token_id": 13,
+      "generated_token_id": 13,
+      "match": true,
+      "position": 6,
+      "request_id": "qwen36-streamver-natural-latency-plan"
+    },
+    {
+      "case_name": "natural_latency_plan",
+      "elapsed_ms_since_case_start": 14204.623893019743,
+      "expected_token_id": 24985,
+      "generated_token_id": 24985,
+      "match": true,
+      "position": 7,
+      "request_id": "qwen36-streamver-natural-latency-plan"
+    },
+    {
+      "case_name": "natural_latency_plan",
+      "elapsed_ms_since_case_start": 14215.283035067841,
+      "expected_token_id": 383,
+      "generated_token_id": 383,
+      "match": true,
+      "position": 8,
+      "request_id": "qwen36-streamver-natural-latency-plan"
+    },
+    {
+      "case_name": "natural_latency_plan",
+      "elapsed_ms_since_case_start": 14225.975049077533,
+      "expected_token_id": 3074,
+      "generated_token_id": 3074,
+      "match": true,
+      "position": 9,
+      "request_id": "qwen36-streamver-natural-latency-plan"
+    },
+    {
+      "case_name": "natural_latency_plan",
+      "elapsed_ms_since_case_start": 14237.611685064621,
+      "expected_token_id": 43318,
+      "generated_token_id": 43318,
+      "match": true,
+      "position": 10,
+      "request_id": "qwen36-streamver-natural-latency-plan"
+    },
+    {
+      "case_name": "natural_latency_plan",
+      "elapsed_ms_since_case_start": 14248.891100054607,
+      "expected_token_id": 16401,
+      "generated_token_id": 16401,
+      "match": true,
+      "position": 11,
+      "request_id": "qwen36-streamver-natural-latency-plan"
+    },
+    {
+      "case_name": "natural_latency_plan",
+      "elapsed_ms_since_case_start": 14260.239063994959,
+      "expected_token_id": 4478,
+      "generated_token_id": 4478,
+      "match": true,
+      "position": 12,
+      "request_id": "qwen36-streamver-natural-latency-plan"
+    },
+    {
+      "case_name": "natural_latency_plan",
+      "elapsed_ms_since_case_start": 14271.42475405708,
+      "expected_token_id": 11,
+      "generated_token_id": 11,
+      "match": true,
+      "position": 13,
+      "request_id": "qwen36-streamver-natural-latency-plan"
+    },
+    {
+      "case_name": "natural_latency_plan",
+      "elapsed_ms_since_case_start": 14282.60641603265,
+      "expected_token_id": 29541,
+      "generated_token_id": 29541,
+      "match": true,
+      "position": 14,
+      "request_id": "qwen36-streamver-natural-latency-plan"
+    },
+    {
+      "case_name": "natural_latency_plan",
+      "elapsed_ms_since_case_start": 14293.577203061432,
+      "expected_token_id": 33389,
+      "generated_token_id": 33389,
+      "match": true,
+      "position": 15,
+      "request_id": "qwen36-streamver-natural-latency-plan"
+    },
+    {
+      "case_name": "natural_latency_plan",
+      "elapsed_ms_since_case_start": 14304.516299045645,
+      "expected_token_id": 11,
+      "generated_token_id": 11,
+      "match": true,
+      "position": 16,
+      "request_id": "qwen36-streamver-natural-latency-plan"
+    },
+    {
+      "case_name": "natural_latency_plan",
+      "elapsed_ms_since_case_start": 14315.49701502081,
+      "expected_token_id": 11436,
+      "generated_token_id": 11436,
+      "match": true,
+      "position": 17,
+      "request_id": "qwen36-streamver-natural-latency-plan"
+    },
+    {
+      "case_name": "natural_latency_plan",
+      "elapsed_ms_since_case_start": 14326.47190906573,
+      "expected_token_id": 29796,
+      "generated_token_id": 29796,
+      "match": true,
+      "position": 18,
+      "request_id": "qwen36-streamver-natural-latency-plan"
+    },
+    {
+      "case_name": "natural_latency_plan",
+      "elapsed_ms_since_case_start": 14337.729955092072,
+      "expected_token_id": 11,
+      "generated_token_id": 11,
+      "match": true,
+      "position": 19,
+      "request_id": "qwen36-streamver-natural-latency-plan"
+    },
+    {
+      "case_name": "natural_latency_plan",
+      "elapsed_ms_since_case_start": 14349.15839903988,
+      "expected_token_id": 321,
+      "generated_token_id": 321,
+      "match": true,
+      "position": 20,
+      "request_id": "qwen36-streamver-natural-latency-plan"
+    },
+    {
+      "case_name": "natural_latency_plan",
+      "elapsed_ms_since_case_start": 14360.491065075621,
+      "expected_token_id": 874,
+      "generated_token_id": 874,
+      "match": true,
+      "position": 21,
+      "request_id": "qwen36-streamver-natural-latency-plan"
+    },
+    {
+      "case_name": "natural_latency_plan",
+      "elapsed_ms_since_case_start": 14371.741214999929,
+      "expected_token_id": 4131,
+      "generated_token_id": 4131,
+      "match": true,
+      "position": 22,
+      "request_id": "qwen36-streamver-natural-latency-plan"
+    },
+    {
+      "case_name": "natural_latency_plan",
+      "elapsed_ms_since_case_start": 14382.93765601702,
+      "expected_token_id": 4557,
+      "generated_token_id": 4557,
+      "match": true,
+      "position": 23,
+      "request_id": "qwen36-streamver-natural-latency-plan"
+    },
+    {
+      "case_name": "natural_latency_plan",
+      "elapsed_ms_since_case_start": 14394.154974026605,
+      "expected_token_id": 13,
+      "generated_token_id": 13,
+      "match": true,
+      "position": 24,
+      "request_id": "qwen36-streamver-natural-latency-plan"
+    },
+    {
+      "case_name": "natural_latency_plan",
+      "elapsed_ms_since_case_start": 14405.33270908054,
+      "expected_token_id": 198,
+      "generated_token_id": 271,
+      "match": false,
+      "position": 25,
+      "request_id": "qwen36-streamver-natural-latency-plan"
+    }
+  ],
+  "seed": 20260611,
+  "summary": [
+    {
+      "all_matched": false,
+      "case_name": "natural_latency_plan",
+      "checked_tokens": 26,
+      "elapsed_ms_since_case_start": {
+        "count": 26,
+        "max": 14405.33270908054,
+        "mean": 14081.558936772546,
+        "median": 14265.83190902602,
+        "min": 9345.947558991611
+      },
+      "elapsed_s": 14.40544097207021,
+      "first_mismatch": {
+        "case_name": "natural_latency_plan",
+        "elapsed_ms_since_case_start": 14405.33270908054,
+        "expected_token_id": 198,
+        "generated_token_id": 271,
+        "match": false,
+        "position": 25,
+        "request_id": "qwen36-streamver-natural-latency-plan"
+      },
+      "matched_tokens": 25,
+      "p90_elapsed_ms_since_case_start": 14377.339435508475,
+      "seed": 20260611,
+      "streaming_session_tok_s": 1.8048735925828123
+    }
+  ]
+}
