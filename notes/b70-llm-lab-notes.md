@@ -852,3 +852,18 @@ vLLM/XPU FP8 work:
     model-specific generated engine behind the existing frontdoor. The next
     order is roofline/stall proof, FlashMoE source/smoke-test learning,
     one-layer persistent MoE layerlet, and a verifier-escrow design doc.
+37. Built the first consolidated Qwen3.6 roofline/stall packet:
+    `notes/2026-06-12-qwen36-roofline-stall-packet.md`. Fresh accepted
+    p512/o512 local-bypass c1 metrics measured `99.618 tok/s` corrected,
+    `98.130 tok/s` e2e, `87.996 ms` client TTFT, and `10.039 ms/token` vLLM
+    decode histogram. The refreshed fusion target budget now says a
+    non-speculative `>200 tok/s` path needs roughly `168.173 us/layer` for
+    rows=1, while exact current MoE replay is `294.145 us/layer`,
+    preallocated staged is `220.530 us/layer`, and the two-GEMM floor remains
+    `193.538 us`. Decision: two-dispatch MoE variants cannot reach the target
+    alone; the next implementation branch is a fixed layer-9 persistent
+    layerlet with exact parity and pass/fail target `<=168 us/layer`. Expanded
+    prompt-class route simulation over `5485` records and `325` windows keeps
+    hot-expert replication alive as a medium-term layout idea:
+    `ep4_hot64_replicated_greedy` reduces the communication-row proxy to
+    `0.155` with balanced pressure at `1.75x` expert-memory cost.

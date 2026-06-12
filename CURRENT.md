@@ -6,6 +6,33 @@ Date: 2026-06-12
 
 2026-06-12 continuation:
 
+- Added a consolidated Qwen3.6 roofline/stall packet and refreshed the live c1
+  endpoint budget. The accepted service remains healthy and paused-local on the
+  public frontdoor. A fresh p512/o512 local-bypass run measured `99.618 tok/s`
+  corrected after first chunk, `98.130 tok/s` e2e, `87.996 ms` client TTFT,
+  and a vLLM decode histogram of `10.039 ms/token`. The refreshed MoE fusion
+  target budget says a non-speculative `>200 tok/s` path needs roughly
+  `168.173 us/layer` or better for rows=1, while the exact current MoE replay
+  is `294.145 us/layer`, preallocated staged is `220.530 us/layer`, and the
+  two-independent-grouped-GEMM floor is still `193.538 us`; therefore a
+  two-dispatch path cannot reach the target by itself. The expanded
+  prompt-class route simulation covered `5485` route records and `325` windows;
+  `ep4_hot64_replicated_greedy` reduces the communication-row proxy to
+  `0.155` with balanced pressure at `1.75x` expert-memory cost, so hot
+  replication remains a serious medium-term layout idea but should not preempt
+  the immediate one-layer persistent MoE layerlet proof. Decision: next
+  implementation branch is a fixed routecapture6 layer-9 persistent layerlet
+  with exact parity and a pass/fail target of `<=168 us/layer`; in parallel,
+  keep target-verified speculation as the high-upside fallback if the layerlet
+  cannot beat the budget. Artifacts:
+  `notes/2026-06-12-qwen36-roofline-stall-packet.md`,
+  `data/qwen36-quark-int8-tp4-live-c1-p512o512-metrics-20260612al.json`,
+  `data/qwen36-quark-int8-moe-fusion-target-budget-20260612al.md`,
+  `data/qwen36-quark-int8-moe-fusion-target-budget-20260612al.json`,
+  `data/qwen36-quark-int8-tp4-promptclass-plus-route6-parallelism-sim-20260612al.md`,
+  and
+  `data/qwen36-quark-int8-tp4-promptclass-plus-route6-parallelism-sim-20260612al.json`.
+
 - Built and gated the active-expert offset W8A8 grouped-GEMM prototype. The
   compact-active variant compiled through `_xpu_C` and `grouped_gemm_xe_2`
   with oneAPI 2025.3, registered cleanly from the build artifact, and passed

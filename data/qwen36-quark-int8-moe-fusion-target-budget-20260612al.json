@@ -1,0 +1,251 @@
+{
+  "decode_scenarios": {
+    "current_route_replay": {
+      "candidate_layer_us": 294.14507291666666,
+      "estimated_decode_ms_per_token": 10.038901235020603,
+      "estimated_saved_ms_per_token": 0.0,
+      "estimated_tok_s": 99.61249509174473
+    },
+    "one_dispatch_floor_proxy": {
+      "candidate_layer_us": 100.50586,
+      "estimated_decode_ms_per_token": 2.293332718353936,
+      "estimated_saved_ms_per_token": 7.745568516666667,
+      "estimated_tok_s": 436.04662855800564
+    },
+    "preallocated_staged_lower_bound": {
+      "candidate_layer_us": 220.53025833333334,
+      "estimated_decode_ms_per_token": 7.094308651687269,
+      "estimated_saved_ms_per_token": 2.9445925833333333,
+      "estimated_tok_s": 140.95806217314293
+    },
+    "required_for_target": {
+      "candidate_layer_us": 168.1725420411516,
+      "estimated_decode_ms_per_token": 5.0,
+      "estimated_saved_ms_per_token": 5.038901235020603,
+      "estimated_tok_s": 200.0
+    },
+    "two_independent_grouped_gemm_floor": {
+      "candidate_layer_us": 193.53828,
+      "estimated_decode_ms_per_token": 6.014629518353936,
+      "estimated_saved_ms_per_token": 4.024271716666667,
+      "estimated_tok_s": 166.2612795931073
+    }
+  },
+  "endpoint_budget": {
+    "corrected_tok_s": 99.61795651879923,
+    "decode_ms_per_token": 10.038901235020603,
+    "e2e_tok_s": 98.12983632097773,
+    "model_forward_ms_per_token": 8.43849975,
+    "outside_model_forward_ms_per_token": 1.600401485020603,
+    "required_model_forward_save_ms": 5.038901235020603,
+    "required_save_per_moe_layer_us": 125.97253087551508,
+    "target_model_forward_ms_per_token_if_outside_unchanged": 3.399598514979397
+  },
+  "grouped_gemm_floor": {
+    "gemm1": {
+      "cases": 10,
+      "effective_tops": 0.08607344386560689,
+      "mean_us": 100.50586
+    },
+    "gemm2": {
+      "cases": 10,
+      "effective_tops": 0.04510139322949881,
+      "mean_us": 93.03242
+    },
+    "one_dispatch_floor_proxy_us": 100.50586,
+    "source_path": "data/qwen36-quark-int8-tp4-grouped-gemm-smallm-timing-20260612an.json",
+    "target_rows": 8,
+    "two_gemm_floor_us": 193.53828
+  },
+  "interpretation": [
+    "The target is >200 tok/s, or <=5 ms/token decode.",
+    "If outside-model-forward time is unchanged, the model-forward bucket must be cut accordingly.",
+    "The route replay numbers are single-layer isolated estimates, not endpoint claims.",
+    "Two independent small-M grouped GEMM dispatches already exceed the required per-layer target, so a persistent/fused MoE prototype must avoid paying both dispatch floors.",
+    "If a one-dispatch/fused MoE layerlet cannot beat the required candidate budget with exact parity, target-verified speculation becomes the stronger path."
+  ],
+  "metadata": {
+    "endpoint_metrics_json": "data/qwen36-quark-int8-tp4-live-c1-p512o512-metrics-20260612al.json",
+    "model_config": "/mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118/config.json",
+    "model_forward_summary_json": "data/qwen36-quark-int8-tp4-sync-modelonly-summary-20260612u.json",
+    "num_moe_layers": 40,
+    "primary_rows": 1,
+    "route_replay_json": [
+      "data/qwen36-quark-int8-moe-routecapture6-layer9-startscan-r15-20260611.json",
+      "data/qwen36-quark-int8-moe-routecapture5-layer20-startscan-r15-20260611.json",
+      "data/qwen36-quark-int8-moe-routecapture6-layer9-active-offset-gemm-20260612ai.json"
+    ],
+    "smallm_timing_json": "data/qwen36-quark-int8-tp4-grouped-gemm-smallm-timing-20260612an.json",
+    "target_decode_ms_per_token": 5.0,
+    "target_tok_s": 200.0,
+    "topk": 8
+  },
+  "primary_layer_budget": {
+    "current_xpu_fused_moe_us": 294.14507291666666,
+    "preallocated_staged_us": 220.53025833333334,
+    "remaining_gap_after_preallocated_us": 52.35771629218175,
+    "required_candidate_us_for_target": 168.1725420411516,
+    "required_saving_from_current_us": 125.97253087551508,
+    "rows": 1
+  },
+  "route_replay": {
+    "by_rows": {
+      "1": {
+        "active_experts": {
+          "count": 32,
+          "max": 8.0,
+          "mean": 8.0,
+          "median": 8.0,
+          "min": 8.0,
+          "stdev": 0.0
+        },
+        "preallocated_staged_us": {
+          "count": 32,
+          "max": 270.7934333333333,
+          "mean": 220.53025833333334,
+          "median": 215.56079999999997,
+          "min": 198.7336,
+          "stdev": 19.798420149087445
+        },
+        "samples": 32,
+        "scratch_saving_us": {
+          "count": 32,
+          "max": 107.25336666666664,
+          "mean": 73.61481458333333,
+          "median": 69.10251666666667,
+          "min": 55.79599999999999,
+          "stdev": 12.261642601917103
+        },
+        "xpu_fused_moe_us": {
+          "count": 32,
+          "max": 378.04679999999996,
+          "mean": 294.14507291666666,
+          "median": 284.4885333333333,
+          "min": 262.8426666666667,
+          "stdev": 31.41540162296928
+        }
+      }
+    },
+    "components_us": {
+      "act_contiguous": {
+        "count": 16,
+        "max": 70.4635,
+        "mean": 58.71929375,
+        "median": 56.24998333333333,
+        "min": 52.52603333333333,
+        "stdev": 5.950137332334565
+      },
+      "activation": {
+        "count": 32,
+        "max": 101.43589999999999,
+        "mean": 81.38327708333333,
+        "median": 78.80494999999999,
+        "min": 72.904,
+        "stdev": 8.493485231902406
+      },
+      "activation_contiguous_quant2": {
+        "count": 16,
+        "max": 291.37146666666666,
+        "mean": 238.87407083333332,
+        "median": 226.14665,
+        "min": 211.89409999999998,
+        "stdev": 26.013345401609826
+      },
+      "activation_plus_quant2": {
+        "count": 32,
+        "max": 221.64749999999998,
+        "mean": 173.41876354166666,
+        "median": 168.28558333333334,
+        "min": 156.0208,
+        "stdev": 18.277695791627426
+      },
+      "component_sum": {
+        "count": 32,
+        "max": 993.1801666666667,
+        "mean": 711.1313677083333,
+        "median": 718.7907833333333,
+        "min": 575.0090666666666,
+        "stdev": 120.5301749951512
+      },
+      "gather": {
+        "count": 32,
+        "max": 99.71693333333333,
+        "mean": 81.00988854166667,
+        "median": 79.14068333333333,
+        "min": 71.47226666666666,
+        "stdev": 7.591865609832057
+      },
+      "gemm1": {
+        "count": 32,
+        "max": 125.8299,
+        "mean": 98.76546354166666,
+        "median": 95.92878333333334,
+        "min": 87.7032,
+        "stdev": 10.758537747268443
+      },
+      "gemm2": {
+        "count": 32,
+        "max": 125.07973333333332,
+        "mean": 98.003428125,
+        "median": 96.96955,
+        "min": 87.37386666666666,
+        "stdev": 10.061810729222751
+      },
+      "quant1": {
+        "count": 32,
+        "max": 119.14573333333333,
+        "mean": 92.15044062499999,
+        "median": 89.80213333333333,
+        "min": 81.98319999999998,
+        "stdev": 10.004009056105174
+      },
+      "quant2": {
+        "count": 32,
+        "max": 120.31943333333332,
+        "mean": 92.03548645833332,
+        "median": 89.60248333333334,
+        "min": 81.75786666666666,
+        "stdev": 9.92321808751331
+      },
+      "remap": {
+        "count": 32,
+        "max": 130.08503333333334,
+        "mean": 96.49323125,
+        "median": 93.4596,
+        "min": 86.6528,
+        "stdev": 10.595913960300589
+      },
+      "rows_zero": {
+        "count": 16,
+        "max": 102.17193333333333,
+        "mean": 83.86101041666666,
+        "median": 80.80291666666666,
+        "min": 74.71703333333333,
+        "stdev": 8.817307274125692
+      }
+    },
+    "max_abs_diffs": {
+      "manual": {
+        "count": 32,
+        "max": 0.0
+      },
+      "preallocated": {
+        "count": 32,
+        "max": 0.0
+      },
+      "scratch": {
+        "count": 16,
+        "max": 0.0
+      }
+    },
+    "paths": [
+      "data/qwen36-quark-int8-moe-routecapture6-layer9-startscan-r15-20260611.json",
+      "data/qwen36-quark-int8-moe-routecapture5-layer20-startscan-r15-20260611.json",
+      "data/qwen36-quark-int8-moe-routecapture6-layer9-active-offset-gemm-20260612ai.json"
+    ],
+    "rows_filter": [
+      1
+    ],
+    "sample_count": 32
+  }
+}
