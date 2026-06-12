@@ -102,6 +102,16 @@ Current Qwen3.6 INT8 direction:
     current `vllm-xpu-kernels` bakeoff, strict 8-bit engine bakeoff, controlled
     driver/kernel/OS bakeoff, and public upstream repro packages. All of these
     keep the no-Qwen3.5, no-4-bit, target-verifier quality constraint.
+16. Added "Bolder Ideas Added After User Backlog Prompt" to the Qwen3.6 note.
+    New no-quality-loss ideas now tracked include TP2/TP3 capacity relaunches,
+    hybrid expert-parallel simulation, a static single-request decode appliance,
+    target-trace-trained proposer adapters, pipelined proposer/verifier work,
+    transactional KV/page-table rollback, persistent MoE layerlet kernels,
+    load-time tile-native INT8 repack caches, exact collective-elimination
+    proofs, prefill/decode disaggregation, capacity-gated mirror serving, and
+    upstream-ready shape repro packages. The note also records fresh public
+    signals from Localmaxxing, `vllm-xpu-kernels`, Intel XPU container notes,
+    B70 TP2 instability reports, and speculative-decoding design discussion.
 
 ## 2026-05-10 MiniMax AutoRound Addendum
 

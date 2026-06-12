@@ -13865,3 +13865,150 @@ Useful follow-up links:
 - `https://github.com/thc1006/qwen3.6-speculative-decoding-rtx3090`
 - `https://recipes.vllm.ai/Qwen/Qwen3.6-27B`
 - `https://github.com/PMZFX/intel-arc-pro-b70-benchmarks`
+
+## Bolder Ideas Added After User Backlog Prompt
+
+This section is a fresh backlog refresh after explicitly asking for bigger,
+bolder ideas. These are not accepted changes yet. Every item remains bound by
+the same constraints: current Qwen3.6 35B Quark W8A8 INT8 model, no 4-bit
+fallback, no Qwen3.5 substitution, no quality loss, target-verifier parity, and
+reliability checks before promotion.
+
+Additional public signals from the refresh:
+
+- Localmaxxing still shows the accepted exact-model row at `99.428 tok/s` and
+  the richer B70-family row at `99.770 tok/s` with about `127.55 GiB` total XPU
+  allocation. The memory figure is reservation/allocated memory, not a reason
+  to assume the 35B W8A8 weights themselves are `127 GiB`.
+- `vllm-xpu-kernels` is now the upstream XPU kernel package to watch. It
+  advertises MoE TopK, grouped TopK, MoE gather, expert remapping,
+  quantization, grouped GEMM, GDN/Flash attention, and normalization kernels.
+- Intel's newer XPU vLLM container notes mention persistent MoE GEMM and fused
+  activation work, with a stated large improvement on Qwen3-30B-A3B-class
+  workloads. That makes persistent MoE a serious candidate, not just a local
+  guess.
+- A public B70 TP2 vLLM issue reports host-stack-sensitive worker crashes and
+  `xe` BCS engine resets. Any TP2/TP3 experiment must run in an isolated test
+  slot with clear health checks and a rollback path.
+- vLLM speculative-decoding discussion is moving beyond simple draft-then-wait
+  loops. The relevant idea for us is not quality-changing approximation; it is
+  overlapping or pipelining proposer work while the same Quark W8A8 model
+  remains authoritative.
+
+New things to try, ordered by risk-adjusted usefulness:
+
+1. **TP2 and TP3 capacity/latency relaunch.**
+   - Try a deliberately small `max_num_seqs=1..4` 32K context lane on TP2 and
+     TP3 before deeper kernel work. If TP2 fits, fewer collectives may beat TP4
+     for single-request decode even with less parallelism.
+   - Guardrails: isolated port, no production endpoint disturbance, exact
+     quality gates, and post-run `xpu-smi`/dmesg health checks because B70 TP2
+     can be host-stack sensitive.
+   - Success would be the cleanest no-quality-loss win: same model, same
+     quantization, fewer synchronization points.
+
+2. **Hybrid expert-parallel prototype instead of pure TP.**
+   - Build a memory ledger for replicated attention/shared layers plus sharded
+     experts. The current TP4 path likely pays many tiny collectives per token;
+     expert parallelism could reduce collectives by communicating only active
+     expert results.
+   - First artifact should be a route-replay simulator: for captured `topk_ids`,
+     count expert ownership transfers and bytes versus TP4 allreduce bytes.
+   - Reject quickly if replicated non-expert memory plus 32K KV cannot fit.
+
+3. **Static single-request decode appliance.**
+   - Create a special serving lane for one active request with fixed shapes,
+     preallocated KV, pre-captured decode graph buckets, minimal scheduler
+     mutation, and direct streaming.
+   - Keep the OpenAI-compatible endpoint as the production fallback, but use
+     this lane to discover whether vLLM scheduling and dynamic shapes are still
+     costing meaningful single-token latency.
+   - If it cannot beat the accepted TP4 lane, stop blaming API/scheduler
+     overhead and focus on kernels/dataflow.
+
+4. **Target-trace-trained proposer.**
+   - If built-in MTP/DFlash assets are unstable or unavailable for this exact
+     model, train a tiny local proposer/MTP adapter from accepted target traces
+     on our real prompt distribution.
+   - This does not change user-visible quality if every proposed token is
+     verified by the Quark W8A8 target before emission.
+   - Acceptance criteria: exact-token parity on canaries, high accept rate on
+     natural/code/JSON/math classes, and a net speedup after verifier overhead.
+
+5. **Pipelined proposer/verifier loop.**
+   - Investigate whether proposer work can run one step ahead while the target
+     verifies the previous speculative window, instead of the current strict
+     draft-then-verify dependency.
+   - Start with `k=1` or `k=2`; larger windows are not useful until
+     reject/replacement COW is correct.
+   - This is only valid if rollback state is exact and the target verifier
+     still controls all emitted tokens.
+
+6. **Transactional KV/page-table layer as a performance enabler.**
+   - Treat COW correctness work as a speed blocker, not just a quality bug.
+     Without exact rollback after rejects, we cannot safely use aggressive MTP,
+     DFlash, or pipelined proposer lanes.
+   - New diagnostic should fingerprint token ids, positions, slots, block-table
+     tails, and `previous_draft_token_ids` around every reject/replacement row.
+   - Success unlocks speculation work; failure means the `100 tok/s` ceiling is
+     partly self-imposed by verifier-state risk.
+
+7. **Persistent MoE layerlet with real route windows.**
+   - Prototype one Qwen3.6 MoE layer from captured route windows: top-k handling,
+     packed W8A8 grouped GEMM, activation, second grouped GEMM, gather, and
+     residual handoff.
+   - Measure against the current vLLM/XPU path outside the server first.
+   - Required proof: hidden-output parity within strict tolerance and a
+     measurable per-layer decode speedup on real rows=1/16 route windows.
+
+8. **Load-time tile-native INT8 repack cache.**
+   - Verify whether Quark W8A8 weight tensors are already in the layout wanted
+     by the active XPU grouped-GEMM kernels. If not, repack once at load time
+     into a checksum-validated cache.
+   - This is a no-quality-loss layout change, but it may trade model-load time
+     and disk space for decode speed.
+   - Only continue if microbench and one-layer replay show a clear gain.
+
+9. **Collective elimination by exact graph rewrite.**
+   - For each repeated hidden-size allreduce, prove whether following linear or
+     residual operations allow delayed/fused reduction without changing math.
+   - Reuse the stricter Q4 lessons: do not promote a fused reduction unless a
+     token/logit or hidden-state parity harness proves it.
+   - If exact delayed reduction is impossible across nonlinear boundaries, use
+     the proof to stop wasting time there and move to EP/MoE.
+
+10. **Prefill/decode disaggregation as a production throughput lane.**
+    - Single-request decode remains the main target, but production also needs
+      aggregate throughput. Explore one lane optimized for prefill/TTFT and one
+      lane optimized for decode, using the same accepted model and quality
+      gates.
+    - This is not a replacement for the `>200 tok/s` single-request goal; it is
+      a production architecture option if single-request decode improves only
+      modestly.
+
+11. **One-card mirror/arbiter aggregate lane only if capacity proves out.**
+    - Some public B70 rows show strong aggregate throughput with one instance
+      per card on other quantizations. For our exact W8A8 model, first prove
+      whether any one-card or two-card configuration can fit 32K without
+      quality-risky KV changes.
+    - If it cannot fit, do not spend time on mirror serving for this model.
+      Aggregate serving should then use multi-request batching on the accepted
+      TP path.
+
+12. **Upstream-ready shape pack and issue bundle.**
+    - Package three tiny repros for Intel/vLLM: W8A8 grouped GEMM route
+      windows, persistent MoE layerlet, and graph-safe tiny collective.
+    - Include exact shapes, timings, expected outputs, oneAPI/PyTorch/vLLM
+      versions, and B70 health notes.
+    - This is a large leverage move: if the bottleneck is in upstream XPU
+      kernels or host-stack behavior, a clean repro is more likely to get help
+      than another local one-off patch.
+
+Standing promotion rule for this new list:
+
+- Any result that changes weights, quantization family, KV dtype in a
+  quality-risky way, model family, or final target-verifier behavior is
+  diagnostic only.
+- Any result that hits XPU graph/device loss, worker init failure, or
+  host-stack instability must record the failure and restore the accepted
+  backend before more speed testing.
