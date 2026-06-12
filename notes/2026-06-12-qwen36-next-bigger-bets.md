@@ -24,6 +24,115 @@ Current speed anchor:
   MoE/kernel architecture improvement. Launch flags alone are unlikely to get
   there.
 
+## Post-Discussion Larger Bets Addendum
+
+Added after the latest "what else could move the needle" pass. These ideas
+remain bound by the current constraints: current Qwen3.6 Quark W8A8 INT8
+target, no Qwen3.5 substitution, no AWQ/4-bit substitution, and no speed claim
+without exact target-model quality gates.
+
+New external signals folded in:
+
+- The current Localmaxxing exact INT8/B70/vLLM rows are still around
+  `99-100 tok/s`, while public Qwen3.6 rows above `200 tok/s` generally use
+  MTP/speculation, NVFP4/FP4, MQ4/AWQ, or CUDA/ROCm kernels. The useful lesson
+  for this project is verifier architecture, not quantization substitution:
+  `https://localmaxxing.com/api/leaderboard?hfId=Qwen%2FQwen3.6-35B-A3B&limit=20`.
+- vLLM's XPU hardware page validates Intel Arc Pro B-series and recommends
+  nearby Qwen MoE models, but it does not make this Quark W8A8 Qwen3.6 path a
+  generic upstream solved case:
+  `https://docs.vllm.ai/en/stable/models/hardware_supported_models/xpu/`.
+- `vllm-xpu-kernels` release notes now call out MoE grouped-GEMM policy updates
+  for Xe2/Battlemage, FP8 tuning, and small-K behavior. We should diff those
+  heuristics against the current local path before hand-writing another kernel:
+  `https://github.com/vllm-project/vllm-xpu-kernels/releases`.
+- Intel's XPU vLLM container notes claim persistent MoE GEMM plus fused
+  activation reduced kernel bubbles and gave Qwen3-30B-A3B a `2.6x` end-to-end
+  improvement. That is close enough to our model family to justify a direct
+  transplant/reimplementation study:
+  `https://github.com/intel/ai-containers/blob/main/vllm/0.10.2-xpu.md`.
+- Intel's grouped-GEMM tuning issue emphasizes realistic MoE route skew:
+  a few experts get many tokens while many experts get very few. This matches
+  our routecapture data and reinforces real-route autotuning over uniform
+  synthetic benchmarking:
+  `https://github.com/intel/intel-xpu-backend-for-triton/issues/6389`.
+- The Intel GPU inference paper frames oneDNN INT8 GEMM as an attainable BMG
+  roofline and notes that small-matrix cases are especially sensitive to launch
+  overhead. That points toward launch fusion, persistent command paths, and
+  route-class scheduling rather than scale/precision shortcuts:
+  `https://arxiv.org/html/2508.06753v2`.
+- The public Qwen3.6 vLLM warning thread shows the model resolves through
+  Qwen3.5 MoE classes and hybrid page/block constraints. This is a reminder to
+  audit Gated DeltaNet / hybrid-attention state when adding speculation or
+  static decode lanes:
+  `https://discuss.vllm.ai/t/warning-while-serving-qwen-qwen3-6-35b-fp8/2570`.
+
+Additional larger bets to keep visible:
+
+1. **Port Intel's persistent MoE schedule into the Quark W8A8 path.**
+   Treat the Intel container claim as a target design, not a black box:
+   persistent worker, grouped GEMM, fused activation, real-route skew, and no
+   kernel bubbles. First gate is a routecapture harness with exact bytes versus
+   current `xpu_fused_moe`; second gate is a disabled live sidecar return path.
+
+2. **Diff and replay upstream Xe2 grouped-GEMM heuristics.**
+   Pull the latest `vllm-xpu-kernels` MoE grouped-GEMM policy changes into a
+   branch and replay our captured layer-9 cases. If the policy alone improves
+   the current XPU path, it is a lower-risk win than new ESIMD code. If not,
+   the diff still gives tile/shape clues for the custom path.
+
+3. **Build a B70 INT8 roofline ledger.**
+   For each token stage, collect queue timestamps, XMX/DPAS counters where
+   available, bytes moved, active experts, and achieved INT8 throughput versus
+   oneDNN roofline. The goal is to stop optimizing by feel: every bigger patch
+   should target a named gap in the ledger.
+
+4. **Create an offline route-skew autotuner.**
+   Feed thousands of real route windows into candidate schedules:
+   oneDNN packed grouped GEMM, current XPU grouped GEMM, persistent MoE,
+   route-class layerlets, and hot-expert replication. Export a tiny runtime
+   decision table keyed by layer, active-expert count, max rows, and route
+   skew. This preserves math while avoiding one-size-fits-all scheduling.
+
+5. **Make speculation a target-verified product feature, not a benchmark hack.**
+   Public `>200 tok/s` Qwen3.6 rows strongly suggest MTP/DFlash-style paths are
+   the fastest route to the numeric goal. For us, a proposer can be lower
+   precision or separate only if the current Quark W8A8 target verifies and
+   commits every emitted token. Required work: transactional KV, transactional
+   GDN/linear-attention state, accepted-token ledger, rollback tests, and
+   quality parity hashes.
+
+6. **Use spare VRAM for target-owned branch farming.**
+   With four B70s, test whether spare capacity can verify multiple draft
+   continuations in parallel under the current target model. This is more
+   radical than normal MTP: branch candidates are discarded unless the target
+   confirms them, so quality is preserved. It may only pay off after lower-TP
+   or replicated-weight lanes reduce collective overhead.
+
+7. **Re-evaluate TP topology as a latency problem, not just a capacity problem.**
+   TP4 may fit comfortably but can make every token pay more collectives.
+   Run TP2, asymmetric TP2+replica, and hot-expert replicated layouts with the
+   current INT8 model and full 32K KV budget. If TP2 is faster for c1, use the
+   remaining cards for replicas, branch farming, or aggregate lanes.
+
+8. **Promote packed weights to a signed runtime artifact.**
+   If oneDNN `acb` or a custom tile layout wins, make the transformed expert
+   weights a reproducible load-time artifact with source safetensor checksum,
+   scale checksum, layout version, and parity proof. This spends VRAM/disk for
+   latency without changing numerical quality.
+
+9. **Separate the c1 latency lane from the production aggregate lane.**
+   A production server may want TP4, large context, and high concurrency; the
+   record-chasing single-user lane may want fixed shapes, lower TP, replicated
+   hot experts, and target speculation. Keep both lanes quality-gated, but do
+   not force one launch configuration to solve both objectives.
+
+10. **Send a maintainer-grade B70 W8A8 MoE packet upstream.**
+    Package current exact rows, live ABI descriptors, route windows, oneDNN
+    byte-exact fixtures, local patches, Localmaxxing links, and a concrete
+    `>200 tok/s` budget. This is the best chance of getting Intel/vLLM eyes on
+    the exact bottleneck instead of another generic "B70 is slow" issue.
+
 ## Live ABI Sidecar Checkpoint And Bolder Queue
 
 Added after the disabled-by-default live ABI smoke and a fresh Localmaxxing /

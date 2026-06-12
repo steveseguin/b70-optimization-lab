@@ -6,6 +6,19 @@ Date: 2026-06-12
 
 2026-06-12 notes update:
 
+- Added a post-discussion larger-bets addendum to
+  `notes/2026-06-12-qwen36-next-bigger-bets.md`. The new section records a
+  fresh Localmaxxing/XPU/MoE source scan and keeps the interpretation explicit:
+  public Qwen3.6 rows above `200 tok/s` are mostly speculative/MTP or lower
+  precision, so for the current Quark W8A8 INT8 goal the lesson is
+  target-verified architecture, not a quantization substitution. New ideas
+  now tracked include transplanting Intel's persistent MoE schedule, diffing
+  latest Xe2 grouped-GEMM heuristics, building a B70 INT8 roofline ledger,
+  offline route-skew autotuning, target-verified speculative transactions with
+  GDN state safety, spare-VRAM branch farming, TP2/asymmetric latency lanes,
+  signed packed-weight artifacts, split c1/aggregate production lanes, and an
+  upstream maintainer-grade B70 W8A8 MoE packet.
+
 - Added a live-ABI-to-sidecar planning artifact for the next no-quality-loss
   oneDNN integration step. `scripts/qwen36-live-abi-sidecar-plan.py` consumes
   the disabled-by-default live ABI smoke JSONL records and emits a concrete
