@@ -6,6 +6,26 @@ Date: 2026-06-12
 
 2026-06-12 notes update:
 
+- Added `scripts/qwen36-w8a8-offset-abi-smoke.py`, the generated
+  `data/qwen36-w8a8-offset-abi-smoke-20260612cw.{json,md}` report, and a
+  "W8A8 Offset ABI Smoke And Bigger Bets 20260612cw" section to
+  `notes/2026-06-12-qwen36-next-bigger-bets.md`. The accepted endpoint on
+  `18080` was not stopped or changed. The installed extension executes only
+  the base W8A8 INT8 grouped GEMM; the stable
+  `build/lib.linux-x86_64-cpython-312` candidate executes base plus offset
+  W8A8 with matching tiny-smoke checksum `1452.126831`; the archived
+  pre-sidecar candidate executes active-offset too; the sidecar-probe build
+  aborts with signal `6` and is not safe to promote. Local source now has an
+  env-gated offset path (`VLLM_XPU_W8A8_USE_OFFSETS=1`) in
+  `/home/steve/src/vllm-xpu-kernels/vllm_xpu_kernels/fused_moe_interface.py`;
+  the patch note is
+  `patches/vllm-xpu-kernels-qwen36-w8a8-offset-path-20260612cw.md`. Next gate:
+  a narrow offset-only endpoint A/B using the stable offset-capable extension,
+  isolated cache, provenance sentinels, p512/o512 c1 speed, and quality
+  canaries, followed by immediate restore if neutral/slower.
+
+2026-06-12 notes update:
+
 - Added `scripts/qwen36-quark-int8-xpu-kernel-path-audit.py` plus a "Kernel
   Path Audit And Bigger Bets 20260612cv" section to
   `notes/2026-06-12-qwen36-next-bigger-bets.md`. This was a static/runtime

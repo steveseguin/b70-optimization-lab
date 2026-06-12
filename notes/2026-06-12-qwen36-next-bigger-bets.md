@@ -29,6 +29,143 @@ Current speed anchor:
   MoE/kernel architecture improvement. Launch flags alone are unlikely to get
   there.
 
+## W8A8 Offset ABI Smoke And Bigger Bets 20260612cw
+
+Added after isolating the local `vllm-xpu-kernels` W8A8 INT8 grouped-GEMM
+extension candidates. This is an ABI and backlog update only. The accepted
+endpoint on `18080` was not stopped or changed during the smoke.
+
+What changed locally:
+
+- Added `scripts/qwen36-w8a8-offset-abi-smoke.py`, which loads each extension
+  candidate in a separate child process so a bad kernel can abort without
+  killing the whole report.
+- Added an env-gated local source hook in
+  `/home/steve/src/vllm-xpu-kernels/vllm_xpu_kernels/fused_moe_interface.py`:
+  `VLLM_XPU_W8A8_USE_OFFSETS=1` builds an exclusive prefix-sum offset vector
+  from `rows_per_expert` and calls
+  `cutlass_grouped_gemm_w8a8_int8_offsets_interface` for INT8 GEMM1/GEMM2 when
+  the loaded extension exports that symbol. With the env var unset or the
+  symbol missing, the existing base W8A8 path is used.
+- Recorded the source hook as a patch note instead of a raw diff because the
+  local `vllm-xpu-kernels` checkout already contains unrelated diagnostic
+  changes in the same file.
+
+Smoke findings:
+
+- Installed extension:
+  `/home/steve/src/vllm-xpu-kernels/vllm_xpu_kernels/_xpu_C.abi3.so` executes
+  the base W8A8 INT8 op, but does not export the offset or active-offset op.
+- Stable build candidate:
+  `build/lib.linux-x86_64-cpython-312/vllm_xpu_kernels/_xpu_C.abi3.so`
+  executes both base and offset W8A8 INT8 ops. The tiny synthetic checksum is
+  identical for base and offset: `1452.126831`.
+- Archived pre-sidecar candidate:
+  `build/temp-before-onednn-grouped-20260612064136/_xpu_C.abi3.so` executes
+  base, offset, and active-offset with the same checksum.
+- Sidecar-probe candidate:
+  `build/qwen36-sidecar-probe-20260612/_xpu_C.abi3.so` aborts with signal `6`
+  for base, offset, and active-offset. Do not promote or benchmark that build
+  until it is rebuilt or fixed.
+
+Decision:
+
+- The next no-quality-loss diagnostic lane is offset-only, using the stable
+  `build/lib.linux-x86_64-cpython-312` candidate and
+  `VLLM_XPU_W8A8_USE_OFFSETS=1`.
+- Active-offset is not discarded, but it is blocked behind a clean rebuild and
+  exact route-fixture tensor comparison. One archived build can execute it,
+  while the sidecar-probe build aborts.
+- Endpoint testing should be a single narrow A/B: accepted baseline versus
+  offset-only overlay, same cache hygiene, same p512/o512 c1 benchmark, same
+  provenance sentinels, then quality canaries. If the offset path is neutral or
+  slower, reject it quickly.
+
+Bigger, bolder ideas to keep in the queue:
+
+1. **Offset-only endpoint bakeoff as a cheap gate.**
+   This is not expected to produce `2x`, but it proves whether eliminating
+   row-count reconstruction inside the grouped-GEMM wrapper matters at all. A
+   fast rejection saves time before deeper kernel work.
+
+2. **Rebuild active-offset from clean source with a reproducible ABI matrix.**
+   The active-offset interface is closer to the desired c1 path because it can
+   skip empty experts explicitly. It needs a clean build artifact, symbol list,
+   child-process smoke, route-fixture tensor comparison, and only then an
+   endpoint run.
+
+3. **Dedicated c1 W8A8 MoE island.**
+   Stop treating this as a generic grouped-GEMM problem. The common target is
+   one decode token, topk=8, `hidden_size=2048`,
+   `moe_intermediate_size=512`, TP-local packed weights/scales, and many empty
+   experts. A dedicated fused island can remove remap, two quant launches, two
+   generic grouped GEMMs, activation, gather, and temporary allocation churn
+   from the one-token fast lane while preserving identical math.
+
+4. **Persistent expert-resident service inside the worker.**
+   A long-lived SYCL/Level Zero worker loop could keep hot expert descriptors,
+   scratch buffers, and command lists resident. The Python/vLLM path would feed
+   route descriptors and pointers through a small ring buffer instead of
+   rebuilding launch work per token.
+
+5. **Route-class generated kernels with exact fallback.**
+   Use accepted route traces to compile a handful of kernels for route classes:
+   low-union, repeated hot tuple, broad-route, and cold fallback. Runtime class
+   selection changes only scheduling and layout; selected experts and weights
+   stay target-owned.
+
+6. **Expert duplication as a latency budget.**
+   VRAM headroom should buy latency. Duplicate hot experts, hot pairs, or
+   packed route classes on multiple cards so the common c1 path avoids a slow
+   shard or collective. Cold routes fall back to the current exact path.
+
+7. **No-collective single-user fast lane.**
+   Investigate a c1 lane that keeps the active dense path and hot MoE subset on
+   one primary card or fewer cards, then reconciles only when needed. This is
+   bolder than TP2 because the goal is to remove per-token TP collectives from
+   the common path, not just repartition the same graph.
+
+8. **Whole-token command-list replay.**
+   For stable decode buckets, capture a patchable Level Zero command-list
+   sequence spanning MoE, attention, residual, normalization, logits, and
+   sampler boundaries. The quality condition is exact same token/logits; the
+   speed hypothesis is fewer host submissions and less stream dependency
+   jitter.
+
+9. **Target-verified branch farming after state transactions.**
+   Speculation is allowed only if the same Quark W8A8 target verifies emitted
+   tokens and KV/GDN/sampler state can be committed or rolled back cleanly.
+   Spare cards could evaluate target-owned branches, not lower-quality draft
+   guesses.
+
+10. **No-server lower-bound runner.**
+    Build a minimal c1 runner that reuses captured hidden states, route IDs,
+    weights, and KV state to measure the real device-side lower bound without
+    OpenAI serving, multiprocessing, scheduler, or HTTP result-path overhead.
+
+11. **Intel stack challenge packet.**
+    Package the route fixture, checksums, symbol matrix, current `~100 tok/s`
+    baseline, and exact desired shape into an upstream `vllm-xpu-kernels` issue
+    or maintainer benchmark request. Ask for a persistent W8A8 MoE target for
+    Qwen3.6 A3B on B70, not generic "XPU is slow" advice.
+
+Immediate next order:
+
+1. Commit the offset ABI smoke and patch note.
+2. Build an overlay launcher using the stable offset-capable extension.
+3. Stop the accepted endpoint only for a narrow diagnostic run.
+4. Launch with `VLLM_XPU_W8A8_USE_OFFSETS=1`, isolated cache root, and no
+   sidecar build.
+5. Run provenance, p512/o512 c1 speed, and quality canaries.
+6. Restore accepted baseline immediately if the offset lane fails or is slower.
+
+Artifacts for this pass:
+
+- `scripts/qwen36-w8a8-offset-abi-smoke.py`
+- `data/qwen36-w8a8-offset-abi-smoke-20260612cw.json`
+- `data/qwen36-w8a8-offset-abi-smoke-20260612cw.md`
+- `patches/vllm-xpu-kernels-qwen36-w8a8-offset-path-20260612cw.md`
+
 ## Kernel Path Audit And Bigger Bets 20260612cv
 
 Added after a static/runtime audit of the current Quark W8A8 INT8 XPU MoE path.
