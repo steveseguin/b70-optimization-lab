@@ -600,3 +600,57 @@ Next best technical target:
    scheduling.
 3. Keep model-forward-only sync as the safe live regression gate for future
    kernel changes; avoid global sync profiles unless a label filter is active.
+
+## 2026-06-12 CPU MoE Flight Recorder
+
+Script:
+
+- `scripts/qwen36-moe-flight-recorder.py`.
+
+Purpose:
+
+- Convert real route-capture JSONL into layer/window flight records without
+  requiring GPUs or interrupting the accepted backend.
+- Rank layers by hot-expert coverage, window active expert counts, repeated
+  top-k tuple share, and route-window shape. This is the input needed before
+  writing persistent MoE kernels, hot-expert replication, tile-native W8A8
+  repack caches, or EP/TP simulations.
+
+Routecapture5 exact-ID run:
+
+```bash
+python3 scripts/qwen36-moe-flight-recorder.py \
+  data/qwen36-quark-int8-tp4-routecapture5-routes-rank0-20260611.jsonl \
+  --out data/qwen36-quark-int8-tp4-routecapture5-flight-record-20260612w.json \
+  --markdown-out data/qwen36-quark-int8-tp4-routecapture5-flight-record-20260612w.md \
+  --require-topk-ids \
+  --window-size 16 \
+  --hot-sizes 8,16,32,64 \
+  --topn 16
+```
+
+Artifacts:
+
+- `data/qwen36-quark-int8-tp4-routecapture5-flight-record-20260612w.json`.
+- `data/qwen36-quark-int8-tp4-routecapture5-flight-record-20260612w.md`.
+
+Findings from the limited layer-8/layer-20 capture:
+
+- `254` records, `2` layers, `127` decode records per layer.
+- Layer `8`: `117` aggregate active experts; top-16 experts cover `54.8%`
+  of assignments; top-32 cover `75.5%`; p50 window active experts is `44`.
+- Layer `20`: `125` aggregate active experts; top-16 experts cover `53.4%`
+  of assignments; top-32 cover `72.9%`; p50 window active experts is `46`.
+- p50 top-k tuple share is only `6.25%`, so whole-tuple replay is not the main
+  opportunity. Expert-set locality is the opportunity.
+
+Implication:
+
+- A blind global hot-expert remap is still rejected by earlier replay data, but
+  layer/window-specific tile-native packing or hot expert replication has enough
+  route locality to justify a deeper fixture. For these two layers, a top-32
+  hot set captures roughly three quarters of assignments while touching only
+  `12.5%` of the experts.
+- The next route capture should cover the highest-priority layers `9`, `14`,
+  `21`, and all prompt classes, then feed the same flight recorder before any
+  persistent-kernel or EP/TP implementation work.

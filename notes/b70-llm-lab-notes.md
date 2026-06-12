@@ -255,6 +255,17 @@ Current Qwen3.6 INT8 direction:
     budget: the graph model forward is the dominant c1 wall, so the next real
     speed target is graph-aware W8A8 MoE replay/kernel work or exact
     target-verified speculation, not frontdoor or queue cleanup.
+30. Added `scripts/qwen36-moe-flight-recorder.py`, a CPU-only route JSONL
+    analyzer for graph-aware MoE planning. The routecapture5 exact-ID flight
+    record covers layers `8` and `20`: layer `8` top-16 experts cover `54.8%`
+    of assignments and top-32 cover `75.5%`; layer `20` top-16 cover `53.4%`
+    and top-32 cover `72.9%`. Median active experts per 16-token route window
+    are `44` and `46`, while full top-k tuple repeat share is only `6.25%`.
+    This argues for layer/window-specific tile-native W8A8 packing, persistent
+    expert scheduling, or hot-expert replication simulations, not whole-route
+    memoization or global remap. Artifacts:
+    `data/qwen36-quark-int8-tp4-routecapture5-flight-record-20260612w.json`
+    and `.md`.
 
 ## 2026-05-10 MiniMax AutoRound Addendum
 
