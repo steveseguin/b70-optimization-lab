@@ -725,6 +725,95 @@ Artifacts for this pass:
 - `data/qwen36-quark-int8-tp4-accepted-provenance-after-routeoverlay-20260612co.json`
 - `data/qwen36-quark-int8-tp4-accepted-quality-after-routeoverlay-nothink-smoke-20260612co.json`
 
+## Route Fixture Diagnostic 20260612cr
+
+Added after the follow-up route-overlay work. This pass separated two things
+that were previously conflated:
+
+- The accepted compiled replay path still needs a lower-level route capture
+  mechanism.
+- Eager route fixtures are enough to understand the c1 decode route shape,
+  even though eager timing is not comparable.
+
+Measured facts:
+
+- Compiled route-counter diagnostic `20260612cp2` stayed near the accepted
+  timing envelope at `96.828 tok/s` corrected p512/o128 and
+  `10.249 ms/token` vLLM decode, but route overlay still produced
+  `captures=0`.
+- The new counters show why: route capture was registered for all `40` MoE
+  layers and called during the 512-token prefill rows (`capture_calls=80` per
+  prefill row), but no one-token decode calls reached the Python route hook.
+  Decode is being served by compiled replay that bypasses Python callbacks.
+- Eager route-fixture diagnostic `20260612cq2` was intentionally slow:
+  `10.718 tok/s` corrected p512/o32 and `90.374 ms/token` vLLM decode. Do not
+  compare that speed to accepted graph runs.
+- The eager route fixture captured `5440` route summaries over `76` boundary
+  rows with `31` route hashes. Top repeated experts across the small sample
+  included `117`, `43`, `134`, `20`, `189`, `182`, `158`, and `116`.
+- The important shape lesson: c1 decode is not a hot-batched grouped-GEMM
+  problem. Each layer is fundamentally one token routed to topk-8 unique
+  experts. The c1 kernel target is a persistent single-token/topk-8 W8A8 MoE
+  island with resident weights/scratch and minimal dispatch overhead.
+
+Decisions:
+
+1. **For accepted graph attribution, Python hooks are done.**
+   The next route ledger must be graph-output based or live inside the XPU
+   MoE custom-op path. Python callbacks can collect eager fixtures but not
+   accepted decode replay routes.
+
+2. **Lead with single-token/topk-8 MoE, not hot batching.**
+   oneDNN grouped matmul and route-class kernels still matter, but the first
+   c1 target should optimize the topk-8 single-token route shape, avoiding
+   per-token primitive rebuilds and launch/fence bubbles.
+
+3. **Keep hot expert replication as secondary.**
+   Expert replication may help aggregate throughput, branch verification, or
+   multi-token speculative lanes. It is less likely to be the primary c1 fix
+   when each layer has one row per selected expert.
+
+4. **Use eager route fixtures as kernel input.**
+   Captured eager route summaries are acceptable input for offline kernel
+   fixture design, as long as any serving integration is later proven by exact
+   accepted-output gates.
+
+New near-term implementation ideas:
+
+1. **Custom-op route side channel.**
+   Add an optional diagnostic output from the XPU MoE custom op: compact route
+   hash, active expert count, and max rows per expert. Keep it disabled in
+   production and avoid CPU copies inside the replay path.
+
+2. **Single-token topk-8 W8A8 microbench.**
+   Build a fixture that takes one hidden vector plus eight routed experts for
+   a representative layer and measures current vLLM/XPU, oneDNN grouped
+   matmul, and a hand-packed persistent path.
+
+3. **Resident expert scratch ring.**
+   Preallocate and reuse per-layer scratch for the topk-8 route shape so
+   accepted decode does not rebuild small intermediates every token.
+
+4. **Layer subset first.**
+   Start with two or three representative layers from the route fixture before
+   attempting all 40 MoE layers. Gate each layer with exact tensor compare.
+
+5. **Graph-safe route hash only.**
+   For the next accepted diagnostic, capture only route hashes/counts, not
+   full IDs, so the probe is less likely to perturb graph replay.
+
+Artifacts for this pass:
+
+- `data/qwen36-quark-int8-tp4-routefixture-diagnostic-summary-20260612cr.json`
+- `data/qwen36-quark-int8-tp4-routeoverlay-counters-20260612cp2.log`
+- `data/qwen36-quark-int8-tp4-routeoverlay-counters-p512o128-metrics-20260612cp2.json`
+- `data/qwen36-quark-int8-tp4-routeoverlay-eager-20260612cq2.log`
+- `data/qwen36-quark-int8-tp4-routeoverlay-eager-p512o32-metrics-20260612cq2.json`
+- `data/qwen36-quark-int8-tp4-routeoverlay-eager-summary-20260612cq2.json`
+- `data/qwen36-quark-int8-tp4-accepted-restored-after-routefixture-20260612cr.log`
+- `data/qwen36-quark-int8-tp4-accepted-provenance-after-routefixture-20260612cr.json`
+- `data/qwen36-quark-int8-tp4-accepted-quality-after-routefixture-nothink-smoke-20260612cr.json`
+
 ## Worker/Async Output Timeline 20260612bz
 
 Implemented the first immediate queue item from the backlog refresh: object-ID

@@ -52,8 +52,19 @@ Result:
   lower in the MoE runner or custom-op path, immediately after expert
   selection and before/inside the shared MoE execution path.
 
+Follow-up 20260612cr:
+
+- Added route-overlay health counters: registered layers, capture calls,
+  overlay candidates, file candidates, and stream-capture skips.
+- The compiled diagnostic confirmed the hooks are registered and called during
+  prefill, but one-token decode replay bypasses Python callbacks.
+- An eager route-fixture run captured decode routes. That route data is useful
+  for offline kernel design, but eager speed is not comparable to the accepted
+  graph path.
+
 Related artifacts:
 
 - `data/qwen36-quark-int8-tp4-routeoverlay-diagnostic-summary-20260612co.json`
 - `data/qwen36-quark-int8-tp4-routeoverlay-freshcache-20260612cn3.log`
 - `data/qwen36-quark-int8-tp4-routeoverlay-freshcache-p512o128-metrics-20260612cn3.json`
+- `data/qwen36-quark-int8-tp4-routefixture-diagnostic-summary-20260612cr.json`

@@ -6,6 +6,29 @@ Date: 2026-06-12
 
 2026-06-12 notes update:
 
+- Added a "Route Fixture Diagnostic 20260612cr" section to
+  `notes/2026-06-12-qwen36-next-bigger-bets.md`. The compiled route-counter
+  run `20260612cp2` measured `96.828 tok/s` corrected p512/o128 and confirmed
+  Python route hooks are registered for all 40 MoE layers and called during
+  prefill, but decode replay bypasses those callbacks (`captures=0`,
+  `overlay_candidates=0` for one-token decode). The eager route-fixture run
+  `20260612cq2` captured `5440` route summaries over `76` boundary rows but
+  was intentionally slow (`10.718 tok/s`) and is not a speed candidate. The
+  main route-shape lesson is that c1 decode is a single-token/topk-8 W8A8 MoE
+  problem, not primarily a hot-batched expert pileup. New direction: graph-safe
+  route hashes or custom-op side channel for accepted replay, then a
+  single-token/topk-8 MoE microbench with resident weights/scratch and exact
+  tensor compare. Accepted TP4 was restored on `18080` afterward and passed
+  provenance sentinels `4752`, `11436`, `198` plus the no-thinking quality
+  smoke. New artifacts:
+  `data/qwen36-quark-int8-tp4-routefixture-diagnostic-summary-20260612cr.json`,
+  `data/qwen36-quark-int8-tp4-routeoverlay-eager-summary-20260612cq2.json`,
+  `data/qwen36-quark-int8-tp4-accepted-provenance-after-routefixture-20260612cr.json`,
+  and
+  `data/qwen36-quark-int8-tp4-accepted-quality-after-routefixture-nothink-smoke-20260612cr.json`.
+
+2026-06-12 notes update:
+
 - Added a "Route Overlay Diagnostic And Bolder Queue Refresh 20260612co"
   section to `notes/2026-06-12-qwen36-next-bigger-bets.md`. This is a
   diagnostic/backlog update, not a promoted speed result. The route-overlay

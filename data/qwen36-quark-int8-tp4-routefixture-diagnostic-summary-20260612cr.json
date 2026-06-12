@@ -1,0 +1,65 @@
+{
+  "date": "2026-06-12",
+  "model": "nameistoken/Qwen3.6-35B-A3B-Quark-W8A8-INT8",
+  "hardware": "4x Intel Arc Pro B70 32GB",
+  "purpose": "route capture diagnosis and c1 decode route-fixture collection; not a promoted speed result",
+  "compiled_route_counter_run": {
+    "session": "qwen36-tp4-routeoverlay-counters-20260612cp2",
+    "log": "data/qwen36-quark-int8-tp4-routeoverlay-counters-20260612cp2.log",
+    "metrics": "data/qwen36-quark-int8-tp4-routeoverlay-counters-p512o128-metrics-20260612cp2.json",
+    "corrected_decode_tok_s_after_first": 96.82844319391666,
+    "vllm_decode_ms_per_generation_token": 10.248951890389435,
+    "boundary_rows": 576,
+    "registered_layer_count_per_row": 40,
+    "capture_calls_on_prefill_rows": 80,
+    "overlay_candidates": 0,
+    "captures": 0,
+    "finding": "Python route hooks are registered and called during prefill, but one-token decode in the accepted compiled replay bypasses Python route capture."
+  },
+  "eager_route_fixture_run": {
+    "session": "qwen36-tp4-routeoverlay-eager-20260612cq2",
+    "log": "data/qwen36-quark-int8-tp4-routeoverlay-eager-20260612cq2.log",
+    "metrics": "data/qwen36-quark-int8-tp4-routeoverlay-eager-p512o32-metrics-20260612cq2.json",
+    "summary": "data/qwen36-quark-int8-tp4-routeoverlay-eager-summary-20260612cq2.json",
+    "corrected_decode_tok_s_after_first": 10.71809703246396,
+    "vllm_decode_ms_per_generation_token": 90.37425462156534,
+    "boundary_rows": 76,
+    "captures": 5440,
+    "route_hash_count": 31,
+    "global_top_experts_top16": [
+      [117, 200],
+      [43, 194],
+      [134, 192],
+      [20, 180],
+      [189, 128],
+      [182, 126],
+      [158, 112],
+      [116, 110],
+      [151, 106],
+      [75, 102],
+      [141, 100],
+      [33, 92],
+      [60, 92],
+      [88, 92],
+      [89, 90],
+      [243, 86]
+    ],
+    "finding": "Eager route fixtures captured decode routes. For c1 decode, each layer is fundamentally a single-token topk-8 sparse expert call; hot batching is not the primary c1 shape."
+  },
+  "accepted_restore_after_diagnostic": {
+    "session": "qwen36-tp4-accepted-restored-after-routefixture-20260612cr",
+    "port": 18080,
+    "log": "data/qwen36-quark-int8-tp4-accepted-restored-after-routefixture-20260612cr.log",
+    "provenance_json": "data/qwen36-quark-int8-tp4-accepted-provenance-after-routefixture-20260612cr.json",
+    "quality_json": "data/qwen36-quark-int8-tp4-accepted-quality-after-routefixture-nothink-smoke-20260612cr.json",
+    "provenance_ok": true,
+    "quality_smoke_ok": true,
+    "sentinels": [4752, 11436, 198]
+  },
+  "decisions": [
+    "Do not compare eager route-fixture speed to the accepted graph path.",
+    "For route attribution under accepted graph replay, route capture must be graph-output or custom-op based, not Python callback based.",
+    "For c1 speed, prioritize a persistent single-token/topk-8 W8A8 MoE path over hot-batch grouped GEMM alone.",
+    "Keep hot-expert replication as a secondary memory-for-latency idea for aggregate or multi-token speculative branches, not as the lead c1 fix."
+  ]
+}
