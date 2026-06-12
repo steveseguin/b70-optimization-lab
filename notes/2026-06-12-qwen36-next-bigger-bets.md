@@ -6073,3 +6073,140 @@ Items added to the active try list:
     experiments, or llama.cpp Q8 if an exact comparable model exists. Exclude
     4-bit, AWQ, Qwen3.5, and any benchmark that cannot pass route-replay and
     endpoint quality gates.
+
+## 2026-06-12 Expanded Bigger-Bet Backlog
+
+User direction: add the current ideas to the durable notes and keep looking for
+larger moves. Constraints remain unchanged: current Qwen3.6 35B Quark W8A8
+INT8 target, no 4-bit/AWQ/Qwen3.5 detours, no unverified emission path, and
+single-request decode speed is the first metric.
+
+Fresh source checks:
+
+- Exact-model Localmaxxing API query still returns one public B70/vLLM row:
+  `tokSOut=99.42835812273452`, `ttftMs=76.45406149094924`,
+  `tokSTotal=196.3252731420561`, c1, 32K context, 4x Arc Pro B70:
+  `https://localmaxxing.com/api/leaderboard?hfId=nameistoken%2FQwen3.6-35B-A3B-Quark-W8A8-INT8&hardwareName=Arc%20Pro%20B70&engineName=vllm&limit=10`.
+- Broader FP8 Qwen3.6 rows show the public `>200 tok/s` path uses DFlash and
+  CUDA/Blackwell, not our exact INT8/B70 stack. Treat it as evidence that
+  target-verified speculation can cross the target, not as a directly
+  comparable quality or hardware result:
+  `https://localmaxxing.com/api/leaderboard?hfId=Qwen%2FQwen3.6-35B-A3B-FP8&limit=10`.
+- Intel/vLLM's Arc Pro B blog describes the MoE failure mode directly:
+  launch overhead, gate dependency stalls, static route imbalance, and a
+  persistent zero-gap kernel with dynamic work assignment. This validates the
+  resident-worker / persistent-MoE direction:
+  `https://vllm.ai/blog/2025-11-11-intel-arc-pro-b`.
+- Intel Triton-XPU grouped-GEMM issue `#6389` says realistic route skew and
+  tile configuration are core tuning inputs. Keep using routecapture windows as
+  kernel fixtures, not synthetic uniform routing:
+  `https://github.com/intel/intel-xpu-backend-for-triton/issues/6389`.
+- oneDNN grouped memory / grouped GEMM is explicitly an experimental MoE path
+  with profiling support. The next resident island should use oneDNN profiling
+  rather than only host wall-clock timing:
+  `https://uxlfoundation.github.io/oneDNN/dev_guide_experimental.html`.
+- Public B70 community repos point at Intel `llm-scaler` / `intel/vllm` B70
+  builds as the canonical stack to compare against, and specifically call out a
+  persistent zero-gap MoE GEMM kernel. Test or transplant the kernel idea, but
+  do not change the target model:
+  `https://github.com/Hal9000AIML/arc-pro-b70-ubuntu-gpu-speedup-bugfixes`.
+- DFlash's Qwen3.6 drafter docs require target-hidden-state handling patches
+  and pair the drafter with `Qwen/Qwen3.6-35B-A3B`. Any DFlash attempt here
+  must be a proposer only; the current Quark W8A8 target must verify before
+  emission:
+  `https://huggingface.co/z-lab/Qwen3.6-35B-A3B-DFlash`.
+- vLLM's MoE kernel design docs show a modular route for prepare/finalize,
+  expert kernels, quantized activation formats, and async backends. A resident
+  XPU island should eventually be shaped as a modular expert/backend instead
+  of an ad hoc Python-side branch:
+  `https://docs.vllm.ai/en/latest/design/moe_kernel_features/`.
+
+Bolder things to try:
+
+1. **Transplant or reimplement Intel's persistent zero-gap MoE schedule.**
+   Build a tiny B70/Qwen3.6 route-window harness that mimics the blog design:
+   one persistent loop, dynamic atomic block assignment, real route skew, and
+   Quark W8A8 output parity. If the isolated harness beats resident oneDNN, it
+   becomes the custom layerlet target; if not, keep oneDNN as the production
+   sidecar.
+
+2. **Create a rank-local MoE command ring.**
+   Instead of Python calling a custom op per MoE boundary, keep a per-rank
+   resident worker with packed weights, scratch buffers, route descriptors, and
+   queue objects already alive. The live path submits compact descriptors and
+   waits for a completion fence. This attacks the control-plane floor directly.
+
+3. **Make a tile-native W8A8 checkpoint artifact.**
+   Convert Quark expert tensors at model-load time into the fastest proven B70
+   layout, with checksums mapping back to the original safetensors. This
+   preserves quality because the math and scales stay identical; only physical
+   layout changes. The artifact should be reproducible and invalidated by
+   source tensor checksum changes.
+
+4. **Build a modular vLLM XPU MoE backend instead of patching one call path.**
+   Use the vLLM modular MoE interfaces as the long-term shape: XPU prepare,
+   XPU W8A8 experts, XPU finalize, with the resident oneDNN/custom worker under
+   the expert implementation. That gives upstream reviewers a real integration
+   point and lets fallback remain clean.
+
+5. **Hot-expert partial replication across TP ranks.**
+   Route traces show active experts are sparse. Simulate and then test a layout
+   where each TP rank owns its normal shard plus replicated hot experts for a
+   few layers. The goal is fewer cross-rank stalls and better local bandwidth
+   without changing token math. Gate by exact route replay and endpoint
+   canaries.
+
+6. **TP2 or single-card c1 lane if memory permits.**
+   TP4 may be a capacity solution with unavoidable c1 collective overhead.
+   Run a strict current-model memory probe for TP2 and single-card service
+   lanes at smaller and full 32K contexts. If a lower-TP lane beats TP4 latency,
+   production can use more independent replicas for aggregate throughput.
+
+7. **Target-owned speculative transaction log.**
+   After resident pointer/COW work exists, implement speculation as a target
+   transaction: copy request state, propose tokens, verify with the current
+   Quark W8A8 model, commit only accepted tokens, and log parent hash,
+   candidates, verifier top-k/logprob evidence, accepted length, and rollback
+   reason. This is the clean path to `>200 tok/s` without quality handwaving.
+
+8. **DFlash/MTP/n-gram bakeoff under one verifier harness.**
+   Once target transactions are available, compare all proposer types under the
+   same quality ledger. The metric is effective verified tok/s, not drafter
+   tok/s. DFlash is interesting because public Qwen3.6 rows cross `200 tok/s`,
+   but it is disqualified unless the current Quark model verifies emissions.
+
+9. **OneDNN Graph / Level Zero command-list supernode.**
+   Prebuild a fixed-shape MoE dependency chain for one layer bucket:
+   remap/quant, GEMM1, activation/quant, GEMM2, gather/finalize. Patch only
+   pointers, scales, and route offsets. If command-list replay removes host
+   wait overhead while staying bit-exact, it may be faster to productionize
+   than a new ESIMD kernel.
+
+10. **Full token critical-path ledger with queue profiling.**
+    Add low-overhead timing for attention, router, route packing, MoE island,
+    collectives, scheduler metadata copies, sampler, and OpenAI/frontdoor. Use
+    oneDNN/SYCL queue profiling where possible. The resident layer is now
+    microsecond-scale; the endpoint is still about `10 ms/token`, so the next
+    large patch should be guided by a ranked wall-time ledger.
+
+11. **Intel-maintainer performance packet.**
+    Package exact route windows, small tensors, raw expected bytes, environment
+    manifest, Localmaxxing row, accepted/rejected patches, and a `>200 tok/s`
+    target budget. This turns the problem into a concrete B70 W8A8 MoE target
+    for Intel/vLLM instead of a vague slow-endpoint complaint.
+
+12. **Production split between quality-certain and speed-experimental lanes.**
+    Keep the current `~100 tok/s`, 32K, quality-gated Quark service as the
+    conservative production answer while the latency lane experiments with
+    resident MoE, lower TP, and verifier transactions. Promotion requires the
+    same sentinels, prompt-class quality gates, route replay, and reliability
+    soak.
+
+Ideas to explicitly avoid for this goal:
+
+- 4-bit, AWQ, Qwen3.5, or different-model shortcuts.
+- Publishing drafter-only throughput as if it were target-verified output.
+- Exact-route kernel caches keyed by ordered top-k tuples; prior trace analysis
+  showed poor reuse. Cache by layer/shape and generate broader route classes
+  instead.
+- More flag sweeps without a token-level bottleneck ledger.

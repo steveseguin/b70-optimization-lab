@@ -4,6 +4,19 @@ Date: 2026-06-12
 
 ## Qwen3.6 35B-A3B Quark W8A8 INT8
 
+2026-06-12 notes update:
+
+- Expanded `notes/2026-06-12-qwen36-next-bigger-bets.md` with a fresh
+  higher-risk idea backlog after the full resident gather gate. The new section
+  keeps the current-model/no-quality-loss constraints explicit, records public
+  Localmaxxing and XPU/MoE source signals, and adds larger paths to test:
+  Intel-style persistent zero-gap MoE scheduling, rank-local command rings,
+  tile-native W8A8 checkpoint artifacts, modular vLLM XPU MoE backend work,
+  hot-expert partial replication, lower-TP c1 lanes, verifier-owned speculative
+  transactions, DFlash/MTP/n-gram proposer bakeoffs under the current Quark
+  verifier, oneDNN Graph / Level Zero command-list supernodes, and a
+  maintainer-ready B70 W8A8 MoE performance packet.
+
 2026-06-12 continuation:
 
 - Extended the resident oneDNN MoE GEMM-pair runner with mutable grouped-offset
