@@ -148,6 +148,135 @@ External signals added to this pass:
   row is still `~99 tok/s`; anything above `200 tok/s` is currently a design
   clue, not a promoted comparable result for this model/posture.
 
+## Bolder Opportunity Refresh 20260612bq
+
+Added after the boundary timing discussion and the latest Localmaxxing refresh.
+This is a backlog, not a claim. The hard constraint remains unchanged: current
+Quark W8A8 INT8 Qwen3.6 35B-A3B output is the quality owner, and no 4-bit/AWQ
+or Qwen3.5 shortcut belongs in the promoted path.
+
+Fresh signals:
+
+- Exact current-model Localmaxxing still has only one public exact-model row on
+  B70/vLLM: `99.428 tok/s` for
+  `nameistoken/Qwen3.6-35B-A3B-Quark-W8A8-INT8`.
+- The broader Qwen/B70/vLLM refresh still tops out at `99.770 tok/s` for the
+  same Quark W8A8 INT8 run family. This supports treating `~100 tok/s` as the
+  honest accepted baseline, not a bad frontdoor artifact.
+- Overall B70 rows above this are useful only as architecture clues: aggregate
+  batch lanes, Gemma/MiniMax, lower precision, shorter contexts, or speculative
+  paths. They do not replace the current-model 8-bit target.
+- vLLM's current MoE design docs emphasize modular all2all/EP backends,
+  backend-specific quantization formats, async overlap, and multiple experts
+  kernels. That matches our next topology question: the B70 path probably needs
+  a real mixed TP/EP or route-aware MoE backend, not just another wrapper around
+  the current fused-MoE call.
+- oneDNN has experimental grouped memory/grouped matmul support aimed at MoE
+  workloads, including an execution-time max-group-size hint and Intel GPU
+  optimized functionality. This keeps the oneDNN sidecar path worth pursuing,
+  but only if it becomes a resident execute-and-compare path with real
+  token-step accounting.
+
+Items to keep in the immediate "things to try" queue:
+
+1. **EngineCore wall-time ledger.**
+   Add env-gated timing around `EngineCore.step()` and `step_with_batch_queue`:
+   scheduler schedule, execute submit, future wait, sample fallback, aborts,
+   and scheduler update. The boundary run left an apparent `~4.39 ms/token`
+   gap between endpoint decode and rank-0 no-sync forward; this is the next
+   highest-value measurement.
+
+2. **All-rank timing and slow-rank attribution.**
+   Repeat the timing run with all ranks sampled, then compare rank-local
+   forward, attention, MoE, and all-reduce spans. If one rank consistently sets
+   the token pace, attack placement, route skew, PCIe locality, or affinity
+   before writing a new kernel.
+
+3. **Synchronized step probe without promotion.**
+   Run one short sync-on timing session to locate hidden device work, but do
+   not use sync timings as a speed benchmark. The previous sync model-only
+   proxy inflated model-forward to `~8.433 ms/token`, which is useful for
+   diagnosis and dangerous for headline results.
+
+4. **oneDNN execute-and-compare gate.**
+   Promote the sidecar from descriptor creation to one captured layer execute:
+   same live route-window tensors, current-kernel output checksum, oneDNN
+   output checksum, max/mean diff, and fallback to current output. Only after
+   parity should it enter a timing run.
+
+5. **TP2 plus replicas as a latency topology.**
+   Test whether TP4 collectives are the single-request limiter. If TP2 is
+   faster for c1, spend the remaining two cards on replicas, verification
+   branches, or aggregate throughput instead of forcing every token through
+   TP4.
+
+6. **c1 no-server model-runner lane.**
+   Build the smallest in-process fixed-shape decode loop around the accepted
+   model runner. The goal is a ceiling measurement for vLLM scheduler/API
+   overhead with exact token parity, not a new production architecture yet.
+
+7. **Verifier-state transaction proof.**
+   Stop timing speculation until a minimal copy-on-write state fork exists for
+   KV pages, Gated DeltaNet/hybrid state, scheduler counters, sampler state,
+   and accepted-token ledgers. If it cannot prove exact rollback/commit, it is
+   not a no-quality-loss path.
+
+Bigger, bolder ideas to keep visible:
+
+1. **Mixed TP/EP current-model topology.**
+   Keep dense/shared work tensor-parallel where needed, but make MoE experts
+   expert-parallel or placement-aware so sparse expert work stops paying
+   full-TP collectives every token. This is a larger vLLM/XPU backend change,
+   but it attacks the "four GPUs slower than expected" problem structurally.
+
+2. **Rank-local persistent MoE island.**
+   For hot MoE layers, create a resident rank-local worker/command ring with
+   prepacked weights, preallocated scratch, mutable grouped offsets, fused
+   activation/top-k weighting, and no per-token primitive rebuild. Treat the
+   oneDNN route-window result as the fixture source.
+
+3. **Whole-token command-list supernode.**
+   Capture a fixed c1 decode bucket from attention through sampler into a
+   Level Zero command sequence where only pointers, route offsets, and KV
+   indices are patched per token. This is risky but directly targets host
+   launch latency and scattered framework boundaries.
+
+4. **Target-owned self-speculation.**
+   Instead of trusting a separate weaker drafter, let spare cards run future
+   target-model branches against transactional state. Only tokens accepted by
+   the current target state commit. This is expensive in VRAM, but we have
+   little c1 use for idle cards if TP2/replica topology wins.
+
+5. **Route-class code generation.**
+   Generate a few route-window kernel/layout classes from captured traces
+   rather than one generic MoE policy. Examples: low-active-expert, high-skew
+   hot expert, wide balanced route, and dense fallback. Numerical math stays
+   identical; only scheduling/layout changes.
+
+6. **B70 roofline plus maintainer challenge packet.**
+   Package route-window tensors, per-stage timing, VTune/Level Zero counters,
+   oneDNN and current-kernel timings, PCIe/CCL topology, and exact quality
+   gates into a repro that an Intel/vLLM maintainer can run. The goal is to
+   make "why only 100 tok/s?" answerable with counters, not anecdotes.
+
+7. **Strict high-fidelity engine bakeoff with an adapter, not a detour.**
+   Try OpenVINO/oneDNN GenAI, llama.cpp SYCL, llm-scaler, or a minimal custom
+   runner only if the artifact is current-model W8A8/BF16-verifier-equivalent
+   and passes the same prompt/token gates. Use other engines to steal topology
+   ideas before accepting a service switch.
+
+8. **Production split by objective.**
+   Plan for two lanes if the data supports it: a c1 latency lane with fixed
+   shapes/topology and a separate aggregate throughput lane with larger
+   batching. Both lanes must share the same quality, provenance, soak, and
+   recovery gates.
+
+New artifacts from this refresh:
+
+- `data/localmaxxing-qwen36-quark-w8a8-int8-exact-refresh-20260612bq.json`
+- `data/localmaxxing-qwen-b70-vllm-leaderboard-20260612bq.json`
+- `data/localmaxxing-b70-overall-leaderboard-20260612bq.json`
+
 ## Boundary Timing Gate 20260612bp
 
 Ran the first maintenance-window boundary timing session with the current

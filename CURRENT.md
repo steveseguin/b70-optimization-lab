@@ -6,6 +6,25 @@ Date: 2026-06-12
 
 2026-06-12 notes update:
 
+- Added a fresh "Bolder Opportunity Refresh 20260612bq" section to
+  `notes/2026-06-12-qwen36-next-bigger-bets.md` after the boundary timing
+  discussion. The refreshed backlog keeps the immediate next items explicit:
+  EngineCore wall-time timing, all-rank slow-rank attribution, oneDNN
+  execute-and-compare, TP2+replica latency topology, c1 no-server ceiling,
+  and verifier-state transactions before more speculation timing. The bigger
+  queue now includes mixed TP/EP current-model topology, a rank-local
+  persistent MoE island, whole-token Level Zero command-list capture,
+  target-owned self-speculation, route-class code generation, a B70 roofline
+  maintainer packet, strict high-fidelity engine bakeoff, and split latency/
+  aggregate production lanes. Fresh public Localmaxxing artifacts confirm the
+  exact/current-model B70/vLLM public row remains `99.428 tok/s`, while the
+  broader Qwen/B70/vLLM class is still effectively `~99.770 tok/s`; higher B70
+  rows remain different-model, aggregate, lower-precision, or speculative
+  design clues. New artifacts:
+  `data/localmaxxing-qwen36-quark-w8a8-int8-exact-refresh-20260612bq.json`,
+  `data/localmaxxing-qwen-b70-vllm-leaderboard-20260612bq.json`, and
+  `data/localmaxxing-b70-overall-leaderboard-20260612bq.json`.
+
 - Ran the boundary-timing maintenance gate on the current accepted Quark W8A8
   INT8 TP4 endpoint, then restored the normal accepted backend. Diagnostic
   throughput stayed at baseline: p512/o256/c1 corrected streaming decode
