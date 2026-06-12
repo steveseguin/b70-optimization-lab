@@ -6,6 +6,21 @@ Date: 2026-06-12
 
 2026-06-12 notes update:
 
+- Added a "Bigger/Bolder Refresh 20260612by" section to
+  `notes/2026-06-12-qwen36-next-bigger-bets.md`. It records the latest idea
+  backlog after the async-output and TP2 truth-serum findings: tiny D2H token
+  copy isolation, device-timeline attribution for `async_copy_ready_event`,
+  official Intel XPU stack bakeoff, EP-lite topology, rank/device rotation
+  with route ledgers, a resident oneDNN grouped-MoE execute-and-compare path,
+  persistent W8A8 MoE island, hot-expert replication, hybrid TP/EP scheduling,
+  a one-token resident c1 lane, whole-token Level Zero replay, target-owned
+  speculative branch farming, same-model engine adapter shootout, and a B70
+  maintainer challenge packet. Fresh external signals came from Intel's XPU
+  container notes, vLLM XPU docs, Localmaxxing exact-model API state, and
+  community B70 fused-MoE notes. The promoted baseline remains unchanged at
+  about `100 tok/s`; these are next experiments and architecture bets, not
+  wins yet.
+
 - Ran the TP2 latency truth-serum for the current Qwen3.6 Quark W8A8 INT8
   checkpoint. TP2 used GPUs `0,1`, 32K context, Quark quantization, and the
   same p512/o256 c1 streaming measurement shape. It is not a win: TP2 repeated

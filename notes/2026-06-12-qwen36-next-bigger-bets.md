@@ -282,6 +282,118 @@ External signals added to this pass:
   row is still `~99 tok/s`; anything above `200 tok/s` is currently a design
   clue, not a promoted comparable result for this model/posture.
 
+## Bigger/Bolder Refresh 20260612by
+
+Added after the latest user review. This section is deliberately broader than
+the immediate diagnostic queue, but every item keeps the hard quality rule:
+the current Quark W8A8 INT8 Qwen3.6 35B-A3B target remains the owner of any
+promoted output. No 4-bit/AWQ or Qwen3.5 detours.
+
+Fresh external signals checked:
+
+- Intel's newer XPU container notes explicitly call out the areas that map to
+  our local bottlenecks: persistent MoE GEMM, fused activation, decode
+  attention optimizations, data parallelism, pipeline parallelism, and expert
+  parallelism. This is a strong signal that the next major gain is probably a
+  backend/topology change, not a launch-flag tweak.
+  Source: `https://github.com/intel/ai-containers/blob/main/vllm/0.10.2-xpu.md`
+  and `https://github.com/intel/ai-containers/blob/main/vllm/0.14.1-xpu.md`.
+- vLLM's XPU docs expose the relevant upstream hooks to study or adapt:
+  custom ops, fused MoE modular kernels, fusion passes, model-runner v2,
+  hybrid KV cache, profiling, benchmark sweeps, and optimization levels.
+  Source: `https://docs.vllm.ai/en/v0.18.0/models/hardware_supported_models/xpu/`.
+- Community B70 notes again point at MoE token-generation fusion as the sort
+  of change that materially moves single-stream latency on Battlemage. The
+  llama.cpp fused MoE TG example is a different quant/runtime path, but it is
+  still a useful architectural clue for a vLLM/XPU W8A8 MoE island.
+  Source: `https://github.com/Hal9000AIML/arc-pro-b70-ubuntu-gpu-speedup-bugfixes`.
+- Localmaxxing exact-model public state is unchanged: the current exact-model
+  B70/vLLM row is still `99.428 tok/s` at 32K context, c1, Quark W8A8 INT8.
+  Source: `https://localmaxxing.com/api/benchmarks?hfId=nameistoken%2FQwen3.6-35B-A3B-Quark-W8A8-INT8&limit=20`.
+
+Near-term ideas to keep queued:
+
+1. **Tiny D2H token-copy isolation.**
+   Benchmark shape `[1,1]` and small batched token tensors from XPU to pinned
+   CPU outside vLLM. The async-output timing showed a `~3.8 ms` event wait,
+   but the copied payload is only one `int32`. If the isolated copy is tiny,
+   the wait is upstream queue/dependency exposure, not the token ferry itself.
+
+2. **Device timeline for `async_copy_ready_event`.**
+   Add Level Zero or torch event markers around sampler output, D2H token copy,
+   worker response send, and EngineCore future completion. The current host
+   labels are enough to identify the symptom, not the dependency chain.
+
+3. **Official Intel XPU stack bakeoff.**
+   Reproduce the exact model and gates on a clean Intel-maintained container
+   or branch with persistent MoE and EP support. Treat this as a benchmark
+   comparison, not an immediate service switch, until exact provenance and the
+   Qwen no-thinking quality suite pass.
+
+4. **EP-lite topology screen.**
+   Test whether sparse MoE work can be made expert-parallel or placement-aware
+   while dense/shared parts remain TP. A bad TP4 topology can leave four B70s
+   doing more synchronization than useful c1 work.
+
+5. **Rank-to-card rotation plus route ledger.**
+   Repeat the all-rank timing with device order/affinity rotated and route
+   skew logged per rank. If the slow rank maps to a physical card or route
+   class, the solution is placement or replication before kernel surgery.
+
+6. **oneDNN grouped-MoE resident execute path.**
+   Continue from descriptor/probe mode to a resident execute-and-compare path:
+   prepacked weights, persistent scratch, route-offset patching, current-output
+   checksum, candidate-output checksum, max/mean diff, automatic fallback.
+
+Bigger architecture bets:
+
+1. **VLLM/XPU persistent MoE island.**
+   Build a dedicated W8A8 MoE token-generation island for Qwen3.6 route shapes:
+   resident weights, persistent scratch, fused activation/top-k weighting,
+   grouped GEMM, and no per-token primitive rebuild. This is the closest local
+   analog to the persistent-MoE direction Intel is advertising.
+
+2. **Memory-for-latency hot expert replicas.**
+   Use the large remaining per-card VRAM budget to duplicate the hottest expert
+   shards/layers where route traces show repeated skew. This preserves weights
+   exactly and buys latency by avoiding remote pressure or rank imbalance.
+
+3. **Hybrid TP/EP scheduler for current model.**
+   Stop treating TP4 as one global setting. Dense projections, attention, MoE,
+   and logits may want different sharding. A layer/type-aware scheduler could
+   use TP where reductions are cheap and EP/replication where sparsity makes
+   all-card sync wasteful.
+
+4. **One-token resident runner lane.**
+   Build a c1-specific runner that keeps KV, sampler state, graph buckets,
+   output buffers, and request state resident. It can still use vLLM's loader
+   and model code, but it should skip generic request scheduling for the
+   latency lane. Exact token parity with the promoted endpoint is the gate.
+
+5. **Whole-token Level Zero replay.**
+   Capture a fixed-shape token step as a patchable command-list sequence across
+   attention, MoE, residuals, sampler, and output copy. This is risky, but it
+   is the boldest route to removing launch/fence bubbles while keeping math
+   unchanged.
+
+6. **Target-owned speculative branch farm.**
+   Once transactional state exists, use spare cards or replicas for future
+   branches that are verified by the current target model before commit. The
+   proposer can be weak, but emitted tokens stay target-owned.
+
+7. **Same-model engine adapter shootout.**
+   Try OpenVINO/oneDNN GenAI, llm-scaler, SGLang if XPU-ready, and llama.cpp
+   only behind an adapter that proves byte-equivalent W8A8 or BF16-verifier
+   parity. The purpose is stealing topology/kernel ideas, not silently changing
+   model quality.
+
+8. **B70 maintainer challenge packet.**
+   Prepare a compact repro with route-window tensors, exact command line,
+   kernel/oneDNN comparison results, xpu-smi and PCIe/NUMA topology, timing
+   summaries, Localmaxxing row IDs, quality gates, and the `5 ms/token` target
+   budget. This is the best way to get useful upstream help on "why only
+   `~100 tok/s` on 4x B70?"
+
 ## Bolder Opportunity Refresh 20260612bq
 
 Added after the boundary timing discussion and the latest Localmaxxing refresh.
