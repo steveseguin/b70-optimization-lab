@@ -669,3 +669,20 @@ vLLM/XPU FP8 work:
     Xe-Forge-style kernel optimization, whole-block fusion, topology-aware
     latency sidecars, tile-native hotset cache artifacts, stricter BF16/logit
     quality gates, and a B70 failure-forensics matrix.
+26. Ran the grouped-GEMM M-scaling timing screen in two clean XPU windows.
+    Broad rows `32,64,128,256,512,1024` are recorded in
+    `data/qwen36-quark-int8-tp4-grouped-gemm-mscaling-timing-20260612am.md`;
+    small rows `8,16,24,32,64,128` are recorded in
+    `data/qwen36-quark-int8-tp4-grouped-gemm-smallm-timing-20260612an.md`.
+    The key result is a near-fixed grouped-GEMM floor around `93-110 us`:
+    `gemm1` rises from `0.086 TOPS` at `M=8` to `10.272 TOPS` at `M=1024`,
+    while `gemm2` rises from `0.045 TOPS` to `5.193 TOPS`. This confirms the
+    c1 decode problem is small-M underutilization and fixed launch/kernel cost,
+    not a lack of arithmetic work. Decision: do not spend more time on
+    split-launch hot/cold variants. The next no-quality-loss implementation
+    target is a one-layer persistent/fused MoE replay that beats the `~93 us`
+    small-M GEMM floor with exact numeric parity; if that fails, prioritize
+    resident-state target-verified speculation to amortize a target forward
+    across multiple accepted tokens. Both benchmark windows restored cleanly:
+    final accepted backend provenance passed exact sentinels and p512/o128
+    measured `99.845 tok/s` corrected with `9.941 ms/token` decode.

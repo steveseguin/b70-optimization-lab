@@ -2189,3 +2189,100 @@ Public signals checked for this refresh:
     oneCCL/OFI, and graph settings with a tiny accepted smoke. The output is a
     known-good production stack and a list of combinations that increase
     device-lost risk.
+
+## 2026-06-12 M-Scaling Timing Result
+
+Artifacts:
+
+- Broad M-scaling timing:
+  `data/qwen36-quark-int8-tp4-grouped-gemm-mscaling-timing-20260612am.json`
+  and `.md`.
+- Small-M timing:
+  `data/qwen36-quark-int8-tp4-grouped-gemm-smallm-timing-20260612an.json`
+  and `.md`.
+- First restore after broad M-scaling:
+  - Log:
+    `data/qwen36-quark-int8-tp4-accepted-restored-after-mscaling-20260612am.log`.
+  - Provenance:
+    `data/qwen36-quark-int8-tp4-accepted-provenance-after-mscaling-20260612am.json`.
+  - Speed:
+    `data/qwen36-quark-int8-tp4-accepted-restored-after-mscaling-speed-p512o128-20260612am.json`.
+- Final restore after small-M screen:
+  - Log:
+    `data/qwen36-quark-int8-tp4-accepted-restored-after-smallm-20260612an.log`.
+  - Provenance:
+    `data/qwen36-quark-int8-tp4-accepted-provenance-after-smallm-20260612an.json`.
+  - Speed:
+    `data/qwen36-quark-int8-tp4-accepted-restored-after-smallm-speed-p512o128-20260612an.json`.
+
+Broad M-scaling result:
+
+| stage | M | mean us | TOPS |
+|---|---:|---:|---:|
+| `gemm1` | 32 | 111.628 | 0.309 |
+| `gemm1` | 64 | 112.938 | 0.605 |
+| `gemm1` | 128 | 107.196 | 1.281 |
+| `gemm1` | 256 | 102.215 | 2.667 |
+| `gemm1` | 512 | 93.805 | 5.731 |
+| `gemm1` | 1024 | 106.699 | 10.272 |
+| `gemm2` | 32 | 110.462 | 0.154 |
+| `gemm2` | 64 | 108.577 | 0.313 |
+| `gemm2` | 128 | 101.541 | 0.671 |
+| `gemm2` | 256 | 101.566 | 1.340 |
+| `gemm2` | 512 | 101.423 | 2.682 |
+| `gemm2` | 1024 | 105.324 | 5.193 |
+
+Small-M result:
+
+| stage | M | mean us | TOPS |
+|---|---:|---:|---:|
+| `gemm1` | 8 | 100.506 | 0.086 |
+| `gemm1` | 16 | 93.443 | 0.180 |
+| `gemm1` | 24 | 92.881 | 0.271 |
+| `gemm1` | 32 | 92.897 | 0.361 |
+| `gemm1` | 64 | 93.287 | 0.720 |
+| `gemm1` | 128 | 93.285 | 1.439 |
+| `gemm2` | 8 | 93.032 | 0.045 |
+| `gemm2` | 16 | 93.586 | 0.090 |
+| `gemm2` | 24 | 93.702 | 0.134 |
+| `gemm2` | 32 | 93.099 | 0.180 |
+| `gemm2` | 64 | 93.438 | 0.359 |
+| `gemm2` | 128 | 93.972 | 0.715 |
+
+Restoration evidence:
+
+- Both benchmark windows exited cleanly. No device-lost event was observed.
+- After the broad M-scaling screen, the accepted backend restored to `/health`
+  in `57 s`, provenance passed all exact sentinels, and p512/o128 measured
+  `99.604 tok/s` corrected with `9.962 ms/token` decode.
+- After the small-M screen, the accepted backend restored to `/health` in
+  `57 s`, provenance passed all exact sentinels, and p512/o128 measured
+  `99.845 tok/s` corrected with `9.941 ms/token` decode.
+
+Interpretation:
+
+- The XPU grouped-GEMM path has a near-fixed latency floor around
+  `93-110 us` for these Qwen3.6 W8A8 MoE shapes.
+- Effective TOPS rises roughly with `M` because the launch/kernel floor is
+  being amortized. `gemm1` rises from `0.086 TOPS` at `M=8` to `10.272 TOPS`
+  at `M=1024`; `gemm2` rises from `0.045 TOPS` to `5.193 TOPS`.
+- This explains why hotrep split launches lost: reducing rows per rank makes
+  the fixed cost dominate harder.
+- For single-user decode, the model pays this small-M floor repeatedly across
+  MoE layers. A plain route reshuffle or hot/cold two-launch design will not
+  halve latency.
+- The no-quality-loss speed path is now narrower:
+  1. collapse the fixed MoE cost with persistent/fused expert workers,
+  2. make one dispatch handle hotset plus cold fallback without extra launches,
+  3. or use exact target-verified speculation so each expensive target forward
+     accepts multiple tokens and moves the workload into larger effective `M`.
+
+Next implementation implication:
+
+- Start with a one-layer persistent/fused MoE replay, not another endpoint flag
+  sweep.
+- The first target should prove it can beat the `~93 us` per-GEMM floor on
+  `M=8,16,32` while matching `xpu_fused_moe` numerically.
+- If no small-M kernel beats the floor, shift effort to resident-state
+  target-verified speculation because larger effective `M` clearly improves
+  arithmetic utilization.
