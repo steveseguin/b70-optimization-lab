@@ -1898,3 +1898,109 @@ New bigger, bolder ideas to keep visible:
     model-forward timing, and Localmaxxing context into a small repro for Intel
     and vLLM. The ask should be precise: persistent or tile-native W8A8 MoE for
     skewed Qwen3.6 A3B decode on Arc Pro B70.
+
+## 2026-06-12 Route-Exact Grouped-GEMM Roofline Packet
+
+New script:
+
+- `scripts/qwen36-gemm-roofline-from-timing.py`.
+
+Purpose:
+
+- Convert existing route-exact grouped-GEMM event timings into an offline
+  roofline packet: GEMM shapes, active experts, estimated math operations,
+  active-weight memory lower bound, full-table memory upper bound, effective
+  TOPS, and implied bandwidth.
+- This is a CPU-only analysis pass over timing JSON. It does not allocate XPU
+  memory or interrupt the accepted backend.
+
+Tooling boundary:
+
+- `unitrace`, `oneprof`, and VTune are not installed in this environment.
+- `xpu-smi` EU, bandwidth, and engine metrics require elevated MEI access; the
+  current user does not have passwordless sudo.
+- `intel_gpu_top` cannot see the current Xe devices from this user context.
+- Therefore this packet cannot prove DPAS/XMX instruction use directly. It is a
+  shape/timing roofline estimate from already-recorded kernel timings.
+
+Command:
+
+```bash
+python3 scripts/qwen36-gemm-roofline-from-timing.py \
+  --timing-json data/qwen36-quark-int8-tp4-hotrep-route-plan-gemm-timing-20260612ah.json \
+  --output-json data/qwen36-quark-int8-tp4-hotrep-route-plan-gemm-roofline-20260612ak.json \
+  --markdown-out data/qwen36-quark-int8-tp4-hotrep-route-plan-gemm-roofline-20260612ak.md
+```
+
+Artifacts:
+
+- `data/qwen36-quark-int8-tp4-hotrep-route-plan-gemm-roofline-20260612ak.json`.
+- `data/qwen36-quark-int8-tp4-hotrep-route-plan-gemm-roofline-20260612ak.md`.
+
+Key numbers:
+
+- `exact_full/gemm1`:
+  - mean timing: `97.138 us`.
+  - mean shape: `M=128, K=2048, N=256`.
+  - mean active experts: `43.4`.
+  - effective math throughput: `1.413 TOPS`.
+  - active-weight lower-bound bandwidth: `0.245 TB/s`.
+  - full-table upper-bound bandwidth: `1.419 TB/s`.
+- `exact_full/gemm2`:
+  - mean timing: `92.556 us`.
+  - mean shape: `M=128, K=128, N=2048`.
+  - mean active experts: `43.4`.
+  - effective math throughput: `0.725 TOPS`.
+  - active-weight lower-bound bandwidth: `0.133 TB/s`.
+  - full-table upper-bound bandwidth: `0.754 TB/s`.
+- `hotrep_one_launch_rankmax/gemm1`:
+  - mean timing: `100.965 us`.
+  - mean shape: `M=32, K=2048, N=256`.
+  - effective math throughput: `0.337 TOPS`.
+- `hotrep_one_launch_rankmax/gemm2`:
+  - mean timing: `96.072 us`.
+  - mean shape: `M=32, K=128, N=2048`.
+  - effective math throughput: `0.175 TOPS`.
+- `hotrep_two_launch_rankmax/cold` drops to roughly `0.050 TOPS` for `gemm1`
+  and `0.026 TOPS` for `gemm2`, because the cold fallback is tiny
+  (`~5` rows).
+
+Interpretation:
+
+- These effective TOPS are far below what a B70-class INT8 path should deliver
+  if it were compute-saturating. The route-exact grouped-GEMM bottleneck is
+  consistent with small-M/skewed-expert underutilization, launch/control
+  overhead, a non-ideal kernel path, or some mix of those.
+- The hotrep negative is now explained more clearly: shrinking the table also
+  shrinks `M` per rank, and effective TOPS collapses further. Memory allocation
+  pressure improved, but compute utilization got worse.
+- This strengthens the decision to avoid more split-launch hot/cold variants.
+  The credible no-quality-loss path is one of:
+  1. persistent expert workers that keep skewed small-M work resident,
+  2. tile-native W8A8 repack plus one-dispatch cold queue,
+  3. grouped-GEMM policy/kernel work for real route distributions,
+  4. or exact target-verified speculation that accepts multiple target tokens
+     per expensive forward.
+
+Next concrete ideas from this packet:
+
+1. **Privilege/tooling lane for real counters.**
+   Install or enable `unitrace`/VTune/oneprof, or grant MEI telemetry access to
+   collect EU active/stall/idle, memory bandwidth, and DPAS/XMX counters on the
+   route-replay GEMM harness.
+2. **Grouped-GEMM shape amplification screen.**
+   Benchmark synthetic exact-shape variants with larger `M` buckets
+   (`128`, `256`, `512`, `1024`) but the same `K/N` and expert skew. If TOPS
+   scales sharply with `M`, persistent batching/work aggregation is the right
+   kernel direction.
+3. **Small-M kernel policy search.**
+   Compare current grouped GEMM against per-expert GEMM, packed batched GEMM,
+   and persistent grouped GEMM for the observed route windows. The cold rows are
+   too small for a normal grouped-GEMM launch to be viable.
+4. **One-layer persistent MoE proof.**
+   Start with one layer and one captured window. The success metric is not only
+   lower microseconds; it must raise effective TOPS materially while matching
+   `xpu_fused_moe` numerically.
+5. **Upstream perf packet target.**
+   Include the roofline packet with route windows, hotrep negative, and exact
+   provenance sentinels when asking Intel/vLLM for persistent W8A8 MoE work.

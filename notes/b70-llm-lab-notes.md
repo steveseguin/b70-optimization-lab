@@ -641,3 +641,17 @@ vLLM/XPU FP8 work:
     latency controls, XMX/DPAS utilization proof, resident-state verifier
     speculation, exact 8-bit engine bakeoff, and an upstreamable B70/Qwen3.6
     perf packet.
+24. Added a CPU-only roofline summarizer for the route-exact W8A8 grouped-GEMM
+    timing artifact: `scripts/qwen36-gemm-roofline-from-timing.py`. The new
+    roofline packet
+    `data/qwen36-quark-int8-tp4-hotrep-route-plan-gemm-roofline-20260612ak.md`
+    explains why the hotrep grouped-GEMM direction lost: exact full `gemm1`
+    reaches only `1.413 TOPS` on mean shape `M=128,K=2048,N=256`, exact full
+    `gemm2` reaches only `0.725 TOPS` on `M=128,K=128,N=2048`, and hotrep
+    rankmax drops further to `0.337` / `0.175 TOPS` because per-rank `M` is
+    only `32`. The current environment lacks `unitrace`/VTune and MEI telemetry
+    privileges, so this is not a DPAS/XMX counter proof; it is a timing-derived
+    roofline estimate. Decision: more topology or split-launch hot/cold work is
+    unlikely to close the gap. The no-quality-loss speed path needs persistent
+    or tile-native W8A8 MoE for skewed small-M routes, real hardware counters,
+    grouped-GEMM small-M policy work, or exact target-verified speculation.
