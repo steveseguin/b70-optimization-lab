@@ -341,3 +341,15 @@ vLLM/XPU FP8 work:
 12. Do not promote `VLLM_XPU_INT8_MOE_MIXED_WORKSPACE=1` based only on isolated
     MoE microbench wins. The endpoint screen already rejected it for current
     production because decode speed did not improve and KV headroom dropped.
+13. Fresh Qwen3.6 Quark W8A8 verifier probes show that accepted graph
+    continuous decode and token-replay/refill verification can follow different
+    state trajectories. The strongest example is `repetitive_kernel_notes` at
+    output position `14`: accepted graph decode selects token `4752`
+    (`" unique"`) as top-1, while prompt-logprob/refill ranks it hundreds to
+    thousands of places behind token `6126` (`"PU"`). External re-prefill
+    sidecars are therefore diagnostics only. The next quality-preserving speed
+    path is resident-state verification: in-engine copy-on-write request/KV/GDN
+    state fork, transactional speculation logs, route-aware persistent MoE
+    layerlets, shape-exact tiny collective work, and a strict 8-bit engine
+    bakeoff. Detailed addendum and artifacts are in
+    `notes/2026-06-11-qwen36-aot-localmaxxing-and-runtime-screens.md`.

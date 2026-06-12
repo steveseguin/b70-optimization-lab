@@ -14911,3 +14911,178 @@ Bigger, bolder ideas added from this checkpoint:
       gaps, and tiny collective latency.
     - Smaller packets are more likely to get useful Intel/vLLM feedback than a
       monolithic "Qwen3.6 is slow" report.
+
+## Fresh Graph-State Verifier Evidence And V5 Ideas
+
+Ran the fresh accepted graph backend against prompt-logprob, rolling
+next-token, and continuous generated-token logprob probes. These used the
+restored accepted baseline
+`data/qwen36-quark-int8-tp4-accepted-restored-current-oracle-baseline-20260612i.json`.
+
+Artifacts:
+
+- `data/qwen36-quark-int8-tp4-graph-promptlogprob-window16-current-20260612j.json`
+- `data/qwen36-quark-int8-tp4-graph-promptlogprob-window16-current-20260612j.md`
+- `data/qwen36-quark-int8-tp4-graph-rolling-next-current-p32-20260612j.json`
+- `data/qwen36-quark-int8-tp4-graph-rolling-next-current-p32-20260612j.md`
+- `data/qwen36-quark-int8-tp4-graph-continuous-logprobs-p512o32-20260612j.json`
+- `data/qwen36-quark-int8-tp4-graph-promptlogprob-window32-current-20260612j.json`
+- `data/qwen36-quark-int8-tp4-graph-promptlogprob-window32-current-20260612j.md`
+
+Key observations:
+
+- Accepted continuous graph decode still matches the first 32 tokens of the
+  accepted baseline. The `baseline_match_all=false` field in the 32-token
+  continuous-logprob artifact is only the expected length difference against a
+  128-token baseline.
+- In `repetitive_kernel_notes`, accepted graph continuous decode selects token
+  `4752` (`" unique"`) at position `14` with logprob `-0.52549`; the no-graph
+  / rolling-reprefill token `6126` (`"PU"`) is rank 2 at `-2.08799`.
+- The prompt-logprob/refill verifier sees the same position completely
+  differently. In the 16-token window it ranks token `4752` at `612` with
+  logprob `-21.656`, while token `6126` is effectively certain at
+  `-0.000239`.
+- The rolling one-token verifier reproduces the no-graph path:
+  `natural_latency_plan` first differs at position `17`, expected `11436` but
+  generated `321`; `repetitive_kernel_notes` first differs at position `14`,
+  expected `4752` but generated `6126`.
+- The 32-token prompt-logprob window makes the mismatch even clearer:
+  `repetitive_kernel_notes` accepts only the first `5` tokens before drifting,
+  and at position `14` ranks accepted graph token `4752` at `1106`.
+
+Interpretation:
+
+- This is stronger than the earlier whitespace-tie streaming-input result. At
+  the `Intel X` branch, accepted graph decode and re-prefill are not close:
+  they prefer different tokens by many logprob points.
+- A sidecar that reconstructs state from token IDs by re-prefilling is not a
+  valid verifier for this Qwen3.6/GDN/MoE path. It would verify the no-graph /
+  re-prefill trajectory, not the live accepted graph trajectory.
+- The verifier-safe speculation path must run from resident model state:
+  in-engine request/KV/GDN-state fork, or an equivalent verifier-owned resident
+  lane. External prompt replay can remain a diagnostic, not the acceptance
+  authority.
+
+Immediate next implementation target:
+
+1. Build a k=1 resident-state oracle, not a re-prefill sidecar.
+   - Fork the scheduler/worker request row inside vLLM.
+   - Alias immutable prefix KV pages.
+   - Copy or alias the current GDN/Mamba recurrent/convolution state in a
+     scratch row.
+   - Score the known accepted next token.
+   - Free scratch blocks and assert the parent request's token IDs, block IDs,
+     and `num_computed_tokens` did not change.
+
+2. Add a first-diff state fingerprint before speed work resumes.
+   - For positions `14` and `17`, record graph/eager mode, token position,
+     top-k logits, block IDs, slot mapping, GDN state metadata, and cheap
+     per-layer hidden checksums.
+   - Start with graph-safe counters only; the earlier graph trace failures mean
+     every new field is also a graph-capture stability test.
+
+3. Keep paired runtime controls mandatory.
+   - Compare graph-spec to graph-no-spec, no-graph-spec to no-graph-no-spec,
+     and eager-spec to eager-no-spec.
+   - Do not compare a speculative no-graph artifact directly to the accepted
+     production graph artifact and call that a quality result.
+
+V5 bigger bets:
+
+1. **Transactional COW speculation.**
+   - Treat every speculative window as a transaction containing candidate
+     tokens, scratch KV pages, scratch GDN state, accepted count, replacement
+     token, and parent commit hash.
+   - The transaction is committed only after the Quark W8A8 verifier accepts
+     it. A replay tool should validate transaction logs offline.
+   - Why it matters: this turns "speculation did something" into a reproducible
+     state-machine contract.
+
+2. **Verifier-owned candidate tree.**
+   - Instead of only linear MTP/DFlash lookahead, let the proposer supply a
+     tiny branch tree around known near-tie positions.
+   - The resident Quark verifier scores the tree and commits the best exact
+     target path.
+   - This may improve accepted-token throughput on prompts with whitespace or
+     phrase-choice ties, while keeping final output target-model exact.
+
+3. **Per-layer divergence bisection.**
+   - Reproduce the first-diff prefixes through graph continuous decode,
+     no-graph compile, eager, prompt-logprob refill, and any future COW fork.
+   - Hash selected activations after each GDN/attention/MoE block until the
+     first divergent layer is located.
+   - This tells us whether the mismatch is GDN recurrent state, graph provider,
+     block table layout, or scheduler accounting.
+
+4. **Persistent B70 MoE layerlet.**
+   - Build one standalone layerlet with real captured routes, W8A8 grouped
+     GEMM, shared expert, residual add, and epilogue.
+   - Keep it outside vLLM until it beats the current kernel path on the exact
+     route distribution.
+   - This is the kernel-side path to a large single-request gain if
+     speculation takes longer.
+
+5. **Shape-exact collective roofline.**
+   - Extract the exact TP4 collectives left in the accepted graph and
+     microbench them as graph-captured kernels.
+   - Test reduce-scatter/all-gather replacements, root-assisted variants, and
+     fused RMS/epilogue collectives.
+   - The goal is to quantify the best possible no-spec single-token latency
+     before investing more scheduler work.
+
+6. **Hybrid TP/EP/hotset simulator before runtime surgery.**
+   - Use real route histograms to model TP4, TP2 plus replicated attention,
+     EP/TP hybrids, and hot-expert replication.
+   - Include 32K KV, scratch COW budget, and production headroom.
+   - Only implement the topology if the simulator shows a credible path above
+     `200 tok/s` single-request decode.
+
+7. **Tile-native 8-bit weight cache.**
+   - Convert Quark tensors once into the native tiled layout wanted by
+     `vllm-xpu-kernels` or a future SYCL/OpenVINO route, with checksums back
+     to the original 8-bit weights.
+   - This preserves quantization quality while reducing load-time repack and
+     decode locality costs.
+
+8. **Core-decode latency appliance.**
+   - Build a direct one-request runner using the same weights/kernels but
+     bypassing OpenAI serving, frontdoor streaming, and most queue logic.
+   - If it is much faster, production needs a dedicated low-latency lane. If it
+     is not, kernel/speculation remains the only realistic `2x` path.
+
+9. **Strict 8-bit engine bakeoff, no 4-bit detours.**
+   - Test only Qwen3.6 35B high-fidelity 8-bit candidates: current vLLM Quark
+     W8A8, native XPU W8A8 paths, OpenVINO/oneDNN GenAI if GDN/MoE support is
+     real, and any Q8/SYCL route that can preserve quality.
+   - Every candidate must pass exact canaries, logprob fingerprints at known
+     drift positions, repeat64, structured output, long-context needle, and
+     BF16/current-Quark comparisons.
+
+10. **Upstream packets with target numbers.**
+    - Split repros by failure class: graph-vs-refill state divergence,
+      graph-capture trace instability, W8A8 grouped-GEMM route skew, and tiny
+      collective latency.
+    - Include the current public `~99.7 tok/s` accepted result and the
+      `>200 tok/s` target so maintainers can judge whether a fix is meaningful.
+
+Fresh public signals checked for this addendum:
+
+- Localmaxxing exact-model row remains one public result:
+  `nameistoken/Qwen3.6-35B-A3B-Quark-W8A8-INT8` on 4x Arc Pro B70 at
+  `99.428 tok/s`.
+- The broader B70/Qwen leaderboard now includes the duplicate base-model row at
+  `99.770 tok/s` with peak VRAM captured, confirming our no-spec graph recipe
+  is already near the public easy-knob ceiling for this model/hardware family.
+- vLLM issues around Qwen3.6 MTP and prefix caching still show correctness and
+  stability hazards, especially with MTP, prefix cache, and hybrid Mamba/GDN
+  state. Treat public MTP/DFlash recipes as proposer ideas, not trusted output
+  paths, until the resident Quark verifier owns commit/rollback.
+
+Sources/leads:
+
+- `https://localmaxxing.com/api/leaderboard?hfId=nameistoken%2FQwen3.6-35B-A3B-Quark-W8A8-INT8&hwClass=DISCRETE_GPU&hardwareName=Intel%20Arc%20Pro%20B70&limit=20`
+- `https://localmaxxing.com/api/leaderboard?modelFamily=qwen&hardwareName=Intel%20Arc%20Pro%20B70&hwClass=DISCRETE_GPU&limit=50`
+- `https://github.com/vllm-project/vllm/issues/40756`
+- `https://github.com/vllm-project/vllm/issues/43559`
+- `https://github.com/vllm-project/vllm/issues/39809`
+- `https://docs.vllm.ai/en/stable/models/hardware_supported_models/xpu/`
