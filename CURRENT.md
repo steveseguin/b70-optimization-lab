@@ -6,6 +6,19 @@ Date: 2026-06-12
 
 2026-06-12 continuation:
 
+- Added a post-floor follow-up backlog to
+  `notes/2026-06-12-qwen36-next-bigger-bets.md`. The new section records a
+  fresh Localmaxxing API check, the local oneDNN grouped-memory capability
+  split, and larger exactness-preserving bets. Key additions: vendored-oneDNN
+  grouped-memory route replay with `ONEDNN_EXPERIMENTAL_GROUPED_MEMORY=ON`,
+  command-stream floor measurement, one-dispatch fake layerlet, PCIe/topology
+  and affinity c1 A/B, rank-local timing without synchronization pollution,
+  static prefix/state lane, hot-expert packed tile cache, verifier-service
+  boundary for speculation, B70 MoE micro-runtime, whole-model c1 runner,
+  expert-parallel latency lane, public XPU MoE challenge packet, and production
+  split by latency class. This is notes-only; no endpoint change or new public
+  benchmark claim was made.
+
 - Added an isolated W8A8 kernel-floor packet for layer-9 routecapture6 after
   stopping the accepted backend for a clean XPU window. Exact grouped GEMM is
   essentially flat across route-window sizes: window 1 averages

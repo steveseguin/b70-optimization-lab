@@ -3775,3 +3775,142 @@ Additional larger ideas to keep in the queue:
    Publish a minimal routecapture6 layer-9 W8A8 fixture with exact expected
    outputs and the `112-114 us` grouped-GEMM floor. This is specific enough
    for Intel/vLLM kernel owners to reproduce and improve.
+
+## 2026-06-12 Post-Floor Follow-up Ideas
+
+This section records the next ideas after the W8A8 floor packet and the latest
+public/API scan. It is notes-only; no endpoint change or new benchmark post is
+implied.
+
+Additional facts from the follow-up scan:
+
+- The exact Localmaxxing filter still has one public row for
+  `nameistoken/Qwen3.6-35B-A3B-Quark-W8A8-INT8` on 4x Arc Pro B70:
+  `cmq8yhxvo001ipb0149aoa79o`, `99.428 tok/s`, c1, 32K context. The broader
+  B70/Qwen/vLLM query still shows the same-family `Qwen/Qwen3.6-35B-A3B` row
+  at `99.770 tok/s`, but that remains a context clue rather than a replacement
+  for the exact model row.
+- The installed `/opt/intel/oneapi/dnnl/2026.0` headers do not expose
+  `dnnl_memory_desc_create_with_grouped_encoding` or
+  `DNNL_ARG_HINT_MAX_GROUP_SIZE` in this host image. The vendored oneDNN tree
+  under `vllm-xpu-kernels/third_party/oneDNN` does expose both. A true oneDNN
+  grouped-matmul experiment therefore needs an isolated vendored-oneDNN build
+  with grouped memory enabled, not a quick link against the installed oneAPI
+  oneDNN package.
+- oneDNN's public grouped-GEMM docs describe exactly the MoE shape we need:
+  variable token rows across expert groups, per-token source scales,
+  per-expert-column weight scales, and binary/SiLU post-op support:
+  `https://uxlfoundation.github.io/oneDNN/dev_guide_matmul.html`.
+- The oneDNN release notes say grouped memory and grouped matmul are
+  experimental, require `ONEDNN_EXPERIMENTAL_GROUPED_MEMORY=ON`, and have an
+  optimized Intel GPU implementation:
+  `https://github.com/uxlfoundation/oneDNN/releases`.
+- Intel's Triton-XPU grouped-GEMM issue reinforces that decode routing is
+  skewed and long-tailed, so routecapture distributions need to remain the
+  benchmark fixture:
+  `https://github.com/intel/intel-xpu-backend-for-triton/issues/6389`.
+- NVIDIA's cuDNN MoE grouped-matmul API uses `first_token_offset` plus optional
+  gather/scatter metadata. That is a useful cross-vendor ABI hint: our
+  offset-native route was the right abstraction even though the current XPU
+  implementation did not clear the speed/stability gates:
+  `https://docs.nvidia.com/deeplearning/cudnn/v1.23.0/operations/MoeGroupedMatmul.html`.
+- Public B70 examples with high aggregate throughput are still mostly batch
+  capacity evidence. The Level1Techs B70 example reports high 50-request
+  aggregate throughput but also very large per-request latency. Keep c1 and
+  aggregate scorecards separate:
+  `https://forum.level1techs.com/t/intel-b70-launch-unboxed-and-tested/247873`.
+
+Concrete things to try next:
+
+1. **Vendored-oneDNN grouped-memory route replay.**
+   Build an isolated `vllm-xpu-kernels` artifact against the vendored oneDNN
+   tree with `ONEDNN_EXPERIMENTAL_GROUPED_MEMORY=ON`. Add one experimental op
+   that consumes packed routed activations, expert offsets, W8A8 weights,
+   per-token activation scales, and per-expert-column weight scales. Gate it on
+   layer-9 routecapture6 exactness first, then compare against the current
+   `112-114 us` per grouped-GEMM dispatch floor. Kill it quickly if primitive
+   creation or grouped scales force host waits.
+
+2. **Command-stream floor measurement.**
+   Measure a single routecapture6 layer with equivalent math but progressively
+   fewer launches: current helper chain, two grouped GEMM dispatches only, one
+   no-op dispatch with the same tensor plumbing, and one empty command-list
+   dispatch. The goal is to separate XMX math time from host/SYCL/Level-Zero
+   command overhead.
+
+3. **One-dispatch fake layerlet before real fusion.**
+   Create a one-dispatch layerlet scaffold that copies through or computes a
+   cheap checksum, but uses the final ABI: route offsets, scratch arena,
+   quant-scale pointers, expert metadata, and output buffer. If the empty
+   layerlet itself costs too much, a full fused kernel will not hit the
+   `<=168 us/layer` gate.
+
+4. **PCIe/topology and affinity c1 A/B.**
+   Capture `lspci -vv`, NUMA locality, `xpu-smi topology`, BAR size, ASPM,
+   IOMMU mode, worker CPU affinity, and CCL fabric settings beside one c1
+   run. Then try one controlled topology/affinity profile. This is a speed and
+   reliability lane because TP4 collective and metadata-copy behavior can be
+   host-topology sensitive.
+
+5. **Rank-local timing without synchronization pollution.**
+   Re-run the decode timing path with rank-local event timing and a separate
+   synchronized sanity mode. The current high-level histogram proves the
+   `~10 ms/token` wall; the next useful profile must avoid adding enough sync
+   overhead that it changes the answer.
+
+6. **Layer-pair pipeline thought experiment with proof script.**
+   Before writing kernels, model whether layer N MoE work on one card can
+   overlap with attention/logits/metadata or collectives for adjacent layers
+   without violating autoregressive dependencies. If the dependency graph says
+   no, record that and avoid a dead-end pipeline branch.
+
+7. **Exact prefix/static-state lane.**
+   For common chat prompts, test whether certified static prefix state plus
+   fixed decode buckets can remove scheduler and metadata churn while still
+   preserving exact target output. This is separate from ordinary vLLM prefix
+   caching, which has been disabled in the accepted graph lane.
+
+8. **Hot-expert packed tile cache with runtime checksum.**
+   Prepack only the route-dominant expert weights into the fastest XPU layout
+   and store checksums plus source tensor hashes. The first test is offline
+   route replay. Endpoint use requires exact output, cache provenance, and a
+   fallback to source weights if a checksum or route class misses.
+
+9. **Speculative branch arbiter as a service boundary.**
+   Keep all proposer ideas behind one verifier-owned interface:
+   `propose(tokens, state) -> candidates`, `verify(target_model) ->
+   accepted_prefix`, `commit_or_rollback`. This lets us test n-gram, MTP,
+   trace-trained proposers, and exact branch lookahead without rewriting the
+   safety logic each time.
+
+Bigger, bolder ideas worth keeping visible:
+
+1. **B70 MoE micro-runtime.**
+   A tiny device/host runtime dedicated to Qwen3.6 decode MoE: static scratch,
+   resident expert tasks, exact Quark W8A8 math, route-class specialization,
+   and no dynamic serving abstractions inside the hot loop. vLLM remains the
+   server, but the MoE layer becomes a specialized appliance.
+
+2. **Whole-model c1 runner as a truth-serum benchmark.**
+   Build a non-serving executable for one fixed prompt bucket that loads the
+   exact weights and runs decode with static arenas. If it is still near
+   `100 tok/s`, kernels/collectives are the wall. If it is much faster, vLLM
+   control flow and metadata are the wall.
+
+3. **Expert-parallel latency lane with replicated attention.**
+   For c1 only, simulate and then prototype EP-style ownership of experts with
+   replicated attention/linear-attention state if memory allows. The goal is to
+   reduce TP all-reduce and tiny-shard overhead while keeping exact weights and
+   exact outputs.
+
+4. **Public XPU MoE challenge packet plus bounty framing.**
+   Publish the layer-9 routecapture6 fixture, expected outputs, local timings,
+   and budget math as a small public challenge. The target is not a generic
+   issue report; it is a reproducible "beat `112 us` W8A8 grouped GEMM on B70
+   without changing math" packet.
+
+5. **Production split by latency class.**
+   Treat `32K TP4 capacity`, `c1 low-latency chat`, and `large aggregate batch`
+   as different products. A future production setup may route them to different
+   launch configs or even different engines while keeping the same model and
+   quality gates.
