@@ -1,0 +1,203 @@
+diff --git a/vllm/v1/worker/gpu_model_runner.py b/vllm/v1/worker/gpu_model_runner.py
+--- a/vllm/v1/worker/gpu_model_runner.py
++++ b/vllm/v1/worker/gpu_model_runner.py
+@@ -2366,7 +2366,16 @@ class GPUModelRunner:
+                         self._cow_worker_array_head(
+                             self.prev_num_draft_tokens.np[:num_reqs]
+                         )
+                     ),
++                    "request_windows": (
++                        self._cow_worker_prepare_request_windows(
++                            scheduler_output=scheduler_output,
++                            num_reqs=num_reqs,
++                            num_scheduled_tokens=num_scheduled_tokens,
++                            cu_num_tokens=cu_num_tokens,
++                            req_indices=req_indices,
++                        )
++                    ),
+                 },
+             )
+ 
+@@ -2489,6 +2498,33 @@ class GPUModelRunner:
+         except Exception as exc:
+             return {"error": repr(exc)}
+ 
++    def _cow_worker_tensor_slice(
++        self,
++        tensor: torch.Tensor | None,
++        start: int,
++        end: int,
++        limit: int = 64,
++    ) -> dict[str, Any] | None:
++        if tensor is None:
++            return None
++        try:
++            start = max(0, int(start))
++            end = max(start, int(end))
++            captured_end = min(end, start + int(limit))
++            detached = tensor[start:captured_end].detach()
++            flat = detached.reshape(-1)
++            return {
++                "start": start,
++                "end": end,
++                "captured_end": captured_end,
++                "shape": list(detached.shape),
++                "dtype": str(detached.dtype),
++                "device": str(detached.device),
++                "head": flat.to("cpu").tolist(),
++            }
++        except Exception as exc:
++            return {"error": repr(exc), "start": start, "end": end}
++
+     def _cow_worker_array_head(
+         self, array: Any, limit: int = 64
+     ) -> dict[str, Any]:
+@@ -2579,6 +2615,143 @@ class GPUModelRunner:
+         except Exception as exc:
+             return {"error": repr(exc), "req_index": req_index}
+ 
++    def _cow_worker_prepare_request_windows(
++        self,
++        *,
++        scheduler_output: "SchedulerOutput",
++        num_reqs: int,
++        num_scheduled_tokens: np.ndarray,
++        cu_num_tokens: np.ndarray,
++        req_indices: np.ndarray,
++        max_reqs: int = 16,
++        max_tokens_per_req: int = 32,
++        token_window: int = 8,
++    ) -> list[dict[str, Any]]:
++        windows: list[dict[str, Any]] = []
++        scheduler_spec_tokens = scheduler_output.scheduled_spec_decode_tokens
++        try:
++            capped_reqs = min(int(num_reqs), int(max_reqs))
++            for req_index in range(capped_reqs):
++                req_id = self.input_batch.req_ids[req_index]
++                scheduled_count = int(num_scheduled_tokens[req_index])
++                batch_start = (
++                    0 if req_index == 0 else int(cu_num_tokens[req_index - 1])
++                )
++                batch_end = int(cu_num_tokens[req_index])
++                captured_end = min(batch_end, batch_start + max_tokens_per_req)
++
++                scheduled_spec = scheduler_spec_tokens.get(req_id, ())
++                num_tokens_no_spec = int(
++                    self.input_batch.num_tokens_no_spec[req_index]
++                )
++                spec_write_start = (
++                    num_tokens_no_spec if scheduled_spec else None
++                )
++                spec_write_end = (
++                    num_tokens_no_spec + len(scheduled_spec)
++                    if scheduled_spec
++                    else None
++                )
++
++                token_window_start = max(
++                    0,
++                    num_tokens_no_spec - int(token_window),
++                )
++                token_window_end = min(
++                    self.max_model_len,
++                    num_tokens_no_spec
++                    + max(len(scheduled_spec), 1)
++                    + int(token_window),
++                )
++
++                positions_cpu: list[int] = []
++                try:
++                    positions_cpu = [
++                        int(pos)
++                        for pos in self.positions[
++                            batch_start:captured_end
++                        ].detach().to("cpu").tolist()
++                    ]
++                except Exception:
++                    positions_cpu = []
++
++                token_ids_at_positions: list[dict[str, Any]] = []
++                for pos in positions_cpu:
++                    item: dict[str, Any] = {"position": pos}
++                    if 0 <= pos < self.max_model_len:
++                        item["token_id"] = int(
++                            self.input_batch.token_ids_cpu[req_index, pos]
++                        )
++                    else:
++                        item["token_id"] = None
++                    token_ids_at_positions.append(item)
++
++                block_and_slot_windows: list[dict[str, Any]] = []
++                for group_index, table in enumerate(
++                    self.input_batch.block_table.block_tables
++                ):
++                    num_blocks = int(table.num_blocks_per_row[req_index])
++                    block_tail_start = max(0, num_blocks - 8)
++                    block_and_slot_windows.append(
++                        {
++                            "group": int(group_index),
++                            "block_size": int(table.block_size),
++                            "num_blocks": num_blocks,
++                            "block_tail_start": int(block_tail_start),
++                            "block_tail": table.block_table.np[
++                                req_index, block_tail_start:num_blocks
++                            ].tolist(),
++                            "slot_mapping": self._cow_worker_tensor_slice(
++                                table.slot_mapping.gpu,
++                                batch_start,
++                                batch_end,
++                                max_tokens_per_req,
++                            ),
++                        }
++                    )
++
++                windows.append(
++                    {
++                        "req_index": int(req_index),
++                        "req_id": req_id,
++                        "batch_token_offset_start": int(batch_start),
++                        "batch_token_offset_end": int(batch_end),
++                        "batch_token_offset_captured_end": int(captured_end),
++                        "num_scheduled_tokens": scheduled_count,
++                        "scheduled_spec_len": int(len(scheduled_spec)),
++                        "scheduled_spec_head": list(scheduled_spec[:16]),
++                        "num_prompt_tokens": int(
++                            self.input_batch.num_prompt_tokens[req_index]
++                        ),
++                        "num_computed_tokens_cpu": int(
++                            self.input_batch
++                            .num_computed_tokens_cpu[req_index]
++                        ),
++                        "num_tokens_no_spec": num_tokens_no_spec,
++                        "prev_num_draft_len": int(
++                            self.requests[req_id].prev_num_draft_len
++                        ) if req_id in self.requests else None,
++                        "spec_write_start": spec_write_start,
++                        "spec_write_end": spec_write_end,
++                        "token_window_start": int(token_window_start),
++                        "token_window": self.input_batch.token_ids_cpu[
++                            req_index, token_window_start:token_window_end
++                        ].tolist(),
++                        "req_indices": np.asarray(
++                            req_indices[batch_start:captured_end]
++                        ).tolist(),
++                        "query_pos": np.asarray(
++                            self.query_pos.np[batch_start:captured_end]
++                        ).tolist(),
++                        "positions": self._cow_worker_tensor_slice(
++                            self.positions,
++                            batch_start,
++                            batch_end,
++                            max_tokens_per_req,
++                        ),
++                        "token_ids_at_positions": token_ids_at_positions,
++                        "block_and_slot_windows": block_and_slot_windows,
++                    }
++                )
++        except Exception as exc:
++            windows.append({"error": repr(exc)})
++        return windows
++
+     def _trace_xpu_cow_worker_event(
+         self,
+         *,

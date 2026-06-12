@@ -55,6 +55,7 @@ def summarize(rows: list[dict[str, Any]]) -> dict[str, Any]:
     stage_by_req: dict[str, list[dict[str, Any]]] = defaultdict(list)
     spec_updates: list[dict[str, Any]] = []
     prepare_events: list[dict[str, Any]] = []
+    prepare_request_windows: list[dict[str, Any]] = []
 
     for row_index, row in enumerate(rows):
         stage = str(row.get("stage", "<missing>"))
@@ -120,6 +121,9 @@ def summarize(rows: list[dict[str, Any]]) -> dict[str, Any]:
             )
 
         if stage == "after_prepare_positions":
+            request_windows = extra.get("request_windows")
+            if not isinstance(request_windows, list):
+                request_windows = []
             prepare_events.append(
                 {
                     "row": row_index,
@@ -139,8 +143,70 @@ def summarize(rows: list[dict[str, Any]]) -> dict[str, Any]:
                     "prev_num_draft_tokens_head": head_values(
                         extra.get("prev_num_draft_tokens_head")
                     ),
+                    "request_window_count": len(request_windows),
                 }
             )
+            for request_window in request_windows:
+                if not isinstance(request_window, dict):
+                    continue
+                block_slot_summary = []
+                for block_slot in request_window.get(
+                    "block_and_slot_windows", []
+                ):
+                    if not isinstance(block_slot, dict):
+                        continue
+                    slot_mapping = block_slot.get("slot_mapping")
+                    block_slot_summary.append(
+                        {
+                            "group": block_slot.get("group"),
+                            "block_size": block_slot.get("block_size"),
+                            "num_blocks": block_slot.get("num_blocks"),
+                            "block_tail": block_slot.get("block_tail"),
+                            "slot_head": head_values(slot_mapping),
+                        }
+                    )
+                positions = request_window.get("positions")
+                prepare_request_windows.append(
+                    {
+                        "row": row_index,
+                        "tp_rank": row.get("tp_rank"),
+                        "req_id": request_window.get("req_id"),
+                        "req_index": request_window.get("req_index"),
+                        "batch_token_offset_start": request_window.get(
+                            "batch_token_offset_start"
+                        ),
+                        "batch_token_offset_end": request_window.get(
+                            "batch_token_offset_end"
+                        ),
+                        "num_scheduled_tokens": request_window.get(
+                            "num_scheduled_tokens"
+                        ),
+                        "scheduled_spec_len": request_window.get(
+                            "scheduled_spec_len"
+                        ),
+                        "spec_write_start": request_window.get(
+                            "spec_write_start"
+                        ),
+                        "spec_write_end": request_window.get(
+                            "spec_write_end"
+                        ),
+                        "num_computed_tokens_cpu": request_window.get(
+                            "num_computed_tokens_cpu"
+                        ),
+                        "num_tokens_no_spec": request_window.get(
+                            "num_tokens_no_spec"
+                        ),
+                        "prev_num_draft_len": request_window.get(
+                            "prev_num_draft_len"
+                        ),
+                        "query_pos": request_window.get("query_pos", [])[:16],
+                        "positions_head": head_values(positions),
+                        "token_ids_at_positions": request_window.get(
+                            "token_ids_at_positions", []
+                        )[:16],
+                        "block_slot_summary": block_slot_summary,
+                    }
+                )
 
     spec_len_counts = Counter(
         str(update.get("scheduled_spec_len")) for update in spec_updates
@@ -149,6 +215,11 @@ def summarize(rows: list[dict[str, Any]]) -> dict[str, Any]:
         update
         for update in spec_updates
         if int(update.get("scheduled_spec_len") or 0) > 0
+    ]
+    nonzero_prepare_request_windows = [
+        request_window
+        for request_window in prepare_request_windows
+        if int(request_window.get("scheduled_spec_len") or 0) > 0
     ]
 
     return {
@@ -163,6 +234,14 @@ def summarize(rows: list[dict[str, Any]]) -> dict[str, Any]:
         "nonzero_spec_updates_head": nonzero_spec_updates[:32],
         "prepare_event_count": len(prepare_events),
         "prepare_events_head": prepare_events[:32],
+        "prepare_request_window_count": len(prepare_request_windows),
+        "prepare_request_windows_head": prepare_request_windows[:32],
+        "nonzero_prepare_request_window_count": len(
+            nonzero_prepare_request_windows
+        ),
+        "nonzero_prepare_request_windows_head": (
+            nonzero_prepare_request_windows[:32]
+        ),
         "stage_transitions_by_req_head": {
             req_id: events[:32]
             for req_id, events in list(stage_by_req.items())[:16]
@@ -179,6 +258,10 @@ def write_markdown(summary: dict[str, Any], output: Path) -> None:
         f"- Spec update rows: `{summary['spec_update_count']}`",
         f"- Nonzero spec updates: `{summary['nonzero_spec_update_count']}`",
         f"- Prepare-position rows: `{summary['prepare_event_count']}`",
+        "- Prepare request windows: "
+        f"`{summary['prepare_request_window_count']}`",
+        "- Nonzero prepare request windows: "
+        f"`{summary['nonzero_prepare_request_window_count']}`",
         "",
         "## Stage Counts",
         "",
@@ -210,6 +293,32 @@ def write_markdown(summary: dict[str, Any], output: Path) -> None:
             f"seq_lens_head `{event['seq_lens_head'][:8]}`"
         )
     if not summary["prepare_events_head"]:
+        lines.append("- none")
+    lines.extend(["", "## Nonzero Prepare Request Windows", ""])
+    for window in summary["nonzero_prepare_request_windows_head"][:16]:
+        group_bits = []
+        for block_slot in window["block_slot_summary"][:4]:
+            group_bits.append(
+                "g"
+                f"{block_slot['group']}:blocks={block_slot['num_blocks']},"
+                f"tail={block_slot['block_tail']},"
+                f"slots={block_slot['slot_head'][:8]}"
+            )
+        lines.append(
+            "- "
+            f"row `{window['row']}`, rank `{window['tp_rank']}`, "
+            f"req `{window['req_id']}`, idx `{window['req_index']}`, "
+            f"spec `{window['scheduled_spec_len']}`, "
+            f"write `{window['spec_write_start']}:"
+            f"{window['spec_write_end']}`, "
+            f"computed_cpu `{window['num_computed_tokens_cpu']}`, "
+            f"tokens_no_spec `{window['num_tokens_no_spec']}`, "
+            f"prev_draft `{window['prev_num_draft_len']}`, "
+            f"positions `{window['positions_head'][:8]}`, "
+            f"tokens_at_pos `{window['token_ids_at_positions'][:4]}`, "
+            f"{'; '.join(group_bits)}"
+        )
+    if not summary["nonzero_prepare_request_windows_head"]:
         lines.append("- none")
     lines.append("")
     output.write_text("\n".join(lines), encoding="utf-8")

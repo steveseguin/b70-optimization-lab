@@ -112,6 +112,14 @@ Current Qwen3.6 INT8 direction:
     upstream-ready shape repro packages. The note also records fresh public
     signals from Localmaxxing, `vllm-xpu-kernels`, Intel XPU container notes,
     B70 TP2 instability reports, and speculative-decoding design discussion.
+17. Added an incremental request-window worker trace patch for the remaining
+    Qwen3.6 speculative `replacement_after_reject` mismatch:
+    `patches/vllm-qwen36-cow-worker-request-window-trace-20260612.patch`.
+    The new env-gated trace records token windows, corrected positions,
+    token ids at those positions, block-table tails, and slot mappings for
+    each active request on `after_prepare_positions`. This is intended to
+    decide whether the next repair should target scratch KV/page-table COW or
+    persistent `token_ids_cpu` rollback/replacement commit.
 
 ## 2026-05-10 MiniMax AutoRound Addendum
 

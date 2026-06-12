@@ -14012,3 +14012,75 @@ Standing promotion rule for this new list:
 - Any result that hits XPU graph/device loss, worker init failure, or
   host-stack instability must record the failure and restore the accepted
   backend before more speed testing.
+
+## Worker Request-Window Trace For Reject/Replacement COW
+
+Added a diagnostic-only incremental patch:
+
+- `patches/vllm-qwen36-cow-worker-request-window-trace-20260612.patch`
+
+This extends the existing env-gated worker COW trace path
+(`VLLM_XPU_COW_WORKER_TRACE_FILE`) with per-request windows on
+`after_prepare_positions`. The new `request_windows` records:
+
+- active request id/index and batch token offsets.
+- scheduled token count and scheduled speculative token head.
+- `num_computed_tokens_cpu`, `num_tokens_no_spec`, and
+  `prev_num_draft_len`.
+- speculative write start/end.
+- token-id window around the speculative write.
+- request indices and query positions for the captured token slice.
+- actual post-correction positions used for attention.
+- token ids currently stored at those positions in `token_ids_cpu`.
+- per-KV-group block-table tails and slot-mapping slices.
+
+Why this matters:
+
+- The no-bonus runtime removed the `verifier_bonus_after_full_accept` mismatch
+  class, but the remaining mismatch class is `replacement_after_reject`.
+- To repair that without lowering quality, we need to prove whether the
+  replacement verifier token is reading/writing the correct token window, KV
+  position, and slot mapping after a rejected draft.
+- This trace is intentionally read-only and inert unless the env var is set, so
+  the accepted TP4 production-candidate backend is not changed by default.
+
+Validation completed:
+
+```bash
+python3 -m py_compile \
+  /home/steve/src/vllm/vllm/v1/worker/gpu_model_runner.py \
+  scripts/summarize-qwen36-cow-worker-trace.py
+
+python3 scripts/summarize-qwen36-cow-worker-trace.py \
+  --trace data/qwen36-quark-int8-tp4-oracle1-nobonus-nograph-20260612a-worker-trace.jsonl \
+  --output-json /tmp/qwen36-worker-summary.json \
+  --output-md /tmp/qwen36-worker-summary.md
+
+git -C /home/steve/src/vllm apply --check --reverse --recount \
+  /home/steve/llm-optimizations/patches/vllm-qwen36-cow-worker-request-window-trace-20260612.patch
+
+git diff --check -- \
+  scripts/summarize-qwen36-cow-worker-trace.py \
+  patches/vllm-qwen36-cow-worker-request-window-trace-20260612.patch
+```
+
+Backwards-compatible summarizer result on the previous worker trace:
+
+- rows: `314`
+- prepare-position rows: `64`
+- prepare request windows: `0`
+- nonzero prepare request windows: `0`
+
+That zero count is expected because the older trace predated the new fields.
+
+Next diagnostic run:
+
+1. Launch an isolated no-XPU-graph oracle `k=1` run with
+   `VLLM_XPU_COW_WORKER_TRACE_FILE` enabled and the request-window patch in the
+   source tree.
+2. Summarize the new trace and inspect nonzero prepare request windows around
+   the first `replacement_after_reject` diff.
+3. If positions and token windows are correct but slots/block tails diverge,
+   implement scratch KV/page-table isolation first.
+4. If slots are correct but token ids at positions show stale speculative
+   drafts, repair persistent `token_ids_cpu` rollback/replacement commit first.
