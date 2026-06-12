@@ -3929,3 +3929,136 @@ Bigger, bolder ideas worth keeping visible:
    as different products. A future production setup may route them to different
    launch configs or even different engines while keeping the same model and
    quality gates.
+
+## 2026-06-12 GPU-Only oneDNN Grouped Smoke
+
+Result:
+
+- The narrow vendored oneDNN path now has a real GPU smoke, not just a partial
+  source build. `DNNL_CPU_RUNTIME=NONE`,
+  `DNNL_ENABLE_PRIMITIVE=MATMUL;SDPA`,
+  `DNNL_EXPERIMENTAL_GROUPED_MEMORY=ON`,
+  `DNNL_GPU_RUNTIME=SYCL`, `DNNL_ENABLE_PRIMITIVE_GPU_ISA=XE2`,
+  `ONEDNN_BUILD_GRAPH=OFF`, and `DNNL_LIBRARY_TYPE=STATIC` produced a
+  linkable `libdnnl.a`.
+- The vendored `third_party/oneDNN/examples/matmul_grouped.cpp` example then
+  compiled against that static library and passed on B70 with
+  `ONEAPI_DEVICE_SELECTOR=level_zero:0`.
+- The example is f32 and tiny: it proves the grouped-memory API can build,
+  link, create a grouped matmul primitive, and execute on our GPU stack. It
+  does not prove Qwen W8A8 quality or speed yet.
+- Repro script:
+  `scripts/probe-onednn-grouped-gpuonly.sh`.
+- Result packet:
+  `data/qwen36-onednn-grouped-gpuonly-smoke-20260612d.json`.
+
+Lessons:
+
+- `DNNL_CPU_RUNTIME=NONE` matters. With CPU runtime enabled, the build stayed
+  broad and spent time compiling CPU matmul code that does not answer the B70
+  decode question.
+- `DNNL_ENABLE_PRIMITIVE=MATMUL` is too narrow for the top-level static
+  library on this oneDNN tree because `gpu_sdpa_list.cpp` still compiles and
+  fails when SDPA is disabled. `MATMUL;SDPA` is the current practical narrow
+  recipe.
+- The internal `dnnl_gpu_intel` target is useful as an object-level proof: it
+  compiles `grouped_micro_gemm`, `ref_grouped_gemm`, and generated grouped
+  GPU kernels. It is not enough by itself because it does not produce a
+  standalone library.
+- Runtime library hygiene matters. Compiler 2025.3 variables alone did not
+  expose SYCL GPU platforms. The executable needed compiler 2025.3 plus UMF,
+  TCM, and TBB library paths.
+
+Things to try from this path:
+
+1. **Routecapture6 W8A8 oneDNN replay.**
+   Fork the example into a layer-9 routecapture6 replay that consumes the same
+   routed rows, expert offsets, Quark scales, and weights used by current
+   `xpu_fused_moe`. Gate first on `max_abs_diff=0.0`, then measure.
+
+2. **Primitive creation versus execution split.**
+   oneDNN primitive creation can hide expensive planning. Time create,
+   reorder, execute, and sync separately. If creation is expensive, cache
+   primitive descriptors by route signature and shape before judging speed.
+
+3. **Real Qwen group shape expansion.**
+   Move from the example's 4 experts and 30 rows to Qwen's real active-expert
+   histograms: layer 9 routecapture6 first, then layers 14, 20, and 21.
+   Record active experts, empty groups, row distribution, and wall time next
+   to every result.
+
+4. **Scale and dtype matrix.**
+   Verify which oneDNN GPU grouped path supports the exact W8A8 semantics we
+   need: s8/u8 source, s8 weights, per-token source scales, per-output/expert
+   weight scales, f32 accumulation, output dtype, binary post-ops, and SiLU.
+   Reject any path that silently changes the accepted model math.
+
+5. **oneDNN as a layerlet backend, not just GEMM.**
+   If grouped matmul is competitive, test whether oneDNN post-ops can absorb
+   SiLU/up-gate or whether it should remain a GEMM island inside a custom
+   route/activation/gather layerlet.
+
+6. **Command-list reuse around oneDNN.**
+   Test whether a route-class primitive can live inside a reused SYCL/Level
+   Zero command path. If oneDNN execute still pays high host overhead every
+   token, the next win probably requires a native persistent layerlet.
+
+Bigger, bolder ideas added from this checkpoint:
+
+1. **oneDNN route-signature primitive cache.**
+   Build a small cache keyed by layer, active expert mask, row distribution
+   bucket, M/K/N, dtype, and scale layout. Warm the cache during graph
+   certification so decode does not create primitives on the hot path.
+
+2. **oneDNN Graph MoE island.**
+   Explore a static subgraph containing grouped matmul, activation, second
+   grouped matmul, and gather for common route buckets. If oneDNN Graph can
+   compile the island with updateable buffers, it may deliver a lower-risk
+   fusion path than writing every kernel by hand.
+
+3. **Native DPAS/XMX tile-pack contract.**
+   Treat the weight pack as a first-class artifact: source tensor hash,
+   expert id, tile layout, scale layout, alignment, and checksum. If oneDNN or
+   a native SYCL layerlet exposes a faster layout, prepack once at load time
+   and validate it like a model shard.
+
+4. **Route-class compiled artifacts.**
+   Instead of one universal MoE kernel, generate a small library of kernels or
+   oneDNN primitive bundles for real route classes. The route classifier picks
+   the nearest exact-safe bucket; rare routes fall back to current
+   `xpu_fused_moe`.
+
+5. **Decode-token flight recorder plus replay-to-kernel CI.**
+   Every promising kernel should be fed by the same captured token flight
+   recorder: routes, scales, tensors, expected outputs, and command timings.
+   That turns future Intel/vLLM/kernel experiments into repeatable CI rather
+   than one-off terminal archaeology.
+
+6. **Level Zero command-bundle lane.**
+   If the profiler confirms host launch gaps dominate, bypass higher-level
+   scheduling for the c1 latency lane: prebuild updateable command bundles for
+   a fixed decode bucket, then patch only token pointers, route offsets, and
+   output buffers each step.
+
+7. **OpenVINO/oneDNN GenAI micro-runtime check.**
+   Do not switch serving engines blindly, but build a tiny Qwen3.6 layer or
+   block replay in the newest Intel inference stack. If Intel's own stack has
+   a materially faster B70 grouped-MoE path with exact math, transplant the
+   lesson rather than the whole service.
+
+8. **Hot-route SRAM-style expert service.**
+   Keep route-dominant expert tiles resident in the fastest reusable packed
+   form and dispatch cold routes through the generic path. This uses memory to
+   buy latency only where routecapture proves reuse.
+
+9. **Quality-shadowed kernel race.**
+   Run BF16 or current accepted `xpu_fused_moe` in a shadow lane for a sampled
+   subset while a faster W8A8 kernel candidate serves the primary path. Promote
+   only if sampled shadow diffs remain exact or within the already accepted
+   quantized semantics over a real prompt mix.
+
+10. **Public grouped-MoE fixture as a collaboration magnet.**
+    Publish a minimal layer-9 package with tensors, route offsets, expected
+    output hash, current timings, oneDNN smoke recipe, and target budget. The
+    ask is concrete: beat the `112-114 us` grouped-GEMM dispatch floor or the
+    `168 us/layer` budget on B70 without changing math.

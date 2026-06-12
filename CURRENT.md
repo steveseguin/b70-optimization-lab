@@ -6,6 +6,23 @@ Date: 2026-06-12
 
 2026-06-12 continuation:
 
+- Completed the next oneDNN grouped-memory smoke after the first broad build
+  probe. A GPU-only vendored oneDNN build with
+  `DNNL_CPU_RUNTIME=NONE`, `DNNL_ENABLE_PRIMITIVE=MATMUL;SDPA`,
+  `DNNL_EXPERIMENTAL_GROUPED_MEMORY=ON`, `DNNL_GPU_RUNTIME=SYCL`, and
+  `DNNL_ENABLE_PRIMITIVE_GPU_ISA=XE2` produced a linkable
+  `libdnnl.a` and the vendored `matmul_grouped.cpp` example passed on a B70
+  through Level Zero. Negative findings were also recorded: a CPU-enabled
+  build stayed too broad, a MATMUL-only full `dnnl` target failed in
+  `gpu_sdpa_list.cpp`, and the internal `dnnl_gpu_intel` target compiled the
+  grouped GPU units but did not produce a standalone library. This remains a
+  build/API smoke only, not a Qwen endpoint or speed claim. Next step is a
+  routecapture6 layer-9 W8A8 oneDNN replay with primitive-creation timing and
+  `max_abs_diff=0.0` against current `xpu_fused_moe`. Artifacts:
+  `scripts/probe-onednn-grouped-gpuonly.sh`,
+  `data/qwen36-onednn-grouped-gpuonly-smoke-20260612d.json`, and
+  `notes/2026-06-12-qwen36-next-bigger-bets.md`.
+
 - Captured the first vendored-oneDNN grouped-memory build probe after the
   post-floor backlog update. A local `vllm-xpu-kernels` CMake patch enabling
   `DNNL_EXPERIMENTAL_GROUPED_MEMORY=TRUE` configured successfully against the

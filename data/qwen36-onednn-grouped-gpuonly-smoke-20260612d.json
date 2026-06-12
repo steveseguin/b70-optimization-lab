@@ -1,0 +1,60 @@
+{
+  "date": "2026-06-12",
+  "purpose": "Record the first narrow GPU-only vendored oneDNN grouped-memory grouped-matmul smoke that builds, links, and executes on an Intel Arc Pro B70.",
+  "model_scope": "nameistoken/Qwen3.6-35B-A3B-Quark-W8A8-INT8",
+  "quality_scope": "Build/API smoke only. No endpoint promotion, no speed claim, and no W8A8 route-exact quality claim yet.",
+  "source_repo": "/home/steve/src/vllm-xpu-kernels",
+  "source_head": "28e1f5e74c15744b69cf3b760f6160ceabd15de0",
+  "compiler": "/opt/intel/oneapi/compiler/2025.3/bin/icpx",
+  "runtime_note": "The oneAPI compiler 2025.3 environment alone did not expose SYCL GPU platforms. Runtime execution required compiler 2025.3 lib plus UMF 1.1, TCM 1.5, and TBB 2023.0 library paths.",
+  "build_dir": "/home/steve/src/vllm-xpu-kernels/build/onednn-grouped-matmul-gpuonly-20260612c",
+  "static_library": "/home/steve/src/vllm-xpu-kernels/build/onednn-grouped-matmul-gpuonly-20260612c/src/libdnnl.a",
+  "static_library_size_bytes": 74389832,
+  "cmake_flags": {
+    "DNNL_EXPERIMENTAL_GROUPED_MEMORY": "ON",
+    "DNNL_ENABLE_PRIMITIVE": "MATMUL;SDPA",
+    "DNNL_ENABLE_PRIMITIVE_GPU_ISA": "XE2",
+    "DNNL_GPU_RUNTIME": "SYCL",
+    "DNNL_CPU_RUNTIME": "NONE",
+    "DNNL_BUILD_TESTS": "OFF",
+    "DNNL_BUILD_EXAMPLES": "OFF",
+    "ONEDNN_BUILD_GRAPH": "OFF",
+    "DNNL_LIBRARY_TYPE": "STATIC"
+  },
+  "negative_findings": [
+    "DNNL_ENABLE_PRIMITIVE=MATMUL with DNNL_CPU_RUNTIME=SEQ configured but still created a broad 921-step build because CPU matmul branches stayed in scope.",
+    "DNNL_CPU_RUNTIME=NONE narrowed the standalone dnnl target to roughly 560 steps and compiled the grouped Intel GPU objects.",
+    "MATMUL-only full dnnl target failed in gpu_sdpa_list.cpp because an SDPA dispatcher list was still compiled while SDPA was disabled.",
+    "The internal dnnl_gpu_intel target succeeded with MATMUL-only but did not produce a linkable libdnnl.a."
+  ],
+  "successful_path": [
+    "Reconfigured the GPU-only build with DNNL_ENABLE_PRIMITIVE=MATMUL;SDPA.",
+    "Built the static dnnl target successfully.",
+    "Compiled third_party/oneDNN/examples/matmul_grouped.cpp against the static libdnnl.a.",
+    "Ran the example with ONEAPI_DEVICE_SELECTOR=level_zero:0 and it reported Example passed on GPU."
+  ],
+  "example_output_summary": {
+    "experts": 4,
+    "token_distribution": "30 total tokens routed to 4 experts (12, 8, 0, 10 tokens per expert)",
+    "dimensions": {
+      "K": 64,
+      "N": 128
+    },
+    "weights_layout": "[4, 64, 128] tensor in acb format",
+    "result": "Example passed on GPU."
+  },
+  "reproduce_script": "scripts/probe-onednn-grouped-gpuonly.sh",
+  "logs": [
+    "/tmp/qwen36-onednn-grouped-matmul-sdpa-gpuonly-configure-20260612d.log",
+    "/tmp/qwen36-onednn-grouped-matmul-sdpa-gpuonly-build-dnnl-20260612d.log",
+    "/tmp/qwen36-onednn-matmul-grouped-example-compile-20260612d.log",
+    "/tmp/qwen36-onednn-matmul-grouped-example-run-gpu-2025runtime-20260612d.log"
+  ],
+  "next_steps": [
+    "Fork the oneDNN grouped matmul example into a Qwen3.6 routecapture6 layer-9 replay fixture.",
+    "Replace the f32 example tensors with the current route-exact W8A8 data path: s8 routed activations or oneDNN-supported source format, s8 expert weights, per-token activation scales, per-expert-column weight scales, and f32/bf16-equivalent output accumulation as required by the accepted path.",
+    "Measure primitive creation time separately from execution time; cache primitive descriptors by route signature if creation is nontrivial.",
+    "Compare the oneDNN grouped path against the current 112-114 us two-dispatch grouped-GEMM floor and the 168 us/layer non-speculative budget.",
+    "Only consider endpoint integration after max_abs_diff=0.0 against current xpu_fused_moe on captured real routes and accepted provenance sentinels."
+  ]
+}
