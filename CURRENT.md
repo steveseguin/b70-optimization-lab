@@ -6,6 +6,24 @@ Date: 2026-06-12
 
 2026-06-12 notes update:
 
+- Added `scripts/qwen36-live-abi-routes-to-jsonl.py`, a CPU-safe bridge from
+  graph-capture live-ABI deferred samples into the route JSONL format consumed
+  by `scripts/qwen36-route-class-aot-plan.py`. This lets the next isolated
+  endpoint capture become a route-class AOT planning ledger without touching
+  the currently live accepted endpoint. The converter reads the current model
+  config for `num_experts_per_tok` and `num_experts`, preserves source path and
+  line provenance, emits stable route hashes, and marks partial/truncated
+  top-k samples separately from clean rows. Synthetic validation converted two
+  deferred samples into route rows and the AOT planner accepted that output.
+  Added a "Live-ABI Route Ledger Bridge And Bigger Ideas 20260612de" section
+  with immediate reproduction commands plus larger no-quality-loss bets:
+  route entropy atlas, persistent/cache-aware MoE worker, B70 tile-layout
+  proof, CCL/topology A/B, decode-only direct runner, route-class AOT codegen,
+  and verifier-owned branch farming. No production endpoint was changed and no
+  new speed result was promoted.
+
+2026-06-12 notes update:
+
 - Added `scripts/qwen36-route-class-aot-plan.py` plus route-class AOT planning
   artifacts:
   `data/qwen36-quark-int8-tp4-route-class-aot-plan-20260612dd.{json,md}`.

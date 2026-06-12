@@ -10980,3 +10980,190 @@ New concrete next thing to try:
    `1-2 GiB` per TP shard, build a layer-9 route-class AOT layerlet prototype.
 4. If route classes explode, drop route-class codegen and focus on a more
    generic persistent MoE conveyor or verified multi-token parallelism.
+
+## Live-ABI Route Ledger Bridge And Bigger Ideas 20260612de
+
+Added the bridge that turns graph-capture live-ABI deferred samples into the
+route JSONL rows consumed by the route-class AOT planner:
+
+- `scripts/qwen36-live-abi-routes-to-jsonl.py`
+
+Why this matters:
+
+- The accepted TP4 endpoint still occupies all four B70s, so the useful work
+  that does not disturb serving is to make the next isolated capture window
+  maximally productive.
+- The previous graph-capture census can prove "the compiled path was observed"
+  and can collect tiny deferred tensor samples. The new converter turns those
+  deferred `topk_ids` samples into route hashes, per-expert counts, layer IDs,
+  and route-class rows.
+- The route-class planner can now consume either the old first-decode fixture
+  or a fresh live graph-capture route ledger. That gives route-class AOT a
+  direct path from production-shaped decode requests to a memory/codegen plan.
+
+Converter behavior:
+
+- Reads `num_experts_per_tok` and `num_experts` from the current model config,
+  with explicit fallback flags.
+- Emits source file/line provenance for every route row.
+- Uses a stable `blake2s` route hash instead of Python's randomized hash.
+- Marks `topk_sample_complete` and `topk_sample_may_be_truncated` so partial
+  diagnostic rows are visible and not silently promoted.
+- Treats the output as a planning artifact only. It proves neither speed nor
+  quality.
+
+Synthetic validation:
+
+```bash
+python3 -m py_compile scripts/qwen36-live-abi-routes-to-jsonl.py
+
+python3 scripts/qwen36-live-abi-routes-to-jsonl.py \
+  /tmp/qwen36-live-abi-routes-synthetic.jsonl \
+  --output-jsonl /tmp/qwen36-live-abi-routes-synthetic.routes.jsonl \
+  --summary-json /tmp/qwen36-live-abi-routes-synthetic.summary.json \
+  --markdown-out /tmp/qwen36-live-abi-routes-synthetic.md
+
+python3 scripts/qwen36-route-class-aot-plan.py \
+  /tmp/qwen36-live-abi-routes-synthetic.routes.jsonl \
+  --output-json /tmp/qwen36-live-abi-routes-synthetic-aot.json \
+  --markdown-out /tmp/qwen36-live-abi-routes-synthetic-aot.md
+```
+
+Expected synthetic result:
+
+- Converter status: `pass`.
+- Routes emitted: `2`.
+- Pure decode routes: `2`.
+- Skipped records: one non-deferred sample.
+- Planner compatibility: pass through the same parser/summary path, with the
+  expected `needs_more_route_windows_before_aot_commit` conclusion because the
+  synthetic ledger is intentionally tiny.
+
+Next isolated endpoint capture:
+
+```bash
+VLLM_XPU_MOE_LIVE_ABI_FILE=/mnt/fast-ai/vllm-cache-exp/qwen36-live-abi-{rank}-{pid}.jsonl \
+VLLM_XPU_MOE_LIVE_ABI_CAPTURE_SKIPS=1 \
+VLLM_XPU_MOE_LIVE_ABI_DEFER_CAPTURE_SAMPLES=1 \
+VLLM_XPU_MOE_LIVE_ABI_DEFER_CAPTURE_MAX_PENDING=8 \
+VLLM_XPU_MOE_LIVE_ABI_MAX_LINES=400 \
+VLLM_XPU_MOE_LIVE_ABI_LAYER_REGEX='layers[.](9|19|29|39)[.]' \
+VLLM_XPU_MOE_LIVE_ABI_RANK=0 \
+scripts/launch-qwen36-quark-int8-accepted.sh
+
+python3 scripts/qwen36-moe-live-abi-graph-capture-gate.py \
+  /mnt/fast-ai/vllm-cache-exp/qwen36-live-abi-*.jsonl \
+  --rank 0 --require-capture-skip --require-deferred-sample \
+  --output-json data/qwen36-quark-int8-liveabi-graph-capture-gate-20260612de.json \
+  --markdown-out data/qwen36-quark-int8-liveabi-graph-capture-gate-20260612de.md
+
+python3 scripts/qwen36-live-abi-routes-to-jsonl.py \
+  /mnt/fast-ai/vllm-cache-exp/qwen36-live-abi-*.jsonl \
+  --output-jsonl data/qwen36-quark-int8-liveabi-route-ledger-20260612de.jsonl \
+  --summary-json data/qwen36-quark-int8-liveabi-route-ledger-20260612de.json \
+  --markdown-out data/qwen36-quark-int8-liveabi-route-ledger-20260612de.md
+
+python3 scripts/qwen36-route-class-aot-plan.py \
+  data/qwen36-quark-int8-liveabi-route-ledger-20260612de.jsonl \
+  --output-json data/qwen36-quark-int8-liveabi-route-class-aot-plan-20260612de.json \
+  --markdown-out data/qwen36-quark-int8-liveabi-route-class-aot-plan-20260612de.md
+```
+
+Fresh outside leads folded in:
+
+- vLLM's Arc Pro B-Series writeup says expert-routing imbalance can accumulate
+  visible MoE GEMM time, and dynamic compute-group balancing is the intended
+  direction:
+  <https://vllm.ai/blog/2025-11-11-intel-arc-pro-b>
+- Intel's Triton/XPU grouped-GEMM issue explicitly calls out skewed decode
+  route distributions and real-route tuning as necessary for representative
+  grouped-GEMM optimization:
+  <https://github.com/intel/intel-xpu-backend-for-triton/issues/6389>
+- vLLM's MoE kernel design docs show modular dispatch/finalize boundaries and
+  quantization-format constraints. That is useful for deciding whether a
+  route-class AOT prototype should be a local expert kernel, a modular expert
+  backend, or only a lab-side replacement:
+  <https://docs.vllm.ai/en/latest/design/moe_kernel_features/>
+- A current dual-B70 vLLM issue documents GP faults/BCS resets and host BOM
+  sensitivity across Ubuntu, KMD, oneCCL, Level Zero, PCIe topology, and vLLM
+  TP worker initialization. Treat host-stack A/B as a performance and
+  reliability experiment, not operations trivia:
+  <https://github.com/vllm-project/vllm/issues/41663>
+- The PyTorch/Triton persistent grouped-GEMM writeup reinforces the same
+  general pattern: persistent kernels, one-wave scheduling, and cache-aware
+  launch ordering can materially reduce grouped-GEMM overhead. The math is not
+  XPU-specific, but the design pressure matches our MoE bottleneck:
+  <https://pytorch.org/blog/accelerating-moes-with-a-triton-persistent-cache-aware-grouped-gemm-kernel/>
+
+More aggressive no-quality-loss ideas to carry forward:
+
+1. **Route entropy atlas by prompt class.**
+   Capture live route windows for natural chat, code, math, repetitive, and
+   structured prompts. If route classes stay low-entropy per layer, route-class
+   AOT is justified. If only some prompt classes are low-entropy, dispatch AOT
+   only for those classes and keep generic fallback for the rest.
+
+2. **Route-class AOT codegen with exact fallback.**
+   Generate a tiny layer-9 library for the top route classes from the live
+   ledger: fixed topk-8 descriptors, resident scale pointers, precomputed
+   expert offsets, and no generic remap path. Dispatch by route hash and fall
+   back to accepted `xpu_fused_moe` on any miss.
+
+3. **Persistent/cache-aware MoE worker per B70.**
+   Keep one device-side worker alive across decode steps with resident route
+   queues, expert descriptors, scratch buffers, and quant metadata. Feed it
+   patchable per-token work rather than relaunching the full wrapper stack.
+   This attacks launch/fence/setup overhead without changing arithmetic.
+
+4. **Dynamic group balancer for skewed routes.**
+   Prototype a B70/XPU version of "next available tile" scheduling for the
+   real topk-8 route ledgers. The target is the long-tail expert imbalance
+   documented in the Intel/vLLM material, not a uniform grouped GEMM win.
+
+5. **B70 tile-layout proof packet.**
+   Repack Quark W8A8 expert weights/scales into one or two DPAS/XMX-friendly
+   memory orders and prove bit-equivalent output against the accepted path.
+   Only after tensor parity, measure whether layout alone improves the
+   prologue-inclusive layerlet gate.
+
+6. **Host-stack speed and reliability matrix.**
+   A/B Ubuntu/kernel/KMD/GuC, Intel compute-runtime, oneAPI, oneCCL,
+   `CCL_ENABLE_SYCL_KERNELS`, `CCL_ALLREDUCE`, PCIe ASPM, Resizable BAR, power
+   limit, and fan curve. Record BCS resets, health, TTFT, c1 tok/s, aggregate
+   tok/s, and exact quality gates. This may find "free" speed or explain why
+   TP collectives are capped.
+
+7. **Decode-only direct runner.**
+   Build a lab runner that bypasses OpenAI serving, HTTP, scheduler queues, and
+   non-c1 batching. It should reuse accepted weights/kernels and compare token
+   output to the endpoint. If direct c1 is much faster, the target moves to
+   scheduler/graph capture; if not, the bottleneck is truly kernel/collective.
+
+8. **Latency-lane topology inversion.**
+   Try fewer collectives for c1 even if aggregate throughput suffers: TP2 plus
+   hot expert replication, asymmetric dense/MoE placement, or one-card MoE
+   islands with dense layers still sharded. Promote only if quality, memory,
+   and p512/o512/c1 improve over the accepted manifest.
+
+9. **Graph-wide command-list supernode.**
+   Capture a patchable Level Zero command-list sequence for one decode bucket:
+   norms, attention, MoE, logits, and sampling. Route IDs and KV pointers are
+   patched per token. This is risky, but it directly targets repeated host
+   orchestration and fence cost.
+
+10. **Verifier-owned branch farming.**
+    Keep this as the largest non-kernel path to `>200 tok/s`: exact request
+    state transactions, speculative branch execution on spare capacity, and
+    commit-only-after-target-verification. It cannot lower quality if rollback
+    and target verification are exact, but it needs a separate state-integrity
+    proof before any production attempt.
+
+Updated near-term order:
+
+1. Collect `10+` isolated graph-capture route windows using the live-ABI hooks.
+2. Convert the captures with `qwen36-live-abi-routes-to-jsonl.py`.
+3. Re-run route-class AOT planning on the live ledger.
+4. If route entropy is low, prototype layer-9 route-class AOT with tensor
+   parity and prologue-inclusive timing.
+5. In parallel, design the host-stack/BOM matrix and decode-only direct runner
+   as the two biggest non-arithmetic ways to learn where the missing 2x lives.
