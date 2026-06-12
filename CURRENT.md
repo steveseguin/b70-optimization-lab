@@ -6,6 +6,33 @@ Date: 2026-06-12
 
 2026-06-12 notes update:
 
+- Added a route-fixture offset gate and bigger-bets refresh to
+  `notes/2026-06-12-qwen36-next-bigger-bets.md`, plus
+  `scripts/qwen36-offset-route-gate-summary.py`. The no-server eager replay
+  across first-decode route rows was tensor-exact (`max_abs_diff=0.0`), but the
+  env-on offset integration path regressed mean `xpu_fused_moe` latency from
+  `347.086 us` to `409.229 us` (`+17.904%`) and the prior endpoint A/B remains
+  rejected. The accepted launcher now hard-unsets rejected diagnostic MoE env
+  vars. The first cache-reuse restore after routeparity failed, so the
+  accepted lane was relaunched from a clean isolated cache root. That clean
+  accepted restore on `18080` passed the no-thinking
+  quality smoke and measured `99.188 tok/s` corrected p512/o512/c1 decode,
+  `97.893 tok/s` e2e, `10.063 ms/token` vLLM decode, and `78.4 ms` client
+  TTFT. The old exact-token provenance baseline did not pass on the fresh clean
+  cache (`4752 -> 6126`, `198 -> 271` while `11436` still matched), so the
+  lesson is sharper: endpoint promotion now needs graph-path tensor parity and
+  a cache-versioned provenance/quality gate, not eager replay alone. New
+  outside leads and things-to-try were added: persistent c1 W8A8 MoE island,
+  real-route grouped-GEMM autotune, AOT cache manifests, latency-lane split,
+  hot-expert memory packs, whole-token Level Zero command lists, target-owned
+  branch farming, and an upstream Intel/vLLM challenge packet. New artifacts
+  include `data/qwen36-quark-int8-firstdecode-multilayer-offset-gate-summary-20260612cy.json`,
+  `data/qwen36-quark-int8-tp4-accepted-quality-after-routeparity-clean-nothink-smoke-20260612cy.json`,
+  `data/qwen36-quark-int8-tp4-accepted-clean-routeparity-p512o512-metrics-20260612cy.json`,
+  and `data/localmaxxing-qwen-b70-vllm-leaderboard-20260612cy.json`.
+
+2026-06-12 notes update:
+
 - Added an offset endpoint rejection record to
   `notes/2026-06-12-qwen36-next-bigger-bets.md` plus a reproducible overlay
   launcher, `scripts/launch-qwen36-quark-int8-w8a8-offset.sh`. The narrow

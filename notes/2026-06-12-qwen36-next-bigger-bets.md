@@ -32,6 +32,153 @@ Current speed anchor:
   MoE/kernel architecture improvement. Launch flags alone are unlikely to get
   there.
 
+## W8A8 Offset Route Gate, Clean Restore Caveat, And Bigger Bets 20260612cy
+
+Added after replaying the first-decode route fixture through the offset-capable
+W8A8 INT8 grouped-GEMM build and restoring the accepted endpoint from an
+isolated cache. This section updates the queue; it does not promote a new speed
+path.
+
+Route replay gate:
+
+- Added `scripts/qwen36-offset-route-gate-summary.py` to summarize base replay,
+  offset-env replay, and endpoint provenance as separate gates.
+- Base route replay used the first-decode JSONL fixture across layers `0`, `9`,
+  `19`, and `39`, route starts `0:12:1`, rows `1`, `20` iterations, and the
+  stable offset-capable extension.
+- Eager tensor parity was exact for both replays:
+  `max_abs_diff_all_checked_paths=0.0`.
+- Base env mean `xpu_fused_moe` latency was `347.086 us`; the env-on offset
+  integration path was `409.229 us`, a `+17.904%` slowdown. The explicit
+  fused-prologue offset micro-path is faster in isolation, but the real
+  `xpu_fused_moe` integration does not realize that win.
+- Endpoint gate still rejects the offset lane because the earlier offset
+  endpoint provenance failed `repetitive_kernel_notes[14]` (`4752 -> 6126`) and
+  `natural_latency_plan[25]` (`198 -> 271`), and the endpoint A/B was slower
+  (`96.165 tok/s` corrected p512/o512/c1 versus accepted `99.309 tok/s`).
+
+Clean restore and reliability caveat:
+
+- The first post-routeparity restore reused the accepted cache root and failed
+  provenance/quality. That made cache/source hygiene part of the result, not a
+  side note.
+- Patched `scripts/launch-qwen36-quark-int8-accepted.sh` to explicitly unset
+  rejected diagnostic MoE env vars, including `VLLM_XPU_W8A8_USE_OFFSETS`,
+  oneDNN sidecar probes, fused Silu+quant, and live ABI capture flags.
+- Relaunched the accepted endpoint from an isolated clean cache root:
+  `/mnt/fast-ai/vllm-cache-exp/qwen36-35b-a3b-quark-int8-tp4-accepted-clean-after-routeparity-20260612cy`.
+- The clean endpoint passed the no-thinking quality smoke:
+  exact arithmetic, copy phrase, JSON schema, repeat stability, and baseline
+  comparison all passed.
+- Clean p512/o512/c1 sanity speed is still the same class:
+  `99.188 tok/s` corrected after-first decode, `97.893 tok/s` e2e,
+  `10.063 ms/token` vLLM decode, and `78.4 ms` client TTFT.
+- The old exact-token provenance sentinels did not pass on the fresh clean
+  cache. The rerun is stable but differs at the same two early positions as
+  the offset endpoint: `4752 -> 6126` and `198 -> 271`; `11436` still matches.
+  Because the broader quality smoke passes, treat this as a provenance
+  baseline/cache-dependence problem, not proof that offset is safe. The next
+  reliability task is to replace the stale single-cache sentinel baseline with
+  a pinned clean-cache baseline plus BF16/logit or semantic checks.
+
+External leads checked:
+
+- Intel's current XPU vLLM container notes call out persistent MoE GEMM and
+  fused activation as the MoE direction, with a reported `2.6x` end-to-end
+  Qwen3-30B-A3B improvement:
+  https://github.com/intel/ai-containers/blob/main/vllm/0.10.2-xpu.md
+- Intel's Triton/XPU grouped-GEMM issue says skewed runtime route
+  distributions materially affect grouped-GEMM performance and should be used
+  as tuning inputs:
+  https://github.com/intel/intel-xpu-backend-for-triton/issues/6389
+- Public B70 reports show the same split we are seeing: strong aggregate
+  throughput at concurrency, but single-stream latency stays hard unless the
+  MoE/kernel path changes:
+  https://www.reddit.com/r/LocalLLM/comments/1sfa0iw/2x_intel_arc_b70_benchmark/
+- Public Localmaxxing B70/Qwen/vLLM snapshot still has the same current family
+  near the top: `99.770 tok/s` for `Qwen/Qwen3.6-35B-A3B` and `99.428 tok/s`
+  for the exact `nameistoken/...Quark-W8A8-INT8` row.
+
+New things to try next:
+
+1. **Graph-path tensor capture before endpoint promotion.**
+   Eager route replay can pass while compiled serving output drifts. Add a
+   capture point in the compiled/custom-op path, or a live tensor compare
+   around the graph replay path, before any more endpoint launches.
+
+2. **Persistent c1 W8A8 MoE kernel island.**
+   Stop optimizing the generic grouped-GEMM wrapper first. Build a
+   target-shaped path for one decode token, topk `8`, `hidden_size=2048`,
+   `moe_intermediate_size=512`, and Quark W8A8 scales, with resident expert
+   descriptors and scratch.
+
+3. **Route-distribution autotune harness.**
+   Feed the real first-decode route ledger into SYCL/Triton/oneDNN/grouped-GEMM
+   microbenches. Tune for the skewed rows-per-expert shape we actually see,
+   not synthetic uniform groups.
+
+4. **Quality gate v2.**
+   Keep exact token sentinels, but make them cache-versioned and add a periodic
+   BF16/logit or answer-scoring lane. The route gate should report
+   "old-cache exact match", "clean-cache exact match", and "quality suite
+   pass" separately.
+
+5. **AOT cache provenance manifest.**
+   Every accepted launch should write the cache root, AOT path hashes, extension
+   SHA256, git SHAs, env scrub list, and sentinel baseline ID. This prevents a
+   passing graph from being confused with a freshly recompiled graph that has
+   different early-token choices.
+
+6. **Latency lane split from aggregate lane.**
+   If TP4 remains around `10 ms/token` for c1, test a dedicated single-user
+   lane that trades some aggregate capacity for fewer per-token collectives,
+   while a separate TP4 lane handles aggregate serving.
+
+7. **Hot-expert memory-for-latency packs.**
+   Use the route fixture to duplicate or prepack hot expert tuples across
+   cards. Exact math stays unchanged; the common path gets fewer remote or
+   long-tail route stalls, and cold routes fall back to current TP4.
+
+8. **Whole-token command-list supernode.**
+   Treat launch/fence overhead as a first-class target: capture a patchable
+   Level Zero command-list sequence for fixed decode buckets covering MoE,
+   attention, norms, logits, and sampling. Gate it with graph-path tensor
+   parity before serving.
+
+9. **Target-owned branch farm.**
+   Use spare VRAM/cards only after we have exact request-state transactions.
+   Branches can be ngram/MTP/route-trained, but the same Quark W8A8 target must
+   verify every emitted token before commit.
+
+10. **Upstream challenge packet.**
+    Package the route fixture, failed offset proof, Localmaxxing rows,
+    p512/o512 metrics, extension symbol matrix, and clean-cache provenance
+    caveat for Intel/vLLM maintainers. The ask is specific: make exact c1
+    Qwen3.6 A3B Quark W8A8 decode materially faster on B70 without token drift.
+
+Artifacts for this pass:
+
+- `scripts/qwen36-offset-route-gate-summary.py`
+- `scripts/launch-qwen36-quark-int8-accepted.sh`
+- `data/qwen36-quark-int8-firstdecode-l9-offset-parity-smoke-20260612cy.json`
+- `data/qwen36-quark-int8-firstdecode-l9-offset-parity-smoke-20260612cy.md`
+- `data/qwen36-quark-int8-firstdecode-l9-offset-integration-parity-smoke-20260612cy.json`
+- `data/qwen36-quark-int8-firstdecode-l9-offset-integration-parity-smoke-20260612cy.md`
+- `data/qwen36-quark-int8-firstdecode-multilayer-offset-gate-base-20260612cy.json`
+- `data/qwen36-quark-int8-firstdecode-multilayer-offset-gate-base-20260612cy.md`
+- `data/qwen36-quark-int8-firstdecode-multilayer-offset-gate-envon-20260612cy.json`
+- `data/qwen36-quark-int8-firstdecode-multilayer-offset-gate-envon-20260612cy.md`
+- `data/qwen36-quark-int8-firstdecode-multilayer-offset-gate-summary-20260612cy.json`
+- `data/qwen36-quark-int8-firstdecode-multilayer-offset-gate-summary-20260612cy.md`
+- `data/localmaxxing-qwen-b70-vllm-leaderboard-20260612cy.json`
+- `data/qwen36-quark-int8-tp4-accepted-provenance-after-routeparity-20260612cy.json`
+- `data/qwen36-quark-int8-tp4-accepted-quality-after-routeparity-nothink-smoke-20260612cy.json`
+- `data/qwen36-quark-int8-tp4-accepted-provenance-after-routeparity-clean-20260612cy.json`
+- `data/qwen36-quark-int8-tp4-accepted-provenance-after-routeparity-clean-rerun-20260612cy.json`
+- `data/qwen36-quark-int8-tp4-accepted-quality-after-routeparity-clean-nothink-smoke-20260612cy.json`
+- `data/qwen36-quark-int8-tp4-accepted-clean-routeparity-p512o512-metrics-20260612cy.json`
+- `data/qwen36-quark-int8-tp4-accepted-restored-after-routeparity-clean-20260612cy.log`
+
 ## W8A8 Offset Endpoint Rejection And Bigger Bets 20260612cx
 
 Added after running the narrow offset endpoint A/B proposed in the previous

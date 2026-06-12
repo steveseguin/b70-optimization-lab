@@ -1,0 +1,231 @@
+{
+  "base_json": "data/qwen36-quark-int8-firstdecode-multilayer-offset-gate-base-20260612cy.json",
+  "base_replay": {
+    "active_offset_gemm_available": false,
+    "max_abs_diff_all_checked_paths": 0.0,
+    "mean_fused_prologue_offset_us": 269.86678333333333,
+    "mean_fused_prologue_us": 356.57635,
+    "mean_xpu_fused_moe_scratch_us": 382.56985000000003,
+    "mean_xpu_fused_moe_us": 347.08570000000003,
+    "offset_gemm_available": true,
+    "route_metadata": {
+      "active_experts": 47,
+      "layers": {
+        "language_model.model.layers.0.mlp.experts": 3,
+        "language_model.model.layers.19.mlp.experts": 3,
+        "language_model.model.layers.39.mlp.experts": 3,
+        "language_model.model.layers.9.mlp.experts": 3
+      },
+      "records_loaded": 120,
+      "records_matched": 12,
+      "route_jsonl": "data/qwen36-quark-int8-tp4-firstdecode-route-fixture-routes-20260612ct.jsonl",
+      "stages": {
+        "quark_int8_apply": 12
+      },
+      "top_experts": [
+        {
+          "count": 6,
+          "expert": 235
+        },
+        {
+          "count": 5,
+          "expert": 139
+        },
+        {
+          "count": 5,
+          "expert": 219
+        },
+        {
+          "count": 3,
+          "expert": 41
+        },
+        {
+          "count": 3,
+          "expert": 222
+        },
+        {
+          "count": 3,
+          "expert": 231
+        },
+        {
+          "count": 3,
+          "expert": 28
+        },
+        {
+          "count": 3,
+          "expert": 171
+        },
+        {
+          "count": 3,
+          "expert": 158
+        },
+        {
+          "count": 3,
+          "expert": 194
+        },
+        {
+          "count": 3,
+          "expert": 6
+        },
+        {
+          "count": 3,
+          "expert": 22
+        },
+        {
+          "count": 3,
+          "expert": 107
+        },
+        {
+          "count": 2,
+          "expert": 29
+        },
+        {
+          "count": 2,
+          "expert": 207
+        },
+        {
+          "count": 2,
+          "expert": 75
+        }
+      ],
+      "topk_rows_loaded": 12,
+      "unique_topk_tuples": 8
+    },
+    "rows": 12
+  },
+  "decision": "rejected",
+  "eager_exact": true,
+  "endpoint_gate": {
+    "errors": [
+      "natural_latency_plan output prefix drift: {'index': 25, 'current': 271, 'baseline': 198, 'current_context': [11436, 29796, 11, 321, 874, 4131, 4557, 13, 271, 248068, 198, 90700, 8340, 25, 271], 'baseline_context': [11436, 29796, 11, 321, 874, 4131, 4557, 13, 198, 22791, 440, 27044, 47193, 14246, 8129]}",
+      "repetitive_kernel_notes output prefix drift: {'index': 14, 'current': 6126, 'baseline': 4752, 'current_context': [1345, 28043, 7072, 3817, 22188, 13, 15153, 1543, 6126, 16401, 85683, 15162, 5832, 4618, 3817, 17856], 'baseline_context': [1345, 28043, 7072, 3817, 22188, 13, 15153, 1543, 4752, 271, 248068, 198, 8160, 579, 264, 7047]}",
+      "sentinel failed: {'name': 'repetitive_kernel_notes', 'index': 14, 'expected_token_id': 4752, 'actual_token_id': 6126, 'ok': False}",
+      "sentinel failed: {'name': 'natural_latency_plan', 'index': 25, 'expected_token_id': 198, 'actual_token_id': 271, 'ok': False}"
+    ],
+    "ok": false,
+    "sentinels": [
+      {
+        "actual_token_id": 6126,
+        "expected_token_id": 4752,
+        "index": 14,
+        "name": "repetitive_kernel_notes",
+        "ok": false
+      },
+      {
+        "actual_token_id": 11436,
+        "expected_token_id": 11436,
+        "index": 17,
+        "name": "natural_latency_plan",
+        "ok": true
+      },
+      {
+        "actual_token_id": 271,
+        "expected_token_id": 198,
+        "index": 25,
+        "name": "natural_latency_plan",
+        "ok": false
+      }
+    ]
+  },
+  "endpoint_provenance_json": "data/qwen36-quark-int8-tp4-w8a8-offset-provenance-20260612cx.json",
+  "kind": "qwen36_w8a8_offset_route_gate_summary",
+  "max_speed_regression_pct": 2.0,
+  "next_gate": "compiled/graph-path tensor parity or live graph-path tensor capture before any endpoint promotion",
+  "offset_env_replay": {
+    "active_offset_gemm_available": false,
+    "max_abs_diff_all_checked_paths": 0.0,
+    "mean_fused_prologue_offset_us": 225.97033333333331,
+    "mean_fused_prologue_us": 297.1774,
+    "mean_xpu_fused_moe_scratch_us": 445.1743833333333,
+    "mean_xpu_fused_moe_us": 409.2291666666667,
+    "offset_gemm_available": true,
+    "route_metadata": {
+      "active_experts": 47,
+      "layers": {
+        "language_model.model.layers.0.mlp.experts": 3,
+        "language_model.model.layers.19.mlp.experts": 3,
+        "language_model.model.layers.39.mlp.experts": 3,
+        "language_model.model.layers.9.mlp.experts": 3
+      },
+      "records_loaded": 120,
+      "records_matched": 12,
+      "route_jsonl": "data/qwen36-quark-int8-tp4-firstdecode-route-fixture-routes-20260612ct.jsonl",
+      "stages": {
+        "quark_int8_apply": 12
+      },
+      "top_experts": [
+        {
+          "count": 6,
+          "expert": 235
+        },
+        {
+          "count": 5,
+          "expert": 139
+        },
+        {
+          "count": 5,
+          "expert": 219
+        },
+        {
+          "count": 3,
+          "expert": 41
+        },
+        {
+          "count": 3,
+          "expert": 222
+        },
+        {
+          "count": 3,
+          "expert": 231
+        },
+        {
+          "count": 3,
+          "expert": 28
+        },
+        {
+          "count": 3,
+          "expert": 171
+        },
+        {
+          "count": 3,
+          "expert": 158
+        },
+        {
+          "count": 3,
+          "expert": 194
+        },
+        {
+          "count": 3,
+          "expert": 6
+        },
+        {
+          "count": 3,
+          "expert": 22
+        },
+        {
+          "count": 3,
+          "expert": 107
+        },
+        {
+          "count": 2,
+          "expert": 29
+        },
+        {
+          "count": 2,
+          "expert": 207
+        },
+        {
+          "count": 2,
+          "expert": 75
+        }
+      ],
+      "topk_rows_loaded": 12,
+      "unique_topk_tuples": 8
+    },
+    "rows": 12
+  },
+  "offset_json": "data/qwen36-quark-int8-firstdecode-multilayer-offset-gate-envon-20260612cy.json",
+  "offset_speed_gate_passed": false,
+  "offset_vs_base_xpu_fused_moe_us_delta_pct": 17.904358107137995,
+  "offset_vs_base_xpu_fused_moe_us_ratio": 1.17904358107138
+}

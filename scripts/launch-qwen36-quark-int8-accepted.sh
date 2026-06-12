@@ -53,6 +53,16 @@ export CCL_KVS_IFACE="${CCL_KVS_IFACE:-eth1}"
 unset CCL_ZE_IPC_EXCHANGE
 unset CCL_WORKER_COUNT
 
+# Accepted production/provenance lane: keep rejected diagnostic MoE paths out
+# unless a new launcher explicitly opts into them.
+unset VLLM_XPU_W8A8_USE_OFFSETS
+unset VLLM_XPU_MOE_ONEDNN_SIDECAR_PROBE
+unset VLLM_XPU_MOE_ONEDNN_SIDECAR_OFFSETS
+unset VLLM_XPU_MOE_ONEDNN_SIDECAR_DRY_DESCRIPTORS
+unset VLLM_XPU_FUSED_MOE_FUSE_SILU_QUANT
+unset VLLM_XPU_MOE_LIVE_ABI_FILE
+unset VLLM_XPU_MOE_LIVE_ABI_MAX_LINES
+
 unset VLLM_XPU_GDN_SKIP_DECODE_CONV_TMP
 if [[ "${VLLM_XPU_DECODE_TIMING_ALLOW:-0}" != "1" ]]; then
   unset VLLM_XPU_DECODE_TIMING

@@ -1,0 +1,407 @@
+{
+  "fused_silu_quant_enabled": false,
+  "model_config": "/mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118/config.json",
+  "results": [
+    {
+      "active_offset_gemm_available": false,
+      "active_offset_gemm_enabled": false,
+      "components_us_mean": {
+        "act_contiguous": 57.94533333333333,
+        "activation": 82.61066666666666,
+        "activation_contiguous_quant2": 230.20399999999995,
+        "activation_plus_quant2": 172.25866666666664,
+        "component_sum": 844.7573333333333,
+        "gather": 80.40933333333334,
+        "gemm1": 97.72533333333332,
+        "gemm2": 95.92266666666666,
+        "quant1": 167.68266666666668,
+        "quant2": 89.64799999999998,
+        "remap": 94.34533333333333,
+        "rows_zero": 78.468
+      },
+      "dtype": "bf16",
+      "fused_prologue_active_offset_gemm_total_us_mean": null,
+      "fused_prologue_active_offset_gemm_vs_xpu_fused_moe_max_abs_diff": null,
+      "fused_prologue_offset_gemm_total_us_mean": 233.56666666666663,
+      "fused_prologue_offset_gemm_vs_xpu_fused_moe_max_abs_diff": 0.0,
+      "fused_prologue_staged_total_us_mean": 309.452,
+      "fused_prologue_vs_xpu_fused_moe_max_abs_diff": 0.0,
+      "fused_prologue_workspace_bytes": 39168,
+      "hidden_size": 2048,
+      "inter_size_per_tp": 128,
+      "iterations": 3,
+      "manual_vs_xpu_fused_moe_max_abs_diff": 0.0,
+      "moe_inputs": 8,
+      "num_active_experts_for_active_offset": 8,
+      "num_experts": 256,
+      "offset_gemm_available": true,
+      "offset_gemm_enabled": true,
+      "preallocated_staged_total_us_mean": 235.5773333333333,
+      "preallocated_vs_xpu_fused_moe_max_abs_diff": 0.0,
+      "quant_out_op_available": false,
+      "quant_scratch_buffers": [
+        "gemm1_a",
+        "gemm1_a_scales",
+        "gemm2_a",
+        "gemm2_a_scales"
+      ],
+      "route_start_index": 0,
+      "route_start_index_mod": 0,
+      "rows": 1,
+      "topk": 8,
+      "topk_source": "route_jsonl",
+      "topk_summary": {
+        "active_experts": 8,
+        "top_experts": [
+          {
+            "count": 1,
+            "expert": 171
+          },
+          {
+            "count": 1,
+            "expert": 43
+          },
+          {
+            "count": 1,
+            "expert": 139
+          },
+          {
+            "count": 1,
+            "expert": 53
+          },
+          {
+            "count": 1,
+            "expert": 18
+          },
+          {
+            "count": 1,
+            "expert": 95
+          },
+          {
+            "count": 1,
+            "expert": 219
+          },
+          {
+            "count": 1,
+            "expert": 80
+          }
+        ],
+        "topk_tuple_examples": [
+          {
+            "count": 1,
+            "topk_ids": [
+              171,
+              43,
+              139,
+              53,
+              18,
+              95,
+              219,
+              80
+            ]
+          }
+        ],
+        "unique_topk_tuples": 1
+      },
+      "total_us_mean": 422.76,
+      "warmup": 1,
+      "xpu_fused_moe_scratch_total_us_mean": 450.33733333333333,
+      "xpu_scratch_vs_xpu_fused_moe_max_abs_diff": 0.0
+    },
+    {
+      "active_offset_gemm_available": false,
+      "active_offset_gemm_enabled": false,
+      "components_us_mean": {
+        "act_contiguous": 54.443999999999996,
+        "activation": 79.24799999999999,
+        "activation_contiguous_quant2": 229.05999999999997,
+        "activation_plus_quant2": 174.61599999999999,
+        "component_sum": 766.376,
+        "gather": 79.45599999999999,
+        "gemm1": 98.76533333333333,
+        "gemm2": 95.71466666666667,
+        "quant1": 89.73466666666667,
+        "quant2": 95.368,
+        "remap": 95.14266666666667,
+        "rows_zero": 78.50266666666666
+      },
+      "dtype": "bf16",
+      "fused_prologue_active_offset_gemm_total_us_mean": null,
+      "fused_prologue_active_offset_gemm_vs_xpu_fused_moe_max_abs_diff": null,
+      "fused_prologue_offset_gemm_total_us_mean": 244.03599999999997,
+      "fused_prologue_offset_gemm_vs_xpu_fused_moe_max_abs_diff": 0.0,
+      "fused_prologue_staged_total_us_mean": 301.9293333333333,
+      "fused_prologue_vs_xpu_fused_moe_max_abs_diff": 0.0,
+      "fused_prologue_workspace_bytes": 39168,
+      "hidden_size": 2048,
+      "inter_size_per_tp": 128,
+      "iterations": 3,
+      "manual_vs_xpu_fused_moe_max_abs_diff": 0.0,
+      "moe_inputs": 8,
+      "num_active_experts_for_active_offset": 8,
+      "num_experts": 256,
+      "offset_gemm_available": true,
+      "offset_gemm_enabled": true,
+      "preallocated_staged_total_us_mean": 232.37066666666666,
+      "preallocated_vs_xpu_fused_moe_max_abs_diff": 0.0,
+      "quant_out_op_available": false,
+      "quant_scratch_buffers": [
+        "gemm1_a",
+        "gemm1_a_scales",
+        "gemm2_a",
+        "gemm2_a_scales"
+      ],
+      "route_start_index": 1,
+      "route_start_index_mod": 1,
+      "rows": 1,
+      "topk": 8,
+      "topk_source": "route_jsonl",
+      "topk_summary": {
+        "active_experts": 8,
+        "top_experts": [
+          {
+            "count": 1,
+            "expert": 171
+          },
+          {
+            "count": 1,
+            "expert": 43
+          },
+          {
+            "count": 1,
+            "expert": 139
+          },
+          {
+            "count": 1,
+            "expert": 53
+          },
+          {
+            "count": 1,
+            "expert": 18
+          },
+          {
+            "count": 1,
+            "expert": 95
+          },
+          {
+            "count": 1,
+            "expert": 219
+          },
+          {
+            "count": 1,
+            "expert": 80
+          }
+        ],
+        "topk_tuple_examples": [
+          {
+            "count": 1,
+            "topk_ids": [
+              171,
+              43,
+              139,
+              53,
+              18,
+              95,
+              219,
+              80
+            ]
+          }
+        ],
+        "unique_topk_tuples": 1
+      },
+      "total_us_mean": 423.3666666666666,
+      "warmup": 1,
+      "xpu_fused_moe_scratch_total_us_mean": 507.06933333333336,
+      "xpu_scratch_vs_xpu_fused_moe_max_abs_diff": 0.0
+    },
+    {
+      "active_offset_gemm_available": false,
+      "active_offset_gemm_enabled": false,
+      "components_us_mean": {
+        "act_contiguous": 53.42133333333333,
+        "activation": 78.104,
+        "activation_contiguous_quant2": 219.024,
+        "activation_plus_quant2": 165.60266666666666,
+        "component_sum": 759.9106666666667,
+        "gather": 78.43333333333334,
+        "gemm1": 95.056,
+        "gemm2": 99.85733333333333,
+        "quant1": 89.89066666666668,
+        "quant2": 87.49866666666667,
+        "remap": 93.06266666666666,
+        "rows_zero": 84.58666666666666
+      },
+      "dtype": "bf16",
+      "fused_prologue_active_offset_gemm_total_us_mean": null,
+      "fused_prologue_active_offset_gemm_vs_xpu_fused_moe_max_abs_diff": null,
+      "fused_prologue_offset_gemm_total_us_mean": 235.36933333333332,
+      "fused_prologue_offset_gemm_vs_xpu_fused_moe_max_abs_diff": 0.0,
+      "fused_prologue_staged_total_us_mean": 306.69599999999997,
+      "fused_prologue_vs_xpu_fused_moe_max_abs_diff": 0.0,
+      "fused_prologue_workspace_bytes": 39168,
+      "hidden_size": 2048,
+      "inter_size_per_tp": 128,
+      "iterations": 3,
+      "manual_vs_xpu_fused_moe_max_abs_diff": 0.0,
+      "moe_inputs": 8,
+      "num_active_experts_for_active_offset": 8,
+      "num_experts": 256,
+      "offset_gemm_available": true,
+      "offset_gemm_enabled": true,
+      "preallocated_staged_total_us_mean": 240.396,
+      "preallocated_vs_xpu_fused_moe_max_abs_diff": 0.0,
+      "quant_out_op_available": false,
+      "quant_scratch_buffers": [
+        "gemm1_a",
+        "gemm1_a_scales",
+        "gemm2_a",
+        "gemm2_a_scales"
+      ],
+      "route_start_index": 2,
+      "route_start_index_mod": 2,
+      "rows": 1,
+      "topk": 8,
+      "topk_source": "route_jsonl",
+      "topk_summary": {
+        "active_experts": 8,
+        "top_experts": [
+          {
+            "count": 1,
+            "expert": 246
+          },
+          {
+            "count": 1,
+            "expert": 213
+          },
+          {
+            "count": 1,
+            "expert": 112
+          },
+          {
+            "count": 1,
+            "expert": 12
+          },
+          {
+            "count": 1,
+            "expert": 155
+          },
+          {
+            "count": 1,
+            "expert": 171
+          },
+          {
+            "count": 1,
+            "expert": 201
+          },
+          {
+            "count": 1,
+            "expert": 235
+          }
+        ],
+        "topk_tuple_examples": [
+          {
+            "count": 1,
+            "topk_ids": [
+              246,
+              213,
+              112,
+              12,
+              155,
+              171,
+              201,
+              235
+            ]
+          }
+        ],
+        "unique_topk_tuples": 1
+      },
+      "total_us_mean": 412.46399999999994,
+      "warmup": 1,
+      "xpu_fused_moe_scratch_total_us_mean": 438.6373333333333,
+      "xpu_scratch_vs_xpu_fused_moe_max_abs_diff": 0.0
+    }
+  ],
+  "route_metadata": {
+    "active_experts": 15,
+    "layers": {
+      "language_model.model.layers.9.mlp.experts": 3
+    },
+    "records_loaded": 120,
+    "records_matched": 3,
+    "route_jsonl": "data/qwen36-quark-int8-tp4-firstdecode-route-fixture-routes-20260612ct.jsonl",
+    "stages": {
+      "quark_int8_apply": 3
+    },
+    "top_experts": [
+      {
+        "count": 3,
+        "expert": 171
+      },
+      {
+        "count": 2,
+        "expert": 43
+      },
+      {
+        "count": 2,
+        "expert": 139
+      },
+      {
+        "count": 2,
+        "expert": 53
+      },
+      {
+        "count": 2,
+        "expert": 18
+      },
+      {
+        "count": 2,
+        "expert": 95
+      },
+      {
+        "count": 2,
+        "expert": 219
+      },
+      {
+        "count": 2,
+        "expert": 80
+      },
+      {
+        "count": 1,
+        "expert": 246
+      },
+      {
+        "count": 1,
+        "expert": 213
+      },
+      {
+        "count": 1,
+        "expert": 112
+      },
+      {
+        "count": 1,
+        "expert": 12
+      },
+      {
+        "count": 1,
+        "expert": 155
+      },
+      {
+        "count": 1,
+        "expert": 201
+      },
+      {
+        "count": 1,
+        "expert": 235
+      }
+    ],
+    "topk_rows_loaded": 3,
+    "unique_topk_tuples": 2
+  },
+  "route_packing_metadata": null,
+  "route_start_indices": [
+    0,
+    1,
+    2
+  ],
+  "tp_size": 4
+}
