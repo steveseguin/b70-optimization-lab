@@ -6,11 +6,26 @@ Date: 2026-06-12
 
 2026-06-12 notes update:
 
+- Added a user-review follow-up section to
+  `notes/2026-06-12-qwen36-next-bigger-bets.md` with larger ideas that remain
+  within the current-model/no-quality-loss constraint. New tracked branches
+  include a decode-only c1 micro-runtime, transactional target-state capsule
+  for verifier-safe speculation, target-owned branch farming with spare VRAM,
+  hybrid TP/EP latency topology tests, hot-expert memory-for-latency replicas,
+  B70 W8A8 tile-layout bakeoffs, whole-token Level Zero command-list replay,
+  router-predictive prefetch that does not alter math, CPU/PCIe/NUMA
+  control-plane audits, upstream-quality B70 W8A8 challenge packets, strict
+  same-model 8-bit engine bakeoffs, and a reliability scoreboard as a
+  promotion gate. The ordering is now explicit: keep the env-guarded oneDNN
+  sidecar probe moving, build a decode critical-path ledger in parallel, then
+  choose between persistent-MoE work and transactional target-state speculation
+  based on measured wall time.
+
 - Added and compile-validated a guarded oneDNN MoE sidecar probe surface in the
   local `vllm-xpu-kernels` tree. The new `qwen36_moe_onednn_sidecar_probe`
   op validates live Qwen3.6 MoE tensor ABI inputs, dry-creates oneDNN grouped
   matmul descriptors for GEMM1/GEMM2, and only wraps grouped source/destination
-  USM handles when an explicit `expert_first_token_offset` tensor is supplied.
+  USM handles when an explicit `onednn_grouped_offsets` tensor is supplied.
   It does not treat `rows_per_expert` as offsets. Validation was non-invasive:
   an out-of-tree `_xpu_C` build with IntelLLVM 2026.0 completed successfully,
   `nm` confirmed the exported probe symbol, and the live endpoint on

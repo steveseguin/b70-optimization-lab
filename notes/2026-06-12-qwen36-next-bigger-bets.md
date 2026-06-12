@@ -24,6 +24,122 @@ Current speed anchor:
   MoE/kernel architecture improvement. Launch flags alone are unlikely to get
   there.
 
+## User-Review Follow-Up: Bigger, Bolder Ideas
+
+Added after the "think bigger" pass. These are deliberately broader than the
+next sidecar step, but still obey the same constraints: current Qwen3.6 Quark
+W8A8 INT8 target, no AWQ/4-bit/Qwen3.5 substitutions, no output from an
+unverified drafter, and no speed claim without exact quality gates.
+
+Fresh leads to keep attached to the backlog:
+
+- PyTorch's persistent cache-aware grouped-GEMM MoE work is CUDA/BF16 oriented,
+  but the design pattern is relevant: persistent block scheduling and cache
+  grouping for skewed expert batches rather than expert-by-expert eager loops:
+  `https://pytorch.org/blog/accelerating-moes-with-a-triton-persistent-cache-aware-grouped-gemm-kernel/`.
+- The public vLLM Arc Pro B writeup names the exact MoE bottleneck class we are
+  seeing: launch overhead, route imbalance, and kernel bubbles. Treat its
+  persistent zero-gap MoE design as a target shape for a B70/XPU W8A8 route
+  replay, not as proof for our exact model:
+  `https://vllm.ai/blog/2025-11-11-intel-arc-pro-b`.
+- Intel Triton-XPU grouped-GEMM issue `#6389` emphasizes that realistic route
+  skew, not uniform synthetic groups, must drive tile selection:
+  `https://github.com/intel/intel-xpu-backend-for-triton/issues/6389`.
+- Public Qwen3.6 DFlash/MTP reports point to the only plausible `2x` class of
+  speedup outside kernel work, but they are proposer ideas only here. The
+  current Quark W8A8 verifier must own the final token decision:
+  `https://github.com/ZengboJamesWang/dgx-spark-vllm-qwen3.6-35b-a3b-dflash`.
+- The Qwen3.6 vLLM recipe highlights the model's long-context posture and YaRN
+  cautions. Production benchmarking should stay at the intended 32K service
+  target unless the test explicitly studies longer context:
+  `https://recipes.vllm.ai/Qwen/Qwen3.6-35B-A3B`.
+
+New bolder branches to keep on the board:
+
+1. **Decode-only c1 micro-runtime.**
+   Build a separate, fixed-shape c1 runner that owns preallocated KV, fixed
+   scheduler state, persistent command queues, packed weights, route buffers,
+   and sampler state. vLLM remains the production server, but this runner tells
+   us the ceiling after removing OpenAI-server and general scheduler overhead.
+   Gate it with token-by-token parity against the live endpoint.
+
+2. **Transactional target-state capsule.**
+   Before more MTP/DFlash timing, isolate everything that changes during one
+   decode step: KV pages, hybrid-attention/GDN state, scheduler counters,
+   sampler RNG state, and accepted-token ledgers. Implement copy, verify,
+   commit, and rollback for that capsule. This is the prerequisite for any
+   target-verified speculative branch farming.
+
+3. **Target-owned branch farm using spare VRAM.**
+   Use spare cards/VRAM to evaluate multiple candidate continuations in
+   parallel under the current target model, then commit only the branch that
+   exactly matches target verification. This is larger than normal MTP because
+   the target, not the proposer, emits the accepted stream. It only makes sense
+   after the transactional-state capsule exists.
+
+4. **Hybrid TP/EP latency topology.**
+   Stop assuming TP4 is optimal for c1. Simulate and then test TP2 plus two
+   replicas, TP2 plus hot-expert copies, and layer-local expert parallelism.
+   The first decision metric is single-request TPOT, with aggregate throughput
+   measured second.
+
+5. **Hot-expert memory-for-latency replicas.**
+   Route traces show long-tail expert use. Spend some of the apparent memory
+   headroom on replicated hot experts for high-impact layers so common routes
+   avoid cross-rank pressure and smaller per-expert batches. Gate by route
+   replay exactness and a per-layer memory ledger.
+
+6. **B70 W8A8 tile-layout bakeoff.**
+   Treat the packed expert layout as a first-class artifact. Compare oneDNN
+   `acb`, current XPU grouped-GEMM layout, and any Intel persistent-kernel
+   layout on the same captured routes. Record source safetensor checksum,
+   scale checksum, layout version, exactness, and latency.
+
+7. **Whole-token Level Zero command-list replay.**
+   Capture a fixed c1 token step as a command-list supernode: attention,
+   router, MoE route packing, GEMM1, activation, GEMM2, gather, all-reduce, and
+   sampler. Patch pointers and route offsets per token. This is high effort,
+   but it directly attacks launch and CPU synchronization overhead.
+
+8. **Router-predictive prefetch without changing math.**
+   Use previous-token and previous-layer route statistics only to prefetch or
+   stage likely expert tiles and scratch buffers. The router's actual top-k
+   still decides the computation, so output quality is unchanged. Measure
+   whether prefetch hides enough memory/layout latency to matter.
+
+9. **Pinned CPU/PCIe/NUMA control-plane audit.**
+   B70 performance may be gated by host synchronization and PCIe topology, not
+   only XMX math. Add reproducible tests for CPU pinning, IRQ affinity, NUMA
+   placement, PCIe link state, power limits, fan/thermal throttling, and queue
+   thread placement. This is not glamorous, but it can unlock free latency.
+
+10. **Upstream-quality B70 W8A8 challenge packet.**
+    Package a minimal reproducible route-window benchmark, exact tensors,
+    accepted output bytes, launch command, profiler trace, and Localmaxxing row
+    so Intel/vLLM maintainers can reproduce the same target. Include a simple
+    budget: which milliseconds must disappear to reach `>200 tok/s`.
+
+11. **Engine bakeoff, but only same model and 8-bit quality posture.**
+    Compare vLLM-XPU, Intel `llm-scaler`, OpenVINO/oneDNN paths, and any
+    Intel-friendly 8-bit engine only if they run the current Qwen3.6 target or
+    a byte-equivalent W8A8/BF16 verifier fallback. The purpose is kernel and
+    scheduler learning, not switching to a lower-quality quant.
+
+12. **Reliability scoreboard as a promotion gate.**
+    For every promising speed branch, record startup success, device-lost
+    frequency, 30-60 minute soak stability, peak VRAM, output parity, canaries,
+    route replay exactness, and crash recovery. A fast branch that cannot soak
+    is not production progress.
+
+Highest-value ordering from this pass:
+
+1. Keep the immediate sidecar path moving: Python env-guarded probe, correct
+   `onednn_grouped_offsets`, descriptor call, then execute-and-compare.
+2. In parallel, start the decode critical-path ledger so the next large branch
+   targets measured wall time instead of intuition.
+3. After one live parity sidecar exists, choose between persistent MoE schedule
+   work and transactional target-state speculation based on the ledger.
+
 ## Post-Discussion Larger Bets Addendum
 
 Added after the latest "what else could move the needle" pass. These ideas
@@ -157,7 +273,7 @@ Source behavior:
   using the live Qwen3.6 MoE shapes.
 - Separates `rows_per_expert` from true grouped memory offsets. The probe only
   wraps grouped source/destination USM handles when an explicit
-  `expert_first_token_offset` tensor is supplied; row counts alone are not used
+  `onednn_grouped_offsets` tensor is supplied; row counts alone are not used
   as offsets.
 
 Validation:
@@ -178,7 +294,7 @@ Validation:
 Next gate:
 
 1. Add Python-side optional call plumbing behind a new environment variable.
-2. Compute/provide `expert_first_token_offset` from `rows_per_expert` on XPU.
+2. Compute/provide `onednn_grouped_offsets` from `rows_per_expert` on XPU.
 3. Call the probe for one layer/rank in metadata/descriptor mode and keep
    returning current `xpu_fused_moe` output.
 4. Extend from descriptor-only to execute-and-compare for one layer, with final

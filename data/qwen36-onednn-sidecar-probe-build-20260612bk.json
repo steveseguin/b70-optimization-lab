@@ -10,6 +10,7 @@
   "build_command": "source /opt/intel/oneapi/setvars.sh --force >/tmp/oneapi-setvars-qwen36-sidecar.log 2>&1 || true; cmake --build build/qwen36-sidecar-probe-20260612 --target _xpu_C -j 8",
   "configure_result": "pass",
   "build_result": "pass",
+  "incremental_rebuild_after_offset_rename": "pass",
   "built_artifacts": {
     "_xpu_C.abi3.so": {
       "path": "build/qwen36-sidecar-probe-20260612/_xpu_C.abi3.so",
@@ -39,7 +40,7 @@
   "probe_contract": {
     "normal_path": "inert unless explicitly called by Python",
     "descriptor_mode": "can dry-create oneDNN grouped matmul primitive descriptors from live tensor shapes",
-    "offset_handling": "requires expert_first_token_offset to wrap grouped source/destination USM handles; rows_per_expert alone is not treated as an offset tensor",
+    "offset_handling": "requires onednn_grouped_offsets to wrap grouped source/destination USM handles; rows_per_expert alone is not treated as an offset tensor",
     "fallback_requirement": "future live use must keep current xpu_fused_moe fallback and compare final-layer parity before returning sidecar output"
   },
   "speed_claim": "none"

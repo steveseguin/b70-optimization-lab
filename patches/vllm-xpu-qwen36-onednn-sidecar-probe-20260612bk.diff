@@ -1,5 +1,5 @@
 diff --git a/csrc/xpu/ops.h b/csrc/xpu/ops.h
-index 0200386..49b81b3 100644
+index 0200386..a9d8550 100644
 --- a/csrc/xpu/ops.h
 +++ b/csrc/xpu/ops.h
 @@ -52,6 +52,30 @@ torch::Tensor int4_gemm_w4a8(
@@ -95,7 +95,7 @@ index 0200386..49b81b3 100644
 +    const torch::Tensor& gemm2_a,
 +    const torch::Tensor& gemm2_a_scales,
 +    const torch::Tensor& gemm2_output,
-+    const c10::optional<at::Tensor>& expert_first_token_offset,
++    const c10::optional<at::Tensor>& onednn_grouped_offsets,
 +    int64_t layer_index,
 +    bool dry_create_descriptors);
  #endif
@@ -109,7 +109,7 @@ index 0200386..49b81b3 100644
 \ No newline at end of file
 +#endif
 diff --git a/csrc/xpu/torch_bindings.cpp b/csrc/xpu/torch_bindings.cpp
-index 2c73d16..b33953f 100644
+index 2c73d16..841df0b 100644
 --- a/csrc/xpu/torch_bindings.cpp
 +++ b/csrc/xpu/torch_bindings.cpp
 @@ -37,6 +37,36 @@ TORCH_LIBRARY_EXPAND(TORCH_EXTENSION_NAME, xpu_ops) {
@@ -192,7 +192,7 @@ index 2c73d16..b33953f 100644
 +      "Tensor rows_per_expert, Tensor unpermuted_row_to_permuted_row, Tensor "
 +      "gemm1_a, Tensor gemm1_a_scales, Tensor gemm1_output, Tensor "
 +      "act_output, Tensor gemm2_a, Tensor gemm2_a_scales, Tensor "
-+      "gemm2_output, Tensor? expert_first_token_offset, int layer_index, "
++      "gemm2_output, Tensor? onednn_grouped_offsets, int layer_index, "
 +      "bool dry_create_descriptors) -> Tensor");
 +  xpu_ops.impl(
 +      "qwen36_moe_onednn_sidecar_probe",
@@ -203,7 +203,7 @@ index 2c73d16..b33953f 100644
    xpu_ops.def(
 diff --git a/csrc/xpu/onednn/qwen36_moe_sidecar.cpp b/csrc/xpu/onednn/qwen36_moe_sidecar.cpp
 new file mode 100644
-index 0000000..0f38938
+index 0000000..0fcf4fc
 --- /dev/null
 +++ b/csrc/xpu/onednn/qwen36_moe_sidecar.cpp
 @@ -0,0 +1,283 @@
@@ -269,7 +269,7 @@ index 0000000..0f38938
 +    const torch::Tensor& weights,
 +    const torch::Tensor& weights_scales,
 +    const torch::Tensor& dst,
-+    const c10::optional<at::Tensor>& expert_first_token_offset,
++    const c10::optional<at::Tensor>& onednn_grouped_offsets,
 +    int64_t m,
 +    int64_t k,
 +    int64_t n,
@@ -295,13 +295,13 @@ index 0000000..0f38938
 +  auto prim = dnnl::matmul(pd);
 +  (void)prim;
 +
-+  if (expert_first_token_offset.has_value()) {
++  if (onednn_grouped_offsets.has_value()) {
 +    std::vector<void*> src_handles = {
 +        const_cast<void*>(src.data_ptr()),
-+        const_cast<void*>(expert_first_token_offset.value().data_ptr())};
++        const_cast<void*>(onednn_grouped_offsets.value().data_ptr())};
 +    std::vector<void*> dst_handles = {
 +        dst.data_ptr(),
-+        const_cast<void*>(expert_first_token_offset.value().data_ptr())};
++        const_cast<void*>(onednn_grouped_offsets.value().data_ptr())};
 +
 +    auto src_mem = dnnl::sycl_interop::make_memory(
 +        src_md, engine, dnnl::sycl_interop::memory_kind::usm, src_handles);
@@ -353,7 +353,7 @@ index 0000000..0f38938
 +    const torch::Tensor& gemm2_a,
 +    const torch::Tensor& gemm2_a_scales,
 +    const torch::Tensor& gemm2_output,
-+    const c10::optional<at::Tensor>& expert_first_token_offset,
++    const c10::optional<at::Tensor>& onednn_grouped_offsets,
 +    int64_t layer_index,
 +    bool dry_create_descriptors) {
 +  TORCH_CHECK(hidden_states.defined(), "hidden_states must be defined");
@@ -388,9 +388,9 @@ index 0000000..0f38938
 +  require_tensor(gemm2_a, "gemm2_a", at::ScalarType::Char, 2, device);
 +  require_tensor(gemm2_a_scales, "gemm2_a_scales", at::ScalarType::Float, 2, device);
 +  require_tensor(gemm2_output, "gemm2_output", at::ScalarType::BFloat16, 2, device);
-+  if (expert_first_token_offset.has_value()) {
-+    require_tensor(expert_first_token_offset.value(),
-+                   "expert_first_token_offset",
++  if (onednn_grouped_offsets.has_value()) {
++    require_tensor(onednn_grouped_offsets.value(),
++                   "onednn_grouped_offsets",
 +                   at::ScalarType::Int,
 +                   1,
 +                   device);
@@ -425,9 +425,9 @@ index 0000000..0f38938
 +  require_shape(w2, "w2", {num_experts, inter_size, hidden_size});
 +  require_shape(w2_scales, "w2_scales", {num_experts, hidden_size});
 +  require_shape(gemm2_output, "gemm2_output", {num_moe_inputs, hidden_size});
-+  if (expert_first_token_offset.has_value()) {
-+    require_shape(expert_first_token_offset.value(),
-+                  "expert_first_token_offset",
++  if (onednn_grouped_offsets.has_value()) {
++    require_shape(onednn_grouped_offsets.value(),
++                  "onednn_grouped_offsets",
 +                  {num_experts});
 +  }
 +
@@ -443,7 +443,7 @@ index 0000000..0f38938
 +                                    w13,
 +                                    w13_scales,
 +                                    gemm1_output,
-+                                    expert_first_token_offset,
++                                    onednn_grouped_offsets,
 +                                    num_moe_inputs,
 +                                    hidden_size,
 +                                    2 * inter_size,
@@ -456,7 +456,7 @@ index 0000000..0f38938
 +                                    w2,
 +                                    w2_scales,
 +                                    gemm2_output,
-+                                    expert_first_token_offset,
++                                    onednn_grouped_offsets,
 +                                    num_moe_inputs,
 +                                    inter_size,
 +                                    hidden_size,
@@ -481,7 +481,7 @@ index 0000000..0f38938
 +  out[10] = hidden_size;
 +  out[11] = static_cast<int64_t>(dry_create_descriptors);
 +  out[12] = descriptor_create_ok;
-+  out[13] = static_cast<int64_t>(expert_first_token_offset.has_value());
++  out[13] = static_cast<int64_t>(onednn_grouped_offsets.has_value());
 +  out[14] = handle_wrap_ok;
 +  out[15] = static_cast<int64_t>(w13.stride(0));
 +  out[16] = static_cast<int64_t>(w13.stride(1));
