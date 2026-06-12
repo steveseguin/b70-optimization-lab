@@ -12291,3 +12291,144 @@ Concrete next steps:
    parent request output.
 4. Only after k=1 oracle parity passes should MTP/DFlash/ngram proposer work
    resume. The proposer is secondary; preserving verifier state is the gate.
+
+## Copy-On-Write Verifier Source Map And Bigger Bets
+
+Added after the streaming-input verifier and logprob microscope proved that
+external token replay is too fragile for exact speculative acceptance. The next
+speed path should keep the current Quark W8A8 INT8 request state authoritative
+and make every proposer disposable until the target verifier accepts tokens.
+
+Source map from the local vLLM V1 tree:
+
+| Component | Local source | Relevant state | Fork implication |
+| --- | --- | --- | --- |
+| Authoritative request | `/home/steve/src/vllm/vllm/v1/request.py:59` | `Request` owns prompt IDs, output IDs, all-token IDs, `spec_token_ids`, and `num_computed_tokens`. | The parent request's `_output_token_ids`, `_all_token_ids`, and `num_computed_tokens` must be unchanged while a verifier fork is scored. |
+| Output commit | `/home/steve/src/vllm/vllm/v1/request.py:211` and `/home/steve/src/vllm/vllm/v1/core/sched/scheduler.py:1781` | `append_output_token_ids()` updates both output and all-token lists; `_update_request_with_output()` is the public commit path. | A COW verifier must not call this on the parent until acceptance is decided. |
+| Scheduler ownership | `/home/steve/src/vllm/vllm/v1/core/sched/scheduler.py:163` | `self.requests` is the scheduler-side owner of active `Request` objects. | The cleanest fork point is scheduler-owned, not an OpenAI sidecar request. |
+| Scheduled compute advance | `/home/steve/src/vllm/vllm/v1/core/sched/scheduler.py:1090` | `_update_after_schedule()` advances `num_computed_tokens` after scheduling; rejected/spec tokens are adjusted later. | The fork needs scratch `num_computed_tokens` accounting or a separate scratch request ID. |
+| Streaming session mutation | `/home/steve/src/vllm/vllm/v1/core/sched/scheduler.py:1116` | Streaming updates discard the prior final sampled token and rewrite prompt/output state. | This likely explains why the streaming-input sidecar can drift and should not be promoted as the verifier. |
+| KV allocation | `/home/steve/src/vllm/vllm/v1/core/kv_cache_manager.py:225` | `allocate_slots()` allocates blocks for new and lookahead tokens, then caches only finalized tokens capped at `request.num_tokens`. | Scratch verifier rows should use scratch request IDs/blocks and be freed after scoring. Parent block IDs must remain unchanged. |
+| Worker cached state | `/home/steve/src/vllm/vllm/v1/worker/gpu_input_batch.py:34` and `:337` | `CachedRequestState` mirrors request tokens, block IDs, computed token count, and output IDs; `InputBatch.add_request()` adds rows and block table entries. | A k=1 oracle can be implemented as a scratch cached request row that shares immutable prefix block IDs and appends only scratch candidate slots. |
+| Spec token injection | `/home/steve/src/vllm/vllm/v1/worker/gpu_input_batch.py:485` | `update_req_spec_token_ids()` writes scheduled speculative IDs into the worker token buffer. | The current spec path mutates live row width/state; the COW path should score candidates in a separate verifier row. |
+
+Minimal k=1 oracle algorithm:
+
+1. Let the accepted request generate or expose the next baseline token, but do
+   not emit it through a speculative path.
+2. Create an internal scratch verifier request with the same prompt/output
+   prefix metadata, the same immutable prefix block IDs, and a different
+   scratch request ID.
+3. Allocate scratch slots only for the one candidate token and run the verifier
+   forward pass.
+4. Assert the scratch verifier accepts the known baseline token.
+5. Free scratch blocks and remove the scratch worker row.
+6. Assert the parent request's token IDs, block IDs, and `num_computed_tokens`
+   are byte-for-byte unchanged before the normal parent commit path runs.
+
+Promotion gates for any verifier implementation:
+
+- k=1 oracle accepts every baseline token for the existing `natural_latency_plan`.
+- Parent request token IDs and KV block IDs are unchanged during scratch scoring.
+- Scratch blocks are freed and do not pollute prefix cache or public streams.
+- Logprob fingerprints match accepted greedy decode on near-tie positions such
+  as token position `25` (`198` vs `271`).
+- Existing quality gates still pass: exact canaries, repeat64, structured JSON,
+  math/code prompts, long-context needle, and BF16/current-Quark comparison.
+
+Bigger, bolder ideas to keep in the backlog:
+
+1. **Two-lane in-engine verifier graph.**
+   - Run a public parent lane and a scratch verifier lane in the same engine
+     step. The scratch lane can score a small candidate tree while the parent
+     state remains untouched.
+   - Why it might matter: it avoids the sidecar replay drift and removes HTTP /
+     scheduler round trips from speculative verification.
+   - Proof required: k=1 oracle parity, then k=2/4 candidate acceptance without
+     parent state mutation.
+
+2. **Dynamic DFlash/MTP budget instead of fixed long lookahead.**
+   - DFlash officially supports Qwen3.6 35B-A3B, but public reports show
+     acceptance can collapse when the lookahead is too long or SWA/target hidden
+     state handling is wrong.
+   - Start with small budgets (`2-5`) and adapt per prompt class, accepted
+     position, and recent acceptance rate. Do not chase draft throughput; chase
+     accepted-token throughput after Quark verification.
+   - This stays quality-preserving because the Quark INT8 verifier remains the
+     final accept/reject authority.
+
+3. **Route-aware persistent MoE kernel suite.**
+   - Capture real Qwen3.6 route distributions from accepted p512/n512 decode,
+     then tune grouped GEMM on those exact skewed shapes instead of synthetic
+     even routing.
+   - Target `vllm-xpu-kernels`, not one-off Python wrappers, because upstream
+     Intel XPU work is moving there and MoE decode is dominated by routing
+     skew, grouped GEMM launch overhead, shared expert add, and tiny epilogues.
+   - Bold target: persistent decode kernel or fused route/sort/grouped-GEMM/
+     shared-expert epilogue for batch-1 and small-batch A3B.
+
+4. **Expert placement and hotset replication.**
+   - Use route captures to find hot experts by layer and prompt class.
+   - Create a latency-only slot with lower context or smaller KV reservation to
+     free VRAM, then replicate hot experts or avoid cross-card fetch/reduce for
+     the hottest paths.
+   - This is separate from the final 32K production slot; it answers whether
+     memory headroom or TP communication is the real single-request ceiling.
+
+5. **TP4 versus EP/replica architecture test.**
+   - Current TP4 gives the best exact-model public result, but TP4 also pays
+     small collective costs every token.
+   - Test whether expert-parallel or partial-replica layouts can reduce
+     per-token communication while preserving the same 8-bit weights.
+   - Do not use 4-bit as the solution; use lower-context latency slots only as
+     a diagnostic to buy room for replicated 8-bit pieces.
+
+6. **Graph-safe tiny collective specialization.**
+   - The current stack already has custom collective work, but remaining
+     decode-time hidden-size collectives may still dominate latency at batch 1.
+   - Build shape-exact microbenches for the TP4 hidden-size all-reduce /
+     reduce-scatter calls and either fuse them into adjacent RMS/epilogue work
+     or replace them with a graph-safe low-latency path.
+
+7. **Same-model high-fidelity engine bakeoff.**
+   - Compare vLLM/XPU Quark W8A8 against any available 8-bit/high-fidelity
+     path that can run Qwen3.6 35B-A3B on Intel: llama.cpp SYCL Q8/8-bit if it
+     exists, OpenVINO/oneDNN GenAI if the GDN/MoE model is supported, SGLang XPU
+     if viable, and native `vllm-xpu-kernels` routes.
+   - Goal is not to switch blindly; it is to determine whether vLLM scheduler,
+     MoE kernels, or Intel backend kernels are the main bottleneck.
+
+8. **Quality validation expansion.**
+   - Keep exact-token gates for deterministic canaries, but add logprob
+     fingerprint gates around known near ties, BF16 fallback comparisons, a
+     small lm-eval/API eval suite, and longer reliability loops after every
+     speed win.
+   - The failure mode we just saw is subtle enough that text-only smoke tests
+     are not enough.
+
+9. **Localmaxxing publication packet v3.**
+   - Our exact-model public row is already the only Quark W8A8 INT8 row and the
+     base-model duplicate is currently the top public Arc Pro B70 Qwen3.6 35B
+     entry.
+   - Next submission should include peak VRAM, command flags, quality gate
+     hashes, reliability loop length, and a clean explanation of whether the
+     speedup came from COW speculation, route-aware kernels, or collectives.
+
+External notes that shaped this addendum:
+
+- vLLM's public INT8 W8A8 docs still describe INT8 compute support in NVIDIA
+  terms, which reinforces that our Intel Quark W8A8 path is relying on local or
+  emerging XPU-specific work rather than a mature stock INT8 route:
+  `https://docs.vllm.ai/en/stable/features/quantization/int8/`
+- Intel/vLLM roadmap items point XPU quantization and kernel work toward
+  `vllm-xpu-kernels`, especially for platform-specific quantization methods:
+  `https://github.com/vllm-project/vllm/issues/33214` and
+  `https://github.com/vllm-project/vllm/issues/37979`
+- Intel's grouped-GEMM tuning issue explicitly calls out decode-stage MoE route
+  skew and real token distributions as critical tuning inputs:
+  `https://github.com/intel/intel-xpu-backend-for-triton/issues/6389`
+- DFlash has a Qwen3.6 35B-A3B drafter, but its docs/discussions make the same
+  point our probes do: target hidden state/SWA correctness and acceptance
+  tuning matter more than raw proposer speed:
+  `https://github.com/z-lab/dflash` and
+  `https://huggingface.co/z-lab/Qwen3.6-35B-A3B-DFlash`
