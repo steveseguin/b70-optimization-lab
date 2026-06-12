@@ -15086,3 +15086,207 @@ Sources/leads:
 - `https://github.com/vllm-project/vllm/issues/43559`
 - `https://github.com/vllm-project/vllm/issues/39809`
 - `https://docs.vllm.ai/en/stable/models/hardware_supported_models/xpu/`
+
+## Accepted Graph COW Trace, Cache Provenance, and V6 Ideas
+
+Added default-off COW trace passthroughs to the accepted launcher:
+
+- `COW_PARENT_TRACE_FILE`
+- `COW_PARENT_TRACE_MAX_LINES`
+- `COW_WORKER_TRACE_FILE`
+- `COW_WORKER_TRACE_MAX_LINES`
+- `COW_WORKER_TRACE_RANK`
+
+The wrapper maps them to the existing vLLM trace envs and unsets them when not
+provided, so normal accepted launches remain non-tracing:
+
+- `VLLM_XPU_COW_VERIFIER_TRACE_FILE`
+- `VLLM_XPU_COW_VERIFIER_TRACE_MAX_LINES`
+- `VLLM_XPU_COW_WORKER_TRACE_FILE`
+- `VLLM_XPU_COW_WORKER_TRACE_MAX_LINES`
+- `VLLM_XPU_COW_WORKER_TRACE_RANK`
+
+Fresh-cache trace run:
+
+- backend: `qwen36-tp4-accepted-graph-cowtrace-20260612k`
+- cache root: fresh temporary vLLM/TorchInductor cache
+- artifacts:
+  - `data/qwen36-quark-int8-tp4-accepted-graph-cowtrace-completions-20260612k.json`
+  - `data/qwen36-quark-int8-tp4-accepted-graph-cowtrace-parent-trace-20260612k.jsonl`
+  - `data/qwen36-quark-int8-tp4-accepted-graph-cowtrace-parent-summary-20260612k.json`
+  - `data/qwen36-quark-int8-tp4-accepted-graph-cowtrace-parent-summary-20260612k.md`
+  - `data/qwen36-quark-int8-tp4-accepted-graph-cowtrace-worker-trace-20260612k.jsonl`
+  - `data/qwen36-quark-int8-tp4-accepted-graph-cowtrace-worker-summary-20260612k.json`
+  - `data/qwen36-quark-int8-tp4-accepted-graph-cowtrace-worker-summary-20260612k.md`
+
+Production-cache trace run:
+
+- backend: `qwen36-tp4-accepted-graph-cowtrace-prodroot-20260612l`
+- cache root: normal accepted cache root
+- artifacts:
+  - `data/qwen36-quark-int8-tp4-accepted-graph-cowtrace-prodroot-completions-20260612l.json`
+  - `data/qwen36-quark-int8-tp4-accepted-graph-cowtrace-prodroot-parent-trace-20260612l.jsonl`
+  - `data/qwen36-quark-int8-tp4-accepted-graph-cowtrace-prodroot-parent-summary-20260612l.json`
+  - `data/qwen36-quark-int8-tp4-accepted-graph-cowtrace-prodroot-parent-summary-20260612l.md`
+  - `data/qwen36-quark-int8-tp4-accepted-graph-cowtrace-prodroot-worker-trace-20260612l.jsonl`
+  - `data/qwen36-quark-int8-tp4-accepted-graph-cowtrace-prodroot-worker-summary-20260612l.json`
+  - `data/qwen36-quark-int8-tp4-accepted-graph-cowtrace-prodroot-worker-summary-20260612l.md`
+
+Restored non-tracing accepted backend after the trace run:
+
+- backend: `qwen36-tp4-accepted-restored-after-cowtrace-20260612l`
+- smoke artifact:
+  `data/qwen36-quark-int8-tp4-accepted-restored-after-cowtrace-completions-20260612l.json`
+- result: first 32 generated tokens match the accepted `20260612i` baseline
+  for both probe prompts; the recorded `baseline_match_all=false` is only the
+  expected length mismatch against the 128-token baseline.
+
+Key result:
+
+- With the production accepted cache root, tracing preserved the accepted graph
+  token stream for the 32-token probe. In `repetitive_kernel_notes`, output
+  token index `14` stayed `4752` (`" unique"`), matching the accepted
+  `20260612i` baseline.
+- With a fresh cache root, the same accepted flags and trace hooks drifted to
+  the refill/no-graph branch. In `repetitive_kernel_notes`, output token index
+  `14` became `6126` (`"PU"`). `natural_latency_plan` also differed at token
+  index `25`.
+- This means graph compile/cache provenance is a quality variable for this
+  model/runtime. "Same launch flags" is not a complete reproducibility claim
+  unless cache root, compiled graph state, and generated-token branch are also
+  recorded.
+
+Trace shape from the production-cache run:
+
+- parent trace rows: `192`
+- worker trace rows: `314`
+- worker request count: `2`
+- worker `spec_update_count`: `64`
+- worker `nonzero_spec_update_count`: `0`
+- worker `prepare_event_count`: `64`
+- worker `nonzero_prepare_request_window_count`: `0`
+- parent KV block-length changes: `0`
+- parent nonzero deltas:
+  - `num_computed_tokens`: `64`
+  - `num_output_placeholders`: `64`
+  - `num_output_tokens`: `0`
+  - `num_tokens`: `0`
+  - `num_tokens_with_spec`: `0`
+  - `spec_len`: `0`
+
+Interpretation:
+
+- The accepted graph run is clean no-spec scheduling: one prefill transition,
+  then one scheduled decode token per step, no speculative token updates, and
+  no KV block-table length churn in the trace.
+- The trace hooks are now safe enough for accepted graph runs when they reuse
+  the production cache. Future COW/spec diagnostics should use this trace as
+  the parent-state baseline.
+- Fresh-cache drift should be treated as a separate graph/eager/cache
+  reproducibility bug, not as proof that the COW trace changed model behavior.
+
+New quality gates to add before speed claims:
+
+1. Record cache root and graph-cache identity for every graph-path benchmark.
+2. For any new graph cache, run the 32-token first-diff probe before speed
+   tests. Known sentinel positions are `repetitive_kernel_notes` index `14`
+   and `natural_latency_plan` index `17`/`25`.
+3. Treat a cache-root or graph-compile change as a new runtime mode until it
+   passes exact canaries, repeat64, long-context needle, and the known
+   graph/refill logprob fingerprints.
+4. Keep trace hooks default-off in production launchers; enable them only for
+   artifact-producing diagnostic runs.
+
+V6 things to try next:
+
+1. **Resident-state first-diff fingerprint.**
+   - At known divergence positions, record a minimal graph-safe fingerprint:
+     request id, token position, selected token, top-k ids/logprobs, KV block
+     tail, slot mapping, graph/cache root, and a cheap hidden-state checksum.
+   - Use it to compare accepted graph, fresh-cache graph, no-graph compile,
+     eager, and any future COW lane.
+
+2. **Accepted-cache provenance guard.**
+   - Add a small script that verifies the backend is using the intended graph
+     cache root and runs the 32-token sentinel probe before opening the
+     frontdoor.
+   - This prevents a production restart from silently moving from the accepted
+     branch to the fresh-cache branch.
+
+3. **Scratch-row COW oracle from resident state.**
+   - Do not re-prefill from token IDs as the verifier authority.
+   - Fork the live request row, alias immutable prefix KV pages, copy mutable
+     GDN/Mamba state, score one known next token, then assert the parent row
+     and block table are unchanged.
+   - The first version only needs correctness and an overhead ledger; speed
+     comes later.
+
+4. **Graph-cache bisection.**
+   - Build the same accepted graph under controlled cache roots and compare
+     generated code fingerprints plus token probes.
+   - If only one compiled artifact drifts, reduce the artifact difference to a
+     small upstream issue: generated kernel, graph replay order, or provider
+     selection.
+
+5. **Two-lane production policy.**
+   - Keep the current accepted cache root pinned as the production quality
+     lane.
+   - Use a separate experimental cache root for COW/spec/kernel probes.
+   - Promotion requires exact token probes and repeat/needle gates, not just
+     startup success.
+
+Bigger, bolder ideas added after the cache-provenance finding:
+
+1. **Cache-certified graph artifact registry.**
+   - Treat compiled graph/cache artifacts as part of the model build, with
+     hashes, sentinel token outputs, and trace summaries.
+   - A production deploy would select a certified graph artifact instead of
+     compiling opportunistically at first request.
+
+2. **Resident-state verifier service inside vLLM.**
+   - Build a small in-engine verifier API that can score candidate tokens from
+     the live request state without passing through OpenAI serving or
+     re-prefill.
+   - This becomes the foundation for n-gram, MTP, DFlash, EAGLE, or any
+     sidecar proposer while preserving current Quark INT8 output quality.
+
+3. **Graph/eager divergence reducer as an upstream package.**
+   - Package the accepted-vs-fresh/no-graph first-diff fixture with model
+     config, graph flags, cache provenance, and token/logprob deltas.
+   - The goal is a maintainer-actionable repro of "same model, different graph
+     cache path changes logits by many logprob points."
+
+4. **Static decode appliance with certified graph cache.**
+   - If OpenAI serving overhead is not the bottleneck, this will prove it. If
+     it is, the static lane can reuse certified graph artifacts and skip
+     scheduler complexity for single-user latency.
+   - It should expose a narrower API: fixed model, fixed graph, fixed context
+     class, fixed sampling policy, and strict sentinel checks.
+
+5. **Speculation transaction log format.**
+   - Define an append-only log for candidate tokens, scratch KV/GDN state,
+     accepted counts, replacement tokens, parent commit hashes, and final
+     output tokens.
+   - This makes COW/speculation bugs reproducible without replaying a full
+     server session.
+
+6. **Route-aware COW/MoE joint capture.**
+   - Capture MoE route histograms at the same positions where COW/spec
+     first-diff probes run.
+   - If state divergence correlates with specific layers or hot experts, the
+     persistent-MoE work and verifier-state work can share fixtures.
+
+7. **Graph-cache-independent verifier fallback.**
+   - Investigate whether a resident-state verifier can avoid the cache
+     provenance problem by replaying only a tiny certified decode graph for
+     candidate scoring.
+   - This is not prompt replay; it is live-state scoring with a separately
+     certified graph bucket.
+
+8. **Production promotion matrix.**
+   - Every future candidate should be classified by quality branch
+     (`accepted-cache graph`, `fresh-cache graph`, `no-graph compile`, `eager`),
+     speed branch (`c1`, aggregate `c8+`), and stability branch
+     (`repeat64`, long context, restart, trace-enabled).
+   - This keeps fast-but-wrong, stable-but-slow, and quality-clean wins from
+     being mixed together.

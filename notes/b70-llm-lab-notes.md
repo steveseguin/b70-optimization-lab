@@ -176,6 +176,18 @@ Current Qwen3.6 INT8 direction:
     are no longer sufficient proof of a speculative verifier bug. The next
     speed-safe work is graph/eager parity, graph-enabled oracle tracing, and
     measured latency decomposition before more speculation benchmarks.
+24. Added "Accepted Graph COW Trace, Cache Provenance, and V6 Ideas" to the
+    Qwen3.6 note. Default-off COW parent/worker trace env passthroughs now
+    exist in `scripts/launch-qwen36-quark-int8-accepted.sh`. Production-cache
+    accepted graph tracing preserved the accepted 32-token branch, while a
+    fresh graph cache root drifted to the no-graph/refill token branch at the
+    known `repetitive_kernel_notes` index `14` sentinel. Cache root and graph
+    artifact provenance are now mandatory quality metadata before speed claims.
+    New larger ideas include a cache-certified graph registry, resident-state
+    verifier service, graph/eager upstream repro packet, certified static
+    decode lane, speculation transaction log, route-aware COW/MoE capture, and
+    a promotion matrix that separates quality branch, speed branch, and
+    stability branch.
 
 ## 2026-05-10 MiniMax AutoRound Addendum
 
