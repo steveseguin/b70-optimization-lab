@@ -11578,3 +11578,195 @@ Priority update:
 3. In parallel, start the route-capture plus `vllm-xpu-kernels` microbench
    suite, because that work remains valuable even if speculation takes longer.
 4. Treat graph-capture device-lost as a reliability metric, not just a nuisance.
+
+## Prompt-Logprob Verifier Bucket Probe
+
+Added a correctness-first sidecar verifier proxy:
+
+- script: `scripts/probe-qwen36-prompt-logprob-verifier-buckets.py`
+- fresh current accepted baseline:
+  `data/qwen36-quark-int8-tp4-accepted-current-p512o128-20260611g.json`
+- stale-baseline check:
+  `data/qwen36-quark-int8-tp4-accepted-current-vs-metadata-p512o64-20260611g.json`
+- initial no-async-fixture probe:
+  `data/qwen36-quark-int8-tp4-prompt-logprob-verifier-buckets-20260611g.json`
+  and `.md`
+- current-backend probe:
+  `data/qwen36-quark-int8-tp4-prompt-logprob-verifier-buckets-current-20260611g.json`
+  and `.md`
+
+Method:
+
+- Send `prompt_token_ids + accepted_prefix_token_ids + draft_token_ids` to
+  `/v1/completions` as token IDs.
+- Use `prompt_logprobs=1`, `temperature=0`, `return_token_ids=true`, and
+  `add_special_tokens=false`.
+- Accept a draft prefix while every teacher-forced draft token has verifier
+  rank `1`.
+- Mutate the first draft token as a negative control; it should accept zero
+  tokens.
+
+Current-backend result:
+
+| Window | Perfect all-rank1 | Perfect accepted / draft | Negative controls |
+| ---: | ---: | ---: | ---: |
+| 1 | 4/4 | 4/4 | 2/2 reject first |
+| 2 | 4/4 | 8/8 | 2/2 reject first |
+| 4 | 4/4 | 16/16 | 2/2 reject first |
+| 8 | 3/4 | 30/32 | 2/2 reject first |
+| 16 | 1/4 | 32/64 | 2/2 reject first |
+| 32 | 1/4 | 52/128 | 2/2 reject first |
+
+Interpretation:
+
+- The rejection rule is sane: all mutated-first-token controls reject at prefix
+  length `0`.
+- Short windows prove the token-id prompt and prompt-logprob path are wired
+  correctly.
+- Longer perfect-draft windows are not always rank-1 under teacher-forced
+  prefill even when those tokens came from the current accepted greedy decode.
+  So this probe is a useful diagnostic, but it is not a production verifier and
+  not a substitute for a KV-resident shadow verifier.
+- The result strengthens the case for temporary-KV verification inside vLLM:
+  a sidecar that re-prefills every candidate is both slow and semantically
+  different enough on Qwen3.6/GDN/MoE sequences to be unsafe as the final
+  acceptance authority.
+
+## Fresh External Signals
+
+Refreshed exact-model and related public feeds:
+
+- exact Quark W8A8 row:
+  `data/localmaxxing-qwen36-quark-w8a8-int8-refresh-20260611g.json`
+  - still `1` exact-model public row
+  - current public row remains `cmq8yhxvo001ipb0149aoa79o` at
+    `99.428358` output tok/s, `76.454061 ms` TTFT
+- FP8 comparison feed:
+  `data/localmaxxing-qwen36-fp8-refresh-20260611g.json`
+  - includes a `253.7 tok/s` public FP8/DFlash-style signal on different
+    hardware/engine assumptions
+- MTP comparison feed:
+  `data/localmaxxing-qwen36-unsloth-mtp-refresh-20260611g.json`
+  - useful only as a speculation recipe source; it is not our quantization or
+    accepted model
+
+Fresh issue/search leads:
+
+- `https://github.com/vllm-project/vllm/issues/40756`
+  - Qwen3.6 FP8 MTP long-sequence crash with invalid `-1` scheduled drafts.
+    This matches our concern that the stock speculative state path needs
+    verifier-state isolation before promotion.
+- `https://github.com/vllm-project/vllm/issues/43559`
+  - prefix caching plus MTP changes quality on a Qwen3.6 classification task.
+    Keep prefix caching disabled in speed/quality gates until speculation is
+    independently proven.
+- `https://github.com/vllm-project/vllm/issues/34650`
+  - speculative scheduling can move token counters ahead of actual accepted
+    output, breaking reasoning-end detection. This is another concrete example
+    of scheduler/accounting drift, close to our `prev_num_draft_len` and slot
+    mapping findings.
+- `https://github.com/ggml-org/llama.cpp/issues/23149`
+  - llama.cpp SYCL MTP on Qwen3.6 also has garbled/truncated output reports.
+    This keeps llama.cpp/SYCL MTP as a diagnostic branch, not an immediate
+    production escape hatch.
+- `https://github.com/ggml-org/llama.cpp/discussions/23313`
+  - Intel GPU SYCL performance data is active and worth watching for B70/Q8
+    engine-bakeoff clues.
+
+## Things To Try: Bolder V3
+
+These are bigger than ordinary knob sweeps. They preserve the current rule:
+Qwen3.6 35B, 8-bit/high-fidelity weights, current Quark INT8 model as the
+quality authority, no Qwen3.5 detours, and no 4-bit promotion.
+
+1. Temporary-KV verifier fork.
+   - Add a verifier path that forks the request state, KV pointers, block
+     tables, GDN/Mamba recurrent state, and slot mappings for a draft window.
+   - Run the verifier on the fork, then commit only the accepted prefix to the
+     live request.
+   - This directly targets the observed failure: actual speculation widens the
+     live verifier row at `rank_step=1`.
+
+2. Rolling sidecar verifier with its own KV, not prompt-logprob re-prefill.
+   - Keep a second local verifier engine synchronized with the accepted output
+     prefix.
+   - Draft windows are checked against that sidecar's live KV, avoiding full
+     re-prefill and avoiding mutation of the production request state.
+   - Use it first for oracle/perfect-draft upper bounds, then for MTP/DFlash
+     proposer tests.
+
+3. Verified speculative streaming buffer.
+   - Let a fast proposer draft ahead, but hold speculative text in a private
+     buffer until the Quark verifier commits it.
+   - This avoids user-visible corrupted loops even if the proposer path is
+     aggressive.
+   - Measure user-perceived latency separately from raw accepted-token speed.
+
+4. Speculation heatmap by prompt class.
+   - Record acceptance rate, first divergence, and bad-loop signatures for
+     natural chat, code, structured JSON, arithmetic, repeat stability, and
+     long-context needles.
+   - Use the heatmap to disable speculation for structured/exact tasks while
+     continuing natural-language experiments. This is not the final speed win,
+     but it can make reliability work less all-or-nothing.
+
+5. GDN/Mamba state audit.
+   - The no-mamba metadata run cleared one cache-block bug, but Qwen3.6 still
+     has GDN/Mamba recurrent/convolution state that can be advanced over
+     rejected tokens if scheduler accounting is wrong.
+   - Add trace points for state rows before and after accepted/rejected drafts.
+   - A good test is oracle `k=1`: if even perfect one-token drafts drift, some
+     state is being advanced in the wrong place.
+
+6. Real-router capture as a first-class benchmark input.
+   - Log expert IDs, route counts, and per-layer route skew from accepted
+     p512/n512 and prompt-class runs.
+   - Replay those exact distributions through `vllm-xpu-kernels` grouped-GEMM
+     and MoE prepare/finalize microbenches.
+   - This should replace synthetic uniform routing in future kernel decisions.
+
+7. Hot-expert memory-for-latency plan.
+   - Use real route histograms to decide whether the hottest experts can be
+     duplicated or placed to reduce cross-card traffic.
+   - Run memory math against 32K KV before coding anything.
+   - This is a possible single-user latency win if pure TP4 is overpaying for
+     MoE collectives.
+
+8. Single-stream Level Zero command-graph runner.
+   - Capture a whole decode token as a static command graph for batch-1:
+     attention/GDN, MoE, residual/norm, collectives, and logits.
+   - Keep it separate from production until it exactly matches accepted token
+     traces.
+   - Goal: quantify whether vLLM graph fragmentation/dispatcher overhead is
+     a hard `~100 tok/s` ceiling.
+
+9. Strict 8-bit engine bakeoff with quality gates.
+   - Try current vLLM Quark W8A8, llama.cpp/SYCL or Vulkan Q8_0, OpenVINO/
+     oneDNN GenAI if Qwen3.6 MoE is supported, and any native XPU W8A8 path.
+   - Count only runs that preserve quality against BF16/current Quark gates,
+     support 32K context, and do not use AWQ/GPTQ-4bit/Q4/MXFP4.
+   - Purpose: learn whether vLLM/XPU is the bottleneck, not to lower quality.
+
+10. Upstream/bounty packet branch.
+    - Package the smallest reproductions for:
+      - speculative slot-mapping drift,
+      - MTP/prefix-cache/accounting quality hazards,
+      - route-skewed W8A8 MoE grouped GEMM,
+      - graph-safe tiny collectives.
+    - Include public artifacts, launch flags, environment, and expected versus
+      actual behavior.
+    - This can bring Intel/vLLM help while local work continues.
+
+11. Reliability scoreboard.
+    - Track every restore and diagnostic with startup time, graph-capture
+      outcome, TP rank of any failure, cache root, host uptime, and frontdoor
+      pause/drain state.
+    - Treat `UR_RESULT_ERROR_DEVICE_LOST` as a regression metric. Speed wins
+      that increase device-lost frequency do not graduate.
+
+12. Production service split after speed proof.
+    - Keep a conservative accepted lane for structured/exact requests.
+    - Add a latency lane only after verifier-isolated speculation passes
+      repeat64/long-context and request-class gates.
+    - Keep two TP2 or c1/c4 replica experiments for aggregate throughput, but
+      do not confuse them with the single-request `>200 tok/s` goal.
