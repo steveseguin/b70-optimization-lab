@@ -14084,3 +14084,228 @@ Next diagnostic run:
    implement scratch KV/page-table isolation first.
 4. If slots are correct but token ids at positions show stale speculative
    drafts, repair persistent `token_ids_cpu` rollback/replacement commit first.
+
+## Worker Request-Window Trace Result
+
+Completed the isolated no-XPU-graph oracle `k=1` request-window diagnostic:
+
+- Run tag:
+  `qwen36-quark-int8-tp4-oracle1-nobonus-windowtrace-nograph-20260612b`.
+- Launch mode: `NUM_SPECULATIVE_TOKENS=1`, `PROMPT_LOOKUP_MIN=2`,
+  `PROMPT_LOOKUP_MAX=5`, `ENABLE_XPU_GRAPH=0`, `ENFORCE_EAGER=1`,
+  `DISABLE_FULL_ACCEPT_BONUS=1`.
+- Trace env:
+  `SPEC_TRACE_FILE`,
+  `VLLM_XPU_COW_VERIFIER_TRACE_FILE`,
+  `VLLM_XPU_COW_WORKER_TRACE_FILE`,
+  `VLLM_XPU_COW_WORKER_TRACE_RANK=0`, and
+  `VLLM_XPU_ORACLE_DRAFT_LOG`.
+- First attempt used the system Python and failed before the benchmark with
+  missing `transformers`; rerun used `/home/steve/.venvs/vllm-xpu/bin/python`.
+- The diagnostic endpoint was stopped afterward and the accepted TP4 endpoint
+  was restored healthy on `127.0.0.1:18080`.
+
+Artifacts:
+
+- `data/qwen36-quark-int8-tp4-oracle1-nobonus-windowtrace-nograph-20260612b-completions.json`
+- `data/qwen36-quark-int8-tp4-oracle1-nobonus-windowtrace-nograph-20260612b-oracle-draft.jsonl`
+- `data/qwen36-quark-int8-tp4-oracle1-nobonus-windowtrace-nograph-20260612b-parent-trace.jsonl`
+- `data/qwen36-quark-int8-tp4-oracle1-nobonus-windowtrace-nograph-20260612b-parent-summary.{json,md}`
+- `data/qwen36-quark-int8-tp4-oracle1-nobonus-windowtrace-nograph-20260612b-spec-trace.jsonl`
+- `data/qwen36-quark-int8-tp4-oracle1-nobonus-windowtrace-nograph-20260612b-spec-summary.{json,md}`
+- `data/qwen36-quark-int8-tp4-oracle1-nobonus-windowtrace-nograph-20260612b-worker-trace.jsonl`
+- `data/qwen36-quark-int8-tp4-oracle1-nobonus-windowtrace-nograph-20260612b-worker-summary.{json,md}`
+- `data/qwen36-quark-int8-tp4-oracle1-nobonus-windowtrace-nograph-20260612b.log`
+
+Summary:
+
+- Completion cases: `2`.
+- Baseline token parity: `false`.
+- Spec trace rows: `16`.
+- Drafts: `16`.
+- Accepted drafts: `7`.
+- Rejected drafts: `9`.
+- Accept rate: `43.75%`.
+- Full-accept rows: `7`.
+- Full-reject rows: `9`.
+- Suppressed bonus rows: `7`.
+- Worker rows: `314`.
+- Worker prepare-position rows: `64`.
+- Worker request windows: `64`.
+- Nonzero worker request windows: `16`.
+
+The first-diff pattern is now clear:
+
+- `natural_latency_plan` first diverges at output index `9`.
+  - Candidate/current token at the diff: `383`.
+  - Accepted baseline token at the diff: `3074`.
+  - Candidate context has `... 24985, 383, 383, 3074 ...`.
+  - Accepted context has `... 24985, 383, 3074, 43318 ...`.
+- `repetitive_kernel_notes` first diverges at output index `7`.
+  - Candidate/current token at the diff: `1345`.
+  - Accepted baseline token at the diff: `28043`.
+  - Candidate context has `... 2468, 1345, 1345, 28043 ...`.
+  - Accepted context has `... 2468, 1345, 28043, 7072 ...`.
+
+Important row-level finding:
+
+- Natural request rows:
+  - Row `36`: `computed_cpu=508`, `tokens_no_spec=509`, positions
+    `[508, 509]`, tokens `13`, `24985`.
+  - Row `41`: `computed_cpu=509`, `tokens_no_spec=510`, positions
+    `[509, 510]`, tokens `24985`, `3074`, spec write `510:511`.
+  - Row `46`: `computed_cpu=510`, `tokens_no_spec=511`, positions
+    `[510, 511]`, tokens `383`, `3074`, spec write `511:512`.
+- Repetitive request rows:
+  - Row `188`: `computed_cpu=493`, `tokens_no_spec=494`, positions
+    `[493, 494]`, tokens `2468`, `28043`.
+  - Row `193`: `computed_cpu=494`, `tokens_no_spec=495`, positions
+    `[494, 495]`, tokens `1345`, `28043`.
+
+Interpretation:
+
+- This is no longer primarily a block-table or KV slot-tail suspicion. The
+  captured slot mappings are monotonic and the block tails are not the first
+  visible failure.
+- In the no-bonus diagnostic, the full-accept bonus token is withheld from
+  output, but the same token remains committed in the next-position token
+  state.
+- The following reject row then re-emits that suppressed bonus token as the
+  target token, pushing the actual accepted next token one position later as a
+  draft candidate.
+- This explains the duplicate current tokens:
+  - natural duplicates `383`; `3074` appears one step late.
+  - repetitive duplicates `1345`; `28043` appears one step late.
+
+Next implementation target:
+
+1. Fix token-state commit semantics around suppressed full-accept bonus tokens.
+2. Either do not write the suppressed bonus into parent `token_ids_cpu` /
+   speculative state until it is truly committed, or roll it back/clear it when
+   suppressing the bonus.
+3. Re-run the same two-case oracle diagnostic.
+4. Only after exact parity returns, revisit larger MTP/DFlash/pipelined
+   proposer experiments.
+
+This keeps the speed backlog honest: speculation is still one of the biggest
+no-quality-loss opportunities, but exact transactional token state is a
+precondition.
+
+## Bigger/Bolder Follow-Up Ideas
+
+This is a second backlog tier after the request-window trace. These ideas are
+larger than the immediate bug fix, but they stay within the same constraint:
+current Qwen3.6 35B Quark W8A8 INT8 target, no 4-bit fallback, no model-family
+swap, and no final-output quality loss.
+
+Fresh external signals checked during this refresh:
+
+- Localmaxxing public API still ranks the accepted exact-model 4x B70
+  Quark W8A8 INT8 run at `99.428 tok/s`, and the richer B70-family row at
+  `99.770 tok/s` with total XPU allocation around `127.55 GiB`.
+- Intel's current XPU container notes say MoE models are being optimized with
+  persistent MoE GEMM plus fused activation kernels, and cite a `2.6x`
+  end-to-end improvement on Qwen3-30B-A3B-class workloads:
+  `https://github.com/intel/ai-containers/blob/main/vllm/0.10.2-xpu.md`.
+- vLLM's public XPU docs expose the relevant surfaces to keep watching:
+  fused MoE kernels, torch compile integration/debugging, hybrid KV cache, and
+  XPU support:
+  `https://docs.vllm.ai/en/stable/models/hardware_supported_models/xpu/`.
+- The public B70 TP2 vLLM issue still argues for careful host-stack A/B
+  testing before betting on TP2/TP3:
+  `https://github.com/vllm-project/vllm/issues/41663`.
+- The ROCm MoE playbook is AMD-specific, but its MoE parallelism lesson is
+  portable: expert parallelism can trade AllReduce-heavy TP for expert-local
+  memory bandwidth and AllToAll-style routing when the runtime supports it:
+  `https://rocm.blogs.amd.com/software-tools-optimization/vllm-moe-guide/README.html`.
+- The public B70 benchmark repo remains worth monitoring for cross-host
+  topology and software-stack deltas:
+  `https://github.com/PMZFX/intel-arc-pro-b70-benchmarks`.
+
+Additional large ideas to try or prove out:
+
+1. **Transactional speculation core as its own milestone.**
+   - Stop treating COW as a side bug. Make an exact rollback/commit harness for
+     token ids, draft ids, positions, slot mappings, and KV writes.
+   - Once the harness proves parity on rejects and full accepts, use it as the
+     gate for every MTP/DFlash/pipelined-proposer experiment.
+
+2. **Intel persistent-MoE kernel stack A/B.**
+   - Build a disposable env against the newest Intel XPU vLLM container or
+     matching `vllm-xpu-kernels` wheel and compare only the exact Quark W8A8
+     route windows first.
+   - If the new stack has the persistent MoE kernel path but does not load this
+     model directly, port the relevant kernel call surface into the local
+     patched source tree behind a default-off env flag.
+
+3. **Single-request static engine lane.**
+   - Build a narrow endpoint path for one active request: fixed block size,
+     fixed decode bucket, preallocated KV, no dynamic scheduler churn, and
+     direct streaming.
+   - This is a diagnostic appliance first. If it beats OpenAI-compatible vLLM
+     meaningfully, production can route latency-sensitive sessions to it.
+   - If it does not beat vLLM, focus all effort on kernels and collectives.
+
+4. **Route-window persistent MoE layerlet.**
+   - Reconstruct one MoE layer outside vLLM using captured exact `topk_ids`,
+     Quark scales, W8A8 grouped GEMM, fused SiLU/up-gate, down projection, and
+     gather.
+   - This avoids full-server noise and answers whether persistent MoE can
+     plausibly deliver the `2x+` class improvement Intel is advertising.
+
+5. **Expert-parallel simulator before runtime work.**
+   - Use captured route traces to simulate expert ownership across 2, 3, and 4
+     B70s.
+   - Compare bytes moved for TP4 allreduces versus sending only routed expert
+     activations/results.
+   - Only implement if the simulator shows enough communication reduction to
+     offset B70 P2P/topology weakness.
+
+6. **Host-stack spare-disk A/B.**
+   - Reproduce the current accepted run and a TP2/TP3 capacity run under a
+     second OS/container stack matching Intel's published validation as closely
+     as possible.
+   - Candidate variables: kernel, GuC firmware, compute-runtime, Level Zero,
+     oneCCL, `vllm-xpu-kernels`, and PyTorch XPU build.
+   - Goal is not blind distro hopping; it is to determine whether the TP2
+     device-loss/GP-fault class is software-stack-specific.
+
+7. **Draft model from target traces, not a quality-changing model.**
+   - Train or fit a tiny proposer only on accepted target traces and local
+     prompt distributions.
+   - Treat it as a speculative drafter only. The Quark W8A8 target remains the
+     sole authority for emitted tokens.
+   - If acceptance is high, this could be a practical path to `>200 tok/s`
+     without changing target quality.
+
+8. **Pipelined verifier/proposer after rollback is exact.**
+   - Run proposer step `N+1` while the target verifies step `N`.
+   - Start at `k=1` and `k=2`; avoid large windows until exact rollback and
+     replacement state are proven.
+   - This targets latency hiding rather than approximate decoding.
+
+9. **Collective topology profiler with real token schedule.**
+   - Instrument per-token collectives by layer and op class under the accepted
+     TP4 graph path.
+   - Pair it with host link, XCCL, and XPU graph settings so TP2/TP3/TP4
+     decisions are driven by actual communication cost, not intuition.
+
+10. **Tile-native W8A8 repack cache.**
+    - Verify if Quark W8A8 tensors are consumed in the exact layout desired by
+      the active XPU grouped-GEMM kernels.
+    - If not, build a checksum-validated load-time repack cache. This changes
+      layout only, not math or quantization.
+
+11. **Upstream repro bundle as a force multiplier.**
+    - Package the smallest failing/speed-critical shapes: request-window
+      rollback trace, W8A8 grouped GEMM route windows, persistent MoE layerlet,
+      and graph-safe collective shapes.
+    - File upstream issues or PRs with exact versions, commands, expected
+      outputs, and B70 health notes.
+
+12. **Production dual-lane architecture.**
+    - Keep the accepted TP4 OpenAI-compatible endpoint as the reliable lane.
+    - Add an experimental latency lane for single active sessions and a batch
+      lane for aggregate throughput once exact quality gates are automated.
+    - This keeps production reliability from blocking deeper speed work, while
+      still allowing a clean promotion path when a fast lane proves itself.

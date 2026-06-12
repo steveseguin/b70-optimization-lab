@@ -120,6 +120,20 @@ Current Qwen3.6 INT8 direction:
     each active request on `after_prepare_positions`. This is intended to
     decide whether the next repair should target scratch KV/page-table COW or
     persistent `token_ids_cpu` rollback/replacement commit.
+18. Ran the new request-window diagnostic as
+    `qwen36-quark-int8-tp4-oracle1-nobonus-windowtrace-nograph-20260612b`.
+    The trace shows `64` request windows, `16` nonzero speculative windows,
+    `7` accepted drafts, and `9` rejected drafts. The remaining drift is now
+    attributable to suppressed full-accept bonus tokens being retained in
+    persistent token state and then re-emitted on the next reject row. The next
+    repair target is token-state commit/rollback, not KV block-table tails.
+19. Added a second-tier Qwen3.6 W8A8 backlog with larger quality-preserving
+    bets: transactional speculation as a milestone, Intel persistent-MoE kernel
+    stack A/B, a one-request static engine lane, route-window persistent MoE
+    layerlet replay, expert-parallel simulation, host-stack spare-disk A/B,
+    target-trace-trained drafter, pipelined verifier/proposer, collective
+    topology profiling, tile-native W8A8 repack cache, upstream repro bundles,
+    and a dual-lane production architecture.
 
 ## 2026-05-10 MiniMax AutoRound Addendum
 
