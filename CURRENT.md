@@ -6,6 +6,28 @@ Date: 2026-06-12
 
 2026-06-12 notes update:
 
+- Added an "External Leads And Bigger Bets Refresh 20260612cu" section to
+  `notes/2026-06-12-qwen36-next-bigger-bets.md` and saved fresh public
+  Localmaxxing snapshots. The exact-model B70/vLLM query still has one row at
+  `99.428 tok/s`; the broader B70/Qwen/vLLM snapshot still has the same
+  current run family at `99.770 tok/s`; and the B70/Qwen/MoE/fp8 query returned
+  no comparable rows. The outside scan reinforces the current technical lead:
+  Intel's current XPU release notes call out persistent MoE GEMM plus fused
+  activation and a `2.6x` Qwen3-30B-A3B gain, while `vllm-xpu-kernels` now
+  advertises MoE top-k/align/gather/remap, FP8/MxFP4 GEMM, and grouped GEMM.
+  New queue items: isolate a latest-`vllm-xpu-kernels` route-fixture bakeoff,
+  prove whether Quark W8A8 dispatch hits the persistent MoE path, use
+  `intel/vllm:0.10.2-xpu` as a kernel lab only, implement a c1 topk-8 W8A8 MoE
+  layerlet, route-class generated kernels, hot/cold expert residency maps,
+  no-collective c1 islands, Level Zero command-list supernodes,
+  target-owned branch farming after state transactions, a platform
+  power/thermal/PCIe audit, and an upstream challenge packet. New artifacts:
+  `data/localmaxxing-qwen36-quark-w8a8-int8-exact-refresh-20260612cu.json`,
+  `data/localmaxxing-qwen-b70-vllm-leaderboard-20260612cu.json`, and
+  `data/localmaxxing-qwen-moe-fp8-leaderboard-20260612cu.json`.
+
+2026-06-12 notes update:
+
 - Added `scripts/qwen36-firstdecode-route-fixture-plan.py` and a
   "First-Decode Route Fixture Planner 20260612ct" section to
   `notes/2026-06-12-qwen36-next-bigger-bets.md`. The CPU-only adapter converts

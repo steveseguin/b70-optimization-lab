@@ -29,6 +29,129 @@ Current speed anchor:
   MoE/kernel architecture improvement. Launch flags alone are unlikely to get
   there.
 
+## External Leads And Bigger Bets Refresh 20260612cu
+
+Added after the route-fixture planner pass and a fresh outside scan. This is a
+notes/backlog update only; it does not change the accepted endpoint and does
+not promote a new speed result.
+
+Fresh public checks:
+
+- Exact Localmaxxing query for
+  `nameistoken/Qwen3.6-35B-A3B-Quark-W8A8-INT8` on B70/vLLM still returns one
+  row: `99.428 tok/s`, c1, 32K, 4x Arc Pro B70.
+- B70/Qwen/vLLM snapshot still has the same current run family at the top:
+  `99.770 tok/s` for `Qwen/Qwen3.6-35B-A3B`, Quark W8A8 INT8, 4x B70.
+- B70/Qwen/MoE/fp8 query returned zero rows. There is still no public
+  comparable proving `>200 tok/s` for this exact model/hardware/quality lane.
+
+Outside signals worth acting on:
+
+- Intel's current `intel/vllm:0.10.2-xpu` notes explicitly call out persistent
+  MoE GEMM plus fused activation for MoE, with a reported `2.6x` end-to-end
+  gain on Qwen3-30B-A3B. This strongly supports our current route-fixture
+  direction: persistent MoE is a serious lead, not a side quest.
+- The `vllm-xpu-kernels` repo now advertises MoE top-k scoring, grouped top-k,
+  MoE align/gather/expert remapping, FP8/MxFP4 GEMM, and grouped GEMM. That is
+  the right home for any durable B70 W8A8 MoE island rather than piling more
+  local Python hooks around the old path.
+- vLLM's XPU RFC says the stack is moving from IPEX to `vllm-xpu-kernels` for
+  performance, maintainability, and integration quality, with fp8 W8A8/W8A16
+  GEMM and fp8 MoE marked complete in that migration plan. Our immediate task
+  is to prove whether the Quark W8A8 path actually hits those kernels and, if
+  not, create the smallest exact fixture showing the miss.
+- Intel's B-Series vLLM blog shows high aggregate throughput on GPT-OSS MXFP4
+  at high concurrency. That is not a c1 comparable, but it is evidence that the
+  B-series software stack can move a lot of tokens when the kernels and
+  batching policy fit the workload.
+
+New concrete things to try:
+
+1. **Latest `vllm-xpu-kernels` route-fixture bakeoff.**
+   Build or install the newest XPU kernel stack in an isolated environment and
+   replay the first-decode route fixture, not the whole server first. Gate:
+   same captured inputs, same route IDs, same output tensor within the existing
+   exact tolerance, then measure current Quark W8A8 MoE path versus newest
+   kernel path.
+
+2. **Persistent MoE kernel hit/miss proof.**
+   Add one low-overhead marker around Quark W8A8 MoE dispatch to record the
+   actual backend selected for each layer. If the current path is bypassing the
+   persistent MoE/fused activation kernel, the next branch should be routing
+   compatibility, not blind tuning.
+
+3. **Intel 0.10.2-xpu container as a kernel lab.**
+   Do not switch production to it blindly. Use it as a route-fixture lab for
+   Qwen MoE persistent-kernel behavior, kernel availability, env defaults, and
+   command lines. Bring back only reproducible deltas that pass our exact
+   canaries.
+
+4. **Single-token/topk-8 W8A8 MoE layerlet.**
+   Implement the smallest DPC++/SYCL or custom-op layerlet that matches our
+   measured c1 shape: one token, topk=8, `hidden_size=2048`,
+   `moe_intermediate_size=512`, resident TP-local packed weights/scales,
+   fused gate/up/activation/down/reduce, and no per-token primitive rebuild.
+
+5. **Route-class generated kernels.**
+   Compile a handful of exact route classes from captured traffic: one-hot
+   dominant, low-union active experts, balanced broad route, and cold fallback.
+   Runtime class selection changes scheduling only; math and selected experts
+   remain target-owned.
+
+6. **Hot/cold expert residency map.**
+   Use real route traces to spend spare VRAM on duplicated hot experts or
+   prepacked hot expert groups, while keeping cold experts exact through the
+   existing path. This is a memory-for-latency bet with a clean fallback.
+
+7. **No-collective c1 island experiment.**
+   Explore whether the active dense plus hot-MoE subset for one-token decode
+   can run on fewer cards or one primary card with cold expert fallback. It is
+   bolder than TP2 because the aim is to remove TP collectives from the common
+   c1 path, not simply repartition the same work.
+
+8. **Level Zero command-list supernode.**
+   For a fixed decode bucket, try capturing a patchable command-list sequence
+   across MoE, attention, residual, and sampler boundaries. The quality gate is
+   unchanged output; the speed hypothesis is fewer scattered host launches and
+   less command submission jitter.
+
+9. **Target-owned branch farm, revisited after state transactions.**
+   The model's MTP/draft machinery is not acceptable until KV/GDN/sampler state
+   can be verified, committed, and rolled back. Once that substrate exists,
+   spare cards can evaluate candidate continuations under the same Quark W8A8
+   target and only commit target-verified tokens.
+
+10. **Power/thermal/PCIe audit as a no-quality lever.**
+    Record B70 clocks, power, throttling flags, PCIe link width/speed, fan
+    curve, oneCCL transport, and NUMA affinity during accepted and diagnostic
+    runs. This will not create `2x` alone, but it prevents a kernel branch from
+    chasing a hidden platform cap.
+
+11. **Upstream challenge packet.**
+    Package the compact route fixture, route-simulator output, current MoE
+    backend selection, tensor checksums, and a small standalone benchmark for
+    `vllm-xpu-kernels`/vLLM maintainers. Ask for a persistent W8A8 MoE kernel
+    target against this exact shape instead of a vague "B70 is slow" report.
+
+12. **Strict same-model engine shootout, expanded.**
+    Include OpenVINO/oneDNN, latest Intel vLLM, llama.cpp SYCL, SGLang if XPU
+    support is viable, and any Intel `llm-scaler` setup only when the current
+    Quark W8A8 model or a byte-equivalent BF16 verifier path is used. No 4-bit,
+    AWQ, or Qwen3.5 substitutions.
+
+Artifacts for this pass:
+
+- `data/localmaxxing-qwen36-quark-w8a8-int8-exact-refresh-20260612cu.json`
+- `data/localmaxxing-qwen-b70-vllm-leaderboard-20260612cu.json`
+- `data/localmaxxing-qwen-moe-fp8-leaderboard-20260612cu.json`
+
+Reference links captured during the scan:
+
+- `https://github.com/intel/ai-containers/blob/main/vllm/0.10.2-xpu.md`
+- `https://github.com/vllm-project/vllm-xpu-kernels`
+- `https://github.com/vllm-project/vllm/issues/33214`
+- `https://vllm.ai/blog/2025-11-11-intel-arc-pro-b`
+
 ## EngineCore And All-Rank Timing Update 20260612bq/br
 
 Added after the latest diagnostic gate. The hook is env-gated in local vLLM
