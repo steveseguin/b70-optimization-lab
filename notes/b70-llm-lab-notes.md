@@ -134,6 +134,19 @@ Current Qwen3.6 INT8 direction:
     target-trace-trained drafter, pipelined verifier/proposer, collective
     topology profiling, tile-native W8A8 repack cache, upstream repro bundles,
     and a dual-lane production architecture.
+20. Added "Cache-Filter No-Bonus Negative And Backlog Refresh" to the Qwen3.6
+    note. The cache-filter diagnostic shows that suppressing the full-accept
+    bonus in worker cache while scheduler no-bonus accounting also rolls it
+    back is a negative result: it moves drift earlier and repeats the last
+    committed token. The next implementation target is a consistent
+    transaction model, starting with cache-filter plus kept computed count or a
+    verifier-owned bonus escrow. New bolder ideas are now tracked around a
+    transactional speculation subsystem, verifier-owned commit protocol,
+    static single-request executor, GPU-resident proposer state, persistent-MoE
+    layerlet work, EP/TP route simulation, W8A8 tile repack cache,
+    collective-elimination roofline, target-trace-trained drafter, spare-root
+    Intel stack bakeoff, upstream bug/perf packets, and production promotion
+    lanes.
 
 ## 2026-05-10 MiniMax AutoRound Addendum
 

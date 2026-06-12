@@ -14309,3 +14309,189 @@ Additional large ideas to try or prove out:
       lane for aggregate throughput once exact quality gates are automated.
     - This keeps production reliability from blocking deeper speed work, while
       still allowing a clean promotion path when a fast lane proves itself.
+
+## Cache-Filter No-Bonus Negative And Backlog Refresh
+
+Added after the suppressed-bonus cache-filter diagnostic. This was a useful
+negative result: it rejected a plausible one-sided worker fix and sharpened the
+next transactional-speculation target.
+
+Run:
+
+- Tag: `qwen36-quark-int8-tp4-oracle1-nobonus-cachefilter-nograph-20260612c`.
+- Model: current `nameistoken/Qwen3.6-35B-A3B-Quark-W8A8-INT8`.
+- Launch mode: `NUM_SPECULATIVE_TOKENS=1`, oracle draft,
+  `DISABLE_FULL_ACCEPT_BONUS=1`, `ENABLE_XPU_GRAPH=0`, `ENFORCE_EAGER=1`.
+- Experimental source behavior: when the verifier returned a full-accept row
+  with one extra bonus token, the worker cached only the scheduled draft token
+  and withheld the bonus token from `token_ids_cpu` / request output state.
+  Scheduler accounting still used the existing no-bonus rollback path.
+- Diagnostic trace env included `SPEC_TRACE_FILE`,
+  `VLLM_XPU_COW_VERIFIER_TRACE_FILE`,
+  `VLLM_XPU_COW_WORKER_TRACE_FILE`,
+  `VLLM_XPU_COW_WORKER_TRACE_RANK=0`, and
+  `VLLM_XPU_ORACLE_DRAFT_LOG`.
+
+Artifacts:
+
+- `data/qwen36-quark-int8-tp4-oracle1-nobonus-cachefilter-nograph-20260612c-completions.json`
+- `data/qwen36-quark-int8-tp4-oracle1-nobonus-cachefilter-nograph-20260612c-spec-summary.{json,md}`
+- `data/qwen36-quark-int8-tp4-oracle1-nobonus-cachefilter-nograph-20260612c-worker-summary.{json,md}`
+- `data/qwen36-quark-int8-tp4-oracle1-nobonus-cachefilter-nograph-20260612c-parent-summary.{json,md}`
+- Archived raw traces are the matching `*-spec-trace.jsonl`,
+  `*-worker-trace.jsonl`, `*-parent-trace.jsonl`, and
+  `*-oracle-draft.jsonl` files.
+
+Summary:
+
+- Completion cases: `2`.
+- Baseline token parity: `false`.
+- Spec trace rows: `6`.
+- Drafts: `6`.
+- Accepted drafts: `4`.
+- Rejected drafts: `2`.
+- Accept rate: `66.67%`.
+- Full-accept rows: `4`.
+- Full-reject rows: `2`.
+- Suppressed bonus rows: `4`.
+- Worker rows: `318`.
+- Worker `after_sampled_cache_bonus_suppression` rows: `4`.
+
+First-diff pattern:
+
+- `natural_latency_plan` now diverges at output index `3`, earlier than the
+  request-window diagnostic. Candidate/current token at the diff is `27044`;
+  accepted baseline token is `47193`. The candidate context repeats `27044`.
+- `repetitive_kernel_notes` also diverges at output index `3`.
+  Candidate/current token at the diff is `271`; accepted baseline token is
+  `78503`.
+
+Interpretation:
+
+- Filtering the suppressed bonus out of worker cache is not sufficient.
+- With scheduler no-bonus accounting still subtracting the suppressed bonus
+  from `num_computed_tokens`, the cache-filter trial appears to under-advance
+  the target context. The failure moves earlier and repeats the last committed
+  token.
+- The previous request-window trace showed "bonus retained in persistent state
+  and re-emitted one row later." This cache-filter trace shows the opposite
+  failure mode: "bonus removed from worker state while scheduler also rewinds."
+- The real invariant is not "hide the bonus token." It is that scheduler
+  accounting, worker token cache, draft history, request output, and KV commit
+  state must advance or roll back as a single transaction.
+
+Near-term things to try next:
+
+1. **Cache filter plus kept computed count.**
+   - Add an explicit env such as
+     `VLLM_XPU_SPEC_DECODE_KEEP_COMPUTED_ON_SUPPRESSED_BONUS=1`.
+   - In that mode, suppress the bonus from output/cache but do not subtract it
+     again from scheduler `num_computed_tokens`.
+   - This tests whether the current failure is the predicted double-rollback.
+
+2. **Bonus escrow instead of bonus hiding.**
+   - Store a full-accept bonus token in a pending side slot with its position,
+     slot mapping, and verification source.
+   - On the next decode step, emit or compare the escrowed token before running
+     a fresh target step for the same position.
+   - This preserves exact target authority while avoiding accidental duplicate
+     or skipped positions.
+
+3. **Transaction-log speculative state harness.**
+   - Build a CPU-only finite-state replay for draft accept, partial reject,
+     full accept, suppressed bonus, and replacement-after-reject rows.
+   - Require it to emit the same token sequence and cursor transitions as the
+     accepted baseline before touching XPU kernels.
+
+4. **Worker/scheduler invariant assertions.**
+   - Add a default-off diagnostic that checks, per request, whether
+     `output_token_ids`, `num_computed_tokens`, `num_tokens_no_spec`,
+     scheduled spec ids, and token cache windows agree on the next target
+     position.
+   - Fail fast in diagnostic runs instead of discovering drift through final
+     completion mismatch.
+
+5. **No-graph first, graph second.**
+   - Keep XPU graphs off until oracle `k=1` no-bonus parity is exact.
+   - Only then re-enable graphs; otherwise graph/device-loss debugging and
+     speculative-state debugging stay entangled.
+
+6. **Make speculation publish gates stricter than speed gates.**
+   - Do not benchmark or publish speculative rows until exact oracle parity,
+     repeat64, long-context needle checks, and request-window invariants pass.
+   - This keeps Localmaxxing/public speed rows tied to target-verifier quality.
+
+Bigger, bolder ideas added from this result:
+
+1. **Speculation as a transactional subsystem.**
+   - Treat token ids, positions, block tables, KV pages, draft ids, and emitted
+     output as a database transaction with commit/rollback records.
+   - This is heavier than patching vLLM's current no-bonus path, but it is the
+     right abstraction for MTP, DFlash, n-gram, and any future sidecar drafter.
+
+2. **Verifier-owned speculative protocol.**
+   - Move acceptance bookkeeping closer to the target verifier so the scheduler
+     receives an already-atomic "commit these positions, reject from here"
+     event.
+   - The scheduler should not need to infer whether a hidden bonus was
+     committed from multiple partially updated arrays.
+
+3. **Single-request static executor outside the dynamic scheduler.**
+   - Build a narrow latency appliance: one request, one decode bucket, fixed KV
+     allocation, fixed graph/command list, and direct streaming.
+   - If it is much faster, use it as the latency lane. If not, it proves the
+     bottleneck is kernels/collectives rather than vLLM scheduling.
+
+4. **GPU-resident proposer and cursor state.**
+   - After exact rollback is proven, keep proposer history and the next-token
+     cursor on XPU instead of bouncing through host-side scheduler structures.
+   - This targets single-request latency without changing target quality.
+
+5. **Persistent-MoE layerlet as the main non-speculative `2x` bet.**
+   - Reconstruct one exact Qwen3.6 MoE layer from captured real routes and
+     Quark W8A8 scales, then compare current vLLM kernels against Intel's
+     persistent-MoE/grouped-GEMM direction in isolation.
+   - If a single layer can show the advertised class of gain, port the call
+     path behind a default-off runtime flag.
+
+6. **Expert-parallel prototype only after route simulation.**
+   - Simulate expert ownership and bytes moved from real route traces across
+     2/3/4 B70s.
+   - If the simulation shows a meaningful cut in allreduce traffic, prototype
+     hybrid TP/EP for decode. If not, avoid a large runtime fork.
+
+7. **Tile-native W8A8 repack and checksum cache.**
+   - Audit whether loaded Quark W8A8 tensors match the XPU grouped-GEMM tile
+     layout.
+   - If not, build a load-time repack cache with checksum validation. This
+     changes only memory layout, not quantization or model math.
+
+8. **Collective-elimination roofline.**
+   - Measure per-token time by MoE GEMM, attention, collectives, scheduler, and
+     sampling with accepted TP4.
+   - Use that to decide whether the next bold bet should be persistent MoE,
+     EP/TP, static execution, or graph/collective fusion.
+
+9. **Target-trace-trained drafter as a separate project.**
+   - Fit a tiny drafter on target-accepted traces from the real workload and
+     keep the Quark W8A8 target as the only source of emitted truth.
+   - This is quality-preserving if all output remains target-verified, but it
+     needs the transaction harness first.
+
+10. **Whole-stack Intel XPU bakeoff on a spare boot/root.**
+    - Reproduce the accepted TP4 run and one capacity TP2/TP3 test under a
+      stack matching Intel's current validation matrix as closely as possible.
+    - This can answer whether the device-loss/GP-fault class is local-stack
+      specific before more runtime code is written around it.
+
+11. **Upstreamable bug/perf packets.**
+    - Package the request-window traces, cache-filter negative, grouped-GEMM
+      route windows, and exact launch commands into small public repro bundles.
+    - This could attract Intel/vLLM help while keeping local production work
+      moving.
+
+12. **Production architecture with promotion lanes.**
+    - Keep accepted TP4 as the reliable OpenAI-compatible lane.
+    - Let latency-lane, batch-lane, and speculative-lane experiments graduate
+      independently only when their quality gates pass.
+    - This avoids blocking production readiness on the highest-risk speed work.
