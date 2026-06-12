@@ -6,6 +6,32 @@ Date: 2026-06-12
 
 2026-06-12 continuation:
 
+- Added and ran a oneDNN grouped INT8 reuse-only Qwen-shape probe in a clean
+  XPU benchmark window. This revises the prior oneDNN conclusion: oneDNN is
+  still not viable if primitives/memory are recreated or if every call pays an
+  isolated wait, but reused primitives and one wait for the GEMM1+GEMM2 pair
+  are fast enough to justify a route-exact integration test. Layer-9 Qwen
+  shapes over 8 routed rows measured: bf16 GEMM1+GEMM2 two-exec/one-wait
+  mean `29.446 us`, p50 `29.145 us`, p90 `29.957 us`; f32 pair mean
+  `26.465 us`, p50 `26.179 us`, p90 `27.412 us`. Destination checksums were
+  nonzero, so the run is not a no-op launch artifact. Setup remains expensive
+  (`~99-305 ms` construct time), so a route-signature primitive/memory cache is
+  mandatory. This is not an endpoint speed claim: the probe uses synthetic
+  buffers and has not yet compared oneDNN output against current Quark W8A8
+  `xpu_fused_moe` on captured routes. Accepted backend was restored afterward;
+  `/health` returned after `56s` and provenance guard passed both prefix cases
+  plus all sentinel tokens. New artifacts:
+  `tools/onednn_grouped_int8_reuse_probe.cpp`,
+  `scripts/probe-onednn-grouped-int8-reuse.sh`,
+  `data/qwen36-onednn-grouped-int8-reuse-qwenshape-20260612av.json`,
+  `.log`,
+  `data/qwen36-quark-int8-tp4-accepted-restored-after-onednn-reuse-20260612av.log`,
+  and
+  `data/qwen36-quark-int8-tp4-accepted-provenance-after-onednn-reuse-20260612av.json`.
+  Next oneDNN gate: routecapture6 layer-9 replay with mutable grouped offsets,
+  real Quark W8A8 weights/scales, persistent primitives/memory, max abs diff
+  `0.0`, then live model-forward regression if exactness and layer timing hold.
+
 - Added a larger-opportunity refresh to
   `notes/2026-06-12-qwen36-next-bigger-bets.md` after the scratch-hook and
   oneDNN Qwen-shape probes. The refresh records the current Localmaxxing

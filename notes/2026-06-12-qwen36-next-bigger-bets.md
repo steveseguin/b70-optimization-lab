@@ -4308,3 +4308,91 @@ External scan update:
     device-lost count, restart time, soak minutes, VRAM, graph-cache id}`.
     This prevents a fragile `120 tok/s` experiment from displacing a stable
     `100 tok/s` production candidate until it earns that status.
+
+## 2026-06-12 oneDNN Reuse-Only Qwen-Shape Probe
+
+Artifacts:
+
+- Probe source:
+  `tools/onednn_grouped_int8_reuse_probe.cpp`.
+- Probe runner:
+  `scripts/probe-onednn-grouped-int8-reuse.sh`.
+- Result JSON/log:
+  `data/qwen36-onednn-grouped-int8-reuse-qwenshape-20260612av.json`,
+  `data/qwen36-onednn-grouped-int8-reuse-qwenshape-20260612av.log`.
+- Restore/provenance:
+  `data/qwen36-quark-int8-tp4-accepted-restored-after-onednn-reuse-20260612av.log`,
+  `data/qwen36-quark-int8-tp4-accepted-provenance-after-onednn-reuse-20260612av.json`.
+
+Command shape:
+
+```bash
+REUSE_JSON_OUT="$PWD/data/qwen36-onednn-grouped-int8-reuse-qwenshape-20260612av.json" \
+REUSE_WARMUP=50 \
+REUSE_ITERATIONS=500 \
+DEVICE_SELECTOR=level_zero:0 \
+bash scripts/probe-onednn-grouped-int8-reuse.sh \
+  2>&1 | tee data/qwen36-onednn-grouped-int8-reuse-qwenshape-20260612av.log
+```
+
+Result:
+
+- The accepted backend was stopped for a clean one-card XPU timing window.
+  VRAM dropped to roughly `26-50 MiB` per card before the run.
+- The probe creates oneDNN grouped-memory matmul primitives, memory objects,
+  grouped offsets, and scale memories once, then measures steady execution.
+- Destination checksums are nonzero, so this is not just a launch/no-op
+  artifact. It is still not a full numeric correctness proof against Quark
+  W8A8 output.
+- Layer-9 Qwen GEMM shapes over 8 routed rows:
+  - GEMM1: `K=2048`, `N=256`, `256` experts.
+  - GEMM2: `K=128`, `N=2048`, `256` experts.
+- bf16 destination:
+  - GEMM1 single execute+wait mean `42.741 us`, p50 `60.033 us`,
+    p90 `63.209 us`.
+  - GEMM2 single execute+wait mean `17.726 us`, p50 `17.293 us`,
+    p90 `18.765 us`.
+  - GEMM1+GEMM2 two-exec/one-wait mean `29.446 us`, p50 `29.145 us`,
+    p90 `29.957 us`, max `90.660 us`.
+- f32 destination:
+  - GEMM1 single execute+wait mean `17.553 us`, p50 `17.182 us`,
+    p90 `17.894 us`.
+  - GEMM2 single execute+wait mean `17.525 us`, p50 `17.232 us`,
+    p90 `17.964 us`.
+  - GEMM1+GEMM2 two-exec/one-wait mean `26.465 us`, p50 `26.179 us`,
+    p90 `27.412 us`, max `34.905 us`.
+- Primitive/memory construction remains expensive:
+  - GEMM1 bf16 construct `305365 us`.
+  - GEMM2 bf16 construct `99437 us`.
+  - GEMM1 f32 construct `186376 us`.
+  - GEMM2 f32 construct `98932 us`.
+
+Decision:
+
+- The earlier oneDNN Qwen-shape result was a false negative for steady decode:
+  it measured cold-ish primitive behavior and isolated execute+wait calls.
+  Reused oneDNN grouped INT8 can be much faster than the current
+  `~112-114 us` per grouped-GEMM route-replay floor, and the two-GEMM pair is
+  far under the `~168 us/layer` non-speculative MoE budget before activation,
+  quant, route, and gather.
+- Do not promote anything to the endpoint yet. This probe uses synthetic
+  tensors and fixed offsets. It does not update route windows, use real Quark
+  W8A8 weights/scales, or compare against `xpu_fused_moe`.
+- The next oneDNN task is now higher priority than another scratch-wrapper
+  variant: build a routecapture6 layer-9 oneDNN replay that reuses primitives
+  and memory, mutates grouped offsets/scales per captured route window, uses
+  real model-shaped W8A8 tensors, and requires `max_abs_diff=0.0` against the
+  current path.
+- If the route-exact replay keeps the pair timing in this range, oneDNN
+  becomes a serious layerlet backend. If route updates or real layouts erase
+  the win, close the oneDNN branch and return to a custom persistent/ESIMD
+  layerlet.
+
+Restore result:
+
+- Accepted backend was relaunched in
+  `qwen36-tp4-accepted-restored-after-onednn-reuse-20260612av`.
+- Backend `/health` returned `200` after `56s`.
+- Provenance guard passed both prefix cases and all sentinel tokens:
+  `4752` at `repetitive_kernel_notes:14`, `11436` at
+  `natural_latency_plan:17`, and `198` at `natural_latency_plan:25`.

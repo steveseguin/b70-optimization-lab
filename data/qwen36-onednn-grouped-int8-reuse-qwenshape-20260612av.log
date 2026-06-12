@@ -1,0 +1,7 @@
+REUSE name=qwen_l9_gemm1_s8s8_bf16 kind=single_wait_each construct_us=305365 tokens=8 experts=256 K=2048 N=256 checksum=73462571.000 mean_us=42.741 min_us=17.723 p50_us=60.033 p90_us=63.209 max_us=178.896
+REUSE name=qwen_l9_gemm2_s8s8_bf16 kind=single_wait_each construct_us=99437 tokens=8 experts=256 K=128 N=2048 checksum=578087765.000 mean_us=17.726 min_us=16.691 p50_us=17.293 p90_us=18.765 max_us=36.378
+REUSE name=qwen_l9_gemm1_s8s8_bf16+qwen_l9_gemm2_s8s8_bf16 kind=two_exec_one_wait construct_us=305365 tokens=8 experts=256 K=-1 N=-1 checksum=651550336.000 mean_us=29.446 min_us=27.342 p50_us=29.145 p90_us=29.957 max_us=90.660
+REUSE name=qwen_l9_gemm1_s8s8_f32 kind=single_wait_each construct_us=186376 tokens=8 experts=256 K=2048 N=256 checksum=-2272.540 mean_us=17.553 min_us=15.920 p50_us=17.182 p90_us=17.894 max_us=36.979
+REUSE name=qwen_l9_gemm2_s8s8_f32 kind=single_wait_each construct_us=98932 tokens=8 experts=256 K=128 N=2048 checksum=41.202 mean_us=17.525 min_us=16.181 p50_us=17.232 p90_us=17.964 max_us=34.145
+REUSE name=qwen_l9_gemm1_s8s8_f32+qwen_l9_gemm2_s8s8_f32 kind=two_exec_one_wait construct_us=186376 tokens=8 experts=256 K=-1 N=-1 checksum=-2231.338 mean_us=26.465 min_us=24.947 p50_us=26.179 p90_us=27.412 max_us=34.905
+Example passed on GPU.
