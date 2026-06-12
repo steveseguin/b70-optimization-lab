@@ -6,6 +6,9 @@ SERVED_MODEL_NAME="${SERVED_MODEL_NAME:-qwen36-35b-a3b-fp8}"
 HOST="${HOST:-127.0.0.1}"
 PORT="${PORT:-18080}"
 LOG_PATH="${LOG_PATH:-/tmp/qwen36-quark-int8-tp4-gdn-reuseqkvzbaquant-clone-envclean-32k-noprefix.log}"
+if [[ -z "${COMPILATION_CONFIG:-}" ]]; then
+  COMPILATION_CONFIG='{"cudagraph_mode":"PIECEWISE"}'
+fi
 MODEL_INPUT_TRACE_FILE="${MODEL_INPUT_TRACE_FILE:-}"
 MODEL_INPUT_TRACE_MAX_LINES="${MODEL_INPUT_TRACE_MAX_LINES:-400}"
 MODEL_INPUT_TRACE_RANK="${MODEL_INPUT_TRACE_RANK:-}"
@@ -123,7 +126,7 @@ exec /home/steve/.venvs/vllm-xpu/bin/vllm serve "$MODEL_PATH" \
   --kv-cache-dtype auto \
   --no-enable-prefix-caching \
   --language-model-only \
-  --compilation-config '{"cudagraph_mode":"PIECEWISE"}' \
+  --compilation-config "$COMPILATION_CONFIG" \
   --generation-config vllm \
   "${EXTRA_ARGS[@]}" \
   >"$LOG_PATH" 2>&1

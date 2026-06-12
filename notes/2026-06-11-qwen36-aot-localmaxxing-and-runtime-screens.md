@@ -15290,3 +15290,87 @@ Bigger, bolder ideas added after the cache-provenance finding:
      (`repeat64`, long context, restart, trace-enabled).
    - This keeps fast-but-wrong, stable-but-slow, and quality-clean wins from
      being mixed together.
+
+## Accepted Provenance Guard And FULL_DECODE_ONLY Negative
+
+Added `scripts/check-qwen36-accepted-provenance.py` as an automated guard for
+future speed work. The guard:
+
+- queries `/v1/models` and checks the served model id
+- parses a launch log for the expected accepted graph/AOT cache root
+- runs the two 512-token prompt / 32-token output completion probes
+- compares the generated output-token prefix against the accepted
+  `20260612i` baseline
+- checks the known graph/refill drift sentinels:
+  - `repetitive_kernel_notes` index `14` -> token `4752`
+  - `natural_latency_plan` index `17` -> token `11436`
+  - `natural_latency_plan` index `25` -> token `198`
+
+Guard artifacts:
+
+- `data/qwen36-quark-int8-tp4-accepted-provenance-guard-20260612m.json`
+- `data/qwen36-quark-int8-tp4-accepted-provenance-guard-after-fulldecode1-20260612m.json`
+
+Both guard runs passed with:
+
+- `ok=true`
+- both probe prefixes matched the accepted baseline
+- all three sentinels matched
+- expected cache fragment matched:
+  `/mnt/fast-ai/vllm-cache-exp/qwen36-35b-a3b-quark-int8-tp4-piecewise-graph-gdn-reuseqkvzbaquant-clone-envclean-32k-noprefix`
+
+Launcher change:
+
+- `scripts/launch-qwen36-quark-int8-accepted.sh` now accepts
+  `COMPILATION_CONFIG` while preserving the exact default
+  `{"cudagraph_mode":"PIECEWISE"}`.
+- The first implementation used JSON inside shell parameter expansion and
+  appended an extra `}` when overridden; that was fixed by assigning the
+  default in an explicit `if [[ -z ... ]]` block.
+
+FULL_DECODE_ONLY speed experiment:
+
+- backend: `qwen36-tp4-fulldecode1-20260612m`
+- cache root:
+  `/mnt/fast-ai/vllm-cache-exp/qwen36-tp4-fulldecode1-20260612m`
+- compilation config:
+  `{"mode":0,"cudagraph_mode":"FULL_DECODE_ONLY","cudagraph_num_of_warmups":0,"compile_sizes":[1]}`
+- artifact:
+  `data/qwen36-quark-int8-tp4-fulldecode1-startup-fail-20260612m.log`
+- result: reject, startup failure before serving
+- root error:
+  `The sycl_ext_oneapi_work_group_scratch_memory feature is not yet available for use with the SYCL Graph extension.`
+
+Interpretation:
+
+- `FULL_DECODE_ONLY` is not currently a safe/easy speed path for this
+  Qwen3.6/B70/vLLM-XPU stack. It reaches graph capture and then fails on a
+  SYCL Graph feature gap in the active kernel path.
+- Do not spend more time on full-decode graph mode until either the scratch
+  memory SYCL Graph limitation is removed or the exact offending kernel path is
+  bypassed/replaced.
+- The accepted PIECEWISE graph branch remains the production quality baseline.
+
+Restored accepted backend after the negative run:
+
+- backend: `qwen36-tp4-accepted-restored-after-fulldecode1-20260612m`
+- launch log artifact:
+  `data/qwen36-quark-int8-tp4-accepted-restored-after-fulldecode1-20260612m.log`
+- guard artifact:
+  `data/qwen36-quark-int8-tp4-accepted-provenance-guard-after-fulldecode1-20260612m.json`
+- c1 speed artifact:
+  `data/qwen36-quark-int8-tp4-accepted-restored-after-fulldecode1-c1-p512o512-20260612m.json`
+- restored p512/o512/c1 result:
+  - output tok/s after first text: `99.4633`
+  - output tok/s wall: `98.0380`
+  - TTFT: `74.84 ms`
+
+Next decisions:
+
+1. Use the provenance guard before every candidate benchmark and after every
+   restore.
+2. Keep graph-mode experiments on isolated cache roots and require sentinel
+   pass before speed measurement.
+3. Since `FULL_DECODE_ONLY` is blocked by a backend feature gap, prioritize
+   resident-state verifier/COW work and persistent-MoE or grouped-GEMM shape
+   repros over more graph-mode flag sweeps.

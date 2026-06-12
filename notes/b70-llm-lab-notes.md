@@ -188,6 +188,15 @@ Current Qwen3.6 INT8 direction:
     decode lane, speculation transaction log, route-aware COW/MoE capture, and
     a promotion matrix that separates quality branch, speed branch, and
     stability branch.
+25. Added `scripts/check-qwen36-accepted-provenance.py` and "Accepted
+    Provenance Guard And FULL_DECODE_ONLY Negative" to the Qwen3.6 note. The
+    guard checks served model id, accepted cache-root evidence in the launch
+    log, two 32-token sentinel completions, and known graph/refill drift token
+    positions before speed claims. `FULL_DECODE_ONLY` was tested on an isolated
+    cache root and rejected at startup with
+    `sycl_ext_oneapi_work_group_scratch_memory` unavailable under SYCL Graph.
+    Restored PIECEWISE accepted backend passed the guard and measured
+    `99.463 tok/s` after first text at p512/o512/c1.
 
 ## 2026-05-10 MiniMax AutoRound Addendum
 
