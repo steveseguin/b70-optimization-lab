@@ -6,6 +6,22 @@ Date: 2026-06-12
 
 2026-06-12 continuation:
 
+- Added a fresh external-scan and larger-bets refresh to
+  `notes/2026-06-12-qwen36-next-bigger-bets.md`. It records the Localmaxxing
+  API nuance that the broad Arc Pro B70/Qwen family query shows our
+  `cmq9ifq0500b0r8012f27j1xl` row at `99.7697 tok/s`, while the exact
+  `nameistoken/Qwen3.6-35B-A3B-Quark-W8A8-INT8` filter still returns only the
+  older `cmq8yhxvo001ipb0149aoa79o` row at `99.4284 tok/s`. It also folds in
+  current vLLM W8A8 docs, Intel IPEX/XPU container notes, and B70 TP-fault
+  reports. New tracked next ideas include active-offset grouped GEMM,
+  device-image budget gates, a clean Intel container A/B, route-exact EP/TP
+  simulation, graph-safe metadata-copy repros, DPAS/XMX proof packets, a
+  static c1 graph runner, TP2 latency truth-serum runs, resident-state
+  verifier speculation, shallow target self-drafting, a persistent MoE device
+  service, an upstream performance challenge packet, reliability scoring, and
+  BF16/logit-rank quality shadows. This is notes-only; no new speed claim or
+  endpoint promotion.
+
 - Built and tested the offset-native W8A8 grouped-GEMM prototype against the
   layer-9 routecapture6 rows=1 replay. The oneAPI 2026 build was rejected
   before use because it linked against `libsycl.so.9`; the rebuilt oneAPI

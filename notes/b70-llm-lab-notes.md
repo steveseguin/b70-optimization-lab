@@ -808,3 +808,16 @@ vLLM/XPU FP8 work:
     minimizer, device-image budget analysis, DPAS/XMX counter proof,
     graph-resident metadata updates, persistent routed-expert worker, and
     target-verified speculation as the high-upside track.
+34. Added "Fresh External Scan And Larger Bets" to the focused Qwen3.6 note
+    after the latest backlog prompt. The new section records Localmaxxing API
+    canonicalization nuance for the `99.7697 tok/s` B70/Qwen-family row versus
+    the exact-HF `99.4284 tok/s` filter, plus current external signals from
+    vLLM W8A8 docs, Intel IPEX/XPU container notes, and public B70 TP-fault
+    reports. New ideas now tracked are active-offset grouped GEMM, device-image
+    budget gates, clean Intel-container A/B, route-exact EP/TP simulation,
+    metadata-copy failure minimizers, small-M DPAS/XMX proof, a static c1 graph
+    runner, TP2 latency truth-serum runs, resident-state verifier speculation,
+    shallow target self-drafting, a persistent MoE device service, an upstream
+    performance challenge packet, reliability scoring, and BF16/logit-rank
+    quality shadow checks. This is notes-only and does not change the accepted
+    endpoint.

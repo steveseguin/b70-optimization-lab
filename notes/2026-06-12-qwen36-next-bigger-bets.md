@@ -3063,3 +3063,119 @@ Public context:
 - Faster public B70 Qwen rows using Q4/llama.cpp or other lower-fidelity
   setups are useful architecture clues, not quality-equivalent targets for
   this INT8/Quark production lane.
+
+## 2026-06-12 Fresh External Scan And Larger Bets
+
+What was added after the latest backlog prompt:
+
+- Localmaxxing public API nuance: the broad Arc Pro B70/Qwen family query shows
+  `cmq9ifq0500b0r8012f27j1xl` at `99.7697 tok/s` for Qwen3.6-35B-A3B on
+  4x B70, but the exact `hfId=nameistoken/Qwen3.6-35B-A3B-Quark-W8A8-INT8`
+  filter still returns only `cmq8yhxvo001ipb0149aoa79o` at `99.4284 tok/s`.
+  Treat `cmq9ifq...` as the best public B70/Qwen-family row from this machine,
+  but keep exact-model provenance artifacts in our notes before calling it a
+  separate exact-HF row.
+- vLLM's public W8A8 INT8 docs still describe the official INT8 compute path in
+  NVIDIA terms. This supports the current rule: our XPU/Quark route needs local
+  route-exact and endpoint-level proof for every kernel change.
+  `https://docs.vllm.ai/en/latest/features/quantization/llm_compressor/int8_w8a8/`
+- Intel Extension for PyTorch release notes now call out vLLM/TGI, MoE, and
+  Arc B-Series validation. This is a good source of host-stack and kernel-stack
+  candidates, but not a reason to relax quality gates.
+  `https://github.com/intel/intel-extension-for-pytorch/releases`
+- Intel's `ai-containers` XPU notes mention core vLLM serving, online FP8,
+  multi-GPU scaling, experimental expert parallelism, and validated MoE support.
+  This should be tested as a clean stack A/B against our accepted command, not
+  mixed into the current source tree during kernel iteration.
+  `https://github.com/intel/ai-containers/blob/main/vllm/0.17.0-xpu.md`
+- The public B70 TP fault report confirms the risk class we keep hitting:
+  multi-card vLLM/XPU can fault around ProcessGroupXCCL, driver, firmware, and
+  graph/metadata paths. Device-lost count belongs in every performance report.
+  `https://github.com/vllm-project/vllm/issues/41663`
+- Community B70 rows show aggregate throughput can be large while single-stream
+  decode remains modest. That reinforces the production split-lane idea:
+  capacity and c1 latency may need different backends or admission policies.
+
+Concrete things to try next:
+
+1. **Active-offset grouped GEMM gate.**
+   Finish the compact active-expert offset op as a microbench-only path first.
+   It should pass import, XPU sync, route-exact layer-9 replay, and compare
+   against both the offset prototype and current `xpu_fused_moe`. Do not expose
+   it to the endpoint unless it avoids the earlier device-lost class.
+
+2. **Device-image size and first-use compile budget.**
+   For each `vllm-xpu-kernels` change, record `.so` size, device image count if
+   inspectable, import time, first XPU op time, and whether a trivial XPU sync
+   survives. The offset prototype's microbench win plus serving failure means
+   binary/device-image cost is now a first-class gate.
+
+3. **Clean Intel container A/B on spare root or isolated env.**
+   Reproduce the accepted command on Intel's newest XPU vLLM container or a
+   clean matching source stack. Keep the same model, prompt, context, quality
+   gates, and no speculation. This answers whether our local stack is missing a
+   newer MoE/expert-parallel path.
+
+4. **Route-exact expert-parallel simulator before implementation.**
+   Use existing routecapture windows to simulate TP4, TP2+EP2, EP4,
+   replicated attention with sharded experts, and hot-expert replication.
+   Include allreduce/all-to-all bytes, worst-rank hot spots, and VRAM. This is
+   the cheapest way to decide whether a parallelism rewrite can help c1.
+
+5. **Graph-safe metadata-copy kill gate.**
+   Build a tiny repro around the repeated `block_table.copy_to_gpu` and
+   `num_accepted_tokens.gpu.fill_` failure class. The goal is a stable
+   first-completion smoke that can be run after kernel rebuilds before a full
+   endpoint provenance request.
+
+6. **Small-M DPAS/XMX proof packet.**
+   Run the route-replay grouped-GEMM shapes under the best available Intel
+   counters. For each hot kernel, record whether it uses XMX/DPAS INT8,
+   occupancy, memory bandwidth, launch count, and time. If DPAS use is weak,
+   layout/repack work outranks scheduler tuning.
+
+7. **Static c1 graph runner as a truth-serum target.**
+   Prototype a fixed-shape decode runner for one accepted prompt/output bucket:
+   resident block tables, resident KV/GDN metadata, no dynamic admission, fixed
+   sampling, and certified graph cache. It does not need to be the production
+   server; it tells us how much vLLM dynamic control flow costs.
+
+8. **Two-card latency lane investigation.**
+   A single B70 is too small for this full W8A8 model with comfortable KV, but
+   a TP2 or TP2-plus-offload lane may reduce cross-card collective and metadata
+   complexity. Run this only as a c1 truth-serum benchmark with the same exact
+   output gates, not as a capacity replacement.
+
+9. **Resident-state verifier service.**
+   Keep speculation on the board, but make the verifier own commit/rollback:
+   alias immutable KV, version mutable GDN/request state, score candidates with
+   the current Quark W8A8 model, and commit only verified tokens. External
+   refill verification is already proven insufficient.
+
+10. **Shallow target self-drafting.**
+    Test a same-model drafter that runs fewer layers or a small trace-trained
+    adapter, but only behind the resident-state verifier. This is a bigger
+    engineering bet than n-gram, but it may provide accepted tokens without
+    changing the served model's quality.
+
+11. **Persistent MoE device service.**
+    Instead of adding one custom op at a time, prototype a process-local device
+    service with persistent USM buffers, hot expert packed weights, and compact
+    route queues. It can serve route-replay requests first, then one layer, then
+    a static c1 lane.
+
+12. **Upstream performance challenge packet.**
+    Package layer-9 routecapture6, the offset-GEMM exactness artifact, the
+    device-lost promotion failure, the live timing budget, and Localmaxxing
+    context into a concise repro for Intel/vLLM. The ask should be specific:
+    persistent or active-expert W8A8 MoE for B70, not a general complaint.
+
+13. **Reliability score as a benchmark field.**
+    Alongside tok/s, record restarts, device-lost count, health-only failures,
+    first-generation failures, and provenance-sentinel pass rate. A fast row
+    that cannot survive restore/provenance is not a usable production result.
+
+14. **Quality shadow set beyond exact sentinels.**
+    Keep exact token sentinels as the hard gate, but add periodic BF16/logit
+    rank or prompt-logprob shadow checks for kernel work. This catches nearby
+    distribution distortion that may not flip the short canary token.
