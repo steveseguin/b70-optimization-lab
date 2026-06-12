@@ -662,9 +662,19 @@ def manual_int8_moe_fused_prologue_once(
     num_experts: int,
     topk: int,
     scratch: dict[str, Any],
+    use_offset_gemm: bool = False,
 ) -> torch.Tensor:
     hidden_size = hidden_states.shape[1]
     inter_size = w13.shape[-1] // 2
+    offset_op = getattr(
+        torch.ops._xpu_C,
+        "cutlass_grouped_gemm_w8a8_int8_offsets_interface",
+        None,
+    )
+    if use_offset_gemm and offset_op is None:
+        raise RuntimeError(
+            "cutlass_grouped_gemm_w8a8_int8_offsets_interface is not available"
+        )
 
     torch.ops._moe_C.fused_moe_prologue(
         input=hidden_states,
@@ -680,41 +690,70 @@ def manual_int8_moe_fused_prologue_once(
         num_experts_on_rank=num_experts,
     )
     expert_offsets = scratch["expert_offsets"]
-    scratch["rows_per_expert"].copy_(
-        (expert_offsets[1:1 + num_experts] -
-         expert_offsets[:num_experts]).to(torch.int32))
+    if not use_offset_gemm:
+        scratch["rows_per_expert"].copy_(
+            (expert_offsets[1:1 + num_experts] -
+             expert_offsets[:num_experts]).to(torch.int32))
 
     gemm1_a, gemm1_a_scales = _per_token_quant_int8(
         scratch["remapped_hidden_states"])
     gemm1_scales = _normalize_int8_weight_scales(w13_scales, 2 * inter_size)
-    torch.ops._xpu_C.cutlass_grouped_gemm_w8a8_int8_interface(
-        ptr_A=gemm1_a,
-        ptr_A_scales=gemm1_a_scales,
-        ptr_B=w13,
-        ptr_B_scales=gemm1_scales,
-        ptr_bias=None,
-        ptr_D=scratch["gemm1_output"],
-        rows_per_expert=scratch["rows_per_expert"],
-        N=2 * inter_size,
-        K=hidden_size,
-        num_experts=num_experts,
-    )
+    if use_offset_gemm:
+        offset_op(
+            ptr_A=gemm1_a,
+            ptr_A_scales=gemm1_a_scales,
+            ptr_B=w13,
+            ptr_B_scales=gemm1_scales,
+            ptr_bias=None,
+            ptr_D=scratch["gemm1_output"],
+            expert_first_token_offset=expert_offsets,
+            N=2 * inter_size,
+            K=hidden_size,
+            num_experts=num_experts,
+        )
+    else:
+        torch.ops._xpu_C.cutlass_grouped_gemm_w8a8_int8_interface(
+            ptr_A=gemm1_a,
+            ptr_A_scales=gemm1_a_scales,
+            ptr_B=w13,
+            ptr_B_scales=gemm1_scales,
+            ptr_bias=None,
+            ptr_D=scratch["gemm1_output"],
+            rows_per_expert=scratch["rows_per_expert"],
+            N=2 * inter_size,
+            K=hidden_size,
+            num_experts=num_experts,
+        )
     fused_moe_activation(scratch["act_output"], scratch["gemm1_output"],
                          "silu")
     gemm2_a, gemm2_a_scales = _per_token_quant_int8(scratch["act_output"])
     gemm2_scales = _normalize_int8_weight_scales(w2_scales, hidden_size)
-    torch.ops._xpu_C.cutlass_grouped_gemm_w8a8_int8_interface(
-        ptr_A=gemm2_a,
-        ptr_A_scales=gemm2_a_scales,
-        ptr_B=w2,
-        ptr_B_scales=gemm2_scales,
-        ptr_bias=None,
-        ptr_D=scratch["gemm2_output"],
-        rows_per_expert=scratch["rows_per_expert"],
-        N=hidden_size,
-        K=inter_size,
-        num_experts=num_experts,
-    )
+    if use_offset_gemm:
+        offset_op(
+            ptr_A=gemm2_a,
+            ptr_A_scales=gemm2_a_scales,
+            ptr_B=w2,
+            ptr_B_scales=gemm2_scales,
+            ptr_bias=None,
+            ptr_D=scratch["gemm2_output"],
+            expert_first_token_offset=expert_offsets,
+            N=hidden_size,
+            K=inter_size,
+            num_experts=num_experts,
+        )
+    else:
+        torch.ops._xpu_C.cutlass_grouped_gemm_w8a8_int8_interface(
+            ptr_A=gemm2_a,
+            ptr_A_scales=gemm2_a_scales,
+            ptr_B=w2,
+            ptr_B_scales=gemm2_scales,
+            ptr_bias=None,
+            ptr_D=scratch["gemm2_output"],
+            rows_per_expert=scratch["rows_per_expert"],
+            N=hidden_size,
+            K=inter_size,
+            num_experts=num_experts,
+        )
     torch.ops._moe_C.moe_gather(scratch["output"], scratch["gemm2_output"],
                                 topk_weights, scratch["unpermuted"],
                                 num_experts)
@@ -872,6 +911,28 @@ def benchmark_rows(
     torch.xpu.synchronize()
     prologue_max_abs_diff = float(
         (ref_output - prologue_output).abs().max().item())
+    offset_gemm_available = hasattr(
+        torch.ops._xpu_C,
+        "cutlass_grouped_gemm_w8a8_int8_offsets_interface",
+    )
+    prologue_offset_max_abs_diff: float | None = None
+    if args.enable_offset_gemm:
+        prologue_offset_output = manual_int8_moe_fused_prologue_once(
+            hidden_states=inputs["hidden_states"],
+            w13=inputs["w13"],
+            w13_scales=inputs["w13_scales"],
+            w2=inputs["w2"],
+            w2_scales=inputs["w2_scales"],
+            topk_weights=inputs["topk_weights"],
+            topk_ids=inputs["topk_ids"],
+            num_experts=num_experts,
+            topk=topk,
+            scratch=prologue_scratch,
+            use_offset_gemm=True,
+        )
+        torch.xpu.synchronize()
+        prologue_offset_max_abs_diff = float(
+            (ref_output - prologue_offset_output).abs().max().item())
     xpu_scratch_output = xpu_fused_moe(
         hidden_states=inputs["hidden_states"],
         w13=inputs["w13"],
@@ -896,6 +957,7 @@ def benchmark_rows(
     scratch_total_us = []
     preallocated_total_us = []
     prologue_preallocated_total_us = []
+    prologue_offset_total_us = []
     component_us: dict[str, list[float]] = {
         "rows_zero": [],
         "remap": [],
@@ -1002,6 +1064,25 @@ def benchmark_rows(
         end.record()
         torch.xpu.synchronize()
         prologue_preallocated_total_us.append(elapsed_us(start, end))
+        if args.enable_offset_gemm:
+            start, end = make_events()
+            start.record()
+            manual_int8_moe_fused_prologue_once(
+                hidden_states=inputs["hidden_states"],
+                w13=inputs["w13"],
+                w13_scales=inputs["w13_scales"],
+                w2=inputs["w2"],
+                w2_scales=inputs["w2_scales"],
+                topk_weights=inputs["topk_weights"],
+                topk_ids=inputs["topk_ids"],
+                num_experts=num_experts,
+                topk=topk,
+                scratch=prologue_scratch,
+                use_offset_gemm=True,
+            )
+            end.record()
+            torch.xpu.synchronize()
+            prologue_offset_total_us.append(elapsed_us(start, end))
 
     def mean(values: list[float]) -> float:
         return sum(values) / max(1, len(values))
@@ -1039,6 +1120,10 @@ def benchmark_rows(
         "preallocated_staged_total_us_mean": mean(preallocated_total_us),
         "fused_prologue_staged_total_us_mean":
         mean(prologue_preallocated_total_us),
+        "fused_prologue_offset_gemm_total_us_mean":
+        (mean(prologue_offset_total_us) if prologue_offset_total_us else None),
+        "offset_gemm_available": offset_gemm_available,
+        "offset_gemm_enabled": bool(args.enable_offset_gemm),
         "fused_prologue_workspace_bytes":
         int(prologue_scratch["workspace_bytes"]),
         "components_us_mean": components,
@@ -1047,6 +1132,8 @@ def benchmark_rows(
         "preallocated_vs_xpu_fused_moe_max_abs_diff": prealloc_max_abs_diff,
         "fused_prologue_vs_xpu_fused_moe_max_abs_diff":
         prologue_max_abs_diff,
+        "fused_prologue_offset_gemm_vs_xpu_fused_moe_max_abs_diff":
+        prologue_offset_max_abs_diff,
         "iterations": args.iterations,
         "warmup": args.warmup,
     }
@@ -1081,6 +1168,15 @@ def write_markdown(path: str, results: dict[str, Any]) -> None:
         "fused_prologue": max(
             (float(row.get("fused_prologue_vs_xpu_fused_moe_max_abs_diff",
                            0.0)) for row in rows),
+            default=float("nan"),
+        ),
+        "fused_prologue_offset": max(
+            (float(row.get(
+                "fused_prologue_offset_gemm_vs_xpu_fused_moe_max_abs_diff",
+                0.0,
+            )) for row in rows if row.get(
+                "fused_prologue_offset_gemm_vs_xpu_fused_moe_max_abs_diff")
+             is not None),
             default=float("nan"),
         ),
     }
@@ -1123,6 +1219,11 @@ def write_markdown(path: str, results: dict[str, Any]) -> None:
         f"- Fused-prologue staged max abs diff: "
         f"`{_fmt(max_diffs['fused_prologue'])}`."
     )
+    if any(row.get("offset_gemm_enabled") for row in rows):
+        lines.append(
+            f"- Fused-prologue offset-GEMM max abs diff: "
+            f"`{_fmt(max_diffs['fused_prologue_offset'])}`."
+        )
     lines.append("")
     lines.append("## Timing")
     lines.append("")
@@ -1137,19 +1238,33 @@ def write_markdown(path: str, results: dict[str, Any]) -> None:
     mean_prologue = sum(
         float(row.get("fused_prologue_staged_total_us_mean", 0.0))
         for row in rows) / max(1, len(rows))
+    offset_rows = [
+        row for row in rows
+        if row.get("fused_prologue_offset_gemm_total_us_mean") is not None
+    ]
+    mean_prologue_offset = (
+        sum(float(row["fused_prologue_offset_gemm_total_us_mean"])
+            for row in offset_rows) / len(offset_rows)
+        if offset_rows else None
+    )
     lines.append(f"- Mean `xpu_fused_moe`: `{_fmt(mean_xpu)} us`.")
     lines.append(
         f"- Mean scratch `xpu_fused_moe`: `{_fmt(mean_xpu_scratch)} us`.")
     lines.append(f"- Mean preallocated staged: `{_fmt(mean_prealloc)} us`.")
     lines.append(
         f"- Mean fused-prologue staged: `{_fmt(mean_prologue)} us`.")
+    if mean_prologue_offset is not None:
+        lines.append(
+            "- Mean fused-prologue offset-GEMM staged: "
+            f"`{_fmt(mean_prologue_offset)} us`."
+        )
     lines.append("")
     lines.append(
         "| rows | route start | active experts | xpu fused us | "
         "xpu scratch us | prealloc staged us | fused prologue staged us | "
-        "gemm1 us | gemm2 us | act+quant2 us |"
+        "fused prologue offset us | gemm1 us | gemm2 us | act+quant2 us |"
     )
-    lines.append("|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|")
+    lines.append("|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|")
     for row in rows:
         comp = row.get("components_us_mean", {})
         topk = row.get("topk_summary", {})
@@ -1160,6 +1275,7 @@ def write_markdown(path: str, results: dict[str, Any]) -> None:
             f"{_fmt(row.get('xpu_fused_moe_scratch_total_us_mean'))} | "
             f"{_fmt(row.get('preallocated_staged_total_us_mean'))} | "
             f"{_fmt(row.get('fused_prologue_staged_total_us_mean'))} | "
+            f"{_fmt(row.get('fused_prologue_offset_gemm_total_us_mean'))} | "
             f"{_fmt(comp.get('gemm1'))} | "
             f"{_fmt(comp.get('gemm2'))} | "
             f"{_fmt(comp.get('activation_plus_quant2'))} |"
@@ -1263,6 +1379,14 @@ def main() -> int:
         "--enable-fused-silu-quant",
         action="store_true",
         help="Benchmark the rejected fused SiLU+quant candidate; use for diagnostics only.",
+    )
+    parser.add_argument(
+        "--enable-offset-gemm",
+        action="store_true",
+        help=(
+            "Benchmark the experimental fused-prologue path that feeds "
+            "expert_first_token_offset directly to the W8A8 grouped GEMM op."
+        ),
     )
     parser.add_argument("--markdown-out")
     args = parser.parse_args()

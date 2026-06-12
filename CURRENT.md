@@ -6,6 +6,34 @@ Date: 2026-06-12
 
 2026-06-12 continuation:
 
+- Built and tested the offset-native W8A8 grouped-GEMM prototype against the
+  layer-9 routecapture6 rows=1 replay. The oneAPI 2026 build was rejected
+  before use because it linked against `libsycl.so.9`; the rebuilt oneAPI
+  2025.3 artifact linked against `libsycl.so.8`, imported cleanly, and passed
+  XPU sync. Route replay was exact (`max_abs_diff=0.0`) and showed a real
+  component win: fused prologue plus offset GEMM averaged `213.233 us/layer`
+  versus fused prologue staged `285.787 us/layer`, exact preallocated staged
+  `218.158 us/layer`, and current scratch `xpu_fused_moe` `256.611 us/layer`.
+  Serving promotion failed: the offset-built backend reached `/health`, but the
+  first provenance completion crashed with Level Zero
+  `UR_RESULT_ERROR_DEVICE_LOST` in `block_table.copy_to_gpu`, followed by
+  `UR_RESULT_ERROR_OUT_OF_RESOURCES` during shutdown. Decision: keep the source
+  patch as a prototype only, do not expose it live, and move the next kernel
+  work toward a narrower offset ABI, active-expert loop removal, or a
+  persistent/one-dispatch MoE layerlet. Live libraries were rolled back to the
+  accepted pre-offset runtime, the offset op is absent from live imports, and
+  accepted provenance passed exact sentinels after rollback. Artifacts:
+  `patches/vllm-xpu-kernels-w8a8-offset-gemm-prototype-20260612.patch`,
+  `data/vllm-xpu-kernels-offset-gemm-rebuild-oneapi2025-20260612.log`,
+  `data/qwen36-quark-int8-moe-routecapture6-layer9-offset-gemm-20260612ae.md`,
+  `data/qwen36-quark-int8-moe-routecapture6-layer9-offset-gemm-20260612ae.json`,
+  `data/qwen36-quark-int8-tp4-accepted-provenance-after-offset-gemm-20260612af.json`,
+  `data/qwen36-quark-int8-tp4-accepted-restored-after-offset-gemm-20260612af.log`,
+  and
+  `data/qwen36-quark-int8-tp4-accepted-provenance-after-offset-rollback-20260612ag.json`.
+  The rollback service log is
+  `data/qwen36-quark-int8-tp4-accepted-restored-after-offset-rollback-20260612ag.log`.
+
 - Added another focused backlog refresh after the offset-native W8A8 grouped-GEMM
   prototype started. This is notes-only, not a speed claim. The new section
   treats the offset op as a fast build-and-kill-gate experiment, then records

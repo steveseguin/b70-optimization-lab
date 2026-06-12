@@ -1,0 +1,1436 @@
+/home/steve/.venvs/vllm-xpu/lib/python3.12/site-packages/setuptools_scm/_integration/version_inference.py:151: UserWarning: version of None already set
+  warnings.warn(f"version of {self.dist_name} already set")
+running build_ext
+Using MAX_JOBS=4 as the number of jobs.
+Intel(R) oneAPI DPC++/C++ Compiler 2025.3.3 (2025.3.3.20260319)
+Target: x86_64-unknown-linux-gnu
+Thread model: posix
+InstalledDir: /opt/intel/oneapi/compiler/2025.3/bin/compiler
+Configuration file: /opt/intel/oneapi/compiler/2025.3/bin/compiler/../icpx.cfg
+Found candidate GCC installation: /usr/lib/gcc/x86_64-linux-gnu/13
+Selected GCC installation: /usr/lib/gcc/x86_64-linux-gnu/13
+Candidate multilib: .;@m64
+Selected multilib: .;@m64
+-- CMPLR_ROOT: /opt/intel/oneapi/compiler/2025.3
+-- CMPLR_ROOT: /opt/intel/oneapi/compiler/2025.3
+-- The CXX compiler identification is IntelLLVM 2025.3.3
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /opt/intel/oneapi/compiler/2025.3/bin/icpx - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Build type: Release
+-- Target device: xpu
+-- 
+-- Kernel build configuration:
+--   BUILD_SYCL_TLA_KERNELS       = ON
+--   VLLM_XPU_ENABLE_XE2          = ON
+--   VLLM_XPU_ENABLE_XE_DEFAULT   = ON
+--   BASIC_KERNELS_ENABLED        = OFF
+--   FA2_KERNELS_ENABLED          = OFF
+--   MOE_KERNELS_ENABLED          = ON
+--   GDN_KERNELS_ENABLED          = ON
+--   MQA_LOGITS_KERNELS_ENABLED   = OFF
+--   XPU_SPECIFIC_KERNELS_ENABLED = ON
+--   XPUMEM_ALLOCATOR_ENABLED     = OFF
+-- 
+-- Found Python: /home/steve/.venvs/vllm-xpu/bin/python3 (found version "3.12.13") found components: Interpreter Development Development.Module Development.SABIModule Development.Embed
+-- Found python matching: /home/steve/.venvs/vllm-xpu/bin/python3.
+-- Python include dirs: /home/steve/.local/share/uv/python/cpython-3.12-linux-x86_64-gnu/include/python3.12
+-- Python libraries: /home/steve/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/libpython3.12.so
+-- Python version: 3.12.13
+CMake Warning (dev) at /home/steve/.venvs/vllm-xpu/lib/python3.12/site-packages/cmake/data/share/cmake-4.3/Modules/FindPackageHandleStandardArgs.cmake:493 (message):
+  The package name passed to find_package_handle_standard_args() (SYCL) does
+  not match the name of the calling package (SYCLToolkit).  This can lead to
+  problems in calling code that expects find_package() result variables
+  (e.g., `_FOUND`) to follow a certain pattern.
+Call Stack (most recent call first):
+  /home/steve/.venvs/vllm-xpu/lib/python3.12/site-packages/torch/share/cmake/Caffe2/FindSYCLToolkit.cmake:135 (find_package_handle_standard_args)
+  /home/steve/.venvs/vllm-xpu/lib/python3.12/site-packages/torch/share/cmake/Caffe2/public/xpu.cmake:11 (find_package)
+  /home/steve/.venvs/vllm-xpu/lib/python3.12/site-packages/torch/share/cmake/Caffe2/Caffe2Config.cmake:101 (include)
+  /home/steve/.venvs/vllm-xpu/lib/python3.12/site-packages/torch/share/cmake/Torch/TorchConfig.cmake:62 (find_package)
+  CMakeLists.txt:106 (find_package)
+This warning is for project developers.  Use -Wno-dev to suppress it.
+
+-- Found SYCL: /opt/intel/oneapi/compiler/2025.3/include;/opt/intel/oneapi/compiler/2025.3/include/sycl (found version "20250303")
+CMake Warning at /home/steve/.venvs/vllm-xpu/lib/python3.12/site-packages/torch/share/cmake/Torch/TorchConfig.cmake:22 (message):
+  library kineto not found.
+Call Stack (most recent call first):
+  /home/steve/.venvs/vllm-xpu/lib/python3.12/site-packages/torch/share/cmake/Torch/TorchConfig.cmake:119 (append_torchlib_if_found)
+  CMakeLists.txt:106 (find_package)
+
+
+-- Found Torch: /home/steve/.venvs/vllm-xpu/lib/python3.12/site-packages/torch/lib/libtorch.so
+CMake Deprecation Warning at third_party/oneDNN/CMakeLists.txt:36 (cmake_policy):
+  The OLD behavior for policy CMP0146 will be removed from a future version
+  of CMake.
+
+  The cmake-policies(7) manual explains that the OLD behaviors of all
+  policies are deprecated and that a policy should be set to OLD only under
+  specific short-term circumstances.  Projects should be ported to the NEW
+  behavior and not rely on setting a policy to OLD.
+
+
+-- The C compiler identification is IntelLLVM 2025.3.3
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Check for working C compiler: /opt/intel/oneapi/compiler/2025.3/bin/icx - skipped
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- DNNL_TARGET_ARCH: X64
+-- DNNL_LIBRARY_NAME: dnnl
+-- Performing Test SYCL_FLAG_SUPPORTED
+-- Performing Test SYCL_FLAG_SUPPORTED - Success
+-- DPC++ support is enabled (OpenCL and Level Zero)
+-- Performing Test CMAKE_HAVE_LIBC_PTHREAD
+-- Performing Test CMAKE_HAVE_LIBC_PTHREAD - Success
+-- Found Threads: TRUE
+-- Found OpenMP_C: -fiopenmp (found version "5.1")
+-- Found OpenMP_CXX: -fiopenmp (found version "5.1")
+-- Found OpenMP: TRUE (found version "5.1")
+-- Found Git: /usr/bin/git (found version "2.43.0")
+-- Enabled testing coverage: CI
+-- Enabled workload: TRAINING
+-- Enabled primitives: ALL
+-- Enabled primitive CPU ISA: ALL
+-- Enabled primitive GPU ISA: ALL
+-- Enabled GeMM kernels ISA: ALL
+-- Primitive cache is enabled
+-- Experimental features are enabled
+-- The ASM compiler identification is IntelLLVM
+-- Found assembler: /opt/intel/oneapi/compiler/2025.3/bin/icx
+-- Performing Test COMPILER_ALLOWS_ALIAS_ATTRIBUTES
+-- Performing Test COMPILER_ALLOWS_ALIAS_ATTRIBUTES - Success
+-- GPU Compute reference kernels are enabled
+-- Graph component is enabled
+-- Found oneDNN: TRUE
+-- Building XPU
+-- SYCL supported arches: intel_gpu_pvc;intel_gpu_bmg_g21;intel_gpu_bmg_g31
+-- Querying torch for GPU compiler flags for SYCL...
+-- Torch GPU compiler flags: -fsycl
+-- FetchContent base directory: /home/steve/src/vllm-xpu-kernels/.deps
+-- Final SYCL compile options: -fsycl;-O3;-DNDEBUG;-fsycl-targets=spir64_gen
+-- Final SYCL link options: -fsycl;-fsycl-max-parallel-link-jobs=16;-flink-huge-device-code;-Xspirv-translator;-spirv-ext=+SPV_INTEL_split_barrier,+SPV_INTEL_2d_block_io,+SPV_INTEL_subgroup_matrix_multiply_accumulate;-fsycl-targets=spir64_gen;-Xsycl-target-backend=spir64_gen;-device pvc,bmg,bmg-g21-a0,bmg-g31-a0
+-- Setting up SYCL-TLA dependency...
+-- CMake Version: 4.3.2
+-- CUTLASS 4.2.1
+-- DPCPP_SYCL_TARGET as list intel_gpu_bmg_g21
+-- DPCPP INCLUDE DIR: /opt/intel/oneapi/compiler/2025.3/bin/../include/sycl;/opt/intel/oneapi/compiler/2025.3/bin/../include
+-- Using DPCPP compile flags: -fsycl;;-fno-sycl-instrument-device-code;
+-- Using DPCPP link flags: -fsycl;;-fno-sycl-instrument-device-code;-fsycl-targets=spir64;-Xs;-device bmg_g21;-Xspirv-translator;-spirv-ext=+SPV_INTEL_split_barrier,+SPV_INTEL_2d_block_io,+SPV_INTEL_subgroup_matrix_multiply_accumulate
+-- Default Install Location: install
+-- Found Python3: /home/steve/.venvs/vllm-xpu/bin/python3.12 (found suitable version "3.12.13", minimum required is "3.5") found components: Interpreter
+-- Enable caching of reference results in conv unit tests
+-- Enable rigorous conv problem sizes in conv unit tests
+CUDA_VERSION check pass 
+-- Using the following NVCC flags: 
+  --expt-relaxed-constexpr
+  -ftemplate-backtrace-limit=0
+  -DCUTLASS_TEST_LEVEL=0
+  -DCUTLASS_TEST_ENABLE_CACHED_RESULTS=1
+  -DCUTLASS_CONV_UNIT_TEST_RIGOROUS_SIZE_ENABLED=1
+  -DCUTLASS_DEBUG_TRACE_LEVEL=0
+  -Xcompiler=-Wconversion
+  -Xcompiler=-fno-strict-aliasing
+  -Xcudafe
+  --diag_suppress=implicit_return_from_non_void_function
+-- Configuring cublas ...
+-- cuBLAS Disabled.
+-- Configuring cuBLAS ... done.
+-- cutlass dir: /home/steve/src/vllm-xpu-kernels/.deps/cutlass-sycl-src/include and /home/steve/src/vllm-xpu-kernels/.deps/cutlass-sycl-src/tools/util/include and /home/steve/src/vllm-xpu-kernels/.deps/cutlass-sycl-src/applications
+-- Setting library output directory for target 'grouped_gemm_xe_2' to '/home/steve/src/vllm-xpu-kernels/build/temp/'.
+-- Setting library output directory for target 'gdn_attn_kernels_xe_2' to '/home/steve/src/vllm-xpu-kernels/build/temp/'.
+-- VLLM_XPU_INCLUDE_DIR: /opt/intel/oneapi/compiler/2025.3/include/;/opt/intel/oneapi/compiler/2025.3/include/sycl/;/opt/intel/oneapi/compiler/2025.3/include/syclcompat/
+-- Enabling _xpu_C extension.
+-- -------_xpu_C , , SYCL
+-- GPU_MOD_NAME: _xpu_C
+-- Enabling _moe_C extension.
+-- -------_moe_C , , SYCL
+-- GPU_MOD_NAME: _moe_C
+-- Configuring done (5.0s)
+-- Generating done (0.1s)
+-- Build files have been written to: /home/steve/src/vllm-xpu-kernels/build/temp
+=============== icpx version ===============
+sycl home: /opt/intel/oneapi/compiler/2025.3
+
+=============== icpx version ===============
+Using MAX_JOBS=4 as the number of jobs.
+Intel(R) oneAPI DPC++/C++ Compiler 2025.3.3 (2025.3.3.20260319)
+Target: x86_64-unknown-linux-gnu
+Thread model: posix
+InstalledDir: /opt/intel/oneapi/compiler/2025.3/bin/compiler
+Configuration file: /opt/intel/oneapi/compiler/2025.3/bin/compiler/../icpx.cfg
+Found candidate GCC installation: /usr/lib/gcc/x86_64-linux-gnu/13
+Selected GCC installation: /usr/lib/gcc/x86_64-linux-gnu/13
+Candidate multilib: .;@m64
+Selected multilib: .;@m64
+[1/718] Generating bnorm_nhwc_reusable_header.cpp
+[2/718] Generating bnorm_xe_header.cpp
+[3/718] Generating bnorm_xe_reduce_header.cpp
+[4/718] Generating binary_common_header.cpp
+[5/718] Generating concat_common_header.cpp
+[6/718] Generating include_custom_types_header.cpp
+[7/718] Generating include_conversion_header.cpp
+[8/718] Generating include_dispatch_header.cpp
+[9/718] Generating include_dnnl_interop_header.cpp
+[10/718] Generating include_generic_vector_ops_header.cpp
+[11/718] Generating include_eltwise_header.cpp
+[12/718] Generating include_io_header.cpp
+[13/718] Generating include_post_ops_header.cpp
+[14/718] Generating include_philox_header.cpp
+[15/718] Generating include_offsets_header.cpp
+[16/718] Generating include_math_utils_header.cpp
+[17/718] Generating include_scales_header.cpp
+[18/718] Generating include_types_interop_header.cpp
+[19/718] Generating include_types_header.cpp
+[20/718] Generating include_utils_header.cpp
+[21/718] Generating include_types_specific_header.cpp
+[22/718] Generating include_tile_ops_header.cpp
+[23/718] Generating lnorm_common_header.cpp
+[24/718] Generating reduction_common_header.cpp
+[25/718] Generating reorder_common_header.cpp
+[26/718] Generating rnn_cell_compute_header.cpp
+[27/718] Generating rnn_cell_kind_utility_header.cpp
+[28/718] Generating rnn_common_header.cpp
+[29/718] Generating softmax_simple_header.cpp
+[30/718] Generating sdpa_utils_header.cpp
+[31/718] Generating binary_simple_kernel.cpp
+[32/718] Generating binary_xe_kernel.cpp
+[33/718] Generating bnorm_ref_kernel.cpp
+[34/718] Generating bnorm_reusable_kernel.cpp
+[35/718] Generating bnorm_simple_kernel.cpp
+[36/718] Generating bnorm_nhwc_reusable_kernel.cpp
+[37/718] Generating bnorm_xe_bwd_kernel.cpp
+[38/718] Generating bnorm_xe_fwd_kernel.cpp
+[39/718] Generating bnorm_xe_nhwc_bwd_kernel.cpp
+[40/718] Generating bnorm_xe_nhwc_fwd_kernel.cpp
+[41/718] Generating concat_xe_kernel.cpp
+[42/718] Generating concat_simple_kernel.cpp
+[43/718] Generating conv_deconv_backward_bias_kernel.cpp
+[44/718] Generating conv_ref_kernel.cpp
+[45/718] Generating conv_xe_wino_fwd_data_2x3_kernel.cpp
+[46/718] Generating gpu_intel_dynamic_scale_kernel.cpp
+[47/718] Generating conv_xe_wino_fwd_data_fused_kernel.cpp
+[48/718] Generating eltwise_ref_kernel.cpp
+[49/718] Generating eltwise_xe_kernel.cpp
+[50/718] Generating gpu_intel_fill_random_kernel.cpp
+[51/718] Generating gemm_ref_kernel.cpp
+[52/718] Generating gemm_with_post_ops_kernel.cpp
+[53/718] Generating gemm_xe_hpc_systolic_copy_kernel.cpp
+[54/718] Generating gnorm_ref_kernel.cpp
+[55/718] Generating gemm_xe_hp_systolic_copy_kernel.cpp
+[56/718] Generating graph_gen_index_kernel.cpp
+[57/718] Generating ip_ref_kernel.cpp
+[58/718] Generating lnorm_ref_kernel.cpp
+[59/718] Generating lnorm_reusable_vectorized_kernel.cpp
+[60/718] Generating lnorm_reusable_kernel.cpp
+[61/718] Generating lnorm_simple_kernel.cpp
+[62/718] Generating lrn_ref_kernel.cpp
+[63/718] Generating lnorm_vectorized_kernel.cpp
+[64/718] Generating lnorm_vectorized_fused_kernel.cpp
+[65/718] Generating matmul_sparse_ref_kernel.cpp
+[66/718] Generating matmul_grouped_micro_gemm_kernel.cpp
+[67/718] Generating matmul_ref_grouped_gemm_kernel.cpp
+[68/718] Generating matmul_ref_kernel.cpp
+[69/718] Generating pool_xe_global_kernel.cpp
+[70/718] Generating pool_ref_kernel.cpp
+[71/718] Generating prelu_ref_kernel.cpp
+[72/718] Generating pool_xe_kernel.cpp
+[73/718] Generating reduction_atomic_kernel.cpp
+[74/718] Generating reduction_ref_kernel.cpp
+[75/718] Generating reduction_combined_kernel.cpp
+[76/718] Generating reduction_reusable_ref_kernel.cpp
+[77/718] Generating reorder_generic_kernel.cpp
+[78/718] Generating reorder_ref_kernel.cpp
+[79/718] Generating resampling_ref_kernel.cpp
+[80/718] Generating reorder_custom_kernel.cpp
+[81/718] Generating resampling_vectorized_kernel.cpp
+[82/718] Generating rnn_reorder_kernel.cpp
+[83/718] Generating sdpa_ref_kernel.cpp
+[84/718] Generating rnn_grid_kernel.cpp
+[85/718] Generating sdpa_micro_kernel.cpp
+[86/718] Generating shuffle_ref_kernel.cpp
+[87/718] Generating sdpa_micro_bwd_kernel.cpp
+[88/718] Generating softmax_reusable_kernel.cpp
+[89/718] Generating softmax_simple_kernel.cpp
+[90/718] Generating gpu_intel_subbyte_pack_kernel.cpp
+[91/718] Generating softmax_xe_kernel.cpp
+[92/718] Generating sum_many_inputs_kernel.cpp
+[93/718] Generating sum_simple_kernel.cpp
+[94/718] Generating sum_xe_kernel.cpp
+[95/718] Generating zeropad_simple_kernel.cpp
+[96/718] Building CXX object oneDNN/src/common/CMakeFiles/dnnl_common.dir/bfloat16.cpp.o
+[97/718] Building CXX object oneDNN/src/common/CMakeFiles/dnnl_common.dir/broadcast_strategy.cpp.o
+[98/718] Building CXX object oneDNN/src/common/CMakeFiles/dnnl_common.dir/concat.cpp.o
+[99/718] Building CXX object oneDNN/src/common/CMakeFiles/dnnl_common.dir/batch_normalization.cpp.o
+[100/718] Building CXX object oneDNN/src/common/CMakeFiles/dnnl_common.dir/binary.cpp.o
+[101/718] Building CXX object oneDNN/src/common/CMakeFiles/dnnl_common.dir/cache_blob_id.cpp.o
+[102/718] Building CXX object oneDNN/src/common/CMakeFiles/dnnl_common.dir/convolution_pd.cpp.o
+[103/718] Building CXX object oneDNN/src/common/CMakeFiles/dnnl_common.dir/dnnl_debug.cpp.o
+[104/718] Building CXX object oneDNN/src/common/CMakeFiles/dnnl_common.dir/convolution.cpp.o
+[105/718] Building CXX object oneDNN/src/common/CMakeFiles/dnnl_common.dir/deconvolution.cpp.o
+[106/718] Building CXX object oneDNN/src/common/CMakeFiles/dnnl_common.dir/dnnl_debug_autogenerated.cpp.o
+[107/718] Building CXX object oneDNN/src/common/CMakeFiles/dnnl_common.dir/dnnl_threadpool.cpp.o
+[108/718] Building CXX object oneDNN/src/common/CMakeFiles/dnnl_common.dir/eltwise.cpp.o
+[109/718] Building CXX object oneDNN/src/common/CMakeFiles/dnnl_common.dir/experimental.cpp.o
+[110/718] Building CXX object oneDNN/src/common/CMakeFiles/dnnl_common.dir/float4.cpp.o
+[111/718] Building CXX object oneDNN/src/common/CMakeFiles/dnnl_common.dir/engine.cpp.o
+[112/718] Building CXX object oneDNN/src/common/CMakeFiles/dnnl_common.dir/float8.cpp.o
+[113/718] Building CXX object oneDNN/src/common/CMakeFiles/dnnl_common.dir/fpmath_mode.cpp.o
+[114/718] Building CXX object oneDNN/src/common/CMakeFiles/dnnl_common.dir/gemm.cpp.o
+[115/718] Building CXX object oneDNN/src/common/CMakeFiles/dnnl_common.dir/gated_mlp_iface.cpp.o
+[116/718] Building CXX object oneDNN/src/common/CMakeFiles/dnnl_common.dir/group_normalization.cpp.o
+[117/718] Building CXX object oneDNN/src/common/CMakeFiles/dnnl_common.dir/inner_product.cpp.o
+[118/718] Building CXX object oneDNN/src/common/CMakeFiles/dnnl_common.dir/ittnotify.cpp.o
+[119/718] Building CXX object oneDNN/src/common/CMakeFiles/dnnl_common.dir/kernel_cache.cpp.o
+[120/718] Building CXX object oneDNN/src/common/CMakeFiles/dnnl_common.dir/layer_normalization.cpp.o
+[121/718] Building CXX object oneDNN/src/common/CMakeFiles/dnnl_common.dir/lrn.cpp.o
+[122/718] Building CXX object oneDNN/src/common/CMakeFiles/dnnl_common.dir/matmul.cpp.o
+[123/718] Building CXX object oneDNN/src/common/CMakeFiles/dnnl_common.dir/memory.cpp.o
+[124/718] Building CXX object oneDNN/src/common/CMakeFiles/dnnl_common.dir/memory_debug.cpp.o
+[125/718] Building CXX object oneDNN/src/common/CMakeFiles/dnnl_common.dir/memory_desc.cpp.o
+[126/718] Building CXX object oneDNN/src/common/CMakeFiles/dnnl_common.dir/memory_desc_wrapper.cpp.o
+[127/718] Building CXX object oneDNN/src/common/CMakeFiles/dnnl_common.dir/memory_tracking.cpp.o
+[128/718] Building CXX object oneDNN/src/common/CMakeFiles/dnnl_common.dir/memory_storage.cpp.o
+[129/718] Building CXX object oneDNN/src/common/CMakeFiles/dnnl_common.dir/pooling.cpp.o
+[130/718] Building CXX object oneDNN/src/common/CMakeFiles/dnnl_common.dir/primitive_attr.cpp.o
+[131/718] Building CXX object oneDNN/src/common/CMakeFiles/dnnl_common.dir/memory_zero_pad.cpp.o
+[132/718] Building CXX object oneDNN/src/common/CMakeFiles/dnnl_common.dir/prelu.cpp.o
+[133/718] Building CXX object oneDNN/src/common/CMakeFiles/dnnl_common.dir/primitive_attr_quant.cpp.o
+[134/718] Building CXX object oneDNN/src/common/CMakeFiles/dnnl_common.dir/primitive_cache.cpp.o
+[135/718] Building CXX object oneDNN/src/common/CMakeFiles/dnnl_common.dir/primitive_desc_iface.cpp.o
+[136/718] Building CXX object oneDNN/src/common/CMakeFiles/dnnl_common.dir/primitive_exec_types.cpp.o
+[137/718] Building CXX object oneDNN/src/common/CMakeFiles/dnnl_common.dir/primitive_hashing.cpp.o
+[138/718] Building CXX object oneDNN/src/common/CMakeFiles/dnnl_common.dir/primitive_serialization.cpp.o
+[139/718] Building CXX object oneDNN/src/common/CMakeFiles/dnnl_common.dir/primitive_iface.cpp.o
+[140/718] Building CXX object oneDNN/src/common/CMakeFiles/dnnl_common.dir/query.cpp.o
+[141/718] Building CXX object oneDNN/src/common/CMakeFiles/dnnl_common.dir/reduction.cpp.o
+[142/718] Building CXX object oneDNN/src/common/CMakeFiles/dnnl_common.dir/reorder.cpp.o
+[143/718] Building CXX object oneDNN/src/common/CMakeFiles/dnnl_common.dir/resampling.cpp.o
+[144/718] Building CXX object oneDNN/src/common/CMakeFiles/dnnl_common.dir/rnn.cpp.o
+[145/718] Building CXX object oneDNN/src/common/CMakeFiles/dnnl_common.dir/rw_mutex.cpp.o
+[146/718] Building CXX object oneDNN/src/common/CMakeFiles/dnnl_common.dir/scratchpad.cpp.o
+[147/718] Building CXX object oneDNN/src/common/CMakeFiles/dnnl_common.dir/scratchpad_debug.cpp.o
+[148/718] Building CXX object oneDNN/src/common/CMakeFiles/dnnl_common.dir/sdpa_test_iface.cpp.o
+[149/718] Building CXX object oneDNN/src/common/CMakeFiles/dnnl_common.dir/shuffle.cpp.o
+[150/718] Building CXX object oneDNN/src/common/CMakeFiles/dnnl_common.dir/stream.cpp.o
+[151/718] Building CXX object oneDNN/src/common/CMakeFiles/dnnl_common.dir/softmax.cpp.o
+[152/718] Building CXX object oneDNN/src/common/CMakeFiles/dnnl_common.dir/stream_profiler.cpp.o
+[153/718] Building CXX object oneDNN/src/common/CMakeFiles/dnnl_common.dir/sum.cpp.o
+[154/718] Building CXX object oneDNN/src/common/CMakeFiles/dnnl_common.dir/utils.cpp.o
+[155/718] Building C object oneDNN/src/common/CMakeFiles/dnnl_common.dir/__/__/third_party/ittnotify/ittnotify_static.c.o
+[156/718] Building C object oneDNN/src/common/CMakeFiles/dnnl_common.dir/__/__/third_party/ittnotify/jitprofiling.c.o
+[157/718] Building CXX object oneDNN/src/common/CMakeFiles/dnnl_common.dir/verbose.cpp.o
+[158/718] Building CXX object oneDNN/src/gpu/CMakeFiles/dnnl_gpu.dir/gpu_binary_list.cpp.o
+[159/718] Building CXX object oneDNN/src/gpu/CMakeFiles/dnnl_gpu.dir/gpu_batch_normalization_list.cpp.o
+[160/718] Building CXX object oneDNN/src/gpu/CMakeFiles/dnnl_gpu.dir/gpu_concat_list.cpp.o
+[161/718] Building CXX object oneDNN/src/gpu/CMakeFiles/dnnl_gpu.dir/gpu_convolution_list.cpp.o
+[162/718] Building CXX object oneDNN/src/gpu/CMakeFiles/dnnl_gpu.dir/gpu_deconvolution_list.cpp.o
+[163/718] Building CXX object oneDNN/src/gpu/CMakeFiles/dnnl_gpu.dir/gpu_eltwise_list.cpp.o
+[164/718] Building CXX object oneDNN/src/gpu/CMakeFiles/dnnl_gpu.dir/gpu_gated_mlp_list.cpp.o
+[165/718] Building CXX object oneDNN/src/gpu/CMakeFiles/dnnl_gpu.dir/gpu_gemm_list.cpp.o
+[166/718] Building CXX object oneDNN/src/gpu/CMakeFiles/dnnl_gpu.dir/gpu_group_normalization_list.cpp.o
+[167/718] Building CXX object oneDNN/src/gpu/CMakeFiles/dnnl_gpu.dir/gpu_impl_list.cpp.o
+[168/718] Building CXX object oneDNN/src/gpu/CMakeFiles/dnnl_gpu.dir/gpu_inner_product_list.cpp.o
+[169/718] Building CXX object oneDNN/src/gpu/CMakeFiles/dnnl_gpu.dir/gpu_layer_normalization_list.cpp.o
+[170/718] Building ASM object oneDNN/src/common/CMakeFiles/dnnl_common.dir/__/__/third_party/ittnotify/ittptmark64.S.o
+[171/718] Building CXX object oneDNN/src/gpu/CMakeFiles/dnnl_gpu.dir/gpu_lrn_list.cpp.o
+[172/718] Building CXX object oneDNN/src/gpu/CMakeFiles/dnnl_gpu.dir/gpu_matmul_list.cpp.o
+[173/718] Building CXX object oneDNN/src/gpu/CMakeFiles/dnnl_gpu.dir/gpu_prelu_list.cpp.o
+[174/718] Building CXX object oneDNN/src/gpu/CMakeFiles/dnnl_gpu.dir/gpu_pooling_list.cpp.o
+[175/718] Building CXX object oneDNN/src/gpu/CMakeFiles/dnnl_gpu.dir/gpu_reduction_list.cpp.o
+[176/718] Building CXX object oneDNN/src/gpu/CMakeFiles/dnnl_gpu.dir/gpu_reorder_pd.cpp.o
+[177/718] Building CXX object oneDNN/src/gpu/CMakeFiles/dnnl_gpu.dir/gpu_reorder_list.cpp.o
+[178/718] Building CXX object oneDNN/src/gpu/CMakeFiles/dnnl_gpu.dir/gpu_resampling_list.cpp.o
+[179/718] Building CXX object oneDNN/src/gpu/CMakeFiles/dnnl_gpu.dir/gpu_sdpa_list.cpp.o
+[180/718] Building CXX object oneDNN/src/gpu/CMakeFiles/dnnl_gpu.dir/gpu_rnn_list.cpp.o
+[181/718] Building CXX object oneDNN/src/gpu/CMakeFiles/dnnl_gpu.dir/gpu_shuffle_list.cpp.o
+[182/718] Building CXX object oneDNN/src/gpu/CMakeFiles/dnnl_gpu.dir/gpu_softmax_list.cpp.o
+[183/718] Building CXX object oneDNN/src/gpu/CMakeFiles/dnnl_gpu.dir/gpu_sum_list.cpp.o
+[184/718] Building CXX object oneDNN/src/gpu/CMakeFiles/dnnl_gpu.dir/gpu_zero_pad_list.cpp.o
+[185/718] Building CXX object oneDNN/src/gpu/CMakeFiles/dnnl_gpu.dir/gpu_zero_points_conv.cpp.o
+[186/718] Building CXX object oneDNN/src/gpu/generic/CMakeFiles/dnnl_gpu_generic.dir/cross_engine_reorder.cpp.o
+[187/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/block_structure.cpp.o
+[188/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/engine.cpp.o
+[189/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/fill_random.cpp.o
+[190/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/kernel_cache.cpp.o
+[191/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/post_ops.cpp.o
+[192/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/primitive.cpp.o
+[193/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/primitive_conf.cpp.o
+[194/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/utils.cpp.o
+[195/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/stream.cpp.o
+[196/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/gemm/config.cpp.o
+[197/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/gemm/jit.cpp.o
+[198/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/gemm/jit_xe_hp_systolic.cpp.o
+[199/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/gemm/ref.cpp.o
+[200/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/gemm/with_post_ops.cpp.o
+[201/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/binary/simple.cpp.o
+[202/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/binary/xe.cpp.o
+[203/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/bnorm/lookup_table.cpp.o
+[204/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/bnorm/nhwc.cpp.o
+[205/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/bnorm/model.cpp.o
+[206/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/bnorm/nhwc_reusable.cpp.o
+[207/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/bnorm/ref.cpp.o
+[208/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/bnorm/simple.cpp.o
+[209/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/bnorm/reusable.cpp.o
+[210/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/bnorm/utils.cpp.o
+[211/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/bnorm/xe.cpp.o
+[212/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/conv/config.cpp.o
+[213/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/conv/jit/config.cpp.o
+[214/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/conv/jit/grf_usage.cpp.o
+[215/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/conv/jit.cpp.o
+[216/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/conv/jit/ir_builder.cpp.o
+[217/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/conv/jit/lookup_table_data.cpp.o
+[218/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/conv/jit/key.cpp.o
+[219/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/conv/jit/lookup_table.cpp.o
+[220/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/conv/jit/model_xehpc_dw_data.cpp.o
+[221/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/conv/jit/model_xehpc_common_data.cpp.o
+[222/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/conv/jit/model_bridge.cpp.o
+[223/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/conv/jit/model_xehpg_dw_data.cpp.o
+[224/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/conv/jit/model_xehpg_common_data.cpp.o
+[225/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/conv/jit/normalization.cpp.o
+[226/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/conv/jit/pipeline.cpp.o
+[227/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/conv/jit/plan.cpp.o
+[228/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/conv/jit/problem.cpp.o
+[229/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/conv/jit/v2/bench_data.cpp.o
+[230/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/conv/jit/tiler.cpp.o
+[231/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/conv/jit/v2/builder.cpp.o
+[232/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/conv/jit/v2/debug.cpp.o
+[233/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/conv/jit/v2/kernel_desc_2d_reqs.cpp.o
+[234/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/conv/jit/v2/kernel_desc.cpp.o
+[235/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/conv/jit/v2/plan_registry_data.cpp.o
+[236/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/conv/jit/v2/model.cpp.o
+[237/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/conv/jit/v2/plan.cpp.o
+[238/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/conv/jit/v2/plan_registry.cpp.o
+[239/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/conv/jit/v2/primitive_plan.cpp.o
+[240/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/conv/jit/v2/problem.cpp.o
+[241/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/conv/jit/v2/tensor_utils.cpp.o
+[242/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/conv/jit/zero_out.cpp.o
+[243/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/conv/jit/zp_plan.cpp.o
+[244/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/conv/jit_v2.cpp.o
+[245/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/conv/ref.cpp.o
+[246/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/conv/xe_wino.cpp.o
+[247/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/concat/xe.cpp.o
+[248/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/concat/simple.cpp.o
+[249/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/eltwise/ref.cpp.o
+[250/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/eltwise/xe.cpp.o
+[251/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/gnorm/ref.cpp.o
+[252/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/ip/conv.cpp.o
+[253/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/ip/gemm.cpp.o
+[254/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/ip/ref.cpp.o
+[255/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/lnorm/ref.cpp.o
+[256/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/lnorm/reusable.cpp.o
+[257/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/lnorm/reusable_vectorized.cpp.o
+[258/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/lrn/ref.cpp.o
+[259/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/lnorm/vectorized.cpp.o
+[260/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/lnorm/simple.cpp.o
+[261/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/matmul/grouped_micro_gemm.cpp.o
+[262/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/matmul/ref_grouped_gemm.cpp.o
+[263/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/matmul/gemm.cpp.o
+[264/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/matmul/ref.cpp.o
+[265/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/pool/config.cpp.o
+[266/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/matmul/sparse_ref.cpp.o
+[267/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/pool/jit.cpp.o
+[268/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/pool/ref.cpp.o
+[269/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/pool/jit/ir_builder.cpp.o
+[270/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/pool/xe.cpp.o
+[271/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/pool/xe_global.cpp.o
+[272/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/prelu/ref.cpp.o
+[273/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/reduction/atomic.cpp.o
+[274/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/reduction/combined.cpp.o
+[275/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/reduction/jit.cpp.o
+[276/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/reduction/ref.cpp.o
+[277/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/reduction/reusable_ref.cpp.o
+[278/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/reduction/utils.cpp.o
+[279/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/reorder/custom.cpp.o
+[280/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/reorder/generic.cpp.o
+[281/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/reorder/jit.cpp.o
+[282/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/reorder/jit/config.cpp.o
+[283/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/reorder/jit/ir_builder.cpp.o
+[284/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/reorder/jit/tiler.cpp.o
+[285/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/reorder/ref.cpp.o
+[286/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/resampling/ref.cpp.o
+[287/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/resampling/vectorized.cpp.o
+[288/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/rnn/cell_common.cpp.o
+[289/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/rnn/cell_gru.cpp.o
+[290/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/rnn/cell_gru_lbr.cpp.o
+[291/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/rnn/grid.cpp.o
+[292/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/rnn/simple_cell_fusion.cpp.o
+[293/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/rnn/reorders.cpp.o
+[294/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/rnn/simple_postgemm.cpp.o
+[295/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/rnn/utils.cpp.o
+[296/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/sdpa/configs.cpp.o
+[297/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/sdpa/micro.cpp.o
+[298/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/sdpa/ref.cpp.o
+[299/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/shuffle/ref.cpp.o
+[300/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/softmax/reusable.cpp.o
+[301/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/softmax/xe.cpp.o
+[302/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/softmax/simple.cpp.o
+[303/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/sum/many_inputs.cpp.o
+[304/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/binary_common_header.cpp.o
+[305/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/sum/simple.cpp.o
+[306/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/sum/xe.cpp.o
+[307/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/zeropad/simple.cpp.o
+[308/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/bnorm_nhwc_reusable_header.cpp.o
+[309/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/bnorm_xe_header.cpp.o
+[310/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/bnorm_xe_reduce_header.cpp.o
+[311/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/concat_common_header.cpp.o
+[312/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/include_conversion_header.cpp.o
+[313/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/include_custom_types_header.cpp.o
+[314/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/include_dispatch_header.cpp.o
+[315/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/include_dnnl_interop_header.cpp.o
+[316/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/include_eltwise_header.cpp.o
+[317/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/include_generic_vector_ops_header.cpp.o
+[318/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/include_io_header.cpp.o
+[319/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/include_offsets_header.cpp.o
+[320/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/include_math_utils_header.cpp.o
+[321/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/include_philox_header.cpp.o
+[322/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/include_post_ops_header.cpp.o
+[323/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/include_scales_header.cpp.o
+[324/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/include_tile_ops_header.cpp.o
+[325/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/include_types_header.cpp.o
+[326/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/include_types_interop_header.cpp.o
+[327/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/include_types_specific_header.cpp.o
+[328/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/include_utils_header.cpp.o
+[329/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/lnorm_common_header.cpp.o
+[330/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/reduction_common_header.cpp.o
+[331/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/rnn_cell_compute_header.cpp.o
+[332/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/reorder_common_header.cpp.o
+[333/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/rnn_cell_kind_utility_header.cpp.o
+[334/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/rnn_common_header.cpp.o
+[335/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/sdpa_utils_header.cpp.o
+[336/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/softmax_simple_header.cpp.o
+[337/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/binary_simple_kernel.cpp.o
+[338/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/binary_xe_kernel.cpp.o
+[339/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/bnorm_ref_kernel.cpp.o
+[340/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/bnorm_nhwc_reusable_kernel.cpp.o
+[341/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/bnorm_reusable_kernel.cpp.o
+[342/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/bnorm_simple_kernel.cpp.o
+[343/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/bnorm_xe_bwd_kernel.cpp.o
+[344/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/bnorm_xe_fwd_kernel.cpp.o
+[345/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/bnorm_xe_nhwc_bwd_kernel.cpp.o
+[346/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/bnorm_xe_nhwc_fwd_kernel.cpp.o
+[347/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/concat_simple_kernel.cpp.o
+[348/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/concat_xe_kernel.cpp.o
+[349/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/conv_deconv_backward_bias_kernel.cpp.o
+[350/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/conv_ref_kernel.cpp.o
+[351/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/conv_xe_wino_fwd_data_2x3_kernel.cpp.o
+[352/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/conv_xe_wino_fwd_data_fused_kernel.cpp.o
+[353/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/gpu_intel_dynamic_scale_kernel.cpp.o
+[354/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/eltwise_ref_kernel.cpp.o
+[355/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/eltwise_xe_kernel.cpp.o
+[356/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/gpu_intel_fill_random_kernel.cpp.o
+[357/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/gemm_ref_kernel.cpp.o
+[358/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/gemm_with_post_ops_kernel.cpp.o
+[359/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/gemm_xe_hp_systolic_copy_kernel.cpp.o
+[360/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/gemm_xe_hpc_systolic_copy_kernel.cpp.o
+[361/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/gnorm_ref_kernel.cpp.o
+[362/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/graph_gen_index_kernel.cpp.o
+[363/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/ip_ref_kernel.cpp.o
+[364/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/lnorm_ref_kernel.cpp.o
+[365/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/lnorm_reusable_kernel.cpp.o
+[366/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/lnorm_reusable_vectorized_kernel.cpp.o
+[367/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/lnorm_simple_kernel.cpp.o
+[368/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/lnorm_vectorized_kernel.cpp.o
+[369/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/lnorm_vectorized_fused_kernel.cpp.o
+[370/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/lrn_ref_kernel.cpp.o
+[371/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/matmul_grouped_micro_gemm_kernel.cpp.o
+[372/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/matmul_ref_kernel.cpp.o
+[373/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/matmul_ref_grouped_gemm_kernel.cpp.o
+[374/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/matmul_sparse_ref_kernel.cpp.o
+[375/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/pool_ref_kernel.cpp.o
+[376/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/pool_xe_kernel.cpp.o
+[377/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/pool_xe_global_kernel.cpp.o
+[378/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/prelu_ref_kernel.cpp.o
+[379/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/reduction_atomic_kernel.cpp.o
+[380/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/reduction_combined_kernel.cpp.o
+[381/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/reduction_ref_kernel.cpp.o
+[382/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/reduction_reusable_ref_kernel.cpp.o
+[383/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/reorder_custom_kernel.cpp.o
+[384/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/reorder_generic_kernel.cpp.o
+[385/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/reorder_ref_kernel.cpp.o
+[386/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/resampling_ref_kernel.cpp.o
+[387/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/resampling_vectorized_kernel.cpp.o
+[388/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/rnn_grid_kernel.cpp.o
+[389/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/rnn_reorder_kernel.cpp.o
+[390/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/sdpa_micro_kernel.cpp.o
+[391/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/sdpa_micro_bwd_kernel.cpp.o
+[392/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/shuffle_ref_kernel.cpp.o
+[393/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/sdpa_ref_kernel.cpp.o
+[394/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/softmax_reusable_kernel.cpp.o
+[395/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/softmax_simple_kernel.cpp.o
+[396/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/softmax_xe_kernel.cpp.o
+[397/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/gpu_intel_subbyte_pack_kernel.cpp.o
+[398/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/sum_many_inputs_kernel.cpp.o
+[399/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/sum_simple_kernel.cpp.o
+[400/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/sum_xe_kernel.cpp.o
+[401/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/zeropad_simple_kernel.cpp.o
+[402/718] Building CXX object oneDNN/src/gpu/intel/CMakeFiles/dnnl_gpu_intel.dir/ocl_kernel_list.cpp.o
+[403/718] Building CXX object oneDNN/src/gpu/intel/gemm/jit/CMakeFiles/generatorXEHPG.dir/generator/generator.cpp.o
+[404/718] Building CXX object oneDNN/src/gpu/intel/gemm/jit/CMakeFiles/generatorXELP.dir/generator/generator.cpp.o
+[405/718] Building CXX object oneDNN/src/gpu/intel/gemm/jit/CMakeFiles/generatorXEHP.dir/generator/generator.cpp.o
+[406/718] Building CXX object oneDNN/src/gpu/intel/gemm/jit/CMakeFiles/generatorXEHPC.dir/generator/generator.cpp.o
+[407/718] Building CXX object oneDNN/src/gpu/intel/gemm/jit/CMakeFiles/generatorXE2.dir/generator/generator.cpp.o
+[408/718] Building CXX object oneDNN/src/gpu/intel/gemm/jit/CMakeFiles/generatorXE3.dir/generator/generator.cpp.o
+[409/718] Building CXX object oneDNN/src/gpu/intel/gemm/jit/CMakeFiles/generatorXE3P_35_10.dir/generator/generator.cpp.o
+[410/718] Building CXX object oneDNN/src/gpu/intel/gemm/jit/CMakeFiles/generatorXE3P_35_11.dir/generator/generator.cpp.o
+[411/718] Building CXX object oneDNN/src/gpu/intel/gemm/jit/CMakeFiles/generatorXE3P_UNKNOWN.dir/generator/generator.cpp.o
+[412/718] Building CXX object oneDNN/src/gpu/intel/gemm/jit/CMakeFiles/dnnl_gpu_intel_gemm_jit.dir/gen_kernel.cpp.o
+[413/718] Building CXX object oneDNN/src/gpu/intel/gemm/jit/CMakeFiles/dnnl_gpu_intel_gemm_jit.dir/gen_kernel_db.cpp.o
+[414/718] Building CXX object oneDNN/src/gpu/intel/gemm/jit/CMakeFiles/dnnl_gpu_intel_gemm_jit.dir/pd.cpp.o
+[415/718] Building CXX object oneDNN/src/gpu/intel/gemm/jit/CMakeFiles/dnnl_gpu_intel_gemm_jit.dir/dsl/hw.cpp.o
+[416/718] Building CXX object oneDNN/src/gpu/intel/gemm/jit/CMakeFiles/dnnl_gpu_intel_gemm_jit.dir/dsl/dsl.cpp.o
+[417/718] Building CXX object oneDNN/src/gpu/intel/gemm/jit/CMakeFiles/dnnl_gpu_intel_gemm_jit.dir/dsl/ir/codegen/bank_conflict_allocation.cpp.o
+[418/718] Building CXX object oneDNN/src/gpu/intel/gemm/jit/CMakeFiles/dnnl_gpu_intel_gemm_jit.dir/dsl/ir/codegen/operand.cpp.o
+[419/718] Building CXX object oneDNN/src/gpu/intel/gemm/jit/CMakeFiles/dnnl_gpu_intel_gemm_jit.dir/dsl/ir/codegen/codegen.cpp.o
+[420/718] Building CXX object oneDNN/src/gpu/intel/gemm/jit/CMakeFiles/dnnl_gpu_intel_gemm_jit.dir/dsl/ir/codegen/reorder.cpp.o
+[421/718] Building CXX object oneDNN/src/gpu/intel/gemm/jit/CMakeFiles/dnnl_gpu_intel_gemm_jit.dir/dsl/ir/core.cpp.o
+[422/718] Building CXX object oneDNN/src/gpu/intel/gemm/jit/CMakeFiles/dnnl_gpu_intel_gemm_jit.dir/dsl/ir/fma.cpp.o
+[423/718] Building CXX object oneDNN/src/gpu/intel/gemm/jit/CMakeFiles/dnnl_gpu_intel_gemm_jit.dir/dsl/ir/ir.cpp.o
+[424/718] Building CXX object oneDNN/src/gpu/intel/gemm/jit/CMakeFiles/dnnl_gpu_intel_gemm_jit.dir/dsl/ir/object.cpp.o
+[425/718] Building CXX object oneDNN/src/gpu/intel/gemm/jit/CMakeFiles/dnnl_gpu_intel_gemm_jit.dir/dsl/ir/pass/cse.cpp.o
+[426/718] Building CXX object oneDNN/src/gpu/intel/gemm/jit/CMakeFiles/dnnl_gpu_intel_gemm_jit.dir/dsl/ir/pass/dp4a.cpp.o
+[427/718] Building CXX object oneDNN/src/gpu/intel/gemm/jit/CMakeFiles/dnnl_gpu_intel_gemm_jit.dir/dsl/ir/pass/dpas.cpp.o
+[428/718] Building CXX object oneDNN/src/gpu/intel/gemm/jit/CMakeFiles/dnnl_gpu_intel_gemm_jit.dir/dsl/ir/pass/dpasw.cpp.o
+[429/718] Building CXX object oneDNN/src/gpu/intel/gemm/jit/CMakeFiles/dnnl_gpu_intel_gemm_jit.dir/dsl/ir/pass/pass.cpp.o
+[430/718] Building CXX object oneDNN/src/gpu/intel/gemm/jit/CMakeFiles/dnnl_gpu_intel_gemm_jit.dir/dsl/ir/pass/send.cpp.o
+[431/718] Building CXX object oneDNN/src/gpu/intel/gemm/jit/CMakeFiles/dnnl_gpu_intel_gemm_jit.dir/dsl/ir/pass/trace.cpp.o
+[432/718] Building CXX object oneDNN/src/gpu/intel/gemm/jit/CMakeFiles/dnnl_gpu_intel_gemm_jit.dir/dsl/ir/pass/simplify.cpp.o
+[433/718] Building CXX object oneDNN/src/gpu/intel/gemm/jit/CMakeFiles/dnnl_gpu_intel_gemm_jit.dir/dsl/ir/reorder.cpp.o
+[434/718] Building CXX object oneDNN/src/gpu/intel/gemm/jit/CMakeFiles/dnnl_gpu_intel_gemm_jit.dir/dsl/kernel.cpp.o
+[435/718] Building CXX object oneDNN/src/gpu/intel/gemm/jit/CMakeFiles/dnnl_gpu_intel_gemm_jit.dir/dsl/ir/send.cpp.o
+[436/718] Building CXX object oneDNN/src/gpu/intel/gemm/jit/CMakeFiles/dnnl_gpu_intel_gemm_jit.dir/dsl/runtime.cpp.o
+[437/718] Building CXX object oneDNN/src/gpu/intel/gemm/jit/CMakeFiles/dnnl_gpu_intel_gemm_jit.dir/dsl/tensor.cpp.o
+[438/718] Building CXX object oneDNN/src/gpu/intel/gemm/jit/CMakeFiles/dnnl_gpu_intel_gemm_jit.dir/generator/microkernel/fuser.cpp.o
+[439/718] Building CXX object oneDNN/src/gpu/intel/gemm/jit/CMakeFiles/dnnl_gpu_intel_gemm_jit.dir/dsl/type.cpp.o
+[440/718] Building CXX object oneDNN/src/gpu/intel/gemm/jit/CMakeFiles/dnnl_gpu_intel_gemm_jit.dir/generator/microkernel/package.cpp.o
+[441/718] Building CXX object oneDNN/src/gpu/intel/gemm/jit/CMakeFiles/dnnl_gpu_intel_gemm_jit.dir/generator/microkernel/shim.cpp.o
+[442/718] Building CXX object oneDNN/src/gpu/intel/gemm/jit/CMakeFiles/dnnl_gpu_intel_gemm_jit.dir/generator/pieces/alloc_utils.cpp.o
+[443/718] Building CXX object oneDNN/src/gpu/intel/gemm/jit/CMakeFiles/dnnl_gpu_intel_gemm_jit.dir/generator/pieces/allocators.cpp.o
+[444/718] Building CXX object oneDNN/src/gpu/intel/gemm/jit/CMakeFiles/dnnl_gpu_intel_gemm_jit.dir/generator/microkernel_selector.cpp.o
+[445/718] Building CXX object oneDNN/src/gpu/intel/gemm/jit/CMakeFiles/dnnl_gpu_intel_gemm_jit.dir/generator/pieces/bfn.cpp.o
+[446/718] Building CXX object oneDNN/src/gpu/intel/gemm/jit/CMakeFiles/dnnl_gpu_intel_gemm_jit.dir/generator/pieces/cooperative_split.cpp.o
+[447/718] Building CXX object oneDNN/src/gpu/intel/gemm/jit/CMakeFiles/dnnl_gpu_intel_gemm_jit.dir/generator/pieces/copy_plan.cpp.o
+[448/718] Building CXX object oneDNN/src/gpu/intel/gemm/jit/CMakeFiles/dnnl_gpu_intel_gemm_jit.dir/generator/pieces/kernel_queries.cpp.o
+[449/718] Building CXX object oneDNN/src/gpu/intel/gemm/jit/CMakeFiles/dnnl_gpu_intel_gemm_jit.dir/generator/pieces/layout_utils.cpp.o
+[450/718] Building CXX object oneDNN/src/gpu/intel/gemm/jit/CMakeFiles/dnnl_gpu_intel_gemm_jit.dir/generator/pieces/loop_sequencer.cpp.o
+[451/718] Building CXX object oneDNN/src/gpu/intel/gemm/jit/CMakeFiles/dnnl_gpu_intel_gemm_jit.dir/generator/pieces/ngen_object_helpers.cpp.o
+[452/718] Building CXX object oneDNN/src/gpu/intel/gemm/jit/CMakeFiles/dnnl_gpu_intel_gemm_jit.dir/generator/pieces/problem_utils.cpp.o
+[453/718] Building CXX object oneDNN/src/gpu/intel/gemm/jit/CMakeFiles/dnnl_gpu_intel_gemm_jit.dir/generator/pieces/quantization.cpp.o
+[454/718] Building CXX object oneDNN/src/gpu/intel/gemm/jit/CMakeFiles/dnnl_gpu_intel_gemm_jit.dir/generator/pieces/register_layout.cpp.o
+[455/718] Building CXX object oneDNN/src/gpu/intel/gemm/jit/CMakeFiles/dnnl_gpu_intel_gemm_jit.dir/generator/pieces/remask.cpp.o
+[456/718] Building CXX object oneDNN/src/gpu/intel/gemm/jit/CMakeFiles/dnnl_gpu_intel_gemm_jit.dir/generator/pieces/state.cpp.o
+[457/718] Building CXX object oneDNN/src/gpu/intel/gemm/jit/CMakeFiles/dnnl_gpu_intel_gemm_jit.dir/generator/pieces/state_debug.cpp.o
+[458/718] Building CXX object oneDNN/src/gpu/intel/gemm/jit/CMakeFiles/dnnl_gpu_intel_gemm_jit.dir/generator/strategy.cpp.o
+[459/718] Building CXX object oneDNN/src/gpu/intel/gemm/jit/CMakeFiles/dnnl_gpu_intel_gemm_jit.dir/generator/pieces/state_utils.cpp.o
+[460/718] Building CXX object oneDNN/src/gpu/intel/gemm/jit/CMakeFiles/dnnl_gpu_intel_gemm_jit.dir/generator/pieces/token_alloc_utils.cpp.o
+[461/718] Building CXX object oneDNN/src/gpu/intel/gemm/jit/CMakeFiles/dnnl_gpu_intel_gemm_jit.dir/generator/strategy_parser.cpp.o
+[462/718] Building CXX object oneDNN/src/gpu/intel/gemm/jit/CMakeFiles/dnnl_gpu_intel_gemm_jit.dir/generator_dsl/builder.cpp.o
+[463/718] Building CXX object oneDNN/src/gpu/intel/gemm/jit/CMakeFiles/dnnl_gpu_intel_gemm_jit.dir/selector/kernel_evaluator.cpp.o
+[464/718] Building CXX object oneDNN/src/gpu/intel/gemm/jit/CMakeFiles/dnnl_gpu_intel_gemm_jit.dir/selector/kernel_selector.cpp.o
+[465/718] Building CXX object oneDNN/src/gpu/intel/compute/CMakeFiles/dnnl_gpu_intel_compute.dir/block_manipulation.cpp.o
+[466/718] Building CXX object oneDNN/src/gpu/intel/compute/CMakeFiles/dnnl_gpu_intel_compute.dir/device_info.cpp.o
+[467/718] Building CXX object oneDNN/src/gpu/intel/compute/CMakeFiles/dnnl_gpu_intel_compute.dir/kernel_ctx.cpp.o
+[468/718] Building CXX object oneDNN/src/gpu/intel/compute/CMakeFiles/dnnl_gpu_intel_compute.dir/dispatch.cpp.o
+[469/718] Building CXX object oneDNN/src/gpu/intel/compute/CMakeFiles/dnnl_gpu_intel_compute.dir/dispatch_reusable.cpp.o
+[470/718] Building CXX object oneDNN/src/gpu/intel/compute/CMakeFiles/dnnl_gpu_intel_compute.dir/ukernels.cpp.o
+[471/718] Building CXX object oneDNN/src/gpu/intel/compute/CMakeFiles/dnnl_gpu_intel_compute.dir/utils.cpp.o
+[472/718] Building CXX object oneDNN/src/gpu/intel/compute/CMakeFiles/dnnl_gpu_intel_compute.dir/zero_pool.cpp.o
+[473/718] Building CXX object oneDNN/src/gpu/intel/jit/CMakeFiles/dnnl_gpu_intel_jit.dir/binary_format.cpp.o
+[474/718] Building CXX object oneDNN/src/gpu/intel/jit/CMakeFiles/dnnl_gpu_intel_jit.dir/eltwise_injector.cpp.o
+[475/718] Building CXX object oneDNN/src/gpu/intel/jit/CMakeFiles/dnnl_gpu_intel_jit.dir/emulated_generator.cpp.o
+[476/718] Building CXX object oneDNN/src/gpu/intel/jit/CMakeFiles/dnnl_gpu_intel_jit.dir/grf_usage.cpp.o
+[477/718] Building CXX object oneDNN/src/gpu/intel/jit/CMakeFiles/dnnl_gpu_intel_jit.dir/post_op_injector.cpp.o
+[478/718] Building CXX object oneDNN/src/gpu/intel/jit/CMakeFiles/dnnl_gpu_intel_jit.dir/reduction_injector.cpp.o
+[479/718] Building CXX object oneDNN/src/gpu/intel/jit/CMakeFiles/dnnl_gpu_intel_jit.dir/generator.cpp.o
+[480/718] Building CXX object oneDNN/src/gpu/intel/jit/CMakeFiles/dnnl_gpu_intel_jit.dir/codegen/extensions.cpp.o
+[481/718] Building CXX object oneDNN/src/gpu/intel/jit/CMakeFiles/dnnl_gpu_intel_jit.dir/config/gemmstone_config.cpp.o
+[482/718] Building CXX object oneDNN/src/gpu/intel/jit/CMakeFiles/dnnl_gpu_intel_jit.dir/codegen/kernel_ext.cpp.o
+[483/718] Building CXX object oneDNN/src/gpu/intel/jit/CMakeFiles/dnnl_gpu_intel_jit.dir/ir/blocking.cpp.o
+[484/718] Building CXX object oneDNN/src/gpu/intel/jit/CMakeFiles/dnnl_gpu_intel_jit.dir/ir/builder.cpp.o
+[485/718] Building CXX object oneDNN/src/gpu/intel/jit/CMakeFiles/dnnl_gpu_intel_jit.dir/ir/config.cpp.o
+[486/718] Building CXX object oneDNN/src/gpu/intel/jit/CMakeFiles/dnnl_gpu_intel_jit.dir/ir/epilogue.cpp.o
+[487/718] Building CXX object oneDNN/src/gpu/intel/jit/CMakeFiles/dnnl_gpu_intel_jit.dir/ir/gemm_schedule.cpp.o
+[488/718] Building CXX object oneDNN/src/gpu/intel/jit/CMakeFiles/dnnl_gpu_intel_jit.dir/ir/linear_expr.cpp.o
+[489/718] Building CXX object oneDNN/src/gpu/intel/jit/CMakeFiles/dnnl_gpu_intel_jit.dir/ir/problem.cpp.o
+[490/718] Building CXX object oneDNN/src/gpu/intel/jit/CMakeFiles/dnnl_gpu_intel_jit.dir/ir/post_ops.cpp.o
+[491/718] Building CXX object oneDNN/src/gpu/intel/jit/CMakeFiles/dnnl_gpu_intel_jit.dir/ir/reduce.cpp.o
+[492/718] Building CXX object oneDNN/src/gpu/intel/jit/CMakeFiles/dnnl_gpu_intel_jit.dir/ir/send_builder.cpp.o
+[493/718] Building CXX object oneDNN/src/gpu/intel/jit/CMakeFiles/dnnl_gpu_intel_jit.dir/ir/slm_reduce_builder.cpp.o
+[494/718] Building CXX object oneDNN/src/gpu/intel/jit/CMakeFiles/dnnl_gpu_intel_jit.dir/ir/send_plan.cpp.o
+[495/718] Building CXX object oneDNN/src/gpu/intel/jit/CMakeFiles/dnnl_gpu_intel_jit.dir/ir/tensor_config.cpp.o
+[496/718] Building CXX object oneDNN/src/gpu/intel/jit/CMakeFiles/dnnl_gpu_intel_jit.dir/ir/tensor.cpp.o
+[497/718] Building CXX object oneDNN/src/gpu/intel/jit/CMakeFiles/dnnl_gpu_intel_jit.dir/ir/v2/reqs.cpp.o
+[498/718] Building CXX object oneDNN/src/gpu/intel/jit/CMakeFiles/dnnl_gpu_intel_jit.dir/ir/v2/builder.cpp.o
+[499/718] Building CXX object oneDNN/src/gpu/intel/jit/CMakeFiles/dnnl_gpu_intel_jit.dir/ir/v2/send.cpp.o
+[500/718] Building CXX object oneDNN/src/gpu/intel/jit/CMakeFiles/dnnl_gpu_intel_jit.dir/ir/v2/tensor.cpp.o
+[501/718] Building CXX object oneDNN/src/gpu/intel/jit/CMakeFiles/dnnl_gpu_intel_jit.dir/pass/alloc.cpp.o
+[502/718] Building CXX object oneDNN/src/gpu/intel/jit/CMakeFiles/dnnl_gpu_intel_jit.dir/pass/bank_conflict.cpp.o
+[503/718] Building CXX object oneDNN/src/gpu/intel/jit/CMakeFiles/dnnl_gpu_intel_jit.dir/pass/barrier.cpp.o
+[504/718] Building CXX object oneDNN/src/gpu/intel/jit/CMakeFiles/dnnl_gpu_intel_jit.dir/pass/hoist.cpp.o
+[505/718] Building CXX object oneDNN/src/gpu/intel/jit/CMakeFiles/dnnl_gpu_intel_jit.dir/pass/overflow.cpp.o
+[506/718] Building CXX object oneDNN/src/gpu/intel/jit/CMakeFiles/dnnl_gpu_intel_jit.dir/pass/pass.cpp.o
+[507/718] Building CXX object oneDNN/src/gpu/intel/jit/CMakeFiles/dnnl_gpu_intel_jit.dir/pass/shuffle_splitter.cpp.o
+[508/718] Building CXX object oneDNN/src/gpu/intel/jit/CMakeFiles/dnnl_gpu_intel_jit.dir/pass/peephole.cpp.o
+[509/718] Building CXX object oneDNN/src/gpu/intel/jit/CMakeFiles/dnnl_gpu_intel_jit.dir/pass/strength_reduce.cpp.o
+[510/718] Building CXX object oneDNN/src/gpu/intel/jit/CMakeFiles/dnnl_gpu_intel_jit.dir/pass/slm.cpp.o
+[511/718] Building CXX object oneDNN/src/gpu/intel/jit/CMakeFiles/dnnl_gpu_intel_jit.dir/utils/utils.cpp.o
+[512/718] Building CXX object oneDNN/src/gpu/intel/jit/CMakeFiles/dnnl_gpu_intel_jit.dir/pass/unroll.cpp.o
+[513/718] Building CXX object oneDNN/src/gpu/intel/sycl/CMakeFiles/dnnl_gpu_intel_sycl.dir/compat.cpp.o
+[514/718] Building CXX object oneDNN/src/gpu/intel/sycl/CMakeFiles/dnnl_gpu_intel_sycl.dir/device_info.cpp.o
+[515/718] Building CXX object oneDNN/src/gpu/intel/sycl/CMakeFiles/dnnl_gpu_intel_sycl.dir/engine.cpp.o
+[516/718] Building CXX object oneDNN/src/gpu/intel/sycl/CMakeFiles/dnnl_gpu_intel_sycl.dir/stream.cpp.o
+[517/718] Building CXX object oneDNN/src/gpu/intel/sycl/CMakeFiles/dnnl_gpu_intel_sycl.dir/interop_kernel.cpp.o
+[518/718] Building CXX object oneDNN/src/gpu/intel/ocl/CMakeFiles/dnnl_gpu_intel_ocl.dir/device_info.cpp.o
+[519/718] Building CXX object oneDNN/src/gpu/intel/sycl/CMakeFiles/dnnl_gpu_intel_sycl.dir/utils.cpp.o
+[520/718] Building CXX object oneDNN/src/gpu/intel/ocl/CMakeFiles/dnnl_gpu_intel_ocl.dir/hw_info.cpp.o
+[521/718] Building CXX object oneDNN/src/gpu/intel/ocl/CMakeFiles/dnnl_gpu_intel_ocl.dir/mdapi_utils.cpp.o
+[522/718] Building CXX object oneDNN/src/gpu/intel/ocl/CMakeFiles/dnnl_gpu_intel_ocl.dir/engine.cpp.o
+[523/718] Building CXX object oneDNN/src/gpu/intel/ocl/CMakeFiles/dnnl_gpu_intel_ocl.dir/kernel.cpp.o
+[524/718] Building CXX object oneDNN/src/gpu/intel/ocl/CMakeFiles/dnnl_gpu_intel_ocl.dir/stream.cpp.o
+[525/718] Building CXX object oneDNN/src/gpu/intel/ocl/CMakeFiles/dnnl_gpu_intel_ocl.dir/usm_utils.cpp.o
+[526/718] Building CXX object oneDNN/src/gpu/intel/ocl/CMakeFiles/dnnl_gpu_intel_ocl.dir/utils.cpp.o
+[527/718] Building CXX object oneDNN/src/gpu/intel/ze/CMakeFiles/dnnl_gpu_intel_ze.dir/device_info.cpp.o
+[528/718] Building CXX object oneDNN/src/gpu/intel/ze/CMakeFiles/dnnl_gpu_intel_ze.dir/engine.cpp.o
+[529/718] Building CXX object oneDNN/src/gpu/intel/ze/CMakeFiles/dnnl_gpu_intel_ze.dir/kernel.cpp.o
+[530/718] Building CXX object oneDNN/src/gpu/intel/ze/CMakeFiles/dnnl_gpu_intel_ze.dir/stream.cpp.o
+[531/718] Building CXX object oneDNN/src/gpu/intel/ze/CMakeFiles/dnnl_gpu_intel_ze.dir/utils.cpp.o
+[532/718] Building CXX object oneDNN/src/xpu/CMakeFiles/dnnl_xpu.dir/utils.cpp.o
+[533/718] Building CXX object oneDNN/src/xpu/sycl/CMakeFiles/dnnl_xpu_sycl.dir/buffer_memory_storage.cpp.o
+[534/718] Building CXX object oneDNN/src/xpu/sycl/CMakeFiles/dnnl_xpu_sycl.dir/capi/capi_engine.cpp.o
+[535/718] Building CXX object oneDNN/src/xpu/sycl/CMakeFiles/dnnl_xpu_sycl.dir/capi/capi_primitive.cpp.o
+[536/718] Building CXX object oneDNN/src/xpu/sycl/CMakeFiles/dnnl_xpu_sycl.dir/capi/capi_memory.cpp.o
+[537/718] Building CXX object oneDNN/src/xpu/sycl/CMakeFiles/dnnl_xpu_sycl.dir/capi/capi_stream.cpp.o
+[538/718] Building CXX object oneDNN/src/xpu/sycl/CMakeFiles/dnnl_xpu_sycl.dir/compat.cpp.o
+[539/718] Building CXX object oneDNN/src/xpu/sycl/CMakeFiles/dnnl_xpu_sycl.dir/engine_factory.cpp.o
+[540/718] Building CXX object oneDNN/src/xpu/sycl/CMakeFiles/dnnl_xpu_sycl.dir/engine_impl.cpp.o
+[541/718] Building CXX object oneDNN/src/xpu/sycl/CMakeFiles/dnnl_xpu_sycl.dir/memory_storage_base.cpp.o
+[542/718] Building CXX object oneDNN/src/xpu/sycl/CMakeFiles/dnnl_xpu_sycl.dir/stream_impl.cpp.o
+[543/718] Building CXX object oneDNN/src/xpu/sycl/CMakeFiles/dnnl_xpu_sycl.dir/stream_profiler.cpp.o
+[544/718] Building CXX object oneDNN/src/xpu/sycl/CMakeFiles/dnnl_xpu_sycl.dir/usm_memory_storage.cpp.o
+[545/718] Building CXX object oneDNN/src/xpu/sycl/CMakeFiles/dnnl_xpu_sycl.dir/utils.cpp.o
+[546/718] Building CXX object oneDNN/src/xpu/ocl/CMakeFiles/dnnl_xpu_ocl.dir/capi/engine.cpp.o
+[547/718] Building CXX object oneDNN/src/xpu/ocl/CMakeFiles/dnnl_xpu_ocl.dir/buffer_memory_storage.cpp.o
+[548/718] Building CXX object oneDNN/src/xpu/ocl/CMakeFiles/dnnl_xpu_ocl.dir/capi/memory.cpp.o
+[549/718] Building CXX object oneDNN/src/xpu/ocl/CMakeFiles/dnnl_xpu_ocl.dir/capi/primitive.cpp.o
+[550/718] Building CXX object oneDNN/src/xpu/ocl/CMakeFiles/dnnl_xpu_ocl.dir/capi/stream.cpp.o
+[551/718] Building CXX object oneDNN/src/xpu/ocl/CMakeFiles/dnnl_xpu_ocl.dir/engine_impl.cpp.o
+[552/718] Building CXX object oneDNN/src/xpu/ocl/CMakeFiles/dnnl_xpu_ocl.dir/stream_impl.cpp.o
+[553/718] Building CXX object oneDNN/src/xpu/ocl/CMakeFiles/dnnl_xpu_ocl.dir/stream_profiler.cpp.o
+[554/718] Building CXX object oneDNN/src/xpu/ocl/CMakeFiles/dnnl_xpu_ocl.dir/usm_memory_storage.cpp.o
+[555/718] Building CXX object oneDNN/src/xpu/ocl/CMakeFiles/dnnl_xpu_ocl.dir/usm_utils.cpp.o
+[556/718] Building CXX object oneDNN/src/xpu/ocl/CMakeFiles/dnnl_xpu_ocl.dir/utils.cpp.o
+[557/718] Building CXX object oneDNN/src/xpu/ocl/CMakeFiles/dnnl_xpu_ocl.dir/utils_shared.cpp.o
+[558/718] Building CXX object oneDNN/src/xpu/ze/CMakeFiles/dnnl_xpu_ze.dir/capi/engine.cpp.o
+[559/718] Building CXX object oneDNN/src/xpu/ze/CMakeFiles/dnnl_xpu_ze.dir/capi/memory.cpp.o
+[560/718] Building CXX object oneDNN/src/xpu/ze/CMakeFiles/dnnl_xpu_ze.dir/capi/primitive.cpp.o
+[561/718] Building CXX object oneDNN/src/xpu/ze/CMakeFiles/dnnl_xpu_ze.dir/capi/stream.cpp.o
+[562/718] Building CXX object oneDNN/src/xpu/ze/CMakeFiles/dnnl_xpu_ze.dir/engine_factory.cpp.o
+[563/718] Building CXX object oneDNN/src/xpu/ze/CMakeFiles/dnnl_xpu_ze.dir/engine_impl.cpp.o
+[564/718] Building CXX object oneDNN/src/xpu/ze/CMakeFiles/dnnl_xpu_ze.dir/memory_storage.cpp.o
+[565/718] Building CXX object oneDNN/src/xpu/ze/CMakeFiles/dnnl_xpu_ze.dir/stream_impl.cpp.o
+[566/718] Building CXX object oneDNN/src/xpu/ze/CMakeFiles/dnnl_xpu_ze.dir/utils.cpp.o
+[567/718] Building CXX object oneDNN/src/xpu/ze/CMakeFiles/dnnl_xpu_ze.dir/usm_utils.cpp.o
+[568/718] Building CXX object oneDNN/src/graph/interface/CMakeFiles/dnnl_graph_interface.dir/backend.cpp.o
+[569/718] Building CXX object oneDNN/src/graph/interface/CMakeFiles/dnnl_graph_interface.dir/allocator.cpp.o
+[570/718] Building CXX object oneDNN/src/graph/interface/CMakeFiles/dnnl_graph_interface.dir/constant_tensor_cache.cpp.o
+[571/718] Building CXX object oneDNN/src/graph/interface/CMakeFiles/dnnl_graph_interface.dir/graph.cpp.o
+[572/718] Building CXX object oneDNN/src/graph/interface/CMakeFiles/dnnl_graph_interface.dir/op.cpp.o
+[573/718] Building CXX object oneDNN/src/graph/interface/CMakeFiles/dnnl_graph_interface.dir/logical_tensor.cpp.o
+[574/718] Building CXX object oneDNN/src/graph/interface/CMakeFiles/dnnl_graph_interface.dir/op_def_constraint.cpp.o
+[575/718] Building CXX object oneDNN/src/graph/interface/CMakeFiles/dnnl_graph_interface.dir/op_schema.cpp.o
+[576/718] Building CXX object oneDNN/src/graph/interface/CMakeFiles/dnnl_graph_interface.dir/partition.cpp.o
+[577/718] Building CXX object oneDNN/src/graph/interface/CMakeFiles/dnnl_graph_interface.dir/partition_cache.cpp.o
+[578/718] Building CXX object oneDNN/src/graph/interface/CMakeFiles/dnnl_graph_interface.dir/partition_hashing.cpp.o
+[579/718] Building CXX object oneDNN/src/graph/interface/CMakeFiles/dnnl_graph_interface.dir/partition_impl.cpp.o
+[580/718] Building CXX object oneDNN/src/graph/interface/CMakeFiles/dnnl_graph_interface.dir/shape_infer.cpp.o
+[581/718] Building CXX object oneDNN/src/graph/interface/CMakeFiles/dnnl_graph_interface.dir/value.cpp.o
+[582/718] Building CXX object oneDNN/src/graph/interface/CMakeFiles/dnnl_graph_interface.dir/tensor.cpp.o
+[583/718] Building CXX object oneDNN/src/graph/backend/fake/CMakeFiles/dnnl_graph_backend_fake.dir/fake_backend.cpp.o
+[584/718] Building CXX object oneDNN/src/graph/backend/dnnl/CMakeFiles/dnnl_graph_backend_dnnl.dir/common.cpp.o
+[585/718] Building CXX object oneDNN/src/graph/backend/dnnl/CMakeFiles/dnnl_graph_backend_dnnl.dir/dnnl_backend.cpp.o
+[586/718] Building CXX object oneDNN/src/graph/backend/dnnl/CMakeFiles/dnnl_graph_backend_dnnl.dir/dnnl_partition_impl.cpp.o
+[587/718] Building CXX object oneDNN/src/graph/backend/dnnl/CMakeFiles/dnnl_graph_backend_dnnl.dir/layout_id_mgr.cpp.o
+[588/718] Building CXX object oneDNN/src/graph/backend/dnnl/CMakeFiles/dnnl_graph_backend_dnnl.dir/fusion_info.cpp.o
+[589/718] Building CXX object oneDNN/src/graph/backend/dnnl/CMakeFiles/dnnl_graph_backend_dnnl.dir/platform.cpp.o
+[590/718] Building CXX object oneDNN/src/graph/backend/dnnl/CMakeFiles/dnnl_graph_backend_dnnl.dir/op_executable.cpp.o
+[591/718] Building CXX object oneDNN/src/graph/backend/dnnl/CMakeFiles/dnnl_graph_backend_dnnl.dir/layout_propagator.cpp.o
+[592/718] Building CXX object oneDNN/src/graph/backend/dnnl/CMakeFiles/dnnl_graph_backend_dnnl.dir/subgraph.cpp.o
+[593/718] Building CXX object oneDNN/src/graph/backend/dnnl/CMakeFiles/dnnl_graph_backend_dnnl.dir/executables/base.cpp.o
+[594/718] Building CXX object oneDNN/src/graph/backend/dnnl/CMakeFiles/dnnl_graph_backend_dnnl.dir/executables/batch_norm.cpp.o
+[595/718] Building CXX object oneDNN/src/graph/backend/dnnl/CMakeFiles/dnnl_graph_backend_dnnl.dir/executables/concat.cpp.o
+[596/718] Building CXX object oneDNN/src/graph/backend/dnnl/CMakeFiles/dnnl_graph_backend_dnnl.dir/executables/const_memory_filler.cpp.o
+[597/718] Building CXX object oneDNN/src/graph/backend/dnnl/CMakeFiles/dnnl_graph_backend_dnnl.dir/executables/conv.cpp.o
+[598/718] Building CXX object oneDNN/src/graph/backend/dnnl/CMakeFiles/dnnl_graph_backend_dnnl.dir/executables/eltwise.cpp.o
+[599/718] Building CXX object oneDNN/src/graph/backend/dnnl/CMakeFiles/dnnl_graph_backend_dnnl.dir/executables/deconv.cpp.o
+[600/718] Building CXX object oneDNN/src/graph/backend/dnnl/CMakeFiles/dnnl_graph_backend_dnnl.dir/executables/gated_mlp.cpp.o
+[601/718] Building CXX object oneDNN/src/graph/backend/dnnl/CMakeFiles/dnnl_graph_backend_dnnl.dir/executables/gen_index.cpp.o
+[602/718] Building CXX object oneDNN/src/graph/backend/dnnl/CMakeFiles/dnnl_graph_backend_dnnl.dir/executables/group_norm.cpp.o
+[603/718] Building CXX object oneDNN/src/graph/backend/dnnl/CMakeFiles/dnnl_graph_backend_dnnl.dir/executables/host_scalar.cpp.o
+[604/718] Building CXX object oneDNN/src/graph/backend/dnnl/CMakeFiles/dnnl_graph_backend_dnnl.dir/executables/layer_norm.cpp.o
+[605/718] Building CXX object oneDNN/src/graph/backend/dnnl/CMakeFiles/dnnl_graph_backend_dnnl.dir/executables/matmul.cpp.o
+[606/718] Building CXX object oneDNN/src/graph/backend/dnnl/CMakeFiles/dnnl_graph_backend_dnnl.dir/executables/memory_reparser.cpp.o
+[607/718] Building CXX object oneDNN/src/graph/backend/dnnl/CMakeFiles/dnnl_graph_backend_dnnl.dir/executables/pool.cpp.o
+[608/718] Building CXX object oneDNN/src/graph/backend/dnnl/CMakeFiles/dnnl_graph_backend_dnnl.dir/executables/reduction.cpp.o
+[609/718] Building CXX object oneDNN/src/graph/backend/dnnl/CMakeFiles/dnnl_graph_backend_dnnl.dir/executables/reorder.cpp.o
+[610/718] Building CXX object oneDNN/src/graph/backend/dnnl/CMakeFiles/dnnl_graph_backend_dnnl.dir/executables/resampling.cpp.o
+[611/718] Building CXX object oneDNN/src/graph/backend/dnnl/CMakeFiles/dnnl_graph_backend_dnnl.dir/executables/sdpa.cpp.o
+[612/718] Building CXX object oneDNN/src/graph/backend/dnnl/CMakeFiles/dnnl_graph_backend_dnnl.dir/executables/shuffle.cpp.o
+[613/718] Building CXX object oneDNN/src/graph/backend/dnnl/CMakeFiles/dnnl_graph_backend_dnnl.dir/executables/softmax.cpp.o
+[614/718] Building CXX object oneDNN/src/graph/backend/dnnl/CMakeFiles/dnnl_graph_backend_dnnl.dir/executables/sum.cpp.o
+[615/718] Building CXX object oneDNN/src/graph/backend/dnnl/CMakeFiles/dnnl_graph_backend_dnnl.dir/kernels/batch_norm.cpp.o
+[616/718] Building CXX object oneDNN/src/graph/backend/dnnl/CMakeFiles/dnnl_graph_backend_dnnl.dir/kernels/binary.cpp.o
+[617/718] Building CXX object oneDNN/src/graph/backend/dnnl/CMakeFiles/dnnl_graph_backend_dnnl.dir/kernels/concat.cpp.o
+[618/718] Building CXX object oneDNN/src/graph/backend/dnnl/CMakeFiles/dnnl_graph_backend_dnnl.dir/kernels/conv.cpp.o
+[619/718] Building CXX object oneDNN/src/graph/backend/dnnl/CMakeFiles/dnnl_graph_backend_dnnl.dir/kernels/conv_base.cpp.o
+[620/718] Building CXX object oneDNN/src/graph/backend/dnnl/CMakeFiles/dnnl_graph_backend_dnnl.dir/kernels/conv_transpose.cpp.o
+[621/718] Building CXX object oneDNN/src/graph/backend/dnnl/CMakeFiles/dnnl_graph_backend_dnnl.dir/kernels/dummy.cpp.o
+[622/718] Building CXX object oneDNN/src/graph/backend/dnnl/CMakeFiles/dnnl_graph_backend_dnnl.dir/kernels/eltwise.cpp.o
+[623/718] Building CXX object oneDNN/src/graph/backend/dnnl/CMakeFiles/dnnl_graph_backend_dnnl.dir/kernels/gated_mlp_primitive.cpp.o
+[624/718] Building CXX object oneDNN/src/graph/backend/dnnl/CMakeFiles/dnnl_graph_backend_dnnl.dir/kernels/gen_index.cpp.o
+[625/718] Building CXX object oneDNN/src/graph/backend/dnnl/CMakeFiles/dnnl_graph_backend_dnnl.dir/kernels/group_norm.cpp.o
+[626/718] Building CXX object oneDNN/src/graph/backend/dnnl/CMakeFiles/dnnl_graph_backend_dnnl.dir/kernels/kernel_base.cpp.o
+[627/718] Building CXX object oneDNN/src/graph/backend/dnnl/CMakeFiles/dnnl_graph_backend_dnnl.dir/kernels/large_partition.cpp.o
+[628/718] Building CXX object oneDNN/src/graph/backend/dnnl/CMakeFiles/dnnl_graph_backend_dnnl.dir/kernels/layer_norm.cpp.o
+[629/718] Building CXX object oneDNN/src/graph/backend/dnnl/CMakeFiles/dnnl_graph_backend_dnnl.dir/kernels/matmul.cpp.o
+[630/718] Building CXX object oneDNN/src/graph/backend/dnnl/CMakeFiles/dnnl_graph_backend_dnnl.dir/kernels/log_softmax.cpp.o
+[631/718] Building CXX object oneDNN/src/graph/backend/dnnl/CMakeFiles/dnnl_graph_backend_dnnl.dir/kernels/mqa_decomp_config.cpp.o
+[632/718] Building CXX object oneDNN/src/graph/backend/dnnl/CMakeFiles/dnnl_graph_backend_dnnl.dir/kernels/mqa_decomp.cpp.o
+[633/718] Building CXX object oneDNN/src/graph/backend/dnnl/CMakeFiles/dnnl_graph_backend_dnnl.dir/kernels/pool.cpp.o
+[634/718] Building CXX object oneDNN/src/graph/backend/dnnl/CMakeFiles/dnnl_graph_backend_dnnl.dir/kernels/prelu.cpp.o
+[635/718] Building CXX object oneDNN/src/graph/backend/dnnl/CMakeFiles/dnnl_graph_backend_dnnl.dir/kernels/quantize.cpp.o
+[636/718] Building CXX object oneDNN/src/graph/backend/dnnl/CMakeFiles/dnnl_graph_backend_dnnl.dir/kernels/reduction.cpp.o
+[637/718] Building CXX object oneDNN/src/graph/backend/dnnl/CMakeFiles/dnnl_graph_backend_dnnl.dir/kernels/reorder.cpp.o
+[638/718] Building CXX object oneDNN/src/graph/backend/dnnl/CMakeFiles/dnnl_graph_backend_dnnl.dir/kernels/resampling.cpp.o
+[639/718] Building CXX object oneDNN/src/graph/backend/dnnl/CMakeFiles/dnnl_graph_backend_dnnl.dir/kernels/sdp_bwd_primitive.cpp.o
+[640/718] Building CXX object oneDNN/src/graph/backend/dnnl/CMakeFiles/dnnl_graph_backend_dnnl.dir/kernels/sdp_decomp.cpp.o
+[641/718] Building CXX object oneDNN/src/graph/backend/dnnl/CMakeFiles/dnnl_graph_backend_dnnl.dir/kernels/sdp_primitive_config.cpp.o
+[642/718] Building CXX object oneDNN/src/graph/backend/dnnl/CMakeFiles/dnnl_graph_backend_dnnl.dir/kernels/sdp_decomp_config.cpp.o
+[643/718] Building CXX object oneDNN/src/graph/backend/dnnl/CMakeFiles/dnnl_graph_backend_dnnl.dir/kernels/sdp_primitive.cpp.o
+[644/718] Building CXX object oneDNN/src/graph/backend/dnnl/CMakeFiles/dnnl_graph_backend_dnnl.dir/kernels/shuffle.cpp.o
+[645/718] Building CXX object oneDNN/src/graph/backend/dnnl/CMakeFiles/dnnl_graph_backend_dnnl.dir/kernels/sum.cpp.o
+[646/718] Building CXX object oneDNN/src/graph/backend/dnnl/CMakeFiles/dnnl_graph_backend_dnnl.dir/kernels/softmax.cpp.o
+[647/718] Building CXX object oneDNN/src/graph/backend/dnnl/CMakeFiles/dnnl_graph_backend_dnnl.dir/passes/constant_propagation.cpp.o
+[648/718] Building CXX object oneDNN/src/graph/backend/dnnl/CMakeFiles/dnnl_graph_backend_dnnl.dir/passes/compile_ops.cpp.o
+[649/718] Building CXX object oneDNN/src/graph/backend/dnnl/CMakeFiles/dnnl_graph_backend_dnnl.dir/passes/insert_ops.cpp.o
+[650/718] Building CXX object oneDNN/src/graph/backend/dnnl/CMakeFiles/dnnl_graph_backend_dnnl.dir/passes/layout_propagation.cpp.o
+[651/718] Building CXX object oneDNN/src/graph/backend/dnnl/CMakeFiles/dnnl_graph_backend_dnnl.dir/passes/lower.cpp.o
+[652/718] Building CXX object oneDNN/src/graph/backend/dnnl/CMakeFiles/dnnl_graph_backend_dnnl.dir/passes/memory_planning.cpp.o
+[653/718] Building CXX object oneDNN/src/graph/backend/dnnl/CMakeFiles/dnnl_graph_backend_dnnl.dir/passes/transform.cpp.o
+[654/718] Building CXX object oneDNN/src/graph/backend/dnnl/CMakeFiles/dnnl_graph_backend_dnnl.dir/patterns/binary_fusion.cpp.o
+[655/718] Building CXX object oneDNN/src/graph/backend/dnnl/CMakeFiles/dnnl_graph_backend_dnnl.dir/passes/utils.cpp.o
+[656/718] Building CXX object oneDNN/src/graph/backend/dnnl/CMakeFiles/dnnl_graph_backend_dnnl.dir/patterns/binary_matmul_binary.cpp.o
+[657/718] Building CXX object oneDNN/src/graph/backend/dnnl/CMakeFiles/dnnl_graph_backend_dnnl.dir/patterns/bn_fusion.cpp.o
+[658/718] Building CXX object oneDNN/src/graph/backend/dnnl/CMakeFiles/dnnl_graph_backend_dnnl.dir/patterns/concat_fusion.cpp.o
+[659/718] Building CXX object oneDNN/src/graph/backend/dnnl/CMakeFiles/dnnl_graph_backend_dnnl.dir/patterns/conv_block_fusion.cpp.o
+[660/718] Building CXX object oneDNN/src/graph/backend/dnnl/CMakeFiles/dnnl_graph_backend_dnnl.dir/patterns/conv_post_ops.cpp.o
+[661/718] Building CXX object oneDNN/src/graph/backend/dnnl/CMakeFiles/dnnl_graph_backend_dnnl.dir/patterns/convtranspose_fusion.cpp.o
+[662/718] Building CXX object oneDNN/src/graph/backend/dnnl/CMakeFiles/dnnl_graph_backend_dnnl.dir/patterns/groupnorm_fusion.cpp.o
+[663/718] Building CXX object oneDNN/src/graph/backend/dnnl/CMakeFiles/dnnl_graph_backend_dnnl.dir/patterns/interpolate_fusion.cpp.o
+[664/718] Building CXX object oneDNN/src/graph/backend/dnnl/CMakeFiles/dnnl_graph_backend_dnnl.dir/patterns/eltwise_fusion.cpp.o
+[665/718] Building CXX object oneDNN/src/graph/backend/dnnl/CMakeFiles/dnnl_graph_backend_dnnl.dir/patterns/matmul_post_ops.cpp.o
+[666/718] Building CXX object oneDNN/src/graph/backend/dnnl/CMakeFiles/dnnl_graph_backend_dnnl.dir/patterns/layernorm_fusion.cpp.o
+[667/718] Building CXX object oneDNN/src/graph/backend/dnnl/CMakeFiles/dnnl_graph_backend_dnnl.dir/patterns/mlp.cpp.o
+[668/718] Building CXX object oneDNN/src/graph/backend/dnnl/CMakeFiles/dnnl_graph_backend_dnnl.dir/patterns/pool_post_ops.cpp.o
+[669/718] Building CXX object oneDNN/src/graph/backend/dnnl/CMakeFiles/dnnl_graph_backend_dnnl.dir/patterns/reduction_fusion.cpp.o
+[670/718] Building CXX object oneDNN/src/graph/backend/dnnl/CMakeFiles/dnnl_graph_backend_dnnl.dir/patterns/quantize_fusion.cpp.o
+[671/718] Building CXX object oneDNN/src/graph/backend/dnnl/CMakeFiles/dnnl_graph_backend_dnnl.dir/patterns/reorder_fusion.cpp.o
+[672/718] Building CXX object oneDNN/src/graph/backend/dnnl/CMakeFiles/dnnl_graph_backend_dnnl.dir/patterns/sdp.cpp.o
+[673/718] Building CXX object oneDNN/src/graph/backend/dnnl/CMakeFiles/dnnl_graph_backend_dnnl.dir/patterns/shuffle_fusion.cpp.o
+[674/718] Building CXX object oneDNN/src/graph/backend/dnnl/CMakeFiles/dnnl_graph_backend_dnnl.dir/patterns/softmax_post_ops.cpp.o
+[675/718] Building CXX object oneDNN/src/graph/backend/dnnl/CMakeFiles/dnnl_graph_backend_dnnl.dir/patterns/single_op_pattern.cpp.o
+[676/718] Building CXX object oneDNN/src/graph/backend/dnnl/CMakeFiles/dnnl_graph_backend_dnnl.dir/patterns/sum_fusion.cpp.o
+[677/718] Building CXX object oneDNN/src/graph/utils/CMakeFiles/dnnl_graph_utils.dir/id.cpp.o
+[678/718] Building CXX object oneDNN/src/graph/utils/CMakeFiles/dnnl_graph_utils.dir/debug.cpp.o
+[679/718] Building CXX object oneDNN/src/graph/utils/CMakeFiles/dnnl_graph_utils.dir/ocl_usm_utils.cpp.o
+[680/718] Building CXX object oneDNN/src/graph/utils/CMakeFiles/dnnl_graph_utils.dir/alloc.cpp.o
+[681/718] Building CXX object oneDNN/src/graph/utils/CMakeFiles/dnnl_graph_utils.dir/pm/nested_matcher.cpp.o
+[682/718] Building CXX object oneDNN/src/graph/utils/CMakeFiles/dnnl_graph_utils.dir/pm/pass_manager.cpp.o
+[683/718] Building CXX object oneDNN/src/graph/utils/CMakeFiles/dnnl_graph_utils.dir/pm/pass_base.cpp.o
+[684/718] Building CXX object oneDNN/src/graph/utils/CMakeFiles/dnnl_graph_utils.dir/pm/pbuilder.cpp.o
+[685/718] Building CXX object oneDNN/src/graph/utils/CMakeFiles/dnnl_graph_utils.dir/utils.cpp.o
+[686/718] Building CXX object oneDNN/src/graph/utils/CMakeFiles/dnnl_graph_utils.dir/verbose.cpp.o
+[687/718] Building CXX object csrc/xpu/grouped_gemm/xe_default/CMakeFiles/grouped_gemm_xe_default.dir/grouped_gemm_kernel.cpp.o
+[688/718] Building CXX object csrc/xpu/grouped_gemm/xe_default/CMakeFiles/grouped_gemm_xe_default.dir/grouped_gemm_xe_default.cpp.o
+[689/718] Building CXX object csrc/xpu/gdn_attn/xe_2/CMakeFiles/gdn_attn_kernels_xe_2.dir/chunk_gated_delta_rule_xe2.cpp.o
+[690/718] Building CXX object CMakeFiles/_xpu_C.dir/csrc/xpu/lora/lora_expand.cpp.o
+[691/718] Building CXX object CMakeFiles/_xpu_C.dir/csrc/xpu/lora/lora_shrink.cpp.o
+[692/718] Building CXX object CMakeFiles/_xpu_C.dir/csrc/xpu/quantization/int8_quant.cpp.o
+[693/718] Building CXX object CMakeFiles/_xpu_C.dir/csrc/xpu/sampler/topk_topp_sampler.cpp.o
+[694/718] Building CXX object CMakeFiles/_xpu_C.dir/csrc/xpu/torch_bindings.cpp.o
+[695/718] Building CXX object CMakeFiles/_xpu_C.dir/csrc/xpu/sycl/deepseek_scaling_rope.cpp.o
+[696/718] Building CXX object CMakeFiles/_xpu_C.dir/csrc/xpu/sycl/multimodal_rope.cpp.o
+[697/718] Building CXX object CMakeFiles/_xpu_C.dir/csrc/xpu/utils.cpp.o
+[698/718] Building CXX object CMakeFiles/_xpu_C.dir/csrc/xpu/rand/exponential.cpp.o
+[699/718] Building CXX object CMakeFiles/_xpu_C.dir/csrc/xpu/grouped_gemm/grouped_gemm_interface.cpp.o
+[700/718] Building CXX object CMakeFiles/_xpu_C.dir/csrc/xpu/onednn/onednn_runtime.cpp.o
+[701/718] Building CXX object CMakeFiles/_xpu_C.dir/csrc/xpu/onednn/onednn_matmul.cpp.o
+[702/718] Building CXX object CMakeFiles/_xpu_C.dir/csrc/xpu/gdn_attn/gdn_attn_interface.cpp.o
+[703/718] Building CXX object CMakeFiles/_moe_C.dir/csrc/moe/fused_grouped_topk.cpp.o
+[704/718] Building CXX object CMakeFiles/_moe_C.dir/csrc/moe/fused_moe_prologue.cpp.o
+[705/718] Building CXX object CMakeFiles/_moe_C.dir/csrc/moe/grouped_topk.cpp.o
+[706/718] Building CXX object CMakeFiles/_moe_C.dir/csrc/moe/init_expert_map.cpp.o
+[707/718] Building CXX object CMakeFiles/_moe_C.dir/csrc/moe/moe_align_sum_kernels.cpp.o
+[708/718] Building CXX object CMakeFiles/_moe_C.dir/csrc/moe/moe_gather.cpp.o
+[709/718] Building CXX object CMakeFiles/_moe_C.dir/csrc/moe/remap_hidden_states.cpp.o
+[710/718] Linking CXX static library oneDNN/src/libdnnl.a
+[711/718] Linking CXX shared library libgrouped_gemm_xe_default.so
+Compilation from IR - skipping loading of FCL
+Build succeeded for : pvc.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : bmg.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : bmg-g21-a0.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : bmg-g31-a0.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : pvc.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : bmg.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : bmg-g21-a0.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : bmg-g31-a0.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : pvc.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : bmg.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : bmg-g21-a0.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : bmg-g31-a0.
+[712/718] Building CXX object CMakeFiles/_moe_C.dir/csrc/moe/torch_bindings.cpp.o
+[713/718] Linking CXX shared library libgdn_attn_kernels_xe_2.so
+Compilation from IR - skipping loading of FCL
+Build succeeded for : pvc.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : bmg.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : bmg-g21-a0.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : bmg-g31-a0.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : pvc.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : bmg.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : bmg-g21-a0.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : bmg-g31-a0.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : pvc.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : bmg.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : bmg-g21-a0.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : bmg-g31-a0.
+[714/718] Building CXX object CMakeFiles/_moe_C.dir/csrc/moe/topk.cpp.o
+[715/718] Linking CXX shared module _moe_C.abi3.so
+Compilation from IR - skipping loading of FCL
+Build succeeded for : pvc.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : bmg.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : bmg-g21-a0.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : bmg-g31-a0.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : pvc.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : bmg.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : bmg-g21-a0.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : bmg-g31-a0.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : pvc.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : bmg.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : bmg-g21-a0.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : bmg-g31-a0.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : pvc.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : bmg.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : bmg-g21-a0.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : bmg-g31-a0.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : pvc.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : bmg.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : bmg-g21-a0.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : bmg-g31-a0.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : pvc.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : bmg.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : bmg-g21-a0.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : bmg-g31-a0.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : pvc.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : bmg.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : bmg-g21-a0.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : bmg-g31-a0.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : pvc.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : bmg.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : bmg-g21-a0.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : bmg-g31-a0.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : pvc.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : bmg.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : bmg-g21-a0.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : bmg-g31-a0.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : pvc.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : bmg.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : bmg-g21-a0.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : bmg-g31-a0.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : pvc.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : bmg.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : bmg-g21-a0.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : bmg-g31-a0.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : pvc.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : bmg.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : bmg-g21-a0.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : bmg-g31-a0.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : pvc.
+Compilation from IR - skipping loading of FCL
+
+warning: kernel _ZTSN4vllm15GroupedTopKImpl18Fused_Grouped_TopkIN4sycl3_V13ext6oneapi8bfloat16ELi16EEE  compiled SIMD32 allocated 128 regs and spilled around 32
+
+Build succeeded for : bmg.
+Compilation from IR - skipping loading of FCL
+
+warning: kernel _ZTSN4vllm15GroupedTopKImpl18Fused_Grouped_TopkIN4sycl3_V13ext6oneapi8bfloat16ELi16EEE  compiled SIMD32 allocated 128 regs and spilled around 32
+
+Build succeeded for : bmg-g21-a0.
+Compilation from IR - skipping loading of FCL
+
+warning: kernel _ZTSN4vllm15GroupedTopKImpl18Fused_Grouped_TopkIN4sycl3_V13ext6oneapi8bfloat16ELi16EEE  compiled SIMD32 allocated 128 regs and spilled around 32
+
+Build succeeded for : bmg-g31-a0.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : pvc.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : bmg.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : bmg-g21-a0.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : bmg-g31-a0.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : pvc.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : bmg.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : bmg-g21-a0.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : bmg-g31-a0.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : pvc.
+Compilation from IR - skipping loading of FCL
+
+warning: kernel _ZTSN4vllm3moe10TopKGatingILi18ELi576ELi4ELi4ELi32EN4sycl3_V16detail9half_impl4halfEiLNS0_11ScoringFuncE1EEE  compiled SIMD32 allocated 128 regs and spilled around 3
+
+warning: kernel _ZTSN4vllm3moe10TopKGatingILi18ELi576ELi4ELi4ELi32EN4sycl3_V16detail9half_impl4halfElLNS0_11ScoringFuncE0EEE  compiled SIMD32 allocated 128 regs and spilled around 3
+
+warning: kernel _ZTSN4vllm3moe10TopKGatingILi18ELi576ELi4ELi4ELi32EN4sycl3_V16detail9half_impl4halfEjLNS0_11ScoringFuncE1EEE  compiled SIMD32 allocated 128 regs and spilled around 3
+
+warning: kernel _ZTSN4vllm3moe10TopKGatingILi16ELi512ELi4ELi16ELi32EN4sycl3_V16detail9half_impl4halfEiLNS0_11ScoringFuncE1EEE  compiled SIMD32 allocated 128 regs and spilled around 3
+
+warning: kernel _ZTSN4vllm3moe10TopKGatingILi18ELi576ELi4ELi4ELi32EN4sycl3_V16detail9half_impl4halfElLNS0_11ScoringFuncE1EEE  compiled SIMD32 allocated 128 regs and spilled around 3
+
+warning: kernel _ZTSN4vllm3moe10TopKGatingILi16ELi512ELi4ELi16ELi32EN4sycl3_V16detail9half_impl4halfEjLNS0_11ScoringFuncE1EEE  compiled SIMD32 allocated 128 regs and spilled around 3
+
+warning: kernel _ZTSN4vllm3moe10TopKGatingILi16ELi512ELi4ELi16ELi32EN4sycl3_V16detail9half_impl4halfElLNS0_11ScoringFuncE1EEE  compiled SIMD32 allocated 128 regs and spilled around 5
+
+warning: kernel _ZTSN4vllm3moe10TopKGatingILi18ELi576ELi4ELi4ELi32EN4sycl3_V16detail9half_impl4halfEjLNS0_11ScoringFuncE0EEE  compiled SIMD32 allocated 128 regs and spilled around 3
+
+warning: kernel _ZTSN4vllm3moe10TopKGatingILi16ELi512ELi4ELi16ELi32EN4sycl3_V16detail9half_impl4halfElLNS0_11ScoringFuncE0EEE  compiled SIMD32 allocated 128 regs and spilled around 5
+
+warning: kernel _ZTSN4vllm3moe10TopKGatingILi18ELi576ELi4ELi4ELi32EN4sycl3_V16detail9half_impl4halfEiLNS0_11ScoringFuncE0EEE  compiled SIMD32 allocated 128 regs and spilled around 3
+
+Build succeeded for : bmg.
+Compilation from IR - skipping loading of FCL
+
+warning: kernel _ZTSN4vllm3moe10TopKGatingILi18ELi576ELi4ELi4ELi32EN4sycl3_V16detail9half_impl4halfEiLNS0_11ScoringFuncE1EEE  compiled SIMD32 allocated 128 regs and spilled around 3
+
+warning: kernel _ZTSN4vllm3moe10TopKGatingILi18ELi576ELi4ELi4ELi32EN4sycl3_V16detail9half_impl4halfElLNS0_11ScoringFuncE0EEE  compiled SIMD32 allocated 128 regs and spilled around 3
+
+warning: kernel _ZTSN4vllm3moe10TopKGatingILi18ELi576ELi4ELi4ELi32EN4sycl3_V16detail9half_impl4halfEjLNS0_11ScoringFuncE1EEE  compiled SIMD32 allocated 128 regs and spilled around 3
+
+warning: kernel _ZTSN4vllm3moe10TopKGatingILi16ELi512ELi4ELi16ELi32EN4sycl3_V16detail9half_impl4halfEiLNS0_11ScoringFuncE1EEE  compiled SIMD32 allocated 128 regs and spilled around 3
+
+warning: kernel _ZTSN4vllm3moe10TopKGatingILi18ELi576ELi4ELi4ELi32EN4sycl3_V16detail9half_impl4halfElLNS0_11ScoringFuncE1EEE  compiled SIMD32 allocated 128 regs and spilled around 3
+
+warning: kernel _ZTSN4vllm3moe10TopKGatingILi16ELi512ELi4ELi16ELi32EN4sycl3_V16detail9half_impl4halfEjLNS0_11ScoringFuncE1EEE  compiled SIMD32 allocated 128 regs and spilled around 3
+
+warning: kernel _ZTSN4vllm3moe10TopKGatingILi16ELi512ELi4ELi16ELi32EN4sycl3_V16detail9half_impl4halfElLNS0_11ScoringFuncE1EEE  compiled SIMD32 allocated 128 regs and spilled around 5
+
+warning: kernel _ZTSN4vllm3moe10TopKGatingILi18ELi576ELi4ELi4ELi32EN4sycl3_V16detail9half_impl4halfEjLNS0_11ScoringFuncE0EEE  compiled SIMD32 allocated 128 regs and spilled around 3
+
+warning: kernel _ZTSN4vllm3moe10TopKGatingILi16ELi512ELi4ELi16ELi32EN4sycl3_V16detail9half_impl4halfElLNS0_11ScoringFuncE0EEE  compiled SIMD32 allocated 128 regs and spilled around 5
+
+warning: kernel _ZTSN4vllm3moe10TopKGatingILi18ELi576ELi4ELi4ELi32EN4sycl3_V16detail9half_impl4halfEiLNS0_11ScoringFuncE0EEE  compiled SIMD32 allocated 128 regs and spilled around 3
+
+Build succeeded for : bmg-g21-a0.
+Compilation from IR - skipping loading of FCL
+
+warning: kernel _ZTSN4vllm3moe10TopKGatingILi18ELi576ELi4ELi4ELi32EN4sycl3_V16detail9half_impl4halfEiLNS0_11ScoringFuncE1EEE  compiled SIMD32 allocated 128 regs and spilled around 3
+
+warning: kernel _ZTSN4vllm3moe10TopKGatingILi18ELi576ELi4ELi4ELi32EN4sycl3_V16detail9half_impl4halfElLNS0_11ScoringFuncE0EEE  compiled SIMD32 allocated 128 regs and spilled around 3
+
+warning: kernel _ZTSN4vllm3moe10TopKGatingILi18ELi576ELi4ELi4ELi32EN4sycl3_V16detail9half_impl4halfEjLNS0_11ScoringFuncE1EEE  compiled SIMD32 allocated 128 regs and spilled around 3
+
+warning: kernel _ZTSN4vllm3moe10TopKGatingILi16ELi512ELi4ELi16ELi32EN4sycl3_V16detail9half_impl4halfEiLNS0_11ScoringFuncE1EEE  compiled SIMD32 allocated 128 regs and spilled around 3
+
+warning: kernel _ZTSN4vllm3moe10TopKGatingILi18ELi576ELi4ELi4ELi32EN4sycl3_V16detail9half_impl4halfElLNS0_11ScoringFuncE1EEE  compiled SIMD32 allocated 128 regs and spilled around 3
+
+warning: kernel _ZTSN4vllm3moe10TopKGatingILi16ELi512ELi4ELi16ELi32EN4sycl3_V16detail9half_impl4halfEjLNS0_11ScoringFuncE1EEE  compiled SIMD32 allocated 128 regs and spilled around 3
+
+warning: kernel _ZTSN4vllm3moe10TopKGatingILi16ELi512ELi4ELi16ELi32EN4sycl3_V16detail9half_impl4halfElLNS0_11ScoringFuncE1EEE  compiled SIMD32 allocated 128 regs and spilled around 5
+
+warning: kernel _ZTSN4vllm3moe10TopKGatingILi18ELi576ELi4ELi4ELi32EN4sycl3_V16detail9half_impl4halfEjLNS0_11ScoringFuncE0EEE  compiled SIMD32 allocated 128 regs and spilled around 3
+
+warning: kernel _ZTSN4vllm3moe10TopKGatingILi16ELi512ELi4ELi16ELi32EN4sycl3_V16detail9half_impl4halfElLNS0_11ScoringFuncE0EEE  compiled SIMD32 allocated 128 regs and spilled around 5
+
+warning: kernel _ZTSN4vllm3moe10TopKGatingILi18ELi576ELi4ELi4ELi32EN4sycl3_V16detail9half_impl4halfEiLNS0_11ScoringFuncE0EEE  compiled SIMD32 allocated 128 regs and spilled around 3
+
+Build succeeded for : bmg-g31-a0.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : pvc.
+Compilation from IR - skipping loading of FCL
+
+warning: kernel _ZTSN4vllm3moe10TopKGatingILi18ELi576ELi4ELi4ELi32EN4sycl3_V13ext6oneapi8bfloat16ElLNS0_11ScoringFuncE1EEE  compiled SIMD32 allocated 128 regs and spilled around 3
+
+warning: kernel _ZTSN4vllm3moe10TopKGatingILi18ELi576ELi4ELi8ELi32EflLNS0_11ScoringFuncE1EEE  compiled SIMD32 allocated 128 regs and spilled around 3
+
+warning: kernel _ZTSN4vllm3moe10TopKGatingILi18ELi576ELi4ELi4ELi32EN4sycl3_V13ext6oneapi8bfloat16EiLNS0_11ScoringFuncE1EEE  compiled SIMD32 allocated 128 regs and spilled around 3
+
+warning: kernel _ZTSN4vllm3moe10TopKGatingILi16ELi512ELi4ELi16ELi32EN4sycl3_V13ext6oneapi8bfloat16ElLNS0_11ScoringFuncE1EEE  compiled SIMD32 allocated 128 regs and spilled around 5
+
+warning: kernel _ZTSN4vllm3moe10TopKGatingILi16ELi512ELi4ELi16ELi32EflLNS0_11ScoringFuncE0EEE  compiled SIMD32 allocated 128 regs and spilled around 5
+
+warning: kernel _ZTSN4vllm3moe10TopKGatingILi18ELi576ELi4ELi8ELi32EflLNS0_11ScoringFuncE0EEE  compiled SIMD32 allocated 128 regs and spilled around 3
+
+warning: kernel _ZTSN4vllm3moe10TopKGatingILi16ELi512ELi4ELi16ELi32EfjLNS0_11ScoringFuncE1EEE  compiled SIMD32 allocated 128 regs and spilled around 3
+
+warning: kernel _ZTSN4vllm3moe10TopKGatingILi14ELi448ELi4ELi8ELi32EfiLNS0_11ScoringFuncE1EEE  compiled SIMD32 allocated 128 regs and spilled around 3
+
+warning: kernel _ZTSN4vllm3moe10TopKGatingILi14ELi448ELi4ELi8ELi32EfjLNS0_11ScoringFuncE1EEE  compiled SIMD32 allocated 128 regs and spilled around 3
+
+warning: kernel _ZTSN4vllm3moe10TopKGatingILi14ELi448ELi4ELi8ELi32EflLNS0_11ScoringFuncE1EEE  compiled SIMD32 allocated 128 regs and spilled around 3
+
+warning: kernel _ZTSN4vllm3moe10TopKGatingILi16ELi512ELi4ELi16ELi32EfiLNS0_11ScoringFuncE1EEE  compiled SIMD32 allocated 128 regs and spilled around 3
+
+warning: kernel _ZTSN4vllm3moe10TopKGatingILi18ELi576ELi4ELi8ELi32EfiLNS0_11ScoringFuncE1EEE  compiled SIMD32 allocated 128 regs and spilled around 3
+
+warning: kernel _ZTSN4vllm3moe10TopKGatingILi16ELi512ELi4ELi16ELi32EflLNS0_11ScoringFuncE1EEE  compiled SIMD32 allocated 128 regs and spilled around 5
+
+warning: kernel _ZTSN4vllm3moe10TopKGatingILi18ELi576ELi4ELi8ELi32EfiLNS0_11ScoringFuncE0EEE  compiled SIMD32 allocated 128 regs and spilled around 3
+
+warning: kernel _ZTSN4vllm3moe10TopKGatingILi18ELi576ELi4ELi4ELi32EN4sycl3_V13ext6oneapi8bfloat16EjLNS0_11ScoringFuncE1EEE  compiled SIMD32 allocated 128 regs and spilled around 3
+
+warning: kernel _ZTSN4vllm3moe10TopKGatingILi18ELi576ELi4ELi8ELi32EfjLNS0_11ScoringFuncE1EEE  compiled SIMD32 allocated 128 regs and spilled around 3
+
+warning: kernel _ZTSN4vllm3moe10TopKGatingILi16ELi512ELi4ELi16ELi32EN4sycl3_V13ext6oneapi8bfloat16ElLNS0_11ScoringFuncE0EEE  compiled SIMD32 allocated 128 regs and spilled around 4
+
+warning: kernel _ZTSN4vllm3moe10TopKGatingILi18ELi576ELi4ELi8ELi32EfjLNS0_11ScoringFuncE0EEE  compiled SIMD32 allocated 128 regs and spilled around 3
+
+warning: kernel _ZTSN4vllm3moe10TopKGatingILi18ELi576ELi4ELi4ELi32EN4sycl3_V13ext6oneapi8bfloat16ElLNS0_11ScoringFuncE0EEE  compiled SIMD32 allocated 128 regs and spilled around 3
+
+Build succeeded for : bmg.
+Compilation from IR - skipping loading of FCL
+
+warning: kernel _ZTSN4vllm3moe10TopKGatingILi18ELi576ELi4ELi4ELi32EN4sycl3_V13ext6oneapi8bfloat16ElLNS0_11ScoringFuncE1EEE  compiled SIMD32 allocated 128 regs and spilled around 3
+
+warning: kernel _ZTSN4vllm3moe10TopKGatingILi18ELi576ELi4ELi8ELi32EflLNS0_11ScoringFuncE1EEE  compiled SIMD32 allocated 128 regs and spilled around 3
+
+warning: kernel _ZTSN4vllm3moe10TopKGatingILi18ELi576ELi4ELi4ELi32EN4sycl3_V13ext6oneapi8bfloat16EiLNS0_11ScoringFuncE1EEE  compiled SIMD32 allocated 128 regs and spilled around 3
+
+warning: kernel _ZTSN4vllm3moe10TopKGatingILi16ELi512ELi4ELi16ELi32EN4sycl3_V13ext6oneapi8bfloat16ElLNS0_11ScoringFuncE1EEE  compiled SIMD32 allocated 128 regs and spilled around 5
+
+warning: kernel _ZTSN4vllm3moe10TopKGatingILi16ELi512ELi4ELi16ELi32EflLNS0_11ScoringFuncE0EEE  compiled SIMD32 allocated 128 regs and spilled around 5
+
+warning: kernel _ZTSN4vllm3moe10TopKGatingILi18ELi576ELi4ELi8ELi32EflLNS0_11ScoringFuncE0EEE  compiled SIMD32 allocated 128 regs and spilled around 3
+
+warning: kernel _ZTSN4vllm3moe10TopKGatingILi16ELi512ELi4ELi16ELi32EfjLNS0_11ScoringFuncE1EEE  compiled SIMD32 allocated 128 regs and spilled around 3
+
+warning: kernel _ZTSN4vllm3moe10TopKGatingILi14ELi448ELi4ELi8ELi32EfiLNS0_11ScoringFuncE1EEE  compiled SIMD32 allocated 128 regs and spilled around 3
+
+warning: kernel _ZTSN4vllm3moe10TopKGatingILi14ELi448ELi4ELi8ELi32EfjLNS0_11ScoringFuncE1EEE  compiled SIMD32 allocated 128 regs and spilled around 3
+
+warning: kernel _ZTSN4vllm3moe10TopKGatingILi14ELi448ELi4ELi8ELi32EflLNS0_11ScoringFuncE1EEE  compiled SIMD32 allocated 128 regs and spilled around 3
+
+warning: kernel _ZTSN4vllm3moe10TopKGatingILi16ELi512ELi4ELi16ELi32EfiLNS0_11ScoringFuncE1EEE  compiled SIMD32 allocated 128 regs and spilled around 3
+
+warning: kernel _ZTSN4vllm3moe10TopKGatingILi18ELi576ELi4ELi8ELi32EfiLNS0_11ScoringFuncE1EEE  compiled SIMD32 allocated 128 regs and spilled around 3
+
+warning: kernel _ZTSN4vllm3moe10TopKGatingILi16ELi512ELi4ELi16ELi32EflLNS0_11ScoringFuncE1EEE  compiled SIMD32 allocated 128 regs and spilled around 5
+
+warning: kernel _ZTSN4vllm3moe10TopKGatingILi18ELi576ELi4ELi8ELi32EfiLNS0_11ScoringFuncE0EEE  compiled SIMD32 allocated 128 regs and spilled around 3
+
+warning: kernel _ZTSN4vllm3moe10TopKGatingILi18ELi576ELi4ELi4ELi32EN4sycl3_V13ext6oneapi8bfloat16EjLNS0_11ScoringFuncE1EEE  compiled SIMD32 allocated 128 regs and spilled around 3
+
+warning: kernel _ZTSN4vllm3moe10TopKGatingILi18ELi576ELi4ELi8ELi32EfjLNS0_11ScoringFuncE1EEE  compiled SIMD32 allocated 128 regs and spilled around 3
+
+warning: kernel _ZTSN4vllm3moe10TopKGatingILi16ELi512ELi4ELi16ELi32EN4sycl3_V13ext6oneapi8bfloat16ElLNS0_11ScoringFuncE0EEE  compiled SIMD32 allocated 128 regs and spilled around 4
+
+warning: kernel _ZTSN4vllm3moe10TopKGatingILi18ELi576ELi4ELi8ELi32EfjLNS0_11ScoringFuncE0EEE  compiled SIMD32 allocated 128 regs and spilled around 3
+
+warning: kernel _ZTSN4vllm3moe10TopKGatingILi18ELi576ELi4ELi4ELi32EN4sycl3_V13ext6oneapi8bfloat16ElLNS0_11ScoringFuncE0EEE  compiled SIMD32 allocated 128 regs and spilled around 3
+
+Build succeeded for : bmg-g21-a0.
+Compilation from IR - skipping loading of FCL
+
+warning: kernel _ZTSN4vllm3moe10TopKGatingILi18ELi576ELi4ELi4ELi32EN4sycl3_V13ext6oneapi8bfloat16ElLNS0_11ScoringFuncE1EEE  compiled SIMD32 allocated 128 regs and spilled around 3
+
+warning: kernel _ZTSN4vllm3moe10TopKGatingILi18ELi576ELi4ELi8ELi32EflLNS0_11ScoringFuncE1EEE  compiled SIMD32 allocated 128 regs and spilled around 3
+
+warning: kernel _ZTSN4vllm3moe10TopKGatingILi18ELi576ELi4ELi4ELi32EN4sycl3_V13ext6oneapi8bfloat16EiLNS0_11ScoringFuncE1EEE  compiled SIMD32 allocated 128 regs and spilled around 3
+
+warning: kernel _ZTSN4vllm3moe10TopKGatingILi16ELi512ELi4ELi16ELi32EN4sycl3_V13ext6oneapi8bfloat16ElLNS0_11ScoringFuncE1EEE  compiled SIMD32 allocated 128 regs and spilled around 5
+
+warning: kernel _ZTSN4vllm3moe10TopKGatingILi16ELi512ELi4ELi16ELi32EflLNS0_11ScoringFuncE0EEE  compiled SIMD32 allocated 128 regs and spilled around 5
+
+warning: kernel _ZTSN4vllm3moe10TopKGatingILi18ELi576ELi4ELi8ELi32EflLNS0_11ScoringFuncE0EEE  compiled SIMD32 allocated 128 regs and spilled around 3
+
+warning: kernel _ZTSN4vllm3moe10TopKGatingILi16ELi512ELi4ELi16ELi32EfjLNS0_11ScoringFuncE1EEE  compiled SIMD32 allocated 128 regs and spilled around 3
+
+warning: kernel _ZTSN4vllm3moe10TopKGatingILi14ELi448ELi4ELi8ELi32EfiLNS0_11ScoringFuncE1EEE  compiled SIMD32 allocated 128 regs and spilled around 3
+
+warning: kernel _ZTSN4vllm3moe10TopKGatingILi14ELi448ELi4ELi8ELi32EfjLNS0_11ScoringFuncE1EEE  compiled SIMD32 allocated 128 regs and spilled around 3
+
+warning: kernel _ZTSN4vllm3moe10TopKGatingILi14ELi448ELi4ELi8ELi32EflLNS0_11ScoringFuncE1EEE  compiled SIMD32 allocated 128 regs and spilled around 3
+
+warning: kernel _ZTSN4vllm3moe10TopKGatingILi16ELi512ELi4ELi16ELi32EfiLNS0_11ScoringFuncE1EEE  compiled SIMD32 allocated 128 regs and spilled around 3
+
+warning: kernel _ZTSN4vllm3moe10TopKGatingILi18ELi576ELi4ELi8ELi32EfiLNS0_11ScoringFuncE1EEE  compiled SIMD32 allocated 128 regs and spilled around 3
+
+warning: kernel _ZTSN4vllm3moe10TopKGatingILi16ELi512ELi4ELi16ELi32EflLNS0_11ScoringFuncE1EEE  compiled SIMD32 allocated 128 regs and spilled around 5
+
+warning: kernel _ZTSN4vllm3moe10TopKGatingILi18ELi576ELi4ELi8ELi32EfiLNS0_11ScoringFuncE0EEE  compiled SIMD32 allocated 128 regs and spilled around 3
+
+warning: kernel _ZTSN4vllm3moe10TopKGatingILi18ELi576ELi4ELi4ELi32EN4sycl3_V13ext6oneapi8bfloat16EjLNS0_11ScoringFuncE1EEE  compiled SIMD32 allocated 128 regs and spilled around 3
+
+warning: kernel _ZTSN4vllm3moe10TopKGatingILi18ELi576ELi4ELi8ELi32EfjLNS0_11ScoringFuncE1EEE  compiled SIMD32 allocated 128 regs and spilled around 3
+
+warning: kernel _ZTSN4vllm3moe10TopKGatingILi16ELi512ELi4ELi16ELi32EN4sycl3_V13ext6oneapi8bfloat16ElLNS0_11ScoringFuncE0EEE  compiled SIMD32 allocated 128 regs and spilled around 4
+
+warning: kernel _ZTSN4vllm3moe10TopKGatingILi18ELi576ELi4ELi8ELi32EfjLNS0_11ScoringFuncE0EEE  compiled SIMD32 allocated 128 regs and spilled around 3
+
+warning: kernel _ZTSN4vllm3moe10TopKGatingILi18ELi576ELi4ELi4ELi32EN4sycl3_V13ext6oneapi8bfloat16ElLNS0_11ScoringFuncE0EEE  compiled SIMD32 allocated 128 regs and spilled around 3
+
+Build succeeded for : bmg-g31-a0.
+[716/718] Building CXX object csrc/xpu/grouped_gemm/xe_2/CMakeFiles/grouped_gemm_xe_2.dir/grouped_gemm_xe2.cpp.o
+[717/718] Linking CXX shared library libgrouped_gemm_xe_2.so
+Compilation from IR - skipping loading of FCL
+Build succeeded for : pvc.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : bmg.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : bmg-g21-a0.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : bmg-g31-a0.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : pvc.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : bmg.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : bmg-g21-a0.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : bmg-g31-a0.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : pvc.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : bmg.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : bmg-g21-a0.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : bmg-g31-a0.
+[718/718] Linking CXX shared module _xpu_C.abi3.so
+Compilation from IR - skipping loading of FCL
+Build succeeded for : pvc.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : bmg.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : bmg-g21-a0.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : bmg-g31-a0.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : pvc.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : bmg.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : bmg-g21-a0.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : bmg-g31-a0.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : pvc.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : bmg.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : bmg-g21-a0.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : bmg-g31-a0.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : pvc.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : bmg.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : bmg-g21-a0.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : bmg-g31-a0.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : pvc.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : bmg.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : bmg-g21-a0.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : bmg-g31-a0.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : pvc.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : bmg.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : bmg-g21-a0.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : bmg-g31-a0.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : pvc.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : bmg.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : bmg-g21-a0.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : bmg-g31-a0.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : pvc.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : bmg.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : bmg-g21-a0.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : bmg-g31-a0.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : pvc.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : bmg.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : bmg-g21-a0.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : bmg-g31-a0.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : pvc.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : bmg.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : bmg-g21-a0.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : bmg-g31-a0.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : pvc.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : bmg.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : bmg-g21-a0.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : bmg-g31-a0.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : pvc.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : bmg.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : bmg-g21-a0.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : bmg-g31-a0.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : pvc.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : bmg.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : bmg-g21-a0.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : bmg-g31-a0.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : pvc.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : bmg.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : bmg-g21-a0.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : bmg-g31-a0.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : pvc.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : bmg.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : bmg-g21-a0.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : bmg-g31-a0.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : pvc.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : bmg.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : bmg-g21-a0.
+Compilation from IR - skipping loading of FCL
+Build succeeded for : bmg-g31-a0.
+-- Install configuration: "Release"
+-- Installing: /home/steve/src/vllm-xpu-kernels/build/lib.linux-x86_64-cpython-312/vllm_xpu_kernels/_moe_C.abi3.so
+-- Set non-toolchain portion of runtime path of "/home/steve/src/vllm-xpu-kernels/build/lib.linux-x86_64-cpython-312/vllm_xpu_kernels/_moe_C.abi3.so" to "$ORIGIN"
+-- Install configuration: "Release"
+-- Installing: /home/steve/src/vllm-xpu-kernels/build/lib.linux-x86_64-cpython-312/vllm_xpu_kernels/_xpu_C.abi3.so
+-- Set non-toolchain portion of runtime path of "/home/steve/src/vllm-xpu-kernels/build/lib.linux-x86_64-cpython-312/vllm_xpu_kernels/_xpu_C.abi3.so" to "$ORIGIN"
+-- Install configuration: "Release"
+-- Installing: /home/steve/src/vllm-xpu-kernels/build/lib.linux-x86_64-cpython-312/vllm_xpu_kernels/libgdn_attn_kernels_xe_2.so
+-- Set non-toolchain portion of runtime path of "/home/steve/src/vllm-xpu-kernels/build/lib.linux-x86_64-cpython-312/vllm_xpu_kernels/libgdn_attn_kernels_xe_2.so" to "$ORIGIN"
+-- Install configuration: "Release"
+-- Installing: /home/steve/src/vllm-xpu-kernels/build/lib.linux-x86_64-cpython-312/vllm_xpu_kernels/libgrouped_gemm_xe_2.so
+-- Set non-toolchain portion of runtime path of "/home/steve/src/vllm-xpu-kernels/build/lib.linux-x86_64-cpython-312/vllm_xpu_kernels/libgrouped_gemm_xe_2.so" to "$ORIGIN"
+-- Install configuration: "Release"
+-- Installing: /home/steve/src/vllm-xpu-kernels/build/lib.linux-x86_64-cpython-312/vllm_xpu_kernels/libgrouped_gemm_xe_default.so
+-- Set non-toolchain portion of runtime path of "/home/steve/src/vllm-xpu-kernels/build/lib.linux-x86_64-cpython-312/vllm_xpu_kernels/libgrouped_gemm_xe_default.so" to "$ORIGIN"
+=============== icpx version ===============
+sycl home: /opt/intel/oneapi/compiler/2025.3
+
+=============== icpx version ===============
+copying build/lib.linux-x86_64-cpython-312/vllm_xpu_kernels/_moe_C.abi3.so -> vllm_xpu_kernels
+copying build/lib.linux-x86_64-cpython-312/vllm_xpu_kernels/_xpu_C.abi3.so -> vllm_xpu_kernels
+Copying build/lib.linux-x86_64-cpython-312/vllm_xpu_kernels/libgrouped_gemm_xe_2.so to /home/steve/src/vllm-xpu-kernels/vllm_xpu_kernels/libgrouped_gemm_xe_2.so
+copying build/lib.linux-x86_64-cpython-312/vllm_xpu_kernels/libgrouped_gemm_xe_2.so -> /home/steve/src/vllm-xpu-kernels/vllm_xpu_kernels
+Copying build/lib.linux-x86_64-cpython-312/vllm_xpu_kernels/libgdn_attn_kernels_xe_2.so to /home/steve/src/vllm-xpu-kernels/vllm_xpu_kernels/libgdn_attn_kernels_xe_2.so
+copying build/lib.linux-x86_64-cpython-312/vllm_xpu_kernels/libgdn_attn_kernels_xe_2.so -> /home/steve/src/vllm-xpu-kernels/vllm_xpu_kernels
+Copying build/lib.linux-x86_64-cpython-312/vllm_xpu_kernels/libgrouped_gemm_xe_default.so to /home/steve/src/vllm-xpu-kernels/vllm_xpu_kernels/libgrouped_gemm_xe_default.so
+copying build/lib.linux-x86_64-cpython-312/vllm_xpu_kernels/libgrouped_gemm_xe_default.so -> /home/steve/src/vllm-xpu-kernels/vllm_xpu_kernels

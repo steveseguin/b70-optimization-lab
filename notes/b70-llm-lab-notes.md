@@ -786,3 +786,25 @@ vLLM/XPU FP8 work:
     verifier-owned speculative escrow, shallow target self-drafting,
     prompt-shape admission control, upstream performance challenge packets, and
     reliability soak tied to every speed claim.
+33. Built and gated the offset-native W8A8 grouped-GEMM prototype. The
+    oneAPI 2026 build linked to `libsycl.so.9` and was rejected for the
+    accepted runtime; the oneAPI 2025.3 rebuild linked to `libsycl.so.8`,
+    imported cleanly, and passed XPU sync. Route-exact layer-9 routecapture6
+    rows=1 replay matched current `xpu_fused_moe` exactly (`max_abs_diff=0.0`)
+    and measured a real component win: fused prologue plus offset GEMM averaged
+    `213.233 us/layer`, versus fused prologue staged `285.787 us/layer`,
+    exact preallocated staged `218.158 us/layer`, and current scratch
+    `xpu_fused_moe` `256.611 us/layer`. Serving promotion failed: the
+    offset-built backend reached `/health`, then crashed on the first
+    provenance completion with `UR_RESULT_ERROR_DEVICE_LOST` in
+    `block_table.copy_to_gpu`, followed by `UR_RESULT_ERROR_OUT_OF_RESOURCES`
+    during shutdown. The live accepted libraries were rolled back, the offset
+    op is absent from live imports, and exact provenance sentinels passed after
+    rollback. Decision: keep
+    `patches/vllm-xpu-kernels-w8a8-offset-gemm-prototype-20260612.patch` as a
+    prototype artifact only. Next ideas now recorded in the focused Qwen note:
+    microbench-only offset plugin, narrower offset ABI, active-expert list,
+    one-dispatch/persistent MoE layerlet, first-token metadata failure
+    minimizer, device-image budget analysis, DPAS/XMX counter proof,
+    graph-resident metadata updates, persistent routed-expert worker, and
+    target-verified speculation as the high-upside track.

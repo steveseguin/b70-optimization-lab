@@ -2963,3 +2963,105 @@ Additional things to try:
     soak recipe: repeated load, p512/o128 c1, c4 aggregate, provenance sentinels,
     `xpu-smi ps`, and device-lost count. A fast but fragile backend is not a
     production candidate.
+
+## 2026-06-12 Offset GEMM Prototype Gate
+
+What was tested:
+
+- Prototype source patch captured at
+  `patches/vllm-xpu-kernels-w8a8-offset-gemm-prototype-20260612.patch`.
+- The first local rebuild used a oneAPI 2026 runtime and linked against
+  `libsycl.so.9`; reject that artifact for the accepted vLLM runtime. The
+  accepted-compatible rebuild used oneAPI 2025.3, linked against
+  `libsycl.so.8`, imported cleanly, and passed a basic XPU sync check.
+- Route-exact layer-9 routecapture6 rows=1 replay passed exact output parity
+  against current `xpu_fused_moe` (`max_abs_diff=0.0`). The offset path is a
+  real component win in microbench:
+  - `fused_prologue_offset_gemm_total_us_mean`: `213.233 us`
+  - `fused_prologue_staged_total_us_mean`: `285.787 us`
+  - `preallocated_staged_total_us_mean`: `218.158 us`
+  - `xpu_fused_moe_scratch_total_us_mean`: `256.611 us`
+- Serving gate failed. The offset-built backend reached `/health`, but the
+  first provenance request crashed the engine with
+  `UR_RESULT_ERROR_DEVICE_LOST` at `block_table.copy_to_gpu(num_reqs)`, then
+  printed `UR_RESULT_ERROR_OUT_OF_RESOURCES` during shutdown. Do not promote
+  this endpoint. Serving logs:
+  `data/qwen36-quark-int8-tp4-accepted-restored-after-offset-gemm-20260612af.log`
+  and
+  `data/qwen36-quark-int8-tp4-accepted-restored-after-offset-rollback-20260612ag.log`.
+- Live rollback is complete: pre-offset `_xpu_C`, grouped GEMM, and GDN helper
+  libraries were restored; the offset op is absent from the live runtime; the
+  accepted backend passed exact provenance sentinels after rollback in
+  `data/qwen36-quark-int8-tp4-accepted-provenance-after-offset-rollback-20260612ag.json`.
+
+Immediate follow-ups from this gate:
+
+1. **Microbench-only offset plugin.**
+   Split the offset prototype out of the full serving library and load it only
+   for route-replay tests. This isolates whether the device-lost failure comes
+   from device-image size, registration, or the serving call path.
+
+2. **Narrow offset ABI.**
+   Rebuild a smaller variant that exposes only the new offset path and avoids
+   broad template duplication or ABI churn around the existing count-based
+   W8A8 op. If the narrower image serves, promote it through the standard
+   quality ladder.
+
+3. **Active-expert list, not just offsets.**
+   Check whether the kernel still loops over all experts. If it does, add a
+   compact active-expert list so rows=1 decode skips cold experts instead of
+   paying an empty-expert loop.
+
+4. **One-dispatch MoE layerlet.**
+   The offset microbench nearly reaches the manual preallocated lower bound,
+   but the end-to-end target still needs millisecond-level savings. Move beyond
+   ABI cleanup toward a single dispatch or persistent layerlet that owns
+   prologue, quant, grouped GEMM, activation, down projection, and gather.
+
+5. **First-token metadata failure minimizer.**
+   Build a tiny post-load first-completion repro around block-table and graph
+   metadata copies. The repeated `block_table.copy_to_gpu` device-lost class is
+   now a production blocker category, not just a one-off failure.
+
+6. **Promotion ladder for every kernel candidate.**
+   Require this order before any endpoint exposure: import and XPU sync,
+   route-microbench exactness, isolated one-token model execution, provenance
+   sentinels, 10-minute c1 soak, then c4 aggregate. The offset prototype passed
+   only the first two stages.
+
+Larger ideas added after this result:
+
+1. **Device-image budget analysis.**
+   Track `.so` size, generated device images, persistent-cache entries, and
+   first-use compile behavior before and after each kernel addition. A "small"
+   template change may still create a serving-risky XPU image.
+
+2. **Counter-proven small-M DPAS packet.**
+   Pair the route replay with XMX/DPAS counters, EU occupancy, memory
+   bandwidth, and kernel-launch timing. If offset GEMM is still math-starved at
+   rows=1, persistent scheduling is mandatory.
+
+3. **Graph-resident metadata update.**
+   Stop treating block-table/GDN metadata copies as fixed overhead. Prototype a
+   graph-resident or dirty-copy update path with a stability soak before speed
+   timing.
+
+4. **Persistent routed-expert worker.**
+   Keep a resident device worker per layer or per hotset that consumes compact
+   route tasks and writes exact outputs. This attacks both launch overhead and
+   empty-expert work, at the cost of a larger engineering branch.
+
+5. **Target-verified speculation as the high-upside track.**
+   If non-speculative MoE work cannot remove roughly `5 ms/token`, the likely
+   path to `>200 tok/s` c1 is verifier-owned speculation. The target model must
+   score and commit tokens; any drafter remains replaceable and untrusted.
+
+Public context:
+
+- The Localmaxxing Arc Pro B70/Qwen view currently shows our quality-gated
+  W8A8 result `cmq9ifq0500b0r8012f27j1xl` at about `99.77 tok/s`, ahead of the
+  prior exact-model row. No new result was submitted for this offset prototype
+  because it is not serving-safe.
+- Faster public B70 Qwen rows using Q4/llama.cpp or other lower-fidelity
+  setups are useful architecture clues, not quality-equivalent targets for
+  this INT8/Quark production lane.
