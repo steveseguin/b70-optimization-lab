@@ -6,6 +6,23 @@ Date: 2026-06-12
 
 2026-06-12 notes update:
 
+- Added `scripts/qwen36-route-class-aot-plan.py` plus route-class AOT planning
+  artifacts:
+  `data/qwen36-quark-int8-tp4-route-class-aot-plan-20260612dd.{json,md}`.
+  Because the accepted TP4 endpoint still occupies all four B70s, this was a
+  CPU-safe planning gate rather than an XPU timing run. It consumed the
+  first-decode route fixture and found `120/120` usable rows, `3` fixture
+  events, `40` layers, `80` global route classes, and exactly `2.000`
+  route classes per layer on average. Top-1 route class per layer covers
+  `66.7%` of the tiny fixture; top-2 covers `100%`. Exact unique hot-pack
+  memory for the seen layers is only `408.229 MiB` per TP shard, about `5.3%`
+  of the full seen-layer MoE shard footprint, so a route-class AOT
+  micro-library is memory-plausible. Status is
+  `needs_more_route_windows_before_aot_commit`: the next graph-capture pass
+  should collect `10+` isolated decode requests before kernel codegen.
+
+2026-06-12 notes update:
+
 - Added the graph-capture census checkpoint and a wider no-quality-loss idea
   bank to `notes/2026-06-12-qwen36-next-bigger-bets.md`. The local dirty
   `vllm-xpu-kernels` tree now has disabled-by-default live-ABI graph-capture

@@ -10914,3 +10914,69 @@ Updated immediate order:
    `xpu_fused_moe`.
 4. Use the results to choose between persistent MoE island, route-class AOT
    micro-library, topology/host-stack work, or exact verifier parallelism.
+
+## Route-Class AOT Planning Gate 20260612dd
+
+Added the first CPU-safe planning gate for the route-class AOT micro-library
+idea:
+
+- `scripts/qwen36-route-class-aot-plan.py`
+- `data/qwen36-quark-int8-tp4-route-class-aot-plan-20260612dd.json`
+- `data/qwen36-quark-int8-tp4-route-class-aot-plan-20260612dd.md`
+
+Why this was the right next move:
+
+- The accepted TP4 service is still live on `18080` and `xpu-smi ps` shows the
+  four B70 cards are effectively occupied by the current workers. Running a
+  side microbench on top of that would risk OOM or contaminate endpoint timing.
+- The route-class AOT planner uses the already captured first-decode fixture,
+  so it can refine the next kernel direction without touching the endpoint or
+  changing model behavior.
+
+Command run:
+
+```bash
+python3 -m py_compile scripts/qwen36-route-class-aot-plan.py
+
+python3 scripts/qwen36-route-class-aot-plan.py \
+  data/qwen36-quark-int8-tp4-firstdecode-route-fixture-routes-20260612ct.jsonl \
+  --output-json data/qwen36-quark-int8-tp4-route-class-aot-plan-20260612dd.json \
+  --markdown-out data/qwen36-quark-int8-tp4-route-class-aot-plan-20260612dd.md
+```
+
+Measured planning result:
+
+- Status: `needs_more_route_windows_before_aot_commit`.
+- Records used: `120/120`.
+- Fixture events: `3`.
+- Layers: `40`.
+- Global unique route classes: `80`.
+- Per-layer exact route classes: `80`, mean `2.000` per layer.
+- Top-1 class per layer covers `66.7%` of this tiny fixture.
+- Top-2 classes per layer cover `100%` of this tiny fixture.
+- Exact unique hot-pack memory for the seen layers is only `408.229 MiB` per
+  TP shard, about `5.3%` of the full seen-layer MoE shard footprint.
+- Duplicate route-pack upper bound for two classes per layer is `485.625 MiB`
+  per TP shard.
+
+Interpretation:
+
+- This supports the route-class AOT direction technically: a small
+  per-layer/topk-8 route-class micro-library would be memory-cheap on B70 if
+  broader route captures preserve similar locality.
+- It is not enough evidence to write kernels yet. Three first-decode fixture
+  events are too few; the next graph-capture pass needs to collect more
+  route-window data before the AOT table is trusted.
+- The current best no-quality-loss kernel sequence is now:
+  graph-capture census, broader route-window capture, route-class AOT planner,
+  prologue-inclusive layerlet timing, then a full layerlet tensor-compare gate.
+
+New concrete next thing to try:
+
+1. Extend the graph-capture census from metadata/checksum evidence into a
+   compact route-window ledger for `10+` isolated decode requests.
+2. Re-run `scripts/qwen36-route-class-aot-plan.py` against that larger ledger.
+3. If per-layer classes stay small and hot-pack memory stays below about
+   `1-2 GiB` per TP shard, build a layer-9 route-class AOT layerlet prototype.
+4. If route classes explode, drop route-class codegen and focus on a more
+   generic persistent MoE conveyor or verified multi-token parallelism.
