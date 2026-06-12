@@ -13207,3 +13207,209 @@ Useful links for this addendum:
 - `https://github.com/vllm-project/vllm-xpu-kernels`
 - `https://github.com/vllm-project/vllm/issues/33214`
 - `https://docs.vllm.ai/en/latest/design/moe_kernel_features/`
+
+## Worker-State COW Trace Hook
+
+Implemented the next default-off diagnostic layer in the local vLLM lab tree.
+This is not a COW verifier implementation yet; it is instrumentation to locate
+the worker-side mutation that must be made transactional before COW can be
+quality-safe.
+
+New envs:
+
+- `VLLM_XPU_COW_WORKER_TRACE_FILE=/tmp/qwen36-cow-worker-trace.jsonl`
+- `VLLM_XPU_COW_WORKER_TRACE_MAX_LINES=2000`
+- `VLLM_XPU_COW_WORKER_TRACE_RANK=0` or `*`
+
+What it records:
+
+1. `before_cached_req_update`
+   - cached request counters before the worker applies scheduler output.
+   - scheduler-provided `num_computed_tokens`, output token count, block IDs,
+     and scheduled speculative length.
+2. `after_cached_req_counter_update`
+   - cached request state immediately after assigning
+     `req_state.num_computed_tokens`.
+3. `after_persistent_batch_update`
+   - input-batch row after `num_computed_tokens_cpu` and block-table append.
+4. `after_spec_token_update`
+   - exact speculative token-buffer write range from
+     `InputBatch.update_req_spec_token_ids()`, including
+     `num_tokens_no_spec`, `write_start`, `write_end`, previous/current draft
+     length, scheduled draft head, and a token-buffer window around the write.
+5. `after_new_req_add_spec_update`
+   - same spec-token update record for newly added/resumed requests.
+6. `after_prepare_positions`
+   - batch-level computed-token GPU values, scheduled counts, request indices,
+     positions, sequence lengths, previous-position mapping, and previous draft
+     token counts after `_prepare_inputs()` computes the model positions and
+     slot mapping.
+
+Artifacts:
+
+- `patches/vllm-qwen36-cow-worker-state-trace-labstate-20260611.patch`
+  - lab-state patch exported from the current dirty `/home/steve/src/vllm`
+    checkout.
+  - caveat: this is cumulative for the touched worker files because the vLLM
+    worktree already contains prior XPU experiments. Use it as a reproduction
+    artifact for this lab state, not as a clean upstream patch.
+- `scripts/summarize-qwen36-cow-worker-trace.py`
+  - summarizes worker trace JSONL into stage counts, nonzero spec-token writes,
+    prepare-position rows, and per-request stage transitions.
+
+Validation:
+
+```bash
+python3 -m py_compile \
+  /home/steve/src/vllm/vllm/v1/worker/gpu_model_runner.py \
+  /home/steve/src/vllm/vllm/v1/worker/gpu_input_batch.py
+
+python3 -m py_compile scripts/summarize-qwen36-cow-worker-trace.py
+```
+
+Both compile checks passed. A synthetic two-row JSONL smoke also passed through
+`scripts/summarize-qwen36-cow-worker-trace.py` and correctly reported one
+nonzero speculative-token write and one `after_prepare_positions` row.
+
+Next runtime trace:
+
+1. Keep the public frontdoor paused and verify `active_generations=0`.
+2. Restart the oracle `k=1` trace backend with both scheduler and worker trace
+   envs:
+   - `VLLM_XPU_COW_VERIFIER_TRACE_FILE=...`
+   - `VLLM_XPU_COW_WORKER_TRACE_FILE=...`
+   - `VLLM_XPU_COW_WORKER_TRACE_RANK=0`
+3. Run the existing two-case oracle completion trace.
+4. Summarize:
+   - scheduler parent-state trace with
+     `scripts/summarize-qwen36-cow-trace.py`
+   - worker-state trace with
+     `scripts/summarize-qwen36-cow-worker-trace.py`
+   - replay/fixture with the existing oracle trace tools.
+5. Compare whether the mismatch aligns with:
+   - scheduler parent `num_computed_tokens`,
+   - worker cached `req_state.num_computed_tokens`,
+   - input-batch `num_computed_tokens_cpu`,
+   - spec-token buffer `write_start/write_end`, or
+   - position/seq-len computation after async spec correction.
+
+## Oracle k=1 Worker-State Trace Result
+
+Ran the worker-state trace against the same two-case oracle `k=1` fixture.
+The accepted backend was restored afterward.
+
+Service safety:
+
+- Frontdoor was paused with local bypass.
+- Frontdoor status after restore showed `active_generations=0` and
+  `queued_generations=0`.
+- Oracle trace backend became healthy after `135s`.
+- Accepted backend restore became healthy after `55s`.
+- Restored vLLM parent process env had no `COW`, `SPEC_DECODE`, `ORACLE`,
+  `SPECULATIVE`, `VLLM_SPEC`, or `MODEL_INPUT_TRACE` variables.
+
+Trace launch additions:
+
+```bash
+VLLM_XPU_COW_WORKER_TRACE_FILE=/tmp/qwen36-oracle1-workertrace-20260611a-worker-trace.jsonl \
+VLLM_XPU_COW_WORKER_TRACE_MAX_LINES=2000 \
+VLLM_XPU_COW_WORKER_TRACE_RANK=0
+```
+
+Artifacts:
+
+- `data/qwen36-quark-int8-tp4-oracle1-workertrace-completions-20260611a.json`
+- `data/qwen36-quark-int8-tp4-oracle1-workertrace-spec-trace-20260611a.jsonl`
+- `data/qwen36-quark-int8-tp4-oracle1-workertrace-spec-summary-20260611a.json`
+- `data/qwen36-quark-int8-tp4-oracle1-workertrace-spec-summary-20260611a.md`
+- `data/qwen36-quark-int8-tp4-oracle1-workertrace-parent-trace-20260611a.jsonl`
+- `data/qwen36-quark-int8-tp4-oracle1-workertrace-parent-summary-20260611a.json`
+- `data/qwen36-quark-int8-tp4-oracle1-workertrace-parent-summary-20260611a.md`
+- `data/qwen36-quark-int8-tp4-oracle1-workertrace-worker-trace-20260611a.jsonl`
+- `data/qwen36-quark-int8-tp4-oracle1-workertrace-worker-summary-20260611a.json`
+- `data/qwen36-quark-int8-tp4-oracle1-workertrace-worker-summary-20260611a.md`
+- `data/qwen36-quark-int8-tp4-oracle1-workertrace-oracle-draft-20260611a.jsonl`
+- `data/qwen36-quark-int8-tp4-oracle1-workertrace-replay-20260611a.json`
+- `data/qwen36-quark-int8-tp4-oracle1-workertrace-replay-20260611a.md`
+- `data/qwen36-quark-int8-tp4-oracle1-workertrace-drift-fixture-20260611a.json`
+- `data/qwen36-quark-int8-tp4-oracle1-workertrace-drift-fixture-20260611a.md`
+
+Validation:
+
+```bash
+python3 scripts/check-qwen36-oracle-fixture.py \
+  --fixture data/qwen36-quark-int8-tp4-oracle1-workertrace-drift-fixture-20260611a.json \
+  --replay-json data/qwen36-quark-int8-tp4-oracle1-workertrace-replay-20260611a.json \
+  --spec-summary data/qwen36-quark-int8-tp4-oracle1-workertrace-spec-summary-20260611a.json \
+  --mode known-drift \
+  --expected-mismatches 2 \
+  --expected-roles verifier_bonus_after_full_accept,replacement_after_reject \
+  --expect-spec-active \
+  --min-draft-tokens 15 \
+  --min-accepted-tokens 14 \
+  --min-accept-rate-pct 90 \
+  --require-spec-join
+```
+
+Result:
+
+- `ok=true`
+- `case_count=2`
+- `mismatch_count=2`
+- roles: `verifier_bonus_after_full_accept`,
+  `replacement_after_reject`
+- spec: `draft_tokens=15`, `accepted=14`, `rejected=1`,
+  `accept_rate_pct=93.33333333333333`, `rows=15`, `requests=2`
+- replay joined both requests and reported `accounting_mismatch_count=0`.
+
+Worker trace summary:
+
+- Rows: `244`
+- Requests: `2`
+- Spec update rows: `50`
+- Nonzero spec updates: `15`
+- Prepare-position rows: `50`
+- Stage counts:
+  - `after_new_req_add_spec_update`: `2`
+  - `after_prepare_positions`: `50`
+  - `before_cached_req_update`: `48`
+  - `after_cached_req_counter_update`: `48`
+  - `after_persistent_batch_update`: `48`
+  - `after_spec_token_update`: `48`
+
+Important first-case spec row:
+
+- scheduler passed `num_computed_tokens=502` with one scheduled draft.
+- before worker update: cached request had `num_computed_tokens=0`,
+  `num_tokens=503`, `num_output_tokens=1`, `num_tokens_no_spec=503`.
+- after cached update and persistent batch update:
+  - `req_state.num_computed_tokens=502`
+  - `input_batch.num_computed_tokens_cpu=502`
+  - `num_tokens_no_spec=503`
+- `InputBatch.update_req_spec_token_ids()` wrote the draft token at
+  `write_start=503`, `write_end=504`.
+- `_prepare_inputs()` then used `num_computed_tokens_gpu=[502]`,
+  `positions=[502, 503]`, and `seq_lens=[504]`.
+
+Interpretation:
+
+The worker trace did not show a simple token-buffer off-by-one for oracle
+`k=1`. The worker uses the scheduler-provided pre-schedule computed-token
+cursor for the current forward, writes the draft after the visible tokens, and
+prepares the expected verifier/draft positions. The mismatch still reproduces
+with the same known-drift roles, so the next COW prototype should focus on
+transactional commit/reconciliation of speculative KV/logical state rather than
+only changing `InputBatch.update_req_spec_token_ids()`.
+
+Concrete next implementation target:
+
+1. Add an env-gated diagnostic that disables verifier-bonus emission after full
+   accept while preserving draft acceptance. This should not be a production
+   speed path, but it will isolate whether the first mismatch class is
+   specifically the bonus-token state.
+2. Add a second diagnostic that commits `num_computed_tokens` only after
+   accept/reject reconciliation, while explicitly setting final parent
+   `num_computed_tokens` to `num_tokens - 1` after output commit.
+3. If either diagnostic improves exact parity without breaking the known-drift
+   gate shape, use the worker trace fields as the acceptance contract for a
+   real scratch/KV COW prototype.
