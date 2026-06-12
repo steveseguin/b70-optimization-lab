@@ -6,6 +6,28 @@ Date: 2026-06-12
 
 2026-06-12 notes update:
 
+- Added a "Sampler Stage-Split And Bolder Queue Refresh" to
+  `notes/2026-06-12-qwen36-next-bigger-bets.md`. The diagnostic p512/o128 run
+  was timing-only and slow (`67.341 tok/s` corrected), but it answered the
+  current question: sampler/output is not the multi-ms bottleneck. The host
+  sync wait averaged `5.934 ms`, with `5.811 ms` already present at sampler
+  entry; sampler device work from entry to output-ready was only `0.063 ms`,
+  and greedy argmax was only `0.039 ms`. Decision: stop chasing sampler,
+  `.tolist()`, or tiny token-copy changes for the `2x` target. The next probe
+  is pre-sampler: model tail, final hidden selection, logits projection or
+  materialization, TP vocab collectives, graph/queue ordering, and rank skew.
+  Accepted TP4 was restored afterward and passed provenance rerun sentinels
+  `4752`, `11436`, `198` plus the no-thinking quality smoke. New artifacts:
+  `patches/vllm-qwen36-sampler-stagesplit-20260612cf.diff`,
+  `data/qwen36-quark-int8-tp4-sampler-stagesplit-20260612ce.log`,
+  `data/qwen36-quark-int8-tp4-sampler-stagesplit-p512o128-metrics-20260612ce.json`,
+  `data/qwen36-quark-int8-tp4-sampler-stagesplit-nested-summary-20260612ce.json`,
+  `data/qwen36-quark-int8-tp4-accepted-provenance-after-sampler-stagesplit-rerun-20260612cf.json`,
+  `data/qwen36-quark-int8-tp4-accepted-quality-after-sampler-stagesplit-nothink-smoke-rerun-20260612cf.json`,
+  `data/localmaxxing-qwen36-quark-w8a8-int8-exact-refresh-20260612cf.json`,
+  `data/localmaxxing-qwen-moe-b70-leaderboard-refresh-20260612cf.json`,
+  and `data/localmaxxing-vllm-b70-leaderboard-refresh-20260612cf.json`.
+
 - Added a "Larger Bet Addendum 20260612cd" to
   `notes/2026-06-12-qwen36-next-bigger-bets.md` after a fresh Localmaxxing and
   Intel grouped-GEMM/XPU scan. The public exact-model B70/vLLM row remains

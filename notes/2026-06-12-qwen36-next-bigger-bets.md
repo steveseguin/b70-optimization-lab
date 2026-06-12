@@ -8500,3 +8500,179 @@ Decision:
 - Next useful paths remain TP4 internal timing/profiling, hybrid TP/EP, a
   direct c1 runner, persistent MoE/command-list work, or exact target-owned
   speculative transactions.
+
+## 2026-06-12 Sampler Stage-Split And Bolder Queue Refresh
+
+Added after the sampler-stage diagnostic and the latest user review. This is a
+backlog/strategy refresh, not a promoted speed result. The current accepted
+single-user speed anchor remains about `99-100 tok/s`; the diagnostic timing
+run was intentionally slower because it synchronized and printed per-token
+stage data.
+
+Artifacts:
+
+- `patches/vllm-qwen36-sampler-stagesplit-20260612cf.diff`
+- `data/qwen36-quark-int8-tp4-sampler-stagesplit-20260612ce-startupfail.log`
+- `data/qwen36-quark-int8-tp4-sampler-stagesplit-20260612ce.log`
+- `data/qwen36-quark-int8-tp4-sampler-stagesplit-p512o128-metrics-20260612ce.json`
+- `data/qwen36-quark-int8-tp4-sampler-stagesplit-summary-20260612ce.json`
+- `data/qwen36-quark-int8-tp4-sampler-stagesplit-nested-summary-20260612ce.json`
+- `data/qwen36-quark-int8-tp4-accepted-restored-after-sampler-stagesplit-20260612ce.log`
+- `data/qwen36-quark-int8-tp4-accepted-provenance-after-sampler-stagesplit-20260612ce.json`
+- `data/qwen36-quark-int8-tp4-accepted-quality-after-sampler-stagesplit-nothink-smoke-20260612ce.json`
+- `data/qwen36-quark-int8-tp4-accepted-provenance-after-sampler-stagesplit-rerun-20260612cf.json`
+- `data/qwen36-quark-int8-tp4-accepted-quality-after-sampler-stagesplit-nothink-smoke-rerun-20260612cf.json`
+- `data/localmaxxing-qwen36-quark-w8a8-int8-exact-refresh-20260612cf.json`
+- `data/localmaxxing-qwen-moe-b70-leaderboard-refresh-20260612cf.json`
+- `data/localmaxxing-vllm-b70-leaderboard-refresh-20260612cf.json`
+
+Measured facts:
+
+- The first sampler diagnostic launch failed during the dummy sampler pass
+  because optional `SamplingMetadata` fields were `None`. The fix keeps the
+  instrumentation env-gated and uses safe empty fallbacks.
+- The successful p512/o128 timing run decoded at `67.341 tok/s` corrected
+  after-first, so the speed number is diagnostic-only.
+- `async_copy_ready_event.synchronize()` still averaged `5.934 ms`, but almost
+  all of that wait was already present at `sampler_entry`: `5.811 ms` mean,
+  `5.870 ms` median.
+- Device elapsed time from sampler entry to output-ready averaged only
+  `0.063 ms`.
+- Greedy argmax itself averaged only `0.039 ms`.
+- The default-ready sync after sampler output averaged `0.007 ms`, and the
+  copy-after-default sync averaged `0.012 ms`.
+- Accepted TP4 was restored afterward. The first corrected restore gate had a
+  transient provenance/quality drift, but the rerun on the same backend passed
+  exact sentinels `4752`, `11436`, and `198`, plus the no-thinking quality
+  smoke (`OK`, copy phrase, arithmetic `60`, JSON, repeat stability).
+
+Decision:
+
+- The sampler, token-list conversion, and tiny D2H token copy are now ruled out
+  as multi-millisecond roots for the greedy/no-logprobs c1 lane.
+- The remaining hidden wait is before sampler entry. The next speed target is
+  model tail, final hidden-state selection, logits projection/materialization,
+  TP vocab gather or collective work, XPU graph/command-queue ordering, or
+  rank imbalance.
+- Exact-token shortcuts are still allowed only if they are mathematically
+  equivalent and parity-gated against the current Quark W8A8 target. No
+  Qwen3.5, 4-bit, AWQ, expert dropping, or unverified proposer output.
+
+External signals checked in this refresh:
+
+- Localmaxxing exact-model B70/vLLM state is unchanged: one public exact row,
+  `cmq8yhxvo001ipb0149aoa79o`, `99.428358 tok/s`, c1, 32K context,
+  4x Arc Pro B70, Quark W8A8 INT8.
+  Source: `https://localmaxxing.com/api/benchmarks?hfId=nameistoken%2FQwen3.6-35B-A3B-Quark-W8A8-INT8&limit=20`
+- The B70/Qwen/MoE Localmaxxing query also only returns this exact current row.
+  Higher public B70/vLLM rows are currently different models, different
+  precision, or aggregate/batch runs; they are design clues, not comparables.
+  Source: `https://localmaxxing.com/api/leaderboard?hardwareName=Arc%20Pro%20B70&modelFamily=qwen&isMoE=true&limit=50`
+- Intel's grouped-GEMM tuning issue for vLLM/XPU calls out the same problem
+  the local traces are pointing at: MoE decode routing is skewed, grouped GEMM
+  performance depends strongly on real token routing distributions, and the
+  issue text says there is no SYCL-TLA fused-MoE kernel path yet. This supports
+  feeding our real Qwen route windows into grouped-GEMM/oneDNN probes instead
+  of relying only on synthetic launch flags.
+  Source: `https://github.com/intel/intel-xpu-backend-for-triton/issues/6389`
+- vLLM's fused-MoE modular-kernel docs and XPU kernel release notes are worth
+  tracking because they expose the upstream direction: modular MoE pieces,
+  all2all/grouped kernels, MLA/decode attention coverage, and MoE GEMM policy
+  updates for Intel XPU.
+  Sources: `https://docs.vllm.ai/en/stable/design/fused_moe_modular_kernel/`
+  and `https://github.com/vllm-project/vllm-xpu-kernels/releases`
+
+Immediate things to try next:
+
+1. **Pre-sampler logits stage split.**
+   Add device events before and after final hidden-state selection, logits
+   computation, logits processor/materialization, TP vocab gather/reduce, and
+   sampler entry. The test succeeds if the `5.8 ms` wait lands in one named
+   pre-sampler slice.
+
+2. **Exact token-only logits lane.**
+   Prototype a no-logprobs, greedy-only path that computes the same next token
+   without forcing unnecessary full-logits host-visible materialization. A
+   sharded top-1 plus exact cross-rank max can be valid, but only if it matches
+   the current full-logits sampler token-for-token and records tie behavior.
+
+3. **TP collective microscope.**
+   Time every rank around vocab/hidden collectives and oneCCL/custom-op calls.
+   Add one controlled A/B for CCL/P2P/custom collective settings. The goal is
+   not a launch-flag hunt; it is to prove whether the c1 token is waiting on
+   collective setup or rank synchronization.
+
+4. **Rank-card-route triangulation.**
+   In one diagnostic, record all-rank timing, physical card assignment,
+   xpu-smi clocks/power/memory, route-window active experts, max rows per
+   expert, and hot IDs. Rotate rank-to-card mapping. If the slow path follows a
+   card, chase topology/thermal/PCIe. If it follows route windows, chase MoE
+   scheduling.
+
+5. **Real-route grouped-GEMM shootout.**
+   Feed captured Qwen3.6 decode route windows into Intel's grouped-GEMM style
+   harness, oneDNN grouped matmul, current vLLM fused-MoE, and any
+   vllm-xpu-kernels update. Compare exact outputs plus per-layer latency.
+
+6. **Latest clean XPU kernel stack bakeoff.**
+   Build an isolated current Intel/vLLM-XPU or `vllm-xpu-kernels` branch and
+   replay route-window fixtures before attempting a full service. A fixture win
+   without output parity does not count.
+
+7. **Static c1 runner ceiling.**
+   Keep this high priority. A direct in-process c1 decode loop tells us whether
+   vLLM's executor/scheduler boundary is still hiding cost after the logits
+   split.
+
+Bigger, bolder ideas to keep on the board:
+
+1. **Logits/projection supernode.**
+   Fuse final hidden selection, lm-head projection, TP top-1 reduction, and
+   token handoff for the greedy/no-logprobs lane. This is narrower and more
+   plausible than a whole-model rewrite, but could remove the next visible
+   synchronization point if logits materialization is the culprit.
+
+2. **Route-class MoE kernels from real traffic.**
+   Generate a small kernel policy table from actual captured routes: single
+   hot expert, few hot experts, broad balanced route, and fallback. This keeps
+   math identical while avoiding one generic grouped-GEMM policy for every
+   decode shape.
+
+3. **Hot-expert replicated work stealing.**
+   Spend spare VRAM on duplicated hot experts, then let idle ranks steal heavy
+   expert work for route windows proven to be skewed. Output remains identical
+   because the weights are duplicated, but scheduling is no longer locked to
+   one rank's hot route.
+
+4. **Target-owned branch farm.**
+   If static TP4 decode stalls below the `2x` goal, pursue multi-token speed by
+   evaluating branches under the current target model with temporary KV/state
+   transactions. Proposers may guess; only verified target tokens commit.
+
+5. **Whole-token Level Zero replay after slice proof.**
+   Do not jump straight to whole-token command replay. First prove the exact
+   pre-sampler slice. If that slice is launch/queue dominated, then capture a
+   patchable command list around that slice before expanding to whole-token
+   replay.
+
+6. **B70 maintainer challenge bundle.**
+   Package the exact checkpoint, launch command, public Localmaxxing row, route
+   fixtures, timing summaries, pre-sampler attribution, oneDNN/current-kernel
+   parity data, xpu-smi/PCIe details, and a clear target: remove about
+   `5 ms/token` without changing output.
+
+7. **Latency and aggregate split as a product design.**
+   Production may need two worker classes: one static c1 low-latency lane and
+   one continuous-batching aggregate lane. Both share the same model, quality
+   gates, provenance sentinels, and soak tests.
+
+Reliability gates to keep attached to every promising branch:
+
+- Exact provenance sentinels on the accepted prompts.
+- Short no-thinking quality smoke.
+- Prompt-class canaries and a longer-context check before promotion.
+- Route-window or logits parity for kernel/logits changes.
+- Startup success from cold and warm cache.
+- 30-60 minute soak before production promotion.
+- Device-lost/error-frequency log.
+- Peak VRAM and xpu-smi clock/power snapshot.
