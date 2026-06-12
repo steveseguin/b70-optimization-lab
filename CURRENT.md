@@ -6,6 +6,35 @@ Date: 2026-06-12
 
 2026-06-12 notes update:
 
+- Ran the TP2 latency truth-serum for the current Qwen3.6 Quark W8A8 INT8
+  checkpoint. TP2 used GPUs `0,1`, 32K context, Quark quantization, and the
+  same p512/o256 c1 streaming measurement shape. It is not a win: TP2 repeated
+  at `91.351 tok/s` corrected mean (`10.906 ms/token` vLLM decode,
+  `10.949 ms` TPOT), while the restored TP4 lane measured `100.475 tok/s`
+  corrected (`9.916 ms/token`, `9.955 ms` TPOT). TP2 also failed exact accepted
+  provenance despite passing the short no-thinking quality smoke: sentinel
+  drifts were `4752 -> 6126`, `11436 -> 19087`, and `198 -> 321`. TP2 loaded
+  at `16.88 GiB/rank`, with `1,138,206` KV tokens and `34.74x` 32K
+  concurrency; TP4 restored at `8.58 GiB/rank`, `2,052,915` KV tokens, and
+  `62.65x` 32K concurrency. Decision: plain TP2 is ruled out for the
+  no-quality-loss latency lane; keep work on TP4 internals, hybrid TP/EP, or
+  verifier-owned transaction paths. TP4 accepted was restored afterward and
+  passed provenance/quality on rerun after one transient failed first gate.
+  New artifacts:
+  `data/qwen36-quark-int8-tp2-latency-truth-20260612bx.log`,
+  `data/qwen36-quark-int8-tp2-latency-truth-p512o256-metrics-20260612bx.json`,
+  `data/qwen36-quark-int8-tp2-latency-truth-p512o256-r3-metrics-20260612bx.json`,
+  `data/qwen36-quark-int8-tp2-latency-truth-provenance-20260612bx.json`,
+  `data/qwen36-quark-int8-tp2-latency-truth-quality-nothink-smoke-20260612bx.json`,
+  `data/qwen36-quark-int8-tp2-latency-truth-summary-20260612bx.md`,
+  `data/qwen36-quark-int8-tp4-accepted-restored-after-tp2-truth-20260612bx.log`,
+  `data/qwen36-quark-int8-tp4-accepted-provenance-after-tp2-truth-20260612bx.json`,
+  `data/qwen36-quark-int8-tp4-accepted-quality-after-tp2-truth-nothink-smoke-20260612bx.json`,
+  `data/qwen36-quark-int8-tp4-accepted-provenance-after-tp2-truth-rerun-20260612bx.json`,
+  `data/qwen36-quark-int8-tp4-accepted-quality-after-tp2-truth-nothink-smoke-rerun-20260612bx.json`,
+  and
+  `data/qwen36-quark-int8-tp4-restored-after-tp2-p512o256-metrics-20260612bx.json`.
+
 - Added async-output sub-timing after the RPC future-result split. The result
   changes the next target: rank-0 response materialization is almost entirely
   `async_copy_ready_event.synchronize()`, not token-list conversion. In the

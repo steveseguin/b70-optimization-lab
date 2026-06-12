@@ -7914,3 +7914,63 @@ Bigger, bolder ideas to keep in the queue:
     Separate latency-first c1 workers from aggregate-throughput workers. The
     c1 lane can use static buffers and conservative batching; the aggregate
     lane can keep vLLM continuous batching once speed and quality are proven.
+
+## 2026-06-12 TP2 Latency Truth-Serum
+
+Ran the planned TP2 topology test on the current checkpoint to check whether
+TP4 synchronization is the main c1 decode limiter. This was deliberately kept
+as the same model and quantization: `nameistoken/Qwen3.6-35B-A3B-Quark-W8A8-INT8`,
+Quark W8A8 INT8, 32K context, no prefix cache, vLLM/XPU.
+
+Artifacts:
+
+- `data/qwen36-quark-int8-tp2-latency-truth-20260612bx.log`
+- `data/qwen36-quark-int8-tp2-latency-truth-p512o256-metrics-20260612bx.json`
+- `data/qwen36-quark-int8-tp2-latency-truth-p512o256-r3-metrics-20260612bx.json`
+- `data/qwen36-quark-int8-tp2-latency-truth-provenance-20260612bx.json`
+- `data/qwen36-quark-int8-tp2-latency-truth-quality-nothink-smoke-20260612bx.json`
+- `data/qwen36-quark-int8-tp2-latency-truth-summary-20260612bx.md`
+- `data/qwen36-quark-int8-tp4-accepted-restored-after-tp2-truth-20260612bx.log`
+- `data/qwen36-quark-int8-tp4-accepted-provenance-after-tp2-truth-20260612bx.json`
+- `data/qwen36-quark-int8-tp4-accepted-quality-after-tp2-truth-nothink-smoke-20260612bx.json`
+- `data/qwen36-quark-int8-tp4-accepted-provenance-after-tp2-truth-rerun-20260612bx.json`
+- `data/qwen36-quark-int8-tp4-accepted-quality-after-tp2-truth-nothink-smoke-rerun-20260612bx.json`
+- `data/qwen36-quark-int8-tp4-restored-after-tp2-p512o256-metrics-20260612bx.json`
+
+Launch comparison:
+
+- TP2 used GPUs `0,1`, model load memory `16.88 GiB/rank`, KV cache
+  `1,138,206` tokens, and max 32K concurrency `34.74x`.
+- TP2 attention page size changed to `1088` tokens.
+- Restored TP4 used GPUs `0,1,2,3`, model load memory `8.58 GiB/rank`, KV cache
+  `2,052,915` tokens, and max 32K concurrency `62.65x`.
+- TP4 attention page size was the accepted `576` tokens.
+
+Speed result:
+
+- TP2 first p512/o256 run: `91.592 tok/s` corrected, `10.877 ms/token` vLLM
+  decode, `10.919 ms` TPOT.
+- TP2 r3 p512/o256 run: `91.351 tok/s` corrected mean, range
+  `91.204-91.542`, `10.906 ms/token` decode, `10.949 ms` TPOT.
+- TP4 restored adjacent p512/o256 run: `100.475 tok/s` corrected,
+  `9.916 ms/token` decode, `9.955 ms` TPOT.
+
+Quality/provenance result:
+
+- TP2 passed the short no-thinking quality smoke, including exact OK/copy,
+  arithmetic, JSON, repeat stability, and baseline matching.
+- TP2 failed exact accepted TP4 provenance. Sentinel drift:
+  `4752 -> 6126`, `11436 -> 19087`, and `198 -> 321`.
+- TP4 restore had one transient failed first gate, then passed on rerun:
+  provenance sentinels `4752`, `11436`, `198`, and no-thinking quality
+  `pass_all=true`.
+
+Decision:
+
+- Plain TP2 is ruled out as a no-quality-loss single-user latency path. It is
+  slower than TP4 and changes the accepted token stream.
+- Do not spend more time on TP2-as-production-latency-lane unless the question
+  changes to aggregate replicas or a separate BF16-quality topology study.
+- Next useful paths remain TP4 internal timing/profiling, hybrid TP/EP, a
+  direct c1 runner, persistent MoE/command-list work, or exact target-owned
+  speculative transactions.
