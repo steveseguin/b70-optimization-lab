@@ -6,6 +6,24 @@ Date: 2026-06-12
 
 2026-06-12 notes update:
 
+- Added and ran a live c1 gap-budget measurement against the accepted Quark
+  W8A8 INT8 TP4 endpoint. Fresh p512/o512/c1 streaming metrics show corrected
+  decode median `100.013 tok/s`, vLLM decode histogram `9.980 ms/token`,
+  inter-token latency `10.000 ms/token`, and queue time only
+  `0.0086 ms/request`. The `200 tok/s` target is therefore a concrete
+  `5.000 ms/token` budget requiring `4.980 ms/token` saved, or about `49.9%`
+  of current decode latency. The new analyzer makes the implication explicit:
+  optimizing a subsystem smaller than half of decode is mathematically
+  insufficient by itself; a `60%` decode stage would need about `5.94x`
+  speedup, `70%` needs `3.48x`, and `80%` needs `2.66x`. Post-run provenance
+  passed both prefix cases plus sentinels `4752`, `11436`, and `198`.
+  Artifacts:
+  `scripts/qwen36-c1-gap-budget.py`,
+  `data/qwen36-quark-int8-tp4-live-c1-p512o512-metrics-20260612bm.json`,
+  `data/qwen36-quark-int8-tp4-live-c1-gap-budget-20260612bm.json`,
+  `.md`, and
+  `data/qwen36-quark-int8-tp4-accepted-provenance-after-c1-gap-budget-20260612bm.json`.
+
 - Added the isolated oneDNN sidecar probe launcher to the tracked reproduction
   path: `scripts/launch-qwen36-quark-int8-sidecar-probe.sh`. It creates a
   temporary overlay package that selects only the rebuilt `_xpu_C.abi3.so`,

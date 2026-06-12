@@ -24,6 +24,62 @@ Current speed anchor:
   MoE/kernel architecture improvement. Launch flags alone are unlikely to get
   there.
 
+## Live C1 200 Tok/s Gap Budget
+
+Added a reproducible gap-budget artifact around the current accepted endpoint.
+This does not change the server; it measures the live c1 path and converts the
+result into the latency that must disappear to reach the `200 tok/s` goal.
+
+Artifacts:
+
+- `scripts/qwen36-c1-gap-budget.py`
+- `data/qwen36-quark-int8-tp4-live-c1-p512o512-metrics-20260612bm.json`
+- `data/qwen36-quark-int8-tp4-live-c1-gap-budget-20260612bm.json`
+- `data/qwen36-quark-int8-tp4-live-c1-gap-budget-20260612bm.md`
+- `data/qwen36-quark-int8-tp4-accepted-provenance-after-c1-gap-budget-20260612bm.json`
+
+Measurement:
+
+- Endpoint: `http://127.0.0.1:18080`, current accepted Quark W8A8 INT8 TP4
+  service, 32K context.
+- Prompt/output: vLLM-random p512/o512, c1, streaming, `ignore_eos=true`,
+  three measured repeats after a small warmup.
+- Corrected decode median: `100.013 tok/s`.
+- vLLM decode histogram median: `9.980 ms/token`.
+- Target `200 tok/s` budget: `5.000 ms/token`.
+- Required saving: `4.980 ms/token`, or `49.9%` of current decode latency.
+- Queue time is not the issue for c1: `0.0086 ms/request`.
+- Prefill for this p512 run is about `69.145 ms/request`; decode is about
+  `5109.901 ms/request`.
+- Inter-token latency histogram is essentially `10.000 ms/token`.
+
+Interpretation:
+
+- A subsystem that accounts for less than half of decode latency cannot reach
+  `200 tok/s` by itself, even with infinite speedup.
+- If the optimized stage is `60%` of decode, it needs about `5.94x` speedup.
+  At `70%`, it still needs about `3.48x`; at `80%`, about `2.66x`.
+- This makes a narrow microsecond-scale GEMM tweak insufficient as a standalone
+  headline result. The sidecar/oneDNN/custom-kernel path is still worth doing,
+  but only if it attacks a multi-millisecond decode slice such as persistent
+  MoE scheduling, queue/command submission, activation/gather fusion, or
+  collectives.
+- Target-verified multi-token acceptance remains a separate `2x`-class path:
+  it can reduce effective emitted-token latency while preserving the current
+  Quark W8A8 verifier as the output owner.
+
+Quality guard:
+
+- After the benchmark, accepted provenance passed both prefix cases and all
+  sentinel tokens: `4752`, `11436`, and `198`.
+
+Immediate consequence:
+
+1. Add device-side token-step timing before committing to another custom kernel.
+2. Keep the sidecar launcher ready for the next maintenance window.
+3. Treat TP2/single-lane and verifier-transaction experiments as serious
+   candidates because the required saving is too large for small flag changes.
+
 ## Isolated oneDNN Sidecar Probe Launcher
 
 Added after the Python-side env hook. This is the missing reproducibility piece
