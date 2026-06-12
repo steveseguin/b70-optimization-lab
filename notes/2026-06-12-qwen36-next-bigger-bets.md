@@ -4143,3 +4143,168 @@ Updated next actions:
    reuse scale buffers, execute many captured route windows, and report
    execute-only timing. If that still exceeds the current GEMM floor, close the
    oneDNN standalone branch.
+
+## 2026-06-12 Larger Opportunity Refresh
+
+This addendum records the next round of ideas after the scratch-hook and
+oneDNN Qwen-shape probes. It is notes-only: no endpoint change, no new speed
+claim, and no quality relaxation.
+
+External scan update:
+
+- Localmaxxing exact-model filter still shows one public exact row for
+  `nameistoken/Qwen3.6-35B-A3B-Quark-W8A8-INT8` on 4x Arc Pro B70:
+  `cmq8yhxvo001ipb0149aoa79o` at `99.428 tok/s`, c1, 32K context. The
+  broader Arc Pro B70/Qwen/vLLM family query still shows our base-model-mapped
+  `Qwen/Qwen3.6-35B-A3B` row `cmq9ifq0500b0r8012f27j1xl` at
+  `99.770 tok/s`. Keep both references because the exact HF ID matters when
+  comparing public results.
+- Intel's B-series vLLM article remains the strongest external match to our
+  measurements: MoE launch overhead, gate dependency stalls, route imbalance,
+  persistent zero-gap kernels, and dynamic work distribution are the same
+  themes now exposed by our `~10 ms/token` decode budget and route-replay
+  floors:
+  `https://vllm.ai/blog/2025-11-11-intel-arc-pro-b`.
+- vLLM XPU docs list speculative decoding feature areas including MTP,
+  n-gram, draft models, EAGLE, and parallel draft models, but public
+  Qwen3.6 MTP reports include long-context crashes. Treat MTP as a serious
+  `>200 tok/s` candidate only behind target-model verification, rollback
+  logs, and long-context soak:
+  `https://docs.vllm.ai/en/v0.18.0/models/hardware_supported_models/xpu/`,
+  `https://github.com/vllm-project/vllm/issues/40756`.
+- Public B70 reports keep showing the same split: aggregate throughput can look
+  good at high concurrency, while single-request latency remains much harder.
+  This supports a production plan with separate c1 latency and aggregate
+  capacity lanes, not one universal serving mode:
+  `https://forum.level1techs.com/t/intel-b70-launch-unboxed-and-tested/247873`,
+  `https://www.reddit.com/r/IntelArc/comments/1ti1uw0/intel_arc_pro_b70_looking_for_llm_setup_guidance/`.
+
+### New Things To Try
+
+1. **One-dispatch fake layerlet overhead gate.**
+   Before writing the full fused MoE layerlet, build the thinnest possible
+   custom op with the final ABI shape: hidden state, top-k ids/weights, route
+   offsets, workspace pointers, output pointer, and a layer id. It can do a
+   checksum or copy. The only question is launch/call overhead. If this empty
+   layerlet is already too expensive, the full fused design must move closer
+   to a resident service or command graph.
+
+2. **oneDNN reuse-only grouped INT8 benchmark.**
+   Run one fair oneDNN follow-up: create Qwen GEMM1/GEMM2 primitives and
+   memory objects once, reuse scale buffers, then replay many captured route
+   windows. Record execute-only timing. If execute-only still trails the
+   current XPU GEMM floor, close standalone oneDNN and keep it only as a
+   design/reference stack.
+
+3. **Layer-9 hotset fast path with cold fallback.**
+   Routecapture says top-32/top-64 experts cover enough assignments to justify
+   a fast path, and the memory cost is roughly `1-2 GiB/rank` for all layers.
+   Prototype one layer first: hot experts use tile-native packed W8A8 buffers
+   and cold experts fall back to current `xpu_fused_moe`. The quality rule is
+   exact math for both paths and max diff `0.0` on captured routes.
+
+4. **MTP/speculation state audit for Qwen3.6 GDN.**
+   Do not start with a speed run. First map exactly which state must be
+   copied, versioned, or rolled back for Qwen3.6's Gated DeltaNet and normal
+   attention paths. The deliverable is a transaction-state table: KV pages,
+   GDN recurrent state, scheduler buffers, sampled-token buffers, logits,
+   and per-request metadata.
+
+5. **Long-context speculative stability probe.**
+   If MTP or another proposer is tried, test it at the failure shape reported
+   publicly: long requests around `25K+` total tokens and `1000+` generated
+   tokens. A short p512/o512 win is not enough. Speculation must survive the
+   production context shapes we care about.
+
+6. **B70 XMX/DPAS counter packet.**
+   Capture hardware counters for the current grouped GEMM, quant, and any
+   layerlet candidate. The question is binary: are the hot kernels using the
+   intended INT8 XMX/DPAS path at useful occupancy? If not, the larger win is
+   a hand-tuned ESIMD/SYCL DPAS kernel or a layout repack, not vLLM flags.
+
+7. **Model-forward graph surgery point.**
+   The safe live timing gate now says accepted graph model-forward costs about
+   `8.44 ms/token`. Locate the exact graph node or compiled custom-op boundary
+   where MoE can be replaced without losing graph replay. A microbench-only win
+   is not enough; the patch must reduce this live model-forward bucket.
+
+8. **Rank-group experiment for latency, not capacity.**
+   Test whether all four cards are helping c1 latency or mainly serving memory
+   and aggregate throughput. Candidate shapes: TP4 current, TP2 with lower
+   context, two TP2 replicas, and one TP2 latency lane plus one TP2 aggregate
+   lane. Use exact canaries and the same p512/o512 metric. If TP4 allreduce or
+   small local GEMMs dominate, production should route c1 traffic differently.
+
+9. **Command-bundle layer group.**
+   If the one-dispatch fake layerlet is cheap but full fusion is hard, build a
+   Level Zero/SYCL command bundle for a small group of layers with updateable
+   memory pointers. This is less invasive than a full custom engine but attacks
+   the same host-launch and graph-boundary costs.
+
+10. **Quality-near-miss suite, not just sentinel suite.**
+    Add a small BF16-vs-Quark and old-kernel-vs-new-kernel logit-rank harness
+    that checks top-k rank stability and semantic answer class on canary
+    prompts. Sentinels catch gross errors; logit-rank drift catches kernels
+    that are numerically "close" but behaviorally risky.
+
+### Bigger, Bolder Ideas To Keep Alive
+
+1. **B70 MoE resident runtime.**
+   Move beyond a fused op: keep resident expert workers alive across decode
+   steps and feed them route/task descriptors from a device queue. This is the
+   closest match to Intel's persistent zero-gap direction and avoids paying
+   per-token setup for the same layer shapes.
+
+2. **Route-class generated layerlet library.**
+   Generate a small number of specialized kernels per layer from real route
+   classes rather than one generic MoE implementation. A route classifier
+   picks the closest exact-safe kernel; rare shapes use the generic fallback.
+   The generator should emit both code and exact replay tests.
+
+3. **Hot-expert tile cache as a first-class model artifact.**
+   At load time, build a checksumed sidecar of tile-native packed expert
+   buffers for selected layers/hotsets. This separates model quality from
+   runtime layout: source tensors remain unchanged, while the fast path uses a
+   certified layout cache.
+
+4. **Verified multi-token target branch engine.**
+   Instead of trusting a small draft model, use spare rank groups or idle time
+   to evaluate several exact target branches, then commit the branch selected
+   by the same target model. This preserves quality by construction but needs
+   careful state sharing to avoid multiplying memory cost.
+
+5. **Latency sidecar outside vLLM.**
+   Build a tiny fixed-bucket serving sidecar for c1 chat traffic: one request,
+   fixed prompt/output buckets, preallocated KV/GDN state, certified graph
+   cache, exact tokenizer/model weights, and a narrow OpenAI-compatible shim.
+   The point is not to replace vLLM; it is to prove the real lower bound for
+   user-perceived latency.
+
+6. **XPU kernel challenge packet with bounty-quality repro.**
+   Publish route windows, tensor shapes, expected output hashes, current
+   timings, oneDNN results, and target budgets. The ask should be specific:
+   beat the B70 W8A8 layer-9 floor without changing math. This can pull help
+   from Intel/vLLM/Triton-XPU people faster than a broad performance issue.
+
+7. **Production split by service class.**
+   Design production as multiple certified lanes: c1 latency, long-context,
+   aggregate batch, and risky experimental. Each lane has its own graph cache,
+   quality gates, soak target, and Localmaxxing payload. Do not force the
+   32K TP4 backend to be optimal for every request shape.
+
+8. **Driver/runtime regression farm.**
+   Use the same accepted command, prompt suite, and provenance checks across
+   kernel/KMD/firmware/oneAPI/oneCCL/vLLM container versions. This is tedious,
+   but the B70 stack is still moving fast enough that one runtime upgrade could
+   matter more than another week of local kernel surgery.
+
+9. **Kernel-level mixed scheduler: hot path exact, cold path generic.**
+   Build one scheduler that can choose among current `xpu_fused_moe`,
+   hotset-packed GEMM, persistent layerlet, and oneDNN/ESIMD candidate per
+   layer/window. The current route data argues against one static winner.
+
+10. **Reliability-weighted benchmark scoreboard.**
+    Track every candidate as `{tok/s, ms/token, exactness, logit drift,
+    device-lost count, restart time, soak minutes, VRAM, graph-cache id}`.
+    This prevents a fragile `120 tok/s` experiment from displacing a stable
+    `100 tok/s` production candidate until it earns that status.

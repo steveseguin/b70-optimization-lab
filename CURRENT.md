@@ -6,6 +6,22 @@ Date: 2026-06-12
 
 2026-06-12 continuation:
 
+- Added a larger-opportunity refresh to
+  `notes/2026-06-12-qwen36-next-bigger-bets.md` after the scratch-hook and
+  oneDNN Qwen-shape probes. The refresh records the current Localmaxxing
+  public state, external B70/vLLM/MTP signals, and a new ordered backlog:
+  one-dispatch fake layerlet overhead gate, oneDNN reuse-only timing, layer-9
+  hotset fast path with cold fallback, Qwen3.6 GDN speculative-state audit,
+  long-context speculative stability probe, XMX/DPAS counter packet,
+  model-forward graph surgery, TP/rank-group latency lanes, command-bundle
+  layer groups, and a quality-near-miss logit-rank suite. Bigger bets now
+  include a B70 MoE resident runtime, generated route-class layerlets,
+  checksumed hot-expert tile-cache artifacts, verified multi-token target
+  branch engine, a fixed-bucket latency sidecar outside vLLM, an upstream XPU
+  kernel challenge packet, production split by service class, a driver/runtime
+  regression farm, mixed hot/cold MoE scheduling, and a reliability-weighted
+  benchmark scoreboard. This is notes-only; no endpoint or speed claim changed.
+
 - Ran the next route-exact layer-9 scratch-hook screen and a Qwen-shaped
   oneDNN grouped INT8 dtype probe while the accepted backend was stopped for a
   clean XPU window, then restored the backend and passed provenance. The
