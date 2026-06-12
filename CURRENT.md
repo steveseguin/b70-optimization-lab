@@ -6,6 +6,27 @@ Date: 2026-06-12
 
 2026-06-12 continuation:
 
+- Added an isolated W8A8 kernel-floor packet for layer-9 routecapture6 after
+  stopping the accepted backend for a clean XPU window. Exact grouped GEMM is
+  essentially flat across route-window sizes: window 1 averages
+  `113.845 us`/`112.371 us` for gemm1/gemm2, while window 16 averages
+  `112.596 us`/`114.068 us`. Quant helper calls sit around `88-115 us`. The
+  decision is that c1 decode is now best treated as a launch/control/tiny-shape
+  floor: two exact grouped GEMM dispatches already cost about `226 us/layer`,
+  above the `~168 us/layer` non-speculative budget before the rest of MoE.
+  Next non-speculative work should collapse dispatch boundaries via a
+  persistent/one-dispatch layerlet, a oneDNN grouped-matmul fused-control
+  replay, or a whole-token command graph; helper variants remain plumbing, not
+  endpoint candidates. Artifacts:
+  `notes/2026-06-12-qwen36-w8a8-floor-and-layerlet-decision.md`,
+  `data/qwen36-quark-int8-w8a8-kernel-floor-layer9-routecapture6-w1-20260612an.json`,
+  `.log`,
+  `data/qwen36-quark-int8-w8a8-kernel-floor-layer9-routecapture6-w16-20260612an.json`,
+  `.log`, and
+  `data/qwen36-quark-int8-tp4-accepted-provenance-after-floor-20260612an.json`.
+  Accepted backend was restored afterward; `/health` returned after `59s` and
+  provenance passed both prefix cases plus all sentinel tokens.
+
 - Ran the quant out-variant scaffold through an isolated layer-9 routecapture6
   rows=1 replay using a temporary package overlay, leaving the accepted source
   package untouched. The patched artifact exposed both quant out ops and the

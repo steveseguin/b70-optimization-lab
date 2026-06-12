@@ -3708,3 +3708,70 @@ Updated decision:
   - a one-dispatch/persistent layer-9 MoE layerlet using the scratch ABI, or
   - a roofline/stall packet proving that one remaining helper kernel is the
     dominant bottleneck before another helper branch is attempted.
+
+## 2026-06-12 W8A8 Floor Gate And Bigger Bets
+
+Artifact:
+`notes/2026-06-12-qwen36-w8a8-floor-and-layerlet-decision.md`.
+
+New local floor facts:
+
+- Route-window 1 exact grouped GEMM is `113.845 us` for gemm1 and
+  `112.371 us` for gemm2.
+- Route-window 16 exact grouped GEMM is still only `112.596 us` for gemm1 and
+  `114.068 us` for gemm2.
+- Quant helper calls sit around `88-115 us` depending shape and noise.
+- Two exact grouped GEMM dispatches alone cost about `226 us/layer`, already
+  above the `~168 us/layer` non-speculative budget before the rest of MoE.
+
+Decision update:
+
+- The c1 bottleneck is now best treated as a launch/control/tiny-shape floor,
+  not merely a missing scratch buffer or one bad helper op.
+- Keep quant-out and scratch variants as plumbing for a larger fused layerlet.
+  Do not spend another benchmark window on isolated helper variants unless a
+  profiler proves that helper is the largest remaining wall.
+- Next non-speculative work should collapse dispatch boundaries: persistent
+  MoE worker, one-dispatch layerlet, oneDNN grouped-matmul fused-control path,
+  or whole-token command graph.
+
+Additional larger ideas to keep in the queue:
+
+1. **oneDNN grouped-matmul fused control.**
+   Build a route-exact layer-9 replay using oneDNN grouped matmul on XPU as a
+   control path. Its grouped API supports source/weight scales, SiLU, binary
+   multiply post-ops, and `DNNL_ARG_HINT_MAX_GROUP_SIZE`; that is close enough
+   to Quark W8A8 MoE to test whether the current SYCL-TLA grouped path is the
+   true floor.
+
+2. **Single persistent MoE layer service, not one kernel per helper.**
+   The service owns static scratch buffers and receives only route descriptors.
+   It should perform route expansion, activation quant, two W8A8 GEMMs,
+   SiLU/up-gate, top-k weighting, and gather in one resident loop. First gate:
+   layer 9 exact parity. Second gate: `<=168 us/layer`.
+
+3. **Route-class layerlet codegen with shape buckets.**
+   Generate a small family of exact kernels for common c1 route classes rather
+   than a fully generic MoE kernel. The routecapture fixtures already give the
+   class distribution. Rare route classes fall back to accepted `xpu_fused_moe`.
+
+4. **Whole-token command-list appliance.**
+   Capture metadata update, attention, MoE, collective, logits, and sampling
+   as a fixed c1 command list for common buckets. This attacks the same flat
+   launch floor at a larger scope than the MoE layerlet.
+
+5. **Exact self-lookahead lane.**
+   Use spare card time to run target-model branch lookahead while the current
+   token is streaming. This does not trust a lower-quality model; it commits
+   only target-model decisions and can be disabled for non-greedy traffic.
+
+6. **One-card/two-card latency truth-serum with reduced context.**
+   If TP4 communication and small shards are part of the c1 wall, a smaller
+   context latency lane might be faster even if it is worse for 32K capacity.
+   Treat this as a routing option, not a replacement for the TP4 production
+   lane.
+
+7. **Public kernel challenge packet.**
+   Publish a minimal routecapture6 layer-9 W8A8 fixture with exact expected
+   outputs and the `112-114 us` grouped-GEMM floor. This is specific enough
+   for Intel/vLLM kernel owners to reproduce and improve.
