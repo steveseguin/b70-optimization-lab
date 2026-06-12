@@ -288,6 +288,15 @@ Current Qwen3.6 INT8 direction:
     also validates fixed replay starts for exact-ID and prompt-class stress
     windows, so the next kernel step is a top-64 hotset fast path with exact
     cold fallback, starting on layer `9`.
+33. Extended `scripts/bench-qwen36-route-exact-w8a8-grouped-gemm.py` with
+    hotset split dry-run support. Layer `9` top-64 exact-ID windows put
+    `75.0%` to `93.8%` of rows into the hotset, leaving only `5` to `22` active
+    cold experts; prompt-class math stress windows still keep `69.5%` to
+    `83.6%` of rows hot. Layer `20` is similar on exact windows and mostly
+    strong on repetitive stress, except one `62.5%` hot window. This makes
+    top-64 hotsets a real target, but a naive two-launch hot/cold GEMM can lose
+    to launch overhead. The next useful implementation should be persistent or
+    fused around the cold fallback, not just two independent grouped GEMMs.
 
 ## 2026-05-10 MiniMax AutoRound Addendum
 

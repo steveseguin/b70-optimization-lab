@@ -904,3 +904,67 @@ Concrete next implementation target:
 5. Promote no endpoint change unless the accepted model-forward synchronized
    bucket drops below the current `8.44 ms/token` baseline and exact provenance
    sentinels still pass.
+
+## 2026-06-12 Hotset Split Replay Model
+
+Updated script:
+
+- `scripts/bench-qwen36-route-exact-w8a8-grouped-gemm.py`.
+
+New support:
+
+- `--hotset-experts`: supply a logical expert hotset for replay windows.
+- `--hotset-cold-mode full|compact|both`: model cold fallback either as the
+  original full expert table with hot rows zeroed, or as an upper-bound compact
+  cold table containing only active cold experts.
+- Dry-run output now reports hot rows, cold rows, hot coverage, hot active
+  experts, cold active experts, and cold fallback expert count per selected
+  route window.
+
+Artifacts:
+
+- `data/qwen36-quark-int8-tp4-hotset-split-l9-route6-dryrun-20260612z.json`.
+- `data/qwen36-quark-int8-tp4-hotset-split-l9-pcmath-dryrun-20260612z.json`.
+- `data/qwen36-quark-int8-tp4-hotset-split-l20-route5-dryrun-20260612z.json`.
+- `data/qwen36-quark-int8-tp4-hotset-split-l20-pcrepetitive-dryrun-20260612z.json`.
+
+Layer `9` top-64 split:
+
+- Exact-ID routecapture6 windows:
+  - hot coverage: `93.8%`, `93.8%`, `93.8%`, `75.0%`, `78.9%`.
+  - hot rows out of 128: `120`, `120`, `120`, `96`, `101`.
+  - cold rows: `8`, `8`, `8`, `32`, `27`.
+  - cold active experts: `5`, `5`, `5`, `22`, `19`.
+- Prompt-class math stress windows:
+  - hot coverage: `69.5%`, `83.6%`, `77.3%`, `72.7%`, `83.6%`, `83.6%`.
+  - cold rows: `39`, `21`, `29`, `35`, `21`, `21`.
+  - cold active experts: `30`, `18`, `22`, `26`, `18`, `18`.
+
+Layer `20` top-64 split:
+
+- Exact-ID routecapture5 windows:
+  - hot coverage: `85.9%`, `85.9%`, `85.9%`, `87.5%`, `82.0%`.
+  - cold rows: `18`, `18`, `18`, `16`, `23`.
+  - cold active experts: `16`, `16`, `16`, `11`, `13`.
+- Prompt-class repetitive stress windows:
+  - hot coverage: `62.5%`, `87.5%`, `87.5%`, `87.5%`, `87.5%`, `87.5%`.
+  - cold rows: `48`, `16`, `16`, `16`, `16`, `16`.
+  - cold active experts: `34`, `12`, `12`, `13`, `12`, `12`.
+
+Implication:
+
+- Top-64 hotsets are strong enough to justify a real fast-path prototype. They
+  move most rows into a small, stable expert set on the exact-ID windows and on
+  most prompt-class stress windows.
+- The cold fallback is small on most windows, but not free. A naive two-launch
+  hotset path can lose to launch overhead unless the hot path is materially
+  faster or the cold path is fused/cheap.
+- The next implementation should not be only "run grouped GEMM twice." Better
+  targets:
+  1. a persistent top-64 hotset layerlet with an in-kernel cold fallback queue,
+  2. a tile-native hotset repack cache with cold rows sent through the existing
+     exact path only when needed,
+  3. or a benchmark-only two-launch hot/cold model to establish the minimum
+     speedup required before writing the persistent kernel.
+- Layer `9` remains first because the exact-ID hot coverage is excellent and
+  the stress window range is broad enough to expose fallback overhead.

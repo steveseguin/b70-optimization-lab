@@ -172,6 +172,60 @@ def compact_counts(counts: list[int]) -> tuple[list[int], dict[str, Any]]:
     return compact, metadata
 
 
+def validate_hotset_experts(experts: list[int], num_experts: int) -> list[int]:
+    seen: set[int] = set()
+    out = []
+    for expert in experts:
+        if expert < 0 or expert >= num_experts:
+            raise ValueError(
+                f"Hotset expert {expert} is outside [0, {num_experts})")
+        if expert in seen:
+            raise ValueError(f"Duplicate hotset expert {expert}")
+        seen.add(expert)
+        out.append(expert)
+    return out
+
+
+def split_counts_by_hotset(
+    counts: list[int],
+    *,
+    hotset_experts: list[int],
+    cold_mode: str,
+) -> tuple[list[int], list[int], dict[str, Any]]:
+    num_experts = len(counts)
+    hotset = validate_hotset_experts(hotset_experts, num_experts)
+    hotset_lookup = set(hotset)
+    hot_counts = [int(counts[expert]) for expert in hotset]
+    cold_full = [
+        0 if expert in hotset_lookup else int(count)
+        for expert, count in enumerate(counts)
+    ]
+    cold_compaction = None
+    if cold_mode == "compact":
+        cold_counts, cold_compaction = compact_counts(cold_full)
+    elif cold_mode == "full":
+        cold_counts = cold_full
+    else:
+        raise ValueError(f"Unknown cold hotset mode {cold_mode}")
+
+    hot_rows = sum(hot_counts)
+    cold_rows = sum(cold_counts)
+    total_rows = hot_rows + cold_rows
+    metadata = {
+        "hotset_size": len(hotset),
+        "hot_rows": hot_rows,
+        "cold_rows": cold_rows,
+        "total_rows": total_rows,
+        "hot_coverage": hot_rows / total_rows if total_rows else 0.0,
+        "hot_active_experts": sum(1 for count in hot_counts if count > 0),
+        "cold_active_experts": sum(1 for count in cold_counts if count > 0),
+        "cold_mode": cold_mode,
+        "cold_num_experts": len(cold_counts),
+        "cold_compaction": cold_compaction,
+    }
+    return hot_counts, cold_counts, metadata
+
+
 def select_windows(
     records: list[dict[str, Any]],
     *,
@@ -394,6 +448,16 @@ def run_benchmark(args: argparse.Namespace) -> dict[str, Any]:
     modes = ["exact"]
     if args.compact_active_experts:
         modes.append("compact_active")
+    hotset_experts = (
+        validate_hotset_experts(args.hotset_experts, full_num_experts)
+        if args.hotset_experts else []
+    )
+    hotset_cold_modes = []
+    if hotset_experts:
+        hotset_cold_modes = (
+            ["full", "compact"]
+            if args.hotset_cold_mode == "both" else [args.hotset_cold_mode]
+        )
 
     for case_idx, window in enumerate(windows):
         base_counts = [int(item) for item in window["counts"]]
@@ -431,6 +495,85 @@ def run_benchmark(args: argparse.Namespace) -> dict[str, Any]:
                     "calls": window["calls"],
                     **metadata,
                     **summarize_timings(timings),
+                })
+        for cold_mode in hotset_cold_modes:
+            hot_counts, cold_counts, split_metadata = split_counts_by_hotset(
+                base_counts,
+                hotset_experts=hotset_experts,
+                cold_mode=cold_mode,
+            )
+            for gemm_stage in gemm_stages:
+                combined_timings: list[float] = []
+                split_parts = []
+                allocated_mib = 0.0
+                all_finite = True
+                output_max_abs = 0.0
+
+                if split_metadata["hot_rows"]:
+                    hot_metadata, hot_timings = run_one(
+                        counts=hot_counts,
+                        gemm_stage=gemm_stage,
+                        case_seed=args.seed + case_idx * 17 +
+                        (0 if gemm_stage == "gemm1" else 100000) + 300000,
+                    )
+                    combined_timings = hot_timings
+                    split_parts.append({"part": "hot", **hot_metadata})
+                    allocated_mib += float(hot_metadata["allocated_mib_estimate"])
+                    all_finite = all_finite and bool(
+                        hot_metadata["output_all_finite"])
+                    output_max_abs = max(
+                        output_max_abs,
+                        float(hot_metadata["output_max_abs"]),
+                    )
+                if split_metadata["cold_rows"]:
+                    cold_metadata, cold_timings = run_one(
+                        counts=cold_counts,
+                        gemm_stage=gemm_stage,
+                        case_seed=args.seed + case_idx * 17 +
+                        (0 if gemm_stage == "gemm1" else 100000) + 400000,
+                    )
+                    if combined_timings:
+                        combined_timings = [
+                            hot + cold
+                            for hot, cold in zip(combined_timings, cold_timings)
+                        ]
+                    else:
+                        combined_timings = cold_timings
+                    split_parts.append({"part": "cold", **cold_metadata})
+                    allocated_mib += float(
+                        cold_metadata["allocated_mib_estimate"])
+                    all_finite = all_finite and bool(
+                        cold_metadata["output_all_finite"])
+                    output_max_abs = max(
+                        output_max_abs,
+                        float(cold_metadata["output_max_abs"]),
+                    )
+
+                case_results.append({
+                    "case_index": case_idx,
+                    "mode": f"hotset_split_{cold_mode}_cold",
+                    "route_start_index": window["route_start_index"],
+                    "route_window_size": window["route_window_size"],
+                    "first_call": window["first_call"],
+                    "first_layer": window["first_layer"],
+                    "layers": window["layers"],
+                    "calls": window["calls"],
+                    "gemm_stage": gemm_stage,
+                    "num_experts": (
+                        f"{len(hot_counts)}+{len(cold_counts)}"),
+                    "active_experts": (
+                        split_metadata["hot_active_experts"] +
+                        split_metadata["cold_active_experts"]),
+                    "total_rows": split_metadata["total_rows"],
+                    "hotset_split": split_metadata,
+                    "split_parts": split_parts,
+                    "k": split_parts[0]["k"] if split_parts else None,
+                    "n": split_parts[0]["n"] if split_parts else None,
+                    "dtype": args.dtype,
+                    "allocated_mib_estimate": allocated_mib,
+                    "output_all_finite": all_finite,
+                    "output_max_abs": output_max_abs,
+                    **summarize_timings(combined_timings),
                 })
 
     aggregates: dict[str, dict[str, Any]] = {}
@@ -507,6 +650,8 @@ def run_benchmark(args: argparse.Namespace) -> dict[str, Any]:
             "warmup": args.warmup,
             "iterations": args.iterations,
             "seed": args.seed,
+            "hotset_experts": hotset_experts,
+            "hotset_cold_mode": args.hotset_cold_mode,
         },
         "compact_metadata": compact_metadata,
         "aggregates": sorted(
@@ -515,7 +660,7 @@ def run_benchmark(args: argparse.Namespace) -> dict[str, Any]:
                 item["mode"],
                 item["gemm_stage"],
                 item["route_window_size"],
-                item["num_experts"],
+                str(item["num_experts"]),
             ),
         ),
         "cases": case_results,
@@ -544,6 +689,24 @@ def parse_args() -> argparse.Namespace:
         default="both",
     )
     parser.add_argument("--compact-active-experts", action="store_true")
+    parser.add_argument(
+        "--hotset-experts",
+        type=parse_int_list,
+        help=(
+            "Comma-separated logical experts for a modeled hotset fast path. "
+            "When set, the harness also reports hotset_split_* modes."
+        ),
+    )
+    parser.add_argument(
+        "--hotset-cold-mode",
+        choices=("full", "compact", "both"),
+        default="both",
+        help=(
+            "Cold fallback model for --hotset-experts. full keeps the original "
+            "expert count with hot rows zeroed; compact is an upper-bound model "
+            "that repacks only active cold experts."
+        ),
+    )
     parser.add_argument("--dtype", choices=("bf16", "fp16"), default="bf16")
     parser.add_argument("--device", default="xpu:0")
     parser.add_argument("--warmup", type=int, default=10)
@@ -577,6 +740,20 @@ def dry_run(args: argparse.Namespace) -> dict[str, Any]:
     for idx, window in enumerate(windows):
         counts = [int(item) for item in window["counts"]]
         compact, _ = compact_counts(counts)
+        hotset_summary = None
+        if args.hotset_experts:
+            hotset_summary = {}
+            cold_modes = (
+                ["full", "compact"]
+                if args.hotset_cold_mode == "both" else [args.hotset_cold_mode]
+            )
+            for cold_mode in cold_modes:
+                _, _, split = split_counts_by_hotset(
+                    counts,
+                    hotset_experts=args.hotset_experts,
+                    cold_mode=cold_mode,
+                )
+                hotset_summary[cold_mode] = split
         summaries.append({
             "case_index": idx,
             "route_start_index": window["route_start_index"],
@@ -586,6 +763,7 @@ def dry_run(args: argparse.Namespace) -> dict[str, Any]:
             "active_experts": sum(1 for count in counts if count > 0),
             "total_rows": sum(counts),
             "compact_active_experts": len(compact),
+            "hotset_split": hotset_summary,
             "layers": window["layers"],
             "calls": window["calls"],
         })
@@ -596,6 +774,8 @@ def dry_run(args: argparse.Namespace) -> dict[str, Any]:
         args.tp_size,
         "full_num_experts": int(text_config["num_experts"]),
         "route_metadata": route_metadata,
+        "hotset_experts": args.hotset_experts or [],
+        "hotset_cold_mode": args.hotset_cold_mode,
         "selected_windows": summaries,
     }
 
