@@ -9172,3 +9172,151 @@ Next work that should move the result:
    The highest-upside no-quality-loss bet remains exact W8A8 MoE execution
    with route-class-specific scheduling or persistent expert state. The rank
    rotation makes this more attractive than more device-environment tuning.
+
+## 2026-06-12 Bigger/Bolder Ideas Refresh 20260612cm
+
+This section records the next idea backlog after the rank/card rotation result.
+It is intentionally separated from measured wins. The accepted speed anchor is
+still the quality-gated `~100 tok/s` class TP4 endpoint, and the public
+Localmaxxing exact-model/B70/vLLM query still returns only the existing
+`99.428 tok/s` row. Nothing below is a promoted result until it passes the
+usual provenance, exact canary, repeat-stability, and quality gates.
+
+External signals checked during this refresh:
+
+- Intel's current XPU container notes explicitly warn that some workloads can be
+  slower than older releases while the stack transitions to the dedicated XPU
+  kernel path. That makes a clean-stack bakeoff useful, but also means a newer
+  image is not automatically a win. Source:
+  <https://github.com/intel/ai-containers/blob/main/vllm/0.17.0-xpu.md>.
+- oneDNN release notes now call out experimental grouped memory and grouped
+  matmul for MoE, including Intel GPU optimization and an execution-time maximum
+  group-size hint. This is directly relevant to route-skewed Qwen MoE decode.
+  Source: <https://github.com/uxlfoundation/oneDNN/releases>.
+- vLLM's XPU direction is moving into `vllm-xpu-kernels`, a dedicated SYCL/DPC++
+  kernel package that already owns attention, GDN, MoE routing, gather, and
+  expert-remapping operations. Source:
+  <https://github.com/vllm-project/vllm-xpu-kernels>.
+- The vLLM XPU migration RFC says the dedicated kernel library is meant to
+  improve performance, maintainability, and integration quality versus the
+  older IPEX-dependent path. Source:
+  <https://github.com/vllm-project/vllm/issues/33214>.
+- A public 4x Arc Pro B60 production-style benchmark reported that an
+  Intel-optimized vLLM build improved TPOT by roughly `20-25%` on its workload.
+  This is not a Qwen3.6/B70/current-model comparable, but it reinforces testing
+  Intel-maintained builds and policies instead of assuming local flags are the
+  whole story. Source:
+  <https://embeddedllm.com/blog/benchmarking-llm-inference-intel-arc-pro-b60>.
+- Upstream vLLM INT8/FP8 docs remain NVIDIA/AMD-centric for official fast paths,
+  so our Quark W8A8-on-XPU path should be treated as an Intel-specific
+  integration/kernel problem, not a generic vLLM quantization problem. Sources:
+  <https://docs.vllm.ai/en/latest/features/quantization/llm_compressor/int8_w8a8/>
+  and
+  <https://docs.vllm.ai/en/latest/features/quantization/llm_compressor/fp8/>.
+
+Near-term additions to things to try:
+
+1. **Route overlay before more blind tuning.**
+   Add low-overhead route signatures beside the all-rank forward-boundary rows:
+   layer id, active expert count, max rows per expert, top expert ids, and a
+   compact route hash. The rank/card rotation says the physical card is not the
+   lead hypothesis; the next proof needs to say whether the slow ranks own
+   heavier route windows or simply pay more graph/collective latency.
+
+2. **Layer-family timing with route context.**
+   Split the forward wait one family at a time: attention/GDN, router, MoE
+   grouped GEMM, expert gather/scatter, dense/shared MLP, residual/norm, and TP
+   collectives. Each run should add only one or two synchronization points so it
+   does not repeat the heavy-probe `UR_RESULT_ERROR_DEVICE_LOST` failure mode.
+
+3. **oneDNN grouped-matmul hint experiment.**
+   Extend the existing route-window sidecar to test grouped memory with an
+   execution-time max-group-size hint. The exact gate is captured-tensor output
+   compare against `xpu_fused_moe`, not endpoint speed. If the hint helps
+   skewed route windows, it becomes a candidate for a disabled live path.
+
+4. **vllm-xpu-kernels MoE plugin branch.**
+   Stop treating the local vLLM tree as the only integration point. Build a
+   small branch in or beside `vllm-xpu-kernels` for the Quark W8A8 MoE decode
+   path: route-class policy, expert remap, grouped GEMM, fused activation, and
+   gather. This is better aligned with upstream XPU ownership and easier to
+   turn into a maintainer challenge packet.
+
+5. **Clean Intel stack matrix, measured by route fixtures first.**
+   Compare local source, current Intel container, one release older/newer if
+   available, and any Intel-optimized vLLM/LLM-Scaler variant. First gate:
+   run real route fixtures or one-layer tensor compare, not the whole server.
+   Second gate: full endpoint provenance and quality. Variables to record:
+   oneAPI, IGC, Level Zero, oneCCL, PyTorch, vLLM, `vllm-xpu-kernels`,
+   `SYCL_UR_USE_LEVEL_ZERO_V2`, block size, graph mode, and memory utilization.
+
+6. **VTune/oneDNN/Level Zero proof packet.**
+   Build one profiling packet for a short p512/o128 run: all-rank boundary
+   timing, XPU occupancy/counters where available, oneDNN verbose for sidecar
+   kernels, Level Zero queue timing if practical, xpu-smi power/frequency, and
+   process-to-card mapping. This should answer whether the `~4-5 ms/token`
+   forward wait is compute, command latency, collective synchronization, or
+   idle dependency chaining.
+
+7. **Static c1 decode micro-engine.**
+   If the in-process no-server c1 harness beats vLLM materially, generate a
+   fixed-shape c1 path for latency-critical requests while keeping vLLM as the
+   correctness oracle. The micro-engine can reuse the exact checkpoint, KV
+   state, tokenizer, and greedy sampler; it only removes generic serving
+   machinery and dynamic graph overhead.
+
+8. **Hybrid TP/EP MoE island with dense TP retained.**
+   Keep attention, dense/shared layers, and logits in the current TP layout,
+   but isolate MoE expert work into an expert-parallel or partially replicated
+   island. The design goal is to avoid paying all-card TP synchronization for
+   sparse expert work that can be local or route-class scheduled.
+
+9. **VRAM-for-latency expert replication.**
+   The 8-bit model leaves enough memory to consider duplicated hot experts or
+   layer-specific expert packs. Use route histograms to choose a small hot set,
+   not guesses. The quality gate is simple because weights are identical; only
+   placement and scheduling change.
+
+10. **Outlier-aware exactness guard.**
+    Record whether particular layers/tokens have activation or route outliers
+    that force slow conservative paths. A bolder branch could add an exact
+    fallback lane for those rare windows while keeping the common window on the
+    fastest W8A8 path. This is not a quality downgrade; it is a routing policy
+    that prefers exactness over one-size-fits-all kernels.
+
+11. **Two-card latency lane plus two-card utility lane.**
+    Re-test TP2 as a first-class latency topology. If TP2 c1 is faster, use the
+    other two cards for replicas, target-model branch verification, or
+    aggregate traffic. Forcing every c1 token through four cards may be the
+    wrong shape even if TP4 is good for capacity.
+
+12. **Target-model branch farming as the real 2x fallback.**
+    If exact single-token decode stalls below `150-170 tok/s`, the clean path to
+    `>200 tok/s` is probably multi-token acceptance. Keep it quality-safe:
+    branches may be proposed by ngram/MTP/heuristics, but only the current
+    Quark W8A8 target model commits tokens after KV/hybrid-state transaction
+    verification.
+
+13. **Public maintainer challenge bundle.**
+    Prepare a minimal repro bundle for Intel/vLLM maintainers: launch command,
+    model id/revision, exact route fixtures, one-layer tensor checksums,
+    all-rank timings, rank/card rotation result, Localmaxxing row, XPU stack
+    versions, and the concrete target: remove `~4-5 ms/token` from c1 Qwen3.6
+    35B-A3B Quark W8A8 decode on 4x B70 without changing emitted tokens.
+
+14. **Quality gate expansion for bolder branches.**
+    Keep the current exact canaries, but add BF16-fallback comparisons where
+    feasible, prompt-class canaries, long-context needle, deterministic
+    replay-hash checks, and a 30-60 minute stability soak before any bolder
+    branch is called viable. Speed without output identity or stability still
+    does not count.
+
+Current priority order:
+
+1. Route-signature overlay on all-rank boundary timing.
+2. One-family-at-a-time forward split with route context.
+3. Route-window oneDNN grouped-matmul hint test.
+4. Clean Intel stack matrix on route fixtures.
+5. Static c1/no-server ceiling harness.
+6. If the ceiling remains poor, move serious effort into target-verified
+   branch farming.

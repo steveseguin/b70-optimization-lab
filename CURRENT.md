@@ -6,6 +6,27 @@ Date: 2026-06-12
 
 2026-06-12 notes update:
 
+- Added a "Bigger/Bolder Ideas Refresh 20260612cm" section to
+  `notes/2026-06-12-qwen36-next-bigger-bets.md`. This is backlog, not a
+  promoted speed result: the public Localmaxxing exact-model/B70/vLLM query
+  still returns only the existing `99.428 tok/s` quality-gated row. The refresh
+  folds in current Intel/XPU signals: Intel's latest XPU container notes warn
+  that some workloads can regress during the migration to dedicated XPU
+  kernels; oneDNN now exposes experimental grouped memory/grouped matmul and a
+  max-group-size hint for MoE; vLLM XPU work is moving into
+  `vllm-xpu-kernels`; and a public 4x B60 report shows Intel-optimized vLLM
+  builds can materially improve TPOT on related workloads. New things to try:
+  route-signature overlay on all-rank timing, layer-family forward timing with
+  route context, oneDNN grouped-matmul hint experiments, a
+  `vllm-xpu-kernels` MoE plugin branch, a clean Intel stack matrix measured by
+  route fixtures first, VTune/oneDNN/Level Zero proof packets, a static c1
+  micro-engine, hybrid TP/EP MoE islands, VRAM-for-latency expert replication,
+  outlier-aware exact fallback lanes, TP2 latency plus utility-card topology,
+  target-model branch farming, an upstream maintainer challenge bundle, and a
+  broader quality/stability gate before any bolder branch is accepted.
+
+2026-06-12 notes update:
+
 - Added a "Rank/Card Rotation Result" addendum to
   `notes/2026-06-12-qwen36-next-bigger-bets.md`. The env-only reverse attempt
   with `ONEAPI_DEVICE_SELECTOR=level_zero:3,2,1,0` and `ZE_AFFINITY_MASK=3,2,1,0`
