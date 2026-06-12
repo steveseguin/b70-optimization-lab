@@ -435,6 +435,18 @@ def make_scratch(
     }
 
 
+def make_xpu_scratch(scratch: dict[str, torch.Tensor]) -> dict[str, torch.Tensor]:
+    """Adapt the manual scratch dict to xpu_fused_moe's scratch schema."""
+    return {
+        "remapped_hidden_states": scratch["remapped_hidden_states"],
+        "gemm1_output": scratch["gemm1_output"],
+        "act_output": scratch["act_output"],
+        "gemm2_output": scratch["gemm2_output"],
+        "rows_per_expert": scratch["rows_per_expert"],
+        "unpermuted_row_to_permuted_row": scratch["unpermuted"],
+    }
+
+
 def manual_int8_moe_preallocated_once(
     *,
     hidden_states: torch.Tensor,
@@ -629,8 +641,28 @@ def benchmark_rows(
     torch.xpu.synchronize()
     prealloc_max_abs_diff = float(
         (ref_output - scratch_output).abs().max().item())
+    xpu_scratch_output = xpu_fused_moe(
+        hidden_states=inputs["hidden_states"],
+        w13=inputs["w13"],
+        w13_scales=inputs["w13_scales"],
+        w13_bias=None,
+        w2=inputs["w2"],
+        w2_scales=inputs["w2_scales"],
+        w2_bias=None,
+        topk_weights=inputs["topk_weights"],
+        topk_ids=inputs["topk_ids"],
+        n_experts_per_token=topk,
+        activation="silu",
+        num_experts=num_experts,
+        is_int8=True,
+        scratch=make_xpu_scratch(scratch),
+    )
+    torch.xpu.synchronize()
+    xpu_scratch_max_abs_diff = float(
+        (ref_output - xpu_scratch_output).abs().max().item())
 
     total_us = []
+    scratch_total_us = []
     preallocated_total_us = []
     component_us: dict[str, list[float]] = {
         "rows_zero": [],
@@ -683,6 +715,28 @@ def benchmark_rows(
 
         start, end = make_events()
         start.record()
+        xpu_fused_moe(
+            hidden_states=inputs["hidden_states"],
+            w13=inputs["w13"],
+            w13_scales=inputs["w13_scales"],
+            w13_bias=None,
+            w2=inputs["w2"],
+            w2_scales=inputs["w2_scales"],
+            w2_bias=None,
+            topk_weights=inputs["topk_weights"],
+            topk_ids=inputs["topk_ids"],
+            n_experts_per_token=topk,
+            activation="silu",
+            num_experts=num_experts,
+            is_int8=True,
+            scratch=make_xpu_scratch(scratch),
+        )
+        end.record()
+        torch.xpu.synchronize()
+        scratch_total_us.append(elapsed_us(start, end))
+
+        start, end = make_events()
+        start.record()
         manual_int8_moe_preallocated_once(
             hidden_states=inputs["hidden_states"],
             w13=inputs["w13"],
@@ -731,9 +785,11 @@ def benchmark_rows(
         ),
         "topk_summary": topk_summary,
         "total_us_mean": mean(total_us),
+        "xpu_fused_moe_scratch_total_us_mean": mean(scratch_total_us),
         "preallocated_staged_total_us_mean": mean(preallocated_total_us),
         "components_us_mean": components,
         "manual_vs_xpu_fused_moe_max_abs_diff": max_abs_diff,
+        "xpu_scratch_vs_xpu_fused_moe_max_abs_diff": xpu_scratch_max_abs_diff,
         "preallocated_vs_xpu_fused_moe_max_abs_diff": prealloc_max_abs_diff,
         "iterations": args.iterations,
         "warmup": args.warmup,

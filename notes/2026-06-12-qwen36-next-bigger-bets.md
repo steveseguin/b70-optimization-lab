@@ -45,21 +45,45 @@ External signals folded into the backlog:
 - vLLM's MoE kernel design treats all-to-all backend, activation format,
   quantization format, and async support as first-class tuning axes:
   `https://docs.vllm.ai/en/latest/design/moe_kernel_features/`.
+- vLLM's public W8A8 INT8 docs still describe the official INT8 compute path
+  as NVIDIA-only. The XPU/Quark route must therefore be treated as a
+  vendor/local stack with its own correctness and performance proof, not as a
+  generic upstream W8A8 path:
+  `https://docs.vllm.ai/en/v0.18.0/features/quantization/int8/`.
+- The open llm-compressor Qwen3.6 W8A8 issue confirms the model-specific
+  quantization details are not trivial: Qwen3.6 uses Qwen3.5 MoE classes,
+  fused expert tensors, Gated DeltaNet/linear attention, and needs W8A8
+  coverage beyond ordinary dense attention layers:
+  `https://github.com/vllm-project/llm-compressor/issues/2787`.
+- Public B70 TP fault reports point at host-stack, firmware, PCIe topology,
+  and vLLM ProcessGroupXCCL interactions as reliability/perf variables. This
+  justifies a controlled host-BOM A/B lane before production hardening:
+  `https://github.com/vllm-project/vllm/issues/41663`.
 - Public B70 aggregate examples show large multi-request throughput can scale
   even while c1 latency remains around the same band. Treat aggregate B70 rows
   as production-capacity clues, not proof that c1 should automatically double:
   `https://forum.level1techs.com/t/intel-b70-launch-unboxed-and-tested/247873`.
+- Public dual-B70 llama.cpp notes are another warning that naive multi-GPU
+  layer splitting can fit larger models without improving one-request latency.
+  Any multi-GPU speed claim needs true concurrent layer parallelism or a
+  measured TP/EP benefit:
+  `https://github.com/PMZFX/intel-arc-pro-b70-benchmarks/blob/master/multi-gpu.md`.
+- Localmaxxing currently shows one approved public row for this exact INT8
+  model/B70/vLLM setup, the existing `99.428 tok/s` c1 baseline:
+  `https://localmaxxing.com/api/leaderboard?hfId=nameistoken%2FQwen3.6-35B-A3B-Quark-W8A8-INT8&hardwareName=Arc%20Pro%20B70&engineName=vllm&limit=10`.
 
 ## Immediate Things To Try
 
-1. **Integrate the exact preallocated MoE scratch idea into the real path.**
+1. **Measure the exact scratch hook before another endpoint promotion.**
    The local microbench already shows a manual preallocated Quark W8A8 MoE path
    can match `xpu_fused_moe` exactly while cutting a routecapture6 layer sample
-   from roughly `270 us` to roughly `206 us`. The next step is to inspect the
-   installed vLLM/vllm-xpu-kernels call path and add a default-off exact scratch
-   reuse path around remap, quant1, gemm1, activation, quant2, gemm2, and gather.
-   This is the highest-confidence non-speculative next patch because it is
-   already exact in isolation.
+   from roughly `270 us` to roughly `206 us`. The existing endpoint screens
+   already rejected shared mixed workspace and archived a per-layer scratch
+   patch, so the next step is narrower: time the actual
+   `xpu_fused_moe(..., scratch=...)` hook in the route-replay microbench and
+   compare it against the manual staged path. Promote no source patch unless
+   this hook proves a real wrapper-level win that the old endpoint result did
+   not capture.
 
 2. **Build a real-route persistent-MoE layerlet.**
    Reconstruct one Qwen3.6 MoE layer outside the server using captured
@@ -100,6 +124,27 @@ External signals folded into the backlog:
    `99.428 tok/s` row but not a new class of result. Post it only if we want an
    exact refreshed recovery datapoint; otherwise wait for a result that clears a
    meaningful threshold such as `105`, `120`, or `200 tok/s`.
+
+8. **Add a host-stack A/B lane, but keep it separate from model tuning.**
+   Reproduce the accepted command on the closest Intel-validated B70/XPU stack
+   available, then compare against the current Ubuntu 24.04.4/HWE host:
+   kernel/KMD, GuC firmware, compute-runtime, oneAPI, oneCCL, PyTorch, vLLM,
+   and `vllm-xpu-kernels`. This is a reliability and collective-performance
+   test, not permission to change the model.
+
+9. **Build a CCL/topology matrix for c1 latency.**
+   Keep the accepted model and graph cache fixed while sweeping only
+   `CCL_*`, `FI_*`, affinity, worker placement, and TP shape. Record per-token
+   all-reduce time and device reset risk. If TP4 communication is a measurable
+   wall, the next engine bet should be TP/EP or static-lane routing, not more
+   launch flags.
+
+10. **Instrument command-stream overhead per token.**
+    Capture the Level Zero/SYCL command timeline for one accepted decode token:
+    kernel count, barriers, host waits, memory copies, and collective launches.
+    The B70 persistent-kernel literature says host waiting and kernel launch
+    gaps are central MoE losses; our routecapture fixtures need to prove how
+    much of the `~10 ms/token` is launch/control overhead.
 
 ## Bigger, Bolder Ideas
 
@@ -170,6 +215,54 @@ External signals folded into the backlog:
     and vLLM. The useful upstream artifact is not "Qwen3.6 is slow"; it is a
     route-exact MoE/kernel suite that makes B70 bottlenecks reproducible.
 
+11. **Exact DPAS/XMX utilization audit.**
+    Prove whether the hot W8A8 MoE and dense paths are actually issuing the
+    intended Intel XMX/DPAS INT8 operations at high occupancy. If they are not,
+    the biggest win may be a lower-level kernel/layout issue rather than vLLM
+    scheduler tuning. The output should be a table per kernel: shape, layout,
+    DPAS/XMX use, occupancy, bandwidth, and launch count.
+
+12. **Quant-output out-variant and fusion campaign.**
+    The current scratch hook reuses remap/GEMM/activation buffers, but dynamic
+    activation quant still returns fresh tensors. Add an exact out-variant for
+    per-token INT8 quantization, then evaluate fusing remap+quant1 and
+    activation+quant2. The previously rejected fused SiLU+quant candidate failed
+    arithmetic quality, so this must be rebuilt with strict equivalence tests
+    before any endpoint run.
+
+13. **Per-layer hot-expert duplicate-and-route experiment.**
+    Use routecapture histograms to identify layers where a few experts dominate
+    c1 decode. If VRAM allows, duplicate only those hot expert shards or their
+    tile-native packed forms across ranks to reduce traffic or imbalance while
+    preserving exact weights. Simulate first; implement only if the bytes and
+    route windows predict a real latency win.
+
+14. **Minimal exact decode engine outside vLLM.**
+    Build a tiny single-request executable for one fixed prompt/output bucket
+    that loads the same Quark W8A8 weights, runs the same tokenizer/model math,
+    and bypasses vLLM scheduling entirely. This is not a replacement server; it
+    is a truth-serum benchmark that tells us whether vLLM control flow is the
+    c1 bottleneck or the kernels are.
+
+15. **Two-lane production architecture with exact routing.**
+    Keep the stable TP4/32K vLLM service as the general lane, but create a
+    latency lane for common c1 chat shapes: fixed buckets, fixed sampling,
+    certified graph cache, preallocated state, and stricter admission control.
+    Route requests by context/output shape. This can improve user-perceived
+    speed without weakening model quality or long-context capacity.
+
+16. **Speculative proposer bakeoff with target-verified rollback.**
+    Expand beyond n-gram by testing MTP, target-trace proposer, simple prefix
+    trie, and small exact-model-trained proposer, all behind the same
+    resident-state verifier. The only promoted metric is accepted target tokens
+    per second with exact sentinel parity; raw draft speed does not count.
+
+17. **Upstream branch archaeology and kernel transplant lane.**
+    Track Intel `llm-scaler-vllm`, `vllm-xpu-kernels`, Triton-XPU, and oneDNN
+    GenAI branches for B70/MoE/W8A8 changes. When a promising kernel appears,
+    extract just the route-replay fixture and compare it against our accepted
+    artifacts before considering a stack upgrade.
+
 ## Promotion Rules
 
 - A speed candidate must pass the accepted provenance guard and the exact
@@ -180,3 +273,18 @@ External signals folded into the backlog:
   produce a transaction log with accept/reject/rollback evidence.
 - A public benchmark should include command, context length, output length,
   TTFT, c1 decode speed, cache-root provenance, and exact quality artifact.
+
+## 2026-06-12 Follow-up
+
+- Added the route-replay diagnostic fields for the real
+  `xpu_fused_moe(..., scratch=...)` hook to
+  `scripts/bench-qwen36-int8-moe-kernels.py`.
+- Validation run:
+  `/home/steve/.venvs/vllm-xpu/bin/python -m py_compile scripts/bench-qwen36-int8-moe-kernels.py`
+  passed.
+- Import/CLI validation:
+  `/home/steve/.venvs/vllm-xpu/bin/python scripts/bench-qwen36-int8-moe-kernels.py --help`
+  passed.
+- The live accepted TP4 backend was left running. A one-shot `xpu-smi` memory
+  check showed roughly `32651 MiB` used on each B70, so the route-replay XPU
+  microbench should wait for a clean benchmark window.
