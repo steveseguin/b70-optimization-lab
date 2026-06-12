@@ -24,6 +24,118 @@ Current speed anchor:
   MoE/kernel architecture improvement. Launch flags alone are unlikely to get
   there.
 
+## Live ABI Sidecar Checkpoint And Bolder Queue
+
+Added after the disabled-by-default live ABI smoke and a fresh Localmaxxing /
+oneDNN / vLLM source scan.
+
+New artifacts:
+
+- `scripts/qwen36-live-abi-sidecar-plan.py`
+- `data/qwen36-live-abi-sidecar-plan-20260612bj.json`
+- `data/qwen36-live-abi-sidecar-plan-20260612bj.md`
+
+Analyzer result:
+
+- Loaded `48` live MoE ABI records from the TP4 smoke, `12` per rank.
+- Layers covered: live layer `8` and `9` MoE calls.
+- All required live tensors are present, contiguous, and have expected dtypes
+  and shapes.
+- Representative sidecar work:
+  - GEMM1: `M=65536,K=2048,N=256`
+  - GEMM2: `M=65536,K=128,N=2048`
+  - Experts: `256`, top-k: `8`
+  - Active experts in the first sample: `11`
+  - Route offsets derived from `rows_per_expert` cover all routed rows.
+
+Concrete next gate:
+
+1. Add a disabled-by-default C++ sidecar entry point that accepts live
+   Tensor-derived device pointers, not file exports.
+2. Wrap those pointers as oneDNN/SYCL memory on the same rank-local XPU device
+   and prove the path does not introduce implicit host copies.
+3. Cache packed `w13`/`w2` weights and oneDNN grouped-matmul primitives by
+   layer/shape; mutate `rows_per_expert` and offsets per call.
+4. Execute GEMM1, activation/quant, GEMM2, and final gather with final-layer
+   `max_abs_diff=0.0` versus current `xpu_fused_moe`.
+5. Keep a kill switch and per-rank fallback to current `xpu_fused_moe` for any
+   unsupported shape, pointer/queue mismatch, or parity failure.
+
+Fresh external signals:
+
+- Localmaxxing still shows the exact public Quark W8A8 INT8 row at
+  `99.428 tok/s` and a same-family B70/vLLM row at `99.770 tok/s`. There is no
+  public exact-model evidence that a flag-only change doubles c1 decode:
+  `https://localmaxxing.com/api/leaderboard?hfId=nameistoken%2FQwen3.6-35B-A3B-Quark-W8A8-INT8&limit=20`.
+- oneDNN documents grouped matmul with grouped encoding as an MoE-targeted
+  example, and separately flags grouped memory / grouped GEMM as experimental
+  MoE support. That supports continuing the oneDNN path, but with a hard
+  in-process/cache requirement:
+  `https://uxlfoundation.github.io/oneDNN/dev_guide_examples.html` and
+  `https://uxlfoundation.github.io/oneDNN/dev_guide_experimental.html`.
+- oneDNN matmul scale/zero-point docs confirm the sidecar must pass scale
+  memory explicitly at execution time; no hidden scale computation should be
+  assumed:
+  `https://uxlfoundation.github.io/oneDNN/dev_guide_matmul.html`.
+- oneDNN release notes call out Intel Arc / Battlemage and int8 matmul
+  improvements, so testing current oneDNN builds against B70 is not just a
+  portability exercise:
+  `https://www.intel.com/content/www/us/en/developer/articles/release-notes/oneapi-deep-neural-network-library-release-notes.html`.
+- Intel Extension for PyTorch release notes warn that INT8 dynamic-shape paths
+  can be slow while dynamic-shape support is still work in progress. That
+  reinforces fixed-shape buckets, c1 decode lanes, and primitive caches:
+  `https://intel.github.io/intel-extension-for-pytorch/latest/tutorials/releases.html`.
+- vLLM upstream carries rich W8A8 and grouped-MoE kernel source paths, but the
+  visible optimized paths are CUDA/CUTLASS-oriented rather than a ready XPU
+  answer for this Quark model:
+  `https://github.com/vllm-project/vllm/blob/main/CMakeLists.txt`.
+
+Bigger, bolder ideas now worth keeping on the board:
+
+1. **Zero-copy oneDNN MoE sidecar.**
+   Use live ABI pointers to make the resident oneDNN runner in-process. This is
+   the closest no-quality-loss path because oneDNN already matched the current
+   XPU bytes in file-backed full-layer replay.
+
+2. **Fixed-shape c1 decode lane.**
+   After the prompt is admitted, move latency-critical single-user decode into
+   a shape-locked lane with fixed buffers, fixed block/table arenas, cached
+   MoE primitives, and reduced scheduler metadata churn. Dynamic shape warnings
+   and the route-cache hit-rate data both point here.
+
+3. **Route-class layerlet generator.**
+   Generate a small set of ESIMD/SYCL/DPAS layerlets for route classes that are
+   frequent enough to matter. oneDNN remains the exact fallback and regression
+   oracle. The goal is not a generic MoE kernel; it is to collapse launch and
+   epilogue overhead on hot route classes.
+
+4. **Spend spare VRAM on latency.**
+   The current INT8 memory footprint leaves large headroom on 4x32GB. Use that
+   budget for hot-expert replication, partial EP, duplicate packed weights, or
+   one-card/two-card c1 lanes instead of only increasing concurrency.
+
+5. **Verifier-owned speculative transaction API.**
+   Stop treating speculation as an external replay problem. Let DFlash, MTP, or
+   n-gram propose, but keep the Quark verifier in control of temporary KV and
+   request state, then commit only accepted tokens. This preserves quality while
+   attacking the only public path that can plausibly exceed `2x`.
+
+6. **Level Zero command-list supernode.**
+   Capture the one-token decode sequence as a rank-local command bundle:
+   route metadata, remap/quant, grouped GEMM1, activation/quant, grouped GEMM2,
+   gather, dense tail, attention, and TP collective boundaries. The target is
+   the control/launch floor, not lower precision.
+
+7. **B70 W8A8 MoE challenge packet.**
+   Package route windows, exact inputs/expected bytes, live ABI descriptors, and
+   oneDNN/current-XPU timings into a maintainer-friendly repro. This can attract
+   Intel/vLLM attention without exposing the production endpoint and gives us a
+   clean benchmark for upstreamable work.
+
+8. **Engine bakeoff only if it stays 8-bit and exact.**
+   Try LMDeploy/OpenVINO/oneDNN GenAI/SGLang only with current-model or
+   equivalent W8A8/INT8 quality gates. Do not repeat the 4-bit/AWQ detour.
+
 ## Latest OneDNN W8A8 Parity Gate
 
 The new oneDNN packet changes the near-term priority. We now have a

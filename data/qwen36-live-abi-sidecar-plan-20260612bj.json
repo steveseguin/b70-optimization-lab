@@ -1,0 +1,3391 @@
+{
+  "all_required_tensors_present": true,
+  "all_shape_dtype_contiguity_checks_passed": true,
+  "bigger_bets": [
+    "A route-class layerlet generator backed by oneDNN parity fixtures, targeting only hot route classes where launch and epilogue fusion can beat oneDNN.",
+    "A fixed-shape c1 decode lane that bypasses general vLLM scheduling for latency-critical single-user traffic after the prompt is admitted.",
+    "Expert-parallel or hot-expert replication simulations that spend the large remaining VRAM budget to reduce c1 cross-card latency.",
+    "A verifier-owned speculative transaction API with temporary KV/request state, so DFlash/MTP/n-gram proposers can be tested without changing accepted model outputs.",
+    "A Level Zero command-list supernode for one token that captures MoE, dense, attention, and TP collective boundaries without lowering precision."
+  ],
+  "descriptor_samples": [
+    {
+      "layer": "language_model.model.layers.8.mlp.experts",
+      "layer_index": 8,
+      "oneDNN_sidecar_call": {
+        "candidate_name": "qwen36_w8a8_moe_onednn_sidecar",
+        "lifetime_rule": "Pointers are live-call only; the sidecar must run inside xpu_fused_moe before buffers are freed or reused.",
+        "queue_rule": "Use the same rank-local XPU device/context/queue or explicit SYCL interop events; no CPU copies.",
+        "required_outputs": [
+          "gemm1_output",
+          "act_output",
+          "gemm2_output",
+          "output"
+        ],
+        "required_zero_copy_inputs": [
+          "gemm1_a",
+          "gemm1_a_scales",
+          "w13",
+          "w13_scales",
+          "rows_per_expert",
+          "gemm2_a",
+          "gemm2_a_scales",
+          "w2",
+          "w2_scales",
+          "topk_weights",
+          "unpermuted_row_to_permuted_row"
+        ],
+        "scope": "rank-local MoE layer call"
+      },
+      "pid": 1773478,
+      "rank": "0",
+      "route": {
+        "active_expert_count": 11,
+        "active_experts_head": [
+          25,
+          38,
+          106,
+          121,
+          149,
+          176,
+          182,
+          186,
+          215,
+          237,
+          248
+        ],
+        "grouped_offsets_head": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          8192,
+          8192,
+          8192,
+          8192,
+          8192,
+          8192
+        ],
+        "max_rows_per_expert": 8192,
+        "offsets_cover_rows": true,
+        "rows_sum": 65536
+      },
+      "shape": {
+        "gemm1": {
+          "k": 2048,
+          "m": 65536,
+          "n": 256
+        },
+        "gemm2": {
+          "k": 128,
+          "m": 65536,
+          "n": 2048
+        },
+        "hidden_size": 2048,
+        "inter_size": 128,
+        "num_experts": 256,
+        "num_moe_inputs": 65536,
+        "num_rows": 8192,
+        "topk": 8
+      },
+      "source": {
+        "call": 1,
+        "file": "data/qwen36-live-abi-20260612bi-1773478.jsonl",
+        "line": 1
+      },
+      "tensors": {
+        "act_output": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "bfloat16",
+          "numel": 8388608,
+          "ptr": 18446697177716883456,
+          "shape": [
+            65536,
+            128
+          ],
+          "stride": [
+            128,
+            1
+          ]
+        },
+        "gemm1_a": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "int8",
+          "numel": 134217728,
+          "ptr": 18446697177548849152,
+          "shape": [
+            65536,
+            2048
+          ],
+          "stride": [
+            2048,
+            1
+          ]
+        },
+        "gemm1_a_scales": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "float32",
+          "numel": 65536,
+          "ptr": 18446697177683066880,
+          "shape": [
+            65536,
+            1
+          ],
+          "stride": [
+            1,
+            1
+          ]
+        },
+        "gemm1_output": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "bfloat16",
+          "numel": 16777216,
+          "ptr": 18446697177683329024,
+          "shape": [
+            65536,
+            256
+          ],
+          "stride": [
+            256,
+            1
+          ]
+        },
+        "gemm2_a": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "int8",
+          "numel": 8388608,
+          "ptr": 18446697177733660672,
+          "shape": [
+            65536,
+            128
+          ],
+          "stride": [
+            128,
+            1
+          ]
+        },
+        "gemm2_a_scales": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "float32",
+          "numel": 65536,
+          "ptr": 18446697177742049280,
+          "shape": [
+            65536,
+            1
+          ],
+          "stride": [
+            1,
+            1
+          ]
+        },
+        "gemm2_output": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "bfloat16",
+          "numel": 134217728,
+          "ptr": 18446697177742311424,
+          "shape": [
+            65536,
+            2048
+          ],
+          "stride": [
+            2048,
+            1
+          ]
+        },
+        "hidden_states": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "bfloat16",
+          "numel": 16777216,
+          "ptr": 18446697177045532672,
+          "shape": [
+            8192,
+            2048
+          ],
+          "stride": [
+            2048,
+            1
+          ]
+        },
+        "output": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "bfloat16",
+          "numel": 16777216,
+          "ptr": 18446697177280413696,
+          "shape": [
+            8192,
+            2048
+          ],
+          "stride": [
+            2048,
+            1
+          ]
+        },
+        "remapped_hidden_states": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "int8",
+          "numel": 134217728,
+          "ptr": 18446697177548849152,
+          "shape": [
+            65536,
+            2048
+          ],
+          "stride": [
+            2048,
+            1
+          ]
+        },
+        "rows_per_expert": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "int32",
+          "numel": 256,
+          "ptr": 18446697178010746880,
+          "shape": [
+            256
+          ],
+          "stride": [
+            1
+          ]
+        },
+        "topk_ids": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "int32",
+          "numel": 65536,
+          "ptr": 18446708893432676352,
+          "shape": [
+            8192,
+            8
+          ],
+          "stride": [
+            8,
+            1
+          ]
+        },
+        "topk_weights": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "float32",
+          "numel": 65536,
+          "ptr": 18446708893435035648,
+          "shape": [
+            8192,
+            8
+          ],
+          "stride": [
+            8,
+            1
+          ]
+        },
+        "unpermuted_row_to_permuted_row": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "int32",
+          "numel": 65536,
+          "ptr": 18446697178010747904,
+          "shape": [
+            8192,
+            8
+          ],
+          "stride": [
+            8,
+            1
+          ]
+        },
+        "w13": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "int8",
+          "numel": 134217728,
+          "ptr": 18446697169286070272,
+          "shape": [
+            256,
+            2048,
+            256
+          ],
+          "stride": [
+            524288,
+            256,
+            1
+          ]
+        },
+        "w13_scales": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "float32",
+          "numel": 65536,
+          "ptr": 18446708893514989568,
+          "shape": [
+            256,
+            256
+          ],
+          "stride": [
+            256,
+            1
+          ]
+        },
+        "w2": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "int8",
+          "numel": 67108864,
+          "ptr": 18446697169420288000,
+          "shape": [
+            256,
+            128,
+            2048
+          ],
+          "stride": [
+            262144,
+            2048,
+            1
+          ]
+        },
+        "w2_scales": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "float32",
+          "numel": 524288,
+          "ptr": 18446697169495785472,
+          "shape": [
+            256,
+            2048
+          ],
+          "stride": [
+            2048,
+            1
+          ]
+        }
+      }
+    },
+    {
+      "layer": "language_model.model.layers.9.mlp.experts",
+      "layer_index": 9,
+      "oneDNN_sidecar_call": {
+        "candidate_name": "qwen36_w8a8_moe_onednn_sidecar",
+        "lifetime_rule": "Pointers are live-call only; the sidecar must run inside xpu_fused_moe before buffers are freed or reused.",
+        "queue_rule": "Use the same rank-local XPU device/context/queue or explicit SYCL interop events; no CPU copies.",
+        "required_outputs": [
+          "gemm1_output",
+          "act_output",
+          "gemm2_output",
+          "output"
+        ],
+        "required_zero_copy_inputs": [
+          "gemm1_a",
+          "gemm1_a_scales",
+          "w13",
+          "w13_scales",
+          "rows_per_expert",
+          "gemm2_a",
+          "gemm2_a_scales",
+          "w2",
+          "w2_scales",
+          "topk_weights",
+          "unpermuted_row_to_permuted_row"
+        ],
+        "scope": "rank-local MoE layer call"
+      },
+      "pid": 1773478,
+      "rank": "0",
+      "route": {
+        "active_expert_count": 11,
+        "active_experts_head": [
+          4,
+          17,
+          32,
+          36,
+          55,
+          88,
+          121,
+          148,
+          158,
+          190,
+          215
+        ],
+        "grouped_offsets_head": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          4096,
+          4096,
+          4096,
+          4096,
+          4096,
+          4096,
+          4096,
+          4096,
+          4096,
+          4096,
+          4096,
+          4096,
+          4096,
+          12288,
+          12288,
+          12288,
+          12288,
+          12288,
+          12288,
+          12288,
+          12288,
+          12288,
+          12288,
+          12288,
+          12288,
+          12288,
+          12288
+        ],
+        "max_rows_per_expert": 8192,
+        "offsets_cover_rows": true,
+        "rows_sum": 65536
+      },
+      "shape": {
+        "gemm1": {
+          "k": 2048,
+          "m": 65536,
+          "n": 256
+        },
+        "gemm2": {
+          "k": 128,
+          "m": 65536,
+          "n": 2048
+        },
+        "hidden_size": 2048,
+        "inter_size": 128,
+        "num_experts": 256,
+        "num_moe_inputs": 65536,
+        "num_rows": 8192,
+        "topk": 8
+      },
+      "source": {
+        "call": 2,
+        "file": "data/qwen36-live-abi-20260612bi-1773478.jsonl",
+        "line": 2
+      },
+      "tensors": {
+        "act_output": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "bfloat16",
+          "numel": 8388608,
+          "ptr": 18446697177716883456,
+          "shape": [
+            65536,
+            128
+          ],
+          "stride": [
+            128,
+            1
+          ]
+        },
+        "gemm1_a": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "int8",
+          "numel": 134217728,
+          "ptr": 18446697177548849152,
+          "shape": [
+            65536,
+            2048
+          ],
+          "stride": [
+            2048,
+            1
+          ]
+        },
+        "gemm1_a_scales": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "float32",
+          "numel": 65536,
+          "ptr": 18446697177683066880,
+          "shape": [
+            65536,
+            1
+          ],
+          "stride": [
+            1,
+            1
+          ]
+        },
+        "gemm1_output": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "bfloat16",
+          "numel": 16777216,
+          "ptr": 18446697177683329024,
+          "shape": [
+            65536,
+            256
+          ],
+          "stride": [
+            256,
+            1
+          ]
+        },
+        "gemm2_a": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "int8",
+          "numel": 8388608,
+          "ptr": 18446697177733660672,
+          "shape": [
+            65536,
+            128
+          ],
+          "stride": [
+            128,
+            1
+          ]
+        },
+        "gemm2_a_scales": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "float32",
+          "numel": 65536,
+          "ptr": 18446697177742049280,
+          "shape": [
+            65536,
+            1
+          ],
+          "stride": [
+            1,
+            1
+          ]
+        },
+        "gemm2_output": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "bfloat16",
+          "numel": 134217728,
+          "ptr": 18446697177742311424,
+          "shape": [
+            65536,
+            2048
+          ],
+          "stride": [
+            2048,
+            1
+          ]
+        },
+        "hidden_states": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "bfloat16",
+          "numel": 16777216,
+          "ptr": 18446697176793874432,
+          "shape": [
+            8192,
+            2048
+          ],
+          "stride": [
+            2048,
+            1
+          ]
+        },
+        "output": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "bfloat16",
+          "numel": 16777216,
+          "ptr": 18446697177280413696,
+          "shape": [
+            8192,
+            2048
+          ],
+          "stride": [
+            2048,
+            1
+          ]
+        },
+        "remapped_hidden_states": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "int8",
+          "numel": 134217728,
+          "ptr": 18446697177548849152,
+          "shape": [
+            65536,
+            2048
+          ],
+          "stride": [
+            2048,
+            1
+          ]
+        },
+        "rows_per_expert": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "int32",
+          "numel": 256,
+          "ptr": 18446697178010746880,
+          "shape": [
+            256
+          ],
+          "stride": [
+            1
+          ]
+        },
+        "topk_ids": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "int32",
+          "numel": 65536,
+          "ptr": 18446708893432676352,
+          "shape": [
+            8192,
+            8
+          ],
+          "stride": [
+            8,
+            1
+          ]
+        },
+        "topk_weights": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "float32",
+          "numel": 65536,
+          "ptr": 18446708893435035648,
+          "shape": [
+            8192,
+            8
+          ],
+          "stride": [
+            8,
+            1
+          ]
+        },
+        "unpermuted_row_to_permuted_row": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "int32",
+          "numel": 65536,
+          "ptr": 18446697178010747904,
+          "shape": [
+            8192,
+            8
+          ],
+          "stride": [
+            8,
+            1
+          ]
+        },
+        "w13": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "int8",
+          "numel": 134217728,
+          "ptr": 18446697169508368384,
+          "shape": [
+            256,
+            2048,
+            256
+          ],
+          "stride": [
+            524288,
+            256,
+            1
+          ]
+        },
+        "w13_scales": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "float32",
+          "numel": 65536,
+          "ptr": 18446708893513678848,
+          "shape": [
+            256,
+            256
+          ],
+          "stride": [
+            256,
+            1
+          ]
+        },
+        "w2": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "int8",
+          "numel": 67108864,
+          "ptr": 18446697169642586112,
+          "shape": [
+            256,
+            128,
+            2048
+          ],
+          "stride": [
+            262144,
+            2048,
+            1
+          ]
+        },
+        "w2_scales": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "float32",
+          "numel": 524288,
+          "ptr": 18446697169506271232,
+          "shape": [
+            256,
+            2048
+          ],
+          "stride": [
+            2048,
+            1
+          ]
+        }
+      }
+    },
+    {
+      "layer": "language_model.model.layers.8.mlp.experts",
+      "layer_index": 8,
+      "oneDNN_sidecar_call": {
+        "candidate_name": "qwen36_w8a8_moe_onednn_sidecar",
+        "lifetime_rule": "Pointers are live-call only; the sidecar must run inside xpu_fused_moe before buffers are freed or reused.",
+        "queue_rule": "Use the same rank-local XPU device/context/queue or explicit SYCL interop events; no CPU copies.",
+        "required_outputs": [
+          "gemm1_output",
+          "act_output",
+          "gemm2_output",
+          "output"
+        ],
+        "required_zero_copy_inputs": [
+          "gemm1_a",
+          "gemm1_a_scales",
+          "w13",
+          "w13_scales",
+          "rows_per_expert",
+          "gemm2_a",
+          "gemm2_a_scales",
+          "w2",
+          "w2_scales",
+          "topk_weights",
+          "unpermuted_row_to_permuted_row"
+        ],
+        "scope": "rank-local MoE layer call"
+      },
+      "pid": 1773478,
+      "rank": "0",
+      "route": {
+        "active_expert_count": 11,
+        "active_experts_head": [
+          25,
+          38,
+          106,
+          121,
+          149,
+          176,
+          182,
+          186,
+          215,
+          237,
+          248
+        ],
+        "grouped_offsets_head": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          96,
+          96,
+          96,
+          96,
+          96,
+          96
+        ],
+        "max_rows_per_expert": 96,
+        "offsets_cover_rows": true,
+        "rows_sum": 768
+      },
+      "shape": {
+        "gemm1": {
+          "k": 2048,
+          "m": 768,
+          "n": 256
+        },
+        "gemm2": {
+          "k": 128,
+          "m": 768,
+          "n": 2048
+        },
+        "hidden_size": 2048,
+        "inter_size": 128,
+        "num_experts": 256,
+        "num_moe_inputs": 768,
+        "num_rows": 96,
+        "topk": 8
+      },
+      "source": {
+        "call": 3,
+        "file": "data/qwen36-live-abi-20260612bi-1773478.jsonl",
+        "line": 3
+      },
+      "tensors": {
+        "act_output": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "bfloat16",
+          "numel": 98304,
+          "ptr": 18446697177285528576,
+          "shape": [
+            768,
+            128
+          ],
+          "stride": [
+            128,
+            1
+          ]
+        },
+        "gemm1_a": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "int8",
+          "numel": 1572864,
+          "ptr": 18446697177283559424,
+          "shape": [
+            768,
+            2048
+          ],
+          "stride": [
+            2048,
+            1
+          ]
+        },
+        "gemm1_a_scales": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "float32",
+          "numel": 768,
+          "ptr": 18446697177285132288,
+          "shape": [
+            768,
+            1
+          ],
+          "stride": [
+            1,
+            1
+          ]
+        },
+        "gemm1_output": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "bfloat16",
+          "numel": 196608,
+          "ptr": 18446697177285135360,
+          "shape": [
+            768,
+            256
+          ],
+          "stride": [
+            256,
+            1
+          ]
+        },
+        "gemm2_a": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "int8",
+          "numel": 98304,
+          "ptr": 18446697177285725184,
+          "shape": [
+            768,
+            128
+          ],
+          "stride": [
+            128,
+            1
+          ]
+        },
+        "gemm2_a_scales": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "float32",
+          "numel": 768,
+          "ptr": 18446697177285823488,
+          "shape": [
+            768,
+            1
+          ],
+          "stride": [
+            1,
+            1
+          ]
+        },
+        "gemm2_output": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "bfloat16",
+          "numel": 1572864,
+          "ptr": 18446697177285826560,
+          "shape": [
+            768,
+            2048
+          ],
+          "stride": [
+            2048,
+            1
+          ]
+        },
+        "hidden_states": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "bfloat16",
+          "numel": 196608,
+          "ptr": 18446708893339418624,
+          "shape": [
+            96,
+            2048
+          ],
+          "stride": [
+            2048,
+            1
+          ]
+        },
+        "output": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "bfloat16",
+          "numel": 196608,
+          "ptr": 18446697177280413696,
+          "shape": [
+            96,
+            2048
+          ],
+          "stride": [
+            2048,
+            1
+          ]
+        },
+        "remapped_hidden_states": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "int8",
+          "numel": 1572864,
+          "ptr": 18446697177283559424,
+          "shape": [
+            768,
+            2048
+          ],
+          "stride": [
+            2048,
+            1
+          ]
+        },
+        "rows_per_expert": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "int32",
+          "numel": 256,
+          "ptr": 18446697177288972288,
+          "shape": [
+            256
+          ],
+          "stride": [
+            1
+          ]
+        },
+        "topk_ids": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "int32",
+          "numel": 768,
+          "ptr": 18446708893342993408,
+          "shape": [
+            96,
+            8
+          ],
+          "stride": [
+            8,
+            1
+          ]
+        },
+        "topk_weights": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "float32",
+          "numel": 768,
+          "ptr": 18446708893342990336,
+          "shape": [
+            96,
+            8
+          ],
+          "stride": [
+            8,
+            1
+          ]
+        },
+        "unpermuted_row_to_permuted_row": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "int32",
+          "numel": 768,
+          "ptr": 18446697177288973312,
+          "shape": [
+            96,
+            8
+          ],
+          "stride": [
+            8,
+            1
+          ]
+        },
+        "w13": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "int8",
+          "numel": 134217728,
+          "ptr": 18446697169286070272,
+          "shape": [
+            256,
+            2048,
+            256
+          ],
+          "stride": [
+            524288,
+            256,
+            1
+          ]
+        },
+        "w13_scales": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "float32",
+          "numel": 65536,
+          "ptr": 18446708893514989568,
+          "shape": [
+            256,
+            256
+          ],
+          "stride": [
+            256,
+            1
+          ]
+        },
+        "w2": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "int8",
+          "numel": 67108864,
+          "ptr": 18446697169420288000,
+          "shape": [
+            256,
+            128,
+            2048
+          ],
+          "stride": [
+            262144,
+            2048,
+            1
+          ]
+        },
+        "w2_scales": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "float32",
+          "numel": 524288,
+          "ptr": 18446697169495785472,
+          "shape": [
+            256,
+            2048
+          ],
+          "stride": [
+            2048,
+            1
+          ]
+        }
+      }
+    },
+    {
+      "layer": "language_model.model.layers.9.mlp.experts",
+      "layer_index": 9,
+      "oneDNN_sidecar_call": {
+        "candidate_name": "qwen36_w8a8_moe_onednn_sidecar",
+        "lifetime_rule": "Pointers are live-call only; the sidecar must run inside xpu_fused_moe before buffers are freed or reused.",
+        "queue_rule": "Use the same rank-local XPU device/context/queue or explicit SYCL interop events; no CPU copies.",
+        "required_outputs": [
+          "gemm1_output",
+          "act_output",
+          "gemm2_output",
+          "output"
+        ],
+        "required_zero_copy_inputs": [
+          "gemm1_a",
+          "gemm1_a_scales",
+          "w13",
+          "w13_scales",
+          "rows_per_expert",
+          "gemm2_a",
+          "gemm2_a_scales",
+          "w2",
+          "w2_scales",
+          "topk_weights",
+          "unpermuted_row_to_permuted_row"
+        ],
+        "scope": "rank-local MoE layer call"
+      },
+      "pid": 1773478,
+      "rank": "0",
+      "route": {
+        "active_expert_count": 11,
+        "active_experts_head": [
+          4,
+          17,
+          32,
+          36,
+          55,
+          88,
+          121,
+          148,
+          158,
+          190,
+          215
+        ],
+        "grouped_offsets_head": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          48,
+          48,
+          48,
+          48,
+          48,
+          48,
+          48,
+          48,
+          48,
+          48,
+          48,
+          48,
+          48,
+          144,
+          144,
+          144,
+          144,
+          144,
+          144,
+          144,
+          144,
+          144,
+          144,
+          144,
+          144,
+          144,
+          144
+        ],
+        "max_rows_per_expert": 96,
+        "offsets_cover_rows": true,
+        "rows_sum": 768
+      },
+      "shape": {
+        "gemm1": {
+          "k": 2048,
+          "m": 768,
+          "n": 256
+        },
+        "gemm2": {
+          "k": 128,
+          "m": 768,
+          "n": 2048
+        },
+        "hidden_size": 2048,
+        "inter_size": 128,
+        "num_experts": 256,
+        "num_moe_inputs": 768,
+        "num_rows": 96,
+        "topk": 8
+      },
+      "source": {
+        "call": 4,
+        "file": "data/qwen36-live-abi-20260612bi-1773478.jsonl",
+        "line": 4
+      },
+      "tensors": {
+        "act_output": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "bfloat16",
+          "numel": 98304,
+          "ptr": 18446697177285528576,
+          "shape": [
+            768,
+            128
+          ],
+          "stride": [
+            128,
+            1
+          ]
+        },
+        "gemm1_a": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "int8",
+          "numel": 1572864,
+          "ptr": 18446697177283559424,
+          "shape": [
+            768,
+            2048
+          ],
+          "stride": [
+            2048,
+            1
+          ]
+        },
+        "gemm1_a_scales": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "float32",
+          "numel": 768,
+          "ptr": 18446697177285132288,
+          "shape": [
+            768,
+            1
+          ],
+          "stride": [
+            1,
+            1
+          ]
+        },
+        "gemm1_output": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "bfloat16",
+          "numel": 196608,
+          "ptr": 18446697177285135360,
+          "shape": [
+            768,
+            256
+          ],
+          "stride": [
+            256,
+            1
+          ]
+        },
+        "gemm2_a": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "int8",
+          "numel": 98304,
+          "ptr": 18446697177285725184,
+          "shape": [
+            768,
+            128
+          ],
+          "stride": [
+            128,
+            1
+          ]
+        },
+        "gemm2_a_scales": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "float32",
+          "numel": 768,
+          "ptr": 18446697177285823488,
+          "shape": [
+            768,
+            1
+          ],
+          "stride": [
+            1,
+            1
+          ]
+        },
+        "gemm2_output": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "bfloat16",
+          "numel": 1572864,
+          "ptr": 18446697177285826560,
+          "shape": [
+            768,
+            2048
+          ],
+          "stride": [
+            2048,
+            1
+          ]
+        },
+        "hidden_states": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "bfloat16",
+          "numel": 196608,
+          "ptr": 18446708893342302208,
+          "shape": [
+            96,
+            2048
+          ],
+          "stride": [
+            2048,
+            1
+          ]
+        },
+        "output": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "bfloat16",
+          "numel": 196608,
+          "ptr": 18446697177280413696,
+          "shape": [
+            96,
+            2048
+          ],
+          "stride": [
+            2048,
+            1
+          ]
+        },
+        "remapped_hidden_states": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "int8",
+          "numel": 1572864,
+          "ptr": 18446697177283559424,
+          "shape": [
+            768,
+            2048
+          ],
+          "stride": [
+            2048,
+            1
+          ]
+        },
+        "rows_per_expert": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "int32",
+          "numel": 256,
+          "ptr": 18446697177288972288,
+          "shape": [
+            256
+          ],
+          "stride": [
+            1
+          ]
+        },
+        "topk_ids": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "int32",
+          "numel": 768,
+          "ptr": 18446708893342993408,
+          "shape": [
+            96,
+            8
+          ],
+          "stride": [
+            8,
+            1
+          ]
+        },
+        "topk_weights": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "float32",
+          "numel": 768,
+          "ptr": 18446708893342990336,
+          "shape": [
+            96,
+            8
+          ],
+          "stride": [
+            8,
+            1
+          ]
+        },
+        "unpermuted_row_to_permuted_row": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "int32",
+          "numel": 768,
+          "ptr": 18446697177288973312,
+          "shape": [
+            96,
+            8
+          ],
+          "stride": [
+            8,
+            1
+          ]
+        },
+        "w13": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "int8",
+          "numel": 134217728,
+          "ptr": 18446697169508368384,
+          "shape": [
+            256,
+            2048,
+            256
+          ],
+          "stride": [
+            524288,
+            256,
+            1
+          ]
+        },
+        "w13_scales": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "float32",
+          "numel": 65536,
+          "ptr": 18446708893513678848,
+          "shape": [
+            256,
+            256
+          ],
+          "stride": [
+            256,
+            1
+          ]
+        },
+        "w2": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "int8",
+          "numel": 67108864,
+          "ptr": 18446697169642586112,
+          "shape": [
+            256,
+            128,
+            2048
+          ],
+          "stride": [
+            262144,
+            2048,
+            1
+          ]
+        },
+        "w2_scales": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "float32",
+          "numel": 524288,
+          "ptr": 18446697169506271232,
+          "shape": [
+            256,
+            2048
+          ],
+          "stride": [
+            2048,
+            1
+          ]
+        }
+      }
+    },
+    {
+      "layer": "language_model.model.layers.8.mlp.experts",
+      "layer_index": 8,
+      "oneDNN_sidecar_call": {
+        "candidate_name": "qwen36_w8a8_moe_onednn_sidecar",
+        "lifetime_rule": "Pointers are live-call only; the sidecar must run inside xpu_fused_moe before buffers are freed or reused.",
+        "queue_rule": "Use the same rank-local XPU device/context/queue or explicit SYCL interop events; no CPU copies.",
+        "required_outputs": [
+          "gemm1_output",
+          "act_output",
+          "gemm2_output",
+          "output"
+        ],
+        "required_zero_copy_inputs": [
+          "gemm1_a",
+          "gemm1_a_scales",
+          "w13",
+          "w13_scales",
+          "rows_per_expert",
+          "gemm2_a",
+          "gemm2_a_scales",
+          "w2",
+          "w2_scales",
+          "topk_weights",
+          "unpermuted_row_to_permuted_row"
+        ],
+        "scope": "rank-local MoE layer call"
+      },
+      "pid": 1773478,
+      "rank": "0",
+      "route": {
+        "active_expert_count": 11,
+        "active_experts_head": [
+          25,
+          38,
+          106,
+          121,
+          149,
+          176,
+          182,
+          186,
+          215,
+          237,
+          248
+        ],
+        "grouped_offsets_head": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          88,
+          88,
+          88,
+          88,
+          88,
+          88
+        ],
+        "max_rows_per_expert": 88,
+        "offsets_cover_rows": true,
+        "rows_sum": 704
+      },
+      "shape": {
+        "gemm1": {
+          "k": 2048,
+          "m": 704,
+          "n": 256
+        },
+        "gemm2": {
+          "k": 128,
+          "m": 704,
+          "n": 2048
+        },
+        "hidden_size": 2048,
+        "inter_size": 128,
+        "num_experts": 256,
+        "num_moe_inputs": 704,
+        "num_rows": 88,
+        "topk": 8
+      },
+      "source": {
+        "call": 5,
+        "file": "data/qwen36-live-abi-20260612bi-1773478.jsonl",
+        "line": 5
+      },
+      "tensors": {
+        "act_output": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "bfloat16",
+          "numel": 90112,
+          "ptr": 18446697177285102336,
+          "shape": [
+            704,
+            128
+          ],
+          "stride": [
+            128,
+            1
+          ]
+        },
+        "gemm1_a": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "int8",
+          "numel": 1441792,
+          "ptr": 18446697177283297280,
+          "shape": [
+            704,
+            2048
+          ],
+          "stride": [
+            2048,
+            1
+          ]
+        },
+        "gemm1_a_scales": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "float32",
+          "numel": 704,
+          "ptr": 18446697177284739072,
+          "shape": [
+            704,
+            1
+          ],
+          "stride": [
+            1,
+            1
+          ]
+        },
+        "gemm1_output": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "bfloat16",
+          "numel": 180224,
+          "ptr": 18446697177284741888,
+          "shape": [
+            704,
+            256
+          ],
+          "stride": [
+            256,
+            1
+          ]
+        },
+        "gemm2_a": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "int8",
+          "numel": 90112,
+          "ptr": 18446697177285282560,
+          "shape": [
+            704,
+            128
+          ],
+          "stride": [
+            128,
+            1
+          ]
+        },
+        "gemm2_a_scales": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "float32",
+          "numel": 704,
+          "ptr": 18446697177285372672,
+          "shape": [
+            704,
+            1
+          ],
+          "stride": [
+            1,
+            1
+          ]
+        },
+        "gemm2_output": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "bfloat16",
+          "numel": 1441792,
+          "ptr": 18446697177285375488,
+          "shape": [
+            704,
+            2048
+          ],
+          "stride": [
+            2048,
+            1
+          ]
+        },
+        "hidden_states": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "bfloat16",
+          "numel": 180224,
+          "ptr": 18446708893340926976,
+          "shape": [
+            88,
+            2048
+          ],
+          "stride": [
+            2048,
+            1
+          ]
+        },
+        "output": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "bfloat16",
+          "numel": 180224,
+          "ptr": 18446697177280413696,
+          "shape": [
+            88,
+            2048
+          ],
+          "stride": [
+            2048,
+            1
+          ]
+        },
+        "remapped_hidden_states": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "int8",
+          "numel": 1441792,
+          "ptr": 18446697177283297280,
+          "shape": [
+            704,
+            2048
+          ],
+          "stride": [
+            2048,
+            1
+          ]
+        },
+        "rows_per_expert": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "int32",
+          "numel": 256,
+          "ptr": 18446697177288259072,
+          "shape": [
+            256
+          ],
+          "stride": [
+            1
+          ]
+        },
+        "topk_ids": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "int32",
+          "numel": 704,
+          "ptr": 18446708893342236672,
+          "shape": [
+            88,
+            8
+          ],
+          "stride": [
+            8,
+            1
+          ]
+        },
+        "topk_weights": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "float32",
+          "numel": 704,
+          "ptr": 18446708893342233600,
+          "shape": [
+            88,
+            8
+          ],
+          "stride": [
+            8,
+            1
+          ]
+        },
+        "unpermuted_row_to_permuted_row": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "int32",
+          "numel": 704,
+          "ptr": 18446697177288260096,
+          "shape": [
+            88,
+            8
+          ],
+          "stride": [
+            8,
+            1
+          ]
+        },
+        "w13": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "int8",
+          "numel": 134217728,
+          "ptr": 18446697169286070272,
+          "shape": [
+            256,
+            2048,
+            256
+          ],
+          "stride": [
+            524288,
+            256,
+            1
+          ]
+        },
+        "w13_scales": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "float32",
+          "numel": 65536,
+          "ptr": 18446708893514989568,
+          "shape": [
+            256,
+            256
+          ],
+          "stride": [
+            256,
+            1
+          ]
+        },
+        "w2": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "int8",
+          "numel": 67108864,
+          "ptr": 18446697169420288000,
+          "shape": [
+            256,
+            128,
+            2048
+          ],
+          "stride": [
+            262144,
+            2048,
+            1
+          ]
+        },
+        "w2_scales": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "float32",
+          "numel": 524288,
+          "ptr": 18446697169495785472,
+          "shape": [
+            256,
+            2048
+          ],
+          "stride": [
+            2048,
+            1
+          ]
+        }
+      }
+    },
+    {
+      "layer": "language_model.model.layers.9.mlp.experts",
+      "layer_index": 9,
+      "oneDNN_sidecar_call": {
+        "candidate_name": "qwen36_w8a8_moe_onednn_sidecar",
+        "lifetime_rule": "Pointers are live-call only; the sidecar must run inside xpu_fused_moe before buffers are freed or reused.",
+        "queue_rule": "Use the same rank-local XPU device/context/queue or explicit SYCL interop events; no CPU copies.",
+        "required_outputs": [
+          "gemm1_output",
+          "act_output",
+          "gemm2_output",
+          "output"
+        ],
+        "required_zero_copy_inputs": [
+          "gemm1_a",
+          "gemm1_a_scales",
+          "w13",
+          "w13_scales",
+          "rows_per_expert",
+          "gemm2_a",
+          "gemm2_a_scales",
+          "w2",
+          "w2_scales",
+          "topk_weights",
+          "unpermuted_row_to_permuted_row"
+        ],
+        "scope": "rank-local MoE layer call"
+      },
+      "pid": 1773478,
+      "rank": "0",
+      "route": {
+        "active_expert_count": 11,
+        "active_experts_head": [
+          4,
+          17,
+          32,
+          36,
+          55,
+          88,
+          121,
+          148,
+          158,
+          190,
+          215
+        ],
+        "grouped_offsets_head": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          44,
+          44,
+          44,
+          44,
+          44,
+          44,
+          44,
+          44,
+          44,
+          44,
+          44,
+          44,
+          44,
+          132,
+          132,
+          132,
+          132,
+          132,
+          132,
+          132,
+          132,
+          132,
+          132,
+          132,
+          132,
+          132,
+          132
+        ],
+        "max_rows_per_expert": 88,
+        "offsets_cover_rows": true,
+        "rows_sum": 704
+      },
+      "shape": {
+        "gemm1": {
+          "k": 2048,
+          "m": 704,
+          "n": 256
+        },
+        "gemm2": {
+          "k": 128,
+          "m": 704,
+          "n": 2048
+        },
+        "hidden_size": 2048,
+        "inter_size": 128,
+        "num_experts": 256,
+        "num_moe_inputs": 704,
+        "num_rows": 88,
+        "topk": 8
+      },
+      "source": {
+        "call": 6,
+        "file": "data/qwen36-live-abi-20260612bi-1773478.jsonl",
+        "line": 6
+      },
+      "tensors": {
+        "act_output": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "bfloat16",
+          "numel": 90112,
+          "ptr": 18446697177285102336,
+          "shape": [
+            704,
+            128
+          ],
+          "stride": [
+            128,
+            1
+          ]
+        },
+        "gemm1_a": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "int8",
+          "numel": 1441792,
+          "ptr": 18446697177283297280,
+          "shape": [
+            704,
+            2048
+          ],
+          "stride": [
+            2048,
+            1
+          ]
+        },
+        "gemm1_a_scales": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "float32",
+          "numel": 704,
+          "ptr": 18446697177284739072,
+          "shape": [
+            704,
+            1
+          ],
+          "stride": [
+            1,
+            1
+          ]
+        },
+        "gemm1_output": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "bfloat16",
+          "numel": 180224,
+          "ptr": 18446697177284741888,
+          "shape": [
+            704,
+            256
+          ],
+          "stride": [
+            256,
+            1
+          ]
+        },
+        "gemm2_a": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "int8",
+          "numel": 90112,
+          "ptr": 18446697177285282560,
+          "shape": [
+            704,
+            128
+          ],
+          "stride": [
+            128,
+            1
+          ]
+        },
+        "gemm2_a_scales": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "float32",
+          "numel": 704,
+          "ptr": 18446697177285372672,
+          "shape": [
+            704,
+            1
+          ],
+          "stride": [
+            1,
+            1
+          ]
+        },
+        "gemm2_output": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "bfloat16",
+          "numel": 1441792,
+          "ptr": 18446697177285375488,
+          "shape": [
+            704,
+            2048
+          ],
+          "stride": [
+            2048,
+            1
+          ]
+        },
+        "hidden_states": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "bfloat16",
+          "numel": 180224,
+          "ptr": 18446708893333708800,
+          "shape": [
+            88,
+            2048
+          ],
+          "stride": [
+            2048,
+            1
+          ]
+        },
+        "output": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "bfloat16",
+          "numel": 180224,
+          "ptr": 18446697177280413696,
+          "shape": [
+            88,
+            2048
+          ],
+          "stride": [
+            2048,
+            1
+          ]
+        },
+        "remapped_hidden_states": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "int8",
+          "numel": 1441792,
+          "ptr": 18446697177283297280,
+          "shape": [
+            704,
+            2048
+          ],
+          "stride": [
+            2048,
+            1
+          ]
+        },
+        "rows_per_expert": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "int32",
+          "numel": 256,
+          "ptr": 18446697177288259072,
+          "shape": [
+            256
+          ],
+          "stride": [
+            1
+          ]
+        },
+        "topk_ids": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "int32",
+          "numel": 704,
+          "ptr": 18446708893343002624,
+          "shape": [
+            88,
+            8
+          ],
+          "stride": [
+            8,
+            1
+          ]
+        },
+        "topk_weights": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "float32",
+          "numel": 704,
+          "ptr": 18446708893342999552,
+          "shape": [
+            88,
+            8
+          ],
+          "stride": [
+            8,
+            1
+          ]
+        },
+        "unpermuted_row_to_permuted_row": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "int32",
+          "numel": 704,
+          "ptr": 18446697177288260096,
+          "shape": [
+            88,
+            8
+          ],
+          "stride": [
+            8,
+            1
+          ]
+        },
+        "w13": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "int8",
+          "numel": 134217728,
+          "ptr": 18446697169508368384,
+          "shape": [
+            256,
+            2048,
+            256
+          ],
+          "stride": [
+            524288,
+            256,
+            1
+          ]
+        },
+        "w13_scales": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "float32",
+          "numel": 65536,
+          "ptr": 18446708893513678848,
+          "shape": [
+            256,
+            256
+          ],
+          "stride": [
+            256,
+            1
+          ]
+        },
+        "w2": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "int8",
+          "numel": 67108864,
+          "ptr": 18446697169642586112,
+          "shape": [
+            256,
+            128,
+            2048
+          ],
+          "stride": [
+            262144,
+            2048,
+            1
+          ]
+        },
+        "w2_scales": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "float32",
+          "numel": 524288,
+          "ptr": 18446697169506271232,
+          "shape": [
+            256,
+            2048
+          ],
+          "stride": [
+            2048,
+            1
+          ]
+        }
+      }
+    },
+    {
+      "layer": "language_model.model.layers.8.mlp.experts",
+      "layer_index": 8,
+      "oneDNN_sidecar_call": {
+        "candidate_name": "qwen36_w8a8_moe_onednn_sidecar",
+        "lifetime_rule": "Pointers are live-call only; the sidecar must run inside xpu_fused_moe before buffers are freed or reused.",
+        "queue_rule": "Use the same rank-local XPU device/context/queue or explicit SYCL interop events; no CPU copies.",
+        "required_outputs": [
+          "gemm1_output",
+          "act_output",
+          "gemm2_output",
+          "output"
+        ],
+        "required_zero_copy_inputs": [
+          "gemm1_a",
+          "gemm1_a_scales",
+          "w13",
+          "w13_scales",
+          "rows_per_expert",
+          "gemm2_a",
+          "gemm2_a_scales",
+          "w2",
+          "w2_scales",
+          "topk_weights",
+          "unpermuted_row_to_permuted_row"
+        ],
+        "scope": "rank-local MoE layer call"
+      },
+      "pid": 1773478,
+      "rank": "0",
+      "route": {
+        "active_expert_count": 11,
+        "active_experts_head": [
+          25,
+          38,
+          106,
+          121,
+          149,
+          176,
+          182,
+          186,
+          215,
+          237,
+          248
+        ],
+        "grouped_offsets_head": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          80,
+          80,
+          80,
+          80,
+          80,
+          80
+        ],
+        "max_rows_per_expert": 80,
+        "offsets_cover_rows": true,
+        "rows_sum": 640
+      },
+      "shape": {
+        "gemm1": {
+          "k": 2048,
+          "m": 640,
+          "n": 256
+        },
+        "gemm2": {
+          "k": 128,
+          "m": 640,
+          "n": 2048
+        },
+        "hidden_size": 2048,
+        "inter_size": 128,
+        "num_experts": 256,
+        "num_moe_inputs": 640,
+        "num_rows": 80,
+        "topk": 8
+      },
+      "source": {
+        "call": 7,
+        "file": "data/qwen36-live-abi-20260612bi-1773478.jsonl",
+        "line": 7
+      },
+      "tensors": {
+        "act_output": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "bfloat16",
+          "numel": 81920,
+          "ptr": 18446697177284676096,
+          "shape": [
+            640,
+            128
+          ],
+          "stride": [
+            128,
+            1
+          ]
+        },
+        "gemm1_a": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "int8",
+          "numel": 1310720,
+          "ptr": 18446697177283035136,
+          "shape": [
+            640,
+            2048
+          ],
+          "stride": [
+            2048,
+            1
+          ]
+        },
+        "gemm1_a_scales": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "float32",
+          "numel": 640,
+          "ptr": 18446697177284345856,
+          "shape": [
+            640,
+            1
+          ],
+          "stride": [
+            1,
+            1
+          ]
+        },
+        "gemm1_output": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "bfloat16",
+          "numel": 163840,
+          "ptr": 18446697177284348416,
+          "shape": [
+            640,
+            256
+          ],
+          "stride": [
+            256,
+            1
+          ]
+        },
+        "gemm2_a": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "int8",
+          "numel": 81920,
+          "ptr": 18446697177284839936,
+          "shape": [
+            640,
+            128
+          ],
+          "stride": [
+            128,
+            1
+          ]
+        },
+        "gemm2_a_scales": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "float32",
+          "numel": 640,
+          "ptr": 18446697177284921856,
+          "shape": [
+            640,
+            1
+          ],
+          "stride": [
+            1,
+            1
+          ]
+        },
+        "gemm2_output": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "bfloat16",
+          "numel": 1310720,
+          "ptr": 18446697177284924416,
+          "shape": [
+            640,
+            2048
+          ],
+          "stride": [
+            2048,
+            1
+          ]
+        },
+        "hidden_states": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "bfloat16",
+          "numel": 163840,
+          "ptr": 18446708893332865024,
+          "shape": [
+            80,
+            2048
+          ],
+          "stride": [
+            2048,
+            1
+          ]
+        },
+        "output": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "bfloat16",
+          "numel": 163840,
+          "ptr": 18446697177280413696,
+          "shape": [
+            80,
+            2048
+          ],
+          "stride": [
+            2048,
+            1
+          ]
+        },
+        "remapped_hidden_states": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "int8",
+          "numel": 1310720,
+          "ptr": 18446697177283035136,
+          "shape": [
+            640,
+            2048
+          ],
+          "stride": [
+            2048,
+            1
+          ]
+        },
+        "rows_per_expert": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "int32",
+          "numel": 256,
+          "ptr": 18446697177287545856,
+          "shape": [
+            256
+          ],
+          "stride": [
+            1
+          ]
+        },
+        "topk_ids": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "int32",
+          "numel": 640,
+          "ptr": 18446708893342936576,
+          "shape": [
+            80,
+            8
+          ],
+          "stride": [
+            8,
+            1
+          ]
+        },
+        "topk_weights": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "float32",
+          "numel": 640,
+          "ptr": 18446708893342934016,
+          "shape": [
+            80,
+            8
+          ],
+          "stride": [
+            8,
+            1
+          ]
+        },
+        "unpermuted_row_to_permuted_row": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "int32",
+          "numel": 640,
+          "ptr": 18446697177287546880,
+          "shape": [
+            80,
+            8
+          ],
+          "stride": [
+            8,
+            1
+          ]
+        },
+        "w13": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "int8",
+          "numel": 134217728,
+          "ptr": 18446697169286070272,
+          "shape": [
+            256,
+            2048,
+            256
+          ],
+          "stride": [
+            524288,
+            256,
+            1
+          ]
+        },
+        "w13_scales": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "float32",
+          "numel": 65536,
+          "ptr": 18446708893514989568,
+          "shape": [
+            256,
+            256
+          ],
+          "stride": [
+            256,
+            1
+          ]
+        },
+        "w2": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "int8",
+          "numel": 67108864,
+          "ptr": 18446697169420288000,
+          "shape": [
+            256,
+            128,
+            2048
+          ],
+          "stride": [
+            262144,
+            2048,
+            1
+          ]
+        },
+        "w2_scales": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "float32",
+          "numel": 524288,
+          "ptr": 18446697169495785472,
+          "shape": [
+            256,
+            2048
+          ],
+          "stride": [
+            2048,
+            1
+          ]
+        }
+      }
+    },
+    {
+      "layer": "language_model.model.layers.9.mlp.experts",
+      "layer_index": 9,
+      "oneDNN_sidecar_call": {
+        "candidate_name": "qwen36_w8a8_moe_onednn_sidecar",
+        "lifetime_rule": "Pointers are live-call only; the sidecar must run inside xpu_fused_moe before buffers are freed or reused.",
+        "queue_rule": "Use the same rank-local XPU device/context/queue or explicit SYCL interop events; no CPU copies.",
+        "required_outputs": [
+          "gemm1_output",
+          "act_output",
+          "gemm2_output",
+          "output"
+        ],
+        "required_zero_copy_inputs": [
+          "gemm1_a",
+          "gemm1_a_scales",
+          "w13",
+          "w13_scales",
+          "rows_per_expert",
+          "gemm2_a",
+          "gemm2_a_scales",
+          "w2",
+          "w2_scales",
+          "topk_weights",
+          "unpermuted_row_to_permuted_row"
+        ],
+        "scope": "rank-local MoE layer call"
+      },
+      "pid": 1773478,
+      "rank": "0",
+      "route": {
+        "active_expert_count": 11,
+        "active_experts_head": [
+          4,
+          17,
+          32,
+          36,
+          55,
+          88,
+          121,
+          148,
+          158,
+          190,
+          215
+        ],
+        "grouped_offsets_head": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          40,
+          40,
+          40,
+          40,
+          40,
+          40,
+          40,
+          40,
+          40,
+          40,
+          40,
+          40,
+          40,
+          120,
+          120,
+          120,
+          120,
+          120,
+          120,
+          120,
+          120,
+          120,
+          120,
+          120,
+          120,
+          120,
+          120
+        ],
+        "max_rows_per_expert": 80,
+        "offsets_cover_rows": true,
+        "rows_sum": 640
+      },
+      "shape": {
+        "gemm1": {
+          "k": 2048,
+          "m": 640,
+          "n": 256
+        },
+        "gemm2": {
+          "k": 128,
+          "m": 640,
+          "n": 2048
+        },
+        "hidden_size": 2048,
+        "inter_size": 128,
+        "num_experts": 256,
+        "num_moe_inputs": 640,
+        "num_rows": 80,
+        "topk": 8
+      },
+      "source": {
+        "call": 8,
+        "file": "data/qwen36-live-abi-20260612bi-1773478.jsonl",
+        "line": 8
+      },
+      "tensors": {
+        "act_output": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "bfloat16",
+          "numel": 81920,
+          "ptr": 18446697177284676096,
+          "shape": [
+            640,
+            128
+          ],
+          "stride": [
+            128,
+            1
+          ]
+        },
+        "gemm1_a": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "int8",
+          "numel": 1310720,
+          "ptr": 18446697177283035136,
+          "shape": [
+            640,
+            2048
+          ],
+          "stride": [
+            2048,
+            1
+          ]
+        },
+        "gemm1_a_scales": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "float32",
+          "numel": 640,
+          "ptr": 18446697177284345856,
+          "shape": [
+            640,
+            1
+          ],
+          "stride": [
+            1,
+            1
+          ]
+        },
+        "gemm1_output": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "bfloat16",
+          "numel": 163840,
+          "ptr": 18446697177284348416,
+          "shape": [
+            640,
+            256
+          ],
+          "stride": [
+            256,
+            1
+          ]
+        },
+        "gemm2_a": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "int8",
+          "numel": 81920,
+          "ptr": 18446697177284839936,
+          "shape": [
+            640,
+            128
+          ],
+          "stride": [
+            128,
+            1
+          ]
+        },
+        "gemm2_a_scales": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "float32",
+          "numel": 640,
+          "ptr": 18446697177284921856,
+          "shape": [
+            640,
+            1
+          ],
+          "stride": [
+            1,
+            1
+          ]
+        },
+        "gemm2_output": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "bfloat16",
+          "numel": 1310720,
+          "ptr": 18446697177284924416,
+          "shape": [
+            640,
+            2048
+          ],
+          "stride": [
+            2048,
+            1
+          ]
+        },
+        "hidden_states": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "bfloat16",
+          "numel": 163840,
+          "ptr": 18446708893334260224,
+          "shape": [
+            80,
+            2048
+          ],
+          "stride": [
+            2048,
+            1
+          ]
+        },
+        "output": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "bfloat16",
+          "numel": 163840,
+          "ptr": 18446697177280413696,
+          "shape": [
+            80,
+            2048
+          ],
+          "stride": [
+            2048,
+            1
+          ]
+        },
+        "remapped_hidden_states": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "int8",
+          "numel": 1310720,
+          "ptr": 18446697177283035136,
+          "shape": [
+            640,
+            2048
+          ],
+          "stride": [
+            2048,
+            1
+          ]
+        },
+        "rows_per_expert": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "int32",
+          "numel": 256,
+          "ptr": 18446697177287545856,
+          "shape": [
+            256
+          ],
+          "stride": [
+            1
+          ]
+        },
+        "topk_ids": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "int32",
+          "numel": 640,
+          "ptr": 18446708893334631424,
+          "shape": [
+            80,
+            8
+          ],
+          "stride": [
+            8,
+            1
+          ]
+        },
+        "topk_weights": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "float32",
+          "numel": 640,
+          "ptr": 18446708893334628864,
+          "shape": [
+            80,
+            8
+          ],
+          "stride": [
+            8,
+            1
+          ]
+        },
+        "unpermuted_row_to_permuted_row": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "int32",
+          "numel": 640,
+          "ptr": 18446697177287546880,
+          "shape": [
+            80,
+            8
+          ],
+          "stride": [
+            8,
+            1
+          ]
+        },
+        "w13": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "int8",
+          "numel": 134217728,
+          "ptr": 18446697169508368384,
+          "shape": [
+            256,
+            2048,
+            256
+          ],
+          "stride": [
+            524288,
+            256,
+            1
+          ]
+        },
+        "w13_scales": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "float32",
+          "numel": 65536,
+          "ptr": 18446708893513678848,
+          "shape": [
+            256,
+            256
+          ],
+          "stride": [
+            256,
+            1
+          ]
+        },
+        "w2": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "int8",
+          "numel": 67108864,
+          "ptr": 18446697169642586112,
+          "shape": [
+            256,
+            128,
+            2048
+          ],
+          "stride": [
+            262144,
+            2048,
+            1
+          ]
+        },
+        "w2_scales": {
+          "contiguous": true,
+          "device": "xpu:0",
+          "dtype": "float32",
+          "numel": 524288,
+          "ptr": 18446697169506271232,
+          "shape": [
+            256,
+            2048
+          ],
+          "stride": [
+            2048,
+            1
+          ]
+        }
+      }
+    }
+  ],
+  "implementation_gates": [
+    "Build a C++ sidecar entry point that accepts Tensor-derived device pointers and derived grouped offsets without serializing to files.",
+    "Wrap live XPU/USM pointers in oneDNN memory objects on the same rank-local SYCL device and prove no implicit host copy.",
+    "Cache packed w13/w2 weights and oneDNN grouped-matmul primitives by layer/shape; update rows_per_expert and offsets per call.",
+    "Run GEMM1 plus activation/quant plus GEMM2 and final gather with max_abs_diff=0.0 versus xpu_fused_moe before timing claims.",
+    "Add a kill switch and per-rank fallback to current xpu_fused_moe on any sidecar validation failure or unsupported shape."
+  ],
+  "layers": {
+    "language_model.model.layers.8.mlp.experts": 24,
+    "language_model.model.layers.9.mlp.experts": 24
+  },
+  "missing_tensors": {},
+  "rank_layer_shape_groups": [
+    {
+      "layer": "language_model.model.layers.8.mlp.experts",
+      "num_rows": 64,
+      "rank": "0",
+      "records": 1
+    },
+    {
+      "layer": "language_model.model.layers.8.mlp.experts",
+      "num_rows": 72,
+      "rank": "0",
+      "records": 1
+    },
+    {
+      "layer": "language_model.model.layers.8.mlp.experts",
+      "num_rows": 80,
+      "rank": "0",
+      "records": 1
+    },
+    {
+      "layer": "language_model.model.layers.8.mlp.experts",
+      "num_rows": 88,
+      "rank": "0",
+      "records": 1
+    },
+    {
+      "layer": "language_model.model.layers.8.mlp.experts",
+      "num_rows": 96,
+      "rank": "0",
+      "records": 1
+    },
+    {
+      "layer": "language_model.model.layers.8.mlp.experts",
+      "num_rows": 8192,
+      "rank": "0",
+      "records": 1
+    },
+    {
+      "layer": "language_model.model.layers.9.mlp.experts",
+      "num_rows": 64,
+      "rank": "0",
+      "records": 1
+    },
+    {
+      "layer": "language_model.model.layers.9.mlp.experts",
+      "num_rows": 72,
+      "rank": "0",
+      "records": 1
+    },
+    {
+      "layer": "language_model.model.layers.9.mlp.experts",
+      "num_rows": 80,
+      "rank": "0",
+      "records": 1
+    },
+    {
+      "layer": "language_model.model.layers.9.mlp.experts",
+      "num_rows": 88,
+      "rank": "0",
+      "records": 1
+    },
+    {
+      "layer": "language_model.model.layers.9.mlp.experts",
+      "num_rows": 96,
+      "rank": "0",
+      "records": 1
+    },
+    {
+      "layer": "language_model.model.layers.9.mlp.experts",
+      "num_rows": 8192,
+      "rank": "0",
+      "records": 1
+    },
+    {
+      "layer": "language_model.model.layers.8.mlp.experts",
+      "num_rows": 64,
+      "rank": "1",
+      "records": 1
+    },
+    {
+      "layer": "language_model.model.layers.8.mlp.experts",
+      "num_rows": 72,
+      "rank": "1",
+      "records": 1
+    },
+    {
+      "layer": "language_model.model.layers.8.mlp.experts",
+      "num_rows": 80,
+      "rank": "1",
+      "records": 1
+    },
+    {
+      "layer": "language_model.model.layers.8.mlp.experts",
+      "num_rows": 88,
+      "rank": "1",
+      "records": 1
+    },
+    {
+      "layer": "language_model.model.layers.8.mlp.experts",
+      "num_rows": 96,
+      "rank": "1",
+      "records": 1
+    },
+    {
+      "layer": "language_model.model.layers.8.mlp.experts",
+      "num_rows": 8192,
+      "rank": "1",
+      "records": 1
+    },
+    {
+      "layer": "language_model.model.layers.9.mlp.experts",
+      "num_rows": 64,
+      "rank": "1",
+      "records": 1
+    },
+    {
+      "layer": "language_model.model.layers.9.mlp.experts",
+      "num_rows": 72,
+      "rank": "1",
+      "records": 1
+    },
+    {
+      "layer": "language_model.model.layers.9.mlp.experts",
+      "num_rows": 80,
+      "rank": "1",
+      "records": 1
+    },
+    {
+      "layer": "language_model.model.layers.9.mlp.experts",
+      "num_rows": 88,
+      "rank": "1",
+      "records": 1
+    },
+    {
+      "layer": "language_model.model.layers.9.mlp.experts",
+      "num_rows": 96,
+      "rank": "1",
+      "records": 1
+    },
+    {
+      "layer": "language_model.model.layers.9.mlp.experts",
+      "num_rows": 8192,
+      "rank": "1",
+      "records": 1
+    },
+    {
+      "layer": "language_model.model.layers.8.mlp.experts",
+      "num_rows": 64,
+      "rank": "2",
+      "records": 1
+    },
+    {
+      "layer": "language_model.model.layers.8.mlp.experts",
+      "num_rows": 72,
+      "rank": "2",
+      "records": 1
+    },
+    {
+      "layer": "language_model.model.layers.8.mlp.experts",
+      "num_rows": 80,
+      "rank": "2",
+      "records": 1
+    },
+    {
+      "layer": "language_model.model.layers.8.mlp.experts",
+      "num_rows": 88,
+      "rank": "2",
+      "records": 1
+    },
+    {
+      "layer": "language_model.model.layers.8.mlp.experts",
+      "num_rows": 96,
+      "rank": "2",
+      "records": 1
+    },
+    {
+      "layer": "language_model.model.layers.8.mlp.experts",
+      "num_rows": 8192,
+      "rank": "2",
+      "records": 1
+    },
+    {
+      "layer": "language_model.model.layers.9.mlp.experts",
+      "num_rows": 64,
+      "rank": "2",
+      "records": 1
+    },
+    {
+      "layer": "language_model.model.layers.9.mlp.experts",
+      "num_rows": 72,
+      "rank": "2",
+      "records": 1
+    },
+    {
+      "layer": "language_model.model.layers.9.mlp.experts",
+      "num_rows": 80,
+      "rank": "2",
+      "records": 1
+    },
+    {
+      "layer": "language_model.model.layers.9.mlp.experts",
+      "num_rows": 88,
+      "rank": "2",
+      "records": 1
+    },
+    {
+      "layer": "language_model.model.layers.9.mlp.experts",
+      "num_rows": 96,
+      "rank": "2",
+      "records": 1
+    },
+    {
+      "layer": "language_model.model.layers.9.mlp.experts",
+      "num_rows": 8192,
+      "rank": "2",
+      "records": 1
+    },
+    {
+      "layer": "language_model.model.layers.8.mlp.experts",
+      "num_rows": 64,
+      "rank": "3",
+      "records": 1
+    },
+    {
+      "layer": "language_model.model.layers.8.mlp.experts",
+      "num_rows": 72,
+      "rank": "3",
+      "records": 1
+    },
+    {
+      "layer": "language_model.model.layers.8.mlp.experts",
+      "num_rows": 80,
+      "rank": "3",
+      "records": 1
+    },
+    {
+      "layer": "language_model.model.layers.8.mlp.experts",
+      "num_rows": 88,
+      "rank": "3",
+      "records": 1
+    },
+    {
+      "layer": "language_model.model.layers.8.mlp.experts",
+      "num_rows": 96,
+      "rank": "3",
+      "records": 1
+    },
+    {
+      "layer": "language_model.model.layers.8.mlp.experts",
+      "num_rows": 8192,
+      "rank": "3",
+      "records": 1
+    },
+    {
+      "layer": "language_model.model.layers.9.mlp.experts",
+      "num_rows": 64,
+      "rank": "3",
+      "records": 1
+    },
+    {
+      "layer": "language_model.model.layers.9.mlp.experts",
+      "num_rows": 72,
+      "rank": "3",
+      "records": 1
+    },
+    {
+      "layer": "language_model.model.layers.9.mlp.experts",
+      "num_rows": 80,
+      "rank": "3",
+      "records": 1
+    },
+    {
+      "layer": "language_model.model.layers.9.mlp.experts",
+      "num_rows": 88,
+      "rank": "3",
+      "records": 1
+    },
+    {
+      "layer": "language_model.model.layers.9.mlp.experts",
+      "num_rows": 96,
+      "rank": "3",
+      "records": 1
+    },
+    {
+      "layer": "language_model.model.layers.9.mlp.experts",
+      "num_rows": 8192,
+      "rank": "3",
+      "records": 1
+    }
+  ],
+  "ranks": {
+    "0": 12,
+    "1": 12,
+    "2": 12,
+    "3": 12
+  },
+  "record_count": 48,
+  "required_tensors": [
+    "hidden_states",
+    "topk_weights",
+    "topk_ids",
+    "w13",
+    "w13_scales",
+    "w2",
+    "w2_scales",
+    "output",
+    "remapped_hidden_states",
+    "rows_per_expert",
+    "unpermuted_row_to_permuted_row",
+    "gemm1_a",
+    "gemm1_a_scales",
+    "gemm1_output",
+    "act_output",
+    "gemm2_a",
+    "gemm2_a_scales",
+    "gemm2_output"
+  ],
+  "validation_problem_counts": {}
+}

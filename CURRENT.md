@@ -6,6 +6,31 @@ Date: 2026-06-12
 
 2026-06-12 notes update:
 
+- Added a live-ABI-to-sidecar planning artifact for the next no-quality-loss
+  oneDNN integration step. `scripts/qwen36-live-abi-sidecar-plan.py` consumes
+  the disabled-by-default live ABI smoke JSONL records and emits a concrete
+  rank-local sidecar descriptor/checklist. The current smoke logs cover `48`
+  records, `12` per rank across four ranks, and all required live tensors are
+  present with shape/dtype/contiguity checks passing. The derived representative
+  oneDNN work is GEMM1 `M=65536,K=2048,N=256` and GEMM2
+  `M=65536,K=128,N=2048`, with route offsets covering all routed rows. New
+  artifacts:
+  `data/qwen36-live-abi-sidecar-plan-20260612bj.json` and
+  `data/qwen36-live-abi-sidecar-plan-20260612bj.md`.
+  This keeps the next guarded call explicit: zero-copy live XPU/USM tensor
+  handoff, cached packed oneDNN primitives, per-rank fallback to current
+  `xpu_fused_moe`, and final-layer `max_abs_diff=0.0` before any endpoint
+  timing claim.
+
+- Refreshed the bigger-bet queue with current external signals. Localmaxxing
+  still shows the public exact-model B70/vLLM row at `99.428 tok/s` and a
+  same-family B70 row at `99.770 tok/s`, so the next gains must come from
+  architecture rather than launch flags. The detailed note now adds bolder
+  candidates: fixed-shape c1 decode lanes, zero-copy oneDNN sidecar entry,
+  route-class layerlet generation, VRAM-for-latency expert replication, a
+  verifier-owned speculative transaction API, Level Zero command-list
+  supernodes, and upstream/challenge packets for B70 W8A8 MoE.
+
 - Expanded `notes/2026-06-12-qwen36-next-bigger-bets.md` with a fresh
   higher-risk idea backlog after the full resident gather gate. The new section
   keeps the current-model/no-quality-loss constraints explicit, records public
