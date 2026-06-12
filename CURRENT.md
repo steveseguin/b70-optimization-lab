@@ -6,6 +6,21 @@ Date: 2026-06-12
 
 2026-06-12 continuation:
 
+- Added a wider-opportunity addendum to
+  `notes/2026-06-12-qwen36-next-bigger-bets.md` after the oneDNN
+  route-window replay. The addendum records the next concrete gates:
+  oneDNN-vs-current-XPU W8A8 grouped-GEMM parity, oneDNN scale/layout
+  forensics, layer-9 full MoE parity replay, profiler acquisition, Qwen3.6
+  GDN speculative-state audit, clean host-stack/topology A/B, TP economics,
+  and Localmaxxing dry-run discipline. It also captures bigger bets:
+  route-signature oneDNN primitive caching, ESIMD/DPAS generated layerlets,
+  resident MoE command processing, exact target branch farming,
+  trace-trained proposer behind target verification, static c1 sidecar,
+  hot-expert memory lane, OpenVINO/oneDNN GenAI truth-serum check, public B70
+  W8A8 MoE challenge packet, and a reliability-weighted scoreboard. Explicit
+  non-goals remain: no 4-bit, no AWQ, no Qwen3.5 substitution, and no public
+  promotion from synthetic tensors or unverified draft speed.
+
 - Added routecapture6 layer-9 count-window export plus mutable-offset oneDNN
   replay. This keeps the oneDNN grouped INT8 primitives and memory resident,
   then rewrites grouped src/dst offsets for 16 real rows=1 layer-9 route

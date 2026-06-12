@@ -4485,3 +4485,155 @@ Restore result:
 - Provenance guard passed both prefix cases and all sentinel tokens:
   `4752` at `repetitive_kernel_notes:14`, `11436` at
   `natural_latency_plan:17`, and `198` at `natural_latency_plan:25`.
+
+## 2026-06-12 Wider Opportunity Addendum
+
+This addendum records the next items to try plus larger bets after the
+oneDNN route-window replay. It is intentionally notes-only: no endpoint
+promotion, no model swap, and no public speed claim.
+
+Fresh external scan:
+
+- Localmaxxing exact-model public state is unchanged: the exact
+  `nameistoken/Qwen3.6-35B-A3B-Quark-W8A8-INT8` / 4x B70 / vLLM row remains
+  `cmq8yhxvo001ipb0149aoa79o` at `99.428 tok/s`.
+- The broader B70/Qwen/vLLM family query still shows our base-model mapped
+  `cmq9ifq0500b0r8012f27j1xl` at `99.770 tok/s`, plus external Qwen3.6 27B
+  B70 MTP work. Treat those 27B rows as speculation and stack clues, not as
+  a substitute for this 35B INT8 target.
+- Localmaxxing's broader `Qwen/Qwen3.6-35B-A3B` rows above `200 tok/s` are
+  mostly non-B70, non-W8A8, MTP/DFlash/NVFP4/MQ4-style paths. They reinforce
+  that exact target-verified speculation can matter, but they do not justify
+  lowering the target model quality or moving to 4-bit.
+- vLLM's public INT8 W8A8 documentation still frames official INT8 compute
+  support around NVIDIA GPU capability. Our XPU Quark W8A8 path remains a
+  local/vendor path that needs its own route-exact correctness proof.
+- oneDNN v3.13 explicitly documents grouped memory for MoE variable token
+  counts, and recent oneDNN releases call out grouped matmul as an experimental
+  opt-in with Intel GPU optimization. This matches the route-window replay and
+  raises priority for the oneDNN parity gate.
+- Triton and PyTorch grouped-GEMM references both point at fixed device-side
+  scheduling and persistent kernels as the right shape for MoE. This reinforces
+  the local conclusion that ordinary two-dispatch grouped GEMM is not the
+  `2x` path.
+
+Immediate additions to the try list:
+
+1. **oneDNN/XPU grouped-GEMM parity harness.**
+   Export one deterministic W8A8 grouped-GEMM case from the current XPU kernel:
+   `A int8`, per-token `A_scales`, `B int8`, per-expert-column `B_scales`,
+   `rows_per_expert`, and XPU output. Feed exactly the same buffers into the
+   oneDNN grouped-memory runner. The first pass can compare GEMM1 and GEMM2
+   independently; the required output is either `max_abs_diff=0.0` or a
+   documented rounding-mode mismatch with a bounded diff.
+
+2. **oneDNN scale/layout forensic packet.**
+   Before full MoE replay, prove the meaning of oneDNN src and weight scales
+   against a CPU reference and the current XPU kernel for tiny and Qwen-shaped
+   cases. This should catch transposed weight layout, per-column scale indexing,
+   and bf16 destination rounding errors early.
+
+3. **Layer-9 full MoE parity replay.**
+   Once GEMM parity is understood, compose route/remap, GEMM1, SiLU/up-gate,
+   quant2, GEMM2, top-k weighting, and gather for one captured layer-9
+   routecapture6 window. Required gate: exact agreement against current
+   `xpu_fused_moe` before any timing conclusion.
+
+4. **Profiler acquisition lane.**
+   Install or locate `unitrace`, VTune, or an equivalent Level Zero trace stack
+   and capture one accepted decode token plus one route-replay layer. The
+   target table is kernel name, duration, launch gap, barriers, copies,
+   collectives, and whether the W8A8 hot kernels are using DPAS/XMX as expected.
+
+5. **Speculation state audit for Qwen3.6 GDN.**
+   Inventory every mutable state that makes target-verified speculation hard:
+   KV pages, GDN/Mamba state, block tables, computed-token counters, scheduler
+   sequence metadata, RNG/sampling state, and graph-captured buffers. The
+   output should be a commit/rollback data model, not a speed run.
+
+6. **Clean host-stack and topology A/B.**
+   Repeat only the accepted command on a clean Intel-supported container or
+   runtime stack, then on alternate PCIe/root-complex placements if available.
+   Keep same model, same prompts, same quality gate. If c1 changes materially,
+   promote the host-stack finding separately from model/kernel changes.
+
+7. **TP economics truth-serum.**
+   Run narrowly scoped TP1/TP2/TP4 or simulated TP2+replicated-hot-expert
+   tests at smaller context if needed. The purpose is to learn whether TP4
+   communication and smaller shard shapes are costing more c1 latency than
+   they save for this MoE.
+
+8. **Localmaxxing dry-run discipline.**
+   Generate a dry-run payload only when a result is material, quality-cleared,
+   and reproducible. Do not spend submission cycles on the current `99.7 tok/s`
+   refresh unless we explicitly want a recovery datapoint; wait for a real
+   threshold such as `105+`, `120+`, or a new exactness category.
+
+Additional bigger bets to keep alive:
+
+1. **oneDNN route-signature primitive cache inside vLLM.**
+   If the parity harness passes, cache oneDNN primitive/memory bundles by
+   `(layer, rows_per_expert signature, dtype, output dtype)` and update only
+   offset metadata at runtime. This is less ambitious than a full custom
+   persistent kernel and could be a bridge to a real endpoint win.
+
+2. **ESIMD/DPAS generated layerlet.**
+   Generate a small number of route-class layerlets that directly issue Intel
+   matrix operations for the exact Qwen shapes. Use tile-native packed expert
+   weights with checksums, fixed Quark scale layout, and route-class metadata.
+   This is the lower-level alternative if oneDNN parity or integration stalls.
+
+3. **Resident MoE command processor.**
+   Put a persistent kernel or device service in charge of route tasks for a
+   layer group. The host writes compact descriptors; device workers perform
+   remap, quant, GEMMs, activation, and gather without paying a host launch for
+   each phase. This is still the cleanest non-speculative `2x` concept.
+
+4. **Exact target branch farm.**
+   Use spare hardware lanes to compute several target-model candidate branches
+   speculatively, then commit only the branch proven by the target model. This
+   is expensive, but it preserves quality and may be useful when decode is
+   underutilizing compute.
+
+5. **Trace-trained proposer behind verifier.**
+   Train or tune a small proposer on continuations emitted by this exact Quark
+   model. It never emits final text directly; it only feeds the target verifier.
+   This could give higher acceptance than generic n-gram without changing
+   output quality.
+
+6. **Static c1 sidecar outside vLLM.**
+   Build a tiny fixed-bucket single-request runner for p512/o512 and a few
+   common chat shapes. Same tokenizer and same Quark weights, but no dynamic
+   vLLM scheduler. Use it as a truth-serum for whether vLLM overhead or kernel
+   math dominates.
+
+7. **Hot-expert memory lane with admission control.**
+   If VRAM remains high but workable, duplicate only hot expert packed tiles
+   for selected layers in a latency lane. Routecapture says hot64 replication
+   can nearly erase imbalance in simulation, but implementation should wait
+   for a communication/stall trace.
+
+8. **OpenVINO/oneDNN GenAI support check.**
+   Do a fit-and-correctness check only if Qwen3.6 A3B, GDN, and Quark-like
+   W8A8/MoE are genuinely supported. If unsupported, record it and stop. This
+   is a possible engine truth-serum, not permission to change the target model.
+
+9. **Public B70 W8A8 MoE challenge packet.**
+   Publish a compact repro once parity fixtures are clean: route windows,
+   model-shaped buffers, expected outputs, current XPU timings, oneDNN timings,
+   and exact quality guard. This could attract useful Intel/vLLM feedback
+   without exposing secrets or a huge private codebase.
+
+10. **Reliability-weighted performance scoreboard.**
+    Every future candidate should record speed, exactness, TTFT, device-lost
+    count, graph-cache identity, restart time, and soak result. A stable
+    `120 tok/s` lane is more useful for production than a fragile `180 tok/s`
+    spike.
+
+Explicit non-goals:
+
+- No 4-bit, AWQ, or Qwen3.5 substitution for this target.
+- No public promotion from synthetic tensors, draft-only speed, or BF16
+  fallback quality alone.
+- No more launch-flag sweeps unless a timing packet identifies the specific
+  stall they are meant to address.
