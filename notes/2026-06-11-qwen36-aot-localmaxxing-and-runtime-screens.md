@@ -13024,3 +13024,186 @@ Next implementation target:
    placeholders, and block-table metadata unchanged until accept/reject is
    known.
 5. Pass the exact fixture gate with speculation active before any speed claim.
+
+## Additional Bigger Bets After Parent-State Trace
+
+Added after the parent-state trace and the first runtime hook audit. The main
+lesson is that a scheduler-only COW change is probably not a real verifier
+implementation. The worker already receives a pre-schedule computed-token
+cursor, while the scheduler parent is advanced for future scheduling and
+speculative accounting. A safe COW prototype has to be transactional across
+the scheduler request state, cached request state, worker input batch, token
+buffer, and KV/block metadata.
+
+Immediate repair items to keep in the queue:
+
+1. **Worker-state trace before any COW mutation.**
+   - Add default-off trace rows around `GPUModelRunner._update_states()`,
+     `InputBatch.update_req_spec_token_ids()`, and `_prepare_inputs()`.
+   - Record request id, `num_computed_tokens`, `num_tokens_no_spec`,
+     `prev_num_draft_len`, token-buffer write ranges, block-table row length,
+     scheduled draft count, and generated acceptance count.
+   - Goal: prove whether the next drift source is scheduler parent state,
+     worker cached state, token-buffer draft placement, or Mamba/GDN state.
+
+2. **No fake COW promotion.**
+   - Do not ship a patch that only defers scheduler
+     `request.num_computed_tokens` and calls that COW.
+   - A diagnostic env is acceptable, but the promotion gate is exact fixture
+     parity with speculation active plus repeat/long-context quality gates.
+
+3. **Transaction model for speculative rows.**
+   - Treat speculative verification as a transaction:
+     snapshot parent metadata, run scratch verification, then commit only
+     accepted output tokens through `_update_request_with_output()`.
+   - Scratch state may advance computed-token and token-buffer positions.
+     Parent state should only advance by verifier-selected visible tokens.
+
+4. **COW overhead meter in the first prototype.**
+   - Log parent snapshot time, scratch-row allocation time, verifier forward
+     time, accept/reject reconciliation time, and scheduler-loop overhead.
+   - Compare against the bucket-6 and bucket-8 budgets in the earlier COW
+     overhead table; a parity-correct prototype that is too slow should still
+     be useful if it identifies the expensive piece.
+
+5. **Direct model-runner latency harness.**
+   - Build an offline or local-only harness that uses the same loaded kernels
+     and graph path but bypasses OpenAI streaming, frontdoor, JSON handling,
+     and most scheduler lifecycle work.
+   - If it is much faster than the endpoint, server overhead is a real target.
+     If it is near the endpoint, the next gains must come from speculation,
+     MoE kernels, collectives, or graph shape.
+
+Bigger, bolder ideas to keep on the board:
+
+1. **Scratch KV page-table transactions.**
+   - Instead of cloning full parent state, give the verifier a copy-on-write
+     page-table view of the parent KV plus temporary lookahead pages.
+   - On accept, promote pages or metadata; on reject, drop scratch pages.
+   - This is harder than logical metadata COW, but it is the right shape if
+     k=4/k=8 speculation is the path to `>200 tok/s`.
+
+2. **COW first, DFlash/MTP second.**
+   - DFlash and MTP have the strongest public speed evidence, but they are
+     only useful here after the verifier path is exact.
+   - The target flow should be: exact COW oracle k=1, then k=2/k=4, then a
+     real proposer, then DFlash/MTP sidecar.
+   - The current Quark INT8 model remains the final verifier; draft quality is
+     only a performance variable.
+
+3. **Lower-context latency lane that frees a draft card.**
+   - The production service needs 32K, but many interactive requests do not.
+     Test a separate 8K or 16K latency lane where the target verifier uses
+     fewer B70s or less KV headroom and one card can run an 8-bit/FP8 proposer.
+   - This does not replace the 32K route. It answers whether a practical
+     product lane can trade maximum context for much higher single-user speed
+     without changing final output quality.
+
+4. **Sidecar proposer protocol.**
+   - Define a small local protocol for draft candidates: prompt hash, parent
+     token count, proposed token block, proposer log metadata, and timeout.
+   - This makes n-gram, MTP, DFlash, EAGLE, or a custom micro-drafter
+     interchangeable while keeping the verifier and quality gates unchanged.
+
+5. **Route-window capture tied to COW/speculation.**
+   - Capture real MoE route windows during accepted baseline, oracle k=1, and
+     future COW runs.
+   - If speculation changes routing distribution or active expert skew, kernel
+     microbenches need to replay those distributions, not just baseline routes.
+
+6. **Persistent grouped-MoE prototype in `vllm-xpu-kernels`.**
+   - The external XPU direction is moving custom kernels into
+     `vllm-xpu-kernels`, and that repo already exposes MoE helpers such as
+     TopK, grouped TopK, align-sum, gather, and expert remapping.
+   - Build the first durable kernel experiment there, not as another Python
+     wrapper in vLLM. Use exact route windows and exact Quark W8A8 shapes.
+
+7. **Expert-parallel feasibility spreadsheet.**
+   - Before coding EP, map per-layer expert weights, active experts per token,
+     shared-expert cost, all-reduce/all-to-all bytes, and 32K KV headroom.
+   - Output should answer whether TP4 is structurally wrong for c1 decode and
+     whether partial expert replication can fit without sacrificing context.
+
+8. **Hybrid TP/EP graph lane.**
+   - If the spreadsheet says pure EP is too invasive, try a narrower hybrid:
+     keep attention/dense TP where needed, but route MoE experts through a
+     graph-safe expert-local path with fewer collectives.
+   - This is probably an upstream-scale project, but it attacks the observed
+     "4 GPUs, still latency-bound" issue directly.
+
+9. **Shape-locked decode service below vLLM scheduling.**
+   - Create a minimal local service for one-user greedy decode with fixed
+     prompt/output buckets, fixed graph shapes, fixed COW spec bucket, and
+     preallocated KV.
+   - Use it as a latency ceiling. If it crosses `200 tok/s`, port only the
+     necessary pieces back into production vLLM routing.
+
+10. **Acceptance-aware proposer tuning.**
+    - Track acceptance by prompt class, output length, and token position.
+    - Dynamically choose `k=1/2/4/8`, DFlash window, or no-spec based on
+      recent acceptance. This avoids silently slowing down bad prompt classes.
+
+11. **Speculation quality matrix, not one smoke test.**
+    - Every proposer/COW candidate needs deterministic canaries, exact hash
+      fixtures, repeat64, long-context needle, structured JSON, code, math, and
+      natural chat.
+    - Add a "same output as current verifier" lane for greedy runs and a
+      "same quality as BF16/current" lane for sampled runs. Do not publish a
+      speed claim unless both the right lane and reliability gate pass.
+
+12. **OneCCL and P2P ledger for every TP experiment.**
+    - Record all-reduce/allgather counts, bytes, wall time, P2P path,
+      NUMA/PCIe placement, and XPU idle gaps.
+    - If the ledger shows collectives dominate, focus on EP/hybrid layout and
+      custom graph-safe collectives; if not, focus on MoE/GDN kernels.
+
+13. **Native 8-bit engine bakeoff as a diagnostic only.**
+    - Keep looking for an 8-bit Qwen3.6 35B path in llama.cpp/SYCL, SGLang, or
+      OpenVINO/oneDNN GenAI, but only as an engineering comparison unless it
+      passes the same quality and 32K requirements.
+    - No AWQ/4-bit detours. Q8_0, W8A8, W8A16, FP8, or BF16-only controls are
+      the acceptable comparison space.
+
+14. **Upstreamable repro package.**
+    - Turn the best AOT/route/cow traces into three public-safe repros:
+      W8A8 dense small-batch GEMM, route-skewed grouped MoE GEMM, and graph
+      collective latency.
+    - Include exact shapes, command lines, current throughput, target
+      throughput, and parity requirements so Intel/vLLM maintainers can help.
+
+15. **Production route split only after a real c1 win.**
+    - Once a candidate beats the accepted baseline and passes quality, test it
+      as a separate production route: conservative 32K no-spec, short-context
+      COW/spec, and aggregate TP/replica route.
+    - This keeps reliability and production concurrency separate from the c1
+      research loop.
+
+Fresh outside signals supporting these ideas:
+
+- DFlash for Qwen3.6 35B is published as a 0.5B BF16 drafter paired with
+  `Qwen/Qwen3.6-35B-A3B`; its vLLM launch example uses method `dflash` with
+  `num_speculative_tokens=15`, and the model card reports up to `2.9x`
+  concurrency-1 speedup on its published setup.
+- The vLLM Qwen3.6 recipe documents MTP speculative decoding for Qwen3.6
+  models, reinforcing that MTP is a first-class latency path in the current
+  Qwen3.6 family.
+- Intel's Arc Pro B-series vLLM note explicitly lists speculative decoding,
+  async scheduling, PP/TP support, and MoE optimization as active B-series
+  capabilities. It also calls out persistent single-kernel MoE loops and
+  dynamic work balancing as the shape of real MoE speedups.
+- The vLLM XPU kernel migration RFC says W8A16/W8A8 support has moved into the
+  dedicated XPU kernel direction, so durable kernel work should target
+  `vllm-xpu-kernels` rather than old IPEX-only paths.
+- vLLM's MoE kernel design docs emphasize backend-specific all2all and
+  quantization-format constraints. That matters for any EP/hybrid idea: the
+  activation format and quantization location must be designed up front, not
+  patched after the fact.
+
+Useful links for this addendum:
+
+- `https://huggingface.co/z-lab/Qwen3.6-35B-A3B-DFlash`
+- `https://recipes.vllm.ai/Qwen/Qwen3.6-27B`
+- `https://vllm.ai/blog/2025-11-11-intel-arc-pro-b`
+- `https://github.com/vllm-project/vllm-xpu-kernels`
+- `https://github.com/vllm-project/vllm/issues/33214`
+- `https://docs.vllm.ai/en/latest/design/moe_kernel_features/`

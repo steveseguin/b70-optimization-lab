@@ -70,6 +70,13 @@ Current Qwen3.6 INT8 direction:
     helped rows=16 slightly. Treat these route streams as parity/performance
     repros for persistent MoE or grouped-GEMM scheduling rather than evidence
     for a simple global physical remap.
+12. After the oracle k=1 parent-state trace, the next speculative branch should
+    avoid a scheduler-only fake COW fix. Track the expanded work queue in
+    `notes/2026-06-11-qwen36-aot-localmaxxing-and-runtime-screens.md` under
+    "Additional Bigger Bets After Parent-State Trace": worker-state tracing,
+    transactional scratch verification, KV page-table COW, a sidecar proposer
+    protocol, lower-context latency lanes, route-aware COW/MoE capture, and
+    upstreamable `vllm-xpu-kernels` repros.
 
 ## 2026-05-10 MiniMax AutoRound Addendum
 
