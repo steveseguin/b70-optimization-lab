@@ -1645,3 +1645,70 @@ Next direction:
      failure modes,
   3. exact target-verified speculation with a transactional resident-state
      verifier.
+
+## 2026-06-12 Block-Table Dirty Commit Patch
+
+New patch and validation:
+
+- Patch:
+  `patches/vllm-qwen36-xpu-block-table-dirty-commit-20260612.patch`.
+- Validation script:
+  `scripts/check-qwen36-block-table-dirty-commit.py`.
+- Validation artifact:
+  `data/qwen36-block-table-dirty-commit-check-20260612ai.json`.
+
+Purpose:
+
+- Reduce one known XPU reliability and latency pressure point:
+  `block_table.copy_to_gpu(num_reqs)`.
+- The current path copies the active block-table rows to XPU every prepare
+  step. In c1 decode, that row normally changes only when the request is added,
+  removed, moved, swapped, or receives a new KV block. For most generated
+  tokens, the block table is unchanged.
+- The default-off patch adds dirty-row tracking to `BlockTable` and makes
+  `commit_block_table()` skip the host-to-XPU copy when no active rows changed,
+  or copy only contiguous dirty row ranges when only a subset changed.
+
+Controls:
+
+- Runtime env:
+  `VLLM_XPU_BLOCK_TABLE_DIRTY_COMMIT=1`.
+- Optional stats log:
+  `VLLM_XPU_BLOCK_TABLE_DIRTY_COMMIT_LOG_EVERY=<N>`.
+- Production launch guard:
+  `scripts/launch-qwen36-quark-int8-accepted.sh` now strips these env vars
+  unless `VLLM_XPU_METADATA_COPY_ALLOW=1` is set.
+
+Validation:
+
+```bash
+/home/steve/.venvs/vllm-xpu/bin/python -m py_compile \
+  /home/steve/src/vllm/vllm/v1/worker/block_table.py \
+  scripts/check-qwen36-block-table-dirty-commit.py
+
+bash -n scripts/launch-qwen36-quark-int8-accepted.sh
+
+/home/steve/.venvs/vllm-xpu/bin/python \
+  scripts/check-qwen36-block-table-dirty-commit.py \
+  --output-json data/qwen36-block-table-dirty-commit-check-20260612ai.json
+```
+
+The CPU-device simulation passed:
+
+- `total` commits: `7`.
+- skipped commits: `2`.
+- full commits: `1`.
+- partial commits: `4`.
+- copied dirty rows: `7`.
+
+Decision:
+
+- This is not a speed claim yet. It is a safe, default-off implementation
+  candidate that specifically targets the repeated metadata-copy failure class
+  observed after risky XPU runs.
+- Next controlled A/B gate: launch accepted TP4/32K with
+  `VLLM_XPU_METADATA_COPY_ALLOW=1`,
+  `VLLM_XPU_BLOCK_TABLE_DIRTY_COMMIT=1`, and a moderate
+  `VLLM_XPU_BLOCK_TABLE_DIRTY_COMMIT_LOG_EVERY`, then run provenance guard and
+  p512/o128 plus p512/o512 speed smokes. Promote only if sentinels pass and
+  decode latency improves or device-lost frequency drops.

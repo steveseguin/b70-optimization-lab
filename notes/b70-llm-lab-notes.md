@@ -607,3 +607,17 @@ vLLM/XPU FP8 work:
     in `block_table.copy_to_gpu`; recovery snapshot and four-XPU copy smoke
     passed, the second restore passed provenance sentinels, and p512/o128
     speed returned to `99.733 tok/s` corrected with `9.953 ms/token` decode.
+22. Added a default-off block-table dirty-commit patch for the repeated
+    metadata-copy pressure point:
+    `patches/vllm-qwen36-xpu-block-table-dirty-commit-20260612.patch`. The
+    local vLLM checkout now tracks dirty block-table rows and, when
+    `VLLM_XPU_BLOCK_TABLE_DIRTY_COMMIT=1`, skips `commit_block_table()` copies
+    if no active rows changed or copies only contiguous dirty ranges. The
+    accepted launch script strips this unless
+    `VLLM_XPU_METADATA_COPY_ALLOW=1`, so production behavior remains unchanged.
+    Validation is in `scripts/check-qwen36-block-table-dirty-commit.py` and
+    `data/qwen36-block-table-dirty-commit-check-20260612ai.json`; the CPU-device
+    simulation passed with `7` commits, `2` skipped, `1` full, `4` partial, and
+    `7` copied rows. This is not yet a speed claim. The next gate is a
+    controlled accepted-backend A/B launch with provenance and p512 speed
+    smokes.
