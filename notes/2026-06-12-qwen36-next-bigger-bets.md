@@ -10746,3 +10746,171 @@ Decision:
 - Passing this gate still is not enough for endpoint promotion; graph-path
   tensor capture, accepted-lane quality gates, and a manifest update remain
   mandatory.
+
+## Graph-Capture Census Hook And Bolder Queue Addendum 20260612dc
+
+This pass adds the next requested tracking checkpoint and records a concrete
+first step toward the graph-path tensor capture gate. It is still diagnostic
+plumbing only: no endpoint speed claim, no quality claim, and no serving
+launcher change.
+
+Local source hook:
+
+- Added an opt-in graph-capture census hook to the dirty local
+  `/home/steve/src/vllm-xpu-kernels/vllm_xpu_kernels/fused_moe_interface.py`
+  tree. The scoped patch artifact is:
+  `patches/qwen36-xpu-moe-graph-capture-census-20260612dc.diff`.
+- New env switches are disabled by default:
+  `VLLM_XPU_MOE_LIVE_ABI_CAPTURE_SKIPS`,
+  `VLLM_XPU_MOE_LIVE_ABI_DEFER_CAPTURE_SAMPLES`,
+  `VLLM_XPU_MOE_LIVE_ABI_DEFER_CAPTURE_DELAY_MS`, and
+  `VLLM_XPU_MOE_LIVE_ABI_DEFER_CAPTURE_MAX_PENDING`.
+- If the XPU stream is being captured, the hook can now write a safe metadata
+  record instead of silently returning. It records tensor shape, dtype, device,
+  stride, data pointer, layer, rank, call ID, and route shape, but it does not
+  copy tensor contents during capture.
+- If deferred samples are enabled, the hook schedules a bounded daemon thread
+  that waits until after capture and then samples small tensors/checksums. It
+  only calls `torch.xpu.synchronize()` when the sampled output is on XPU, so the
+  helper is safe in CPU/no-device smoke tests.
+
+New gate parser:
+
+- Added `scripts/qwen36-moe-live-abi-graph-capture-gate.py`.
+- The parser checks opt-in live-ABI JSONL logs for:
+  `stream_capture_skip_no_tensor_copy` records, deferred
+  `deferred_post_capture_sample` records, required capture-safe tensor metadata,
+  and deferred output sample checksums.
+- A passing parser result proves only that the requested graph-capture evidence
+  was observed. It does not prove endpoint speed, output quality, or full
+  graph/eager tensor parity.
+
+Validation already run without touching the live serving endpoint:
+
+```bash
+python3 -m py_compile \
+  /home/steve/src/vllm-xpu-kernels/vllm_xpu_kernels/fused_moe_interface.py
+
+python3 -m py_compile scripts/qwen36-moe-live-abi-graph-capture-gate.py
+
+python3 scripts/qwen36-moe-live-abi-graph-capture-gate.py \
+  /tmp/qwen36-live-abi-gate-synthetic.jsonl \
+  --layer-regex 'layers[.]9[.]' --rank 0 \
+  --require-capture-skip --require-deferred-sample
+```
+
+Synthetic helper smoke also imported the local kernel module, wrote one
+capture-safe record and one deferred sample record with CPU tensors, and
+confirmed observations:
+
+- `stream_capture_skip_no_tensor_copy`
+- `deferred_post_capture_sample`
+
+Deferred real endpoint diagnostic command for the next isolated launch window:
+
+```bash
+VLLM_XPU_MOE_LIVE_ABI_FILE=/mnt/fast-ai/vllm-cache-exp/qwen36-live-abi-{rank}-{pid}.jsonl \
+VLLM_XPU_MOE_LIVE_ABI_CAPTURE_SKIPS=1 \
+VLLM_XPU_MOE_LIVE_ABI_DEFER_CAPTURE_SAMPLES=1 \
+VLLM_XPU_MOE_LIVE_ABI_MAX_LINES=20 \
+VLLM_XPU_MOE_LIVE_ABI_LAYER_REGEX='layers[.]9[.]' \
+VLLM_XPU_MOE_LIVE_ABI_RANK=0 \
+scripts/launch-qwen36-quark-int8-accepted.sh
+
+python3 scripts/qwen36-moe-live-abi-graph-capture-gate.py \
+  /mnt/fast-ai/vllm-cache-exp/qwen36-live-abi-*.jsonl \
+  --layer-regex 'layers[.]9[.]' --rank 0 \
+  --require-capture-skip --require-deferred-sample \
+  --output-json data/qwen36-quark-int8-liveabi-graph-capture-gate-20260612dc.json \
+  --markdown-out data/qwen36-quark-int8-liveabi-graph-capture-gate-20260612dc.md
+```
+
+New external signals from the quick scan:
+
+- Hugging Face lists the base Qwen3.6-35B-A3B artifact as compatible with
+  vLLM, SGLang, KTransformers, and Transformers. Treat alternative engines as
+  ceiling probes only; they are not substitutes unless they can run this exact
+  W8A8 INT8 lane with comparable quality evidence:
+  <https://huggingface.co/Qwen/Qwen3.6-35B-A3B>.
+- A recent vLLM B70/XPU issue asks which host BOM should be targeted for dual
+  B70 plus Qwen3 MoE dynamic FP8 and points at possible boundaries across
+  vLLM, `vllm-xpu-kernels`, oneCCL, Level Zero, and the `xe` kernel driver.
+  That reinforces keeping host stack, driver, oneCCL, and graph-cache identity
+  in every manifest:
+  <https://github.com/vllm-project/vllm/issues/41663>.
+- LLM Compressor has an active W8A8 INT8 support thread for
+  Qwen3.6-35B-A3B. That is relevant to quality and portable quant tooling, but
+  it is not a reason to switch away from the current accepted checkpoint:
+  <https://github.com/vllm-project/llm-compressor/issues/2787>.
+- Community B70 setup notes continue to mention llama.cpp SYCL and Vulkan
+  paths. Use them as strict same-model/same-quant ceiling probes if possible,
+  not as production replacements or lower-bit shortcuts.
+
+Additional bigger, bolder ideas to keep visible:
+
+1. **Graph-capture tensor parity ladder.**
+   Start with metadata-only capture proof, then deferred small checksums, then
+   one-layer accepted-vs-candidate tensor compare, then all-layer route-window
+   tensor compare. Endpoint candidates should climb that ladder in order.
+
+2. **Per-layer route-class AOT micro-library.**
+   Build a small library of exact layerlet variants at startup for the route
+   classes actually observed: single-token sparse topk-8, repeated hot tuple,
+   broad sparse tuple, and aggregate batch. Dispatch by route hash/class while
+   keeping the current fallback.
+
+3. **Persistent cross-layer MoE conveyor.**
+   Instead of one persistent island per layer, try a resident device-side
+   conveyor that keeps route descriptors, scratch buffers, and expert work
+   queues alive across several MoE layers. This attacks host fences and
+   repeated setup at a larger scale.
+
+4. **DPAS/XMX tile-layout proof packet.**
+   Create a tiny exact W8A8 Quark weight/scale repack experiment that proves
+   which layout feeds B70 DPAS/XMX best. The values must be bit-identical after
+   unpack; only memory order and descriptors change.
+
+5. **Host BOM and stability matrix as a speed feature.**
+   Benchmark kernel, Intel compute-runtime, oneAPI, oneCCL, BIOS PCIe ASPM,
+   Resizable BAR, power limit, and fan curves as a controlled matrix. A stable
+   lower-latency host stack is a valid no-quality-loss win.
+
+6. **Strict 8-bit engine ceiling bakeoff.**
+   Try SGLang, KTransformers, llama.cpp SYCL, and Intel containers only if they
+   can run the same model family and an 8-bit W8A8-like quality lane. The goal
+   is to find a ceiling or borrow a kernel idea, not to accept lower quality.
+
+7. **Route-aware topology scheduler.**
+   Use route ledgers plus rank/card timing to choose rank placement, hot expert
+   placement, and possibly asymmetric dense/MoE placement. If rank skew is
+   repeatable, bake that into the latency lane.
+
+8. **Quality tribunal instead of one sentinel file.**
+   Combine exact token sentinels, cache-versioned sentinels, no-thinking task
+   canaries, prompt-logprob rank checks, route-window tensor parity, and a
+   small BF16 fallback comparison packet. A bolder speed branch must satisfy
+   multiple independent quality views.
+
+9. **Maintainer/crowd challenge after the graph gate.**
+   Publish the accepted manifest, Localmaxxing result, graph-capture gate,
+   one-layer route fixture, and prologue-inclusive timings. Ask Intel/vLLM and
+   B70 users for exact Qwen3.6 W8A8 INT8 settings or kernel patches that beat
+   `~100 tok/s` c1 without output drift.
+
+10. **Verifier-owned parallelism remains the only non-kernel 2x path.**
+    If the kernel path stalls below the target, return to exact target-state
+    transactions: temporary KV/GDN/request-state forks, target-owned branch
+    farming, and commit-only-after-verification streaming. This is the biggest
+    path to `>200 tok/s` without lowering quality, but only after exact state
+    rollback is proven.
+
+Updated immediate order:
+
+1. Run the graph-capture census on an isolated endpoint launch and parse it
+   with `scripts/qwen36-moe-live-abi-graph-capture-gate.py`.
+2. Run the prologue-inclusive layer-9 real-route microbench when the serving
+   endpoint can be stopped or an isolated XPU is available.
+3. Build the first full layerlet tensor-compare gate against accepted
+   `xpu_fused_moe`.
+4. Use the results to choose between persistent MoE island, route-class AOT
+   micro-library, topology/host-stack work, or exact verifier parallelism.

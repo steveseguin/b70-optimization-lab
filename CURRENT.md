@@ -6,6 +6,27 @@ Date: 2026-06-12
 
 2026-06-12 notes update:
 
+- Added the graph-capture census checkpoint and a wider no-quality-loss idea
+  bank to `notes/2026-06-12-qwen36-next-bigger-bets.md`. The local dirty
+  `vllm-xpu-kernels` tree now has disabled-by-default live-ABI graph-capture
+  hooks for capture-safe metadata records and bounded deferred post-capture
+  samples; the scoped patch artifact is
+  `patches/qwen36-xpu-moe-graph-capture-census-20260612dc.diff`. Added
+  `scripts/qwen36-moe-live-abi-graph-capture-gate.py` to validate JSONL logs
+  for stream-capture skip records, deferred samples, tensor metadata, and
+  output sample checksums. Static validation passed (`py_compile` on the local
+  source and parser), and a synthetic helper smoke produced both
+  `stream_capture_skip_no_tensor_copy` and `deferred_post_capture_sample`
+  observations. The new backlog adds graph-capture parity ladder, per-layer
+  route-class AOT micro-library, persistent cross-layer MoE conveyor,
+  DPAS/XMX tile-layout proof packet, host BOM/stability matrix, strict 8-bit
+  engine ceiling bakeoff, route-aware topology scheduler, multi-view quality
+  tribunal, maintainer/crowd challenge packet, and verifier-owned parallelism
+  as the remaining non-kernel 2x path. No endpoint was changed and no speed
+  result was promoted.
+
+2026-06-12 notes update:
+
 - Added prologue-inclusive MoE gate plumbing to
   `scripts/bench-qwen36-int8-moe-kernels.py` and documented it in
   `notes/2026-06-12-qwen36-next-bigger-bets.md`. Each benchmark row now emits
