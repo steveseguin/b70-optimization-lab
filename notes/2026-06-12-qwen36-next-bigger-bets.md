@@ -2427,3 +2427,123 @@ Bigger bets to keep in the queue:
     checks into a minimal issue/PR-ready repro for `vllm-xpu-kernels`. This may
     attract kernel maintainer attention and gives us a clean artifact even if we
     carry a local patch first.
+
+## 2026-06-12 Fused SiLU+Quant Gate And Fresh Bigger Bets
+
+Artifacts:
+
+- Baseline route replay:
+  `data/qwen36-quark-int8-moe-routecapture6-layer9-baseline-gate-20260612ap.md`
+  and `.json`.
+- Fused SiLU+quant candidate replay:
+  `data/qwen36-quark-int8-moe-routecapture6-layer9-fused-siluq-gate-20260612ap.md`
+  and `.json`.
+- Restored accepted endpoint log:
+  `data/qwen36-quark-int8-tp4-accepted-restored-after-siluqgate-20260612ap.log`.
+- Restored accepted endpoint provenance:
+  `data/qwen36-quark-int8-tp4-accepted-provenance-after-siluqgate-20260612ap.json`.
+
+Result:
+
+- The route-gate fixture uses layer `9`, routecapture6 rank-0 exact-ID routes,
+  rows=`1`, starts `0:64:4`, `30` timed iterations, and `5` warmup iterations.
+- Baseline current path is exact against `xpu_fused_moe`: max diff `0.000`.
+  Its mean `xpu_fused_moe` time is `283.098 us/layer`; preallocated staged
+  lower-bound mean is `212.792 us/layer`.
+- The fused SiLU+quant candidate is not exact: manual staged and preallocated
+  staged paths both show max abs diff `0.750` versus `xpu_fused_moe`.
+- Even ignoring the exactness failure, the candidate only moves mean
+  `xpu_fused_moe` time to `272.862 us/layer`, far above the `~160 us/layer`
+  target needed for a plausible non-speculative `200 tok/s` c1 lane.
+- Decision: reject the fused SiLU+quant candidate for the no-quality-loss path.
+  Keep any future activation/quant fusion behind strict bit/token parity and
+  treat it as a small component cleanup, not the main speed plan.
+- After the one-card route replay window, the accepted TP4 endpoint was
+  restored on `127.0.0.1:18080`. Provenance passed exact sentinels and parsed
+  the expected accepted graph cache root. `xpu-smi ps` showed one TP worker
+  owning each B70 with about `32.76 GB` allocated per card and reported
+  available KV cache memory in the log is `20.67 GiB`.
+- Fresh Localmaxxing exact-model query still shows the approved public row at
+  `99.428 tok/s` for this exact model/hardware/engine setup. Do not post the
+  tiny `99.728 tok/s` local recovery datapoint as a public win; reserve public
+  updates for a material threshold such as `105`, `120`, or `200 tok/s`, or for
+  a clearly useful reproducibility packet.
+
+Immediate things to try next:
+
+1. **One-dispatch MoE parity prototype.**
+   Stop optimizing individual activation/quant fragments in isolation. Build a
+   one-dispatch replay for the full rows=`1` layer-9 MoE path and require exact
+   parity plus `<160 us/layer`.
+
+2. **Exact activation/quant out-variant only after parity root-cause.**
+   The fused candidate drift means rounding, scale reuse, or BF16/FP32 ordering
+   changed. If this path is revisited, first write a tiny scalar/reference
+   fixture that proves identical SiLU, quant scale, clamp, and rounding for
+   every activation element before timing.
+
+3. **Whole-token command timeline.**
+   Use Level Zero tracing or another command-stream view to count kernel
+   launches, barriers, host waits, memory copies, and collective launches for
+   one accepted decode token. The route replay says fixed dispatch cost is
+   likely the bottleneck; the command stream should quantify it.
+
+4. **Hardware-counter access path.**
+   Get `unitrace`, VTune, or another XMX/DPAS metric path working with the
+   current driver stack. The timing-derived TOPS are too low, but counters are
+   needed to decide whether the limiting factor is DPAS issue, occupancy,
+   memory layout, or synchronization.
+
+5. **Upstream route-exact repro packet.**
+   Package the layer-9 route-gate baseline, failed fused SiLU+quant candidate,
+   M-scaling floor, and target budget into a minimal `vllm-xpu-kernels`
+   maintainer packet. The useful artifact is a reproducible B70 small-M MoE
+   benchmark with exactness gates, not just a throughput complaint.
+
+Fresh bigger ideas to keep on the board:
+
+1. **Resident transactional verifier lane.**
+   Build a target-verifier path that versions KV, GDN/Mamba state, sampler
+   metadata, and request counters. Draft tokens run in temporary state; only
+   target-accepted tokens commit. This is still the cleanest quality-preserving
+   route to `>200 tok/s` if a proposer can keep acceptance high.
+
+2. **Device-side routed-expert work queue.**
+   Treat Qwen3.6 MoE decode as a dynamic task problem. A small resident device
+   scheduler can consume top-k route rows, issue expert tiles as they become
+   ready, and gather outputs without round-tripping through host/PyTorch phase
+   boundaries.
+
+3. **Tile-native expert cache with certified manifests.**
+   Prepack expert weights into the fastest B70/XMX layout at model load time,
+   store checksums and layout metadata, and reuse that packed asset across
+   vLLM, oneDNN, or a custom layerlet. This spends VRAM/disk to remove runtime
+   layout friction without changing model quality.
+
+4. **Static c1 decode appliance beside vLLM.**
+   Prototype a fixed-shape single-request lane that bypasses dynamic scheduling:
+   preallocated request state, prebuilt graph or command lists, fixed decode
+   buckets, and certified graph cache. Keep vLLM TP4 as the general 32K lane;
+   route latency-sensitive c1 traffic to the appliance only after quality proof.
+
+5. **Hybrid TP/EP with hot-expert replication.**
+   Use captured route windows to simulate TP4, TP2, EP4, and partial hot-expert
+   replication. Implement only if the byte model predicts less communication
+   and less small-M underfill than today's TP4 path.
+
+6. **Automated kernel-branch archaeology.**
+   Build a route-replay CI script that can bisect `vllm-xpu-kernels`,
+   intel-xpu-backend-for-triton, oneDNN grouped-GEMM changes, and local patches
+   against the same exactness/timing budget. This lets us mine upstream work
+   without accidentally taking quality regressions.
+
+7. **Same-model micro-drafter trained from traces.**
+   If the transactional verifier lane works, train a tiny same-tokenizer
+   proposer on Qwen3.6 target traces. The draft model can be fast and imperfect
+   because the target still verifies every committed token.
+
+8. **Benchmark-plus-reliability publication packet.**
+   When a real threshold is crossed, post both speed and reliability: exact
+   model ID, command, quality gates, provenance JSON, peak VRAM, single-request
+   and aggregate throughput, uptime/soak result, and known failure modes. That
+   is more valuable than a one-line tok/s leaderboard row.

@@ -6,6 +6,26 @@ Date: 2026-06-12
 
 2026-06-12 continuation:
 
+- Ran the layer-9 routecapture6 rows=1 fused SiLU+quant gate. Baseline current
+  `xpu_fused_moe` is exact at max diff `0.000`, averaging
+  `283.098 us/layer`; exact preallocated staged replay averages
+  `212.792 us/layer`. The fused SiLU+quant candidate is rejected because it
+  drifts by max abs diff `0.750` and only moves mean `xpu_fused_moe` timing to
+  `272.862 us/layer`, still far above the `~160 us/layer` non-speculative
+  budget. Accepted TP4 service was restored on `127.0.0.1:18080`; provenance
+  passed exact sentinels against the accepted graph cache and `xpu-smi ps`
+  showed one TP worker owning each B70 with about `32.76 GB` allocated per
+  card. The detailed backlog now records the rejection plus larger next bets:
+  one-dispatch/persistent W8A8 MoE, whole-token command tracing,
+  hardware-counter proof, upstream route-exact repros, transactional
+  target-verified speculation, device-side expert queues, tile-native expert
+  caches, static c1 decode, hybrid TP/EP with hot-expert replication, kernel
+  branch archaeology, and same-model micro-drafters. Artifacts:
+  `data/qwen36-quark-int8-moe-routecapture6-layer9-baseline-gate-20260612ap.md`,
+  `data/qwen36-quark-int8-moe-routecapture6-layer9-fused-siluq-gate-20260612ap.md`,
+  `data/qwen36-quark-int8-tp4-accepted-provenance-after-siluqgate-20260612ap.json`,
+  and `notes/2026-06-12-qwen36-next-bigger-bets.md`.
+
 - Added a CPU-only MoE fusion target budget after the grouped-GEMM M-scaling
   screens. Current accepted p512/o128 decode remains about `99.845 tok/s`
   corrected with `9.941 ms/token`; model-forward-only timing is

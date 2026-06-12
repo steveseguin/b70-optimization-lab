@@ -709,3 +709,20 @@ vLLM/XPU FP8 work:
     trace-trained micro-drafters, whole-token Level Zero command lists,
     hardware-counter proof, engine-mining without quantization compromise, and
     an upstreamable B70/Qwen3.6 perf packet.
+28. Ran the layer-9 routecapture6 rows=1 fused SiLU+quant route gate. Baseline
+    current `xpu_fused_moe` remains exact at max diff `0.000`, averaging
+    `283.098 us/layer`; exact preallocated staged replay averages
+    `212.792 us/layer`. The fused SiLU+quant candidate is rejected: it drifts
+    by max abs diff `0.750`, and even ignoring drift only improves mean
+    `xpu_fused_moe` timing to `272.862 us/layer`, still far above the
+    `~160 us/layer` non-speculative budget. Accepted TP4 service was restored
+    afterward on `127.0.0.1:18080`; provenance passed exact sentinels against
+    the accepted graph cache, and `xpu-smi ps` showed one TP worker owning each
+    B70 with about `32.76 GB` allocated per card. The updated backlog in
+    `notes/2026-06-12-qwen36-next-bigger-bets.md` now promotes one-dispatch or
+    persistent W8A8 MoE, whole-token command tracing, hardware-counter proof,
+    upstream route-exact repros, and transactional target-verified speculation.
+    It also records bolder branches: device-side routed-expert queues,
+    tile-native expert caches, static c1 decode appliance, hybrid TP/EP plus
+    hot-expert replication, kernel-branch archaeology, same-model micro-drafter,
+    and a benchmark-plus-reliability publication packet.

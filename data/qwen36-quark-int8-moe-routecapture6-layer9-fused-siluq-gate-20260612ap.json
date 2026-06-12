@@ -1,0 +1,1498 @@
+{
+  "fused_silu_quant_enabled": true,
+  "model_config": "/mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118/config.json",
+  "results": [
+    {
+      "components_us_mean": {
+        "act_contiguous": 55.837599999999995,
+        "activation": 79.73506666666665,
+        "activation_contiguous_quant2": 223.8201333333333,
+        "activation_plus_quant2": 167.98253333333332,
+        "component_sum": 769.1961333333333,
+        "gather": 78.76266666666666,
+        "gemm1": 94.27773333333333,
+        "gemm2": 94.2864,
+        "quant1": 109.12026666666665,
+        "quant2": 88.24746666666667,
+        "remap": 91.54946666666666,
+        "rows_zero": 77.37946666666667
+      },
+      "dtype": "bf16",
+      "hidden_size": 2048,
+      "inter_size_per_tp": 128,
+      "iterations": 30,
+      "manual_vs_xpu_fused_moe_max_abs_diff": 0.5,
+      "moe_inputs": 8,
+      "num_experts": 256,
+      "preallocated_staged_total_us_mean": 215.41346666666666,
+      "preallocated_vs_xpu_fused_moe_max_abs_diff": 0.5,
+      "route_start_index": 0,
+      "route_start_index_mod": 0,
+      "rows": 1,
+      "topk": 8,
+      "topk_source": "route_jsonl",
+      "topk_summary": {
+        "active_experts": 8,
+        "top_experts": [
+          {
+            "count": 1,
+            "expert": 59
+          },
+          {
+            "count": 1,
+            "expert": 2
+          },
+          {
+            "count": 1,
+            "expert": 243
+          },
+          {
+            "count": 1,
+            "expert": 161
+          },
+          {
+            "count": 1,
+            "expert": 255
+          },
+          {
+            "count": 1,
+            "expert": 170
+          },
+          {
+            "count": 1,
+            "expert": 200
+          },
+          {
+            "count": 1,
+            "expert": 36
+          }
+        ],
+        "topk_tuple_examples": [
+          {
+            "count": 1,
+            "topk_ids": [
+              59,
+              2,
+              243,
+              161,
+              255,
+              170,
+              200,
+              36
+            ]
+          }
+        ],
+        "unique_topk_tuples": 1
+      },
+      "total_us_mean": 260.05373333333335,
+      "warmup": 5,
+      "xpu_fused_moe_scratch_total_us_mean": 234.43159999999997,
+      "xpu_scratch_vs_xpu_fused_moe_max_abs_diff": 0.0
+    },
+    {
+      "components_us_mean": {
+        "act_contiguous": 56.58293333333333,
+        "activation": 77.8596,
+        "activation_contiguous_quant2": 222.81306666666666,
+        "activation_plus_quant2": 166.23013333333333,
+        "component_sum": 747.4913333333333,
+        "gather": 79.67786666666666,
+        "gemm1": 94.28639999999999,
+        "gemm2": 94.28293333333333,
+        "quant1": 87.98746666666666,
+        "quant2": 88.37053333333333,
+        "remap": 91.1664,
+        "rows_zero": 77.2772
+      },
+      "dtype": "bf16",
+      "hidden_size": 2048,
+      "inter_size_per_tp": 128,
+      "iterations": 30,
+      "manual_vs_xpu_fused_moe_max_abs_diff": 0.375,
+      "moe_inputs": 8,
+      "num_experts": 256,
+      "preallocated_staged_total_us_mean": 209.44733333333335,
+      "preallocated_vs_xpu_fused_moe_max_abs_diff": 0.375,
+      "route_start_index": 4,
+      "route_start_index_mod": 4,
+      "rows": 1,
+      "topk": 8,
+      "topk_source": "route_jsonl",
+      "topk_summary": {
+        "active_experts": 8,
+        "top_experts": [
+          {
+            "count": 1,
+            "expert": 243
+          },
+          {
+            "count": 1,
+            "expert": 59
+          },
+          {
+            "count": 1,
+            "expert": 200
+          },
+          {
+            "count": 1,
+            "expert": 8
+          },
+          {
+            "count": 1,
+            "expert": 189
+          },
+          {
+            "count": 1,
+            "expert": 255
+          },
+          {
+            "count": 1,
+            "expert": 104
+          },
+          {
+            "count": 1,
+            "expert": 221
+          }
+        ],
+        "topk_tuple_examples": [
+          {
+            "count": 1,
+            "topk_ids": [
+              243,
+              59,
+              200,
+              8,
+              189,
+              255,
+              104,
+              221
+            ]
+          }
+        ],
+        "unique_topk_tuples": 1
+      },
+      "total_us_mean": 256.5645333333333,
+      "warmup": 5,
+      "xpu_fused_moe_scratch_total_us_mean": 233.3049333333333,
+      "xpu_scratch_vs_xpu_fused_moe_max_abs_diff": 0.0
+    },
+    {
+      "components_us_mean": {
+        "act_contiguous": 59.38053333333333,
+        "activation": 77.09346666666667,
+        "activation_contiguous_quant2": 224.48573333333331,
+        "activation_plus_quant2": 165.1052,
+        "component_sum": 746.8361333333334,
+        "gather": 78.55293333333333,
+        "gemm1": 93.46653333333333,
+        "gemm2": 94.10266666666666,
+        "quant1": 87.57493333333333,
+        "quant2": 88.01173333333332,
+        "remap": 91.68466666666667,
+        "rows_zero": 76.96866666666666
+      },
+      "dtype": "bf16",
+      "hidden_size": 2048,
+      "inter_size_per_tp": 128,
+      "iterations": 30,
+      "manual_vs_xpu_fused_moe_max_abs_diff": 0.375,
+      "moe_inputs": 8,
+      "num_experts": 256,
+      "preallocated_staged_total_us_mean": 208.19066666666666,
+      "preallocated_vs_xpu_fused_moe_max_abs_diff": 0.375,
+      "route_start_index": 8,
+      "route_start_index_mod": 8,
+      "rows": 1,
+      "topk": 8,
+      "topk_source": "route_jsonl",
+      "topk_summary": {
+        "active_experts": 8,
+        "top_experts": [
+          {
+            "count": 1,
+            "expert": 203
+          },
+          {
+            "count": 1,
+            "expert": 61
+          },
+          {
+            "count": 1,
+            "expert": 197
+          },
+          {
+            "count": 1,
+            "expert": 47
+          },
+          {
+            "count": 1,
+            "expert": 161
+          },
+          {
+            "count": 1,
+            "expert": 207
+          },
+          {
+            "count": 1,
+            "expert": 250
+          },
+          {
+            "count": 1,
+            "expert": 123
+          }
+        ],
+        "topk_tuple_examples": [
+          {
+            "count": 1,
+            "topk_ids": [
+              203,
+              61,
+              197,
+              47,
+              161,
+              207,
+              250,
+              123
+            ]
+          }
+        ],
+        "unique_topk_tuples": 1
+      },
+      "total_us_mean": 258.45733333333334,
+      "warmup": 5,
+      "xpu_fused_moe_scratch_total_us_mean": 230.1277333333333,
+      "xpu_scratch_vs_xpu_fused_moe_max_abs_diff": 0.0
+    },
+    {
+      "components_us_mean": {
+        "act_contiguous": 56.59853333333333,
+        "activation": 78.34493333333333,
+        "activation_contiguous_quant2": 223.76119999999997,
+        "activation_plus_quant2": 167.16266666666667,
+        "component_sum": 747.8796,
+        "gather": 78.94293333333333,
+        "gemm1": 94.95546666666665,
+        "gemm2": 94.18759999999999,
+        "quant1": 88.166,
+        "quant2": 88.81773333333332,
+        "remap": 90.93759999999999,
+        "rows_zero": 76.9288
+      },
+      "dtype": "bf16",
+      "hidden_size": 2048,
+      "inter_size_per_tp": 128,
+      "iterations": 30,
+      "manual_vs_xpu_fused_moe_max_abs_diff": 0.5,
+      "moe_inputs": 8,
+      "num_experts": 256,
+      "preallocated_staged_total_us_mean": 206.94266666666667,
+      "preallocated_vs_xpu_fused_moe_max_abs_diff": 0.5,
+      "route_start_index": 12,
+      "route_start_index_mod": 12,
+      "rows": 1,
+      "topk": 8,
+      "topk_source": "route_jsonl",
+      "topk_summary": {
+        "active_experts": 8,
+        "top_experts": [
+          {
+            "count": 1,
+            "expert": 243
+          },
+          {
+            "count": 1,
+            "expert": 166
+          },
+          {
+            "count": 1,
+            "expert": 251
+          },
+          {
+            "count": 1,
+            "expert": 81
+          },
+          {
+            "count": 1,
+            "expert": 189
+          },
+          {
+            "count": 1,
+            "expert": 61
+          },
+          {
+            "count": 1,
+            "expert": 32
+          },
+          {
+            "count": 1,
+            "expert": 250
+          }
+        ],
+        "topk_tuple_examples": [
+          {
+            "count": 1,
+            "topk_ids": [
+              243,
+              166,
+              251,
+              81,
+              189,
+              61,
+              32,
+              250
+            ]
+          }
+        ],
+        "unique_topk_tuples": 1
+      },
+      "total_us_mean": 257.0256,
+      "warmup": 5,
+      "xpu_fused_moe_scratch_total_us_mean": 230.6876,
+      "xpu_scratch_vs_xpu_fused_moe_max_abs_diff": 0.0
+    },
+    {
+      "components_us_mean": {
+        "act_contiguous": 59.7844,
+        "activation": 84.08573333333332,
+        "activation_contiguous_quant2": 242.51239999999999,
+        "activation_plus_quant2": 182.728,
+        "component_sum": 805.1714666666667,
+        "gather": 84.04933333333334,
+        "gemm1": 101.7744,
+        "gemm2": 100.66159999999999,
+        "quant1": 94.82893333333332,
+        "quant2": 98.64226666666667,
+        "remap": 97.75653333333334,
+        "rows_zero": 83.58826666666667
+      },
+      "dtype": "bf16",
+      "hidden_size": 2048,
+      "inter_size_per_tp": 128,
+      "iterations": 30,
+      "manual_vs_xpu_fused_moe_max_abs_diff": 0.5,
+      "moe_inputs": 8,
+      "num_experts": 256,
+      "preallocated_staged_total_us_mean": 227.65946666666665,
+      "preallocated_vs_xpu_fused_moe_max_abs_diff": 0.5,
+      "route_start_index": 16,
+      "route_start_index_mod": 16,
+      "rows": 1,
+      "topk": 8,
+      "topk_source": "route_jsonl",
+      "topk_summary": {
+        "active_experts": 8,
+        "top_experts": [
+          {
+            "count": 1,
+            "expert": 116
+          },
+          {
+            "count": 1,
+            "expert": 191
+          },
+          {
+            "count": 1,
+            "expert": 171
+          },
+          {
+            "count": 1,
+            "expert": 2
+          },
+          {
+            "count": 1,
+            "expert": 59
+          },
+          {
+            "count": 1,
+            "expert": 255
+          },
+          {
+            "count": 1,
+            "expert": 161
+          },
+          {
+            "count": 1,
+            "expert": 170
+          }
+        ],
+        "topk_tuple_examples": [
+          {
+            "count": 1,
+            "topk_ids": [
+              116,
+              191,
+              171,
+              2,
+              59,
+              255,
+              161,
+              170
+            ]
+          }
+        ],
+        "unique_topk_tuples": 1
+      },
+      "total_us_mean": 280.644,
+      "warmup": 5,
+      "xpu_fused_moe_scratch_total_us_mean": 250.07493333333332,
+      "xpu_scratch_vs_xpu_fused_moe_max_abs_diff": 0.0
+    },
+    {
+      "components_us_mean": {
+        "act_contiguous": 57.55186666666666,
+        "activation": 80.72133333333333,
+        "activation_contiguous_quant2": 232.19213333333335,
+        "activation_plus_quant2": 174.64026666666666,
+        "component_sum": 773.0458666666666,
+        "gather": 81.8168,
+        "gemm1": 98.32506666666667,
+        "gemm2": 97.15159999999999,
+        "quant1": 89.9704,
+        "quant2": 93.91893333333333,
+        "remap": 93.69879999999999,
+        "rows_zero": 79.89106666666666
+      },
+      "dtype": "bf16",
+      "hidden_size": 2048,
+      "inter_size_per_tp": 128,
+      "iterations": 30,
+      "manual_vs_xpu_fused_moe_max_abs_diff": 0.5,
+      "moe_inputs": 8,
+      "num_experts": 256,
+      "preallocated_staged_total_us_mean": 216.88679999999997,
+      "preallocated_vs_xpu_fused_moe_max_abs_diff": 0.5,
+      "route_start_index": 20,
+      "route_start_index_mod": 20,
+      "rows": 1,
+      "topk": 8,
+      "topk_source": "route_jsonl",
+      "topk_summary": {
+        "active_experts": 8,
+        "top_experts": [
+          {
+            "count": 1,
+            "expert": 189
+          },
+          {
+            "count": 1,
+            "expert": 5
+          },
+          {
+            "count": 1,
+            "expert": 20
+          },
+          {
+            "count": 1,
+            "expert": 198
+          },
+          {
+            "count": 1,
+            "expert": 243
+          },
+          {
+            "count": 1,
+            "expert": 197
+          },
+          {
+            "count": 1,
+            "expert": 237
+          },
+          {
+            "count": 1,
+            "expert": 54
+          }
+        ],
+        "topk_tuple_examples": [
+          {
+            "count": 1,
+            "topk_ids": [
+              189,
+              5,
+              20,
+              198,
+              243,
+              197,
+              237,
+              54
+            ]
+          }
+        ],
+        "unique_topk_tuples": 1
+      },
+      "total_us_mean": 269.17106666666666,
+      "warmup": 5,
+      "xpu_fused_moe_scratch_total_us_mean": 244.54559999999998,
+      "xpu_scratch_vs_xpu_fused_moe_max_abs_diff": 0.0
+    },
+    {
+      "components_us_mean": {
+        "act_contiguous": 59.068533333333335,
+        "activation": 83.99733333333333,
+        "activation_contiguous_quant2": 238.72506666666666,
+        "activation_plus_quant2": 179.65653333333333,
+        "component_sum": 799.1776,
+        "gather": 83.48773333333334,
+        "gemm1": 101.92866666666666,
+        "gemm2": 101.01173333333332,
+        "quant1": 95.05946666666665,
+        "quant2": 95.6592,
+        "remap": 97.21053333333333,
+        "rows_zero": 81.7544
+      },
+      "dtype": "bf16",
+      "hidden_size": 2048,
+      "inter_size_per_tp": 128,
+      "iterations": 30,
+      "manual_vs_xpu_fused_moe_max_abs_diff": 0.5,
+      "moe_inputs": 8,
+      "num_experts": 256,
+      "preallocated_staged_total_us_mean": 225.92613333333333,
+      "preallocated_vs_xpu_fused_moe_max_abs_diff": 0.5,
+      "route_start_index": 24,
+      "route_start_index_mod": 24,
+      "rows": 1,
+      "topk": 8,
+      "topk_source": "route_jsonl",
+      "topk_summary": {
+        "active_experts": 8,
+        "top_experts": [
+          {
+            "count": 1,
+            "expert": 61
+          },
+          {
+            "count": 1,
+            "expert": 108
+          },
+          {
+            "count": 1,
+            "expert": 44
+          },
+          {
+            "count": 1,
+            "expert": 188
+          },
+          {
+            "count": 1,
+            "expert": 250
+          },
+          {
+            "count": 1,
+            "expert": 82
+          },
+          {
+            "count": 1,
+            "expert": 207
+          },
+          {
+            "count": 1,
+            "expert": 123
+          }
+        ],
+        "topk_tuple_examples": [
+          {
+            "count": 1,
+            "topk_ids": [
+              61,
+              108,
+              44,
+              188,
+              250,
+              82,
+              207,
+              123
+            ]
+          }
+        ],
+        "unique_topk_tuples": 1
+      },
+      "total_us_mean": 279.4497333333333,
+      "warmup": 5,
+      "xpu_fused_moe_scratch_total_us_mean": 251.85853333333333,
+      "xpu_scratch_vs_xpu_fused_moe_max_abs_diff": 0.0
+    },
+    {
+      "components_us_mean": {
+        "act_contiguous": 60.14666666666666,
+        "activation": 86.53493333333333,
+        "activation_contiguous_quant2": 244.66866666666667,
+        "activation_plus_quant2": 184.522,
+        "component_sum": 829.2509333333333,
+        "gather": 86.44653333333332,
+        "gemm1": 106.17013333333333,
+        "gemm2": 103.95666666666666,
+        "quant1": 97.91773333333332,
+        "quant2": 97.98706666666666,
+        "remap": 104.0052,
+        "rows_zero": 86.086
+      },
+      "dtype": "bf16",
+      "hidden_size": 2048,
+      "inter_size_per_tp": 128,
+      "iterations": 30,
+      "manual_vs_xpu_fused_moe_max_abs_diff": 0.5,
+      "moe_inputs": 8,
+      "num_experts": 256,
+      "preallocated_staged_total_us_mean": 237.3592,
+      "preallocated_vs_xpu_fused_moe_max_abs_diff": 0.5,
+      "route_start_index": 28,
+      "route_start_index_mod": 28,
+      "rows": 1,
+      "topk": 8,
+      "topk_source": "route_jsonl",
+      "topk_summary": {
+        "active_experts": 8,
+        "top_experts": [
+          {
+            "count": 1,
+            "expert": 243
+          },
+          {
+            "count": 1,
+            "expert": 166
+          },
+          {
+            "count": 1,
+            "expert": 251
+          },
+          {
+            "count": 1,
+            "expert": 207
+          },
+          {
+            "count": 1,
+            "expert": 61
+          },
+          {
+            "count": 1,
+            "expert": 81
+          },
+          {
+            "count": 1,
+            "expert": 32
+          },
+          {
+            "count": 1,
+            "expert": 186
+          }
+        ],
+        "topk_tuple_examples": [
+          {
+            "count": 1,
+            "topk_ids": [
+              243,
+              166,
+              251,
+              207,
+              61,
+              81,
+              32,
+              186
+            ]
+          }
+        ],
+        "unique_topk_tuples": 1
+      },
+      "total_us_mean": 301.8132,
+      "warmup": 5,
+      "xpu_fused_moe_scratch_total_us_mean": 261.8893333333333,
+      "xpu_scratch_vs_xpu_fused_moe_max_abs_diff": 0.0
+    },
+    {
+      "components_us_mean": {
+        "act_contiguous": 60.703066666666665,
+        "activation": 82.08373333333333,
+        "activation_contiguous_quant2": 238.18426666666664,
+        "activation_plus_quant2": 177.4812,
+        "component_sum": 793.286,
+        "gather": 83.47386666666667,
+        "gemm1": 99.64586666666666,
+        "gemm2": 101.38786666666667,
+        "quant1": 93.44573333333332,
+        "quant2": 95.39746666666666,
+        "remap": 96.03533333333333,
+        "rows_zero": 81.11306666666665
+      },
+      "dtype": "bf16",
+      "hidden_size": 2048,
+      "inter_size_per_tp": 128,
+      "iterations": 30,
+      "manual_vs_xpu_fused_moe_max_abs_diff": 0.75,
+      "moe_inputs": 8,
+      "num_experts": 256,
+      "preallocated_staged_total_us_mean": 226.2832,
+      "preallocated_vs_xpu_fused_moe_max_abs_diff": 0.75,
+      "route_start_index": 32,
+      "route_start_index_mod": 32,
+      "rows": 1,
+      "topk": 8,
+      "topk_source": "route_jsonl",
+      "topk_summary": {
+        "active_experts": 8,
+        "top_experts": [
+          {
+            "count": 1,
+            "expert": 207
+          },
+          {
+            "count": 1,
+            "expert": 166
+          },
+          {
+            "count": 1,
+            "expert": 243
+          },
+          {
+            "count": 1,
+            "expert": 186
+          },
+          {
+            "count": 1,
+            "expert": 61
+          },
+          {
+            "count": 1,
+            "expert": 250
+          },
+          {
+            "count": 1,
+            "expert": 172
+          },
+          {
+            "count": 1,
+            "expert": 188
+          }
+        ],
+        "topk_tuple_examples": [
+          {
+            "count": 1,
+            "topk_ids": [
+              207,
+              166,
+              243,
+              186,
+              61,
+              250,
+              172,
+              188
+            ]
+          }
+        ],
+        "unique_topk_tuples": 1
+      },
+      "total_us_mean": 275.34346666666664,
+      "warmup": 5,
+      "xpu_fused_moe_scratch_total_us_mean": 249.22906666666668,
+      "xpu_scratch_vs_xpu_fused_moe_max_abs_diff": 0.0
+    },
+    {
+      "components_us_mean": {
+        "act_contiguous": 58.07706666666666,
+        "activation": 82.07333333333332,
+        "activation_contiguous_quant2": 233.98786666666666,
+        "activation_plus_quant2": 175.9108,
+        "component_sum": 787.1725333333333,
+        "gather": 81.848,
+        "gemm1": 100.35653333333333,
+        "gemm2": 99.56266666666666,
+        "quant1": 94.18586666666667,
+        "quant2": 93.83746666666666,
+        "remap": 96.56573333333333,
+        "rows_zero": 80.66586666666666
+      },
+      "dtype": "bf16",
+      "hidden_size": 2048,
+      "inter_size_per_tp": 128,
+      "iterations": 30,
+      "manual_vs_xpu_fused_moe_max_abs_diff": 0.75,
+      "moe_inputs": 8,
+      "num_experts": 256,
+      "preallocated_staged_total_us_mean": 222.2168,
+      "preallocated_vs_xpu_fused_moe_max_abs_diff": 0.75,
+      "route_start_index": 36,
+      "route_start_index_mod": 36,
+      "rows": 1,
+      "topk": 8,
+      "topk_source": "route_jsonl",
+      "topk_summary": {
+        "active_experts": 8,
+        "top_experts": [
+          {
+            "count": 1,
+            "expert": 73
+          },
+          {
+            "count": 1,
+            "expert": 47
+          },
+          {
+            "count": 1,
+            "expert": 198
+          },
+          {
+            "count": 1,
+            "expert": 54
+          },
+          {
+            "count": 1,
+            "expert": 156
+          },
+          {
+            "count": 1,
+            "expert": 120
+          },
+          {
+            "count": 1,
+            "expert": 161
+          },
+          {
+            "count": 1,
+            "expert": 44
+          }
+        ],
+        "topk_tuple_examples": [
+          {
+            "count": 1,
+            "topk_ids": [
+              73,
+              47,
+              198,
+              54,
+              156,
+              120,
+              161,
+              44
+            ]
+          }
+        ],
+        "unique_topk_tuples": 1
+      },
+      "total_us_mean": 276.6001333333333,
+      "warmup": 5,
+      "xpu_fused_moe_scratch_total_us_mean": 248.82,
+      "xpu_scratch_vs_xpu_fused_moe_max_abs_diff": 0.0
+    },
+    {
+      "components_us_mean": {
+        "act_contiguous": 56.29866666666666,
+        "activation": 80.63293333333333,
+        "activation_contiguous_quant2": 228.1864,
+        "activation_plus_quant2": 171.8877333333333,
+        "component_sum": 770.25,
+        "gather": 80.76813333333332,
+        "gemm1": 97.70973333333333,
+        "gemm2": 97.65079999999999,
+        "quant1": 92.25666666666666,
+        "quant2": 91.25479999999999,
+        "remap": 94.2084,
+        "rows_zero": 79.46986666666666
+      },
+      "dtype": "bf16",
+      "hidden_size": 2048,
+      "inter_size_per_tp": 128,
+      "iterations": 30,
+      "manual_vs_xpu_fused_moe_max_abs_diff": 0.375,
+      "moe_inputs": 8,
+      "num_experts": 256,
+      "preallocated_staged_total_us_mean": 225.2605333333333,
+      "preallocated_vs_xpu_fused_moe_max_abs_diff": 0.375,
+      "route_start_index": 40,
+      "route_start_index_mod": 40,
+      "rows": 1,
+      "topk": 8,
+      "topk_source": "route_jsonl",
+      "topk_summary": {
+        "active_experts": 8,
+        "top_experts": [
+          {
+            "count": 1,
+            "expert": 47
+          },
+          {
+            "count": 1,
+            "expert": 44
+          },
+          {
+            "count": 1,
+            "expert": 8
+          },
+          {
+            "count": 1,
+            "expert": 61
+          },
+          {
+            "count": 1,
+            "expert": 123
+          },
+          {
+            "count": 1,
+            "expert": 197
+          },
+          {
+            "count": 1,
+            "expert": 41
+          },
+          {
+            "count": 1,
+            "expert": 161
+          }
+        ],
+        "topk_tuple_examples": [
+          {
+            "count": 1,
+            "topk_ids": [
+              47,
+              44,
+              8,
+              61,
+              123,
+              197,
+              41,
+              161
+            ]
+          }
+        ],
+        "unique_topk_tuples": 1
+      },
+      "total_us_mean": 270.48493333333334,
+      "warmup": 5,
+      "xpu_fused_moe_scratch_total_us_mean": 247.32586666666666,
+      "xpu_scratch_vs_xpu_fused_moe_max_abs_diff": 0.0
+    },
+    {
+      "components_us_mean": {
+        "act_contiguous": 58.45146666666666,
+        "activation": 84.23306666666666,
+        "activation_contiguous_quant2": 236.98133333333334,
+        "activation_plus_quant2": 178.52986666666666,
+        "component_sum": 798.0024,
+        "gather": 84.8016,
+        "gemm1": 102.71733333333333,
+        "gemm2": 100.49,
+        "quant1": 93.26546666666667,
+        "quant2": 94.2968,
+        "remap": 97.55546666666666,
+        "rows_zero": 82.1912
+      },
+      "dtype": "bf16",
+      "hidden_size": 2048,
+      "inter_size_per_tp": 128,
+      "iterations": 30,
+      "manual_vs_xpu_fused_moe_max_abs_diff": 0.5,
+      "moe_inputs": 8,
+      "num_experts": 256,
+      "preallocated_staged_total_us_mean": 230.05666666666667,
+      "preallocated_vs_xpu_fused_moe_max_abs_diff": 0.5,
+      "route_start_index": 44,
+      "route_start_index_mod": 44,
+      "rows": 1,
+      "topk": 8,
+      "topk_source": "route_jsonl",
+      "topk_summary": {
+        "active_experts": 8,
+        "top_experts": [
+          {
+            "count": 1,
+            "expert": 227
+          },
+          {
+            "count": 1,
+            "expert": 44
+          },
+          {
+            "count": 1,
+            "expert": 123
+          },
+          {
+            "count": 1,
+            "expert": 61
+          },
+          {
+            "count": 1,
+            "expert": 197
+          },
+          {
+            "count": 1,
+            "expert": 161
+          },
+          {
+            "count": 1,
+            "expert": 5
+          },
+          {
+            "count": 1,
+            "expert": 207
+          }
+        ],
+        "topk_tuple_examples": [
+          {
+            "count": 1,
+            "topk_ids": [
+              227,
+              44,
+              123,
+              61,
+              197,
+              161,
+              5,
+              207
+            ]
+          }
+        ],
+        "unique_topk_tuples": 1
+      },
+      "total_us_mean": 276.9017333333333,
+      "warmup": 5,
+      "xpu_fused_moe_scratch_total_us_mean": 252.89853333333335,
+      "xpu_scratch_vs_xpu_fused_moe_max_abs_diff": 0.0
+    },
+    {
+      "components_us_mean": {
+        "act_contiguous": 61.651199999999996,
+        "activation": 87.62866666666666,
+        "activation_contiguous_quant2": 249.50639999999999,
+        "activation_plus_quant2": 187.85519999999997,
+        "component_sum": 845.8996,
+        "gather": 88.8524,
+        "gemm1": 107.97626666666666,
+        "gemm2": 108.86200000000001,
+        "quant1": 101.42946666666667,
+        "quant2": 100.22653333333332,
+        "remap": 102.78493333333333,
+        "rows_zero": 86.48813333333332
+      },
+      "dtype": "bf16",
+      "hidden_size": 2048,
+      "inter_size_per_tp": 128,
+      "iterations": 30,
+      "manual_vs_xpu_fused_moe_max_abs_diff": 0.65625,
+      "moe_inputs": 8,
+      "num_experts": 256,
+      "preallocated_staged_total_us_mean": 240.87786666666665,
+      "preallocated_vs_xpu_fused_moe_max_abs_diff": 0.65625,
+      "route_start_index": 48,
+      "route_start_index_mod": 48,
+      "rows": 1,
+      "topk": 8,
+      "topk_source": "route_jsonl",
+      "topk_summary": {
+        "active_experts": 8,
+        "top_experts": [
+          {
+            "count": 1,
+            "expert": 113
+          },
+          {
+            "count": 1,
+            "expert": 53
+          },
+          {
+            "count": 1,
+            "expert": 201
+          },
+          {
+            "count": 1,
+            "expert": 126
+          },
+          {
+            "count": 1,
+            "expert": 200
+          },
+          {
+            "count": 1,
+            "expert": 210
+          },
+          {
+            "count": 1,
+            "expert": 112
+          },
+          {
+            "count": 1,
+            "expert": 171
+          }
+        ],
+        "topk_tuple_examples": [
+          {
+            "count": 1,
+            "topk_ids": [
+              113,
+              53,
+              201,
+              126,
+              200,
+              210,
+              112,
+              171
+            ]
+          }
+        ],
+        "unique_topk_tuples": 1
+      },
+      "total_us_mean": 295.9025333333333,
+      "warmup": 5,
+      "xpu_fused_moe_scratch_total_us_mean": 274.9413333333333,
+      "xpu_scratch_vs_xpu_fused_moe_max_abs_diff": 0.0
+    },
+    {
+      "components_us_mean": {
+        "act_contiguous": 57.328266666666664,
+        "activation": 82.5448,
+        "activation_contiguous_quant2": 232.84386666666666,
+        "activation_plus_quant2": 175.5156,
+        "component_sum": 785.1393333333333,
+        "gather": 82.2796,
+        "gemm1": 99.66493333333332,
+        "gemm2": 99.43959999999998,
+        "quant1": 94.05066666666667,
+        "quant2": 92.9708,
+        "remap": 96.52933333333333,
+        "rows_zero": 80.33133333333333
+      },
+      "dtype": "bf16",
+      "hidden_size": 2048,
+      "inter_size_per_tp": 128,
+      "iterations": 30,
+      "manual_vs_xpu_fused_moe_max_abs_diff": 0.625,
+      "moe_inputs": 8,
+      "num_experts": 256,
+      "preallocated_staged_total_us_mean": 220.64293333333333,
+      "preallocated_vs_xpu_fused_moe_max_abs_diff": 0.625,
+      "route_start_index": 52,
+      "route_start_index_mod": 52,
+      "rows": 1,
+      "topk": 8,
+      "topk_source": "route_jsonl",
+      "topk_summary": {
+        "active_experts": 8,
+        "top_experts": [
+          {
+            "count": 1,
+            "expert": 241
+          },
+          {
+            "count": 1,
+            "expert": 180
+          },
+          {
+            "count": 1,
+            "expert": 197
+          },
+          {
+            "count": 1,
+            "expert": 47
+          },
+          {
+            "count": 1,
+            "expert": 208
+          },
+          {
+            "count": 1,
+            "expert": 98
+          },
+          {
+            "count": 1,
+            "expert": 6
+          },
+          {
+            "count": 1,
+            "expert": 84
+          }
+        ],
+        "topk_tuple_examples": [
+          {
+            "count": 1,
+            "topk_ids": [
+              241,
+              180,
+              197,
+              47,
+              208,
+              98,
+              6,
+              84
+            ]
+          }
+        ],
+        "unique_topk_tuples": 1
+      },
+      "total_us_mean": 276.7908,
+      "warmup": 5,
+      "xpu_fused_moe_scratch_total_us_mean": 252.28493333333333,
+      "xpu_scratch_vs_xpu_fused_moe_max_abs_diff": 0.0
+    },
+    {
+      "components_us_mean": {
+        "act_contiguous": 58.77559999999999,
+        "activation": 84.61959999999999,
+        "activation_contiguous_quant2": 240.07186666666666,
+        "activation_plus_quant2": 181.29626666666667,
+        "component_sum": 814.6250666666666,
+        "gather": 86.23506666666667,
+        "gemm1": 103.94106666666667,
+        "gemm2": 102.81786666666667,
+        "quant1": 97.21053333333333,
+        "quant2": 96.67666666666666,
+        "remap": 100.60786666666667,
+        "rows_zero": 83.7408
+      },
+      "dtype": "bf16",
+      "hidden_size": 2048,
+      "inter_size_per_tp": 128,
+      "iterations": 30,
+      "manual_vs_xpu_fused_moe_max_abs_diff": 0.75,
+      "moe_inputs": 8,
+      "num_experts": 256,
+      "preallocated_staged_total_us_mean": 233.83706666666663,
+      "preallocated_vs_xpu_fused_moe_max_abs_diff": 0.75,
+      "route_start_index": 56,
+      "route_start_index_mod": 56,
+      "rows": 1,
+      "topk": 8,
+      "topk_source": "route_jsonl",
+      "topk_summary": {
+        "active_experts": 8,
+        "top_experts": [
+          {
+            "count": 1,
+            "expert": 47
+          },
+          {
+            "count": 1,
+            "expert": 161
+          },
+          {
+            "count": 1,
+            "expert": 73
+          },
+          {
+            "count": 1,
+            "expert": 81
+          },
+          {
+            "count": 1,
+            "expert": 22
+          },
+          {
+            "count": 1,
+            "expert": 14
+          },
+          {
+            "count": 1,
+            "expert": 23
+          },
+          {
+            "count": 1,
+            "expert": 243
+          }
+        ],
+        "topk_tuple_examples": [
+          {
+            "count": 1,
+            "topk_ids": [
+              47,
+              161,
+              73,
+              81,
+              22,
+              14,
+              23,
+              243
+            ]
+          }
+        ],
+        "unique_topk_tuples": 1
+      },
+      "total_us_mean": 287.9950666666666,
+      "warmup": 5,
+      "xpu_fused_moe_scratch_total_us_mean": 262.8236,
+      "xpu_scratch_vs_xpu_fused_moe_max_abs_diff": 0.0
+    },
+    {
+      "components_us_mean": {
+        "act_contiguous": 52.74186666666666,
+        "activation": 73.87466666666666,
+        "activation_contiguous_quant2": 209.6449333333333,
+        "activation_plus_quant2": 156.90306666666663,
+        "component_sum": 705.068,
+        "gather": 74.71706666666665,
+        "gemm1": 88.77266666666667,
+        "gemm2": 89.60813333333333,
+        "quant1": 83.69399999999999,
+        "quant2": 83.02839999999999,
+        "remap": 86.1328,
+        "rows_zero": 72.49839999999999
+      },
+      "dtype": "bf16",
+      "hidden_size": 2048,
+      "inter_size_per_tp": 128,
+      "iterations": 30,
+      "manual_vs_xpu_fused_moe_max_abs_diff": 0.625,
+      "moe_inputs": 8,
+      "num_experts": 256,
+      "preallocated_staged_total_us_mean": 198.67119999999997,
+      "preallocated_vs_xpu_fused_moe_max_abs_diff": 0.625,
+      "route_start_index": 60,
+      "route_start_index_mod": 60,
+      "rows": 1,
+      "topk": 8,
+      "topk_source": "route_jsonl",
+      "topk_summary": {
+        "active_experts": 8,
+        "top_experts": [
+          {
+            "count": 1,
+            "expert": 116
+          },
+          {
+            "count": 1,
+            "expert": 191
+          },
+          {
+            "count": 1,
+            "expert": 197
+          },
+          {
+            "count": 1,
+            "expert": 203
+          },
+          {
+            "count": 1,
+            "expert": 239
+          },
+          {
+            "count": 1,
+            "expert": 208
+          },
+          {
+            "count": 1,
+            "expert": 2
+          },
+          {
+            "count": 1,
+            "expert": 169
+          }
+        ],
+        "topk_tuple_examples": [
+          {
+            "count": 1,
+            "topk_ids": [
+              116,
+              191,
+              197,
+              203,
+              239,
+              208,
+              2,
+              169
+            ]
+          }
+        ],
+        "unique_topk_tuples": 1
+      },
+      "total_us_mean": 242.5904,
+      "warmup": 5,
+      "xpu_fused_moe_scratch_total_us_mean": 222.26879999999997,
+      "xpu_scratch_vs_xpu_fused_moe_max_abs_diff": 0.0
+    }
+  ],
+  "route_metadata": {
+    "active_experts": 111,
+    "layers": {
+      "language_model.model.layers.9.mlp.experts": 95
+    },
+    "records_loaded": 285,
+    "records_matched": 95,
+    "route_jsonl": "data/qwen36-quark-int8-tp4-routecapture6-routes-rank0-20260611.jsonl",
+    "stages": {
+      "quark_int8_apply": 95
+    },
+    "top_experts": [
+      {
+        "count": 43,
+        "expert": 243
+      },
+      {
+        "count": 43,
+        "expert": 61
+      },
+      {
+        "count": 36,
+        "expert": 207
+      },
+      {
+        "count": 30,
+        "expert": 197
+      },
+      {
+        "count": 29,
+        "expert": 161
+      },
+      {
+        "count": 29,
+        "expert": 166
+      },
+      {
+        "count": 27,
+        "expert": 47
+      },
+      {
+        "count": 24,
+        "expert": 250
+      },
+      {
+        "count": 21,
+        "expert": 81
+      },
+      {
+        "count": 21,
+        "expert": 44
+      },
+      {
+        "count": 16,
+        "expert": 188
+      },
+      {
+        "count": 15,
+        "expert": 116
+      },
+      {
+        "count": 14,
+        "expert": 198
+      },
+      {
+        "count": 14,
+        "expert": 126
+      },
+      {
+        "count": 13,
+        "expert": 191
+      },
+      {
+        "count": 13,
+        "expert": 123
+      }
+    ],
+    "topk_rows_loaded": 95,
+    "unique_topk_tuples": 95
+  },
+  "route_packing_metadata": null,
+  "route_start_indices": [
+    0,
+    4,
+    8,
+    12,
+    16,
+    20,
+    24,
+    28,
+    32,
+    36,
+    40,
+    44,
+    48,
+    52,
+    56,
+    60
+  ],
+  "tp_size": 4
+}

@@ -796,6 +796,118 @@ def benchmark_rows(
     }
 
 
+def _fmt(value: Any, digits: int = 3) -> str:
+    try:
+        return f"{float(value):.{digits}f}"
+    except (TypeError, ValueError):
+        return "n/a"
+
+
+def write_markdown(path: str, results: dict[str, Any]) -> None:
+    rows = results.get("results", [])
+    fused = bool(results.get("fused_silu_quant_enabled"))
+    max_diffs = {
+        "manual": max(
+            (float(row.get("manual_vs_xpu_fused_moe_max_abs_diff", 0.0))
+             for row in rows),
+            default=float("nan"),
+        ),
+        "scratch": max(
+            (float(row.get("xpu_scratch_vs_xpu_fused_moe_max_abs_diff", 0.0))
+             for row in rows),
+            default=float("nan"),
+        ),
+        "preallocated": max(
+            (float(row.get("preallocated_vs_xpu_fused_moe_max_abs_diff", 0.0))
+             for row in rows),
+            default=float("nan"),
+        ),
+    }
+
+    lines = []
+    lines.append("# Qwen3.6 INT8 MoE Route Replay")
+    lines.append("")
+    lines.append(f"- Fused SiLU+quant enabled: `{fused}`.")
+    lines.append(f"- TP size: `{results['tp_size']}`.")
+    lines.append(f"- Result rows: `{len(rows)}`.")
+    if results.get("route_metadata"):
+        meta = results["route_metadata"]
+        lines.append(f"- Route source: `{meta.get('route_jsonl')}`.")
+        lines.append(
+            f"- Route records matched: `{meta.get('records_matched')}`; "
+            f"top-k rows loaded: `{meta.get('topk_rows_loaded')}`."
+        )
+    if results.get("route_start_indices") is not None:
+        lines.append(
+            "- Route start indices: `"
+            + ",".join(str(item) for item in results["route_start_indices"])
+            + "`."
+        )
+    lines.append("")
+    lines.append("## Exactness")
+    lines.append("")
+    lines.append(
+        f"- Manual staged max abs diff versus `xpu_fused_moe`: "
+        f"`{_fmt(max_diffs['manual'])}`."
+    )
+    lines.append(
+        f"- Scratch `xpu_fused_moe` max abs diff: "
+        f"`{_fmt(max_diffs['scratch'])}`."
+    )
+    lines.append(
+        f"- Preallocated staged max abs diff: "
+        f"`{_fmt(max_diffs['preallocated'])}`."
+    )
+    lines.append("")
+    lines.append("## Timing")
+    lines.append("")
+    lines.append(
+        "| rows | route start | active experts | xpu fused us | "
+        "xpu scratch us | prealloc staged us | gemm1 us | gemm2 us | "
+        "act+quant2 us |"
+    )
+    lines.append("|---:|---:|---:|---:|---:|---:|---:|---:|---:|")
+    for row in rows:
+        comp = row.get("components_us_mean", {})
+        topk = row.get("topk_summary", {})
+        lines.append(
+            f"| {row.get('rows')} | {row.get('route_start_index')} | "
+            f"{topk.get('active_experts')} | "
+            f"{_fmt(row.get('total_us_mean'))} | "
+            f"{_fmt(row.get('xpu_fused_moe_scratch_total_us_mean'))} | "
+            f"{_fmt(row.get('preallocated_staged_total_us_mean'))} | "
+            f"{_fmt(comp.get('gemm1'))} | "
+            f"{_fmt(comp.get('gemm2'))} | "
+            f"{_fmt(comp.get('activation_plus_quant2'))} |"
+        )
+    lines.append("")
+    lines.append("## Decision")
+    lines.append("")
+    if fused:
+        if max_diffs["manual"] == 0.0:
+            lines.append(
+                "- The fused SiLU+quant candidate is exact against the "
+                "manual staged path for this route replay."
+            )
+        else:
+            lines.append(
+                "- The fused SiLU+quant candidate is not exact against the "
+                "manual staged path for this route replay. Do not promote it "
+                "as a no-quality-loss path."
+            )
+    else:
+        lines.append(
+            "- This is a baseline route replay with the current non-fused "
+            "activation and quantization path."
+        )
+    lines.append(
+        "- Compare `xpu fused us` with the current budget target of roughly "
+        "`160 us/layer` for a plausible `200 tok/s` non-speculative lane."
+    )
+    lines.append("")
+    Path(path).write_text("\n".join(lines), encoding="utf-8")
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--model-config", default=DEFAULT_MODEL_CONFIG)
@@ -850,6 +962,7 @@ def main() -> int:
         action="store_true",
         help="Benchmark the rejected fused SiLU+quant candidate; use for diagnostics only.",
     )
+    parser.add_argument("--markdown-out")
     args = parser.parse_args()
 
     if args.enable_fused_silu_quant:
@@ -904,6 +1017,9 @@ def main() -> int:
     if args.output_json:
         Path(args.output_json).parent.mkdir(parents=True, exist_ok=True)
         Path(args.output_json).write_text(text + "\n")
+    if args.markdown_out:
+        Path(args.markdown_out).parent.mkdir(parents=True, exist_ok=True)
+        write_markdown(args.markdown_out, results)
     print(text)
     return 0
 
