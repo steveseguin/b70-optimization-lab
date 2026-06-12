@@ -762,3 +762,17 @@ vLLM/XPU FP8 work:
     that fuses prologue with downstream work. The accepted TP4 backend was
     restored afterward; provenance passed all exact sentinels in
     `data/qwen36-quark-int8-tp4-accepted-provenance-after-prologuestaged-20260612as.json`.
+31. Added "Fresh Ideas After Offset-ABI Review" to
+    `notes/2026-06-12-qwen36-next-bigger-bets.md`. The new section records
+    the current conclusion from the prologue-staged negative: the exposed W8A8
+    grouped-GEMM ABI is rows-per-expert/count based, while the clean prologue
+    emits offsets, so a binding-only glue path is unlikely to be enough. New
+    no-quality-loss items are now tracked: offset-native W8A8 grouped GEMM
+    with a real kernel/launcher change, oneDNN grouped-memory replay as a
+    control, route-window persistent worker proof, W8A8 DPAS/XMX roofline
+    packet, static c1 lane, target-verified speculative transactions,
+    same-model trace-trained micro-drafter, route-class autotuning, host-stack
+    reliability matrix, and an upstreamable B70 perf packet. The same refresh
+    records bigger ideas around graph-resident decode, a verifier-owned commit
+    protocol, MoE-only hybrid parallelism, tile-native packed-weight artifacts,
+    and production routing by latency/service class.

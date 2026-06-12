@@ -6,6 +6,19 @@ Date: 2026-06-12
 
 2026-06-12 continuation:
 
+- Added a fresh ideas refresh after reviewing the W8A8 grouped-GEMM offset ABI
+  and current public benchmark context. The new notes distinguish faster
+  Localmaxxing same-family rows as architecture clues rather than
+  quality-equivalent targets because top public rows use other hardware and/or
+  lower-fidelity quant/speculation such as MQ4-AWQ, NVFP4, Q4_K_M, MTP, or
+  speculative decode. The focused backlog now adds concrete no-quality-loss
+  branches: offset-native W8A8 grouped GEMM, oneDNN grouped-memory replay as a
+  control, route-window persistent worker proof, DPAS/XMX roofline packet,
+  static c1 latency lane, target-verified speculation, same-model
+  trace-trained micro-drafter, route-class autotuning, host-stack reliability
+  matrix, and an upstreamable B70 performance packet. Details:
+  `notes/2026-06-12-qwen36-next-bigger-bets.md`.
+
 - Extended `scripts/bench-qwen36-int8-moe-kernels.py` with a full-layer
   `fused_prologue_staged` replay path, then ran layer-9 routecapture6 rows=1
   starts `0:64:4`. The path is exact against current `xpu_fused_moe`

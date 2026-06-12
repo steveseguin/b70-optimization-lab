@@ -2717,3 +2717,144 @@ Concrete next kernel ideas:
    prologue savings are insufficient. The next plausible `>200 tok/s` path
    needs to remove multiple phase boundaries at once or amortize target forward
    work with exact verifier-safe speculation.
+
+## 2026-06-12 Fresh Ideas After Offset-ABI Review
+
+Scope:
+
+- Keep the model fixed at
+  `nameistoken/Qwen3.6-35B-A3B-Quark-W8A8-INT8`.
+- Keep the quality bar fixed: no Qwen3.5, no 4-bit/AWQ substitute, no public
+  row unless the current Quark W8A8 target verifies exact output.
+- Treat public faster rows as architecture clues only. A fresh Localmaxxing
+  query for `Qwen/Qwen3.6-35B-A3B` shows much faster public rows, but the top
+  entries use different hardware and/or different fidelity classes such as
+  MQ4-AWQ, NVFP4, Q4_K_M, speculative decoding, or MTP. They do not answer
+  whether our B70 Quark W8A8 path should be faster without changing the model.
+- The B70-specific filtered query still has our 4x B70 Quark W8A8 vLLM row at
+  the top of visible Arc Pro B70 results for this family, with the closest B70
+  comparables being llama.cpp Q4 variants. This supports publishing only
+  material future wins, not tiny recovery refreshes.
+
+External signals folded into this refresh:
+
+- Localmaxxing model-family leaderboard:
+  `https://localmaxxing.com/api/leaderboard?hfId=Qwen%2FQwen3.6-35B-A3B&limit=10`.
+- Localmaxxing Arc Pro B70 filtered rows:
+  `https://localmaxxing.com/api/leaderboard?hfId=Qwen%2FQwen3.6-35B-A3B&hardwareName=Arc%20Pro%20B70&limit=20`.
+- vLLM/XPU B580 tuning question:
+  `https://github.com/vllm-project/vllm/issues/35638`.
+- Intel Triton-XPU grouped-GEMM performance epic:
+  `https://github.com/intel/intel-xpu-backend-for-triton/issues/6389`.
+- oneDNN grouped-memory grouped-GEMM documentation:
+  `https://uxlfoundation.github.io/oneDNN/dev_guide_matmul.html#grouped-gemm-support`.
+- PyTorch persistent grouped-GEMM writeup:
+  `https://pytorch.org/blog/accelerating-moes-with-a-triton-persistent-cache-aware-grouped-gemm-kernel/`.
+- vLLM XPU support matrix:
+  `https://docs.vllm.ai/en/stable/models/hardware_supported_models/xpu/`.
+
+New concrete things to try:
+
+1. **Offset-native W8A8 grouped-GEMM prototype, but measure the loop.**
+   The local `vllm-xpu-kernels` W8A8 grouped-GEMM path currently takes
+   `int32 rows_per_expert` and computes row/tile prefixes inside the kernel.
+   A binding-only change is not enough; the prototype needs a launcher/kernel
+   variant that consumes `expert_first_token_offset` directly. The first gate
+   is not endpoint speed, but a route-replay comparison against:
+   current rows-per-expert GEMM, offset-to-count helper, and exact staged lower
+   bound. If the kernel still loops all experts per workgroup, this may save
+   glue but not the `2x` target.
+
+2. **oneDNN grouped-memory replay as a control, not a migration.**
+   oneDNN's grouped memory uses offsets for variable group boundaries, matching
+   the prologue output shape more naturally than the current W8A8 exposed ABI.
+   Build a narrow replay harness for one layer/window with identical Quark W8A8
+   math or a clearly labeled BF16/int8-control variant. If it is slower, close
+   the lane. If it is faster, mine its scheduling/layout for the custom kernel.
+
+3. **Route-window persistent worker proof before endpoint downtime.**
+   The fastest plausible no-speculative path is still a persistent or
+   one-dispatch layerlet. Start with one layer, one route window, and a fixed
+   hot/cold queue. It must consume prologue offsets directly, run both W8A8
+   GEMMs, preserve exact dynamic quant behavior, and scatter/gather without a
+   Python/Torch allocation boundary.
+
+4. **W8A8 kernel roofline packet.**
+   Use unitrace, VTune, or the lowest-friction Intel counter path to capture
+   DPAS/XMX utilization, occupancy, memory bandwidth, command count, and launch
+   gaps for `gemm1_w8a8`, `gemm2_w8a8`, and the full MoE custom op. This tells
+   us whether the current bottleneck is math utilization, small-M scheduling,
+   memory/layout, or graph/host control overhead.
+
+5. **Static c1 lane as a separate product shape.**
+   Prototype a fixed-bucket c1 runner with certified graph cache, preallocated
+   request/KV/GDN metadata, fixed sampling, and no dynamic scheduler churn. Do
+   not let it replace general TP4/32K serving. Use it to answer whether a
+   production split-lane architecture can improve interactive speed without
+   weakening long-context reliability.
+
+6. **Target-verified speculation as the parallel track.**
+   Keep MTP/DFlash/ngram/tree proposers on the board only behind a resident
+   target verifier. The key design is a transactional request-state fork:
+   alias immutable KV, version mutable GDN/Mamba/scheduler metadata, score
+   candidates with the current Quark W8A8 target, then commit only verified
+   tokens. Without this, faster public speculative rows are not comparable.
+
+7. **Current-model micro-drafter, not external-model drafter.**
+   Train or fit a tiny same-tokenizer proposer from accepted Qwen3.6 traces,
+   but never trust it directly. Its only role is to feed the target verifier.
+   This may outperform generic n-gram on prompt classes where n-gram collapsed,
+   while preserving the exact target output.
+
+8. **Route-class autotuner.**
+   Convert routecapture windows into classes: concentrated hotset, broad
+   hotset, cold-heavy, repetitive, math/code/natural. For each class, choose a
+   policy: full-table current GEMM, active-only table, hot-cache persistent
+   queue, oneDNN control, or custom layerlet. This avoids another global policy
+   that wins one layer/window and loses another.
+
+9. **Host-stack reliability matrix with speed as a secondary metric.**
+   The repeated device-lost class means a production path needs a separate
+   reliability lane: fixed accepted command, fixed graph cache, fixed sentinel
+   probes, then vary KMD/runtime/oneAPI/PyTorch/oneCCL/PCIe placement. A stack
+   that is 3% faster but less stable is rejected for production.
+
+10. **Upstreamable B70 performance packet.**
+    Package the prologue exactness, prologue-staged negative, M-scaling gate,
+    hotrep negative, route windows, W8A8 shapes, provenance guard, and the
+    public B70 leaderboard context. The ask to Intel/vLLM should be precise:
+    "B70 W8A8 small-M MoE decode needs offset-native/persistent grouped GEMM",
+    not a broad "XPU is slow" report.
+
+Bigger, bolder ideas to keep visible:
+
+1. **Graph-resident decode loop.**
+   Move the whole steady-state c1 decode step into a resident command graph or
+   persistent loop: attention/GDN, routing, MoE, collectives, logits, sampling,
+   and metadata update. Host only receives committed tokens. This is a large
+   engineering branch, but it attacks launch gaps, metadata copies, and
+   scheduler churn simultaneously.
+
+2. **Verifier-owned commit protocol.**
+   Redesign speculative decode around the verifier, not around the proposer.
+   The verifier owns token-state, KV/GDN state, rollback logs, and streaming
+   commit. Proposers become replaceable plugins. This could unify MTP, DFlash,
+   n-gram, trace-trained drafter, and future hardware-assisted draft paths.
+
+3. **MoE-only hybrid parallelism.**
+   Keep attention replicated or TP-light, but route experts with EP/hot-rep
+   semantics only where captured routes justify it. The simulator already
+   showed hot64 replication can reduce movement pressure but not compute. Pair
+   it with persistent/tile-native MoE before attempting any endpoint rewrite.
+
+4. **Tile-native packed-weight artifact registry.**
+   At model load or offline prep time, produce per-layer packed W8A8 expert
+   artifacts for the fastest B70 layout. Store tensor hashes, tile policy,
+   graph-cache compatibility, and replay parity. This turns expensive runtime
+   layout work into a certified artifact like the graph cache.
+
+5. **Latency-market production router.**
+   Production may not be one backend. Keep general TP4/32K for long-context and
+   capacity, add one or more low-context static lanes for c1 chat, and route by
+   request shape. Aggregate throughput stays secondary to c1 speed, but this
+   makes both measurable instead of forcing one universal compromise.
