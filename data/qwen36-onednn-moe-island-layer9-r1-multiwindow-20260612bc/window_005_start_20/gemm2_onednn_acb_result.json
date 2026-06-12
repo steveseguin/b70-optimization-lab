@@ -1,0 +1,20 @@
+{
+  "name": "gemm2",
+  "num_experts": 256,
+  "total_tokens": 8,
+  "k": 128,
+  "n": 2048,
+  "dst_dtype": "bf16",
+  "weight_format": "acb",
+  "b_path_key": "b_acb_path",
+  "warmup": 20,
+  "iterations": 100,
+  "construct_us": 107298,
+  "mean_us": 36.993050,
+  "min_us": 35.066000,
+  "p50_us": 36.739000,
+  "p90_us": 37.680000,
+  "max_us": 46.086000,
+  "raw_checksum": 544106181.000000,
+  "output_path": "/home/steve/llm-optimizations/data/qwen36-onednn-moe-island-layer9-r1-multiwindow-20260612bc/window_005_start_20/gemm2_onednn_acb_out.bf16.bin"
+}

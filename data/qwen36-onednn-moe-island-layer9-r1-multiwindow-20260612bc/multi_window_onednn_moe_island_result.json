@@ -1,0 +1,1764 @@
+{
+  "aggregate_max_abs_diffs": {
+    "gemm1_vs_xpu_max_abs_diff": 0.0,
+    "gemm2_vs_xpu_max_abs_diff": 0.0,
+    "onednn_island_vs_staged_max_abs_diff": 0.0,
+    "onednn_island_vs_xpu_fused_moe_max_abs_diff": 0.0,
+    "staged_vs_xpu_fused_moe_max_abs_diff": 0.0
+  },
+  "all_exact": true,
+  "dtype": "bf16",
+  "kind": "multi_window_file_backed_onednn_moe_island",
+  "note": "Correctness scaffold only. Each window regenerates remap, quantization, oneDNN GEMM outputs, and final gather for its captured route slice. File IO and process boundaries are excluded from endpoint-speed interpretation.",
+  "route_metadata": {
+    "active_experts": 111,
+    "layers": {
+      "language_model.model.layers.9.mlp.experts": 95
+    },
+    "records_loaded": 285,
+    "records_matched": 95,
+    "route_jsonl": "data/qwen36-quark-int8-tp4-routecapture6-routes-rank0-20260611.jsonl",
+    "stages": {
+      "quark_int8_apply": 95
+    },
+    "top_experts": [
+      {
+        "count": 43,
+        "expert": 243
+      },
+      {
+        "count": 43,
+        "expert": 61
+      },
+      {
+        "count": 36,
+        "expert": 207
+      },
+      {
+        "count": 30,
+        "expert": 197
+      },
+      {
+        "count": 29,
+        "expert": 161
+      },
+      {
+        "count": 29,
+        "expert": 166
+      },
+      {
+        "count": 27,
+        "expert": 47
+      },
+      {
+        "count": 24,
+        "expert": 250
+      },
+      {
+        "count": 21,
+        "expert": 81
+      },
+      {
+        "count": 21,
+        "expert": 44
+      },
+      {
+        "count": 16,
+        "expert": 188
+      },
+      {
+        "count": 15,
+        "expert": 116
+      },
+      {
+        "count": 14,
+        "expert": 198
+      },
+      {
+        "count": 14,
+        "expert": 126
+      },
+      {
+        "count": 13,
+        "expert": 191
+      },
+      {
+        "count": 13,
+        "expert": 123
+      }
+    ],
+    "topk_rows_loaded": 95,
+    "unique_topk_tuples": 95
+  },
+  "route_start_indices": [
+    0,
+    4,
+    8,
+    12,
+    16,
+    20,
+    24,
+    28,
+    32,
+    36,
+    40,
+    44,
+    48,
+    52,
+    56,
+    60
+  ],
+  "rows": 1,
+  "tp_size": 4,
+  "window_count": 16,
+  "windows": [
+    {
+      "active_experts": 8,
+      "gemm1_onednn_mean_us": 31.81753,
+      "gemm1_onednn_p50_us": 31.719,
+      "gemm1_vs_xpu_max_abs_diff": 0.0,
+      "gemm2_onednn_mean_us": 26.53593,
+      "gemm2_onednn_p50_us": 26.37,
+      "gemm2_vs_xpu_max_abs_diff": 0.0,
+      "onednn_island_vs_staged_max_abs_diff": 0.0,
+      "onednn_island_vs_xpu_fused_moe_max_abs_diff": 0.0,
+      "onednn_output_checksum_f32": -751.800048828125,
+      "ref_output_checksum_f32": -751.800048828125,
+      "route_start_index": 0,
+      "rows_per_expert_nonzero": [
+        {
+          "expert": 2,
+          "rows": 1
+        },
+        {
+          "expert": 36,
+          "rows": 1
+        },
+        {
+          "expert": 59,
+          "rows": 1
+        },
+        {
+          "expert": 161,
+          "rows": 1
+        },
+        {
+          "expert": 170,
+          "rows": 1
+        },
+        {
+          "expert": 200,
+          "rows": 1
+        },
+        {
+          "expert": 243,
+          "rows": 1
+        },
+        {
+          "expert": 255,
+          "rows": 1
+        }
+      ],
+      "staged_vs_xpu_fused_moe_max_abs_diff": 0.0,
+      "subdir": "window_000_start_0",
+      "topk_summary": {
+        "active_experts": 8,
+        "top_experts": [
+          {
+            "count": 1,
+            "expert": 59
+          },
+          {
+            "count": 1,
+            "expert": 2
+          },
+          {
+            "count": 1,
+            "expert": 243
+          },
+          {
+            "count": 1,
+            "expert": 161
+          },
+          {
+            "count": 1,
+            "expert": 255
+          },
+          {
+            "count": 1,
+            "expert": 170
+          },
+          {
+            "count": 1,
+            "expert": 200
+          },
+          {
+            "count": 1,
+            "expert": 36
+          }
+        ],
+        "topk_tuple_examples": [
+          {
+            "count": 1,
+            "topk_ids": [
+              59,
+              2,
+              243,
+              161,
+              255,
+              170,
+              200,
+              36
+            ]
+          }
+        ],
+        "unique_topk_tuples": 1
+      }
+    },
+    {
+      "active_experts": 8,
+      "gemm1_onednn_mean_us": 45.45948,
+      "gemm1_onednn_p50_us": 45.305,
+      "gemm1_vs_xpu_max_abs_diff": 0.0,
+      "gemm2_onednn_mean_us": 33.9488,
+      "gemm2_onednn_p50_us": 32.551,
+      "gemm2_vs_xpu_max_abs_diff": 0.0,
+      "onednn_island_vs_staged_max_abs_diff": 0.0,
+      "onednn_island_vs_xpu_fused_moe_max_abs_diff": 0.0,
+      "onednn_output_checksum_f32": -495.0894470214844,
+      "ref_output_checksum_f32": -495.0894470214844,
+      "route_start_index": 4,
+      "rows_per_expert_nonzero": [
+        {
+          "expert": 8,
+          "rows": 1
+        },
+        {
+          "expert": 59,
+          "rows": 1
+        },
+        {
+          "expert": 104,
+          "rows": 1
+        },
+        {
+          "expert": 189,
+          "rows": 1
+        },
+        {
+          "expert": 200,
+          "rows": 1
+        },
+        {
+          "expert": 221,
+          "rows": 1
+        },
+        {
+          "expert": 243,
+          "rows": 1
+        },
+        {
+          "expert": 255,
+          "rows": 1
+        }
+      ],
+      "staged_vs_xpu_fused_moe_max_abs_diff": 0.0,
+      "subdir": "window_001_start_4",
+      "topk_summary": {
+        "active_experts": 8,
+        "top_experts": [
+          {
+            "count": 1,
+            "expert": 243
+          },
+          {
+            "count": 1,
+            "expert": 59
+          },
+          {
+            "count": 1,
+            "expert": 200
+          },
+          {
+            "count": 1,
+            "expert": 8
+          },
+          {
+            "count": 1,
+            "expert": 189
+          },
+          {
+            "count": 1,
+            "expert": 255
+          },
+          {
+            "count": 1,
+            "expert": 104
+          },
+          {
+            "count": 1,
+            "expert": 221
+          }
+        ],
+        "topk_tuple_examples": [
+          {
+            "count": 1,
+            "topk_ids": [
+              243,
+              59,
+              200,
+              8,
+              189,
+              255,
+              104,
+              221
+            ]
+          }
+        ],
+        "unique_topk_tuples": 1
+      }
+    },
+    {
+      "active_experts": 8,
+      "gemm1_onednn_mean_us": 57.97799,
+      "gemm1_onednn_p50_us": 57.899,
+      "gemm1_vs_xpu_max_abs_diff": 0.0,
+      "gemm2_onednn_mean_us": 40.77607,
+      "gemm2_onednn_p50_us": 40.506,
+      "gemm2_vs_xpu_max_abs_diff": 0.0,
+      "onednn_island_vs_staged_max_abs_diff": 0.0,
+      "onednn_island_vs_xpu_fused_moe_max_abs_diff": 0.0,
+      "onednn_output_checksum_f32": -392.723876953125,
+      "ref_output_checksum_f32": -392.723876953125,
+      "route_start_index": 8,
+      "rows_per_expert_nonzero": [
+        {
+          "expert": 47,
+          "rows": 1
+        },
+        {
+          "expert": 61,
+          "rows": 1
+        },
+        {
+          "expert": 123,
+          "rows": 1
+        },
+        {
+          "expert": 161,
+          "rows": 1
+        },
+        {
+          "expert": 197,
+          "rows": 1
+        },
+        {
+          "expert": 203,
+          "rows": 1
+        },
+        {
+          "expert": 207,
+          "rows": 1
+        },
+        {
+          "expert": 250,
+          "rows": 1
+        }
+      ],
+      "staged_vs_xpu_fused_moe_max_abs_diff": 0.0,
+      "subdir": "window_002_start_8",
+      "topk_summary": {
+        "active_experts": 8,
+        "top_experts": [
+          {
+            "count": 1,
+            "expert": 203
+          },
+          {
+            "count": 1,
+            "expert": 61
+          },
+          {
+            "count": 1,
+            "expert": 197
+          },
+          {
+            "count": 1,
+            "expert": 47
+          },
+          {
+            "count": 1,
+            "expert": 161
+          },
+          {
+            "count": 1,
+            "expert": 207
+          },
+          {
+            "count": 1,
+            "expert": 250
+          },
+          {
+            "count": 1,
+            "expert": 123
+          }
+        ],
+        "topk_tuple_examples": [
+          {
+            "count": 1,
+            "topk_ids": [
+              203,
+              61,
+              197,
+              47,
+              161,
+              207,
+              250,
+              123
+            ]
+          }
+        ],
+        "unique_topk_tuples": 1
+      }
+    },
+    {
+      "active_experts": 8,
+      "gemm1_onednn_mean_us": 53.20167,
+      "gemm1_onednn_p50_us": 52.989,
+      "gemm1_vs_xpu_max_abs_diff": 0.0,
+      "gemm2_onednn_mean_us": 30.97947,
+      "gemm2_onednn_p50_us": 30.327,
+      "gemm2_vs_xpu_max_abs_diff": 0.0,
+      "onednn_island_vs_staged_max_abs_diff": 0.0,
+      "onednn_island_vs_xpu_fused_moe_max_abs_diff": 0.0,
+      "onednn_output_checksum_f32": 1246.193603515625,
+      "ref_output_checksum_f32": 1246.193603515625,
+      "route_start_index": 12,
+      "rows_per_expert_nonzero": [
+        {
+          "expert": 32,
+          "rows": 1
+        },
+        {
+          "expert": 61,
+          "rows": 1
+        },
+        {
+          "expert": 81,
+          "rows": 1
+        },
+        {
+          "expert": 166,
+          "rows": 1
+        },
+        {
+          "expert": 189,
+          "rows": 1
+        },
+        {
+          "expert": 243,
+          "rows": 1
+        },
+        {
+          "expert": 250,
+          "rows": 1
+        },
+        {
+          "expert": 251,
+          "rows": 1
+        }
+      ],
+      "staged_vs_xpu_fused_moe_max_abs_diff": 0.0,
+      "subdir": "window_003_start_12",
+      "topk_summary": {
+        "active_experts": 8,
+        "top_experts": [
+          {
+            "count": 1,
+            "expert": 243
+          },
+          {
+            "count": 1,
+            "expert": 166
+          },
+          {
+            "count": 1,
+            "expert": 251
+          },
+          {
+            "count": 1,
+            "expert": 81
+          },
+          {
+            "count": 1,
+            "expert": 189
+          },
+          {
+            "count": 1,
+            "expert": 61
+          },
+          {
+            "count": 1,
+            "expert": 32
+          },
+          {
+            "count": 1,
+            "expert": 250
+          }
+        ],
+        "topk_tuple_examples": [
+          {
+            "count": 1,
+            "topk_ids": [
+              243,
+              166,
+              251,
+              81,
+              189,
+              61,
+              32,
+              250
+            ]
+          }
+        ],
+        "unique_topk_tuples": 1
+      }
+    },
+    {
+      "active_experts": 8,
+      "gemm1_onednn_mean_us": 57.07654,
+      "gemm1_onednn_p50_us": 56.396,
+      "gemm1_vs_xpu_max_abs_diff": 0.0,
+      "gemm2_onednn_mean_us": 31.5891,
+      "gemm2_onednn_p50_us": 31.129,
+      "gemm2_vs_xpu_max_abs_diff": 0.0,
+      "onednn_island_vs_staged_max_abs_diff": 0.0,
+      "onednn_island_vs_xpu_fused_moe_max_abs_diff": 0.0,
+      "onednn_output_checksum_f32": -1281.8690185546875,
+      "ref_output_checksum_f32": -1281.8690185546875,
+      "route_start_index": 16,
+      "rows_per_expert_nonzero": [
+        {
+          "expert": 2,
+          "rows": 1
+        },
+        {
+          "expert": 59,
+          "rows": 1
+        },
+        {
+          "expert": 116,
+          "rows": 1
+        },
+        {
+          "expert": 161,
+          "rows": 1
+        },
+        {
+          "expert": 170,
+          "rows": 1
+        },
+        {
+          "expert": 171,
+          "rows": 1
+        },
+        {
+          "expert": 191,
+          "rows": 1
+        },
+        {
+          "expert": 255,
+          "rows": 1
+        }
+      ],
+      "staged_vs_xpu_fused_moe_max_abs_diff": 0.0,
+      "subdir": "window_004_start_16",
+      "topk_summary": {
+        "active_experts": 8,
+        "top_experts": [
+          {
+            "count": 1,
+            "expert": 116
+          },
+          {
+            "count": 1,
+            "expert": 191
+          },
+          {
+            "count": 1,
+            "expert": 171
+          },
+          {
+            "count": 1,
+            "expert": 2
+          },
+          {
+            "count": 1,
+            "expert": 59
+          },
+          {
+            "count": 1,
+            "expert": 255
+          },
+          {
+            "count": 1,
+            "expert": 161
+          },
+          {
+            "count": 1,
+            "expert": 170
+          }
+        ],
+        "topk_tuple_examples": [
+          {
+            "count": 1,
+            "topk_ids": [
+              116,
+              191,
+              171,
+              2,
+              59,
+              255,
+              161,
+              170
+            ]
+          }
+        ],
+        "unique_topk_tuples": 1
+      }
+    },
+    {
+      "active_experts": 8,
+      "gemm1_onednn_mean_us": 61.45175,
+      "gemm1_onednn_p50_us": 58.891,
+      "gemm1_vs_xpu_max_abs_diff": 0.0,
+      "gemm2_onednn_mean_us": 36.99305,
+      "gemm2_onednn_p50_us": 36.739,
+      "gemm2_vs_xpu_max_abs_diff": 0.0,
+      "onednn_island_vs_staged_max_abs_diff": 0.0,
+      "onednn_island_vs_xpu_fused_moe_max_abs_diff": 0.0,
+      "onednn_output_checksum_f32": 1636.68310546875,
+      "ref_output_checksum_f32": 1636.68310546875,
+      "route_start_index": 20,
+      "rows_per_expert_nonzero": [
+        {
+          "expert": 5,
+          "rows": 1
+        },
+        {
+          "expert": 20,
+          "rows": 1
+        },
+        {
+          "expert": 54,
+          "rows": 1
+        },
+        {
+          "expert": 189,
+          "rows": 1
+        },
+        {
+          "expert": 197,
+          "rows": 1
+        },
+        {
+          "expert": 198,
+          "rows": 1
+        },
+        {
+          "expert": 237,
+          "rows": 1
+        },
+        {
+          "expert": 243,
+          "rows": 1
+        }
+      ],
+      "staged_vs_xpu_fused_moe_max_abs_diff": 0.0,
+      "subdir": "window_005_start_20",
+      "topk_summary": {
+        "active_experts": 8,
+        "top_experts": [
+          {
+            "count": 1,
+            "expert": 189
+          },
+          {
+            "count": 1,
+            "expert": 5
+          },
+          {
+            "count": 1,
+            "expert": 20
+          },
+          {
+            "count": 1,
+            "expert": 198
+          },
+          {
+            "count": 1,
+            "expert": 243
+          },
+          {
+            "count": 1,
+            "expert": 197
+          },
+          {
+            "count": 1,
+            "expert": 237
+          },
+          {
+            "count": 1,
+            "expert": 54
+          }
+        ],
+        "topk_tuple_examples": [
+          {
+            "count": 1,
+            "topk_ids": [
+              189,
+              5,
+              20,
+              198,
+              243,
+              197,
+              237,
+              54
+            ]
+          }
+        ],
+        "unique_topk_tuples": 1
+      }
+    },
+    {
+      "active_experts": 8,
+      "gemm1_onednn_mean_us": 58.08932,
+      "gemm1_onednn_p50_us": 57.868,
+      "gemm1_vs_xpu_max_abs_diff": 0.0,
+      "gemm2_onednn_mean_us": 37.62201,
+      "gemm2_onednn_p50_us": 37.46,
+      "gemm2_vs_xpu_max_abs_diff": 0.0,
+      "onednn_island_vs_staged_max_abs_diff": 0.0,
+      "onednn_island_vs_xpu_fused_moe_max_abs_diff": 0.0,
+      "onednn_output_checksum_f32": 142.9923095703125,
+      "ref_output_checksum_f32": 142.9923095703125,
+      "route_start_index": 24,
+      "rows_per_expert_nonzero": [
+        {
+          "expert": 44,
+          "rows": 1
+        },
+        {
+          "expert": 61,
+          "rows": 1
+        },
+        {
+          "expert": 82,
+          "rows": 1
+        },
+        {
+          "expert": 108,
+          "rows": 1
+        },
+        {
+          "expert": 123,
+          "rows": 1
+        },
+        {
+          "expert": 188,
+          "rows": 1
+        },
+        {
+          "expert": 207,
+          "rows": 1
+        },
+        {
+          "expert": 250,
+          "rows": 1
+        }
+      ],
+      "staged_vs_xpu_fused_moe_max_abs_diff": 0.0,
+      "subdir": "window_006_start_24",
+      "topk_summary": {
+        "active_experts": 8,
+        "top_experts": [
+          {
+            "count": 1,
+            "expert": 61
+          },
+          {
+            "count": 1,
+            "expert": 108
+          },
+          {
+            "count": 1,
+            "expert": 44
+          },
+          {
+            "count": 1,
+            "expert": 188
+          },
+          {
+            "count": 1,
+            "expert": 250
+          },
+          {
+            "count": 1,
+            "expert": 82
+          },
+          {
+            "count": 1,
+            "expert": 207
+          },
+          {
+            "count": 1,
+            "expert": 123
+          }
+        ],
+        "topk_tuple_examples": [
+          {
+            "count": 1,
+            "topk_ids": [
+              61,
+              108,
+              44,
+              188,
+              250,
+              82,
+              207,
+              123
+            ]
+          }
+        ],
+        "unique_topk_tuples": 1
+      }
+    },
+    {
+      "active_experts": 8,
+      "gemm1_onednn_mean_us": 57.0178,
+      "gemm1_onednn_p50_us": 56.937,
+      "gemm1_vs_xpu_max_abs_diff": 0.0,
+      "gemm2_onednn_mean_us": 37.05694,
+      "gemm2_onednn_p50_us": 36.188,
+      "gemm2_vs_xpu_max_abs_diff": 0.0,
+      "onednn_island_vs_staged_max_abs_diff": 0.0,
+      "onednn_island_vs_xpu_fused_moe_max_abs_diff": 0.0,
+      "onednn_output_checksum_f32": -91.15362548828125,
+      "ref_output_checksum_f32": -91.15362548828125,
+      "route_start_index": 28,
+      "rows_per_expert_nonzero": [
+        {
+          "expert": 32,
+          "rows": 1
+        },
+        {
+          "expert": 61,
+          "rows": 1
+        },
+        {
+          "expert": 81,
+          "rows": 1
+        },
+        {
+          "expert": 166,
+          "rows": 1
+        },
+        {
+          "expert": 186,
+          "rows": 1
+        },
+        {
+          "expert": 207,
+          "rows": 1
+        },
+        {
+          "expert": 243,
+          "rows": 1
+        },
+        {
+          "expert": 251,
+          "rows": 1
+        }
+      ],
+      "staged_vs_xpu_fused_moe_max_abs_diff": 0.0,
+      "subdir": "window_007_start_28",
+      "topk_summary": {
+        "active_experts": 8,
+        "top_experts": [
+          {
+            "count": 1,
+            "expert": 243
+          },
+          {
+            "count": 1,
+            "expert": 166
+          },
+          {
+            "count": 1,
+            "expert": 251
+          },
+          {
+            "count": 1,
+            "expert": 207
+          },
+          {
+            "count": 1,
+            "expert": 61
+          },
+          {
+            "count": 1,
+            "expert": 81
+          },
+          {
+            "count": 1,
+            "expert": 32
+          },
+          {
+            "count": 1,
+            "expert": 186
+          }
+        ],
+        "topk_tuple_examples": [
+          {
+            "count": 1,
+            "topk_ids": [
+              243,
+              166,
+              251,
+              207,
+              61,
+              81,
+              32,
+              186
+            ]
+          }
+        ],
+        "unique_topk_tuples": 1
+      }
+    },
+    {
+      "active_experts": 8,
+      "gemm1_onednn_mean_us": 54.37744,
+      "gemm1_onednn_p50_us": 54.062,
+      "gemm1_vs_xpu_max_abs_diff": 0.0,
+      "gemm2_onednn_mean_us": 33.90384,
+      "gemm2_onednn_p50_us": 33.252,
+      "gemm2_vs_xpu_max_abs_diff": 0.0,
+      "onednn_island_vs_staged_max_abs_diff": 0.0,
+      "onednn_island_vs_xpu_fused_moe_max_abs_diff": 0.0,
+      "onednn_output_checksum_f32": -989.9647216796875,
+      "ref_output_checksum_f32": -989.9647216796875,
+      "route_start_index": 32,
+      "rows_per_expert_nonzero": [
+        {
+          "expert": 61,
+          "rows": 1
+        },
+        {
+          "expert": 166,
+          "rows": 1
+        },
+        {
+          "expert": 172,
+          "rows": 1
+        },
+        {
+          "expert": 186,
+          "rows": 1
+        },
+        {
+          "expert": 188,
+          "rows": 1
+        },
+        {
+          "expert": 207,
+          "rows": 1
+        },
+        {
+          "expert": 243,
+          "rows": 1
+        },
+        {
+          "expert": 250,
+          "rows": 1
+        }
+      ],
+      "staged_vs_xpu_fused_moe_max_abs_diff": 0.0,
+      "subdir": "window_008_start_32",
+      "topk_summary": {
+        "active_experts": 8,
+        "top_experts": [
+          {
+            "count": 1,
+            "expert": 207
+          },
+          {
+            "count": 1,
+            "expert": 166
+          },
+          {
+            "count": 1,
+            "expert": 243
+          },
+          {
+            "count": 1,
+            "expert": 186
+          },
+          {
+            "count": 1,
+            "expert": 61
+          },
+          {
+            "count": 1,
+            "expert": 250
+          },
+          {
+            "count": 1,
+            "expert": 172
+          },
+          {
+            "count": 1,
+            "expert": 188
+          }
+        ],
+        "topk_tuple_examples": [
+          {
+            "count": 1,
+            "topk_ids": [
+              207,
+              166,
+              243,
+              186,
+              61,
+              250,
+              172,
+              188
+            ]
+          }
+        ],
+        "unique_topk_tuples": 1
+      }
+    },
+    {
+      "active_experts": 8,
+      "gemm1_onednn_mean_us": 53.9214,
+      "gemm1_onednn_p50_us": 53.791,
+      "gemm1_vs_xpu_max_abs_diff": 0.0,
+      "gemm2_onednn_mean_us": 30.19058,
+      "gemm2_onednn_p50_us": 30.157,
+      "gemm2_vs_xpu_max_abs_diff": 0.0,
+      "onednn_island_vs_staged_max_abs_diff": 0.0,
+      "onednn_island_vs_xpu_fused_moe_max_abs_diff": 0.0,
+      "onednn_output_checksum_f32": -78.9464111328125,
+      "ref_output_checksum_f32": -78.9464111328125,
+      "route_start_index": 36,
+      "rows_per_expert_nonzero": [
+        {
+          "expert": 44,
+          "rows": 1
+        },
+        {
+          "expert": 47,
+          "rows": 1
+        },
+        {
+          "expert": 54,
+          "rows": 1
+        },
+        {
+          "expert": 73,
+          "rows": 1
+        },
+        {
+          "expert": 120,
+          "rows": 1
+        },
+        {
+          "expert": 156,
+          "rows": 1
+        },
+        {
+          "expert": 161,
+          "rows": 1
+        },
+        {
+          "expert": 198,
+          "rows": 1
+        }
+      ],
+      "staged_vs_xpu_fused_moe_max_abs_diff": 0.0,
+      "subdir": "window_009_start_36",
+      "topk_summary": {
+        "active_experts": 8,
+        "top_experts": [
+          {
+            "count": 1,
+            "expert": 73
+          },
+          {
+            "count": 1,
+            "expert": 47
+          },
+          {
+            "count": 1,
+            "expert": 198
+          },
+          {
+            "count": 1,
+            "expert": 54
+          },
+          {
+            "count": 1,
+            "expert": 156
+          },
+          {
+            "count": 1,
+            "expert": 120
+          },
+          {
+            "count": 1,
+            "expert": 161
+          },
+          {
+            "count": 1,
+            "expert": 44
+          }
+        ],
+        "topk_tuple_examples": [
+          {
+            "count": 1,
+            "topk_ids": [
+              73,
+              47,
+              198,
+              54,
+              156,
+              120,
+              161,
+              44
+            ]
+          }
+        ],
+        "unique_topk_tuples": 1
+      }
+    },
+    {
+      "active_experts": 8,
+      "gemm1_onednn_mean_us": 57.63053,
+      "gemm1_onednn_p50_us": 57.288,
+      "gemm1_vs_xpu_max_abs_diff": 0.0,
+      "gemm2_onednn_mean_us": 31.44333,
+      "gemm2_onednn_p50_us": 31.289,
+      "gemm2_vs_xpu_max_abs_diff": 0.0,
+      "onednn_island_vs_staged_max_abs_diff": 0.0,
+      "onednn_island_vs_xpu_fused_moe_max_abs_diff": 0.0,
+      "onednn_output_checksum_f32": -562.840087890625,
+      "ref_output_checksum_f32": -562.840087890625,
+      "route_start_index": 40,
+      "rows_per_expert_nonzero": [
+        {
+          "expert": 8,
+          "rows": 1
+        },
+        {
+          "expert": 41,
+          "rows": 1
+        },
+        {
+          "expert": 44,
+          "rows": 1
+        },
+        {
+          "expert": 47,
+          "rows": 1
+        },
+        {
+          "expert": 61,
+          "rows": 1
+        },
+        {
+          "expert": 123,
+          "rows": 1
+        },
+        {
+          "expert": 161,
+          "rows": 1
+        },
+        {
+          "expert": 197,
+          "rows": 1
+        }
+      ],
+      "staged_vs_xpu_fused_moe_max_abs_diff": 0.0,
+      "subdir": "window_010_start_40",
+      "topk_summary": {
+        "active_experts": 8,
+        "top_experts": [
+          {
+            "count": 1,
+            "expert": 47
+          },
+          {
+            "count": 1,
+            "expert": 44
+          },
+          {
+            "count": 1,
+            "expert": 8
+          },
+          {
+            "count": 1,
+            "expert": 61
+          },
+          {
+            "count": 1,
+            "expert": 123
+          },
+          {
+            "count": 1,
+            "expert": 197
+          },
+          {
+            "count": 1,
+            "expert": 41
+          },
+          {
+            "count": 1,
+            "expert": 161
+          }
+        ],
+        "topk_tuple_examples": [
+          {
+            "count": 1,
+            "topk_ids": [
+              47,
+              44,
+              8,
+              61,
+              123,
+              197,
+              41,
+              161
+            ]
+          }
+        ],
+        "unique_topk_tuples": 1
+      }
+    },
+    {
+      "active_experts": 8,
+      "gemm1_onednn_mean_us": 57.41614,
+      "gemm1_onednn_p50_us": 57.257,
+      "gemm1_vs_xpu_max_abs_diff": 0.0,
+      "gemm2_onednn_mean_us": 33.99486,
+      "gemm2_onednn_p50_us": 33.563,
+      "gemm2_vs_xpu_max_abs_diff": 0.0,
+      "onednn_island_vs_staged_max_abs_diff": 0.0,
+      "onednn_island_vs_xpu_fused_moe_max_abs_diff": 0.0,
+      "onednn_output_checksum_f32": -551.94384765625,
+      "ref_output_checksum_f32": -551.94384765625,
+      "route_start_index": 44,
+      "rows_per_expert_nonzero": [
+        {
+          "expert": 5,
+          "rows": 1
+        },
+        {
+          "expert": 44,
+          "rows": 1
+        },
+        {
+          "expert": 61,
+          "rows": 1
+        },
+        {
+          "expert": 123,
+          "rows": 1
+        },
+        {
+          "expert": 161,
+          "rows": 1
+        },
+        {
+          "expert": 197,
+          "rows": 1
+        },
+        {
+          "expert": 207,
+          "rows": 1
+        },
+        {
+          "expert": 227,
+          "rows": 1
+        }
+      ],
+      "staged_vs_xpu_fused_moe_max_abs_diff": 0.0,
+      "subdir": "window_011_start_44",
+      "topk_summary": {
+        "active_experts": 8,
+        "top_experts": [
+          {
+            "count": 1,
+            "expert": 227
+          },
+          {
+            "count": 1,
+            "expert": 44
+          },
+          {
+            "count": 1,
+            "expert": 123
+          },
+          {
+            "count": 1,
+            "expert": 61
+          },
+          {
+            "count": 1,
+            "expert": 197
+          },
+          {
+            "count": 1,
+            "expert": 161
+          },
+          {
+            "count": 1,
+            "expert": 5
+          },
+          {
+            "count": 1,
+            "expert": 207
+          }
+        ],
+        "topk_tuple_examples": [
+          {
+            "count": 1,
+            "topk_ids": [
+              227,
+              44,
+              123,
+              61,
+              197,
+              161,
+              5,
+              207
+            ]
+          }
+        ],
+        "unique_topk_tuples": 1
+      }
+    },
+    {
+      "active_experts": 8,
+      "gemm1_onednn_mean_us": 53.76602,
+      "gemm1_onednn_p50_us": 53.57,
+      "gemm1_vs_xpu_max_abs_diff": 0.0,
+      "gemm2_onednn_mean_us": 30.78705,
+      "gemm2_onednn_p50_us": 30.487,
+      "gemm2_vs_xpu_max_abs_diff": 0.0,
+      "onednn_island_vs_staged_max_abs_diff": 0.0,
+      "onednn_island_vs_xpu_fused_moe_max_abs_diff": 0.0,
+      "onednn_output_checksum_f32": -81.3304443359375,
+      "ref_output_checksum_f32": -81.3304443359375,
+      "route_start_index": 48,
+      "rows_per_expert_nonzero": [
+        {
+          "expert": 53,
+          "rows": 1
+        },
+        {
+          "expert": 112,
+          "rows": 1
+        },
+        {
+          "expert": 113,
+          "rows": 1
+        },
+        {
+          "expert": 126,
+          "rows": 1
+        },
+        {
+          "expert": 171,
+          "rows": 1
+        },
+        {
+          "expert": 200,
+          "rows": 1
+        },
+        {
+          "expert": 201,
+          "rows": 1
+        },
+        {
+          "expert": 210,
+          "rows": 1
+        }
+      ],
+      "staged_vs_xpu_fused_moe_max_abs_diff": 0.0,
+      "subdir": "window_012_start_48",
+      "topk_summary": {
+        "active_experts": 8,
+        "top_experts": [
+          {
+            "count": 1,
+            "expert": 113
+          },
+          {
+            "count": 1,
+            "expert": 53
+          },
+          {
+            "count": 1,
+            "expert": 201
+          },
+          {
+            "count": 1,
+            "expert": 126
+          },
+          {
+            "count": 1,
+            "expert": 200
+          },
+          {
+            "count": 1,
+            "expert": 210
+          },
+          {
+            "count": 1,
+            "expert": 112
+          },
+          {
+            "count": 1,
+            "expert": 171
+          }
+        ],
+        "topk_tuple_examples": [
+          {
+            "count": 1,
+            "topk_ids": [
+              113,
+              53,
+              201,
+              126,
+              200,
+              210,
+              112,
+              171
+            ]
+          }
+        ],
+        "unique_topk_tuples": 1
+      }
+    },
+    {
+      "active_experts": 8,
+      "gemm1_onednn_mean_us": 53.97081,
+      "gemm1_onednn_p50_us": 53.781,
+      "gemm1_vs_xpu_max_abs_diff": 0.0,
+      "gemm2_onednn_mean_us": 38.22679,
+      "gemm2_onednn_p50_us": 37.821,
+      "gemm2_vs_xpu_max_abs_diff": 0.0,
+      "onednn_island_vs_staged_max_abs_diff": 0.0,
+      "onednn_island_vs_xpu_fused_moe_max_abs_diff": 0.0,
+      "onednn_output_checksum_f32": 44.82745361328125,
+      "ref_output_checksum_f32": 44.82745361328125,
+      "route_start_index": 52,
+      "rows_per_expert_nonzero": [
+        {
+          "expert": 6,
+          "rows": 1
+        },
+        {
+          "expert": 47,
+          "rows": 1
+        },
+        {
+          "expert": 84,
+          "rows": 1
+        },
+        {
+          "expert": 98,
+          "rows": 1
+        },
+        {
+          "expert": 180,
+          "rows": 1
+        },
+        {
+          "expert": 197,
+          "rows": 1
+        },
+        {
+          "expert": 208,
+          "rows": 1
+        },
+        {
+          "expert": 241,
+          "rows": 1
+        }
+      ],
+      "staged_vs_xpu_fused_moe_max_abs_diff": 0.0,
+      "subdir": "window_013_start_52",
+      "topk_summary": {
+        "active_experts": 8,
+        "top_experts": [
+          {
+            "count": 1,
+            "expert": 241
+          },
+          {
+            "count": 1,
+            "expert": 180
+          },
+          {
+            "count": 1,
+            "expert": 197
+          },
+          {
+            "count": 1,
+            "expert": 47
+          },
+          {
+            "count": 1,
+            "expert": 208
+          },
+          {
+            "count": 1,
+            "expert": 98
+          },
+          {
+            "count": 1,
+            "expert": 6
+          },
+          {
+            "count": 1,
+            "expert": 84
+          }
+        ],
+        "topk_tuple_examples": [
+          {
+            "count": 1,
+            "topk_ids": [
+              241,
+              180,
+              197,
+              47,
+              208,
+              98,
+              6,
+              84
+            ]
+          }
+        ],
+        "unique_topk_tuples": 1
+      }
+    },
+    {
+      "active_experts": 8,
+      "gemm1_onednn_mean_us": 53.11518,
+      "gemm1_onednn_p50_us": 53.04,
+      "gemm1_vs_xpu_max_abs_diff": 0.0,
+      "gemm2_onednn_mean_us": 30.49733,
+      "gemm2_onednn_p50_us": 30.237,
+      "gemm2_vs_xpu_max_abs_diff": 0.0,
+      "onednn_island_vs_staged_max_abs_diff": 0.0,
+      "onednn_island_vs_xpu_fused_moe_max_abs_diff": 0.0,
+      "onednn_output_checksum_f32": 714.80712890625,
+      "ref_output_checksum_f32": 714.80712890625,
+      "route_start_index": 56,
+      "rows_per_expert_nonzero": [
+        {
+          "expert": 14,
+          "rows": 1
+        },
+        {
+          "expert": 22,
+          "rows": 1
+        },
+        {
+          "expert": 23,
+          "rows": 1
+        },
+        {
+          "expert": 47,
+          "rows": 1
+        },
+        {
+          "expert": 73,
+          "rows": 1
+        },
+        {
+          "expert": 81,
+          "rows": 1
+        },
+        {
+          "expert": 161,
+          "rows": 1
+        },
+        {
+          "expert": 243,
+          "rows": 1
+        }
+      ],
+      "staged_vs_xpu_fused_moe_max_abs_diff": 0.0,
+      "subdir": "window_014_start_56",
+      "topk_summary": {
+        "active_experts": 8,
+        "top_experts": [
+          {
+            "count": 1,
+            "expert": 47
+          },
+          {
+            "count": 1,
+            "expert": 161
+          },
+          {
+            "count": 1,
+            "expert": 73
+          },
+          {
+            "count": 1,
+            "expert": 81
+          },
+          {
+            "count": 1,
+            "expert": 22
+          },
+          {
+            "count": 1,
+            "expert": 14
+          },
+          {
+            "count": 1,
+            "expert": 23
+          },
+          {
+            "count": 1,
+            "expert": 243
+          }
+        ],
+        "topk_tuple_examples": [
+          {
+            "count": 1,
+            "topk_ids": [
+              47,
+              161,
+              73,
+              81,
+              22,
+              14,
+              23,
+              243
+            ]
+          }
+        ],
+        "unique_topk_tuples": 1
+      }
+    },
+    {
+      "active_experts": 8,
+      "gemm1_onednn_mean_us": 54.67733,
+      "gemm1_onednn_p50_us": 54.392,
+      "gemm1_vs_xpu_max_abs_diff": 0.0,
+      "gemm2_onednn_mean_us": 30.50418,
+      "gemm2_onednn_p50_us": 29.926,
+      "gemm2_vs_xpu_max_abs_diff": 0.0,
+      "onednn_island_vs_staged_max_abs_diff": 0.0,
+      "onednn_island_vs_xpu_fused_moe_max_abs_diff": 0.0,
+      "onednn_output_checksum_f32": -616.6686401367188,
+      "ref_output_checksum_f32": -616.6686401367188,
+      "route_start_index": 60,
+      "rows_per_expert_nonzero": [
+        {
+          "expert": 2,
+          "rows": 1
+        },
+        {
+          "expert": 116,
+          "rows": 1
+        },
+        {
+          "expert": 169,
+          "rows": 1
+        },
+        {
+          "expert": 191,
+          "rows": 1
+        },
+        {
+          "expert": 197,
+          "rows": 1
+        },
+        {
+          "expert": 203,
+          "rows": 1
+        },
+        {
+          "expert": 208,
+          "rows": 1
+        },
+        {
+          "expert": 239,
+          "rows": 1
+        }
+      ],
+      "staged_vs_xpu_fused_moe_max_abs_diff": 0.0,
+      "subdir": "window_015_start_60",
+      "topk_summary": {
+        "active_experts": 8,
+        "top_experts": [
+          {
+            "count": 1,
+            "expert": 116
+          },
+          {
+            "count": 1,
+            "expert": 191
+          },
+          {
+            "count": 1,
+            "expert": 197
+          },
+          {
+            "count": 1,
+            "expert": 203
+          },
+          {
+            "count": 1,
+            "expert": 239
+          },
+          {
+            "count": 1,
+            "expert": 208
+          },
+          {
+            "count": 1,
+            "expert": 2
+          },
+          {
+            "count": 1,
+            "expert": 169
+          }
+        ],
+        "topk_tuple_examples": [
+          {
+            "count": 1,
+            "topk_ids": [
+              116,
+              191,
+              197,
+              203,
+              239,
+              208,
+              2,
+              169
+            ]
+          }
+        ],
+        "unique_topk_tuples": 1
+      }
+    }
+  ]
+}

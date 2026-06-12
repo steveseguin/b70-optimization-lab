@@ -5278,3 +5278,74 @@ External references to keep attached to this queue:
   `https://arxiv.org/html/2605.23911v1`.
 - SonicMoE IO-aware MoE design notes:
   `https://tridao.me/blog/2026/sonicmoe-blackwell/`.
+
+## 2026-06-12 Multi-Window oneDNN MoE Island Exactness Packet
+
+Patch:
+
+- `scripts/replay-qwen36-onednn-moe-island.py` now supports
+  `--route-start-indices`, including range syntax such as `0:64:4`.
+- In multi-window mode it writes one subdirectory per route window and reuses
+  the first window's large expert-weight dumps through relative meta paths, so
+  only per-window activations, rows, expected outputs, and JSON summaries vary.
+- The script now fails fast if the local `vllm_xpu_kernels` ops are not loaded,
+  with an explicit reminder to set `PYTHONPATH` and `LD_LIBRARY_PATH` like the
+  accepted service launcher.
+
+Command shape:
+
+```bash
+PYTHONPATH=/home/steve/src/vllm:/home/steve/src/vllm-xpu-kernels \
+LD_LIBRARY_PATH=/home/steve/src/vllm-xpu-kernels/vllm_xpu_kernels:/home/steve/.venvs/vllm-xpu/lib:/home/steve/.venvs/vllm-xpu/lib/python3.12/site-packages/torch/lib:${LD_LIBRARY_PATH:-} \
+/home/steve/.venvs/vllm-xpu/bin/python scripts/replay-qwen36-onednn-moe-island.py \
+  --out-dir data/qwen36-onednn-moe-island-layer9-r1-multiwindow-20260612bc \
+  --route-start-indices 0:64:4 \
+  --rows 1 \
+  --warmup 20 \
+  --iterations 100 \
+  --case-bin /tmp/qwen36-onednn-moe-island-case-runner-multiwindow-20260612bc
+```
+
+Artifacts:
+
+- `data/qwen36-onednn-moe-island-layer9-r1-multiwindow-20260612bc/multi_window_onednn_moe_island_result.json`.
+- Per-window `gemm1.meta`, `gemm2.meta`, `*_onednn_acb_result.json`, and
+  `onednn_moe_island_result.json` under
+  `data/qwen36-onednn-moe-island-layer9-r1-multiwindow-20260612bc/window_*`.
+- Raw `.bin` payloads are ignored recursively under
+  `data/qwen36-onednn-moe-island-*`; they are regeneration artifacts, not
+  GitHub payloads.
+- Restore/provenance:
+  `data/qwen36-quark-int8-tp4-accepted-restored-after-multiwindow-20260612bc.log`
+  and
+  `data/qwen36-quark-int8-tp4-accepted-provenance-after-multiwindow-20260612bc.json`.
+
+Result:
+
+- Replayed 16 real route windows for layer 9, route starts
+  `0,4,8,12,16,20,24,28,32,36,40,44,48,52,56,60`.
+- `all_exact=true`.
+- Aggregate max diffs are all `0.0`:
+  - `gemm1_vs_xpu_max_abs_diff`
+  - `gemm2_vs_xpu_max_abs_diff`
+  - `staged_vs_xpu_fused_moe_max_abs_diff`
+  - `onednn_island_vs_xpu_fused_moe_max_abs_diff`
+  - `onednn_island_vs_staged_max_abs_diff`
+- oneDNN packed `acb` timing ranges over the windows:
+  - GEMM1 mean `31.818-61.452 us`, p50 `31.719-58.891 us`.
+  - GEMM2 mean `26.536-40.776 us`, p50 `26.370-40.506 us`.
+- Accepted backend restore was healthy after `63s`; the provenance guard passed
+  all sentinels after the clean XPU replay window.
+
+Interpretation:
+
+- This eliminates the fixed-buffer caveat from the previous resident
+  route-window timing packet. Each window now regenerates the real remapped
+  hidden input, per-token scales, oneDNN GEMM outputs, activation/quant2, and
+  final gather for that captured route slice.
+- The correctness case for a oneDNN-backed vLLM/XPU sidecar is now stronger:
+  packed oneDNN GEMMs are byte-equivalent to current XPU GEMMs, and the full
+  MoE island remains exact versus `xpu_fused_moe` over a route-window set.
+- The next implementation step should be an in-process sidecar smoke that owns
+  resident buffers and removes the Python/file/process boundaries while keeping
+  this multi-window packet as the regression gate.

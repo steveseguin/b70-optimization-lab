@@ -1,0 +1,15 @@
+name=gemm1
+num_experts=256
+total_tokens=8
+k=2048
+n=256
+dst_dtype=bf16
+weight_format=abc
+a_path=gemm1_A.s8.bin
+a_scales_path=gemm1_A_scales.f32.bin
+b_path=../window_000_start_0/gemm1_B.s8.bin
+b_acb_path=../window_000_start_0/gemm1_B_acb.s8.bin
+b_scales_path=../window_000_start_0/gemm1_B_scales.f32.bin
+rows_path=gemm1_rows.i32.bin
+xpu_out_path=gemm1_xpu_out.bf16.bin
+xpu_out_f32_path=gemm1_xpu_out.f32.bin
