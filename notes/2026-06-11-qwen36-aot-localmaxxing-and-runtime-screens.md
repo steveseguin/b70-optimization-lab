@@ -14702,3 +14702,212 @@ Bigger bolder ideas added from this round:
       traces, exact env, and expected token ids.
     - This is a better upstream ask than "speculative decode is slow"; it is a
       concrete verifier-state correctness issue on XPU.
+
+## Runtime-Mode Parity Controls And Larger Bets
+
+Added after the no-spec no-graph/eager and no-spec graph-off compile-on
+controls. This updates the interpretation of the previous no-graph speculative
+diagnostics.
+
+Fresh accepted graph checkpoint:
+
+- Restored accepted endpoint tag:
+  `qwen36-tp4-accepted-restored-after-nospec-controls-20260612i`.
+- Endpoint mode: current accepted graph path, 32K context, no prefix caching,
+  no speculative config.
+- Quality gate:
+  `data/qwen36-quark-int8-tp4-accepted-restored-after-nospec-controls-quality-r8-20260612i.json`
+  passed with `pass_all=true`.
+- Fresh oracle baseline:
+  `data/qwen36-quark-int8-tp4-accepted-restored-current-oracle-baseline-20260612i.json`.
+- The fresh baseline matches prior isolated accepted graph baselines:
+  `data/qwen36-quark-int8-tp4-oracle-isolated-accepted-graph-20260611.json`
+  and
+  `data/qwen36-quark-int8-tp4-oracle-k1-isolated-accepted-graph-20260611.json`.
+
+Baseline correction:
+
+- The older default oracle fixture
+  `data/qwen36-quark-int8-tp4-oracle-completions-accepted-20260611.json`
+  is stale or mixed for at least `natural_latency_plan`.
+- Fresh accepted graph versus the old fixture:
+  - `natural_latency_plan`: first diff at output index `14`, fresh/current
+    token `29541` versus old fixture token `4779`.
+  - `repetitive_kernel_notes`: first diff at output index `81`, fresh/current
+    token `1546` versus old fixture token `809`.
+- `scripts/launch-qwen36-quark-int8-oracle-trace.sh` now defaults to the fresh
+  accepted graph baseline. Use `ORACLE_TRACE=...` explicitly for any old
+  fixture replay.
+
+No-spec runtime controls:
+
+1. `qwen36-tp4-nospec-nograph-eager-20260612g`
+   - Mode: no speculative config, XPU graph disabled, `--enforce-eager`.
+   - Artifact:
+     `data/qwen36-quark-int8-tp4-nospec-nograph-eager-20260612g-completions.json`.
+   - Against the fresh accepted graph baseline:
+     - `natural_latency_plan`: first diff index `17`, candidate token `321`,
+       graph baseline token `11436`.
+     - `repetitive_kernel_notes`: first diff index `14`, candidate token
+       `6126`, graph baseline token `4752`.
+
+2. `qwen36-tp4-nospec-noxpugraph-compile-20260612h`
+   - Mode: no speculative config, XPU graph disabled, compile-on, no
+     `--enforce-eager`.
+   - Artifact:
+     `data/qwen36-quark-int8-tp4-nospec-noxpugraph-compile-20260612h-completions.json`.
+   - Against the fresh accepted graph baseline:
+     - `natural_latency_plan`: first diff index `25`, candidate token `271`,
+       graph baseline token `198`.
+     - `repetitive_kernel_notes`: first diff index `14`, candidate token
+       `6126`, graph baseline token `4752`.
+
+3. `qwen36-tp4-accepted-restored-after-nospec-controls-20260612i`
+   - Mode: accepted graph, no speculative config.
+   - Completion artifact:
+     `data/qwen36-quark-int8-tp4-accepted-restored-after-nospec-controls-20260612i-completions.json`.
+   - This run established the fresh accepted graph baseline above and passed
+     the no-thinking direct quality gate.
+
+Updated interpretation:
+
+- The no-graph/eager runtime mode is not token-identical to the accepted graph
+  runtime for the oracle prompts even without speculative decoding.
+- Therefore the previous full-bonus/no-bonus no-graph speculative diagnostics
+  are useful for tracing scheduler/worker transaction behavior, but they cannot
+  by themselves prove a speculative verifier correctness bug against the
+  production graph runtime.
+- The `repetitive_kernel_notes` index-14 divergence appears in no-spec
+  no-graph controls too, so that specific first diff is a runtime-mode parity
+  issue before it is a speculative issue.
+- Future speculative fixes should be compared against a matching no-spec
+  runtime mode, and production candidates must eventually prove parity under
+  the accepted graph path.
+
+Immediate things to try next:
+
+1. **Graph/eager parity minimization.**
+   - Reduce the oracle prompts until the no-spec graph/eager first diff still
+     reproduces.
+   - Capture top-k logits for graph versus no-graph at the first divergent
+     position.
+   - Decide whether the drift is expected floating-point tie sensitivity,
+     kernel-provider difference, graph capture state, or prompt/template
+     mismatch.
+
+2. **Graph-enabled oracle `k=1` tracing.**
+   - Re-run oracle `k=1` with the fresh graph baseline and accepted graph path.
+   - If graph capture still fails with the current trace hooks, reduce trace
+     hooks until the graph path survives, then add one signal at a time.
+
+3. **Runtime-paired speculative diagnostics.**
+   - For every speculative diagnostic, run the matching no-spec runtime control
+     in the same graph/eager/compile mode.
+   - Score only the delta against that paired control; do not compare
+     no-graph speculative output directly to accepted graph output.
+
+4. **First-diff logit and KV probe.**
+   - For the no-spec graph/eager index-14 and index-17/25 diffs, capture prompt
+     token ids, positions, selected kernel providers, top-k logits, and any
+     per-layer hidden-state checksum already cheap to expose.
+   - If top-2 logits are nearly tied, treat exact-token drift as a determinism
+     constraint rather than a quality regression; otherwise chase the kernel or
+     graph-state source.
+
+5. **Speed after correctness-only gate.**
+   - Do not benchmark speculative speed again until oracle `k=1` full-bonus
+     parity is exact against its paired no-spec control and accepted graph
+     parity is understood.
+
+Fresh public signals:
+
+- Localmaxxing exact-model public count remains `1` for
+  `nameistoken/Qwen3.6-35B-A3B-Quark-W8A8-INT8`: `cmq8yhxvo001ipb0149aoa79o`
+  at `99.428 tok/s`.
+- The B70/Qwen leaderboard now shows a richer same-family 4x B70 row at
+  `99.770 tok/s` with peak VRAM recorded. That is close enough to confirm the
+  current no-spec graph recipe is near the easy vLLM/XPU knob ceiling.
+- Public B70 rows still show useful contrast: one-card llama.cpp Q4 rows around
+  `70 tok/s`, four-card mirror capacity rows around `68.8 tok/s` per stream
+  with high aggregate, and a Qwen3.6 27B MTP/XPU row showing that users are
+  unblocking MTP on B70-class stacks.
+- The Intel Arc Pro/vLLM guidance still points toward persistent MoE,
+  dynamic work balancing, and prepacked formats, which matches our local
+  evidence that Python-level wrappers and env-var collective sweeps are not
+  enough for another `2x`.
+
+Additional public leads checked:
+
+- `https://localmaxxing.com/api/benchmarks?hfId=nameistoken%2FQwen3.6-35B-A3B-Quark-W8A8-INT8&limit=20`
+- `https://localmaxxing.com/api/leaderboard?hardwareName=Arc%20Pro%20B70&modelFamily=qwen&limit=50`
+- `https://vllm.ai/blog/2025-11-11-intel-arc-pro-b`
+- `https://github.com/vllm-project/vllm/issues/41663`
+- `https://github.com/PMZFX/intel-arc-pro-b70-benchmarks`
+- `https://recipes.vllm.ai/Qwen/Qwen3.6-27B`
+
+Bigger, bolder ideas added from this checkpoint:
+
+1. **Deterministic graph/eager convergence lane.**
+   - Build a tiny harness that reproduces the same prompt through graph,
+     no-graph compile, and eager with identical model weights and sampling.
+   - The output is a per-position logit-rank and top-k drift report, not just a
+     token mismatch. This makes determinism measurable.
+
+2. **Speculation transaction log as a replayable contract.**
+   - Record speculative state transitions as immutable transactions:
+     input positions, draft tokens, accepted count, bonus token, replacement
+     token, KV pages touched, and committed output ids.
+   - A replay tool should validate the transaction without launching the full
+     server. This becomes the quality gate for MTP/DFlash later.
+
+3. **Graph-safe minimal trace hooks.**
+   - The earlier graph-enabled trace attempt hit device loss. Split tracing
+     into graph-safe counters first, then token windows, then KV/page metadata.
+   - Treat every added trace field as a graph-capture compatibility test.
+
+4. **Backend-core latency appliance.**
+   - Create a direct model-runner/static decode path for one request that
+     bypasses OpenAI streaming and most scheduler logic while using the same
+     graph and kernels.
+   - If it is much faster than the endpoint, production gets a dedicated
+     single-user latency lane. If not, kernel/speculation work stays primary.
+
+5. **Verifier-owned proposer sidecar protocol.**
+   - Instead of teaching the dynamic scheduler to own every proposer detail,
+     let a sidecar propose token blocks and let the Quark verifier own all
+     final commit/rollback decisions.
+   - This isolates DFlash/MTP experiments from the production request state
+     machine.
+
+6. **B70-native persistent MoE layerlet.**
+   - Use real route captures to build one layerlet repro containing routed
+     W8A8 grouped GEMM, shared expert, residual, and final epilogue.
+   - Only after the standalone layerlet wins should it be wired into vLLM.
+
+7. **Hybrid expert/tensor parallel memory simulator.**
+   - Before implementing expert parallelism on XPU, simulate bytes moved,
+     expert locality, and per-card memory for TP4, TP2+replicated attention,
+     and EP/TP hybrids using real route traces.
+   - This avoids a large runtime fork unless the communication roofline is
+     compelling.
+
+8. **Tile-native W8A8 cache as an engine-neutral asset.**
+   - Persistently repack weights into the layout needed by `vllm-xpu-kernels`
+     or a future llama.cpp/SYCL W8A8 route, with checksum validation against
+     the original Quark tensors.
+   - This can improve load time and decode memory locality without changing
+     quantization or model quality.
+
+9. **Strict 8-bit mirror-capacity production lane.**
+   - Keep TP4 as the single-request latency baseline, but measure whether
+     independent 8-bit replicas or TP2 replicas give better production
+     aggregate and fault isolation.
+   - This is secondary to single-request speed, but it may be the production
+     answer while the `>200 tok/s` latency lane is still experimental.
+
+10. **Upstream packets split by failure class.**
+    - Create separate public repro packets for graph/eager token drift,
+      graph-capture device loss with trace hooks, W8A8 grouped-GEMM shape
+      gaps, and tiny collective latency.
+    - Smaller packets are more likely to get useful Intel/vLLM feedback than a
+      monolithic "Qwen3.6 is slow" report.

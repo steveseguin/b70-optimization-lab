@@ -166,6 +166,16 @@ Current Qwen3.6 INT8 direction:
     a no-spec static latency lane, real-route persistent MoE repros, strict
     8-bit engine bakeoff, graph/eager parity audit, host-stack A/B, and an
     upstreamable oracle `k=1` full-bonus failure packet.
+23. Added "Runtime-Mode Parity Controls And Larger Bets" to the Qwen3.6 note.
+    The old oracle default baseline was stale/mixed for at least the natural
+    prompt, so `scripts/launch-qwen36-quark-int8-oracle-trace.sh` now defaults
+    to the fresh accepted graph baseline
+    `data/qwen36-quark-int8-tp4-accepted-restored-current-oracle-baseline-20260612i.json`.
+    No-spec no-graph/eager and no-spec graph-off compile-on controls diverged
+    from the accepted graph token stream, so no-graph speculative diagnostics
+    are no longer sufficient proof of a speculative verifier bug. The next
+    speed-safe work is graph/eager parity, graph-enabled oracle tracing, and
+    measured latency decomposition before more speculation benchmarks.
 
 ## 2026-05-10 MiniMax AutoRound Addendum
 

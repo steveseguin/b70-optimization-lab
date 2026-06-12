@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-ORACLE_TRACE="${ORACLE_TRACE:-/home/steve/llm-optimizations/data/qwen36-quark-int8-tp4-oracle-completions-accepted-20260611.json}"
+ORACLE_TRACE="${ORACLE_TRACE:-/home/steve/llm-optimizations/data/qwen36-quark-int8-tp4-accepted-restored-current-oracle-baseline-20260612i.json}"
 TAG="${TAG:-oracle${NUM_SPECULATIVE_TOKENS:-5}-trace}"
 
 export VLLM_XPU_ORACLE_DRAFT_TRACE="$ORACLE_TRACE"
