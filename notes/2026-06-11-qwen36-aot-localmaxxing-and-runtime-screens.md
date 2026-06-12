@@ -13692,7 +13692,7 @@ Next concrete implementation target:
 3. Re-run the oracle `k=1` fixture first in no-XPU-graph mode for role movement,
    then in graph mode once the graph-capture/device-lost instability is avoided.
 
-## Additional Bigger Bets And Things To Try
+## Additional Bigger Bets After No-Bonus Runtime
 
 The no-bonus diagnostic narrowed one correctness class, but the current
 quality-preserving public ceiling is still around `100 tok/s`. Treat these as

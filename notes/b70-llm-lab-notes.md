@@ -92,7 +92,7 @@ Current Qwen3.6 INT8 direction:
     class disappears while replacement-after-reject mismatches remain. Next COW
     work should target rejected-draft/replacement-token state isolation rather
     than only bonus-token emission.
-15. Added "Additional Bigger Bets And Things To Try" to the Qwen3.6 note. The
+15. Added "Additional Bigger Bets After No-Bonus Runtime" to the Qwen3.6 note. The
     next near-term items are reject/replacement scratch KV, graph-capture
     failure reduction, prompt-class speculation accept maps, MTP-1, DFlash
     sidecar target verification, and a single-user static graph lane. Larger
