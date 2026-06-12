@@ -592,3 +592,18 @@ vLLM/XPU FP8 work:
     work-stealing, per-layer route-class autotuning, XMX/DPAS roofline packets,
     a C++/SYCL single-layer parity binary, and a verified public perf packet
     once a material exact-model speed win exists.
+21. Ran the hotrep route-plan grouped-GEMM timing screen on XPU 0:
+    `data/qwen36-quark-int8-tp4-hotrep-route-plan-gemm-timing-20260612ah.json`
+    and `.md`. This rejects hot64 route replication as a near-term grouped-GEMM
+    speed path: current `exact_full` mean was `189.694 us`,
+    `hotrep_one_launch_rankmax` was slower at `197.037 us`, and
+    `hotrep_two_launch_rankmax` was much slower at `389.275 us`. The smaller
+    per-rank hotrep table does not overcome B70 small-shape/launch/occupancy
+    costs for these route windows. The route-plan metadata remains useful for
+    persistent MoE/parity/upstream repros, but do not spend production-lane
+    downtime on endpoint hot64 KV carve-outs or two-launch variants without a
+    new persistent/tile-native kernel result first. The first restore after the
+    microbench hit the known `UR_RESULT_ERROR_DEVICE_LOST` metadata-copy class
+    in `block_table.copy_to_gpu`; recovery snapshot and four-XPU copy smoke
+    passed, the second restore passed provenance sentinels, and p512/o128
+    speed returned to `99.733 tok/s` corrected with `9.953 ms/token` decode.

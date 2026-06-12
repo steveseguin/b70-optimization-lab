@@ -1,0 +1,34 @@
+$ xpu-smi health -d 2 -j
+{
+    "core_temperature": {
+        "description": "Health cannot be determined for temperature sensors.",
+        "shutdown_threshold": 130,
+        "status": "Unknown",
+        "throttle_threshold": 105
+    },
+    "device_id": 2,
+    "frequency": {
+        "description": "Device frequency is not throttled",
+        "status": "OK"
+    },
+    "memory": {
+        "description": "The memory health cannot be determined.",
+        "status": "Unknown"
+    },
+    "memory_temperature": {
+        "description": "Health cannot be determined for temperature sensors.",
+        "shutdown_threshold": 100,
+        "status": "Unknown",
+        "throttle_threshold": 85
+    },
+    "power": {
+        "description": "Values for all the power domains are healthy.",
+        "status": "OK",
+        "throttle_threshold": 300
+    },
+    "xe_link_port": {
+        "description": "Device lacks Xe Link capability.",
+        "status": "Unknown"
+    }
+}
+exit_status=0

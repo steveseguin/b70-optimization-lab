@@ -1554,3 +1554,94 @@ Additional larger no-quality-loss ideas to track:
    route-window timing artifact, provenance guard, and quality sentinel file.
    The current `99.428 tok/s` row is still the only public exact-model B70 row
    as of this check, so a real improvement will be easy to distinguish.
+
+## 2026-06-12 Hotrep Route-Plan GEMM Timing Result
+
+Artifacts:
+
+- Timing JSON:
+  `data/qwen36-quark-int8-tp4-hotrep-route-plan-gemm-timing-20260612ah.json`.
+- Timing summary:
+  `data/qwen36-quark-int8-tp4-hotrep-route-plan-gemm-timing-20260612ah.md`.
+- First restore log with device-lost event:
+  `data/qwen36-quark-int8-tp4-accepted-restored-after-hotrep-gemm-20260612ah.log`.
+- Recovery snapshot:
+  `data/qwen36-hotrep-gemm-device-lost-recovery-20260612ah/`.
+- Successful second restore log:
+  `data/qwen36-quark-int8-tp4-accepted-restored-after-hotrep-gemm-recovery-20260612ah.log`.
+- Successful provenance guard:
+  `data/qwen36-quark-int8-tp4-accepted-provenance-after-hotrep-gemm-recovery-20260612ah.json`.
+- Successful p512/o128 speed smoke:
+  `data/qwen36-quark-int8-tp4-accepted-restored-after-hotrep-gemm-recovery-speed-p512o128-20260612ah.json`.
+
+Command:
+
+```bash
+ZE_AFFINITY_MASK=0 ONEAPI_DEVICE_SELECTOR=level_zero:0 \
+  /home/steve/.venvs/vllm-xpu/bin/python \
+  scripts/bench-qwen36-hotrep-route-plan-gemm.py \
+  --route-plan-json \
+    data/qwen36-quark-int8-tp4-hotrep-route-plan-l9-route6-20260612af.json \
+    data/qwen36-quark-int8-tp4-hotrep-route-plan-l20-route5-20260612af.json \
+  --output-json data/qwen36-quark-int8-tp4-hotrep-route-plan-gemm-timing-20260612ah.json \
+  --markdown-out data/qwen36-quark-int8-tp4-hotrep-route-plan-gemm-timing-20260612ah.md
+```
+
+Result:
+
+- The benchmark ran cleanly on XPU 0 after stopping the accepted TP4 endpoint.
+- Mean total grouped-GEMM time across the ten selected route windows:
+  - `exact_full`: `189.694 us`.
+  - `hotrep_one_launch_rankmax`: `197.037 us`.
+  - `hotrep_two_launch_rankmax`: `389.275 us`.
+- Stage means:
+  - `exact_full/gemm1`: `97.138 us`.
+  - `exact_full/gemm2`: `92.556 us`.
+  - `hotrep_one_launch/gemm1`: `100.965 us`.
+  - `hotrep_one_launch/gemm2`: `96.072 us`.
+  - `hotrep_two_launch/gemm1`: `198.532 us`.
+  - `hotrep_two_launch/gemm2`: `190.743 us`.
+
+Decision:
+
+- Hot64 route replication is rejected as a grouped-GEMM lower-bound speed path
+  for these windows. Even the idealized one-launch rank-max screen is `3.9%`
+  slower than the current full-table exact shape, despite the smaller
+  per-rank table.
+- The likely reason is small-shape/launch/occupancy overhead: shrinking the
+  table from `256` experts to about `68-70` experts per rank does not make the
+  B70 W8A8 grouped-GEMM kernel faster for this decode shape.
+- Do not spend more production-lane downtime on endpoint hot64 replication,
+  cold/hot two-launch variants, or KV carve-outs for hot64 unless a different
+  persistent/tile-native kernel first reverses this lower-bound result.
+- Keep the route-plan JSON format as useful metadata for persistent MoE,
+  expert work queues, parity tests, and upstream repros. The data is still
+  valuable; the current grouped-GEMM execution strategy is not.
+
+Reliability note:
+
+- The first accepted-backend restore after the microbench reached `/health`,
+  then crashed on the first p512/o128 completion with
+  `UR_RESULT_ERROR_DEVICE_LOST` in `block_table.copy_to_gpu(num_reqs)`, followed
+  by `num_computed_tokens` copy failures. This is the same XPU metadata-copy
+  failure class seen in earlier profiling restores.
+- Recovery snapshot plus targeted vLLM cleanup succeeded; the four-XPU copy
+  smoke passed with correct sums on devices `0-3`.
+- The second restore passed the accepted provenance guard:
+  `repetitive_kernel_notes` token `4752` at index `14`,
+  `natural_latency_plan` token `11436` at index `17`, and token `198` at
+  index `25`.
+- The second restore speed smoke measured `99.733 tok/s` corrected after first
+  text chunk and `9.953 ms/generated token` decode at p512/o128. The accepted
+  quality/speed baseline is restored.
+
+Next direction:
+
+- Move hotrep out of the near-term serving path.
+- Prioritize either:
+  1. persistent/tile-native exact W8A8 MoE that can beat the full-table
+     grouped-GEMM lower bound,
+  2. graph-resident scheduler metadata to attack both latency and device-lost
+     failure modes,
+  3. exact target-verified speculation with a transactional resident-state
+     verifier.
