@@ -6,6 +6,31 @@ Date: 2026-06-12
 
 2026-06-12 notes update:
 
+- Added EngineCore and all-rank timing notes for the current accepted Quark
+  W8A8 INT8 TP4 path. The diagnostic runs stayed at baseline speed
+  (`99.803-99.829 tok/s` corrected decode, `9.985-10.022 ms/token` TPOT).
+  EngineCore total time is `~9.94-10.05 ms/token`, with `~9.70-9.84 ms` spent
+  waiting on `future_result`; Python scheduler/update/submit regions are each
+  tiny. All-rank labels show rank 3 is slowest (`6.058 ms` model-forward mean
+  versus rank 1 at `5.580 ms`), but the rank spread is not large enough to
+  explain the full engine wait. Interpretation: the next speed work should
+  attack hidden model-execution completion, collectives, command queues,
+  rank placement, and a no-server c1 ceiling harness, not request streaming or
+  scheduler micro-tuning. Restore validation passed accepted provenance and the
+  no-thinking Qwen quality smoke. New artifacts:
+  `patches/vllm-qwen36-engine-step-timing-20260612bq.diff`,
+  `data/qwen36-quark-int8-tp4-engine-step-timing-20260612bq.log`,
+  `data/qwen36-quark-int8-tp4-engine-step-timing-p512o256-metrics-20260612bq.json`,
+  `data/qwen36-quark-int8-tp4-engine-step-timing-summary-20260612bq.json`,
+  `data/qwen36-quark-int8-tp4-engine-step-timing-summary-20260612bq.md`,
+  `data/qwen36-quark-int8-tp4-engine-allrank-timing-20260612br.log`,
+  `data/qwen36-quark-int8-tp4-engine-allrank-timing-p512o256-metrics-20260612br.json`,
+  `data/qwen36-quark-int8-tp4-engine-allrank-timing-summary-20260612br.json`,
+  `data/qwen36-quark-int8-tp4-accepted-restored-after-engine-timing-20260612br.log`,
+  `data/qwen36-quark-int8-tp4-accepted-provenance-after-engine-timing-20260612br.json`,
+  `data/qwen36-quark-int8-tp4-accepted-quality-after-engine-timing-nothink-smoke-20260612br.json`,
+  and `data/localmaxxing-qwen36-b70-leaderboard-20260612bs.json`.
+
 - Added a fresh "Bolder Opportunity Refresh 20260612bq" section to
   `notes/2026-06-12-qwen36-next-bigger-bets.md` after the boundary timing
   discussion. The refreshed backlog keeps the immediate next items explicit:

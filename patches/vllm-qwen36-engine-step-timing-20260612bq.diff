@@ -1,0 +1,414 @@
+diff --git a/vllm/v1/engine/core.py b/vllm/v1/engine/core.py
+index 11c5ee19a..6c978d216 100644
+--- a/vllm/v1/engine/core.py
++++ b/vllm/v1/engine/core.py
+@@ -1,6 +1,7 @@
+ # SPDX-License-Identifier: Apache-2.0
+ # SPDX-FileCopyrightText: Copyright contributors to the vLLM project
+ import gc
++import json
+ import os
+ import queue
+ import signal
+@@ -87,6 +88,142 @@ HANDSHAKE_TIMEOUT_MINS = 5
+
+ _R = TypeVar("_R")  # Return type for collective_rpc
+
++_ENGINE_STEP_TIMING = os.environ.get("VLLM_XPU_ENGINE_STEP_TIMING", "0") == "1"
++_ENGINE_STEP_PRINT_EVERY = max(
++    1, int(os.environ.get("VLLM_XPU_ENGINE_STEP_TIMING_PRINT_EVERY", "1") or "1")
++)
++_ENGINE_STEP_SKIP_FIRST = max(
++    0, int(os.environ.get("VLLM_XPU_ENGINE_STEP_TIMING_SKIP_FIRST", "0") or "0")
++)
++_ENGINE_STEP_SEEN = 0
++
++
++def _engine_histogram(values: list[int]) -> dict[str, int]:
++    histogram: dict[str, int] = {}
++    for value in values:
++        key = str(int(value))
++        histogram[key] = histogram.get(key, 0) + 1
++    return histogram
++
++
++def _engine_scheduler_metadata(
++    scheduler_output: SchedulerOutput, prefix: str = ""
++) -> dict[str, object]:
++    scheduled_counts = [
++        int(value) for value in scheduler_output.num_scheduled_tokens.values()
++    ]
++    spec_lengths = [
++        len(tokens) for tokens in scheduler_output.scheduled_spec_decode_tokens.values()
++    ]
++    total_spec_tokens = sum(spec_lengths)
++    num_reqs = len(scheduler_output.num_scheduled_tokens)
++    decode_req_count = sum(1 for value in scheduled_counts if value == 1)
++    prefill_req_count = num_reqs - decode_req_count
++    is_pure_decode = num_reqs > 0 and prefill_req_count == 0
++    data: dict[str, object] = {
++        "num_reqs": num_reqs,
++        "scheduled_new_reqs": len(scheduler_output.scheduled_new_reqs),
++        "scheduled_cached_reqs": scheduler_output.scheduled_cached_reqs.num_reqs,
++        "total_num_scheduled_tokens": int(
++            scheduler_output.total_num_scheduled_tokens
++        ),
++        "max_num_scheduled_tokens": max(scheduled_counts)
++        if scheduled_counts
++        else 0,
++        "scheduled_token_histogram": _engine_histogram(scheduled_counts),
++        "decode_req_count": decode_req_count,
++        "prefill_req_count": prefill_req_count,
++        "is_pure_decode": is_pure_decode,
++        "decode_bucket": max(scheduled_counts) if is_pure_decode else None,
++        "scheduled_spec_req_count": len(
++            scheduler_output.scheduled_spec_decode_tokens
++        ),
++        "scheduled_spec_token_total": total_spec_tokens,
++        "scheduled_spec_histogram": _engine_histogram(spec_lengths),
++        "finished_req_count": len(scheduler_output.finished_req_ids),
++        "pending_structured_output_tokens": bool(
++            scheduler_output.pending_structured_output_tokens
++        ),
++        "has_structured_output_requests": bool(
++            scheduler_output.has_structured_output_requests
++        ),
++    }
++    if scheduler_output.preempted_req_ids is not None:
++        data["preempted_req_count"] = len(scheduler_output.preempted_req_ids)
++    if prefix:
++        return {f"{prefix}_{key}": value for key, value in data.items()}
++    return data
++
++
++class _EngineStepTimer:
++    def __init__(self, label: str, metadata: dict[str, object] | None = None):
++        global _ENGINE_STEP_SEEN
++        self.enabled = _ENGINE_STEP_TIMING
++        self.label = label
++        self.metadata = metadata or {}
++        self.regions: list[dict[str, object]] = []
++        self.step = 0
++        self.start_ns = 0
++        self.emit = False
++        if not self.enabled:
++            return
++        _ENGINE_STEP_SEEN += 1
++        self.step = _ENGINE_STEP_SEEN
++        self.emit = (
++            self.step > _ENGINE_STEP_SKIP_FIRST
++            and (self.step - _ENGINE_STEP_SKIP_FIRST) % _ENGINE_STEP_PRINT_EVERY == 0
++        )
++        if self.emit:
++            self.start_ns = time.perf_counter_ns()
++
++    def add_metadata(self, values: dict[str, object]) -> None:
++        if self.emit:
++            self.metadata.update(values)
++
++    @contextmanager
++    def region(self, label: str):
++        if not self.emit:
++            yield
++            return
++        start_ns = time.perf_counter_ns()
++        try:
++            yield
++        finally:
++            elapsed_ns = time.perf_counter_ns() - start_ns
++            self.regions.append(
++                {
++                    "label": label,
++                    "elapsed_ms": elapsed_ns / 1e6,
++                    "start_offset_ms": (start_ns - self.start_ns) / 1e6,
++                }
++            )
++
++    def finish(self, status: str = "ok") -> None:
++        if not self.emit:
++            return
++        total_ms = (time.perf_counter_ns() - self.start_ns) / 1e6
++        accounted_ms = sum(float(row["elapsed_ms"]) for row in self.regions)
++        payload = {
++            "step": self.step,
++            "label": self.label,
++            "status": status,
++            "total_ms": total_ms,
++            "accounted_region_ms": accounted_ms,
++            "unaccounted_ms": total_ms - accounted_ms,
++            "metadata": self.metadata,
++            "regions": self.regions,
++            "regions_by_elapsed_ms": sorted(
++                self.regions,
++                key=lambda row: float(row["elapsed_ms"]),
++                reverse=True,
++            ),
++        }
++        print(
++            "[vllm-xpu-engine-step] "
++            + json.dumps(payload, sort_keys=True, separators=(",", ":")),
++            flush=True,
++        )
++
+
+ class EngineCore:
+     """Inner loop of vLLM's Engine."""
+@@ -410,25 +547,52 @@ class EngineCore:
+         # or finished and not yet removed from the batch.
+         if not self.scheduler.has_requests():
+             return {}, False
+-        scheduler_output = self.scheduler.schedule()
+-        future = self.model_executor.execute_model(scheduler_output, non_block=True)
+-        grammar_output = self.scheduler.get_grammar_bitmask(scheduler_output)
+-        with (
+-            self.log_error_detail(scheduler_output),
+-            self.log_iteration_details(scheduler_output),
+-        ):
+-            model_output = future.result()
+-            if model_output is None:
+-                model_output = self.model_executor.sample_tokens(grammar_output)
+-
+-        # Before processing the model output, process any aborts that happened
+-        # during the model execution.
+-        self._process_aborts_queue()
+-        engine_core_outputs = self.scheduler.update_from_output(
+-            scheduler_output, model_output
++        timer = _EngineStepTimer(
++            "engine_core.step",
++            {
++                "batch_queue_size": self.batch_queue_size,
++                "async_scheduling": self.async_scheduling,
++                "use_spec_decode": self.use_spec_decode,
++            },
+         )
++        status = "ok"
++        try:
++            with timer.region("scheduler_schedule"):
++                scheduler_output = self.scheduler.schedule()
++            timer.add_metadata(_engine_scheduler_metadata(scheduler_output))
++            with timer.region("execute_model_submit"):
++                future = self.model_executor.execute_model(
++                    scheduler_output, non_block=True
++                )
++            with timer.region("get_grammar_bitmask"):
++                grammar_output = self.scheduler.get_grammar_bitmask(scheduler_output)
++            with (
++                self.log_error_detail(scheduler_output),
++                self.log_iteration_details(scheduler_output),
++            ):
++                with timer.region("future_result"):
++                    model_output = future.result()
++                if model_output is None:
++                    with timer.region("sample_tokens_sync"):
++                        model_output = self.model_executor.sample_tokens(grammar_output)
++
++            # Before processing the model output, process any aborts that happened
++            # during the model execution.
++            with timer.region("process_aborts_queue"):
++                self._process_aborts_queue()
++            with timer.region("scheduler_update_from_output"):
++                engine_core_outputs = self.scheduler.update_from_output(
++                    scheduler_output, model_output
++                )
+
+-        return engine_core_outputs, scheduler_output.total_num_scheduled_tokens > 0
++            model_executed = scheduler_output.total_num_scheduled_tokens > 0
++            timer.add_metadata({"model_executed": model_executed})
++            return engine_core_outputs, model_executed
++        except BaseException:
++            status = "error"
++            raise
++        finally:
++            timer.finish(status)
+
+     def post_step(self, model_executed: bool) -> None:
+         # When using async scheduling we can't get draft token ids in advance,
+@@ -459,6 +623,38 @@ class EngineCore:
+
+         batch_queue = self.batch_queue
+         assert batch_queue is not None
++        timer = _EngineStepTimer(
++            "engine_core.step_with_batch_queue",
++            {
++                "batch_queue_size": self.batch_queue_size,
++                "batch_queue_len_start": len(batch_queue),
++                "async_scheduling": self.async_scheduling,
++                "use_spec_decode": self.use_spec_decode,
++            },
++        )
++        status = "ok"
++        try:
++            result = self._step_with_batch_queue_timed(batch_queue, timer)
++            timer.add_metadata(
++                {
++                    "batch_queue_len_end": len(batch_queue),
++                    "model_executed": result[1],
++                }
++            )
++            return result
++        except BaseException:
++            status = "error"
++            raise
++        finally:
++            timer.finish(status)
++
++    def _step_with_batch_queue_timed(
++        self,
++        batch_queue: deque[
++            tuple[Future[ModelRunnerOutput], SchedulerOutput, Future[Any]]
++        ],
++        timer: _EngineStepTimer,
++    ) -> tuple[dict[int, EngineCoreOutputs] | None, bool]:
+
+         # Try to schedule a new batch if the batch queue is not full, but
+         # the scheduler may return an empty batch if all requests are scheduled.
+@@ -468,11 +664,16 @@ class EngineCore:
+         model_executed = False
+         deferred_scheduler_output = None
+         if self.scheduler.has_requests():
+-            scheduler_output = self.scheduler.schedule()
++            with timer.region("scheduler_schedule"):
++                scheduler_output = self.scheduler.schedule()
++            timer.add_metadata(
++                _engine_scheduler_metadata(scheduler_output, prefix="scheduled")
++            )
+             with self.log_error_detail(scheduler_output):
+-                exec_future = self.model_executor.execute_model(
+-                    scheduler_output, non_block=True
+-                )
++                with timer.region("execute_model_submit"):
++                    exec_future = self.model_executor.execute_model(
++                        scheduler_output, non_block=True
++                    )
+             if self.is_ec_consumer:
+                 model_executed = scheduler_output.total_num_scheduled_tokens > 0
+
+@@ -483,12 +684,14 @@ class EngineCore:
+                 if not scheduler_output.pending_structured_output_tokens:
+                     # We aren't waiting for any tokens, get any grammar output
+                     # and sample immediately.
+-                    grammar_output = self.scheduler.get_grammar_bitmask(
+-                        scheduler_output
+-                    )
+-                    future = self.model_executor.sample_tokens(
+-                        grammar_output, non_block=True
+-                    )
++                    with timer.region("get_grammar_bitmask_for_sample_submit"):
++                        grammar_output = self.scheduler.get_grammar_bitmask(
++                            scheduler_output
++                        )
++                    with timer.region("sample_tokens_submit"):
++                        future = self.model_executor.sample_tokens(
++                            grammar_output, non_block=True
++                        )
+                 else:
+                     # We need to defer sampling until we have processed the model output
+                     # from the prior step.
+@@ -496,7 +699,8 @@ class EngineCore:
+
+             if not deferred_scheduler_output:
+                 # Add this step's future to the queue.
+-                batch_queue.appendleft((future, scheduler_output, exec_future))
++                with timer.region("queue_appendleft"):
++                    batch_queue.appendleft((future, scheduler_output, exec_future))
+                 if (
+                     model_executed
+                     and len(batch_queue) < self.batch_queue_size
+@@ -504,58 +708,81 @@ class EngineCore:
+                 ):
+                     # Don't block on next worker response unless the queue is full
+                     # or there are no more requests to schedule.
++                    timer.add_metadata({"return_kind": "queued_nonblocking"})
+                     return None, True
+
+         elif not batch_queue:
+             # Queue is empty. We should not reach here since this method should
+             # only be called when the scheduler contains requests or the queue
+             # is non-empty.
++            timer.add_metadata({"return_kind": "empty_queue"})
+             return None, False
+
+         # Block until the next result is available.
+-        future, scheduler_output, exec_model_fut = batch_queue.pop()
++        with timer.region("queue_pop"):
++            future, scheduler_output, exec_model_fut = batch_queue.pop()
++        timer.add_metadata(_engine_scheduler_metadata(scheduler_output, prefix="popped"))
+         with (
+             self.log_error_detail(scheduler_output),
+             self.log_iteration_details(scheduler_output),
+         ):
+-            model_output = future.result()
++            with timer.region("future_result"):
++                model_output = future.result()
+             if model_output is None:
+                 # None from sample_tokens() implies that the original execute_model()
+                 # call failed - raise that exception.
+-                exec_model_fut.result()
++                with timer.region("exec_model_future_result_error_check"):
++                    exec_model_fut.result()
+                 raise RuntimeError("unexpected error")
+
+         # Before processing the model output, process any aborts that happened
+         # during the model execution.
+-        self._process_aborts_queue()
+-        engine_core_outputs = self.scheduler.update_from_output(
+-            scheduler_output, model_output
+-        )
++        with timer.region("process_aborts_queue"):
++            self._process_aborts_queue()
++        with timer.region("scheduler_update_from_output"):
++            engine_core_outputs = self.scheduler.update_from_output(
++                scheduler_output, model_output
++            )
+
+         # NOTE(nick): We can either handle the deferred tasks here or save
+         # in a field and do it immediately once step_with_batch_queue is
+         # re-called. The latter slightly favors TTFT over TPOT/throughput.
+         if deferred_scheduler_output:
++            timer.add_metadata(
++                _engine_scheduler_metadata(
++                    deferred_scheduler_output, prefix="deferred"
++                )
++            )
+             # If we are doing speculative decoding with structured output,
+             # we need to get the draft token ids from the prior step before
+             # we can compute the grammar bitmask for the deferred request.
+             if self.use_spec_decode:
+-                draft_token_ids = self.model_executor.take_draft_token_ids()
++                with timer.region("deferred_take_draft_token_ids"):
++                    draft_token_ids = self.model_executor.take_draft_token_ids()
+                 assert draft_token_ids is not None
+                 # Update the draft token ids in the scheduler output to
+                 # filter out the invalid spec tokens, which will be padded
+                 # with -1 and skipped by the grammar bitmask computation.
+-                self.scheduler.update_draft_token_ids_in_output(
+-                    draft_token_ids, deferred_scheduler_output
+-                )
++                with timer.region("deferred_update_draft_token_ids"):
++                    self.scheduler.update_draft_token_ids_in_output(
++                        draft_token_ids, deferred_scheduler_output
++                    )
+             # We now have the tokens needed to compute the bitmask for the
+             # deferred request. Get the bitmask and call sample tokens.
+-            grammar_output = self.scheduler.get_grammar_bitmask(
+-                deferred_scheduler_output
+-            )
+-            future = self.model_executor.sample_tokens(grammar_output, non_block=True)
+-            batch_queue.appendleft((future, deferred_scheduler_output, exec_future))
++            with timer.region("deferred_get_grammar_bitmask"):
++                grammar_output = self.scheduler.get_grammar_bitmask(
++                    deferred_scheduler_output
++                )
++            with timer.region("deferred_sample_tokens_submit"):
++                future = self.model_executor.sample_tokens(
++                    grammar_output, non_block=True
++                )
++            with timer.region("deferred_queue_appendleft"):
++                batch_queue.appendleft(
++                    (future, deferred_scheduler_output, exec_future)
++                )
+
++        timer.add_metadata({"return_kind": "outputs"})
+         return engine_core_outputs, model_executed
+
+     def _process_aborts_queue(self):

@@ -17,12 +17,146 @@ Current speed anchor:
 - Public exact-model Localmaxxing row:
   `cmq8yhxvo001ipb0149aoa79o`, `99.428 tok/s`, c1, 32K context,
   4x Arc Pro B70.
+- Fresh B70/Qwen3.6 Localmaxxing check:
+  `99.770 tok/s` for the current Quark W8A8 INT8 vLLM run family is the top
+  B70 row for this model class. Rows above `200 tok/s` remain architecture
+  signals, mostly MTP/speculative, lower-bit, or non-B70 setups, not accepted
+  comparables for the current no-quality-loss INT8 goal.
 - Restored post-recovery local sanity run:
   `99.728 tok/s` corrected after-first and `98.212 tok/s` e2e at p512/o512/c1.
 - Practical interpretation: about `100 tok/s` is now the proven quality baseline.
   The `>200 tok/s` c1 goal needs either verifier-safe speculation or a real
   MoE/kernel architecture improvement. Launch flags alone are unlikely to get
   there.
+
+## EngineCore And All-Rank Timing Update 20260612bq/br
+
+Added after the latest diagnostic gate. The hook is env-gated in local vLLM
+and does not affect the accepted service unless
+`VLLM_XPU_ENGINE_STEP_TIMING=1` is set. The accepted backend was restored after
+timing, then passed provenance and a Qwen no-thinking quality smoke.
+
+Measured facts:
+
+- Rank-0 diagnostic run: `99.803 tok/s` corrected decode,
+  `10.022 ms/token` TPOT, and `10.051 ms` mean EngineCore step total.
+- All-rank diagnostic run: `99.829 tok/s` corrected decode,
+  `9.985 ms/token` TPOT, and `9.942 ms` mean EngineCore step total.
+- EngineCore is dominated by `future_result`: `9.835 ms` mean in the rank-0
+  run and `9.703 ms` mean in the all-rank run.
+- Scheduler schedule, scheduler update, execute submit, and sample-submit are
+  all tiny compared with the token budget. Python scheduler work is not the
+  missing `~5 ms/token`.
+- All-rank worker labels show rank 3 as slowest:
+  `6.058 ms` model-forward mean, compared with rank 1 at `5.580 ms`. This
+  skew matters, but it only explains about `0.48 ms`, not the whole gap
+  between no-sync worker timing and EngineCore wall time.
+
+Immediate things to try from this:
+
+1. **Split the `future_result` wait.**
+   Add timings on the worker side around input queue receive, graph/command
+   submit, command completion, all-reduce completion, output packaging, and
+   result sendback. The next unknown is inside the model-execution completion
+   path, not outside it.
+
+2. **Rank-placement and affinity A/B.**
+   Rotate rank-to-card placement, CPU affinity, Level Zero device order, and
+   PCIe/NUMA locality. If rank 3 remains slow on the same physical card, treat
+   it as topology or hardware behavior; if the slowness follows the rank, treat
+   it as route skew or scheduling.
+
+3. **All-rank route-skew ledger.**
+   Log route-window statistics per layer/rank beside timing: active experts,
+   max rows per expert, imbalance, and hot-expert IDs. If the slow rank is
+   carrying hotter experts, topology or replication may beat kernel surgery.
+
+4. **No-server c1 ceiling harness.**
+   Build a fixed-shape in-process decode loop around the accepted model runner
+   to measure the minimum possible c1 TPOT with exact token parity. This tells
+   us whether vLLM's multiprocess/result path itself is burning the hidden
+   `future_result` time.
+
+5. **TP2 plus replicas as a real latency topology.**
+   TP4 may be over-distributing a single token across four B70s. Test TP2 for
+   c1 latency, then spend the other two cards on replicas, target-verifier
+   branches, or aggregate traffic if TP2 wins.
+
+6. **oneDNN execute-and-compare.**
+   Keep advancing the sidecar, but only through a strict captured-tensor
+   compare: same route window, current output checksum, oneDNN output checksum,
+   max/mean diff, and automatic fallback.
+
+7. **Future-result black-box alternates.**
+   Run one short session with forced synchronization and one with deeper
+   command queue traces. The goal is not to publish sync timings; it is to
+   locate hidden work that no-sync labels currently miss.
+
+Larger, bolder ideas added from this pass:
+
+1. **C1 custom serving lane.**
+   If the no-server harness shows much lower TPOT, build a production-adjacent
+   c1 lane that keeps vLLM's loader/model code but replaces generic request
+   scheduling with a fixed-shape, pinned, token-at-a-time loop. Quality remains
+   identical because the model path and sampler output are parity-gated.
+
+2. **Target-verifier branch farm.**
+   Use spare cards or replicas to run speculative futures under the current
+   Quark W8A8 target model, not a lower-quality output owner. A trained MTP or
+   ngram proposer can suggest work, but only target-verified tokens commit.
+   This is the clean path to `2x` if pure no-spec decode bottoms out near
+   `160-180 tok/s`.
+
+3. **Hybrid TP/EP MoE topology.**
+   Keep dense/shared layers tensor-parallel, but place sparse MoE expert work
+   expert-parallel or partially replicated. The current four-card TP path may
+   be paying all-card synchronization for sparse work that should be local.
+
+4. **Persistent MoE island with prepacked artifacts.**
+   Prepack layer/rank/expert weights once, keep scratch and offsets resident,
+   and drive each token through a persistent grouped-GEMM or oneDNN command
+   ring. Store checksummed prepack metadata so reload behavior is reproducible.
+
+5. **Whole-token Level Zero graph replay.**
+   Capture fixed decode buckets across attention, MoE, residuals, sampler, and
+   output handoff into a patchable command sequence. This is risky, but it is
+   the boldest way to remove scattered host launches without changing math.
+
+6. **Rank-local hot expert replicas.**
+   Spend the large remaining VRAM budget on duplicated hot experts in layers
+   where real route traces show repeated rank pressure. This is a memory-for-
+   latency trade: identical weights, fewer cross-rank stalls.
+
+7. **Route-class generated kernels.**
+   Generate a small set of route classes from captured traffic: low active
+   expert count, single hot expert, balanced broad route, and dense fallback.
+   Runtime chooses a class from exact route statistics; numerical operations
+   are unchanged.
+
+8. **B70 maintainer challenge packet.**
+   Package the exact W8A8 checkpoint, route-window fixtures, timing summaries,
+   Localmaxxing rows, oneDNN/current-kernel compare results, xpu-smi/PCIe/NUMA
+   details, and the `5 ms/token` target. This gives Intel/vLLM maintainers a
+   concrete repro for "why is 4x B70 still only about 100 tok/s?"
+
+9. **Strict 8-bit engine bakeoff.**
+   Compare vLLM-XPU, OpenVINO/oneDNN, llama.cpp SYCL, and any Intel-friendly
+   serving stack only when they can run the current model or a byte-equivalent
+   W8A8/BF16 verifier path. The point is to learn topology and kernels, not to
+   slide into 4-bit or Qwen3.5.
+
+10. **Two production lanes with shared gates.**
+    Stop assuming one launch must optimize c1 latency and aggregate throughput
+    at the same time. Build a c1-latency lane and an aggregate lane, both
+    judged by the same provenance, quality, and soak tests.
+
+Artifacts for this pass:
+
+- `patches/vllm-qwen36-engine-step-timing-20260612bq.diff`
+- `data/qwen36-quark-int8-tp4-engine-step-timing-summary-20260612bq.md`
+- `data/qwen36-quark-int8-tp4-engine-step-timing-summary-20260612bq.json`
+- `data/qwen36-quark-int8-tp4-engine-allrank-timing-summary-20260612br.json`
+- `data/localmaxxing-qwen36-b70-leaderboard-20260612bs.json`
 
 ## Follow-Up: Concrete Next Gates And Bigger Bets
 

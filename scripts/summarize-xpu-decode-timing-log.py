@@ -21,6 +21,7 @@ SUMMARY_RE = re.compile(
     r"max_ms=(?P<max_ms>[0-9.]+)"
 )
 STEP_RE = re.compile(r"\[vllm-xpu-timing-step\]\s+(?P<payload>\{.*\})")
+ENGINE_STEP_RE = re.compile(r"\[vllm-xpu-engine-step\]\s+(?P<payload>\{.*\})")
 POST_RE = re.compile(r'POST\s+/v1/(?:completions|chat/completions)\s+HTTP/\d(?:\.\d)?"\s+200')
 
 
@@ -90,6 +91,40 @@ def summarize_steps(steps: list[dict]) -> list[dict]:
             }
         )
     rows.sort(key=lambda row: row["mean_total_ms_per_step"], reverse=True)
+    return rows
+
+
+def summarize_steps_by_rank_label(steps: list[dict]) -> list[dict]:
+    grouped: dict[tuple[str, str], list[dict]] = {}
+    for step in steps:
+        for row in step.get("summary_by_total_ms", []):
+            key = (str(row.get("rank", "")), str(row.get("label", "")))
+            grouped.setdefault(key, []).append(row)
+
+    rows = []
+    for (rank, label), items in grouped.items():
+        totals = [float(item["total_ms"]) for item in items]
+        counts = [int(item["count"]) for item in items]
+        avg_per_call = [float(item["avg_ms"]) for item in items]
+        maxes = [float(item["max_ms"]) for item in items]
+        rows.append(
+            {
+                "rank": rank,
+                "label": label,
+                "step_count": len(items),
+                "call_count": sum(counts),
+                "mean_total_ms_per_step": statistics.fmean(totals),
+                "median_total_ms_per_step": statistics.median(totals),
+                "p90_total_ms_per_step": percentile(totals, 0.90),
+                "max_total_ms_per_step": max(totals),
+                "mean_avg_ms_per_call": statistics.fmean(avg_per_call),
+                "max_ms": max(maxes),
+            }
+        )
+    rows.sort(
+        key=lambda row: (row["mean_total_ms_per_step"], row["rank"]),
+        reverse=True,
+    )
     return rows
 
 
@@ -280,6 +315,157 @@ def summarize_steps_by_bucket(steps: list[dict]) -> list[dict]:
     return rows
 
 
+def summarize_engine_steps(engine_steps: list[dict]) -> dict[str, object]:
+    if not engine_steps:
+        return {
+            "step_count": 0,
+            "status_counts": {},
+            "total_ms": {},
+            "accounted_region_ms": {},
+            "unaccounted_ms": {},
+            "regions_by_mean_elapsed_ms": [],
+        }
+
+    def metric_summary(values: list[float]) -> dict[str, float | None]:
+        return {
+            "mean": statistics.fmean(values) if values else None,
+            "median": statistics.median(values) if values else None,
+            "p90": percentile(values, 0.90),
+            "p99": percentile(values, 0.99),
+            "min": min(values) if values else None,
+            "max": max(values) if values else None,
+        }
+
+    status_counts: dict[str, int] = {}
+    totals = []
+    accounted = []
+    unaccounted = []
+    regions: dict[str, list[dict]] = {}
+    for step in engine_steps:
+        status = str(step.get("status", ""))
+        status_counts[status] = status_counts.get(status, 0) + 1
+        totals.append(float(step.get("total_ms", 0.0)))
+        accounted.append(float(step.get("accounted_region_ms", 0.0)))
+        unaccounted.append(float(step.get("unaccounted_ms", 0.0)))
+        for region in step.get("regions", []):
+            label = region.get("label")
+            if label:
+                regions.setdefault(str(label), []).append(region)
+
+    region_rows = []
+    for label, items in regions.items():
+        elapsed_values = [float(item.get("elapsed_ms", 0.0)) for item in items]
+        start_offsets = [float(item.get("start_offset_ms", 0.0)) for item in items]
+        row = {
+            "label": label,
+            "count": len(items),
+            "elapsed_ms": metric_summary(elapsed_values),
+            "start_offset_ms": metric_summary(start_offsets),
+        }
+        region_rows.append(row)
+    region_rows.sort(
+        key=lambda row: row["elapsed_ms"]["mean"]
+        if row["elapsed_ms"]["mean"] is not None
+        else -1.0,
+        reverse=True,
+    )
+
+    return {
+        "step_count": len(engine_steps),
+        "status_counts": status_counts,
+        "total_ms": metric_summary(totals),
+        "accounted_region_ms": metric_summary(accounted),
+        "unaccounted_ms": metric_summary(unaccounted),
+        "regions_by_mean_elapsed_ms": region_rows,
+    }
+
+
+def summarize_engine_steps_by_bucket(engine_steps: list[dict]) -> list[dict]:
+    grouped: dict[str, dict] = {}
+    for step in engine_steps:
+        metadata = step.get("metadata") or {}
+        if not isinstance(metadata, dict):
+            metadata = {}
+        group = {
+            "label": step.get("label"),
+            "status": step.get("status"),
+            "return_kind": metadata.get("return_kind"),
+            "num_reqs": metadata.get("num_reqs", metadata.get("popped_num_reqs")),
+            "total_num_scheduled_tokens": metadata.get(
+                "total_num_scheduled_tokens",
+                metadata.get("popped_total_num_scheduled_tokens"),
+            ),
+            "decode_bucket": metadata.get(
+                "decode_bucket", metadata.get("popped_decode_bucket")
+            ),
+            "is_pure_decode": metadata.get(
+                "is_pure_decode", metadata.get("popped_is_pure_decode")
+            ),
+            "scheduled_num_reqs": metadata.get("scheduled_num_reqs"),
+            "popped_num_reqs": metadata.get("popped_num_reqs"),
+            "batch_queue_len_start": metadata.get("batch_queue_len_start"),
+            "batch_queue_len_end": metadata.get("batch_queue_len_end"),
+        }
+        key = json.dumps(group, sort_keys=True, separators=(",", ":"))
+        entry = grouped.setdefault(
+            key,
+            {
+                "group": group,
+                "step_count": 0,
+                "first_step": step.get("step"),
+                "last_step": step.get("step"),
+                "first_line": step.get("line"),
+                "last_line": step.get("line"),
+                "total_ms": [],
+                "unaccounted_ms": [],
+                "regions": {},
+            },
+        )
+        entry["step_count"] += 1
+        entry["last_step"] = step.get("step")
+        entry["last_line"] = step.get("line")
+        entry["total_ms"].append(float(step.get("total_ms", 0.0)))
+        entry["unaccounted_ms"].append(float(step.get("unaccounted_ms", 0.0)))
+        for region in step.get("regions", []):
+            label = region.get("label")
+            if label:
+                entry["regions"].setdefault(str(label), []).append(
+                    float(region.get("elapsed_ms", 0.0))
+                )
+
+    rows = []
+    for entry in grouped.values():
+        totals = entry.pop("total_ms")
+        unaccounted = entry.pop("unaccounted_ms")
+        regions = entry.pop("regions")
+        region_rows = []
+        for label, values in regions.items():
+            region_rows.append(
+                {
+                    "label": label,
+                    "mean_elapsed_ms": statistics.fmean(values),
+                    "median_elapsed_ms": statistics.median(values),
+                    "p90_elapsed_ms": percentile(values, 0.90),
+                    "max_elapsed_ms": max(values),
+                }
+            )
+        region_rows.sort(key=lambda row: row["mean_elapsed_ms"], reverse=True)
+        rows.append(
+            {
+                **entry,
+                "mean_total_ms": statistics.fmean(totals),
+                "median_total_ms": statistics.median(totals),
+                "p90_total_ms": percentile(totals, 0.90),
+                "max_total_ms": max(totals),
+                "mean_unaccounted_ms": statistics.fmean(unaccounted),
+                "top_regions_by_mean_elapsed_ms": region_rows[:8],
+            }
+        )
+
+    rows.sort(key=lambda row: row["mean_total_ms"], reverse=True)
+    return rows
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--log", required=True, help="vLLM worker log file")
@@ -311,6 +497,7 @@ def main() -> int:
     samples = []
     summaries = []
     steps = []
+    engine_steps = []
     for idx, line in enumerate(lines, start=1):
         if sample_start_line <= idx <= sample_end_line:
             match = SAMPLE_RE.search(line)
@@ -349,11 +536,22 @@ def main() -> int:
                 continue
             payload["line"] = idx
             steps.append(payload)
+        match = ENGINE_STEP_RE.search(line)
+        if match and (args.all_lines or idx >= sample_start_line):
+            try:
+                payload = json.loads(match.group("payload"))
+            except json.JSONDecodeError:
+                continue
+            payload["line"] = idx
+            engine_steps.append(payload)
 
     summary_rows = summarize_samples(samples)
     timing_summary = sorted(summaries, key=lambda row: row["total_ms"], reverse=True)
     step_summary = summarize_steps(steps)
+    step_rank_label_summary = summarize_steps_by_rank_label(steps)
     step_bucket_summary = summarize_steps_by_bucket(steps)
+    engine_step_summary = summarize_engine_steps(engine_steps)
+    engine_step_bucket_summary = summarize_engine_steps_by_bucket(engine_steps)
     payload = {
         "source_log": str(log_path),
         "line_count": len(lines),
@@ -364,15 +562,20 @@ def main() -> int:
         "sample_line_count": len(samples),
         "summary_line_count": len(timing_summary),
         "step_line_count": len(steps),
+        "engine_step_line_count": len(engine_steps),
         "samples_by_last_ms": summary_rows,
         "summary_by_total_ms": timing_summary,
         "step_summary_by_mean_total_ms": step_summary,
+        "step_summary_by_rank_label": step_rank_label_summary,
         "step_summary_by_bucket": step_bucket_summary,
+        "engine_step_summary": engine_step_summary,
+        "engine_step_summary_by_bucket": engine_step_bucket_summary,
     }
     if args.include_raw:
         payload["raw_samples"] = samples
         payload["raw_summaries"] = summaries
         payload["raw_steps"] = steps
+        payload["raw_engine_steps"] = engine_steps
 
     out_path = Path(args.out)
     out_path.parent.mkdir(parents=True, exist_ok=True)
