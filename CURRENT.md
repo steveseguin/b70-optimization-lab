@@ -17,7 +17,11 @@ Date: 2026-06-12
   `git -C /home/steve/src/vllm-xpu-kernels apply --check` passed for the patch;
   the only warning was the existing `fused_moe_interface.py` file-mode
   mismatch. The patch was not applied to the dirty kernel checkout, no endpoint
-  was changed, and no speed result was promoted.
+  was changed, and no speed result was promoted. Follow-up source audit found
+  the patch depends on the active local W8A8/live-ABI/sidecar source stack:
+  `qwen36_moe_sidecar.cpp` is untracked in the kernel checkout and the binding
+  files are substantially modified, so the next isolated build should start
+  from that active source snapshot rather than raw `origin/main`.
 
 2026-06-12 notes update:
 

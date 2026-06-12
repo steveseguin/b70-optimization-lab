@@ -210,6 +210,18 @@ Result:
 - The patch has not been applied to the dirty kernel checkout and no endpoint
   was changed.
 
+Build-base caveat:
+
+- The local `/home/steve/src/vllm-xpu-kernels` checkout is not a clean
+  `origin/main` tree. It already contains the current W8A8, live-ABI, and
+  sidecar probe edits that this digest patch layers on.
+- `csrc/xpu/onednn/qwen36_moe_sidecar.cpp` is untracked in that checkout, while
+  `ops.h`, `torch_bindings.cpp`, `CMakeLists.txt`, and
+  `vllm_xpu_kernels/fused_moe_interface.py` have substantial local changes.
+- Therefore the next build should use the active local source stack or a
+  captured source snapshot of it. A clean upstream worktree will not contain
+  the sidecar symbols and is not the right base for this patch.
+
 Next isolated validation window:
 
 ```bash
