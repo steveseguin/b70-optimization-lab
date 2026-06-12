@@ -1,0 +1,305 @@
+--- /tmp/qwen36-liveabi-pre-fused_moe_interface.py	2026-06-12 10:32:56.666912239 -0400
++++ /home/steve/src/vllm-xpu-kernels/vllm_xpu_kernels/fused_moe_interface.py	2026-06-12 10:33:54.237597198 -0400
+@@ -1,6 +1,10 @@
+ # SPDX-License-Identifier: Apache-2.0
+ from contextlib import contextmanager
++import json
+ import os
++import re
++import threading
++import time
+ 
+ import torch
+ 
+@@ -18,6 +22,16 @@
+ 
+ REF_FUSED_MOE_ENV = "VLLM_XPU_FUSED_MOE_USE_REF"
+ FUSE_SILU_QUANT_ENV = "VLLM_XPU_FUSED_MOE_FUSE_SILU_QUANT"
++LIVE_ABI_FILE_ENV = "VLLM_XPU_MOE_LIVE_ABI_FILE"
++LIVE_ABI_MAX_LINES_ENV = "VLLM_XPU_MOE_LIVE_ABI_MAX_LINES"
++LIVE_ABI_LAYER_REGEX_ENV = "VLLM_XPU_MOE_LIVE_ABI_LAYER_REGEX"
++LIVE_ABI_RANK_ENV = "VLLM_XPU_MOE_LIVE_ABI_RANK"
++LIVE_ABI_INCLUDE_SAMPLES_ENV = "VLLM_XPU_MOE_LIVE_ABI_INCLUDE_SAMPLES"
++
++_live_abi_lock = threading.Lock()
++_live_abi_writes = 0
++_live_abi_calls = 0
++_live_abi_warned = False
+ 
+ 
+ try:
+@@ -34,12 +48,231 @@
+     return value in ("1", "ON", "TRUE", "YES", "Y")
+ 
+ 
++def _int_env(env_name: str, default: int) -> int:
++    try:
++        return int(os.environ.get(env_name, str(default)))
++    except Exception:
++        return default
++
++
+ def _should_use_ref_fused_moe(is_mxfp8: bool) -> bool:
+     if is_mxfp8:
+         return True
+     return _is_env_enabled(REF_FUSED_MOE_ENV)
+ 
+ 
++def _stream_capture_active() -> bool:
++    try:
++        return bool(torch.xpu.is_current_stream_capturing())
++    except Exception:
++        return False
++
++
++def _live_abi_path() -> str | None:
++    raw = os.environ.get(LIVE_ABI_FILE_ENV, "").strip()
++    if not raw:
++        return None
++    return (raw.replace("{pid}", str(os.getpid())).replace(
++        "{rank}", os.environ.get("RANK", "")).replace(
++            "{local_rank}", os.environ.get("LOCAL_RANK", "")))
++
++
++def _live_abi_rank_allowed() -> bool:
++    wanted = os.environ.get(LIVE_ABI_RANK_ENV, "").strip()
++    if not wanted:
++        return True
++    return wanted in {
++        os.environ.get("RANK", ""),
++        os.environ.get("LOCAL_RANK", ""),
++    }
++
++
++def _tensor_meta(tensor):
++    if tensor is None:
++        return None
++    try:
++        return {
++            "shape": list(tensor.shape),
++            "dtype": str(tensor.dtype).replace("torch.", ""),
++            "device": str(tensor.device),
++            "data_ptr": int(tensor.data_ptr()),
++            "stride": list(tensor.stride()),
++            "is_contiguous": bool(tensor.is_contiguous()),
++            "numel": int(tensor.numel()),
++        }
++    except Exception as exc:
++        return {"error": repr(exc)}
++
++
++def _tensor_sample(tensor, limit: int = 16):
++    if tensor is None:
++        return None
++    try:
++        if tensor.numel() == 0:
++            return []
++        values = tensor.detach().reshape(-1)[:limit].to("cpu",
++                                                        non_blocking=False)
++        if tensor.dtype in (torch.int8, torch.uint8, torch.int16, torch.int32,
++                            torch.int64):
++            return [int(v) for v in values.tolist()]
++        return [float(v) for v in values.float().tolist()]
++    except Exception as exc:
++        return {"error": repr(exc)}
++
++
++def _tensor_sample_sum(tensor, limit: int = 64):
++    sample = _tensor_sample(tensor, limit)
++    if not isinstance(sample, list):
++        return None
++    try:
++        return float(sum(sample))
++    except Exception:
++        return None
++
++
++def _maybe_record_live_abi(*,
++                           hidden_states,
++                           w13,
++                           w13_scales,
++                           w2,
++                           w2_scales,
++                           topk_weights,
++                           topk_ids,
++                           output,
++                           remapped_hidden_states,
++                           rows_per_expert,
++                           unpermuted_row_to_permuted_row,
++                           gemm1_output,
++                           gemm2_output,
++                           int8_scratch,
++                           num_rows,
++                           hidden_size,
++                           num_moe_inputs,
++                           inter_size,
++                           n_experts_per_token,
++                           activation,
++                           num_experts,
++                           ep_rank,
++                           ep_size,
++                           is_int8,
++                           diagnostic_context=None):
++    global _live_abi_calls, _live_abi_warned, _live_abi_writes
++
++    path = _live_abi_path()
++    if path is None:
++        return
++    if _stream_capture_active() or not _live_abi_rank_allowed():
++        return
++
++    context = diagnostic_context or {}
++    layer = str(context.get("layer", ""))
++    pattern = os.environ.get(LIVE_ABI_LAYER_REGEX_ENV, "").strip()
++    if pattern:
++        try:
++            if not re.search(pattern, layer):
++                return
++        except Exception:
++            return
++
++    max_lines = max(1, _int_env(LIVE_ABI_MAX_LINES_ENV, 100))
++    include_samples = _is_env_enabled(LIVE_ABI_INCLUDE_SAMPLES_ENV)
++
++    with _live_abi_lock:
++        if _live_abi_writes >= max_lines:
++            return
++        _live_abi_calls += 1
++        call_id = _live_abi_calls
++
++    try:
++        tensor_map = {
++            "hidden_states": hidden_states,
++            "w13": w13,
++            "w13_scales": w13_scales,
++            "w2": w2,
++            "w2_scales": w2_scales,
++            "topk_weights": topk_weights,
++            "topk_ids": topk_ids,
++            "output": output,
++            "remapped_hidden_states": remapped_hidden_states,
++            "rows_per_expert": rows_per_expert,
++            "unpermuted_row_to_permuted_row": unpermuted_row_to_permuted_row,
++            "gemm1_output": gemm1_output,
++            "gemm2_output": gemm2_output,
++        }
++        if int8_scratch:
++            for name in ("gemm1_a", "gemm1_a_scales", "act_output",
++                         "gemm2_a", "gemm2_a_scales"):
++                tensor_map[name] = int8_scratch.get(name)
++
++        route_sample_limit = min(int(num_experts), 256)
++        rows_sample = _tensor_sample(rows_per_expert, route_sample_limit)
++        if isinstance(rows_sample, list):
++            route = {
++                "rows_sample": rows_sample,
++                "rows_sum": int(sum(rows_sample)),
++                "nonzero_experts": int(sum(1 for v in rows_sample if v)),
++                "max_rows_per_expert": int(max(rows_sample) if rows_sample else 0),
++            }
++        else:
++            route = {"rows_sample": rows_sample}
++
++        record = {
++            "ts": time.time(),
++            "pid": os.getpid(),
++            "rank": os.environ.get("RANK", ""),
++            "local_rank": os.environ.get("LOCAL_RANK", ""),
++            "call": call_id,
++            "layer": layer,
++            "context": context,
++            "shape": {
++                "num_rows": int(num_rows),
++                "hidden_size": int(hidden_size),
++                "topk": int(n_experts_per_token),
++                "num_moe_inputs": int(num_moe_inputs),
++                "inter_size": int(inter_size),
++                "num_experts": int(num_experts),
++                "ep_rank": int(ep_rank),
++                "ep_size": int(ep_size),
++                "activation": str(activation),
++                "is_int8": bool(is_int8),
++            },
++            "tensors": {
++                name: _tensor_meta(tensor)
++                for name, tensor in tensor_map.items()
++            },
++            "route": route,
++            "checksums": {
++                "output_sample_sum": _tensor_sample_sum(output, 64),
++                "gemm1_output_sample_sum": _tensor_sample_sum(gemm1_output, 64),
++                "gemm2_output_sample_sum": _tensor_sample_sum(gemm2_output, 64),
++            },
++        }
++        if include_samples:
++            record["samples"] = {
++                "topk_ids": _tensor_sample(topk_ids, 32),
++                "topk_weights": _tensor_sample(topk_weights, 32),
++                "output": _tensor_sample(output, 32),
++                "unpermuted_row_to_permuted_row":
++                _tensor_sample(unpermuted_row_to_permuted_row, 32),
++            }
++
++        line = json.dumps(record, sort_keys=True)
++        with _live_abi_lock:
++            if _live_abi_writes >= max_lines:
++                return
++            os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
++            with open(path, "a", encoding="utf-8") as handle:
++                handle.write(line + "\n")
++            _live_abi_writes += 1
++    except Exception as exc:
++        if not _live_abi_warned:
++            _live_abi_warned = True
++            try:
++                print(f"[xpu_moe_live_abi] disabled after error: {exc!r}")
++            except Exception:
++                pass
++
++
+ if FUSEDMOE_AVAILABLE:
+     try:
+ 
+@@ -733,7 +966,8 @@
+                   is_mxfp8=False,
+                   is_block_fp8=False,
+                   is_int8=False,
+-                  scratch=None):
++                  scratch=None,
++                  diagnostic_context=None):
+     '''
+     hidden_states: [num_rows, hidden_size]
+     w13: [num_experts, 2*inter_size, hidden_size]
+@@ -988,5 +1222,32 @@
+         torch.ops._moe_C.moe_gather(output, gemm2_output, topk_weights,
+                                     unpermuted_row_to_permuted_row,
+                                     num_experts)
++    _maybe_record_live_abi(
++        hidden_states=hidden_states,
++        w13=w13,
++        w13_scales=w13_scales,
++        w2=w2,
++        w2_scales=w2_scales,
++        topk_weights=topk_weights,
++        topk_ids=topk_ids,
++        output=output,
++        remapped_hidden_states=remapped_hidden_states,
++        rows_per_expert=rows_per_expert,
++        unpermuted_row_to_permuted_row=unpermuted_row_to_permuted_row,
++        gemm1_output=gemm1_output,
++        gemm2_output=gemm2_output,
++        int8_scratch=int8_scratch,
++        num_rows=num_rows,
++        hidden_size=hidden_size,
++        num_moe_inputs=num_moe_inputs,
++        inter_size=inter_size,
++        n_experts_per_token=n_experts_per_token,
++        activation=activation,
++        num_experts=num_experts,
++        ep_rank=ep_rank,
++        ep_size=ep_size,
++        is_int8=is_int8,
++        diagnostic_context=diagnostic_context,
++    )
+ 
+     return output

@@ -6210,3 +6210,91 @@ Ideas to explicitly avoid for this goal:
   showed poor reuse. Cache by layer/shape and generate broader route classes
   instead.
 - More flag sweeps without a token-level bottleneck ledger.
+
+## 2026-06-12 Rank-Local Live ABI Smoke
+
+Added a disabled-by-default live pointer diagnostic to the current XPU Quark
+W8A8 INT8 MoE path. It is only active when
+`VLLM_XPU_MOE_LIVE_ABI_FILE` is set, records after `moe_gather`, and always
+returns the accepted output path unchanged.
+
+Source patch artifacts:
+
+- `patches/qwen36-live-abi-fused-moe-interface-20260612bi.diff`
+- `patches/qwen36-live-abi-vllm-xpu-moe-20260612bi.diff`
+- `patches/qwen36-live-abi-vllm-quark-moe-20260612bi.diff`
+
+Diagnostic env used for the smoke:
+
+- `VLLM_XPU_INT8_MOE_MIXED_WORKSPACE=1`
+- `VLLM_XPU_MOE_LIVE_ABI_FILE=/tmp/qwen36-live-abi-20260612bi-{pid}.jsonl`
+- `VLLM_XPU_MOE_LIVE_ABI_MAX_LINES=12`
+- `VLLM_XPU_MOE_LIVE_ABI_LAYER_REGEX='layers\\.(8|9)\\.'`
+- `VLLM_XPU_MOE_LIVE_ABI_INCLUDE_SAMPLES=1`
+
+Validation before live run:
+
+- `python3 -m py_compile` passed for:
+  - `vllm_xpu_kernels/fused_moe_interface.py`
+  - `vllm/model_executor/layers/fused_moe/experts/xpu_moe.py`
+  - `vllm/model_executor/layers/quantization/quark/quark_moe.py`
+- vLLM/XPU venv import check passed:
+  `live_abi_env VLLM_XPU_MOE_LIVE_ABI_FILE`,
+  `has_xpu_fused_moe True`.
+
+Live smoke:
+
+- Diagnostic backend session:
+  `qwen36-tp4-live-abi-smoke-20260612bi`
+- Launch log:
+  `data/qwen36-quark-int8-tp4-live-abi-smoke-20260612bi.log`
+- `/v1/models` healthy after `57s`.
+- A small deterministic `/v1/completions` request completed successfully.
+- Artifacts:
+  - `data/qwen36-live-abi-smoke-summary-20260612bi.json`
+  - `data/qwen36-live-abi-smoke-completion-20260612bi.json`
+  - `data/qwen36-live-abi-20260612bi-1773478.jsonl`
+  - `data/qwen36-live-abi-20260612bi-1773479.jsonl`
+  - `data/qwen36-live-abi-20260612bi-1773480.jsonl`
+  - `data/qwen36-live-abi-20260612bi-1773481.jsonl`
+
+Summary:
+
+- `48` total records, `12` per TP rank.
+- Ranks covered: `0`, `1`, `2`, `3`.
+- Layers covered: `language_model.model.layers.8.mlp.experts` and
+  `language_model.model.layers.9.mlp.experts`, `24` records each.
+- Captured live tensor metadata and data pointers for:
+  hidden states, `w13`, `w13_scales`, `w2`, `w2_scales`, `topk_weights`,
+  `topk_ids`, output, remapped hidden states, rows per expert,
+  unpermuted-row map, GEMM1 output, GEMM2 output, `gemm1_a`,
+  `gemm1_a_scales`, activation output, `gemm2_a`, and `gemm2_a_scales`.
+- Captured route summaries including `rows_sum`, `nonzero_experts`, and
+  `max_rows_per_expert`; first warm/capture records included
+  `num_rows=8192`, later decode-bucket records included shapes such as
+  `num_rows=96`, `88`, `80`, `72`, and `64`.
+- Captured lightweight output/GEMM sample checksums for each record.
+
+Post-smoke restore:
+
+- Normal accepted backend session:
+  `qwen36-tp4-accepted-restored-after-live-abi-smoke-20260612bi`
+- Restore log:
+  `data/qwen36-quark-int8-tp4-accepted-restored-after-live-abi-smoke-20260612bi.log`
+- `/v1/models` healthy after `55s`.
+- Provenance guard:
+  `data/qwen36-quark-int8-tp4-accepted-provenance-after-live-abi-smoke-20260612bi.json`
+- Result: `ok=true`; both prefix cases matched and all sentinel tokens passed:
+  `4752`, `11436`, `198`.
+
+Interpretation:
+
+- This proves the live vLLM rank path can expose exactly the pointer/shape/dtype
+  metadata the resident MoE island needs, including scratch buffers, route
+  rows, output, and GEMM intermediates.
+- It is still not an endpoint speed result. The hook intentionally records
+  metadata and returns the current accepted output.
+- Next implementation gate: replace metadata-only recording with a guarded
+  resident oneDNN sidecar call for one layer/rank, compare output against the
+  current `xpu_fused_moe` path, log parity/timing, and still return the current
+  accepted output until exact live parity is proven across more layers/shapes.

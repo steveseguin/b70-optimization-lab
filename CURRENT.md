@@ -17,6 +17,20 @@ Date: 2026-06-12
   verifier, oneDNN Graph / Level Zero command-list supernodes, and a
   maintainer-ready B70 W8A8 MoE performance packet.
 
+- Added and smoked a disabled-by-default rank-local live ABI diagnostic for the
+  current Quark W8A8 INT8 XPU MoE path. With
+  `VLLM_XPU_MOE_LIVE_ABI_FILE` set, the hook records live rank-local tensor
+  pointers, shapes, dtypes, route rows, scratch buffers, GEMM intermediates, and
+  output checksums after `moe_gather`, then returns the accepted output
+  unchanged. A TP4 smoke captured `48` records across all four ranks for layers
+  `8` and `9`; the normal accepted backend was restored afterward and
+  provenance passed both prefix cases plus sentinels `4752`, `11436`, and
+  `198`. New artifacts include
+  `data/qwen36-live-abi-smoke-summary-20260612bi.json`, the four
+  `data/qwen36-live-abi-20260612bi-*.jsonl` rank logs,
+  `data/qwen36-quark-int8-tp4-accepted-provenance-after-live-abi-smoke-20260612bi.json`,
+  and isolated source patches under `patches/qwen36-live-abi-*20260612bi.diff`.
+
 2026-06-12 continuation:
 
 - Extended the resident oneDNN MoE GEMM-pair runner with mutable grouped-offset

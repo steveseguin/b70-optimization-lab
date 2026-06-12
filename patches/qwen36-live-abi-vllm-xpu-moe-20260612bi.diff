@@ -1,0 +1,10 @@
+--- /tmp/qwen36-liveabi-pre-xpu_moe.py	2026-06-12 10:32:56.668365300 -0400
++++ /home/steve/src/vllm/vllm/model_executor/layers/fused_moe/experts/xpu_moe.py	2026-06-12 10:34:00.101619923 -0400
+@@ -246,6 +246,7 @@
+             is_mxfp4=self.is_mxfp4,
+             is_int8=self.is_int8,
+             scratch=scratch,
++            diagnostic_context=getattr(self, "_live_abi_context", None),
+         )
+ 
+ 

@@ -1,0 +1,433 @@
+{
+  "by_rank": {
+    "0": 12,
+    "1": 12,
+    "2": 12,
+    "3": 12
+  },
+  "env": {
+    "VLLM_XPU_INT8_MOE_MIXED_WORKSPACE": "1",
+    "VLLM_XPU_MOE_LIVE_ABI_FILE": "/tmp/qwen36-live-abi-20260612bi-{pid}.jsonl",
+    "VLLM_XPU_MOE_LIVE_ABI_INCLUDE_SAMPLES": "1",
+    "VLLM_XPU_MOE_LIVE_ABI_LAYER_REGEX": "layers\\.(8|9)\\.",
+    "VLLM_XPU_MOE_LIVE_ABI_MAX_LINES": "12"
+  },
+  "files": [
+    "qwen36-live-abi-20260612bi-1773478.jsonl",
+    "qwen36-live-abi-20260612bi-1773479.jsonl",
+    "qwen36-live-abi-20260612bi-1773480.jsonl",
+    "qwen36-live-abi-20260612bi-1773481.jsonl"
+  ],
+  "interpretation": [
+    "Diagnostic is disabled unless VLLM_XPU_MOE_LIVE_ABI_FILE is set.",
+    "The hook records live rank-local XPU tensor pointers and metadata after moe_gather, then returns the accepted output unchanged.",
+    "Smoke request completed successfully and produced records on all four TP ranks."
+  ],
+  "label": "qwen36-live-abi-smoke-20260612bi",
+  "layers": {
+    "language_model.model.layers.8.mlp.experts": 24,
+    "language_model.model.layers.9.mlp.experts": 24
+  },
+  "model": "nameistoken/Qwen3.6-35B-A3B-Quark-W8A8-INT8",
+  "sample_records": [
+    {
+      "checksums": {
+        "gemm1_output_sample_sum": -10.030426025390625,
+        "gemm2_output_sample_sum": 0.03674173355102539,
+        "output_sample_sum": -0.010606765747070312
+      },
+      "file": "qwen36-live-abi-20260612bi-1773478.jsonl",
+      "layer": "language_model.model.layers.8.mlp.experts",
+      "rank": "0",
+      "route": {
+        "max_rows_per_expert": 8192,
+        "nonzero_experts": 11,
+        "rows_sum": 65536
+      },
+      "shape": {
+        "activation": "silu",
+        "ep_rank": 0,
+        "ep_size": 1,
+        "hidden_size": 2048,
+        "inter_size": 128,
+        "is_int8": true,
+        "num_experts": 256,
+        "num_moe_inputs": 65536,
+        "num_rows": 8192,
+        "topk": 8
+      },
+      "tensor_ptrs": {
+        "gemm1_output": 18446697177683329024,
+        "gemm2_output": 18446697177742311424,
+        "hidden_states": 18446697177045532672,
+        "output": 18446697177280413696,
+        "rows_per_expert": 18446697178010746880,
+        "unpermuted_row_to_permuted_row": 18446697178010747904,
+        "w13": 18446697169286070272,
+        "w13_scales": 18446708893514989568,
+        "w2": 18446697169420288000,
+        "w2_scales": 18446697169495785472
+      }
+    },
+    {
+      "checksums": {
+        "gemm1_output_sample_sum": -14.3353271484375,
+        "gemm2_output_sample_sum": 0.09789657592773438,
+        "output_sample_sum": -0.09278297424316406
+      },
+      "file": "qwen36-live-abi-20260612bi-1773478.jsonl",
+      "layer": "language_model.model.layers.9.mlp.experts",
+      "rank": "0",
+      "route": {
+        "max_rows_per_expert": 8192,
+        "nonzero_experts": 11,
+        "rows_sum": 65536
+      },
+      "shape": {
+        "activation": "silu",
+        "ep_rank": 0,
+        "ep_size": 1,
+        "hidden_size": 2048,
+        "inter_size": 128,
+        "is_int8": true,
+        "num_experts": 256,
+        "num_moe_inputs": 65536,
+        "num_rows": 8192,
+        "topk": 8
+      },
+      "tensor_ptrs": {
+        "gemm1_output": 18446697177683329024,
+        "gemm2_output": 18446697177742311424,
+        "hidden_states": 18446697176793874432,
+        "output": 18446697177280413696,
+        "rows_per_expert": 18446697178010746880,
+        "unpermuted_row_to_permuted_row": 18446697178010747904,
+        "w13": 18446697169508368384,
+        "w13_scales": 18446708893513678848,
+        "w2": 18446697169642586112,
+        "w2_scales": 18446697169506271232
+      }
+    },
+    {
+      "checksums": {
+        "gemm1_output_sample_sum": -9.5362548828125,
+        "gemm2_output_sample_sum": 0.05635547637939453,
+        "output_sample_sum": -0.010606765747070312
+      },
+      "file": "qwen36-live-abi-20260612bi-1773478.jsonl",
+      "layer": "language_model.model.layers.8.mlp.experts",
+      "rank": "0",
+      "route": {
+        "max_rows_per_expert": 96,
+        "nonzero_experts": 11,
+        "rows_sum": 768
+      },
+      "shape": {
+        "activation": "silu",
+        "ep_rank": 0,
+        "ep_size": 1,
+        "hidden_size": 2048,
+        "inter_size": 128,
+        "is_int8": true,
+        "num_experts": 256,
+        "num_moe_inputs": 768,
+        "num_rows": 96,
+        "topk": 8
+      },
+      "tensor_ptrs": {
+        "gemm1_output": 18446697177285135360,
+        "gemm2_output": 18446697177285826560,
+        "hidden_states": 18446708893339418624,
+        "output": 18446697177280413696,
+        "rows_per_expert": 18446697177288972288,
+        "unpermuted_row_to_permuted_row": 18446697177288973312,
+        "w13": 18446697169286070272,
+        "w13_scales": 18446708893514989568,
+        "w2": 18446697169420288000,
+        "w2_scales": 18446697169495785472
+      }
+    },
+    {
+      "checksums": {
+        "gemm1_output_sample_sum": -14.3353271484375,
+        "gemm2_output_sample_sum": 0.09789657592773438,
+        "output_sample_sum": -0.09278297424316406
+      },
+      "file": "qwen36-live-abi-20260612bi-1773478.jsonl",
+      "layer": "language_model.model.layers.9.mlp.experts",
+      "rank": "0",
+      "route": {
+        "max_rows_per_expert": 96,
+        "nonzero_experts": 11,
+        "rows_sum": 768
+      },
+      "shape": {
+        "activation": "silu",
+        "ep_rank": 0,
+        "ep_size": 1,
+        "hidden_size": 2048,
+        "inter_size": 128,
+        "is_int8": true,
+        "num_experts": 256,
+        "num_moe_inputs": 768,
+        "num_rows": 96,
+        "topk": 8
+      },
+      "tensor_ptrs": {
+        "gemm1_output": 18446697177285135360,
+        "gemm2_output": 18446697177285826560,
+        "hidden_states": 18446708893342302208,
+        "output": 18446697177280413696,
+        "rows_per_expert": 18446697177288972288,
+        "unpermuted_row_to_permuted_row": 18446697177288973312,
+        "w13": 18446697169508368384,
+        "w13_scales": 18446708893513678848,
+        "w2": 18446697169642586112,
+        "w2_scales": 18446697169506271232
+      }
+    },
+    {
+      "checksums": {
+        "gemm1_output_sample_sum": -8.59722900390625,
+        "gemm2_output_sample_sum": 0.03118729591369629,
+        "output_sample_sum": -0.010606765747070312
+      },
+      "file": "qwen36-live-abi-20260612bi-1773478.jsonl",
+      "layer": "language_model.model.layers.8.mlp.experts",
+      "rank": "0",
+      "route": {
+        "max_rows_per_expert": 88,
+        "nonzero_experts": 11,
+        "rows_sum": 704
+      },
+      "shape": {
+        "activation": "silu",
+        "ep_rank": 0,
+        "ep_size": 1,
+        "hidden_size": 2048,
+        "inter_size": 128,
+        "is_int8": true,
+        "num_experts": 256,
+        "num_moe_inputs": 704,
+        "num_rows": 88,
+        "topk": 8
+      },
+      "tensor_ptrs": {
+        "gemm1_output": 18446697177284741888,
+        "gemm2_output": 18446697177285375488,
+        "hidden_states": 18446708893340926976,
+        "output": 18446697177280413696,
+        "rows_per_expert": 18446697177288259072,
+        "unpermuted_row_to_permuted_row": 18446697177288260096,
+        "w13": 18446697169286070272,
+        "w13_scales": 18446708893514989568,
+        "w2": 18446697169420288000,
+        "w2_scales": 18446697169495785472
+      }
+    },
+    {
+      "checksums": {
+        "gemm1_output_sample_sum": -14.3353271484375,
+        "gemm2_output_sample_sum": 0.09789657592773438,
+        "output_sample_sum": -0.09278297424316406
+      },
+      "file": "qwen36-live-abi-20260612bi-1773478.jsonl",
+      "layer": "language_model.model.layers.9.mlp.experts",
+      "rank": "0",
+      "route": {
+        "max_rows_per_expert": 88,
+        "nonzero_experts": 11,
+        "rows_sum": 704
+      },
+      "shape": {
+        "activation": "silu",
+        "ep_rank": 0,
+        "ep_size": 1,
+        "hidden_size": 2048,
+        "inter_size": 128,
+        "is_int8": true,
+        "num_experts": 256,
+        "num_moe_inputs": 704,
+        "num_rows": 88,
+        "topk": 8
+      },
+      "tensor_ptrs": {
+        "gemm1_output": 18446697177284741888,
+        "gemm2_output": 18446697177285375488,
+        "hidden_states": 18446708893333708800,
+        "output": 18446697177280413696,
+        "rows_per_expert": 18446697177288259072,
+        "unpermuted_row_to_permuted_row": 18446697177288260096,
+        "w13": 18446697169508368384,
+        "w13_scales": 18446708893513678848,
+        "w2": 18446697169642586112,
+        "w2_scales": 18446697169506271232
+      }
+    },
+    {
+      "checksums": {
+        "gemm1_output_sample_sum": -9.5362548828125,
+        "gemm2_output_sample_sum": 0.05635547637939453,
+        "output_sample_sum": -0.010606765747070312
+      },
+      "file": "qwen36-live-abi-20260612bi-1773478.jsonl",
+      "layer": "language_model.model.layers.8.mlp.experts",
+      "rank": "0",
+      "route": {
+        "max_rows_per_expert": 80,
+        "nonzero_experts": 11,
+        "rows_sum": 640
+      },
+      "shape": {
+        "activation": "silu",
+        "ep_rank": 0,
+        "ep_size": 1,
+        "hidden_size": 2048,
+        "inter_size": 128,
+        "is_int8": true,
+        "num_experts": 256,
+        "num_moe_inputs": 640,
+        "num_rows": 80,
+        "topk": 8
+      },
+      "tensor_ptrs": {
+        "gemm1_output": 18446697177284348416,
+        "gemm2_output": 18446697177284924416,
+        "hidden_states": 18446708893332865024,
+        "output": 18446697177280413696,
+        "rows_per_expert": 18446697177287545856,
+        "unpermuted_row_to_permuted_row": 18446697177287546880,
+        "w13": 18446697169286070272,
+        "w13_scales": 18446708893514989568,
+        "w2": 18446697169420288000,
+        "w2_scales": 18446697169495785472
+      }
+    },
+    {
+      "checksums": {
+        "gemm1_output_sample_sum": -14.565353393554688,
+        "gemm2_output_sample_sum": 0.07591986656188965,
+        "output_sample_sum": -0.09278297424316406
+      },
+      "file": "qwen36-live-abi-20260612bi-1773478.jsonl",
+      "layer": "language_model.model.layers.9.mlp.experts",
+      "rank": "0",
+      "route": {
+        "max_rows_per_expert": 80,
+        "nonzero_experts": 11,
+        "rows_sum": 640
+      },
+      "shape": {
+        "activation": "silu",
+        "ep_rank": 0,
+        "ep_size": 1,
+        "hidden_size": 2048,
+        "inter_size": 128,
+        "is_int8": true,
+        "num_experts": 256,
+        "num_moe_inputs": 640,
+        "num_rows": 80,
+        "topk": 8
+      },
+      "tensor_ptrs": {
+        "gemm1_output": 18446697177284348416,
+        "gemm2_output": 18446697177284924416,
+        "hidden_states": 18446708893334260224,
+        "output": 18446697177280413696,
+        "rows_per_expert": 18446697177287545856,
+        "unpermuted_row_to_permuted_row": 18446697177287546880,
+        "w13": 18446697169508368384,
+        "w13_scales": 18446708893513678848,
+        "w2": 18446697169642586112,
+        "w2_scales": 18446697169506271232
+      }
+    }
+  ],
+  "service": "vLLM/XPU TP4 accepted launch plus live ABI diagnostic",
+  "tensor_presence": {
+    "act_output|bfloat16|(512, 128)": 8,
+    "act_output|bfloat16|(576, 128)": 8,
+    "act_output|bfloat16|(640, 128)": 8,
+    "act_output|bfloat16|(65536, 128)": 8,
+    "act_output|bfloat16|(704, 128)": 8,
+    "act_output|bfloat16|(768, 128)": 8,
+    "gemm1_a_scales|float32|(512, 1)": 8,
+    "gemm1_a_scales|float32|(576, 1)": 8,
+    "gemm1_a_scales|float32|(640, 1)": 8,
+    "gemm1_a_scales|float32|(65536, 1)": 8,
+    "gemm1_a_scales|float32|(704, 1)": 8,
+    "gemm1_a_scales|float32|(768, 1)": 8,
+    "gemm1_a|int8|(512, 2048)": 8,
+    "gemm1_a|int8|(576, 2048)": 8,
+    "gemm1_a|int8|(640, 2048)": 8,
+    "gemm1_a|int8|(65536, 2048)": 8,
+    "gemm1_a|int8|(704, 2048)": 8,
+    "gemm1_a|int8|(768, 2048)": 8,
+    "gemm1_output|bfloat16|(512, 256)": 8,
+    "gemm1_output|bfloat16|(576, 256)": 8,
+    "gemm1_output|bfloat16|(640, 256)": 8,
+    "gemm1_output|bfloat16|(65536, 256)": 8,
+    "gemm1_output|bfloat16|(704, 256)": 8,
+    "gemm1_output|bfloat16|(768, 256)": 8,
+    "gemm2_a_scales|float32|(512, 1)": 8,
+    "gemm2_a_scales|float32|(576, 1)": 8,
+    "gemm2_a_scales|float32|(640, 1)": 8,
+    "gemm2_a_scales|float32|(65536, 1)": 8,
+    "gemm2_a_scales|float32|(704, 1)": 8,
+    "gemm2_a_scales|float32|(768, 1)": 8,
+    "gemm2_a|int8|(512, 128)": 8,
+    "gemm2_a|int8|(576, 128)": 8,
+    "gemm2_a|int8|(640, 128)": 8,
+    "gemm2_a|int8|(65536, 128)": 8,
+    "gemm2_a|int8|(704, 128)": 8,
+    "gemm2_a|int8|(768, 128)": 8,
+    "gemm2_output|bfloat16|(512, 2048)": 8,
+    "gemm2_output|bfloat16|(576, 2048)": 8,
+    "gemm2_output|bfloat16|(640, 2048)": 8,
+    "gemm2_output|bfloat16|(65536, 2048)": 8,
+    "gemm2_output|bfloat16|(704, 2048)": 8,
+    "gemm2_output|bfloat16|(768, 2048)": 8,
+    "hidden_states|bfloat16|(64, 2048)": 8,
+    "hidden_states|bfloat16|(72, 2048)": 8,
+    "hidden_states|bfloat16|(80, 2048)": 8,
+    "hidden_states|bfloat16|(8192, 2048)": 8,
+    "hidden_states|bfloat16|(88, 2048)": 8,
+    "hidden_states|bfloat16|(96, 2048)": 8,
+    "output|bfloat16|(64, 2048)": 8,
+    "output|bfloat16|(72, 2048)": 8,
+    "output|bfloat16|(80, 2048)": 8,
+    "output|bfloat16|(8192, 2048)": 8,
+    "output|bfloat16|(88, 2048)": 8,
+    "output|bfloat16|(96, 2048)": 8,
+    "remapped_hidden_states|int8|(512, 2048)": 8,
+    "remapped_hidden_states|int8|(576, 2048)": 8,
+    "remapped_hidden_states|int8|(640, 2048)": 8,
+    "remapped_hidden_states|int8|(65536, 2048)": 8,
+    "remapped_hidden_states|int8|(704, 2048)": 8,
+    "remapped_hidden_states|int8|(768, 2048)": 8,
+    "rows_per_expert|int32|(256,)": 48,
+    "topk_ids|int32|(64, 8)": 8,
+    "topk_ids|int32|(72, 8)": 8,
+    "topk_ids|int32|(80, 8)": 8,
+    "topk_ids|int32|(8192, 8)": 8,
+    "topk_ids|int32|(88, 8)": 8,
+    "topk_ids|int32|(96, 8)": 8,
+    "topk_weights|float32|(64, 8)": 8,
+    "topk_weights|float32|(72, 8)": 8,
+    "topk_weights|float32|(80, 8)": 8,
+    "topk_weights|float32|(8192, 8)": 8,
+    "topk_weights|float32|(88, 8)": 8,
+    "topk_weights|float32|(96, 8)": 8,
+    "unpermuted_row_to_permuted_row|int32|(64, 8)": 8,
+    "unpermuted_row_to_permuted_row|int32|(72, 8)": 8,
+    "unpermuted_row_to_permuted_row|int32|(80, 8)": 8,
+    "unpermuted_row_to_permuted_row|int32|(8192, 8)": 8,
+    "unpermuted_row_to_permuted_row|int32|(88, 8)": 8,
+    "unpermuted_row_to_permuted_row|int32|(96, 8)": 8,
+    "w13_scales|float32|(256, 256)": 48,
+    "w13|int8|(256, 2048, 256)": 48,
+    "w2_scales|float32|(256, 2048)": 48,
+    "w2|int8|(256, 128, 2048)": 48
+  },
+  "total_records": 48
+}
