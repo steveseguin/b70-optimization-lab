@@ -24,6 +24,130 @@ Current speed anchor:
   MoE/kernel architecture improvement. Launch flags alone are unlikely to get
   there.
 
+## Follow-Up: Concrete Next Gates And Bigger Bets
+
+Added after the latest user review. The current public Localmaxxing check still
+shows only one exact-model B70/vLLM row for
+`nameistoken/Qwen3.6-35B-A3B-Quark-W8A8-INT8`, at `99.428 tok/s`. The live
+endpoint mode/context sweep also ruled out two easy explanations: SSE
+streaming overhead is only about `0.34%`, and p512-vs-p4096 steady decode only
+moved about `0.55%`. The missing performance is therefore still in model
+execution, XPU command/collective overhead, TP topology, MoE scheduling, or a
+quality-safe multi-token acceptance path.
+
+New items to keep in the near-term queue:
+
+1. **Boundary timing maintenance run.**
+   Restart the accepted endpoint with the new env-gated
+   `gpu_model_runner.preprocess_total`, `forward_total`, `postprocess_total`,
+   `sample_total`, and `async_output_wrap` labels. The objective is not a speed
+   result; it is to partition the remaining `~4.98 ms/token` gap into named
+   slices before another large kernel branch.
+
+2. **No-server c1 ceiling lab.**
+   Build a direct in-process c1 decode harness around the same model runner,
+   fixed prompt shape, fixed KV allocation, and deterministic sampling. This
+   isolates OpenAI API, streaming, scheduler, and request accounting overhead
+   without changing math. Token-by-token parity with the live endpoint is the
+   gate.
+
+3. **Collective and command-submission ledger.**
+   Add a small all-reduce and command-queue benchmark using the same oneCCL,
+   Level Zero, affinity, and graph settings as the service. Current decode is
+   TP4, so even a perfect MoE kernel will not reach `200 tok/s` if every token
+   still burns milliseconds in collective setup or host-side synchronization.
+
+4. **TP topology experiments as latency tests.**
+   Test TP2, TP2 plus two replicas, and asymmetric latency/aggregate lanes with
+   the current 32K target. If TP2 improves c1 TPOT, use the other cards for
+   replicas, branch verification, or aggregate throughput instead of forcing
+   every token through TP4 collectives.
+
+5. **oneDNN sidecar execute-and-compare.**
+   Move the sidecar from descriptor/probe mode to a one-layer execute-and-
+   compare gate. The acceptance bar is exact output parity for captured
+   route-window tensors, then a disabled live return path with rollback to
+   `xpu_fused_moe`.
+
+6. **Persistent MoE command ring.**
+   Prototype a resident worker or command-list ring for the hot MoE layers:
+   prepacked weights, persistent scratch, mutable route offsets, fused
+   activation, and no per-token rebuild of primitives. This directly targets
+   launch overhead and route imbalance instead of only GEMM math.
+
+7. **Route-skew autotuner using real traces.**
+   Feed the captured route windows into candidate schedules and emit a small
+   runtime decision table keyed by layer, active expert count, max rows, and
+   route skew. This keeps numerical output identical while avoiding a single
+   kernel policy for both hot and sparse routes.
+
+8. **Target-state transaction substrate.**
+   Before more DFlash/MTP/ngram timing, implement the state capsule needed for
+   verify, commit, and rollback: KV pages, Gated DeltaNet / hybrid state,
+   scheduler counters, sampler state, and accepted-token ledgers. This is the
+   prerequisite for speculation that cannot silently perturb output.
+
+9. **Target-owned branch farming.**
+   After transactional state exists, use spare VRAM/cards to evaluate multiple
+   candidate continuations under the current Quark W8A8 target model. The
+   proposer can be experimental, but emitted tokens must come from target
+   verification. This is the cleanest route to a `2x` class result without a
+   quantization downgrade.
+
+10. **B70 W8A8 roofline packet.**
+    Build a maintainer-grade packet with route-window fixtures, exact tensor
+    checksums, oneDNN/current-kernel timings, XMX/DPAS counters where
+    available, Localmaxxing rows, and the `5.000 ms/token` target budget. This
+    makes upstream help concrete rather than asking generally why B70 is slow.
+
+11. **Strict same-model 8-bit engine shootout.**
+    Compare vLLM-XPU, OpenVINO/oneDNN, Intel `llm-scaler` or related stacks
+    only if they run the current model or a byte-equivalent W8A8/BF16 verifier
+    fallback. The goal is to learn scheduler/kernel topology, not to switch to
+    4-bit, AWQ, Qwen3.5, or a lower-quality checkpoint.
+
+12. **Quality and reliability scoreboard.**
+    For every promising branch, record exact token parity, prompt-class
+    canaries, long-context needle, BF16 fallback comparison where feasible,
+    startup success, device-lost frequency, 30-60 minute soak, peak VRAM, and
+    recovery behavior. A faster branch that fails soak or parity does not count.
+
+Additional bolder ideas worth revisiting if the near-term gates stall:
+
+- **Whole-token Level Zero supernode:** capture a fixed c1 token step as a
+  command-list sequence from attention through sampler, patching only pointers
+  and route offsets each token.
+- **Router-predictive prefetch:** use previous-token/layer route statistics
+  only for prefetch and staging. The actual router still decides computation,
+  preserving output.
+- **Hot-expert memory-for-latency replicas:** spend VRAM on duplicated hot
+  experts in high-impact layers if route traces show the copied experts remove
+  cross-rank pressure.
+- **Pluggable XPU MoE backend branch:** exploit vLLM's ongoing MoE backend
+  refactors and grouped-GEMM direction to make the B70 W8A8 path upstreamable,
+  not a permanent local fork.
+- **Two production lanes:** keep one launch optimized for c1 latency and one
+  for aggregate throughput, both quality-gated against the same baseline.
+
+External signals added to this pass:
+
+- vLLM release notes now list Intel XPU work in the exact areas we care about:
+  MXFP8/FP8 quantization, custom-op collectives, MoE top-k routing, and reduced
+  XPU MoE host overhead:
+  `https://github.com/vllm-project/vllm/releases`.
+- vLLM's roadmap explicitly calls out a transition from `fused_moe` toward
+  grouped-GEMM and expert-parallel work. That matches the local conclusion that
+  generic fused-MoE scheduling is probably not enough for this c1 target:
+  `https://github.com/vllm-project/vllm/issues/15735`.
+- A recent vLLM quantized-MoE issue still shows quantized W8A8/W8A16 MoE
+  paths falling into missing config or dtype/backend gaps. Treat this as
+  evidence that B70 W8A8 MoE needs a reproducible maintainer packet, not just
+  another launch flag:
+  `https://github.com/vllm-project/vllm/issues/28622`.
+- Localmaxxing remains useful as a public scoreboard, but the exact current
+  row is still `~99 tok/s`; anything above `200 tok/s` is currently a design
+  clue, not a promoted comparable result for this model/posture.
+
 ## Live C1 200 Tok/s Gap Budget
 
 Added a reproducible gap-budget artifact around the current accepted endpoint.

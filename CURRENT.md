@@ -6,6 +6,17 @@ Date: 2026-06-12
 
 2026-06-12 notes update:
 
+- Added a follow-up "concrete next gates and bigger bets" section to
+  `notes/2026-06-12-qwen36-next-bigger-bets.md`. It records that the latest
+  Localmaxxing exact-model public row remains `99.428 tok/s`, while the live
+  mode/context sweep ruled out SSE streaming and p512-vs-p4096 context as
+  major steady-decode bottlenecks. New tracked items: boundary timing
+  maintenance run, no-server c1 ceiling lab, collective/command-submission
+  ledger, TP2/replica topology tests, oneDNN sidecar execute-and-compare,
+  persistent MoE command ring, real-route autotuner, target-state transaction
+  substrate, target-owned branch farming, B70 W8A8 roofline packet, strict
+  same-model 8-bit engine shootout, and a parity/stability scoreboard.
+
 - Added a no-output-path-change live mode/context sweep on the accepted
   endpoint and a disabled-by-default boundary timing patch for the next
   maintenance run. Stream p512/o512 was `99.590 tok/s` corrected with
