@@ -6,6 +6,22 @@ Date: 2026-06-12
 
 2026-06-12 notes update:
 
+- Added and compile-validated a guarded oneDNN MoE sidecar probe surface in the
+  local `vllm-xpu-kernels` tree. The new `qwen36_moe_onednn_sidecar_probe`
+  op validates live Qwen3.6 MoE tensor ABI inputs, dry-creates oneDNN grouped
+  matmul descriptors for GEMM1/GEMM2, and only wraps grouped source/destination
+  USM handles when an explicit `expert_first_token_offset` tensor is supplied.
+  It does not treat `rows_per_expert` as offsets. Validation was non-invasive:
+  an out-of-tree `_xpu_C` build with IntelLLVM 2026.0 completed successfully,
+  `nm` confirmed the exported probe symbol, and the live endpoint on
+  `127.0.0.1:18080` stayed healthy on the current Quark INT8 model. New
+  tracking artifacts:
+  `patches/vllm-xpu-qwen36-onednn-sidecar-probe-20260612bk.diff` and
+  `data/qwen36-onednn-sidecar-probe-build-20260612bk.json`. This is a
+  compile/link gate only, not a speed claim; the next gate is Python-side
+  env-guarded probe calls with XPU offset tensor construction while still
+  returning the current `xpu_fused_moe` output.
+
 - Added a post-discussion larger-bets addendum to
   `notes/2026-06-12-qwen36-next-bigger-bets.md`. The new section records a
   fresh Localmaxxing/XPU/MoE source scan and keeps the interpretation explicit:

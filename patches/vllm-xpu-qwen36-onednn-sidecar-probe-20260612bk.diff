@@ -1,0 +1,492 @@
+diff --git a/csrc/xpu/ops.h b/csrc/xpu/ops.h
+index 0200386..49b81b3 100644
+--- a/csrc/xpu/ops.h
++++ b/csrc/xpu/ops.h
+@@ -52,6 +52,30 @@ torch::Tensor int4_gemm_w4a8(
+     const std::optional<torch::Tensor>& g_idx,
+     const std::optional<torch::Tensor>& bias);
+ 
++torch::Tensor int8_gemm_w8a8(
++    const torch::Tensor& A,
++    const torch::Tensor& A_scale,
++    const torch::Tensor& B,
++    const torch::Tensor& B_scale,
++    std::optional<c10::ScalarType> out_dtype,
++    const std::optional<torch::Tensor>& bias);
++
++std::tuple<torch::Tensor, torch::Tensor> per_token_quant_int8_xpu(
++    const torch::Tensor& x);
++
++std::tuple<torch::Tensor, torch::Tensor> per_token_quant_int8_xpu_out(
++    const torch::Tensor& x,
++    torch::Tensor& q,
++    torch::Tensor& scales);
++
++std::tuple<torch::Tensor, torch::Tensor> silu_and_mul_quant_int8_xpu(
++    const torch::Tensor& x);
++
++std::tuple<torch::Tensor, torch::Tensor> silu_and_mul_quant_int8_xpu_out(
++    const torch::Tensor& x,
++    torch::Tensor& q,
++    torch::Tensor& scales);
++
+ #ifdef VLLM_MOE_ENABLED
+ torch::Tensor cutlass_grouped_gemm_interface(
+     torch::Tensor ptr_A,
+@@ -65,6 +89,67 @@ torch::Tensor cutlass_grouped_gemm_interface(
+     int64_t num_experts,
+     bool is_B_int4,
+     bool is_B_mxfp4);
++
++torch::Tensor cutlass_grouped_gemm_w8a8_int8_interface(
++    torch::Tensor ptr_A,
++    torch::Tensor ptr_A_scales,
++    torch::Tensor ptr_B,
++    torch::Tensor ptr_B_scales,
++    const c10::optional<at::Tensor>& ptr_bias,
++    torch::Tensor ptr_D,
++    torch::Tensor rows_per_expert,
++    int64_t N,
++    int64_t K,
++    int64_t num_experts);
++
++torch::Tensor cutlass_grouped_gemm_w8a8_int8_offsets_interface(
++    torch::Tensor ptr_A,
++    torch::Tensor ptr_A_scales,
++    torch::Tensor ptr_B,
++    torch::Tensor ptr_B_scales,
++    const c10::optional<at::Tensor>& ptr_bias,
++    torch::Tensor ptr_D,
++    torch::Tensor expert_first_token_offset,
++    int64_t N,
++    int64_t K,
++    int64_t num_experts);
++
++torch::Tensor cutlass_grouped_gemm_w8a8_int8_active_offsets_interface(
++    torch::Tensor ptr_A,
++    torch::Tensor ptr_A_scales,
++    torch::Tensor ptr_B,
++    torch::Tensor ptr_B_scales,
++    const c10::optional<at::Tensor>& ptr_bias,
++    torch::Tensor ptr_D,
++    torch::Tensor expert_first_token_offset,
++    torch::Tensor active_expert_ids,
++    int64_t N,
++    int64_t K,
++    int64_t num_experts,
++    int64_t num_active_experts);
++
++torch::Tensor qwen36_moe_onednn_sidecar_probe(
++    const torch::Tensor& hidden_states,
++    const torch::Tensor& topk_weights,
++    const torch::Tensor& topk_ids,
++    const torch::Tensor& w13,
++    const torch::Tensor& w13_scales,
++    const torch::Tensor& w2,
++    const torch::Tensor& w2_scales,
++    const torch::Tensor& output,
++    const torch::Tensor& remapped_hidden_states,
++    const torch::Tensor& rows_per_expert,
++    const torch::Tensor& unpermuted_row_to_permuted_row,
++    const torch::Tensor& gemm1_a,
++    const torch::Tensor& gemm1_a_scales,
++    const torch::Tensor& gemm1_output,
++    const torch::Tensor& act_output,
++    const torch::Tensor& gemm2_a,
++    const torch::Tensor& gemm2_a_scales,
++    const torch::Tensor& gemm2_output,
++    const c10::optional<at::Tensor>& expert_first_token_offset,
++    int64_t layer_index,
++    bool dry_create_descriptors);
+ #endif
+ 
+ std::tuple<at::Tensor, at::Tensor> deepseek_scaling_rope(
+@@ -148,4 +233,4 @@ torch::Tensor fp8_paged_mqa_logits(
+     const torch::Tensor& block_tables,
+     const c10::optional<at::Tensor>& schedule_metadata,
+     int64_t max_model_len);
+-#endif
+\ No newline at end of file
++#endif
+diff --git a/csrc/xpu/torch_bindings.cpp b/csrc/xpu/torch_bindings.cpp
+index 2c73d16..b33953f 100644
+--- a/csrc/xpu/torch_bindings.cpp
++++ b/csrc/xpu/torch_bindings.cpp
+@@ -37,6 +37,36 @@ TORCH_LIBRARY_EXPAND(TORCH_EXTENSION_NAME, xpu_ops) {
+       "bias) -> Tensor");
+   xpu_ops.impl("int4_gemm_w4a8", torch::kXPU, &int4_gemm_w4a8);
+ 
++  xpu_ops.def(
++      "int8_gemm_w8a8(Tensor A, Tensor A_scale, Tensor B, Tensor B_scale, "
++      "ScalarType? out_dtype, Tensor? bias) -> Tensor");
++  xpu_ops.impl("int8_gemm_w8a8", torch::kXPU, &int8_gemm_w8a8);
++
++  xpu_ops.def("per_token_quant_int8_xpu(Tensor x) -> (Tensor, Tensor)");
++  xpu_ops.impl("per_token_quant_int8_xpu", torch::kXPU, &per_token_quant_int8_xpu);
++
++  xpu_ops.def(
++      "per_token_quant_int8_xpu_out(Tensor x, Tensor! q, Tensor! scales) -> "
++      "(Tensor, Tensor)");
++  xpu_ops.impl(
++      "per_token_quant_int8_xpu_out",
++      torch::kXPU,
++      &per_token_quant_int8_xpu_out);
++
++  xpu_ops.def("silu_and_mul_quant_int8_xpu(Tensor x) -> (Tensor, Tensor)");
++  xpu_ops.impl(
++      "silu_and_mul_quant_int8_xpu",
++      torch::kXPU,
++      &silu_and_mul_quant_int8_xpu);
++
++  xpu_ops.def(
++      "silu_and_mul_quant_int8_xpu_out(Tensor x, Tensor! q, Tensor! scales) -> "
++      "(Tensor, Tensor)");
++  xpu_ops.impl(
++      "silu_and_mul_quant_int8_xpu_out",
++      torch::kXPU,
++      &silu_and_mul_quant_int8_xpu_out);
++
+ #ifdef VLLM_MOE_ENABLED
+   xpu_ops.def(
+       "cutlass_grouped_gemm_interface(Tensor ptr_A, Tensor ptr_B, Tensor? "
+@@ -51,6 +81,51 @@ TORCH_LIBRARY_EXPAND(TORCH_EXTENSION_NAME, xpu_ops) {
+       "cutlass_grouped_gemm_interface",
+       torch::kXPU,
+       &cutlass_grouped_gemm_interface);
++
++  xpu_ops.def(
++      "cutlass_grouped_gemm_w8a8_int8_interface(Tensor ptr_A, Tensor "
++      "ptr_A_scales, Tensor ptr_B, Tensor ptr_B_scales, Tensor? ptr_bias, "
++      "Tensor ptr_D, Tensor rows_per_expert, int N, int K, int num_experts) "
++      "-> Tensor");
++  xpu_ops.impl(
++      "cutlass_grouped_gemm_w8a8_int8_interface",
++      torch::kXPU,
++      &cutlass_grouped_gemm_w8a8_int8_interface);
++
++  xpu_ops.def(
++      "cutlass_grouped_gemm_w8a8_int8_offsets_interface(Tensor ptr_A, Tensor "
++      "ptr_A_scales, Tensor ptr_B, Tensor ptr_B_scales, Tensor? ptr_bias, "
++      "Tensor ptr_D, Tensor expert_first_token_offset, int N, int K, int "
++      "num_experts) -> Tensor");
++  xpu_ops.impl(
++      "cutlass_grouped_gemm_w8a8_int8_offsets_interface",
++      torch::kXPU,
++      &cutlass_grouped_gemm_w8a8_int8_offsets_interface);
++
++  xpu_ops.def(
++      "cutlass_grouped_gemm_w8a8_int8_active_offsets_interface(Tensor ptr_A, "
++      "Tensor ptr_A_scales, Tensor ptr_B, Tensor ptr_B_scales, Tensor? "
++      "ptr_bias, Tensor ptr_D, Tensor expert_first_token_offset, Tensor "
++      "active_expert_ids, int N, int K, int num_experts, int "
++      "num_active_experts) -> Tensor");
++  xpu_ops.impl(
++      "cutlass_grouped_gemm_w8a8_int8_active_offsets_interface",
++      torch::kXPU,
++      &cutlass_grouped_gemm_w8a8_int8_active_offsets_interface);
++
++  xpu_ops.def(
++      "qwen36_moe_onednn_sidecar_probe(Tensor hidden_states, Tensor "
++      "topk_weights, Tensor topk_ids, Tensor w13, Tensor w13_scales, Tensor "
++      "w2, Tensor w2_scales, Tensor output, Tensor remapped_hidden_states, "
++      "Tensor rows_per_expert, Tensor unpermuted_row_to_permuted_row, Tensor "
++      "gemm1_a, Tensor gemm1_a_scales, Tensor gemm1_output, Tensor "
++      "act_output, Tensor gemm2_a, Tensor gemm2_a_scales, Tensor "
++      "gemm2_output, Tensor? expert_first_token_offset, int layer_index, "
++      "bool dry_create_descriptors) -> Tensor");
++  xpu_ops.impl(
++      "qwen36_moe_onednn_sidecar_probe",
++      torch::kXPU,
++      &qwen36_moe_onednn_sidecar_probe);
+ #endif
+ 
+   xpu_ops.def(
+diff --git a/csrc/xpu/onednn/qwen36_moe_sidecar.cpp b/csrc/xpu/onednn/qwen36_moe_sidecar.cpp
+new file mode 100644
+index 0000000..0f38938
+--- /dev/null
++++ b/csrc/xpu/onednn/qwen36_moe_sidecar.cpp
+@@ -0,0 +1,283 @@
++#include <array>
++#include <cstdint>
++#include <initializer_list>
++#include <vector>
++
++#include <c10/xpu/XPUStream.h>
++#include <dnnl.hpp>
++#include <torch/torch.h>
++
++#include "onednn_runtime.h"
++
++namespace {
++
++void require_tensor(
++    const torch::Tensor& tensor,
++    const char* name,
++    at::ScalarType dtype,
++    int64_t dims,
++    const at::Device& device) {
++  TORCH_CHECK(tensor.defined(), name, " must be defined");
++  TORCH_CHECK(tensor.device() == device, name, " must be on ", device);
++  TORCH_CHECK(tensor.scalar_type() == dtype,
++              name,
++              " dtype mismatch: expected ",
++              dtype,
++              " got ",
++              tensor.scalar_type());
++  TORCH_CHECK(tensor.dim() == dims,
++              name,
++              " dim mismatch: expected ",
++              dims,
++              " got ",
++              tensor.dim());
++  TORCH_CHECK(tensor.is_contiguous(), name, " must be contiguous");
++}
++
++void require_shape(
++    const torch::Tensor& tensor,
++    const char* name,
++    std::initializer_list<int64_t> shape) {
++  const auto actual = tensor.sizes().vec();
++  const auto expected = std::vector<int64_t>(shape);
++  TORCH_CHECK(actual == expected, name, " shape mismatch");
++}
++
++dnnl::memory::data_type dnnl_dst_dtype(const torch::Tensor& tensor) {
++  if (tensor.scalar_type() == at::ScalarType::BFloat16) {
++    return dnnl::memory::data_type::bf16;
++  }
++  if (tensor.scalar_type() == at::ScalarType::Half) {
++    return dnnl::memory::data_type::f16;
++  }
++  TORCH_CHECK(false, "sidecar output tensors must be bf16 or f16");
++}
++
++void validate_grouped_pd_and_handles(
++    dnnl::engine& engine,
++    const torch::Tensor& src,
++    const torch::Tensor& src_scales,
++    const torch::Tensor& weights,
++    const torch::Tensor& weights_scales,
++    const torch::Tensor& dst,
++    const c10::optional<at::Tensor>& expert_first_token_offset,
++    int64_t m,
++    int64_t k,
++    int64_t n,
++    int64_t num_experts,
++    dnnl::memory::format_tag weight_layout,
++    int64_t* handle_wrap_ok) {
++  const dnnl::memory::dims src_dims = {m, k};
++  const dnnl::memory::dims weights_dims = {num_experts, k, n};
++  const dnnl::memory::dims dst_dims = {m, n};
++
++  auto src_md = dnnl::memory::desc::grouped(
++      src_dims, dnnl::memory::data_type::s8, 0, num_experts);
++  auto dst_md = dnnl::memory::desc::grouped(
++      dst_dims, dnnl_dst_dtype(dst), 0, num_experts);
++  auto weights_md = dnnl::memory::desc(
++      weights_dims, dnnl::memory::data_type::s8, weight_layout);
++
++  dnnl::primitive_attr attr;
++  attr.set_scales_mask(DNNL_ARG_SRC, 1 << 0);
++  attr.set_scales_mask(DNNL_ARG_WEIGHTS, (1 << 0) | (1 << 2));
++
++  auto pd = dnnl::matmul::primitive_desc(engine, src_md, weights_md, dst_md, attr);
++  auto prim = dnnl::matmul(pd);
++  (void)prim;
++
++  if (expert_first_token_offset.has_value()) {
++    std::vector<void*> src_handles = {
++        const_cast<void*>(src.data_ptr()),
++        const_cast<void*>(expert_first_token_offset.value().data_ptr())};
++    std::vector<void*> dst_handles = {
++        dst.data_ptr(),
++        const_cast<void*>(expert_first_token_offset.value().data_ptr())};
++
++    auto src_mem = dnnl::sycl_interop::make_memory(
++        src_md, engine, dnnl::sycl_interop::memory_kind::usm, src_handles);
++    auto dst_mem = dnnl::sycl_interop::make_memory(
++        dst_md, engine, dnnl::sycl_interop::memory_kind::usm, dst_handles);
++    (void)src_mem;
++    (void)dst_mem;
++    *handle_wrap_ok = 1;
++  }
++
++  auto weights_mem = oneDNN::make_onednn_memory(
++      weights_md, engine, const_cast<void*>(weights.data_ptr()));
++  auto src_scales_mem = oneDNN::make_onednn_memory(
++      dnnl::memory::desc({m}, dnnl::memory::data_type::f32,
++                         dnnl::memory::format_tag::a),
++      engine,
++      const_cast<void*>(src_scales.data_ptr()));
++  auto weights_scales_mem = oneDNN::make_onednn_memory(
++      dnnl::memory::desc({num_experts, n}, dnnl::memory::data_type::f32,
++                         dnnl::memory::format_tag::ab),
++      engine,
++      const_cast<void*>(weights_scales.data_ptr()));
++
++  TORCH_CHECK(src_scales_mem.get_desc().get_dims()[0] == m,
++              "source scales descriptor changed");
++  TORCH_CHECK(weights_scales_mem.get_desc().get_dims()[0] == num_experts,
++              "weight scales descriptor changed");
++  (void)weights_mem;
++}
++
++}  // namespace
++
++torch::Tensor qwen36_moe_onednn_sidecar_probe(
++    const torch::Tensor& hidden_states,
++    const torch::Tensor& topk_weights,
++    const torch::Tensor& topk_ids,
++    const torch::Tensor& w13,
++    const torch::Tensor& w13_scales,
++    const torch::Tensor& w2,
++    const torch::Tensor& w2_scales,
++    const torch::Tensor& output,
++    const torch::Tensor& remapped_hidden_states,
++    const torch::Tensor& rows_per_expert,
++    const torch::Tensor& unpermuted_row_to_permuted_row,
++    const torch::Tensor& gemm1_a,
++    const torch::Tensor& gemm1_a_scales,
++    const torch::Tensor& gemm1_output,
++    const torch::Tensor& act_output,
++    const torch::Tensor& gemm2_a,
++    const torch::Tensor& gemm2_a_scales,
++    const torch::Tensor& gemm2_output,
++    const c10::optional<at::Tensor>& expert_first_token_offset,
++    int64_t layer_index,
++    bool dry_create_descriptors) {
++  TORCH_CHECK(hidden_states.defined(), "hidden_states must be defined");
++  TORCH_CHECK(hidden_states.device().type() == at::kXPU,
++              "hidden_states must be XPU");
++  const at::Device device = hidden_states.device();
++  const at::DeviceGuard device_guard(device);
++
++  require_tensor(hidden_states, "hidden_states", at::ScalarType::BFloat16, 2, device);
++  require_tensor(topk_weights, "topk_weights", at::ScalarType::Float, 2, device);
++  require_tensor(topk_ids, "topk_ids", at::ScalarType::Int, 2, device);
++  require_tensor(w13, "w13", at::ScalarType::Char, 3, device);
++  require_tensor(w13_scales, "w13_scales", at::ScalarType::Float, 2, device);
++  require_tensor(w2, "w2", at::ScalarType::Char, 3, device);
++  require_tensor(w2_scales, "w2_scales", at::ScalarType::Float, 2, device);
++  require_tensor(output, "output", at::ScalarType::BFloat16, 2, device);
++  require_tensor(remapped_hidden_states,
++                 "remapped_hidden_states",
++                 at::ScalarType::Char,
++                 2,
++                 device);
++  require_tensor(rows_per_expert, "rows_per_expert", at::ScalarType::Int, 1, device);
++  require_tensor(unpermuted_row_to_permuted_row,
++                 "unpermuted_row_to_permuted_row",
++                 at::ScalarType::Int,
++                 2,
++                 device);
++  require_tensor(gemm1_a, "gemm1_a", at::ScalarType::Char, 2, device);
++  require_tensor(gemm1_a_scales, "gemm1_a_scales", at::ScalarType::Float, 2, device);
++  require_tensor(gemm1_output, "gemm1_output", at::ScalarType::BFloat16, 2, device);
++  require_tensor(act_output, "act_output", at::ScalarType::BFloat16, 2, device);
++  require_tensor(gemm2_a, "gemm2_a", at::ScalarType::Char, 2, device);
++  require_tensor(gemm2_a_scales, "gemm2_a_scales", at::ScalarType::Float, 2, device);
++  require_tensor(gemm2_output, "gemm2_output", at::ScalarType::BFloat16, 2, device);
++  if (expert_first_token_offset.has_value()) {
++    require_tensor(expert_first_token_offset.value(),
++                   "expert_first_token_offset",
++                   at::ScalarType::Int,
++                   1,
++                   device);
++  }
++
++  const int64_t num_rows = hidden_states.size(0);
++  const int64_t hidden_size = hidden_states.size(1);
++  const int64_t topk = topk_weights.size(1);
++  const int64_t num_moe_inputs = num_rows * topk;
++  const int64_t num_experts = rows_per_expert.numel();
++  const int64_t gemm1_n = gemm1_output.size(1);
++  TORCH_CHECK(gemm1_n % 2 == 0, "GEMM1 output N must be gate/up paired");
++  const int64_t inter_size = gemm1_n / 2;
++
++  require_shape(topk_weights, "topk_weights", {num_rows, topk});
++  require_shape(topk_ids, "topk_ids", {num_rows, topk});
++  require_shape(output, "output", {num_rows, hidden_size});
++  require_shape(unpermuted_row_to_permuted_row,
++                "unpermuted_row_to_permuted_row",
++                {num_rows, topk});
++  require_shape(remapped_hidden_states,
++                "remapped_hidden_states",
++                {num_moe_inputs, hidden_size});
++  require_shape(gemm1_a, "gemm1_a", {num_moe_inputs, hidden_size});
++  require_shape(gemm1_a_scales, "gemm1_a_scales", {num_moe_inputs, 1});
++  require_shape(w13, "w13", {num_experts, hidden_size, 2 * inter_size});
++  require_shape(w13_scales, "w13_scales", {num_experts, 2 * inter_size});
++  require_shape(gemm1_output, "gemm1_output", {num_moe_inputs, 2 * inter_size});
++  require_shape(act_output, "act_output", {num_moe_inputs, inter_size});
++  require_shape(gemm2_a, "gemm2_a", {num_moe_inputs, inter_size});
++  require_shape(gemm2_a_scales, "gemm2_a_scales", {num_moe_inputs, 1});
++  require_shape(w2, "w2", {num_experts, inter_size, hidden_size});
++  require_shape(w2_scales, "w2_scales", {num_experts, hidden_size});
++  require_shape(gemm2_output, "gemm2_output", {num_moe_inputs, hidden_size});
++  if (expert_first_token_offset.has_value()) {
++    require_shape(expert_first_token_offset.value(),
++                  "expert_first_token_offset",
++                  {num_experts});
++  }
++
++  int64_t descriptor_create_ok = 0;
++  int64_t handle_wrap_ok = 0;
++  if (dry_create_descriptors) {
++    const int dev_id = c10::xpu::getCurrentXPUStream().device_index();
++    at::Device current_device(at::kXPU, dev_id);
++    auto& engine = oneDNN::GpuEngineManager::Instance().get_engine(current_device);
++    validate_grouped_pd_and_handles(engine,
++                                    gemm1_a,
++                                    gemm1_a_scales,
++                                    w13,
++                                    w13_scales,
++                                    gemm1_output,
++                                    expert_first_token_offset,
++                                    num_moe_inputs,
++                                    hidden_size,
++                                    2 * inter_size,
++                                    num_experts,
++                                    dnnl::memory::format_tag::abc,
++                                    &handle_wrap_ok);
++    validate_grouped_pd_and_handles(engine,
++                                    gemm2_a,
++                                    gemm2_a_scales,
++                                    w2,
++                                    w2_scales,
++                                    gemm2_output,
++                                    expert_first_token_offset,
++                                    num_moe_inputs,
++                                    inter_size,
++                                    hidden_size,
++                                    num_experts,
++                                    dnnl::memory::format_tag::abc,
++                                    &handle_wrap_ok);
++    descriptor_create_ok = 1;
++  }
++
++  auto stats = torch::empty({20}, torch::dtype(torch::kInt64));
++  auto* out = stats.data_ptr<int64_t>();
++  out[0] = 1;
++  out[1] = device.index();
++  out[2] = layer_index;
++  out[3] = num_rows;
++  out[4] = topk;
++  out[5] = num_moe_inputs;
++  out[6] = hidden_size;
++  out[7] = inter_size;
++  out[8] = num_experts;
++  out[9] = 2 * inter_size;
++  out[10] = hidden_size;
++  out[11] = static_cast<int64_t>(dry_create_descriptors);
++  out[12] = descriptor_create_ok;
++  out[13] = static_cast<int64_t>(expert_first_token_offset.has_value());
++  out[14] = handle_wrap_ok;
++  out[15] = static_cast<int64_t>(w13.stride(0));
++  out[16] = static_cast<int64_t>(w13.stride(1));
++  out[17] = static_cast<int64_t>(w13.stride(2));
++  out[18] = static_cast<int64_t>(w2.stride(0));
++  out[19] = static_cast<int64_t>(w2.stride(1));
++  return stats;
++}

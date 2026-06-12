@@ -1,0 +1,46 @@
+{
+  "label": "qwen36-onednn-sidecar-probe-build-20260612bk",
+  "date": "2026-06-12",
+  "scope": "compile-only guarded oneDNN MoE sidecar probe for current local vllm-xpu-kernels stack",
+  "model_target": "nameistoken/Qwen3.6-35B-A3B-Quark-W8A8-INT8",
+  "source_repo": "/home/steve/src/vllm-xpu-kernels",
+  "tracking_patch": "patches/vllm-xpu-qwen36-onednn-sidecar-probe-20260612bk.diff",
+  "build_dir": "build/qwen36-sidecar-probe-20260612",
+  "configure_command": "source /opt/intel/oneapi/setvars.sh --force >/tmp/oneapi-setvars-qwen36-sidecar.log 2>&1 || true; cmake -S . -B build/qwen36-sidecar-probe-20260612 -G Ninja -DCMAKE_C_COMPILER=/opt/intel/oneapi/compiler/2026.0/bin/icx -DCMAKE_CXX_COMPILER=/opt/intel/oneapi/compiler/2026.0/bin/icpx -DVLLM_PYTHON_EXECUTABLE=/home/steve/.venvs/vllm-xpu/bin/python -DCMAKE_BUILD_TYPE=Release -DXPU_SPECIFIC_KERNELS_ENABLED=ON -DMOE_KERNELS_ENABLED=ON -DBASIC_KERNELS_ENABLED=OFF -DFA2_KERNELS_ENABLED=OFF -DGDN_KERNELS_ENABLED=OFF -DMQA_LOGITS_KERNELS_ENABLED=OFF -DXPUMEM_ALLOCATOR_ENABLED=OFF",
+  "build_command": "source /opt/intel/oneapi/setvars.sh --force >/tmp/oneapi-setvars-qwen36-sidecar.log 2>&1 || true; cmake --build build/qwen36-sidecar-probe-20260612 --target _xpu_C -j 8",
+  "configure_result": "pass",
+  "build_result": "pass",
+  "built_artifacts": {
+    "_xpu_C.abi3.so": {
+      "path": "build/qwen36-sidecar-probe-20260612/_xpu_C.abi3.so",
+      "size": "56M"
+    },
+    "libgrouped_gemm_xe_2.so": {
+      "path": "build/qwen36-sidecar-probe-20260612/libgrouped_gemm_xe_2.so",
+      "size": "7.9M"
+    },
+    "libgrouped_gemm_xe_default.so": {
+      "path": "build/qwen36-sidecar-probe-20260612/libgrouped_gemm_xe_default.so",
+      "size": "1.2M"
+    }
+  },
+  "symbol_check": {
+    "command": "nm -D -C build/qwen36-sidecar-probe-20260612/_xpu_C.abi3.so | grep qwen36_moe_onednn_sidecar_probe",
+    "result": "pass",
+    "symbol": "qwen36_moe_onednn_sidecar_probe(at::Tensor const&, at::Tensor const&, at::Tensor const&, at::Tensor const&, at::Tensor const&, at::Tensor const&, at::Tensor const&, at::Tensor const&, at::Tensor const&, at::Tensor const&, at::Tensor const&, at::Tensor const&, at::Tensor const&, at::Tensor const&, at::Tensor const&, at::Tensor const&, at::Tensor const&, at::Tensor const&, std::optional<at::Tensor> const&, long, bool)"
+  },
+  "live_endpoint_check": {
+    "url": "http://127.0.0.1:18080",
+    "health": "pass",
+    "served_model": "qwen36-35b-a3b-fp8",
+    "root": "/mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118",
+    "note": "The compile-only build was out-of-tree and was not installed into the live endpoint."
+  },
+  "probe_contract": {
+    "normal_path": "inert unless explicitly called by Python",
+    "descriptor_mode": "can dry-create oneDNN grouped matmul primitive descriptors from live tensor shapes",
+    "offset_handling": "requires expert_first_token_offset to wrap grouped source/destination USM handles; rows_per_expert alone is not treated as an offset tensor",
+    "fallback_requirement": "future live use must keep current xpu_fused_moe fallback and compare final-layer parity before returning sidecar output"
+  },
+  "speed_claim": "none"
+}

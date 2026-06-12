@@ -133,6 +133,57 @@ Additional larger bets to keep visible:
     `>200 tok/s` budget. This is the best chance of getting Intel/vLLM eyes on
     the exact bottleneck instead of another generic "B70 is slow" issue.
 
+## Compile-Only oneDNN Sidecar Probe Checkpoint
+
+Added after the live ABI sidecar plan as the first guarded C++ integration
+surface. This is not installed into the live endpoint and is not a speed claim.
+It proves the narrow probe surface compiles and links against the current local
+vLLM XPU kernel stack with oneDNN grouped matmul support.
+
+Artifacts:
+
+- `patches/vllm-xpu-qwen36-onednn-sidecar-probe-20260612bk.diff`
+- `data/qwen36-onednn-sidecar-probe-build-20260612bk.json`
+- Out-of-tree local build directory:
+  `/home/steve/src/vllm-xpu-kernels/build/qwen36-sidecar-probe-20260612`
+
+Source behavior:
+
+- Adds `qwen36_moe_onednn_sidecar_probe(...)` in
+  `csrc/xpu/onednn/qwen36_moe_sidecar.cpp`.
+- Registers the op under `_xpu_C` only when explicitly called from Python.
+- Validates the live ABI tensor device, dtype, contiguity, and expected shapes.
+- Dry-creates oneDNN grouped-matmul primitive descriptors for GEMM1 and GEMM2
+  using the live Qwen3.6 MoE shapes.
+- Separates `rows_per_expert` from true grouped memory offsets. The probe only
+  wraps grouped source/destination USM handles when an explicit
+  `expert_first_token_offset` tensor is supplied; row counts alone are not used
+  as offsets.
+
+Validation:
+
+- Configure passed with oneAPI IntelLLVM 2026.0:
+  `icx`/`icpx`, `XPU_SPECIFIC_KERNELS_ENABLED=ON`, `MOE_KERNELS_ENABLED=ON`,
+  and unrelated kernel families disabled for a narrower `_xpu_C` build.
+- Build passed:
+  `cmake --build build/qwen36-sidecar-probe-20260612 --target _xpu_C -j 8`.
+- Built module:
+  `build/qwen36-sidecar-probe-20260612/_xpu_C.abi3.so`, `56M`.
+- Symbol check passed:
+  `qwen36_moe_onednn_sidecar_probe(...)` is exported from the built module.
+- Live endpoint stayed healthy on `http://127.0.0.1:18080` and continued to
+  serve the current Quark INT8 model. The new module was not copied into the
+  active venv or production path.
+
+Next gate:
+
+1. Add Python-side optional call plumbing behind a new environment variable.
+2. Compute/provide `expert_first_token_offset` from `rows_per_expert` on XPU.
+3. Call the probe for one layer/rank in metadata/descriptor mode and keep
+   returning current `xpu_fused_moe` output.
+4. Extend from descriptor-only to execute-and-compare for one layer, with final
+   `max_abs_diff=0.0`, then broaden shape/layer coverage.
+
 ## Live ABI Sidecar Checkpoint And Bolder Queue
 
 Added after the disabled-by-default live ABI smoke and a fresh Localmaxxing /
