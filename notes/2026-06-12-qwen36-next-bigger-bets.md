@@ -32,6 +32,142 @@ Current speed anchor:
   MoE/kernel architecture improvement. Launch flags alone are unlikely to get
   there.
 
+## Accepted C1 Latency Decomposition 20260612dg
+
+Added a fresh latency-decomposition gate against the currently restored
+accepted endpoint. This did not change the model, endpoint launch flags, cache,
+or quality posture.
+
+Artifacts:
+
+- `scripts/qwen36-latency-decomp-summary.py`
+- `data/qwen36-quark-int8-tp4-accepted-latencydecomp-backend-stream-p512o512-20260612dg.json`
+- `data/qwen36-quark-int8-tp4-accepted-latencydecomp-backend-nonstream-p512o512-20260612dg.json`
+- `data/qwen36-quark-int8-tp4-accepted-latencydecomp-frontdoor-stream-p512o512-20260612dg.json`
+- `data/qwen36-quark-int8-tp4-accepted-latencydecomp-summary-20260612dg.json`
+- `data/qwen36-quark-int8-tp4-accepted-latencydecomp-summary-20260612dg.md`
+
+Commands:
+
+```bash
+/home/steve/.venvs/vllm-xpu/bin/python scripts/measure-openai-endpoint-metrics.py \
+  --base-url http://127.0.0.1:18080 \
+  --tokenizer /mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118 \
+  --prompt-tokens 512 \
+  --output-tokens 512 \
+  --prompt-kind preset \
+  --prompt-preset natural-chat \
+  --repeats 3 \
+  --warmup-output-tokens 32 \
+  --endpoint completions \
+  --mode stream \
+  --ignore-eos \
+  --skip-vram \
+  --out data/qwen36-quark-int8-tp4-accepted-latencydecomp-backend-stream-p512o512-20260612dg.json
+
+/home/steve/.venvs/vllm-xpu/bin/python scripts/measure-openai-endpoint-metrics.py \
+  --base-url http://127.0.0.1:18080 \
+  --tokenizer /mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118 \
+  --prompt-tokens 512 \
+  --output-tokens 512 \
+  --prompt-kind preset \
+  --prompt-preset natural-chat \
+  --repeats 3 \
+  --warmup-output-tokens 32 \
+  --endpoint completions \
+  --mode nonstream \
+  --ignore-eos \
+  --skip-vram \
+  --out data/qwen36-quark-int8-tp4-accepted-latencydecomp-backend-nonstream-p512o512-20260612dg.json
+
+/home/steve/.venvs/vllm-xpu/bin/python scripts/measure-openai-endpoint-metrics.py \
+  --base-url http://127.0.0.1:8000 \
+  --tokenizer /mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118 \
+  --prompt-tokens 512 \
+  --output-tokens 512 \
+  --prompt-kind preset \
+  --prompt-preset natural-chat \
+  --repeats 3 \
+  --warmup-output-tokens 32 \
+  --endpoint completions \
+  --mode stream \
+  --ignore-eos \
+  --skip-vram \
+  --out data/qwen36-quark-int8-tp4-accepted-latencydecomp-frontdoor-stream-p512o512-20260612dg.json
+
+python3 scripts/qwen36-latency-decomp-summary.py \
+  --artifact backend_stream=data/qwen36-quark-int8-tp4-accepted-latencydecomp-backend-stream-p512o512-20260612dg.json \
+  --artifact backend_nonstream=data/qwen36-quark-int8-tp4-accepted-latencydecomp-backend-nonstream-p512o512-20260612dg.json \
+  --artifact frontdoor_stream=data/qwen36-quark-int8-tp4-accepted-latencydecomp-frontdoor-stream-p512o512-20260612dg.json \
+  --output-json data/qwen36-quark-int8-tp4-accepted-latencydecomp-summary-20260612dg.json \
+  --markdown-out data/qwen36-quark-int8-tp4-accepted-latencydecomp-summary-20260612dg.md
+```
+
+Results:
+
+- Backend direct streaming:
+  `100.024 tok/s` corrected after first chunk,
+  `98.521 tok/s` e2e, client TTFT `88.111 ms`,
+  vLLM TTFT `77.045 ms`, queue `0.0116 ms`,
+  prefill `72.432 ms`, decode `9.998 ms/token`.
+- Backend direct non-streaming:
+  `99.044 tok/s` e2e, vLLM TTFT `72.523 ms`,
+  queue `0.0130 ms`, prefill `68.142 ms`,
+  decode `9.952 ms/token`.
+- Frontdoor streaming:
+  `99.971 tok/s` corrected after first chunk,
+  `98.528 tok/s` e2e, client TTFT `85.020 ms`,
+  vLLM TTFT `72.741 ms`, queue `0.0114 ms`,
+  prefill `67.972 ms`, decode `10.004 ms/token`.
+- Summary classification:
+  `device_or_vllm_runtime_bound_not_http_or_frontdoor`.
+- Backend stream client throughput versus vLLM decode histogram:
+  `+0.006%`.
+- Frontdoor stream versus backend direct stream:
+  `-0.053%`.
+- Backend non-stream e2e versus backend stream corrected:
+  `-0.980%`.
+- Current best from these runs:
+  `100.480 tok/s`, or `9.952 ms/token`.
+- Target:
+  `200 tok/s`, or `5.000 ms/token`.
+- Required per-token latency reduction:
+  `49.76%`.
+
+Decision:
+
+- Do not spend primary effort on HTTP, SSE, output streaming, or frontdoor
+  wrapping for the single-user decode target.
+- The current restored endpoint still behaves like prior accepted baselines:
+  about `100 tok/s`, with vLLM/device decode accounting for nearly all steady
+  output time.
+- The highest-upside exact paths remain:
+  graph-replay/custom-op observability, MoE/kernel runtime work,
+  TP/rank/collective topology changes, whole-token command graphing, or
+  verifier-safe multi-token execution.
+
+Immediate next experiments from this evidence:
+
+1. **Run a narrow no-stop source audit for async scheduling state.**
+   Current accepted engine-step logs already show async scheduling enabled in
+   the normal lane, and older no-async/spec lanes were used for determinism.
+   Do not relaunch just to chase `stream_interval` or non-stream output.
+
+2. **Build the custom-op route/output digest hook.**
+   The latency gate says the next useful signal must be inside graph replay or
+   XPU custom ops. A tiny replay-safe digest is more useful than more HTTP
+   profiling.
+
+3. **Prepare a route-fixture kernel floor rerun for an isolated XPU window.**
+   The endpoint currently owns all four cards. The next stop/restart window
+   should benchmark the exact first-decode route fixture against the current
+   installed extension and any candidate `vllm-xpu-kernels` build, then restore.
+
+4. **Use the existing offline-c1 result as closed evidence.**
+   The prior in-process vLLM c1 run was not materially faster than serving, so
+   a no-HTTP runner is useful only if it bypasses more than OpenAI/SSE: it must
+   bypass scheduler/multiprocess or become a static decode micro-engine.
+
 ## Graph Live-ABI Capture Run And Bigger Ideas 20260612df
 
 Added an opt-in graph-path live-ABI runner and corrected the route-ledger

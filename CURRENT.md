@@ -6,6 +6,24 @@ Date: 2026-06-12
 
 2026-06-12 notes update:
 
+- Added `scripts/qwen36-latency-decomp-summary.py` and fresh accepted-lane
+  c1 latency decomposition artifacts for the restored
+  `liveabi-graphcapture-20260612df` endpoint. Backend streaming
+  p512/o512/c1 measured `100.024 tok/s` corrected after first chunk and vLLM
+  decode histogram `9.998 ms/token`; backend non-streaming measured only
+  `99.044 tok/s` e2e with vLLM decode `9.952 ms/token`; frontdoor streaming
+  measured `99.971 tok/s` corrected with vLLM decode `10.004 ms/token`.
+  Queue time was effectively zero (`~0.012 ms`). The summary gate status is
+  `device_or_vllm_runtime_bound_not_http_or_frontdoor`: client throughput
+  matches vLLM decode within `0.006%`, frontdoor is within `-0.053%` of direct
+  backend, and non-streaming is not faster enough to matter. Current best is
+  `100.480 tok/s` from vLLM decode histogram, or `9.952 ms/token`; the
+  `200 tok/s` target requires `5.000 ms/token`, so this path needs about a
+  `49.76%` per-token latency reduction inside vLLM/XPU/runtime, not HTTP/SSE
+  changes. No model or endpoint configuration was changed.
+
+2026-06-12 notes update:
+
 - Added `scripts/run-qwen36-liveabi-graph-capture.sh`, an opt-in graph-path
   live-ABI capture runner, and tightened
   `scripts/qwen36-live-abi-routes-to-jsonl.py` so truncated, invalid, or
