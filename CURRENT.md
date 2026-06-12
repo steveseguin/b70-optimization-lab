@@ -6,6 +6,29 @@ Date: 2026-06-12
 
 2026-06-12 continuation:
 
+- Added a deterministic W8A8 grouped-GEMM parity packet for oneDNN versus the
+  current XPU grouped-GEMM output using real Qwen3.6 layer-9 routecapture6
+  counts and real Quark INT8 weights/scales. Both raw `abc` and packed `acb`
+  oneDNN weight layouts are bit-exact against the current XPU output; the
+  packed `acb` path is the important result. GEMM1 (`K=2048,N=256`) packed
+  `acb` measured mean `35.950 us`, p50 `34.775 us`; GEMM2
+  (`K=128,N=2048`) packed `acb` measured mean `26.078 us`, p50 `25.948 us`.
+  Both compare artifacts report `raw_equal=true`, `raw_diff_count=0`, and
+  `max_abs_diff=0.0`. This promotes oneDNN from a synthetic timing curiosity
+  to the next exactness-preserving integration candidate, but it is not an
+  endpoint speed claim. The next gate is a full layer-9 MoE island with packed
+  oneDNN GEMMs, exact activation/quant/gather parity, route-signature
+  primitive caching, and no extra host wait between the two GEMMs. New
+  artifacts:
+  `scripts/export-xpu-w8a8-gemm-case.py`,
+  `scripts/compare-w8a8-gemm-case.py`,
+  `scripts/run-onednn-grouped-int8-case.sh`,
+  `tools/onednn_grouped_int8_case_runner.cpp`, and
+  committed metadata/result summaries under
+  `data/qwen36-w8a8-gemm-parity-layer9-r1-20260612ax/`. The raw tensor
+  buffers are local-only because the expert-weight dumps exceed GitHub's file
+  limit; rerun the exporter to regenerate them.
+
 - Added a wider-opportunity addendum to
   `notes/2026-06-12-qwen36-next-bigger-bets.md` after the oneDNN
   route-window replay. The addendum records the next concrete gates:

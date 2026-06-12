@@ -24,6 +24,106 @@ Current speed anchor:
   MoE/kernel architecture improvement. Launch flags alone are unlikely to get
   there.
 
+## Latest OneDNN W8A8 Parity Gate
+
+The new oneDNN packet changes the near-term priority. We now have a
+deterministic file-based fixture that exports real Quark W8A8 grouped-GEMM
+inputs from layer-9 routecapture6 counts, runs the current XPU grouped GEMM,
+runs oneDNN grouped matmul, and compares the raw bf16 output bytes.
+The repository should track the exporter, runner, metadata, and JSON summaries;
+raw expert-weight buffers are regenerated locally because the largest dumps are
+over GitHub's normal file-size limit.
+
+Result:
+
+- GEMM1, shape `total_M=8,K=2048,N=256,E=256`, packed oneDNN `acb` weights:
+  mean `35.950 us`, p50 `34.775 us`, `raw_equal=true`,
+  `raw_diff_count=0`, `max_abs_diff=0.0`.
+- GEMM2, shape `total_M=8,K=128,N=2048,E=256`, packed oneDNN `acb` weights:
+  mean `26.078 us`, p50 `25.948 us`, `raw_equal=true`,
+  `raw_diff_count=0`, `max_abs_diff=0.0`.
+- Raw `abc` layout is exact too, but packed `acb` is the path to pursue:
+  it matches the current XPU bytes and cuts the standalone GEMM timings.
+
+Interpretation:
+
+- This is not an endpoint speed result. It is a stronger gate than the earlier
+  synthetic oneDNN probes because the output bytes match the current XPU
+  grouped-GEMM output exactly on model-shaped tensors, weights, and scales.
+- The construct cost is still around `100 ms`, so production use requires a
+  route-signature primitive and memory cache. Rebuilding primitives in the
+  decode loop is disqualified.
+- The next implementation candidate is a full layer-9 MoE island using packed
+  oneDNN GEMMs: quant/remap, GEMM1, SiLU/up-gate, quant2, GEMM2, top-k weight
+  and gather. The promotion gate is full-layer `max_abs_diff=0.0` against
+  current `xpu_fused_moe`, then timing with one command bundle or one host wait
+  for the two GEMMs.
+
+Immediate follow-up items:
+
+1. **Full layer-9 oneDNN MoE island.**
+   Build a routecapture6 layer-9 replay that swaps only the grouped GEMM calls
+   to packed oneDNN `acb`, leaves all other math exact, and compares final MoE
+   layer output against current `xpu_fused_moe`.
+
+2. **Route-signature primitive cache.**
+   Cache oneDNN primitive, src/weight/dst memory descriptors, and packed
+   weights by `(layer, GEMM side, active experts, rows_per_expert signature,
+   dtype, layout)`. Route signatures that repeat should pay offset updates
+   only, not primitive construction.
+
+3. **Packed expert-weight load artifact.**
+   Create a startup repack step that writes expert weights in the fastest
+   checked oneDNN `acb` layout, with source tensor checksum and parity metadata.
+   This makes packed weights an audited model-load artifact instead of a
+   benchmark-side conversion.
+
+4. **Two-GEMM command bundle.**
+   Measure whether GEMM1 and GEMM2 can run through a single queue submission
+   and one wait after the activation/quant boundary is included. The key metric
+   is end-to-end layer time, not isolated GEMM time.
+
+5. **OneDNN as the exact oracle for custom layerlets.**
+   Use the file runner as the regression oracle while developing ESIMD/SYCL
+   layerlets. If a custom kernel beats oneDNN, it still must match both the
+   current XPU output and the oneDNN packet.
+
+6. **Primitive-cache stress and reliability soak.**
+   Run thousands of route signatures from prompt-class traces through the cache
+   with repeated create/reuse/evict cycles. Record device-lost events, memory
+   growth, and output parity before any endpoint integration.
+
+New bigger bets from this gate:
+
+1. **oneDNN-backed MoE sidecar inside vLLM.**
+   Add a narrow sidecar for Qwen3.6 Quark W8A8 MoE layers that keeps packed
+   weights and primitives resident, while vLLM still owns scheduler, KV, dense
+   layers, and request handling. This is less invasive than replacing the
+   engine and more realistic than waiting for a generic XPU W8A8 path.
+
+2. **Route-class generated layerlets seeded by oneDNN parity.**
+   Generate a few exact layerlet kernels for the dominant route classes found
+   in live traces. oneDNN provides the verified reference and fallback; generated
+   kernels compete only for route classes where they can remove host waits or
+   fuse quant/activation boundaries.
+
+3. **Resident MoE worker with oneDNN primitives as tasks.**
+   Keep a device-side or long-lived host-side worker per rank that receives
+   compact route descriptors and dispatches prebuilt oneDNN or custom kernels
+   without per-token setup. This targets the launch/control floor directly.
+
+4. **Hybrid oneDNN/custom pipeline.**
+   Let oneDNN own the exact INT8 GEMMs while custom XPU kernels own remap,
+   dynamic quant, SiLU/up-gate, and gather. This avoids reimplementing the
+   hardest GEMM correctness path while still collapsing the smaller launch
+   boundaries around it.
+
+5. **Public B70 W8A8 grouped-GEMM challenge packet.**
+   Publish the tiny file-based GEMM fixtures, expected bytes, route counts, and
+   oneDNN/current-XPU timings as a focused challenge for Intel/vLLM. The ask is
+   precise: beat the packed oneDNN and current XPU timings while preserving raw
+   bf16 byte equality.
+
 External signals folded into the backlog:
 
 - Intel's grouped-GEMM issue says realistic route distributions matter for XPU
