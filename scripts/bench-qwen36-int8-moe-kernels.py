@@ -197,6 +197,142 @@ def elapsed_us(start: torch.xpu.Event, end: torch.xpu.Event) -> float:
     return float(start.elapsed_time(end) * 1000.0)
 
 
+def ceil_div(a: int, b: int) -> int:
+    return (a + b - 1) // b
+
+
+def compute_num_tokens_per_block(num_tokens: int,
+                                 num_experts_per_node: int) -> int:
+    for num_tokens_per_block in [32, 64, 128, 256, 512, 1024]:
+        num_blocks_per_seq = ceil_div(num_tokens, num_tokens_per_block)
+        if num_blocks_per_seq * num_experts_per_node <= num_tokens_per_block:
+            return num_tokens_per_block
+    return 1024
+
+
+def align_256(size: int) -> int:
+    return (size + 255) & ~255
+
+
+def make_prologue_workspace_layout(
+    *,
+    rows: int,
+    hidden_size: int,
+    inter_size: int,
+    num_experts: int,
+    topk: int,
+    dtype: torch.dtype,
+    block_k: int = 1,
+    scale_dtype: torch.dtype | None = None,
+) -> tuple[dict[str, tuple[int, int]], int]:
+    num_moe_inputs = rows * topk
+    num_tokens_per_block = compute_num_tokens_per_block(rows, num_experts)
+    num_blocks_per_seq = ceil_div(rows, num_tokens_per_block)
+
+    sizes = {
+        "permuted_row_to_unpermuted_row": num_moe_inputs * 4,
+        "permuted_token_selected_experts": num_moe_inputs * 4,
+        "unpermuted_row_to_permuted_row": num_moe_inputs * 4,
+        "blocked_expert_counts": num_experts * num_blocks_per_seq * 4,
+        "blocked_expert_counts_cumsum": num_experts * num_blocks_per_seq * 4,
+        "blocked_row_to_unpermuted_row": num_experts * rows * 4,
+        "expert_first_token_offset": (num_experts + 1) * 8,
+        "permuted_token_final_scales": num_moe_inputs * 4,
+        "overlapped_gemm1_gemm2_inputs":
+        num_moe_inputs * hidden_size *
+        torch.tensor([], dtype=dtype).element_size(),
+        "permuted_act_scales": 0
+        if scale_dtype is None else num_moe_inputs *
+        (hidden_size // block_k) *
+        torch.tensor([], dtype=scale_dtype).element_size(),
+    }
+
+    layout: dict[str, tuple[int, int]] = {}
+    offset = 0
+    for name, size in sizes.items():
+        aligned = align_256(size)
+        layout[name] = (offset, aligned)
+        offset += aligned
+    return layout, offset
+
+
+def workspace_view(
+    workspace: torch.Tensor,
+    layout: dict[str, tuple[int, int]],
+    name: str,
+    dtype: torch.dtype,
+    shape: tuple[int, ...],
+) -> torch.Tensor:
+    offset, _ = layout[name]
+    elems = 1
+    for dim in shape:
+        elems *= dim
+    bytes_needed = elems * torch.tensor([], dtype=dtype).element_size()
+    segment = workspace[offset:offset + bytes_needed]
+    return segment.view(dtype).view(*shape)
+
+
+def make_prologue_scratch(
+    *,
+    rows: int,
+    hidden_size: int,
+    inter_size: int,
+    num_experts: int,
+    topk: int,
+    dtype: torch.dtype,
+    device: str,
+) -> dict[str, Any]:
+    layout, workspace_bytes = make_prologue_workspace_layout(
+        rows=rows,
+        hidden_size=hidden_size,
+        inter_size=inter_size,
+        num_experts=num_experts,
+        topk=topk,
+        dtype=dtype,
+    )
+    workspace = torch.empty((workspace_bytes), dtype=torch.uint8, device=device)
+    num_moe_inputs = rows * topk
+    return {
+        "workspace": workspace,
+        "workspace_bytes": workspace_bytes,
+        "layout": layout,
+        "remapped_hidden_states": workspace_view(
+            workspace,
+            layout,
+            "overlapped_gemm1_gemm2_inputs",
+            dtype,
+            (num_moe_inputs, hidden_size),
+        ),
+        "unpermuted": workspace_view(
+            workspace,
+            layout,
+            "unpermuted_row_to_permuted_row",
+            torch.int32,
+            (rows, topk),
+        ),
+        "expert_offsets": workspace_view(
+            workspace,
+            layout,
+            "expert_first_token_offset",
+            torch.int64,
+            (num_experts + 1,),
+        ),
+        "rows_per_expert": torch.empty((num_experts),
+                                       device=device,
+                                       dtype=torch.int32),
+        "output": torch.empty((rows, hidden_size), device=device, dtype=dtype),
+        "gemm1_output": torch.empty((num_moe_inputs, 2 * inter_size),
+                                    device=device,
+                                    dtype=dtype),
+        "act_output": torch.empty((num_moe_inputs, inter_size),
+                                  device=device,
+                                  dtype=dtype),
+        "gemm2_output": torch.empty((num_moe_inputs, hidden_size),
+                                    device=device,
+                                    dtype=dtype),
+    }
+
+
 def make_events() -> tuple[torch.xpu.Event, torch.xpu.Event]:
     return (
         torch.xpu.Event(enable_timing=True),
@@ -514,6 +650,77 @@ def manual_int8_moe_preallocated_once(
     return scratch["output"]
 
 
+def manual_int8_moe_fused_prologue_once(
+    *,
+    hidden_states: torch.Tensor,
+    w13: torch.Tensor,
+    w13_scales: torch.Tensor,
+    w2: torch.Tensor,
+    w2_scales: torch.Tensor,
+    topk_weights: torch.Tensor,
+    topk_ids: torch.Tensor,
+    num_experts: int,
+    topk: int,
+    scratch: dict[str, Any],
+) -> torch.Tensor:
+    hidden_size = hidden_states.shape[1]
+    inter_size = w13.shape[-1] // 2
+
+    torch.ops._moe_C.fused_moe_prologue(
+        input=hidden_states,
+        input_scales=None,
+        token_selected_experts=topk_ids,
+        token_final_scales=topk_weights,
+        workspace=scratch["workspace"],
+        hidden_size=hidden_size,
+        inter_size=inter_size,
+        block_k=1,
+        ep_rank=0,
+        ep_size=1,
+        num_experts_on_rank=num_experts,
+    )
+    expert_offsets = scratch["expert_offsets"]
+    scratch["rows_per_expert"].copy_(
+        (expert_offsets[1:1 + num_experts] -
+         expert_offsets[:num_experts]).to(torch.int32))
+
+    gemm1_a, gemm1_a_scales = _per_token_quant_int8(
+        scratch["remapped_hidden_states"])
+    gemm1_scales = _normalize_int8_weight_scales(w13_scales, 2 * inter_size)
+    torch.ops._xpu_C.cutlass_grouped_gemm_w8a8_int8_interface(
+        ptr_A=gemm1_a,
+        ptr_A_scales=gemm1_a_scales,
+        ptr_B=w13,
+        ptr_B_scales=gemm1_scales,
+        ptr_bias=None,
+        ptr_D=scratch["gemm1_output"],
+        rows_per_expert=scratch["rows_per_expert"],
+        N=2 * inter_size,
+        K=hidden_size,
+        num_experts=num_experts,
+    )
+    fused_moe_activation(scratch["act_output"], scratch["gemm1_output"],
+                         "silu")
+    gemm2_a, gemm2_a_scales = _per_token_quant_int8(scratch["act_output"])
+    gemm2_scales = _normalize_int8_weight_scales(w2_scales, hidden_size)
+    torch.ops._xpu_C.cutlass_grouped_gemm_w8a8_int8_interface(
+        ptr_A=gemm2_a,
+        ptr_A_scales=gemm2_a_scales,
+        ptr_B=w2,
+        ptr_B_scales=gemm2_scales,
+        ptr_bias=None,
+        ptr_D=scratch["gemm2_output"],
+        rows_per_expert=scratch["rows_per_expert"],
+        N=hidden_size,
+        K=inter_size,
+        num_experts=num_experts,
+    )
+    torch.ops._moe_C.moe_gather(scratch["output"], scratch["gemm2_output"],
+                                topk_weights, scratch["unpermuted"],
+                                num_experts)
+    return scratch["output"]
+
+
 def summarize_topk_ids(topk_ids: torch.Tensor, topn: int = 16) -> dict[str, Any]:
     topk_cpu = topk_ids.detach().cpu().tolist()
     tuple_counts: dict[tuple[int, ...], int] = {}
@@ -641,6 +848,30 @@ def benchmark_rows(
     torch.xpu.synchronize()
     prealloc_max_abs_diff = float(
         (ref_output - scratch_output).abs().max().item())
+    prologue_scratch = make_prologue_scratch(
+        rows=rows,
+        hidden_size=hidden_size,
+        inter_size=inter_size,
+        num_experts=num_experts,
+        topk=topk,
+        dtype=dtype,
+        device=args.device,
+    )
+    prologue_output = manual_int8_moe_fused_prologue_once(
+        hidden_states=inputs["hidden_states"],
+        w13=inputs["w13"],
+        w13_scales=inputs["w13_scales"],
+        w2=inputs["w2"],
+        w2_scales=inputs["w2_scales"],
+        topk_weights=inputs["topk_weights"],
+        topk_ids=inputs["topk_ids"],
+        num_experts=num_experts,
+        topk=topk,
+        scratch=prologue_scratch,
+    )
+    torch.xpu.synchronize()
+    prologue_max_abs_diff = float(
+        (ref_output - prologue_output).abs().max().item())
     xpu_scratch_output = xpu_fused_moe(
         hidden_states=inputs["hidden_states"],
         w13=inputs["w13"],
@@ -664,6 +895,7 @@ def benchmark_rows(
     total_us = []
     scratch_total_us = []
     preallocated_total_us = []
+    prologue_preallocated_total_us = []
     component_us: dict[str, list[float]] = {
         "rows_zero": [],
         "remap": [],
@@ -753,6 +985,24 @@ def benchmark_rows(
         torch.xpu.synchronize()
         preallocated_total_us.append(elapsed_us(start, end))
 
+        start, end = make_events()
+        start.record()
+        manual_int8_moe_fused_prologue_once(
+            hidden_states=inputs["hidden_states"],
+            w13=inputs["w13"],
+            w13_scales=inputs["w13_scales"],
+            w2=inputs["w2"],
+            w2_scales=inputs["w2_scales"],
+            topk_weights=inputs["topk_weights"],
+            topk_ids=inputs["topk_ids"],
+            num_experts=num_experts,
+            topk=topk,
+            scratch=prologue_scratch,
+        )
+        end.record()
+        torch.xpu.synchronize()
+        prologue_preallocated_total_us.append(elapsed_us(start, end))
+
     def mean(values: list[float]) -> float:
         return sum(values) / max(1, len(values))
 
@@ -787,10 +1037,16 @@ def benchmark_rows(
         "total_us_mean": mean(total_us),
         "xpu_fused_moe_scratch_total_us_mean": mean(scratch_total_us),
         "preallocated_staged_total_us_mean": mean(preallocated_total_us),
+        "fused_prologue_staged_total_us_mean":
+        mean(prologue_preallocated_total_us),
+        "fused_prologue_workspace_bytes":
+        int(prologue_scratch["workspace_bytes"]),
         "components_us_mean": components,
         "manual_vs_xpu_fused_moe_max_abs_diff": max_abs_diff,
         "xpu_scratch_vs_xpu_fused_moe_max_abs_diff": xpu_scratch_max_abs_diff,
         "preallocated_vs_xpu_fused_moe_max_abs_diff": prealloc_max_abs_diff,
+        "fused_prologue_vs_xpu_fused_moe_max_abs_diff":
+        prologue_max_abs_diff,
         "iterations": args.iterations,
         "warmup": args.warmup,
     }
@@ -820,6 +1076,11 @@ def write_markdown(path: str, results: dict[str, Any]) -> None:
         "preallocated": max(
             (float(row.get("preallocated_vs_xpu_fused_moe_max_abs_diff", 0.0))
              for row in rows),
+            default=float("nan"),
+        ),
+        "fused_prologue": max(
+            (float(row.get("fused_prologue_vs_xpu_fused_moe_max_abs_diff",
+                           0.0)) for row in rows),
             default=float("nan"),
         ),
     }
@@ -858,15 +1119,37 @@ def write_markdown(path: str, results: dict[str, Any]) -> None:
         f"- Preallocated staged max abs diff: "
         f"`{_fmt(max_diffs['preallocated'])}`."
     )
+    lines.append(
+        f"- Fused-prologue staged max abs diff: "
+        f"`{_fmt(max_diffs['fused_prologue'])}`."
+    )
     lines.append("")
     lines.append("## Timing")
     lines.append("")
+    mean_xpu = sum(float(row.get("total_us_mean", 0.0))
+                   for row in rows) / max(1, len(rows))
+    mean_xpu_scratch = sum(
+        float(row.get("xpu_fused_moe_scratch_total_us_mean", 0.0))
+        for row in rows) / max(1, len(rows))
+    mean_prealloc = sum(
+        float(row.get("preallocated_staged_total_us_mean", 0.0))
+        for row in rows) / max(1, len(rows))
+    mean_prologue = sum(
+        float(row.get("fused_prologue_staged_total_us_mean", 0.0))
+        for row in rows) / max(1, len(rows))
+    lines.append(f"- Mean `xpu_fused_moe`: `{_fmt(mean_xpu)} us`.")
+    lines.append(
+        f"- Mean scratch `xpu_fused_moe`: `{_fmt(mean_xpu_scratch)} us`.")
+    lines.append(f"- Mean preallocated staged: `{_fmt(mean_prealloc)} us`.")
+    lines.append(
+        f"- Mean fused-prologue staged: `{_fmt(mean_prologue)} us`.")
+    lines.append("")
     lines.append(
         "| rows | route start | active experts | xpu fused us | "
-        "xpu scratch us | prealloc staged us | gemm1 us | gemm2 us | "
-        "act+quant2 us |"
+        "xpu scratch us | prealloc staged us | fused prologue staged us | "
+        "gemm1 us | gemm2 us | act+quant2 us |"
     )
-    lines.append("|---:|---:|---:|---:|---:|---:|---:|---:|---:|")
+    lines.append("|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|")
     for row in rows:
         comp = row.get("components_us_mean", {})
         topk = row.get("topk_summary", {})
@@ -876,6 +1159,7 @@ def write_markdown(path: str, results: dict[str, Any]) -> None:
             f"{_fmt(row.get('total_us_mean'))} | "
             f"{_fmt(row.get('xpu_fused_moe_scratch_total_us_mean'))} | "
             f"{_fmt(row.get('preallocated_staged_total_us_mean'))} | "
+            f"{_fmt(row.get('fused_prologue_staged_total_us_mean'))} | "
             f"{_fmt(comp.get('gemm1'))} | "
             f"{_fmt(comp.get('gemm2'))} | "
             f"{_fmt(comp.get('activation_plus_quant2'))} |"
@@ -899,6 +1183,24 @@ def write_markdown(path: str, results: dict[str, Any]) -> None:
         lines.append(
             "- This is a baseline route replay with the current non-fused "
             "activation and quantization path."
+        )
+    if max_diffs["fused_prologue"] == 0.0:
+        lines.append(
+            "- The fused-prologue staged path is exact against "
+            "`xpu_fused_moe` for this route replay."
+        )
+        if mean_prologue > mean_prealloc:
+            lines.append(
+                "- The fused-prologue staged path is slower than the simpler "
+                "preallocated staged path in this full-MoE screen. Do not "
+                "wire it into the endpoint unless the downstream GEMM ABI can "
+                "consume prologue offsets directly or the prologue is fused "
+                "with more downstream work."
+            )
+    else:
+        lines.append(
+            "- The fused-prologue staged path is not exact against "
+            "`xpu_fused_moe`; do not use it as an endpoint candidate."
         )
     lines.append(
         "- Compare `xpu fused us` with the current budget target of roughly "

@@ -744,3 +744,21 @@ vLLM/XPU FP8 work:
     exact out-variants, fixed-shape static decode bundles, target-verified
     speculative transactions, DPAS/XMX counter proof, route-aware AOT MoE
     layerlets, host-stack stress gates, and production split-lane routing.
+30. Extended `scripts/bench-qwen36-int8-moe-kernels.py` with a full-layer
+    `fused_prologue_staged` replay path and ran the layer-9 routecapture6
+    rows=1 screen:
+    `data/qwen36-quark-int8-moe-routecapture6-layer9-prologue-staged-20260612ar.md`
+    and `.json`. The new path is exact against current `xpu_fused_moe`
+    (`max_abs_diff=0.0`) but not fast enough and not better than the simpler
+    staged lower bound: mean `xpu_fused_moe` was `288.237 us/layer`, scratch
+    `xpu_fused_moe` was `258.465 us/layer`, exact manual preallocated staged
+    was `216.361 us/layer`, and fused-prologue staged was
+    `284.705 us/layer`. Decision: do not wire the existing prologue ABI into
+    the endpoint. The exposed prologue path emits expert offsets, while the
+    exposed W8A8 grouped-GEMM path consumes `int32 rows_per_expert`, so the
+    conversion/glue erases the small prologue-only win. The next useful
+    non-speculative kernel work is offset-native W8A8 grouped GEMM,
+    quant/gather out-variants, or a larger one-dispatch/persistent MoE layerlet
+    that fuses prologue with downstream work. The accepted TP4 backend was
+    restored afterward; provenance passed all exact sentinels in
+    `data/qwen36-quark-int8-tp4-accepted-provenance-after-prologuestaged-20260612as.json`.

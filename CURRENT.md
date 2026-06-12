@@ -6,6 +6,26 @@ Date: 2026-06-12
 
 2026-06-12 continuation:
 
+- Extended `scripts/bench-qwen36-int8-moe-kernels.py` with a full-layer
+  `fused_prologue_staged` replay path, then ran layer-9 routecapture6 rows=1
+  starts `0:64:4`. The path is exact against current `xpu_fused_moe`
+  (`max_abs_diff=0.0`), but the full path is not a speed win: mean
+  `xpu_fused_moe` is `288.237 us/layer`, scratch `xpu_fused_moe` is
+  `258.465 us/layer`, exact manual preallocated staged is
+  `216.361 us/layer`, and fused-prologue staged is `284.705 us/layer`. The
+  exposed prologue ABI emits expert offsets while the current W8A8 grouped GEMM
+  op consumes `int32 rows_per_expert`, so the conversion/glue erases the small
+  prologue-only win. Decision: do not wire the current prologue path into the
+  endpoint. Next productive non-speculative work is either an offset-native
+  W8A8 grouped-GEMM ABI, exact quant/gather out-variants, or a larger
+  one-dispatch/persistent MoE layerlet that fuses prologue with downstream
+  work. Accepted TP4 service was restored afterward and provenance passed all
+  exact sentinels. Artifacts:
+  `data/qwen36-quark-int8-moe-routecapture6-layer9-prologue-staged-20260612ar.md`,
+  `data/qwen36-quark-int8-moe-routecapture6-layer9-prologue-staged-20260612ar.json`,
+  and
+  `data/qwen36-quark-int8-tp4-accepted-provenance-after-prologuestaged-20260612as.json`.
+
 - Added and ran a route-exact prologue screen for the existing
   `torch.ops._moe_C.fused_moe_prologue` path:
   `scripts/bench-qwen36-moe-prologue.py`. On layer-9 routecapture6 rows=1

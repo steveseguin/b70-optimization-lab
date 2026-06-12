@@ -2654,3 +2654,66 @@ New concrete items to try:
     canaries, route-replay numeric parity, and a small BF16 differential/logit
     rank probe. Token sentinels are necessary, but the BF16/logit lane catches
     near-miss probability drift before it becomes production instability.
+
+## 2026-06-12 Full-Layer Fused Prologue Staged Screen
+
+Artifacts:
+
+- Updated harness: `scripts/bench-qwen36-int8-moe-kernels.py`.
+- JSON:
+  `data/qwen36-quark-int8-moe-routecapture6-layer9-prologue-staged-20260612ar.json`.
+- Markdown:
+  `data/qwen36-quark-int8-moe-routecapture6-layer9-prologue-staged-20260612ar.md`.
+- Restore log:
+  `data/qwen36-quark-int8-tp4-accepted-restored-after-prologuestaged-20260612as.log`.
+- Provenance guard:
+  `data/qwen36-quark-int8-tp4-accepted-provenance-after-prologuestaged-20260612as.json`.
+
+Result:
+
+- The full-layer fused-prologue staged path is exact against current
+  `xpu_fused_moe`: max abs diff `0.0`.
+- Mean `xpu_fused_moe`: `288.237 us/layer`.
+- Mean scratch `xpu_fused_moe`: `258.465 us/layer`.
+- Mean exact manual preallocated staged: `216.361 us/layer`.
+- Mean fused-prologue staged: `284.705 us/layer`.
+- Restored accepted backend health passed after `64s`; provenance passed all
+  exact sentinels; frontdoor remained paused with local bypass enabled and
+  `0` active / `0` queued generations.
+
+Decision:
+
+- Do not wire the current exposed `fused_moe_prologue` path into the endpoint.
+  It is exact, but it is not a meaningful full-layer speed win.
+- Root cause: the prologue path emits `expert_first_token_offset`, while the
+  exposed W8A8 grouped-GEMM op consumes `int32 rows_per_expert`. The required
+  offset-to-count conversion and current glue erase the prologue-only substep
+  win.
+- The useful next branch is not another endpoint flag. It is one of:
+  offset-native W8A8 grouped GEMM, exact quant/gather out-variant cleanup, or a
+  larger one-dispatch/persistent MoE layerlet that lets prologue outputs feed
+  downstream work without returning through today's Python/Torch ABI boundary.
+
+Concrete next kernel ideas:
+
+1. **Expose offset-native W8A8 grouped GEMM.**
+   Add a W8A8 INT8 grouped-GEMM binding that consumes
+   `expert_first_token_offset` directly, matching the lower-level grouped-GEMM
+   scheduler shape. Gate it with route-replay exactness and compare it against
+   both current `rows_per_expert` GEMM and the staged preallocated lower bound.
+
+2. **Add an offset-to-count XPU helper only as a control.**
+   A tiny helper that writes `int32 rows_per_expert` from offsets may recover
+   some glue overhead, but it still leaves an extra operation. Use it as an ABI
+   control, not as the main bet.
+
+3. **Move quant/gather to out-variant APIs.**
+   The staged path is still paying tensor-return allocation boundaries for
+   dynamic quantization and gather. Exact out-variants are lower risk than
+   arithmetic fusion and should be measured before another endpoint attempt.
+
+4. **Keep the persistent/one-dispatch layerlet as the main non-speculative bet.**
+   The full-layer fused-prologue result confirms that small standalone
+   prologue savings are insufficient. The next plausible `>200 tok/s` path
+   needs to remove multiple phase boundaries at once or amortize target forward
+   work with exact verifier-safe speculation.
