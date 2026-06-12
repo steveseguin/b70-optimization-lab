@@ -968,3 +968,96 @@ Implication:
      speedup required before writing the persistent kernel.
 - Layer `9` remains first because the exact-ID hot coverage is excellent and
   the stress window range is broad enough to expose fallback overhead.
+
+## 2026-06-12 Follow-Up Ideas Added After Hotset Split
+
+Current constraint:
+
+- The accepted endpoint currently occupies essentially all four B70 cards. Do
+  CPU-safe modeling, dry runs, and source inspection while the endpoint is live.
+  Real XPU grouped-GEMM or fused-MoE microbenchmarks need a deliberate
+  maintenance window where the accepted backend is stopped, benchmarked, and
+  restored with the provenance guard.
+
+Immediate things to try next:
+
+1. **Hotset split floor model without GPU allocation.**
+   Extend the existing W8A8 kernel-floor or route-replay scripts to estimate
+   hot rows, cold rows, active hot experts, active cold experts, and launch
+   counts per layer/window. The goal is to answer whether top-64 needs a
+   persistent/fused kernel to win, or whether a simpler two-launch benchmark is
+   worth testing during a maintenance window.
+2. **Layer `9` top-64 GPU microbench during a backend stop.**
+   First test only the routecapture6 exact windows with tiny iteration counts,
+   then add the math stress windows. Record full-table, hot+full-cold, and
+   hot+compact-cold timings. If hot+full-cold is slower, stop spending time on
+   two independent grouped GEMMs and move straight to persistent/fused work.
+3. **Grouped-GEMM policy override sweep on exact route windows.**
+   Inspect and exercise the local XPU grouped-GEMM policy override path against
+   the captured layer `9` and `20` windows. The route distributions are now
+   realistic enough that a policy sweep can be more informative than synthetic
+   uniform expert-count tests.
+4. **Top-64 tile-native repack cache.**
+   Build a benchmark-only repacked hotset table where the 64 hot experts are
+   physically adjacent and aligned for the current XPU tile shape. Cold experts
+   remain exact and unchanged. This should reveal whether the main win is from
+   better memory/layout locality or from eliminating launches.
+5. **Quality gate before endpoint promotion.**
+   Every candidate above must pass: exact token sentinels, route-replay numeric
+   comparison against the current kernel, prompt-class canaries, and a BF16
+   differential spot check. A speed-only MoE microbench is not enough.
+
+Bigger, bolder ideas to keep on the board:
+
+1. **One resident hotset layerlet per high-impact MoE layer.**
+   Keep top-64 hot expert weights/scales resident in a layer-local persistent
+   kernel, route hot rows in-kernel, and enqueue rare cold rows to the exact
+   existing path. This attacks both launch overhead and small-M grouped-GEMM
+   underutilization while preserving the same top-k experts and weights.
+2. **Fuse hot expert gate/up/SwiGLU/down for the common case.**
+   For hot rows only, test a fused exact-arithmetic layerlet that avoids
+   materializing the intermediate activation between expert projections. The
+   cold fallback remains the existing path. This is larger than a repack but
+   could remove memory traffic and launches at the actual decode bottleneck.
+3. **Adaptive per-request hotset cache.**
+   Use the first few decode tokens or prompt-class route history to choose a
+   per-layer hotset for the request, then run exact cold fallback for misses.
+   The math is unchanged; only the hot table changes. The risk is scheduler and
+   cache churn, so the first version should be offline replay only.
+4. **Hybrid TP/EP for MoE layers only.**
+   Keep dense/attention TP4, but route MoE experts with expert affinity across
+   cards so hot experts are not always narrow TP shards. This is a bigger
+   architecture change and may introduce all-to-all overhead, but it is one of
+   the few no-quality-loss paths that could materially improve single-request
+   MoE utilization on four GPUs.
+5. **Static c1 latency lane separate from production aggregate lane.**
+   Maintain a warmed, shape-bucketed, low-concurrency service for c1 latency
+   experiments while a separate endpoint handles aggregate throughput. This
+   would let command graphs, static memory pools, and hotset caches specialize
+   aggressively without constraining the eventual production server.
+6. **Device-resident scheduler metadata for decode.**
+   The recurring stability/performance hazards around metadata copies suggest
+   moving more decode-step metadata, block-table decisions, and top-k route
+   state onto device-resident buffers. This is not a weight/model change, but
+   it could reduce host fences and lower device-lost risk.
+7. **Resident-state verifier speculation, not external refill verification.**
+   External prompt-logprob/refill checks already diverged from accepted graph
+   state. The quality-preserving speculation path is an in-engine copy-on-write
+   fork of KV/GDN/request state where the Quark verifier accepts or rejects
+   candidate tokens transactionally.
+8. **Backend bakeoff with the exact same INT8 weights.**
+   Keep `nameistoken/Qwen3.6-35B-A3B-Quark-W8A8-INT8` fixed, but compare the
+   local vLLM/XPU path against Intel-native or Triton/oneDNN/SYCL prototype
+   paths for just the captured MoE layerlets. This can expose whether the
+   current limit is vLLM scheduling, the grouped-GEMM kernel, or B70 hardware
+   utilization.
+9. **Upstreamable hotset repro packet.**
+   Package the layer `9` and `20` route windows, top-64 manifests, cold fallback
+   counts, and a minimal grouped-GEMM benchmark into a standalone repro. This is
+   the clearest way to ask Intel/vLLM maintainers for a persistent XPU W8A8 MoE
+   kernel without requiring them to run the full 35B model.
+10. **Reliability soak as part of speed validation.**
+    Treat any `>100 tok/s` improvement as provisional until it survives a
+    restart/restore cycle, provenance guard, repeated p512/o512 c1 run, and a
+    short mixed prompt-class soak. The target is not just a fast single screen;
+    it is a fast path that can become production.

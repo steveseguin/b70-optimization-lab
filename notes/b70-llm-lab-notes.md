@@ -297,6 +297,18 @@ Current Qwen3.6 INT8 direction:
     top-64 hotsets a real target, but a naive two-launch hot/cold GEMM can lose
     to launch overhead. The next useful implementation should be persistent or
     fused around the cold fallback, not just two independent grouped GEMMs.
+34. Added a follow-up backlog to
+    `notes/2026-06-12-qwen36-next-bigger-bets.md` after the hotset split
+    results. Immediate next items are a CPU-safe hotset split floor model,
+    layer `9` top-64 GPU microbench during a deliberate backend stop,
+    grouped-GEMM policy sweeps on captured route windows, a tile-native hotset
+    repack cache, and a strict quality gate before endpoint promotion. Larger
+    ideas now tracked include persistent hotset layerlets, fused hot expert
+    gate/up/SwiGLU/down, adaptive per-request hotsets, MoE-only TP/EP hybrid
+    routing, a static c1 latency lane, device-resident scheduler metadata,
+    resident-state verifier speculation, exact-weight backend bakeoffs, an
+    upstreamable hotset repro packet, and reliability soak as part of every
+    speed claim.
 
 ## 2026-05-10 MiniMax AutoRound Addendum
 
