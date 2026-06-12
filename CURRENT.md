@@ -6,6 +6,29 @@ Date: 2026-06-12
 
 2026-06-12 notes update:
 
+- Added `scripts/qwen36-quark-int8-xpu-kernel-path-audit.py` plus a "Kernel
+  Path Audit And Bigger Bets 20260612cv" section to
+  `notes/2026-06-12-qwen36-next-bigger-bets.md`. This was a static/runtime
+  audit only; the accepted endpoint on `18080` was inspected but not changed.
+  The current Quark W8A8 INT8 path does select the XPU INT8 MoE backend, but
+  runtime execution remains a multi-stage wrapper: remap, INT8 quant, W8A8
+  grouped GEMM 1, activation, INT8 quant, W8A8 grouped GEMM 2, and gather. The
+  installed `_xpu_C.abi3.so` exports the base W8A8 grouped GEMM and INT8 quant
+  ops, but not the route-aware offset or active-offset W8A8 symbols that exist
+  in the dirty source tree. Decision: the next meaningful no-quality-loss gate
+  is to rebuild or isolate `vllm-xpu-kernels` with those symbols exported, run
+  ABI smoke tests, replay the first-decode route fixture with exact tensor
+  comparison, and only then launch a diagnostic endpoint. New bigger bets added:
+  persistent topk-8 c1 MoE island, route-class kernel generation, long-lived
+  per-GPU MoE workers, hot expert duplication, TP+EP/TP2+replica topology
+  lanes, a no-server c1 runner, whole-token command-list capture, target-owned
+  branch farming after state transactions, and an upstream maintainer challenge
+  packet. New artifacts:
+  `data/qwen36-quark-int8-xpu-kernel-path-audit-20260612cv.json` and
+  `data/qwen36-quark-int8-xpu-kernel-path-audit-20260612cv.md`.
+
+2026-06-12 notes update:
+
 - Added an "External Leads And Bigger Bets Refresh 20260612cu" section to
   `notes/2026-06-12-qwen36-next-bigger-bets.md` and saved fresh public
   Localmaxxing snapshots. The exact-model B70/vLLM query still has one row at

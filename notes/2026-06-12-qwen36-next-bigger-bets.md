@@ -29,6 +29,134 @@ Current speed anchor:
   MoE/kernel architecture improvement. Launch flags alone are unlikely to get
   there.
 
+## Kernel Path Audit And Bigger Bets 20260612cv
+
+Added after a static/runtime audit of the current Quark W8A8 INT8 XPU MoE path.
+This is a notes/backlog update only. The accepted endpoint on `18080` was
+inspected but not changed.
+
+Audit findings:
+
+- Current Quark W8A8 INT8 dispatch does select the XPU INT8 MoE backend:
+  `QuarkW8A8Int8MoEMethod` calls `select_int8_moe_backend`, XPU is prioritized
+  before Triton on XPU, and `XPUExpertsInt8` passes `is_int8=True` into
+  `xpu_fused_moe`.
+- The runtime path is still a multi-stage MoE wrapper: remap, per-token INT8
+  quant, W8A8 grouped GEMM 1, activation, per-token INT8 quant, W8A8 grouped
+  GEMM 2, gather. That leaves several per-token launches and temporary tensors
+  in the c1 decode path.
+- The installed `_xpu_C.abi3.so` exports
+  `cutlass_grouped_gemm_w8a8_int8_interface`, `per_token_quant_int8_xpu`, and
+  `silu_and_mul_quant_int8_xpu`, but it does not export the route-aware
+  `cutlass_grouped_gemm_w8a8_int8_offsets_interface` or
+  `cutlass_grouped_gemm_w8a8_int8_active_offsets_interface` symbols.
+- The dirty `vllm-xpu-kernels` source tree has those offset/active-offset
+  prototypes, so the next useful engineering gate is rebuild/ABI validation,
+  not another endpoint flag pass.
+- `VLLM_XPU_INT8_MOE_MIXED_WORKSPACE=1` and
+  `VLLM_XPU_FUSED_MOE_FUSE_SILU_QUANT=1` remain rejected for promotion from
+  earlier notes: one was slower, the other failed quality. Do not re-spend
+  endpoint time on those toggles unless the implementation changes.
+
+Fresh source-backed signals:
+
+- Intel/vLLM's Arc Pro B-series writeup says naive MoE GEMM suffers from
+  launch overhead, scheduling latency, and gate-dependent stalls; their
+  persistent zero-gap kernel is the kind of architecture we need to reproduce
+  for this exact W8A8 path.
+- Intel's `0.10.2-xpu` container notes report persistent MoE GEMM plus fused
+  activation reducing MoE bubbles, with `2.6x` end-to-end improvement on a
+  related Qwen3-30B-A3B workload.
+- Intel's grouped-GEMM tuning issue calls out runtime route distribution and
+  tile configuration as key grouped-GEMM performance variables, with decode
+  routing often long-tailed.
+- The PyTorch locality-aware MoE post is NVIDIA/Triton-oriented, but the lesson
+  transfers: schedule/layout choices around grouped GEMM can be worth multiples
+  before model quality changes.
+- The ROCm/vLLM MoE playbook reinforces that TP, DP, and EP are latency versus
+  throughput topology choices. It is not an XPU recipe, but it is a useful
+  checklist for our TP4, TP2+replicas, and possible TP+EP experiments.
+
+Other bigger, bolder things to keep in the queue:
+
+1. **Rebuild-to-proof route-aware W8A8.**
+   Build the local `vllm-xpu-kernels` candidate so the offset/active-offset
+   W8A8 INT8 symbols are actually exported, then run a no-server ABI smoke
+   and first-decode route fixture tensor compare before touching the endpoint.
+
+2. **Persistent topk-8 c1 MoE island.**
+   Treat the current shape as a custom target: `hidden=2048`,
+   `intermediate=512`, `topk=8`, one decode token, TP-local Quark scales and
+   packed weights. The desired primitive fuses remap, quant, GEMM1,
+   activation, quant, GEMM2, and gather/reduce for c1 without changing math.
+
+3. **Route-class kernel generation.**
+   From accepted route traces, generate a small set of specialized route
+   classes: low-union, repeated hot tuple, broad-route, and cold fallback.
+   Use exact route IDs after the router runs; this changes scheduling/layout,
+   not selected experts.
+
+4. **Persistent per-GPU MoE worker.**
+   Keep expert weights, scratch, and command descriptors resident inside a
+   long-lived SYCL/Level Zero worker loop. Feed route descriptors through a
+   ring buffer to remove host launch bubbles from the common one-token path.
+
+5. **Hot expert residency and duplication.**
+   Spend spare VRAM on duplicated hot experts, hot expert pairs, or prepacked
+   hot route classes. Cold routes fall back to the generic exact path. This is
+   a memory-for-latency bet with a clean correctness boundary.
+
+6. **TP+EP and TP2+replica topology lane.**
+   Test whether c1 latency improves when expert work is distributed by expert
+   ownership rather than full TP4 sharding. Keep this as a diagnostic lane
+   until exact route fixtures show parity and latency benefit.
+
+7. **C1 latency runner outside serving.**
+   Build a minimal runner around the accepted model executor or a single-layer
+   MoE/attention loop. The first purpose is to find the true device-side c1
+   lower bound without vLLM multiprocess/result-path overhead.
+
+8. **Whole-token command-list capture.**
+   For stable decode buckets, experiment with a patchable command-list replay
+   covering MoE, attention, residual, and sampler boundaries. This only wins if
+   it preserves exact output while reducing command submission jitter.
+
+9. **Target-owned branch farm after state transactions.**
+   Revisit MTP/draft ideas only after KV/GDN/sampler state can be copied,
+   committed, and rolled back. The emitted token must remain target-verified by
+   the same Quark W8A8 model.
+
+10. **Maintainer challenge packet.**
+    Turn the compact route fixture, shape summary, symbol audit, tensor
+    checksums, and current profiler evidence into a small upstream issue or
+    benchmark request. Ask for a persistent W8A8 MoE target against this exact
+    shape instead of a vague "B70 is slow" report.
+
+Immediate next order:
+
+1. Rebuild or isolate `vllm-xpu-kernels` with the route-aware W8A8 symbols
+   exported.
+2. Run ABI smoke tests for those symbols outside the server.
+3. Replay the first-decode route fixture and compare tensors against the
+   current accepted path.
+4. Only then launch a diagnostic endpoint and measure c1 p512/o512 speed,
+   provenance sentinels, and quality canaries.
+
+Artifacts for this pass:
+
+- `scripts/qwen36-quark-int8-xpu-kernel-path-audit.py`
+- `data/qwen36-quark-int8-xpu-kernel-path-audit-20260612cv.json`
+- `data/qwen36-quark-int8-xpu-kernel-path-audit-20260612cv.md`
+
+Reference links captured during the scan:
+
+- `https://vllm.ai/blog/2025-11-11-intel-arc-pro-b`
+- `https://github.com/intel/ai-containers/blob/main/vllm/0.10.2-xpu.md`
+- `https://github.com/intel/intel-xpu-backend-for-triton/issues/6389`
+- `https://pytorch.org/blog/accelerating-moe-model/`
+- `https://rocm.blogs.amd.com/software-tools-optimization/vllm-moe-guide/README.html`
+- `https://github.com/vllm-project/vllm-xpu-kernels`
+
 ## External Leads And Bigger Bets Refresh 20260612cu
 
 Added after the route-fixture planner pass and a fresh outside scan. This is a
