@@ -5862,3 +5862,214 @@ Bigger, bolder ideas unlocked by this result:
    latency lane rather than forcing it into every request shape. Route common
    c1 chat shapes to the certified island lane; keep the accepted vLLM lane for
    general 32K/capacity traffic.
+
+## 2026-06-12 Resident Full-Layer Gather Gate
+
+Patch:
+
+- Added `scripts/export-qwen36-onednn-gather-fixtures.py`.
+- Extended `tools/onednn_moe_island_resident_runner.cpp` with opt-in
+  `ONEDNN_PAIR_INCLUDE_GATHER=1`.
+- The resident runner now supports the complete exact layer-9 route-window
+  island:
+  oneDNN GEMM1 -> exact BF16 SiLU+INT8 quant bridge -> oneDNN GEMM2 ->
+  `_moe_C.moe_gather`-equivalent BF16 top-k gather.
+- The gather fixture exporter writes only small per-window files:
+  `moe_topk_weights.f32.bin`, `moe_topk_ids.i64.bin`,
+  `moe_unpermuted.i32.bin`, and `moe_ref_output.bf16.bin`. It deliberately
+  does not rewrite the large GEMM weight/input files.
+
+Commands:
+
+```bash
+python3 -m py_compile scripts/export-qwen36-onednn-gather-fixtures.py
+
+RUNNER_BIN=/tmp/qwen36-onednn-moe-island-resident-gather-compile-20260612bg \
+bash scripts/run-onednn-moe-island-resident.sh --compile-only
+
+PYTHONPATH=/home/steve/src/vllm:/home/steve/src/vllm-xpu-kernels \
+LD_LIBRARY_PATH=/home/steve/src/vllm-xpu-kernels/vllm_xpu_kernels:/home/steve/.venvs/vllm-xpu/lib:/home/steve/.venvs/vllm-xpu/lib/python3.12/site-packages/torch/lib:${LD_LIBRARY_PATH:-} \
+/home/steve/.venvs/vllm-xpu/bin/python scripts/export-qwen36-onednn-gather-fixtures.py \
+  --manifest data/qwen36-onednn-moe-island-layer9-r1-multiwindow-20260612bc/resident_multiwindow_full_silu_quant_manifest_20260612bf.csv \
+  --out-json data/qwen36-onednn-moe-island-layer9-r1-multiwindow-20260612bc/gather_fixture_export_20260612bg.json
+
+RUNNER_BIN=/tmp/qwen36-onednn-moe-island-resident-gather-compile-20260612bg \
+ONEDNN_SKIP_COMPILE=1 \
+ONEDNN_PAIR_INCLUDE_ACTIVATION_QUANT=1 \
+ONEDNN_PAIR_INCLUDE_GATHER=1 \
+WARMUP=80 \
+ITERATIONS=1000 \
+OUT_JSON=data/qwen36-onednn-moe-island-layer9-r1-multiwindow-20260612bc/resident_multiwindow_full_island_gather_result_20260612bg.json \
+MANIFEST=data/qwen36-onednn-moe-island-layer9-r1-multiwindow-20260612bc/resident_multiwindow_full_silu_quant_manifest_20260612bf.csv \
+bash scripts/run-qwen36-onednn-resident-multiwindow.sh
+```
+
+Artifacts:
+
+- `data/qwen36-onednn-moe-island-layer9-r1-multiwindow-20260612bc/gather_fixture_export_20260612bg.json`.
+- `data/qwen36-onednn-moe-island-layer9-r1-multiwindow-20260612bc/resident_multiwindow_full_island_gather_smoke_20260612bg.json`.
+- `data/qwen36-onednn-moe-island-layer9-r1-multiwindow-20260612bc/resident_multiwindow_full_island_gather_result_20260612bg.json`.
+- `data/qwen36-onednn-moe-island-layer9-r1-multiwindow-20260612bc/resident_multiwindow_full_island_gather_repeat_20260612bg.json`.
+- Restore/provenance:
+  `data/qwen36-quark-int8-tp4-accepted-restored-after-full-gather-resident-20260612bg.log`
+  and
+  `data/qwen36-quark-int8-tp4-accepted-provenance-after-full-gather-resident-20260612bg.json`.
+
+Result:
+
+- Gather fixture export matched every previous file-backed full-island
+  reference checksum: each `prior_ref_output_checksum_delta` is `0.0`.
+- Full resident smoke: `window_count=16`, `exact_full_window_count=16`,
+  `gather_total_raw_diff_count=0`, `p50=88.236 us`, `mean=88.422 us`,
+  `p90=90.139 us`.
+- Full resident timed run: `window_count=16`, `exact_full_window_count=16`,
+  `gather_total_raw_diff_count=0`, `p50=50.404 us`, `mean=48.676 us`,
+  `p90=55.494 us`.
+- Full resident repeat: `window_count=16`, `exact_full_window_count=16`,
+  `gather_total_raw_diff_count=0`, `p50=61.445 us`, `mean=53.445 us`,
+  `p90=68.148 us`.
+- Accepted backend restored afterward in `33s`; provenance guard passed all
+  sentinel positions.
+
+Important run note:
+
+- Do not run two `scripts/run-qwen36-onednn-resident-multiwindow.sh` jobs in
+  parallel against the same `MANIFEST`. The script rewrites a temporary manifest
+  beside `MANIFEST`, so parallel runs can race and truncate the manifest. The
+  invalid parallel timing covered only `5` windows and was discarded; the valid
+  results above were rerun serially against all `16` windows.
+
+Interpretation:
+
+- This closes the local correctness scaffold for layer-9 routecapture6 rows=1:
+  the resident oneDNN path now matches the current `xpu_fused_moe` final layer
+  output exactly across all 16 route windows.
+- This is still a lab runner result, not an endpoint speed result. It does not
+  yet prove vLLM-rank device-pointer ownership, route-signature cache behavior,
+  interaction with live scheduler buffers, or production reliability.
+- The timing remains encouraging because adding the final gather did not blow
+  up the resident island. The measured full-layer island is still in the same
+  tens-of-microseconds class as the prior GEMM1+bridge+GEMM2 resident proof.
+
+Next things to try:
+
+1. **Rank-local device-pointer ABI smoke.**
+   Add a disabled-by-default diagnostic call inside one vLLM rank that runs the
+   resident island from live device pointers, compares against current
+   `xpu_fused_moe`, then returns the current path. This is the next gate before
+   any endpoint A/B.
+
+2. **Route-signature cache API.**
+   Promote the runner's resident objects into a C++ manager keyed by
+   `(layer, active experts, rows-per-expert signature, dtype, layout)`.
+   Primitive construction is still a `~120 ms` one-time cost; endpoint use needs
+   cached primitives and packed weights.
+
+3. **Gather fusion and epilogue audit.**
+   The standalone gather is exact. Now test whether top-k weighting can move
+   into a GEMM2 epilogue or one post-GEMM kernel without changing BF16 output.
+
+4. **More layers and route shapes.**
+   Repeat the full resident gather gate on layers `14`, `20`, and `21`, and on
+   rows greater than `1`. Do not promote a rank hook from a single-layer,
+   single-row fixture.
+
+5. **Resident-lifetime stress.**
+   Loop thousands of signatures through the resident manager once it exists:
+   create/reuse/evict, verify exact output, monitor XPU memory, and record any
+   device-lost events before endpoint testing.
+
+## 2026-06-12 Post-Gather Bigger Bets
+
+External signals checked after the full-gather gate:
+
+- Localmaxxing still shows the exact
+  `nameistoken/Qwen3.6-35B-A3B-Quark-W8A8-INT8` 4x Arc Pro B70 vLLM row as
+  the only exact-model public row returned by the API, with `tokSOut=99.428`
+  from the earlier quality-gated endpoint run:
+  `https://localmaxxing.com/api/benchmarks?hfId=nameistoken%2FQwen3.6-35B-A3B-Quark-W8A8-INT8&limit=20`.
+- The broader Arc Pro B70/Qwen leaderboard query has our later public family
+  row at `tokSOut=99.770` and shows no public 8-bit exact-model result near the
+  `>200 tok/s` target yet:
+  `https://localmaxxing.com/api/leaderboard?hardwareName=Intel%20Arc%20Pro%20B70&modelFamily=qwen&limit=20`.
+- Intel's XPU grouped-GEMM tracking issue explicitly calls out realistic MoE
+  route skew and tile configuration as first-order tuning inputs:
+  `https://github.com/intel/intel-xpu-backend-for-triton/issues/6389`.
+- vLLM's MoE kernel design docs separate prepare/finalize, quantized
+  activation formats, and expert-kernel choices. That maps cleanly onto a
+  resident island manager rather than a monolithic endpoint fork:
+  `https://docs.vllm.ai/en/latest/design/moe_kernel_features/`.
+- The PyTorch locality-aware MoE work is CUDA/Triton-focused, but the
+  scheduling lesson is portable: route order and locality can move MoE GEMM
+  performance by multiples when cache behavior is the limiter:
+  `https://pytorch.org/blog/accelerating-moe-model/`.
+- The Intel LLM inference roofline paper reports Xe2/Battlemage INT8 and
+  mixed-precision GEMM/GEMV behavior close to attainable rooflines in the right
+  layout. Our tiny-M route windows are therefore probably paying launch,
+  scheduling, layout, or dependency overhead, not simply "B70 is too slow":
+  `https://arxiv.org/html/2508.06753v2`.
+
+Items added to the active try list:
+
+1. **Build the rank-local pointer smoke immediately.**
+   The lab runner is exact only because it owns file-backed tensors. The next
+   useful proof is a disabled diagnostic inside one live vLLM rank that consumes
+   live device pointers, runs the resident island, compares raw BF16 output to
+   the current `xpu_fused_moe`, logs parity/timing, and always returns the
+   accepted path.
+
+2. **Turn the runner into a resident MoE island manager.**
+   Promote the current C++ code into an object with long-lived packed weights,
+   primitives, scratch buffers, route descriptors, queues, and per-layer parity
+   counters. Python should pass compact descriptors, not rebuild memory objects
+   or primitives per call.
+
+3. **Try a oneDNN Graph or Level Zero command-list supernode.**
+   The full island still has multiple submits: GEMM1, bridge, GEMM2, gather.
+   Capture or prebuild the dependency chain for a fixed layer/shape bucket and
+   patch only pointers, route offsets, and scales. Gate this against the current
+   exact gather fixture before any live endpoint hook.
+
+4. **Generate route-class kernels, not exact-route kernels.**
+   Exact ordered route tuples have weak reuse. Broader classes may still repeat:
+   rows-per-expert shape, active expert count, hot-expert subset, and layer.
+   Generate a small menu of exact-safe layerlets for those classes and let rare
+   classes fall back to current `xpu_fused_moe`.
+
+5. **Run a single-card or TP2 latency probe if memory actually permits.**
+   The 4x TP path has collectives and multiprocess overhead on every token. If
+   the Quark W8A8 model plus 32K KV can fit a useful lane on one or two B70s,
+   even with lower aggregate throughput, it might beat TP4 single-request
+   latency. This must be an exact-output probe with the current model only.
+
+6. **Prototype a static c1 latency lane.**
+   Production does not need one universal path first. Build a certified lane
+   for the common single-request decode shape: current model, 32K budget,
+   temperature 0/generic sampling, fixed TP plan, resident MoE island, exact
+   canaries, and fallback to the accepted vLLM path on any unsupported shape.
+
+7. **Revisit exact speculation only after verifier cost drops.**
+   Speculation remains the most plausible way to exceed `200 tok/s` without
+   quality loss, but only if the target verifier is much faster and all accepted
+   tokens are verified by the current model. Pair the resident island with
+   n-gram or MTP-style proposal experiments; reject anything that changes target
+   logits or bypasses verification.
+
+8. **Package a public Intel/vLLM performance packet.**
+   Once the rank-local pointer smoke passes, publish a no-secret repro with
+   route windows, tiny tensors, expected bytes, timing JSON, rejected shortcuts,
+   Localmaxxing row links, and exactness gates. The goal is to give Intel/vLLM a
+   focused B70 W8A8 MoE target instead of a vague "vLLM is slow" report.
+
+9. **Measure where the remaining token budget actually goes.**
+   Build a token-level stall packet: dense attention, router, route packing,
+   MoE island, collectives, sampler, Python/scheduler. The resident layer result
+   is promising, but the endpoint still spends roughly `10 ms/token`; we need a
+   ranked budget before chasing the next large branch.
+
+10. **Keep a high-fidelity engine bakeoff on the side.**
+    Test only 8-bit or BF16-compatible paths that can prove parity against the
+    current model: newer vLLM/XPU, Intel container builds, oneDNN/OpenVINO
+    experiments, or llama.cpp Q8 if an exact comparable model exists. Exclude
+    4-bit, AWQ, Qwen3.5, and any benchmark that cannot pass route-replay and
+    endpoint quality gates.

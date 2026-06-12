@@ -46,6 +46,18 @@ struct ManifestPair {
     std::filesystem::path gemm2_meta;
 };
 
+struct GatherWindow {
+    std::filesystem::path base;
+    std::vector<uint8_t> expected_output;
+    std::vector<uint8_t> output;
+    int64_t rows = 0;
+    int64_t topk = 0;
+    int64_t hidden_size = 0;
+    memory topk_weights_mem;
+    memory unpermuted_mem;
+    memory output_mem;
+};
+
 std::string env_string(const char *name, const std::string &fallback = "") {
     const char *value = std::getenv(name);
     if (!value || !*value) return fallback;
@@ -338,6 +350,75 @@ void launch_exact_silu_quant_bf16_to_int8(sycl::queue &queue,
                                 127.0f, sycl::fmax(-127.0f, quantized));
                         q[output_row_offset + col] =
                                 static_cast<int8_t>(quantized);
+                    }
+                });
+    });
+}
+
+void launch_moe_gather_bf16(sycl::queue &queue, memory &gemm2_dst_mem,
+        GatherWindow &gather) {
+    using bf16 = sycl::ext::oneapi::bfloat16;
+    if (gather.hidden_size % 8 != 0) {
+        throw std::runtime_error("gather hidden_size must be divisible by 8");
+    }
+    const auto *moe_output = reinterpret_cast<const bf16 *>(
+            gemm2_dst_mem.get_data_handle(0));
+    const auto *topk_weights = reinterpret_cast<const float *>(
+            gather.topk_weights_mem.get_data_handle());
+    const auto *unpermuted = reinterpret_cast<const int32_t *>(
+            gather.unpermuted_mem.get_data_handle());
+    auto *output = reinterpret_cast<bf16 *>(
+            gather.output_mem.get_data_handle());
+    if (!moe_output || !topk_weights || !unpermuted || !output) {
+        throw std::runtime_error("oneDNN memory handle for gather was null");
+    }
+
+    constexpr int kGroupWorkItem = 256;
+    constexpr int kElemsPerItem = 8;
+    constexpr int kStride = kGroupWorkItem * kElemsPerItem;
+    const int64_t rows = gather.rows;
+    const int64_t topk = gather.topk;
+    const int64_t hidden_size = gather.hidden_size;
+
+    queue.submit([&](sycl::handler &cgh) {
+        cgh.parallel_for(sycl::nd_range<1>(
+                sycl::range<1>(rows * kGroupWorkItem),
+                sycl::range<1>(kGroupWorkItem)),
+                [=](sycl::nd_item<1> item)
+                        [[sycl::reqd_sub_group_size(32)]] {
+                    const int64_t token_idx = item.get_group(0);
+                    const int local_id = item.get_local_id(0);
+                    const int64_t loop_count =
+                            (hidden_size + kStride - 1) / kStride;
+                    for (int64_t i = 0; i < loop_count; ++i) {
+                        const int64_t hidden_idx =
+                                i * kStride + local_id * kElemsPerItem;
+                        if (hidden_idx >= hidden_size) continue;
+                        float accum[kElemsPerItem];
+#pragma unroll
+                        for (int e = 0; e < kElemsPerItem; ++e) {
+                            accum[e] = 0.0f;
+                        }
+                        for (int64_t k = 0; k < topk; ++k) {
+                            const int32_t moe_id =
+                                    unpermuted[token_idx * topk + k];
+                            if (moe_id == -1) continue;
+                            const float score =
+                                    topk_weights[token_idx * topk + k];
+#pragma unroll
+                            for (int e = 0; e < kElemsPerItem; ++e) {
+                                accum[e] += static_cast<float>(
+                                        moe_output[static_cast<int64_t>(moe_id)
+                                                        * hidden_size
+                                                + hidden_idx + e])
+                                        * score;
+                            }
+                        }
+#pragma unroll
+                        for (int e = 0; e < kElemsPerItem; ++e) {
+                            output[token_idx * hidden_size + hidden_idx + e] =
+                                    accum[e];
+                        }
                     }
                 });
     });
@@ -736,6 +817,60 @@ class WindowedResidentCase {
     memory weights_scales_mem_;
 };
 
+GatherWindow load_gather_window(engine &eng,
+        const WindowedResidentCase::Window &gemm2_window) {
+    GatherWindow gather;
+    gather.base = gemm2_window.meta_path.parent_path();
+    const auto topk_weights_path = gather.base / "moe_topk_weights.f32.bin";
+    const auto unpermuted_path = gather.base / "moe_unpermuted.i32.bin";
+    const auto ref_output_path = gather.base / "moe_ref_output.bf16.bin";
+    auto topk_weights_data = read_file(topk_weights_path);
+    auto unpermuted_data = read_file(unpermuted_path);
+    gather.expected_output = read_file(ref_output_path);
+    gather.hidden_size = gemm2_window.meta.n;
+    const size_t ref_element_size = dtype_size(memory::data_type::bf16);
+    if (gather.expected_output.size()
+            % (static_cast<size_t>(gather.hidden_size) * ref_element_size)
+            != 0) {
+        throw std::runtime_error("bad gather ref output size: "
+                + ref_output_path.string());
+    }
+    gather.rows = static_cast<int64_t>(gather.expected_output.size()
+            / (static_cast<size_t>(gather.hidden_size) * ref_element_size));
+    if (gather.rows <= 0
+            || gemm2_window.meta.total_tokens % gather.rows != 0) {
+        throw std::runtime_error("bad gather rows/topk for "
+                + gemm2_window.meta_path.string());
+    }
+    gather.topk = gemm2_window.meta.total_tokens / gather.rows;
+    expect_size("gather topk weights", topk_weights_data,
+            static_cast<size_t>(gather.rows * gather.topk) * sizeof(float));
+    expect_size("gather unpermuted", unpermuted_data,
+            static_cast<size_t>(gather.rows * gather.topk) * sizeof(int32_t));
+    gather.output.assign(gather.expected_output.size(), 0);
+
+    gather.topk_weights_mem = memory(
+            memory::desc({gather.rows, gather.topk}, memory::data_type::f32,
+                    memory::format_tag::ab),
+            eng);
+    gather.unpermuted_mem = memory(
+            memory::desc({gather.rows, gather.topk}, memory::data_type::s32,
+                    memory::format_tag::ab),
+            eng);
+    gather.output_mem = memory(
+            memory::desc({gather.rows, gather.hidden_size},
+                    memory::data_type::bf16, memory::format_tag::ab),
+            eng);
+    write_to_dnnl_memory(topk_weights_data.data(), gather.topk_weights_mem);
+    write_to_dnnl_memory(unpermuted_data.data(), gather.unpermuted_mem);
+    write_to_dnnl_memory(gather.output.data(), gather.output_mem);
+    return gather;
+}
+
+void read_gather_output(GatherWindow &gather) {
+    read_from_dnnl_memory(gather.output.data(), gather.output_mem);
+}
+
 void write_case_json(std::ofstream &json, const char *prefix,
         const ResidentCase &item, const std::vector<uint8_t> &output) {
     const uint64_t diff_count = raw_diff_count(output, item.expected_output());
@@ -775,6 +910,8 @@ void run_manifest_pair(engine::kind engine_kind,
     const std::string weight_format = env_string("ONEDNN_WEIGHT_FORMAT", "acb");
     const bool include_activation_quant =
             env_int("ONEDNN_PAIR_INCLUDE_ACTIVATION_QUANT", 0) != 0;
+    const bool include_gather =
+            env_int("ONEDNN_PAIR_INCLUDE_GATHER", 0) != 0;
     const std::filesystem::path json_path = env_string(
             "ONEDNN_PAIR_JSON",
             (manifest_path.parent_path()
@@ -800,6 +937,13 @@ void run_manifest_pair(engine::kind engine_kind,
         throw std::runtime_error("manifest GEMM window count mismatch");
     }
     const size_t window_count = gemm1.window_count();
+    std::vector<GatherWindow> gather_windows;
+    if (include_gather) {
+        gather_windows.reserve(window_count);
+        for (size_t i = 0; i < window_count; ++i) {
+            gather_windows.push_back(load_gather_window(eng, gemm2.window(i)));
+        }
+    }
 
     for (int i = 0; i < warmup; ++i) {
         const size_t index = static_cast<size_t>(i) % window_count;
@@ -811,6 +955,10 @@ void run_manifest_pair(engine::kind engine_kind,
                     gemm1.window(index).meta.n);
         }
         gemm2.execute_window(engine_stream, index);
+        if (include_gather) {
+            launch_moe_gather_bf16(sycl_queue, gemm2.dst_memory(index),
+                    gather_windows.at(index));
+        }
         engine_stream.wait();
     }
 
@@ -827,6 +975,10 @@ void run_manifest_pair(engine::kind engine_kind,
                     gemm1.window(index).meta.n);
         }
         gemm2.execute_window(engine_stream, index);
+        if (include_gather) {
+            launch_moe_gather_bf16(sycl_queue, gemm2.dst_memory(index),
+                    gather_windows.at(index));
+        }
         engine_stream.wait();
         const auto end = std::chrono::steady_clock::now();
         pair_samples.push_back(std::chrono::duration<double, std::micro>(
@@ -836,15 +988,28 @@ void run_manifest_pair(engine::kind engine_kind,
 
     uint64_t gemm1_total_diff = 0;
     uint64_t gemm2_total_diff = 0;
+    uint64_t gather_total_diff = 0;
     uint64_t exact_windows = 0;
+    uint64_t exact_full_windows = 0;
     for (size_t i = 0; i < window_count; ++i) {
         gemm1.read_window_output(i);
         gemm2.read_window_output(i);
+        if (include_gather) {
+            read_gather_output(gather_windows.at(i));
+        }
         const uint64_t d1 = gemm1.window_diff_count(i);
         const uint64_t d2 = gemm2.window_diff_count(i);
+        const uint64_t dg = include_gather
+                ? raw_diff_count(gather_windows.at(i).output,
+                        gather_windows.at(i).expected_output)
+                : 0;
         gemm1_total_diff += d1;
         gemm2_total_diff += d2;
+        gather_total_diff += dg;
         if (d1 == 0 && d2 == 0) ++exact_windows;
+        if (d1 == 0 && d2 == 0 && (!include_gather || dg == 0)) {
+            ++exact_full_windows;
+        }
     }
 
     std::ofstream json(json_path);
@@ -852,8 +1017,12 @@ void run_manifest_pair(engine::kind engine_kind,
     json << std::fixed << std::setprecision(6);
     json << "{\n";
     json << "  \"kind\": \""
-         << (include_activation_quant
+         << (include_activation_quant && include_gather
+                    ? "resident_onednn_multiwindow_gemm1_silu_quant_gemm2_gather"
+                    : include_activation_quant
                     ? "resident_onednn_multiwindow_gemm1_silu_quant_gemm2"
+                    : include_gather
+                    ? "resident_onednn_multiwindow_two_gemm_pair_gather"
                     : "resident_onednn_multiwindow_two_gemm_pair")
          << "\",\n";
     json << "  \"note\": \"Cycles real per-window A/scales/offsets from "
@@ -861,11 +1030,16 @@ void run_manifest_pair(engine::kind engine_kind,
             "GEMM. ";
     if (include_activation_quant) {
         json << "GEMM2 input/scales are generated from GEMM1 output by the "
-                "runner's exact BF16 SiLU+INT8 quant bridge; final gather is "
-                "not included.";
+                "runner's exact BF16 SiLU+INT8 quant bridge";
     } else {
         json << "GEMM2 input is the captured post-activation quantized input; "
-                "activation and gather are not included.";
+                "activation is not included";
+    }
+    if (include_gather) {
+        json << "; final top-k gather is included and compared against the "
+                "exported xpu_fused_moe reference output.";
+    } else {
+        json << "; final gather is not included.";
     }
     json << "\",\n";
     json << "  \"manifest\": \"" << json_escape(manifest_path.string()) << "\",\n";
@@ -873,12 +1047,18 @@ void run_manifest_pair(engine::kind engine_kind,
     json << "  \"iterations\": " << iterations << ",\n";
     json << "  \"include_activation_quant\": "
          << (include_activation_quant ? "true" : "false") << ",\n";
+    json << "  \"include_gather\": "
+         << (include_gather ? "true" : "false") << ",\n";
     json << "  \"window_count\": " << window_count << ",\n";
     json << "  \"exact_window_count\": " << exact_windows << ",\n";
+    json << "  \"exact_full_window_count\": " << exact_full_windows << ",\n";
     json << "  \"all_gemm_windows_exact\": "
          << (exact_windows == window_count ? "true" : "false") << ",\n";
+    json << "  \"all_full_windows_exact\": "
+         << (exact_full_windows == window_count ? "true" : "false") << ",\n";
     json << "  \"gemm1_total_raw_diff_count\": " << gemm1_total_diff << ",\n";
     json << "  \"gemm2_total_raw_diff_count\": " << gemm2_total_diff << ",\n";
+    json << "  \"gather_total_raw_diff_count\": " << gather_total_diff << ",\n";
     json << "  \"pair_mean_us\": " << pair_stats.mean_us << ",\n";
     json << "  \"pair_min_us\": " << pair_stats.min_us << ",\n";
     json << "  \"pair_p50_us\": " << pair_stats.p50_us << ",\n";
@@ -918,6 +1098,10 @@ void run_manifest_pair(engine::kind engine_kind,
     for (size_t i = 0; i < window_count; ++i) {
         const uint64_t d1 = gemm1.window_diff_count(i);
         const uint64_t d2 = gemm2.window_diff_count(i);
+        const uint64_t dg = include_gather
+                ? raw_diff_count(gather_windows.at(i).output,
+                        gather_windows.at(i).expected_output)
+                : 0;
         json << "    {\n";
         json << "      \"index\": " << i << ",\n";
         json << "      \"gemm1_meta\": \""
@@ -937,7 +1121,26 @@ void run_manifest_pair(engine::kind engine_kind,
         json << "      \"gemm2_raw_checksum\": " << gemm2.window_checksum(i)
              << ",\n";
         json << "      \"gemm2_expected_raw_checksum\": "
-             << gemm2.window_expected_checksum(i) << "\n";
+             << gemm2.window_expected_checksum(i);
+        if (include_gather) {
+            json << ",\n";
+            json << "      \"gather_rows\": "
+                 << gather_windows.at(i).rows << ",\n";
+            json << "      \"gather_topk\": "
+                 << gather_windows.at(i).topk << ",\n";
+            json << "      \"gather_raw_equal\": "
+                 << (dg == 0 ? "true" : "false") << ",\n";
+            json << "      \"gather_raw_diff_count\": " << dg << ",\n";
+            json << "      \"gather_raw_checksum\": "
+                 << raw_checksum(gather_windows.at(i).output,
+                         memory::data_type::bf16)
+                 << ",\n";
+            json << "      \"gather_expected_raw_checksum\": "
+                 << raw_checksum(gather_windows.at(i).expected_output,
+                         memory::data_type::bf16) << "\n";
+        } else {
+            json << "\n";
+        }
         json << "    }" << (i + 1 == window_count ? "\n" : ",\n");
     }
     json << "  ]\n";
@@ -947,9 +1150,12 @@ void run_manifest_pair(engine::kind engine_kind,
               << pair_stats.p50_us
               << " mean_us=" << pair_stats.mean_us
               << " include_activation_quant=" << include_activation_quant
+              << " include_gather=" << include_gather
               << " exact_windows=" << exact_windows << "/" << window_count
+              << " exact_full_windows=" << exact_full_windows << "/" << window_count
               << " gemm1_total_diff=" << gemm1_total_diff
               << " gemm2_total_diff=" << gemm2_total_diff
+              << " gather_total_diff=" << gather_total_diff
               << " json=" << json_path << std::endl;
 }
 
