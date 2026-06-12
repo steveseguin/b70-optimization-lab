@@ -117,6 +117,7 @@ def completion(
         "temperature": 0,
         "top_p": 1.0,
         "seed": seed,
+        "return_token_ids": True,
     }
     if logprobs is not None:
         payload["logprobs"] = logprobs
@@ -148,6 +149,8 @@ def completion(
         "finish_reason": choice.get("finish_reason"),
         "usage": data.get("usage"),
         "logprobs": choice.get("logprobs"),
+        "response_output_token_ids": choice.get("token_ids"),
+        "response_prompt_token_ids": choice.get("prompt_token_ids"),
     }
 
 
@@ -258,7 +261,15 @@ def main() -> int:
             seed=args.seed,
             logprobs=args.logprobs,
         )
-        output_ids = tokenizer.encode(result["text"], add_special_tokens=False)
+        retokenized_output_ids = tokenizer.encode(
+            result["text"], add_special_tokens=False)
+        response_output_token_ids = result.get("response_output_token_ids")
+        api_output_ids = (
+            [int(value) for value in response_output_token_ids]
+            if isinstance(response_output_token_ids, list)
+            else []
+        )
+        output_ids = api_output_ids or retokenized_output_ids
         normalized_logprobs = normalize_completion_logprobs(
             tokenizer, result.get("logprobs"))
         record = {
@@ -275,6 +286,15 @@ def main() -> int:
             "text_sha256": sha256_text(result["text"]),
             "output_token_count": len(output_ids),
             "output_token_ids": output_ids,
+            "output_token_ids_source": (
+                "api_token_ids" if api_output_ids else "retokenized_text"
+            ),
+            "retokenized_output_token_count": len(retokenized_output_ids),
+            "retokenized_output_token_ids": retokenized_output_ids,
+            "api_vs_retokenized_output_token_ids_match": (
+                api_output_ids == retokenized_output_ids
+                if api_output_ids else None
+            ),
             "normalized_logprobs": normalized_logprobs,
         }
         base = baseline_by_name.get(case["name"])

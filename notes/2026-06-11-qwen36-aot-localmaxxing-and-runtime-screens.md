@@ -11632,6 +11632,68 @@ Interpretation:
   different enough on Qwen3.6/GDN/MoE sequences to be unsafe as the final
   acceptance authority.
 
+## Rolling Re-Prefill Verifier Probe
+
+After the prompt-logprob probe, tightened token capture first:
+
+- `scripts/qwen36-completion-oracle-trace.py` now requests
+  `return_token_ids=true`, stores API-returned output token IDs, and records
+  retokenized text IDs separately.
+- Fresh API-token-ID baseline:
+  `data/qwen36-quark-int8-tp4-accepted-current-apiids-p512o128-20260611h.json`
+- It matches the prior current baseline exactly:
+  `baseline_match_all=true`, and both cases have
+  `api_vs_retokenized_output_token_ids_match=true`.
+
+Added a rolling one-token verifier probe:
+
+- script: `scripts/probe-qwen36-rolling-next-token-verifier.py`
+- short artifact:
+  `data/qwen36-quark-int8-tp4-rolling-next-token-verifier-current-p512o32-20260611h.json`
+  and `.md`
+- full artifact using API token IDs:
+  `data/qwen36-quark-int8-tp4-rolling-next-token-verifier-apiids-p512o128-20260611h.json`
+  and `.md`
+
+Method:
+
+- For each accepted output position, send
+  `prompt_token_ids + accepted_output_token_ids[:position]` as token IDs to
+  `/v1/completions`.
+- Ask the accepted backend for exactly one next token with `temperature=0`,
+  `top_p=1.0`, `seed=20260611`, `return_token_ids=true`, and
+  `add_special_tokens=false`.
+- Compare that one generated token to the accepted baseline token at the same
+  position.
+
+Full result:
+
+| Case | Checked | Matched | First mismatch |
+| --- | ---: | ---: | --- |
+| `natural_latency_plan` | 128 | 122 | pos `17`: expected `11436`, got `321` |
+| `repetitive_kernel_notes` | 128 | 126 | pos `14`: expected `4752`, got `6126` |
+
+Important decoded example:
+
+- In `repetitive_kernel_notes`, the accepted incremental decode reaches a
+  prefix ending in `Intel X` and then emits token `4752` (` unique`).
+- A fresh one-token re-prefill request from the same token prefix emits token
+  `6126` (`PU`), continuing the original prompt phrase `Intel XPU`.
+
+Conclusion:
+
+- Re-prefill verification is not semantically aligned with the accepted
+  incremental decode for this Qwen3.6/GDN/MoE path.
+- A production sidecar cannot reconstruct verifier state from token IDs and
+  re-prefill every prefix. It would verify a different state trajectory.
+- The next verifier-safe speculation target must preserve rolling model state:
+  either an in-engine temporary-KV/request-state fork, or a rolling sidecar
+  engine that is advanced token-by-token in lockstep with accepted output and
+  never rebuilds accepted output prefixes through prefill.
+- This makes prompt-logprob and rolling re-prefill probes diagnostic artifacts
+  only. They are useful for rejecting unsafe verifier designs, not for
+  production acceptance.
+
 ## Fresh External Signals
 
 Refreshed exact-model and related public feeds:
