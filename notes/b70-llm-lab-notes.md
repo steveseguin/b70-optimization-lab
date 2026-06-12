@@ -309,6 +309,17 @@ Current Qwen3.6 INT8 direction:
     resident-state verifier speculation, exact-weight backend bakeoffs, an
     upstreamable hotset repro packet, and reliability soak as part of every
     speed claim.
+35. Added `scripts/qwen36-hotset-split-floor-model.py` and generated
+    `data/qwen36-quark-int8-tp4-hotset-split-floor-model-20260612aa.{json,md}`.
+    The CPU-only break-even model shows every selected top-64 hotset split
+    window still has cold fallback, so a simple split adds `2` launches per
+    two-GEMM MoE layer window. Under a `200 us` full-window / `10 us` launch
+    scenario, split body work must be at least `1.11x` faster to break even.
+    Full-cold split is deprioritized because it uses `1.25x` table slots plus
+    extra launches. Compact-cold split remains worth one maintenance-window
+    microbench: layer `9` routecapture6 exact windows shrink table slots to
+    `0.29x` mean / `0.34x` max with `75.0%` / `87.0%` min/mean hot coverage.
+    The production direction is still persistent/fused cold fallback.
 
 ## 2026-05-10 MiniMax AutoRound Addendum
 

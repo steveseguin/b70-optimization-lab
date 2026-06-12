@@ -1061,3 +1061,86 @@ Bigger, bolder ideas to keep on the board:
     restart/restore cycle, provenance guard, repeated p512/o512 c1 run, and a
     short mixed prompt-class soak. The target is not just a fast single screen;
     it is a fast path that can become production.
+
+## 2026-06-12 Hotset Split Floor Model
+
+New script:
+
+- `scripts/qwen36-hotset-split-floor-model.py`.
+
+Purpose:
+
+- Consume hotset split dry-run JSON without allocating GPU memory.
+- Estimate hot coverage, cold fallback size, compact/full cold table-slot
+  ratios, extra launch count, and body-speedup requirements under launch
+  overhead scenarios.
+- Keep the accepted endpoint live while narrowing the next maintenance-window
+  GPU benchmark.
+
+Artifacts:
+
+- `data/qwen36-quark-int8-tp4-hotset-split-floor-model-20260612aa.json`.
+- `data/qwen36-quark-int8-tp4-hotset-split-floor-model-20260612aa.md`.
+
+Command:
+
+```bash
+python3 scripts/qwen36-hotset-split-floor-model.py \
+  --dry-run-json data/qwen36-quark-int8-tp4-hotset-split-l9-route6-dryrun-20260612z.json \
+  --dry-run-json data/qwen36-quark-int8-tp4-hotset-split-l9-pcmath-dryrun-20260612z.json \
+  --dry-run-json data/qwen36-quark-int8-tp4-hotset-split-l20-route5-dryrun-20260612z.json \
+  --dry-run-json data/qwen36-quark-int8-tp4-hotset-split-l20-pcrepetitive-dryrun-20260612z.json \
+  --baseline-us 150,200,270 \
+  --launch-overhead-us 5,10,20,40 \
+  --primary-baseline-us 200 \
+  --primary-launch-overhead-us 10 \
+  --output-json data/qwen36-quark-int8-tp4-hotset-split-floor-model-20260612aa.json \
+  --markdown-out data/qwen36-quark-int8-tp4-hotset-split-floor-model-20260612aa.md
+```
+
+Primary scenario:
+
+- Full path normalized to a `200 us` selected MoE layer window.
+- Launch overhead scenario: `10 us`.
+- Two GEMM stages modeled per MoE layer window.
+- Every selected window has a cold fallback, so a simple hot/cold split adds
+  `2` launches per full MoE layer window.
+- Under this scenario, the split body must be at least `1.11x` faster than the
+  full body before the extra launch overhead breaks even.
+
+Compact-cold results:
+
+- Layer `9` routecapture6 exact windows:
+  - hot coverage minimum/mean: `75.0%` / `87.0%`.
+  - max cold rows: `32`.
+  - max active cold experts: `22`.
+  - compact table-slot ratio mean/max: `0.29x` / `0.34x`.
+- Layer `9` math stress windows:
+  - hot coverage minimum/mean: `69.5%` / `78.4%`.
+  - max cold rows: `39`.
+  - max active cold experts: `30`.
+  - compact table-slot ratio mean/max: `0.34x` / `0.37x`.
+- Layer `20` routecapture5 exact windows:
+  - hot coverage minimum/mean: `82.0%` / `85.5%`.
+  - max cold rows: `23`.
+  - max active cold experts: `16`.
+  - compact table-slot ratio mean/max: `0.31x` / `0.31x`.
+- Layer `20` repetitive stress windows:
+  - hot coverage minimum/mean: `62.5%` / `83.3%`.
+  - max cold rows: `48`.
+  - max active cold experts: `34`.
+  - compact table-slot ratio mean/max: `0.31x` / `0.38x`.
+
+Decision:
+
+- Full-cold split is not worth a maintenance-window benchmark first. It is
+  `1.25x` table slots versus the exact full path and still adds launches.
+- Compact-cold split is worth one small maintenance-window microbench because
+  it reduces table slots to roughly `0.29x` to `0.38x` of the full table on
+  these windows.
+- The production target remains persistent/fused hotset fallback, because a
+  two-launch compact split still needs enough body speedup to overcome launch
+  overhead and row math is unchanged.
+- Layer `9` routecapture6 exact windows remain the first GPU test. Then add
+  layer `9` math stress. Do not spend endpoint downtime on full-cold split
+  unless compact-cold unexpectedly wins and the comparison needs a control.

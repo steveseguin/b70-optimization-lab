@@ -328,6 +328,7 @@ The rest of this README is dense historical lab context. New users should start 
 - `scripts/bench-vllm-qwen36-fp8.sh`: reusable Qwen3.6 FP8 vLLM latency wrapper with TP/PP/speculative knobs.
 - `scripts/bench-vllm-minimax-autoround-xpu.sh`: reusable MiniMax M2.7 AutoRound INT4 vLLM/XPU throughput wrapper for TP4 B70 bring-up.
 - `scripts/build-llm-scaler-moe-int4-xpu.sh`: reproducible llm-scaler INT4 extension rebuild wrapper that sources oneAPI 2025.3 for PyTorch XPU `libsycl.so.8` compatibility.
+- `scripts/qwen36-hotset-split-floor-model.py`: CPU-only Qwen3.6 hotset split break-even analyzer for dry-run route replay JSON; estimates cold fallback size, extra launches, and the body-speedup needed before a real XPU benchmark.
 - `scripts/summarize-vllm-aot-collectives.sh`: helper for inspecting vLLM AOT cache allreduce/wait/RMS patterns.
 - `scripts/add-qwen35-fused-ba-gguf.py`: experimental augmented-GGUF generator that adds fused Qwen35 `ssm_ba` tensors from separate alpha/beta tensors.
 - `scripts/submit_localmaxxing_results.py`: LocalMaxxing submission helper. Requires `LMX_API_KEY` in the environment; no API key is stored in this repo.
