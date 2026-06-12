@@ -326,14 +326,14 @@ Implication:
   MoE/linear-attention kernels, collectives, graph fences, scheduler metadata,
   or exact target-verified speculation.
 
-Next controlled timing profile recipe:
+Safer next controlled timing profile recipe:
 
 ```bash
 tmux new -s qwen36-tp4-decode-timing-$(date +%Y%m%d%H%M%S) -- \
   env \
     VLLM_XPU_DECODE_TIMING_ALLOW=1 \
     VLLM_XPU_DECODE_TIMING=1 \
-    VLLM_XPU_DECODE_TIMING_SYNC=1 \
+    VLLM_XPU_DECODE_TIMING_SYNC=0 \
     VLLM_XPU_DECODE_TIMING_RANK=0 \
     VLLM_XPU_DECODE_TIMING_STEP_SUMMARY=1 \
     VLLM_XPU_DECODE_TIMING_STEP_EVERY=32 \
@@ -356,6 +356,139 @@ tmux new -s qwen36-tp4-decode-timing-$(date +%Y%m%d%H%M%S) -- \
   --all-lines
 ```
 
-`VLLM_XPU_DECODE_TIMING_SYNC=1` intentionally distorts throughput, so this is
-for attribution only. It should run in a clean benchmark window, not against the
-live accepted service.
+This no-sync version is the default next run. If a synchronized profile is
+needed, add a label/category filter first and synchronize only a narrow MoE or
+allreduce subset in a clean benchmark window, not against the live accepted
+service.
+
+## 2026-06-12 Sync Timing Result And Added Bets
+
+Artifacts:
+
+- Timing log:
+  `data/qwen36-quark-int8-tp4-decode-timing-sync-devicelost-20260612r.log`.
+- Parsed timing summary:
+  `data/qwen36-quark-int8-tp4-decode-timing-sync-devicelost-summary-20260612r.json`.
+- Restored accepted-backend log:
+  `data/qwen36-quark-int8-tp4-accepted-restored-after-timing-devicelost-20260612s.log`.
+- Restored provenance guard:
+  `data/qwen36-quark-int8-tp4-accepted-provenance-guard-after-timing-devicelost-20260612s.json`.
+- Restored p512/o128 speed sanity:
+  `data/qwen36-quark-int8-tp4-accepted-restored-after-timing-devicelost-speed-p512o128-20260612s.json`.
+
+Result:
+
+- The synchronized timing backend crashed during warmup/main measurement with
+  Level Zero `UR_RESULT_ERROR_DEVICE_LOST`, first in
+  `block_table.copy_to_gpu(num_reqs)`, then with
+  `UR_RESULT_ERROR_OUT_OF_RESOURCES` at `num_accepted_tokens.gpu.fill_(1)`.
+- The timing hook still emitted a useful partial rank0 summary before shutdown.
+  Treat absolute timings as distorted by explicit synchronization, but use the
+  ranking as a directional decode-attribution signal.
+- Top timing buckets:
+  - `moe_forward_shared.custom_op`: `1248` calls, `4837.535 ms` total,
+    `3.876 ms` average.
+  - `xpu_moe.gemm2_w8a8`: `1248` calls, `1672.690 ms` total,
+    `1.340 ms` average.
+  - `xpu_moe.gemm1_w8a8`: `1248` calls, `1476.398 ms` total,
+    `1.183 ms` average.
+  - Largest dense allreduce bucket:
+    `all_reduce:(8192, 2048):torch.bfloat16`, `49` calls,
+    `122.319 ms` total, `2.496 ms` average.
+- Directional takeaway: the W8A8 MoE custom-op and GEMM path dominates this
+  profile. Allreduce still matters, but it is secondary in this partial timing
+  capture. Queue, frontdoor, and normal prefill were already ruled out by the
+  live histogram run.
+- The normal accepted backend was restored afterward. Provenance guard passed
+  the exact sentinel positions and the restored p512/o128 sanity run measured
+  `100.234 tok/s` corrected after first text chunk, `95.391 tok/s` e2e output,
+  and `9.901 ms/token` decode histogram. The quality/speed baseline is intact.
+
+Immediate follow-ups:
+
+1. **Replace global sync timing with safer selective profiling.**
+   Do not run broad `VLLM_XPU_DECODE_TIMING_SYNC=1` as a default diagnostic
+   again. Add a label-regex or category filter so only `xpu_moe.*` and selected
+   allreduce labels synchronize, and start with no-sync counters plus periodic
+   summaries before enabling any synchronized timing.
+
+2. **Make metadata-copy stability part of every timing run.**
+   The crash site was in scheduler/model-runner metadata movement, not inside
+   the MoE timing bucket itself. Any future timing branch should record block
+   table shape, `num_reqs`, `num_computed_tokens`, candidate-count buffers, and
+   whether a host/device copy or fill was the first failing operation.
+
+3. **Move the next speed bet down into W8A8 MoE, not launch flags.**
+   The profile points at `gemm1_w8a8`, `gemm2_w8a8`, quant/remap/gather, and
+   custom-op wrapper overhead. The next productive branch is a route-exact
+   MoE layerlet or lower-level kernel change, not another service flag sweep.
+
+4. **Keep a fast restore loop around risky profiling.**
+   Before any synchronized timing, collect current tmux name, launch log,
+   graph-cache fragment, and XPU process state. After any device-lost event,
+   restore the accepted backend, run provenance guard, then run a short
+   p512/o128 speed sanity before continuing.
+
+Additional bigger, bolder ideas:
+
+1. **Selective event-timing ring buffer inside hot kernels.**
+   Instead of synchronizing Python labels, add a tiny device-side or low-level
+   event recorder around the W8A8 MoE substeps. Dump one compact timeline per
+   token after the run. This should reduce timing-induced device loss while
+   still exposing launch gaps and kernel overlap.
+
+2. **MoE flight recorder for one decode token.**
+   For a single accepted token, capture route IDs, active experts, expert token
+   counts, packed shapes, GEMM tile shapes, DPAS/XMX counters, command count,
+   and gather/quant buffers. The goal is one file that explains why the token
+   costs about `10 ms`, not only which high-level label is slow.
+
+3. **Persistent expert-worker prototype with exact Quark math.**
+   Build a small SYCL or Triton-XPU kernel that keeps expert workers resident
+   across the two MoE GEMMs and dynamic quant steps for one layer. It must match
+   `xpu_fused_moe` on captured routes before endpoint testing. If it cannot
+   beat the current route replay fixture by a large margin, it will not close
+   the `>200 tok/s` gap.
+
+4. **Expert-parallel shadow simulator using real route windows.**
+   Simulate EP4, TP2+EP2, hot-expert replication, and replicated-attention plus
+   sharded-expert layouts from routecapture artifacts. Compute bytes moved,
+   expected all-to-all/allreduce operations, per-rank hot spots, and VRAM. This
+   is the cheapest way to decide if a more radical parallelism change is worth
+   implementing.
+
+5. **Graph-safe GPU-resident scheduler metadata.**
+   Prototype moving block-table tails, accepted-token counters, and other tiny
+   per-step metadata updates onto the device or into graph-stable buffers. This
+   targets both latency and the recurring device-lost class around metadata
+   copies/fills.
+
+6. **Offline kernel replay binary.**
+   Generate a standalone replay executable from captured one-token inputs:
+   attention input, MoE routes, expert weights/scales, and collectives mocked or
+   isolated. This separates vLLM scheduler noise from kernel reality and makes
+   upstream Intel/vLLM conversations much sharper.
+
+7. **Layer-specific tile-native W8A8 repack plus autotune cache.**
+   Repack expert tensors into the exact layout needed by the fastest B70 kernel
+   per layer, record checksums, and autotune only from real route windows. A
+   layer-specific cache is more work than a global layout, but the route scans
+   already showed global hot-expert assumptions are unreliable.
+
+8. **Certified static c1 lane as a production sidecar.**
+   Keep general vLLM for capacity and long contexts, but prototype a fixed
+   p512/p2k decode sidecar with preallocated metadata, certified graph cache,
+   fixed sampling, and strict admission control. This is a pragmatic way to get
+   user-facing latency down while the general server remains reliable.
+
+9. **Quality-first BF16 differential harness.**
+   Continue using Quark W8A8 as the production target, but keep a BF16 fallback
+   harness for periodic semantic/logit-rank checks on a small suite. This is
+   not a speed candidate; it is an early warning system for kernel changes that
+   pass token sentinels but distort nearby probabilities.
+
+10. **Hardware/driver stress lane for profile safety.**
+    The timing crash reinforces that B70 performance work needs a separate
+    reliability lane. Sweep only host stack, firmware, oneCCL, and runtime
+    versions with the accepted command and a fixed quality/speed smoke. Promote
+    no kernel change from a stack that increases device-lost rate.

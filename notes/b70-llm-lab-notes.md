@@ -222,6 +222,24 @@ Current Qwen3.6 INT8 direction:
     decode, so the main work has to cut decode-path kernels/collectives/graph
     fences or use exact target-verified speculation; frontdoor and queue work
     cannot close the gap for c1.
+28. Ran a synchronized decode timing profile as a risky attribution diagnostic.
+    The timing backend hit Level Zero `UR_RESULT_ERROR_DEVICE_LOST` in
+    `block_table.copy_to_gpu(num_reqs)` and then
+    `UR_RESULT_ERROR_OUT_OF_RESOURCES` while filling
+    `num_accepted_tokens.gpu`, so broad synchronized timing is no longer a
+    default profiling recipe. The partial summary is still useful:
+    `moe_forward_shared.custom_op` dominated with `4837.535 ms` total across
+    `1248` calls, followed by `xpu_moe.gemm2_w8a8` at `1672.690 ms` and
+    `xpu_moe.gemm1_w8a8` at `1476.398 ms`; the largest dense allreduce bucket
+    was much smaller at `122.319 ms`. Normal accepted service was restored,
+    provenance guard passed, and p512/o128 sanity measured `100.234 tok/s`
+    corrected after first text chunk. New tracked bets are selective/no-sync
+    timing, MoE flight recording, persistent exact W8A8 expert workers,
+    expert-parallel simulation, GPU-resident scheduler metadata, offline kernel
+    replay, layer-specific tile-native W8A8 repack, a certified static c1 lane,
+    BF16 differential quality checks, and a separate host-stack reliability
+    lane. Detailed artifacts and next actions are in
+    `notes/2026-06-12-qwen36-next-bigger-bets.md`.
 
 ## 2026-05-10 MiniMax AutoRound Addendum
 
