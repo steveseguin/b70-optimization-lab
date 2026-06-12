@@ -1,0 +1,208 @@
+(APIServer pid=1587833) INFO 06-12 01:22:23 [utils.py:299]
+(APIServer pid=1587833) INFO 06-12 01:22:23 [utils.py:299]        █     █     █▄   ▄█
+(APIServer pid=1587833) INFO 06-12 01:22:23 [utils.py:299]  ▄▄ ▄█ █     █     █ ▀▄▀ █  version 0.20.2rc1.dev2+gc51df4300.d20260523
+(APIServer pid=1587833) INFO 06-12 01:22:23 [utils.py:299]   █▄█▀ █     █     █     █  model   /mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118
+(APIServer pid=1587833) INFO 06-12 01:22:23 [utils.py:299]    ▀▀  ▀▀▀▀▀ ▀▀▀▀▀ ▀     ▀
+(APIServer pid=1587833) INFO 06-12 01:22:23 [utils.py:299]
+(APIServer pid=1587833) INFO 06-12 01:22:23 [utils.py:233] non-default args: {'model_tag': '/mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118', 'host': '127.0.0.1', 'port': 18080, 'model': '/mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118', 'trust_remote_code': True, 'max_model_len': 32768, 'quantization': 'quark', 'served_model_name': ['qwen36-35b-a3b-fp8'], 'generation_config': 'vllm', 'distributed_executor_backend': 'mp', 'tensor_parallel_size': 4, 'gpu_memory_utilization': 0.95, 'enable_prefix_caching': False, 'language_model_only': True, 'max_num_batched_tokens': 8192, 'max_num_seqs': 48, 'compilation_config': {'mode': None, 'debug_dump_path': None, 'cache_dir': '', 'compile_cache_save_format': 'binary', 'backend': 'inductor', 'custom_ops': [], 'ir_enable_torch_wrap': None, 'splitting_ops': None, 'compile_mm_encoder': False, 'cudagraph_mm_encoder': False, 'encoder_cudagraph_token_budgets': [], 'encoder_cudagraph_max_vision_items_per_batch': 0, 'encoder_cudagraph_max_frames_per_batch': None, 'compile_sizes': None, 'compile_ranges_endpoints': None, 'inductor_compile_config': {'enable_auto_functionalized_v2': False, 'size_asserts': False, 'alignment_asserts': False, 'scalar_asserts': False, 'combo_kernels': True, 'benchmark_combo_kernel': True}, 'inductor_passes': {}, 'cudagraph_mode': <CUDAGraphMode.PIECEWISE: 1>, 'cudagraph_num_of_warmups': 0, 'cudagraph_capture_sizes': None, 'cudagraph_copy_inputs': False, 'cudagraph_specialize_lora': True, 'use_inductor_graph_partition': None, 'pass_config': {}, 'max_cudagraph_capture_size': None, 'dynamic_shapes_config': {'type': <DynamicShapesType.BACKED: 'backed'>, 'evaluate_guards': False, 'assume_32_bit_indexing': False}, 'local_cache_dir': None, 'fast_moe_cold_start': None, 'static_all_moe_layers': []}}
+(APIServer pid=1587833) WARNING 06-12 01:22:23 [envs.py:1923] Unknown vLLM environment variable detected: VLLM_XPU_FORCE_QUARK_REPACK
+(APIServer pid=1587833) WARNING 06-12 01:22:23 [envs.py:1923] Unknown vLLM environment variable detected: VLLM_XPU_FORCE_GRAPH_WITH_COMM
+(APIServer pid=1587833) WARNING 06-12 01:22:23 [envs.py:1923] Unknown vLLM environment variable detected: VLLM_XPU_DECODE_TIMING_LABEL_REGEX
+(APIServer pid=1587833) WARNING 06-12 01:22:23 [envs.py:1923] Unknown vLLM environment variable detected: VLLM_XPU_DECODE_TIMING_RANK
+(APIServer pid=1587833) WARNING 06-12 01:22:23 [envs.py:1923] Unknown vLLM environment variable detected: VLLM_XPU_CUSTOM_ALLREDUCE_CLONE_INPUT
+(APIServer pid=1587833) WARNING 06-12 01:22:23 [envs.py:1923] Unknown vLLM environment variable detected: VLLM_XPU_DECODE_TIMING_SYNC_LABEL_REGEX
+(APIServer pid=1587833) WARNING 06-12 01:22:23 [envs.py:1923] Unknown vLLM environment variable detected: VLLM_XPU_COMPILE_ALLREDUCE_CUSTOM_OP
+(APIServer pid=1587833) WARNING 06-12 01:22:23 [envs.py:1923] Unknown vLLM environment variable detected: VLLM_XPU_DECODE_TIMING_STEP_SKIP_FIRST
+(APIServer pid=1587833) WARNING 06-12 01:22:23 [envs.py:1923] Unknown vLLM environment variable detected: VLLM_XPU_USE_CUSTOM_OP_COLLECTIVES
+(APIServer pid=1587833) WARNING 06-12 01:22:23 [envs.py:1923] Unknown vLLM environment variable detected: VLLM_XPU_GRAPH_NOOP_COMM_CAPTURE
+(APIServer pid=1587833) WARNING 06-12 01:22:23 [envs.py:1923] Unknown vLLM environment variable detected: VLLM_XPU_CUSTOM_ALLREDUCE_GRAPH_CLONE_INPUT
+(APIServer pid=1587833) WARNING 06-12 01:22:23 [envs.py:1923] Unknown vLLM environment variable detected: VLLM_XPU_DECODE_TIMING_SYNC
+(APIServer pid=1587833) WARNING 06-12 01:22:23 [envs.py:1923] Unknown vLLM environment variable detected: VLLM_XPU_QUARK_W8A8_MOE
+(APIServer pid=1587833) WARNING 06-12 01:22:23 [envs.py:1923] Unknown vLLM environment variable detected: VLLM_XPU_DECODE_TIMING_STEP_SUMMARY
+(APIServer pid=1587833) WARNING 06-12 01:22:23 [envs.py:1923] Unknown vLLM environment variable detected: VLLM_XPU_DECODE_TIMING_STEP_EVERY
+(APIServer pid=1587833) WARNING 06-12 01:22:23 [envs.py:1923] Unknown vLLM environment variable detected: VLLM_XPU_DECODE_TIMING
+(APIServer pid=1587833) WARNING 06-12 01:22:23 [envs.py:1923] Unknown vLLM environment variable detected: VLLM_XPU_DECODE_TIMING_ALLOW
+(APIServer pid=1587833) WARNING 06-12 01:22:23 [envs.py:1923] Unknown vLLM environment variable detected: VLLM_XPU_DECODE_TIMING_SKIP_FIRST
+(APIServer pid=1587833) WARNING 06-12 01:22:23 [envs.py:1923] Unknown vLLM environment variable detected: VLLM_USE_V1
+(APIServer pid=1587833) INFO 06-12 01:22:23 [model.py:563] Resolved architecture: Qwen3_5MoeForConditionalGeneration
+(APIServer pid=1587833) INFO 06-12 01:22:23 [model.py:1692] Using max model len 32768
+(APIServer pid=1587833) INFO 06-12 01:22:23 [nixl_utils.py:20] Setting UCX_RCACHE_MAX_UNRELEASED to '1024' to avoid a rare memory leak in UCX when using NIXL.
+(APIServer pid=1587833) WARNING 06-12 01:22:23 [nixl_utils.py:34] NIXL is not available
+(APIServer pid=1587833) WARNING 06-12 01:22:23 [nixl_utils.py:44] NIXL agent config is not available
+(APIServer pid=1587833) INFO 06-12 01:22:24 [scheduler.py:239] Chunked prefill is enabled with max_num_batched_tokens=8192.
+(APIServer pid=1587833) INFO 06-12 01:22:24 [vllm.py:844] Asynchronous scheduling is enabled.
+(APIServer pid=1587833) INFO 06-12 01:22:24 [kernel.py:210] Final IR op priority after setting platform defaults: IrOpPriorityConfig(rms_norm=['native'], fused_add_rms_norm=['native'])
+(APIServer pid=1587833) WARNING 06-12 01:22:24 [xpu.py:208] Forcing XPU Graph with communication ops because VLLM_XPU_FORCE_GRAPH_WITH_COMM=1.
+(APIServer pid=1587833) [transformers] `Qwen2VLImageProcessorFast` is deprecated. The `Fast` suffix for image processors has been removed; use `Qwen2VLImageProcessor` instead.
+(APIServer pid=1587833) INFO 06-12 01:22:25 [registry.py:126] All limits of multimodal modalities supported by the model are set to 0, running in text-only mode.
+WARNING 06-12 01:22:30 [nixl_utils.py:34] NIXL is not available
+WARNING 06-12 01:22:30 [nixl_utils.py:44] NIXL agent config is not available
+(EngineCore pid=1587969) INFO 06-12 01:22:30 [core.py:109] Initializing a V1 LLM engine (v0.20.2rc1.dev2+gc51df4300.d20260523) with config: model='/mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118', speculative_config=None, tokenizer='/mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118', skip_tokenizer_init=False, tokenizer_mode=auto, revision=None, tokenizer_revision=None, trust_remote_code=True, dtype=torch.bfloat16, max_seq_len=32768, download_dir=None, load_format=auto, tensor_parallel_size=4, pipeline_parallel_size=1, data_parallel_size=1, decode_context_parallel_size=1, dcp_comm_backend=ag_rs, disable_custom_all_reduce=True, quantization=quark, quantization_config=None, enforce_eager=False, enable_return_routed_experts=False, kv_cache_dtype=auto, device_config=xpu, structured_outputs_config=StructuredOutputsConfig(backend='auto', disable_any_whitespace=False, disable_additional_properties=False, reasoning_parser='', reasoning_parser_plugin='', enable_in_reasoning=False), observability_config=ObservabilityConfig(show_hidden_metrics_for_version=None, otlp_traces_endpoint=None, collect_detailed_traces=None, kv_cache_metrics=False, kv_cache_metrics_sample=0.01, cudagraph_metrics=False, enable_layerwise_nvtx_tracing=False, enable_mfu_metrics=False, enable_mm_processor_stats=False, enable_logging_iteration_details=False), seed=0, served_model_name=qwen36-35b-a3b-fp8, enable_prefix_caching=False, enable_chunked_prefill=True, pooler_config=None, compilation_config={'mode': <CompilationMode.VLLM_COMPILE: 3>, 'debug_dump_path': None, 'cache_dir': '', 'compile_cache_save_format': 'binary', 'backend': 'inductor', 'custom_ops': ['none'], 'ir_enable_torch_wrap': True, 'splitting_ops': ['vllm::unified_attention_with_output', 'vllm::unified_mla_attention_with_output', 'vllm::mamba_mixer2', 'vllm::mamba_mixer', 'vllm::short_conv', 'vllm::linear_attention', 'vllm::plamo2_mamba_mixer', 'vllm::gdn_attention_core', 'vllm::gdn_attention_core_xpu', 'vllm::olmo_hybrid_gdn_full_forward', 'vllm::kda_attention', 'vllm::sparse_attn_indexer', 'vllm::rocm_aiter_sparse_attn_indexer', 'vllm::deepseek_v4_attention', 'vllm::unified_kv_cache_update', 'vllm::unified_mla_kv_cache_update'], 'compile_mm_encoder': False, 'cudagraph_mm_encoder': False, 'encoder_cudagraph_token_budgets': [], 'encoder_cudagraph_max_vision_items_per_batch': 0, 'encoder_cudagraph_max_frames_per_batch': None, 'compile_sizes': [], 'compile_ranges_endpoints': [8192], 'inductor_compile_config': {'enable_auto_functionalized_v2': False, 'size_asserts': False, 'alignment_asserts': False, 'scalar_asserts': False, 'combo_kernels': True, 'benchmark_combo_kernel': True}, 'inductor_passes': {}, 'cudagraph_mode': <CUDAGraphMode.PIECEWISE: 1>, 'cudagraph_num_of_warmups': 1, 'cudagraph_capture_sizes': [1, 2, 4, 8, 16, 24, 32, 40, 48, 56, 64, 72, 80, 88, 96], 'cudagraph_copy_inputs': False, 'cudagraph_specialize_lora': True, 'use_inductor_graph_partition': False, 'pass_config': {'fuse_norm_quant': False, 'fuse_act_quant': False, 'fuse_attn_quant': False, 'enable_sp': False, 'fuse_gemm_comms': False, 'fuse_allreduce_rms': False, 'fuse_act_padding': False}, 'max_cudagraph_capture_size': 96, 'dynamic_shapes_config': {'type': <DynamicShapesType.BACKED: 'backed'>, 'evaluate_guards': False, 'assume_32_bit_indexing': False}, 'local_cache_dir': None, 'fast_moe_cold_start': False, 'static_all_moe_layers': []}, kernel_config=KernelConfig(ir_op_priority=IrOpPriorityConfig(rms_norm=['native'], fused_add_rms_norm=['native']), enable_flashinfer_autotune=False, moe_backend='auto')
+(EngineCore pid=1587969) WARNING 06-12 01:22:30 [multiproc_executor.py:1046] Reducing Torch parallelism from 16 threads to 1 to avoid unnecessary CPU contention. Set OMP_NUM_THREADS in the external environment to tune this value as needed.
+(EngineCore pid=1587969) INFO 06-12 01:22:30 [multiproc_executor.py:139] DP group leader: node_rank=0, node_rank_within_dp=0, master_addr=127.0.0.1, mq_connect_ip=10.0.0.65 (local), world_size=4, local_world_size=4
+WARNING 06-12 01:22:35 [nixl_utils.py:34] NIXL is not available
+WARNING 06-12 01:22:35 [nixl_utils.py:44] NIXL agent config is not available
+WARNING 06-12 01:22:35 [nixl_utils.py:34] NIXL is not available
+WARNING 06-12 01:22:35 [nixl_utils.py:44] NIXL agent config is not available
+WARNING 06-12 01:22:35 [nixl_utils.py:34] NIXL is not available
+WARNING 06-12 01:22:35 [nixl_utils.py:44] NIXL agent config is not available
+WARNING 06-12 01:22:35 [nixl_utils.py:34] NIXL is not available
+WARNING 06-12 01:22:35 [nixl_utils.py:44] NIXL agent config is not available
+[transformers] `Qwen2VLImageProcessorFast` is deprecated. The `Fast` suffix for image processors has been removed; use `Qwen2VLImageProcessor` instead.
+[transformers] `Qwen2VLImageProcessorFast` is deprecated. The `Fast` suffix for image processors has been removed; use `Qwen2VLImageProcessor` instead.
+[transformers] `Qwen2VLImageProcessorFast` is deprecated. The `Fast` suffix for image processors has been removed; use `Qwen2VLImageProcessor` instead.
+[transformers] `Qwen2VLImageProcessorFast` is deprecated. The `Fast` suffix for image processors has been removed; use `Qwen2VLImageProcessor` instead.
+INFO 06-12 01:22:38 [registry.py:126] All limits of multimodal modalities supported by the model are set to 0, running in text-only mode.
+INFO 06-12 01:22:38 [registry.py:126] All limits of multimodal modalities supported by the model are set to 0, running in text-only mode.
+INFO 06-12 01:22:38 [registry.py:126] All limits of multimodal modalities supported by the model are set to 0, running in text-only mode.
+INFO 06-12 01:22:38 [registry.py:126] All limits of multimodal modalities supported by the model are set to 0, running in text-only mode.
+(Worker pid=1588083) INFO 06-12 01:22:40 [parallel_state.py:1524] world_size=4 rank=2 local_rank=2 distributed_init_method=tcp://127.0.0.1:51075 backend=xccl
+(Worker pid=1588082) INFO 06-12 01:22:40 [parallel_state.py:1524] world_size=4 rank=1 local_rank=1 distributed_init_method=tcp://127.0.0.1:51075 backend=xccl
+(Worker pid=1588084) INFO 06-12 01:22:40 [parallel_state.py:1524] world_size=4 rank=3 local_rank=3 distributed_init_method=tcp://127.0.0.1:51075 backend=xccl
+(Worker pid=1588081) INFO 06-12 01:22:40 [parallel_state.py:1524] world_size=4 rank=0 local_rank=0 distributed_init_method=tcp://127.0.0.1:51075 backend=xccl
+(Worker pid=1588081) INFO 06-12 01:22:41 [parallel_state.py:1837] rank 0 in world size 4 is assigned as DP rank 0, PP rank 0, PCP rank 0, TP rank 0, EP rank 0, EPLB rank N/A
+2026:06:12-01:22:41:1588084 |CCL_WARN| value of CCL_ATL_TRANSPORT changed to be ofi (default:mpi)
+2026:06:12-01:22:41:1588082 |CCL_WARN| value of CCL_ATL_TRANSPORT changed to be ofi (default:mpi)
+2026:06:12-01:22:41:1588084 |CCL_WARN| value of CCL_TOPO_P2P_ACCESS changed to be 1 (default:-1)
+2026:06:12-01:22:41:1588082 |CCL_WARN| value of CCL_TOPO_P2P_ACCESS changed to be 1 (default:-1)
+2026:06:12-01:22:41:1588083 |CCL_WARN| value of CCL_ATL_TRANSPORT changed to be ofi (default:mpi)
+2026:06:12-01:22:41:1588083 |CCL_WARN| value of CCL_TOPO_P2P_ACCESS changed to be 1 (default:-1)
+2026:06:12-01:22:41:1588084 |CCL_WARN| could not get local_idx/count from environment variables, trying to get them from ATL
+2026:06:12-01:22:41:1588082 |CCL_WARN| could not get local_idx/count from environment variables, trying to get them from ATL
+2026:06:12-01:22:41:1588083 |CCL_WARN| could not get local_idx/count from environment variables, trying to get them from ATL
+2026:06:12-01:22:41:1588081 |CCL_WARN| value of CCL_ATL_TRANSPORT changed to be ofi (default:mpi)
+2026:06:12-01:22:41:1588081 |CCL_WARN| value of CCL_TOPO_P2P_ACCESS changed to be 1 (default:-1)
+2026:06:12-01:22:41:1588081 |CCL_WARN| could not get local_idx/count from environment variables, trying to get them from ATL
+2026:06:12-01:22:42:1588082:[1] |CCL_WARN| topology recognition shows PCIe connection between devices. If this is not correct, you can disable topology recognition, with CCL_TOPO_FABRIC_VERTEX_CONNECTION_CHECK=0. This will assume XeLinks across devices
+2026:06:12-01:22:42:1588081:[0] |CCL_WARN| topology recognition shows PCIe connection between devices. If this is not correct, you can disable topology recognition, with CCL_TOPO_FABRIC_VERTEX_CONNECTION_CHECK=0. This will assume XeLinks across devices
+2026:06:12-01:22:42:1588083:[2] |CCL_WARN| topology recognition shows PCIe connection between devices. If this is not correct, you can disable topology recognition, with CCL_TOPO_FABRIC_VERTEX_CONNECTION_CHECK=0. This will assume XeLinks across devices
+2026:06:12-01:22:42:1588084:[3] |CCL_WARN| topology recognition shows PCIe connection between devices. If this is not correct, you can disable topology recognition, with CCL_TOPO_FABRIC_VERTEX_CONNECTION_CHECK=0. This will assume XeLinks across devices
+(Worker_TP0 pid=1588081) INFO 06-12 01:22:43 [gpu_model_runner.py:6194] Starting to load model /mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118...
+(Worker_TP0 pid=1588081) INFO 06-12 01:22:43 [xpu.py:122] Using backend AttentionBackendEnum.FLASH_ATTN for vit attention
+(Worker_TP0 pid=1588081) INFO 06-12 01:22:43 [mm_encoder_attention.py:372] Using AttentionBackendEnum.FLASH_ATTN for MMEncoderAttention.
+(Worker_TP0 pid=1588081) INFO 06-12 01:22:43 [__init__.py:463] Selected XPUInt8ScaledMMLinearKernel for QuarkW8A8Int8
+(Worker_TP0 pid=1588081) INFO 06-12 01:22:43 [gdn_linear_attn.py:153] Using Triton/FLA GDN prefill kernel
+(Worker_TP0 pid=1588081) INFO 06-12 01:22:43 [int8.py:152] Using XPU Int8 MoE backend out of potential backends: ['XPU', 'TRITON'].
+(Worker_TP0 pid=1588081) INFO 06-12 01:22:43 [xpu.py:59] Setting VLLM_KV_CACHE_LAYOUT to 'NHD' for XPU; only NHD layout is supported by XPU attention kernels.
+(Worker_TP0 pid=1588081) INFO 06-12 01:22:43 [xpu.py:87] Using Flash Attention backend.
+(Worker_TP0 pid=1588081) INFO 06-12 01:22:43 [flash_attn.py:646] Using FlashAttention version 2
+(Worker_TP1 pid=1588082) INFO 06-12 01:22:43 [xpu.py:59] Setting VLLM_KV_CACHE_LAYOUT to 'NHD' for XPU; only NHD layout is supported by XPU attention kernels.
+(Worker_TP3 pid=1588084) INFO 06-12 01:22:43 [xpu.py:59] Setting VLLM_KV_CACHE_LAYOUT to 'NHD' for XPU; only NHD layout is supported by XPU attention kernels.
+(Worker_TP2 pid=1588083) INFO 06-12 01:22:43 [xpu.py:59] Setting VLLM_KV_CACHE_LAYOUT to 'NHD' for XPU; only NHD layout is supported by XPU attention kernels.
+(Worker_TP0 pid=1588081) INFO 06-12 01:22:44 [weight_utils.py:904] Filesystem type for checkpoints: EXT4. Checkpoint size: 34.15 GiB. Available RAM: 111.27 GiB.
+(Worker_TP0 pid=1588081) INFO 06-12 01:22:44 [weight_utils.py:927] Auto-prefetch is disabled because the filesystem (EXT4) is not a recognized network FS (NFS/Lustre). If you want to force prefetching, start vLLM with --safetensors-load-strategy=prefetch.
+(Worker_TP0 pid=1588081) Loading safetensors checkpoint shards:   0% Completed | 0/7 [00:00<?, ?it/s]
+(Worker_TP0 pid=1588081) Loading safetensors checkpoint shards:  14% Completed | 1/7 [00:01<00:09,  1.58s/it]
+(Worker_TP0 pid=1588081) Loading safetensors checkpoint shards:  29% Completed | 2/7 [00:04<00:10,  2.09s/it]
+(Worker_TP0 pid=1588081) Loading safetensors checkpoint shards:  43% Completed | 3/7 [00:06<00:08,  2.16s/it]
+(Worker_TP0 pid=1588081) Loading safetensors checkpoint shards:  57% Completed | 4/7 [00:08<00:06,  2.12s/it]
+(Worker_TP0 pid=1588081) Loading safetensors checkpoint shards:  71% Completed | 5/7 [00:10<00:04,  2.14s/it]
+(Worker_TP0 pid=1588081) Loading safetensors checkpoint shards:  86% Completed | 6/7 [00:12<00:02,  2.17s/it]
+(Worker_TP1 pid=1588082) INFO 06-12 01:22:57 [interface.py:492] Setting kv cache block size to 64 for FLASH_ATTN backend.
+(Worker_TP1 pid=1588082) INFO 06-12 01:22:57 [interface.py:609] Setting attention block size to 576 tokens to ensure that attention page size is >= mamba page size.
+(Worker_TP1 pid=1588082) INFO 06-12 01:22:57 [interface.py:633] Padding mamba page size by 9.92% to ensure that mamba page size and attention page size are exactly equal.
+(Worker_TP3 pid=1588084) INFO 06-12 01:22:57 [interface.py:492] Setting kv cache block size to 64 for FLASH_ATTN backend.
+(Worker_TP3 pid=1588084) INFO 06-12 01:22:57 [interface.py:609] Setting attention block size to 576 tokens to ensure that attention page size is >= mamba page size.
+(Worker_TP3 pid=1588084) INFO 06-12 01:22:57 [interface.py:633] Padding mamba page size by 9.92% to ensure that mamba page size and attention page size are exactly equal.
+(Worker_TP2 pid=1588083) INFO 06-12 01:22:57 [interface.py:492] Setting kv cache block size to 64 for FLASH_ATTN backend.
+(Worker_TP2 pid=1588083) INFO 06-12 01:22:57 [interface.py:609] Setting attention block size to 576 tokens to ensure that attention page size is >= mamba page size.
+(Worker_TP2 pid=1588083) INFO 06-12 01:22:57 [interface.py:633] Padding mamba page size by 9.92% to ensure that mamba page size and attention page size are exactly equal.
+(Worker_TP0 pid=1588081) Loading safetensors checkpoint shards: 100% Completed | 7/7 [00:14<00:00,  1.89s/it]
+(Worker_TP0 pid=1588081) Loading safetensors checkpoint shards: 100% Completed | 7/7 [00:14<00:00,  2.00s/it]
+(Worker_TP0 pid=1588081)
+(Worker_TP0 pid=1588081) INFO 06-12 01:22:58 [default_loader.py:391] Loading weights took 14.07 seconds
+(Worker_TP0 pid=1588081) INFO 06-12 01:22:58 [int8.py:216] Using MoEPrepareAndFinalizeNoDPEPModular
+(Worker_TP0 pid=1588081) INFO 06-12 01:22:58 [gpu_model_runner.py:6296] Model loading took 8.58 GiB memory and 15.073413 seconds
+(Worker_TP0 pid=1588081) INFO 06-12 01:22:58 [interface.py:492] Setting kv cache block size to 64 for FLASH_ATTN backend.
+(Worker_TP0 pid=1588081) INFO 06-12 01:22:58 [interface.py:609] Setting attention block size to 576 tokens to ensure that attention page size is >= mamba page size.
+(Worker_TP0 pid=1588081) INFO 06-12 01:22:58 [interface.py:633] Padding mamba page size by 9.92% to ensure that mamba page size and attention page size are exactly equal.
+(Worker_TP0 pid=1588081) INFO 06-12 01:23:01 [backends.py:1089] Using cache directory: /mnt/fast-ai/vllm-cache-exp/qwen36-35b-a3b-quark-int8-tp4-piecewise-graph-gdn-reuseqkvzbaquant-clone-envclean-32k-noprefix/vllm/torch_compile_cache/52d3565df4/rank_0_0/backbone for vLLM's torch.compile
+(Worker_TP0 pid=1588081) INFO 06-12 01:23:01 [backends.py:1148] Dynamo bytecode transform time: 2.70 s
+(Worker_TP3 pid=1588084) INFO 06-12 01:23:03 [decorators.py:311] Directly load AOT compilation from path /mnt/fast-ai/vllm-cache-exp/qwen36-35b-a3b-quark-int8-tp4-piecewise-graph-gdn-reuseqkvzbaquant-clone-envclean-32k-noprefix/vllm/torch_compile_cache/torch_aot_compile/c4bb6b79350bfabbe51d07437b11dc2a968f27b5e12cc0b20821a0579a5d0ef3/rank_3_0/model
+(Worker_TP0 pid=1588081) INFO 06-12 01:23:03 [backends.py:292] Directly load the compiled graph(s) for compile range (1, 8192) from the cache, took 1.338 s
+(Worker_TP0 pid=1588081) INFO 06-12 01:23:03 [decorators.py:311] Directly load AOT compilation from path /mnt/fast-ai/vllm-cache-exp/qwen36-35b-a3b-quark-int8-tp4-piecewise-graph-gdn-reuseqkvzbaquant-clone-envclean-32k-noprefix/vllm/torch_compile_cache/torch_aot_compile/c4bb6b79350bfabbe51d07437b11dc2a968f27b5e12cc0b20821a0579a5d0ef3/rank_0_0/model
+(Worker_TP0 pid=1588081) INFO 06-12 01:23:03 [monitor.py:53] torch.compile took 4.28 s in total
+(Worker_TP2 pid=1588083) INFO 06-12 01:23:03 [decorators.py:311] Directly load AOT compilation from path /mnt/fast-ai/vllm-cache-exp/qwen36-35b-a3b-quark-int8-tp4-piecewise-graph-gdn-reuseqkvzbaquant-clone-envclean-32k-noprefix/vllm/torch_compile_cache/torch_aot_compile/c4bb6b79350bfabbe51d07437b11dc2a968f27b5e12cc0b20821a0579a5d0ef3/rank_2_0/model
+(Worker_TP1 pid=1588082) INFO 06-12 01:23:03 [decorators.py:311] Directly load AOT compilation from path /mnt/fast-ai/vllm-cache-exp/qwen36-35b-a3b-quark-int8-tp4-piecewise-graph-gdn-reuseqkvzbaquant-clone-envclean-32k-noprefix/vllm/torch_compile_cache/torch_aot_compile/c4bb6b79350bfabbe51d07437b11dc2a968f27b5e12cc0b20821a0579a5d0ef3/rank_1_0/model
+(Worker_TP0 pid=1588081) INFO 06-12 01:23:04 [monitor.py:81] Initial profiling/warmup run took 1.01 s
+(Worker_TP0 pid=1588081) INFO 06-12 01:23:05 [gpu_worker.py:487] Available KV cache memory: 20.67 GiB
+(EngineCore pid=1587969) INFO 06-12 01:23:05 [kv_cache_utils.py:1710] GPU KV cache size: 2,052,915 tokens
+(EngineCore pid=1587969) INFO 06-12 01:23:05 [kv_cache_utils.py:1711] Maximum concurrency for 32,768 tokens per request: 62.65x
+(Worker_TP0 pid=1588081) INFO 06-12 01:23:05 [utils.py:60] `_KV_CACHE_LAYOUT_OVERRIDE` variable detected. Setting KV cache layout to NHD.
+(Worker_TP0 pid=1588081) INFO 06-12 01:23:05 [kernel_warmup.py:44] Skipping FlashInfer autotune because it is disabled.
+(Worker_TP3 pid=1588084) INFO 06-12 01:23:05 [kernel_warmup.py:44] Skipping FlashInfer autotune because it is disabled.
+(Worker_TP2 pid=1588083) INFO 06-12 01:23:05 [kernel_warmup.py:44] Skipping FlashInfer autotune because it is disabled.
+(Worker_TP1 pid=1588082) INFO 06-12 01:23:05 [kernel_warmup.py:44] Skipping FlashInfer autotune because it is disabled.
+(Worker_TP0 pid=1588081) WARNING 06-12 01:23:06 [parallel_state.py:548] Skipping communicator graph-capture context for XpuCommunicator under VLLM_XPU_GRAPH_NOOP_COMM_CAPTURE=1.
+(Worker_TP0 pid=1588081) Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   0%|          | 0/15 [00:00<?, ?it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   7%|▋         | 1/15 [00:00<00:05,  2.42it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  13%|█▎        | 2/15 [00:00<00:04,  2.61it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  20%|██        | 3/15 [00:01<00:05,  2.39it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  27%|██▋       | 4/15 [00:01<00:05,  2.06it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  33%|███▎      | 5/15 [00:02<00:05,  1.90it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  40%|████      | 6/15 [00:02<00:04,  1.85it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  47%|████▋     | 7/15 [00:03<00:04,  1.61it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  53%|█████▎    | 8/15 [00:07<00:11,  1.67s/it]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  60%|██████    | 9/15 [00:08<00:08,  1.36s/it]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  67%|██████▋   | 10/15 [00:08<00:05,  1.05s/it]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  73%|███████▎  | 11/15 [00:09<00:03,  1.19it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  80%|████████  | 12/15 [00:09<00:02,  1.38it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  87%|████████▋ | 13/15 [00:10<00:01,  1.24it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  93%|█████████▎| 14/15 [00:10<00:00,  1.48it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE): 100%|██████████| 15/15 [00:11<00:00,  1.36it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE): 100%|██████████| 15/15 [00:11<00:00,  1.27it/s]
+(Worker_TP0 pid=1588081) INFO 06-12 01:23:18 [gpu_model_runner.py:7587] Graph capturing finished in 12 secs, took -0.18 GiB
+(EngineCore pid=1587969) INFO 06-12 01:23:18 [core.py:299] init engine (profile, create kv cache, warmup model) took 19.73 s (compilation: 4.30 s)
+(EngineCore pid=1587969) [transformers] `Qwen2VLImageProcessorFast` is deprecated. The `Fast` suffix for image processors has been removed; use `Qwen2VLImageProcessor` instead.
+(EngineCore pid=1587969) INFO 06-12 01:23:20 [registry.py:126] All limits of multimodal modalities supported by the model are set to 0, running in text-only mode.
+(EngineCore pid=1587969) INFO 06-12 01:23:20 [vllm.py:844] Asynchronous scheduling is enabled.
+(EngineCore pid=1587969) INFO 06-12 01:23:20 [kernel.py:210] Final IR op priority after setting platform defaults: IrOpPriorityConfig(rms_norm=['native'], fused_add_rms_norm=['native'])
+(EngineCore pid=1587969) WARNING 06-12 01:23:20 [xpu.py:208] Forcing XPU Graph with communication ops because VLLM_XPU_FORCE_GRAPH_WITH_COMM=1.
+(APIServer pid=1587833) INFO 06-12 01:23:20 [api_server.py:598] Supported tasks: ['generate']
+(APIServer pid=1587833) INFO 06-12 01:23:21 [hf.py:482] Detected the chat template content format to be 'string'. You can set `--chat-template-content-format` to override this.
+(APIServer pid=1587833) INFO 06-12 01:23:21 [api_server.py:602] Starting vLLM server on http://127.0.0.1:18080
+(APIServer pid=1587833) INFO 06-12 01:23:21 [launcher.py:37] Available routes are:
+(APIServer pid=1587833) INFO 06-12 01:23:21 [launcher.py:46] Route: /openapi.json, Methods: GET, HEAD
+(APIServer pid=1587833) INFO 06-12 01:23:21 [launcher.py:46] Route: /docs, Methods: GET, HEAD
+(APIServer pid=1587833) INFO 06-12 01:23:21 [launcher.py:46] Route: /docs/oauth2-redirect, Methods: GET, HEAD
+(APIServer pid=1587833) INFO 06-12 01:23:21 [launcher.py:46] Route: /redoc, Methods: GET, HEAD
+(APIServer pid=1587833) INFO 06-12 01:23:21 [launcher.py:46] Route: /tokenize, Methods: POST
+(APIServer pid=1587833) INFO 06-12 01:23:21 [launcher.py:46] Route: /detokenize, Methods: POST
+(APIServer pid=1587833) INFO 06-12 01:23:21 [launcher.py:46] Route: /load, Methods: GET
+(APIServer pid=1587833) INFO 06-12 01:23:21 [launcher.py:46] Route: /version, Methods: GET
+(APIServer pid=1587833) INFO 06-12 01:23:21 [launcher.py:46] Route: /health, Methods: GET
+(APIServer pid=1587833) INFO 06-12 01:23:21 [launcher.py:46] Route: /metrics, Methods: GET
+(APIServer pid=1587833) INFO 06-12 01:23:21 [launcher.py:46] Route: /v1/models, Methods: GET
+(APIServer pid=1587833) INFO 06-12 01:23:21 [launcher.py:46] Route: /ping, Methods: GET
+(APIServer pid=1587833) INFO 06-12 01:23:21 [launcher.py:46] Route: /ping, Methods: POST
+(APIServer pid=1587833) INFO 06-12 01:23:21 [launcher.py:46] Route: /invocations, Methods: POST
+(APIServer pid=1587833) INFO 06-12 01:23:21 [launcher.py:46] Route: /v1/chat/completions, Methods: POST
+(APIServer pid=1587833) INFO 06-12 01:23:21 [launcher.py:46] Route: /v1/chat/completions/batch, Methods: POST
+(APIServer pid=1587833) INFO 06-12 01:23:21 [launcher.py:46] Route: /v1/responses, Methods: POST
+(APIServer pid=1587833) INFO 06-12 01:23:21 [launcher.py:46] Route: /v1/responses/{response_id}, Methods: GET
+(APIServer pid=1587833) INFO 06-12 01:23:21 [launcher.py:46] Route: /v1/responses/{response_id}/cancel, Methods: POST
+(APIServer pid=1587833) INFO 06-12 01:23:21 [launcher.py:46] Route: /v1/completions, Methods: POST
+(APIServer pid=1587833) INFO 06-12 01:23:21 [launcher.py:46] Route: /v1/messages, Methods: POST
+(APIServer pid=1587833) INFO 06-12 01:23:21 [launcher.py:46] Route: /v1/messages/count_tokens, Methods: POST
+(APIServer pid=1587833) INFO 06-12 01:23:21 [launcher.py:46] Route: /inference/v1/generate, Methods: POST
+(APIServer pid=1587833) INFO 06-12 01:23:21 [launcher.py:46] Route: /scale_elastic_ep, Methods: POST
+(APIServer pid=1587833) INFO 06-12 01:23:21 [launcher.py:46] Route: /is_scaling_elastic_ep, Methods: POST
+(APIServer pid=1587833) INFO 06-12 01:23:21 [launcher.py:46] Route: /generative_scoring, Methods: POST
+(APIServer pid=1587833) INFO 06-12 01:23:21 [launcher.py:46] Route: /v1/chat/completions/render, Methods: POST
+(APIServer pid=1587833) INFO 06-12 01:23:21 [launcher.py:46] Route: /v1/completions/render, Methods: POST
+(APIServer pid=1587833) INFO:     Started server process [1587833]
+(APIServer pid=1587833) INFO:     Waiting for application startup.
+(APIServer pid=1587833) INFO:     Application startup complete.
+(APIServer pid=1587833) INFO:     127.0.0.1:60564 - "GET /health HTTP/1.1" 200 OK
+(APIServer pid=1587833) INFO:     127.0.0.1:41084 - "GET /v1/models HTTP/1.1" 200 OK
+(APIServer pid=1587833) INFO:     127.0.0.1:41088 - "POST /v1/completions HTTP/1.1" 200 OK
+(APIServer pid=1587833) INFO:     127.0.0.1:35760 - "GET /metrics HTTP/1.1" 200 OK
+(APIServer pid=1587833) INFO:     127.0.0.1:35776 - "POST /v1/completions HTTP/1.1" 200 OK
+(Worker_TP0 pid=1588081) [vllm-xpu-timing-step] {"metadata":{"batch_desc_num_reqs":null,"batch_desc_num_tokens":1,"computed_token_counts":[518],"cudagraph_mode":"PIECEWISE","decode_bucket":1,"decode_req_count":1,"is_pure_decode":true,"max_num_scheduled_tokens":1,"max_scheduled_spec_tokens":0,"num_reqs":1,"num_tokens_across_dp":null,"num_tokens_padded":1,"num_tokens_unpadded":1,"prefill_req_count":0,"scheduled_spec_histogram":{"0":1},"scheduled_spec_lengths":[0],"scheduled_token_counts":[1],"scheduled_token_histogram":{"1":1},"should_ubatch":false,"skip_compiled":false,"use_spec_decode":false},"rank":"0","status":"ok","step":24,"summary_by_total_ms":[{"avg_ms":8.451488,"count":1,"label":"gpu_model_runner.model_forward","max_ms":8.451488,"rank":"0","total_ms":8.451488}]}
+(Worker_TP0 pid=1588081) [vllm-xpu-timing-step] {"metadata":{"batch_desc_num_reqs":null,"batch_desc_num_tokens":1,"computed_token_counts":[526],"cudagraph_mode":"PIECEWISE","decode_bucket":1,"decode_req_count":1,"is_pure_decode":true,"max_num_scheduled_tokens":1,"max_scheduled_spec_tokens":0,"num_reqs":1,"num_tokens_across_dp":null,"num_tokens_padded":1,"num_tokens_unpadded":1,"prefill_req_count":0,"scheduled_spec_histogram":{"0":1},"scheduled_spec_lengths":[0],"scheduled_token_counts":[1],"scheduled_token_histogram":{"1":1},"should_ubatch":false,"skip_compiled":false,"use_spec_decode":false},"rank":"0","status":"ok","step":32,"summary_by_total_ms":[{"avg_ms":8.490271,"count":1,"label":"gpu_model_runner.model_forward","max_ms":8.490271,"rank":"0","total_ms":8.490271}]}
+(Worker_TP0 pid=1588081) [vllm-xpu-timing-step] {"metadata":{"batch_desc_num_reqs":null,"batch_desc_num_tokens":1,"computed_token_counts":[534],"cudagraph_mode":"PIECEWISE","decode_bucket":1,"decode_req_count":1,"is_pure_decode":true,"max_num_scheduled_tokens":1,"max_scheduled_spec_tokens":0,"num_reqs":1,"num_tokens_across_dp":null,"num_tokens_padded":1,"num_tokens_unpadded":1,"prefill_req_count":0,"scheduled_spec_histogram":{"0":1},"scheduled_spec_lengths":[0],"scheduled_token_counts":[1],"scheduled_token_histogram":{"1":1},"should_ubatch":false,"skip_compiled":false,"use_spec_decode":false},"rank":"0","status":"ok","step":40,"summary_by_total_ms":[{"avg_ms":8.429587,"count":1,"label":"gpu_model_runner.model_forward","max_ms":8.429587,"rank":"0","total_ms":8.429587}]}
+(Worker_TP0 pid=1588081) [vllm-xpu-timing-step] {"metadata":{"batch_desc_num_reqs":null,"batch_desc_num_tokens":1,"computed_token_counts":[542],"cudagraph_mode":"PIECEWISE","decode_bucket":1,"decode_req_count":1,"is_pure_decode":true,"max_num_scheduled_tokens":1,"max_scheduled_spec_tokens":0,"num_reqs":1,"num_tokens_across_dp":null,"num_tokens_padded":1,"num_tokens_unpadded":1,"prefill_req_count":0,"scheduled_spec_histogram":{"0":1},"scheduled_spec_lengths":[0],"scheduled_token_counts":[1],"scheduled_token_histogram":{"1":1},"should_ubatch":false,"skip_compiled":false,"use_spec_decode":false},"rank":"0","status":"ok","step":48,"summary_by_total_ms":[{"avg_ms":8.424076,"count":1,"label":"gpu_model_runner.model_forward","max_ms":8.424076,"rank":"0","total_ms":8.424076}]}
+(Worker_TP0 pid=1588081) [vllm-xpu-timing-step] {"metadata":{"batch_desc_num_reqs":null,"batch_desc_num_tokens":1,"computed_token_counts":[550],"cudagraph_mode":"PIECEWISE","decode_bucket":1,"decode_req_count":1,"is_pure_decode":true,"max_num_scheduled_tokens":1,"max_scheduled_spec_tokens":0,"num_reqs":1,"num_tokens_across_dp":null,"num_tokens_padded":1,"num_tokens_unpadded":1,"prefill_req_count":0,"scheduled_spec_histogram":{"0":1},"scheduled_spec_lengths":[0],"scheduled_token_counts":[1],"scheduled_token_histogram":{"1":1},"should_ubatch":false,"skip_compiled":false,"use_spec_decode":false},"rank":"0","status":"ok","step":56,"summary_by_total_ms":[{"avg_ms":8.422053,"count":1,"label":"gpu_model_runner.model_forward","max_ms":8.422053,"rank":"0","total_ms":8.422053}]}
+(Worker_TP0 pid=1588081) [vllm-xpu-timing-step] {"metadata":{"batch_desc_num_reqs":null,"batch_desc_num_tokens":1,"computed_token_counts":[558],"cudagraph_mode":"PIECEWISE","decode_bucket":1,"decode_req_count":1,"is_pure_decode":true,"max_num_scheduled_tokens":1,"max_scheduled_spec_tokens":0,"num_reqs":1,"num_tokens_across_dp":null,"num_tokens_padded":1,"num_tokens_unpadded":1,"prefill_req_count":0,"scheduled_spec_histogram":{"0":1},"scheduled_spec_lengths":[0],"scheduled_token_counts":[1],"scheduled_token_histogram":{"1":1},"should_ubatch":false,"skip_compiled":false,"use_spec_decode":false},"rank":"0","status":"ok","step":64,"summary_by_total_ms":[{"avg_ms":8.437481,"count":1,"label":"gpu_model_runner.model_forward","max_ms":8.437481,"rank":"0","total_ms":8.437481}]}
+(Worker_TP0 pid=1588081) [vllm-xpu-timing-step] {"metadata":{"batch_desc_num_reqs":null,"batch_desc_num_tokens":1,"computed_token_counts":[566],"cudagraph_mode":"PIECEWISE","decode_bucket":1,"decode_req_count":1,"is_pure_decode":true,"max_num_scheduled_tokens":1,"max_scheduled_spec_tokens":0,"num_reqs":1,"num_tokens_across_dp":null,"num_tokens_padded":1,"num_tokens_unpadded":1,"prefill_req_count":0,"scheduled_spec_histogram":{"0":1},"scheduled_spec_lengths":[0],"scheduled_token_counts":[1],"scheduled_token_histogram":{"1":1},"should_ubatch":false,"skip_compiled":false,"use_spec_decode":false},"rank":"0","status":"ok","step":72,"summary_by_total_ms":[{"avg_ms":8.416311,"count":1,"label":"gpu_model_runner.model_forward","max_ms":8.416311,"rank":"0","total_ms":8.416311}]}
+(Worker_TP0 pid=1588081) [vllm-xpu-timing-step] {"metadata":{"batch_desc_num_reqs":null,"batch_desc_num_tokens":1,"computed_token_counts":[574],"cudagraph_mode":"PIECEWISE","decode_bucket":1,"decode_req_count":1,"is_pure_decode":true,"max_num_scheduled_tokens":1,"max_scheduled_spec_tokens":0,"num_reqs":1,"num_tokens_across_dp":null,"num_tokens_padded":1,"num_tokens_unpadded":1,"prefill_req_count":0,"scheduled_spec_histogram":{"0":1},"scheduled_spec_lengths":[0],"scheduled_token_counts":[1],"scheduled_token_histogram":{"1":1},"should_ubatch":false,"skip_compiled":false,"use_spec_decode":false},"rank":"0","status":"ok","step":80,"summary_by_total_ms":[{"avg_ms":8.436731,"count":1,"label":"gpu_model_runner.model_forward","max_ms":8.436731,"rank":"0","total_ms":8.436731}]}
+(APIServer pid=1587833) INFO:     127.0.0.1:35784 - "GET /metrics HTTP/1.1" 200 OK
+(APIServer pid=1587833) INFO 06-12 01:23:51 [loggers.py:271] Engine 000: Avg prompt throughput: 102.4 tokens/s, Avg generation throughput: 8.0 tokens/s, Running: 0 reqs, Waiting: 0 reqs, GPU KV cache usage: 0.0%, Prefix cache hit rate: 0.0%
+(Worker_TP3 pid=1588084) WARNING 06-12 01:23:56 [multiproc_executor.py:884] WorkerProc was terminated
+(Worker_TP0 pid=1588081) WARNING 06-12 01:23:56 [multiproc_executor.py:884] WorkerProc was terminated
+(Worker_TP2 pid=1588083) WARNING 06-12 01:23:56 [multiproc_executor.py:884] WorkerProc was terminated
+(Worker_TP1 pid=1588082) WARNING 06-12 01:23:56 [multiproc_executor.py:884] WorkerProc was terminated
+(EngineCore pid=1587969) INFO 06-12 01:23:56 [core.py:1238] Shutdown initiated (timeout=0)
+(EngineCore pid=1587969) INFO 06-12 01:23:56 [core.py:1261] Shutdown complete
+(Worker_TP0 pid=1588081) INFO 06-12 01:23:56 [multiproc_executor.py:775] Parent process exited, terminating worker queues
+(APIServer pid=1587833) INFO:     Shutting down
+(APIServer pid=1587833) INFO:     Waiting for application shutdown.
+(APIServer pid=1587833) INFO:     Application shutdown complete.
+(APIServer pid=1587833) INFO:     Finished server process [1587833]
+(Worker_TP0 pid=1588081) [vllm-xpu-timing-summary] begin
+(Worker_TP0 pid=1588081) [vllm-xpu-timing-summary] rank=0 label=gpu_model_runner.model_forward count=64 total_ms=602.931424 avg_ms=9.420803 max_ms=71.216329
+(Worker_TP0 pid=1588081) [vllm-xpu-timing-summary] end

@@ -335,6 +335,7 @@ tmux new -s qwen36-tp4-decode-timing-$(date +%Y%m%d%H%M%S) -- \
     VLLM_XPU_DECODE_TIMING=1 \
     VLLM_XPU_DECODE_TIMING_SYNC=0 \
     VLLM_XPU_DECODE_TIMING_RANK=0 \
+    VLLM_XPU_DECODE_TIMING_LABEL_REGEX='^(xpu_moe[.]|moe_forward_shared[.]custom_op|all_reduce:|gpu_model_runner[.]model_forward|gdn_attention_core_xpu[.]native|logits[.])' \
     VLLM_XPU_DECODE_TIMING_STEP_SUMMARY=1 \
     VLLM_XPU_DECODE_TIMING_STEP_EVERY=32 \
     VLLM_XPU_DECODE_TIMING_STEP_SKIP_FIRST=64 \
@@ -492,3 +493,110 @@ Additional bigger, bolder ideas:
     reliability lane. Sweep only host stack, firmware, oneCCL, and runtime
     versions with the accepted command and a fixed quality/speed smoke. Promote
     no kernel change from a stack that increases device-lost rate.
+
+## 2026-06-12 Selective Timing Controls And Safer Profiles
+
+Patch:
+
+- `patches/vllm-qwen36-selective-xpu-decode-timing-20260612.patch`.
+- Live source updated:
+  `/home/steve/src/vllm/vllm/utils/xpu_decode_timing.py`.
+- Accepted launch guard updated:
+  `scripts/launch-qwen36-quark-int8-accepted.sh`.
+
+New profiling environment controls:
+
+- `VLLM_XPU_DECODE_TIMING_LABEL_REGEX`: record only labels matching this regex.
+- `VLLM_XPU_DECODE_TIMING_EXCLUDE_LABEL_REGEX`: drop labels matching this regex.
+- `VLLM_XPU_DECODE_TIMING_SYNC_LABEL_REGEX`: when sync timing is enabled,
+  synchronize only matching labels.
+- `VLLM_XPU_DECODE_TIMING_SYNC_EXCLUDE_LABEL_REGEX`: exclude matching labels
+  from sync timing.
+- The accepted launch script strips all four unless
+  `VLLM_XPU_DECODE_TIMING_ALLOW=1`, so normal service stays timing-free.
+
+Validation:
+
+- `bash -n scripts/launch-qwen36-quark-int8-accepted.sh` passed.
+- `/home/steve/.venvs/vllm-xpu/bin/python -m py_compile
+  /home/steve/src/vllm/vllm/utils/xpu_decode_timing.py` passed.
+- A small import/filter exercise recorded only `xpu_moe.*` when
+  `VLLM_XPU_DECODE_TIMING_LABEL_REGEX='^xpu_moe[.]'`.
+
+No-sync label timing profile:
+
+- Session: `qwen36-tp4-nosync-labeltiming-20260612t`.
+- Artifacts:
+  - `data/qwen36-quark-int8-tp4-nosync-labeltiming-20260612t.log`.
+  - `data/qwen36-quark-int8-tp4-nosync-labeltiming-summary-20260612t.json`.
+  - `data/qwen36-quark-int8-tp4-nosync-labeltiming-p512o128-20260612t.json`.
+- p512/o128 corrected after-first speed: `100.669 tok/s`.
+- p512/o128 e2e output speed: `95.384 tok/s`.
+- vLLM decode histogram: `9.863 ms/token`.
+- Process summary emitted `28` timing labels and step summary emitted `8`
+  decode steps without device loss.
+- Active decode-step bucket, no sync:
+  - `gpu_model_runner.model_forward`: `5.461 ms/step` mean.
+  - `gdn_attention_core_xpu.native`: `1.505 ms/step` mean.
+  - `logits.local_argmax_lm_head`: `0.067 ms/step` mean.
+  - visible timed total: `7.033 ms/step` mean.
+- Interpretation: no-sync timing is safe and useful for call counts and
+  host/graph-enqueue visibility, but it is not a real kernel-time profile.
+  MoE substep labels appear in the process summary but not in active decode-step
+  summaries under accepted graph replay, so no-sync cannot directly rank live
+  MoE replay kernels.
+
+Model-forward-only synchronized timing profile:
+
+- Session: `qwen36-tp4-sync-modelonly-20260612u`.
+- Artifacts:
+  - `data/qwen36-quark-int8-tp4-sync-modelonly-20260612u.log`.
+  - `data/qwen36-quark-int8-tp4-sync-modelonly-summary-20260612u.json`.
+  - `data/qwen36-quark-int8-tp4-sync-modelonly-p512o64-20260612u.json`.
+- Sync was limited to exactly `gpu_model_runner.model_forward`:
+  `VLLM_XPU_DECODE_TIMING_LABEL_REGEX='^gpu_model_runner[.]model_forward$'`
+  and
+  `VLLM_XPU_DECODE_TIMING_SYNC_LABEL_REGEX='^gpu_model_runner[.]model_forward$'`.
+- p512/o64 corrected after-first speed under this profiling overhead:
+  `96.957 tok/s`.
+- vLLM decode histogram under profiling overhead: `10.162 ms/token`.
+- Steady active decode-step model-forward timing:
+  - mean `8.438 ms/token`.
+  - median `8.433 ms/token`.
+  - p90 `8.463 ms/token`.
+- Process-wide model-forward summary averaged `9.421 ms` over `64` counted
+  calls, with a large `71.216 ms` max from non-steady startup/prefill/capture
+  work. Use the steady decode-step bucket for c1 decode budgeting.
+
+Restored accepted backend:
+
+- Session: `qwen36-tp4-accepted-restored-after-selective-timing-20260612v`.
+- Artifacts:
+  - `data/qwen36-quark-int8-tp4-accepted-restored-after-selective-timing-20260612v.log`.
+  - `data/qwen36-quark-int8-tp4-accepted-provenance-guard-after-selective-timing-20260612v.json`.
+  - `data/qwen36-quark-int8-tp4-accepted-restored-after-selective-timing-speed-p512o128-20260612v.json`.
+- Provenance guard passed all exact sentinels after restore.
+- Restored p512/o128 corrected after-first speed: `100.196 tok/s`.
+- Restored p512/o128 e2e output speed: `95.184 tok/s`.
+- Restored decode histogram: `9.906 ms/token`.
+
+New budget:
+
+- The useful c1 decode budget is now approximately:
+  - `8.44 ms/token` inside accepted graph model forward.
+  - `~1.5 ms/token` outside or around graph forward, including scheduler,
+    sampling/logits, stream timing, and measurement-visible overhead.
+- The `>200 tok/s` goal needs `<=5 ms/token` overall. A pure outside-graph
+  cleanup cannot get there; the model-forward graph must drop to about
+  `4.5 ms/token`, or exact target-verified speculation must amortize multiple
+  accepted tokens per target forward.
+
+Next best technical target:
+
+1. Build a graph-aware MoE flight recorder or offline replay fixture, because
+   active decode graph replay hides Python MoE substep timers.
+2. Use the replay fixture to attack the W8A8 MoE path: persistent expert worker,
+   tile-native W8A8 repack, out-variant quant buffers, and exact route-window
+   scheduling.
+3. Keep model-forward-only sync as the safe live regression gate for future
+   kernel changes; avoid global sync profiles unless a label filter is active.

@@ -1,0 +1,88 @@
+{
+  "line_count": 234,
+  "post_lines": [
+    208,
+    210
+  ],
+  "sample_end_line": 234,
+  "sample_line_count": 0,
+  "sample_start_line": 1,
+  "samples_by_last_ms": [],
+  "source_log": "data/qwen36-quark-int8-tp4-sync-modelonly-20260612u.log",
+  "step_line_count": 8,
+  "step_summary_by_bucket": [
+    {
+      "first_line": 211,
+      "first_step": 24,
+      "group": {
+        "batch_desc_num_reqs": null,
+        "batch_desc_num_tokens": 1,
+        "cudagraph_mode": "PIECEWISE",
+        "decode_bucket": 1,
+        "decode_req_count": 1,
+        "is_pure_decode": true,
+        "max_num_scheduled_tokens": 1,
+        "max_scheduled_spec_tokens": 0,
+        "num_reqs": 1,
+        "num_tokens_padded": 1,
+        "num_tokens_unpadded": 1,
+        "prefill_req_count": 0,
+        "should_ubatch": false,
+        "skip_compiled": false,
+        "status": "ok",
+        "use_spec_decode": false
+      },
+      "last_line": 218,
+      "last_step": 80,
+      "max_model_forward_ms": 8.490271,
+      "mean_model_forward_ms": 8.43849975,
+      "mean_visible_timed_ms": 8.43849975,
+      "median_model_forward_ms": 8.433159,
+      "median_visible_timed_ms": 8.433159,
+      "p90_model_forward_ms": 8.463122899999998,
+      "p90_visible_timed_ms": 8.463122899999998,
+      "scheduled_spec_histogram_total": {
+        "0": 8
+      },
+      "scheduled_token_histogram_total": {
+        "1": 8
+      },
+      "step_count": 8,
+      "top_labels_by_mean_total_ms": [
+        {
+          "label": "gpu_model_runner.model_forward",
+          "max_total_ms": 8.490271,
+          "mean_total_ms": 8.43849975,
+          "median_total_ms": 8.433159,
+          "p90_total_ms": 8.463122899999998
+        }
+      ]
+    }
+  ],
+  "step_summary_by_mean_total_ms": [
+    {
+      "call_count": 8,
+      "label": "gpu_model_runner.model_forward",
+      "max_ms": 8.490271,
+      "max_total_ms_per_step": 8.490271,
+      "mean_avg_ms_per_call": 8.43849975,
+      "mean_total_ms_per_step": 8.43849975,
+      "median_total_ms_per_step": 8.433159,
+      "p90_total_ms_per_step": 8.463122899999998,
+      "step_count": 8
+    }
+  ],
+  "summary_by_total_ms": [
+    {
+      "avg_ms": 9.420803,
+      "count": 64,
+      "label": "gpu_model_runner.model_forward",
+      "line": 233,
+      "max_ms": 71.216329,
+      "rank": 0,
+      "total_ms": 602.931424
+    }
+  ],
+  "summary_line_count": 1,
+  "summary_start_line": 1
+}

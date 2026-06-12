@@ -240,6 +240,21 @@ Current Qwen3.6 INT8 direction:
     BF16 differential quality checks, and a separate host-stack reliability
     lane. Detailed artifacts and next actions are in
     `notes/2026-06-12-qwen36-next-bigger-bets.md`.
+29. Added selective XPU decode timing controls in
+    `patches/vllm-qwen36-selective-xpu-decode-timing-20260612.patch` and the
+    live vLLM helper. New envs allow label include/exclude filtering and
+    separate sync include/exclude filtering; the accepted launch script strips
+    these unless `VLLM_XPU_DECODE_TIMING_ALLOW=1`. A no-sync label profile
+    stayed stable at `100.669 tok/s` corrected p512/o128 and showed no-sync
+    step timing is useful for host/graph-enqueue visibility but cannot rank
+    live MoE replay kernels under the accepted graph. A model-forward-only
+    synchronized profile avoided device loss and measured steady active decode
+    `gpu_model_runner.model_forward` at `8.438 ms/token` mean, with profiled
+    decode at `10.162 ms/token`. The restored accepted backend passed
+    provenance guard and measured `100.196 tok/s` corrected p512/o128. Current
+    budget: the graph model forward is the dominant c1 wall, so the next real
+    speed target is graph-aware W8A8 MoE replay/kernel work or exact
+    target-verified speculation, not frontdoor or queue cleanup.
 
 ## 2026-05-10 MiniMax AutoRound Addendum
 
