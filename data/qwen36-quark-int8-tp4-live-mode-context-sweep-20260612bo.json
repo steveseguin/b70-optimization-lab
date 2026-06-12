@@ -1,0 +1,41 @@
+{
+  "date": "2026-06-12",
+  "endpoint": "http://127.0.0.1:18080",
+  "model": "nameistoken/Qwen3.6-35B-A3B-Quark-W8A8-INT8",
+  "model_root": "/mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118",
+  "purpose": "Bound current-model c1 decode bottlenecks without changing output path.",
+  "raw_metrics": [
+    "data/qwen36-quark-int8-tp4-live-stream-p512o512-c1-20260612bo.json",
+    "data/qwen36-quark-int8-tp4-live-nonstream-p512o512-c1-20260612bo.json",
+    "data/qwen36-quark-int8-tp4-live-stream-p512o256-c1-20260612bo.json",
+    "data/qwen36-quark-int8-tp4-live-stream-p4096o256-c1-20260612bo.json"
+  ],
+  "summary_artifacts": [
+    "data/qwen36-quark-int8-tp4-live-mode-context-sweep-summary-20260612bo.json",
+    "data/qwen36-quark-int8-tp4-live-mode-context-sweep-summary-20260612bo.md"
+  ],
+  "patch_artifact": "patches/vllm-qwen36-boundary-timing-labels-20260612bo.diff",
+  "validation": [
+    "python3 -m py_compile /home/steve/src/vllm/vllm/v1/worker/gpu_model_runner.py",
+    "Endpoint /v1/models stayed healthy after the live sweep."
+  ],
+  "key_results": {
+    "stream_p512_o512_corrected_tok_s": 99.58950917109154,
+    "stream_p512_o512_decode_ms_per_token": 10.02276113285916,
+    "nonstream_p512_o512_e2e_tok_s": 98.66760701067639,
+    "nonstream_p512_o512_decode_ms_per_token": 9.988651812363969,
+    "streaming_vs_nonstream_decode_delta_pct": -0.34,
+    "stream_p512_o256_decode_ms_per_token": 9.925302816554904,
+    "stream_p4096_o256_decode_ms_per_token": 9.980144826386095,
+    "p4096_vs_p512_decode_delta_pct": 0.55,
+    "stream_p512_o256_ttft_ms": 74.20289516448975,
+    "stream_p4096_o256_ttft_ms": 375.5446672439575,
+    "queue_ms_range": [0.007724622264504433, 0.009217066690325737]
+  },
+  "interpretation": [
+    "SSE streaming is not a material c1 decode bottleneck; non-streaming improved decode by only about 0.34%.",
+    "Context length from p512 to p4096 primarily increases TTFT/prefill, not steady decode; decode changed by about 0.55%.",
+    "Queue/frontdoor work remains negligible for c1.",
+    "Next optimization work should target model execution, command submission/synchronization, TP/collective topology, or verifier-safe multi-token acceptance."
+  ]
+}

@@ -1,0 +1,42 @@
+diff --git a/vllm/v1/worker/gpu_model_runner.py b/vllm/v1/worker/gpu_model_runner.py
+--- a/vllm/v1/worker/gpu_model_runner.py
++++ b/vllm/v1/worker/gpu_model_runner.py
+@@
+-        with (
+-            record_function_or_nullcontext("gpu_model_runner: preprocess"),
+-            self.synchronize_input_prep(),
+-        ):
++        with (
++            record_function_or_nullcontext("gpu_model_runner: preprocess"),
++            timed_region("gpu_model_runner.preprocess_total"),
++            self.synchronize_input_prep(),
++        ):
+@@
+-        with (
+-            set_forward_context(
++        with (
++            timed_region("gpu_model_runner.forward_total"),
++            set_forward_context(
+@@
+-        with record_function_or_nullcontext("gpu_model_runner: postprocess"):
++        with (
++            record_function_or_nullcontext("gpu_model_runner: postprocess"),
++            timed_region("gpu_model_runner.postprocess_total"),
++        ):
+@@
+-        with record_function_or_nullcontext("gpu_model_runner: sample"):
++        with (
++            record_function_or_nullcontext("gpu_model_runner: sample"),
++            timed_region("gpu_model_runner.sample_total"),
++        ):
+             sampler_output = self._sample(logits, spec_decode_metadata)
+@@
+-        with record_function_or_nullcontext(
+-            "gpu_model_runner: AsyncGPUModelRunnerOutput"
++        with (
++            record_function_or_nullcontext(
++                "gpu_model_runner: AsyncGPUModelRunnerOutput"
++            ),
++            timed_region("gpu_model_runner.async_output_wrap"),
+         ):
+             async_output = AsyncGPUModelRunnerOutput(

@@ -7007,6 +7007,59 @@ Bigger ideas to keep on the board:
     deltas can tell us whether the missing milliseconds are MoE-dominated or
     cache/attention/server dominated.
 
+## 2026-06-12 Live Mode And Context Sweep
+
+Added a bounded no-output-path-change sweep on the accepted endpoint to test two
+easy hypotheses before deeper maintenance: whether SSE streaming/frontdoor
+output handling is a large decode bottleneck, and whether shorter context
+materially improves steady decode.
+
+Artifacts:
+
+- `scripts/qwen36-live-sweep-summary.py`
+- `data/qwen36-quark-int8-tp4-live-stream-p512o512-c1-20260612bo.json`
+- `data/qwen36-quark-int8-tp4-live-nonstream-p512o512-c1-20260612bo.json`
+- `data/qwen36-quark-int8-tp4-live-stream-p512o256-c1-20260612bo.json`
+- `data/qwen36-quark-int8-tp4-live-stream-p4096o256-c1-20260612bo.json`
+- `data/qwen36-quark-int8-tp4-live-mode-context-sweep-summary-20260612bo.json`
+- `data/qwen36-quark-int8-tp4-live-mode-context-sweep-summary-20260612bo.md`
+- `data/qwen36-quark-int8-tp4-live-mode-context-sweep-20260612bo.json`
+
+Findings:
+
+- Stream p512/o512 corrected decode: `99.590 tok/s`, with vLLM decode median
+  `10.023 ms/token`.
+- Non-stream p512/o512 vLLM decode median: `9.989 ms/token`, only `-0.34%`
+  versus stream; e2e tok/s moved by only `+0.35%`.
+- Stream p512/o256 vLLM decode median: `9.925 ms/token`.
+- Stream p4096/o256 vLLM decode median: `9.980 ms/token`, only `+0.55%`
+  versus p512/o256, while TTFT rose from `74.2 ms` to `375.5 ms`.
+- Queue time stayed around `0.008-0.009 ms/request`.
+
+Interpretation:
+
+- SSE streaming/output response mechanics are not the missing `~5 ms/token`.
+- Reducing context from 4096 to 512 does not materially change steady decode,
+  so the c1 gap is not primarily long-context attention/KV work at these
+  lengths. Prefill/TTFT scales as expected, but decode remains near `10 ms`.
+- The next high-value work should focus on model execution, command
+  submission/synchronization, TP/collective topology, resident MoE scheduling,
+  or target-verified multi-token acceptance.
+
+Boundary timing patch:
+
+- Added a local source patch artifact,
+  `patches/vllm-qwen36-boundary-timing-labels-20260612bo.diff`, and applied it
+  to `/home/steve/src/vllm/vllm/v1/worker/gpu_model_runner.py`.
+- It adds disabled-by-default `timed_region` labels for
+  `gpu_model_runner.preprocess_total`, `gpu_model_runner.forward_total`,
+  `gpu_model_runner.postprocess_total`, `gpu_model_runner.sample_total`, and
+  `gpu_model_runner.async_output_wrap`.
+- `python3 -m py_compile vllm/v1/worker/gpu_model_runner.py` passed.
+- The live endpoint was not restarted for this patch in this pass; the new
+  labels are for the next maintenance timing run with
+  `VLLM_XPU_DECODE_TIMING=1`.
+
 ## 2026-06-12 Rank-Local Live ABI Smoke
 
 Added a disabled-by-default live pointer diagnostic to the current XPU Quark

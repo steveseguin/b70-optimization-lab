@@ -6,6 +6,22 @@ Date: 2026-06-12
 
 2026-06-12 notes update:
 
+- Added a no-output-path-change live mode/context sweep on the accepted
+  endpoint and a disabled-by-default boundary timing patch for the next
+  maintenance run. Stream p512/o512 was `99.590 tok/s` corrected with
+  `10.023 ms/token` decode; non-stream p512/o512 was `9.989 ms/token`, only
+  `-0.34%` different, so SSE/output streaming is not the missing `~5 ms/token`.
+  Stream p4096/o256 was `9.980 ms/token` versus p512/o256 at
+  `9.925 ms/token`, only `+0.55%`, while TTFT rose from `74.2 ms` to
+  `375.5 ms`; steady decode is therefore not primarily a p512-vs-p4096 context
+  issue. Queue time stayed around `0.008-0.009 ms/request`. Added
+  `scripts/qwen36-live-sweep-summary.py`, four raw metric JSONs, summary
+  JSON/MD artifacts, `data/qwen36-quark-int8-tp4-live-mode-context-sweep-20260612bo.json`,
+  and `patches/vllm-qwen36-boundary-timing-labels-20260612bo.diff`.
+  The local vLLM source now has env-gated labels for preprocess, forward,
+  postprocess, sample, and async-output wrap; `py_compile` passed, but the live
+  endpoint was not restarted for these labels yet.
+
 - Added a bolder post-refresh idea backlog to
   `notes/2026-06-12-qwen36-next-bigger-bets.md` after a fresh public
   Localmaxxing refresh and local checkpoint metadata check. Current public
