@@ -535,3 +535,19 @@ vLLM/XPU FP8 work:
     afterward; provenance sentinels passed and a repetitive p512/o256 sanity run
     measured `99.157 tok/s` corrected after first text chunk with
     `10.047 ms/generated token` decode.
+17. A route-conditioned parallelism simulator now screens EP/TP/hot-expert
+    replication ideas before implementation:
+    `scripts/qwen36-route-parallelism-sim.py`. On routecapture6, plain
+    `ep4_greedy_static` still has p95 route pressure `1.456` versus TP4 and full
+    movement proxy `1.000`; `tp2_ep2_greedy_static` improves pressure to p95
+    `1.177` but still keeps the full movement proxy. Prompt-class captures show
+    the same pattern (`ep4_greedy_static` p95 `1.312` for 16-record windows and
+    `1.562` for 8-record windows; `tp2_ep2_greedy_static` p95 `1.156` and
+    `1.250`). Top-64 hot replication is the interesting ingredient: it keeps
+    route pressure near `1.000`, cuts the routed-row movement proxy to roughly
+    `0.11`, and has an expert-weight memory lower bound of `1.75x` versus
+    current TP4. Decision: do not start with a broad EP rewrite. Hot64
+    replication is only worth pursuing inside route replay and only if paired
+    with one-launch persistent/tile-native MoE or collective-removal work,
+    because it reduces communication pressure but does not reduce MoE compute by
+    itself.

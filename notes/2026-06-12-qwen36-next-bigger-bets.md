@@ -1249,3 +1249,76 @@ Additional things to try from this result:
     grouped-GEMM shapes into a small Intel/vLLM repro. A negative result with
     real routes is useful: it points maintainers toward persistent/grouped-GEMM
     policy work instead of more split-launch experiments.
+
+## 2026-06-12 Route-Conditioned Parallelism Simulation
+
+New script:
+
+- `scripts/qwen36-route-parallelism-sim.py`.
+
+Artifacts:
+
+- Focused routecapture6 simulation:
+  `data/qwen36-quark-int8-tp4-routecapture6-parallelism-sim-20260612ad.json`
+  and
+  `data/qwen36-quark-int8-tp4-routecapture6-parallelism-sim-20260612ad.md`.
+- Prompt-class 16-record window simulation:
+  `data/qwen36-quark-int8-tp4-promptclass-parallelism-sim-20260612ad.json`
+  and
+  `data/qwen36-quark-int8-tp4-promptclass-parallelism-sim-20260612ad.md`.
+- Prompt-class 8-record window simulation, added so short code/structured
+  traces are represented:
+  `data/qwen36-quark-int8-tp4-promptclass-parallelism-sim-w8-20260612ad.json`
+  and
+  `data/qwen36-quark-int8-tp4-promptclass-parallelism-sim-w8-20260612ad.md`.
+
+What the simulator measures:
+
+- `compute_pressure_vs_tp4`: route-load pressure normalized so `1.0` means
+  balanced row-work equal to the current TP4 proxy.
+- `communication_row_fraction_proxy`: routed row fraction that still needs
+  expert-parallel movement. Plain EP/TP-EP policies are `1.0`; hot replication
+  reduces it by localizing hot rows.
+- `expert_memory_relative_to_tp4`: per-rank expert-weight memory lower bound
+  relative to current TP4. Dense weights and KV are intentionally excluded.
+
+Result:
+
+- Focused routecapture6, 15 windows:
+  - `ep4_greedy_static`: mean pressure `1.238`, p95 `1.456`, comm proxy `1.000`.
+  - `tp2_ep2_greedy_static`: mean pressure `1.079`, p95 `1.177`, comm proxy `1.000`.
+  - `ep4_hot32_replicated_greedy`: mean pressure `1.002`, p95 `1.009`,
+    comm proxy `0.311`, memory lower bound `1.375x`.
+  - `ep4_hot64_replicated_greedy`: mean pressure `1.000`, p95 `1.000`,
+    comm proxy `0.118`, memory lower bound `1.750x`.
+- Prompt-class 16-record windows, 150 windows:
+  - `ep4_greedy_static`: mean pressure `1.193`, p95 `1.312`, comm proxy `1.000`.
+  - `tp2_ep2_greedy_static`: mean pressure `1.069`, p95 `1.156`, comm proxy `1.000`.
+  - `ep4_hot64_replicated_greedy`: mean pressure `1.000`, p95 `1.000`,
+    comm proxy `0.109`, memory lower bound `1.750x`.
+- Prompt-class 8-record windows, 315 windows:
+  - `ep4_greedy_static`: mean pressure `1.269`, p95 `1.562`, comm proxy `1.000`.
+  - `tp2_ep2_greedy_static`: mean pressure `1.100`, p95 `1.250`, comm proxy `1.000`.
+  - `ep4_hot64_replicated_greedy`: mean pressure `1.000`, p95 `1.000`,
+    comm proxy `0.110`, memory lower bound `1.750x`.
+
+Decision:
+
+- Plain EP4 is not a clean c1 speed path. Even with static greedy placement it
+  keeps the full expert-parallel movement proxy and shows meaningful p95
+  imbalance.
+- TP2+EP2 is less imbalanced than EP4, but it still keeps the full movement
+  proxy and does not obviously halve the `~10 ms/token` decode budget.
+- Hot-expert replication remains interesting, but only as an ingredient:
+  top-64 replication can reduce routed-row movement to about `0.11x` while
+  keeping route-load pressure near the TP4 proxy, at roughly `1.75x` per-rank
+  expert-weight memory. It does not reduce MoE compute by itself, so it is not
+  enough for `>200 tok/s` without a persistent/tile-native kernel, collective
+  removal, or a static latency lane.
+- The next implementation bet should not be a broad EP rewrite. The better
+  sequence is:
+  1. measure current per-rank expert-weight and KV headroom for hot64,
+  2. prototype one-layer hot64 replicated routing in route replay only,
+  3. pair it with one-launch persistent/tile-native MoE work,
+  4. then consider a static c1 sidecar if the replay kernel shows a real
+     latency drop.

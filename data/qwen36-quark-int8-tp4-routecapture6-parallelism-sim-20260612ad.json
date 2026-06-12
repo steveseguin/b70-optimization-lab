@@ -1,0 +1,1977 @@
+{
+  "metadata": {
+    "baseline_tp": 4,
+    "gpu_count": 4,
+    "hotset_sizes": [
+      16,
+      32,
+      64
+    ],
+    "input_files": [
+      "data/qwen36-quark-int8-tp4-routecapture6-routes-rank0-20260611.jsonl"
+    ],
+    "layer_regex": null,
+    "records_by_source": {
+      "data/qwen36-quark-int8-tp4-routecapture6-routes-rank0-20260611.jsonl": 285
+    },
+    "records_loaded": 285,
+    "records_matched": 285,
+    "records_skipped": 0,
+    "stage_regex": "quark_int8_apply",
+    "stride": 16,
+    "window_size": 16
+  },
+  "summary": {
+    "best_by_layer": [
+      {
+        "best_policy_by_p95_compute_pressure": "ep4_hot64_replicated_greedy",
+        "label": "6-routes-rank0-20260611",
+        "layer": "language_model.model.layers.14.mlp.experts",
+        "max_expert_memory_relative_to_tp4": 1.75,
+        "mean_comm_row_fraction_proxy": 0.128125,
+        "mean_compute_pressure_vs_tp4": 1.0,
+        "p95_compute_pressure_vs_tp4": 1.0
+      },
+      {
+        "best_policy_by_p95_compute_pressure": "ep4_hot64_replicated_greedy",
+        "label": "6-routes-rank0-20260611",
+        "layer": "language_model.model.layers.21.mlp.experts",
+        "max_expert_memory_relative_to_tp4": 1.75,
+        "mean_comm_row_fraction_proxy": 0.140625,
+        "mean_compute_pressure_vs_tp4": 1.0,
+        "p95_compute_pressure_vs_tp4": 1.0
+      },
+      {
+        "best_policy_by_p95_compute_pressure": "ep4_hot64_replicated_greedy",
+        "label": "6-routes-rank0-20260611",
+        "layer": "language_model.model.layers.9.mlp.experts",
+        "max_expert_memory_relative_to_tp4": 1.75,
+        "mean_comm_row_fraction_proxy": 0.084375,
+        "mean_compute_pressure_vs_tp4": 1.0,
+        "p95_compute_pressure_vs_tp4": 1.0
+      }
+    ],
+    "layer_policy_summary": [
+      {
+        "active_experts": {
+          "max": 54.0,
+          "mean": 49.4,
+          "min": 46.0,
+          "p50": 49.0,
+          "p90": 52.8,
+          "p95": 53.4
+        },
+        "communication_row_fraction_proxy": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.46875,
+          "mean": 1.3375,
+          "min": 1.21875,
+          "p50": 1.3125,
+          "p90": 1.4562499999999998,
+          "p95": 1.4625000000000001
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "hot_coverage": {
+          "max": 0.0,
+          "mean": 0.0,
+          "min": 0.0,
+          "p50": 0.0,
+          "p90": 0.0,
+          "p95": 0.0
+        },
+        "label": "6-routes-rank0-20260611",
+        "layer": "language_model.model.layers.14.mlp.experts",
+        "policy": "ep4_contiguous",
+        "total_rows": {
+          "max": 128.0,
+          "mean": 128.0,
+          "min": 128.0,
+          "p50": 128.0,
+          "p90": 128.0,
+          "p95": 128.0
+        },
+        "windows": 5
+      },
+      {
+        "active_experts": {
+          "max": 54.0,
+          "mean": 49.4,
+          "min": 46.0,
+          "p50": 49.0,
+          "p90": 52.8,
+          "p95": 53.4
+        },
+        "communication_row_fraction_proxy": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.5,
+          "mean": 1.2625,
+          "min": 1.09375,
+          "p50": 1.15625,
+          "p90": 1.475,
+          "p95": 1.4875
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "hot_coverage": {
+          "max": 0.0,
+          "mean": 0.0,
+          "min": 0.0,
+          "p50": 0.0,
+          "p90": 0.0,
+          "p95": 0.0
+        },
+        "label": "6-routes-rank0-20260611",
+        "layer": "language_model.model.layers.14.mlp.experts",
+        "policy": "ep4_greedy_static",
+        "total_rows": {
+          "max": 128.0,
+          "mean": 128.0,
+          "min": 128.0,
+          "p50": 128.0,
+          "p90": 128.0,
+          "p95": 128.0
+        },
+        "windows": 5
+      },
+      {
+        "active_experts": {
+          "max": 54.0,
+          "mean": 49.4,
+          "min": 46.0,
+          "p50": 49.0,
+          "p90": 52.8,
+          "p95": 53.4
+        },
+        "communication_row_fraction_proxy": {
+          "max": 0.6328125,
+          "mean": 0.56875,
+          "min": 0.484375,
+          "p50": 0.578125,
+          "p90": 0.6296875,
+          "p95": 0.63125
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.03125,
+          "mean": 1.00625,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.01875,
+          "p95": 1.025
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.1875,
+          "mean": 1.1875,
+          "min": 1.1875,
+          "p50": 1.1875,
+          "p90": 1.1875,
+          "p95": 1.1875
+        },
+        "hot_coverage": {
+          "max": 0.515625,
+          "mean": 0.43125,
+          "min": 0.3671875,
+          "p50": 0.421875,
+          "p90": 0.5,
+          "p95": 0.5078125
+        },
+        "label": "6-routes-rank0-20260611",
+        "layer": "language_model.model.layers.14.mlp.experts",
+        "policy": "ep4_hot16_replicated_greedy",
+        "total_rows": {
+          "max": 128.0,
+          "mean": 128.0,
+          "min": 128.0,
+          "p50": 128.0,
+          "p90": 128.0,
+          "p95": 128.0
+        },
+        "windows": 5
+      },
+      {
+        "active_experts": {
+          "max": 54.0,
+          "mean": 49.4,
+          "min": 46.0,
+          "p50": 49.0,
+          "p90": 52.8,
+          "p95": 53.4
+        },
+        "communication_row_fraction_proxy": {
+          "max": 0.4453125,
+          "mean": 0.3390625,
+          "min": 0.265625,
+          "p50": 0.3359375,
+          "p90": 0.4046875,
+          "p95": 0.42499999999999993
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.03125,
+          "mean": 1.00625,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.01875,
+          "p95": 1.025
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.375,
+          "mean": 1.375,
+          "min": 1.375,
+          "p50": 1.375,
+          "p90": 1.375,
+          "p95": 1.375
+        },
+        "hot_coverage": {
+          "max": 0.734375,
+          "mean": 0.6609375,
+          "min": 0.5546875,
+          "p50": 0.6640625,
+          "p90": 0.71875,
+          "p95": 0.7265625
+        },
+        "label": "6-routes-rank0-20260611",
+        "layer": "language_model.model.layers.14.mlp.experts",
+        "policy": "ep4_hot32_replicated_greedy",
+        "total_rows": {
+          "max": 128.0,
+          "mean": 128.0,
+          "min": 128.0,
+          "p50": 128.0,
+          "p90": 128.0,
+          "p95": 128.0
+        },
+        "windows": 5
+      },
+      {
+        "active_experts": {
+          "max": 54.0,
+          "mean": 49.4,
+          "min": 46.0,
+          "p50": 49.0,
+          "p90": 52.8,
+          "p95": 53.4
+        },
+        "communication_row_fraction_proxy": {
+          "max": 0.1640625,
+          "mean": 0.128125,
+          "min": 0.0703125,
+          "p50": 0.1328125,
+          "p90": 0.1578125,
+          "p95": 0.1609375
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.75,
+          "mean": 1.75,
+          "min": 1.75,
+          "p50": 1.75,
+          "p90": 1.75,
+          "p95": 1.75
+        },
+        "hot_coverage": {
+          "max": 0.9296875,
+          "mean": 0.871875,
+          "min": 0.8359375,
+          "p50": 0.8671875,
+          "p90": 0.9078124999999999,
+          "p95": 0.91875
+        },
+        "label": "6-routes-rank0-20260611",
+        "layer": "language_model.model.layers.14.mlp.experts",
+        "policy": "ep4_hot64_replicated_greedy",
+        "total_rows": {
+          "max": 128.0,
+          "mean": 128.0,
+          "min": 128.0,
+          "p50": 128.0,
+          "p90": 128.0,
+          "p95": 128.0
+        },
+        "windows": 5
+      },
+      {
+        "active_experts": {
+          "max": 54.0,
+          "mean": 49.4,
+          "min": 46.0,
+          "p50": 49.0,
+          "p90": 52.8,
+          "p95": 53.4
+        },
+        "communication_row_fraction_proxy": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.53125,
+          "mean": 1.425,
+          "min": 1.3125,
+          "p50": 1.40625,
+          "p90": 1.51875,
+          "p95": 1.525
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "hot_coverage": {
+          "max": 0.0,
+          "mean": 0.0,
+          "min": 0.0,
+          "p50": 0.0,
+          "p90": 0.0,
+          "p95": 0.0
+        },
+        "label": "6-routes-rank0-20260611",
+        "layer": "language_model.model.layers.14.mlp.experts",
+        "policy": "ep4_round_robin",
+        "total_rows": {
+          "max": 128.0,
+          "mean": 128.0,
+          "min": 128.0,
+          "p50": 128.0,
+          "p90": 128.0,
+          "p95": 128.0
+        },
+        "windows": 5
+      },
+      {
+        "active_experts": {
+          "max": 54.0,
+          "mean": 49.4,
+          "min": 46.0,
+          "p50": 49.0,
+          "p90": 52.8,
+          "p95": 53.4
+        },
+        "communication_row_fraction_proxy": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.203125,
+          "mean": 1.1125,
+          "min": 1.03125,
+          "p50": 1.109375,
+          "p90": 1.1843750000000002,
+          "p95": 1.19375
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "hot_coverage": {
+          "max": 0.0,
+          "mean": 0.0,
+          "min": 0.0,
+          "p50": 0.0,
+          "p90": 0.0,
+          "p95": 0.0
+        },
+        "label": "6-routes-rank0-20260611",
+        "layer": "language_model.model.layers.14.mlp.experts",
+        "policy": "tp2_ep2_contiguous",
+        "total_rows": {
+          "max": 128.0,
+          "mean": 128.0,
+          "min": 128.0,
+          "p50": 128.0,
+          "p90": 128.0,
+          "p95": 128.0
+        },
+        "windows": 5
+      },
+      {
+        "active_experts": {
+          "max": 54.0,
+          "mean": 49.4,
+          "min": 46.0,
+          "p50": 49.0,
+          "p90": 52.8,
+          "p95": 53.4
+        },
+        "communication_row_fraction_proxy": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.171875,
+          "mean": 1.059375,
+          "min": 1.0,
+          "p50": 1.046875,
+          "p90": 1.128125,
+          "p95": 1.15
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "hot_coverage": {
+          "max": 0.0,
+          "mean": 0.0,
+          "min": 0.0,
+          "p50": 0.0,
+          "p90": 0.0,
+          "p95": 0.0
+        },
+        "label": "6-routes-rank0-20260611",
+        "layer": "language_model.model.layers.14.mlp.experts",
+        "policy": "tp2_ep2_greedy_static",
+        "total_rows": {
+          "max": 128.0,
+          "mean": 128.0,
+          "min": 128.0,
+          "p50": 128.0,
+          "p90": 128.0,
+          "p95": 128.0
+        },
+        "windows": 5
+      },
+      {
+        "active_experts": {
+          "max": 54.0,
+          "mean": 49.4,
+          "min": 46.0,
+          "p50": 49.0,
+          "p90": 52.8,
+          "p95": 53.4
+        },
+        "communication_row_fraction_proxy": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.1875,
+          "mean": 1.065625,
+          "min": 1.0,
+          "p50": 1.046875,
+          "p90": 1.1375000000000002,
+          "p95": 1.1624999999999999
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "hot_coverage": {
+          "max": 0.0,
+          "mean": 0.0,
+          "min": 0.0,
+          "p50": 0.0,
+          "p90": 0.0,
+          "p95": 0.0
+        },
+        "label": "6-routes-rank0-20260611",
+        "layer": "language_model.model.layers.14.mlp.experts",
+        "policy": "tp2_ep2_round_robin",
+        "total_rows": {
+          "max": 128.0,
+          "mean": 128.0,
+          "min": 128.0,
+          "p50": 128.0,
+          "p90": 128.0,
+          "p95": 128.0
+        },
+        "windows": 5
+      },
+      {
+        "active_experts": {
+          "max": 55.0,
+          "mean": 50.6,
+          "min": 46.0,
+          "p50": 50.0,
+          "p90": 55.0,
+          "p95": 55.0
+        },
+        "communication_row_fraction_proxy": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.40625,
+          "mean": 1.25,
+          "min": 1.09375,
+          "p50": 1.21875,
+          "p90": 1.38125,
+          "p95": 1.39375
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "hot_coverage": {
+          "max": 0.0,
+          "mean": 0.0,
+          "min": 0.0,
+          "p50": 0.0,
+          "p90": 0.0,
+          "p95": 0.0
+        },
+        "label": "6-routes-rank0-20260611",
+        "layer": "language_model.model.layers.21.mlp.experts",
+        "policy": "ep4_contiguous",
+        "total_rows": {
+          "max": 128.0,
+          "mean": 128.0,
+          "min": 128.0,
+          "p50": 128.0,
+          "p90": 128.0,
+          "p95": 128.0
+        },
+        "windows": 5
+      },
+      {
+        "active_experts": {
+          "max": 55.0,
+          "mean": 50.6,
+          "min": 46.0,
+          "p50": 50.0,
+          "p90": 55.0,
+          "p95": 55.0
+        },
+        "communication_row_fraction_proxy": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.28125,
+          "mean": 1.23125,
+          "min": 1.15625,
+          "p50": 1.21875,
+          "p90": 1.28125,
+          "p95": 1.28125
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "hot_coverage": {
+          "max": 0.0,
+          "mean": 0.0,
+          "min": 0.0,
+          "p50": 0.0,
+          "p90": 0.0,
+          "p95": 0.0
+        },
+        "label": "6-routes-rank0-20260611",
+        "layer": "language_model.model.layers.21.mlp.experts",
+        "policy": "ep4_greedy_static",
+        "total_rows": {
+          "max": 128.0,
+          "mean": 128.0,
+          "min": 128.0,
+          "p50": 128.0,
+          "p90": 128.0,
+          "p95": 128.0
+        },
+        "windows": 5
+      },
+      {
+        "active_experts": {
+          "max": 55.0,
+          "mean": 50.6,
+          "min": 46.0,
+          "p50": 50.0,
+          "p90": 55.0,
+          "p95": 55.0
+        },
+        "communication_row_fraction_proxy": {
+          "max": 0.5703125,
+          "mean": 0.51875,
+          "min": 0.453125,
+          "p50": 0.5078125,
+          "p90": 0.5640625,
+          "p95": 0.5671875
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.03125,
+          "mean": 1.01875,
+          "min": 1.0,
+          "p50": 1.03125,
+          "p90": 1.03125,
+          "p95": 1.03125
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.1875,
+          "mean": 1.1875,
+          "min": 1.1875,
+          "p50": 1.1875,
+          "p90": 1.1875,
+          "p95": 1.1875
+        },
+        "hot_coverage": {
+          "max": 0.546875,
+          "mean": 0.48125,
+          "min": 0.4296875,
+          "p50": 0.4921875,
+          "p90": 0.525,
+          "p95": 0.5359375
+        },
+        "label": "6-routes-rank0-20260611",
+        "layer": "language_model.model.layers.21.mlp.experts",
+        "policy": "ep4_hot16_replicated_greedy",
+        "total_rows": {
+          "max": 128.0,
+          "mean": 128.0,
+          "min": 128.0,
+          "p50": 128.0,
+          "p90": 128.0,
+          "p95": 128.0
+        },
+        "windows": 5
+      },
+      {
+        "active_experts": {
+          "max": 55.0,
+          "mean": 50.6,
+          "min": 46.0,
+          "p50": 50.0,
+          "p90": 55.0,
+          "p95": 55.0
+        },
+        "communication_row_fraction_proxy": {
+          "max": 0.3671875,
+          "mean": 0.321875,
+          "min": 0.28125,
+          "p50": 0.3203125,
+          "p90": 0.3578125,
+          "p95": 0.36250000000000004
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.375,
+          "mean": 1.375,
+          "min": 1.375,
+          "p50": 1.375,
+          "p90": 1.375,
+          "p95": 1.375
+        },
+        "hot_coverage": {
+          "max": 0.71875,
+          "mean": 0.678125,
+          "min": 0.6328125,
+          "p50": 0.6796875,
+          "p90": 0.7125,
+          "p95": 0.715625
+        },
+        "label": "6-routes-rank0-20260611",
+        "layer": "language_model.model.layers.21.mlp.experts",
+        "policy": "ep4_hot32_replicated_greedy",
+        "total_rows": {
+          "max": 128.0,
+          "mean": 128.0,
+          "min": 128.0,
+          "p50": 128.0,
+          "p90": 128.0,
+          "p95": 128.0
+        },
+        "windows": 5
+      },
+      {
+        "active_experts": {
+          "max": 55.0,
+          "mean": 50.6,
+          "min": 46.0,
+          "p50": 50.0,
+          "p90": 55.0,
+          "p95": 55.0
+        },
+        "communication_row_fraction_proxy": {
+          "max": 0.1640625,
+          "mean": 0.140625,
+          "min": 0.1015625,
+          "p50": 0.1484375,
+          "p90": 0.1578125,
+          "p95": 0.1609375
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.75,
+          "mean": 1.75,
+          "min": 1.75,
+          "p50": 1.75,
+          "p90": 1.75,
+          "p95": 1.75
+        },
+        "hot_coverage": {
+          "max": 0.8984375,
+          "mean": 0.859375,
+          "min": 0.8359375,
+          "p50": 0.8515625,
+          "p90": 0.8828125,
+          "p95": 0.890625
+        },
+        "label": "6-routes-rank0-20260611",
+        "layer": "language_model.model.layers.21.mlp.experts",
+        "policy": "ep4_hot64_replicated_greedy",
+        "total_rows": {
+          "max": 128.0,
+          "mean": 128.0,
+          "min": 128.0,
+          "p50": 128.0,
+          "p90": 128.0,
+          "p95": 128.0
+        },
+        "windows": 5
+      },
+      {
+        "active_experts": {
+          "max": 55.0,
+          "mean": 50.6,
+          "min": 46.0,
+          "p50": 50.0,
+          "p90": 55.0,
+          "p95": 55.0
+        },
+        "communication_row_fraction_proxy": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.8125,
+          "mean": 1.5125,
+          "min": 1.25,
+          "p50": 1.5,
+          "p90": 1.725,
+          "p95": 1.76875
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "hot_coverage": {
+          "max": 0.0,
+          "mean": 0.0,
+          "min": 0.0,
+          "p50": 0.0,
+          "p90": 0.0,
+          "p95": 0.0
+        },
+        "label": "6-routes-rank0-20260611",
+        "layer": "language_model.model.layers.21.mlp.experts",
+        "policy": "ep4_round_robin",
+        "total_rows": {
+          "max": 128.0,
+          "mean": 128.0,
+          "min": 128.0,
+          "p50": 128.0,
+          "p90": 128.0,
+          "p95": 128.0
+        },
+        "windows": 5
+      },
+      {
+        "active_experts": {
+          "max": 55.0,
+          "mean": 50.6,
+          "min": 46.0,
+          "p50": 50.0,
+          "p90": 55.0,
+          "p95": 55.0
+        },
+        "communication_row_fraction_proxy": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.140625,
+          "mean": 1.09375,
+          "min": 1.015625,
+          "p50": 1.09375,
+          "p90": 1.134375,
+          "p95": 1.1375
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "hot_coverage": {
+          "max": 0.0,
+          "mean": 0.0,
+          "min": 0.0,
+          "p50": 0.0,
+          "p90": 0.0,
+          "p95": 0.0
+        },
+        "label": "6-routes-rank0-20260611",
+        "layer": "language_model.model.layers.21.mlp.experts",
+        "policy": "tp2_ep2_contiguous",
+        "total_rows": {
+          "max": 128.0,
+          "mean": 128.0,
+          "min": 128.0,
+          "p50": 128.0,
+          "p90": 128.0,
+          "p95": 128.0
+        },
+        "windows": 5
+      },
+      {
+        "active_experts": {
+          "max": 55.0,
+          "mean": 50.6,
+          "min": 46.0,
+          "p50": 50.0,
+          "p90": 55.0,
+          "p95": 55.0
+        },
+        "communication_row_fraction_proxy": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.1875,
+          "mean": 1.090625,
+          "min": 1.046875,
+          "p50": 1.0625,
+          "p90": 1.15625,
+          "p95": 1.171875
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "hot_coverage": {
+          "max": 0.0,
+          "mean": 0.0,
+          "min": 0.0,
+          "p50": 0.0,
+          "p90": 0.0,
+          "p95": 0.0
+        },
+        "label": "6-routes-rank0-20260611",
+        "layer": "language_model.model.layers.21.mlp.experts",
+        "policy": "tp2_ep2_greedy_static",
+        "total_rows": {
+          "max": 128.0,
+          "mean": 128.0,
+          "min": 128.0,
+          "p50": 128.0,
+          "p90": 128.0,
+          "p95": 128.0
+        },
+        "windows": 5
+      },
+      {
+        "active_experts": {
+          "max": 55.0,
+          "mean": 50.6,
+          "min": 46.0,
+          "p50": 50.0,
+          "p90": 55.0,
+          "p95": 55.0
+        },
+        "communication_row_fraction_proxy": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.421875,
+          "mean": 1.2625,
+          "min": 1.0625,
+          "p50": 1.265625,
+          "p90": 1.384375,
+          "p95": 1.403125
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "hot_coverage": {
+          "max": 0.0,
+          "mean": 0.0,
+          "min": 0.0,
+          "p50": 0.0,
+          "p90": 0.0,
+          "p95": 0.0
+        },
+        "label": "6-routes-rank0-20260611",
+        "layer": "language_model.model.layers.21.mlp.experts",
+        "policy": "tp2_ep2_round_robin",
+        "total_rows": {
+          "max": 128.0,
+          "mean": 128.0,
+          "min": 128.0,
+          "p50": 128.0,
+          "p90": 128.0,
+          "p95": 128.0
+        },
+        "windows": 5
+      },
+      {
+        "active_experts": {
+          "max": 59.0,
+          "mean": 47.4,
+          "min": 37.0,
+          "p50": 50.0,
+          "p90": 55.400000000000006,
+          "p95": 57.199999999999996
+        },
+        "communication_row_fraction_proxy": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.5625,
+          "mean": 1.325,
+          "min": 1.15625,
+          "p50": 1.3125,
+          "p90": 1.4625,
+          "p95": 1.5125
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "hot_coverage": {
+          "max": 0.0,
+          "mean": 0.0,
+          "min": 0.0,
+          "p50": 0.0,
+          "p90": 0.0,
+          "p95": 0.0
+        },
+        "label": "6-routes-rank0-20260611",
+        "layer": "language_model.model.layers.9.mlp.experts",
+        "policy": "ep4_contiguous",
+        "total_rows": {
+          "max": 128.0,
+          "mean": 128.0,
+          "min": 128.0,
+          "p50": 128.0,
+          "p90": 128.0,
+          "p95": 128.0
+        },
+        "windows": 5
+      },
+      {
+        "active_experts": {
+          "max": 59.0,
+          "mean": 47.4,
+          "min": 37.0,
+          "p50": 50.0,
+          "p90": 55.400000000000006,
+          "p95": 57.199999999999996
+        },
+        "communication_row_fraction_proxy": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.34375,
+          "mean": 1.21875,
+          "min": 1.0625,
+          "p50": 1.21875,
+          "p90": 1.33125,
+          "p95": 1.3375
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "hot_coverage": {
+          "max": 0.0,
+          "mean": 0.0,
+          "min": 0.0,
+          "p50": 0.0,
+          "p90": 0.0,
+          "p95": 0.0
+        },
+        "label": "6-routes-rank0-20260611",
+        "layer": "language_model.model.layers.9.mlp.experts",
+        "policy": "ep4_greedy_static",
+        "total_rows": {
+          "max": 128.0,
+          "mean": 128.0,
+          "min": 128.0,
+          "p50": 128.0,
+          "p90": 128.0,
+          "p95": 128.0
+        },
+        "windows": 5
+      },
+      {
+        "active_experts": {
+          "max": 59.0,
+          "mean": 47.4,
+          "min": 37.0,
+          "p50": 50.0,
+          "p90": 55.400000000000006,
+          "p95": 57.199999999999996
+        },
+        "communication_row_fraction_proxy": {
+          "max": 0.578125,
+          "mean": 0.4984375,
+          "min": 0.421875,
+          "p50": 0.4765625,
+          "p90": 0.56875,
+          "p95": 0.5734375
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.03125,
+          "mean": 1.01875,
+          "min": 1.0,
+          "p50": 1.03125,
+          "p90": 1.03125,
+          "p95": 1.03125
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.1875,
+          "mean": 1.1875,
+          "min": 1.1875,
+          "p50": 1.1875,
+          "p90": 1.1875,
+          "p95": 1.1875
+        },
+        "hot_coverage": {
+          "max": 0.578125,
+          "mean": 0.5015625,
+          "min": 0.421875,
+          "p50": 0.5234375,
+          "p90": 0.5625,
+          "p95": 0.5703125
+        },
+        "label": "6-routes-rank0-20260611",
+        "layer": "language_model.model.layers.9.mlp.experts",
+        "policy": "ep4_hot16_replicated_greedy",
+        "total_rows": {
+          "max": 128.0,
+          "mean": 128.0,
+          "min": 128.0,
+          "p50": 128.0,
+          "p90": 128.0,
+          "p95": 128.0
+        },
+        "windows": 5
+      },
+      {
+        "active_experts": {
+          "max": 59.0,
+          "mean": 47.4,
+          "min": 37.0,
+          "p50": 50.0,
+          "p90": 55.400000000000006,
+          "p95": 57.199999999999996
+        },
+        "communication_row_fraction_proxy": {
+          "max": 0.3671875,
+          "mean": 0.2734375,
+          "min": 0.2265625,
+          "p50": 0.2421875,
+          "p90": 0.3421875,
+          "p95": 0.3546875
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.375,
+          "mean": 1.375,
+          "min": 1.375,
+          "p50": 1.375,
+          "p90": 1.375,
+          "p95": 1.375
+        },
+        "hot_coverage": {
+          "max": 0.7734375,
+          "mean": 0.7265625,
+          "min": 0.6328125,
+          "p50": 0.7578125,
+          "p90": 0.7734375,
+          "p95": 0.7734375
+        },
+        "label": "6-routes-rank0-20260611",
+        "layer": "language_model.model.layers.9.mlp.experts",
+        "policy": "ep4_hot32_replicated_greedy",
+        "total_rows": {
+          "max": 128.0,
+          "mean": 128.0,
+          "min": 128.0,
+          "p50": 128.0,
+          "p90": 128.0,
+          "p95": 128.0
+        },
+        "windows": 5
+      },
+      {
+        "active_experts": {
+          "max": 59.0,
+          "mean": 47.4,
+          "min": 37.0,
+          "p50": 50.0,
+          "p90": 55.400000000000006,
+          "p95": 57.199999999999996
+        },
+        "communication_row_fraction_proxy": {
+          "max": 0.109375,
+          "mean": 0.084375,
+          "min": 0.0546875,
+          "p50": 0.0859375,
+          "p90": 0.10625000000000001,
+          "p95": 0.1078125
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.75,
+          "mean": 1.75,
+          "min": 1.75,
+          "p50": 1.75,
+          "p90": 1.75,
+          "p95": 1.75
+        },
+        "hot_coverage": {
+          "max": 0.9453125,
+          "mean": 0.915625,
+          "min": 0.890625,
+          "p50": 0.9140625,
+          "p90": 0.9390624999999999,
+          "p95": 0.9421875000000001
+        },
+        "label": "6-routes-rank0-20260611",
+        "layer": "language_model.model.layers.9.mlp.experts",
+        "policy": "ep4_hot64_replicated_greedy",
+        "total_rows": {
+          "max": 128.0,
+          "mean": 128.0,
+          "min": 128.0,
+          "p50": 128.0,
+          "p90": 128.0,
+          "p95": 128.0
+        },
+        "windows": 5
+      },
+      {
+        "active_experts": {
+          "max": 59.0,
+          "mean": 47.4,
+          "min": 37.0,
+          "p50": 50.0,
+          "p90": 55.400000000000006,
+          "p95": 57.199999999999996
+        },
+        "communication_row_fraction_proxy": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.46875,
+          "mean": 1.3375,
+          "min": 1.21875,
+          "p50": 1.28125,
+          "p90": 1.4562499999999998,
+          "p95": 1.4625000000000001
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "hot_coverage": {
+          "max": 0.0,
+          "mean": 0.0,
+          "min": 0.0,
+          "p50": 0.0,
+          "p90": 0.0,
+          "p95": 0.0
+        },
+        "label": "6-routes-rank0-20260611",
+        "layer": "language_model.model.layers.9.mlp.experts",
+        "policy": "ep4_round_robin",
+        "total_rows": {
+          "max": 128.0,
+          "mean": 128.0,
+          "min": 128.0,
+          "p50": 128.0,
+          "p90": 128.0,
+          "p95": 128.0
+        },
+        "windows": 5
+      },
+      {
+        "active_experts": {
+          "max": 59.0,
+          "mean": 47.4,
+          "min": 37.0,
+          "p50": 50.0,
+          "p90": 55.400000000000006,
+          "p95": 57.199999999999996
+        },
+        "communication_row_fraction_proxy": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.25,
+          "mean": 1.128125,
+          "min": 1.015625,
+          "p50": 1.171875,
+          "p90": 1.21875,
+          "p95": 1.234375
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "hot_coverage": {
+          "max": 0.0,
+          "mean": 0.0,
+          "min": 0.0,
+          "p50": 0.0,
+          "p90": 0.0,
+          "p95": 0.0
+        },
+        "label": "6-routes-rank0-20260611",
+        "layer": "language_model.model.layers.9.mlp.experts",
+        "policy": "tp2_ep2_contiguous",
+        "total_rows": {
+          "max": 128.0,
+          "mean": 128.0,
+          "min": 128.0,
+          "p50": 128.0,
+          "p90": 128.0,
+          "p95": 128.0
+        },
+        "windows": 5
+      },
+      {
+        "active_experts": {
+          "max": 59.0,
+          "mean": 47.4,
+          "min": 37.0,
+          "p50": 50.0,
+          "p90": 55.400000000000006,
+          "p95": 57.199999999999996
+        },
+        "communication_row_fraction_proxy": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.15625,
+          "mean": 1.0875,
+          "min": 1.03125,
+          "p50": 1.09375,
+          "p90": 1.1375,
+          "p95": 1.146875
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "hot_coverage": {
+          "max": 0.0,
+          "mean": 0.0,
+          "min": 0.0,
+          "p50": 0.0,
+          "p90": 0.0,
+          "p95": 0.0
+        },
+        "label": "6-routes-rank0-20260611",
+        "layer": "language_model.model.layers.9.mlp.experts",
+        "policy": "tp2_ep2_greedy_static",
+        "total_rows": {
+          "max": 128.0,
+          "mean": 128.0,
+          "min": 128.0,
+          "p50": 128.0,
+          "p90": 128.0,
+          "p95": 128.0
+        },
+        "windows": 5
+      },
+      {
+        "active_experts": {
+          "max": 59.0,
+          "mean": 47.4,
+          "min": 37.0,
+          "p50": 50.0,
+          "p90": 55.400000000000006,
+          "p95": 57.199999999999996
+        },
+        "communication_row_fraction_proxy": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.28125,
+          "mean": 1.2,
+          "min": 1.09375,
+          "p50": 1.21875,
+          "p90": 1.2625000000000002,
+          "p95": 1.2718749999999999
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "hot_coverage": {
+          "max": 0.0,
+          "mean": 0.0,
+          "min": 0.0,
+          "p50": 0.0,
+          "p90": 0.0,
+          "p95": 0.0
+        },
+        "label": "6-routes-rank0-20260611",
+        "layer": "language_model.model.layers.9.mlp.experts",
+        "policy": "tp2_ep2_round_robin",
+        "total_rows": {
+          "max": 128.0,
+          "mean": 128.0,
+          "min": 128.0,
+          "p50": 128.0,
+          "p90": 128.0,
+          "p95": 128.0
+        },
+        "windows": 5
+      }
+    ],
+    "policy_summary": {
+      "ep4_contiguous": {
+        "active_experts": {
+          "max": 59.0,
+          "mean": 49.13333333333333,
+          "min": 37.0,
+          "p50": 50.0,
+          "p90": 55.0,
+          "p95": 56.199999999999996
+        },
+        "communication_row_fraction_proxy": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.5625,
+          "mean": 1.3041666666666667,
+          "min": 1.09375,
+          "p50": 1.3125,
+          "p90": 1.4562499999999998,
+          "p95": 1.4968749999999997
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "hot_coverage": {
+          "max": 0.0,
+          "mean": 0.0,
+          "min": 0.0,
+          "p50": 0.0,
+          "p90": 0.0,
+          "p95": 0.0
+        },
+        "total_rows": {
+          "max": 128.0,
+          "mean": 128.0,
+          "min": 128.0,
+          "p50": 128.0,
+          "p90": 128.0,
+          "p95": 128.0
+        },
+        "windows": 15
+      },
+      "ep4_greedy_static": {
+        "active_experts": {
+          "max": 59.0,
+          "mean": 49.13333333333333,
+          "min": 37.0,
+          "p50": 50.0,
+          "p90": 55.0,
+          "p95": 56.199999999999996
+        },
+        "communication_row_fraction_proxy": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.5,
+          "mean": 1.2375,
+          "min": 1.0625,
+          "p50": 1.21875,
+          "p90": 1.4,
+          "p95": 1.4562499999999998
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "hot_coverage": {
+          "max": 0.0,
+          "mean": 0.0,
+          "min": 0.0,
+          "p50": 0.0,
+          "p90": 0.0,
+          "p95": 0.0
+        },
+        "total_rows": {
+          "max": 128.0,
+          "mean": 128.0,
+          "min": 128.0,
+          "p50": 128.0,
+          "p90": 128.0,
+          "p95": 128.0
+        },
+        "windows": 15
+      },
+      "ep4_hot16_replicated_greedy": {
+        "active_experts": {
+          "max": 59.0,
+          "mean": 49.13333333333333,
+          "min": 37.0,
+          "p50": 50.0,
+          "p90": 55.0,
+          "p95": 56.199999999999996
+        },
+        "communication_row_fraction_proxy": {
+          "max": 0.6328125,
+          "mean": 0.5286458333333334,
+          "min": 0.421875,
+          "p50": 0.5234375,
+          "p90": 0.60625,
+          "p95": 0.62734375
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.03125,
+          "mean": 1.0145833333333334,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.03125,
+          "p95": 1.03125
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.1875,
+          "mean": 1.1875,
+          "min": 1.1875,
+          "p50": 1.1875,
+          "p90": 1.1875,
+          "p95": 1.1875
+        },
+        "hot_coverage": {
+          "max": 0.578125,
+          "mean": 0.4713541666666667,
+          "min": 0.3671875,
+          "p50": 0.4765625,
+          "p90": 0.54375,
+          "p95": 0.5562499999999999
+        },
+        "total_rows": {
+          "max": 128.0,
+          "mean": 128.0,
+          "min": 128.0,
+          "p50": 128.0,
+          "p90": 128.0,
+          "p95": 128.0
+        },
+        "windows": 15
+      },
+      "ep4_hot32_replicated_greedy": {
+        "active_experts": {
+          "max": 59.0,
+          "mean": 49.13333333333333,
+          "min": 37.0,
+          "p50": 50.0,
+          "p90": 55.0,
+          "p95": 56.199999999999996
+        },
+        "communication_row_fraction_proxy": {
+          "max": 0.4453125,
+          "mean": 0.31145833333333334,
+          "min": 0.2265625,
+          "p50": 0.3046875,
+          "p90": 0.3671875,
+          "p95": 0.3906249999999999
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.03125,
+          "mean": 1.0020833333333334,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.009375
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.375,
+          "mean": 1.375,
+          "min": 1.375,
+          "p50": 1.375,
+          "p90": 1.375,
+          "p95": 1.375
+        },
+        "hot_coverage": {
+          "max": 0.7734375,
+          "mean": 0.6885416666666667,
+          "min": 0.5546875,
+          "p50": 0.6953125,
+          "p90": 0.7671874999999999,
+          "p95": 0.7734375
+        },
+        "total_rows": {
+          "max": 128.0,
+          "mean": 128.0,
+          "min": 128.0,
+          "p50": 128.0,
+          "p90": 128.0,
+          "p95": 128.0
+        },
+        "windows": 15
+      },
+      "ep4_hot64_replicated_greedy": {
+        "active_experts": {
+          "max": 59.0,
+          "mean": 49.13333333333333,
+          "min": 37.0,
+          "p50": 50.0,
+          "p90": 55.0,
+          "p95": 56.199999999999996
+        },
+        "communication_row_fraction_proxy": {
+          "max": 0.1640625,
+          "mean": 0.11770833333333333,
+          "min": 0.0546875,
+          "p50": 0.125,
+          "p90": 0.1578125,
+          "p95": 0.1640625
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.75,
+          "mean": 1.75,
+          "min": 1.75,
+          "p50": 1.75,
+          "p90": 1.75,
+          "p95": 1.75
+        },
+        "hot_coverage": {
+          "max": 0.9453125,
+          "mean": 0.8822916666666667,
+          "min": 0.8359375,
+          "p50": 0.875,
+          "p90": 0.9296875,
+          "p95": 0.934375
+        },
+        "total_rows": {
+          "max": 128.0,
+          "mean": 128.0,
+          "min": 128.0,
+          "p50": 128.0,
+          "p90": 128.0,
+          "p95": 128.0
+        },
+        "windows": 15
+      },
+      "ep4_round_robin": {
+        "active_experts": {
+          "max": 59.0,
+          "mean": 49.13333333333333,
+          "min": 37.0,
+          "p50": 50.0,
+          "p90": 55.0,
+          "p95": 56.199999999999996
+        },
+        "communication_row_fraction_proxy": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.8125,
+          "mean": 1.425,
+          "min": 1.21875,
+          "p50": 1.40625,
+          "p90": 1.5687499999999999,
+          "p95": 1.6593749999999998
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "hot_coverage": {
+          "max": 0.0,
+          "mean": 0.0,
+          "min": 0.0,
+          "p50": 0.0,
+          "p90": 0.0,
+          "p95": 0.0
+        },
+        "total_rows": {
+          "max": 128.0,
+          "mean": 128.0,
+          "min": 128.0,
+          "p50": 128.0,
+          "p90": 128.0,
+          "p95": 128.0
+        },
+        "windows": 15
+      },
+      "tp2_ep2_contiguous": {
+        "active_experts": {
+          "max": 59.0,
+          "mean": 49.13333333333333,
+          "min": 37.0,
+          "p50": 50.0,
+          "p90": 55.0,
+          "p95": 56.199999999999996
+        },
+        "communication_row_fraction_proxy": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.25,
+          "mean": 1.1114583333333334,
+          "min": 1.015625,
+          "p50": 1.109375,
+          "p90": 1.190625,
+          "p95": 1.2171875
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "hot_coverage": {
+          "max": 0.0,
+          "mean": 0.0,
+          "min": 0.0,
+          "p50": 0.0,
+          "p90": 0.0,
+          "p95": 0.0
+        },
+        "total_rows": {
+          "max": 128.0,
+          "mean": 128.0,
+          "min": 128.0,
+          "p50": 128.0,
+          "p90": 128.0,
+          "p95": 128.0
+        },
+        "windows": 15
+      },
+      "tp2_ep2_greedy_static": {
+        "active_experts": {
+          "max": 59.0,
+          "mean": 49.13333333333333,
+          "min": 37.0,
+          "p50": 50.0,
+          "p90": 55.0,
+          "p95": 56.199999999999996
+        },
+        "communication_row_fraction_proxy": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.1875,
+          "mean": 1.0791666666666666,
+          "min": 1.0,
+          "p50": 1.0625,
+          "p90": 1.165625,
+          "p95": 1.1765625
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "hot_coverage": {
+          "max": 0.0,
+          "mean": 0.0,
+          "min": 0.0,
+          "p50": 0.0,
+          "p90": 0.0,
+          "p95": 0.0
+        },
+        "total_rows": {
+          "max": 128.0,
+          "mean": 128.0,
+          "min": 128.0,
+          "p50": 128.0,
+          "p90": 128.0,
+          "p95": 128.0
+        },
+        "windows": 15
+      },
+      "tp2_ep2_round_robin": {
+        "active_experts": {
+          "max": 59.0,
+          "mean": 49.13333333333333,
+          "min": 37.0,
+          "p50": 50.0,
+          "p90": 55.0,
+          "p95": 56.199999999999996
+        },
+        "communication_row_fraction_proxy": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.421875,
+          "mean": 1.1760416666666667,
+          "min": 1.0,
+          "p50": 1.1875,
+          "p90": 1.309375,
+          "p95": 1.35625
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "hot_coverage": {
+          "max": 0.0,
+          "mean": 0.0,
+          "min": 0.0,
+          "p50": 0.0,
+          "p90": 0.0,
+          "p95": 0.0
+        },
+        "total_rows": {
+          "max": 128.0,
+          "mean": 128.0,
+          "min": 128.0,
+          "p50": 128.0,
+          "p90": 128.0,
+          "p95": 128.0
+        },
+        "windows": 15
+      }
+    },
+    "window_count": 15
+  }
+}

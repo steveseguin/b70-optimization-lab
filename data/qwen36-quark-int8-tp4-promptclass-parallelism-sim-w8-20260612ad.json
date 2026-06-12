@@ -1,0 +1,7590 @@
+{
+  "metadata": {
+    "baseline_tp": 4,
+    "gpu_count": 4,
+    "hotset_sizes": [
+      16,
+      32,
+      64
+    ],
+    "input_files": [
+      "data/qwen36-quark-int8-tp4-promptclass-routecapture-20260611a-routes-code.jsonl",
+      "data/qwen36-quark-int8-tp4-promptclass-routecapture-20260611a-routes-math-reasoning.jsonl",
+      "data/qwen36-quark-int8-tp4-promptclass-routecapture-20260611a-routes-repetitive.jsonl",
+      "data/qwen36-quark-int8-tp4-promptclass-routecapture-20260611a-routes-structured.jsonl",
+      "data/qwen36-quark-int8-tp4-promptclass-routecapture-20260611a-routes-long-natural.jsonl",
+      "data/qwen36-quark-int8-tp4-promptclass-routecapture-20260611a-routes-natural-chat.jsonl"
+    ],
+    "layer_regex": null,
+    "records_by_source": {
+      "data/qwen36-quark-int8-tp4-promptclass-routecapture-20260611a-routes-code.jsonl": 40,
+      "data/qwen36-quark-int8-tp4-promptclass-routecapture-20260611a-routes-long-natural.jsonl": 20,
+      "data/qwen36-quark-int8-tp4-promptclass-routecapture-20260611a-routes-math-reasoning.jsonl": 1260,
+      "data/qwen36-quark-int8-tp4-promptclass-routecapture-20260611a-routes-repetitive.jsonl": 1260,
+      "data/qwen36-quark-int8-tp4-promptclass-routecapture-20260611a-routes-structured.jsonl": 20
+    },
+    "records_loaded": 2600,
+    "records_matched": 2600,
+    "records_skipped": 0,
+    "stage_regex": "quark_int8_apply",
+    "stride": 8,
+    "window_size": 8
+  },
+  "summary": {
+    "best_by_layer": [
+      {
+        "best_policy_by_p95_compute_pressure": "ep4_hot8_replicated_greedy",
+        "label": "code",
+        "layer": "language_model.model.layers.14.mlp.experts",
+        "max_expert_memory_relative_to_tp4": 1.09375,
+        "mean_comm_row_fraction_proxy": 0.0,
+        "mean_compute_pressure_vs_tp4": 1.0,
+        "p95_compute_pressure_vs_tp4": 1.0
+      },
+      {
+        "best_policy_by_p95_compute_pressure": "ep4_hot11_replicated_greedy",
+        "label": "code",
+        "layer": "language_model.model.layers.20.mlp.experts",
+        "max_expert_memory_relative_to_tp4": 1.140625,
+        "mean_comm_row_fraction_proxy": 0.0,
+        "mean_compute_pressure_vs_tp4": 1.0,
+        "p95_compute_pressure_vs_tp4": 1.0
+      },
+      {
+        "best_policy_by_p95_compute_pressure": "ep4_hot13_replicated_greedy",
+        "label": "code",
+        "layer": "language_model.model.layers.21.mlp.experts",
+        "max_expert_memory_relative_to_tp4": 1.15625,
+        "mean_comm_row_fraction_proxy": 0.0,
+        "mean_compute_pressure_vs_tp4": 1.0,
+        "p95_compute_pressure_vs_tp4": 1.0
+      },
+      {
+        "best_policy_by_p95_compute_pressure": "ep4_hot11_replicated_greedy",
+        "label": "code",
+        "layer": "language_model.model.layers.8.mlp.experts",
+        "max_expert_memory_relative_to_tp4": 1.140625,
+        "mean_comm_row_fraction_proxy": 0.0,
+        "mean_compute_pressure_vs_tp4": 1.0,
+        "p95_compute_pressure_vs_tp4": 1.0
+      },
+      {
+        "best_policy_by_p95_compute_pressure": "ep4_hot9_replicated_greedy",
+        "label": "code",
+        "layer": "language_model.model.layers.9.mlp.experts",
+        "max_expert_memory_relative_to_tp4": 1.109375,
+        "mean_comm_row_fraction_proxy": 0.0,
+        "mean_compute_pressure_vs_tp4": 1.0,
+        "p95_compute_pressure_vs_tp4": 1.0
+      },
+      {
+        "best_policy_by_p95_compute_pressure": "ep4_hot64_replicated_greedy",
+        "label": "math-reasoning",
+        "layer": "language_model.model.layers.14.mlp.experts",
+        "max_expert_memory_relative_to_tp4": 1.75,
+        "mean_comm_row_fraction_proxy": 0.046370967741935484,
+        "mean_compute_pressure_vs_tp4": 1.0,
+        "p95_compute_pressure_vs_tp4": 1.0
+      },
+      {
+        "best_policy_by_p95_compute_pressure": "ep4_hot64_replicated_greedy",
+        "label": "math-reasoning",
+        "layer": "language_model.model.layers.20.mlp.experts",
+        "max_expert_memory_relative_to_tp4": 1.75,
+        "mean_comm_row_fraction_proxy": 0.0846774193548387,
+        "mean_compute_pressure_vs_tp4": 1.0,
+        "p95_compute_pressure_vs_tp4": 1.0
+      },
+      {
+        "best_policy_by_p95_compute_pressure": "ep4_hot64_replicated_greedy",
+        "label": "math-reasoning",
+        "layer": "language_model.model.layers.21.mlp.experts",
+        "max_expert_memory_relative_to_tp4": 1.75,
+        "mean_comm_row_fraction_proxy": 0.07762096774193548,
+        "mean_compute_pressure_vs_tp4": 1.0,
+        "p95_compute_pressure_vs_tp4": 1.0
+      },
+      {
+        "best_policy_by_p95_compute_pressure": "ep4_hot64_replicated_greedy",
+        "label": "math-reasoning",
+        "layer": "language_model.model.layers.8.mlp.experts",
+        "max_expert_memory_relative_to_tp4": 1.75,
+        "mean_comm_row_fraction_proxy": 0.08366935483870967,
+        "mean_compute_pressure_vs_tp4": 1.0,
+        "p95_compute_pressure_vs_tp4": 1.0
+      },
+      {
+        "best_policy_by_p95_compute_pressure": "ep4_hot64_replicated_greedy",
+        "label": "math-reasoning",
+        "layer": "language_model.model.layers.9.mlp.experts",
+        "max_expert_memory_relative_to_tp4": 1.75,
+        "mean_comm_row_fraction_proxy": 0.11391129032258064,
+        "mean_compute_pressure_vs_tp4": 1.0,
+        "p95_compute_pressure_vs_tp4": 1.0
+      },
+      {
+        "best_policy_by_p95_compute_pressure": "ep4_hot64_replicated_greedy",
+        "label": "repetitive",
+        "layer": "language_model.model.layers.14.mlp.experts",
+        "max_expert_memory_relative_to_tp4": 1.75,
+        "mean_comm_row_fraction_proxy": 0.17288306451612903,
+        "mean_compute_pressure_vs_tp4": 1.0,
+        "p95_compute_pressure_vs_tp4": 1.0
+      },
+      {
+        "best_policy_by_p95_compute_pressure": "ep4_hot64_replicated_greedy",
+        "label": "repetitive",
+        "layer": "language_model.model.layers.20.mlp.experts",
+        "max_expert_memory_relative_to_tp4": 1.75,
+        "mean_comm_row_fraction_proxy": 0.11139112903225806,
+        "mean_compute_pressure_vs_tp4": 1.0,
+        "p95_compute_pressure_vs_tp4": 1.0
+      },
+      {
+        "best_policy_by_p95_compute_pressure": "ep4_hot64_replicated_greedy",
+        "label": "repetitive",
+        "layer": "language_model.model.layers.21.mlp.experts",
+        "max_expert_memory_relative_to_tp4": 1.75,
+        "mean_comm_row_fraction_proxy": 0.13911290322580644,
+        "mean_compute_pressure_vs_tp4": 1.0,
+        "p95_compute_pressure_vs_tp4": 1.0
+      },
+      {
+        "best_policy_by_p95_compute_pressure": "ep4_hot64_replicated_greedy",
+        "label": "repetitive",
+        "layer": "language_model.model.layers.8.mlp.experts",
+        "max_expert_memory_relative_to_tp4": 1.75,
+        "mean_comm_row_fraction_proxy": 0.14264112903225806,
+        "mean_compute_pressure_vs_tp4": 1.0,
+        "p95_compute_pressure_vs_tp4": 1.0
+      },
+      {
+        "best_policy_by_p95_compute_pressure": "ep4_hot64_replicated_greedy",
+        "label": "repetitive",
+        "layer": "language_model.model.layers.9.mlp.experts",
+        "max_expert_memory_relative_to_tp4": 1.75,
+        "mean_comm_row_fraction_proxy": 0.12701612903225806,
+        "mean_compute_pressure_vs_tp4": 1.0,
+        "p95_compute_pressure_vs_tp4": 1.0
+      }
+    ],
+    "layer_policy_summary": [
+      {
+        "active_experts": {
+          "max": 8.0,
+          "mean": 8.0,
+          "min": 8.0,
+          "p50": 8.0,
+          "p90": 8.0,
+          "p95": 8.0
+        },
+        "communication_row_fraction_proxy": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.5,
+          "mean": 1.5,
+          "min": 1.5,
+          "p50": 1.5,
+          "p90": 1.5,
+          "p95": 1.5
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "hot_coverage": {
+          "max": 0.0,
+          "mean": 0.0,
+          "min": 0.0,
+          "p50": 0.0,
+          "p90": 0.0,
+          "p95": 0.0
+        },
+        "label": "code",
+        "layer": "language_model.model.layers.14.mlp.experts",
+        "policy": "ep4_contiguous",
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 1
+      },
+      {
+        "active_experts": {
+          "max": 8.0,
+          "mean": 8.0,
+          "min": 8.0,
+          "p50": 8.0,
+          "p90": 8.0,
+          "p95": 8.0
+        },
+        "communication_row_fraction_proxy": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "hot_coverage": {
+          "max": 0.0,
+          "mean": 0.0,
+          "min": 0.0,
+          "p50": 0.0,
+          "p90": 0.0,
+          "p95": 0.0
+        },
+        "label": "code",
+        "layer": "language_model.model.layers.14.mlp.experts",
+        "policy": "ep4_greedy_static",
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 1
+      },
+      {
+        "active_experts": {
+          "max": 8.0,
+          "mean": 8.0,
+          "min": 8.0,
+          "p50": 8.0,
+          "p90": 8.0,
+          "p95": 8.0
+        },
+        "communication_row_fraction_proxy": {
+          "max": 0.0,
+          "mean": 0.0,
+          "min": 0.0,
+          "p50": 0.0,
+          "p90": 0.0,
+          "p95": 0.0
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.09375,
+          "mean": 1.09375,
+          "min": 1.09375,
+          "p50": 1.09375,
+          "p90": 1.09375,
+          "p95": 1.09375
+        },
+        "hot_coverage": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "label": "code",
+        "layer": "language_model.model.layers.14.mlp.experts",
+        "policy": "ep4_hot8_replicated_greedy",
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 3
+      },
+      {
+        "active_experts": {
+          "max": 8.0,
+          "mean": 8.0,
+          "min": 8.0,
+          "p50": 8.0,
+          "p90": 8.0,
+          "p95": 8.0
+        },
+        "communication_row_fraction_proxy": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 2.5,
+          "mean": 2.5,
+          "min": 2.5,
+          "p50": 2.5,
+          "p90": 2.5,
+          "p95": 2.5
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "hot_coverage": {
+          "max": 0.0,
+          "mean": 0.0,
+          "min": 0.0,
+          "p50": 0.0,
+          "p90": 0.0,
+          "p95": 0.0
+        },
+        "label": "code",
+        "layer": "language_model.model.layers.14.mlp.experts",
+        "policy": "ep4_round_robin",
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 1
+      },
+      {
+        "active_experts": {
+          "max": 8.0,
+          "mean": 8.0,
+          "min": 8.0,
+          "p50": 8.0,
+          "p90": 8.0,
+          "p95": 8.0
+        },
+        "communication_row_fraction_proxy": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.25,
+          "mean": 1.25,
+          "min": 1.25,
+          "p50": 1.25,
+          "p90": 1.25,
+          "p95": 1.25
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "hot_coverage": {
+          "max": 0.0,
+          "mean": 0.0,
+          "min": 0.0,
+          "p50": 0.0,
+          "p90": 0.0,
+          "p95": 0.0
+        },
+        "label": "code",
+        "layer": "language_model.model.layers.14.mlp.experts",
+        "policy": "tp2_ep2_contiguous",
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 1
+      },
+      {
+        "active_experts": {
+          "max": 8.0,
+          "mean": 8.0,
+          "min": 8.0,
+          "p50": 8.0,
+          "p90": 8.0,
+          "p95": 8.0
+        },
+        "communication_row_fraction_proxy": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "hot_coverage": {
+          "max": 0.0,
+          "mean": 0.0,
+          "min": 0.0,
+          "p50": 0.0,
+          "p90": 0.0,
+          "p95": 0.0
+        },
+        "label": "code",
+        "layer": "language_model.model.layers.14.mlp.experts",
+        "policy": "tp2_ep2_greedy_static",
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 1
+      },
+      {
+        "active_experts": {
+          "max": 8.0,
+          "mean": 8.0,
+          "min": 8.0,
+          "p50": 8.0,
+          "p90": 8.0,
+          "p95": 8.0
+        },
+        "communication_row_fraction_proxy": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.25,
+          "mean": 1.25,
+          "min": 1.25,
+          "p50": 1.25,
+          "p90": 1.25,
+          "p95": 1.25
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "hot_coverage": {
+          "max": 0.0,
+          "mean": 0.0,
+          "min": 0.0,
+          "p50": 0.0,
+          "p90": 0.0,
+          "p95": 0.0
+        },
+        "label": "code",
+        "layer": "language_model.model.layers.14.mlp.experts",
+        "policy": "tp2_ep2_round_robin",
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 1
+      },
+      {
+        "active_experts": {
+          "max": 11.0,
+          "mean": 11.0,
+          "min": 11.0,
+          "p50": 11.0,
+          "p90": 11.0,
+          "p95": 11.0
+        },
+        "communication_row_fraction_proxy": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.75,
+          "mean": 1.75,
+          "min": 1.75,
+          "p50": 1.75,
+          "p90": 1.75,
+          "p95": 1.75
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "hot_coverage": {
+          "max": 0.0,
+          "mean": 0.0,
+          "min": 0.0,
+          "p50": 0.0,
+          "p90": 0.0,
+          "p95": 0.0
+        },
+        "label": "code",
+        "layer": "language_model.model.layers.20.mlp.experts",
+        "policy": "ep4_contiguous",
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 1
+      },
+      {
+        "active_experts": {
+          "max": 11.0,
+          "mean": 11.0,
+          "min": 11.0,
+          "p50": 11.0,
+          "p90": 11.0,
+          "p95": 11.0
+        },
+        "communication_row_fraction_proxy": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "hot_coverage": {
+          "max": 0.0,
+          "mean": 0.0,
+          "min": 0.0,
+          "p50": 0.0,
+          "p90": 0.0,
+          "p95": 0.0
+        },
+        "label": "code",
+        "layer": "language_model.model.layers.20.mlp.experts",
+        "policy": "ep4_greedy_static",
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 1
+      },
+      {
+        "active_experts": {
+          "max": 11.0,
+          "mean": 11.0,
+          "min": 11.0,
+          "p50": 11.0,
+          "p90": 11.0,
+          "p95": 11.0
+        },
+        "communication_row_fraction_proxy": {
+          "max": 0.0,
+          "mean": 0.0,
+          "min": 0.0,
+          "p50": 0.0,
+          "p90": 0.0,
+          "p95": 0.0
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.140625,
+          "mean": 1.140625,
+          "min": 1.140625,
+          "p50": 1.140625,
+          "p90": 1.140625,
+          "p95": 1.140625
+        },
+        "hot_coverage": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "label": "code",
+        "layer": "language_model.model.layers.20.mlp.experts",
+        "policy": "ep4_hot11_replicated_greedy",
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 3
+      },
+      {
+        "active_experts": {
+          "max": 11.0,
+          "mean": 11.0,
+          "min": 11.0,
+          "p50": 11.0,
+          "p90": 11.0,
+          "p95": 11.0
+        },
+        "communication_row_fraction_proxy": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 2.25,
+          "mean": 2.25,
+          "min": 2.25,
+          "p50": 2.25,
+          "p90": 2.25,
+          "p95": 2.25
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "hot_coverage": {
+          "max": 0.0,
+          "mean": 0.0,
+          "min": 0.0,
+          "p50": 0.0,
+          "p90": 0.0,
+          "p95": 0.0
+        },
+        "label": "code",
+        "layer": "language_model.model.layers.20.mlp.experts",
+        "policy": "ep4_round_robin",
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 1
+      },
+      {
+        "active_experts": {
+          "max": 11.0,
+          "mean": 11.0,
+          "min": 11.0,
+          "p50": 11.0,
+          "p90": 11.0,
+          "p95": 11.0
+        },
+        "communication_row_fraction_proxy": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.125,
+          "mean": 1.125,
+          "min": 1.125,
+          "p50": 1.125,
+          "p90": 1.125,
+          "p95": 1.125
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "hot_coverage": {
+          "max": 0.0,
+          "mean": 0.0,
+          "min": 0.0,
+          "p50": 0.0,
+          "p90": 0.0,
+          "p95": 0.0
+        },
+        "label": "code",
+        "layer": "language_model.model.layers.20.mlp.experts",
+        "policy": "tp2_ep2_contiguous",
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 1
+      },
+      {
+        "active_experts": {
+          "max": 11.0,
+          "mean": 11.0,
+          "min": 11.0,
+          "p50": 11.0,
+          "p90": 11.0,
+          "p95": 11.0
+        },
+        "communication_row_fraction_proxy": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "hot_coverage": {
+          "max": 0.0,
+          "mean": 0.0,
+          "min": 0.0,
+          "p50": 0.0,
+          "p90": 0.0,
+          "p95": 0.0
+        },
+        "label": "code",
+        "layer": "language_model.model.layers.20.mlp.experts",
+        "policy": "tp2_ep2_greedy_static",
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 1
+      },
+      {
+        "active_experts": {
+          "max": 11.0,
+          "mean": 11.0,
+          "min": 11.0,
+          "p50": 11.0,
+          "p90": 11.0,
+          "p95": 11.0
+        },
+        "communication_row_fraction_proxy": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.375,
+          "mean": 1.375,
+          "min": 1.375,
+          "p50": 1.375,
+          "p90": 1.375,
+          "p95": 1.375
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "hot_coverage": {
+          "max": 0.0,
+          "mean": 0.0,
+          "min": 0.0,
+          "p50": 0.0,
+          "p90": 0.0,
+          "p95": 0.0
+        },
+        "label": "code",
+        "layer": "language_model.model.layers.20.mlp.experts",
+        "policy": "tp2_ep2_round_robin",
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 1
+      },
+      {
+        "active_experts": {
+          "max": 13.0,
+          "mean": 13.0,
+          "min": 13.0,
+          "p50": 13.0,
+          "p90": 13.0,
+          "p95": 13.0
+        },
+        "communication_row_fraction_proxy": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.25,
+          "mean": 1.25,
+          "min": 1.25,
+          "p50": 1.25,
+          "p90": 1.25,
+          "p95": 1.25
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "hot_coverage": {
+          "max": 0.0,
+          "mean": 0.0,
+          "min": 0.0,
+          "p50": 0.0,
+          "p90": 0.0,
+          "p95": 0.0
+        },
+        "label": "code",
+        "layer": "language_model.model.layers.21.mlp.experts",
+        "policy": "ep4_contiguous",
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 1
+      },
+      {
+        "active_experts": {
+          "max": 13.0,
+          "mean": 13.0,
+          "min": 13.0,
+          "p50": 13.0,
+          "p90": 13.0,
+          "p95": 13.0
+        },
+        "communication_row_fraction_proxy": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "hot_coverage": {
+          "max": 0.0,
+          "mean": 0.0,
+          "min": 0.0,
+          "p50": 0.0,
+          "p90": 0.0,
+          "p95": 0.0
+        },
+        "label": "code",
+        "layer": "language_model.model.layers.21.mlp.experts",
+        "policy": "ep4_greedy_static",
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 1
+      },
+      {
+        "active_experts": {
+          "max": 13.0,
+          "mean": 13.0,
+          "min": 13.0,
+          "p50": 13.0,
+          "p90": 13.0,
+          "p95": 13.0
+        },
+        "communication_row_fraction_proxy": {
+          "max": 0.0,
+          "mean": 0.0,
+          "min": 0.0,
+          "p50": 0.0,
+          "p90": 0.0,
+          "p95": 0.0
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.15625,
+          "mean": 1.15625,
+          "min": 1.15625,
+          "p50": 1.15625,
+          "p90": 1.15625,
+          "p95": 1.15625
+        },
+        "hot_coverage": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "label": "code",
+        "layer": "language_model.model.layers.21.mlp.experts",
+        "policy": "ep4_hot13_replicated_greedy",
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 3
+      },
+      {
+        "active_experts": {
+          "max": 13.0,
+          "mean": 13.0,
+          "min": 13.0,
+          "p50": 13.0,
+          "p90": 13.0,
+          "p95": 13.0
+        },
+        "communication_row_fraction_proxy": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.5,
+          "mean": 1.5,
+          "min": 1.5,
+          "p50": 1.5,
+          "p90": 1.5,
+          "p95": 1.5
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "hot_coverage": {
+          "max": 0.0,
+          "mean": 0.0,
+          "min": 0.0,
+          "p50": 0.0,
+          "p90": 0.0,
+          "p95": 0.0
+        },
+        "label": "code",
+        "layer": "language_model.model.layers.21.mlp.experts",
+        "policy": "ep4_round_robin",
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 1
+      },
+      {
+        "active_experts": {
+          "max": 13.0,
+          "mean": 13.0,
+          "min": 13.0,
+          "p50": 13.0,
+          "p90": 13.0,
+          "p95": 13.0
+        },
+        "communication_row_fraction_proxy": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.125,
+          "mean": 1.125,
+          "min": 1.125,
+          "p50": 1.125,
+          "p90": 1.125,
+          "p95": 1.125
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "hot_coverage": {
+          "max": 0.0,
+          "mean": 0.0,
+          "min": 0.0,
+          "p50": 0.0,
+          "p90": 0.0,
+          "p95": 0.0
+        },
+        "label": "code",
+        "layer": "language_model.model.layers.21.mlp.experts",
+        "policy": "tp2_ep2_contiguous",
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 1
+      },
+      {
+        "active_experts": {
+          "max": 13.0,
+          "mean": 13.0,
+          "min": 13.0,
+          "p50": 13.0,
+          "p90": 13.0,
+          "p95": 13.0
+        },
+        "communication_row_fraction_proxy": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "hot_coverage": {
+          "max": 0.0,
+          "mean": 0.0,
+          "min": 0.0,
+          "p50": 0.0,
+          "p90": 0.0,
+          "p95": 0.0
+        },
+        "label": "code",
+        "layer": "language_model.model.layers.21.mlp.experts",
+        "policy": "tp2_ep2_greedy_static",
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 1
+      },
+      {
+        "active_experts": {
+          "max": 13.0,
+          "mean": 13.0,
+          "min": 13.0,
+          "p50": 13.0,
+          "p90": 13.0,
+          "p95": 13.0
+        },
+        "communication_row_fraction_proxy": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.375,
+          "mean": 1.375,
+          "min": 1.375,
+          "p50": 1.375,
+          "p90": 1.375,
+          "p95": 1.375
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "hot_coverage": {
+          "max": 0.0,
+          "mean": 0.0,
+          "min": 0.0,
+          "p50": 0.0,
+          "p90": 0.0,
+          "p95": 0.0
+        },
+        "label": "code",
+        "layer": "language_model.model.layers.21.mlp.experts",
+        "policy": "tp2_ep2_round_robin",
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 1
+      },
+      {
+        "active_experts": {
+          "max": 11.0,
+          "mean": 11.0,
+          "min": 11.0,
+          "p50": 11.0,
+          "p90": 11.0,
+          "p95": 11.0
+        },
+        "communication_row_fraction_proxy": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 2.0,
+          "mean": 2.0,
+          "min": 2.0,
+          "p50": 2.0,
+          "p90": 2.0,
+          "p95": 2.0
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "hot_coverage": {
+          "max": 0.0,
+          "mean": 0.0,
+          "min": 0.0,
+          "p50": 0.0,
+          "p90": 0.0,
+          "p95": 0.0
+        },
+        "label": "code",
+        "layer": "language_model.model.layers.8.mlp.experts",
+        "policy": "ep4_contiguous",
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 1
+      },
+      {
+        "active_experts": {
+          "max": 11.0,
+          "mean": 11.0,
+          "min": 11.0,
+          "p50": 11.0,
+          "p90": 11.0,
+          "p95": 11.0
+        },
+        "communication_row_fraction_proxy": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "hot_coverage": {
+          "max": 0.0,
+          "mean": 0.0,
+          "min": 0.0,
+          "p50": 0.0,
+          "p90": 0.0,
+          "p95": 0.0
+        },
+        "label": "code",
+        "layer": "language_model.model.layers.8.mlp.experts",
+        "policy": "ep4_greedy_static",
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 1
+      },
+      {
+        "active_experts": {
+          "max": 11.0,
+          "mean": 11.0,
+          "min": 11.0,
+          "p50": 11.0,
+          "p90": 11.0,
+          "p95": 11.0
+        },
+        "communication_row_fraction_proxy": {
+          "max": 0.0,
+          "mean": 0.0,
+          "min": 0.0,
+          "p50": 0.0,
+          "p90": 0.0,
+          "p95": 0.0
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.140625,
+          "mean": 1.140625,
+          "min": 1.140625,
+          "p50": 1.140625,
+          "p90": 1.140625,
+          "p95": 1.140625
+        },
+        "hot_coverage": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "label": "code",
+        "layer": "language_model.model.layers.8.mlp.experts",
+        "policy": "ep4_hot11_replicated_greedy",
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 3
+      },
+      {
+        "active_experts": {
+          "max": 11.0,
+          "mean": 11.0,
+          "min": 11.0,
+          "p50": 11.0,
+          "p90": 11.0,
+          "p95": 11.0
+        },
+        "communication_row_fraction_proxy": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 2.0,
+          "mean": 2.0,
+          "min": 2.0,
+          "p50": 2.0,
+          "p90": 2.0,
+          "p95": 2.0
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "hot_coverage": {
+          "max": 0.0,
+          "mean": 0.0,
+          "min": 0.0,
+          "p50": 0.0,
+          "p90": 0.0,
+          "p95": 0.0
+        },
+        "label": "code",
+        "layer": "language_model.model.layers.8.mlp.experts",
+        "policy": "ep4_round_robin",
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 1
+      },
+      {
+        "active_experts": {
+          "max": 11.0,
+          "mean": 11.0,
+          "min": 11.0,
+          "p50": 11.0,
+          "p90": 11.0,
+          "p95": 11.0
+        },
+        "communication_row_fraction_proxy": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.125,
+          "mean": 1.125,
+          "min": 1.125,
+          "p50": 1.125,
+          "p90": 1.125,
+          "p95": 1.125
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "hot_coverage": {
+          "max": 0.0,
+          "mean": 0.0,
+          "min": 0.0,
+          "p50": 0.0,
+          "p90": 0.0,
+          "p95": 0.0
+        },
+        "label": "code",
+        "layer": "language_model.model.layers.8.mlp.experts",
+        "policy": "tp2_ep2_contiguous",
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 1
+      },
+      {
+        "active_experts": {
+          "max": 11.0,
+          "mean": 11.0,
+          "min": 11.0,
+          "p50": 11.0,
+          "p90": 11.0,
+          "p95": 11.0
+        },
+        "communication_row_fraction_proxy": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "hot_coverage": {
+          "max": 0.0,
+          "mean": 0.0,
+          "min": 0.0,
+          "p50": 0.0,
+          "p90": 0.0,
+          "p95": 0.0
+        },
+        "label": "code",
+        "layer": "language_model.model.layers.8.mlp.experts",
+        "policy": "tp2_ep2_greedy_static",
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 1
+      },
+      {
+        "active_experts": {
+          "max": 11.0,
+          "mean": 11.0,
+          "min": 11.0,
+          "p50": 11.0,
+          "p90": 11.0,
+          "p95": 11.0
+        },
+        "communication_row_fraction_proxy": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.125,
+          "mean": 1.125,
+          "min": 1.125,
+          "p50": 1.125,
+          "p90": 1.125,
+          "p95": 1.125
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "hot_coverage": {
+          "max": 0.0,
+          "mean": 0.0,
+          "min": 0.0,
+          "p50": 0.0,
+          "p90": 0.0,
+          "p95": 0.0
+        },
+        "label": "code",
+        "layer": "language_model.model.layers.8.mlp.experts",
+        "policy": "tp2_ep2_round_robin",
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 1
+      },
+      {
+        "active_experts": {
+          "max": 9.0,
+          "mean": 9.0,
+          "min": 9.0,
+          "p50": 9.0,
+          "p90": 9.0,
+          "p95": 9.0
+        },
+        "communication_row_fraction_proxy": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.75,
+          "mean": 1.75,
+          "min": 1.75,
+          "p50": 1.75,
+          "p90": 1.75,
+          "p95": 1.75
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "hot_coverage": {
+          "max": 0.0,
+          "mean": 0.0,
+          "min": 0.0,
+          "p50": 0.0,
+          "p90": 0.0,
+          "p95": 0.0
+        },
+        "label": "code",
+        "layer": "language_model.model.layers.9.mlp.experts",
+        "policy": "ep4_contiguous",
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 1
+      },
+      {
+        "active_experts": {
+          "max": 9.0,
+          "mean": 9.0,
+          "min": 9.0,
+          "p50": 9.0,
+          "p90": 9.0,
+          "p95": 9.0
+        },
+        "communication_row_fraction_proxy": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "hot_coverage": {
+          "max": 0.0,
+          "mean": 0.0,
+          "min": 0.0,
+          "p50": 0.0,
+          "p90": 0.0,
+          "p95": 0.0
+        },
+        "label": "code",
+        "layer": "language_model.model.layers.9.mlp.experts",
+        "policy": "ep4_greedy_static",
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 1
+      },
+      {
+        "active_experts": {
+          "max": 9.0,
+          "mean": 9.0,
+          "min": 9.0,
+          "p50": 9.0,
+          "p90": 9.0,
+          "p95": 9.0
+        },
+        "communication_row_fraction_proxy": {
+          "max": 0.0,
+          "mean": 0.0,
+          "min": 0.0,
+          "p50": 0.0,
+          "p90": 0.0,
+          "p95": 0.0
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.109375,
+          "mean": 1.109375,
+          "min": 1.109375,
+          "p50": 1.109375,
+          "p90": 1.109375,
+          "p95": 1.109375
+        },
+        "hot_coverage": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "label": "code",
+        "layer": "language_model.model.layers.9.mlp.experts",
+        "policy": "ep4_hot9_replicated_greedy",
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 3
+      },
+      {
+        "active_experts": {
+          "max": 9.0,
+          "mean": 9.0,
+          "min": 9.0,
+          "p50": 9.0,
+          "p90": 9.0,
+          "p95": 9.0
+        },
+        "communication_row_fraction_proxy": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.5,
+          "mean": 1.5,
+          "min": 1.5,
+          "p50": 1.5,
+          "p90": 1.5,
+          "p95": 1.5
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "hot_coverage": {
+          "max": 0.0,
+          "mean": 0.0,
+          "min": 0.0,
+          "p50": 0.0,
+          "p90": 0.0,
+          "p95": 0.0
+        },
+        "label": "code",
+        "layer": "language_model.model.layers.9.mlp.experts",
+        "policy": "ep4_round_robin",
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 1
+      },
+      {
+        "active_experts": {
+          "max": 9.0,
+          "mean": 9.0,
+          "min": 9.0,
+          "p50": 9.0,
+          "p90": 9.0,
+          "p95": 9.0
+        },
+        "communication_row_fraction_proxy": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.125,
+          "mean": 1.125,
+          "min": 1.125,
+          "p50": 1.125,
+          "p90": 1.125,
+          "p95": 1.125
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "hot_coverage": {
+          "max": 0.0,
+          "mean": 0.0,
+          "min": 0.0,
+          "p50": 0.0,
+          "p90": 0.0,
+          "p95": 0.0
+        },
+        "label": "code",
+        "layer": "language_model.model.layers.9.mlp.experts",
+        "policy": "tp2_ep2_contiguous",
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 1
+      },
+      {
+        "active_experts": {
+          "max": 9.0,
+          "mean": 9.0,
+          "min": 9.0,
+          "p50": 9.0,
+          "p90": 9.0,
+          "p95": 9.0
+        },
+        "communication_row_fraction_proxy": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "hot_coverage": {
+          "max": 0.0,
+          "mean": 0.0,
+          "min": 0.0,
+          "p50": 0.0,
+          "p90": 0.0,
+          "p95": 0.0
+        },
+        "label": "code",
+        "layer": "language_model.model.layers.9.mlp.experts",
+        "policy": "tp2_ep2_greedy_static",
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 1
+      },
+      {
+        "active_experts": {
+          "max": 9.0,
+          "mean": 9.0,
+          "min": 9.0,
+          "p50": 9.0,
+          "p90": 9.0,
+          "p95": 9.0
+        },
+        "communication_row_fraction_proxy": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.125,
+          "mean": 1.125,
+          "min": 1.125,
+          "p50": 1.125,
+          "p90": 1.125,
+          "p95": 1.125
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "hot_coverage": {
+          "max": 0.0,
+          "mean": 0.0,
+          "min": 0.0,
+          "p50": 0.0,
+          "p90": 0.0,
+          "p95": 0.0
+        },
+        "label": "code",
+        "layer": "language_model.model.layers.9.mlp.experts",
+        "policy": "tp2_ep2_round_robin",
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 1
+      },
+      {
+        "active_experts": {
+          "max": 41.0,
+          "mean": 34.54838709677419,
+          "min": 26.0,
+          "p50": 35.0,
+          "p90": 40.0,
+          "p95": 40.5
+        },
+        "communication_row_fraction_proxy": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.625,
+          "mean": 1.372983870967742,
+          "min": 1.125,
+          "p50": 1.375,
+          "p90": 1.5625,
+          "p95": 1.59375
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "hot_coverage": {
+          "max": 0.0,
+          "mean": 0.0,
+          "min": 0.0,
+          "p50": 0.0,
+          "p90": 0.0,
+          "p95": 0.0
+        },
+        "label": "math-reasoning",
+        "layer": "language_model.model.layers.14.mlp.experts",
+        "policy": "ep4_contiguous",
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 31
+      },
+      {
+        "active_experts": {
+          "max": 41.0,
+          "mean": 34.54838709677419,
+          "min": 26.0,
+          "p50": 35.0,
+          "p90": 40.0,
+          "p95": 40.5
+        },
+        "communication_row_fraction_proxy": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.5625,
+          "mean": 1.2641129032258065,
+          "min": 1.0625,
+          "p50": 1.25,
+          "p90": 1.5,
+          "p95": 1.5
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "hot_coverage": {
+          "max": 0.0,
+          "mean": 0.0,
+          "min": 0.0,
+          "p50": 0.0,
+          "p90": 0.0,
+          "p95": 0.0
+        },
+        "label": "math-reasoning",
+        "layer": "language_model.model.layers.14.mlp.experts",
+        "policy": "ep4_greedy_static",
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 31
+      },
+      {
+        "active_experts": {
+          "max": 41.0,
+          "mean": 34.54838709677419,
+          "min": 26.0,
+          "p50": 35.0,
+          "p90": 40.0,
+          "p95": 40.5
+        },
+        "communication_row_fraction_proxy": {
+          "max": 0.546875,
+          "mean": 0.45514112903225806,
+          "min": 0.359375,
+          "p50": 0.453125,
+          "p90": 0.515625,
+          "p95": 0.53125
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.0625,
+          "mean": 1.002016129032258,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.1875,
+          "mean": 1.1875,
+          "min": 1.1875,
+          "p50": 1.1875,
+          "p90": 1.1875,
+          "p95": 1.1875
+        },
+        "hot_coverage": {
+          "max": 0.640625,
+          "mean": 0.5448588709677419,
+          "min": 0.453125,
+          "p50": 0.546875,
+          "p90": 0.609375,
+          "p95": 0.6328125
+        },
+        "label": "math-reasoning",
+        "layer": "language_model.model.layers.14.mlp.experts",
+        "policy": "ep4_hot16_replicated_greedy",
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 31
+      },
+      {
+        "active_experts": {
+          "max": 41.0,
+          "mean": 34.54838709677419,
+          "min": 26.0,
+          "p50": 35.0,
+          "p90": 40.0,
+          "p95": 40.5
+        },
+        "communication_row_fraction_proxy": {
+          "max": 0.3125,
+          "mean": 0.21673387096774194,
+          "min": 0.09375,
+          "p50": 0.21875,
+          "p90": 0.28125,
+          "p95": 0.296875
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.375,
+          "mean": 1.375,
+          "min": 1.375,
+          "p50": 1.375,
+          "p90": 1.375,
+          "p95": 1.375
+        },
+        "hot_coverage": {
+          "max": 0.90625,
+          "mean": 0.7832661290322581,
+          "min": 0.6875,
+          "p50": 0.78125,
+          "p90": 0.890625,
+          "p95": 0.8984375
+        },
+        "label": "math-reasoning",
+        "layer": "language_model.model.layers.14.mlp.experts",
+        "policy": "ep4_hot32_replicated_greedy",
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 31
+      },
+      {
+        "active_experts": {
+          "max": 41.0,
+          "mean": 34.54838709677419,
+          "min": 26.0,
+          "p50": 35.0,
+          "p90": 40.0,
+          "p95": 40.5
+        },
+        "communication_row_fraction_proxy": {
+          "max": 0.109375,
+          "mean": 0.046370967741935484,
+          "min": 0.0,
+          "p50": 0.046875,
+          "p90": 0.09375,
+          "p95": 0.09375
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.75,
+          "mean": 1.75,
+          "min": 1.75,
+          "p50": 1.75,
+          "p90": 1.75,
+          "p95": 1.75
+        },
+        "hot_coverage": {
+          "max": 1.0,
+          "mean": 0.9536290322580645,
+          "min": 0.890625,
+          "p50": 0.953125,
+          "p90": 0.984375,
+          "p95": 1.0
+        },
+        "label": "math-reasoning",
+        "layer": "language_model.model.layers.14.mlp.experts",
+        "policy": "ep4_hot64_replicated_greedy",
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 31
+      },
+      {
+        "active_experts": {
+          "max": 41.0,
+          "mean": 34.54838709677419,
+          "min": 26.0,
+          "p50": 35.0,
+          "p90": 40.0,
+          "p95": 40.5
+        },
+        "communication_row_fraction_proxy": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.6875,
+          "mean": 1.3084677419354838,
+          "min": 1.0625,
+          "p50": 1.25,
+          "p90": 1.5,
+          "p95": 1.5625
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "hot_coverage": {
+          "max": 0.0,
+          "mean": 0.0,
+          "min": 0.0,
+          "p50": 0.0,
+          "p90": 0.0,
+          "p95": 0.0
+        },
+        "label": "math-reasoning",
+        "layer": "language_model.model.layers.14.mlp.experts",
+        "policy": "ep4_round_robin",
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 31
+      },
+      {
+        "active_experts": {
+          "max": 41.0,
+          "mean": 34.54838709677419,
+          "min": 26.0,
+          "p50": 35.0,
+          "p90": 40.0,
+          "p95": 40.5
+        },
+        "communication_row_fraction_proxy": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.3125,
+          "mean": 1.1330645161290323,
+          "min": 1.0,
+          "p50": 1.125,
+          "p90": 1.21875,
+          "p95": 1.28125
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "hot_coverage": {
+          "max": 0.0,
+          "mean": 0.0,
+          "min": 0.0,
+          "p50": 0.0,
+          "p90": 0.0,
+          "p95": 0.0
+        },
+        "label": "math-reasoning",
+        "layer": "language_model.model.layers.14.mlp.experts",
+        "policy": "tp2_ep2_contiguous",
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 31
+      },
+      {
+        "active_experts": {
+          "max": 41.0,
+          "mean": 34.54838709677419,
+          "min": 26.0,
+          "p50": 35.0,
+          "p90": 40.0,
+          "p95": 40.5
+        },
+        "communication_row_fraction_proxy": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.28125,
+          "mean": 1.1038306451612903,
+          "min": 1.0,
+          "p50": 1.09375,
+          "p90": 1.21875,
+          "p95": 1.21875
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "hot_coverage": {
+          "max": 0.0,
+          "mean": 0.0,
+          "min": 0.0,
+          "p50": 0.0,
+          "p90": 0.0,
+          "p95": 0.0
+        },
+        "label": "math-reasoning",
+        "layer": "language_model.model.layers.14.mlp.experts",
+        "policy": "tp2_ep2_greedy_static",
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 31
+      },
+      {
+        "active_experts": {
+          "max": 41.0,
+          "mean": 34.54838709677419,
+          "min": 26.0,
+          "p50": 35.0,
+          "p90": 40.0,
+          "p95": 40.5
+        },
+        "communication_row_fraction_proxy": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.25,
+          "mean": 1.0806451612903225,
+          "min": 1.0,
+          "p50": 1.0625,
+          "p90": 1.15625,
+          "p95": 1.21875
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "hot_coverage": {
+          "max": 0.0,
+          "mean": 0.0,
+          "min": 0.0,
+          "p50": 0.0,
+          "p90": 0.0,
+          "p95": 0.0
+        },
+        "label": "math-reasoning",
+        "layer": "language_model.model.layers.14.mlp.experts",
+        "policy": "tp2_ep2_round_robin",
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 31
+      },
+      {
+        "active_experts": {
+          "max": 42.0,
+          "mean": 37.064516129032256,
+          "min": 32.0,
+          "p50": 37.0,
+          "p90": 40.0,
+          "p95": 40.5
+        },
+        "communication_row_fraction_proxy": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.625,
+          "mean": 1.346774193548387,
+          "min": 1.1875,
+          "p50": 1.3125,
+          "p90": 1.5,
+          "p95": 1.53125
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "hot_coverage": {
+          "max": 0.0,
+          "mean": 0.0,
+          "min": 0.0,
+          "p50": 0.0,
+          "p90": 0.0,
+          "p95": 0.0
+        },
+        "label": "math-reasoning",
+        "layer": "language_model.model.layers.20.mlp.experts",
+        "policy": "ep4_contiguous",
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 31
+      },
+      {
+        "active_experts": {
+          "max": 42.0,
+          "mean": 37.064516129032256,
+          "min": 32.0,
+          "p50": 37.0,
+          "p90": 40.0,
+          "p95": 40.5
+        },
+        "communication_row_fraction_proxy": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.5625,
+          "mean": 1.2580645161290323,
+          "min": 1.0,
+          "p50": 1.25,
+          "p90": 1.4375,
+          "p95": 1.5
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "hot_coverage": {
+          "max": 0.0,
+          "mean": 0.0,
+          "min": 0.0,
+          "p50": 0.0,
+          "p90": 0.0,
+          "p95": 0.0
+        },
+        "label": "math-reasoning",
+        "layer": "language_model.model.layers.20.mlp.experts",
+        "policy": "ep4_greedy_static",
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 31
+      },
+      {
+        "active_experts": {
+          "max": 42.0,
+          "mean": 37.064516129032256,
+          "min": 32.0,
+          "p50": 37.0,
+          "p90": 40.0,
+          "p95": 40.5
+        },
+        "communication_row_fraction_proxy": {
+          "max": 0.625,
+          "mean": 0.4969758064516129,
+          "min": 0.390625,
+          "p50": 0.484375,
+          "p90": 0.5625,
+          "p95": 0.6015625
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.0625,
+          "mean": 1.0040322580645162,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.03125
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.1875,
+          "mean": 1.1875,
+          "min": 1.1875,
+          "p50": 1.1875,
+          "p90": 1.1875,
+          "p95": 1.1875
+        },
+        "hot_coverage": {
+          "max": 0.609375,
+          "mean": 0.5030241935483871,
+          "min": 0.375,
+          "p50": 0.515625,
+          "p90": 0.59375,
+          "p95": 0.59375
+        },
+        "label": "math-reasoning",
+        "layer": "language_model.model.layers.20.mlp.experts",
+        "policy": "ep4_hot16_replicated_greedy",
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 31
+      },
+      {
+        "active_experts": {
+          "max": 42.0,
+          "mean": 37.064516129032256,
+          "min": 32.0,
+          "p50": 37.0,
+          "p90": 40.0,
+          "p95": 40.5
+        },
+        "communication_row_fraction_proxy": {
+          "max": 0.4375,
+          "mean": 0.28024193548387094,
+          "min": 0.171875,
+          "p50": 0.28125,
+          "p90": 0.34375,
+          "p95": 0.390625
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.375,
+          "mean": 1.375,
+          "min": 1.375,
+          "p50": 1.375,
+          "p90": 1.375,
+          "p95": 1.375
+        },
+        "hot_coverage": {
+          "max": 0.828125,
+          "mean": 0.719758064516129,
+          "min": 0.5625,
+          "p50": 0.71875,
+          "p90": 0.796875,
+          "p95": 0.8046875
+        },
+        "label": "math-reasoning",
+        "layer": "language_model.model.layers.20.mlp.experts",
+        "policy": "ep4_hot32_replicated_greedy",
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 31
+      },
+      {
+        "active_experts": {
+          "max": 42.0,
+          "mean": 37.064516129032256,
+          "min": 32.0,
+          "p50": 37.0,
+          "p90": 40.0,
+          "p95": 40.5
+        },
+        "communication_row_fraction_proxy": {
+          "max": 0.171875,
+          "mean": 0.0846774193548387,
+          "min": 0.03125,
+          "p50": 0.078125,
+          "p90": 0.125,
+          "p95": 0.1484375
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.75,
+          "mean": 1.75,
+          "min": 1.75,
+          "p50": 1.75,
+          "p90": 1.75,
+          "p95": 1.75
+        },
+        "hot_coverage": {
+          "max": 0.96875,
+          "mean": 0.9153225806451613,
+          "min": 0.828125,
+          "p50": 0.921875,
+          "p90": 0.953125,
+          "p95": 0.953125
+        },
+        "label": "math-reasoning",
+        "layer": "language_model.model.layers.20.mlp.experts",
+        "policy": "ep4_hot64_replicated_greedy",
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 31
+      },
+      {
+        "active_experts": {
+          "max": 42.0,
+          "mean": 37.064516129032256,
+          "min": 32.0,
+          "p50": 37.0,
+          "p90": 40.0,
+          "p95": 40.5
+        },
+        "communication_row_fraction_proxy": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.875,
+          "mean": 1.4254032258064515,
+          "min": 1.1875,
+          "p50": 1.3125,
+          "p90": 1.75,
+          "p95": 1.78125
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "hot_coverage": {
+          "max": 0.0,
+          "mean": 0.0,
+          "min": 0.0,
+          "p50": 0.0,
+          "p90": 0.0,
+          "p95": 0.0
+        },
+        "label": "math-reasoning",
+        "layer": "language_model.model.layers.20.mlp.experts",
+        "policy": "ep4_round_robin",
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 31
+      },
+      {
+        "active_experts": {
+          "max": 42.0,
+          "mean": 37.064516129032256,
+          "min": 32.0,
+          "p50": 37.0,
+          "p90": 40.0,
+          "p95": 40.5
+        },
+        "communication_row_fraction_proxy": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.28125,
+          "mean": 1.1441532258064515,
+          "min": 1.0,
+          "p50": 1.125,
+          "p90": 1.25,
+          "p95": 1.28125
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "hot_coverage": {
+          "max": 0.0,
+          "mean": 0.0,
+          "min": 0.0,
+          "p50": 0.0,
+          "p90": 0.0,
+          "p95": 0.0
+        },
+        "label": "math-reasoning",
+        "layer": "language_model.model.layers.20.mlp.experts",
+        "policy": "tp2_ep2_contiguous",
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 31
+      },
+      {
+        "active_experts": {
+          "max": 42.0,
+          "mean": 37.064516129032256,
+          "min": 32.0,
+          "p50": 37.0,
+          "p90": 40.0,
+          "p95": 40.5
+        },
+        "communication_row_fraction_proxy": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.3125,
+          "mean": 1.121975806451613,
+          "min": 1.0,
+          "p50": 1.09375,
+          "p90": 1.21875,
+          "p95": 1.25
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "hot_coverage": {
+          "max": 0.0,
+          "mean": 0.0,
+          "min": 0.0,
+          "p50": 0.0,
+          "p90": 0.0,
+          "p95": 0.0
+        },
+        "label": "math-reasoning",
+        "layer": "language_model.model.layers.20.mlp.experts",
+        "policy": "tp2_ep2_greedy_static",
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 31
+      },
+      {
+        "active_experts": {
+          "max": 42.0,
+          "mean": 37.064516129032256,
+          "min": 32.0,
+          "p50": 37.0,
+          "p90": 40.0,
+          "p95": 40.5
+        },
+        "communication_row_fraction_proxy": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.3125,
+          "mean": 1.1461693548387097,
+          "min": 1.03125,
+          "p50": 1.15625,
+          "p90": 1.25,
+          "p95": 1.28125
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "hot_coverage": {
+          "max": 0.0,
+          "mean": 0.0,
+          "min": 0.0,
+          "p50": 0.0,
+          "p90": 0.0,
+          "p95": 0.0
+        },
+        "label": "math-reasoning",
+        "layer": "language_model.model.layers.20.mlp.experts",
+        "policy": "tp2_ep2_round_robin",
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 31
+      },
+      {
+        "active_experts": {
+          "max": 43.0,
+          "mean": 36.064516129032256,
+          "min": 28.0,
+          "p50": 36.0,
+          "p90": 41.0,
+          "p95": 41.5
+        },
+        "communication_row_fraction_proxy": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.625,
+          "mean": 1.4133064516129032,
+          "min": 1.125,
+          "p50": 1.4375,
+          "p90": 1.5625,
+          "p95": 1.625
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "hot_coverage": {
+          "max": 0.0,
+          "mean": 0.0,
+          "min": 0.0,
+          "p50": 0.0,
+          "p90": 0.0,
+          "p95": 0.0
+        },
+        "label": "math-reasoning",
+        "layer": "language_model.model.layers.21.mlp.experts",
+        "policy": "ep4_contiguous",
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 31
+      },
+      {
+        "active_experts": {
+          "max": 43.0,
+          "mean": 36.064516129032256,
+          "min": 28.0,
+          "p50": 36.0,
+          "p90": 41.0,
+          "p95": 41.5
+        },
+        "communication_row_fraction_proxy": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.5625,
+          "mean": 1.2762096774193548,
+          "min": 1.0625,
+          "p50": 1.25,
+          "p90": 1.4375,
+          "p95": 1.53125
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "hot_coverage": {
+          "max": 0.0,
+          "mean": 0.0,
+          "min": 0.0,
+          "p50": 0.0,
+          "p90": 0.0,
+          "p95": 0.0
+        },
+        "label": "math-reasoning",
+        "layer": "language_model.model.layers.21.mlp.experts",
+        "policy": "ep4_greedy_static",
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 31
+      },
+      {
+        "active_experts": {
+          "max": 43.0,
+          "mean": 36.064516129032256,
+          "min": 28.0,
+          "p50": 36.0,
+          "p90": 41.0,
+          "p95": 41.5
+        },
+        "communication_row_fraction_proxy": {
+          "max": 0.578125,
+          "mean": 0.4465725806451613,
+          "min": 0.328125,
+          "p50": 0.4375,
+          "p90": 0.546875,
+          "p95": 0.5546875
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.1875,
+          "mean": 1.1875,
+          "min": 1.1875,
+          "p50": 1.1875,
+          "p90": 1.1875,
+          "p95": 1.1875
+        },
+        "hot_coverage": {
+          "max": 0.671875,
+          "mean": 0.5534274193548387,
+          "min": 0.421875,
+          "p50": 0.5625,
+          "p90": 0.640625,
+          "p95": 0.6484375
+        },
+        "label": "math-reasoning",
+        "layer": "language_model.model.layers.21.mlp.experts",
+        "policy": "ep4_hot16_replicated_greedy",
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 31
+      },
+      {
+        "active_experts": {
+          "max": 43.0,
+          "mean": 36.064516129032256,
+          "min": 28.0,
+          "p50": 36.0,
+          "p90": 41.0,
+          "p95": 41.5
+        },
+        "communication_row_fraction_proxy": {
+          "max": 0.328125,
+          "mean": 0.25252016129032256,
+          "min": 0.140625,
+          "p50": 0.265625,
+          "p90": 0.3125,
+          "p95": 0.3203125
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.375,
+          "mean": 1.375,
+          "min": 1.375,
+          "p50": 1.375,
+          "p90": 1.375,
+          "p95": 1.375
+        },
+        "hot_coverage": {
+          "max": 0.859375,
+          "mean": 0.7474798387096774,
+          "min": 0.671875,
+          "p50": 0.734375,
+          "p90": 0.8125,
+          "p95": 0.8359375
+        },
+        "label": "math-reasoning",
+        "layer": "language_model.model.layers.21.mlp.experts",
+        "policy": "ep4_hot32_replicated_greedy",
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 31
+      },
+      {
+        "active_experts": {
+          "max": 43.0,
+          "mean": 36.064516129032256,
+          "min": 28.0,
+          "p50": 36.0,
+          "p90": 41.0,
+          "p95": 41.5
+        },
+        "communication_row_fraction_proxy": {
+          "max": 0.109375,
+          "mean": 0.07762096774193548,
+          "min": 0.03125,
+          "p50": 0.09375,
+          "p90": 0.109375,
+          "p95": 0.109375
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.75,
+          "mean": 1.75,
+          "min": 1.75,
+          "p50": 1.75,
+          "p90": 1.75,
+          "p95": 1.75
+        },
+        "hot_coverage": {
+          "max": 0.96875,
+          "mean": 0.9223790322580645,
+          "min": 0.890625,
+          "p50": 0.90625,
+          "p90": 0.96875,
+          "p95": 0.96875
+        },
+        "label": "math-reasoning",
+        "layer": "language_model.model.layers.21.mlp.experts",
+        "policy": "ep4_hot64_replicated_greedy",
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 31
+      },
+      {
+        "active_experts": {
+          "max": 43.0,
+          "mean": 36.064516129032256,
+          "min": 28.0,
+          "p50": 36.0,
+          "p90": 41.0,
+          "p95": 41.5
+        },
+        "communication_row_fraction_proxy": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.6875,
+          "mean": 1.282258064516129,
+          "min": 1.0625,
+          "p50": 1.25,
+          "p90": 1.5625,
+          "p95": 1.625
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "hot_coverage": {
+          "max": 0.0,
+          "mean": 0.0,
+          "min": 0.0,
+          "p50": 0.0,
+          "p90": 0.0,
+          "p95": 0.0
+        },
+        "label": "math-reasoning",
+        "layer": "language_model.model.layers.21.mlp.experts",
+        "policy": "ep4_round_robin",
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 31
+      },
+      {
+        "active_experts": {
+          "max": 43.0,
+          "mean": 36.064516129032256,
+          "min": 28.0,
+          "p50": 36.0,
+          "p90": 41.0,
+          "p95": 41.5
+        },
+        "communication_row_fraction_proxy": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.28125,
+          "mean": 1.1098790322580645,
+          "min": 1.03125,
+          "p50": 1.125,
+          "p90": 1.1875,
+          "p95": 1.203125
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "hot_coverage": {
+          "max": 0.0,
+          "mean": 0.0,
+          "min": 0.0,
+          "p50": 0.0,
+          "p90": 0.0,
+          "p95": 0.0
+        },
+        "label": "math-reasoning",
+        "layer": "language_model.model.layers.21.mlp.experts",
+        "policy": "tp2_ep2_contiguous",
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 31
+      },
+      {
+        "active_experts": {
+          "max": 43.0,
+          "mean": 36.064516129032256,
+          "min": 28.0,
+          "p50": 36.0,
+          "p90": 41.0,
+          "p95": 41.5
+        },
+        "communication_row_fraction_proxy": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.25,
+          "mean": 1.1290322580645162,
+          "min": 1.0,
+          "p50": 1.125,
+          "p90": 1.21875,
+          "p95": 1.234375
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "hot_coverage": {
+          "max": 0.0,
+          "mean": 0.0,
+          "min": 0.0,
+          "p50": 0.0,
+          "p90": 0.0,
+          "p95": 0.0
+        },
+        "label": "math-reasoning",
+        "layer": "language_model.model.layers.21.mlp.experts",
+        "policy": "tp2_ep2_greedy_static",
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 31
+      },
+      {
+        "active_experts": {
+          "max": 43.0,
+          "mean": 36.064516129032256,
+          "min": 28.0,
+          "p50": 36.0,
+          "p90": 41.0,
+          "p95": 41.5
+        },
+        "communication_row_fraction_proxy": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.4375,
+          "mean": 1.1653225806451613,
+          "min": 1.03125,
+          "p50": 1.125,
+          "p90": 1.34375,
+          "p95": 1.390625
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "hot_coverage": {
+          "max": 0.0,
+          "mean": 0.0,
+          "min": 0.0,
+          "p50": 0.0,
+          "p90": 0.0,
+          "p95": 0.0
+        },
+        "label": "math-reasoning",
+        "layer": "language_model.model.layers.21.mlp.experts",
+        "policy": "tp2_ep2_round_robin",
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 31
+      },
+      {
+        "active_experts": {
+          "max": 45.0,
+          "mean": 37.83870967741935,
+          "min": 28.0,
+          "p50": 39.0,
+          "p90": 42.0,
+          "p95": 43.5
+        },
+        "communication_row_fraction_proxy": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.5625,
+          "mean": 1.2741935483870968,
+          "min": 1.0625,
+          "p50": 1.25,
+          "p90": 1.4375,
+          "p95": 1.4375
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "hot_coverage": {
+          "max": 0.0,
+          "mean": 0.0,
+          "min": 0.0,
+          "p50": 0.0,
+          "p90": 0.0,
+          "p95": 0.0
+        },
+        "label": "math-reasoning",
+        "layer": "language_model.model.layers.8.mlp.experts",
+        "policy": "ep4_contiguous",
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 31
+      },
+      {
+        "active_experts": {
+          "max": 45.0,
+          "mean": 37.83870967741935,
+          "min": 28.0,
+          "p50": 39.0,
+          "p90": 42.0,
+          "p95": 43.5
+        },
+        "communication_row_fraction_proxy": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.4375,
+          "mean": 1.2137096774193548,
+          "min": 1.0625,
+          "p50": 1.1875,
+          "p90": 1.3125,
+          "p95": 1.40625
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "hot_coverage": {
+          "max": 0.0,
+          "mean": 0.0,
+          "min": 0.0,
+          "p50": 0.0,
+          "p90": 0.0,
+          "p95": 0.0
+        },
+        "label": "math-reasoning",
+        "layer": "language_model.model.layers.8.mlp.experts",
+        "policy": "ep4_greedy_static",
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 31
+      },
+      {
+        "active_experts": {
+          "max": 45.0,
+          "mean": 37.83870967741935,
+          "min": 28.0,
+          "p50": 39.0,
+          "p90": 42.0,
+          "p95": 43.5
+        },
+        "communication_row_fraction_proxy": {
+          "max": 0.609375,
+          "mean": 0.4838709677419355,
+          "min": 0.328125,
+          "p50": 0.5,
+          "p90": 0.578125,
+          "p95": 0.5859375
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.1875,
+          "mean": 1.1875,
+          "min": 1.1875,
+          "p50": 1.1875,
+          "p90": 1.1875,
+          "p95": 1.1875
+        },
+        "hot_coverage": {
+          "max": 0.671875,
+          "mean": 0.5161290322580645,
+          "min": 0.390625,
+          "p50": 0.5,
+          "p90": 0.609375,
+          "p95": 0.625
+        },
+        "label": "math-reasoning",
+        "layer": "language_model.model.layers.8.mlp.experts",
+        "policy": "ep4_hot16_replicated_greedy",
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 31
+      },
+      {
+        "active_experts": {
+          "max": 45.0,
+          "mean": 37.83870967741935,
+          "min": 28.0,
+          "p50": 39.0,
+          "p90": 42.0,
+          "p95": 43.5
+        },
+        "communication_row_fraction_proxy": {
+          "max": 0.390625,
+          "mean": 0.28881048387096775,
+          "min": 0.15625,
+          "p50": 0.296875,
+          "p90": 0.359375,
+          "p95": 0.375
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.375,
+          "mean": 1.375,
+          "min": 1.375,
+          "p50": 1.375,
+          "p90": 1.375,
+          "p95": 1.375
+        },
+        "hot_coverage": {
+          "max": 0.84375,
+          "mean": 0.7111895161290323,
+          "min": 0.609375,
+          "p50": 0.703125,
+          "p90": 0.78125,
+          "p95": 0.828125
+        },
+        "label": "math-reasoning",
+        "layer": "language_model.model.layers.8.mlp.experts",
+        "policy": "ep4_hot32_replicated_greedy",
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 31
+      },
+      {
+        "active_experts": {
+          "max": 45.0,
+          "mean": 37.83870967741935,
+          "min": 28.0,
+          "p50": 39.0,
+          "p90": 42.0,
+          "p95": 43.5
+        },
+        "communication_row_fraction_proxy": {
+          "max": 0.171875,
+          "mean": 0.08366935483870967,
+          "min": 0.03125,
+          "p50": 0.078125,
+          "p90": 0.109375,
+          "p95": 0.1328125
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.75,
+          "mean": 1.75,
+          "min": 1.75,
+          "p50": 1.75,
+          "p90": 1.75,
+          "p95": 1.75
+        },
+        "hot_coverage": {
+          "max": 0.96875,
+          "mean": 0.9163306451612904,
+          "min": 0.828125,
+          "p50": 0.921875,
+          "p90": 0.953125,
+          "p95": 0.9609375
+        },
+        "label": "math-reasoning",
+        "layer": "language_model.model.layers.8.mlp.experts",
+        "policy": "ep4_hot64_replicated_greedy",
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 31
+      },
+      {
+        "active_experts": {
+          "max": 45.0,
+          "mean": 37.83870967741935,
+          "min": 28.0,
+          "p50": 39.0,
+          "p90": 42.0,
+          "p95": 43.5
+        },
+        "communication_row_fraction_proxy": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.8125,
+          "mean": 1.4818548387096775,
+          "min": 1.125,
+          "p50": 1.5,
+          "p90": 1.75,
+          "p95": 1.75
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "hot_coverage": {
+          "max": 0.0,
+          "mean": 0.0,
+          "min": 0.0,
+          "p50": 0.0,
+          "p90": 0.0,
+          "p95": 0.0
+        },
+        "label": "math-reasoning",
+        "layer": "language_model.model.layers.8.mlp.experts",
+        "policy": "ep4_round_robin",
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 31
+      },
+      {
+        "active_experts": {
+          "max": 45.0,
+          "mean": 37.83870967741935,
+          "min": 28.0,
+          "p50": 39.0,
+          "p90": 42.0,
+          "p95": 43.5
+        },
+        "communication_row_fraction_proxy": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.375,
+          "mean": 1.1401209677419355,
+          "min": 1.0,
+          "p50": 1.09375,
+          "p90": 1.28125,
+          "p95": 1.34375
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "hot_coverage": {
+          "max": 0.0,
+          "mean": 0.0,
+          "min": 0.0,
+          "p50": 0.0,
+          "p90": 0.0,
+          "p95": 0.0
+        },
+        "label": "math-reasoning",
+        "layer": "language_model.model.layers.8.mlp.experts",
+        "policy": "tp2_ep2_contiguous",
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 31
+      },
+      {
+        "active_experts": {
+          "max": 45.0,
+          "mean": 37.83870967741935,
+          "min": 28.0,
+          "p50": 39.0,
+          "p90": 42.0,
+          "p95": 43.5
+        },
+        "communication_row_fraction_proxy": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.28125,
+          "mean": 1.1149193548387097,
+          "min": 1.0,
+          "p50": 1.09375,
+          "p90": 1.21875,
+          "p95": 1.25
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "hot_coverage": {
+          "max": 0.0,
+          "mean": 0.0,
+          "min": 0.0,
+          "p50": 0.0,
+          "p90": 0.0,
+          "p95": 0.0
+        },
+        "label": "math-reasoning",
+        "layer": "language_model.model.layers.8.mlp.experts",
+        "policy": "tp2_ep2_greedy_static",
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 31
+      },
+      {
+        "active_experts": {
+          "max": 45.0,
+          "mean": 37.83870967741935,
+          "min": 28.0,
+          "p50": 39.0,
+          "p90": 42.0,
+          "p95": 43.5
+        },
+        "communication_row_fraction_proxy": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.25,
+          "mean": 1.1471774193548387,
+          "min": 1.0,
+          "p50": 1.15625,
+          "p90": 1.25,
+          "p95": 1.25
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "hot_coverage": {
+          "max": 0.0,
+          "mean": 0.0,
+          "min": 0.0,
+          "p50": 0.0,
+          "p90": 0.0,
+          "p95": 0.0
+        },
+        "label": "math-reasoning",
+        "layer": "language_model.model.layers.8.mlp.experts",
+        "policy": "tp2_ep2_round_robin",
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 31
+      },
+      {
+        "active_experts": {
+          "max": 44.0,
+          "mean": 37.29032258064516,
+          "min": 29.0,
+          "p50": 37.0,
+          "p90": 41.0,
+          "p95": 43.0
+        },
+        "communication_row_fraction_proxy": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.9375,
+          "mean": 1.3487903225806452,
+          "min": 1.125,
+          "p50": 1.25,
+          "p90": 1.75,
+          "p95": 1.90625
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "hot_coverage": {
+          "max": 0.0,
+          "mean": 0.0,
+          "min": 0.0,
+          "p50": 0.0,
+          "p90": 0.0,
+          "p95": 0.0
+        },
+        "label": "math-reasoning",
+        "layer": "language_model.model.layers.9.mlp.experts",
+        "policy": "ep4_contiguous",
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 31
+      },
+      {
+        "active_experts": {
+          "max": 44.0,
+          "mean": 37.29032258064516,
+          "min": 29.0,
+          "p50": 37.0,
+          "p90": 41.0,
+          "p95": 43.0
+        },
+        "communication_row_fraction_proxy": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.6875,
+          "mean": 1.346774193548387,
+          "min": 1.0625,
+          "p50": 1.3125,
+          "p90": 1.625,
+          "p95": 1.65625
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "hot_coverage": {
+          "max": 0.0,
+          "mean": 0.0,
+          "min": 0.0,
+          "p50": 0.0,
+          "p90": 0.0,
+          "p95": 0.0
+        },
+        "label": "math-reasoning",
+        "layer": "language_model.model.layers.9.mlp.experts",
+        "policy": "ep4_greedy_static",
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 31
+      },
+      {
+        "active_experts": {
+          "max": 44.0,
+          "mean": 37.29032258064516,
+          "min": 29.0,
+          "p50": 37.0,
+          "p90": 41.0,
+          "p95": 43.0
+        },
+        "communication_row_fraction_proxy": {
+          "max": 0.578125,
+          "mean": 0.4627016129032258,
+          "min": 0.28125,
+          "p50": 0.453125,
+          "p90": 0.546875,
+          "p95": 0.5546875
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.0625,
+          "mean": 1.0040322580645162,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.03125
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.1875,
+          "mean": 1.1875,
+          "min": 1.1875,
+          "p50": 1.1875,
+          "p90": 1.1875,
+          "p95": 1.1875
+        },
+        "hot_coverage": {
+          "max": 0.71875,
+          "mean": 0.5372983870967742,
+          "min": 0.421875,
+          "p50": 0.546875,
+          "p90": 0.640625,
+          "p95": 0.65625
+        },
+        "label": "math-reasoning",
+        "layer": "language_model.model.layers.9.mlp.experts",
+        "policy": "ep4_hot16_replicated_greedy",
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 31
+      },
+      {
+        "active_experts": {
+          "max": 44.0,
+          "mean": 37.29032258064516,
+          "min": 29.0,
+          "p50": 37.0,
+          "p90": 41.0,
+          "p95": 43.0
+        },
+        "communication_row_fraction_proxy": {
+          "max": 0.40625,
+          "mean": 0.2918346774193548,
+          "min": 0.15625,
+          "p50": 0.296875,
+          "p90": 0.34375,
+          "p95": 0.375
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.375,
+          "mean": 1.375,
+          "min": 1.375,
+          "p50": 1.375,
+          "p90": 1.375,
+          "p95": 1.375
+        },
+        "hot_coverage": {
+          "max": 0.84375,
+          "mean": 0.7081653225806451,
+          "min": 0.59375,
+          "p50": 0.703125,
+          "p90": 0.78125,
+          "p95": 0.8125
+        },
+        "label": "math-reasoning",
+        "layer": "language_model.model.layers.9.mlp.experts",
+        "policy": "ep4_hot32_replicated_greedy",
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 31
+      },
+      {
+        "active_experts": {
+          "max": 44.0,
+          "mean": 37.29032258064516,
+          "min": 29.0,
+          "p50": 37.0,
+          "p90": 41.0,
+          "p95": 43.0
+        },
+        "communication_row_fraction_proxy": {
+          "max": 0.203125,
+          "mean": 0.11391129032258064,
+          "min": 0.03125,
+          "p50": 0.109375,
+          "p90": 0.15625,
+          "p95": 0.171875
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.75,
+          "mean": 1.75,
+          "min": 1.75,
+          "p50": 1.75,
+          "p90": 1.75,
+          "p95": 1.75
+        },
+        "hot_coverage": {
+          "max": 0.96875,
+          "mean": 0.8860887096774194,
+          "min": 0.796875,
+          "p50": 0.890625,
+          "p90": 0.9375,
+          "p95": 0.953125
+        },
+        "label": "math-reasoning",
+        "layer": "language_model.model.layers.9.mlp.experts",
+        "policy": "ep4_hot64_replicated_greedy",
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 31
+      },
+      {
+        "active_experts": {
+          "max": 44.0,
+          "mean": 37.29032258064516,
+          "min": 29.0,
+          "p50": 37.0,
+          "p90": 41.0,
+          "p95": 43.0
+        },
+        "communication_row_fraction_proxy": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.5625,
+          "mean": 1.2641129032258065,
+          "min": 1.0625,
+          "p50": 1.25,
+          "p90": 1.4375,
+          "p95": 1.4375
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "hot_coverage": {
+          "max": 0.0,
+          "mean": 0.0,
+          "min": 0.0,
+          "p50": 0.0,
+          "p90": 0.0,
+          "p95": 0.0
+        },
+        "label": "math-reasoning",
+        "layer": "language_model.model.layers.9.mlp.experts",
+        "policy": "ep4_round_robin",
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 31
+      },
+      {
+        "active_experts": {
+          "max": 44.0,
+          "mean": 37.29032258064516,
+          "min": 29.0,
+          "p50": 37.0,
+          "p90": 41.0,
+          "p95": 43.0
+        },
+        "communication_row_fraction_proxy": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.375,
+          "mean": 1.1320564516129032,
+          "min": 1.0,
+          "p50": 1.125,
+          "p90": 1.28125,
+          "p95": 1.3125
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "hot_coverage": {
+          "max": 0.0,
+          "mean": 0.0,
+          "min": 0.0,
+          "p50": 0.0,
+          "p90": 0.0,
+          "p95": 0.0
+        },
+        "label": "math-reasoning",
+        "layer": "language_model.model.layers.9.mlp.experts",
+        "policy": "tp2_ep2_contiguous",
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 31
+      },
+      {
+        "active_experts": {
+          "max": 44.0,
+          "mean": 37.29032258064516,
+          "min": 29.0,
+          "p50": 37.0,
+          "p90": 41.0,
+          "p95": 43.0
+        },
+        "communication_row_fraction_proxy": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.28125,
+          "mean": 1.0715725806451613,
+          "min": 1.0,
+          "p50": 1.0625,
+          "p90": 1.125,
+          "p95": 1.15625
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "hot_coverage": {
+          "max": 0.0,
+          "mean": 0.0,
+          "min": 0.0,
+          "p50": 0.0,
+          "p90": 0.0,
+          "p95": 0.0
+        },
+        "label": "math-reasoning",
+        "layer": "language_model.model.layers.9.mlp.experts",
+        "policy": "tp2_ep2_greedy_static",
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 31
+      },
+      {
+        "active_experts": {
+          "max": 44.0,
+          "mean": 37.29032258064516,
+          "min": 29.0,
+          "p50": 37.0,
+          "p90": 41.0,
+          "p95": 43.0
+        },
+        "communication_row_fraction_proxy": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.34375,
+          "mean": 1.1502016129032258,
+          "min": 1.0,
+          "p50": 1.15625,
+          "p90": 1.28125,
+          "p95": 1.3125
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "hot_coverage": {
+          "max": 0.0,
+          "mean": 0.0,
+          "min": 0.0,
+          "p50": 0.0,
+          "p90": 0.0,
+          "p95": 0.0
+        },
+        "label": "math-reasoning",
+        "layer": "language_model.model.layers.9.mlp.experts",
+        "policy": "tp2_ep2_round_robin",
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 31
+      },
+      {
+        "active_experts": {
+          "max": 51.0,
+          "mean": 38.12903225806452,
+          "min": 27.0,
+          "p50": 39.0,
+          "p90": 47.0,
+          "p95": 50.5
+        },
+        "communication_row_fraction_proxy": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.75,
+          "mean": 1.3608870967741935,
+          "min": 1.125,
+          "p50": 1.375,
+          "p90": 1.5,
+          "p95": 1.59375
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "hot_coverage": {
+          "max": 0.0,
+          "mean": 0.0,
+          "min": 0.0,
+          "p50": 0.0,
+          "p90": 0.0,
+          "p95": 0.0
+        },
+        "label": "repetitive",
+        "layer": "language_model.model.layers.14.mlp.experts",
+        "policy": "ep4_contiguous",
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 31
+      },
+      {
+        "active_experts": {
+          "max": 51.0,
+          "mean": 38.12903225806452,
+          "min": 27.0,
+          "p50": 39.0,
+          "p90": 47.0,
+          "p95": 50.5
+        },
+        "communication_row_fraction_proxy": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.625,
+          "mean": 1.252016129032258,
+          "min": 1.0625,
+          "p50": 1.25,
+          "p90": 1.375,
+          "p95": 1.4375
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "hot_coverage": {
+          "max": 0.0,
+          "mean": 0.0,
+          "min": 0.0,
+          "p50": 0.0,
+          "p90": 0.0,
+          "p95": 0.0
+        },
+        "label": "repetitive",
+        "layer": "language_model.model.layers.14.mlp.experts",
+        "policy": "ep4_greedy_static",
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 31
+      },
+      {
+        "active_experts": {
+          "max": 51.0,
+          "mean": 38.12903225806452,
+          "min": 27.0,
+          "p50": 39.0,
+          "p90": 47.0,
+          "p95": 50.5
+        },
+        "communication_row_fraction_proxy": {
+          "max": 0.765625,
+          "mean": 0.5730846774193549,
+          "min": 0.28125,
+          "p50": 0.640625,
+          "p90": 0.734375,
+          "p95": 0.7578125
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.25,
+          "mean": 1.032258064516129,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.125,
+          "p95": 1.1875
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.1875,
+          "mean": 1.1875,
+          "min": 1.1875,
+          "p50": 1.1875,
+          "p90": 1.1875,
+          "p95": 1.1875
+        },
+        "hot_coverage": {
+          "max": 0.71875,
+          "mean": 0.4269153225806452,
+          "min": 0.234375,
+          "p50": 0.359375,
+          "p90": 0.65625,
+          "p95": 0.6796875
+        },
+        "label": "repetitive",
+        "layer": "language_model.model.layers.14.mlp.experts",
+        "policy": "ep4_hot16_replicated_greedy",
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 31
+      },
+      {
+        "active_experts": {
+          "max": 51.0,
+          "mean": 38.12903225806452,
+          "min": 27.0,
+          "p50": 39.0,
+          "p90": 47.0,
+          "p95": 50.5
+        },
+        "communication_row_fraction_proxy": {
+          "max": 0.578125,
+          "mean": 0.3956653225806452,
+          "min": 0.125,
+          "p50": 0.4375,
+          "p90": 0.5625,
+          "p95": 0.5703125
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.375,
+          "mean": 1.375,
+          "min": 1.375,
+          "p50": 1.375,
+          "p90": 1.375,
+          "p95": 1.375
+        },
+        "hot_coverage": {
+          "max": 0.875,
+          "mean": 0.6043346774193549,
+          "min": 0.421875,
+          "p50": 0.5625,
+          "p90": 0.828125,
+          "p95": 0.84375
+        },
+        "label": "repetitive",
+        "layer": "language_model.model.layers.14.mlp.experts",
+        "policy": "ep4_hot32_replicated_greedy",
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 31
+      },
+      {
+        "active_experts": {
+          "max": 51.0,
+          "mean": 38.12903225806452,
+          "min": 27.0,
+          "p50": 39.0,
+          "p90": 47.0,
+          "p95": 50.5
+        },
+        "communication_row_fraction_proxy": {
+          "max": 0.28125,
+          "mean": 0.17288306451612903,
+          "min": 0.0625,
+          "p50": 0.1875,
+          "p90": 0.25,
+          "p95": 0.265625
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.75,
+          "mean": 1.75,
+          "min": 1.75,
+          "p50": 1.75,
+          "p90": 1.75,
+          "p95": 1.75
+        },
+        "hot_coverage": {
+          "max": 0.9375,
+          "mean": 0.827116935483871,
+          "min": 0.71875,
+          "p50": 0.8125,
+          "p90": 0.9375,
+          "p95": 0.9375
+        },
+        "label": "repetitive",
+        "layer": "language_model.model.layers.14.mlp.experts",
+        "policy": "ep4_hot64_replicated_greedy",
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 31
+      },
+      {
+        "active_experts": {
+          "max": 51.0,
+          "mean": 38.12903225806452,
+          "min": 27.0,
+          "p50": 39.0,
+          "p90": 47.0,
+          "p95": 50.5
+        },
+        "communication_row_fraction_proxy": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.8125,
+          "mean": 1.3608870967741935,
+          "min": 1.0625,
+          "p50": 1.3125,
+          "p90": 1.625,
+          "p95": 1.71875
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "hot_coverage": {
+          "max": 0.0,
+          "mean": 0.0,
+          "min": 0.0,
+          "p50": 0.0,
+          "p90": 0.0,
+          "p95": 0.0
+        },
+        "label": "repetitive",
+        "layer": "language_model.model.layers.14.mlp.experts",
+        "policy": "ep4_round_robin",
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 31
+      },
+      {
+        "active_experts": {
+          "max": 51.0,
+          "mean": 38.12903225806452,
+          "min": 27.0,
+          "p50": 39.0,
+          "p90": 47.0,
+          "p95": 50.5
+        },
+        "communication_row_fraction_proxy": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.375,
+          "mean": 1.15625,
+          "min": 1.03125,
+          "p50": 1.125,
+          "p90": 1.28125,
+          "p95": 1.328125
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "hot_coverage": {
+          "max": 0.0,
+          "mean": 0.0,
+          "min": 0.0,
+          "p50": 0.0,
+          "p90": 0.0,
+          "p95": 0.0
+        },
+        "label": "repetitive",
+        "layer": "language_model.model.layers.14.mlp.experts",
+        "policy": "tp2_ep2_contiguous",
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 31
+      },
+      {
+        "active_experts": {
+          "max": 51.0,
+          "mean": 38.12903225806452,
+          "min": 27.0,
+          "p50": 39.0,
+          "p90": 47.0,
+          "p95": 50.5
+        },
+        "communication_row_fraction_proxy": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.25,
+          "mean": 1.1018145161290323,
+          "min": 1.0,
+          "p50": 1.125,
+          "p90": 1.15625,
+          "p95": 1.1875
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "hot_coverage": {
+          "max": 0.0,
+          "mean": 0.0,
+          "min": 0.0,
+          "p50": 0.0,
+          "p90": 0.0,
+          "p95": 0.0
+        },
+        "label": "repetitive",
+        "layer": "language_model.model.layers.14.mlp.experts",
+        "policy": "tp2_ep2_greedy_static",
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 31
+      },
+      {
+        "active_experts": {
+          "max": 51.0,
+          "mean": 38.12903225806452,
+          "min": 27.0,
+          "p50": 39.0,
+          "p90": 47.0,
+          "p95": 50.5
+        },
+        "communication_row_fraction_proxy": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.25,
+          "mean": 1.121975806451613,
+          "min": 1.03125,
+          "p50": 1.09375,
+          "p90": 1.21875,
+          "p95": 1.21875
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "hot_coverage": {
+          "max": 0.0,
+          "mean": 0.0,
+          "min": 0.0,
+          "p50": 0.0,
+          "p90": 0.0,
+          "p95": 0.0
+        },
+        "label": "repetitive",
+        "layer": "language_model.model.layers.14.mlp.experts",
+        "policy": "tp2_ep2_round_robin",
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 31
+      },
+      {
+        "active_experts": {
+          "max": 49.0,
+          "mean": 36.41935483870968,
+          "min": 29.0,
+          "p50": 36.0,
+          "p90": 43.0,
+          "p95": 47.0
+        },
+        "communication_row_fraction_proxy": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.5,
+          "mean": 1.3024193548387097,
+          "min": 1.125,
+          "p50": 1.3125,
+          "p90": 1.4375,
+          "p95": 1.4375
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "hot_coverage": {
+          "max": 0.0,
+          "mean": 0.0,
+          "min": 0.0,
+          "p50": 0.0,
+          "p90": 0.0,
+          "p95": 0.0
+        },
+        "label": "repetitive",
+        "layer": "language_model.model.layers.20.mlp.experts",
+        "policy": "ep4_contiguous",
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 31
+      },
+      {
+        "active_experts": {
+          "max": 49.0,
+          "mean": 36.41935483870968,
+          "min": 29.0,
+          "p50": 36.0,
+          "p90": 43.0,
+          "p95": 47.0
+        },
+        "communication_row_fraction_proxy": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.375,
+          "mean": 1.2661290322580645,
+          "min": 1.125,
+          "p50": 1.25,
+          "p90": 1.375,
+          "p95": 1.375
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "hot_coverage": {
+          "max": 0.0,
+          "mean": 0.0,
+          "min": 0.0,
+          "p50": 0.0,
+          "p90": 0.0,
+          "p95": 0.0
+        },
+        "label": "repetitive",
+        "layer": "language_model.model.layers.20.mlp.experts",
+        "policy": "ep4_greedy_static",
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 31
+      },
+      {
+        "active_experts": {
+          "max": 49.0,
+          "mean": 36.41935483870968,
+          "min": 29.0,
+          "p50": 36.0,
+          "p90": 43.0,
+          "p95": 47.0
+        },
+        "communication_row_fraction_proxy": {
+          "max": 0.625,
+          "mean": 0.5131048387096774,
+          "min": 0.40625,
+          "p50": 0.5,
+          "p90": 0.578125,
+          "p95": 0.6015625
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.0625,
+          "mean": 1.0080645161290323,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0625,
+          "p95": 1.0625
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.1875,
+          "mean": 1.1875,
+          "min": 1.1875,
+          "p50": 1.1875,
+          "p90": 1.1875,
+          "p95": 1.1875
+        },
+        "hot_coverage": {
+          "max": 0.59375,
+          "mean": 0.48689516129032256,
+          "min": 0.375,
+          "p50": 0.5,
+          "p90": 0.546875,
+          "p95": 0.5859375
+        },
+        "label": "repetitive",
+        "layer": "language_model.model.layers.20.mlp.experts",
+        "policy": "ep4_hot16_replicated_greedy",
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 31
+      },
+      {
+        "active_experts": {
+          "max": 49.0,
+          "mean": 36.41935483870968,
+          "min": 29.0,
+          "p50": 36.0,
+          "p90": 43.0,
+          "p95": 47.0
+        },
+        "communication_row_fraction_proxy": {
+          "max": 0.453125,
+          "mean": 0.3014112903225806,
+          "min": 0.1875,
+          "p50": 0.296875,
+          "p90": 0.375,
+          "p95": 0.40625
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.0625,
+          "mean": 1.002016129032258,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.375,
+          "mean": 1.375,
+          "min": 1.375,
+          "p50": 1.375,
+          "p90": 1.375,
+          "p95": 1.375
+        },
+        "hot_coverage": {
+          "max": 0.8125,
+          "mean": 0.6985887096774194,
+          "min": 0.546875,
+          "p50": 0.703125,
+          "p90": 0.796875,
+          "p95": 0.8046875
+        },
+        "label": "repetitive",
+        "layer": "language_model.model.layers.20.mlp.experts",
+        "policy": "ep4_hot32_replicated_greedy",
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 31
+      },
+      {
+        "active_experts": {
+          "max": 49.0,
+          "mean": 36.41935483870968,
+          "min": 29.0,
+          "p50": 36.0,
+          "p90": 43.0,
+          "p95": 47.0
+        },
+        "communication_row_fraction_proxy": {
+          "max": 0.296875,
+          "mean": 0.11139112903225806,
+          "min": 0.03125,
+          "p50": 0.078125,
+          "p90": 0.234375,
+          "p95": 0.25
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.75,
+          "mean": 1.75,
+          "min": 1.75,
+          "p50": 1.75,
+          "p90": 1.75,
+          "p95": 1.75
+        },
+        "hot_coverage": {
+          "max": 0.96875,
+          "mean": 0.8886088709677419,
+          "min": 0.703125,
+          "p50": 0.921875,
+          "p90": 0.953125,
+          "p95": 0.953125
+        },
+        "label": "repetitive",
+        "layer": "language_model.model.layers.20.mlp.experts",
+        "policy": "ep4_hot64_replicated_greedy",
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 31
+      },
+      {
+        "active_experts": {
+          "max": 49.0,
+          "mean": 36.41935483870968,
+          "min": 29.0,
+          "p50": 36.0,
+          "p90": 43.0,
+          "p95": 47.0
+        },
+        "communication_row_fraction_proxy": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.8125,
+          "mean": 1.469758064516129,
+          "min": 1.125,
+          "p50": 1.5,
+          "p90": 1.6875,
+          "p95": 1.78125
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "hot_coverage": {
+          "max": 0.0,
+          "mean": 0.0,
+          "min": 0.0,
+          "p50": 0.0,
+          "p90": 0.0,
+          "p95": 0.0
+        },
+        "label": "repetitive",
+        "layer": "language_model.model.layers.20.mlp.experts",
+        "policy": "ep4_round_robin",
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 31
+      },
+      {
+        "active_experts": {
+          "max": 49.0,
+          "mean": 36.41935483870968,
+          "min": 29.0,
+          "p50": 36.0,
+          "p90": 43.0,
+          "p95": 47.0
+        },
+        "communication_row_fraction_proxy": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.375,
+          "mean": 1.1643145161290323,
+          "min": 1.0,
+          "p50": 1.15625,
+          "p90": 1.34375,
+          "p95": 1.34375
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "hot_coverage": {
+          "max": 0.0,
+          "mean": 0.0,
+          "min": 0.0,
+          "p50": 0.0,
+          "p90": 0.0,
+          "p95": 0.0
+        },
+        "label": "repetitive",
+        "layer": "language_model.model.layers.20.mlp.experts",
+        "policy": "tp2_ep2_contiguous",
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 31
+      },
+      {
+        "active_experts": {
+          "max": 49.0,
+          "mean": 36.41935483870968,
+          "min": 29.0,
+          "p50": 36.0,
+          "p90": 43.0,
+          "p95": 47.0
+        },
+        "communication_row_fraction_proxy": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.21875,
+          "mean": 1.0816532258064515,
+          "min": 1.0,
+          "p50": 1.0625,
+          "p90": 1.15625,
+          "p95": 1.171875
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "hot_coverage": {
+          "max": 0.0,
+          "mean": 0.0,
+          "min": 0.0,
+          "p50": 0.0,
+          "p90": 0.0,
+          "p95": 0.0
+        },
+        "label": "repetitive",
+        "layer": "language_model.model.layers.20.mlp.experts",
+        "policy": "tp2_ep2_greedy_static",
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 31
+      },
+      {
+        "active_experts": {
+          "max": 49.0,
+          "mean": 36.41935483870968,
+          "min": 29.0,
+          "p50": 36.0,
+          "p90": 43.0,
+          "p95": 47.0
+        },
+        "communication_row_fraction_proxy": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.375,
+          "mean": 1.220766129032258,
+          "min": 1.09375,
+          "p50": 1.21875,
+          "p90": 1.375,
+          "p95": 1.375
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "hot_coverage": {
+          "max": 0.0,
+          "mean": 0.0,
+          "min": 0.0,
+          "p50": 0.0,
+          "p90": 0.0,
+          "p95": 0.0
+        },
+        "label": "repetitive",
+        "layer": "language_model.model.layers.20.mlp.experts",
+        "policy": "tp2_ep2_round_robin",
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 31
+      },
+      {
+        "active_experts": {
+          "max": 48.0,
+          "mean": 36.96774193548387,
+          "min": 26.0,
+          "p50": 37.0,
+          "p90": 46.0,
+          "p95": 47.0
+        },
+        "communication_row_fraction_proxy": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.5625,
+          "mean": 1.2661290322580645,
+          "min": 1.0625,
+          "p50": 1.25,
+          "p90": 1.5,
+          "p95": 1.53125
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "hot_coverage": {
+          "max": 0.0,
+          "mean": 0.0,
+          "min": 0.0,
+          "p50": 0.0,
+          "p90": 0.0,
+          "p95": 0.0
+        },
+        "label": "repetitive",
+        "layer": "language_model.model.layers.21.mlp.experts",
+        "policy": "ep4_contiguous",
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 31
+      },
+      {
+        "active_experts": {
+          "max": 48.0,
+          "mean": 36.96774193548387,
+          "min": 26.0,
+          "p50": 37.0,
+          "p90": 46.0,
+          "p95": 47.0
+        },
+        "communication_row_fraction_proxy": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.4375,
+          "mean": 1.252016129032258,
+          "min": 1.0625,
+          "p50": 1.25,
+          "p90": 1.375,
+          "p95": 1.40625
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "hot_coverage": {
+          "max": 0.0,
+          "mean": 0.0,
+          "min": 0.0,
+          "p50": 0.0,
+          "p90": 0.0,
+          "p95": 0.0
+        },
+        "label": "repetitive",
+        "layer": "language_model.model.layers.21.mlp.experts",
+        "policy": "ep4_greedy_static",
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 31
+      },
+      {
+        "active_experts": {
+          "max": 48.0,
+          "mean": 36.96774193548387,
+          "min": 26.0,
+          "p50": 37.0,
+          "p90": 46.0,
+          "p95": 47.0
+        },
+        "communication_row_fraction_proxy": {
+          "max": 0.75,
+          "mean": 0.5806451612903226,
+          "min": 0.375,
+          "p50": 0.59375,
+          "p90": 0.703125,
+          "p95": 0.71875
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.125,
+          "mean": 1.0100806451612903,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0625,
+          "p95": 1.0625
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.1875,
+          "mean": 1.1875,
+          "min": 1.1875,
+          "p50": 1.1875,
+          "p90": 1.1875,
+          "p95": 1.1875
+        },
+        "hot_coverage": {
+          "max": 0.625,
+          "mean": 0.41935483870967744,
+          "min": 0.25,
+          "p50": 0.40625,
+          "p90": 0.609375,
+          "p95": 0.609375
+        },
+        "label": "repetitive",
+        "layer": "language_model.model.layers.21.mlp.experts",
+        "policy": "ep4_hot16_replicated_greedy",
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 31
+      },
+      {
+        "active_experts": {
+          "max": 48.0,
+          "mean": 36.96774193548387,
+          "min": 26.0,
+          "p50": 37.0,
+          "p90": 46.0,
+          "p95": 47.0
+        },
+        "communication_row_fraction_proxy": {
+          "max": 0.5625,
+          "mean": 0.3870967741935484,
+          "min": 0.234375,
+          "p50": 0.375,
+          "p90": 0.515625,
+          "p95": 0.546875
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.0625,
+          "mean": 1.0040322580645162,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.03125
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.375,
+          "mean": 1.375,
+          "min": 1.375,
+          "p50": 1.375,
+          "p90": 1.375,
+          "p95": 1.375
+        },
+        "hot_coverage": {
+          "max": 0.765625,
+          "mean": 0.6129032258064516,
+          "min": 0.4375,
+          "p50": 0.625,
+          "p90": 0.75,
+          "p95": 0.7578125
+        },
+        "label": "repetitive",
+        "layer": "language_model.model.layers.21.mlp.experts",
+        "policy": "ep4_hot32_replicated_greedy",
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 31
+      },
+      {
+        "active_experts": {
+          "max": 48.0,
+          "mean": 36.96774193548387,
+          "min": 26.0,
+          "p50": 37.0,
+          "p90": 46.0,
+          "p95": 47.0
+        },
+        "communication_row_fraction_proxy": {
+          "max": 0.25,
+          "mean": 0.13911290322580644,
+          "min": 0.03125,
+          "p50": 0.140625,
+          "p90": 0.234375,
+          "p95": 0.25
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.75,
+          "mean": 1.75,
+          "min": 1.75,
+          "p50": 1.75,
+          "p90": 1.75,
+          "p95": 1.75
+        },
+        "hot_coverage": {
+          "max": 0.96875,
+          "mean": 0.8608870967741935,
+          "min": 0.75,
+          "p50": 0.859375,
+          "p90": 0.953125,
+          "p95": 0.953125
+        },
+        "label": "repetitive",
+        "layer": "language_model.model.layers.21.mlp.experts",
+        "policy": "ep4_hot64_replicated_greedy",
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 31
+      },
+      {
+        "active_experts": {
+          "max": 48.0,
+          "mean": 36.96774193548387,
+          "min": 26.0,
+          "p50": 37.0,
+          "p90": 46.0,
+          "p95": 47.0
+        },
+        "communication_row_fraction_proxy": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.9375,
+          "mean": 1.465725806451613,
+          "min": 1.0625,
+          "p50": 1.4375,
+          "p90": 1.875,
+          "p95": 1.9375
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "hot_coverage": {
+          "max": 0.0,
+          "mean": 0.0,
+          "min": 0.0,
+          "p50": 0.0,
+          "p90": 0.0,
+          "p95": 0.0
+        },
+        "label": "repetitive",
+        "layer": "language_model.model.layers.21.mlp.experts",
+        "policy": "ep4_round_robin",
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 31
+      },
+      {
+        "active_experts": {
+          "max": 48.0,
+          "mean": 36.96774193548387,
+          "min": 26.0,
+          "p50": 37.0,
+          "p90": 46.0,
+          "p95": 47.0
+        },
+        "communication_row_fraction_proxy": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.21875,
+          "mean": 1.1149193548387097,
+          "min": 1.0,
+          "p50": 1.125,
+          "p90": 1.1875,
+          "p95": 1.1875
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "hot_coverage": {
+          "max": 0.0,
+          "mean": 0.0,
+          "min": 0.0,
+          "p50": 0.0,
+          "p90": 0.0,
+          "p95": 0.0
+        },
+        "label": "repetitive",
+        "layer": "language_model.model.layers.21.mlp.experts",
+        "policy": "tp2_ep2_contiguous",
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 31
+      },
+      {
+        "active_experts": {
+          "max": 48.0,
+          "mean": 36.96774193548387,
+          "min": 26.0,
+          "p50": 37.0,
+          "p90": 46.0,
+          "p95": 47.0
+        },
+        "communication_row_fraction_proxy": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.21875,
+          "mean": 1.0866935483870968,
+          "min": 1.0,
+          "p50": 1.09375,
+          "p90": 1.15625,
+          "p95": 1.203125
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "hot_coverage": {
+          "max": 0.0,
+          "mean": 0.0,
+          "min": 0.0,
+          "p50": 0.0,
+          "p90": 0.0,
+          "p95": 0.0
+        },
+        "label": "repetitive",
+        "layer": "language_model.model.layers.21.mlp.experts",
+        "policy": "tp2_ep2_greedy_static",
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 31
+      },
+      {
+        "active_experts": {
+          "max": 48.0,
+          "mean": 36.96774193548387,
+          "min": 26.0,
+          "p50": 37.0,
+          "p90": 46.0,
+          "p95": 47.0
+        },
+        "communication_row_fraction_proxy": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.4375,
+          "mean": 1.2026209677419355,
+          "min": 1.0,
+          "p50": 1.1875,
+          "p90": 1.375,
+          "p95": 1.40625
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "hot_coverage": {
+          "max": 0.0,
+          "mean": 0.0,
+          "min": 0.0,
+          "p50": 0.0,
+          "p90": 0.0,
+          "p95": 0.0
+        },
+        "label": "repetitive",
+        "layer": "language_model.model.layers.21.mlp.experts",
+        "policy": "tp2_ep2_round_robin",
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 31
+      },
+      {
+        "active_experts": {
+          "max": 47.0,
+          "mean": 34.41935483870968,
+          "min": 25.0,
+          "p50": 31.0,
+          "p90": 44.0,
+          "p95": 46.0
+        },
+        "communication_row_fraction_proxy": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.9375,
+          "mean": 1.3608870967741935,
+          "min": 1.0625,
+          "p50": 1.3125,
+          "p90": 1.625,
+          "p95": 1.84375
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "hot_coverage": {
+          "max": 0.0,
+          "mean": 0.0,
+          "min": 0.0,
+          "p50": 0.0,
+          "p90": 0.0,
+          "p95": 0.0
+        },
+        "label": "repetitive",
+        "layer": "language_model.model.layers.8.mlp.experts",
+        "policy": "ep4_contiguous",
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 31
+      },
+      {
+        "active_experts": {
+          "max": 47.0,
+          "mean": 34.41935483870968,
+          "min": 25.0,
+          "p50": 31.0,
+          "p90": 44.0,
+          "p95": 46.0
+        },
+        "communication_row_fraction_proxy": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.5,
+          "mean": 1.215725806451613,
+          "min": 1.0625,
+          "p50": 1.1875,
+          "p90": 1.375,
+          "p95": 1.40625
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "hot_coverage": {
+          "max": 0.0,
+          "mean": 0.0,
+          "min": 0.0,
+          "p50": 0.0,
+          "p90": 0.0,
+          "p95": 0.0
+        },
+        "label": "repetitive",
+        "layer": "language_model.model.layers.8.mlp.experts",
+        "policy": "ep4_greedy_static",
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 31
+      },
+      {
+        "active_experts": {
+          "max": 47.0,
+          "mean": 34.41935483870968,
+          "min": 25.0,
+          "p50": 31.0,
+          "p90": 44.0,
+          "p95": 46.0
+        },
+        "communication_row_fraction_proxy": {
+          "max": 0.828125,
+          "mean": 0.5725806451612904,
+          "min": 0.3125,
+          "p50": 0.578125,
+          "p90": 0.8125,
+          "p95": 0.828125
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.125,
+          "mean": 1.032258064516129,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0625,
+          "p95": 1.09375
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.1875,
+          "mean": 1.1875,
+          "min": 1.1875,
+          "p50": 1.1875,
+          "p90": 1.1875,
+          "p95": 1.1875
+        },
+        "hot_coverage": {
+          "max": 0.6875,
+          "mean": 0.4274193548387097,
+          "min": 0.171875,
+          "p50": 0.421875,
+          "p90": 0.6875,
+          "p95": 0.6875
+        },
+        "label": "repetitive",
+        "layer": "language_model.model.layers.8.mlp.experts",
+        "policy": "ep4_hot16_replicated_greedy",
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 31
+      },
+      {
+        "active_experts": {
+          "max": 47.0,
+          "mean": 34.41935483870968,
+          "min": 25.0,
+          "p50": 31.0,
+          "p90": 44.0,
+          "p95": 46.0
+        },
+        "communication_row_fraction_proxy": {
+          "max": 0.609375,
+          "mean": 0.3689516129032258,
+          "min": 0.15625,
+          "p50": 0.359375,
+          "p90": 0.578125,
+          "p95": 0.5859375
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.375,
+          "mean": 1.375,
+          "min": 1.375,
+          "p50": 1.375,
+          "p90": 1.375,
+          "p95": 1.375
+        },
+        "hot_coverage": {
+          "max": 0.84375,
+          "mean": 0.6310483870967742,
+          "min": 0.390625,
+          "p50": 0.640625,
+          "p90": 0.8125,
+          "p95": 0.828125
+        },
+        "label": "repetitive",
+        "layer": "language_model.model.layers.8.mlp.experts",
+        "policy": "ep4_hot32_replicated_greedy",
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 31
+      },
+      {
+        "active_experts": {
+          "max": 47.0,
+          "mean": 34.41935483870968,
+          "min": 25.0,
+          "p50": 31.0,
+          "p90": 44.0,
+          "p95": 46.0
+        },
+        "communication_row_fraction_proxy": {
+          "max": 0.25,
+          "mean": 0.14264112903225806,
+          "min": 0.0625,
+          "p50": 0.140625,
+          "p90": 0.203125,
+          "p95": 0.2265625
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.75,
+          "mean": 1.75,
+          "min": 1.75,
+          "p50": 1.75,
+          "p90": 1.75,
+          "p95": 1.75
+        },
+        "hot_coverage": {
+          "max": 0.9375,
+          "mean": 0.8573588709677419,
+          "min": 0.75,
+          "p50": 0.859375,
+          "p90": 0.921875,
+          "p95": 0.9375
+        },
+        "label": "repetitive",
+        "layer": "language_model.model.layers.8.mlp.experts",
+        "policy": "ep4_hot64_replicated_greedy",
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 31
+      },
+      {
+        "active_experts": {
+          "max": 47.0,
+          "mean": 34.41935483870968,
+          "min": 25.0,
+          "p50": 31.0,
+          "p90": 44.0,
+          "p95": 46.0
+        },
+        "communication_row_fraction_proxy": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.75,
+          "mean": 1.3649193548387097,
+          "min": 1.125,
+          "p50": 1.3125,
+          "p90": 1.5625,
+          "p95": 1.6875
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "hot_coverage": {
+          "max": 0.0,
+          "mean": 0.0,
+          "min": 0.0,
+          "p50": 0.0,
+          "p90": 0.0,
+          "p95": 0.0
+        },
+        "label": "repetitive",
+        "layer": "language_model.model.layers.8.mlp.experts",
+        "policy": "ep4_round_robin",
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 31
+      },
+      {
+        "active_experts": {
+          "max": 47.0,
+          "mean": 34.41935483870968,
+          "min": 25.0,
+          "p50": 31.0,
+          "p90": 44.0,
+          "p95": 46.0
+        },
+        "communication_row_fraction_proxy": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.375,
+          "mean": 1.1008064516129032,
+          "min": 1.0,
+          "p50": 1.0625,
+          "p90": 1.21875,
+          "p95": 1.296875
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "hot_coverage": {
+          "max": 0.0,
+          "mean": 0.0,
+          "min": 0.0,
+          "p50": 0.0,
+          "p90": 0.0,
+          "p95": 0.0
+        },
+        "label": "repetitive",
+        "layer": "language_model.model.layers.8.mlp.experts",
+        "policy": "tp2_ep2_contiguous",
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 31
+      },
+      {
+        "active_experts": {
+          "max": 47.0,
+          "mean": 34.41935483870968,
+          "min": 25.0,
+          "p50": 31.0,
+          "p90": 44.0,
+          "p95": 46.0
+        },
+        "communication_row_fraction_proxy": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.15625,
+          "mean": 1.0625,
+          "min": 1.0,
+          "p50": 1.0625,
+          "p90": 1.09375,
+          "p95": 1.140625
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "hot_coverage": {
+          "max": 0.0,
+          "mean": 0.0,
+          "min": 0.0,
+          "p50": 0.0,
+          "p90": 0.0,
+          "p95": 0.0
+        },
+        "label": "repetitive",
+        "layer": "language_model.model.layers.8.mlp.experts",
+        "policy": "tp2_ep2_greedy_static",
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 31
+      },
+      {
+        "active_experts": {
+          "max": 47.0,
+          "mean": 34.41935483870968,
+          "min": 25.0,
+          "p50": 31.0,
+          "p90": 44.0,
+          "p95": 46.0
+        },
+        "communication_row_fraction_proxy": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.40625,
+          "mean": 1.1522177419354838,
+          "min": 1.0,
+          "p50": 1.09375,
+          "p90": 1.34375,
+          "p95": 1.40625
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "hot_coverage": {
+          "max": 0.0,
+          "mean": 0.0,
+          "min": 0.0,
+          "p50": 0.0,
+          "p90": 0.0,
+          "p95": 0.0
+        },
+        "label": "repetitive",
+        "layer": "language_model.model.layers.8.mlp.experts",
+        "policy": "tp2_ep2_round_robin",
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 31
+      },
+      {
+        "active_experts": {
+          "max": 44.0,
+          "mean": 34.61290322580645,
+          "min": 23.0,
+          "p50": 32.0,
+          "p90": 43.0,
+          "p95": 43.0
+        },
+        "communication_row_fraction_proxy": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.625,
+          "mean": 1.3326612903225807,
+          "min": 1.125,
+          "p50": 1.3125,
+          "p90": 1.5,
+          "p95": 1.5
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "hot_coverage": {
+          "max": 0.0,
+          "mean": 0.0,
+          "min": 0.0,
+          "p50": 0.0,
+          "p90": 0.0,
+          "p95": 0.0
+        },
+        "label": "repetitive",
+        "layer": "language_model.model.layers.9.mlp.experts",
+        "policy": "ep4_contiguous",
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 31
+      },
+      {
+        "active_experts": {
+          "max": 44.0,
+          "mean": 34.61290322580645,
+          "min": 23.0,
+          "p50": 32.0,
+          "p90": 43.0,
+          "p95": 43.0
+        },
+        "communication_row_fraction_proxy": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 2.0625,
+          "mean": 1.3931451612903225,
+          "min": 1.125,
+          "p50": 1.3125,
+          "p90": 1.6875,
+          "p95": 1.875
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "hot_coverage": {
+          "max": 0.0,
+          "mean": 0.0,
+          "min": 0.0,
+          "p50": 0.0,
+          "p90": 0.0,
+          "p95": 0.0
+        },
+        "label": "repetitive",
+        "layer": "language_model.model.layers.9.mlp.experts",
+        "policy": "ep4_greedy_static",
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 31
+      },
+      {
+        "active_experts": {
+          "max": 44.0,
+          "mean": 34.61290322580645,
+          "min": 23.0,
+          "p50": 32.0,
+          "p90": 43.0,
+          "p95": 43.0
+        },
+        "communication_row_fraction_proxy": {
+          "max": 0.890625,
+          "mean": 0.5675403225806451,
+          "min": 0.28125,
+          "p50": 0.46875,
+          "p90": 0.859375,
+          "p95": 0.8671875
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.3125,
+          "mean": 1.0483870967741935,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.125,
+          "p95": 1.25
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.1875,
+          "mean": 1.1875,
+          "min": 1.1875,
+          "p50": 1.1875,
+          "p90": 1.1875,
+          "p95": 1.1875
+        },
+        "hot_coverage": {
+          "max": 0.71875,
+          "mean": 0.4324596774193548,
+          "min": 0.109375,
+          "p50": 0.53125,
+          "p90": 0.6875,
+          "p95": 0.703125
+        },
+        "label": "repetitive",
+        "layer": "language_model.model.layers.9.mlp.experts",
+        "policy": "ep4_hot16_replicated_greedy",
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 31
+      },
+      {
+        "active_experts": {
+          "max": 44.0,
+          "mean": 34.61290322580645,
+          "min": 23.0,
+          "p50": 32.0,
+          "p90": 43.0,
+          "p95": 43.0
+        },
+        "communication_row_fraction_proxy": {
+          "max": 0.59375,
+          "mean": 0.3538306451612903,
+          "min": 0.1875,
+          "p50": 0.359375,
+          "p90": 0.5,
+          "p95": 0.515625
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.0625,
+          "mean": 1.002016129032258,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.375,
+          "mean": 1.375,
+          "min": 1.375,
+          "p50": 1.375,
+          "p90": 1.375,
+          "p95": 1.375
+        },
+        "hot_coverage": {
+          "max": 0.8125,
+          "mean": 0.6461693548387096,
+          "min": 0.40625,
+          "p50": 0.640625,
+          "p90": 0.796875,
+          "p95": 0.796875
+        },
+        "label": "repetitive",
+        "layer": "language_model.model.layers.9.mlp.experts",
+        "policy": "ep4_hot32_replicated_greedy",
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 31
+      },
+      {
+        "active_experts": {
+          "max": 44.0,
+          "mean": 34.61290322580645,
+          "min": 23.0,
+          "p50": 32.0,
+          "p90": 43.0,
+          "p95": 43.0
+        },
+        "communication_row_fraction_proxy": {
+          "max": 0.265625,
+          "mean": 0.12701612903225806,
+          "min": 0.03125,
+          "p50": 0.109375,
+          "p90": 0.21875,
+          "p95": 0.25
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.75,
+          "mean": 1.75,
+          "min": 1.75,
+          "p50": 1.75,
+          "p90": 1.75,
+          "p95": 1.75
+        },
+        "hot_coverage": {
+          "max": 0.96875,
+          "mean": 0.8729838709677419,
+          "min": 0.734375,
+          "p50": 0.890625,
+          "p90": 0.953125,
+          "p95": 0.9609375
+        },
+        "label": "repetitive",
+        "layer": "language_model.model.layers.9.mlp.experts",
+        "policy": "ep4_hot64_replicated_greedy",
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 31
+      },
+      {
+        "active_experts": {
+          "max": 44.0,
+          "mean": 34.61290322580645,
+          "min": 23.0,
+          "p50": 32.0,
+          "p90": 43.0,
+          "p95": 43.0
+        },
+        "communication_row_fraction_proxy": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.8125,
+          "mean": 1.4435483870967742,
+          "min": 1.125,
+          "p50": 1.4375,
+          "p90": 1.625,
+          "p95": 1.65625
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "hot_coverage": {
+          "max": 0.0,
+          "mean": 0.0,
+          "min": 0.0,
+          "p50": 0.0,
+          "p90": 0.0,
+          "p95": 0.0
+        },
+        "label": "repetitive",
+        "layer": "language_model.model.layers.9.mlp.experts",
+        "policy": "ep4_round_robin",
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 31
+      },
+      {
+        "active_experts": {
+          "max": 44.0,
+          "mean": 34.61290322580645,
+          "min": 23.0,
+          "p50": 32.0,
+          "p90": 43.0,
+          "p95": 43.0
+        },
+        "communication_row_fraction_proxy": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.3125,
+          "mean": 1.1300403225806452,
+          "min": 1.0,
+          "p50": 1.125,
+          "p90": 1.21875,
+          "p95": 1.21875
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "hot_coverage": {
+          "max": 0.0,
+          "mean": 0.0,
+          "min": 0.0,
+          "p50": 0.0,
+          "p90": 0.0,
+          "p95": 0.0
+        },
+        "label": "repetitive",
+        "layer": "language_model.model.layers.9.mlp.experts",
+        "policy": "tp2_ep2_contiguous",
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 31
+      },
+      {
+        "active_experts": {
+          "max": 44.0,
+          "mean": 34.61290322580645,
+          "min": 23.0,
+          "p50": 32.0,
+          "p90": 43.0,
+          "p95": 43.0
+        },
+        "communication_row_fraction_proxy": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.28125,
+          "mean": 1.1381048387096775,
+          "min": 1.03125,
+          "p50": 1.125,
+          "p90": 1.25,
+          "p95": 1.25
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "hot_coverage": {
+          "max": 0.0,
+          "mean": 0.0,
+          "min": 0.0,
+          "p50": 0.0,
+          "p90": 0.0,
+          "p95": 0.0
+        },
+        "label": "repetitive",
+        "layer": "language_model.model.layers.9.mlp.experts",
+        "policy": "tp2_ep2_greedy_static",
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 31
+      },
+      {
+        "active_experts": {
+          "max": 44.0,
+          "mean": 34.61290322580645,
+          "min": 23.0,
+          "p50": 32.0,
+          "p90": 43.0,
+          "p95": 43.0
+        },
+        "communication_row_fraction_proxy": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.4375,
+          "mean": 1.2137096774193548,
+          "min": 1.0,
+          "p50": 1.1875,
+          "p90": 1.40625,
+          "p95": 1.4375
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "hot_coverage": {
+          "max": 0.0,
+          "mean": 0.0,
+          "min": 0.0,
+          "p50": 0.0,
+          "p90": 0.0,
+          "p95": 0.0
+        },
+        "label": "repetitive",
+        "layer": "language_model.model.layers.9.mlp.experts",
+        "policy": "tp2_ep2_round_robin",
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 31
+      }
+    ],
+    "policy_summary": {
+      "ep4_contiguous": {
+        "active_experts": {
+          "max": 51.0,
+          "mean": 35.923809523809524,
+          "min": 8.0,
+          "p50": 37.0,
+          "p90": 43.0,
+          "p95": 45.30000000000001
+        },
+        "communication_row_fraction_proxy": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 2.0,
+          "mean": 1.3428571428571427,
+          "min": 1.0625,
+          "p50": 1.3125,
+          "p90": 1.5625,
+          "p95": 1.625
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "hot_coverage": {
+          "max": 0.0,
+          "mean": 0.0,
+          "min": 0.0,
+          "p50": 0.0,
+          "p90": 0.0,
+          "p95": 0.0
+        },
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 315
+      },
+      "ep4_greedy_static": {
+        "active_experts": {
+          "max": 51.0,
+          "mean": 35.923809523809524,
+          "min": 8.0,
+          "p50": 37.0,
+          "p90": 43.0,
+          "p95": 45.30000000000001
+        },
+        "communication_row_fraction_proxy": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 2.0625,
+          "mean": 1.2694444444444444,
+          "min": 1.0,
+          "p50": 1.25,
+          "p90": 1.4375,
+          "p95": 1.5625
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "hot_coverage": {
+          "max": 0.0,
+          "mean": 0.0,
+          "min": 0.0,
+          "p50": 0.0,
+          "p90": 0.0,
+          "p95": 0.0
+        },
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 315
+      },
+      "ep4_hot11_replicated_greedy": {
+        "active_experts": {
+          "max": 11.0,
+          "mean": 11.0,
+          "min": 11.0,
+          "p50": 11.0,
+          "p90": 11.0,
+          "p95": 11.0
+        },
+        "communication_row_fraction_proxy": {
+          "max": 0.0,
+          "mean": 0.0,
+          "min": 0.0,
+          "p50": 0.0,
+          "p90": 0.0,
+          "p95": 0.0
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.140625,
+          "mean": 1.140625,
+          "min": 1.140625,
+          "p50": 1.140625,
+          "p90": 1.140625,
+          "p95": 1.140625
+        },
+        "hot_coverage": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 6
+      },
+      "ep4_hot13_replicated_greedy": {
+        "active_experts": {
+          "max": 13.0,
+          "mean": 13.0,
+          "min": 13.0,
+          "p50": 13.0,
+          "p90": 13.0,
+          "p95": 13.0
+        },
+        "communication_row_fraction_proxy": {
+          "max": 0.0,
+          "mean": 0.0,
+          "min": 0.0,
+          "p50": 0.0,
+          "p90": 0.0,
+          "p95": 0.0
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.15625,
+          "mean": 1.15625,
+          "min": 1.15625,
+          "p50": 1.15625,
+          "p90": 1.15625,
+          "p95": 1.15625
+        },
+        "hot_coverage": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 3
+      },
+      "ep4_hot16_replicated_greedy": {
+        "active_experts": {
+          "max": 51.0,
+          "mean": 36.33548387096774,
+          "min": 23.0,
+          "p50": 37.0,
+          "p90": 43.0,
+          "p95": 45.55000000000001
+        },
+        "communication_row_fraction_proxy": {
+          "max": 0.890625,
+          "mean": 0.5152217741935484,
+          "min": 0.28125,
+          "p50": 0.5,
+          "p90": 0.703125,
+          "p95": 0.796875
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.3125,
+          "mean": 1.0141129032258065,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0625,
+          "p95": 1.0625
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.1875,
+          "mean": 1.1875,
+          "min": 1.1875,
+          "p50": 1.1875,
+          "p90": 1.1875,
+          "p95": 1.1875
+        },
+        "hot_coverage": {
+          "max": 0.71875,
+          "mean": 0.48477822580645163,
+          "min": 0.109375,
+          "p50": 0.5,
+          "p90": 0.6265625000000004,
+          "p95": 0.671875
+        },
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 310
+      },
+      "ep4_hot32_replicated_greedy": {
+        "active_experts": {
+          "max": 51.0,
+          "mean": 36.33548387096774,
+          "min": 23.0,
+          "p50": 37.0,
+          "p90": 43.0,
+          "p95": 45.55000000000001
+        },
+        "communication_row_fraction_proxy": {
+          "max": 0.609375,
+          "mean": 0.31370967741935485,
+          "min": 0.09375,
+          "p50": 0.296875,
+          "p90": 0.48593750000000036,
+          "p95": 0.5398437500000002
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.0625,
+          "mean": 1.0008064516129032,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.375,
+          "mean": 1.375,
+          "min": 1.375,
+          "p50": 1.375,
+          "p90": 1.375,
+          "p95": 1.375
+        },
+        "hot_coverage": {
+          "max": 0.90625,
+          "mean": 0.6862903225806452,
+          "min": 0.390625,
+          "p50": 0.703125,
+          "p90": 0.796875,
+          "p95": 0.828125
+        },
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 310
+      },
+      "ep4_hot64_replicated_greedy": {
+        "active_experts": {
+          "max": 51.0,
+          "mean": 36.33548387096774,
+          "min": 23.0,
+          "p50": 37.0,
+          "p90": 43.0,
+          "p95": 45.55000000000001
+        },
+        "communication_row_fraction_proxy": {
+          "max": 0.296875,
+          "mean": 0.10992943548387096,
+          "min": 0.0,
+          "p50": 0.09375,
+          "p90": 0.21875,
+          "p95": 0.234375
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.75,
+          "mean": 1.75,
+          "min": 1.75,
+          "p50": 1.75,
+          "p90": 1.75,
+          "p95": 1.75
+        },
+        "hot_coverage": {
+          "max": 1.0,
+          "mean": 0.890070564516129,
+          "min": 0.703125,
+          "p50": 0.90625,
+          "p90": 0.953125,
+          "p95": 0.96875
+        },
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 310
+      },
+      "ep4_hot8_replicated_greedy": {
+        "active_experts": {
+          "max": 8.0,
+          "mean": 8.0,
+          "min": 8.0,
+          "p50": 8.0,
+          "p90": 8.0,
+          "p95": 8.0
+        },
+        "communication_row_fraction_proxy": {
+          "max": 0.0,
+          "mean": 0.0,
+          "min": 0.0,
+          "p50": 0.0,
+          "p90": 0.0,
+          "p95": 0.0
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.09375,
+          "mean": 1.09375,
+          "min": 1.09375,
+          "p50": 1.09375,
+          "p90": 1.09375,
+          "p95": 1.09375
+        },
+        "hot_coverage": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 3
+      },
+      "ep4_hot9_replicated_greedy": {
+        "active_experts": {
+          "max": 9.0,
+          "mean": 9.0,
+          "min": 9.0,
+          "p50": 9.0,
+          "p90": 9.0,
+          "p95": 9.0
+        },
+        "communication_row_fraction_proxy": {
+          "max": 0.0,
+          "mean": 0.0,
+          "min": 0.0,
+          "p50": 0.0,
+          "p90": 0.0,
+          "p95": 0.0
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.109375,
+          "mean": 1.109375,
+          "min": 1.109375,
+          "p50": 1.109375,
+          "p90": 1.109375,
+          "p95": 1.109375
+        },
+        "hot_coverage": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 3
+      },
+      "ep4_round_robin": {
+        "active_experts": {
+          "max": 51.0,
+          "mean": 35.923809523809524,
+          "min": 8.0,
+          "p50": 37.0,
+          "p90": 43.0,
+          "p95": 45.30000000000001
+        },
+        "communication_row_fraction_proxy": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 2.5,
+          "mean": 1.3956349206349206,
+          "min": 1.0625,
+          "p50": 1.375,
+          "p90": 1.6875,
+          "p95": 1.7687500000000007
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "hot_coverage": {
+          "max": 0.0,
+          "mean": 0.0,
+          "min": 0.0,
+          "p50": 0.0,
+          "p90": 0.0,
+          "p95": 0.0
+        },
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 315
+      },
+      "tp2_ep2_contiguous": {
+        "active_experts": {
+          "max": 51.0,
+          "mean": 35.923809523809524,
+          "min": 8.0,
+          "p50": 37.0,
+          "p90": 43.0,
+          "p95": 45.30000000000001
+        },
+        "communication_row_fraction_proxy": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.375,
+          "mean": 1.1328373015873017,
+          "min": 1.0,
+          "p50": 1.125,
+          "p90": 1.28125,
+          "p95": 1.3125
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "hot_coverage": {
+          "max": 0.0,
+          "mean": 0.0,
+          "min": 0.0,
+          "p50": 0.0,
+          "p90": 0.0,
+          "p95": 0.0
+        },
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 315
+      },
+      "tp2_ep2_greedy_static": {
+        "active_experts": {
+          "max": 51.0,
+          "mean": 35.923809523809524,
+          "min": 8.0,
+          "p50": 37.0,
+          "p90": 43.0,
+          "p95": 45.30000000000001
+        },
+        "communication_row_fraction_proxy": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.3125,
+          "mean": 1.0996031746031747,
+          "min": 1.0,
+          "p50": 1.09375,
+          "p90": 1.21875,
+          "p95": 1.25
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "hot_coverage": {
+          "max": 0.0,
+          "mean": 0.0,
+          "min": 0.0,
+          "p50": 0.0,
+          "p90": 0.0,
+          "p95": 0.0
+        },
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 315
+      },
+      "tp2_ep2_round_robin": {
+        "active_experts": {
+          "max": 51.0,
+          "mean": 35.923809523809524,
+          "min": 8.0,
+          "p50": 37.0,
+          "p90": 43.0,
+          "p95": 45.30000000000001
+        },
+        "communication_row_fraction_proxy": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "compute_pressure_vs_tp4": {
+          "max": 1.4375,
+          "mean": 1.1615079365079366,
+          "min": 1.0,
+          "p50": 1.15625,
+          "p90": 1.34375,
+          "p95": 1.375
+        },
+        "expert_memory_relative_to_tp4": {
+          "max": 1.0,
+          "mean": 1.0,
+          "min": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "p95": 1.0
+        },
+        "hot_coverage": {
+          "max": 0.0,
+          "mean": 0.0,
+          "min": 0.0,
+          "p50": 0.0,
+          "p90": 0.0,
+          "p95": 0.0
+        },
+        "total_rows": {
+          "max": 64.0,
+          "mean": 64.0,
+          "min": 64.0,
+          "p50": 64.0,
+          "p90": 64.0,
+          "p95": 64.0
+        },
+        "windows": 315
+      }
+    },
+    "window_count": 315
+  }
+}
