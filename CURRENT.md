@@ -6,6 +6,30 @@ Date: 2026-06-12
 
 2026-06-12 notes update:
 
+- Ran the boundary-timing maintenance gate on the current accepted Quark W8A8
+  INT8 TP4 endpoint, then restored the normal accepted backend. Diagnostic
+  throughput stayed at baseline: p512/o256/c1 corrected streaming decode
+  `99.796 tok/s`, vLLM decode `9.984 ms/token`, and time-per-output-token
+  `10.023 ms/token`. Rank-0 no-sync pure-decode step timing shows
+  `gpu_model_runner.forward_total ~= 5.648 ms/step` and
+  `gpu_model_runner.model_forward ~= 5.593 ms/step`; postprocess/logits/sample/
+  async-output labels are sub-millisecond. The measured endpoint-vs-rank0
+  forward gap is therefore about `4.39 ms/token`, but the labels are nested and
+  asynchronous, not exclusive wall-clock slices. Interpretation: the next
+  timing target is scheduler/engine step wall time, rank-to-rank variance,
+  host/device synchronization, and collectives across all ranks, not another
+  narrow Python wrapper around model forward. Restore validation passed Qwen3.6
+  accepted provenance (`4752`, `11436`, `198` sentinels) and a short
+  no-thinking Qwen-specific text quality smoke. New artifacts:
+  `data/qwen36-quark-int8-tp4-boundary-timing-20260612bp.log`,
+  `data/qwen36-quark-int8-tp4-boundary-timing-p512o256-metrics-20260612bp.json`,
+  `data/qwen36-quark-int8-tp4-boundary-timing-summary-20260612bp.json`,
+  `data/qwen36-quark-int8-tp4-boundary-timing-summary-20260612bp.md`,
+  `data/qwen36-quark-int8-tp4-accepted-restored-after-boundary-timing-20260612bp.log`,
+  `data/qwen36-quark-int8-tp4-accepted-provenance-after-boundary-timing-20260612bp.json`,
+  and
+  `data/qwen36-quark-int8-tp4-accepted-quality-after-boundary-timing-nothink-smoke-20260612bp.json`.
+
 - Added a follow-up "concrete next gates and bigger bets" section to
   `notes/2026-06-12-qwen36-next-bigger-bets.md`. It records that the latest
   Localmaxxing exact-model public row remains `99.428 tok/s`, while the live

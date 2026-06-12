@@ -148,6 +148,73 @@ External signals added to this pass:
   row is still `~99 tok/s`; anything above `200 tok/s` is currently a design
   clue, not a promoted comparable result for this model/posture.
 
+## Boundary Timing Gate 20260612bp
+
+Ran the first maintenance-window boundary timing session with the current
+accepted Quark W8A8 INT8 TP4 model and the env-gated labels added in the local
+vLLM source. The live service was restored afterward.
+
+Artifacts:
+
+- `data/qwen36-quark-int8-tp4-boundary-timing-20260612bp.log`
+- `data/qwen36-quark-int8-tp4-boundary-timing-p512o256-metrics-20260612bp.json`
+- `data/qwen36-quark-int8-tp4-boundary-timing-summary-20260612bp.json`
+- `data/qwen36-quark-int8-tp4-boundary-timing-summary-20260612bp.md`
+- `data/qwen36-quark-int8-tp4-accepted-restored-after-boundary-timing-20260612bp.log`
+- `data/qwen36-quark-int8-tp4-accepted-provenance-after-boundary-timing-20260612bp.json`
+- `data/qwen36-quark-int8-tp4-accepted-quality-after-boundary-timing-nothink-smoke-20260612bp.json`
+
+Endpoint result:
+
+- Prompt/output: vLLM-random p512/o256, c1, streaming, `ignore_eos=true`.
+- Corrected decode median: `99.796 tok/s`.
+- vLLM decode histogram median: `9.984 ms/token`.
+- vLLM time-per-output-token median: `10.023 ms/token`.
+- Queue time stayed negligible: `0.0075 ms/request`.
+- Diagnostic timing labels therefore did not materially perturb the baseline.
+
+Rank-0 sampled pure-decode step timing:
+
+- `gpu_model_runner.forward_total`: `5.648 ms/step` mean.
+- `gpu_model_runner.model_forward`: `5.593 ms/step` mean.
+- Nested `gdn_attention_core_xpu.native`: `1.507 ms/step` mean across `30`
+  calls per sampled step.
+- `gpu_model_runner.postprocess_total`: `0.308 ms/step`.
+- `gpu_model_runner.compute_logits`: `0.228 ms/step`.
+- `gpu_model_runner.sample_total`: `0.162 ms/step`.
+- `gpu_model_runner.async_output_wrap`: `0.104 ms/step`.
+
+Interpretation:
+
+- The endpoint is still about `10 ms/token`, while the rank-0 no-sync
+  `model_forward` proxy is about `5.59 ms/token`. That leaves about
+  `4.39 ms/token` unexplained by this asynchronous rank-0 forward proxy.
+- The labels are nested and overlapping. They must not be summed into a token
+  budget.
+- The tiny gap between `forward_total` and `model_forward` means Python wrapping
+  immediately around model forward is not the big missing slice.
+- Postprocess, logits, sampler, and async output wrap are too small to reach
+  `200 tok/s` by themselves.
+- The next profiling branch should measure scheduler/engine step wall time,
+  rank-to-rank variance, synchronized all-rank forward cost, collectives, and
+  host/device synchronization. The prior sync model-only proxy
+  (`~8.433 ms/token`) now looks like a real clue: most of the missing wall time
+  may be hidden asynchronous device work or synchronization outside the
+  no-sync rank-0 forward label.
+
+Restore and quality:
+
+- Restored accepted endpoint in
+  `qwen36-tp4-accepted-restored-after-boundary-timing-20260612bp`.
+- `/v1/models` reports the current
+  `nameistoken/Qwen3.6-35B-A3B-Quark-W8A8-INT8` snapshot at 32K context.
+- Accepted provenance passed both prefix cases and sentinels `4752`, `11436`,
+  and `198`.
+- A short Qwen-specific no-thinking text quality smoke passed exact OK, copy
+  phrase, arithmetic, JSON schema, and repeat checks. The generic
+  `openai-quality-canary.py` is not a valid Qwen3.6 direct-chat gate without
+  the model-specific no-thinking path; it starts receiving thinking text.
+
 ## Live C1 200 Tok/s Gap Budget
 
 Added a reproducible gap-budget artifact around the current accepted endpoint.
