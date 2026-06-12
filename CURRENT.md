@@ -6,6 +6,24 @@ Date: 2026-06-12
 
 2026-06-12 notes update:
 
+- Added a "Bigger Bolder Queue Refresh 20260612da" section to
+  `notes/2026-06-12-qwen36-next-bigger-bets.md`. This records the next
+  requested things-to-try after the accepted-lane manifest: graph-path tensor
+  capture, prologue-inclusive MoE timing, real-route grouped-GEMM autotune,
+  quality gate v2, and manifest-required candidate promotion. It also keeps
+  larger no-quality-loss bets in view: persistent c1 W8A8 MoE island,
+  tile-native Quark W8A8 repacking, hot-expert memory packs, hybrid TP/EP or
+  asymmetric latency lanes, whole-token Level Zero command-list supernodes,
+  target-owned branch farming, route-class kernel generation, a single-user
+  direct runner, rank/card topology bakeoff, and a maintainer challenge packet.
+  Fresh public signals were folded in: Localmaxxing still has the exact B70/vLLM
+  row at `99.428 tok/s` and same-family row at `99.770 tok/s`; Intel's
+  grouped-GEMM issue points at real skewed MoE decode routes; a new XPU timing
+  issue warns to include prologue/gather work; and vLLM's Arc Pro B-Series
+  writeup reinforces persistent-loop MoE and dynamic compute-group balancing.
+
+2026-06-12 notes update:
+
 - Added `scripts/qwen36-accepted-lane-manifest.py` and a clean accepted-lane
   manifest for future speed candidates:
   `data/qwen36-quark-int8-tp4-accepted-lane-manifest-20260612cz.{json,md}`.

@@ -10553,3 +10553,136 @@ Artifacts for this pass:
 - `data/qwen36-quark-int8-tp4-firstdecode-route-fixture-routes-20260612ct.jsonl`
 - `data/qwen36-quark-int8-tp4-firstdecode-route-parallelism-sim-20260612ct.json`
 - `data/qwen36-quark-int8-tp4-firstdecode-route-parallelism-sim-20260612ct.md`
+
+## Bigger Bolder Queue Refresh 20260612da
+
+This pass adds the follow-up ideas requested after the accepted-lane manifest
+and route-fixture work. It is a planning/checkpoint update only: no endpoint
+promotion, no quality claim, and no Localmaxxing submission. The accepted
+single-request reference remains the clean `~99 tok/s` Qwen3.6 35B-A3B Quark
+W8A8 INT8 TP4 lane.
+
+Fresh outside signals:
+
+- Localmaxxing public API still shows the exact
+  `nameistoken/Qwen3.6-35B-A3B-Quark-W8A8-INT8` B70/vLLM row at
+  `99.428 tok/s`, and the broader same-family B70/vLLM row at `99.770 tok/s`.
+  There is no public exact-model B70/vLLM result above `200 tok/s` to copy.
+- Intel's grouped-GEMM XPU issue says MoE decode routing is highly skewed and
+  that kernels need tuning from real token distributions, not uniform synthetic
+  groups.
+  Source: <https://github.com/intel/intel-xpu-backend-for-triton/issues/6389>.
+- A new Intel XPU benchmark issue says SYCL-TLA and Triton MoE timing must
+  include the same work, especially token grouping/prologue and gather. This
+  matters because our offset/prologue experiments can look good in isolation
+  and still lose in end-to-end decode.
+  Source: <https://github.com/intel/intel-xpu-backend-for-triton/issues/7190>.
+- vLLM's Arc Pro B-Series writeup calls out persistent-loop MoE, dynamic
+  compute-group balancing, fused activation, multi-GPU scaling, and
+  speculative decoding as intended XPU directions.
+  Source: <https://vllm.ai/blog/2025-11-11-intel-arc-pro-b>.
+- Current vLLM XPU docs list Intel Arc Pro B-Series as validated hardware and
+  Qwen3-30B-A3B as optimized for XPU FP16/dynamic-FP8, which is adjacent but
+  not the exact Qwen3.6 Quark W8A8 checkpoint.
+  Source: <https://docs.vllm.ai/en/v0.18.0/models/hardware_supported_models/xpu/>.
+- The public 2x B70 Qwen3-30B-A3B FP8 report shows `40.60 tok/s`
+  single-stream and about `997 tok/s` output throughput at high concurrency.
+  That reinforces the split: B70 aggregate throughput can be strong, but
+  single-request latency needs a different lane.
+  Source: <https://www.reddit.com/r/LocalLLM/comments/1sfa0iw/2x_intel_arc_b70_benchmark/>.
+
+Concrete next gates to add before more endpoint experiments:
+
+1. **Graph-path tensor capture gate.**
+   Eager route replay is insufficient. Add a capture point around the compiled
+   XPU/custom-op path or graph replay path and compare live tensors against the
+   accepted lane before any endpoint promotion. Required for all kernel-path
+   changes.
+
+2. **Prologue-inclusive MoE timing gate.**
+   Every MoE microbench must report both kernel-only and end-to-end layerlet
+   timing: route/topk, token grouping or offsets, GEMM1, activation, quant,
+   GEMM2, gather, and final scatter. Kernel-only wins are not accepted unless
+   the full layerlet also improves.
+
+3. **Real-route grouped-GEMM autotune harness.**
+   Feed the first-decode route fixture and later routecapture6 windows into a
+   grouped-GEMM tuner. Score candidates against long-tail c1 route skew,
+   not uniform `M=8192` or synthetic balanced groups.
+
+4. **Quality gate v2.**
+   Keep old token sentinels as cache-versioned provenance only. Add a modern
+   lane with no-thinking answer canaries, generated-token logprob/argmax
+   checks, graph/eager tensor parity, and selected BF16 fallback comparisons
+   when affordable.
+
+5. **AOT cache and binary manifest required for every candidate.**
+   Continue using the accepted-lane manifest style: cache root digest, extension
+   SHA256/symbols, source repo heads/dirty counts, env scrub, speed artifact,
+   quality artifact, and provenance state.
+
+Bigger no-quality-loss opportunities to keep in the queue:
+
+1. **Persistent c1 W8A8 MoE island.**
+   Build one exact Qwen3.6 decode layerlet with resident weights/scales,
+   resident scratch, fixed topk-8 descriptors, and route-class dispatch.
+   The goal is to remove per-token launch/prologue overhead while preserving
+   identical W8A8 math and exact tensor parity.
+
+2. **Tile-native Quark W8A8 repack at load time.**
+   Repack the same int8 weights and scales into the layout the XPU grouped-GEMM
+   kernels prefer. This should not change quality because values are identical;
+   it may remove runtime swizzles, pointer chasing, or unfavorable memory
+   access.
+
+3. **Hot-expert memory-for-latency packs.**
+   Use route histograms to duplicate or pre-pack common experts per GPU/rank.
+   The route fixture says memory is available for layer-local packs; the gate is
+   whether real longer traces keep enough hot-expert locality to pay back.
+
+4. **Hybrid TP/EP or asymmetric latency lane.**
+   Stop assuming TP4 is the only serving shape. Test a latency lane where dense
+   blocks stay TP-friendly but MoE expert work is placed or replicated by route
+   class. Also test TP2 plus two replicas if it reduces collectives and improves
+   single-request decode while preserving a separate aggregate lane.
+
+5. **Whole-token Level Zero command-list supernode.**
+   Capture the fixed c1 decode bucket as one patchable command-list sequence
+   across attention/GDN, MoE, residual, logits, and sampler. This is bold and
+   risky, but it attacks the launch/fence overhead left after small Python
+   changes stopped mattering.
+
+6. **Target-owned branch farm.**
+   If exact c1 decode stalls below `150-170 tok/s`, run target-model branches
+   from cloned state on spare cards or spare process slots. Commit only tokens
+   verified by the current Qwen3.6 target state. This can cross `200 tok/s`
+   without quality loss if the state transaction/rollback substrate is exact.
+
+7. **Route-class kernel generator.**
+   Generate a small set of exact kernels or kernel policies from route classes:
+   single-token sparse topk, repeated hot-expert topk, broad sparse topk,
+   aggregate batch, and fallback. Dispatch from measured route statistics.
+
+8. **Single-user direct runner.**
+   Build a no-HTTP/no-frontdoor c1 decode runner around the exact accepted
+   model path. If it is not materially faster, stop blaming API/frontdoor
+   overhead and focus only on GPU kernels, collectives, and graph fences.
+
+9. **Rank/card and PCIe/oneCCL topology bakeoff.**
+   Make rank-to-card rotation and oneCCL/P2P topology a repeatable matrix.
+   The gain may be modest, but it is cheap and can expose whether one GPU or
+   link is consistently dragging TP4 latency.
+
+10. **Maintainer-grade challenge packet.**
+    Package the exact model revision, accepted manifest, route fixtures,
+    prologue-inclusive timings, graph-path parity need, Localmaxxing rows,
+    xpu-smi/topology, and a one-layer executable W8A8 compare harness. The ask:
+    remove several ms/token from c1 Qwen3.6 35B-A3B Quark W8A8 decode on B70
+    without changing outputs.
+
+Immediate priority:
+
+1. Build the graph-path tensor capture gate.
+2. Make MoE timing prologue-inclusive.
+3. Run real-route grouped-GEMM/autotune on the first-decode fixture.
+4. Only then try another endpoint candidate.
