@@ -5254,6 +5254,49 @@ path keeps the current Quark W8A8 INT8 model as the verifier/source of truth.
    tok/s; it is variance, device-lost rate, graph-cache repeatability, and
    whether the accepted sidecar fixtures remain exact across stacks.
 
+9. **Persistent zero-gap MoE kernel clone.**
+   Intel's own B-series vLLM write-up says the major MoE loss comes from per
+   iteration GEMM launch overhead, routing-dependent stalls, and imbalanced
+   expert work assignment. Treat that as the reference design: one persistent
+   XPU kernel per rank, resident packed W8A8 weights, route offsets in device
+   memory, and an atomic block queue so fast work-groups immediately steal the
+   next expert tile. This is a bigger lift than a oneDNN sidecar, but it is the
+   most direct path to a step-function single-user decode gain without changing
+   model math.
+
+10. **Exact speculative lane using real Qwen3.6 target verification.**
+    Localmaxxing rows for adjacent Qwen3.6 setups show large wins from MTP /
+    DFlash-style speculation when the implementation verifies against the
+    target model before committing tokens. This is quality-safe only if every
+    accepted token is target-verified and rollback is logged. Keep it as a
+    second lane after the non-speculative sidecar, because it can stack with
+    kernel work but should not mask slow base kernels.
+
+11. **B70 one-instance-per-card mirror for low-latency routing.**
+    A leaderboard B70 setup reports strong aggregate throughput by running one
+    single-GPU instance per card instead of one TP instance. It uses lower
+    fidelity Q4, so it is not directly acceptable, but the topology lesson is
+    useful: compare TP4 single-request latency against four replicated W8A8
+    runtimes behind a latency-aware router. If the replicated lane fits 32K on
+    one card with this quant, it can remove TP all-reduce from the c1 path and
+    reserve TP4 for longer contexts or batch throughput.
+
+12. **Upstream W8A8 artifact and calibration lane.**
+    The open `llm-compressor` Qwen3.6 W8A8 issue calls out missing tested
+    registry/mapping support for `Qwen3_5MoeForConditionalGeneration`, fused
+    MoE expert tensors, and hybrid GDN/full-attention linears. Even if the
+    current Quark model remains the production candidate, building a clean
+    calibration/export lane would let us compare Quark against a native
+    compressed-tensors or upstream W8A8 artifact with the same eval gates.
+
+13. **Host-stack A/B as a speed feature, not just reliability work.**
+    The B70/vLLM crash issue shows that kernel/KMD/GuC/Level Zero/oneCCL
+    choices change both stability and usable XPU graph/collective paths. Treat
+    a spare-disk Ubuntu 25.x or Intel-validated BOM test as a performance
+    experiment: same model, same prompt/eval gates, same benchmark harness,
+    but a stack that may unlock graph capture, SYCL collectives, or lower
+    variance without code changes.
+
 External references to keep attached to this queue:
 
 - oneDNN grouped matmul/grouped memory for MoE and Intel GPU optimization:
@@ -5278,6 +5321,17 @@ External references to keep attached to this queue:
   `https://arxiv.org/html/2605.23911v1`.
 - SonicMoE IO-aware MoE design notes:
   `https://tridao.me/blog/2026/sonicmoe-blackwell/`.
+- Intel B-series vLLM persistent zero-gap MoE kernel write-up:
+  `https://vllm.ai/blog/2025-11-11-intel-arc-pro-b`.
+- B70/vLLM XPU host-stack stability issue:
+  `https://github.com/vllm-project/vllm/issues/41663`.
+- Qwen3.6 W8A8 INT8 support request in `llm-compressor`:
+  `https://github.com/vllm-project/llm-compressor/issues/2787`.
+- vLLM Ascend Qwen3.6-35B-A3B page, useful for architecture and eval
+  cross-checks:
+  `https://docs.vllm.ai/projects/ascend/zh-cn/v0.18.0/tutorials/models/Qwen3.6-35B-A3B.html`.
+- Localmaxxing public Arc/Qwen3.6-35B sweep, checked 2026-06-12:
+  `https://localmaxxing.com/api/leaderboard?hfId=Qwen%2FQwen3.6-35B-A3B&hwClass=DISCRETE_GPU&hardwareName=Arc&limit=20`.
 
 ## 2026-06-12 Multi-Window oneDNN MoE Island Exactness Packet
 
