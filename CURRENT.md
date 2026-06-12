@@ -6,6 +6,26 @@ Date: 2026-06-12
 
 2026-06-12 continuation:
 
+- Added a CPU route-signature cache analyzer for real Qwen3.6 MoE route traces
+  to decide whether the resident oneDNN path should cache generic primitives or
+  exact route-specialized bundles. Across prompt-class traces plus
+  routecapture6 (`5485` c1 decode MoE records, `5` captured layers), the
+  mutable-offset primitive key has only `5` unique entries and reaches `99.9%`
+  LRU hit rate with capacity `16` or `40`. Exact route keys are a poor cache
+  target: active-set/count-vector keys have `914` unique entries and only
+  `1.8%` LRU@40 hit rate; ordered top-k tuples are available for the
+  routecapture6 subset only and have `285/285` unique routes with `0.0%` reuse.
+  Decision: the next oneDNN integration should cache resident primitives and
+  packed weights by layer/shape, then mutate offsets/counts at execution time.
+  Do not build exact active-set layerlet caches; generated kernels should
+  target hot-expert or broader route classes instead.
+  New artifacts:
+  `scripts/qwen36-route-signature-cache-analysis.py`,
+  `data/qwen36-quark-int8-tp4-routecapture6-signature-cache-20260612ba.json`,
+  `.md`,
+  `data/qwen36-quark-int8-tp4-promptclass-plus-route6-signature-cache-20260612ba.json`,
+  and `.md`.
+
 - Added a resident oneDNN MoE GEMM-pair runner after the full layer-9 island
   parity proof. The new runner loads the real exported routecapture6 layer-9
   GEMM1/GEMM2 buffers once, constructs packed `acb` oneDNN grouped-matmul

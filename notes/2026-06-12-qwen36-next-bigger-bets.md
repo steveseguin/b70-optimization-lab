@@ -4970,3 +4970,79 @@ Bigger, bolder ideas worth keeping alive:
     bet should show DPAS/XMX utilization, launch count, barriers, and bandwidth.
     If a path is not using the hardware correctly, stop polishing higher-level
     vLLM flags and fix layout/kernel selection first.
+
+## 2026-06-12 Route-Signature Cache Analysis
+
+New script:
+
+- `scripts/qwen36-route-signature-cache-analysis.py`.
+
+Purpose:
+
+- Decide whether the resident oneDNN path should cache by generic primitive
+  shape, exact rows-per-expert vector, active expert set, or ordered top-k
+  route.
+- Keep this CPU-only so it can run while the accepted backend stays live.
+
+Artifacts:
+
+- `data/qwen36-quark-int8-tp4-routecapture6-signature-cache-20260612ba.json`.
+- `data/qwen36-quark-int8-tp4-routecapture6-signature-cache-20260612ba.md`.
+- `data/qwen36-quark-int8-tp4-promptclass-plus-route6-signature-cache-20260612ba.json`.
+- `data/qwen36-quark-int8-tp4-promptclass-plus-route6-signature-cache-20260612ba.md`.
+
+Command shape:
+
+```bash
+python3 scripts/qwen36-route-signature-cache-analysis.py \
+  'data/qwen36-quark-int8-tp4-promptclass-routecapture-20260611a-routes-*.jsonl' \
+  data/qwen36-quark-int8-tp4-routecapture6-routes-rank0-20260611.jsonl \
+  --max-num-tokens 1 \
+  --out data/qwen36-quark-int8-tp4-promptclass-plus-route6-signature-cache-20260612ba.json \
+  --markdown-out data/qwen36-quark-int8-tp4-promptclass-plus-route6-signature-cache-20260612ba.md
+```
+
+Result from prompt-class traces plus routecapture6:
+
+- Input size: `5485` c1 decode MoE route records across `5` captured layers.
+- Mutable-offset primitive key: `5` unique keys, `99.9%` repeat rate,
+  `99.9%` LRU hit rate at capacity `16` and `40`.
+- Exact `count_vector` and `active_set` keys: `914` unique keys, but only
+  `1.4%` LRU@16 and `1.8%` LRU@40 hit rate. They repeat over the whole
+  dataset but not with useful short-window locality.
+- Ordered `topk_tuple` is present only for the routecapture6 subset
+  (`285` records). In that subset, all `285` ordered routes are unique, so
+  exact ordered-route kernels have no reuse signal.
+- Count histogram has `1` key because c1 decode mostly routes `8` assignments
+  as `8x1`; this is useful for generic primitive sizing, not for exact route
+  specialization.
+
+Layer-9/14/21 routecapture6-only control:
+
+- `285` records, `3` layers.
+- Primitive key: `3` unique, `98.9%` LRU@40.
+- Active-set/count-vector key: `282` unique, `1.1%` LRU@40.
+- Ordered top-k tuple: `285` unique, `0.0%` reuse.
+
+Decision:
+
+1. **Cache resident oneDNN primitives by layer/shape, not exact route.**
+   The right first integration is a small per-layer cache of packed weights,
+   primitive descriptors, memory descriptors, and reusable buffers. Runtime
+   should mutate offsets/counts and scales, then execute.
+
+2. **Do not build exact active-set layerlet caches.**
+   Exact active-set and ordered-route reuse is too weak at short cache sizes.
+   Generated layerlets must target broader hot-expert or route classes, or they
+   should be emitted only for fixtures that prove locality separately.
+
+3. **Keep hot-expert planning as the route-specialization branch.**
+   The earlier hotset and flight-recorder results remain the better way to
+   specialize route work: pack/replicate hot experts by layer, with current XPU
+   or oneDNN fallback for cold experts.
+
+4. **Next implementation gate is now clearer.**
+   Build a vLLM/XPU sidecar around resident per-layer oneDNN primitives with
+   mutable offsets. The gate is full-layer `max_abs_diff=0.0` versus
+   `xpu_fused_moe`, then timing below the `168 us/layer` non-speculative
+   budget.

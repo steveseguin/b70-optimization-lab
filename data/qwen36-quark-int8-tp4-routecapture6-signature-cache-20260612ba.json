@@ -1,0 +1,1850 @@
+{
+  "capacities": [
+    1,
+    2,
+    4,
+    8,
+    16,
+    32,
+    40,
+    64,
+    128,
+    256,
+    512
+  ],
+  "input_files": [
+    "data/qwen36-quark-int8-tp4-routecapture6-routes-rank0-20260611.jsonl"
+  ],
+  "layer_count": 3,
+  "layers": {
+    "language_model.model.layers.14.mlp.experts": {
+      "assignments": {
+        "max": 8.0,
+        "mean": 8.0,
+        "p50": 8.0,
+        "p90": 8.0,
+        "p99": 8.0
+      },
+      "key_stats": {
+        "active_set": {
+          "available": 95,
+          "lru": {
+            "1": {
+              "capacity": 1,
+              "hit_rate": 0.0,
+              "hits": 0,
+              "misses": 95
+            },
+            "128": {
+              "capacity": 128,
+              "hit_rate": 0.021052631578947368,
+              "hits": 2,
+              "misses": 93
+            },
+            "16": {
+              "capacity": 16,
+              "hit_rate": 0.021052631578947368,
+              "hits": 2,
+              "misses": 93
+            },
+            "2": {
+              "capacity": 2,
+              "hit_rate": 0.021052631578947368,
+              "hits": 2,
+              "misses": 93
+            },
+            "256": {
+              "capacity": 256,
+              "hit_rate": 0.021052631578947368,
+              "hits": 2,
+              "misses": 93
+            },
+            "32": {
+              "capacity": 32,
+              "hit_rate": 0.021052631578947368,
+              "hits": 2,
+              "misses": 93
+            },
+            "4": {
+              "capacity": 4,
+              "hit_rate": 0.021052631578947368,
+              "hits": 2,
+              "misses": 93
+            },
+            "40": {
+              "capacity": 40,
+              "hit_rate": 0.021052631578947368,
+              "hits": 2,
+              "misses": 93
+            },
+            "512": {
+              "capacity": 512,
+              "hit_rate": 0.021052631578947368,
+              "hits": 2,
+              "misses": 93
+            },
+            "64": {
+              "capacity": 64,
+              "hit_rate": 0.021052631578947368,
+              "hits": 2,
+              "misses": 93
+            },
+            "8": {
+              "capacity": 8,
+              "hit_rate": 0.021052631578947368,
+              "hits": 2,
+              "misses": 93
+            }
+          },
+          "missing": 0,
+          "records": 95,
+          "repeat_rate": 0.021052631578947323,
+          "top_key_share": 0.021052631578947368,
+          "unique": 93
+        },
+        "count_histogram": {
+          "available": 95,
+          "lru": {
+            "1": {
+              "capacity": 1,
+              "hit_rate": 0.9894736842105263,
+              "hits": 94,
+              "misses": 1
+            },
+            "128": {
+              "capacity": 128,
+              "hit_rate": 0.9894736842105263,
+              "hits": 94,
+              "misses": 1
+            },
+            "16": {
+              "capacity": 16,
+              "hit_rate": 0.9894736842105263,
+              "hits": 94,
+              "misses": 1
+            },
+            "2": {
+              "capacity": 2,
+              "hit_rate": 0.9894736842105263,
+              "hits": 94,
+              "misses": 1
+            },
+            "256": {
+              "capacity": 256,
+              "hit_rate": 0.9894736842105263,
+              "hits": 94,
+              "misses": 1
+            },
+            "32": {
+              "capacity": 32,
+              "hit_rate": 0.9894736842105263,
+              "hits": 94,
+              "misses": 1
+            },
+            "4": {
+              "capacity": 4,
+              "hit_rate": 0.9894736842105263,
+              "hits": 94,
+              "misses": 1
+            },
+            "40": {
+              "capacity": 40,
+              "hit_rate": 0.9894736842105263,
+              "hits": 94,
+              "misses": 1
+            },
+            "512": {
+              "capacity": 512,
+              "hit_rate": 0.9894736842105263,
+              "hits": 94,
+              "misses": 1
+            },
+            "64": {
+              "capacity": 64,
+              "hit_rate": 0.9894736842105263,
+              "hits": 94,
+              "misses": 1
+            },
+            "8": {
+              "capacity": 8,
+              "hit_rate": 0.9894736842105263,
+              "hits": 94,
+              "misses": 1
+            }
+          },
+          "missing": 0,
+          "records": 95,
+          "repeat_rate": 0.9894736842105263,
+          "top_key_share": 1.0,
+          "unique": 1
+        },
+        "count_vector": {
+          "available": 95,
+          "lru": {
+            "1": {
+              "capacity": 1,
+              "hit_rate": 0.0,
+              "hits": 0,
+              "misses": 95
+            },
+            "128": {
+              "capacity": 128,
+              "hit_rate": 0.021052631578947368,
+              "hits": 2,
+              "misses": 93
+            },
+            "16": {
+              "capacity": 16,
+              "hit_rate": 0.021052631578947368,
+              "hits": 2,
+              "misses": 93
+            },
+            "2": {
+              "capacity": 2,
+              "hit_rate": 0.021052631578947368,
+              "hits": 2,
+              "misses": 93
+            },
+            "256": {
+              "capacity": 256,
+              "hit_rate": 0.021052631578947368,
+              "hits": 2,
+              "misses": 93
+            },
+            "32": {
+              "capacity": 32,
+              "hit_rate": 0.021052631578947368,
+              "hits": 2,
+              "misses": 93
+            },
+            "4": {
+              "capacity": 4,
+              "hit_rate": 0.021052631578947368,
+              "hits": 2,
+              "misses": 93
+            },
+            "40": {
+              "capacity": 40,
+              "hit_rate": 0.021052631578947368,
+              "hits": 2,
+              "misses": 93
+            },
+            "512": {
+              "capacity": 512,
+              "hit_rate": 0.021052631578947368,
+              "hits": 2,
+              "misses": 93
+            },
+            "64": {
+              "capacity": 64,
+              "hit_rate": 0.021052631578947368,
+              "hits": 2,
+              "misses": 93
+            },
+            "8": {
+              "capacity": 8,
+              "hit_rate": 0.021052631578947368,
+              "hits": 2,
+              "misses": 93
+            }
+          },
+          "missing": 0,
+          "records": 95,
+          "repeat_rate": 0.021052631578947323,
+          "top_key_share": 0.021052631578947368,
+          "unique": 93
+        },
+        "primitive": {
+          "available": 95,
+          "lru": {
+            "1": {
+              "capacity": 1,
+              "hit_rate": 0.9894736842105263,
+              "hits": 94,
+              "misses": 1
+            },
+            "128": {
+              "capacity": 128,
+              "hit_rate": 0.9894736842105263,
+              "hits": 94,
+              "misses": 1
+            },
+            "16": {
+              "capacity": 16,
+              "hit_rate": 0.9894736842105263,
+              "hits": 94,
+              "misses": 1
+            },
+            "2": {
+              "capacity": 2,
+              "hit_rate": 0.9894736842105263,
+              "hits": 94,
+              "misses": 1
+            },
+            "256": {
+              "capacity": 256,
+              "hit_rate": 0.9894736842105263,
+              "hits": 94,
+              "misses": 1
+            },
+            "32": {
+              "capacity": 32,
+              "hit_rate": 0.9894736842105263,
+              "hits": 94,
+              "misses": 1
+            },
+            "4": {
+              "capacity": 4,
+              "hit_rate": 0.9894736842105263,
+              "hits": 94,
+              "misses": 1
+            },
+            "40": {
+              "capacity": 40,
+              "hit_rate": 0.9894736842105263,
+              "hits": 94,
+              "misses": 1
+            },
+            "512": {
+              "capacity": 512,
+              "hit_rate": 0.9894736842105263,
+              "hits": 94,
+              "misses": 1
+            },
+            "64": {
+              "capacity": 64,
+              "hit_rate": 0.9894736842105263,
+              "hits": 94,
+              "misses": 1
+            },
+            "8": {
+              "capacity": 8,
+              "hit_rate": 0.9894736842105263,
+              "hits": 94,
+              "misses": 1
+            }
+          },
+          "missing": 0,
+          "records": 95,
+          "repeat_rate": 0.9894736842105263,
+          "top_key_share": 1.0,
+          "unique": 1
+        },
+        "topk_tuple": {
+          "available": 95,
+          "lru": {
+            "1": {
+              "capacity": 1,
+              "hit_rate": 0.0,
+              "hits": 0,
+              "misses": 95
+            },
+            "128": {
+              "capacity": 128,
+              "hit_rate": 0.0,
+              "hits": 0,
+              "misses": 95
+            },
+            "16": {
+              "capacity": 16,
+              "hit_rate": 0.0,
+              "hits": 0,
+              "misses": 95
+            },
+            "2": {
+              "capacity": 2,
+              "hit_rate": 0.0,
+              "hits": 0,
+              "misses": 95
+            },
+            "256": {
+              "capacity": 256,
+              "hit_rate": 0.0,
+              "hits": 0,
+              "misses": 95
+            },
+            "32": {
+              "capacity": 32,
+              "hit_rate": 0.0,
+              "hits": 0,
+              "misses": 95
+            },
+            "4": {
+              "capacity": 4,
+              "hit_rate": 0.0,
+              "hits": 0,
+              "misses": 95
+            },
+            "40": {
+              "capacity": 40,
+              "hit_rate": 0.0,
+              "hits": 0,
+              "misses": 95
+            },
+            "512": {
+              "capacity": 512,
+              "hit_rate": 0.0,
+              "hits": 0,
+              "misses": 95
+            },
+            "64": {
+              "capacity": 64,
+              "hit_rate": 0.0,
+              "hits": 0,
+              "misses": 95
+            },
+            "8": {
+              "capacity": 8,
+              "hit_rate": 0.0,
+              "hits": 0,
+              "misses": 95
+            }
+          },
+          "missing": 0,
+          "records": 95,
+          "repeat_rate": 0.0,
+          "top_key_share": 0.010526315789473684,
+          "unique": 95
+        }
+      },
+      "layer": "language_model.model.layers.14.mlp.experts",
+      "layer_index": 14,
+      "max_rows_per_expert": {
+        "max": 1.0,
+        "mean": 1.0,
+        "p50": 1.0,
+        "p90": 1.0,
+        "p99": 1.0
+      },
+      "nonzero_experts": {
+        "max": 8.0,
+        "mean": 8.0,
+        "p50": 8.0,
+        "p90": 8.0,
+        "p99": 8.0
+      },
+      "records": 95,
+      "sources": {
+        "data/qwen36-quark-int8-tp4-routecapture6-routes-rank0-20260611.jsonl": 95
+      },
+      "stages": {
+        "quark_int8_apply": 95
+      },
+      "top_active_sets": [
+        {
+          "count": 2,
+          "key": "cdb43829c284fc0b"
+        },
+        {
+          "count": 2,
+          "key": "456adca6b9eaafe6"
+        },
+        {
+          "count": 1,
+          "key": "65f4991de93cf4ea"
+        },
+        {
+          "count": 1,
+          "key": "268b7e0e4727cbab"
+        },
+        {
+          "count": 1,
+          "key": "0f9b4be2bb5660d7"
+        },
+        {
+          "count": 1,
+          "key": "e1196e52cbd60185"
+        },
+        {
+          "count": 1,
+          "key": "73b7baf5106fa307"
+        },
+        {
+          "count": 1,
+          "key": "67c89f2d967a8776"
+        }
+      ],
+      "top_ordered_routes": [
+        {
+          "count": 1,
+          "key": "b77b41a2269b0a3f"
+        },
+        {
+          "count": 1,
+          "key": "65f4f906fd46f72f"
+        },
+        {
+          "count": 1,
+          "key": "0121cdfbcdc785ce"
+        },
+        {
+          "count": 1,
+          "key": "60d845814b59e1f6"
+        },
+        {
+          "count": 1,
+          "key": "dfcebdcc692a0b14"
+        },
+        {
+          "count": 1,
+          "key": "2b05d4a8e45de26b"
+        },
+        {
+          "count": 1,
+          "key": "f0861fd6966b2943"
+        },
+        {
+          "count": 1,
+          "key": "fcd0a62f07d519e0"
+        }
+      ]
+    },
+    "language_model.model.layers.21.mlp.experts": {
+      "assignments": {
+        "max": 8.0,
+        "mean": 8.0,
+        "p50": 8.0,
+        "p90": 8.0,
+        "p99": 8.0
+      },
+      "key_stats": {
+        "active_set": {
+          "available": 95,
+          "lru": {
+            "1": {
+              "capacity": 1,
+              "hit_rate": 0.0,
+              "hits": 0,
+              "misses": 95
+            },
+            "128": {
+              "capacity": 128,
+              "hit_rate": 0.0,
+              "hits": 0,
+              "misses": 95
+            },
+            "16": {
+              "capacity": 16,
+              "hit_rate": 0.0,
+              "hits": 0,
+              "misses": 95
+            },
+            "2": {
+              "capacity": 2,
+              "hit_rate": 0.0,
+              "hits": 0,
+              "misses": 95
+            },
+            "256": {
+              "capacity": 256,
+              "hit_rate": 0.0,
+              "hits": 0,
+              "misses": 95
+            },
+            "32": {
+              "capacity": 32,
+              "hit_rate": 0.0,
+              "hits": 0,
+              "misses": 95
+            },
+            "4": {
+              "capacity": 4,
+              "hit_rate": 0.0,
+              "hits": 0,
+              "misses": 95
+            },
+            "40": {
+              "capacity": 40,
+              "hit_rate": 0.0,
+              "hits": 0,
+              "misses": 95
+            },
+            "512": {
+              "capacity": 512,
+              "hit_rate": 0.0,
+              "hits": 0,
+              "misses": 95
+            },
+            "64": {
+              "capacity": 64,
+              "hit_rate": 0.0,
+              "hits": 0,
+              "misses": 95
+            },
+            "8": {
+              "capacity": 8,
+              "hit_rate": 0.0,
+              "hits": 0,
+              "misses": 95
+            }
+          },
+          "missing": 0,
+          "records": 95,
+          "repeat_rate": 0.0,
+          "top_key_share": 0.010526315789473684,
+          "unique": 95
+        },
+        "count_histogram": {
+          "available": 95,
+          "lru": {
+            "1": {
+              "capacity": 1,
+              "hit_rate": 0.9894736842105263,
+              "hits": 94,
+              "misses": 1
+            },
+            "128": {
+              "capacity": 128,
+              "hit_rate": 0.9894736842105263,
+              "hits": 94,
+              "misses": 1
+            },
+            "16": {
+              "capacity": 16,
+              "hit_rate": 0.9894736842105263,
+              "hits": 94,
+              "misses": 1
+            },
+            "2": {
+              "capacity": 2,
+              "hit_rate": 0.9894736842105263,
+              "hits": 94,
+              "misses": 1
+            },
+            "256": {
+              "capacity": 256,
+              "hit_rate": 0.9894736842105263,
+              "hits": 94,
+              "misses": 1
+            },
+            "32": {
+              "capacity": 32,
+              "hit_rate": 0.9894736842105263,
+              "hits": 94,
+              "misses": 1
+            },
+            "4": {
+              "capacity": 4,
+              "hit_rate": 0.9894736842105263,
+              "hits": 94,
+              "misses": 1
+            },
+            "40": {
+              "capacity": 40,
+              "hit_rate": 0.9894736842105263,
+              "hits": 94,
+              "misses": 1
+            },
+            "512": {
+              "capacity": 512,
+              "hit_rate": 0.9894736842105263,
+              "hits": 94,
+              "misses": 1
+            },
+            "64": {
+              "capacity": 64,
+              "hit_rate": 0.9894736842105263,
+              "hits": 94,
+              "misses": 1
+            },
+            "8": {
+              "capacity": 8,
+              "hit_rate": 0.9894736842105263,
+              "hits": 94,
+              "misses": 1
+            }
+          },
+          "missing": 0,
+          "records": 95,
+          "repeat_rate": 0.9894736842105263,
+          "top_key_share": 1.0,
+          "unique": 1
+        },
+        "count_vector": {
+          "available": 95,
+          "lru": {
+            "1": {
+              "capacity": 1,
+              "hit_rate": 0.0,
+              "hits": 0,
+              "misses": 95
+            },
+            "128": {
+              "capacity": 128,
+              "hit_rate": 0.0,
+              "hits": 0,
+              "misses": 95
+            },
+            "16": {
+              "capacity": 16,
+              "hit_rate": 0.0,
+              "hits": 0,
+              "misses": 95
+            },
+            "2": {
+              "capacity": 2,
+              "hit_rate": 0.0,
+              "hits": 0,
+              "misses": 95
+            },
+            "256": {
+              "capacity": 256,
+              "hit_rate": 0.0,
+              "hits": 0,
+              "misses": 95
+            },
+            "32": {
+              "capacity": 32,
+              "hit_rate": 0.0,
+              "hits": 0,
+              "misses": 95
+            },
+            "4": {
+              "capacity": 4,
+              "hit_rate": 0.0,
+              "hits": 0,
+              "misses": 95
+            },
+            "40": {
+              "capacity": 40,
+              "hit_rate": 0.0,
+              "hits": 0,
+              "misses": 95
+            },
+            "512": {
+              "capacity": 512,
+              "hit_rate": 0.0,
+              "hits": 0,
+              "misses": 95
+            },
+            "64": {
+              "capacity": 64,
+              "hit_rate": 0.0,
+              "hits": 0,
+              "misses": 95
+            },
+            "8": {
+              "capacity": 8,
+              "hit_rate": 0.0,
+              "hits": 0,
+              "misses": 95
+            }
+          },
+          "missing": 0,
+          "records": 95,
+          "repeat_rate": 0.0,
+          "top_key_share": 0.010526315789473684,
+          "unique": 95
+        },
+        "primitive": {
+          "available": 95,
+          "lru": {
+            "1": {
+              "capacity": 1,
+              "hit_rate": 0.9894736842105263,
+              "hits": 94,
+              "misses": 1
+            },
+            "128": {
+              "capacity": 128,
+              "hit_rate": 0.9894736842105263,
+              "hits": 94,
+              "misses": 1
+            },
+            "16": {
+              "capacity": 16,
+              "hit_rate": 0.9894736842105263,
+              "hits": 94,
+              "misses": 1
+            },
+            "2": {
+              "capacity": 2,
+              "hit_rate": 0.9894736842105263,
+              "hits": 94,
+              "misses": 1
+            },
+            "256": {
+              "capacity": 256,
+              "hit_rate": 0.9894736842105263,
+              "hits": 94,
+              "misses": 1
+            },
+            "32": {
+              "capacity": 32,
+              "hit_rate": 0.9894736842105263,
+              "hits": 94,
+              "misses": 1
+            },
+            "4": {
+              "capacity": 4,
+              "hit_rate": 0.9894736842105263,
+              "hits": 94,
+              "misses": 1
+            },
+            "40": {
+              "capacity": 40,
+              "hit_rate": 0.9894736842105263,
+              "hits": 94,
+              "misses": 1
+            },
+            "512": {
+              "capacity": 512,
+              "hit_rate": 0.9894736842105263,
+              "hits": 94,
+              "misses": 1
+            },
+            "64": {
+              "capacity": 64,
+              "hit_rate": 0.9894736842105263,
+              "hits": 94,
+              "misses": 1
+            },
+            "8": {
+              "capacity": 8,
+              "hit_rate": 0.9894736842105263,
+              "hits": 94,
+              "misses": 1
+            }
+          },
+          "missing": 0,
+          "records": 95,
+          "repeat_rate": 0.9894736842105263,
+          "top_key_share": 1.0,
+          "unique": 1
+        },
+        "topk_tuple": {
+          "available": 95,
+          "lru": {
+            "1": {
+              "capacity": 1,
+              "hit_rate": 0.0,
+              "hits": 0,
+              "misses": 95
+            },
+            "128": {
+              "capacity": 128,
+              "hit_rate": 0.0,
+              "hits": 0,
+              "misses": 95
+            },
+            "16": {
+              "capacity": 16,
+              "hit_rate": 0.0,
+              "hits": 0,
+              "misses": 95
+            },
+            "2": {
+              "capacity": 2,
+              "hit_rate": 0.0,
+              "hits": 0,
+              "misses": 95
+            },
+            "256": {
+              "capacity": 256,
+              "hit_rate": 0.0,
+              "hits": 0,
+              "misses": 95
+            },
+            "32": {
+              "capacity": 32,
+              "hit_rate": 0.0,
+              "hits": 0,
+              "misses": 95
+            },
+            "4": {
+              "capacity": 4,
+              "hit_rate": 0.0,
+              "hits": 0,
+              "misses": 95
+            },
+            "40": {
+              "capacity": 40,
+              "hit_rate": 0.0,
+              "hits": 0,
+              "misses": 95
+            },
+            "512": {
+              "capacity": 512,
+              "hit_rate": 0.0,
+              "hits": 0,
+              "misses": 95
+            },
+            "64": {
+              "capacity": 64,
+              "hit_rate": 0.0,
+              "hits": 0,
+              "misses": 95
+            },
+            "8": {
+              "capacity": 8,
+              "hit_rate": 0.0,
+              "hits": 0,
+              "misses": 95
+            }
+          },
+          "missing": 0,
+          "records": 95,
+          "repeat_rate": 0.0,
+          "top_key_share": 0.010526315789473684,
+          "unique": 95
+        }
+      },
+      "layer": "language_model.model.layers.21.mlp.experts",
+      "layer_index": 21,
+      "max_rows_per_expert": {
+        "max": 1.0,
+        "mean": 1.0,
+        "p50": 1.0,
+        "p90": 1.0,
+        "p99": 1.0
+      },
+      "nonzero_experts": {
+        "max": 8.0,
+        "mean": 8.0,
+        "p50": 8.0,
+        "p90": 8.0,
+        "p99": 8.0
+      },
+      "records": 95,
+      "sources": {
+        "data/qwen36-quark-int8-tp4-routecapture6-routes-rank0-20260611.jsonl": 95
+      },
+      "stages": {
+        "quark_int8_apply": 95
+      },
+      "top_active_sets": [
+        {
+          "count": 1,
+          "key": "4d7de745263b84fb"
+        },
+        {
+          "count": 1,
+          "key": "14d810594d240119"
+        },
+        {
+          "count": 1,
+          "key": "600b8892d427ba47"
+        },
+        {
+          "count": 1,
+          "key": "b3d49cf7898b3c79"
+        },
+        {
+          "count": 1,
+          "key": "19b43041e1a6029c"
+        },
+        {
+          "count": 1,
+          "key": "1d4f63552c1b4fc9"
+        },
+        {
+          "count": 1,
+          "key": "8711d1ec6db84b9d"
+        },
+        {
+          "count": 1,
+          "key": "0dd62a9dda27c7fd"
+        }
+      ],
+      "top_ordered_routes": [
+        {
+          "count": 1,
+          "key": "51269f6aaebb196e"
+        },
+        {
+          "count": 1,
+          "key": "be76549d4eb182c1"
+        },
+        {
+          "count": 1,
+          "key": "60839e8c8ebf6d87"
+        },
+        {
+          "count": 1,
+          "key": "0dec2fccef64186c"
+        },
+        {
+          "count": 1,
+          "key": "d8aa23b67b112d69"
+        },
+        {
+          "count": 1,
+          "key": "db538e6bbf4a3008"
+        },
+        {
+          "count": 1,
+          "key": "cc81223020c26351"
+        },
+        {
+          "count": 1,
+          "key": "ce17528fe019dd2d"
+        }
+      ]
+    },
+    "language_model.model.layers.9.mlp.experts": {
+      "assignments": {
+        "max": 8.0,
+        "mean": 8.0,
+        "p50": 8.0,
+        "p90": 8.0,
+        "p99": 8.0
+      },
+      "key_stats": {
+        "active_set": {
+          "available": 95,
+          "lru": {
+            "1": {
+              "capacity": 1,
+              "hit_rate": 0.010526315789473684,
+              "hits": 1,
+              "misses": 94
+            },
+            "128": {
+              "capacity": 128,
+              "hit_rate": 0.010526315789473684,
+              "hits": 1,
+              "misses": 94
+            },
+            "16": {
+              "capacity": 16,
+              "hit_rate": 0.010526315789473684,
+              "hits": 1,
+              "misses": 94
+            },
+            "2": {
+              "capacity": 2,
+              "hit_rate": 0.010526315789473684,
+              "hits": 1,
+              "misses": 94
+            },
+            "256": {
+              "capacity": 256,
+              "hit_rate": 0.010526315789473684,
+              "hits": 1,
+              "misses": 94
+            },
+            "32": {
+              "capacity": 32,
+              "hit_rate": 0.010526315789473684,
+              "hits": 1,
+              "misses": 94
+            },
+            "4": {
+              "capacity": 4,
+              "hit_rate": 0.010526315789473684,
+              "hits": 1,
+              "misses": 94
+            },
+            "40": {
+              "capacity": 40,
+              "hit_rate": 0.010526315789473684,
+              "hits": 1,
+              "misses": 94
+            },
+            "512": {
+              "capacity": 512,
+              "hit_rate": 0.010526315789473684,
+              "hits": 1,
+              "misses": 94
+            },
+            "64": {
+              "capacity": 64,
+              "hit_rate": 0.010526315789473684,
+              "hits": 1,
+              "misses": 94
+            },
+            "8": {
+              "capacity": 8,
+              "hit_rate": 0.010526315789473684,
+              "hits": 1,
+              "misses": 94
+            }
+          },
+          "missing": 0,
+          "records": 95,
+          "repeat_rate": 0.010526315789473717,
+          "top_key_share": 0.021052631578947368,
+          "unique": 94
+        },
+        "count_histogram": {
+          "available": 95,
+          "lru": {
+            "1": {
+              "capacity": 1,
+              "hit_rate": 0.9894736842105263,
+              "hits": 94,
+              "misses": 1
+            },
+            "128": {
+              "capacity": 128,
+              "hit_rate": 0.9894736842105263,
+              "hits": 94,
+              "misses": 1
+            },
+            "16": {
+              "capacity": 16,
+              "hit_rate": 0.9894736842105263,
+              "hits": 94,
+              "misses": 1
+            },
+            "2": {
+              "capacity": 2,
+              "hit_rate": 0.9894736842105263,
+              "hits": 94,
+              "misses": 1
+            },
+            "256": {
+              "capacity": 256,
+              "hit_rate": 0.9894736842105263,
+              "hits": 94,
+              "misses": 1
+            },
+            "32": {
+              "capacity": 32,
+              "hit_rate": 0.9894736842105263,
+              "hits": 94,
+              "misses": 1
+            },
+            "4": {
+              "capacity": 4,
+              "hit_rate": 0.9894736842105263,
+              "hits": 94,
+              "misses": 1
+            },
+            "40": {
+              "capacity": 40,
+              "hit_rate": 0.9894736842105263,
+              "hits": 94,
+              "misses": 1
+            },
+            "512": {
+              "capacity": 512,
+              "hit_rate": 0.9894736842105263,
+              "hits": 94,
+              "misses": 1
+            },
+            "64": {
+              "capacity": 64,
+              "hit_rate": 0.9894736842105263,
+              "hits": 94,
+              "misses": 1
+            },
+            "8": {
+              "capacity": 8,
+              "hit_rate": 0.9894736842105263,
+              "hits": 94,
+              "misses": 1
+            }
+          },
+          "missing": 0,
+          "records": 95,
+          "repeat_rate": 0.9894736842105263,
+          "top_key_share": 1.0,
+          "unique": 1
+        },
+        "count_vector": {
+          "available": 95,
+          "lru": {
+            "1": {
+              "capacity": 1,
+              "hit_rate": 0.010526315789473684,
+              "hits": 1,
+              "misses": 94
+            },
+            "128": {
+              "capacity": 128,
+              "hit_rate": 0.010526315789473684,
+              "hits": 1,
+              "misses": 94
+            },
+            "16": {
+              "capacity": 16,
+              "hit_rate": 0.010526315789473684,
+              "hits": 1,
+              "misses": 94
+            },
+            "2": {
+              "capacity": 2,
+              "hit_rate": 0.010526315789473684,
+              "hits": 1,
+              "misses": 94
+            },
+            "256": {
+              "capacity": 256,
+              "hit_rate": 0.010526315789473684,
+              "hits": 1,
+              "misses": 94
+            },
+            "32": {
+              "capacity": 32,
+              "hit_rate": 0.010526315789473684,
+              "hits": 1,
+              "misses": 94
+            },
+            "4": {
+              "capacity": 4,
+              "hit_rate": 0.010526315789473684,
+              "hits": 1,
+              "misses": 94
+            },
+            "40": {
+              "capacity": 40,
+              "hit_rate": 0.010526315789473684,
+              "hits": 1,
+              "misses": 94
+            },
+            "512": {
+              "capacity": 512,
+              "hit_rate": 0.010526315789473684,
+              "hits": 1,
+              "misses": 94
+            },
+            "64": {
+              "capacity": 64,
+              "hit_rate": 0.010526315789473684,
+              "hits": 1,
+              "misses": 94
+            },
+            "8": {
+              "capacity": 8,
+              "hit_rate": 0.010526315789473684,
+              "hits": 1,
+              "misses": 94
+            }
+          },
+          "missing": 0,
+          "records": 95,
+          "repeat_rate": 0.010526315789473717,
+          "top_key_share": 0.021052631578947368,
+          "unique": 94
+        },
+        "primitive": {
+          "available": 95,
+          "lru": {
+            "1": {
+              "capacity": 1,
+              "hit_rate": 0.9894736842105263,
+              "hits": 94,
+              "misses": 1
+            },
+            "128": {
+              "capacity": 128,
+              "hit_rate": 0.9894736842105263,
+              "hits": 94,
+              "misses": 1
+            },
+            "16": {
+              "capacity": 16,
+              "hit_rate": 0.9894736842105263,
+              "hits": 94,
+              "misses": 1
+            },
+            "2": {
+              "capacity": 2,
+              "hit_rate": 0.9894736842105263,
+              "hits": 94,
+              "misses": 1
+            },
+            "256": {
+              "capacity": 256,
+              "hit_rate": 0.9894736842105263,
+              "hits": 94,
+              "misses": 1
+            },
+            "32": {
+              "capacity": 32,
+              "hit_rate": 0.9894736842105263,
+              "hits": 94,
+              "misses": 1
+            },
+            "4": {
+              "capacity": 4,
+              "hit_rate": 0.9894736842105263,
+              "hits": 94,
+              "misses": 1
+            },
+            "40": {
+              "capacity": 40,
+              "hit_rate": 0.9894736842105263,
+              "hits": 94,
+              "misses": 1
+            },
+            "512": {
+              "capacity": 512,
+              "hit_rate": 0.9894736842105263,
+              "hits": 94,
+              "misses": 1
+            },
+            "64": {
+              "capacity": 64,
+              "hit_rate": 0.9894736842105263,
+              "hits": 94,
+              "misses": 1
+            },
+            "8": {
+              "capacity": 8,
+              "hit_rate": 0.9894736842105263,
+              "hits": 94,
+              "misses": 1
+            }
+          },
+          "missing": 0,
+          "records": 95,
+          "repeat_rate": 0.9894736842105263,
+          "top_key_share": 1.0,
+          "unique": 1
+        },
+        "topk_tuple": {
+          "available": 95,
+          "lru": {
+            "1": {
+              "capacity": 1,
+              "hit_rate": 0.0,
+              "hits": 0,
+              "misses": 95
+            },
+            "128": {
+              "capacity": 128,
+              "hit_rate": 0.0,
+              "hits": 0,
+              "misses": 95
+            },
+            "16": {
+              "capacity": 16,
+              "hit_rate": 0.0,
+              "hits": 0,
+              "misses": 95
+            },
+            "2": {
+              "capacity": 2,
+              "hit_rate": 0.0,
+              "hits": 0,
+              "misses": 95
+            },
+            "256": {
+              "capacity": 256,
+              "hit_rate": 0.0,
+              "hits": 0,
+              "misses": 95
+            },
+            "32": {
+              "capacity": 32,
+              "hit_rate": 0.0,
+              "hits": 0,
+              "misses": 95
+            },
+            "4": {
+              "capacity": 4,
+              "hit_rate": 0.0,
+              "hits": 0,
+              "misses": 95
+            },
+            "40": {
+              "capacity": 40,
+              "hit_rate": 0.0,
+              "hits": 0,
+              "misses": 95
+            },
+            "512": {
+              "capacity": 512,
+              "hit_rate": 0.0,
+              "hits": 0,
+              "misses": 95
+            },
+            "64": {
+              "capacity": 64,
+              "hit_rate": 0.0,
+              "hits": 0,
+              "misses": 95
+            },
+            "8": {
+              "capacity": 8,
+              "hit_rate": 0.0,
+              "hits": 0,
+              "misses": 95
+            }
+          },
+          "missing": 0,
+          "records": 95,
+          "repeat_rate": 0.0,
+          "top_key_share": 0.010526315789473684,
+          "unique": 95
+        }
+      },
+      "layer": "language_model.model.layers.9.mlp.experts",
+      "layer_index": 9,
+      "max_rows_per_expert": {
+        "max": 1.0,
+        "mean": 1.0,
+        "p50": 1.0,
+        "p90": 1.0,
+        "p99": 1.0
+      },
+      "nonzero_experts": {
+        "max": 8.0,
+        "mean": 8.0,
+        "p50": 8.0,
+        "p90": 8.0,
+        "p99": 8.0
+      },
+      "records": 95,
+      "sources": {
+        "data/qwen36-quark-int8-tp4-routecapture6-routes-rank0-20260611.jsonl": 95
+      },
+      "stages": {
+        "quark_int8_apply": 95
+      },
+      "top_active_sets": [
+        {
+          "count": 2,
+          "key": "6cf5dd47dd2029ef"
+        },
+        {
+          "count": 1,
+          "key": "4715d91c634b3856"
+        },
+        {
+          "count": 1,
+          "key": "7564bbe4dcb01dfc"
+        },
+        {
+          "count": 1,
+          "key": "e867d33366df4a0a"
+        },
+        {
+          "count": 1,
+          "key": "204ea81244e53ee5"
+        },
+        {
+          "count": 1,
+          "key": "356d418d32a673e0"
+        },
+        {
+          "count": 1,
+          "key": "ed02c20fe3b62cf9"
+        },
+        {
+          "count": 1,
+          "key": "7300f5a689004d91"
+        }
+      ],
+      "top_ordered_routes": [
+        {
+          "count": 1,
+          "key": "532213d91720beb3"
+        },
+        {
+          "count": 1,
+          "key": "703eb91d2a526dd0"
+        },
+        {
+          "count": 1,
+          "key": "53c81aaf7ad87701"
+        },
+        {
+          "count": 1,
+          "key": "c16a6cfb3aab391b"
+        },
+        {
+          "count": 1,
+          "key": "c0d2d157616f681a"
+        },
+        {
+          "count": 1,
+          "key": "9016b73ec4f016ce"
+        },
+        {
+          "count": 1,
+          "key": "f5a5c0a42bc0f057"
+        },
+        {
+          "count": 1,
+          "key": "4b8d73314b2f8ab0"
+        }
+      ]
+    }
+  },
+  "overall_key_stats": {
+    "active_set": {
+      "available": 285,
+      "lru": {
+        "1": {
+          "capacity": 1,
+          "hit_rate": 0.0,
+          "hits": 0,
+          "misses": 285
+        },
+        "128": {
+          "capacity": 128,
+          "hit_rate": 0.010526315789473684,
+          "hits": 3,
+          "misses": 282
+        },
+        "16": {
+          "capacity": 16,
+          "hit_rate": 0.010526315789473684,
+          "hits": 3,
+          "misses": 282
+        },
+        "2": {
+          "capacity": 2,
+          "hit_rate": 0.0,
+          "hits": 0,
+          "misses": 285
+        },
+        "256": {
+          "capacity": 256,
+          "hit_rate": 0.010526315789473684,
+          "hits": 3,
+          "misses": 282
+        },
+        "32": {
+          "capacity": 32,
+          "hit_rate": 0.010526315789473684,
+          "hits": 3,
+          "misses": 282
+        },
+        "4": {
+          "capacity": 4,
+          "hit_rate": 0.0035087719298245615,
+          "hits": 1,
+          "misses": 284
+        },
+        "40": {
+          "capacity": 40,
+          "hit_rate": 0.010526315789473684,
+          "hits": 3,
+          "misses": 282
+        },
+        "512": {
+          "capacity": 512,
+          "hit_rate": 0.010526315789473684,
+          "hits": 3,
+          "misses": 282
+        },
+        "64": {
+          "capacity": 64,
+          "hit_rate": 0.010526315789473684,
+          "hits": 3,
+          "misses": 282
+        },
+        "8": {
+          "capacity": 8,
+          "hit_rate": 0.010526315789473684,
+          "hits": 3,
+          "misses": 282
+        }
+      },
+      "missing": 0,
+      "records": 285,
+      "repeat_rate": 0.010526315789473717,
+      "top_key_share": 0.007017543859649123,
+      "unique": 282
+    },
+    "count_histogram": {
+      "available": 285,
+      "lru": {
+        "1": {
+          "capacity": 1,
+          "hit_rate": 0.9964912280701754,
+          "hits": 284,
+          "misses": 1
+        },
+        "128": {
+          "capacity": 128,
+          "hit_rate": 0.9964912280701754,
+          "hits": 284,
+          "misses": 1
+        },
+        "16": {
+          "capacity": 16,
+          "hit_rate": 0.9964912280701754,
+          "hits": 284,
+          "misses": 1
+        },
+        "2": {
+          "capacity": 2,
+          "hit_rate": 0.9964912280701754,
+          "hits": 284,
+          "misses": 1
+        },
+        "256": {
+          "capacity": 256,
+          "hit_rate": 0.9964912280701754,
+          "hits": 284,
+          "misses": 1
+        },
+        "32": {
+          "capacity": 32,
+          "hit_rate": 0.9964912280701754,
+          "hits": 284,
+          "misses": 1
+        },
+        "4": {
+          "capacity": 4,
+          "hit_rate": 0.9964912280701754,
+          "hits": 284,
+          "misses": 1
+        },
+        "40": {
+          "capacity": 40,
+          "hit_rate": 0.9964912280701754,
+          "hits": 284,
+          "misses": 1
+        },
+        "512": {
+          "capacity": 512,
+          "hit_rate": 0.9964912280701754,
+          "hits": 284,
+          "misses": 1
+        },
+        "64": {
+          "capacity": 64,
+          "hit_rate": 0.9964912280701754,
+          "hits": 284,
+          "misses": 1
+        },
+        "8": {
+          "capacity": 8,
+          "hit_rate": 0.9964912280701754,
+          "hits": 284,
+          "misses": 1
+        }
+      },
+      "missing": 0,
+      "records": 285,
+      "repeat_rate": 0.9964912280701754,
+      "top_key_share": 1.0,
+      "unique": 1
+    },
+    "count_vector": {
+      "available": 285,
+      "lru": {
+        "1": {
+          "capacity": 1,
+          "hit_rate": 0.0,
+          "hits": 0,
+          "misses": 285
+        },
+        "128": {
+          "capacity": 128,
+          "hit_rate": 0.010526315789473684,
+          "hits": 3,
+          "misses": 282
+        },
+        "16": {
+          "capacity": 16,
+          "hit_rate": 0.010526315789473684,
+          "hits": 3,
+          "misses": 282
+        },
+        "2": {
+          "capacity": 2,
+          "hit_rate": 0.0,
+          "hits": 0,
+          "misses": 285
+        },
+        "256": {
+          "capacity": 256,
+          "hit_rate": 0.010526315789473684,
+          "hits": 3,
+          "misses": 282
+        },
+        "32": {
+          "capacity": 32,
+          "hit_rate": 0.010526315789473684,
+          "hits": 3,
+          "misses": 282
+        },
+        "4": {
+          "capacity": 4,
+          "hit_rate": 0.0035087719298245615,
+          "hits": 1,
+          "misses": 284
+        },
+        "40": {
+          "capacity": 40,
+          "hit_rate": 0.010526315789473684,
+          "hits": 3,
+          "misses": 282
+        },
+        "512": {
+          "capacity": 512,
+          "hit_rate": 0.010526315789473684,
+          "hits": 3,
+          "misses": 282
+        },
+        "64": {
+          "capacity": 64,
+          "hit_rate": 0.010526315789473684,
+          "hits": 3,
+          "misses": 282
+        },
+        "8": {
+          "capacity": 8,
+          "hit_rate": 0.010526315789473684,
+          "hits": 3,
+          "misses": 282
+        }
+      },
+      "missing": 0,
+      "records": 285,
+      "repeat_rate": 0.010526315789473717,
+      "top_key_share": 0.007017543859649123,
+      "unique": 282
+    },
+    "primitive": {
+      "available": 285,
+      "lru": {
+        "1": {
+          "capacity": 1,
+          "hit_rate": 0.0,
+          "hits": 0,
+          "misses": 285
+        },
+        "128": {
+          "capacity": 128,
+          "hit_rate": 0.9894736842105263,
+          "hits": 282,
+          "misses": 3
+        },
+        "16": {
+          "capacity": 16,
+          "hit_rate": 0.9894736842105263,
+          "hits": 282,
+          "misses": 3
+        },
+        "2": {
+          "capacity": 2,
+          "hit_rate": 0.0,
+          "hits": 0,
+          "misses": 285
+        },
+        "256": {
+          "capacity": 256,
+          "hit_rate": 0.9894736842105263,
+          "hits": 282,
+          "misses": 3
+        },
+        "32": {
+          "capacity": 32,
+          "hit_rate": 0.9894736842105263,
+          "hits": 282,
+          "misses": 3
+        },
+        "4": {
+          "capacity": 4,
+          "hit_rate": 0.9894736842105263,
+          "hits": 282,
+          "misses": 3
+        },
+        "40": {
+          "capacity": 40,
+          "hit_rate": 0.9894736842105263,
+          "hits": 282,
+          "misses": 3
+        },
+        "512": {
+          "capacity": 512,
+          "hit_rate": 0.9894736842105263,
+          "hits": 282,
+          "misses": 3
+        },
+        "64": {
+          "capacity": 64,
+          "hit_rate": 0.9894736842105263,
+          "hits": 282,
+          "misses": 3
+        },
+        "8": {
+          "capacity": 8,
+          "hit_rate": 0.9894736842105263,
+          "hits": 282,
+          "misses": 3
+        }
+      },
+      "missing": 0,
+      "records": 285,
+      "repeat_rate": 0.9894736842105263,
+      "top_key_share": 0.3333333333333333,
+      "unique": 3
+    },
+    "topk_tuple": {
+      "available": 285,
+      "lru": {
+        "1": {
+          "capacity": 1,
+          "hit_rate": 0.0,
+          "hits": 0,
+          "misses": 285
+        },
+        "128": {
+          "capacity": 128,
+          "hit_rate": 0.0,
+          "hits": 0,
+          "misses": 285
+        },
+        "16": {
+          "capacity": 16,
+          "hit_rate": 0.0,
+          "hits": 0,
+          "misses": 285
+        },
+        "2": {
+          "capacity": 2,
+          "hit_rate": 0.0,
+          "hits": 0,
+          "misses": 285
+        },
+        "256": {
+          "capacity": 256,
+          "hit_rate": 0.0,
+          "hits": 0,
+          "misses": 285
+        },
+        "32": {
+          "capacity": 32,
+          "hit_rate": 0.0,
+          "hits": 0,
+          "misses": 285
+        },
+        "4": {
+          "capacity": 4,
+          "hit_rate": 0.0,
+          "hits": 0,
+          "misses": 285
+        },
+        "40": {
+          "capacity": 40,
+          "hit_rate": 0.0,
+          "hits": 0,
+          "misses": 285
+        },
+        "512": {
+          "capacity": 512,
+          "hit_rate": 0.0,
+          "hits": 0,
+          "misses": 285
+        },
+        "64": {
+          "capacity": 64,
+          "hit_rate": 0.0,
+          "hits": 0,
+          "misses": 285
+        },
+        "8": {
+          "capacity": 8,
+          "hit_rate": 0.0,
+          "hits": 0,
+          "misses": 285
+        }
+      },
+      "missing": 0,
+      "records": 285,
+      "repeat_rate": 0.0,
+      "top_key_share": 0.0035087719298245615,
+      "unique": 285
+    }
+  },
+  "records": 285
+}
