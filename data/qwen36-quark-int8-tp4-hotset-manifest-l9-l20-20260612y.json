@@ -1,0 +1,2416 @@
+{
+  "filters": {
+    "max_num_tokens": 1,
+    "min_num_tokens": 1,
+    "stage_regex": "^quark_int8_apply$",
+    "target_layer_indices": [
+      9,
+      20
+    ]
+  },
+  "hot_sizes": [
+    16,
+    32,
+    64
+  ],
+  "inputs": [
+    {
+      "label": "route5_exact",
+      "path": "data/qwen36-quark-int8-tp4-routecapture5-routes-rank0-20260611.jsonl"
+    },
+    {
+      "label": "route6_exact",
+      "path": "data/qwen36-quark-int8-tp4-routecapture6-routes-rank0-20260611.jsonl"
+    },
+    {
+      "label": "pc_code",
+      "path": "data/qwen36-quark-int8-tp4-promptclass-routecapture-20260611a-routes-code.jsonl"
+    },
+    {
+      "label": "pc_math",
+      "path": "data/qwen36-quark-int8-tp4-promptclass-routecapture-20260611a-routes-math-reasoning.jsonl"
+    },
+    {
+      "label": "pc_repetitive",
+      "path": "data/qwen36-quark-int8-tp4-promptclass-routecapture-20260611a-routes-repetitive.jsonl"
+    },
+    {
+      "label": "pc_structured",
+      "path": "data/qwen36-quark-int8-tp4-promptclass-routecapture-20260611a-routes-structured.jsonl"
+    },
+    {
+      "label": "pc_longnatural",
+      "path": "data/qwen36-quark-int8-tp4-promptclass-routecapture-20260611a-routes-long-natural.jsonl"
+    }
+  ],
+  "layers": [
+    {
+      "combined_hotsets": {
+        "16": {
+          "raw_count_coverage": 0.41727642276422766,
+          "raw_count_experts": [
+            95,
+            243,
+            44,
+            161,
+            61,
+            197,
+            47,
+            207,
+            250,
+            106,
+            166,
+            2,
+            81,
+            255,
+            59,
+            41
+          ],
+          "source_normalized_experts": [
+            95,
+            2,
+            191,
+            164,
+            36,
+            161,
+            255,
+            170,
+            18,
+            59,
+            243,
+            38,
+            61,
+            44,
+            197,
+            47
+          ],
+          "source_normalized_mean_coverage": 0.6629594820384294,
+          "source_normalized_min_coverage": 0.29563492063492064,
+          "source_normalized_per_source_coverage": {
+            "pc_code": 1.0,
+            "pc_longnatural": 1.0,
+            "pc_math": 0.29563492063492064,
+            "pc_repetitive": 0.3531746031746032,
+            "pc_structured": 1.0,
+            "route6_exact": 0.32894736842105265
+          }
+        },
+        "32": {
+          "raw_count_coverage": 0.5873983739837398,
+          "raw_count_experts": [
+            95,
+            243,
+            44,
+            161,
+            61,
+            197,
+            47,
+            207,
+            250,
+            106,
+            166,
+            2,
+            81,
+            255,
+            59,
+            41,
+            245,
+            189,
+            21,
+            191,
+            171,
+            54,
+            73,
+            227,
+            198,
+            170,
+            70,
+            248,
+            140,
+            141,
+            29,
+            251
+          ],
+          "source_normalized_experts": [
+            95,
+            2,
+            191,
+            164,
+            36,
+            161,
+            255,
+            170,
+            18,
+            59,
+            243,
+            38,
+            61,
+            44,
+            197,
+            47,
+            207,
+            250,
+            166,
+            81,
+            106,
+            189,
+            21,
+            41,
+            73,
+            198,
+            171,
+            54,
+            227,
+            245,
+            29,
+            251
+          ],
+          "source_normalized_mean_coverage": 0.7841861598440546,
+          "source_normalized_min_coverage": 0.5198412698412699,
+          "source_normalized_per_source_coverage": {
+            "pc_code": 1.0,
+            "pc_longnatural": 1.0,
+            "pc_math": 0.5773809523809523,
+            "pc_repetitive": 0.5198412698412699,
+            "pc_structured": 1.0,
+            "route6_exact": 0.6078947368421053
+          }
+        },
+        "64": {
+          "raw_count_coverage": 0.7815040650406504,
+          "raw_count_experts": [
+            95,
+            243,
+            44,
+            161,
+            61,
+            197,
+            47,
+            207,
+            250,
+            106,
+            166,
+            2,
+            81,
+            255,
+            59,
+            41,
+            245,
+            189,
+            21,
+            191,
+            171,
+            54,
+            73,
+            227,
+            198,
+            170,
+            70,
+            248,
+            140,
+            141,
+            29,
+            251,
+            164,
+            156,
+            12,
+            209,
+            246,
+            94,
+            36,
+            20,
+            155,
+            136,
+            200,
+            213,
+            218,
+            108,
+            116,
+            53,
+            210,
+            31,
+            131,
+            254,
+            120,
+            186,
+            14,
+            203,
+            112,
+            217,
+            239,
+            240,
+            43,
+            135,
+            188,
+            238
+          ],
+          "source_normalized_experts": [
+            95,
+            2,
+            191,
+            164,
+            36,
+            161,
+            255,
+            170,
+            18,
+            59,
+            243,
+            38,
+            61,
+            44,
+            197,
+            47,
+            207,
+            250,
+            166,
+            81,
+            106,
+            189,
+            21,
+            41,
+            73,
+            198,
+            171,
+            54,
+            227,
+            245,
+            29,
+            251,
+            116,
+            188,
+            70,
+            156,
+            248,
+            94,
+            200,
+            120,
+            186,
+            140,
+            141,
+            108,
+            203,
+            20,
+            126,
+            12,
+            209,
+            246,
+            155,
+            254,
+            180,
+            123,
+            53,
+            239,
+            8,
+            136,
+            213,
+            218,
+            210,
+            14,
+            183,
+            31
+          ],
+          "source_normalized_mean_coverage": 0.8871727930938458,
+          "source_normalized_min_coverage": 0.75,
+          "source_normalized_per_source_coverage": {
+            "pc_code": 1.0,
+            "pc_longnatural": 1.0,
+            "pc_math": 0.75,
+            "pc_repetitive": 0.751984126984127,
+            "pc_structured": 1.0,
+            "route6_exact": 0.8210526315789474
+          }
+        }
+      },
+      "layer": "language_model.model.layers.9.mlp.experts",
+      "layer_index": 9,
+      "overlap": {
+        "source_top32_intersection_size": 0,
+        "source_top32_union_size": 69
+      },
+      "recommended_experts": [
+        95,
+        2,
+        191,
+        164,
+        36,
+        161,
+        255,
+        170,
+        18,
+        59,
+        243,
+        38,
+        61,
+        44,
+        197,
+        47,
+        207,
+        250,
+        166,
+        81,
+        106,
+        189,
+        21,
+        41,
+        73,
+        198,
+        171,
+        54,
+        227,
+        245,
+        29,
+        251,
+        116,
+        188,
+        70,
+        156,
+        248,
+        94,
+        200,
+        120,
+        186,
+        140,
+        141,
+        108,
+        203,
+        20,
+        126,
+        12,
+        209,
+        246,
+        155,
+        254,
+        180,
+        123,
+        53,
+        239,
+        8,
+        136,
+        213,
+        218,
+        210,
+        14,
+        183,
+        31
+      ],
+      "recommended_hotset_size": 64,
+      "replay_sources": [
+        {
+          "commands": {
+            "fused_moe_rows_1_16": "/home/steve/.venvs/vllm-xpu/bin/python scripts/bench-qwen36-int8-moe-kernels.py --route-jsonl data/qwen36-quark-int8-tp4-routecapture6-routes-rank0-20260611.jsonl --route-layer-regex 'layers[.]9[.]' --rows 1,16 --route-start-indices 0,1,2,46,78",
+            "grouped_gemm_dry_run": "python3 scripts/bench-qwen36-route-exact-w8a8-grouped-gemm.py --dry-run --route-jsonl data/qwen36-quark-int8-tp4-routecapture6-routes-rank0-20260611.jsonl --route-layer-regex 'layers[.]9[.]' --route-start-indices 0,1,2,46,78 --route-window-size 16"
+          },
+          "has_topk_ids": true,
+          "label": "route6_exact",
+          "path": "data/qwen36-quark-int8-tp4-routecapture6-routes-rank0-20260611.jsonl",
+          "window_choices": [
+            {
+              "active_experts": 37,
+              "assignments": 128,
+              "choice": "high_extra",
+              "coverage": {
+                "combined_top16": 0.5546875,
+                "combined_top32": 0.7578125,
+                "combined_top64": 0.9375
+              },
+              "records": 16,
+              "start_index": 0
+            },
+            {
+              "active_experts": 38,
+              "assignments": 128,
+              "choice": "high_extra",
+              "coverage": {
+                "combined_top16": 0.546875,
+                "combined_top32": 0.7578125,
+                "combined_top64": 0.9375
+              },
+              "records": 16,
+              "start_index": 1
+            },
+            {
+              "active_experts": 38,
+              "assignments": 128,
+              "choice": "high",
+              "coverage": {
+                "combined_top16": 0.5546875,
+                "combined_top32": 0.7578125,
+                "combined_top64": 0.9375
+              },
+              "records": 16,
+              "start_index": 2
+            },
+            {
+              "active_experts": 58,
+              "assignments": 128,
+              "choice": "low",
+              "coverage": {
+                "combined_top16": 0.2890625,
+                "combined_top32": 0.484375,
+                "combined_top64": 0.75
+              },
+              "records": 16,
+              "start_index": 46
+            },
+            {
+              "active_experts": 45,
+              "assignments": 128,
+              "choice": "median",
+              "coverage": {
+                "combined_top16": 0.203125,
+                "combined_top32": 0.578125,
+                "combined_top64": 0.7890625
+              },
+              "records": 16,
+              "start_index": 78
+            }
+          ]
+        },
+        {
+          "commands": {
+            "grouped_gemm_dry_run": "python3 scripts/bench-qwen36-route-exact-w8a8-grouped-gemm.py --dry-run --route-jsonl data/qwen36-quark-int8-tp4-promptclass-routecapture-20260611a-routes-code.jsonl --route-layer-regex 'layers[.]9[.]' --route-start-indices 0 --route-window-size 16"
+          },
+          "has_topk_ids": false,
+          "label": "pc_code",
+          "path": "data/qwen36-quark-int8-tp4-promptclass-routecapture-20260611a-routes-code.jsonl",
+          "window_choices": []
+        },
+        {
+          "commands": {
+            "grouped_gemm_dry_run": "python3 scripts/bench-qwen36-route-exact-w8a8-grouped-gemm.py --dry-run --route-jsonl data/qwen36-quark-int8-tp4-promptclass-routecapture-20260611a-routes-math-reasoning.jsonl --route-layer-regex 'layers[.]9[.]' --route-start-indices 5,22,52,58,85,211 --route-window-size 16"
+          },
+          "has_topk_ids": false,
+          "label": "pc_math",
+          "path": "data/qwen36-quark-int8-tp4-promptclass-routecapture-20260611a-routes-math-reasoning.jsonl",
+          "window_choices": [
+            {
+              "active_experts": 61,
+              "assignments": 128,
+              "choice": "low",
+              "coverage": {
+                "combined_top16": 0.1953125,
+                "combined_top32": 0.484375,
+                "combined_top64": 0.6953125
+              },
+              "records": 16,
+              "start_index": 5
+            },
+            {
+              "active_experts": 56,
+              "assignments": 128,
+              "choice": "high_extra",
+              "coverage": {
+                "combined_top16": 0.3984375,
+                "combined_top32": 0.65625,
+                "combined_top64": 0.8359375
+              },
+              "records": 16,
+              "start_index": 22
+            },
+            {
+              "active_experts": 57,
+              "assignments": 128,
+              "choice": "high_extra",
+              "coverage": {
+                "combined_top16": 0.375,
+                "combined_top32": 0.65625,
+                "combined_top64": 0.7734375
+              },
+              "records": 16,
+              "start_index": 52
+            },
+            {
+              "active_experts": 57,
+              "assignments": 128,
+              "choice": "median",
+              "coverage": {
+                "combined_top16": 0.28125,
+                "combined_top32": 0.578125,
+                "combined_top64": 0.7265625
+              },
+              "records": 16,
+              "start_index": 58
+            },
+            {
+              "active_experts": 56,
+              "assignments": 128,
+              "choice": "high_extra",
+              "coverage": {
+                "combined_top16": 0.3984375,
+                "combined_top32": 0.65625,
+                "combined_top64": 0.8359375
+              },
+              "records": 16,
+              "start_index": 85
+            },
+            {
+              "active_experts": 56,
+              "assignments": 128,
+              "choice": "high",
+              "coverage": {
+                "combined_top16": 0.3984375,
+                "combined_top32": 0.65625,
+                "combined_top64": 0.8359375
+              },
+              "records": 16,
+              "start_index": 211
+            }
+          ]
+        },
+        {
+          "commands": {
+            "grouped_gemm_dry_run": "python3 scripts/bench-qwen36-route-exact-w8a8-grouped-gemm.py --dry-run --route-jsonl data/qwen36-quark-int8-tp4-promptclass-routecapture-20260611a-routes-repetitive.jsonl --route-layer-regex 'layers[.]9[.]' --route-start-indices 7,31,94,157,176,220 --route-window-size 16"
+          },
+          "has_topk_ids": false,
+          "label": "pc_repetitive",
+          "path": "data/qwen36-quark-int8-tp4-promptclass-routecapture-20260611a-routes-repetitive.jsonl",
+          "window_choices": [
+            {
+              "active_experts": 56,
+              "assignments": 128,
+              "choice": "low",
+              "coverage": {
+                "combined_top16": 0.0703125,
+                "combined_top32": 0.1015625,
+                "combined_top64": 0.5
+              },
+              "records": 16,
+              "start_index": 7
+            },
+            {
+              "active_experts": 40,
+              "assignments": 128,
+              "choice": "high_extra",
+              "coverage": {
+                "combined_top16": 0.59375,
+                "combined_top32": 0.7890625,
+                "combined_top64": 0.9296875
+              },
+              "records": 16,
+              "start_index": 31
+            },
+            {
+              "active_experts": 40,
+              "assignments": 128,
+              "choice": "high_extra",
+              "coverage": {
+                "combined_top16": 0.59375,
+                "combined_top32": 0.7890625,
+                "combined_top64": 0.9296875
+              },
+              "records": 16,
+              "start_index": 94
+            },
+            {
+              "active_experts": 40,
+              "assignments": 128,
+              "choice": "high_extra",
+              "coverage": {
+                "combined_top16": 0.59375,
+                "combined_top32": 0.7890625,
+                "combined_top64": 0.9296875
+              },
+              "records": 16,
+              "start_index": 157
+            },
+            {
+              "active_experts": 54,
+              "assignments": 128,
+              "choice": "median",
+              "coverage": {
+                "combined_top16": 0.328125,
+                "combined_top32": 0.6171875,
+                "combined_top64": 0.8046875
+              },
+              "records": 16,
+              "start_index": 176
+            },
+            {
+              "active_experts": 40,
+              "assignments": 128,
+              "choice": "high",
+              "coverage": {
+                "combined_top16": 0.59375,
+                "combined_top32": 0.7890625,
+                "combined_top64": 0.9296875
+              },
+              "records": 16,
+              "start_index": 220
+            }
+          ]
+        },
+        {
+          "commands": {
+            "grouped_gemm_dry_run": "python3 scripts/bench-qwen36-route-exact-w8a8-grouped-gemm.py --dry-run --route-jsonl data/qwen36-quark-int8-tp4-promptclass-routecapture-20260611a-routes-structured.jsonl --route-layer-regex 'layers[.]9[.]' --route-start-indices 0 --route-window-size 16"
+          },
+          "has_topk_ids": false,
+          "label": "pc_structured",
+          "path": "data/qwen36-quark-int8-tp4-promptclass-routecapture-20260611a-routes-structured.jsonl",
+          "window_choices": []
+        },
+        {
+          "commands": {
+            "grouped_gemm_dry_run": "python3 scripts/bench-qwen36-route-exact-w8a8-grouped-gemm.py --dry-run --route-jsonl data/qwen36-quark-int8-tp4-promptclass-routecapture-20260611a-routes-long-natural.jsonl --route-layer-regex 'layers[.]9[.]' --route-start-indices 0 --route-window-size 16"
+          },
+          "has_topk_ids": false,
+          "label": "pc_longnatural",
+          "path": "data/qwen36-quark-int8-tp4-promptclass-routecapture-20260611a-routes-long-natural.jsonl",
+          "window_choices": []
+        }
+      ],
+      "source_count": 6,
+      "sources": [
+        {
+          "active_experts": 111,
+          "assignments": 760,
+          "has_topk_ids": true,
+          "hotsets": {
+            "16": {
+              "coverage": 0.5105263157894737,
+              "experts": [
+                61,
+                243,
+                207,
+                197,
+                161,
+                166,
+                47,
+                250,
+                44,
+                81,
+                188,
+                116,
+                126,
+                198,
+                21,
+                123
+              ]
+            },
+            "32": {
+              "coverage": 0.7223684210526315,
+              "experts": [
+                61,
+                243,
+                207,
+                197,
+                161,
+                166,
+                47,
+                250,
+                44,
+                81,
+                188,
+                116,
+                126,
+                198,
+                21,
+                123,
+                191,
+                59,
+                2,
+                73,
+                120,
+                186,
+                227,
+                189,
+                203,
+                5,
+                29,
+                171,
+                251,
+                255,
+                8,
+                54
+              ]
+            },
+            "64": {
+              "coverage": 0.9157894736842105,
+              "experts": [
+                61,
+                243,
+                207,
+                197,
+                161,
+                166,
+                47,
+                250,
+                44,
+                81,
+                188,
+                116,
+                126,
+                198,
+                21,
+                123,
+                191,
+                59,
+                2,
+                73,
+                120,
+                186,
+                227,
+                189,
+                203,
+                5,
+                29,
+                171,
+                251,
+                255,
+                8,
+                54,
+                183,
+                200,
+                94,
+                108,
+                169,
+                180,
+                32,
+                41,
+                156,
+                228,
+                20,
+                132,
+                170,
+                233,
+                239,
+                98,
+                104,
+                165,
+                212,
+                215,
+                254,
+                1,
+                22,
+                77,
+                84,
+                113,
+                137,
+                164,
+                208,
+                6,
+                14,
+                19
+              ]
+            }
+          },
+          "label": "route6_exact",
+          "path": "data/qwen36-quark-int8-tp4-routecapture6-routes-rank0-20260611.jsonl",
+          "records": 95
+        },
+        {
+          "active_experts": 9,
+          "assignments": 64,
+          "has_topk_ids": false,
+          "hotsets": {
+            "16": {
+              "coverage": 1.0,
+              "experts": [
+                2,
+                36,
+                95,
+                164,
+                170,
+                191,
+                255,
+                18,
+                161
+              ]
+            },
+            "32": {
+              "coverage": 1.0,
+              "experts": [
+                2,
+                36,
+                95,
+                164,
+                170,
+                191,
+                255,
+                18,
+                161
+              ]
+            },
+            "64": {
+              "coverage": 1.0,
+              "experts": [
+                2,
+                36,
+                95,
+                164,
+                170,
+                191,
+                255,
+                18,
+                161
+              ]
+            }
+          },
+          "label": "pc_code",
+          "path": "data/qwen36-quark-int8-tp4-promptclass-routecapture-20260611a-routes-code.jsonl",
+          "records": 8
+        },
+        {
+          "active_experts": 111,
+          "assignments": 2016,
+          "has_topk_ids": false,
+          "hotsets": {
+            "16": {
+              "coverage": 0.5376984126984127,
+              "experts": [
+                95,
+                44,
+                106,
+                61,
+                207,
+                245,
+                197,
+                250,
+                41,
+                21,
+                70,
+                140,
+                161,
+                166,
+                227,
+                243
+              ]
+            },
+            "32": {
+              "coverage": 0.7083333333333334,
+              "experts": [
+                95,
+                44,
+                106,
+                61,
+                207,
+                245,
+                197,
+                250,
+                41,
+                21,
+                70,
+                140,
+                161,
+                166,
+                227,
+                243,
+                198,
+                131,
+                141,
+                47,
+                108,
+                12,
+                94,
+                129,
+                135,
+                208,
+                210,
+                217,
+                252,
+                6,
+                29,
+                156
+              ]
+            },
+            "64": {
+              "coverage": 0.8869047619047619,
+              "experts": [
+                95,
+                44,
+                106,
+                61,
+                207,
+                245,
+                197,
+                250,
+                41,
+                21,
+                70,
+                140,
+                161,
+                166,
+                227,
+                243,
+                198,
+                131,
+                141,
+                47,
+                108,
+                12,
+                94,
+                129,
+                135,
+                208,
+                210,
+                217,
+                252,
+                6,
+                29,
+                156,
+                185,
+                186,
+                201,
+                232,
+                240,
+                248,
+                255,
+                2,
+                8,
+                15,
+                31,
+                81,
+                115,
+                132,
+                164,
+                178,
+                187,
+                209,
+                251,
+                39,
+                59,
+                71,
+                73,
+                86,
+                120,
+                136,
+                137,
+                145,
+                152,
+                160,
+                183,
+                184
+              ]
+            }
+          },
+          "label": "pc_math",
+          "path": "data/qwen36-quark-int8-tp4-promptclass-routecapture-20260611a-routes-math-reasoning.jsonl",
+          "records": 252
+        },
+        {
+          "active_experts": 112,
+          "assignments": 2016,
+          "has_topk_ids": false,
+          "hotsets": {
+            "16": {
+              "coverage": 0.43452380952380953,
+              "experts": [
+                243,
+                161,
+                47,
+                95,
+                197,
+                54,
+                59,
+                189,
+                2,
+                81,
+                171,
+                61,
+                73,
+                255,
+                44,
+                155
+              ]
+            },
+            "32": {
+              "coverage": 0.6468253968253969,
+              "experts": [
+                243,
+                161,
+                47,
+                95,
+                197,
+                54,
+                59,
+                189,
+                2,
+                81,
+                171,
+                61,
+                73,
+                255,
+                44,
+                155,
+                170,
+                218,
+                246,
+                20,
+                166,
+                213,
+                248,
+                250,
+                43,
+                53,
+                112,
+                136,
+                191,
+                200,
+                209,
+                238
+              ]
+            },
+            "64": {
+              "coverage": 0.873015873015873,
+              "experts": [
+                243,
+                161,
+                47,
+                95,
+                197,
+                54,
+                59,
+                189,
+                2,
+                81,
+                171,
+                61,
+                73,
+                255,
+                44,
+                155,
+                170,
+                218,
+                246,
+                20,
+                166,
+                213,
+                248,
+                250,
+                43,
+                53,
+                112,
+                136,
+                191,
+                200,
+                209,
+                238,
+                14,
+                26,
+                251,
+                12,
+                29,
+                31,
+                34,
+                36,
+                40,
+                46,
+                55,
+                72,
+                116,
+                141,
+                156,
+                167,
+                180,
+                203,
+                254,
+                42,
+                87,
+                97,
+                107,
+                121,
+                137,
+                165,
+                176,
+                239,
+                18,
+                22,
+                41,
+                50
+              ]
+            }
+          },
+          "label": "pc_repetitive",
+          "path": "data/qwen36-quark-int8-tp4-promptclass-routecapture-20260611a-routes-repetitive.jsonl",
+          "records": 252
+        },
+        {
+          "active_experts": 8,
+          "assignments": 32,
+          "has_topk_ids": false,
+          "hotsets": {
+            "16": {
+              "coverage": 1.0,
+              "experts": [
+                2,
+                18,
+                36,
+                38,
+                95,
+                161,
+                164,
+                191
+              ]
+            },
+            "32": {
+              "coverage": 1.0,
+              "experts": [
+                2,
+                18,
+                36,
+                38,
+                95,
+                161,
+                164,
+                191
+              ]
+            },
+            "64": {
+              "coverage": 1.0,
+              "experts": [
+                2,
+                18,
+                36,
+                38,
+                95,
+                161,
+                164,
+                191
+              ]
+            }
+          },
+          "label": "pc_structured",
+          "path": "data/qwen36-quark-int8-tp4-promptclass-routecapture-20260611a-routes-structured.jsonl",
+          "records": 4
+        },
+        {
+          "active_experts": 8,
+          "assignments": 32,
+          "has_topk_ids": false,
+          "hotsets": {
+            "16": {
+              "coverage": 1.0,
+              "experts": [
+                2,
+                36,
+                59,
+                95,
+                164,
+                170,
+                191,
+                255
+              ]
+            },
+            "32": {
+              "coverage": 1.0,
+              "experts": [
+                2,
+                36,
+                59,
+                95,
+                164,
+                170,
+                191,
+                255
+              ]
+            },
+            "64": {
+              "coverage": 1.0,
+              "experts": [
+                2,
+                36,
+                59,
+                95,
+                164,
+                170,
+                191,
+                255
+              ]
+            }
+          },
+          "label": "pc_longnatural",
+          "path": "data/qwen36-quark-int8-tp4-promptclass-routecapture-20260611a-routes-long-natural.jsonl",
+          "records": 4
+        }
+      ]
+    },
+    {
+      "combined_hotsets": {
+        "16": {
+          "raw_count_coverage": 0.446483771251932,
+          "raw_count_experts": [
+            224,
+            191,
+            117,
+            151,
+            206,
+            41,
+            237,
+            186,
+            185,
+            107,
+            110,
+            239,
+            53,
+            99,
+            171,
+            127
+          ],
+          "source_normalized_experts": [
+            191,
+            186,
+            99,
+            116,
+            239,
+            224,
+            185,
+            113,
+            83,
+            151,
+            52,
+            117,
+            41,
+            115,
+            7,
+            206
+          ],
+          "source_normalized_mean_coverage": 0.6805373286672499,
+          "source_normalized_min_coverage": 0.34523809523809523,
+          "source_normalized_per_source_coverage": {
+            "pc_code": 1.0,
+            "pc_longnatural": 1.0,
+            "pc_math": 0.3492063492063492,
+            "pc_repetitive": 0.34523809523809523,
+            "pc_structured": 1.0,
+            "route5_exact": 0.3887795275590551
+          }
+        },
+        "32": {
+          "raw_count_coverage": 0.6238408037094282,
+          "raw_count_experts": [
+            224,
+            191,
+            117,
+            151,
+            206,
+            41,
+            237,
+            186,
+            185,
+            107,
+            110,
+            239,
+            53,
+            99,
+            171,
+            127,
+            205,
+            3,
+            135,
+            115,
+            72,
+            116,
+            121,
+            175,
+            7,
+            159,
+            179,
+            216,
+            80,
+            155,
+            194,
+            11
+          ],
+          "source_normalized_experts": [
+            191,
+            186,
+            99,
+            116,
+            239,
+            224,
+            185,
+            113,
+            83,
+            151,
+            52,
+            117,
+            41,
+            115,
+            7,
+            206,
+            237,
+            110,
+            107,
+            53,
+            171,
+            80,
+            127,
+            121,
+            205,
+            135,
+            3,
+            159,
+            179,
+            72,
+            175,
+            242
+          ],
+          "source_normalized_mean_coverage": 0.8015586593342499,
+          "source_normalized_min_coverage": 0.5694444444444444,
+          "source_normalized_per_source_coverage": {
+            "pc_code": 1.0,
+            "pc_longnatural": 1.0,
+            "pc_math": 0.5932539682539683,
+            "pc_repetitive": 0.5694444444444444,
+            "pc_structured": 1.0,
+            "route5_exact": 0.6466535433070866
+          }
+        },
+        "64": {
+          "raw_count_coverage": 0.8230293663060279,
+          "raw_count_experts": [
+            224,
+            191,
+            117,
+            151,
+            206,
+            41,
+            237,
+            186,
+            185,
+            107,
+            110,
+            239,
+            53,
+            99,
+            171,
+            127,
+            205,
+            3,
+            135,
+            115,
+            72,
+            116,
+            121,
+            175,
+            7,
+            159,
+            179,
+            216,
+            80,
+            155,
+            194,
+            11,
+            126,
+            42,
+            56,
+            242,
+            136,
+            157,
+            49,
+            180,
+            247,
+            193,
+            36,
+            232,
+            71,
+            143,
+            141,
+            235,
+            198,
+            207,
+            137,
+            10,
+            52,
+            203,
+            238,
+            22,
+            89,
+            234,
+            17,
+            33,
+            108,
+            132,
+            18,
+            61
+          ],
+          "source_normalized_experts": [
+            191,
+            186,
+            99,
+            116,
+            239,
+            224,
+            185,
+            113,
+            83,
+            151,
+            52,
+            117,
+            41,
+            115,
+            7,
+            206,
+            237,
+            110,
+            107,
+            53,
+            171,
+            80,
+            127,
+            121,
+            205,
+            135,
+            3,
+            159,
+            179,
+            72,
+            175,
+            242,
+            56,
+            194,
+            42,
+            216,
+            155,
+            11,
+            157,
+            126,
+            207,
+            136,
+            137,
+            203,
+            49,
+            180,
+            143,
+            235,
+            247,
+            193,
+            141,
+            36,
+            232,
+            71,
+            10,
+            238,
+            234,
+            198,
+            33,
+            35,
+            89,
+            108,
+            47,
+            184
+          ],
+          "source_normalized_mean_coverage": 0.9095920301628962,
+          "source_normalized_min_coverage": 0.7837301587301587,
+          "source_normalized_per_source_coverage": {
+            "pc_code": 1.0,
+            "pc_longnatural": 1.0,
+            "pc_math": 0.8253968253968254,
+            "pc_repetitive": 0.7837301587301587,
+            "pc_structured": 1.0,
+            "route5_exact": 0.8484251968503937
+          }
+        }
+      },
+      "layer": "language_model.model.layers.20.mlp.experts",
+      "layer_index": 20,
+      "overlap": {
+        "source_top32_intersection_size": 2,
+        "source_top32_union_size": 62
+      },
+      "recommended_experts": [
+        191,
+        186,
+        99,
+        116,
+        239,
+        224,
+        185,
+        113,
+        83,
+        151,
+        52,
+        117,
+        41,
+        115,
+        7,
+        206,
+        237,
+        110,
+        107,
+        53,
+        171,
+        80,
+        127,
+        121,
+        205,
+        135,
+        3,
+        159,
+        179,
+        72,
+        175,
+        242,
+        56,
+        194,
+        42,
+        216,
+        155,
+        11,
+        157,
+        126,
+        207,
+        136,
+        137,
+        203,
+        49,
+        180,
+        143,
+        235,
+        247,
+        193,
+        141,
+        36,
+        232,
+        71,
+        10,
+        238,
+        234,
+        198,
+        33,
+        35,
+        89,
+        108,
+        47,
+        184
+      ],
+      "recommended_hotset_size": 64,
+      "replay_sources": [
+        {
+          "commands": {
+            "fused_moe_rows_1_16": "/home/steve/.venvs/vllm-xpu/bin/python scripts/bench-qwen36-int8-moe-kernels.py --route-jsonl data/qwen36-quark-int8-tp4-routecapture5-routes-rank0-20260611.jsonl --route-layer-regex 'layers[.]20[.]' --rows 1,16 --route-start-indices 11,12,13,52,63",
+            "grouped_gemm_dry_run": "python3 scripts/bench-qwen36-route-exact-w8a8-grouped-gemm.py --dry-run --route-jsonl data/qwen36-quark-int8-tp4-routecapture5-routes-rank0-20260611.jsonl --route-layer-regex 'layers[.]20[.]' --route-start-indices 11,12,13,52,63 --route-window-size 16"
+          },
+          "has_topk_ids": true,
+          "label": "route5_exact",
+          "path": "data/qwen36-quark-int8-tp4-routecapture5-routes-rank0-20260611.jsonl",
+          "window_choices": [
+            {
+              "active_experts": 44,
+              "assignments": 128,
+              "choice": "high",
+              "coverage": {
+                "combined_top16": 0.5546875,
+                "combined_top32": 0.765625,
+                "combined_top64": 0.859375
+              },
+              "records": 16,
+              "start_index": 11
+            },
+            {
+              "active_experts": 42,
+              "assignments": 128,
+              "choice": "high_extra",
+              "coverage": {
+                "combined_top16": 0.5703125,
+                "combined_top32": 0.7578125,
+                "combined_top64": 0.859375
+              },
+              "records": 16,
+              "start_index": 12
+            },
+            {
+              "active_experts": 42,
+              "assignments": 128,
+              "choice": "high_extra",
+              "coverage": {
+                "combined_top16": 0.5703125,
+                "combined_top32": 0.7578125,
+                "combined_top64": 0.859375
+              },
+              "records": 16,
+              "start_index": 13
+            },
+            {
+              "active_experts": 48,
+              "assignments": 128,
+              "choice": "low",
+              "coverage": {
+                "combined_top16": 0.34375,
+                "combined_top32": 0.5703125,
+                "combined_top64": 0.875
+              },
+              "records": 16,
+              "start_index": 52
+            },
+            {
+              "active_experts": 42,
+              "assignments": 128,
+              "choice": "median",
+              "coverage": {
+                "combined_top16": 0.375,
+                "combined_top32": 0.6328125,
+                "combined_top64": 0.8203125
+              },
+              "records": 16,
+              "start_index": 63
+            }
+          ]
+        },
+        {
+          "commands": {
+            "grouped_gemm_dry_run": "python3 scripts/bench-qwen36-route-exact-w8a8-grouped-gemm.py --dry-run --route-jsonl data/qwen36-quark-int8-tp4-promptclass-routecapture-20260611a-routes-code.jsonl --route-layer-regex 'layers[.]20[.]' --route-start-indices 0 --route-window-size 16"
+          },
+          "has_topk_ids": false,
+          "label": "pc_code",
+          "path": "data/qwen36-quark-int8-tp4-promptclass-routecapture-20260611a-routes-code.jsonl",
+          "window_choices": []
+        },
+        {
+          "commands": {
+            "grouped_gemm_dry_run": "python3 scripts/bench-qwen36-route-exact-w8a8-grouped-gemm.py --dry-run --route-jsonl data/qwen36-quark-int8-tp4-promptclass-routecapture-20260611a-routes-math-reasoning.jsonl --route-layer-regex 'layers[.]20[.]' --route-start-indices 15,39,102,165,172,228 --route-window-size 16"
+          },
+          "has_topk_ids": false,
+          "label": "pc_math",
+          "path": "data/qwen36-quark-int8-tp4-promptclass-routecapture-20260611a-routes-math-reasoning.jsonl",
+          "window_choices": [
+            {
+              "active_experts": 56,
+              "assignments": 128,
+              "choice": "low",
+              "coverage": {
+                "combined_top16": 0.2890625,
+                "combined_top32": 0.5234375,
+                "combined_top64": 0.828125
+              },
+              "records": 16,
+              "start_index": 15
+            },
+            {
+              "active_experts": 52,
+              "assignments": 128,
+              "choice": "high_extra",
+              "coverage": {
+                "combined_top16": 0.3984375,
+                "combined_top32": 0.6640625,
+                "combined_top64": 0.828125
+              },
+              "records": 16,
+              "start_index": 39
+            },
+            {
+              "active_experts": 52,
+              "assignments": 128,
+              "choice": "high_extra",
+              "coverage": {
+                "combined_top16": 0.3984375,
+                "combined_top32": 0.6640625,
+                "combined_top64": 0.828125
+              },
+              "records": 16,
+              "start_index": 102
+            },
+            {
+              "active_experts": 52,
+              "assignments": 128,
+              "choice": "high_extra",
+              "coverage": {
+                "combined_top16": 0.3984375,
+                "combined_top32": 0.6640625,
+                "combined_top64": 0.828125
+              },
+              "records": 16,
+              "start_index": 165
+            },
+            {
+              "active_experts": 60,
+              "assignments": 128,
+              "choice": "median",
+              "coverage": {
+                "combined_top16": 0.3515625,
+                "combined_top32": 0.59375,
+                "combined_top64": 0.796875
+              },
+              "records": 16,
+              "start_index": 172
+            },
+            {
+              "active_experts": 52,
+              "assignments": 128,
+              "choice": "high",
+              "coverage": {
+                "combined_top16": 0.3984375,
+                "combined_top32": 0.6640625,
+                "combined_top64": 0.828125
+              },
+              "records": 16,
+              "start_index": 228
+            }
+          ]
+        },
+        {
+          "commands": {
+            "grouped_gemm_dry_run": "python3 scripts/bench-qwen36-route-exact-w8a8-grouped-gemm.py --dry-run --route-jsonl data/qwen36-quark-int8-tp4-promptclass-routecapture-20260611a-routes-repetitive.jsonl --route-layer-regex 'layers[.]20[.]' --route-start-indices 6,33,96,101,159,222 --route-window-size 16"
+          },
+          "has_topk_ids": false,
+          "label": "pc_repetitive",
+          "path": "data/qwen36-quark-int8-tp4-promptclass-routecapture-20260611a-routes-repetitive.jsonl",
+          "window_choices": [
+            {
+              "active_experts": 61,
+              "assignments": 128,
+              "choice": "low",
+              "coverage": {
+                "combined_top16": 0.1484375,
+                "combined_top32": 0.390625,
+                "combined_top64": 0.625
+              },
+              "records": 16,
+              "start_index": 6
+            },
+            {
+              "active_experts": 53,
+              "assignments": 128,
+              "choice": "high_extra",
+              "coverage": {
+                "combined_top16": 0.4609375,
+                "combined_top32": 0.6640625,
+                "combined_top64": 0.875
+              },
+              "records": 16,
+              "start_index": 33
+            },
+            {
+              "active_experts": 53,
+              "assignments": 128,
+              "choice": "high_extra",
+              "coverage": {
+                "combined_top16": 0.4609375,
+                "combined_top32": 0.6640625,
+                "combined_top64": 0.875
+              },
+              "records": 16,
+              "start_index": 96
+            },
+            {
+              "active_experts": 47,
+              "assignments": 128,
+              "choice": "median",
+              "coverage": {
+                "combined_top16": 0.359375,
+                "combined_top32": 0.6015625,
+                "combined_top64": 0.875
+              },
+              "records": 16,
+              "start_index": 101
+            },
+            {
+              "active_experts": 53,
+              "assignments": 128,
+              "choice": "high_extra",
+              "coverage": {
+                "combined_top16": 0.4609375,
+                "combined_top32": 0.6640625,
+                "combined_top64": 0.875
+              },
+              "records": 16,
+              "start_index": 159
+            },
+            {
+              "active_experts": 53,
+              "assignments": 128,
+              "choice": "high",
+              "coverage": {
+                "combined_top16": 0.4609375,
+                "combined_top32": 0.6640625,
+                "combined_top64": 0.875
+              },
+              "records": 16,
+              "start_index": 222
+            }
+          ]
+        },
+        {
+          "commands": {
+            "grouped_gemm_dry_run": "python3 scripts/bench-qwen36-route-exact-w8a8-grouped-gemm.py --dry-run --route-jsonl data/qwen36-quark-int8-tp4-promptclass-routecapture-20260611a-routes-structured.jsonl --route-layer-regex 'layers[.]20[.]' --route-start-indices 0 --route-window-size 16"
+          },
+          "has_topk_ids": false,
+          "label": "pc_structured",
+          "path": "data/qwen36-quark-int8-tp4-promptclass-routecapture-20260611a-routes-structured.jsonl",
+          "window_choices": []
+        },
+        {
+          "commands": {
+            "grouped_gemm_dry_run": "python3 scripts/bench-qwen36-route-exact-w8a8-grouped-gemm.py --dry-run --route-jsonl data/qwen36-quark-int8-tp4-promptclass-routecapture-20260611a-routes-long-natural.jsonl --route-layer-regex 'layers[.]20[.]' --route-start-indices 0 --route-window-size 16"
+          },
+          "has_topk_ids": false,
+          "label": "pc_longnatural",
+          "path": "data/qwen36-quark-int8-tp4-promptclass-routecapture-20260611a-routes-long-natural.jsonl",
+          "window_choices": []
+        }
+      ],
+      "source_count": 6,
+      "sources": [
+        {
+          "active_experts": 125,
+          "assignments": 1016,
+          "has_topk_ids": true,
+          "hotsets": {
+            "16": {
+              "coverage": 0.5344488188976378,
+              "experts": [
+                224,
+                191,
+                151,
+                237,
+                117,
+                41,
+                53,
+                239,
+                80,
+                185,
+                110,
+                206,
+                107,
+                121,
+                203,
+                171
+              ]
+            },
+            "32": {
+              "coverage": 0.7293307086614174,
+              "experts": [
+                224,
+                191,
+                151,
+                237,
+                117,
+                41,
+                53,
+                239,
+                80,
+                185,
+                110,
+                206,
+                107,
+                121,
+                203,
+                171,
+                186,
+                207,
+                242,
+                137,
+                7,
+                159,
+                179,
+                35,
+                56,
+                99,
+                116,
+                234,
+                33,
+                143,
+                42,
+                157
+              ]
+            },
+            "64": {
+              "coverage": 0.9084645669291339,
+              "experts": [
+                224,
+                191,
+                151,
+                237,
+                117,
+                41,
+                53,
+                239,
+                80,
+                185,
+                110,
+                206,
+                107,
+                121,
+                203,
+                171,
+                186,
+                207,
+                242,
+                137,
+                7,
+                159,
+                179,
+                35,
+                56,
+                99,
+                116,
+                234,
+                33,
+                143,
+                42,
+                157,
+                235,
+                47,
+                52,
+                142,
+                184,
+                103,
+                147,
+                174,
+                238,
+                10,
+                20,
+                74,
+                108,
+                124,
+                175,
+                221,
+                61,
+                115,
+                127,
+                135,
+                136,
+                141,
+                194,
+                220,
+                49,
+                65,
+                72,
+                89,
+                180,
+                205,
+                233,
+                2
+              ]
+            }
+          },
+          "label": "route5_exact",
+          "path": "data/qwen36-quark-int8-tp4-routecapture5-routes-rank0-20260611.jsonl",
+          "records": 127
+        },
+        {
+          "active_experts": 11,
+          "assignments": 64,
+          "has_topk_ids": false,
+          "hotsets": {
+            "16": {
+              "coverage": 1.0,
+              "experts": [
+                99,
+                116,
+                185,
+                186,
+                191,
+                7,
+                83,
+                115,
+                151,
+                224,
+                239
+              ]
+            },
+            "32": {
+              "coverage": 1.0,
+              "experts": [
+                99,
+                116,
+                185,
+                186,
+                191,
+                7,
+                83,
+                115,
+                151,
+                224,
+                239
+              ]
+            },
+            "64": {
+              "coverage": 1.0,
+              "experts": [
+                99,
+                116,
+                185,
+                186,
+                191,
+                7,
+                83,
+                115,
+                151,
+                224,
+                239
+              ]
+            }
+          },
+          "label": "pc_code",
+          "path": "data/qwen36-quark-int8-tp4-promptclass-routecapture-20260611a-routes-code.jsonl",
+          "records": 8
+        },
+        {
+          "active_experts": 103,
+          "assignments": 2016,
+          "has_topk_ids": false,
+          "hotsets": {
+            "16": {
+              "coverage": 0.501984126984127,
+              "experts": [
+                191,
+                206,
+                224,
+                107,
+                117,
+                41,
+                151,
+                171,
+                53,
+                72,
+                110,
+                155,
+                115,
+                135,
+                186,
+                7
+              ]
+            },
+            "32": {
+              "coverage": 0.7182539682539683,
+              "experts": [
+                191,
+                206,
+                224,
+                107,
+                117,
+                41,
+                151,
+                171,
+                53,
+                72,
+                110,
+                155,
+                115,
+                135,
+                186,
+                7,
+                42,
+                136,
+                185,
+                232,
+                198,
+                49,
+                126,
+                159,
+                121,
+                205,
+                216,
+                247,
+                3,
+                36,
+                44,
+                80
+              ]
+            },
+            "64": {
+              "coverage": 0.9126984126984127,
+              "experts": [
+                191,
+                206,
+                224,
+                107,
+                117,
+                41,
+                151,
+                171,
+                53,
+                72,
+                110,
+                155,
+                115,
+                135,
+                186,
+                7,
+                42,
+                136,
+                185,
+                232,
+                198,
+                49,
+                126,
+                159,
+                121,
+                205,
+                216,
+                247,
+                3,
+                36,
+                44,
+                80,
+                89,
+                132,
+                163,
+                179,
+                238,
+                10,
+                157,
+                164,
+                242,
+                246,
+                33,
+                52,
+                64,
+                66,
+                88,
+                99,
+                141,
+                165,
+                220,
+                1,
+                38,
+                46,
+                47,
+                56,
+                61,
+                65,
+                73,
+                105,
+                120,
+                140,
+                150,
+                180
+              ]
+            }
+          },
+          "label": "pc_math",
+          "path": "data/qwen36-quark-int8-tp4-promptclass-routecapture-20260611a-routes-math-reasoning.jsonl",
+          "records": 252
+        },
+        {
+          "active_experts": 111,
+          "assignments": 2016,
+          "has_topk_ids": false,
+          "hotsets": {
+            "16": {
+              "coverage": 0.4880952380952381,
+              "experts": [
+                224,
+                237,
+                127,
+                41,
+                117,
+                151,
+                191,
+                186,
+                175,
+                206,
+                3,
+                185,
+                11,
+                110,
+                205,
+                239
+              ]
+            },
+            "32": {
+              "coverage": 0.6984126984126984,
+              "experts": [
+                224,
+                237,
+                127,
+                41,
+                117,
+                151,
+                191,
+                186,
+                175,
+                206,
+                3,
+                185,
+                11,
+                110,
+                205,
+                239,
+                99,
+                193,
+                194,
+                116,
+                71,
+                180,
+                216,
+                22,
+                56,
+                135,
+                235,
+                17,
+                18,
+                107,
+                139,
+                143
+              ]
+            },
+            "64": {
+              "coverage": 0.8888888888888888,
+              "experts": [
+                224,
+                237,
+                127,
+                41,
+                117,
+                151,
+                191,
+                186,
+                175,
+                206,
+                3,
+                185,
+                11,
+                110,
+                205,
+                239,
+                99,
+                193,
+                194,
+                116,
+                71,
+                180,
+                216,
+                22,
+                56,
+                135,
+                235,
+                17,
+                18,
+                107,
+                139,
+                143,
+                179,
+                36,
+                108,
+                115,
+                121,
+                126,
+                137,
+                141,
+                157,
+                173,
+                217,
+                16,
+                50,
+                104,
+                124,
+                159,
+                172,
+                207,
+                242,
+                247,
+                10,
+                20,
+                23,
+                35,
+                49,
+                59,
+                61,
+                69,
+                72,
+                78,
+                92,
+                97
+              ]
+            }
+          },
+          "label": "pc_repetitive",
+          "path": "data/qwen36-quark-int8-tp4-promptclass-routecapture-20260611a-routes-repetitive.jsonl",
+          "records": 252
+        },
+        {
+          "active_experts": 8,
+          "assignments": 32,
+          "has_topk_ids": false,
+          "hotsets": {
+            "16": {
+              "coverage": 1.0,
+              "experts": [
+                52,
+                99,
+                113,
+                116,
+                186,
+                191,
+                224,
+                239
+              ]
+            },
+            "32": {
+              "coverage": 1.0,
+              "experts": [
+                52,
+                99,
+                113,
+                116,
+                186,
+                191,
+                224,
+                239
+              ]
+            },
+            "64": {
+              "coverage": 1.0,
+              "experts": [
+                52,
+                99,
+                113,
+                116,
+                186,
+                191,
+                224,
+                239
+              ]
+            }
+          },
+          "label": "pc_structured",
+          "path": "data/qwen36-quark-int8-tp4-promptclass-routecapture-20260611a-routes-structured.jsonl",
+          "records": 4
+        },
+        {
+          "active_experts": 8,
+          "assignments": 32,
+          "has_topk_ids": false,
+          "hotsets": {
+            "16": {
+              "coverage": 1.0,
+              "experts": [
+                83,
+                99,
+                113,
+                116,
+                185,
+                186,
+                191,
+                239
+              ]
+            },
+            "32": {
+              "coverage": 1.0,
+              "experts": [
+                83,
+                99,
+                113,
+                116,
+                185,
+                186,
+                191,
+                239
+              ]
+            },
+            "64": {
+              "coverage": 1.0,
+              "experts": [
+                83,
+                99,
+                113,
+                116,
+                185,
+                186,
+                191,
+                239
+              ]
+            }
+          },
+          "label": "pc_longnatural",
+          "path": "data/qwen36-quark-int8-tp4-promptclass-routecapture-20260611a-routes-long-natural.jsonl",
+          "records": 4
+        }
+      ]
+    }
+  ],
+  "min_top32_coverage": 0.6,
+  "window_size": 16
+}

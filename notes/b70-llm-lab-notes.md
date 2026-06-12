@@ -279,6 +279,15 @@ Current Qwen3.6 INT8 direction:
     using model-forward-only sync timing as the live regression gate. The
     detailed backlog and larger ideas are in
     `notes/2026-06-12-qwen36-next-bigger-bets.md`.
+32. Added `scripts/qwen36-moe-hotset-manifest.py` and a concrete layer `9` /
+    layer `20` manifest from raw route JSONLs. Source-normalized top-64 is now
+    the first hotset target: layer `9` top-64 covers `88.7%` mean / `75.0%`
+    worst-source, while layer `20` top-64 covers `91.0%` mean / `78.4%`
+    worst-source. Top-32 remains a subtest but misses the worst-source
+    threshold (`52.0%` for layer `9`, `56.9%` for layer `20`). The manifest
+    also validates fixed replay starts for exact-ID and prompt-class stress
+    windows, so the next kernel step is a top-64 hotset fast path with exact
+    cold fallback, starting on layer `9`.
 
 ## 2026-05-10 MiniMax AutoRound Addendum
 

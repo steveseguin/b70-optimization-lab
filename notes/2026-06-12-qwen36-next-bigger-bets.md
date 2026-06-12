@@ -820,3 +820,87 @@ External signals checked:
     and vLLM maintainers. The current evidence is specific enough to ask for
     persistent W8A8 MoE support on this model rather than generic "XPU is slow"
     advice.
+
+## 2026-06-12 Layer 9/20 Hotset Manifest
+
+New script:
+
+- `scripts/qwen36-moe-hotset-manifest.py`.
+
+Purpose:
+
+- Build layer-specific hotset manifests from raw route JSONL files, not the
+  summarized flight records, so full expert count vectors remain available.
+- Combine exact-ID captures with prompt-class captures using source-normalized
+  expert scores. This prevents long prompt-class files from dominating shorter
+  exact captures.
+- Emit replay start indices and command lines for the existing route-replay
+  harnesses, so kernel work can start from fixed, reproducible windows.
+
+Artifacts:
+
+- `data/qwen36-quark-int8-tp4-hotset-manifest-l9-l20-20260612y.json`.
+- `data/qwen36-quark-int8-tp4-hotset-manifest-l9-l20-20260612y.md`.
+- `data/qwen36-quark-int8-tp4-hotset-manifest-l9-route6-dryrun-20260612y.json`.
+- `data/qwen36-quark-int8-tp4-hotset-manifest-l20-route5-dryrun-20260612y.json`.
+- `data/qwen36-quark-int8-tp4-hotset-manifest-l9-pcmath-dryrun-20260612y.json`.
+- `data/qwen36-quark-int8-tp4-hotset-manifest-l20-pcrepetitive-dryrun-20260612y.json`.
+
+Layer results:
+
+- Layer `9` uses six sources: routecapture6 exact plus prompt-class code,
+  math, repetitive, structured, and long-natural captures.
+  - Source-normalized top-32 mean coverage: `78.4%`.
+  - Source-normalized top-32 minimum coverage: `52.0%`.
+  - Source-normalized top-64 mean coverage: `88.7%`.
+  - Source-normalized top-64 minimum coverage: `75.0%`.
+  - Source top-32 union size: `69`; intersection size: `0`.
+  - Recommendation: top-64 hotset. Top-32 is worth a memory-minimal subtest,
+    but it fails the `0.60` worst-source coverage threshold.
+- Layer `20` uses six sources: routecapture5 exact plus the same prompt-class
+  sources.
+  - Source-normalized top-32 mean coverage: `80.2%`.
+  - Source-normalized top-32 minimum coverage: `56.9%`.
+  - Source-normalized top-64 mean coverage: `91.0%`.
+  - Source-normalized top-64 minimum coverage: `78.4%`.
+  - Source top-32 union size: `62`; intersection size: `2`.
+  - Recommendation: top-64 hotset. Top-32 is close, but still below the
+    worst-source guardrail.
+
+Replay windows validated without GPU execution:
+
+- Layer `9` exact-ID routecapture6:
+  - route starts: `0,1,2,46,78`.
+  - dry-run records matched: `95`.
+  - selected 16-token windows have `37`, `38`, `38`, `58`, and `45` active
+    experts.
+- Layer `20` exact-ID routecapture5:
+  - route starts: `11,12,13,52,63`.
+  - dry-run records matched: `127`.
+  - selected 16-token windows have `44`, `42`, `42`, `48`, and `42` active
+    experts.
+- Layer `9` prompt-class math stress windows:
+  - route starts: `5,22,52,58,85,211`.
+  - selected windows have `56` to `61` active experts.
+- Layer `20` prompt-class repetitive stress windows:
+  - route starts: `6,33,96,101,159,222`.
+  - selected windows have `47` to `61` active experts.
+
+Concrete next implementation target:
+
+1. Prototype a top-64 hotset fast path for layer `9` first, because it has the
+   best exact-ID coverage and a wide stress range in replay windows.
+2. Keep top-32 as a subtest to measure the speed-memory tradeoff, but do not
+   assume it is production-safe unless prompt-class worst-source coverage
+   improves or the cold fallback overhead is negligible.
+3. Implement as a hotset fast path plus exact cold fallback, not a physical
+   global remap. The source top-32 intersections are too small for a global
+   hotset to be trustworthy.
+4. Use these replay commands as the first gate:
+   - `scripts/bench-qwen36-int8-moe-kernels.py` for exact topk rows from
+     routecapture6/routecapture5.
+   - `scripts/bench-qwen36-route-exact-w8a8-grouped-gemm.py --dry-run` and then
+     real grouped-GEMM runs for count-vector prompt-class stress windows.
+5. Promote no endpoint change unless the accepted model-forward synchronized
+   bucket drops below the current `8.44 ms/token` baseline and exact provenance
+   sentinels still pass.
