@@ -12900,3 +12900,127 @@ Useful links for this pass:
 - `https://docs.vllm.ai/en/v0.18.0/models/hardware_supported_models/xpu/`
 - `https://vllm.ai/blog/2025-11-11-intel-arc-pro-b`
 - `https://github.com/vllm-project/vllm/issues/41663`
+
+## Oracle k=1 COW Parent-State Trace
+
+Ran the default-off COW parent-state trace against the minimized oracle `k=1`
+fixture. The backend was temporarily restarted in oracle/spec trace mode, the
+two-case oracle completion trace was captured, and the normal accepted backend
+was restored afterward.
+
+Service safety:
+
+- Public frontdoor was already paused with local bypass enabled.
+- Frontdoor status before/after showed `active_generations=0` and
+  `queued_generations=0`.
+- Trace backend became healthy after `144s`.
+- Normal accepted backend was restored and became healthy after `65s`.
+- Restored backend process env had no `COW`, `SPEC_DECODE`, `ORACLE`,
+  `SPECULATIVE`, `VLLM_SPEC`, or `MODEL_INPUT_TRACE` variables.
+
+Trace launch:
+
+```bash
+ORACLE_TRACE=/home/steve/llm-optimizations/data/qwen36-quark-int8-tp4-oracle-k1-short-accepted-graph-20260611.json \
+NUM_SPECULATIVE_TOKENS=1 \
+TAG=oracle1-cowtrace-20260611a \
+SPEC_TRACE_FILE=/tmp/qwen36-oracle1-cowtrace-20260611a-spec-trace.jsonl \
+VLLM_XPU_COW_VERIFIER_TRACE_FILE=/tmp/qwen36-oracle1-cowtrace-20260611a-cow-trace.jsonl \
+VLLM_XPU_COW_VERIFIER_TRACE_MAX_LINES=2000 \
+VLLM_XPU_ORACLE_DRAFT_LOG=/tmp/qwen36-oracle1-cowtrace-20260611a-oracle-draft.jsonl \
+VLLM_XPU_ORACLE_DRAFT_LOG_MAX_LINES=2000 \
+LOG_PATH=/tmp/qwen36-quark-int8-tp4-oracle1-cowtrace-20260611a.log \
+scripts/launch-qwen36-quark-int8-oracle-trace.sh
+```
+
+Oracle completion capture:
+
+```bash
+/home/steve/.venvs/vllm-xpu/bin/python scripts/qwen36-completion-oracle-trace.py \
+  --base-url http://127.0.0.1:18080 \
+  --model qwen36-35b-a3b-fp8 \
+  --prompt-tokens 512 \
+  --output-tokens 32 \
+  --baseline-json data/qwen36-quark-int8-tp4-oracle-k1-short-accepted-graph-20260611.json \
+  --output-json data/qwen36-quark-int8-tp4-oracle1-cowtrace-completions-20260611a.json \
+  --timeout 300
+```
+
+Artifacts:
+
+- `data/qwen36-quark-int8-tp4-oracle1-cowtrace-completions-20260611a.json`
+- `data/qwen36-quark-int8-tp4-oracle1-cowtrace-spec-trace-20260611a.jsonl`
+- `data/qwen36-quark-int8-tp4-oracle1-cowtrace-spec-summary-20260611a.json`
+- `data/qwen36-quark-int8-tp4-oracle1-cowtrace-spec-summary-20260611a.md`
+- `data/qwen36-quark-int8-tp4-oracle1-cowtrace-parent-trace-20260611a.jsonl`
+- `data/qwen36-quark-int8-tp4-oracle1-cowtrace-parent-summary-20260611a.json`
+- `data/qwen36-quark-int8-tp4-oracle1-cowtrace-parent-summary-20260611a.md`
+- `data/qwen36-quark-int8-tp4-oracle1-cowtrace-oracle-draft-20260611a.jsonl`
+- `data/qwen36-quark-int8-tp4-oracle1-cowtrace-replay-20260611a.json`
+- `data/qwen36-quark-int8-tp4-oracle1-cowtrace-replay-20260611a.md`
+- `data/qwen36-quark-int8-tp4-oracle1-cowtrace-drift-fixture-20260611a.json`
+- `data/qwen36-quark-int8-tp4-oracle1-cowtrace-drift-fixture-20260611a.md`
+
+Validation:
+
+```bash
+python3 scripts/check-qwen36-oracle-fixture.py \
+  --fixture data/qwen36-quark-int8-tp4-oracle1-cowtrace-drift-fixture-20260611a.json \
+  --replay-json data/qwen36-quark-int8-tp4-oracle1-cowtrace-replay-20260611a.json \
+  --mode known-drift \
+  --expected-mismatches 2 \
+  --expected-roles verifier_bonus_after_full_accept,replacement_after_reject \
+  --expect-spec-active \
+  --min-draft-tokens 15 \
+  --min-accepted-tokens 14 \
+  --min-accept-rate-pct 90 \
+  --require-spec-join
+```
+
+Result:
+
+- `case_count=2`
+- `mismatch_count=2`
+- `draft_tokens=15`
+- `accepted=14`
+- `rejected=1`
+- `accept_rate_pct=93.33333333333333`
+- replay joined both requests and reported `accounting_mismatch_count=0`.
+
+COW parent-state finding:
+
+- Parent trace rows: `150`.
+- Schedule transitions: `50`.
+- Spec schedule transitions: `15`.
+- Every schedule transition advanced parent `num_computed_tokens`.
+- For the `k=1` speculative rows, `_update_after_schedule()` advanced the
+  parent by `+2` computed tokens before output commit: one verifier token plus
+  one draft token.
+- The prefill rows advanced by the prompt length (`+502` or `+488`) as
+  expected.
+- KV block-table lengths and last-block IDs did not change in this small
+  fixture, so the immediate drift evidence points at parent logical state /
+  computed-token position rather than parent block-table growth.
+- `after_output_commit` then added visible output tokens (`+1` for prefill
+  first token, `+2` for full-accept k=1 rows), while `num_computed_tokens`
+  stayed at the already-advanced value.
+
+Interpretation:
+
+The current non-COW path scores speculative candidates after advancing the
+parent request's computed-token cursor through unaccepted draft positions. The
+minimal COW prototype should make the scratch verifier own that computed-token
+advance and leave the parent unchanged until accepted tokens are committed
+through `_update_request_with_output()`.
+
+Next implementation target:
+
+1. Add a second env-gated prototype path, separate from tracing, such as
+   `VLLM_XPU_COW_VERIFIER_ENABLE=1`.
+2. Start with oracle `k=1` only.
+3. Create a scratch scheduling state whose `num_computed_tokens` can advance by
+   `num_scheduled_tokens` while the parent remains at its pre-schedule value.
+4. Keep parent output IDs, `num_tokens`, `num_tokens_with_spec`,
+   placeholders, and block-table metadata unchanged until accept/reject is
+   known.
+5. Pass the exact fixture gate with speculation active before any speed claim.
