@@ -4062,3 +4062,84 @@ Bigger, bolder ideas added from this checkpoint:
     output hash, current timings, oneDNN smoke recipe, and target budget. The
     ask is concrete: beat the `112-114 us` grouped-GEMM dispatch floor or the
     `168 us/layer` budget on B70 without changing math.
+
+## 2026-06-12 Scratch Hook And oneDNN Qwen-Shape Probe
+
+Artifacts:
+
+- Scratch route replay:
+  `data/qwen36-quark-int8-moe-routecapture6-layer9-scratch-hook-20260612au.json`,
+  `.md`, and `.log`.
+- oneDNN Qwen-shape probe:
+  `tools/onednn_grouped_int8_dtype_probe.cpp`,
+  `scripts/probe-onednn-grouped-int8-dtypes.sh`,
+  `data/qwen36-onednn-grouped-int8-qwenshape-probe-20260612au.json`,
+  `data/qwen36-onednn-grouped-int8-qwenshape-probe-20260612au.log`, and
+  `data/qwen36-onednn-grouped-int8-qwenshape-probe-rerun-20260612au.log`.
+- Restore proof:
+  `data/qwen36-quark-int8-tp4-accepted-provenance-after-onednn-probes-20260612au.json`.
+
+Scratch-hook result:
+
+- Ran layer-9 routecapture6 rows=1 over 16 captured route offsets with the
+  accepted base W8A8 grouped-GEMM op only. Offset, active-offset, and quant-out
+  experimental ops were absent in the restored runtime, as expected.
+- Exactness passed: manual staged, scratch `xpu_fused_moe`, preallocated
+  staged, and fused-prologue staged all had max abs diff `0.0` against
+  current `xpu_fused_moe`.
+- Timing was not a win:
+  - Base `xpu_fused_moe`: `309.978 us/layer` mean.
+  - Scratch `xpu_fused_moe`: `346.038 us/layer` mean.
+  - Preallocated staged: `250.135 us/layer` mean.
+  - Fused-prologue staged: `333.010 us/layer` mean.
+- Decision: scratch wiring is exact but not useful as a standalone endpoint
+  optimization. The lower staged number still points at allocator/control
+  overhead, but it needs a real fused layerlet or output-buffer ABI change to
+  become a serving win.
+
+oneDNN grouped INT8 result:
+
+- The new dtype probe confirmed oneDNN grouped-memory matmul supports the
+  basic Qwen-relevant dtype and scale shape on B70:
+  `s8` source, `s8` weights, grouped source/destination offsets, per-token
+  source scales, per-expert-column weight scales, and f32 or bf16 destination.
+- Small example shape warmed rerun: `s8/s8/f32` executed in `62 us`.
+- Qwen layer-9 GEMM1 shape (`256` experts, `8` routed rows, `K=2048`,
+  `N=256`) warmed rerun:
+  - f32 dst: create `3296 us`, execute+wait `222 us`.
+  - bf16 dst: create `5798 us`, execute+wait `258 us`.
+- Qwen layer-9 GEMM2 shape (`256` experts, `8` routed rows, `K=128`,
+  `N=2048`) warmed rerun:
+  - f32 dst: create `4159 us`, execute+wait `210 us`.
+  - bf16 dst: create `5142 us`, execute+wait `227 us`.
+- Decision: oneDNN is viable at the API/dtype level, but two standalone
+  oneDNN grouped GEMM calls are slower than the current XPU grouped-GEMM
+  components (`~89-125 us` each in the scratch replay). Do not use oneDNN as a
+  drop-in two-GEMM replacement.
+
+Updated next actions:
+
+1. **Stop pursuing scratch-only endpoint wiring.**
+   It is exact, but the measured wrapper call is slower than base
+   `xpu_fused_moe`. Keep the result as evidence that allocation/control
+   matters; spend implementation time on a fused ABI, not on passing scratch
+   into the current wrapper.
+
+2. **Use oneDNN only if it removes boundaries.**
+   The oneDNN path should continue only as a primitive-cache/fused-island or
+   command-bundle experiment. A route-signature cache is mandatory because
+   cold primitive creation was hundreds of milliseconds and warmed creation
+   was still several milliseconds for Qwen shapes.
+
+3. **Next non-speculative implementation should be a layerlet scaffold.**
+   The current evidence now converges: base wrapper `~310 us`, current GEMM
+   components `~90-125 us` each, oneDNN standalone `~210-222 us` each, and
+   target budget `~168 us/layer`. The only plausible non-speculative path is
+   fewer command boundaries: a one-dispatch fake layerlet first, then a fused
+   route/quant/GEMM/activation/GEMM/gather layerlet.
+
+4. **If oneDNN gets another run, make it reuse everything.**
+   A fair next oneDNN run must create primitives once, allocate memories once,
+   reuse scale buffers, execute many captured route windows, and report
+   execute-only timing. If that still exceeds the current GEMM floor, close the
+   oneDNN standalone branch.

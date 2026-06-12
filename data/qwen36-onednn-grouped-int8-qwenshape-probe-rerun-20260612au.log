@@ -1,0 +1,10 @@
+PASS control_f32 src=f32 wei=f32 dst=f32 experts=4 tokens=30 K=64 N=128 create_us=116718 exec_wait_us=7942
+PASS qwen_like_s8s8_f32 src=s8 wei=s8 dst=f32 experts=4 tokens=30 K=64 N=128 create_us=5731 exec_wait_us=62
+PASS u8s8_f32 src=u8 wei=s8 dst=f32 experts=4 tokens=30 K=64 N=128 create_us=4673 exec_wait_us=49
+PASS s8s8_bf16 src=s8 wei=s8 dst=bf16 experts=4 tokens=30 K=64 N=128 create_us=5237 exec_wait_us=46
+PASS qwen_l9_gemm1_s8s8_f32 src=s8 wei=s8 dst=f32 experts=256 tokens=8 K=2048 N=256 create_us=3296 exec_wait_us=222
+PASS qwen_l9_gemm1_s8s8_bf16 src=s8 wei=s8 dst=bf16 experts=256 tokens=8 K=2048 N=256 create_us=5798 exec_wait_us=258
+PASS qwen_l9_gemm2_s8s8_f32 src=s8 wei=s8 dst=f32 experts=256 tokens=8 K=128 N=2048 create_us=4159 exec_wait_us=210
+PASS qwen_l9_gemm2_s8s8_bf16 src=s8 wei=s8 dst=bf16 experts=256 tokens=8 K=128 N=2048 create_us=5142 exec_wait_us=227
+SUMMARY pass=8 fail=0
+Example passed on GPU.

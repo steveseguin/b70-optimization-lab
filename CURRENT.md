@@ -6,6 +6,33 @@ Date: 2026-06-12
 
 2026-06-12 continuation:
 
+- Ran the next route-exact layer-9 scratch-hook screen and a Qwen-shaped
+  oneDNN grouped INT8 dtype probe while the accepted backend was stopped for a
+  clean XPU window, then restored the backend and passed provenance. The
+  scratch `xpu_fused_moe(..., scratch=...)` path was exact but slower than the
+  base call over 16 captured layer-9 route offsets: base `xpu_fused_moe`
+  averaged `309.978 us/layer`, scratch `xpu_fused_moe` averaged
+  `346.038 us/layer`, preallocated staged averaged `250.135 us/layer`, and
+  all max diffs were `0.0`. Decision: do not wire scratch into the endpoint as
+  a standalone speed lever. The oneDNN probe confirmed grouped signed INT8
+  support for Qwen-like shapes: `s8` source, `s8` weights, per-token source
+  scales, per-expert-column weight scales, and f32/bf16 outputs all created
+  and executed on B70. Warm rerun Qwen-shaped execution was still slower than
+  current grouped-GEMM components: GEMM1 f32 `222 us`, GEMM2 f32 `210 us`,
+  versus current route-replay grouped GEMM components around `89-125 us`.
+  Decision: do not use oneDNN as two standalone GEMM calls; keep it only for
+  primitive-cache, fused island, or command-bundle/layerlet experiments.
+  Backend `/health` returned after `57s` and accepted provenance passed both
+  prefix cases plus all sentinel tokens. Artifacts:
+  `data/qwen36-quark-int8-moe-routecapture6-layer9-scratch-hook-20260612au.json`,
+  `.md`, `.log`,
+  `tools/onednn_grouped_int8_dtype_probe.cpp`,
+  `scripts/probe-onednn-grouped-int8-dtypes.sh`,
+  `data/qwen36-onednn-grouped-int8-qwenshape-probe-20260612au.json`,
+  `data/qwen36-onednn-grouped-int8-qwenshape-probe-20260612au.log`,
+  `data/qwen36-onednn-grouped-int8-qwenshape-probe-rerun-20260612au.log`, and
+  `data/qwen36-quark-int8-tp4-accepted-provenance-after-onednn-probes-20260612au.json`.
+
 - Completed the next oneDNN grouped-memory smoke after the first broad build
   probe. A GPU-only vendored oneDNN build with
   `DNNL_CPU_RUNTIME=NONE`, `DNNL_ENABLE_PRIMITIVE=MATMUL;SDPA`,

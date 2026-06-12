@@ -1,0 +1,83 @@
+{
+  "date": "2026-06-12",
+  "purpose": "Probe whether vendored oneDNN grouped-memory matmul can create and execute Qwen3.6-like signed INT8 grouped matmul primitives on B70.",
+  "model_scope": "nameistoken/Qwen3.6-35B-A3B-Quark-W8A8-INT8",
+  "quality_scope": "API and shape smoke only. This does not use real model weights and is not an endpoint quality or speed claim.",
+  "source_repo": "/home/steve/src/vllm-xpu-kernels",
+  "source_head": "28e1f5e74c15744b69cf3b760f6160ceabd15de0",
+  "probe_source": "tools/onednn_grouped_int8_dtype_probe.cpp",
+  "probe_script": "scripts/probe-onednn-grouped-int8-dtypes.sh",
+  "oneDNN_build": {
+    "build_dir": "/home/steve/src/vllm-xpu-kernels/build/onednn-grouped-matmul-gpuonly-20260612c",
+    "library": "/home/steve/src/vllm-xpu-kernels/build/onednn-grouped-matmul-gpuonly-20260612c/src/libdnnl.a",
+    "DNNL_EXPERIMENTAL_GROUPED_MEMORY": "ON",
+    "DNNL_ENABLE_PRIMITIVE": "MATMUL;SDPA",
+    "DNNL_ENABLE_PRIMITIVE_GPU_ISA": "XE2",
+    "DNNL_GPU_RUNTIME": "SYCL",
+    "DNNL_CPU_RUNTIME": "NONE"
+  },
+  "route_shape": {
+    "layer": "language_model.model.layers.9.mlp.experts",
+    "topk_ids": [59, 2, 243, 161, 255, 170, 200, 36],
+    "num_experts": 256,
+    "tokens": 8,
+    "gemm1": {
+      "K": 2048,
+      "N": 256
+    },
+    "gemm2": {
+      "K": 128,
+      "N": 2048
+    }
+  },
+  "initial_run": {
+    "log": "data/qwen36-onednn-grouped-int8-qwenshape-probe-20260612au.log",
+    "summary": "All 8 probe cases passed.",
+    "qwen_l9_gemm1_s8s8_f32": {
+      "create_us": 411234,
+      "exec_wait_us": 302
+    },
+    "qwen_l9_gemm1_s8s8_bf16": {
+      "create_us": 418281,
+      "exec_wait_us": 470
+    },
+    "qwen_l9_gemm2_s8s8_f32": {
+      "create_us": 373956,
+      "exec_wait_us": 326
+    },
+    "qwen_l9_gemm2_s8s8_bf16": {
+      "create_us": 404093,
+      "exec_wait_us": 346
+    }
+  },
+  "rerun": {
+    "log": "data/qwen36-onednn-grouped-int8-qwenshape-probe-rerun-20260612au.log",
+    "summary": "All 8 probe cases passed after oneDNN/JIT cache warmth.",
+    "qwen_l9_gemm1_s8s8_f32": {
+      "create_us": 3296,
+      "exec_wait_us": 222
+    },
+    "qwen_l9_gemm1_s8s8_bf16": {
+      "create_us": 5798,
+      "exec_wait_us": 258
+    },
+    "qwen_l9_gemm2_s8s8_f32": {
+      "create_us": 4159,
+      "exec_wait_us": 210
+    },
+    "qwen_l9_gemm2_s8s8_bf16": {
+      "create_us": 5142,
+      "exec_wait_us": 227
+    }
+  },
+  "comparison_context": {
+    "current_route_replay_gemm_components_us": "Layer-9 scratch-hook route replay in data/qwen36-quark-int8-moe-routecapture6-layer9-scratch-hook-20260612au.md measured current grouped GEMM components around 89-125 us per GEMM across the same rows=1 route offsets.",
+    "interpretation": "oneDNN grouped signed INT8 has the required basic dtype/scale shape support, but direct per-token grouped matmul execution is not competitive with the current XPU grouped-GEMM floor for Qwen rows=1 unless primitive reuse, post-op fusion, or command-bundle integration changes the overhead profile."
+  },
+  "decision": "Do not route the endpoint through oneDNN grouped matmul as two standalone GEMM calls. Keep oneDNN as a candidate backend for route-signature primitive caches, larger fused MoE islands, or command-bundle/layerlet experiments.",
+  "next_steps": [
+    "If continuing oneDNN, build a single-process replay that creates primitives once, reuses them across many route windows, and times execute without recreating memory objects.",
+    "Test oneDNN post-op or graph fusion only if it can absorb activation/gather or reduce command boundaries; two isolated oneDNN GEMMs are too slow.",
+    "Use the scratch-hook result to deprioritize xpu_fused_moe scratch wiring as an endpoint candidate: it is exact but slower than base xpu_fused_moe."
+  ]
+}
