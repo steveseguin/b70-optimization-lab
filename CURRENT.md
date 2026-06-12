@@ -6,6 +6,33 @@ Date: 2026-06-12
 
 2026-06-12 notes update:
 
+- Added a "Minimal Forward Boundary Split" to
+  `notes/2026-06-12-qwen36-next-bigger-bets.md`. This replaces the failed
+  heavy pre-sampler probe with low-overhead boundary events and identifies the
+  remaining hidden wait as model-forward-side. Diagnostic `20260612ch`
+  stayed near baseline at `97.707 tok/s` corrected p512/o128 and showed
+  `forward_end` carrying the wait: pure decode after first five decode events
+  had `forward_end` sync mean `3.470 ms` / median `3.778 ms`, while
+  `compute_logits_end` and `sample_start` were near-zero. Diagnostic
+  `20260612ci` split `forward_start` vs `forward_end` and stayed near baseline
+  at `99.123 tok/s`; `forward_start` sync mean was only `0.0020 ms`, while
+  `forward_end` was `3.674 ms` mean / `3.775 ms` median. Decision: the next
+  optimization target is inside model forward or its forward-stream
+  dependencies: MoE decode kernels, attention/GDN pieces, TP collectives inside
+  forward, XPU graph replay, rank skew, route skew, or stream ordering before
+  `forward_end`. Accepted TP4 was restored on `18080` with no diagnostic env
+  flags and passed provenance sentinels `4752`, `11436`, `198` plus the
+  no-thinking quality smoke. The launch script now has default-preserving env
+  overrides for diagnostic memory/context settings. New artifacts:
+  `patches/vllm-qwen36-presampler-boundary-minimal-20260612ci.diff`,
+  `data/qwen36-quark-int8-tp4-presampler-minboundary-nested-summary-20260612ch.json`,
+  `data/qwen36-quark-int8-tp4-presampler-forwardboundary-nested-summary-20260612ci.json`,
+  `data/qwen36-quark-int8-tp4-accepted-provenance-after-forwardboundary-20260612ci.json`,
+  and
+  `data/qwen36-quark-int8-tp4-accepted-quality-after-forwardboundary-nothink-smoke-20260612ci.json`.
+
+2026-06-12 notes update:
+
 - Added a "Pre-Sampler Probe Attempt And Bigger Ideas Addendum" to
   `notes/2026-06-12-qwen36-next-bigger-bets.md`. A heavier pre-sampler
   stage-split patch was captured, but the isolated diagnostic backend failed on

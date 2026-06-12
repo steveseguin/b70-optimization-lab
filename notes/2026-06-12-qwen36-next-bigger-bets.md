@@ -8847,3 +8847,99 @@ Bigger, bolder ideas worth keeping alive:
    is sharper: command, model revision, exact quality gates, route fixtures,
    timing summaries, xpu-smi/topology, Localmaxxing row, and the single target
    of removing about `5 ms/token` without changing output.
+
+## 2026-06-12 Minimal Forward Boundary Split
+
+This addendum records the lower-overhead replacement for the failed heavy
+pre-sampler probe. It is still diagnostic, not a promoted speed result. The
+important result is attribution: the remaining multi-ms wait is inside model
+forward, between `forward_start_event` and `forward_end_event`.
+
+Code/config changes:
+
+- `scripts/launch-qwen36-quark-int8-accepted.sh` now has env overrides for
+  `MAX_MODEL_LEN`, `MAX_NUM_BATCHED_TOKENS`, `MAX_NUM_SEQS`, and
+  `GPU_MEMORY_UTILIZATION`. Defaults are unchanged: 32K, 8192, 48, and 0.95.
+- `gpu_model_runner.py` now supports
+  `VLLM_XPU_PRE_SAMPLER_BOUNDARY_TIMING=1` with a comma-separated
+  `VLLM_XPU_PRE_SAMPLER_BOUNDARY_EVENTS` list. This records only selected
+  non-timing XPU events unless full
+  `VLLM_XPU_ASYNC_OUTPUT_DEVICE_TIMING=1` is also enabled.
+- The pre-sampler sync splitter no longer requires full copy-stream timing, so
+  boundary-only probes can avoid the heavy event path that previously triggered
+  device loss.
+
+Artifacts:
+
+- `patches/vllm-qwen36-presampler-boundary-minimal-20260612ci.diff`
+- `data/qwen36-quark-int8-tp4-presampler-minboundary-20260612ch.log`
+- `data/qwen36-quark-int8-tp4-presampler-minboundary-p512o128-metrics-20260612ch.json`
+- `data/qwen36-quark-int8-tp4-presampler-minboundary-summary-20260612ch.json`
+- `data/qwen36-quark-int8-tp4-presampler-minboundary-nested-summary-20260612ch.json`
+- `data/qwen36-quark-int8-tp4-presampler-forwardboundary-20260612ci.log`
+- `data/qwen36-quark-int8-tp4-presampler-forwardboundary-p512o128-metrics-20260612ci.json`
+- `data/qwen36-quark-int8-tp4-presampler-forwardboundary-summary-20260612ci.json`
+- `data/qwen36-quark-int8-tp4-presampler-forwardboundary-nested-summary-20260612ci.json`
+- `data/qwen36-quark-int8-tp4-accepted-restored-after-forwardboundary-20260612ci.log`
+- `data/qwen36-quark-int8-tp4-accepted-provenance-after-forwardboundary-20260612ci.json`
+- `data/qwen36-quark-int8-tp4-accepted-quality-after-forwardboundary-nothink-smoke-20260612ci.json`
+
+Run setup:
+
+- Diagnostic services used port `18081`.
+- Diagnostic-only headroom: `GPU_MEMORY_UTILIZATION=0.85`,
+  `MAX_NUM_SEQS=8`, 32K context unchanged.
+- Accepted service was restored afterward on port `18080` with default
+  settings and no diagnostic timing env vars.
+
+Measured facts:
+
+- Minimal boundary run `20260612ch` stayed near baseline:
+  p512/o128 corrected after-first decode was `97.707 tok/s`.
+- In `20260612ch`, pure decode after the first five decode events showed:
+  `forward_end` sync mean `3.470 ms`, median `3.778 ms`;
+  `compute_logits_end` sync mean `0.0178 ms`, median `0.0056 ms`;
+  `sample_start` sync mean `0.0087 ms`, median `0.0030 ms`.
+- Forward-boundary run `20260612ci` also stayed near baseline:
+  p512/o128 corrected after-first decode was `99.123 tok/s`.
+- In `20260612ci`, pure decode after the first five decode events showed:
+  `forward_start` sync mean `0.0020 ms`, median `0.0019 ms`;
+  `forward_end` sync mean `3.674 ms`, median `3.775 ms`;
+  `compute_logits_end` sync mean `0.0139 ms`, median `0.0054 ms`;
+  `sample_start` sync mean `0.0043 ms`, median `0.0019 ms`.
+- Accepted restore passed provenance sentinels `4752`, `11436`, and `198`.
+- Accepted restore passed the no-thinking quality smoke: exact canaries,
+  arithmetic, JSON, copy phrase, repeat stability, and baseline match.
+
+Decision:
+
+- Stop chasing input preparation, logits materialization, sampler, async output,
+  D2H token copy, token-list conversion, or output packaging for the current
+  `2x` target.
+- The next target is the model forward itself or forward-stream dependencies:
+  MoE decode kernels, attention/GDN pieces, TP collectives inside forward,
+  XPU graph launch/replay, rank skew, route skew, or stream ordering before
+  `forward_end`.
+
+Immediate next probes:
+
+1. **All-rank forward boundary timing.**
+   Record a low-overhead `forward_start`/`forward_end` pair per TP rank, with
+   route-window metadata and card IDs. If one rank owns the wait, chase route
+   skew/topology. If all ranks wait similarly, chase shared forward kernels or
+   graph replay.
+
+2. **Layer-family forward split.**
+   Use existing timing hooks or a narrow model-forward wrapper to split decode
+   forward into attention/GDN, MoE, residual/norm, and collectives. Keep event
+   count low; one family boundary per run if needed.
+
+3. **Route-window replay against MoE kernels.**
+   Since the bottleneck is now model-forward-side, prioritize captured Qwen3.6
+   route windows in grouped-GEMM/MoE harnesses over more sampler/output work.
+
+4. **Static c1 runner.**
+   A direct in-process decode loop remains useful: if it still shows about
+   `10 ms/token`, the model-forward attribution is confirmed outside server
+   scheduling. If it improves, vLLM graph/executor coordination around forward
+   is still part of the cost.

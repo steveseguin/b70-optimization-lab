@@ -6,6 +6,10 @@ SERVED_MODEL_NAME="${SERVED_MODEL_NAME:-qwen36-35b-a3b-fp8}"
 HOST="${HOST:-127.0.0.1}"
 PORT="${PORT:-18080}"
 LOG_PATH="${LOG_PATH:-/tmp/qwen36-quark-int8-tp4-gdn-reuseqkvzbaquant-clone-envclean-32k-noprefix.log}"
+MAX_MODEL_LEN="${MAX_MODEL_LEN:-32768}"
+MAX_NUM_BATCHED_TOKENS="${MAX_NUM_BATCHED_TOKENS:-8192}"
+MAX_NUM_SEQS="${MAX_NUM_SEQS:-48}"
+GPU_MEMORY_UTILIZATION="${GPU_MEMORY_UTILIZATION:-0.95}"
 if [[ -z "${COMPILATION_CONFIG:-}" ]]; then
   COMPILATION_CONFIG='{"cudagraph_mode":"PIECEWISE"}'
 fi
@@ -127,10 +131,10 @@ exec /home/steve/.venvs/vllm-xpu/bin/vllm serve "$MODEL_PATH" \
   --tensor-parallel-size 4 \
   --pipeline-parallel-size 1 \
   --distributed-executor-backend mp \
-  --max-model-len 32768 \
-  --max-num-batched-tokens 8192 \
-  --max-num-seqs 48 \
-  --gpu-memory-utilization 0.95 \
+  --max-model-len "$MAX_MODEL_LEN" \
+  --max-num-batched-tokens "$MAX_NUM_BATCHED_TOKENS" \
+  --max-num-seqs "$MAX_NUM_SEQS" \
+  --gpu-memory-utilization "$GPU_MEMORY_UTILIZATION" \
   --kv-cache-dtype auto \
   --no-enable-prefix-caching \
   --language-model-only \

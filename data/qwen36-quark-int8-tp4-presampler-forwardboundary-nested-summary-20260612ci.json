@@ -1,0 +1,141 @@
+{
+  "interpretation": [
+    "The forward_start boundary sync is near-zero, while forward_end carries the multi-ms wait.",
+    "For pure decode after the first five decode events, forward_end sync averages about 3.67 ms, while forward_start, compute_logits_end, and sample_start are near-zero after forward_end has synchronized.",
+    "This places the hidden wait inside model forward execution or its forward-stream dependencies, not in input preparation before forward launch, logits materialization, sampler, output copy, token-list conversion, or async output packaging."
+  ],
+  "prefill_events": 2,
+  "pure_decode": {
+    "copy_after_default_sync_ms": {
+      "count": 158,
+      "max": 0.083376,
+      "mean": 0.014608677215189873,
+      "median": 0.010139,
+      "min": 0.002965,
+      "p90": 0.01773430000000001,
+      "p95": 0.07049830000000001,
+      "p99": 0.07812663
+    },
+    "pre_sampler_stage_sync_ms": {
+      "compute_logits_end": {
+        "count": 158,
+        "max": 0.494408,
+        "mean": 0.014114645569620252,
+        "median": 0.005405,
+        "min": 0.003848,
+        "p90": 0.01381190000000002,
+        "p95": 0.018921650000000005,
+        "p99": 0.26443608000000274
+      },
+      "forward_end": {
+        "count": 158,
+        "max": 4.043127,
+        "mean": 3.6637798734177216,
+        "median": 3.7709159999999997,
+        "min": 2.692002,
+        "p90": 3.9049713,
+        "p95": 3.95881985,
+        "p99": 3.98620491
+      },
+      "forward_start": {
+        "count": 158,
+        "max": 0.008055,
+        "mean": 0.002076784810126582,
+        "median": 0.0019035,
+        "min": 0.001413,
+        "p90": 0.002209300000000001,
+        "p95": 0.0034803500000000005,
+        "p99": 0.004193930000000004
+      },
+      "sample_start": {
+        "count": 158,
+        "max": 0.070151,
+        "mean": 0.004466626582278481,
+        "median": 0.001954,
+        "min": 0.001763,
+        "p90": 0.005648000000000001,
+        "p95": 0.01041290000000002,
+        "p99": 0.06209364000000002
+      }
+    },
+    "sync_ms": {
+      "count": 158,
+      "max": 4.104993,
+      "mean": 3.707816696202532,
+      "median": 3.8066535,
+      "min": 2.712691,
+      "p90": 3.940295,
+      "p95": 3.9892276,
+      "p99": 4.01287
+    }
+  },
+  "pure_decode_after_first5": {
+    "copy_after_default_sync_ms": {
+      "count": 153,
+      "max": 0.083376,
+      "mean": 0.014873209150326798,
+      "median": 0.010199,
+      "min": 0.002965,
+      "p90": 0.017969800000000005,
+      "p95": 0.07075880000000001,
+      "p99": 0.07813367999999998
+    },
+    "pre_sampler_stage_sync_ms": {
+      "compute_logits_end": {
+        "count": 153,
+        "max": 0.494408,
+        "mean": 0.01393070588235294,
+        "median": 0.00536,
+        "min": 0.003848,
+        "p90": 0.011185,
+        "p95": 0.018506800000000004,
+        "p99": 0.28457387999999584
+      },
+      "forward_end": {
+        "count": 153,
+        "max": 4.043127,
+        "mean": 3.674252477124183,
+        "median": 3.775265,
+        "min": 2.692002,
+        "p90": 3.9051118000000002,
+        "p95": 3.9599246,
+        "p99": 3.9866667600000003
+      },
+      "forward_start": {
+        "count": 153,
+        "max": 0.008055,
+        "mean": 0.0020191960784313725,
+        "median": 0.001903,
+        "min": 0.001413,
+        "p90": 0.002082,
+        "p95": 0.0028776000000000006,
+        "p99": 0.003780199999999999
+      },
+      "sample_start": {
+        "count": 153,
+        "max": 0.070151,
+        "mean": 0.004252444444444444,
+        "median": 0.001944,
+        "min": 0.001763,
+        "p90": 0.005274000000000001,
+        "p95": 0.00882260000000001,
+        "p99": 0.062296039999999955
+      }
+    },
+    "sync_ms": {
+      "count": 153,
+      "max": 4.104993,
+      "mean": 3.717794274509804,
+      "median": 3.808917,
+      "min": 2.712691,
+      "p90": 3.9403300000000003,
+      "p95": 3.9895986000000003,
+      "p99": 4.0134
+    }
+  },
+  "pure_decode_after_first5_events": 153,
+  "pure_decode_events": 158,
+  "source_log": "data/qwen36-quark-int8-tp4-presampler-forwardboundary-20260612ci.log",
+  "source_summary": "data/qwen36-quark-int8-tp4-presampler-forwardboundary-summary-20260612ci.json",
+  "total_async_events": 160
+}
