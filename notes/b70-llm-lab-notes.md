@@ -578,3 +578,17 @@ vLLM/XPU FP8 work:
     clears the route-metadata side of the idea, but it is not a speed result.
     The next gate is a one-launch or persistent kernel that consumes these exact
     queues and proves output parity against `xpu_fused_moe`.
+20. Added `scripts/bench-qwen36-hotrep-route-plan-gemm.py` and a dry-run shape
+    gate for the hot64 route plans:
+    `data/qwen36-quark-int8-tp4-hotrep-route-plan-gemm-dryrun-20260612ag.json`
+    and `.md`. The dry-run shows the current exact full-table shape at
+    `128` rows, `256` experts, and `128.56 MiB` max estimated `gemm1`
+    allocation, while the hotrep per-rank one-launch shape is `32` rows,
+    mean/max `68.1` / `70` experts, and `35.15 MiB` max estimated `gemm1`
+    allocation. This is not a speed result; it is a clean lower-bound screen to
+    run in the next XPU maintenance window. The focused backlog now also tracks
+    bigger ideas around route-plan-to-persistent-kernel compilation,
+    graph-resident MoE dispatch, low-context hot-cache latency lanes, expert
+    work-stealing, per-layer route-class autotuning, XMX/DPAS roofline packets,
+    a C++/SYCL single-layer parity binary, and a verified public perf packet
+    once a material exact-model speed win exists.

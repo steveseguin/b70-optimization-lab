@@ -1438,3 +1438,119 @@ Decision:
 - If that kernel cannot beat the current exact grouped-GEMM replay on these
   same windows, hot64 should stay a planning artifact rather than a production
   memory carve-out.
+
+## 2026-06-12 Hotrep Route-Plan GEMM Shape Gate
+
+New script:
+
+- `scripts/bench-qwen36-hotrep-route-plan-gemm.py`.
+
+Artifacts:
+
+- Dry-run JSON:
+  `data/qwen36-quark-int8-tp4-hotrep-route-plan-gemm-dryrun-20260612ag.json`.
+- Dry-run summary:
+  `data/qwen36-quark-int8-tp4-hotrep-route-plan-gemm-dryrun-20260612ag.md`.
+
+Command:
+
+```bash
+python3 scripts/bench-qwen36-hotrep-route-plan-gemm.py \
+  --dry-run \
+  --route-plan-json \
+    data/qwen36-quark-int8-tp4-hotrep-route-plan-l9-route6-20260612af.json \
+    data/qwen36-quark-int8-tp4-hotrep-route-plan-l20-route5-20260612af.json \
+  --output-json data/qwen36-quark-int8-tp4-hotrep-route-plan-gemm-dryrun-20260612ag.json \
+  --markdown-out data/qwen36-quark-int8-tp4-hotrep-route-plan-gemm-dryrun-20260612ag.md
+```
+
+Purpose:
+
+- Convert the exact hot64 route work queues into the grouped-GEMM shapes that
+  a one-launch or persistent hot-replicated MoE layerlet would need to run.
+- Compare three cases without changing the live endpoint:
+  1. current exact full logical expert table,
+  2. ideal per-rank hot+cold one-launch lower bound,
+  3. hot and cold as separate per-rank launches.
+
+Dry-run shape result:
+
+- Current exact full table:
+  - rows/window: `128`.
+  - experts/table: `256`.
+  - active experts/window: mean `43.4`, max `58`.
+  - estimated allocation pressure: `128.56 MiB` for `gemm1`,
+    `66.52 MiB` for `gemm2`.
+- Hotrep per-rank one-launch shape:
+  - rows/rank/window: `32`.
+  - experts/rank/table: mean `68.1`, max `70`.
+  - active experts/rank/window: mean `21.9`, max `25`.
+  - estimated allocation pressure: max `35.15 MiB` for `gemm1`,
+    `18.18 MiB` for `gemm2`.
+- The two-launch hot/cold screen has the same shape pressure, but it will pay
+  the same launch-tax failure mode that already made compact hotset splitting
+  lose. Keep it as a diagnostic only.
+
+Decision:
+
+- This is a shape gate, not a speed result. It confirms the route-plan format
+  produces plausible smaller per-rank work tables before any endpoint or kernel
+  change.
+- The next clean-XPU benchmark should run this same script without `--dry-run`
+  after stopping the accepted endpoint, then restore the accepted backend and
+  rerun provenance plus a short speed sanity.
+- Promotion bar: a hotrep path only matters if the one-launch/persistent lower
+  bound beats the current exact full-table grouped-GEMM replay on these same
+  route windows. A two-launch hot/cold win is unlikely based on the previous
+  negative GPU result.
+
+Additional larger no-quality-loss ideas to track:
+
+1. **Route-plan to persistent-kernel compiler.**
+   Treat the hotrep JSON as an intermediate representation. Compile it into a
+   persistent worker queue with fixed rank-local hot tables, cold overflow
+   tasks, and deterministic gather maps. This avoids inventing the kernel API
+   blind and makes route replay, parity, and production metadata share one
+   format.
+
+2. **Graph-resident MoE dispatch sequencer.**
+   Move route packing, rows-per-expert metadata, and tiny scheduling decisions
+   into graph-stable device buffers. The goal is to reduce host/device fences
+   and stop making every decode token rebuild small MoE control structures.
+
+3. **Hot cache as a low-context latency-lane feature only.**
+   Do not spend the 32K production KV budget until a route-replay speed result
+   exists. If hot64 wins, test it first in a smaller static c1 lane where
+   `~2 GiB/rank` for all-layer hot cache is an intentional trade, not hidden
+   pressure on the general service.
+
+4. **Expert work-stealing inside a rank group.**
+   Static row balance is good in the current windows, but cold experts can
+   still create small irregular GEMMs. A persistent kernel could let idle
+   workers steal cold expert tiles while preserving exact output order through
+   the gather map.
+
+5. **Per-layer route-class autotune cache.**
+   Record a small menu of route classes per layer, prompt type, and decode
+   phase, then pick a kernel policy from that cache: full table, hotrep
+   one-launch, compact active-only, or persistent queue. The policy must be
+   selected from route metadata, not from generated text semantics.
+
+6. **XMX/DPAS roofline packet per MoE stage.**
+   For each route-window shape, measure whether the XPU kernel is compute-bound,
+   bandwidth-bound, or launch-bound. If hotrep reduces allocation but lowers
+   DPAS occupancy too much, persistent full-table scheduling may be the better
+   route than smaller tables.
+
+7. **C++/SYCL single-layer parity binary.**
+   Build one standalone executable that consumes captured hidden states,
+   top-k routes, Quark W8A8 expert weights/scales, and the hotrep gather map.
+   It should compare byte/logit-level against Python route replay while making
+   Level Zero timelines and XMX counters easier to collect.
+
+8. **Verified public perf packet after a real win.**
+   When a material result clears a threshold such as `105` or `120 tok/s`,
+   publish the Localmaxxing row with the exact command, dry-run shape artifact,
+   route-window timing artifact, provenance guard, and quality sentinel file.
+   The current `99.428 tok/s` row is still the only public exact-model B70 row
+   as of this check, so a real improvement will be easy to distinguish.
