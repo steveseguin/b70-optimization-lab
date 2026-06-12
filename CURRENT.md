@@ -6,6 +6,22 @@ Date: 2026-06-12
 
 2026-06-12 notes update:
 
+- Added prologue-inclusive MoE gate plumbing to
+  `scripts/bench-qwen36-int8-moe-kernels.py` and documented it in
+  `notes/2026-06-12-qwen36-next-bigger-bets.md`. Each benchmark row now emits
+  `prologue_inclusive_gate`, and each run emits
+  `prologue_inclusive_gate_summary`. The gate only counts full layerlet
+  timings that include route/remap, quant, GEMM1, activation, quant2, GEMM2,
+  and gather; isolated GEMM/prologue timings remain diagnostics. Defaults:
+  `--target-layerlet-us 160`, `--exactness-threshold 0`, and
+  `--min-speedup-vs-xpu 1.0`. Static validation passed
+  (`py_compile`, `--help`, `git diff --check`) and a synthetic no-device helper
+  check selected an exact `150 us` full-layerlet candidate correctly. No real
+  XPU microbench was run because the accepted endpoint is still live; the note
+  includes the deferred isolated benchmark command.
+
+2026-06-12 notes update:
+
 - Added a "Bigger Bolder Queue Refresh 20260612da" section to
   `notes/2026-06-12-qwen36-next-bigger-bets.md`. This records the next
   requested things-to-try after the accepted-lane manifest: graph-path tensor

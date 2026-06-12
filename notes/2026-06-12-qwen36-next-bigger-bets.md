@@ -10686,3 +10686,63 @@ Immediate priority:
 2. Make MoE timing prologue-inclusive.
 3. Run real-route grouped-GEMM/autotune on the first-decode fixture.
 4. Only then try another endpoint candidate.
+
+## Prologue-Inclusive MoE Gate Plumbing 20260612db
+
+Added the first concrete gate from the `20260612da` queue to
+`scripts/bench-qwen36-int8-moe-kernels.py`. This is measurement/reporting
+plumbing only; it does not change the live endpoint and does not claim a speed
+win.
+
+What changed:
+
+- Each benchmark row now emits `prologue_inclusive_gate`.
+- The run emits `prologue_inclusive_gate_summary`.
+- The gate only considers full MoE layerlet timings that include route/remap,
+  quant, GEMM1, activation, quant2, GEMM2, and gather. Isolated GEMM or
+  prologue timings remain diagnostics only.
+- A non-reference candidate must be exact within `--exactness-threshold`, meet
+  `--target-layerlet-us`, and beat the current `xpu_fused_moe` full-layerlet
+  timing by `--min-speedup-vs-xpu`.
+- The default target is `160 us/layerlet`, matching the current rough budget
+  for a plausible non-speculative `>200 tok/s` path. This is a gate target,
+  not a current result.
+- Markdown reports now include a "Prologue-Inclusive Gate" section with row
+  readiness, best exact non-reference candidate, speedup, and endpoint
+  promotion blockers.
+
+Validation run without touching the live serving endpoint:
+
+```bash
+python3 -m py_compile scripts/bench-qwen36-int8-moe-kernels.py
+
+/home/steve/.venvs/vllm-xpu/bin/python \
+  scripts/bench-qwen36-int8-moe-kernels.py --help
+
+git diff --check -- scripts/bench-qwen36-int8-moe-kernels.py
+```
+
+I also ran a synthetic no-device import check of the new gate helpers. It
+correctly marked an exact `150 us` full-layerlet candidate as ready against a
+`160 us` target and selected `fused_prologue_offset_gemm` as the best exact
+non-reference candidate.
+
+Deferred real XPU command for the next isolated benchmark window:
+
+```bash
+/home/steve/.venvs/vllm-xpu/bin/python scripts/bench-qwen36-int8-moe-kernels.py \
+  --route-jsonl data/qwen36-quark-int8-tp4-firstdecode-route-fixture-routes-20260612ct.jsonl \
+  --route-layer-regex 'layers[.]9[.]mlp[.]experts' \
+  --rows 1 --iterations 100 --warmup 20 \
+  --target-layerlet-us 160 \
+  --output-json data/qwen36-quark-int8-firstdecode-l9-r1-prologue-gate-20260612db.json \
+  --markdown-out data/qwen36-quark-int8-firstdecode-l9-r1-prologue-gate-20260612db.md
+```
+
+Decision:
+
+- Future MoE kernel candidates must pass this prologue-inclusive gate before
+  any endpoint experiment.
+- Passing this gate still is not enough for endpoint promotion; graph-path
+  tensor capture, accepted-lane quality gates, and a manifest update remain
+  mandatory.

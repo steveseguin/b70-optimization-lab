@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import os
 import re
 from pathlib import Path
@@ -1253,7 +1254,7 @@ def benchmark_rows(
                       "activation", "act_contiguous", "quant2", "gemm2",
                       "gather"))
 
-    return {
+    result = {
         "rows": rows,
         "moe_inputs": rows * topk,
         "hidden_size": hidden_size,
@@ -1307,6 +1308,13 @@ def benchmark_rows(
         "iterations": args.iterations,
         "warmup": args.warmup,
     }
+    result["prologue_inclusive_gate"] = build_prologue_inclusive_gate(
+        result,
+        exactness_threshold=args.exactness_threshold,
+        target_layerlet_us=args.target_layerlet_us,
+        min_speedup_vs_xpu=args.min_speedup_vs_xpu,
+    )
+    return result
 
 
 def _fmt(value: Any, digits: int = 3) -> str:
@@ -1314,6 +1322,229 @@ def _fmt(value: Any, digits: int = 3) -> str:
         return f"{float(value):.{digits}f}"
     except (TypeError, ValueError):
         return "n/a"
+
+
+def _maybe_float(value: Any) -> float | None:
+    if value is None:
+        return None
+    try:
+        parsed = float(value)
+    except (TypeError, ValueError):
+        return None
+    if math.isnan(parsed) or math.isinf(parsed):
+        return None
+    return parsed
+
+
+def build_prologue_inclusive_gate(
+    row: dict[str, Any],
+    *,
+    exactness_threshold: float,
+    target_layerlet_us: float,
+    min_speedup_vs_xpu: float,
+) -> dict[str, Any]:
+    """Attach a full-MoE-layerlet gate to a benchmark row.
+
+    The gate intentionally uses prologue-inclusive timings only. Isolated GEMM
+    or prologue wins are diagnostics; they are not promotion candidates unless
+    the full route/remap/quant/GEMM/activation/GEMM/gather layerlet also wins.
+    """
+
+    baseline_us = _maybe_float(row.get("total_us_mean"))
+    candidates = [
+        {
+            "name": "xpu_fused_moe_reference",
+            "us_mean": baseline_us,
+            "max_abs_diff_vs_xpu": 0.0,
+            "reference": True,
+        },
+        {
+            "name": "xpu_fused_moe_with_scratch",
+            "us_mean": _maybe_float(
+                row.get("xpu_fused_moe_scratch_total_us_mean")),
+            "max_abs_diff_vs_xpu": _maybe_float(
+                row.get("xpu_scratch_vs_xpu_fused_moe_max_abs_diff")),
+            "reference": False,
+        },
+        {
+            "name": "preallocated_staged",
+            "us_mean": _maybe_float(row.get("preallocated_staged_total_us_mean")),
+            "max_abs_diff_vs_xpu": _maybe_float(
+                row.get("preallocated_vs_xpu_fused_moe_max_abs_diff")),
+            "reference": False,
+        },
+        {
+            "name": "fused_prologue_staged",
+            "us_mean": _maybe_float(
+                row.get("fused_prologue_staged_total_us_mean")),
+            "max_abs_diff_vs_xpu": _maybe_float(
+                row.get("fused_prologue_vs_xpu_fused_moe_max_abs_diff")),
+            "reference": False,
+        },
+        {
+            "name": "fused_prologue_offset_gemm",
+            "us_mean": _maybe_float(
+                row.get("fused_prologue_offset_gemm_total_us_mean")),
+            "max_abs_diff_vs_xpu": _maybe_float(row.get(
+                "fused_prologue_offset_gemm_vs_xpu_fused_moe_max_abs_diff")),
+            "reference": False,
+        },
+        {
+            "name": "fused_prologue_active_offset_gemm",
+            "us_mean": _maybe_float(row.get(
+                "fused_prologue_active_offset_gemm_total_us_mean")),
+            "max_abs_diff_vs_xpu": _maybe_float(row.get(
+                "fused_prologue_active_offset_gemm_vs_xpu_fused_moe_max_abs_diff")),
+            "reference": False,
+        },
+    ]
+
+    usable_candidates = []
+    for candidate in candidates:
+        us_mean = candidate["us_mean"]
+        max_abs_diff = candidate["max_abs_diff_vs_xpu"]
+        exact = (
+            max_abs_diff is not None and max_abs_diff <= exactness_threshold)
+        speedup = (
+            baseline_us / us_mean
+            if baseline_us is not None and us_mean not in (None, 0.0)
+            else None
+        )
+        candidate["exact_within_threshold"] = exact
+        candidate["speedup_vs_xpu"] = speedup
+        candidate["target_layerlet_met"] = (
+            us_mean is not None and us_mean <= target_layerlet_us)
+        candidate["beats_xpu_min_speedup"] = (
+            (candidate.get("reference") is True) or
+            (speedup is not None and speedup >= min_speedup_vs_xpu))
+        if us_mean is not None:
+            usable_candidates.append(candidate)
+
+    exact_candidates = [
+        candidate for candidate in usable_candidates
+        if candidate["exact_within_threshold"]
+    ]
+    exact_nonreference = [
+        candidate for candidate in exact_candidates
+        if not candidate.get("reference")
+    ]
+    best_exact_any = (
+        min(exact_candidates, key=lambda candidate: candidate["us_mean"])
+        if exact_candidates else None
+    )
+    best_exact_nonreference = (
+        min(exact_nonreference, key=lambda candidate: candidate["us_mean"])
+        if exact_nonreference else None
+    )
+
+    candidate_ready_for_endpoint_gate = (
+        best_exact_nonreference is not None and
+        bool(best_exact_nonreference["target_layerlet_met"]) and
+        bool(best_exact_nonreference["beats_xpu_min_speedup"]))
+
+    if candidate_ready_for_endpoint_gate:
+        status = "candidate_layerlet_meets_speed_and_exactness_gate"
+    elif best_exact_nonreference is None:
+        status = "no_exact_nonreference_layerlet_candidate"
+    elif not best_exact_nonreference["beats_xpu_min_speedup"]:
+        status = "best_exact_nonreference_does_not_beat_current_xpu"
+    elif not best_exact_nonreference["target_layerlet_met"]:
+        status = "best_exact_nonreference_misses_target_layerlet_us"
+    else:
+        status = "candidate_gate_not_met"
+
+    return {
+        "scope": "prologue_inclusive_full_moe_layerlet",
+        "exactness_threshold": exactness_threshold,
+        "target_layerlet_us": target_layerlet_us,
+        "min_speedup_vs_xpu": min_speedup_vs_xpu,
+        "baseline_xpu_fused_moe_us_mean": baseline_us,
+        "candidates": candidates,
+        "best_exact_any": best_exact_any,
+        "best_exact_nonreference": best_exact_nonreference,
+        "candidate_ready_for_endpoint_gate": candidate_ready_for_endpoint_gate,
+        "status": status,
+        "non_kernel_only_rule": (
+            "Only full layerlet timings that include route/remap, quant, "
+            "GEMM1, activation, quant2, GEMM2, and gather can satisfy this "
+            "gate. Isolated GEMM/prologue timings are diagnostics only."
+        ),
+        "endpoint_promotion_blockers_after_gate": [
+            "graph_path_tensor_capture_not_proven",
+            "full_quality_gate_not_run",
+            "accepted_lane_manifest_not_updated",
+        ],
+    }
+
+
+def build_prologue_inclusive_gate_summary(
+    rows: list[dict[str, Any]],
+    *,
+    exactness_threshold: float,
+    target_layerlet_us: float,
+    min_speedup_vs_xpu: float,
+) -> dict[str, Any]:
+    gates = [row.get("prologue_inclusive_gate", {}) for row in rows]
+    best_nonreference = [
+        gate.get("best_exact_nonreference")
+        for gate in gates
+        if gate.get("best_exact_nonreference")
+    ]
+    best_any = [
+        gate.get("best_exact_any")
+        for gate in gates
+        if gate.get("best_exact_any")
+    ]
+
+    candidate_ready_rows = [
+        gate for gate in gates if gate.get("candidate_ready_for_endpoint_gate")
+    ]
+    all_rows_ready = len(gates) > 0 and len(candidate_ready_rows) == len(gates)
+    best_nonreference_overall = (
+        min(best_nonreference, key=lambda candidate: candidate["us_mean"])
+        if best_nonreference else None
+    )
+    best_any_overall = (
+        min(best_any, key=lambda candidate: candidate["us_mean"])
+        if best_any else None
+    )
+    worst_best_nonreference_us = (
+        max(
+            float(candidate["us_mean"])
+            for candidate in best_nonreference
+            if candidate.get("us_mean") is not None
+        )
+        if best_nonreference else None
+    )
+
+    if all_rows_ready:
+        status = "all_rows_have_exact_nonreference_layerlet_candidate"
+    elif candidate_ready_rows:
+        status = "some_rows_have_exact_nonreference_layerlet_candidate"
+    elif best_nonreference:
+        status = "exact_nonreference_candidates_exist_but_gate_not_met"
+    else:
+        status = "no_exact_nonreference_layerlet_candidate"
+
+    return {
+        "scope": "aggregate_prologue_inclusive_full_moe_layerlet",
+        "exactness_threshold": exactness_threshold,
+        "target_layerlet_us": target_layerlet_us,
+        "min_speedup_vs_xpu": min_speedup_vs_xpu,
+        "rows_checked": len(gates),
+        "rows_ready_for_endpoint_gate": len(candidate_ready_rows),
+        "all_rows_ready_for_endpoint_gate": all_rows_ready,
+        "best_exact_any_overall": best_any_overall,
+        "best_exact_nonreference_overall": best_nonreference_overall,
+        "worst_best_exact_nonreference_us_mean": worst_best_nonreference_us,
+        "status": status,
+        "endpoint_promotion_allowed": False,
+        "endpoint_promotion_note": (
+            "This benchmark can nominate a layerlet candidate only. Endpoint "
+            "promotion still requires graph-path tensor capture, accepted-lane "
+            "quality gates, and a manifest update."
+        ),
+    }
 
 
 def write_markdown(path: str, results: dict[str, Any]) -> None:
@@ -1383,6 +1614,16 @@ def write_markdown(path: str, results: dict[str, Any]) -> None:
             "- Route start indices: `"
             + ",".join(str(item) for item in results["route_start_indices"])
             + "`."
+        )
+    gate_summary = results.get("prologue_inclusive_gate_summary", {})
+    if gate_summary:
+        lines.append(
+            f"- Prologue-inclusive target: "
+            f"`{_fmt(gate_summary.get('target_layerlet_us'))} us/layerlet`."
+        )
+        lines.append(
+            f"- Exactness threshold: "
+            f"`{_fmt(gate_summary.get('exactness_threshold'), 6)}`."
         )
     lines.append("")
     lines.append("## Exactness")
@@ -1487,6 +1728,56 @@ def write_markdown(path: str, results: dict[str, Any]) -> None:
             f"{_fmt(comp.get('activation_plus_quant2'))} |"
         )
     lines.append("")
+    lines.append("## Prologue-Inclusive Gate")
+    lines.append("")
+    if gate_summary:
+        lines.append(f"- Gate status: `{gate_summary.get('status')}`.")
+        lines.append(
+            "- Rows ready for endpoint gate: "
+            f"`{gate_summary.get('rows_ready_for_endpoint_gate')}` / "
+            f"`{gate_summary.get('rows_checked')}`."
+        )
+        best_nonref = gate_summary.get("best_exact_nonreference_overall")
+        if best_nonref:
+            lines.append(
+                "- Best exact non-reference full-layerlet candidate: "
+                f"`{best_nonref.get('name')}` at "
+                f"`{_fmt(best_nonref.get('us_mean'))} us` "
+                f"(`{_fmt(best_nonref.get('speedup_vs_xpu'))}x` vs current "
+                "`xpu_fused_moe`)."
+            )
+        else:
+            lines.append(
+                "- No exact non-reference full-layerlet candidate was available."
+            )
+        lines.append(
+            "- Endpoint promotion allowed by this artifact: "
+            f"`{bool(gate_summary.get('endpoint_promotion_allowed'))}`."
+        )
+        lines.append(
+            "- Endpoint promotion still requires graph-path tensor capture, "
+            "accepted-lane quality gates, and a manifest update."
+        )
+    else:
+        lines.append("- No prologue-inclusive gate summary was present.")
+    lines.append("")
+    lines.append(
+        "| rows | route start | best exact nonref | best nonref us | "
+        "speedup vs xpu | target met | status |"
+    )
+    lines.append("|---:|---:|---|---:|---:|---:|---|")
+    for row in rows:
+        gate = row.get("prologue_inclusive_gate", {})
+        candidate = gate.get("best_exact_nonreference") or {}
+        lines.append(
+            f"| {row.get('rows')} | {row.get('route_start_index')} | "
+            f"{candidate.get('name', 'none')} | "
+            f"{_fmt(candidate.get('us_mean'))} | "
+            f"{_fmt(candidate.get('speedup_vs_xpu'))} | "
+            f"{candidate.get('target_layerlet_met', False)} | "
+            f"{gate.get('status', 'n/a')} |"
+        )
+    lines.append("")
     lines.append("## Decision")
     lines.append("")
     if fused:
@@ -1540,6 +1831,34 @@ def main() -> int:
     parser.add_argument("--iterations", type=int, default=50)
     parser.add_argument("--warmup", type=int, default=10)
     parser.add_argument("--seed", type=int, default=20260609)
+    parser.add_argument(
+        "--target-layerlet-us",
+        type=float,
+        default=160.0,
+        help=(
+            "Full MoE layerlet mean latency target for a plausible >200 tok/s "
+            "single-request decode lane. This gate includes prologue and "
+            "gather work; isolated kernel timings do not satisfy it."
+        ),
+    )
+    parser.add_argument(
+        "--exactness-threshold",
+        type=float,
+        default=0.0,
+        help=(
+            "Maximum allowed max_abs_diff versus xpu_fused_moe for a candidate "
+            "to count as no-quality-loss in this microbench gate."
+        ),
+    )
+    parser.add_argument(
+        "--min-speedup-vs-xpu",
+        type=float,
+        default=1.0,
+        help=(
+            "Minimum full-layerlet speedup over the current xpu_fused_moe "
+            "reference required for a non-reference candidate."
+        ),
+    )
     parser.add_argument("--dtype", choices=("bf16", "fp16"), default="bf16")
     parser.add_argument("--device", default="xpu")
     parser.add_argument("--output-json")
@@ -1648,6 +1967,13 @@ def main() -> int:
         "model_config": args.model_config,
         "tp_size": args.tp_size,
         "fused_silu_quant_enabled": args.enable_fused_silu_quant,
+        "prologue_inclusive_gate_summary":
+        build_prologue_inclusive_gate_summary(
+            benchmark_results,
+            exactness_threshold=args.exactness_threshold,
+            target_layerlet_us=args.target_layerlet_us,
+            min_speedup_vs_xpu=args.min_speedup_vs_xpu,
+        ),
         "route_metadata": route_metadata,
         "route_packing_metadata": route_packing_metadata,
         "route_start_indices": route_start_indices if route_topk_rows else None,
