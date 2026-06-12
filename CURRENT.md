@@ -6,6 +6,24 @@ Date: 2026-06-12
 
 2026-06-12 notes update:
 
+- Added `scripts/qwen36-accepted-lane-manifest.py` and a clean accepted-lane
+  manifest for future speed candidates:
+  `data/qwen36-quark-int8-tp4-accepted-lane-manifest-20260612cz.{json,md}`.
+  The manifest pins the live endpoint health, clean cache root digest
+  (`4221` files, `1.184728587 GB`,
+  `754a30c22b94952565827ce6e0431c6589da23c3e540cebb3e15909313bef54e`),
+  runtime extension SHA256s/symbols, launcher diagnostic-env scrub, source repo
+  heads/dirty counts, p512/o512/c1 speed (`99.188 tok/s` corrected,
+  `10.063 ms/token`), quality-smoke pass, and old-token provenance status. Its
+  gate status is `accepted_quality_baseline_with_stale_token_sentinel`: the
+  current accepted lane is healthy and quality-smoke clean, but strict
+  old-cache token sentinels are not a valid standalone promotion gate for fresh
+  AOT caches. Next speed candidates must beat this manifest and include the
+  same cache/binary/quality evidence plus graph-path tensor parity for kernel
+  changes.
+
+2026-06-12 notes update:
+
 - Added a route-fixture offset gate and bigger-bets refresh to
   `notes/2026-06-12-qwen36-next-bigger-bets.md`, plus
   `scripts/qwen36-offset-route-gate-summary.py`. The no-server eager replay

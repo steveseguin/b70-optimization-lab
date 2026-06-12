@@ -32,6 +32,52 @@ Current speed anchor:
   MoE/kernel architecture improvement. Launch flags alone are unlikely to get
   there.
 
+## Accepted Lane Manifest And Candidate Gate 20260612cz
+
+Added a cache-versioned manifest for the current accepted Qwen3.6 Quark W8A8
+INT8 lane:
+
+- `scripts/qwen36-accepted-lane-manifest.py`
+- `data/qwen36-quark-int8-tp4-accepted-lane-manifest-20260612cz.json`
+- `data/qwen36-quark-int8-tp4-accepted-lane-manifest-20260612cz.md`
+
+What the manifest pins:
+
+- Live endpoint health on `http://127.0.0.1:18080`.
+- Clean accepted cache root:
+  `/mnt/fast-ai/vllm-cache-exp/qwen36-35b-a3b-quark-int8-tp4-accepted-clean-after-routeparity-20260612cy`.
+- Cache tree digest: `4221` files, `1184728587` bytes,
+  `754a30c22b94952565827ce6e0431c6589da23c3e540cebb3e15909313bef54e`.
+- Runtime extension hashes and symbol presence. The live `_xpu_C.abi3.so`
+  exposes the base W8A8 INT8 grouped GEMM symbol and does not expose the
+  rejected offset/active-offset or oneDNN sidecar symbols.
+- Launcher scrub state. `scripts/launch-qwen36-quark-int8-accepted.sh` now
+  unsets the rejected diagnostic MoE env vars before serving.
+- Runtime source repo heads and dirty counts for `/home/steve/src/vllm` and
+  `/home/steve/src/vllm-xpu-kernels`.
+- p512/o512/c1 speed baseline:
+  `99.188 tok/s` corrected decode, `97.893 tok/s` e2e,
+  `10.063 ms/token` vLLM decode, and `78.4 ms` client TTFT.
+- Quality-smoke state: pass, including baseline comparison.
+- Old exact-token provenance state: fail on this fresh clean cache. This is
+  recorded separately instead of being hidden.
+
+Gate status:
+
+- `accepted_quality_baseline_with_stale_token_sentinel`
+
+Meaning:
+
+- This is the accepted quality/performance baseline for the next speed branch,
+  but not a claim that the old token-sentinel file is cache-invariant.
+- Future candidates must beat the manifest speed while passing the no-thinking
+  quality suite and must report old-token sentinels separately from
+  cache-versioned clean-cache token baselines.
+- Kernel-path candidates also need graph-path or live compiled-path tensor
+  parity before endpoint promotion.
+- The manifest makes the `>200 tok/s` work more actionable: a candidate now
+  has a single baseline packet to beat and a concrete evidence format to copy.
+
 ## W8A8 Offset Route Gate, Clean Restore Caveat, And Bigger Bets 20260612cy
 
 Added after replaying the first-decode route fixture through the offset-capable

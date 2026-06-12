@@ -1,0 +1,447 @@
+{
+  "accepted_lane_gate": {
+    "health_ok": true,
+    "launcher_scrub_ok": true,
+    "notes": [
+      "No-thinking quality smoke and baseline comparison passed.",
+      "Old exact-token provenance did not pass on this clean cache; treat token sentinels as cache-versioned.",
+      "Accepted launcher scrubs rejected diagnostic MoE env vars.",
+      "p512/o512/c1 speed artifact is present and parseable."
+    ],
+    "quality_ok": true,
+    "speed_ok": true,
+    "status": "accepted_quality_baseline_with_stale_token_sentinel",
+    "strict_old_token_provenance_ok": false
+  },
+  "base_url": "http://127.0.0.1:18080",
+  "cache_root": {
+    "exists": true,
+    "file_count": 4221,
+    "largest_files": [
+      {
+        "path": "vllm/torch_compile_cache/87cd0a63d8/rank_3_0/backbone/artifact_compile_range_1_8192_subgraph_3",
+        "size_bytes": 16924231
+      },
+      {
+        "path": "vllm/torch_compile_cache/87cd0a63d8/rank_2_0/backbone/artifact_compile_range_1_8192_subgraph_3",
+        "size_bytes": 16924231
+      },
+      {
+        "path": "vllm/torch_compile_cache/87cd0a63d8/rank_0_0/backbone/artifact_compile_range_1_8192_subgraph_3",
+        "size_bytes": 16924136
+      },
+      {
+        "path": "vllm/torch_compile_cache/87cd0a63d8/rank_1_0/backbone/artifact_compile_range_1_8192_subgraph_3",
+        "size_bytes": 16923943
+      },
+      {
+        "path": "vllm/torch_compile_cache/87cd0a63d8/rank_3_0/backbone/artifact_compile_range_1_8192_subgraph_7",
+        "size_bytes": 16920349
+      },
+      {
+        "path": "vllm/torch_compile_cache/87cd0a63d8/rank_3_0/backbone/artifact_compile_range_1_8192_subgraph_39",
+        "size_bytes": 16920349
+      },
+      {
+        "path": "vllm/torch_compile_cache/87cd0a63d8/rank_3_0/backbone/artifact_compile_range_1_8192_subgraph_35",
+        "size_bytes": 16920349
+      },
+      {
+        "path": "vllm/torch_compile_cache/87cd0a63d8/rank_3_0/backbone/artifact_compile_range_1_8192_subgraph_31",
+        "size_bytes": 16920349
+      },
+      {
+        "path": "vllm/torch_compile_cache/87cd0a63d8/rank_3_0/backbone/artifact_compile_range_1_8192_subgraph_27",
+        "size_bytes": 16920349
+      },
+      {
+        "path": "vllm/torch_compile_cache/87cd0a63d8/rank_3_0/backbone/artifact_compile_range_1_8192_subgraph_23",
+        "size_bytes": 16920349
+      },
+      {
+        "path": "vllm/torch_compile_cache/87cd0a63d8/rank_3_0/backbone/artifact_compile_range_1_8192_subgraph_19",
+        "size_bytes": 16920349
+      },
+      {
+        "path": "vllm/torch_compile_cache/87cd0a63d8/rank_3_0/backbone/artifact_compile_range_1_8192_subgraph_15",
+        "size_bytes": 16920349
+      },
+      {
+        "path": "vllm/torch_compile_cache/87cd0a63d8/rank_3_0/backbone/artifact_compile_range_1_8192_subgraph_11",
+        "size_bytes": 16920349
+      },
+      {
+        "path": "vllm/torch_compile_cache/87cd0a63d8/rank_2_0/backbone/artifact_compile_range_1_8192_subgraph_7",
+        "size_bytes": 16920349
+      },
+      {
+        "path": "vllm/torch_compile_cache/87cd0a63d8/rank_2_0/backbone/artifact_compile_range_1_8192_subgraph_39",
+        "size_bytes": 16920349
+      },
+      {
+        "path": "vllm/torch_compile_cache/87cd0a63d8/rank_2_0/backbone/artifact_compile_range_1_8192_subgraph_35",
+        "size_bytes": 16920349
+      }
+    ],
+    "path": "/mnt/fast-ai/vllm-cache-exp/qwen36-35b-a3b-quark-int8-tp4-accepted-clean-after-routeparity-20260612cy",
+    "sha256": "754a30c22b94952565827ce6e0431c6589da23c3e540cebb3e15909313bef54e",
+    "total_bytes": 1184728587
+  },
+  "created_at_unix": 1781301368.8966713,
+  "endpoint": {
+    "health": {
+      "body": null,
+      "elapsed_ms": 17.10659102536738,
+      "ok": true,
+      "status": 200
+    },
+    "models": {
+      "body": {
+        "data": [
+          {
+            "created": 1781301368,
+            "id": "qwen36-35b-a3b-fp8",
+            "max_model_len": 32768,
+            "object": "model",
+            "owned_by": "vllm",
+            "parent": null,
+            "permission": [
+              {
+                "allow_create_engine": false,
+                "allow_fine_tuning": false,
+                "allow_logprobs": true,
+                "allow_sampling": true,
+                "allow_search_indices": false,
+                "allow_view": true,
+                "created": 1781301368,
+                "group": null,
+                "id": "modelperm-9b74eca0ee9b70df",
+                "is_blocking": false,
+                "object": "model_permission",
+                "organization": "*"
+              }
+            ],
+            "root": "/mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118"
+          }
+        ],
+        "object": "list"
+      },
+      "elapsed_ms": 0.6992300041019917,
+      "ok": true,
+      "status": 200
+    }
+  },
+  "extensions": [
+    {
+      "exists": true,
+      "is_dir": false,
+      "is_file": true,
+      "mtime_unix": 1781144774.5171573,
+      "nm_returncode": 0,
+      "path": "/home/steve/src/vllm-xpu-kernels/vllm_xpu_kernels/_xpu_C.abi3.so",
+      "sha256": "d2c6cc8d1cc92c3671a3a9357bed6c5783bdbcf505ee663d16f2e42f1e46ce8c",
+      "size_bytes": 69925576,
+      "symbols": {
+        "cutlass_grouped_gemm_w8a8_int8_active_offset_interface": false,
+        "cutlass_grouped_gemm_w8a8_int8_interface": true,
+        "cutlass_grouped_gemm_w8a8_int8_offsets_interface": false,
+        "qwen36_moe_onednn_sidecar": false
+      }
+    },
+    {
+      "exists": true,
+      "is_dir": false,
+      "is_file": true,
+      "mtime_unix": 1781127907.7456062,
+      "nm_returncode": 0,
+      "path": "/home/steve/src/vllm-xpu-kernels/vllm_xpu_kernels/libgrouped_gemm_xe_2.so",
+      "sha256": "d2d2ecdf96f8d56549baa708cc46658827f601fb55141d6ab793fb1a24a5009e",
+      "size_bytes": 2928072,
+      "symbols": {
+        "cutlass_grouped_gemm_w8a8_int8_active_offset_interface": false,
+        "cutlass_grouped_gemm_w8a8_int8_interface": false,
+        "cutlass_grouped_gemm_w8a8_int8_offsets_interface": false,
+        "qwen36_moe_onednn_sidecar": false
+      }
+    },
+    {
+      "exists": true,
+      "is_dir": false,
+      "is_file": true,
+      "mtime_unix": 1781144774.5531573,
+      "nm_returncode": 0,
+      "path": "/home/steve/src/vllm-xpu-kernels/vllm_xpu_kernels/libgdn_attn_kernels_xe_2.so",
+      "sha256": "c0db2d8c90295c1f26bac00a4851a90e65ff36f40b42d1632e4532f3c388bb3f",
+      "size_bytes": 6153928,
+      "symbols": {
+        "cutlass_grouped_gemm_w8a8_int8_active_offset_interface": false,
+        "cutlass_grouped_gemm_w8a8_int8_interface": false,
+        "cutlass_grouped_gemm_w8a8_int8_offsets_interface": false,
+        "qwen36_moe_onednn_sidecar": false
+      }
+    }
+  ],
+  "git_repositories": [
+    {
+      "branch": null,
+      "dirty_count": 77,
+      "dirty_sample": [
+        " M benchmarks/kernels/benchmark_moe.py",
+        " M vllm/_custom_ops.py",
+        " M vllm/_xpu_ops.py",
+        " M vllm/benchmarks/latency.py",
+        " M vllm/benchmarks/throughput.py",
+        " M vllm/compilation/cuda_graph.py",
+        " M vllm/compilation/passes/fusion/minimax_qk_norm_fusion.py",
+        " M vllm/compilation/passes/fusion/rms_quant_fusion.py",
+        " M vllm/compilation/passes/fusion/sequence_parallelism.py",
+        " M vllm/compilation/passes/pass_manager.py",
+        " M vllm/compilation/piecewise_backend.py",
+        " M vllm/config/vllm.py",
+        " M vllm/distributed/device_communicators/all2all.py",
+        " M vllm/distributed/device_communicators/base_device_communicator.py",
+        " M vllm/distributed/device_communicators/xpu_communicator.py",
+        " M vllm/distributed/kv_transfer/kv_connector/v1/offloading/scheduler.py",
+        " M vllm/distributed/kv_transfer/kv_connector/v1/offloading/worker.py",
+        " M vllm/distributed/parallel_state.py",
+        " M vllm/envs.py",
+        " M vllm/model_executor/kernels/linear/__init__.py",
+        " M vllm/model_executor/kernels/linear/scaled_mm/xpu.py",
+        " M vllm/model_executor/layers/fused_moe/__init__.py",
+        " M vllm/model_executor/layers/fused_moe/config.py",
+        " M vllm/model_executor/layers/fused_moe/experts/xpu_moe.py"
+      ],
+      "exists": true,
+      "head": "c51df43005726a09c6eb7348e8c1b00501c70a8e",
+      "path": "/home/steve/src/vllm"
+    },
+    {
+      "branch": "main",
+      "dirty_count": 39,
+      "dirty_sample": [
+        " M CMakeLists.txt",
+        " M cmake/Modules/FindoneDNN.cmake",
+        " M csrc/layernorm_quant.cpp",
+        " M csrc/xpu/gdn_attn/causal_conv1d.hpp",
+        " M csrc/xpu/gdn_attn/gdn_attn_interface.cpp",
+        " M csrc/xpu/gdn_attn/xe_2/chunk_causal_conv1d_xe2.hpp",
+        " M csrc/xpu/grouped_gemm/grouped_gemm_interface.cpp",
+        " M csrc/xpu/grouped_gemm/grouped_gemm_interface.h",
+        " M csrc/xpu/grouped_gemm/xe_2/gemm_xe2.hpp",
+        " M csrc/xpu/grouped_gemm/xe_2/gemm_xe2_policy.hpp",
+        " M csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2.cpp",
+        " M csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2.h",
+        " M csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2.hpp",
+        " M csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2_interface.hpp",
+        " M csrc/xpu/onednn/onednn_ext.h",
+        " M csrc/xpu/onednn/onednn_matmul.cpp",
+        " M csrc/xpu/ops.h",
+        " M csrc/xpu/torch_bindings.cpp",
+        " M vllm_xpu_kernels/fused_moe_interface.py",
+        "?? csrc/xpu/onednn/int8_gemm_w8a8.h",
+        "?? csrc/xpu/onednn/qwen36_moe_sidecar.cpp",
+        "?? csrc/xpu/quantization/",
+        "?? vllm_xpu_kernels/_C.abi3.so.backup-20260610-gdn-rmsgate-precopy",
+        "?? vllm_xpu_kernels/_C.abi3.so.backup-rmsint8-20260610-102022"
+      ],
+      "exists": true,
+      "head": "28e1f5e74c15744b69cf3b760f6160ceabd15de0",
+      "path": "/home/steve/src/vllm-xpu-kernels"
+    }
+  ],
+  "kind": "qwen36_accepted_lane_manifest",
+  "launcher": {
+    "exists": true,
+    "export_vars": [
+      "CCL_ATL_TRANSPORT",
+      "CCL_KVS_IFACE",
+      "CCL_TOPO_P2P_ACCESS",
+      "FI_TCP_IFACE",
+      "HF_HOME",
+      "HUGGINGFACE_HUB_CACHE",
+      "LD_LIBRARY_PATH",
+      "ONEAPI_DEVICE_SELECTOR",
+      "PYTHONPATH",
+      "TORCHINDUCTOR_CACHE_DIR",
+      "VLLM_ALLOW_LONG_MAX_MODEL_LEN",
+      "VLLM_CACHE_ROOT",
+      "VLLM_TARGET_DEVICE",
+      "VLLM_USE_V1",
+      "VLLM_XPU_COMPILE_ALLREDUCE_CUSTOM_OP",
+      "VLLM_XPU_COW_VERIFIER_TRACE_FILE",
+      "VLLM_XPU_COW_VERIFIER_TRACE_MAX_LINES",
+      "VLLM_XPU_COW_WORKER_TRACE_FILE",
+      "VLLM_XPU_COW_WORKER_TRACE_MAX_LINES",
+      "VLLM_XPU_COW_WORKER_TRACE_RANK",
+      "VLLM_XPU_CUSTOM_ALLREDUCE_CLONE_INPUT",
+      "VLLM_XPU_CUSTOM_ALLREDUCE_GRAPH_CLONE_INPUT",
+      "VLLM_XPU_ENABLE_XPU_GRAPH",
+      "VLLM_XPU_FORCE_GRAPH_WITH_COMM",
+      "VLLM_XPU_FORCE_QUARK_REPACK",
+      "VLLM_XPU_GDN_REUSE_QKVZ_BA_QUANT",
+      "VLLM_XPU_GRAPH_NOOP_COMM_CAPTURE",
+      "VLLM_XPU_MODEL_INPUT_TRACE_FILE",
+      "VLLM_XPU_MODEL_INPUT_TRACE_MAX_LINES",
+      "VLLM_XPU_MODEL_INPUT_TRACE_RANK",
+      "VLLM_XPU_QUARK_W8A8_MOE",
+      "VLLM_XPU_USE_CUSTOM_OP_COLLECTIVES",
+      "XPU_GRAPH",
+      "ZE_AFFINITY_MASK"
+    ],
+    "is_dir": false,
+    "is_file": true,
+    "mtime_unix": 1781300514.7543569,
+    "path": "scripts/launch-qwen36-quark-int8-accepted.sh",
+    "rejected_diagnostic_scrub": {
+      "VLLM_XPU_FUSED_MOE_FUSE_SILU_QUANT": true,
+      "VLLM_XPU_MOE_LIVE_ABI_FILE": true,
+      "VLLM_XPU_MOE_LIVE_ABI_MAX_LINES": true,
+      "VLLM_XPU_MOE_ONEDNN_SIDECAR_DRY_DESCRIPTORS": true,
+      "VLLM_XPU_MOE_ONEDNN_SIDECAR_OFFSETS": true,
+      "VLLM_XPU_MOE_ONEDNN_SIDECAR_PROBE": true,
+      "VLLM_XPU_W8A8_USE_OFFSETS": true
+    },
+    "scrub_complete": true,
+    "sha256": "24e749dc42824d7148af76e35ea08aae18b7ce447548441c3c640d8e660364ff",
+    "size_bytes": 6440,
+    "unset_vars": [
+      "CCL_WORKER_COUNT",
+      "CCL_ZE_IPC_EXCHANGE",
+      "VLLM_XPU_BLOCK_TABLE_DIRTY_COMMIT",
+      "VLLM_XPU_BLOCK_TABLE_DIRTY_COMMIT_LOG_EVERY",
+      "VLLM_XPU_COW_VERIFIER_TRACE_FILE",
+      "VLLM_XPU_COW_VERIFIER_TRACE_MAX_LINES",
+      "VLLM_XPU_COW_WORKER_TRACE_FILE",
+      "VLLM_XPU_COW_WORKER_TRACE_MAX_LINES",
+      "VLLM_XPU_COW_WORKER_TRACE_RANK",
+      "VLLM_XPU_DECODE_TIMING",
+      "VLLM_XPU_DECODE_TIMING_EXCLUDE_LABEL_REGEX",
+      "VLLM_XPU_DECODE_TIMING_LABEL_REGEX",
+      "VLLM_XPU_DECODE_TIMING_PRINT_EVERY",
+      "VLLM_XPU_DECODE_TIMING_RANK",
+      "VLLM_XPU_DECODE_TIMING_SKIP_FIRST",
+      "VLLM_XPU_DECODE_TIMING_STEP_EVERY",
+      "VLLM_XPU_DECODE_TIMING_STEP_SKIP_FIRST",
+      "VLLM_XPU_DECODE_TIMING_STEP_SUMMARY",
+      "VLLM_XPU_DECODE_TIMING_SUMMARY",
+      "VLLM_XPU_DECODE_TIMING_SYNC",
+      "VLLM_XPU_DECODE_TIMING_SYNC_EXCLUDE_LABEL_REGEX",
+      "VLLM_XPU_DECODE_TIMING_SYNC_LABEL_REGEX",
+      "VLLM_XPU_DEDUP_INT8_QUANT",
+      "VLLM_XPU_FUSED_MOE_FUSE_SILU_QUANT",
+      "VLLM_XPU_GDN_SKIP_DECODE_CONV_TMP",
+      "VLLM_XPU_MODEL_INPUT_TRACE_FILE",
+      "VLLM_XPU_MODEL_INPUT_TRACE_MAX_LINES",
+      "VLLM_XPU_MODEL_INPUT_TRACE_RANK",
+      "VLLM_XPU_MOE_LIVE_ABI_FILE",
+      "VLLM_XPU_MOE_LIVE_ABI_MAX_LINES",
+      "VLLM_XPU_MOE_ONEDNN_SIDECAR_DRY_DESCRIPTORS",
+      "VLLM_XPU_MOE_ONEDNN_SIDECAR_OFFSETS",
+      "VLLM_XPU_MOE_ONEDNN_SIDECAR_PROBE",
+      "VLLM_XPU_W8A8_USE_OFFSETS"
+    ]
+  },
+  "log": {
+    "aot_path_records": [
+      {
+        "exists": true,
+        "is_dir": false,
+        "is_file": true,
+        "mtime_unix": 1781300634.492582,
+        "path": "/mnt/fast-ai/vllm-cache-exp/qwen36-35b-a3b-quark-int8-tp4-accepted-clean-after-routeparity-20260612cy/vllm/torch_compile_cache/torch_aot_compile/c4bb6b79350bfabbe51d07437b11dc2a968f27b5e12cc0b20821a0579a5d0ef3/rank_0_0/model",
+        "sha256": "db301eff5a22808037cf079aff859ca52a3a2077fbf8577e827d845f929bfee8",
+        "size_bytes": 7146252
+      }
+    ],
+    "aot_paths": [
+      "/mnt/fast-ai/vllm-cache-exp/qwen36-35b-a3b-quark-int8-tp4-accepted-clean-after-routeparity-20260612cy/vllm/torch_compile_cache/torch_aot_compile/c4bb6b79350bfabbe51d07437b11dc2a968f27b5e12cc0b20821a0579a5d0ef3/rank_0_0/model"
+    ],
+    "available_kv_cache_memory_gib": 20.67,
+    "cache_directories": [
+      "/mnt/fast-ai/vllm-cache-exp/qwen36-35b-a3b-quark-int8-tp4-accepted-clean-after-routeparity-20260612cy/vllm/torch_compile_cache/87cd0a63d8/rank_0_0/backbone"
+    ],
+    "compilation_seconds": null,
+    "env_warning_names": [
+      "VLLM_USE_V1",
+      "VLLM_XPU_COMPILE_ALLREDUCE_CUSTOM_OP",
+      "VLLM_XPU_CUSTOM_ALLREDUCE_CLONE_INPUT",
+      "VLLM_XPU_CUSTOM_ALLREDUCE_GRAPH_CLONE_INPUT",
+      "VLLM_XPU_FORCE_GRAPH_WITH_COMM",
+      "VLLM_XPU_FORCE_QUARK_REPACK",
+      "VLLM_XPU_GRAPH_NOOP_COMM_CAPTURE",
+      "VLLM_XPU_QUARK_W8A8_MOE",
+      "VLLM_XPU_USE_CUSTOM_OP_COLLECTIVES"
+    ],
+    "exists": true,
+    "gpu_kv_cache_tokens": 2052915,
+    "graph_capturing_finished": true,
+    "init_engine_seconds": 87.19,
+    "path": "data/qwen36-quark-int8-tp4-accepted-restored-after-routeparity-clean-20260612cy.log",
+    "sha256": "9b4df6c1d502af8cbf406598fe6879fcffcd5dd8985ae3451b1073c2881bf240",
+    "using_xpu_int8_moe": true
+  },
+  "model_path": "/mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118",
+  "next_candidate_requirements": [
+    "Beat this manifest's corrected p512/o512/c1 decode speed on the same current model.",
+    "Pass the no-thinking quality suite and baseline comparison.",
+    "Report strict old-token provenance separately from cache-versioned clean-cache token baselines.",
+    "Record cache root digest, AOT path hashes, extension SHA256, and launcher env scrub state.",
+    "For kernel-path changes, pass graph-path or live compiled-path tensor parity before endpoint promotion."
+  ],
+  "provenance_artifact": {
+    "case_prefix_matches": null,
+    "error_count": 4,
+    "errors_head": [
+      "natural_latency_plan output prefix drift: {'index': 25, 'current': 271, 'baseline': 198, 'current_context': [11436, 29796, 11, 321, 874, 4131, 4557, 13, 271, 248068, 198, 90700, 8340, 25, 271], 'baseline_context': [11436, 29796, 11, 321, 874, 4131, 4557, 13, 198, 22791, 440, 27044, 47193, 14246, 8129]}",
+      "repetitive_kernel_notes output prefix drift: {'index': 14, 'current': 6126, 'baseline': 4752, 'current_context': [1345, 28043, 7072, 3817, 22188, 13, 15153, 1543, 6126, 16401, 85683, 15162, 5832, 4618, 3817, 17856], 'baseline_context': [1345, 28043, 7072, 3817, 22188, 13, 15153, 1543, 4752, 271, 248068, 198, 8160, 579, 264, 7047]}",
+      "sentinel failed: {'name': 'repetitive_kernel_notes', 'index': 14, 'expected_token_id': 4752, 'actual_token_id': 6126, 'ok': False}",
+      "sentinel failed: {'name': 'natural_latency_plan', 'index': 25, 'expected_token_id': 198, 'actual_token_id': 271, 'ok': False}"
+    ],
+    "ok": false,
+    "path": "data/qwen36-quark-int8-tp4-accepted-provenance-after-routeparity-clean-rerun-20260612cy.json",
+    "sentinels": [
+      {
+        "actual_token_id": 6126,
+        "expected_token_id": 4752,
+        "index": 14,
+        "name": "repetitive_kernel_notes",
+        "ok": false
+      },
+      {
+        "actual_token_id": 11436,
+        "expected_token_id": 11436,
+        "index": 17,
+        "name": "natural_latency_plan",
+        "ok": true
+      },
+      {
+        "actual_token_id": 271,
+        "expected_token_id": 198,
+        "index": 25,
+        "name": "natural_latency_plan",
+        "ok": false
+      }
+    ],
+    "sha256": "4dbd572a2960250a26bd574584075454c4cff35ec21374e650ee833bd810f44d"
+  },
+  "quality_artifact": {
+    "baseline_match_all": true,
+    "exact_case_count": 4,
+    "long_context_case_present": false,
+    "pass_all": true,
+    "path": "data/qwen36-quark-int8-tp4-accepted-quality-after-routeparity-clean-nothink-smoke-20260612cy.json",
+    "sha256": "dc3240a4e26d8888cf915e9cfe805b544e9506f599b67e4e59df3e7c1f60b92f"
+  },
+  "speed_artifact": {
+    "corrected_decode_tok_s": 99.18778253038587,
+    "decode_ms_per_generation_token_vllm": 10.062937719794718,
+    "e2e_decode_tok_s": 97.89306339885482,
+    "iteration_tokens_per_step": 2.0,
+    "output_tokens_requested": 512,
+    "path": "data/qwen36-quark-int8-tp4-accepted-clean-routeparity-p512o512-metrics-20260612cy.json",
+    "prompt_tokens_actual": 512,
+    "repeats": 2,
+    "sha256": "c953786890b2c479e35761f2fa1e7a87911b9c8942636823faafaba908171be7",
+    "ttft_ms_client": 78.35460605565459
+  }
+}
