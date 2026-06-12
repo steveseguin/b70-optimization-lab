@@ -6,6 +6,22 @@ Date: 2026-06-12
 
 2026-06-12 notes update:
 
+- Added and ran `scripts/bench-xpu-d2h-token-copy.py` to isolate the tiny
+  token-id XPU-to-host copy behind the async-output wait. The raw copy is not
+  the `~3.8 ms` bottleneck: on `xpu:0`, pinned-host `1x1` nonblocking
+  copy+event median was `0.010019 ms` with p99 `0.016331 ms`; `48x1` median
+  was `0.011431 ms`; blocking copy+sync was only `0.033-0.037 ms`. A shorter
+  `xpu:3` cross-check was similar (`1x1` median `0.010299 ms`, `48x1`
+  `0.011722 ms`). Decision: stop chasing `.tolist()`, pinned-buffer reuse, or
+  the raw token ferry as a multi-millisecond lever. The live
+  `async_copy_ready_event.synchronize()` wait is almost certainly upstream
+  queue/dependency exposure from model tail, sampler/logits, graph/event
+  ordering, rank sync, or worker-result handoff. New artifacts:
+  `scripts/bench-xpu-d2h-token-copy.py`,
+  `data/qwen36-xpu-d2h-token-copy-20260612by.json`,
+  `data/qwen36-xpu-d2h-token-copy-xpu3-20260612by.json`, and
+  `data/qwen36-xpu-d2h-token-copy-summary-20260612by.md`.
+
 - Added a "Bigger/Bolder Refresh 20260612by" section to
   `notes/2026-06-12-qwen36-next-bigger-bets.md`. It records the latest idea
   backlog after the async-output and TP2 truth-serum findings: tiny D2H token

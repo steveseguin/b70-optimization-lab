@@ -394,6 +394,41 @@ Bigger architecture bets:
    budget. This is the best way to get useful upstream help on "why only
    `~100 tok/s` on 4x B70?"
 
+## Tiny D2H Token Copy Isolation 20260612by
+
+Ran the new `scripts/bench-xpu-d2h-token-copy.py` isolation bench to test the
+first item above. This did not change the model service.
+
+Artifacts:
+
+- `scripts/bench-xpu-d2h-token-copy.py`
+- `data/qwen36-xpu-d2h-token-copy-20260612by.json`
+- `data/qwen36-xpu-d2h-token-copy-xpu3-20260612by.json`
+- `data/qwen36-xpu-d2h-token-copy-summary-20260612by.md`
+
+Result:
+
+- On `xpu:0`, pinned-host `1x1` nonblocking copy+event median was
+  `0.010019 ms`, p99 `0.016331 ms`.
+- On `xpu:0`, `48x1` nonblocking copy+event median was `0.011431 ms`, p99
+  `0.018799 ms`.
+- On `xpu:3`, the cross-check was similar: `1x1` median `0.010299 ms`,
+  `48x1` median `0.011722 ms`.
+- Empty event median was about `0.003 ms`; empty XPU synchronize median was
+  about `0.025 ms`; blocking copy+sync was about `0.033-0.043 ms`.
+
+Decision:
+
+- The isolated token copy is roughly `200-380x` smaller than the live vLLM
+  `~3.8 ms` `async_copy_ready_event.synchronize()` wait. The raw D2H token
+  ferry is not the bottleneck.
+- Do not spend more time on `.tolist()`, host buffer reuse, or pinned-memory
+  token-copy micro-optimizations unless a later device timeline contradicts
+  this result.
+- Next target: device/worker timeline around sampler output, event record,
+  D2H submission, worker response enqueue, and EngineCore future completion.
+  The wait is almost certainly upstream queue/dependency exposure.
+
 ## Bolder Opportunity Refresh 20260612bq
 
 Added after the boundary timing discussion and the latest Localmaxxing refresh.

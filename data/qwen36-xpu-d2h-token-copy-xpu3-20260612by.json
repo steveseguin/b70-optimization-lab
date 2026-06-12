@@ -1,0 +1,718 @@
+{
+  "created_unix": 1781286737.7276988,
+  "device": "xpu:3",
+  "env": {
+    "ONEAPI_DEVICE_SELECTOR": null,
+    "SYCL_CACHE_PERSISTENT": null,
+    "ZE_AFFINITY_MASK": null
+  },
+  "host": "steve-b70s",
+  "iters": 1000,
+  "python": "3.12.13",
+  "records": [
+    {
+      "destinations": [
+        {
+          "actual_pinned": true,
+          "modes": [
+            {
+              "checksum_iterations": 1000,
+              "mode": "empty_sync",
+              "timings_ms": {
+                "total": {
+                  "count": 1000,
+                  "max": 0.033613,
+                  "mean": 0.025651716,
+                  "median": 0.025267,
+                  "min": 0.024876,
+                  "p90": 0.026677,
+                  "p99": 0.031450099999999995
+                }
+              }
+            },
+            {
+              "checksum_iterations": 1000,
+              "mode": "empty_event_current",
+              "timings_ms": {
+                "submit": {
+                  "count": 1000,
+                  "max": 0.008556,
+                  "mean": 0.002772688,
+                  "median": 0.002725,
+                  "min": 0.002605,
+                  "p90": 0.002796,
+                  "p99": 0.0035876999999999992
+                },
+                "total": {
+                  "count": 1000,
+                  "max": 0.008907,
+                  "mean": 0.003056019,
+                  "median": 0.003005,
+                  "min": 0.002885,
+                  "p90": 0.003086,
+                  "p99": 0.0038675999999999997
+                },
+                "wait": {
+                  "count": 1000,
+                  "max": 0.000681,
+                  "mean": 0.000283331,
+                  "median": 0.00028,
+                  "min": 0.00026,
+                  "p90": 0.000301,
+                  "p99": 0.0003310899999999999
+                }
+              }
+            },
+            {
+              "checksum_iterations": 1000,
+              "mode": "to_cpu_blocking",
+              "timings_ms": {
+                "total": {
+                  "count": 1000,
+                  "max": 0.02664,
+                  "mean": 0.009021514,
+                  "median": 0.008886,
+                  "min": 0.008686,
+                  "p90": 0.008997,
+                  "p99": 0.012638239999999978
+                }
+              }
+            },
+            {
+              "checksum_iterations": 1000,
+              "mode": "copy_blocking_sync",
+              "timings_ms": {
+                "submit": {
+                  "count": 1000,
+                  "max": 0.228807,
+                  "mean": 0.008046767000000002,
+                  "median": 0.006231,
+                  "min": 0.006051,
+                  "p90": 0.0063628999999999995,
+                  "p99": 0.012478029999999987
+                },
+                "total": {
+                  "count": 1000,
+                  "max": 0.261778,
+                  "mean": 0.035327317999999996,
+                  "median": 0.033202,
+                  "min": 0.032721,
+                  "p90": 0.034305,
+                  "p99": 0.043003919999999946
+                },
+                "wait": {
+                  "count": 1000,
+                  "max": 0.043461,
+                  "mean": 0.027280551,
+                  "median": 0.02698,
+                  "min": 0.026529,
+                  "p90": 0.027352,
+                  "p99": 0.033873400000000005
+                }
+              }
+            },
+            {
+              "checksum_iterations": 1000,
+              "mode": "copy_nonblocking_current_event",
+              "timings_ms": {
+                "submit": {
+                  "count": 1000,
+                  "max": 0.231292,
+                  "mean": 0.010290155,
+                  "median": 0.009899,
+                  "min": 0.009598,
+                  "p90": 0.010139,
+                  "p99": 0.01578019
+                },
+                "total": {
+                  "count": 1000,
+                  "max": 0.231753,
+                  "mean": 0.010708464,
+                  "median": 0.010299,
+                  "min": 0.009989,
+                  "p90": 0.010559,
+                  "p99": 0.016626709999999996
+                },
+                "wait": {
+                  "count": 1000,
+                  "max": 0.007645,
+                  "mean": 0.000418309,
+                  "median": 0.000401,
+                  "min": 0.00033,
+                  "p90": 0.00043,
+                  "p99": 0.000531
+                }
+              }
+            },
+            {
+              "checksum_iterations": 1000,
+              "mode": "copy_nonblocking_side_stream_event",
+              "timings_ms": {
+                "submit": {
+                  "count": 1000,
+                  "max": 0.240749,
+                  "mean": 0.016437453,
+                  "median": 0.015659,
+                  "min": 0.015178,
+                  "p90": 0.01613,
+                  "p99": 0.023798309999999996
+                },
+                "total": {
+                  "count": 1000,
+                  "max": 0.24125,
+                  "mean": 0.016920677000000002,
+                  "median": 0.01614,
+                  "min": 0.01564,
+                  "p90": 0.016611,
+                  "p99": 0.024369509999999997
+                },
+                "wait": {
+                  "count": 1000,
+                  "max": 0.001733,
+                  "mean": 0.000483224,
+                  "median": 0.000471,
+                  "min": 0.000391,
+                  "p90": 0.000511,
+                  "p99": 0.0006712099999999999
+                }
+              }
+            }
+          ],
+          "name": "pinned_cpu",
+          "pin_error": null,
+          "requested_pinned": true
+        },
+        {
+          "actual_pinned": false,
+          "modes": [
+            {
+              "checksum_iterations": 1000,
+              "mode": "empty_sync",
+              "timings_ms": {
+                "total": {
+                  "count": 1000,
+                  "max": 0.041537,
+                  "mean": 0.025520141,
+                  "median": 0.025307,
+                  "min": 0.024907,
+                  "p90": 0.0255389,
+                  "p99": 0.0309099
+                }
+              }
+            },
+            {
+              "checksum_iterations": 1000,
+              "mode": "empty_event_current",
+              "timings_ms": {
+                "submit": {
+                  "count": 1000,
+                  "max": 0.009909,
+                  "mean": 0.0027680379999999996,
+                  "median": 0.002725,
+                  "min": 0.002615,
+                  "p90": 0.002796,
+                  "p99": 0.0032290099999999974
+                },
+                "total": {
+                  "count": 1000,
+                  "max": 0.01042,
+                  "mean": 0.0030633720000000004,
+                  "median": 0.003015,
+                  "min": 0.002905,
+                  "p90": 0.003086,
+                  "p99": 0.0038994199999999885
+                },
+                "wait": {
+                  "count": 1000,
+                  "max": 0.006683,
+                  "mean": 0.00029533399999999996,
+                  "median": 0.000281,
+                  "min": 0.00026,
+                  "p90": 0.000301,
+                  "p99": 0.00034001
+                }
+              }
+            },
+            {
+              "checksum_iterations": 1000,
+              "mode": "to_cpu_blocking",
+              "timings_ms": {
+                "total": {
+                  "count": 1000,
+                  "max": 0.253944,
+                  "mean": 0.009228118,
+                  "median": 0.008837,
+                  "min": 0.008636,
+                  "p90": 0.008966,
+                  "p99": 0.015033909999999994
+                }
+              }
+            },
+            {
+              "checksum_iterations": 1000,
+              "mode": "copy_blocking_sync",
+              "timings_ms": {
+                "submit": {
+                  "count": 1000,
+                  "max": 0.228586,
+                  "mean": 0.007936074999999999,
+                  "median": 0.006302,
+                  "min": 0.006091,
+                  "p90": 0.006442,
+                  "p99": 0.012930519999999994
+                },
+                "total": {
+                  "count": 1000,
+                  "max": 0.271696,
+                  "mean": 0.03524744,
+                  "median": 0.033312,
+                  "min": 0.032791,
+                  "p90": 0.034275,
+                  "p99": 0.04136200999999999
+                },
+                "wait": {
+                  "count": 1000,
+                  "max": 0.045384,
+                  "mean": 0.027311364999999997,
+                  "median": 0.02701,
+                  "min": 0.026509,
+                  "p90": 0.027471,
+                  "p99": 0.033382300000000004
+                }
+              }
+            },
+            {
+              "checksum_iterations": 1000,
+              "mode": "copy_nonblocking_current_event",
+              "timings_ms": {
+                "submit": {
+                  "count": 1000,
+                  "max": 0.23594,
+                  "mean": 0.010358062999999999,
+                  "median": 0.009959,
+                  "min": 0.009618,
+                  "p90": 0.010189,
+                  "p99": 0.01673381
+                },
+                "total": {
+                  "count": 1000,
+                  "max": 0.236631,
+                  "mean": 0.010791418,
+                  "median": 0.010389,
+                  "min": 0.010029,
+                  "p90": 0.01063,
+                  "p99": 0.017264909999999998
+                },
+                "wait": {
+                  "count": 1000,
+                  "max": 0.005991,
+                  "mean": 0.000433355,
+                  "median": 0.000421,
+                  "min": 0.00038,
+                  "p90": 0.000451,
+                  "p99": 0.0005411
+                }
+              }
+            },
+            {
+              "checksum_iterations": 1000,
+              "mode": "copy_nonblocking_side_stream_event",
+              "timings_ms": {
+                "submit": {
+                  "count": 1000,
+                  "max": 0.272318,
+                  "mean": 0.018445971,
+                  "median": 0.0162005,
+                  "min": 0.01566,
+                  "p90": 0.0216101,
+                  "p99": 0.030041009999999996
+                },
+                "total": {
+                  "count": 1000,
+                  "max": 0.27317,
+                  "mean": 0.018982739,
+                  "median": 0.0166765,
+                  "min": 0.01612,
+                  "p90": 0.0223011,
+                  "p99": 0.030772919999999995
+                },
+                "wait": {
+                  "count": 1000,
+                  "max": 0.008356,
+                  "mean": 0.0005367680000000001,
+                  "median": 0.000481,
+                  "min": 0.00041,
+                  "p90": 0.000681,
+                  "p99": 0.0008510099999999999
+                }
+              }
+            }
+          ],
+          "name": "plain_cpu",
+          "pin_error": null,
+          "requested_pinned": false
+        }
+      ],
+      "dtype": "torch.int32",
+      "numel": 1,
+      "shape": [
+        1,
+        1
+      ]
+    },
+    {
+      "destinations": [
+        {
+          "actual_pinned": true,
+          "modes": [
+            {
+              "checksum_iterations": 1000,
+              "mode": "empty_sync",
+              "timings_ms": {
+                "total": {
+                  "count": 1000,
+                  "max": 0.038642,
+                  "mean": 0.025563950999999998,
+                  "median": 0.025317,
+                  "min": 0.024866,
+                  "p90": 0.025599,
+                  "p99": 0.031389799999999995
+                }
+              }
+            },
+            {
+              "checksum_iterations": 1000,
+              "mode": "empty_event_current",
+              "timings_ms": {
+                "submit": {
+                  "count": 1000,
+                  "max": 0.008075,
+                  "mean": 0.002731902,
+                  "median": 0.002705,
+                  "min": 0.002615,
+                  "p90": 0.0027651000000000004,
+                  "p99": 0.0031460999999999998
+                },
+                "total": {
+                  "count": 1000,
+                  "max": 0.008356,
+                  "mean": 0.003014548,
+                  "median": 0.002986,
+                  "min": 0.002885,
+                  "p90": 0.003055,
+                  "p99": 0.003438599999999998
+                },
+                "wait": {
+                  "count": 1000,
+                  "max": 0.000581,
+                  "mean": 0.000282646,
+                  "median": 0.00028,
+                  "min": 0.00026,
+                  "p90": 0.0003,
+                  "p99": 0.000321
+                }
+              }
+            },
+            {
+              "checksum_iterations": 1000,
+              "mode": "to_cpu_blocking",
+              "timings_ms": {
+                "total": {
+                  "count": 1000,
+                  "max": 0.029766,
+                  "mean": 0.020887305999999998,
+                  "median": 0.020618,
+                  "min": 0.020348,
+                  "p90": 0.020879,
+                  "p99": 0.027391799999999997
+                }
+              }
+            },
+            {
+              "checksum_iterations": 1000,
+              "mode": "copy_blocking_sync",
+              "timings_ms": {
+                "submit": {
+                  "count": 1000,
+                  "max": 0.044203,
+                  "mean": 0.014924158,
+                  "median": 0.015329,
+                  "min": 0.009387,
+                  "p90": 0.019717,
+                  "p99": 0.022706109999999998
+                },
+                "total": {
+                  "count": 1000,
+                  "max": 0.072065,
+                  "mean": 0.043055064000000004,
+                  "median": 0.043286000000000005,
+                  "min": 0.036958,
+                  "p90": 0.04778,
+                  "p99": 0.05326221
+                },
+                "wait": {
+                  "count": 1000,
+                  "max": 0.057126,
+                  "mean": 0.028130906,
+                  "median": 0.027862,
+                  "min": 0.027391,
+                  "p90": 0.028293,
+                  "p99": 0.03433441
+                }
+              }
+            },
+            {
+              "checksum_iterations": 1000,
+              "mode": "copy_nonblocking_current_event",
+              "timings_ms": {
+                "submit": {
+                  "count": 1000,
+                  "max": 0.08562,
+                  "mean": 0.011667515,
+                  "median": 0.011261,
+                  "min": 0.01063,
+                  "p90": 0.011762,
+                  "p99": 0.019899689999999998
+                },
+                "total": {
+                  "count": 1000,
+                  "max": 0.086652,
+                  "mean": 0.012147367,
+                  "median": 0.011722,
+                  "min": 0.011081,
+                  "p90": 0.012243,
+                  "p99": 0.020649
+                },
+                "wait": {
+                  "count": 1000,
+                  "max": 0.009989,
+                  "mean": 0.000479852,
+                  "median": 0.000451,
+                  "min": 0.000401,
+                  "p90": 0.000491,
+                  "p99": 0.000812109999999999
+                }
+              }
+            },
+            {
+              "checksum_iterations": 1000,
+              "mode": "copy_nonblocking_side_stream_event",
+              "timings_ms": {
+                "submit": {
+                  "count": 1000,
+                  "max": 0.035927,
+                  "mean": 0.017203546,
+                  "median": 0.0167965,
+                  "min": 0.01621,
+                  "p90": 0.0174321,
+                  "p99": 0.027724009999999997
+                },
+                "total": {
+                  "count": 1000,
+                  "max": 0.036729,
+                  "mean": 0.017715467,
+                  "median": 0.017302,
+                  "min": 0.016651,
+                  "p90": 0.017944900000000003,
+                  "p99": 0.028494799999999997
+                },
+                "wait": {
+                  "count": 1000,
+                  "max": 0.006923,
+                  "mean": 0.0005119209999999999,
+                  "median": 0.000491,
+                  "min": 0.00042,
+                  "p90": 0.000541,
+                  "p99": 0.0007810100000000001
+                }
+              }
+            }
+          ],
+          "name": "pinned_cpu",
+          "pin_error": null,
+          "requested_pinned": true
+        },
+        {
+          "actual_pinned": false,
+          "modes": [
+            {
+              "checksum_iterations": 1000,
+              "mode": "empty_sync",
+              "timings_ms": {
+                "total": {
+                  "count": 1000,
+                  "max": 0.041337,
+                  "mean": 0.025595305,
+                  "median": 0.025368,
+                  "min": 0.025017,
+                  "p90": 0.0256289,
+                  "p99": 0.03139891
+                }
+              }
+            },
+            {
+              "checksum_iterations": 1000,
+              "mode": "empty_event_current",
+              "timings_ms": {
+                "submit": {
+                  "count": 1000,
+                  "max": 0.01082,
+                  "mean": 0.0028211559999999996,
+                  "median": 0.002735,
+                  "min": 0.002615,
+                  "p90": 0.002815,
+                  "p99": 0.0050192
+                },
+                "total": {
+                  "count": 1000,
+                  "max": 0.011431,
+                  "mean": 0.003112425,
+                  "median": 0.003016,
+                  "min": 0.002895,
+                  "p90": 0.003096,
+                  "p99": 0.005560509999999999
+                },
+                "wait": {
+                  "count": 1000,
+                  "max": 0.000732,
+                  "mean": 0.000291269,
+                  "median": 0.000281,
+                  "min": 0.00026,
+                  "p90": 0.000301,
+                  "p99": 0.000551
+                }
+              }
+            },
+            {
+              "checksum_iterations": 1000,
+              "mode": "to_cpu_blocking",
+              "timings_ms": {
+                "total": {
+                  "count": 1000,
+                  "max": 0.216183,
+                  "mean": 0.01526768,
+                  "median": 0.014898,
+                  "min": 0.014687,
+                  "p90": 0.015088,
+                  "p99": 0.0214412
+                }
+              }
+            },
+            {
+              "checksum_iterations": 1000,
+              "mode": "copy_blocking_sync",
+              "timings_ms": {
+                "submit": {
+                  "count": 1000,
+                  "max": 0.218677,
+                  "mean": 0.014337302,
+                  "median": 0.012444,
+                  "min": 0.012223,
+                  "p90": 0.012684,
+                  "p99": 0.029238499999999997
+                },
+                "total": {
+                  "count": 1000,
+                  "max": 0.246419,
+                  "mean": 0.041648217,
+                  "median": 0.039403,
+                  "min": 0.038832,
+                  "p90": 0.040801000000000004,
+                  "p99": 0.05755011999999998
+                },
+                "wait": {
+                  "count": 1000,
+                  "max": 0.042108,
+                  "mean": 0.027310915,
+                  "median": 0.02696,
+                  "min": 0.026479,
+                  "p90": 0.027521,
+                  "p99": 0.03427920999999999
+                }
+              }
+            },
+            {
+              "checksum_iterations": 1000,
+              "mode": "copy_nonblocking_current_event",
+              "timings_ms": {
+                "submit": {
+                  "count": 1000,
+                  "max": 0.026239,
+                  "mean": 0.016142462,
+                  "median": 0.01593,
+                  "min": 0.015569,
+                  "p90": 0.01619,
+                  "p99": 0.02295402
+                },
+                "total": {
+                  "count": 1000,
+                  "max": 0.02682,
+                  "mean": 0.016579650999999997,
+                  "median": 0.016361,
+                  "min": 0.016,
+                  "p90": 0.016631,
+                  "p99": 0.023524319999999998
+                },
+                "wait": {
+                  "count": 1000,
+                  "max": 0.001032,
+                  "mean": 0.000437189,
+                  "median": 0.000431,
+                  "min": 0.000381,
+                  "p90": 0.000461,
+                  "p99": 0.0005810999999999999
+                }
+              }
+            },
+            {
+              "checksum_iterations": 1000,
+              "mode": "copy_nonblocking_side_stream_event",
+              "timings_ms": {
+                "submit": {
+                  "count": 1000,
+                  "max": 0.210913,
+                  "mean": 0.022985325,
+                  "median": 0.0218405,
+                  "min": 0.02135,
+                  "p90": 0.022441100000000002,
+                  "p99": 0.03260052999999999
+                },
+                "total": {
+                  "count": 1000,
+                  "max": 0.211544,
+                  "mean": 0.023478563,
+                  "median": 0.022322,
+                  "min": 0.021801,
+                  "p90": 0.022963,
+                  "p99": 0.034420099999999995
+                },
+                "wait": {
+                  "count": 1000,
+                  "max": 0.003076,
+                  "mean": 0.000493238,
+                  "median": 0.000481,
+                  "min": 0.00042,
+                  "p90": 0.000531,
+                  "p99": 0.000731
+                }
+              }
+            }
+          ],
+          "name": "plain_cpu",
+          "pin_error": null,
+          "requested_pinned": false
+        }
+      ],
+      "dtype": "torch.int32",
+      "numel": 48,
+      "shape": [
+        48,
+        1
+      ]
+    }
+  ],
+  "schema": "bench-xpu-d2h-token-copy-v1",
+  "torch": "2.11.0+xpu",
+  "warmup": 100,
+  "xpu_device_count": 4
+}
