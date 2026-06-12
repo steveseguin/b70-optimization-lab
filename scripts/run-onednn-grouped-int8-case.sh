@@ -16,14 +16,16 @@ set +u
 source "$ONEAPI_COMPILER_ROOT/env/vars.sh" >/tmp/oneapi-compiler2025-onednn-int8-case-vars.log 2>&1 || true
 set -u
 
-"$ONEAPI_COMPILER_ROOT/bin/icpx" -std=c++17 -O2 -fsycl \
-  -I"$VLLM_XPU_KERNELS_DIR/third_party/oneDNN/examples" \
-  -I"$BUILD_DIR/include" \
-  -I"$VLLM_XPU_KERNELS_DIR/third_party/oneDNN/include" \
-  "$CASE_SRC" \
-  "$BUILD_DIR/src/libdnnl.a" \
-  -lpthread -ldl \
-  -o "$CASE_BIN"
+if [[ "${ONEDNN_SKIP_COMPILE:-0}" != "1" || ! -x "$CASE_BIN" ]]; then
+  "$ONEAPI_COMPILER_ROOT/bin/icpx" -std=c++17 -O2 -fsycl \
+    -I"$VLLM_XPU_KERNELS_DIR/third_party/oneDNN/examples" \
+    -I"$BUILD_DIR/include" \
+    -I"$VLLM_XPU_KERNELS_DIR/third_party/oneDNN/include" \
+    "$CASE_SRC" \
+    "$BUILD_DIR/src/libdnnl.a" \
+    -lpthread -ldl \
+    -o "$CASE_BIN"
+fi
 
 if [[ "$COMPILE_ONLY" == "1" ]]; then
   echo "compiled $CASE_BIN"

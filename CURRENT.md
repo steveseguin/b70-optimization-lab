@@ -6,6 +6,31 @@ Date: 2026-06-12
 
 2026-06-12 continuation:
 
+- Added and ran a file-backed full layer-9 oneDNN MoE island replay. This is
+  the first full-layer exactness gate after the standalone GEMM parity: Python
+  keeps the current XPU remap, quantization, activation, and gather semantics,
+  while packed oneDNN `acb` grouped matmul supplies GEMM1 and GEMM2 from
+  exported intermediate buffers. The routecapture6 layer-9 rows=1 replay
+  matched current XPU exactly at every checked boundary: GEMM1 max abs diff
+  `0.0`, GEMM2 max abs diff `0.0`, and final gathered MoE output max abs diff
+  `0.0` versus `xpu_fused_moe`; the reference and oneDNN-island checksums both
+  equal `-751.800048828125`. oneDNN packed timings inside the scaffold:
+  GEMM1 mean `34.463 us`, p50 `34.184 us`; GEMM2 mean `24.756 us`, p50
+  `24.687 us`. This is still not an endpoint speed claim because file IO and
+  process boundaries dominate wall time. The next real optimization gate is to
+  move this exact island into a resident route-signature primitive cache inside
+  the process, then time the full layer without file/process boundaries or
+  repeated primitive construction. Accepted backend was restored afterward;
+  `/health` returned after `58s` and provenance passed both prefix cases plus
+  all sentinel tokens. New artifacts:
+  `scripts/replay-qwen36-onednn-moe-island.py`,
+  `data/qwen36-onednn-moe-island-layer9-r1-20260612ay/onednn_moe_island_result.json`,
+  `gemm1.meta`, `gemm2.meta`, `gemm1_onednn_acb_result.json`,
+  `gemm2_onednn_acb_result.json`,
+  `data/qwen36-quark-int8-tp4-accepted-restored-after-onednn-moe-island-20260612ay.log`,
+  and
+  `data/qwen36-quark-int8-tp4-accepted-provenance-after-onednn-moe-island-20260612ay.json`.
+
 - Added a deterministic W8A8 grouped-GEMM parity packet for oneDNN versus the
   current XPU grouped-GEMM output using real Qwen3.6 layer-9 routecapture6
   counts and real Quark INT8 weights/scales. Both raw `abc` and packed `acb`

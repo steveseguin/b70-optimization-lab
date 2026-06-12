@@ -34,6 +34,22 @@ The repository should track the exporter, runner, metadata, and JSON summaries;
 raw expert-weight buffers are regenerated locally because the largest dumps are
 over GitHub's normal file-size limit.
 
+Full-layer follow-up:
+
+- A file-backed layer-9 MoE island now proves the packed oneDNN GEMMs compose
+  with the existing exact XPU remap, quantization, activation, and gather path.
+  On routecapture6 rows=1, GEMM1 diff is `0.0`, GEMM2 diff is `0.0`, and final
+  gathered MoE output diff is `0.0` versus current `xpu_fused_moe`. Checksums:
+  reference `-751.800048828125`, oneDNN island `-751.800048828125`.
+- Packed oneDNN timings inside that full-layer scaffold: GEMM1 p50
+  `34.184 us`; GEMM2 p50 `24.687 us`. File-backed wall time is irrelevant to
+  endpoint performance because it crosses Python, disk, and process
+  boundaries.
+- This narrows the next real implementation gate: keep packed weights and
+  oneDNN primitives resident in-process, update route offsets/scales, execute
+  GEMM1 and GEMM2 without file/process boundaries, and compare the complete
+  layer against `xpu_fused_moe` before any endpoint promotion.
+
 Result:
 
 - GEMM1, shape `total_M=8,K=2048,N=256,E=256`, packed oneDNN `acb` weights:
@@ -61,10 +77,12 @@ Interpretation:
 
 Immediate follow-up items:
 
-1. **Full layer-9 oneDNN MoE island.**
-   Build a routecapture6 layer-9 replay that swaps only the grouped GEMM calls
-   to packed oneDNN `acb`, leaves all other math exact, and compares final MoE
-   layer output against current `xpu_fused_moe`.
+1. **In-process layer-9 oneDNN MoE island.**
+   Move the now-exact file-backed replay into an in-process C++/SYCL sidecar:
+   resident packed weights, resident oneDNN primitives, direct XPU buffers,
+   updated grouped offsets/scales, no file IO, and no runner process boundary.
+   The gate is still final-layer `max_abs_diff=0.0` against current
+   `xpu_fused_moe`.
 
 2. **Route-signature primitive cache.**
    Cache oneDNN primitive, src/weight/dst memory descriptors, and packed
