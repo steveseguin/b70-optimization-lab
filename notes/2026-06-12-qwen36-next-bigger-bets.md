@@ -715,6 +715,7 @@ Sources added to this refresh:
 
 Artifacts for this pass:
 
+- `patches/vllm-qwen36-route-overlay-diagnostic-20260612co.md`
 - `data/qwen36-quark-int8-tp4-routeoverlay-diagnostic-summary-20260612co.json`
 - `data/qwen36-quark-int8-tp4-routeoverlay-20260612cn.log`
 - `data/qwen36-quark-int8-tp4-routeoverlay-20260612cn2.log`

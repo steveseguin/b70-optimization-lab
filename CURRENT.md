@@ -27,6 +27,7 @@ Date: 2026-06-12
   needed for restore. Provenance passed sentinels `4752`, `11436`, and `198`,
   and the no-thinking quality smoke matched the previous accepted baseline.
   New artifacts:
+  `patches/vllm-qwen36-route-overlay-diagnostic-20260612co.md`,
   `data/qwen36-quark-int8-tp4-routeoverlay-diagnostic-summary-20260612co.json`,
   `data/qwen36-quark-int8-tp4-accepted-provenance-after-routeoverlay-20260612co.json`,
   and
