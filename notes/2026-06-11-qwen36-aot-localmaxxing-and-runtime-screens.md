@@ -12735,3 +12735,168 @@ Next runtime patch target:
    scratch row/block setup, verifier forward, scratch free, and commit.
 5. First pass target remains exact fixture mode with speculation active; speed
    is only meaningful after that passes.
+
+## COW Trace Tooling And Bigger Bets
+
+Added a default-off local vLLM scheduler trace patch and a repo-side summarizer
+so the next COW verifier implementation has measurable parent-state mutation
+evidence instead of only inferred scheduler behavior.
+
+Artifacts:
+
+- `patches/vllm-qwen36-cow-parent-state-trace-20260611.patch`
+- `scripts/summarize-qwen36-cow-trace.py`
+
+Important caveat: the patch artifact was exported from the current dirty local
+vLLM tree at `/home/steve/src/vllm`, so it is cumulative against that tree's
+existing speculative decode/XPU edits. It is useful for reproducing this lab
+state, not as a clean upstream-ready patch yet.
+
+Trace envs added in the local vLLM tree:
+
+- `VLLM_XPU_COW_VERIFIER_TRACE_FILE=/tmp/qwen36-cow-trace.jsonl`
+- `VLLM_XPU_COW_VERIFIER_TRACE_MAX_LINES=2000`
+
+The trace records parent request state before `_update_after_schedule()`, after
+`_update_after_schedule()`, and after `_update_request_with_output()`. It
+includes output/token counters, placeholder count, spec length, scheduled spec
+IDs, and KV block-table length/last-block snapshots. The expected immediate use
+is to prove exactly where the current non-COW path mutates parent state before
+acceptance, then compare a scratch-row COW prototype against the same trace.
+
+Summarizer smoke test:
+
+```bash
+python3 scripts/summarize-qwen36-cow-trace.py \
+  --trace /tmp/qwen36-cow-trace.jsonl \
+  --output-json data/qwen36-cow-trace-summary.json \
+  --output-md data/qwen36-cow-trace-summary.md
+```
+
+Next things to try:
+
+1. **Trace-enabled runtime run.**
+   - Launch an alternate-port vLLM service or controlled restart with the COW
+     trace envs and a small max-line cap.
+   - Run the known oracle fixture and the current frontdoor p512/o512 canary.
+   - Summarize the trace and verify that speculative rows show parent
+     `num_computed_tokens`/placeholder/block-table mutation before final
+     acceptance.
+
+2. **Minimal scratch-row COW prototype.**
+   - Start with k=1 or k=2, even if it is slow, because the first gate is
+     exactness.
+   - Allocate scratch request IDs/worker rows for candidate scoring while
+     keeping the parent request's output IDs, computed count, placeholders, and
+     KV block table unchanged until commit.
+   - Gate with exact fixture mode and speculation active. Passing by suppressing
+     speculation does not count.
+
+3. **COW overhead ledger.**
+   - Split one verifier step into parent snapshot, scratch row/block setup,
+     verifier forward, scratch free, and accepted-token commit.
+   - Compare measured overhead directly to the bucket-6/bucket-8 budgets in
+     `data/qwen36-quark-int8-tp4-verifier-upper-bound-cow-budget-20260611.md`.
+   - If k=1/k=2 already exceeds the bucket-6 scaled budget, move effort toward
+     persistent kernels/layout work instead of proposer tuning.
+
+External signal checked in this pass:
+
+- Localmaxxing public leaderboard currently shows our 4x B70 Qwen3.6 35B Quark
+  W8A8 INT8 vLLM row at `99.77 tok/s` output, `76.5 ms` TTFT, 32K context, and
+  about `127.55 GiB` total allocated VRAM across the four cards. That is the
+  best public matching row found for this exact class, but it is still far
+  below the single-request target.
+- A public B70/Qwen3.6 27B vLLM-XPU row reports MTP/spec decode unblocked with
+  `num_speculative_tokens=5`, mean accepted length `4.04`, and about `54.2
+  tok/s`. It is a different model and precision, so it is not a target result,
+  but it is a useful implementation clue for vLLM XPU speculative plumbing.
+- DFlash exists specifically for Qwen3.6 35B-A3B as a block-diffusion drafter.
+  It should be considered only as a proposal source: final output must still be
+  accepted by the current Quark W8A8 verifier to preserve quality semantics.
+- Community B70 reports continue to show large backend differences between
+  vLLM, llama.cpp SYCL/Vulkan, and Windows/Linux drivers. Use these as
+  architectural clues, not as permission to switch to 4-bit.
+
+Bigger, bolder ideas worth tracking:
+
+1. **Expert-parallel MoE instead of tensor-parallel everywhere.**
+   - Current TP4 likely pays collectives on a batch-1 critical path. A more
+     suitable MoE serving layout may replicate dense/shared blocks and shard
+     experts by owner card, routing only active expert work.
+   - This is a larger engine change, but it directly attacks the "4 GPUs but
+     still slow" symptom.
+   - Quality risk is low if weights/scales remain unchanged; implementation
+     risk is high because scheduling, expert routing, and KV placement all need
+     coordination.
+
+2. **Offline Quark W8A8 repack for B70/XMX tile shapes.**
+   - Keep the same 8-bit weights and scales, but prepack them into the layout
+     the XPU kernels actually want for tiny-batch decode and grouped MoE GEMM.
+   - Goal: remove runtime layout/scaling overhead and make persistent kernels
+     simple.
+   - Gate with bit/near-bit parity on logits versus current Quark load path.
+
+3. **Persistent route-specialized MoE kernels.**
+   - Use route histograms from accepted runs to build kernels for the small set
+     of hot route shapes seen in batch-1 decode.
+   - Keep a generic fallback for rare expert patterns.
+   - This may outperform broad grouped-GEMM kernels because Qwen3.6 A3B decode
+     is sparse, repetitive, and latency-bound.
+
+4. **Verified DFlash or MTP sidecar.**
+   - Run a DFlash/MTP proposer as a separate sidecar process or separate engine
+     path and feed candidate blocks into the current verifier.
+   - Quality remains verifier-bound; bad drafts only cost time.
+   - This is attractive if COW exactness works but ngram/self proposals are not
+     accepted often enough.
+
+5. **Speculative branch tree for greedy decode.**
+   - For temperature-0/top-k-1 workloads, explore verifying a small candidate
+     tree rather than a single linear draft. A rejection could fall through to
+     another already-scored branch instead of wasting the whole verifier step.
+   - This is only worthwhile if branch scoring can share most KV/work.
+   - Quality remains exact if final tokens are still target-verifier selected.
+
+6. **Shape-locked graph lane for interactive requests.**
+   - Add a production lane with fixed prompt/output buckets, fixed spec bucket,
+     and fixed scheduler shapes so XPU graph capture has fewer dynamic edges.
+   - Route only matching short/medium interactive requests to that lane; long
+     32K contexts stay on the conservative lane.
+   - This does not lower quality, but it does make production routing more
+     complex.
+
+7. **TP topology and collective minimization pass.**
+   - Build a per-token ledger for allreduce/allgather time, P2P path, NUMA/PCIe
+     locality, and XPU idle time.
+   - Try TP2, TP4, PP/EP hybrids, and one-card/CPU-offload diagnostics only to
+     isolate collectives, not as final quality targets.
+   - If collectives dominate, kernel work alone will not reach `200 tok/s`.
+
+8. **Dedicated OpenVINO/oneDNN GenAI viability spike.**
+   - Test only if Qwen3.6 A3B MoE plus Quark/INT8 or equivalent W8A8 can be
+     represented without changing final numerics materially.
+   - The goal would be a native Intel graph/compiler path for batch-1 decode.
+   - If conversion changes logits beyond the accepted tolerance, drop it.
+
+9. **Route-aware expert replication for hot layers.**
+   - Replicate a small number of hot experts on all cards and leave cold experts
+     sharded.
+   - This trades VRAM headroom for lower cross-card latency. The current 32K
+     run reserves nearly all VRAM, so this likely needs a lower-context test
+     lane first.
+
+10. **Upstream-targeted microbench suite.**
+    - Extract three standalone repros: tiny-batch W8A8 dense GEMM, route-skewed
+      grouped MoE GEMM, and TP collective under graph capture.
+    - Use these to compare local kernel changes, `vllm-xpu-kernels`, and Intel
+      backend updates without relaunching the full model every time.
+
+Useful links for this pass:
+
+- `https://localmaxxing.com/api/leaderboard?hardwareName=Intel%20Arc%20Pro%20B70&modelFamily=qwen&limit=20`
+- `https://huggingface.co/z-lab/Qwen3.6-35B-A3B-DFlash`
+- `https://github.com/z-lab/dflash`
+- `https://docs.vllm.ai/en/v0.18.0/models/hardware_supported_models/xpu/`
+- `https://vllm.ai/blog/2025-11-11-intel-arc-pro-b`
+- `https://github.com/vllm-project/vllm/issues/41663`
