@@ -6,6 +6,25 @@ Date: 2026-06-12
 
 2026-06-12 notes update:
 
+- Added a "Bigger Opportunity Refresh 20260612di" section to
+  `notes/2026-06-12-qwen36-next-bigger-bets.md`. The refresh records the
+  latest public Localmaxxing confirmation for the exact
+  `nameistoken/Qwen3.6-35B-A3B-Quark-W8A8-INT8` B70/vLLM row
+  (`99.428 tok/s`) and the broader B70/Qwen current-family row
+  (`99.770 tok/s`, about `127.55 GiB` total allocated VRAM across four B70s).
+  It adds immediate things to try: isolated replay-digest build, upstream XPU
+  MoE/collective diff packet, single-card/TP2 latency lane probe,
+  expert-parallel sketch, power/frequency telemetry, target-owned verifier
+  lane, native INT8 MoE microkernel fork point, and an external challenge
+  bundle. It also adds larger bets: one-B70 hot active model lane, four exact
+  replicas for production routing, expert-cache resident EP lane, decode-only
+  scheduler bypass, Xe2 occupancy autopsy, patchable Level Zero decode loop,
+  same-output engine bakeoff, hardware topology experiment, and target-owned
+  speculative branch farming across idle cards. No endpoint was changed and no
+  speed result was promoted.
+
+2026-06-12 notes update:
+
 - Added `patches/vllm-xpu-qwen36-replay-digest-probe-20260612dh.diff` and a
   "Replay Digest Patch Artifact 20260612dh" section to
   `notes/2026-06-12-qwen36-next-bigger-bets.md`. The patch adds a

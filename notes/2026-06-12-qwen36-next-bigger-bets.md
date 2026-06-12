@@ -246,6 +246,160 @@ Promotion gate for the digest branch:
 - Digest rows are stable across repeats for identical prompt/token windows.
 - No speed result is promoted from the diagnostic endpoint.
 
+## Bigger Opportunity Refresh 20260612di
+
+Added after the replay-digest patch plan to keep the next speculative ideas
+visible while preserving the current quality boundary. This does not change the
+accepted endpoint, model, cache, or published speed result.
+
+Public signals checked:
+
+- Localmaxxing exact-model query still shows the public
+  `nameistoken/Qwen3.6-35B-A3B-Quark-W8A8-INT8` B70/vLLM row
+  `cmq8yhxvo001ipb0149aoa79o` at `99.428 tok/s`, c1, 32K context.
+- Localmaxxing broader B70/Qwen query still shows the same current-family top
+  row `cmq9ifq0500b0r8012f27j1xl` at `99.770 tok/s`, c1, 32K context, with
+  total allocated VRAM around `127.55 GiB` across four B70s. This remains a
+  reservation/serving-footprint number, not proof that weights alone consume
+  that memory.
+- vLLM release notes now list several XPU-relevant performance hooks worth
+  mining for the local fork: MXFP8 MoE, FP8 block-scaled quantization,
+  top-k routing fallback work, reduced XPU MoE host overhead, sparse-attention
+  kernels, and custom-op collective behavior.
+- vLLM XPU docs explicitly validate Intel Arc Pro B-Series as an XPU target
+  and list INT8 W8A8, FP8 W8A8, AMD Quark, and speculative decoding docs in
+  the XPU documentation tree. The docs are not enough to prove our exact
+  Qwen3.6 Quark INT8 path is optimal, but they identify upstream paths to
+  diff against.
+- The public TurboQuant XPU issue is useful mostly as a methodology clue:
+  upstream Triton kernels can compile and pass correctness on Arc Pro B70, but
+  can still miss Xe2 performance badly. Use Triton/XPU ports as correctness
+  oracles and benchmark fixtures, not as proof of speed.
+- PMZFX B70 notes reinforce that naive multi-GPU layer split can waste devices
+  on single-stream decode, while MoE is the natural place to use multiple B70s.
+  This supports testing topology inversion and expert-parallel style lanes
+  rather than assuming TP4 is optimal for c1 latency.
+
+Immediate items added to the things-to-try queue:
+
+1. **Digest build window from an isolated source snapshot.**
+   Use the active W8A8/live-ABI/sidecar source snapshot as the base, apply the
+   replay digest patch there, build `_xpu_C`, and run only a diagnostic graph
+   replay. This is the shortest path to real graph-route evidence.
+
+2. **Upstream XPU performance diff packet.**
+   Diff local vLLM/XPU against the upstream changes around reduced XPU MoE host
+   overhead, custom-op collectives, and XPU top-k routing. Keep a small table:
+   local equivalent exists, missing, incompatible, or already superseded.
+
+3. **Single-card and TP2 latency lane probe.**
+   If VRAM accounting proves the exact W8A8 model plus 32K KV can fit on one
+   B70 or two B70s at lower concurrency, test a low-latency lane that avoids
+   some TP4 collectives. This may trade aggregate throughput for c1 speed,
+   which matches the current priority.
+
+4. **Expert-parallel sketch before kernel work.**
+   Build a paper model of expert ownership, active top-k distribution, data
+   movement, and combine cost for TP4 versus EP-like placement. If the model
+   shows less cross-rank traffic for Qwen3.6 routes, then prototype only the
+   combine path first.
+
+5. **Power/frequency telemetry beside token latency.**
+   Record per-card GT clocks, power, memory bandwidth counters where available,
+   and BCS/reset logs during c1 decode. If single-stream decode is not driving
+   the cards hard, the next win is occupancy/persistence; if it is bandwidth
+   saturated, the next win is packing/reuse.
+
+6. **No-quality-loss verifier lane for accepted-target speculation.**
+   Keep the Quark W8A8 target as the only source of truth, but allow draft
+   branches from ngram, same-model partial layers, or a smaller helper only if
+   target verification owns token acceptance and rollback. The quality gate is
+   target-token exactness, not draft-model quality.
+
+7. **Native INT8 MoE microkernel fork point.**
+   If upstream W8A8 kernels still miss the shape, create a narrow kernel fork
+   for Qwen3.6 decode top-k-8 and one-token microbatches. Scope it to the
+   observed route shapes, not a generic MoE implementation.
+
+8. **External challenge bundle.**
+   Publish a small reproducible packet once the digest/latency artifacts are
+   clean: exact model ID, command, top Localmaxxing rows, p512/o512 speed,
+   route fixture, graph digest, and one-layer parity harness. The ask should be
+   concrete: beat `5.0 ms/token` c1 decode on Arc Pro B70 without changing the
+   accepted model output.
+
+Bigger, bolder ideas to keep separate from the near-term queue:
+
+1. **One-B70 hot active model lane.**
+   Try to make a c1-only exact lane fit on one B70 by lowering reserved KV,
+   using a strict 32K single-sequence budget, and keeping only needed graph
+   buckets. If it fits, it removes TP collectives from the critical path. If it
+   cannot fit, the memory breakdown becomes a hard constraint for future work.
+
+2. **Four independent exact replicas for production routing.**
+   If one-card exact lanes become feasible, production can use four replicas
+   for aggregate throughput while each request gets single-card latency. This
+   is not a single-request `200 tok/s` solution by itself, but it may be the
+   cleanest production architecture if c1 TP collectives dominate.
+
+3. **Expert-cache resident EP lane.**
+   Keep dense layers TP2/TP4 if needed, but make hot experts resident on local
+   cards with route-aware ownership and a lightweight cross-rank combine. This
+   attacks the MoE part directly while preserving exact weights and scales.
+
+4. **Decode-only persistent scheduler bypass.**
+   Build a lab-only runner for one warmed sequence that bypasses OpenAI HTTP,
+   vLLM request scheduling, queue structures, and Python sampling. The runner
+   should call the same model kernels. A large speedup here would justify a
+   dedicated low-latency serving path; no speedup would exonerate the server.
+
+5. **Xe2 occupancy autopsy.**
+   Use VTune/Level Zero metrics or equivalent counters to determine whether
+   decode stalls on host launch, XMX occupancy, memory bandwidth, collectives,
+   or synchronization. This prevents building the wrong custom kernel.
+
+6. **Patchable command-list decode loop.**
+   Capture the full decode token path into a reusable Level Zero command list
+   and patch only pointers, block tables, token IDs, route IDs, and sampler
+   state. This is high risk, but it targets the whole `~10 ms/token` path
+   instead of isolated kernels.
+
+7. **Same-output engine bakeoff with strict parity.**
+   Test llama.cpp SYCL, LMDeploy, SGLang/XPU if viable, and any Intel fork only
+   when the same Qwen3.6 source weights or a provably equivalent 8-bit
+   representation can be used. The benchmark must include output parity, not
+   just speed.
+
+8. **Hardware topology experiment.**
+   Move cards/NUMA/network variables only if telemetry points to PCIe or CCL.
+   Candidate tests: rank-to-card order, CCL transport/interface, affinity
+   masks, TP2 pairs, and one-rank-per-root-complex placement if the platform
+   exposes meaningful differences.
+
+9. **Target-owned speculative branch farming across idle cards.**
+   Let idle cards compute candidate branches while the accepted target verifies
+   in order. The hard requirement is exact rollback and no emitted token unless
+   the target model accepts it. This could convert extra hardware into c1 speed
+   without trusting a lower-quality model.
+
+Reproduction commands for the public checks:
+
+```bash
+curl -sS -A 'Mozilla/5.0' \
+  'https://localmaxxing.com/api/leaderboard?hfId=nameistoken%2FQwen3.6-35B-A3B-Quark-W8A8-INT8&hardwareName=B70&engineName=vllm&limit=10'
+
+curl -sS -A 'Mozilla/5.0' \
+  'https://localmaxxing.com/api/leaderboard?hardwareName=B70&modelFamily=qwen&limit=10'
+```
+
+Source leads:
+
+- `https://github.com/vllm-project/vllm/releases`
+- `https://docs.vllm.ai/en/v0.18.0/models/hardware_supported_models/xpu/`
+- `https://github.com/vllm-project/vllm-xpu-kernels/issues/271`
+- `https://github.com/PMZFX/intel-arc-pro-b70-benchmarks/blob/master/multi-gpu.md`
+- `https://github.com/PMZFX/intel-arc-pro-b70-benchmarks/blob/master/llm-benchmarks.md`
+
 ## Accepted C1 Latency Decomposition 20260612dg
 
 Added a fresh latency-decomposition gate against the currently restored
