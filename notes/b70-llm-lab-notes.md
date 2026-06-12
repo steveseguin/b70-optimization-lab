@@ -565,3 +565,16 @@ vLLM/XPU FP8 work:
     reserve, but it should first be tested as a route-replay one-layer prototype
     and then as a lower-context static c1 sidecar only if it produces a real
     latency win.
+19. The first route-replay hot64 one-layer prototype now exists as metadata:
+    `scripts/qwen36-hotrep-route-plan.py`. It consumes captured exact
+    `topk_ids` and emits per-rank hot/cold queues plus gather maps without
+    expert dropping or approximation. Layer 9 routecapture6 windows
+    `0,1,2,46,78` have hot64 coverage mean/min `0.870` / `0.750`, cold rows
+    mean/max `16.6` / `32.0`, and every selected window balances to
+    `[32, 32, 32, 32]` rows by rank. Layer 20 routecapture5 windows
+    `11,12,13,52,63` have hot64 coverage mean/min `0.855` / `0.820`, cold rows
+    mean/max `18.6` / `23.0`, and also balance to `[32, 32, 32, 32]`. The JSON
+    artifacts include row-level detail and 128-row gather maps per window. This
+    clears the route-metadata side of the idea, but it is not a speed result.
+    The next gate is a one-launch or persistent kernel that consumes these exact
+    queues and proves output parity against `xpu_fused_moe`.

@@ -1379,3 +1379,62 @@ Decision:
      a real latency win.
 - This keeps the production lane stable while we test whether hot replication
   has speed value before spending VRAM on it.
+
+## 2026-06-12 Hot64 Route Work-Queue Prototype
+
+New script:
+
+- `scripts/qwen36-hotrep-route-plan.py`.
+
+Artifacts:
+
+- Layer 9 routecapture6:
+  `data/qwen36-quark-int8-tp4-hotrep-route-plan-l9-route6-20260612af.json`
+  and
+  `data/qwen36-quark-int8-tp4-hotrep-route-plan-l9-route6-20260612af.md`.
+- Layer 20 routecapture5:
+  `data/qwen36-quark-int8-tp4-hotrep-route-plan-l20-route5-20260612af.json`
+  and
+  `data/qwen36-quark-int8-tp4-hotrep-route-plan-l20-route5-20260612af.md`.
+
+Purpose:
+
+- Convert captured exact `topk_ids` into kernel-facing per-rank hot/cold work
+  queues and gather maps.
+- Preserve exact routing: no expert dropping, no top-k approximation, and no
+  prompt-class substitution.
+- Keep this as route replay only; no live endpoint restart or production-lane
+  VRAM changes.
+
+Result:
+
+- Layer 9, routecapture6, starts `0,1,2,46,78`:
+  - assignments/window: `128`.
+  - hot64 coverage mean/p95/min: `0.870` / `0.938` / `0.750`.
+  - cold rows mean/max: `16.6` / `32.0`.
+  - every selected window balances exactly to rows by rank `[32, 32, 32, 32]`.
+  - generated JSON includes actual row detail and a complete 128-row gather map
+    for each window.
+- Layer 20, routecapture5, starts `11,12,13,52,63`:
+  - assignments/window: `128`.
+  - hot64 coverage mean/p95/min: `0.855` / `0.872` / `0.820`.
+  - cold rows mean/max: `18.6` / `23.0`.
+  - every selected window balances exactly to rows by rank `[32, 32, 32, 32]`.
+  - generated JSON includes actual row detail and a complete 128-row gather map
+    for each window.
+
+Decision:
+
+- Hot64 replicated routing is implementable as exact metadata for these
+  route-replay windows. The route planner can produce:
+  1. per-rank hot rows keyed by compact hot expert,
+  2. per-rank cold rows keyed by logical expert,
+  3. deterministic rank-local row indices,
+  4. and a gather map back to original assignment order.
+- This solves the route-metadata side of a one-launch hot64 layerlet, but it is
+  not a speed result. The next meaningful gate is a kernel/microbench that
+  consumes this exact queue format, runs hot and cold work in one dispatch or
+  persistent loop, and compares output exactly against `xpu_fused_moe`.
+- If that kernel cannot beat the current exact grouped-GEMM replay on these
+  same windows, hot64 should stay a planning artifact rather than a production
+  memory carve-out.
