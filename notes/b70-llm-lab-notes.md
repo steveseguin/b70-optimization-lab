@@ -197,6 +197,19 @@ Current Qwen3.6 INT8 direction:
     `sycl_ext_oneapi_work_group_scratch_memory` unavailable under SYCL Graph.
     Restored PIECEWISE accepted backend passed the guard and measured
     `99.463 tok/s` after first text at p512/o512/c1.
+26. Added `notes/2026-06-12-qwen36-next-bigger-bets.md` as the focused backlog
+    for the next Qwen3.6 35B Quark W8A8 INT8 push. It records the current
+    `~100 tok/s` quality baseline, folds in public B70/XPU/persistent-MoE
+    signals, and ranks immediate no-quality-loss experiments: real-path
+    preallocated MoE scratch reuse, route-exact persistent-MoE layerlets,
+    route-window kernel fixtures, low-overhead latency decomposition,
+    block-size/metadata-copy screens, strict 8-bit engine bakeoff, and material
+    Localmaxxing submission thresholds. Bigger bets now tracked there include a
+    B70-native persistent MoE kernel, resident-state transactional verifier,
+    static one-request latency appliance, hybrid TP/EP simulation, tile-native
+    W8A8 repack cache, GPU-resident metadata updates, cache artifact
+    certification, target-trace-trained proposer, production dual-lane routing,
+    and an upstreamable Qwen3.6 XPU perf packet.
 
 ## 2026-05-10 MiniMax AutoRound Addendum
 

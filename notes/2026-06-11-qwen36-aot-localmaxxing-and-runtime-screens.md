@@ -15637,3 +15637,20 @@ Interpretation:
   require the post-relaunch provenance guard before collecting speed data.
 - The restored lane remains around `99-100 tok/s`, so the >200 tok/s target
   still needs the larger COW/speculation or MoE-kernel work described above.
+
+## Focused Bigger-Bet Backlog
+
+Added a focused follow-up note for the next no-quality-loss Qwen3.6 35B Quark
+W8A8 INT8 push:
+
+- `notes/2026-06-12-qwen36-next-bigger-bets.md`
+
+This note keeps the actionable backlog separate from the full running log. It
+records the current `~100 tok/s` c1 baseline, public B70/XPU signals, immediate
+experiments, larger architectural bets, and promotion rules. The highest
+near-term non-speculative item is real-path preallocated MoE scratch reuse
+because the routecapture6 microbench already matched `xpu_fused_moe` exactly
+while cutting one layer sample from roughly `270 us` to roughly `206 us`. The
+highest-upside overall item remains resident-state transactional verification,
+because it permits MTP/DFlash/n-gram/target-trace proposers while the current
+Quark W8A8 model remains the only accepted source of emitted tokens.
