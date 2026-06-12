@@ -246,6 +246,109 @@ Promotion gate for the digest branch:
 - Digest rows are stable across repeats for identical prompt/token windows.
 - No speed result is promoted from the diagnostic endpoint.
 
+## Replay Digest Build 20260612di
+
+Built the replay digest probe from an isolated copy of the active local
+W8A8/live-ABI/sidecar kernel source stack. This still did not touch the live
+accepted endpoint and does not promote a speed result.
+
+Artifacts:
+
+- `data/qwen36-replay-digest-build-20260612di.json`
+- `data/qwen36-replay-digest-build-20260612di.log`
+- `patches/vllm-xpu-qwen36-replay-digest-probe-20260612dh.diff`
+- `scripts/launch-qwen36-quark-int8-replay-digest.sh`
+
+Build base:
+
+- Source snapshot:
+  `/home/steve/src/vllm-xpu-kernels-digest-20260612dh`
+- Build tree:
+  `/home/steve/src/vllm-xpu-kernels-digest-20260612dh/build/qwen36-replay-digest-20260612dh`
+- Install prefix:
+  `/tmp/vllm-xpu-replay-digest-20260612dh`
+- Compiler environment:
+  `/opt/intel/oneapi/compiler/2026.0/env/vars.sh`
+
+Commands and results:
+
+```bash
+# Patch applies cleanly to the active local source base.
+git -C /home/steve/src/vllm-xpu-kernels apply --check \
+  /home/steve/llm-optimizations/patches/vllm-xpu-qwen36-replay-digest-probe-20260612dh.diff
+
+# Successful build command after removing only the copied snapshot .deps cache.
+KERNELS_DIR=/home/steve/src/vllm-xpu-kernels-digest-20260612dh \
+ONEAPI_VARS=/opt/intel/oneapi/compiler/2026.0/env/vars.sh \
+BUILD_DIR=/home/steve/src/vllm-xpu-kernels-digest-20260612dh/build/qwen36-replay-digest-20260612dh \
+INSTALL_PREFIX=/tmp/vllm-xpu-replay-digest-20260612dh \
+JOBS=8 \
+scripts/build-vllm-xpu-kernels-xpu-c-only.sh
+```
+
+What failed and was fixed:
+
+- The first configure attempt failed because the source snapshot copied `.deps`
+  from `/home/steve/src/vllm-xpu-kernels`, so CMake FetchContent saw stale
+  paths. Removing only the snapshot `.deps` fixed configure.
+- The first compile attempt failed in
+  `qwen36_moe_replay_digest.cpp` because the added-file hunk count in the patch
+  said `+1,158` even though the file had `164` added lines. `git apply`
+  truncated the generated source at `row[14]`. The patch now uses `+1,164`.
+- While fixing the source, `rows_max = sycl::max(rows_max, value)` was changed
+  to `rows_max = value > rows_max ? value : rows_max` inside the device lambda
+  to avoid a possible SYCL device compile issue.
+
+Successful build evidence:
+
+- Build-tree extension:
+  `/home/steve/src/vllm-xpu-kernels-digest-20260612dh/build/qwen36-replay-digest-20260612dh/_xpu_C.abi3.so`
+- Size: `50689752` bytes.
+- SHA256:
+  `e033ad76c7d2c21938715763ba646f42b4f66ff19cb15476a1c10dac5b04e2fa`.
+- `nm -D` shows both
+  `qwen36_moe_replay_digest_probe` and
+  `qwen36_moe_onednn_sidecar_probe`.
+- Direct Python import of the build-tree `_xpu_C.abi3.so` passed with
+  `importlib.util.spec_from_file_location`, and
+  `torch.ops._xpu_C` exposed:
+  `qwen36_moe_onednn_sidecar_probe` and
+  `qwen36_moe_replay_digest_probe`.
+
+Important import caveat:
+
+- Importing `vllm_xpu_kernels._xpu_C` through the copied `/tmp` package overlay
+  plus the source snapshot package path segfaulted.
+- Direct-loading the build-tree `_xpu_C.abi3.so` with a coherent
+  `LD_LIBRARY_PATH` passed.
+- Added `scripts/launch-qwen36-quark-int8-replay-digest.sh`, which creates a
+  tiny overlay package whose `__init__.py` direct-loads the build-tree
+  `_xpu_C.abi3.so` via `importlib` before vLLM can import
+  `vllm_xpu_kernels._xpu_C` from another tree.
+- Launcher validation passed:
+
+```bash
+DRY_RUN_IMPORT=1 scripts/launch-qwen36-quark-int8-replay-digest.sh
+# replay_digest_import_ok
+```
+
+Next gate:
+
+- Run the dedicated diagnostic launcher on an isolated port with:
+
+```bash
+PORT=18082 \
+TAG=replay-digest-20260612di \
+VLLM_XPU_MOE_REPLAY_DIGEST=1 \
+VLLM_XPU_MOE_REPLAY_DIGEST_LAYER_REGEX='layers[.](9|19|29|39)[.]' \
+VLLM_XPU_MOE_REPLAY_DIGEST_RANK=0
+scripts/launch-qwen36-quark-int8-replay-digest.sh
+```
+
+- Promote nothing unless graph replay mutates the digest counter, digest rows
+  are stable across repeated identical requests, and the accepted endpoint is
+  restored afterward.
+
 ## Bigger Opportunity Refresh 20260612di
 
 Added after the replay-digest patch plan to keep the next speculative ideas

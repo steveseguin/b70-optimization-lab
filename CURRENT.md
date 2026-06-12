@@ -6,6 +6,27 @@ Date: 2026-06-12
 
 2026-06-12 notes update:
 
+- Added the replay digest isolated build checkpoint to
+  `notes/2026-06-12-qwen36-next-bigger-bets.md` and
+  `data/qwen36-replay-digest-build-20260612di.{json,log}`, plus
+  `scripts/launch-qwen36-quark-int8-replay-digest.sh`. The diagnostic patch
+  artifact now has the correct added-file hunk count (`164` lines) and avoids
+  `sycl::max` inside the device lambda. The first build failed because the
+  copied source snapshot included stale `.deps`; after removing only the
+  snapshot `.deps`, the build reached the digest source, exposed the hunk-count
+  truncation, and then succeeded incrementally with IntelLLVM 2026. The
+  build-tree `_xpu_C.abi3.so` is `50689752` bytes with SHA256
+  `e033ad76c7d2c21938715763ba646f42b4f66ff19cb15476a1c10dac5b04e2fa`; `nm -D`
+  shows `qwen36_moe_replay_digest_probe`, and direct Python import of the
+  build-tree extension registers both replay-digest and sidecar ops. Importing
+  through the copied `/tmp` package overlay segfaulted, so the new launcher
+  creates an overlay package that direct-loads the build-tree extension via
+  `importlib` before vLLM imports `_xpu_C`; `DRY_RUN_IMPORT=1` passed with
+  `replay_digest_import_ok`. No endpoint was changed and no speed result was
+  promoted.
+
+2026-06-12 notes update:
+
 - Added a "Bigger Opportunity Refresh 20260612di" section to
   `notes/2026-06-12-qwen36-next-bigger-bets.md`. The refresh records the
   latest public Localmaxxing confirmation for the exact

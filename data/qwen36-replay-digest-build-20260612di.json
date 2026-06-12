@@ -1,0 +1,82 @@
+{
+  "tag": "qwen36-replay-digest-build-20260612di",
+  "date": "2026-06-12",
+  "model": "nameistoken/Qwen3.6-35B-A3B-Quark-W8A8-INT8",
+  "purpose": "Build a graph-replay-safe XPU MoE digest probe for route/output observability before custom INT8 MoE or topology work.",
+  "source_snapshot": "/home/steve/src/vllm-xpu-kernels-digest-20260612dh",
+  "patch": {
+    "path": "patches/vllm-xpu-qwen36-replay-digest-probe-20260612dh.diff",
+    "sha256": "d902b35cfa5ee3a89ed5502cdb67c69eb0f06bcfdf4e76b076bbbea8efb82424",
+    "notes": [
+      "Patch applies cleanly to the active local vllm-xpu-kernels source base.",
+      "Original added-file hunk count truncated qwen36_moe_replay_digest.cpp at line 158; fixed hunk count to 164.",
+      "Replaced sycl::max inside the single_task lambda with a plain comparison."
+    ]
+  },
+  "build": {
+    "status": "succeeded_after_retry",
+    "log": "data/qwen36-replay-digest-build-20260612di.log",
+    "compiler_env": "/opt/intel/oneapi/compiler/2026.0/env/vars.sh",
+    "helper": "scripts/build-vllm-xpu-kernels-xpu-c-only.sh",
+    "command": "KERNELS_DIR=/home/steve/src/vllm-xpu-kernels-digest-20260612dh ONEAPI_VARS=/opt/intel/oneapi/compiler/2026.0/env/vars.sh BUILD_DIR=/home/steve/src/vllm-xpu-kernels-digest-20260612dh/build/qwen36-replay-digest-20260612dh INSTALL_PREFIX=/tmp/vllm-xpu-replay-digest-20260612dh JOBS=8 scripts/build-vllm-xpu-kernels-xpu-c-only.sh",
+    "initial_failures": [
+      "Copied .deps cache pointed at /home/steve/src/vllm-xpu-kernels and caused CMake FetchContent path mismatch.",
+      "The patch hunk count truncated the new digest source and caused an expected 'expected }' compiler error."
+    ],
+    "fixes_applied": [
+      "Removed only the snapshot .deps directory and reconfigured.",
+      "Fixed patch hunk count and the truncated source, then rebuilt incrementally."
+    ]
+  },
+  "artifacts": {
+    "build_xpu_c": {
+      "path": "/home/steve/src/vllm-xpu-kernels-digest-20260612dh/build/qwen36-replay-digest-20260612dh/_xpu_C.abi3.so",
+      "bytes": 50689752,
+      "sha256": "e033ad76c7d2c21938715763ba646f42b4f66ff19cb15476a1c10dac5b04e2fa"
+    },
+    "installed_xpu_c": {
+      "path": "/tmp/vllm-xpu-replay-digest-20260612dh/vllm_xpu_kernels/_xpu_C.abi3.so",
+      "bytes": 50689752,
+      "sha256": "771f7c8b1eda49bc15fa34227a9214df4348290b7a968d87b1fc77f53631934b",
+      "note": "Install step rewrites runtime path, so the hash differs from the build-tree .so."
+    },
+    "grouped_gemm_xe_2": {
+      "path": "/home/steve/src/vllm-xpu-kernels-digest-20260612dh/build/qwen36-replay-digest-20260612dh/libgrouped_gemm_xe_2.so",
+      "bytes": 3482208
+    }
+  },
+  "sanity_checks": {
+    "symbol_check": {
+      "status": "passed",
+      "symbols": [
+        "qwen36_moe_replay_digest_probe",
+        "qwen36_moe_onednn_sidecar_probe"
+      ]
+    },
+    "direct_python_import": {
+      "status": "passed",
+      "method": "importlib.util.spec_from_file_location on the build-tree _xpu_C.abi3.so",
+      "ld_library_path": "/home/steve/src/vllm-xpu-kernels-digest-20260612dh/build/qwen36-replay-digest-20260612dh:/home/steve/src/vllm-xpu-kernels-digest-20260612dh/vllm_xpu_kernels:/opt/intel/oneapi/compiler/2026.0/lib:/home/steve/.venvs/vllm-xpu/lib/python3.12/site-packages/torch/lib",
+      "observed_ops": [
+        "qwen36_moe_onednn_sidecar_probe",
+        "qwen36_moe_replay_digest_probe"
+      ]
+    },
+    "package_overlay_import": {
+      "status": "failed",
+      "failure": "Segmentation fault when importing vllm_xpu_kernels._xpu_C through the copied /tmp overlay plus snapshot package path.",
+      "interpretation": "Use the build-tree .so plus explicit LD_LIBRARY_PATH for the next diagnostic launcher, or build a full coherent wheel/overlay before endpoint testing."
+    }
+  },
+  "launcher": {
+    "path": "scripts/launch-qwen36-quark-int8-replay-digest.sh",
+    "purpose": "Diagnostic TP4 graph-replay launcher that preloads the build-tree _xpu_C via an overlay package __init__.py before vLLM imports vllm_xpu_kernels._xpu_C.",
+    "dry_run_command": "DRY_RUN_IMPORT=1 scripts/launch-qwen36-quark-int8-replay-digest.sh",
+    "dry_run_status": "passed",
+    "dry_run_output": "replay_digest_import_ok",
+    "default_port": 18082,
+    "default_tag": "replay-digest-20260612di"
+  },
+  "endpoint_impact": "No live endpoint was changed and no speed result was promoted.",
+  "next_step": "Run scripts/launch-qwen36-quark-int8-replay-digest.sh on an isolated port, send repeated identical decode requests, and verify that graph replay mutates the digest counter with stable selected-layer digest rows before any kernel/topology promotion."
+}

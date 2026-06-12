@@ -3,7 +3,7 @@ new file mode 100644
 index 0000000..8f86143
 --- /dev/null
 +++ b/csrc/xpu/onednn/qwen36_moe_replay_digest.cpp
-@@ -0,0 +1,158 @@
+@@ -0,0 +1,164 @@
 +#include <algorithm>
 +#include <cstdint>
 +
@@ -136,7 +136,7 @@ index 0000000..8f86143
 +        const int64_t value = static_cast<int64_t>(rows_ptr[i]);
 +        rows_sum += value;
 +        rows_nonzero += value != 0;
-+        rows_max = sycl::max(rows_max, value);
++        rows_max = value > rows_max ? value : rows_max;
 +        row_hash ^= static_cast<uint64_t>(value + 0x10000 + i);
 +        row_hash *= 1099511628211ULL;
 +      }
