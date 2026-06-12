@@ -1,0 +1,355 @@
+diff --git a/csrc/xpu/onednn/qwen36_moe_replay_digest.cpp b/csrc/xpu/onednn/qwen36_moe_replay_digest.cpp
+new file mode 100644
+index 0000000..8f86143
+--- /dev/null
++++ b/csrc/xpu/onednn/qwen36_moe_replay_digest.cpp
+@@ -0,0 +1,158 @@
++#include <algorithm>
++#include <cstdint>
++
++#include <sycl/sycl.hpp>
++#include <torch/torch.h>
++
++#include "utils.h"
++
++namespace {
++
++constexpr int64_t kDigestColumns = 16;
++constexpr int64_t kDigestMagic = 0x51573336444947LL;  // "QW36DIG"
++
++void require_xpu_contiguous(
++    const torch::Tensor& tensor,
++    const char* name,
++    at::ScalarType dtype) {
++  TORCH_CHECK(tensor.defined(), name, " must be defined");
++  TORCH_CHECK(tensor.is_xpu(), name, " must be an XPU tensor");
++  TORCH_CHECK(tensor.is_contiguous(), name, " must be contiguous");
++  TORCH_CHECK(
++      tensor.scalar_type() == dtype,
++      name,
++      " dtype mismatch: expected ",
++      dtype,
++      " got ",
++      tensor.scalar_type());
++}
++
++}  // namespace
++
++torch::Tensor qwen36_moe_replay_digest_probe(
++    const torch::Tensor& topk_ids,
++    const torch::Tensor& rows_per_expert,
++    const torch::Tensor& output,
++    torch::Tensor& digest_ring,
++    torch::Tensor& digest_counter,
++    int64_t layer_index,
++    int64_t max_records_arg,
++    int64_t max_topk_values_arg,
++    int64_t max_output_bytes_arg) {
++  require_xpu_contiguous(topk_ids, "topk_ids", at::ScalarType::Int);
++  require_xpu_contiguous(rows_per_expert, "rows_per_expert", at::ScalarType::Int);
++  require_xpu_contiguous(digest_ring, "digest_ring", at::ScalarType::Long);
++  require_xpu_contiguous(digest_counter, "digest_counter", at::ScalarType::Long);
++
++  TORCH_CHECK(output.defined(), "output must be defined");
++  TORCH_CHECK(output.is_xpu(), "output must be an XPU tensor");
++  TORCH_CHECK(output.is_contiguous(), "output must be contiguous");
++  TORCH_CHECK(
++      output.scalar_type() == at::ScalarType::BFloat16 ||
++          output.scalar_type() == at::ScalarType::Half ||
++          output.scalar_type() == at::ScalarType::Float,
++      "output must be bf16, fp16, or fp32, got ",
++      output.scalar_type());
++
++  TORCH_CHECK(topk_ids.dim() == 2, "topk_ids must be [num_rows, topk]");
++  TORCH_CHECK(rows_per_expert.dim() == 1, "rows_per_expert must be [experts]");
++  TORCH_CHECK(output.dim() == 2, "output must be [num_rows, hidden_size]");
++  TORCH_CHECK(digest_ring.dim() == 2, "digest_ring must be [records, columns]");
++  TORCH_CHECK(
++      digest_ring.size(1) >= kDigestColumns,
++      "digest_ring needs at least ",
++      kDigestColumns,
++      " columns");
++  TORCH_CHECK(digest_counter.numel() >= 1, "digest_counter must have one value");
++  TORCH_CHECK(
++      topk_ids.device() == output.device() &&
++          rows_per_expert.device() == output.device() &&
++          digest_ring.device() == output.device() &&
++          digest_counter.device() == output.device(),
++      "all tensors must be on the same XPU device");
++
++  const int64_t max_records =
++      std::min<int64_t>(std::max<int64_t>(max_records_arg, 0), digest_ring.size(0));
++  if (max_records == 0) {
++    return digest_ring;
++  }
++
++  const int64_t digest_stride = digest_ring.size(1);
++  const int64_t topk_values = std::min<int64_t>(
++      std::max<int64_t>(max_topk_values_arg, 0), topk_ids.numel());
++  const int64_t output_bytes_total = output.numel() * output.element_size();
++  const int64_t output_bytes = std::min<int64_t>(
++      std::max<int64_t>(max_output_bytes_arg, 0), output_bytes_total);
++
++  auto device_guard = at::DeviceGuard(output.device());
++  auto& queue = vllm::xpu::vllmGetQueue(output.device().index());
++
++  const int32_t* topk_ptr = topk_ids.data_ptr<int32_t>();
++  const int32_t* rows_ptr = rows_per_expert.data_ptr<int32_t>();
++  const uint8_t* output_ptr =
++      reinterpret_cast<const uint8_t*>(output.data_ptr());
++  int64_t* ring_ptr = digest_ring.data_ptr<int64_t>();
++  int64_t* counter_ptr = digest_counter.data_ptr<int64_t>();
++
++  const int64_t num_rows = topk_ids.size(0);
++  const int64_t topk = topk_ids.size(1);
++  const int64_t num_experts = rows_per_expert.numel();
++  const int64_t hidden_size = output.size(1);
++  const int64_t output_numel = output.numel();
++
++  queue.submit([&](sycl::handler& cgh) {
++    cgh.single_task([=]() {
++      using atomic_i64 = sycl::atomic_ref<
++          int64_t,
++          sycl::memory_order::relaxed,
++          sycl::memory_scope::device,
++          sycl::access::address_space::global_space>;
++
++      atomic_i64 counter(counter_ptr[0]);
++      const int64_t sequence = counter.fetch_add(1);
++      const int64_t slot =
++          (sequence >= 0 ? sequence : -sequence) % max_records;
++      int64_t* row = ring_ptr + slot * digest_stride;
++
++      uint64_t route_hash = 1469598103934665603ULL;
++      for (int64_t i = 0; i < topk_values; ++i) {
++        const uint64_t value = static_cast<uint32_t>(topk_ptr[i]);
++        route_hash ^= value + 0x9e3779b97f4a7c15ULL +
++                      (route_hash << 6) + (route_hash >> 2);
++        route_hash *= 1099511628211ULL;
++      }
++
++      int64_t rows_sum = 0;
++      int64_t rows_nonzero = 0;
++      int64_t rows_max = 0;
++      uint64_t row_hash = 1469598103934665603ULL;
++      for (int64_t i = 0; i < num_experts; ++i) {
++        const int64_t value = static_cast<int64_t>(rows_ptr[i]);
++        rows_sum += value;
++        rows_nonzero += value != 0;
++        rows_max = sycl::max(rows_max, value);
++        row_hash ^= static_cast<uint64_t>(value + 0x10000 + i);
++        row_hash *= 1099511628211ULL;
++      }
++
++      uint64_t output_hash = 1469598103934665603ULL;
++      for (int64_t i = 0; i < output_bytes; ++i) {
++        output_hash ^= static_cast<uint64_t>(output_ptr[i]);
++        output_hash *= 1099511628211ULL;
++      }
++
++      row[0] = kDigestMagic;
++      row[1] = sequence;
++      row[2] = layer_index;
++      row[3] = num_rows;
++      row[4] = topk;
++      row[5] = num_experts;
++      row[6] = hidden_size;
++      row[7] = rows_sum;
++      row[8] = rows_nonzero;
++      row[9] = rows_max;
++      row[10] = static_cast<int64_t>(route_hash);
++      row[11] = static_cast<int64_t>(row_hash);
++      row[12] = output_numel;
++      row[13] = output_bytes;
++      row[14] = static_cast<int64_t>(output_hash);
++      row[15] = 1;
++    });
++  });
++
++  return digest_ring;
++}
+diff --git a/csrc/xpu/ops.h b/csrc/xpu/ops.h
+index 2f77f7c..6ba6c36 100644
+--- a/csrc/xpu/ops.h
++++ b/csrc/xpu/ops.h
+@@ -149,7 +149,18 @@ torch::Tensor qwen36_moe_onednn_sidecar_probe(
+     const torch::Tensor& gemm2_output,
+     const c10::optional<at::Tensor>& onednn_grouped_offsets,
+     int64_t layer_index,
+     bool dry_create_descriptors);
++
++torch::Tensor qwen36_moe_replay_digest_probe(
++    const torch::Tensor& topk_ids,
++    const torch::Tensor& rows_per_expert,
++    const torch::Tensor& output,
++    torch::Tensor& digest_ring,
++    torch::Tensor& digest_counter,
++    int64_t layer_index,
++    int64_t max_records,
++    int64_t max_topk_values,
++    int64_t max_output_bytes);
+ #endif
+ 
+ std::tuple<at::Tensor, at::Tensor> deepseek_scaling_rope(
+diff --git a/csrc/xpu/torch_bindings.cpp b/csrc/xpu/torch_bindings.cpp
+index 86e65b2..208015b 100644
+--- a/csrc/xpu/torch_bindings.cpp
++++ b/csrc/xpu/torch_bindings.cpp
+@@ -125,7 +125,17 @@ TORCH_LIBRARY_EXPAND(TORCH_EXTENSION_NAME, xpu_ops) {
+   xpu_ops.impl(
+       "qwen36_moe_onednn_sidecar_probe",
+       torch::kXPU,
+       &qwen36_moe_onednn_sidecar_probe);
++
++  xpu_ops.def(
++      "qwen36_moe_replay_digest_probe(Tensor topk_ids, Tensor "
++      "rows_per_expert, Tensor output, Tensor! digest_ring, Tensor! "
++      "digest_counter, int layer_index, int max_records, int "
++      "max_topk_values, int max_output_bytes) -> Tensor");
++  xpu_ops.impl(
++      "qwen36_moe_replay_digest_probe",
++      torch::kXPU,
++      &qwen36_moe_replay_digest_probe);
+ #endif
+ 
+   xpu_ops.def(
+diff --git a/vllm_xpu_kernels/fused_moe_interface.py b/vllm_xpu_kernels/fused_moe_interface.py
+index e5dc297..2bf9c94 100644
+--- a/vllm_xpu_kernels/fused_moe_interface.py
++++ b/vllm_xpu_kernels/fused_moe_interface.py
+@@ -42,6 +42,13 @@ ONEDNN_SIDECAR_MAX_CALLS_ENV = "VLLM_XPU_MOE_ONEDNN_SIDECAR_MAX_CALLS"
+ ONEDNN_SIDECAR_LAYER_REGEX_ENV = "VLLM_XPU_MOE_ONEDNN_SIDECAR_LAYER_REGEX"
+ ONEDNN_SIDECAR_RANK_ENV = "VLLM_XPU_MOE_ONEDNN_SIDECAR_RANK"
+ ONEDNN_SIDECAR_LOG_ENV = "VLLM_XPU_MOE_ONEDNN_SIDECAR_LOG"
++REPLAY_DIGEST_ENV = "VLLM_XPU_MOE_REPLAY_DIGEST"
++REPLAY_DIGEST_MAX_RECORDS_ENV = "VLLM_XPU_MOE_REPLAY_DIGEST_MAX_RECORDS"
++REPLAY_DIGEST_MAX_TOPK_ENV = "VLLM_XPU_MOE_REPLAY_DIGEST_MAX_TOPK"
++REPLAY_DIGEST_MAX_OUTPUT_BYTES_ENV = (
++    "VLLM_XPU_MOE_REPLAY_DIGEST_MAX_OUTPUT_BYTES")
++REPLAY_DIGEST_LAYER_REGEX_ENV = "VLLM_XPU_MOE_REPLAY_DIGEST_LAYER_REGEX"
++REPLAY_DIGEST_RANK_ENV = "VLLM_XPU_MOE_REPLAY_DIGEST_RANK"
+ 
+ _live_abi_lock = threading.Lock()
+ _live_abi_writes = 0
+@@ -55,6 +62,9 @@ _sidecar_probe_calls = 0
+ _sidecar_probe_writes = 0
+ _sidecar_probe_disabled = False
+ _sidecar_probe_warned = False
++_replay_digest_state = {}
++_replay_digest_lock = threading.Lock()
++_replay_digest_warned = False
+ 
+ 
+ try:
+@@ -724,6 +734,78 @@ def _maybe_probe_onednn_sidecar(
+         })
+         return None
+ 
++
++def _maybe_probe_replay_digest(*,
++                               topk_ids,
++                               rows_per_expert,
++                               output,
++                               is_int8: bool,
++                               diagnostic_context=None):
++    global _replay_digest_warned
++
++    if not is_int8:
++        return None
++    if not _is_env_enabled(REPLAY_DIGEST_ENV):
++        return None
++    if not _rank_allowed(REPLAY_DIGEST_RANK_ENV):
++        return None
++    if not _layer_matches(REPLAY_DIGEST_LAYER_REGEX_ENV, diagnostic_context):
++        return None
++    if not hasattr(torch.ops._xpu_C, "qwen36_moe_replay_digest_probe"):
++        if not _replay_digest_warned:
++            _replay_digest_warned = True
++            try:
++                print("[xpu_moe_replay_digest] op is unavailable")
++            except Exception:
++                pass
++        return None
++
++    max_records = max(1, _int_env(REPLAY_DIGEST_MAX_RECORDS_ENV, 4096))
++    max_topk = max(0, _int_env(REPLAY_DIGEST_MAX_TOPK_ENV, 64))
++    max_output_bytes = max(
++        0, _int_env(REPLAY_DIGEST_MAX_OUTPUT_BYTES_ENV, 512))
++    key = (str(output.device), int(max_records))
++    state = _replay_digest_state.get(key)
++
++    if state is None:
++        if _stream_capture_active():
++            return None
++        try:
++            with _replay_digest_lock:
++                state = _replay_digest_state.get(key)
++                if state is None:
++                    state = {
++                        "ring": torch.zeros((max_records, 16),
++                                            dtype=torch.int64,
++                                            device=output.device),
++                        "counter": torch.zeros((1, ),
++                                               dtype=torch.int64,
++                                               device=output.device),
++                    }
++                    _replay_digest_state[key] = state
++        except Exception as exc:
++            if not _replay_digest_warned:
++                _replay_digest_warned = True
++                try:
++                    print(f"[xpu_moe_replay_digest] init failed: {exc!r}")
++                except Exception:
++                    pass
++            return None
++
++    try:
++        return torch.ops._xpu_C.qwen36_moe_replay_digest_probe(
++            topk_ids, rows_per_expert, output, state["ring"],
++            state["counter"], _layer_index_from_context(diagnostic_context),
++            max_records, max_topk, max_output_bytes)
++    except Exception as exc:
++        if not _replay_digest_warned:
++            _replay_digest_warned = True
++            try:
++                print(f"[xpu_moe_replay_digest] disabled after {exc!r}")
++            except Exception:
++                pass
++        return None
++
+ 
+ if FUSEDMOE_AVAILABLE:
+     try:
+@@ -808,6 +890,18 @@ if FUSEDMOE_AVAILABLE:
+ 
+     except RuntimeError:
+         pass
++
++    try:
++
++        @torch.library.register_fake("_xpu_C::qwen36_moe_replay_digest_probe")
++        def _fake_qwen36_moe_replay_digest_probe(
++                topk_ids, rows_per_expert, output, digest_ring,
++                digest_counter, layer_index, max_records, max_topk_values,
++                max_output_bytes):
++            return digest_ring
++
++    except RuntimeError:
++        pass
+ 
+     try:
+ 
+@@ -1742,6 +1836,13 @@ def xpu_fused_moe(hidden_states,
+         torch.ops._moe_C.moe_gather(output, gemm2_output, topk_weights,
+                                     unpermuted_row_to_permuted_row,
+                                     num_experts)
++    _maybe_probe_replay_digest(
++        topk_ids=topk_ids,
++        rows_per_expert=rows_per_expert,
++        output=output,
++        is_int8=is_int8,
++        diagnostic_context=diagnostic_context,
++    )
+     _maybe_record_live_abi(
+         hidden_states=hidden_states,
+         w13=w13,

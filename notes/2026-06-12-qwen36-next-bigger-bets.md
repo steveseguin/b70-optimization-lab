@@ -163,6 +163,77 @@ Updated order:
 5. Promote nothing unless it beats the accepted manifest and passes the
    cache-versioned quality/stability gate.
 
+## Replay Digest Patch Artifact 20260612dh
+
+Added the first concrete patch artifact for the graph-replay observability
+gap:
+
+- `patches/vllm-xpu-qwen36-replay-digest-probe-20260612dh.diff`
+
+What it does:
+
+- Adds a new XPU custom op:
+  `qwen36_moe_replay_digest_probe`.
+- Registers the op in `_xpu_C` and adds a Python fake registration for compile
+  compatibility.
+- Calls the op immediately after `moe_gather` in the INT8 MoE path, gated by
+  `VLLM_XPU_MOE_REPLAY_DIGEST=1`.
+- Allocates a per-device XPU ring and counter only outside stream capture.
+  During replay, the op mutates preallocated device tensors and avoids CPU
+  tensor copies or synchronizes.
+- Records compact, graph-captured digest rows with layer ID, sequence ID,
+  route hash, rows-per-expert summary, and bounded raw output-byte checksum.
+
+Why this matters:
+
+- The live-ABI graph-capture run proved that Python hooks can see graph-capture
+  events, but cannot reliably observe actual replayed decode routes.
+- This patch moves the probe into the captured tensor op stream. If it builds
+  and the ring changes during graph replay, we get a safer signal for
+  route-class AOT, persistent MoE, or topology experiments.
+- The patch is diagnostic only. It must remain disabled in accepted production
+  launches unless an isolated capture run explicitly enables it.
+
+Validation already performed:
+
+```bash
+git -C /home/steve/src/vllm-xpu-kernels apply --check \
+  /home/steve/llm-optimizations/patches/vllm-xpu-qwen36-replay-digest-probe-20260612dh.diff
+```
+
+Result:
+
+- `git apply --check` passed against the current local
+  `/home/steve/src/vllm-xpu-kernels` tree.
+- The only warning was the existing mode mismatch:
+  `vllm_xpu_kernels/fused_moe_interface.py has type 100755, expected 100644`.
+- The patch has not been applied to the dirty kernel checkout and no endpoint
+  was changed.
+
+Next isolated validation window:
+
+```bash
+git -C /home/steve/src/vllm-xpu-kernels apply \
+  /home/steve/llm-optimizations/patches/vllm-xpu-qwen36-replay-digest-probe-20260612dh.diff
+
+# Build in an isolated wheel/cache path, then run a diagnostic endpoint with:
+VLLM_XPU_MOE_REPLAY_DIGEST=1 \
+VLLM_XPU_MOE_REPLAY_DIGEST_LAYER_REGEX='layers[.](9|19|29|39)[.]' \
+VLLM_XPU_MOE_REPLAY_DIGEST_RANK=0 \
+VLLM_XPU_MOE_REPLAY_DIGEST_MAX_RECORDS=4096 \
+VLLM_XPU_MOE_REPLAY_DIGEST_MAX_TOPK=64 \
+VLLM_XPU_MOE_REPLAY_DIGEST_MAX_OUTPUT_BYTES=512 \
+scripts/run-qwen36-liveabi-graph-capture.sh
+```
+
+Promotion gate for the digest branch:
+
+- Build succeeds from an isolated checkout.
+- The accepted endpoint restores cleanly after the diagnostic run.
+- Digest counter increments during graph replay for selected layers.
+- Digest rows are stable across repeats for identical prompt/token windows.
+- No speed result is promoted from the diagnostic endpoint.
+
 ## Accepted C1 Latency Decomposition 20260612dg
 
 Added a fresh latency-decomposition gate against the currently restored

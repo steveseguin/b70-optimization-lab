@@ -6,6 +6,21 @@ Date: 2026-06-12
 
 2026-06-12 notes update:
 
+- Added `patches/vllm-xpu-qwen36-replay-digest-probe-20260612dh.diff` and a
+  "Replay Digest Patch Artifact 20260612dh" section to
+  `notes/2026-06-12-qwen36-next-bigger-bets.md`. The patch adds a
+  disabled-by-default XPU custom op, `qwen36_moe_replay_digest_probe`, called
+  after INT8 MoE `moe_gather` to mutate a preallocated device digest ring with
+  layer IDs, route hashes, rows-per-expert summaries, and bounded output-byte
+  checksums. This is the next graph-path observability step after the live-ABI
+  capture showed Python hooks do not reliably see replayed decode routes.
+  `git -C /home/steve/src/vllm-xpu-kernels apply --check` passed for the patch;
+  the only warning was the existing `fused_moe_interface.py` file-mode
+  mismatch. The patch was not applied to the dirty kernel checkout, no endpoint
+  was changed, and no speed result was promoted.
+
+2026-06-12 notes update:
+
 - Added a "Bolder Queue After Latency Gate 20260612dh" section to
   `notes/2026-06-12-qwen36-next-bigger-bets.md`. This records the immediate
   next work from the accepted latency decomposition and graph live-ABI lesson:
