@@ -32,6 +32,137 @@ Current speed anchor:
   MoE/kernel architecture improvement. Launch flags alone are unlikely to get
   there.
 
+## Bolder Queue After Latency Gate 20260612dh
+
+This is a planning checkpoint after the accepted latency decomposition and the
+graph live-ABI run. It adds the current next items and keeps bigger ideas
+visible without promoting a new endpoint or speed result.
+
+Fresh external snapshot:
+
+- Localmaxxing exact-model public row remains the accepted
+  `nameistoken/Qwen3.6-35B-A3B-Quark-W8A8-INT8` B70/vLLM row:
+  `99.428 tok/s`, 4x Arc Pro B70, c1, 32K context.
+- Localmaxxing broader B70/Qwen snapshot still has the same current-family top
+  row at `99.770 tok/s` for Qwen3.6 35B A3B Quark W8A8 INT8 on 4x B70.
+- Rows above `200 tok/s` are useful architecture signals, not current accepted
+  comparables: the visible leaders use non-B70 hardware, lower-bit quantization,
+  MTP/speculative execution, or custom engines.
+- The accepted latency gate says frontdoor and HTTP are not the bottleneck.
+  Current best local decode histogram is `100.480 tok/s`, or `9.952 ms/token`.
+  The `200 tok/s` target is `5.000 ms/token`, so the missing win is about a
+  `49.76%` device/runtime/token-path latency reduction.
+
+Items to add to the immediate things-to-try list:
+
+1. **Replay-safe XPU MoE digest custom op.**
+   Add a disabled-by-default captured custom-op probe that writes layer ID,
+   route hash, rows-per-expert summary, and bounded output checksums into a
+   device ring. It must be captured as graph work, mutate preallocated tensors,
+   and avoid CPU tensor copies or synchronizes during replay. This is now the
+   cleanest next diagnostic because Python live-ABI proved graph presence but
+   did not observe real replay routes.
+
+2. **Graph-output parity gate before another endpoint promotion.**
+   For any MoE/kernel candidate, compare accepted versus candidate tensors from
+   the compiled graph path, not just eager route replay. Minimum viable gate:
+   layer-9 output checksum, route digest, selected token/logit fingerprint, and
+   no-thinking quality smoke.
+
+3. **Real-route prologue-inclusive layerlet benchmark.**
+   Rerun the layer-9 first-decode route fixture when the cards are free and
+   score the full path: route/remap, activation quant, GEMM1, activation,
+   quant2, GEMM2, gather, and output combine. Isolated GEMM-only wins are not
+   enough.
+
+4. **VRAM budget re-accounting for topology experiments.**
+   The accepted TP4 row reserves almost all visible memory for serving, but the
+   actual model shard memory appears much smaller than the reservation. Measure
+   loaded weights, KV, graph cache, and scratch separately under lower
+   `gpu_memory_utilization`. Use the result to decide whether TP2, dense-path
+   replication, hot-expert replication, or a dedicated latency lane is plausible
+   without lowering quality.
+
+5. **Cache-versioned quality gate v2.**
+   Keep exact token canaries, but pin them to cache root, graph cache, extension
+   hash, tokenizer/model revision, and generation config. Add a periodic BF16
+   fallback or logit-rank comparison packet so cache drift is separated from
+   real quality regressions.
+
+6. **Reliability soak attached to any faster branch.**
+   A candidate that beats `100 tok/s` needs a short c1 speed pass, multi-prompt
+   quality pass, and then a longer stability pass with xpu-smi allocation,
+   BCS/GPU reset logs, TTFT spread, token drift checks, and restart recovery.
+
+Bigger, bolder ideas to keep in view:
+
+1. **Single-token topk-8 expert microprogram.**
+   Build an exact W8A8 decode-only MoE path for one token and topk `8` that
+   fuses the expert gather, two expert matmuls, Silu/mul, requant, and weighted
+   combine for the route shape we actually see. Generic grouped-GEMM machinery
+   may be too expensive for eight tiny routed rows.
+
+2. **Persistent MoE conveyor with route work stealing.**
+   Keep a device-side worker per B70 alive across decode steps with resident
+   expert descriptors, scale pointers, scratch buffers, and route queues. Feed
+   it token work via a small command ring. Add dynamic assignment of route
+   chunks to available tiles so skewed expert routes do not stall the whole
+   layer.
+
+3. **Tile-native Quark W8A8 repack cache.**
+   Repack the exact same int8 weights and scales into one or more DPAS/XMX
+   friendly orders at load time. This is quality-neutral if dequant math and
+   scale application are identical. It should be proven with a one-layer tensor
+   compare before any endpoint run.
+
+4. **Latency topology inversion.**
+   Test whether c1 improves when fewer ranks participate in each token, even if
+   aggregate throughput drops. Candidates: TP2 with more memory per shard,
+   asymmetric dense/MoE placement, hot experts duplicated across ranks, and a
+   separate TP4 aggregate lane for production concurrency.
+
+5. **Whole-token static decode runner.**
+   Build a direct lab runner that bypasses OpenAI serving, vLLM scheduling, and
+   non-c1 batching while reusing the accepted weights and kernels. If it stays
+   near `100 tok/s`, we know the missing 2x is kernel/collective. If it jumps,
+   the production answer is a dedicated low-latency serving lane.
+
+6. **Patchable Level Zero decode supergraph.**
+   Capture or construct one patchable command-list sequence per decode bucket
+   that spans norms, attention, MoE, logits, and sampler. Patch KV pointers,
+   block tables, route IDs, and token state per step. This is high risk, but it
+   directly attacks the repeated host orchestration behind the `~10 ms/token`
+   wall.
+
+7. **Verifier-owned parallel branches.**
+   Treat exact target verification as the quality boundary. Branches can come
+   from ngram, MTP, or route-aware proposers, but the Quark W8A8 target must
+   verify every emitted token and support exact KV/sampler rollback before
+   production. This remains the most credible non-kernel path over `200 tok/s`.
+
+8. **Same-model engine ceiling bakeoff.**
+   Try only engines or forks that can run the same Qwen3.6 target and an
+   8-bit/no-quality-loss representation. The useful comparison is not another
+   4-bit leaderboard win; it is whether a different runner reaches a lower c1
+   latency floor with current-model output parity.
+
+9. **Maintainer challenge packet with executable fixtures.**
+   Package the accepted manifest, Localmaxxing rows, latency decomposition,
+   filtered live-ABI failure, first-decode route fixture, and a one-layer W8A8
+   compare harness. The narrow ask: exact Qwen3.6 A3B Quark W8A8 c1 decode on
+   Arc Pro B70 needs a real MoE/token-path speedup without token drift.
+
+Updated order:
+
+1. Draft the replay-safe digest custom-op patch artifact.
+2. Use that to obtain graph-path route/output evidence.
+3. Run the real-route prologue-inclusive layerlet benchmark in an isolated XPU
+   window.
+4. In parallel, measure VRAM budget accurately enough to choose TP2/hot-pack
+   topology experiments.
+5. Promote nothing unless it beats the accepted manifest and passes the
+   cache-versioned quality/stability gate.
+
 ## Accepted C1 Latency Decomposition 20260612dg
 
 Added a fresh latency-decomposition gate against the currently restored

@@ -6,6 +6,22 @@ Date: 2026-06-12
 
 2026-06-12 notes update:
 
+- Added a "Bolder Queue After Latency Gate 20260612dh" section to
+  `notes/2026-06-12-qwen36-next-bigger-bets.md`. This records the immediate
+  next work from the accepted latency decomposition and graph live-ABI lesson:
+  a replay-safe XPU MoE digest custom-op patch artifact, graph-output parity
+  before endpoint promotion, real-route prologue-inclusive layerlet timing,
+  VRAM budget re-accounting for topology choices, cache-versioned quality gate
+  v2, and reliability soak requirements for any faster branch. The refreshed
+  bigger queue adds a single-token topk-8 W8A8 expert microprogram, persistent
+  MoE conveyor with route work stealing, tile-native Quark W8A8 repack cache,
+  latency topology inversion, whole-token static decode runner, patchable
+  Level Zero decode supergraph, verifier-owned parallel branches, same-model
+  engine ceiling bakeoff, and an executable maintainer challenge packet. No
+  endpoint was changed and no speed result was promoted.
+
+2026-06-12 notes update:
+
 - Added `scripts/qwen36-latency-decomp-summary.py` and fresh accepted-lane
   c1 latency decomposition artifacts for the restored
   `liveabi-graphcapture-20260612df` endpoint. Backend streaming
