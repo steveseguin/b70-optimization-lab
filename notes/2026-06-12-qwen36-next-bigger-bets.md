@@ -2004,3 +2004,188 @@ Next concrete ideas from this packet:
 5. **Upstream perf packet target.**
    Include the roofline packet with route windows, hotrep negative, and exact
    provenance sentinels when asking Intel/vLLM for persistent W8A8 MoE work.
+
+## 2026-06-12 Bigger Bets Refresh And M-Scaling Gate
+
+User direction:
+
+- Keep tracking lessons, future experiments, results, and repro code in this
+  repo.
+- Continue pursuing speed on the current exact Qwen3.6 Quark W8A8 INT8 model
+  without lowering quality.
+- Think bigger than launch-flag tuning, but keep every idea tied to a proof
+  artifact and a quality gate.
+
+New dry-run artifact:
+
+- Script: `scripts/bench-qwen36-grouped-gemm-m-scaling.py`.
+- Dry-run JSON:
+  `data/qwen36-quark-int8-tp4-grouped-gemm-mscaling-dryrun-20260612al.json`.
+- Dry-run markdown:
+  `data/qwen36-quark-int8-tp4-grouped-gemm-mscaling-dryrun-20260612al.md`.
+- Validation:
+  `python3 -m py_compile scripts/bench-qwen36-grouped-gemm-m-scaling.py`
+  passed.
+- Inputs:
+  - `data/qwen36-quark-int8-tp4-hotrep-route-plan-l9-route6-20260612af.json`.
+  - `data/qwen36-quark-int8-tp4-hotrep-route-plan-l20-route5-20260612af.json`.
+- Dry-run generated `120` cases: `10` real route windows, `2` GEMM stages,
+  and target row buckets `32,64,128,256,512,1024`.
+- The artifact is intentionally timing-free. It validates shape construction
+  only and should be run on XPU only in a clean benchmark window.
+
+Why this gate matters:
+
+- The roofline packet showed current route-exact grouped GEMM is far below B70
+  INT8 compute potential.
+- The hotrep split made `M` smaller and got slower, so the next question is
+  whether larger `M` buckets recover TOPS.
+- If TOPS scales strongly from `M=128` to `M=512/1024`, persistent batching,
+  work aggregation, or a static c1 lane that amortizes more routed rows per
+  launch is a credible no-quality-loss direction.
+- If TOPS stays flat, the blocker is more likely the underlying kernel path,
+  data layout, DPAS/XMX utilization, launch/control overhead, or a bad
+  small-shape policy. In that case, route batching alone will not get us to
+  `>200 tok/s`.
+
+Public signals checked for this refresh:
+
+- Localmaxxing still shows one approved public exact-model B70/vLLM row for
+  `nameistoken/Qwen3.6-35B-A3B-Quark-W8A8-INT8`: our 4x B70, 32K,
+  quality-gated `99.428 tok/s` baseline. No public exact-model faster row was
+  found in the filtered result set.
+- Intel's grouped-GEMM XPU issue remains aligned with our approach: MoE decode
+  routing is skewed, and grouped-GEMM tuning needs realistic route
+  distributions rather than only synthetic uniform shapes:
+  <https://github.com/intel/intel-xpu-backend-for-triton/issues/6389>.
+- Public B70 benchmark data from PMZFX reports Qwen3.6-35B-A3B MoE behavior
+  across llama.cpp SYCL/Vulkan and dual-card runs, reinforcing two lessons:
+  B70 can run this model family well, and naive multi-GPU layer splitting is
+  not proof of better c1 latency:
+  <https://github.com/PMZFX/intel-arc-pro-b70-benchmarks>.
+- Xe-Forge is relevant as a process idea, not as a drop-in solution: start from
+  a correct Triton/SYCL kernel, then run a hardware-in-the-loop optimization
+  loop with correctness and performance checks on Intel GPU:
+  <https://arxiv.org/html/2605.26118v1>.
+
+## Things To Try Next
+
+1. **Run the grouped-GEMM M-scaling timing screen.**
+   Stop the accepted backend, run the new M-scaling script on `xpu:0`, restore
+   the accepted backend, then run provenance and p512/o128 speed sanity. The
+   decision table is simple: strong TOPS scaling means aggregate/persistent
+   work is worth building; flat TOPS means go lower into kernel/layout/counter
+   proof first.
+
+2. **Build a one-layer exact MoE replay with hotset and cold fallback.**
+   Use layer `9` and layer `20` route windows first. Compare current
+   `xpu_fused_moe`, preallocated scratch, current grouped GEMM, top-64
+   tile-native hotset, and cold fallback in the same harness. Promotion requires
+   numeric equivalence against the current Quark W8A8 path.
+
+3. **Turn M-scaling into a kernel policy search.**
+   For the same route windows, compare grouped GEMM, per-expert GEMM,
+   batch-packed GEMM, persistent grouped GEMM, and one-dispatch hot/cold queue.
+   Record effective TOPS, lower/upper bandwidth bounds, active experts, and
+   launch count per case.
+
+4. **Get real DPAS/XMX counters or a credible substitute.**
+   The current roofline is timing-derived. The next proof should install or
+   enable `unitrace`, VTune, `oneprof`, or MEI telemetry access, then report
+   whether the hot W8A8 kernels actually issue high-occupancy DPAS/XMX INT8.
+   If privileged counters remain blocked, disassemble the generated kernels and
+   at least prove the intended op path.
+
+5. **Transplant, do not migrate, a newer persistent-MoE kernel.**
+   Watch Intel `vllm-xpu-kernels`, `llm-scaler-vllm`, and Triton-XPU branches.
+   When a persistent W8A8 MoE kernel appears, isolate it behind the route-replay
+   harness before changing the accepted server stack.
+
+6. **Prototype a static low-context latency lane.**
+   Keep the TP4/32K service as the stable production lane, but test a fixed
+   c1 sidecar with lower context, preallocated metadata, certified graph cache,
+   and strict admission control. This is not a model-quality compromise; it is
+   a serving-shape specialization.
+
+7. **Run a TP/EP/hotset simulation with measured latencies.**
+   Update the route-parallelism simulator with measured GEMM and allreduce
+   costs, not only movement proxies. This will tell us whether TP2+EP2,
+   replicated attention plus sharded experts, or hot-expert replication can
+   beat TP4 c1 latency.
+
+8. **Add a BF16/logit-rank differential gate for kernel experiments.**
+   Exact token sentinels are necessary but not enough for a deep kernel rewrite.
+   Add a small BF16 fallback/logit-rank suite and route-replay numeric checks so
+   a candidate cannot silently distort nearby probabilities.
+
+9. **Make reliability a first-class perf metric.**
+   Every maintenance-window experiment should record device-lost state,
+   recovery snapshot, provenance result, restore time, and post-restore speed.
+   A fast kernel that raises reset rate is not production progress.
+
+10. **Prepare the upstreamable packet in parallel.**
+    Bundle one route window, minimal weights/scales slice, current timing,
+    roofline, M-scaling result, and expected outputs. The packet should be
+    small enough that Intel/vLLM maintainers can run it without the full
+    production service.
+
+## Bigger, Bolder Ideas Added
+
+1. **Route-window generated MoE kernels.**
+   Generate layer/window-specialized kernels from captured route shapes. Keep
+   the math exact, but specialize scheduling, tile size, and active expert
+   layout to the observed distribution. This is bold because it trades generic
+   runtime flexibility for c1 latency, but it fits the static-lane idea.
+
+2. **Resident expert-worker runtime.**
+   Instead of launching independent MoE substeps, keep a persistent expert
+   worker pool alive on each B70. Workers pull routed rows, run W8A8 GEMM1,
+   fused activation/quant, W8A8 GEMM2, and scatter without returning to Python
+   or host scheduling between substeps.
+
+3. **Graph-resident decode transaction engine.**
+   Build the verifier/speculation path as an in-graph transaction system:
+   versioned KV/GDN state, candidate token scoring by the current model,
+   accept/rollback buffers, and exact sentinel proof. This is the highest-upside
+   path if pure kernel work cannot halve model-forward time.
+
+4. **Automatic Intel-kernel optimization loop.**
+   Use the route-replay harness as the evaluator for a Xe-Forge-style loop:
+   candidate Triton/SYCL kernels are generated or transformed, compiled, checked
+   against exact outputs, benchmarked, and kept only if they improve the
+   route-exact fixture.
+
+5. **Whole-block fusion experiment.**
+   If MoE-only wins are insufficient, prototype a one-layer whole-block replay
+   that fuses or graph-coalesces Gated DeltaNet/attention, MoE, residuals, and
+   metadata updates. The aim is to remove barriers around the model-forward
+   graph, not change model math.
+
+6. **Hardware topology sidecar.**
+   Try the same accepted model on alternative physical topologies if available:
+   all four cards, best two cards, one card with lower context, and independent
+   replicas. Public B70 data suggests extra cards often improve aggregate
+   throughput more than c1 latency; production may need topology-aware routing.
+
+7. **Tile-native hotset cache as a first-class model artifact.**
+   Store packed hot expert tensors beside the model with source tensor hashes,
+   layer/source coverage, route-class labels, and equivalence checks. Treat it
+   like a compiled graph cache: reproducible, certified, and invalidated when
+   weights or runtime kernels change.
+
+8. **C1 latency leaderboard packet.**
+   Once a material improvement clears `105` or `120 tok/s`, publish a refreshed
+   Localmaxxing row with provenance, quality gates, command, and notes. Save
+   `>200 tok/s` for a genuinely new class of result, not measurement noise.
+
+9. **Production dual-policy scheduler.**
+   Serve the same model through two exact lanes: a stable capacity lane and a
+   latency lane with fixed shapes. Route by prompt length, requested output,
+   temperature policy, and concurrency. This can improve real user experience
+   before a single universal backend exists.
+
+10. **B70 failure-forensics matrix.**
+    Systematically vary kernel/KMD, compute-runtime, oneAPI, PyTorch,
+    oneCCL/OFI, and graph settings with a tiny accepted smoke. The output is a
+    known-good production stack and a list of combinations that increase
+    device-lost risk.

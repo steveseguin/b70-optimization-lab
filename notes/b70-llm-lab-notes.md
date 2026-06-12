@@ -655,3 +655,17 @@ vLLM/XPU FP8 work:
     unlikely to close the gap. The no-quality-loss speed path needs persistent
     or tile-native W8A8 MoE for skewed small-M routes, real hardware counters,
     grouped-GEMM small-M policy work, or exact target-verified speculation.
+25. Added the next experiment queue and bigger-bet refresh to
+    `notes/2026-06-12-qwen36-next-bigger-bets.md`. New repro code
+    `scripts/bench-qwen36-grouped-gemm-m-scaling.py` passed `py_compile` and a
+    CPU dry-run shape gate, producing
+    `data/qwen36-quark-int8-tp4-grouped-gemm-mscaling-dryrun-20260612al.json`
+    and `.md`. The dry-run validates `120` route-derived grouped-GEMM cases
+    across layers `9` and `20`, stages `gemm1`/`gemm2`, and target row buckets
+    `32,64,128,256,512,1024`; it is not a timing result. The next clean XPU
+    window should run this screen to decide whether larger `M` restores
+    effective TOPS. The refreshed backlog now tracks route-window generated
+    kernels, resident expert workers, graph-resident verifier transactions,
+    Xe-Forge-style kernel optimization, whole-block fusion, topology-aware
+    latency sidecars, tile-native hotset cache artifacts, stricter BF16/logit
+    quality gates, and a B70 failure-forensics matrix.
