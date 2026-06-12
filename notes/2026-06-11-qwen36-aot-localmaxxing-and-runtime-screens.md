@@ -12621,3 +12621,58 @@ External links checked for this addendum:
 - `https://github.com/PMZFX/intel-arc-pro-b70-benchmarks/blob/master/multi-gpu.md`
 - `https://pytorch.org/blog/accelerating-moe-model/`
 - `https://localmaxxing.com/api/leaderboard?hardwareName=Intel%20Arc%20Pro%20B70&modelFamily=qwen&limit=20`
+
+## COW Verifier Overhead Budget
+
+Extended `scripts/analyze-qwen36-verifier-upper-bound.py` to report the extra
+milliseconds per speculative verifier step that a future copy-on-write
+request/KV implementation can spend before falling below the `200 tok/s`
+single-user target.
+
+Generated artifacts:
+
+- `data/qwen36-quark-int8-tp4-verifier-upper-bound-cow-budget-20260611.json`
+- `data/qwen36-quark-int8-tp4-verifier-upper-bound-cow-budget-20260611.md`
+
+Command:
+
+```bash
+python3 scripts/analyze-qwen36-verifier-upper-bound.py \
+  --output-json data/qwen36-quark-int8-tp4-verifier-upper-bound-cow-budget-20260611.json \
+  --output-md data/qwen36-quark-int8-tp4-verifier-upper-bound-cow-budget-20260611.md
+```
+
+Key output:
+
+| Bucket | Accept fraction | Expected tokens/step | Endpoint-scaled tok/s | Endpoint-scaled overhead budget |
+| ---: | ---: | ---: | ---: | ---: |
+| 3 | 75% | 2.50 | `199.95` | `-0.003 ms` |
+| 3 | 90% | 2.80 | `223.95` | `1.828 ms` |
+| 3 | 100% | 3.00 | `239.95` | `3.050 ms` |
+| 6 | 50% | 3.50 | `274.997` | `5.829 ms` |
+| 6 | 75% | 4.75 | `373.211` | `13.462 ms` |
+| 6 | 90% | 5.50 | `432.139` | `18.041 ms` |
+| 8 | 50% | 4.50 | `291.040` | `8.596 ms` |
+| 8 | 75% | 6.25 | `404.223` | `19.282 ms` |
+| 8 | 90% | 7.30 | `472.132` | `25.694 ms` |
+
+Interpretation:
+
+- Bucket 3 is too tight for a naive COW implementation. At 75% acceptance it
+  has effectively zero endpoint-scaled overhead room, and even at perfect
+  acceptance it only has about `3.05 ms` per speculative verifier step.
+- Buckets 6 and 8 are the realistic speed path if COW parity is fixed. They
+  leave enough endpoint-scaled room for scratch request bookkeeping and still
+  clear `200 tok/s` at moderate acceptance.
+- The next runtime patch should therefore instrument actual COW overhead as:
+  parent snapshot, scratch row/block setup, verifier forward, scratch free, and
+  accepted-token commit. Compare those measured components directly against the
+  endpoint-scaled budgets above.
+- If a k=1/k=2 COW prototype spends more than the bucket-6 budget when scaled
+  up, the bottleneck is not proposer quality; it is scratch verifier overhead,
+  and we should pivot toward persistent MoE/kernel/layout work.
+
+Validation:
+
+- `python3 -m py_compile scripts/analyze-qwen36-verifier-upper-bound.py`
+- generated the JSON and Markdown artifacts above.

@@ -24,6 +24,8 @@ DEFAULT_INPUTS = [
     "data/qwen36-quark-int8-tp4-ngram7-bucket-timing-repetitive-summary-20260611.json",
 ]
 
+DEFAULT_ACCEPT_FRACTIONS = [0.0, 0.25, 0.5, 0.75, 0.9, 1.0]
+
 
 def load_json(path: Path) -> dict[str, Any]:
     return json.loads(path.read_text())
@@ -116,12 +118,64 @@ def accept_fraction_for_target(
     return max(0.0, min(1.0, (tokens_needed - 1.0) / float(bucket - 1)))
 
 
+def overhead_budget_ms_for_target(
+    *,
+    target_tok_s: float,
+    expected_tokens_per_step: float,
+    base_step_ms: float,
+) -> float:
+    """Return additional ms/step available before dropping below target tok/s."""
+    max_step_ms = 1000.0 * expected_tokens_per_step / target_tok_s
+    return max_step_ms - base_step_ms
+
+
+def endpoint_scaled_overhead_budget_ms_for_target(
+    *,
+    target_tok_s: float,
+    baseline_endpoint_tok_s: float,
+    baseline_bucket1_model_ms: float,
+    expected_tokens_per_step: float,
+    base_model_ms: float,
+) -> float:
+    """Overhead budget using endpoint-normalized model-forward timing.
+
+    The endpoint-scaled estimate maps a synchronized model-forward bucket timing
+    back to the accepted endpoint row. Solving the same expression for the
+    maximum allowed step time gives an endpoint-normalized COW/scheduler budget.
+    """
+    max_model_ms = (
+        baseline_endpoint_tok_s
+        * expected_tokens_per_step
+        * baseline_bucket1_model_ms
+        / target_tok_s
+    )
+    return max_model_ms - base_model_ms
+
+
+def parse_accept_fractions(value: str) -> list[float]:
+    fractions: list[float] = []
+    for part in value.split(","):
+        part = part.strip()
+        if not part:
+            continue
+        fraction = float(part)
+        if fraction < 0.0 or fraction > 1.0:
+            raise argparse.ArgumentTypeError(
+                f"accept fraction must be between 0 and 1: {part}"
+            )
+        fractions.append(fraction)
+    if not fractions:
+        raise argparse.ArgumentTypeError("at least one accept fraction is required")
+    return fractions
+
+
 def add_estimates(
     rows: list[dict[str, Any]],
     *,
     baseline_endpoint_tok_s: float,
     baseline_bucket1_model_ms: float,
     target_tok_s: float,
+    accept_fractions: list[float],
 ) -> list[dict[str, Any]]:
     out: list[dict[str, Any]] = []
     for row in rows:
@@ -144,8 +198,32 @@ def add_estimates(
             ms_per_step=visible_ms,
             bucket=bucket,
         )
+        row["perfect_accept_model_forward_overhead_budget_ms"] = (
+            overhead_budget_ms_for_target(
+                target_tok_s=target_tok_s,
+                expected_tokens_per_step=float(bucket),
+                base_step_ms=model_ms,
+            )
+        )
+        row["perfect_accept_visible_timed_overhead_budget_ms"] = (
+            overhead_budget_ms_for_target(
+                target_tok_s=target_tok_s,
+                expected_tokens_per_step=float(bucket),
+                base_step_ms=visible_ms,
+            )
+        )
+        row["perfect_accept_endpoint_scaled_overhead_budget_ms"] = (
+            endpoint_scaled_overhead_budget_ms_for_target(
+                target_tok_s=target_tok_s,
+                baseline_endpoint_tok_s=baseline_endpoint_tok_s,
+                baseline_bucket1_model_ms=baseline_bucket1_model_ms,
+                expected_tokens_per_step=float(bucket),
+                base_model_ms=model_ms,
+            )
+        )
+
         rate_rows = []
-        for draft_accept_fraction in (0.0, 0.25, 0.5, 0.75, 1.0):
+        for draft_accept_fraction in accept_fractions:
             expected_tokens = 1.0 + draft_accept_fraction * max(0, bucket - 1)
             rate_rows.append(
                 {
@@ -158,6 +236,25 @@ def add_estimates(
                         * expected_tokens
                         * baseline_bucket1_model_ms
                         / model_ms
+                    ),
+                    "model_forward_overhead_budget_ms": overhead_budget_ms_for_target(
+                        target_tok_s=target_tok_s,
+                        expected_tokens_per_step=expected_tokens,
+                        base_step_ms=model_ms,
+                    ),
+                    "visible_timed_overhead_budget_ms": overhead_budget_ms_for_target(
+                        target_tok_s=target_tok_s,
+                        expected_tokens_per_step=expected_tokens,
+                        base_step_ms=visible_ms,
+                    ),
+                    "endpoint_scaled_overhead_budget_ms": (
+                        endpoint_scaled_overhead_budget_ms_for_target(
+                            target_tok_s=target_tok_s,
+                            baseline_endpoint_tok_s=baseline_endpoint_tok_s,
+                            baseline_bucket1_model_ms=baseline_bucket1_model_ms,
+                            expected_tokens_per_step=expected_tokens,
+                            base_model_ms=model_ms,
+                        )
                     ),
                 }
             )
@@ -182,6 +279,7 @@ def fmt_pct_fraction(value: Any) -> str:
 
 def write_markdown(path: Path, output: dict[str, Any]) -> None:
     rows = output["best_by_bucket"]
+    accept_fractions = output["accept_fractions"]
     lines = [
         "# Qwen3.6 Verifier Upper-Bound Estimate",
         "",
@@ -219,12 +317,51 @@ def write_markdown(path: Path, output: dict[str, Any]) -> None:
     lines.extend(
         [
             "",
+            "## COW / Scheduler Overhead Budget",
+            "",
+            "The values below are additional milliseconds per speculative verifier",
+            "step that can be spent on copy-on-write request/KV setup, scheduler",
+            "bookkeeping, scratch block allocation/free, and result commit before",
+            f"falling below `{output['target_tok_s']:.1f} tok/s`.",
+            "",
+            "Positive budget means the bucket could still hit the target after that",
+            "much extra overhead. Negative budget means the bucket already misses",
+            "the target at that acceptance fraction.",
+            "",
+            "| Bucket | Accept frac | Expected tokens/step | Model budget ms | Visible budget ms | Endpoint-scaled budget ms |",
+            "| ---: | ---: | ---: | ---: | ---: | ---: |",
+        ]
+    )
+    for row in rows:
+        for estimate in row["estimates_by_draft_accept_fraction"]:
+            fraction = float(estimate["draft_accept_fraction"])
+            if fraction not in accept_fractions:
+                continue
+            lines.append(
+                "| "
+                + " | ".join(
+                    [
+                        str(row["bucket"]),
+                        fmt_pct_fraction(fraction),
+                        fmt(estimate["expected_tokens_per_step"], 3),
+                        fmt(estimate["model_forward_overhead_budget_ms"], 3),
+                        fmt(estimate["visible_timed_overhead_budget_ms"], 3),
+                        fmt(estimate["endpoint_scaled_overhead_budget_ms"], 3),
+                    ]
+                )
+                + " |"
+            )
+
+    lines.extend(
+        [
+            "",
             "Interpretation:",
             "",
             "- Bucket 3 is already near the 200 tok/s line on synchronized model-forward timing and clears it on endpoint-scaled timing.",
             "- Buckets 6 and 8 have enough sublinear verifier scaling to clear 200 tok/s if draft correctness and scheduler state are fixed.",
             "- The rejected n-gram and hybrid MTP runs failed quality, so these numbers are only an upper bound for a future exact proposer.",
             "- If a true perfect-draft harness comes in materially below this estimate, pivot back to persistent MoE/layout work.",
+            "- The COW patch should log actual scratch/fork overhead and compare it to the endpoint-scaled budget above.",
             "",
         ]
     )
@@ -243,6 +380,15 @@ def main() -> int:
     parser.add_argument("--output-json", type=Path, required=True)
     parser.add_argument("--output-md", type=Path, required=True)
     parser.add_argument("--target-tok-s", type=float, default=200.0)
+    parser.add_argument(
+        "--accept-fractions",
+        type=parse_accept_fractions,
+        default=DEFAULT_ACCEPT_FRACTIONS,
+        help=(
+            "Comma-separated draft acceptance fractions for overhead-budget rows. "
+            "Default: 0,0.25,0.5,0.75,0.9,1"
+        ),
+    )
     parser.add_argument(
         "--baseline-endpoint-tok-s",
         type=float,
@@ -268,12 +414,14 @@ def main() -> int:
         baseline_endpoint_tok_s=args.baseline_endpoint_tok_s,
         baseline_bucket1_model_ms=baseline_bucket1_model_ms,
         target_tok_s=args.target_tok_s,
+        accept_fractions=args.accept_fractions,
     )
     detailed = add_estimates(
         observations,
         baseline_endpoint_tok_s=args.baseline_endpoint_tok_s,
         baseline_bucket1_model_ms=baseline_bucket1_model_ms,
         target_tok_s=args.target_tok_s,
+        accept_fractions=args.accept_fractions,
     )
     output = {
         "method_caveat": (
@@ -283,6 +431,7 @@ def main() -> int:
         ),
         "inputs": [str(path) for path in paths],
         "target_tok_s": args.target_tok_s,
+        "accept_fractions": args.accept_fractions,
         "baseline_endpoint_tok_s": args.baseline_endpoint_tok_s,
         "baseline_bucket1_model_ms": baseline_bucket1_model_ms,
         "best_by_bucket": best,
