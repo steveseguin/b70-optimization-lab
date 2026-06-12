@@ -5403,3 +5403,63 @@ Interpretation:
 - The next implementation step should be an in-process sidecar smoke that owns
   resident buffers and removes the Python/file/process boundaries while keeping
   this multi-window packet as the regression gate.
+
+## 2026-06-12 Resident oneDNN Multi-Window Two-GEMM Smoke
+
+Patch:
+
+- `tools/onednn_moe_island_resident_runner.cpp` now supports
+  `ONEDNN_WINDOW_MANIFEST`.
+- The manifest mode loads all window `gemm1.meta,gemm2.meta` pairs once,
+  keeps one resident oneDNN primitive and one resident packed weight/scales set
+  per GEMM, and cycles per-window source/scales/offset/destination memory
+  objects already resident on the device.
+- `scripts/run-qwen36-onednn-resident-multiwindow.sh` builds the manifest from
+  a multi-window replay directory and runs the resident C++ path.
+
+Command shape:
+
+```bash
+RUNNER_BIN=/tmp/qwen36-onednn-moe-island-resident-compilecheck-20260612bd \
+ONEDNN_SKIP_COMPILE=1 \
+WARMUP=80 \
+ITERATIONS=1000 \
+OUT_JSON=data/qwen36-onednn-moe-island-layer9-r1-multiwindow-20260612bc/resident_multiwindow_pair_result_20260612bd.json \
+MANIFEST=data/qwen36-onednn-moe-island-layer9-r1-multiwindow-20260612bc/resident_multiwindow_manifest_20260612bd.csv \
+scripts/run-qwen36-onednn-resident-multiwindow.sh
+```
+
+Artifacts:
+
+- `data/qwen36-onednn-moe-island-layer9-r1-multiwindow-20260612bc/resident_multiwindow_manifest_20260612bd.csv`.
+- `data/qwen36-onednn-moe-island-layer9-r1-multiwindow-20260612bc/resident_multiwindow_pair_smoke_20260612bd.json`.
+- `data/qwen36-onednn-moe-island-layer9-r1-multiwindow-20260612bc/resident_multiwindow_pair_result_20260612bd.json`.
+- `data/qwen36-onednn-moe-island-layer9-r1-multiwindow-20260612bc/resident_multiwindow_pair_repeat_20260612bd.json`.
+- Restore/provenance:
+  `data/qwen36-quark-int8-tp4-accepted-restored-after-resident-multiwindow-20260612bd.log`
+  and
+  `data/qwen36-quark-int8-tp4-accepted-provenance-after-resident-multiwindow-20260612bd.json`.
+
+Result:
+
+- Smoke: 16/16 exact windows, total raw diff `0` for both GEMMs, resident pair
+  p50 `123.321 us`, mean `122.164 us`.
+- Timed run: 16/16 exact windows, total raw diff `0` for both GEMMs, resident
+  pair p50 `32.111 us`, mean `42.384 us`, p90 `90.179 us`.
+- Repeat: 16/16 exact windows, total raw diff `0` for both GEMMs, resident
+  pair p50 `35.527 us`, mean `36.205 us`, p90 `38.452 us`.
+- Accepted backend restore was healthy after `64s`; the provenance guard passed
+  all sentinels after the clean XPU resident run.
+
+Interpretation:
+
+- This removes the file/process/primitive setup boundary from the two oneDNN
+  GEMMs across the real multi-window route packet. It is the first successful
+  resident sidecar-style timing over changing real window inputs.
+- It is not a full MoE island yet. GEMM2 input is the captured
+  post-activation/per-token-quant tensor for each window; activation, quant2,
+  final gather, and vLLM scheduler integration are still outside this runner.
+- The result says the two-GEMM floor is not the whole bottleneck. The next
+  sidecar step should pull activation+quant2 into the resident process and
+  then add a vLLM-rank call site or extension hook that passes device pointers
+  instead of file-backed fixtures.

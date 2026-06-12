@@ -39,6 +39,11 @@ struct Stats {
     double max_us = 0.0;
 };
 
+struct ManifestPair {
+    std::filesystem::path gemm1_meta;
+    std::filesystem::path gemm2_meta;
+};
+
 std::string env_string(const char *name, const std::string &fallback = "") {
     const char *value = std::getenv(name);
     if (!value || !*value) return fallback;
@@ -59,6 +64,41 @@ std::string json_escape(const std::string &value) {
         out.push_back(c);
     }
     return out;
+}
+
+std::string trim_copy(const std::string &value) {
+    const auto begin = value.find_first_not_of(" \t\r\n");
+    if (begin == std::string::npos) return "";
+    const auto end = value.find_last_not_of(" \t\r\n");
+    return value.substr(begin, end - begin + 1);
+}
+
+std::vector<ManifestPair> read_manifest(const std::filesystem::path &path) {
+    std::ifstream in(path);
+    if (!in) throw std::runtime_error("failed to open manifest: " + path.string());
+    std::vector<ManifestPair> pairs;
+    const auto base = path.parent_path();
+    std::string line;
+    int line_no = 0;
+    while (std::getline(in, line)) {
+        ++line_no;
+        line = trim_copy(line);
+        if (line.empty() || line[0] == '#') continue;
+        const auto comma = line.find(',');
+        if (comma == std::string::npos) {
+            throw std::runtime_error("manifest line " + std::to_string(line_no)
+                    + " missing comma separator");
+        }
+        std::filesystem::path gemm1 = trim_copy(line.substr(0, comma));
+        std::filesystem::path gemm2 = trim_copy(line.substr(comma + 1));
+        if (gemm1.is_relative()) gemm1 = base / gemm1;
+        if (gemm2.is_relative()) gemm2 = base / gemm2;
+        pairs.push_back({gemm1, gemm2});
+    }
+    if (pairs.empty()) {
+        throw std::runtime_error("manifest has no window pairs: " + path.string());
+    }
+    return pairs;
 }
 
 memory::data_type parse_dst_dtype(const std::string &value) {
@@ -394,6 +434,216 @@ class ResidentCase {
     std::unordered_map<int, memory> args_;
 };
 
+class WindowedResidentCase {
+  public:
+    struct Window {
+        std::filesystem::path meta_path;
+        Meta meta;
+        std::vector<uint8_t> expected_output;
+        std::vector<uint8_t> output;
+        std::vector<int32_t> offsets;
+        memory src_mem;
+        memory dst_mem;
+        memory src_scales_mem;
+        std::unordered_map<int, memory> args;
+    };
+
+    WindowedResidentCase(engine &eng,
+            const std::vector<std::filesystem::path> &meta_paths,
+            const std::string &weight_format_name)
+        : dst_dt_(memory::data_type::undef) {
+        if (meta_paths.empty()) {
+            throw std::runtime_error("WindowedResidentCase requires meta paths");
+        }
+        base_meta_path_ = meta_paths.front();
+        base_meta_ = read_meta(base_meta_path_);
+        base_ = base_meta_path_.parent_path();
+        dst_dt_ = parse_dst_dtype(base_meta_.dst_dtype);
+        weight_format_name_ = weight_format_name.empty()
+                ? base_meta_.weight_format
+                : weight_format_name;
+        weight_format_ = parse_weight_format(weight_format_name_);
+
+        auto path_for_base = [&](const std::string &key) {
+            auto it = base_meta_.paths.find(key);
+            if (it == base_meta_.paths.end()) {
+                throw std::runtime_error("missing path key: " + key);
+            }
+            return base_ / it->second;
+        };
+
+        std::string b_path_key = env_string("ONEDNN_B_PATH_KEY");
+        if (b_path_key.empty()) {
+            b_path_key = (weight_format_name_ == "acb"
+                            && base_meta_.paths.find("b_acb_path")
+                                    != base_meta_.paths.end())
+                    ? "b_acb_path"
+                    : "b_path";
+        }
+        b_path_key_ = b_path_key;
+        b_data_ = read_file(path_for_base(b_path_key_));
+        b_scales_data_ = read_file(path_for_base("b_scales_path"));
+        expect_size("B", b_data_,
+                static_cast<size_t>(
+                        base_meta_.num_experts * base_meta_.k * base_meta_.n));
+        expect_size("B scales", b_scales_data_,
+                static_cast<size_t>(base_meta_.num_experts * base_meta_.n)
+                        * sizeof(float));
+
+        const memory::dims src_dims = {base_meta_.total_tokens, base_meta_.k};
+        const memory::dims weights_dims = {
+                base_meta_.num_experts, base_meta_.k, base_meta_.n};
+        const memory::dims dst_dims = {base_meta_.total_tokens, base_meta_.n};
+
+        src_md_ = memory::desc::grouped(
+                src_dims, memory::data_type::s8, 0, base_meta_.num_experts);
+        dst_md_ = memory::desc::grouped(
+                dst_dims, dst_dt_, 0, base_meta_.num_experts);
+        weights_md_ = memory::desc(weights_dims, memory::data_type::s8,
+                weight_format_);
+
+        primitive_attr attr;
+        attr.set_scales_mask(DNNL_ARG_SRC, 1 << 0);
+        attr.set_scales_mask(DNNL_ARG_WEIGHTS, (1 << 0) | (1 << 2));
+
+        const auto start = std::chrono::steady_clock::now();
+        pd_ = matmul::primitive_desc(eng, src_md_, weights_md_, dst_md_, attr);
+        prim_ = matmul(pd_);
+        weights_mem_ = memory(weights_md_, eng);
+        weights_scales_mem_ = memory(
+                memory::desc({base_meta_.num_experts, base_meta_.n},
+                        memory::data_type::f32, memory::format_tag::ab),
+                eng);
+        const auto end = std::chrono::steady_clock::now();
+        construct_us_ = std::chrono::duration_cast<std::chrono::microseconds>(
+                end - start).count();
+
+        write_to_dnnl_memory(b_data_.data(), weights_mem_);
+        write_to_dnnl_memory(b_scales_data_.data(), weights_scales_mem_);
+
+        windows_.reserve(meta_paths.size());
+        for (const auto &meta_path : meta_paths) {
+            windows_.push_back(load_window(eng, meta_path));
+        }
+    }
+
+    void execute_window(stream &engine_stream, size_t index) {
+        prim_.execute(engine_stream, windows_.at(index).args);
+    }
+
+    void read_window_output(size_t index) {
+        auto &window = windows_.at(index);
+        read_from_dnnl_memory(window.output.data(), window.dst_mem);
+    }
+
+    uint64_t window_diff_count(size_t index) const {
+        const auto &window = windows_.at(index);
+        return raw_diff_count(window.output, window.expected_output);
+    }
+
+    double window_checksum(size_t index) const {
+        return raw_checksum(windows_.at(index).output, dst_dt_);
+    }
+
+    double window_expected_checksum(size_t index) const {
+        return raw_checksum(windows_.at(index).expected_output, dst_dt_);
+    }
+
+    size_t window_count() const { return windows_.size(); }
+    const Meta &base_meta() const { return base_meta_; }
+    const Window &window(size_t index) const { return windows_.at(index); }
+    const std::string &b_path_key() const { return b_path_key_; }
+    const std::string &weight_format_name() const { return weight_format_name_; }
+    int64_t construct_us() const { return construct_us_; }
+
+  private:
+    Window load_window(engine &eng, const std::filesystem::path &meta_path) {
+        Window window;
+        window.meta_path = meta_path;
+        window.meta = read_meta(meta_path);
+        validate_window_meta(window.meta, meta_path);
+        const auto base = meta_path.parent_path();
+        auto path_for = [&](const std::string &key) {
+            auto it = window.meta.paths.find(key);
+            if (it == window.meta.paths.end()) {
+                throw std::runtime_error("missing path key: " + key);
+            }
+            return base / it->second;
+        };
+
+        auto a_data = read_file(path_for("a_path"));
+        auto a_scales_data = read_file(path_for("a_scales_path"));
+        const auto rows_data = read_file(path_for("rows_path"));
+        window.expected_output = read_file(path_for("xpu_out_path"));
+        window.offsets = cumulative_offsets(
+                rows_data, window.meta.num_experts, window.meta.total_tokens);
+        expect_size("A", a_data,
+                static_cast<size_t>(window.meta.total_tokens * window.meta.k));
+        expect_size("A scales", a_scales_data,
+                static_cast<size_t>(window.meta.total_tokens) * sizeof(float));
+        expect_size("expected output", window.expected_output,
+                static_cast<size_t>(window.meta.total_tokens * window.meta.n)
+                        * dtype_size(dst_dt_));
+
+        window.output.assign(window.expected_output.size(), 0);
+        window.src_mem = memory(src_md_, eng);
+        window.dst_mem = memory(dst_md_, eng);
+        window.src_scales_mem = memory(
+                memory::desc({window.meta.total_tokens}, memory::data_type::f32,
+                        memory::format_tag::a),
+                eng);
+
+        write_to_dnnl_memory(a_data.data(), window.src_mem);
+        write_to_dnnl_memory(window.output.data(), window.dst_mem);
+        write_to_dnnl_memory(window.offsets.data(), window.src_mem, 1);
+        write_to_dnnl_memory(window.offsets.data(), window.dst_mem, 1);
+        write_to_dnnl_memory(a_scales_data.data(), window.src_scales_mem);
+
+        window.args = {
+                {DNNL_ARG_SRC, window.src_mem},
+                {DNNL_ARG_WEIGHTS, weights_mem_},
+                {DNNL_ARG_DST, window.dst_mem},
+                {DNNL_ARG_ATTR_SCALES | DNNL_ARG_SRC,
+                        window.src_scales_mem},
+                {DNNL_ARG_ATTR_SCALES | DNNL_ARG_WEIGHTS,
+                        weights_scales_mem_},
+        };
+        return window;
+    }
+
+    void validate_window_meta(
+            const Meta &meta, const std::filesystem::path &meta_path) const {
+        if (meta.num_experts != base_meta_.num_experts
+                || meta.total_tokens != base_meta_.total_tokens
+                || meta.k != base_meta_.k || meta.n != base_meta_.n
+                || meta.dst_dtype != base_meta_.dst_dtype) {
+            throw std::runtime_error("window meta shape mismatch: "
+                    + meta_path.string());
+        }
+    }
+
+    std::filesystem::path base_meta_path_;
+    Meta base_meta_;
+    std::filesystem::path base_;
+    memory::data_type dst_dt_;
+    std::string weight_format_name_;
+    memory::format_tag weight_format_;
+    std::string b_path_key_;
+    int64_t construct_us_ = 0;
+
+    std::vector<uint8_t> b_data_;
+    std::vector<uint8_t> b_scales_data_;
+    std::vector<Window> windows_;
+
+    memory::desc src_md_;
+    memory::desc dst_md_;
+    memory::desc weights_md_;
+    matmul::primitive_desc pd_;
+    matmul prim_;
+    memory weights_mem_;
+    memory weights_scales_mem_;
+};
+
 void write_case_json(std::ofstream &json, const char *prefix,
         const ResidentCase &item, const std::vector<uint8_t> &output) {
     const uint64_t diff_count = raw_diff_count(output, item.expected_output());
@@ -425,7 +675,169 @@ void write_stats_json(std::ofstream &json, const char *prefix, const Stats &stat
     json << "  }";
 }
 
+void run_manifest_pair(engine::kind engine_kind,
+        const std::filesystem::path &manifest_path) {
+    const auto manifest = read_manifest(manifest_path);
+    const int warmup = env_int("ONEDNN_PAIR_WARMUP", 20);
+    const int iterations = env_int("ONEDNN_PAIR_ITERATIONS", 200);
+    const std::string weight_format = env_string("ONEDNN_WEIGHT_FORMAT", "acb");
+    const std::filesystem::path json_path = env_string(
+            "ONEDNN_PAIR_JSON",
+            (manifest_path.parent_path()
+                    / "resident_multiwindow_pair_result.json")
+                    .string());
+
+    std::vector<std::filesystem::path> gemm1_paths;
+    std::vector<std::filesystem::path> gemm2_paths;
+    gemm1_paths.reserve(manifest.size());
+    gemm2_paths.reserve(manifest.size());
+    for (const auto &pair : manifest) {
+        gemm1_paths.push_back(pair.gemm1_meta);
+        gemm2_paths.push_back(pair.gemm2_meta);
+    }
+
+    engine eng(engine_kind, 0);
+    stream engine_stream(eng);
+
+    WindowedResidentCase gemm1(eng, gemm1_paths, weight_format);
+    WindowedResidentCase gemm2(eng, gemm2_paths, weight_format);
+    if (gemm1.window_count() != gemm2.window_count()) {
+        throw std::runtime_error("manifest GEMM window count mismatch");
+    }
+    const size_t window_count = gemm1.window_count();
+
+    for (int i = 0; i < warmup; ++i) {
+        const size_t index = static_cast<size_t>(i) % window_count;
+        gemm1.execute_window(engine_stream, index);
+        gemm2.execute_window(engine_stream, index);
+        engine_stream.wait();
+    }
+
+    std::vector<double> pair_samples;
+    pair_samples.reserve(iterations);
+    for (int i = 0; i < iterations; ++i) {
+        const size_t index = static_cast<size_t>(i) % window_count;
+        const auto start = std::chrono::steady_clock::now();
+        gemm1.execute_window(engine_stream, index);
+        gemm2.execute_window(engine_stream, index);
+        engine_stream.wait();
+        const auto end = std::chrono::steady_clock::now();
+        pair_samples.push_back(std::chrono::duration<double, std::micro>(
+                end - start).count());
+    }
+    const Stats pair_stats = summarize(pair_samples);
+
+    uint64_t gemm1_total_diff = 0;
+    uint64_t gemm2_total_diff = 0;
+    uint64_t exact_windows = 0;
+    for (size_t i = 0; i < window_count; ++i) {
+        gemm1.read_window_output(i);
+        gemm2.read_window_output(i);
+        const uint64_t d1 = gemm1.window_diff_count(i);
+        const uint64_t d2 = gemm2.window_diff_count(i);
+        gemm1_total_diff += d1;
+        gemm2_total_diff += d2;
+        if (d1 == 0 && d2 == 0) ++exact_windows;
+    }
+
+    std::ofstream json(json_path);
+    if (!json) throw std::runtime_error("failed to open json: " + json_path.string());
+    json << std::fixed << std::setprecision(6);
+    json << "{\n";
+    json << "  \"kind\": \"resident_onednn_multiwindow_two_gemm_pair\",\n";
+    json << "  \"note\": \"Cycles real per-window A/scales/offsets from "
+            "resident device memory with one resident primitive/weight set per "
+            "GEMM. GEMM2 input is the captured post-activation quantized input; "
+            "activation and gather are not included.\",\n";
+    json << "  \"manifest\": \"" << json_escape(manifest_path.string()) << "\",\n";
+    json << "  \"warmup\": " << warmup << ",\n";
+    json << "  \"iterations\": " << iterations << ",\n";
+    json << "  \"window_count\": " << window_count << ",\n";
+    json << "  \"exact_window_count\": " << exact_windows << ",\n";
+    json << "  \"all_gemm_windows_exact\": "
+         << (exact_windows == window_count ? "true" : "false") << ",\n";
+    json << "  \"gemm1_total_raw_diff_count\": " << gemm1_total_diff << ",\n";
+    json << "  \"gemm2_total_raw_diff_count\": " << gemm2_total_diff << ",\n";
+    json << "  \"pair_mean_us\": " << pair_stats.mean_us << ",\n";
+    json << "  \"pair_min_us\": " << pair_stats.min_us << ",\n";
+    json << "  \"pair_p50_us\": " << pair_stats.p50_us << ",\n";
+    json << "  \"pair_p90_us\": " << pair_stats.p90_us << ",\n";
+    json << "  \"pair_max_us\": " << pair_stats.max_us << ",\n";
+    json << "  \"pair_construct_us\": "
+         << (gemm1.construct_us() + gemm2.construct_us()) << ",\n";
+    json << "  \"gemm1\": {\n";
+    json << "    \"name\": \"" << json_escape(gemm1.base_meta().name) << "\",\n";
+    json << "    \"num_experts\": " << gemm1.base_meta().num_experts << ",\n";
+    json << "    \"total_tokens\": " << gemm1.base_meta().total_tokens << ",\n";
+    json << "    \"k\": " << gemm1.base_meta().k << ",\n";
+    json << "    \"n\": " << gemm1.base_meta().n << ",\n";
+    json << "    \"dst_dtype\": \""
+         << json_escape(gemm1.base_meta().dst_dtype) << "\",\n";
+    json << "    \"weight_format\": \""
+         << json_escape(gemm1.weight_format_name()) << "\",\n";
+    json << "    \"b_path_key\": \"" << json_escape(gemm1.b_path_key())
+         << "\",\n";
+    json << "    \"construct_us\": " << gemm1.construct_us() << "\n";
+    json << "  },\n";
+    json << "  \"gemm2\": {\n";
+    json << "    \"name\": \"" << json_escape(gemm2.base_meta().name) << "\",\n";
+    json << "    \"num_experts\": " << gemm2.base_meta().num_experts << ",\n";
+    json << "    \"total_tokens\": " << gemm2.base_meta().total_tokens << ",\n";
+    json << "    \"k\": " << gemm2.base_meta().k << ",\n";
+    json << "    \"n\": " << gemm2.base_meta().n << ",\n";
+    json << "    \"dst_dtype\": \""
+         << json_escape(gemm2.base_meta().dst_dtype) << "\",\n";
+    json << "    \"weight_format\": \""
+         << json_escape(gemm2.weight_format_name()) << "\",\n";
+    json << "    \"b_path_key\": \"" << json_escape(gemm2.b_path_key())
+         << "\",\n";
+    json << "    \"construct_us\": " << gemm2.construct_us() << "\n";
+    json << "  },\n";
+    json << "  \"windows\": [\n";
+    for (size_t i = 0; i < window_count; ++i) {
+        const uint64_t d1 = gemm1.window_diff_count(i);
+        const uint64_t d2 = gemm2.window_diff_count(i);
+        json << "    {\n";
+        json << "      \"index\": " << i << ",\n";
+        json << "      \"gemm1_meta\": \""
+             << json_escape(gemm1.window(i).meta_path.string()) << "\",\n";
+        json << "      \"gemm2_meta\": \""
+             << json_escape(gemm2.window(i).meta_path.string()) << "\",\n";
+        json << "      \"gemm1_raw_equal\": " << (d1 == 0 ? "true" : "false")
+             << ",\n";
+        json << "      \"gemm1_raw_diff_count\": " << d1 << ",\n";
+        json << "      \"gemm1_raw_checksum\": " << gemm1.window_checksum(i)
+             << ",\n";
+        json << "      \"gemm1_expected_raw_checksum\": "
+             << gemm1.window_expected_checksum(i) << ",\n";
+        json << "      \"gemm2_raw_equal\": " << (d2 == 0 ? "true" : "false")
+             << ",\n";
+        json << "      \"gemm2_raw_diff_count\": " << d2 << ",\n";
+        json << "      \"gemm2_raw_checksum\": " << gemm2.window_checksum(i)
+             << ",\n";
+        json << "      \"gemm2_expected_raw_checksum\": "
+             << gemm2.window_expected_checksum(i) << "\n";
+        json << "    }" << (i + 1 == window_count ? "\n" : ",\n");
+    }
+    json << "  ]\n";
+    json << "}\n";
+
+    std::cout << "ONEDNN_RESIDENT_MULTIWINDOW_PAIR p50_us="
+              << pair_stats.p50_us
+              << " mean_us=" << pair_stats.mean_us
+              << " exact_windows=" << exact_windows << "/" << window_count
+              << " gemm1_total_diff=" << gemm1_total_diff
+              << " gemm2_total_diff=" << gemm2_total_diff
+              << " json=" << json_path << std::endl;
+}
+
 void run_pair(engine::kind engine_kind) {
+    const std::filesystem::path manifest_path = env_string("ONEDNN_WINDOW_MANIFEST");
+    if (!manifest_path.empty()) {
+        run_manifest_pair(engine_kind, manifest_path);
+        return;
+    }
+
     const std::filesystem::path gemm1_meta = env_string("ONEDNN_GEMM1_META");
     const std::filesystem::path gemm2_meta = env_string("ONEDNN_GEMM2_META");
     if (gemm1_meta.empty() || gemm2_meta.empty()) {

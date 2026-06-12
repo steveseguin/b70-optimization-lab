@@ -32,8 +32,8 @@ if [[ "$COMPILE_ONLY" == "1" ]]; then
   exit 0
 fi
 
-if [[ -z "${ONEDNN_GEMM1_META:-}" || -z "${ONEDNN_GEMM2_META:-}" ]]; then
-  echo "ONEDNN_GEMM1_META and ONEDNN_GEMM2_META are required" >&2
+if [[ -z "${ONEDNN_WINDOW_MANIFEST:-}" && ( -z "${ONEDNN_GEMM1_META:-}" || -z "${ONEDNN_GEMM2_META:-}" ) ]]; then
+  echo "ONEDNN_WINDOW_MANIFEST or ONEDNN_GEMM1_META/ONEDNN_GEMM2_META are required" >&2
   exit 2
 fi
 
