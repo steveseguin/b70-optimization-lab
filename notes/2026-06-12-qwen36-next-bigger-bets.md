@@ -274,6 +274,171 @@ External signals folded into the backlog:
 - A public benchmark should include command, context length, output length,
   TTFT, c1 decode speed, cache-root provenance, and exact quality artifact.
 
+## 2026-06-12 Big-Bet Refresh
+
+This section folds in the latest roofline packet, active-offset rejection, and
+fresh external/API scan. It is notes-only; no endpoint change or new speed
+claim is implied.
+
+Current hard facts:
+
+- Exact-model public baseline remains the quality-cleared `~99-100 tok/s` c1
+  tier. The exact Localmaxxing filter still returns
+  `cmq8yhxvo001ipb0149aoa79o` at `99.428 tok/s`; the broader B70/Qwen/vLLM
+  family query also shows `cmq9ifq0500b0r8012f27j1xl` at `99.770 tok/s`,
+  mapped to the base `Qwen/Qwen3.6-35B-A3B` row.
+- Fresh live p512/o512 local-bypass timing measured `99.618 tok/s` corrected
+  after first chunk with a `10.039 ms/token` decode histogram.
+- The current route-exact MoE layer replay is `294.145 us/layer`; the
+  preallocated staged lower bound is `220.530 us/layer`; the two-dispatch GEMM
+  floor is `193.538 us`; the non-speculative `200 tok/s` target needs about
+  `168.173 us/layer`.
+- Active-offset grouped GEMM was exact but rejected for speed:
+  `225.911 us/layer`, slightly slower than the plain offset path.
+- External XPU signals match our measurements: Intel's grouped-GEMM issue says
+  route skew and tile configuration are first-order MoE performance variables,
+  the vLLM XPU migration is still moving kernel work into
+  `vllm-xpu-kernels`, and upstream W8A8 support for Qwen3.6 remains
+  model-specific rather than a solved generic path.
+
+### Things To Try Next
+
+1. **Fixed layer-9 persistent layerlet scaffold.**
+   Build the smallest route-exact C++/SYCL op that accepts captured
+   routecapture6 metadata and produces the exact current `xpu_fused_moe`
+   output for layer 9. The first version may call existing launchers
+   sequentially; that validates ABI, workspace ownership, and parity. The
+   second version must remove at least one dispatch boundary. Kill gate:
+   no path to `<=168 us/layer` by the time the first true fused variant runs.
+
+2. **Quant out-variants as layerlet plumbing, not as a standalone bet.**
+   Add exact preallocated-output variants for `per_token_quant_int8_xpu` and
+   `silu_and_mul_quant_int8_xpu`. Use them to reduce allocator churn and to
+   feed the layerlet. Do not promote them alone unless an endpoint run proves a
+   real decode win and full parity.
+
+3. **DPAS/XMX proof before more kernel archaeology.**
+   Install or locate a working oneAPI/Level-Zero profiling path
+   (`unitrace`, VTune, or equivalent) and capture one decode token plus the
+   route-replay grouped-GEMM kernels. We need to know whether the W8A8 hot path
+   is issuing high-occupancy DPAS/XMX INT8 work or whether layout/upconvert/
+   launch overhead is dominating.
+
+4. **Clean Intel container A/B.**
+   Run the accepted command, same model, same prompt suite, and same p512/o512
+   metric inside the newest Intel XPU/vLLM container that supports B70. Treat
+   this as a host-stack A/B, not a model change. Required artifacts:
+   version matrix, exact quality canary, speed metric, and device-lost scan.
+
+5. **TP2/EP truth-serum lane.**
+   Run a narrow latency test with TP2 or a simulated TP2+hot-expert plan, even
+   if it reduces 32K capacity. The question is whether TP4 communication and
+   small shards are hurting c1 more than they help. If TP2 is faster at smaller
+   context, production can route latency-sensitive small-context traffic to a
+   separate lane.
+
+6. **Graph-safe metadata arena.**
+   The repeated `block_table.copy_to_gpu` device-lost traces justify a fixed
+   metadata arena experiment: precommit block-table/KV/GDN request state for a
+   solo decode lane and update it with device-side or graph-safe kernels. This
+   is both a stability bet and a possible latency win.
+
+7. **Route-class autotune table.**
+   For layers 9, 14, 20, and 21, generate route-class fixtures from natural,
+   code, structured, math, and repetitive prompts. Autotune grouped-GEMM policy
+   per fixture (`m16`, `m32`, base, offset, active-set, Triton-XPU if usable)
+   and store a per-layer decision table. If no policy crosses the budget, stop
+   spending time on ordinary grouped-GEMM variants.
+
+8. **Resident verifier-state prototype.**
+   Build the data model for speculative transactions before another speculative
+   speed run: immutable KV aliasing, mutable GDN/request metadata copy,
+   candidate scoring, accept/rollback log, and exact sentinel replay. Raw draft
+   acceptance does not matter until this is exact.
+
+9. **Localmaxxing race harness without auto-posting.**
+   Keep querying public rows for exact model, base model, and B70/Qwen/vLLM
+   family context. Generate dry-run payloads from local results, but only post
+   results that are material and quality-cleared. Use an environment variable
+   for API auth; never store the key in the repo.
+
+10. **Upstream repro packet.**
+    Package routecapture6 layer 9, the active-offset negative, the roofline
+    budget, exact expected outputs, and a minimal grouped-GEMM fixture. This is
+    the packet to hand to Intel/vLLM maintainers if we need help with the B70
+    W8A8 MoE floor.
+
+### Bigger And Bolder Ideas
+
+1. **B70-resident MoE device service.**
+   Instead of launching route/remap/quant/GEMM/activation/quant/GEMM/gather as
+   separate operations, run a persistent device service per layer or layer
+   group. Host code submits compact route/task descriptors; resident workers
+   pull expert tiles, run exact W8A8 math, and write the final gathered output.
+   This is the most plausible non-speculative `2x` route because the
+   one-dispatch floor is the only local budget scenario that clearly exceeds
+   `200 tok/s`.
+
+2. **Layerlet code generator.**
+   Generate specialized SYCL/ESIMD layerlets from captured real route classes:
+   fixed hidden size, fixed expert topk, fixed Quark scale layout, fixed
+   activation, and optional hot-expert duplication. The generator emits a
+   small number of route-class kernels rather than one generic MoE kernel.
+   Quality is protected by route-replay exactness before any endpoint use.
+
+3. **Target-model branch lookahead.**
+   For greedy/temperature-zero traffic, use spare XPU capacity to compute a
+   small exact target-model branch tree ahead of the committed token. Only the
+   target model chooses the branch; no lower-quality model is trusted. This is
+   expensive, but if current decode underutilizes XMX, exact branch lookahead
+   could trade parallel compute for lower visible latency.
+
+4. **Trace-trained micro-proposer plus transactional verifier.**
+   Train or tune a tiny same-tokenizer proposer on continuations emitted by this
+   exact Quark model. It can be lower quality because it is never authoritative;
+   the resident verifier commits only matching target tokens. This is a
+   quality-preserving alternative to generic n-gram when n-gram acceptance is
+   too prompt-dependent.
+
+5. **Static c1 appliance beside vLLM.**
+   Build a separate low-latency lane for common chat shapes: one active
+   request, fixed prompt/output buckets, fixed sampling, preallocated KV/GDN
+   state, certified graph cache, and strict admission. Keep vLLM TP4/32K as the
+   general production lane. This accepts that dynamic serving and c1 latency
+   may need different engines.
+
+6. **Hot-expert memory-for-latency service class.**
+   If VRAM headroom permits, duplicate only route-dominant expert tiles or
+   packed hot experts across ranks. The route simulation says hot64 replication
+   can cut the communication-row proxy to `0.155` at `1.75x` expert-memory
+   cost. That is too large for blind implementation, but it is worth a
+   controlled c1 lane if profiler data shows remote expert movement or load
+   imbalance is material.
+
+7. **One-card and two-card latency replicas.**
+   The full quantized model is near the memory boundary, but smaller-context
+   or reduced-capacity lanes may fit on fewer cards with less TP overhead. Test
+   model fit and latency honestly. A slower aggregate lane can still be better
+   for one user's perceived speed if TP4 communication dominates.
+
+8. **IR-level whole-token command graph.**
+   Capture the entire decode token, including metadata updates, collectives,
+   MoE, attention, and sampling, as a static Level-Zero/SYCL command graph.
+   This is more invasive than piecewise graph capture but directly targets
+   launch gaps and host waits.
+
+9. **Kernel challenge/bounty packet.**
+   Publish a small reproducible performance challenge: exact route windows,
+   W8A8 tensor shapes, expected outputs, and current timings. A focused public
+   repro may attract Intel/vLLM help faster than a broad "make Qwen faster"
+   issue.
+
+10. **Production reliability score as a first-class metric.**
+    Track every candidate with speed, exactness, device-lost count, restart
+    time, graph-cache identity, and 30-60 minute c1 soak result. A `130 tok/s`
+    route that survives production may be more valuable than a `180 tok/s`
+    route that loses devices under real traffic.
+
 ## 2026-06-12 Follow-up
 
 - Added the route-replay diagnostic fields for the real

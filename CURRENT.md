@@ -6,6 +6,22 @@ Date: 2026-06-12
 
 2026-06-12 continuation:
 
+- Added a new big-bet refresh to
+  `notes/2026-06-12-qwen36-next-bigger-bets.md`. It folds in the latest
+  roofline packet, active-offset rejection, Localmaxxing API context, and
+  external XPU/vLLM signals without changing the endpoint or claiming a new
+  speed result. The updated near-term queue prioritizes a fixed layer-9
+  persistent layerlet scaffold, quant out-variants as layerlet plumbing,
+  DPAS/XMX profiling, clean Intel container A/B, TP2/EP truth-serum runs,
+  graph-safe metadata arenas, route-class autotune tables, resident verifier
+  state, Localmaxxing dry-run discipline, and an upstream repro packet. The
+  larger bets now explicitly track a B70-resident MoE device service, layerlet
+  code generation, exact target-model branch lookahead, trace-trained
+  micro-proposers behind a transactional verifier, static c1 latency appliance,
+  hot-expert memory-for-latency service class, one/two-card latency replicas,
+  whole-token command graphs, a public kernel challenge packet, and a
+  reliability score beside every speed result.
+
 - Added a consolidated Qwen3.6 roofline/stall packet and refreshed the live c1
   endpoint budget. The accepted service remains healthy and paused-local on the
   public frontdoor. A fresh p512/o512 local-bypass run measured `99.618 tok/s`
