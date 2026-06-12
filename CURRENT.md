@@ -20,9 +20,12 @@ Date: 2026-06-12
   single-token/topk-8 MoE microbench with resident weights/scratch and exact
   tensor compare. Accepted TP4 was restored on `18080` afterward and passed
   provenance sentinels `4752`, `11436`, `198` plus the no-thinking quality
-  smoke. New artifacts:
+  smoke. A compact route fixture was extracted with three first-decode
+  examples, all 40 MoE layers, and each layer's selected topk expert IDs for
+  the next microbench. New artifacts:
   `data/qwen36-quark-int8-tp4-routefixture-diagnostic-summary-20260612cr.json`,
   `data/qwen36-quark-int8-tp4-routeoverlay-eager-summary-20260612cq2.json`,
+  `data/qwen36-quark-int8-tp4-routefixture-firstdecode-routes-20260612cr.json`,
   `data/qwen36-quark-int8-tp4-accepted-provenance-after-routefixture-20260612cr.json`,
   and
   `data/qwen36-quark-int8-tp4-accepted-quality-after-routefixture-nothink-smoke-20260612cr.json`.

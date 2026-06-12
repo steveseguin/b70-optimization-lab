@@ -802,6 +802,13 @@ New near-term implementation ideas:
    For the next accepted diagnostic, capture only route hashes/counts, not
    full IDs, so the probe is less likely to perturb graph replay.
 
+Follow-up artifact:
+
+- Extracted `data/qwen36-quark-int8-tp4-routefixture-firstdecode-routes-20260612cr.json`
+  from the eager summary. It contains three first-decode examples with all
+  `40` MoE layers and each layer's selected topk expert IDs. This is the
+  compact input for the single-token/topk-8 microbench design.
+
 Artifacts for this pass:
 
 - `data/qwen36-quark-int8-tp4-routefixture-diagnostic-summary-20260612cr.json`
@@ -810,6 +817,7 @@ Artifacts for this pass:
 - `data/qwen36-quark-int8-tp4-routeoverlay-eager-20260612cq2.log`
 - `data/qwen36-quark-int8-tp4-routeoverlay-eager-p512o32-metrics-20260612cq2.json`
 - `data/qwen36-quark-int8-tp4-routeoverlay-eager-summary-20260612cq2.json`
+- `data/qwen36-quark-int8-tp4-routefixture-firstdecode-routes-20260612cr.json`
 - `data/qwen36-quark-int8-tp4-accepted-restored-after-routefixture-20260612cr.log`
 - `data/qwen36-quark-int8-tp4-accepted-provenance-after-routefixture-20260612cr.json`
 - `data/qwen36-quark-int8-tp4-accepted-quality-after-routefixture-nothink-smoke-20260612cr.json`
