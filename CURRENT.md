@@ -6,6 +6,37 @@ Date: 2026-06-12
 
 2026-06-12 notes update:
 
+- Added an "All-Rank Forward Boundary And Larger Bets" addendum to
+  `notes/2026-06-12-qwen36-next-bigger-bets.md`. The all-rank diagnostic
+  backend stayed close enough for attribution at `95.529 tok/s` corrected
+  p512/o128 and showed the wait is model-forward-side on every TP rank:
+  pure decode after the first five events had all-rank
+  `forward_end_after_start_sync_ms` mean `4.569 ms` / median `4.653 ms`, while
+  `forward_start` sync was near-zero (`0.00159 ms` mean). In the unrotated
+  mapping, ranks/cards 2 and 3 were slower than ranks/cards 0 and 1
+  (`4.769/4.683 ms` and `4.820/4.739 ms` mean/median versus rank 0
+  `4.214/4.318 ms`). Decision: run rank-to-card rotation next to separate
+  physical-card/topology skew from TP-shard/route skew, then split model
+  forward by layer family. The note also adds bigger no-quality-loss bets:
+  route-ledger overlays, Intel clean-stack bakeoff, persistent MoE island,
+  dynamic route-class compute grouping, hot-expert re-layout/replication,
+  hybrid TP/EP decode, whole-token resident replay, same-model branch
+  verification, topology/driver A-B lab, and an external challenge bundle.
+  The accepted launcher now preserves production defaults while allowing
+  `ONEAPI_DEVICE_SELECTOR` and `ZE_AFFINITY_MASK` overrides for reproducible
+  rank/card rotation. Accepted TP4 was restored on `18080` with no diagnostic
+  timing env vars and passed provenance sentinels `4752`, `11436`, `198` plus
+  the no-thinking quality smoke. New artifacts:
+  `patches/vllm-qwen36-allrank-forward-boundary-20260612cj.diff`,
+  `data/qwen36-quark-int8-tp4-allrank-forwardboundary-summary-20260612cj.json`,
+  `data/qwen36-quark-int8-tp4-allrank-forwardboundary-p512o128-metrics-20260612cj.json`,
+  `data/qwen36-quark-int8-tp4-allrank-forwardboundary-xpusmi-ps-20260612cj.json`,
+  `data/qwen36-quark-int8-tp4-accepted-provenance-after-allrank-forwardboundary-20260612cj.json`,
+  and
+  `data/qwen36-quark-int8-tp4-accepted-quality-after-allrank-forwardboundary-nothink-smoke-20260612cj.json`.
+
+2026-06-12 notes update:
+
 - Added a "Minimal Forward Boundary Split" to
   `notes/2026-06-12-qwen36-next-bigger-bets.md`. This replaces the failed
   heavy pre-sampler probe with low-overhead boundary events and identifies the

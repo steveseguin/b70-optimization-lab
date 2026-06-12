@@ -8943,3 +8943,148 @@ Immediate next probes:
    `10 ms/token`, the model-forward attribution is confirmed outside server
    scheduling. If it improves, vLLM graph/executor coordination around forward
    is still part of the cost.
+
+## 2026-06-12 All-Rank Forward Boundary And Larger Bets
+
+This addendum records the all-rank follow-up to the minimal forward-boundary
+split. It is diagnostic-only, not a promoted speed result. The key change was
+to record and synchronize `forward_start`/`forward_end` on every TP worker,
+instead of only seeing rank 0 through the async output path.
+
+Artifacts:
+
+- `data/qwen36-quark-int8-tp4-allrank-forwardboundary-20260612cj.log`
+- `data/qwen36-quark-int8-tp4-allrank-forwardboundary-p512o128-metrics-20260612cj.json`
+- `data/qwen36-quark-int8-tp4-allrank-forwardboundary-summary-20260612cj.json`
+- `data/qwen36-quark-int8-tp4-allrank-forwardboundary-xpusmi-ps-20260612cj.json`
+- `data/qwen36-quark-int8-tp4-accepted-restored-after-allrank-forwardboundary-20260612cj.log`
+- `data/qwen36-quark-int8-tp4-accepted-provenance-after-allrank-forwardboundary-20260612cj.json`
+- `data/qwen36-quark-int8-tp4-accepted-quality-after-allrank-forwardboundary-nothink-smoke-20260612cj.json`
+- `patches/vllm-qwen36-allrank-forward-boundary-20260612cj.diff`
+
+Run setup:
+
+- Diagnostic service used port `18081`.
+- Diagnostic-only headroom: `GPU_MEMORY_UTILIZATION=0.85`,
+  `MAX_NUM_SEQS=8`, 32K context unchanged.
+- Rank-to-physical-device mapping from `xpu-smi ps`: rank 0 -> card 0,
+  rank 1 -> card 1, rank 2 -> card 2, rank 3 -> card 3.
+- Accepted TP4 was restored afterward on port `18080` with no diagnostic timing
+  env vars.
+
+Measured facts:
+
+- p512/o128 diagnostic throughput stayed close enough for attribution:
+  corrected after-first decode `95.529 tok/s`, e2e output `91.234 tok/s`,
+  client TTFT `73.552 ms`, vLLM decode `10.389 ms/token`.
+- All four TP ranks emitted forward-boundary rows.
+- Pure decode after the first five decode events showed near-zero
+  `forward_start` sync on every rank: all-rank mean `0.00159 ms`, median
+  `0.00150 ms`.
+- The model-forward wait sits after `forward_start`: all-rank
+  `forward_end_after_start_sync_ms` mean `4.569 ms`, median `4.653 ms`.
+- Per-rank `forward_end_after_start_sync_ms` means/medians:
+  rank 0 `4.214/4.318 ms`, rank 1 `4.471/4.454 ms`,
+  rank 2 `4.769/4.683 ms`, rank 3 `4.820/4.739 ms`.
+
+Interpretation:
+
+- This confirms the wait is model-forward-side on every TP rank, not a
+  rank-0-only output/sampler artifact.
+- In the unrotated mapping, ranks/cards 2 and 3 are consistently slower than
+  ranks/cards 0 and 1 by roughly `0.55-0.61 ms` versus rank 0.
+- The next attribution test is rank-to-card rotation. If the slow tail follows
+  physical cards 2/3, focus on topology, PCIe, power, thermal, driver, or
+  card-specific behavior. If the slow tail stays TP ranks 2/3, focus on shard
+  imbalance, route skew, layer ownership, or per-rank graph shape.
+- The accepted launcher now allows overriding `ONEAPI_DEVICE_SELECTOR` and
+  `ZE_AFFINITY_MASK` while preserving the default `level_zero:0,1,2,3` /
+  `0,1,2,3` mapping. That makes rotation runs reproducible without editing
+  the production script.
+- Restore gates passed: provenance sentinels `4752`, `11436`, `198`; no-thinking
+  quality smoke with exact canaries, repeat stability, and baseline match.
+
+Fresh external leads to keep in the queue:
+
+- Intel's `intel/vllm:0.10.2-xpu` notes claim MoE models benefit from
+  persistent MoE GEMM and fused activation kernels, including a reported
+  `2.6x` end-to-end improvement for Qwen3-30B-A3B in that stack. Source:
+  <https://github.com/intel/ai-containers/blob/main/vllm/0.10.2-xpu.md>.
+- Intel's grouped-GEMM performance issue explicitly says MoE decode grouped
+  GEMM depends strongly on real token routing distribution and that decode
+  routing is often long-tail/skewed. Source:
+  <https://github.com/intel/intel-xpu-backend-for-triton/issues/6389>.
+- Recent `vllm-xpu-kernels` releases mention Xe2/Battlemage paged-decode and
+  grouped-GEMM policy updates. Source:
+  <https://github.com/vllm-project/vllm-xpu-kernels/releases>.
+- vLLM's Arc Pro B-Series writeup names persistent-loop MoE, dynamic compute
+  group balancing, multi-GPU scaling, PCIe P2P, async scheduling, and
+  prefill/decode disaggregation as intended levers. Source:
+  <https://vllm.ai/blog/2025-11-11-intel-arc-pro-b>.
+
+Things to try next, from narrow to bolder:
+
+1. **Rank/card rotation matrix.**
+   Run the same all-rank probe with reversed and pair-swapped device order.
+   This is the cheapest way to distinguish physical-card/topology skew from TP
+   shard skew.
+
+2. **Per-rank route ledger overlay.**
+   Attach active-expert/window signatures to the all-rank forward-boundary
+   rows. If ranks 2/3 also see heavier route shapes, prioritize route-aware
+   expert placement or route-class kernels.
+
+3. **Layer-family forward split, one boundary per run.**
+   Split attention/GDN, MoE, residual/norm, and collectives with a very low
+   event count. The all-rank probe says where to look; this identifies which
+   forward family owns the `~4.5 ms` wait.
+
+4. **Intel clean-stack bakeoff as a serious candidate.**
+   Build or container-test the current Intel XPU stack against route fixtures
+   first, then the full service only if exact output parity and route-fixture
+   speed are clean. The container notes claim exactly the kind of MoE wins we
+   need, but production adoption needs quality and stability gates.
+
+5. **Persistent MoE island.**
+   Prototype a resident W8A8 MoE execution path that keeps expert weights,
+   scales, and common route-class state hot across decode tokens. This is a
+   direct attempt to remove per-token kernel bubbles without changing model
+   math.
+
+6. **Dynamic compute-group balancing for skewed routes.**
+   Instead of one generic grouped-GEMM policy, choose execution grouping based
+   on the captured route class: one-hot, two-hot, broad-balanced, and
+   long-tail. Exact same tokens and weights; only work partitioning changes.
+
+7. **Expert physical re-layout or replication.**
+   Use route histograms plus rank timing to move or duplicate the small hot
+   expert set into faster card paths when VRAM allows. This is a schedule/data
+   placement change, not a quantization or quality change.
+
+8. **Hybrid TP/EP decode lane.**
+   Keep attention/lm-head in the best current TP layout, but route MoE work
+   through an expert-parallel island to reduce per-token TP collective pressure
+   inside forward.
+
+9. **Whole-token resident replay.**
+   Capture the entire c1 decode step into a persistent Level Zero/SYCL path:
+   input token, KV pointer advance, forward, exact greedy token, and commit.
+   Use the current vLLM path as the reference oracle until every emitted token
+   matches.
+
+10. **Exact same-model branch verifier.**
+    Speculate with the target model itself using temporary KV branches and
+    commit only exact verified tokens. This avoids 4-bit/AWQ/draft-model
+    quality risk, but it is only worth attempting after the single-token path
+    is better understood.
+
+11. **Topology/driver A-B lab.**
+    Treat KMD, Level Zero, oneAPI, oneCCL, IGC, BIOS PCIe settings, ASPM, and
+    physical slot order as real variables. The rank/card skew plus previous
+    device-lost behavior suggests the runtime stack may be a major lever.
+
+12. **External challenge bundle.**
+    Package the route fixtures, all-rank timing, exact quality gates, launch
+    command, Localmaxxing row, and hardware/topology into a small public issue
+    or discussion. The target ask should be specific: remove `~4-5 ms/token`
+    from Qwen3.6 35B-A3B W8A8 c1 decode on 4x B70 without changing outputs.
