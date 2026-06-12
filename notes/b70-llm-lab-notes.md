@@ -621,3 +621,23 @@ vLLM/XPU FP8 work:
     `7` copied rows. This is not yet a speed claim. The next gate is a
     controlled accepted-backend A/B launch with provenance and p512 speed
     smokes.
+23. Ran the dirty block-table accepted-endpoint A/B:
+    `qwen36-tp4-dirty-blocktable-ab-20260612aj`. Provenance passed all exact
+    sentinels, p512/o128 measured `100.364 tok/s` corrected after first text
+    chunk with `9.893 ms/token` decode, and p512/o512 r2 measured
+    `100.093 tok/s` corrected with `9.972 ms/token` decode. The dirty-copy
+    counters showed the patch doing the intended work mechanically, with latest
+    visible per-worker counters around `1280` commit calls, `1270` skipped,
+    `10` full copies, no partial copies, and no device-lost errors during the
+    smoke. Decision: neutral for c1 decode speed, useful as a default-off
+    metadata-copy/stability tool, and not a `>200 tok/s` performance path by
+    itself. The normal accepted backend was restored afterward in
+    `53 s`; provenance passed all exact sentinels and p512/o128 measured
+    `99.256 tok/s` corrected with `10.003 ms/token` decode. Added follow-up
+    ideas to
+    `notes/2026-06-12-qwen36-next-bigger-bets.md`: metadata-copy stress soak,
+    graph/device-resident scheduler metadata, route-window generated persistent
+    MoE kernels, tile-native one-dispatch hotset fallback, TP1/TP2 low-context
+    latency controls, XMX/DPAS utilization proof, resident-state verifier
+    speculation, exact 8-bit engine bakeoff, and an upstreamable B70/Qwen3.6
+    perf packet.

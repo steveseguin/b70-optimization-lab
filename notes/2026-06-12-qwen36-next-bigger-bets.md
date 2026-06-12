@@ -1712,3 +1712,189 @@ Decision:
   `VLLM_XPU_BLOCK_TABLE_DIRTY_COMMIT_LOG_EVERY`, then run provenance guard and
   p512/o128 plus p512/o512 speed smokes. Promote only if sentinels pass and
   decode latency improves or device-lost frequency drops.
+
+## 2026-06-12 Dirty Block-Table Endpoint A/B
+
+Session:
+
+- `qwen36-tp4-dirty-blocktable-ab-20260612aj`.
+
+Launch:
+
+```bash
+VLLM_XPU_METADATA_COPY_ALLOW=1 \
+VLLM_XPU_BLOCK_TABLE_DIRTY_COMMIT=1 \
+VLLM_XPU_BLOCK_TABLE_DIRTY_COMMIT_LOG_EVERY=64 \
+LOG_PATH=data/qwen36-quark-int8-tp4-dirty-blocktable-ab-20260612aj.log \
+scripts/launch-qwen36-quark-int8-accepted.sh
+```
+
+Artifacts:
+
+- A/B log:
+  `data/qwen36-quark-int8-tp4-dirty-blocktable-ab-20260612aj.log`.
+- Provenance guard:
+  `data/qwen36-quark-int8-tp4-dirty-blocktable-ab-provenance-20260612aj.json`.
+- p512/o128 speed:
+  `data/qwen36-quark-int8-tp4-dirty-blocktable-ab-speed-p512o128-20260612aj.json`.
+- p512/o512 r2 speed:
+  `data/qwen36-quark-int8-tp4-dirty-blocktable-ab-speed-p512o512-r2-20260612aj.json`.
+- Restored accepted-backend log:
+  `data/qwen36-quark-int8-tp4-accepted-restored-after-dirty-ab-20260612aj.log`.
+- Restored accepted-backend provenance:
+  `data/qwen36-quark-int8-tp4-accepted-provenance-after-dirty-ab-20260612aj.json`.
+- Restored accepted-backend p512/o128 speed:
+  `data/qwen36-quark-int8-tp4-accepted-restored-after-dirty-ab-speed-p512o128-20260612aj.json`.
+
+Quality/provenance:
+
+- Provenance guard passed.
+- `repetitive_kernel_notes` sentinel index `14`: expected/actual token `4752`.
+- `natural_latency_plan` sentinel index `17`: expected/actual token `11436`.
+- `natural_latency_plan` sentinel index `25`: expected/actual token `198`.
+- Cache fragment matched the accepted TP4/32K no-prefix graph cache root.
+
+Speed result:
+
+- p512/o128:
+  - corrected after-first output speed: `100.364 tok/s`.
+  - e2e output speed: `95.451 tok/s`.
+  - client TTFT: `75.614 ms`.
+  - vLLM decode histogram: `9.893 ms/generated token`.
+- p512/o512, 2 repeats:
+  - corrected after-first output speed: `100.093 tok/s` mean.
+  - e2e output speed: `98.814 tok/s` mean.
+  - client TTFT: `76.200 ms` mean.
+  - vLLM decode histogram: `9.972 ms/generated token` mean.
+
+Dirty-commit counters:
+
+- The patch worked mechanically. The latest visible per-worker counters reached
+  roughly `1280` total commit calls with about `1270` skipped, `10` full
+  copies, `0` partial copies, and `10` copied rows.
+- There were no `DEVICE_LOST`, `Traceback`, or first-error lines in the A/B log
+  during the provenance and speed smokes.
+
+Decision:
+
+- Neutral for c1 decode speed. The repeated block-table H2D copy is mostly
+  redundant, but removing it did not move the `~10 ms/token` steady decode
+  ceiling.
+- Keep the patch default-off as a reliability and metadata-copy pressure
+  reducer. It may matter more under multi-request churn, request add/remove
+  cycles, swap/move events, or risky timing/profiling branches.
+- Do not count this as a performance win toward `>200 tok/s`.
+- Restore the normal accepted backend after the A/B because the env is still
+  experimental.
+
+Restore result:
+
+- Session:
+  `qwen36-tp4-accepted-restored-after-dirty-ab-20260612aj`.
+- `/health` returned after `53 s`.
+- Provenance guard passed all three exact sentinels after restore.
+- Restored p512/o128 speed sanity:
+  - corrected after-first output speed: `99.256 tok/s`.
+  - e2e output speed: `94.425 tok/s`.
+  - client TTFT: `76.050 ms`.
+  - vLLM decode histogram: `10.003 ms/generated token`.
+- The live backend is back on the normal accepted launch path, without the
+  dirty block-table env enabled.
+
+Things to try from this result:
+
+1. **Metadata-copy stress soak.**
+   Build a churn workload that repeatedly adds, removes, and completes requests
+   while generating. Compare default block-table copies versus dirty commits for
+   device-lost rate, host-copy count, TTFT p95, and c1 throughput.
+2. **Unify tiny scheduler metadata updates.**
+   The recurring failures also touched `num_computed_tokens` and
+   `num_accepted_tokens`. Treat block tables as one member of a broader
+   device-resident metadata project, not the whole project.
+3. **Device-side metadata ring.**
+   Prototype a graph-safe device buffer for block-table tails, computed-token
+   counters, accepted-token counters, and slot maps, then update it with a tiny
+   kernel instead of repeated host-to-device copies/fills.
+4. **Keep a no-speed regression gate.**
+   Any metadata patch must pass exact sentinels and stay within noise of the
+   accepted `~100 tok/s` c1 baseline before it is used in risky profiling.
+5. **Measure aggregate impact separately.**
+   The A/B only tested single-request decode. Dirty commits may still improve
+   aggregate throughput or tail latency at `c8`, `c16`, or `c48` where request
+   churn and scheduler state are more active.
+
+External context added while planning next steps:
+
+- Localmaxxing currently shows the 4x Arc Pro B70 Qwen3.6-35B result set topped
+  by two `~100 tok/s` c1 rows at 32K context, including the exact
+  `nameistoken/Qwen3.6-35B-A3B-Quark-W8A8-INT8` run:
+  <https://localmaxxing.com/api/leaderboard?hardwareName=B70&modelFamily=qwen&limit=20>.
+- vLLM's Arc Pro B-series writeup lists the major XPU features that matter to
+  this work: multi-GPU scaling, P2P transfer, optimized MoE models, async
+  scheduling, prefill/decode disaggregation, n-gram/EAGLE/EAGLE3 speculative
+  decoding, and mixed precision recipes:
+  <https://vllm.ai/blog/2025-11-11-intel-arc-pro-b>.
+- The Intel Triton-XPU grouped-GEMM issue specifically calls out skewed decode
+  routing and real token distributions as critical for MoE kernel tuning:
+  <https://github.com/intel/intel-xpu-backend-for-triton/issues/6389>.
+- vLLM's public XPU page validates Arc Pro B-Series as the hardware target, but
+  current recommended-model docs do not replace our exact-model validation:
+  <https://docs.vllm.ai/en/stable/models/hardware_supported_models/xpu/>.
+- vLLM's public W8A8 INT8 docs still describe the official INT8 compute support
+  in NVIDIA terms, so our Quark/XPU path remains a local/vendor path that needs
+  its own correctness and performance proof:
+  <https://docs.vllm.ai/en/v0.18.0/features/quantization/int8/>.
+- IPEX-LLM/OpenVINO/llama.cpp/Vulkan remain useful as control lanes for Intel
+  hardware behavior, but they are not production candidates unless they can run
+  the same Qwen3.6 A3B target with an 8-bit or BF16-equivalent fidelity gate.
+
+New bigger, bolder ideas to keep visible:
+
+1. **Exact decode appliance outside vLLM.**
+   Build a fixed-bucket runner for one c1 shape that loads the exact Quark W8A8
+   weights, certified graph/kernel artifacts, and fixed sampling, then bypasses
+   the dynamic vLLM scheduler. If it stays near `100 tok/s`, the ceiling is
+   kernel/hardware. If it jumps, production should add a latency sidecar.
+2. **Persistent MoE kernel compiler from route windows.**
+   Turn routecapture windows into generated kernel descriptors: layer, hotset,
+   active experts, row maps, tile layout, and exact fallback policy. Generate a
+   one-layer persistent worker and compare it against `xpu_fused_moe` before
+   trying a server patch.
+3. **Tile-native hotset cache with cold queue in one dispatch.**
+   Keep top-64 hot experts packed in the fastest B70 layout, but execute hot and
+   cold rows in one launch or persistent loop. The two-launch split lost; the
+   one-dispatch form is still a serious no-quality-loss path.
+4. **TP1/TP2 low-context sidecar as a latency control.**
+   Try the exact model at lower max context and lower concurrency on one or two
+   cards. The goal is not production capacity; it is to prove whether TP4
+   collectives and rank synchronization are part of the c1 wall.
+5. **XMX/DPAS proof packet.**
+   Profile the hot W8A8 kernels down to DPAS/XMX utilization, occupancy, memory
+   bandwidth, and launch gaps. If the current Quark path is not using the
+   intended INT8 hardware efficiently, launch-flag tuning will never reach
+   `>200 tok/s`.
+6. **MTP/EAGLE/DFlash only behind resident target verification.**
+   Speculation is still the clearest mathematical route to `>200 tok/s`, but
+   only if the current model verifies candidate tokens from in-engine
+   copy-on-write KV/GDN/request state. External refill verification is not good
+   enough.
+7. **Graph-resident decode loop.**
+   Investigate keeping the whole single-token decode loop resident across
+   scheduler metadata, GDN/linear attention, MoE, logits, and sampling metadata.
+   This is larger than a kernel patch, but it attacks command gaps and host
+   synchronization directly.
+8. **Exact 8-bit engine bakeoff with route fixtures.**
+   Compare vLLM/Quark, newer `vllm-xpu-kernels`, Intel container branches,
+   OpenVINO/oneDNN GenAI if supported, IPEX-LLM, and llama.cpp/Vulkan as
+   route-replay or short-context controls. Exclude 4-bit/AWQ and any Qwen3.5
+   substitute.
+9. **Host-stack breakglass lane.**
+   Keep a separate disk/environment for aggressive Intel stack experiments:
+   kernel/KMD, firmware, oneAPI, oneCCL, PyTorch XPU, Triton-XPU, and
+   vLLM/vllm-xpu-kernels. A stack that improves speed but increases
+   device-lost rate does not enter production.
+10. **Public upstream perf packet.**
+    Package exact sentinels, route windows, hotrep negative, dirty-copy A/B,
+    model-forward timing, and Localmaxxing context into a small repro for Intel
+    and vLLM. The ask should be precise: persistent or tile-native W8A8 MoE for
+    skewed Qwen3.6 A3B decode on Arc Pro B70.
