@@ -3797,6 +3797,19 @@ Additional facts from the follow-up scan:
   grouped-matmul experiment therefore needs an isolated vendored-oneDNN build
   with grouped memory enabled, not a quick link against the installed oneAPI
   oneDNN package.
+- Build probe result: a local `vllm-xpu-kernels` build with
+  `DNNL_EXPERIMENTAL_GROUPED_MEMORY=TRUE` configured successfully against the
+  vendored oneDNN tree using oneAPI compiler `2025.3`. The relevant grouped
+  units compiled:
+  `matmul/grouped_micro_gemm.cpp.o`, `matmul/ref_grouped_gemm.cpp.o`,
+  `matmul_grouped_micro_gemm_kernel.cpp.o`, and
+  `matmul_ref_grouped_gemm_kernel.cpp.o`. The full extension build was stopped
+  once it moved into broad generated attention-kernel compilation, because the
+  grouped-memory question was already answered and the full build is too wide
+  for iteration. Artifacts:
+  `patches/vllm-xpu-kernels-onednn-grouped-memory-build-probe-20260612.patch`
+  and
+  `data/qwen36-onednn-grouped-memory-build-probe-20260612.json`.
 - oneDNN's public grouped-GEMM docs describe exactly the MoE shape we need:
   variable token rows across expert groups, per-token source scales,
   per-expert-column weight scales, and binary/SiLU post-op support:
@@ -3823,13 +3836,15 @@ Additional facts from the follow-up scan:
 Concrete things to try next:
 
 1. **Vendored-oneDNN grouped-memory route replay.**
-   Build an isolated `vllm-xpu-kernels` artifact against the vendored oneDNN
-   tree with `ONEDNN_EXPERIMENTAL_GROUPED_MEMORY=ON`. Add one experimental op
-   that consumes packed routed activations, expert offsets, W8A8 weights,
-   per-token activation scales, and per-expert-column weight scales. Gate it on
-   layer-9 routecapture6 exactness first, then compare against the current
-   `112-114 us` per grouped-GEMM dispatch floor. Kill it quickly if primitive
-   creation or grouped scales force host waits.
+   The first build probe proves the vendored grouped-memory path is viable
+   enough to continue. Before adding a serving op, narrow the build to
+   oneDNN/matmul-only or `libdnnl.a` so iteration is not blocked by generated
+   attention kernels. Then add one experimental op that consumes packed routed
+   activations, expert offsets, W8A8 weights, per-token activation scales, and
+   per-expert-column weight scales. Gate it on layer-9 routecapture6 exactness
+   first, then compare against the current `112-114 us` per grouped-GEMM
+   dispatch floor. Kill it quickly if primitive creation or grouped scales
+   force host waits.
 
 2. **Command-stream floor measurement.**
    Measure a single routecapture6 layer with equivalent math but progressively

@@ -6,6 +6,20 @@ Date: 2026-06-12
 
 2026-06-12 continuation:
 
+- Captured the first vendored-oneDNN grouped-memory build probe after the
+  post-floor backlog update. A local `vllm-xpu-kernels` CMake patch enabling
+  `DNNL_EXPERIMENTAL_GROUPED_MEMORY=TRUE` configured successfully against the
+  vendored oneDNN tree with oneAPI compiler `2025.3`; the grouped micro-GEMM
+  and ref-grouped-GEMM host/generated GPU units compiled. The full extension
+  build was stopped once it moved into broad generated attention-kernel
+  compilation, so this is a build-viability result only, not an endpoint
+  promotion or speed claim. Next step: narrow the build to oneDNN/matmul-only
+  or `libdnnl.a`, then wrap a routecapture6 layer-9 grouped-memory matmul op
+  and compare it against the current `112-114 us` W8A8 grouped-GEMM dispatch
+  floor. Artifacts:
+  `patches/vllm-xpu-kernels-onednn-grouped-memory-build-probe-20260612.patch`
+  and `data/qwen36-onednn-grouped-memory-build-probe-20260612.json`.
+
 - Added a post-floor follow-up backlog to
   `notes/2026-06-12-qwen36-next-bigger-bets.md`. The new section records a
   fresh Localmaxxing API check, the local oneDNN grouped-memory capability

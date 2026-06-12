@@ -1,0 +1,48 @@
+{
+  "date": "2026-06-12",
+  "purpose": "Probe whether the vendored oneDNN tree inside vllm-xpu-kernels can build Intel GPU grouped-memory/grouped-GEMM units for a future exact Qwen3.6 W8A8 MoE route replay.",
+  "model_scope": "nameistoken/Qwen3.6-35B-A3B-Quark-W8A8-INT8",
+  "quality_scope": "No endpoint promotion and no quality claim. This only probes build viability for a later route-exact op.",
+  "source_repo": "/home/steve/src/vllm-xpu-kernels",
+  "source_remote": "https://github.com/vllm-project/vllm-xpu-kernels",
+  "source_head": "28e1f5e74c15744b69cf3b760f6160ceabd15de0",
+  "source_worktree_note": "The source tree already contains unrelated local W8A8/GDN/grouped-GEMM prototype changes. The tracked patch artifact only records the grouped-memory CMake flag addition.",
+  "tracked_patch": "patches/vllm-xpu-kernels-onednn-grouped-memory-build-probe-20260612.patch",
+  "cmake_flag_added": "DNNL_EXPERIMENTAL_GROUPED_MEMORY=TRUE",
+  "compiler": "/opt/intel/oneapi/compiler/2025.3/bin/icpx",
+  "python": "/home/steve/.venvs/vllm-xpu/bin/python",
+  "cmake_cache": {
+    "path": "/home/steve/src/vllm-xpu-kernels/build/temp/CMakeCache.txt",
+    "DNNL_EXPERIMENTAL_GROUPED_MEMORY": "TRUE",
+    "DNNL_ENABLE_PRIMITIVE": "ALL",
+    "DNNL_GPU_RUNTIME": "SYCL",
+    "ONEDNN_BUILD_GRAPH": "ON",
+    "VLLM_PYTHON_EXECUTABLE": "/home/steve/.venvs/vllm-xpu/bin/python"
+  },
+  "build_command_shape": "VLLM_TARGET_DEVICE=xpu MAX_JOBS=4 CMAKE_BUILD_TYPE=Release /home/steve/.venvs/vllm-xpu/bin/python setup.py build_ext --build-lib=build/lib-onednn-grouped-20260612",
+  "full_extension_build_completed": false,
+  "build_stopped_reason": "CMake configured successfully and the relevant oneDNN grouped-GEMM host/generated GPU units compiled. The full extension build then moved into hundreds of generated attention kernels, so it was stopped because it no longer answered the grouped-memory viability question.",
+  "confirmed_targets": [
+    "dnnl",
+    "libdnnl.a",
+    "dnnl_gpu_intel",
+    "dnnl_gpu_intel_gemm_jit",
+    "grouped_gemm_xe_2"
+  ],
+  "compiled_grouped_units": [
+    "oneDNN/src/gpu/intel/matmul/grouped_micro_gemm.cpp.o",
+    "oneDNN/src/gpu/intel/matmul/ref_grouped_gemm.cpp.o",
+    "oneDNN/src/gpu/intel/matmul_grouped_micro_gemm_kernel.cpp.o",
+    "oneDNN/src/gpu/intel/matmul_ref_grouped_gemm_kernel.cpp.o"
+  ],
+  "negative_findings": [
+    "Installed /opt/intel/oneapi/dnnl/2026.0 headers did not expose dnnl_memory_desc_create_with_grouped_encoding or DNNL_ARG_HINT_MAX_GROUP_SIZE on this host image.",
+    "The default full vllm-xpu-kernels build is too broad for fast oneDNN grouped-memory iteration."
+  ],
+  "next_steps": [
+    "Create a narrow vendored-oneDNN build path, ideally oneDNN matmul-only or libdnnl-only, before adding a serving op.",
+    "Try ONEDNN_BUILD_GRAPH=OFF and a matmul-only primitive scope if this oneDNN tree accepts it.",
+    "Wrap one experimental grouped-memory matmul op using routecapture6 layer-9 inputs, then compare against the current 112-114 us W8A8 grouped-GEMM dispatch floor.",
+    "Gate any future endpoint use on max_abs_diff=0.0 against current xpu_fused_moe and accepted provenance sentinels."
+  ]
+}
