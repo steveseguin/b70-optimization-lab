@@ -6,6 +6,29 @@ Date: 2026-06-12
 
 2026-06-12 notes update:
 
+- Added a "Route-Fixture Bigger/Bolder Refresh 20260612cs" section to
+  `notes/2026-06-12-qwen36-next-bigger-bets.md`. This turns the first-decode
+  route fixture into a concrete next queue: route-fixture microbench before
+  endpoint work, accepted-replay route side channel inside the XPU MoE custom
+  op or graph output path, single-token/topk-8 persistent MoE lane for Qwen's
+  `hidden_size=2048`, `moe_intermediate_size=512`, `num_hidden_layers=40`,
+  `num_experts=256`, `num_experts_per_tok=8`, oneDNN grouped-matmul hint gate,
+  align/gather overhead split, TP/EP placement simulator on real routes,
+  no-server c1 ceiling with route ledger, and target-state transactions before
+  using the model's MTP layer as a proposer. Bigger bets now tracked include a
+  B70 W8A8 MoE island in `vllm-xpu-kernels`, memory-for-latency expert packs,
+  whole-token Level Zero replay, target-verified branch farming, separate
+  latency/aggregate lanes, route-class kernel generation, and a maintainer
+  challenge packet with executable fixtures. Fresh Localmaxxing public
+  snapshots still show the exact current Quark W8A8 row at `99.428 tok/s`; the
+  B70/Qwen/vLLM snapshot has a same-family `Qwen/Qwen3.6-35B-A3B` row at
+  `99.770 tok/s`. New artifacts:
+  `data/localmaxxing-qwen36-quark-w8a8-int8-exact-refresh-20260612cs.json`,
+  `data/localmaxxing-qwen-b70-vllm-leaderboard-20260612cs.json`, and
+  `data/localmaxxing-b70-moe-leaderboard-20260612cs.json`.
+
+2026-06-12 notes update:
+
 - Added a "Route Fixture Diagnostic 20260612cr" section to
   `notes/2026-06-12-qwen36-next-bigger-bets.md`. The compiled route-counter
   run `20260612cp2` measured `96.828 tok/s` corrected p512/o128 and confirmed

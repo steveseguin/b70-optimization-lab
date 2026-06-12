@@ -9583,3 +9583,153 @@ Current priority order:
 5. Static c1/no-server ceiling harness.
 6. If the ceiling remains poor, move serious effort into target-verified
    branch farming.
+
+## Route-Fixture Bigger/Bolder Refresh 20260612cs
+
+Added after the first-decode route fixture extraction. This refresh keeps the
+same hard rule: the promoted answer must still be owned by the current
+`nameistoken/Qwen3.6-35B-A3B-Quark-W8A8-INT8` target model. The purpose here
+is to turn the route-fixture lesson into a more aggressive work queue without
+sliding into 4-bit, AWQ, Qwen3.5, or unverified speculation.
+
+Fresh public benchmark snapshots:
+
+- Exact current model on Localmaxxing is unchanged: one public exact-model row,
+  `cmq8yhxvo001ipb0149aoa79o`, at `99.428 tok/s`, c1, 32K context.
+- B70/Qwen/vLLM leaderboard snapshot has `Qwen/Qwen3.6-35B-A3B` at
+  `99.770 tok/s` and the exact Quark W8A8 INT8 row at `99.428 tok/s`.
+- B70/MoE leaderboard snapshot still has the exact Quark W8A8 row as the top
+  returned B70 MoE row at `99.428 tok/s`.
+
+Local model shape to bake into fixtures:
+
+- `text_config.hidden_size=2048`
+- `text_config.moe_intermediate_size=512`
+- `text_config.num_hidden_layers=40`
+- `text_config.num_experts=256`
+- `text_config.num_experts_per_tok=8`
+- `text_config.mtp_num_hidden_layers=1`
+- Route fixture: three first-decode examples, `40` MoE layers each, one token
+  per event, topk-8 expert IDs per layer.
+
+External signals that reinforce the route-fixture direction:
+
+- `vllm-xpu-kernels` is now the natural upstream XPU landing zone. Its public
+  README lists SYCL/DPC++ custom ops using oneDNN, including MoE top-k,
+  grouped top-k, MoE align/gather/expert remapping, and grouped GEMM:
+  <https://github.com/vllm-project/vllm-xpu-kernels>.
+- oneDNN matmul exposes `DNNL_ARG_HINT_MAX_GROUP_SIZE` as an execution-time
+  hint for grouped matmul. The warning is important: the hint must be a valid
+  upper bound or results can be incorrect, so this belongs behind captured
+  route-fixture compare gates first:
+  <https://uxlfoundation.github.io/oneDNN/dev_guide_matmul.html>.
+- vLLM's MoE kernel design docs explicitly frame MoE as a kernel-selection
+  problem with modular all-to-all and expert-kernel families:
+  <https://docs.vllm.ai/en/latest/design/moe_kernel_features/>.
+- Intel's public grouped-GEMM tuning issue says MoE grouped GEMM performance
+  depends strongly on runtime route distributions and that decode-stage routes
+  are often skewed/long-tailed:
+  <https://github.com/intel/intel-xpu-backend-for-triton/issues/6389>.
+- Other MoE runtime writeups point at two relevant ideas: expert parallelism
+  can trade all-to-all communication for more expert-weight bandwidth, and
+  alignment sorting matters for grouped-GEMM efficiency:
+  <https://rocm.blogs.amd.com/software-tools-optimization/vllm-moe-guide/README.html>
+  and
+  <https://huggingface.co/blog/yiakwy-xpu-team/efficient-moe-align-sort-design-for-sglang>.
+
+Concrete near-term additions:
+
+1. **Route-fixture microbench first, endpoint second.**
+   Build a small harness around the extracted first-decode routes and the exact
+   Qwen shape above. The first version can use synthetic weights to measure
+   dispatch/route overhead; the second version should load real layer weights
+   and compare tensor output against `xpu_fused_moe` before any server wiring.
+
+2. **Accepted-replay route side channel in the custom op.**
+   Python route hooks are bypassed by compiled decode replay. Put the optional
+   route hash/count capture inside the XPU MoE custom-op path or graph output
+   path. It should emit only compact hashes/counters during diagnostics, not
+   full expert lists on the serving path.
+
+3. **Single-token/topk-8 persistent MoE lane.**
+   Treat c1 decode as the primary target shape: one hidden vector, eight routed
+   experts, hidden `2048`, expert intermediate `512`. Prepack weights, keep
+   scratch resident, fuse activation/topk weighting where exact, and remove
+   per-token primitive rebuilds.
+
+4. **oneDNN grouped-matmul hint gate.**
+   Try `DNNL_ARG_HINT_MAX_GROUP_SIZE` on captured topk-8 route windows with a
+   strict current-output checksum, candidate-output checksum, max/mean diff,
+   and automatic fallback. This is especially useful if real route windows show
+   repeated skew, but it must be proven at the layer level first.
+
+5. **Align/gather overhead split.**
+   Measure route remap, align/sort, gather, GEMM1, activation, GEMM2, and
+   unpermute separately for the single-token fixture. If align/gather dominates
+   rows=1/topk=8, the kernel win is a fused path, not only faster GEMM.
+
+6. **TP/EP simulator on real route fixtures.**
+   Before another full endpoint topology test, run the route fixture through a
+   placement simulator: current TP4, TP2, expert-parallel, hot-expert
+   replicated, and hybrid dense-TP/MoE-EP. Score expected communication,
+   weight bandwidth, and per-rank route pressure.
+
+7. **No-server c1 ceiling with exact route ledger.**
+   Pair the direct in-process c1 decode harness with route hashes from the
+   custom-op side channel. If no-server c1 is still near `100 tok/s`, focus on
+   kernels/topology. If it jumps materially, build the fixed-shape serving lane.
+
+8. **Target-state transaction substrate before more speculation.**
+   The config exposes one MTP layer, but it should not own emitted tokens until
+   KV, GDN/hybrid state, scheduler counters, sampler state, and accepted-token
+   ledgers have a verify/commit/rollback path. MTP is a proposer only; the
+   Quark W8A8 target still commits.
+
+Bigger, bolder ideas to keep alive:
+
+1. **B70 W8A8 MoE island in `vllm-xpu-kernels`.**
+   Build the persistent single-token/topk-8 path as an upstreamable XPU kernel
+   island instead of a long-lived local vLLM monkeypatch. Inputs: hidden vector,
+   topk IDs/weights, prepacked W8A8 expert tensors, resident scratch. Outputs:
+   exact current hidden-state result and diagnostic timing counters.
+
+2. **Memory-for-latency expert packs.**
+   Spend spare VRAM on route-derived expert packs: duplicated hot experts,
+   layer-local route packs, or card-local hotsets. This does not change weights
+   or math; it trades memory for fewer remote/rank-stall cases.
+
+3. **Whole-token command-list replay.**
+   Capture the fixed decode bucket as a Level Zero command-list sequence with
+   patchable pointers and route offsets. This is risky, but it directly attacks
+   launch/fence bubbles across attention, MoE, residuals, logits, and sampler.
+
+4. **Target-verified branch farm.**
+   If exact c1 decode bottoms out below `150-170 tok/s`, use spare cards or
+   spare VRAM to run target-model branches from cloned state. Proposers can be
+   ngram, MTP, or route-trained, but only target-verified tokens commit. This
+   is still no-quality-loss if the transaction substrate is exact.
+
+5. **Latency lane plus aggregate lane.**
+   Stop assuming TP4 must serve every use case. If TP2 or a fixed-shape c1 lane
+   wins latency, use the other cards for replicas, target-verifier branches, or
+   aggregate serving. Production can run two quality-gated lanes instead of one
+   compromised launch.
+
+6. **Route-class kernel generator.**
+   Generate a tiny policy table from captured routes: single-token balanced
+   topk, repeated hot expert, broad sparse, aggregate batch, and fallback.
+   Runtime chooses the implementation from exact route statistics; numerical
+   operations and weights stay identical.
+
+7. **Maintainer challenge packet with executable fixtures.**
+   Package the first-decode route fixture, exact model revision, launch command,
+   vLLM/XPU stack versions, route-counter proof that Python hooks miss compiled
+   replay, all-rank timings, Localmaxxing rows, and a one-layer executable
+   compare harness. The ask should be specific: remove `~4-5 ms/token` from
+   c1 Qwen3.6 35B-A3B Quark W8A8 decode on 4x B70 without token drift.
+
+Artifacts for this refresh:
+
+- `data/localmaxxing-qwen36-quark-w8a8-int8-exact-refresh-20260612cs.json`
+- `data/localmaxxing-qwen-b70-vllm-leaderboard-20260612cs.json`
+- `data/localmaxxing-b70-moe-leaderboard-20260612cs.json`
