@@ -7601,3 +7601,163 @@ Interpretation:
   resident oneDNN sidecar call for one layer/rank, compare output against the
   current `xpu_fused_moe` path, log parity/timing, and still return the current
   accepted output until exact live parity is proven across more layers/shapes.
+
+## 2026-06-12 RPC Future-Result Split And Bigger Bets
+
+Added an env-gated RPC timing split around the vLLM multiprocess executor and
+worker response path. The objective was to break the EngineCore `future_result`
+wait into worker compute, response materialization, and driver response wait
+without changing model output.
+
+Artifacts:
+
+- `patches/vllm-qwen36-engine-rpc-timing-20260612bt.diff`
+- `data/qwen36-quark-int8-tp4-rpc-timing-20260612bt.log`
+- `data/qwen36-quark-int8-tp4-rpc-timing-p512o256-metrics-20260612bt.json`
+- `data/qwen36-quark-int8-tp4-rpc-timing-summary-20260612bt.json`
+- `data/qwen36-quark-int8-tp4-rpc-timing-summary-20260612bt.md`
+- `data/qwen36-quark-int8-tp4-rpc-fastoutput-20260612bu.log`
+- `data/qwen36-quark-int8-tp4-rpc-fastoutput-p512o256-metrics-20260612bu.json`
+- `data/qwen36-quark-int8-tp4-rpc-fastoutput-summary-20260612bu.json`
+- `data/qwen36-quark-int8-tp4-accepted-restored-after-rpc-timing-20260612bu.log`
+- `data/qwen36-quark-int8-tp4-accepted-provenance-after-rpc-timing-20260612bu.json`
+- `data/qwen36-quark-int8-tp4-accepted-quality-after-rpc-timing-nothink-smoke-20260612bu.json`
+- `data/localmaxxing-b70-vllm-leaderboard-20260612bt.json`
+- `data/localmaxxing-qwen36-quark-w8a8-int8-exact-refresh-20260612bt.json`
+- `data/localmaxxing-qwen-b70-leaderboard-20260612bt.json`
+
+Diagnostic run:
+
+- Current model: `nameistoken/Qwen3.6-35B-A3B-Quark-W8A8-INT8`.
+- Runtime: vLLM/XPU TP4, 32K context, accepted graph cache, no prefix caching.
+- Prompt/output: vLLM-random p512/o256, c1, streaming, `ignore_eos=true`.
+- Corrected output throughput after first chunk: `100.621 tok/s`.
+- vLLM decode histogram: `9.902 ms/token`.
+- vLLM time-per-output-token histogram: `9.941 ms/token`.
+- Joined sampled RPC calls were `sample_tokens` because of the print cadence;
+  this is still the relevant queued decode path for emitted tokens.
+
+Measured `sample_tokens` split:
+
+- Driver response wait: `4.297 ms` mean, `4.358 ms` median.
+- Max worker function time: `0.351 ms` mean, `0.343 ms` median.
+- Rank-0 response materialization / output enqueue:
+  `3.900 ms` mean, `3.954 ms` median.
+- Response wait minus max worker function:
+  `3.946 ms` mean, `4.008 ms` median.
+- Worker function skew across ranks: only `0.037 ms` mean.
+
+Interpretation:
+
+- `sample_tokens` compute is not the bottleneck; it is about `0.35 ms`.
+- The output-rank response materialization path accounts for almost the whole
+  `sample_tokens` wait. The likely target is
+  `AsyncModelRunnerOutput.get_output()`, especially event synchronization or
+  device-to-host token ID copy completion.
+- The existing `gpu_model_runner.async_output_wrap` label is only about
+  `0.1 ms`, so the cost is later, when the async output is converted into the
+  worker response.
+- The `VLLM_XPU_FAST_ASYNC_OUTPUT_LIST=1` plus
+  `VLLM_XPU_REUSE_ASYNC_OUTPUT_COPY_BUFFER=1` A/B did not improve speed:
+  `100.327 tok/s` corrected, `9.931 ms/token` decode, and
+  `3.962 ms` mean output enqueue. A simple `.tolist()` shortcut or current
+  reusable-buffer branch is therefore not enough.
+
+Immediate things to try:
+
+1. **Sub-time `AsyncModelRunnerOutput.get_output()`.**
+   Split event sync, token-id conversion, logprobs conversion, and message
+   enqueue. Record sampled-token dtype and whether the reusable CPU buffer path
+   actually fires.
+
+2. **Pinned scalar c1 output path.**
+   For no-logprobs c1 completions, copy only one committed token ID into a
+   pinned one-token host slot or ring. Avoid per-token tensor/list payload
+   construction when the response only needs one ID.
+
+3. **Async-copy branch proof.**
+   Run `VLLM_XPU_SYNC_ASYNC_OUTPUT_COPY=1` and
+   `VLLM_XPU_DEFER_ASYNC_OUTPUT_COPY=1` diagnostics. These are attribution
+   tests, not promotion candidates.
+
+4. **No-server c1 ceiling with identical sampler output.**
+   If a direct model-runner loop avoids the `~4 ms` response materialization
+   cost while preserving exact token parity, the production latency lane target
+   becomes concrete.
+
+5. **Output-rank-only focus.**
+   All ranks are low-cost in `sample_tokens`; the output rank is where the
+   response cost lands. Prioritize output materialization before broad sampler
+   rewrites.
+
+Public signals refreshed:
+
+- Localmaxxing exact-model B70/vLLM row remains `99.428 tok/s`; nearby
+  B70/Qwen3.6 rows remain around `100 tok/s` unless they change model,
+  precision, batch/concurrency, or workload.
+- Intel's grouped-GEMM tuning issue says MoE grouped GEMM performance depends
+  strongly on real routing distribution and decode-stage skew:
+  https://github.com/intel/intel-xpu-backend-for-triton/issues/6389
+- The vLLM Arc Pro B-series post calls out persistent zero-gap MoE kernels,
+  dynamic work balancing, host-wait/device-idle gaps, multi-GPU scaling, and
+  speculative decoding as Intel Arc optimization targets:
+  https://vllm.ai/blog/2025-11-11-intel-arc-pro-b
+- oneDNN's INT8 inference path supports INT8 primitives, scaling attributes,
+  zero-points, and fused post-ops:
+  https://uxlfoundation.github.io/oneDNN/dev_guide_inference_int8.html
+- vLLM's Intel quantization docs currently list W4A16 and W8A16 AutoRound
+  support on Intel platforms, with additional recipes planned. Useful context,
+  but not a reason to leave the current Quark W8A8 target:
+  https://docs.vllm.ai/en/latest/features/quantization/inc/
+
+Bigger bets added from this pass:
+
+1. **Pinned scalar output ferry.**
+   Replace per-token output materialization with a fixed pinned scalar ring and
+   event handoff for c1/no-logprobs. Quality is unchanged because only the host
+   transport changes.
+
+2. **Device-resident sampler/streamer lane.**
+   Keep token selection and short committed-token buffers device-side, then
+   copy committed IDs through a persistent host-visible ring. This attacks one
+   synchronization point per token.
+
+3. **Single-request direct runner.**
+   Keep the same model runner and sampler, but bypass OpenAI serving,
+   scheduler queues, and multiprocessing for a fixed c1 latency lane. Exact
+   token parity with accepted vLLM is mandatory.
+
+4. **TP2 latency lane plus replicas.**
+   Test whether TP4 is over-synchronizing sparse active-token decode. If TP2
+   wins c1 latency, use the other B70s for replicas, branch verification, or
+   aggregate throughput.
+
+5. **Expert-parallel sparse island.**
+   Keep dense/shared layers tensor-parallel, but route MoE expert work to
+   rank-local or duplicated expert islands. Spend VRAM surplus to reduce
+   synchronization and route skew.
+
+6. **Whole-token command-list replay.**
+   Capture a fixed decode bucket across attention, MoE, residual, sampler, and
+   output handoff into a patchable Level Zero command sequence. This is large,
+   but it directly targets host launch and synchronization overhead.
+
+7. **Target-owned branch farm.**
+   Use current Quark W8A8 target verification for ngram/MTP/EAGLE-style
+   proposed futures. Proposed tokens never reach the user unless the current
+   target model commits them.
+
+8. **B70 maintainer packet.**
+   Package route windows, exact checkpoint, command line, profiler traces,
+   output-path timing, oneDNN sidecar fixtures, and the `5 ms/token` target for
+   Intel/vLLM maintainers.
+
+9. **Strict same-model engine bakeoff.**
+   Compare OpenVINO/oneDNN, llama.cpp SYCL, SGLang, KTransformers, and custom
+   runners only when they preserve current-model output or use BF16 as the
+   quality oracle. No 4-bit/AWQ/Qwen3.5 shortcut qualifies.
+
+10. **Parity/stability scoreboard.**
+    Every performance branch needs exact provenance sentinels, no-thinking
+    quality smoke, route-window parity where applicable, reproducible command,
+    XPU memory, and a soak/stability result before promotion.

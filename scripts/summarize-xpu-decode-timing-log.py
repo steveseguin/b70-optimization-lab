@@ -22,6 +22,13 @@ SUMMARY_RE = re.compile(
 )
 STEP_RE = re.compile(r"\[vllm-xpu-timing-step\]\s+(?P<payload>\{.*\})")
 ENGINE_STEP_RE = re.compile(r"\[vllm-xpu-engine-step\]\s+(?P<payload>\{.*\})")
+EXECUTOR_RPC_RE = re.compile(
+    r"\[vllm-xpu-executor-rpc\]\s+(?P<payload>\{.*\})"
+)
+WORKER_RPC_RE = re.compile(r"\[vllm-xpu-worker-rpc\]\s+(?P<payload>\{.*\})")
+WORKER_OUTPUT_RE = re.compile(
+    r"\[vllm-xpu-worker-output\]\s+(?P<payload>\{.*\})"
+)
 POST_RE = re.compile(r'POST\s+/v1/(?:completions|chat/completions)\s+HTTP/\d(?:\.\d)?"\s+200')
 
 
@@ -36,6 +43,17 @@ def percentile(values: list[float], pct: float) -> float | None:
     upper = min(lower + 1, len(ordered) - 1)
     frac = pos - lower
     return ordered[lower] * (1.0 - frac) + ordered[upper] * frac
+
+
+def summarize_metric_values(values: list[float]) -> dict[str, float | None]:
+    return {
+        "mean": statistics.fmean(values) if values else None,
+        "median": statistics.median(values) if values else None,
+        "p90": percentile(values, 0.90),
+        "p99": percentile(values, 0.99),
+        "min": min(values) if values else None,
+        "max": max(values) if values else None,
+    }
 
 
 def summarize_samples(samples: list[dict]) -> list[dict]:
@@ -326,16 +344,6 @@ def summarize_engine_steps(engine_steps: list[dict]) -> dict[str, object]:
             "regions_by_mean_elapsed_ms": [],
         }
 
-    def metric_summary(values: list[float]) -> dict[str, float | None]:
-        return {
-            "mean": statistics.fmean(values) if values else None,
-            "median": statistics.median(values) if values else None,
-            "p90": percentile(values, 0.90),
-            "p99": percentile(values, 0.99),
-            "min": min(values) if values else None,
-            "max": max(values) if values else None,
-        }
-
     status_counts: dict[str, int] = {}
     totals = []
     accounted = []
@@ -359,8 +367,8 @@ def summarize_engine_steps(engine_steps: list[dict]) -> dict[str, object]:
         row = {
             "label": label,
             "count": len(items),
-            "elapsed_ms": metric_summary(elapsed_values),
-            "start_offset_ms": metric_summary(start_offsets),
+            "elapsed_ms": summarize_metric_values(elapsed_values),
+            "start_offset_ms": summarize_metric_values(start_offsets),
         }
         region_rows.append(row)
     region_rows.sort(
@@ -373,9 +381,9 @@ def summarize_engine_steps(engine_steps: list[dict]) -> dict[str, object]:
     return {
         "step_count": len(engine_steps),
         "status_counts": status_counts,
-        "total_ms": metric_summary(totals),
-        "accounted_region_ms": metric_summary(accounted),
-        "unaccounted_ms": metric_summary(unaccounted),
+        "total_ms": summarize_metric_values(totals),
+        "accounted_region_ms": summarize_metric_values(accounted),
+        "unaccounted_ms": summarize_metric_values(unaccounted),
         "regions_by_mean_elapsed_ms": region_rows,
     }
 
@@ -466,6 +474,202 @@ def summarize_engine_steps_by_bucket(engine_steps: list[dict]) -> list[dict]:
     return rows
 
 
+def summarize_rpc_events(events: list[dict], group_fields: list[str]) -> list[dict]:
+    grouped: dict[str, dict] = {}
+    for event in events:
+        group = {field: event.get(field) for field in group_fields}
+        key = json.dumps(group, sort_keys=True, separators=(",", ":"))
+        entry = grouped.setdefault(
+            key,
+            {
+                "group": group,
+                "event_count": 0,
+                "first_line": event.get("line"),
+                "last_line": event.get("line"),
+                "first_call_id": event.get("call_id"),
+                "last_call_id": event.get("call_id"),
+                "metrics": {},
+            },
+        )
+        entry["event_count"] += 1
+        entry["last_line"] = event.get("line")
+        entry["last_call_id"] = event.get("call_id")
+        for key2, value in event.items():
+            if key2 in group_fields or key2 in {
+                "line",
+                "call_id",
+                "scheduler",
+                "response_dequeue_rows",
+            }:
+                continue
+            if isinstance(value, bool):
+                continue
+            if isinstance(value, int | float):
+                entry["metrics"].setdefault(key2, []).append(float(value))
+
+    rows = []
+    for entry in grouped.values():
+        metrics = entry.pop("metrics")
+        rows.append(
+            {
+                **entry,
+                "metric_summaries": {
+                    key: summarize_metric_values(values)
+                    for key, values in sorted(metrics.items())
+                },
+            }
+        )
+    rows.sort(
+        key=lambda row: (
+            row["group"].get("method") or "",
+            str(row["group"].get("event") or row["group"].get("rank") or ""),
+        )
+    )
+    return rows
+
+
+def summarize_rpc_calls(
+    executor_rpc_events: list[dict],
+    worker_rpc_events: list[dict],
+    worker_output_events: list[dict],
+) -> dict[str, object]:
+    calls: dict[int, dict] = {}
+
+    def call_for(event: dict) -> dict | None:
+        call_id = event.get("call_id")
+        if not isinstance(call_id, int):
+            return None
+        return calls.setdefault(
+            call_id,
+            {
+                "call_id": call_id,
+                "method": event.get("method"),
+                "scheduler": event.get("scheduler") or {},
+                "executor": {},
+                "workers": [],
+                "outputs": [],
+            },
+        )
+
+    for event in executor_rpc_events:
+        call = call_for(event)
+        if call is None:
+            continue
+        if event.get("method"):
+            call["method"] = event.get("method")
+        if event.get("scheduler"):
+            call["scheduler"] = event.get("scheduler")
+        event_name = event.get("event")
+        if event_name:
+            call["executor"][event_name] = event
+
+    for event in worker_rpc_events:
+        call = call_for(event)
+        if call is None:
+            continue
+        call["workers"].append(event)
+
+    for event in worker_output_events:
+        call = call_for(event)
+        if call is None:
+            continue
+        call["outputs"].append(event)
+
+    joined = []
+    for call in sorted(calls.values(), key=lambda row: row["call_id"]):
+        workers = call["workers"]
+        outputs = call["outputs"]
+        executor = call["executor"]
+        response = executor.get("response_dequeue") or {}
+        enqueue = executor.get("enqueue") or {}
+        worker_func = [
+            float(row["func_ms"])
+            for row in workers
+            if isinstance(row.get("func_ms"), int | float)
+        ]
+        worker_after = [
+            float(row["worker_after_dequeue_ms"])
+            for row in workers
+            if isinstance(row.get("worker_after_dequeue_ms"), int | float)
+        ]
+        driver_to_worker = [
+            float(row["driver_enqueue_to_dequeue_ms"])
+            for row in workers
+            if isinstance(row.get("driver_enqueue_to_dequeue_ms"), int | float)
+        ]
+        output_enqueue = [
+            float(row["enqueue_ms"])
+            for row in outputs
+            if isinstance(row.get("enqueue_ms"), int | float)
+        ]
+        response_wait = response.get("response_wait_ms")
+        max_worker_func = max(worker_func) if worker_func else None
+        min_worker_func = min(worker_func) if worker_func else None
+        max_worker_after = max(worker_after) if worker_after else None
+        row = {
+            "call_id": call["call_id"],
+            "method": call["method"],
+            "scheduler": call["scheduler"],
+            "executor_enqueue_ms": enqueue.get("enqueue_ms"),
+            "executor_response_wait_ms": response_wait,
+            "worker_count": len(workers),
+            "output_event_count": len(outputs),
+            "max_worker_func_ms": max_worker_func,
+            "min_worker_func_ms": min_worker_func,
+            "worker_func_skew_ms": (
+                max_worker_func - min_worker_func
+                if max_worker_func is not None and min_worker_func is not None
+                else None
+            ),
+            "max_worker_after_dequeue_ms": max_worker_after,
+            "max_driver_enqueue_to_worker_dequeue_ms": max(driver_to_worker)
+            if driver_to_worker
+            else None,
+            "max_output_enqueue_ms": max(output_enqueue)
+            if output_enqueue
+            else None,
+        }
+        if isinstance(response_wait, int | float) and max_worker_func is not None:
+            row["response_wait_minus_max_worker_func_ms"] = (
+                float(response_wait) - max_worker_func
+            )
+        if isinstance(response_wait, int | float) and max_worker_after is not None:
+            row["response_wait_minus_max_worker_after_dequeue_ms"] = (
+                float(response_wait) - max_worker_after
+            )
+        joined.append(row)
+
+    by_method: dict[str, dict[str, list[float]]] = {}
+    for row in joined:
+        method = str(row.get("method") or "")
+        entry = by_method.setdefault(method, {})
+        for key, value in row.items():
+            if key in {"call_id", "method", "scheduler"} or isinstance(value, bool):
+                continue
+            if isinstance(value, int | float):
+                entry.setdefault(key, []).append(float(value))
+
+    summary_rows = []
+    for method, metrics in by_method.items():
+        summary_rows.append(
+            {
+                "method": method,
+                "call_count": max((len(values) for values in metrics.values()), default=0),
+                "metric_summaries": {
+                    key: summarize_metric_values(values)
+                    for key, values in sorted(metrics.items())
+                },
+            }
+        )
+    summary_rows.sort(key=lambda row: row["method"])
+
+    return {
+        "call_count": len(joined),
+        "by_method": summary_rows,
+        "calls": joined,
+    }
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--log", required=True, help="vLLM worker log file")
@@ -498,6 +702,9 @@ def main() -> int:
     summaries = []
     steps = []
     engine_steps = []
+    executor_rpc_events = []
+    worker_rpc_events = []
+    worker_output_events = []
     for idx, line in enumerate(lines, start=1):
         if sample_start_line <= idx <= sample_end_line:
             match = SAMPLE_RE.search(line)
@@ -544,6 +751,30 @@ def main() -> int:
                 continue
             payload["line"] = idx
             engine_steps.append(payload)
+        match = EXECUTOR_RPC_RE.search(line)
+        if match and (args.all_lines or idx >= sample_start_line):
+            try:
+                payload = json.loads(match.group("payload"))
+            except json.JSONDecodeError:
+                continue
+            payload["line"] = idx
+            executor_rpc_events.append(payload)
+        match = WORKER_RPC_RE.search(line)
+        if match and (args.all_lines or idx >= sample_start_line):
+            try:
+                payload = json.loads(match.group("payload"))
+            except json.JSONDecodeError:
+                continue
+            payload["line"] = idx
+            worker_rpc_events.append(payload)
+        match = WORKER_OUTPUT_RE.search(line)
+        if match and (args.all_lines or idx >= sample_start_line):
+            try:
+                payload = json.loads(match.group("payload"))
+            except json.JSONDecodeError:
+                continue
+            payload["line"] = idx
+            worker_output_events.append(payload)
 
     summary_rows = summarize_samples(samples)
     timing_summary = sorted(summaries, key=lambda row: row["total_ms"], reverse=True)
@@ -552,6 +783,23 @@ def main() -> int:
     step_bucket_summary = summarize_steps_by_bucket(steps)
     engine_step_summary = summarize_engine_steps(engine_steps)
     engine_step_bucket_summary = summarize_engine_steps_by_bucket(engine_steps)
+    executor_rpc_summary = summarize_rpc_events(
+        executor_rpc_events,
+        ["event", "method", "output_rank"],
+    )
+    worker_rpc_summary = summarize_rpc_events(
+        worker_rpc_events,
+        ["method", "rank", "output_rank", "status"],
+    )
+    worker_output_summary = summarize_rpc_events(
+        worker_output_events,
+        ["event", "method", "rank", "status"],
+    )
+    rpc_call_summary = summarize_rpc_calls(
+        executor_rpc_events,
+        worker_rpc_events,
+        worker_output_events,
+    )
     payload = {
         "source_log": str(log_path),
         "line_count": len(lines),
@@ -563,6 +811,9 @@ def main() -> int:
         "summary_line_count": len(timing_summary),
         "step_line_count": len(steps),
         "engine_step_line_count": len(engine_steps),
+        "executor_rpc_line_count": len(executor_rpc_events),
+        "worker_rpc_line_count": len(worker_rpc_events),
+        "worker_output_line_count": len(worker_output_events),
         "samples_by_last_ms": summary_rows,
         "summary_by_total_ms": timing_summary,
         "step_summary_by_mean_total_ms": step_summary,
@@ -570,12 +821,19 @@ def main() -> int:
         "step_summary_by_bucket": step_bucket_summary,
         "engine_step_summary": engine_step_summary,
         "engine_step_summary_by_bucket": engine_step_bucket_summary,
+        "executor_rpc_summary": executor_rpc_summary,
+        "worker_rpc_summary": worker_rpc_summary,
+        "worker_output_summary": worker_output_summary,
+        "rpc_call_summary": rpc_call_summary,
     }
     if args.include_raw:
         payload["raw_samples"] = samples
         payload["raw_summaries"] = summaries
         payload["raw_steps"] = steps
         payload["raw_engine_steps"] = engine_steps
+        payload["raw_executor_rpc_events"] = executor_rpc_events
+        payload["raw_worker_rpc_events"] = worker_rpc_events
+        payload["raw_worker_output_events"] = worker_output_events
 
     out_path = Path(args.out)
     out_path.parent.mkdir(parents=True, exist_ok=True)

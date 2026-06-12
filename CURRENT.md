@@ -6,6 +6,38 @@ Date: 2026-06-12
 
 2026-06-12 notes update:
 
+- Added an RPC future-result split around the vLLM multiprocess executor and
+  worker response path. The p512/o256/c1 diagnostic stayed at baseline speed:
+  `100.621 tok/s` corrected, `9.902 ms/token` vLLM decode, and
+  `9.941 ms/token` TPOT. The key finding is that joined `sample_tokens` worker
+  compute is only `0.351 ms` mean, while rank-0 output materialization /
+  response enqueue is `3.900 ms` mean and accounts for almost the whole
+  `4.297 ms` driver response wait. The fast-output/reuse-buffer A/B did not
+  improve this (`100.327 tok/s`, `3.962 ms` output enqueue), so the next target
+  is sub-timing and optimizing `AsyncModelRunnerOutput.get_output()`, especially
+  event sync / device-to-host token ID copy completion. The accepted backend was
+  restored and passed exact provenance sentinels plus the Qwen no-thinking
+  quality smoke. Added public-signal refreshes and bigger-bet items to
+  `notes/2026-06-12-qwen36-next-bigger-bets.md`, including pinned scalar output
+  ferry, device-resident sampler/streamer lane, single-request direct runner,
+  TP2 latency lane plus replicas, expert-parallel sparse island, whole-token
+  command-list replay, target-owned branch farm, B70 maintainer packet, strict
+  same-model engine bakeoff, and a parity/stability scoreboard. New artifacts:
+  `patches/vllm-qwen36-engine-rpc-timing-20260612bt.diff`,
+  `data/qwen36-quark-int8-tp4-rpc-timing-20260612bt.log`,
+  `data/qwen36-quark-int8-tp4-rpc-timing-p512o256-metrics-20260612bt.json`,
+  `data/qwen36-quark-int8-tp4-rpc-timing-summary-20260612bt.json`,
+  `data/qwen36-quark-int8-tp4-rpc-timing-summary-20260612bt.md`,
+  `data/qwen36-quark-int8-tp4-rpc-fastoutput-20260612bu.log`,
+  `data/qwen36-quark-int8-tp4-rpc-fastoutput-p512o256-metrics-20260612bu.json`,
+  `data/qwen36-quark-int8-tp4-rpc-fastoutput-summary-20260612bu.json`,
+  `data/qwen36-quark-int8-tp4-accepted-restored-after-rpc-timing-20260612bu.log`,
+  `data/qwen36-quark-int8-tp4-accepted-provenance-after-rpc-timing-20260612bu.json`,
+  `data/qwen36-quark-int8-tp4-accepted-quality-after-rpc-timing-nothink-smoke-20260612bu.json`,
+  `data/localmaxxing-b70-vllm-leaderboard-20260612bt.json`,
+  `data/localmaxxing-qwen36-quark-w8a8-int8-exact-refresh-20260612bt.json`,
+  and `data/localmaxxing-qwen-b70-leaderboard-20260612bt.json`.
+
 - Added EngineCore and all-rank timing notes for the current accepted Quark
   W8A8 INT8 TP4 path. The diagnostic runs stayed at baseline speed
   (`99.803-99.829 tok/s` corrected decode, `9.985-10.022 ms/token` TPOT).
