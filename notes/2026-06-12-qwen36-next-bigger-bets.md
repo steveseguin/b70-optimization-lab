@@ -5112,3 +5112,169 @@ Interpretation:
 - If full-island timing stays below `168 us/layer` with `max_abs_diff=0.0`,
   wire the cache as a vLLM/XPU sidecar. If it does not, move the same ABI to a
   generated DPAS layerlet or exact target-verified speculation branch.
+
+## 2026-06-12 Addendum: Current Queue And Larger Opportunities
+
+This addendum captures the next items after the resident oneDNN mutable-offset
+route-window result. It is deliberately quality-conservative: every promoted
+path keeps the current Quark W8A8 INT8 model as the verifier/source of truth.
+
+### Immediate Notes To Carry Forward
+
+1. **Multi-window exactness packet is now the next gate.**
+   The resident route-window benchmark proved offset-update cost and primitive
+   reuse, but it reused fixed exported inputs. The next replay must export or
+   directly hand off real per-window remapped inputs, activation scales, route
+   rows, and expected outputs for all route starts in `0:64:4`. Promotion
+   criteria: GEMM1 diff `0.0`, GEMM2 diff `0.0`, and final gathered MoE island
+   diff `0.0` against current `xpu_fused_moe` for every window.
+
+2. **Use resident oneDNN as the sidecar contract, not just a benchmark.**
+   Define the sidecar ABI around resident packed expert weights, resident
+   primitives, mutable offset/count buffers, preallocated activation/quant
+   scratch, and one provenance JSON per layer/window. That ABI can later route
+   to oneDNN, Triton-XPU, or a custom DPAS layerlet without changing the
+   correctness harness.
+
+3. **Budget the full layer from the measured GEMM floor.**
+   The current mutable-offset two-GEMM route-window floor is about `42 us`.
+   The non-speculative `200 tok/s` target implies roughly `168 us/layer` for
+   the whole layer replay, leaving about `126 us` for remap, quant1,
+   activation, quant2, gather, queue overhead, and host waits. Any full-island
+   prototype that cannot stay near that envelope should be treated as a
+   correctness/profiling asset, not a speed candidate.
+
+4. **Route-signature caching should stay broad.**
+   The cache-analysis result says primitive-cache keys should be based on
+   stable layer/shape/layout state with mutable offsets, not exact ordered
+   route signatures. Exact active-set or ordered-route layerlets should be
+   generated only when a prompt-class fixture proves enough locality.
+
+5. **Do not post tiny public deltas as wins.**
+   The public Localmaxxing row is already a quality-cleared `~99-100 tok/s`
+   exact-model result. A fresh post should either add materially better speed
+   (`105+`, preferably `120+` or a real `200+` class result), stronger metrics
+   such as peak VRAM/repeat quality, or a genuinely new implementation class.
+   Localmaxxing API auth must stay outside the repo.
+
+### Things To Try Next
+
+1. **Multi-window file-backed exact replay.**
+   Extend the oneDNN MoE island replay to run all real route-count windows,
+   compile the oneDNN runner once, and emit a compact summary with max diffs,
+   checksums, per-window row histograms, and per-window timing. This is the
+   immediate reproducibility packet before any sidecar wiring.
+
+2. **In-process sidecar smoke for one layer.**
+   Build a narrow vLLM/XPU sidecar path for a single fixed layer and route
+   window. The first version can still call separate kernels if it owns the
+   buffers and parity logs. The second version must remove at least one host
+   process/file boundary and one hot allocation boundary.
+
+3. **Command-stream trace of the accepted decode token.**
+   Capture a Level Zero/SYCL timeline for one accepted p512/o128 decode token:
+   kernel count, command-list boundaries, waits, copies, all-reduces, and MoE
+   substeps. The question is whether the missing `2x` is mainly kernel math,
+   launch/control overhead, collectives, or scheduler metadata churn.
+
+4. **DPAS/XMX utilization proof.**
+   Profile the current XPU grouped GEMM, packed oneDNN grouped matmul, and any
+   generated layerlet candidate for actual INT8 DPAS/XMX occupancy. If the hot
+   path is not issuing the intended B70 matrix instructions efficiently, the
+   priority shifts to layout/kernel generation rather than vLLM flags.
+
+5. **OpenVINO/oneDNN GenAI feasibility lane.**
+   Track OpenVINO/oneDNN GenAI only as an 8-bit/high-fidelity engine
+   diagnostic for B70/Qwen3.6. Do not switch production unless it supports the
+   actual Qwen3.6 A3B/GDN/MoE path, 32K context, and the same quality gates.
+
+6. **cuDNN-style routing ABI check.**
+   Even though cuDNN is not our backend, its grouped-MoE API shape around
+   `first_token_offset` is a useful sanity check. Keep our sidecar route
+   descriptors similarly compact: counts/offsets and packed token blocks,
+   not bulky per-token host-side metadata in the hot loop.
+
+7. **TritonMoE/SonicMoE idea mining without backend drift.**
+   Extract ideas from fused dispatch, fused gate+up, in-register activation,
+   and IO-aware epilogues, then implement only the pieces that can be proven
+   exact on the current Quark W8A8 route fixtures. Do not depend on non-XPU
+   kernels for a promoted path.
+
+### Bigger, Bolder Ideas To Keep Alive
+
+1. **B70-resident MoE microservice per rank.**
+   Keep a long-lived per-rank worker with resident packed weights, route
+   buffers, scratch arenas, and command lists. vLLM sends compact route
+   descriptors; the worker returns layer outputs. This attacks dispatcher,
+   allocation, and primitive setup overhead directly while preserving a simple
+   fallback to the current `xpu_fused_moe` path.
+
+2. **Whole-token static graph lane.**
+   Build a c1-only latency lane that captures more than one layerlet: fixed
+   request metadata, fixed KV/GDN state arenas, fixed sampling, and a certified
+   graph cache. It can coexist with the general TP4 service. The purpose is to
+   quantify and possibly remove scheduler/control overhead for common chat
+   shapes without reducing model quality.
+
+3. **Hybrid TP/EP with hot-expert replication.**
+   Use routecapture histograms to simulate expert ownership and selective hot
+   expert duplication under 32K KV constraints. If a small set of layer/expert
+   replicas can cut collectives or imbalance, implement it behind an exact
+   routing table. This is larger than a kernel patch but may be the cleanest
+   non-speculative way to beat pure TP4 c1 latency.
+
+4. **Target-verified speculative transaction engine.**
+   Treat speculation as an engine-state problem, not just a draft-model knob:
+   immutable KV aliases, versioned mutable GDN/request metadata, exact target
+   verification, and accept/rollback logs. This keeps MTP, n-gram, DFlash, or
+   target-trace proposers quality-safe because only verified target tokens
+   commit.
+
+5. **Route-exact public upstream packet.**
+   Publish a small no-secret packet for Intel/vLLM: route windows, packed
+   oneDNN fixtures, expected bytes, accepted baseline command, command-stream
+   trace, and device-lost notes. The ask should be concrete: beat the current
+   packed oneDNN and vLLM XPU W8A8 MoE timings while preserving exact outputs.
+
+6. **Tile-native weight artifact shared across engines.**
+   Create a checksumed packed-weight cache for the fastest proven B70 layout.
+   It should be engine-neutral enough for vLLM sidecar, oneDNN runner, and
+   custom layerlets. If this works, startup repack and runtime layout penalties
+   both disappear without changing quantization.
+
+7. **Minimal exact decode executable.**
+   Build a small offline executable that runs the same tokenizer, prompt
+   template, Quark W8A8 weights, and greedy sampler for one fixed c1 bucket,
+   bypassing vLLM scheduling. If it is not faster, kernels are the wall. If it
+   is much faster, production should get a latency lane or vLLM scheduler patch.
+
+8. **B70 host-stack certification matrix.**
+   Make a reversible matrix across kernel/KMD, GuC firmware, compute-runtime,
+   oneAPI, oneCCL, PyTorch, and vLLM-XPU kernels. The target metric is not only
+   tok/s; it is variance, device-lost rate, graph-cache repeatability, and
+   whether the accepted sidecar fixtures remain exact across stacks.
+
+External references to keep attached to this queue:
+
+- oneDNN grouped matmul/grouped memory for MoE and Intel GPU optimization:
+  `https://github.com/uxlfoundation/oneDNN/releases`.
+- oneDNN grouped encoding examples:
+  `https://uxlfoundation.github.io/oneDNN/dev_guide_examples.html`.
+- Intel oneDNN 2026 notes for Xe2/Xe3 LLM matmul work:
+  `https://www.intel.com/content/www/us/en/developer/articles/release-notes/onednn/2026.html`.
+- Intel/vLLM Arc Pro B-series MoE persistent-kernel direction:
+  `https://vllm.ai/blog/2025-11-11-intel-arc-pro-b`.
+- Intel Triton-XPU grouped-GEMM tuning issue:
+  `https://github.com/intel/intel-xpu-backend-for-triton/issues/6389`.
+- PyTorch persistent cache-aware grouped GEMM article:
+  `https://pytorch.org/blog/accelerating-moes-with-a-triton-persistent-cache-aware-grouped-gemm-kernel/`.
+- Triton grouped-GEMM tutorial as a compact device-side scheduling reference:
+  `https://triton-lang.org/main/getting-started/tutorials/08-grouped-gemm.html`.
+- vLLM MoE kernel feature matrix:
+  `https://docs.vllm.ai/en/latest/design/moe_kernel_features/`.
+- cuDNN MoE grouped matmul routing API as an ABI comparison point:
+  `https://docs.nvidia.com/deeplearning/cudnn/latest/operations/MoeGroupedMatmul.html`.
+- Cross-platform fused MoE dispatch paper:
+  `https://arxiv.org/html/2605.23911v1`.
+- SonicMoE IO-aware MoE design notes:
+  `https://tridao.me/blog/2026/sonicmoe-blackwell/`.
