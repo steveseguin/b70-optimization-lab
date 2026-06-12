@@ -14380,6 +14380,17 @@ Interpretation:
   accounting, worker token cache, draft history, request output, and KV commit
   state must advance or roll back as a single transaction.
 
+Post-diagnostic source cleanup:
+
+- The cache-filter behavior is now guarded as its own opt-in diagnostic flag
+  instead of being tied to the broad no-bonus flag:
+  `VLLM_XPU_SPEC_DECODE_FILTER_SUPPRESSED_BONUS_CACHE=1`.
+- Patch artifact:
+  `patches/vllm-qwen36-spec-cachefilter-optin-20260612.patch`.
+- This prevents future no-bonus traces from accidentally rerunning the negative
+  worker-cache path unless that path is explicitly requested for the next
+  double-rollback test.
+
 Near-term things to try next:
 
 1. **Cache filter plus kept computed count.**

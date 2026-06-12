@@ -1,0 +1,22 @@
+diff --git a/vllm/v1/worker/gpu_model_runner.py b/vllm/v1/worker/gpu_model_runner.py
+--- a/vllm/v1/worker/gpu_model_runner.py
++++ b/vllm/v1/worker/gpu_model_runner.py
+@@ -4580,6 +4580,7 @@
+-        xpu_disable_full_accept_bonus = (
+-            os.environ.get("VLLM_XPU_SPEC_DECODE_DISABLE_FULL_ACCEPT_BONUS", "")
++        xpu_filter_suppressed_bonus_cache = (
++            os.environ.get(
++                "VLLM_XPU_SPEC_DECODE_FILTER_SUPPRESSED_BONUS_CACHE", "")
+             .strip()
+             .lower()
+             in ("1", "true", "yes", "on")
+         )
+@@ -4599,7 +4600,7 @@
+             sampled_ids_for_cache = sampled_ids
+             scheduled_spec_ids = scheduled_spec_tokens.get(req_id, ())
+             if (
+-                xpu_disable_full_accept_bonus
++                xpu_filter_suppressed_bonus_cache
+                 and scheduled_spec_ids
+                 and len(sampled_ids) == len(scheduled_spec_ids) + 1
+             ):

@@ -147,6 +147,13 @@ Current Qwen3.6 INT8 direction:
     collective-elimination roofline, target-trace-trained drafter, spare-root
     Intel stack bakeoff, upstream bug/perf packets, and production promotion
     lanes.
+21. Added `patches/vllm-qwen36-spec-cachefilter-optin-20260612.patch` and
+    applied the same cleanup to the local vLLM checkout. The negative
+    cache-filter path is no longer tied to
+    `VLLM_XPU_SPEC_DECODE_DISABLE_FULL_ACCEPT_BONUS`; it now requires the
+    explicit diagnostic env
+    `VLLM_XPU_SPEC_DECODE_FILTER_SUPPRESSED_BONUS_CACHE=1`. This keeps future
+    no-bonus traces from silently enabling the rejected worker-cache behavior.
 
 ## 2026-05-10 MiniMax AutoRound Addendum
 
