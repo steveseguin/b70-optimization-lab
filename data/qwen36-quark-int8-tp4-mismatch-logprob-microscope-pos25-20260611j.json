@@ -1,0 +1,710 @@
+{
+  "accepted_logprobs_json": "data/qwen36-quark-int8-tp4-accepted-logprobs-after-streamver-p512o32-20260611j.json",
+  "baseline_json": "data/qwen36-quark-int8-tp4-accepted-current-apiids-p512o128-20260611h.json",
+  "case_name": "natural_latency_plan",
+  "comparison_rows": [
+    {
+      "expected": "rank 2, logprob -0.797245",
+      "name": "streaming-input",
+      "streaming": "rank 1, logprob -0.672245",
+      "top": "271 '\\n\\n'"
+    },
+    {
+      "expected": "rank 1, logprob -0.737163",
+      "name": "accepted-decode",
+      "streaming": "rank 2, logprob -0.737163",
+      "top": "198 '\\n'"
+    },
+    {
+      "expected": "rank 2, logprob -0.936827",
+      "name": "rolling-refill-next",
+      "streaming": "rank 1, logprob -0.561827",
+      "top": "271 '\\n\\n'"
+    },
+    {
+      "expected": "rank 1, logprob -0.720617",
+      "name": "prompt-logprob-refill",
+      "streaming": "rank 2, logprob -0.720617",
+      "top": "198 '\\n'"
+    }
+  ],
+  "context_text": " hardware acceleration, and no quality loss.\nContinue with dense numbered engineering notes.",
+  "context_token_ids": [
+    11436,
+    29796,
+    11,
+    321,
+    874,
+    4131,
+    4557,
+    13,
+    198,
+    22791,
+    440,
+    27044,
+    47193,
+    14246,
+    8129,
+    13
+  ],
+  "expected_text": "\n",
+  "expected_token_id": 198,
+  "interpretation": "Accepted decode and prompt-logprob refill put the expected newline and streaming double-newline on an exact logprob tie, while streaming-input and rolling re-prefill both rank the double-newline first. This points at tie/order or resident-state divergence, so an external replay sidecar is still not acceptable as an exact-token verifier. The next quality-safe speed path should use the accepted request state directly, for example in-engine copy-on-write KV/request forking.",
+  "position": 25,
+  "probe_rows": [
+    {
+      "expected": {
+        "decoded_token": null,
+        "logprob": -0.797245442867279,
+        "rank": 2,
+        "token_id": 198
+      },
+      "name": "streaming-input",
+      "streaming": {
+        "decoded_token": null,
+        "logprob": -0.672245442867279,
+        "rank": 1,
+        "token_id": 271
+      },
+      "top": {
+        "decoded_token": null,
+        "logprob": -0.672245442867279,
+        "rank": 1,
+        "token_id": 271
+      },
+      "top_logprobs": [
+        {
+          "decoded_token": null,
+          "logprob": -0.672245442867279,
+          "rank": 1,
+          "token_id": 271
+        },
+        {
+          "decoded_token": null,
+          "logprob": -0.797245442867279,
+          "rank": 2,
+          "token_id": 198
+        },
+        {
+          "decoded_token": null,
+          "logprob": -3.547245502471924,
+          "rank": 3,
+          "token_id": 14569
+        },
+        {
+          "decoded_token": null,
+          "logprob": -6.359745502471924,
+          "rank": 4,
+          "token_id": 24985
+        },
+        {
+          "decoded_token": null,
+          "logprob": -6.547245502471924,
+          "rank": 5,
+          "token_id": 1358
+        },
+        {
+          "decoded_token": null,
+          "logprob": -6.859745502471924,
+          "rank": 6,
+          "token_id": 248046
+        },
+        {
+          "decoded_token": null,
+          "logprob": -7.297245502471924,
+          "rank": 7,
+          "token_id": 695
+        },
+        {
+          "decoded_token": null,
+          "logprob": -7.609745502471924,
+          "rank": 8,
+          "token_id": 220
+        }
+      ]
+    },
+    {
+      "expected": {
+        "logprob": -0.737163245677948,
+        "rank": 1,
+        "text": "\n",
+        "token_id": 198,
+        "token_ids": [
+          198
+        ]
+      },
+      "name": "accepted-decode",
+      "streaming": {
+        "logprob": -0.737163245677948,
+        "rank": 2,
+        "text": "\n\n",
+        "token_id": 271,
+        "token_ids": [
+          271
+        ]
+      },
+      "top": {
+        "logprob": -0.737163245677948,
+        "text": "\n",
+        "token_id": 198,
+        "token_ids": [
+          198
+        ]
+      },
+      "top_logprobs": [
+        {
+          "logprob": -0.737163245677948,
+          "text": "\n",
+          "token_id": 198,
+          "token_ids": [
+            198
+          ]
+        },
+        {
+          "logprob": -0.737163245677948,
+          "text": "\n\n",
+          "token_id": 271,
+          "token_ids": [
+            271
+          ]
+        },
+        {
+          "logprob": -3.4871633052825928,
+          "text": " Continue",
+          "token_id": 14569,
+          "token_ids": [
+            14569
+          ]
+        },
+        {
+          "logprob": -5.924663066864014,
+          "text": " Focus",
+          "token_id": 24985,
+          "token_ids": [
+            24985
+          ]
+        },
+        {
+          "logprob": -6.362163066864014,
+          "text": "<|im_end|>",
+          "token_id": 248046,
+          "token_ids": [
+            248046
+          ]
+        },
+        {
+          "logprob": -6.424663066864014,
+          "text": "\n\n\n",
+          "token_id": 1358,
+          "token_ids": [
+            1358
+          ]
+        },
+        {
+          "logprob": -7.112163066864014,
+          "text": " \n",
+          "token_id": 695,
+          "token_ids": [
+            695
+          ]
+        },
+        {
+          "logprob": -7.549663066864014,
+          "text": " ",
+          "token_id": 220,
+          "token_ids": [
+            220
+          ]
+        }
+      ]
+    },
+    {
+      "expected": {
+        "logprob": -0.936826765537262,
+        "rank": 2,
+        "text": "\n",
+        "token_id": 198,
+        "token_ids": [
+          198
+        ]
+      },
+      "name": "rolling-refill-next",
+      "streaming": {
+        "logprob": -0.561826765537262,
+        "rank": 1,
+        "text": "\n\n",
+        "token_id": 271,
+        "token_ids": [
+          271
+        ]
+      },
+      "top": {
+        "logprob": -0.561826765537262,
+        "text": "\n\n",
+        "token_id": 271,
+        "token_ids": [
+          271
+        ]
+      },
+      "top_logprobs": [
+        {
+          "logprob": -0.561826765537262,
+          "text": "\n\n",
+          "token_id": 271,
+          "token_ids": [
+            271
+          ]
+        },
+        {
+          "logprob": -0.936826765537262,
+          "text": "\n",
+          "token_id": 198,
+          "token_ids": [
+            198
+          ]
+        },
+        {
+          "logprob": -3.561826705932617,
+          "text": " Continue",
+          "token_id": 14569,
+          "token_ids": [
+            14569
+          ]
+        },
+        {
+          "logprob": -6.311826705932617,
+          "text": " Focus",
+          "token_id": 24985,
+          "token_ids": [
+            24985
+          ]
+        },
+        {
+          "logprob": -6.374326705932617,
+          "text": "\n\n\n",
+          "token_id": 1358,
+          "token_ids": [
+            1358
+          ]
+        },
+        {
+          "logprob": -6.686826705932617,
+          "text": "<|im_end|>",
+          "token_id": 248046,
+          "token_ids": [
+            248046
+          ]
+        },
+        {
+          "logprob": -7.499326705932617,
+          "text": " ",
+          "token_id": 220,
+          "token_ids": [
+            220
+          ]
+        },
+        {
+          "logprob": -7.561826705932617,
+          "text": " \n",
+          "token_id": 695,
+          "token_ids": [
+            695
+          ]
+        }
+      ]
+    },
+    {
+      "expected": {
+        "decoded_token": "\n",
+        "logprob": -0.7206174731254578,
+        "rank": 1,
+        "token_id": 198
+      },
+      "name": "prompt-logprob-refill",
+      "streaming": {
+        "decoded_token": "\n\n",
+        "logprob": -0.7206174731254578,
+        "rank": 2,
+        "token_id": 271
+      },
+      "top": {
+        "decoded_token": "\n",
+        "logprob": -0.7206174731254578,
+        "rank": 1,
+        "token_id": 198
+      },
+      "top_logprobs": [
+        {
+          "decoded_token": "\n",
+          "logprob": -0.7206174731254578,
+          "rank": 1,
+          "token_id": 198
+        },
+        {
+          "decoded_token": "\n\n",
+          "logprob": -0.7206174731254578,
+          "rank": 2,
+          "token_id": 271
+        },
+        {
+          "decoded_token": " Continue",
+          "logprob": -4.095617294311523,
+          "rank": 3,
+          "token_id": 14569
+        },
+        {
+          "decoded_token": "\n\n\n",
+          "logprob": -6.345617294311523,
+          "rank": 4,
+          "token_id": 1358
+        },
+        {
+          "decoded_token": "<|im_end|>",
+          "logprob": -6.470617294311523,
+          "rank": 5,
+          "token_id": 248046
+        },
+        {
+          "decoded_token": " Focus",
+          "logprob": -6.533117294311523,
+          "rank": 6,
+          "token_id": 24985
+        },
+        {
+          "decoded_token": " \n",
+          "logprob": -7.533117294311523,
+          "rank": 7,
+          "token_id": 695
+        },
+        {
+          "decoded_token": " ",
+          "logprob": -7.595617294311523,
+          "rank": 8,
+          "token_id": 220
+        }
+      ]
+    }
+  ],
+  "prompt_logprob_refill": {
+    "prompt_position": 527,
+    "response_id": "cmpl-mismatch-promptlogprob-natural_latency_plan-25",
+    "top_logprobs": [
+      {
+        "decoded_token": "\n",
+        "logprob": -0.7206174731254578,
+        "rank": 1,
+        "token_id": 198
+      },
+      {
+        "decoded_token": "\n\n",
+        "logprob": -0.7206174731254578,
+        "rank": 2,
+        "token_id": 271
+      },
+      {
+        "decoded_token": " Continue",
+        "logprob": -4.095617294311523,
+        "rank": 3,
+        "token_id": 14569
+      },
+      {
+        "decoded_token": "\n\n\n",
+        "logprob": -6.345617294311523,
+        "rank": 4,
+        "token_id": 1358
+      },
+      {
+        "decoded_token": "<|im_end|>",
+        "logprob": -6.470617294311523,
+        "rank": 5,
+        "token_id": 248046
+      },
+      {
+        "decoded_token": " Focus",
+        "logprob": -6.533117294311523,
+        "rank": 6,
+        "token_id": 24985
+      },
+      {
+        "decoded_token": " \n",
+        "logprob": -7.533117294311523,
+        "rank": 7,
+        "token_id": 695
+      },
+      {
+        "decoded_token": " ",
+        "logprob": -7.595617294311523,
+        "rank": 8,
+        "token_id": 220
+      },
+      {
+        "decoded_token": " The",
+        "logprob": -7.908117294311523,
+        "rank": 9,
+        "token_id": 561
+      },
+      {
+        "decoded_token": " (",
+        "logprob": -8.408117294311523,
+        "rank": 10,
+        "token_id": 318
+      },
+      {
+        "decoded_token": " No",
+        "logprob": -8.408117294311523,
+        "rank": 11,
+        "token_id": 2233
+      },
+      {
+        "decoded_token": " Note",
+        "logprob": -8.783117294311523,
+        "rank": 12,
+        "token_id": 6817
+      },
+      {
+        "decoded_token": " Keep",
+        "logprob": -8.783117294311523,
+        "rank": 13,
+        "token_id": 13262
+      },
+      {
+        "decoded_token": "Continue",
+        "logprob": -8.845617294311523,
+        "rank": 14,
+        "token_id": 22791
+      },
+      {
+        "decoded_token": " continue",
+        "logprob": -8.908117294311523,
+        "rank": 15,
+        "token_id": 2962
+      },
+      {
+        "decoded_token": " Single",
+        "logprob": -8.908117294311523,
+        "rank": 16,
+        "token_id": 11000
+      },
+      {
+        "decoded_token": " Provide",
+        "logprob": -9.033117294311523,
+        "rank": 17,
+        "token_id": 38256
+      },
+      {
+        "decoded_token": " **",
+        "logprob": -9.220617294311523,
+        "rank": 18,
+        "token_id": 2972
+      },
+      {
+        "decoded_token": " Continuing",
+        "logprob": -9.283117294311523,
+        "rank": 19,
+        "token_id": 78224
+      },
+      {
+        "decoded_token": " [",
+        "logprob": -9.345617294311523,
+        "rank": 20,
+        "token_id": 498
+      }
+    ],
+    "usage": {
+      "completion_tokens": 1,
+      "prompt_tokens": 528,
+      "prompt_tokens_details": null,
+      "total_tokens": 529
+    }
+  },
+  "rolling_refill": {
+    "normalized_logprobs": [
+      {
+        "index": 0,
+        "token_id": 271,
+        "token_ids": [
+          271
+        ],
+        "token_logprob": -0.561826765537262,
+        "token_text": "\n\n",
+        "top": [
+          {
+            "logprob": -0.561826765537262,
+            "text": "\n\n",
+            "token_id": 271,
+            "token_ids": [
+              271
+            ]
+          },
+          {
+            "logprob": -0.936826765537262,
+            "text": "\n",
+            "token_id": 198,
+            "token_ids": [
+              198
+            ]
+          },
+          {
+            "logprob": -3.561826705932617,
+            "text": " Continue",
+            "token_id": 14569,
+            "token_ids": [
+              14569
+            ]
+          },
+          {
+            "logprob": -6.311826705932617,
+            "text": " Focus",
+            "token_id": 24985,
+            "token_ids": [
+              24985
+            ]
+          },
+          {
+            "logprob": -6.374326705932617,
+            "text": "\n\n\n",
+            "token_id": 1358,
+            "token_ids": [
+              1358
+            ]
+          },
+          {
+            "logprob": -6.686826705932617,
+            "text": "<|im_end|>",
+            "token_id": 248046,
+            "token_ids": [
+              248046
+            ]
+          },
+          {
+            "logprob": -7.499326705932617,
+            "text": " ",
+            "token_id": 220,
+            "token_ids": [
+              220
+            ]
+          },
+          {
+            "logprob": -7.561826705932617,
+            "text": " \n",
+            "token_id": 695,
+            "token_ids": [
+              695
+            ]
+          },
+          {
+            "logprob": -8.436826705932617,
+            "text": " (",
+            "token_id": 318,
+            "token_ids": [
+              318
+            ]
+          },
+          {
+            "logprob": -8.436826705932617,
+            "text": " No",
+            "token_id": 2233,
+            "token_ids": [
+              2233
+            ]
+          },
+          {
+            "logprob": -8.561826705932617,
+            "text": " The",
+            "token_id": 561,
+            "token_ids": [
+              561
+            ]
+          },
+          {
+            "logprob": -8.874326705932617,
+            "text": "Continue",
+            "token_id": 22791,
+            "token_ids": [
+              22791
+            ]
+          },
+          {
+            "logprob": -8.999326705932617,
+            "text": " Keep",
+            "token_id": 13262,
+            "token_ids": [
+              13262
+            ]
+          },
+          {
+            "logprob": -8.999326705932617,
+            "text": " Note",
+            "token_id": 6817,
+            "token_ids": [
+              6817
+            ]
+          },
+          {
+            "logprob": -9.061826705932617,
+            "text": " Single",
+            "token_id": 11000,
+            "token_ids": [
+              11000
+            ]
+          },
+          {
+            "logprob": -9.061826705932617,
+            "text": " continue",
+            "token_id": 2962,
+            "token_ids": [
+              2962
+            ]
+          },
+          {
+            "logprob": -9.186826705932617,
+            "text": " **",
+            "token_id": 2972,
+            "token_ids": [
+              2972
+            ]
+          },
+          {
+            "logprob": -9.249326705932617,
+            "text": " \n\n",
+            "token_id": 4558,
+            "token_ids": [
+              4558
+            ]
+          },
+          {
+            "logprob": -9.374326705932617,
+            "text": " [",
+            "token_id": 498,
+            "token_ids": [
+              498
+            ]
+          },
+          {
+            "logprob": -9.499326705932617,
+            "text": "\n\n\n\n",
+            "token_id": 987,
+            "token_ids": [
+              987
+            ]
+          }
+        ]
+      }
+    ],
+    "response_id": "cmpl-mismatch-rolling-natural_latency_plan-25",
+    "text": "\n\n",
+    "token_ids": [
+      271
+    ],
+    "usage": {
+      "completion_tokens": 1,
+      "prompt_tokens": 527,
+      "prompt_tokens_details": null,
+      "total_tokens": 528
+    }
+  },
+  "streaming_json": "data/qwen36-quark-int8-tp4-streaming-input-verifier-logprobs-current-p512o27-20260611j.json",
+  "streaming_text": "\n\n",
+  "streaming_token_id": 271,
+  "target_prompt_position": 527
+}

@@ -17,6 +17,7 @@ from __future__ import annotations
 import argparse
 import asyncio
 import json
+import math
 import os
 import statistics
 import time
@@ -74,6 +75,45 @@ def load_cases(path: Path, limit_cases: int | None) -> list[dict[str, Any]]:
                 "baseline cases must contain prompt_token_ids and output_token_ids"
             )
     return selected
+
+
+def serialize_logprob_steps(logprobs: Any) -> list[list[dict[str, Any]] | None] | None:
+    if logprobs is None:
+        return None
+    serialized: list[list[dict[str, Any]] | None] = []
+    for step in logprobs:
+        if step is None:
+            serialized.append(None)
+            continue
+        entries: list[dict[str, Any]] = []
+        for token_id, item in step.items():
+            record: dict[str, Any] = {"token_id": int(token_id)}
+            for attr in ("logprob", "rank", "decoded_token"):
+                if not hasattr(item, attr):
+                    continue
+                value = getattr(item, attr)
+                if attr == "logprob" and value is not None:
+                    value = float(value)
+                    if not math.isfinite(value):
+                        record["logprob_nonfinite"] = str(value)
+                        value = None
+                record[attr] = value
+            entries.append(record)
+        entries.sort(key=lambda entry: entry.get("rank") or 10**9)
+        serialized.append(entries)
+    return serialized
+
+
+def logprob_entry(
+    entries: list[dict[str, Any]] | None,
+    token_id: int,
+) -> dict[str, Any] | None:
+    if not entries:
+        return None
+    for entry in entries:
+        if int(entry.get("token_id", -1)) == int(token_id):
+            return entry
+    return None
 
 
 async def streaming_chunks(
@@ -143,7 +183,11 @@ async def probe_case(
                     break
                 continue
 
-            for generated_token_id in token_ids:
+            serialized_logprobs = serialize_logprob_steps(
+                getattr(outputs[0], "logprobs", None)
+            )
+
+            for token_index, generated_token_id in enumerate(token_ids):
                 if position >= limit:
                     await feed_queue.put(None)
                     break
@@ -151,17 +195,35 @@ async def probe_case(
                 expected_token_id = int(output_ids[position])
                 now = time.perf_counter()
                 match = int(generated_token_id) == expected_token_id
-                records.append(
-                    {
-                        "case_name": case_name,
-                        "request_id": request_id,
-                        "position": position,
-                        "expected_token_id": expected_token_id,
-                        "generated_token_id": int(generated_token_id),
-                        "match": match,
-                        "elapsed_ms_since_case_start": (now - started) * 1000.0,
-                    }
+                step_logprobs = (
+                    serialized_logprobs[token_index]
+                    if serialized_logprobs is not None
+                    and token_index < len(serialized_logprobs)
+                    else None
                 )
+                record: dict[str, Any] = {
+                    "case_name": case_name,
+                    "request_id": request_id,
+                    "position": position,
+                    "expected_token_id": expected_token_id,
+                    "generated_token_id": int(generated_token_id),
+                    "match": match,
+                    "elapsed_ms_since_case_start": (now - started) * 1000.0,
+                }
+                if step_logprobs is not None:
+                    record["top_logprobs"] = step_logprobs
+                    record["expected_logprob_entry"] = logprob_entry(
+                        step_logprobs,
+                        expected_token_id,
+                    )
+                    record["generated_logprob_entry"] = logprob_entry(
+                        step_logprobs,
+                        int(generated_token_id),
+                    )
+                    record["top_logprob_entry"] = (
+                        step_logprobs[0] if step_logprobs else None
+                    )
+                records.append(record)
 
                 position += 1
                 if position >= limit or (not match and stop_on_first_mismatch):
@@ -218,6 +280,7 @@ def write_markdown(path: Path, data: dict[str, Any]) -> None:
     lines.append(f"- max model len: `{data['engine_args']['max_model_len']}`")
     lines.append(f"- prefix caching: `{data['engine_args']['enable_prefix_caching']}`")
     lines.append(f"- seed: `{data['seed']}`")
+    lines.append(f"- generated-token logprobs: `{data.get('logprobs')}`")
     lines.append(f"- max tokens per case: `{data['max_tokens_per_case']}`")
     lines.append(f"- preflight only: `{data['preflight_only']}`")
     lines.append(f"- all matched: `{data.get('all_matched')}`")
@@ -290,6 +353,7 @@ async def run_probe(args: argparse.Namespace) -> dict[str, Any]:
         "baseline_json": str(args.baseline_json),
         "model": args.model,
         "seed": args.seed,
+        "logprobs": args.logprobs,
         "max_tokens_per_case": args.max_tokens_per_case,
         "limit_cases": args.limit_cases,
         "preflight_only": args.preflight_only,
@@ -333,6 +397,7 @@ async def run_probe(args: argparse.Namespace) -> dict[str, Any]:
         top_p=1.0,
         top_k=0,
         max_tokens=1,
+        logprobs=args.logprobs,
         seed=args.seed,
         ignore_eos=args.ignore_eos,
         detokenize=False,
@@ -393,6 +458,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--enforce-eager", action="store_true")
     parser.add_argument("--ignore-eos", action="store_true")
     parser.add_argument("--seed", type=int, default=20260611)
+    parser.add_argument(
+        "--logprobs",
+        type=int,
+        default=None,
+        help="Record generated-token top logprobs for mismatch diagnostics.",
+    )
     parser.add_argument("--max-tokens-per-case", type=int, default=32)
     parser.add_argument("--limit-cases", type=int, default=None)
     parser.add_argument("--stop-on-first-mismatch", action="store_true")

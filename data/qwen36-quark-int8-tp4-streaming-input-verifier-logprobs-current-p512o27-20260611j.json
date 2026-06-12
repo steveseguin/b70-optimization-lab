@@ -1,0 +1,4092 @@
+{
+  "all_matched": false,
+  "baseline_json": "data/qwen36-quark-int8-tp4-accepted-current-apiids-p512o128-20260611h.json",
+  "cases_loaded": [
+    {
+      "name": "natural_latency_plan",
+      "output_tokens": 128,
+      "prompt_tokens": 502
+    }
+  ],
+  "engine_args": {
+    "compilation_config": {
+      "cudagraph_mode": "PIECEWISE"
+    },
+    "disable_log_stats": true,
+    "distributed_executor_backend": "mp",
+    "dtype": "auto",
+    "enable_prefix_caching": false,
+    "enforce_eager": false,
+    "generation_config": "vllm",
+    "gpu_memory_utilization": 0.95,
+    "kv_cache_dtype": "auto",
+    "language_model_only": true,
+    "max_model_len": 32768,
+    "max_num_batched_tokens": 8192,
+    "max_num_seqs": 1,
+    "model": "/mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118",
+    "quantization": "quark",
+    "tensor_parallel_size": 4,
+    "tokenizer": "/mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118",
+    "trust_remote_code": true
+  },
+  "environment": {
+    "CCL_ATL_TRANSPORT": "ofi",
+    "CCL_TOPO_P2P_ACCESS": "1",
+    "ONEAPI_DEVICE_SELECTOR": "level_zero:0,1,2,3",
+    "VLLM_XPU_ENABLE_XPU_GRAPH": "1",
+    "VLLM_XPU_FORCE_GRAPH_WITH_COMM": "1",
+    "VLLM_XPU_GRAPH_NOOP_COMM_CAPTURE": "1",
+    "ZE_AFFINITY_MASK": "0,1,2,3"
+  },
+  "limit_cases": 1,
+  "logprobs": 20,
+  "max_tokens_per_case": 27,
+  "model": "/mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118",
+  "preflight_only": false,
+  "records": [
+    {
+      "case_name": "natural_latency_plan",
+      "elapsed_ms_since_case_start": 9756.615231977776,
+      "expected_logprob_entry": {
+        "decoded_token": null,
+        "logprob": -0.7632882595062256,
+        "rank": 1,
+        "token_id": 22791
+      },
+      "expected_token_id": 22791,
+      "generated_logprob_entry": {
+        "decoded_token": null,
+        "logprob": -0.7632882595062256,
+        "rank": 1,
+        "token_id": 22791
+      },
+      "generated_token_id": 22791,
+      "match": true,
+      "position": 0,
+      "request_id": "qwen36-streamver-natural-latency-plan",
+      "top_logprob_entry": {
+        "decoded_token": null,
+        "logprob": -0.7632882595062256,
+        "rank": 1,
+        "token_id": 22791
+      },
+      "top_logprobs": [
+        {
+          "decoded_token": null,
+          "logprob": -0.7632882595062256,
+          "rank": 1,
+          "token_id": 22791
+        },
+        {
+          "decoded_token": null,
+          "logprob": -3.2632882595062256,
+          "rank": 2,
+          "token_id": 248046
+        },
+        {
+          "decoded_token": null,
+          "logprob": -3.3257882595062256,
+          "rank": 3,
+          "token_id": 13423
+        },
+        {
+          "decoded_token": null,
+          "logprob": -3.5757882595062256,
+          "rank": 4,
+          "token_id": 16
+        },
+        {
+          "decoded_token": null,
+          "logprob": -3.7007882595062256,
+          "rank": 5,
+          "token_id": 760
+        },
+        {
+          "decoded_token": null,
+          "logprob": -3.8257882595062256,
+          "rank": 6,
+          "token_id": 35
+        },
+        {
+          "decoded_token": null,
+          "logprob": -4.075788497924805,
+          "rank": 7,
+          "token_id": 271
+        },
+        {
+          "decoded_token": null,
+          "logprob": -4.200788497924805,
+          "rank": 8,
+          "token_id": 18
+        },
+        {
+          "decoded_token": null,
+          "logprob": -4.263288497924805,
+          "rank": 9,
+          "token_id": 332
+        },
+        {
+          "decoded_token": null,
+          "logprob": -4.575788497924805,
+          "rank": 10,
+          "token_id": 17
+        },
+        {
+          "decoded_token": null,
+          "logprob": -4.763288497924805,
+          "rank": 11,
+          "token_id": 12
+        },
+        {
+          "decoded_token": null,
+          "logprob": -4.825788497924805,
+          "rank": 12,
+          "token_id": 7734
+        },
+        {
+          "decoded_token": null,
+          "logprob": -5.013288497924805,
+          "rank": 13,
+          "token_id": 19
+        },
+        {
+          "decoded_token": null,
+          "logprob": -5.013288497924805,
+          "rank": 14,
+          "token_id": 2665
+        },
+        {
+          "decoded_token": null,
+          "logprob": -5.075788497924805,
+          "rank": 15,
+          "token_id": 8839
+        },
+        {
+          "decoded_token": null,
+          "logprob": -5.138288497924805,
+          "rank": 16,
+          "token_id": 58
+        },
+        {
+          "decoded_token": null,
+          "logprob": -5.138288497924805,
+          "rank": 17,
+          "token_id": 248069
+        },
+        {
+          "decoded_token": null,
+          "logprob": -5.200788497924805,
+          "rank": 18,
+          "token_id": 248068
+        },
+        {
+          "decoded_token": null,
+          "logprob": -5.325788497924805,
+          "rank": 19,
+          "token_id": 262
+        },
+        {
+          "decoded_token": null,
+          "logprob": -5.388288497924805,
+          "rank": 20,
+          "token_id": 2381
+        }
+      ]
+    },
+    {
+      "case_name": "natural_latency_plan",
+      "elapsed_ms_since_case_start": 14556.104070972651,
+      "expected_logprob_entry": {
+        "decoded_token": null,
+        "logprob": -0.01778957061469555,
+        "rank": 1,
+        "token_id": 440
+      },
+      "expected_token_id": 440,
+      "generated_logprob_entry": {
+        "decoded_token": null,
+        "logprob": -0.01778957061469555,
+        "rank": 1,
+        "token_id": 440
+      },
+      "generated_token_id": 440,
+      "match": true,
+      "position": 1,
+      "request_id": "qwen36-streamver-natural-latency-plan",
+      "top_logprob_entry": {
+        "decoded_token": null,
+        "logprob": -0.01778957061469555,
+        "rank": 1,
+        "token_id": 440
+      },
+      "top_logprobs": [
+        {
+          "decoded_token": null,
+          "logprob": -0.01778957061469555,
+          "rank": 1,
+          "token_id": 440
+        },
+        {
+          "decoded_token": null,
+          "logprob": -5.267789363861084,
+          "rank": 2,
+          "token_id": 271
+        },
+        {
+          "decoded_token": null,
+          "logprob": -6.392789363861084,
+          "rank": 3,
+          "token_id": 279
+        },
+        {
+          "decoded_token": null,
+          "logprob": -6.705289363861084,
+          "rank": 4,
+          "token_id": 13
+        },
+        {
+          "decoded_token": null,
+          "logprob": -6.955289363861084,
+          "rank": 5,
+          "token_id": 4237
+        },
+        {
+          "decoded_token": null,
+          "logprob": -7.142789363861084,
+          "rank": 6,
+          "token_id": 310
+        },
+        {
+          "decoded_token": null,
+          "logprob": -7.330289363861084,
+          "rank": 7,
+          "token_id": 494
+        },
+        {
+          "decoded_token": null,
+          "logprob": -7.392789363861084,
+          "rank": 8,
+          "token_id": 303
+        },
+        {
+          "decoded_token": null,
+          "logprob": -8.017789840698242,
+          "rank": 9,
+          "token_id": 411
+        },
+        {
+          "decoded_token": null,
+          "logprob": -8.267789840698242,
+          "rank": 10,
+          "token_id": 25
+        },
+        {
+          "decoded_token": null,
+          "logprob": -8.330289840698242,
+          "rank": 11,
+          "token_id": 678
+        },
+        {
+          "decoded_token": null,
+          "logprob": -8.392789840698242,
+          "rank": 12,
+          "token_id": 364
+        },
+        {
+          "decoded_token": null,
+          "logprob": -8.517789840698242,
+          "rank": 13,
+          "token_id": 27044
+        },
+        {
+          "decoded_token": null,
+          "logprob": -8.580289840698242,
+          "rank": 14,
+          "token_id": 198
+        },
+        {
+          "decoded_token": null,
+          "logprob": -8.642789840698242,
+          "rank": 15,
+          "token_id": 430
+        },
+        {
+          "decoded_token": null,
+          "logprob": -8.892789840698242,
+          "rank": 16,
+          "token_id": 539
+        },
+        {
+          "decoded_token": null,
+          "logprob": -9.017789840698242,
+          "rank": 17,
+          "token_id": 1076
+        },
+        {
+          "decoded_token": null,
+          "logprob": -9.080289840698242,
+          "rank": 18,
+          "token_id": 383
+        },
+        {
+          "decoded_token": null,
+          "logprob": -9.080289840698242,
+          "rank": 19,
+          "token_id": 1238
+        },
+        {
+          "decoded_token": null,
+          "logprob": -9.080289840698242,
+          "rank": 20,
+          "token_id": 2980
+        }
+      ]
+    },
+    {
+      "case_name": "natural_latency_plan",
+      "elapsed_ms_since_case_start": 14575.346755911596,
+      "expected_logprob_entry": {
+        "decoded_token": null,
+        "logprob": -0.05039951205253601,
+        "rank": 1,
+        "token_id": 27044
+      },
+      "expected_token_id": 27044,
+      "generated_logprob_entry": {
+        "decoded_token": null,
+        "logprob": -0.05039951205253601,
+        "rank": 1,
+        "token_id": 27044
+      },
+      "generated_token_id": 27044,
+      "match": true,
+      "position": 2,
+      "request_id": "qwen36-streamver-natural-latency-plan",
+      "top_logprob_entry": {
+        "decoded_token": null,
+        "logprob": -0.05039951205253601,
+        "rank": 1,
+        "token_id": 27044
+      },
+      "top_logprobs": [
+        {
+          "decoded_token": null,
+          "logprob": -0.05039951205253601,
+          "rank": 1,
+          "token_id": 27044
+        },
+        {
+          "decoded_token": null,
+          "logprob": -5.050399303436279,
+          "rank": 2,
+          "token_id": 11346
+        },
+        {
+          "decoded_token": null,
+          "logprob": -5.112899303436279,
+          "rank": 3,
+          "token_id": 264
+        },
+        {
+          "decoded_token": null,
+          "logprob": -6.050399303436279,
+          "rank": 4,
+          "token_id": 3074
+        },
+        {
+          "decoded_token": null,
+          "logprob": -6.175399303436279,
+          "rank": 5,
+          "token_id": 47193
+        },
+        {
+          "decoded_token": null,
+          "logprob": -6.362899303436279,
+          "rank": 6,
+          "token_id": 61446
+        },
+        {
+          "decoded_token": null,
+          "logprob": -6.487899303436279,
+          "rank": 7,
+          "token_id": 271
+        },
+        {
+          "decoded_token": null,
+          "logprob": -6.612899303436279,
+          "rank": 8,
+          "token_id": 220
+        },
+        {
+          "decoded_token": null,
+          "logprob": -6.800399303436279,
+          "rank": 9,
+          "token_id": 279
+        },
+        {
+          "decoded_token": null,
+          "logprob": -6.987899303436279,
+          "rank": 10,
+          "token_id": 14246
+        },
+        {
+          "decoded_token": null,
+          "logprob": -7.175399303436279,
+          "rank": 11,
+          "token_id": 32335
+        },
+        {
+          "decoded_token": null,
+          "logprob": -7.175399303436279,
+          "rank": 12,
+          "token_id": 41108
+        },
+        {
+          "decoded_token": null,
+          "logprob": -7.425399303436279,
+          "rank": 13,
+          "token_id": 22825
+        },
+        {
+          "decoded_token": null,
+          "logprob": -7.550399303436279,
+          "rank": 14,
+          "token_id": 3050
+        },
+        {
+          "decoded_token": null,
+          "logprob": -7.612899303436279,
+          "rank": 15,
+          "token_id": 31838
+        },
+        {
+          "decoded_token": null,
+          "logprob": -7.800399303436279,
+          "rank": 16,
+          "token_id": 777
+        },
+        {
+          "decoded_token": null,
+          "logprob": -7.800399303436279,
+          "rank": 17,
+          "token_id": 10597
+        },
+        {
+          "decoded_token": null,
+          "logprob": -7.987899303436279,
+          "rank": 18,
+          "token_id": 2972
+        },
+        {
+          "decoded_token": null,
+          "logprob": -8.112899780273438,
+          "rank": 19,
+          "token_id": 449
+        },
+        {
+          "decoded_token": null,
+          "logprob": -8.112899780273438,
+          "rank": 20,
+          "token_id": 1496
+        }
+      ]
+    },
+    {
+      "case_name": "natural_latency_plan",
+      "elapsed_ms_since_case_start": 14588.23324891273,
+      "expected_logprob_entry": {
+        "decoded_token": null,
+        "logprob": -0.006497448310256004,
+        "rank": 1,
+        "token_id": 47193
+      },
+      "expected_token_id": 47193,
+      "generated_logprob_entry": {
+        "decoded_token": null,
+        "logprob": -0.006497448310256004,
+        "rank": 1,
+        "token_id": 47193
+      },
+      "generated_token_id": 47193,
+      "match": true,
+      "position": 3,
+      "request_id": "qwen36-streamver-natural-latency-plan",
+      "top_logprob_entry": {
+        "decoded_token": null,
+        "logprob": -0.006497448310256004,
+        "rank": 1,
+        "token_id": 47193
+      },
+      "top_logprobs": [
+        {
+          "decoded_token": null,
+          "logprob": -0.006497448310256004,
+          "rank": 1,
+          "token_id": 47193
+        },
+        {
+          "decoded_token": null,
+          "logprob": -5.756497383117676,
+          "rank": 2,
+          "token_id": 14246
+        },
+        {
+          "decoded_token": null,
+          "logprob": -7.006497383117676,
+          "rank": 3,
+          "token_id": 11
+        },
+        {
+          "decoded_token": null,
+          "logprob": -7.256497383117676,
+          "rank": 4,
+          "token_id": 10597
+        },
+        {
+          "decoded_token": null,
+          "logprob": -8.318997383117676,
+          "rank": 5,
+          "token_id": 1324
+        },
+        {
+          "decoded_token": null,
+          "logprob": -8.381497383117676,
+          "rank": 6,
+          "token_id": 75579
+        },
+        {
+          "decoded_token": null,
+          "logprob": -8.443997383117676,
+          "rank": 7,
+          "token_id": 43439
+        },
+        {
+          "decoded_token": null,
+          "logprob": -8.568997383117676,
+          "rank": 8,
+          "token_id": 33625
+        },
+        {
+          "decoded_token": null,
+          "logprob": -9.193997383117676,
+          "rank": 9,
+          "token_id": 271
+        },
+        {
+          "decoded_token": null,
+          "logprob": -9.756497383117676,
+          "rank": 10,
+          "token_id": 31838
+        },
+        {
+          "decoded_token": null,
+          "logprob": -9.818997383117676,
+          "rank": 11,
+          "token_id": 8129
+        },
+        {
+          "decoded_token": null,
+          "logprob": -10.318997383117676,
+          "rank": 12,
+          "token_id": 3074
+        },
+        {
+          "decoded_token": null,
+          "logprob": -10.381497383117676,
+          "rank": 13,
+          "token_id": 220
+        },
+        {
+          "decoded_token": null,
+          "logprob": -10.381497383117676,
+          "rank": 14,
+          "token_id": 18788
+        },
+        {
+          "decoded_token": null,
+          "logprob": -10.631497383117676,
+          "rank": 15,
+          "token_id": 18677
+        },
+        {
+          "decoded_token": null,
+          "logprob": -10.818997383117676,
+          "rank": 16,
+          "token_id": 4947
+        },
+        {
+          "decoded_token": null,
+          "logprob": -10.943997383117676,
+          "rank": 17,
+          "token_id": 81944
+        },
+        {
+          "decoded_token": null,
+          "logprob": -11.006497383117676,
+          "rank": 18,
+          "token_id": 10036
+        },
+        {
+          "decoded_token": null,
+          "logprob": -11.068997383117676,
+          "rank": 19,
+          "token_id": 23311
+        },
+        {
+          "decoded_token": null,
+          "logprob": -11.318997383117676,
+          "rank": 20,
+          "token_id": 2716
+        }
+      ]
+    },
+    {
+      "case_name": "natural_latency_plan",
+      "elapsed_ms_since_case_start": 14600.976592977531,
+      "expected_logprob_entry": {
+        "decoded_token": null,
+        "logprob": -0.0045724124647676945,
+        "rank": 1,
+        "token_id": 14246
+      },
+      "expected_token_id": 14246,
+      "generated_logprob_entry": {
+        "decoded_token": null,
+        "logprob": -0.0045724124647676945,
+        "rank": 1,
+        "token_id": 14246
+      },
+      "generated_token_id": 14246,
+      "match": true,
+      "position": 4,
+      "request_id": "qwen36-streamver-natural-latency-plan",
+      "top_logprob_entry": {
+        "decoded_token": null,
+        "logprob": -0.0045724124647676945,
+        "rank": 1,
+        "token_id": 14246
+      },
+      "top_logprobs": [
+        {
+          "decoded_token": null,
+          "logprob": -0.0045724124647676945,
+          "rank": 1,
+          "token_id": 14246
+        },
+        {
+          "decoded_token": null,
+          "logprob": -6.00457239151001,
+          "rank": 2,
+          "token_id": 8129
+        },
+        {
+          "decoded_token": null,
+          "logprob": -7.62957239151001,
+          "rank": 3,
+          "token_id": 10597
+        },
+        {
+          "decoded_token": null,
+          "logprob": -8.504572868347168,
+          "rank": 4,
+          "token_id": 271
+        },
+        {
+          "decoded_token": null,
+          "logprob": -9.129572868347168,
+          "rank": 5,
+          "token_id": 11140
+        },
+        {
+          "decoded_token": null,
+          "logprob": -9.317072868347168,
+          "rank": 6,
+          "token_id": 3387
+        },
+        {
+          "decoded_token": null,
+          "logprob": -9.504572868347168,
+          "rank": 7,
+          "token_id": 1103
+        },
+        {
+          "decoded_token": null,
+          "logprob": -9.567072868347168,
+          "rank": 8,
+          "token_id": 16107
+        },
+        {
+          "decoded_token": null,
+          "logprob": -9.629572868347168,
+          "rank": 9,
+          "token_id": 41228
+        },
+        {
+          "decoded_token": null,
+          "logprob": -10.192072868347168,
+          "rank": 10,
+          "token_id": 198
+        },
+        {
+          "decoded_token": null,
+          "logprob": -10.254572868347168,
+          "rank": 11,
+          "token_id": 220
+        },
+        {
+          "decoded_token": null,
+          "logprob": -10.629572868347168,
+          "rank": 12,
+          "token_id": 3470
+        },
+        {
+          "decoded_token": null,
+          "logprob": -10.754572868347168,
+          "rank": 13,
+          "token_id": 47193
+        },
+        {
+          "decoded_token": null,
+          "logprob": -10.817072868347168,
+          "rank": 14,
+          "token_id": 13753
+        },
+        {
+          "decoded_token": null,
+          "logprob": -10.817072868347168,
+          "rank": 15,
+          "token_id": 22839
+        },
+        {
+          "decoded_token": null,
+          "logprob": -10.879572868347168,
+          "rank": 16,
+          "token_id": 2828
+        },
+        {
+          "decoded_token": null,
+          "logprob": -10.942072868347168,
+          "rank": 17,
+          "token_id": 318
+        },
+        {
+          "decoded_token": null,
+          "logprob": -10.942072868347168,
+          "rank": 18,
+          "token_id": 498
+        },
+        {
+          "decoded_token": null,
+          "logprob": -11.004572868347168,
+          "rank": 19,
+          "token_id": 13
+        },
+        {
+          "decoded_token": null,
+          "logprob": -11.129572868347168,
+          "rank": 20,
+          "token_id": 4560
+        }
+      ]
+    },
+    {
+      "case_name": "natural_latency_plan",
+      "elapsed_ms_since_case_start": 14613.66133694537,
+      "expected_logprob_entry": {
+        "decoded_token": null,
+        "logprob": -0.0013713965890929103,
+        "rank": 1,
+        "token_id": 8129
+      },
+      "expected_token_id": 8129,
+      "generated_logprob_entry": {
+        "decoded_token": null,
+        "logprob": -0.0013713965890929103,
+        "rank": 1,
+        "token_id": 8129
+      },
+      "generated_token_id": 8129,
+      "match": true,
+      "position": 5,
+      "request_id": "qwen36-streamver-natural-latency-plan",
+      "top_logprob_entry": {
+        "decoded_token": null,
+        "logprob": -0.0013713965890929103,
+        "rank": 1,
+        "token_id": 8129
+      },
+      "top_logprobs": [
+        {
+          "decoded_token": null,
+          "logprob": -0.0013713965890929103,
+          "rank": 1,
+          "token_id": 8129
+        },
+        {
+          "decoded_token": null,
+          "logprob": -7.376371383666992,
+          "rank": 2,
+          "token_id": 5020
+        },
+        {
+          "decoded_token": null,
+          "logprob": -8.251371383666992,
+          "rank": 3,
+          "token_id": 271
+        },
+        {
+          "decoded_token": null,
+          "logprob": -10.063871383666992,
+          "rank": 4,
+          "token_id": 198
+        },
+        {
+          "decoded_token": null,
+          "logprob": -10.251371383666992,
+          "rank": 5,
+          "token_id": 17529
+        },
+        {
+          "decoded_token": null,
+          "logprob": -10.751371383666992,
+          "rank": 6,
+          "token_id": 11241
+        },
+        {
+          "decoded_token": null,
+          "logprob": -11.126371383666992,
+          "rank": 7,
+          "token_id": 13
+        },
+        {
+          "decoded_token": null,
+          "logprob": -11.188871383666992,
+          "rank": 8,
+          "token_id": 10104
+        },
+        {
+          "decoded_token": null,
+          "logprob": -11.376371383666992,
+          "rank": 9,
+          "token_id": 3447
+        },
+        {
+          "decoded_token": null,
+          "logprob": -11.438871383666992,
+          "rank": 10,
+          "token_id": 7123
+        },
+        {
+          "decoded_token": null,
+          "logprob": -11.563871383666992,
+          "rank": 11,
+          "token_id": 248046
+        },
+        {
+          "decoded_token": null,
+          "logprob": -11.626371383666992,
+          "rank": 12,
+          "token_id": 3387
+        },
+        {
+          "decoded_token": null,
+          "logprob": -11.751371383666992,
+          "rank": 13,
+          "token_id": 14246
+        },
+        {
+          "decoded_token": null,
+          "logprob": -11.813871383666992,
+          "rank": 14,
+          "token_id": 22980
+        },
+        {
+          "decoded_token": null,
+          "logprob": -12.001371383666992,
+          "rank": 15,
+          "token_id": 307
+        },
+        {
+          "decoded_token": null,
+          "logprob": -12.063871383666992,
+          "rank": 16,
+          "token_id": 16484
+        },
+        {
+          "decoded_token": null,
+          "logprob": -12.126371383666992,
+          "rank": 17,
+          "token_id": 17742
+        },
+        {
+          "decoded_token": null,
+          "logprob": -12.251371383666992,
+          "rank": 18,
+          "token_id": 17872
+        },
+        {
+          "decoded_token": null,
+          "logprob": -12.313871383666992,
+          "rank": 19,
+          "token_id": 524
+        },
+        {
+          "decoded_token": null,
+          "logprob": -12.313871383666992,
+          "rank": 20,
+          "token_id": 6380
+        }
+      ]
+    },
+    {
+      "case_name": "natural_latency_plan",
+      "elapsed_ms_since_case_start": 14626.293923007324,
+      "expected_logprob_entry": {
+        "decoded_token": null,
+        "logprob": -0.00912578497081995,
+        "rank": 1,
+        "token_id": 13
+      },
+      "expected_token_id": 13,
+      "generated_logprob_entry": {
+        "decoded_token": null,
+        "logprob": -0.00912578497081995,
+        "rank": 1,
+        "token_id": 13
+      },
+      "generated_token_id": 13,
+      "match": true,
+      "position": 6,
+      "request_id": "qwen36-streamver-natural-latency-plan",
+      "top_logprob_entry": {
+        "decoded_token": null,
+        "logprob": -0.00912578497081995,
+        "rank": 1,
+        "token_id": 13
+      },
+      "top_logprobs": [
+        {
+          "decoded_token": null,
+          "logprob": -0.00912578497081995,
+          "rank": 1,
+          "token_id": 13
+        },
+        {
+          "decoded_token": null,
+          "logprob": -5.634125709533691,
+          "rank": 2,
+          "token_id": 271
+        },
+        {
+          "decoded_token": null,
+          "logprob": -6.384125709533691,
+          "rank": 3,
+          "token_id": 383
+        },
+        {
+          "decoded_token": null,
+          "logprob": -7.134125709533691,
+          "rank": 4,
+          "token_id": 364
+        },
+        {
+          "decoded_token": null,
+          "logprob": -7.759125709533691,
+          "rank": 5,
+          "token_id": 318
+        },
+        {
+          "decoded_token": null,
+          "logprob": -7.946625709533691,
+          "rank": 6,
+          "token_id": 11
+        },
+        {
+          "decoded_token": null,
+          "logprob": -7.946625709533691,
+          "rank": 7,
+          "token_id": 20434
+        },
+        {
+          "decoded_token": null,
+          "logprob": -8.196625709533691,
+          "rank": 8,
+          "token_id": 1076
+        },
+        {
+          "decoded_token": null,
+          "logprob": -8.509125709533691,
+          "rank": 9,
+          "token_id": 248046
+        },
+        {
+          "decoded_token": null,
+          "logprob": -8.759125709533691,
+          "rank": 10,
+          "token_id": 1149
+        },
+        {
+          "decoded_token": null,
+          "logprob": -8.946625709533691,
+          "rank": 11,
+          "token_id": 198
+        },
+        {
+          "decoded_token": null,
+          "logprob": -8.946625709533691,
+          "rank": 12,
+          "token_id": 10419
+        },
+        {
+          "decoded_token": null,
+          "logprob": -9.321625709533691,
+          "rank": 13,
+          "token_id": 440
+        },
+        {
+          "decoded_token": null,
+          "logprob": -9.384125709533691,
+          "rank": 14,
+          "token_id": 25
+        },
+        {
+          "decoded_token": null,
+          "logprob": -9.634125709533691,
+          "rank": 15,
+          "token_id": 421
+        },
+        {
+          "decoded_token": null,
+          "logprob": -10.071625709533691,
+          "rank": 16,
+          "token_id": 159029
+        },
+        {
+          "decoded_token": null,
+          "logprob": -10.134125709533691,
+          "rank": 17,
+          "token_id": 494
+        },
+        {
+          "decoded_token": null,
+          "logprob": -10.259125709533691,
+          "rank": 18,
+          "token_id": 883
+        },
+        {
+          "decoded_token": null,
+          "logprob": -10.384125709533691,
+          "rank": 19,
+          "token_id": 1132
+        },
+        {
+          "decoded_token": null,
+          "logprob": -10.384125709533691,
+          "rank": 20,
+          "token_id": 38809
+        }
+      ]
+    },
+    {
+      "case_name": "natural_latency_plan",
+      "elapsed_ms_since_case_start": 14638.850888004526,
+      "expected_logprob_entry": {
+        "decoded_token": null,
+        "logprob": -0.07713799923658371,
+        "rank": 1,
+        "token_id": 24985
+      },
+      "expected_token_id": 24985,
+      "generated_logprob_entry": {
+        "decoded_token": null,
+        "logprob": -0.07713799923658371,
+        "rank": 1,
+        "token_id": 24985
+      },
+      "generated_token_id": 24985,
+      "match": true,
+      "position": 7,
+      "request_id": "qwen36-streamver-natural-latency-plan",
+      "top_logprob_entry": {
+        "decoded_token": null,
+        "logprob": -0.07713799923658371,
+        "rank": 1,
+        "token_id": 24985
+      },
+      "top_logprobs": [
+        {
+          "decoded_token": null,
+          "logprob": -0.07713799923658371,
+          "rank": 1,
+          "token_id": 24985
+        },
+        {
+          "decoded_token": null,
+          "logprob": -2.7021379470825195,
+          "rank": 2,
+          "token_id": 271
+        },
+        {
+          "decoded_token": null,
+          "logprob": -5.8271379470825195,
+          "rank": 3,
+          "token_id": 198
+        },
+        {
+          "decoded_token": null,
+          "logprob": -7.2646379470825195,
+          "rank": 4,
+          "token_id": 14569
+        },
+        {
+          "decoded_token": null,
+          "logprob": -7.9521379470825195,
+          "rank": 5,
+          "token_id": 4558
+        },
+        {
+          "decoded_token": null,
+          "logprob": -8.38963794708252,
+          "rank": 6,
+          "token_id": 248046
+        },
+        {
+          "decoded_token": null,
+          "logprob": -8.63963794708252,
+          "rank": 7,
+          "token_id": 426
+        },
+        {
+          "decoded_token": null,
+          "logprob": -8.63963794708252,
+          "rank": 8,
+          "token_id": 41108
+        },
+        {
+          "decoded_token": null,
+          "logprob": -9.01463794708252,
+          "rank": 9,
+          "token_id": 220
+        },
+        {
+          "decoded_token": null,
+          "logprob": -9.01463794708252,
+          "rank": 10,
+          "token_id": 498
+        },
+        {
+          "decoded_token": null,
+          "logprob": -9.13963794708252,
+          "rank": 11,
+          "token_id": 695
+        },
+        {
+          "decoded_token": null,
+          "logprob": -9.13963794708252,
+          "rank": 12,
+          "token_id": 11000
+        },
+        {
+          "decoded_token": null,
+          "logprob": -9.20213794708252,
+          "rank": 13,
+          "token_id": 1358
+        },
+        {
+          "decoded_token": null,
+          "logprob": -9.26463794708252,
+          "rank": 14,
+          "token_id": 561
+        },
+        {
+          "decoded_token": null,
+          "logprob": -9.45213794708252,
+          "rank": 15,
+          "token_id": 2233
+        },
+        {
+          "decoded_token": null,
+          "logprob": -9.45213794708252,
+          "rank": 16,
+          "token_id": 2972
+        },
+        {
+          "decoded_token": null,
+          "logprob": -9.57713794708252,
+          "rank": 17,
+          "token_id": 414
+        },
+        {
+          "decoded_token": null,
+          "logprob": -9.63963794708252,
+          "rank": 18,
+          "token_id": 318
+        },
+        {
+          "decoded_token": null,
+          "logprob": -9.82713794708252,
+          "rank": 19,
+          "token_id": 8020
+        },
+        {
+          "decoded_token": null,
+          "logprob": -9.88963794708252,
+          "rank": 20,
+          "token_id": 3054
+        }
+      ]
+    },
+    {
+      "case_name": "natural_latency_plan",
+      "elapsed_ms_since_case_start": 14651.467643911019,
+      "expected_logprob_entry": {
+        "decoded_token": null,
+        "logprob": -0.000998594332486391,
+        "rank": 1,
+        "token_id": 383
+      },
+      "expected_token_id": 383,
+      "generated_logprob_entry": {
+        "decoded_token": null,
+        "logprob": -0.000998594332486391,
+        "rank": 1,
+        "token_id": 383
+      },
+      "generated_token_id": 383,
+      "match": true,
+      "position": 8,
+      "request_id": "qwen36-streamver-natural-latency-plan",
+      "top_logprob_entry": {
+        "decoded_token": null,
+        "logprob": -0.000998594332486391,
+        "rank": 1,
+        "token_id": 383
+      },
+      "top_logprobs": [
+        {
+          "decoded_token": null,
+          "logprob": -0.000998594332486391,
+          "rank": 1,
+          "token_id": 383
+        },
+        {
+          "decoded_token": null,
+          "logprob": -7.500998497009277,
+          "rank": 2,
+          "token_id": 271
+        },
+        {
+          "decoded_token": null,
+          "logprob": -9.125998497009277,
+          "rank": 3,
+          "token_id": 3074
+        },
+        {
+          "decoded_token": null,
+          "logprob": -9.438498497009277,
+          "rank": 4,
+          "token_id": 25
+        },
+        {
+          "decoded_token": null,
+          "logprob": -10.625998497009277,
+          "rank": 5,
+          "token_id": 1076
+        },
+        {
+          "decoded_token": null,
+          "logprob": -11.063498497009277,
+          "rank": 6,
+          "token_id": 198
+        },
+        {
+          "decoded_token": null,
+          "logprob": -11.063498497009277,
+          "rank": 7,
+          "token_id": 369
+        },
+        {
+          "decoded_token": null,
+          "logprob": -11.125998497009277,
+          "rank": 8,
+          "token_id": 263
+        },
+        {
+          "decoded_token": null,
+          "logprob": -11.125998497009277,
+          "rank": 9,
+          "token_id": 1132
+        },
+        {
+          "decoded_token": null,
+          "logprob": -11.250998497009277,
+          "rank": 10,
+          "token_id": 248046
+        },
+        {
+          "decoded_token": null,
+          "logprob": -11.375998497009277,
+          "rank": 11,
+          "token_id": 13
+        },
+        {
+          "decoded_token": null,
+          "logprob": -11.375998497009277,
+          "rank": 12,
+          "token_id": 303
+        },
+        {
+          "decoded_token": null,
+          "logprob": -11.563498497009277,
+          "rank": 13,
+          "token_id": 364
+        },
+        {
+          "decoded_token": null,
+          "logprob": -12.250998497009277,
+          "rank": 14,
+          "token_id": 286
+        },
+        {
+          "decoded_token": null,
+          "logprob": -12.250998497009277,
+          "rank": 15,
+          "token_id": 4558
+        },
+        {
+          "decoded_token": null,
+          "logprob": -12.313498497009277,
+          "rank": 16,
+          "token_id": 16401
+        },
+        {
+          "decoded_token": null,
+          "logprob": -12.625998497009277,
+          "rank": 17,
+          "token_id": 314
+        },
+        {
+          "decoded_token": null,
+          "logprob": -12.625998497009277,
+          "rank": 18,
+          "token_id": 513
+        },
+        {
+          "decoded_token": null,
+          "logprob": -12.625998497009277,
+          "rank": 19,
+          "token_id": 1848
+        },
+        {
+          "decoded_token": null,
+          "logprob": -12.688498497009277,
+          "rank": 20,
+          "token_id": 2423
+        }
+      ]
+    },
+    {
+      "case_name": "natural_latency_plan",
+      "elapsed_ms_since_case_start": 14664.082297007553,
+      "expected_logprob_entry": {
+        "decoded_token": null,
+        "logprob": -0.017742140218615532,
+        "rank": 1,
+        "token_id": 3074
+      },
+      "expected_token_id": 3074,
+      "generated_logprob_entry": {
+        "decoded_token": null,
+        "logprob": -0.017742140218615532,
+        "rank": 1,
+        "token_id": 3074
+      },
+      "generated_token_id": 3074,
+      "match": true,
+      "position": 9,
+      "request_id": "qwen36-streamver-natural-latency-plan",
+      "top_logprob_entry": {
+        "decoded_token": null,
+        "logprob": -0.017742140218615532,
+        "rank": 1,
+        "token_id": 3074
+      },
+      "top_logprobs": [
+        {
+          "decoded_token": null,
+          "logprob": -0.017742140218615532,
+          "rank": 1,
+          "token_id": 3074
+        },
+        {
+          "decoded_token": null,
+          "logprob": -5.642742156982422,
+          "rank": 2,
+          "token_id": 16401
+        },
+        {
+          "decoded_token": null,
+          "logprob": -6.955242156982422,
+          "rank": 3,
+          "token_id": 1064
+        },
+        {
+          "decoded_token": null,
+          "logprob": -7.267742156982422,
+          "rank": 4,
+          "token_id": 4560
+        },
+        {
+          "decoded_token": null,
+          "logprob": -7.392742156982422,
+          "rank": 5,
+          "token_id": 3050
+        },
+        {
+          "decoded_token": null,
+          "logprob": -7.392742156982422,
+          "rank": 6,
+          "token_id": 15167
+        },
+        {
+          "decoded_token": null,
+          "logprob": -7.455242156982422,
+          "rank": 7,
+          "token_id": 45543
+        },
+        {
+          "decoded_token": null,
+          "logprob": -7.892742156982422,
+          "rank": 8,
+          "token_id": 6937
+        },
+        {
+          "decoded_token": null,
+          "logprob": -8.017742156982422,
+          "rank": 9,
+          "token_id": 271
+        },
+        {
+          "decoded_token": null,
+          "logprob": -8.142742156982422,
+          "rank": 10,
+          "token_id": 42903
+        },
+        {
+          "decoded_token": null,
+          "logprob": -8.205242156982422,
+          "rank": 11,
+          "token_id": 15702
+        },
+        {
+          "decoded_token": null,
+          "logprob": -8.205242156982422,
+          "rank": 12,
+          "token_id": 18612
+        },
+        {
+          "decoded_token": null,
+          "logprob": -8.392742156982422,
+          "rank": 13,
+          "token_id": 25
+        },
+        {
+          "decoded_token": null,
+          "logprob": -8.392742156982422,
+          "rank": 14,
+          "token_id": 343
+        },
+        {
+          "decoded_token": null,
+          "logprob": -8.392742156982422,
+          "rank": 15,
+          "token_id": 7752
+        },
+        {
+          "decoded_token": null,
+          "logprob": -8.455242156982422,
+          "rank": 16,
+          "token_id": 12204
+        },
+        {
+          "decoded_token": null,
+          "logprob": -8.517742156982422,
+          "rank": 17,
+          "token_id": 4618
+        },
+        {
+          "decoded_token": null,
+          "logprob": -8.517742156982422,
+          "rank": 18,
+          "token_id": 63520
+        },
+        {
+          "decoded_token": null,
+          "logprob": -8.642742156982422,
+          "rank": 19,
+          "token_id": 279
+        },
+        {
+          "decoded_token": null,
+          "logprob": -8.767742156982422,
+          "rank": 20,
+          "token_id": 264
+        }
+      ]
+    },
+    {
+      "case_name": "natural_latency_plan",
+      "elapsed_ms_since_case_start": 14676.735902903602,
+      "expected_logprob_entry": {
+        "decoded_token": null,
+        "logprob": -0.0017114529618993402,
+        "rank": 1,
+        "token_id": 43318
+      },
+      "expected_token_id": 43318,
+      "generated_logprob_entry": {
+        "decoded_token": null,
+        "logprob": -0.0017114529618993402,
+        "rank": 1,
+        "token_id": 43318
+      },
+      "generated_token_id": 43318,
+      "match": true,
+      "position": 10,
+      "request_id": "qwen36-streamver-natural-latency-plan",
+      "top_logprob_entry": {
+        "decoded_token": null,
+        "logprob": -0.0017114529618993402,
+        "rank": 1,
+        "token_id": 43318
+      },
+      "top_logprobs": [
+        {
+          "decoded_token": null,
+          "logprob": -0.0017114529618993402,
+          "rank": 1,
+          "token_id": 43318
+        },
+        {
+          "decoded_token": null,
+          "logprob": -7.376711368560791,
+          "rank": 2,
+          "token_id": 6596
+        },
+        {
+          "decoded_token": null,
+          "logprob": -8.87671184539795,
+          "rank": 3,
+          "token_id": 8429
+        },
+        {
+          "decoded_token": null,
+          "logprob": -9.00171184539795,
+          "rank": 4,
+          "token_id": 271
+        },
+        {
+          "decoded_token": null,
+          "logprob": -9.12671184539795,
+          "rank": 5,
+          "token_id": 58755
+        },
+        {
+          "decoded_token": null,
+          "logprob": -9.25171184539795,
+          "rank": 6,
+          "token_id": 12
+        },
+        {
+          "decoded_token": null,
+          "logprob": -9.62671184539795,
+          "rank": 7,
+          "token_id": 71152
+        },
+        {
+          "decoded_token": null,
+          "logprob": -9.68921184539795,
+          "rank": 8,
+          "token_id": 29029
+        },
+        {
+          "decoded_token": null,
+          "logprob": -9.75171184539795,
+          "rank": 9,
+          "token_id": 2195
+        },
+        {
+          "decoded_token": null,
+          "logprob": -10.06421184539795,
+          "rank": 10,
+          "token_id": 1622
+        },
+        {
+          "decoded_token": null,
+          "logprob": -10.25171184539795,
+          "rank": 11,
+          "token_id": 61384
+        },
+        {
+          "decoded_token": null,
+          "logprob": -10.56421184539795,
+          "rank": 12,
+          "token_id": 5331
+        },
+        {
+          "decoded_token": null,
+          "logprob": -10.56421184539795,
+          "rank": 13,
+          "token_id": 33686
+        },
+        {
+          "decoded_token": null,
+          "logprob": -11.31421184539795,
+          "rank": 14,
+          "token_id": 198
+        },
+        {
+          "decoded_token": null,
+          "logprob": -11.37671184539795,
+          "rank": 15,
+          "token_id": 1402
+        },
+        {
+          "decoded_token": null,
+          "logprob": -11.37671184539795,
+          "rank": 16,
+          "token_id": 7644
+        },
+        {
+          "decoded_token": null,
+          "logprob": -11.62671184539795,
+          "rank": 17,
+          "token_id": 22728
+        },
+        {
+          "decoded_token": null,
+          "logprob": -11.62671184539795,
+          "rank": 18,
+          "token_id": 37761
+        },
+        {
+          "decoded_token": null,
+          "logprob": -11.87671184539795,
+          "rank": 19,
+          "token_id": 101729
+        },
+        {
+          "decoded_token": null,
+          "logprob": -12.06421184539795,
+          "rank": 20,
+          "token_id": 17938
+        }
+      ]
+    },
+    {
+      "case_name": "natural_latency_plan",
+      "elapsed_ms_since_case_start": 14689.558394951746,
+      "expected_logprob_entry": {
+        "decoded_token": null,
+        "logprob": -0.0024523441679775715,
+        "rank": 1,
+        "token_id": 16401
+      },
+      "expected_token_id": 16401,
+      "generated_logprob_entry": {
+        "decoded_token": null,
+        "logprob": -0.0024523441679775715,
+        "rank": 1,
+        "token_id": 16401
+      },
+      "generated_token_id": 16401,
+      "match": true,
+      "position": 11,
+      "request_id": "qwen36-streamver-natural-latency-plan",
+      "top_logprob_entry": {
+        "decoded_token": null,
+        "logprob": -0.0024523441679775715,
+        "rank": 1,
+        "token_id": 16401
+      },
+      "top_logprobs": [
+        {
+          "decoded_token": null,
+          "logprob": -0.0024523441679775715,
+          "rank": 1,
+          "token_id": 16401
+        },
+        {
+          "decoded_token": null,
+          "logprob": -7.377452373504639,
+          "rank": 2,
+          "token_id": 271
+        },
+        {
+          "decoded_token": null,
+          "logprob": -7.752452373504639,
+          "rank": 3,
+          "token_id": 61610
+        },
+        {
+          "decoded_token": null,
+          "logprob": -8.50245189666748,
+          "rank": 4,
+          "token_id": 3074
+        },
+        {
+          "decoded_token": null,
+          "logprob": -8.68995189666748,
+          "rank": 5,
+          "token_id": 37972
+        },
+        {
+          "decoded_token": null,
+          "logprob": -8.87745189666748,
+          "rank": 6,
+          "token_id": 45543
+        },
+        {
+          "decoded_token": null,
+          "logprob": -9.00245189666748,
+          "rank": 7,
+          "token_id": 48507
+        },
+        {
+          "decoded_token": null,
+          "logprob": -9.50245189666748,
+          "rank": 8,
+          "token_id": 1566
+        },
+        {
+          "decoded_token": null,
+          "logprob": -9.75245189666748,
+          "rank": 9,
+          "token_id": 4478
+        },
+        {
+          "decoded_token": null,
+          "logprob": -10.00245189666748,
+          "rank": 10,
+          "token_id": 198
+        },
+        {
+          "decoded_token": null,
+          "logprob": -10.18995189666748,
+          "rank": 11,
+          "token_id": 401
+        },
+        {
+          "decoded_token": null,
+          "logprob": -10.31495189666748,
+          "rank": 12,
+          "token_id": 318
+        },
+        {
+          "decoded_token": null,
+          "logprob": -10.37745189666748,
+          "rank": 13,
+          "token_id": 80980
+        },
+        {
+          "decoded_token": null,
+          "logprob": -10.56495189666748,
+          "rank": 14,
+          "token_id": 17655
+        },
+        {
+          "decoded_token": null,
+          "logprob": -10.81495189666748,
+          "rank": 15,
+          "token_id": 14835
+        },
+        {
+          "decoded_token": null,
+          "logprob": -11.06495189666748,
+          "rank": 16,
+          "token_id": 15688
+        },
+        {
+          "decoded_token": null,
+          "logprob": -11.37745189666748,
+          "rank": 17,
+          "token_id": 1076
+        },
+        {
+          "decoded_token": null,
+          "logprob": -11.56495189666748,
+          "rank": 18,
+          "token_id": 1358
+        },
+        {
+          "decoded_token": null,
+          "logprob": -11.68995189666748,
+          "rank": 19,
+          "token_id": 31489
+        },
+        {
+          "decoded_token": null,
+          "logprob": -11.81495189666748,
+          "rank": 20,
+          "token_id": 15452
+        }
+      ]
+    },
+    {
+      "case_name": "natural_latency_plan",
+      "elapsed_ms_since_case_start": 14702.157397987321,
+      "expected_logprob_entry": {
+        "decoded_token": null,
+        "logprob": -0.002033667638897896,
+        "rank": 1,
+        "token_id": 4478
+      },
+      "expected_token_id": 4478,
+      "generated_logprob_entry": {
+        "decoded_token": null,
+        "logprob": -0.002033667638897896,
+        "rank": 1,
+        "token_id": 4478
+      },
+      "generated_token_id": 4478,
+      "match": true,
+      "position": 12,
+      "request_id": "qwen36-streamver-natural-latency-plan",
+      "top_logprob_entry": {
+        "decoded_token": null,
+        "logprob": -0.002033667638897896,
+        "rank": 1,
+        "token_id": 4478
+      },
+      "top_logprobs": [
+        {
+          "decoded_token": null,
+          "logprob": -0.002033667638897896,
+          "rank": 1,
+          "token_id": 4478
+        },
+        {
+          "decoded_token": null,
+          "logprob": -7.377033710479736,
+          "rank": 2,
+          "token_id": 271
+        },
+        {
+          "decoded_token": null,
+          "logprob": -7.627033710479736,
+          "rank": 3,
+          "token_id": 2923
+        },
+        {
+          "decoded_token": null,
+          "logprob": -8.252033233642578,
+          "rank": 4,
+          "token_id": 9956
+        },
+        {
+          "decoded_token": null,
+          "logprob": -9.064533233642578,
+          "rank": 5,
+          "token_id": 198
+        },
+        {
+          "decoded_token": null,
+          "logprob": -9.127033233642578,
+          "rank": 6,
+          "token_id": 7123
+        },
+        {
+          "decoded_token": null,
+          "logprob": -9.752033233642578,
+          "rank": 7,
+          "token_id": 37972
+        },
+        {
+          "decoded_token": null,
+          "logprob": -10.314533233642578,
+          "rank": 8,
+          "token_id": 23944
+        },
+        {
+          "decoded_token": null,
+          "logprob": -10.564533233642578,
+          "rank": 9,
+          "token_id": 28632
+        },
+        {
+          "decoded_token": null,
+          "logprob": -10.939533233642578,
+          "rank": 10,
+          "token_id": 854
+        },
+        {
+          "decoded_token": null,
+          "logprob": -11.002033233642578,
+          "rank": 11,
+          "token_id": 11
+        },
+        {
+          "decoded_token": null,
+          "logprob": -11.064533233642578,
+          "rank": 12,
+          "token_id": 61610
+        },
+        {
+          "decoded_token": null,
+          "logprob": -11.127033233642578,
+          "rank": 13,
+          "token_id": 6228
+        },
+        {
+          "decoded_token": null,
+          "logprob": -11.189533233642578,
+          "rank": 14,
+          "token_id": 29541
+        },
+        {
+          "decoded_token": null,
+          "logprob": -11.252033233642578,
+          "rank": 15,
+          "token_id": 318
+        },
+        {
+          "decoded_token": null,
+          "logprob": -11.377033233642578,
+          "rank": 16,
+          "token_id": 1076
+        },
+        {
+          "decoded_token": null,
+          "logprob": -11.439533233642578,
+          "rank": 17,
+          "token_id": 791
+        },
+        {
+          "decoded_token": null,
+          "logprob": -11.564533233642578,
+          "rank": 18,
+          "token_id": 248046
+        },
+        {
+          "decoded_token": null,
+          "logprob": -11.627033233642578,
+          "rank": 19,
+          "token_id": 14739
+        },
+        {
+          "decoded_token": null,
+          "logprob": -12.064533233642578,
+          "rank": 20,
+          "token_id": 1358
+        }
+      ]
+    },
+    {
+      "case_name": "natural_latency_plan",
+      "elapsed_ms_since_case_start": 14714.804551913403,
+      "expected_logprob_entry": {
+        "decoded_token": null,
+        "logprob": -0.0016180293168872595,
+        "rank": 1,
+        "token_id": 11
+      },
+      "expected_token_id": 11,
+      "generated_logprob_entry": {
+        "decoded_token": null,
+        "logprob": -0.0016180293168872595,
+        "rank": 1,
+        "token_id": 11
+      },
+      "generated_token_id": 11,
+      "match": true,
+      "position": 13,
+      "request_id": "qwen36-streamver-natural-latency-plan",
+      "top_logprob_entry": {
+        "decoded_token": null,
+        "logprob": -0.0016180293168872595,
+        "rank": 1,
+        "token_id": 11
+      },
+      "top_logprobs": [
+        {
+          "decoded_token": null,
+          "logprob": -0.0016180293168872595,
+          "rank": 1,
+          "token_id": 11
+        },
+        {
+          "decoded_token": null,
+          "logprob": -6.876617908477783,
+          "rank": 2,
+          "token_id": 271
+        },
+        {
+          "decoded_token": null,
+          "logprob": -8.814118385314941,
+          "rank": 3,
+          "token_id": 321
+        },
+        {
+          "decoded_token": null,
+          "logprob": -9.001618385314941,
+          "rank": 4,
+          "token_id": 13
+        },
+        {
+          "decoded_token": null,
+          "logprob": -9.751618385314941,
+          "rank": 5,
+          "token_id": 685
+        },
+        {
+          "decoded_token": null,
+          "logprob": -10.189118385314941,
+          "rank": 6,
+          "token_id": 198
+        },
+        {
+          "decoded_token": null,
+          "logprob": -10.751618385314941,
+          "rank": 7,
+          "token_id": 318
+        },
+        {
+          "decoded_token": null,
+          "logprob": -11.064118385314941,
+          "rank": 8,
+          "token_id": 248046
+        },
+        {
+          "decoded_token": null,
+          "logprob": -11.189118385314941,
+          "rank": 9,
+          "token_id": 1076
+        },
+        {
+          "decoded_token": null,
+          "logprob": -11.564118385314941,
+          "rank": 10,
+          "token_id": 24460
+        },
+        {
+          "decoded_token": null,
+          "logprob": -11.626618385314941,
+          "rank": 11,
+          "token_id": 29541
+        },
+        {
+          "decoded_token": null,
+          "logprob": -11.814118385314941,
+          "rank": 12,
+          "token_id": 446
+        },
+        {
+          "decoded_token": null,
+          "logprob": -11.876618385314941,
+          "rank": 13,
+          "token_id": 1116
+        },
+        {
+          "decoded_token": null,
+          "logprob": -11.939118385314941,
+          "rank": 14,
+          "token_id": 364
+        },
+        {
+          "decoded_token": null,
+          "logprob": -11.939118385314941,
+          "rank": 15,
+          "token_id": 33389
+        },
+        {
+          "decoded_token": null,
+          "logprob": -12.001618385314941,
+          "rank": 16,
+          "token_id": 1358
+        },
+        {
+          "decoded_token": null,
+          "logprob": -12.189118385314941,
+          "rank": 17,
+          "token_id": 25
+        },
+        {
+          "decoded_token": null,
+          "logprob": -12.251618385314941,
+          "rank": 18,
+          "token_id": 5072
+        },
+        {
+          "decoded_token": null,
+          "logprob": -12.314118385314941,
+          "rank": 19,
+          "token_id": 594
+        },
+        {
+          "decoded_token": null,
+          "logprob": -12.564118385314941,
+          "rank": 20,
+          "token_id": 506
+        }
+      ]
+    },
+    {
+      "case_name": "natural_latency_plan",
+      "elapsed_ms_since_case_start": 14727.375112008303,
+      "expected_logprob_entry": {
+        "decoded_token": null,
+        "logprob": -0.0018882793374359608,
+        "rank": 1,
+        "token_id": 29541
+      },
+      "expected_token_id": 29541,
+      "generated_logprob_entry": {
+        "decoded_token": null,
+        "logprob": -0.0018882793374359608,
+        "rank": 1,
+        "token_id": 29541
+      },
+      "generated_token_id": 29541,
+      "match": true,
+      "position": 14,
+      "request_id": "qwen36-streamver-natural-latency-plan",
+      "top_logprob_entry": {
+        "decoded_token": null,
+        "logprob": -0.0018882793374359608,
+        "rank": 1,
+        "token_id": 29541
+      },
+      "top_logprobs": [
+        {
+          "decoded_token": null,
+          "logprob": -0.0018882793374359608,
+          "rank": 1,
+          "token_id": 29541
+        },
+        {
+          "decoded_token": null,
+          "logprob": -7.626888275146484,
+          "rank": 2,
+          "token_id": 271
+        },
+        {
+          "decoded_token": null,
+          "logprob": -8.001888275146484,
+          "rank": 3,
+          "token_id": 14294
+        },
+        {
+          "decoded_token": null,
+          "logprob": -8.751888275146484,
+          "rank": 4,
+          "token_id": 1303
+        },
+        {
+          "decoded_token": null,
+          "logprob": -9.064388275146484,
+          "rank": 5,
+          "token_id": 9096
+        },
+        {
+          "decoded_token": null,
+          "logprob": -9.189388275146484,
+          "rank": 6,
+          "token_id": 874
+        },
+        {
+          "decoded_token": null,
+          "logprob": -9.376888275146484,
+          "rank": 7,
+          "token_id": 3074
+        },
+        {
+          "decoded_token": null,
+          "logprob": -9.876888275146484,
+          "rank": 8,
+          "token_id": 110807
+        },
+        {
+          "decoded_token": null,
+          "logprob": -10.064388275146484,
+          "rank": 9,
+          "token_id": 198
+        },
+        {
+          "decoded_token": null,
+          "logprob": -10.064388275146484,
+          "rank": 10,
+          "token_id": 51297
+        },
+        {
+          "decoded_token": null,
+          "logprob": -10.251888275146484,
+          "rank": 11,
+          "token_id": 19150
+        },
+        {
+          "decoded_token": null,
+          "logprob": -10.689388275146484,
+          "rank": 12,
+          "token_id": 321
+        },
+        {
+          "decoded_token": null,
+          "logprob": -10.939388275146484,
+          "rank": 13,
+          "token_id": 4131
+        },
+        {
+          "decoded_token": null,
+          "logprob": -11.064388275146484,
+          "rank": 14,
+          "token_id": 311
+        },
+        {
+          "decoded_token": null,
+          "logprob": -11.189388275146484,
+          "rank": 15,
+          "token_id": 6309
+        },
+        {
+          "decoded_token": null,
+          "logprob": -11.251888275146484,
+          "rank": 16,
+          "token_id": 37972
+        },
+        {
+          "decoded_token": null,
+          "logprob": -11.314388275146484,
+          "rank": 17,
+          "token_id": 4618
+        },
+        {
+          "decoded_token": null,
+          "logprob": -11.501888275146484,
+          "rank": 18,
+          "token_id": 30805
+        },
+        {
+          "decoded_token": null,
+          "logprob": -11.689388275146484,
+          "rank": 19,
+          "token_id": 628
+        },
+        {
+          "decoded_token": null,
+          "logprob": -11.751888275146484,
+          "rank": 20,
+          "token_id": 4478
+        }
+      ]
+    },
+    {
+      "case_name": "natural_latency_plan",
+      "elapsed_ms_since_case_start": 14740.01566390507,
+      "expected_logprob_entry": {
+        "decoded_token": null,
+        "logprob": -0.0017245433991774917,
+        "rank": 1,
+        "token_id": 33389
+      },
+      "expected_token_id": 33389,
+      "generated_logprob_entry": {
+        "decoded_token": null,
+        "logprob": -0.0017245433991774917,
+        "rank": 1,
+        "token_id": 33389
+      },
+      "generated_token_id": 33389,
+      "match": true,
+      "position": 15,
+      "request_id": "qwen36-streamver-natural-latency-plan",
+      "top_logprob_entry": {
+        "decoded_token": null,
+        "logprob": -0.0017245433991774917,
+        "rank": 1,
+        "token_id": 33389
+      },
+      "top_logprobs": [
+        {
+          "decoded_token": null,
+          "logprob": -0.0017245433991774917,
+          "rank": 1,
+          "token_id": 33389
+        },
+        {
+          "decoded_token": null,
+          "logprob": -7.501724720001221,
+          "rank": 2,
+          "token_id": 17587
+        },
+        {
+          "decoded_token": null,
+          "logprob": -8.001724243164062,
+          "rank": 3,
+          "token_id": 11
+        },
+        {
+          "decoded_token": null,
+          "logprob": -8.001724243164062,
+          "rank": 4,
+          "token_id": 70901
+        },
+        {
+          "decoded_token": null,
+          "logprob": -8.501724243164062,
+          "rank": 5,
+          "token_id": 271
+        },
+        {
+          "decoded_token": null,
+          "logprob": -9.751724243164062,
+          "rank": 6,
+          "token_id": 11988
+        },
+        {
+          "decoded_token": null,
+          "logprob": -9.814224243164062,
+          "rank": 7,
+          "token_id": 34320
+        },
+        {
+          "decoded_token": null,
+          "logprob": -10.814224243164062,
+          "rank": 8,
+          "token_id": 321
+        },
+        {
+          "decoded_token": null,
+          "logprob": -10.876724243164062,
+          "rank": 9,
+          "token_id": 338
+        },
+        {
+          "decoded_token": null,
+          "logprob": -10.939224243164062,
+          "rank": 10,
+          "token_id": 198
+        },
+        {
+          "decoded_token": null,
+          "logprob": -11.314224243164062,
+          "rank": 11,
+          "token_id": 81787
+        },
+        {
+          "decoded_token": null,
+          "logprob": -12.001724243164062,
+          "rank": 12,
+          "token_id": 13
+        },
+        {
+          "decoded_token": null,
+          "logprob": -12.001724243164062,
+          "rank": 13,
+          "token_id": 4691
+        },
+        {
+          "decoded_token": null,
+          "logprob": -12.251724243164062,
+          "rank": 14,
+          "token_id": 64941
+        },
+        {
+          "decoded_token": null,
+          "logprob": -12.314224243164062,
+          "rank": 15,
+          "token_id": 506
+        },
+        {
+          "decoded_token": null,
+          "logprob": -12.439224243164062,
+          "rank": 16,
+          "token_id": 31092
+        },
+        {
+          "decoded_token": null,
+          "logprob": -12.626724243164062,
+          "rank": 17,
+          "token_id": 25343
+        },
+        {
+          "decoded_token": null,
+          "logprob": -12.689224243164062,
+          "rank": 18,
+          "token_id": 54254
+        },
+        {
+          "decoded_token": null,
+          "logprob": -12.814224243164062,
+          "rank": 19,
+          "token_id": 314
+        },
+        {
+          "decoded_token": null,
+          "logprob": -12.814224243164062,
+          "rank": 20,
+          "token_id": 594
+        }
+      ]
+    },
+    {
+      "case_name": "natural_latency_plan",
+      "elapsed_ms_since_case_start": 14752.635665936396,
+      "expected_logprob_entry": {
+        "decoded_token": null,
+        "logprob": -0.0007945717661641538,
+        "rank": 1,
+        "token_id": 11
+      },
+      "expected_token_id": 11,
+      "generated_logprob_entry": {
+        "decoded_token": null,
+        "logprob": -0.0007945717661641538,
+        "rank": 1,
+        "token_id": 11
+      },
+      "generated_token_id": 11,
+      "match": true,
+      "position": 16,
+      "request_id": "qwen36-streamver-natural-latency-plan",
+      "top_logprob_entry": {
+        "decoded_token": null,
+        "logprob": -0.0007945717661641538,
+        "rank": 1,
+        "token_id": 11
+      },
+      "top_logprobs": [
+        {
+          "decoded_token": null,
+          "logprob": -0.0007945717661641538,
+          "rank": 1,
+          "token_id": 11
+        },
+        {
+          "decoded_token": null,
+          "logprob": -8.188294410705566,
+          "rank": 2,
+          "token_id": 271
+        },
+        {
+          "decoded_token": null,
+          "logprob": -9.188294410705566,
+          "rank": 3,
+          "token_id": 321
+        },
+        {
+          "decoded_token": null,
+          "logprob": -9.438294410705566,
+          "rank": 4,
+          "token_id": 364
+        },
+        {
+          "decoded_token": null,
+          "logprob": -9.750794410705566,
+          "rank": 5,
+          "token_id": 318
+        },
+        {
+          "decoded_token": null,
+          "logprob": -9.813294410705566,
+          "rank": 6,
+          "token_id": 13
+        },
+        {
+          "decoded_token": null,
+          "logprob": -10.063294410705566,
+          "rank": 7,
+          "token_id": 248046
+        },
+        {
+          "decoded_token": null,
+          "logprob": -10.500794410705566,
+          "rank": 8,
+          "token_id": 198
+        },
+        {
+          "decoded_token": null,
+          "logprob": -10.875794410705566,
+          "rank": 9,
+          "token_id": 506
+        },
+        {
+          "decoded_token": null,
+          "logprob": -11.125794410705566,
+          "rank": 10,
+          "token_id": 874
+        },
+        {
+          "decoded_token": null,
+          "logprob": -11.188294410705566,
+          "rank": 11,
+          "token_id": 1076
+        },
+        {
+          "decoded_token": null,
+          "logprob": -12.188294410705566,
+          "rank": 12,
+          "token_id": 11988
+        },
+        {
+          "decoded_token": null,
+          "logprob": -12.250794410705566,
+          "rank": 13,
+          "token_id": 1716
+        },
+        {
+          "decoded_token": null,
+          "logprob": -12.375794410705566,
+          "rank": 14,
+          "token_id": 1116
+        },
+        {
+          "decoded_token": null,
+          "logprob": -12.375794410705566,
+          "rank": 15,
+          "token_id": 33389
+        },
+        {
+          "decoded_token": null,
+          "logprob": -12.500794410705566,
+          "rank": 16,
+          "token_id": 383
+        },
+        {
+          "decoded_token": null,
+          "logprob": -12.500794410705566,
+          "rank": 17,
+          "token_id": 421
+        },
+        {
+          "decoded_token": null,
+          "logprob": -12.813294410705566,
+          "rank": 18,
+          "token_id": 594
+        },
+        {
+          "decoded_token": null,
+          "logprob": -12.938294410705566,
+          "rank": 19,
+          "token_id": 440
+        },
+        {
+          "decoded_token": null,
+          "logprob": -12.938294410705566,
+          "rank": 20,
+          "token_id": 2487
+        }
+      ]
+    },
+    {
+      "case_name": "natural_latency_plan",
+      "elapsed_ms_since_case_start": 14765.069368993863,
+      "expected_logprob_entry": {
+        "decoded_token": null,
+        "logprob": -0.5880138874053955,
+        "rank": 1,
+        "token_id": 11436
+      },
+      "expected_token_id": 11436,
+      "generated_logprob_entry": {
+        "decoded_token": null,
+        "logprob": -0.5880138874053955,
+        "rank": 1,
+        "token_id": 11436
+      },
+      "generated_token_id": 11436,
+      "match": true,
+      "position": 17,
+      "request_id": "qwen36-streamver-natural-latency-plan",
+      "top_logprob_entry": {
+        "decoded_token": null,
+        "logprob": -0.5880138874053955,
+        "rank": 1,
+        "token_id": 11436
+      },
+      "top_logprobs": [
+        {
+          "decoded_token": null,
+          "logprob": -0.5880138874053955,
+          "rank": 1,
+          "token_id": 11436
+        },
+        {
+          "decoded_token": null,
+          "logprob": -1.7130138874053955,
+          "rank": 2,
+          "token_id": 271
+        },
+        {
+          "decoded_token": null,
+          "logprob": -2.3380138874053955,
+          "rank": 3,
+          "token_id": 321
+        },
+        {
+          "decoded_token": null,
+          "logprob": -3.0255138874053955,
+          "rank": 4,
+          "token_id": 1543
+        },
+        {
+          "decoded_token": null,
+          "logprob": -3.3380138874053955,
+          "rank": 5,
+          "token_id": 198
+        },
+        {
+          "decoded_token": null,
+          "logprob": -3.9005138874053955,
+          "rank": 6,
+          "token_id": 19087
+        },
+        {
+          "decoded_token": null,
+          "logprob": -4.025513648986816,
+          "rank": 7,
+          "token_id": 15153
+        },
+        {
+          "decoded_token": null,
+          "logprob": -5.400513648986816,
+          "rank": 8,
+          "token_id": 67964
+        },
+        {
+          "decoded_token": null,
+          "logprob": -5.588013648986816,
+          "rank": 9,
+          "token_id": 25818
+        },
+        {
+          "decoded_token": null,
+          "logprob": -5.713013648986816,
+          "rank": 10,
+          "token_id": 101874
+        },
+        {
+          "decoded_token": null,
+          "logprob": -6.088013648986816,
+          "rank": 11,
+          "token_id": 30230
+        },
+        {
+          "decoded_token": null,
+          "logprob": -6.213013648986816,
+          "rank": 12,
+          "token_id": 15123
+        },
+        {
+          "decoded_token": null,
+          "logprob": -6.463013648986816,
+          "rank": 13,
+          "token_id": 830
+        },
+        {
+          "decoded_token": null,
+          "logprob": -6.463013648986816,
+          "rank": 14,
+          "token_id": 4779
+        },
+        {
+          "decoded_token": null,
+          "logprob": -6.588013648986816,
+          "rank": 15,
+          "token_id": 462
+        },
+        {
+          "decoded_token": null,
+          "logprob": -6.588013648986816,
+          "rank": 16,
+          "token_id": 13752
+        },
+        {
+          "decoded_token": null,
+          "logprob": -6.650513648986816,
+          "rank": 17,
+          "token_id": 248046
+        },
+        {
+          "decoded_token": null,
+          "logprob": -6.713013648986816,
+          "rank": 18,
+          "token_id": 1167
+        },
+        {
+          "decoded_token": null,
+          "logprob": -6.838013648986816,
+          "rank": 19,
+          "token_id": 343
+        },
+        {
+          "decoded_token": null,
+          "logprob": -6.838013648986816,
+          "rank": 20,
+          "token_id": 64495
+        }
+      ]
+    },
+    {
+      "case_name": "natural_latency_plan",
+      "elapsed_ms_since_case_start": 14777.535913977772,
+      "expected_logprob_entry": {
+        "decoded_token": null,
+        "logprob": -2.5022268295288086,
+        "rank": 1,
+        "token_id": 29796
+      },
+      "expected_token_id": 29796,
+      "generated_logprob_entry": {
+        "decoded_token": null,
+        "logprob": -2.5022268295288086,
+        "rank": 1,
+        "token_id": 29796
+      },
+      "generated_token_id": 29796,
+      "match": true,
+      "position": 18,
+      "request_id": "qwen36-streamver-natural-latency-plan",
+      "top_logprob_entry": {
+        "decoded_token": null,
+        "logprob": -2.5022268295288086,
+        "rank": 1,
+        "token_id": 29796
+      },
+      "top_logprobs": [
+        {
+          "decoded_token": null,
+          "logprob": -2.5022268295288086,
+          "rank": 1,
+          "token_id": 29796
+        },
+        {
+          "decoded_token": null,
+          "logprob": -2.9397268295288086,
+          "rank": 2,
+          "token_id": 18336
+        },
+        {
+          "decoded_token": null,
+          "logprob": -3.1272268295288086,
+          "rank": 3,
+          "token_id": 62807
+        },
+        {
+          "decoded_token": null,
+          "logprob": -3.2522268295288086,
+          "rank": 4,
+          "token_id": 47785
+        },
+        {
+          "decoded_token": null,
+          "logprob": -3.5022268295288086,
+          "rank": 5,
+          "token_id": 16484
+        },
+        {
+          "decoded_token": null,
+          "logprob": -3.6272268295288086,
+          "rank": 6,
+          "token_id": 11258
+        },
+        {
+          "decoded_token": null,
+          "logprob": -4.127226829528809,
+          "rank": 7,
+          "token_id": 271
+        },
+        {
+          "decoded_token": null,
+          "logprob": -4.189726829528809,
+          "rank": 8,
+          "token_id": 14
+        },
+        {
+          "decoded_token": null,
+          "logprob": -4.377226829528809,
+          "rank": 9,
+          "token_id": 31925
+        },
+        {
+          "decoded_token": null,
+          "logprob": -4.502226829528809,
+          "rank": 10,
+          "token_id": 13001
+        },
+        {
+          "decoded_token": null,
+          "logprob": -4.564726829528809,
+          "rank": 11,
+          "token_id": 11
+        },
+        {
+          "decoded_token": null,
+          "logprob": -4.627226829528809,
+          "rank": 12,
+          "token_id": 12
+        },
+        {
+          "decoded_token": null,
+          "logprob": -4.752226829528809,
+          "rank": 13,
+          "token_id": 13771
+        },
+        {
+          "decoded_token": null,
+          "logprob": -4.814726829528809,
+          "rank": 14,
+          "token_id": 48753
+        },
+        {
+          "decoded_token": null,
+          "logprob": -4.939726829528809,
+          "rank": 15,
+          "token_id": 4906
+        },
+        {
+          "decoded_token": null,
+          "logprob": -5.002226829528809,
+          "rank": 16,
+          "token_id": 16682
+        },
+        {
+          "decoded_token": null,
+          "logprob": -5.002226829528809,
+          "rank": 17,
+          "token_id": 23967
+        },
+        {
+          "decoded_token": null,
+          "logprob": -5.002226829528809,
+          "rank": 18,
+          "token_id": 24460
+        },
+        {
+          "decoded_token": null,
+          "logprob": -5.127226829528809,
+          "rank": 19,
+          "token_id": 31184
+        },
+        {
+          "decoded_token": null,
+          "logprob": -5.127226829528809,
+          "rank": 20,
+          "token_id": 46737
+        }
+      ]
+    },
+    {
+      "case_name": "natural_latency_plan",
+      "elapsed_ms_since_case_start": 14790.507506928407,
+      "expected_logprob_entry": {
+        "decoded_token": null,
+        "logprob": -0.8480571508407593,
+        "rank": 1,
+        "token_id": 11
+      },
+      "expected_token_id": 11,
+      "generated_logprob_entry": {
+        "decoded_token": null,
+        "logprob": -0.8480571508407593,
+        "rank": 1,
+        "token_id": 11
+      },
+      "generated_token_id": 11,
+      "match": true,
+      "position": 19,
+      "request_id": "qwen36-streamver-natural-latency-plan",
+      "top_logprob_entry": {
+        "decoded_token": null,
+        "logprob": -0.8480571508407593,
+        "rank": 1,
+        "token_id": 11
+      },
+      "top_logprobs": [
+        {
+          "decoded_token": null,
+          "logprob": -0.8480571508407593,
+          "rank": 1,
+          "token_id": 11
+        },
+        {
+          "decoded_token": null,
+          "logprob": -2.910557270050049,
+          "rank": 2,
+          "token_id": 318
+        },
+        {
+          "decoded_token": null,
+          "logprob": -3.035557270050049,
+          "rank": 3,
+          "token_id": 271
+        },
+        {
+          "decoded_token": null,
+          "logprob": -3.160557270050049,
+          "rank": 4,
+          "token_id": 4275
+        },
+        {
+          "decoded_token": null,
+          "logprob": -3.410557270050049,
+          "rank": 5,
+          "token_id": 13
+        },
+        {
+          "decoded_token": null,
+          "logprob": -3.660557270050049,
+          "rank": 6,
+          "token_id": 364
+        },
+        {
+          "decoded_token": null,
+          "logprob": -4.098057270050049,
+          "rank": 7,
+          "token_id": 1761
+        },
+        {
+          "decoded_token": null,
+          "logprob": -4.160557270050049,
+          "rank": 8,
+          "token_id": 314
+        },
+        {
+          "decoded_token": null,
+          "logprob": -4.410557270050049,
+          "rank": 9,
+          "token_id": 28707
+        },
+        {
+          "decoded_token": null,
+          "logprob": -4.660557270050049,
+          "rank": 10,
+          "token_id": 10121
+        },
+        {
+          "decoded_token": null,
+          "logprob": -4.785557270050049,
+          "rank": 11,
+          "token_id": 383
+        },
+        {
+          "decoded_token": null,
+          "logprob": -4.785557270050049,
+          "rank": 12,
+          "token_id": 248046
+        },
+        {
+          "decoded_token": null,
+          "logprob": -4.848057270050049,
+          "rank": 13,
+          "token_id": 4417
+        },
+        {
+          "decoded_token": null,
+          "logprob": -4.848057270050049,
+          "rank": 14,
+          "token_id": 12351
+        },
+        {
+          "decoded_token": null,
+          "logprob": -4.910557270050049,
+          "rank": 15,
+          "token_id": 29796
+        },
+        {
+          "decoded_token": null,
+          "logprob": -5.098057270050049,
+          "rank": 16,
+          "token_id": 321
+        },
+        {
+          "decoded_token": null,
+          "logprob": -5.098057270050049,
+          "rank": 17,
+          "token_id": 47785
+        },
+        {
+          "decoded_token": null,
+          "logprob": -5.285557270050049,
+          "rank": 18,
+          "token_id": 440
+        },
+        {
+          "decoded_token": null,
+          "logprob": -5.410557270050049,
+          "rank": 19,
+          "token_id": 198
+        },
+        {
+          "decoded_token": null,
+          "logprob": -5.473057270050049,
+          "rank": 20,
+          "token_id": 68777
+        }
+      ]
+    },
+    {
+      "case_name": "natural_latency_plan",
+      "elapsed_ms_since_case_start": 14803.25122200884,
+      "expected_logprob_entry": {
+        "decoded_token": null,
+        "logprob": -0.18776178359985352,
+        "rank": 1,
+        "token_id": 321
+      },
+      "expected_token_id": 321,
+      "generated_logprob_entry": {
+        "decoded_token": null,
+        "logprob": -0.18776178359985352,
+        "rank": 1,
+        "token_id": 321
+      },
+      "generated_token_id": 321,
+      "match": true,
+      "position": 20,
+      "request_id": "qwen36-streamver-natural-latency-plan",
+      "top_logprob_entry": {
+        "decoded_token": null,
+        "logprob": -0.18776178359985352,
+        "rank": 1,
+        "token_id": 321
+      },
+      "top_logprobs": [
+        {
+          "decoded_token": null,
+          "logprob": -0.18776178359985352,
+          "rank": 1,
+          "token_id": 321
+        },
+        {
+          "decoded_token": null,
+          "logprob": -2.4377617835998535,
+          "rank": 2,
+          "token_id": 11436
+        },
+        {
+          "decoded_token": null,
+          "logprob": -3.5002617835998535,
+          "rank": 3,
+          "token_id": 874
+        },
+        {
+          "decoded_token": null,
+          "logprob": -5.5002617835998535,
+          "rank": 4,
+          "token_id": 271
+        },
+        {
+          "decoded_token": null,
+          "logprob": -5.5627617835998535,
+          "rank": 5,
+          "token_id": 4779
+        },
+        {
+          "decoded_token": null,
+          "logprob": -5.9377617835998535,
+          "rank": 6,
+          "token_id": 4618
+        },
+        {
+          "decoded_token": null,
+          "logprob": -6.3752617835998535,
+          "rank": 7,
+          "token_id": 29541
+        },
+        {
+          "decoded_token": null,
+          "logprob": -6.6252617835998535,
+          "rank": 8,
+          "token_id": 198
+        },
+        {
+          "decoded_token": null,
+          "logprob": -6.6252617835998535,
+          "rank": 9,
+          "token_id": 29796
+        },
+        {
+          "decoded_token": null,
+          "logprob": -6.9377617835998535,
+          "rank": 10,
+          "token_id": 13016
+        },
+        {
+          "decoded_token": null,
+          "logprob": -7.3752617835998535,
+          "rank": 11,
+          "token_id": 248046
+        },
+        {
+          "decoded_token": null,
+          "logprob": -7.7502617835998535,
+          "rank": 12,
+          "token_id": 1543
+        },
+        {
+          "decoded_token": null,
+          "logprob": -7.7502617835998535,
+          "rank": 13,
+          "token_id": 21966
+        },
+        {
+          "decoded_token": null,
+          "logprob": -7.8752617835998535,
+          "rank": 14,
+          "token_id": 15579
+        },
+        {
+          "decoded_token": null,
+          "logprob": -7.9377617835998535,
+          "rank": 15,
+          "token_id": 4478
+        },
+        {
+          "decoded_token": null,
+          "logprob": -7.9377617835998535,
+          "rank": 16,
+          "token_id": 14588
+        },
+        {
+          "decoded_token": null,
+          "logprob": -7.9377617835998535,
+          "rank": 17,
+          "token_id": 37972
+        },
+        {
+          "decoded_token": null,
+          "logprob": -8.000261306762695,
+          "rank": 18,
+          "token_id": 2233
+        },
+        {
+          "decoded_token": null,
+          "logprob": -8.000261306762695,
+          "rank": 19,
+          "token_id": 9705
+        },
+        {
+          "decoded_token": null,
+          "logprob": -8.187761306762695,
+          "rank": 20,
+          "token_id": 4906
+        }
+      ]
+    },
+    {
+      "case_name": "natural_latency_plan",
+      "elapsed_ms_since_case_start": 14815.756098018028,
+      "expected_logprob_entry": {
+        "decoded_token": null,
+        "logprob": -0.04619058966636658,
+        "rank": 1,
+        "token_id": 874
+      },
+      "expected_token_id": 874,
+      "generated_logprob_entry": {
+        "decoded_token": null,
+        "logprob": -0.04619058966636658,
+        "rank": 1,
+        "token_id": 874
+      },
+      "generated_token_id": 874,
+      "match": true,
+      "position": 21,
+      "request_id": "qwen36-streamver-natural-latency-plan",
+      "top_logprob_entry": {
+        "decoded_token": null,
+        "logprob": -0.04619058966636658,
+        "rank": 1,
+        "token_id": 874
+      },
+      "top_logprobs": [
+        {
+          "decoded_token": null,
+          "logprob": -0.04619058966636658,
+          "rank": 1,
+          "token_id": 874
+        },
+        {
+          "decoded_token": null,
+          "logprob": -5.1711907386779785,
+          "rank": 2,
+          "token_id": 4131
+        },
+        {
+          "decoded_token": null,
+          "logprob": -5.1711907386779785,
+          "rank": 3,
+          "token_id": 6942
+        },
+        {
+          "decoded_token": null,
+          "logprob": -5.7961907386779785,
+          "rank": 4,
+          "token_id": 7077
+        },
+        {
+          "decoded_token": null,
+          "logprob": -5.9211907386779785,
+          "rank": 5,
+          "token_id": 4581
+        },
+        {
+          "decoded_token": null,
+          "logprob": -6.9836907386779785,
+          "rank": 6,
+          "token_id": 5486
+        },
+        {
+          "decoded_token": null,
+          "logprob": -6.9836907386779785,
+          "rank": 7,
+          "token_id": 69892
+        },
+        {
+          "decoded_token": null,
+          "logprob": -7.0461907386779785,
+          "rank": 8,
+          "token_id": 11436
+        },
+        {
+          "decoded_token": null,
+          "logprob": -7.0461907386779785,
+          "rank": 9,
+          "token_id": 15579
+        },
+        {
+          "decoded_token": null,
+          "logprob": -7.3586907386779785,
+          "rank": 10,
+          "token_id": 29541
+        },
+        {
+          "decoded_token": null,
+          "logprob": -7.4211907386779785,
+          "rank": 11,
+          "token_id": 279
+        },
+        {
+          "decoded_token": null,
+          "logprob": -7.4211907386779785,
+          "rank": 12,
+          "token_id": 13016
+        },
+        {
+          "decoded_token": null,
+          "logprob": -7.4836907386779785,
+          "rank": 13,
+          "token_id": 264
+        },
+        {
+          "decoded_token": null,
+          "logprob": -7.4836907386779785,
+          "rank": 14,
+          "token_id": 19720
+        },
+        {
+          "decoded_token": null,
+          "logprob": -7.6711907386779785,
+          "rank": 15,
+          "token_id": 10424
+        },
+        {
+          "decoded_token": null,
+          "logprob": -7.7336907386779785,
+          "rank": 16,
+          "token_id": 271
+        },
+        {
+          "decoded_token": null,
+          "logprob": -7.7961907386779785,
+          "rank": 17,
+          "token_id": 220
+        },
+        {
+          "decoded_token": null,
+          "logprob": -7.9211907386779785,
+          "rank": 18,
+          "token_id": 4574
+        },
+        {
+          "decoded_token": null,
+          "logprob": -7.9211907386779785,
+          "rank": 19,
+          "token_id": 10557
+        },
+        {
+          "decoded_token": null,
+          "logprob": -7.9836907386779785,
+          "rank": 20,
+          "token_id": 2233
+        }
+      ]
+    },
+    {
+      "case_name": "natural_latency_plan",
+      "elapsed_ms_since_case_start": 14828.606773982756,
+      "expected_logprob_entry": {
+        "decoded_token": null,
+        "logprob": -0.007409354206174612,
+        "rank": 1,
+        "token_id": 4131
+      },
+      "expected_token_id": 4131,
+      "generated_logprob_entry": {
+        "decoded_token": null,
+        "logprob": -0.007409354206174612,
+        "rank": 1,
+        "token_id": 4131
+      },
+      "generated_token_id": 4131,
+      "match": true,
+      "position": 22,
+      "request_id": "qwen36-streamver-natural-latency-plan",
+      "top_logprob_entry": {
+        "decoded_token": null,
+        "logprob": -0.007409354206174612,
+        "rank": 1,
+        "token_id": 4131
+      },
+      "top_logprobs": [
+        {
+          "decoded_token": null,
+          "logprob": -0.007409354206174612,
+          "rank": 1,
+          "token_id": 4131
+        },
+        {
+          "decoded_token": null,
+          "logprob": -5.507409572601318,
+          "rank": 2,
+          "token_id": 4557
+        },
+        {
+          "decoded_token": null,
+          "logprob": -6.382409572601318,
+          "rank": 3,
+          "token_id": 21408
+        },
+        {
+          "decoded_token": null,
+          "logprob": -8.31990909576416,
+          "rank": 4,
+          "token_id": 271
+        },
+        {
+          "decoded_token": null,
+          "logprob": -9.19490909576416,
+          "rank": 5,
+          "token_id": 1167
+        },
+        {
+          "decoded_token": null,
+          "logprob": -9.31990909576416,
+          "rank": 6,
+          "token_id": 50702
+        },
+        {
+          "decoded_token": null,
+          "logprob": -9.31990909576416,
+          "rank": 7,
+          "token_id": 58972
+        },
+        {
+          "decoded_token": null,
+          "logprob": -9.88240909576416,
+          "rank": 8,
+          "token_id": 17391
+        },
+        {
+          "decoded_token": null,
+          "logprob": -9.94490909576416,
+          "rank": 9,
+          "token_id": 12
+        },
+        {
+          "decoded_token": null,
+          "logprob": -9.94490909576416,
+          "rank": 10,
+          "token_id": 13016
+        },
+        {
+          "decoded_token": null,
+          "logprob": -10.19490909576416,
+          "rank": 11,
+          "token_id": 198
+        },
+        {
+          "decoded_token": null,
+          "logprob": -10.19490909576416,
+          "rank": 12,
+          "token_id": 15579
+        },
+        {
+          "decoded_token": null,
+          "logprob": -10.25740909576416,
+          "rank": 13,
+          "token_id": 5660
+        },
+        {
+          "decoded_token": null,
+          "logprob": -10.31990909576416,
+          "rank": 14,
+          "token_id": 10160
+        },
+        {
+          "decoded_token": null,
+          "logprob": -10.50740909576416,
+          "rank": 15,
+          "token_id": 73691
+        },
+        {
+          "decoded_token": null,
+          "logprob": -10.56990909576416,
+          "rank": 16,
+          "token_id": 2715
+        },
+        {
+          "decoded_token": null,
+          "logprob": -10.94490909576416,
+          "rank": 17,
+          "token_id": 9966
+        },
+        {
+          "decoded_token": null,
+          "logprob": -11.00740909576416,
+          "rank": 18,
+          "token_id": 4906
+        },
+        {
+          "decoded_token": null,
+          "logprob": -11.00740909576416,
+          "rank": 19,
+          "token_id": 63683
+        },
+        {
+          "decoded_token": null,
+          "logprob": -11.06990909576416,
+          "rank": 20,
+          "token_id": 5384
+        }
+      ]
+    },
+    {
+      "case_name": "natural_latency_plan",
+      "elapsed_ms_since_case_start": 14841.472296975553,
+      "expected_logprob_entry": {
+        "decoded_token": null,
+        "logprob": -0.0010008569806814194,
+        "rank": 1,
+        "token_id": 4557
+      },
+      "expected_token_id": 4557,
+      "generated_logprob_entry": {
+        "decoded_token": null,
+        "logprob": -0.0010008569806814194,
+        "rank": 1,
+        "token_id": 4557
+      },
+      "generated_token_id": 4557,
+      "match": true,
+      "position": 23,
+      "request_id": "qwen36-streamver-natural-latency-plan",
+      "top_logprob_entry": {
+        "decoded_token": null,
+        "logprob": -0.0010008569806814194,
+        "rank": 1,
+        "token_id": 4557
+      },
+      "top_logprobs": [
+        {
+          "decoded_token": null,
+          "logprob": -0.0010008569806814194,
+          "rank": 1,
+          "token_id": 4557
+        },
+        {
+          "decoded_token": null,
+          "logprob": -8.00100040435791,
+          "rank": 2,
+          "token_id": 50702
+        },
+        {
+          "decoded_token": null,
+          "logprob": -8.12600040435791,
+          "rank": 3,
+          "token_id": 271
+        },
+        {
+          "decoded_token": null,
+          "logprob": -10.12600040435791,
+          "rank": 4,
+          "token_id": 198
+        },
+        {
+          "decoded_token": null,
+          "logprob": -10.43850040435791,
+          "rank": 5,
+          "token_id": 17157
+        },
+        {
+          "decoded_token": null,
+          "logprob": -10.50100040435791,
+          "rank": 6,
+          "token_id": 73691
+        },
+        {
+          "decoded_token": null,
+          "logprob": -11.12600040435791,
+          "rank": 7,
+          "token_id": 5087
+        },
+        {
+          "decoded_token": null,
+          "logprob": -11.25100040435791,
+          "rank": 8,
+          "token_id": 23926
+        },
+        {
+          "decoded_token": null,
+          "logprob": -11.31350040435791,
+          "rank": 9,
+          "token_id": 10868
+        },
+        {
+          "decoded_token": null,
+          "logprob": -11.31350040435791,
+          "rank": 10,
+          "token_id": 29551
+        },
+        {
+          "decoded_token": null,
+          "logprob": -11.37600040435791,
+          "rank": 11,
+          "token_id": 248046
+        },
+        {
+          "decoded_token": null,
+          "logprob": -11.62600040435791,
+          "rank": 12,
+          "token_id": 5758
+        },
+        {
+          "decoded_token": null,
+          "logprob": -11.62600040435791,
+          "rank": 13,
+          "token_id": 9100
+        },
+        {
+          "decoded_token": null,
+          "logprob": -11.75100040435791,
+          "rank": 14,
+          "token_id": 36320
+        },
+        {
+          "decoded_token": null,
+          "logprob": -11.81350040435791,
+          "rank": 15,
+          "token_id": 29712
+        },
+        {
+          "decoded_token": null,
+          "logprob": -12.06350040435791,
+          "rank": 16,
+          "token_id": 13
+        },
+        {
+          "decoded_token": null,
+          "logprob": -12.12600040435791,
+          "rank": 17,
+          "token_id": 32524
+        },
+        {
+          "decoded_token": null,
+          "logprob": -12.25100040435791,
+          "rank": 18,
+          "token_id": 1358
+        },
+        {
+          "decoded_token": null,
+          "logprob": -12.25100040435791,
+          "rank": 19,
+          "token_id": 8457
+        },
+        {
+          "decoded_token": null,
+          "logprob": -12.31350040435791,
+          "rank": 20,
+          "token_id": 324
+        }
+      ]
+    },
+    {
+      "case_name": "natural_latency_plan",
+      "elapsed_ms_since_case_start": 14855.06276995875,
+      "expected_logprob_entry": {
+        "decoded_token": null,
+        "logprob": -0.01285868976265192,
+        "rank": 1,
+        "token_id": 13
+      },
+      "expected_token_id": 13,
+      "generated_logprob_entry": {
+        "decoded_token": null,
+        "logprob": -0.01285868976265192,
+        "rank": 1,
+        "token_id": 13
+      },
+      "generated_token_id": 13,
+      "match": true,
+      "position": 24,
+      "request_id": "qwen36-streamver-natural-latency-plan",
+      "top_logprob_entry": {
+        "decoded_token": null,
+        "logprob": -0.01285868976265192,
+        "rank": 1,
+        "token_id": 13
+      },
+      "top_logprobs": [
+        {
+          "decoded_token": null,
+          "logprob": -0.01285868976265192,
+          "rank": 1,
+          "token_id": 13
+        },
+        {
+          "decoded_token": null,
+          "logprob": -5.137858867645264,
+          "rank": 2,
+          "token_id": 271
+        },
+        {
+          "decoded_token": null,
+          "logprob": -6.512858867645264,
+          "rank": 3,
+          "token_id": 1149
+        },
+        {
+          "decoded_token": null,
+          "logprob": -6.887858867645264,
+          "rank": 4,
+          "token_id": 198
+        },
+        {
+          "decoded_token": null,
+          "logprob": -7.700358867645264,
+          "rank": 5,
+          "token_id": 318
+        },
+        {
+          "decoded_token": null,
+          "logprob": -8.012858390808105,
+          "rank": 6,
+          "token_id": 11
+        },
+        {
+          "decoded_token": null,
+          "logprob": -8.325358390808105,
+          "rank": 7,
+          "token_id": 248046
+        },
+        {
+          "decoded_token": null,
+          "logprob": -8.450358390808105,
+          "rank": 8,
+          "token_id": 159029
+        },
+        {
+          "decoded_token": null,
+          "logprob": -8.637858390808105,
+          "rank": 9,
+          "token_id": 440
+        },
+        {
+          "decoded_token": null,
+          "logprob": -8.700358390808105,
+          "rank": 10,
+          "token_id": 364
+        },
+        {
+          "decoded_token": null,
+          "logprob": -8.950358390808105,
+          "rank": 11,
+          "token_id": 874
+        },
+        {
+          "decoded_token": null,
+          "logprob": -9.262858390808105,
+          "rank": 12,
+          "token_id": 6889
+        },
+        {
+          "decoded_token": null,
+          "logprob": -9.262858390808105,
+          "rank": 13,
+          "token_id": 16274
+        },
+        {
+          "decoded_token": null,
+          "logprob": -9.575358390808105,
+          "rank": 14,
+          "token_id": 303
+        },
+        {
+          "decoded_token": null,
+          "logprob": -9.575358390808105,
+          "rank": 15,
+          "token_id": 1076
+        },
+        {
+          "decoded_token": null,
+          "logprob": -9.700358390808105,
+          "rank": 16,
+          "token_id": 383
+        },
+        {
+          "decoded_token": null,
+          "logprob": -9.700358390808105,
+          "rank": 17,
+          "token_id": 486
+        },
+        {
+          "decoded_token": null,
+          "logprob": -9.762858390808105,
+          "rank": 18,
+          "token_id": 506
+        },
+        {
+          "decoded_token": null,
+          "logprob": -9.887858390808105,
+          "rank": 19,
+          "token_id": 494
+        },
+        {
+          "decoded_token": null,
+          "logprob": -10.012858390808105,
+          "rank": 20,
+          "token_id": 1358
+        }
+      ]
+    },
+    {
+      "case_name": "natural_latency_plan",
+      "elapsed_ms_since_case_start": 14869.990611914545,
+      "expected_logprob_entry": {
+        "decoded_token": null,
+        "logprob": -0.797245442867279,
+        "rank": 2,
+        "token_id": 198
+      },
+      "expected_token_id": 198,
+      "generated_logprob_entry": {
+        "decoded_token": null,
+        "logprob": -0.672245442867279,
+        "rank": 1,
+        "token_id": 271
+      },
+      "generated_token_id": 271,
+      "match": false,
+      "position": 25,
+      "request_id": "qwen36-streamver-natural-latency-plan",
+      "top_logprob_entry": {
+        "decoded_token": null,
+        "logprob": -0.672245442867279,
+        "rank": 1,
+        "token_id": 271
+      },
+      "top_logprobs": [
+        {
+          "decoded_token": null,
+          "logprob": -0.672245442867279,
+          "rank": 1,
+          "token_id": 271
+        },
+        {
+          "decoded_token": null,
+          "logprob": -0.797245442867279,
+          "rank": 2,
+          "token_id": 198
+        },
+        {
+          "decoded_token": null,
+          "logprob": -3.547245502471924,
+          "rank": 3,
+          "token_id": 14569
+        },
+        {
+          "decoded_token": null,
+          "logprob": -6.359745502471924,
+          "rank": 4,
+          "token_id": 24985
+        },
+        {
+          "decoded_token": null,
+          "logprob": -6.547245502471924,
+          "rank": 5,
+          "token_id": 1358
+        },
+        {
+          "decoded_token": null,
+          "logprob": -6.859745502471924,
+          "rank": 6,
+          "token_id": 248046
+        },
+        {
+          "decoded_token": null,
+          "logprob": -7.297245502471924,
+          "rank": 7,
+          "token_id": 695
+        },
+        {
+          "decoded_token": null,
+          "logprob": -7.609745502471924,
+          "rank": 8,
+          "token_id": 220
+        },
+        {
+          "decoded_token": null,
+          "logprob": -8.109745025634766,
+          "rank": 9,
+          "token_id": 561
+        },
+        {
+          "decoded_token": null,
+          "logprob": -8.359745025634766,
+          "rank": 10,
+          "token_id": 2233
+        },
+        {
+          "decoded_token": null,
+          "logprob": -8.672245025634766,
+          "rank": 11,
+          "token_id": 318
+        },
+        {
+          "decoded_token": null,
+          "logprob": -8.672245025634766,
+          "rank": 12,
+          "token_id": 11000
+        },
+        {
+          "decoded_token": null,
+          "logprob": -8.797245025634766,
+          "rank": 13,
+          "token_id": 6817
+        },
+        {
+          "decoded_token": null,
+          "logprob": -8.859745025634766,
+          "rank": 14,
+          "token_id": 13262
+        },
+        {
+          "decoded_token": null,
+          "logprob": -9.047245025634766,
+          "rank": 15,
+          "token_id": 2962
+        },
+        {
+          "decoded_token": null,
+          "logprob": -9.109745025634766,
+          "rank": 16,
+          "token_id": 2972
+        },
+        {
+          "decoded_token": null,
+          "logprob": -9.234745025634766,
+          "rank": 17,
+          "token_id": 22791
+        },
+        {
+          "decoded_token": null,
+          "logprob": -9.234745025634766,
+          "rank": 18,
+          "token_id": 38256
+        },
+        {
+          "decoded_token": null,
+          "logprob": -9.297245025634766,
+          "rank": 19,
+          "token_id": 1061
+        },
+        {
+          "decoded_token": null,
+          "logprob": -9.297245025634766,
+          "rank": 20,
+          "token_id": 78224
+        }
+      ]
+    }
+  ],
+  "seed": 20260611,
+  "summary": [
+    {
+      "all_matched": false,
+      "case_name": "natural_latency_plan",
+      "checked_tokens": 26,
+      "elapsed_ms_since_case_start": {
+        "count": 26,
+        "max": 14869.990611914545,
+        "mean": 14523.929509307402,
+        "median": 14708.480974950362,
+        "min": 9756.615231977776
+      },
+      "elapsed_s": 14.870064619928598,
+      "first_mismatch": {
+        "case_name": "natural_latency_plan",
+        "elapsed_ms_since_case_start": 14869.990611914545,
+        "expected_logprob_entry": {
+          "decoded_token": null,
+          "logprob": -0.797245442867279,
+          "rank": 2,
+          "token_id": 198
+        },
+        "expected_token_id": 198,
+        "generated_logprob_entry": {
+          "decoded_token": null,
+          "logprob": -0.672245442867279,
+          "rank": 1,
+          "token_id": 271
+        },
+        "generated_token_id": 271,
+        "match": false,
+        "position": 25,
+        "request_id": "qwen36-streamver-natural-latency-plan",
+        "top_logprob_entry": {
+          "decoded_token": null,
+          "logprob": -0.672245442867279,
+          "rank": 1,
+          "token_id": 271
+        },
+        "top_logprobs": [
+          {
+            "decoded_token": null,
+            "logprob": -0.672245442867279,
+            "rank": 1,
+            "token_id": 271
+          },
+          {
+            "decoded_token": null,
+            "logprob": -0.797245442867279,
+            "rank": 2,
+            "token_id": 198
+          },
+          {
+            "decoded_token": null,
+            "logprob": -3.547245502471924,
+            "rank": 3,
+            "token_id": 14569
+          },
+          {
+            "decoded_token": null,
+            "logprob": -6.359745502471924,
+            "rank": 4,
+            "token_id": 24985
+          },
+          {
+            "decoded_token": null,
+            "logprob": -6.547245502471924,
+            "rank": 5,
+            "token_id": 1358
+          },
+          {
+            "decoded_token": null,
+            "logprob": -6.859745502471924,
+            "rank": 6,
+            "token_id": 248046
+          },
+          {
+            "decoded_token": null,
+            "logprob": -7.297245502471924,
+            "rank": 7,
+            "token_id": 695
+          },
+          {
+            "decoded_token": null,
+            "logprob": -7.609745502471924,
+            "rank": 8,
+            "token_id": 220
+          },
+          {
+            "decoded_token": null,
+            "logprob": -8.109745025634766,
+            "rank": 9,
+            "token_id": 561
+          },
+          {
+            "decoded_token": null,
+            "logprob": -8.359745025634766,
+            "rank": 10,
+            "token_id": 2233
+          },
+          {
+            "decoded_token": null,
+            "logprob": -8.672245025634766,
+            "rank": 11,
+            "token_id": 318
+          },
+          {
+            "decoded_token": null,
+            "logprob": -8.672245025634766,
+            "rank": 12,
+            "token_id": 11000
+          },
+          {
+            "decoded_token": null,
+            "logprob": -8.797245025634766,
+            "rank": 13,
+            "token_id": 6817
+          },
+          {
+            "decoded_token": null,
+            "logprob": -8.859745025634766,
+            "rank": 14,
+            "token_id": 13262
+          },
+          {
+            "decoded_token": null,
+            "logprob": -9.047245025634766,
+            "rank": 15,
+            "token_id": 2962
+          },
+          {
+            "decoded_token": null,
+            "logprob": -9.109745025634766,
+            "rank": 16,
+            "token_id": 2972
+          },
+          {
+            "decoded_token": null,
+            "logprob": -9.234745025634766,
+            "rank": 17,
+            "token_id": 22791
+          },
+          {
+            "decoded_token": null,
+            "logprob": -9.234745025634766,
+            "rank": 18,
+            "token_id": 38256
+          },
+          {
+            "decoded_token": null,
+            "logprob": -9.297245025634766,
+            "rank": 19,
+            "token_id": 1061
+          },
+          {
+            "decoded_token": null,
+            "logprob": -9.297245025634766,
+            "rank": 20,
+            "token_id": 78224
+          }
+        ]
+      },
+      "matched_tokens": 25,
+      "p90_elapsed_ms_since_case_start": 14835.039535479154,
+      "seed": 20260611,
+      "streaming_session_tok_s": 1.7484792880560356
+    }
+  ]
+}

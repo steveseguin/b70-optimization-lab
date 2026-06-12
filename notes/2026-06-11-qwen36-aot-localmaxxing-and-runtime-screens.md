@@ -12237,3 +12237,57 @@ Additional things to try:
       repeat64, and a short reliability loop are all captured.
     - Keep the exact command snippet and notes clean enough for others with
       B70 cards to reproduce without private paths or API keys.
+
+## Mismatch Logprob Microscope
+
+Added `scripts/probe-qwen36-mismatch-logprob-microscope.py` and extended
+`scripts/probe-qwen36-streaming-input-verifier.py` with `--logprobs` so the
+streaming-input sidecar drift can be inspected at the exact divergent token.
+
+Artifacts:
+
+- `data/qwen36-quark-int8-tp4-accepted-logprobs-after-streamver-p512o32-20260611j.json`
+- `data/qwen36-quark-int8-tp4-streaming-input-verifier-logprobs-current-p512o27-20260611j.json`
+- `data/qwen36-quark-int8-tp4-streaming-input-verifier-logprobs-current-p512o27-20260611j.md`
+- `data/qwen36-quark-int8-tp4-mismatch-logprob-microscope-pos25-20260611j.json`
+- `data/qwen36-quark-int8-tp4-mismatch-logprob-microscope-pos25-20260611j.md`
+
+Result at `natural_latency_plan`, output position `25`:
+
+| Probe | Top token | Expected `198` (`"\n"`) | Streaming `271` (`"\n\n"`) |
+| --- | --- | --- | --- |
+| streaming-input | `271` | rank 2, logprob `-0.797245` | rank 1, logprob `-0.672245` |
+| accepted decode | `198` | rank 1, logprob `-0.737163` | rank 2, logprob `-0.737163` |
+| rolling re-prefill next-token | `271` | rank 2, logprob `-0.936827` | rank 1, logprob `-0.561827` |
+| prompt-logprob refill | `198` | rank 1, logprob `-0.720617` | rank 2, logprob `-0.720617` |
+
+Interpretation:
+
+- The accepted endpoint still exactly matches the first 32 baseline tokens when
+  asked for only 32 tokens, so the live restored service remains aligned with
+  the accepted trace for this fixture.
+- The mismatch token is a near/tie newline branch, but the important detail is
+  directional: accepted decode and prompt-logprob scoring place `198` and `271`
+  on an exact tie with `198` first, while streaming-input and rolling re-prefill
+  rank `271` above `198`.
+- That makes external replay sidecars too fragile for exact-token verification.
+  They can be useful diagnostics, but they cannot safely accept speculative
+  tokens unless the final verifier runs from the accepted request's resident
+  state.
+- The next speed architecture should be in-engine copy-on-write request/KV
+  forking: keep the accepted request state authoritative, fork it to score draft
+  tokens, then discard the fork. This preserves final-model quality better than
+  trying to recreate the same state in a second request.
+
+Concrete next steps:
+
+1. Inspect vLLM V1 request/KV state ownership for the accepted request path:
+   scheduler request object, block table/KV cache handles, and sequence output
+   state.
+2. Identify the smallest fork point that can score one candidate token without
+   committing it to the public stream.
+3. Build a k=1 oracle candidate first: the draft token is the known accepted
+   baseline token, and the forked verifier must accept it without changing the
+   parent request output.
+4. Only after k=1 oracle parity passes should MTP/DFlash/ngram proposer work
+   resume. The proposer is secondary; preserving verifier state is the gate.
