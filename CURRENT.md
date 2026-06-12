@@ -6,6 +6,50 @@ Date: 2026-06-12
 
 2026-06-12 notes update:
 
+- Added a "Larger Bet Addendum 20260612cd" to
+  `notes/2026-06-12-qwen36-next-bigger-bets.md` after a fresh Localmaxxing and
+  Intel grouped-GEMM/XPU scan. The public exact-model B70/vLLM row remains
+  `99.428358 tok/s`, so this is backlog, not a win. New bigger bets now tracked:
+  inside-`_sample` timing, exact vocab-sharded greedy argmax, final-logits
+  fingerprint gates, provider bakeoff on real Qwen route windows, XPU-friendly
+  W8A8 expert retile/repack cache, all-rank route-skew timelines, static c1
+  runner ceiling, verifier-owned speculation only after state parity,
+  whole-token Level Zero replay, and an upstream B70 challenge bundle. New
+  public snapshot artifacts:
+  `data/localmaxxing-qwen36-quark-w8a8-int8-exact-20260612.json` and
+  `data/localmaxxing-qwen36-30b-class-leaderboard-20260612.json`.
+
+- Added async device timeline and staged sync attribution for the output-event
+  wait. This was diagnostic-only and slowed decode to `~76.6-77.4 tok/s`, so
+  none of these speed numbers are candidates. The attribution is useful:
+  `device_default_before_copy_to_ready_ms` was only about `0.0077 ms`, but the
+  host still waited multi-ms. The sync split showed `default_ready_sync_ms`
+  at `5.933 ms` mean and `copy_after_default_sync_ms` at `0.021 ms`, proving
+  the D2H copy is not the wait. The stage split then showed the wait is already
+  present at sampler end: `stage_sample_end_sync_ms` averaged `5.007 ms`, while
+  state update (`0.026 ms`), bookkeeping (`0.0088 ms`), pre-async-wrap
+  (`0.0033 ms`), default marker (`0.0025 ms`), and copy-after-default
+  (`0.0107 ms`) were all tiny. Decision: stop output-materialization work for
+  the `2x` target. The remaining `~5 ms` target is model tail, logits, sampler,
+  graph/queue ordering, TP collectives, or rank imbalance. Accepted TP4 was
+  restored afterward and passed exact provenance sentinels plus the short
+  no-thinking quality smoke. New artifacts:
+  `patches/vllm-qwen36-async-device-timeline-20260612cc.diff`,
+  `data/qwen36-quark-int8-tp4-async-device-timeline-20260612ca.log`,
+  `data/qwen36-quark-int8-tp4-async-device-timeline-p512o384-metrics-20260612ca.json`,
+  `data/qwen36-quark-int8-tp4-async-device-timeline-summary-20260612ca.json`,
+  `data/qwen36-quark-int8-tp4-async-device-syncsplit-20260612cb.log`,
+  `data/qwen36-quark-int8-tp4-async-device-syncsplit-p512o256-metrics-20260612cb.json`,
+  `data/qwen36-quark-int8-tp4-async-device-syncsplit-summary-20260612cb.json`,
+  `data/qwen36-quark-int8-tp4-async-device-stagesplit-20260612cc.log`,
+  `data/qwen36-quark-int8-tp4-async-device-stagesplit-p512o192-metrics-20260612cc.json`,
+  `data/qwen36-quark-int8-tp4-async-device-stagesplit-summary-20260612cc.json`,
+  `data/qwen36-quark-int8-tp4-async-device-stagesplit-summary-20260612cc.md`,
+  `data/qwen36-quark-int8-tp4-accepted-restored-after-async-device-stagesplit-20260612cc.log`,
+  `data/qwen36-quark-int8-tp4-accepted-provenance-after-async-device-stagesplit-20260612cc.json`,
+  and
+  `data/qwen36-quark-int8-tp4-accepted-quality-after-async-device-stagesplit-nothink-smoke-20260612cc.json`.
+
 - Added and ran worker/async output timeline correlation for the current
   accepted TP4 backend. The p512/o384/c1 timing sanity stayed at baseline:
   `100.009 tok/s` corrected, `9.975 ms` vLLM decode/token, and `10.001 ms`

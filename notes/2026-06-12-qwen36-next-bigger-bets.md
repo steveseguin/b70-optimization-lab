@@ -627,6 +627,187 @@ Next concrete measurement:
 3. Keep result-packing/mailbox work pruned unless this device timeline shows a
    new host-side dependency.
 
+## Async Device Timeline And Stage Split 20260612ca-cc
+
+Followed the worker/output timeline with three diagnostic-only event probes:
+
+1. `20260612ca`: device timing events around sampler/copy/default stream.
+2. `20260612cb`: host sync split between the default-stream marker and the
+   copy-ready event.
+3. `20260612cc`: host sync split across sampler end, state update,
+   bookkeeping, pre-async-wrap, default-before-copy, and copy-ready.
+
+Patch:
+
+- `patches/vllm-qwen36-async-device-timeline-20260612cc.diff`
+
+Important caveat:
+
+- These probes are not speed candidates. XPU timing events and staged host
+  synchronizes slowed decode to about `76.6-77.4 tok/s` corrected. Use them
+  only for attribution.
+
+Key results:
+
+- Device elapsed event timings were tiny:
+  - `device_default_before_copy_to_ready_ms`: about `0.0077 ms`.
+  - `device_copy_stream_entry_to_ready_ms`: about `0.0065 ms`.
+  - `device_sample_start_to_copy_ready_ms`: about `0.064-0.065 ms`.
+- Host sync remained multi-ms:
+  - ca `sync_ms`: `4.962 ms` mean.
+  - cb `sync_ms`: `5.957 ms` mean.
+  - cc `sync_ms`: `5.066 ms` mean.
+- cb showed the wait is default-stream readiness, not copy:
+  - `default_ready_sync_ms`: `5.933 ms` mean.
+  - `copy_after_default_sync_ms`: `0.021 ms` mean.
+- cc showed the wait is already present at sampler end:
+  - `stage_sample_end_sync_ms`: `5.007 ms` mean.
+  - `stage_state_update_sync_ms`: `0.026 ms` mean.
+  - `stage_bookkeeping_sync_ms`: `0.0088 ms` mean.
+  - `stage_pre_async_wrap_sync_ms`: `0.0033 ms` mean.
+  - `default_ready_sync_ms`: `0.0025 ms` mean.
+  - `copy_after_default_sync_ms`: `0.0107 ms` mean.
+
+Interpretation:
+
+- The host returns from `_sample(...)` before the XPU/default-stream work
+  needed for the token has completed. The async output event is where that
+  unresolved device work becomes visible.
+- Post-sample state update, bookkeeping, async-wrap setup, D2H copy, token list
+  conversion, response tuple packing, and response-MQ enqueue are all ruled out
+  as multi-ms c1 bottlenecks.
+- Device elapsed event values alone are insufficient for host-latency
+  attribution because they exclude time spent waiting for previously queued
+  default-stream work to become ready.
+
+New pruning rule:
+
+- Stop output-materialization work for the `2x` target unless a later trace
+  contradicts this result. The remaining `~5 ms` target is model tail, logits,
+  sampler, graph/queue ordering, TP collectives, or rank imbalance.
+
+Artifacts:
+
+- `data/qwen36-quark-int8-tp4-async-device-timeline-20260612ca.log`
+- `data/qwen36-quark-int8-tp4-async-device-timeline-p512o384-metrics-20260612ca.json`
+- `data/qwen36-quark-int8-tp4-async-device-timeline-summary-20260612ca.json`
+- `data/qwen36-quark-int8-tp4-async-device-syncsplit-20260612cb.log`
+- `data/qwen36-quark-int8-tp4-async-device-syncsplit-p512o256-metrics-20260612cb.json`
+- `data/qwen36-quark-int8-tp4-async-device-syncsplit-summary-20260612cb.json`
+- `data/qwen36-quark-int8-tp4-async-device-stagesplit-20260612cc.log`
+- `data/qwen36-quark-int8-tp4-async-device-stagesplit-p512o192-metrics-20260612cc.json`
+- `data/qwen36-quark-int8-tp4-async-device-stagesplit-summary-20260612cc.json`
+- `data/qwen36-quark-int8-tp4-async-device-stagesplit-summary-20260612cc.md`
+- `data/qwen36-quark-int8-tp4-accepted-restored-after-async-device-stagesplit-20260612cc.log`
+- `data/qwen36-quark-int8-tp4-accepted-provenance-after-async-device-stagesplit-20260612cc.json`
+- `data/qwen36-quark-int8-tp4-accepted-quality-after-async-device-stagesplit-nothink-smoke-20260612cc.json`
+
+Next concrete measurement:
+
+1. Split `_sample(...)` and the preceding model/logits tail with staged host
+   synchronizes or lower-overhead queue markers.
+2. Attribute the remaining `~5 ms` to logits processor, sampler kernels,
+   graph-captured model tail, TP collectives, or rank imbalance.
+3. Then decide between sampler/logits surgery, TP/rank placement, or MoE/graph
+   kernel work. Do not start another output-copy branch.
+
+## Larger Bet Addendum 20260612cd
+
+Added after the async device stage split and a fresh public-source scan. The
+headline is unchanged: no new promoted speed win. The value of this pass is
+turning the `stage_sample_end_sync_ms ~= 5 ms` finding into bigger experiments
+that could plausibly move c1 decode without changing model quality.
+
+Fresh external/context signals:
+
+- Localmaxxing exact-model query still has one approved public row for
+  `nameistoken/Qwen3.6-35B-A3B-Quark-W8A8-INT8`: `99.428358 tok/s`,
+  `76.454 ms` TTFT, `196.325` total tok/s. This remains the public exact
+  checkpoint/B70/vLLM reference.
+- Broader Qwen 30B-class leaderboard rows above `200 tok/s` are mostly not
+  directly comparable because they use NVFP4, MTP/DFlash, CUDA/Blackwell, lower
+  precision, shorter context, or different engines. Use them as architecture
+  clues only.
+- Intel Triton/XPU grouped-GEMM issues are still active. Issue #5918 reports a
+  large gap between pointer-based grouped GEMM and contiguous-memory variants,
+  with oneDNN and contiguous layouts showing much higher ceilings. Issue #6861
+  tracks poor grouped-GEMM performance as a current performance task.
+- Intel issue #6840 explicitly recommends comparing Triton, oneDNN, and
+  SYCL-TLA baselines for GEMM-style work. For us, that argues for a provider
+  bakeoff using real Qwen route windows, not another isolated launch flag.
+
+New artifacts:
+
+- `data/localmaxxing-qwen36-quark-w8a8-int8-exact-20260612.json`
+- `data/localmaxxing-qwen36-30b-class-leaderboard-20260612.json`
+
+Near-term measurements to add:
+
+1. **Inside `_sample(...)` stage split.**
+   The current split says the wait exists by sampler return. Next split logits
+   processor, sampler kernel launch, sampler postprocess, and any final-logits
+   sync inside `_sample`. Use low-repeat diagnostics only.
+
+2. **Vocab-sharded greedy argmax proof.**
+   For temperature `0`, no logprobs, and no penalties, compute per-rank top-1
+   logits and all-reduce only `(value, token_id, tie_break)` instead of
+   materializing/gathering the full vocab path. This can be exact if tie
+   behavior matches. It is one of the few sampler/logits ideas with real
+   multi-ms upside and no model-quality trade.
+
+3. **Final-logits fingerprint harness.**
+   Before changing sampler/logits, record deterministic hashes of full logits,
+   per-rank top-k, final sampled token, and tie order for a small prompt suite.
+   This becomes the no-quality-loss gate for greedy fast paths.
+
+4. **Provider bakeoff on real MoE route windows.**
+   Build a harness that feeds captured Qwen route windows into current
+   `vllm-xpu-kernels`, oneDNN grouped matmul/BRGEMM where possible, SYCL-TLA,
+   and Triton variants. Score exact output diff plus us/token. Use the current
+   route histograms, not synthetic balanced groups.
+
+5. **Retile/repack cache for W8A8 experts.**
+   Keep the exact Quark INT8 values and scales, but store additional
+   XPU-friendly physical layouts for hot experts. This spends spare VRAM for
+   lower gather/descriptor overhead and should be quality-neutral if the math
+   path is byte-equivalent.
+
+6. **All-rank route-skew timeline.**
+   Pair the sampler-end wait with active expert IDs, per-rank active rows, and
+   collective spans. If the `~5 ms` wait follows a slow rank or route class,
+   topology/layout work beats sampler surgery.
+
+7. **One-token static runner ceiling.**
+   A minimal in-process c1 loop with static buffers and no OpenAI serving path
+   still matters. It separates vLLM scheduler/executor cost from model/kernel
+   cost. Exact token parity is mandatory before any speed interpretation.
+
+8. **Verifier-preserving speculation lane, but only after state proof.**
+   Public fast rows keep pointing at MTP/DFlash-style acceptance. For this
+   checkpoint, the only acceptable version is target-owned temporary KV/GDN/
+   scheduler state with exact commit/rollback. Do not benchmark more speculation
+   until `k=1` exact parity is fixed.
+
+9. **Whole-token Level Zero replay experiment.**
+   If `_sample` and model tail are mostly queue/graph-bound rather than raw
+   kernel-bound, prototype a fixed decode-bucket command-list replay with
+   patchable token/KV addresses. The target is fewer host submissions and fewer
+   default-stream visibility points.
+
+10. **B70 upstream challenge bundle.**
+    Package the exact model, public Localmaxxing row, async stage-split logs,
+    route-window fixtures, provider bakeoff harness, and `5 ms/token` budget for
+    Intel/vLLM maintainers. The grouped-GEMM issue history suggests external
+    kernel work may be needed for a real `2x`.
+
+Biggest plausible no-quality-loss paths, ranked:
+
+1. Exact sampler/logits fast path for greedy no-logprobs requests.
+2. Provider/layout replacement for real Qwen W8A8 route windows.
+3. Hybrid route-aware TP/EP plus hot-expert physical replication.
+4. Fixed-shape c1 runner or Level Zero replay if host/graph boundaries dominate.
+5. Verifier-owned speculation after state parity is proven.
+
 ## Bolder Opportunity Refresh 20260612bq
 
 Added after the boundary timing discussion and the latest Localmaxxing refresh.
