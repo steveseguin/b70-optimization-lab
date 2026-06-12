@@ -77,6 +77,15 @@ Current Qwen3.6 INT8 direction:
     transactional scratch verification, KV page-table COW, a sidecar proposer
     protocol, lower-context latency lanes, route-aware COW/MoE capture, and
     upstreamable `vllm-xpu-kernels` repros.
+13. After the worker-state trace, the latest backlog is under "Bigger Bolder
+    Ideas After Worker Trace And Fresh Public Scan" in the same Qwen3.6 note.
+    The highest-upside items are now: no-bonus/post-reconcile COW diagnostics,
+    scratch KV page-table verification, verifier-preserving DFlash/MTP sidecar,
+    speculative-window pipeline-parallel latency lane, hybrid EP/TP memory
+    model, real-route grouped-GEMM autotuning, persistent MoE layerlet kernels,
+    tile-native 8-bit repack cache, isolated newer `vllm-xpu-kernels` bakeoff,
+    and strict 8-bit engine bakeoff. None of these relax the no-Qwen3.5,
+    no-4-bit, no-quality-loss constraint.
 
 ## 2026-05-10 MiniMax AutoRound Addendum
 

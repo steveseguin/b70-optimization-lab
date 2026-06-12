@@ -13413,3 +13413,171 @@ Concrete next implementation target:
 3. If either diagnostic improves exact parity without breaking the known-drift
    gate shape, use the worker trace fields as the acceptance contract for a
    real scratch/KV COW prototype.
+
+## Bigger Bolder Ideas After Worker Trace And Fresh Public Scan
+
+Added after the oracle `k=1` worker-state trace and a fresh public scan of
+Localmaxxing, vLLM XPU, Intel grouped-GEMM, and B70 benchmark notes.
+
+The worker trace changes the speculative-decoding diagnosis: this no longer
+looks like a simple worker token-buffer write offset. The active problem is
+more likely that speculative verification mutates logical/KV/request state in
+places that need to be transactional. The performance scan changes the broader
+strategy: public `>200 tok/s` Qwen3.6-class single-user rows are coming from
+speculation or heavily specialized kernels, not from simple serving flags.
+
+Immediate diagnostics to add:
+
+1. **No-bonus-after-full-accept diagnostic.**
+   - Env-gate a mode that accepts draft tokens but suppresses the verifier
+     bonus token after a full accept.
+   - Goal: isolate the `verifier_bonus_after_full_accept` mismatch class
+     without pretending this is a production speed path.
+   - Pass condition: the known-drift fixture changes in the expected way, not
+     by hiding speculation entirely.
+
+2. **Post-reconcile computed-token commit diagnostic.**
+   - Env-gate a scheduler/worker reconciliation path that commits
+     `num_computed_tokens` only after accept/reject output reconciliation.
+   - For the oracle fixture, explicitly validate final parent state against
+     `num_tokens - 1` after output commit.
+   - Goal: confirm whether parent logical cursor drift, not token-buffer
+     placement, causes the replacement-after-reject mismatch.
+
+3. **Scratch KV page-table verifier prototype.**
+   - Instead of mutating the parent request's active KV blocks during draft
+     verification, verify draft tokens against scratch block mappings.
+   - Promote accepted blocks/tokens only after reconciliation; discard rejected
+     branches without touching parent state.
+   - This is the real COW direction if the two diagnostics above explain the
+     known drift.
+
+4. **Speculation acceptance ledger.**
+   - For each candidate, record draft tokens, accepted tokens, rejected tokens,
+     bonus tokens, exact mismatch roles, and corrected tok/s.
+   - Reject candidates whose speedup comes from bad accepted loops, hidden
+     eager/no-graph output drift, or prompt-specific benchmark overfitting.
+
+Bigger no-quality-loss bets:
+
+1. **Verifier-preserving DFlash/MTP sidecar.**
+   - Use a Qwen3.6-family MTP or DFlash proposer only as a draft source.
+   - The current Quark W8A8 INT8 model remains the final verifier, so output
+     quality is bounded by the accepted model rather than by the draft model.
+   - Measure whether sidecar draft latency plus verifier work beats the current
+     token-by-token path. If not, abandon quickly.
+
+2. **Pipeline-parallel latency lane fed by speculative windows.**
+   - Pure PP is usually bad for one-token decode, but multi-token speculative
+     windows could create enough in-flight work to reduce TP4 collective
+     overhead.
+   - Prototype as a separate latency lane: fewer tensor-parallel collectives,
+     more pipeline bubbles hidden by accepted draft windows.
+   - This is high risk, but it attacks the structural issue that TP4 pays many
+     tiny collectives per generated token.
+
+3. **Hybrid EP/TP memory model before implementation.**
+   - Build the exact memory ledger for partitioned experts, replicated shared
+     modules, 32K KV, graph overhead, and peak fragmentation on 4x32GB.
+   - Only implement if the math says a MoE-aware layout can fit with useful
+     headroom.
+   - The aim is to stop sharding every expert/dense boundary when single-token
+     latency is dominated by small collectives.
+
+4. **Route-window autotuner for `vllm-xpu-kernels`.**
+   - Feed real route captures, not synthetic uniform routing, into grouped-GEMM
+     tuning.
+   - Tune by layer/window/prompt class because the existing hot-pack screens
+     proved a blind global expert remap can help one shape and hurt another.
+   - Output should be an upstreamable grouped-GEMM repro with real long-tail
+     expert histograms.
+
+5. **Persistent MoE layerlet kernel.**
+   - Prototype a persistent decode path for the exact Qwen3.6 W8A8 MoE
+     sequence: route metadata, quant, grouped GEMM, activation, second grouped
+     GEMM, gather/finalize.
+   - The rejected Python custom-op proved boundary movement alone is not
+     enough; the candidate needs fewer launches and less intermediate traffic.
+   - Start outside the server and require parity against the current staged
+     path before vLLM integration.
+
+6. **Tile-native 8-bit repack cache.**
+   - Check whether Quark W8A8 weights enter the XPU kernels in a B70/XMX-native
+     layout.
+   - If not, repack once at model-load time, checksum the source and packed
+     layouts, and cache the packed form on disk.
+   - This is still the same quantization and same mathematical weights; it is a
+     layout optimization only.
+
+7. **Decode-only shape-locked runner.**
+   - Build a direct runner with fixed batch=1 shapes, preallocated buffers,
+     stable graph replay, and minimal streaming/request bookkeeping.
+   - If it beats the OpenAI endpoint materially, turn the delta into a
+     production "single-user latency lane".
+   - If it is also capped near `100 tok/s`, stop blaming frontend overhead and
+     focus on speculation/kernels.
+
+8. **Isolated newer XPU stack bakeoff.**
+   - In a separate venv/tree, test the newest vLLM plus `vllm-xpu-kernels`
+     direction against the accepted recipe and quality gate.
+   - Do not disturb the accepted service; this is a comparison branch.
+   - Reason: public XPU work has moved W8A8/W8A16 and MoE support toward the
+     dedicated kernel library, so our May-era lab tree may not be the fastest
+     baseline anymore.
+
+9. **Strict 8-bit engine bakeoff.**
+   - Try llama.cpp/SYCL Q8_0, OpenVINO/oneDNN GenAI 8-bit, SGLang if XPU
+     support is usable, and current vLLM Quark W8A8 under the same prompts.
+   - This remains diagnostic unless it keeps 32K context, production serving,
+     and the same quality gates.
+   - No Qwen3.5 and no 4-bit/AWQ promotion.
+
+10. **Tiny-message graph-safe collective kernel.**
+    - Build a standalone collective repro for the repeated hidden-size
+      all-reduces in the accepted AOT cache.
+    - If oneCCL graph-safe latency is already near floor, this idea dies. If
+      not, a specialized XPU collective could help every layer.
+
+11. **Acceptance-aware route/spec co-design.**
+    - Correlate draft acceptance with MoE route windows.
+    - If rejected tokens concentrate in certain route/position/prompt patterns,
+      use that to disable speculation early or select a different proposer
+      only for high-acceptance regions.
+    - This is a quality guardrail and a speed lever because low-acceptance
+      speculation is slower than baseline.
+
+12. **Public upstream repro package.**
+    - Prepare three small public-safe issues/PR repros:
+      W8A8 dense GEMM shape, real-route grouped MoE GEMM shape, and graph-safe
+      tiny all-reduce.
+    - Include exact shapes, B70/oneAPI versions, current throughput, expected
+      throughput target, and parity checks.
+    - This is the path most likely to get useful help from Intel/vLLM instead
+      of only maintaining local patches.
+
+Fresh outside signals behind this section:
+
+- Localmaxxing has the exact Quark W8A8 INT8 row at `99.428 tok/s` and the
+  broader B70/Qwen scan shows a later richer B70 row at `99.770 tok/s` with
+  measured total VRAM. The exact-model row remains the canonical exact-model
+  public record until a new exact-model submission is made.
+- Public Qwen3.6 35B FP8 rows show `253.7 tok/s` with vLLM plus DFlash on
+  Blackwell-class hardware, which makes speculation the clearest public path
+  over `200 tok/s`.
+- Public Qwen3.6 35B MTP/GGUF rows include Q8_0-MTP and other MTP routes. They
+  are not our accepted model/engine, but they provide useful draft-depth and
+  scheduling clues.
+- Intel/vLLM XPU discussions point toward `vllm-xpu-kernels` for W8A8/W8A16
+  and MoE support, and Intel grouped-GEMM notes call out real route skew as a
+  first-order tuning variable.
+
+Useful links:
+
+- `https://localmaxxing.com/api/benchmarks?hfId=nameistoken%2FQwen3.6-35B-A3B-Quark-W8A8-INT8&limit=10`
+- `https://localmaxxing.com/api/leaderboard?modelFamily=qwen&hardwareName=B70&limit=50`
+- `https://localmaxxing.com/api/benchmarks?hfId=Qwen%2FQwen3.6-35B-A3B-FP8&limit=10`
+- `https://localmaxxing.com/api/benchmarks?hfId=GestaltLabs%2FQwen3.6-35B-A3B-NSC-ACE-SABER-GGUF-MTP&limit=10`
+- `https://github.com/vllm-project/vllm/issues/33214`
+- `https://github.com/intel/intel-xpu-backend-for-triton/issues/6389`
+- `https://github.com/PMZFX/intel-arc-pro-b70-benchmarks`
+- `https://recipes.vllm.ai/Qwen/Qwen3.6-35B-A3B`
