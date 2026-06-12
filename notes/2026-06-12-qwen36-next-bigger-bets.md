@@ -32,6 +32,196 @@ Current speed anchor:
   MoE/kernel architecture improvement. Launch flags alone are unlikely to get
   there.
 
+## Graph Live-ABI Capture Run And Bigger Ideas 20260612df
+
+Added an opt-in graph-path live-ABI runner and corrected the route-ledger
+promotion gate after testing it against an isolated capture run.
+
+New or changed files:
+
+- `scripts/run-qwen36-liveabi-graph-capture.sh`
+- `scripts/launch-qwen36-quark-int8-accepted.sh`
+- `scripts/qwen36-live-abi-routes-to-jsonl.py`
+- `data/qwen36-quark-int8-liveabi-graph-capture-gate-liveabi-graphcapture-20260612df.json`
+- `data/qwen36-quark-int8-liveabi-graph-capture-gate-liveabi-graphcapture-20260612df.md`
+- `data/qwen36-quark-int8-liveabi-route-ledger-liveabi-graphcapture-20260612df.json`
+- `data/qwen36-quark-int8-liveabi-route-ledger-liveabi-graphcapture-20260612df.jsonl`
+- `data/qwen36-quark-int8-liveabi-route-ledger-liveabi-graphcapture-20260612df.md`
+- `data/qwen36-quark-int8-liveabi-route-class-aot-plan-liveabi-graphcapture-20260612df.json`
+- `data/qwen36-quark-int8-liveabi-route-class-aot-plan-liveabi-graphcapture-20260612df.md`
+- `data/qwen36-quark-int8-liveabi-graphcapture-20260612df-live-abi--1905406.jsonl`
+- `data/qwen36-quark-int8-tp4-liveabi-graphcapture-20260612df-natural-chat.json`
+- `data/qwen36-quark-int8-tp4-liveabi-graphcapture-20260612df-code.json`
+- `data/qwen36-quark-int8-tp4-liveabi-graphcapture-20260612df-structured.json`
+- `data/qwen36-quark-int8-tp4-liveabi-graphcapture-20260612df-math-reasoning.json`
+- `data/qwen36-quark-int8-tp4-liveabi-graphcapture-20260612df-repetitive.json`
+
+Repro command used:
+
+```bash
+TAG=liveabi-graphcapture-20260612df \
+OUTPUT_TOKENS=32 \
+REPEATS=2 \
+LIVE_ABI_MAX_LINES=1000 \
+scripts/run-qwen36-liveabi-graph-capture.sh
+```
+
+What the runner does:
+
+- Stops the current Qwen3.6 TP4 endpoint.
+- Launches the accepted configuration from an isolated cache root under
+  `/mnt/fast-ai/vllm-cache-exp/qwen36-${TAG}`.
+- Enables live-ABI capture only through the explicit
+  `VLLM_XPU_MOE_LIVE_ABI_ALLOW=1` gate. The normal accepted launcher still
+  scrubs live-ABI variables.
+- Captures five prompt classes, runs the graph-capture gate, converts deferred
+  samples into a filtered route ledger, runs the route-class AOT planner only
+  when clean rows exist, and restores the accepted endpoint by default.
+
+Capture result:
+
+- Diagnostic tmux session:
+  `qwen36-tp4-liveabi-graphcapture-20260612df`.
+- Restore tmux session:
+  `qwen36-tp4-accepted-restored-after-liveabi-graphcapture-20260612df`.
+- Restore health on `http://127.0.0.1:18080`: pass.
+- Graph-capture gate status: pass.
+- Records total: `228`.
+- Observation counts:
+  `60` `stream_capture_skip_no_tensor_copy`,
+  `60` `deferred_post_capture_sample`,
+  and `108` `eager_or_post_capture_checksum`.
+- Layers covered: `9`, `19`, `29`, and `39`.
+- Each covered layer had `15` deferred samples, `15` capture-skip records, and
+  `27` checksum records.
+
+Important correction:
+
+- The first unfiltered route ledger looked superficially useful, but it was not
+  safe to use. Most deferred top-k samples hit the sample cap, and the
+  remaining pure-decode graph-capture rows included duplicate/dummy expert
+  vectors such as all-zero top-k IDs.
+- `scripts/qwen36-live-abi-routes-to-jsonl.py` now indexes shape metadata from
+  capture-skip records and can drop truncated, invalid, or duplicate-expert
+  samples.
+- The corrected filtered ledger emitted `0` clean route rows:
+  `52` samples were dropped as truncated, `8` as duplicate/dummy, and `168`
+  non-deferred records were ignored.
+- The AOT plan artifact is therefore
+  `skipped_no_clean_route_rows`. Do not promote any route-class AOT conclusion
+  from the earlier unfiltered planner output.
+
+Lesson:
+
+- Python-level live-ABI hooks are useful for proving that graph capture and
+  deferred sampling are wired up.
+- They are not sufficient for observing the actual replayed decode route
+  windows after XPU graph capture. The true replay path can bypass the Python
+  hooks that produced the useful-looking deferred rows.
+- Route-class AOT codegen needs lower-level observability, or it must use an
+  explicitly labeled eager-route proxy plus a graph-output parity gate.
+
+Immediate things to try:
+
+1. **Graph-safe custom-op route digest.**
+   Add a disabled-by-default C++/custom-op hook inside the XPU MoE op that
+   records tiny route hashes, row counts, layer IDs, and expert histograms into
+   a preallocated host-visible ring buffer. Do not copy full tensors during
+   replay; start with route digests and checksum counters only.
+
+2. **Eager-route proxy gate.**
+   For each candidate route-class optimization, collect route windows with XPU
+   graph disabled, then run the same prompt class on the graph path and compare
+   accepted quality canaries plus a short token/logit fingerprint. This would
+   not be final proof, but it can rank AOT ideas without pretending Python
+   graph samples are live replay routes.
+
+3. **Replay-path checksum in the final fused MoE output.**
+   If route IDs remain hard to observe under graph replay, record bounded
+   checksums of MoE output tensors at selected layers from the custom op. That
+   gives a graph-path tensor parity gate without dumping large buffers.
+
+4. **Route-ledger contamination tests.**
+   Keep synthetic and real negative fixtures for truncated, invalid, and
+   duplicate expert rows. Route-class planners should fail closed when samples
+   look like graph dummy data.
+
+5. **Promote graph-capture runs as diagnostics only.**
+   Do not let diagnostic capture metrics become speed claims. The run perturbs
+   capture and sampling behavior; keep accepted speed numbers from clean
+   endpoints.
+
+Bigger bolder ideas to carry forward:
+
+1. **C1 persistent MoE conveyor.**
+   Instead of launching generic grouped-GEMM plumbing per layer and per token,
+   keep a resident per-card MoE worker alive with expert descriptors, scale
+   pointers, scratch, and command lists already loaded. Feed route descriptors
+   through a small ring buffer. This preserves exact math and attacks
+   setup/launch/fence overhead directly.
+
+2. **Decode-token supergraph.**
+   Capture a larger patchable Level Zero/XPU graph that spans MoE, attention,
+   residual/norm, logits, and sampler boundaries for fixed decode buckets.
+   This is harder than a kernel tweak, but it targets the whole `~10 ms/token`
+   path instead of one micro-op.
+
+3. **Full or partial model replication proof.**
+   Validate actual packed model bytes and KV headroom. If the Quark W8A8
+   footprint allows full or near-full replication on one B70, test a
+   no-collective c1 lane. If it does not, test replicated dense path plus
+   hot-expert packs. Exact weights stay unchanged; topology changes.
+
+4. **TP4 aggregate lane plus latency lane.**
+   Stop expecting one launch shape to optimize both c1 latency and aggregate
+   serving. Keep TP4 for throughput and build a separate latency lane that
+   trades memory for fewer per-token collectives.
+
+5. **Route-class micro-kernel library, but only after clean replay evidence.**
+   Generate exact-scheduling kernels for common top-k tuple classes, broad
+   route classes, and cold fallback. The model router still decides the route;
+   the library only changes scheduling and memory layout.
+
+6. **Hot expert pair and tuple packs.**
+   Spend VRAM on prepacked expert pairs or top-k tuple layouts for the most
+   common route classes. This could reduce pointer chasing and grouped-GEMM
+   setup without changing logits.
+
+7. **B70 DPAS/XMX tile-layout proof.**
+   Build the smallest standalone Quark W8A8 layerlet that proves the intended
+   XMX tile shape for `hidden_size=2048`, `moe_intermediate_size=512`, and
+   top-k `8`. If this cannot beat the generic path in isolation, the route-AOT
+   idea is not worth serving time.
+
+8. **Expert-parallel common path with exact fallback.**
+   Try an EP-like common path for hot experts with current TP4 fallback for
+   cold or broad routes. The promotion gate must prove identical output for
+   both hot and fallback cases.
+
+9. **Verifier-owned branch farming.**
+   Use idle cards for same-target speculative branches only after exact KV and
+   sampler state transactions are implemented. The Quark W8A8 target verifies
+   every token before emission, so quality does not depend on a weaker draft.
+
+10. **Single-request direct runner.**
+    Build a stripped-down c1 runner outside the OpenAI server path to measure
+    the lower bound for scheduler, batching, tokenizer, and HTTP overhead. If
+    direct c1 remains near `100 tok/s`, the bottleneck is device/kernel. If it
+    jumps, production should get a dedicated low-latency serving lane.
+
+11. **Topology and host jitter audit.**
+    Pin worker processes, audit PCIe links, Resizable BAR, NUMA affinity, power
+    limits, thermals, and XPU frequency behavior under steady c1 decode. This
+    will not create a 2x alone, but it can remove hidden instability before
+    deeper kernel work.
+
+12. **Maintainer challenge packet.**
+    Package the exact model, route fixtures, graph-capture caveat, filtered
+    ledger, accepted manifest, Localmaxxing row, and target speed ask for
+    Intel/vLLM maintainers. The useful question is narrow: make exact
+    Qwen3.6-A3B Quark W8A8 c1 decode materially faster on Arc Pro B70 without
+    token drift.
+
 ## Accepted Lane Manifest And Candidate Gate 20260612cz
 
 Added a cache-versioned manifest for the current accepted Qwen3.6 Quark W8A8

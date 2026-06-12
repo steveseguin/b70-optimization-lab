@@ -6,6 +6,33 @@ Date: 2026-06-12
 
 2026-06-12 notes update:
 
+- Added `scripts/run-qwen36-liveabi-graph-capture.sh`, an opt-in graph-path
+  live-ABI capture runner, and tightened
+  `scripts/qwen36-live-abi-routes-to-jsonl.py` so truncated, invalid, or
+  duplicate/dummy expert samples cannot be promoted into route-class AOT
+  planning. The accepted launcher still scrubs live-ABI env vars by default;
+  only `VLLM_XPU_MOE_LIVE_ABI_ALLOW=1` enables this diagnostic mode.
+- The isolated `liveabi-graphcapture-20260612df` run restored the accepted TP4
+  endpoint afterward on `18080` and the health check passed. The graph-capture
+  gate passed with `228` records: `60` stream-capture skips, `60` deferred
+  post-capture samples, and `108` checksum records across layers `9`, `19`,
+  `29`, and `39`.
+- The corrected filtered route ledger emitted `0` clean rows:
+  `52` truncated route samples and `8` duplicate/dummy route samples were
+  dropped, with `168` non-deferred records ignored. The route-class AOT plan is
+  now explicitly `skipped_no_clean_route_rows`; the earlier optimistic planner
+  interpretation from unfiltered graph-capture samples is not promotable.
+- Key lesson: Python-level live-ABI hooks can prove graph-capture presence, but
+  they do not reliably observe actual XPU graph replay decode routes. Next
+  no-quality-loss performance work should move route observability into the
+  XPU custom op/C++ layer or use an eager-route proxy gate before AOT kernel
+  generation. The refreshed idea queue adds graph-safe route digests,
+  persistent MoE conveyors, full/partial model replication probes, TP/EP
+  topology splits, and verifier-owned branch farming as larger paths toward
+  `>200 tok/s` without lowering quality.
+
+2026-06-12 notes update:
+
 - Added `scripts/qwen36-live-abi-routes-to-jsonl.py`, a CPU-safe bridge from
   graph-capture live-ABI deferred samples into the route JSONL format consumed
   by `scripts/qwen36-route-class-aot-plan.py`. This lets the next isolated

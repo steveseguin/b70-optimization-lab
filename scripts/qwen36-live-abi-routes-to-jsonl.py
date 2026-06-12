@@ -74,6 +74,24 @@ def layer_index(layer: str) -> int | None:
     return int(match.group(1))
 
 
+def record_key(record: dict[str, Any]) -> tuple[str, str, str, str]:
+    return (
+        str(record.get("_source_path") or ""),
+        str(record.get("pid") or ""),
+        str(record.get("call") or ""),
+        str(record.get("layer") or ""),
+    )
+
+
+def build_shape_index(records: list[dict[str, Any]]) -> dict[tuple[str, str, str, str], dict[str, Any]]:
+    shapes: dict[tuple[str, str, str, str], dict[str, Any]] = {}
+    for record in records:
+        shape = record.get("shape")
+        if isinstance(shape, dict):
+            shapes[record_key(record)] = shape
+    return shapes
+
+
 def stable_route_hash(topk_rows: list[list[int]]) -> str:
     payload = "|".join(",".join(str(item) for item in row) for row in topk_rows)
     return hashlib.blake2s(payload.encode("utf-8"), digest_size=8).hexdigest()
@@ -102,23 +120,64 @@ def reshape_topk(
 
 def build_route_record(
         record: dict[str, Any], *, topk: int, num_experts_default: int,
-        sample_limit: int) -> tuple[dict[str, Any] | None, str | None]:
+        sample_limit: int, shape_index: dict[tuple[str, str, str, str], dict[str, Any]],
+        drop_truncated: bool, drop_invalid_experts: bool,
+        drop_duplicate_experts: bool) -> tuple[dict[str, Any] | None, str | None]:
     if record.get("capture_observation") != "deferred_post_capture_sample":
         return None, "not_deferred_sample"
     samples = record.get("samples")
     if not isinstance(samples, dict):
         return None, "missing_samples"
-    topk_rows, complete, may_be_truncated = reshape_topk(
+    shape = shape_index.get(record_key(record), {})
+    if isinstance(shape, dict) and shape.get("topk"):
+        topk = int(shape["topk"])
+
+    topk_rows, complete, hit_sample_limit = reshape_topk(
         samples.get("topk_ids"), topk, sample_limit)
     if not topk_rows:
         return None, "missing_complete_topk_ids"
 
     num_experts = num_experts_default
-    context = record.get("context")
-    if isinstance(context, dict):
-        shape = context.get("shape")
-        if isinstance(shape, dict) and shape.get("num_experts"):
-            num_experts = int(shape["num_experts"])
+    if isinstance(shape, dict) and shape.get("num_experts"):
+        num_experts = int(shape["num_experts"])
+    else:
+        context = record.get("context")
+        if isinstance(context, dict):
+            for key in ("num_experts", "global_num_experts", "local_num_experts"):
+                if context.get(key):
+                    num_experts = int(context[key])
+                    break
+
+    expected_topk_values = None
+    expected_num_rows = None
+    if isinstance(shape, dict):
+        if shape.get("num_moe_inputs"):
+            expected_topk_values = int(shape["num_moe_inputs"])
+        elif shape.get("num_rows") and shape.get("topk"):
+            expected_topk_values = int(shape["num_rows"]) * int(shape["topk"])
+        if shape.get("num_rows"):
+            expected_num_rows = int(shape["num_rows"])
+
+    flat_count = sum(len(row) for row in topk_rows)
+    may_be_truncated = hit_sample_limit
+    if expected_topk_values is not None and flat_count < expected_topk_values:
+        may_be_truncated = True
+
+    invalid_experts = sorted({
+        expert for row in topk_rows for expert in row
+        if expert < 0 or expert >= num_experts
+    })
+    duplicate_expert_rows = sum(
+        1 for row in topk_rows if len(set(row)) != len(row)
+    )
+
+    if may_be_truncated and drop_truncated:
+        return None, "dropped_truncated_topk_sample"
+    if invalid_experts and drop_invalid_experts:
+        return None, "dropped_invalid_expert_ids"
+    if duplicate_expert_rows and drop_duplicate_experts:
+        return None, "dropped_duplicate_expert_ids"
+
     counts = [0] * num_experts
     for row in topk_rows:
         for expert in row:
@@ -143,12 +202,18 @@ def build_route_record(
         "topk_ids": topk_rows,
         "num_tokens": len(topk_rows),
         "num_experts": num_experts,
+        "expected_num_rows": expected_num_rows,
+        "expected_topk_values": expected_topk_values,
         "counts": counts,
         "active_experts": sum(1 for count in counts if count),
         "total_assignments": sum(counts),
         "route_hash": stable_route_hash(topk_rows),
         "topk_sample_complete": complete,
         "topk_sample_may_be_truncated": may_be_truncated,
+        "topk_sample_values": flat_count,
+        "topk_invalid_expert_count": len(invalid_experts),
+        "topk_invalid_expert_ids_sample": invalid_experts[:16],
+        "topk_duplicate_expert_rows": duplicate_expert_rows,
         "checksums": (
             record.get("checksums")
             if isinstance(record.get("checksums"), dict) else {}
@@ -163,13 +228,15 @@ def build_route_record(
 
 def summarize(routes: list[dict[str, Any]],
               skipped: Counter[str],
-              parse_errors: list[dict[str, Any]]) -> dict[str, Any]:
+              parse_errors: list[dict[str, Any]],
+              allow_empty: bool) -> dict[str, Any]:
     by_layer = Counter(str(route.get("layer", "")) for route in routes)
     by_rank = Counter(str(route.get("rank", "")) for route in routes)
     route_classes = Counter(str(route.get("route_hash", "")) for route in routes)
     decode_routes = [route for route in routes if route.get("is_pure_decode")]
     return {
-        "status": "pass" if routes and not parse_errors else "fail",
+        "status": "pass" if (routes or allow_empty) and not parse_errors else "fail",
+        "allow_empty": allow_empty,
         "routes_emitted": len(routes),
         "pure_decode_routes": len(decode_routes),
         "unique_route_classes": len(route_classes),
@@ -215,6 +282,10 @@ def main() -> int:
     parser.add_argument("--topk", type=int, default=8)
     parser.add_argument("--num-experts", type=int, default=256)
     parser.add_argument("--sample-limit", type=int, default=32)
+    parser.add_argument("--drop-truncated", action="store_true")
+    parser.add_argument("--drop-invalid-experts", action="store_true")
+    parser.add_argument("--drop-duplicate-experts", action="store_true")
+    parser.add_argument("--allow-empty", action="store_true")
     parser.add_argument("--output-jsonl", required=True)
     parser.add_argument("--summary-json")
     parser.add_argument("--markdown-out")
@@ -226,6 +297,7 @@ def main() -> int:
         fallback_num_experts=args.num_experts,
     )
     records, errors = read_jsonl(args.jsonl)
+    shape_index = build_shape_index(records)
     routes = []
     skipped: Counter[str] = Counter()
     for record in records:
@@ -234,6 +306,10 @@ def main() -> int:
             topk=model_shape["topk"],
             num_experts_default=model_shape["num_experts"],
             sample_limit=args.sample_limit,
+            shape_index=shape_index,
+            drop_truncated=args.drop_truncated,
+            drop_invalid_experts=args.drop_invalid_experts,
+            drop_duplicate_experts=args.drop_duplicate_experts,
         )
         if route is None:
             skipped[reason or "unknown"] += 1
@@ -248,7 +324,7 @@ def main() -> int:
         "".join(json.dumps(route, sort_keys=True) + "\n" for route in routes),
         encoding="utf-8",
     )
-    summary = summarize(routes, skipped, errors)
+    summary = summarize(routes, skipped, errors, args.allow_empty)
     text = json.dumps(summary, indent=2, sort_keys=True)
     if args.summary_json:
         Path(args.summary_json).parent.mkdir(parents=True, exist_ok=True)
