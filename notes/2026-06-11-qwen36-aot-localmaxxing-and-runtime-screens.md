@@ -12676,3 +12676,62 @@ Validation:
 
 - `python3 -m py_compile scripts/analyze-qwen36-verifier-upper-bound.py`
 - generated the JSON and Markdown artifacts above.
+
+## Runtime COW Hook Audit
+
+Read the current dirty local vLLM tree after the COW overhead budget work. No
+live vLLM files were edited in this pass.
+
+Hook findings:
+
+- Scheduler scheduling loop:
+  `/home/steve/src/vllm/vllm/v1/core/sched/scheduler.py`, `schedule()`.
+  Current speculative decode computes `num_new_tokens` from
+  `request.num_tokens_with_spec`, allocates slots through
+  `kv_cache_manager.allocate_slots()`, records
+  `scheduled_spec_decode_tokens`, then clears `request.spec_token_ids`.
+- Parent state advance:
+  `/home/steve/src/vllm/vllm/v1/core/sched/scheduler.py`,
+  `_update_after_schedule()`.
+  The parent request's `num_computed_tokens` is advanced immediately after
+  scheduling. Rejections are repaired later in `update_from_output()`. A real
+  COW verifier must not use this parent mutation for scratch candidate scoring.
+- Current reject/commit path:
+  `/home/steve/src/vllm/vllm/v1/core/sched/scheduler.py`,
+  `update_from_output()` and `_update_request_with_output()`.
+  Spec rejections decrement parent counters, then accepted/emitted tokens commit
+  through `request.append_output_token_ids()`. This is the public commit point;
+  COW should keep it as the only parent output mutation.
+- KV allocation:
+  `/home/steve/src/vllm/vllm/v1/core/kv_cache_manager.py`, `allocate_slots()`.
+  The allocator already caps cache commits at `request.num_tokens` so
+  unverified draft tokens are not prefix-cached as finalized tokens. A scratch
+  verifier still needs separate request IDs/blocks so parent block tables remain
+  unchanged during scoring.
+- Worker persistent state:
+  `/home/steve/src/vllm/vllm/v1/worker/gpu_input_batch.py`, `add_request()` and
+  `update_req_spec_token_ids()`.
+  Worker rows mirror prompt/output IDs, block IDs, `num_computed_tokens`, and
+  scheduled speculative IDs. This is the likely scratch-row insertion point for
+  a minimal k=1/k=2 COW prototype.
+- Worker state update:
+  `/home/steve/src/vllm/vllm/v1/worker/gpu_model_runner.py`, `_update_states()`.
+  Cached request state and block tables are updated from scheduler output, and
+  async speculative decode can optimistically extend output IDs with placeholders
+  before correcting counts. COW must avoid this optimistic parent mutation for
+  scratch verification.
+
+Next runtime patch target:
+
+1. Add opt-in COW trace envs, likely `VLLM_XPU_COW_VERIFIER_TRACE_FILE` and
+   `VLLM_XPU_COW_VERIFIER_TRACE_MAX_LINES`.
+2. Start with a non-invasive parent snapshot around the current spec path:
+   request IDs, output length, `num_computed_tokens`, `num_output_placeholders`,
+   spec length, and block-table length before schedule, after
+   `_update_after_schedule()`, and after `_update_request_with_output()`.
+3. Use that trace to prove the current path mutates parent state before
+   acceptance, then implement the scratch-row path behind a separate env.
+4. Measure the actual components from the COW budget table: parent snapshot,
+   scratch row/block setup, verifier forward, scratch free, and commit.
+5. First pass target remains exact fixture mode with speculation active; speed
+   is only meaningful after that passes.
