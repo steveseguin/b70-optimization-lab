@@ -2858,3 +2858,108 @@ Bigger, bolder ideas to keep visible:
    capacity, add one or more low-context static lanes for c1 chat, and route by
    request shape. Aggregate throughput stays secondary to c1 speed, but this
    makes both measurable instead of forcing one universal compromise.
+
+## 2026-06-12 Additional Bigger Bets After Offset Prototype
+
+Current new local branch:
+
+- A source prototype is in progress for
+  `cutlass_grouped_gemm_w8a8_int8_offsets_interface` in local
+  `vllm-xpu-kernels`. It adds an offset-native W8A8 grouped-GEMM route that
+  accepts `expert_first_token_offset` directly from the fused prologue path.
+- This is not yet a speed result. It needs a C++ build, op-presence check,
+  route-replay exactness gate, and accepted-backend restore/provenance guard if
+  the XPUs are disturbed.
+- Expected upside is modest if the kernel still loops across all experts per
+  workgroup. The real decision metric is whether offset-native routing removes
+  enough glue to make the fused prologue path approach the exact preallocated
+  staged lower bound. If it does not, move immediately to persistent/one-dispatch
+  MoE rather than polishing the ABI.
+
+Additional things to try:
+
+1. **Offset-op build gate plus route-replay kill switch.**
+   Build the offset-native W8A8 op in `vllm-xpu-kernels`, run only the
+   routecapture6 layer-9 rows=1 exactness/perf replay, and reject it quickly if
+   it cannot beat fused-prologue staged by a material margin. Keep this as a
+   one-maintenance-window test, not a multi-day branch.
+
+2. **Expert-loop removal variant.**
+   If offset-native GEMM is exact but only a small win, inspect whether the
+   kernel still pays a full-expert loop for empty experts. The next variant
+   should consume a compact active-expert list plus offsets, so workgroups skip
+   cold experts instead of merely seeing zero rows.
+
+3. **Fused hotset plus compact-cold single dispatch.**
+   The top-64 hotset floor model says a naive hot/cold split risks launch
+   overhead. Try a single dispatch that has fast hot expert tables plus a
+   compact cold fallback queue inside the same kernel or layerlet. That preserves
+   exact weights while avoiding the two-launch tax.
+
+4. **Route-class graph library.**
+   Precompile a small set of graph/layerlet variants by route class:
+   concentrated hotset, broad hotset, cold-heavy, repetitive, math/code, and
+   natural-chat. At runtime, choose the cheapest exact variant from the current
+   route histogram. This is more realistic than a global hot-expert layout.
+
+5. **Layerlet code generator.**
+   Generate C++/SYCL or Triton-XPU layerlet code from captured layer metadata:
+   expert shapes, W8A8 scales, hotset table, offsets, top-k, and output gather.
+   The generated artifact can be specialized per layer while still checking
+   tensor hashes and exact replay parity.
+
+6. **MoE microservice inside the process.**
+   Treat MoE as a persistent device service with resident queues and buffers,
+   called from vLLM through a narrow ABI. The service owns hotset packing,
+   active-expert scheduling, W8A8 GEMMs, activation, down projection, and
+   gather. vLLM sees the same tensor result, but the device side avoids repeated
+   allocation and launch setup.
+
+7. **Single-card and TP2 truth-serum runs.**
+   Run controlled c1 probes on single-card or TP2 variants only if memory allows
+   the accepted model posture. The goal is not production capacity; it is to
+   quantify how much TP4 collectives and graph metadata hurt one-request
+   latency. If TP2 c1 is materially faster, revisit production as split lanes
+   instead of forcing TP4 to do everything.
+
+8. **Token-step command-list capture.**
+   Capture or synthesize one full accepted decode token as a Level Zero command
+   list: metadata updates, GDN/attention, MoE, allreduces, logits, sampler, and
+   output copy. Replay it as a fixed-shape artifact to separate raw kernel
+   latency from vLLM scheduler/control latency.
+
+9. **BF16 shadow differential on a tiny suite.**
+   Keep Quark W8A8 as the production target, but periodically compare candidate
+   kernels against BF16 fallback on short prompts for logit-rank and semantic
+   drift. This is a guardrail for subtle arithmetic changes that pass current
+   token sentinels but move probability mass.
+
+10. **Speculative verifier escrow for bonus/reject state.**
+    The earlier no-bonus diagnostics exposed how hard rollback is. Build an
+    explicit verifier-owned escrow for candidate tokens, token IDs, block-table
+    updates, GDN/Mamba state, and streaming output. This is the minimum viable
+    substrate for safe MTP/DFlash/tree speculation.
+
+11. **Self-draft from shallow target layers.**
+    Instead of an external model, try a proposer that reuses early target-model
+    layers or a small adapter trained from target traces. The final output still
+    comes only from the full Quark verifier. This may preserve tokenizer/style
+    alignment better than generic n-gram and avoids Qwen3.5 substitution.
+
+12. **Prompt-shape admission control.**
+    For production, define a latency lane that accepts only shapes with known
+    certified graph/cache/provenance and route-class behavior. Everything else
+    goes to the general TP4 lane. This is not a quality compromise; it is a
+    scheduling/product decision that protects c1 latency.
+
+13. **Upstream performance challenge packet.**
+    Publish the smallest route-exact W8A8 MoE repro that shows the gap:
+    current grouped GEMM, exact staged lower bound, prologue-staged negative,
+    offset prototype result, hotset floor model, and DPAS/XMX counters. This is
+    more likely to attract useful Intel/vLLM help than a full server log.
+
+14. **Reliability soak tied to every speed result.**
+    Any candidate that touches kernels, graph cache, timing, or metadata needs a
+    soak recipe: repeated load, p512/o128 c1, c4 aggregate, provenance sentinels,
+    `xpu-smi ps`, and device-lost count. A fast but fragile backend is not a
+    production candidate.

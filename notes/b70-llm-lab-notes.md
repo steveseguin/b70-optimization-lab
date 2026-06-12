@@ -776,3 +776,13 @@ vLLM/XPU FP8 work:
     records bigger ideas around graph-resident decode, a verifier-owned commit
     protocol, MoE-only hybrid parallelism, tile-native packed-weight artifacts,
     and production routing by latency/service class.
+32. Added "Additional Bigger Bets After Offset Prototype" to the focused
+    Qwen3.6 note. It records the local offset-native W8A8 grouped-GEMM
+    prototype as a build-and-kill-gate experiment, then expands the future queue
+    with active-expert-loop removal, fused hotset plus compact-cold single
+    dispatch, route-class graph libraries, layerlet code generation, a
+    process-local MoE device service, TP2/single-card c1 truth-serum runs,
+    full-token command-list capture, BF16 shadow differential checks,
+    verifier-owned speculative escrow, shallow target self-drafting,
+    prompt-shape admission control, upstream performance challenge packets, and
+    reliability soak tied to every speed claim.

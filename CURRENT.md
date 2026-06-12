@@ -6,6 +6,18 @@ Date: 2026-06-12
 
 2026-06-12 continuation:
 
+- Added another focused backlog refresh after the offset-native W8A8 grouped-GEMM
+  prototype started. This is notes-only, not a speed claim. The new section
+  treats the offset op as a fast build-and-kill-gate experiment, then records
+  larger no-quality-loss bets: active-expert-loop removal, fused hotset plus
+  compact-cold single dispatch, route-class graph libraries, layerlet code
+  generation, a process-local MoE device service, TP2/single-card c1
+  truth-serum runs, full-token command-list capture, BF16 shadow differential
+  checks, verifier-owned speculative escrow, shallow target self-drafting,
+  prompt-shape admission control, upstream performance challenge packets, and
+  reliability soak requirements. Details:
+  `notes/2026-06-12-qwen36-next-bigger-bets.md`.
+
 - Added a fresh ideas refresh after reviewing the W8A8 grouped-GEMM offset ABI
   and current public benchmark context. The new notes distinguish faster
   Localmaxxing same-family rows as architecture clues rather than
