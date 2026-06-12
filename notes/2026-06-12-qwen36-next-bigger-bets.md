@@ -9733,3 +9733,89 @@ Artifacts for this refresh:
 - `data/localmaxxing-qwen36-quark-w8a8-int8-exact-refresh-20260612cs.json`
 - `data/localmaxxing-qwen-b70-vllm-leaderboard-20260612cs.json`
 - `data/localmaxxing-b70-moe-leaderboard-20260612cs.json`
+
+## First-Decode Route Fixture Planner 20260612ct
+
+Added the CPU-only bridge from the compact first-decode fixture to the existing
+route simulator and XPU MoE microbench tools:
+
+- `scripts/qwen36-firstdecode-route-fixture-plan.py`
+
+This does not touch the serving endpoint and does not run XPU kernels. It
+emits JSONL route records that look like normal route-capture rows:
+`counts`, `topk_ids`, `num_experts`, `num_tokens`, `layer`, `stage`,
+`route_hash`, and fixture metadata. That makes the new compact route fixture
+usable by `scripts/qwen36-route-parallelism-sim.py` and
+`scripts/bench-qwen36-int8-moe-kernels.py`.
+
+Validation run:
+
+```bash
+python3 -m py_compile scripts/qwen36-firstdecode-route-fixture-plan.py
+
+python3 scripts/qwen36-firstdecode-route-fixture-plan.py \
+  --output-json data/qwen36-quark-int8-tp4-firstdecode-route-fixture-plan-20260612ct.json \
+  --output-jsonl data/qwen36-quark-int8-tp4-firstdecode-route-fixture-routes-20260612ct.jsonl \
+  --markdown-out data/qwen36-quark-int8-tp4-firstdecode-route-fixture-plan-20260612ct.md
+
+python3 scripts/qwen36-route-parallelism-sim.py \
+  data/qwen36-quark-int8-tp4-firstdecode-route-fixture-routes-20260612ct.jsonl \
+  --output-json data/qwen36-quark-int8-tp4-firstdecode-route-parallelism-sim-20260612ct.json \
+  --markdown-out data/qwen36-quark-int8-tp4-firstdecode-route-parallelism-sim-20260612ct.md \
+  --window-size 1 --stride 1 --max-num-tokens 1 --include-windows
+```
+
+Measured planning facts:
+
+- The adapter emitted `120` records: `3` first-decode fixture events across
+  all `40` MoE layers.
+- The route rows cover `215` globally active experts, `960` total expert
+  assignments, and `80` unique topk tuples.
+- Each one-token layer record has exactly `8` active experts and `8`
+  assignments.
+- Across the three fixture events, the mean per-layer union active expert
+  count is `13.45`; mean pairwise topk Jaccard is `0.471`. This confirms
+  useful route reuse within a layer, but not a single static route.
+- The TP-local expert weight/scale footprint for one MoE layer shard is about
+  `194.250 MiB`; single-token scratch is only about `0.085968 MiB`. Memory is
+  not the limiting factor for a persistent topk-8 layerlet.
+- Naive EP placement is risky for c1: contiguous EP4 proxy mean pressure
+  `1.771`, p95 `2.500`; round-robin EP4 mean `1.892`, p95 `2.500`.
+- Static greedy placement on this tiny sample can balance row pressure
+  (`1.000` mean/p95), but it is a route-derived policy, not a generic
+  launch-flag win.
+- A hot-replicated `ep4_hot16_replicated_greedy` proxy covers all rows in this
+  small fixture with `1.000` mean/p95 pressure and `1.188x` max expert memory
+  relative to TP4. Treat that as a direction for route-derived hot packs, not
+  proof that EP/hot replication will beat the kernel path.
+
+Decision:
+
+- Do not lead with naive EP for c1. With only eight routed rows per layer,
+  route imbalance can erase the theoretical bandwidth win.
+- The next low-risk speed experiment should be a layer-9 rows=1 XPU MoE
+  microbench using the generated JSONL, but only when the accepted serving
+  endpoint is stopped or an isolated XPU is available.
+- The highest-upside no-quality-loss kernel branch remains a persistent
+  TP-local single-token/topk-8 W8A8 MoE path with active-expert or route-class
+  dispatch, then exact tensor compare before any endpoint wiring.
+
+Next XPU microbench command, deferred until the serving endpoint is isolated:
+
+```bash
+/home/steve/.venvs/vllm-xpu/bin/python scripts/bench-qwen36-int8-moe-kernels.py \
+  --route-jsonl data/qwen36-quark-int8-tp4-firstdecode-route-fixture-routes-20260612ct.jsonl \
+  --route-layer-regex 'layers[.]9[.]mlp[.]experts' \
+  --rows 1 --iterations 100 --warmup 20 \
+  --output-json data/qwen36-quark-int8-firstdecode-l9-r1-microbench-20260612ct.json \
+  --markdown-out data/qwen36-quark-int8-firstdecode-l9-r1-microbench-20260612ct.md
+```
+
+Artifacts for this pass:
+
+- `scripts/qwen36-firstdecode-route-fixture-plan.py`
+- `data/qwen36-quark-int8-tp4-firstdecode-route-fixture-plan-20260612ct.json`
+- `data/qwen36-quark-int8-tp4-firstdecode-route-fixture-plan-20260612ct.md`
+- `data/qwen36-quark-int8-tp4-firstdecode-route-fixture-routes-20260612ct.jsonl`
+- `data/qwen36-quark-int8-tp4-firstdecode-route-parallelism-sim-20260612ct.json`
+- `data/qwen36-quark-int8-tp4-firstdecode-route-parallelism-sim-20260612ct.md`

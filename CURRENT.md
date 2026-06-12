@@ -6,6 +6,33 @@ Date: 2026-06-12
 
 2026-06-12 notes update:
 
+- Added `scripts/qwen36-firstdecode-route-fixture-plan.py` and a
+  "First-Decode Route Fixture Planner 20260612ct" section to
+  `notes/2026-06-12-qwen36-next-bigger-bets.md`. The CPU-only adapter converts
+  the compact first-decode fixture into normal route JSONL rows compatible with
+  the existing route simulator and XPU MoE microbench. It emitted `120` records
+  from `3` first-decode events across all `40` MoE layers, covering `215`
+  globally active experts, `960` total assignments, and `80` unique topk
+  tuples. Mean per-layer union active experts across the three fixtures is
+  `13.45`, with mean pairwise topk Jaccard `0.471`. The TP-local expert
+  weight/scale footprint for one MoE layer shard is about `194.250 MiB`, while
+  single-token scratch is only `0.085968 MiB`, so memory is available for a
+  persistent topk-8 layerlet. The route placement proxy says naive EP is not
+  the c1 lead path: contiguous EP4 mean/p95 pressure `1.771/2.500`,
+  round-robin EP4 `1.892/2.500`. Route-derived greedy/hot-replicated placement
+  can balance this tiny fixture, but that is a route policy/hot-pack direction,
+  not a launch flag. Next deferred XPU gate: layer-9 rows=1 microbench from the
+  generated JSONL when the serving endpoint is stopped or an isolated XPU is
+  available. New artifacts:
+  `data/qwen36-quark-int8-tp4-firstdecode-route-fixture-plan-20260612ct.json`,
+  `data/qwen36-quark-int8-tp4-firstdecode-route-fixture-plan-20260612ct.md`,
+  `data/qwen36-quark-int8-tp4-firstdecode-route-fixture-routes-20260612ct.jsonl`,
+  `data/qwen36-quark-int8-tp4-firstdecode-route-parallelism-sim-20260612ct.json`,
+  and
+  `data/qwen36-quark-int8-tp4-firstdecode-route-parallelism-sim-20260612ct.md`.
+
+2026-06-12 notes update:
+
 - Added a "Route-Fixture Bigger/Bolder Refresh 20260612cs" section to
   `notes/2026-06-12-qwen36-next-bigger-bets.md`. This turns the first-decode
   route fixture into a concrete next queue: route-fixture microbench before
