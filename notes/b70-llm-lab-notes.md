@@ -551,3 +551,17 @@ vLLM/XPU FP8 work:
     with one-launch persistent/tile-native MoE or collective-removal work,
     because it reduces communication pressure but does not reduce MoE compute by
     itself.
+18. Hot-replication memory feasibility is now quantified by
+    `scripts/qwen36-hotrep-memory-plan.py`. The corrected per local-shard expert
+    estimate is `795648` bytes, giving `7770.0 MiB` baseline all-expert MoE
+    weight footprint per rank and additional all-layer hot-cache storage of
+    `485.6 MiB` for hot16, `971.2 MiB` for hot32, and `1942.5 MiB` for hot64.
+    The live accepted TP4/32K/c48 lane reports `20.67 GiB` available KV cache,
+    `2052915` KV tokens, and `62.65x` theoretical 32K concurrency, but current
+    XPU memory telemetry shows only about `4.6 MiB` free on the fullest card.
+    Decision: do not bolt hot64 onto the current production lane without an
+    explicit KV/graph carve-out. Hot64 is feasible in principle by freeing about
+    `188405` KV tokens without reserve, or `238064` tokens with a `512 MiB`
+    reserve, but it should first be tested as a route-replay one-layer prototype
+    and then as a lower-context static c1 sidecar only if it produces a real
+    latency win.

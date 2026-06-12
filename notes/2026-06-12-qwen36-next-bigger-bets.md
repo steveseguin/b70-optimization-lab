@@ -1322,3 +1322,60 @@ Decision:
   3. pair it with one-launch persistent/tile-native MoE work,
   4. then consider a static c1 sidecar if the replay kernel shows a real
      latency drop.
+
+## 2026-06-12 Hot-Replication Memory Feasibility
+
+New script:
+
+- `scripts/qwen36-hotrep-memory-plan.py`.
+
+Artifacts:
+
+- `data/qwen36-quark-int8-tp4-hotrep-memory-plan-20260612ae.json`.
+- `data/qwen36-quark-int8-tp4-hotrep-memory-plan-20260612ae.md`.
+
+Inputs:
+
+- Accepted restore log:
+  `/tmp/qwen36-quark-int8-tp4-accepted-restored-after-hotsetbench-20260612ac.log`.
+- Live XPU telemetry from `xpu-smi dump -d -1 -m 18 -n 1`.
+- Current model config:
+  `nameistoken/Qwen3.6-35B-A3B-Quark-W8A8-INT8`.
+
+Result:
+
+- Per local-shard expert bytes: `795648`, matching the prior hotset plan and
+  route-replay grouped-GEMM dimensions.
+- Baseline all-expert MoE weight footprint per rank: `7770.0 MiB`.
+- Live accepted lane memory snapshot:
+  - device physical memory: `32656 MiB`.
+  - max used: `32651.4 MiB`.
+  - min free: `4.6 MiB`.
+- Runtime KV report from vLLM:
+  - available KV cache memory: `20.67 GiB`.
+  - GPU KV cache size: `2052915` tokens.
+  - maximum 32K-context concurrency: `62.65x`.
+- Additional all-layer hot cache storage per rank:
+  - hot16: `485.6 MiB`.
+  - hot32: `971.2 MiB`.
+  - hot64: `1942.5 MiB`.
+- KV carve-out required for all-layer hot64:
+  - no extra reserve: free about `188405` KV tokens, leaving `56.90x`
+    theoretical 32K concurrency.
+  - `512 MiB` reserve: free about `238064` KV tokens, leaving `55.38x`.
+  - `1024 MiB` reserve: free about `287724` KV tokens, leaving `53.87x`.
+
+Decision:
+
+- Do not try to bolt all-layer hot64 storage onto the current accepted
+  TP4/32K/c48 lane as-is. The lane is effectively full by telemetry.
+- Hot64 storage is feasible in principle because it is small compared with the
+  reported KV cache budget, but it needs an explicit KV/graph memory carve-out
+  or a separate lower-context c1 latency lane.
+- The next implementation step remains route-replay only:
+  1. one-layer hot64 replicated routing,
+  2. one-launch or persistent/tile-native execution,
+  3. then a low-context sidecar memory screen if the route-replay kernel shows
+     a real latency win.
+- This keeps the production lane stable while we test whether hot replication
+  has speed value before spending VRAM on it.
