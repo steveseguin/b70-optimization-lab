@@ -15374,3 +15374,180 @@ Next decisions:
 3. Since `FULL_DECODE_ONLY` is blocked by a backend feature gap, prioritize
    resident-state verifier/COW work and persistent-MoE or grouped-GEMM shape
    repros over more graph-mode flag sweeps.
+
+## Offline Core Benchmark, Reset Hazard, And Bigger Backlog
+
+Direct in-process `LLM.generate` against the accepted cache root is not
+materially faster than the accepted OpenAI-compatible endpoint. Artifact:
+
+- `data/qwen36-quark-int8-tp4-offline-core-p512o512-r3-acceptedcache-20260612n.json`
+- `data/qwen36-quark-int8-tp4-offline-core-p512o512-r3-acceptedcache-20260612n.stdout.log`
+
+Result:
+
+- model: `nameistoken/Qwen3.6-35B-A3B-Quark-W8A8-INT8`
+- mode: vLLM offline `LLM`, TP4, Quark INT8, accepted PIECEWISE graph cache
+- shape: prompt `512`, output `512`, `num_prompts=1`, greedy
+- mean output speed: `98.5644 tok/s`
+- min/max output speed: `98.4955` / `98.6965 tok/s`
+- stdev: `0.1145 tok/s`
+- mean total speed: `197.1287 tok/s`
+- init elapsed: `55.3766 s`
+
+Interpretation:
+
+- The single-request decode bottleneck is in the model/runtime core, not the
+  public frontdoor or OpenAI serving layer.
+- The current public LocalMaxxing B70/Qwen leaderboard already puts this stack
+  at the top tier: `99.77 tok/s` for base `Qwen/Qwen3.6-35B-A3B` and
+  `99.43 tok/s` for the exact `nameistoken` Quark W8A8 INT8 artifact.
+- Getting past `200 tok/s` single-user decode almost certainly needs a real
+  architectural win: verifier-safe speculation, a new MoE kernel path, or
+  fewer per-token metadata/collective costs. Small serving flags are unlikely
+  to double speed.
+
+Reliability hazard:
+
+- The pre-offline provenance guard passed:
+  `data/qwen36-quark-int8-tp4-accepted-provenance-guard-before-offline-20260612n.json`.
+- Two accepted-backend restores after the offline in-process run reached
+  `/health` and then crashed on the first completion with
+  `UR_RESULT_ERROR_DEVICE_LOST`.
+- Crash artifacts:
+  - `data/qwen36-quark-int8-tp4-accepted-restored-after-offline-20260612n.log`
+  - `data/qwen36-quark-int8-tp4-accepted-restored-after-offline2-20260612n.log`
+- Both failures occurred in scheduler/model-runner metadata transfer paths
+  such as `block_table.copy_to_gpu` or
+  `num_computed_tokens[:num_reqs].copy_`.
+
+Do not use the offline in-process probe on the production host without a
+controlled reset plan. Future reliability work should add:
+
+1. A post-crash cleanup script that kills vLLM workers, records `xpu-smi ps`,
+   `xpu-smi health`, and memory state, then validates a small XPU tensor copy
+   before relaunch.
+2. A guard-script failure JSON path. If `/v1/completions` returns HTTP 500 or
+   the backend dies, the guard should still write a structured failure artifact
+   with request payload, exception class, and log tail.
+3. An isolated benchmark lane for offline `LLM` probes, preferably on a
+   separate boot/session from the production-serving lane.
+
+External leads checked on 2026-06-12:
+
+- Intel's grouped-GEMM tuning issue for `intel-xpu-backend-for-triton` says MoE
+  decode performance depends strongly on real route distributions, highlights
+  long-tail expert skew, and points at a grouped-GEMM benchmark that can be
+  extended with real token distributions:
+  `https://github.com/intel/intel-xpu-backend-for-triton/issues/6389`.
+- vLLM's current MoE kernel design docs treat all-to-all backends, expert
+  kernels, async support, activation format, and quantization format as
+  first-class tuning axes:
+  `https://docs.vllm.ai/en/latest/design/moe_kernel_features/`.
+- The PyTorch MoE locality writeup shows why skinny MoE decode GEMMs can
+  benefit from SplitK and column-major scheduling, with the core point being
+  weight-column reuse and reduced global memory traffic:
+  `https://pytorch.org/blog/accelerating-moe-model/`.
+- vLLM's XPU hardware docs validate Intel Arc Pro B-series and list Qwen3
+  dense-family support, but the current Qwen3.6 Quark W8A8 MoE stack is still
+  outside the clean documented fast path:
+  `https://docs.vllm.ai/en/v0.18.0/models/hardware_supported_models/xpu/`.
+- A B70 multi-GPU notes repo says vLLM tensor parallel is the route for real
+  parallel layer execution, but single-stream decode may remain comparable to
+  layer split; multi-user throughput and giant MoE are where extra cards shine:
+  `https://github.com/PMZFX/intel-arc-pro-b70-benchmarks/blob/master/multi-gpu.md`.
+- A LocalLLM B70 report calls out MoE friendliness on Intel XPU FP8, 32K
+  context, block size `64`, and large multi-stream scaling. Treat this as an
+  aggregate-throughput clue, not proof of higher c1 speed:
+  `https://www.reddit.com/r/LocalLLM/comments/1sfa0iw/2x_intel_arc_b70_benchmark/`.
+
+Next things to try, in priority order:
+
+1. **Resident-state COW verifier.**
+   Build the smallest in-engine verifier that forks live request state, aliases
+   immutable KV pages, copies mutable GDN/Mamba state, scores one candidate
+   token, and proves the parent row is unchanged. This is the prerequisite for
+   any exact-quality speculation.
+
+2. **Guard failure artifacts.**
+   Patch `scripts/check-qwen36-accepted-provenance.py` so HTTP 500/device-lost
+   produces JSON instead of only a Python exception. This makes stability work
+   auditable.
+
+3. **Real-route grouped-GEMM harness.**
+   Feed captured Qwen3.6 route histograms into Intel's grouped-GEMM benchmark.
+   Compare current vLLM Quark MoE, SYCL-TLA grouped GEMM, and Triton-XPU on
+   actual layer shapes and active-expert distributions.
+
+4. **B70-specific fused MoE kernel prototype.**
+   The bold kernel target is a fused XPU path for Qwen3.6 A3B decode:
+   route packing, W8A16 or W8A8 expert GEMM, top-k weight application,
+   activation combine, and output layout in one graph-friendly family.
+   Avoid changing quantization semantics.
+
+5. **Metadata-copy elimination.**
+   Investigate whether `block_table`, `num_computed_tokens`, `seq_lens`, and
+   related scheduler metadata can stay resident on XPU or be updated through a
+   tiny persistent kernel. The crash site suggests this path is both fragile
+   and on the per-request critical path.
+
+6. **Expert locality and physical packing.**
+   Use route-capture artifacts to reorder or cluster expert weights by hotness
+   and co-activation, then re-run the grouped-GEMM harness. This preserves math
+   if the permutation is exact and only changes physical layout.
+
+7. **TP/EP hybrid for A3B.**
+   Prototype an expert-parallel layout where dense/shared layers remain TP4
+   but expert weights are partitioned or partially replicated by hotness.
+   This trades all-to-all activation dispatch against lower per-token expert
+   weight bandwidth. It is risky, but it is one of the few plausible routes to
+   a 2x c1 improvement without lower precision.
+
+8. **Block-size and scheduler-shape sweep.**
+   Test block size `64` and nearby KV/scheduler shapes in an isolated lane.
+   The goal is not memory headroom; it is fewer metadata updates and better
+   graph replay stability.
+
+9. **Kernel-stack bakeoff.**
+   Build a clean matrix for oneAPI, PyTorch/XPU, Triton-XPU, vLLM, and
+   `vllm-xpu-kernels` versions. Require the provenance guard first, then run
+   c1 p512/o512, c1 long-output, and a small aggregate batch. Do not compare
+   across graph-cache branches without sentinel proof.
+
+10. **Speculation proposer options after COW exists.**
+    Test n-gram, MTP, DFlash/EAGLE-style proposer, and route-aware proposer
+    only through the resident verifier. External re-prefill remains a diagnostic
+    path because it can disagree with accepted continuous decode.
+
+Bigger, bolder opportunities to keep in view:
+
+1. **Certified runtime appliance.**
+   Package model weights, graph cache, exact sentinels, route histograms,
+   launch flags, and quality gates as one deployable artifact. Production
+   starts only from a certified artifact.
+
+2. **Qwen3.6 A3B XPU kernel upstream bundle.**
+   Turn our route captures and shape harness into an upstreamable benchmark
+   package for Intel/vLLM maintainers. The most useful artifact is not another
+   endpoint log; it is a reproducible kernel-shape suite with expected tokens.
+
+3. **Persistent decode loop.**
+   For c1 latency, consider bypassing more of the vLLM scheduler by building a
+   fixed-shape decode loop for one active request: resident metadata, static
+   graph buckets, fixed sampling policy, and explicit rollback hooks for COW.
+
+4. **Hot-expert cache residency policy.**
+   If route histograms are stable enough, pre-place hot experts per layer for
+   B70 cache/locality and measure whether exact physical layout changes reduce
+   DRAM traffic.
+
+5. **Transactional speculation log.**
+   Every speculative attempt should produce an append-only record: parent state
+   hash, candidate tokens, verifier logits/top-k, accepted count, rollback or
+   commit decision, final tokens. This is how we keep quality arguments
+   defensible while moving fast.
+
+6. **Single-card fast lane plus multi-card service lane.**
+   The leaderboard and B70 reports suggest extra cards may help aggregate more
+   reliably than c1. If c1 stalls under TP4, keep a separate production design
+   where one-card or two-card instances serve independent requests, while TP4
+   remains for 32K capacity and large prompts.

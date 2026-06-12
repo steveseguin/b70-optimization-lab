@@ -374,3 +374,16 @@ vLLM/XPU FP8 work:
     layerlets, shape-exact tiny collective work, and a strict 8-bit engine
     bakeoff. Detailed addendum and artifacts are in
     `notes/2026-06-11-qwen36-aot-localmaxxing-and-runtime-screens.md`.
+14. Qwen3.6 Quark W8A8 direct offline `LLM.generate` with the accepted
+    PIECEWISE graph cache reached `98.564 tok/s` mean output speed for
+    p512/o512/r3, essentially matching the accepted endpoint. This rules out
+    OpenAI serving/frontdoor overhead as the main c1 bottleneck. The offline
+    probe also exposed a stability hazard: two accepted-backend restores reached
+    `/health` and then crashed on first completion with
+    `UR_RESULT_ERROR_DEVICE_LOST` in XPU metadata-copy paths. The next backlog
+    is now resident-state COW verification, structured guard failure artifacts,
+    real-route grouped-GEMM/MoE kernel work, scheduler metadata-copy removal,
+    exact expert physical packing, TP/EP hybrid experiments, block-size `64`
+    screens, and a full oneAPI/PyTorch/Triton/vLLM kernel-stack bakeoff. Detailed
+    artifacts and external leads are in
+    `notes/2026-06-11-qwen36-aot-localmaxxing-and-runtime-screens.md`.
