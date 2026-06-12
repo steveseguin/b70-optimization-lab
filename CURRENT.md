@@ -6,6 +6,27 @@ Date: 2026-06-12
 
 2026-06-12 continuation:
 
+- Added and ran a route-exact prologue screen for the existing
+  `torch.ops._moe_C.fused_moe_prologue` path:
+  `scripts/bench-qwen36-moe-prologue.py`. On layer-9 routecapture6 rows=1
+  windows, the prologue exactly matched current `remap_hidden_states` expansion
+  and expert counts (`max_expand_abs_diff=0.0`,
+  `max_rows_per_expert_diff=0`) while reducing the current
+  `rows_per_expert.zero_()+remap_hidden_states` substep from
+  `111.108 us` mean to `106.637 us` mean, a `4.471 us` average component win.
+  This is useful for a future one-dispatch MoE layerlet, but too small by
+  itself to move the `~10 ms/token` c1 decode bottleneck. The accepted TP4
+  service was restored on `127.0.0.1:18080` and provenance passed all exact
+  sentinels after the benchmark. The refreshed backlog now adds larger lanes:
+  kernel ABI cleanup with out-variants, fixed-shape static decode bundles,
+  target-verified speculative transactions, DPAS/XMX counter proof, route-aware
+  AOT MoE layerlets, host-stack stress gates, and production split-lane routing.
+  Artifacts:
+  `data/qwen36-quark-int8-moe-prologue-layer9-routecapture6-20260612aq.md`,
+  `data/qwen36-quark-int8-moe-prologue-layer9-routecapture6-20260612aq.json`,
+  `data/qwen36-quark-int8-tp4-accepted-provenance-after-prologue-20260612aq.json`,
+  and `notes/2026-06-12-qwen36-next-bigger-bets.md`.
+
 - Ran the layer-9 routecapture6 rows=1 fused SiLU+quant gate. Baseline current
   `xpu_fused_moe` is exact at max diff `0.000`, averaging
   `283.098 us/layer`; exact preallocated staged replay averages

@@ -518,6 +518,7 @@ New profiling environment controls:
 Validation:
 
 - `bash -n scripts/launch-qwen36-quark-int8-accepted.sh` passed.
+
 - `/home/steve/.venvs/vllm-xpu/bin/python -m py_compile
   /home/steve/src/vllm/vllm/utils/xpu_decode_timing.py` passed.
 - A small import/filter exercise recorded only `xpu_moe.*` when
@@ -2547,3 +2548,109 @@ Fresh bigger ideas to keep on the board:
    model ID, command, quality gates, provenance JSON, peak VRAM, single-request
    and aggregate throughput, uptime/soak result, and known failure modes. That
    is more valuable than a one-line tok/s leaderboard row.
+
+## 2026-06-12 Fused Prologue Screen And Bigger Lanes
+
+New route-exact prologue artifact:
+
+- Script: `scripts/bench-qwen36-moe-prologue.py`.
+- JSON:
+  `data/qwen36-quark-int8-moe-prologue-layer9-routecapture6-20260612aq.json`.
+- Markdown:
+  `data/qwen36-quark-int8-moe-prologue-layer9-routecapture6-20260612aq.md`.
+
+Result:
+
+- The existing `torch.ops._moe_C.fused_moe_prologue` path exactly matched the
+  current `rows_per_expert.zero_()+remap_hidden_states` route expansion on
+  layer-9 routecapture6 rows=1 windows:
+  `max_expand_abs_diff=0.0` and `max_rows_per_expert_diff=0`.
+- Current zero+remap mean: `111.108 us`.
+- Fused prologue mean: `106.637 us`.
+- Mean component delta: `-4.471 us`.
+- Decision: keep fused prologue as a correct building block for a
+  one-dispatch or persistent MoE layerlet, but do not promote it as a standalone
+  endpoint optimization. The measured win is real but too small to close the
+  `~10 ms/token` to `<=5 ms/token` c1 target gap.
+
+Restore/provenance:
+
+- Accepted backend restored as
+  `qwen36-tp4-accepted-restored-after-prologue-20260612aq`.
+- Restore log:
+  `data/qwen36-quark-int8-tp4-accepted-restored-after-prologue-20260612aq.log`.
+- Provenance guard:
+  `data/qwen36-quark-int8-tp4-accepted-provenance-after-prologue-20260612aq.json`.
+- Guard result: all exact sentinels passed.
+- Frontdoor status after restore: paused for remote generation, local bypass
+  enabled, `0` active and `0` queued generations.
+
+External refresh:
+
+- Localmaxxing still shows only one approved exact-model B70/vLLM row for
+  `nameistoken/Qwen3.6-35B-A3B-Quark-W8A8-INT8`: our existing
+  `99.428 tok/s` c1 row. No public exact-model result currently suggests a
+  simple config-only path to `>200 tok/s`.
+- That keeps the priority order unchanged: first persistent/fused MoE and
+  exact verifier-safe speculation, then production split-lane architecture.
+
+New concrete items to try:
+
+1. **Promote fused prologue into a route-replay layerlet, not the endpoint.**
+   Wire `fused_moe_prologue` into a standalone layer replay that includes
+   quant, both W8A8 grouped GEMMs, activation, second quant, gather, and
+   top-k weighting. The gate is exact parity with `xpu_fused_moe` and a layer
+   mean below the `~160 us` non-speculative budget.
+
+2. **Add exact out-variants for quant and gather buffers.**
+   The prologue component is now clean, but dynamic quant and gather still
+   allocate/return tensors. Add exact out-variant APIs for the remaining small
+   MoE buffers before attempting another fusion. The gate is byte-for-byte
+   parity plus a route-replay timing win.
+
+3. **Build a fixed-shape decode bundle for one bucket.**
+   Compile one p512/o512 or p2k/o512 c1 lane with preallocated KV/GDN metadata,
+   certified graph cache, fixed sampling, and no dynamic request scheduler
+   churn. This is a truth-serum benchmark: if it does not move c1 speed, the
+   kernel path dominates; if it does, production needs a split latency lane.
+
+4. **Run a DPAS/XMX proof packet before more kernel speculation.**
+   Use the best available Intel tooling on this host, or add a host-stack lane
+   with VTune/unitrace if needed, to prove whether the W8A8 GEMMs are issuing
+   the expected INT8 DPAS/XMX instructions at useful occupancy. If counters are
+   poor, layout/kernel work outranks scheduler work.
+
+5. **Generate route-aware AOT MoE kernels from captured windows.**
+   Instead of a generic grouped-GEMM policy, emit a small set of route-window
+   kernels for common layer/token patterns. Each kernel carries a route-shape
+   manifest, tensor-hash provenance, and a fallback to the generic exact path.
+
+6. **Prototype a transactional verifier sidecar inside vLLM state.**
+   Fork request state, alias immutable KV pages, version mutable GDN/Mamba and
+   scheduler metadata, run the current Quark W8A8 target as verifier, and commit
+   only accepted draft tokens. This is still the cleanest no-quality-loss way
+   to exceed `200 tok/s` if non-speculative MoE cannot halve token latency.
+
+7. **Run a B70 host-stack stress matrix as a separate reliability lane.**
+   Keep the accepted model and command fixed while varying only KMD/runtime,
+   oneAPI, PyTorch, oneCCL, firmware, and PCIe placement. Measure device-lost
+   rate, p512/o128 sentinel parity, and c1 speed. Do not mix this with model or
+   kernel changes.
+
+8. **Design production around two service classes if the static lane wins.**
+   Keep the stable TP4/32K service for long context and aggregate throughput,
+   but route low-latency c1 chat shapes to a certified static lane. This avoids
+   sacrificing reliability or context length while still improving interactive
+   speed.
+
+9. **Prepare an upstreamable route-exact B70 packet.**
+   Package the fused-prologue screen, grouped-GEMM M-scaling data, SiLU+quant
+   rejection, routecapture windows, exact expected outputs, launch command, and
+   provenance guards. The packet should let Intel/vLLM reproduce the small-M
+   MoE floor and target the same bottleneck.
+
+10. **Make quality validation multi-layered by default.**
+    For every future speed candidate, run exact sentinel parity, prompt-class
+    canaries, route-replay numeric parity, and a small BF16 differential/logit
+    rank probe. Token sentinels are necessary, but the BF16/logit lane catches
+    near-miss probability drift before it becomes production instability.

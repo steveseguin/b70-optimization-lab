@@ -726,3 +726,21 @@ vLLM/XPU FP8 work:
     tile-native expert caches, static c1 decode appliance, hybrid TP/EP plus
     hot-expert replication, kernel-branch archaeology, same-model micro-drafter,
     and a benchmark-plus-reliability publication packet.
+29. Added and ran `scripts/bench-qwen36-moe-prologue.py` against the existing
+    `torch.ops._moe_C.fused_moe_prologue` path. The route-exact layer-9
+    routecapture6 rows=1 screen produced
+    `data/qwen36-quark-int8-moe-prologue-layer9-routecapture6-20260612aq.md`
+    and `.json`: expanded hidden states and reconstructed expert counts matched
+    the current `zero_()+remap_hidden_states` path exactly
+    (`max_expand_abs_diff=0.0`, `max_rows_per_expert_diff=0`). Mean timing
+    improved from `111.108 us` to `106.637 us`, a `4.471 us` average component
+    win. Decision: keep fused prologue as a building block for a future
+    one-dispatch/persistent MoE layerlet, but do not treat it as an endpoint
+    promotion path by itself because the current c1 target needs roughly
+    millisecond-level savings per token. The accepted TP4 backend was restored
+    after the microbench; provenance passed all exact sentinels in
+    `data/qwen36-quark-int8-tp4-accepted-provenance-after-prologue-20260612aq.json`.
+    The refreshed idea queue now tracks broader lanes: kernel ABI cleanup and
+    exact out-variants, fixed-shape static decode bundles, target-verified
+    speculative transactions, DPAS/XMX counter proof, route-aware AOT MoE
+    layerlets, host-stack stress gates, and production split-lane routing.
