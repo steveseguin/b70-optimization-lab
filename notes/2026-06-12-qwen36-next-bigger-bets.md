@@ -172,6 +172,34 @@ External signals folded into the backlog:
   model/B70/vLLM setup, the existing `99.428 tok/s` c1 baseline:
   `https://localmaxxing.com/api/leaderboard?hfId=nameistoken%2FQwen3.6-35B-A3B-Quark-W8A8-INT8&hardwareName=Arc%20Pro%20B70&engineName=vllm&limit=10`.
 
+Fresh post-parity scan:
+
+- oneDNN's release notes and matmul docs explicitly describe grouped memory and
+  grouped matmul as experimental MoE support, enabled with
+  `ONEDNN_EXPERIMENTAL_GROUPED_MEMORY=ON`, with optimized Intel GPU
+  implementation. This supports keeping the packed oneDNN path as a serious
+  exactness-preserving candidate rather than a generic library detour:
+  `https://github.com/uxlfoundation/oneDNN/releases`,
+  `https://uxlfoundation.github.io/oneDNN/dev_guide_matmul.html`, and
+  `https://uxlfoundation.github.io/oneDNN/dev_guide_experimental.html`.
+- SonicMoE's IO/tile-aware framing is useful even if its implementation is not
+  directly portable: grouped GEMM wins can come from tile sizing, prologue and
+  epilogue IO, padding, and keeping per-expert work aligned with hardware
+  matrix units. Add an explicit epilogue/IO audit to the custom layerlet plan:
+  `https://arxiv.org/html/2512.14080v2`.
+- AMD's vLLM MoE playbook is vendor-specific but the systems tradeoff applies:
+  EP can trade all-to-all communication for more aggregate expert-weight memory
+  bandwidth. For B70, this means TP4 should not be assumed best for c1 latency;
+  route-driven TP2/EP/hot-replication simulations remain worth doing:
+  `https://rocm.blogs.amd.com/software-tools-optimization/vllm-moe-guide/README.html`.
+- Recent public B70 field reports still point at host-stack and runtime
+  instability variance across Ubuntu/kernel/driver/container combinations.
+  Treat the clean Intel container/BOM lane as production reliability work and
+  as a possible performance unlock, but keep it separate from model-quality
+  changes:
+  `https://www.reddit.com/r/LocalLLaMA/comments/1siar7y/intel_arc_pro_b70_32gb_performance_on_qwen3527bq4/`,
+  `https://forum.level1techs.com/t/intel-b70-launch-unboxed-and-tested/247873`.
+
 ## Immediate Things To Try
 
 1. **Measure the exact scratch hook before another endpoint promotion.**
