@@ -6,6 +6,34 @@ Date: 2026-06-12
 
 2026-06-12 notes update:
 
+- Added a "Route Overlay Diagnostic And Bolder Queue Refresh 20260612co"
+  section to `notes/2026-06-12-qwen36-next-bigger-bets.md`. This is a
+  diagnostic/backlog update, not a promoted speed result. The route-overlay
+  attempts exposed a production-cache hygiene issue: two launches that reused
+  the production AOT cache failed with cross-device tensors after the previous
+  reversed-rank diagnostic, while the same launch with an isolated fresh cache
+  started cleanly. The fresh-cache diagnostic measured `94.938 tok/s`
+  corrected p512/o128, but route overlay payloads had `captures=0`, so the
+  current Python route hook does not observe the compiled replay path. New
+  tracked items: isolate diagnostic cache roots, add an AOT cache provenance
+  manifest, move route capture into the compiled MoE runner/custom-op path,
+  replay real route fixtures outside serving, split model-forward timing by
+  layer family with route context, re-test TP2 latency with cache isolation,
+  and keep broader no-quality-loss bets around route-aware expert caching,
+  `vllm-xpu-kernels` custom MoE ops, oneDNN grouped-memory MoE sidecar,
+  locality-aware schedule transfer, TP2 latency cells, static c1 micro-engine,
+  and a maintainer-grade route/timeline bundle. Accepted TP4 was restored on
+  `18080` afterward with the standard launcher; cache quarantine was not
+  needed for restore. Provenance passed sentinels `4752`, `11436`, and `198`,
+  and the no-thinking quality smoke matched the previous accepted baseline.
+  New artifacts:
+  `data/qwen36-quark-int8-tp4-routeoverlay-diagnostic-summary-20260612co.json`,
+  `data/qwen36-quark-int8-tp4-accepted-provenance-after-routeoverlay-20260612co.json`,
+  and
+  `data/qwen36-quark-int8-tp4-accepted-quality-after-routeoverlay-nothink-smoke-20260612co.json`.
+
+2026-06-12 notes update:
+
 - Added a "Bigger/Bolder Ideas Refresh 20260612cm" section to
   `notes/2026-06-12-qwen36-next-bigger-bets.md`. This is backlog, not a
   promoted speed result: the public Localmaxxing exact-model/B70/vLLM query

@@ -559,6 +559,171 @@ Pruning rules for this backlog:
 - Any branch that improves aggregate throughput but harms c1 latency belongs
   in a separate aggregate-serving lane, not the c1 speed goal.
 
+## Route Overlay Diagnostic And Bolder Queue Refresh 20260612co
+
+Added after the route-overlay diagnostic pass. This pass did not produce a new
+speed win, but it added two important lessons: route capture must be placed in
+the compiled replay path, and rank-map/topology diagnostics must not reuse the
+production AOT cache root.
+
+Measured facts:
+
+- The first two route-overlay launches reused the production compile cache and
+  failed during startup with cross-device tensors, e.g. `mat2 is on xpu:0,
+  different from other tensors on xpu:3`. The likely cause is stale AOT state
+  from the previous reversed-rank diagnostic.
+- The same route-overlay launch with an isolated fresh cache root started
+  cleanly and served the diagnostic request on `18081`.
+- Diagnostic p512/o128/c1 on the fresh cache produced
+  `94.938 tok/s` corrected after-first, `90.568 tok/s` e2e, and
+  `10.453 ms/token` vLLM decode. This is attribution-only, not a promoted
+  result.
+- The boundary hook captured `576` all-rank rows. Pure-decode
+  `forward_end_after_start_sync_ms` after the first five events was:
+  rank 0 `4.020 ms` mean / `4.202 ms` median, rank 1 `4.554/4.516`,
+  rank 2 `4.428/4.392`, rank 3 `4.453/4.411`.
+- Route overlay payloads were present but empty: `captures=0` and no route
+  hash on all rows. The current Python route-capture hook does not observe the
+  actual compiled replay path used by this accepted graph family.
+
+Operational notes to carry forward:
+
+1. **Isolate diagnostic cache roots.**
+   Any experiment that changes rank-to-device mapping, compiled graph shape,
+   route capture, or worker device setup must use a dedicated
+   `TORCHINDUCTOR_CACHE_DIR` and `VLLM_CACHE_ROOT`, or explicitly quarantine
+   stale AOT hashes before restoring production.
+
+2. **Move route capture below Python router callbacks.**
+   Capture `topk_ids` / `topk_weights` at the lower compiled path: immediately
+   after expert selection in the MoE runner, inside the shared MoE custom-op
+   wrapper, or from a graph-safe side channel. A Python callback on the router
+   object is not enough under AOT replay.
+
+3. **Route overlay remains the next attribution gate.**
+   The rank timing still says model-forward-side work is the wait. We need
+   route signatures beside those timing rows before deciding between
+   route-class kernels, expert replication, or TP/EP topology changes.
+
+4. **Promoted service restore must include cache hygiene.**
+   The accepted endpoint should be relaunched only after checking whether the
+   production cache still selects the clean graph. If it selects the stale
+   reversed-rank AOT hash, quarantine that hash rather than debugging service
+   flags.
+
+Restore status:
+
+- Stopped the fresh-cache route-overlay diagnostic and restored the accepted
+  TP4 endpoint on `18080` with `scripts/launch-qwen36-quark-int8-accepted.sh`.
+- The standard accepted launcher came back without needing cache quarantine.
+- Provenance passed exact sentinels `4752`, `11436`, and `198`.
+- The no-thinking quality smoke passed and matched the previous accepted
+  baseline across the checked cases.
+
+New things to add to the near-term queue:
+
+1. **Compiled-path route ledger.**
+   Add a graph-safe route ledger in the MoE runner/custom-op path with per-rank
+   route hash, active expert count, max rows per expert, top hot experts, and
+   layer family. Keep it env-gated and limited to one-token decode windows.
+
+2. **AOT cache provenance manifest.**
+   Write a small cache manifest beside each accepted launch: source revision,
+   rank map, physical device order, model revision, key env vars, and AOT hash.
+   This turns cache pollution from a mystery into a visible mismatch.
+
+3. **Route-fixture replay outside vLLM serving.**
+   Extract real route windows and replay just the MoE layer kernels with the
+   same W8A8 tensors. This avoids waiting on full endpoint startup for every
+   kernel/tile idea.
+
+4. **Layer-family timing with route context.**
+   Split model forward into dense attention/GDN, sparse MoE, logits, and
+   sampler-adjacent sections, then attach route summaries to MoE layers only.
+   That tells us whether the `~4.5 ms` forward wait is broad or concentrated.
+
+5. **TP2 latency with cache isolation.**
+   Re-run TP2 as a latency experiment with a clean cache root and exact gates.
+   If TP2 materially improves c1, the other two cards can serve replicas,
+   target-verifier branches, or aggregate traffic.
+
+6. **Localmaxxing comparison query before every claim.**
+   Query the exact model ID and B70/vLLM class before posting. The best public
+   exact row remains the `~99 tok/s` accepted result; new diagnostic rows do
+   not get posted unless they pass provenance, quality, and stability.
+
+Bigger and bolder ideas added from this pass:
+
+1. **Route-aware expert cache compiler.**
+   Use captured traffic to generate a static expert placement/replication
+   plan per layer: hot experts duplicated, cold experts left sharded, and
+   route-class kernels preselected. The model values are unchanged; memory is
+   traded for less synchronization and less skew.
+
+2. **XPU MoE plugin in `vllm-xpu-kernels`.**
+   Build the W8A8 Qwen3.6 MoE island as a custom XPU op/plugin rather than
+   burying it only in the local vLLM fork. The upstream XPU kernels repo is
+   designed for Intel GPU custom ops and oneDNN-backed primitives, so this is
+   the cleanest path to a maintainable fast path.
+
+3. **oneDNN grouped-memory MoE sidecar.**
+   oneDNN now has experimental grouped memory/grouped matmul support and a
+   max-group-size execution hint for MoE-like workloads. Try it first on real
+   route fixtures, then only wire it into serving behind exact compare/fallback.
+
+4. **Column-major/locality schedule transfer.**
+   Borrow the locality-aware grouped-GEMM idea from MoE kernel research: sort
+   or bucket work for cache/locality without changing arithmetic. On XPU this
+   should be evaluated with real Qwen3.6 route distributions, not synthetic
+   balanced routes.
+
+5. **Two-card latency cell plus two-card verifier/replica cell.**
+   If TP4 keeps losing c1 time to cross-card coordination, split the machine
+   into a lower-latency TP2 cell and a second utility cell for target-owned
+   speculative verification, redundancy, or aggregate requests.
+
+6. **Static c1 micro-engine as a truth oracle.**
+   Build a minimal single-request decode loop that bypasses OpenAI serving but
+   uses the same weights, graph buckets, KV state, and sampler. If it cannot
+   beat `~100 tok/s`, the bottleneck is model/kernel. If it does, the serving
+   stack still has removable orchestration cost.
+
+7. **Maintainer-grade route/timeline bundle.**
+   Publish a compact repro with the exact model, cache manifest, route
+   fixtures, all-rank timing, oneDNN/current-kernel comparison, Localmaxxing
+   row, and quality gates. The concrete ask: help close the gap from
+   `~10 ms/token` to `~5 ms/token` for B70 W8A8 MoE decode.
+
+Sources added to this refresh:
+
+- vLLM's fused MoE kernel design documents describe expert-parallel all2all
+  backends, quantization formats, fused expert kernels, and modular kernel
+  families: `https://docs.vllm.ai/en/latest/design/moe_kernel_features/`.
+- oneDNN release notes list experimental grouped memory/grouped matmul support
+  for MoE and a `DNNL_ARG_HINT_MAX_GROUP_SIZE` execution-time hint:
+  `https://github.com/uxlfoundation/oneDNN/releases`.
+- Intel's Triton XPU grouped-GEMM issue highlights decode route skew and real
+  token distributions as key to MoE performance tuning:
+  `https://github.com/intel/intel-xpu-backend-for-triton/issues/6389`.
+- `vllm-xpu-kernels` is the upstream-adjacent custom-op home for Intel XPU
+  kernels and oneDNN-backed primitives:
+  `https://github.com/vllm-project/vllm-xpu-kernels`.
+- Public B70 llama.cpp/SYCL numbers show Qwen3.6 MoE can be attractive on B70,
+  but the comparable rows are lower-bit and different-runtime signals rather
+  than accepted W8A8/vLLM replacements:
+  `https://github.com/PMZFX/intel-arc-pro-b70-benchmarks`.
+
+Artifacts for this pass:
+
+- `data/qwen36-quark-int8-tp4-routeoverlay-diagnostic-summary-20260612co.json`
+- `data/qwen36-quark-int8-tp4-routeoverlay-20260612cn.log`
+- `data/qwen36-quark-int8-tp4-routeoverlay-20260612cn2.log`
+- `data/qwen36-quark-int8-tp4-routeoverlay-freshcache-20260612cn3.log`
+- `data/qwen36-quark-int8-tp4-routeoverlay-freshcache-p512o128-metrics-20260612cn3.json`
+- `data/qwen36-quark-int8-tp4-accepted-restored-after-routeoverlay-20260612co.log`
+- `data/qwen36-quark-int8-tp4-accepted-provenance-after-routeoverlay-20260612co.json`
+- `data/qwen36-quark-int8-tp4-accepted-quality-after-routeoverlay-nothink-smoke-20260612co.json`
+
 ## Worker/Async Output Timeline 20260612bz
 
 Implemented the first immediate queue item from the backlog refresh: object-ID
