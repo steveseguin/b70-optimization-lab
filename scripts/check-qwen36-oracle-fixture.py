@@ -5,6 +5,10 @@ This is a lightweight regression gate around
 ``reduce-qwen36-oracle-fixture.py`` output. Use ``--mode exact`` after a
 speculative scheduler/KV patch; use ``--mode known-drift`` to verify that the
 current minimized failure still describes the expected blocker.
+
+For copy-on-write verifier work, pair ``--mode exact`` with
+``--expect-spec-active``. That proves the speculative/verifier path actually
+ran while the final token stream still matched the accepted baseline.
 """
 
 from __future__ import annotations
@@ -58,10 +62,129 @@ def check_replay(replay: dict[str, Any], errors: list[str]) -> None:
         fail(errors, "suppressed follow-up mismatches are present")
 
 
+def load_spec_summary(fixture: dict[str, Any], path: Path | None) -> dict[str, Any] | None:
+    if path is not None:
+        data = load_json(path)
+        if isinstance(data, dict) and isinstance(data.get("spec_summary"), dict):
+            return data["spec_summary"]
+        return data if isinstance(data, dict) else None
+    summary = fixture.get("spec_summary")
+    return summary if isinstance(summary, dict) else None
+
+
+def spec_totals(summary: dict[str, Any] | None) -> dict[str, Any]:
+    totals: dict[str, Any] = {
+        "rows": 0,
+        "requests": 0,
+        "draft_tokens": 0,
+        "accepted": 0,
+        "rejected": 0,
+        "accept_rate_pct": None,
+        "trace_count": 0,
+    }
+    if not summary:
+        return totals
+    traces = summary.get("traces")
+    if not isinstance(traces, list):
+        return totals
+    totals["trace_count"] = len(traces)
+    request_ids: set[str] = set()
+    for trace in traces:
+        if not isinstance(trace, dict):
+            continue
+        totals["rows"] += int(trace.get("rows") or 0)
+        totals["draft_tokens"] += int(trace.get("draft_tokens") or 0)
+        totals["accepted"] += int(trace.get("accepted") or 0)
+        totals["rejected"] += int(trace.get("rejected") or 0)
+        ids = trace.get("request_ids")
+        if isinstance(ids, list):
+            request_ids.update(str(item) for item in ids)
+        else:
+            totals["requests"] += int(trace.get("requests") or 0)
+    if request_ids:
+        totals["requests"] = len(request_ids)
+    if totals["draft_tokens"]:
+        totals["accept_rate_pct"] = (
+            float(totals["accepted"]) * 100.0 / float(totals["draft_tokens"])
+        )
+    return totals
+
+
+def check_spec_summary(
+    fixture: dict[str, Any],
+    summary: dict[str, Any] | None,
+    args: argparse.Namespace,
+    errors: list[str],
+) -> dict[str, Any]:
+    totals = spec_totals(summary)
+    needs_summary = (
+        args.expect_spec_active
+        or args.min_draft_tokens > 0
+        or args.min_accepted_tokens > 0
+        or args.min_accept_rate_pct is not None
+        or args.require_spec_join
+    )
+    if needs_summary and not summary:
+        fail(errors, "spec summary is required but missing")
+        return totals
+
+    if args.expect_spec_active:
+        if totals["draft_tokens"] <= 0:
+            fail(errors, "expected speculative draft tokens, found none")
+        if totals["accepted"] <= 0:
+            fail(errors, "expected accepted speculative tokens, found none")
+    if totals["draft_tokens"] < args.min_draft_tokens:
+        fail(
+            errors,
+            f"expected at least {args.min_draft_tokens} draft tokens, "
+            f"found {totals['draft_tokens']}",
+        )
+    if totals["accepted"] < args.min_accepted_tokens:
+        fail(
+            errors,
+            f"expected at least {args.min_accepted_tokens} accepted draft tokens, "
+            f"found {totals['accepted']}",
+        )
+    if args.min_accept_rate_pct is not None:
+        rate = totals["accept_rate_pct"]
+        if rate is None or rate < args.min_accept_rate_pct:
+            fail(
+                errors,
+                f"expected accept_rate_pct >= {args.min_accept_rate_pct}, found {rate}",
+            )
+
+    if args.require_spec_join and summary:
+        joinability = summary.get("joinability")
+        if not isinstance(joinability, dict):
+            fail(errors, "spec summary joinability is missing")
+        else:
+            if joinability.get("request_id_join_possible") is not True:
+                fail(errors, "spec summary request-id join is not possible")
+            trace_count = int(joinability.get("trace_request_count") or 0)
+            artifact_count = int(joinability.get("artifact_request_count") or 0)
+            case_count = int(fixture.get("case_count") or 0)
+            if trace_count != artifact_count:
+                fail(
+                    errors,
+                    f"spec trace/artifact request count mismatch: {trace_count} != {artifact_count}",
+                )
+            if case_count and artifact_count != case_count:
+                fail(
+                    errors,
+                    f"spec artifact request count {artifact_count} != fixture case count {case_count}",
+                )
+    return totals
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--fixture", type=Path, required=True)
     parser.add_argument("--replay-json", type=Path)
+    parser.add_argument(
+        "--spec-summary",
+        type=Path,
+        help="Optional spec summary JSON. Defaults to fixture.spec_summary when present.",
+    )
     parser.add_argument(
         "--mode",
         choices=("exact", "known-drift"),
@@ -73,6 +196,19 @@ def main() -> int:
         "--expected-roles",
         default="",
         help="Comma-separated expected emission roles for known-drift mode.",
+    )
+    parser.add_argument(
+        "--expect-spec-active",
+        action="store_true",
+        help="Require speculative draft and accepted-token activity in the spec summary.",
+    )
+    parser.add_argument("--min-draft-tokens", type=int, default=0)
+    parser.add_argument("--min-accepted-tokens", type=int, default=0)
+    parser.add_argument("--min-accept-rate-pct", type=float)
+    parser.add_argument(
+        "--require-spec-join",
+        action="store_true",
+        help="Require spec trace request IDs to join back to every fixture case.",
     )
     args = parser.parse_args()
 
@@ -92,6 +228,8 @@ def main() -> int:
 
     if args.replay_json:
         check_replay(load_json(args.replay_json), errors)
+    spec_summary = load_spec_summary(fixture, args.spec_summary)
+    spec = check_spec_summary(fixture, spec_summary, args, errors)
 
     if args.mode == "exact":
         if fixture.get("exact_match_all") is not True:
@@ -132,6 +270,7 @@ def main() -> int:
         "case_count": len(cases) if isinstance(cases, list) else 0,
         "mismatch_count": mismatch_count,
         "roles": mapped_roles(mismatches),
+        "spec": spec,
         "ok": not errors,
         "errors": errors,
     }

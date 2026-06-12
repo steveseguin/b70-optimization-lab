@@ -12432,3 +12432,61 @@ External notes that shaped this addendum:
   tuning matter more than raw proposer speed:
   `https://github.com/z-lab/dflash` and
   `https://huggingface.co/z-lab/Qwen3.6-35B-A3B-DFlash`
+
+## Copy-On-Write Gate Extension
+
+Extended `scripts/check-qwen36-oracle-fixture.py` so a future COW verifier patch
+can prove two things at once:
+
+1. Speculative verification actually ran.
+2. The final token stream still matched the accepted baseline exactly.
+
+New opt-in flags:
+
+- `--expect-spec-active`
+- `--min-draft-tokens`
+- `--min-accepted-tokens`
+- `--min-accept-rate-pct`
+- `--require-spec-join`
+- `--spec-summary` to override or provide a standalone spec summary JSON.
+
+Current known-drift gate:
+
+```bash
+python3 scripts/check-qwen36-oracle-fixture.py \
+  --fixture data/qwen36-quark-int8-tp4-oracle-k1-drift-fixture-20260611.json \
+  --replay-json data/qwen36-quark-int8-tp4-oracle-k1-drift-replay-20260611.json \
+  --mode known-drift \
+  --expected-mismatches 2 \
+  --expected-roles verifier_bonus_after_full_accept,replacement_after_reject \
+  --expect-spec-active \
+  --min-draft-tokens 15 \
+  --min-accepted-tokens 14 \
+  --min-accept-rate-pct 90 \
+  --require-spec-join
+```
+
+Result on the current fixture:
+
+- pass in `known-drift` mode;
+- `draft_tokens=15`, `accepted=14`, `accept_rate_pct=93.3333`, `requests=2`;
+- emission roles remain `verifier_bonus_after_full_accept` and
+  `replacement_after_reject`.
+
+The same fixture intentionally fails in exact COW mode:
+
+```bash
+python3 scripts/check-qwen36-oracle-fixture.py \
+  --fixture data/qwen36-quark-int8-tp4-oracle-k1-drift-fixture-20260611.json \
+  --replay-json data/qwen36-quark-int8-tp4-oracle-k1-drift-replay-20260611.json \
+  --mode exact \
+  --expect-spec-active \
+  --min-draft-tokens 15 \
+  --min-accepted-tokens 14 \
+  --min-accept-rate-pct 90 \
+  --require-spec-join
+```
+
+That exact command is the first pass target for the next scheduler/KV patch: it
+must report `ok=true` while keeping speculative activity nonzero. If it only
+passes with speculation disabled, it does not move the speed goal forward.
