@@ -1,0 +1,5 @@
+$ pgrep -af 'vllm serve|VLLM::Worker|multiprocessing.resource_tracker|qwen36|run-qwen36' || true
+1383632 tmux new-session -d -s qwen36-tp4-accepted-restored-after-oracle1-short-20260611a cd /home/steve/llm-optimizations && LOG_PATH=/tmp/qwen36-quark-int8-tp4-accepted-restored-after-oracle1-short-20260611a.log scripts/launch-qwen36-quark-int8-accepted.sh
+1573090 bash scripts/qwen36-xpu-recovery-snapshot.sh --out-dir data/qwen36-xpu-recovery-snapshot-after-offline-devicelost-20260612o --copy-smoke
+1574908 bash -lc pgrep -af 'vllm serve|VLLM::Worker|multiprocessing.resource_tracker|qwen36|run-qwen36' || true
+exit_status=0

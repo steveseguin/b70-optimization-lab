@@ -387,3 +387,14 @@ vLLM/XPU FP8 work:
     screens, and a full oneAPI/PyTorch/Triton/vLLM kernel-stack bakeoff. Detailed
     artifacts and external leads are in
     `notes/2026-06-11-qwen36-aot-localmaxxing-and-runtime-screens.md`.
+15. Recovery tooling now covers the post-device-lost path. The accepted
+    provenance guard writes structured failure JSON when the backend is down,
+    and `scripts/qwen36-xpu-recovery-snapshot.sh` captures XPU process,
+    health, stats, optional vLLM cleanup, and optional per-device torch copy
+    smoke artifacts. After the offline-probe `UR_RESULT_ERROR_DEVICE_LOST`
+    event, the four-XPU copy smoke passed, the accepted backend relaunched to
+    `/health` in `62 s`, the provenance guard passed all exact sentinels, and a
+    p512/o512 c1 sanity run measured `99.728 tok/s` corrected after-first and
+    `98.212 tok/s` e2e. This restores the quality baseline but does not change
+    the speed diagnosis: >200 tok/s still needs resident-state speculation or a
+    real MoE/kernel breakthrough.

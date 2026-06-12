@@ -8,6 +8,8 @@ import hashlib
 import json
 import re
 import time
+import traceback
+import urllib.error
 import urllib.request
 from pathlib import Path
 from typing import Any
@@ -49,6 +51,29 @@ def post_json(url: str, payload: dict[str, Any], timeout: int) -> dict[str, Any]
             "headers": {key.lower(): value for key, value in resp.headers.items()},
             "json": json.loads(resp.read().decode("utf-8")),
         }
+
+
+def exception_summary(exc: BaseException) -> dict[str, Any]:
+    summary: dict[str, Any] = {
+        "type": type(exc).__name__,
+        "message": str(exc),
+        "traceback_tail": traceback.format_exception(type(exc), exc, exc.__traceback__)[-8:],
+    }
+    if isinstance(exc, urllib.error.HTTPError):
+        body = exc.read().decode("utf-8", errors="replace")
+        summary.update({
+            "http_status": exc.code,
+            "http_reason": exc.reason,
+            "headers": {key.lower(): value for key, value in exc.headers.items()},
+            "body": body,
+        })
+        try:
+            summary["json"] = json.loads(body)
+        except json.JSONDecodeError:
+            pass
+    elif isinstance(exc, urllib.error.URLError):
+        summary["reason"] = str(exc.reason)
+    return summary
 
 
 def sha256_text(text: str) -> str:
@@ -213,6 +238,12 @@ def parse_log(log_path: Path | None, expected_cache_fragments: list[str]) -> dic
     }
 
 
+def log_tail(log_path: Path | None, max_lines: int = 120) -> list[str]:
+    if log_path is None or not log_path.exists():
+        return []
+    return log_path.read_text(errors="replace").splitlines()[-max_lines:]
+
+
 def load_baseline(path: Path) -> dict[str, dict[str, Any]]:
     data = json.loads(path.read_text())
     return {case["name"]: case for case in data.get("cases", [])}
@@ -267,13 +298,6 @@ def main() -> int:
 
     base_url = args.base_url.rstrip("/")
     errors: list[str] = []
-    model_payload = request_json(f"{base_url}/v1/models", args.timeout)
-    model_info = model_payload.get("data", [{}])[0]
-    if model_info.get("id") != args.model:
-        errors.append(f"served model id mismatch: {model_info.get('id')} != {args.model}")
-
-    baseline_by_name = load_baseline(args.baseline_json)
-    tokenizer = AutoTokenizer.from_pretrained(args.tokenizer, trust_remote_code=True)
     log_info = parse_log(args.log_path, args.expected_cache_fragment)
     if not log_info["exists"] and not args.allow_missing_log:
         errors.append("launch log is missing; pass --allow-missing-log to skip cache provenance failure")
@@ -281,16 +305,62 @@ def main() -> int:
         if not hit and not args.allow_missing_log:
             errors.append(f"expected cache fragment not found in launch log: {fragment}")
 
+    model_payload: dict[str, Any] = {}
+    model_info: dict[str, Any] = {}
+    model_request_error: dict[str, Any] | None = None
+    try:
+        model_payload = request_json(f"{base_url}/v1/models", args.timeout)
+        model_info = model_payload.get("data", [{}])[0]
+        if model_info.get("id") != args.model:
+            errors.append(f"served model id mismatch: {model_info.get('id')} != {args.model}")
+    except Exception as exc:
+        model_request_error = exception_summary(exc)
+        errors.append(
+            "model list request failed: "
+            f"{model_request_error['type']}: {model_request_error['message']}"
+        )
+
+    baseline_by_name = load_baseline(args.baseline_json)
+    tokenizer = AutoTokenizer.from_pretrained(args.tokenizer, trust_remote_code=True)
+
     cases: list[dict[str, Any]] = []
     for case in make_cases(tokenizer, args.prompt_tokens):
-        result = completion(
-            base_url=base_url,
-            model=args.model,
-            prompt=case["prompt"],
-            max_tokens=args.output_tokens,
-            seed=args.seed,
-            timeout=args.timeout,
-        )
+        prompt_token_count = len(tokenizer.encode(case["prompt"], add_special_tokens=False))
+        try:
+            result = completion(
+                base_url=base_url,
+                model=args.model,
+                prompt=case["prompt"],
+                max_tokens=args.output_tokens,
+                seed=args.seed,
+                timeout=args.timeout,
+            )
+        except Exception as exc:
+            request_error = exception_summary(exc)
+            errors.append(
+                f"{case['name']} completion request failed: "
+                f"{request_error['type']}: {request_error['message']}"
+            )
+            baseline = baseline_by_name.get(case["name"], {})
+            baseline_ids = [int(value) for value in baseline.get("output_token_ids", [])]
+            cases.append({
+                "name": case["name"],
+                "prompt_sha256": sha256_text(case["prompt"]),
+                "prompt_token_count": prompt_token_count,
+                "request_error": request_error,
+                "output_token_count": 0,
+                "output_token_ids": [],
+                "retokenized_output_token_ids": [],
+                "api_vs_retokenized_output_token_ids_match": None,
+                "baseline_prefix_token_ids": baseline_ids[:args.output_tokens],
+                "baseline_prefix_match": False,
+                "baseline_prefix_diff": {
+                    "index": 0,
+                    "current_len": 0,
+                    "baseline_len": min(len(baseline_ids), args.output_tokens),
+                },
+            })
+            continue
         retokenized = tokenizer.encode(result["text"], add_special_tokens=False)
         api_ids = result["response_output_token_ids"]
         output_ids = [int(value) for value in api_ids] if isinstance(api_ids, list) else retokenized
@@ -304,7 +374,7 @@ def main() -> int:
         cases.append({
             "name": case["name"],
             "prompt_sha256": sha256_text(case["prompt"]),
-            "prompt_token_count": len(tokenizer.encode(case["prompt"], add_special_tokens=False)),
+            "prompt_token_count": prompt_token_count,
             **result,
             "text_sha256": sha256_text(result["text"]),
             "output_token_count": len(output_ids),
@@ -347,13 +417,16 @@ def main() -> int:
         "errors": errors,
         "base_url": base_url,
         "model": args.model,
+        "model_payload": model_payload,
         "model_info": model_info,
+        "model_request_error": model_request_error,
         "tokenizer": args.tokenizer,
         "baseline_json": str(args.baseline_json),
         "prompt_tokens": args.prompt_tokens,
         "output_tokens": args.output_tokens,
         "seed": args.seed,
         "log": log_info,
+        "log_tail": log_tail(args.log_path),
         "sentinels": sentinel_results,
         "cases": cases,
     }

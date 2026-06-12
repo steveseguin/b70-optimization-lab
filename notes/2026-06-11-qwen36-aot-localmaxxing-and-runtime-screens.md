@@ -15551,3 +15551,89 @@ Bigger, bolder opportunities to keep in view:
    reliably than c1. If c1 stalls under TP4, keep a separate production design
    where one-card or two-card instances serve independent requests, while TP4
    remains for 32K capacity and large prompts.
+
+## Guard Failure Artifacts And Recovery Snapshot
+
+Added structured failure handling to
+`scripts/check-qwen36-accepted-provenance.py`. The guard now catches `/v1/models`
+and `/v1/completions` request failures, records exception summaries and HTTP
+metadata when available, still evaluates missing sentinels as failures, and
+writes the requested output JSON before exiting non-zero.
+
+Validation artifact with no backend listening:
+
+- `data/qwen36-quark-int8-tp4-accepted-provenance-guard-no-backend-failurejson-20260612o.json`
+- result: `ok=false`
+- captured model-list failure: `URLError: [Errno 111] Connection refused`
+- captured both completion failures as per-case `request_error` objects
+- preserved the expected sentinel failures with `actual_token_id=null`
+
+Added `scripts/qwen36-xpu-recovery-snapshot.sh` for post-crash evidence. By
+default it is read-only and captures:
+
+- `xpu-smi discovery`
+- `xpu-smi ps`
+- `xpu-smi health -l`
+- per-device health and stats JSON for devices `0..3`
+- pgrep/tmux state before and after optional cleanup
+
+Optional flags:
+
+- `--kill-vllm`: terminate only `vllm serve` and `VLLM::Worker` processes
+- `--copy-smoke`: run a small PyTorch/XPU copy/synchronize test on every XPU
+
+Recovery snapshot after the offline `UR_RESULT_ERROR_DEVICE_LOST` event:
+
+- directory:
+  `data/qwen36-xpu-recovery-snapshot-after-offline-devicelost-20260612o/`
+- copy smoke: passed on all four XPUs
+- torch: `2.11.0+xpu`
+- device count: `4`
+- each device copied `4096` fp32 values and returned the expected sum
+  `8386560.0`
+
+Accepted backend recovery:
+
+- session: `qwen36-tp4-accepted-restored-after-recovery-snapshot-20260612o`
+- launch log:
+  `data/qwen36-quark-int8-tp4-accepted-restored-after-recovery-snapshot-20260612o.log`
+- `/health`: available after `62 s`
+- accepted AOT cache fragment was reused:
+  `/mnt/fast-ai/vllm-cache-exp/qwen36-35b-a3b-quark-int8-tp4-piecewise-graph-gdn-reuseqkvzbaquant-clone-envclean-32k-noprefix`
+- GPU KV cache: `2,052,915` tokens
+- 32K max-concurrency estimate: `62.65x`
+
+Post-recovery provenance guard:
+
+- artifact:
+  `data/qwen36-quark-int8-tp4-accepted-provenance-guard-after-recovery-snapshot-20260612o.json`
+- result: `ok=true`
+- `natural_latency_plan`: baseline prefix matched
+- `repetitive_kernel_notes`: baseline prefix matched
+- sentinels:
+  - `repetitive_kernel_notes[14] = 4752`
+  - `natural_latency_plan[17] = 11436`
+  - `natural_latency_plan[25] = 198`
+
+Post-recovery c1 speed sanity:
+
+- artifact:
+  `data/qwen36-quark-int8-tp4-accepted-restored-after-recovery-snapshot-c1-p512o512-20260612o.json`
+- shape: completions endpoint, streaming, prompt `512`, output `512`,
+  `ignore_eos`, one repeat after a 32-token warmup
+- output tok/s, after-first corrected: `99.7284`
+- output tok/s, client e2e: `98.2121`
+- total tok/s, client: `193.7386`
+- TTFT, client: `89.295 ms`
+- TTFT, vLLM metrics: `78.084 ms`
+
+Interpretation:
+
+- The machine recovered from the offline-probe device-lost state without a host
+  reboot once stale vLLM workers were gone.
+- The small tensor-copy smoke is not enough to prove the full model can serve;
+  the restored provenance guard is the stronger proof.
+- Keep the recovery snapshot before any future relaunch after device-lost, then
+  require the post-relaunch provenance guard before collecting speed data.
+- The restored lane remains around `99-100 tok/s`, so the >200 tok/s target
+  still needs the larger COW/speculation or MoE-kernel work described above.
