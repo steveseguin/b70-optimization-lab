@@ -5636,3 +5636,72 @@ Fresh external signals from the follow-up scan:
   `https://forum.level1techs.com/t/intel-b70-launch-unboxed-and-tested/247873`
   and
   `https://www.reddit.com/r/LocalLLaMA/comments/1siar7y/intel_arc_pro_b70_32gb_performance_on_qwen3527bq4/`.
+
+## 2026-06-12 Fused SiLU+INT8 Quant Multi-Window Gate
+
+Patch:
+
+- Added `scripts/check-qwen36-silu-quant-parity.py`.
+- The script loads the layer-9 multi-window oneDNN MoE packet, runs the current
+  installed `_xpu_C.silu_and_mul_quant_int8_xpu` kernel, and compares its
+  `q` and scale outputs against captured accepted GEMM2 inputs.
+- It also reruns the current accepted two-step path,
+  `fused_moe_activation(..., "silu")` plus
+  `_xpu_C.per_token_quant_int8_xpu`, to separate fixture drift from fused
+  kernel drift.
+- The active extension build exposes `silu_and_mul_quant_int8_xpu` and
+  `per_token_quant_int8_xpu`; the `_out` variants are still absent in the
+  installed runtime.
+
+Commands:
+
+```bash
+PYTHONPATH=/home/steve/src/vllm:/home/steve/src/vllm-xpu-kernels \
+LD_LIBRARY_PATH=/home/steve/src/vllm-xpu-kernels/vllm_xpu_kernels:/home/steve/.venvs/vllm-xpu/lib:/home/steve/.venvs/vllm-xpu/lib/python3.12/site-packages/torch/lib:${LD_LIBRARY_PATH:-} \
+/home/steve/.venvs/vllm-xpu/bin/python scripts/check-qwen36-silu-quant-parity.py \
+  --source xpu \
+  --out-json data/qwen36-onednn-moe-island-layer9-r1-multiwindow-20260612bc/silu_quant_parity_xpu_20260612be.json
+
+PYTHONPATH=/home/steve/src/vllm:/home/steve/src/vllm-xpu-kernels \
+LD_LIBRARY_PATH=/home/steve/src/vllm-xpu-kernels/vllm_xpu_kernels:/home/steve/.venvs/vllm-xpu/lib:/home/steve/.venvs/vllm-xpu/lib/python3.12/site-packages/torch/lib:${LD_LIBRARY_PATH:-} \
+/home/steve/.venvs/vllm-xpu/bin/python scripts/check-qwen36-silu-quant-parity.py \
+  --source onednn \
+  --out-json data/qwen36-onednn-moe-island-layer9-r1-multiwindow-20260612bc/silu_quant_parity_onednn_20260612be.json
+```
+
+Artifacts:
+
+- `data/qwen36-onednn-moe-island-layer9-r1-multiwindow-20260612bc/silu_quant_parity_xpu_20260612be.json`.
+- `data/qwen36-onednn-moe-island-layer9-r1-multiwindow-20260612bc/silu_quant_parity_onednn_20260612be.json`.
+- Restore/provenance:
+  `data/qwen36-quark-int8-tp4-accepted-restored-after-siluquant-parity-20260612be.log`
+  and
+  `data/qwen36-quark-int8-tp4-accepted-provenance-after-siluquant-parity-20260612be.json`.
+
+Result:
+
+- XPU-source packet:
+  - `window_count=16`
+  - `all_fused_q_exact=false`
+  - `all_fused_scales_exact=false`
+  - `all_twostep_q_exact=true`
+  - `all_twostep_scales_exact=true`
+  - `max_fused_q_diff_count=35`
+  - `max_fused_scale_abs_diff=0.0019685328006744385`
+- oneDNN-source packet:
+  - same summary as XPU-source.
+- Accepted backend restored healthy after `64s`; provenance guard passed all
+  sentinels.
+
+Decision:
+
+- Keep `VLLM_XPU_FUSED_MOE_FUSE_SILU_QUANT` off.
+- The current installed fused SiLU+INT8 quant kernel is not exact on real
+  route windows. It changes INT8 values by up to `2` and scale values by up to
+  about `0.00197`, while the accepted two-step path reproduces the captured
+  GEMM2 input exactly for both captured XPU and oneDNN GEMM1 sources.
+- This reinforces the earlier endpoint decision in
+  `notes/2026-06-10-qwen36-exact-siluq-rejected.md`: even a more exact fused
+  variant was too small and failed repeat stability. The next path to
+  `>200 tok/s` should be the resident full-MoE island and device-pointer ABI,
+  not enabling the current fused SiLU quant shortcut.
