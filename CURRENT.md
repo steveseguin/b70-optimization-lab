@@ -31,8 +31,6 @@ Date: 2026-06-12
   `data/qwen36-quark-int8-tp4-accepted-restored-after-offset-gemm-20260612af.log`,
   and
   `data/qwen36-quark-int8-tp4-accepted-provenance-after-offset-rollback-20260612ag.json`.
-  The rollback service log is
-  `data/qwen36-quark-int8-tp4-accepted-restored-after-offset-rollback-20260612ag.log`.
 
 - Added another focused backlog refresh after the offset-native W8A8 grouped-GEMM
   prototype started. This is notes-only, not a speed claim. The new section

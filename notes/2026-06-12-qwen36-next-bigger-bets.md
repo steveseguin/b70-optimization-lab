@@ -2985,10 +2985,8 @@ What was tested:
   first provenance request crashed the engine with
   `UR_RESULT_ERROR_DEVICE_LOST` at `block_table.copy_to_gpu(num_reqs)`, then
   printed `UR_RESULT_ERROR_OUT_OF_RESOURCES` during shutdown. Do not promote
-  this endpoint. Serving logs:
-  `data/qwen36-quark-int8-tp4-accepted-restored-after-offset-gemm-20260612af.log`
-  and
-  `data/qwen36-quark-int8-tp4-accepted-restored-after-offset-rollback-20260612ag.log`.
+  this endpoint. Crash log:
+  `data/qwen36-quark-int8-tp4-accepted-restored-after-offset-gemm-20260612af.log`.
 - Live rollback is complete: pre-offset `_xpu_C`, grouped GEMM, and GDN helper
   libraries were restored; the offset op is absent from the live runtime; the
   accepted backend passed exact provenance sentinels after rollback in
