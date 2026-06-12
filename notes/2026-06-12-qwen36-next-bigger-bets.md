@@ -429,6 +429,204 @@ Decision:
   D2H submission, worker response enqueue, and EngineCore future completion.
   The wait is almost certainly upstream queue/dependency exposure.
 
+## Bigger/Bolder Backlog Refresh 20260612bz
+
+Added after the D2H token-copy isolation and another external-signal scan. The
+new constraint from the copy bench is important: the live `~3.8 ms`
+`async_copy_ready_event.synchronize()` wait is not a tiny host token-copy
+problem. It is likely exposing upstream device work, queue ordering, sampler
+tail work, rank synchronization, or worker response handoff. The next ideas
+therefore bias toward timeline attribution, topology changes, and architecture
+changes that keep the exact current model as the quality owner.
+
+Fresh external signals checked:
+
+- Public B70 reports continue to show that Battlemage can scale well in some
+  vLLM workloads, but MoE/runtime support is still fragile. One report cites
+  high aggregate Gemma throughput while warning that MoE support is rough:
+  `https://www.reddit.com/r/LocalLLaMA/comments/1sgdt7t/my_experience_with_the_intel_arc_pro_b70_for/`.
+- Another B70 benchmark thread highlights MoE route shape and XPU kernels as
+  the reason some multi-stream results look strong. That is useful as a design
+  clue, not as a comparable Qwen3.6 INT8 result:
+  `https://www.reddit.com/r/LocalLLM/comments/1sfa0iw/2x_intel_arc_b70_benchmark/`.
+- vLLM's public INT8 W8A8 documentation still describes INT8 compute support
+  in NVIDIA terms, which matches the local diagnosis that the XPU INT8 path is
+  not a mature one-flag path for this model:
+  `https://docs.vllm.ai/en/latest/features/quantization/llm_compressor/int8_w8a8/`.
+- `vllm-xpu-kernels` is still the right upstream-adjacent place to watch for
+  custom Intel GPU ops, SYCL/DPC++ kernels, and oneDNN-backed primitives:
+  `https://github.com/vllm-project/vllm-xpu-kernels`.
+- A grouped-GEMM issue in Intel's XPU backend for Triton explicitly calls out
+  MoE routing skew and runtime tile tuning as the hard part. This lines up
+  with the route-ledger and route-class kernel ideas:
+  `https://github.com/intel/intel-xpu-backend-for-triton/issues/6389`.
+
+Immediate next things to add to the queue:
+
+1. **Worker/output timeline correlation.**
+   Add object IDs and absolute age fields to async-output timing, then split
+   worker response output into `get_output`, result pack, and response-MQ
+   enqueue. Goal: prove whether the `~3.8 ms` wait starts immediately after
+   sampling or whether the object sits behind worker/result queues.
+
+2. **Event dependency chain probe.**
+   Put device events around sampler/logits, token-ID copy submission,
+   `async_copy_ready_event.record()`, and the rank-0 worker handoff. The D2H
+   microbench says copy cost is tiny; this probe should reveal what the copy
+   event is really waiting on.
+
+3. **Rank-3 slow-path rotation.**
+   Rotate rank-to-card order, CPU affinity, and Level Zero device order while
+   collecting all-rank route skew. If the slow path follows a physical card,
+   it is topology/hardware/driver. If it follows logical rank or route class,
+   it is runtime scheduling or expert placement.
+
+4. **Route-window roofline packet.**
+   For a handful of hot layers, save route windows, active expert histograms,
+   current kernel timing, tensor byte counts, and oneDNN/Triton candidate
+   timings. This gives a real "bytes, DPAS work, launch count, and route skew"
+   budget instead of arguing from endpoint tok/s alone.
+
+5. **Strict clean-stack bakeoff.**
+   Reproduce the exact checkpoint/gates in the latest Intel-maintained XPU
+   container or `llm-scaler` stack. This is not a production switch unless
+   exact provenance, quality canaries, and soak pass; it is a way to tell
+   whether the local fork is behind upstream XPU kernel work.
+
+6. **c1 lane without generic response materialization.**
+   If timeline correlation shows worker response packing costs are real, build
+   a fixed c1/no-logprobs output path that emits the scalar token from a pinned
+   mailbox while preserving the exact same sampler result and API text.
+
+Bigger no-quality-loss bets worth serious design time:
+
+1. **MoE route-class kernel farm.**
+   Generate and benchmark a small family of exact W8A8 MoE kernels keyed by
+   real route shape: single-hot, two-hot, sparse-long-tail, broad-balanced, and
+   fallback. Runtime selects by measured route statistics. Math and weights
+   are unchanged; only scheduling/tile choice changes.
+
+2. **Expert physical re-layout and hot-replica cache.**
+   Reorder or duplicate experts by real Qwen3.6 traffic, not by checkpoint
+   order. Hot experts that repeatedly create rank imbalance can be copied into
+   spare VRAM with checksummed metadata. This spends memory to reduce remote
+   pressure and slow-rank stalls without changing model values.
+
+3. **Layer-type sharding instead of one global TP size.**
+   Treat dense projections, GDN/hybrid state, MoE experts, logits, and sampler
+   as different placement problems. TP4 may be right for some dense work while
+   EP/replication is better for sparse MoE. A mixed scheduler is invasive but
+   directly targets "four GPUs but only `~100 tok/s`."
+
+4. **Persistent token engine.**
+   Create a resident decode service inside the worker process with fixed
+   graph buckets, resident KV, resident route scratch, resident output mailbox,
+   and a minimal host control loop. This is a narrower alternative to rewriting
+   vLLM: keep loader/model parity, remove per-token generic orchestration.
+
+5. **Verifier-owned speculative transactions.**
+   Build transactional target-state snapshots first, then let branch workers
+   propose continuations that the current Quark W8A8 target verifies before
+   commit. This remains the most plausible path to a true `2x` single-request
+   result if no-spec decode bottoms out near `100-130 tok/s`.
+
+6. **Cross-engine "kernel donor" harness.**
+   Run OpenVINO/oneDNN GenAI, llama.cpp SYCL, and any Intel XPU stack against
+   the same captured tensors or a BF16 verifier fallback, then port only the
+   winning kernel/topology ideas back into the current accepted model path.
+   This avoids silently changing model quality while still learning from other
+   runtimes.
+
+7. **Whole-token command-list replay with rollback.**
+   Capture a token step as a patchable Level Zero command sequence and replay
+   it under exact output parity checks. If a replay bucket ever diverges,
+   rollback to vLLM's normal path. This is high risk, but it is the largest
+   launch/fence-removal bet left.
+
+8. **B70 maintainer challenge packet plus bounty-style issue.**
+   Publish a compact packet with exact command line, model revision, local
+   patches, route fixtures, timing summaries, Localmaxxing row, quality gates,
+   `xpu-smi`, PCIe/NUMA, and the target budget: `5 ms/token` for c1 decode.
+   The ask should be concrete: identify the hidden `~4 ms` event wait and the
+   missing XPU W8A8 MoE/grouped-GEMM fast path.
+
+Pruning rules for this backlog:
+
+- Remove copy/list/pinned-buffer work unless a device timeline contradicts the
+  D2H isolation result.
+- Do not promote TP2, new containers, alternate engines, speculation, or
+  re-layout work without exact provenance and the quality suite.
+- Any branch that improves aggregate throughput but harms c1 latency belongs
+  in a separate aggregate-serving lane, not the c1 speed goal.
+
+## Worker/Async Output Timeline 20260612bz
+
+Implemented the first immediate queue item from the backlog refresh: object-ID
+correlation and a split around worker output materialization. The local vLLM
+patch is env-gated through existing timing flags and is tracked as:
+
+- `patches/vllm-qwen36-worker-output-timeline-20260612bz.diff`
+
+Diagnostic run:
+
+- Endpoint posture: current accepted TP4/Quark W8A8 INT8/32K/no-prefix launch.
+- Benchmark: p512/o384/c1 stream, two measured repeats after warmup.
+- Corrected output throughput: `100.009 tok/s`.
+- vLLM decode histogram mean: `9.975 ms/generation token`.
+- vLLM TPOT/inter-token histogram mean: `10.001 ms/token`.
+
+Key timing split:
+
+- Engine step total mean: `9.973 ms`.
+- Engine `future_result` mean: `9.783 ms`.
+- `sample_tokens` executor response wait mean: `4.649 ms`.
+- Rank-0 worker response enqueue mean: `4.325 ms`.
+- Rank-0 `AsyncModelRunnerOutput.get_output()` mean: `4.241 ms`.
+- Response-MQ enqueue mean: `0.081 ms`.
+- Result tuple packing mean: `0.00047 ms`.
+- Async object created to `get_output()` start: `0.269 ms`.
+- D2H copy-submit end to `get_output()` start: `0.168 ms`.
+- `async_copy_ready_event.synchronize()` mean: `4.044 ms`.
+- Token scalar/list conversion mean: `0.019 ms`.
+
+Interpretation:
+
+- The output object is not waiting in a long Python queue. It reaches
+  `get_output()` roughly `0.17 ms` after the copy submission ends.
+- Python result packing and response-MQ enqueue are not the hidden
+  multi-millisecond cost.
+- The `~4 ms` cost is still the async event sync. Together with the tiny D2H
+  isolation bench, this points at upstream device dependency exposure: sampler
+  tail, logits, graph/event ordering, rank synchronization, or command-queue
+  dependency, not host token-copy mechanics.
+
+Restore/quality gate:
+
+- Accepted backend restored in tmux session
+  `qwen36-tp4-accepted-restored-after-worker-output-timeline-20260612bz`.
+- Accepted provenance passed both prompt cases and sentinels `4752`, `11436`,
+  and `198`.
+- Short no-thinking Qwen text quality smoke passed exact OK, copy phrase,
+  arithmetic, JSON schema, and repeat stability.
+
+Artifacts:
+
+- `data/qwen36-quark-int8-tp4-worker-output-timeline-20260612bz.log`
+- `data/qwen36-quark-int8-tp4-worker-output-timeline-p512o384-metrics-20260612bz.json`
+- `data/qwen36-quark-int8-tp4-worker-output-timeline-summary-20260612bz.json`
+- `data/qwen36-quark-int8-tp4-worker-output-timeline-summary-20260612bz.md`
+- `data/qwen36-quark-int8-tp4-accepted-restored-after-worker-output-timeline-20260612bz.log`
+- `data/qwen36-quark-int8-tp4-accepted-provenance-after-worker-output-timeline-20260612bz.json`
+- `data/qwen36-quark-int8-tp4-accepted-quality-after-worker-output-timeline-nothink-smoke-20260612bz.json`
+
+Next concrete measurement:
+
+1. Add device events around sampler/logits completion, D2H token-copy
+   submission, event record, and event sync.
+2. Correlate that with rank/device route skew and rank-to-card rotation.
+3. Keep result-packing/mailbox work pruned unless this device timeline shows a
+   new host-side dependency.
+
 ## Bolder Opportunity Refresh 20260612bq
 
 Added after the boundary timing discussion and the latest Localmaxxing refresh.

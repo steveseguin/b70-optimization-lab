@@ -6,6 +6,43 @@ Date: 2026-06-12
 
 2026-06-12 notes update:
 
+- Added and ran worker/async output timeline correlation for the current
+  accepted TP4 backend. The p512/o384/c1 timing sanity stayed at baseline:
+  `100.009 tok/s` corrected, `9.975 ms` vLLM decode/token, and `10.001 ms`
+  TPOT. The split rules out Python result packing and worker response queueing
+  as the hidden multi-ms cost: rank-0 worker response enqueue averaged
+  `4.325 ms`, `AsyncModelRunnerOutput.get_output()` averaged `4.241 ms`,
+  response-MQ enqueue was only `0.081 ms`, and result tuple packing was
+  `0.00047 ms`. The async object reached `get_output()` only `0.168 ms` after
+  copy submission ended, but `async_copy_ready_event.synchronize()` still
+  averaged `4.044 ms`. Combined with the tiny D2H copy bench, the next target
+  is device event dependency tracing around sampler/logits, copy submission,
+  event record, graph/queue ordering, and rank sync. Accepted TP4 was restored
+  afterward and passed exact provenance sentinels plus the short no-thinking
+  quality smoke. New artifacts:
+  `patches/vllm-qwen36-worker-output-timeline-20260612bz.diff`,
+  `data/qwen36-quark-int8-tp4-worker-output-timeline-20260612bz.log`,
+  `data/qwen36-quark-int8-tp4-worker-output-timeline-p512o384-metrics-20260612bz.json`,
+  `data/qwen36-quark-int8-tp4-worker-output-timeline-summary-20260612bz.json`,
+  `data/qwen36-quark-int8-tp4-worker-output-timeline-summary-20260612bz.md`,
+  `data/qwen36-quark-int8-tp4-accepted-restored-after-worker-output-timeline-20260612bz.log`,
+  `data/qwen36-quark-int8-tp4-accepted-provenance-after-worker-output-timeline-20260612bz.json`,
+  and
+  `data/qwen36-quark-int8-tp4-accepted-quality-after-worker-output-timeline-nothink-smoke-20260612bz.json`.
+
+- Added a "Bigger/Bolder Backlog Refresh 20260612bz" section to
+  `notes/2026-06-12-qwen36-next-bigger-bets.md`. The new items fold in the
+  D2H copy isolation result plus fresh public B70/vLLM/XPU signals: worker and
+  async-output timeline correlation, device event dependency tracing,
+  rank-to-card/route-skew rotation, route-window roofline packets, strict
+  Intel clean-stack bakeoff, a c1 scalar-output lane, MoE route-class kernel
+  farm, hot-expert physical re-layout/replication, mixed TP/EP sharding,
+  persistent token engine, verifier-owned speculative transactions,
+  cross-engine kernel donor harness, whole-token Level Zero replay, and a
+  maintainer challenge packet. Pruning rule added: stop spending time on tiny
+  D2H/list/pinned-buffer token-copy work unless a device timeline contradicts
+  the `~0.01 ms` isolation result.
+
 - Added and ran `scripts/bench-xpu-d2h-token-copy.py` to isolate the tiny
   token-id XPU-to-host copy behind the async-output wait. The raw copy is not
   the `~3.8 ms` bottleneck: on `xpu:0`, pinned-host `1x1` nonblocking
