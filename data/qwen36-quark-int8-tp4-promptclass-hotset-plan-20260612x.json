@@ -1,0 +1,199 @@
+{
+  "bytes_per_local_tp_expert": {
+    "intermediate_size_per_tp": 128,
+    "scale_bytes": 9216,
+    "total_bytes": 795648,
+    "w13_int8_bytes": 524288,
+    "w2_int8_bytes": 262144
+  },
+  "captured_layers": 5,
+  "captured_layers_local_rank_mib": {
+    "16": 60.703125,
+    "32": 121.40625,
+    "64": 242.8125
+  },
+  "captured_selected_layers_local_rank_mib": {
+    "16": 0.0,
+    "32": 121.40625,
+    "64": 242.8125
+  },
+  "estimated_all_layers_local_rank_mib": {
+    "16": 485.625,
+    "32": 971.25,
+    "64": 1942.5
+  },
+  "flight_record": [
+    "data/qwen36-quark-int8-tp4-promptclass-routecapture-20260611a-routes-code.jsonl",
+    "data/qwen36-quark-int8-tp4-promptclass-routecapture-20260611a-routes-math-reasoning.jsonl",
+    "data/qwen36-quark-int8-tp4-promptclass-routecapture-20260611a-routes-repetitive.jsonl",
+    "data/qwen36-quark-int8-tp4-promptclass-routecapture-20260611a-routes-structured.jsonl",
+    "data/qwen36-quark-int8-tp4-promptclass-routecapture-20260611a-routes-long-natural.jsonl"
+  ],
+  "hot_sizes": [
+    16,
+    32,
+    64
+  ],
+  "layers": [
+    {
+      "active_experts": 158,
+      "layer": "language_model.model.layers.20.mlp.experts",
+      "layer_index": 20,
+      "plans": {
+        "16": {
+          "all_tp_ranks_mib": 48.5625,
+          "coverage": 0.43846153846153846,
+          "hot_experts": 16,
+          "local_rank_mib": 12.140625,
+          "selected_at_min_coverage": false
+        },
+        "32": {
+          "all_tp_ranks_mib": 97.125,
+          "coverage": 0.6278846153846154,
+          "hot_experts": 32,
+          "local_rank_mib": 24.28125,
+          "selected_at_min_coverage": true
+        },
+        "64": {
+          "all_tp_ranks_mib": 194.25,
+          "coverage": 0.8298076923076924,
+          "hot_experts": 64,
+          "local_rank_mib": 48.5625,
+          "selected_at_min_coverage": true
+        }
+      },
+      "records": 520,
+      "window_active_experts_p50": 24.0
+    },
+    {
+      "active_experts": 155,
+      "layer": "language_model.model.layers.14.mlp.experts",
+      "layer_index": 14,
+      "plans": {
+        "16": {
+          "all_tp_ranks_mib": 48.5625,
+          "coverage": 0.4230769230769231,
+          "hot_experts": 16,
+          "local_rank_mib": 12.140625,
+          "selected_at_min_coverage": false
+        },
+        "32": {
+          "all_tp_ranks_mib": 97.125,
+          "coverage": 0.6163461538461539,
+          "hot_experts": 32,
+          "local_rank_mib": 24.28125,
+          "selected_at_min_coverage": true
+        },
+        "64": {
+          "all_tp_ranks_mib": 194.25,
+          "coverage": 0.8086538461538462,
+          "hot_experts": 64,
+          "local_rank_mib": 48.5625,
+          "selected_at_min_coverage": true
+        }
+      },
+      "records": 520,
+      "window_active_experts_p50": 23.0
+    },
+    {
+      "active_experts": 165,
+      "layer": "language_model.model.layers.9.mlp.experts",
+      "layer_index": 9,
+      "plans": {
+        "16": {
+          "all_tp_ranks_mib": 48.5625,
+          "coverage": 0.41346153846153844,
+          "hot_experts": 16,
+          "local_rank_mib": 12.140625,
+          "selected_at_min_coverage": false
+        },
+        "32": {
+          "all_tp_ranks_mib": 97.125,
+          "coverage": 0.5865384615384616,
+          "hot_experts": 32,
+          "local_rank_mib": 24.28125,
+          "selected_at_min_coverage": true
+        },
+        "64": {
+          "all_tp_ranks_mib": 194.25,
+          "coverage": 0.7923076923076923,
+          "hot_experts": 64,
+          "local_rank_mib": 48.5625,
+          "selected_at_min_coverage": true
+        }
+      },
+      "records": 520,
+      "window_active_experts_p50": 22.0
+    },
+    {
+      "active_experts": 150,
+      "layer": "language_model.model.layers.21.mlp.experts",
+      "layer_index": 21,
+      "plans": {
+        "16": {
+          "all_tp_ranks_mib": 48.5625,
+          "coverage": 0.42115384615384616,
+          "hot_experts": 16,
+          "local_rank_mib": 12.140625,
+          "selected_at_min_coverage": false
+        },
+        "32": {
+          "all_tp_ranks_mib": 97.125,
+          "coverage": 0.5980769230769231,
+          "hot_experts": 32,
+          "local_rank_mib": 24.28125,
+          "selected_at_min_coverage": true
+        },
+        "64": {
+          "all_tp_ranks_mib": 194.25,
+          "coverage": 0.7875,
+          "hot_experts": 64,
+          "local_rank_mib": 48.5625,
+          "selected_at_min_coverage": true
+        }
+      },
+      "records": 520,
+      "window_active_experts_p50": 24.0
+    },
+    {
+      "active_experts": 163,
+      "layer": "language_model.model.layers.8.mlp.experts",
+      "layer_index": 8,
+      "plans": {
+        "16": {
+          "all_tp_ranks_mib": 48.5625,
+          "coverage": 0.4009615384615385,
+          "hot_experts": 16,
+          "local_rank_mib": 12.140625,
+          "selected_at_min_coverage": false
+        },
+        "32": {
+          "all_tp_ranks_mib": 97.125,
+          "coverage": 0.5778846153846153,
+          "hot_experts": 32,
+          "local_rank_mib": 24.28125,
+          "selected_at_min_coverage": true
+        },
+        "64": {
+          "all_tp_ranks_mib": 194.25,
+          "coverage": 0.7855769230769231,
+          "hot_experts": 64,
+          "local_rank_mib": 48.5625,
+          "selected_at_min_coverage": true
+        }
+      },
+      "records": 520,
+      "window_active_experts_p50": 22.0
+    }
+  ],
+  "min_coverage": 0.5,
+  "model": {
+    "hidden_size": 2048,
+    "include_scales": true,
+    "intermediate_size_per_tp": 128,
+    "moe_intermediate_size": 512,
+    "num_experts": 256,
+    "num_hidden_layers": 40,
+    "tp_size": 4
+  }
+}

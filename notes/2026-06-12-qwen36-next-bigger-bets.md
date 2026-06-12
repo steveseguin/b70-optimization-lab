@@ -654,3 +654,169 @@ Implication:
 - The next route capture should cover the highest-priority layers `9`, `14`,
   `21`, and all prompt classes, then feed the same flight recorder before any
   persistent-kernel or EP/TP implementation work.
+
+## 2026-06-12 Broader Flight Records And Hotset Planning
+
+New script:
+
+- `scripts/qwen36-moe-hotset-plan.py`.
+
+Purpose:
+
+- Estimate the memory cost and route coverage of exact hot-expert repack or
+  replication plans from CPU-only flight records.
+- Keep the plan exact: hot experts can use a faster tile-native or persistent
+  path, but cold experts must fall back to the same Quark W8A8 math, so this is
+  a performance layout change rather than a model-quality change.
+
+New artifacts:
+
+- `data/qwen36-quark-int8-tp4-routecapture6-flight-record-20260612x.json`.
+- `data/qwen36-quark-int8-tp4-routecapture6-flight-record-20260612x.md`.
+- `data/qwen36-quark-int8-tp4-promptclass-flight-record-20260612x.json`.
+- `data/qwen36-quark-int8-tp4-promptclass-flight-record-20260612x.md`.
+- `data/qwen36-quark-int8-tp4-routecapture6-hotset-plan-20260612x.json`.
+- `data/qwen36-quark-int8-tp4-routecapture6-hotset-plan-20260612x.md`.
+- `data/qwen36-quark-int8-tp4-promptclass-hotset-plan-20260612x.json`.
+- `data/qwen36-quark-int8-tp4-promptclass-hotset-plan-20260612x.md`.
+
+Routecapture6 exact-ID findings:
+
+- `285` records across layers `9`, `14`, and `21`.
+- Layer `9`: top-16 coverage `51.1%`, top-32 `72.2%`, top-64 `91.6%`,
+  p50 window active experts `47.0`.
+- Layer `21`: top-16 `48.9%`, top-32 `68.3%`, top-64 `86.4%`,
+  p50 window active experts `48.5`.
+- Layer `14`: top-16 `42.1%`, top-32 `64.5%`, top-64 `87.4%`,
+  p50 window active experts `50.0`.
+- p50 repeated top-k tuple share is still only `6.25%`, so full-route
+  memoization is not the main path. Expert-set locality is the path.
+
+Prompt-class findings:
+
+- `2600` records across layers `8`, `9`, `14`, `20`, and `21`.
+- These prompt-class JSONLs have count vectors but no exact `topk_ids`, so
+  tuple-share metrics are unavailable.
+- Top-32 coverage ranges from `57.8%` to `62.8%`; top-64 ranges from `78.6%`
+  to `83.0%`.
+- Prompt-class p50 window active experts is lower than routecapture6:
+  `22` to `24` experts, which is favorable for persistent workers and
+  hotset-local scheduling.
+
+Hotset memory model from the current model config:
+
+- `hidden_size=2048`, `moe_intermediate_size=512`, `num_hidden_layers=40`,
+  `num_experts=256`, `tp_size=4`.
+- Per local TP-shard expert, including current fp32 scales: `795648` bytes,
+  or about `0.759 MiB`.
+- One layer top-32 hotset costs about `24.3 MiB/rank`.
+- All-layer local-rank estimates:
+  - top-16: `485.6 MiB/rank`.
+  - top-32: `971.2 MiB/rank`.
+  - top-64: `1942.5 MiB/rank`.
+
+Implication:
+
+- A top-32 or top-64 hotset cache is cheap enough to prototype without
+  threatening the 32 GiB B70 memory budget. This makes a tile-native W8A8
+  repack cache or persistent hot-expert layerlet a serious next target.
+- Do not implement another global expert physical remap. Earlier replay showed
+  layer/window-specific wins and losses. The better exact design is a hotset
+  fast path with cold-expert fallback, gated by layer and route-window evidence.
+- Start with layers `9` and `20`. Layer `9` has the best exact-ID coverage in
+  routecapture6, while layer `20` remains strong in prompt-class and earlier
+  exact-ID captures.
+- Keep the model-forward-only synchronized timing profile as the live regression
+  gate. Any kernel patch must reduce the `8.44 ms/token` model-forward bucket,
+  not only improve an isolated microbench.
+
+External signals checked:
+
+- The current Localmaxxing Arc Pro B70 Qwen snapshot has the accepted
+  Qwen3.6 Quark W8A8 INT8 4x B70 run at the top of the public filtered result
+  set, with `99.77 tok/s` and 32K context:
+  <https://localmaxxing.com/api/leaderboard?hardwareName=Arc%20Pro%20B70&modelFamily=qwen&limit=20>.
+- `vllm-xpu-kernels` is the right upstream surface for this work because it
+  already exposes XPU MoE, expert remapping, FP8 quantization/GEMM, and grouped
+  GEMM kernels:
+  <https://github.com/vllm-project/vllm-xpu-kernels>.
+- The vLLM XPU migration RFC records the move from IPEX to the dedicated
+  `vllm-xpu-kernels` library and notes W8A16/W8A8 FP8 support work:
+  <https://github.com/vllm-project/vllm/issues/33214>.
+- Intel's newer XPU container notes claim persistent MoE GEMM plus fused
+  activation gave Qwen3-30B-A3B a `2.6x` end-to-end improvement:
+  <https://github.com/intel/ai-containers/blob/main/vllm/0.10.2-xpu.md>.
+- The vLLM Arc Pro B-Series blog explains why persistent MoE matters: it
+  removes per-iteration launch/scheduling gaps and keeps work resident despite
+  routing dependencies:
+  <https://vllm.ai/blog/2025-11-11-intel-arc-pro-b>.
+- Public B70 benchmarking outside this repo shows Qwen3.6-35B-A3B MoE is a
+  good B70 shape even when run through different engines and quants:
+  <https://github.com/PMZFX/intel-arc-pro-b70-benchmarks>.
+
+## Bigger Bolder Ideas After Hotset Planning
+
+1. **Exact hotset persistent MoE layerlets.**
+   Build one layer-specific persistent kernel for a top-32 or top-64 hotset.
+   It should keep expert workers resident across gate, gather, W8A8 GEMM1,
+   fused activation, dynamic quant, W8A8 GEMM2, scatter, and local reduction.
+   Cold experts stay on the current exact path. This is the most direct way to
+   test whether Intel's reported persistent-MoE class of wins can transfer to
+   this exact Quark W8A8 model.
+
+2. **Tile-native W8A8 repack cache with checksum promotion.**
+   At load time, duplicate selected hot experts into the exact tile layout
+   needed by the fastest B70 grouped-GEMM kernel. Store per-expert checksums and
+   a manifest so the cache is reproducible and quality-auditable. The memory
+   estimate says all-layer top-64 is only about `1.9 GiB/rank`, so this is now
+   practical.
+
+3. **Hybrid replicated-attention plus expert-parallel simulation.**
+   Simulate a layout where dense attention and router state are replicated but
+   MoE experts are sharded or replicated by hotness. This may remove some TP4
+   dense allreduce cost while replacing it with tiny MoE token exchange. Use
+   route windows before coding because c1 all-to-all overhead can erase the win.
+
+4. **TP1/TP2 exact latency lane capacity proof.**
+   Re-test the same Quark W8A8 model at lower max context and tighter
+   `max_num_seqs` on TP1 or TP2. If it fits, it could beat TP4 c1 latency by
+   removing cross-card collectives. It would not replace the 32K production
+   lane until capacity and quality are proven.
+
+5. **Static single-request decode appliance.**
+   Build a fixed-bucket c1 runner outside the full vLLM scheduler that reuses
+   the same tokenizer, weights, graph cache, sampling, and quality canaries.
+   If it is still near `100 tok/s`, kernels are the ceiling. If it is much
+   faster, production should add a certified latency sidecar.
+
+6. **Persistent-MoE transplant bakeoff from newer Intel stack.**
+   Isolate the persistent MoE and fused activation pieces from the newest Intel
+   XPU container or `vllm-xpu-kernels`, then run them in a tiny route-replay
+   harness before touching the accepted server. This avoids a full host-stack
+   migration while still testing the big upstream kernel idea.
+
+7. **Target-verified MTP/DFlash sidecar with resident verifier state.**
+   Keep speculation on the table, but only with the current Quark W8A8 model as
+   the in-engine verifier. The parent-state traces show external refill
+   verification is not equivalent enough. The bold version is a transactional
+   verifier that can accept several tokens per model-forward without losing
+   exact sentinel parity.
+
+8. **Graph-resident metadata lane.**
+   Move block-table tail updates, accepted-token counters, slot mappings, and
+   small scheduler fills into graph-stable device buffers. This targets both
+   the `~1.5 ms/token` outside-forward budget and the device-lost class seen
+   around metadata copy/fill operations.
+
+9. **BF16 differential plus route-replay numeric gate.**
+   Expand quality validation beyond exact token sentinels by sampling BF16
+   fallback logit-rank deltas and replaying captured MoE inputs through old and
+   new kernels. This catches subtle kernel drift before a speed candidate ever
+   reaches the public endpoint.
+
+10. **Upstreamable performance packet.**
+    Package one captured route window, minimal weights/scales slice,
+    model-forward timing, and hotset-plan numbers into a tiny repro for Intel
+    and vLLM maintainers. The current evidence is specific enough to ask for
+    persistent W8A8 MoE support on this model rather than generic "XPU is slow"
+    advice.

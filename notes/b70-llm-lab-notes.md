@@ -266,6 +266,19 @@ Current Qwen3.6 INT8 direction:
     memoization or global remap. Artifacts:
     `data/qwen36-quark-int8-tp4-routecapture5-flight-record-20260612w.json`
     and `.md`.
+31. Added `scripts/qwen36-moe-hotset-plan.py` and broader routecapture6 plus
+    prompt-class flight records. Routecapture6 exact-ID layers `9`, `14`, and
+    `21` show top-32 hotset coverage from `64.5%` to `72.2%`, with top-64 from
+    `86.4%` to `91.6%`. Prompt-class layers `8`, `9`, `14`, `20`, and `21`
+    show broader top-32 coverage from `57.8%` to `62.8%`, with top-64 from
+    `78.6%` to `83.0%`. The hotset memory estimate is favorable: one layer
+    top-32 costs about `24.3 MiB/rank`; all-layer top-32 costs about
+    `971 MiB/rank`; all-layer top-64 costs about `1.9 GiB/rank`. The next
+    exact speed target is now a layer-gated hotset fast path: persistent W8A8
+    MoE layerlets or tile-native W8A8 repack with cold-expert exact fallback,
+    using model-forward-only sync timing as the live regression gate. The
+    detailed backlog and larger ideas are in
+    `notes/2026-06-12-qwen36-next-bigger-bets.md`.
 
 ## 2026-05-10 MiniMax AutoRound Addendum
 

@@ -1,0 +1,135 @@
+{
+  "bytes_per_local_tp_expert": {
+    "intermediate_size_per_tp": 128,
+    "scale_bytes": 9216,
+    "total_bytes": 795648,
+    "w13_int8_bytes": 524288,
+    "w2_int8_bytes": 262144
+  },
+  "captured_layers": 3,
+  "captured_layers_local_rank_mib": {
+    "16": 36.421875,
+    "32": 72.84375,
+    "64": 145.6875
+  },
+  "captured_selected_layers_local_rank_mib": {
+    "16": 12.140625,
+    "32": 72.84375,
+    "64": 145.6875
+  },
+  "estimated_all_layers_local_rank_mib": {
+    "16": 485.625,
+    "32": 971.25,
+    "64": 1942.5
+  },
+  "flight_record": [
+    "data/qwen36-quark-int8-tp4-routecapture6-routes-rank0-20260611.jsonl"
+  ],
+  "hot_sizes": [
+    16,
+    32,
+    64
+  ],
+  "layers": [
+    {
+      "active_experts": 111,
+      "layer": "language_model.model.layers.9.mlp.experts",
+      "layer_index": 9,
+      "plans": {
+        "16": {
+          "all_tp_ranks_mib": 48.5625,
+          "coverage": 0.5105263157894737,
+          "hot_experts": 16,
+          "local_rank_mib": 12.140625,
+          "selected_at_min_coverage": true
+        },
+        "32": {
+          "all_tp_ranks_mib": 97.125,
+          "coverage": 0.7223684210526315,
+          "hot_experts": 32,
+          "local_rank_mib": 24.28125,
+          "selected_at_min_coverage": true
+        },
+        "64": {
+          "all_tp_ranks_mib": 194.25,
+          "coverage": 0.9157894736842105,
+          "hot_experts": 64,
+          "local_rank_mib": 48.5625,
+          "selected_at_min_coverage": true
+        }
+      },
+      "records": 95,
+      "window_active_experts_p50": 47.0
+    },
+    {
+      "active_experts": 126,
+      "layer": "language_model.model.layers.14.mlp.experts",
+      "layer_index": 14,
+      "plans": {
+        "16": {
+          "all_tp_ranks_mib": 48.5625,
+          "coverage": 0.42105263157894735,
+          "hot_experts": 16,
+          "local_rank_mib": 12.140625,
+          "selected_at_min_coverage": false
+        },
+        "32": {
+          "all_tp_ranks_mib": 97.125,
+          "coverage": 0.6447368421052632,
+          "hot_experts": 32,
+          "local_rank_mib": 24.28125,
+          "selected_at_min_coverage": true
+        },
+        "64": {
+          "all_tp_ranks_mib": 194.25,
+          "coverage": 0.8736842105263158,
+          "hot_experts": 64,
+          "local_rank_mib": 48.5625,
+          "selected_at_min_coverage": true
+        }
+      },
+      "records": 95,
+      "window_active_experts_p50": 50.0
+    },
+    {
+      "active_experts": 119,
+      "layer": "language_model.model.layers.21.mlp.experts",
+      "layer_index": 21,
+      "plans": {
+        "16": {
+          "all_tp_ranks_mib": 48.5625,
+          "coverage": 0.48947368421052634,
+          "hot_experts": 16,
+          "local_rank_mib": 12.140625,
+          "selected_at_min_coverage": false
+        },
+        "32": {
+          "all_tp_ranks_mib": 97.125,
+          "coverage": 0.6828947368421052,
+          "hot_experts": 32,
+          "local_rank_mib": 24.28125,
+          "selected_at_min_coverage": true
+        },
+        "64": {
+          "all_tp_ranks_mib": 194.25,
+          "coverage": 0.8644736842105263,
+          "hot_experts": 64,
+          "local_rank_mib": 48.5625,
+          "selected_at_min_coverage": true
+        }
+      },
+      "records": 95,
+      "window_active_experts_p50": 48.5
+    }
+  ],
+  "min_coverage": 0.5,
+  "model": {
+    "hidden_size": 2048,
+    "include_scales": true,
+    "intermediate_size_per_tp": 128,
+    "moe_intermediate_size": 512,
+    "num_experts": 256,
+    "num_hidden_layers": 40,
+    "tp_size": 4
+  }
+}
