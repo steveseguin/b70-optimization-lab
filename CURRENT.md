@@ -6,6 +6,35 @@ Date: 2026-06-12
 
 2026-06-12 notes update:
 
+- Added a "Rank/Card Rotation Result" addendum to
+  `notes/2026-06-12-qwen36-next-bigger-bets.md`. The env-only reverse attempt
+  with `ONEAPI_DEVICE_SELECTOR=level_zero:3,2,1,0` and `ZE_AFFINITY_MASK=3,2,1,0`
+  did not rotate worker placement: TP0/TP1/TP2/TP3 still owned physical cards
+  0/1/2/3. A diagnostic-only vLLM hook,
+  `VLLM_XPU_LOCAL_RANK_DEVICE_MAP=3,2,1,0`, successfully reversed ownership:
+  TP0 -> card 3, TP1 -> card 2, TP2 -> card 1, TP3 -> card 0. The true
+  reversed diagnostic stayed near baseline at `96.578 tok/s` corrected
+  p512/o128 and `10.272 ms/token` vLLM decode. The important attribution:
+  rank 0 stayed fastest after moving from physical card 0 to physical card 3
+  (`4.139/4.263 ms` mean/median forward-end-after-start), while ranks 2/3
+  stayed in the slower tail (`4.485/4.423 ms`, `4.472/4.412 ms`). Decision:
+  stop treating physical-card/topology as the lead hypothesis for the
+  `~4-5 ms/token` forward wait; next work should overlay route signatures by
+  rank, split model forward by layer family, replay rank-specific route
+  fixtures, and keep pushing the exact W8A8 persistent/route-class MoE path.
+  Accepted TP4 was restored on `18080` with no diagnostic env vars and passed
+  provenance sentinels `4752`, `11436`, `198` plus the no-thinking quality
+  smoke. New artifacts:
+  `patches/vllm-qwen36-rankmap-forward-boundary-20260612cl.diff`,
+  `data/qwen36-quark-int8-tp4-allrank-forwardboundary-rankmap-rev-summary-20260612cl.json`,
+  `data/qwen36-quark-int8-tp4-allrank-forwardboundary-revmap-summary-20260612ck.json`,
+  `data/qwen36-quark-int8-tp4-rankmap-rotation-comparison-20260612cl.json`,
+  `data/qwen36-quark-int8-tp4-accepted-provenance-after-rankmap-rotation-20260612cl.json`,
+  and
+  `data/qwen36-quark-int8-tp4-accepted-quality-after-rankmap-rotation-nothink-smoke-20260612cl.json`.
+
+2026-06-12 notes update:
+
 - Added an "All-Rank Forward Boundary And Larger Bets" addendum to
   `notes/2026-06-12-qwen36-next-bigger-bets.md`. The all-rank diagnostic
   backend stayed close enough for attribution at `95.529 tok/s` corrected

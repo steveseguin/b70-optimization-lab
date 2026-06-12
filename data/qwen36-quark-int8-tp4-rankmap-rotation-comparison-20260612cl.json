@@ -1,0 +1,89 @@
+{
+  "decision": [
+    "ONEAPI_DEVICE_SELECTOR/ZE_AFFINITY_MASK reverse did not rotate TP ownership.",
+    "VLLM_XPU_LOCAL_RANK_DEVICE_MAP=3,2,1,0 did rotate ownership.",
+    "Rank 0 stayed fastest after moving from physical card 0 to physical card 3.",
+    "The forward tail is more consistent with TP-rank/shard/route/graph behavior than simple physical-card topology."
+  ],
+  "next": [
+    "Overlay route signatures on all-rank boundary timing.",
+    "Split model forward by layer family with one low-overhead boundary per run.",
+    "Replay rank-specific route fixtures in the W8A8 MoE kernel harness."
+  ],
+  "runs": {
+    "env_reverse_noop_ck": {
+      "all_forward_end_after_start_mean_ms": 4.403173892156863,
+      "by_rank_forward_end_after_start_mean_ms": {
+        "0": 4.072055209150327,
+        "1": 4.556619352941176,
+        "2": 4.491474673202615,
+        "3": 4.492546333333333
+      },
+      "by_rank_forward_end_after_start_median_ms": {
+        "0": 4.116557,
+        "1": 4.546174,
+        "2": 4.536666,
+        "3": 4.516959
+      },
+      "corrected_tok_s": 96.93147006029378,
+      "rank_to_physical_device_id": {
+        "0": 0,
+        "1": 1,
+        "2": 2,
+        "3": 3
+      },
+      "vllm_decode_ms_per_token": 10.238061053314595
+    },
+    "rankmap_reverse_cl": {
+      "all_forward_end_after_start_mean_ms": 4.3512495718954245,
+      "by_rank_forward_end_after_start_mean_ms": {
+        "0": 4.139121928104575,
+        "1": 4.308445954248366,
+        "2": 4.485459653594771,
+        "3": 4.471970751633987
+      },
+      "by_rank_forward_end_after_start_median_ms": {
+        "0": 4.262711,
+        "1": 4.253143,
+        "2": 4.423402,
+        "3": 4.412041
+      },
+      "corrected_tok_s": 96.57787515803732,
+      "rank_to_physical_device_id": {
+        "0": 3,
+        "1": 2,
+        "2": 1,
+        "3": 0
+      },
+      "vllm_decode_ms_per_token": 10.272499985148897
+    },
+    "unrotated_cj": {
+      "all_forward_end_after_start_mean_ms": 4.568658039215686,
+      "by_rank_forward_end_after_start_mean_ms": {
+        "0": 4.214303111111111,
+        "1": 4.470654934640523,
+        "2": 4.769201895424836,
+        "3": 4.820472215686275
+      },
+      "by_rank_forward_end_after_start_median_ms": {
+        "0": 4.318414,
+        "1": 4.454459,
+        "2": 4.682988,
+        "3": 4.739163
+      },
+      "corrected_tok_s": null,
+      "rank_to_physical_device_id": {
+        "0": 0,
+        "1": 1,
+        "2": 2,
+        "3": 3
+      },
+      "vllm_decode_ms_per_token": null
+    }
+  },
+  "sources": {
+    "env_reverse_noop_ck": "data/qwen36-quark-int8-tp4-allrank-forwardboundary-revmap-summary-20260612ck.json",
+    "rankmap_reverse_cl": "data/qwen36-quark-int8-tp4-allrank-forwardboundary-rankmap-rev-summary-20260612cl.json",
+    "unrotated_cj": "data/qwen36-quark-int8-tp4-allrank-forwardboundary-summary-20260612cj.json"
+  }
+}

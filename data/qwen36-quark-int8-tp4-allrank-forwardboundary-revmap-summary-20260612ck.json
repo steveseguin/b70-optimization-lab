@@ -1,0 +1,366 @@
+{
+  "all": {
+    "forward_end_after_start_sync_ms": {
+      "count": 640,
+      "max": 4.854343,
+      "mean": 4.361282703125,
+      "median": 4.50686,
+      "min": 0.404119,
+      "p90": 4.614613599999999,
+      "p95": 4.6434621499999995,
+      "p99": 4.7442915900000004
+    },
+    "forward_start_sync_ms": {
+      "count": 640,
+      "max": 0.008707,
+      "mean": 0.0014407984375,
+      "median": 0.001373,
+      "min": 0.001203,
+      "p90": 0.0015440000000000002,
+      "p95": 0.0017334999999999994,
+      "p99": 0.0030992000000000016
+    },
+    "forward_sync_total_ms": {
+      "count": 640,
+      "max": 4.86412,
+      "mean": 4.3713937609375,
+      "median": 4.5169645,
+      "min": 0.419206,
+      "p90": 4.624450499999999,
+      "p95": 4.6532971,
+      "p99": 4.754066570000001
+    }
+  },
+  "interpretation": [
+    "Requested ONEAPI_DEVICE_SELECTOR=level_zero:3,2,1,0 and ZE_AFFINITY_MASK=3,2,1,0.",
+    "xpu-smi still maps TP0/TP1/TP2/TP3 to physical devices 0/1/2/3, so this environment-only attempt did not rotate worker placement.",
+    "Forward wait remains model-forward-side on all ranks; rank 0 is still fastest and rank 1/2/3 form the slower tail in this run.",
+    "Next rotation attempt needs an explicit vLLM diagnostic local-rank-to-device mapping hook or one-process-per-rank launch control."
+  ],
+  "metrics": "data/qwen36-quark-int8-tp4-allrank-forwardboundary-revmap-p512o128-metrics-20260612ck.json",
+  "metrics_summary": {
+    "decode_ms_per_generation_token_vllm_histogram": {
+      "max": 10.238061053314595,
+      "mean": 10.238061053314595,
+      "median": 10.238061053314595,
+      "min": 10.238061053314595
+    },
+    "decode_ms_vllm_histogram": {
+      "max": 1310.4718148242682,
+      "mean": 1310.4718148242682,
+      "median": 1310.4718148242682,
+      "min": 1310.4718148242682
+    },
+    "e2e_ms_vllm_metrics": {
+      "max": 1382.2951316833496,
+      "mean": 1382.2951316833496,
+      "median": 1382.2951316833496,
+      "min": 1382.2951316833496
+    },
+    "inference_ms_vllm_histogram": {
+      "max": 1377.5657799560577,
+      "mean": 1377.5657799560577,
+      "median": 1377.5657799560577,
+      "min": 1377.5657799560577
+    },
+    "inter_token_ms_vllm_histogram": {
+      "max": 10.318675707277702,
+      "mean": 10.318675707277702,
+      "median": 10.318675707277702,
+      "min": 10.318675707277702
+    },
+    "iteration_tokens_per_step_vllm_histogram": {
+      "max": 5.0,
+      "mean": 5.0,
+      "median": 5.0,
+      "min": 5.0
+    },
+    "prefill_ms_vllm_histogram": {
+      "max": 67.09396513178945,
+      "mean": 67.09396513178945,
+      "median": 67.09396513178945,
+      "min": 67.09396513178945
+    },
+    "queue_ms_vllm_histogram": {
+      "max": 0.010950956493616104,
+      "mean": 0.010950956493616104,
+      "median": 0.010950956493616104,
+      "min": 0.010950956493616104
+    },
+    "time_per_output_token_ms_vllm_histogram": {
+      "max": 10.318675707277702,
+      "mean": 10.318675707277702,
+      "median": 10.318675707277702,
+      "min": 10.318675707277702
+    },
+    "tok_s_out_client_after_first_chunk": {
+      "max": 97.69470998202839,
+      "mean": 97.69470998202839,
+      "median": 97.69470998202839,
+      "min": 97.69470998202839
+    },
+    "tok_s_out_client_after_first_chunk_corrected": {
+      "max": 96.93147006029378,
+      "mean": 96.93147006029378,
+      "median": 96.93147006029378,
+      "min": 96.93147006029378
+    },
+    "tok_s_out_client_e2e": {
+      "max": 92.51803700718324,
+      "mean": 92.51803700718324,
+      "median": 92.51803700718324,
+      "min": 92.51803700718324
+    },
+    "tok_s_prefill_lower_bound_from_ttft": {
+      "max": 6984.040009824049,
+      "mean": 6984.040009824049,
+      "median": 6984.040009824049,
+      "min": 6984.040009824049
+    },
+    "tok_s_total_client": {
+      "max": 462.5901850359162,
+      "mean": 462.5901850359162,
+      "median": 462.5901850359162,
+      "min": 462.5901850359162
+    },
+    "ttft_ms_client": {
+      "max": 73.31000384874642,
+      "mean": 73.31000384874642,
+      "median": 73.31000384874642,
+      "min": 73.31000384874642
+    },
+    "ttft_ms_vllm_metrics": {
+      "max": 72.02625274658203,
+      "mean": 72.02625274658203,
+      "median": 72.02625274658203,
+      "min": 72.02625274658203
+    }
+  },
+  "pure_decode": {
+    "forward_end_after_start_sync_ms": {
+      "count": 632,
+      "max": 4.854343,
+      "mean": 4.400762615506329,
+      "median": 4.507727,
+      "min": 3.387048,
+      "p90": 4.6164743999999995,
+      "p95": 4.64399135,
+      "p99": 4.746773110000002
+    },
+    "forward_start_sync_ms": {
+      "count": 632,
+      "max": 0.008707,
+      "mean": 0.0014201060126582277,
+      "median": 0.001372,
+      "min": 0.001203,
+      "p90": 0.0015329000000000002,
+      "p95": 0.001693,
+      "p99": 0.0019223000000000037
+    },
+    "forward_sync_total_ms": {
+      "count": 632,
+      "max": 4.86412,
+      "mean": 4.410784115506329,
+      "median": 4.5179565,
+      "min": 3.39877,
+      "p90": 4.626534500000001,
+      "p95": 4.6537139,
+      "p99": 4.756509530000002
+    }
+  },
+  "pure_decode_after_first5_each_rank": {
+    "forward_end_after_start_sync_ms": {
+      "count": 612,
+      "max": 4.854343,
+      "mean": 4.403173892156863,
+      "median": 4.509835499999999,
+      "min": 3.387048,
+      "p90": 4.6164743999999995,
+      "p95": 4.64399135,
+      "p99": 4.75297691
+    },
+    "forward_start_sync_ms": {
+      "count": 612,
+      "max": 0.008707,
+      "mean": 0.001412921568627451,
+      "median": 0.001372,
+      "min": 0.001203,
+      "p90": 0.001523,
+      "p95": 0.001673,
+      "p99": 0.0018606999999999996
+    },
+    "forward_sync_total_ms": {
+      "count": 612,
+      "max": 4.86412,
+      "mean": 4.413159784313725,
+      "median": 4.519685,
+      "min": 3.39877,
+      "p90": 4.626534500000001,
+      "p95": 4.6537139,
+      "p99": 4.76261693
+    }
+  },
+  "pure_decode_after_first5_each_rank_by_rank": {
+    "0": {
+      "forward_end_after_start_sync_ms": {
+        "count": 153,
+        "max": 4.419767,
+        "mean": 4.072055209150327,
+        "median": 4.116557,
+        "min": 3.865275,
+        "p90": 4.1737048,
+        "p95": 4.2736764,
+        "p99": 4.3889613999999995
+      },
+      "forward_start_sync_ms": {
+        "count": 153,
+        "max": 0.001874,
+        "mean": 0.0014357254901960785,
+        "median": 0.001393,
+        "min": 0.001273,
+        "p90": 0.001683,
+        "p95": 0.0017634,
+        "p99": 0.0018527199999999995
+      },
+      "forward_sync_total_ms": {
+        "count": 153,
+        "max": 4.429595,
+        "mean": 4.081979882352941,
+        "median": 4.125965,
+        "min": 3.875174,
+        "p90": 4.1838831999999995,
+        "p95": 4.283278,
+        "p99": 4.3983824799999995
+      }
+    },
+    "1": {
+      "forward_end_after_start_sync_ms": {
+        "count": 153,
+        "max": 4.854343,
+        "mean": 4.556619352941176,
+        "median": 4.546174,
+        "min": 4.2081,
+        "p90": 4.6395606,
+        "p95": 4.67154,
+        "p99": 4.82773984
+      },
+      "forward_start_sync_ms": {
+        "count": 153,
+        "max": 0.002034,
+        "mean": 0.0013801895424836602,
+        "median": 0.001363,
+        "min": 0.001242,
+        "p90": 0.0014728,
+        "p95": 0.001503,
+        "p99": 0.001756319999999999
+      },
+      "forward_sync_total_ms": {
+        "count": 153,
+        "max": 4.86412,
+        "mean": 4.566419568627451,
+        "median": 4.555872,
+        "min": 4.220052,
+        "p90": 4.649385199999999,
+        "p95": 4.6810574,
+        "p99": 4.837253839999999
+      }
+    },
+    "2": {
+      "forward_end_after_start_sync_ms": {
+        "count": 153,
+        "max": 4.716744,
+        "mean": 4.491474673202615,
+        "median": 4.536666,
+        "min": 3.387048,
+        "p90": 4.6109514,
+        "p95": 4.6342716,
+        "p99": 4.680435319999999
+      },
+      "forward_start_sync_ms": {
+        "count": 153,
+        "max": 0.003527,
+        "mean": 0.0013940915032679738,
+        "median": 0.001362,
+        "min": 0.001203,
+        "p90": 0.0015028,
+        "p95": 0.0016150000000000001,
+        "p99": 0.0017925999999999999
+      },
+      "forward_sync_total_ms": {
+        "count": 153,
+        "max": 4.726613,
+        "mean": 4.501635483660131,
+        "median": 4.546425,
+        "min": 3.39877,
+        "p90": 4.6208844,
+        "p95": 4.644474799999999,
+        "p99": 4.690400759999999
+      }
+    },
+    "3": {
+      "forward_end_after_start_sync_ms": {
+        "count": 153,
+        "max": 4.820158,
+        "mean": 4.492546333333333,
+        "median": 4.516959,
+        "min": 3.58496,
+        "p90": 4.6292606,
+        "p95": 4.6535458,
+        "p99": 4.766213199999999
+      },
+      "forward_start_sync_ms": {
+        "count": 153,
+        "max": 0.008707,
+        "mean": 0.0014416797385620914,
+        "median": 0.001373,
+        "min": 0.001233,
+        "p90": 0.0015302000000000002,
+        "p95": 0.001563,
+        "p99": 0.0019023999999999992
+      },
+      "forward_sync_total_ms": {
+        "count": 153,
+        "max": 4.830307,
+        "mean": 4.502604202614379,
+        "median": 4.527138,
+        "min": 3.598044,
+        "p90": 4.6390628,
+        "p95": 4.6639108,
+        "p99": 4.776286999999999
+      }
+    }
+  },
+  "pure_rows_by_rank": {
+    "0": 158,
+    "1": 158,
+    "2": 158,
+    "3": 158
+  },
+  "rank_to_logical_device": {
+    "0": "xpu:0",
+    "1": "xpu:1",
+    "2": "xpu:2",
+    "3": "xpu:3"
+  },
+  "rank_to_physical_device_id": {
+    "0": 0,
+    "1": 1,
+    "2": 2,
+    "3": 3
+  },
+  "rank_to_pid": {
+    "0": 1857753,
+    "1": 1857754,
+    "2": 1857755,
+    "3": 1857756
+  },
+  "rows_by_rank": {
+    "0": 160,
+    "1": 160,
+    "2": 160,
+    "3": 160
+  },
+  "source_log": "data/qwen36-quark-int8-tp4-allrank-forwardboundary-revmap-20260612ck.log",
+  "total_rows": 640,
+  "xpusmi_ps": "data/qwen36-quark-int8-tp4-allrank-forwardboundary-revmap-xpusmi-ps-20260612ck.json"
+}

@@ -9088,3 +9088,87 @@ Things to try next, from narrow to bolder:
     command, Localmaxxing row, and hardware/topology into a small public issue
     or discussion. The target ask should be specific: remove `~4-5 ms/token`
     from Qwen3.6 35B-A3B W8A8 c1 decode on 4x B70 without changing outputs.
+
+## 2026-06-12 Rank/Card Rotation Result
+
+This addendum closes the first rank/card attribution loop. The result is
+important because it prevents us from spending the next day on the wrong class
+of fix.
+
+Artifacts:
+
+- `data/qwen36-quark-int8-tp4-allrank-forwardboundary-revmap-20260612ck.log`
+- `data/qwen36-quark-int8-tp4-allrank-forwardboundary-revmap-p512o128-metrics-20260612ck.json`
+- `data/qwen36-quark-int8-tp4-allrank-forwardboundary-revmap-summary-20260612ck.json`
+- `data/qwen36-quark-int8-tp4-allrank-forwardboundary-revmap-xpusmi-ps-20260612ck.json`
+- `data/qwen36-quark-int8-tp4-allrank-forwardboundary-rankmap-rev-20260612cl.log`
+- `data/qwen36-quark-int8-tp4-allrank-forwardboundary-rankmap-rev-p512o128-metrics-20260612cl.json`
+- `data/qwen36-quark-int8-tp4-allrank-forwardboundary-rankmap-rev-summary-20260612cl.json`
+- `data/qwen36-quark-int8-tp4-allrank-forwardboundary-rankmap-rev-xpusmi-ps-20260612cl.json`
+- `data/qwen36-quark-int8-tp4-accepted-restored-after-rankmap-rotation-20260612cl.log`
+- `data/qwen36-quark-int8-tp4-accepted-provenance-after-rankmap-rotation-20260612cl.json`
+- `data/qwen36-quark-int8-tp4-accepted-quality-after-rankmap-rotation-nothink-smoke-20260612cl.json`
+- `data/qwen36-quark-int8-tp4-rankmap-rotation-comparison-20260612cl.json`
+- `patches/vllm-qwen36-rankmap-forward-boundary-20260612cl.diff`
+
+What happened:
+
+- The env-only attempt with `ONEAPI_DEVICE_SELECTOR=level_zero:3,2,1,0` and
+  `ZE_AFFINITY_MASK=3,2,1,0` did not rotate worker placement. `xpu-smi` still
+  showed TP0/TP1/TP2/TP3 owning physical devices 0/1/2/3.
+- A diagnostic-only vLLM hook,
+  `VLLM_XPU_LOCAL_RANK_DEVICE_MAP=3,2,1,0`, was added to the XPU worker and
+  distributed group device binding. With that hook, `xpu-smi` confirmed true
+  reverse ownership: TP0 -> card 3, TP1 -> card 2, TP2 -> card 1, TP3 -> card 0.
+- The true reversed diagnostic stayed near baseline: p512/o128 corrected
+  after-first decode was `96.578 tok/s`; vLLM decode was `10.272 ms/token`.
+- Accepted TP4 was restored afterward on port `18080`, with no timing or
+  rank-map env vars. Restore gates passed: provenance sentinels `4752`,
+  `11436`, `198`; no-thinking quality smoke with exact canaries, repeat
+  stability, and baseline match.
+
+Forward-boundary comparison, pure decode after first five events:
+
+- Original unrotated mapping, rank -> physical card 0/1/2/3:
+  rank 0 `4.214/4.318 ms` mean/median, rank 1 `4.471/4.454 ms`,
+  rank 2 `4.769/4.683 ms`, rank 3 `4.820/4.739 ms`.
+- Env-only reverse attempt was a no-op for placement. It still mapped
+  0/1/2/3 and measured rank 0 `4.072/4.117 ms`, rank 1 `4.557/4.546 ms`,
+  rank 2 `4.491/4.537 ms`, rank 3 `4.493/4.517 ms`.
+- True reverse mapping, rank -> physical card 3/2/1/0:
+  rank 0 `4.139/4.263 ms`, rank 1 `4.308/4.253 ms`,
+  rank 2 `4.485/4.423 ms`, rank 3 `4.472/4.412 ms`.
+
+Decision:
+
+- The tail did not simply follow physical cards. Rank 0 stayed fastest after
+  moving from physical card 0 to physical card 3.
+- The remaining forward-side wait is more likely TP-rank/shard/route/graph
+  behavior than a simple bad-card/topology-only issue.
+- Physical topology is not cleared forever; card/rank interaction still shows
+  some noise. But it is no longer the lead hypothesis for the `~4-5 ms/token`
+  forward wait.
+
+Next work that should move the result:
+
+1. **Route-signature overlay on all-rank timing.**
+   Add active expert/window IDs to the same all-rank boundary rows. We need to
+   know whether ranks 1/2/3 are slower because they own heavier route windows
+   or because their compiled shard does more work independent of routing.
+
+2. **One-family-at-a-time forward split.**
+   Add one low-overhead boundary per run around MoE, attention/GDN, residual
+   norm, and TP collectives. The rank rotation says this is not a raw output
+   path problem; now split the forward body without reintroducing the heavy
+   event path that caused device loss.
+
+3. **Rank-specific route fixture replay.**
+   Replay captured route windows by TP rank in the kernel harness. If the slow
+   rank windows are heavier in isolation, tune grouped-GEMM/route policy. If
+   fixture costs are similar, focus on graph/collective ordering around those
+   ranks.
+
+4. **Persistent/route-class MoE path.**
+   The highest-upside no-quality-loss bet remains exact W8A8 MoE execution
+   with route-class-specific scheduling or persistent expert state. The rank
+   rotation makes this more attractive than more device-environment tuning.
