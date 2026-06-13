@@ -6,6 +6,26 @@ Date: 2026-06-12
 
 2026-06-13 notes update:
 
+- Completed the narrow diagnostic-off sidecar A/B and TP4 collective replay
+  pass. Added graph-mode support to
+  `scripts/launch-qwen36-quark-int8-sidecar-probe.sh` with
+  `ENFORCE_EAGER=0` and optional `COMPILATION_CONFIG`, recorded the patch in
+  `patches/qwen36-sidecar-launcher-graph-switch-20260613.patch`, and captured
+  the consolidated result in
+  `data/qwen36-sidecar-diagnostic-off-collective-replay-summary-20260613.json`.
+  The sidecar graph control matched accepted graph speed (`99.984597 tok/s`
+  versus `99.975721 tok/s`), but narrow rank-0/layer-9 replacement was not a
+  speed win (`99.711101 tok/s`, `-0.273539%`). It did pass no-thinking quality
+  and matched the accepted baseline. Collective replay showed small TP4
+  all-reduces around `0.05-0.08 ms`; tensor AG/RS was also small, while
+  list/compat forms were `2-3x` slower and a 96-token AG/RS stress case hit a
+  recoverable XPU device-lost condition. Accepted service was restored on
+  `127.0.0.1:18080` and passed serial quality plus provenance. Next best work:
+  true persistent resident MoE layerlet/command queue, oracle `k=1` parity
+  repair, and call-site timing only where it informs those two paths.
+
+2026-06-13 notes update:
+
 - Added `notes/2026-06-13-experiment-coverage-audit.md` and linked its main
   carryovers into `notes/2026-06-12-qwen36-next-bigger-bets.md` as
   `Historical Coverage Audit 20260613q`. The audit confirms the current Qwen

@@ -236,7 +236,24 @@ Key reminders now folded into this backlog:
 
 ### Immediate Next Things To Try
 
-1. **All-rank layer-family timing.**
+1. **Persistent resident MoE layerlet or command queue.**
+   The rank-0/layer-9 oneDNN sidecar replacement is now same-request exact and
+   graph-compatible, but the narrow graph A/B was `-0.273539%` versus graph
+   control. The next implementation should stop adding another helper call and
+   instead keep descriptors, expert pointers, scales, scratch, route buffers,
+   and outputs resident, enqueueing only the token route command. The goal is
+   one fixed MoE boundary that includes route/remap, quant, GEMM1, activation,
+   quant2, GEMM2, gather/combine, and possibly adjacent MoE output collective
+   handling.
+
+2. **Oracle `k=1` parity repair.**
+   This remains the most plausible no-quality-loss `2x` route if raw forward
+   cannot drop from `~10 ms/token` to `~5 ms/token`. Compare no-spec eager
+   against oracle-spec eager at the first divergence and trace token IDs,
+   positions, slot IDs, KV block state, hidden-state digests, and top-k logits.
+   No speculation speed claim is valid until oracle `k=1` is token-identical.
+
+3. **All-rank layer-family timing.**
    Split c1 decode forward by attention/GDN, router/topk, MoE prologue,
    grouped GEMM1, activation/quant, grouped GEMM2, combine, dense residual,
    logits, and TP collectives. Include MiniMax-style call-site labels for every
@@ -246,31 +263,23 @@ Key reminders now folded into this backlog:
    activation/quant are actually hot, reuse those exactness gates. This is the
    next highest-signal probe because route skew and output tail are ruled out.
 
-2. **Collective-only replay.**
-   Measure TP4 all-reduce/all-gather latency outside model code using the same
-   rank map and representative tensor shapes. Record bytes, algorithm, CCL
-   transport, rank/card mapping, and any CPU staging indicators.
+4. **Collective policy cleanup from replay.**
+   TP4 all-reduce replay was roughly `0.05-0.08 ms` for the tested small
+   payloads, so it is not the main c1 wall by itself. AG/RS tensor forms were
+   roughly `0.056-0.066 ms`, vLLM-compatible forms `0.076-0.091 ms`, and
+   list-based forms `0.116-0.160 ms` for hidden `2048`, `1-64` tokens. Prefer
+   tensor collectives where possible and isolate any broader AG/RS stress,
+   because the 96-token replay exposed a device-lost recovery case.
 
-3. **Device-event graph dependency audit.**
+5. **Device-event graph dependency audit.**
    Add device-side start/end events for forward subregions and dump intervals
    after the run, avoiding per-token host synchronization. This should expose
    stream gaps or hidden dependencies without perturbing decode.
 
-4. **Richer route payload digest.**
+6. **Richer route payload digest.**
    Extend replay digest rows with compact hot-expert pairs for `num_rows=1`.
    Then re-run the rank overlay to test whether expert-frequency skew is also
    rank-invariant.
-
-5. **Persistent one-dispatch MoE layerlet.**
-   Keep per-layer descriptors, scratch, scales, expert pointers, and output
-   buffers resident; enqueue only the current token route command. Include a
-   candidate path where MoE combine/output collective handling is inside or
-   immediately adjacent to the layerlet. This attacks the fixed dispatch
-   boundary that offset-GEMM did not remove.
-
-6. **Oracle `k=1` parity repair.**
-   Continue the verifier/KV trace work until oracle `k=1` is token-identical.
-   Only then widen speculative acceptance or measure speed.
 
 ### Larger Untried Bets
 
@@ -14888,3 +14897,60 @@ Next best step:
    before expanding.
 4. Keep the oracle `k=1` verifier/KV parity repair alive as the parallel path
    to a possible 2x improvement.
+
+## 2026-06-13 Continuation: Diagnostic-Off Sidecar A/B And Collective Replay
+
+Artifacts:
+
+- `patches/qwen36-sidecar-launcher-graph-switch-20260613.patch`
+- `data/qwen36-sidecar-diagnostic-off-collective-replay-summary-20260613.json`
+- `data/qwen36-b70-collective-replay-allreduce-tp4-20260613.log`
+- `data/qwen36-b70-collective-replay-agrs-tp4-h2048-20260613.log`
+- `data/qwen36-collective-replay-devicelost-recovery-20260613/`
+
+What worked:
+
+- Made the sidecar launcher graph-compatible via `ENFORCE_EAGER=0` and
+  optional `COMPILATION_CONFIG`.
+- Confirmed sidecar graph control matches the accepted graph control:
+  `99.984597 tok/s` versus `99.975721 tok/s`.
+- Confirmed graph-mode rank-0/layer-9 replacement remains quality-clean:
+  no-thinking smoke passed and matched the accepted baseline.
+- Restored the accepted endpoint after collective replay and passed serial
+  no-thinking quality plus serial provenance.
+
+What did not work / not proven:
+
+- Narrow graph-mode rank-0/layer-9 replacement was not faster:
+  `99.711101 tok/s`, `-0.273539%` versus graph control.
+- Capped eager replacement was also slower than eager control:
+  `10.474151 tok/s`, `-1.244676%`.
+- The first high-`MAX_CALLS` measurement was invalid because diagnostic
+  clone/checksum logging stayed active and collapsed decode to eager-like
+  speed.
+- Parallel quality/provenance gates interfered with the single-request canary
+  path, producing a negative artifact before the serial reruns passed.
+
+Collective replay result:
+
+- Small TP4 all-reduces are fast enough that they are not the main missing
+  `~5 ms/token`: in-place `0.051-0.056 ms`, clone `0.071-0.075 ms`, and
+  empty-copy `0.072-0.082 ms`.
+- Tensor AG/RS forms are also small, roughly `0.056-0.066 ms` for the tested
+  hidden-2048 `1-64` token shapes.
+- vLLM-compatible AG is slower (`0.076-0.091 ms`) and list collectives are
+  slower again (`0.116-0.160 ms`).
+- The AG/RS replay hit a device-lost recovery case after the 96-token
+  `all_gather_into_tensor_equal` line; the recovery snapshot captured
+  `UR_RESULT_ERROR_DEVICE_LOST`, and a fresh accepted-lane torch copy smoke
+  recovered all four XPUs without reboot.
+
+Updated decision:
+
+- Do not expand the current oneDNN sidecar replacement as a speed candidate.
+  It is an exactness substrate, not the missing c1 speed path.
+- Put next engineering effort into either a real persistent resident MoE
+  layerlet/command queue or oracle `k=1` parity repair.
+- Keep collective cleanup scoped to replacing avoidable list/compat forms with
+  tensor forms and to call-site timing. Collectives remain secondary unless a
+  model-integrated trace contradicts the replay.

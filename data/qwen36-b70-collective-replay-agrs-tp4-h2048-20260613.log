@@ -1,0 +1,45 @@
+world_size=4 hidden=2048 ccl_env={'CCL_ATL_TRANSPORT': 'ofi', 'CCL_KVS_IFACE': 'eth1', 'CCL_TOPO_P2P_ACCESS': '1'}
+case,tokens,hidden,iters,avg_ms,payload_mib
+2026:06:13-14:13:07:2116628 |CCL_WARN| value of CCL_ATL_TRANSPORT changed to be ofi (default:mpi)
+2026:06:13-14:13:07:2116628 |CCL_WARN| value of CCL_TOPO_P2P_ACCESS changed to be 1 (default:-1)
+2026:06:13-14:13:07:2116628 |CCL_WARN| could not get local_idx/count from environment variables, trying to get them from ATL
+2026:06:13-14:13:07:2116630 |CCL_WARN| could not get local_idx/count from environment variables, trying to get them from ATL
+2026:06:13-14:13:07:2116629 |CCL_WARN| could not get local_idx/count from environment variables, trying to get them from ATL
+2026:06:13-14:13:07:2116631 |CCL_WARN| could not get local_idx/count from environment variables, trying to get them from ATL
+2026:06:13-14:13:08:2116628:[0] |CCL_WARN| topology recognition shows PCIe connection between devices. If this is not correct, you can disable topology recognition, with CCL_TOPO_FABRIC_VERTEX_CONNECTION_CHECK=0. This will assume XeLinks across devices
+all_gather_into_tensor_equal,1,2048,500,0.0664,0.0039
+all_gather_list_equal,1,2048,500,0.1565,0.0039
+all_gather_vllm_xpu_equal,1,2048,500,0.0768,0.0039
+reduce_scatter_tensor_equal,1,2048,500,0.0577,0.0039
+reduce_scatter_list_equal,1,2048,500,0.1203,0.0039
+all_gather_into_tensor_equal,2,2048,500,0.0563,0.0078
+all_gather_list_equal,2,2048,500,0.1532,0.0078
+all_gather_vllm_xpu_equal,2,2048,500,0.0765,0.0078
+reduce_scatter_tensor_equal,2,2048,500,0.0571,0.0078
+reduce_scatter_list_equal,2,2048,500,0.1169,0.0078
+all_gather_into_tensor_equal,4,2048,500,0.0561,0.0156
+all_gather_list_equal,4,2048,500,0.1537,0.0156
+all_gather_vllm_xpu_equal,4,2048,500,0.0762,0.0156
+reduce_scatter_tensor_equal,4,2048,500,0.0571,0.0156
+reduce_scatter_list_equal,4,2048,500,0.1161,0.0156
+all_gather_into_tensor_equal,8,2048,200,0.0570,0.0312
+all_gather_list_equal,8,2048,200,0.1540,0.0312
+all_gather_vllm_xpu_equal,8,2048,200,0.0766,0.0312
+reduce_scatter_tensor_equal,8,2048,200,0.0579,0.0312
+reduce_scatter_list_equal,8,2048,200,0.1168,0.0312
+all_gather_into_tensor_equal,16,2048,200,0.0587,0.0625
+all_gather_list_equal,16,2048,200,0.1543,0.0625
+all_gather_vllm_xpu_equal,16,2048,200,0.0797,0.0625
+reduce_scatter_tensor_equal,16,2048,200,0.0600,0.0625
+reduce_scatter_list_equal,16,2048,200,0.1186,0.0625
+all_gather_into_tensor_equal,32,2048,200,0.0604,0.1250
+all_gather_list_equal,32,2048,200,0.1566,0.1250
+all_gather_vllm_xpu_equal,32,2048,200,0.0871,0.1250
+reduce_scatter_tensor_equal,32,2048,200,0.0618,0.1250
+reduce_scatter_list_equal,32,2048,200,0.1203,0.1250
+all_gather_into_tensor_equal,64,2048,200,0.0607,0.2500
+all_gather_list_equal,64,2048,200,0.1603,0.2500
+all_gather_vllm_xpu_equal,64,2048,200,0.0906,0.2500
+reduce_scatter_tensor_equal,64,2048,200,0.0616,0.2500
+reduce_scatter_list_equal,64,2048,200,0.1205,0.2500
+all_gather_into_tensor_equal,96,2048,200,0.0635,0.3750

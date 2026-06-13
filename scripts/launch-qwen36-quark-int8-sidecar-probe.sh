@@ -88,7 +88,13 @@ unset VLLM_XPU_DEDUP_INT8_QUANT
 
 source /home/steve/.venvs/vllm-xpu/bin/activate
 
-EXTRA_ARGS=("--enforce-eager")
+EXTRA_ARGS=()
+if [[ "${ENFORCE_EAGER:-1}" != "0" ]]; then
+  EXTRA_ARGS+=("--enforce-eager")
+fi
+if [[ -n "${COMPILATION_CONFIG:-}" ]]; then
+  EXTRA_ARGS+=("--compilation-config" "$COMPILATION_CONFIG")
+fi
 if [[ -n "${VLLM_EXTRA_ARGS:-}" ]]; then
   # shellcheck disable=SC2206
   EXTRA_ARGS+=(${VLLM_EXTRA_ARGS})

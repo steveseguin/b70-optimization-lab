@@ -1,0 +1,8 @@
+$ /home/steve/.venvs/vllm-xpu/bin/python - <<'PY'
+Traceback (most recent call last):
+  File "<stdin>", line 19, in <module>
+  File "/home/steve/.venvs/vllm-xpu/lib/python3.12/site-packages/torch/xpu/__init__.py", line 482, in synchronize
+    return torch._C._xpu_synchronize(device)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+RuntimeError: level_zero backend failed with error: 20 (UR_RESULT_ERROR_DEVICE_LOST)
+exit_status=1

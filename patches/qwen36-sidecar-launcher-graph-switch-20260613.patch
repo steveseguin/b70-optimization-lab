@@ -1,0 +1,19 @@
+diff --git a/scripts/launch-qwen36-quark-int8-sidecar-probe.sh b/scripts/launch-qwen36-quark-int8-sidecar-probe.sh
+index 36842d3..b80f1fb 100755
+--- a/scripts/launch-qwen36-quark-int8-sidecar-probe.sh
++++ b/scripts/launch-qwen36-quark-int8-sidecar-probe.sh
+@@ -88,7 +88,13 @@ unset VLLM_XPU_DEDUP_INT8_QUANT
+
+ source /home/steve/.venvs/vllm-xpu/bin/activate
+
+-EXTRA_ARGS=("--enforce-eager")
++EXTRA_ARGS=()
++if [[ "${ENFORCE_EAGER:-1}" != "0" ]]; then
++  EXTRA_ARGS+=("--enforce-eager")
++fi
++if [[ -n "${COMPILATION_CONFIG:-}" ]]; then
++  EXTRA_ARGS+=("--compilation-config" "$COMPILATION_CONFIG")
++fi
+ if [[ -n "${VLLM_EXTRA_ARGS:-}" ]]; then
+   # shellcheck disable=SC2206
+   EXTRA_ARGS+=(${VLLM_EXTRA_ARGS})

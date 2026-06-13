@@ -1,0 +1,565 @@
+{
+  "candidate": "qwen36-quark-int8-tp4-sidecar-rank0-layer9-replacement",
+  "collective_replay": {
+    "agrs_device_lost": true,
+    "agrs_device_lost_point": "after all_gather_into_tensor_equal tokens=96; next list/vllm-compatible AG case did not complete",
+    "agrs_log": "data/qwen36-b70-collective-replay-agrs-tp4-h2048-20260613.log",
+    "agrs_results_before_device_lost": [
+      {
+        "avg_ms": 0.0664,
+        "case": "all_gather_into_tensor_equal",
+        "hidden": 2048,
+        "iters": 500,
+        "payload_mib": 0.0039,
+        "tokens": 1
+      },
+      {
+        "avg_ms": 0.1565,
+        "case": "all_gather_list_equal",
+        "hidden": 2048,
+        "iters": 500,
+        "payload_mib": 0.0039,
+        "tokens": 1
+      },
+      {
+        "avg_ms": 0.0768,
+        "case": "all_gather_vllm_xpu_equal",
+        "hidden": 2048,
+        "iters": 500,
+        "payload_mib": 0.0039,
+        "tokens": 1
+      },
+      {
+        "avg_ms": 0.0577,
+        "case": "reduce_scatter_tensor_equal",
+        "hidden": 2048,
+        "iters": 500,
+        "payload_mib": 0.0039,
+        "tokens": 1
+      },
+      {
+        "avg_ms": 0.1203,
+        "case": "reduce_scatter_list_equal",
+        "hidden": 2048,
+        "iters": 500,
+        "payload_mib": 0.0039,
+        "tokens": 1
+      },
+      {
+        "avg_ms": 0.0563,
+        "case": "all_gather_into_tensor_equal",
+        "hidden": 2048,
+        "iters": 500,
+        "payload_mib": 0.0078,
+        "tokens": 2
+      },
+      {
+        "avg_ms": 0.1532,
+        "case": "all_gather_list_equal",
+        "hidden": 2048,
+        "iters": 500,
+        "payload_mib": 0.0078,
+        "tokens": 2
+      },
+      {
+        "avg_ms": 0.0765,
+        "case": "all_gather_vllm_xpu_equal",
+        "hidden": 2048,
+        "iters": 500,
+        "payload_mib": 0.0078,
+        "tokens": 2
+      },
+      {
+        "avg_ms": 0.0571,
+        "case": "reduce_scatter_tensor_equal",
+        "hidden": 2048,
+        "iters": 500,
+        "payload_mib": 0.0078,
+        "tokens": 2
+      },
+      {
+        "avg_ms": 0.1169,
+        "case": "reduce_scatter_list_equal",
+        "hidden": 2048,
+        "iters": 500,
+        "payload_mib": 0.0078,
+        "tokens": 2
+      },
+      {
+        "avg_ms": 0.0561,
+        "case": "all_gather_into_tensor_equal",
+        "hidden": 2048,
+        "iters": 500,
+        "payload_mib": 0.0156,
+        "tokens": 4
+      },
+      {
+        "avg_ms": 0.1537,
+        "case": "all_gather_list_equal",
+        "hidden": 2048,
+        "iters": 500,
+        "payload_mib": 0.0156,
+        "tokens": 4
+      },
+      {
+        "avg_ms": 0.0762,
+        "case": "all_gather_vllm_xpu_equal",
+        "hidden": 2048,
+        "iters": 500,
+        "payload_mib": 0.0156,
+        "tokens": 4
+      },
+      {
+        "avg_ms": 0.0571,
+        "case": "reduce_scatter_tensor_equal",
+        "hidden": 2048,
+        "iters": 500,
+        "payload_mib": 0.0156,
+        "tokens": 4
+      },
+      {
+        "avg_ms": 0.1161,
+        "case": "reduce_scatter_list_equal",
+        "hidden": 2048,
+        "iters": 500,
+        "payload_mib": 0.0156,
+        "tokens": 4
+      },
+      {
+        "avg_ms": 0.057,
+        "case": "all_gather_into_tensor_equal",
+        "hidden": 2048,
+        "iters": 200,
+        "payload_mib": 0.0312,
+        "tokens": 8
+      },
+      {
+        "avg_ms": 0.154,
+        "case": "all_gather_list_equal",
+        "hidden": 2048,
+        "iters": 200,
+        "payload_mib": 0.0312,
+        "tokens": 8
+      },
+      {
+        "avg_ms": 0.0766,
+        "case": "all_gather_vllm_xpu_equal",
+        "hidden": 2048,
+        "iters": 200,
+        "payload_mib": 0.0312,
+        "tokens": 8
+      },
+      {
+        "avg_ms": 0.0579,
+        "case": "reduce_scatter_tensor_equal",
+        "hidden": 2048,
+        "iters": 200,
+        "payload_mib": 0.0312,
+        "tokens": 8
+      },
+      {
+        "avg_ms": 0.1168,
+        "case": "reduce_scatter_list_equal",
+        "hidden": 2048,
+        "iters": 200,
+        "payload_mib": 0.0312,
+        "tokens": 8
+      },
+      {
+        "avg_ms": 0.0587,
+        "case": "all_gather_into_tensor_equal",
+        "hidden": 2048,
+        "iters": 200,
+        "payload_mib": 0.0625,
+        "tokens": 16
+      },
+      {
+        "avg_ms": 0.1543,
+        "case": "all_gather_list_equal",
+        "hidden": 2048,
+        "iters": 200,
+        "payload_mib": 0.0625,
+        "tokens": 16
+      },
+      {
+        "avg_ms": 0.0797,
+        "case": "all_gather_vllm_xpu_equal",
+        "hidden": 2048,
+        "iters": 200,
+        "payload_mib": 0.0625,
+        "tokens": 16
+      },
+      {
+        "avg_ms": 0.06,
+        "case": "reduce_scatter_tensor_equal",
+        "hidden": 2048,
+        "iters": 200,
+        "payload_mib": 0.0625,
+        "tokens": 16
+      },
+      {
+        "avg_ms": 0.1186,
+        "case": "reduce_scatter_list_equal",
+        "hidden": 2048,
+        "iters": 200,
+        "payload_mib": 0.0625,
+        "tokens": 16
+      },
+      {
+        "avg_ms": 0.0604,
+        "case": "all_gather_into_tensor_equal",
+        "hidden": 2048,
+        "iters": 200,
+        "payload_mib": 0.125,
+        "tokens": 32
+      },
+      {
+        "avg_ms": 0.1566,
+        "case": "all_gather_list_equal",
+        "hidden": 2048,
+        "iters": 200,
+        "payload_mib": 0.125,
+        "tokens": 32
+      },
+      {
+        "avg_ms": 0.0871,
+        "case": "all_gather_vllm_xpu_equal",
+        "hidden": 2048,
+        "iters": 200,
+        "payload_mib": 0.125,
+        "tokens": 32
+      },
+      {
+        "avg_ms": 0.0618,
+        "case": "reduce_scatter_tensor_equal",
+        "hidden": 2048,
+        "iters": 200,
+        "payload_mib": 0.125,
+        "tokens": 32
+      },
+      {
+        "avg_ms": 0.1203,
+        "case": "reduce_scatter_list_equal",
+        "hidden": 2048,
+        "iters": 200,
+        "payload_mib": 0.125,
+        "tokens": 32
+      },
+      {
+        "avg_ms": 0.0607,
+        "case": "all_gather_into_tensor_equal",
+        "hidden": 2048,
+        "iters": 200,
+        "payload_mib": 0.25,
+        "tokens": 64
+      },
+      {
+        "avg_ms": 0.1603,
+        "case": "all_gather_list_equal",
+        "hidden": 2048,
+        "iters": 200,
+        "payload_mib": 0.25,
+        "tokens": 64
+      },
+      {
+        "avg_ms": 0.0906,
+        "case": "all_gather_vllm_xpu_equal",
+        "hidden": 2048,
+        "iters": 200,
+        "payload_mib": 0.25,
+        "tokens": 64
+      },
+      {
+        "avg_ms": 0.0616,
+        "case": "reduce_scatter_tensor_equal",
+        "hidden": 2048,
+        "iters": 200,
+        "payload_mib": 0.25,
+        "tokens": 64
+      },
+      {
+        "avg_ms": 0.1205,
+        "case": "reduce_scatter_list_equal",
+        "hidden": 2048,
+        "iters": 200,
+        "payload_mib": 0.25,
+        "tokens": 64
+      },
+      {
+        "avg_ms": 0.0635,
+        "case": "all_gather_into_tensor_equal",
+        "hidden": 2048,
+        "iters": 200,
+        "payload_mib": 0.375,
+        "tokens": 96
+      }
+    ],
+    "allreduce_log": "data/qwen36-b70-collective-replay-allreduce-tp4-20260613.log",
+    "allreduce_results": [
+      {
+        "avg_ms": 0.051,
+        "bytes": 4096,
+        "iters": 1000,
+        "mode": "inplace",
+        "payload_gbps": 0.08
+      },
+      {
+        "avg_ms": 0.054,
+        "bytes": 8192,
+        "iters": 1000,
+        "mode": "inplace",
+        "payload_gbps": 0.15
+      },
+      {
+        "avg_ms": 0.052,
+        "bytes": 16384,
+        "iters": 300,
+        "mode": "inplace",
+        "payload_gbps": 0.32
+      },
+      {
+        "avg_ms": 0.052,
+        "bytes": 32768,
+        "iters": 300,
+        "mode": "inplace",
+        "payload_gbps": 0.63
+      },
+      {
+        "avg_ms": 0.052,
+        "bytes": 65536,
+        "iters": 300,
+        "mode": "inplace",
+        "payload_gbps": 1.26
+      },
+      {
+        "avg_ms": 0.054,
+        "bytes": 131072,
+        "iters": 50,
+        "mode": "inplace",
+        "payload_gbps": 2.41
+      },
+      {
+        "avg_ms": 0.056,
+        "bytes": 262144,
+        "iters": 50,
+        "mode": "inplace",
+        "payload_gbps": 4.72
+      },
+      {
+        "avg_ms": 0.056,
+        "bytes": 524288,
+        "iters": 50,
+        "mode": "inplace",
+        "payload_gbps": 9.42
+      },
+      {
+        "avg_ms": 0.075,
+        "bytes": 4096,
+        "iters": 1000,
+        "mode": "clone",
+        "payload_gbps": 0.05
+      },
+      {
+        "avg_ms": 0.071,
+        "bytes": 8192,
+        "iters": 1000,
+        "mode": "clone",
+        "payload_gbps": 0.12
+      },
+      {
+        "avg_ms": 0.071,
+        "bytes": 16384,
+        "iters": 300,
+        "mode": "clone",
+        "payload_gbps": 0.23
+      },
+      {
+        "avg_ms": 0.071,
+        "bytes": 32768,
+        "iters": 300,
+        "mode": "clone",
+        "payload_gbps": 0.46
+      },
+      {
+        "avg_ms": 0.071,
+        "bytes": 65536,
+        "iters": 300,
+        "mode": "clone",
+        "payload_gbps": 0.93
+      },
+      {
+        "avg_ms": 0.073,
+        "bytes": 131072,
+        "iters": 50,
+        "mode": "clone",
+        "payload_gbps": 1.79
+      },
+      {
+        "avg_ms": 0.074,
+        "bytes": 262144,
+        "iters": 50,
+        "mode": "clone",
+        "payload_gbps": 3.56
+      },
+      {
+        "avg_ms": 0.074,
+        "bytes": 524288,
+        "iters": 50,
+        "mode": "clone",
+        "payload_gbps": 7.06
+      },
+      {
+        "avg_ms": 0.072,
+        "bytes": 4096,
+        "iters": 1000,
+        "mode": "empty_copy",
+        "payload_gbps": 0.06
+      },
+      {
+        "avg_ms": 0.077,
+        "bytes": 8192,
+        "iters": 1000,
+        "mode": "empty_copy",
+        "payload_gbps": 0.11
+      },
+      {
+        "avg_ms": 0.077,
+        "bytes": 16384,
+        "iters": 300,
+        "mode": "empty_copy",
+        "payload_gbps": 0.21
+      },
+      {
+        "avg_ms": 0.077,
+        "bytes": 32768,
+        "iters": 300,
+        "mode": "empty_copy",
+        "payload_gbps": 0.42
+      },
+      {
+        "avg_ms": 0.078,
+        "bytes": 65536,
+        "iters": 300,
+        "mode": "empty_copy",
+        "payload_gbps": 0.84
+      },
+      {
+        "avg_ms": 0.081,
+        "bytes": 131072,
+        "iters": 50,
+        "mode": "empty_copy",
+        "payload_gbps": 1.62
+      },
+      {
+        "avg_ms": 0.082,
+        "bytes": 262144,
+        "iters": 50,
+        "mode": "empty_copy",
+        "payload_gbps": 3.2
+      },
+      {
+        "avg_ms": 0.082,
+        "bytes": 524288,
+        "iters": 50,
+        "mode": "empty_copy",
+        "payload_gbps": 6.37
+      }
+    ],
+    "recovery_snapshot": "data/qwen36-collective-replay-devicelost-recovery-20260613"
+  },
+  "comparisons": {
+    "eager_control_vs_graph_control_pct": -89.39220238460821,
+    "eager_replace_capped_vs_eager_control_pct": -1.24467568924429,
+    "graph_control_vs_accepted_graph_control_pct": 0.008878645300836041,
+    "graph_replace_r0l9_vs_graph_control_pct": -0.27353850288566184
+  },
+  "created_at": "2026-06-13",
+  "decisions": [
+    "Do not broaden current sidecar replacement: graph-mode rank0/layer9 replacement was quality-clean but -0.27% vs graph control.",
+    "Do not benchmark with high sidecar MAX_CALLS when measuring speed; per-call clone/checksum logging collapses decode to eager-like speed.",
+    "Collective replay small all-reduce latencies are ~0.05-0.08 ms, not the main 90 ms eager wall by themselves.",
+    "AG/RS list/compat paths are 2-3x slower than tensor collectives and hit a device-lost stability bug at larger token replay; avoid broad stress without isolation."
+  ],
+  "metrics": {
+    "accepted_graph_control": {
+      "decode_ms_per_generation_token_mean": 10.022440758802986,
+      "path": "data/qwen36-quark-int8-tp4-accepted-refparity-control-p512o512-r4-20260613.json",
+      "prefill_ms_vllm_mean": 91.28091408638284,
+      "tok_s_out_after_first_chunk_max": 100.1524202860077,
+      "tok_s_out_after_first_chunk_mean": 99.97572070918173,
+      "tok_s_out_after_first_chunk_min": 99.85839605484304,
+      "ttft_ms_client_mean": 108.41075971256942
+    },
+    "sidecar_eager_control": {
+      "decode_ms_per_generation_token_mean": 94.4704764845028,
+      "path": "data/qwen36-quark-int8-tp4-sidecar-eager-control-p512o512-r4-20260613.json",
+      "prefill_ms_vllm_mean": 120.2571089961566,
+      "tok_s_out_after_first_chunk_max": 10.728342472438833,
+      "tok_s_out_after_first_chunk_mean": 10.606163717414503,
+      "tok_s_out_after_first_chunk_min": 10.509083470345624,
+      "ttft_ms_client_mean": 218.76167401205748
+    },
+    "sidecar_eager_replace_bad_logged": {
+      "decode_ms_per_generation_token_mean": 95.93674677398667,
+      "path": "data/qwen36-quark-int8-tp4-sidecar-replace-diagoff-r0l9-p512o512-r4-20260613.json",
+      "prefill_ms_vllm_mean": 125.51666545914486,
+      "tok_s_out_after_first_chunk_max": 10.583119753510978,
+      "tok_s_out_after_first_chunk_mean": 10.44608405167676,
+      "tok_s_out_after_first_chunk_min": 10.379609802627785,
+      "ttft_ms_client_mean": 235.73480296181515
+    },
+    "sidecar_eager_replace_capped": {
+      "decode_ms_per_generation_token_mean": 95.6550926523505,
+      "path": "data/qwen36-quark-int8-tp4-sidecar-replace-diagoff-capped-r0l9-p512o512-r4-20260613.json",
+      "prefill_ms_vllm_mean": 123.38832020759583,
+      "tok_s_out_after_first_chunk_max": 10.537322858557353,
+      "tok_s_out_after_first_chunk_mean": 10.474151376062396,
+      "tok_s_out_after_first_chunk_min": 10.43170014539632,
+      "ttft_ms_client_mean": 222.7119212038815
+    },
+    "sidecar_graph_control": {
+      "decode_ms_per_generation_token_mean": 10.021934713336123,
+      "path": "data/qwen36-quark-int8-tp4-sidecar-graph-control-p512o512-r4-20260613.json",
+      "prefill_ms_vllm_mean": 91.60030103521422,
+      "tok_s_out_after_first_chunk_max": 100.36432546048779,
+      "tok_s_out_after_first_chunk_mean": 99.98459719881046,
+      "tok_s_out_after_first_chunk_min": 99.58962871959082,
+      "ttft_ms_client_mean": 108.84209751384333
+    },
+    "sidecar_graph_replace_r0l9": {
+      "decode_ms_per_generation_token_mean": 10.049176817233274,
+      "path": "data/qwen36-quark-int8-tp4-sidecar-graph-replace-r0l9-p512o512-r4-20260613.json",
+      "prefill_ms_vllm_mean": 99.2282404913567,
+      "tok_s_out_after_first_chunk_max": 99.95882059481755,
+      "tok_s_out_after_first_chunk_mean": 99.71110082851658,
+      "tok_s_out_after_first_chunk_min": 99.49766945820252,
+      "ttft_ms_client_mean": 116.55447771772742
+    }
+  },
+  "next_best_steps": [
+    "Make sidecar useful only if it is captured as a persistent graph/layerlet with no Python/logging path and shows positive timing in graph mode.",
+    "Investigate why the oneDNN prefill/capture sidecar call costs ~200 ms and whether primitive creation is still on the critical path.",
+    "Prefer tensor AG/RS forms over list forms in any future TP/topology work; list AG/RS is slower and less stable on this stack.",
+    "Continue oracle k=1 spec parity as the larger no-quality-loss speed path; sidecar rank0/layer9 alone is not enough."
+  ],
+  "quality": {
+    "accepted_restore_provenance_serial": "data/qwen36-quark-int8-tp4-accepted-provenance-after-collective-replay-serial-20260613.json",
+    "accepted_restore_provenance_serial_ok": true,
+    "accepted_restore_quality_serial": "data/qwen36-quark-int8-tp4-accepted-restored-after-collective-replay-quality-nothink-smoke-serial-20260613.json",
+    "accepted_restore_quality_serial_pass_all": true,
+    "sidecar_graph_replace_baseline_match_all": true,
+    "sidecar_graph_replace_nothink": "data/qwen36-quark-int8-tp4-sidecar-graph-replace-r0l9-quality-nothink-smoke-20260613.json",
+    "sidecar_graph_replace_pass_all": true
+  },
+  "shape": {
+    "ignore_eos": true,
+    "output_tokens": 512,
+    "prompt_preset": "natural-chat",
+    "prompt_tokens": 512,
+    "repeats": 4
+  },
+  "sidecar_execution_records": {
+    "eager_capped_jsonl": "data/qwen36-onednn-sidecar-replace-diagoff-capped-live-20260613.jsonl",
+    "graph_replace_jsonl": "data/qwen36-onednn-sidecar-graph-replace-r0l9-live-20260613.jsonl"
+  }
+}

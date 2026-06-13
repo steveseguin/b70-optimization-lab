@@ -556,3 +556,99 @@ Next:
    any timing.
 4. Keep accepted graph quality/reliability gates separate from eager sidecar
    text smoke.
+
+## Diagnostic-Off Timing, Graph Compatibility, And Collective Replay
+
+Date: 2026-06-13.
+
+Artifacts:
+
+- `patches/qwen36-sidecar-launcher-graph-switch-20260613.patch`
+- `data/qwen36-sidecar-diagnostic-off-collective-replay-summary-20260613.json`
+- `data/qwen36-quark-int8-tp4-accepted-refparity-control-p512o512-r4-20260613.json`
+- `data/qwen36-quark-int8-tp4-sidecar-eager-control-p512o512-r4-20260613.json`
+- `data/qwen36-quark-int8-tp4-sidecar-replace-diagoff-capped-r0l9-p512o512-r4-20260613.json`
+- `data/qwen36-quark-int8-tp4-sidecar-graph-control-p512o512-r4-20260613.json`
+- `data/qwen36-quark-int8-tp4-sidecar-graph-replace-r0l9-p512o512-r4-20260613.json`
+- `data/qwen36-quark-int8-tp4-sidecar-graph-replace-r0l9-quality-nothink-smoke-20260613.json`
+- `data/qwen36-b70-collective-replay-allreduce-tp4-20260613.log`
+- `data/qwen36-b70-collective-replay-agrs-tp4-h2048-20260613.log`
+- `data/qwen36-collective-replay-devicelost-recovery-20260613/`
+- `data/qwen36-quark-int8-tp4-accepted-restored-after-collective-replay-quality-nothink-smoke-serial-20260613.json`
+- `data/qwen36-quark-int8-tp4-accepted-provenance-after-collective-replay-serial-20260613.json`
+
+Implementation:
+
+- Made `scripts/launch-qwen36-quark-int8-sidecar-probe.sh`
+  graph-switchable with `ENFORCE_EAGER=0` and optional
+  `COMPILATION_CONFIG`.
+- Kept eager as the default sidecar mode so existing diagnostic runs are
+  unchanged.
+- Confirmed graph-mode sidecar overlay can match the accepted graph launcher
+  when replacement is disabled.
+
+Timing:
+
+- Accepted graph control: `99.975721 tok/s`, `10.022441 ms/token`.
+- Sidecar eager control: `10.606164 tok/s`, `94.470476 ms/token`.
+- Capped eager rank-0/layer-9 replacement:
+  `10.474151 tok/s`, `95.655093 ms/token`, `-1.244676%` versus eager
+  control.
+- Sidecar graph control: `99.984597 tok/s`, `10.021935 ms/token`,
+  `+0.008879%` versus accepted graph control.
+- Sidecar graph rank-0/layer-9 replacement:
+  `99.711101 tok/s`, `10.049177 ms/token`, `-0.273539%` versus sidecar graph
+  control.
+- The first attempted diagnostic-off run was invalid for speed: an empty log
+  env fell back to the default JSONL path and high `MAX_CALLS` kept clone,
+  checksum, and per-call logging active for thousands of calls.
+
+Quality:
+
+- Sidecar graph rank-0/layer-9 replacement passed the no-thinking smoke and
+  matched the accepted baseline.
+- After collective replay and XPU recovery, the accepted graph endpoint was
+  restored and passed serial no-thinking quality plus serial provenance.
+- A parallel quality/provenance attempt failed the arithmetic/provenance gates;
+  keep that as a negative artifact and avoid concurrent quality gates on this
+  single-request canary path.
+
+Collective replay:
+
+- TP4 all-reduce replay with the accepted rank map was fast for the tested
+  small payloads: in-place cases were roughly `0.051-0.056 ms`, clone cases
+  `0.071-0.075 ms`, and empty-copy cases `0.072-0.082 ms`.
+- AG/RS tensor forms for hidden `2048` and `1-64` tokens were roughly
+  `0.056-0.066 ms`.
+- vLLM-compatible all-gather forms were roughly `0.076-0.091 ms`.
+- List-based all-gather/reduce-scatter forms were roughly `0.116-0.160 ms`,
+  about `2-3x` slower than tensor forms for these small shapes.
+- The AG/RS stress run reached `all_gather_into_tensor_equal` at `96` tokens,
+  then the subsequent list/compat case did not complete. The thrown
+  `UR_RESULT_ERROR_DEVICE_LOST` was captured by the recovery copy-smoke
+  artifact rather than the tee'd replay log. Re-sourcing the accepted oneAPI
+  lane and running a fresh torch XPU copy smoke recovered without reboot.
+
+Decision:
+
+- Do not broaden the current sidecar replacement path. It is tensor-exact and
+  graph-compatible for the narrow sampled layer/rank, but it is not faster.
+- Small TP4 all-reduces are not the missing `~5 ms/token` by themselves.
+- Avoid list-style AG/RS paths where tensor collectives are possible, and do
+  not run broader AG/RS stress without isolation because the 96-token replay
+  exposed a device-lost stability hazard.
+- The next real MoE speed path must remove more fixed dispatch overhead than
+  the current Python sidecar replacement. A true persistent graph/layerlet or
+  device-resident command queue is still the right direction.
+
+Next:
+
+1. Keep the graph-switchable sidecar launcher for future exactness tests, but
+   do not treat current rank-0/layer-9 replacement as a speed candidate.
+2. Build the next MoE prototype around a persistent resident layerlet or
+   command queue, not another post-hoc helper call.
+3. Continue oracle `k=1` verifier/KV parity repair in parallel, because it
+   remains the strongest no-quality-loss route to a `2x` c1 decode gain.
+4. For any future candidate, run adjacent graph-control A/B, serial quality
+   gates, provenance, peak VRAM/power/thermal capture, and no parallel gate
+   interference.
