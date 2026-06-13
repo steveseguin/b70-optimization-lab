@@ -1,0 +1,74 @@
+diff --git a/vllm_xpu_kernels/fused_moe_interface.py b/vllm_xpu_kernels/fused_moe_interface.py
+--- a/vllm_xpu_kernels/fused_moe_interface.py
++++ b/vllm_xpu_kernels/fused_moe_interface.py
+@@
+ def _tensor_sample_sum(tensor, limit: int = 64):
+@@
+     except Exception:
+         return None
+ 
+ 
++def _tensor_checksum_f32(tensor):
++    if tensor is None:
++        return None
++    try:
++        return float(
++            tensor.detach().float().sum().to("cpu",
++                                             non_blocking=False).item())
++    except Exception as exc:
++        return {"error": repr(exc)}
++
++
++def _tensor_max_abs_diff_f32(left, right):
++    if left is None or right is None:
++        return None
++    try:
++        diff = (left.detach().float() - right.detach().float()).abs().max()
++        return float(diff.to("cpu", non_blocking=False).item())
++    except Exception as exc:
++        return {"error": repr(exc)}
++
++
+ def _write_live_abi_record(path: str, record: dict, max_lines: int) -> bool:
+@@
+         dry_create_descriptors = _is_env_enabled(
+             ONEDNN_SIDECAR_DRY_DESCRIPTORS_ENV, "1")
+         execute_mode = _onednn_sidecar_execute_mode()
++        parity_target = None
++        parity_before = None
++        parity_before_checksum = None
++        if execute_mode == 1:
++            parity_target = gemm1_output
++        elif execute_mode == 2:
++            parity_target = gemm2_output
++        if parity_target is not None:
++            parity_before = parity_target.detach().clone()
++            parity_before_checksum = _tensor_checksum_f32(parity_before)
+         started = time.perf_counter()
+         stats = torch.ops._xpu_C.qwen36_moe_onednn_sidecar_probe(
+@@
+             dry_create_descriptors,
+             execute_mode,
+         )
++        parity_record = None
++        if parity_target is not None:
++            try:
++                if getattr(getattr(parity_target, "device", None), "type",
++                           None) == "xpu":
++                    torch.xpu.synchronize()
++                parity_record = {
++                    "target": ("gemm1_output"
++                               if execute_mode == 1 else "gemm2_output"),
++                    "before_checksum_f32": parity_before_checksum,
++                    "after_checksum_f32": _tensor_checksum_f32(parity_target),
++                    "max_abs_diff_f32": _tensor_max_abs_diff_f32(
++                        parity_target, parity_before),
++                }
++            except Exception as exc:
++                parity_record = {"error": repr(exc)}
+         elapsed_ms = (time.perf_counter() - started) * 1000.0
+@@
+             "elapsed_ms": elapsed_ms,
+             "stats": stats_list,
++            "parity": parity_record,
+         }

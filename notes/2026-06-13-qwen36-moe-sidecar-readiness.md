@@ -90,13 +90,29 @@ Validation artifact:
   vLLM process, so the next runtime test should run inside the normal vLLM
   endpoint context, not via standalone import.
 
+Follow-up parity logging patch:
+`patches/vllm-xpu-qwen36-onednn-sidecar-parity-log-20260613.patch`.
+Validation:
+`data/qwen36-onednn-sidecar-parity-log-smoke-20260613.json`.
+
+When execute mode is `gemm1` or `gemm2`, the Python probe now clones the target
+scratch tensor before sidecar execution and logs:
+
+- target scratch tensor name,
+- pre-execute f32 checksum,
+- post-execute f32 checksum,
+- `max_abs_diff_f32` between post-execute oneDNN scratch and pre-execute XPU
+  scratch.
+
+This adds an intentional diagnostic sync for that single gated call. Promotion
+requires `max_abs_diff_f32 == 0.0`.
+
 ## Next Tasks
 
 1. Run the one-GEMM execute prototype inside a normal vLLM process context with
    `VLLM_XPU_MOE_ONEDNN_SIDECAR_EXECUTE=gemm1`, max calls `1`, rank `0`, and a
    single layer filter such as `layers.9`.
-2. Add a sidecar log checksum/parity field for the overwritten scratch output,
-   then compare the oneDNN result against the pre-execute XPU scratch result.
+2. Require the sidecar log parity field to report `max_abs_diff_f32 == 0.0`.
 3. Repeat for GEMM2.
 4. Extend to resident two-GEMM execution with cached descriptors/primitives.
 5. Add activation/quant2 and gather/combine parity until the full island

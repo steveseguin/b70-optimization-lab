@@ -1,0 +1,21 @@
+{
+  "kind": "qwen36_onednn_sidecar_parity_log_smoke",
+  "date": "2026-06-13",
+  "source_repo": "/home/steve/src/vllm-xpu-kernels",
+  "source_file": "vllm_xpu_kernels/fused_moe_interface.py",
+  "patch_artifact": "patches/vllm-xpu-qwen36-onednn-sidecar-parity-log-20260613.patch",
+  "validation": {
+    "py_compile": {
+      "command": "PYTHONPATH=/home/steve/src/vllm-xpu-kernels /home/steve/.venvs/vllm-xpu/bin/python -m py_compile /home/steve/src/vllm-xpu-kernels/vllm_xpu_kernels/fused_moe_interface.py",
+      "exit_code": 0,
+      "result": "pass"
+    }
+  },
+  "behavior": {
+    "default": "no parity clone or comparison unless VLLM_XPU_MOE_ONEDNN_SIDECAR_EXECUTE selects gemm1 or gemm2",
+    "execute_mode_1": "clone gemm1_output before sidecar execution, then log before checksum, after checksum, and max_abs_diff_f32 after execution",
+    "execute_mode_2": "clone gemm2_output before sidecar execution, then log before checksum, after checksum, and max_abs_diff_f32 after execution",
+    "synchronization": "diagnostic path synchronizes after oneDNN execution before reading checksums/diff; sidecar max-call/layer/rank gates keep this out of normal performance paths"
+  },
+  "next_gate": "Run inside the isolated vLLM sidecar launcher and require parity.max_abs_diff_f32 == 0.0 before any endpoint A/B."
+}

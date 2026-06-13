@@ -14596,8 +14596,10 @@ Artifacts:
 - `notes/2026-06-13-qwen36-moe-sidecar-readiness.md`
 - `patches/vllm-xpu-qwen36-onednn-sidecar-end-offsets-20260613.patch`
 - `patches/vllm-xpu-qwen36-onednn-sidecar-execute-onegemm-20260613.patch`
+- `patches/vllm-xpu-qwen36-onednn-sidecar-parity-log-20260613.patch`
 - `data/qwen36-onednn-sidecar-offset-helper-smoke-20260613.json`
 - `data/qwen36-onednn-sidecar-execute-build-smoke-20260613.json`
+- `data/qwen36-onednn-sidecar-parity-log-smoke-20260613.json`
 
 What changed:
 
@@ -14612,6 +14614,8 @@ What changed:
 - Targeted build succeeded in
   `/home/steve/src/vllm-xpu-kernels/build/qwen36-sidecar-probe-20260612`.
 - Schema probe passed and confirmed the new `int execute_mode` argument.
+- Added parity logging for execute mode: clone the selected scratch tensor before
+  oneDNN execution and record f32 pre/post checksums plus `max_abs_diff_f32`.
 
 Runtime lesson:
 
@@ -14631,10 +14635,9 @@ Next gate:
    with the rebuilt `_xpu_C` overlay and:
    `VLLM_XPU_MOE_ONEDNN_SIDECAR_EXECUTE=gemm1`.
 2. Keep `MAX_CALLS=1`, `RANK=0`, and `LAYER_REGEX=layers\\.9\\.`.
-3. Confirm the sidecar JSONL records `execute_mode=1`, `execute_ok=1`, and
-   sane construct/execute timings while endpoint output still comes from the
-   accepted `xpu_fused_moe` path.
-4. Add checksum/parity logging around the overwritten scratch output, then
-   repeat for GEMM2.
+3. Confirm the sidecar JSONL records `execute_mode=1`, `execute_ok=1`,
+   `parity.max_abs_diff_f32 == 0.0`, and sane construct/execute timings while
+   endpoint output still comes from the accepted `xpu_fused_moe` path.
+4. Repeat for GEMM2.
 5. Only after exact scratch parity, extend to cached descriptors and full
    island replay.
