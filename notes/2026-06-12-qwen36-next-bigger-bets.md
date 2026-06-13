@@ -17,6 +17,9 @@ Current speed anchor:
 - Public exact-model Localmaxxing row:
   `cmq8yhxvo001ipb0149aoa79o`, `99.428 tok/s`, c1, 32K context,
   4x Arc Pro B70.
+- Fresh full-diagnostic backend baseline:
+  `99.533 tok/s` corrected p512/o512/c1 decode, `98.045 tok/s` e2e,
+  `10.048 ms/token` vLLM decode, and `73.4 ms` vLLM TTFT.
 - Fresh local accepted A/B baseline before the offset endpoint test:
   `99.309 tok/s` corrected p512/o512/c1 decode, `98.068 tok/s` e2e,
   `10.051 ms/token` vLLM decode, and `75.3 ms` client TTFT.
@@ -31,6 +34,87 @@ Current speed anchor:
   The `>200 tok/s` c1 goal needs either verifier-safe speculation or a real
   MoE/kernel architecture improvement. Launch flags alone are unlikely to get
   there.
+
+## Post-Fullcandidate Gap Budget 20260613h
+
+Artifacts:
+
+- Endpoint metrics:
+  `data/qwen36-quark-int8-tp4-fullcandidate-c1-p512o512-metrics-20260613h.json`.
+- Decode gap budget:
+  `data/qwen36-c1-gap-budget-fullcandidate-20260613h.{json,md}`.
+- MoE fusion target budget:
+  `data/qwen36-moe-fusion-target-budget-offsetactive-20260613h.{json,md}`.
+- Budget script updated:
+  `scripts/qwen36-moe-fusion-target-budget.py` now records exact
+  fused-prologue offset-GEMM and active-offset-GEMM replay timings.
+
+Measured budget:
+
+- Current full-diagnostic accepted endpoint: `99.533 tok/s` corrected,
+  `98.045 tok/s` e2e, `10.048 ms/token` decode.
+- Target `200 tok/s` means `5.000 ms/token`, so the missing budget is
+  `5.048 ms/token`, or `50.24%` of current decode latency.
+- The current model-forward timing anchor is `5.461 ms/token`; outside-forward
+  timing is estimated at `4.587 ms/token`.
+- If outside-forward timing is unchanged, model-forward has to shrink to
+  roughly `0.413 ms/token`, which is not reachable by small host-side cleanup.
+
+Layerlet budget:
+
+- Primary replay window: layer-20 rank-0 c1 routes, `16` route starts,
+  rows=`1`, topk=`8`.
+- Mean current `xpu_fused_moe`: `315.292 us/layer`.
+- Mean exact preallocated staged path: `211.869 us/layer`.
+- Mean exact fused-prologue offset-GEMM path: `209.052 us/layer`.
+- Mean exact fused-prologue active-offset-GEMM path: `211.170 us/layer`.
+- Required layerlet target for `200 tok/s`, under the current budget model:
+  `189.101 us/layer`.
+- Remaining mean gap after offset-GEMM: `19.952 us/layer`.
+- Endpoint estimate if offset-GEMM translated perfectly across all 40 MoE
+  layers: `172.471 tok/s`. Active-offset estimates `169.988 tok/s`.
+- Two independent small-M GEMM dispatch floor estimates `193.143 tok/s`; a
+  one-dispatch proxy is far above target. This makes dispatch amortization the
+  primary non-speculative lever.
+
+Decision:
+
+- Do not promote the full diagnostic extension or offset-GEMM as an endpoint
+  speed win. It is exact, restart-safe, and useful, but it is not enough.
+- The next non-speculative prototype should target a resident/persistent MoE
+  layerlet that fuses route/remap, quant, GEMM1, activation, quant2, GEMM2, and
+  gather behind one host-visible boundary.
+- If the one-layer parity harness cannot beat about `189 us/layer`, shift more
+  effort toward exact target-verified multi-token acceptance, because the
+  current single-token path needs a roughly `2.01x` decode speedup.
+
+Concrete follow-up ideas from this budget:
+
+1. **Persistent MoE command queue.** Allocate descriptors, scratch, scales, and
+   expert pointer tables once per layer/rank; enqueue only token route commands
+   during decode. The win target is about `20 us/layer` beyond offset-GEMM.
+2. **Whole-token command-list capture.** Capture an entire decode step for the
+   common c1 shape, including MoE, attention, collectives, logits, and sampler
+   sync points. Use route-class or graph-miss fallback for correctness.
+3. **Verifier-safe multi-token acceptance.** Use the exact target model as the
+   verifier and report per-position acceptance, verifier cost, rollback cost,
+   and output parity. This is the strongest path if per-layer work cannot hit
+   `189 us`.
+4. **Decode-rank ownership experiment.** Test whether TP4 collectives and
+   all-rank synchronization are part of the `4.587 ms` outside-forward budget by
+   comparing single-rank, TP2, TP4, and hybrid dense/MoE layouts under the same
+   token-output gate.
+5. **Gemma-style fast lane plus exact eval lane.** Keep an optimized serving
+   lane for normal decode and a reference-compatible lane for prompt logprobs,
+   PPL, and provenance. Promotion requires continuous token parity probes
+   between lanes.
+6. **Token-ID streaming and delayed detok.** Add a frontdoor test that streams
+   token IDs internally and detokenizes at chunk/end boundaries, with
+   byte-identical reconstruction. This is likely smaller than MoE, but it is a
+   low-risk production polish once kernel work moves.
+7. **Readiness warm packs.** Treat prefix caches, graph captures, route atlases,
+   and hot expert packs as readiness artifacts, not ad hoc first-request work.
+   Record cold-start and warm steady-state separately.
 
 ## Things To Try And Bigger Bets Refresh 20260612dj
 
@@ -13668,14 +13752,18 @@ Bigger bets added from this review:
 Reviewed the live dashboard result feed again after the user pointed at the
 Gemma E4B board as a source of ideas. Snapshot artifact:
 `data/gemma-dashboard-results-summary-20260613-gemmalessons.json`.
+Added a reusable fetcher and refreshed snapshot after the offset-active Qwen
+budget pass:
+`scripts/fetch-gemma-dashboard-summary.py` and
+`data/gemma-dashboard-results-summary-20260613h.json`.
 
 Feed summary at fetch time:
 
-- Results: `352`.
-- Keyword counts: `159` negative/regression/blocked entries, `88` vLLM
-  entries, `195` graph/capture entries, `155` speculative/MTP/n-gram entries,
-  `59` lm-head entries, `17` precache/prefix-cache entries, and `3` entries
-  explicitly calling out exact fallback/original-forward paths.
+- Original snapshot results: `352`; refreshed snapshot results: `353`.
+- Refreshed keyword counts: `146` negative entries, `88` vLLM entries,
+  `219` graph entries, `142` capture entries, `111` prefix entries, `60`
+  speculative entries, `43` lm-head entries, `35` fallback entries, `14`
+  prompt-logprobs entries, and `9` detok entries.
 - Public frontier rows moved from roughly `421 tok/s` to `470.53 tok/s`.
 
 The new high rows are still Gemma-specific and frequently rely on challenge

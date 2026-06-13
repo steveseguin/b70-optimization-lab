@@ -1,0 +1,88 @@
+{
+  "input_metrics": "data/qwen36-quark-int8-tp4-fullcandidate-c1-p512o512-metrics-20260613h.json",
+  "model": "qwen36-35b-a3b-fp8",
+  "server_model_root": "/mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118",
+  "prompt_tokens": 498,
+  "output_tokens": 512,
+  "mode": "stream",
+  "ignore_eos": true,
+  "budget": {
+    "target_tok_s": 200.0,
+    "target_ms_per_token": 5.0,
+    "current_corrected_tok_s": 99.44755164551465,
+    "current_after_first_tok_s": 99.64216524951762,
+    "current_e2e_tok_s": 97.92598025886723,
+    "current_decode_ms_per_token": 10.056053390599118,
+    "required_ms_saving_per_token": 5.056053390599118,
+    "required_fractional_latency_reduction": 0.5027870471855052,
+    "required_speedup_factor": 2.0111103460134356,
+    "queue_ms": 0.011221040040254593,
+    "prefill_ms": 68.7445281073451,
+    "decode_ms_total": 5148.699335986748,
+    "inter_token_ms": 10.075732555747061,
+    "iteration_tokens_per_step": 1.97265625,
+    "ttft_ms": 73.38285446166992,
+    "record_count": 3,
+    "record_corrected_tok_s": {
+      "mean": 99.53331440664005,
+      "median": 99.44755164551465,
+      "min": 99.3452309820591,
+      "max": 99.80716059234636
+    },
+    "record_decode_ms_per_token": {
+      "mean": 10.047643717371102,
+      "median": 10.056053390599118,
+      "min": 10.020054587585037,
+      "max": 10.066823173929151
+    }
+  },
+  "stage_speedup_scenarios": [
+    {
+      "stage_share": 0.25,
+      "stage_ms_per_token": 2.5140133476497795,
+      "required_stage_speedup": null
+    },
+    {
+      "stage_share": 0.33,
+      "stage_ms_per_token": 3.318497618897709,
+      "required_stage_speedup": null
+    },
+    {
+      "stage_share": 0.4,
+      "stage_ms_per_token": 4.022421356239647,
+      "required_stage_speedup": null
+    },
+    {
+      "stage_share": 0.5,
+      "stage_ms_per_token": 5.028026695299559,
+      "required_stage_speedup": null
+    },
+    {
+      "stage_share": 0.6,
+      "stage_ms_per_token": 6.033632034359471,
+      "required_stage_speedup": 6.172017026835313
+    },
+    {
+      "stage_share": 0.7,
+      "stage_ms_per_token": 7.039237373419382,
+      "required_stage_speedup": 3.549462598729222
+    },
+    {
+      "stage_share": 0.8,
+      "stage_ms_per_token": 8.044842712479294,
+      "required_stage_speedup": 2.691672729685234
+    },
+    {
+      "stage_share": 0.9,
+      "stage_ms_per_token": 9.050448051539206,
+      "required_stage_speedup": 2.2657871391729647
+    }
+  ],
+  "next_gates": [
+    "Do not spend time on queue/frontdoor fixes first; measured queue time is effectively zero for c1.",
+    "Use the sidecar/oneDNN path only if it can attack multi-millisecond decode latency, not just a microsecond GEMM slice.",
+    "Add device-side token-step timing before committing to a custom kernel so attention, GDN, MoE, collectives, sampler, and scheduler costs are ranked.",
+    "Treat target-verified MTP/DFlash/ngram transactions as a separate 2x-class path because they can reduce effective emitted-token latency without changing accepted output.",
+    "Revisit TP2/single-lane topology only with exact current-model canaries, because TP4 may be paying collective/control overhead for c1."
+  ]
+}

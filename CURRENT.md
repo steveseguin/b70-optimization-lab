@@ -6,13 +6,36 @@ Date: 2026-06-12
 
 2026-06-13 notes update:
 
+- Added a post-fullcandidate c1 endpoint budget using the currently restored
+  Quark W8A8 INT8 backend. Artifacts:
+  `data/qwen36-quark-int8-tp4-fullcandidate-c1-p512o512-metrics-20260613h.json`,
+  `data/qwen36-c1-gap-budget-fullcandidate-20260613h.{json,md}`, and
+  `data/qwen36-moe-fusion-target-budget-offsetactive-20260613h.{json,md}`.
+  The fresh p512/o512/c1 baseline is `99.533 tok/s` corrected, `98.045 tok/s`
+  e2e, and `10.048 ms/token` decode. Hitting `200 tok/s` requires saving
+  `5.048 ms/token`, or `126.191 us` across each of the 40 MoE layerlets if
+  outside-forward cost stays unchanged.
+- Updated `scripts/qwen36-moe-fusion-target-budget.py` so it accounts for the
+  newer exact fused-prologue offset-GEMM and active-offset-GEMM replay paths.
+  The strongest exact offset replay mean is `209.052 us/layer`, estimating
+  `172.471 tok/s` if it translated perfectly endpoint-wide. The calculated
+  layerlet target is `189.101 us/layer`; offset-GEMM remains about
+  `19.952 us/layer` short. Decision: do not promote this as a speed result.
+  The next no-quality-loss implementation target is a persistent/one-dispatch
+  MoE layerlet, whole-token capture, or exact verifier-safe multi-token
+  acceptance stacked on top.
+
+2026-06-13 notes update:
+
 - Reviewed the live Fast Gemma Challenge dashboard result feed again after the
   user flagged the Gemma E4B board as a source of transferable ideas. Added
   `data/gemma-dashboard-results-summary-20260613-gemmalessons.json` and a
   "Fast Gemma Frontier Refresh 20260613" section in
-  `notes/2026-06-12-qwen36-next-bigger-bets.md`. The snapshot contains `352`
-  results; public frontier rows are now about `470.53 tok/s`, with strong
-  recurring signals around graph/capture, fast decode plus exact eval fallback,
+  `notes/2026-06-12-qwen36-next-bigger-bets.md`. Added reusable fetcher
+  `scripts/fetch-gemma-dashboard-summary.py` and refreshed snapshot
+  `data/gemma-dashboard-results-summary-20260613h.json`; the live feed now has
+  `353` parsed rows and still tops out around `470.53 tok/s`. Strong recurring
+  signals remain graph/capture, fast decode plus exact eval fallback,
   prefix-cache warmup, lm-head/sampler cost isolation, token-ID/end-only detok
   lanes, and acceptance telemetry for speculative paths. These are planning
   inputs only: no Qwen model, quantization, endpoint, or promoted result was

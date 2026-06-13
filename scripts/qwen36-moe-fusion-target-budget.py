@@ -110,9 +110,20 @@ def text_config(path: str) -> dict[str, Any]:
 
 def collect_route_replay(paths: list[str], rows_filter: set[int]) -> dict[str, Any]:
     samples: list[dict[str, Any]] = []
+    replay_timing_fields = [
+        ("xpu_fused_moe_us", "total_us_mean", True),
+        ("preallocated_staged_us", "preallocated_staged_total_us_mean", True),
+        ("fused_prologue_staged_us", "fused_prologue_staged_total_us_mean", False),
+        ("fused_prologue_offset_gemm_us", "fused_prologue_offset_gemm_total_us_mean", False),
+        ("fused_prologue_active_offset_gemm_us", "fused_prologue_active_offset_gemm_total_us_mean", False),
+        ("xpu_fused_moe_scratch_us", "xpu_fused_moe_scratch_total_us_mean", False),
+    ]
     max_diffs = {
         "manual": [],
         "preallocated": [],
+        "fused_prologue": [],
+        "fused_prologue_offset_gemm": [],
+        "fused_prologue_active_offset_gemm": [],
         "scratch": [],
     }
     component_names = [
@@ -141,23 +152,27 @@ def collect_route_replay(paths: list[str], rows_filter: set[int]) -> dict[str, A
                 "source_path": path,
                 "rows": rows,
                 "route_start_index": result.get("route_start_index"),
-                "xpu_fused_moe_us": float(result["total_us_mean"]),
-                "preallocated_staged_us": float(result["preallocated_staged_total_us_mean"]),
-                "xpu_fused_moe_scratch_us": (
-                    float(result["xpu_fused_moe_scratch_total_us_mean"])
-                    if result.get("xpu_fused_moe_scratch_total_us_mean") is not None
-                    else None
-                ),
                 "active_experts": (
                     result.get("topk_summary", {}).get("active_experts")
                     if isinstance(result.get("topk_summary"), dict)
                     else None
                 ),
             }
+            for sample_key, result_key, required in replay_timing_fields:
+                value = result.get(result_key)
+                if value is None:
+                    if required:
+                        raise KeyError(f"{result_key} missing from {path}")
+                    sample[sample_key] = None
+                else:
+                    sample[sample_key] = float(value)
             samples.append(sample)
             for key, diff_key in (
                 ("manual", "manual_vs_xpu_fused_moe_max_abs_diff"),
                 ("preallocated", "preallocated_vs_xpu_fused_moe_max_abs_diff"),
+                ("fused_prologue", "fused_prologue_vs_xpu_fused_moe_max_abs_diff"),
+                ("fused_prologue_offset_gemm", "fused_prologue_offset_gemm_vs_xpu_fused_moe_max_abs_diff"),
+                ("fused_prologue_active_offset_gemm", "fused_prologue_active_offset_gemm_vs_xpu_fused_moe_max_abs_diff"),
                 ("scratch", "xpu_scratch_vs_xpu_fused_moe_max_abs_diff"),
             ):
                 value = result.get(diff_key)
@@ -176,24 +191,39 @@ def collect_route_replay(paths: list[str], rows_filter: set[int]) -> dict[str, A
     by_rows: dict[str, Any] = {}
     for rows in sorted({sample["rows"] for sample in samples}):
         row_samples = [sample for sample in samples if sample["rows"] == rows]
-        by_rows[str(rows)] = {
+        row_summary: dict[str, Any] = {
             "samples": len(row_samples),
             "active_experts": summarize([
                 float(sample["active_experts"])
                 for sample in row_samples
                 if sample["active_experts"] is not None
             ]),
-            "xpu_fused_moe_us": summarize([
-                sample["xpu_fused_moe_us"] for sample in row_samples
-            ]),
-            "preallocated_staged_us": summarize([
-                sample["preallocated_staged_us"] for sample in row_samples
-            ]),
             "scratch_saving_us": summarize([
                 sample["xpu_fused_moe_us"] - sample["preallocated_staged_us"]
                 for sample in row_samples
             ]),
         }
+        for sample_key, _result_key, _required in replay_timing_fields:
+            values = [
+                float(sample[sample_key])
+                for sample in row_samples
+                if sample.get(sample_key) is not None
+            ]
+            if values:
+                row_summary[sample_key] = summarize(values)
+        if "fused_prologue_offset_gemm_us" in row_summary:
+            row_summary["offset_gemm_saving_us"] = summarize([
+                sample["xpu_fused_moe_us"] - sample["fused_prologue_offset_gemm_us"]
+                for sample in row_samples
+                if sample.get("fused_prologue_offset_gemm_us") is not None
+            ])
+        if "fused_prologue_active_offset_gemm_us" in row_summary:
+            row_summary["active_offset_gemm_saving_us"] = summarize([
+                sample["xpu_fused_moe_us"] - sample["fused_prologue_active_offset_gemm_us"]
+                for sample in row_samples
+                if sample.get("fused_prologue_active_offset_gemm_us") is not None
+            ])
+        by_rows[str(rows)] = row_summary
 
     return {
         "paths": paths,
@@ -258,6 +288,20 @@ def estimate_decode(
     }
 
 
+def summary_mean(row: dict[str, Any], key: str) -> float | None:
+    summary_row = row.get(key)
+    if not isinstance(summary_row, dict):
+        return None
+    value = summary_row.get("mean")
+    try:
+        out = float(value)
+    except (TypeError, ValueError):
+        return None
+    if not math.isfinite(out):
+        return None
+    return out
+
+
 def build_report(args: argparse.Namespace) -> dict[str, Any]:
     cfg = text_config(args.model_config)
     layers = int(cfg.get("num_hidden_layers", args.num_moe_layers))
@@ -277,6 +321,9 @@ def build_report(args: argparse.Namespace) -> dict[str, Any]:
     primary = replay["by_rows"][row_key]
     current_layer_us = primary["xpu_fused_moe_us"]["mean"]
     preallocated_us = primary["preallocated_staged_us"]["mean"]
+    fused_prologue_staged_us = summary_mean(primary, "fused_prologue_staged_us")
+    offset_gemm_us = summary_mean(primary, "fused_prologue_offset_gemm_us")
+    active_offset_gemm_us = summary_mean(primary, "fused_prologue_active_offset_gemm_us")
     gemm_floor = collect_gemm_floor(args.smallm_timing_json, args.primary_rows * args.topk)
 
     target_layer_us = current_layer_us - required_save_per_layer_us
@@ -294,6 +341,18 @@ def build_report(args: argparse.Namespace) -> dict[str, Any]:
             candidate_layer_us=preallocated_us,
         ),
     }
+    for name, value in (
+        ("fused_prologue_staged_lower_bound", fused_prologue_staged_us),
+        ("fused_prologue_offset_gemm_lower_bound", offset_gemm_us),
+        ("fused_prologue_active_offset_gemm_lower_bound", active_offset_gemm_us),
+    ):
+        if value is not None:
+            scenarios[name] = estimate_decode(
+                current_decode_ms=current_decode_ms,
+                layers=layers,
+                current_layer_us=current_layer_us,
+                candidate_layer_us=value,
+            )
     if "two_gemm_floor_us" in gemm_floor:
         scenarios["two_independent_grouped_gemm_floor"] = estimate_decode(
             current_decode_ms=current_decode_ms,
@@ -340,9 +399,18 @@ def build_report(args: argparse.Namespace) -> dict[str, Any]:
             "rows": args.primary_rows,
             "current_xpu_fused_moe_us": current_layer_us,
             "preallocated_staged_us": preallocated_us,
+            "fused_prologue_staged_us": fused_prologue_staged_us,
+            "fused_prologue_offset_gemm_us": offset_gemm_us,
+            "fused_prologue_active_offset_gemm_us": active_offset_gemm_us,
             "required_candidate_us_for_target": target_layer_us,
             "required_saving_from_current_us": required_save_per_layer_us,
             "remaining_gap_after_preallocated_us": preallocated_us - target_layer_us,
+            "remaining_gap_after_fused_prologue_offset_gemm_us": (
+                offset_gemm_us - target_layer_us if offset_gemm_us is not None else None
+            ),
+            "remaining_gap_after_fused_prologue_active_offset_gemm_us": (
+                active_offset_gemm_us - target_layer_us if active_offset_gemm_us is not None else None
+            ),
         },
         "grouped_gemm_floor": gemm_floor,
         "decode_scenarios": scenarios,
@@ -350,6 +418,7 @@ def build_report(args: argparse.Namespace) -> dict[str, Any]:
             "The target is >200 tok/s, or <=5 ms/token decode.",
             "If outside-model-forward time is unchanged, the model-forward bucket must be cut accordingly.",
             "The route replay numbers are single-layer isolated estimates, not endpoint claims.",
+            "Offset-GEMM and active-offset-GEMM are exact in isolated replay, but still do not by themselves close the c1 >200 tok/s gap.",
             "Two independent small-M grouped GEMM dispatches already exceed the required per-layer target, so a persistent/fused MoE prototype must avoid paying both dispatch floors.",
             "If a one-dispatch/fused MoE layerlet cannot beat the required candidate budget with exact parity, target-verified speculation becomes the stronger path.",
         ],
@@ -405,8 +474,12 @@ def write_markdown(path: str, report: dict[str, Any]) -> None:
     lines.append(f"- Route replay samples: `{route['samples']}`.")
     lines.append(f"- Exact current `xpu_fused_moe`: `{fmt(primary['current_xpu_fused_moe_us'])} us/layer`.")
     lines.append(f"- Exact preallocated staged path: `{fmt(primary['preallocated_staged_us'])} us/layer`.")
+    lines.append(f"- Exact fused-prologue offset-GEMM path: `{fmt(primary.get('fused_prologue_offset_gemm_us'))} us/layer`.")
+    lines.append(f"- Exact fused-prologue active-offset-GEMM path: `{fmt(primary.get('fused_prologue_active_offset_gemm_us'))} us/layer`.")
     lines.append(f"- Candidate layerlet target for >200 tok/s: `{fmt(primary['required_candidate_us_for_target'])} us/layer`.")
     lines.append(f"- Remaining gap after preallocated staged path: `{fmt(primary['remaining_gap_after_preallocated_us'])} us/layer`.")
+    lines.append(f"- Remaining gap after offset-GEMM path: `{fmt(primary.get('remaining_gap_after_fused_prologue_offset_gemm_us'))} us/layer`.")
+    lines.append(f"- Remaining gap after active-offset-GEMM path: `{fmt(primary.get('remaining_gap_after_fused_prologue_active_offset_gemm_us'))} us/layer`.")
     lines.append("")
     lines.append("## Grouped-GEMM Floor")
     lines.append("")

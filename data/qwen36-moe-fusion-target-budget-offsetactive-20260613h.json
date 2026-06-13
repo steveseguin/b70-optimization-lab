@@ -1,0 +1,332 @@
+{
+  "decode_scenarios": {
+    "current_route_replay": {
+      "candidate_layer_us": 315.29168125,
+      "estimated_decode_ms_per_token": 10.047643717371102,
+      "estimated_saved_ms_per_token": 0.0,
+      "estimated_tok_s": 99.52582198661432
+    },
+    "fused_prologue_active_offset_gemm_lower_bound": {
+      "candidate_layer_us": 211.16964374999998,
+      "estimated_decode_ms_per_token": 5.8827622173711,
+      "estimated_saved_ms_per_token": 4.164881500000002,
+      "estimated_tok_s": 169.98817274087986
+    },
+    "fused_prologue_offset_gemm_lower_bound": {
+      "candidate_layer_us": 209.05243124999998,
+      "estimated_decode_ms_per_token": 5.798073717371101,
+      "estimated_saved_ms_per_token": 4.249570000000001,
+      "estimated_tok_s": 172.47107379887007
+    },
+    "fused_prologue_staged_lower_bound": {
+      "candidate_layer_us": 286.14226874999997,
+      "estimated_decode_ms_per_token": 8.8816672173711,
+      "estimated_saved_ms_per_token": 1.1659765000000015,
+      "estimated_tok_s": 112.5914735967772
+    },
+    "one_dispatch_floor_proxy": {
+      "candidate_layer_us": 100.50586,
+      "estimated_decode_ms_per_token": 1.4562108673711016,
+      "estimated_saved_ms_per_token": 8.59143285,
+      "estimated_tok_s": 686.7137324728943
+    },
+    "preallocated_staged_lower_bound": {
+      "candidate_layer_us": 211.8688,
+      "estimated_decode_ms_per_token": 5.910728467371101,
+      "estimated_saved_ms_per_token": 4.136915250000001,
+      "estimated_tok_s": 169.18388410502766
+    },
+    "required_for_target": {
+      "candidate_layer_us": 189.10058831572246,
+      "estimated_decode_ms_per_token": 5.0,
+      "estimated_saved_ms_per_token": 5.047643717371102,
+      "estimated_tok_s": 200.0
+    },
+    "two_independent_grouped_gemm_floor": {
+      "candidate_layer_us": 193.53828,
+      "estimated_decode_ms_per_token": 5.177507667371101,
+      "estimated_saved_ms_per_token": 4.870136050000001,
+      "estimated_tok_s": 193.1431229550943
+    }
+  },
+  "endpoint_budget": {
+    "corrected_tok_s": 99.53331440664005,
+    "decode_ms_per_token": 10.047643717371102,
+    "e2e_tok_s": 98.04452685890273,
+    "model_forward_ms_per_token": 5.460676250000001,
+    "outside_model_forward_ms_per_token": 4.586967467371101,
+    "required_model_forward_save_ms": 5.047643717371102,
+    "required_save_per_moe_layer_us": 126.19109293427755,
+    "target_model_forward_ms_per_token_if_outside_unchanged": 0.4130325326288986
+  },
+  "grouped_gemm_floor": {
+    "gemm1": {
+      "cases": 10,
+      "effective_tops": 0.08607344386560689,
+      "mean_us": 100.50586
+    },
+    "gemm2": {
+      "cases": 10,
+      "effective_tops": 0.04510139322949881,
+      "mean_us": 93.03242
+    },
+    "one_dispatch_floor_proxy_us": 100.50586,
+    "source_path": "data/qwen36-quark-int8-tp4-grouped-gemm-smallm-timing-20260612an.json",
+    "target_rows": 8,
+    "two_gemm_floor_us": 193.53828
+  },
+  "interpretation": [
+    "The target is >200 tok/s, or <=5 ms/token decode.",
+    "If outside-model-forward time is unchanged, the model-forward bucket must be cut accordingly.",
+    "The route replay numbers are single-layer isolated estimates, not endpoint claims.",
+    "Offset-GEMM and active-offset-GEMM are exact in isolated replay, but still do not by themselves close the c1 >200 tok/s gap.",
+    "Two independent small-M grouped GEMM dispatches already exceed the required per-layer target, so a persistent/fused MoE prototype must avoid paying both dispatch floors.",
+    "If a one-dispatch/fused MoE layerlet cannot beat the required candidate budget with exact parity, target-verified speculation becomes the stronger path."
+  ],
+  "metadata": {
+    "endpoint_metrics_json": "data/qwen36-quark-int8-tp4-fullcandidate-c1-p512o512-metrics-20260613h.json",
+    "model_config": "/mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118/config.json",
+    "model_forward_summary_json": "data/qwen36-quark-int8-tp4-nosync-labeltiming-summary-20260612t.json",
+    "num_moe_layers": 40,
+    "primary_rows": 1,
+    "route_replay_json": [
+      "data/qwen36-replay-digest-moe-layerfloor-offsetactive-20260613f.json"
+    ],
+    "smallm_timing_json": "data/qwen36-quark-int8-tp4-grouped-gemm-smallm-timing-20260612an.json",
+    "target_decode_ms_per_token": 5.0,
+    "target_tok_s": 200.0,
+    "topk": 8
+  },
+  "primary_layer_budget": {
+    "current_xpu_fused_moe_us": 315.29168125,
+    "fused_prologue_active_offset_gemm_us": 211.16964374999998,
+    "fused_prologue_offset_gemm_us": 209.05243124999998,
+    "fused_prologue_staged_us": 286.14226874999997,
+    "preallocated_staged_us": 211.8688,
+    "remaining_gap_after_fused_prologue_active_offset_gemm_us": 22.069055434277516,
+    "remaining_gap_after_fused_prologue_offset_gemm_us": 19.951842934277522,
+    "remaining_gap_after_preallocated_us": 22.76821168427753,
+    "required_candidate_us_for_target": 189.10058831572246,
+    "required_saving_from_current_us": 126.19109293427755,
+    "rows": 1
+  },
+  "route_replay": {
+    "by_rows": {
+      "1": {
+        "active_experts": {
+          "count": 16,
+          "max": 8.0,
+          "mean": 8.0,
+          "median": 8.0,
+          "min": 8.0,
+          "stdev": 0.0
+        },
+        "active_offset_gemm_saving_us": {
+          "count": 16,
+          "max": 131.7134,
+          "mean": 104.12203749999999,
+          "median": 100.67005,
+          "min": 92.20640000000003,
+          "stdev": 11.49068836149922
+        },
+        "fused_prologue_active_offset_gemm_us": {
+          "count": 16,
+          "max": 254.4438,
+          "mean": 211.16964374999998,
+          "median": 208.2977,
+          "min": 191.555,
+          "stdev": 17.14276263215649
+        },
+        "fused_prologue_offset_gemm_us": {
+          "count": 16,
+          "max": 262.84049999999996,
+          "mean": 209.05243124999998,
+          "median": 203.11915,
+          "min": 190.0249,
+          "stdev": 18.190942381227757
+        },
+        "fused_prologue_staged_us": {
+          "count": 16,
+          "max": 354.2227,
+          "mean": 286.14226874999997,
+          "median": 280.57705,
+          "min": 259.00030000000004,
+          "stdev": 24.615716385236443
+        },
+        "offset_gemm_saving_us": {
+          "count": 16,
+          "max": 138.1107,
+          "mean": 106.23925,
+          "median": 103.0172,
+          "min": 93.05010000000001,
+          "stdev": 12.016230691652021
+        },
+        "preallocated_staged_us": {
+          "count": 16,
+          "max": 252.06349999999998,
+          "mean": 211.8688,
+          "median": 207.33049999999997,
+          "min": 192.82379999999998,
+          "stdev": 16.612931159378533
+        },
+        "samples": 16,
+        "scratch_saving_us": {
+          "count": 16,
+          "max": 135.35469999999995,
+          "mean": 103.42288124999999,
+          "median": 99.79775,
+          "min": 89.41400000000002,
+          "stdev": 12.694326111900272
+        },
+        "xpu_fused_moe_scratch_us": {
+          "count": 16,
+          "max": 318.7951,
+          "mean": 268.16781875,
+          "median": 264.81975,
+          "min": 243.7058,
+          "stdev": 21.73207760104342
+        },
+        "xpu_fused_moe_us": {
+          "count": 16,
+          "max": 378.34939999999995,
+          "mean": 315.29168125,
+          "median": 308.8007,
+          "min": 285.2785,
+          "stdev": 27.962080860676714
+        }
+      }
+    },
+    "components_us": {
+      "act_contiguous": {
+        "count": 16,
+        "max": 67.0163,
+        "mean": 57.480475,
+        "median": 56.48825,
+        "min": 52.80989999999999,
+        "stdev": 3.859026857981815
+      },
+      "activation": {
+        "count": 16,
+        "max": 102.72079999999998,
+        "mean": 82.76181875,
+        "median": 80.94645,
+        "min": 75.7861,
+        "stdev": 7.294025335781567
+      },
+      "activation_contiguous_quant2": {
+        "count": 16,
+        "max": 280.22540000000004,
+        "mean": 233.9735125,
+        "median": 228.52245,
+        "min": 214.35829999999999,
+        "stdev": 18.3396466878071
+      },
+      "activation_plus_quant2": {
+        "count": 16,
+        "max": 213.20909999999998,
+        "mean": 176.49303749999999,
+        "median": 172.1486,
+        "min": 161.54840000000002,
+        "stdev": 14.555456791392487
+      },
+      "component_sum": {
+        "count": 16,
+        "max": 935.1302999999999,
+        "mean": 790.25626875,
+        "median": 776.5875,
+        "min": 722.4321,
+        "stdev": 60.57084768868517
+      },
+      "gather": {
+        "count": 16,
+        "max": 98.82079999999999,
+        "mean": 82.75921874999999,
+        "median": 80.8392,
+        "min": 76.28139999999999,
+        "stdev": 6.4956577272069564
+      },
+      "gemm1": {
+        "count": 16,
+        "max": 119.20219999999999,
+        "mean": 101.51643125,
+        "median": 100.84554999999999,
+        "min": 92.1557,
+        "stdev": 7.622043484912585
+      },
+      "gemm2": {
+        "count": 16,
+        "max": 119.2828,
+        "mean": 100.4329625,
+        "median": 98.8,
+        "min": 91.8151,
+        "stdev": 7.343110671138882
+      },
+      "quant1": {
+        "count": 16,
+        "max": 110.91209999999998,
+        "mean": 93.55198125,
+        "median": 92.19794999999999,
+        "min": 85.1396,
+        "stdev": 7.52089918138273
+      },
+      "quant2": {
+        "count": 16,
+        "max": 110.48830000000001,
+        "mean": 93.73121875,
+        "median": 91.21904999999998,
+        "min": 85.7623,
+        "stdev": 7.5261301462985255
+      },
+      "remap": {
+        "count": 16,
+        "max": 113.3652,
+        "mean": 96.41815625,
+        "median": 95.2757,
+        "min": 88.36749999999999,
+        "stdev": 7.625049560164247
+      },
+      "rows_zero": {
+        "count": 16,
+        "max": 95.2055,
+        "mean": 81.60400625,
+        "median": 80.90939999999999,
+        "min": 74.3145,
+        "stdev": 6.160353691395156
+      }
+    },
+    "max_abs_diffs": {
+      "fused_prologue": {
+        "count": 16,
+        "max": 0.0
+      },
+      "fused_prologue_active_offset_gemm": {
+        "count": 16,
+        "max": 0.0
+      },
+      "fused_prologue_offset_gemm": {
+        "count": 16,
+        "max": 0.0
+      },
+      "manual": {
+        "count": 16,
+        "max": 0.0
+      },
+      "preallocated": {
+        "count": 16,
+        "max": 0.0
+      },
+      "scratch": {
+        "count": 16,
+        "max": 0.0
+      }
+    },
+    "paths": [
+      "data/qwen36-replay-digest-moe-layerfloor-offsetactive-20260613f.json"
+    ],
+    "rows_filter": [
+      1,
+      16
+    ],
+    "sample_count": 16
+  }
+}
