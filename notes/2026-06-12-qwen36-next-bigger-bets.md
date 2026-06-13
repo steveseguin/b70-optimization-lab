@@ -45,12 +45,20 @@ chronological evidence and artifact links.
 
 - Current accepted speed anchor remains about `99-101 tok/s` single-request
   decode for the current Qwen3.6 Quark W8A8 INT8 model.
+- Important correction as of 2026-06-13o: the fast TP4 PIECEWISE graph replay
+  lane is not currently quality-safe. Raw fixed `/v1/completions` canaries
+  expose replay-only corruption (`whiskey`/zero-token patterns), while
+  `cudagraph_mode=NONE` and the selective decode replay bypass are clean but
+  only about `15.9-16.0 tok/s`.
+- Dedicated graph replay boundary note:
+  `notes/2026-06-13-qwen36-decode-graph-replay-corruption.md`.
 - The target is still `>200 tok/s` c1 decode without changing the model,
   dropping to Qwen3.5, using 4-bit/AWQ, or accepting quality drift.
 - The confirmed gap is about `2x`, or roughly `5 ms/token` that must be saved
   versus the current `~10 ms/token` decode path.
-- The main bottleneck evidence points inside `model_forward` or its
-  forward-stream dependencies, not response formatting.
+- The main bottleneck evidence still points inside `model_forward` or its
+  forward-stream dependencies, but no further speed claim should stack on the
+  corrupt replay base until decode replay correctness is repaired.
 
 ### Tried And Ruled Out As Lead 2x Levers
 
@@ -235,6 +243,15 @@ Key reminders now folded into this backlog:
   not Qwen substitutes.
 
 ### Immediate Next Things To Try
+
+0. **Repair decode graph replay correctness.**
+   This is now the prerequisite for any fast-lane claim. `VLLM_XPU_SYNC_ASYNC_OUTPUT_COPY=1`,
+   `VLLM_XPU_CUDAGRAPH_MARK_STEP_BEGIN=1`, strong graph outputs, and live
+   runtime recapture were negative. `VLLM_XPU_DISABLE_DECODE_CUDAGRAPH_REPLAY=1`
+   passed fixed color/json canaries but dropped p512/o512 c1 to `15.993 tok/s`.
+   Next: first-divergence replay-vs-no-replay tensor/logits microscope,
+   Python-side state-write audit inside replayed modules, padded/static input
+   sanitation, and selective family-level replay bypass.
 
 1. **Persistent resident MoE layerlet or command queue.**
    The rank-0/layer-9 oneDNN sidecar replacement is now same-request exact and

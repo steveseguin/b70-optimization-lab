@@ -157,6 +157,7 @@ def run_exact_cases(
     timeout: int,
     seed: int,
     chat_template_kwargs: dict[str, Any] | None,
+    request_delay_s: float,
 ) -> list[dict[str, Any]]:
     results = []
     for index, case in enumerate(make_exact_cases()):
@@ -169,6 +170,8 @@ def run_exact_cases(
             seed=seed + index,
             chat_template_kwargs=chat_template_kwargs,
         )
+        if request_delay_s > 0:
+            time.sleep(request_delay_s)
         item = {
             "name": case["name"],
             **result,
@@ -197,6 +200,7 @@ def run_repeat_case(
     seed: int,
     repeats: int,
     chat_template_kwargs: dict[str, Any] | None,
+    request_delay_s: float,
 ) -> dict[str, Any]:
     messages = [
         {
@@ -207,8 +211,9 @@ def run_repeat_case(
             ),
         }
     ]
-    runs = [
-        chat_completion(
+    runs = []
+    for _ in range(repeats):
+        runs.append(chat_completion(
             base_url,
             model,
             messages,
@@ -216,9 +221,9 @@ def run_repeat_case(
             timeout,
             seed=seed,
             chat_template_kwargs=chat_template_kwargs,
-        )
-        for _ in range(repeats)
-    ]
+        ))
+        if request_delay_s > 0:
+            time.sleep(request_delay_s)
     hashes = [item["sha256"] for item in runs]
     texts = [item["normalized"] for item in runs]
     return {
@@ -334,6 +339,12 @@ def main() -> int:
     parser.add_argument("--timeout", type=int, default=900)
     parser.add_argument("--seed", type=int, default=20260609)
     parser.add_argument("--repeat-runs", type=int, default=8)
+    parser.add_argument(
+        "--request-delay-s",
+        type=float,
+        default=0.0,
+        help="Sleep after each short chat request; useful for slot-reuse race probes.",
+    )
     parser.add_argument("--long-context-tokens", type=int, default=8192)
     parser.add_argument("--skip-long-context", action="store_true")
     parser.add_argument("--baseline-json", type=Path, default=None)
@@ -362,9 +373,15 @@ def main() -> int:
         "model": model,
         "tokenizer": args.tokenizer,
         "chat_template_kwargs": chat_template_kwargs,
+        "request_delay_s": args.request_delay_s,
         "seed": args.seed,
         "exact_cases": run_exact_cases(
-            base_url, model, args.timeout, args.seed, chat_template_kwargs
+            base_url,
+            model,
+            args.timeout,
+            args.seed,
+            chat_template_kwargs,
+            args.request_delay_s,
         ),
         "repeat_case": run_repeat_case(
             base_url,
@@ -373,6 +390,7 @@ def main() -> int:
             args.seed + 1000,
             args.repeat_runs,
             chat_template_kwargs,
+            args.request_delay_s,
         ),
         "long_context_case": None,
     }
