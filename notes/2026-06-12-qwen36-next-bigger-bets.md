@@ -32,6 +32,252 @@ Current speed anchor:
   MoE/kernel architecture improvement. Launch flags alone are unlikely to get
   there.
 
+## Things To Try And Bigger Bets Refresh 20260612dj
+
+Added after the replay-digest diagnostic launcher exposed a startup/runtime
+interaction. The accepted endpoint was restored afterward, and this section is
+only planning plus reproducibility tracking. It does not promote a speed result.
+
+Immediate items added to the active queue:
+
+1. **Lazy-load replay digest module instead of package preload.**
+   The first diagnostic endpoint died in vLLM model-inspection subprocesses
+   after the overlay package preloaded the diagnostic `_xpu_C` extension. Move
+   the digest extension out of `__init__.py`: the overlay now symlinks
+   `_xpu_C.abi3.so` as a normal package extension and lets
+   `fused_moe_interface.py` import it only if the fused-MoE path is imported.
+   This should reduce registry/import risk without changing model math.
+
+2. **Keep the SYCL-8/oneAPI 2025.3 digest build path.**
+   The accepted stack is closer to the 2025.3 SYCL ABI than the IntelLLVM 2026
+   experiment. Finish the fresh oneAPI 2025.3 digest extension build, then
+   check `ldd` for `libsycl.so.8`, verify the replay-digest symbol, and test the
+   lazy op load before any endpoint stop/restart window.
+
+3. **Make graph-replay evidence file-backed and bounded.**
+   Keep the new JSONL dumper for replay digest rings, but treat it as
+   diagnostic-only. Required evidence: counter increments during graph replay,
+   valid magic rows, stable `(layer, route_hash, rows_hash, output_hash)` across
+   repeated identical requests, and no counter movement when the digest env is
+   disabled.
+
+4. **Post only the best clean Localmaxxing result.**
+   The public exact-model B70/vLLM row around `99 to 100 tok/s` is useful to
+   share, but any new post should include the exact model ID, c1 batch size,
+   context length, command snippet, peak VRAM, and quality/stability caveat. Do
+   not post a diagnostic digest endpoint result, and do not post a run that did
+   not pass the accepted quality gate.
+
+5. **Create a small upstream-diff table.**
+   Track whether our local fork already has, lacks, or supersedes upstream XPU
+   changes around Qwen3 MoE redundant all-reduce removal, reduced XPU MoE host
+   overhead, top-k routing fallbacks, custom-op collectives, and XPU FusedMoE
+   grouped-GEMM paths. This prevents rediscovering fixes that already exist
+   upstream.
+
+6. **Run a host-stack/BOM A-B test when practical.**
+   Current public reports and vLLM issue traffic suggest Arc Pro B70 behavior is
+   sensitive to kernel, firmware, oneAPI, oneCCL, PyTorch, and vLLM-XPU-kernels
+   combinations. Keep the production lane stable, but schedule a spare-disk or
+   container A-B against Intel's validated B-Series-style BOM before assuming
+   the `~10 ms/token` wall is purely kernel code.
+
+7. **Measure collectives, not just GEMM.**
+   Because B70 multi-GPU has no XeLink-style peer fabric in common desktop
+   setups, TP4 collectives and ProcessGroupXCCL may be part of the c1 latency
+   floor. Add an isolated per-token collective timeline: all-reduce/all-gather
+   count, bytes, algorithm, CCL transport, rank/card mapping, and CPU fallback
+   indicators.
+
+8. **Add context-depth and KV pressure sweeps.**
+   We care about 32K production, but c1 speed diagnosis needs p512/o512,
+   4K/8K/16K/32K prompts, and a fixed output length. If decode slows with
+   context, attention/KV dominates; if it stays flat, MoE/collectives dominate.
+
+Outside signals folded in:
+
+- vLLM XPU docs list Intel Arc Pro B-Series Graphics as validated hardware and
+  include INT8 W8A8, FP8 W8A8, AMD Quark, quantized KV cache, and speculative
+  decoding in the XPU documentation tree:
+  `https://docs.vllm.ai/en/v0.18.0/models/hardware_supported_models/xpu/`.
+- vLLM's Fused MoE kernel design docs describe modular all2all/expert-parallel
+  backends and quantization/backend feature tradeoffs. This is relevant if TP4
+  collectives are the c1 bottleneck:
+  `https://docs.vllm.ai/en/latest/design/moe_kernel_features/`.
+- Intel's grouped-GEMM tuning issue says MoE decode routes are often skewed and
+  long-tailed, which matches our need for real route digests before generating
+  route-class kernels:
+  `https://github.com/intel/intel-xpu-backend-for-triton/issues/6389`.
+- A current vLLM dual-B70 issue reports TP=2 GP faults and BCS resets on a
+  specific Ubuntu 24.04/HWE stack while pointing to Intel's validated stack as
+  a comparison target. Treat topology and software BOM as first-class variables:
+  `https://github.com/vllm-project/vllm/issues/41663`.
+- Community B70 notes repeatedly show that memory utilization and context caps
+  affect stability. This supports a production split between a conservative
+  reliable lane and more aggressive isolated speed experiments.
+
+Bigger, bolder ideas added to the backlog:
+
+1. **Expert-parallel latency lane instead of tensor-parallel latency lane.**
+   Keep exact weights and outputs, but assign experts or hot expert groups to
+   cards and move routed activations rather than splitting every dense operation
+   TP4-style. If MoE dominates and collectives hurt c1, EP-like placement could
+   make better use of four cards than TP4.
+
+2. **Single-rank dense path plus remote expert service.**
+   Run dense/attention on one or two ranks and call remote expert workers only
+   for MoE layers. This is more invasive than TP/EP config tuning, but it
+   changes the shape from "all cards synchronize every token" to "cards do
+   useful expert work when routed."
+
+3. **Per-layer route-class microkernel library.**
+   Use graph digest rows to generate a small set of exact W8A8 decode kernels
+   for observed top-k route classes per layer. Each kernel can bake expert
+   pointer order, tile shape, scratch layout, and combine pattern while still
+   using the same int8 weights and scales.
+
+4. **Persistent device-side decode loop for MoE layers.**
+   Keep queues, descriptors, scale pointers, and scratch resident on each XPU.
+   Host code should enqueue token commands, not rebuild grouped-GEMM metadata
+   and synchronization state every token.
+
+5. **Tile-native Quark repack with strict tensor proof.**
+   Repack weights into Xe2/DPAS-friendly layout at load time, never changing
+   quantization values or scales. Prove exactness with per-layer output parity
+   before endpoint work, then measure whether the layout alone lowers c1 MoE
+   latency.
+
+6. **Target-verified branch farm across otherwise idle cards.**
+   Let extra cards produce candidate continuations from ngram, route-aware
+   partial target passes, or MTP-like helpers, but emit only tokens accepted by
+   the exact Quark W8A8 target model. This is a no-quality-loss path only if KV
+   rollback and sampler state are exact.
+
+7. **Same-model engine ceiling bakeoff on B70.**
+   Test vLLM, SGLang if XPU support is viable, llama.cpp SYCL, LMDeploy, and
+   Intel containers only under strict same-output or same-logit-gate rules. The
+   point is to find the c1 latency ceiling for the same model, not to win with a
+   different quant.
+
+8. **Validated-stack mirror machine or spare-disk boot.**
+   If the host-stack A-B shows a meaningful c1 or stability gap, freeze the
+   fast stack as a reproducible production BOM and backport only our proven
+   local patches. This could be a larger win than another launch-flag sweep.
+
+9. **Executable public challenge packet.**
+   Publish a small repo artifact with the accepted manifest, route digest,
+   p512/o512 benchmark, one-layer parity harness, and Localmaxxing row. Ask for
+   exact Qwen3.6 Quark W8A8 on B70, c1, no 4-bit/AWQ, no Qwen3.5, and no token
+   drift. A focused challenge is more likely to attract useful kernel help than
+   a broad "make it faster" request.
+
+Launcher hygiene implemented:
+
+```bash
+DRY_RUN_IMPORT=1 scripts/launch-qwen36-quark-int8-replay-digest.sh
+# replay_digest_import_ok /tmp/qwen36-vllm-xpu-replay-digest-overlay-replay-digest-20260612di/vllm_xpu_kernels/fused_moe_interface.py
+```
+
+- `scripts/launch-qwen36-quark-int8-replay-digest.sh` now keeps
+  `__init__.py` side-effect-light, symlinks the digest `_xpu_C.abi3.so` into
+  the overlay package, derives the oneAPI compiler `lib` path from
+  `ONEAPI_COMPILER_VARS` instead of hardcoding 2026.0, and dry-runs by
+  importing the patched `fused_moe_interface.py`.
+- This passed against the existing IntelLLVM 2026 digest build. The same check
+  still needs to be repeated against the oneAPI 2025.3/SYCL-8 build once that
+  build completes.
+
+## Replay Digest SYCL-8 Diagnostic 20260612dl
+
+Built and ran the replay digest diagnostic against a oneAPI 2025.3/SYCL-8
+extension, then restored the accepted endpoint. This produced the first
+graph-execution digest JSONL, but it is not a speed result and it is not yet a
+per-layer route ledger.
+
+Artifacts:
+
+- `data/qwen36-replay-digest-sycl8-build-20260612dj.log`
+- `data/qwen36-replay-digest-sycl8-gdn-build-20260612dk.log`
+- `data/qwen36-quark-int8-tp4-replay-digest-sycl8-20260612dj.log`
+- `data/qwen36-quark-int8-tp4-replay-digest-sycl8-gdn-20260612dk.log`
+- `data/qwen36-quark-int8-tp4-replay-digest-sycl8-gdn-nofilter-20260612dl.log`
+- `data/qwen36-replay-digest-replay-digest-sycl8-gdn-nofilter-20260612dl--1938680.jsonl`
+- `data/qwen36-replay-digest-sycl8-gdn-nofilter-summary-20260612dl.json`
+- `data/qwen36-replay-digest-sycl8-gdn-nofilter-completion-{1..4}-20260612dl.json`
+- `data/qwen36-quark-int8-tp4-accepted-restored-after-replaydigest-nofilter-20260612dl.log`
+
+Build results:
+
+- Initial oneAPI 2025.3 build succeeded with `_xpu_C.abi3.so` size
+  `51237336` bytes and SHA256
+  `4a9d6cef5170e6bb6274ade74e9bfe3ae9fbb848d94d50a09dde71a55593f78d`.
+  It exported `qwen36_moe_replay_digest_probe` and
+  `qwen36_moe_onednn_sidecar_probe`, and `ldd` resolved `libsycl.so.8`.
+- That first SYCL-8 endpoint reached `/v1/models` after `142s`, but failed on
+  the first completion because `_xpu_C` did not export `gdn_attention`.
+  Root cause: the build helper defaulted `GDN_KERNELS=OFF`.
+- Rebuilding the same source/build tree with `GDN_KERNELS=ON` produced
+  `_xpu_C.abi3.so` size `55818904` bytes and SHA256
+  `64b3198a0727091f0b3a8acd92dc014a6b5700c555ef51e49e7d19b9a65acd06`.
+  It exports all required symbols checked here:
+  `gdn_attention`, `qwen36_moe_replay_digest_probe`, and
+  `qwen36_moe_onednn_sidecar_probe`.
+- The GDN-enabled build also produced adjacent runtime libraries:
+  `libgrouped_gemm_xe_2.so` (`3539968` bytes) and
+  `libgdn_attn_kernels_xe_2.so` (`2713184` bytes), both resolved from the
+  diagnostic build tree, with `libsycl.so.8` from oneAPI 2025.3.
+- `DRY_RUN_IMPORT=1` passed against the GDN-enabled build through the safer
+  overlay launcher.
+
+Endpoint runs:
+
+- GDN-enabled digest endpoint reached `/v1/models` after `143s` and completed
+  four deterministic 64-token requests with identical outputs. No JSONL was
+  emitted because the launcher default log path was malformed by Bash
+  `${VAR:-...}` parsing around `{rank}`, and the default layer regex was still
+  too restrictive for the missing layer context.
+- Fixed `scripts/launch-qwen36-quark-int8-replay-digest.sh` so the default log
+  path is assembled in a separate variable and the default layer regex is empty.
+- Changed `scripts/build-vllm-xpu-kernels-xpu-c-only.sh` to default
+  `GDN_KERNELS=ON`; Qwen3.6 execution needs `gdn_attention`, and omitting GDN is
+  now a known invalid diagnostic build for this endpoint.
+- No-filter endpoint reused the cache, reached `/v1/models` after `71s`, and
+  completed four deterministic 64-token requests with identical outputs.
+- The accepted endpoint was restored afterward as
+  `qwen36-tp4-accepted-restored-after-replaydigest-nofilter-20260612dl` and
+  `/v1/models` passed after `65s`.
+
+Digest evidence from the no-filter run:
+
+- JSONL size: `474404` bytes.
+- Summary:
+  `23` dumper records,
+  `2336` dumped rows,
+  `2336` valid magic rows,
+  counter advanced from `40` to `10920`,
+  one enabled writer device (`xpu:0` on `local_rank=0`),
+  `300` unique shape summaries,
+  and `1488` unique `(num_rows, route_hash, row_hash, output_hash)` digest
+  combinations in the sampled rows.
+- Four completions returned the same text and token counts
+  (`12` prompt tokens, `64` completion tokens each), so the diagnostic endpoint
+  did not visibly perturb deterministic output for this tiny prompt.
+
+Limitations and lessons:
+
+- `layer_index` is `-1` for all dumped rows. The compiled graph path did not
+  carry `diagnostic_context` layer labels into this Python wrapper call, so the
+  current digest proves graph-executed mutation and output/route hashing, but
+  not per-layer attribution.
+- The dumper was capped at `256` rows per interval, so high-rate windows show
+  ring-tail samples rather than every digest row.
+- Only local rank `0` was enabled. The next pass should either log all ranks or
+  explicitly run rank-specific windows.
+- The digest custom op is now a real diagnostic primitive. The next patch
+  should pass a reliable layer index from the model/MoE module into the fused
+  path, fix row-window alignment for repeat comparison, and increase dump
+  coverage for short isolated runs.
+
 ## Bolder Queue After Latency Gate 20260612dh
 
 This is a planning checkpoint after the accepted latency decomposition and the
@@ -11964,3 +12210,92 @@ Updated near-term order:
    parity and prologue-inclusive timing.
 5. In parallel, design the host-stack/BOM matrix and decode-only direct runner
    as the two biggest non-arithmetic ways to learn where the missing 2x lives.
+
+## Additional Bigger Bets After User Review 20260612dm
+
+The next queue should not get trapped in only small flag sweeps. The current
+accepted model is quality-correct but leaves enough VRAM and enough unexplained
+single-request latency that larger structural experiments are justified, as
+long as every branch keeps an exact-token verifier and a rollback path.
+
+New things to add to the backlog:
+
+1. **VRAM-for-latency expert mirroring.**
+   Use the remaining B70 memory to replicate hot experts or hot expert
+   metadata across ranks, then route c1 decode to local copies where possible.
+   This could reduce rank coordination and remote expert pressure without
+   changing weights or arithmetic. The gate is strict output parity plus a
+   per-layer memory budget from the replay digest route atlas.
+
+2. **Hybrid TP/EP latency lane.**
+   Keep TP4 for aggregate serving, but test a separate c1 lane where dense
+   work is sharded differently from MoE work. Examples: TP2 dense plus local
+   expert mirrors, or TP4 attention with EP-style MoE islands. This is a large
+   topology change, so it needs a direct-runner prototype before touching the
+   public endpoint.
+
+3. **Rank-coordination elimination audit.**
+   Build a per-token ledger of every cross-rank synchronization and every
+   host-visible wait in accepted c1 decode. For each wait, classify it as
+   mathematically required, framework artifact, scheduler artifact, or
+   implementation accident. The goal is to find removable coordination rather
+   than only faster collectives.
+
+4. **Autotune tournament for real route classes.**
+   Generate multiple W8A16/W8A8 grouped-MoE variants from the captured route
+   atlas: tile sizes, expert ordering, scale layout, split-K choices, and
+   persistent-vs-nonpersistent scheduling. Each candidate must run an isolated
+   tensor parity gate, then a prologue-inclusive layerlet timing gate. This
+   turns kernel work into a reproducible search instead of a single hand-coded
+   bet.
+
+5. **Attention-side specialization lane.**
+   The accepted timing still shows GDN attention as a visible c1 component.
+   Build a fixed-bucket decode attention microbench around the exact accepted
+   KV layout and test whether a c1-specialized path beats the generic GDN path.
+   This is lower upside than MoE/speculation, but it is independent and may
+   stack with MoE wins.
+
+6. **One-rank logits and sampler ownership.**
+   Audit whether all ranks are doing redundant logits, sampler, or result
+   handling work for c1. If only one rank needs to own the final token, move
+   non-owning ranks to a lighter path while preserving the exact accepted
+   logits source and token selection.
+
+7. **Exact sidecar engine shootout.**
+   Try a same-model, same-quant, same-prompts bakeoff against Intel-friendly
+   stacks such as current vLLM-XPU, OpenVINO/oneDNN GenAI paths, IPEX-style
+   PyTorch paths, and any available XPU SGLang path. The target is not to
+   switch blindly; it is to identify whether another stack already solved a
+   kernel, scheduler, or attention issue we can port back.
+
+8. **Static decode graph executor.**
+   Build a lab-only runner that owns one fixed c1 decode bucket end to end:
+   input staging, model forward, logits, sampling, and token return. If this
+   runner is much faster than the endpoint with identical tokens, the missing
+   speed is scheduler/graph orchestration. If it is not, the missing speed is
+   inside attention/MoE/collectives.
+
+9. **Power, clocks, and thermals as a first-class axis.**
+   Log per-card frequency, power, temperature, PCIe link state, and reset
+   counters beside every speed run. A 4x B70 system can lose a large fraction
+   of apparent kernel performance to clocks, fan curve, or bus state; the
+   optimization notebook should treat this as evidence, not background noise.
+
+10. **Verifier-first speculative service design.**
+    Keep speculative work separated from current quality-safe serving, but
+    design the production architecture now: target model owns request state,
+    draft lanes are disposable, accepted tokens commit only after target
+    verification, and failed branches leave no KV/block-table residue. This
+    is still the clearest no-quality-loss path to a step-function speedup if
+    the state-parity problem can be solved.
+
+Concrete priority after the replay digest layer-ID fix:
+
+1. Build the rank-coordination ledger and direct static decode runner.
+2. Use the digest route atlas to decide whether expert mirroring or route-class
+   autotune has enough concentration to be worth implementation.
+3. Run one attention-side microbench and one MoE autotune seed in parallel.
+4. Keep speculative service design on paper until the verifier-input parity
+   bug is fixed; then revive it with exact rollback tests rather than n-gram
+   blind sweeps.

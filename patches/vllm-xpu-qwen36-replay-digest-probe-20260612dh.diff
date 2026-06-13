@@ -1,6 +1,6 @@
 diff --git a/csrc/xpu/onednn/qwen36_moe_replay_digest.cpp b/csrc/xpu/onednn/qwen36_moe_replay_digest.cpp
 new file mode 100644
-index 0000000..8f86143
+index 0000000..9c4048e
 --- /dev/null
 +++ b/csrc/xpu/onednn/qwen36_moe_replay_digest.cpp
 @@ -0,0 +1,164 @@
@@ -169,11 +169,10 @@ index 0000000..8f86143
 +  return digest_ring;
 +}
 diff --git a/csrc/xpu/ops.h b/csrc/xpu/ops.h
-index 2f77f7c..6ba6c36 100644
+index a9d8550..7af353a 100644
 --- a/csrc/xpu/ops.h
 +++ b/csrc/xpu/ops.h
-@@ -149,7 +149,18 @@ torch::Tensor qwen36_moe_onednn_sidecar_probe(
-     const torch::Tensor& gemm2_output,
+@@ -150,6 +150,17 @@ torch::Tensor qwen36_moe_onednn_sidecar_probe(
      const c10::optional<at::Tensor>& onednn_grouped_offsets,
      int64_t layer_index,
      bool dry_create_descriptors);
@@ -192,11 +191,10 @@ index 2f77f7c..6ba6c36 100644
  
  std::tuple<at::Tensor, at::Tensor> deepseek_scaling_rope(
 diff --git a/csrc/xpu/torch_bindings.cpp b/csrc/xpu/torch_bindings.cpp
-index 86e65b2..208015b 100644
+index 841df0b..d34d48f 100644
 --- a/csrc/xpu/torch_bindings.cpp
 +++ b/csrc/xpu/torch_bindings.cpp
-@@ -125,7 +125,17 @@ TORCH_LIBRARY_EXPAND(TORCH_EXTENSION_NAME, xpu_ops) {
-   xpu_ops.impl(
+@@ -126,6 +126,16 @@ TORCH_LIBRARY_EXPAND(TORCH_EXTENSION_NAME, xpu_ops) {
        "qwen36_moe_onednn_sidecar_probe",
        torch::kXPU,
        &qwen36_moe_onednn_sidecar_probe);
@@ -214,10 +212,10 @@ index 86e65b2..208015b 100644
  
    xpu_ops.def(
 diff --git a/vllm_xpu_kernels/fused_moe_interface.py b/vllm_xpu_kernels/fused_moe_interface.py
-index e5dc297..2bf9c94 100644
+index 1239498..0767bcb 100755
 --- a/vllm_xpu_kernels/fused_moe_interface.py
 +++ b/vllm_xpu_kernels/fused_moe_interface.py
-@@ -42,6 +42,13 @@ ONEDNN_SIDECAR_MAX_CALLS_ENV = "VLLM_XPU_MOE_ONEDNN_SIDECAR_MAX_CALLS"
+@@ -43,6 +43,18 @@ ONEDNN_SIDECAR_MAX_CALLS_ENV = "VLLM_XPU_MOE_ONEDNN_SIDECAR_MAX_CALLS"
  ONEDNN_SIDECAR_LAYER_REGEX_ENV = "VLLM_XPU_MOE_ONEDNN_SIDECAR_LAYER_REGEX"
  ONEDNN_SIDECAR_RANK_ENV = "VLLM_XPU_MOE_ONEDNN_SIDECAR_RANK"
  ONEDNN_SIDECAR_LOG_ENV = "VLLM_XPU_MOE_ONEDNN_SIDECAR_LOG"
@@ -228,24 +226,147 @@ index e5dc297..2bf9c94 100644
 +    "VLLM_XPU_MOE_REPLAY_DIGEST_MAX_OUTPUT_BYTES")
 +REPLAY_DIGEST_LAYER_REGEX_ENV = "VLLM_XPU_MOE_REPLAY_DIGEST_LAYER_REGEX"
 +REPLAY_DIGEST_RANK_ENV = "VLLM_XPU_MOE_REPLAY_DIGEST_RANK"
++REPLAY_DIGEST_LOG_ENV = "VLLM_XPU_MOE_REPLAY_DIGEST_LOG"
++REPLAY_DIGEST_LOG_INTERVAL_MS_ENV = (
++    "VLLM_XPU_MOE_REPLAY_DIGEST_LOG_INTERVAL_MS")
++REPLAY_DIGEST_LOG_MAX_ROWS_ENV = "VLLM_XPU_MOE_REPLAY_DIGEST_LOG_MAX_ROWS"
++REPLAY_DIGEST_MAGIC = 0x51573336444947
  
  _live_abi_lock = threading.Lock()
  _live_abi_writes = 0
-@@ -55,6 +62,9 @@ _sidecar_probe_calls = 0
+@@ -54,6 +66,11 @@ _sidecar_probe_calls = 0
  _sidecar_probe_writes = 0
  _sidecar_probe_disabled = False
  _sidecar_probe_warned = False
 +_replay_digest_state = {}
 +_replay_digest_lock = threading.Lock()
 +_replay_digest_warned = False
++_replay_digest_dumper_started = False
++_replay_digest_dumper_warned = False
  
  
  try:
-@@ -724,6 +734,78 @@ def _maybe_probe_onednn_sidecar(
-         })
+@@ -154,6 +171,116 @@ def _sidecar_log_path() -> str | None:
+             "{local_rank}", os.environ.get("LOCAL_RANK", "")))
+ 
+ 
++def _replay_digest_log_path() -> str | None:
++    raw = os.environ.get(REPLAY_DIGEST_LOG_ENV, "").strip()
++    if not raw:
++        return None
++    return (raw.replace("{pid}", str(os.getpid())).replace(
++        "{rank}", os.environ.get("RANK", "")).replace(
++            "{local_rank}", os.environ.get("LOCAL_RANK", "")))
++
++
++def _append_replay_digest_log(record) -> None:
++    path = _replay_digest_log_path()
++    if not path:
++        return
++    try:
++        directory = os.path.dirname(path)
++        if directory:
++            os.makedirs(directory, exist_ok=True)
++        with open(path, "a", encoding="utf-8") as handle:
++            handle.write(json.dumps(record, sort_keys=True) + "\n")
++    except Exception:
++        pass
++
++
++def _replay_digest_dump_loop() -> None:
++    global _replay_digest_dumper_warned
++
++    last_seen = {}
++    interval_ms = max(100, _int_env(REPLAY_DIGEST_LOG_INTERVAL_MS_ENV, 1000))
++    max_rows = max(1, _int_env(REPLAY_DIGEST_LOG_MAX_ROWS_ENV, 256))
++
++    while True:
++        time.sleep(interval_ms / 1000.0)
++        if not _replay_digest_log_path():
++            continue
++
++        try:
++            with _replay_digest_lock:
++                states = list(_replay_digest_state.items())
++
++            for key, state in states:
++                ring = state.get("ring")
++                counter_tensor = state.get("counter")
++                if ring is None or counter_tensor is None:
++                    continue
++
++                counter = int(counter_tensor.detach().cpu().item())
++                previous = int(last_seen.get(key, 0))
++                if counter <= previous:
++                    continue
++
++                records_available = int(ring.shape[0])
++                begin = max(previous, counter - records_available)
++                if counter - begin > max_rows:
++                    begin = counter - max_rows
++                ring_cpu = ring.detach().cpu()
++
++                rows = []
++                for sequence in range(begin, counter):
++                    slot = abs(sequence) % records_available
++                    values = [int(v) for v in ring_cpu[slot].tolist()]
++                    rows.append({
++                        "sequence": sequence,
++                        "slot": slot,
++                        "valid_magic": values[0] == REPLAY_DIGEST_MAGIC,
++                        "values": values,
++                    })
++
++                _append_replay_digest_log({
++                    "ts": time.time(),
++                    "pid": os.getpid(),
++                    "rank": os.environ.get("RANK", ""),
++                    "local_rank": os.environ.get("LOCAL_RANK", ""),
++                    "device": key[0],
++                    "max_records": key[1],
++                    "counter": counter,
++                    "previous_counter": previous,
++                    "begin_sequence": begin,
++                    "end_sequence": counter,
++                    "rows": rows,
++                })
++                last_seen[key] = counter
++        except Exception as exc:
++            if not _replay_digest_dumper_warned:
++                _replay_digest_dumper_warned = True
++                _append_replay_digest_log({
++                    "ts": time.time(),
++                    "pid": os.getpid(),
++                    "rank": os.environ.get("RANK", ""),
++                    "local_rank": os.environ.get("LOCAL_RANK", ""),
++                    "error": repr(exc),
++                })
++
++
++def _ensure_replay_digest_dumper_started() -> None:
++    global _replay_digest_dumper_started
++
++    if _replay_digest_dumper_started or not _replay_digest_log_path():
++        return
++    with _replay_digest_lock:
++        if _replay_digest_dumper_started:
++            return
++        thread = threading.Thread(
++            target=_replay_digest_dump_loop,
++            name="xpu-moe-replay-digest-dumper",
++            daemon=True,
++        )
++        thread.start()
++        _replay_digest_dumper_started = True
++
++
+ def _tensor_meta(tensor):
+     if tensor is None:
+         return None
+@@ -739,6 +866,80 @@ def _maybe_probe_onednn_sidecar(*,
          return None
  
-+
+ 
 +def _maybe_probe_replay_digest(*,
 +                               topk_ids,
 +                               rows_per_expert,
@@ -303,6 +424,8 @@ index e5dc297..2bf9c94 100644
 +                    pass
 +            return None
 +
++    _ensure_replay_digest_dumper_started()
++
 +    try:
 +        return torch.ops._xpu_C.qwen36_moe_replay_digest_probe(
 +            topk_ids, rows_per_expert, output, state["ring"],
@@ -317,14 +440,14 @@ index e5dc297..2bf9c94 100644
 +                pass
 +        return None
 +
- 
++
  if FUSEDMOE_AVAILABLE:
      try:
-@@ -808,6 +890,18 @@ if FUSEDMOE_AVAILABLE:
  
+@@ -815,6 +1016,18 @@ if FUSEDMOE_AVAILABLE:
      except RuntimeError:
          pass
-+
+ 
 +    try:
 +
 +        @torch.library.register_fake("_xpu_C::qwen36_moe_replay_digest_probe")
@@ -336,10 +459,11 @@ index e5dc297..2bf9c94 100644
 +
 +    except RuntimeError:
 +        pass
- 
++
      try:
  
-@@ -1742,6 +1836,13 @@ def xpu_fused_moe(hidden_states,
+         @torch.library.register_fake(
+@@ -1739,6 +1952,13 @@ def xpu_fused_moe(hidden_states,
          torch.ops._moe_C.moe_gather(output, gemm2_output, topk_weights,
                                      unpermuted_row_to_permuted_row,
                                      num_experts)

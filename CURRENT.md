@@ -6,6 +6,68 @@ Date: 2026-06-12
 
 2026-06-12 notes update:
 
+- Added an "Additional Bigger Bets After User Review 20260612dm" section to
+  `notes/2026-06-12-qwen36-next-bigger-bets.md`. The new backlog items focus
+  on larger no-quality-loss speed paths: VRAM-for-latency expert mirroring,
+  hybrid TP/EP latency lanes, a rank-coordination elimination audit, an
+  autotune tournament over real route classes, c1-specialized attention
+  microbenching, one-rank logits/sampler ownership, exact same-quant engine
+  shootouts, a static decode graph executor, power/clock/thermal telemetry as
+  a required benchmark axis, and verifier-first speculative service design.
+  Priority after the replay-digest layer-ID fix is to build the coordination
+  ledger and static decode runner, then use the route atlas to choose between
+  expert mirroring and route-class autotune. No endpoint was changed and no
+  speed result was promoted.
+
+2026-06-12 notes update:
+
+- Added a "Replay Digest SYCL-8 Diagnostic 20260612dl" section to
+  `notes/2026-06-12-qwen36-next-bigger-bets.md`. The oneAPI 2025.3/SYCL-8
+  digest extension first built and linked against `libsycl.so.8`, but the
+  initial endpoint failed on first completion because the helper defaulted
+  `GDN_KERNELS=OFF` and the diagnostic `_xpu_C` lacked `gdn_attention`.
+  Rebuilding with `GDN_KERNELS=ON` produced a larger `_xpu_C.abi3.so`
+  (`55818904` bytes, SHA256
+  `64b3198a0727091f0b3a8acd92dc014a6b5700c555ef51e49e7d19b9a65acd06`) that
+  exports `gdn_attention`, `qwen36_moe_replay_digest_probe`, and
+  `qwen36_moe_onednn_sidecar_probe`. The corrected no-filter diagnostic
+  endpoint reached health in `71s`, completed four deterministic 64-token
+  requests with identical outputs, and emitted
+  `data/qwen36-replay-digest-replay-digest-sycl8-gdn-nofilter-20260612dl--1938680.jsonl`.
+  The summary has `23` dumper records, `2336` valid digest rows, counter
+  movement from `40` to `10920`, `300` unique shape summaries, and `1488`
+  unique digest combinations. Limitation: all `layer_index` values are `-1`,
+  so the next patch must pass reliable layer IDs into the fused path and log
+  more/all ranks. `scripts/build-vllm-xpu-kernels-xpu-c-only.sh` now defaults
+  `GDN_KERNELS=ON` to avoid rebuilding an extension that cannot execute this
+  model. The accepted endpoint was restored afterward and `/v1/models` passed
+  after `65s`. No speed result was promoted.
+
+2026-06-12 notes update:
+
+- Added a "Things To Try And Bigger Bets Refresh 20260612dj" section to
+  `notes/2026-06-12-qwen36-next-bigger-bets.md`. It records the immediate
+  follow-ups from the replay-digest diagnostic failure: lazy-load the digest
+  module instead of preloading the package during vLLM registry inspection,
+  finish the SYCL-8/oneAPI 2025.3 digest build, keep graph-replay evidence
+  file-backed and bounded, post only clean accepted Localmaxxing results, build
+  an upstream XPU diff table, run a host-stack/BOM A-B, measure collectives
+  directly, and add context/KV sweeps. It also adds larger no-quality-loss bets:
+  expert-parallel latency lane, single-rank dense path plus remote expert
+  service, per-layer route-class microkernel library, persistent device-side
+  MoE decode loop, tile-native Quark repack with tensor parity, target-verified
+  branch farming, same-model engine bakeoff, validated-stack mirror boot, and
+  an executable public challenge packet. Sources folded in include vLLM XPU
+  docs, vLLM FusedMoE design docs, Intel grouped-GEMM routing discussion, and
+  current dual-B70/vLLM stability issue traffic. The diagnostic launcher now
+  keeps overlay `__init__.py` side-effect-light, symlinks digest `_xpu_C` as a
+  normal extension, derives oneAPI `lib` from `ONEAPI_COMPILER_VARS`, and
+  `DRY_RUN_IMPORT=1 scripts/launch-qwen36-quark-int8-replay-digest.sh` passed
+  against the existing IntelLLVM 2026 digest build. No endpoint was changed and
+  no speed result was promoted.
+
+2026-06-12 notes update:
+
 - Added the replay digest isolated build checkpoint to
   `notes/2026-06-12-qwen36-next-bigger-bets.md` and
   `data/qwen36-replay-digest-build-20260612di.{json,log}`, plus

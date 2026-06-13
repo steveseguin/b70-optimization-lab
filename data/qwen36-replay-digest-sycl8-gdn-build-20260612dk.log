@@ -1,0 +1,184 @@
+-- CMPLR_ROOT: /opt/intel/oneapi/compiler/2025.3
+-- Build type: Release
+-- Target device: xpu
+-- 
+-- Kernel build configuration:
+--   BUILD_SYCL_TLA_KERNELS       = ON
+--   VLLM_XPU_ENABLE_XE2          = ON
+--   VLLM_XPU_ENABLE_XE_DEFAULT   = OFF
+--   BASIC_KERNELS_ENABLED        = OFF
+--   FA2_KERNELS_ENABLED          = OFF
+--   MOE_KERNELS_ENABLED          = ON
+--   GDN_KERNELS_ENABLED          = ON
+--   MQA_LOGITS_KERNELS_ENABLED   = OFF
+--   XPU_SPECIFIC_KERNELS_ENABLED = ON
+--   XPUMEM_ALLOCATOR_ENABLED     = OFF
+-- 
+-- Found python matching: /home/steve/.venvs/vllm-xpu/bin/python3.
+-- Python include dirs: /home/steve/.local/share/uv/python/cpython-3.12-linux-x86_64-gnu/include/python3.12
+-- Python libraries: /home/steve/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/libpython3.12.so
+-- Python version: 3.12.13
+CMake Warning (dev) at /home/steve/.venvs/vllm-xpu/lib/python3.12/site-packages/cmake/data/share/cmake-4.3/Modules/FindPackageHandleStandardArgs.cmake:493 (message):
+  The package name passed to find_package_handle_standard_args() (SYCL) does
+  not match the name of the calling package (SYCLToolkit).  This can lead to
+  problems in calling code that expects find_package() result variables
+  (e.g., `_FOUND`) to follow a certain pattern.
+Call Stack (most recent call first):
+  /home/steve/.venvs/vllm-xpu/lib/python3.12/site-packages/torch/share/cmake/Caffe2/FindSYCLToolkit.cmake:135 (find_package_handle_standard_args)
+  /home/steve/.venvs/vllm-xpu/lib/python3.12/site-packages/torch/share/cmake/Caffe2/public/xpu.cmake:11 (find_package)
+  /home/steve/.venvs/vllm-xpu/lib/python3.12/site-packages/torch/share/cmake/Caffe2/Caffe2Config.cmake:101 (include)
+  /home/steve/.venvs/vllm-xpu/lib/python3.12/site-packages/torch/share/cmake/Torch/TorchConfig.cmake:62 (find_package)
+  CMakeLists.txt:106 (find_package)
+This warning is for project developers.  Use -Wno-dev to suppress it.
+
+CMake Warning at /home/steve/.venvs/vllm-xpu/lib/python3.12/site-packages/torch/share/cmake/Torch/TorchConfig.cmake:22 (message):
+  library kineto not found.
+Call Stack (most recent call first):
+  /home/steve/.venvs/vllm-xpu/lib/python3.12/site-packages/torch/share/cmake/Torch/TorchConfig.cmake:119 (append_torchlib_if_found)
+  CMakeLists.txt:106 (find_package)
+
+
+CMake Deprecation Warning at third_party/oneDNN/CMakeLists.txt:36 (cmake_policy):
+  The OLD behavior for policy CMP0146 will be removed from a future version
+  of CMake.
+
+  The cmake-policies(7) manual explains that the OLD behaviors of all
+  policies are deprecated and that a policy should be set to OLD only under
+  specific short-term circumstances.  Projects should be ported to the NEW
+  behavior and not rely on setting a policy to OLD.
+
+
+-- DNNL_TARGET_ARCH: X64
+-- DNNL_LIBRARY_NAME: dnnl
+-- DPC++ support is enabled (OpenCL and Level Zero)
+-- Enabled testing coverage: CI
+-- Enabled workload: TRAINING
+-- Enabled primitives: ALL
+-- Enabled primitive CPU ISA: ALL
+-- Enabled primitive GPU ISA: ALL
+-- Enabled GeMM kernels ISA: ALL
+-- Primitive cache is enabled
+-- Experimental features are enabled
+-- GPU Compute reference kernels are enabled
+-- Graph component is enabled
+-- Found oneDNN: TRUE
+-- Building XPU
+-- SYCL supported arches: intel_gpu_pvc;intel_gpu_bmg_g21;intel_gpu_bmg_g31
+-- Querying torch for GPU compiler flags for SYCL...
+-- Torch GPU compiler flags: -fsycl
+-- FetchContent base directory: /home/steve/src/vllm-xpu-kernels-digest-sycl8-20260612dj/.deps
+-- Final SYCL compile options: -fsycl;-O3;-DNDEBUG;-fsycl-targets=spir64_gen
+-- Final SYCL link options: -fsycl;-fsycl-max-parallel-link-jobs=16;-flink-huge-device-code;-Xspirv-translator;-spirv-ext=+SPV_INTEL_split_barrier,+SPV_INTEL_2d_block_io,+SPV_INTEL_subgroup_matrix_multiply_accumulate;-fsycl-targets=spir64_gen;-Xsycl-target-backend=spir64_gen;-device bmg-g21-a0
+-- Setting up SYCL-TLA dependency...
+-- CMake Version: 4.3.2
+-- CUTLASS 4.2.1
+-- DPCPP_SYCL_TARGET as list intel_gpu_bmg_g21
+-- DPCPP INCLUDE DIR: /opt/intel/oneapi/compiler/2025.3/bin/../include/sycl;/opt/intel/oneapi/compiler/2025.3/bin/../include
+-- Using DPCPP compile flags: -fsycl;;-fno-sycl-instrument-device-code;
+-- Using DPCPP link flags: -fsycl;;-fno-sycl-instrument-device-code;-fsycl-targets=spir64;-Xs;-device bmg_g21;-Xspirv-translator;-spirv-ext=+SPV_INTEL_split_barrier,+SPV_INTEL_2d_block_io,+SPV_INTEL_subgroup_matrix_multiply_accumulate
+-- Default Install Location: install
+-- Enable caching of reference results in conv unit tests
+-- Enable rigorous conv problem sizes in conv unit tests
+CUDA_VERSION check pass 
+-- Using the following NVCC flags: 
+  --expt-relaxed-constexpr
+  -ftemplate-backtrace-limit=0
+  -DCUTLASS_TEST_LEVEL=0
+  -DCUTLASS_TEST_ENABLE_CACHED_RESULTS=1
+  -DCUTLASS_CONV_UNIT_TEST_RIGOROUS_SIZE_ENABLED=1
+  -DCUTLASS_DEBUG_TRACE_LEVEL=0
+  -Xcompiler=-Wconversion
+  -Xcompiler=-fno-strict-aliasing
+  -Xcudafe
+  --diag_suppress=implicit_return_from_non_void_function
+-- Configuring cublas ...
+-- cuBLAS Disabled.
+-- Configuring cuBLAS ... done.
+-- cutlass dir: /home/steve/src/vllm-xpu-kernels-digest-sycl8-20260612dj/.deps/cutlass-sycl-src/include and /home/steve/src/vllm-xpu-kernels-digest-sycl8-20260612dj/.deps/cutlass-sycl-src/tools/util/include and /home/steve/src/vllm-xpu-kernels-digest-sycl8-20260612dj/.deps/cutlass-sycl-src/applications
+-- Setting library output directory for target 'grouped_gemm_xe_2' to '/home/steve/src/vllm-xpu-kernels-digest-sycl8-20260612dj/build/qwen36-replay-digest-sycl8-20260612dj/'.
+-- Setting library output directory for target 'gdn_attn_kernels_xe_2' to '/home/steve/src/vllm-xpu-kernels-digest-sycl8-20260612dj/build/qwen36-replay-digest-sycl8-20260612dj/'.
+-- VLLM_XPU_INCLUDE_DIR: /opt/intel/oneapi/compiler/2025.3/include/;/opt/intel/oneapi/compiler/2025.3/include/sycl/;/opt/intel/oneapi/compiler/2025.3/include/syclcompat/
+-- Enabling _xpu_C extension.
+-- -------_xpu_C , , SYCL
+-- GPU_MOD_NAME: _xpu_C
+-- Enabling _moe_C extension.
+-- -------_moe_C , , SYCL
+-- GPU_MOD_NAME: _moe_C
+-- Configuring done (3.1s)
+-- Generating done (0.1s)
+CMake Warning:
+  Manually-specified variables were not used by the project:
+
+    CMAKE_TOOLCHAIN_FILE
+
+
+-- Build files have been written to: /home/steve/src/vllm-xpu-kernels-digest-sycl8-20260612dj/build/qwen36-replay-digest-sycl8-20260612dj
+[1/19] Building CXX object CMakeFiles/_xpu_C.dir/csrc/xpu/sampler/topk_topp_sampler.cpp.o
+[2/19] Building CXX object CMakeFiles/_xpu_C.dir/csrc/xpu/quantization/int8_quant.cpp.o
+[3/19] Building CXX object CMakeFiles/_xpu_C.dir/csrc/xpu/sycl/multimodal_rope.cpp.o
+[4/19] Building CXX object CMakeFiles/_xpu_C.dir/csrc/xpu/torch_bindings.cpp.o
+[5/19] Building CXX object CMakeFiles/_xpu_C.dir/csrc/xpu/sycl/deepseek_scaling_rope.cpp.o
+[6/19] Building CXX object CMakeFiles/_xpu_C.dir/csrc/xpu/lora/lora_shrink.cpp.o
+[7/19] Building CXX object CMakeFiles/_xpu_C.dir/csrc/xpu/lora/lora_expand.cpp.o
+[8/19] Building CXX object CMakeFiles/_xpu_C.dir/csrc/xpu/onednn/onednn_runtime.cpp.o
+[9/19] Building CXX object CMakeFiles/_xpu_C.dir/csrc/xpu/utils.cpp.o
+[10/19] Linking CXX shared library libgrouped_gemm_xe_2.so
+Compilation from IR - skipping loading of FCL
+Build succeeded.
+Compilation from IR - skipping loading of FCL
+Build succeeded.
+Compilation from IR - skipping loading of FCL
+Build succeeded.
+[11/19] Building CXX object CMakeFiles/_xpu_C.dir/csrc/xpu/rand/exponential.cpp.o
+[12/19] Building CXX object CMakeFiles/_xpu_C.dir/csrc/xpu/grouped_gemm/grouped_gemm_interface.cpp.o
+[13/19] Building CXX object CMakeFiles/_xpu_C.dir/csrc/xpu/onednn/qwen36_moe_replay_digest.cpp.o
+[14/19] Building CXX object CMakeFiles/_xpu_C.dir/csrc/xpu/onednn/onednn_matmul.cpp.o
+[15/19] Building CXX object CMakeFiles/_xpu_C.dir/csrc/xpu/onednn/qwen36_moe_sidecar.cpp.o
+[16/19] Building CXX object CMakeFiles/_xpu_C.dir/csrc/xpu/gdn_attn/gdn_attn_interface.cpp.o
+[17/19] Building CXX object csrc/xpu/gdn_attn/xe_2/CMakeFiles/gdn_attn_kernels_xe_2.dir/chunk_gated_delta_rule_xe2.cpp.o
+[18/19] Linking CXX shared library libgdn_attn_kernels_xe_2.so
+Compilation from IR - skipping loading of FCL
+Build succeeded.
+Compilation from IR - skipping loading of FCL
+Build succeeded.
+Compilation from IR - skipping loading of FCL
+Build succeeded.
+[19/19] Linking CXX shared module _xpu_C.abi3.so
+Compilation from IR - skipping loading of FCL
+Build succeeded.
+Compilation from IR - skipping loading of FCL
+Build succeeded.
+Compilation from IR - skipping loading of FCL
+Build succeeded.
+Compilation from IR - skipping loading of FCL
+Build succeeded.
+Compilation from IR - skipping loading of FCL
+Build succeeded.
+Compilation from IR - skipping loading of FCL
+Build succeeded.
+Compilation from IR - skipping loading of FCL
+Build succeeded.
+Compilation from IR - skipping loading of FCL
+Build succeeded.
+Compilation from IR - skipping loading of FCL
+Build succeeded.
+Compilation from IR - skipping loading of FCL
+Build succeeded.
+Compilation from IR - skipping loading of FCL
+Build succeeded.
+Compilation from IR - skipping loading of FCL
+Build succeeded.
+Compilation from IR - skipping loading of FCL
+Build succeeded.
+Compilation from IR - skipping loading of FCL
+Build succeeded.
+Compilation from IR - skipping loading of FCL
+Build succeeded.
+Compilation from IR - skipping loading of FCL
+Build succeeded.
+Compilation from IR - skipping loading of FCL
+Build succeeded.
+-- Install configuration: "Release"
+-- Installing: /tmp/vllm-xpu-replay-digest-sycl8-gdn-20260612dk/vllm_xpu_kernels/_xpu_C.abi3.so
+-- Set non-toolchain portion of runtime path of "/tmp/vllm-xpu-replay-digest-sycl8-gdn-20260612dk/vllm_xpu_kernels/_xpu_C.abi3.so" to "$ORIGIN"
+55818904 /tmp/vllm-xpu-replay-digest-sycl8-gdn-20260612dk/vllm_xpu_kernels/_xpu_C.abi3.so

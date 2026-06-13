@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Diagnostic launcher for the graph-replay MoE digest probe. This intentionally
-# avoids the copied /tmp _xpu_C package import path that segfaulted during
-# validation. Instead, a tiny overlay package preloads the build-tree _xpu_C
-# extension via importlib before vLLM imports vllm_xpu_kernels._xpu_C.
+# Diagnostic launcher for the graph-replay MoE digest probe. The overlay keeps
+# package import side effects light: __init__.py only extends the package path,
+# while the digest _xpu_C extension is exposed as a normal module file and is
+# loaded only if vLLM imports the XPU fused-MoE path.
 
 MODEL_PATH="${MODEL_PATH:-/mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118}"
 SERVED_MODEL_NAME="${SERVED_MODEL_NAME:-qwen36-35b-a3b-fp8}"
@@ -14,8 +14,9 @@ TAG="${TAG:-replay-digest-20260612di}"
 LOG_PATH="${LOG_PATH:-/tmp/qwen36-quark-int8-tp4-${TAG}.log}"
 
 VLLM_SRC="${VLLM_SRC:-/home/steve/src/vllm}"
-KERNELS_SRC="${KERNELS_SRC:-/home/steve/src/vllm-xpu-kernels-digest-20260612dh}"
-DIGEST_BUILD_DIR="${DIGEST_BUILD_DIR:-$KERNELS_SRC/build/qwen36-replay-digest-20260612dh}"
+KERNELS_SRC="${KERNELS_SRC:-/home/steve/src/vllm-xpu-kernels}"
+DIGEST_SRC="${DIGEST_SRC:-/home/steve/src/vllm-xpu-kernels-digest-20260612dh}"
+DIGEST_BUILD_DIR="${DIGEST_BUILD_DIR:-$DIGEST_SRC/build/qwen36-replay-digest-20260612dh}"
 OVERLAY_DIR="${OVERLAY_DIR:-/tmp/qwen36-vllm-xpu-replay-digest-overlay-${TAG}}"
 ONEAPI_COMPILER_VARS="${ONEAPI_COMPILER_VARS:-/opt/intel/oneapi/compiler/2026.0/env/vars.sh}"
 
@@ -31,24 +32,23 @@ if [[ -f "$ONEAPI_COMPILER_VARS" ]]; then
   set -u
 fi
 
+ONEAPI_COMPILER_ROOT="$(cd "$(dirname "$ONEAPI_COMPILER_VARS")/.." 2>/dev/null && pwd || true)"
+ONEAPI_COMPILER_LIB=""
+if [[ -n "$ONEAPI_COMPILER_ROOT" && -d "$ONEAPI_COMPILER_ROOT/lib" ]]; then
+  ONEAPI_COMPILER_LIB="$ONEAPI_COMPILER_ROOT/lib"
+fi
+
 rm -rf "$OVERLAY_DIR"
 mkdir -p "$OVERLAY_DIR/vllm_xpu_kernels"
+ln -sf "$DIGEST_SRC/vllm_xpu_kernels/fused_moe_interface.py" \
+  "$OVERLAY_DIR/vllm_xpu_kernels/fused_moe_interface.py"
+ln -sf "$DIGEST_BUILD_DIR/_xpu_C.abi3.so" \
+  "$OVERLAY_DIR/vllm_xpu_kernels/_xpu_C.abi3.so"
 cat >"$OVERLAY_DIR/vllm_xpu_kernels/__init__.py" <<PY
-from pathlib import Path
 from pkgutil import extend_path
-import importlib.util
-import sys
 
 __path__ = extend_path(__path__, __name__)
 __path__.append("$KERNELS_SRC/vllm_xpu_kernels")
-
-_digest_so = Path("$DIGEST_BUILD_DIR/_xpu_C.abi3.so")
-_module_name = __name__ + "._xpu_C"
-if _module_name not in sys.modules:
-    _spec = importlib.util.spec_from_file_location(_module_name, _digest_so)
-    _module = importlib.util.module_from_spec(_spec)
-    sys.modules[_module_name] = _module
-    _spec.loader.exec_module(_module)
 PY
 
 DEFAULT_CACHE_ROOT="/mnt/fast-ai/vllm-cache-exp/qwen36-35b-a3b-quark-int8-tp4-${TAG}"
@@ -58,7 +58,7 @@ export TORCHINDUCTOR_CACHE_DIR="${TORCHINDUCTOR_CACHE_DIR:-${DEFAULT_CACHE_ROOT}
 export VLLM_CACHE_ROOT="${VLLM_CACHE_ROOT:-${DEFAULT_CACHE_ROOT}/vllm}"
 
 export PYTHONPATH="$OVERLAY_DIR:$VLLM_SRC:$KERNELS_SRC${PYTHONPATH:+:$PYTHONPATH}"
-export LD_LIBRARY_PATH="$DIGEST_BUILD_DIR:$KERNELS_SRC/vllm_xpu_kernels:/opt/intel/oneapi/compiler/2026.0/lib:/home/steve/.venvs/vllm-xpu/lib:/home/steve/.venvs/vllm-xpu/lib/python3.12/site-packages/torch/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+export LD_LIBRARY_PATH="$DIGEST_BUILD_DIR:$KERNELS_SRC/vllm_xpu_kernels${ONEAPI_COMPILER_LIB:+:$ONEAPI_COMPILER_LIB}:/home/steve/.venvs/vllm-xpu/lib:/home/steve/.venvs/vllm-xpu/lib/python3.12/site-packages/torch/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
 
 export VLLM_USE_V1=1
 export VLLM_TARGET_DEVICE=xpu
@@ -76,11 +76,15 @@ export VLLM_XPU_FORCE_QUARK_REPACK=0
 export VLLM_XPU_GDN_REUSE_QKVZ_BA_QUANT=clone
 
 export VLLM_XPU_MOE_REPLAY_DIGEST="${VLLM_XPU_MOE_REPLAY_DIGEST:-1}"
-export VLLM_XPU_MOE_REPLAY_DIGEST_LAYER_REGEX="${VLLM_XPU_MOE_REPLAY_DIGEST_LAYER_REGEX:-layers[.](9|19|29|39)[.]}"
+export VLLM_XPU_MOE_REPLAY_DIGEST_LAYER_REGEX="${VLLM_XPU_MOE_REPLAY_DIGEST_LAYER_REGEX:-}"
 export VLLM_XPU_MOE_REPLAY_DIGEST_RANK="${VLLM_XPU_MOE_REPLAY_DIGEST_RANK:-0}"
 export VLLM_XPU_MOE_REPLAY_DIGEST_MAX_RECORDS="${VLLM_XPU_MOE_REPLAY_DIGEST_MAX_RECORDS:-4096}"
 export VLLM_XPU_MOE_REPLAY_DIGEST_MAX_TOPK="${VLLM_XPU_MOE_REPLAY_DIGEST_MAX_TOPK:-64}"
 export VLLM_XPU_MOE_REPLAY_DIGEST_MAX_OUTPUT_BYTES="${VLLM_XPU_MOE_REPLAY_DIGEST_MAX_OUTPUT_BYTES:-512}"
+DEFAULT_REPLAY_DIGEST_LOG="/tmp/qwen36-replay-digest-${TAG}-{rank}-{pid}.jsonl"
+export VLLM_XPU_MOE_REPLAY_DIGEST_LOG="${VLLM_XPU_MOE_REPLAY_DIGEST_LOG:-$DEFAULT_REPLAY_DIGEST_LOG}"
+export VLLM_XPU_MOE_REPLAY_DIGEST_LOG_INTERVAL_MS="${VLLM_XPU_MOE_REPLAY_DIGEST_LOG_INTERVAL_MS:-1000}"
+export VLLM_XPU_MOE_REPLAY_DIGEST_LOG_MAX_ROWS="${VLLM_XPU_MOE_REPLAY_DIGEST_LOG_MAX_ROWS:-256}"
 
 export ONEAPI_DEVICE_SELECTOR="${ONEAPI_DEVICE_SELECTOR:-level_zero:0,1,2,3}"
 export ZE_AFFINITY_MASK="${ZE_AFFINITY_MASK:-0,1,2,3}"
@@ -104,11 +108,12 @@ source /home/steve/.venvs/vllm-xpu/bin/activate
 
 python3 - <<'PY'
 import torch
+import vllm_xpu_kernels.fused_moe_interface as fused_moe_interface
 import vllm_xpu_kernels._xpu_C  # noqa: F401
 
 if not hasattr(torch.ops._xpu_C, "qwen36_moe_replay_digest_probe"):
     raise SystemExit("replay digest op did not register")
-print("replay_digest_import_ok")
+print("replay_digest_import_ok", fused_moe_interface.__file__)
 PY
 
 if [[ "${DRY_RUN_IMPORT:-0}" == "1" ]]; then
