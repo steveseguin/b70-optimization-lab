@@ -14954,3 +14954,57 @@ Updated decision:
 - Keep collective cleanup scoped to replacing avoidable list/compat forms with
   tensor forms and to call-site timing. Collectives remain secondary unless a
   model-integrated trace contradicts the replay.
+
+## 2026-06-13 Continuation: Cached/No-Wait MoE Sidecar Substrate
+
+Artifacts:
+
+- `patches/vllm-xpu-qwen36-onednn-sidecar-cached-nowait-20260613.patch`
+- `data/qwen36-onednn-sidecar-nowait-summary-20260613.json`
+- `data/qwen36-onednn-sidecar-nowait-parity-live-20260613.jsonl`
+- `data/qwen36-onednn-sidecar-nowait-cache-live-20260613.jsonl`
+
+What worked:
+
+- Added opt-in oneDNN sidecar modes `11`, `12`, and `13` for cached no-wait
+  GEMM execution.
+- Added `VLLM_XPU_MOE_ONEDNN_SIDECAR_NO_WAIT=1` so the existing
+  `REPLACE_BOTH` path can use mode `11` for GEMM1 and mode `12` for GEMM2.
+- Built and smoke-loaded a fresh `_xpu_C` from
+  `/home/steve/src/vllm-xpu-kernels/build/qwen36-sidecar-nowait-sycl8-20260613`.
+- Narrow rank-0/layer-9 same-request parity stayed exact:
+  `8` replacement records, both sidecar GEMMs active, max diff `0.0` for
+  `gemm1_output`, `gemm2_a`, `gemm2_a_scales`, `gemm2_output`, and
+  `gathered_output`.
+- The repeated decode shape showed the intended primitive cache behavior:
+  `28/29` cache hits for mode `11` and `28/29` cache hits for mode `12`, with
+  median construct time dropping to `0 us` on both paths.
+- Restore reliability remains a cost: the first accepted-lane restore after
+  sidecar diagnostics hit `UR_RESULT_ERROR_DEVICE_LOST` at
+  `block_table.copy_to_gpu` on the first direct chat request. A torch XPU copy
+  smoke recovered all four B70s, and the second accepted restore passed
+  provenance plus local no-thinking frontdoor quality.
+
+What did not become a speed win:
+
+- This is still a Python-side helper. `_stream_capture_active()` blocks it
+  during XPU graph capture, so it cannot improve the accepted graph endpoint by
+  itself.
+- Broadening the helper to all ranks/all layers would add Python-side calls
+  outside the production graph path, so it is not the right next performance
+  experiment.
+
+Updated backlog:
+
+1. Convert the exact cached/no-wait behavior into a captured persistent MoE
+   layerlet/custom op.
+2. Keep staged parity gates: one layer/rank, one layer/all ranks, layer groups,
+   then all MoE layers.
+3. Use the MiniMax lesson directly: meaningful wins came when the MoE/allreduce
+   boundary moved inside a custom-op/graph boundary, not when another Python
+   helper was wrapped around existing kernels.
+4. Add a reliability guard around future sidecar/layerlet tests: post-diagnostic
+   XPU copy smoke before accepted restore, then provenance and isolated
+   no-thinking frontdoor quality.
+5. Continue oracle `k=1` verifier/KV/block-table parity repair as the parallel
+   high-ceiling path.

@@ -1,0 +1,269 @@
+--- /tmp/qwen36-nowait-sidecar-before/fused_moe_interface.py	2026-06-13 14:31:30.641981270 -0400
++++ /home/steve/src/vllm-xpu-kernels/vllm_xpu_kernels/fused_moe_interface.py	2026-06-13 14:32:05.077429227 -0400
+@@ -50,6 +50,7 @@
+     "VLLM_XPU_MOE_ONEDNN_SIDECAR_REPLACE_BOTH")
+ ONEDNN_SIDECAR_REPLACE_REFERENCE_PARITY_ENV = (
+     "VLLM_XPU_MOE_ONEDNN_SIDECAR_REPLACE_REFERENCE_PARITY")
++ONEDNN_SIDECAR_NO_WAIT_ENV = "VLLM_XPU_MOE_ONEDNN_SIDECAR_NO_WAIT"
+
+ _live_abi_lock = threading.Lock()
+ _live_abi_writes = 0
+@@ -606,15 +607,25 @@
+         return 2
+     if raw in ("3", "both", "gemm12", "gemm1_gemm2", "two_gemm"):
+         return 3
++    if raw in ("11", "gemm1_nowait", "nowait_gemm1"):
++        return 11
++    if raw in ("12", "gemm2_nowait", "nowait_gemm2"):
++        return 12
++    if raw in ("13", "both_nowait", "gemm12_nowait", "two_gemm_nowait"):
++        return 13
+     try:
+         return int(raw)
+     except ValueError:
+         return 0
+
+
++def _onednn_sidecar_no_wait():
++    return _is_env_enabled(ONEDNN_SIDECAR_NO_WAIT_ENV)
++
++
+ def _should_replace_gemm1_with_onednn_sidecar():
+     return (_is_env_enabled(ONEDNN_SIDECAR_REPLACE_GEMM1_ENV)
+-            and _onednn_sidecar_execute_mode() == 1)
++            and _onednn_sidecar_execute_mode() in (1, 11))
+
+
+ def _should_replace_both_with_onednn_sidecar():
+@@ -720,6 +731,51 @@
+     return offsets
+
+
++def _sidecar_stats_dict(stats_list):
++    fields = (
++        "ok",
++        "device_index",
++        "layer_index",
++        "num_rows",
++        "topk",
++        "num_moe_inputs",
++        "hidden_size",
++        "inter_size",
++        "num_experts",
++        "gemm1_n",
++        "gemm2_n",
++        "dry_create_descriptors",
++        "descriptor_create_ok",
++        "offsets_supplied",
++        "handle_wrap_ok",
++        "w13_stride0",
++        "w13_stride1",
++        "w13_stride2",
++        "w2_stride0",
++        "w2_stride1",
++        "execute_mode",
++        "execute_ok",
++        "execute_construct_us",
++        "execute_wait_us",
++        "gemm1_cache_hit",
++        "gemm1_construct_us",
++        "gemm1_execute_us",
++        "gemm2_cache_hit",
++        "gemm2_construct_us",
++        "gemm2_execute_us",
++        "both_wall_us",
++        "sidecar_matmul_cache_size",
++        "gemm1_wait_after_execute",
++        "gemm2_wait_after_execute",
++        "cached_execution_path",
++    )
++    return {
++        name: stats_list[index]
++        for index, name in enumerate(fields)
++        if index < len(stats_list)
++    }
++
++
+ def _should_use_w8a8_offsets():
+     return (FUSEDMOE_AVAILABLE and _is_env_enabled(W8A8_USE_OFFSETS_ENV)
+             and hasattr(torch.ops._xpu_C,
+@@ -928,6 +984,7 @@
+             "offsets_supplied": offsets is not None,
+             "elapsed_ms": elapsed_ms,
+             "stats": stats_list,
++            "stats_named": _sidecar_stats_dict(stats_list),
+             "parity": parity_record,
+         }
+         if should_log:
+@@ -1011,7 +1068,7 @@
+                 gemm1_output, act_output, gemm2_a, gemm2_a_scales,
+                 gemm2_output, onednn_grouped_offsets, layer_index,
+                 dry_create_descriptors, execute_mode):
+-            return torch.empty((32,), dtype=torch.int64)
++            return torch.empty((40,), dtype=torch.int64)
+
+     except RuntimeError:
+         pass
+@@ -1908,6 +1965,8 @@
+         gemm1_replaced_with_sidecar = False
+         if replace_both_with_sidecar:
+             with timed_region("xpu_moe.onednn_gemm1_replace_live"):
++                gemm1_sidecar_mode = (
++                    11 if _onednn_sidecar_no_wait() else 1)
+                 gemm1_replaced_with_sidecar = (
+                     _maybe_probe_onednn_sidecar(
+                         hidden_states=hidden_states,
+@@ -1931,7 +1990,7 @@
+                         gemm2_output=gemm2_output,
+                         is_int8=is_int8,
+                         diagnostic_context=diagnostic_context,
+-                        execute_mode_override=1,
++                        execute_mode_override=gemm1_sidecar_mode,
+                         required_execution=True,
+                     ) is not None)
+         if not gemm1_replaced_with_sidecar:
+@@ -2105,6 +2164,8 @@
+         gemm2_replaced_with_sidecar = False
+         if replace_both_with_sidecar:
+             with timed_region("xpu_moe.onednn_gemm2_replace_live"):
++                gemm2_sidecar_mode = (
++                    12 if _onednn_sidecar_no_wait() else 2)
+                 gemm2_replaced_with_sidecar = (
+                     _maybe_probe_onednn_sidecar(
+                         hidden_states=hidden_states,
+@@ -2130,7 +2191,7 @@
+                         gemm2_output=gemm2_output,
+                         is_int8=is_int8,
+                         diagnostic_context=diagnostic_context,
+-                        execute_mode_override=2,
++                        execute_mode_override=gemm2_sidecar_mode,
+                         required_execution=True,
+                     ) is not None)
+         if not gemm2_replaced_with_sidecar:
+--- /tmp/qwen36-nowait-sidecar-before/qwen36_moe_sidecar.cpp	2026-06-13 14:31:30.637741937 -0400
++++ /home/steve/src/vllm-xpu-kernels/csrc/xpu/onednn/qwen36_moe_sidecar.cpp	2026-06-13 14:32:30.819558523 -0400
+@@ -537,6 +537,9 @@
+   int64_t gemm2_construct_us = 0;
+   int64_t gemm2_execute_us = 0;
+   int64_t both_wall_us = 0;
++  int64_t gemm1_wait_after_execute = 1;
++  int64_t gemm2_wait_after_execute = 1;
++  int64_t cached_execution_path = 0;
+   if (dry_create_descriptors) {
+     const int dev_id = c10::xpu::getCurrentXPUStream().device_index();
+     at::Device current_device(at::kXPU, dev_id);
+@@ -578,42 +581,53 @@
+     auto& engine = oneDNN::GpuEngineManager::Instance().get_engine(current_device);
+     auto& stream = oneDNN::GpuStreamManager::Instance().get_stream(dev_id);
+     SidecarMatmulStats exec_stats;
+-    if (execute_mode == 1) {
+-      exec_stats = execute_grouped_matmul(engine,
+-                                          stream,
+-                                          gemm1_a,
+-                                          gemm1_a_scales,
+-                                          w13,
+-                                          w13_scales,
+-                                          gemm1_output,
+-                                          onednn_grouped_offsets.value(),
+-                                          num_moe_inputs,
+-                                          hidden_size,
+-                                          2 * inter_size,
+-                                          num_experts,
+-                                          dnnl::memory::format_tag::abc);
++    if (execute_mode == 1 || execute_mode == 11) {
++      gemm1_wait_after_execute = execute_mode == 1 ? 1 : 0;
++      cached_execution_path = 1;
++      exec_stats = execute_cached_grouped_matmul(engine,
++                                                 stream,
++                                                 dev_id,
++                                                 gemm1_a,
++                                                 gemm1_a_scales,
++                                                 w13,
++                                                 w13_scales,
++                                                 gemm1_output,
++                                                 onednn_grouped_offsets.value(),
++                                                 num_moe_inputs,
++                                                 hidden_size,
++                                                 2 * inter_size,
++                                                 num_experts,
++                                                 dnnl::memory::format_tag::abc,
++                                                 gemm1_wait_after_execute != 0);
+       gemm1_cache_hit = exec_stats.cache_hit;
+       gemm1_construct_us = exec_stats.construct_us;
+       gemm1_execute_us = exec_stats.execute_wait_us;
+-    } else if (execute_mode == 2) {
+-      exec_stats = execute_grouped_matmul(engine,
+-                                          stream,
+-                                          gemm2_a,
+-                                          gemm2_a_scales,
+-                                          w2,
+-                                          w2_scales,
+-                                          gemm2_output,
+-                                          onednn_grouped_offsets.value(),
+-                                          num_moe_inputs,
+-                                          inter_size,
+-                                          hidden_size,
+-                                          num_experts,
+-                                          dnnl::memory::format_tag::abc);
++    } else if (execute_mode == 2 || execute_mode == 12) {
++      gemm2_wait_after_execute = execute_mode == 2 ? 1 : 0;
++      cached_execution_path = 1;
++      exec_stats = execute_cached_grouped_matmul(engine,
++                                                 stream,
++                                                 dev_id,
++                                                 gemm2_a,
++                                                 gemm2_a_scales,
++                                                 w2,
++                                                 w2_scales,
++                                                 gemm2_output,
++                                                 onednn_grouped_offsets.value(),
++                                                 num_moe_inputs,
++                                                 inter_size,
++                                                 hidden_size,
++                                                 num_experts,
++                                                 dnnl::memory::format_tag::abc,
++                                                 gemm2_wait_after_execute != 0);
+       gemm2_cache_hit = exec_stats.cache_hit;
+       gemm2_construct_us = exec_stats.construct_us;
+       gemm2_execute_us = exec_stats.execute_wait_us;
+-    } else if (execute_mode == 3) {
++    } else if (execute_mode == 3 || execute_mode == 13) {
+       const auto both_start = std::chrono::steady_clock::now();
++      gemm1_wait_after_execute = 0;
++      gemm2_wait_after_execute = execute_mode == 3 ? 1 : 0;
++      cached_execution_path = 1;
+       auto gemm1_stats = execute_cached_grouped_matmul(engine,
+                                                        stream,
+                                                        dev_id,
+@@ -643,7 +657,7 @@
+                                                        hidden_size,
+                                                        num_experts,
+                                                        dnnl::memory::format_tag::abc,
+-                                                       true);
++                                                       gemm2_wait_after_execute != 0);
+       const auto both_end = std::chrono::steady_clock::now();
+       gemm1_cache_hit = gemm1_stats.cache_hit;
+       gemm1_construct_us = gemm1_stats.construct_us;
+@@ -663,7 +677,7 @@
+     execute_wait_us = exec_stats.execute_wait_us;
+   }
+
+-  auto stats = torch::empty({32}, torch::dtype(torch::kInt64));
++  auto stats = torch::empty({40}, torch::dtype(torch::kInt64));
+   auto* out = stats.data_ptr<int64_t>();
+   out[0] = 1;
+   out[1] = device.index();
+@@ -697,5 +711,13 @@
+   out[29] = gemm2_execute_us;
+   out[30] = both_wall_us;
+   out[31] = sidecar_matmul_cache_size();
++  out[32] = gemm1_wait_after_execute;
++  out[33] = gemm2_wait_after_execute;
++  out[34] = cached_execution_path;
++  out[35] = 0;
++  out[36] = 0;
++  out[37] = 0;
++  out[38] = 0;
++  out[39] = 0;
+   return stats;
+ }

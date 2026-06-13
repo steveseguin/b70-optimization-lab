@@ -652,3 +652,90 @@ Next:
 4. For any future candidate, run adjacent graph-control A/B, serial quality
    gates, provenance, peak VRAM/power/thermal capture, and no parallel gate
    interference.
+
+## Cached/No-Wait Sidecar Substrate
+
+Date: 2026-06-13.
+
+Artifacts:
+
+- `patches/vllm-xpu-qwen36-onednn-sidecar-cached-nowait-20260613.patch`
+- `data/qwen36-onednn-sidecar-nowait-summary-20260613.json`
+- `data/qwen36-onednn-sidecar-nowait-parity-live-20260613.jsonl`
+- `data/qwen36-onednn-sidecar-nowait-cache-live-20260613.jsonl`
+- `data/qwen36-onednn-sidecar-nowait-parity-completion-20260613.json`
+- `data/qwen36-onednn-sidecar-nowait-cache-completion-20260613.json`
+- `data/qwen36-quark-int8-tp4-nowait-sidecar-devicelost-recovery-smoke-20260613.json`
+- `data/qwen36-quark-int8-tp4-accepted-provenance-after-nowait-sidecar-retry-20260613.json`
+- `data/qwen36-quark-int8-tp4-accepted-restored-after-nowait-sidecar-quality-nothink-frontdoor-20260613.json`
+- `data/qwen36-quark-int8-tp4-accepted-restored-after-nowait-sidecar-retry-completion-ok-20260613.json`
+
+Implementation:
+
+- Added cached per-GEMM sidecar execute modes:
+  - `11`: GEMM1 cached path, no explicit post-execute wait.
+  - `12`: GEMM2 cached path, no explicit post-execute wait.
+  - `13`: two-GEMM cached path, no explicit final wait.
+- Added `VLLM_XPU_MOE_ONEDNN_SIDECAR_NO_WAIT=1` so the existing
+  `REPLACE_BOTH` path can use mode `11` for GEMM1 and mode `12` for GEMM2.
+- Extended sidecar stats from 32 to 40 entries and added named JSON fields for
+  wait flags and cached execution path.
+- Built `_xpu_C.abi3.so` in
+  `/home/steve/src/vllm-xpu-kernels/build/qwen36-sidecar-nowait-sycl8-20260613`.
+- Loader/schema smoke passed through the sidecar overlay.
+
+Validation:
+
+- Temporarily stopped the accepted `18080` endpoint because it occupied all four
+  XPUs; restored it after diagnostics.
+- Narrow parity endpoint ran on `18081`, eager, rank `0`, `layers\.9\.`,
+  `REPLACE_BOTH=1`, reference parity enabled, no-wait enabled.
+- Same-request replacement parity captured `8` records with both sidecar GEMMs
+  active.
+- Every tracked target stayed exact with aggregate max diff `0.0`:
+  `gemm1_output`, `gemm2_a`, `gemm2_a_scales`, `gemm2_output`, and
+  `gathered_output`.
+- Cache probe captured `64` sidecar records with parity disabled and no-wait
+  enabled.
+- Repeated decode shape `num_rows=1, num_moe_inputs=8` hit cached oneDNN
+  primitives after the first shape instance:
+  - mode `11`: `28/29` records hit cache, median construct `0 us`, median
+    execute field `27 us`.
+  - mode `12`: `28/29` records hit cache, median construct `0 us`, median
+    execute field `23 us`.
+
+Reliability:
+
+- The first accepted-lane restore reached `/v1/models`, then hit
+  `UR_RESULT_ERROR_DEVICE_LOST` on the first direct chat quality request at
+  `block_table.copy_to_gpu`.
+- Stopping the failed service and running a fresh torch XPU copy smoke recovered
+  all four B70s without reboot.
+- A second accepted-lane launch on `18080` passed:
+  - completion execution smoke,
+  - accepted provenance/token sentinel check with `ok=true`,
+  - local no-thinking frontdoor quality smoke with `pass_all=true`.
+- Lesson: sidecar diagnostics remain capable of leaving the driver/runtime in a
+  fragile state even after tensor parity passes. Keep the restore sequence as:
+  stop diagnostic endpoint, run XPU copy smoke, relaunch accepted endpoint,
+  run provenance, then run isolated no-thinking frontdoor quality.
+
+Decision:
+
+- Accept this as an exact, scoped substrate for future layerlet work.
+- Do not promote it as a speed win. The Python sidecar helper is guarded out
+  during XPU graph capture, and graph-mode production speed needs a captured
+  custom-op or persistent layerlet boundary.
+- Do not broaden the Python helper to all ranks/all layers as a performance
+  candidate. Broadening should happen only after the same cached/no-wait
+  semantics move inside a graph-captured boundary.
+- Treat the post-diagnostic device-lost restore failure as a reliability cost
+  that must be solved or avoided before any all-layer sidecar/layerlet work.
+
+Next:
+
+1. Build the captured persistent MoE layerlet/custom-op boundary using this
+   cached/no-wait sidecar behavior as the exactness reference.
+2. Add staged all-rank/all-layer parity gates before broad rollout.
+3. Keep oracle `k=1` KV/block-table parity repair active as the parallel
+   no-quality-loss speed path.
