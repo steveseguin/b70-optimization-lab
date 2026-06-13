@@ -6,6 +6,21 @@ Date: 2026-06-12
 
 2026-06-12 notes update:
 
+- Added a "Replay Digest Layer-ID Fix And Bigger Ideas 20260612dn" section to
+  `notes/2026-06-12-qwen36-next-bigger-bets.md`. The diagnostic replay digest
+  path now receives explicit layer IDs from the Quark INT8 XPU fused-MoE path
+  when replay digest, live-ABI, or oneDNN sidecar diagnostics are enabled.
+  The isolated `18082` capture produced `40` records, `16518` valid digest
+  rows, zero negative layer rows, and every MoE layer `0..39` present; the
+  dominant shape was c1 decode `(1, 8, 256, 2048)` with `15534` rows. The
+  accepted backend was restored on `18080`, `/v1/models` passed after `57s`,
+  and a short completion smoke succeeded. New artifacts include the layer-ID
+  JSONL/summary/completions, accepted restore log, a Localmaxxing B70/Qwen
+  refresh, and active-stack source diff files under `patches/`. No speed
+  result was promoted.
+
+2026-06-12 notes update:
+
 - Added an "Additional Bigger Bets After User Review 20260612dm" section to
   `notes/2026-06-12-qwen36-next-bigger-bets.md`. The new backlog items focus
   on larger no-quality-loss speed paths: VRAM-for-latency expert mirroring,

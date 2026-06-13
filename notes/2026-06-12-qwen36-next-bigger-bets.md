@@ -12297,5 +12297,186 @@ Concrete priority after the replay digest layer-ID fix:
    autotune has enough concentration to be worth implementation.
 3. Run one attention-side microbench and one MoE autotune seed in parallel.
 4. Keep speculative service design on paper until the verifier-input parity
-   bug is fixed; then revive it with exact rollback tests rather than n-gram
-   blind sweeps.
+    bug is fixed; then revive it with exact rollback tests rather than n-gram
+    blind sweeps.
+
+## Replay Digest Layer-ID Fix And Bigger Ideas 20260612dn
+
+This checkpoint fixes the biggest limitation from the SYCL-8/GDN replay digest
+run: graph-replayed digest rows now carry reliable MoE layer IDs. This is still
+diagnostic work, not a speed result and not an endpoint promotion.
+
+Source changes:
+
+- Patched `/home/steve/src/vllm/.../quark_moe.py` so the Quark W8A8 INT8 XPU
+  fused-MoE path attaches diagnostic context when replay digest, live-ABI, or
+  oneDNN sidecar diagnostics are enabled, not only when live-ABI file logging is
+  enabled.
+- Added explicit `layer_index` to `fused_experts._live_abi_context`, derived
+  from `layer.layer_id` with a safe `-1` fallback.
+- Patched both active and digest-copy
+  `vllm_xpu_kernels/fused_moe_interface.py` so `_layer_index_from_context()`
+  prefers explicit `diagnostic_context["layer_index"]` before falling back to
+  parsing `layers.<n>.` from a layer-name string.
+- Active-stack full diff artifacts:
+  `patches/vllm-qwen36-replay-digest-layer-index-20260612dm.diff` and
+  `patches/vllm-xpu-kernels-qwen36-replay-digest-layer-index-20260612dm.diff`.
+  These are valid reverse-checked diffs from the current dirty source trees;
+  they include the local diagnostic stack around the layer-ID fix, not a clean
+  upstream-minimal patch series.
+
+Validation:
+
+```bash
+python3 -m py_compile \
+  /home/steve/src/vllm/vllm/model_executor/layers/quantization/quark/quark_moe.py
+
+python3 -m py_compile \
+  /home/steve/src/vllm-xpu-kernels-digest-sycl8-20260612dj/vllm_xpu_kernels/fused_moe_interface.py
+
+python3 -m py_compile \
+  /home/steve/src/vllm-xpu-kernels/vllm_xpu_kernels/fused_moe_interface.py
+
+DRY_RUN_IMPORT=1 TAG=replay-digest-layeridx-dryrun-20260612dm \
+DIGEST_SRC=/home/steve/src/vllm-xpu-kernels-digest-sycl8-20260612dj \
+DIGEST_BUILD_DIR=/home/steve/src/vllm-xpu-kernels-digest-sycl8-20260612dj/build/qwen36-replay-digest-sycl8-20260612dj \
+ONEAPI_COMPILER_VARS=/opt/intel/oneapi/compiler/2025.3/env/vars.sh \
+scripts/launch-qwen36-quark-int8-replay-digest.sh
+# replay_digest_import_ok ...
+```
+
+Isolated diagnostic run:
+
+- Stopped the accepted backend temporarily and launched
+  `qwen36-tp4-replay-digest-layeridx-20260612dm` on port `18082`.
+- `/v1/models` passed on the diagnostic endpoint.
+- Ran 10 deterministic 64-token completion prompts covering natural chat, code,
+  math, structured output, repetition, operations, debugging, routing, memory,
+  and production notes.
+- Completion timing was diagnostic only: the first request paid warmup/compile
+  cost (`12.519s` for 64 tokens), and subsequent 64-token calls were roughly
+  `0.75-0.83s`. Do not treat this as a promoted performance number.
+- Digest JSONL copied from
+  `/tmp/qwen36-replay-digest-replay-digest-layeridx-20260612dm--1942968.jsonl`
+  to `data/qwen36-replay-digest-replay-digest-layeridx-20260612dm--1942968.jsonl`.
+- Accepted backend restored afterward as
+  `qwen36-tp4-accepted-restored-after-replaydigest-layeridx-20260612dm`; port
+  `18080` `/v1/models` passed after `57s`, and a short deterministic completion
+  smoke succeeded.
+
+Replay digest summary:
+
+- `records`: `40`
+- `rows`: `16518`
+- `valid_magic_rows`: `16518`
+- `first_counter`: `40`
+- `last_counter`: `26280`
+- `rank_records`: `{"": 40}`
+- `local_rank_records`: `{"0": 40}`
+- `device_records`: `{"xpu:0": 40}`
+- `non_negative_layer_rows`: `16518`
+- `negative_layer_rows`: `0`
+- `unique_layers`: all MoE layers `0..39`
+- `unique_shape_summaries`: `16`
+- Top shape: `(1, 8, 256, 2048)` with `15534` rows
+- `unique_digest_combos`: `16478`
+
+Interpretation:
+
+- This proves the graph-executed digest op now receives reliable per-layer
+  metadata for the current Qwen3.6 Quark W8A8 INT8 path.
+- The dominant shape is c1 decode, so the evidence is directly relevant to the
+  single-request path we care about.
+- This is still only rank/local-rank `0`; an all-rank capture is required before
+  deciding expert mirroring, EP topology, or per-rank route-class AOT.
+- The digest currently records compact shape/hash/checksum evidence, not raw
+  route IDs. A route atlas still needs either all-rank digest extension with
+  compact route signatures/histograms or a safer raw-route bridge.
+
+Fresh outside signals to fold into the backlog:
+
+- Intel's current XPU container notes say the validated Arc Pro B-Series stack
+  uses vLLM-XPU-kernels `0.1.4`, oneAPI `2025.3.2` with hotfix, PyTorch `2.10`,
+  and oneCCL `2021.15.7.8`; it also lists experimental expert parallelism and
+  `TP+DP+EP` support. This makes a validated-stack A/B and EP-latency lane
+  worth scheduling.
+- Intel's earlier XPU notes call out persistent MoE GEMM and fused activation
+  work as a `2.6x` end-to-end improvement class for Qwen3-30B-A3B. That keeps
+  persistent MoE and fused route-class kernels high on the list.
+- A community dual-B70 Qwen3-30B-A3B FP8 run reports `40.60 tok/s` single
+  stream and `996.67 tok/s` output at high concurrency. That suggests B70 can
+  do much more aggregate work than c1 exposes, and single-request latency is
+  likely coordination, kernel launch/setup, route imbalance, or scheduler
+  limited.
+- A fresh Localmaxxing B70/Qwen query is saved as
+  `data/localmaxxing-b70-qwen-leaderboard-refresh-20260612dn.json`. It shows
+  our current accepted row at `99.77 tok/s` and another exact-checkpoint row at
+  `99.43 tok/s`. It also shows a single-B70 `70.35 tok/s` Qwen3.6-35B-A3B row
+  mentioning fused MoE MMVQ plus Xe GT frequency pinning; this is a concrete
+  reminder to log clocks and study whether single-card latency work can beat
+  TP4 coordination for c1.
+
+Bigger, bolder ideas added from this checkpoint:
+
+1. **All-rank route atlas first.**
+   Repeat replay digest with all ranks enabled and either route-signature
+   histograms or raw bounded top-k route IDs. Do not choose expert mirroring or
+   AOT based on rank 0 alone.
+
+2. **Frequency-pinned latency lane.**
+   Build a run wrapper that pins/records Xe GT clocks, power, fan policy, PCIe
+   link state, and reset counters. Re-run accepted p512/o512/c1 before assuming
+   the `~10 ms/token` wall is purely software.
+
+3. **Single-card ceiling probe for the exact checkpoint.**
+   If memory permits a strict same-checkpoint single-card lane at shorter
+   context, measure c1 without TP collectives. If one card is close to TP4, TP
+   coordination is the main c1 enemy; if it is far slower, MoE/attention kernels
+   remain primary.
+
+4. **TP2 plus expert-mirror lane.**
+   Use the all-rank route atlas to choose hot experts/metadata to replicate.
+   A TP2 dense path plus local hot experts may reduce collectives while using
+   available VRAM for latency instead of only KV reservation.
+
+5. **Route-class autotune tournament.**
+   For the top real route classes, generate multiple exact W8A8 MoE kernels:
+   oneDNN grouped, current XPU grouped, persistent queue, alternate expert
+   order, split-K, and scale-layout variants. Gate every candidate with tensor
+   parity before endpoint tests.
+
+6. **Static c1 decode runner with accepted kernels.**
+   A lab runner should bypass HTTP, vLLM scheduling, and non-c1 batching while
+   reusing the exact accepted weights/kernels. A large speed gap means
+   scheduler/orchestration work; no gap means kernel/collective work.
+
+7. **Fused MoE MMVQ clue audit.**
+   Trace the public single-B70 `70.35 tok/s` clue back to its implementation
+   style. If it is llama.cpp/SYCL-specific, identify which part is portable:
+   fused gate/up/down layout, MMVQ tiling, command submission, or clock policy.
+
+8. **Validated Intel container/BOM A-B.**
+   Run the exact checkpoint under the closest available Intel validated XPU
+   container/BOM, even if only as a diagnostic lane. If c1 moves materially,
+   freeze the faster BOM before more kernel work.
+
+9. **Target-owned verifier branch farm, but only after parity is fixed.**
+   The public fast rows above our range keep pointing at verifier-preserving
+   speculation, but our current verifier-state bug blocks promotion. Keep the
+   architecture on paper until temporary-KV/rollback parity is exact.
+
+10. **Public challenge packet after all-rank atlas.**
+    Package exact checkpoint, launch command, all-rank route atlas, latency
+    decomposition, Localmaxxing rows, and quality gates into a small issue/repo
+    packet for Intel/vLLM/kernel contributors. The ask should be precise:
+    Qwen3.6-35B-A3B Quark W8A8 INT8, B70, c1, no 4-bit, no Qwen3.5, no token
+    drift, target `5 ms/token`.
+
+Updated next order:
+
+1. Run all-rank replay digest capture and summarize per-layer/per-rank route
+   evidence.
+2. Add compact route signature or raw route histogram output to the digest path.
+3. Run frequency/clock telemetry beside an accepted p512/o512/c1 baseline.
+4. Use the route atlas to choose between TP2+expert mirror, route-class
+   autotune, or a static c1 runner as the next implementation branch.

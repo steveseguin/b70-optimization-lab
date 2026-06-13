@@ -1,0 +1,332 @@
+[
+  {
+    "index": 1,
+    "name": "natural_chat",
+    "prompt": "Write a concise, practical answer: why does batching improve LLM throughput?",
+    "elapsed_s": 12.518741569947451,
+    "response": {
+      "id": "cmpl-b8bcf197aa09757a",
+      "object": "text_completion",
+      "created": 1781310811,
+      "model": "qwen36-35b-a3b-fp8",
+      "choices": [
+        {
+          "index": 0,
+          "text": "\n\n<think>\nHere's a thinking process:\n\n1.  **Analyze User Input:**\n   - **Question:** Why does batching improve LLM throughput?\n   - **Requirements:** Concise, practical answer.\n\n2.  **Identify Key Concepts:**\n   - LLM inference involves compute (",
+          "logprobs": null,
+          "finish_reason": "length",
+          "stop_reason": null,
+          "token_ids": null,
+          "prompt_logprobs": null,
+          "prompt_token_ids": null
+        }
+      ],
+      "service_tier": null,
+      "system_fingerprint": "vllm-0.20.2rc1.dev2+gc51df4300.d20260523-tp4-2d3553b3",
+      "usage": {
+        "prompt_tokens": 15,
+        "total_tokens": 79,
+        "completion_tokens": 64,
+        "prompt_tokens_details": null
+      },
+      "kv_transfer_params": null
+    }
+  },
+  {
+    "index": 2,
+    "name": "code",
+    "prompt": "Write Python code that prints the numbers 1 through 8, one per line.",
+    "elapsed_s": 0.828835632186383,
+    "response": {
+      "id": "cmpl-9d9a261843b2457b",
+      "object": "text_completion",
+      "created": 1781310824,
+      "model": "qwen36-35b-a3b-fp8",
+      "choices": [
+        {
+          "index": 0,
+          "text": "\n\n1. To print a sequence of consecutive integers, a `for` loop is appropriate.\n2. The `range(start, stop)` function generates numbers from `start` up to, but not including, `stop`. \n - Therefore, `range(1, 9)` produces the numbers 1,",
+          "logprobs": null,
+          "finish_reason": "length",
+          "stop_reason": null,
+          "token_ids": null,
+          "prompt_logprobs": null,
+          "prompt_token_ids": null
+        }
+      ],
+      "service_tier": null,
+      "system_fingerprint": "vllm-0.20.2rc1.dev2+gc51df4300.d20260523-tp4-2d3553b3",
+      "usage": {
+        "prompt_tokens": 17,
+        "total_tokens": 81,
+        "completion_tokens": 64,
+        "prompt_tokens_details": null
+      },
+      "kv_transfer_params": null
+    }
+  },
+  {
+    "index": 3,
+    "name": "math",
+    "prompt": "Solve step by step: if 3x + 7 = 31, what is x?",
+    "elapsed_s": 0.7514308660756797,
+    "response": {
+      "id": "cmpl-bccb12a305669c04",
+      "object": "text_completion",
+      "created": 1781310824,
+      "model": "qwen36-35b-a3b-fp8",
+      "choices": [
+        {
+          "index": 0,
+          "text": "\n\nTo solve the equation \\(3x + 7 = 31\\), we will follow these steps:\n\n1. **Isolate the term with \\(x\\)**: Subtract 7 from both sides of the equation to eliminate the constant on the left side.\n   \\[\n   3x",
+          "logprobs": null,
+          "finish_reason": "length",
+          "stop_reason": null,
+          "token_ids": null,
+          "prompt_logprobs": null,
+          "prompt_token_ids": null
+        }
+      ],
+      "service_tier": null,
+      "system_fingerprint": "vllm-0.20.2rc1.dev2+gc51df4300.d20260523-tp4-2d3553b3",
+      "usage": {
+        "prompt_tokens": 22,
+        "total_tokens": 86,
+        "completion_tokens": 64,
+        "prompt_tokens_details": null
+      },
+      "kv_transfer_params": null
+    }
+  },
+  {
+    "index": 4,
+    "name": "structured",
+    "prompt": "Return JSON with keys status, reason, and next_action for a healthy server.",
+    "elapsed_s": 0.8306602230295539,
+    "response": {
+      "id": "cmpl-bc4a19b0e148ed9e",
+      "object": "text_completion",
+      "created": 1781310825,
+      "model": "qwen36-35b-a3b-fp8",
+      "choices": [
+        {
+          "index": 0,
+          "text": "\n\n```python\ndef health_check():\n    return jsonify(status=\"healthy\", reason=\"Server is running\", next_action=\"None\")\n```\n\n```python\ndef health_check():\n    return jsonify(status=\"healthy\", reason=\"Server is running\", next_action=\"None\")\n```\n\n```python\ndef health",
+          "logprobs": null,
+          "finish_reason": "length",
+          "stop_reason": null,
+          "token_ids": null,
+          "prompt_logprobs": null,
+          "prompt_token_ids": null
+        }
+      ],
+      "service_tier": null,
+      "system_fingerprint": "vllm-0.20.2rc1.dev2+gc51df4300.d20260523-tp4-2d3553b3",
+      "usage": {
+        "prompt_tokens": 16,
+        "total_tokens": 80,
+        "completion_tokens": 64,
+        "prompt_tokens_details": null
+      },
+      "kv_transfer_params": null
+    }
+  },
+  {
+    "index": 5,
+    "name": "repetitive",
+    "prompt": "Repeat the word latency exactly ten times separated by commas.",
+    "elapsed_s": 0.7502808468416333,
+    "response": {
+      "id": "cmpl-82f9fe2f068779dc",
+      "object": "text_completion",
+      "created": 1781310826,
+      "model": "qwen36-35b-a3b-fp8",
+      "choices": [
+        {
+          "index": 0,
+          "text": "\n\n<think>\nHere's a thinking process:\n\n1.  **Analyze User Input:**\n   - **Task:** Repeat the word \"latency\" exactly ten times.\n   - **Format:** Separated by commas.\n   - **Exact wording:** \"latency\"\n\n2.  **Ident",
+          "logprobs": null,
+          "finish_reason": "length",
+          "stop_reason": null,
+          "token_ids": null,
+          "prompt_logprobs": null,
+          "prompt_token_ids": null
+        }
+      ],
+      "service_tier": null,
+      "system_fingerprint": "vllm-0.20.2rc1.dev2+gc51df4300.d20260523-tp4-2d3553b3",
+      "usage": {
+        "prompt_tokens": 11,
+        "total_tokens": 75,
+        "completion_tokens": 64,
+        "prompt_tokens_details": null
+      },
+      "kv_transfer_params": null
+    }
+  },
+  {
+    "index": 6,
+    "name": "ops",
+    "prompt": "List three Linux commands useful for checking GPU inference server health.",
+    "elapsed_s": 0.751630388898775,
+    "response": {
+      "id": "cmpl-893dedb031e6cb37",
+      "object": "text_completion",
+      "created": 1781310827,
+      "model": "qwen36-35b-a3b-fp8",
+      "choices": [
+        {
+          "index": 0,
+          "text": "\n\n<think>\nHere's a thinking process:\n\n1.  **Understand User Request:**\n   - **Topic:** Linux commands for checking GPU inference server health\n   - **Quantity:** Exactly three commands\n   - **Context:** GPU inference server (implies NVIDIA GPUs typically, running AI/ML workloads",
+          "logprobs": null,
+          "finish_reason": "length",
+          "stop_reason": null,
+          "token_ids": null,
+          "prompt_logprobs": null,
+          "prompt_token_ids": null
+        }
+      ],
+      "service_tier": null,
+      "system_fingerprint": "vllm-0.20.2rc1.dev2+gc51df4300.d20260523-tp4-2d3553b3",
+      "usage": {
+        "prompt_tokens": 12,
+        "total_tokens": 76,
+        "completion_tokens": 64,
+        "prompt_tokens_details": null
+      },
+      "kv_transfer_params": null
+    }
+  },
+  {
+    "index": 7,
+    "name": "debug",
+    "prompt": "Explain how to isolate a performance regression without changing model quality.",
+    "elapsed_s": 0.7494049828965217,
+    "response": {
+      "id": "cmpl-846d34011c0b8cc2",
+      "object": "text_completion",
+      "created": 1781310828,
+      "model": "qwen36-35b-a3b-fp8",
+      "choices": [
+        {
+          "index": 0,
+          "text": "\n\n<think>\nHere's a thinking process:\n\n1.  **Understand User Query:** The user wants to know how to isolate a performance regression (i.e., a drop in model performance/accuracy/efficiency) without changing model quality. This implies they want to identify the root cause of a performance issue while",
+          "logprobs": null,
+          "finish_reason": "length",
+          "stop_reason": null,
+          "token_ids": null,
+          "prompt_logprobs": null,
+          "prompt_token_ids": null
+        }
+      ],
+      "service_tier": null,
+      "system_fingerprint": "vllm-0.20.2rc1.dev2+gc51df4300.d20260523-tp4-2d3553b3",
+      "usage": {
+        "prompt_tokens": 13,
+        "total_tokens": 77,
+        "completion_tokens": 64,
+        "prompt_tokens_details": null
+      },
+      "kv_transfer_params": null
+    }
+  },
+  {
+    "index": 8,
+    "name": "routing",
+    "prompt": "Briefly describe why mixture-of-experts route distributions can affect latency.",
+    "elapsed_s": 0.7567489580251276,
+    "response": {
+      "id": "cmpl-9e78d4feab0337be",
+      "object": "text_completion",
+      "created": 1781310828,
+      "model": "qwen36-35b-a3b-fp8",
+      "choices": [
+        {
+          "index": 0,
+          "text": "\n\n<think>\nHere's a thinking process:\n\n1.  **Understand User Query:** The user asks: \"Briefly describe why mixture-of-experts route distributions can affect latency.\" This is about Mixture-of-Experts (MoE) models in deep learning, specifically how the routing mechanism (how tokens/exp",
+          "logprobs": null,
+          "finish_reason": "length",
+          "stop_reason": null,
+          "token_ids": null,
+          "prompt_logprobs": null,
+          "prompt_token_ids": null
+        }
+      ],
+      "service_tier": null,
+      "system_fingerprint": "vllm-0.20.2rc1.dev2+gc51df4300.d20260523-tp4-2d3553b3",
+      "usage": {
+        "prompt_tokens": 14,
+        "total_tokens": 78,
+        "completion_tokens": 64,
+        "prompt_tokens_details": null
+      },
+      "kv_transfer_params": null
+    }
+  },
+  {
+    "index": 9,
+    "name": "memory",
+    "prompt": "Explain the tradeoff of using extra VRAM to reduce single-request latency.",
+    "elapsed_s": 0.7482996801845729,
+    "response": {
+      "id": "cmpl-8c24927e5a9cf72d",
+      "object": "text_completion",
+      "created": 1781310829,
+      "model": "qwen36-35b-a3b-fp8",
+      "choices": [
+        {
+          "index": 0,
+          "text": "\n\n<think>\nHere's a thinking process:\n\n1.  **Understand User Query:** The user is asking about the tradeoff of using extra VRAM (Video RAM) to reduce single-request latency. This is a systems/architecture question, likely in the context of GPUs, AI inference, or high-performance computing",
+          "logprobs": null,
+          "finish_reason": "length",
+          "stop_reason": null,
+          "token_ids": null,
+          "prompt_logprobs": null,
+          "prompt_token_ids": null
+        }
+      ],
+      "service_tier": null,
+      "system_fingerprint": "vllm-0.20.2rc1.dev2+gc51df4300.d20260523-tp4-2d3553b3",
+      "usage": {
+        "prompt_tokens": 16,
+        "total_tokens": 80,
+        "completion_tokens": 64,
+        "prompt_tokens_details": null
+      },
+      "kv_transfer_params": null
+    }
+  },
+  {
+    "index": 10,
+    "name": "production",
+    "prompt": "Give a short checklist for promoting an inference optimization to production.",
+    "elapsed_s": 0.7502309421543032,
+    "response": {
+      "id": "cmpl-b431bfd248b6168a",
+      "object": "text_completion",
+      "created": 1781310830,
+      "model": "qwen36-35b-a3b-fp8",
+      "choices": [
+        {
+          "index": 0,
+          "text": "\n\n<think>\nHere's a thinking process:\n\n1.  **Understand User Request:**\n   - **Topic:** Promoting an inference optimization to production\n   - **Format:** Short checklist\n   - **Goal:** Provide a concise, actionable list of steps/checkpoints for moving an optimized inference model/service from",
+          "logprobs": null,
+          "finish_reason": "length",
+          "stop_reason": null,
+          "token_ids": null,
+          "prompt_logprobs": null,
+          "prompt_token_ids": null
+        }
+      ],
+      "service_tier": null,
+      "system_fingerprint": "vllm-0.20.2rc1.dev2+gc51df4300.d20260523-tp4-2d3553b3",
+      "usage": {
+        "prompt_tokens": 12,
+        "total_tokens": 76,
+        "completion_tokens": 64,
+        "prompt_tokens_details": null
+      },
+      "kv_transfer_params": null
+    }
+  }
+]
