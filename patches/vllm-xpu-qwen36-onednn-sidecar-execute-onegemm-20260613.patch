@@ -1,0 +1,229 @@
+diff --git a/csrc/xpu/onednn/qwen36_moe_sidecar.cpp b/csrc/xpu/onednn/qwen36_moe_sidecar.cpp
+--- a/csrc/xpu/onednn/qwen36_moe_sidecar.cpp
++++ b/csrc/xpu/onednn/qwen36_moe_sidecar.cpp
+@@
+ #include <array>
++#include <chrono>
+ #include <cstdint>
+ #include <initializer_list>
++#include <unordered_map>
+ #include <vector>
+@@
+ dnnl::memory::data_type dnnl_dst_dtype(const torch::Tensor& tensor) {
+@@
+   TORCH_CHECK(false, "sidecar output tensors must be bf16 or f16");
+ }
+ 
++struct SidecarMatmulStats {
++  int64_t construct_us = 0;
++  int64_t execute_wait_us = 0;
++};
++
++SidecarMatmulStats execute_grouped_matmul(
++    dnnl::engine& engine,
++    dnnl::stream& engine_stream,
++    const torch::Tensor& src,
++    const torch::Tensor& src_scales,
++    const torch::Tensor& weights,
++    const torch::Tensor& weights_scales,
++    const torch::Tensor& dst,
++    const torch::Tensor& onednn_grouped_offsets,
++    int64_t m,
++    int64_t k,
++    int64_t n,
++    int64_t num_experts,
++    dnnl::memory::format_tag weight_layout) {
++  const dnnl::memory::dims src_dims = {m, k};
++  const dnnl::memory::dims weights_dims = {num_experts, k, n};
++  const dnnl::memory::dims dst_dims = {m, n};
++
++  auto src_md = dnnl::memory::desc::grouped(
++      src_dims, dnnl::memory::data_type::s8, 0, num_experts);
++  auto dst_md = dnnl::memory::desc::grouped(
++      dst_dims, dnnl_dst_dtype(dst), 0, num_experts);
++  auto weights_md = dnnl::memory::desc(
++      weights_dims, dnnl::memory::data_type::s8, weight_layout);
++
++  dnnl::primitive_attr attr;
++  attr.set_scales_mask(DNNL_ARG_SRC, 1 << 0);
++  attr.set_scales_mask(DNNL_ARG_WEIGHTS, (1 << 0) | (1 << 2));
++
++  const auto construct_start = std::chrono::steady_clock::now();
++  auto pd = dnnl::matmul::primitive_desc(engine, src_md, weights_md, dst_md, attr);
++  auto prim = dnnl::matmul(pd);
++
++  std::vector<void*> src_handles = {
++      const_cast<void*>(src.data_ptr()),
++      const_cast<void*>(onednn_grouped_offsets.data_ptr())};
++  std::vector<void*> dst_handles = {
++      dst.data_ptr(),
++      const_cast<void*>(onednn_grouped_offsets.data_ptr())};
++
++  auto src_mem = dnnl::sycl_interop::make_memory(
++      src_md, engine, dnnl::sycl_interop::memory_kind::usm, src_handles);
++  auto dst_mem = dnnl::sycl_interop::make_memory(
++      dst_md, engine, dnnl::sycl_interop::memory_kind::usm, dst_handles);
++  auto weights_mem = oneDNN::make_onednn_memory(
++      weights_md, engine, const_cast<void*>(weights.data_ptr()));
++  auto src_scales_mem = oneDNN::make_onednn_memory(
++      dnnl::memory::desc({m}, dnnl::memory::data_type::f32,
++                         dnnl::memory::format_tag::a),
++      engine,
++      const_cast<void*>(src_scales.data_ptr()));
++  auto weights_scales_mem = oneDNN::make_onednn_memory(
++      dnnl::memory::desc({num_experts, n}, dnnl::memory::data_type::f32,
++                         dnnl::memory::format_tag::ab),
++      engine,
++      const_cast<void*>(weights_scales.data_ptr()));
++  const auto construct_end = std::chrono::steady_clock::now();
++
++  std::unordered_map<int, dnnl::memory> args = {
++      {DNNL_ARG_SRC, src_mem},
++      {DNNL_ARG_WEIGHTS, weights_mem},
++      {DNNL_ARG_DST, dst_mem},
++      {DNNL_ARG_ATTR_SCALES | DNNL_ARG_SRC, src_scales_mem},
++      {DNNL_ARG_ATTR_SCALES | DNNL_ARG_WEIGHTS, weights_scales_mem},
++  };
++
++  const auto execute_start = std::chrono::steady_clock::now();
++  prim.execute(engine_stream, args);
++  engine_stream.wait();
++  const auto execute_end = std::chrono::steady_clock::now();
++
++  return {
++      std::chrono::duration_cast<std::chrono::microseconds>(
++          construct_end - construct_start).count(),
++      std::chrono::duration_cast<std::chrono::microseconds>(
++          execute_end - execute_start).count()};
++}
++
+ void validate_grouped_pd_and_handles(
+@@
+     const torch::Tensor& gemm2_output,
+     const c10::optional<at::Tensor>& onednn_grouped_offsets,
+     int64_t layer_index,
+-    bool dry_create_descriptors) {
++    bool dry_create_descriptors,
++    int64_t execute_mode) {
+@@
+   int64_t descriptor_create_ok = 0;
+   int64_t handle_wrap_ok = 0;
++  int64_t execute_ok = 0;
++  int64_t execute_construct_us = 0;
++  int64_t execute_wait_us = 0;
+   if (dry_create_descriptors) {
+@@
+     descriptor_create_ok = 1;
+   }
+ 
+-  auto stats = torch::empty({20}, torch::dtype(torch::kInt64));
++  if (execute_mode != 0) {
++    TORCH_CHECK(onednn_grouped_offsets.has_value(),
++                "oneDNN sidecar execution requires grouped offsets");
++    const int dev_id = c10::xpu::getCurrentXPUStream().device_index();
++    at::Device current_device(at::kXPU, dev_id);
++    auto& engine = oneDNN::GpuEngineManager::Instance().get_engine(current_device);
++    auto& stream = oneDNN::GpuStreamManager::Instance().get_stream(dev_id);
++    SidecarMatmulStats exec_stats;
++    if (execute_mode == 1) {
++      exec_stats = execute_grouped_matmul(engine, stream, gemm1_a,
++          gemm1_a_scales, w13, w13_scales, gemm1_output,
++          onednn_grouped_offsets.value(), num_moe_inputs, hidden_size,
++          2 * inter_size, num_experts, dnnl::memory::format_tag::abc);
++    } else if (execute_mode == 2) {
++      exec_stats = execute_grouped_matmul(engine, stream, gemm2_a,
++          gemm2_a_scales, w2, w2_scales, gemm2_output,
++          onednn_grouped_offsets.value(), num_moe_inputs, inter_size,
++          hidden_size, num_experts, dnnl::memory::format_tag::abc);
++    } else {
++      TORCH_CHECK(false, "unknown oneDNN sidecar execute mode: ", execute_mode);
++    }
++    execute_ok = 1;
++    execute_construct_us = exec_stats.construct_us;
++    execute_wait_us = exec_stats.execute_wait_us;
++  }
++
++  auto stats = torch::empty({24}, torch::dtype(torch::kInt64));
+@@
+   out[17] = static_cast<int64_t>(w13.stride(2));
+   out[18] = static_cast<int64_t>(w2.stride(0));
+   out[19] = static_cast<int64_t>(w2.stride(1));
++  out[20] = execute_mode;
++  out[21] = execute_ok;
++  out[22] = execute_construct_us;
++  out[23] = execute_wait_us;
+   return stats;
+ }
+diff --git a/csrc/xpu/ops.h b/csrc/xpu/ops.h
+--- a/csrc/xpu/ops.h
++++ b/csrc/xpu/ops.h
+@@
+     const torch::Tensor& gemm2_output,
+     const c10::optional<at::Tensor>& onednn_grouped_offsets,
+     int64_t layer_index,
+-    bool dry_create_descriptors);
++    bool dry_create_descriptors,
++    int64_t execute_mode);
+ #endif
+diff --git a/csrc/xpu/torch_bindings.cpp b/csrc/xpu/torch_bindings.cpp
+--- a/csrc/xpu/torch_bindings.cpp
++++ b/csrc/xpu/torch_bindings.cpp
+@@
+       "gemm1_a, Tensor gemm1_a_scales, Tensor gemm1_output, Tensor "
+       "act_output, Tensor gemm2_a, Tensor gemm2_a_scales, Tensor "
+       "gemm2_output, Tensor? onednn_grouped_offsets, int layer_index, "
+-      "bool dry_create_descriptors) -> Tensor");
++      "bool dry_create_descriptors, int execute_mode) -> Tensor");
+diff --git a/vllm_xpu_kernels/fused_moe_interface.py b/vllm_xpu_kernels/fused_moe_interface.py
+--- a/vllm_xpu_kernels/fused_moe_interface.py
++++ b/vllm_xpu_kernels/fused_moe_interface.py
+@@
+ ONEDNN_SIDECAR_RANK_ENV = "VLLM_XPU_MOE_ONEDNN_SIDECAR_RANK"
+ ONEDNN_SIDECAR_LOG_ENV = "VLLM_XPU_MOE_ONEDNN_SIDECAR_LOG"
++ONEDNN_SIDECAR_EXECUTE_ENV = "VLLM_XPU_MOE_ONEDNN_SIDECAR_EXECUTE"
+@@
+ def _make_onednn_grouped_offsets(rows_per_expert):
+@@
+     return torch.cumsum(rows_per_expert, dim=0, dtype=rows_per_expert.dtype)
+ 
+ 
++def _onednn_sidecar_execute_mode():
++    raw = os.environ.get(ONEDNN_SIDECAR_EXECUTE_ENV, "0").strip().lower()
++    if raw in ("", "0", "false", "off", "none", "dry"):
++        return 0
++    if raw in ("1", "true", "yes", "gemm1"):
++        return 1
++    if raw in ("2", "gemm2"):
++        return 2
++    try:
++        return int(raw)
++    except ValueError:
++        return 0
++
++
+ def _make_w8a8_grouped_gemm_offsets(rows_per_expert):
+@@
+         dry_create_descriptors = _is_env_enabled(
+             ONEDNN_SIDECAR_DRY_DESCRIPTORS_ENV, "1")
++        execute_mode = _onednn_sidecar_execute_mode()
+         started = time.perf_counter()
+         stats = torch.ops._xpu_C.qwen36_moe_onednn_sidecar_probe(
+@@
+             offsets,
+             layer_index,
+             dry_create_descriptors,
++            execute_mode,
+         )
+@@
+             "layer": _context_layer(diagnostic_context),
+             "layer_index": layer_index,
+             "dry_create_descriptors": bool(dry_create_descriptors),
++            "execute_mode": execute_mode,
+             "offsets_supplied": offsets is not None,
+@@
+                 gemm1_output, act_output, gemm2_a, gemm2_a_scales,
+                 gemm2_output, onednn_grouped_offsets, layer_index,
+-                dry_create_descriptors):
+-            return torch.empty((20,), dtype=torch.int64)
++                dry_create_descriptors, execute_mode):
++            return torch.empty((24,), dtype=torch.int64)

@@ -1,0 +1,20 @@
+diff --git a/vllm_xpu_kernels/fused_moe_interface.py b/vllm_xpu_kernels/fused_moe_interface.py
+index 0000000..0000000 100644
+--- a/vllm_xpu_kernels/fused_moe_interface.py
++++ b/vllm_xpu_kernels/fused_moe_interface.py
+@@
+ def _make_onednn_grouped_offsets(rows_per_expert):
+-    offsets = torch.empty_like(rows_per_expert)
+-    if offsets.numel() == 0:
+-        return offsets
+-    cumsum = torch.cumsum(rows_per_expert,
+-                          dim=0,
+-                          dtype=rows_per_expert.dtype)
+-    offsets[0].zero_()
+-    if offsets.numel() > 1:
+-        offsets[1:].copy_(cumsum[:-1])
+-    return offsets
++    # oneDNN grouped memory uses one end offset per group. This intentionally
++    # differs from the W8A8 cutlass helper, which passes a leading-zero start
++    # offset plus a final end offset.
++    return torch.cumsum(rows_per_expert, dim=0, dtype=rows_per_expert.dtype)

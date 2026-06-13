@@ -1,0 +1,48 @@
+{
+  "kind": "qwen36_onednn_sidecar_execute_build_smoke",
+  "date": "2026-06-13",
+  "source_repo": "/home/steve/src/vllm-xpu-kernels",
+  "build_dir": "/home/steve/src/vllm-xpu-kernels/build/qwen36-sidecar-probe-20260612",
+  "patch_artifact": "patches/vllm-xpu-qwen36-onednn-sidecar-execute-onegemm-20260613.patch",
+  "build": {
+    "command": "ninja -C /home/steve/src/vllm-xpu-kernels/build/qwen36-sidecar-probe-20260612",
+    "exit_code": 0,
+    "result": "success",
+    "notes": [
+      "Modified csrc/xpu/onednn/qwen36_moe_sidecar.cpp compiled.",
+      "Modified csrc/xpu/torch_bindings.cpp compiled.",
+      "_xpu_C.abi3.so and _moe_C.abi3.so linked successfully."
+    ]
+  },
+  "schema_probe": {
+    "command": "source /opt/intel/oneapi/setvars.sh >/tmp/oneapi-setvars-qwen36.log 2>&1 || true; /home/steve/.venvs/vllm-xpu/bin/python - <<'PY'\nimport importlib.util\nimport sys\nimport torch\npath = '/home/steve/src/vllm-xpu-kernels/build/qwen36-sidecar-probe-20260612/_xpu_C.abi3.so'\nname = 'vllm_xpu_kernels._xpu_C'\nspec = importlib.util.spec_from_file_location(name, path)\nmod = importlib.util.module_from_spec(spec)\nsys.modules[name] = mod\nspec.loader.exec_module(mod)\nprint(torch._C._dispatch_find_schema_or_throw('_xpu_C::qwen36_moe_onednn_sidecar_probe', '').schema())\nPY",
+    "exit_code": 0,
+    "schema": "_xpu_C::qwen36_moe_onednn_sidecar_probe(Tensor hidden_states, Tensor topk_weights, Tensor topk_ids, Tensor w13, Tensor w13_scales, Tensor w2, Tensor w2_scales, Tensor output, Tensor remapped_hidden_states, Tensor rows_per_expert, Tensor unpermuted_row_to_permuted_row, Tensor gemm1_a, Tensor gemm1_a_scales, Tensor gemm1_output, Tensor act_output, Tensor gemm2_a, Tensor gemm2_a_scales, Tensor gemm2_output, Tensor? onednn_grouped_offsets, int layer_index, bool dry_create_descriptors, int execute_mode) -> Tensor"
+  },
+  "direct_synthetic_xpu_smoke": {
+    "result": "blocked",
+    "first_attempt": {
+      "exit_code": 134,
+      "error": "onednn_grouped_offsets dtype mismatch: expected Int got Long",
+      "lesson": "Direct callers must keep offsets int32. The production helper uses torch.cumsum(..., dtype=rows_per_expert.dtype), so it keeps rows_per_expert int32."
+    },
+    "second_attempt": {
+      "exit_code": 1,
+      "offset_dtype": "int32",
+      "error": "RuntimeError: could not create an engine",
+      "onednn_message": "onednn_verbose common error runtime bad engine kind, src/xpu/sycl/capi/capi_engine.cpp:45",
+      "interpretation": "The standalone import path can load the built extension and register the schema, but cannot create the shared oneDNN engine through the vLLM/PyTorch XPU runtime context. Existing endpoint-side descriptor probes remain the correct next runtime test."
+    }
+  },
+  "next_runtime_test": {
+    "scope": "normal vLLM process context, disabled-by-default probe",
+    "env": {
+      "VLLM_XPU_MOE_ONEDNN_SIDECAR_PROBE": "1",
+      "VLLM_XPU_MOE_ONEDNN_SIDECAR_EXECUTE": "gemm1",
+      "VLLM_XPU_MOE_ONEDNN_SIDECAR_MAX_CALLS": "1",
+      "VLLM_XPU_MOE_ONEDNN_SIDECAR_LAYER_REGEX": "layers.9",
+      "VLLM_XPU_MOE_ONEDNN_SIDECAR_RANK": "0",
+      "VLLM_XPU_MOE_ONEDNN_SIDECAR_LOG": "data/qwen36-onednn-sidecar-execute-live-{rank}-{pid}.jsonl"
+    }
+  }
+}

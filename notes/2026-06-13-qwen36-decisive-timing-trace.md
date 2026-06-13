@@ -139,3 +139,19 @@ MoE replay shows the graph timing was misleading.
 5. If the replay confirms the wall, prototype the persistent W8A8 layerlet.
 6. Only after replay parity and layer target are met, run endpoint A/B and the
    standard quality/reliability gates.
+
+## Continuation: MoE Sidecar Readiness
+
+The first follow-up kept the persistent W8A8 MoE path as primary and recorded
+the existing oneDNN replay evidence in
+`notes/2026-06-13-qwen36-moe-sidecar-readiness.md`.
+
+Small source-readiness patch:
+`patches/vllm-xpu-qwen36-onednn-sidecar-end-offsets-20260613.patch`.
+The helper `_make_onednn_grouped_offsets` now emits cumulative end offsets,
+matching oneDNN grouped memory and the exact standalone oneDNN runner. Smoke:
+`data/qwen36-onednn-sidecar-offset-helper-smoke-20260613.json`.
+
+Next implementation move: add a disabled-by-default C++ sidecar execution op
+for one live grouped GEMM, prove exact parity outside endpoint mutation, then
+grow it into a resident two-GEMM/full-island replay before any endpoint A/B.

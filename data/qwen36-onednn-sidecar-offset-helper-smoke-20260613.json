@@ -1,0 +1,13 @@
+{
+  "kind": "qwen36_onednn_sidecar_offset_helper_smoke",
+  "date": "2026-06-13",
+  "source_repo": "/home/steve/src/vllm-xpu-kernels",
+  "source_file": "vllm_xpu_kernels/fused_moe_interface.py",
+  "helper": "_make_onednn_grouped_offsets",
+  "input_rows_per_expert": [0, 2, 0, 3, 1],
+  "observed_offsets": [0, 2, 2, 5, 6],
+  "expected_offsets": [0, 2, 2, 5, 6],
+  "ok": true,
+  "interpretation": "oneDNN grouped memory expects one cumulative end offset per group. This differs from the W8A8 grouped-GEMM helper, which uses a leading-zero start offset plus final end offset.",
+  "command": "PYTHONPATH=/home/steve/src/vllm-xpu-kernels /home/steve/.venvs/vllm-xpu/bin/python - <<'PY'\nimport json\nimport torch\nfrom vllm_xpu_kernels.fused_moe_interface import _make_onednn_grouped_offsets\nrows = torch.tensor([0, 2, 0, 3, 1], dtype=torch.int32)\noffsets = _make_onednn_grouped_offsets(rows)\nprint(json.dumps({\"rows\": rows.tolist(), \"offsets\": offsets.tolist(), \"expected\": [0, 2, 2, 5, 6], \"ok\": offsets.tolist() == [0, 2, 2, 5, 6]}))\nPY"
+}
