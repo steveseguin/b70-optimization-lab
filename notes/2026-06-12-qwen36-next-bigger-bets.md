@@ -35,6 +35,168 @@ Current speed anchor:
   MoE/kernel architecture improvement. Launch flags alone are unlikely to get
   there.
 
+## Active Backlog Index 20260613o
+
+This section is the working index for what has been tried, what remains
+untried, and what should be tried next. Older sections below preserve the full
+chronological evidence and artifact links.
+
+### Current Status
+
+- Current accepted speed anchor remains about `99-101 tok/s` single-request
+  decode for the current Qwen3.6 Quark W8A8 INT8 model.
+- The target is still `>200 tok/s` c1 decode without changing the model,
+  dropping to Qwen3.5, using 4-bit/AWQ, or accepting quality drift.
+- The confirmed gap is about `2x`, or roughly `5 ms/token` that must be saved
+  versus the current `~10 ms/token` decode path.
+- The main bottleneck evidence points inside `model_forward` or its
+  forward-stream dependencies, not response formatting.
+
+### Tried And Ruled Out As Lead 2x Levers
+
+1. **HTTP/SSE/output-tail cleanup.**
+   The stream-vs-final-only tail check showed backend streaming throughput
+   matches vLLM decode within `0.018%`, with queue time around
+   `0.012-0.016 ms`. Detok, SSE, final-only responses, token-list formatting,
+   and frontdoor queueing are production polish, not the 2x path.
+
+2. **Static output-tail/lm-head restriction as first move.**
+   The current Qwen bottleneck evidence sits before output packaging and after
+   forward start. Gemma-style lm-head/detok ideas remain useful for Gemma and
+   later polishing, but they are deprioritized as lead Qwen c1 levers.
+
+3. **Simple physical-card rotation.**
+   Rank-map reversal did not make a physical card obviously responsible for the
+   slow rank. Topology still matters, but a card-only explanation is too weak.
+
+4. **Simple rank route skew.**
+   The rank route overlay showed route counters identical across ranks for
+   `40/40` layers while forward wait still ranged `4.214-4.820 ms`. Do not
+   generate rank-specific route kernels unless a richer hot-expert trace
+   contradicts this.
+
+5. **Hot-expert table-size-only grouped-GEMM changes.**
+   Top128 hot-only and compact-active probes did not move enough. Table size
+   alone is not the dominant c1 layerlet cost.
+
+6. **Offset/active-offset W8A8 MoE as endpoint promotion.**
+   The offset-GEMM path is exact and useful, but projected endpoint speed is
+   still below target. It improves the layer floor but does not remove enough
+   fixed dispatch overhead.
+
+7. **Current oracle `k=1` speculation as-is.**
+   It is not quality-safe yet. The latest traces narrowed the issue to a
+   verifier/KV/input-position boundary, not draft quality, but parity must be
+   repaired before any speed result can be promoted.
+
+### Tried And Kept As Useful Building Blocks
+
+1. **Replay digest route evidence.**
+   Useful for graph-replay observability and route distribution analysis.
+   Needs an added compact hot-expert payload for the next route skew check.
+
+2. **Full diagnostic W8A8 extension restoration.**
+   Restart-safe and exact for installed-package smoke. Keep it as a diagnostic
+   substrate, but do not confuse it with a promoted endpoint speedup.
+
+3. **Fused-prologue offset-GEMM replay.**
+   Exact versus `xpu_fused_moe` and useful for layer-floor estimates. The next
+   version needs persistent descriptors/one-dispatch behavior.
+
+4. **Forward-boundary timing.**
+   Useful and still the highest-confidence bottleneck direction. It should now
+   be refined into layer-family and collective timing.
+
+5. **Localmaxxing submission.**
+   The clean exact-model B70/Qwen3.6 row around `99-100 tok/s` is useful public
+   evidence and a reproducibility anchor. Future posts should only include
+   accepted-quality, non-diagnostic endpoints.
+
+### Immediate Next Things To Try
+
+1. **All-rank layer-family timing.**
+   Split c1 decode forward by attention/GDN, router/topk, MoE prologue,
+   grouped GEMM1, activation/quant, grouped GEMM2, combine, dense residual,
+   logits, and TP collectives. This is the next highest-signal probe because
+   route skew and output tail are ruled out.
+
+2. **Collective-only replay.**
+   Measure TP4 all-reduce/all-gather latency outside model code using the same
+   rank map and representative tensor shapes. Record bytes, algorithm, CCL
+   transport, rank/card mapping, and any CPU staging indicators.
+
+3. **Device-event graph dependency audit.**
+   Add device-side start/end events for forward subregions and dump intervals
+   after the run, avoiding per-token host synchronization. This should expose
+   stream gaps or hidden dependencies without perturbing decode.
+
+4. **Richer route payload digest.**
+   Extend replay digest rows with compact hot-expert pairs for `num_rows=1`.
+   Then re-run the rank overlay to test whether expert-frequency skew is also
+   rank-invariant.
+
+5. **Persistent one-dispatch MoE layerlet.**
+   Keep per-layer descriptors, scratch, scales, expert pointers, and output
+   buffers resident; enqueue only the current token route command. This attacks
+   the fixed dispatch boundary that offset-GEMM did not remove.
+
+6. **Oracle `k=1` parity repair.**
+   Continue the verifier/KV trace work until oracle `k=1` is token-identical.
+   Only then widen speculative acceptance or measure speed.
+
+### Larger Untried Bets
+
+1. **TP4 latency bypass lane.**
+   Try an exact latency lane that reduces cross-rank synchronization for c1:
+   TP2 plus selected replication, dense-on-one/two-rank plus remote expert
+   workers, or EP-style routed activations. Four B70s may help memory but hurt
+   single-request latency.
+
+2. **Whole-token resident command graph.**
+   Capture a full c1 decode step with resident descriptors and graph-miss
+   fallback, rather than optimizing layerlets one by one. Correctness gate:
+   exact token parity and per-op sentinel hashes.
+
+3. **Device-side MoE command queue.**
+   Build a long-lived queue per rank/layer for route commands so host-visible
+   submission overhead is amortized across decode. This can share substrate
+   with the persistent layerlet.
+
+4. **Reference-verifier transaction layer.**
+   Once oracle `k=1` parity works, build exact target-verified multi-token
+   acceptance with rollback telemetry. This remains the strongest no-quality
+   loss 2x path if raw forward cannot reach `5 ms/token`.
+
+5. **Production warm artifact manager.**
+   Borrow the Gemma dashboard runtime pattern: graph captures, prefix caches,
+   route atlases, generated kernels, and canary baselines should be
+   single-flight, content-addressed, bounded, and built before readiness rather
+   than under first-user latency.
+
+6. **Clean Intel stack/BOM bakeoff.**
+   Compare the current stack against Intel's validated B-Series/XPU stack in a
+   container or spare boot environment. Keep the production lane stable while
+   testing kernel, firmware, oneAPI, oneCCL, PyTorch, and vLLM-XPU-kernels as a
+   controlled variable.
+
+7. **Expert-parallel or remote-expert layout.**
+   Instead of tensor-parallelizing all work, place experts or hot expert groups
+   across cards and move routed activations. This is invasive but directly
+   targets MoE-dominated c1 latency.
+
+### Quality And Reliability Gates For Any Promotion
+
+- Exact model remains `nameistoken/Qwen3.6-35B-A3B-Quark-W8A8-INT8`.
+- No 4-bit/AWQ, no Qwen3.5 substitution, no expert dropping, no approximate
+  router, and no accepted quality drift.
+- Run provenance/canary prompts before and after any endpoint restart.
+- Keep raw metrics, command snippets, model revision, engine env, and endpoint
+  `/v1/models` evidence with every promoted result.
+- For speculative or fast-lane changes, require token-ID parity against the
+  reference path before speed claims.
+- For production setup, report cold-start, readiness-warmed, steady-state,
+  single-request, and aggregate behavior separately.
+
 ## Post-Fullcandidate Gap Budget 20260613h
 
 Artifacts:

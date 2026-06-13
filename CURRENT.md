@@ -6,6 +6,15 @@ Date: 2026-06-12
 
 2026-06-13 notes update:
 
+- Added an explicit `Active Backlog Index 20260613o` to
+  `notes/2026-06-12-qwen36-next-bigger-bets.md`. It now separates current
+  status, tried-and-ruled-out 2x levers, useful-but-insufficient building
+  blocks, immediate next probes, larger untried bets, and quality/reliability
+  gates. Next preferred work remains all-rank layer-family timing, then
+  collective-only replay.
+
+2026-06-13 notes update:
+
 - Added `scripts/qwen36-rank-route-forward-overlay.py` and
   `data/qwen36-rank-route-forward-overlay-20260613n.{json,md}` to overlay
   accepted replay-digest `num_rows=1` route signatures with all-rank forward
