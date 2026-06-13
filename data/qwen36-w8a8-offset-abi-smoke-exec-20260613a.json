@@ -1,0 +1,286 @@
+{
+  "candidates": [
+    "/home/steve/src/vllm-xpu-kernels/vllm_xpu_kernels/_xpu_C.abi3.so",
+    "/home/steve/src/vllm-xpu-kernels/build/lib.linux-x86_64-cpython-312/vllm_xpu_kernels/_xpu_C.abi3.so",
+    "/home/steve/src/vllm-xpu-kernels/build/temp-before-onednn-grouped-20260612064136/_xpu_C.abi3.so",
+    "/home/steve/src/vllm-xpu-kernels/build/qwen36-sidecar-probe-20260612/_xpu_C.abi3.so"
+  ],
+  "decision": "Use the stable offset-only candidate as the next no-quality-loss diagnostic lane. Treat active-offset as split: one archived build executed it successfully, but the sidecar-probe build aborted, so do not promote active-offset until that candidate is rebuilt or fixed. Active-offset crashed in at least one candidate.",
+  "execute": true,
+  "generated_at": "2026-06-13T02:43:26.484730+00:00",
+  "python": "/home/steve/.venvs/vllm-xpu/bin/python",
+  "results": [
+    {
+      "candidate": "/home/steve/src/vllm-xpu-kernels/vllm_xpu_kernels/_xpu_C.abi3.so",
+      "candidate_label": "installed",
+      "op": "base",
+      "parsed": {
+        "candidate": "/home/steve/src/vllm-xpu-kernels/vllm_xpu_kernels/_xpu_C.abi3.so",
+        "checksum": 1452.1268310546875,
+        "device": "Intel(R) Arc(TM) Pro B70 Graphics",
+        "max_abs": 3.421875,
+        "mean_abs": 0.4405636489391327,
+        "op": "base",
+        "shape": {
+          "experts": 4,
+          "k": 2048,
+          "n": 1024,
+          "rows": [
+            2,
+            0,
+            3,
+            1
+          ],
+          "total_m": 6
+        },
+        "status": "executed",
+        "symbol": "cutlass_grouped_gemm_w8a8_int8_interface"
+      },
+      "returncode": 0,
+      "status": "ok",
+      "stderr": "",
+      "stdout": "{\"candidate\": \"/home/steve/src/vllm-xpu-kernels/vllm_xpu_kernels/_xpu_C.abi3.so\", \"checksum\": 1452.1268310546875, \"device\": \"Intel(R) Arc(TM) Pro B70 Graphics\", \"max_abs\": 3.421875, \"mean_abs\": 0.4405636489391327, \"op\": \"base\", \"shape\": {\"experts\": 4, \"k\": 2048, \"n\": 1024, \"rows\": [2, 0, 3, 1], \"total_m\": 6}, \"status\": \"executed\", \"symbol\": \"cutlass_grouped_gemm_w8a8_int8_interface\"}\n"
+    },
+    {
+      "candidate": "/home/steve/src/vllm-xpu-kernels/vllm_xpu_kernels/_xpu_C.abi3.so",
+      "candidate_label": "installed",
+      "op": "offsets",
+      "parsed": {
+        "candidate": "/home/steve/src/vllm-xpu-kernels/vllm_xpu_kernels/_xpu_C.abi3.so",
+        "op": "offsets",
+        "status": "missing_symbol",
+        "symbol": "cutlass_grouped_gemm_w8a8_int8_offsets_interface"
+      },
+      "returncode": 0,
+      "status": "ok",
+      "stderr": "",
+      "stdout": "{\"candidate\": \"/home/steve/src/vllm-xpu-kernels/vllm_xpu_kernels/_xpu_C.abi3.so\", \"op\": \"offsets\", \"status\": \"missing_symbol\", \"symbol\": \"cutlass_grouped_gemm_w8a8_int8_offsets_interface\"}\n"
+    },
+    {
+      "candidate": "/home/steve/src/vllm-xpu-kernels/vllm_xpu_kernels/_xpu_C.abi3.so",
+      "candidate_label": "installed",
+      "op": "active_offsets",
+      "parsed": {
+        "candidate": "/home/steve/src/vllm-xpu-kernels/vllm_xpu_kernels/_xpu_C.abi3.so",
+        "op": "active_offsets",
+        "status": "missing_symbol",
+        "symbol": "cutlass_grouped_gemm_w8a8_int8_active_offsets_interface"
+      },
+      "returncode": 0,
+      "status": "ok",
+      "stderr": "",
+      "stdout": "{\"candidate\": \"/home/steve/src/vllm-xpu-kernels/vllm_xpu_kernels/_xpu_C.abi3.so\", \"op\": \"active_offsets\", \"status\": \"missing_symbol\", \"symbol\": \"cutlass_grouped_gemm_w8a8_int8_active_offsets_interface\"}\n"
+    },
+    {
+      "candidate": "/home/steve/src/vllm-xpu-kernels/build/lib.linux-x86_64-cpython-312/vllm_xpu_kernels/_xpu_C.abi3.so",
+      "candidate_label": "build/lib.linux-x86_64-cpython-312",
+      "op": "base",
+      "parsed": {
+        "candidate": "/home/steve/src/vllm-xpu-kernels/build/lib.linux-x86_64-cpython-312/vllm_xpu_kernels/_xpu_C.abi3.so",
+        "checksum": 1452.1268310546875,
+        "device": "Intel(R) Arc(TM) Pro B70 Graphics",
+        "max_abs": 3.421875,
+        "mean_abs": 0.4405636489391327,
+        "op": "base",
+        "shape": {
+          "experts": 4,
+          "k": 2048,
+          "n": 1024,
+          "rows": [
+            2,
+            0,
+            3,
+            1
+          ],
+          "total_m": 6
+        },
+        "status": "executed",
+        "symbol": "cutlass_grouped_gemm_w8a8_int8_interface"
+      },
+      "returncode": 0,
+      "status": "ok",
+      "stderr": "",
+      "stdout": "{\"candidate\": \"/home/steve/src/vllm-xpu-kernels/build/lib.linux-x86_64-cpython-312/vllm_xpu_kernels/_xpu_C.abi3.so\", \"checksum\": 1452.1268310546875, \"device\": \"Intel(R) Arc(TM) Pro B70 Graphics\", \"max_abs\": 3.421875, \"mean_abs\": 0.4405636489391327, \"op\": \"base\", \"shape\": {\"experts\": 4, \"k\": 2048, \"n\": 1024, \"rows\": [2, 0, 3, 1], \"total_m\": 6}, \"status\": \"executed\", \"symbol\": \"cutlass_grouped_gemm_w8a8_int8_interface\"}\n"
+    },
+    {
+      "candidate": "/home/steve/src/vllm-xpu-kernels/build/lib.linux-x86_64-cpython-312/vllm_xpu_kernels/_xpu_C.abi3.so",
+      "candidate_label": "build/lib.linux-x86_64-cpython-312",
+      "op": "offsets",
+      "parsed": {
+        "candidate": "/home/steve/src/vllm-xpu-kernels/build/lib.linux-x86_64-cpython-312/vllm_xpu_kernels/_xpu_C.abi3.so",
+        "checksum": 1452.1268310546875,
+        "device": "Intel(R) Arc(TM) Pro B70 Graphics",
+        "max_abs": 3.421875,
+        "mean_abs": 0.4405636489391327,
+        "op": "offsets",
+        "shape": {
+          "experts": 4,
+          "k": 2048,
+          "n": 1024,
+          "rows": [
+            2,
+            0,
+            3,
+            1
+          ],
+          "total_m": 6
+        },
+        "status": "executed",
+        "symbol": "cutlass_grouped_gemm_w8a8_int8_offsets_interface"
+      },
+      "returncode": 0,
+      "status": "ok",
+      "stderr": "",
+      "stdout": "{\"candidate\": \"/home/steve/src/vllm-xpu-kernels/build/lib.linux-x86_64-cpython-312/vllm_xpu_kernels/_xpu_C.abi3.so\", \"checksum\": 1452.1268310546875, \"device\": \"Intel(R) Arc(TM) Pro B70 Graphics\", \"max_abs\": 3.421875, \"mean_abs\": 0.4405636489391327, \"op\": \"offsets\", \"shape\": {\"experts\": 4, \"k\": 2048, \"n\": 1024, \"rows\": [2, 0, 3, 1], \"total_m\": 6}, \"status\": \"executed\", \"symbol\": \"cutlass_grouped_gemm_w8a8_int8_offsets_interface\"}\n"
+    },
+    {
+      "candidate": "/home/steve/src/vllm-xpu-kernels/build/lib.linux-x86_64-cpython-312/vllm_xpu_kernels/_xpu_C.abi3.so",
+      "candidate_label": "build/lib.linux-x86_64-cpython-312",
+      "op": "active_offsets",
+      "parsed": {
+        "candidate": "/home/steve/src/vllm-xpu-kernels/build/lib.linux-x86_64-cpython-312/vllm_xpu_kernels/_xpu_C.abi3.so",
+        "op": "active_offsets",
+        "status": "missing_symbol",
+        "symbol": "cutlass_grouped_gemm_w8a8_int8_active_offsets_interface"
+      },
+      "returncode": 0,
+      "status": "ok",
+      "stderr": "",
+      "stdout": "{\"candidate\": \"/home/steve/src/vllm-xpu-kernels/build/lib.linux-x86_64-cpython-312/vllm_xpu_kernels/_xpu_C.abi3.so\", \"op\": \"active_offsets\", \"status\": \"missing_symbol\", \"symbol\": \"cutlass_grouped_gemm_w8a8_int8_active_offsets_interface\"}\n"
+    },
+    {
+      "candidate": "/home/steve/src/vllm-xpu-kernels/build/temp-before-onednn-grouped-20260612064136/_xpu_C.abi3.so",
+      "candidate_label": "build/temp-before-onednn-grouped-20260612064136",
+      "op": "base",
+      "parsed": {
+        "candidate": "/home/steve/src/vllm-xpu-kernels/build/temp-before-onednn-grouped-20260612064136/_xpu_C.abi3.so",
+        "checksum": 1452.1268310546875,
+        "device": "Intel(R) Arc(TM) Pro B70 Graphics",
+        "max_abs": 3.421875,
+        "mean_abs": 0.4405636489391327,
+        "op": "base",
+        "shape": {
+          "experts": 4,
+          "k": 2048,
+          "n": 1024,
+          "rows": [
+            2,
+            0,
+            3,
+            1
+          ],
+          "total_m": 6
+        },
+        "status": "executed",
+        "symbol": "cutlass_grouped_gemm_w8a8_int8_interface"
+      },
+      "returncode": 0,
+      "status": "ok",
+      "stderr": "",
+      "stdout": "{\"candidate\": \"/home/steve/src/vllm-xpu-kernels/build/temp-before-onednn-grouped-20260612064136/_xpu_C.abi3.so\", \"checksum\": 1452.1268310546875, \"device\": \"Intel(R) Arc(TM) Pro B70 Graphics\", \"max_abs\": 3.421875, \"mean_abs\": 0.4405636489391327, \"op\": \"base\", \"shape\": {\"experts\": 4, \"k\": 2048, \"n\": 1024, \"rows\": [2, 0, 3, 1], \"total_m\": 6}, \"status\": \"executed\", \"symbol\": \"cutlass_grouped_gemm_w8a8_int8_interface\"}\n"
+    },
+    {
+      "candidate": "/home/steve/src/vllm-xpu-kernels/build/temp-before-onednn-grouped-20260612064136/_xpu_C.abi3.so",
+      "candidate_label": "build/temp-before-onednn-grouped-20260612064136",
+      "op": "offsets",
+      "parsed": {
+        "candidate": "/home/steve/src/vllm-xpu-kernels/build/temp-before-onednn-grouped-20260612064136/_xpu_C.abi3.so",
+        "checksum": 1452.1268310546875,
+        "device": "Intel(R) Arc(TM) Pro B70 Graphics",
+        "max_abs": 3.421875,
+        "mean_abs": 0.4405636489391327,
+        "op": "offsets",
+        "shape": {
+          "experts": 4,
+          "k": 2048,
+          "n": 1024,
+          "rows": [
+            2,
+            0,
+            3,
+            1
+          ],
+          "total_m": 6
+        },
+        "status": "executed",
+        "symbol": "cutlass_grouped_gemm_w8a8_int8_offsets_interface"
+      },
+      "returncode": 0,
+      "status": "ok",
+      "stderr": "",
+      "stdout": "{\"candidate\": \"/home/steve/src/vllm-xpu-kernels/build/temp-before-onednn-grouped-20260612064136/_xpu_C.abi3.so\", \"checksum\": 1452.1268310546875, \"device\": \"Intel(R) Arc(TM) Pro B70 Graphics\", \"max_abs\": 3.421875, \"mean_abs\": 0.4405636489391327, \"op\": \"offsets\", \"shape\": {\"experts\": 4, \"k\": 2048, \"n\": 1024, \"rows\": [2, 0, 3, 1], \"total_m\": 6}, \"status\": \"executed\", \"symbol\": \"cutlass_grouped_gemm_w8a8_int8_offsets_interface\"}\n"
+    },
+    {
+      "candidate": "/home/steve/src/vllm-xpu-kernels/build/temp-before-onednn-grouped-20260612064136/_xpu_C.abi3.so",
+      "candidate_label": "build/temp-before-onednn-grouped-20260612064136",
+      "op": "active_offsets",
+      "parsed": {
+        "candidate": "/home/steve/src/vllm-xpu-kernels/build/temp-before-onednn-grouped-20260612064136/_xpu_C.abi3.so",
+        "checksum": 1452.1268310546875,
+        "device": "Intel(R) Arc(TM) Pro B70 Graphics",
+        "max_abs": 3.421875,
+        "mean_abs": 0.4405636489391327,
+        "op": "active_offsets",
+        "shape": {
+          "experts": 4,
+          "k": 2048,
+          "n": 1024,
+          "rows": [
+            2,
+            0,
+            3,
+            1
+          ],
+          "total_m": 6
+        },
+        "status": "executed",
+        "symbol": "cutlass_grouped_gemm_w8a8_int8_active_offsets_interface"
+      },
+      "returncode": 0,
+      "status": "ok",
+      "stderr": "",
+      "stdout": "{\"candidate\": \"/home/steve/src/vllm-xpu-kernels/build/temp-before-onednn-grouped-20260612064136/_xpu_C.abi3.so\", \"checksum\": 1452.1268310546875, \"device\": \"Intel(R) Arc(TM) Pro B70 Graphics\", \"max_abs\": 3.421875, \"mean_abs\": 0.4405636489391327, \"op\": \"active_offsets\", \"shape\": {\"experts\": 4, \"k\": 2048, \"n\": 1024, \"rows\": [2, 0, 3, 1], \"total_m\": 6}, \"status\": \"executed\", \"symbol\": \"cutlass_grouped_gemm_w8a8_int8_active_offsets_interface\"}\n"
+    },
+    {
+      "candidate": "/home/steve/src/vllm-xpu-kernels/build/qwen36-sidecar-probe-20260612/_xpu_C.abi3.so",
+      "candidate_label": "build/qwen36-sidecar-probe-20260612",
+      "op": "base",
+      "parsed": null,
+      "returncode": -6,
+      "status": "signal",
+      "stderr": "Traceback (most recent call last):\n  File \"/home/steve/llm-optimizations/scripts/qwen36-w8a8-offset-abi-smoke.py\", line 352, in <module>\n    raise SystemExit(main())\n                     ^^^^^^\n  File \"/home/steve/llm-optimizations/scripts/qwen36-w8a8-offset-abi-smoke.py\", line 294, in main\n    return child_main(args)\n           ^^^^^^^^^^^^^^^^\n  File \"/home/steve/llm-optimizations/scripts/qwen36-w8a8-offset-abi-smoke.py\", line 125, in child_main\n    ops.cutlass_grouped_gemm_w8a8_int8_interface(\n  File \"/home/steve/.venvs/vllm-xpu/lib/python3.12/site-packages/torch/_ops.py\", line 1269, in __call__\n    return self._op(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^\nRuntimeError: W8A8 INT8 grouped GEMM requires an XE2 XPU architecture.\nlevel_zero backend failed with error: 37 (UR_RESULT_ERROR_UNINITIALIZED)\nlevel_zero backend failed with error: 37 (UR_RESULT_ERROR_UNINITIALIZED)\nlevel_zero backend failed with error: 37 (UR_RESULT_ERROR_UNINITIALIZED)\nlevel_zero backend failed with error: 37 (UR_RESULT_ERROR_UNINITIALIZED)\nopencl backend failed with error: 37 (UR_RESULT_ERROR_UNINITIALIZED)\nopencl backend failed with error: 37 (UR_RESULT_ERROR_UNINITIALIZED)\nopencl backend failed with error: 37 (UR_RESULT_ERROR_UNINITIALIZED)\nopencl backend failed with error: 37 (UR_RESULT_ERROR_UNINITIALIZED)\nopencl backend failed with error: 37 (UR_RESULT_ERROR_UNINITIALIZED)\nterminate called after throwing an instance of 'sycl::_V1::exception'\n  what():  level_zero backend failed with error: 37 (UR_RESULT_ERROR_UNINITIALIZED)\n",
+      "stdout": "[2026-06-12 22:43:18.825] [error] [sycl_collector.h:575] XPTI Callback Registration returned: -2147467259\n[2026-06-12 22:43:18.826] [error] [sycl_collector.h:581] XPTI Callback Registration returned: -2147467259\n[2026-06-12 22:43:18.826] [error] [sycl_collector.h:587] XPTI Callback Registration returned: -2147467259\n"
+    },
+    {
+      "candidate": "/home/steve/src/vllm-xpu-kernels/build/qwen36-sidecar-probe-20260612/_xpu_C.abi3.so",
+      "candidate_label": "build/qwen36-sidecar-probe-20260612",
+      "op": "offsets",
+      "parsed": null,
+      "returncode": -6,
+      "status": "signal",
+      "stderr": "Traceback (most recent call last):\n  File \"/home/steve/llm-optimizations/scripts/qwen36-w8a8-offset-abi-smoke.py\", line 352, in <module>\n    raise SystemExit(main())\n                     ^^^^^^\n  File \"/home/steve/llm-optimizations/scripts/qwen36-w8a8-offset-abi-smoke.py\", line 294, in main\n    return child_main(args)\n           ^^^^^^^^^^^^^^^^\n  File \"/home/steve/llm-optimizations/scripts/qwen36-w8a8-offset-abi-smoke.py\", line 128, in child_main\n    ops.cutlass_grouped_gemm_w8a8_int8_offsets_interface(\n  File \"/home/steve/.venvs/vllm-xpu/lib/python3.12/site-packages/torch/_ops.py\", line 1269, in __call__\n    return self._op(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^\nRuntimeError: W8A8 INT8 grouped GEMM offsets requires an XE2 XPU architecture.\nlevel_zero backend failed with error: 37 (UR_RESULT_ERROR_UNINITIALIZED)\nlevel_zero backend failed with error: 37 (UR_RESULT_ERROR_UNINITIALIZED)\nlevel_zero backend failed with error: 37 (UR_RESULT_ERROR_UNINITIALIZED)\nlevel_zero backend failed with error: 37 (UR_RESULT_ERROR_UNINITIALIZED)\nopencl backend failed with error: 37 (UR_RESULT_ERROR_UNINITIALIZED)\nopencl backend failed with error: 37 (UR_RESULT_ERROR_UNINITIALIZED)\nopencl backend failed with error: 37 (UR_RESULT_ERROR_UNINITIALIZED)\nopencl backend failed with error: 37 (UR_RESULT_ERROR_UNINITIALIZED)\nopencl backend failed with error: 37 (UR_RESULT_ERROR_UNINITIALIZED)\nterminate called after throwing an instance of 'sycl::_V1::exception'\n  what():  level_zero backend failed with error: 37 (UR_RESULT_ERROR_UNINITIALIZED)\n",
+      "stdout": "[2026-06-12 22:43:22.065] [error] [sycl_collector.h:575] XPTI Callback Registration returned: -2147467259\n[2026-06-12 22:43:22.065] [error] [sycl_collector.h:581] XPTI Callback Registration returned: -2147467259\n[2026-06-12 22:43:22.065] [error] [sycl_collector.h:587] XPTI Callback Registration returned: -2147467259\n"
+    },
+    {
+      "candidate": "/home/steve/src/vllm-xpu-kernels/build/qwen36-sidecar-probe-20260612/_xpu_C.abi3.so",
+      "candidate_label": "build/qwen36-sidecar-probe-20260612",
+      "op": "active_offsets",
+      "parsed": null,
+      "returncode": -6,
+      "status": "signal",
+      "stderr": "Traceback (most recent call last):\n  File \"/home/steve/llm-optimizations/scripts/qwen36-w8a8-offset-abi-smoke.py\", line 352, in <module>\n    raise SystemExit(main())\n                     ^^^^^^\n  File \"/home/steve/llm-optimizations/scripts/qwen36-w8a8-offset-abi-smoke.py\", line 294, in main\n    return child_main(args)\n           ^^^^^^^^^^^^^^^^\n  File \"/home/steve/llm-optimizations/scripts/qwen36-w8a8-offset-abi-smoke.py\", line 132, in child_main\n    ops.cutlass_grouped_gemm_w8a8_int8_active_offsets_interface(\n  File \"/home/steve/.venvs/vllm-xpu/lib/python3.12/site-packages/torch/_ops.py\", line 1269, in __call__\n    return self._op(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^\nRuntimeError: W8A8 INT8 grouped GEMM active offsets requires an XE2 XPU architecture.\nlevel_zero backend failed with error: 37 (UR_RESULT_ERROR_UNINITIALIZED)\nlevel_zero backend failed with error: 37 (UR_RESULT_ERROR_UNINITIALIZED)\nlevel_zero backend failed with error: 37 (UR_RESULT_ERROR_UNINITIALIZED)\nlevel_zero backend failed with error: 37 (UR_RESULT_ERROR_UNINITIALIZED)\nopencl backend failed with error: 37 (UR_RESULT_ERROR_UNINITIALIZED)\nopencl backend failed with error: 37 (UR_RESULT_ERROR_UNINITIALIZED)\nopencl backend failed with error: 37 (UR_RESULT_ERROR_UNINITIALIZED)\nopencl backend failed with error: 37 (UR_RESULT_ERROR_UNINITIALIZED)\nopencl backend failed with error: 37 (UR_RESULT_ERROR_UNINITIALIZED)\nterminate called after throwing an instance of 'sycl::_V1::exception'\n  what():  level_zero backend failed with error: 37 (UR_RESULT_ERROR_UNINITIALIZED)\n",
+      "stdout": "[2026-06-12 22:43:25.322] [error] [sycl_collector.h:575] XPTI Callback Registration returned: -2147467259\n[2026-06-12 22:43:25.322] [error] [sycl_collector.h:581] XPTI Callback Registration returned: -2147467259\n[2026-06-12 22:43:25.322] [error] [sycl_collector.h:587] XPTI Callback Registration returned: -2147467259\n"
+    }
+  ],
+  "shape": {
+    "experts": 4,
+    "k": 2048,
+    "n": 1024,
+    "rows": [
+      2,
+      0,
+      3,
+      1
+    ]
+  }
+}

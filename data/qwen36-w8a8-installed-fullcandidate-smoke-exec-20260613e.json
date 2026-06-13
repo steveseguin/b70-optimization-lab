@@ -1,0 +1,165 @@
+{
+  "candidates": [
+    "/home/steve/src/vllm-xpu-kernels/vllm_xpu_kernels/_xpu_C.abi3.so"
+  ],
+  "decision": "Use the full diagnostic candidate(s) that executed base, offsets, active-offset, quant-out, and SiLU+quant-out: installed. Keep endpoint promotion gated on exactness, speed, and provenance; this smoke proves only ABI and tiny execution.",
+  "execute": true,
+  "generated_at": "2026-06-13T02:50:49.438028+00:00",
+  "python": "/home/steve/.venvs/vllm-xpu/bin/python",
+  "results": [
+    {
+      "candidate": "/home/steve/src/vllm-xpu-kernels/vllm_xpu_kernels/_xpu_C.abi3.so",
+      "candidate_label": "installed",
+      "op": "base",
+      "parsed": {
+        "candidate": "/home/steve/src/vllm-xpu-kernels/vllm_xpu_kernels/_xpu_C.abi3.so",
+        "checksum": 1452.1268310546875,
+        "device": "Intel(R) Arc(TM) Pro B70 Graphics",
+        "max_abs": 3.421875,
+        "mean_abs": 0.4405636489391327,
+        "op": "base",
+        "shape": {
+          "experts": 4,
+          "k": 2048,
+          "n": 1024,
+          "rows": [
+            2,
+            0,
+            3,
+            1
+          ],
+          "total_m": 6
+        },
+        "status": "executed",
+        "symbol": "cutlass_grouped_gemm_w8a8_int8_interface"
+      },
+      "returncode": 0,
+      "status": "ok",
+      "stderr": "",
+      "stdout": "{\"candidate\": \"/home/steve/src/vllm-xpu-kernels/vllm_xpu_kernels/_xpu_C.abi3.so\", \"checksum\": 1452.1268310546875, \"device\": \"Intel(R) Arc(TM) Pro B70 Graphics\", \"max_abs\": 3.421875, \"mean_abs\": 0.4405636489391327, \"op\": \"base\", \"shape\": {\"experts\": 4, \"k\": 2048, \"n\": 1024, \"rows\": [2, 0, 3, 1], \"total_m\": 6}, \"status\": \"executed\", \"symbol\": \"cutlass_grouped_gemm_w8a8_int8_interface\"}\n"
+    },
+    {
+      "candidate": "/home/steve/src/vllm-xpu-kernels/vllm_xpu_kernels/_xpu_C.abi3.so",
+      "candidate_label": "installed",
+      "op": "offsets",
+      "parsed": {
+        "candidate": "/home/steve/src/vllm-xpu-kernels/vllm_xpu_kernels/_xpu_C.abi3.so",
+        "checksum": 1452.1268310546875,
+        "device": "Intel(R) Arc(TM) Pro B70 Graphics",
+        "max_abs": 3.421875,
+        "mean_abs": 0.4405636489391327,
+        "op": "offsets",
+        "shape": {
+          "experts": 4,
+          "k": 2048,
+          "n": 1024,
+          "rows": [
+            2,
+            0,
+            3,
+            1
+          ],
+          "total_m": 6
+        },
+        "status": "executed",
+        "symbol": "cutlass_grouped_gemm_w8a8_int8_offsets_interface"
+      },
+      "returncode": 0,
+      "status": "ok",
+      "stderr": "",
+      "stdout": "{\"candidate\": \"/home/steve/src/vllm-xpu-kernels/vllm_xpu_kernels/_xpu_C.abi3.so\", \"checksum\": 1452.1268310546875, \"device\": \"Intel(R) Arc(TM) Pro B70 Graphics\", \"max_abs\": 3.421875, \"mean_abs\": 0.4405636489391327, \"op\": \"offsets\", \"shape\": {\"experts\": 4, \"k\": 2048, \"n\": 1024, \"rows\": [2, 0, 3, 1], \"total_m\": 6}, \"status\": \"executed\", \"symbol\": \"cutlass_grouped_gemm_w8a8_int8_offsets_interface\"}\n"
+    },
+    {
+      "candidate": "/home/steve/src/vllm-xpu-kernels/vllm_xpu_kernels/_xpu_C.abi3.so",
+      "candidate_label": "installed",
+      "op": "active_offsets",
+      "parsed": {
+        "candidate": "/home/steve/src/vllm-xpu-kernels/vllm_xpu_kernels/_xpu_C.abi3.so",
+        "checksum": 1452.1268310546875,
+        "device": "Intel(R) Arc(TM) Pro B70 Graphics",
+        "max_abs": 3.421875,
+        "mean_abs": 0.4405636489391327,
+        "op": "active_offsets",
+        "shape": {
+          "experts": 4,
+          "k": 2048,
+          "n": 1024,
+          "rows": [
+            2,
+            0,
+            3,
+            1
+          ],
+          "total_m": 6
+        },
+        "status": "executed",
+        "symbol": "cutlass_grouped_gemm_w8a8_int8_active_offsets_interface"
+      },
+      "returncode": 0,
+      "status": "ok",
+      "stderr": "",
+      "stdout": "{\"candidate\": \"/home/steve/src/vllm-xpu-kernels/vllm_xpu_kernels/_xpu_C.abi3.so\", \"checksum\": 1452.1268310546875, \"device\": \"Intel(R) Arc(TM) Pro B70 Graphics\", \"max_abs\": 3.421875, \"mean_abs\": 0.4405636489391327, \"op\": \"active_offsets\", \"shape\": {\"experts\": 4, \"k\": 2048, \"n\": 1024, \"rows\": [2, 0, 3, 1], \"total_m\": 6}, \"status\": \"executed\", \"symbol\": \"cutlass_grouped_gemm_w8a8_int8_active_offsets_interface\"}\n"
+    },
+    {
+      "candidate": "/home/steve/src/vllm-xpu-kernels/vllm_xpu_kernels/_xpu_C.abi3.so",
+      "candidate_label": "installed",
+      "op": "quant_out",
+      "parsed": {
+        "candidate": "/home/steve/src/vllm-xpu-kernels/vllm_xpu_kernels/_xpu_C.abi3.so",
+        "checksum": 683.0,
+        "device": "Intel(R) Arc(TM) Pro B70 Graphics",
+        "max_abs": 127.0,
+        "mean_abs": 30.20426368713379,
+        "op": "quant_out",
+        "scale_sum": 0.16190944612026215,
+        "shape": {
+          "in_features": 1024,
+          "out_features": 1024,
+          "rows": 6
+        },
+        "status": "executed",
+        "symbol": "per_token_quant_int8_xpu_out"
+      },
+      "returncode": 0,
+      "status": "ok",
+      "stderr": "",
+      "stdout": "{\"candidate\": \"/home/steve/src/vllm-xpu-kernels/vllm_xpu_kernels/_xpu_C.abi3.so\", \"checksum\": 683.0, \"device\": \"Intel(R) Arc(TM) Pro B70 Graphics\", \"max_abs\": 127.0, \"mean_abs\": 30.20426368713379, \"op\": \"quant_out\", \"scale_sum\": 0.16190944612026215, \"shape\": {\"in_features\": 1024, \"out_features\": 1024, \"rows\": 6}, \"status\": \"executed\", \"symbol\": \"per_token_quant_int8_xpu_out\"}\n"
+    },
+    {
+      "candidate": "/home/steve/src/vllm-xpu-kernels/vllm_xpu_kernels/_xpu_C.abi3.so",
+      "candidate_label": "installed",
+      "op": "silu_quant_out",
+      "parsed": {
+        "candidate": "/home/steve/src/vllm-xpu-kernels/vllm_xpu_kernels/_xpu_C.abi3.so",
+        "checksum": -28.0,
+        "device": "Intel(R) Arc(TM) Pro B70 Graphics",
+        "max_abs": 127.0,
+        "mean_abs": 7.816080570220947,
+        "op": "silu_quant_out",
+        "scale_sum": 0.24458660185337067,
+        "shape": {
+          "in_features": 2048,
+          "out_features": 1024,
+          "rows": 6
+        },
+        "status": "executed",
+        "symbol": "silu_and_mul_quant_int8_xpu_out"
+      },
+      "returncode": 0,
+      "status": "ok",
+      "stderr": "",
+      "stdout": "{\"candidate\": \"/home/steve/src/vllm-xpu-kernels/vllm_xpu_kernels/_xpu_C.abi3.so\", \"checksum\": -28.0, \"device\": \"Intel(R) Arc(TM) Pro B70 Graphics\", \"max_abs\": 127.0, \"mean_abs\": 7.816080570220947, \"op\": \"silu_quant_out\", \"scale_sum\": 0.24458660185337067, \"shape\": {\"in_features\": 2048, \"out_features\": 1024, \"rows\": 6}, \"status\": \"executed\", \"symbol\": \"silu_and_mul_quant_int8_xpu_out\"}\n"
+    }
+  ],
+  "shape": {
+    "experts": 4,
+    "k": 2048,
+    "n": 1024,
+    "rows": [
+      2,
+      0,
+      3,
+      1
+    ]
+  }
+}

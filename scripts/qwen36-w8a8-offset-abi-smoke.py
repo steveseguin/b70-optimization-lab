@@ -33,7 +33,13 @@ DEFAULT_VENV_LIB = "/home/steve/.venvs/vllm-xpu/lib"
 DEFAULT_TORCH_LIB = (
     "/home/steve/.venvs/vllm-xpu/lib/python3.12/site-packages/torch/lib"
 )
-OPS = ["base", "offsets", "active_offsets"]
+OPS = [
+    "base",
+    "offsets",
+    "active_offsets",
+    "quant_out",
+    "silu_quant_out",
+]
 
 
 def candidate_label(path: str) -> str:
@@ -65,6 +71,8 @@ def child_main(args: argparse.Namespace) -> int:
         "offsets": "cutlass_grouped_gemm_w8a8_int8_offsets_interface",
         "active_offsets": (
             "cutlass_grouped_gemm_w8a8_int8_active_offsets_interface"),
+        "quant_out": "per_token_quant_int8_xpu_out",
+        "silu_quant_out": "silu_and_mul_quant_int8_xpu_out",
     }
     symbol = op_to_symbol[args.op]
     has_symbol = hasattr(torch.ops._xpu_C, symbol)
@@ -102,6 +110,43 @@ def child_main(args: argparse.Namespace) -> int:
         torch.int32)
     total_m = int(rows_cpu.sum().item())
 
+    ops = torch.ops._xpu_C
+    if args.op in ("quant_out", "silu_quant_out"):
+        if args.op == "quant_out":
+            x = torch.randn((total_m, args.n),
+                            dtype=torch.bfloat16,
+                            device=device)
+        else:
+            x = torch.randn((total_m, args.n * 2),
+                            dtype=torch.bfloat16,
+                            device=device)
+        q = torch.empty((total_m, args.n), dtype=torch.int8, device=device)
+        scales = torch.empty((total_m, 1), dtype=torch.float32, device=device)
+        if args.op == "quant_out":
+            ops.per_token_quant_int8_xpu_out(x, q, scales)
+        else:
+            ops.silu_and_mul_quant_int8_xpu_out(x, q, scales)
+        torch.xpu.synchronize()
+        out = q.cpu().float()
+        scale_cpu = scales.cpu().float()
+        print(json.dumps({
+            "candidate": candidate,
+            "device": str(torch.xpu.get_device_name(args.device)),
+            "op": args.op,
+            "symbol": symbol,
+            "status": "executed",
+            "shape": {
+                "rows": total_m,
+                "in_features": int(x.shape[-1]),
+                "out_features": args.n,
+            },
+            "checksum": float(out.sum().item()),
+            "mean_abs": float(out.abs().mean().item()),
+            "max_abs": float(out.abs().max().item()),
+            "scale_sum": float(scale_cpu.sum().item()),
+        }, sort_keys=True))
+        return 0
+
     a = torch.randint(-8,
                       8, (total_m, args.k),
                       dtype=torch.int8,
@@ -120,7 +165,6 @@ def child_main(args: argparse.Namespace) -> int:
     rows = rows_cpu.to(device)
     offsets = offsets_cpu.to(device)
     active = active_cpu.to(device)
-    ops = torch.ops._xpu_C
     if args.op == "base":
         ops.cutlass_grouped_gemm_w8a8_int8_interface(
             a, a_scale, b, b_scale, None, d, rows, args.n, args.k, experts)
@@ -194,13 +238,31 @@ def run_child(args: argparse.Namespace, candidate: str, op: str) -> dict[str, An
     if args.execute:
         cmd.append("--execute")
 
-    proc = subprocess.run(cmd,
-                          text=True,
-                          stdout=subprocess.PIPE,
-                          stderr=subprocess.PIPE,
-                          env=env,
-                          timeout=args.timeout,
-                          check=False)
+    try:
+        proc = subprocess.run(cmd,
+                              text=True,
+                              stdout=subprocess.PIPE,
+                              stderr=subprocess.PIPE,
+                              env=env,
+                              timeout=args.timeout,
+                              check=False)
+    except subprocess.TimeoutExpired as exc:
+        return {
+            "candidate": candidate,
+            "candidate_label": candidate_label(candidate),
+            "op": op,
+            "returncode": None,
+            "status": "timeout",
+            "stdout": exc.stdout or "",
+            "stderr": exc.stderr or "",
+            "timeout_seconds": args.timeout,
+            "parsed": {
+                "candidate": candidate,
+                "op": op,
+                "status": "timeout",
+                "timeout_seconds": args.timeout,
+            },
+        }
     parsed = None
     for line in reversed(proc.stdout.splitlines()):
         try:
@@ -234,7 +296,8 @@ def write_markdown(report: dict[str, Any], path: Path) -> None:
     for item in report["results"]:
         parsed = item.get("parsed") or {}
         status = parsed.get("status") or item["status"]
-        if item["returncode"] < 0:
+        returncode = item.get("returncode")
+        if isinstance(returncode, int) and returncode < 0:
             status = f"signal {-item['returncode']}"
         lines.append(
             f"- `{item['candidate_label']}` `{item['op']}`: {status}")
@@ -299,6 +362,26 @@ def main() -> int:
         for op in OPS:
             results.append(run_child(args, candidate, op))
 
+    executed_ops_by_candidate: dict[str, set[str]] = {}
+    for item in results:
+        if item.get("returncode") != 0:
+            continue
+        if (item.get("parsed") or {}).get("status") != "executed":
+            continue
+        executed_ops_by_candidate.setdefault(item["candidate"], set()).add(
+            item["op"])
+
+    required_full_ops = {
+        "base",
+        "offsets",
+        "active_offsets",
+        "quant_out",
+        "silu_quant_out",
+    }
+    full_candidates = [
+        candidate for candidate, ops in executed_ops_by_candidate.items()
+        if required_full_ops.issubset(ops)
+    ]
     stable_offset = [
         item for item in results
         if item["op"] == "offsets" and item["returncode"] == 0 and
@@ -306,21 +389,36 @@ def main() -> int:
     ]
     active_crashes = [
         item for item in results
-        if item["op"] == "active_offsets" and item["returncode"] < 0
+        if item["op"] == "active_offsets" and
+        isinstance(item.get("returncode"), int) and item["returncode"] < 0
     ]
-    decision = (
-        "Use the stable offset-only candidate as the next no-quality-loss "
-        "diagnostic lane. Treat active-offset as split: one archived build "
-        "executed it successfully, but the sidecar-probe build aborted, so "
-        "do not promote active-offset until that candidate is rebuilt or "
-        "fixed."
-    )
-    if not stable_offset:
+    timeouts = [
+        item for item in results
+        if item.get("status") == "timeout" or
+        (item.get("parsed") or {}).get("status") == "timeout"
+    ]
+    if full_candidates:
+        labels = ", ".join(candidate_label(path) for path in full_candidates)
+        decision = (
+            "Use the full diagnostic candidate(s) that executed base, offsets, "
+            "active-offset, quant-out, and SiLU+quant-out: "
+            f"{labels}. Keep endpoint promotion gated on exactness, speed, "
+            "and provenance; this smoke proves only ABI and tiny execution."
+        )
+    elif stable_offset:
+        decision = (
+            "Use the stable offset-only candidate as the next no-quality-loss "
+            "diagnostic lane. Treat active-offset and quant-out as unavailable "
+            "until a full candidate is rebuilt or fixed."
+        )
+    else:
         decision = (
             "No offset candidate executed successfully; stop before endpoint "
             "testing and rebuild the XPU extension.")
-    elif active_crashes:
+    if active_crashes:
         decision += " Active-offset crashed in at least one candidate."
+    if timeouts:
+        decision += f" {len(timeouts)} candidate/op child run(s) timed out."
 
     report = {
         "generated_at": datetime.now(timezone.utc).isoformat(),

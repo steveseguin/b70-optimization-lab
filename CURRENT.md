@@ -4,6 +4,40 @@ Date: 2026-06-12
 
 ## Qwen3.6 35B-A3B Quark W8A8 INT8
 
+2026-06-13 notes update:
+
+- Reviewed the live Fast Gemma Challenge dashboard result feed again after the
+  user flagged the Gemma E4B board as a source of transferable ideas. Added
+  `data/gemma-dashboard-results-summary-20260613-gemmalessons.json` and a
+  "Fast Gemma Frontier Refresh 20260613" section in
+  `notes/2026-06-12-qwen36-next-bigger-bets.md`. The snapshot contains `352`
+  results; public frontier rows are now about `470.53 tok/s`, with strong
+  recurring signals around graph/capture, fast decode plus exact eval fallback,
+  prefix-cache warmup, lm-head/sampler cost isolation, token-ID/end-only detok
+  lanes, and acceptance telemetry for speculative paths. These are planning
+  inputs only: no Qwen model, quantization, endpoint, or promoted result was
+  changed.
+
+2026-06-13 notes update:
+
+- Restored the full W8A8 diagnostic XPU extension symbols from the archived
+  `build/temp-before-onednn-grouped-20260612064136` candidate into the lab
+  install after backing up binaries with tag `20260613-fullw8a8diag`. Extended
+  `scripts/qwen36-w8a8-offset-abi-smoke.py` to cover quant-out ops and child
+  timeouts. Fresh installed-package smoke now executes `base`, `offsets`,
+  `active_offsets`, `quant_out`, and `silu_quant_out`. Binary hashes are in
+  `data/qwen36-w8a8-fullcandidate-installed-sha256-20260613f.txt`.
+- Ran layer-20 rank-0 replay with `--enable-offset-gemm` and
+  `--enable-active-offset-gemm`. Artifacts:
+  `data/qwen36-replay-digest-moe-layerfloor-offsetactive-20260613f.{json,log,md}`.
+  All candidates were exact (`max_abs_diff=0.0`). Mean `xpu_fused_moe` was
+  `315.292 us`; mean fused-prologue offset-GEMM was `209.052 us`; mean
+  active-offset was `211.170 us`. Best exact row was `190.025 us`, but
+  `0/16` rows met the `125 us/layerlet` target, so no endpoint promotion is
+  allowed. The accepted backend was restarted with the full diagnostic
+  extension, reached `/v1/models` after `63s`, and passed provenance in
+  `data/qwen36-quark-int8-tp4-accepted-provenance-after-fullcandidate-20260613g.json`.
+
 2026-06-12 notes update:
 
 - Ran a full MoE layerlet floor probe on layer-20 rank-0 replay-digest c1

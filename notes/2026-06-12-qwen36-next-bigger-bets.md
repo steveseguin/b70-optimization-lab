@@ -13662,3 +13662,157 @@ Bigger bets added from this review:
    pattern: every graph/kernel candidate gets a manifest with source SHA,
    cache root, env, route atlas, quality result, reliability result, and a
    rollback recipe before frontdoor traffic can point at it.
+
+## Fast Gemma Frontier Refresh 20260613
+
+Reviewed the live dashboard result feed again after the user pointed at the
+Gemma E4B board as a source of ideas. Snapshot artifact:
+`data/gemma-dashboard-results-summary-20260613-gemmalessons.json`.
+
+Feed summary at fetch time:
+
+- Results: `352`.
+- Keyword counts: `159` negative/regression/blocked entries, `88` vLLM
+  entries, `195` graph/capture entries, `155` speculative/MTP/n-gram entries,
+  `59` lm-head entries, `17` precache/prefix-cache entries, and `3` entries
+  explicitly calling out exact fallback/original-forward paths.
+- Public frontier rows moved from roughly `421 tok/s` to `470.53 tok/s`.
+
+The new high rows are still Gemma-specific and frequently rely on challenge
+constraints, so they are not directly portable to our Qwen3.6 35B W8A8 service.
+The useful transfer is the pattern, not the checkpoint or 4-bit quantization.
+For our current Qwen3.6 lane, keep the model and W8A8 quantization fixed.
+
+Transferable ideas:
+
+1. **Fast decode lane plus exact scoring fallback.** The frontier rows use a
+   fast served decode path while forcing prompt-logprob/PPL requests through an
+   exact original-forward path. For us, this suggests separating the low-latency
+   generation path from exact eval/logprob/provenance paths, with parity gates
+   before any serving switch. This is a control-plane pattern, not permission to
+   alter model numerics.
+2. **Graph/capture is the main shared signal.** The result feed is saturated
+   with onegraph/capture language. This reinforces our current conclusion from
+   the MoE layer-floor negatives: dispatch count is now the enemy, and the next
+   serious no-quality-loss path is persistent MoE layerlets or whole-token
+   command-list capture.
+3. **Prefix cache is a production feature when the prefix is real.** Benchmark
+   prompt replay is not a general speed claim, but production-known prefixes
+   are fair game: system prompts, tool schemas, moderation/routing prompts, and
+   eval suites can be warmed before readiness. This should be reported
+   separately from cold-prompt latency.
+4. **Measure lm-head/sampler cost before assuming MoE is the only limiter.**
+   Gemma's output-head work mattered once the body was optimized. Our current
+   layerlet probes show MoE is still too slow, but we should still add a Qwen
+   c1 decode timeline that isolates final norm, logits, all-reduce/gather,
+   sampler, detok, and stream write.
+5. **Token-ID and end-only detok lane.** Several Gemma rows avoid avoidable
+   per-token frontend work. We should add an internal token-ID response mode and
+   delayed detok/chunked detok test for the frontdoor. This cannot change token
+   choice and should be gated on byte-identical text reconstruction.
+6. **Speculation needs acceptance telemetry, not faith.** The board has many
+   speculative wins and many speculative negatives. Our current no-quality-loss
+   speculative work should report per-position acceptance, verifier cost, and
+   scheduler overhead every time; no acceptance histogram means no promotion.
+
+Bolder ideas added to the queue:
+
+1. **Dual-path OpenAI server.** Route normal generation to an optimized
+   captured/persistent lane, route logprobs/PPL/provenance to a reference lane,
+   and continuously compare sampled prompts across both. This mirrors the
+   fast-decode/exact-eval split while preserving production correctness.
+2. **Whole-token capture bank keyed by route class.** Build a small bank of
+   captured token-step graphs for the most common decode route classes, then
+   fall back to normal eager/vLLM for misses. The route atlas already gives
+   coverage data for deciding which banks are worth building.
+3. **Exact sparse-logits tournament.** If the Qwen lm-head/sampler timeline is
+   material, test a shortlist-plus-exact-fallback logits path. Promotion requires
+   token-id parity and logprob parity for eval paths, so this remains a
+   no-quality-loss experiment rather than approximate top-k sampling.
+4. **Readiness-gated production warm packs.** Treat graph captures, prefix
+   cache entries, hot expert packs, and route atlases as warm packs that must
+   finish before a latency-optimized endpoint reports ready. Record warm time
+   separately from serving speed.
+5. **Verifier-safe multi-token branch farming.** For latency-sensitive requests,
+   run multiple candidate continuations or draft lanes in parallel only if the
+   current target model verifies the accepted tokens. This spends spare VRAM or
+   duplicate cards for latency without changing the output distribution.
+6. **Manifested rollback bundle.** Every aggressive runtime candidate should
+   ship with a manifest containing exact source SHAs, binary hashes, env,
+   graph-cache ids, route atlas ids, quality/eval results, reliability soak
+   result, and the restore command. No ad hoc production flip.
+
+## Full W8A8 Diagnostic Extension And Offset Layer Floor 20260613
+
+Restored the missing grouped-GEMM offset, active-offset, quant-out, and
+SiLU+quant-out symbols into the installed lab XPU extension using the archived
+full diagnostic candidate:
+`/home/steve/src/vllm-xpu-kernels/build/temp-before-onednn-grouped-20260612064136`.
+
+Safety steps and artifacts:
+
+- Extended `scripts/qwen36-w8a8-offset-abi-smoke.py` so the smoke covers
+  `per_token_quant_int8_xpu_out` and `silu_and_mul_quant_int8_xpu_out`, and so
+  timed-out child processes are reported instead of aborting the parent.
+- Registration-only and execution smokes:
+  `data/qwen36-w8a8-offset-abi-smoke-20260613a.{json,md}`,
+  `data/qwen36-w8a8-offset-abi-smoke-exec-20260613a.{json,md}`,
+  `data/qwen36-w8a8-offset-quant-abi-smoke-20260613b.{json,md}`,
+  `data/qwen36-w8a8-offset-quant-abi-smoke-exec-20260613c.{json,md}`,
+  `data/qwen36-w8a8-fullcandidate-abi-smoke-exec-20260613d.{json,md}`, and
+  `data/qwen36-w8a8-installed-fullcandidate-smoke-exec-20260613e.{json,md}`.
+- Installed binary backup tag: `20260613-fullw8a8diag`.
+- Binary hashes: `data/qwen36-w8a8-fullcandidate-installed-sha256-20260613f.txt`.
+- The installed package now executes `base`, `offsets`, `active_offsets`,
+  `quant_out`, and `silu_quant_out` in a fresh process.
+
+Focused layer-floor run:
+
+- Benchmark:
+  `data/qwen36-replay-digest-moe-layerfloor-offsetactive-20260613f.{json,log,md}`.
+- XPU process snapshots:
+  `data/qwen36-replay-digest-moe-layerfloor-offsetactive-20260613f-pre-xpusmi-ps.txt`
+  and
+  `data/qwen36-replay-digest-moe-layerfloor-offsetactive-20260613f-post-xpusmi-ps.txt`.
+- Route source:
+  `data/qwen36-replay-digest-hot-decode1-layer20-rank0-routes-20260612dv.jsonl`.
+- Command added both `--enable-offset-gemm` and
+  `--enable-active-offset-gemm` over layer-20 rank-0 route starts `0:16`.
+
+Results:
+
+- All tested candidate paths were exact versus `xpu_fused_moe`
+  (`max_abs_diff=0.0`).
+- Mean `xpu_fused_moe`: `315.292 us`.
+- Mean preallocated staged: `211.869 us`.
+- Mean fused-prologue offset-GEMM staged: `209.052 us`.
+- Mean fused-prologue active-offset-GEMM staged: `211.170 us`.
+- Best exact row: fused-prologue offset-GEMM at `190.025 us`,
+  `1.501x` versus current `xpu_fused_moe`.
+- Worst best-exact non-reference row: `252.063 us`.
+- Gate: `0/16` rows met the `125 us/layerlet` target, so endpoint promotion
+  remains blocked.
+
+Reliability:
+
+- Restarted the accepted backend after installing the full diagnostic
+  extension. Direct tmux launch reached `/v1/models` after `63s`.
+- Provenance passed:
+  `data/qwen36-quark-int8-tp4-accepted-provenance-after-fullcandidate-20260613g.json`.
+- Restart log:
+  `data/qwen36-quark-int8-tp4-accepted-restored-after-fullcandidate-20260613g.log`.
+- Post-provenance XPU process snapshot:
+  `data/qwen36-quark-int8-tp4-accepted-postprovenance-fullcandidate-20260613g-xpusmi-ps.txt`.
+
+Interpretation:
+
+- Restoring the full diagnostic ABI was useful and restart-safe for the
+  accepted lane.
+- Offset-GEMM is exact and improves the layer-floor screen versus the previous
+  preallocated staged candidate, but the best measured layerlet is still far
+  above the `125 us` target.
+- Active-offset is exact, but does not beat offset-GEMM in this route window.
+- This strengthens the earlier conclusion: the next meaningful path is not
+  another offset/table-layout tweak. We need persistent MoE layerlets,
+  whole-token command-list capture, or verifier-safe multi-token acceptance to
+  reduce submission/dispatch overhead.
