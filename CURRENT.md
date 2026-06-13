@@ -6,6 +6,22 @@ Date: 2026-06-12
 
 2026-06-13 notes update:
 
+- Added `notes/2026-06-13-minimax-m27-transfer-audit-for-qwen36.md` and folded
+  its findings into `notes/2026-06-12-qwen36-next-bigger-bets.md` as
+  `MiniMax M2.7 Transfer Audit 20260613p`. The useful MiniMax transfers are
+  instrumentation and promotion discipline, not 4-bit quantization: add
+  site-labeled all-rank collective timing, test MoE output reduction inside or
+  adjacent to the persistent W8A8 layerlet, apply tiny-collective policies only
+  after shape/call-site proof, use warm-cache paired A/B promotion gates, and
+  keep structured-output fast lanes separate from free-form chat decode claims.
+  The older MiniMax GGUF wins add two conditional Qwen checks: verify
+  attention/KV placement and CPU-staging behavior, then only run row-packing or
+  microtile sweeps if the measured Qwen W8A8 shapes point there.
+  Already-tried Qwen direct ports remain rejected: `block-size 256` and
+  `MBT512`.
+
+2026-06-13 notes update:
+
 - Added an explicit `Active Backlog Index 20260613o` to
   `notes/2026-06-12-qwen36-next-bigger-bets.md`. It now separates current
   status, tried-and-ruled-out 2x levers, useful-but-insufficient building

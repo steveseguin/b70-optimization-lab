@@ -112,13 +112,95 @@ chronological evidence and artifact links.
    evidence and a reproducibility anchor. Future posts should only include
    accepted-quality, non-diagnostic endpoints.
 
+### MiniMax M2.7 Transfer Audit 20260613p
+
+The MiniMax M2.7 review is recorded in
+`notes/2026-06-13-minimax-m27-transfer-audit-for-qwen36.md`. The transfer is
+about instrumentation, dispatch structure, and promotion discipline, not
+quantization: no MiniMax INT4/AutoRound/llm-scaler u4 path is an acceptable
+Qwen substitute.
+
+Actions already applied or tried on Qwen:
+
+- PIECEWISE graph/no-prefix serving posture is already part of the accepted
+  Qwen launcher.
+- Clone-safe custom XPU collectives are already enabled in the accepted Qwen
+  launcher.
+- Direct MiniMax ports `--block-size 256` and `--max-num-batched-tokens 512`
+  were already tested and rejected for the current Qwen 32K/no-prefix W8A8
+  endpoint.
+- Cache provenance and canary checks already exist, but the promotion protocol
+  should become stricter for future speed claims.
+- Qwen already matches the later MiniMax vLLM oneCCL posture: P2P enabled and
+  `CCL_ZE_IPC_EXCHANGE` left unset/default, while explicit `pidfd` remains more
+  useful for standalone communication probes.
+- Qwen already uses `/mnt/fast-ai` for model/cache roots, matching the MiniMax
+  fast-storage operational lesson.
+
+Successful MiniMax patterns not fully tried on Qwen:
+
+1. **Site-labeled collective timing.**
+   MiniMax's call-site timing found the exact collective classes that mattered.
+   Qwen has forward-boundary timing, but still needs all-rank labels for vocab,
+   attention output, MoE output/combine, GDN/router-adjacent collectives, and
+   any tiny FP32 reductions.
+
+2. **MoE output collective inside or adjacent to the MoE custom-op boundary.**
+   MiniMax won by moving MoE output reduction closer to the custom path. Qwen's
+   offset/active-offset W8A8 replay did not remove enough dispatch overhead and
+   did not yet absorb the output collective boundary.
+
+3. **Tiny-collective policy based on measured shape, not guesswork.**
+   MiniMax Q/K variance allreduce was small enough for clone-elision and then
+   alias-correct in-place custom-op wins. Qwen should first log call-site
+   labels, element counts, dtypes, and aliasing, then apply the same policy only
+   to proven hot tiny sites.
+
+4. **Work-sharing/persistent MoE as an architecture, not as INT4.**
+   The MiniMax INT4 kernel itself is off-limits for Qwen, but the useful idea is
+   a resident one-dispatch W8A8 top-k layerlet with descriptors, scales, expert
+   pointers, scratch, route command, combine, and collective boundary handled
+   together.
+
+5. **Warm-cache repeat gates.**
+   MiniMax rejected fast stale-cache roots and promoted only fresh-cache,
+   direct-loaded, repeated, quality-passing runs. Future Qwen promotions should
+   require two discarded warmups, at least four measured repeats, adjacent
+   control/candidate A/B, raw cache-root hashes, and token-ID/canary proof.
+
+6. **Structured-output fast lane kept separate.**
+   MiniMax's fastest regex-constrained HTML lane is a production pattern for
+   strict schemas, not a general chat-decode result. Qwen can track a separate
+   schema/tool fast lane later, but it must not be mixed with free-form c1
+   speed claims.
+
+7. **Host/display isolation as benchmark metadata.**
+   MiniMax's 32K result recorded display isolation on the Arc cards. The next
+   Localmaxxing-worthy Qwen run should record driver/kernel/firmware, power
+   state, display attachment, and whether any B70 is serving desktop output.
+
+8. **Attention/KV placement audit.**
+   Early MiniMax GGUF speedups depended on fixing K/Q/V placement after stale
+   device-map assumptions made earlier tests misleading. Qwen vLLM should
+   already be XPU-resident, but the next layer-family artifact should verify no
+   hidden CPU staging or host transfers around attention, KV, GDN, router,
+   logits, or collective boundaries.
+
+9. **Shape-driven row packing or microtile sweeps.**
+   MiniMax GGUF gains from `MMV_Y=2`, `-ub 64`, and fused RMSNorm do not map
+   directly to Qwen vLLM, but the method does: if Qwen timing points at small-N
+   W8A8 kernels rather than collectives/dispatch, run Qwen-specific row-packing
+   or microtile sweeps against the measured shapes.
+
 ### Immediate Next Things To Try
 
 1. **All-rank layer-family timing.**
    Split c1 decode forward by attention/GDN, router/topk, MoE prologue,
    grouped GEMM1, activation/quant, grouped GEMM2, combine, dense residual,
-   logits, and TP collectives. This is the next highest-signal probe because
-   route skew and output tail are ruled out.
+   logits, and TP collectives. Include MiniMax-style call-site labels for every
+   collective and log dtype, element count, bytes, rank/card map, wait time,
+   attention/KV placement, and CPU-staging indicators. This is the next
+   highest-signal probe because route skew and output tail are ruled out.
 
 2. **Collective-only replay.**
    Measure TP4 all-reduce/all-gather latency outside model code using the same
@@ -137,8 +219,10 @@ chronological evidence and artifact links.
 
 5. **Persistent one-dispatch MoE layerlet.**
    Keep per-layer descriptors, scratch, scales, expert pointers, and output
-   buffers resident; enqueue only the current token route command. This attacks
-   the fixed dispatch boundary that offset-GEMM did not remove.
+   buffers resident; enqueue only the current token route command. Include a
+   candidate path where MoE combine/output collective handling is inside or
+   immediately adjacent to the layerlet. This attacks the fixed dispatch
+   boundary that offset-GEMM did not remove.
 
 6. **Oracle `k=1` parity repair.**
    Continue the verifier/KV trace work until oracle `k=1` is token-identical.
