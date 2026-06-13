@@ -109,11 +109,11 @@ requires `max_abs_diff_f32 == 0.0`.
 
 ## Next Tasks
 
-1. Run the one-GEMM execute prototype inside a normal vLLM process context with
-   `VLLM_XPU_MOE_ONEDNN_SIDECAR_EXECUTE=gemm1`, max calls `1`, rank `0`, and a
-   single layer filter such as `layers.9`.
-2. Require the sidecar log parity field to report `max_abs_diff_f32 == 0.0`.
-3. Repeat for GEMM2.
+1. Done: run the one-GEMM execute prototype inside a normal vLLM process
+   context with `VLLM_XPU_MOE_ONEDNN_SIDECAR_EXECUTE=gemm1`, max calls `1`,
+   rank `0`, and `layers.9`.
+2. Done: require `parity.max_abs_diff_f32 == 0.0` for GEMM1.
+3. Done: repeat for GEMM2 and require `parity.max_abs_diff_f32 == 0.0`.
 4. Extend to resident two-GEMM execution with cached descriptors/primitives.
 5. Add activation/quant2 and gather/combine parity until the full island
    returns `max_abs_diff=0.0` versus `xpu_fused_moe`.
@@ -127,3 +127,86 @@ The non-speculative layerlet needs to beat roughly `189 us/layer`, ideally with
 one resident/fused dispatch boundary. If a replay-exact layerlet cannot beat
 that budget, shift the next >200 tok/s effort toward exact target-verified
 speculation parity.
+
+## Live Endpoint Sidecar GEMM Parity
+
+Date: 2026-06-13.
+
+Summary artifact:
+`data/qwen36-onednn-sidecar-execute-live-sycl8-20260613.json`.
+
+Launcher patch artifact:
+`patches/qwen36-sidecar-launcher-sycl8-runtime-20260613.patch`.
+
+The first endpoint-side one-GEMM execute attempt used the earlier sidecar build
+from `/home/steve/src/vllm-xpu-kernels/build/qwen36-sidecar-probe-20260612`.
+That build pulled in oneAPI 2026 and linked `_xpu_C.abi3.so` against
+`libsycl.so.9`. In the accepted PyTorch/vLLM runtime lane, the extension could
+not infer the XPU device type. When forced toward the oneAPI 2026 runtime, the
+import failed with an unresolved `urDeviceWaitExp` symbol from
+`LIBUR_LOADER_0.12`.
+
+Runtime lesson: sidecar builds must stay in the PyTorch-compatible SYCL 8 lane.
+Do not source global oneAPI 2026 into the accepted vLLM process.
+
+Rebuilt sidecar:
+
+```bash
+BUILD_DIR=/home/steve/src/vllm-xpu-kernels/build/qwen36-sidecar-probe-sycl8-20260613 \
+INSTALL_PREFIX=/tmp/qwen36-sidecar-probe-sycl8-20260613 \
+ONEAPI_VARS=/opt/intel/oneapi/compiler/2025.3/env/vars.sh \
+JOBS=4 GDN_KERNELS=ON CLEAN=1 \
+scripts/build-vllm-xpu-kernels-xpu-c-only.sh
+```
+
+The new `_xpu_C.abi3.so` links against `libsycl.so.8`. With the vLLM launcher
+LD path active, import, schema registration, and vLLM XPU platform detection
+passed. Plain `ldd` outside that launcher still reports missing oneAPI/PyTorch
+runtime libraries, so use the launcher environment for validation.
+
+GEMM1 endpoint-side parity:
+
+- tmux tag: `sidecar-exec-gemm1-20260613`
+- JSONL:
+  `data/qwen36-onednn-sidecar-execute-gemm1-live-20260613--2043961.jsonl`
+- layer: `language_model.model.layers.9.mlp.experts`
+- `execute_mode`: `1`
+- `execute_ok`: `1`
+- `construct_us`: `15`
+- `execute_wait_us`: `3244`
+- parity target: `gemm1_output`
+- `before_checksum_f32`: `-1768229.0`
+- `after_checksum_f32`: `-1768229.0`
+- `max_abs_diff_f32`: `0.0`
+
+GEMM2 endpoint-side parity:
+
+- tmux tag: `sidecar-exec-gemm2-20260613`
+- JSONL:
+  `data/qwen36-onednn-sidecar-execute-gemm2-live-20260613--2045166.jsonl`
+- layer: `language_model.model.layers.9.mlp.experts`
+- `execute_mode`: `2`
+- `execute_ok`: `1`
+- `construct_us`: `8`
+- `execute_wait_us`: `14433`
+- parity target: `gemm2_output`
+- `before_checksum_f32`: `-8468.5048828125`
+- `after_checksum_f32`: `-8468.5048828125`
+- `max_abs_diff_f32`: `0.0`
+
+The `elapsed_ms` fields in these one-shot logs include diagnostic clone/sync
+work and possibly one-time setup effects. They are not promotion-grade
+steady-state layerlet timing.
+
+The accepted endpoint was restored after the sidecar probes:
+
+- tmux: `qwen36-tp4-accepted-restored-after-sidecar-gemm-20260613`
+- launch log:
+  `/tmp/qwen36-quark-int8-tp4-accepted-restored-after-sidecar-gemm-20260613.log`
+- no-thinking text smoke:
+  `data/qwen36-quark-int8-tp4-accepted-restored-after-sidecar-gemm-quality-nothink-smoke-20260613.json`
+- result: `pass_all=true`, `baseline_match_all=true`
+
+Next engineering gate: implement a resident two-GEMM sidecar path with cached
+descriptors/primitives and a parity-only diagnostic mode. Only then should the
+activation/quant2 and gather/combine stages be pulled into the same island.

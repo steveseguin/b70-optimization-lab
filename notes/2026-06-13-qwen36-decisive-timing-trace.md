@@ -155,3 +155,19 @@ matching oneDNN grouped memory and the exact standalone oneDNN runner. Smoke:
 Next implementation move: add a disabled-by-default C++ sidecar execution op
 for one live grouped GEMM, prove exact parity outside endpoint mutation, then
 grow it into a resident two-GEMM/full-island replay before any endpoint A/B.
+
+## Continuation: Live GEMM Execute Gate
+
+The endpoint-side oneDNN sidecar execute gate passed for both GEMM halves after
+rebuilding the probe in the SYCL 8 / oneAPI 2025.3 lane:
+
+- GEMM1 live parity:
+  `data/qwen36-onednn-sidecar-execute-gemm1-live-20260613--2043961.jsonl`
+- GEMM2 live parity:
+  `data/qwen36-onednn-sidecar-execute-gemm2-live-20260613--2045166.jsonl`
+- summary:
+  `data/qwen36-onednn-sidecar-execute-live-sycl8-20260613.json`
+
+Both records have `execute_ok=1` and `parity.max_abs_diff_f32=0.0`. This keeps
+the decision pointed at the persistent W8A8 MoE layerlet. The next timing claim
+must come from a resident path without diagnostic clone/sync overhead.

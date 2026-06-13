@@ -1,0 +1,22 @@
+diff --git a/scripts/launch-qwen36-quark-int8-sidecar-probe.sh b/scripts/launch-qwen36-quark-int8-sidecar-probe.sh
+index 4184357..36842d3 100755
+--- a/scripts/launch-qwen36-quark-int8-sidecar-probe.sh
++++ b/scripts/launch-qwen36-quark-int8-sidecar-probe.sh
+@@ -18 +18 @@ KERNELS_SRC="${KERNELS_SRC:-/home/steve/src/vllm-xpu-kernels}"
+-SIDECAR_BUILD_DIR="${SIDECAR_BUILD_DIR:-$KERNELS_SRC/build/qwen36-sidecar-probe-20260612}"
++SIDECAR_BUILD_DIR="${SIDECAR_BUILD_DIR:-$KERNELS_SRC/build/qwen36-sidecar-probe-sycl8-20260613}"
+@@ -20 +20 @@ OVERLAY_DIR="${OVERLAY_DIR:-/tmp/qwen36-vllm-xpu-sidecar-overlay-${TAG}}"
+-ONEAPI_SETVARS="${ONEAPI_SETVARS:-/opt/intel/oneapi/setvars.sh}"
++ONEAPI_SETVARS="${ONEAPI_SETVARS:-}"
+@@ -27 +27 @@ fi
+-if [[ -f "$ONEAPI_SETVARS" ]]; then
++if [[ -n "$ONEAPI_SETVARS" && -f "$ONEAPI_SETVARS" ]]; then
+@@ -29 +29,3 @@ if [[ -f "$ONEAPI_SETVARS" ]]; then
+-  source "$ONEAPI_SETVARS" --force >/tmp/oneapi-setvars-qwen36-sidecar-probe.log 2>&1 || true
++  set +u
++  source "$ONEAPI_SETVARS" >/tmp/oneapi-setvars-qwen36-sidecar-probe.log 2>&1 || true
++  set -u
+@@ -72 +74,2 @@ export VLLM_XPU_MOE_ONEDNN_SIDECAR_LAYER_REGEX="${VLLM_XPU_MOE_ONEDNN_SIDECAR_LA
+-export VLLM_XPU_MOE_ONEDNN_SIDECAR_LOG="${VLLM_XPU_MOE_ONEDNN_SIDECAR_LOG:-/tmp/qwen36-onednn-sidecar-probe-${TAG}-{pid}.jsonl}"
++DEFAULT_SIDECAR_LOG="/tmp/qwen36-onednn-sidecar-probe-${TAG}-{pid}.jsonl"
++export VLLM_XPU_MOE_ONEDNN_SIDECAR_LOG="${VLLM_XPU_MOE_ONEDNN_SIDECAR_LOG:-$DEFAULT_SIDECAR_LOG}"

@@ -15,18 +15,20 @@ LOG_PATH="${LOG_PATH:-/tmp/qwen36-quark-int8-tp4-${TAG}.log}"
 
 VLLM_SRC="${VLLM_SRC:-/home/steve/src/vllm}"
 KERNELS_SRC="${KERNELS_SRC:-/home/steve/src/vllm-xpu-kernels}"
-SIDECAR_BUILD_DIR="${SIDECAR_BUILD_DIR:-$KERNELS_SRC/build/qwen36-sidecar-probe-20260612}"
+SIDECAR_BUILD_DIR="${SIDECAR_BUILD_DIR:-$KERNELS_SRC/build/qwen36-sidecar-probe-sycl8-20260613}"
 OVERLAY_DIR="${OVERLAY_DIR:-/tmp/qwen36-vllm-xpu-sidecar-overlay-${TAG}}"
-ONEAPI_SETVARS="${ONEAPI_SETVARS:-/opt/intel/oneapi/setvars.sh}"
+ONEAPI_SETVARS="${ONEAPI_SETVARS:-}"
 
 if [[ ! -f "$SIDECAR_BUILD_DIR/_xpu_C.abi3.so" ]]; then
   echo "Missing rebuilt sidecar module: $SIDECAR_BUILD_DIR/_xpu_C.abi3.so" >&2
   exit 1
 fi
 
-if [[ -f "$ONEAPI_SETVARS" ]]; then
+if [[ -n "$ONEAPI_SETVARS" && -f "$ONEAPI_SETVARS" ]]; then
   # shellcheck disable=SC1090
-  source "$ONEAPI_SETVARS" --force >/tmp/oneapi-setvars-qwen36-sidecar-probe.log 2>&1 || true
+  set +u
+  source "$ONEAPI_SETVARS" >/tmp/oneapi-setvars-qwen36-sidecar-probe.log 2>&1 || true
+  set -u
 fi
 
 rm -rf "$OVERLAY_DIR"
@@ -69,7 +71,8 @@ export VLLM_XPU_MOE_ONEDNN_SIDECAR_OFFSETS="${VLLM_XPU_MOE_ONEDNN_SIDECAR_OFFSET
 export VLLM_XPU_MOE_ONEDNN_SIDECAR_MAX_CALLS="${VLLM_XPU_MOE_ONEDNN_SIDECAR_MAX_CALLS:-1}"
 export VLLM_XPU_MOE_ONEDNN_SIDECAR_RANK="${VLLM_XPU_MOE_ONEDNN_SIDECAR_RANK:-0}"
 export VLLM_XPU_MOE_ONEDNN_SIDECAR_LAYER_REGEX="${VLLM_XPU_MOE_ONEDNN_SIDECAR_LAYER_REGEX:-layers\\.9\\.}"
-export VLLM_XPU_MOE_ONEDNN_SIDECAR_LOG="${VLLM_XPU_MOE_ONEDNN_SIDECAR_LOG:-/tmp/qwen36-onednn-sidecar-probe-${TAG}-{pid}.jsonl}"
+DEFAULT_SIDECAR_LOG="/tmp/qwen36-onednn-sidecar-probe-${TAG}-{pid}.jsonl"
+export VLLM_XPU_MOE_ONEDNN_SIDECAR_LOG="${VLLM_XPU_MOE_ONEDNN_SIDECAR_LOG:-$DEFAULT_SIDECAR_LOG}"
 
 export ONEAPI_DEVICE_SELECTOR=level_zero:0,1,2,3
 export ZE_AFFINITY_MASK=0,1,2,3

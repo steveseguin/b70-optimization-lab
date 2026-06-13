@@ -1,0 +1,73 @@
+{
+  "date": "2026-06-13",
+  "model": "nameistoken/Qwen3.6-35B-A3B-Quark-W8A8-INT8",
+  "served_model_name": "qwen36-35b-a3b-fp8",
+  "goal": "Validate endpoint-side oneDNN sidecar execution parity for individual W8A8 MoE GEMM halves before resident layerlet work.",
+  "old_build_failure": {
+    "build_dir": "/home/steve/src/vllm-xpu-kernels/build/qwen36-sidecar-probe-20260612",
+    "linked_sycl": "libsycl.so.9",
+    "result": "Rejected for accepted endpoint lane.",
+    "symptoms": [
+      "vLLM failed to infer device type when the extension was overlaid into the accepted PyTorch/vLLM runtime.",
+      "Forcing the oneAPI 2026 runtime caused import failure with unresolved urDeviceWaitExp from LIBUR_LOADER_0.12."
+    ],
+    "lesson": "Sidecar probes must use the PyTorch-compatible SYCL 8 runtime lane; do not source global oneAPI 2026 into the accepted vLLM process."
+  },
+  "rebuilt_sidecar": {
+    "build_dir": "/home/steve/src/vllm-xpu-kernels/build/qwen36-sidecar-probe-sycl8-20260613",
+    "install_prefix": "/tmp/qwen36-sidecar-probe-sycl8-20260613",
+    "oneapi_vars": "/opt/intel/oneapi/compiler/2025.3/env/vars.sh",
+    "command": "BUILD_DIR=/home/steve/src/vllm-xpu-kernels/build/qwen36-sidecar-probe-sycl8-20260613 INSTALL_PREFIX=/tmp/qwen36-sidecar-probe-sycl8-20260613 ONEAPI_VARS=/opt/intel/oneapi/compiler/2025.3/env/vars.sh JOBS=4 GDN_KERNELS=ON CLEAN=1 scripts/build-vllm-xpu-kernels-xpu-c-only.sh",
+    "linked_sycl": "libsycl.so.8",
+    "import_schema_platform_check": "passed under launcher LD path",
+    "schema": "_xpu_C::qwen36_moe_onednn_sidecar_probe(..., bool dry_create_descriptors, int execute_mode) -> Tensor"
+  },
+  "gemm1_live_probe": {
+    "tag": "sidecar-exec-gemm1-20260613",
+    "artifact": "data/qwen36-onednn-sidecar-execute-gemm1-live-20260613--2043961.jsonl",
+    "layer": "language_model.model.layers.9.mlp.experts",
+    "layer_index": 9,
+    "rank": 0,
+    "execute_mode": 1,
+    "execute_ok": 1,
+    "construct_us": 15,
+    "execute_wait_us": 3244,
+    "parity_target": "gemm1_output",
+    "before_checksum_f32": -1768229.0,
+    "after_checksum_f32": -1768229.0,
+    "max_abs_diff_f32": 0.0
+  },
+  "gemm2_live_probe": {
+    "tag": "sidecar-exec-gemm2-20260613",
+    "artifact": "data/qwen36-onednn-sidecar-execute-gemm2-live-20260613--2045166.jsonl",
+    "layer": "language_model.model.layers.9.mlp.experts",
+    "layer_index": 9,
+    "rank": 0,
+    "execute_mode": 2,
+    "execute_ok": 1,
+    "construct_us": 8,
+    "execute_wait_us": 14433,
+    "parity_target": "gemm2_output",
+    "before_checksum_f32": -8468.5048828125,
+    "after_checksum_f32": -8468.5048828125,
+    "max_abs_diff_f32": 0.0
+  },
+  "accepted_endpoint_restoration": {
+    "tmux_session": "qwen36-tp4-accepted-restored-after-sidecar-gemm-20260613",
+    "launch_log": "/tmp/qwen36-quark-int8-tp4-accepted-restored-after-sidecar-gemm-20260613.log",
+    "health": "passed",
+    "models_endpoint": "qwen36-35b-a3b-fp8, max_model_len 32768",
+    "quality_artifact": "data/qwen36-quark-int8-tp4-accepted-restored-after-sidecar-gemm-quality-nothink-smoke-20260613.json",
+    "quality_result": {
+      "pass_all": true,
+      "baseline_match_all": true
+    }
+  },
+  "promotion_status": "Correctness gate passed for isolated GEMM1 and GEMM2 execution. No speed claim yet because the live probe includes diagnostic clone/sync and one-shot setup overhead.",
+  "next_steps": [
+    "Implement resident two-GEMM sidecar path with cached descriptors and primitives.",
+    "Keep parity diagnostics opt-in and outside performance measurements.",
+    "Add activation/quant2 and gather/combine parity before endpoint A/B.",
+    "Run accepted quality/reliability gates after any performance win."
+  ]
+}

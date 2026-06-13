@@ -14630,14 +14630,49 @@ Runtime lesson:
 
 Next gate:
 
-1. During a controlled maintenance window, stop or move the accepted TP4
-   endpoint, then launch `scripts/launch-qwen36-quark-int8-sidecar-probe.sh`
-   with the rebuilt `_xpu_C` overlay and:
-   `VLLM_XPU_MOE_ONEDNN_SIDECAR_EXECUTE=gemm1`.
-2. Keep `MAX_CALLS=1`, `RANK=0`, and `LAYER_REGEX=layers\\.9\\.`.
-3. Confirm the sidecar JSONL records `execute_mode=1`, `execute_ok=1`,
-   `parity.max_abs_diff_f32 == 0.0`, and sane construct/execute timings while
-   endpoint output still comes from the accepted `xpu_fused_moe` path.
-4. Repeat for GEMM2.
-5. Only after exact scratch parity, extend to cached descriptors and full
-   island replay.
+1. Done: during a controlled maintenance window, launch
+   `scripts/launch-qwen36-quark-int8-sidecar-probe.sh` with the rebuilt
+   `_xpu_C` overlay and `VLLM_XPU_MOE_ONEDNN_SIDECAR_EXECUTE=gemm1`.
+2. Done: keep `MAX_CALLS=1`, `RANK=0`, and `LAYER_REGEX=layers\\.9\\.`.
+3. Done: confirm JSONL records `execute_mode=1`, `execute_ok=1`, and
+   `parity.max_abs_diff_f32 == 0.0`.
+4. Done: repeat for GEMM2. JSONL records `execute_mode=2`, `execute_ok=1`,
+   and `parity.max_abs_diff_f32 == 0.0`.
+5. Next: extend to cached descriptors and full island replay.
+
+## 2026-06-13 Continuation: SYCL 8 Live Sidecar Gate
+
+Artifacts:
+
+- `data/qwen36-onednn-sidecar-execute-live-sycl8-20260613.json`
+- `data/qwen36-onednn-sidecar-execute-gemm1-live-20260613--2043961.jsonl`
+- `data/qwen36-onednn-sidecar-execute-gemm2-live-20260613--2045166.jsonl`
+- `data/qwen36-quark-int8-tp4-accepted-restored-after-sidecar-gemm-quality-nothink-smoke-20260613.json`
+- `patches/qwen36-sidecar-launcher-sycl8-runtime-20260613.patch`
+
+What worked:
+
+- Rebuilding the sidecar with oneAPI 2025.3 produced an extension that links
+  against `libsycl.so.8`, matching the accepted PyTorch/vLLM XPU runtime lane.
+- GEMM1 sidecar execution on live layer 9 rank 0 exactly matched the existing
+  `xpu_fused_moe` scratch: `max_abs_diff_f32=0.0`.
+- GEMM2 sidecar execution on the same layer/rank also exactly matched:
+  `max_abs_diff_f32=0.0`.
+- The accepted endpoint was restored and passed the no-thinking text smoke
+  against the previous accepted baseline.
+
+What did not work:
+
+- The previous sidecar build linked against oneAPI 2026 `libsycl.so.9`. That
+  was not compatible with the accepted stack and either broke XPU platform
+  detection or failed import with `urDeviceWaitExp` unresolved.
+
+Ideas carried forward:
+
+- Build the resident two-GEMM path in the SYCL 8 lane only.
+- Cache oneDNN descriptors/primitives by shape and layer.
+- Keep route offsets, expert pointers, scales, scratch, and outputs resident.
+- Preserve a parity-only mode that can clone/sync one gated call, but remove
+  that overhead for any performance measurement.
+- After two-GEMM parity, pull activation/quant2 and gather/combine into the
+  same sidecar island before endpoint A/B.
