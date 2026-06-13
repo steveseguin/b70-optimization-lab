@@ -1,0 +1,323 @@
+diff --git a/csrc/xpu/onednn/qwen36_moe_sidecar.cpp b/csrc/xpu/onednn/qwen36_moe_sidecar.cpp
+--- a/csrc/xpu/onednn/qwen36_moe_sidecar.cpp
++++ b/csrc/xpu/onednn/qwen36_moe_sidecar.cpp
+@@
++#include <memory>
++#include <mutex>
++#include <utility>
+@@
+ struct SidecarMatmulStats {
+   int64_t construct_us = 0;
+   int64_t execute_wait_us = 0;
++  int64_t cache_hit = 0;
+ };
+@@
++struct SidecarMatmulCacheKey {
++  int64_t device_index;
++  int64_t m;
++  int64_t k;
++  int64_t n;
++  int64_t num_experts;
++  int64_t dst_dtype;
++  int64_t weight_layout;
++
++  bool operator==(const SidecarMatmulCacheKey& other) const {
++    return device_index == other.device_index && m == other.m && k == other.k &&
++        n == other.n && num_experts == other.num_experts &&
++        dst_dtype == other.dst_dtype && weight_layout == other.weight_layout;
++  }
++};
++
++struct SidecarMatmulCacheKeyHash {
++  size_t operator()(const SidecarMatmulCacheKey& key) const {
++    size_t h = 0;
++    auto mix = [&h](int64_t value) {
++      size_t v = std::hash<int64_t>{}(value);
++      h ^= v + 0x9e3779b97f4a7c15ULL + (h << 6) + (h >> 2);
++    };
++    mix(key.device_index);
++    mix(key.m);
++    mix(key.k);
++    mix(key.n);
++    mix(key.num_experts);
++    mix(key.dst_dtype);
++    mix(key.weight_layout);
++    return h;
++  }
++};
++
++struct CachedSidecarMatmul {
++  CachedSidecarMatmul(dnnl::memory::desc src_md,
++                      dnnl::memory::desc weights_md,
++                      dnnl::memory::desc dst_md,
++                      dnnl::memory::desc src_scales_md,
++                      dnnl::memory::desc weights_scales_md,
++                      dnnl::matmul prim)
++      : src_md(std::move(src_md)),
++        weights_md(std::move(weights_md)),
++        dst_md(std::move(dst_md)),
++        src_scales_md(std::move(src_scales_md)),
++        weights_scales_md(std::move(weights_scales_md)),
++        prim(std::move(prim)) {}
++
++  dnnl::memory::desc src_md;
++  dnnl::memory::desc weights_md;
++  dnnl::memory::desc dst_md;
++  dnnl::memory::desc src_scales_md;
++  dnnl::memory::desc weights_scales_md;
++  dnnl::matmul prim;
++};
++
++std::mutex g_sidecar_matmul_cache_mutex;
++std::unordered_map<SidecarMatmulCacheKey,
++                   std::shared_ptr<CachedSidecarMatmul>,
++                   SidecarMatmulCacheKeyHash>
++    g_sidecar_matmul_cache;
++
++int64_t sidecar_matmul_cache_size() {
++  std::lock_guard<std::mutex> guard(g_sidecar_matmul_cache_mutex);
++  return static_cast<int64_t>(g_sidecar_matmul_cache.size());
++}
++
++std::shared_ptr<CachedSidecarMatmul> get_cached_grouped_matmul(
++    dnnl::engine& engine,
++    int64_t device_index,
++    const torch::Tensor& dst,
++    int64_t m,
++    int64_t k,
++    int64_t n,
++    int64_t num_experts,
++    dnnl::memory::format_tag weight_layout,
++    int64_t* cache_hit,
++    int64_t* construct_us) {
++  SidecarMatmulCacheKey key{
++      device_index,
++      m,
++      k,
++      n,
++      num_experts,
++      static_cast<int64_t>(dnnl_dst_dtype(dst)),
++      static_cast<int64_t>(weight_layout),
++  };
++
++  {
++    std::lock_guard<std::mutex> guard(g_sidecar_matmul_cache_mutex);
++    auto it = g_sidecar_matmul_cache.find(key);
++    if (it != g_sidecar_matmul_cache.end()) {
++      *cache_hit = 1;
++      *construct_us = 0;
++      return it->second;
++    }
++  }
++
++  const auto construct_start = std::chrono::steady_clock::now();
++  auto src_md = dnnl::memory::desc::grouped(
++      {m, k}, dnnl::memory::data_type::s8, 0, num_experts);
++  auto dst_md = dnnl::memory::desc::grouped(
++      {m, n}, dnnl_dst_dtype(dst), 0, num_experts);
++  auto weights_md = dnnl::memory::desc(
++      {num_experts, k, n}, dnnl::memory::data_type::s8, weight_layout);
++  auto src_scales_md = dnnl::memory::desc(
++      {m}, dnnl::memory::data_type::f32, dnnl::memory::format_tag::a);
++  auto weights_scales_md = dnnl::memory::desc(
++      {num_experts, n}, dnnl::memory::data_type::f32,
++      dnnl::memory::format_tag::ab);
++  dnnl::primitive_attr attr;
++  attr.set_scales_mask(DNNL_ARG_SRC, 1 << 0);
++  attr.set_scales_mask(DNNL_ARG_WEIGHTS, (1 << 0) | (1 << 2));
++  auto pd = dnnl::matmul::primitive_desc(engine, src_md, weights_md, dst_md, attr);
++  auto cached = std::make_shared<CachedSidecarMatmul>(
++      src_md, weights_md, dst_md, src_scales_md, weights_scales_md,
++      dnnl::matmul(pd));
++  const auto construct_end = std::chrono::steady_clock::now();
++
++  {
++    std::lock_guard<std::mutex> guard(g_sidecar_matmul_cache_mutex);
++    auto inserted = g_sidecar_matmul_cache.emplace(key, cached);
++    if (!inserted.second) {
++      *cache_hit = 1;
++      *construct_us = 0;
++      return inserted.first->second;
++    }
++  }
++
++  *cache_hit = 0;
++  *construct_us = std::chrono::duration_cast<std::chrono::microseconds>(
++      construct_end - construct_start).count();
++  return cached;
++}
+@@
+   return {
+       std::chrono::duration_cast<std::chrono::microseconds>(
+           construct_end - construct_start).count(),
+       std::chrono::duration_cast<std::chrono::microseconds>(
+-          execute_end - execute_start).count()};
++          execute_end - execute_start).count(),
++      0};
+ }
+@@
++SidecarMatmulStats execute_cached_grouped_matmul(
++    dnnl::engine& engine,
++    dnnl::stream& engine_stream,
++    int64_t device_index,
++    const torch::Tensor& src,
++    const torch::Tensor& src_scales,
++    const torch::Tensor& weights,
++    const torch::Tensor& weights_scales,
++    const torch::Tensor& dst,
++    const torch::Tensor& onednn_grouped_offsets,
++    int64_t m,
++    int64_t k,
++    int64_t n,
++    int64_t num_experts,
++    dnnl::memory::format_tag weight_layout,
++    bool wait_after_execute) {
++  int64_t cache_hit = 0;
++  int64_t construct_us = 0;
++  auto cached = get_cached_grouped_matmul(engine, device_index, dst, m, k, n,
++                                          num_experts, weight_layout,
++                                          &cache_hit, &construct_us);
++  std::vector<void*> src_handles = {
++      const_cast<void*>(src.data_ptr()),
++      const_cast<void*>(onednn_grouped_offsets.data_ptr())};
++  std::vector<void*> dst_handles = {
++      dst.data_ptr(),
++      const_cast<void*>(onednn_grouped_offsets.data_ptr())};
++  auto src_mem = dnnl::sycl_interop::make_memory(
++      cached->src_md, engine, dnnl::sycl_interop::memory_kind::usm, src_handles);
++  auto dst_mem = dnnl::sycl_interop::make_memory(
++      cached->dst_md, engine, dnnl::sycl_interop::memory_kind::usm, dst_handles);
++  auto weights_mem = oneDNN::make_onednn_memory(
++      cached->weights_md, engine, const_cast<void*>(weights.data_ptr()));
++  auto src_scales_mem = oneDNN::make_onednn_memory(
++      cached->src_scales_md, engine, const_cast<void*>(src_scales.data_ptr()));
++  auto weights_scales_mem = oneDNN::make_onednn_memory(
++      cached->weights_scales_md, engine,
++      const_cast<void*>(weights_scales.data_ptr()));
++  std::unordered_map<int, dnnl::memory> args = {
++      {DNNL_ARG_SRC, src_mem},
++      {DNNL_ARG_WEIGHTS, weights_mem},
++      {DNNL_ARG_DST, dst_mem},
++      {DNNL_ARG_ATTR_SCALES | DNNL_ARG_SRC, src_scales_mem},
++      {DNNL_ARG_ATTR_SCALES | DNNL_ARG_WEIGHTS, weights_scales_mem},
++  };
++  const auto execute_start = std::chrono::steady_clock::now();
++  cached->prim.execute(engine_stream, args);
++  if (wait_after_execute) {
++    engine_stream.wait();
++  }
++  const auto execute_end = std::chrono::steady_clock::now();
++  return {construct_us,
++          std::chrono::duration_cast<std::chrono::microseconds>(
++              execute_end - execute_start).count(),
++          cache_hit};
++}
+@@
++  int64_t gemm1_cache_hit = 0;
++  int64_t gemm1_construct_us = 0;
++  int64_t gemm1_execute_us = 0;
++  int64_t gemm2_cache_hit = 0;
++  int64_t gemm2_construct_us = 0;
++  int64_t gemm2_execute_us = 0;
++  int64_t both_wall_us = 0;
+@@
++    } else if (execute_mode == 3) {
++      const auto both_start = std::chrono::steady_clock::now();
++      auto gemm1_stats = execute_cached_grouped_matmul(
++          engine, stream, dev_id, gemm1_a, gemm1_a_scales, w13, w13_scales,
++          gemm1_output, onednn_grouped_offsets.value(), num_moe_inputs,
++          hidden_size, 2 * inter_size, num_experts,
++          dnnl::memory::format_tag::abc, false);
++      auto gemm2_stats = execute_cached_grouped_matmul(
++          engine, stream, dev_id, gemm2_a, gemm2_a_scales, w2, w2_scales,
++          gemm2_output, onednn_grouped_offsets.value(), num_moe_inputs,
++          inter_size, hidden_size, num_experts,
++          dnnl::memory::format_tag::abc, true);
++      const auto both_end = std::chrono::steady_clock::now();
++      gemm1_cache_hit = gemm1_stats.cache_hit;
++      gemm1_construct_us = gemm1_stats.construct_us;
++      gemm1_execute_us = gemm1_stats.execute_wait_us;
++      gemm2_cache_hit = gemm2_stats.cache_hit;
++      gemm2_construct_us = gemm2_stats.construct_us;
++      gemm2_execute_us = gemm2_stats.execute_wait_us;
++      exec_stats.construct_us = gemm1_stats.construct_us + gemm2_stats.construct_us;
++      exec_stats.execute_wait_us = std::chrono::duration_cast<std::chrono::microseconds>(
++          both_end - both_start).count();
++      both_wall_us = exec_stats.execute_wait_us;
+@@
+-  auto stats = torch::empty({24}, torch::dtype(torch::kInt64));
++  auto stats = torch::empty({32}, torch::dtype(torch::kInt64));
+@@
++  out[24] = gemm1_cache_hit;
++  out[25] = gemm1_construct_us;
++  out[26] = gemm1_execute_us;
++  out[27] = gemm2_cache_hit;
++  out[28] = gemm2_construct_us;
++  out[29] = gemm2_execute_us;
++  out[30] = both_wall_us;
++  out[31] = sidecar_matmul_cache_size();
+diff --git a/vllm_xpu_kernels/fused_moe_interface.py b/vllm_xpu_kernels/fused_moe_interface.py
+--- a/vllm_xpu_kernels/fused_moe_interface.py
++++ b/vllm_xpu_kernels/fused_moe_interface.py
+@@
+     if raw in ("2", "gemm2"):
+         return 2
++    if raw in ("3", "both", "gemm12", "gemm1_gemm2", "two_gemm"):
++        return 3
+@@
+-        parity_target = None
+-        parity_before = None
+-        parity_before_checksum = None
++        parity_targets = []
+         if execute_mode == 1:
+-            parity_target = gemm1_output
++            parity_targets.append(("gemm1_output", gemm1_output))
+         elif execute_mode == 2:
+-            parity_target = gemm2_output
+-        if parity_target is not None:
+-            parity_before = parity_target.detach().clone()
+-            parity_before_checksum = _tensor_checksum_f32(parity_before)
++            parity_targets.append(("gemm2_output", gemm2_output))
++        elif execute_mode == 3:
++            parity_targets.append(("gemm1_output", gemm1_output))
++            parity_targets.append(("gemm2_output", gemm2_output))
++        parity_before = []
++        for target_name, target_tensor in parity_targets:
++            before = target_tensor.detach().clone()
++            parity_before.append((target_name, target_tensor, before,
++                                  _tensor_checksum_f32(before)))
+@@
+-        if parity_target is not None:
++        if parity_before:
+             try:
+-                if getattr(getattr(parity_target, "device", None), "type",
+-                           None) == "xpu":
++                if any(
++                        getattr(getattr(target_tensor, "device", None),
++                                "type", None) == "xpu"
++                        for _, target_tensor, _, _ in parity_before):
+                     torch.xpu.synchronize()
+-                parity_record = {
+-                    "target": ("gemm1_output"
+-                               if execute_mode == 1 else "gemm2_output"),
+-                    "before_checksum_f32": parity_before_checksum,
+-                    "after_checksum_f32": _tensor_checksum_f32(parity_target),
+-                    "max_abs_diff_f32": _tensor_max_abs_diff_f32(
+-                        parity_target, parity_before),
+-                }
++                parity_record = []
++                for target_name, target_tensor, before, before_checksum in (
++                        parity_before):
++                    parity_record.append({
++                        "target": target_name,
++                        "before_checksum_f32": before_checksum,
++                        "after_checksum_f32":
++                        _tensor_checksum_f32(target_tensor),
++                        "max_abs_diff_f32":
++                        _tensor_max_abs_diff_f32(target_tensor, before),
++                    })
++                if len(parity_record) == 1:
++                    parity_record = parity_record[0]
+@@
+-            return torch.empty((24,), dtype=torch.int64)
++            return torch.empty((32,), dtype=torch.int64)

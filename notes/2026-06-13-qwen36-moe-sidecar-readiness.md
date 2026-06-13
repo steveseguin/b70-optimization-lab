@@ -210,3 +210,97 @@ The accepted endpoint was restored after the sidecar probes:
 Next engineering gate: implement a resident two-GEMM sidecar path with cached
 descriptors/primitives and a parity-only diagnostic mode. Only then should the
 activation/quant2 and gather/combine stages be pulled into the same island.
+
+## Cached Two-GEMM Sidecar Diagnostic
+
+Date: 2026-06-13.
+
+Patch artifact:
+`patches/vllm-xpu-qwen36-onednn-sidecar-both-cached-20260613.patch`.
+
+Summary artifact:
+`data/qwen36-onednn-sidecar-both-cached-live-20260613.json`.
+
+Build:
+
+```bash
+BUILD_DIR=/home/steve/src/vllm-xpu-kernels/build/qwen36-sidecar-both-sycl8-20260613 \
+INSTALL_PREFIX=/tmp/qwen36-sidecar-both-sycl8-20260613 \
+ONEAPI_VARS=/opt/intel/oneapi/compiler/2025.3/env/vars.sh \
+JOBS=4 GDN_KERNELS=ON CLEAN=1 \
+scripts/build-vllm-xpu-kernels-xpu-c-only.sh
+```
+
+Result: build passed. New extension:
+`/home/steve/src/vllm-xpu-kernels/build/qwen36-sidecar-both-sycl8-20260613/_xpu_C.abi3.so`,
+size `55794984` bytes, linked against `libsycl.so.8`.
+
+Import/schema check passed in overlay
+`/tmp/qwen36-vllm-xpu-sidecar-overlay-both-import-20260613`.
+The parser maps `both`, `two_gemm`, and `3` to execute mode `3`, and vLLM
+still detects `XPUPlatform xpu`.
+
+Implementation:
+
+- Add `execute_mode=3` for a diagnostic two-GEMM sidecar call.
+- Cache oneDNN grouped matmul primitive/descriptors by
+  `(device, m, k, n, num_experts, dst_dtype, weight_layout)`.
+- Submit GEMM1 and GEMM2 through one sidecar call and wait once after GEMM2.
+- Expand stats from 24 to 32 fields:
+  - `24`: GEMM1 cache hit
+  - `25`: GEMM1 construct us
+  - `26`: GEMM1 execute/submit us
+  - `27`: GEMM2 cache hit
+  - `28`: GEMM2 construct us
+  - `29`: GEMM2 execute/wait us
+  - `30`: both-wall us
+  - `31`: cache size
+- Python parity now supports multiple targets for `execute_mode=3`.
+
+First live probe:
+`data/qwen36-onednn-sidecar-execute-both-cached-live-20260613--2055696.jsonl`.
+
+- `MAX_CALLS=2`
+- Both calls passed exact parity for `gemm1_output` and `gemm2_output`.
+- Call 1: `num_rows=8192`, `num_moe_inputs=65536`, `both_wall_us=19871`,
+  no cache hits, cache size `2`.
+- Call 2: `num_rows=48`, `num_moe_inputs=384`, `both_wall_us=1351`,
+  no cache hits, cache size `4`.
+- This validated the `both` mode, but not cache reuse because the two shapes
+  differed.
+
+Repeat live probe:
+`data/qwen36-onednn-sidecar-execute-both-cached-repeat-live-20260613--2056910.jsonl`.
+
+- `MAX_CALLS=5`
+- All five calls passed exact parity for both GEMM outputs.
+- Call 1: `num_rows=8192`, `both_wall_us=21116`, no cache hits.
+- Call 2: `num_rows=48`, `both_wall_us=1138`, no cache hits.
+- Call 3: `num_rows=8`, `both_wall_us=1088`, no cache hits.
+- Call 4: `num_rows=1`, `both_wall_us=309`, no cache hits, cache size `8`.
+- Call 5: `num_rows=1`, `both_wall_us=66`, GEMM1 cache hit `1`,
+  GEMM2 cache hit `1`, GEMM1 execute `24 us`, GEMM2 execute `29 us`,
+  cache size `8`.
+
+Interpretation:
+
+- This is a real correctness step and a useful timing signal for the two-GEMM
+  boundary.
+- It is not yet a production speed win. The sidecar still runs after the
+  accepted `xpu_fused_moe` path and the parity mode clones/synchronizes output
+  tensors for diagnostics.
+- The useful result is that repeated decode-shape oneDNN grouped GEMM
+  primitives can be cached and both GEMMs can complete inside one diagnostic
+  boundary with exact scratch parity.
+
+Accepted endpoint restored afterward:
+
+- tmux: `qwen36-tp4-accepted-restored-after-sidecar-both-20260613`
+- model endpoint: `qwen36-35b-a3b-fp8`, max model length `32768`
+- no-thinking smoke:
+  `data/qwen36-quark-int8-tp4-accepted-restored-after-sidecar-both-quality-nothink-smoke-20260613.json`
+- result: `pass_all=true`, `baseline_match_all=true`, `repeat_pass=true`
+
+Next gate: move the sidecar boundary earlier so the oneDNN GEMM1 output feeds
+activation/quant2 and then cached GEMM2, still under exact parity mode. Only
+after that should we include gather/combine and run endpoint A/B.

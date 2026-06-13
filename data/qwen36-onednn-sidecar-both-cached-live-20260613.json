@@ -1,0 +1,140 @@
+{
+  "date": "2026-06-13",
+  "model": "nameistoken/Qwen3.6-35B-A3B-Quark-W8A8-INT8",
+  "served_model_name": "qwen36-35b-a3b-fp8",
+  "goal": "Prototype a diagnostic two-GEMM oneDNN sidecar boundary with cached primitive descriptors and exact parity checks.",
+  "build": {
+    "build_dir": "/home/steve/src/vllm-xpu-kernels/build/qwen36-sidecar-both-sycl8-20260613",
+    "install_prefix": "/tmp/qwen36-sidecar-both-sycl8-20260613",
+    "oneapi_vars": "/opt/intel/oneapi/compiler/2025.3/env/vars.sh",
+    "command": "BUILD_DIR=/home/steve/src/vllm-xpu-kernels/build/qwen36-sidecar-both-sycl8-20260613 INSTALL_PREFIX=/tmp/qwen36-sidecar-both-sycl8-20260613 ONEAPI_VARS=/opt/intel/oneapi/compiler/2025.3/env/vars.sh JOBS=4 GDN_KERNELS=ON CLEAN=1 scripts/build-vllm-xpu-kernels-xpu-c-only.sh",
+    "result": "passed",
+    "artifact": "/home/steve/src/vllm-xpu-kernels/build/qwen36-sidecar-both-sycl8-20260613/_xpu_C.abi3.so",
+    "size_bytes": 55794984,
+    "linked_sycl": "libsycl.so.8"
+  },
+  "import_check": {
+    "overlay": "/tmp/qwen36-vllm-xpu-sidecar-overlay-both-import-20260613",
+    "schema": "_xpu_C::qwen36_moe_onednn_sidecar_probe(..., bool dry_create_descriptors, int execute_mode) -> Tensor",
+    "platform": "XPUPlatform xpu",
+    "execute_mode_parser": {
+      "gemm1": 1,
+      "gemm2": 2,
+      "both": 3,
+      "two_gemm": 3,
+      "3": 3,
+      "off": 0
+    },
+    "result": "passed"
+  },
+  "first_live_probe": {
+    "tmux_session": "qwen36-sidecar-both-cached-20260613",
+    "log": "/tmp/qwen36-quark-int8-tp4-sidecar-exec-both-cached-20260613.log",
+    "artifact": "data/qwen36-onednn-sidecar-execute-both-cached-live-20260613--2055696.jsonl",
+    "max_calls": 2,
+    "result": "passed exact parity for GEMM1 and GEMM2 on both calls",
+    "notes": "The two calls used different shapes, so this run validated execute_mode=3 but did not validate cache reuse.",
+    "calls": [
+      {
+        "call": 1,
+        "num_rows": 8192,
+        "num_moe_inputs": 65536,
+        "both_wall_us": 19871,
+        "gemm1_cache_hit": 0,
+        "gemm2_cache_hit": 0,
+        "cache_size": 2,
+        "max_abs_diff_f32": [0.0, 0.0]
+      },
+      {
+        "call": 2,
+        "num_rows": 48,
+        "num_moe_inputs": 384,
+        "both_wall_us": 1351,
+        "gemm1_cache_hit": 0,
+        "gemm2_cache_hit": 0,
+        "cache_size": 4,
+        "max_abs_diff_f32": [0.0, 0.0]
+      }
+    ]
+  },
+  "repeat_live_probe": {
+    "tmux_session": "qwen36-sidecar-both-cached-repeat-20260613",
+    "log": "/tmp/qwen36-quark-int8-tp4-sidecar-exec-both-cached-repeat-20260613.log",
+    "artifact": "data/qwen36-onednn-sidecar-execute-both-cached-repeat-live-20260613--2056910.jsonl",
+    "max_calls": 5,
+    "result": "passed exact parity for GEMM1 and GEMM2 on all five calls; call 5 repeated the m=1 decode shape and hit both cached primitives",
+    "calls": [
+      {
+        "call": 1,
+        "num_rows": 8192,
+        "num_moe_inputs": 65536,
+        "both_wall_us": 21116,
+        "gemm1_cache_hit": 0,
+        "gemm2_cache_hit": 0,
+        "cache_size": 2,
+        "max_abs_diff_f32": [0.0, 0.0]
+      },
+      {
+        "call": 2,
+        "num_rows": 48,
+        "num_moe_inputs": 384,
+        "both_wall_us": 1138,
+        "gemm1_cache_hit": 0,
+        "gemm2_cache_hit": 0,
+        "cache_size": 4,
+        "max_abs_diff_f32": [0.0, 0.0]
+      },
+      {
+        "call": 3,
+        "num_rows": 8,
+        "num_moe_inputs": 64,
+        "both_wall_us": 1088,
+        "gemm1_cache_hit": 0,
+        "gemm2_cache_hit": 0,
+        "cache_size": 6,
+        "max_abs_diff_f32": [0.0, 0.0]
+      },
+      {
+        "call": 4,
+        "num_rows": 1,
+        "num_moe_inputs": 8,
+        "both_wall_us": 309,
+        "gemm1_cache_hit": 0,
+        "gemm2_cache_hit": 0,
+        "cache_size": 8,
+        "max_abs_diff_f32": [0.0, 0.0]
+      },
+      {
+        "call": 5,
+        "num_rows": 1,
+        "num_moe_inputs": 8,
+        "both_wall_us": 66,
+        "gemm1_cache_hit": 1,
+        "gemm1_execute_us": 24,
+        "gemm2_cache_hit": 1,
+        "gemm2_execute_us": 29,
+        "cache_size": 8,
+        "max_abs_diff_f32": [0.0, 0.0]
+      }
+    ]
+  },
+  "accepted_endpoint_restoration": {
+    "tmux_session": "qwen36-tp4-accepted-restored-after-sidecar-both-20260613",
+    "launch_log": "/tmp/qwen36-quark-int8-tp4-accepted-restored-after-sidecar-both-20260613.log",
+    "health": "passed",
+    "models_endpoint": "qwen36-35b-a3b-fp8, max_model_len 32768",
+    "quality_artifact": "data/qwen36-quark-int8-tp4-accepted-restored-after-sidecar-both-quality-nothink-smoke-20260613.json",
+    "quality_result": {
+      "pass_all": true,
+      "baseline_match_all": true,
+      "repeat_pass": true
+    }
+  },
+  "interpretation": "The cached diagnostic sidecar proves that one call can execute both grouped GEMM halves with exact scratch parity and that repeated decode-shape primitives hit the cache. This is not yet a production speed win because it still runs after the existing fused MoE path and uses diagnostic parity cloning/synchronization.",
+  "next_steps": [
+    "Move the sidecar boundary earlier so GEMM1 output feeds activation/quant2 instead of only re-executing after the accepted path.",
+    "Add an opt-in parity mode for GEMM1 -> activation/quant2 -> GEMM2.",
+    "Keep cached primitives resident and remove diagnostic clone/sync from timing runs.",
+    "Only run endpoint A/B after the full island is exact versus xpu_fused_moe."
+  ]
+}

@@ -14676,3 +14676,39 @@ Ideas carried forward:
   that overhead for any performance measurement.
 - After two-GEMM parity, pull activation/quant2 and gather/combine into the
   same sidecar island before endpoint A/B.
+
+## 2026-06-13 Continuation: Cached Two-GEMM Sidecar Signal
+
+Artifacts:
+
+- `patches/vllm-xpu-qwen36-onednn-sidecar-both-cached-20260613.patch`
+- `data/qwen36-onednn-sidecar-both-cached-live-20260613.json`
+- `data/qwen36-onednn-sidecar-execute-both-cached-live-20260613--2055696.jsonl`
+- `data/qwen36-onednn-sidecar-execute-both-cached-repeat-live-20260613--2056910.jsonl`
+- `data/qwen36-quark-int8-tp4-accepted-restored-after-sidecar-both-quality-nothink-smoke-20260613.json`
+
+What worked:
+
+- SYCL 8 build passed for the cached `execute_mode=both` sidecar.
+- Import/schema/platform check passed under the vLLM overlay.
+- Both GEMM outputs had exact parity on every live probe call.
+- With repeated `num_rows=1` decode shape, both cached oneDNN primitives hit
+  on call 5 and the diagnostic C++ both-wall was `66 us`.
+- The accepted endpoint was restored and passed the no-thinking smoke against
+  the accepted baseline.
+
+What this does not prove yet:
+
+- It does not prove endpoint speedup because the diagnostic still executes
+  after the existing fused MoE path.
+- It does not yet connect oneDNN GEMM1 output to activation/quant2, so the next
+  correctness risk remains the full island transaction.
+
+Next:
+
+1. Move the sidecar hook earlier, before activation/quant2.
+2. Let cached oneDNN GEMM1 feed the existing activation/quant2 path.
+3. Run cached oneDNN GEMM2 from that quantized activation.
+4. Compare final `gemm2_output` and gather/combine output against the accepted
+   path under exact parity mode.
+5. Only after exact full-island parity, measure without diagnostic clone/sync.
