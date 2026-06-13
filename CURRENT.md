@@ -6,6 +6,18 @@ Date: 2026-06-12
 
 2026-06-12 notes update:
 
+- Added `scripts/qwen36-digest-hotpack-admission.py` and generated
+  `data/qwen36-digest-hotpack-admission-top64-top128-decode1-20260612dw.{json,md}`.
+  Across `55520` decode rows, top64 has mean coverage `0.7022` but is fully
+  hot only `16.1%` of the time; top128 has mean coverage `0.9130`, median row
+  coverage `1.0`, and is fully hot `58.2%` of the time. The high-value layer
+  set `8,9,13,16,19,20,21,38` reaches top128 mean coverage `0.9377-0.9564`
+  with roughly `67.7-72.3%` fully-hot admission, making top128 hot-only
+  admission for these eight layers the next cleaner no-quality-loss prototype.
+  Top64 remains a fused hot/cold kernel target, not a hot-only lane.
+
+2026-06-12 notes update:
+
 - Added `scripts/qwen36-replay-digest-to-route-jsonl.py` to convert replay
   digest rows into the route-count JSONL schema used by the existing
   grouped-GEMM hotset harness. The layer-20 rank-0 decode conversion emitted

@@ -13214,3 +13214,58 @@ Gemma challenge transfer folded into this Qwen branch:
 - Apply that here by recording failed hotset/speculation/scheduler attempts
   with the exact reason, especially when a tempting idea loses to launch tax or
   disabled async scheduling. This prevents re-testing seductive but bad paths.
+
+## Decode Hot-Pack Admission Summary 20260612dw
+
+Added `scripts/qwen36-digest-hotpack-admission.py` to measure not just routed
+row coverage, but hot-only admission and cold-tail shape. This uses raw
+replay-digest rows plus the existing top128 hot-pack plan.
+
+Artifacts:
+
+- `data/qwen36-digest-hotpack-admission-top64-top128-decode1-20260612dw.json`
+- `data/qwen36-digest-hotpack-admission-top64-top128-decode1-20260612dw.md`
+
+Reproduction:
+
+```bash
+python3 scripts/qwen36-digest-hotpack-admission.py \
+  'data/qwen36-replay-digest-replay-digest-hot-20260612dq-*.jsonl' \
+  --plan data/qwen36-digest-hotpack-decode1-top128-plan-20260612du.json \
+  --hot-sizes 64,128 \
+  --num-rows 1 \
+  --out-json data/qwen36-digest-hotpack-admission-top64-top128-decode1-20260612dw.json \
+  --out-md data/qwen36-digest-hotpack-admission-top64-top128-decode1-20260612dw.md
+```
+
+Overall decode admission:
+
+- Rows matched: `55520`; rows skipped by filter: `3520`.
+- Top64: mean coverage `0.7022`, fully-hot fraction `0.1611`, median row
+  coverage `0.7500`, p10 row coverage `0.3750`, mean cold rows `2.382`.
+- Top128: mean coverage `0.9130`, fully-hot fraction `0.5821`, median row
+  coverage `1.0000`, p10 row coverage `0.7500`, mean cold rows `0.696`.
+
+High-value top128 layer set:
+
+- Layers `8,9,13,16,19,20,21,38` all have top128 mean coverage between
+  `0.9377` and `0.9564`.
+- Fully-hot fractions for that set are roughly `0.677` to `0.723` except
+  layer `13` at `0.6772`, so most route rows in those layers can use a
+  hot-only fast lane.
+- The same layers are only `0.187` to `0.257` fully hot under top64, despite
+  respectable mean coverage. That is why top64 should be treated as a
+  hot/cold fused-kernel target, not as a hot-only admission target.
+
+Updated implementation choice:
+
+1. **Top128 hot-only admission lane first for the eight high-value layers.**
+   This has a clean success criterion: if all eight routed experts are in the
+   resident pack, run the hot-only layerlet; otherwise call the accepted path.
+   Quality is unchanged because both paths use the same Quark W8A8 weights.
+2. **Top64 remains useful only with one-dispatch cold fallback.** It covers
+   routed rows but rarely eliminates cold rows, so split-launch designs should
+   stay parked.
+3. **Admission stats become part of the quality/perf gate.** A promoted hot-pack
+   experiment should report mean coverage, fully-hot fraction, cold histogram,
+   exact layer-output parity, and completion canaries before endpoint timing.
