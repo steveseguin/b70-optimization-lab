@@ -6,6 +6,25 @@ Date: 2026-06-12
 
 2026-06-13 notes update:
 
+- Ran a non-invasive accepted-endpoint stream-vs-final-only c1 tail check on
+  `127.0.0.1:18080` using the current Quark W8A8 INT8 Qwen3.6 service.
+  Artifacts:
+  `data/qwen36-quark-int8-tp4-tailcheck-stream-p512o256-20260613l.json`,
+  `data/qwen36-quark-int8-tp4-tailcheck-nonstream-p512o256-20260613l.json`,
+  and
+  `data/qwen36-quark-int8-tp4-tailcheck-latency-decomp-20260613l.{json,md}`.
+  Streaming corrected after-first throughput was `100.836 tok/s` with vLLM
+  decode `9.919 ms/token`; non-streaming e2e was `97.827 tok/s` with vLLM
+  decode `9.914 ms/token`. Backend stream throughput matched the vLLM decode
+  histogram within `0.018%`, and queue time stayed around `0.012-0.016 ms`.
+  Together with prior forward-boundary evidence, this rules out detok,
+  final-only responses, SSE/HTTP, frontdoor queueing, and output packaging as
+  2x-class levers for the current Qwen c1 path. Next work should stay on
+  model-forward reductions, persistent MoE layerlets, TP topology/collectives,
+  whole-token graph capture, or oracle `k=1` speculation repair.
+
+2026-06-13 notes update:
+
 - Refreshed the Fast Gemma dashboard snapshot in
   `data/gemma-dashboard-results-summary-20260613k.json` after the user
   pointed back to the E4B board as an ideas source for our own Gemma lane.

@@ -14086,3 +14086,66 @@ Interpretation:
   another offset/table-layout tweak. We need persistent MoE layerlets,
   whole-token command-list capture, or verifier-safe multi-token acceptance to
   reduce submission/dispatch overhead.
+
+## Streaming And Tail-Cost Check 20260613l
+
+This checked the Gemma-dashboard-inspired idea that token-ID streaming,
+delayed-detok, or final-only responses might expose a meaningful c1 latency
+win on the current Qwen3.6 accepted backend. It used the restored
+`qwen36-35b-a3b-fp8` service on `127.0.0.1:18080` without changing server
+settings.
+
+Artifacts:
+
+- Streaming endpoint metrics:
+  `data/qwen36-quark-int8-tp4-tailcheck-stream-p512o256-20260613l.json`.
+- Non-streaming endpoint metrics:
+  `data/qwen36-quark-int8-tp4-tailcheck-nonstream-p512o256-20260613l.json`.
+- Decomposition summary:
+  `data/qwen36-quark-int8-tp4-tailcheck-latency-decomp-20260613l.{json,md}`.
+- Earlier boundary evidence used for interpretation:
+  `data/qwen36-quark-int8-tp4-presampler-forwardboundary-nested-summary-20260612ci.json`.
+
+Live p512/o256/c1 result:
+
+- Streaming corrected after-first throughput: `100.836 tok/s`.
+- Streaming vLLM decode histogram: `9.919 ms/token`.
+- Non-streaming e2e throughput: `97.827 tok/s`.
+- Non-streaming vLLM decode histogram: `9.914 ms/token`.
+- Backend client stream throughput matched vLLM decode throughput within
+  `0.018%`.
+- Queue time stayed effectively zero: `0.012-0.016 ms/request`.
+- Final-only/non-streaming did not improve c1 decode speed.
+
+Boundary evidence:
+
+- The prior forward-boundary run showed pure decode after the first five events
+  had `forward_end` sync mean `3.674 ms`, while `forward_start`,
+  `compute_logits_end`, and `sample_start` were near-zero after `forward_end`.
+- That places the hidden wait inside model forward execution or its
+  forward-stream dependencies, not in input preparation, logits materialization,
+  sampler, D2H token copy, detokenization, token-list conversion, async output,
+  HTTP, or SSE packaging.
+
+Decision:
+
+- Do not spend primary `>200 tok/s` effort on streaming, detok, final-only
+  responses, HTTP/SSE, frontdoor queueing, or token-list formatting for this
+  Qwen c1 path. Those are production polish items, not 2x-class levers.
+- The c1 decode target still requires about `5 ms/token`, while the current
+  backend is `~9.91 ms/token`. The remaining credible paths are:
+  model-forward reductions, persistent/one-dispatch MoE layerlets, TP
+  collective/topology changes, whole-token graph capture, or verifier-safe
+  multi-token acceptance.
+
+Immediate follow-up:
+
+1. **Forward-side rank/family split, not output-tail split.** Continue from
+   all-rank forward-boundary and layer-family probes. Measure whether the
+   hidden wait is route/rank skew, collectives, GDN/attention, or MoE dispatch.
+2. **Persistent MoE layerlet prototype.** The fullcandidate offset-GEMM replay
+   is exact but not enough; the next non-speculative prototype has to remove
+   dispatch boundaries, not just improve table layout.
+3. **Oracle `k=1` speculation repair.** If model-forward cannot drop below
+   `5 ms/token`, target-verified multi-token acceptance is the most plausible
+   exact-output route to 2x effective decode.
