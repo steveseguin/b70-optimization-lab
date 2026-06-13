@@ -214,3 +214,89 @@ What changes from this refresh:
 - None of this changes the Qwen3.6 path. The dashboard is Gemma E4B on
   challenge hardware, so its absolute TPS is only a signal for ideas and
   validation discipline.
+
+## Dashboard Refresh 20260613k
+
+The user flagged the live Fast Gemma dashboard again as a source of ideas for
+our own Gemma acceleration work. I refreshed the compact snapshot in
+`data/gemma-dashboard-results-summary-20260613k.json`.
+
+Snapshot details:
+
+- Parsed rows: `354`.
+- Top public row: `470.526 tok/s`, PPL `2.37794`,
+  method `mao-gemma-fast-lf29pc-v1`.
+- The top-10 rows are still clustered around the same ingredients:
+  fast onegraph/loopgraph-style decode, `lmhead12k` or logits restriction
+  experiments, `fa2sw` sliding-window attention handling, public prompt
+  precache/prefix warmup, and exact PPL/prompt-logprob fallback.
+- Recurring keyword counts are unchanged enough to treat the trend as stable:
+  `graph=219`, `capture=143`, `prefix=111`, `vllm=88`,
+  `speculative=60`, `lm_head=43`, `fallback=35`,
+  `prompt_logprobs=14`, `detok=9`, `precache=8`, `negative=147`,
+  and `ppl=354`.
+
+Gemma transfer matrix:
+
+1. **Try first: Gemma logits/lm-head timing probe.**
+   The board repeatedly found output-head/logits work worth isolating once the
+   body was optimized. For our Gemma lane, add a profile that separates final
+   norm, lm-head matvec, logits postprocess, sampler, detok, and response
+   streaming. Only after this timing exists should we prototype restricted
+   logits or keep-set paths.
+
+2. **Try first: full-head fallback for any restricted logits path.**
+   A workload-specific keep-set can be production-safe only if the endpoint can
+   immediately fall back to the full head whenever the restricted lane is not
+   provably exact. Promotion gate: identical token IDs against the full head on
+   a fixed prompt bank plus full `prompt_logprobs` compatibility through the
+   reference path.
+
+3. **Try first: sliding-window attention audit.**
+   The `fa2sw` cluster is a reminder to prove that Gemma local/sliding layers
+   are actually executed with their intended window, not accidentally routed
+   through full attention or a slow fallback. Measure by layer, context length,
+   graph state, and backend.
+
+4. **Try first: token-ID streaming with delayed detok.**
+   Several frontier notes treat detokenization and response formatting as real
+   overhead. Add an internal token-ID stream and an end/chunk detok path with
+   byte-identical reconstruction. This should be a low-risk production cleanup
+   because it cannot change the sampled token.
+
+5. **Try first: two-lane eval contract.**
+   Keep normal generation on the fastest exact decode lane, but route PPL,
+   prompt-logprob, provenance, and audit requests through a reference-compatible
+   original-forward lane. The two lanes must be continuously sampled for token
+   parity.
+
+6. **Try later: captured width-1 decode/propose graph.**
+   The frontier has captured single-token propose/decode shapes before going
+   wider. For our Gemma lane this is attractive because it attacks scheduler
+   and dispatch overhead without depending on speculative acceptance quality.
+
+7. **Try later: acceptance telemetry before any speculative depth.**
+   The dashboard has both speculative wins and many speculative negatives. Do
+   not tune depth or drafter choice until we log accept length, zero-accept
+   rate, verifier cost, rollback cost, and whether speculation disables async
+   scheduling in the chosen backend.
+
+8. **Avoid as a production claim: public benchmark prompt precache.**
+   It is useful for understanding the challenge leaderboard, but it should not
+   be reported as general prompt speed. The production-clean analogue is
+   readiness-gated warming of real system prompts, tool schemas, safety prompts,
+   and known workflow prefixes, reported separately from cold-prompt latency.
+
+9. **Avoid as a quality shortcut: PPL-only acceptance for fast lanes.**
+   The challenge can approve rows through its public contract even when local
+   token comparison against a previous baseline is not exact. Our stricter bar
+   remains token-ID parity, exact canaries, and a reference scoring path before
+   any production promotion.
+
+Concrete next Gemma task:
+
+- Build a small `gemma-profile-lmhead-detok` harness before touching kernels:
+  fixed prompt bank, greedy decode, token IDs, timings for final norm, lm-head,
+  sampler, detok, response write, and reference `prompt_logprobs`. This tells
+  us whether the Gemma dashboard's lm-head/logits lesson maps to our Gemma
+  model or is mostly E4B/challenge-specific.

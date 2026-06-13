@@ -6,6 +6,19 @@ Date: 2026-06-12
 
 2026-06-13 notes update:
 
+- Refreshed the Fast Gemma dashboard snapshot in
+  `data/gemma-dashboard-results-summary-20260613k.json` after the user
+  pointed back to the E4B board as an ideas source for our own Gemma lane.
+  Extended `notes/2026-06-12-gemma-dashboard-transfer-ideas.md` with a
+  transfer matrix: first profile Gemma lm-head/logits, sampler, detok, and
+  response-write costs; require full-head fallback and token-ID parity for any
+  restricted logits path; audit sliding-window attention execution; keep a
+  fast decode lane plus reference prompt-logprob/PPL lane; treat benchmark
+  prompt precache as non-production. This is an ideas update only; no accepted
+  Qwen endpoint or model configuration was changed.
+
+2026-06-13 notes update:
+
 - Added worker-boundary COW trace plumbing to
   `scripts/launch-qwen36-quark-int8-ngram-trace.sh` and ran
   `qwen36-quark-int8-tp4-oracle1-nobonus-cachefilter-cow-20260613j` with
