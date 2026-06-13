@@ -6,6 +6,21 @@ Date: 2026-06-12
 
 2026-06-12 notes update:
 
+- Ran a compact-active upper-bound grouped-GEMM timing window on the same
+  layer-20 rank-0 replay digest route file. Artifacts:
+  `data/qwen36-replay-digest-compactactive-layer20-rank0-gpu-compactactive-20260612dy.{json,log,md}`.
+  Compacting each route from the full 256-expert table to only the 8 active
+  experts reduced temporary harness allocation by roughly `32x`, but barely
+  moved latency: `gemm1` improved from `91.139 us` to `90.627 us` (`-0.5622%`)
+  and `gemm2` improved from `90.998 us` to `90.213 us` (`-0.8632%`). The
+  accepted endpoint was restored on `18080`, `/v1/models` reports
+  `qwen36-35b-a3b-fp8` with `32768` max context, and provenance sentinels
+  passed. Conclusion: active-expert table compaction is not the path to
+  `>200 tok/s`; the next work should reduce dispatch count/fixed per-token
+  overhead through persistent MoE layerlets or whole-token graph capture.
+
+2026-06-12 notes update:
+
 - Ran the real XPU top128 hot-only layer-20 grouped-GEMM timing window from the
   replay-digest route converter. Artifacts:
   `data/qwen36-replay-digest-hotset-top128-layer20-rank0-hotonly-gpu-20260612dx.{json,log,md}`.

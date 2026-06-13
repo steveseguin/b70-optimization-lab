@@ -13387,3 +13387,90 @@ Updated things to try:
    `3.89 GiB/rank`; a production setup may keep a high-concurrency 32K lane and
    a separate lower-concurrency latency lane that spends VRAM on resident
    hotpacks.
+
+## Compact-Active Upper-Bound Timing 20260612dy
+
+Ran a second real XPU timing window on the same layer-20 rank-0 replay-digest
+route file. This time the harness compared the accepted 256-expert grouped-GEMM
+table against a synthetic compact table with only the 8 active experts for each
+c1 route.
+
+Artifacts:
+
+- Benchmark JSON:
+  `data/qwen36-replay-digest-compactactive-layer20-rank0-gpu-compactactive-20260612dy.json`
+- Benchmark log:
+  `data/qwen36-replay-digest-compactactive-layer20-rank0-gpu-compactactive-20260612dy.log`
+- Summary:
+  `data/qwen36-replay-digest-compactactive-layer20-rank0-gpu-compactactive-20260612dy.md`
+- XPU process snapshots:
+  `data/qwen36-replay-digest-compactactive-layer20-rank0-gpu-compactactive-20260612dy-pre-xpusmi-ps.txt`,
+  `data/qwen36-replay-digest-compactactive-layer20-rank0-gpu-compactactive-20260612dy-poststop-xpusmi-ps.txt`,
+  and
+  `data/qwen36-replay-digest-compactactive-layer20-rank0-gpu-compactactive-20260612dy-postrestore-xpusmi-ps.txt`
+- Restore/provenance:
+  `data/qwen36-quark-int8-tp4-accepted-restored-after-compactactive-20260612dy.log`
+  and
+  `data/qwen36-quark-int8-tp4-accepted-provenance-after-compactactive-20260612dy.json`
+
+Benchmark reproduction:
+
+```bash
+PYTHONPATH=/home/steve/src/vllm-xpu-kernels \
+LD_LIBRARY_PATH=/home/steve/src/vllm-xpu-kernels/vllm_xpu_kernels:/home/steve/.venvs/vllm-xpu/lib:/home/steve/.venvs/vllm-xpu/lib/python3.12/site-packages/torch/lib \
+ONEAPI_DEVICE_SELECTOR=level_zero:0 \
+ZE_AFFINITY_MASK=0 \
+/home/steve/.venvs/vllm-xpu/bin/python \
+  scripts/bench-qwen36-route-exact-w8a8-grouped-gemm.py \
+  --route-jsonl data/qwen36-replay-digest-hot-decode1-layer20-rank0-routes-20260612dv.jsonl \
+  --route-layer-regex 'layers[.]20[.]' \
+  --route-start-indices 0:32 \
+  --route-window-size 1 \
+  --compact-active-experts \
+  --gemm-stage both \
+  --device xpu:0 \
+  --warmup 10 \
+  --iterations 80 \
+  --output-json data/qwen36-replay-digest-compactactive-layer20-rank0-gpu-compactactive-20260612dy.json
+```
+
+Result:
+
+| Mode | Experts | Stage | Cases | Mean case us | Median case us |
+| --- | ---: | --- | ---: | ---: | ---: |
+| exact | 256 | gemm1 | 32 | 91.139 | 89.666 |
+| compact_active | 8 | gemm1 | 32 | 90.627 | 88.964 |
+| exact | 256 | gemm2 | 32 | 90.998 | 89.183 |
+| compact_active | 8 | gemm2 | 32 | 90.213 | 89.317 |
+
+Relative to the full 256-expert exact path, compact-active was only `0.5622%`
+faster for `gemm1` and `0.8632%` faster for `gemm2` by mean case time. The
+temporary allocation estimate fell from about `128.27 MiB` to `4.03 MiB` for
+`gemm1` and from `66.03 MiB` to `2.09 MiB` for `gemm2`, so this is a memory win
+but not a latency win.
+
+Interpretation:
+
+- This rejects ordinary active-expert table compaction as a major standalone
+  speed path. Even an idealized 8-expert table barely moves the grouped-GEMM
+  latency floor.
+- Combined with the top128 hot-only result, this points at fixed per-dispatch
+  overhead and/or kernel shape floor as the current limiter.
+- The next optimization target should reduce the number of per-token grouped
+  GEMM dispatches or make them persistent, instead of continuing to shrink the
+  expert table.
+
+Updated priority:
+
+1. **Persistent MoE layerlet prototype.** Fuse the c1 MoE sequence inside one
+   resident layerlet: remap/prologue, GEMM1, activation, quant2, GEMM2, and
+   gather. Use exact current weights and route outputs for parity.
+2. **Whole-token graph capture.** Build a direct runner or endpoint diagnostic
+   that captures a full token step around MoE, collectives, norm, logits, and
+   sampler. The target is dispatch-count reduction, not table-size reduction.
+3. **One-dispatch hot/cold fallback.** Keep hotset admission for memory and
+   branch selection, but only pursue top64/top128 if the hot and cold work can
+   share one kernel/dispatch.
+4. **Stop rebuilding active-offset as a standalone win.** Earlier active-offset
+   was exact but not faster, and the compact-active upper bound now explains
+   why.
