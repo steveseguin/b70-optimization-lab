@@ -13058,3 +13058,90 @@ Next implementation ideas from this plan:
    Treat hot packs as a latency lane knob. The 32K/c48 production lane can keep
    maximum KV; a lower-concurrency low-latency lane can buy resident hot packs
    without quality loss.
+
+## Decode Route-Class And Wider Hot-Pack Plan 20260612dt-du
+
+Extended `scripts/qwen36-replay-digest-summary.py` so replay-digest summaries
+can report route-hash frequency and filter rows by `num_rows`. This matters
+because the first route-hash pass was misleading: all-shape routed-row coverage
+was dominated by prefill and chunk shapes, not by the single-token decode path
+we are trying to speed up.
+
+New summary artifacts:
+
+- `data/qwen36-replay-digest-hot-routeclass-summary-20260612dt.{json,md}`
+  for all shapes.
+- `data/qwen36-replay-digest-hot-routeclass-decode1-summary-20260612dt.{json,md}`
+  for `num_rows=1`.
+- `data/qwen36-digest-hotpack-decode1-plan-20260612dt.{json,md}` for top32
+  decode hot packs.
+- `data/qwen36-digest-hotpack-decode1-top128-plan-20260612du.{json,md}` for
+  the wider decode top64/top128 hot-pack curve.
+
+Reproduction commands:
+
+```bash
+python3 scripts/qwen36-replay-digest-summary.py \
+  'data/qwen36-replay-digest-replay-digest-hot-20260612dq-*-*.jsonl' \
+  --top-n 32 \
+  --output-json data/qwen36-replay-digest-hot-routeclass-summary-20260612dt.json \
+  --markdown-out data/qwen36-replay-digest-hot-routeclass-summary-20260612dt.md
+
+python3 scripts/qwen36-replay-digest-summary.py \
+  'data/qwen36-replay-digest-replay-digest-hot-20260612dq-*-*.jsonl' \
+  --top-n 32 \
+  --num-rows 1 \
+  --output-json data/qwen36-replay-digest-hot-routeclass-decode1-summary-20260612dt.json \
+  --markdown-out data/qwen36-replay-digest-hot-routeclass-decode1-summary-20260612dt.md
+
+python3 scripts/qwen36-replay-digest-summary.py \
+  'data/qwen36-replay-digest-replay-digest-hot-20260612dq-*-*.jsonl' \
+  --top-n 128 \
+  --num-rows 1 \
+  --output-json /tmp/qwen36-replay-digest-hot-decode1-top128-summary-20260612du.json
+
+python3 scripts/qwen36-digest-hotpack-plan.py \
+  --summary /tmp/qwen36-replay-digest-hot-decode1-top128-summary-20260612du.json \
+  --hot-sizes 1,2,4,8,16,32,64,128 \
+  --vllm-log data/qwen36-quark-int8-tp4-accepted-restored-after-replaydigest-hot-20260612dq.log \
+  --out-json data/qwen36-digest-hotpack-decode1-top128-plan-20260612du.json \
+  --out-md data/qwen36-digest-hotpack-decode1-top128-plan-20260612du.md
+```
+
+Route-class finding:
+
+- All-shape route-hash coverage looks concentrated only because large prefill
+  rows dominate routed-row weighting. It should not drive the c1 decode plan.
+- The decode-only `num_rows=1` route-hash view has `55520` rows, `3520`
+  filtered-out non-decode rows, one shape `(1, 8, 256, 2048)`, and roughly
+  `342` unique route hashes per layer.
+- Decode-only top route hashes are diffuse: mean top1 route-hash coverage is
+  `0.0062`, top4 `0.0208`, top8 `0.0348`, and top16 only `0.0596`.
+- Decision: route-class kernel banks are not the first implementation target
+  for single-token decode. The trace does not repeat exact route hashes enough.
+
+Wider static hot-pack finding:
+
+- For `num_rows=1`, static top16 per-layer hot packs cover only `0.340` weighted
+  routed rows, so the earlier all-shape top16 optimism does not carry over to
+  decode.
+- Static top32 improves to `0.503` coverage for `971.2 MiB/rank`.
+- Static top64 reaches `0.702` coverage for `1942.5 MiB/rank`.
+- Static top128 reaches `0.913` coverage for `3885.0 MiB/rank`.
+- With the current 32K lane's KV report, top64 plus `512 MiB` reserve would
+  carve about `238064` KV tokens and leave about `55.38x` reported 32K
+  concurrency. Top128 plus reserve would leave about `49.64x`.
+
+Updated implementation choice:
+
+1. Prototype a one-layer top64 static hot-pack kernel first. Pick a high
+   coverage layer from the decode top64 plan, prove exact layer-output parity,
+   and benchmark only the kernel path before endpoint work.
+2. If the one-layer prototype is faster, test the threshold top64 lane:
+   `8` layers above `0.75` coverage cost only `388.5 MiB/rank`, while `26`
+   layers above `0.70` cost `1262.6 MiB/rank`.
+3. Keep top128 as the bolder memory-for-latency lane. It covers almost all
+   decode rows but costs `3.89 GiB/rank`; this is plausible for a latency lane,
+   not the first production capacity lane.
+4. Keep route-class kernels parked unless a longer or more realistic trace
+   shows much stronger exact route-hash repetition.

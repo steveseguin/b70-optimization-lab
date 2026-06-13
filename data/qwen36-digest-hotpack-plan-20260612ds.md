@@ -2,7 +2,7 @@
 
 ## Scope
 
-This plan uses only the replay-digest hot columns captured in the 20260612dq diagnostic run. The digest records top-16 hot experts, so top-32/top-64 coverage is intentionally not extrapolated here.
+This plan uses only the aggregate hot expert list present in the input replay-digest summary. Coverage beyond that list is not extrapolated.
 
 ## Memory Model
 
@@ -75,6 +75,7 @@ Static coverage uses one per-layer hot pack across the whole replay. Recorded dy
 
 ## Decision
 
-- A static top-16 pack covers a majority of replayed decode rows while adding only a few hundred MiB per rank. The dynamic top-16 upper bound is materially higher, so route-aware exact hotset selection is a real opportunity.
-- The first implementation target should still be a one-layer or threshold-selected fast lane, because the speed risk is kernel routing and copy overhead, not raw VRAM.
+- Static hot-pack coverage is the actionable resident-cache number in the table above. If it is low, a blind static pack is not enough for the filtered workload even though the memory cost is modest.
+- The recorded dynamic top-16 value is an upper bound from the per-call digest columns. For rows=1/topk=8 decode it is expected to approach 1.0, because the probe can record every selected expert; it does not imply a precomputed static pack covers them.
+- The first implementation target should still be a one-layer, threshold-selected, or exact-admission fast lane, because the speed risk is kernel routing and copy overhead, not raw VRAM.
 - Keep full cold fallback and sentinel parity. The hot pack is an execution shortcut for already-selected experts, not a routing approximation.

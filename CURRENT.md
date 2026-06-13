@@ -6,6 +6,20 @@ Date: 2026-06-12
 
 2026-06-12 notes update:
 
+- Extended `scripts/qwen36-replay-digest-summary.py` with route-hash counters
+  and `--num-rows` filtering, then generated route-class summaries for the
+  20260612dq hot trace. The all-shape route-hash view is dominated by
+  prefill/chunk rows and is not the right latency signal. The decode-only
+  `num_rows=1` view has diffuse route hashes: top-16 route hashes average only
+  `0.0596` coverage per layer, with about `342` unique route hashes per layer,
+  so route-class kernel banks are not the first single-token target. A wider
+  decode-only hot-expert plan shows static top32/top64/top128 resident packs at
+  `0.503` / `0.702` / `0.913` weighted coverage for `971 MiB` / `1.94 GiB` /
+  `3.89 GiB` per rank. This makes top64 or top128 static hot-pack replication
+  the next stronger no-quality-loss branch, with exact cold fallback.
+
+2026-06-12 notes update:
+
 - Added `scripts/qwen36-digest-hotpack-plan.py` and
   `data/qwen36-digest-hotpack-plan-20260612ds.{json,md}` to turn the
   replay-digest hot atlas into a concrete VRAM-for-latency plan. The model's

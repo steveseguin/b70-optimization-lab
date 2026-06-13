@@ -25,6 +25,17 @@ def expand_inputs(patterns: list[str]) -> list[str]:
     return paths
 
 
+def parse_csv_ints(value: str) -> list[int]:
+    out = []
+    for item in value.split(","):
+        item = item.strip()
+        if item:
+            out.append(int(item))
+    if not out:
+        raise argparse.ArgumentTypeError("expected at least one integer")
+    return out
+
+
 def row_fields(values: list[int]) -> dict[str, Any]:
     return {
         "magic": values[0],
@@ -72,9 +83,15 @@ def worker_key(rank: str, local_rank: str, device: str) -> str:
     return f"device:{device}"
 
 
-def summarize(paths: list[str], top_n: int) -> dict[str, Any]:
+def summarize(
+    paths: list[str],
+    top_n: int,
+    *,
+    num_rows_filter: set[int] | None,
+) -> dict[str, Any]:
     record_count = 0
     row_count = 0
+    filtered_out_rows = 0
     valid_magic_rows = 0
     invalid_rows = 0
     first_counter: int | None = None
@@ -94,6 +111,12 @@ def summarize(paths: list[str], top_n: int) -> dict[str, Any]:
     layers_by_worker: dict[str, set[int]] = defaultdict(set)
     rows_by_rank_layer: Counter[tuple[str, int]] = Counter()
     rows_by_worker_layer: Counter[tuple[str, int]] = Counter()
+    route_hash_rows_by_layer: Counter[tuple[int, int]] = Counter()
+    route_hash_routed_rows_by_layer: Counter[tuple[int, int]] = Counter()
+    route_hash_rows_by_worker_layer: Counter[tuple[str, int, int]] = Counter()
+    route_hash_routed_rows_by_worker_layer: Counter[tuple[str, int, int]] = Counter()
+    route_shape_hash_rows_by_layer: Counter[tuple[int, str, int]] = Counter()
+    route_row_hash_rows_by_layer: Counter[tuple[int, int, int]] = Counter()
     non_negative_layer_rows = 0
     negative_layer_rows = 0
     max_rows_nonzero = 0
@@ -141,6 +164,12 @@ def summarize(paths: list[str], top_n: int) -> dict[str, Any]:
                         continue
                     max_columns = max(max_columns, len(values_i))
                     fields = row_fields(values_i)
+                    if (
+                        num_rows_filter is not None
+                        and int(fields["num_rows"]) not in num_rows_filter
+                    ):
+                        filtered_out_rows += 1
+                        continue
                     row_count += 1
                     rank_rows[rank] += 1
                     local_rank_rows[local_rank] += 1
@@ -178,6 +207,15 @@ def summarize(paths: list[str], top_n: int) -> dict[str, Any]:
                     )
                     route_hashes.add(route_key)
                     route_by_rank_layer[f"{worker}:{layer}"].add(fields["route_hash"])
+                    route_hash = int(fields["route_hash"])
+                    row_hash = int(fields["row_hash"])
+                    rows_sum = int(fields["rows_sum"])
+                    route_hash_rows_by_layer[(layer, route_hash)] += 1
+                    route_hash_routed_rows_by_layer[(layer, route_hash)] += rows_sum
+                    route_hash_rows_by_worker_layer[(worker, layer, route_hash)] += 1
+                    route_hash_routed_rows_by_worker_layer[(worker, layer, route_hash)] += rows_sum
+                    route_shape_hash_rows_by_layer[(layer, str(shape), route_hash)] += 1
+                    route_row_hash_rows_by_layer[(layer, route_hash, row_hash)] += 1
                     max_rows_nonzero = max(max_rows_nonzero, int(fields["rows_nonzero"]))
                     max_rows_max = max(max_rows_max, int(fields["rows_max"]))
                     pairs = hot_expert_pairs(values_i)
@@ -209,6 +247,123 @@ def summarize(paths: list[str], top_n: int) -> dict[str, Any]:
         key: len(value)
         for key, value in sorted(route_by_rank_layer.items(), key=lambda item: item[0])
     }
+    unique_route_hashes_by_layer = {}
+    route_hash_coverage_by_layer = {}
+    top_route_hashes_by_layer: dict[str, list[dict[str, Any]]] = {}
+    for layer in sorted(layer_counts):
+        layer_route_items = [
+            (route_hash, count)
+            for (route_layer, route_hash), count in route_hash_rows_by_layer.items()
+            if route_layer == layer
+        ]
+        if not layer_route_items:
+            continue
+        unique_route_hashes_by_layer[str(layer)] = len(layer_route_items)
+        by_records = Counter({route_hash: count for route_hash, count in layer_route_items})
+        top_records = by_records.most_common(top_n)
+        layer_record_denom = int(layer_counts[layer])
+        layer_routed_denom = int(rows_sum_by_layer[layer])
+        route_hash_coverage_by_layer[str(layer)] = {
+            "unique_route_hashes": len(layer_route_items),
+            "digest_rows": layer_record_denom,
+            "routed_rows": layer_routed_denom,
+        }
+        for k in (1, 4, 8, 16):
+            selected = top_records[:k]
+            selected_records = sum(count for _route_hash, count in selected)
+            selected_routed = sum(
+                int(route_hash_routed_rows_by_layer[(layer, route_hash)])
+                for route_hash, _count in selected
+            )
+            route_hash_coverage_by_layer[str(layer)][f"top{k}_digest_row_coverage"] = (
+                selected_records / layer_record_denom if layer_record_denom else 0.0
+            )
+            route_hash_coverage_by_layer[str(layer)][f"top{k}_routed_row_coverage"] = (
+                selected_routed / layer_routed_denom if layer_routed_denom else 0.0
+            )
+        top_route_hashes_by_layer[str(layer)] = [
+            {
+                "route_hash": str(route_hash),
+                "digest_rows": int(record_count_for_hash),
+                "digest_row_coverage": (
+                    record_count_for_hash / layer_record_denom
+                    if layer_record_denom else 0.0
+                ),
+                "routed_rows": int(route_hash_routed_rows_by_layer[(layer, route_hash)]),
+                "routed_row_coverage": (
+                    route_hash_routed_rows_by_layer[(layer, route_hash)] / layer_routed_denom
+                    if layer_routed_denom else 0.0
+                ),
+            }
+            for route_hash, record_count_for_hash in top_records
+        ]
+
+    top_route_hashes_by_worker_layer: dict[str, list[dict[str, Any]]] = {}
+    worker_route_keys = sorted({
+        (worker, layer)
+        for (worker, layer, _route_hash) in route_hash_rows_by_worker_layer
+    }, key=lambda item: (str(item[0]), int(item[1])))
+    for worker, layer in worker_route_keys:
+        by_records = Counter({
+            route_hash: count
+            for (route_worker, route_layer, route_hash), count in route_hash_rows_by_worker_layer.items()
+            if route_worker == worker and route_layer == layer
+        })
+        if not by_records:
+            continue
+        digest_denom = int(rows_by_worker_layer[(worker, layer)])
+        routed_denom = sum(
+            int(count)
+            for (route_worker, route_layer, _route_hash), count in route_hash_routed_rows_by_worker_layer.items()
+            if route_worker == worker and route_layer == layer
+        )
+        top_route_hashes_by_worker_layer[f"{worker}:{layer}"] = [
+            {
+                "route_hash": str(route_hash),
+                "digest_rows": int(count),
+                "digest_row_coverage": count / digest_denom if digest_denom else 0.0,
+                "routed_rows": int(route_hash_routed_rows_by_worker_layer[(worker, layer, route_hash)]),
+                "routed_row_coverage": (
+                    route_hash_routed_rows_by_worker_layer[(worker, layer, route_hash)] / routed_denom
+                    if routed_denom else 0.0
+                ),
+            }
+            for route_hash, count in by_records.most_common(top_n)
+        ]
+
+    top_route_shape_hashes_by_layer: dict[str, list[dict[str, Any]]] = {}
+    for layer in sorted(layer_counts):
+        layer_items = [
+            ((shape, route_hash), count)
+            for (route_layer, shape, route_hash), count in route_shape_hash_rows_by_layer.items()
+            if route_layer == layer
+        ]
+        if layer_items:
+            top_route_shape_hashes_by_layer[str(layer)] = [
+                {
+                    "shape": shape,
+                    "route_hash": str(route_hash),
+                    "digest_rows": int(count),
+                }
+                for (shape, route_hash), count in Counter(dict(layer_items)).most_common(top_n)
+            ]
+
+    top_route_row_hashes_by_layer: dict[str, list[dict[str, Any]]] = {}
+    for layer in sorted(layer_counts):
+        layer_items = [
+            ((route_hash, row_hash), count)
+            for (route_layer, route_hash, row_hash), count in route_row_hash_rows_by_layer.items()
+            if route_layer == layer
+        ]
+        if layer_items:
+            top_route_row_hashes_by_layer[str(layer)] = [
+                {
+                    "route_hash": str(route_hash),
+                    "row_hash": str(row_hash),
+                    "digest_rows": int(count),
+                }
+                for (route_hash, row_hash), count in Counter(dict(layer_items)).most_common(top_n)
+            ]
     hot_by_layer_out: dict[str, list[list[int]]] = {}
     hot_unique_by_layer: dict[str, int] = {}
     for layer in sorted(layer_counts):
@@ -253,8 +408,12 @@ def summarize(paths: list[str], top_n: int) -> dict[str, Any]:
 
     return {
         "sources": paths,
+        "filters": {
+            "num_rows": sorted(num_rows_filter) if num_rows_filter is not None else None,
+        },
         "records": record_count,
         "rows": row_count,
+        "filtered_out_rows": filtered_out_rows,
         "valid_magic_rows": valid_magic_rows,
         "invalid_rows": invalid_rows,
         "first_counter": first_counter,
@@ -278,6 +437,12 @@ def summarize(paths: list[str], top_n: int) -> dict[str, Any]:
         "top_shape_summaries": top_counter(shape_summaries, top_n),
         "unique_digest_combos": len(route_hashes),
         "unique_route_hashes_by_rank_layer": unique_route_hashes_by_rank_layer,
+        "unique_route_hashes_by_layer": unique_route_hashes_by_layer,
+        "route_hash_coverage_by_layer": route_hash_coverage_by_layer,
+        "top_route_hashes_by_layer": top_route_hashes_by_layer,
+        "top_route_hashes_by_worker_layer": top_route_hashes_by_worker_layer,
+        "top_route_shape_hashes_by_layer": top_route_shape_hashes_by_layer,
+        "top_route_row_hashes_by_layer": top_route_row_hashes_by_layer,
         "max_rows_nonzero": max_rows_nonzero,
         "max_rows_max": max_rows_max,
         "max_columns": max_columns,
@@ -299,6 +464,8 @@ def write_markdown(summary: dict[str, Any], path: str) -> None:
         f"- Sources: `{len(summary['sources'])}`",
         f"- Records: `{summary['records']}`",
         f"- Rows: `{summary['rows']}`",
+        f"- Filtered out rows: `{summary.get('filtered_out_rows', 0)}`",
+        f"- Filters: `{summary.get('filters', {})}`",
         f"- Valid magic rows: `{summary['valid_magic_rows']}`",
         f"- Invalid rows: `{summary['invalid_rows']}`",
         f"- Counter range: `{summary['first_counter']}` to `{summary['last_counter']}`",
@@ -328,6 +495,28 @@ def write_markdown(summary: dict[str, Any], path: str) -> None:
     lines.extend(["", "## Rank Layer Coverage", ""])
     for worker, layers in summary["layers_by_worker"].items():
         lines.append(f"- Worker `{worker}`: `{len(layers)}` layers, `{layers}`")
+    if summary.get("route_hash_coverage_by_layer"):
+        lines.extend(["", "## Route Hash Coverage By Layer", ""])
+        lines.extend([
+            "| Layer | Unique route hashes | top1 routed | top4 routed | top8 routed | top16 routed |",
+            "| ---: | ---: | ---: | ---: | ---: | ---: |",
+        ])
+        for layer, data in summary["route_hash_coverage_by_layer"].items():
+            lines.append(
+                f"| {layer} | {data['unique_route_hashes']} | "
+                f"{data['top1_routed_row_coverage']:.6f} | "
+                f"{data['top4_routed_row_coverage']:.6f} | "
+                f"{data['top8_routed_row_coverage']:.6f} | "
+                f"{data['top16_routed_row_coverage']:.6f} |"
+            )
+        lines.extend(["", "## Top Route Hashes By Layer", ""])
+        for layer, items in summary["top_route_hashes_by_layer"].items():
+            rendered = ", ".join(
+                f"{item['route_hash']}:{item['digest_rows']}r/"
+                f"{item['routed_row_coverage']:.3f}"
+                for item in items
+            )
+            lines.append(f"- Layer `{layer}`: {rendered}")
     if summary.get("hot_pair_observations"):
         lines.extend(["", "## Top Hot Experts Overall", ""])
         lines.extend(["| Layer/expert | Routed rows |", "| --- | ---: |"])
@@ -354,13 +543,18 @@ def main() -> int:
     parser.add_argument("--output-json", required=True)
     parser.add_argument("--markdown-out")
     parser.add_argument("--top-n", type=int, default=16)
+    parser.add_argument("--num-rows", type=parse_csv_ints)
     args = parser.parse_args()
 
     paths = expand_inputs(args.inputs)
     missing = [path for path in paths if not Path(path).exists()]
     if missing:
         raise SystemExit(f"missing input files: {missing}")
-    summary = summarize(paths, args.top_n)
+    summary = summarize(
+        paths,
+        args.top_n,
+        num_rows_filter=set(args.num_rows) if args.num_rows else None,
+    )
     Path(args.output_json).write_text(json.dumps(summary, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     if args.markdown_out:
         write_markdown(summary, args.markdown_out)
