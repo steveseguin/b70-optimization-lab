@@ -12670,3 +12670,160 @@ Updated next order:
    separate collectives from pure kernel latency.
 4. Start route-class autotune only after hot expert overlap is measured across
    all ranks.
+
+## Post-Review Bigger Bets Refresh 20260612dq
+
+Added after the user review of the best public result and the current
+`~100 tok/s` accepted plateau. This is a planning checkpoint only: no endpoint
+was changed and no speed result is promoted.
+
+Public/local status:
+
+- The exact-model Localmaxxing row remains public and clean:
+  `nameistoken/Qwen3.6-35B-A3B-Quark-W8A8-INT8`, 4x Arc Pro B70, vLLM,
+  32K context, c1, `99.428 tok/s`, with quality gates recorded in the row.
+- The current B70/Qwen family refresh still shows the later accepted-lane row
+  at `99.770 tok/s`, but it is filed against the base model family rather than
+  the exact quantized HF ID. Do not repost unless the new result is cleaner,
+  faster, and includes telemetry plus quality proof.
+- Fresh accepted local telemetry is close to those public rows:
+  `99.885 tok/s` corrected after-first, `98.387 tok/s` e2e, and
+  `10.012 ms/token` vLLM decode with no observed throttle events.
+
+External signals folded in:
+
+- vLLM's EP docs treat expert parallelism as the intended locality/efficiency
+  path for MoE models, with multiple all2all backends and a decode-oriented
+  low-latency backend in the CUDA ecosystem. Even if those exact backends are
+  not usable on XPU, the architecture is a useful target.
+- vLLM's Fused MoE design docs make the all2all/prepare/finalize split explicit
+  and track backend support by quantization format. Any XPU EP experiment must
+  preserve the Quark W8A8 path rather than falling back to higher precision or a
+  different quantization.
+- Intel's grouped-GEMM performance issue calls out decode-stage route skew and
+  long-tail expert distributions as first-class tuning inputs. That directly
+  validates the next replay-digest extension: hashes are not enough; we need
+  bounded hot expert counts per layer and rank.
+- The vLLM XPU kernels repository confirms the active XPU stack already owns
+  MoE top-k, MoE align/gather, expert remapping, grouped GEMM, GDN attention,
+  and XPU custom-op registration. The likely win is a better composition of
+  existing primitives plus one or two Qwen3.6-specific kernels, not a wholesale
+  engine rewrite as the first step.
+- Current dual-B70 issue traffic keeps host stack, firmware, PCIe topology,
+  ProcessGroupXCCL, and BCS resets in scope. Treat the Intel validated BOM and
+  topology A-B as performance and stability variables, not cleanup work.
+- Persistent grouped-GEMM work in the broader MoE ecosystem reinforces the
+  direction: reduce launch count, reuse cache-resident tiles/metadata, and
+  schedule real routed shapes rather than synthetic balanced shapes.
+
+Concrete items added to the active queue:
+
+1. **Hot-expert digest extension.**
+   Extend the replay digest row format from 16 fixed columns to
+   `16 + 2*N` columns, where each pair is `(expert_id, routed_row_count)`.
+   Rerun all ranks and summarize top experts by layer/rank. This is the next
+   required fact before expert mirroring, route-class kernels, or EP placement.
+
+2. **Hot expert overlap score.**
+   Add a summary metric per layer: top-N coverage, rank overlap, and cold-tail
+   mass. If top experts are stable across ranks, mirror them; if each rank has
+   different hot experts, prefer EP or route-class autotune.
+
+3. **VRAM-for-latency budget ledger.**
+   Convert the current `gpu_memory_utilization=0.95` reservation into an
+   explicit budget: weights, KV cache at 32K, graph/cache artifacts, and
+   reclaimable headroom. Expert mirroring must reserve memory intentionally,
+   not fight vLLM's default cache reservation.
+
+4. **TP4 versus TP2 versus single-card short-context latency split.**
+   Run controlled p512/o512 and shorter-context probes to separate MoE kernel
+   latency from TP collectives. This must use the same Quark W8A8 checkpoint;
+   lower-bit or Qwen3.5 rows are not comparables.
+
+5. **Collective algorithm ledger.**
+   Add per-token all-reduce/all-gather/all2all timing and bytes where possible,
+   plus CCL transport, rank mapping, IPC mode, and host-copy fallback signals.
+   If collectives are a meaningful slice of the `10 ms/token`, topology/EP work
+   gets priority over another GEMM microkernel.
+
+6. **Validated-BOM boot lane.**
+   Reproduce the accepted run under the closest Intel validated XPU container
+   and host stack available. A large movement here would change the plan more
+   than a local code patch.
+
+7. **XPU grouped-GEMM real-route tournament.**
+   Feed the hot-expert digest distributions into Xe grouped-GEMM and Triton-XPU
+   microbenches. Tune against real decode route histograms, not balanced dummy
+   distributions.
+
+8. **Quality gate v3.**
+   Keep exact-output canaries for runtime changes, add a small BF16 comparison
+   bank for model-quality awareness, and log logits/hash parity for kernel
+   branches before serving them. Runtime optimizations must be bitwise or
+   acceptably numerically identical against the current Quark W8A8 target.
+
+Bigger, bolder ideas to keep in view:
+
+1. **Hot-expert mirror cache.**
+   Keep the current TP4 dense path, but replicate the top hot experts for each
+   layer on every card and route hot tokens locally. Cold experts stay sharded.
+   This spends VRAM to remove remote/cross-rank work on the common path without
+   changing weights or quantization.
+
+2. **Hybrid TP-dense / EP-MoE lane.**
+   Preserve TP where dense layers require it, but switch MoE layers to
+   expert-owned placement with an XPU all2all/gather path. This is more work
+   than a flag flip, but it attacks the specific mismatch of MoE decode on TP4.
+
+3. **One-rank decode owner plus expert coprocessors.**
+   Let one rank own KV/logits/sampler state for a request while other cards act
+   as expert workers. The target is fewer global synchronization points per
+   token, with exact output parity enforced by the owner.
+
+4. **Qwen3.6 W8A8 persistent MoE layerlet.**
+   Build a decode-only rows=1/topk=8 Quark W8A8 kernel path that keeps expert
+   descriptors, scale pointers, scratch, and tile scheduling resident. Host code
+   should submit token descriptors, not rebuild route metadata every token.
+
+5. **Whole-token static decode supergraph.**
+   For c1 serving, generate a fixed-shape command graph covering the repeated
+   decode step and patch only the token/KV pointers. This would bypass enough
+   scheduler/Python/runtime churn to test whether vLLM overhead is the wall.
+
+6. **Expert layout compiler.**
+   Reorder expert memory layout per layer according to the hot atlas, keeping a
+   reversible route-id map. The math is unchanged, but hot experts become
+   contiguous and cache-friendly for grouped GEMM.
+
+7. **Route-class kernel bank.**
+   Generate a small bank of exact per-layer kernels for the top route classes:
+   fixed expert order, fixed top-k shape, baked pointer offsets, and a fallback
+   generic grouped-GEMM path for misses.
+
+8. **Verifier-owned branch farm.**
+   Use idle cards to draft candidate continuations, but only commit tokens
+   accepted by the exact Quark W8A8 target. This is the clearest no-quality-loss
+   path above `200 tok/s`, but it requires exact KV rollback and sampler-state
+   accounting before it can be promoted.
+
+9. **Single-card/replica production split.**
+   If the exact W8A8 model can be made to fit short-context or with a reduced
+   KV budget on one B70, run four independent replicas for low-latency routing
+   and keep the TP4 lane for 32K context. This may not improve one long-context
+   stream, but it could improve production tail latency and aggregate capacity.
+
+10. **External maintainer challenge packet.**
+    Publish an executable packet after the hot-expert atlas: exact checkpoint,
+    command, route histograms, quality gates, latency decomposition, telemetry,
+    and desired target (`5 ms/token`). The ask should be precise enough for
+    Intel/vLLM/XPU-kernel maintainers to reproduce without reverse-engineering
+    our local branch history.
+
+Updated immediate order:
+
+1. Implement hot-expert replay-digest columns and summary metrics.
+2. Run all-rank hot-expert capture, restore accepted backend, and verify health.
+3. Use the hot-expert atlas to pick one implementation branch:
+   hot-expert mirror, hybrid TP/EP lane, or route-class kernel bank.
+4. In parallel, prepare a BOM/topology A-B checklist and a privileged telemetry
+   path so later speed wins include reliability evidence.

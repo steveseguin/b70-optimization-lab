@@ -6,6 +6,23 @@ Date: 2026-06-12
 
 2026-06-12 notes update:
 
+- Added a "Post-Review Bigger Bets Refresh 20260612dq" section to
+  `notes/2026-06-12-qwen36-next-bigger-bets.md`. It records the current public
+  Localmaxxing status (`99.428 tok/s` exact quantized HF ID and `99.770 tok/s`
+  B70/Qwen-family row), folds in current vLLM/XPU/EP/grouped-GEMM/B70 host-stack
+  signals, and adds the next planning queue: hot-expert digest columns,
+  hot-expert overlap scoring, explicit VRAM-for-latency budgeting, TP4/TP2/
+  single-card latency splits, collective telemetry, validated-BOM A-B testing,
+  real-route grouped-GEMM tournaments, and quality gate v3. The bolder backlog
+  now includes hot-expert mirroring, hybrid TP-dense/EP-MoE, one-rank decode
+  ownership with expert coprocessors, persistent W8A8 MoE layerlets, whole-token
+  static decode supergraphs, expert layout compilation, route-class kernel
+  banks, verifier-owned branch farming, replica/TP production split, and a
+  maintainer challenge packet. No endpoint was changed and no speed result was
+  promoted.
+
+2026-06-12 notes update:
+
 - Added an accepted backend p512/o512 telemetry baseline with
   `scripts/qwen36-xpusmi-dump-summary.py`. Direct backend streaming measured
   `99.885 tok/s` corrected after-first output throughput, `98.387 tok/s` e2e,
