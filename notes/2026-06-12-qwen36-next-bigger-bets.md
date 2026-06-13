@@ -13269,3 +13269,121 @@ Updated implementation choice:
 3. **Admission stats become part of the quality/perf gate.** A promoted hot-pack
    experiment should report mean coverage, fully-hot fraction, cold histogram,
    exact layer-output parity, and completion canaries before endpoint timing.
+
+## Top128 Hot-Only Layer-20 GPU Timing 20260612dx
+
+Ran the first real XPU timing window for the top128 hot-only idea after the
+layer-20 rank-0 replay digest route conversion. The accepted backend was stopped
+so `xpu:0` had enough free VRAM for the isolated harness, then restored and
+checked before ending the maintenance window.
+
+Artifacts:
+
+- Benchmark JSON:
+  `data/qwen36-replay-digest-hotset-top128-layer20-rank0-hotonly-gpu-20260612dx.json`
+- Benchmark log:
+  `data/qwen36-replay-digest-hotset-top128-layer20-rank0-hotonly-gpu-20260612dx.log`
+- Summary:
+  `data/qwen36-replay-digest-hotset-top128-layer20-rank0-hotonly-gpu-20260612dx.md`
+- XPU process snapshots:
+  `data/qwen36-replay-digest-hotset-top128-layer20-rank0-hotonly-gpu-20260612dx-pre-xpusmi-ps.txt`,
+  `data/qwen36-replay-digest-hotset-top128-layer20-rank0-hotonly-gpu-20260612dx-poststop-xpusmi-ps.txt`,
+  and
+  `data/qwen36-replay-digest-hotset-top128-layer20-rank0-hotonly-gpu-20260612dx-postrestore-xpusmi-ps.txt`
+- Restore/provenance:
+  `data/qwen36-quark-int8-tp4-accepted-restored-after-top128hotonly-20260612dx.log`
+  and
+  `data/qwen36-quark-int8-tp4-accepted-provenance-after-top128hotonly-20260612dx.json`
+
+Benchmark reproduction:
+
+```bash
+TOP128="224,191,185,151,237,41,239,117,99,116,110,206,186,7,53,127,72,180,171,205,220,107,175,193,121,135,148,179,71,35,141,194,216,235,115,207,56,23,159,49,3,157,247,133,36,173,47,137,18,92,246,155,38,11,143,50,4,203,164,184,52,126,195,253,160,89,221,20,80,242,22,42,198,17,172,33,61,85,244,10,165,232,102,217,225,86,238,181,98,69,223,234,150,136,249,29,68,112,120,65,0,132,178,108,233,147,74,95,104,123,174,103,46,138,81,226,83,114,240,88,44,163,78,93,139,21,94,113"
+
+PYTHONPATH=/home/steve/src/vllm-xpu-kernels \
+LD_LIBRARY_PATH=/home/steve/src/vllm-xpu-kernels/vllm_xpu_kernels:/home/steve/.venvs/vllm-xpu/lib:/home/steve/.venvs/vllm-xpu/lib/python3.12/site-packages/torch/lib \
+ONEAPI_DEVICE_SELECTOR=level_zero:0 \
+ZE_AFFINITY_MASK=0 \
+/home/steve/.venvs/vllm-xpu/bin/python \
+  scripts/bench-qwen36-route-exact-w8a8-grouped-gemm.py \
+  --route-jsonl data/qwen36-replay-digest-hot-decode1-layer20-rank0-routes-20260612dv.jsonl \
+  --route-layer-regex 'layers[.]20[.]' \
+  --route-start-indices 0:16 \
+  --route-window-size 1 \
+  --hotset-experts "$TOP128" \
+  --hotset-cold-mode compact \
+  --gemm-stage both \
+  --device xpu:0 \
+  --warmup 10 \
+  --iterations 80 \
+  --output-json data/qwen36-replay-digest-hotset-top128-layer20-rank0-hotonly-gpu-20260612dx.json
+```
+
+Result:
+
+| Mode | Experts | Stage | Cases | Mean case us | Median case us |
+| --- | ---: | --- | ---: | ---: | ---: |
+| exact | 256 | gemm1 | 16 | 100.533 | 97.875 |
+| exact | 256 | gemm2 | 16 | 102.365 | 91.377 |
+| hotset_split_compact_cold | 128+0 | gemm1 | 16 | 101.408 | 101.670 |
+| hotset_split_compact_cold | 128+0 | gemm2 | 16 | 103.594 | 103.691 |
+
+Relative to the full 256-expert exact path, top128 hot-only was `0.8703%`
+slower for `gemm1` and `1.2005%` slower for `gemm2` by mean case time.
+
+Interpretation:
+
+- This is a negative result for a table-size-only hotpack path. Top128 has
+  strong admission coverage, but the current grouped-GEMM XPU kernel does not
+  get faster just because the resident expert table is smaller.
+- Top128 admission remains useful as a gate. It just needs to feed a materially
+  different execution path.
+- The next fast path needs to remove launch/host/dispatch overhead or change
+  device scheduling enough to reduce actual work. Candidate forms are a
+  persistent MoE layerlet, fused hot/cold single-dispatch kernel, static decode
+  graph, or a route-aware grouped-GEMM layout that specializes c1 decode.
+
+Restore status:
+
+- The accepted endpoint was restored at `http://127.0.0.1:18080`.
+- `/v1/models` returned `qwen36-35b-a3b-fp8` and max context `32768`.
+- Provenance canaries passed after the final restore.
+- Restore log reports `2,052,915` GPU KV cache tokens and `62.65x` maximum
+  concurrency for 32K requests.
+
+Fast Gemma dashboard follow-up:
+
+- The current public Space is a live dashboard, and its file history shows a
+  recent fix for paginating tree endpoint listings. The app code also warms the
+  listing cache in the background, uses a bounded async connection pool, caches
+  immutable file content by content hash, gates fan-out concurrency, wraps
+  refreshes in a single-flight TTL cache, and serves stale values after refresh
+  failures.
+- Direct inference-speed transfer for our Gemma/Qwen lanes: treat every cold
+  path the same way. Warm graph/tokenizer/template/KV-admission caches before
+  traffic, make refresh/build steps single-flight, cap concurrent background
+  work so it cannot starve decode, and keep a last-good runtime plan available
+  if a refresh fails.
+- Larger idea: build a local "inference control plane" like that dashboard's
+  data plane. It would keep immutable benchmark/eval artifacts, graph-cache
+  manifests, route atlases, and accepted-launch recipes content-addressed; the
+  serving process should only switch to a new plan after parity, canaries, and
+  a short reliability probe pass.
+
+Updated things to try:
+
+1. **Persistent top128 layerlet for one high-value layer.** Keep the same
+   admission gate but eliminate the per-call grouped-GEMM setup path.
+2. **One-dispatch top64 hot/cold kernel.** Top64 admission is poor for
+   hot-only, but its mean coverage is good enough if the cold rows do not
+   require a second launch.
+3. **Route-aware c1 kernel tournament.** Use the replay digest to create a
+   small suite of c1 route patterns, then benchmark candidate layouts against
+   exact full 256 under identical routes.
+4. **Whole-token static decode graph.** Capture the accepted c1 graph boundary
+   around routing, MoE, all-reduce, norm, logits, and sampler so the server is
+   not paying host scheduling on every generated token.
+5. **Latency-lane KV trade.** Top128 across all layers costs about
+   `3.89 GiB/rank`; a production setup may keep a high-concurrency 32K lane and
+   a separate lower-concurrency latency lane that spends VRAM on resident
+   hotpacks.

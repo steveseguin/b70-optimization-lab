@@ -6,6 +6,21 @@ Date: 2026-06-12
 
 2026-06-12 notes update:
 
+- Ran the real XPU top128 hot-only layer-20 grouped-GEMM timing window from the
+  replay-digest route converter. Artifacts:
+  `data/qwen36-replay-digest-hotset-top128-layer20-rank0-hotonly-gpu-20260612dx.{json,log,md}`.
+  On `xpu:0`, fully covered rank-0 layer-20 decode rows showed no speed win:
+  full 256-expert exact `gemm1` averaged `100.533 us`, while top128 hot-only
+  averaged `101.408 us` (`+0.8703%`); full exact `gemm2` averaged `102.365 us`,
+  while top128 hot-only averaged `103.594 us` (`+1.2005%`). The accepted
+  endpoint was restored on `18080`, `/v1/models` reports
+  `qwen36-35b-a3b-fp8` with `32768` max context, and the provenance sentinels
+  passed. Conclusion: top128 admission is still valuable, but a table-size-only
+  grouped-GEMM fast path is not; the speed path needs a persistent/one-dispatch
+  layerlet, fused hot/cold kernel, or static decode graph.
+
+2026-06-12 notes update:
+
 - Added `scripts/qwen36-digest-hotpack-admission.py` and generated
   `data/qwen36-digest-hotpack-admission-top64-top128-decode1-20260612dw.{json,md}`.
   Across `55520` decode rows, top64 has mean coverage `0.7022` but is fully
