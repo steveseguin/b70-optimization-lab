@@ -46,6 +46,16 @@ def row_fields(values: list[int]) -> dict[str, Any]:
     }
 
 
+def hot_expert_pairs(values: list[int]) -> list[tuple[int, int]]:
+    pairs: list[tuple[int, int]] = []
+    for idx in range(16, len(values) - 1, 2):
+        expert = int(values[idx])
+        count = int(values[idx + 1])
+        if expert >= 0 and count > 0:
+            pairs.append((expert, count))
+    return pairs
+
+
 def counter_to_dict(counter: Counter[Any]) -> dict[str, int]:
     return {str(key): int(value) for key, value in sorted(counter.items(), key=lambda item: str(item[0]))}
 
@@ -88,6 +98,14 @@ def summarize(paths: list[str], top_n: int) -> dict[str, Any]:
     negative_layer_rows = 0
     max_rows_nonzero = 0
     max_rows_max = 0
+    max_columns = 0
+    hot_pair_observations = 0
+    rows_with_hot_pairs = 0
+    rows_sum_by_layer: Counter[int] = Counter()
+    hot_count_sum_by_layer: Counter[int] = Counter()
+    hot_expert_overall: Counter[str] = Counter()
+    hot_expert_by_layer: Counter[tuple[int, int]] = Counter()
+    hot_expert_by_worker_layer: Counter[tuple[str, int, int]] = Counter()
 
     for path in paths:
         with open(path, "r", encoding="utf-8") as handle:
@@ -117,10 +135,11 @@ def summarize(paths: list[str], top_n: int) -> dict[str, Any]:
                         invalid_rows += 1
                         continue
                     try:
-                        values_i = [int(value) for value in values[:16]]
+                        values_i = [int(value) for value in values]
                     except Exception:
                         invalid_rows += 1
                         continue
+                    max_columns = max(max_columns, len(values_i))
                     fields = row_fields(values_i)
                     row_count += 1
                     rank_rows[rank] += 1
@@ -133,6 +152,7 @@ def summarize(paths: list[str], top_n: int) -> dict[str, Any]:
                         invalid_rows += 1
                     layer = int(fields["layer_index"])
                     layer_counts[layer] += 1
+                    rows_sum_by_layer[layer] += int(fields["rows_sum"])
                     layers_by_rank[rank].add(layer)
                     layers_by_worker[worker].add(layer)
                     rows_by_rank_layer[(rank, layer)] += 1
@@ -160,6 +180,15 @@ def summarize(paths: list[str], top_n: int) -> dict[str, Any]:
                     route_by_rank_layer[f"{worker}:{layer}"].add(fields["route_hash"])
                     max_rows_nonzero = max(max_rows_nonzero, int(fields["rows_nonzero"]))
                     max_rows_max = max(max_rows_max, int(fields["rows_max"]))
+                    pairs = hot_expert_pairs(values_i)
+                    if pairs:
+                        rows_with_hot_pairs += 1
+                    for expert, count in pairs:
+                        hot_pair_observations += 1
+                        hot_count_sum_by_layer[layer] += count
+                        hot_expert_overall[f"layer:{layer}:expert:{expert}"] += count
+                        hot_expert_by_layer[(layer, expert)] += count
+                        hot_expert_by_worker_layer[(worker, layer, expert)] += count
 
     rank_layer_counts: dict[str, dict[str, int]] = defaultdict(dict)
     for (rank, layer), count in rows_by_rank_layer.items():
@@ -180,6 +209,47 @@ def summarize(paths: list[str], top_n: int) -> dict[str, Any]:
         key: len(value)
         for key, value in sorted(route_by_rank_layer.items(), key=lambda item: item[0])
     }
+    hot_by_layer_out: dict[str, list[list[int]]] = {}
+    hot_unique_by_layer: dict[str, int] = {}
+    for layer in sorted(layer_counts):
+        layer_counter = Counter({
+            expert: count
+            for (hot_layer, expert), count in hot_expert_by_layer.items()
+            if hot_layer == layer
+        })
+        if layer_counter:
+            hot_by_layer_out[str(layer)] = [
+                [int(expert), int(count)]
+                for expert, count in layer_counter.most_common(top_n)
+            ]
+            hot_unique_by_layer[str(layer)] = int(len(layer_counter))
+
+    hot_by_worker_layer_out: dict[str, list[list[int]]] = {}
+    worker_layer_keys = sorted({
+        (worker, layer)
+        for (worker, layer, _expert) in hot_expert_by_worker_layer
+    }, key=lambda item: (str(item[0]), int(item[1])))
+    for worker, layer in worker_layer_keys:
+        layer_counter = Counter({
+            expert: count
+            for (hot_worker, hot_layer, expert), count in hot_expert_by_worker_layer.items()
+            if hot_worker == worker and hot_layer == layer
+        })
+        if layer_counter:
+            hot_by_worker_layer_out[f"{worker}:{layer}"] = [
+                [int(expert), int(count)]
+                for expert, count in layer_counter.most_common(top_n)
+            ]
+
+    hot_coverage_by_layer = {}
+    for layer, rows_sum in sorted(rows_sum_by_layer.items()):
+        hot_sum = int(hot_count_sum_by_layer[layer])
+        denom = int(rows_sum)
+        hot_coverage_by_layer[str(layer)] = {
+            "hot_count_sum": hot_sum,
+            "rows_sum": denom,
+            "coverage": (hot_sum / denom) if denom else None,
+        }
 
     return {
         "sources": paths,
@@ -210,6 +280,15 @@ def summarize(paths: list[str], top_n: int) -> dict[str, Any]:
         "unique_route_hashes_by_rank_layer": unique_route_hashes_by_rank_layer,
         "max_rows_nonzero": max_rows_nonzero,
         "max_rows_max": max_rows_max,
+        "max_columns": max_columns,
+        "hot_columns_detected": max(0, (max_columns - 16) // 2),
+        "hot_pair_observations": hot_pair_observations,
+        "rows_with_hot_pairs": rows_with_hot_pairs,
+        "top_hot_experts_overall": top_counter(hot_expert_overall, top_n),
+        "top_hot_experts_by_layer": hot_by_layer_out,
+        "top_hot_experts_by_worker_layer": hot_by_worker_layer_out,
+        "unique_hot_experts_by_layer": hot_unique_by_layer,
+        "hot_coverage_by_layer": hot_coverage_by_layer,
     }
 
 
@@ -234,6 +313,10 @@ def write_markdown(summary: dict[str, Any], path: str) -> None:
         f"- Unique digest combos: `{summary['unique_digest_combos']}`",
         f"- Max rows_nonzero: `{summary['max_rows_nonzero']}`",
         f"- Max rows_max: `{summary['max_rows_max']}`",
+        f"- Max columns: `{summary['max_columns']}`",
+        f"- Hot columns detected: `{summary['hot_columns_detected']}`",
+        f"- Hot pair observations: `{summary['hot_pair_observations']}`",
+        f"- Rows with hot pairs: `{summary['rows_with_hot_pairs']}`",
         "",
         "## Top Shapes",
         "",
@@ -245,6 +328,23 @@ def write_markdown(summary: dict[str, Any], path: str) -> None:
     lines.extend(["", "## Rank Layer Coverage", ""])
     for worker, layers in summary["layers_by_worker"].items():
         lines.append(f"- Worker `{worker}`: `{len(layers)}` layers, `{layers}`")
+    if summary.get("hot_pair_observations"):
+        lines.extend(["", "## Top Hot Experts Overall", ""])
+        lines.extend(["| Layer/expert | Routed rows |", "| --- | ---: |"])
+        for key, count in summary["top_hot_experts_overall"]:
+            lines.append(f"| `{key}` | {count} |")
+        lines.extend(["", "## Hot Coverage By Layer", ""])
+        lines.extend(["| Layer | Hot routed rows | Total routed rows | Coverage |", "| ---: | ---: | ---: | ---: |"])
+        for layer, data in summary["hot_coverage_by_layer"].items():
+            coverage = data["coverage"]
+            coverage_s = "" if coverage is None else f"{coverage:.6f}"
+            lines.append(
+                f"| {layer} | {data['hot_count_sum']} | {data['rows_sum']} | {coverage_s} |"
+            )
+        lines.extend(["", "## Top Hot Experts By Layer", ""])
+        for layer, items in summary["top_hot_experts_by_layer"].items():
+            rendered = ", ".join(f"{expert}:{count}" for expert, count in items)
+            lines.append(f"- Layer `{layer}`: {rendered}")
     Path(path).write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 

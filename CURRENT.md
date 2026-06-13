@@ -6,6 +6,35 @@ Date: 2026-06-12
 
 2026-06-12 notes update:
 
+- Added `notes/2026-06-12-gemma-dashboard-transfer-ideas.md` after reviewing
+  the public Fast Gemma Challenge dashboard, workspace guide, eval-prompt page,
+  and public digest/results API. Transferable ideas for our Gemma lanes:
+  PPL as a first-class speed gate, prompt-logprob compatibility,
+  production-safe static-prefix caching, lm-head keep-set pruning with full-head
+  fallback, sliding-window attention audits, speculative acceptance histograms,
+  exact-fidelity kernel checks for partial RoPE/cos-sin/BF16/tie-breaking,
+  avoiding per-token host sync, paired multi-draw A/B, and immutable manifests.
+  This is a planning note only; no endpoint or promoted speed result changed.
+
+2026-06-12 notes update:
+
+- Added a "Hot-Expert Replay Digest Atlas 20260612dq" section to
+  `notes/2026-06-12-qwen36-next-bigger-bets.md`, plus
+  `patches/vllm-xpu-qwen36-replay-digest-hot-experts-20260612dq.diff`,
+  hot-digest prompt metrics, four rank-local JSONL traces, and
+  `data/qwen36-replay-digest-hot-summary-20260612dq.{json,md}`. The diagnostic
+  build adds `VLLM_XPU_MOE_REPLAY_DIGEST_HOT_EXPERTS`; `git apply --check`
+  passed against the active kernel checkout and `py_compile` passed for
+  `scripts/qwen36-replay-digest-summary.py`. The atlas has `59040/59040` valid
+  rows, zero invalid rows, all 40 MoE layers on all four workers, `48`-column
+  rows (`16 + 2*16`), `493672` hot-pair observations, and top-16 hot-expert
+  coverage of about `62%` to `82%` by layer. This makes hot-pack admission,
+  top-16 replicated tile caches, route-class kernels, and hybrid hot/cold
+  TP/EP policy the next concrete no-quality-loss branches. No diagnostic speed
+  result was promoted.
+
+2026-06-12 notes update:
+
 - Added a "Post-Review Bigger Bets Refresh 20260612dq" section to
   `notes/2026-06-12-qwen36-next-bigger-bets.md`. It records the current public
   Localmaxxing status (`99.428 tok/s` exact quantized HF ID and `99.770 tok/s`

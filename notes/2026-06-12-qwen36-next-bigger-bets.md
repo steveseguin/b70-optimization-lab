@@ -12827,3 +12827,161 @@ Updated immediate order:
    hot-expert mirror, hybrid TP/EP lane, or route-class kernel bank.
 4. In parallel, prepare a BOM/topology A-B checklist and a privileged telemetry
    path so later speed wins include reliability evidence.
+
+## Hot-Expert Replay Digest Atlas 20260612dq
+
+Implemented and ran the all-rank hot-expert replay digest diagnostic. This is a
+diagnostic/atlas result only: the probe adds overhead and no speed result is
+promoted from this endpoint.
+
+Artifacts:
+
+- `patches/vllm-xpu-qwen36-replay-digest-hot-experts-20260612dq.diff`
+- `data/qwen36-quark-int8-tp4-replay-digest-hot-20260612dq.log`
+- `data/qwen36-quark-int8-tp4-replay-digest-hot-20260612dq-{natural-chat,code,structured,math-reasoning,repetitive,long-natural}.json`
+- `data/qwen36-replay-digest-replay-digest-hot-20260612dq-{0,1,2,3}-*.jsonl`
+- `data/qwen36-replay-digest-hot-summary-20260612dq.json`
+- `data/qwen36-replay-digest-hot-summary-20260612dq.md`
+
+Build and validation evidence:
+
+- Source snapshot:
+  `/home/steve/src/vllm-xpu-kernels-digest-sycl8-20260612dj`.
+- Build tree:
+  `/home/steve/src/vllm-xpu-kernels-digest-sycl8-20260612dj/build/qwen36-replay-digest-sycl8-hot-20260612dq`.
+- Install prefix:
+  `/tmp/vllm-xpu-replay-digest-hot-20260612dq`.
+- Incremental oneAPI 2025.3/SYCL-8 build succeeded after moving
+  `hot_experts` calculation after `num_experts` was defined.
+- Build-tree `_xpu_C.abi3.so` size: `55822360` bytes.
+- Build-tree SHA256:
+  `53f1754ee088e8d96188dc25b8af97b405d9513e8b5fee135b0d95b0b9fcde18`.
+- Install-prefix SHA256:
+  `883fbe4d3887352a52367211603d5383c5136423263bb910d5827759bdaa3afa`.
+- Symbol check found `gdn_attention`, `qwen36_moe_replay_digest_probe`, and
+  `qwen36_moe_onednn_sidecar_probe`.
+- `DRY_RUN_IMPORT=1` passed through
+  `scripts/launch-qwen36-quark-int8-replay-digest.sh`.
+- `git -C /home/steve/src/vllm-xpu-kernels apply --check
+  patches/vllm-xpu-qwen36-replay-digest-hot-experts-20260612dq.diff` passed.
+- `python3 -m py_compile scripts/qwen36-replay-digest-summary.py` passed.
+
+Diagnostic endpoint:
+
+- Session: `qwen36-tp4-replay-digest-hot-20260612dq`.
+- Port: `18082`.
+- Enabled:
+  `VLLM_XPU_MOE_REPLAY_DIGEST_ALL_RANKS=1`,
+  `VLLM_XPU_MOE_REPLAY_DIGEST_HOT_EXPERTS=16`,
+  `VLLM_XPU_MOE_REPLAY_DIGEST_LOG_MAX_ROWS=4096`,
+  `VLLM_XPU_MOE_REPLAY_DIGEST_LOG_INTERVAL_MS=500`.
+- Startup reached `/v1/models`; model loading reported `8.58 GiB`, available KV
+  cache `20.67 GiB`, `2,052,915` GPU KV tokens, and max 32K concurrency
+  `62.65x`.
+- Six prompt classes were sampled: natural chat, code, structured,
+  math-reasoning, repetitive, and long natural-chat context. The diagnostic
+  endpoint measured about `11.7-12.1 tok/s` corrected after-first on short
+  prompts because the probe is intentionally intrusive. Treat these throughput
+  numbers only as diagnostic overhead evidence.
+
+Hot atlas result:
+
+- Sources: `4` rank-local JSONL files.
+- Records: `367`.
+- Digest rows: `59040`.
+- Valid magic rows: `59040`.
+- Invalid rows: `0`.
+- Workers/devices: `local_rank:0..3` / `xpu:0..3`, each with `14760` rows.
+- Layers: every MoE layer `0..39` present on every worker.
+- Max columns: `48`, confirming the expected `16 + 2*16` row format.
+- Hot columns detected: `16`.
+- Hot pair observations: `493672`.
+- Rows with hot pairs: `59040`.
+- Dominant shape remains c1 decode: `(1, 8, 256, 2048)` with `55520` rows.
+- Top-16 hot-expert coverage by layer ranges from about `0.622` to `0.818` of
+  routed rows. That is enough locality to justify targeted memory-for-latency
+  experiments, but not enough to replace the generic path.
+- Strongest hot layer/expert pairs in this sweep:
+  `layer:29/expert:150` (`45004` routed rows),
+  `layer:23/expert:80` (`44848`),
+  `layer:38/expert:103` (`43076`),
+  `layer:6/expert:119` (`41780`),
+  `layer:13/expert:251` (`40088`),
+  `layer:9/expert:55` (`39732`),
+  `layer:12/expert:247` (`39704`),
+  `layer:13/expert:189` (`39476`).
+
+Interpretation:
+
+- A blind global hot-expert remap is still not the right move. The useful unit
+  is per-layer hotness plus route shape, because coverage and expert identity
+  vary materially across layers.
+- The common case is still rows=1/topk=8 decode. Any faster branch should first
+  specialize this exact shape, with a generic fallback for miss cases and
+  prefill.
+- Top-16 coverage above `60%` on every layer makes replicated hot packs,
+  hot-layout compilation, and route-class kernels credible next attempts.
+- The long tail remains too large to delete the generic grouped-GEMM path.
+  Optimizations need admission control: fast lane for hot-covered routes,
+  fallback for cold/rare routes.
+
+New larger ideas and refinements to try:
+
+1. **Hot-pack admission controller.**
+   Build a runtime check that admits a token/layer to a fast lane only when all
+   top-k experts are in that layer's hot pack. This avoids quality risk and
+   limits fallback complexity.
+
+2. **Top-16 replicated expert tile cache.**
+   Repack or duplicate only the per-layer top-16 experts into a contiguous
+   Xe/DPAS-friendly tile cache. The atlas suggests this could cover about
+   `62-82%` of routed work while spending far less VRAM than full expert
+   replication.
+
+3. **Coverage-tiered layer plan.**
+   Treat layers with coverage above `0.78` as hot-pack candidates first, layers
+   around `0.70-0.78` as route-class candidates, and layers below `0.70` as
+   generic-path candidates unless overlap improves in longer traces.
+
+4. **Route-pair/route-octet frequency atlas.**
+   Expert hotness alone is weaker than exact top-k route classes. Extend the
+   summary to count stable top-k sets or sorted route octets per layer, then
+   choose between a hot expert cache and fixed route-class kernels.
+
+5. **Per-rank overlap and ownership simulator.**
+   Score whether the same hot experts dominate across all four ranks. High
+   overlap favors mirroring; low overlap favors expert ownership/EP placement.
+
+6. **Hybrid fast lane: hot local, cold remote.**
+   Prototype only the combine/routing policy first: hot experts local on each
+   card, cold experts served by the current TP/generic path. This is less
+   invasive than full EP and keeps exact weights.
+
+7. **Persistent rows=1 MoE island.**
+   For rows=1/topk=8, keep descriptors, hot-pack pointers, row buffers, scales,
+   and combine metadata resident on device. The host should only patch the
+   current route IDs and activation pointer.
+
+8. **Layer-specific cold-tail bundling.**
+   For layers with lower top-16 coverage, group the long tail into a smaller
+   number of physical memory regions by observed co-occurrence. That may improve
+   cache locality without pretending the tail is stable.
+
+9. **VRAM-for-latency ledger with concrete pack sizes.**
+   Use the model's actual expert tensor sizes to price top-8, top-16, top-32,
+   and full expert replication per layer. The current KV reservation leaves
+   throughput headroom; we need to know how much can be traded for latency.
+
+10. **Quality gate for hot-pack kernels.**
+    Before serving any hot-pack kernel, run exact accepted-vs-candidate checks
+    at the layer output, selected logits, completion text, and no-thinking
+    canaries. The fast lane must be math-equivalent to the Quark W8A8 target.
+
+Updated immediate order:
+
+1. Restore the accepted endpoint on `18080` and smoke-test it.
+2. Add route-octet/top-k-set counting to the replay digest summary.
+3. Add a VRAM cost estimator for top-N expert packs from the model weights.
+4. Use the atlas to pick a first no-quality-loss fast lane:
+   top-16 replicated tile cache, route-class kernel bank, or hybrid hot/cold
+   TP/EP policy.
