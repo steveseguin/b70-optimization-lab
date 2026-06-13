@@ -6,6 +6,26 @@ Date: 2026-06-12
 
 2026-06-12 notes update:
 
+- Ran a full MoE layerlet floor probe on layer-20 rank-0 replay-digest c1
+  routes. Artifacts:
+  `data/qwen36-replay-digest-moe-layerfloor-layer20-rank0-gpu-layerfloor-20260612dz.{json,log,md}`.
+  Current `xpu_fused_moe` averaged `290.622 us` across the 16 route windows;
+  the best exact non-reference candidate was `preallocated_staged`, exact
+  (`max_abs_diff=0.0`) and `1.269x` faster, but still `217.342-239.290 us`
+  per layerlet. The prologue-inclusive promotion gate found `0/16` rows under
+  the `125 us` target, so no endpoint promotion is allowed. This confirms the
+  main limiter is per-token dispatch/fixed MoE-layer overhead, not expert-table
+  size. During the first restore, the backend hit
+  `UR_RESULT_ERROR_DEVICE_LOST` on the provenance completion; the recovery
+  snapshot in `data/qwen36-layerfloor-devicelost-recovery-20260612dz/` showed
+  all four XPUs passed a copy smoke after stale vLLM workers were cleared. A
+  clean retry restore passed provenance in
+  `data/qwen36-quark-int8-tp4-accepted-provenance-after-layerfloor-retry-20260612dz2.json`.
+  The accepted endpoint is again serving `qwen36-35b-a3b-fp8` with `32768`
+  max context on `127.0.0.1:18080`.
+
+2026-06-12 notes update:
+
 - Ran a compact-active upper-bound grouped-GEMM timing window on the same
   layer-20 rank-0 replay digest route file. Artifacts:
   `data/qwen36-replay-digest-compactactive-layer20-rank0-gpu-compactactive-20260612dy.{json,log,md}`.

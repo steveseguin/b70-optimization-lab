@@ -13474,3 +13474,191 @@ Updated priority:
 4. **Stop rebuilding active-offset as a standalone win.** Earlier active-offset
    was exact but not faster, and the compact-active upper bound now explains
    why.
+
+## Full MoE Layerlet Floor 20260612dz
+
+Ran a prologue-inclusive full MoE layerlet floor probe on the same layer-20
+rank-0 replay-digest route file. The point was to stop reasoning from isolated
+GEMM timings and measure a whole c1 MoE layerlet candidate: route remap,
+quant1/GEMM1, activation, quant2/GEMM2, and gather.
+
+Artifacts:
+
+- Benchmark JSON:
+  `data/qwen36-replay-digest-moe-layerfloor-layer20-rank0-gpu-layerfloor-20260612dz.json`
+- Benchmark log:
+  `data/qwen36-replay-digest-moe-layerfloor-layer20-rank0-gpu-layerfloor-20260612dz.log`
+- Summary:
+  `data/qwen36-replay-digest-moe-layerfloor-layer20-rank0-gpu-layerfloor-20260612dz.md`
+- XPU process snapshots:
+  `data/qwen36-replay-digest-moe-layerfloor-layer20-rank0-gpu-layerfloor-20260612dz-pre-xpusmi-ps.txt`,
+  `data/qwen36-replay-digest-moe-layerfloor-layer20-rank0-gpu-layerfloor-20260612dz-poststop-xpusmi-ps.txt`,
+  and
+  `data/qwen36-replay-digest-moe-layerfloor-layer20-rank0-gpu-layerfloor-20260612dz-postrestore-xpusmi-ps.txt`
+- First restore attempt and failed provenance:
+  `data/qwen36-quark-int8-tp4-accepted-restored-after-layerfloor-20260612dz.log`
+  and
+  `data/qwen36-quark-int8-tp4-accepted-provenance-after-layerfloor-20260612dz.json`
+- Device-lost recovery snapshot:
+  `data/qwen36-layerfloor-devicelost-recovery-20260612dz/`
+- Clean retry restore/provenance:
+  `data/qwen36-quark-int8-tp4-accepted-restored-after-layerfloor-retry-20260612dz2.log`
+  and
+  `data/qwen36-quark-int8-tp4-accepted-provenance-after-layerfloor-retry-20260612dz2.json`
+
+Benchmark reproduction:
+
+```bash
+PYTHONPATH=/home/steve/src/vllm-xpu-kernels \
+LD_LIBRARY_PATH=/home/steve/src/vllm-xpu-kernels/vllm_xpu_kernels:/home/steve/.venvs/vllm-xpu/lib:/home/steve/.venvs/vllm-xpu/lib/python3.12/site-packages/torch/lib \
+ONEAPI_DEVICE_SELECTOR=level_zero:0 \
+ZE_AFFINITY_MASK=0 \
+/home/steve/.venvs/vllm-xpu/bin/python \
+  scripts/bench-qwen36-int8-moe-kernels.py \
+  --rows 1 \
+  --route-jsonl data/qwen36-replay-digest-hot-decode1-layer20-rank0-routes-20260612dv.jsonl \
+  --route-layer-regex 'layers[.]20[.]' \
+  --route-start-indices 0:16 \
+  --device xpu:0 \
+  --warmup 5 \
+  --iterations 40 \
+  --target-layerlet-us 125 \
+  --exactness-threshold 0 \
+  --min-speedup-vs-xpu 1.0 \
+  --output-json data/qwen36-replay-digest-moe-layerfloor-layer20-rank0-gpu-layerfloor-20260612dz.json \
+  --markdown-out data/qwen36-replay-digest-moe-layerfloor-layer20-rank0-gpu-layerfloor-20260612dz.md
+```
+
+Result:
+
+| Path | Mean us | Exact vs current | Notes |
+| --- | ---: | --- | --- |
+| `xpu_fused_moe` | `290.622` | reference | Current runtime-like fused MoE layerlet floor for these routes. |
+| scratch `xpu_fused_moe` | `322.331` | yes | Slower scratch variant. |
+| `preallocated_staged` | `226.341` | yes, `max_abs_diff=0.0` | Best exact non-reference path, but still misses the target. |
+| `fused_prologue_staged` | `302.343` | yes, `max_abs_diff=0.0` | Exact but slower than current fused MoE. |
+
+Gate summary:
+
+- Target: `125 us/layerlet`.
+- Rows checked: `16`.
+- Rows ready for endpoint gate: `0/16`.
+- Best exact non-reference candidate: `preallocated_staged`, `217.342 us`
+  best row, `239.290 us` worst row, `1.269x` speedup versus current
+  `xpu_fused_moe`.
+- Endpoint promotion: `false`.
+
+Interpretation:
+
+- Current full MoE layerlet floor is roughly `276-309 us` for these rows.
+- Best exact staged candidate is roughly `217-239 us`, still `1.74-1.91x`
+  slower than the `125 us` layerlet budget implied by a non-speculative
+  `>200 tok/s` target across 40 MoE layers.
+- Together with the top128 and compact-active negatives, this is strong
+  evidence that table shrinkage is not enough. The next real path must reduce
+  dispatch count or make the MoE sequence persistent/whole-token captured.
+- The installed kernel still lacks `offset_gemm`, `active_offset_gemm`, and
+  `quant_out` op availability, so those remain diagnostic gaps, not promotion
+  blockers by themselves.
+
+Reliability note:
+
+- The first restore reached `/v1/models` after `63s`, then hit
+  `UR_RESULT_ERROR_DEVICE_LOST` during the first provenance completion and
+  shut down.
+- The recovery snapshot killed only stale vLLM serve/worker processes and then
+  ran a four-device torch XPU copy smoke successfully.
+- A clean retry restore reached `/v1/models` after `65s` and passed provenance:
+  both tracked prompts matched the accepted prefix and all sentinel token IDs
+  were correct.
+- Lesson: post-maintenance restore gates must include a real completion
+  provenance check. `/v1/models` alone is not a health proof.
+
+Updated priority:
+
+1. **Persistent MoE layerlet floor test.** Build one resident layerlet for a
+   single layer/route family and compare against this `217-239 us` exact staged
+   floor, not against isolated GEMM timings.
+2. **Whole-token command-list capture.** The layerlet budget alone is too high;
+   the bigger win is likely fewer host/device submissions across MoE,
+   collectives, norm, logits, and sampling.
+3. **Restore missing op symbols as diagnostics.** Re-enable or rebuild the
+   `offset_gemm`, `active_offset_gemm`, and `quant_out` paths to make future
+   layerlet candidates measurable, but require exactness plus the `125 us`
+   gate before endpoint wiring.
+4. **Reliability scoreboard.** Treat `UR_RESULT_ERROR_DEVICE_LOST` during
+   first-generation smoke as a tracked regression. Every optimization run
+   should report whether retry restore was needed.
+
+## Fast Gemma Dashboard Ideas 20260613
+
+Reviewed the public Fast Gemma Challenge dashboard and result feed:
+
+- Space: `https://huggingface.co/spaces/gemma-challenge/gemma-dashboard`
+- Result API snapshot:
+  `data/gemma-dashboard-results-summary-20260612dz.json`
+
+The dashboard code itself is useful process evidence: the Space follows Hub
+tree pagination, caches immutable file content by content hash, caps async
+fetch fan-out, warms listing caches in the background, uses a single-flight TTL
+cache, and serves stale values after refresh failures. That maps cleanly to our
+benchmark/control-plane work: graph-cache manifests, route atlases, accepted
+launch recipes, and quality baselines should be content-addressed and switched
+only after a parity/provenance gate.
+
+The result feed had `351` entries in the snapshot:
+
+- `144` explicit negative entries.
+- `88` entries mentioning vLLM.
+- `73` entries mentioning speculative or n-gram work.
+- `40` entries mentioning compile/graph work.
+- `33` entries mentioning single-stream/conc=1.
+- `31` entries mentioning CUDA graph/cudagraph.
+
+Transferable ideas, filtered for our no-quality-loss rule:
+
+1. **Static decode loop / onegraph.**
+   The strongest Gemma stacks repeatedly mention a captured width-1 propose or
+   decode graph. For us, this reinforces whole-token or per-layerlet graph
+   capture as a primary branch.
+2. **Fused accept/proposer bookkeeping.**
+   Their fused accept/proposer-prep path suggests a concrete place to cut
+   overhead once our verifier-state parity bug is fixed. Do not revisit this
+   until oracle `k=1` exact parity is repaired.
+3. **End-only detokenization.**
+   Several high runs avoid per-token detok work until the end. For our
+   frontdoor, expose a token-ID internal lane and detokenize at chunk or final
+   boundaries where UX allows. This preserves model quality and attacks host
+   overhead.
+4. **Sparse/pruned lm-head with exact fallback.**
+   Gemma used a 12k lm-head keepset plus full-vocab scatter/PPL path. For open
+   Qwen service, static vocab pruning is not acceptable as a blind default, but
+   a quality-safe experiment is possible: shortlist lm-head rows for a known
+   workload, compute exact fallback when the target token is outside the
+   shortlist, and require token/logprob/PPL parity.
+5. **Readiness-gated precache.**
+   Top Gemma runs warm public benchmark prompts into prefix cache before
+   readiness. We should not claim benchmark-specific public-prompt precache as
+   general production speed, but the pattern is valid for production-known
+   prefixes: system prompts, tool schemas, routing prompts, and eval suites can
+   be warmed before traffic with exact output unchanged.
+6. **Negative-result hygiene.**
+   The result board explicitly archives failed speculation and timing attempts.
+   Keep doing this in our repo; the top128, compact-active, and layer-floor
+   negatives are useful because they redirect effort away from table shrinkage.
+
+Bigger bets added from this review:
+
+1. **Two-lane production control plane.** A high-throughput lane keeps 32K and
+   aggregate capacity; a latency lane warms known prefixes, route atlases,
+   graph buckets, and optional hotpacks before readiness.
+2. **Exact sparse lm-head tournament.** Measure whether Qwen's lm-head/sampler
+   is a material part of the c1 budget. If it is, test exact shortlist plus
+   fallback rather than approximate argmax.
+3. **Token-ID service mode.** Add an internal OpenAI-compatible response mode
+   that returns token IDs and delayed text, then compare TTFT/decode overhead
+   against normal streaming.
+4. **Manifest-gated graph switcher.** Borrow the dashboard's immutable-result
+   pattern: every graph/kernel candidate gets a manifest with source SHA,
+   cache root, env, route atlas, quality result, reliability result, and a
+   rollback recipe before frontdoor traffic can point at it.
