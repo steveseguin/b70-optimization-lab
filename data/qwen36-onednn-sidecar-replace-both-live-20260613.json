@@ -1,0 +1,214 @@
+{
+  "artifacts": {
+    "completion_json": "/tmp/qwen36-sidecar-replace-both-completion.json",
+    "jsonl": [
+      "data/qwen36-onednn-sidecar-replace-both-live-20260613--2070387.jsonl"
+    ],
+    "patch": "patches/vllm-xpu-qwen36-onednn-sidecar-replace-both-20260613.patch",
+    "quality_json": "data/qwen36-quark-int8-tp4-sidecar-replace-both-quality-nothink-smoke-20260613.json",
+    "server_log": "/tmp/qwen36-quark-int8-tp4-sidecar-replace-both-20260613.log"
+  },
+  "candidate": "qwen36-quark-int8-tp4-sidecar-replace-both-rank0-layer9",
+  "next_steps": [
+    "If we keep this path, add a reference-after-sidecar comparison mode that computes XPU into a separate scratch tensor for replacement parity.",
+    "Broaden from rank0/layer9 only after exact replacement-vs-reference parity is available in the same request.",
+    "Measure per-token speed with sidecar enabled only after parity gating is repaired."
+  ],
+  "quality_smoke": {
+    "exact": {
+      "arithmetic": {
+        "normalized": "58",
+        "pass": false
+      },
+      "copy_phrase": {
+        "normalized": "satin cobalt orbit",
+        "pass": true
+      },
+      "exact_ok": {
+        "normalized": "OK",
+        "pass": true
+      },
+      "json_schema": {
+        "normalized": "{\"answer\": \"42\", \"unit\": \"widgets\"}",
+        "pass": true
+      }
+    },
+    "interpretation": "Arithmetic returned 58, matching the previously recorded eager-control failure; this run is not promoted as quality-cleared.",
+    "long_context_pass": null,
+    "pass_all": false,
+    "repeat_pass": true,
+    "repeat_texts": [
+      "blue, green, orange, red",
+      "blue, green, orange, red"
+    ]
+  },
+  "scope": {
+    "execute_mode_override": "gemm1 then gemm2 from Python wrapper",
+    "layer_regex": "layers\\.9\\.",
+    "max_logged_calls": 32,
+    "rank_filter": "0",
+    "replacement_env": "VLLM_XPU_MOE_ONEDNN_SIDECAR_REPLACE_BOTH=1",
+    "sidecar_execute_env": "off"
+  },
+  "sidecar_records": {
+    "by_mode": {
+      "1": {
+        "count": 16,
+        "elapsed_ms_max": 212.574320146814,
+        "elapsed_ms_median": 0.4195359069854021,
+        "elapsed_ms_min": 0.39478903636336327,
+        "first_stats": [
+          1,
+          0,
+          9,
+          8192,
+          8,
+          65536,
+          2048,
+          128,
+          256,
+          256,
+          2048,
+          1,
+          1,
+          1,
+          1,
+          524288,
+          256,
+          1,
+          262144,
+          2048,
+          1,
+          1,
+          10,
+          2906,
+          0,
+          10,
+          2906,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "last_stats": [
+          1,
+          0,
+          9,
+          1,
+          8,
+          8,
+          2048,
+          128,
+          256,
+          256,
+          2048,
+          1,
+          1,
+          1,
+          1,
+          524288,
+          256,
+          1,
+          262144,
+          2048,
+          1,
+          1,
+          6,
+          47,
+          0,
+          6,
+          47,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "2": {
+        "count": 16,
+        "elapsed_ms_max": 31.766183907166123,
+        "elapsed_ms_median": 0.3451160155236721,
+        "elapsed_ms_min": 0.3231349401175976,
+        "first_stats": [
+          1,
+          0,
+          9,
+          8192,
+          8,
+          65536,
+          2048,
+          128,
+          256,
+          256,
+          2048,
+          1,
+          1,
+          1,
+          1,
+          524288,
+          256,
+          1,
+          262144,
+          2048,
+          2,
+          1,
+          6,
+          13481,
+          0,
+          0,
+          0,
+          0,
+          6,
+          13481,
+          0,
+          0
+        ],
+        "last_stats": [
+          1,
+          0,
+          9,
+          1,
+          8,
+          8,
+          2048,
+          128,
+          256,
+          256,
+          2048,
+          1,
+          1,
+          1,
+          1,
+          524288,
+          256,
+          1,
+          262144,
+          2048,
+          2,
+          1,
+          5,
+          39,
+          0,
+          0,
+          0,
+          0,
+          5,
+          39,
+          0,
+          0
+        ]
+      }
+    },
+    "errors": 0,
+    "modes": {
+      "1": 16,
+      "2": 16
+    },
+    "parity_note": "Replacement-mode parity compares pre-write scratch against sidecar output, so nonzero diffs are expected. Exactness proof remains the prior execute=both post-XPU parity gate.",
+    "rows": 32
+  },
+  "status": "execution_smoke_passed_quality_smoke_matches_known_eager_arithmetic_failure",
+  "timestamp": "2026-06-13T12:12:02-0400"
+}

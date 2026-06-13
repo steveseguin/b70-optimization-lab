@@ -403,3 +403,78 @@ Decision:
   accepted MoE path and pays clone/sync/temporary-gather overhead.
 - Next promotion gate is a resident replacement island using this same
   three-target parity check before timing.
+
+## Two-GEMM Live Replacement Gate
+
+Date: 2026-06-13.
+
+Artifacts:
+
+- `patches/vllm-xpu-qwen36-onednn-sidecar-replace-both-20260613.patch`
+- `data/qwen36-onednn-sidecar-replace-both-live-20260613.json`
+- `data/qwen36-onednn-sidecar-replace-both-live-20260613--2070387.jsonl`
+- `data/qwen36-quark-int8-tp4-sidecar-replace-both-quality-nothink-smoke-20260613.json`
+- `data/qwen36-quark-int8-tp4-accepted-restored-after-replace-both-quality-nothink-smoke-20260613.json`
+
+Implementation:
+
+- Added opt-in `VLLM_XPU_MOE_ONEDNN_SIDECAR_REPLACE_BOTH=1`.
+- The Python wrapper calls the sidecar before existing W8A8 GEMM1 and before
+  existing W8A8 GEMM2.
+- Each replacement call uses an explicit execute-mode override:
+  `1` for GEMM1 and `2` for GEMM2, so the launcher can keep
+  `VLLM_XPU_MOE_ONEDNN_SIDECAR_EXECUTE=off`.
+- The path is fail-closed per GEMM. If the sidecar helper returns `None`
+  because the op is unavailable, rank/layer filters do not match, stream
+  capture is active, or an exception disables the sidecar, the existing XPU
+  W8A8 GEMM runs for that GEMM.
+- After the capped log count is reached, `required_execution=True` keeps the
+  sidecar executing for matching calls without adding more JSONL rows.
+- The normal post-gather diagnostic sidecar probe is skipped while two-GEMM
+  replacement is active, avoiding an accidental extra sidecar invocation.
+
+Validation:
+
+- `python3 -m py_compile` passed for
+  `/home/steve/src/vllm-xpu-kernels/vllm_xpu_kernels/fused_moe_interface.py`.
+- Endpoint launched in eager sidecar mode on `18081` with replacement gated to
+  rank `0`, `layers\.9\.`.
+- Short completion returned successfully and the endpoint remained healthy.
+- JSONL captured `32` replacement records: `16` GEMM1 and `16` GEMM2.
+- No sidecar errors or disable messages were found in the server log.
+- Final logged decode-shape stats:
+  - GEMM1: cache hit `1`, construct `6 us`, execute/wait `47 us`
+  - GEMM2: cache hit `1`, construct `5 us`, execute/wait `39 us`
+- Median logged wrapper elapsed time was about `0.420 ms` for GEMM1 and
+  `0.345 ms` for GEMM2. These include Python/logging/sync effects and are not
+  promotion-grade timing.
+- Replacement-mode parity fields are expected to be nonzero because the
+  diagnostic clones pre-write scratch, then compares it with the sidecar output.
+  The exactness proof remains the earlier diagnostic `execute=both` gathered
+  parity gate where all sampled targets had `max_abs_diff_f32=0.0`.
+- The no-thinking smoke on the sidecar/eager replacement endpoint matched the
+  known eager-control weakness: exact OK, copy phrase, JSON, and repeat
+  stability passed, but arithmetic returned `58` instead of accepted `60`.
+- Accepted graph endpoint was restored on `18080` and passed the same
+  no-thinking smoke with `pass_all=true`, `baseline_match_all=true`, and
+  `repeat_pass=true`.
+
+Decision:
+
+- Keep the two-GEMM replacement gate as a useful plumbing step.
+- Do not promote or benchmark it as a speed win yet.
+- The next correctness gate must compare replacement output against a reference
+  tensor in the same request, or replay accepted-path captured tensors outside
+  the endpoint scheduler. Text quality on the eager sidecar endpoint is not
+  enough because that endpoint has a known arithmetic canary mismatch even
+  without replacement.
+
+Next:
+
+1. Add replacement-vs-reference parity using separate scratch buffers, not
+   pre-write scratch.
+2. Compare final gathered output under replacement before any broader rank or
+   layer rollout.
+3. Once exact, run a narrow timing A/B without diagnostic clone/sync.
+4. If timing is promising, broaden layer/rank coverage incrementally and run
+   the accepted quality/reliability protocol before any Localmaxxing update.

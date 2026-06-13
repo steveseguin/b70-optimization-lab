@@ -14798,3 +14798,49 @@ Next:
    cached GEMM2.
 3. Only after exact gathered-output parity under replacement, run speed and
    quality A/B.
+
+## 2026-06-13 Continuation: Two-GEMM Replacement Gate
+
+Artifacts:
+
+- `patches/vllm-xpu-qwen36-onednn-sidecar-replace-both-20260613.patch`
+- `data/qwen36-onednn-sidecar-replace-both-live-20260613.json`
+- `data/qwen36-onednn-sidecar-replace-both-live-20260613--2070387.jsonl`
+- `data/qwen36-quark-int8-tp4-sidecar-replace-both-quality-nothink-smoke-20260613.json`
+- `data/qwen36-quark-int8-tp4-accepted-restored-after-replace-both-quality-nothink-smoke-20260613.json`
+
+What worked:
+
+- Added `VLLM_XPU_MOE_ONEDNN_SIDECAR_REPLACE_BOTH=1`.
+- The wrapper can now attempt oneDNN GEMM1 before activation/quant2 and oneDNN
+  GEMM2 before gather, with per-GEMM fallback to the existing XPU W8A8 kernel.
+- The sidecar execute mode is overridden per call, so the launcher can keep the
+  global execute env disabled.
+- A narrow rank-0/layer-9 endpoint smoke completed successfully.
+- The capped JSONL had `32` replacement records, evenly split across GEMM1 and
+  GEMM2, with no sidecar errors.
+- Final logged decode-shape stats showed cached oneDNN replacement calls around
+  `47 us` for GEMM1 and `39 us` for GEMM2 inside the sidecar stats fields.
+- Accepted endpoint was restored and passed the no-thinking smoke.
+
+What did not work / not proven:
+
+- Replacement-mode parity is not meaningful yet because it compares against
+  pre-write scratch. The exactness proof still comes from the prior
+  diagnostic-after-existing-path gathered-output parity.
+- The sidecar/eager endpoint still fails the arithmetic no-thinking canary with
+  `58`, matching the previous eager-control weakness. Do not promote from this
+  endpoint quality signal.
+- No speed claim is valid yet because this was a narrow safety/plumbing smoke,
+  not an adjacent accepted-control A/B benchmark.
+
+Next best step:
+
+1. Add same-request replacement-vs-reference parity with separate scratch
+   buffers, so GEMM1, GEMM2, and gathered output can be compared under actual
+   replacement.
+2. If exact, run a diagnostic-off timing A/B on rank-0/layer-9 only.
+3. If that improves decode, broaden one dimension at a time: more layers on
+   rank 0, then all ranks, then accepted-graph compatibility.
+4. Keep oracle `k=1` speculation parity as the parallel 2x path if the sidecar
+   layerlet cannot beat the layer budget.
