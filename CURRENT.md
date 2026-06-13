@@ -6,6 +6,33 @@ Date: 2026-06-12
 
 2026-06-13 notes update:
 
+- Added worker-boundary COW trace plumbing to
+  `scripts/launch-qwen36-quark-int8-ngram-trace.sh` and ran
+  `qwen36-quark-int8-tp4-oracle1-nobonus-cachefilter-cow-20260613j` with
+  oracle `k=1`, graph disabled, full-accept bonus suppression, and worker
+  cache filtering. Artifacts:
+  `data/qwen36-quark-int8-tp4-oracle1-nobonus-cachefilter-cow-20260613j-*`
+  plus
+  `data/qwen36-spec-trace-rootcause-oracle1-nobonus-cachefilter-cow-20260613j.{json,md}`.
+  The result still fails parity, but the cause is much narrower: schedule
+  mismatches are `0`, accept mismatches are `2`, and the worker prepares the
+  expected token window while the verifier repeats the prior accepted token.
+  Next speculative work should trace no-spec/no-graph and full-bonus verifier
+  logits/KV side by side before any wider speculation. The diagnostic endpoint
+  was stopped afterward; the accepted endpoint was restored on `127.0.0.1:18080`
+  and passed provenance in
+  `data/qwen36-quark-int8-tp4-accepted-provenance-after-cowtrace-20260613j.json`.
+- Refreshed the Fast Gemma dashboard idea feed again in
+  `data/gemma-dashboard-results-summary-20260613j.json` and updated
+  `notes/2026-06-12-gemma-dashboard-transfer-ideas.md` plus
+  `notes/2026-06-12-qwen36-next-bigger-bets.md`. The latest parsed feed has
+  `354` rows and a `470.526 tok/s` public top row for Gemma E4B, used only as
+  a methodology signal: fast decode lane plus exact PPL/prompt-logprob fallback,
+  readiness-gated warm/capture artifacts, lm-head/sampler isolation, and
+  preserving negative runs.
+
+2026-06-13 notes update:
+
 - Tightened `scripts/replay-qwen36-spec-trace.py` to distinguish suppressed
   bonus schedule/replay/accept failures and to report post-output
   computed-token skew. Added

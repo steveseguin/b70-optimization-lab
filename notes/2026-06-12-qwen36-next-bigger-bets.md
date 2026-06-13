@@ -220,6 +220,143 @@ Bigger, bolder ideas added to the backlog:
    pointer order, tile shape, scratch layout, and combine pattern while still
    using the same int8 weights and scales.
 
+## Oracle K1 COW Trace 20260613j
+
+This run used the current Quark W8A8 INT8 Qwen3.6 model with oracle
+`NUM_SPECULATIVE_TOKENS=1`, graph disabled, eager mode, full-accept bonus
+suppressed, and worker cache filtering enabled. It is diagnostic only; no speed
+result is promoted.
+
+Artifacts:
+
+- Completion comparison:
+  `data/qwen36-quark-int8-tp4-oracle1-nobonus-cachefilter-cow-20260613j-completions.json`.
+- Spec trace and replay:
+  `data/qwen36-quark-int8-tp4-oracle1-nobonus-cachefilter-cow-20260613j-spec-trace.jsonl`,
+  `data/qwen36-spec-trace-rootcause-oracle1-nobonus-cachefilter-cow-20260613j.{json,md}`.
+- Parent COW trace:
+  `data/qwen36-quark-int8-tp4-oracle1-nobonus-cachefilter-cow-20260613j-parent-trace.jsonl`,
+  `data/qwen36-quark-int8-tp4-oracle1-nobonus-cachefilter-cow-20260613j-parent-summary.{json,md}`.
+- Worker COW trace:
+  `data/qwen36-quark-int8-tp4-oracle1-nobonus-cachefilter-cow-20260613j-worker-trace.jsonl`,
+  `data/qwen36-quark-int8-tp4-oracle1-nobonus-cachefilter-cow-20260613j-worker-summary.{json,md}`.
+- Launcher support:
+  `scripts/launch-qwen36-quark-int8-ngram-trace.sh` now exposes
+  `COW_PARENT_TRACE_FILE`, `COW_PARENT_TRACE_MAX_LINES`,
+  `COW_WORKER_TRACE_FILE`, `COW_WORKER_TRACE_MAX_LINES`, and
+  `COW_WORKER_TRACE_RANK`.
+- Restore/provenance:
+  `data/qwen36-quark-int8-tp4-accepted-restored-after-cowtrace-20260613j.log`,
+  `data/qwen36-quark-int8-tp4-accepted-provenance-after-cowtrace-20260613j.json`,
+  and
+  `data/qwen36-quark-int8-tp4-accepted-postprovenance-cowtrace-20260613j-xpusmi-ps.txt`.
+
+Result:
+
+- Baseline parity still fails. Both probe prompts diverged at output index `3`.
+- Spec replay rows: `6` across `2` requests.
+- Suppressed schedule mismatches: `0`.
+- Suppressed accept mismatches: `2`.
+- Suppressed follow-up mismatches: `2`.
+- Accounting mismatches: `0`.
+- Parent trace rows: `768`; worker trace rows: `5112`.
+- The accepted endpoint was restored afterward on `127.0.0.1:18080`; `/v1/models`
+  reports `qwen36-35b-a3b-fp8` with `32768` max context, and provenance
+  sentinels passed.
+
+Key finding:
+
+- The next scheduled oracle draft is correct. For `natural_latency_plan`, line
+  `2` suppresses bonus token `47193`; line `3` schedules that same token as the
+  next draft.
+- The worker prepares the expected verifier window: positions `[504, 505]`
+  contain token IDs `[27044, 47193]`.
+- The target verifier still emits `27044` again instead of accepting `47193`.
+- The same pattern appears on `repetitive_kernel_notes`: suppressed bonus
+  `78503` is scheduled next, but verifier emits `271`.
+
+Interpretation:
+
+- This is no longer a draft-quality problem and not a scheduler-proposer
+  mismatch.
+- It is also not explained by block-table churn; the parent summary found no KV
+  block length or last-block-id changes in the traced window.
+- The failure is at the verifier/KV/input-position boundary after consecutive
+  full accepts. The target is being asked to verify the right token ID at the
+  right position, but its effective context behaves as if it is one accepted
+  token behind.
+
+Next code targets:
+
+1. **No-spec no-graph/eager baseline control.**
+   Confirm whether the same launch shape without speculative decode matches the
+   accepted graph baseline. If it diverges, graph/eager parity must be fixed
+   before speculation.
+2. **Full-bonus side-by-side verifier trace.**
+   Capture one no-spec and one oracle-spec row at the first repeated-token
+   divergence, including token IDs, positions, slot IDs, selected hidden state
+   digest, and top-k logits. The current traces prove where to look; the next
+   trace should show whether the logits see stale KV, stale query state, or a
+   sampler path difference.
+3. **Bonus escrow instead of hidden bonus suppression.**
+   Treat the verifier bonus as a pending target-owned record with token,
+   position, slot mapping, and logits/provenance. The next step must either
+   emit that exact record or recompute and prove it before accepting another
+   draft.
+4. **Transactional speculative state harness.**
+   Build a CPU replay fixture for full accept, hidden bonus, partial reject,
+   recompute, and worker-cache updates. The invariant is that scheduler counts,
+   worker token cache, KV commit state, and user-visible output advance as one
+   transaction.
+5. **Keep wider speculation gated.**
+   Do not spend more time on `k>1`, n-gram tuning, MTP, or public speculative
+   speed rows until oracle `k=1` passes token parity on this diagnostic pair.
+
+## Fast Gemma Dashboard Refresh 20260613j
+
+The user pointed back to the Fast Gemma dashboard as a source of transferable
+ideas. This refresh uses the public dashboard API only as an idea feed; it is
+Gemma E4B on challenge hardware and is not comparable to Qwen3.6/B70 results.
+
+Artifact:
+
+- `data/gemma-dashboard-results-summary-20260613j.json`.
+
+Snapshot:
+
+- Parsed result rows: `354`.
+- Current top public row: `470.526 tok/s`, PPL `2.37794`,
+  method `mao-gemma-fast-lf29pc-v1`.
+- Keyword counts across result notes: `graph=219`, `capture=143`,
+  `prefix=111`, `vllm=88`, `speculative=60`, `lm_head=43`,
+  `fallback=35`, `prompt_logprobs=14`, `detok=9`, `precache=8`,
+  `negative=147`, and `ppl=354`.
+
+Transferable ideas for our own Gemma lane:
+
+1. **Fast decode lane plus exact eval lane.**
+   The top rows repeatedly separate a served-fit decode path from exact
+   `prompt_logprobs`/PPL handling. For our Gemma, this means a fast generation
+   profile can exist only if a full-fidelity scoring path remains intact.
+2. **Readiness-gated warm packs.**
+   Public prompt precache is challenge-specific; production should warm only
+   real static system/tool prefixes and report cache-hit telemetry separately
+   from cold-prompt latency.
+3. **Attention-backend audits before new kernels.**
+   The repeated `fa2sw`/sliding-window signal says to verify whether Gemma
+   local/sliding attention is actually using its intended narrow work shape.
+4. **lm-head/sampler isolation.**
+   The repeated `lmhead12k`, logits, detok, and fused-accept signals suggest a
+   restricted fast logits path with full-head fallback is worth measuring for
+   Gemma, but only under exact token parity and PPL gates.
+5. **Negative-result discipline.**
+   `147` result notes mention negative/failure cases. Keep preserving failures
+   with exact commands so we avoid re-testing scheduler/speculative dead ends.
+6. **Graph/capture as a productized readiness artifact.**
+   The board's frontier is capture-heavy. For our systems, capture should be a
+   named readiness state with cold-start, warm-start, and graph-miss fallback
+   metrics, not an implicit one-off benchmark condition.
+
 4. **Persistent device-side decode loop for MoE layers.**
    Keep queues, descriptors, scale pointers, and scratch resident on each XPU.
    Host code should enqueue token commands, not rebuild grouped-GEMM metadata

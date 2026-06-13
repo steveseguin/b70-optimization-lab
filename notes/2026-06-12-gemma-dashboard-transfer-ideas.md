@@ -179,3 +179,38 @@ Actionable items for our Gemma lane:
 6. **Artifact parity bundle.** Every Gemma speed run should ship the same class
    of artifacts: exact command, env, model revision, cache state, decode token
    IDs, PPL/logprob results, and raw logs.
+
+## Dashboard Refresh 20260613j
+
+The latest public dashboard API snapshot is recorded in
+`data/gemma-dashboard-results-summary-20260613j.json`.
+
+Snapshot details:
+
+- Parsed rows: `354`.
+- Top public row: `470.526 tok/s`, PPL `2.37794`,
+  method `mao-gemma-fast-lf29pc-v1`.
+- Recurring keywords in result notes: `graph=219`, `capture=143`,
+  `prefix=111`, `vllm=88`, `speculative=60`, `lm_head=43`,
+  `fallback=35`, `prompt_logprobs=14`, `detok=9`, `precache=8`,
+  `negative=147`, and `ppl=354`.
+
+What changes from this refresh:
+
+- The board keeps converging on a fast decode path plus exact scoring fallback.
+  For our own Gemma work, that supports a two-lane implementation: optimized
+  generation for live serving, exact original-forward scoring for PPL and
+  prompt-logprob requests.
+- The result feed is capture-heavy, but the useful production version is a
+  named readiness state: graph captures, route packs, and safe prefix caches
+  should be measured as warmup artifacts, not hidden inside cold-prompt speed
+  claims.
+- The `lm_head`/detok/fused-accept cluster is worth a Gemma-specific timing
+  probe. Any restricted logits path needs a full-head fallback and exact
+  token-ID parity before speed claims.
+- The large number of negative result notes is a process lesson: keep failed
+  scheduler, graph, and speculative attempts in the repo with exact commands so
+  we do not repeat them.
+- None of this changes the Qwen3.6 path. The dashboard is Gemma E4B on
+  challenge hardware, so its absolute TPS is only a signal for ideas and
+  validation discipline.
