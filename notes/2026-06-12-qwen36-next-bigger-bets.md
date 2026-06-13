@@ -112,6 +112,12 @@ chronological evidence and artifact links.
    evidence and a reproducibility anchor. Future posts should only include
    accepted-quality, non-diagnostic endpoints.
 
+6. **Exact SiLU-Q harness.**
+   The fused SiLU plus quant candidate was exact and quality-cleared, but its
+   endpoint lift was only a small `~0.47%` against one accepted artifact. Keep
+   its parity harness and repeat gate for later activation/quant timing, but do
+   not treat it as a promoted speed result.
+
 ### MiniMax M2.7 Transfer Audit 20260613p
 
 The MiniMax M2.7 review is recorded in
@@ -192,6 +198,42 @@ Successful MiniMax patterns not fully tried on Qwen:
    W8A8 kernels rather than collectives/dispatch, run Qwen-specific row-packing
    or microtile sweeps against the measured shapes.
 
+### Historical Coverage Audit 20260613q
+
+The broader audit is recorded in
+`notes/2026-06-13-experiment-coverage-audit.md`. It reviewed tracked notes,
+recent commits, and current artifact names to make sure already-tried work and
+older wins are not lost.
+
+Key reminders now folded into this backlog:
+
+- Current Qwen W8A8 coverage is complete enough for decision tracking: the
+  accepted no-prefix/PIECEWISE/custom-collective base is captured; TP2,
+  MBT512, block-size 256, async-wait, graph-clone-off, local argmax, current
+  n-gram/oracle speculation, simple rank route skew, hot-expert table size,
+  GDN alias/shared-quant variants, and output-tail cleanup are already rejected
+  or deprioritized as lead `2x` paths.
+- Quant-out and offset/active-offset replay are useful exact building blocks,
+  but the layer floor still points at persistent one-dispatch MoE layerlets
+  rather than endpoint promotion.
+- Older Qwen Q4 showed that fewer cards can win c1 latency: TP3 reached
+  `46.194319 tok/s` while equal four-card was around `34.929313 tok/s`. Keep
+  this in mind for the TP4 bypass lane.
+- Older Qwen Q4 graph/epilogue fusion produced quality-preserving gains when
+  exactness was controlled, while root-residual shortcuts failed stronger
+  canaries. Fuse real boundaries, then prove them.
+- The Q4 fused beta/alpha projection reached `50.129900 tok/s` in a safe
+  probe. If current layer timing points at GDN or recurrent projections, try a
+  runtime/layerlet fusion instead of changing model weights.
+- Older FP8 work says bounded n-gram settings and default IPC/topology can win,
+  but speculation still needs exact target verification. It also showed that
+  library precedence matters; future promoted rows should keep recording
+  oneAPI/oneCCL/PyTorch/vLLM provenance.
+- MiniMax carryovers are instrumentation and promotion discipline: site-labeled
+  timing, warm-cache adjacent A/B gates, tiny-collective policies based on
+  measured shape, and MoE-output collective placement. MiniMax INT4 kernels are
+  not Qwen substitutes.
+
 ### Immediate Next Things To Try
 
 1. **All-rank layer-family timing.**
@@ -199,8 +241,10 @@ Successful MiniMax patterns not fully tried on Qwen:
    grouped GEMM1, activation/quant, grouped GEMM2, combine, dense residual,
    logits, and TP collectives. Include MiniMax-style call-site labels for every
    collective and log dtype, element count, bytes, rank/card map, wait time,
-   attention/KV placement, and CPU-staging indicators. This is the next
-   highest-signal probe because route skew and output tail are ruled out.
+   attention/KV placement, and CPU-staging indicators. Keep the older fused
+   beta/alpha and exact SiLU-Q wins in view: if GDN/recurrent projections or
+   activation/quant are actually hot, reuse those exactness gates. This is the
+   next highest-signal probe because route skew and output tail are ruled out.
 
 2. **Collective-only replay.**
    Measure TP4 all-reduce/all-gather latency outside model code using the same
@@ -234,7 +278,8 @@ Successful MiniMax patterns not fully tried on Qwen:
    Try an exact latency lane that reduces cross-rank synchronization for c1:
    TP2 plus selected replication, dense-on-one/two-rank plus remote expert
    workers, or EP-style routed activations. Four B70s may help memory but hurt
-   single-request latency.
+   single-request latency; the older Qwen Q4 TP3-over-TP4 result is the clearest
+   warning that latency and card count are not monotonic.
 
 2. **Whole-token resident command graph.**
    Capture a full c1 decode step with resident descriptors and graph-miss

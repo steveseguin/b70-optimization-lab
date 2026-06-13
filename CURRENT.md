@@ -6,6 +6,21 @@ Date: 2026-06-12
 
 2026-06-13 notes update:
 
+- Added `notes/2026-06-13-experiment-coverage-audit.md` and linked its main
+  carryovers into `notes/2026-06-12-qwen36-next-bigger-bets.md` as
+  `Historical Coverage Audit 20260613q`. The audit confirms the current Qwen
+  W8A8 accepted base and rejected paths are covered, and it preserves older
+  wins that are easy to forget: Qwen Q4 TP3 beating four-card latency
+  (`46.194319 tok/s` versus `34.929313 tok/s`), exact graph/epilogue fusion,
+  fused beta/alpha projection reaching `50.129900 tok/s`, validated FP8
+  n-gram/topology/library-provenance lessons, and MiniMax warm-cache promotion
+  discipline around `93.443623 tok/s`. No new endpoint, model, quantization, or
+  speed result was promoted. Next Qwen work remains site-labeled all-rank
+  layer/collective timing, collective replay, persistent W8A8 MoE layerlet
+  work, and oracle `k=1` parity repair.
+
+2026-06-13 notes update:
+
 - Added `notes/2026-06-13-minimax-m27-transfer-audit-for-qwen36.md` and folded
   its findings into `notes/2026-06-12-qwen36-next-bigger-bets.md` as
   `MiniMax M2.7 Transfer Audit 20260613p`. The useful MiniMax transfers are
