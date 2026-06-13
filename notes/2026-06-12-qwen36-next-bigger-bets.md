@@ -14761,3 +14761,40 @@ Future ideas captured from this result:
 - Extend the sidecar replacement mode from GEMM1-only to GEMM1 plus activation
   quant plus cached GEMM2, but keep a final tensor parity gate before any speed
   measurement.
+
+## 2026-06-13 Continuation: Live Gathered-Output Sidecar Parity
+
+Artifacts:
+
+- `patches/vllm-xpu-qwen36-onednn-sidecar-both-gather-parity-20260613.patch`
+- `data/qwen36-onednn-sidecar-both-gather-parity-live-20260613.json`
+- `data/qwen36-onednn-sidecar-both-gather-parity-live-20260613--2066195.jsonl`
+- `data/qwen36-quark-int8-tp4-accepted-restored-after-both-gather-parity-quality-nothink-smoke-20260613.json`
+
+What worked:
+
+- Added diagnostic-only gathered-output parity for sidecar `execute_mode=both`.
+- Live layer-9/rank-0 probe recorded 5 calls.
+- All three targets were exact on every call:
+  - `gemm1_output`: max diff `0.0`
+  - `gemm2_output`: max diff `0.0`
+  - `gathered_output`: max diff `0.0`
+- The repeated decode-shape call used cached primitives and reported
+  `both_wall_us=69`.
+- Accepted endpoint was restored and passed the no-thinking smoke.
+
+What this changes:
+
+- The live sidecar evidence is now stronger than scratch-only parity. We have
+  an exact sampled full-island output check, not just GEMM checks.
+- This still remains diagnostic-after-existing-path, so it must not be reported
+  as endpoint throughput improvement.
+
+Next:
+
+1. Use the gathered-output parity check as the acceptance gate for a resident
+   full-island replacement.
+2. Move replacement from GEMM1-only toward GEMM1 plus activation/quant2 plus
+   cached GEMM2.
+3. Only after exact gathered-output parity under replacement, run speed and
+   quality A/B.

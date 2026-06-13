@@ -1,0 +1,58 @@
+{
+  "date": "2026-06-13",
+  "objective": "Strengthen live sidecar execute_mode=both parity by comparing gathered output in addition to GEMM1 and GEMM2 scratch tensors.",
+  "source_tree": "/home/steve/src/vllm-xpu-kernels",
+  "build_dir": "/home/steve/src/vllm-xpu-kernels/build/qwen36-sidecar-both-sycl8-20260613",
+  "extension": "/home/steve/src/vllm-xpu-kernels/build/qwen36-sidecar-both-sycl8-20260613/_xpu_C.abi3.so",
+  "python_change": {
+    "file": "vllm_xpu_kernels/fused_moe_interface.py",
+    "patch_artifact": "patches/vllm-xpu-qwen36-onednn-sidecar-both-gather-parity-20260613.patch",
+    "description": "When execute_mode=both, gather the sidecar GEMM2 output into a temporary tensor and compare it to the accepted gathered output.",
+    "py_compile": "pass"
+  },
+  "live_probe": {
+    "endpoint": "http://127.0.0.1:18081",
+    "tmux": "qwen36-sidecar-both-gather-parity-20260613",
+    "jsonl": "data/qwen36-onednn-sidecar-both-gather-parity-live-20260613--2066195.jsonl",
+    "rank": 0,
+    "layer_regex": "layers\\.9\\.",
+    "max_calls": 5,
+    "records": 5,
+    "execute_mode": 3,
+    "target_counts": {
+      "gemm1_output": 5,
+      "gemm2_output": 5,
+      "gathered_output": 5
+    },
+    "max_abs_diff_by_target": {
+      "gemm1_output": 0.0,
+      "gemm2_output": 0.0,
+      "gathered_output": 0.0
+    },
+    "last_decode_shape": {
+      "stats_num_rows": 1,
+      "stats_num_moe_inputs": 8,
+      "gemm1_cache_hit": 1,
+      "gemm1_construct_us": 0,
+      "gemm1_execute_us": 24,
+      "gemm2_cache_hit": 1,
+      "gemm2_construct_us": 0,
+      "gemm2_execute_us": 31,
+      "both_wall_us": 69,
+      "cache_size": 8
+    }
+  },
+  "accepted_restore": {
+    "endpoint": "http://127.0.0.1:18080",
+    "tmux": "qwen36-tp4-accepted-restored-after-both-gather-parity-20260613",
+    "quality_json": "data/qwen36-quark-int8-tp4-accepted-restored-after-both-gather-parity-quality-nothink-smoke-20260613.json",
+    "pass_all": true,
+    "baseline_match_all": true,
+    "repeat_pass": true
+  },
+  "decision": {
+    "promotion_status": "diagnostic_gate_passed",
+    "reason": "Live sidecar both-mode now verifies GEMM1, GEMM2, and final gathered output exactly for the sampled layer-9 decode/prefill calls. This still runs after the accepted MoE path and includes diagnostic clone/sync/gather overhead, so it is not an endpoint speed result.",
+    "next_gate": "Move from diagnostic-after-existing-path to resident replacement of the full island, preserving this three-target parity check before performance measurement."
+  }
+}

@@ -361,3 +361,45 @@ Next:
 2. Add a replay harness using captured accepted-path inputs so the full island
    can be validated outside the endpoint scheduler/eager mismatch.
 3. Once full-island parity is exact, measure without diagnostic clone/sync.
+
+## Live Both-Mode Gathered-Output Parity
+
+Date: 2026-06-13.
+
+Artifacts:
+
+- `patches/vllm-xpu-qwen36-onednn-sidecar-both-gather-parity-20260613.patch`
+- `data/qwen36-onednn-sidecar-both-gather-parity-live-20260613.json`
+- `data/qwen36-onednn-sidecar-both-gather-parity-live-20260613--2066195.jsonl`
+- `data/qwen36-quark-int8-tp4-accepted-restored-after-both-gather-parity-quality-nothink-smoke-20260613.json`
+
+Implementation:
+
+- Extended the live sidecar diagnostic only.
+- For `VLLM_XPU_MOE_ONEDNN_SIDECAR_EXECUTE=both`, after oneDNN writes GEMM1
+  and GEMM2 scratch outputs, Python gathers the sidecar GEMM2 output into a
+  temporary output tensor.
+- The diagnostic compares that temporary gathered output against the accepted
+  already-gathered output and logs it as `target=gathered_output`.
+- The accepted output tensor is not mutated by this extra parity check.
+
+Result:
+
+- Five live layer-9/rank-0 calls were recorded.
+- Each call logged three parity targets: `gemm1_output`, `gemm2_output`, and
+  `gathered_output`.
+- Max abs diff was `0.0` for all three targets across all calls.
+- Repeated decode-shape call showed cached oneDNN primitives:
+  `gemm1_cache_hit=1`, `gemm2_cache_hit=1`, `gemm1_execute_us=24`,
+  `gemm2_execute_us=31`, `both_wall_us=69`, cache size `8`.
+- Accepted endpoint restored afterward and passed the no-thinking baseline
+  smoke: `pass_all=true`, `baseline_match_all=true`, `repeat_pass=true`.
+
+Decision:
+
+- This closes the live diagnostic parity gap for the sampled full island:
+  GEMM1, GEMM2, and gathered output are exact.
+- It is still not a speed result because the diagnostic runs after the existing
+  accepted MoE path and pays clone/sync/temporary-gather overhead.
+- Next promotion gate is a resident replacement island using this same
+  three-target parity check before timing.
