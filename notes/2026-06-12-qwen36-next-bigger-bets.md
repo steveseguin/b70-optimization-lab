@@ -13145,3 +13145,72 @@ Updated implementation choice:
    not the first production capacity lane.
 4. Keep route-class kernels parked unless a longer or more realistic trace
    shows much stronger exact route-hash repetition.
+
+## Replay-Digest Route Converter And Layer-20 Hotset Dry Run 20260612dv
+
+Added a converter so the replay digest can feed the existing route-count
+grouped-GEMM/hotset harness directly:
+
+- Script: `scripts/qwen36-replay-digest-to-route-jsonl.py`.
+- Summary artifact:
+  `data/qwen36-replay-digest-hotset-layer20-dryrun-20260612dv.md`.
+- Route-count artifact:
+  `data/qwen36-replay-digest-hot-decode1-layer20-rank0-routes-20260612dv.jsonl`.
+- Metadata artifact:
+  `data/qwen36-replay-digest-hot-decode1-layer20-rank0-routes-20260612dv.json`.
+- Dry-run artifacts:
+  `data/qwen36-replay-digest-hotset-top64-layer20-rank0-dryrun-20260612dv.json`
+  and
+  `data/qwen36-replay-digest-hotset-top128-layer20-rank0-dryrun-20260612dv.json`.
+
+Reproduction:
+
+```bash
+python3 scripts/qwen36-replay-digest-to-route-jsonl.py \
+  'data/qwen36-replay-digest-replay-digest-hot-20260612dq-*.jsonl' \
+  --layers 20 \
+  --num-rows 1 \
+  --local-ranks 0 \
+  --out data/qwen36-replay-digest-hot-decode1-layer20-rank0-routes-20260612dv.jsonl \
+  --metadata-out data/qwen36-replay-digest-hot-decode1-layer20-rank0-routes-20260612dv.json
+```
+
+Conversion result:
+
+- Emitted `347` rank-0 layer-20 decode route rows.
+- Invalid rows: `0`.
+- Count mismatches: `0`.
+- The `num_rows=1` top-k reconstruction is exact: each route row has eight
+  one-count experts, so `topk_ids` can be reconstructed from the counts vector.
+
+Full rank-0 layer-20 route coverage:
+
+- Top64: mean `0.7788`, median `0.7500`, fully-hot rows `84/347` (`0.2421`).
+  Cold-row histogram:
+  `{0:84, 1:89, 2:74, 3:52, 4:31, 5:10, 6:4, 7:1, 8:2}`.
+- Top128: mean `0.9564`, median `1.0000`, fully-hot rows `251/347`
+  (`0.7233`). Cold-row histogram:
+  `{0:251, 1:77, 2:15, 3:2, 4:2}`.
+
+Implementation update:
+
+- Top64 is still a useful memory-for-latency tier, but it requires cold
+  fallback on most layer-20 decode rows. Given prior split-launch negative
+  results, top64 only makes sense in a one-dispatch or persistent hot/cold
+  layerlet.
+- Top128 is a stronger first real layerlet candidate for layer 20 if the goal
+  is to remove cold fallback from most c1 decode rows. It costs more VRAM, but
+  the current top128 plan still leaves a large reported 32K-concurrency budget
+  for a dedicated low-latency lane.
+- The accepted backend reported about `32653 MiB` used on XPU 0 during this
+  pass, so no live XPU grouped-GEMM timing run was attempted. Run the timing in
+  an isolated window or after stopping the accepted backend.
+
+Gemma challenge transfer folded into this Qwen branch:
+
+- The useful process signal from the Fast Gemma Challenge dashboard is not the
+  4-bit Gemma result itself. It is the discipline of pairing every TPS claim
+  with a quality guardrail, reproducible artifacts, and negative-result notes.
+- Apply that here by recording failed hotset/speculation/scheduler attempts
+  with the exact reason, especially when a tempting idea loses to launch tax or
+  disabled async scheduling. This prevents re-testing seductive but bad paths.

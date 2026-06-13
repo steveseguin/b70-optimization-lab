@@ -6,6 +6,23 @@ Date: 2026-06-12
 
 2026-06-12 notes update:
 
+- Added `scripts/qwen36-replay-digest-to-route-jsonl.py` to convert replay
+  digest rows into the route-count JSONL schema used by the existing
+  grouped-GEMM hotset harness. The layer-20 rank-0 decode conversion emitted
+  `347` rows with zero invalid rows and zero count mismatches. Dry-run hotset
+  coverage from the converted route file shows top64 at `0.7788` mean coverage
+  but fully-hot on only `84/347` rows, while top128 reaches `0.9564` mean
+  coverage and is fully hot on `251/347` rows. This makes top128 a stronger
+  first layer-20 layerlet candidate if VRAM is acceptable, and reinforces that
+  top64 needs a one-dispatch/persistent hot+cold fallback rather than another
+  split-launch path. No live XPU timing run was attempted because the accepted
+  backend was using about `32653 MiB` on XPU 0. The Gemma dashboard lesson
+  folded into this branch is process-level: keep speed claims tied to quality
+  guards and preserve negative results when scheduler/launch overhead defeats a
+  tempting optimization.
+
+2026-06-12 notes update:
+
 - Extended `scripts/qwen36-replay-digest-summary.py` with route-hash counters
   and `--num-rows` filtering, then generated route-class summaries for the
   20260612dq hot trace. The all-shape route-hash view is dominated by
