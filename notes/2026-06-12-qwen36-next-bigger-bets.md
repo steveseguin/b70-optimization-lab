@@ -14197,3 +14197,97 @@ Immediate follow-up:
 3. **Oracle `k=1` speculation repair.** If model-forward cannot drop below
    `5 ms/token`, target-verified multi-token acceptance is the most plausible
    exact-output route to 2x effective decode.
+
+## Rank Route Forward Overlay 20260613n
+
+This follows the forward-bottleneck decision artifact:
+`data/qwen36-forward-bottleneck-decision-20260613m.{json,md}`. The goal was to
+test whether the all-rank forward wait spread is simply rank-specific route
+skew before spending time on rank-specific route kernels.
+
+Artifacts:
+
+- Script:
+  `scripts/qwen36-rank-route-forward-overlay.py`.
+- Overlay output:
+  `data/qwen36-rank-route-forward-overlay-20260613n.{json,md}`.
+- Route sources:
+  `data/qwen36-replay-digest-replay-digest-allrank-20260612do--*.jsonl`.
+- Timing sources:
+  `data/qwen36-quark-int8-tp4-allrank-forwardboundary-summary-20260612cj.json`
+  and
+  `data/qwen36-quark-int8-tp4-allrank-forwardboundary-rankmap-rev-summary-20260612cl.json`.
+
+Result:
+
+- Decision: `route_distribution_is_rank_invariant`.
+- Decode row filter: `num_rows=1`.
+- Loaded replay rows: `105120`; filtered non-c1 rows: `4160`;
+  invalid rows: `0`.
+- Route counters are identical across ranks for `40/40` layers.
+- Hot-expert pair payloads were not present in this digest (`0/0` hot layers
+  with data), so the conclusion is route-counter based.
+- Each rank contributed `25240` c1 route rows.
+- Mean unique route hashes per layer are identical across ranks:
+  `625.550`.
+- Mean top-16 route-hash coverage is identical across ranks:
+  `0.032964`.
+- Forward-end wait still varies by rank:
+  rank 0 `4.214303 ms`, rank 1 `4.470655 ms`, rank 2 `4.769202 ms`,
+  rank 3 `4.820472 ms`.
+- After rank-map reversal, those ranks map to physical cards `3, 2, 1, 0`.
+
+Interpretation:
+
+- Simple route distribution skew does not explain the slow-rank spread.
+- Rank-specific route kernels are not the next lead unless a richer
+  hot-expert-payload trace contradicts this result.
+- The next exact probe should split model forward by layer family and
+  collectives on each rank: attention/GDN, router, expert gather/remap,
+  GEMM1, activation/quant, GEMM2, combine, dense residual work, and TP
+  collectives.
+- The forward spread can still come from topology, XCCL/all-reduce behavior,
+  stream ordering, graph replay dependencies, per-rank shard layout, or
+  hidden synchronization inside the XPU kernels.
+
+Immediate next experiments:
+
+1. **Layer-family all-rank timer.** Add low-overhead worker labels around
+   attention/GDN, router/topk, MoE prologue, grouped GEMMs, combine, dense
+   residual, logits, and collectives. The useful output is per-rank deltas for
+   pure c1 decode after warmup.
+2. **Collective-only replay.** Use the same rank map and tensor sizes to
+   measure TP all-reduce/all-gather latency outside model code. Record CCL
+   transport, bytes, algorithm hints, and whether any CPU staging appears.
+3. **Graph dependency audit.** Add start/end device events for forward
+   subregions without host synchronization, then dump intervals after the run.
+   The goal is to find stream dependency gaps without perturbing c1 decode.
+4. **Richer route payload digest.** Extend the replay digest to include compact
+   hot-expert pairs for c1 rows. This can confirm whether expert-frequency
+   skew is also invariant across ranks.
+5. **Persistent MoE layerlet remains lead.** The route cache is diffuse
+   (`top16` route coverage only `3.3%`), so exact route-class banks are weak
+   for c1. The non-speculative lead is still a persistent/one-dispatch layerlet
+   that removes fixed dispatch boundaries for arbitrary topk-8 routes.
+
+Bigger, bolder bets to keep alive:
+
+1. **TP4 latency bypass lane.** Explore a latency lane that keeps exact weights
+   but reduces cross-rank synchronization for c1, for example TP2 plus expert
+   replication, dense-on-one-rank plus remote expert workers, or EP-style
+   routed activations. The question is whether four B70s are hurting
+   single-request latency more than they help.
+2. **Whole-token resident command graph.** Instead of per-layer fixes, capture
+   a full c1 decode step with resident descriptors and graph-miss fallback.
+   The correctness gate is exact token parity and per-op sentinel hashes.
+3. **Device-side MoE command queue.** Keep per-layer expert descriptors,
+   scratch, scales, and output buffers resident; enqueue only the current
+   token route command. This attacks fixed host-visible dispatch overhead.
+4. **Reference-verifier transaction layer.** Repair oracle `k=1` parity, then
+   build exact target-verified multi-token acceptance with rollback telemetry.
+   If model-forward cannot hit the `5 ms/token` target directly, this is the
+   strongest no-quality-loss 2x path.
+5. **Readiness warm artifact manager.** Borrow the Gemma dashboard runtime
+   pattern: graph captures, prefix caches, route atlases, generated kernels,
+   and canary baselines should be single-flight, content-addressed, bounded,
+   and built before readiness rather than under first-user latency.

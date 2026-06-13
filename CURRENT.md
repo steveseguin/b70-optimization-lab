@@ -6,6 +6,25 @@ Date: 2026-06-12
 
 2026-06-13 notes update:
 
+- Added `scripts/qwen36-rank-route-forward-overlay.py` and
+  `data/qwen36-rank-route-forward-overlay-20260613n.{json,md}` to overlay
+  accepted replay-digest `num_rows=1` route signatures with all-rank forward
+  timing. The route counters are identical across ranks for `40/40` layers
+  while forward-end wait still ranges from `4.214 ms` to `4.820 ms`, so simple
+  rank route skew is rejected as the cause of the slow-rank spread. The digest
+  did not include hot-expert pair payloads (`0/0` hot layers with data). Next
+  probe should split model forward by layer family and collectives on the slow
+  ranks before generating rank-specific route kernels.
+- Re-checked the live Fast Gemma result API after the user pointed to the
+  dashboard source again. The result feed is unchanged (`354` rows, same
+  `470.526 tok/s` top row), but the Space source now has a useful production
+  control-plane pattern: paginated bucket listings, content-hash file caching,
+  bounded fetch fanout, background listing warmup, single-flight TTL refresh,
+  and stale-good fallback. Added those ideas to the Gemma transfer notes as
+  readiness/warm-artifact handling, not a direct Qwen speed claim.
+
+2026-06-13 notes update:
+
 - Re-checked the live Fast Gemma dashboard API after the user pointed to the
   Gemma E4B board again. The feed still has `354` rows, the same
   `470.526 tok/s` top row, and unchanged keyword counts versus

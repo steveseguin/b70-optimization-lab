@@ -1,0 +1,135 @@
+{
+  "decision": "route_distribution_is_rank_invariant",
+  "forward_rank_means_ms": {
+    "0": 4.214303111111111,
+    "1": 4.470654934640523,
+    "2": 4.769201895424836,
+    "3": 4.820472215686275
+  },
+  "interpretation": [
+    "This is a CPU-side overlay of replay-digest route signatures and all-rank forward timing.",
+    "It does not prove kernel causality, but it can reject simple rank route-skew explanations.",
+    "If route and hot-expert counters are rank-invariant, the next probe should split forward time by layer family and collectives rather than generate rank-specific route kernels."
+  ],
+  "next_step": "Add layer-family timing around attention, router, expert gather, expert GEMM, combine, and collectives on the slow ranks.",
+  "num_rows_filter": 1,
+  "rankmap_reversed_rank_to_physical_device": {
+    "0": 3,
+    "1": 2,
+    "2": 1,
+    "3": 0
+  },
+  "route_inputs": [
+    "data/qwen36-replay-digest-replay-digest-allrank-20260612do--1947301.jsonl",
+    "data/qwen36-replay-digest-replay-digest-allrank-20260612do--1947302.jsonl",
+    "data/qwen36-replay-digest-replay-digest-allrank-20260612do--1947303.jsonl",
+    "data/qwen36-replay-digest-replay-digest-allrank-20260612do--1947304.jsonl"
+  ],
+  "route_summary": {
+    "by_rank": {
+      "0": {
+        "forward_end_after_start_sync_mean_ms": 4.214303111111111,
+        "layers": 40,
+        "mean_top16_hot_expert_coverage": null,
+        "mean_top16_route_hash_coverage": 0.0329635499207607,
+        "mean_top1_route_hash_coverage": 0.0040015847860538824,
+        "mean_top4_route_hash_coverage": 0.011450079239302694,
+        "mean_unique_hot_experts_per_layer": null,
+        "mean_unique_route_hashes_per_layer": 625.55,
+        "physical_device_after_rankmap_reversal": 3,
+        "route_rows": 25240
+      },
+      "1": {
+        "forward_end_after_start_sync_mean_ms": 4.470654934640523,
+        "layers": 40,
+        "mean_top16_hot_expert_coverage": null,
+        "mean_top16_route_hash_coverage": 0.0329635499207607,
+        "mean_top1_route_hash_coverage": 0.0040015847860538824,
+        "mean_top4_route_hash_coverage": 0.011450079239302694,
+        "mean_unique_hot_experts_per_layer": null,
+        "mean_unique_route_hashes_per_layer": 625.55,
+        "physical_device_after_rankmap_reversal": 2,
+        "route_rows": 25240
+      },
+      "2": {
+        "forward_end_after_start_sync_mean_ms": 4.769201895424836,
+        "layers": 40,
+        "mean_top16_hot_expert_coverage": null,
+        "mean_top16_route_hash_coverage": 0.0329635499207607,
+        "mean_top1_route_hash_coverage": 0.0040015847860538824,
+        "mean_top4_route_hash_coverage": 0.011450079239302694,
+        "mean_unique_hot_experts_per_layer": null,
+        "mean_unique_route_hashes_per_layer": 625.55,
+        "physical_device_after_rankmap_reversal": 1,
+        "route_rows": 25240
+      },
+      "3": {
+        "forward_end_after_start_sync_mean_ms": 4.820472215686275,
+        "layers": 40,
+        "mean_top16_hot_expert_coverage": null,
+        "mean_top16_route_hash_coverage": 0.0329635499207607,
+        "mean_top1_route_hash_coverage": 0.0040015847860538824,
+        "mean_top4_route_hash_coverage": 0.011450079239302694,
+        "mean_unique_hot_experts_per_layer": null,
+        "mean_unique_route_hashes_per_layer": 625.55,
+        "physical_device_after_rankmap_reversal": 0,
+        "route_rows": 25240
+      }
+    },
+    "correlation_with_forward_mean": {
+      "mean_top16_hot_expert_coverage": null,
+      "mean_top16_route_hash_coverage": null,
+      "mean_top1_route_hash_coverage": null,
+      "mean_top4_route_hash_coverage": null,
+      "mean_unique_hot_experts_per_layer": null,
+      "mean_unique_route_hashes_per_layer": null
+    },
+    "filtered_rows": 4160,
+    "hot_counter_identical_layers_across_ranks": 0,
+    "hot_counter_layers_with_data": 0,
+    "invalid_rows": 0,
+    "layer_count": 40,
+    "loaded_rows": 105120,
+    "metric_spreads": {
+      "mean_top16_hot_expert_coverage": {
+        "max": null,
+        "min": null,
+        "spread": null,
+        "stddev": null
+      },
+      "mean_top16_route_hash_coverage": {
+        "max": 0.0329635499207607,
+        "min": 0.0329635499207607,
+        "spread": 0.0,
+        "stddev": 0.0
+      },
+      "mean_top1_route_hash_coverage": {
+        "max": 0.0040015847860538824,
+        "min": 0.0040015847860538824,
+        "spread": 0.0,
+        "stddev": 0.0
+      },
+      "mean_top4_route_hash_coverage": {
+        "max": 0.011450079239302694,
+        "min": 0.011450079239302694,
+        "spread": 0.0,
+        "stddev": 0.0
+      },
+      "mean_unique_hot_experts_per_layer": {
+        "max": null,
+        "min": null,
+        "spread": null,
+        "stddev": null
+      },
+      "mean_unique_route_hashes_per_layer": {
+        "max": 625.55,
+        "min": 625.55,
+        "spread": 0.0,
+        "stddev": 0.0
+      }
+    },
+    "route_counter_identical_layers_across_ranks": 40
+  },
+  "source_forward_summary": "data/qwen36-quark-int8-tp4-allrank-forwardboundary-summary-20260612cj.json",
+  "source_rankmap_summary": "data/qwen36-quark-int8-tp4-allrank-forwardboundary-rankmap-rev-summary-20260612cl.json"
+}

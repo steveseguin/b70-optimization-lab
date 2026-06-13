@@ -326,3 +326,55 @@ Decision:
 - For Qwen3.6, the matching actionable artifact is
   `data/qwen36-forward-bottleneck-decision-20260613m.md`, which points back to
   model-forward/forward-stream dependencies rather than output-tail work.
+
+## Dashboard Runtime Source Check 20260613n
+
+The user linked the dashboard again as a source of ideas. I checked the live
+result API into `/tmp` and re-read the current Space source. The result feed is
+still not new enough to warrant another tracked snapshot:
+
+- Current live row count: `354`.
+- Top row: `470.526 tok/s`, PPL `2.37794`, method
+  `mao-gemma-fast-lf29pc-v1`.
+- Keyword counts remain stable versus the tracked
+  `data/gemma-dashboard-results-summary-20260613k.json` snapshot.
+
+The useful new signal is in the dashboard service code, not the leaderboard
+values:
+
+- The Space warms the message/results/agent listing cache in the background so
+  the first user request is not forced to pay cold fanout.
+- It follows paginated Hub bucket tree listings, fixing the silent 1000-file
+  ceiling that had hidden newer files from the message board.
+- It caches immutable file content by a content validator (`xetHash`, with
+  size/mtime fallback), so polling mostly fetches the tree and only new files.
+- It bounds concurrent file fetch fanout with `HUB_FETCH_CONCURRENCY`.
+- It fronts Hub-backed endpoints with a TTL single-flight cache and
+  `asyncio.shield`, so one cancelled client does not cancel the shared refresh.
+- On refresh failure it serves the last good value instead of turning a
+  transient Hub issue into a blank dashboard.
+
+Transfer to our own Gemma and Qwen production work:
+
+1. **Readiness warm pack manager.** Treat graph captures, prefix caches,
+   route atlases, expert descriptor tables, and quality canary prompts as
+   explicit warm artifacts built before readiness. Record cold-start and warm
+   steady-state separately.
+2. **Single-flight warm artifact refresh.** If many requests need the same
+   graph/prefix/route pack, one worker builds it while others await or use the
+   last good artifact. This avoids a thundering-herd compile/cache miss.
+3. **Content-addressed artifact cache.** Key route digests, generated kernels,
+   prompt-prefix caches, and quality baselines by model revision, engine build,
+   quantization, shape, and source hash. Stale entries should be invalidated
+   deterministically rather than by timestamp guesses.
+4. **Bounded fanout for production maintenance.** Limit concurrent background
+   graph captures, quality probes, and benchmark fetches so observability or
+   warmup cannot steal the very latency budget being measured.
+5. **Stale-good fallback lane.** For dashboards, manifests, and quality
+   metadata, serve the last validated artifact when refresh fails. For model
+   serving this means falling back to the exact reference lane or previous
+   validated graph, never to an unproven fast path.
+
+This does not change the current Qwen3.6 optimization target. It strengthens
+the production discipline around any future fast lane: warmed artifacts should
+be explicit, bounded, content-addressed, and quality-gated.
