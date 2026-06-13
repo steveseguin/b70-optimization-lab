@@ -6,6 +6,19 @@ Date: 2026-06-12
 
 2026-06-12 notes update:
 
+- Added an accepted backend p512/o512 telemetry baseline with
+  `scripts/qwen36-xpusmi-dump-summary.py`. Direct backend streaming measured
+  `99.885 tok/s` corrected after-first output throughput, `98.387 tok/s` e2e,
+  and `10.012 ms/token` vLLM decode. `xpu-smi` sampled `25` rows per B70:
+  mean GPU frequency was about `2517-2526 MHz`, mean power `98-104 W`, memory
+  used about `32655 MiB` per card, PCIe read/write `0`, and every sample was
+  `Not Throttled`. Non-daemon `xpu-smi` could not read utilization or
+  temperature without elevated MEI access. This points the next speed work at
+  runtime/kernel/collective latency rather than thermal throttling. No speed
+  result was promoted.
+
+2026-06-12 notes update:
+
 - Added an "All-Rank Replay Digest Capture 20260612do" section to
   `notes/2026-06-12-qwen36-next-bigger-bets.md`. The replay-digest launcher
   now supports `VLLM_XPU_MOE_REPLAY_DIGEST_ALL_RANKS=1`, and

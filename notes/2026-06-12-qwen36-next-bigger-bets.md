@@ -12579,3 +12579,94 @@ Updated next order:
 3. Add clock/power/frequency telemetry to the accepted p512/o512/c1 baseline.
 4. Use those two data sources to choose between TP2+expert mirror,
    route-class autotune, or a static c1 decode runner.
+
+## Accepted C1 Telemetry Baseline 20260612dp
+
+Added low-friction XPU telemetry beside the accepted p512/o512/c1 speed
+baseline. This is not a new speed promotion; it is a baseline for diagnosing why
+the accepted lane remains near `10 ms/token`.
+
+Tooling:
+
+- Added `scripts/qwen36-xpusmi-dump-summary.py` to parse text output from
+  `xpu-smi dump`. This host's `xpu-smi` does not support JSON dump output
+  without the daemon.
+- Tested parser with one-sample `xpu-smi dump`; it found four B70 devices.
+- The current non-daemon `xpu-smi` can read power, frequency, memory use, PCIe
+  read/write, and throttle reason. GPU utilization, EU/engine utilization,
+  bandwidth, and core temperature report `N/A` without elevated MEI access.
+
+Run:
+
+```bash
+xpu-smi dump -d -1 -m 0,1,2,3,5,17,18,19,20,22,26,31,35 -i 1 -n 90 \
+  > data/qwen36-xpusmi-accepted-p512o512-20260612dp.txt 2>&1 &
+
+/home/steve/.venvs/vllm-xpu/bin/python scripts/measure-openai-endpoint-metrics.py \
+  --base-url http://127.0.0.1:18080 \
+  --model qwen36-35b-a3b-fp8 \
+  --tokenizer /mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118 \
+  --prompt-kind preset \
+  --prompt-preset natural-chat \
+  --prompt-tokens 512 \
+  --output-tokens 512 \
+  --warmup-output-tokens 64 \
+  --repeats 4 \
+  --endpoint completions \
+  --mode stream \
+  --ignore-eos \
+  --skip-vram \
+  --out data/qwen36-quark-int8-tp4-accepted-telemetry-p512o512-20260612dp.json
+```
+
+Artifacts:
+
+- `data/qwen36-quark-int8-tp4-accepted-telemetry-p512o512-20260612dp.json`
+- `data/qwen36-xpusmi-accepted-p512o512-20260612dp.txt`
+- `data/qwen36-xpusmi-accepted-p512o512-summary-20260612dp.json`
+- `data/qwen36-xpusmi-accepted-p512o512-summary-20260612dp.md`
+
+Speed baseline:
+
+- Corrected after-first output throughput mean: `99.885 tok/s`
+- E2E output throughput mean: `98.387 tok/s`
+- vLLM decode mean: `10.012 ms/token`
+- Client TTFT mean: `88.026 ms`
+- vLLM TTFT mean: `76.811 ms`
+- Queue time remains negligible: `0.012 ms`
+
+Telemetry baseline:
+
+- `25` samples per card, `100` telemetry rows total.
+- Mean frequency:
+  device 0 `2516.680 MHz`, device 1 `2521.360 MHz`,
+  device 2 `2526.040 MHz`, device 3 `2521.360 MHz`.
+- Mean power:
+  device 0 `99.648 W`, device 1 `101.071 W`,
+  device 2 `98.250 W`, device 3 `103.704 W`.
+- Mean memory used is about `32655 MiB` per card under
+  `gpu_memory_utilization=0.95`.
+- PCIe read/write sampled as `0 kB/s` during this run.
+- Throttle reason was `Not Throttled` for every sample on every card.
+
+Interpretation:
+
+- The current accepted c1 lane is not obviously thermal- or throttle-limited in
+  this run. It is running at roughly `2.52 GHz` average with no throttle events.
+- The next `2x` work should focus on runtime/kernel/collective/scheduler
+  latency, plus a better privileged telemetry lane for EU utilization and
+  bandwidth when available.
+- The nearly full memory reservation is expected from `gpu_memory_utilization`
+  and does not imply the active model weights are 32 GiB per card; it does mean
+  VRAM-for-latency plans must budget against reserved KV/cache behavior, not
+  just raw weight size.
+
+Updated next order:
+
+1. Extend replay digest to emit hot expert histograms/raw top-k samples.
+2. Add a privileged or daemon-backed telemetry option for utilization,
+   bandwidth, and temperature.
+3. Compare TP4 accepted against a shorter-context single-card or TP2 lane to
+   separate collectives from pure kernel latency.
+4. Start route-class autotune only after hot expert overlap is measured across
+   all ranks.
