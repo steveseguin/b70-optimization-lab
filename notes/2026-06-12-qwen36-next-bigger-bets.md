@@ -14582,3 +14582,59 @@ Bigger, bolder bets to keep alive:
    pattern: graph captures, prefix caches, route atlases, generated kernels,
    and canary baselines should be single-flight, content-addressed, bounded,
    and built before readiness rather than under first-user latency.
+
+## 2026-06-13 Continuation: MoE Sidecar Execute Prototype
+
+Added after the all-rank layer-family timing and oneDNN sidecar-readiness work.
+The immediate no-quality-loss path remains the persistent/resident W8A8 MoE
+layerlet. Collectives stay secondary unless a replay contradicts the MoE timing
+decision.
+
+Artifacts:
+
+- `notes/2026-06-13-qwen36-decisive-timing-trace.md`
+- `notes/2026-06-13-qwen36-moe-sidecar-readiness.md`
+- `patches/vllm-xpu-qwen36-onednn-sidecar-end-offsets-20260613.patch`
+- `patches/vllm-xpu-qwen36-onednn-sidecar-execute-onegemm-20260613.patch`
+- `data/qwen36-onednn-sidecar-offset-helper-smoke-20260613.json`
+- `data/qwen36-onednn-sidecar-execute-build-smoke-20260613.json`
+
+What changed:
+
+- Fixed the Python oneDNN grouped-offset helper to return cumulative int32 end
+  offsets. This matches oneDNN grouped memory and the exact standalone runner.
+- Added an opt-in `VLLM_XPU_MOE_ONEDNN_SIDECAR_EXECUTE` mode to the sidecar
+  probe:
+  - `0`/`dry`: descriptor and USM-handle validation only.
+  - `gemm1`/`1`: execute oneDNN grouped GEMM1 into `gemm1_output`.
+  - `gemm2`/`2`: execute oneDNN grouped GEMM2 into `gemm2_output`.
+- The default path remains inert and does not change endpoint output.
+- Targeted build succeeded in
+  `/home/steve/src/vllm-xpu-kernels/build/qwen36-sidecar-probe-20260612`.
+- Schema probe passed and confirmed the new `int execute_mode` argument.
+
+Runtime lesson:
+
+- A direct standalone XPU smoke via `importlib` is not the right execution
+  context. The first attempt found an offset dtype bug in the hand-written
+  smoke (`Long` offsets); the production helper keeps offsets as int32. The
+  corrected attempt loaded oneDNN but failed engine creation with
+  `RuntimeError: could not create an engine` and oneDNN `bad engine kind`.
+- Treat the direct-import path as a schema/build smoke only. The next runtime
+  test should use the existing isolated vLLM sidecar launcher, because the
+  sidecar is meant to share the normal vLLM/PyTorch XPU process context.
+
+Next gate:
+
+1. During a controlled maintenance window, stop or move the accepted TP4
+   endpoint, then launch `scripts/launch-qwen36-quark-int8-sidecar-probe.sh`
+   with the rebuilt `_xpu_C` overlay and:
+   `VLLM_XPU_MOE_ONEDNN_SIDECAR_EXECUTE=gemm1`.
+2. Keep `MAX_CALLS=1`, `RANK=0`, and `LAYER_REGEX=layers\\.9\\.`.
+3. Confirm the sidecar JSONL records `execute_mode=1`, `execute_ok=1`, and
+   sane construct/execute timings while endpoint output still comes from the
+   accepted `xpu_fused_moe` path.
+4. Add checksum/parity logging around the overwritten scratch output, then
+   repeat for GEMM2.
+5. Only after exact scratch parity, extend to cached descriptors and full
+   island replay.
