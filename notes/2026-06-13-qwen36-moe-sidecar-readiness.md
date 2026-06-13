@@ -823,3 +823,74 @@ Next:
    repeats, provenance, canary token checks, VRAM, and thermal/power capture.
 4. Keep oracle `k=1` verifier/KV parity repair active because it remains the
    larger no-quality-loss speed path.
+
+## Stats-Free XPU Graph Capture Smoke
+
+Date: 2026-06-13.
+
+Artifacts:
+
+- `patches/vllm-xpu-qwen36-onednn-sidecar-statsfree-capture-20260613.patch`
+- `data/qwen36-sidecar-middle-statsfree-capture-summary-20260613.json`
+- `data/qwen36-sidecar-middle-statsfree-xpugraph-smoke-20260613.json`
+- `data/qwen36-pre-sidecar-capture-smoke-recovery-20260613/`
+- `data/qwen36-post-sidecar-capture-smoke-recovery-20260613/`
+- `data/qwen36-quark-int8-tp4-accepted-provenance-after-sidecar-capture-smoke-20260613.json`
+- `data/qwen36-quark-int8-tp4-accepted-provenance-after-sidecar-capture-smoke-rerun-20260613.json`
+- `data/qwen36-quark-int8-tp4-accepted-restored-after-sidecar-capture-smoke-chat-ok-nothink-20260613.json`
+
+Implementation:
+
+- Added stats-free execute aliases:
+  - `123`: middle path with GEMM2 wait, return existing `gemm2_output`.
+  - `133`: middle no-wait path, return existing `gemm2_output`.
+- The body is the same exact middle path as `23`/`33`; the difference is only
+  the return path. It avoids allocating the CPU stats tensor after the device
+  work, which was the obvious capture blocker.
+- Parser aliases include `middle_nowait_return_output` and
+  `layerlet_nowait_return_output`.
+- Built `_xpu_C.abi3.so` into
+  `/tmp/qwen36-sidecar-middle-capture-sycl8-20260613/vllm_xpu_kernels/_xpu_C.abi3.so`.
+
+Validation:
+
+- Import/mode smoke passed: `middle_nowait_return_output` maps to
+  `execute_mode=133`.
+- With accepted stopped and XPUs freed, a standalone smoke saw all four XPUs.
+- A tiny baseline `torch.xpu.XPUGraph` add/copy capture replayed correctly.
+- The stats-free sidecar middle op captured and replayed inside
+  `torch.xpu.XPUGraph`.
+- The returned tensor shares the `gemm2_output` storage.
+- Capture elapsed time in the smoke was `0.007206 s`; this is a capture
+  feasibility signal, not a throughput metric.
+
+Reliability:
+
+- Running the same graph smoke while the accepted service owned all four cards
+  made a standalone PyTorch process report `device_count=0`; do not run capture
+  diagnostics beside the accepted service.
+- Pre- and post-capture XPU copy smokes passed.
+- Accepted service was restored on `127.0.0.1:18080`.
+- The first old-token provenance run after restore had a natural-prompt
+  sentinel drift; an immediate rerun passed all sentinels. Record both rather
+  than hiding the warmup/cache sensitivity.
+- No-thinking chat smoke returned exactly `OK`.
+
+Decision:
+
+- This is the first proof that the one-call middle sidecar boundary can be
+  graph captured in isolation once stats allocation is removed.
+- Still not a speed win: the accepted vLLM graph MoE path does not call this
+  stats-free op yet.
+- Next implementation should wire `execute_mode=133` into the graph path with a
+  captured-op parity gate, not broaden the eager diagnostic helper.
+
+Next:
+
+1. Add a capture-safe replacement gate that can run during vLLM graph capture
+   without tensor logging/checksum work.
+2. Start with rank `0`/layer `9` only and compare graph-control versus
+   captured sidecar graph using token sentinels and same-request tensor parity
+   where possible.
+3. If endpoint graph capture works, move timing from synthetic capture smoke to
+   adjacent c1 A/B repeats.

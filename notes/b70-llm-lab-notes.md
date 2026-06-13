@@ -883,3 +883,16 @@ vLLM/XPU FP8 work:
     no-thinking chat returned exactly `OK`. Next work is to move this exact
     boundary into a graph-captured custom op, persistent layerlet, or
     device-resident command queue before broadening.
+39. Removed the immediate graph-capture blocker from the middle sidecar by
+    adding stats-free execute modes `123` and `133`, which return the existing
+    `gemm2_output` tensor rather than allocating a CPU stats tensor. A
+    standalone `torch.xpu.XPUGraph` smoke passed: simple graph replay worked,
+    the stats-free sidecar middle op captured and replayed, and the returned
+    tensor shared `gemm2_output` storage. This proves capture feasibility for
+    the native middle boundary but is still not wired into vLLM's accepted MoE
+    graph path, so it is not an endpoint speed promotion. Artifacts:
+    `data/qwen36-sidecar-middle-statsfree-capture-summary-20260613.json` and
+    `patches/vllm-xpu-qwen36-onednn-sidecar-statsfree-capture-20260613.patch`.
+    Restore note: first old-token provenance after restore had one
+    warmup/cache-sensitive drift, immediate rerun passed, and no-thinking chat
+    returned exactly `OK`.

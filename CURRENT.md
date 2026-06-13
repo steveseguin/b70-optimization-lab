@@ -6,6 +6,26 @@ Date: 2026-06-12
 
 2026-06-13 notes update:
 
+- Added stats-free middle sidecar execute modes `123`/`133`, where `133` runs
+  the exact cached oneDNN GEMM1 -> XPU SiLU+quant -> cached oneDNN GEMM2 path
+  and returns the existing `gemm2_output` tensor instead of allocating a CPU
+  stats tensor. Rebuilt into
+  `/tmp/qwen36-sidecar-middle-capture-sycl8-20260613/vllm_xpu_kernels/_xpu_C.abi3.so`.
+  With the accepted service stopped, an isolated `torch.xpu.XPUGraph` smoke
+  passed: simple graph replay worked, the stats-free sidecar middle op captured
+  and replayed, and the returned tensor shared `gemm2_output` storage.
+  Artifacts:
+  `data/qwen36-sidecar-middle-statsfree-capture-summary-20260613.json`,
+  `data/qwen36-sidecar-middle-statsfree-xpugraph-smoke-20260613.json`, and
+  `patches/vllm-xpu-qwen36-onednn-sidecar-statsfree-capture-20260613.patch`.
+  This proves capture feasibility for the native boundary, but it is not yet
+  wired into the accepted vLLM graph MoE path and is not an endpoint speed
+  promotion. Accepted service was restored; first old-token provenance had one
+  cache/warmup drift, rerun passed, and no-thinking chat returned exactly
+  `OK`.
+
+2026-06-13 notes update:
+
 - Added and tested the first one-call middle MoE sidecar/layerlet prototype:
   native cached oneDNN GEMM1 -> XPU exact SiLU+quant -> native cached oneDNN
   GEMM2, exposed as `VLLM_XPU_MOE_ONEDNN_SIDECAR_EXECUTE=middle_nowait`
