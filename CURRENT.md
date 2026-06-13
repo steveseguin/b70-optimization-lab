@@ -6,6 +6,20 @@ Date: 2026-06-12
 
 2026-06-12 notes update:
 
+- Added `scripts/qwen36-digest-hotpack-plan.py` and
+  `data/qwen36-digest-hotpack-plan-20260612ds.{json,md}` to turn the
+  replay-digest hot atlas into a concrete VRAM-for-latency plan. The model's
+  Quark W8A8 local-rank expert shard is `795648` bytes (`0.759 MiB`), and a
+  static all-layer top-16 hot pack would add only `485.6 MiB/rank`. Static
+  per-layer top-16 coverage is `0.620` weighted across the replay, while the
+  recorded dynamic per-call top-16 upper bound is `0.751`. This shifts the next
+  no-quality-loss implementation target toward exact route-aware hotset
+  admission with cold fallback, while keeping a static top-16/threshold layer
+  pack as the lower-risk first kernel prototype. The accepted endpoint on
+  `18080` remained healthy.
+
+2026-06-12 notes update:
+
 - Added `notes/2026-06-12-gemma-dashboard-transfer-ideas.md` after reviewing
   the public Fast Gemma Challenge dashboard, workspace guide, eval-prompt page,
   and public digest/results API. Transferable ideas for our Gemma lanes:

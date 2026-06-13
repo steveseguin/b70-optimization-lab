@@ -12985,3 +12985,76 @@ Updated immediate order:
 4. Use the atlas to pick a first no-quality-loss fast lane:
    top-16 replicated tile cache, route-class kernel bank, or hybrid hot/cold
    TP/EP policy.
+
+## Replay-Digest Hot-Pack Memory Plan 20260612ds
+
+Added a concrete planning pass that consumes the 20260612dq replay-digest hot
+summary directly:
+
+- Script: `scripts/qwen36-digest-hotpack-plan.py`.
+- Artifacts:
+  `data/qwen36-digest-hotpack-plan-20260612ds.json` and
+  `data/qwen36-digest-hotpack-plan-20260612ds.md`.
+- Inputs:
+  `data/qwen36-replay-digest-hot-summary-20260612dq.json`,
+  current accepted restore log
+  `data/qwen36-quark-int8-tp4-accepted-restored-after-replaydigest-hot-20260612dq.log`,
+  and the current Quark W8A8 model config.
+
+Memory findings:
+
+- Per local-rank Quark W8A8 expert shard: `795648` bytes (`0.759 MiB`).
+- Baseline all-expert MoE footprint per rank: about `7770.0 MiB`.
+- Static all-layer hot packs are cheap relative to the model:
+  top1 `30.4 MiB/rank`, top2 `60.7 MiB/rank`, top4 `121.4 MiB/rank`,
+  top8 `242.8 MiB/rank`, top16 `485.6 MiB/rank`.
+- The accepted 32K lane is still effectively full by `xpu-smi`; an all-layer
+  top16 pack plus `512 MiB` reserve would need to carve about `96761` KV tokens
+  and would leave about `59.70x` reported 32K concurrency. This is a small
+  production-capacity tradeoff, not a raw VRAM blocker.
+
+Coverage findings:
+
+- Static per-layer top16 coverage across the replay is `0.620` weighted.
+- Static top8 coverage is `0.475`; top4 is only `0.276`.
+- The recorded dynamic per-call top16 coverage is `0.751` weighted. This is an
+  upper bound from the replay digest's hot columns, not a static pack result.
+- Only `17` layers clear static top16 coverage >= `0.65`, costing
+  `206.4 MiB/rank`: layers
+  `0,1,2,3,4,5,6,7,8,9,10,11,12,13,18,20,23`.
+
+Decision update:
+
+- Static top16 replicated packs are memory-plausible and low-risk as a first
+  one-layer or threshold-layer kernel prototype.
+- The larger opportunity is exact route-aware hotset admission: if the current
+  token/layer's selected experts all sit in a resident hot pack, use the fast
+  lane; otherwise fall back to the current generic grouped-GEMM path. This keeps
+  quality exact while chasing the dynamic top16 `0.751` upper bound.
+- Do not extrapolate top32/top64 from this digest. The hot diagnostic captured
+  dynamic top16 columns only. A wider digest or route-octet capture is required
+  before pricing larger static packs.
+
+Next implementation ideas from this plan:
+
+1. **Route-octet/top-k-set counting.**
+   Extend the digest summary to count sorted top8 expert sets per layer. Expert
+   frequency alone leaves too much dynamic coverage on the table.
+
+2. **One-layer static top16 hot-pack kernel.**
+   Repack one high-coverage layer into contiguous per-rank expert tiles and
+   prove layer-output parity before endpoint work.
+
+3. **Threshold-layer static lane.**
+   If one-layer replay is faster, try only the 17 layers with static top16
+   coverage >= `0.65` before all 40 layers.
+
+4. **Dynamic exact hotset admission.**
+   Keep one or more resident packs per layer, but admit a route only when every
+   selected expert is covered. The cold fallback remains the current accepted
+   kernel.
+
+5. **KV-for-latency production split.**
+   Treat hot packs as a latency lane knob. The 32K/c48 production lane can keep
+   maximum KV; a lower-concurrency low-latency lane can buy resident hot packs
+   without quality loss.
