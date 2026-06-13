@@ -894,3 +894,70 @@ Next:
    where possible.
 3. If endpoint graph capture works, move timing from synthetic capture smoke to
    adjacent c1 A/B repeats.
+
+## vLLM Graph Gate Rejection
+
+Date: 2026-06-13.
+
+Artifacts:
+
+- `data/qwen36-sidecar-capture-gate-summary-20260613.json`
+- `patches/vllm-xpu-qwen36-onednn-sidecar-capture-gate-20260613.patch`
+- `data/qwen36-sidecar-capture-gate-mode133-l9-r0-20260613.log`
+- `data/qwen36-onednn-sidecar-capture-gate-20260613-2168129.jsonl`
+- `data/qwen36-sidecar-capture-gate-provenance-20260613.json`
+- `data/qwen36-post-sidecar-capture-gate-devicelost-recovery-20260613/`
+- `data/qwen36-sidecar-capture-gate-mode123-l9-r0-20260613.log`
+- `data/qwen36-onednn-sidecar-capture-gate-mode123-20260613-2175292.jsonl`
+- `data/qwen36-sidecar-capture-gate-mode123-chat-ok-nothink-20260613.json`
+- `data/qwen36-post-sidecar-capture-gate-mode123-recovery-20260613/`
+- `data/qwen36-accepted-restored-after-sidecar-capture-gate-mode123-provenance-20260613.json`
+- `data/qwen36-accepted-restored-after-sidecar-capture-gate-mode123-provenance-rerun-20260613.json`
+
+Implementation:
+
+- Added a narrow capture gate in `_maybe_probe_onednn_sidecar`:
+  - compute `execute_mode` before the stream-capture early return;
+  - allow captured execution only when `required_execution` is true and the
+    mode returns an existing output tensor (`123` or `133`);
+  - keep tensor logging, parity clones, CPU copies, and stats parsing disabled
+    during capture;
+  - return `gemm2_output` from the fake registration for `123/133`.
+- Tested only rank `0`, layer `9`, `REPLACE_BOTH=1`, `DRY_DESCRIPTORS=0`,
+  and `OFFSETS=1`.
+
+Results:
+
+- Mode `133` (`middle_nowait_return_output`) reached endpoint health and graph
+  capture finished. The sidecar log captured nine rank-0/layer-9 startup rows
+  with `execute_mode=133`, no stats tensor, and return tensors pointing at
+  `gemm2_output`.
+- The first real request returned HTTP 500. Rank 0 then reported
+  `UR_RESULT_ERROR_DEVICE_LOST` while the next host-to-device metadata copy was
+  running. The stack points at `block_table.copy_to_gpu` and
+  `num_computed_tokens.copy_`, which is likely downstream of an invalid queue
+  state caused by replaying the captured oneDNN stream work.
+- Mode `123` (`middle_return_output`) also reached endpoint health, but during
+  graph capture the sidecar hit
+  `wait cannot be called for a queue which is recording to a command graph`.
+  The helper disabled itself, graph capture completed, and a request returned
+  HTTP 200 with `OK.`. This is stable because it fell back to the baseline, not
+  because the sidecar ran.
+
+Decision:
+
+- Reject both direct vLLM graph-captured oneDNN sidecar modes.
+- Do not promote or benchmark. There is no speed result.
+- The standalone `XPUGraph` smoke remains useful, but vLLM replay is stricter:
+  mode `133` is replay-unsafe and mode `123` cannot wait inside capture.
+
+Next:
+
+1. Stop trying to replay oneDNN engine-stream work inside vLLM XPU graphs.
+2. Move the middle MoE boundary to a graph-native SYCL/custom-op layerlet where
+   all work is enqueued on the captured XPU stream, or to a persistent
+   device-resident command queue with explicit graph-safe synchronization.
+3. Keep the eager oneDNN sidecar as an exact oracle and timing substrate for
+   the native layerlet implementation.
+4. Continue oracle `k=1` speculation parity work in parallel because it is still
+   the most plausible larger no-quality-loss speed path.

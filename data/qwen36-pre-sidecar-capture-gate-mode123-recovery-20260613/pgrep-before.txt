@@ -1,0 +1,11 @@
+$ pgrep -af 'vllm serve|VLLM::Worker|multiprocessing.resource_tracker|qwen36|run-qwen36' || true
+1383632 tmux new-session -d -s qwen36-tp4-accepted-restored-after-oracle1-short-20260611a cd /home/steve/llm-optimizations && LOG_PATH=/tmp/qwen36-quark-int8-tp4-accepted-restored-after-oracle1-short-20260611a.log scripts/launch-qwen36-quark-int8-accepted.sh
+2171784 /home/steve/.venvs/vllm-xpu/bin/python /home/steve/.venvs/vllm-xpu/bin/vllm serve /mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118 --host 127.0.0.1 --port 18080 --trust-remote-code --served-model-name qwen36-35b-a3b-fp8 --dtype auto --quantization quark --tensor-parallel-size 4 --pipeline-parallel-size 1 --distributed-executor-backend mp --max-model-len 32768 --max-num-batched-tokens 8192 --max-num-seqs 48 --gpu-memory-utilization 0.95 --kv-cache-dtype auto --no-enable-prefix-caching --language-model-only --compilation-config {"cudagraph_mode":"PIECEWISE"} --generation-config vllm
+2171914 /home/steve/.venvs/vllm-xpu/bin/python -c from multiprocessing.resource_tracker import main;main(40)
+2172025 VLLM::Worker_TP0
+2172026 VLLM::Worker_TP1
+2172027 VLLM::Worker_TP2
+2172028 VLLM::Worker_TP3
+2172907 bash scripts/qwen36-xpu-recovery-snapshot.sh --out-dir data/qwen36-pre-sidecar-capture-gate-mode123-recovery-20260613 --kill-vllm --copy-smoke --wait-seconds 5
+2174571 bash -lc pgrep -af 'vllm serve|VLLM::Worker|multiprocessing.resource_tracker|qwen36|run-qwen36' || true
+exit_status=0

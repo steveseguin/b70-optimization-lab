@@ -896,3 +896,13 @@ vLLM/XPU FP8 work:
     Restore note: first old-token provenance after restore had one
     warmup/cache-sensitive drift, immediate rerun passed, and no-thinking chat
     returned exactly `OK`.
+40. Tested the stats-free middle sidecar inside vLLM's graph-captured path with
+    a narrow rank-0/layer-9 gate. Mode `133` captured and reached health, but
+    the first real request hit `UR_RESULT_ERROR_DEVICE_LOST` on rank 0. Mode
+    `123` avoided device-lost only by failing during graph capture with
+    `wait cannot be called for a queue which is recording to a command graph`,
+    disabling the sidecar and falling back to baseline. Decision: reject direct
+    oneDNN sidecar replay inside vLLM XPU graphs; next MoE speed work needs a
+    graph-native SYCL/custom-op layerlet or persistent command queue. Artifacts:
+    `data/qwen36-sidecar-capture-gate-summary-20260613.json` and
+    `patches/vllm-xpu-qwen36-onednn-sidecar-capture-gate-20260613.patch`.

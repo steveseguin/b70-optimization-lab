@@ -6,6 +6,25 @@ Date: 2026-06-12
 
 2026-06-13 notes update:
 
+- Tested a capture-safe Python gate for stats-free middle sidecar modes inside
+  the vLLM XPU graph path, scoped to rank `0` / `layers\.9\.` only. The gate
+  lets `execute_mode=123/133` run during stream capture without tensor logging,
+  parity clones, or CPU stats copies. Result: reject both captured oneDNN
+  sidecar modes. Mode `133` captured and logged nine startup rows, but the
+  first real request returned HTTP 500 and rank 0 hit
+  `UR_RESULT_ERROR_DEVICE_LOST`. Mode `123` avoided device-lost only because
+  `engine_stream.wait()` is illegal while recording a command graph
+  (`wait cannot be called for a queue which is recording to a command graph`),
+  so the helper disabled itself and fell back to baseline. Artifacts:
+  `data/qwen36-sidecar-capture-gate-summary-20260613.json` and
+  `patches/vllm-xpu-qwen36-onednn-sidecar-capture-gate-20260613.patch`.
+  Accepted service was restored; first post-restore provenance had the known
+  natural-prompt warm/cache drift, rerun passed. This is not a speed win. Next
+  MoE path should be a graph-native SYCL/custom-op layerlet or persistent
+  command queue, not oneDNN stream replay inside captured vLLM graphs.
+
+2026-06-13 notes update:
+
 - Added stats-free middle sidecar execute modes `123`/`133`, where `133` runs
   the exact cached oneDNN GEMM1 -> XPU SiLU+quant -> cached oneDNN GEMM2 path
   and returns the existing `gemm2_output` tensor instead of allocating a CPU
