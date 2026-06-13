@@ -478,3 +478,81 @@ Next:
 3. Once exact, run a narrow timing A/B without diagnostic clone/sync.
 4. If timing is promising, broaden layer/rank coverage incrementally and run
    the accepted quality/reliability protocol before any Localmaxxing update.
+
+## Same-Request Replacement Reference Parity
+
+Date: 2026-06-13.
+
+Artifacts:
+
+- `patches/vllm-xpu-qwen36-onednn-sidecar-replace-reference-parity-20260613.patch`
+- `data/qwen36-onednn-sidecar-replace-reference-parity-live-20260613.json`
+- `data/qwen36-onednn-sidecar-replace-reference-parity-live-20260613--2074280.jsonl`
+- `data/qwen36-quark-int8-tp4-sidecar-replace-reference-parity-quality-nothink-smoke-20260613.json`
+- `data/qwen36-quark-int8-tp4-accepted-restored-after-refparity-quality-nothink-smoke-20260613.json`
+
+Implementation:
+
+- Added opt-in
+  `VLLM_XPU_MOE_ONEDNN_SIDECAR_REPLACE_REFERENCE_PARITY=1`.
+- Under the existing two-GEMM replacement gate, the wrapper now computes the
+  current XPU W8A8 reference path into separate tensors while sidecar writes
+  the live replacement tensors.
+- The diagnostic logs exact parity for:
+  - `gemm1_output`
+  - `gemm2_a`
+  - `gemm2_a_scales`
+  - `gemm2_output`
+  - `gathered_output`
+- This is same-request parity, not pre-write scratch parity. It directly
+  compares the replacement transaction against the existing XPU path.
+- The diagnostic remains capped by `VLLM_XPU_MOE_ONEDNN_SIDECAR_MAX_CALLS` and
+  uses the existing rank/layer filters.
+
+Validation:
+
+- `python3 -m py_compile` passed for
+  `/home/steve/src/vllm-xpu-kernels/vllm_xpu_kernels/fused_moe_interface.py`.
+- Endpoint launched in eager sidecar mode on `18081`, gated to rank `0` and
+  `layers\.9\.`.
+- Short completion and no-thinking smoke both completed without sidecar errors.
+- JSONL captured `48` rows:
+  - `24` sidecar execute records
+  - `24` replacement-reference parity records
+- All `24` reference records reported `gemm1_replaced=true` and
+  `gemm2_replaced=true`.
+- Aggregate max diff was `0.0` for every tracked target:
+  - `gemm1_output`: `0.0`
+  - `gemm2_a`: `0.0`
+  - `gemm2_a_scales`: `0.0`
+  - `gemm2_output`: `0.0`
+  - `gathered_output`: `0.0`
+- Final logged decode-shape sidecar stats remained in the same range:
+  - GEMM1: cache hit `1`, construct `6 us`, execute/wait `46 us`
+  - GEMM2: cache hit `1`, construct `5 us`, execute/wait `35 us`
+- The sidecar/eager no-thinking text smoke retained the known eager arithmetic
+  weakness: arithmetic returned `58`, while exact OK, copy phrase, JSON, and
+  repeat stability passed.
+- Accepted graph endpoint was restored on `18080` and passed no-thinking smoke
+  with `pass_all=true`, `baseline_match_all=true`, and `repeat_pass=true`.
+
+Decision:
+
+- This closes the replacement parity gap for the sampled layer/rank. The
+  two-GEMM replacement path is tensor-exact against same-request XPU reference
+  for all tracked outputs.
+- It is still not a speed result. Reference buffers, extra XPU reference work,
+  checksum syncs, and JSONL logging are all diagnostic overhead.
+- The next step is now benchmarkable in principle: run a narrow
+  diagnostic-off timing A/B for rank-0/layer-9 replacement, then re-enable this
+  parity gate at every broader rollout step.
+
+Next:
+
+1. Run diagnostic-off narrow timing A/B for rank-0/layer-9 replacement.
+2. If positive, expand one dimension at a time: more layers on rank 0, then all
+   ranks for one layer, then selected layer groups.
+3. Re-run same-request reference parity after every expansion before trusting
+   any timing.
+4. Keep accepted graph quality/reliability gates separate from eager sidecar
+   text smoke.

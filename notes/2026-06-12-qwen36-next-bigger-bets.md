@@ -14844,3 +14844,47 @@ Next best step:
    rank 0, then all ranks, then accepted-graph compatibility.
 4. Keep oracle `k=1` speculation parity as the parallel 2x path if the sidecar
    layerlet cannot beat the layer budget.
+
+## 2026-06-13 Continuation: Same-Request Replacement Reference Parity
+
+Artifacts:
+
+- `patches/vllm-xpu-qwen36-onednn-sidecar-replace-reference-parity-20260613.patch`
+- `data/qwen36-onednn-sidecar-replace-reference-parity-live-20260613.json`
+- `data/qwen36-onednn-sidecar-replace-reference-parity-live-20260613--2074280.jsonl`
+- `data/qwen36-quark-int8-tp4-sidecar-replace-reference-parity-quality-nothink-smoke-20260613.json`
+- `data/qwen36-quark-int8-tp4-accepted-restored-after-refparity-quality-nothink-smoke-20260613.json`
+
+What worked:
+
+- Added
+  `VLLM_XPU_MOE_ONEDNN_SIDECAR_REPLACE_REFERENCE_PARITY=1`.
+- The replacement path now compares sidecar-written live tensors against
+  separate same-request XPU reference tensors.
+- The narrow rank-0/layer-9 run captured `24` replacement-reference parity
+  records.
+- All records had both sidecar GEMMs active:
+  `gemm1_replaced=true`, `gemm2_replaced=true`.
+- Every tracked target was exact with aggregate max diff `0.0`:
+  `gemm1_output`, `gemm2_a`, `gemm2_a_scales`, `gemm2_output`, and
+  `gathered_output`.
+- Accepted graph endpoint was restored and passed no-thinking smoke.
+
+What remains unproven:
+
+- No speed claim yet. This path intentionally does extra XPU reference work,
+  extra gathers, checksum syncs, and JSONL logging.
+- The sidecar/eager endpoint text smoke still has the known arithmetic
+  mismatch (`58`), so endpoint text quality for sidecar/eager remains a
+  weak oracle. Tensor parity is the reliable signal here.
+
+Next best step:
+
+1. Run a narrow diagnostic-off timing A/B on rank-0/layer-9 replacement.
+2. If there is a real gain, re-enable reference parity and expand one dimension
+   at a time.
+3. If the narrow timing is neutral or negative, inspect whether Python dispatch,
+   oneDNN submit/wait, or remaining activation/quant/gather boundaries dominate
+   before expanding.
+4. Keep the oracle `k=1` verifier/KV parity repair alive as the parallel path
+   to a possible 2x improvement.

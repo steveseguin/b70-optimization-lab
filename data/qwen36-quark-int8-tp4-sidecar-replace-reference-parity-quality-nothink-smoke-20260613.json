@@ -1,0 +1,128 @@
+{
+  "base_url": "http://127.0.0.1:18081",
+  "model": "qwen36-35b-a3b-fp8",
+  "tokenizer": "/mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118",
+  "chat_template_kwargs": {
+    "enable_thinking": false
+  },
+  "seed": 20260609,
+  "exact_cases": [
+    {
+      "name": "exact_ok",
+      "content": "OK",
+      "normalized": "OK",
+      "sha256": "565339bc4d33d72817b583024112eb7f5cdf3e5eef0252d6ec1b9c9a94e12bb3",
+      "elapsed_s": 0.26847898215055466,
+      "usage": {
+        "prompt_tokens": 17,
+        "total_tokens": 19,
+        "completion_tokens": 2,
+        "prompt_tokens_details": null
+      },
+      "expected": "OK",
+      "json_expected_fields": null,
+      "pass": true
+    },
+    {
+      "name": "copy_phrase",
+      "content": "satin cobalt orbit",
+      "normalized": "satin cobalt orbit",
+      "sha256": "cfaf413c134eea7354fa0b63fe7543885f4008cee709e8e4d3349f46872ca569",
+      "elapsed_s": 0.6834534611552954,
+      "usage": {
+        "prompt_tokens": 26,
+        "total_tokens": 32,
+        "completion_tokens": 6,
+        "prompt_tokens_details": null
+      },
+      "expected": "satin cobalt orbit",
+      "json_expected_fields": null,
+      "pass": true
+    },
+    {
+      "name": "arithmetic",
+      "content": "58",
+      "normalized": "58",
+      "sha256": "6208ef0f7750c111548cf90b6ea1d0d0a66f6bff40dbef07cb45ec436263c7d6",
+      "elapsed_s": 0.3973454120568931,
+      "usage": {
+        "prompt_tokens": 36,
+        "total_tokens": 39,
+        "completion_tokens": 3,
+        "prompt_tokens_details": null
+      },
+      "expected": "60",
+      "json_expected_fields": null,
+      "pass": false
+    },
+    {
+      "name": "json_schema",
+      "content": "{\"answer\": \"42\", \"unit\": \"widgets\"}",
+      "normalized": "{\"answer\": \"42\", \"unit\": \"widgets\"}",
+      "sha256": "6683a1d68b84de6af69a14fc665d42fc6f0c53f6090ede34544d4671fafb1411",
+      "elapsed_s": 1.3922654329799116,
+      "usage": {
+        "prompt_tokens": 36,
+        "total_tokens": 50,
+        "completion_tokens": 14,
+        "prompt_tokens_details": null
+      },
+      "expected": null,
+      "json_expected_fields": {
+        "answer": "42",
+        "unit": "widgets"
+      },
+      "pass": true,
+      "json_parsed": {
+        "answer": "42",
+        "unit": "widgets"
+      }
+    }
+  ],
+  "repeat_case": {
+    "name": "repeat_hash_stability",
+    "repeats": 2,
+    "hashes": [
+      "c40708bd7280e02bd9dc04ec775023d5be7b4870ea8096039af38576e60fc80b",
+      "c40708bd7280e02bd9dc04ec775023d5be7b4870ea8096039af38576e60fc80b"
+    ],
+    "texts": [
+      "blue, green, orange, red",
+      "blue, green, orange, red"
+    ],
+    "unique_hashes": [
+      "c40708bd7280e02bd9dc04ec775023d5be7b4870ea8096039af38576e60fc80b"
+    ],
+    "pass": true,
+    "runs": [
+      {
+        "content": "blue, green, orange, red",
+        "normalized": "blue, green, orange, red",
+        "sha256": "c40708bd7280e02bd9dc04ec775023d5be7b4870ea8096039af38576e60fc80b",
+        "elapsed_s": 0.8592218731064349,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 38,
+          "completion_tokens": 8,
+          "prompt_tokens_details": null
+        }
+      },
+      {
+        "content": "blue, green, orange, red",
+        "normalized": "blue, green, orange, red",
+        "sha256": "c40708bd7280e02bd9dc04ec775023d5be7b4870ea8096039af38576e60fc80b",
+        "elapsed_s": 0.8418218269944191,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 38,
+          "completion_tokens": 8,
+          "prompt_tokens_details": null
+        }
+      }
+    ]
+  },
+  "long_context_case": null,
+  "pass_all": false,
+  "baseline_comparisons": {},
+  "baseline_match_all": true
+}

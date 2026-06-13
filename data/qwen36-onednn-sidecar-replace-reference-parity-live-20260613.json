@@ -1,0 +1,266 @@
+{
+  "accepted_post_restore_quality_smoke": {
+    "baseline_match_all": true,
+    "exact": {
+      "arithmetic": {
+        "normalized": "60",
+        "pass": true
+      },
+      "copy_phrase": {
+        "normalized": "satin cobalt orbit",
+        "pass": true
+      },
+      "exact_ok": {
+        "normalized": "OK",
+        "pass": true
+      },
+      "json_schema": {
+        "normalized": "{\"answer\": \"42\", \"unit\": \"widgets\"}",
+        "pass": true
+      }
+    },
+    "pass_all": true,
+    "repeat_pass": true
+  },
+  "artifacts": {
+    "accepted_quality_json": "data/qwen36-quark-int8-tp4-accepted-restored-after-refparity-quality-nothink-smoke-20260613.json",
+    "completion_json": "/tmp/qwen36-sidecar-replace-reference-parity-completion.json",
+    "jsonl": [
+      "data/qwen36-onednn-sidecar-replace-reference-parity-live-20260613--2074280.jsonl"
+    ],
+    "patch": "patches/vllm-xpu-qwen36-onednn-sidecar-replace-reference-parity-20260613.patch",
+    "server_log": "/tmp/qwen36-quark-int8-tp4-sidecar-replace-reference-parity-20260613.log",
+    "sidecar_quality_json": "data/qwen36-quark-int8-tp4-sidecar-replace-reference-parity-quality-nothink-smoke-20260613.json"
+  },
+  "candidate": "qwen36-quark-int8-tp4-sidecar-replace-both-reference-parity-rank0-layer9",
+  "decision": "The narrow replacement path is tensor-exact against same-request XPU reference for all tracked targets, but it is still diagnostic-only and not benchmark-promoted.",
+  "next_steps": [
+    "Run a diagnostic-off narrow timing A/B for rank0/layer9 replacement without reference buffers or parity logging.",
+    "If timing is positive, broaden to more layers on rank0, then all ranks for one layer, with this parity gate re-enabled at each expansion step.",
+    "Keep accepted-graph quality/reliability gates separate from eager sidecar text smoke."
+  ],
+  "records": {
+    "by_mode": {
+      "1": {
+        "count": 12,
+        "elapsed_ms_max": 215.28176381252706,
+        "elapsed_ms_median": 0.43085357174277306,
+        "elapsed_ms_min": 0.32444903627038,
+        "first_stats": [
+          1,
+          0,
+          9,
+          8192,
+          8,
+          65536,
+          2048,
+          128,
+          256,
+          256,
+          2048,
+          1,
+          1,
+          1,
+          1,
+          524288,
+          256,
+          1,
+          262144,
+          2048,
+          1,
+          1,
+          10,
+          4042,
+          0,
+          10,
+          4042,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "last_stats": [
+          1,
+          0,
+          9,
+          1,
+          8,
+          8,
+          2048,
+          128,
+          256,
+          256,
+          2048,
+          1,
+          1,
+          1,
+          1,
+          524288,
+          256,
+          1,
+          262144,
+          2048,
+          1,
+          1,
+          6,
+          46,
+          0,
+          6,
+          46,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "2": {
+        "count": 12,
+        "elapsed_ms_max": 36.51744010858238,
+        "elapsed_ms_median": 0.3376179374754429,
+        "elapsed_ms_min": 0.3042209427803755,
+        "first_stats": [
+          1,
+          0,
+          9,
+          8192,
+          8,
+          65536,
+          2048,
+          128,
+          256,
+          256,
+          2048,
+          1,
+          1,
+          1,
+          1,
+          524288,
+          256,
+          1,
+          262144,
+          2048,
+          2,
+          1,
+          6,
+          19404,
+          0,
+          0,
+          0,
+          0,
+          6,
+          19404,
+          0,
+          0
+        ],
+        "last_stats": [
+          1,
+          0,
+          9,
+          1,
+          8,
+          8,
+          2048,
+          128,
+          256,
+          256,
+          2048,
+          1,
+          1,
+          1,
+          1,
+          524288,
+          256,
+          1,
+          262144,
+          2048,
+          2,
+          1,
+          5,
+          35,
+          0,
+          0,
+          0,
+          0,
+          5,
+          35,
+          0,
+          0
+        ]
+      }
+    },
+    "by_target": {
+      "gathered_output": {
+        "count": 24,
+        "max_abs_diff_f32_max": 0.0,
+        "max_abs_diff_f32_median": 0.0
+      },
+      "gemm1_output": {
+        "count": 24,
+        "max_abs_diff_f32_max": 0.0,
+        "max_abs_diff_f32_median": 0.0
+      },
+      "gemm2_a": {
+        "count": 24,
+        "max_abs_diff_f32_max": 0.0,
+        "max_abs_diff_f32_median": 0.0
+      },
+      "gemm2_a_scales": {
+        "count": 24,
+        "max_abs_diff_f32_max": 0.0,
+        "max_abs_diff_f32_median": 0.0
+      },
+      "gemm2_output": {
+        "count": 24,
+        "max_abs_diff_f32_max": 0.0,
+        "max_abs_diff_f32_median": 0.0
+      }
+    },
+    "errors": 0,
+    "execute_modes": {
+      "1": 12,
+      "2": 12
+    },
+    "replace_reference_parity_rows": 24,
+    "replaced_flags": {
+      "(True, True)": 24
+    },
+    "sidecar_execute_rows": 24,
+    "total_rows": 48
+  },
+  "scope": {
+    "execute_mode_override": "gemm1 and gemm2 from Python wrapper",
+    "layer_regex": "layers\\.9\\.",
+    "max_logged_calls": 24,
+    "rank_filter": "0",
+    "reference_parity_env": "VLLM_XPU_MOE_ONEDNN_SIDECAR_REPLACE_REFERENCE_PARITY=1",
+    "replacement_env": "VLLM_XPU_MOE_ONEDNN_SIDECAR_REPLACE_BOTH=1",
+    "sidecar_execute_env": "off"
+  },
+  "sidecar_quality_smoke": {
+    "exact": {
+      "arithmetic": {
+        "normalized": "58",
+        "pass": false
+      },
+      "copy_phrase": {
+        "normalized": "satin cobalt orbit",
+        "pass": true
+      },
+      "exact_ok": {
+        "normalized": "OK",
+        "pass": true
+      },
+      "json_schema": {
+        "normalized": "{\"answer\": \"42\", \"unit\": \"widgets\"}",
+        "pass": true
+      }
+    },
+    "interpretation": "Arithmetic returned 58, matching the known eager sidecar/control limitation. This endpoint remains a tensor-parity diagnostic, not a promotion quality oracle.",
+    "pass_all": false,
+    "repeat_pass": true
+  },
+  "status": "replacement_reference_parity_exact_not_promoted_eager_quality_smoke_has_known_arithmetic_failure",
+  "timestamp": "2026-06-13T12:28:39-0400"
+}
