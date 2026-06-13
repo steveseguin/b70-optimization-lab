@@ -867,3 +867,19 @@ vLLM/XPU FP8 work:
     hot-expert replication alive as a medium-term layout idea:
     `ep4_hot64_replicated_greedy` reduces the communication-row proxy to
     `0.155` with balanced pressure at `1.75x` expert-memory cost.
+38. Added the first one-call Qwen3.6 MoE middle-layerlet prototype:
+    native cached oneDNN GEMM1 -> exact XPU SiLU+quant -> native cached oneDNN
+    GEMM2. The live rank-0/layer-9 eager replacement gate captured `16`
+    sidecar rows and `16` replacement parity rows with all tracked tensors
+    exact (`max_abs_diff=0.0` for `gemm1_output`, `gemm2_a`,
+    `gemm2_a_scales`, `gemm2_output`, and `gathered_output`). Warm cached
+    decode-shape middle wall time was `78 us` median, with activation+quant at
+    `12.5 us` median. This is an exact substrate, not a promoted endpoint
+    speed win, because the helper is still outside accepted graph capture.
+    Artifacts:
+    `patches/vllm-xpu-qwen36-onednn-sidecar-middle-layerlet-20260613.patch`
+    and `data/qwen36-onednn-sidecar-middle-layerlet-summary-20260613.json`.
+    The accepted graph backend was restored afterward, provenance passed, and
+    no-thinking chat returned exactly `OK`. Next work is to move this exact
+    boundary into a graph-captured custom op, persistent layerlet, or
+    device-resident command queue before broadening.

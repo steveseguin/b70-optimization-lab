@@ -6,6 +6,28 @@ Date: 2026-06-12
 
 2026-06-13 notes update:
 
+- Added and tested the first one-call middle MoE sidecar/layerlet prototype:
+  native cached oneDNN GEMM1 -> XPU exact SiLU+quant -> native cached oneDNN
+  GEMM2, exposed as `VLLM_XPU_MOE_ONEDNN_SIDECAR_EXECUTE=middle_nowait`
+  (`execute_mode=33`). Narrow live replacement on `18081`, eager, rank `0`,
+  `layers\.9\.`, `REPLACE_BOTH=1`, and reference parity captured `16`
+  replacement records. All tracked tensors matched the XPU reference exactly:
+  `gemm1_output`, `gemm2_a`, `gemm2_a_scales`, `gemm2_output`, and
+  `gathered_output` all had max diff `0.0`. Warm cached decode-shape native
+  `middle_wall_us` median was `78 us` with activation+quant median `12.5 us`.
+  This is not a promoted speed win because it is still an eager diagnostic
+  helper outside graph capture. Artifacts:
+  `data/qwen36-onednn-sidecar-middle-layerlet-summary-20260613.json` and
+  `patches/vllm-xpu-qwen36-onednn-sidecar-middle-layerlet-20260613.patch`.
+  Accepted graph service was restored on `127.0.0.1:18080`, provenance passed
+  in
+  `data/qwen36-quark-int8-tp4-accepted-provenance-after-middle-sidecar-20260613.json`,
+  and no-thinking chat returned exactly `OK`. Next step: turn this exact
+  boundary into a graph-captured custom op/persistent layerlet or device
+  command queue before broadening all layers/ranks.
+
+2026-06-13 notes update:
+
 - Completed the narrow diagnostic-off sidecar A/B and TP4 collective replay
   pass. Added graph-mode support to
   `scripts/launch-qwen36-quark-int8-sidecar-probe.sh` with

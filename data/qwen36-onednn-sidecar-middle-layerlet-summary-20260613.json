@@ -1,0 +1,146 @@
+{
+  "artifacts": {
+    "accepted_nothink_ok": "data/qwen36-quark-int8-tp4-accepted-restored-after-middle-sidecar-chat-ok-nothink-20260613.json",
+    "accepted_provenance": "data/qwen36-quark-int8-tp4-accepted-provenance-after-middle-sidecar-20260613.json",
+    "jsonl": [
+      "data/qwen36-onednn-sidecar-middle-parity-live-20260613-2147490.jsonl"
+    ],
+    "patch": "patches/vllm-xpu-qwen36-onednn-sidecar-middle-layerlet-20260613.patch",
+    "post_recovery": "data/qwen36-post-middle-sidecar-recovery-20260613",
+    "pre_recovery": "data/qwen36-pre-middle-sidecar-recovery-20260613",
+    "server_log": "/tmp/qwen36-quark-int8-tp4-qwen36-sidecar-middle-parity-20260613.log"
+  },
+  "candidate": "rank0-layer9-middle-native-gemm1-silu_quant-gemm2-nowait",
+  "interpretation": "The one-call middle sidecar path is exact for the sampled live rank/layer and warm cached decode-shape calls show middle_wall_us median 78us, but this path is still eager and the Python helper is not a promoted production speed path. Next speed work is turning this exact boundary into a graph-captured registered op/persistent layerlet or device-resident command queue.",
+  "label": "qwen36-onednn-sidecar-middle-layerlet-parity-20260613",
+  "records": {
+    "execute_modes": {
+      "33": 16,
+      "None": 16
+    },
+    "parity": {
+      "gathered_output": {
+        "count": 16,
+        "max_abs_diff_f32_max": 0.0,
+        "max_abs_diff_f32_median": 0.0
+      },
+      "gemm1_output": {
+        "count": 16,
+        "max_abs_diff_f32_max": 0.0,
+        "max_abs_diff_f32_median": 0.0
+      },
+      "gemm2_a": {
+        "count": 16,
+        "max_abs_diff_f32_max": 0.0,
+        "max_abs_diff_f32_median": 0.0
+      },
+      "gemm2_a_scales": {
+        "count": 16,
+        "max_abs_diff_f32_max": 0.0,
+        "max_abs_diff_f32_median": 0.0
+      },
+      "gemm2_output": {
+        "count": 16,
+        "max_abs_diff_f32_max": 0.0,
+        "max_abs_diff_f32_median": 0.0
+      }
+    },
+    "record_types": {
+      "replace_reference_parity": 16,
+      "sidecar_execute": 16
+    },
+    "replaced_flags": {
+      "(True, True)": 16
+    },
+    "stats": {
+      "dry_create_descriptors": {
+        "count": 16,
+        "max": 0.0,
+        "median": 0.0,
+        "min": 0.0
+      },
+      "elapsed_ms": null,
+      "gemm1_cache_hit": {
+        "count": 16,
+        "max": 1.0,
+        "median": 1.0,
+        "min": 0.0
+      },
+      "gemm1_construct_us": {
+        "count": 16,
+        "max": 511557.0,
+        "median": 0.0,
+        "min": 0.0
+      },
+      "gemm1_execute_us": {
+        "count": 16,
+        "max": 170.0,
+        "median": 26.0,
+        "min": 24.0
+      },
+      "gemm2_cache_hit": {
+        "count": 16,
+        "max": 1.0,
+        "median": 1.0,
+        "min": 0.0
+      },
+      "gemm2_construct_us": {
+        "count": 16,
+        "max": 431043.0,
+        "median": 0.0,
+        "min": 0.0
+      },
+      "gemm2_execute_us": {
+        "count": 16,
+        "max": 146.0,
+        "median": 17.5,
+        "min": 15.0
+      },
+      "middle_activation_quant_us": {
+        "count": 16,
+        "max": 57.0,
+        "median": 12.5,
+        "min": 11.0
+      },
+      "middle_wall_us": {
+        "count": 16,
+        "max": 942978.0,
+        "median": 78.0,
+        "min": 71.0
+      },
+      "num_moe_inputs": {
+        "count": 16,
+        "max": 65536.0,
+        "median": 8.0,
+        "min": 8.0
+      },
+      "num_rows": {
+        "count": 16,
+        "max": 8192.0,
+        "median": 1.0,
+        "min": 1.0
+      }
+    },
+    "total_rows": 32
+  },
+  "restore": {
+    "accepted_nothink_chat_ok": "OK",
+    "accepted_provenance_ok": true,
+    "post_copy_smoke": "pass",
+    "pre_copy_smoke": "pass"
+  },
+  "scope": {
+    "dry_descriptors": false,
+    "enforce_eager": true,
+    "execute": "middle_nowait",
+    "execute_mode": 33,
+    "layer_regex": "layers\\.9\\.",
+    "max_logged_calls": 16,
+    "port": 18081,
+    "rank_filter": "0",
+    "replace_both": true,
+    "replace_reference_parity": true
+  },
+  "status": "tensor_exact_substrate_not_promoted_speed_win",
+  "timestamp": "2026-06-13T16:02:00-0400"
+}

@@ -739,3 +739,87 @@ Next:
 2. Add staged all-rank/all-layer parity gates before broad rollout.
 3. Keep oracle `k=1` KV/block-table parity repair active as the parallel
    no-quality-loss speed path.
+
+## Middle Layerlet Prototype
+
+Date: 2026-06-13.
+
+Artifacts:
+
+- `patches/vllm-xpu-qwen36-onednn-sidecar-middle-layerlet-20260613.patch`
+- `data/qwen36-onednn-sidecar-middle-layerlet-summary-20260613.json`
+- `data/qwen36-onednn-sidecar-middle-parity-live-20260613-2147490.jsonl`
+- `data/qwen36-pre-middle-sidecar-recovery-20260613/`
+- `data/qwen36-post-middle-sidecar-recovery-20260613/`
+- `data/qwen36-quark-int8-tp4-accepted-provenance-after-middle-sidecar-20260613.json`
+- `data/qwen36-quark-int8-tp4-accepted-restored-after-middle-sidecar-chat-ok-nothink-20260613.json`
+
+Implementation:
+
+- Added a one-call middle sidecar execute path in `_xpu_C`:
+  cached oneDNN GEMM1, exact XPU `silu_and_mul_quant_int8_xpu_out`, then
+  cached oneDNN GEMM2.
+- Added execute modes:
+  - `23`: middle path with GEMM2 wait.
+  - `33`: middle path without the final explicit GEMM2 wait.
+- Added parser aliases including `middle`, `layerlet`,
+  `gemm1_silu_quant_gemm2`, and `middle_nowait`.
+- Extended sidecar stats with `middle_activation_quant_us` and
+  `middle_wall_us`.
+- Kept replacement opt-in and fail-closed behind the existing sidecar gates:
+  `VLLM_XPU_MOE_ONEDNN_SIDECAR_PROBE=1`,
+  `VLLM_XPU_MOE_ONEDNN_SIDECAR_REPLACE_BOTH=1`, and
+  `VLLM_XPU_MOE_ONEDNN_SIDECAR_EXECUTE=middle_nowait`.
+
+Validation:
+
+- Loader/schema smoke passed with the rebuilt artifact at
+  `/tmp/qwen36-sidecar-middle-sycl8-20260613/vllm_xpu_kernels/_xpu_C.abi3.so`.
+- Temporarily stopped the accepted `18080` service, ran pre-diagnostic XPU copy
+  smoke, and launched the candidate on `18081`.
+- Scope: eager, rank `0`, `layers\.9\.`, `execute_mode=33`,
+  `REPLACE_BOTH=1`, reference parity enabled, `DRY_DESCRIPTORS=0`, and
+  `MAX_CALLS=16`.
+- Captured `16` sidecar execute rows and `16` replacement parity rows.
+- Replacement flags were `(True, True)` for all `16` parity rows.
+- All tracked reference comparisons were exact with max diff `0.0`:
+  `gemm1_output`, `gemm2_a`, `gemm2_a_scales`, `gemm2_output`, and
+  `gathered_output`.
+- Warm cached decode-shape stats:
+  - `middle_wall_us`: median `78 us`, min `71 us`.
+  - `middle_activation_quant_us`: median `12.5 us`, min `11 us`.
+  - GEMM cache hits were active after first-shape construction.
+
+Reliability:
+
+- The candidate stayed healthy through the canary requests and did not hit
+  device lost.
+- Direct backend chat quality canary is not a promotion signal here because the
+  direct backend did not inject no-thinking template kwargs and therefore
+  emitted thinking text; one multimodal case also correctly failed because this
+  text-only launch permits zero images.
+- After stopping the candidate, the post-diagnostic XPU copy smoke passed on
+  all four B70s.
+- Restored the accepted graph service on `127.0.0.1:18080`.
+- Accepted provenance passed with `ok=true`, and a no-thinking chat smoke
+  returned exactly `OK`.
+
+Decision:
+
+- Keep this as an exact substrate for the next MoE layerlet branch.
+- Do not count it as an endpoint speed win. It is still an eager diagnostic
+  helper and does not run inside the accepted XPU graph capture path.
+- Do not broaden to all layers/ranks until the same boundary is available as a
+  graph-captured custom op, persistent layerlet, or device-resident command
+  queue.
+
+Next:
+
+1. Convert this exact middle boundary into a graph-captured registered op or
+   persistent layerlet that can replace the existing graph MoE body.
+2. Add a parity harness for the captured op before any endpoint benchmark:
+   rank `0`/layer `9`, then all ranks for layer `9`, then a small layer set.
+3. If the captured op remains exact, run adjacent graph-control A/B with warm
+   repeats, provenance, canary token checks, VRAM, and thermal/power capture.
+4. Keep oracle `k=1` verifier/KV parity repair active because it remains the
+   larger no-quality-loss speed path.

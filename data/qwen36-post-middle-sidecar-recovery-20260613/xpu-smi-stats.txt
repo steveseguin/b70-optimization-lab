@@ -1,0 +1,30 @@
+$ xpu-smi stats
+List the GPU statistics.
+
+Usage: xpu-smi stats [Options]
+  xpu-smi stats
+  xpu-smi stats -d [deviceId]
+  xpu-smi stats -d [pciBdfAddress]
+  xpu-smi stats -d [deviceId] -j
+  xpu-smi stats -d [pciBdfAddress] -j
+  xpu-smi stats -d [deviceId] -e
+  xpu-smi stats -d [pciBdfAddress] -e
+  xpu-smi stats -d [deviceId] -e -j
+  xpu-smi stats -d [pciBdfAddress] -e -j
+  xpu-smi stats -d [deviceId] -r
+  xpu-smi stats -d [pciBdfAddress] -r
+  xpu-smi stats -d [deviceId] -r -j
+  xpu-smi stats -d [pciBdfAddress] -r -j
+
+Options:
+  -h,--help                   Print this help message and exit
+  -j,--json                   Print result in JSON format
+                              
+  -d,--device                 The device ID or PCI BDF address to query
+  -e,--eu                     Show EU metrics
+  -r,--ras                    Show RAS error metrics
+  -x                          Show Xe Link metrics
+  --xelink                    Show the all the Xe Link throughput (GB/s) matrix
+  --utils                     Show the Xe Link throughput utilization
+
+exit_status=0
