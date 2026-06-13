@@ -1,0 +1,80 @@
+{
+  "date": "2026-06-13",
+  "objective": "Move the oneDNN sidecar boundary earlier so GEMM1 can overwrite the accepted GEMM1 scratch before activation/quant2, then gate promotion on parity and quality controls.",
+  "source_tree": "/home/steve/src/vllm-xpu-kernels",
+  "build_dir": "/home/steve/src/vllm-xpu-kernels/build/qwen36-sidecar-both-sycl8-20260613",
+  "extension": "/home/steve/src/vllm-xpu-kernels/build/qwen36-sidecar-both-sycl8-20260613/_xpu_C.abi3.so",
+  "python_change": {
+    "file": "vllm_xpu_kernels/fused_moe_interface.py",
+    "new_env": "VLLM_XPU_MOE_ONEDNN_SIDECAR_REPLACE_GEMM1",
+    "execute_mode_required": "gemm1",
+    "patch_artifact": "patches/vllm-xpu-qwen36-onednn-sidecar-replace-gemm1-20260613.patch",
+    "py_compile": "pass"
+  },
+  "short_completion_probe": {
+    "endpoint": "http://127.0.0.1:18081",
+    "tmux": "qwen36-sidecar-replace-gemm1-20260613",
+    "jsonl": "data/qwen36-onednn-sidecar-replace-gemm1-live-20260613--2059780.jsonl",
+    "rank": 0,
+    "layer_regex": "layers\\.9\\.",
+    "max_calls": 5,
+    "records": 5,
+    "bad_parity_records": 0,
+    "max_abs_diff_f32": 0.0,
+    "last_decode_shape": {
+      "stats_num_rows": 1,
+      "stats_num_moe_inputs": 8,
+      "stats_construct_us": 6,
+      "stats_execute_wait_us": 44
+    },
+    "completion_result": "request completed downstream"
+  },
+  "replacement_quality_probe": {
+    "endpoint": "http://127.0.0.1:18081",
+    "tmux": "qwen36-sidecar-replace-gemm1-quality-20260613",
+    "jsonl": "data/qwen36-onednn-sidecar-replace-gemm1-quality-live-20260613--2060920.jsonl",
+    "quality_json": "data/qwen36-quark-int8-tp4-sidecar-replace-gemm1-quality-nothink-smoke-20260613.json",
+    "records": 58,
+    "bad_parity_records": 0,
+    "max_abs_diff_f32": 0.0,
+    "pass_all": false,
+    "baseline_match_all": false,
+    "failed_case": {
+      "name": "arithmetic",
+      "expected": "60",
+      "observed": "58",
+      "sha256": "6208ef0f7750c111548cf90b6ea1d0d0a66f6bff40dbef07cb45ec436263c7d6"
+    },
+    "repeat_pass": true
+  },
+  "eager_no_replacement_control": {
+    "endpoint": "http://127.0.0.1:18081",
+    "tmux": "qwen36-sidecar-eager-control-quality-20260613",
+    "quality_json": "data/qwen36-quark-int8-tp4-sidecar-eager-control-quality-nothink-smoke-20260613.json",
+    "probe_enabled": false,
+    "pass_all": false,
+    "baseline_match_all": false,
+    "failed_case": {
+      "name": "arithmetic",
+      "expected": "60",
+      "observed": "58",
+      "sha256": "6208ef0f7750c111548cf90b6ea1d0d0a66f6bff40dbef07cb45ec436263c7d6"
+    },
+    "interpretation": "The same no-thinking arithmetic drift appears without GEMM1 replacement, so this smoke failure is a sidecar/eager control-path mismatch rather than evidence that the exact GEMM1 overwrite changes model output."
+  },
+  "accepted_restore": {
+    "endpoint": "http://127.0.0.1:18080",
+    "tmux": "qwen36-tp4-accepted-restored-after-replace-gemm1-20260613",
+    "model_id": "qwen36-35b-a3b-fp8",
+    "max_model_len": 32768,
+    "quality_json": "data/qwen36-quark-int8-tp4-accepted-restored-after-replace-gemm1-quality-nothink-smoke-20260613.json",
+    "pass_all": true,
+    "baseline_match_all": true,
+    "repeat_pass": true
+  },
+  "decision": {
+    "promotion_status": "do_not_promote",
+    "reason": "Layer-9 GEMM1 replacement parity is exact, but the current sidecar/eager control does not match the accepted graph quality baseline. The replacement remains a useful parity step, not a performance candidate.",
+    "next_gate": "Validate a graph-compatible or replay-harness full-island transaction: oneDNN GEMM1 feeds activation/quant2, oneDNN GEMM2, then compare final GEMM2 and gathered output against accepted-path tensors without relying on the eager endpoint smoke as the only quality oracle."
+  }
+}

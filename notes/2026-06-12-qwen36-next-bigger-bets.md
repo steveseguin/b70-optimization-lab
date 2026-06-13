@@ -14712,3 +14712,52 @@ Next:
 4. Compare final `gemm2_output` and gather/combine output against the accepted
    path under exact parity mode.
 5. Only after exact full-island parity, measure without diagnostic clone/sync.
+
+## 2026-06-13 Continuation: GEMM1 Replacement Gate
+
+Artifacts:
+
+- `patches/vllm-xpu-qwen36-onednn-sidecar-replace-gemm1-20260613.patch`
+- `data/qwen36-onednn-sidecar-replace-gemm1-live-20260613.json`
+- `data/qwen36-onednn-sidecar-replace-gemm1-live-20260613--2059780.jsonl`
+- `data/qwen36-onednn-sidecar-replace-gemm1-quality-live-20260613--2060920.jsonl`
+- `data/qwen36-quark-int8-tp4-sidecar-replace-gemm1-quality-nothink-smoke-20260613.json`
+- `data/qwen36-quark-int8-tp4-sidecar-eager-control-quality-nothink-smoke-20260613.json`
+- `data/qwen36-quark-int8-tp4-accepted-restored-after-replace-gemm1-quality-nothink-smoke-20260613.json`
+
+What worked:
+
+- Added a guarded pre-activation hook so oneDNN GEMM1 can overwrite the live
+  `gemm1_output` buffer before existing activation/quant2.
+- Short completion probe passed exact parity for all 5 layer-9 replacement
+  calls.
+- Larger no-thinking replacement smoke recorded 58 exact GEMM1 parity rows,
+  all `max_abs_diff_f32=0.0`.
+- The accepted endpoint was restored on `18080` and passed the no-thinking
+  baseline smoke with `baseline_match_all=true`.
+
+What did not work:
+
+- The sidecar/eager endpoint no-thinking smoke failed arithmetic with observed
+  `58` instead of accepted-baseline `60`.
+- The no-replacement eager control failed the same case with the same observed
+  output and hash, so the current eager control path is not a promotion-grade
+  quality oracle.
+
+Decision:
+
+- Keep the replacement patch as a useful parity gate, but do not promote it as
+  a speed win.
+- The next serious step is full-island tensor parity: validate post-activation,
+  GEMM2, and gathered output against accepted-path tensors, ideally from a
+  replay harness rather than endpoint text quality alone.
+
+Future ideas captured from this result:
+
+- Add a graph-compatible single-call parity tap that records hashes after graph
+  replay instead of forcing eager mode.
+- Capture accepted-path layer inputs once, then replay sidecar variants against
+  those tensors without involving scheduler/template differences.
+- Extend the sidecar replacement mode from GEMM1-only to GEMM1 plus activation
+  quant plus cached GEMM2, but keep a final tensor parity gate before any speed
+  measurement.

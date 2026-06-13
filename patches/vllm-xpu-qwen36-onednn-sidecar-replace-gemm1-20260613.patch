@@ -1,0 +1,120 @@
+Focused patch excerpt against the previous cached two-GEMM sidecar patch.
+This is intentionally limited to the GEMM1 replacement gate added during the
+2026-06-13 experiment; the prior sidecar infrastructure is recorded in
+patches/vllm-xpu-qwen36-onednn-sidecar-both-cached-20260613.patch.
+
+diff --git a/vllm_xpu_kernels/fused_moe_interface.py b/vllm_xpu_kernels/fused_moe_interface.py
+--- a/vllm_xpu_kernels/fused_moe_interface.py
++++ b/vllm_xpu_kernels/fused_moe_interface.py
+@@
+ ONEDNN_SIDECAR_EXECUTE_ENV = "VLLM_XPU_MOE_ONEDNN_SIDECAR_EXECUTE"
++ONEDNN_SIDECAR_REPLACE_GEMM1_ENV = (
++    "VLLM_XPU_MOE_ONEDNN_SIDECAR_REPLACE_GEMM1")
+@@
+ def _onednn_sidecar_execute_mode():
+@@
+     except ValueError:
+         return 0
++
++
++def _should_replace_gemm1_with_onednn_sidecar():
++    return (_is_env_enabled(ONEDNN_SIDECAR_REPLACE_GEMM1_ENV)
++            and _onednn_sidecar_execute_mode() == 1)
+@@
+ def _maybe_probe_onednn_sidecar(*,
+@@
+     if any(tensor is None for tensor in required_tensors):
+         return None
++    if (_is_env_enabled(ONEDNN_SIDECAR_REPLACE_GEMM1_ENV)
++            and _onednn_sidecar_execute_mode() != 1):
++        return None
+@@
+-    inter_size_scale = 2 if activation == "relu2_no_mul" else 1
++    inter_size_scale = 2 if activation == "relu2_no_mul" else 1
++    gemm2_output = None
++    if is_int8 and _should_replace_gemm1_with_onednn_sidecar():
++        sidecar_act_output = (
++            int8_scratch.get("act_output")
++            if int8_scratch is not None else torch.empty(
++                (num_moe_inputs, inter_size * inter_size_scale),
++                dtype=gemm1_output.dtype,
++                device=gemm1_output.device))
++        sidecar_gemm2_a = (
++            int8_scratch.get("gemm2_a")
++            if int8_scratch is not None else torch.empty(
++                (num_moe_inputs, inter_size * inter_size_scale),
++                dtype=torch.int8,
++                device=gemm1_output.device))
++        sidecar_gemm2_a_scales = (
++            int8_scratch.get("gemm2_a_scales")
++            if int8_scratch is not None else torch.empty((num_moe_inputs, 1),
++                                                         dtype=torch.float32,
++                                                         device=gemm1_output.device))
++        gemm2_output = (
++            int8_scratch["gemm2_output"]
++            if int8_scratch is not None else torch.empty(
++                (num_moe_inputs, hidden_size),
++                dtype=hidden_states.dtype,
++                device=hidden_states.device))
++        with timed_region("xpu_moe.onednn_gemm1_replace"):
++            _maybe_probe_onednn_sidecar(
++                hidden_states=hidden_states,
++                w13=w13,
++                w13_scales=gemm1_scales,
++                w2=w2,
++                w2_scales=gemm2_scales,
++                topk_weights=topk_weights,
++                topk_ids=topk_ids,
++                output=output,
++                remapped_hidden_states=remapped_hidden_states,
++                rows_per_expert=rows_per_expert,
++                unpermuted_row_to_permuted_row=
++                unpermuted_row_to_permuted_row,
++                gemm1_a=remapped_hidden_states,
++                gemm1_a_scales=gemm1_a_scales,
++                gemm1_output=gemm1_output,
++                act_output=sidecar_act_output,
++                gemm2_a=sidecar_gemm2_a,
++                gemm2_a_scales=sidecar_gemm2_a_scales,
++                gemm2_output=gemm2_output,
++                is_int8=is_int8,
++                diagnostic_context=diagnostic_context,
++            )
+@@
+-    gemm2_output = torch.empty((num_moe_inputs, hidden_size),
+-                               dtype=hidden_states.dtype,
+-                               device=hidden_states.device)
++    if gemm2_output is None and int8_scratch is None:
++        gemm2_output = torch.empty((num_moe_inputs, hidden_size),
++                                   dtype=hidden_states.dtype,
++                                   device=hidden_states.device)
++    elif gemm2_output is None:
++        gemm2_output = int8_scratch["gemm2_output"]
+@@
+-    _maybe_probe_onednn_sidecar(
+-        hidden_states=hidden_states,
+-        ...
+-    )
++    if not _is_env_enabled(ONEDNN_SIDECAR_REPLACE_GEMM1_ENV):
++        _maybe_probe_onednn_sidecar(
++            hidden_states=hidden_states,
++            w13=w13,
++            w13_scales=gemm1_scales,
++            w2=w2,
++            w2_scales=gemm2_scales,
++            topk_weights=topk_weights,
++            topk_ids=topk_ids,
++            output=output,
++            remapped_hidden_states=remapped_hidden_states,
++            rows_per_expert=rows_per_expert,
++            unpermuted_row_to_permuted_row=unpermuted_row_to_permuted_row,
++            gemm1_a=remapped_hidden_states,
++            gemm1_a_scales=gemm1_a_scales if is_int8 else None,
++            gemm1_output=gemm1_output,
++            act_output=act_output_for_probe,
++            gemm2_a=input_A if is_int8 else None,
++            gemm2_a_scales=gemm2_a_scales if is_int8 else None,
++            gemm2_output=gemm2_output,
++            is_int8=is_int8,
++            diagnostic_context=diagnostic_context,
++        )

@@ -304,3 +304,60 @@ Accepted endpoint restored afterward:
 Next gate: move the sidecar boundary earlier so the oneDNN GEMM1 output feeds
 activation/quant2 and then cached GEMM2, still under exact parity mode. Only
 after that should we include gather/combine and run endpoint A/B.
+
+## GEMM1 Replacement Gate
+
+Date: 2026-06-13.
+
+Artifacts:
+
+- `patches/vllm-xpu-qwen36-onednn-sidecar-replace-gemm1-20260613.patch`
+- `data/qwen36-onednn-sidecar-replace-gemm1-live-20260613.json`
+- `data/qwen36-onednn-sidecar-replace-gemm1-live-20260613--2059780.jsonl`
+- `data/qwen36-onednn-sidecar-replace-gemm1-quality-live-20260613--2060920.jsonl`
+- `data/qwen36-quark-int8-tp4-sidecar-replace-gemm1-quality-nothink-smoke-20260613.json`
+- `data/qwen36-quark-int8-tp4-sidecar-eager-control-quality-nothink-smoke-20260613.json`
+- `data/qwen36-quark-int8-tp4-accepted-restored-after-replace-gemm1-quality-nothink-smoke-20260613.json`
+
+Implementation:
+
+- Added opt-in `VLLM_XPU_MOE_ONEDNN_SIDECAR_REPLACE_GEMM1=1`.
+- Replacement is active only with `VLLM_XPU_MOE_ONEDNN_SIDECAR_EXECUTE=gemm1`.
+- The hook runs after accepted GEMM1 and before activation/quant2.
+- oneDNN writes into the live `gemm1_output` buffer, then the existing
+  activation/quant2 and GEMM2 path consumes that buffer.
+- The normal post-gather sidecar probe is skipped while replacement mode is
+  active, avoiding a second diagnostic sidecar invocation.
+
+Validation:
+
+- `python3 -m py_compile` passed for `fused_moe_interface.py`.
+- Short completion probe: 5 live layer-9 rank-0 calls, all exact parity,
+  `max_abs_diff_f32=0.0`.
+- Repeated decode-shape replacement call reported stats construct `6 us` and
+  execute/wait `44 us`.
+- No-thinking quality with replacement failed arithmetic: expected `60`,
+  observed `58`.
+- Crucial control: no-thinking quality on the same sidecar/eager endpoint with
+  sidecar probing disabled also failed the same arithmetic case with the same
+  observed `58` and the same output hash.
+- Accepted graph endpoint restored on `18080` and passed:
+  `pass_all=true`, `baseline_match_all=true`, `repeat_pass=true`.
+
+Decision:
+
+- Do not promote this as a speed path yet.
+- GEMM1 replacement parity is exact, and the quality failure is not attributed
+  to replacement because the eager no-replacement control produces the same
+  drift.
+- The current sidecar/eager endpoint is therefore not a sufficient quality
+  oracle for promotion. The next gate needs graph-compatible tensor parity or a
+  replay harness that compares full-island output against accepted-path tensors.
+
+Next:
+
+1. Compare final `gemm2_output` and gathered output after replacement, not just
+   `gemm1_output`.
+2. Add a replay harness using captured accepted-path inputs so the full island
+   can be validated outside the endpoint scheduler/eager mismatch.
+3. Once full-island parity is exact, measure without diagnostic clone/sync.
