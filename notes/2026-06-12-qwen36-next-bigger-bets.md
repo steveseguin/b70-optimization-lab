@@ -14012,6 +14012,54 @@ Next speculative implementation gate:
   ranges. The likely fix target is an explicit no-bonus sampler/verifier mode
   or a worker/scheduler boundary repair, not another proposer tweak.
 
+## Forward Bottleneck Decision 20260613m
+
+Added a reproducible decision artifact:
+
+- `scripts/qwen36-forward-bottleneck-decision.py`
+- `data/qwen36-forward-bottleneck-decision-20260613m.json`
+- `data/qwen36-forward-bottleneck-decision-20260613m.md`
+
+This consolidates the current gap budget, tail check, all-rank
+forward-boundary timing, rank-map reversal, worker label timing, presampler
+split, and the stable Fast Gemma dashboard source check.
+
+Key numbers:
+
+- Current clean c1 decode: `100.863 tok/s` (`9.914 ms/token`).
+- Target: `200.0 tok/s` (`5.000 ms/token`).
+- Required saving: `4.914 ms/token`, or `49.57%`.
+- Tail check: streaming client timing matched vLLM decode within `0.018%`;
+  queue time was `0.0124-0.0155 ms`.
+- All-rank forward boundary: forward-start sync mean was `0.001595 ms`; the
+  forward-end wait mean was `4.569 ms`.
+- Rank-map reversal: TP0 stayed fastest after moving to physical card `3`;
+  rank spread remained `0.346 ms`, so physical-card-only topology tuning is
+  not the lead explanation.
+- Worker-label timing: model-forward means across the selected profiles ranged
+  from `4.217-5.766 ms`; GDN attention ranged from `1.384-1.541 ms`; logits,
+  sampler, and async-output labels stayed sub-ms.
+
+Decision:
+
+- Primary bottleneck: model forward or forward-stream dependencies.
+- Next implementation target: rank/layer route-signature overlay, then a
+  persistent or route-class one-dispatch MoE layerlet prototype if the overlay
+  finds stable hot classes.
+- Backup speed branch: repair oracle `k=1` verifier/KV parity before any wider
+  exact multi-token acceptance.
+- Deprioritize as lead levers for the `200 tok/s` target: HTTP/SSE/frontdoor
+  packaging, detok-only changes, static lm-head/logits restriction before
+  timing proves it matters, and physical-card-only rank placement.
+
+Immediate next probe:
+
+- Add rank and layer route signatures to the all-rank forward-boundary probe.
+- Split model-forward timing by layer family on slow ranks: attention, router,
+  expert gather, expert GEMM, combine, and collectives.
+- Use that trace to decide whether the persistent MoE layerlet should target a
+  common route class, a layer family, or a collective/epilogue boundary.
+
 ## Full W8A8 Diagnostic Extension And Offset Layer Floor 20260613
 
 Restored the missing grouped-GEMM offset, active-offset, quant-out, and

@@ -6,6 +6,27 @@ Date: 2026-06-12
 
 2026-06-13 notes update:
 
+- Re-checked the live Fast Gemma dashboard API after the user pointed to the
+  Gemma E4B board again. The feed still has `354` rows, the same
+  `470.526 tok/s` top row, and unchanged keyword counts versus
+  `data/gemma-dashboard-results-summary-20260613k.json`, so I did not create a
+  redundant snapshot. The transferable lesson remains methodology only:
+  captured decode lanes, exact PPL/prompt-logprob fallback, readiness-gated
+  warm artifacts, and preserving negative runs.
+- Added a reusable Qwen forward-bottleneck decision artifact:
+  `scripts/qwen36-forward-bottleneck-decision.py`,
+  `data/qwen36-forward-bottleneck-decision-20260613m.json`, and
+  `data/qwen36-forward-bottleneck-decision-20260613m.md`. It consolidates the
+  current gap budget, tail check, all-rank forward-boundary timing, rank-map
+  reversal, worker label timing, presampler split, and Gemma source check.
+  Decision: c1 work should stay on model-forward/forward-stream dependencies,
+  with rank/layer route-signature overlay and a persistent one-dispatch MoE
+  layerlet as the next no-quality-loss target. HTTP/SSE, detok-only, static
+  lm-head restriction, and physical-card-only topology tuning are deprioritized
+  as lead levers for the `200 tok/s` target.
+
+2026-06-13 notes update:
+
 - Ran a non-invasive accepted-endpoint stream-vs-final-only c1 tail check on
   `127.0.0.1:18080` using the current Quark W8A8 INT8 Qwen3.6 service.
   Artifacts:

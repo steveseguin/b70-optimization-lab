@@ -1,0 +1,140 @@
+{
+  "created_at": "2026-06-13T03:49:33Z",
+  "decision": {
+    "backup_target": "oracle k=1 verifier/KV repair for exact multi-token acceptance",
+    "deprioritized": [
+      "HTTP/SSE/frontdoor/response packaging for c1 decode",
+      "detokenization-only changes as a 2x lever",
+      "static lm-head/logits restriction before timing proves it matters",
+      "physical-card-only topology tuning as the lead hypothesis"
+    ],
+    "next_implementation_target": "route-signature overlay plus persistent one-dispatch MoE layerlet prototype",
+    "primary_bottleneck": "model_forward_or_forward_stream_dependencies"
+  },
+  "evidence": {
+    "engine_profiles": {
+      "gdn_attention_mean_ms_range": [
+        1.3842231666666667,
+        1.5405295833333335
+      ],
+      "interpretation": "logits, sampler, and async-output labels remain sub-ms while model-forward dominates measured worker time",
+      "label_mean_ms_by_profile": {
+        "async_output_reuse": {
+          "gdn_attention_core_xpu.native": 1.3842231666666667,
+          "gpu_model_runner.async_output_wrap": 0.11141105555555557,
+          "gpu_model_runner.compute_logits": 0.22216969444444445,
+          "gpu_model_runner.model_forward": 4.21676175,
+          "gpu_model_runner.postprocess_total": 0.2933773333333333,
+          "gpu_model_runner.sample_total": 0.13392419444444445,
+          "gpu_model_runner.sampler": 0.11386294444444443
+        },
+        "engine_allrank": {
+          "gdn_attention_core_xpu.native": 1.5405295833333335,
+          "gpu_model_runner.async_output_wrap": 0.10781561111111111,
+          "gpu_model_runner.compute_logits": 0.22353030555555556,
+          "gpu_model_runner.model_forward": 5.766033527777777,
+          "gpu_model_runner.postprocess_total": 0.2974028888888889,
+          "gpu_model_runner.sample_total": 0.1364553888888889,
+          "gpu_model_runner.sampler": 0.11580819444444446
+        },
+        "rpc_fastoutput": {
+          "gdn_attention_core_xpu.native": 1.412359861111111,
+          "gpu_model_runner.async_output_wrap": 0.10627319444444444,
+          "gpu_model_runner.compute_logits": 0.22413672222222225,
+          "gpu_model_runner.model_forward": 4.346957305555556,
+          "gpu_model_runner.postprocess_total": 0.29613388888888886,
+          "gpu_model_runner.sample_total": 0.13949124999999998,
+          "gpu_model_runner.sampler": 0.11839988888888889
+        }
+      },
+      "model_forward_mean_ms_range": [
+        4.21676175,
+        5.766033527777777
+      ]
+    },
+    "forward_boundary": {
+      "interpretation": "forward_start sync is near-zero, while forward_end carries multi-ms wait on all ranks",
+      "presampler_forward_end_mean_ms": 3.674252477124183,
+      "presampler_forward_start_mean_ms": 0.0020191960784313725,
+      "rankmap_reversed_rank_forward_end_mean_ms": {
+        "0": 4.139121928104575,
+        "1": 4.308445954248366,
+        "2": 4.485459653594771,
+        "3": 4.471970751633987
+      },
+      "rankmap_reversed_rank_spread_ms": 0.34633772549019604,
+      "rankmap_reversed_rank_to_physical_device": {
+        "0": 3,
+        "1": 2,
+        "2": 1,
+        "3": 0
+      },
+      "unrotated_allrank_forward_end_mean_ms": 4.568658039215686,
+      "unrotated_allrank_forward_start_mean_ms": 0.001594545751633987,
+      "unrotated_rank_forward_end_mean_ms": {
+        "0": 4.214303111111111,
+        "1": 4.470654934640523,
+        "2": 4.769201895424836,
+        "3": 4.820472215686275
+      },
+      "unrotated_rank_spread_ms": 0.606169104575164
+    },
+    "gemma_dashboard_source_check": {
+      "count": 354,
+      "keyword_counts": {
+        "capture": 143,
+        "detok": 9,
+        "fallback": 35,
+        "graph": 219,
+        "lm_head": 43,
+        "logits": 16,
+        "negative": 147,
+        "ppl": 354,
+        "precache": 8,
+        "prefix": 111,
+        "prompt_logprobs": 14,
+        "speculation": 11,
+        "speculative": 60,
+        "vllm": 88
+      },
+      "top_method": "mao-gemma-fast-lf29pc-v1",
+      "top_tps": 470.52640446750513,
+      "transfer": "stable methodology signal: captured decode, exact fallback lanes, warm artifacts, negative-result hygiene"
+    },
+    "tail_check": {
+      "interpretation": "client stream timing tracks vLLM decode and queue is effectively zero",
+      "nonstream_e2e_vs_stream_corrected_pct": -2.9841007553192966,
+      "queue_ms": {
+        "nonstream": 0.015549478121101856,
+        "stream": 0.012363540008664131
+      },
+      "stream_client_vs_vllm_decode_pct": 0.01840657542819651
+    }
+  },
+  "goal": {
+    "current_best_ms_per_token": 9.914403244692949,
+    "current_best_tok_s": 100.86335761411429,
+    "required_latency_reduction_pct": 49.568321192942854,
+    "required_ms_saving_per_token": 4.914403244692949,
+    "target_ms_per_token": 5.0,
+    "target_tok_s": 200.0
+  },
+  "model": "qwen36-35b-a3b-fp8",
+  "next_steps": [
+    "Add rank/layer route-signature overlay to the all-rank forward-boundary probe.",
+    "Split model-forward timing by layer family on slow ranks: attention, router, expert gather, expert GEMM, combine, collectives.",
+    "Prototype a persistent or route-class one-dispatch MoE layerlet only after the route overlay identifies stable hot classes.",
+    "Keep output-tail and lm-head experiments as secondary until the new layer-family trace shows they are material."
+  ],
+  "source_inputs": {
+    "async_output_reuse": "data/qwen36-quark-int8-tp4-async-output-reuse-timing-summary-20260612bw.json",
+    "engine_allrank": "data/qwen36-quark-int8-tp4-engine-allrank-timing-summary-20260612br.json",
+    "forward_boundary": "data/qwen36-quark-int8-tp4-allrank-forwardboundary-summary-20260612cj.json",
+    "gap_budget": "data/qwen36-c1-gap-budget-fullcandidate-20260613h.json",
+    "gemma_dashboard": "data/gemma-dashboard-results-summary-20260613k.json",
+    "presampler_forward": "data/qwen36-quark-int8-tp4-presampler-forwardboundary-nested-summary-20260612ci.json",
+    "rankmap_reversal": "data/qwen36-quark-int8-tp4-allrank-forwardboundary-rankmap-rev-summary-20260612cl.json",
+    "rpc_fastoutput": "data/qwen36-quark-int8-tp4-rpc-fastoutput-summary-20260612bu.json",
+    "tail_check": "data/qwen36-quark-int8-tp4-tailcheck-latency-decomp-20260613l.json"
+  }
+}

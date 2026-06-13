@@ -300,3 +300,29 @@ Concrete next Gemma task:
   sampler, detok, response write, and reference `prompt_logprobs`. This tells
   us whether the Gemma dashboard's lm-head/logits lesson maps to our Gemma
   model or is mostly E4B/challenge-specific.
+
+## Dashboard Source Check 20260613m
+
+The user pointed to the live Gemma dashboard again. I re-fetched the public
+`/api/results` endpoint and compared it against the latest tracked compact
+snapshot, `data/gemma-dashboard-results-summary-20260613k.json`.
+
+No new idea-bearing rows were visible:
+
+- Current live row count: `354`; tracked snapshot row count: `354`.
+- Current top row: `470.526 tok/s`, method `mao-gemma-fast-lf29pc-v1`;
+  tracked snapshot top row is the same.
+- Keyword counts were unchanged for `graph`, `capture`, `prefix`, `vllm`,
+  `speculative`, `lm_head`, `fallback`, `prompt_logprobs`, `detok`,
+  `precache`, `negative`, and `ppl`.
+
+Decision:
+
+- Do not add another redundant dashboard snapshot for this check.
+- Keep the existing transfer matrix as current.
+- Continue using the board as a methodology source only: captured decode
+  lanes, exact eval fallback, readiness-gated warm artifacts, and preserved
+  negative runs.
+- For Qwen3.6, the matching actionable artifact is
+  `data/qwen36-forward-bottleneck-decision-20260613m.md`, which points back to
+  model-forward/forward-stream dependencies rather than output-tail work.
