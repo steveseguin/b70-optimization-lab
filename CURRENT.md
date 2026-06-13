@@ -6,6 +6,19 @@ Date: 2026-06-12
 
 2026-06-12 notes update:
 
+- Added an "All-Rank Replay Digest Capture 20260612do" section to
+  `notes/2026-06-12-qwen36-next-bigger-bets.md`. The replay-digest launcher
+  now supports `VLLM_XPU_MOE_REPLAY_DIGEST_ALL_RANKS=1`, and
+  `scripts/qwen36-replay-digest-summary.py` provides reusable JSON/Markdown
+  summaries. The isolated all-rank run emitted four digest files, one per
+  local rank/device, with `105120` valid rows total, `26280` rows on each of
+  `xpu:0..3`, all 40 MoE layers on every local rank, zero invalid or negative
+  layer rows, and c1 decode `(1, 8, 256, 2048)` dominating with `100960` rows.
+  The accepted backend was restored on `18080`, `/v1/models` passed after
+  `66s`, and a short completion smoke succeeded. No speed result was promoted.
+
+2026-06-12 notes update:
+
 - Added a "Replay Digest Layer-ID Fix And Bigger Ideas 20260612dn" section to
   `notes/2026-06-12-qwen36-next-bigger-bets.md`. The diagnostic replay digest
   path now receives explicit layer IDs from the Quark INT8 XPU fused-MoE path

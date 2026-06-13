@@ -12480,3 +12480,102 @@ Updated next order:
 3. Run frequency/clock telemetry beside an accepted p512/o512/c1 baseline.
 4. Use the route atlas to choose between TP2+expert mirror, route-class
    autotune, or a static c1 runner as the next implementation branch.
+
+## All-Rank Replay Digest Capture 20260612do
+
+This completed the immediate next step from the layer-ID checkpoint: replay
+digest now runs across all four local ranks/devices, and the result is recorded
+with a reusable summary script. This is still observability work, not a speed
+claim.
+
+Tooling changes:
+
+- `scripts/launch-qwen36-quark-int8-replay-digest.sh` now accepts
+  `VLLM_XPU_MOE_REPLAY_DIGEST_ALL_RANKS=1`. When set, it exports an empty
+  `VLLM_XPU_MOE_REPLAY_DIGEST_RANK`, which the diagnostic code treats as
+  "all ranks".
+- Added `scripts/qwen36-replay-digest-summary.py`, which understands the
+  16-column replay digest row layout:
+  magic, sequence, layer index, row count, top-k, expert count, hidden size,
+  row sums/nonzero/max, route hash, row hash, output size/sample, output hash,
+  and validity marker.
+- Validation passed:
+  `python3 -m py_compile scripts/qwen36-replay-digest-summary.py`,
+  `bash -n scripts/launch-qwen36-quark-int8-replay-digest.sh`, summary replay
+  against the prior rank-0 capture, and all-rank launcher dry-run import.
+
+Run:
+
+```bash
+VLLM_XPU_MOE_REPLAY_DIGEST_ALL_RANKS=1 \
+TAG=replay-digest-allrank-20260612do \
+PORT=18082 \
+LOG_PATH=data/qwen36-quark-int8-tp4-replay-digest-allrank-20260612do.log \
+DIGEST_SRC=/home/steve/src/vllm-xpu-kernels-digest-sycl8-20260612dj \
+DIGEST_BUILD_DIR=/home/steve/src/vllm-xpu-kernels-digest-sycl8-20260612dj/build/qwen36-replay-digest-sycl8-20260612dj \
+ONEAPI_COMPILER_VARS=/opt/intel/oneapi/compiler/2025.3/env/vars.sh \
+TORCHINDUCTOR_CACHE_DIR=/mnt/fast-ai/vllm-cache-exp/qwen36-35b-a3b-quark-int8-tp4-replay-digest-sycl8-gdn-20260612dk/torchinductor \
+VLLM_CACHE_ROOT=/mnt/fast-ai/vllm-cache-exp/qwen36-35b-a3b-quark-int8-tp4-replay-digest-sycl8-gdn-20260612dk/vllm \
+VLLM_XPU_MOE_REPLAY_DIGEST_LOG_MAX_ROWS=2048 \
+VLLM_XPU_MOE_REPLAY_DIGEST_LOG_INTERVAL_MS=500 \
+scripts/launch-qwen36-quark-int8-replay-digest.sh
+```
+
+Diagnostic endpoint behavior:
+
+- `/v1/models` on port `18082` passed after `61s`.
+- Ran the same 10 deterministic 64-token prompt classes used for the rank-0
+  layer-ID capture.
+- First request paid warmup/compile cost (`12.772s` for 64 tokens);
+  subsequent 64-token calls were roughly `0.776-0.843s`. This is diagnostic
+  timing only and is not a promoted speed result.
+- Four digest JSONLs were emitted, one per worker process:
+  `data/qwen36-replay-digest-replay-digest-allrank-20260612do--1947301.jsonl`
+  through
+  `data/qwen36-replay-digest-replay-digest-allrank-20260612do--1947304.jsonl`.
+- Summary artifacts:
+  `data/qwen36-replay-digest-allrank-summary-20260612do.json` and
+  `data/qwen36-replay-digest-allrank-summary-20260612do.md`.
+- Accepted backend restored afterward as
+  `qwen36-tp4-accepted-restored-after-replaydigest-allrank-20260612do`;
+  `/v1/models` on `18080` passed after `66s`, and a short deterministic
+  completion smoke succeeded.
+
+All-rank summary:
+
+- `records`: `179`
+- `rows`: `105120`
+- `valid_magic_rows`: `105120`
+- `invalid_rows`: `0`
+- `worker_rows`: `local_rank:0..3` each has `26280`
+- `device_rows`: `xpu:0..3` each has `26280`
+- `non_negative_layer_rows`: `105120`
+- `negative_layer_rows`: `0`
+- every local rank/device saw all MoE layers `0..39`
+- `unique_shape_summaries`: `16`
+- dominant shape: `(1, 8, 256, 2048)` with `100960` rows
+- `unique_digest_combos`: `104960`
+- `max_rows_nonzero`: `119`
+- `max_rows_max`: `8192`
+
+Interpretation:
+
+- The previous rank-0 limitation is resolved. The graph-replayed digest path
+  now covers all four TP workers and all MoE layers on every worker.
+- All four workers emit exactly the same row count, which makes the next route
+  analysis stable enough to compare rank-local route distributions.
+- The c1 decode shape dominates the captured rows, so this data is relevant to
+  the single-user decode target.
+- The digest still contains compact hashes and row summaries, not raw route IDs
+  or per-expert histograms. That means the next code step is not expert
+  mirroring yet; it is extending the digest to emit bounded route histograms or
+  raw top-k samples so hot expert overlap can be measured per layer and rank.
+
+Updated next order:
+
+1. Extend the digest op/log format with compact per-layer route histograms or
+   bounded raw top-k route samples.
+2. Rerun all-rank capture and summarize hot expert overlap per layer/rank.
+3. Add clock/power/frequency telemetry to the accepted p512/o512/c1 baseline.
+4. Use those two data sources to choose between TP2+expert mirror,
+   route-class autotune, or a static c1 decode runner.
