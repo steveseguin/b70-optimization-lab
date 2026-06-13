@@ -131,3 +131,51 @@ does not change the Qwen accepted endpoint.
    Confirm our current Gemma vLLM endpoint can accept integer-token prompts,
    disable special-token insertion, and return `prompt_logprobs`. If not, fix
    that before serious PPL-gated optimization.
+
+## Fast Gemma E4B Frontier Follow-Up 20260613
+
+The live dashboard's top public row moved to `470.526 tok/s` on
+`google/gemma-4-E4B-it` after the original notes were written. The useful
+signal is not the absolute TPS or the challenge-specific stack; it is the
+shape of the control plane and validation contract.
+
+Observed frontier ingredients:
+
+- A onegraph/vLLM-derived served decode path.
+- A captured `K=7`, width-1 propose graph.
+- Fused accept/prep bookkeeping.
+- `choices[0].token_ids` returned for every decode record.
+- Exact prompt-logprob/PPL fallback through the original dense forward path
+  when scoring requests arrive.
+- Readiness-gated prefix-cache warmup of the 128 public benchmark prompts.
+- Full artifact trail: summaries, decode outputs, PPL outputs, environment,
+  server config, and logs.
+
+Important caveat:
+
+- The top row explicitly calls itself a benchmark-specific precache
+  composition, not a native runtime result. The same note says local exact
+  decode-token comparison against its previous baseline was not token-identical,
+  while the official decode contract and PPL gate passed. For our work, that is
+  a warning: public benchmark validity is useful, but production promotion still
+  needs our stricter byte/token parity canaries.
+
+Actionable items for our Gemma lane:
+
+1. **Token-ID decode contract.** Add or verify an endpoint mode that returns
+   token IDs for every decode record. This makes speed/quality comparisons less
+   dependent on detokenization timing and string formatting.
+2. **Exact PPL fallback path.** Keep a full-original-forward path for
+   `prompt_logprobs` and PPL even if normal generation uses a captured or
+   fused fast lane.
+3. **Readiness-only warmup accounting.** Warm real production prefixes before
+   readiness, but report benchmark-prompt warmup separately and never as a
+   general cold-prompt claim.
+4. **Captured width-1 propose graph.** For Gemma, prototype a captured
+   single-token propose/decode graph before spending time on wider speculative
+   depth. Width-1 removes scheduler overhead without needing model changes.
+5. **Fused accept bookkeeping.** If speculative decode is revisited, fuse
+   accept/prep only after acceptance histograms and rollback parity are working.
+6. **Artifact parity bundle.** Every Gemma speed run should ship the same class
+   of artifacts: exact command, env, model revision, cache state, decode token
+   IDs, PPL/logprob results, and raw logs.

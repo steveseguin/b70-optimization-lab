@@ -6,6 +6,33 @@ Date: 2026-06-12
 
 2026-06-13 notes update:
 
+- Tightened `scripts/replay-qwen36-spec-trace.py` to distinguish suppressed
+  bonus schedule/replay/accept failures and to report post-output
+  computed-token skew. Added
+  `data/qwen36-spec-trace-rootcause-summary-20260613i.md` plus v2 replay
+  artifacts for oracle cache-filter, keep-computed, recompute, and ngram5
+  no-bonus traces. The actionable finding is that the oracle cache-filter trace
+  has `0` schedule mismatches but `2` accept mismatches: the suppressed bonus is
+  fed back as the next draft, then the exact target rejects it. This is a
+  verifier/KV/input-position boundary problem, not a draft-quality problem.
+  Next speculative work is gated on oracle `k=1` parity before any wider ngram
+  or MTP work.
+
+2026-06-13 notes update:
+
+- Refreshed the Fast Gemma Challenge feed after the user pointed to the E4B
+  dashboard as an ideas source for our Gemma lane. Added
+  `data/gemma-dashboard-results-summary-20260613i.json` and expanded
+  `notes/2026-06-12-gemma-dashboard-transfer-ideas.md` with the frontier
+  checklist: token-ID decode records, exact prompt-logprob/PPL fallback,
+  readiness-only warmup accounting, captured width-1 propose/decode graph,
+  fused accept bookkeeping after parity is fixed, and full artifact parity
+  bundles. The current top row is `470.526 tok/s`, but it is treated only as a
+  process/control-plane signal because it is Gemma E4B on challenge hardware and
+  includes benchmark-specific precache.
+
+2026-06-13 notes update:
+
 - Added a post-fullcandidate c1 endpoint budget using the currently restored
   Quark W8A8 INT8 backend. Artifacts:
   `data/qwen36-quark-int8-tp4-fullcandidate-c1-p512o512-metrics-20260613h.json`,

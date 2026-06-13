@@ -13830,6 +13830,51 @@ Bolder ideas added to the queue:
    graph-cache ids, route atlas ids, quality/eval results, reliability soak
    result, and the restore command. No ad hoc production flip.
 
+## Speculative Trace Root-Cause Refresh 20260613i
+
+The Gemma frontier rows reinforce that verifier-safe speculation needs
+acceptance telemetry before speed claims. I refreshed our Qwen3.6 trace replay
+for the existing no-bonus/oracle speculative artifacts and tightened
+`scripts/replay-qwen36-spec-trace.py` so it now separates:
+
+- whether the next step schedules the suppressed bonus as the next draft;
+- whether the target verifier replays that suppressed bonus;
+- whether the target accepts and emits that suppressed bonus;
+- the post-output `num_computed_tokens - num_tokens` skew.
+
+Artifacts:
+
+- `data/qwen36-spec-trace-rootcause-summary-20260613i.md`.
+- `data/qwen36-spec-trace-rootcause-oracle1-nobonus-cachefilter-v2-20260613i.{json,md}`.
+- `data/qwen36-spec-trace-rootcause-oracle1-keepcomputed-v2-20260613i.{json,md}`.
+- `data/qwen36-spec-trace-rootcause-oracle1-recompute-v2-20260613i.{json,md}`.
+- `data/qwen36-spec-trace-rootcause-ngram5-nobonus-accounting-v2-20260613i.{json,md}`.
+
+Key result:
+
+- In the oracle cache-filter trace, schedule mismatches are `0`, accept
+  mismatches are `2`, and accounting mismatches are `0`. The proposer feeds the
+  suppressed bonus back as the next draft, but the exact target rejects it.
+  That points at worker/scheduler KV or input-position drift after suppressed
+  bonus handling, not draft quality.
+- The keep-computed variant still has `2` accept mismatches and adds `2`
+  accounting mismatches, so simply leaving computed tokens advanced is not the
+  fix.
+- The recompute/skip-next-spec path has `18` schedule mismatches and `18`
+  accept mismatches, so skipping the next speculative proposal does not restore
+  the oracle invariant.
+
+Next speculative implementation gate:
+
+- Do not revisit wider ngram/MTP depth until oracle `k=1` no-bonus has zero
+  schedule mismatches, zero accept mismatches, zero accounting mismatches, and
+  accepted-output parity against no-spec.
+- The next code probe should enable worker COW tracing on consecutive
+  full-accept rows and compare `token_ids_cpu`, `num_tokens_no_spec`,
+  `num_computed_tokens_cpu`, scheduler `num_computed_tokens`, and cache write
+  ranges. The likely fix target is an explicit no-bonus sampler/verifier mode
+  or a worker/scheduler boundary repair, not another proposer tweak.
+
 ## Full W8A8 Diagnostic Extension And Offset Layer Floor 20260613
 
 Restored the missing grouped-GEMM offset, active-offset, quant-out, and

@@ -220,18 +220,52 @@ def summarize_request(
         next_row = rows[index + 1] if index + 1 < len(rows) else None
         followup = None
         if suppressed_int is not None and next_row is not None:
+            next_scheduled = int_list(next_row.get("scheduled_spec_token_ids"))
             next_generated = int_list(next_row.get("generated_token_ids"))
+            next_emitted = int_list(next_row.get("emitted_token_ids"))
+            if not next_emitted and next_generated:
+                next_emitted = next_generated
             next_first = next_generated[0] if next_generated else None
+            next_scheduled_first = next_scheduled[0] if next_scheduled else None
+            next_emitted_first = next_emitted[0] if next_emitted else None
+            next_num_accepted = int(next_row.get("num_accepted") or 0)
+            next_num_rejected = int(next_row.get("num_rejected") or 0)
             followup = {
                 "line_no": row.get("_line_no"),
                 "next_line_no": next_row.get("_line_no"),
                 "suppressed_bonus_token_id": suppressed_int,
                 "suppressed_bonus_text": decode_ids(tokenizer, [suppressed_int]),
+                "next_scheduled_first_token_id": next_scheduled_first,
+                "next_scheduled_first_text": (
+                    decode_ids(tokenizer, [next_scheduled_first])
+                    if next_scheduled_first is not None
+                    else None
+                ),
                 "next_generated_first_token_id": next_first,
                 "next_generated_first_text": (
                     decode_ids(tokenizer, [next_first]) if next_first is not None else None
                 ),
+                "next_emitted_first_token_id": next_emitted_first,
+                "next_emitted_first_text": (
+                    decode_ids(tokenizer, [next_emitted_first])
+                    if next_emitted_first is not None
+                    else None
+                ),
+                "next_num_accepted": next_num_accepted,
+                "next_num_rejected": next_num_rejected,
+                "next_schedules_suppressed_bonus": (
+                    next_scheduled_first == suppressed_int
+                ),
                 "next_replays_suppressed_bonus": next_first == suppressed_int,
+                "next_accepts_suppressed_bonus": (
+                    next_scheduled_first == suppressed_int
+                    and next_num_accepted > 0
+                    and next_emitted_first == suppressed_int
+                ),
+                "next_rejects_suppressed_bonus": (
+                    next_scheduled_first == suppressed_int
+                    and next_num_rejected > 0
+                ),
             }
             suppressed_followup_checks.append(followup)
 
@@ -273,6 +307,21 @@ def summarize_request(
             "followup_check": followup,
             "state_transition": state_transition,
             "accounting_check": row_accounting_check,
+            "computed_minus_tokens_after_output": (
+                state_transition["after_output_update"]["num_computed_tokens"]
+                - state_transition["after_output_update"]["num_tokens"]
+                if state_transition
+                and isinstance(state_transition.get("after_output_update"), dict)
+                and isinstance(
+                    state_transition["after_output_update"].get("num_computed_tokens"),
+                    int,
+                )
+                and isinstance(
+                    state_transition["after_output_update"].get("num_tokens"),
+                    int,
+                )
+                else None
+            ),
         })
 
     token_case_output = int_list((token_case or {}).get("output_token_ids"))
@@ -302,6 +351,14 @@ def summarize_request(
             item for item in suppressed_followup_checks
             if item.get("next_replays_suppressed_bonus") is False
         ],
+        "suppressed_followup_schedule_mismatches": [
+            item for item in suppressed_followup_checks
+            if item.get("next_schedules_suppressed_bonus") is False
+        ],
+        "suppressed_followup_accept_mismatches": [
+            item for item in suppressed_followup_checks
+            if item.get("next_accepts_suppressed_bonus") is False
+        ],
         "accounting_checks": accounting_checks,
         "accounting_mismatches": [
             item for item in accounting_checks if item.get("matches") is False
@@ -327,10 +384,12 @@ def render_markdown(summary: dict[str, Any]) -> str:
         f"- malformed rows: `{summary['malformed_rows']}`",
         f"- requests: `{summary['requests']}`",
         f"- suppressed follow-up mismatches: `{summary['suppressed_followup_mismatch_count']}`",
+        f"- suppressed schedule mismatches: `{summary['suppressed_schedule_mismatch_count']}`",
+        f"- suppressed accept mismatches: `{summary['suppressed_accept_mismatch_count']}`",
         f"- accounting mismatches: `{summary['accounting_mismatch_count']}`",
         "",
-        "| request | rows | drafts | accepted | rejected | suppressed rows | joined token case | follow-up mismatches | accounting mismatches |",
-        "| --- | ---: | ---: | ---: | ---: | ---: | --- | ---: | ---: |",
+        "| request | rows | drafts | accepted | rejected | suppressed rows | joined token case | generated mismatches | schedule mismatches | accept mismatches | accounting mismatches |",
+        "| --- | ---: | ---: | ---: | ---: | ---: | --- | ---: | ---: | ---: | ---: |",
     ]
     for item in summary["request_summaries"]:
         case = item.get("token_trace_case") or {}
@@ -344,6 +403,8 @@ def render_markdown(summary: dict[str, Any]) -> str:
             f"| `{item['req_id']}` | {item['rows']} | {item['draft_tokens']} | "
             f"{item['accepted']} | {item['rejected']} | {item['suppressed_bonus_rows']} | "
             f"`{case_label}` | {len(item['suppressed_followup_mismatches'])} | "
+            f"{len(item['suppressed_followup_schedule_mismatches'])} | "
+            f"{len(item['suppressed_followup_accept_mismatches'])} | "
             f"{len(item['accounting_mismatches'])} |"
         )
 
@@ -359,9 +420,13 @@ def render_markdown(summary: dict[str, Any]) -> str:
                 f"- request `{req_id}` line `{mismatch['line_no']}` -> `{mismatch['next_line_no']}`:",
                 (
                     f"  suppressed `{mismatch['suppressed_bonus_token_id']}` "
-                    f"`{mismatch['suppressed_bonus_text']}` but next verifier token was "
+                    f"`{mismatch['suppressed_bonus_text']}`, next scheduled "
+                    f"`{mismatch['next_scheduled_first_token_id']}` "
+                    f"`{mismatch['next_scheduled_first_text']}`, next verifier token was "
                     f"`{mismatch['next_generated_first_token_id']}` "
-                    f"`{mismatch['next_generated_first_text']}`"
+                    f"`{mismatch['next_generated_first_text']}`, next emitted "
+                    f"`{mismatch['next_emitted_first_token_id']}` "
+                    f"`{mismatch['next_emitted_first_text']}`."
                 ),
             ])
     accounting_mismatches = [
@@ -404,6 +469,13 @@ def render_markdown(summary: dict[str, Any]) -> str:
                 f"{transition.get('num_output_tokens_delta_output_update')} | "
                 f"{transition.get('num_tokens_delta_output_update')} |"
             )
+        lines.extend([
+            "",
+            "Post-output `computed_minus_tokens` is included in the JSON rows.",
+            "Values below zero usually mean the next pass may recompute an already",
+            "emitted token; values above zero after suppressing a bonus can mean stale",
+            "unemitted KV stayed live.",
+        ])
     return "\n".join(lines) + "\n"
 
 
@@ -445,6 +517,14 @@ def main() -> int:
     mismatch_count = sum(
         len(item["suppressed_followup_mismatches"]) for item in request_summaries
     )
+    schedule_mismatch_count = sum(
+        len(item["suppressed_followup_schedule_mismatches"])
+        for item in request_summaries
+    )
+    accept_mismatch_count = sum(
+        len(item["suppressed_followup_accept_mismatches"])
+        for item in request_summaries
+    )
     accounting_mismatch_count = sum(
         len(item["accounting_mismatches"]) for item in request_summaries
     )
@@ -457,6 +537,8 @@ def main() -> int:
         "requests": len(by_req),
         "joined_requests": joined_requests,
         "suppressed_followup_mismatch_count": mismatch_count,
+        "suppressed_schedule_mismatch_count": schedule_mismatch_count,
+        "suppressed_accept_mismatch_count": accept_mismatch_count,
         "accounting_mismatch_count": accounting_mismatch_count,
         "request_summaries": request_summaries,
     }
@@ -473,6 +555,8 @@ def main() -> int:
         "requests": len(by_req),
         "joined_requests": joined_requests,
         "suppressed_followup_mismatch_count": mismatch_count,
+        "suppressed_schedule_mismatch_count": schedule_mismatch_count,
+        "suppressed_accept_mismatch_count": accept_mismatch_count,
         "accounting_mismatch_count": accounting_mismatch_count,
         "out_json": str(args.out_json),
     }, sort_keys=True))
