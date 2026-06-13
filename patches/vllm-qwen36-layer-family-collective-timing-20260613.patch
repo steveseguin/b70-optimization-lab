@@ -1,0 +1,1151 @@
+# Generated from /home/steve/src/vllm on 2026-06-13.
+# Captures the current lab source state for Qwen3.6 layer-family and collective timing.
+# The lab tree already contained earlier XPU/MoE optimization edits; review notes before applying to a clean upstream tree.
+
+diff --git a/vllm/distributed/device_communicators/xpu_communicator.py b/vllm/distributed/device_communicators/xpu_communicator.py
+index 29c731fbc..13c9315b2 100644
+--- a/vllm/distributed/device_communicators/xpu_communicator.py
++++ b/vllm/distributed/device_communicators/xpu_communicator.py
+@@ -1,6 +1,7 @@
+ # SPDX-License-Identifier: Apache-2.0
+ # SPDX-FileCopyrightText: Copyright contributors to the vLLM project
+ 
++import os
+ 
+ import torch
+ import torch.distributed as dist
+@@ -13,6 +14,17 @@ from .base_device_communicator import DeviceCommunicatorBase
+ logger = init_logger(__name__)
+ 
+ 
++def _collective_label(kind: str, input_: torch.Tensor, site: str | None) -> str:
++    label = f"{kind}:{tuple(input_.shape)}:{input_.dtype}"
++    if site:
++        label = f"{kind}:{site}:{tuple(input_.shape)}:{input_.dtype}"
++    try:
++        label = f"{label}:bytes={input_.numel() * input_.element_size()}"
++    except Exception:
++        pass
++    return label
++
++
+ class XpuCommunicator(DeviceCommunicatorBase):
+     def __init__(
+         self,
+@@ -42,8 +54,43 @@ class XpuCommunicator(DeviceCommunicatorBase):
+                 logger.info("Using AgRs manager on XPU device.")
+ 
+     def all_reduce(self, input_: torch.Tensor) -> torch.Tensor:
+-        output = input_.clone() if torch.compiler.is_compiling() else input_
+-        dist.all_reduce(output, group=self.device_group)
++        if (
++            torch.compiler.is_compiling()
++            and os.environ.get("VLLM_XPU_COMPILE_ALLREDUCE_CUSTOM_OP", "0") == "1"
++        ):
++            if (
++                os.environ.get(
++                    "VLLM_XPU_CUSTOM_ALLREDUCE_GRAPH_CLONE_INPUT", "0"
++                )
++                == "1"
++            ):
++                input_ = input_.clone()
++            return torch.ops.vllm.all_reduce(input_, group_name=self.unique_name)
++
++        if torch.compiler.is_compiling():
++            if os.environ.get("VLLM_XPU_COMPILE_ALLREDUCE_NO_CLONE", "0") == "1":
++                output = input_
++            else:
++                output = input_.clone()
++        else:
++            output = input_
++        if torch.compiler.is_compiling():
++            dist.all_reduce(output, group=self.device_group)
++            return output
++
++        from vllm.utils.xpu_decode_timing import (
++            current_allreduce_label,
++            timed_region,
++        )
++
++        site = current_allreduce_label()
++        label = _collective_label("all_reduce", input_, site)
++        with timed_region(label):
++            if os.environ.get("VLLM_XPU_ALLREDUCE_ASYNC_WAIT", "0") == "1":
++                work = dist.all_reduce(output, group=self.device_group, async_op=True)
++                work.wait()
++            else:
++                dist.all_reduce(output, group=self.device_group)
+         return output
+ 
+     def reduce_scatter(self, input_: torch.Tensor, dim: int = -1):
+@@ -65,7 +112,12 @@ class XpuCommunicator(DeviceCommunicatorBase):
+             output_shape, dtype=input_tensor.dtype, device=input_tensor.device
+         )
+ 
+-        dist.reduce_scatter_tensor(output, input_tensor, group=self.device_group)
++        from vllm.utils.xpu_decode_timing import current_allreduce_label, timed_region
++
++        site = current_allreduce_label()
++        label = _collective_label("reduce_scatter", input_tensor, site)
++        with timed_region(label):
++            dist.reduce_scatter_tensor(output, input_tensor, group=self.device_group)
+ 
+         # Reshape before returning
+         return output.movedim(0, dim).contiguous()
+@@ -100,7 +152,17 @@ class XpuCommunicator(DeviceCommunicatorBase):
+             input_splits = list(input_tensor.split(sizes, dim=0))
+             dist.reduce_scatter(output, input_splits, group=self.device_group)
+         else:
+-            dist.reduce_scatter_tensor(output, input_tensor, group=self.device_group)
++            from vllm.utils.xpu_decode_timing import (
++                current_allreduce_label,
++                timed_region,
++            )
++
++            site = current_allreduce_label()
++            label = _collective_label("reduce_scatterv", input_tensor, site)
++            with timed_region(label):
++                dist.reduce_scatter_tensor(
++                    output, input_tensor, group=self.device_group
++                )
+         # Reshape before returning
+         return output.movedim(0, dim).contiguous()
+ 
+@@ -126,6 +188,45 @@ class XpuCommunicator(DeviceCommunicatorBase):
+                 assert input_.shape[dim] == sizes[self.rank_in_group], (
+                     f"{input_.shape[dim]} != {sizes[self.rank_in_group]}"
+                 )
++                if os.environ.get("VLLM_XPU_PAD_UNEVEN_ALLGATHERV", "1") != "0":
++                    # XCCL can hang on variable-size all_gather(list, input)
++                    # for XPU. Pad to an equal first dimension, gather with
++                    # all_gather_into_tensor, then slice back to the requested
++                    # per-rank chunk sizes.
++                    max_size = max(sizes)
++                    if input_.shape[dim] == max_size:
++                        padded = input_.contiguous()
++                    else:
++                        padded = torch.empty(
++                            (max_size,) + input_size[1:],
++                            dtype=input_.dtype,
++                            device=input_.device,
++                        )
++                        padded[: input_.shape[dim]].copy_(input_)
++                        padded[input_.shape[dim] :].zero_()
++
++                    gathered = torch.empty(
++                        (max_size * world_size,) + input_size[1:],
++                        dtype=input_.dtype,
++                        device=input_.device,
++                    )
++                    from vllm.utils.xpu_decode_timing import (
++                        current_allreduce_label,
++                        timed_region,
++                    )
++
++                    site = current_allreduce_label()
++                    label = _collective_label("all_gatherv_padded", padded, site)
++                    with timed_region(label):
++                        dist.all_gather_into_tensor(
++                            gathered, padded, group=self.device_group
++                        )
++                    chunks = []
++                    for rank, size in enumerate(sizes):
++                        start = rank * max_size
++                        chunks.append(gathered[start : start + size])
++                    return torch.cat(chunks, dim=0)
++
+                 output_size = (sum(sizes),) + input_size[1:]
+             else:
+                 output_size = (input_size[0] * world_size,) + input_size[1:]
+@@ -147,7 +248,17 @@ class XpuCommunicator(DeviceCommunicatorBase):
+                 dist.all_gather(all_gather_list, input_, group=self.device_group)
+                 output_tensor = torch.cat(all_gather_list, dim=0)
+             else:
+-                dist.all_gather([output_tensor], input_, group=self.device_group)
++                from vllm.utils.xpu_decode_timing import (
++                    current_allreduce_label,
++                    timed_region,
++                )
++
++                site = current_allreduce_label()
++                label = _collective_label("all_gather", input_, site)
++                with timed_region(label):
++                    dist.all_gather_into_tensor(
++                        output_tensor, input_.contiguous(), group=self.device_group
++                    )
+             return output_tensor
+ 
+         if isinstance(input_, torch.Tensor):
+diff --git a/vllm/model_executor/layers/fused_moe/runner/moe_runner.py b/vllm/model_executor/layers/fused_moe/runner/moe_runner.py
+index 2eee8acf6..5f7dba585 100644
+--- a/vllm/model_executor/layers/fused_moe/runner/moe_runner.py
++++ b/vllm/model_executor/layers/fused_moe/runner/moe_runner.py
+@@ -1,5 +1,6 @@
+ # SPDX-License-Identifier: Apache-2.0
+ # SPDX-FileCopyrightText: Copyright contributors to the vLLM project
++import os
+ from collections.abc import Callable
+ from contextlib import nullcontext
+ from typing import TYPE_CHECKING
+@@ -10,6 +11,7 @@ import torch.nn.functional as F
+ from vllm.distributed import (
+     get_ep_group,
+     get_pcp_group,
++    get_tp_group,
+     tensor_model_parallel_all_reduce,
+ )
+ from vllm.forward_context import (
+@@ -42,6 +44,31 @@ from vllm.utils.torch_utils import (
+     LayerName,
+     direct_register_custom_op,
+ )
++from vllm.utils.xpu_decode_timing import allreduce_label, timed_region
++
++
++def _minimax_moe_delay_allreduce_enabled() -> bool:
++    return os.environ.get("VLLM_MINIMAX_MOE_DELAY_ALLREDUCE", "0") == "1"
++
++
++def _minimax_moe_final_inplace_allreduce_enabled() -> bool:
++    return os.environ.get("VLLM_MINIMAX_MOE_FINAL_INPLACE_ALLREDUCE", "0") == "1"
++
++
++def _minimax_moe_output_allreduce_inside_custom_op_enabled() -> bool:
++    return (
++        os.environ.get(
++            "VLLM_MINIMAX_MOE_OUTPUT_ALLREDUCE_INSIDE_CUSTOM_OP", "0"
++        )
++        == "1"
++    )
++
++
++def _xpu_moe_shared_add_allreduce_custom_op_enabled() -> bool:
++    return (
++        os.environ.get("VLLM_XPU_MOE_SHARED_ADD_ALLREDUCE_CUSTOM_OP", "0")
++        == "1"
++    )
+ 
+ 
+ def get_layer_from_name(layer_name: str) -> torch.nn.Module:
+@@ -95,13 +122,14 @@ def _moe_forward(
+     layer_name: _layer_name_type,
+ ) -> torch.Tensor:
+     layer = get_layer_from_name(_resolve_layer_name(layer_name))
+-    return layer.runner._forward_impl(
+-        layer,
+-        hidden_states,
+-        router_logits,
+-        shared_experts_input,
+-        input_ids,
+-    )
++    with timed_region("moe_forward.custom_op"):
++        return layer.runner._forward_impl(
++            layer,
++            hidden_states,
++            router_logits,
++            shared_experts_input,
++            input_ids,
++        )
+ 
+ 
+ def _moe_forward_fake(
+@@ -122,13 +150,14 @@ def _moe_forward_shared(
+     layer_name: _layer_name_type,
+ ) -> tuple[torch.Tensor, torch.Tensor]:
+     layer = get_layer_from_name(_resolve_layer_name(layer_name))
+-    return layer.runner._forward_impl(
+-        layer,
+-        hidden_states,
+-        router_logits,
+-        shared_experts_input,
+-        input_ids,
+-    )
++    with timed_region("moe_forward_shared.custom_op"):
++        return layer.runner._forward_impl(
++            layer,
++            hidden_states,
++            router_logits,
++            shared_experts_input,
++            input_ids,
++        )
+ 
+ 
+ def _moe_forward_shared_fake(
+@@ -151,6 +180,21 @@ def _moe_forward_shared_fake(
+     return shared_out, fused_out
+ 
+ 
++def _moe_shared_add_allreduce(
++    shared_output: torch.Tensor,
++    fused_output: torch.Tensor,
++) -> torch.Tensor:
++    with timed_region("moe_shared_add_allreduce.custom_op"):
++        return tensor_model_parallel_all_reduce(shared_output + fused_output)
++
++
++def _moe_shared_add_allreduce_fake(
++    shared_output: torch.Tensor,
++    fused_output: torch.Tensor,
++) -> torch.Tensor:
++    return torch.empty_like(fused_output)
++
++
+ direct_register_custom_op(
+     op_name="moe_forward",
+     op_func=_moe_forward,
+@@ -168,6 +212,14 @@ direct_register_custom_op(
+ )
+ 
+ 
++direct_register_custom_op(
++    op_name="moe_shared_add_allreduce",
++    op_func=_moe_shared_add_allreduce,
++    fake_impl=_moe_shared_add_allreduce_fake,
++    tags=(torch.Tag.needs_fixed_stride_order,),
++)
++
++
+ def _unpack(
+     result: torch.Tensor | tuple[torch.Tensor, torch.Tensor],
+ ) -> tuple[torch.Tensor | None, torch.Tensor]:
+@@ -351,9 +403,38 @@ class MoERunner(MoERunnerInterface):
+             and not self.moe_config.is_sequence_parallel
+             and self._fused_output_is_reduced
+         ):
+-            shared_output = tensor_model_parallel_all_reduce(shared_output)
++            with allreduce_label("moe.reduce_shared_output"):
++                shared_output = tensor_model_parallel_all_reduce(shared_output)
+         return shared_output
+ 
++    def _allreduce_output_inside_custom_op_active(self) -> bool:
++        return (
++            _minimax_moe_output_allreduce_inside_custom_op_enabled()
++            and self._shared_experts is None
++            and self.routed_output_transform is None
++            and not self.moe_config.is_sequence_parallel
++            and (self.moe_config.tp_size > 1 or self.moe_config.ep_size > 1)
++            and not self._fused_output_is_reduced
++            and not _minimax_moe_delay_allreduce_enabled()
++        )
++
++    def _shared_add_allreduce_inside_custom_op_active(
++        self,
++        shared_output: torch.Tensor | None,
++        *,
++        hidden_dim_was_padded: bool,
++    ) -> bool:
++        return (
++            _xpu_moe_shared_add_allreduce_custom_op_enabled()
++            and shared_output is not None
++            and not hidden_dim_was_padded
++            and self.routed_output_transform is None
++            and not self.moe_config.is_sequence_parallel
++            and (self.moe_config.tp_size > 1 or self.moe_config.ep_size > 1)
++            and not self._fused_output_is_reduced
++            and not _minimax_moe_delay_allreduce_enabled()
++        )
++
+     def _maybe_reduce_final_output(
+         self,
+         states: torch.Tensor,
+@@ -373,8 +454,22 @@ class MoERunner(MoERunnerInterface):
+             not self.moe_config.is_sequence_parallel
+             and (self.moe_config.tp_size > 1 or self.moe_config.ep_size > 1)
+             and not self._fused_output_is_reduced
++            and not self._allreduce_output_inside_custom_op_active()
++            and not getattr(self, "_last_quant_output_reduced", False)
++            and not _minimax_moe_delay_allreduce_enabled()
+         ):
+-            states = tensor_model_parallel_all_reduce(states)
++            if (
++                _minimax_moe_final_inplace_allreduce_enabled()
++                and self.moe_config.tp_size > 1
++                and hasattr(torch.ops, "vllm")
++                and hasattr(torch.ops.vllm, "all_reduce_inplace")
++            ):
++                torch.ops.vllm.all_reduce_inplace(
++                    states, group_name=get_tp_group().unique_name
++                )
++            else:
++                with allreduce_label("moe.final_output"):
++                    states = tensor_model_parallel_all_reduce(states)
+ 
+         return states[..., :trunc_size]
+ 
+@@ -447,33 +542,77 @@ class MoERunner(MoERunnerInterface):
+         via the router, and the actual fused MoE computation. Returns
+         (shared_expert_output, fused_expert_output).
+         """
++        self._last_quant_output_reduced = False
+         self._maybe_apply_shared_experts(
+             shared_experts_input, SharedExpertsOrder.NO_OVERLAP
+         )
+ 
+-        if self._quant_method.is_monolithic:
+-            fused_out = self._quant_method.apply_monolithic(
+-                layer=layer,
+-                x=hidden_states,
+-                router_logits=router_logits,
+-                input_ids=input_ids,
+-            )
++        should_apply_decode_monolithic = getattr(
++            self._quant_method, "should_apply_decode_monolithic", None
++        )
++        if (
++            should_apply_decode_monolithic is not None
++            and should_apply_decode_monolithic(layer, hidden_states)
++        ):
++            route_capture = getattr(layer, "route_capture", None)
++            if route_capture is not None:
++                with timed_region("moe.router_select_for_capture"):
++                    _, topk_ids = self.router.select_experts(
++                        hidden_states=hidden_states,
++                        router_logits=router_logits,
++                        input_ids=input_ids,
++                    )
++                route_capture.capture(topk_ids, stage="runner_pre_monolithic")
++            with timed_region("moe.apply_monolithic"):
++                fused_out = self._quant_method.apply_monolithic(
++                    layer=layer,
++                    x=hidden_states,
++                    router_logits=router_logits,
++                    input_ids=input_ids,
++                )
++        elif self._quant_method.is_monolithic:
++            route_capture = getattr(layer, "route_capture", None)
++            if route_capture is not None:
++                with timed_region("moe.router_select_for_capture"):
++                    _, topk_ids = self.router.select_experts(
++                        hidden_states=hidden_states,
++                        router_logits=router_logits,
++                        input_ids=input_ids,
++                    )
++                route_capture.capture(topk_ids, stage="runner_pre_monolithic")
++            with timed_region("moe.apply_monolithic"):
++                fused_out = self._quant_method.apply_monolithic(
++                    layer=layer,
++                    x=hidden_states,
++                    router_logits=router_logits,
++                    input_ids=input_ids,
++                )
+         else:
+-            topk_weights, topk_ids = self.router.select_experts(
+-                hidden_states=hidden_states,
+-                router_logits=router_logits,
+-                input_ids=input_ids,
+-            )
++            with timed_region("moe.router_select"):
++                topk_weights, topk_ids = self.router.select_experts(
++                    hidden_states=hidden_states,
++                    router_logits=router_logits,
++                    input_ids=input_ids,
++                )
+ 
+             # Passing shared_experts_input in case SharedExpertsOrder is
+             # MK_INTERNAL_OVERLAPPED.
+-            fused_out = self._quant_method.apply(
+-                layer=layer,
+-                x=hidden_states,
+-                topk_weights=topk_weights,
+-                topk_ids=topk_ids,
+-                shared_experts_input=shared_experts_input,
+-            )
++            with timed_region("moe.apply"):
++                fused_out = self._quant_method.apply(
++                    layer=layer,
++                    x=hidden_states,
++                    topk_weights=topk_weights,
++                    topk_ids=topk_ids,
++                    shared_experts_input=shared_experts_input,
++                )
++
++        if (
++            self._allreduce_output_inside_custom_op_active()
++            and shared_experts_input is None
++        ):
++            with allreduce_label("moe.quant_output_inside_custom_op"):
++                fused_out = tensor_model_parallel_all_reduce(fused_out)
++            self._last_quant_output_reduced = True
+ 
+         self._maybe_apply_shared_experts(
+             shared_experts_input,
+@@ -606,7 +745,16 @@ class MoERunner(MoERunnerInterface):
+         # Apply output transform (e.g. latent -> full dim)
+         fused_output = self.apply_routed_output_transform(fused_output)
+ 
+-        if shared_output is not None:
++        if self._shared_add_allreduce_inside_custom_op_active(
++            shared_output,
++            hidden_dim_was_padded=hidden_dim_was_padded,
++        ):
++            result = torch.ops.vllm.moe_shared_add_allreduce(
++                shared_output,
++                fused_output,
++            )
++            self._last_quant_output_reduced = True
++        elif shared_output is not None:
+             result = shared_output + fused_output
+         else:
+             result = fused_output
+@@ -707,27 +855,31 @@ class MoERunner(MoERunnerInterface):
+         # so it can run overlapped with the
+         # NOTE: in future PR, MoE runner will always hold the gate.
+         if self.gate is not None:
+-            router_logits, _ = self.gate(hidden_states)
++            with timed_region("moe.internal_gate"):
++                router_logits, _ = self.gate(hidden_states)
+ 
+         with self._sequence_parallel_context():
+             # TODO(bnell): parts of the dispatch/combine steps will go away once
+             # #32567 lands and the remaining kernels are made MKs.  The PCP
+             # code will probably remain
+-            hidden_states, router_logits = self._maybe_dispatch(
+-                layer,
+-                hidden_states,
+-                router_logits,
+-            )
+-
+-            shared_output, hidden_states = self._apply_quant_method(
+-                layer=layer,
+-                hidden_states=hidden_states,
+-                router_logits=router_logits,
+-                shared_experts_input=shared_experts_input,
+-                input_ids=input_ids,
+-            )
+-
+-            return self._maybe_combine(
+-                shared_output,
+-                hidden_states,
+-            )
++            with timed_region("moe.dispatch"):
++                hidden_states, router_logits = self._maybe_dispatch(
++                    layer,
++                    hidden_states,
++                    router_logits,
++                )
++
++            with timed_region("moe.quant_method_total"):
++                shared_output, hidden_states = self._apply_quant_method(
++                    layer=layer,
++                    hidden_states=hidden_states,
++                    router_logits=router_logits,
++                    shared_experts_input=shared_experts_input,
++                    input_ids=input_ids,
++                )
++
++            with timed_region("moe.combine"):
++                return self._maybe_combine(
++                    shared_output,
++                    hidden_states,
++                )
+diff --git a/vllm/model_executor/layers/mamba/gdn_linear_attn.py b/vllm/model_executor/layers/mamba/gdn_linear_attn.py
+index a621ab962..d50f2d0df 100644
+--- a/vllm/model_executor/layers/mamba/gdn_linear_attn.py
++++ b/vllm/model_executor/layers/mamba/gdn_linear_attn.py
+@@ -62,6 +62,7 @@ from vllm.utils.torch_utils import (
+     _resolve_layer_name,
+     direct_register_custom_op,
+ )
++from vllm.utils.xpu_decode_timing import timed_region
+ from vllm.v1.attention.backends.gdn_attn import GDNAttentionMetadata
+ 
+ logger = init_logger(__name__)
+@@ -384,6 +385,14 @@ class GatedDeltaNetAttention(PluggableLayer, MambaBase):
+         self.enable_packed_recurrent_decode = (
+             envs.VLLM_ENABLE_FLA_PACKED_RECURRENT_DECODE
+         )
++        xpu_gdn_reuse_qkvz_ba_quant_mode = (
++            envs.VLLM_XPU_GDN_REUSE_QKVZ_BA_QUANT
++        )
++        self.xpu_reuse_qkvz_ba_quant_mode = xpu_gdn_reuse_qkvz_ba_quant_mode
++        self.xpu_reuse_qkvz_ba_quant = current_platform.is_xpu() and (
++            xpu_gdn_reuse_qkvz_ba_quant_mode
++            in ("1", "true", "clone", "clone-ba", "clone-qkvz")
++        )
+ 
+         compilation_config = get_current_vllm_config().compilation_config
+         if prefix in compilation_config.static_forward_context:
+@@ -612,8 +621,61 @@ class GatedDeltaNetAttention(PluggableLayer, MambaBase):
+         # ============================================================
+         # Part 1: Input Projection
+         # ============================================================
+-        projected_states_qkvz, _ = self.in_proj_qkvz(hidden_states)
+-        projected_states_ba, _ = self.in_proj_ba(hidden_states)
++        if self.xpu_reuse_qkvz_ba_quant and (
++            getattr(self.in_proj_qkvz, "xpu_native_int8_activation_quant", False)
++            and getattr(self.in_proj_ba, "xpu_native_int8_activation_quant", False)
++            and self.in_proj_qkvz.bias is None
++            and self.in_proj_ba.bias is None
++            and not self.in_proj_qkvz.gather_output
++            and not self.in_proj_ba.gather_output
++        ):
++            x_2d = hidden_states.view(-1, hidden_states.shape[-1]).contiguous()
++            with timed_region("qwen3_next.gdn.input_quant"):
++                x_q, x_s = torch.ops._xpu_C.per_token_quant_int8_xpu(x_2d)
++            if self.xpu_reuse_qkvz_ba_quant_mode == "clone":
++                x_q_qkvz = x_q.clone()
++                x_s_qkvz = x_s.clone()
++                x_q_ba = x_q.clone()
++                x_s_ba = x_s.clone()
++            elif self.xpu_reuse_qkvz_ba_quant_mode == "clone-ba":
++                x_q_qkvz = x_q
++                x_s_qkvz = x_s
++                x_q_ba = x_q.clone()
++                x_s_ba = x_s.clone()
++            elif self.xpu_reuse_qkvz_ba_quant_mode == "clone-qkvz":
++                x_q_qkvz = x_q.clone()
++                x_s_qkvz = x_s.clone()
++                x_q_ba = x_q
++                x_s_ba = x_s
++            else:
++                x_q_qkvz = x_q
++                x_s_qkvz = x_s
++                x_q_ba = x_q
++                x_s_ba = x_s
++
++            with timed_region("qwen3_next.gdn.qkvz_gemm_w8a8"):
++                projected_states_qkvz = torch.ops._xpu_C.int8_gemm_w8a8(
++                    x_q_qkvz,
++                    x_s_qkvz,
++                    self.in_proj_qkvz.weight,
++                    self.in_proj_qkvz.weight_scale,
++                    hidden_states.dtype,
++                    None,
++                ).view(*hidden_states.shape[:-1], self.in_proj_qkvz.weight.shape[1])
++            with timed_region("qwen3_next.gdn.ba_gemm_w8a8"):
++                projected_states_ba = torch.ops._xpu_C.int8_gemm_w8a8(
++                    x_q_ba,
++                    x_s_ba,
++                    self.in_proj_ba.weight,
++                    self.in_proj_ba.weight_scale,
++                    hidden_states.dtype,
++                    None,
++                ).view(*hidden_states.shape[:-1], self.in_proj_ba.weight.shape[1])
++        else:
++            with timed_region("qwen3_next.gdn.qkvz_proj"):
++                projected_states_qkvz, _ = self.in_proj_qkvz(hidden_states)
++            with timed_region("qwen3_next.gdn.ba_proj"):
++                projected_states_ba, _ = self.in_proj_ba(hidden_states)
+ 
+         # ============================================================
+         # Part 2: Core Attention
+@@ -625,13 +687,14 @@ class GatedDeltaNetAttention(PluggableLayer, MambaBase):
+         )
+         z = torch.empty_like(core_attn_out)
+ 
+-        torch.ops.vllm.gdn_attention_core_xpu(
+-            core_attn_out,
+-            z,
+-            projected_states_qkvz,
+-            projected_states_ba,
+-            self.prefix,
+-        )
++        with timed_region("qwen3_next.gdn.core_op"):
++            torch.ops.vllm.gdn_attention_core_xpu(
++                core_attn_out,
++                z,
++                projected_states_qkvz,
++                projected_states_ba,
++                self.prefix,
++            )
+ 
+         # ============================================================
+         # Part 3: Output Projection
+@@ -640,10 +703,12 @@ class GatedDeltaNetAttention(PluggableLayer, MambaBase):
+         # Reshape input data into 2D tensor
+         core_attn_out = core_attn_out.reshape(-1, core_attn_out.shape[-1])
+         z = z.reshape(-1, z.shape[-1])
+-        core_attn_out = self.norm(core_attn_out, z)
++        with timed_region("qwen3_next.gdn.output_norm"):
++            core_attn_out = self.norm(core_attn_out, z)
+         core_attn_out = core_attn_out.reshape(z_shape_og)
+         core_attn_out = rearrange(core_attn_out, "... h d -> ... (h d)")
+-        output[:num_tokens], _ = self.out_proj(core_attn_out)
++        with timed_region("qwen3_next.gdn.out_proj"):
++            output[:num_tokens], _ = self.out_proj(core_attn_out)
+ 
+     def _warmup_prefill_kernels(self, mixed_qkv: torch.Tensor) -> None:
+         """Warm up GDN prefill kernels during V1 profiling.
+diff --git a/vllm/model_executor/models/qwen3_next.py b/vllm/model_executor/models/qwen3_next.py
+index 96d7e9c71..0457f0446 100644
+--- a/vllm/model_executor/models/qwen3_next.py
++++ b/vllm/model_executor/models/qwen3_next.py
+@@ -57,6 +57,7 @@ from vllm.model_executor.models.qwen2_moe import Qwen2MoeMLP as Qwen3NextMLP
+ from vllm.model_executor.models.utils import sequence_parallel_chunk
+ from vllm.sequence import IntermediateTensors
+ from vllm.transformers_utils.configs.qwen3_next import Qwen3NextConfig
++from vllm.utils.xpu_decode_timing import allreduce_label, timed_region
+ 
+ from .interfaces import (
+     EagleModelMixin,
+@@ -84,6 +85,7 @@ KVCache = tuple[torch.Tensor, torch.Tensor]
+ class Qwen3NextSparseMoeBlock(nn.Module):
+     def __init__(self, vllm_config: VllmConfig, prefix: str = ""):
+         super().__init__()
++        self.prefix = prefix
+ 
+         config = vllm_config.model_config.hf_text_config
+         parallel_config = vllm_config.parallel_config
+@@ -171,24 +173,29 @@ class Qwen3NextSparseMoeBlock(nn.Module):
+         hidden_states = hidden_states.view(-1, hidden_dim)
+ 
+         if self.is_sequence_parallel:
+-            hidden_states = sequence_parallel_chunk(hidden_states)
++            with timed_region("qwen3_next.moe.sequence_parallel_chunk"):
++                hidden_states = sequence_parallel_chunk(hidden_states)
+ 
+         if self.experts.is_internal_router:
+             # In this case, the gate/router runs inside the FusedMoE class
+-            final_hidden_states = self.experts(
+-                hidden_states=hidden_states, router_logits=hidden_states
+-            )
++            with timed_region("qwen3_next.moe.experts_internal_router"):
++                final_hidden_states = self.experts(
++                    hidden_states=hidden_states, router_logits=hidden_states
++                )
+         else:
+             # router_logits: (num_tokens, n_experts)
+-            router_logits, _ = self.gate(hidden_states)
+-            final_hidden_states = self.experts(
+-                hidden_states=hidden_states, router_logits=router_logits
+-            )
++            with timed_region("qwen3_next.moe.router_gate"):
++                router_logits, _ = self.gate(hidden_states)
++            with timed_region("qwen3_next.moe.experts"):
++                final_hidden_states = self.experts(
++                    hidden_states=hidden_states, router_logits=router_logits
++                )
+ 
+         if self.is_sequence_parallel:
+-            final_hidden_states = tensor_model_parallel_all_gather(
+-                final_hidden_states, 0
+-            )
++            with allreduce_label("qwen3_next.moe.sequence_parallel_gather"):
++                final_hidden_states = tensor_model_parallel_all_gather(
++                    final_hidden_states, 0
++                )
+             final_hidden_states = final_hidden_states[:num_tokens]
+ 
+         return final_hidden_states.view(orig_shape)
+@@ -279,7 +286,8 @@ class Qwen3NextAttention(nn.Module):
+         output: torch.Tensor,
+         hidden_states: torch.Tensor,
+     ):
+-        qkv, _ = self.qkv_proj(hidden_states)
++        with timed_region("qwen3_next.full_attention.qkv_proj"):
++            qkv, _ = self.qkv_proj(hidden_states)
+ 
+         if self.attn_output_gate:
+             q_gate, k, v = qkv.split(
+@@ -293,22 +301,27 @@ class Qwen3NextAttention(nn.Module):
+         else:
+             q, k, v = qkv.split([self.q_size, self.kv_size, self.kv_size], dim=-1)
+ 
+-        q = self.q_norm(q.view(-1, self.num_heads, self.head_dim)).view(
+-            -1, self.num_heads * self.head_dim
+-        )
+-        k = self.k_norm(k.view(-1, self.num_kv_heads, self.head_dim)).view(
+-            -1, self.num_kv_heads * self.head_dim
+-        )
++        with timed_region("qwen3_next.full_attention.qk_norm"):
++            q = self.q_norm(q.view(-1, self.num_heads, self.head_dim)).view(
++                -1, self.num_heads * self.head_dim
++            )
++            k = self.k_norm(k.view(-1, self.num_kv_heads, self.head_dim)).view(
++                -1, self.num_kv_heads * self.head_dim
++            )
+ 
+-        q, k = self.rotary_emb(positions, q, k)
++        with timed_region("qwen3_next.full_attention.rotary"):
++            q, k = self.rotary_emb(positions, q, k)
+ 
+-        attn_output = self.attn(q, k, v)
++        with timed_region("qwen3_next.full_attention.attn"):
++            attn_output = self.attn(q, k, v)
+ 
+         if self.attn_output_gate:
+-            gate = torch.sigmoid(gate)
+-            attn_output = attn_output * gate
++            with timed_region("qwen3_next.full_attention.output_gate"):
++                gate = torch.sigmoid(gate)
++                attn_output = attn_output * gate
+ 
+-        output[:], _ = self.o_proj(attn_output)
++        with timed_region("qwen3_next.full_attention.o_proj"):
++            output[:], _ = self.o_proj(attn_output)
+ 
+ 
+ class Qwen3NextDecoderLayer(nn.Module):
+@@ -399,22 +412,28 @@ class Qwen3NextDecoderLayer(nn.Module):
+     ):
+         if residual is None:
+             residual = hidden_states
+-            hidden_states = self.input_layernorm(hidden_states)
++            with timed_region("qwen3_next.layer.input_norm"):
++                hidden_states = self.input_layernorm(hidden_states)
+         else:
+-            hidden_states, residual = self.input_layernorm(hidden_states, residual)
++            with timed_region("qwen3_next.layer.input_norm"):
++                hidden_states, residual = self.input_layernorm(
++                    hidden_states, residual
++                )
+ 
+         self_attention_output = torch.empty_like(hidden_states)
+         if self.layer_type == "linear_attention":
+-            self.linear_attn(
+-                hidden_states=hidden_states,
+-                output=self_attention_output,
+-            )
++            with timed_region("qwen3_next.layer.linear_attention"):
++                self.linear_attn(
++                    hidden_states=hidden_states,
++                    output=self_attention_output,
++                )
+         elif self.layer_type == "full_attention":
+-            self.self_attn(
+-                hidden_states=hidden_states,
+-                output=self_attention_output,
+-                positions=positions,
+-            )
++            with timed_region("qwen3_next.layer.full_attention"):
++                self.self_attn(
++                    hidden_states=hidden_states,
++                    output=self_attention_output,
++                    positions=positions,
++                )
+         else:
+             raise ValueError("Invalid layer_type")
+         hidden_states = self_attention_output
+@@ -430,8 +449,12 @@ class Qwen3NextDecoderLayer(nn.Module):
+                 )
+ 
+         # Fully Connected
+-        hidden_states, residual = self.post_attention_layernorm(hidden_states, residual)
+-        hidden_states = self.mlp(hidden_states)
++        with timed_region("qwen3_next.layer.post_attention_norm"):
++            hidden_states, residual = self.post_attention_layernorm(
++                hidden_states, residual
++            )
++        with timed_region("qwen3_next.layer.mlp"):
++            hidden_states = self.mlp(hidden_states)
+ 
+         if self.layer_scale:
+             if len(hidden_states.shape) == 2:
+@@ -515,11 +538,12 @@ class Qwen3NextModel(nn.Module, EagleModelMixin):
+             islice(self.layers, self.start_layer, self.end_layer),
+             start=self.start_layer,
+         ):
+-            hidden_states, residual = layer(
+-                positions=positions,
+-                hidden_states=hidden_states,
+-                residual=residual,
+-            )
++            with timed_region(f"qwen3_next.layer_type.{layer.layer_type}"):
++                hidden_states, residual = layer(
++                    positions=positions,
++                    hidden_states=hidden_states,
++                    residual=residual,
++                )
+             self._maybe_add_hidden_state(
+                 aux_hidden_states, layer_idx + 1, hidden_states, residual
+             )
+@@ -528,7 +552,8 @@ class Qwen3NextModel(nn.Module, EagleModelMixin):
+             return IntermediateTensors(
+                 {"hidden_states": hidden_states, "residual": residual}
+             )
+-        hidden_states, _ = self.norm(hidden_states, residual)
++        with timed_region("qwen3_next.final_norm"):
++            hidden_states, _ = self.norm(hidden_states, residual)
+         if aux_hidden_states:
+             return hidden_states, aux_hidden_states
+         return hidden_states
+
+diff --git a/vllm/utils/xpu_decode_timing.py b/vllm/utils/xpu_decode_timing.py
+new file mode 100644
+index 000000000..a2de8832a
+--- /dev/null
++++ b/vllm/utils/xpu_decode_timing.py
+@@ -0,0 +1,283 @@
++# SPDX-License-Identifier: Apache-2.0
++# SPDX-FileCopyrightText: Copyright contributors to the vLLM project
++
++"""Small opt-in timing helper for local XPU decode diagnostics."""
++
++import os
++import re
++import time
++import atexit
++import json
++from collections import defaultdict
++from contextlib import contextmanager
++from contextvars import ContextVar
++
++_ENABLED = os.environ.get("VLLM_XPU_DECODE_TIMING", "0") == "1"
++_SYNC = os.environ.get("VLLM_XPU_DECODE_TIMING_SYNC", "0") == "1"
++_RANK_FILTER = os.environ.get("VLLM_XPU_DECODE_TIMING_RANK")
++_SUMMARY = os.environ.get("VLLM_XPU_DECODE_TIMING_SUMMARY", "1") != "0"
++_PRINT_EVERY = max(
++    0, int(os.environ.get("VLLM_XPU_DECODE_TIMING_PRINT_EVERY", "0") or "0")
++)
++_SKIP_FIRST = max(
++    0, int(os.environ.get("VLLM_XPU_DECODE_TIMING_SKIP_FIRST", "0") or "0")
++)
++_STEP_SUMMARY = os.environ.get("VLLM_XPU_DECODE_TIMING_STEP_SUMMARY", "0") == "1"
++_STEP_EVERY = max(
++    1, int(os.environ.get("VLLM_XPU_DECODE_TIMING_STEP_EVERY", "1") or "1")
++)
++_STEP_SKIP_FIRST = max(
++    0,
++    int(
++        os.environ.get(
++            "VLLM_XPU_DECODE_TIMING_STEP_SKIP_FIRST",
++            os.environ.get("VLLM_XPU_DECODE_TIMING_SKIP_FIRST", "0"),
++        )
++        or "0"
++    ),
++)
++_STATS: dict[tuple[str, str], list[int]] = defaultdict(lambda: [0, 0, 0, 0])
++_SUMMARY_PRINTED = False
++_ALLREDUCE_LABEL: ContextVar[str | None] = ContextVar(
++    "vllm_xpu_allreduce_label", default=None
++)
++_STEP_SEEN = 0
++_STEP_ACTIVE = False
++_STEP_RANK = ""
++_STEP_METADATA: dict[str, object] = {}
++_STEP_STATS: dict[tuple[str, str], list[int]] = defaultdict(lambda: [0, 0, 0])
++
++
++def _compile_regex_env(name: str) -> re.Pattern[str] | None:
++    value = os.environ.get(name)
++    if not value:
++        return None
++    try:
++        return re.compile(value)
++    except re.error as exc:
++        print(
++            "[vllm-xpu-timing-config] "
++            f"ignoring invalid {name}={value!r}: {exc}",
++            flush=True,
++        )
++        return None
++
++
++_LABEL_INCLUDE_RE = _compile_regex_env("VLLM_XPU_DECODE_TIMING_LABEL_REGEX")
++_LABEL_EXCLUDE_RE = _compile_regex_env("VLLM_XPU_DECODE_TIMING_EXCLUDE_LABEL_REGEX")
++_SYNC_LABEL_INCLUDE_RE = _compile_regex_env(
++    "VLLM_XPU_DECODE_TIMING_SYNC_LABEL_REGEX"
++)
++_SYNC_LABEL_EXCLUDE_RE = _compile_regex_env(
++    "VLLM_XPU_DECODE_TIMING_SYNC_EXCLUDE_LABEL_REGEX"
++)
++
++
++def _rank_label() -> str:
++    for name in ("LOCAL_RANK", "RANK", "VLLM_LOCAL_RANK", "VLLM_RANK"):
++        value = os.environ.get(name)
++        if value is not None:
++            return value
++    try:
++        import torch.distributed as dist
++
++        if dist.is_available() and dist.is_initialized():
++            return str(dist.get_rank())
++    except Exception:
++        pass
++    return f"pid{os.getpid()}"
++
++
++def _rank_enabled(rank: str) -> bool:
++    return _RANK_FILTER is None or _RANK_FILTER == rank
++
++
++def _label_enabled(label: str) -> bool:
++    if _LABEL_INCLUDE_RE is not None and _LABEL_INCLUDE_RE.search(label) is None:
++        return False
++    if _LABEL_EXCLUDE_RE is not None and _LABEL_EXCLUDE_RE.search(label) is not None:
++        return False
++    return True
++
++
++def _sync_enabled_for_label(label: str) -> bool:
++    if not _SYNC:
++        return False
++    if (
++        _SYNC_LABEL_INCLUDE_RE is not None
++        and _SYNC_LABEL_INCLUDE_RE.search(label) is None
++    ):
++        return False
++    if (
++        _SYNC_LABEL_EXCLUDE_RE is not None
++        and _SYNC_LABEL_EXCLUDE_RE.search(label) is not None
++    ):
++        return False
++    return True
++
++
++def _sync_xpu(label: str) -> None:
++    if not _sync_enabled_for_label(label):
++        return
++    try:
++        import torch
++
++        if hasattr(torch, "xpu") and torch.xpu.is_available():
++            torch.xpu.synchronize()
++    except Exception:
++        pass
++
++
++def _is_compiling() -> bool:
++    try:
++        import torch
++
++        compiler = getattr(torch, "compiler", None)
++        if compiler is not None and compiler.is_compiling():
++            return True
++        dynamo = getattr(torch, "_dynamo", None)
++        return bool(dynamo is not None and dynamo.is_compiling())
++    except Exception:
++        return False
++
++
++def _print_summary() -> None:
++    global _SUMMARY_PRINTED
++    if not _ENABLED or not _SUMMARY or _SUMMARY_PRINTED or not _STATS:
++        return
++    _SUMMARY_PRINTED = True
++    rows = []
++    for (rank, label), (_seen, count, total_ns, max_ns) in _STATS.items():
++        if count == 0:
++            continue
++        rows.append((total_ns, rank, label, count, max_ns))
++    rows.sort(reverse=True)
++    print("[vllm-xpu-timing-summary] begin", flush=True)
++    for total_ns, rank, label, count, max_ns in rows:
++        avg_ns = total_ns / max(count, 1)
++        print(
++            "[vllm-xpu-timing-summary] "
++            f"rank={rank} label={label} count={count} "
++            f"total_ms={total_ns / 1e6:.6f} "
++            f"avg_ms={avg_ns / 1e6:.6f} "
++            f"max_ms={max_ns / 1e6:.6f}",
++            flush=True,
++        )
++    print("[vllm-xpu-timing-summary] end", flush=True)
++
++
++atexit.register(_print_summary)
++
++
++def begin_timing_step(metadata: dict[str, object] | None = None) -> bool:
++    global _STEP_ACTIVE, _STEP_METADATA, _STEP_RANK, _STEP_SEEN, _STEP_STATS
++    if not _ENABLED or not _STEP_SUMMARY or _is_compiling():
++        return False
++    rank = _rank_label()
++    if not _rank_enabled(rank):
++        return False
++    if _STEP_ACTIVE:
++        end_timing_step("abandoned")
++    _STEP_SEEN += 1
++    _STEP_RANK = rank
++    _STEP_METADATA = metadata or {}
++    _STEP_STATS = defaultdict(lambda: [0, 0, 0])
++    should_capture = (
++        _STEP_SEEN > _STEP_SKIP_FIRST
++        and (_STEP_SEEN - _STEP_SKIP_FIRST) % _STEP_EVERY == 0
++    )
++    _STEP_ACTIVE = should_capture
++    return should_capture
++
++
++def end_timing_step(status: str = "ok") -> None:
++    global _STEP_ACTIVE, _STEP_METADATA, _STEP_RANK, _STEP_STATS
++    if not _ENABLED or not _STEP_SUMMARY or not _STEP_ACTIVE:
++        return
++    rows = []
++    for (rank, label), (count, total_ns, max_ns) in _STEP_STATS.items():
++        if count == 0:
++            continue
++        avg_ns = total_ns / max(count, 1)
++        rows.append(
++            {
++                "rank": rank,
++                "label": label,
++                "count": count,
++                "total_ms": total_ns / 1e6,
++                "avg_ms": avg_ns / 1e6,
++                "max_ms": max_ns / 1e6,
++            }
++        )
++    rows.sort(key=lambda row: row["total_ms"], reverse=True)
++    payload = {
++        "rank": _STEP_RANK,
++        "step": _STEP_SEEN,
++        "status": status,
++        "metadata": _STEP_METADATA,
++        "summary_by_total_ms": rows,
++    }
++    print(
++        "[vllm-xpu-timing-step] "
++        + json.dumps(payload, sort_keys=True, separators=(",", ":")),
++        flush=True,
++    )
++    _STEP_ACTIVE = False
++    _STEP_METADATA = {}
++    _STEP_STATS = defaultdict(lambda: [0, 0, 0])
++
++
++@contextmanager
++def allreduce_label(label: str | None):
++    if not _ENABLED or not label or _is_compiling():
++        yield
++        return
++    token = _ALLREDUCE_LABEL.set(label)
++    try:
++        yield
++    finally:
++        _ALLREDUCE_LABEL.reset(token)
++
++
++def current_allreduce_label() -> str | None:
++    return _ALLREDUCE_LABEL.get()
++
++
++@contextmanager
++def timed_region(label: str):
++    if not _ENABLED or _is_compiling():
++        yield
++        return
++    if not _label_enabled(label):
++        yield
++        return
++    rank = _rank_label()
++    if not _rank_enabled(rank):
++        yield
++        return
++    _sync_xpu(label)
++    start_ns = time.perf_counter_ns()
++    try:
++        yield
++    finally:
++        _sync_xpu(label)
++        elapsed_ns = time.perf_counter_ns() - start_ns
++        stat = _STATS[(rank, label)]
++        stat[0] += 1
++        if stat[0] <= _SKIP_FIRST:
++            return
++        stat[1] += 1
++        stat[2] += elapsed_ns
++        stat[3] = max(stat[3], elapsed_ns)
++        if _STEP_ACTIVE:
++            step_stat = _STEP_STATS[(rank, label)]
++            step_stat[0] += 1
++            step_stat[1] += elapsed_ns
++            step_stat[2] = max(step_stat[2], elapsed_ns)
++        if _PRINT_EVERY and stat[1] % _PRINT_EVERY == 0:
++            print(
++                "[vllm-xpu-timing] "
++                f"rank={rank} label={label} count={stat[1]} "
++                f"last_ms={elapsed_ns / 1e6:.6f}",
++                flush=True,
++            )

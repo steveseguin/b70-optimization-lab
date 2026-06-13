@@ -62,3 +62,41 @@ When submitting, include:
 - vLLM XPU FA2 singleton compressed-tensors scale patch: `patches/vllm-xpu-fa2-compressed-tensors-scalar-scales.patch` in GitHub.
 - vLLM Qwen3.5 language-only vision skip patch: `patches/vllm-qwen35-language-model-only-skip-vision.patch` in GitHub.
 - LocalMaxxing diagnostic PP2xTP2 result: `cmormmlz0000bky04wpu4oc01`.
+
+## Qwen3.6 Decode Optimization Protocol
+
+Standing goal: increase the single-request decode token rate of
+`nameistoken/Qwen3.6-35B-A3B-Quark-W8A8-INT8` without lowering quality.
+Aggregate throughput still matters, but c1 decode latency is the lead metric.
+
+For every task:
+
+- update the active notes before or immediately after running experiments;
+- record future ideas that look promising, even if they are not tested yet;
+- record positive, neutral, and negative results with enough context to avoid
+  retesting dead ends;
+- preserve patches, scripts, command snippets, and compact JSON/Markdown
+  artifacts for anything that changes a result or teaches a reusable lesson;
+- keep raw logs out of commits unless they are necessary reproducibility
+  artifacts, and summarize large logs into compact files;
+- do not promote speed unless quality and reliability gates pass.
+
+Promotion gates for a candidate improvement:
+
+- exact same model and quantization unless the experiment is explicitly marked
+  out-of-scope;
+- canary/token-ID quality checks before and after endpoint restart;
+- adjacent accepted-control A/B run with warmups discarded;
+- repeated steady-state measurements, preferably at least four measured runs;
+- clear runtime provenance: vLLM source/patch, oneAPI/oneCCL/PyTorch stack,
+  driver/kernel, rank map, context length, cache root, and launch flags;
+- single-request and aggregate behavior reported separately;
+- cold-start, readiness-warmed, and persistent-engine numbers kept separate.
+
+Current incremental stack priorities:
+
+1. Decisive all-rank layer-family and collective timing.
+2. Collective-only TP4/TP2/TP3 replay if synchronization dominates.
+3. Persistent W8A8 MoE layerlet if MoE dispatch/GEMM dominates.
+4. Oracle `k=1` parity repair before any speculative speed claim.
+5. TP4 bypass or hybrid layouts only after timing says all-rank sync is the wall.
