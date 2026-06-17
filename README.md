@@ -4,8 +4,6 @@ Community setup guides, benchmark recipes, troubleshooting notes, and patches fo
 
 ## Start Here
 
-- Ask questions: https://github.com/steveseguin/Unofficial-Intel-XPU-Community/discussions
-- Community wiki: https://github.com/steveseguin/Unofficial-Intel-XPU-Community/wiki
 - Docs index: [docs/README.md](docs/README.md)
 - Current reproducibility map: [docs/current-reproducibility-map.md](docs/current-reproducibility-map.md)
 - MiniMax install guide: [docs/b70-minimax-ubuntu24-deployment.md](docs/b70-minimax-ubuntu24-deployment.md)
@@ -28,8 +26,6 @@ This repository is meant to become a stable community hub for Intel XPU local AI
 
 | I want to... | Go here |
 | --- | --- |
-| Ask for setup help | [Discussions](https://github.com/steveseguin/Unofficial-Intel-XPU-Community/discussions) |
-| Read community-maintained notes | [Wiki](https://github.com/steveseguin/Unofficial-Intel-XPU-Community/wiki) |
 | Reproduce the current work | [Current reproducibility map](docs/current-reproducibility-map.md) |
 | Deploy MiniMax M2.7 INT4 on 4x B70 | [MiniMax Ubuntu 24 guide](docs/b70-minimax-ubuntu24-deployment.md) |
 | Run the endpoint as a service | [Production c1 service](docs/minimax-production-c1-service.md) |
