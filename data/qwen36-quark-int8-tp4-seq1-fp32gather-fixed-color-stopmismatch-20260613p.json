@@ -1,0 +1,1478 @@
+{
+  "base_url": "http://127.0.0.1:18080",
+  "model": "qwen36-35b-a3b-fp8",
+  "tokenizer": "/mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118",
+  "case": "color",
+  "user_prompt": "Give exactly four comma-separated lowercase color words, sorted alphabetically, with no extra text.",
+  "prompt": "<|im_start|>user\nGive exactly four comma-separated lowercase color words, sorted alphabetically, with no extra text.<|im_end|>\n<|im_start|>assistant\n<think>\n\n</think>\n\n",
+  "prompt_token_ids": [
+    248045,
+    846,
+    198,
+    33963,
+    6681,
+    2943,
+    30644,
+    70221,
+    40657,
+    1829,
+    4105,
+    11,
+    10300,
+    26887,
+    2586,
+    11,
+    440,
+    874,
+    4799,
+    1414,
+    13,
+    248046,
+    198,
+    248045,
+    74455,
+    198,
+    248068,
+    271,
+    248069,
+    271
+  ],
+  "max_tokens": 32,
+  "repeats_requested": 128,
+  "repeats_completed": 56,
+  "seed": 20260613,
+  "request_delay_s": 0.0,
+  "request_id_prefix": "q36-fp32gather-color",
+  "stop_on_mismatch": true,
+  "logprobs": 0,
+  "expected_normalized": "blue, green, orange, red",
+  "json_expected_fields": null,
+  "pass_all": false,
+  "mismatch_count": 1,
+  "mismatches": [
+    {
+      "index": 55,
+      "request_id": "q36-fp32gather-color-000055",
+      "text": "blue, green hail hail hail hail0000000000000000000000000",
+      "normalized": "blue, green hail hail hail hail0000000000000000000000000",
+      "token_ids": [
+        11855,
+        11,
+        5983,
+        62082,
+        62082,
+        62082,
+        62082,
+        15,
+        15,
+        15,
+        15,
+        15,
+        15,
+        15,
+        15,
+        15,
+        15,
+        15,
+        15,
+        15,
+        15,
+        15,
+        15,
+        15,
+        15,
+        15,
+        15,
+        15,
+        15,
+        15,
+        15,
+        15
+      ],
+      "finish_reason": "length",
+      "elapsed_s": 1.1978023229166865,
+      "usage": {
+        "prompt_tokens": 30,
+        "total_tokens": 62,
+        "completion_tokens": 32,
+        "prompt_tokens_details": null
+      },
+      "pass": false
+    }
+  ],
+  "unique_normalized": [
+    "blue, green hail hail hail hail0000000000000000000000000",
+    "blue, green, orange, red"
+  ],
+  "rows": [
+    {
+      "index": 0,
+      "request_id": "q36-fp32gather-color-000000",
+      "text": "blue, green, orange, red",
+      "normalized": "blue, green, orange, red",
+      "token_ids": [
+        11855,
+        11,
+        5983,
+        11,
+        18016,
+        11,
+        2438
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.2643040050752461,
+      "usage": {
+        "prompt_tokens": 30,
+        "total_tokens": 38,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "pass": true
+    },
+    {
+      "index": 1,
+      "request_id": "q36-fp32gather-color-000001",
+      "text": "blue, green, orange, red",
+      "normalized": "blue, green, orange, red",
+      "token_ids": [
+        11855,
+        11,
+        5983,
+        11,
+        18016,
+        11,
+        2438
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.14583977009169757,
+      "usage": {
+        "prompt_tokens": 30,
+        "total_tokens": 38,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "pass": true
+    },
+    {
+      "index": 2,
+      "request_id": "q36-fp32gather-color-000002",
+      "text": "blue, green, orange, red",
+      "normalized": "blue, green, orange, red",
+      "token_ids": [
+        11855,
+        11,
+        5983,
+        11,
+        18016,
+        11,
+        2438
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.14583961991593242,
+      "usage": {
+        "prompt_tokens": 30,
+        "total_tokens": 38,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "pass": true
+    },
+    {
+      "index": 3,
+      "request_id": "q36-fp32gather-color-000003",
+      "text": "blue, green, orange, red",
+      "normalized": "blue, green, orange, red",
+      "token_ids": [
+        11855,
+        11,
+        5983,
+        11,
+        18016,
+        11,
+        2438
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.1460020139347762,
+      "usage": {
+        "prompt_tokens": 30,
+        "total_tokens": 38,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "pass": true
+    },
+    {
+      "index": 4,
+      "request_id": "q36-fp32gather-color-000004",
+      "text": "blue, green, orange, red",
+      "normalized": "blue, green, orange, red",
+      "token_ids": [
+        11855,
+        11,
+        5983,
+        11,
+        18016,
+        11,
+        2438
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.14791039400734007,
+      "usage": {
+        "prompt_tokens": 30,
+        "total_tokens": 38,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "pass": true
+    },
+    {
+      "index": 5,
+      "request_id": "q36-fp32gather-color-000005",
+      "text": "blue, green, orange, red",
+      "normalized": "blue, green, orange, red",
+      "token_ids": [
+        11855,
+        11,
+        5983,
+        11,
+        18016,
+        11,
+        2438
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.14684190112166107,
+      "usage": {
+        "prompt_tokens": 30,
+        "total_tokens": 38,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "pass": true
+    },
+    {
+      "index": 6,
+      "request_id": "q36-fp32gather-color-000006",
+      "text": "blue, green, orange, red",
+      "normalized": "blue, green, orange, red",
+      "token_ids": [
+        11855,
+        11,
+        5983,
+        11,
+        18016,
+        11,
+        2438
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.14907667296938598,
+      "usage": {
+        "prompt_tokens": 30,
+        "total_tokens": 38,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "pass": true
+    },
+    {
+      "index": 7,
+      "request_id": "q36-fp32gather-color-000007",
+      "text": "blue, green, orange, red",
+      "normalized": "blue, green, orange, red",
+      "token_ids": [
+        11855,
+        11,
+        5983,
+        11,
+        18016,
+        11,
+        2438
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.14898417913354933,
+      "usage": {
+        "prompt_tokens": 30,
+        "total_tokens": 38,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "pass": true
+    },
+    {
+      "index": 8,
+      "request_id": "q36-fp32gather-color-000008",
+      "text": "blue, green, orange, red",
+      "normalized": "blue, green, orange, red",
+      "token_ids": [
+        11855,
+        11,
+        5983,
+        11,
+        18016,
+        11,
+        2438
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.1493995268829167,
+      "usage": {
+        "prompt_tokens": 30,
+        "total_tokens": 38,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "pass": true
+    },
+    {
+      "index": 9,
+      "request_id": "q36-fp32gather-color-000009",
+      "text": "blue, green, orange, red",
+      "normalized": "blue, green, orange, red",
+      "token_ids": [
+        11855,
+        11,
+        5983,
+        11,
+        18016,
+        11,
+        2438
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.14898614189587533,
+      "usage": {
+        "prompt_tokens": 30,
+        "total_tokens": 38,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "pass": true
+    },
+    {
+      "index": 10,
+      "request_id": "q36-fp32gather-color-000010",
+      "text": "blue, green, orange, red",
+      "normalized": "blue, green, orange, red",
+      "token_ids": [
+        11855,
+        11,
+        5983,
+        11,
+        18016,
+        11,
+        2438
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.15283520217053592,
+      "usage": {
+        "prompt_tokens": 30,
+        "total_tokens": 38,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "pass": true
+    },
+    {
+      "index": 11,
+      "request_id": "q36-fp32gather-color-000011",
+      "text": "blue, green, orange, red",
+      "normalized": "blue, green, orange, red",
+      "token_ids": [
+        11855,
+        11,
+        5983,
+        11,
+        18016,
+        11,
+        2438
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.14655182603746653,
+      "usage": {
+        "prompt_tokens": 30,
+        "total_tokens": 38,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "pass": true
+    },
+    {
+      "index": 12,
+      "request_id": "q36-fp32gather-color-000012",
+      "text": "blue, green, orange, red",
+      "normalized": "blue, green, orange, red",
+      "token_ids": [
+        11855,
+        11,
+        5983,
+        11,
+        18016,
+        11,
+        2438
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.14813014795072377,
+      "usage": {
+        "prompt_tokens": 30,
+        "total_tokens": 38,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "pass": true
+    },
+    {
+      "index": 13,
+      "request_id": "q36-fp32gather-color-000013",
+      "text": "blue, green, orange, red",
+      "normalized": "blue, green, orange, red",
+      "token_ids": [
+        11855,
+        11,
+        5983,
+        11,
+        18016,
+        11,
+        2438
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.1480650349985808,
+      "usage": {
+        "prompt_tokens": 30,
+        "total_tokens": 38,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "pass": true
+    },
+    {
+      "index": 14,
+      "request_id": "q36-fp32gather-color-000014",
+      "text": "blue, green, orange, red",
+      "normalized": "blue, green, orange, red",
+      "token_ids": [
+        11855,
+        11,
+        5983,
+        11,
+        18016,
+        11,
+        2438
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.1465424399357289,
+      "usage": {
+        "prompt_tokens": 30,
+        "total_tokens": 38,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "pass": true
+    },
+    {
+      "index": 15,
+      "request_id": "q36-fp32gather-color-000015",
+      "text": "blue, green, orange, red",
+      "normalized": "blue, green, orange, red",
+      "token_ids": [
+        11855,
+        11,
+        5983,
+        11,
+        18016,
+        11,
+        2438
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.14658238389529288,
+      "usage": {
+        "prompt_tokens": 30,
+        "total_tokens": 38,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "pass": true
+    },
+    {
+      "index": 16,
+      "request_id": "q36-fp32gather-color-000016",
+      "text": "blue, green, orange, red",
+      "normalized": "blue, green, orange, red",
+      "token_ids": [
+        11855,
+        11,
+        5983,
+        11,
+        18016,
+        11,
+        2438
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.1466918191872537,
+      "usage": {
+        "prompt_tokens": 30,
+        "total_tokens": 38,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "pass": true
+    },
+    {
+      "index": 17,
+      "request_id": "q36-fp32gather-color-000017",
+      "text": "blue, green, orange, red",
+      "normalized": "blue, green, orange, red",
+      "token_ids": [
+        11855,
+        11,
+        5983,
+        11,
+        18016,
+        11,
+        2438
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.1468276649247855,
+      "usage": {
+        "prompt_tokens": 30,
+        "total_tokens": 38,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "pass": true
+    },
+    {
+      "index": 18,
+      "request_id": "q36-fp32gather-color-000018",
+      "text": "blue, green, orange, red",
+      "normalized": "blue, green, orange, red",
+      "token_ids": [
+        11855,
+        11,
+        5983,
+        11,
+        18016,
+        11,
+        2438
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.14630671800114214,
+      "usage": {
+        "prompt_tokens": 30,
+        "total_tokens": 38,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "pass": true
+    },
+    {
+      "index": 19,
+      "request_id": "q36-fp32gather-color-000019",
+      "text": "blue, green, orange, red",
+      "normalized": "blue, green, orange, red",
+      "token_ids": [
+        11855,
+        11,
+        5983,
+        11,
+        18016,
+        11,
+        2438
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.14904187782667577,
+      "usage": {
+        "prompt_tokens": 30,
+        "total_tokens": 38,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "pass": true
+    },
+    {
+      "index": 20,
+      "request_id": "q36-fp32gather-color-000020",
+      "text": "blue, green, orange, red",
+      "normalized": "blue, green, orange, red",
+      "token_ids": [
+        11855,
+        11,
+        5983,
+        11,
+        18016,
+        11,
+        2438
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.1469976929947734,
+      "usage": {
+        "prompt_tokens": 30,
+        "total_tokens": 38,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "pass": true
+    },
+    {
+      "index": 21,
+      "request_id": "q36-fp32gather-color-000021",
+      "text": "blue, green, orange, red",
+      "normalized": "blue, green, orange, red",
+      "token_ids": [
+        11855,
+        11,
+        5983,
+        11,
+        18016,
+        11,
+        2438
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.14631054503843188,
+      "usage": {
+        "prompt_tokens": 30,
+        "total_tokens": 38,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "pass": true
+    },
+    {
+      "index": 22,
+      "request_id": "q36-fp32gather-color-000022",
+      "text": "blue, green, orange, red",
+      "normalized": "blue, green, orange, red",
+      "token_ids": [
+        11855,
+        11,
+        5983,
+        11,
+        18016,
+        11,
+        2438
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.14620020799338818,
+      "usage": {
+        "prompt_tokens": 30,
+        "total_tokens": 38,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "pass": true
+    },
+    {
+      "index": 23,
+      "request_id": "q36-fp32gather-color-000023",
+      "text": "blue, green, orange, red",
+      "normalized": "blue, green, orange, red",
+      "token_ids": [
+        11855,
+        11,
+        5983,
+        11,
+        18016,
+        11,
+        2438
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.1466153571382165,
+      "usage": {
+        "prompt_tokens": 30,
+        "total_tokens": 38,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "pass": true
+    },
+    {
+      "index": 24,
+      "request_id": "q36-fp32gather-color-000024",
+      "text": "blue, green, orange, red",
+      "normalized": "blue, green, orange, red",
+      "token_ids": [
+        11855,
+        11,
+        5983,
+        11,
+        18016,
+        11,
+        2438
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.14660456590354443,
+      "usage": {
+        "prompt_tokens": 30,
+        "total_tokens": 38,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "pass": true
+    },
+    {
+      "index": 25,
+      "request_id": "q36-fp32gather-color-000025",
+      "text": "blue, green, orange, red",
+      "normalized": "blue, green, orange, red",
+      "token_ids": [
+        11855,
+        11,
+        5983,
+        11,
+        18016,
+        11,
+        2438
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.1476238591130823,
+      "usage": {
+        "prompt_tokens": 30,
+        "total_tokens": 38,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "pass": true
+    },
+    {
+      "index": 26,
+      "request_id": "q36-fp32gather-color-000026",
+      "text": "blue, green, orange, red",
+      "normalized": "blue, green, orange, red",
+      "token_ids": [
+        11855,
+        11,
+        5983,
+        11,
+        18016,
+        11,
+        2438
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.14681092300452292,
+      "usage": {
+        "prompt_tokens": 30,
+        "total_tokens": 38,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "pass": true
+    },
+    {
+      "index": 27,
+      "request_id": "q36-fp32gather-color-000027",
+      "text": "blue, green, orange, red",
+      "normalized": "blue, green, orange, red",
+      "token_ids": [
+        11855,
+        11,
+        5983,
+        11,
+        18016,
+        11,
+        2438
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.14648139593191445,
+      "usage": {
+        "prompt_tokens": 30,
+        "total_tokens": 38,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "pass": true
+    },
+    {
+      "index": 28,
+      "request_id": "q36-fp32gather-color-000028",
+      "text": "blue, green, orange, red",
+      "normalized": "blue, green, orange, red",
+      "token_ids": [
+        11855,
+        11,
+        5983,
+        11,
+        18016,
+        11,
+        2438
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.1462506230454892,
+      "usage": {
+        "prompt_tokens": 30,
+        "total_tokens": 38,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "pass": true
+    },
+    {
+      "index": 29,
+      "request_id": "q36-fp32gather-color-000029",
+      "text": "blue, green, orange, red",
+      "normalized": "blue, green, orange, red",
+      "token_ids": [
+        11855,
+        11,
+        5983,
+        11,
+        18016,
+        11,
+        2438
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.14617207599803805,
+      "usage": {
+        "prompt_tokens": 30,
+        "total_tokens": 38,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "pass": true
+    },
+    {
+      "index": 30,
+      "request_id": "q36-fp32gather-color-000030",
+      "text": "blue, green, orange, red",
+      "normalized": "blue, green, orange, red",
+      "token_ids": [
+        11855,
+        11,
+        5983,
+        11,
+        18016,
+        11,
+        2438
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.14662622683681548,
+      "usage": {
+        "prompt_tokens": 30,
+        "total_tokens": 38,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "pass": true
+    },
+    {
+      "index": 31,
+      "request_id": "q36-fp32gather-color-000031",
+      "text": "blue, green, orange, red",
+      "normalized": "blue, green, orange, red",
+      "token_ids": [
+        11855,
+        11,
+        5983,
+        11,
+        18016,
+        11,
+        2438
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.1462156679481268,
+      "usage": {
+        "prompt_tokens": 30,
+        "total_tokens": 38,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "pass": true
+    },
+    {
+      "index": 32,
+      "request_id": "q36-fp32gather-color-000032",
+      "text": "blue, green, orange, red",
+      "normalized": "blue, green, orange, red",
+      "token_ids": [
+        11855,
+        11,
+        5983,
+        11,
+        18016,
+        11,
+        2438
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.14714045193977654,
+      "usage": {
+        "prompt_tokens": 30,
+        "total_tokens": 38,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "pass": true
+    },
+    {
+      "index": 33,
+      "request_id": "q36-fp32gather-color-000033",
+      "text": "blue, green, orange, red",
+      "normalized": "blue, green, orange, red",
+      "token_ids": [
+        11855,
+        11,
+        5983,
+        11,
+        18016,
+        11,
+        2438
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.14631335088051856,
+      "usage": {
+        "prompt_tokens": 30,
+        "total_tokens": 38,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "pass": true
+    },
+    {
+      "index": 34,
+      "request_id": "q36-fp32gather-color-000034",
+      "text": "blue, green, orange, red",
+      "normalized": "blue, green, orange, red",
+      "token_ids": [
+        11855,
+        11,
+        5983,
+        11,
+        18016,
+        11,
+        2438
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.14617242594249547,
+      "usage": {
+        "prompt_tokens": 30,
+        "total_tokens": 38,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "pass": true
+    },
+    {
+      "index": 35,
+      "request_id": "q36-fp32gather-color-000035",
+      "text": "blue, green, orange, red",
+      "normalized": "blue, green, orange, red",
+      "token_ids": [
+        11855,
+        11,
+        5983,
+        11,
+        18016,
+        11,
+        2438
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.1459796349518001,
+      "usage": {
+        "prompt_tokens": 30,
+        "total_tokens": 38,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "pass": true
+    },
+    {
+      "index": 36,
+      "request_id": "q36-fp32gather-color-000036",
+      "text": "blue, green, orange, red",
+      "normalized": "blue, green, orange, red",
+      "token_ids": [
+        11855,
+        11,
+        5983,
+        11,
+        18016,
+        11,
+        2438
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.14647957193665206,
+      "usage": {
+        "prompt_tokens": 30,
+        "total_tokens": 38,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "pass": true
+    },
+    {
+      "index": 37,
+      "request_id": "q36-fp32gather-color-000037",
+      "text": "blue, green, orange, red",
+      "normalized": "blue, green, orange, red",
+      "token_ids": [
+        11855,
+        11,
+        5983,
+        11,
+        18016,
+        11,
+        2438
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.1459472249262035,
+      "usage": {
+        "prompt_tokens": 30,
+        "total_tokens": 38,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "pass": true
+    },
+    {
+      "index": 38,
+      "request_id": "q36-fp32gather-color-000038",
+      "text": "blue, green, orange, red",
+      "normalized": "blue, green, orange, red",
+      "token_ids": [
+        11855,
+        11,
+        5983,
+        11,
+        18016,
+        11,
+        2438
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.14610676397569478,
+      "usage": {
+        "prompt_tokens": 30,
+        "total_tokens": 38,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "pass": true
+    },
+    {
+      "index": 39,
+      "request_id": "q36-fp32gather-color-000039",
+      "text": "blue, green, orange, red",
+      "normalized": "blue, green, orange, red",
+      "token_ids": [
+        11855,
+        11,
+        5983,
+        11,
+        18016,
+        11,
+        2438
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.14636514894664288,
+      "usage": {
+        "prompt_tokens": 30,
+        "total_tokens": 38,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "pass": true
+    },
+    {
+      "index": 40,
+      "request_id": "q36-fp32gather-color-000040",
+      "text": "blue, green, orange, red",
+      "normalized": "blue, green, orange, red",
+      "token_ids": [
+        11855,
+        11,
+        5983,
+        11,
+        18016,
+        11,
+        2438
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.14631627593189478,
+      "usage": {
+        "prompt_tokens": 30,
+        "total_tokens": 38,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "pass": true
+    },
+    {
+      "index": 41,
+      "request_id": "q36-fp32gather-color-000041",
+      "text": "blue, green, orange, red",
+      "normalized": "blue, green, orange, red",
+      "token_ids": [
+        11855,
+        11,
+        5983,
+        11,
+        18016,
+        11,
+        2438
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.14650372811593115,
+      "usage": {
+        "prompt_tokens": 30,
+        "total_tokens": 38,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "pass": true
+    },
+    {
+      "index": 42,
+      "request_id": "q36-fp32gather-color-000042",
+      "text": "blue, green, orange, red",
+      "normalized": "blue, green, orange, red",
+      "token_ids": [
+        11855,
+        11,
+        5983,
+        11,
+        18016,
+        11,
+        2438
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.1462287330068648,
+      "usage": {
+        "prompt_tokens": 30,
+        "total_tokens": 38,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "pass": true
+    },
+    {
+      "index": 43,
+      "request_id": "q36-fp32gather-color-000043",
+      "text": "blue, green, orange, red",
+      "normalized": "blue, green, orange, red",
+      "token_ids": [
+        11855,
+        11,
+        5983,
+        11,
+        18016,
+        11,
+        2438
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.14815172902308404,
+      "usage": {
+        "prompt_tokens": 30,
+        "total_tokens": 38,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "pass": true
+    },
+    {
+      "index": 44,
+      "request_id": "q36-fp32gather-color-000044",
+      "text": "blue, green, orange, red",
+      "normalized": "blue, green, orange, red",
+      "token_ids": [
+        11855,
+        11,
+        5983,
+        11,
+        18016,
+        11,
+        2438
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.1459783618338406,
+      "usage": {
+        "prompt_tokens": 30,
+        "total_tokens": 38,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "pass": true
+    },
+    {
+      "index": 45,
+      "request_id": "q36-fp32gather-color-000045",
+      "text": "blue, green, orange, red",
+      "normalized": "blue, green, orange, red",
+      "token_ids": [
+        11855,
+        11,
+        5983,
+        11,
+        18016,
+        11,
+        2438
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.14672786905430257,
+      "usage": {
+        "prompt_tokens": 30,
+        "total_tokens": 38,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "pass": true
+    },
+    {
+      "index": 46,
+      "request_id": "q36-fp32gather-color-000046",
+      "text": "blue, green, orange, red",
+      "normalized": "blue, green, orange, red",
+      "token_ids": [
+        11855,
+        11,
+        5983,
+        11,
+        18016,
+        11,
+        2438
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.14652368589304388,
+      "usage": {
+        "prompt_tokens": 30,
+        "total_tokens": 38,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "pass": true
+    },
+    {
+      "index": 47,
+      "request_id": "q36-fp32gather-color-000047",
+      "text": "blue, green, orange, red",
+      "normalized": "blue, green, orange, red",
+      "token_ids": [
+        11855,
+        11,
+        5983,
+        11,
+        18016,
+        11,
+        2438
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.14758093911223114,
+      "usage": {
+        "prompt_tokens": 30,
+        "total_tokens": 38,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "pass": true
+    },
+    {
+      "index": 48,
+      "request_id": "q36-fp32gather-color-000048",
+      "text": "blue, green, orange, red",
+      "normalized": "blue, green, orange, red",
+      "token_ids": [
+        11855,
+        11,
+        5983,
+        11,
+        18016,
+        11,
+        2438
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.14738953998312354,
+      "usage": {
+        "prompt_tokens": 30,
+        "total_tokens": 38,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "pass": true
+    },
+    {
+      "index": 49,
+      "request_id": "q36-fp32gather-color-000049",
+      "text": "blue, green, orange, red",
+      "normalized": "blue, green, orange, red",
+      "token_ids": [
+        11855,
+        11,
+        5983,
+        11,
+        18016,
+        11,
+        2438
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.14734533708542585,
+      "usage": {
+        "prompt_tokens": 30,
+        "total_tokens": 38,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "pass": true
+    },
+    {
+      "index": 50,
+      "request_id": "q36-fp32gather-color-000050",
+      "text": "blue, green, orange, red",
+      "normalized": "blue, green, orange, red",
+      "token_ids": [
+        11855,
+        11,
+        5983,
+        11,
+        18016,
+        11,
+        2438
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.14698930899612606,
+      "usage": {
+        "prompt_tokens": 30,
+        "total_tokens": 38,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "pass": true
+    },
+    {
+      "index": 51,
+      "request_id": "q36-fp32gather-color-000051",
+      "text": "blue, green, orange, red",
+      "normalized": "blue, green, orange, red",
+      "token_ids": [
+        11855,
+        11,
+        5983,
+        11,
+        18016,
+        11,
+        2438
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.14915198599919677,
+      "usage": {
+        "prompt_tokens": 30,
+        "total_tokens": 38,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "pass": true
+    },
+    {
+      "index": 52,
+      "request_id": "q36-fp32gather-color-000052",
+      "text": "blue, green, orange, red",
+      "normalized": "blue, green, orange, red",
+      "token_ids": [
+        11855,
+        11,
+        5983,
+        11,
+        18016,
+        11,
+        2438
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.1473075768444687,
+      "usage": {
+        "prompt_tokens": 30,
+        "total_tokens": 38,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "pass": true
+    },
+    {
+      "index": 53,
+      "request_id": "q36-fp32gather-color-000053",
+      "text": "blue, green, orange, red",
+      "normalized": "blue, green, orange, red",
+      "token_ids": [
+        11855,
+        11,
+        5983,
+        11,
+        18016,
+        11,
+        2438
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.1465797817800194,
+      "usage": {
+        "prompt_tokens": 30,
+        "total_tokens": 38,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "pass": true
+    },
+    {
+      "index": 54,
+      "request_id": "q36-fp32gather-color-000054",
+      "text": "blue, green, orange, red",
+      "normalized": "blue, green, orange, red",
+      "token_ids": [
+        11855,
+        11,
+        5983,
+        11,
+        18016,
+        11,
+        2438
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.1468437360599637,
+      "usage": {
+        "prompt_tokens": 30,
+        "total_tokens": 38,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "pass": true
+    },
+    {
+      "index": 55,
+      "request_id": "q36-fp32gather-color-000055",
+      "text": "blue, green hail hail hail hail0000000000000000000000000",
+      "normalized": "blue, green hail hail hail hail0000000000000000000000000",
+      "token_ids": [
+        11855,
+        11,
+        5983,
+        62082,
+        62082,
+        62082,
+        62082,
+        15,
+        15,
+        15,
+        15,
+        15,
+        15,
+        15,
+        15,
+        15,
+        15,
+        15,
+        15,
+        15,
+        15,
+        15,
+        15,
+        15,
+        15,
+        15,
+        15,
+        15,
+        15,
+        15,
+        15,
+        15
+      ],
+      "finish_reason": "length",
+      "elapsed_s": 1.1978023229166865,
+      "usage": {
+        "prompt_tokens": 30,
+        "total_tokens": 62,
+        "completion_tokens": 32,
+        "prompt_tokens_details": null
+      },
+      "pass": false
+    }
+  ]
+}

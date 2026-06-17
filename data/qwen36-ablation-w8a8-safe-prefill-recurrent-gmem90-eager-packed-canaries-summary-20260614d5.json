@@ -1,0 +1,46 @@
+{
+  "label": "w8a8-safe-prefill-recurrent-gmem90-eager-packed-canaries",
+  "stamp": "20260614d5",
+  "return_codes": {
+    "metrics": 0,
+    "json_canary": 0,
+    "color_canary": 0,
+    "quality_suite": 0
+  },
+  "artifacts": {
+    "metrics": "/home/steve/llm-optimizations/data/qwen36-ablation-w8a8-safe-prefill-recurrent-gmem90-eager-packed-canaries-p512o512-20260614d5.json",
+    "json_canary": "/home/steve/llm-optimizations/data/qwen36-ablation-w8a8-safe-prefill-recurrent-gmem90-eager-packed-canaries-json-repeat64-20260614d5.json",
+    "color_canary": "/home/steve/llm-optimizations/data/qwen36-ablation-w8a8-safe-prefill-recurrent-gmem90-eager-packed-canaries-color-repeat64-20260614d5.json",
+    "quality_suite": "/home/steve/llm-optimizations/data/qwen36-ablation-w8a8-safe-prefill-recurrent-gmem90-eager-packed-canaries-quality-suite-20260614d5.json",
+    "log": "/home/steve/llm-optimizations/data/qwen36-ablation-w8a8-safe-prefill-recurrent-gmem90-eager-packed-canaries-20260614d5.log"
+  },
+  "env": {
+    "VLLM_XPU_GDN_NATIVE_FALLBACK": "decode,prefill",
+    "VLLM_XPU_GDN_NATIVE_PREFILL_FALLBACK": null,
+    "VLLM_XPU_GDN_PREFILL_RECURRENT_FALLBACK": "1",
+    "VLLM_XPU_GDN_NATIVE_FALLBACK_INITIAL_DECODE_STEPS": null,
+    "VLLM_XPU_GDN_NATIVE_FALLBACK_DECODE_LAYERS": null,
+    "VLLM_XPU_GDN_NATIVE_FALLBACK_DECODE_MAX_LAYER": null,
+    "VLLM_XPU_GDN_NATIVE_FALLBACK_DECODE_LAYER_REGEX": null,
+    "VLLM_XPU_GDN_SYNC_BEFORE_NATIVE_DECODE": null,
+    "VLLM_XPU_GDN_SYNC_BEFORE_NATIVE_DECODE_LAYERS": null,
+    "VLLM_XPU_GREEDY_SAMPLE_TOPK_FALLBACK": null,
+    "VLLM_XPU_GREEDY_SAMPLE_XPU_FALLBACK": null,
+    "VLLM_XPU_ZERO_ALL_PREFILL_GDN_STATE": null,
+    "VLLM_XPU_DISABLE_PREFILL_CUDAGRAPH_REPLAY": null,
+    "VLLM_EXTRA_ARGS": "--enforce-eager --no-async-scheduling"
+  },
+  "metrics_summary": {},
+  "json_canary": {
+    "pass_all": true,
+    "repeats_completed": 64,
+    "mismatch_count": 0,
+    "first_mismatch": null
+  },
+  "color_canary": {
+    "pass_all": true,
+    "repeats_completed": 64,
+    "mismatch_count": 0,
+    "first_mismatch": null
+  }
+}

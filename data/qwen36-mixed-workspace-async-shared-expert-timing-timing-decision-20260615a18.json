@@ -1,0 +1,819 @@
+{
+  "decision": {
+    "family": "moe",
+    "next_target": "persistent_w8a8_moe_layerlet",
+    "rank_skew_ms": 0.47044095138888853,
+    "reason": "moe has the largest visible per-family label (moe.quant_method_total at 4.611344 ms).",
+    "runner_up": null,
+    "score_ms": 4.611344465277778,
+    "top_label": "moe.quant_method_total"
+  },
+  "decision_basis": "aggregate_exit_summary",
+  "endpoint_metrics": {
+    "decode_ms_per_generation_token_vllm_mean": 10.492439914742135,
+    "tok_s_out_client_after_first_chunk_corrected_mean": 95.31141643086656,
+    "ttft_ms_mean": null
+  },
+  "families": {
+    "moe": {
+      "label_count": 18,
+      "nonexclusive_sum_max_ms": 11.280329319444444,
+      "top_label": "moe.quant_method_total",
+      "top_label_max_ms": 4.611344465277778,
+      "top_label_rank_skew_ms": 0.47044095138888853,
+      "top_labels": [
+        {
+          "label": "moe.quant_method_total",
+          "max_ms": 4.611344465277778,
+          "mean_ms": 4.2770150920138885,
+          "rank_skew_ms": 0.47044095138888853
+        },
+        {
+          "label": "moe.shared_experts.apply_no_overlap",
+          "max_ms": 2.621235180555556,
+          "mean_ms": 2.277987547743056,
+          "rank_skew_ms": 0.4719274895833334
+        },
+        {
+          "label": "moe.apply",
+          "max_ms": 1.5927806180555555,
+          "mean_ms": 1.5850263472222221,
+          "rank_skew_ms": 0.020716510416666667
+        },
+        {
+          "label": "xpu_moe.fused_moe_call",
+          "max_ms": 1.0100144062499998,
+          "mean_ms": 1.0042103671875,
+          "rank_skew_ms": 0.012759118055555407
+        },
+        {
+          "label": "moe.internal_gate",
+          "max_ms": 0.41685157638888887,
+          "mean_ms": 0.4110487526041666,
+          "rank_skew_ms": 0.009288340277777751
+        },
+        {
+          "label": "moe.router_select",
+          "max_ms": 0.18290665972222223,
+          "mean_ms": 0.1781214548611111,
+          "rank_skew_ms": 0.008448142361111105
+        },
+        {
+          "label": "xpu_moe.workspace_scratch_get",
+          "max_ms": 0.17555018055555557,
+          "mean_ms": 0.17225887152777777,
+          "rank_skew_ms": 0.005795038194444463
+        },
+        {
+          "label": "xpu_moe.gemm1_w8a8",
+          "max_ms": 0.13801225,
+          "mean_ms": 0.13606652430555555,
+          "rank_skew_ms": 0.003836059027777783
+        },
+        {
+          "label": "xpu_moe.remap_hidden_states",
+          "max_ms": 0.13022918055555555,
+          "mean_ms": 0.1291178628472222,
+          "rank_skew_ms": 0.0029034374999999946
+        },
+        {
+          "label": "xpu_moe.gemm2_w8a8",
+          "max_ms": 0.11145778472222223,
+          "mean_ms": 0.11078871006944443,
+          "rank_skew_ms": 0.001082118055555567
+        },
+        {
+          "label": "xpu_moe.gemm1_quant",
+          "max_ms": 0.06398780555555555,
+          "mean_ms": 0.06239396267361111,
+          "rank_skew_ms": 0.0024285381944444476
+        },
+        {
+          "label": "xpu_moe.activation",
+          "max_ms": 0.05614956944444444,
+          "mean_ms": 0.05532657378472222,
+          "rank_skew_ms": 0.0011977569444444405
+        }
+      ]
+    }
+  },
+  "families_ranked": [
+    [
+      "moe",
+      {
+        "label_count": 18,
+        "nonexclusive_sum_max_ms": 11.280329319444444,
+        "top_label": "moe.quant_method_total",
+        "top_label_max_ms": 4.611344465277778,
+        "top_label_rank_skew_ms": 0.47044095138888853,
+        "top_labels": [
+          {
+            "label": "moe.quant_method_total",
+            "max_ms": 4.611344465277778,
+            "mean_ms": 4.2770150920138885,
+            "rank_skew_ms": 0.47044095138888853
+          },
+          {
+            "label": "moe.shared_experts.apply_no_overlap",
+            "max_ms": 2.621235180555556,
+            "mean_ms": 2.277987547743056,
+            "rank_skew_ms": 0.4719274895833334
+          },
+          {
+            "label": "moe.apply",
+            "max_ms": 1.5927806180555555,
+            "mean_ms": 1.5850263472222221,
+            "rank_skew_ms": 0.020716510416666667
+          },
+          {
+            "label": "xpu_moe.fused_moe_call",
+            "max_ms": 1.0100144062499998,
+            "mean_ms": 1.0042103671875,
+            "rank_skew_ms": 0.012759118055555407
+          },
+          {
+            "label": "moe.internal_gate",
+            "max_ms": 0.41685157638888887,
+            "mean_ms": 0.4110487526041666,
+            "rank_skew_ms": 0.009288340277777751
+          },
+          {
+            "label": "moe.router_select",
+            "max_ms": 0.18290665972222223,
+            "mean_ms": 0.1781214548611111,
+            "rank_skew_ms": 0.008448142361111105
+          },
+          {
+            "label": "xpu_moe.workspace_scratch_get",
+            "max_ms": 0.17555018055555557,
+            "mean_ms": 0.17225887152777777,
+            "rank_skew_ms": 0.005795038194444463
+          },
+          {
+            "label": "xpu_moe.gemm1_w8a8",
+            "max_ms": 0.13801225,
+            "mean_ms": 0.13606652430555555,
+            "rank_skew_ms": 0.003836059027777783
+          },
+          {
+            "label": "xpu_moe.remap_hidden_states",
+            "max_ms": 0.13022918055555555,
+            "mean_ms": 0.1291178628472222,
+            "rank_skew_ms": 0.0029034374999999946
+          },
+          {
+            "label": "xpu_moe.gemm2_w8a8",
+            "max_ms": 0.11145778472222223,
+            "mean_ms": 0.11078871006944443,
+            "rank_skew_ms": 0.001082118055555567
+          },
+          {
+            "label": "xpu_moe.gemm1_quant",
+            "max_ms": 0.06398780555555555,
+            "mean_ms": 0.06239396267361111,
+            "rank_skew_ms": 0.0024285381944444476
+          },
+          {
+            "label": "xpu_moe.activation",
+            "max_ms": 0.05614956944444444,
+            "mean_ms": 0.05532657378472222,
+            "rank_skew_ms": 0.0011977569444444405
+          }
+        ]
+      }
+    ]
+  ],
+  "metrics_path": "/home/steve/llm-optimizations/data/qwen36-mixed-workspace-async-shared-expert-timing-p512o256-20260615a18.json",
+  "source_log": "/home/steve/llm-optimizations/data/qwen36-mixed-workspace-async-shared-expert-timing-20260615a18.log",
+  "summary_path": "/home/steve/llm-optimizations/data/qwen36-mixed-workspace-async-shared-expert-timing-timing-summary-20260615a18.json",
+  "top_labels": [
+    {
+      "family": "runtime",
+      "is_wrapper": true,
+      "label": "gpu_model_runner.forward_total",
+      "max_ms": 5.821587701388889,
+      "mean_ms": 5.593283246527778,
+      "median_ms": 5.527565548611111,
+      "min_ms": 5.4964141875,
+      "rank_count": 4,
+      "rank_skew_ms": 0.32517351388888915,
+      "row_count": 4
+    },
+    {
+      "family": "runtime",
+      "is_wrapper": true,
+      "label": "gpu_model_runner.model_forward",
+      "max_ms": 5.767066364583333,
+      "mean_ms": 5.539622798611111,
+      "median_ms": 5.4740263038194445,
+      "min_ms": 5.443372222222222,
+      "rank_count": 4,
+      "rank_skew_ms": 0.32369414236111105,
+      "row_count": 4
+    },
+    {
+      "family": "moe",
+      "is_wrapper": false,
+      "label": "moe.quant_method_total",
+      "max_ms": 4.611344465277778,
+      "mean_ms": 4.2770150920138885,
+      "median_ms": 4.177906194444445,
+      "min_ms": 4.140903513888889,
+      "rank_count": 4,
+      "rank_skew_ms": 0.47044095138888853,
+      "row_count": 4
+    },
+    {
+      "family": "moe",
+      "is_wrapper": false,
+      "label": "moe.shared_experts.apply_no_overlap",
+      "max_ms": 2.621235180555556,
+      "mean_ms": 2.277987547743056,
+      "median_ms": 2.1707036597222222,
+      "min_ms": 2.1493076909722224,
+      "rank_count": 4,
+      "rank_skew_ms": 0.4719274895833334,
+      "row_count": 4
+    },
+    {
+      "family": "moe",
+      "is_wrapper": false,
+      "label": "moe.apply",
+      "max_ms": 1.5927806180555555,
+      "mean_ms": 1.5850263472222221,
+      "median_ms": 1.587630331597222,
+      "min_ms": 1.5720641076388888,
+      "rank_count": 4,
+      "rank_skew_ms": 0.020716510416666667,
+      "row_count": 4
+    },
+    {
+      "family": "moe",
+      "is_wrapper": false,
+      "label": "xpu_moe.fused_moe_call",
+      "max_ms": 1.0100144062499998,
+      "mean_ms": 1.0042103671875,
+      "median_ms": 1.0047858871527777,
+      "min_ms": 0.9972552881944444,
+      "rank_count": 4,
+      "rank_skew_ms": 0.012759118055555407,
+      "row_count": 4
+    },
+    {
+      "family": "moe",
+      "is_wrapper": false,
+      "label": "moe.internal_gate",
+      "max_ms": 0.41685157638888887,
+      "mean_ms": 0.4110487526041666,
+      "median_ms": 0.4098900989583333,
+      "min_ms": 0.4075632361111111,
+      "rank_count": 4,
+      "rank_skew_ms": 0.009288340277777751,
+      "row_count": 4
+    },
+    {
+      "family": "moe",
+      "is_wrapper": false,
+      "label": "moe.router_select",
+      "max_ms": 0.18290665972222223,
+      "mean_ms": 0.1781214548611111,
+      "median_ms": 0.17756032118055554,
+      "min_ms": 0.17445851736111112,
+      "rank_count": 4,
+      "rank_skew_ms": 0.008448142361111105,
+      "row_count": 4
+    },
+    {
+      "family": "moe",
+      "is_wrapper": false,
+      "label": "xpu_moe.workspace_scratch_get",
+      "max_ms": 0.17555018055555557,
+      "mean_ms": 0.17225887152777777,
+      "median_ms": 0.17186508159722222,
+      "min_ms": 0.1697551423611111,
+      "rank_count": 4,
+      "rank_skew_ms": 0.005795038194444463,
+      "row_count": 4
+    },
+    {
+      "family": "moe",
+      "is_wrapper": false,
+      "label": "xpu_moe.gemm1_w8a8",
+      "max_ms": 0.13801225,
+      "mean_ms": 0.13606652430555555,
+      "median_ms": 0.136038828125,
+      "min_ms": 0.13417619097222222,
+      "rank_count": 4,
+      "rank_skew_ms": 0.003836059027777783,
+      "row_count": 4
+    },
+    {
+      "family": "moe",
+      "is_wrapper": false,
+      "label": "xpu_moe.remap_hidden_states",
+      "max_ms": 0.13022918055555555,
+      "mean_ms": 0.1291178628472222,
+      "median_ms": 0.1294582638888889,
+      "min_ms": 0.12732574305555555,
+      "rank_count": 4,
+      "rank_skew_ms": 0.0029034374999999946,
+      "row_count": 4
+    },
+    {
+      "family": "moe",
+      "is_wrapper": false,
+      "label": "xpu_moe.gemm2_w8a8",
+      "max_ms": 0.11145778472222223,
+      "mean_ms": 0.11078871006944443,
+      "median_ms": 0.11066069444444443,
+      "min_ms": 0.11037566666666666,
+      "rank_count": 4,
+      "rank_skew_ms": 0.001082118055555567,
+      "row_count": 4
+    },
+    {
+      "family": "moe",
+      "is_wrapper": false,
+      "label": "xpu_moe.gemm1_quant",
+      "max_ms": 0.06398780555555555,
+      "mean_ms": 0.06239396267361111,
+      "median_ms": 0.06201438888888888,
+      "min_ms": 0.06155926736111111,
+      "rank_count": 4,
+      "rank_skew_ms": 0.0024285381944444476,
+      "row_count": 4
+    },
+    {
+      "family": "moe",
+      "is_wrapper": false,
+      "label": "xpu_moe.activation",
+      "max_ms": 0.05614956944444444,
+      "mean_ms": 0.05532657378472222,
+      "median_ms": 0.055102456597222224,
+      "min_ms": 0.0549518125,
+      "rank_count": 4,
+      "rank_skew_ms": 0.0011977569444444405,
+      "row_count": 4
+    },
+    {
+      "family": "moe",
+      "is_wrapper": false,
+      "label": "xpu_moe.gather",
+      "max_ms": 0.05591097222222222,
+      "mean_ms": 0.054922467881944444,
+      "median_ms": 0.05477201041666667,
+      "min_ms": 0.05423487847222222,
+      "rank_count": 4,
+      "rank_skew_ms": 0.001676093750000003,
+      "row_count": 4
+    },
+    {
+      "family": "moe",
+      "is_wrapper": false,
+      "label": "xpu_moe.gemm2_quant",
+      "max_ms": 0.05314096527777778,
+      "mean_ms": 0.05180916232638889,
+      "median_ms": 0.05164421875,
+      "min_ms": 0.05080724652777777,
+      "rank_count": 4,
+      "rank_skew_ms": 0.002333718750000005,
+      "row_count": 4
+    },
+    {
+      "family": "moe",
+      "is_wrapper": false,
+      "label": "moe.shared_experts.determine_apply_order",
+      "max_ms": 0.022124135416666666,
+      "mean_ms": 0.020070691840277776,
+      "median_ms": 0.019715039930555553,
+      "min_ms": 0.018728552083333336,
+      "rank_count": 4,
+      "rank_skew_ms": 0.0033955833333333303,
+      "row_count": 4
+    },
+    {
+      "family": "moe",
+      "is_wrapper": false,
+      "label": "moe.shared_experts.determine_sync_order",
+      "max_ms": 0.017001746527777778,
+      "mean_ms": 0.01573371875,
+      "median_ms": 0.01543477951388889,
+      "min_ms": 0.015063569444444444,
+      "rank_count": 4,
+      "rank_skew_ms": 0.0019381770833333343,
+      "row_count": 4
+    },
+    {
+      "family": "moe",
+      "is_wrapper": false,
+      "label": "moe.dispatch",
+      "max_ms": 0.011299364583333334,
+      "mean_ms": 0.009645578125,
+      "median_ms": 0.009431715277777777,
+      "min_ms": 0.008419517361111111,
+      "rank_count": 4,
+      "rank_skew_ms": 0.002879847222222223,
+      "row_count": 4
+    },
+    {
+      "family": "moe",
+      "is_wrapper": false,
+      "label": "moe.combine",
+      "max_ms": 0.010332458333333332,
+      "mean_ms": 0.008834328124999999,
+      "median_ms": 0.008432413194444443,
+      "min_ms": 0.008140027777777777,
+      "rank_count": 4,
+      "rank_skew_ms": 0.002192430555555555,
+      "row_count": 4
+    }
+  ],
+  "views": {
+    "aggregate_exit_summary": {
+      "families": {
+        "moe": {
+          "label_count": 18,
+          "nonexclusive_sum_max_ms": 11.280329319444444,
+          "top_label": "moe.quant_method_total",
+          "top_label_max_ms": 4.611344465277778,
+          "top_label_rank_skew_ms": 0.47044095138888853,
+          "top_labels": [
+            {
+              "label": "moe.quant_method_total",
+              "max_ms": 4.611344465277778,
+              "mean_ms": 4.2770150920138885,
+              "rank_skew_ms": 0.47044095138888853
+            },
+            {
+              "label": "moe.shared_experts.apply_no_overlap",
+              "max_ms": 2.621235180555556,
+              "mean_ms": 2.277987547743056,
+              "rank_skew_ms": 0.4719274895833334
+            },
+            {
+              "label": "moe.apply",
+              "max_ms": 1.5927806180555555,
+              "mean_ms": 1.5850263472222221,
+              "rank_skew_ms": 0.020716510416666667
+            },
+            {
+              "label": "xpu_moe.fused_moe_call",
+              "max_ms": 1.0100144062499998,
+              "mean_ms": 1.0042103671875,
+              "rank_skew_ms": 0.012759118055555407
+            },
+            {
+              "label": "moe.internal_gate",
+              "max_ms": 0.41685157638888887,
+              "mean_ms": 0.4110487526041666,
+              "rank_skew_ms": 0.009288340277777751
+            },
+            {
+              "label": "moe.router_select",
+              "max_ms": 0.18290665972222223,
+              "mean_ms": 0.1781214548611111,
+              "rank_skew_ms": 0.008448142361111105
+            },
+            {
+              "label": "xpu_moe.workspace_scratch_get",
+              "max_ms": 0.17555018055555557,
+              "mean_ms": 0.17225887152777777,
+              "rank_skew_ms": 0.005795038194444463
+            },
+            {
+              "label": "xpu_moe.gemm1_w8a8",
+              "max_ms": 0.13801225,
+              "mean_ms": 0.13606652430555555,
+              "rank_skew_ms": 0.003836059027777783
+            },
+            {
+              "label": "xpu_moe.remap_hidden_states",
+              "max_ms": 0.13022918055555555,
+              "mean_ms": 0.1291178628472222,
+              "rank_skew_ms": 0.0029034374999999946
+            },
+            {
+              "label": "xpu_moe.gemm2_w8a8",
+              "max_ms": 0.11145778472222223,
+              "mean_ms": 0.11078871006944443,
+              "rank_skew_ms": 0.001082118055555567
+            },
+            {
+              "label": "xpu_moe.gemm1_quant",
+              "max_ms": 0.06398780555555555,
+              "mean_ms": 0.06239396267361111,
+              "rank_skew_ms": 0.0024285381944444476
+            },
+            {
+              "label": "xpu_moe.activation",
+              "max_ms": 0.05614956944444444,
+              "mean_ms": 0.05532657378472222,
+              "rank_skew_ms": 0.0011977569444444405
+            }
+          ]
+        }
+      },
+      "top_labels": [
+        {
+          "family": "runtime",
+          "is_wrapper": true,
+          "label": "gpu_model_runner.forward_total",
+          "max_ms": 5.821587701388889,
+          "mean_ms": 5.593283246527778,
+          "median_ms": 5.527565548611111,
+          "min_ms": 5.4964141875,
+          "rank_count": 4,
+          "rank_skew_ms": 0.32517351388888915,
+          "row_count": 4
+        },
+        {
+          "family": "runtime",
+          "is_wrapper": true,
+          "label": "gpu_model_runner.model_forward",
+          "max_ms": 5.767066364583333,
+          "mean_ms": 5.539622798611111,
+          "median_ms": 5.4740263038194445,
+          "min_ms": 5.443372222222222,
+          "rank_count": 4,
+          "rank_skew_ms": 0.32369414236111105,
+          "row_count": 4
+        },
+        {
+          "family": "moe",
+          "is_wrapper": false,
+          "label": "moe.quant_method_total",
+          "max_ms": 4.611344465277778,
+          "mean_ms": 4.2770150920138885,
+          "median_ms": 4.177906194444445,
+          "min_ms": 4.140903513888889,
+          "rank_count": 4,
+          "rank_skew_ms": 0.47044095138888853,
+          "row_count": 4
+        },
+        {
+          "family": "moe",
+          "is_wrapper": false,
+          "label": "moe.shared_experts.apply_no_overlap",
+          "max_ms": 2.621235180555556,
+          "mean_ms": 2.277987547743056,
+          "median_ms": 2.1707036597222222,
+          "min_ms": 2.1493076909722224,
+          "rank_count": 4,
+          "rank_skew_ms": 0.4719274895833334,
+          "row_count": 4
+        },
+        {
+          "family": "moe",
+          "is_wrapper": false,
+          "label": "moe.apply",
+          "max_ms": 1.5927806180555555,
+          "mean_ms": 1.5850263472222221,
+          "median_ms": 1.587630331597222,
+          "min_ms": 1.5720641076388888,
+          "rank_count": 4,
+          "rank_skew_ms": 0.020716510416666667,
+          "row_count": 4
+        },
+        {
+          "family": "moe",
+          "is_wrapper": false,
+          "label": "xpu_moe.fused_moe_call",
+          "max_ms": 1.0100144062499998,
+          "mean_ms": 1.0042103671875,
+          "median_ms": 1.0047858871527777,
+          "min_ms": 0.9972552881944444,
+          "rank_count": 4,
+          "rank_skew_ms": 0.012759118055555407,
+          "row_count": 4
+        },
+        {
+          "family": "moe",
+          "is_wrapper": false,
+          "label": "moe.internal_gate",
+          "max_ms": 0.41685157638888887,
+          "mean_ms": 0.4110487526041666,
+          "median_ms": 0.4098900989583333,
+          "min_ms": 0.4075632361111111,
+          "rank_count": 4,
+          "rank_skew_ms": 0.009288340277777751,
+          "row_count": 4
+        },
+        {
+          "family": "moe",
+          "is_wrapper": false,
+          "label": "moe.router_select",
+          "max_ms": 0.18290665972222223,
+          "mean_ms": 0.1781214548611111,
+          "median_ms": 0.17756032118055554,
+          "min_ms": 0.17445851736111112,
+          "rank_count": 4,
+          "rank_skew_ms": 0.008448142361111105,
+          "row_count": 4
+        },
+        {
+          "family": "moe",
+          "is_wrapper": false,
+          "label": "xpu_moe.workspace_scratch_get",
+          "max_ms": 0.17555018055555557,
+          "mean_ms": 0.17225887152777777,
+          "median_ms": 0.17186508159722222,
+          "min_ms": 0.1697551423611111,
+          "rank_count": 4,
+          "rank_skew_ms": 0.005795038194444463,
+          "row_count": 4
+        },
+        {
+          "family": "moe",
+          "is_wrapper": false,
+          "label": "xpu_moe.gemm1_w8a8",
+          "max_ms": 0.13801225,
+          "mean_ms": 0.13606652430555555,
+          "median_ms": 0.136038828125,
+          "min_ms": 0.13417619097222222,
+          "rank_count": 4,
+          "rank_skew_ms": 0.003836059027777783,
+          "row_count": 4
+        },
+        {
+          "family": "moe",
+          "is_wrapper": false,
+          "label": "xpu_moe.remap_hidden_states",
+          "max_ms": 0.13022918055555555,
+          "mean_ms": 0.1291178628472222,
+          "median_ms": 0.1294582638888889,
+          "min_ms": 0.12732574305555555,
+          "rank_count": 4,
+          "rank_skew_ms": 0.0029034374999999946,
+          "row_count": 4
+        },
+        {
+          "family": "moe",
+          "is_wrapper": false,
+          "label": "xpu_moe.gemm2_w8a8",
+          "max_ms": 0.11145778472222223,
+          "mean_ms": 0.11078871006944443,
+          "median_ms": 0.11066069444444443,
+          "min_ms": 0.11037566666666666,
+          "rank_count": 4,
+          "rank_skew_ms": 0.001082118055555567,
+          "row_count": 4
+        },
+        {
+          "family": "moe",
+          "is_wrapper": false,
+          "label": "xpu_moe.gemm1_quant",
+          "max_ms": 0.06398780555555555,
+          "mean_ms": 0.06239396267361111,
+          "median_ms": 0.06201438888888888,
+          "min_ms": 0.06155926736111111,
+          "rank_count": 4,
+          "rank_skew_ms": 0.0024285381944444476,
+          "row_count": 4
+        },
+        {
+          "family": "moe",
+          "is_wrapper": false,
+          "label": "xpu_moe.activation",
+          "max_ms": 0.05614956944444444,
+          "mean_ms": 0.05532657378472222,
+          "median_ms": 0.055102456597222224,
+          "min_ms": 0.0549518125,
+          "rank_count": 4,
+          "rank_skew_ms": 0.0011977569444444405,
+          "row_count": 4
+        },
+        {
+          "family": "moe",
+          "is_wrapper": false,
+          "label": "xpu_moe.gather",
+          "max_ms": 0.05591097222222222,
+          "mean_ms": 0.054922467881944444,
+          "median_ms": 0.05477201041666667,
+          "min_ms": 0.05423487847222222,
+          "rank_count": 4,
+          "rank_skew_ms": 0.001676093750000003,
+          "row_count": 4
+        },
+        {
+          "family": "moe",
+          "is_wrapper": false,
+          "label": "xpu_moe.gemm2_quant",
+          "max_ms": 0.05314096527777778,
+          "mean_ms": 0.05180916232638889,
+          "median_ms": 0.05164421875,
+          "min_ms": 0.05080724652777777,
+          "rank_count": 4,
+          "rank_skew_ms": 0.002333718750000005,
+          "row_count": 4
+        },
+        {
+          "family": "moe",
+          "is_wrapper": false,
+          "label": "moe.shared_experts.determine_apply_order",
+          "max_ms": 0.022124135416666666,
+          "mean_ms": 0.020070691840277776,
+          "median_ms": 0.019715039930555553,
+          "min_ms": 0.018728552083333336,
+          "rank_count": 4,
+          "rank_skew_ms": 0.0033955833333333303,
+          "row_count": 4
+        },
+        {
+          "family": "moe",
+          "is_wrapper": false,
+          "label": "moe.shared_experts.determine_sync_order",
+          "max_ms": 0.017001746527777778,
+          "mean_ms": 0.01573371875,
+          "median_ms": 0.01543477951388889,
+          "min_ms": 0.015063569444444444,
+          "rank_count": 4,
+          "rank_skew_ms": 0.0019381770833333343,
+          "row_count": 4
+        },
+        {
+          "family": "moe",
+          "is_wrapper": false,
+          "label": "moe.dispatch",
+          "max_ms": 0.011299364583333334,
+          "mean_ms": 0.009645578125,
+          "median_ms": 0.009431715277777777,
+          "min_ms": 0.008419517361111111,
+          "rank_count": 4,
+          "rank_skew_ms": 0.002879847222222223,
+          "row_count": 4
+        },
+        {
+          "family": "moe",
+          "is_wrapper": false,
+          "label": "moe.combine",
+          "max_ms": 0.010332458333333332,
+          "mean_ms": 0.008834328124999999,
+          "median_ms": 0.008432413194444443,
+          "min_ms": 0.008140027777777777,
+          "rank_count": 4,
+          "rank_skew_ms": 0.002192430555555555,
+          "row_count": 4
+        }
+      ]
+    },
+    "step_rank_summary": {
+      "families": {},
+      "top_labels": [
+        {
+          "family": "runtime",
+          "is_wrapper": true,
+          "label": "gpu_model_runner.forward_total",
+          "max_ms": 5.328700888888889,
+          "mean_ms": 5.050155291666667,
+          "median_ms": 4.964826416666667,
+          "min_ms": 4.942267444444444,
+          "rank_count": 4,
+          "rank_skew_ms": 0.38643344444444505,
+          "row_count": 4
+        },
+        {
+          "family": "runtime",
+          "is_wrapper": true,
+          "label": "gpu_model_runner.model_forward",
+          "max_ms": 5.272233277777778,
+          "mean_ms": 4.9950767222222225,
+          "median_ms": 4.910117638888889,
+          "min_ms": 4.887838333333333,
+          "rank_count": 4,
+          "rank_skew_ms": 0.3843949444444448,
+          "row_count": 4
+        }
+      ]
+    },
+    "step_summary": {
+      "families": {},
+      "top_labels": [
+        {
+          "family": "runtime",
+          "is_wrapper": true,
+          "label": "gpu_model_runner.forward_total",
+          "max_ms": 5.050155291666666,
+          "mean_ms": 5.050155291666666,
+          "median_ms": 5.050155291666666,
+          "min_ms": 5.050155291666666,
+          "rank_count": 0,
+          "rank_skew_ms": 0.0,
+          "row_count": 1
+        },
+        {
+          "family": "runtime",
+          "is_wrapper": true,
+          "label": "gpu_model_runner.model_forward",
+          "max_ms": 4.9950767222222225,
+          "mean_ms": 4.9950767222222225,
+          "median_ms": 4.9950767222222225,
+          "min_ms": 4.9950767222222225,
+          "rank_count": 0,
+          "rank_skew_ms": 0.0,
+          "row_count": 1
+        }
+      ]
+    }
+  },
+  "warning": "Timing labels are nested and non-exclusive; use this as a routing signal only."
+}

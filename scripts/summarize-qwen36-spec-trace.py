@@ -341,11 +341,18 @@ def summarize_quality_artifact(label: str, path: Path) -> dict[str, Any]:
     repeat_case = data.get("repeat_case") or {}
     repeat_runs = repeat_case.get("runs") or []
     token_trace_cases = list(data.get("cases") or [])
-    request_ids = [
-        case.get("request_id") or case.get("response_id")
-        for case in token_trace_cases
-        if case.get("request_id") or case.get("response_id")
-    ]
+    request_ids = []
+    cases_with_any_request_id = 0
+    for case in token_trace_cases:
+        # Scheduler trace IDs are derived from the vLLM response ID (for
+        # completions, e.g. ``cmpl-...-0-<suffix>``). Some artifacts also store
+        # the caller-provided request_id; counting both doubles the artifact
+        # request count and makes joinability gates fail even when prefix
+        # joining is possible.
+        join_id = case.get("response_id") or case.get("request_id")
+        if join_id:
+            cases_with_any_request_id += 1
+            request_ids.append(str(join_id))
     starts = [
         float(case["request_started_at_unix"])
         for case in token_trace_cases
@@ -368,7 +375,10 @@ def summarize_quality_artifact(label: str, path: Path) -> dict[str, Any]:
         "repeat_repeats": repeat_case.get("repeats") or len(repeat_runs),
         "long_context_pass": (data.get("long_context_case") or {}).get("pass"),
         "token_trace_cases": len(token_trace_cases),
-        "has_request_ids": len(request_ids) == len(token_trace_cases) and bool(token_trace_cases),
+        "has_request_ids": (
+            cases_with_any_request_id == len(token_trace_cases)
+            and bool(token_trace_cases)
+        ),
         "request_ids": request_ids,
         "has_request_timestamps": (
             len(starts) == len(token_trace_cases)

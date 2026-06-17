@@ -1,0 +1,277 @@
+(APIServer pid=2560230) INFO 06-14 22:04:48 [utils.py:299] 
+(APIServer pid=2560230) INFO 06-14 22:04:48 [utils.py:299]        █     █     █▄   ▄█
+(APIServer pid=2560230) INFO 06-14 22:04:48 [utils.py:299]  ▄▄ ▄█ █     █     █ ▀▄▀ █  version 0.20.2rc1.dev2+gc51df4300.d20260523
+(APIServer pid=2560230) INFO 06-14 22:04:48 [utils.py:299]   █▄█▀ █     █     █     █  model   /mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118
+(APIServer pid=2560230) INFO 06-14 22:04:48 [utils.py:299]    ▀▀  ▀▀▀▀▀ ▀▀▀▀▀ ▀     ▀
+(APIServer pid=2560230) INFO 06-14 22:04:48 [utils.py:299] 
+(APIServer pid=2560230) INFO 06-14 22:04:48 [utils.py:233] non-default args: {'model_tag': '/mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118', 'host': '127.0.0.1', 'port': 18080, 'model': '/mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118', 'trust_remote_code': True, 'max_model_len': 32768, 'quantization': 'quark', 'served_model_name': ['qwen36-35b-a3b-fp8'], 'generation_config': 'vllm', 'distributed_executor_backend': 'mp', 'tensor_parallel_size': 4, 'gpu_memory_utilization': 0.9, 'enable_prefix_caching': False, 'language_model_only': True, 'max_num_batched_tokens': 8192, 'max_num_seqs': 48, 'async_scheduling': False, 'compilation_config': {'mode': None, 'debug_dump_path': None, 'cache_dir': '', 'compile_cache_save_format': 'binary', 'backend': 'inductor', 'custom_ops': [], 'ir_enable_torch_wrap': None, 'splitting_ops': None, 'compile_mm_encoder': False, 'cudagraph_mm_encoder': False, 'encoder_cudagraph_token_budgets': [], 'encoder_cudagraph_max_vision_items_per_batch': 0, 'encoder_cudagraph_max_frames_per_batch': None, 'compile_sizes': None, 'compile_ranges_endpoints': None, 'inductor_compile_config': {'enable_auto_functionalized_v2': False, 'size_asserts': False, 'alignment_asserts': False, 'scalar_asserts': False, 'combo_kernels': True, 'benchmark_combo_kernel': True}, 'inductor_passes': {}, 'cudagraph_mode': <CUDAGraphMode.PIECEWISE: 1>, 'cudagraph_num_of_warmups': 0, 'cudagraph_capture_sizes': None, 'cudagraph_copy_inputs': False, 'cudagraph_specialize_lora': True, 'use_inductor_graph_partition': None, 'pass_config': {}, 'max_cudagraph_capture_size': None, 'dynamic_shapes_config': {'type': <DynamicShapesType.BACKED: 'backed'>, 'evaluate_guards': False, 'assume_32_bit_indexing': False}, 'local_cache_dir': None, 'fast_moe_cold_start': None, 'static_all_moe_layers': []}}
+(APIServer pid=2560230) WARNING 06-14 22:04:48 [envs.py:1923] Unknown vLLM environment variable detected: VLLM_XPU_ZERO_FRESH_GDN_STATE
+(APIServer pid=2560230) WARNING 06-14 22:04:48 [envs.py:1923] Unknown vLLM environment variable detected: VLLM_XPU_FORCE_QUARK_REPACK
+(APIServer pid=2560230) WARNING 06-14 22:04:48 [envs.py:1923] Unknown vLLM environment variable detected: VLLM_EXTRA_ARGS
+(APIServer pid=2560230) WARNING 06-14 22:04:48 [envs.py:1923] Unknown vLLM environment variable detected: VLLM_XPU_GDN_NATIVE_FALLBACK
+(APIServer pid=2560230) WARNING 06-14 22:04:48 [envs.py:1923] Unknown vLLM environment variable detected: VLLM_XPU_FORCE_GRAPH_WITH_COMM
+(APIServer pid=2560230) WARNING 06-14 22:04:48 [envs.py:1923] Unknown vLLM environment variable detected: VLLM_XPU_CUSTOM_ALLREDUCE_CLONE_INPUT
+(APIServer pid=2560230) WARNING 06-14 22:04:48 [envs.py:1923] Unknown vLLM environment variable detected: VLLM_XPU_COMPILE_ALLREDUCE_CUSTOM_OP
+(APIServer pid=2560230) WARNING 06-14 22:04:48 [envs.py:1923] Unknown vLLM environment variable detected: VLLM_XPU_GDN_SYNC_BEFORE_NATIVE_DECODE
+(APIServer pid=2560230) WARNING 06-14 22:04:48 [envs.py:1923] Unknown vLLM environment variable detected: VLLM_XPU_USE_CUSTOM_OP_COLLECTIVES
+(APIServer pid=2560230) WARNING 06-14 22:04:48 [envs.py:1923] Unknown vLLM environment variable detected: VLLM_XPU_GRAPH_NOOP_COMM_CAPTURE
+(APIServer pid=2560230) WARNING 06-14 22:04:48 [envs.py:1923] Unknown vLLM environment variable detected: VLLM_XPU_GDN_PREFILL_RECURRENT_FALLBACK
+(APIServer pid=2560230) WARNING 06-14 22:04:48 [envs.py:1923] Unknown vLLM environment variable detected: VLLM_XPU_CUSTOM_ALLREDUCE_GRAPH_CLONE_INPUT
+(APIServer pid=2560230) WARNING 06-14 22:04:48 [envs.py:1923] Unknown vLLM environment variable detected: VLLM_XPU_QUARK_W8A8_MOE
+(APIServer pid=2560230) WARNING 06-14 22:04:48 [envs.py:1923] Unknown vLLM environment variable detected: VLLM_XPU_DISABLE_PREFILL_CUDAGRAPH_REPLAY
+(APIServer pid=2560230) WARNING 06-14 22:04:48 [envs.py:1923] Unknown vLLM environment variable detected: VLLM_XPU_GREEDY_SAMPLE_TOPK_FALLBACK
+(APIServer pid=2560230) WARNING 06-14 22:04:48 [envs.py:1923] Unknown vLLM environment variable detected: VLLM_USE_V1
+(APIServer pid=2560230) INFO 06-14 22:04:48 [model.py:563] Resolved architecture: Qwen3_5MoeForConditionalGeneration
+(APIServer pid=2560230) INFO 06-14 22:04:48 [model.py:1692] Using max model len 32768
+(APIServer pid=2560230) INFO 06-14 22:04:49 [nixl_utils.py:20] Setting UCX_RCACHE_MAX_UNRELEASED to '1024' to avoid a rare memory leak in UCX when using NIXL.
+(APIServer pid=2560230) WARNING 06-14 22:04:49 [nixl_utils.py:34] NIXL is not available
+(APIServer pid=2560230) WARNING 06-14 22:04:49 [nixl_utils.py:44] NIXL agent config is not available
+(APIServer pid=2560230) INFO 06-14 22:04:49 [scheduler.py:239] Chunked prefill is enabled with max_num_batched_tokens=8192.
+(APIServer pid=2560230) INFO 06-14 22:04:49 [vllm.py:844] Asynchronous scheduling is disabled.
+(APIServer pid=2560230) INFO 06-14 22:04:49 [kernel.py:210] Final IR op priority after setting platform defaults: IrOpPriorityConfig(rms_norm=['native'], fused_add_rms_norm=['native'])
+(APIServer pid=2560230) WARNING 06-14 22:04:49 [xpu.py:208] Forcing XPU Graph with communication ops because VLLM_XPU_FORCE_GRAPH_WITH_COMM=1.
+(APIServer pid=2560230) [transformers] `Qwen2VLImageProcessorFast` is deprecated. The `Fast` suffix for image processors has been removed; use `Qwen2VLImageProcessor` instead.
+(APIServer pid=2560230) INFO 06-14 22:04:51 [registry.py:126] All limits of multimodal modalities supported by the model are set to 0, running in text-only mode.
+WARNING 06-14 22:04:55 [nixl_utils.py:34] NIXL is not available
+WARNING 06-14 22:04:55 [nixl_utils.py:44] NIXL agent config is not available
+(EngineCore pid=2560357) INFO 06-14 22:04:56 [core.py:246] Initializing a V1 LLM engine (v0.20.2rc1.dev2+gc51df4300.d20260523) with config: model='/mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118', speculative_config=None, tokenizer='/mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118', skip_tokenizer_init=False, tokenizer_mode=auto, revision=None, tokenizer_revision=None, trust_remote_code=True, dtype=torch.bfloat16, max_seq_len=32768, download_dir=None, load_format=auto, tensor_parallel_size=4, pipeline_parallel_size=1, data_parallel_size=1, decode_context_parallel_size=1, dcp_comm_backend=ag_rs, disable_custom_all_reduce=True, quantization=quark, quantization_config=None, enforce_eager=False, enable_return_routed_experts=False, kv_cache_dtype=auto, device_config=xpu, structured_outputs_config=StructuredOutputsConfig(backend='auto', disable_any_whitespace=False, disable_additional_properties=False, reasoning_parser='', reasoning_parser_plugin='', enable_in_reasoning=False), observability_config=ObservabilityConfig(show_hidden_metrics_for_version=None, otlp_traces_endpoint=None, collect_detailed_traces=None, kv_cache_metrics=False, kv_cache_metrics_sample=0.01, cudagraph_metrics=False, enable_layerwise_nvtx_tracing=False, enable_mfu_metrics=False, enable_mm_processor_stats=False, enable_logging_iteration_details=False), seed=0, served_model_name=qwen36-35b-a3b-fp8, enable_prefix_caching=False, enable_chunked_prefill=True, pooler_config=None, compilation_config={'mode': <CompilationMode.VLLM_COMPILE: 3>, 'debug_dump_path': None, 'cache_dir': '', 'compile_cache_save_format': 'binary', 'backend': 'inductor', 'custom_ops': ['none'], 'ir_enable_torch_wrap': True, 'splitting_ops': ['vllm::unified_attention_with_output', 'vllm::unified_mla_attention_with_output', 'vllm::mamba_mixer2', 'vllm::mamba_mixer', 'vllm::short_conv', 'vllm::linear_attention', 'vllm::plamo2_mamba_mixer', 'vllm::gdn_attention_core', 'vllm::gdn_attention_core_xpu', 'vllm::olmo_hybrid_gdn_full_forward', 'vllm::kda_attention', 'vllm::sparse_attn_indexer', 'vllm::rocm_aiter_sparse_attn_indexer', 'vllm::deepseek_v4_attention', 'vllm::unified_kv_cache_update', 'vllm::unified_mla_kv_cache_update'], 'compile_mm_encoder': False, 'cudagraph_mm_encoder': False, 'encoder_cudagraph_token_budgets': [], 'encoder_cudagraph_max_vision_items_per_batch': 0, 'encoder_cudagraph_max_frames_per_batch': None, 'compile_sizes': [], 'compile_ranges_endpoints': [8192], 'inductor_compile_config': {'enable_auto_functionalized_v2': False, 'size_asserts': False, 'alignment_asserts': False, 'scalar_asserts': False, 'combo_kernels': True, 'benchmark_combo_kernel': True}, 'inductor_passes': {}, 'cudagraph_mode': <CUDAGraphMode.PIECEWISE: 1>, 'cudagraph_num_of_warmups': 1, 'cudagraph_capture_sizes': [1, 2, 4, 8, 16, 24, 32, 40, 48, 56, 64, 72, 80, 88, 96], 'cudagraph_copy_inputs': False, 'cudagraph_specialize_lora': True, 'use_inductor_graph_partition': False, 'pass_config': {'fuse_norm_quant': False, 'fuse_act_quant': False, 'fuse_attn_quant': False, 'enable_sp': False, 'fuse_gemm_comms': False, 'fuse_allreduce_rms': False, 'fuse_act_padding': False}, 'max_cudagraph_capture_size': 96, 'dynamic_shapes_config': {'type': <DynamicShapesType.BACKED: 'backed'>, 'evaluate_guards': False, 'assume_32_bit_indexing': False}, 'local_cache_dir': None, 'fast_moe_cold_start': False, 'static_all_moe_layers': []}, kernel_config=KernelConfig(ir_op_priority=IrOpPriorityConfig(rms_norm=['native'], fused_add_rms_norm=['native']), enable_flashinfer_autotune=False, moe_backend='auto')
+(EngineCore pid=2560357) WARNING 06-14 22:04:56 [multiproc_executor.py:1367] Reducing Torch parallelism from 16 threads to 1 to avoid unnecessary CPU contention. Set OMP_NUM_THREADS in the external environment to tune this value as needed.
+(EngineCore pid=2560357) INFO 06-14 22:04:56 [multiproc_executor.py:243] DP group leader: node_rank=0, node_rank_within_dp=0, master_addr=127.0.0.1, mq_connect_ip=10.0.0.65 (local), world_size=4, local_world_size=4
+WARNING 06-14 22:05:00 [nixl_utils.py:34] NIXL is not available
+WARNING 06-14 22:05:00 [nixl_utils.py:44] NIXL agent config is not available
+WARNING 06-14 22:05:00 [nixl_utils.py:34] NIXL is not available
+WARNING 06-14 22:05:00 [nixl_utils.py:44] NIXL agent config is not available
+WARNING 06-14 22:05:01 [nixl_utils.py:34] NIXL is not available
+WARNING 06-14 22:05:01 [nixl_utils.py:44] NIXL agent config is not available
+WARNING 06-14 22:05:01 [nixl_utils.py:34] NIXL is not available
+WARNING 06-14 22:05:01 [nixl_utils.py:44] NIXL agent config is not available
+[transformers] `Qwen2VLImageProcessorFast` is deprecated. The `Fast` suffix for image processors has been removed; use `Qwen2VLImageProcessor` instead.
+[transformers] `Qwen2VLImageProcessorFast` is deprecated. The `Fast` suffix for image processors has been removed; use `Qwen2VLImageProcessor` instead.
+[transformers] `Qwen2VLImageProcessorFast` is deprecated. The `Fast` suffix for image processors has been removed; use `Qwen2VLImageProcessor` instead.
+[transformers] `Qwen2VLImageProcessorFast` is deprecated. The `Fast` suffix for image processors has been removed; use `Qwen2VLImageProcessor` instead.
+INFO 06-14 22:05:03 [registry.py:126] All limits of multimodal modalities supported by the model are set to 0, running in text-only mode.
+INFO 06-14 22:05:03 [registry.py:126] All limits of multimodal modalities supported by the model are set to 0, running in text-only mode.
+INFO 06-14 22:05:03 [registry.py:126] All limits of multimodal modalities supported by the model are set to 0, running in text-only mode.
+INFO 06-14 22:05:04 [registry.py:126] All limits of multimodal modalities supported by the model are set to 0, running in text-only mode.
+(Worker pid=2560467) INFO 06-14 22:05:04 [parallel_state.py:1542] world_size=4 rank=0 local_rank=0 distributed_init_method=tcp://127.0.0.1:36667 backend=xccl
+(Worker pid=2560470) INFO 06-14 22:05:04 [parallel_state.py:1542] world_size=4 rank=3 local_rank=3 distributed_init_method=tcp://127.0.0.1:36667 backend=xccl
+(Worker pid=2560469) INFO 06-14 22:05:04 [parallel_state.py:1542] world_size=4 rank=2 local_rank=2 distributed_init_method=tcp://127.0.0.1:36667 backend=xccl
+(Worker pid=2560468) INFO 06-14 22:05:04 [parallel_state.py:1542] world_size=4 rank=1 local_rank=1 distributed_init_method=tcp://127.0.0.1:36667 backend=xccl
+(Worker pid=2560467) INFO 06-14 22:05:04 [parallel_state.py:1855] rank 0 in world size 4 is assigned as DP rank 0, PP rank 0, PCP rank 0, TP rank 0, EP rank 0, EPLB rank N/A
+2026:06:14-22:05:04:2560468 |CCL_WARN| value of CCL_ATL_TRANSPORT changed to be ofi (default:mpi)
+2026:06:14-22:05:04:2560470 |CCL_WARN| value of CCL_ATL_TRANSPORT changed to be ofi (default:mpi)
+2026:06:14-22:05:04:2560468 |CCL_WARN| value of CCL_TOPO_P2P_ACCESS changed to be 1 (default:-1)
+2026:06:14-22:05:04:2560470 |CCL_WARN| value of CCL_TOPO_P2P_ACCESS changed to be 1 (default:-1)
+2026:06:14-22:05:04:2560469 |CCL_WARN| value of CCL_ATL_TRANSPORT changed to be ofi (default:mpi)
+2026:06:14-22:05:04:2560469 |CCL_WARN| value of CCL_TOPO_P2P_ACCESS changed to be 1 (default:-1)
+2026:06:14-22:05:04:2560468 |CCL_WARN| could not get local_idx/count from environment variables, trying to get them from ATL
+2026:06:14-22:05:04:2560470 |CCL_WARN| could not get local_idx/count from environment variables, trying to get them from ATL
+2026:06:14-22:05:04:2560469 |CCL_WARN| could not get local_idx/count from environment variables, trying to get them from ATL
+2026:06:14-22:05:04:2560467 |CCL_WARN| value of CCL_ATL_TRANSPORT changed to be ofi (default:mpi)
+2026:06:14-22:05:04:2560467 |CCL_WARN| value of CCL_TOPO_P2P_ACCESS changed to be 1 (default:-1)
+2026:06:14-22:05:04:2560467 |CCL_WARN| could not get local_idx/count from environment variables, trying to get them from ATL
+2026:06:14-22:05:05:2560469:[2] |CCL_WARN| topology recognition shows PCIe connection between devices. If this is not correct, you can disable topology recognition, with CCL_TOPO_FABRIC_VERTEX_CONNECTION_CHECK=0. This will assume XeLinks across devices
+2026:06:14-22:05:05:2560468:[1] |CCL_WARN| topology recognition shows PCIe connection between devices. If this is not correct, you can disable topology recognition, with CCL_TOPO_FABRIC_VERTEX_CONNECTION_CHECK=0. This will assume XeLinks across devices
+2026:06:14-22:05:05:2560467:[0] |CCL_WARN| topology recognition shows PCIe connection between devices. If this is not correct, you can disable topology recognition, with CCL_TOPO_FABRIC_VERTEX_CONNECTION_CHECK=0. This will assume XeLinks across devices
+2026:06:14-22:05:05:2560470:[3] |CCL_WARN| topology recognition shows PCIe connection between devices. If this is not correct, you can disable topology recognition, with CCL_TOPO_FABRIC_VERTEX_CONNECTION_CHECK=0. This will assume XeLinks across devices
+(Worker pid=2560469) ERROR 06-14 22:05:05 [multiproc_executor.py:1025] WorkerProc failed to start.
+(Worker pid=2560469) ERROR 06-14 22:05:05 [multiproc_executor.py:1025] Traceback (most recent call last):
+(Worker pid=2560469) ERROR 06-14 22:05:05 [multiproc_executor.py:1025]   File "/home/steve/src/vllm/vllm/v1/executor/multiproc_executor.py", line 992, in worker_main
+(Worker pid=2560469) ERROR 06-14 22:05:05 [multiproc_executor.py:1025]     worker = WorkerProc(*args, **kwargs)
+(Worker pid=2560469) ERROR 06-14 22:05:05 [multiproc_executor.py:1025]              ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker pid=2560469) ERROR 06-14 22:05:05 [multiproc_executor.py:1025]   File "/home/steve/src/vllm/vllm/tracing/otel.py", line 178, in sync_wrapper
+(Worker pid=2560469) ERROR 06-14 22:05:05 [multiproc_executor.py:1025]     return func(*args, **kwargs)
+(Worker pid=2560469) ERROR 06-14 22:05:05 [multiproc_executor.py:1025]            ^^^^^^^^^^^^^^^^^^^^^
+(Worker pid=2560469) ERROR 06-14 22:05:05 [multiproc_executor.py:1025]   File "/home/steve/src/vllm/vllm/v1/executor/multiproc_executor.py", line 766, in __init__
+(Worker pid=2560469) ERROR 06-14 22:05:05 [multiproc_executor.py:1025]     self.worker.init_device()
+(Worker pid=2560469) ERROR 06-14 22:05:05 [multiproc_executor.py:1025]   File "/home/steve/src/vllm/vllm/v1/worker/worker_base.py", line 317, in init_device
+(Worker pid=2560469) ERROR 06-14 22:05:05 [multiproc_executor.py:1025]     self.worker.init_device()  # type: ignore
+(Worker pid=2560469) ERROR 06-14 22:05:05 [multiproc_executor.py:1025]     ^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker pid=2560469) ERROR 06-14 22:05:05 [multiproc_executor.py:1025]   File "/home/steve/src/vllm/vllm/v1/worker/xpu_worker.py", line 136, in init_device
+(Worker pid=2560469) ERROR 06-14 22:05:05 [multiproc_executor.py:1025]     self.requested_memory = request_memory(init_snapshot, self.cache_config)
+(Worker pid=2560469) ERROR 06-14 22:05:05 [multiproc_executor.py:1025]                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker pid=2560469) ERROR 06-14 22:05:05 [multiproc_executor.py:1025]   File "/home/steve/src/vllm/vllm/v1/worker/utils.py", line 413, in request_memory
+(Worker pid=2560469) ERROR 06-14 22:05:05 [multiproc_executor.py:1025]     raise ValueError(
+(Worker pid=2560469) ERROR 06-14 22:05:05 [multiproc_executor.py:1025] ValueError: Free memory on device xpu:2 (0.87/31.89 GiB) on startup is less than desired GPU memory utilization (0.9, 28.7 GiB). Decrease GPU memory utilization or reduce GPU memory used by other processes.
+(Worker pid=2560470) ERROR 06-14 22:05:05 [multiproc_executor.py:1025] WorkerProc failed to start.
+(Worker pid=2560470) ERROR 06-14 22:05:05 [multiproc_executor.py:1025] Traceback (most recent call last):
+(Worker pid=2560470) ERROR 06-14 22:05:05 [multiproc_executor.py:1025]   File "/home/steve/src/vllm/vllm/v1/executor/multiproc_executor.py", line 992, in worker_main
+(Worker pid=2560470) ERROR 06-14 22:05:05 [multiproc_executor.py:1025]     worker = WorkerProc(*args, **kwargs)
+(Worker pid=2560470) ERROR 06-14 22:05:05 [multiproc_executor.py:1025]              ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker pid=2560470) ERROR 06-14 22:05:05 [multiproc_executor.py:1025]   File "/home/steve/src/vllm/vllm/tracing/otel.py", line 178, in sync_wrapper
+(Worker pid=2560470) ERROR 06-14 22:05:05 [multiproc_executor.py:1025]     return func(*args, **kwargs)
+(Worker pid=2560470) ERROR 06-14 22:05:05 [multiproc_executor.py:1025]            ^^^^^^^^^^^^^^^^^^^^^
+(Worker pid=2560470) ERROR 06-14 22:05:05 [multiproc_executor.py:1025]   File "/home/steve/src/vllm/vllm/v1/executor/multiproc_executor.py", line 766, in __init__
+(Worker pid=2560470) ERROR 06-14 22:05:05 [multiproc_executor.py:1025]     self.worker.init_device()
+(Worker pid=2560470) ERROR 06-14 22:05:05 [multiproc_executor.py:1025]   File "/home/steve/src/vllm/vllm/v1/worker/worker_base.py", line 317, in init_device
+(Worker pid=2560470) ERROR 06-14 22:05:05 [multiproc_executor.py:1025]     self.worker.init_device()  # type: ignore
+(Worker pid=2560470) ERROR 06-14 22:05:05 [multiproc_executor.py:1025]     ^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker pid=2560470) ERROR 06-14 22:05:05 [multiproc_executor.py:1025]   File "/home/steve/src/vllm/vllm/v1/worker/xpu_worker.py", line 136, in init_device
+(Worker pid=2560470) ERROR 06-14 22:05:05 [multiproc_executor.py:1025]     self.requested_memory = request_memory(init_snapshot, self.cache_config)
+(Worker pid=2560470) ERROR 06-14 22:05:05 [multiproc_executor.py:1025]                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker pid=2560470) ERROR 06-14 22:05:05 [multiproc_executor.py:1025]   File "/home/steve/src/vllm/vllm/v1/worker/utils.py", line 413, in request_memory
+(Worker pid=2560470) ERROR 06-14 22:05:05 [multiproc_executor.py:1025]     raise ValueError(
+(Worker pid=2560470) ERROR 06-14 22:05:05 [multiproc_executor.py:1025] ValueError: Free memory on device xpu:3 (0.87/31.89 GiB) on startup is less than desired GPU memory utilization (0.9, 28.7 GiB). Decrease GPU memory utilization or reduce GPU memory used by other processes.
+(Worker pid=2560468) ERROR 06-14 22:05:05 [multiproc_executor.py:1025] WorkerProc failed to start.
+(Worker pid=2560468) ERROR 06-14 22:05:05 [multiproc_executor.py:1025] Traceback (most recent call last):
+(Worker pid=2560468) ERROR 06-14 22:05:05 [multiproc_executor.py:1025]   File "/home/steve/src/vllm/vllm/v1/executor/multiproc_executor.py", line 992, in worker_main
+(Worker pid=2560468) ERROR 06-14 22:05:05 [multiproc_executor.py:1025]     worker = WorkerProc(*args, **kwargs)
+(Worker pid=2560468) ERROR 06-14 22:05:05 [multiproc_executor.py:1025]              ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker pid=2560468) ERROR 06-14 22:05:05 [multiproc_executor.py:1025]   File "/home/steve/src/vllm/vllm/tracing/otel.py", line 178, in sync_wrapper
+(Worker pid=2560468) ERROR 06-14 22:05:05 [multiproc_executor.py:1025]     return func(*args, **kwargs)
+(Worker pid=2560468) ERROR 06-14 22:05:05 [multiproc_executor.py:1025]            ^^^^^^^^^^^^^^^^^^^^^
+(Worker pid=2560468) ERROR 06-14 22:05:05 [multiproc_executor.py:1025]   File "/home/steve/src/vllm/vllm/v1/executor/multiproc_executor.py", line 766, in __init__
+(Worker pid=2560468) ERROR 06-14 22:05:05 [multiproc_executor.py:1025]     self.worker.init_device()
+(Worker pid=2560468) ERROR 06-14 22:05:05 [multiproc_executor.py:1025]   File "/home/steve/src/vllm/vllm/v1/worker/worker_base.py", line 317, in init_device
+(Worker pid=2560468) ERROR 06-14 22:05:05 [multiproc_executor.py:1025]     self.worker.init_device()  # type: ignore
+(Worker pid=2560468) ERROR 06-14 22:05:05 [multiproc_executor.py:1025]     ^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker pid=2560468) ERROR 06-14 22:05:05 [multiproc_executor.py:1025]   File "/home/steve/src/vllm/vllm/v1/worker/xpu_worker.py", line 136, in init_device
+(Worker pid=2560468) ERROR 06-14 22:05:05 [multiproc_executor.py:1025]     self.requested_memory = request_memory(init_snapshot, self.cache_config)
+(Worker pid=2560468) ERROR 06-14 22:05:05 [multiproc_executor.py:1025]                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker pid=2560468) ERROR 06-14 22:05:05 [multiproc_executor.py:1025]   File "/home/steve/src/vllm/vllm/v1/worker/utils.py", line 413, in request_memory
+(Worker pid=2560468) ERROR 06-14 22:05:05 [multiproc_executor.py:1025]     raise ValueError(
+(Worker pid=2560468) ERROR 06-14 22:05:05 [multiproc_executor.py:1025] ValueError: Free memory on device xpu:1 (0.87/31.89 GiB) on startup is less than desired GPU memory utilization (0.9, 28.7 GiB). Decrease GPU memory utilization or reduce GPU memory used by other processes.
+(Worker pid=2560467) ERROR 06-14 22:05:05 [multiproc_executor.py:1025] WorkerProc failed to start.
+(Worker pid=2560467) ERROR 06-14 22:05:05 [multiproc_executor.py:1025] Traceback (most recent call last):
+(Worker pid=2560467) ERROR 06-14 22:05:05 [multiproc_executor.py:1025]   File "/home/steve/src/vllm/vllm/v1/executor/multiproc_executor.py", line 992, in worker_main
+(Worker pid=2560467) ERROR 06-14 22:05:05 [multiproc_executor.py:1025]     worker = WorkerProc(*args, **kwargs)
+(Worker pid=2560467) ERROR 06-14 22:05:05 [multiproc_executor.py:1025]              ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker pid=2560467) ERROR 06-14 22:05:05 [multiproc_executor.py:1025]   File "/home/steve/src/vllm/vllm/tracing/otel.py", line 178, in sync_wrapper
+(Worker pid=2560467) ERROR 06-14 22:05:05 [multiproc_executor.py:1025]     return func(*args, **kwargs)
+(Worker pid=2560467) ERROR 06-14 22:05:05 [multiproc_executor.py:1025]            ^^^^^^^^^^^^^^^^^^^^^
+(Worker pid=2560467) ERROR 06-14 22:05:05 [multiproc_executor.py:1025]   File "/home/steve/src/vllm/vllm/v1/executor/multiproc_executor.py", line 766, in __init__
+(Worker pid=2560467) ERROR 06-14 22:05:05 [multiproc_executor.py:1025]     self.worker.init_device()
+(Worker pid=2560467) ERROR 06-14 22:05:05 [multiproc_executor.py:1025]   File "/home/steve/src/vllm/vllm/v1/worker/worker_base.py", line 317, in init_device
+(Worker pid=2560467) ERROR 06-14 22:05:05 [multiproc_executor.py:1025]     self.worker.init_device()  # type: ignore
+(Worker pid=2560467) ERROR 06-14 22:05:05 [multiproc_executor.py:1025]     ^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker pid=2560467) ERROR 06-14 22:05:05 [multiproc_executor.py:1025]   File "/home/steve/src/vllm/vllm/v1/worker/xpu_worker.py", line 136, in init_device
+(Worker pid=2560467) ERROR 06-14 22:05:05 [multiproc_executor.py:1025]     self.requested_memory = request_memory(init_snapshot, self.cache_config)
+(Worker pid=2560467) ERROR 06-14 22:05:05 [multiproc_executor.py:1025]                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker pid=2560467) ERROR 06-14 22:05:05 [multiproc_executor.py:1025]   File "/home/steve/src/vllm/vllm/v1/worker/utils.py", line 413, in request_memory
+(Worker pid=2560467) ERROR 06-14 22:05:05 [multiproc_executor.py:1025]     raise ValueError(
+(Worker pid=2560467) ERROR 06-14 22:05:05 [multiproc_executor.py:1025] ValueError: Free memory on device xpu:0 (14.08/31.89 GiB) on startup is less than desired GPU memory utilization (0.9, 28.7 GiB). Decrease GPU memory utilization or reduce GPU memory used by other processes.
+(EngineCore pid=2560357) ERROR 06-14 22:05:07 [core.py:1363] EngineCore failed to start.
+(EngineCore pid=2560357) ERROR 06-14 22:05:07 [core.py:1363] Traceback (most recent call last):
+(EngineCore pid=2560357) ERROR 06-14 22:05:07 [core.py:1363]   File "/home/steve/src/vllm/vllm/v1/engine/core.py", line 1337, in run_engine_core
+(EngineCore pid=2560357) ERROR 06-14 22:05:07 [core.py:1363]     engine_core = EngineCoreProc(*args, engine_index=dp_rank, **kwargs)
+(EngineCore pid=2560357) ERROR 06-14 22:05:07 [core.py:1363]                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(EngineCore pid=2560357) ERROR 06-14 22:05:07 [core.py:1363]   File "/home/steve/src/vllm/vllm/tracing/otel.py", line 178, in sync_wrapper
+(EngineCore pid=2560357) ERROR 06-14 22:05:07 [core.py:1363]     return func(*args, **kwargs)
+(EngineCore pid=2560357) ERROR 06-14 22:05:07 [core.py:1363]            ^^^^^^^^^^^^^^^^^^^^^
+(EngineCore pid=2560357) ERROR 06-14 22:05:07 [core.py:1363]   File "/home/steve/src/vllm/vllm/v1/engine/core.py", line 1103, in __init__
+(EngineCore pid=2560357) ERROR 06-14 22:05:07 [core.py:1363]     super().__init__(
+(EngineCore pid=2560357) ERROR 06-14 22:05:07 [core.py:1363]   File "/home/steve/src/vllm/vllm/v1/engine/core.py", line 255, in __init__
+(EngineCore pid=2560357) ERROR 06-14 22:05:07 [core.py:1363]     self.model_executor = executor_class(vllm_config)
+(EngineCore pid=2560357) ERROR 06-14 22:05:07 [core.py:1363]                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(EngineCore pid=2560357) ERROR 06-14 22:05:07 [core.py:1363]   File "/home/steve/src/vllm/vllm/v1/executor/multiproc_executor.py", line 211, in __init__
+(EngineCore pid=2560357) ERROR 06-14 22:05:07 [core.py:1363]     super().__init__(vllm_config)
+(EngineCore pid=2560357) ERROR 06-14 22:05:07 [core.py:1363]   File "/home/steve/src/vllm/vllm/tracing/otel.py", line 178, in sync_wrapper
+(EngineCore pid=2560357) ERROR 06-14 22:05:07 [core.py:1363]     return func(*args, **kwargs)
+(EngineCore pid=2560357) ERROR 06-14 22:05:07 [core.py:1363]            ^^^^^^^^^^^^^^^^^^^^^
+(EngineCore pid=2560357) ERROR 06-14 22:05:07 [core.py:1363]   File "/home/steve/src/vllm/vllm/v1/executor/abstract.py", line 109, in __init__
+(EngineCore pid=2560357) ERROR 06-14 22:05:07 [core.py:1363]     self._init_executor()
+(EngineCore pid=2560357) ERROR 06-14 22:05:07 [core.py:1363]   File "/home/steve/src/vllm/vllm/v1/executor/multiproc_executor.py", line 304, in _init_executor
+(EngineCore pid=2560357) ERROR 06-14 22:05:07 [core.py:1363]     self.workers = WorkerProc.wait_for_ready(unready_workers)
+(EngineCore pid=2560357) ERROR 06-14 22:05:07 [core.py:1363]                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(EngineCore pid=2560357) ERROR 06-14 22:05:07 [core.py:1363]   File "/home/steve/src/vllm/vllm/v1/executor/multiproc_executor.py", line 902, in wait_for_ready
+(EngineCore pid=2560357) ERROR 06-14 22:05:07 [core.py:1363]     raise e from None
+(EngineCore pid=2560357) ERROR 06-14 22:05:07 [core.py:1363] Exception: WorkerProc initialization failed due to an exception in a background process. See stack trace for root cause.
+(EngineCore pid=2560357) Process EngineCore:
+(EngineCore pid=2560357) Traceback (most recent call last):
+(EngineCore pid=2560357)   File "/home/steve/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+(EngineCore pid=2560357)     self.run()
+(EngineCore pid=2560357)   File "/home/steve/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/multiprocessing/process.py", line 108, in run
+(EngineCore pid=2560357)     self._target(*self._args, **self._kwargs)
+(EngineCore pid=2560357)   File "/home/steve/src/vllm/vllm/v1/engine/core.py", line 1367, in run_engine_core
+(EngineCore pid=2560357)     raise e
+(EngineCore pid=2560357)   File "/home/steve/src/vllm/vllm/v1/engine/core.py", line 1337, in run_engine_core
+(EngineCore pid=2560357)     engine_core = EngineCoreProc(*args, engine_index=dp_rank, **kwargs)
+(EngineCore pid=2560357)                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(EngineCore pid=2560357)   File "/home/steve/src/vllm/vllm/tracing/otel.py", line 178, in sync_wrapper
+(EngineCore pid=2560357)     return func(*args, **kwargs)
+(EngineCore pid=2560357)            ^^^^^^^^^^^^^^^^^^^^^
+(EngineCore pid=2560357)   File "/home/steve/src/vllm/vllm/v1/engine/core.py", line 1103, in __init__
+(EngineCore pid=2560357)     super().__init__(
+(EngineCore pid=2560357)   File "/home/steve/src/vllm/vllm/v1/engine/core.py", line 255, in __init__
+(EngineCore pid=2560357)     self.model_executor = executor_class(vllm_config)
+(EngineCore pid=2560357)                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(EngineCore pid=2560357)   File "/home/steve/src/vllm/vllm/v1/executor/multiproc_executor.py", line 211, in __init__
+(EngineCore pid=2560357)     super().__init__(vllm_config)
+(EngineCore pid=2560357)   File "/home/steve/src/vllm/vllm/tracing/otel.py", line 178, in sync_wrapper
+(EngineCore pid=2560357)     return func(*args, **kwargs)
+(EngineCore pid=2560357)            ^^^^^^^^^^^^^^^^^^^^^
+(EngineCore pid=2560357)   File "/home/steve/src/vllm/vllm/v1/executor/abstract.py", line 109, in __init__
+(EngineCore pid=2560357)     self._init_executor()
+(EngineCore pid=2560357)   File "/home/steve/src/vllm/vllm/v1/executor/multiproc_executor.py", line 304, in _init_executor
+(EngineCore pid=2560357)     self.workers = WorkerProc.wait_for_ready(unready_workers)
+(EngineCore pid=2560357)                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(EngineCore pid=2560357)   File "/home/steve/src/vllm/vllm/v1/executor/multiproc_executor.py", line 902, in wait_for_ready
+(EngineCore pid=2560357)     raise e from None
+(EngineCore pid=2560357) Exception: WorkerProc initialization failed due to an exception in a background process. See stack trace for root cause.
+(APIServer pid=2560230) Traceback (most recent call last):
+(APIServer pid=2560230)   File "/home/steve/.venvs/vllm-xpu/bin/vllm", line 6, in <module>
+(APIServer pid=2560230)     sys.exit(main())
+(APIServer pid=2560230)              ^^^^^^
+(APIServer pid=2560230)   File "/home/steve/src/vllm/vllm/entrypoints/cli/main.py", line 92, in main
+(APIServer pid=2560230)     args.dispatch_function(args)
+(APIServer pid=2560230)   File "/home/steve/src/vllm/vllm/entrypoints/cli/serve.py", line 122, in cmd
+(APIServer pid=2560230)     uvloop.run(run_server(args))
+(APIServer pid=2560230)   File "/home/steve/.venvs/vllm-xpu/lib/python3.12/site-packages/uvloop/__init__.py", line 96, in run
+(APIServer pid=2560230)     return __asyncio.run(
+(APIServer pid=2560230)            ^^^^^^^^^^^^^^
+(APIServer pid=2560230)   File "/home/steve/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/asyncio/runners.py", line 195, in run
+(APIServer pid=2560230)     return runner.run(main)
+(APIServer pid=2560230)            ^^^^^^^^^^^^^^^^
+(APIServer pid=2560230)   File "/home/steve/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/asyncio/runners.py", line 118, in run
+(APIServer pid=2560230)     return self._loop.run_until_complete(task)
+(APIServer pid=2560230)            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(APIServer pid=2560230)   File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+(APIServer pid=2560230)   File "/home/steve/.venvs/vllm-xpu/lib/python3.12/site-packages/uvloop/__init__.py", line 48, in wrapper
+(APIServer pid=2560230)     return await main
+(APIServer pid=2560230)            ^^^^^^^^^^
+(APIServer pid=2560230)   File "/home/steve/src/vllm/vllm/entrypoints/openai/api_server.py", line 678, in run_server
+(APIServer pid=2560230)     await run_server_worker(listen_address, sock, args, **uvicorn_kwargs)
+(APIServer pid=2560230)   File "/home/steve/src/vllm/vllm/entrypoints/openai/api_server.py", line 692, in run_server_worker
+(APIServer pid=2560230)     async with build_async_engine_client(
+(APIServer pid=2560230)                ^^^^^^^^^^^^^^^^^^^^^^^^^^
+(APIServer pid=2560230)   File "/home/steve/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/contextlib.py", line 210, in __aenter__
+(APIServer pid=2560230)     return await anext(self.gen)
+(APIServer pid=2560230)            ^^^^^^^^^^^^^^^^^^^^^
+(APIServer pid=2560230)   File "/home/steve/src/vllm/vllm/entrypoints/openai/api_server.py", line 100, in build_async_engine_client
+(APIServer pid=2560230)     async with build_async_engine_client_from_engine_args(
+(APIServer pid=2560230)                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(APIServer pid=2560230)   File "/home/steve/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/contextlib.py", line 210, in __aenter__
+(APIServer pid=2560230)     return await anext(self.gen)
+(APIServer pid=2560230)            ^^^^^^^^^^^^^^^^^^^^^
+(APIServer pid=2560230)   File "/home/steve/src/vllm/vllm/entrypoints/openai/api_server.py", line 136, in build_async_engine_client_from_engine_args
+(APIServer pid=2560230)     async_llm = AsyncLLM.from_vllm_config(
+(APIServer pid=2560230)                 ^^^^^^^^^^^^^^^^^^^^^^^^^^
+(APIServer pid=2560230)   File "/home/steve/src/vllm/vllm/v1/engine/async_llm.py", line 217, in from_vllm_config
+(APIServer pid=2560230)     return cls(
+(APIServer pid=2560230)            ^^^^
+(APIServer pid=2560230)   File "/home/steve/src/vllm/vllm/v1/engine/async_llm.py", line 146, in __init__
+(APIServer pid=2560230)     self.engine_core = EngineCoreClient.make_async_mp_client(
+(APIServer pid=2560230)                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(APIServer pid=2560230)   File "/home/steve/src/vllm/vllm/tracing/otel.py", line 178, in sync_wrapper
+(APIServer pid=2560230)     return func(*args, **kwargs)
+(APIServer pid=2560230)            ^^^^^^^^^^^^^^^^^^^^^
+(APIServer pid=2560230)   File "/home/steve/src/vllm/vllm/v1/engine/core_client.py", line 130, in make_async_mp_client
+(APIServer pid=2560230)     return AsyncMPClient(*client_args)
+(APIServer pid=2560230)            ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(APIServer pid=2560230)   File "/home/steve/src/vllm/vllm/tracing/otel.py", line 178, in sync_wrapper
+(APIServer pid=2560230)     return func(*args, **kwargs)
+(APIServer pid=2560230)            ^^^^^^^^^^^^^^^^^^^^^
+(APIServer pid=2560230)   File "/home/steve/src/vllm/vllm/v1/engine/core_client.py", line 900, in __init__
+(APIServer pid=2560230)     super().__init__(
+(APIServer pid=2560230)   File "/home/steve/src/vllm/vllm/v1/engine/core_client.py", line 535, in __init__
+(APIServer pid=2560230)     with launch_core_engines(
+(APIServer pid=2560230)          ^^^^^^^^^^^^^^^^^^^^
+(APIServer pid=2560230)   File "/home/steve/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/contextlib.py", line 144, in __exit__
+(APIServer pid=2560230)     next(self.gen)
+(APIServer pid=2560230)   File "/home/steve/src/vllm/vllm/v1/engine/utils.py", line 1119, in launch_core_engines
+(APIServer pid=2560230)     wait_for_engine_startup(
+(APIServer pid=2560230)   File "/home/steve/src/vllm/vllm/v1/engine/utils.py", line 1178, in wait_for_engine_startup
+(APIServer pid=2560230)     raise RuntimeError(
+(APIServer pid=2560230) RuntimeError: Engine core initialization failed. See root cause above. Failed core proc(s): {}
+/home/steve/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/multiprocessing/resource_tracker.py:279: UserWarning: resource_tracker: There appear to be 1 leaked shared_memory objects to clean up at shutdown
+  warnings.warn('resource_tracker: There appear to be %d '

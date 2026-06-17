@@ -1,0 +1,158 @@
+{
+  "created_at_unix": 1781161156.7787015,
+  "base_url": "http://127.0.0.1:8000",
+  "model": "qwen36-35b-a3b-fp8",
+  "tokenizer": "/mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118",
+  "server_model_record": {
+    "id": "qwen36-35b-a3b-fp8",
+    "object": "model",
+    "created": 1781161144,
+    "owned_by": "vllm",
+    "root": "/mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118",
+    "parent": null,
+    "max_model_len": 32768,
+    "permission": [
+      {
+        "id": "modelperm-98614128968ab242",
+        "object": "model_permission",
+        "created": 1781161144,
+        "allow_create_engine": false,
+        "allow_sampling": true,
+        "allow_logprobs": true,
+        "allow_search_indices": false,
+        "allow_view": true,
+        "allow_fine_tuning": false,
+        "organization": "*",
+        "group": null,
+        "is_blocking": false
+      }
+    ]
+  },
+  "prompt_kind": "preset",
+  "prompt_preset": "math-reasoning",
+  "prompt_file": null,
+  "seed": 0,
+  "random_prefix_len": 0,
+  "prompt_tokens_requested": 512,
+  "prompt_tokens_actual": 503,
+  "output_tokens_requested": 512,
+  "mode": "stream",
+  "skip_vram": true,
+  "repeats": 2,
+  "measurement_notes": [
+    "TTFT and e2e are measured both client-side and from vLLM Prometheus histogram deltas.",
+    "tok_s_prefill_lower_bound_from_ttft is prompt_tokens / TTFT, so it is conservative and includes first-token scheduling/decode overhead.",
+    "tok_s_out_client_after_first_chunk is generated-token-only throughput after the first streamed text chunk.",
+    "tok_s_out_client_after_first_chunk_corrected subtracts the estimated first streamed chunk tokens from the numerator; this is more stable when --stream-interval > 1."
+  ],
+  "vram_mib_before_all": {},
+  "peak_vram_mib_observed": {},
+  "records": [
+    {
+      "repeat": 1,
+      "prompt_tokens_client": 503,
+      "output_tokens_client": 512,
+      "elapsed_s_client": 5.225141502916813,
+      "ttft_ms_client": 75.33777097705752,
+      "tok_s_out_client_after_first_chunk": 99.42126470267384,
+      "tok_s_out_client_after_first_chunk_corrected": 99.22708254505143,
+      "tok_s_out_client_e2e": 97.98777692703403,
+      "tok_s_total_client": 194.25311246277255,
+      "tok_s_prefill_lower_bound_from_ttft": 6676.597853594285,
+      "vllm_metric_deltas": {
+        "prompt_tokens": 503.0,
+        "generation_tokens": 512.0,
+        "ttft_count": 1.0,
+        "ttft_sum_s": 0.0736246109008789,
+        "e2e_count": 1.0,
+        "e2e_sum_s": 5.223510265350342
+      },
+      "ttft_ms_vllm_metrics": 73.6246109008789,
+      "e2e_ms_vllm_metrics": 5223.510265350342,
+      "vram_mib_before": {},
+      "vram_mib_after": {},
+      "first_chunk_tokens_client_estimate": 1,
+      "streamed_text_chunks": 512,
+      "text_preview": "Answer with the formula and the percentage.\n\n<think>\nHere's a thinking process:\n\n1.  **Analyze User Input:**\n   - The prompt contains a lot of repetition: \"A server processes 48 independent client sessions. Each session reserves a 32K token",
+      "text": "Answer with the formula and the percentage.\n\n<think>\nHere's a thinking process:\n\n1.  **Analyze User Input:**\n   - The prompt contains a lot of repetition: \"A server processes 48 independent client sessions. Each session reserves a 32K token cache window, but the active decode stream uses only one request at a time. Measurements should distinguish prefill, decode, and total throughput.\" repeated many times.\n   - The actual question is at the end: \"If decode throughput is 99 tokens/s baseline and a candidate reports 105 tokens/s, what is the percentage increase? Answer with the formula and the percentage.\"\n   - The repetitive text seems like noise/fluff or a copy-paste error. I should focus on the actual question.\n   - The question asks for the percentage increase from a baseline of 99 tokens/s to a candidate value of 105 tokens/s.\n   - It explicitly requests: \"Answer with the formula and the percentage.\"\n\n2.  **Identify Key Variables:**\n   - Baseline (old value) = 99 tokens/s\n   - Candidate (new value) = 105 tokens/s\n   - Percentage increase formula: `((New - Old) / Old) * 100%`\n\n3.  **Perform Calculation:**\n   - Difference = 105 - 99 = 6\n   - Divide by baseline: 6 / 99 \u2248 0.060606...\n   - Multiply by 100: \u2248 6.0606...%\n   - Round appropriately (typically 2 decimal places): 6.06%\n\n4.  **Format Output:**\n   - The user wants the formula and the percentage.\n   - I'll state the formula clearly, then show the calculation, then give the final percentage.\n   - Formula: `((New Value - Baseline) / Baseline) \u00d7 100%`\n   - Calculation: `((105 - 99) / 99) \u00d7 100% = (6 / 99) \u00d7 100% \u2248 6.06%`\n   - Final answer: 6.06%\n\n5.  **Check for Constraints/Traps:**\n   - The repetitive text about 48 sessions, 32K"
+    },
+    {
+      "repeat": 2,
+      "prompt_tokens_client": 503,
+      "output_tokens_client": 512,
+      "elapsed_s_client": 5.244424623902887,
+      "ttft_ms_client": 77.54971599206328,
+      "tok_s_out_client_after_first_chunk": 99.0927802831252,
+      "tok_s_out_client_after_first_chunk_corrected": 98.89923969663472,
+      "tok_s_out_client_e2e": 97.62748761159064,
+      "tok_s_total_client": 193.53886704250877,
+      "tok_s_prefill_lower_bound_from_ttft": 6486.161729483043,
+      "vllm_metric_deltas": {
+        "prompt_tokens": 503.0,
+        "generation_tokens": 512.0,
+        "ttft_count": 1.0,
+        "ttft_sum_s": 0.07579207420349121,
+        "e2e_count": 1.0,
+        "e2e_sum_s": 5.242802619934082
+      },
+      "ttft_ms_vllm_metrics": 75.79207420349121,
+      "e2e_ms_vllm_metrics": 5242.802619934082,
+      "vram_mib_before": {},
+      "vram_mib_after": {},
+      "first_chunk_tokens_client_estimate": 1,
+      "streamed_text_chunks": 512,
+      "text_preview": "Answer with the formula and the percentage.\n\n<think>\nHere's a thinking process:\n\n1.  **Analyze User Input:**\n   - The prompt contains a lot of repetition: \"A server processes 48 independent client sessions. Each session reserves a 32K token",
+      "text": "Answer with the formula and the percentage.\n\n<think>\nHere's a thinking process:\n\n1.  **Analyze User Input:**\n   - The prompt contains a lot of repetition: \"A server processes 48 independent client sessions. Each session reserves a 32K token cache window, but the active decode stream uses only one request at a time. Measurements should distinguish prefill, decode, and total throughput.\" repeated many times.\n   - The actual question is at the end: \"If decode throughput is 99 tokens/s baseline and a candidate reports 105 tokens/s, what is the percentage increase? Answer with the formula and the percentage.\"\n   - The repetitive text seems like noise/fluff or a copy-paste error. I should focus on the actual question.\n   - The question asks for the percentage increase from a whiskeyDocumento whiskey whiskey `99 tokens/s` baseline to `105 tokens/s` candidate.\n   - It explicitly requests: \"Answer with the formula and the percentage.\"\n\n2.  **Identify Key Variables:**\n   - Baseline ($B$) = 99 tokens/s\n   - Candidate ($C$) = 105 tokens/s\n   - Percentage Increase Formula: $\\frac{C - B}{B} \\times 100\\%$\n\n3.  **Calculate:**\n   - Difference = $105 - 99 = 6$\n   - Fraction = $6 / 99$\n   - $6 / 99 = 2 / 33 \\approx 0.060606...$\n   - Percentage = $0.060606... \\times 100\\% \\approx 6.06\\%$\n   - Let's keep it precise: $6.06\\%$ (or $6.0606...\\%$)\n\n4.  **Format Output:**\n   - The user wants the formula and the percentage.\n   - I will state the formula clearly.\n   - I will show the calculation briefly.\n   - I will give the final percentage.\n   - I should ignore the repetitive fluff as it doesn't change the math question.\n\n   Formula: $\\text{Percentage Increase} = \\frac{\\text{New Value} - \\text{Baseline}}{\\text{Baseline}} \\times 100\\%"
+    }
+  ],
+  "summary": {
+    "tok_s_out_client_after_first_chunk": {
+      "mean": 99.25702249289952,
+      "median": 99.25702249289952,
+      "min": 99.0927802831252,
+      "max": 99.42126470267384
+    },
+    "tok_s_out_client_after_first_chunk_corrected": {
+      "mean": 99.06316112084308,
+      "median": 99.06316112084308,
+      "min": 98.89923969663472,
+      "max": 99.22708254505143
+    },
+    "tok_s_out_client_e2e": {
+      "mean": 97.80763226931234,
+      "median": 97.80763226931234,
+      "min": 97.62748761159064,
+      "max": 97.98777692703403
+    },
+    "tok_s_total_client": {
+      "mean": 193.89598975264067,
+      "median": 193.89598975264067,
+      "min": 193.53886704250877,
+      "max": 194.25311246277255
+    },
+    "ttft_ms_client": {
+      "mean": 76.4437434845604,
+      "median": 76.4437434845604,
+      "min": 75.33777097705752,
+      "max": 77.54971599206328
+    },
+    "ttft_ms_vllm_metrics": {
+      "mean": 74.70834255218506,
+      "median": 74.70834255218506,
+      "min": 73.6246109008789,
+      "max": 75.79207420349121
+    },
+    "tok_s_prefill_lower_bound_from_ttft": {
+      "mean": 6581.379791538664,
+      "median": 6581.379791538664,
+      "min": 6486.161729483043,
+      "max": 6676.597853594285
+    },
+    "e2e_ms_vllm_metrics": {
+      "mean": 5233.156442642212,
+      "median": 5233.156442642212,
+      "min": 5223.510265350342,
+      "max": 5242.802619934082
+    }
+  }
+}

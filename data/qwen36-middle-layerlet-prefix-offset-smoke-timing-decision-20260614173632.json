@@ -1,0 +1,407 @@
+{
+  "decision": {
+    "family": "moe",
+    "next_target": "persistent_w8a8_moe_layerlet",
+    "rank_skew_ms": 0.0018260000000000012,
+    "reason": "moe has the largest visible per-family label (xpu_moe.w8a8_middle_layerlet at 0.049362 ms).",
+    "runner_up": null,
+    "score_ms": 0.049362,
+    "top_label": "xpu_moe.w8a8_middle_layerlet"
+  },
+  "decision_basis": "aggregate_exit_summary",
+  "endpoint_metrics": {
+    "decode_ms_per_generation_token_vllm_mean": 70.40956260607345,
+    "tok_s_out_client_after_first_chunk_corrected_mean": 14.20562843236303,
+    "ttft_ms_mean": null
+  },
+  "families": {
+    "moe": {
+      "label_count": 4,
+      "nonexclusive_sum_max_ms": 0.099051,
+      "top_label": "xpu_moe.w8a8_middle_layerlet",
+      "top_label_max_ms": 0.049362,
+      "top_label_rank_skew_ms": 0.0018260000000000012,
+      "top_labels": [
+        {
+          "label": "xpu_moe.w8a8_middle_layerlet",
+          "max_ms": 0.049362,
+          "mean_ms": 0.04851775,
+          "rank_skew_ms": 0.0018260000000000012
+        },
+        {
+          "label": "xpu_moe.w8a8_offsets",
+          "max_ms": 0.02238,
+          "mean_ms": 0.0221915,
+          "rank_skew_ms": 0.0003590000000000017
+        },
+        {
+          "label": "xpu_moe.gemm1_quant",
+          "max_ms": 0.014299,
+          "mean_ms": 0.0141435,
+          "rank_skew_ms": 0.0005459999999999996
+        },
+        {
+          "label": "xpu_moe.w8a8_offsets_prefix_op",
+          "max_ms": 0.01301,
+          "mean_ms": 0.01286625,
+          "rank_skew_ms": 0.0004220000000000005
+        }
+      ]
+    }
+  },
+  "families_ranked": [
+    [
+      "moe",
+      {
+        "label_count": 4,
+        "nonexclusive_sum_max_ms": 0.099051,
+        "top_label": "xpu_moe.w8a8_middle_layerlet",
+        "top_label_max_ms": 0.049362,
+        "top_label_rank_skew_ms": 0.0018260000000000012,
+        "top_labels": [
+          {
+            "label": "xpu_moe.w8a8_middle_layerlet",
+            "max_ms": 0.049362,
+            "mean_ms": 0.04851775,
+            "rank_skew_ms": 0.0018260000000000012
+          },
+          {
+            "label": "xpu_moe.w8a8_offsets",
+            "max_ms": 0.02238,
+            "mean_ms": 0.0221915,
+            "rank_skew_ms": 0.0003590000000000017
+          },
+          {
+            "label": "xpu_moe.gemm1_quant",
+            "max_ms": 0.014299,
+            "mean_ms": 0.0141435,
+            "rank_skew_ms": 0.0005459999999999996
+          },
+          {
+            "label": "xpu_moe.w8a8_offsets_prefix_op",
+            "max_ms": 0.01301,
+            "mean_ms": 0.01286625,
+            "rank_skew_ms": 0.0004220000000000005
+          }
+        ]
+      }
+    ]
+  ],
+  "metrics_path": "/home/steve/llm-optimizations/data/qwen36-middle-layerlet-prefix-offset-smoke-p64o64-20260614173632.json",
+  "source_log": "/home/steve/llm-optimizations/data/qwen36-middle-layerlet-prefix-offset-smoke-20260614173632.log",
+  "summary_path": "/home/steve/llm-optimizations/data/qwen36-middle-layerlet-prefix-offset-smoke-timing-summary-20260614173632.json",
+  "top_labels": [
+    {
+      "family": "moe",
+      "is_wrapper": false,
+      "label": "xpu_moe.w8a8_middle_layerlet",
+      "max_ms": 0.049362,
+      "mean_ms": 0.04851775,
+      "median_ms": 0.048586500000000005,
+      "min_ms": 0.047536,
+      "rank_count": 4,
+      "rank_skew_ms": 0.0018260000000000012,
+      "row_count": 4
+    },
+    {
+      "family": "moe",
+      "is_wrapper": false,
+      "label": "xpu_moe.w8a8_offsets",
+      "max_ms": 0.02238,
+      "mean_ms": 0.0221915,
+      "median_ms": 0.0221825,
+      "min_ms": 0.022021,
+      "rank_count": 4,
+      "rank_skew_ms": 0.0003590000000000017,
+      "row_count": 4
+    },
+    {
+      "family": "moe",
+      "is_wrapper": false,
+      "label": "xpu_moe.gemm1_quant",
+      "max_ms": 0.014299,
+      "mean_ms": 0.0141435,
+      "median_ms": 0.014261,
+      "min_ms": 0.013753,
+      "rank_count": 4,
+      "rank_skew_ms": 0.0005459999999999996,
+      "row_count": 4
+    },
+    {
+      "family": "moe",
+      "is_wrapper": false,
+      "label": "xpu_moe.w8a8_offsets_prefix_op",
+      "max_ms": 0.01301,
+      "mean_ms": 0.01286625,
+      "median_ms": 0.0129335,
+      "min_ms": 0.012588,
+      "rank_count": 4,
+      "rank_skew_ms": 0.0004220000000000005,
+      "row_count": 4
+    }
+  ],
+  "views": {
+    "aggregate_exit_summary": {
+      "families": {
+        "moe": {
+          "label_count": 4,
+          "nonexclusive_sum_max_ms": 0.099051,
+          "top_label": "xpu_moe.w8a8_middle_layerlet",
+          "top_label_max_ms": 0.049362,
+          "top_label_rank_skew_ms": 0.0018260000000000012,
+          "top_labels": [
+            {
+              "label": "xpu_moe.w8a8_middle_layerlet",
+              "max_ms": 0.049362,
+              "mean_ms": 0.04851775,
+              "rank_skew_ms": 0.0018260000000000012
+            },
+            {
+              "label": "xpu_moe.w8a8_offsets",
+              "max_ms": 0.02238,
+              "mean_ms": 0.0221915,
+              "rank_skew_ms": 0.0003590000000000017
+            },
+            {
+              "label": "xpu_moe.gemm1_quant",
+              "max_ms": 0.014299,
+              "mean_ms": 0.0141435,
+              "rank_skew_ms": 0.0005459999999999996
+            },
+            {
+              "label": "xpu_moe.w8a8_offsets_prefix_op",
+              "max_ms": 0.01301,
+              "mean_ms": 0.01286625,
+              "rank_skew_ms": 0.0004220000000000005
+            }
+          ]
+        }
+      },
+      "top_labels": [
+        {
+          "family": "moe",
+          "is_wrapper": false,
+          "label": "xpu_moe.w8a8_middle_layerlet",
+          "max_ms": 0.049362,
+          "mean_ms": 0.04851775,
+          "median_ms": 0.048586500000000005,
+          "min_ms": 0.047536,
+          "rank_count": 4,
+          "rank_skew_ms": 0.0018260000000000012,
+          "row_count": 4
+        },
+        {
+          "family": "moe",
+          "is_wrapper": false,
+          "label": "xpu_moe.w8a8_offsets",
+          "max_ms": 0.02238,
+          "mean_ms": 0.0221915,
+          "median_ms": 0.0221825,
+          "min_ms": 0.022021,
+          "rank_count": 4,
+          "rank_skew_ms": 0.0003590000000000017,
+          "row_count": 4
+        },
+        {
+          "family": "moe",
+          "is_wrapper": false,
+          "label": "xpu_moe.gemm1_quant",
+          "max_ms": 0.014299,
+          "mean_ms": 0.0141435,
+          "median_ms": 0.014261,
+          "min_ms": 0.013753,
+          "rank_count": 4,
+          "rank_skew_ms": 0.0005459999999999996,
+          "row_count": 4
+        },
+        {
+          "family": "moe",
+          "is_wrapper": false,
+          "label": "xpu_moe.w8a8_offsets_prefix_op",
+          "max_ms": 0.01301,
+          "mean_ms": 0.01286625,
+          "median_ms": 0.0129335,
+          "min_ms": 0.012588,
+          "rank_count": 4,
+          "rank_skew_ms": 0.0004220000000000005,
+          "row_count": 4
+        }
+      ]
+    },
+    "step_rank_summary": {
+      "families": {
+        "moe": {
+          "label_count": 4,
+          "nonexclusive_sum_max_ms": 3.9667923333333333,
+          "top_label": "xpu_moe.w8a8_middle_layerlet",
+          "top_label_max_ms": 1.9534909999999999,
+          "top_label_rank_skew_ms": 0.1099549999999998,
+          "top_labels": [
+            {
+              "label": "xpu_moe.w8a8_middle_layerlet",
+              "max_ms": 1.9534909999999999,
+              "mean_ms": 1.9116465833333334,
+              "rank_skew_ms": 0.1099549999999998
+            },
+            {
+              "label": "xpu_moe.w8a8_offsets",
+              "max_ms": 0.9170663333333334,
+              "mean_ms": 0.9006778333333334,
+              "rank_skew_ms": 0.037091333333333476
+            },
+            {
+              "label": "xpu_moe.gemm1_quant",
+              "max_ms": 0.5750296666666667,
+              "mean_ms": 0.5612474166666667,
+              "rank_skew_ms": 0.03563099999999997
+            },
+            {
+              "label": "xpu_moe.w8a8_offsets_prefix_op",
+              "max_ms": 0.5212053333333334,
+              "mean_ms": 0.5087605833333334,
+              "rank_skew_ms": 0.03593866666666673
+            }
+          ]
+        }
+      },
+      "top_labels": [
+        {
+          "family": "moe",
+          "is_wrapper": false,
+          "label": "xpu_moe.w8a8_middle_layerlet",
+          "max_ms": 1.9534909999999999,
+          "mean_ms": 1.9116465833333334,
+          "median_ms": 1.9247796666666666,
+          "min_ms": 1.843536,
+          "rank_count": 4,
+          "rank_skew_ms": 0.1099549999999998,
+          "row_count": 4
+        },
+        {
+          "family": "moe",
+          "is_wrapper": false,
+          "label": "xpu_moe.w8a8_offsets",
+          "max_ms": 0.9170663333333334,
+          "mean_ms": 0.9006778333333334,
+          "median_ms": 0.902835,
+          "min_ms": 0.879975,
+          "rank_count": 4,
+          "rank_skew_ms": 0.037091333333333476,
+          "row_count": 4
+        },
+        {
+          "family": "moe",
+          "is_wrapper": false,
+          "label": "xpu_moe.gemm1_quant",
+          "max_ms": 0.5750296666666667,
+          "mean_ms": 0.5612474166666667,
+          "median_ms": 0.5652806666666667,
+          "min_ms": 0.5393986666666667,
+          "rank_count": 4,
+          "rank_skew_ms": 0.03563099999999997,
+          "row_count": 4
+        },
+        {
+          "family": "moe",
+          "is_wrapper": false,
+          "label": "xpu_moe.w8a8_offsets_prefix_op",
+          "max_ms": 0.5212053333333334,
+          "mean_ms": 0.5087605833333334,
+          "median_ms": 0.5142851666666667,
+          "min_ms": 0.4852666666666667,
+          "rank_count": 4,
+          "rank_skew_ms": 0.03593866666666673,
+          "row_count": 4
+        }
+      ]
+    },
+    "step_summary": {
+      "families": {
+        "moe": {
+          "label_count": 4,
+          "nonexclusive_sum_max_ms": 3.8823324166666664,
+          "top_label": "xpu_moe.w8a8_middle_layerlet",
+          "top_label_max_ms": 1.9116465833333331,
+          "top_label_rank_skew_ms": 0.0,
+          "top_labels": [
+            {
+              "label": "xpu_moe.w8a8_middle_layerlet",
+              "max_ms": 1.9116465833333331,
+              "mean_ms": 1.9116465833333331,
+              "rank_skew_ms": 0.0
+            },
+            {
+              "label": "xpu_moe.w8a8_offsets",
+              "max_ms": 0.9006778333333334,
+              "mean_ms": 0.9006778333333334,
+              "rank_skew_ms": 0.0
+            },
+            {
+              "label": "xpu_moe.gemm1_quant",
+              "max_ms": 0.5612474166666667,
+              "mean_ms": 0.5612474166666667,
+              "rank_skew_ms": 0.0
+            },
+            {
+              "label": "xpu_moe.w8a8_offsets_prefix_op",
+              "max_ms": 0.5087605833333334,
+              "mean_ms": 0.5087605833333334,
+              "rank_skew_ms": 0.0
+            }
+          ]
+        }
+      },
+      "top_labels": [
+        {
+          "family": "moe",
+          "is_wrapper": false,
+          "label": "xpu_moe.w8a8_middle_layerlet",
+          "max_ms": 1.9116465833333331,
+          "mean_ms": 1.9116465833333331,
+          "median_ms": 1.9116465833333331,
+          "min_ms": 1.9116465833333331,
+          "rank_count": 0,
+          "rank_skew_ms": 0.0,
+          "row_count": 1
+        },
+        {
+          "family": "moe",
+          "is_wrapper": false,
+          "label": "xpu_moe.w8a8_offsets",
+          "max_ms": 0.9006778333333334,
+          "mean_ms": 0.9006778333333334,
+          "median_ms": 0.9006778333333334,
+          "min_ms": 0.9006778333333334,
+          "rank_count": 0,
+          "rank_skew_ms": 0.0,
+          "row_count": 1
+        },
+        {
+          "family": "moe",
+          "is_wrapper": false,
+          "label": "xpu_moe.gemm1_quant",
+          "max_ms": 0.5612474166666667,
+          "mean_ms": 0.5612474166666667,
+          "median_ms": 0.5612474166666667,
+          "min_ms": 0.5612474166666667,
+          "rank_count": 0,
+          "rank_skew_ms": 0.0,
+          "row_count": 1
+        },
+        {
+          "family": "moe",
+          "is_wrapper": false,
+          "label": "xpu_moe.w8a8_offsets_prefix_op",
+          "max_ms": 0.5087605833333334,
+          "mean_ms": 0.5087605833333334,
+          "median_ms": 0.5087605833333334,
+          "min_ms": 0.5087605833333334,
+          "rank_count": 0,
+          "rank_skew_ms": 0.0,
+          "row_count": 1
+        }
+      ]
+    }
+  },
+  "warning": "Timing labels are nested and non-exclusive; use this as a routing signal only."
+}

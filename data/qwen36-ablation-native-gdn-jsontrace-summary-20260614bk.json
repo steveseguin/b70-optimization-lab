@@ -1,0 +1,164 @@
+{
+  "label": "native-gdn-jsontrace",
+  "stamp": "20260614bk",
+  "return_codes": {
+    "metrics": 0,
+    "json_canary": 1,
+    "color_canary": 0,
+    "quality_suite": 0
+  },
+  "artifacts": {
+    "metrics": "/home/steve/llm-optimizations/data/qwen36-ablation-native-gdn-jsontrace-p512o512-20260614bk.json",
+    "json_canary": "/home/steve/llm-optimizations/data/qwen36-ablation-native-gdn-jsontrace-json-repeat80-20260614bk.json",
+    "color_canary": "/home/steve/llm-optimizations/data/qwen36-ablation-native-gdn-jsontrace-color-repeat1-20260614bk.json",
+    "quality_suite": "/home/steve/llm-optimizations/data/qwen36-ablation-native-gdn-jsontrace-quality-suite-20260614bk.json",
+    "log": "/home/steve/llm-optimizations/data/qwen36-ablation-native-gdn-jsontrace-20260614bk.log"
+  },
+  "env": {
+    "VLLM_XPU_GDN_NATIVE_FALLBACK": "0",
+    "VLLM_XPU_GREEDY_SAMPLE_TOPK_FALLBACK": null,
+    "VLLM_XPU_GREEDY_SAMPLE_XPU_FALLBACK": null,
+    "VLLM_XPU_DISABLE_PREFILL_CUDAGRAPH_REPLAY": null,
+    "VLLM_EXTRA_ARGS": null
+  },
+  "metrics_summary": {
+    "tok_s_out_client_after_first_chunk": {
+      "mean": 92.40656079336954,
+      "median": 93.64087984934415,
+      "min": 88.5279821606487,
+      "max": 93.81650131414116
+    },
+    "tok_s_out_client_after_first_chunk_corrected": {
+      "mean": 92.22607922931999,
+      "median": 93.4579875058884,
+      "min": 88.3550759454912,
+      "max": 93.63326596001198
+    },
+    "tok_s_out_client_e2e": {
+      "mean": 90.7029283055562,
+      "median": 91.89295044940116,
+      "min": 86.96741015230005,
+      "max": 92.05840217112245
+    },
+    "tok_s_total_client": {
+      "mean": 178.92569841525736,
+      "median": 181.2732030349515,
+      "min": 171.55680518324814,
+      "max": 181.59958240787827
+    },
+    "ttft_ms_client": {
+      "mean": 104.00311282137409,
+      "median": 104.00270950049162,
+      "min": 103.68412616662681,
+      "max": 104.3229061178863
+    },
+    "ttft_ms_vllm_metrics": {
+      "mean": 91.97527170181274,
+      "median": 91.86410903930664,
+      "min": 91.76373481750488,
+      "max": 92.40913391113281
+    },
+    "tok_s_prefill_lower_bound_from_ttft": {
+      "mean": 4788.351706225345,
+      "median": 4788.358604187564,
+      "min": 4773.640023383295,
+      "max": 4803.049593142958
+    },
+    "e2e_ms_vllm_metrics": {
+      "mean": 5647.076845169067,
+      "median": 5570.737719535828,
+      "min": 5560.584783554077,
+      "max": 5886.247158050537
+    },
+    "queue_ms_vllm_histogram": {
+      "mean": 0.013853481505066156,
+      "median": 0.013881013728678226,
+      "min": 0.0131949782371521,
+      "max": 0.014456920325756073
+    },
+    "prefill_ms_vllm_histogram": {
+      "mean": 87.02812978299335,
+      "median": 87.0221285149455,
+      "min": 86.61798504181206,
+      "max": 87.45027706027031
+    },
+    "decode_ms_vllm_histogram": {
+      "mean": 5555.351515242364,
+      "median": 5478.849684470333,
+      "min": 5469.080840935931,
+      "max": 5794.62585109286
+    },
+    "decode_ms_per_generation_token_vllm_histogram": {
+      "mean": 10.850295928207743,
+      "median": 10.70087828998112,
+      "min": 10.68179851745299,
+      "max": 11.317628615415742
+    },
+    "inference_ms_vllm_histogram": {
+      "mean": 5642.379645025358,
+      "median": 5566.075360053219,
+      "min": 5555.698825977743,
+      "max": 5881.66903401725
+    },
+    "time_per_output_token_ms_vllm_histogram": {
+      "mean": 10.871529384035936,
+      "median": 10.721819343386166,
+      "min": 10.702702232751326,
+      "max": 11.339776616620084
+    },
+    "inter_token_ms_vllm_histogram": {
+      "mean": 10.871529384035938,
+      "median": 10.72181934338617,
+      "min": 10.702702232751331,
+      "max": 11.339776616620078
+    },
+    "iteration_tokens_per_step_vllm_histogram": {
+      "mean": 1.97265625,
+      "median": 1.97265625,
+      "min": 1.97265625,
+      "max": 1.97265625
+    }
+  },
+  "json_canary": {
+    "pass_all": false,
+    "repeats_completed": 49,
+    "mismatch_count": 1,
+    "first_mismatch": {
+      "index": 48,
+      "request_id": "native-gdn-jsontrace-000048",
+      "text": "{\"answer\":\"12\",\"unit\":\"widgets\"}",
+      "normalized": "{\"answer\":\"12\",\"unit\":\"widgets\"}",
+      "token_ids": [
+        4754,
+        8944,
+        3147,
+        16,
+        17,
+        2129,
+        3715,
+        3147,
+        28844,
+        8934
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 19.561892887111753,
+      "usage": {
+        "prompt_tokens": 36,
+        "total_tokens": 47,
+        "completion_tokens": 11,
+        "prompt_tokens_details": null
+      },
+      "json_parsed": {
+        "answer": "12",
+        "unit": "widgets"
+      },
+      "pass": false
+    }
+  },
+  "color_canary": {
+    "pass_all": true,
+    "repeats_completed": 1,
+    "mismatch_count": 0,
+    "first_mismatch": null
+  }
+}

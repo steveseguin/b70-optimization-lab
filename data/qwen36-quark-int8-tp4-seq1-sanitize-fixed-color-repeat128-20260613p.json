@@ -1,0 +1,1434 @@
+{
+  "base_url": "http://127.0.0.1:18080",
+  "model": "qwen36-35b-a3b-fp8",
+  "tokenizer": "/mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118",
+  "case": "color",
+  "user_prompt": "Give exactly four comma-separated lowercase color words, sorted alphabetically, with no extra text.",
+  "prompt": "<|im_start|>user\nGive exactly four comma-separated lowercase color words, sorted alphabetically, with no extra text.<|im_end|>\n<|im_start|>assistant\n<think>\n\n</think>\n\n",
+  "prompt_token_ids": [
+    248045,
+    846,
+    198,
+    33963,
+    6681,
+    2943,
+    30644,
+    70221,
+    40657,
+    1829,
+    4105,
+    11,
+    10300,
+    26887,
+    2586,
+    11,
+    440,
+    874,
+    4799,
+    1414,
+    13,
+    248046,
+    198,
+    248045,
+    74455,
+    198,
+    248068,
+    271,
+    248069,
+    271
+  ],
+  "max_tokens": 32,
+  "repeats_requested": 128,
+  "repeats_completed": 56,
+  "seed": 20260613,
+  "request_delay_s": 0.0,
+  "request_id_prefix": "q36-sanitize-color",
+  "stop_on_mismatch": true,
+  "logprobs": 0,
+  "expected_normalized": "blue, green, orange, red",
+  "json_expected_fields": null,
+  "pass_all": false,
+  "mismatch_count": 1,
+  "mismatches": [
+    {
+      "index": 55,
+      "request_id": "q36-sanitize-color-000055",
+      "text": "blue, green, orange,\n</think>\n\nred",
+      "normalized": "blue, green, orange, </think> red",
+      "token_ids": [
+        11855,
+        11,
+        5983,
+        11,
+        18016,
+        11,
+        198,
+        248069,
+        271,
+        1114
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.7281832678709179,
+      "usage": {
+        "prompt_tokens": 30,
+        "total_tokens": 41,
+        "completion_tokens": 11,
+        "prompt_tokens_details": null
+      },
+      "pass": false
+    }
+  ],
+  "unique_normalized": [
+    "blue, green, orange, </think> red",
+    "blue, green, orange, red"
+  ],
+  "rows": [
+    {
+      "index": 0,
+      "request_id": "q36-sanitize-color-000000",
+      "text": "blue, green, orange, red",
+      "normalized": "blue, green, orange, red",
+      "token_ids": [
+        11855,
+        11,
+        5983,
+        11,
+        18016,
+        11,
+        2438
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.2648312160745263,
+      "usage": {
+        "prompt_tokens": 30,
+        "total_tokens": 38,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "pass": true
+    },
+    {
+      "index": 1,
+      "request_id": "q36-sanitize-color-000001",
+      "text": "blue, green, orange, red",
+      "normalized": "blue, green, orange, red",
+      "token_ids": [
+        11855,
+        11,
+        5983,
+        11,
+        18016,
+        11,
+        2438
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.14774855598807335,
+      "usage": {
+        "prompt_tokens": 30,
+        "total_tokens": 38,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "pass": true
+    },
+    {
+      "index": 2,
+      "request_id": "q36-sanitize-color-000002",
+      "text": "blue, green, orange, red",
+      "normalized": "blue, green, orange, red",
+      "token_ids": [
+        11855,
+        11,
+        5983,
+        11,
+        18016,
+        11,
+        2438
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.146171618020162,
+      "usage": {
+        "prompt_tokens": 30,
+        "total_tokens": 38,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "pass": true
+    },
+    {
+      "index": 3,
+      "request_id": "q36-sanitize-color-000003",
+      "text": "blue, green, orange, red",
+      "normalized": "blue, green, orange, red",
+      "token_ids": [
+        11855,
+        11,
+        5983,
+        11,
+        18016,
+        11,
+        2438
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.14747793902643025,
+      "usage": {
+        "prompt_tokens": 30,
+        "total_tokens": 38,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "pass": true
+    },
+    {
+      "index": 4,
+      "request_id": "q36-sanitize-color-000004",
+      "text": "blue, green, orange, red",
+      "normalized": "blue, green, orange, red",
+      "token_ids": [
+        11855,
+        11,
+        5983,
+        11,
+        18016,
+        11,
+        2438
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.14666679804213345,
+      "usage": {
+        "prompt_tokens": 30,
+        "total_tokens": 38,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "pass": true
+    },
+    {
+      "index": 5,
+      "request_id": "q36-sanitize-color-000005",
+      "text": "blue, green, orange, red",
+      "normalized": "blue, green, orange, red",
+      "token_ids": [
+        11855,
+        11,
+        5983,
+        11,
+        18016,
+        11,
+        2438
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.14575488585978746,
+      "usage": {
+        "prompt_tokens": 30,
+        "total_tokens": 38,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "pass": true
+    },
+    {
+      "index": 6,
+      "request_id": "q36-sanitize-color-000006",
+      "text": "blue, green, orange, red",
+      "normalized": "blue, green, orange, red",
+      "token_ids": [
+        11855,
+        11,
+        5983,
+        11,
+        18016,
+        11,
+        2438
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.14709041314199567,
+      "usage": {
+        "prompt_tokens": 30,
+        "total_tokens": 38,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "pass": true
+    },
+    {
+      "index": 7,
+      "request_id": "q36-sanitize-color-000007",
+      "text": "blue, green, orange, red",
+      "normalized": "blue, green, orange, red",
+      "token_ids": [
+        11855,
+        11,
+        5983,
+        11,
+        18016,
+        11,
+        2438
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.15055674500763416,
+      "usage": {
+        "prompt_tokens": 30,
+        "total_tokens": 38,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "pass": true
+    },
+    {
+      "index": 8,
+      "request_id": "q36-sanitize-color-000008",
+      "text": "blue, green, orange, red",
+      "normalized": "blue, green, orange, red",
+      "token_ids": [
+        11855,
+        11,
+        5983,
+        11,
+        18016,
+        11,
+        2438
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.14869601489044726,
+      "usage": {
+        "prompt_tokens": 30,
+        "total_tokens": 38,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "pass": true
+    },
+    {
+      "index": 9,
+      "request_id": "q36-sanitize-color-000009",
+      "text": "blue, green, orange, red",
+      "normalized": "blue, green, orange, red",
+      "token_ids": [
+        11855,
+        11,
+        5983,
+        11,
+        18016,
+        11,
+        2438
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.14682683791033924,
+      "usage": {
+        "prompt_tokens": 30,
+        "total_tokens": 38,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "pass": true
+    },
+    {
+      "index": 10,
+      "request_id": "q36-sanitize-color-000010",
+      "text": "blue, green, orange, red",
+      "normalized": "blue, green, orange, red",
+      "token_ids": [
+        11855,
+        11,
+        5983,
+        11,
+        18016,
+        11,
+        2438
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.14605199499055743,
+      "usage": {
+        "prompt_tokens": 30,
+        "total_tokens": 38,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "pass": true
+    },
+    {
+      "index": 11,
+      "request_id": "q36-sanitize-color-000011",
+      "text": "blue, green, orange, red",
+      "normalized": "blue, green, orange, red",
+      "token_ids": [
+        11855,
+        11,
+        5983,
+        11,
+        18016,
+        11,
+        2438
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.14659691601991653,
+      "usage": {
+        "prompt_tokens": 30,
+        "total_tokens": 38,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "pass": true
+    },
+    {
+      "index": 12,
+      "request_id": "q36-sanitize-color-000012",
+      "text": "blue, green, orange, red",
+      "normalized": "blue, green, orange, red",
+      "token_ids": [
+        11855,
+        11,
+        5983,
+        11,
+        18016,
+        11,
+        2438
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.1457273259293288,
+      "usage": {
+        "prompt_tokens": 30,
+        "total_tokens": 38,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "pass": true
+    },
+    {
+      "index": 13,
+      "request_id": "q36-sanitize-color-000013",
+      "text": "blue, green, orange, red",
+      "normalized": "blue, green, orange, red",
+      "token_ids": [
+        11855,
+        11,
+        5983,
+        11,
+        18016,
+        11,
+        2438
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.145700816065073,
+      "usage": {
+        "prompt_tokens": 30,
+        "total_tokens": 38,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "pass": true
+    },
+    {
+      "index": 14,
+      "request_id": "q36-sanitize-color-000014",
+      "text": "blue, green, orange, red",
+      "normalized": "blue, green, orange, red",
+      "token_ids": [
+        11855,
+        11,
+        5983,
+        11,
+        18016,
+        11,
+        2438
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.1455651819705963,
+      "usage": {
+        "prompt_tokens": 30,
+        "total_tokens": 38,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "pass": true
+    },
+    {
+      "index": 15,
+      "request_id": "q36-sanitize-color-000015",
+      "text": "blue, green, orange, red",
+      "normalized": "blue, green, orange, red",
+      "token_ids": [
+        11855,
+        11,
+        5983,
+        11,
+        18016,
+        11,
+        2438
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.14560340391471982,
+      "usage": {
+        "prompt_tokens": 30,
+        "total_tokens": 38,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "pass": true
+    },
+    {
+      "index": 16,
+      "request_id": "q36-sanitize-color-000016",
+      "text": "blue, green, orange, red",
+      "normalized": "blue, green, orange, red",
+      "token_ids": [
+        11855,
+        11,
+        5983,
+        11,
+        18016,
+        11,
+        2438
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.14592134999111295,
+      "usage": {
+        "prompt_tokens": 30,
+        "total_tokens": 38,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "pass": true
+    },
+    {
+      "index": 17,
+      "request_id": "q36-sanitize-color-000017",
+      "text": "blue, green, orange, red",
+      "normalized": "blue, green, orange, red",
+      "token_ids": [
+        11855,
+        11,
+        5983,
+        11,
+        18016,
+        11,
+        2438
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.14993598079308867,
+      "usage": {
+        "prompt_tokens": 30,
+        "total_tokens": 38,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "pass": true
+    },
+    {
+      "index": 18,
+      "request_id": "q36-sanitize-color-000018",
+      "text": "blue, green, orange, red",
+      "normalized": "blue, green, orange, red",
+      "token_ids": [
+        11855,
+        11,
+        5983,
+        11,
+        18016,
+        11,
+        2438
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.1506630650255829,
+      "usage": {
+        "prompt_tokens": 30,
+        "total_tokens": 38,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "pass": true
+    },
+    {
+      "index": 19,
+      "request_id": "q36-sanitize-color-000019",
+      "text": "blue, green, orange, red",
+      "normalized": "blue, green, orange, red",
+      "token_ids": [
+        11855,
+        11,
+        5983,
+        11,
+        18016,
+        11,
+        2438
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.15180203202180564,
+      "usage": {
+        "prompt_tokens": 30,
+        "total_tokens": 38,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "pass": true
+    },
+    {
+      "index": 20,
+      "request_id": "q36-sanitize-color-000020",
+      "text": "blue, green, orange, red",
+      "normalized": "blue, green, orange, red",
+      "token_ids": [
+        11855,
+        11,
+        5983,
+        11,
+        18016,
+        11,
+        2438
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.15183098521083593,
+      "usage": {
+        "prompt_tokens": 30,
+        "total_tokens": 38,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "pass": true
+    },
+    {
+      "index": 21,
+      "request_id": "q36-sanitize-color-000021",
+      "text": "blue, green, orange, red",
+      "normalized": "blue, green, orange, red",
+      "token_ids": [
+        11855,
+        11,
+        5983,
+        11,
+        18016,
+        11,
+        2438
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.15187727310694754,
+      "usage": {
+        "prompt_tokens": 30,
+        "total_tokens": 38,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "pass": true
+    },
+    {
+      "index": 22,
+      "request_id": "q36-sanitize-color-000022",
+      "text": "blue, green, orange, red",
+      "normalized": "blue, green, orange, red",
+      "token_ids": [
+        11855,
+        11,
+        5983,
+        11,
+        18016,
+        11,
+        2438
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.14722383301705122,
+      "usage": {
+        "prompt_tokens": 30,
+        "total_tokens": 38,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "pass": true
+    },
+    {
+      "index": 23,
+      "request_id": "q36-sanitize-color-000023",
+      "text": "blue, green, orange, red",
+      "normalized": "blue, green, orange, red",
+      "token_ids": [
+        11855,
+        11,
+        5983,
+        11,
+        18016,
+        11,
+        2438
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.1513467279728502,
+      "usage": {
+        "prompt_tokens": 30,
+        "total_tokens": 38,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "pass": true
+    },
+    {
+      "index": 24,
+      "request_id": "q36-sanitize-color-000024",
+      "text": "blue, green, orange, red",
+      "normalized": "blue, green, orange, red",
+      "token_ids": [
+        11855,
+        11,
+        5983,
+        11,
+        18016,
+        11,
+        2438
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.14962145080789924,
+      "usage": {
+        "prompt_tokens": 30,
+        "total_tokens": 38,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "pass": true
+    },
+    {
+      "index": 25,
+      "request_id": "q36-sanitize-color-000025",
+      "text": "blue, green, orange, red",
+      "normalized": "blue, green, orange, red",
+      "token_ids": [
+        11855,
+        11,
+        5983,
+        11,
+        18016,
+        11,
+        2438
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.150009699864313,
+      "usage": {
+        "prompt_tokens": 30,
+        "total_tokens": 38,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "pass": true
+    },
+    {
+      "index": 26,
+      "request_id": "q36-sanitize-color-000026",
+      "text": "blue, green, orange, red",
+      "normalized": "blue, green, orange, red",
+      "token_ids": [
+        11855,
+        11,
+        5983,
+        11,
+        18016,
+        11,
+        2438
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.15125485602766275,
+      "usage": {
+        "prompt_tokens": 30,
+        "total_tokens": 38,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "pass": true
+    },
+    {
+      "index": 27,
+      "request_id": "q36-sanitize-color-000027",
+      "text": "blue, green, orange, red",
+      "normalized": "blue, green, orange, red",
+      "token_ids": [
+        11855,
+        11,
+        5983,
+        11,
+        18016,
+        11,
+        2438
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.15198561595752835,
+      "usage": {
+        "prompt_tokens": 30,
+        "total_tokens": 38,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "pass": true
+    },
+    {
+      "index": 28,
+      "request_id": "q36-sanitize-color-000028",
+      "text": "blue, green, orange, red",
+      "normalized": "blue, green, orange, red",
+      "token_ids": [
+        11855,
+        11,
+        5983,
+        11,
+        18016,
+        11,
+        2438
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.15244722203351557,
+      "usage": {
+        "prompt_tokens": 30,
+        "total_tokens": 38,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "pass": true
+    },
+    {
+      "index": 29,
+      "request_id": "q36-sanitize-color-000029",
+      "text": "blue, green, orange, red",
+      "normalized": "blue, green, orange, red",
+      "token_ids": [
+        11855,
+        11,
+        5983,
+        11,
+        18016,
+        11,
+        2438
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.15541551099158823,
+      "usage": {
+        "prompt_tokens": 30,
+        "total_tokens": 38,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "pass": true
+    },
+    {
+      "index": 30,
+      "request_id": "q36-sanitize-color-000030",
+      "text": "blue, green, orange, red",
+      "normalized": "blue, green, orange, red",
+      "token_ids": [
+        11855,
+        11,
+        5983,
+        11,
+        18016,
+        11,
+        2438
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.15113377897068858,
+      "usage": {
+        "prompt_tokens": 30,
+        "total_tokens": 38,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "pass": true
+    },
+    {
+      "index": 31,
+      "request_id": "q36-sanitize-color-000031",
+      "text": "blue, green, orange, red",
+      "normalized": "blue, green, orange, red",
+      "token_ids": [
+        11855,
+        11,
+        5983,
+        11,
+        18016,
+        11,
+        2438
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.16245035687461495,
+      "usage": {
+        "prompt_tokens": 30,
+        "total_tokens": 38,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "pass": true
+    },
+    {
+      "index": 32,
+      "request_id": "q36-sanitize-color-000032",
+      "text": "blue, green, orange, red",
+      "normalized": "blue, green, orange, red",
+      "token_ids": [
+        11855,
+        11,
+        5983,
+        11,
+        18016,
+        11,
+        2438
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.147292654030025,
+      "usage": {
+        "prompt_tokens": 30,
+        "total_tokens": 38,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "pass": true
+    },
+    {
+      "index": 33,
+      "request_id": "q36-sanitize-color-000033",
+      "text": "blue, green, orange, red",
+      "normalized": "blue, green, orange, red",
+      "token_ids": [
+        11855,
+        11,
+        5983,
+        11,
+        18016,
+        11,
+        2438
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.14674039697274566,
+      "usage": {
+        "prompt_tokens": 30,
+        "total_tokens": 38,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "pass": true
+    },
+    {
+      "index": 34,
+      "request_id": "q36-sanitize-color-000034",
+      "text": "blue, green, orange, red",
+      "normalized": "blue, green, orange, red",
+      "token_ids": [
+        11855,
+        11,
+        5983,
+        11,
+        18016,
+        11,
+        2438
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.1468537689652294,
+      "usage": {
+        "prompt_tokens": 30,
+        "total_tokens": 38,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "pass": true
+    },
+    {
+      "index": 35,
+      "request_id": "q36-sanitize-color-000035",
+      "text": "blue, green, orange, red",
+      "normalized": "blue, green, orange, red",
+      "token_ids": [
+        11855,
+        11,
+        5983,
+        11,
+        18016,
+        11,
+        2438
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.14688500785268843,
+      "usage": {
+        "prompt_tokens": 30,
+        "total_tokens": 38,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "pass": true
+    },
+    {
+      "index": 36,
+      "request_id": "q36-sanitize-color-000036",
+      "text": "blue, green, orange, red",
+      "normalized": "blue, green, orange, red",
+      "token_ids": [
+        11855,
+        11,
+        5983,
+        11,
+        18016,
+        11,
+        2438
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.14650088781490922,
+      "usage": {
+        "prompt_tokens": 30,
+        "total_tokens": 38,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "pass": true
+    },
+    {
+      "index": 37,
+      "request_id": "q36-sanitize-color-000037",
+      "text": "blue, green, orange, red",
+      "normalized": "blue, green, orange, red",
+      "token_ids": [
+        11855,
+        11,
+        5983,
+        11,
+        18016,
+        11,
+        2438
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.14676487306132913,
+      "usage": {
+        "prompt_tokens": 30,
+        "total_tokens": 38,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "pass": true
+    },
+    {
+      "index": 38,
+      "request_id": "q36-sanitize-color-000038",
+      "text": "blue, green, orange, red",
+      "normalized": "blue, green, orange, red",
+      "token_ids": [
+        11855,
+        11,
+        5983,
+        11,
+        18016,
+        11,
+        2438
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.14717137604020536,
+      "usage": {
+        "prompt_tokens": 30,
+        "total_tokens": 38,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "pass": true
+    },
+    {
+      "index": 39,
+      "request_id": "q36-sanitize-color-000039",
+      "text": "blue, green, orange, red",
+      "normalized": "blue, green, orange, red",
+      "token_ids": [
+        11855,
+        11,
+        5983,
+        11,
+        18016,
+        11,
+        2438
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.14682121900841594,
+      "usage": {
+        "prompt_tokens": 30,
+        "total_tokens": 38,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "pass": true
+    },
+    {
+      "index": 40,
+      "request_id": "q36-sanitize-color-000040",
+      "text": "blue, green, orange, red",
+      "normalized": "blue, green, orange, red",
+      "token_ids": [
+        11855,
+        11,
+        5983,
+        11,
+        18016,
+        11,
+        2438
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.14711864688433707,
+      "usage": {
+        "prompt_tokens": 30,
+        "total_tokens": 38,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "pass": true
+    },
+    {
+      "index": 41,
+      "request_id": "q36-sanitize-color-000041",
+      "text": "blue, green, orange, red",
+      "normalized": "blue, green, orange, red",
+      "token_ids": [
+        11855,
+        11,
+        5983,
+        11,
+        18016,
+        11,
+        2438
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.1534449141472578,
+      "usage": {
+        "prompt_tokens": 30,
+        "total_tokens": 38,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "pass": true
+    },
+    {
+      "index": 42,
+      "request_id": "q36-sanitize-color-000042",
+      "text": "blue, green, orange, red",
+      "normalized": "blue, green, orange, red",
+      "token_ids": [
+        11855,
+        11,
+        5983,
+        11,
+        18016,
+        11,
+        2438
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.15189713099971414,
+      "usage": {
+        "prompt_tokens": 30,
+        "total_tokens": 38,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "pass": true
+    },
+    {
+      "index": 43,
+      "request_id": "q36-sanitize-color-000043",
+      "text": "blue, green, orange, red",
+      "normalized": "blue, green, orange, red",
+      "token_ids": [
+        11855,
+        11,
+        5983,
+        11,
+        18016,
+        11,
+        2438
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.15001540095545352,
+      "usage": {
+        "prompt_tokens": 30,
+        "total_tokens": 38,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "pass": true
+    },
+    {
+      "index": 44,
+      "request_id": "q36-sanitize-color-000044",
+      "text": "blue, green, orange, red",
+      "normalized": "blue, green, orange, red",
+      "token_ids": [
+        11855,
+        11,
+        5983,
+        11,
+        18016,
+        11,
+        2438
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.1514020930044353,
+      "usage": {
+        "prompt_tokens": 30,
+        "total_tokens": 38,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "pass": true
+    },
+    {
+      "index": 45,
+      "request_id": "q36-sanitize-color-000045",
+      "text": "blue, green, orange, red",
+      "normalized": "blue, green, orange, red",
+      "token_ids": [
+        11855,
+        11,
+        5983,
+        11,
+        18016,
+        11,
+        2438
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.15795141900889575,
+      "usage": {
+        "prompt_tokens": 30,
+        "total_tokens": 38,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "pass": true
+    },
+    {
+      "index": 46,
+      "request_id": "q36-sanitize-color-000046",
+      "text": "blue, green, orange, red",
+      "normalized": "blue, green, orange, red",
+      "token_ids": [
+        11855,
+        11,
+        5983,
+        11,
+        18016,
+        11,
+        2438
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.15017292695119977,
+      "usage": {
+        "prompt_tokens": 30,
+        "total_tokens": 38,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "pass": true
+    },
+    {
+      "index": 47,
+      "request_id": "q36-sanitize-color-000047",
+      "text": "blue, green, orange, red",
+      "normalized": "blue, green, orange, red",
+      "token_ids": [
+        11855,
+        11,
+        5983,
+        11,
+        18016,
+        11,
+        2438
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.15139020001515746,
+      "usage": {
+        "prompt_tokens": 30,
+        "total_tokens": 38,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "pass": true
+    },
+    {
+      "index": 48,
+      "request_id": "q36-sanitize-color-000048",
+      "text": "blue, green, orange, red",
+      "normalized": "blue, green, orange, red",
+      "token_ids": [
+        11855,
+        11,
+        5983,
+        11,
+        18016,
+        11,
+        2438
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.15033981995657086,
+      "usage": {
+        "prompt_tokens": 30,
+        "total_tokens": 38,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "pass": true
+    },
+    {
+      "index": 49,
+      "request_id": "q36-sanitize-color-000049",
+      "text": "blue, green, orange, red",
+      "normalized": "blue, green, orange, red",
+      "token_ids": [
+        11855,
+        11,
+        5983,
+        11,
+        18016,
+        11,
+        2438
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.1485425280407071,
+      "usage": {
+        "prompt_tokens": 30,
+        "total_tokens": 38,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "pass": true
+    },
+    {
+      "index": 50,
+      "request_id": "q36-sanitize-color-000050",
+      "text": "blue, green, orange, red",
+      "normalized": "blue, green, orange, red",
+      "token_ids": [
+        11855,
+        11,
+        5983,
+        11,
+        18016,
+        11,
+        2438
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.14833902707323432,
+      "usage": {
+        "prompt_tokens": 30,
+        "total_tokens": 38,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "pass": true
+    },
+    {
+      "index": 51,
+      "request_id": "q36-sanitize-color-000051",
+      "text": "blue, green, orange, red",
+      "normalized": "blue, green, orange, red",
+      "token_ids": [
+        11855,
+        11,
+        5983,
+        11,
+        18016,
+        11,
+        2438
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.14721071999520063,
+      "usage": {
+        "prompt_tokens": 30,
+        "total_tokens": 38,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "pass": true
+    },
+    {
+      "index": 52,
+      "request_id": "q36-sanitize-color-000052",
+      "text": "blue, green, orange, red",
+      "normalized": "blue, green, orange, red",
+      "token_ids": [
+        11855,
+        11,
+        5983,
+        11,
+        18016,
+        11,
+        2438
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.15163657302036881,
+      "usage": {
+        "prompt_tokens": 30,
+        "total_tokens": 38,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "pass": true
+    },
+    {
+      "index": 53,
+      "request_id": "q36-sanitize-color-000053",
+      "text": "blue, green, orange, red",
+      "normalized": "blue, green, orange, red",
+      "token_ids": [
+        11855,
+        11,
+        5983,
+        11,
+        18016,
+        11,
+        2438
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.15194248710758984,
+      "usage": {
+        "prompt_tokens": 30,
+        "total_tokens": 38,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "pass": true
+    },
+    {
+      "index": 54,
+      "request_id": "q36-sanitize-color-000054",
+      "text": "blue, green, orange, red",
+      "normalized": "blue, green, orange, red",
+      "token_ids": [
+        11855,
+        11,
+        5983,
+        11,
+        18016,
+        11,
+        2438
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.15184579603374004,
+      "usage": {
+        "prompt_tokens": 30,
+        "total_tokens": 38,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "pass": true
+    },
+    {
+      "index": 55,
+      "request_id": "q36-sanitize-color-000055",
+      "text": "blue, green, orange,\n</think>\n\nred",
+      "normalized": "blue, green, orange, </think> red",
+      "token_ids": [
+        11855,
+        11,
+        5983,
+        11,
+        18016,
+        11,
+        198,
+        248069,
+        271,
+        1114
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.7281832678709179,
+      "usage": {
+        "prompt_tokens": 30,
+        "total_tokens": 41,
+        "completion_tokens": 11,
+        "prompt_tokens_details": null
+      },
+      "pass": false
+    }
+  ]
+}

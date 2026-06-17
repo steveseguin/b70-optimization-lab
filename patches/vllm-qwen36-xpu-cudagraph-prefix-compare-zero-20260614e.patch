@@ -1,0 +1,839 @@
+diff --git a/vllm/compilation/cuda_graph.py b/vllm/compilation/cuda_graph.py
+index b63d86199..7e0916d19 100644
+--- a/vllm/compilation/cuda_graph.py
++++ b/vllm/compilation/cuda_graph.py
+@@ -2,6 +2,10 @@
+ # SPDX-FileCopyrightText: Copyright contributors to the vLLM project
+ 
+ import dataclasses
++import json
++import os
++import re
++import time
+ import weakref
+ from collections import Counter
+ from collections.abc import Callable
+@@ -13,7 +17,10 @@ import torch
+ 
+ import vllm.envs as envs
+ from vllm.compilation.counter import compilation_counter
+-from vllm.compilation.monitor import validate_cudagraph_capturing_enabled
++from vllm.compilation.monitor import (
++    set_cudagraph_capturing_enabled,
++    validate_cudagraph_capturing_enabled,
++)
+ from vllm.config import CUDAGraphMode, VllmConfig
+ from vllm.distributed.device_communicators.pynccl_allocator import set_graph_pool_id
+ from vllm.forward_context import (
+@@ -27,6 +34,35 @@ from vllm.platforms import current_platform
+ from vllm.utils.torch_utils import current_stream, weak_ref_tensors
+ 
+ logger = init_logger(__name__)
++_XPU_CUDAGRAPH_TRACE_LINES = 0
++_XPU_CUDAGRAPH_WRAPPER_IDS = 0
++_XPU_CUDAGRAPH_COMPARE_DIRECT_LINES = 0
++
++
++def _xpu_cudagraph_int_env(name: str, default: int) -> int:
++    try:
++        return int(os.environ.get(name, str(default)) or default)
++    except ValueError:
++        return default
++
++
++def _xpu_cudagraph_rank() -> int:
++    try:
++        from vllm.distributed import get_tensor_model_parallel_rank
++
++        return int(get_tensor_model_parallel_rank())
++    except Exception:
++        try:
++            return int(os.environ.get("LOCAL_RANK", "0") or "0")
++        except ValueError:
++            return 0
++
++
++def _xpu_cudagraph_trace_path(raw_path: str, rank: int) -> str:
++    try:
++        return raw_path.format(rank=rank, pid=os.getpid())
++    except Exception:
++        return raw_path
+ 
+ 
+ @dataclasses.dataclass(frozen=True)
+@@ -129,6 +165,7 @@ class CUDAGraphEntry:
+     batch_descriptor: BatchDescriptor
+     cudagraph: torch.cuda.CUDAGraph | None = None
+     output: Any | None = None
++    replay_count: int = 0
+ 
+     # for cudagraph debugging, track the input addresses
+     # during capture, and check if they are the same during replay
+@@ -182,10 +219,13 @@ class CUDAGraphWrapper:
+         runtime_mode: CUDAGraphMode,
+         cudagraph_options: CUDAGraphOptions | None = None,
+     ) -> None:
++        global _XPU_CUDAGRAPH_WRAPPER_IDS
+         self.runnable = runnable
+         self.vllm_config = vllm_config
+         self.runtime_mode = runtime_mode
+         self.compilation_config = vllm_config.compilation_config
++        self._xpu_cudagraph_wrapper_id = _XPU_CUDAGRAPH_WRAPPER_IDS
++        _XPU_CUDAGRAPH_WRAPPER_IDS += 1
+ 
+         self.first_run_finished = False
+         self.is_debugging_mode = envs.VLLM_LOGGING_LEVEL == "DEBUG"
+@@ -197,10 +237,19 @@ class CUDAGraphWrapper:
+         # TODO: in the future, if we want to use multiple
+         # streams, it might not be safe to share a global pool.
+         # only investigate this when we use multiple streams
+-        self.graph_pool = current_platform.get_global_graph_pool()
++        if os.environ.get("VLLM_XPU_CUDAGRAPH_PER_WRAPPER_POOL", "0") == "1":
++            self.graph_pool = current_platform.graph_pool_handle()
++        elif os.environ.get("VLLM_XPU_CUDAGRAPH_NO_GLOBAL_POOL", "0") == "1":
++            self.graph_pool = None
++        else:
++            self.graph_pool = current_platform.get_global_graph_pool()
+ 
+         if cudagraph_options is None:
+             cudagraph_options = CUDAGraphOptions()
++        if os.environ.get("VLLM_XPU_CUDAGRAPH_STRONG_OUTPUT", "0") == "1":
++            cudagraph_options = dataclasses.replace(
++                cudagraph_options, weak_ref_output=False
++            )
+         self.cudagraph_options = cudagraph_options
+         # the entries for different batch descriptors that we need to capture
+         # cudagraphs for.
+@@ -208,6 +257,529 @@ class CUDAGraphWrapper:
+ 
+         CUDAGraphWrapper._all_instances.add(self)
+ 
++    def _xpu_cudagraph_identity(self) -> dict[str, Any]:
++        runnable_type = type(self.runnable)
++        submod_name = getattr(self.runnable, "submod_name", "")
++        piecewise_index = getattr(self.runnable, "piecewise_compile_index", None)
++        total_piecewise = getattr(self.runnable, "total_piecewise_compiles", None)
++        identity = {
++            "wrapper_id": self._xpu_cudagraph_wrapper_id,
++            "runtime_mode": self.runtime_mode.name,
++            "runnable_type": (
++                f"{runnable_type.__module__}.{runnable_type.__qualname__}"
++            ),
++            "submod_name": submod_name,
++            "piecewise_index": piecewise_index,
++            "total_piecewise_compiles": total_piecewise,
++            "is_first_graph": getattr(self.runnable, "is_first_graph", None),
++            "is_last_graph": getattr(self.runnable, "is_last_graph", None),
++        }
++        return identity
++
++    def _xpu_cudagraph_trace_label(self) -> str:
++        identity = self._xpu_cudagraph_identity()
++        fields = [
++            f"wrapper:{identity['wrapper_id']}",
++            f"mode:{identity['runtime_mode']}",
++            f"type:{identity['runnable_type']}",
++        ]
++        if identity.get("submod_name"):
++            fields.append(f"submod:{identity['submod_name']}")
++        if identity.get("piecewise_index") is not None:
++            fields.append(
++                "piecewise:"
++                f"{identity['piecewise_index']}/"
++                f"{identity.get('total_piecewise_compiles')}"
++            )
++        return " ".join(fields)
++
++    def _xpu_cudagraph_disabled_by_regex(self) -> bool:
++        pattern = os.environ.get("VLLM_XPU_CUDAGRAPH_DISABLE_SUBMOD_REGEX", "")
++        if not pattern:
++            return False
++        try:
++            return re.search(pattern, self._xpu_cudagraph_trace_label()) is not None
++        except re.error as exc:
++            logger.warning_once(
++                "Invalid VLLM_XPU_CUDAGRAPH_DISABLE_SUBMOD_REGEX=%r: %r",
++                pattern,
++                exc,
++            )
++            return False
++
++    def _xpu_cudagraph_disabled_reason(self) -> str:
++        max_piecewise_raw = os.environ.get(
++            "VLLM_XPU_CUDAGRAPH_REPLAY_MAX_PIECEWISE_INDEX", ""
++        ).strip()
++        if max_piecewise_raw:
++            try:
++                max_piecewise = int(max_piecewise_raw)
++                piecewise_index = getattr(
++                    self.runnable, "piecewise_compile_index", None
++                )
++                if (
++                    piecewise_index is not None
++                    and int(piecewise_index) > max_piecewise
++                ):
++                    return (
++                        "piecewise_index_above_replay_max:"
++                        f"{piecewise_index}>{max_piecewise}"
++                    )
++            except ValueError:
++                logger.warning_once(
++                    "Invalid VLLM_XPU_CUDAGRAPH_REPLAY_MAX_PIECEWISE_INDEX=%r",
++                    max_piecewise_raw,
++                )
++
++        if self._xpu_cudagraph_disabled_by_regex():
++            return "disabled_by_submod_regex"
++        return ""
++
++    def _xpu_cudagraph_compare_direct_enabled(self) -> bool:
++        pattern = os.environ.get("VLLM_XPU_CUDAGRAPH_COMPARE_DIRECT_REGEX", "")
++        if not pattern:
++            return False
++        global _XPU_CUDAGRAPH_COMPARE_DIRECT_LINES
++        max_lines = _xpu_cudagraph_int_env(
++            "VLLM_XPU_CUDAGRAPH_COMPARE_DIRECT_MAX_LINES", 0
++        )
++        if max_lines > 0 and _XPU_CUDAGRAPH_COMPARE_DIRECT_LINES >= max_lines:
++            return False
++        try:
++            return re.search(pattern, self._xpu_cudagraph_trace_label()) is not None
++        except re.error as exc:
++            logger.warning_once(
++                "Invalid VLLM_XPU_CUDAGRAPH_COMPARE_DIRECT_REGEX=%r: %r",
++                pattern,
++                exc,
++            )
++            return False
++
++    def _xpu_cudagraph_zero_replay_outputs_enabled(self) -> bool:
++        pattern = os.environ.get("VLLM_XPU_CUDAGRAPH_ZERO_REPLAY_OUTPUT_REGEX", "")
++        if not pattern:
++            return False
++        try:
++            return re.search(pattern, self._xpu_cudagraph_trace_label()) is not None
++        except re.error as exc:
++            logger.warning_once(
++                "Invalid VLLM_XPU_CUDAGRAPH_ZERO_REPLAY_OUTPUT_REGEX=%r: %r",
++                pattern,
++                exc,
++            )
++            return False
++
++    @staticmethod
++    def _xpu_cudagraph_zero_replay_output_indices() -> set[int]:
++        raw_indices = os.environ.get(
++            "VLLM_XPU_CUDAGRAPH_ZERO_REPLAY_OUTPUT_INDICES", ""
++        )
++        indices: set[int] = set()
++        for raw_index in raw_indices.split(","):
++            raw_index = raw_index.strip()
++            if not raw_index:
++                continue
++            try:
++                indices.add(int(raw_index))
++            except ValueError:
++                logger.warning_once(
++                    "Invalid VLLM_XPU_CUDAGRAPH_ZERO_REPLAY_OUTPUT_INDICES item=%r",
++                    raw_index,
++                )
++        return indices
++
++    def _xpu_cudagraph_zero_selected_replay_outputs(self, output: Any) -> int:
++        if not self._xpu_cudagraph_zero_replay_outputs_enabled():
++            return 0
++        indices = self._xpu_cudagraph_zero_replay_output_indices()
++        if not indices:
++            return 0
++        if not isinstance(output, (tuple, list)):
++            return 0
++
++        zeroed = 0
++        with torch.no_grad():
++            for index in indices:
++                if index < 0 or index >= len(output):
++                    continue
++                tensor = output[index]
++                if isinstance(tensor, torch.Tensor) and tensor.numel() > 0:
++                    tensor.zero_()
++                    zeroed += 1
++        return zeroed
++
++    def _xpu_cudagraph_clone_output_tensors(self, output: Any) -> Any:
++        if isinstance(output, torch.Tensor):
++            return output.detach().clone()
++        if isinstance(output, tuple):
++            return tuple(self._xpu_cudagraph_clone_output_tensors(v) for v in output)
++        if isinstance(output, list):
++            return [self._xpu_cudagraph_clone_output_tensors(v) for v in output]
++        if isinstance(output, dict):
++            return {
++                key: self._xpu_cudagraph_clone_output_tensors(value)
++                for key, value in output.items()
++            }
++        tensors = getattr(output, "tensors", None)
++        if isinstance(tensors, dict):
++            return {
++                str(key): self._xpu_cudagraph_clone_output_tensors(value)
++                for key, value in tensors.items()
++            }
++        return output
++
++    def _xpu_cudagraph_collect_tensors(
++        self, output: Any, path: str = "$"
++    ) -> list[tuple[str, torch.Tensor]]:
++        if isinstance(output, torch.Tensor):
++            return [(path, output)]
++        if isinstance(output, tuple):
++            tensors: list[tuple[str, torch.Tensor]] = []
++            for idx, value in enumerate(output):
++                tensors.extend(
++                    self._xpu_cudagraph_collect_tensors(value, f"{path}[{idx}]")
++                )
++            return tensors
++        if isinstance(output, list):
++            tensors = []
++            for idx, value in enumerate(output):
++                tensors.extend(
++                    self._xpu_cudagraph_collect_tensors(value, f"{path}[{idx}]")
++                )
++            return tensors
++        if isinstance(output, dict):
++            tensors = []
++            for key, value in output.items():
++                tensors.extend(
++                    self._xpu_cudagraph_collect_tensors(value, f"{path}.{key}")
++                )
++            return tensors
++        output_tensors = getattr(output, "tensors", None)
++        if isinstance(output_tensors, dict):
++            tensors = []
++            for key, value in output_tensors.items():
++                tensors.extend(
++                    self._xpu_cudagraph_collect_tensors(value, f"{path}.{key}")
++                )
++            return tensors
++        return []
++
++    def _xpu_cudagraph_compare_outputs(
++        self, replay_output: Any, direct_output: Any
++    ) -> dict[str, Any]:
++        max_numel = _xpu_cudagraph_int_env(
++            "VLLM_XPU_CUDAGRAPH_COMPARE_DIRECT_MAX_NUMEL", 262144
++        )
++        replay_tensors = self._xpu_cudagraph_collect_tensors(replay_output)
++        direct_tensors = self._xpu_cudagraph_collect_tensors(direct_output)
++        comparisons: list[dict[str, Any]] = []
++        for idx, (replay_item, direct_item) in enumerate(
++            zip(replay_tensors, direct_tensors)
++        ):
++            replay_path, replay_tensor = replay_item
++            direct_path, direct_tensor = direct_item
++            item: dict[str, Any] = {
++                "index": idx,
++                "replay_path": replay_path,
++                "direct_path": direct_path,
++                "replay_shape": list(replay_tensor.shape),
++                "direct_shape": list(direct_tensor.shape),
++                "replay_dtype": str(replay_tensor.dtype),
++                "direct_dtype": str(direct_tensor.dtype),
++                "replay_device": str(replay_tensor.device),
++                "direct_device": str(direct_tensor.device),
++            }
++            if replay_tensor.shape != direct_tensor.shape:
++                item["match"] = False
++                item["reason"] = "shape"
++            elif replay_tensor.numel() > max_numel:
++                item["match"] = None
++                item["reason"] = "numel"
++                item["max_numel"] = max_numel
++            else:
++                try:
++                    replay_float = replay_tensor.detach().float()
++                    direct_float = direct_tensor.detach().float()
++                    diff = (replay_float - direct_float).abs()
++                    finite = torch.isfinite(diff)
++                    finite_count = int(finite.sum().item())
++                    item["finite_diff"] = finite_count
++                    item["nan_diff"] = int(torch.isnan(diff).sum().item())
++                    if finite_count:
++                        finite_diff = diff[finite]
++                        max_abs = float(finite_diff.max().item())
++                        mean_abs = float(finite_diff.mean().item())
++                        item["max_abs"] = max_abs
++                        item["mean_abs"] = mean_abs
++                        item["match"] = max_abs == 0.0
++                    else:
++                        item["match"] = False
++                except Exception as exc:
++                    item["match"] = False
++                    item["reason"] = repr(exc)
++            comparisons.append(item)
++        return {
++            "replay_tensor_count": len(replay_tensors),
++            "direct_tensor_count": len(direct_tensors),
++            "all_match": (
++                len(replay_tensors) == len(direct_tensors)
++                and all(item.get("match") is True for item in comparisons)
++            ),
++            "comparisons": comparisons,
++        }
++
++    def _xpu_cudagraph_trace_compare_direct(
++        self,
++        trace_context: dict[str, Any],
++        batch_descriptor: BatchDescriptor | None,
++        entry: CUDAGraphEntry,
++        replay_output_snapshot: Any,
++        direct_output: Any,
++        comparison: dict[str, Any],
++    ) -> None:
++        global _XPU_CUDAGRAPH_COMPARE_DIRECT_LINES
++        _XPU_CUDAGRAPH_COMPARE_DIRECT_LINES += 1
++        try:
++            record = {
++                "ts": time.time(),
++                "pid": os.getpid(),
++                "tp_rank": trace_context.get("rank"),
++                "event": "compare_direct_finish",
++                **self._xpu_cudagraph_identity(),
++                "label": trace_context.get("label"),
++                "batch_descriptor": None
++                if batch_descriptor is None
++                else str(batch_descriptor),
++                "req_ids": trace_context.get("req_ids", []),
++                "matched_req_ids": trace_context.get("matched_req_ids", []),
++                "forward_extra": trace_context.get("forward_extra", {}),
++                "entry": {
++                    "has_graph": entry.cudagraph is not None,
++                    "replay_count": int(entry.replay_count),
++                },
++                "comparison": comparison,
++                "replay_output": self._xpu_cudagraph_output_trace_record(
++                    replay_output_snapshot
++                ),
++                "direct_output": self._xpu_cudagraph_output_trace_record(
++                    direct_output
++                ),
++            }
++            with open(trace_context["trace_file"], "a", encoding="utf-8") as f:
++                f.write(json.dumps(record, default=str) + "\n")
++        except Exception as exc:
++            logger.warning_once(
++                "Failed to write XPU cudagraph direct-compare trace: %r", exc
++            )
++
++    def _xpu_cudagraph_trace_enabled(
++        self,
++        forward_context: Any,
++    ) -> tuple[bool, dict[str, Any]]:
++        trace_file = os.environ.get("VLLM_XPU_CUDAGRAPH_REPLAY_TRACE_FILE", "")
++        if not trace_file:
++            return False, {}
++
++        global _XPU_CUDAGRAPH_TRACE_LINES
++        max_lines = _xpu_cudagraph_int_env(
++            "VLLM_XPU_CUDAGRAPH_REPLAY_TRACE_MAX_LINES", 0
++        )
++        if max_lines > 0 and _XPU_CUDAGRAPH_TRACE_LINES >= max_lines:
++            return False, {}
++
++        rank = _xpu_cudagraph_rank()
++        rank_filter = os.environ.get("VLLM_XPU_CUDAGRAPH_REPLAY_TRACE_RANK", "")
++        if rank_filter and rank_filter not in ("*", "all") and str(rank) != rank_filter:
++            return False, {}
++
++        label = self._xpu_cudagraph_trace_label()
++        submod_regex = os.environ.get(
++            "VLLM_XPU_CUDAGRAPH_REPLAY_TRACE_SUBMOD_REGEX", ""
++        )
++        if submod_regex:
++            try:
++                if re.search(submod_regex, label) is None:
++                    return False, {}
++            except re.error:
++                return False, {}
++
++        extra = getattr(forward_context, "additional_kwargs", {}) or {}
++        req_ids = [str(req_id) for req_id in extra.get("xpu_req_ids", [])]
++        req_regex = os.environ.get("VLLM_XPU_CUDAGRAPH_REPLAY_TRACE_REQ_REGEX", "")
++        matched_req_ids = req_ids
++        if req_regex:
++            try:
++                matched_req_ids = [
++                    req_id for req_id in req_ids if re.search(req_regex, req_id)
++                ]
++            except re.error:
++                matched_req_ids = []
++            if not matched_req_ids:
++                return False, {}
++
++        return True, {
++            "trace_file": _xpu_cudagraph_trace_path(trace_file, rank),
++            "rank": rank,
++            "label": label,
++            "req_ids": req_ids,
++            "matched_req_ids": matched_req_ids,
++            "forward_extra": extra,
++        }
++
++    def _xpu_cudagraph_trace_write(
++        self,
++        event: str,
++        trace_context: dict[str, Any],
++        batch_descriptor: BatchDescriptor | None,
++        entry: CUDAGraphEntry | None = None,
++        args: tuple[Any, ...] | None = None,
++        output: Any | None = None,
++        reason: str = "",
++    ) -> None:
++        global _XPU_CUDAGRAPH_TRACE_LINES
++        max_lines = _xpu_cudagraph_int_env(
++            "VLLM_XPU_CUDAGRAPH_REPLAY_TRACE_MAX_LINES", 0
++        )
++        if max_lines > 0 and _XPU_CUDAGRAPH_TRACE_LINES >= max_lines:
++            return
++        try:
++            include_args = (
++                os.environ.get("VLLM_XPU_CUDAGRAPH_REPLAY_TRACE_INPUTS", "0")
++                == "1"
++            )
++            include_digest = (
++                os.environ.get("VLLM_XPU_CUDAGRAPH_REPLAY_TRACE_DIGEST", "0")
++                == "1"
++            )
++            record: dict[str, Any] = {
++                "ts": time.time(),
++                "pid": os.getpid(),
++                "tp_rank": trace_context.get("rank"),
++                "event": event,
++                "reason": reason,
++                **self._xpu_cudagraph_identity(),
++                "label": trace_context.get("label"),
++                "batch_descriptor": None
++                if batch_descriptor is None
++                else str(batch_descriptor),
++                "req_ids": trace_context.get("req_ids", []),
++                "matched_req_ids": trace_context.get("matched_req_ids", []),
++                "forward_extra": trace_context.get("forward_extra", {}),
++                "entry": None
++                if entry is None
++                else {
++                    "has_graph": entry.cudagraph is not None,
++                    "replay_count": int(entry.replay_count),
++                    "input_addresses": entry.input_addresses
++                    if include_args
++                    else None,
++                },
++            }
++            if include_args and args is not None:
++                record["tensor_args"] = [
++                    {
++                        "arg_index": idx,
++                        **self._xpu_cudagraph_tensor_trace_record(
++                            arg,
++                            include_digest=include_digest,
++                        ),
++                    }
++                    for idx, arg in enumerate(args)
++                    if isinstance(arg, torch.Tensor)
++                ]
++            if include_digest and output is not None:
++                record["output"] = self._xpu_cudagraph_output_trace_record(output)
++            with open(trace_context["trace_file"], "a", encoding="utf-8") as f:
++                f.write(json.dumps(record, default=str) + "\n")
++            _XPU_CUDAGRAPH_TRACE_LINES += 1
++        except Exception as exc:
++            logger.warning_once("Failed to write XPU cudagraph replay trace: %r", exc)
++
++    def _xpu_cudagraph_tensor_trace_record(
++        self,
++        tensor: torch.Tensor,
++        *,
++        include_digest: bool,
++    ) -> dict[str, Any]:
++        record: dict[str, Any] = {
++            "shape": list(tensor.shape),
++            "dtype": str(tensor.dtype),
++            "device": str(tensor.device),
++            "data_ptr": int(tensor.data_ptr()),
++            "numel": int(tensor.numel()),
++        }
++        if not include_digest:
++            return record
++        max_numel = _xpu_cudagraph_int_env(
++            "VLLM_XPU_CUDAGRAPH_REPLAY_TRACE_DIGEST_MAX_NUMEL", 262144
++        )
++        head_limit = _xpu_cudagraph_int_env(
++            "VLLM_XPU_CUDAGRAPH_REPLAY_TRACE_DIGEST_HEAD", 8
++        )
++        if tensor.numel() == 0:
++            record["digest"] = {"empty": True}
++            return record
++        if tensor.numel() > max_numel:
++            record["digest"] = {"skipped": "numel", "max_numel": max_numel}
++            return record
++        try:
++            with torch.no_grad():
++                t = tensor.detach()
++                stats_t = t.float() if not t.is_floating_point() else t
++                finite_mask = torch.isfinite(stats_t)
++                finite_count = int(finite_mask.sum().item())
++                digest: dict[str, Any] = {
++                    "finite": finite_count,
++                    "nan": int(torch.isnan(stats_t).sum().item()),
++                    "posinf": int((stats_t == float("inf")).sum().item()),
++                    "neginf": int((stats_t == -float("inf")).sum().item()),
++                }
++                if finite_count:
++                    finite_vals = stats_t[finite_mask].float()
++                    digest.update(
++                        {
++                            "min": float(finite_vals.min().item()),
++                            "max": float(finite_vals.max().item()),
++                            "mean": float(finite_vals.mean().item()),
++                            "sum": float(finite_vals.sum().item()),
++                            "l2": float(torch.linalg.vector_norm(finite_vals).item()),
++                        }
++                    )
++                if head_limit > 0:
++                    digest["head"] = (
++                        t.reshape(-1)[:head_limit].to("cpu").tolist()
++                    )
++                record["digest"] = digest
++        except Exception as exc:
++            record["digest"] = {"error": repr(exc)}
++        return record
++
++    def _xpu_cudagraph_output_trace_record(self, output: Any) -> Any:
++        max_tensors = _xpu_cudagraph_int_env(
++            "VLLM_XPU_CUDAGRAPH_REPLAY_TRACE_OUTPUT_MAX_TENSORS", 8
++        )
++        tensors_seen = 0
++
++        def visit(obj: Any) -> Any:
++            nonlocal tensors_seen
++            if isinstance(obj, torch.Tensor):
++                if tensors_seen >= max_tensors:
++                    return {"skipped": "max_tensors"}
++                tensors_seen += 1
++                return self._xpu_cudagraph_tensor_trace_record(
++                    obj,
++                    include_digest=True,
++                )
++            if isinstance(obj, tuple):
++                return [visit(item) for item in obj]
++            if isinstance(obj, list):
++                return [visit(item) for item in obj]
++            if isinstance(obj, dict):
++                return {str(key): visit(value) for key, value in obj.items()}
++            return str(type(obj))
++
++        return visit(output)
++
+     def __getattr__(self, key: str) -> Any:
+         # allow accessing the attributes of the runnable.
+         if hasattr(self.runnable, key):
+@@ -230,6 +802,14 @@ class CUDAGraphWrapper:
+     def clear_graphs(self) -> None:
+         self.concrete_cudagraph_entries.clear()
+ 
++    @staticmethod
++    def _recapture_after_n_replays() -> int:
++        raw = os.environ.get("VLLM_XPU_CUDAGRAPH_RECAPTURE_AFTER_N_REPLAYS", "0")
++        try:
++            return max(0, int(raw))
++        except ValueError:
++            return 0
++
+     def __call__(self, *args: Any, **kwargs: Any) -> Any | None:
+         if not is_forward_context_available():
+             # No forward context means we are outside the normal
+@@ -240,6 +820,9 @@ class CUDAGraphWrapper:
+         forward_context = get_forward_context()
+         batch_descriptor = forward_context.batch_descriptor
+         cudagraph_runtime_mode = forward_context.cudagraph_runtime_mode
++        trace_enabled, trace_context = self._xpu_cudagraph_trace_enabled(
++            forward_context
++        )
+ 
+         if (
+             cudagraph_runtime_mode == CUDAGraphMode.NONE
+@@ -251,9 +834,55 @@ class CUDAGraphWrapper:
+             # matches. This enables properly dispatching to the correct
+             # CUDAGraphWrapper when nesting multiple instances with different
+             # runtime modes.
+-            return self.runnable(*args, **kwargs)
++            if trace_enabled:
++                self._xpu_cudagraph_trace_write(
++                    "direct_start",
++                    trace_context,
++                    batch_descriptor,
++                    args=args,
++                    reason=(
++                        f"runtime_mode={cudagraph_runtime_mode.name} "
++                        f"wrapper_mode={self.runtime_mode.name}"
++                    ),
++                )
++            output = self.runnable(*args, **kwargs)
++            if trace_enabled:
++                self._xpu_cudagraph_trace_write(
++                    "direct_finish",
++                    trace_context,
++                    batch_descriptor,
++                    args=args,
++                    output=output,
++                    reason=(
++                        f"runtime_mode={cudagraph_runtime_mode.name} "
++                        f"wrapper_mode={self.runtime_mode.name}"
++                    ),
++                )
++            return output
+ 
+         assert batch_descriptor is not None
++        disabled_reason = self._xpu_cudagraph_disabled_reason()
++        if disabled_reason:
++            if trace_enabled:
++                self._xpu_cudagraph_trace_write(
++                    "direct_start",
++                    trace_context,
++                    batch_descriptor,
++                    args=args,
++                    reason=disabled_reason,
++                )
++            output = self.runnable(*args, **kwargs)
++            if trace_enabled:
++                self._xpu_cudagraph_trace_write(
++                    "direct_finish",
++                    trace_context,
++                    batch_descriptor,
++                    args=args,
++                    output=output,
++                    reason=disabled_reason,
++                )
++            return output
++
+         if batch_descriptor not in self.concrete_cudagraph_entries:
+             # create a new entry for this batch descriptor
+             self.concrete_cudagraph_entries[batch_descriptor] = CUDAGraphEntry(
+@@ -281,6 +910,14 @@ class CUDAGraphWrapper:
+             ]
+             entry.input_addresses = input_addresses
+             cudagraph = torch.cuda.CUDAGraph()
++            if trace_enabled:
++                self._xpu_cudagraph_trace_write(
++                    "capture_start",
++                    trace_context,
++                    batch_descriptor,
++                    entry,
++                    args=args,
++                )
+ 
+             with ExitStack() as stack:
+                 if self.cudagraph_options.gc_disable:
+@@ -337,6 +974,15 @@ class CUDAGraphWrapper:
+             entry.cudagraph = cudagraph
+ 
+             compilation_counter.num_cudagraph_captured += 1
++            if trace_enabled:
++                self._xpu_cudagraph_trace_write(
++                    "capture_finish",
++                    trace_context,
++                    batch_descriptor,
++                    entry,
++                    args=args,
++                    output=output,
++                )
+ 
+             # important: we need to return the output, rather than
+             # the weak ref of the output, so that pytorch can correctly
+@@ -357,5 +1003,89 @@ class CUDAGraphWrapper:
+         # Sync offloader before replay - ensures any external dependencies
+         # from pre-capture prefetches are satisfied.
+         get_offloader().sync_prev_onload()
++        recapture_after = self._recapture_after_n_replays()
++        if recapture_after and entry.replay_count >= recapture_after:
++            if trace_enabled:
++                self._xpu_cudagraph_trace_write(
++                    "recapture_requested",
++                    trace_context,
++                    batch_descriptor,
++                    entry,
++                    args=args,
++                    reason=f"replay_count>={recapture_after}",
++                )
++            entry.cudagraph = None
++            entry.output = None
++            entry.input_addresses = None
++            entry.replay_count = 0
++            if (
++                os.environ.get(
++                    "VLLM_XPU_CUDAGRAPH_ALLOW_RUNTIME_RECAPTURE", "0"
++                )
++                == "1"
++            ):
++                set_cudagraph_capturing_enabled(True)
++                try:
++                    return self.__call__(*args, **kwargs)
++                finally:
++                    set_cudagraph_capturing_enabled(False)
++            return self.__call__(*args, **kwargs)
++        sync_replay = os.environ.get("VLLM_XPU_SYNC_CUDAGRAPH_REPLAY", "0") == "1"
++        if sync_replay and hasattr(torch, "xpu"):
++            torch.xpu.synchronize()
++        if trace_enabled:
++            self._xpu_cudagraph_trace_write(
++                "replay_start",
++                trace_context,
++                batch_descriptor,
++                entry,
++                args=args,
++            )
+         entry.cudagraph.replay()
++        entry.replay_count += 1
++        if sync_replay and hasattr(torch, "xpu"):
++            torch.xpu.synchronize()
++        zeroed_replay_outputs = self._xpu_cudagraph_zero_selected_replay_outputs(
++            entry.output
++        )
++        replay_output_snapshot = None
++        compare_direct = trace_enabled and self._xpu_cudagraph_compare_direct_enabled()
++        if compare_direct:
++            replay_output_snapshot = self._xpu_cudagraph_clone_output_tensors(
++                entry.output
++            )
++        if trace_enabled:
++            self._xpu_cudagraph_trace_write(
++                "replay_finish",
++                trace_context,
++                batch_descriptor,
++                entry,
++                args=args,
++                output=entry.output,
++                reason=(
++                    f"zeroed_replay_outputs={zeroed_replay_outputs}"
++                    if zeroed_replay_outputs
++                    else ""
++                ),
++            )
++        if compare_direct:
++            direct_output = self.runnable(*args, **kwargs)
++            comparison = self._xpu_cudagraph_compare_outputs(
++                replay_output_snapshot, direct_output
++            )
++            self._xpu_cudagraph_trace_compare_direct(
++                trace_context,
++                batch_descriptor,
++                entry,
++                replay_output_snapshot,
++                direct_output,
++                comparison,
++            )
++            if (
++                os.environ.get(
++                    "VLLM_XPU_CUDAGRAPH_COMPARE_DIRECT_RETURN_DIRECT", "0"
++                )
++                == "1"
++            ):
++                return direct_output
+         return entry.output

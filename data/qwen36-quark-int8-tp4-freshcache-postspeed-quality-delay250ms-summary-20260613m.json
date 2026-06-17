@@ -1,0 +1,78 @@
+{
+  "count": 8,
+  "pass_count": 7,
+  "runs": [
+    {
+      "path": "data/qwen36-quark-int8-tp4-freshcache-postspeed-quality-delay250ms-nothink-smoke-20260613m-1.json",
+      "pass_all": true,
+      "baseline_match_all": true,
+      "failures": []
+    },
+    {
+      "path": "data/qwen36-quark-int8-tp4-freshcache-postspeed-quality-delay250ms-nothink-smoke-20260613m-2.json",
+      "pass_all": true,
+      "baseline_match_all": true,
+      "failures": []
+    },
+    {
+      "path": "data/qwen36-quark-int8-tp4-freshcache-postspeed-quality-delay250ms-nothink-smoke-20260613m-3.json",
+      "pass_all": true,
+      "baseline_match_all": true,
+      "failures": []
+    },
+    {
+      "path": "data/qwen36-quark-int8-tp4-freshcache-postspeed-quality-delay250ms-nothink-smoke-20260613m-4.json",
+      "pass_all": true,
+      "baseline_match_all": true,
+      "failures": []
+    },
+    {
+      "path": "data/qwen36-quark-int8-tp4-freshcache-postspeed-quality-delay250ms-nothink-smoke-20260613m-5.json",
+      "pass_all": true,
+      "baseline_match_all": true,
+      "failures": []
+    },
+    {
+      "path": "data/qwen36-quark-int8-tp4-freshcache-postspeed-quality-delay250ms-nothink-smoke-20260613m-6.json",
+      "pass_all": true,
+      "baseline_match_all": true,
+      "failures": []
+    },
+    {
+      "path": "data/qwen36-quark-int8-tp4-freshcache-postspeed-quality-delay250ms-nothink-smoke-20260613m-7.json",
+      "pass_all": false,
+      "baseline_match_all": false,
+      "failures": [
+        {
+          "name": "repeat_hash_stability",
+          "unique_hashes": [
+            "86ddb4e982129071c1c7fde394bbc61b05977e414842fa8dd9be95bd942cffa5",
+            "c40708bd7280e02bd9dc04ec775023d5be7b4870ea8096039af38576e60fc80b"
+          ],
+          "texts": [
+            "\u4f2aoneoneoneoneoneoneoneoneoneoneoneoneoneoneoneoneoneoneoneone whiskey whiskey whiskey whiskey \u4e00 \u4e00",
+            "blue, green, orange, red",
+            "blue, green, orange, red",
+            "blue, green, orange, red",
+            "blue, green, orange, red",
+            "blue, green, orange, red",
+            "blue, green, orange, red",
+            "blue, green, orange, red"
+          ]
+        },
+        {
+          "name": "baseline",
+          "comparisons": {
+            "repeat:first_hash_same": false
+          }
+        }
+      ]
+    },
+    {
+      "path": "data/qwen36-quark-int8-tp4-freshcache-postspeed-quality-delay250ms-nothink-smoke-20260613m-8.json",
+      "pass_all": true,
+      "baseline_match_all": true,
+      "failures": []
+    }
+  ]
+}

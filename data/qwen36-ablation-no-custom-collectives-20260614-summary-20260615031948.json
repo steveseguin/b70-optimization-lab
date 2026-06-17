@@ -1,0 +1,214 @@
+{
+  "label": "no-custom-collectives-20260614",
+  "stamp": "20260615031948",
+  "return_codes": {
+    "metrics": 0,
+    "json_canary": 0,
+    "color_canary": 0,
+    "quality_suite": 0
+  },
+  "status": {
+    "metrics": "passed",
+    "json_canary": "passed",
+    "color_canary": "passed",
+    "quality_suite": "skipped"
+  },
+  "artifacts": {
+    "metrics": "/home/steve/llm-optimizations/data/qwen36-ablation-no-custom-collectives-20260614-p512o512-20260615031948.json",
+    "json_canary": "/home/steve/llm-optimizations/data/qwen36-ablation-no-custom-collectives-20260614-json-repeat24-20260615031948.json",
+    "color_canary": "/home/steve/llm-optimizations/data/qwen36-ablation-no-custom-collectives-20260614-color-repeat24-20260615031948.json",
+    "quality_suite": "/home/steve/llm-optimizations/data/qwen36-ablation-no-custom-collectives-20260614-quality-suite-20260615031948.json",
+    "log": "/home/steve/llm-optimizations/data/qwen36-ablation-no-custom-collectives-20260614-20260615031948.log"
+  },
+  "artifact_exists": {
+    "metrics": true,
+    "json_canary": true,
+    "color_canary": true,
+    "quality_suite": false,
+    "log": true
+  },
+  "env": {
+    "VLLM_XPU_GDN_NATIVE_FALLBACK": "decode",
+    "VLLM_XPU_GDN_NATIVE_PREFILL_FALLBACK": null,
+    "VLLM_XPU_GDN_PREFILL_RECURRENT_FALLBACK": "1",
+    "VLLM_XPU_GDN_NATIVE_FALLBACK_INITIAL_DECODE_STEPS": null,
+    "VLLM_XPU_GDN_NATIVE_FALLBACK_DECODE_LAYERS": null,
+    "VLLM_XPU_GDN_NATIVE_FALLBACK_DECODE_MAX_LAYER": null,
+    "VLLM_XPU_GDN_NATIVE_FALLBACK_DECODE_LAYER_REGEX": null,
+    "VLLM_XPU_GDN_SYNC_BEFORE_NATIVE_DECODE": "1",
+    "VLLM_XPU_GDN_SYNC_BEFORE_NATIVE_DECODE_LAYERS": null,
+    "VLLM_XPU_GREEDY_SAMPLE_TOPK_FALLBACK": "1",
+    "VLLM_XPU_GREEDY_SAMPLE_XPU_FALLBACK": null,
+    "VLLM_XPU_ZERO_ALL_PREFILL_GDN_STATE": null,
+    "VLLM_XPU_ZERO_FRESH_GDN_STATE": "1",
+    "VLLM_XPU_DISABLE_PREFILL_CUDAGRAPH_REPLAY": "1",
+    "VLLM_ENABLE_FLA_PACKED_RECURRENT_DECODE": null,
+    "XPU_GRAPH": "1",
+    "VLLM_XPU_ENABLE_XPU_GRAPH": "1",
+    "VLLM_XPU_FORCE_GRAPH_WITH_COMM": "1",
+    "VLLM_XPU_GRAPH_NOOP_COMM_CAPTURE": "1",
+    "VLLM_XPU_USE_CUSTOM_OP_COLLECTIVES": "0",
+    "VLLM_XPU_COMPILE_ALLREDUCE_CUSTOM_OP": "0",
+    "VLLM_XPU_CUSTOM_ALLREDUCE_GRAPH_CLONE_INPUT": "0",
+    "VLLM_XPU_CUSTOM_ALLREDUCE_CLONE_INPUT": "0",
+    "VLLM_XPU_CUDAGRAPH_REPLAY_MAX_PIECEWISE_INDEX": null,
+    "VLLM_XPU_CUDAGRAPH_DISABLE_SUBMOD_REGEX": null,
+    "VLLM_XPU_CUDAGRAPH_RECAPTURE_AFTER_N_REPLAYS": null,
+    "VLLM_XPU_CUDAGRAPH_RECAPTURE_REGEX": null,
+    "VLLM_XPU_DECODE_CUDAGRAPH_REPLAY_EAGER_EVERY_N_REQUESTS": null,
+    "VLLM_XPU_CUDAGRAPH_ALLOW_RUNTIME_RECAPTURE": null,
+    "VLLM_XPU_SYNC_CUDAGRAPH_REPLAY": null,
+    "VLLM_XPU_CUDAGRAPH_REPLAY_TRACE_FILE": null,
+    "VLLM_XPU_CUDAGRAPH_REPLAY_TRACE_MAX_LINES": null,
+    "VLLM_XPU_CUDAGRAPH_REPLAY_TRACE_RANK": null,
+    "VLLM_XPU_CUDAGRAPH_REPLAY_TRACE_SUBMOD_REGEX": null,
+    "VLLM_XPU_CUDAGRAPH_REPLAY_TRACE_REQ_REGEX": null,
+    "VLLM_XPU_CUDAGRAPH_REPLAY_TRACE_INPUTS": null,
+    "VLLM_XPU_CUDAGRAPH_REPLAY_TRACE_DIGEST": null,
+    "VLLM_XPU_GDN_TRACE_FILE": null,
+    "VLLM_XPU_GDN_TRACE_MAX_LINES": null,
+    "VLLM_XPU_GDN_TRACE_RANK": null,
+    "VLLM_XPU_GDN_TRACE_LAYER_REGEX": null,
+    "VLLM_XPU_GDN_TRACE_REQ_REGEX": null,
+    "VLLM_XPU_GDN_TRACE_PREFILL_ONLY": null,
+    "VLLM_XPU_GDN_TRACE_DECODE_ONLY": null,
+    "VLLM_XPU_GDN_TRACE_TENSOR_LIMIT": null,
+    "VLLM_XPU_GDN_TRACE_STATE_LIMIT": null,
+    "VLLM_XPU_CUDAGRAPH_ZERO_REPLAY_OUTPUT_REGEX": null,
+    "VLLM_XPU_CUDAGRAPH_ZERO_REPLAY_OUTPUT_INDICES": null,
+    "VLLM_XPU_CUDAGRAPH_CLONE_REPLAY_OUTPUT_REGEX": null,
+    "VLLM_XPU_CUDAGRAPH_CLONE_REPLAY_OUTPUT_INDICES": null,
+    "VLLM_XPU_CUDAGRAPH_COMPARE_DIRECT_REGEX": null,
+    "VLLM_XPU_CUDAGRAPH_COMPARE_DIRECT_RETURN_DIRECT": null,
+    "VLLM_XPU_W8A8_EXPERIMENTAL_ALLOW": null,
+    "VLLM_XPU_W8A8_USE_OFFSETS": null,
+    "VLLM_XPU_W8A8_OFFSETS_PREFIX_OP": null,
+    "VLLM_XPU_MOE_W8A8_MIDDLE_LAYERLET": null,
+    "VLLM_XPU_INT8_MOE_MIXED_WORKSPACE": null,
+    "GPU_MEMORY_UTILIZATION": "0.90",
+    "COMPILATION_CONFIG": "{\"cudagraph_mode\":\"PIECEWISE\"}",
+    "ABLATION_FAST_GRAPH_AUTOCONFIG": "0",
+    "VLLM_EXTRA_ARGS": "--no-async-scheduling"
+  },
+  "metrics_summary": {
+    "tok_s_out_client_after_first_chunk": {
+      "mean": 70.93213991865218,
+      "median": 70.93213991865218,
+      "min": 70.5654572741678,
+      "max": 71.29882256313658
+    },
+    "tok_s_out_client_after_first_chunk_corrected": {
+      "mean": 70.79360058287358,
+      "median": 70.79360058287358,
+      "min": 70.42763411542919,
+      "max": 71.15956705031796
+    },
+    "tok_s_out_client_e2e": {
+      "mean": 69.82464226002456,
+      "median": 69.82464226002456,
+      "min": 69.44854124777753,
+      "max": 70.2007432722716
+    },
+    "tok_s_total_client": {
+      "mean": 137.74001695825157,
+      "median": 137.74001695825157,
+      "min": 136.99809894581114,
+      "max": 138.481934970692
+    },
+    "ttft_ms_client": {
+      "mean": 114.50811848044395,
+      "median": 114.50811848044395,
+      "min": 112.32581897638738,
+      "max": 116.69041798450053
+    },
+    "ttft_ms_vllm_metrics": {
+      "mean": 99.35665130615234,
+      "median": 99.35665130615234,
+      "min": 97.55587577819824,
+      "max": 101.15742683410645
+    },
+    "tok_s_prefill_lower_bound_from_ttft": {
+      "mean": 4350.616796656019,
+      "median": 4350.616796656019,
+      "min": 4267.702598050057,
+      "max": 4433.530995261982
+    },
+    "e2e_ms_vllm_metrics": {
+      "mean": 7331.551671028137,
+      "median": 7331.551671028137,
+      "min": 7291.987180709839,
+      "max": 7371.116161346436
+    },
+    "queue_ms_vllm_histogram": {
+      "mean": 0.013941084034740925,
+      "median": 0.013941084034740925,
+      "min": 0.012674136087298393,
+      "max": 0.015208031982183456
+    },
+    "prefill_ms_vllm_histogram": {
+      "mean": 94.26720847841352,
+      "median": 94.26720847841352,
+      "min": 92.4138450063765,
+      "max": 96.12057195045054
+    },
+    "decode_ms_vllm_histogram": {
+      "mean": 7232.352095423266,
+      "median": 7232.352095423266,
+      "min": 7194.60956286639,
+      "max": 7270.094627980143
+    },
+    "decode_ms_per_generation_token_vllm_histogram": {
+      "mean": 14.125687686373567,
+      "median": 14.125687686373567,
+      "min": 14.051971802473417,
+      "max": 14.199403570273716
+    },
+    "inference_ms_vllm_histogram": {
+      "mean": 7326.61930390168,
+      "median": 7326.61930390168,
+      "min": 7287.023407872766,
+      "max": 7366.215199930593
+    },
+    "time_per_output_token_ms_vllm_histogram": {
+      "mean": 14.15333091080874,
+      "median": 14.15333091080874,
+      "min": 14.07947076881877,
+      "max": 14.22719105279871
+    },
+    "inter_token_ms_vllm_histogram": {
+      "mean": 14.15333091080874,
+      "median": 14.15333091080874,
+      "min": 14.079470768818766,
+      "max": 14.227191052798714
+    },
+    "iteration_tokens_per_step_vllm_histogram": {
+      "mean": 1.97265625,
+      "median": 1.97265625,
+      "min": 1.97265625,
+      "max": 1.97265625
+    }
+  },
+  "speed": {
+    "tok_s_out_corrected_mean": 70.79360058287358,
+    "tok_s_out_after_first_chunk_mean": 70.93213991865218,
+    "tok_s_out_e2e_mean": 69.82464226002456,
+    "decode_ms_per_token_mean": 14.125687686373567,
+    "ttft_ms_client_mean": 114.50811848044395
+  },
+  "json_canary": {
+    "pass_all": true,
+    "repeats_completed": 24,
+    "mismatch_count": 0,
+    "first_mismatch": null
+  },
+  "color_canary": {
+    "pass_all": true,
+    "repeats_completed": 24,
+    "mismatch_count": 0,
+    "first_mismatch": null
+  },
+  "decision": {
+    "accepted_by_requested_gates": true,
+    "gate_failures": []
+  }
+}

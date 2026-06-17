@@ -1,0 +1,287 @@
+diff --git a/home/steve/llm-optimizations/scripts/run-qwen36-ablation-candidate.sh b/home/steve/llm-optimizations/scripts/run-qwen36-ablation-candidate.sh
+new file mode 100755
+index 0000000..150b43c
+--- /dev/null
++++ b/home/steve/llm-optimizations/scripts/run-qwen36-ablation-candidate.sh
+@@ -0,0 +1,281 @@
++#!/usr/bin/env bash
++set -uo pipefail
++
++if [[ $# -lt 1 ]]; then
++  echo "usage: $0 <label>" >&2
++  exit 2
++fi
++
++LABEL="$1"
++ROOT="${ROOT:-/home/steve/llm-optimizations}"
++DATA_DIR="${DATA_DIR:-$ROOT/data}"
++MODEL_PATH="${MODEL_PATH:-/mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118}"
++PYTHON="${PYTHON:-/home/steve/.venvs/vllm-xpu/bin/python}"
++PORT="${PORT:-18080}"
++BASE_URL="${BASE_URL:-http://127.0.0.1:$PORT}"
++STAMP="${STAMP:-$(date -u +%Y%m%d%H%M%S)}"
++CACHE_LABEL="${CACHE_LABEL:-qwen36-ablation-$LABEL}"
++LOG_PATH="${LOG_PATH:-$DATA_DIR/qwen36-ablation-$LABEL-$STAMP.log}"
++
++METRICS_OUT="${METRICS_OUT:-$DATA_DIR/qwen36-ablation-$LABEL-p512o512-$STAMP.json}"
++JSON_OUT="${JSON_OUT:-$DATA_DIR/qwen36-ablation-$LABEL-json-repeat${JSON_REPEATS:-96}-$STAMP.json}"
++COLOR_OUT="${COLOR_OUT:-$DATA_DIR/qwen36-ablation-$LABEL-color-repeat${COLOR_REPEATS:-96}-$STAMP.json}"
++SUMMARY_OUT="${SUMMARY_OUT:-$DATA_DIR/qwen36-ablation-$LABEL-summary-$STAMP.json}"
++QUALITY_OUT="${QUALITY_OUT:-$DATA_DIR/qwen36-ablation-$LABEL-quality-suite-$STAMP.json}"
++
++METRICS_REPEATS="${METRICS_REPEATS:-2}"
++JSON_REPEATS="${JSON_REPEATS:-96}"
++COLOR_REPEATS="${COLOR_REPEATS:-96}"
++QUALITY_REPEAT_RUNS="${QUALITY_REPEAT_RUNS:-8}"
++QUALITY_LONG_CONTEXT_TOKENS="${QUALITY_LONG_CONTEXT_TOKENS:-4096}"
++QUALITY_CHAT_TEMPLATE_KWARGS_JSON="${QUALITY_CHAT_TEMPLATE_KWARGS_JSON:-{\"enable_thinking\": false}}"
++JSON_REQUEST_ID_PREFIX="${JSON_REQUEST_ID_PREFIX:-}"
++COLOR_REQUEST_ID_PREFIX="${COLOR_REQUEST_ID_PREFIX:-}"
++READINESS_TIMEOUT_S="${READINESS_TIMEOUT_S:-1800}"
++
++mkdir -p "$DATA_DIR"
++
++export MODEL_PATH
++export PORT
++export LOG_PATH
++export TORCHINDUCTOR_CACHE_DIR="${TORCHINDUCTOR_CACHE_DIR:-/mnt/fast-ai/vllm-cache-exp/$CACHE_LABEL/torchinductor}"
++export VLLM_CACHE_ROOT="${VLLM_CACHE_ROOT:-/mnt/fast-ai/vllm-cache-exp/$CACHE_LABEL/vllm}"
++export VLLM_XPU_GDN_NATIVE_FALLBACK="${VLLM_XPU_GDN_NATIVE_FALLBACK:-decode,prefill}"
++export VLLM_XPU_GDN_PREFILL_RECURRENT_FALLBACK="${VLLM_XPU_GDN_PREFILL_RECURRENT_FALLBACK:-1}"
++
++SERVER_PID=""
++
++cleanup() {
++  local status=$?
++  if [[ -n "$SERVER_PID" ]] && kill -0 "$SERVER_PID" 2>/dev/null; then
++    kill -INT "$SERVER_PID" 2>/dev/null || true
++    for _ in $(seq 1 60); do
++      if ! kill -0 "$SERVER_PID" 2>/dev/null; then
++        break
++      fi
++      sleep 1
++    done
++    if kill -0 "$SERVER_PID" 2>/dev/null; then
++      kill -TERM "$SERVER_PID" 2>/dev/null || true
++    fi
++    wait "$SERVER_PID" 2>/dev/null || true
++  fi
++  exit "$status"
++}
++trap cleanup EXIT INT TERM
++
++check_ready() {
++  "$PYTHON" - "$BASE_URL" <<'PY'
++import json
++import sys
++import urllib.request
++
++base_url = sys.argv[1].rstrip("/")
++try:
++    with urllib.request.urlopen(base_url + "/v1/models", timeout=5) as resp:
++        data = json.loads(resp.read().decode("utf-8"))
++    if data.get("data"):
++        raise SystemExit(0)
++except Exception:
++    pass
++raise SystemExit(1)
++PY
++}
++
++run_step() {
++  local name="$1"
++  shift
++  echo "[ablation:$LABEL] running $name"
++  "$@"
++  local rc=$?
++  echo "[ablation:$LABEL] $name rc=$rc"
++  return "$rc"
++}
++
++echo "[ablation:$LABEL] stamp=$STAMP"
++echo "[ablation:$LABEL] log=$LOG_PATH"
++echo "[ablation:$LABEL] cache=$CACHE_LABEL"
++echo "[ablation:$LABEL] guard env: GDN=${VLLM_XPU_GDN_NATIVE_FALLBACK:-<default>} GDN_PREFILL_FALLBACK=${VLLM_XPU_GDN_NATIVE_PREFILL_FALLBACK:-<default>} GDN_PREFILL_RECURRENT=${VLLM_XPU_GDN_PREFILL_RECURRENT_FALLBACK:-<default>} GDN_INITIAL_STEPS=${VLLM_XPU_GDN_NATIVE_FALLBACK_INITIAL_DECODE_STEPS:-<default>} GDN_DECODE_LAYERS=${VLLM_XPU_GDN_NATIVE_FALLBACK_DECODE_LAYERS:-<default>} GDN_DECODE_MAX_LAYER=${VLLM_XPU_GDN_NATIVE_FALLBACK_DECODE_MAX_LAYER:-<default>} GDN_DECODE_LAYER_REGEX=${VLLM_XPU_GDN_NATIVE_FALLBACK_DECODE_LAYER_REGEX:-<default>} GDN_SYNC_DECODE=${VLLM_XPU_GDN_SYNC_BEFORE_NATIVE_DECODE:-<default>} GDN_SYNC_DECODE_LAYERS=${VLLM_XPU_GDN_SYNC_BEFORE_NATIVE_DECODE_LAYERS:-<default>} TOPK=${VLLM_XPU_GREEDY_SAMPLE_TOPK_FALLBACK:-<default>} SAMPLE_FALLBACK=${VLLM_XPU_GREEDY_SAMPLE_XPU_FALLBACK:-<default>} PREFILL_REPLAY_OFF=${VLLM_XPU_DISABLE_PREFILL_CUDAGRAPH_REPLAY:-<default>} ZERO_ALL_PREFILL_GDN=${VLLM_XPU_ZERO_ALL_PREFILL_GDN_STATE:-<default>} PACKED_DECODE=${VLLM_ENABLE_FLA_PACKED_RECURRENT_DECODE:-<default>} XPU_GRAPH=${XPU_GRAPH:-<default>} VLLM_XPU_GRAPH=${VLLM_XPU_ENABLE_XPU_GRAPH:-<default>} NOOP_COMM_CAPTURE=${VLLM_XPU_GRAPH_NOOP_COMM_CAPTURE:-<default>} GMEM=${GPU_MEMORY_UTILIZATION:-<default>} COMPILATION_CONFIG=${COMPILATION_CONFIG:-<default>} EXTRA_ARGS=${VLLM_EXTRA_ARGS:-<default>}"
++
++/home/steve/llm-optimizations/scripts/launch-qwen36-quark-int8-accepted.sh &
++SERVER_PID=$!
++
++ready=0
++for elapsed in $(seq 1 "$READINESS_TIMEOUT_S"); do
++  if ! kill -0 "$SERVER_PID" 2>/dev/null; then
++    echo "[ablation:$LABEL] server exited before readiness" >&2
++    tail -n 120 "$LOG_PATH" >&2 || true
++    exit 1
++  fi
++  if check_ready; then
++    ready=1
++    break
++  fi
++  sleep 1
++done
++
++if [[ "$ready" != "1" ]]; then
++  echo "[ablation:$LABEL] server was not ready after ${READINESS_TIMEOUT_S}s" >&2
++  tail -n 160 "$LOG_PATH" >&2 || true
++  exit 1
++fi
++
++metrics_rc=0
++json_rc=0
++color_rc=0
++quality_rc=0
++
++if [[ "${ABLATION_SKIP_METRICS:-0}" != "1" ]]; then
++  run_step metrics "$PYTHON" "$ROOT/scripts/measure-openai-endpoint-metrics.py" \
++    --base-url "$BASE_URL" \
++    --tokenizer "$MODEL_PATH" \
++    --prompt-kind preset \
++    --prompt-preset natural-chat \
++    --prompt-tokens 512 \
++    --output-tokens 512 \
++    --warmup-output-tokens 64 \
++    --repeats "$METRICS_REPEATS" \
++    --ignore-eos \
++    --skip-vram \
++    --out "$METRICS_OUT"
++  metrics_rc=$?
++fi
++
++if [[ "${ABLATION_SKIP_CANARIES:-0}" != "1" ]]; then
++  json_request_id_args=()
++  if [[ -n "$JSON_REQUEST_ID_PREFIX" ]]; then
++    json_request_id_args=(--request-id-prefix "$JSON_REQUEST_ID_PREFIX")
++  fi
++  run_step json-canary "$PYTHON" "$ROOT/scripts/probe-fixed-chatml-completion-repeat.py" \
++    --base-url "$BASE_URL" \
++    --tokenizer "$MODEL_PATH" \
++    --case json \
++    --repeats "$JSON_REPEATS" \
++    --stop-on-mismatch \
++    "${json_request_id_args[@]}" \
++    --output-json "$JSON_OUT"
++  json_rc=$?
++
++  color_request_id_args=()
++  if [[ -n "$COLOR_REQUEST_ID_PREFIX" ]]; then
++    color_request_id_args=(--request-id-prefix "$COLOR_REQUEST_ID_PREFIX")
++  fi
++  run_step color-canary "$PYTHON" "$ROOT/scripts/probe-fixed-chatml-completion-repeat.py" \
++    --base-url "$BASE_URL" \
++    --tokenizer "$MODEL_PATH" \
++    --case color \
++    --repeats "$COLOR_REPEATS" \
++    --stop-on-mismatch \
++    "${color_request_id_args[@]}" \
++    --output-json "$COLOR_OUT"
++  color_rc=$?
++fi
++
++if [[ "${ABLATION_RUN_QUALITY:-0}" == "1" ]]; then
++  run_step quality-suite "$PYTHON" "$ROOT/scripts/qwen36-text-quality-suite.py" \
++    --base-url "$BASE_URL" \
++    --tokenizer "$MODEL_PATH" \
++    --repeat-runs "$QUALITY_REPEAT_RUNS" \
++    --long-context-tokens "$QUALITY_LONG_CONTEXT_TOKENS" \
++    --chat-template-kwargs-json "$QUALITY_CHAT_TEMPLATE_KWARGS_JSON" \
++    --output-json "$QUALITY_OUT"
++  quality_rc=$?
++fi
++
++"$PYTHON" - "$SUMMARY_OUT" "$LABEL" "$STAMP" "$metrics_rc" "$json_rc" "$color_rc" "$quality_rc" "$METRICS_OUT" "$JSON_OUT" "$COLOR_OUT" "$QUALITY_OUT" "$LOG_PATH" <<'PY'
++import json
++import os
++import sys
++from pathlib import Path
++
++summary_out, label, stamp, metrics_rc, json_rc, color_rc, quality_rc, metrics_path, json_path, color_path, quality_path, log_path = sys.argv[1:]
++
++def read_json(path):
++    p = Path(path)
++    if not p.exists():
++        return None
++    return json.loads(p.read_text())
++
++metrics = read_json(metrics_path)
++json_canary = read_json(json_path)
++color_canary = read_json(color_path)
++quality = read_json(quality_path)
++
++out = {
++    "label": label,
++    "stamp": stamp,
++    "return_codes": {
++        "metrics": int(metrics_rc),
++        "json_canary": int(json_rc),
++        "color_canary": int(color_rc),
++        "quality_suite": int(quality_rc),
++    },
++    "artifacts": {
++        "metrics": metrics_path,
++        "json_canary": json_path,
++        "color_canary": color_path,
++        "quality_suite": quality_path,
++        "log": log_path,
++    },
++    "env": {
++        "VLLM_XPU_GDN_NATIVE_FALLBACK": os.environ.get("VLLM_XPU_GDN_NATIVE_FALLBACK"),
++        "VLLM_XPU_GDN_NATIVE_PREFILL_FALLBACK": os.environ.get("VLLM_XPU_GDN_NATIVE_PREFILL_FALLBACK"),
++        "VLLM_XPU_GDN_PREFILL_RECURRENT_FALLBACK": os.environ.get("VLLM_XPU_GDN_PREFILL_RECURRENT_FALLBACK"),
++        "VLLM_XPU_GDN_NATIVE_FALLBACK_INITIAL_DECODE_STEPS": os.environ.get("VLLM_XPU_GDN_NATIVE_FALLBACK_INITIAL_DECODE_STEPS"),
++        "VLLM_XPU_GDN_NATIVE_FALLBACK_DECODE_LAYERS": os.environ.get("VLLM_XPU_GDN_NATIVE_FALLBACK_DECODE_LAYERS"),
++        "VLLM_XPU_GDN_NATIVE_FALLBACK_DECODE_MAX_LAYER": os.environ.get("VLLM_XPU_GDN_NATIVE_FALLBACK_DECODE_MAX_LAYER"),
++        "VLLM_XPU_GDN_NATIVE_FALLBACK_DECODE_LAYER_REGEX": os.environ.get("VLLM_XPU_GDN_NATIVE_FALLBACK_DECODE_LAYER_REGEX"),
++        "VLLM_XPU_GDN_SYNC_BEFORE_NATIVE_DECODE": os.environ.get("VLLM_XPU_GDN_SYNC_BEFORE_NATIVE_DECODE"),
++        "VLLM_XPU_GDN_SYNC_BEFORE_NATIVE_DECODE_LAYERS": os.environ.get("VLLM_XPU_GDN_SYNC_BEFORE_NATIVE_DECODE_LAYERS"),
++        "VLLM_XPU_GREEDY_SAMPLE_TOPK_FALLBACK": os.environ.get("VLLM_XPU_GREEDY_SAMPLE_TOPK_FALLBACK"),
++        "VLLM_XPU_GREEDY_SAMPLE_XPU_FALLBACK": os.environ.get("VLLM_XPU_GREEDY_SAMPLE_XPU_FALLBACK"),
++        "VLLM_XPU_ZERO_ALL_PREFILL_GDN_STATE": os.environ.get("VLLM_XPU_ZERO_ALL_PREFILL_GDN_STATE"),
++        "VLLM_XPU_DISABLE_PREFILL_CUDAGRAPH_REPLAY": os.environ.get("VLLM_XPU_DISABLE_PREFILL_CUDAGRAPH_REPLAY"),
++        "VLLM_ENABLE_FLA_PACKED_RECURRENT_DECODE": os.environ.get("VLLM_ENABLE_FLA_PACKED_RECURRENT_DECODE"),
++        "XPU_GRAPH": os.environ.get("XPU_GRAPH"),
++        "VLLM_XPU_ENABLE_XPU_GRAPH": os.environ.get("VLLM_XPU_ENABLE_XPU_GRAPH"),
++        "VLLM_XPU_FORCE_GRAPH_WITH_COMM": os.environ.get("VLLM_XPU_FORCE_GRAPH_WITH_COMM"),
++        "VLLM_XPU_GRAPH_NOOP_COMM_CAPTURE": os.environ.get("VLLM_XPU_GRAPH_NOOP_COMM_CAPTURE"),
++        "GPU_MEMORY_UTILIZATION": os.environ.get("GPU_MEMORY_UTILIZATION"),
++        "COMPILATION_CONFIG": os.environ.get("COMPILATION_CONFIG"),
++        "VLLM_EXTRA_ARGS": os.environ.get("VLLM_EXTRA_ARGS"),
++    },
++}
++
++if metrics:
++    out["metrics_summary"] = metrics.get("summary", {})
++if json_canary:
++    out["json_canary"] = {
++        "pass_all": json_canary.get("pass_all"),
++        "repeats_completed": json_canary.get("repeats_completed"),
++        "mismatch_count": json_canary.get("mismatch_count"),
++        "first_mismatch": (json_canary.get("mismatches") or [None])[0],
++    }
++if color_canary:
++    out["color_canary"] = {
++        "pass_all": color_canary.get("pass_all"),
++        "repeats_completed": color_canary.get("repeats_completed"),
++        "mismatch_count": color_canary.get("mismatch_count"),
++        "first_mismatch": (color_canary.get("mismatches") or [None])[0],
++    }
++if quality:
++    out["quality_suite"] = {
++        "pass_all": quality.get("pass_all"),
++        "baseline_match_all": quality.get("baseline_match_all"),
++        "exact": {item.get("name"): item.get("pass") for item in quality.get("exact_cases", [])},
++        "repeat_pass": (quality.get("repeat_case") or {}).get("pass"),
++        "long_context_pass": (quality.get("long_context_case") or {}).get("pass"),
++    }
++
++Path(summary_out).write_text(json.dumps(out, indent=2) + "\n")
++print(json.dumps({
++    "summary": summary_out,
++    "metrics_rc": int(metrics_rc),
++    "json_rc": int(json_rc),
++    "color_rc": int(color_rc),
++    "quality_rc": int(quality_rc),
++}, sort_keys=True))
++PY
++
++echo "[ablation:$LABEL] summary=$SUMMARY_OUT"
++exit 0

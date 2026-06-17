@@ -1,0 +1,927 @@
+{
+  "oracle_trace": "/home/steve/llm-optimizations/data/qwen36-oracle1-replaymargin-eager-repetitive-20260615g62-replay-r{rank}.jsonl",
+  "nospec_trace": "/home/steve/llm-optimizations/data/qwen36-nospec-replaymargin-nglauncher-eager-repetitive-20260615g64-replay-r{rank}.jsonl",
+  "oracle_completion": "/home/steve/llm-optimizations/data/qwen36-oracle1-replaymargin-eager-repetitive-20260615g62-completion.json",
+  "nospec_completion": "/home/steve/llm-optimizations/data/qwen36-nospec-replaymargin-nglauncher-eager-repetitive-20260615g64-completion.json",
+  "known_output_mismatch": {
+    "output_index": 30,
+    "nospec_token": 17856,
+    "oracle_token": 22188
+  },
+  "validity": {
+    "oracle_vs_g20_diffs": [
+      [
+        30,
+        17856,
+        22188
+      ]
+    ],
+    "nospec_vs_g20_diffs": [],
+    "discarded_wrong_lane": "qwen36-nospec-replaymargin-eager-repetitive-20260615g63 diverged from g20 due accepted launcher identity mismatch; do not compare it."
+  },
+  "positions_512_518": {
+    "512": {
+      "nospec": [
+        {
+          "line_no": 153,
+          "stage": "logits_after_compute",
+          "batch_desc": {
+            "num_tokens": 1,
+            "num_reqs": null,
+            "uniform": false
+          },
+          "scheduled_spec_decode_tokens": {},
+          "row": 0,
+          "role": "sample",
+          "input_id": 4581,
+          "draft_token_id": null,
+          "position": 512,
+          "query_pos": 0,
+          "top_ids": [
+            2468,
+            1879,
+            271,
+            8204,
+            2706,
+            352,
+            1412,
+            198
+          ],
+          "top_values": [
+            23.0,
+            18.875,
+            17.125,
+            16.625,
+            14.9375,
+            14.75,
+            14.5,
+            14.25
+          ],
+          "top1_top2_margin": 4.125,
+          "draft_token_rank": null,
+          "draft_token_logit": null,
+          "sample_hidden_digest": {
+            "shape": [
+              2048
+            ],
+            "dtype": "torch.bfloat16",
+            "finite": 2048,
+            "min": -14.6875,
+            "max": 12.875,
+            "mean": -0.06849944591522217,
+            "sum": -140.286865234375,
+            "l2": 112.91010284423828,
+            "head": [
+              -2.25,
+              -4.40625,
+              1.1796875,
+              2.859375,
+              2.734375,
+              0.37109375,
+              1.2421875,
+              -2.8125
+            ]
+          }
+        }
+      ],
+      "oracle": [
+        {
+          "line_no": 111,
+          "stage": "logits_after_compute",
+          "batch_desc": {
+            "num_tokens": 1,
+            "num_reqs": null,
+            "uniform": false
+          },
+          "scheduled_spec_decode_tokens": {},
+          "row": 0,
+          "role": "sample",
+          "input_id": 4581,
+          "draft_token_id": null,
+          "position": 512,
+          "query_pos": 0,
+          "top_ids": [
+            2468,
+            271,
+            680,
+            248046,
+            198,
+            5724,
+            15796,
+            296
+          ],
+          "top_values": [
+            21.75,
+            16.25,
+            15.5,
+            14.1875,
+            13.9375,
+            13.3125,
+            13.125,
+            13.0625
+          ],
+          "top1_top2_margin": 5.5,
+          "draft_token_rank": null,
+          "draft_token_logit": null,
+          "sample_hidden_digest": {
+            "shape": [
+              2048
+            ],
+            "dtype": "torch.bfloat16",
+            "finite": 2048,
+            "min": -21.0,
+            "max": 21.75,
+            "mean": -0.08603611588478088,
+            "sum": -176.20196533203125,
+            "l2": 101.83953857421875,
+            "head": [
+              0.87890625,
+              -2.671875,
+              1.375,
+              -0.5078125,
+              3.28125,
+              -1.59375,
+              -1.6328125,
+              -1.140625
+            ]
+          }
+        }
+      ]
+    },
+    "513": {
+      "nospec": [
+        {
+          "line_no": 159,
+          "stage": "logits_after_compute",
+          "batch_desc": {
+            "num_tokens": 1,
+            "num_reqs": null,
+            "uniform": false
+          },
+          "scheduled_spec_decode_tokens": {},
+          "row": 0,
+          "role": "sample",
+          "input_id": 2468,
+          "draft_token_id": null,
+          "position": 513,
+          "query_pos": 0,
+          "top_ids": [
+            1345,
+            271,
+            248046,
+            13,
+            198,
+            412,
+            248044,
+            220
+          ],
+          "top_values": [
+            23.875,
+            17.5,
+            15.0625,
+            14.4375,
+            13.9375,
+            13.375,
+            12.8125,
+            12.75
+          ],
+          "top1_top2_margin": 6.375,
+          "draft_token_rank": null,
+          "draft_token_logit": null,
+          "sample_hidden_digest": {
+            "shape": [
+              2048
+            ],
+            "dtype": "torch.bfloat16",
+            "finite": 2048,
+            "min": -15.0625,
+            "max": 14.75,
+            "mean": -0.045426271855831146,
+            "sum": -93.03300476074219,
+            "l2": 106.28378295898438,
+            "head": [
+              0.6015625,
+              -1.4921875,
+              1.0625,
+              -2.328125,
+              2.53125,
+              0.92578125,
+              -2.46875,
+              1.7265625
+            ]
+          }
+        }
+      ],
+      "oracle": [
+        {
+          "line_no": 117,
+          "stage": "logits_after_compute",
+          "batch_desc": {
+            "num_tokens": 1,
+            "num_reqs": null,
+            "uniform": false
+          },
+          "scheduled_spec_decode_tokens": {},
+          "row": 0,
+          "role": "sample",
+          "input_id": 2468,
+          "draft_token_id": null,
+          "position": 513,
+          "query_pos": 0,
+          "top_ids": [
+            1345,
+            271,
+            412,
+            13,
+            288,
+            248046,
+            198,
+            948
+          ],
+          "top_values": [
+            22.125,
+            16.125,
+            15.0625,
+            14.0,
+            13.8125,
+            13.75,
+            13.5625,
+            13.1875
+          ],
+          "top1_top2_margin": 6.0,
+          "draft_token_rank": null,
+          "draft_token_logit": null,
+          "sample_hidden_digest": {
+            "shape": [
+              2048
+            ],
+            "dtype": "torch.bfloat16",
+            "finite": 2048,
+            "min": -17.75,
+            "max": 16.125,
+            "mean": -0.10322710871696472,
+            "sum": -211.40911865234375,
+            "l2": 103.8931884765625,
+            "head": [
+              0.486328125,
+              -1.0703125,
+              0.43359375,
+              -2.1875,
+              3.109375,
+              0.27734375,
+              -3.359375,
+              0.4765625
+            ]
+          }
+        }
+      ]
+    },
+    "514": {
+      "nospec": [
+        {
+          "line_no": 165,
+          "stage": "logits_after_compute",
+          "batch_desc": {
+            "num_tokens": 1,
+            "num_reqs": null,
+            "uniform": false
+          },
+          "scheduled_spec_decode_tokens": {},
+          "row": 0,
+          "role": "sample",
+          "input_id": 1345,
+          "draft_token_id": null,
+          "position": 514,
+          "query_pos": 0,
+          "top_ids": [
+            28043,
+            271,
+            6678,
+            248046,
+            728,
+            4558,
+            211533,
+            198
+          ],
+          "top_values": [
+            23.875,
+            17.875,
+            17.375,
+            15.5,
+            14.8125,
+            14.4375,
+            14.4375,
+            14.125
+          ],
+          "top1_top2_margin": 6.0,
+          "draft_token_rank": null,
+          "draft_token_logit": null,
+          "sample_hidden_digest": {
+            "shape": [
+              2048
+            ],
+            "dtype": "torch.bfloat16",
+            "finite": 2048,
+            "min": -19.0,
+            "max": 13.6875,
+            "mean": -0.029621511697769165,
+            "sum": -60.66485595703125,
+            "l2": 110.41143035888672,
+            "head": [
+              0.87109375,
+              -2.046875,
+              3.28125,
+              -0.51171875,
+              1.4453125,
+              0.68359375,
+              -1.7890625,
+              2.421875
+            ]
+          }
+        }
+      ],
+      "oracle": [
+        {
+          "line_no": 123,
+          "stage": "logits_after_compute",
+          "batch_desc": {
+            "num_tokens": 1,
+            "num_reqs": null,
+            "uniform": false
+          },
+          "scheduled_spec_decode_tokens": {},
+          "row": 0,
+          "role": "sample",
+          "input_id": 1345,
+          "draft_token_id": null,
+          "position": 514,
+          "query_pos": 0,
+          "top_ids": [
+            28043,
+            271,
+            6678,
+            728,
+            211533,
+            7072,
+            295,
+            4558
+          ],
+          "top_values": [
+            21.25,
+            16.75,
+            16.625,
+            15.0,
+            14.875,
+            14.3125,
+            13.5625,
+            13.4375
+          ],
+          "top1_top2_margin": 4.5,
+          "draft_token_rank": null,
+          "draft_token_logit": null,
+          "sample_hidden_digest": {
+            "shape": [
+              2048
+            ],
+            "dtype": "torch.bfloat16",
+            "finite": 2048,
+            "min": -20.875,
+            "max": 17.0,
+            "mean": -0.06752055138349533,
+            "sum": -138.28208923339844,
+            "l2": 104.83876037597656,
+            "head": [
+              1.453125,
+              -1.296875,
+              1.8046875,
+              -1.1875,
+              2.5,
+              0.462890625,
+              -2.75,
+              0.8359375
+            ]
+          }
+        }
+      ]
+    },
+    "515": {
+      "nospec": [
+        {
+          "line_no": 171,
+          "stage": "logits_after_compute",
+          "batch_desc": {
+            "num_tokens": 1,
+            "num_reqs": null,
+            "uniform": false
+          },
+          "scheduled_spec_decode_tokens": {},
+          "row": 0,
+          "role": "sample",
+          "input_id": 28043,
+          "draft_token_id": null,
+          "position": 515,
+          "query_pos": 0,
+          "top_ids": [
+            7072,
+            271,
+            248046,
+            198,
+            95869,
+            2658,
+            4558,
+            13
+          ],
+          "top_values": [
+            23.25,
+            18.125,
+            17.375,
+            14.625,
+            14.125,
+            13.8125,
+            13.6875,
+            13.4375
+          ],
+          "top1_top2_margin": 5.125,
+          "draft_token_rank": null,
+          "draft_token_logit": null,
+          "sample_hidden_digest": {
+            "shape": [
+              2048
+            ],
+            "dtype": "torch.bfloat16",
+            "finite": 2048,
+            "min": -20.375,
+            "max": 20.125,
+            "mean": -0.0775306448340416,
+            "sum": -158.7827606201172,
+            "l2": 104.80308532714844,
+            "head": [
+              0.83984375,
+              -1.4765625,
+              3.453125,
+              -2.671875,
+              3.234375,
+              -1.34375,
+              -0.373046875,
+              -1.7265625
+            ]
+          }
+        }
+      ],
+      "oracle": [
+        {
+          "line_no": 129,
+          "stage": "logits_after_compute",
+          "batch_desc": {
+            "num_tokens": 1,
+            "num_reqs": null,
+            "uniform": false
+          },
+          "scheduled_spec_decode_tokens": {},
+          "row": 0,
+          "role": "sample",
+          "input_id": 28043,
+          "draft_token_id": null,
+          "position": 515,
+          "query_pos": 0,
+          "top_ids": [
+            7072,
+            271,
+            248046,
+            15144,
+            2658,
+            198,
+            5081,
+            11495
+          ],
+          "top_values": [
+            20.875,
+            16.5,
+            15.5625,
+            13.9375,
+            13.6875,
+            13.625,
+            13.0625,
+            12.875
+          ],
+          "top1_top2_margin": 4.375,
+          "draft_token_rank": null,
+          "draft_token_logit": null,
+          "sample_hidden_digest": {
+            "shape": [
+              2048
+            ],
+            "dtype": "torch.bfloat16",
+            "finite": 2048,
+            "min": -21.875,
+            "max": 21.0,
+            "mean": -0.10647483915090561,
+            "sum": -218.0604705810547,
+            "l2": 101.72760009765625,
+            "head": [
+              0.9140625,
+              -2.171875,
+              2.265625,
+              -1.046875,
+              4.25,
+              0.37109375,
+              -0.6015625,
+              -1.1640625
+            ]
+          }
+        }
+      ]
+    },
+    "516": {
+      "nospec": [
+        {
+          "line_no": 177,
+          "stage": "logits_after_compute",
+          "batch_desc": {
+            "num_tokens": 1,
+            "num_reqs": null,
+            "uniform": false
+          },
+          "scheduled_spec_decode_tokens": {},
+          "row": 0,
+          "role": "sample",
+          "input_id": 7072,
+          "draft_token_id": null,
+          "position": 516,
+          "query_pos": 0,
+          "top_ids": [
+            3817,
+            271,
+            248046,
+            198,
+            310,
+            33686,
+            4558,
+            13
+          ],
+          "top_values": [
+            23.25,
+            17.0,
+            16.125,
+            13.9375,
+            13.875,
+            13.625,
+            13.25,
+            13.1875
+          ],
+          "top1_top2_margin": 6.25,
+          "draft_token_rank": null,
+          "draft_token_logit": null,
+          "sample_hidden_digest": {
+            "shape": [
+              2048
+            ],
+            "dtype": "torch.bfloat16",
+            "finite": 2048,
+            "min": -21.625,
+            "max": 21.125,
+            "mean": -0.037846460938453674,
+            "sum": -77.50955200195312,
+            "l2": 104.00727844238281,
+            "head": [
+              3.171875,
+              -1.828125,
+              0.6171875,
+              1.203125,
+              4.90625,
+              -0.9921875,
+              -1.484375,
+              -0.8515625
+            ]
+          }
+        }
+      ],
+      "oracle": [
+        {
+          "line_no": 135,
+          "stage": "logits_after_compute",
+          "batch_desc": {
+            "num_tokens": 1,
+            "num_reqs": null,
+            "uniform": false
+          },
+          "scheduled_spec_decode_tokens": {},
+          "row": 0,
+          "role": "sample",
+          "input_id": 7072,
+          "draft_token_id": null,
+          "position": 516,
+          "query_pos": 0,
+          "top_ids": [
+            3817,
+            33686,
+            271,
+            248046,
+            310,
+            9341,
+            198,
+            6256
+          ],
+          "top_values": [
+            21.625,
+            17.75,
+            15.9375,
+            14.375,
+            13.9375,
+            13.8125,
+            13.5625,
+            13.0
+          ],
+          "top1_top2_margin": 3.875,
+          "draft_token_rank": null,
+          "draft_token_logit": null,
+          "sample_hidden_digest": {
+            "shape": [
+              2048
+            ],
+            "dtype": "torch.bfloat16",
+            "finite": 2048,
+            "min": -19.375,
+            "max": 20.125,
+            "mean": -0.054059214890003204,
+            "sum": -110.71327209472656,
+            "l2": 99.97003173828125,
+            "head": [
+              2.296875,
+              -1.6796875,
+              -0.380859375,
+              1.3359375,
+              4.84375,
+              1.1640625,
+              -1.3203125,
+              -0.267578125
+            ]
+          }
+        }
+      ]
+    },
+    "517": {
+      "nospec": [
+        {
+          "line_no": 183,
+          "stage": "logits_after_compute",
+          "batch_desc": {
+            "num_tokens": 1,
+            "num_reqs": null,
+            "uniform": false
+          },
+          "scheduled_spec_decode_tokens": {},
+          "row": 0,
+          "role": "sample",
+          "input_id": 3817,
+          "draft_token_id": null,
+          "position": 517,
+          "query_pos": 0,
+          "top_ids": [
+            17856,
+            22188,
+            271,
+            248046,
+            9191,
+            198,
+            13,
+            1358
+          ],
+          "top_values": [
+            21.875,
+            18.125,
+            17.125,
+            15.25,
+            14.375,
+            14.3125,
+            13.5625,
+            13.5
+          ],
+          "top1_top2_margin": 3.75,
+          "draft_token_rank": null,
+          "draft_token_logit": null,
+          "sample_hidden_digest": {
+            "shape": [
+              2048
+            ],
+            "dtype": "torch.bfloat16",
+            "finite": 2048,
+            "min": -21.0,
+            "max": 16.875,
+            "mean": -0.1280970275402069,
+            "sum": -262.34271240234375,
+            "l2": 109.96859741210938,
+            "head": [
+              2.1875,
+              -1.8125,
+              -0.296875,
+              1.1875,
+              2.578125,
+              -2.875,
+              -0.515625,
+              -4.21875
+            ]
+          }
+        }
+      ],
+      "oracle": [
+        {
+          "line_no": 141,
+          "stage": "logits_after_compute",
+          "batch_desc": {
+            "num_tokens": 1,
+            "num_reqs": null,
+            "uniform": false
+          },
+          "scheduled_spec_decode_tokens": {},
+          "row": 0,
+          "role": "sample",
+          "input_id": 3817,
+          "draft_token_id": null,
+          "position": 517,
+          "query_pos": 0,
+          "top_ids": [
+            22188,
+            159676,
+            271,
+            181505,
+            2652,
+            248046,
+            5043,
+            87934
+          ],
+          "top_values": [
+            22.0,
+            16.375,
+            16.25,
+            15.3125,
+            15.125,
+            14.5,
+            14.375,
+            14.1875
+          ],
+          "top1_top2_margin": 5.625,
+          "draft_token_rank": null,
+          "draft_token_logit": null,
+          "sample_hidden_digest": {
+            "shape": [
+              2048
+            ],
+            "dtype": "torch.bfloat16",
+            "finite": 2048,
+            "min": -21.75,
+            "max": 23.125,
+            "mean": -0.1402679681777954,
+            "sum": -287.268798828125,
+            "l2": 107.3835220336914,
+            "head": [
+              1.3046875,
+              -3.0,
+              -0.828125,
+              0.5546875,
+              2.09375,
+              -2.515625,
+              -2.140625,
+              -2.0625
+            ]
+          }
+        }
+      ]
+    },
+    "518": {
+      "nospec": [
+        {
+          "line_no": 189,
+          "stage": "logits_after_compute",
+          "batch_desc": {
+            "num_tokens": 1,
+            "num_reqs": null,
+            "uniform": false
+          },
+          "scheduled_spec_decode_tokens": {},
+          "row": 0,
+          "role": "sample",
+          "input_id": 17856,
+          "draft_token_id": null,
+          "position": 518,
+          "query_pos": 0,
+          "top_ids": [
+            13,
+            271,
+            248046,
+            198,
+            22188,
+            318,
+            364,
+            1149
+          ],
+          "top_values": [
+            19.625,
+            16.375,
+            16.0,
+            14.0,
+            13.375,
+            12.9375,
+            12.875,
+            12.8125
+          ],
+          "top1_top2_margin": 3.25,
+          "draft_token_rank": null,
+          "draft_token_logit": null,
+          "sample_hidden_digest": {
+            "shape": [
+              2048
+            ],
+            "dtype": "torch.bfloat16",
+            "finite": 2048,
+            "min": -15.75,
+            "max": 20.375,
+            "mean": -0.06700536608695984,
+            "sum": -137.22698974609375,
+            "l2": 109.29479217529297,
+            "head": [
+              1.0859375,
+              -0.8046875,
+              1.140625,
+              -1.046875,
+              1.84375,
+              -2.828125,
+              -3.171875,
+              0.283203125
+            ]
+          }
+        }
+      ],
+      "oracle": [
+        {
+          "line_no": 147,
+          "stage": "logits_after_compute",
+          "batch_desc": {
+            "num_tokens": 1,
+            "num_reqs": null,
+            "uniform": false
+          },
+          "scheduled_spec_decode_tokens": {},
+          "row": 0,
+          "role": "sample",
+          "input_id": 22188,
+          "draft_token_id": null,
+          "position": 518,
+          "query_pos": 0,
+          "top_ids": [
+            13,
+            271,
+            248046,
+            198,
+            1149,
+            1710,
+            1034,
+            47452
+          ],
+          "top_values": [
+            18.875,
+            15.9375,
+            13.4375,
+            13.1875,
+            13.0625,
+            12.6875,
+            12.1875,
+            11.875
+          ],
+          "top1_top2_margin": 2.9375,
+          "draft_token_rank": null,
+          "draft_token_logit": null,
+          "sample_hidden_digest": {
+            "shape": [
+              2048
+            ],
+            "dtype": "torch.bfloat16",
+            "finite": 2048,
+            "min": -13.25,
+            "max": 17.125,
+            "mean": -0.0843505933880806,
+            "sum": -172.75001525878906,
+            "l2": 100.98130798339844,
+            "head": [
+              3.03125,
+              -0.0361328125,
+              1.21875,
+              -1.1953125,
+              1.9296875,
+              -0.490234375,
+              -4.5,
+              0.37890625
+            ]
+          }
+        }
+      ]
+    }
+  },
+  "position_517_conclusion": {
+    "nospec_top1": 17856,
+    "nospec_margin": 3.75,
+    "oracle_top1": 22188,
+    "oracle_margin": 5.625,
+    "interpretation": "The final flip is not a low-margin sampler decision; by position 517 the distributions are already separated with large margins."
+  }
+}

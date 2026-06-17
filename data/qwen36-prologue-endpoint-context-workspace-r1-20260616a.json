@@ -1,0 +1,37 @@
+{
+  "config": {
+    "captures": 1,
+    "compile_wrapper": false,
+    "distinct_layers": false,
+    "endpoint_context": true,
+    "experts": 256,
+    "hidden": 2048,
+    "inter": 128,
+    "kernel_repo": "/home/steve/src/vllm-xpu-kernels",
+    "layers_per_capture": 1,
+    "no_post_copy": false,
+    "pid": 3112434,
+    "prewarm_repeats": 1,
+    "prewarm_rows": 0,
+    "ranks": 1,
+    "replays": 1,
+    "rows": 1,
+    "topk": 8,
+    "topk_dtype": "int64",
+    "workspace_manager": true
+  },
+  "overall_status": "fail",
+  "ranks": [
+    {
+      "captures_completed": 0,
+      "error": "No module named 'numpy'",
+      "error_type": "ModuleNotFoundError",
+      "exitcode": 0,
+      "rank": 0,
+      "replays_completed": 0,
+      "status": "fail",
+      "traceback": "Traceback (most recent call last):\n  File \"/home/steve/llm-optimizations/scripts/repro-qwen36-prologue-tp4-capture.py\", line 544, in run_rank\n    import numpy as np\nModuleNotFoundError: No module named 'numpy'\n"
+    }
+  ],
+  "timestamp_utc": "2026-06-16T04:15:51.881603+00:00"
+}

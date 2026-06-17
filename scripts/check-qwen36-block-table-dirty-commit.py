@@ -58,6 +58,7 @@ def run_check(vllm_src: str) -> dict[str, Any]:
     assert_equal(bt.block_table.gpu[0, :3].tolist(), [10, 11, 12], "row0 append")
     assert_equal(bt.block_table.gpu[1, :1].tolist(), [20], "row1 add")
     assert_equal(bt._dirty_commit_full, 1, "full count after rows 0 and 1")
+    assert_equal(bt._dirty_commit_partial, 1, "partial count unchanged on full dirty")
 
     bt.clear_row(0)
     bt.commit_block_table(2)

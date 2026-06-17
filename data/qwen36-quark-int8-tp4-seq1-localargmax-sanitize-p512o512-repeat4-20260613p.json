@@ -1,0 +1,92 @@
+{
+  "base_url": "http://127.0.0.1:18080",
+  "model": "qwen36-35b-a3b-fp8",
+  "model_info": {
+    "id": "qwen36-35b-a3b-fp8",
+    "object": "model",
+    "created": 1781395244,
+    "owned_by": "vllm",
+    "root": "/mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118",
+    "parent": null,
+    "max_model_len": 32768,
+    "permission": [
+      {
+        "id": "modelperm-b0e635d21cfb4d5a",
+        "object": "model_permission",
+        "created": 1781395244,
+        "allow_create_engine": false,
+        "allow_sampling": true,
+        "allow_logprobs": true,
+        "allow_search_indices": false,
+        "allow_view": true,
+        "allow_fine_tuning": false,
+        "organization": "*",
+        "group": null,
+        "is_blocking": false
+      }
+    ]
+  },
+  "tokenizer": "/mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118",
+  "requested_prompt_tokens": 512,
+  "shared_prefix_tokens": 0,
+  "prompt_salt": "localargmax-sanitize-repeat-4",
+  "requested_output_tokens": 512,
+  "warmups": 1,
+  "scenarios": {
+    "c1": {
+      "concurrency": 1,
+      "records": [
+        {
+          "started_s": 1200859.131655796,
+          "first_text_at_s": 1200859.356332433,
+          "ended_s": 1200864.949748279,
+          "elapsed_s": 5.818092483095825,
+          "ttft_s": 0.22467663697898388,
+          "post_ttft_s": 5.593415846116841,
+          "prompt_tokens": 520,
+          "completion_tokens": 512,
+          "total_tokens": 1032,
+          "tok_s_out_wall": 88.00135121392282,
+          "tok_s_out_after_ttft": 91.53619435527034,
+          "tok_s_total_wall": 177.37772354056318,
+          "chunks": 512,
+          "sha256": "e794969e4c69adf03b3c89f39cc865a07065565d1214c6ba68b17ace20e4c402",
+          "text_preview": " benchmark benchmark benchmark benchmark benchmark benchmark benchmark benchmark benchmark benchmark benchmark benchmark benchmark benchmark benchmark benchmark"
+        }
+      ],
+      "summary": {
+        "requests": 1,
+        "total_prompt_tokens": 520,
+        "total_completion_tokens": 512,
+        "wall_s": 5.818092483095825,
+        "aggregate_output_tok_s_wall": 88.00135121392282,
+        "decode_wall_s_from_first_text": 5.593415846116841,
+        "aggregate_output_tok_s_from_first_text": 91.53619435527034,
+        "per_request_tok_s_out_after_ttft": {
+          "mean": 91.53619435527034,
+          "median": 91.53619435527034,
+          "min": 91.53619435527034,
+          "max": 91.53619435527034
+        },
+        "per_request_tok_s_out_wall": {
+          "mean": 88.00135121392282,
+          "median": 88.00135121392282,
+          "min": 88.00135121392282,
+          "max": 88.00135121392282
+        },
+        "per_request_ttft_s": {
+          "mean": 0.22467663697898388,
+          "median": 0.22467663697898388,
+          "min": 0.22467663697898388,
+          "max": 0.22467663697898388
+        },
+        "per_request_elapsed_s": {
+          "mean": 5.818092483095825,
+          "median": 5.818092483095825,
+          "min": 5.818092483095825,
+          "max": 5.818092483095825
+        }
+      }
+    }
+  }
+}

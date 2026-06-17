@@ -1,0 +1,561 @@
+diff --git a/suggestions.md b/suggestions.md
+new file mode 100644
+index 0000000..4c4f526
+--- /dev/null
++++ b/suggestions.md
+@@ -0,0 +1,555 @@
++# Qwen 3.6 35B INT8 on Intel B70 Arc GPUs — Optimization Plan
++
++> Scope: keep the model at INT8 (Quark W8A8), keep per-request decoding, zero quality degradation. No weight-bit reduction, no hardware-limit excuses. Exact **target-verified** speculation (the Quark W8A8 target remains the verifier, every emitted token is target-accepted with exact KV/sampler rollback) is in scope because it produces zero token drift; lossy or approximate draft models remain out of scope.
++>
++> Updated 2026-06-15: rewritten around the roofline, the precise P0 root causes (graph-owned static-state staleness; oracle-spec parity), and a phased plan to ~200 tok/s. Baseline corrected for benchmark identity.
++
++> Current correction, 2026-06-15: we now have a validated fast research base,
++> not just an unsafe ceiling. The current promoted base is
++> `prefill-safe-int8-mixed-workspace-async-deep-gate`: metrics, JSON 128,
++> color 256, and quality pass at `93.5505 tok/s` with PIECEWISE forced-comm
++> graph, prefill-safe GDN, prefill graph replay disabled, top-k sampler
++> fallback, `VLLM_XPU_INT8_MOE_MIXED_WORKSPACE=1`, and async scheduling
++> enabled. It supersedes the earlier `p0a-static-piece1-8-10-deep-gate`
++> (`93.1062 tok/s`) because it keeps the same relevant identity but no longer
++> needs static-input copy flags. Current rejected stacks: W8A8 layerlet/prefix,
++> shared-expert activation workspace, BF16 greedy top-k shortcut, custom XPU
++> top-k sampler family, and no-bonus/draft-only oracle workarounds. The next
++> >100 tok/s path remains exact verified speculation after repairing oracle k=1
++> verifier bonus-row state, plus base-lane improvements that pass the same deep
++> gates. `VLLM_XPU_MOE_SHARED_ADD_ALLREDUCE_CUSTOM_OP=1` is now also rejected
++> as quality-clean but slower (`91.9646 tok/s`) under the deep gate. The
++> native-GDN/top-k/mixed-workspace candidate is rejected too: `93.8668 tok/s`
++> on metrics, but JSON, color, and quality repeat gates fail.
++> XPU shared-expert aux-stream overlap is rejected as well, even after switching
++> to a process-global stream: the endpoint fails before readiness with
++> `wait method cannot be used for an event associated with a command graph`.
++> Dirty block-table commit is also rejected on this exact current fast identity:
++> readiness completes, but the first metrics request device-loses in
++> `block_table.copy_to_gpu(num_reqs)`. The older dirty-block-table ~100 tok/s
++> A/B is not comparable to the current validated fast base.
++> TP2 under the current fast-safe identity is rejected too:
++> `85.8691 tok/s` corrected with JSON/color `16/16`, slower than TP4.
++> The GDN speculative store-all diagnostic is also rejected: the endpoint
++> reached readiness but device-lost on the first trace request, so the default
++> stays accepted-only state stores.
++> The real-row W8A8 middle-layerlet gate now passes eager and XPU graph replay
++> on a model-shaped TP4 decode case, including skewed selected experts and
++> zero-row experts: offsets and rows-per-expert references match exactly
++> (`0` diff). The standalone math/offset convention is not the blocker.
++> The fused prologue endpoint path remains rejected: even limiting PIECEWISE
++> capture to size `1` still device-loses before readiness in
++> `prefill-safe-int8-prologue-c1capture-smoke`.
++> Corrected decisive timing on this base routes the next implementation target
++> to MoE, not collectives or sampler: `moe_forward_shared.custom_op` is the
++> leading visible family label at `9.059 ms`, while `gdn_attention_core_xpu.native`
++> is `1.691 ms` and the top visible collective is only about `0.063 ms`.
++> The immediate next work item is a reduced TP4/full-capture reproducer for the
++> prologue device-loss path, or a persistent layerlet variant that avoids adding
++> new graph-captured prologue state until the capture bug is isolated.
++
++## Hardware And Model Facts (Roofline)
++
++Hardware — 4× Intel Arc Pro B70 (from Intel ARK / B-series overview):
++- 608 GB/s memory bandwidth per card; 32 GB; 367 INT8 pTOPS (XMX); Gen5 PCIe x16; **no XeLink** → TP collectives cross PCIe.
++- Aggregate TP4 bandwidth ≈ 2432 GB/s if perfectly utilized.
++
++Model — `nameistoken/Qwen3.6-35B-A3B-Quark-W8A8-INT8` (source: snapshot `config.json`):
++- `Qwen3_5Moe`, **256 experts / top-8**, 40 layers, hybrid **30 GDN (linear-attention) + 10 full-attention** (full every 4th), hidden 2048.
++- **`mtp_num_hidden_layers: 1` — the model ships with a native Multi-Token-Prediction head.** This is the natural high-acceptance draft source for verified speculation.
++- Quark W8A8: per-channel symmetric INT8 weights, per-channel **dynamic** INT8 activations.
++
++Roofline math:
++- Active ≈ 3 B params INT8 ≈ 3 GB/token; TP4-sharded ≈ 750 MB/rank; at 608 GB/s → **~1.23 ms weight-read floor per token**.
++- 200 tok/s = 5.000 ms/token budget → weights are only ~25% of budget. **200 tok/s is physically reachable.**
++- But measured `model_forward` ≈ 5.46 ms (4.4× the floor) and outside-forward ≈ 4.59 ms. The gap is **overhead** (MoE dispatch, GDN recurrent updates, collectives, sampler, host orchestration), not compute.
++
++Implication: the win is overhead removal + speculation that amortizes the weight-read floor across multiple emitted tokens.
++
++## Honest Current State (Benchmark-Identity Corrected)
++
++Per the workspace rule, runs are only comparable when full identity matches (model/quant/TP-PP/concurrency/`COMPILATION_CONFIG`/`GPU_MEMORY_UTILIZATION`/`XPU_GRAPH`/forced-comm/sampler fallbacks/async/diagnostic flags). With that discipline:
++
++| Lane | Config identity | Decode tok/s | Quality under deep gates | Status |
++|------|-----------------|-------------:|--------------------------|--------|
++| **`prefill-safe-int8-mixed-workspace-async-deep-gate`** | PIECEWISE + forced comm + prefill-safe GDN + prefill replay disabled + INT8 mixed workspace + async | **93.551** | deep gate passed | current validated fast research base |
++| `p0a-static-piece1-8-10-deep-gate` | same base plus selected static input copy `piecewise:1/41` args `8,10` | 93.106 | deep gate passed | superseded by cleaner base |
++| **`production-accepted`** | `cudagraph_mode=NONE`, recurrent safe prefill, GDN `decode,prefill` fallback, no-async | **~15–16** | fully safe | conservative fallback service |
++| `baseline-conservative` | Graph NONE, GDN fallback decode+prefill, no-async | 12.8 | safe | oracle only |
++| `fast-conservative-quality` (shallow) | PIECEWISE + forced comm + GDN decode fallback + topk + prefill-replay bypass + zero-fresh, no-async | ~77–86 | **passes shallow gate, fails 4-repeat promotion** | candidate, not promoted |
++| `fast-forced-graph` | PIECEWISE + forced comm + `GRAPH_NOOP_COMM_CAPTURE=1` | **~93.45** | **corrupts** (JSON @repeat ~48, color @repeat ~91/137) | unsafe ceiling |
++| Localmaxxing public row | same fast class | ~99–100 | unvalidated | fast-but-unsafe |
++
++**Key corrections versus older versions of this doc:**
++- The previous `93.3 tok/s` "fastest validated so far" row had `quality=skipped`. It is smoke/oracle, not quality-validated.
++- The 77–86 tok/s "quality-passed" ablations were **shallow gates**; under the 4-repeat promotion gate they fail at the same repeat windows as the forced-graph lane (see `notes/2026-06-13-qwen36-decode-graph-replay-corruption.md` h20/h23).
++- The previous "no quality-safe fast lane" statement is now stale. The
++  validated fast research base is `93.551 tok/s`, but it is still below the
++  user's no-quality-loss target of well above 100 tok/s.
++
++Common env for the fast lanes:
++- `COMPILATION_CONFIG='{"cudagraph_mode":"PIECEWISE"}'`
++- `XPU_GRAPH=1 VLLM_XPU_ENABLE_XPU_GRAPH=1 VLLM_XPU_FORCE_GRAPH_WITH_COMM=1 VLLM_XPU_GRAPH_NOOP_COMM_CAPTURE=1`
++- `VLLM_XPU_GDN_NATIVE_FALLBACK=decode|prefill`, `VLLM_XPU_GDN_PREFILL_RECURRENT_FALLBACK=1`
++- `VLLM_XPU_DISABLE_PREFILL_CUDAGRAPH_REPLAY=1`, `VLLM_XPU_GREEDY_SAMPLE_TOPK_FALLBACK=1`, `VLLM_XPU_ZERO_FRESH_GDN_STATE=1`
++- `--no-async-scheduling`
++
++Fast-class speed anchor (unsafe): `data/qwen36-ablation-fastlane-config-restored-control-metrics-summary-20260614h4.json` — `93.45 tok/s`, `10.70 ms/token`.
++
++## Why 200 tok/s Requires Speculation
++
++From `data/qwen36-c1-gap-budget-fullcandidate-20260613h.{json,md}`:
++
++- Current decode ≈ 10 ms/token; target 200 = 5.000 ms/token; required saving **5.056 ms/token (50.3%)**; required speedup **2.011×**.
++- `model_forward` ≈ 5.46 ms; outside-forward ≈ 4.59 ms. **Even driving `model_forward` to ~0 ms would not reach 200** unless outside-forward is also cut.
++- The W8A8 MoE layerlet, projected perfectly across all 40 layers, caps at **~172 tok/s** — still short of 200; measured endpoint A/B gain was only **+1.42%**.
++
++The only math that reaches 200 with zero quality drift:
++
++```
++effective_tok/s = base_tok/s × mean_draft_acceptance
++~100 tok/s base × ~2.0 mean acceptance ≈ 200 tok/s
++~140 tok/s base × ~1.5 mean acceptance ≈ 210 tok/s
++```
++
++Both multipliers require the two P0 correctness fixes below. Speculation amortizes the ~1.2 ms weight-read floor across multiple emitted tokens — that is *why* 200 is reachable, not just base-rate tuning.
++
++## Already Ruled Out As Lead 2× Levers (Do Not Retry Without New Evidence)
++
++From `notes/2026-06-12-qwen36-next-bigger-bets.md`, `notes/2026-06-13-qwen36-decode-graph-replay-corruption.md`, and the rejected-paths index:
++
++- HTTP/SSE/output-tail/detok cleanup — stream matches decode within 0.018%; queue ≈ 0.012 ms.
++- Static lm-head/output-tail restriction as first move — bottleneck is before output packaging.
++- Physical-card rotation / simple rank-route skew — route counters identical across ranks.
++- Hot-expert table-size-only grouped-GEMM changes — insufficient.
++- Offset/active-offset W8A8 MoE as an endpoint promotion — improves layer floor, not enough dispatch removal.
++- Async scheduling — breaks the color canary.
++- oneDNN sidecar capture inside vLLM XPU graphs — falls back or `UR_RESULT_ERROR_DEVICE_LOST` (gate patch `patches/vllm-xpu-qwen36-onednn-sidecar-capture-gate-20260613.patch`).
++- `VLLM_XPU_INT8_MOE_MIXED_WORKSPACE=1` as-is — slightly slower, costs KV headroom.
++- Direct TP2 / `--block-size 256` / `MBT512` ports — rejected for this 32K/no-prefix W8A8 endpoint.
++- XPU greedy `argmax` / `torch.max` / clone-argmax sampler variants — all corrupt under slot reuse; topk is the only validated greedy reduction.
++- Surface graph fixes that **move but do not cure** the corruption: graph0 output-5/5,6 cloning (h14/h16), fresh/all-prefill GDN state zeroing (h23/h24), GDN reuse-off, native activation-quant off, per-wrapper/no-global graph pool, stock collectives, first-decode eager, runtime recapture as a *deployable* fix (it passes canaries but reverts to ~15 tok/s).
++
++# The Plan
++
++Sequenced so each phase's gate is measurable. P0a and P0b are independent and parallelizable; P0a is on the critical path (nothing is measurable without a quality-safe fast lane).
++
++```
++P0a (graph-owned-state staleness) ──┐
++                                    ├──► quality-safe ~90–100 tok/s base
++P0b (oracle k=1 verifier parity) ───┘            │
++                                                 ▼
++                   Phase 1 (layerlet + real comm capture) ──► ~140–160 tok/s base
++                                                 │
++                                                 ▼
++                   Phase 2 (n-gram → native MTP, k=2–4) ──► ~200 tok/s ✅
++                                                 │
++                                                 ▼
++                              Phase 3 (EP/topology/engine bakeoff) — fallback only
++```
++
++## Phase 0 — Correctness unlocks (do first; gate everything)
++
++### P0a. Kill the forced-graph staleness bug → first quality-safe fast lane (~90–100 tok/s)
++
++Root cause is now precisely localized (not a math bug):
++- **Hidden graph-owned static state in `piecewise:0` goes stale after enough replays**, poisoning later *direct prefill*. Adjacent good/bad requests have **identical visible tensor arguments** but diverge at graph0 compute-step 0 (`data/qwen36-cudagraph-state-h22-json-analysis.json`).
++- Direct-vs-replay compare shows **0 diff on real outputs**, only scratch/empty buffers differ (`data/qwen36-cudagraph-state-h12-analysis.json` — output index `5`, `[1,2048]` bf16, is the first corrupt handoff).
++- Proof it is stale-state, not math: **periodic runtime recapture makes canaries pass** (`...-recapture{1,8,64}-canary-summary-20260614g{1,2,3}.json`); but recapture reverts to ~15 tok/s so it is diagnostic, not a fix.
++
++Tasks:
++1. **Alias-lifetime tracer** in `vllm/compilation/cuda_graph.py`: for each `piecewise:0` output, log whether its storage data-ptr / offset / pool slot aliases any `piecewise:1` input or any registered custom-op scratch (GDN `conv_state`/`ssm_state`, MoE `w8a8_offsets`/workspace, custom all-reduce clone buffers). Start at output index 5.
++2. **Identify the stale buffer.** Candidates in priority order: (a) GDN conv/ssm slot pointers captured into the graph; (b) MoE workspace/offsets scratch; (c) custom all-reduce clone-input buffers; (d) graph-pool/allocator addresses shifting after N allocations. "Recapture fixes it" ⇒ one of these is captured-by-reference and goes stale.
++3. **Cheap targeted refresh instead of recapture**: copy/sanitize *only* the stale static buffer before each replay (a minimal XPU-safe copy-inputs path — the stock `cudagraph_copy_inputs=true` hit an inductor bounds-assert, so build a reduced XPU copy).
++4. **Reduced reproducer** (highest-leverage single artifact): standalone `torch.xpu` script capturing `piecewise:0` + its GDN consumer, looping replay/direct with a token canary, asserting on allocator addresses / custom-op mutation. Turns a ~10-min endpoint-restart debug loop into a seconds-long one.
++
++Gate: JSON 128/128 + color 256/256 + full quality suite, **after 4 warm p512/o512 repeats**, at ≥90 tok/s, token-identical to the graph-disabled oracle.
++Impact: converts the unsafe 93 tok/s lane into a **quality-safe ~90–100 tok/s production lane** — the base speculation multiplies.
++
++### P0b. Oracle k=1 verifier/KV-commit parity → unlock verified speculation
++
++**Correction (2026-06-15, see "Research Findings" below):** the predecessor-reemission in the COW trace is **diagnostic-flag-induced, not a missing commit**. The normal spec path commits the bonus correctly; the trace ran with `VLLM_XPU_SPEC_DECODE_DISABLE_FULL_ACCEPT_BONUS=1` + `VLLM_XPU_SPEC_DECODE_FILTER_SUPPRESSED_BONUS_CACHE=1`, which *by design* un-commits the bonus (`scheduler.py:1553-1565`) and drops it from the worker cache (`gpu_model_runner.py:5787-5817`). First action: validate the **unsuppressed** oracle k=1 path for token-identical output, and recover the original reason the bonus was suppressed. The earlier "bonus KV is never committed" framing is wrong.
++
++Tasks:
++1. **Bonus-token escrow**: instead of suppressing the bonus, commit its KV/slot as a pending target-owned record; the next step must emit exactly that record or recompute+prove it before another draft.
++2. **Transactional invariant**: scheduler counts, worker token cache, KV commit state, and user-visible output advance as one transaction per verifier pass. CPU replay fixture covering full-accept, hidden-bonus, partial-reject, recompute, worker-cache update.
++3. **First-divergence verifier trace** at the repeated-token divergence: token IDs, positions, slot IDs, hidden-state digest, top-k logits — confirm stale KV vs stale query vs sampler path.
++
++Gate: `scripts/run-qwen36-oracle-parity-gate.sh` exact mode shows "spec ran" **and** tokens match the no-spec baseline on ≥2 deterministic probes.
++Impact: speculation becomes promotable. Without this, no speculative number is valid.
++
++## Phase 1 — Raise the single-token kernel floor (~100 → ~140–160 tok/s)
++
++Start only after P0a lands a safe base. With 256 experts/top-8 at batch=1, MoE is **dispatch-bound** (8 tiny GEMMs + permute/unpermute), not compute-bound.
++
++1. **Fix the layerlet color-canary offset/scale bug**, then **persistent resident W8A8 MoE layerlet**: descriptors, expert pointers, scales, scratch, route buffers resident per layer/rank; enqueue only the route command. One boundary route→quant→GEMM1→SiLU→quant2→GEMM2→gather→combine. Target the documented **189 µs/layer** (current ~315 µs). Synthetic harness already passes graph-replay parity (0.0 diff).
++2. **Real XPU graph-collective capture** to remove `VLLM_XPU_GRAPH_NOOP_COMM_CAPTURE=1`. Collective bytes are cheap (0.05–0.08 ms) but the **host-dispatch gap around the no-op comm** is not — and no-op comm capture is part of what makes forced-comm fragile (de-risks P0a). Requires a true XPU communicator graph-capture context.
++3. **Recover the sampler ~4 tok/s** with a genuinely-different XPU greedy reduction (custom op; all argmax/max/topk-family variants corrupt or cost ~4 tok/s).
++4. **GDN recurrent-decode kernel tuning** (causal conv-1d + SSM) only after P0a makes native GDN safe under load.
++
++Gate: each item passes the P0a deep gate independently; A/B vs adjacent control with ≥4 repeats.
++
++## Phase 2 — Verified speculation (the ≥200 multiplier)
++
++Stack on the Phase-1 base. Speculation amortizes the ~1.2 ms weight-read floor across multiple emitted tokens.
++
++1. **n-gram proposer first** (no draft model) — establish the verified-acceptance harness; measure real acceptance on representative prompts.
++2. **Native MTP head** (`mtp_num_hidden_layers: 1`) — the trained MTP head is the high-acceptance draft source and the right long-term proposer. Note: MTP-on-XPU is **not** in vLLM's validated XPU list, so expect compile/capture work; keep n-gram as fallback.
++3. **Tune k** (start 2, push toward 4) against measured mean acceptance; report per-position acceptance, verifier cost, rollback cost, output parity.
++
++Gate: token-ID parity vs no-spec oracle on the full quality suite + 512-repeat canaries, across a 4K/16K/32K context sweep.
++
++## Phase 3 — Only if P0–P2 fall short
++
++EP-style expert placement (256 experts favors EP over TP for c1), TP2+replication topology, or a same-model engine bakeoff (SGLang / llama.cpp-SYCL / Intel container) under strict token-parity gates. Lower priority — Q4 history warns card count is not monotonic for c1 latency.
++
++## Top Risks
++
++- **P0a may be a deep XPU graph-runtime bug** (allocator/pool reuse across capture) rather than a vLLM-controllable buffer. The reduced reproducer (P0a task 4) distinguishes "fixable in vLLM" from "needs an Intel driver/oneAPI fix or a different capture strategy."
++- **MTP-on-XPU unvalidated upstream** — Phase 2 may need kernel/capture work; n-gram fallback ensures P0b alone still yields a speed win.
++- **Benchmark identity** (per AGENTS.md): every claim must diff `COMPILATION_CONFIG`/graph/comm/GDN/sampler/async flags vs the `20260614h4` 93.45 tok/s baseline. The 2026-06-14h drift (missing PIECEWISE → fake 15 tok/s "regression") must not recur; the harness autoconfig fix is already in `scripts/run-qwen36-ablation-candidate.sh`.
++
++# Optimization Pathway Reference (detail)
++
++The phased plan above is primary; the entries below retain the per-lever detail and status for reference.
++
++### 0. P0 Correctness Unlocks — see Phase 0 above (P0a graph staleness, P0b oracle k=1).
++
++### S. Target-verified multi-token speculation — see Phase 2.
++
++### 1. Persistent W8A8 MoE layerlet + prefix-offset path
++Kernels and Python glue are substantially in tree (`csrc/xpu/moe_layerlet.cpp` adds `qwen36_moe_w8a8_middle_layerlet` and `qwen36_rows_per_expert_offsets_int64_out`; `xpu_moe.py` workspace reuse; resident int64 offsets scratch).
++Status (2026-06-15): synthetic middle-layerlet parity passes eager and XPU graph-replay (0.0 diff), and the new real-row/model-shaped TP4 decode gate also passes with `0` diff against rows-per-expert and offsets references. That clears standalone math, offset layout, skewed routing, and zero-row expert handling. The decisive timing trace still shows that the current middle-only layerlet is too narrow because it starts after remap/offsets/shared-expert prologue work, while the hot labels are `moe_forward_shared.custom_op`, `moe.quant_method_total`, `moe.shared_experts.apply_no_overlap`, and `qwen2_moe.shared.silu_and_mul`. Endpoint `fastgraph-exact-layerlet-smoke` is quality-clean in a shallow gate but slower (`88.283 tok/s`), and the prologue-inclusive endpoint path device-loses during PIECEWISE capture even with capture size `1`. Projection ceiling remains ≈ **172 tok/s** even if perfect across all 40 layers.
++Next: isolate the multi-rank/full-model prologue capture device-loss with a reduced TP4 reproducer, then make descriptors/scratch resident per layer/rank only after graph safety is proven. Potential: large as a floor-raiser (~150–170 tok/s base), **insufficient alone** for 200.
++
++### 2. Real XPU graph collectives (replace no-op comm capture)
++`VLLM_XPU_GRAPH_NOOP_COMM_CAPTURE=1` lets capture run but host-dispatches the real TP all-reduce. Removing it requires an XPU communicator graph-capture context (`parallel_state.graph_capture` currently asserts `CudaCommunicator`). Also de-risks P0a. Potential: medium-high.
++
++### 3. Native GDN decode stability
++Native GDN decode measures ~90–94 tok/s short-gate but corrupts under warm load (JSON @49, color @22). Trace shows selected layer-0 SSM state differs between good/bad requests at first decode step — a symptom of the P0a staleness class, not an independent root cause. Fix P0a first; native GDN then becomes safe. Potential: high but a stability rabbit hole until P0a clears.
++
++### 4. Graph replay metadata-copy reduction
++Every decode step pays Python overhead for metadata/block-table copies; the metadata-sanitation patch cost ~8 tok/s — proof this overhead is material. Move block-table updates into the captured graph or a single device-side copy; reuse static-shape metadata tensors. Potential: +5–15 tok/s.
++
++### 5. Custom all-reduce optimization
++Clone inputs (`VLLM_XPU_CUSTOM_ALLREDUCE_CLONE_INPUT=1`, `..._GRAPH_CLONE_INPUT=1`) cost bandwidth/latency for safety. Audit whether clones are still needed with PIECEWISE + native GDN prefill; tune launch grid/workgroup for Xe2. Potential: medium.
++
++### 6. TP↔PP / EP reshape
++TP4 all-reduces every layer; EP places experts across cards and moves routed activations. With 256 experts, EP is architecturally favored for c1. Validate `--pipeline-parallel-size 2 --tensor-parallel-size 2` and EP layouts under exact canaries. Potential: medium; invasive.
++
++### 7. Kernel fusion
++Unfused RMSNorm, residual add, activation, quant/dequant, RoPE. Fuse memory-bound chains (RMSNorm+residual+quant, SILU+mul+quant, RoPE+QKV). Potential: medium.
++
++### 8. Causal-conv1d / GDN attention kernel tuning
++Profile `csrc/xpu/gdn_attn/xe_2/chunk_causal_conv1d_xe2.hpp`; tune tiles/workgroup/scratch for B70; consider persistent-thread conv state in registers/SRAM. Potential: medium-high for native GDN paths.
++
++### 9. PIECEWISE boundary autotuning
++Split points are fixed; expose as knobs and sweep for the 512→512 decode workload. Potential: small-medium, low risk.
++
++### 10. Compilation-config / Inductor tuning
++`PIECEWISE` is coarse; explore XPU codegen/Triton tiling/fusion keys (avoid options that broke quality, e.g. async). Potential: small-medium.
++
++### 11. Weight layout / memory-format
++Audit `prepare_int8_moe_layer_for_xpu`; try oneDNN pre-packed / Xe2-cache-line-blocked layouts (quality-neutral repack at load). Potential: medium.
++
++### 12. Engine-core scheduler overhead
++For batch=1 decode the scheduler/core still run Python per step; move hot paths to C++, vectorize metadata, reduce EngineCore↔worker IPC. Potential: small-medium; more impactful at very high tok/s.
++
++### 13. Persistent / fewer kernel launches
++Persistent attention/MoE kernels carrying state across steps reduce launch overhead and improve cache locality. Potential: high but large effort.
++
++### 14. Compute/communication overlap
++Profile whether all-reduce is on the critical path; launch it earlier to overlap with subsequent compute (may require the #2 capture change). Potential: medium.
++
++# Research Findings & Concrete Fixes (2026-06-15)
++
++Source-level review of `/home/steve/src/vllm` and `/home/steve/src/vllm-xpu-kernels` against the plan. All file:line references verified. These supersede the corresponding framing in the Phase 0/1 sections above where they conflict.
++
++## R1. P0b — the bonus-token "bug" is diagnostic-flag-induced (correction)
++
++The original Phase 0 P0b framing ("bonus KV is never committed") is **wrong**. Verified facts:
++
++- **Normal path commits the bonus correctly.** `vllm/v1/core/sched/scheduler.py:1553-1565`: with `num_rejected==0` and `num_suppressed_bonus_tokens==0`, `num_uncommitted_tokens==0`, so `num_computed_tokens` is **not** rolled back — the bonus slot the verifier computed (the `+1` in `num_sampled_tokens = num_draft_tokens + 1`, `gpu_model_runner.py:3256`) stays committed. Its KV was physically written during the verifier forward.
++- **The predecessor-reemission in the COW trace was self-inflicted.** That run explicitly enabled `VLLM_XPU_SPEC_DECODE_DISABLE_FULL_ACCEPT_BONUS=1` (`scheduler.py:242`) + `VLLM_XPU_SPEC_DECODE_KEEP_COMPUTED_ON_SUPPRESSED_BONUS` unset + `VLLM_XPU_SPEC_DECODE_FILTER_SUPPRESSED_BONUS_CACHE=1` (`gpu_model_runner.py:5768`). With those flags, `num_suppressed_bonus_tokens=1` (`scheduler.py:1520`) → `num_uncommitted_tokens=1` → `num_computed_tokens -= 1` (un-committing the bonus), and the worker cache drops the bonus (`gpu_model_runner.py:5797`), so the next verifier pass recomputes the bonus slot fed the **predecessor token** and re-emits it. There is even a code comment at `scheduler.py:1545-1550` documenting this exact behavior.
++
++Revised P0b tasks:
++1. **Validate the unsuppressed path first.** Run oracle k=1 with the three suppress/filter flags **off** and check token-identity via `scripts/run-qwen36-oracle-parity-gate.sh` exact mode. If it passes, P0b is essentially closed — the "bug" was the diagnostic.
++2. **Recover the original motivation.** Find the run/note that introduced `DISABLE_FULL_ACCEPT_BONUS` — there may be a *real* failure (e.g. a sampler/KV interaction on XPU) that the suppression was papering over. If the unsuppressed path reproduces that failure, *that* is the genuine bug; the COW trace was chasing a symptom.
++3. Only if (2) reveals a real failure: implement bonus-token escrow / transactional state as originally planned.
++
++This likely removes P0b from the critical path entirely.
++
++## R2. P0a — concrete root cause located; line-level fix options
++
++The forced-graph staleness is structural, not a math bug. Verified setup:
++
++- **No copy at piece boundaries.** `cudagraph_copy_inputs` defaults `False` (`vllm/config/compilation.py:626`). In PIECEWISE mode the codegen stitching (`vllm/compilation/codegen.py:79`) passes piece0's output tensor **by reference** as piece1's input — no decoupling copy. The only copy path (`vllm/compilation/backends.py:59` `make_copy_and_call`) is gated on `cudagraph_copy_inputs=True` and is never created.
++- **Shared global pool.** Default at `vllm/compilation/cuda_graph.py:240-245` is one global pool (`current_platform.get_global_graph_pool()`) shared by **every** piecewise wrapper. Pool addresses are reused across pieces.
++- **Output weak-ref.** `entry.output = weak_ref_tensors(output)` is **unconditional** at `cuda_graph.py:1124-1126`; the `weak_ref_output=is_last_graph` flag (`backends.py:677`, consumed `cuda_graph.py:1115-1122`) only controls an intermediate local. So the wrapper's cached reference to a piece's output pool memory is always weak.
++- **Replay trusts `data_ptr()` stability.** Because `cudagraph_copy_inputs=False`, replay assumes the caller's tensor addresses equal capture-time addresses — only checked as a DEBUG assert (`cuda_graph.py:1145-1154`).
++- **Why recapture "fixes" it:** `VLLM_XPU_CUDAGRAPH_RECAPTURE_AFTER_N_REPLAYS` (`cuda_graph.py:943, 1159-1185`) drops and re-captures, re-anchoring fresh pool addresses — consistent with stale/aliased pool memory, not a kernel math error. h14 showed cloning graph0 output index 5 alone fixes the standalone canary (so an in-place downstream mutation / pool recycling of that `[1,2048]` bf16 buffer is the first corrupt handoff), but a second alias appears after metrics warmup.
++
++Concrete fix options (cheapest first):
++1. **Run the differential-test matrix below** to confirm which theory holds before writing code.
++2. **XPU-safe piecewise copy-inputs.** Enable `cudagraph_copy_inputs` behavior for PIECEWISE on XPU via a minimal copy in `make_copy_and_call` (`backends.py:78-91`). The stock `COMPILATION_CONFIG='{"cudagraph_copy_inputs":true}'` path hits an inductor bounds-assert on XPU (2026-06-13ae) — build a reduced XPU copy that avoids the inductor static-shape path. This decouples every piece's output from the next piece's input and directly removes the alias class.
++3. **Per-wrapper pools** (`VLLM_XPU_CUDAGRAPH_PER_WRAPPER_POOL=1`, `cuda_graph.py:240-241`) or **strong refs on intermediate piece outputs** (`VLLM_XPU_CUDAGRAPH_STRONG_OUTPUT=1`, `cuda_graph.py:249`) — lower-risk env toggles if (2) is too invasive; measure the memory cost.
++4. Reduced `piecewise:0` reproducer (already in the plan) to iterate in seconds, not endpoint restarts.
++
++Corroborating upstream: vLLM issue #32834 — "CUDA illegal memory access caused by CUDA Graph with awq_marlin," fixed by `--enforce-eager`. Same failure class (quant kernel with device-side state/pointers under graph capture/replay). Our case is the INT8 W8A8 analogue on XPU.
++
++## R3. P1 layerlet — the synthetic test is blind; one cited flag is in the wrong tree
++
++Verified findings that change the layerlet work:
++
++- **The "0.0 max diff synthetic" proves only wiring, not correctness.** The layerlet (`csrc/xpu/moe_layerlet.cpp:169-194`) chains `cutlass_grouped_gemm_w8a8_int8_offsets_interface → silu_and_mul_quant_int8_xpu_out → cutlass_grouped_gemm_w8a8_int8_offsets_interface` — i.e. the **same three ops** as the offsets-based reference. Diffing layerlet-vs-offsets-reference is trivially 0. The real oracle is `ref_fused_moe` (`vllm_xpu_kernels/fused_moe_interface.py:1442-1589`) or the `rows_per_expert` path (`VLLM_XPU_W8A8_USE_OFFSETS=0`). **No in-repo test exercises the layerlet with real per-expert scales + skewed/zero-row routing.** Add that test before more endpoint A/B.
++- **`VLLM_XPU_INT8_MOE_MIXED_WORKSPACE` is NOT in vllm-xpu-kernels** (0 matches). It lives in **vLLM**: `vllm/model_executor/layers/fused_moe/experts/xpu_moe.py:34`. The resident `w8a8_offsets` scratch and workspace reuse therefore live in vLLM's `xpu_moe.py`, not the kernel. Any scratch-aliasing theory for the layerlet color-canary failure must be traced in vLLM, not assumed fixed by a kernels-rebuild.
++- **Two incompatible offset conventions ~150 lines apart** (`fused_moe_interface.py:597-601` oneDNN `[N]` end-only vs `:752-778` cutlass `[N+1]` leading-zero). The layerlet (`moe_layerlet.cpp:176,190`) and the offsets interface both **require** cutlass `[N+1]`. Assert the offsets tensor your harness builds is `[num_experts+1]`, int64, `offsets[0]==0`, `offsets[-1]==num_moe_inputs` — a wrong convention shifts every expert by one and reads OOB on the last expert (deterministic total corruption).
++- **int64→int32 truncation at the kernel edge.** `csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2.hpp:142-144`: `pre_rows`, `gemm_m`, `cumsum_rows_for_experts` are `int` even in the offsets path. Safe at normal MoE `Total_M`, but this is the literal overflow hazard.
++- **Sparse-routing tile policy.** `grouped_gemm_xe2_interface.hpp:852` integer-divides `A_avg_M = A_total_M / num_experts`; for 256 experts + decode (Total_M=1), `A_avg_M≈0` selects `w8a16_policy_m_16` for the whole call regardless of per-expert skew — a tile/scheduler corner case that only real skewed routing exposes.
++- **No shared-expert code in this repo.** The shared expert (512 inter) is a separate MLP in vLLM's model layer; the layerlet only ever sees the 256 routed experts. A shared/routed scale mismatch cannot originate in `vllm-xpu-kernels`.
++
++Revised P1 first step: add the missing real-routing parity test (layerlet vs `ref_fused_moe` vs `rows_per_expert`, with real per-expert scales and zero-row experts) before any further endpoint promotion attempt.
++
++## R4. Differential-test matrix (run in this order; each is one endpoint A/B)
++
++Keep full benchmark identity identical per AGENTS.md (PIECEWISE compile, GPU_MEM_UTIL, graph/comm/GDN/sampler flags). Expected outcomes confirm/refute each theory:
++
++| # | Env override | Confirms | Anchor |
++|---|--------------|----------|--------|
++| 1 | `VLLM_XPU_CUDAGRAPH_CLONE_REPLAY_OUTPUT_REGEX=piecewise:0` + `_INDICES=5` | graph0 output[5] in-place alias | `cuda_graph.py:373,413` |
++| 2 | `VLLM_XPU_CUDAGRAPH_STRONG_OUTPUT=1` | weak-ref-driven pool recycling of piece outputs | `cuda_graph.py:249` |
++| 3 | `VLLM_XPU_CUDAGRAPH_PER_WRAPPER_POOL=1` | shared-global-pool address aliasing across pieces | `cuda_graph.py:240` |
++| 4 | `VLLM_XPU_CUDAGRAPH_NO_GLOBAL_POOL=1` | same, stronger (PT private pool) | `cuda_graph.py:242` |
++| 5 | (P0b) oracle k=1 with all three `*_SUPPRESSED_BONUS*` / `DISABLE_FULL_ACCEPT_BONUS` flags **off** | normal-path bonus commit is correct → P0b closes | `scheduler.py:242,249`; `gpu_model_runner.py:5768` |
++| 6 | (P1) layerlet vs `ref_fused_moe` with `VLLM_XPU_W8A8_USE_OFFSETS=0` and real skewed routing | whether the offsets/layerlet path diverges from the true reference | `fused_moe_interface.py:1442,2193` |
++
++If #1 or #2 or #3 makes the deep gate (JSON 128 + color 256 + 4 warm p512/o512 repeats) pass at ≥90 tok/s, the P0a fix is localized to output lifetime / pool aliasing and R2 option 2 or 3 is the production fix.
++
++Status update from 2026-06-15:
++
++- #1 targeted output clone was already insufficient: output 5 and 5/6 variants
++  still fail the deep gate at JSON repeat 49 / color repeat 138. Cloning all
++  `piecewise:0/41` outputs is worse and corrupts immediately after metrics.
++- #2 strong output is medium-clean (`94.12 tok/s`, JSON 64/64, color 128/128)
++  but deep-fails at JSON repeat 49 / color repeat 138. Rejected as a fix.
++- #3 per-wrapper pool device-loses on the first metrics request during
++  block-table CPU-to-XPU copy. Rejected as unstable.
++- #4 no-global-pool is medium-clean (`92.39 tok/s`, JSON 64/64, color 128/128)
++  but deep-fails at JSON repeat 49 / color repeat 138. Rejected as a fix.
++- Selected `piecewise:1/41` static input copy for args `8,10` is the first
++  deep-clean fast base: `93.1062 tok/s`, JSON `128/128`, color `256/256`,
++  quality suite pass under label `p0a-static-piece1-8-10-deep-gate`.
++  Identity caveat: that lane includes `VLLM_EXTRA_ARGS='--uvicorn-log-level warning'`
++  and did not include `--no-async-scheduling`, so compare only against matching
++  run summaries.
++- Static-input base plus the current W8A8 middle-layerlet/prefix-offset stack
++  is rejected: `89.4664 tok/s`, JSON failed at `27/64`, color failed at
++  `91/128` under label `p0a-static810-layerlet-prefix-medium-gate`.
++- Static-input base plus shared-expert activation workspace is rejected:
++  `93.6893 tok/s`, JSON failed at `27/64`, color failed at `91/128` under
++  label `p0a-static810-sharedact-medium-gate`. It uses exact
++  `torch.ops._C.silu_and_mul` math and passed local kernel parity, so the
++  endpoint failure is another graph-owned static-buffer/lifetime hazard.
++- Prologue-inclusive W8A8 MoE is exact in isolated route replay and improves the
++  local replay path, but endpoint PIECEWISE graph capture device-loses under
++  `prefill-safe-int8-fused-prologue-offset-smoke` (`20260615prol1`). Keep this
++  path default-off until a reduced multi-rank graph reproducer is fixed.
++- Follow-up prologue repros on 2026-06-15 narrowed the failure: prologue-only
++  graph capture passes, synthetic `xpu_fused_moe` prologue+INT8 grouped-GEMM
++  capture passes, and 15 repeated single-rank graph captures with 40 fused-MoE
++  calls each pass. The endpoint still device-loses at `14/15` PIECEWISE capture
++  on TP3 when
++  `VLLM_XPU_INT8_MOE_FUSED_PROLOGUE_OFFSET_ALLOW_CAPTURE=1`
++  (`qwen36-ablation-prefill-safe-int8-fused-prologue-offset-capture-smoke-20260615prolcap2.log`).
++  The remaining prologue blocker is multi-rank/full-model capture, not the
++  standalone prologue op.
++- A bounded capture-size retry also failed:
++  `prefill-safe-int8-prologue-c1capture-smoke` with
++  `cudagraph_capture_sizes=[1]` device-lost before readiness on TP1/TP2 while
++  preparing the dummy run. Reducing the capture sweep is not enough; the
++  capture safety problem is present at the c1 graph boundary.
++- Removing the GEMM2 activation `contiguous()` handoff is rejected. It measured
++  `94.1136 tok/s` in the short endpoint smoke, but JSON canary failed at repeat
++  `3/32` with a semantic wrong answer (`12` instead of `42`). The change was
++  reverted; route replay parity was not sufficient.
++- Current safe-identity sampler swaps are rejected. `max` reached
++  `98.4505 tok/s` but failed JSON repeat `3/64` and color repeat `56/128`;
++  the FP32 top-k shortcut slowed to `88.5245 tok/s` and failed JSON/color, so
++  it was reverted. Keep accepted `torch.topk` fallback as the sampler anchor.
++- Reduced TP4 prologue capture now passes with repeated and distinct synthetic
++  layer tensors (`fused_moe_prologue` + INT8 quant + middle layerlet +
++  post-capture host-to-device copy). The full endpoint still device-loses during
++  PIECEWISE c1 capture at the `logit_indices_device` copy when prologue capture
++  is enabled, even with persistent prologue scratch. Treat the blocker as
++  full-vLLM graph/memory-manager/adjacent-graph state, not standalone prologue
++  kernel math.
++- Next P0a/P1 step is not another pool/output-clone toggle and not the current
++  routed-MoE layerlet stack. Use the static-input base as the clean anchor,
++  then test unsuppressed oracle k=1 parity as the next stackable
++  quality-preserving lever.
++
++Speculation status update from 2026-06-15:
++
++- Replay/summarizer tooling now joins oracle traces by both `request_id` and
++  `response_id`, so P0b evidence is no longer blocked by trace aliasing.
++- Unsuppressed oracle k=1 has real speculative activity and correct acceptance
++  accounting, but is not token-identical yet. The natural prompt diverges at
++  output index `14`, specifically on the verifier bonus token after fully
++  accepted drafts. Prompts and accepted draft tokens match the no-spec oracle
++  before that point.
++- The bug is therefore narrower than "spec decode is broken": accepted draft
++  math/accounting is clean; the remaining target is verifier bonus
++  KV/position/GDN state.
++- No-bonus filtered workaround attempts are rejected. Both recompute and
++  no-recompute variants hit `UR_RESULT_ERROR_DEVICE_LOST` in
++  `gpu_model_runner.py` while copying `num_accepted_tokens.gpu` into the
++  CPU-visible accepted-token tensor for GDN/Mamba state processing. The
++  no-recompute lane reached 92.9% acceptance before dying, so the proposer is
++  useful once state handling is fixed.
++- Next P0b steps, in order:
++  1. `VLLM_XPU_NGRAM_NO_MAMBA_SPEC_BLOCKS=1` has now been tested and rejected:
++     same device loss at the accepted-token CPU tensor copy.
++  2. `VLLM_XPU_SPEC_DECODE_SKIP_ACCEPTED_D2H_NONSPEC=1` moved the failure past
++     the accepted-count copy, but the same request then device-lost at the next
++     sampled-token XPU-to-CPU copy. The no-bonus filtered lane is therefore
++     rejected as an unsafe workaround.
++  3. Pivot back to the unsuppressed oracle k=1 path. It completes without
++     device loss and diverges only at the verifier bonus token after accepted
++     drafts, making it the right target for first-divergence instrumentation.
++  4. Re-run exact oracle parity only after the verifier-bonus state fix; no
++     speed claim until emitted token IDs match the no-spec oracle.
++
++Additional oracle k=1 update from 2026-06-15:
++
++- Graph-safe unsuppressed oracle k=1 still fails exact parity even though spec
++  activity is real (`15` accepted, `1` rejected, `93.75%` accept rate in the
++  short gate). The mismatch roles are `replacement_after_reject` and
++  `verifier_bonus_after_full_accept`, with concrete drifts captured in
++  `qwen36-oracle-graph-safe-k1-fixture-20260615graphsafe1.md`.
++- Full serial GDN under the PIECEWISE graph lane is rejected. It produced only
++  four spec rows, then the engine starved in shared-memory broadcast and died
++  with `RPC call to sample_tokens timed out`; workers had to be killed
++  manually. Do not retry this as a candidate.
++- Next best P0b work: narrow verifier-bonus state instrumentation. Compare the
++  no-spec token after a known accepted draft with the spec verifier bonus using
++  token IDs, position/slot IDs, `num_computed_tokens`, GDN state indices,
++  accepted-count tensors, and top-k logits. The likely bug is packed verifier
++  GDN state/position handling, not draft proposal quality.
++- If a serial diagnostic is needed, run it in a tiny eager-only repro first and
++  stop after the first divergence. Do not put full serial GDN back into the
++  graph endpoint unless a reduced parity repro has already proved it is both
++  correct and finite.
++
++Oracle k=1 isolation update from 2026-06-15:
++
++- Graph-safe oracle k=1 with `--no-async-scheduling` still failed exact parity
++  with the same `replacement_after_reject` and
++  `verifier_bonus_after_full_accept` roles. It accepted `15/16` spec rows
++  (`93.75%`), matching the async graph-safe run, so async scheduling is not the
++  root cause.
++- Eager/no-graph/no-async oracle k=1 also failed exact parity with the same two
++  roles. The repetitive prompt still drifted `unique` -> `PU` after accepting
++  draft token `1543`. This rules out XPU graph replay as the primary P0b cause.
++- Eager serial-recurrent GDN (`VLLM_XPU_GDN_SERIAL_SPEC_DECODE=1`) did not fix
++  parity; the same two roles remained.
++- Eager serial-conv + serial-recurrent GDN changed verifier behavior and
++  worsened acceptance to `4/6` (`66.67%`). Treat that branch as rejected, not a
++  candidate fix.
++- Current P0b target: instrument the first divergent verifier row under
++  eager/no-graph/no-async. Capture input IDs, positions, slot/block IDs,
++  `num_accepted_tokens`, spec state indices, hidden digests, and top-k logits
++  for the accepted draft row and the verifier bonus/replacement row. The fix is
++  likely in spec row construction or hybrid GDN state/logit indexing, not in
++  graph capture or existing serial fallback flags.
++
++Current-reference correction from 2026-06-15:
++
++- The older oracle fixture
++  `data/qwen36-quark-int8-tp4-accepted-restored-current-oracle-baseline-20260612i.json`
++  is stale for the current optimized fast-lane identity
++  (`PIECEWISE` forced graph, async scheduling, `GDN_NATIVE_FALLBACK=prefill`,
++  mixed INT8 MoE workspace).
++- Fresh current graph/no-spec references:
++  `data/qwen36-nospec-graph-current-ref-candidate-20260615graphref1.json`
++  (logprob diagnostic) and
++  `data/qwen36-nospec-graph-current-ref-candidate-20260615graphref2nolog.json`
++  (no-logprob, 128-token comparison).
++- Both fresh references diverge from the old fixture at the known prompts
++  (`hardware acceleration` -> `memory management`, `unique` -> `PU`), so
++  future oracle/spec parity gates must use the fresh current no-spec reference
++  as both `ORACLE_TRACE` and accepted comparison.
++- Do not interpret stale-fixture mismatch as a model-quality loss or a
++  speculative verifier bug. First diff run identity, then regenerate the
++  no-spec anchor when any fast-lane flag changes.
++
++Current-reference oracle k=1 result from 2026-06-15:
++
++- Graph oracle k=1 against the fresh current no-spec reference accepted `29/30`
++  draft rows (`96.67%`) but still failed exact parity.
++- The remaining high-value blocker is the same-forward verifier bonus row:
++  after a full accepted draft, the spec path emitted `memory` where the next
++  normal no-spec decode emitted `reliability`.
++- A second tail mismatch remains after a rejected draft (`graph` instead of a
++  newline), but replay accounting is clean; this points to packed GDN/spec row
++  state or logit construction, not trace tooling.
++- Next best work: trace GDN row metadata and hidden/logit digests for the first
++  `verifier_bonus_after_full_accept` mismatch, then patch the packed spec
++  verifier state path. Do not benchmark or promote speculative speed until the
++  exact-parity gate passes.
++
++## R5. Errors & pitfalls identified in past work (do not repeat)
++
++- **P0b misdiagnosis.** The COW root-cause note treated diagnostic-flag-induced predecessor-reemission as a deep commit bug and spun up an "escrow / transactional harness" plan. Verify the unsuppressed path first (R1). Per AGENTS.md benchmark-identity rule: diff launcher env for spec flags before concluding a spec bug.
++- **Shallow-gate confusion.** The 77–86 tok/s "quality_suite=passed" ablations were shallow (1–2 repeats); they fail the 4-repeat promotion gate at the same repeat windows as the unsafe lane. Treat any result without "4 warm p512/o512 repeats + 128+ JSON + 256+ color" as smoke, not validated.
++- **Layerlet synthetic-oracle blindness.** Diffing the layerlet against the offsets-reference will always read ~0.0 because they share ops. Use `ref_fused_moe` or `rows_per_expert` as the oracle (R3).
++- **Wrong-tree flag assumption.** `VLLM_XPU_INT8_MOE_MIXED_WORKSPACE` is read in vLLM (`xpu_moe.py:34`), not in `vllm-xpu-kernels`. A kernels rebuild alone cannot change its behavior.
++- **Harness drift (2026-06-14h).** Omitting `COMPILATION_CONFIG='{"cudagraph_mode":"PIECEWISE"}'` silently measured the graph-none class (~15 tok/s) and was misread as a regression. The `run-qwen36-ablation-candidate.sh` autoconfig fix exists; keep using it and record `COMPILATION_CONFIG` in every summary.
++- **`VLLM_XPU_GRAPH_NOOP_COMM_CAPTURE=0` startup failure.** `parallel_state.graph_capture` asserts `CudaCommunicator` (`parallel_state.py:565`); a true XPU communicator graph-capture context is a prerequisite for removing the no-op-comm workaround (ties to Phase 1 item 2).
++
++## R6. Additional ideas from research
++
++- **EAGLE/MTP acceptance reference.** For MoE A3B-class models, published EAGLE/MTP mean acceptance on representative prompts is typically 1.5–2.5 at k=4; the model's native `mtp_num_hidden_layers: 1` head should land in that band. This makes the Phase-2 math (`base × ~2 ≈ 200`) realistic, but acceptance is workload-dependent — measure on your actual prompts (chat, JSON, code) and report per-bin.
++- **`is_last_graph` leverage.** Because `weak_ref_output=is_last_graph` already protects the *final* piece's output strongly, the alias risk is concentrated on intermediate piece handoffs. A targeted "strong-ref all piecewise outputs except the last" patch is a small, low-risk experiment distinct from full `STRONG_OUTPUT`.
++- **vLLM MoE upstream diffs.** Before more custom kernel work, diff the local fork against upstream for: Qwen3 MoE redundant all-reduce removal, reduced XPU MoE host overhead, and XPU FusedMoE grouped-GEMM paths (per bigger-bets note item 5). Some "new" work may already exist upstream.
++- **KV-cache quant is OFF the table** (FP8 KV ablation ran ~75 tok/s and is a separate quality-labeled lane, per `qwen36-ablation-kv-cache-fp8-20260614`). Do not revisit for the no-quality-loss target.
++
++# Artifacts
++
++Model / config (source of truth for arch):
++- `config.json` at `/mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118/config.json`
++
++Key analytical / planning references:
++- Gap budget (why 200 needs speculation): `data/qwen36-c1-gap-budget-fullcandidate-20260613h.{json,md}`
++- Planning backlog (tried/kept/ruled-out): `notes/2026-06-12-qwen36-next-bigger-bets.md`
++- Layerlet implementation + measurements: `notes/2026-06-14-qwen36-recovery-implementation.md`
++- Replay corruption root-cause trail (P0a): `notes/2026-06-13-qwen36-decode-graph-replay-corruption.md`
++- Oracle k=1 root cause (P0b): `data/qwen36-spec-trace-rootcause-oracle1-nobonus-cachefilter-cow-20260613j.md`
++
++P0a evidence anchors:
++- Fast-class speed (unsafe): `data/qwen36-ablation-fastlane-config-restored-control-metrics-summary-20260614h4.json` (93.45 tok/s)
++- Recapture passes canaries (stale-state proof): `data/qwen36-ablation-forcedcomm-recapture{1,8,64}-canary-summary-20260614g{1,2,3}.json`
++- First corrupt graph0 handoff = output index 5: `data/qwen36-cudagraph-state-h12-analysis.json`
++- Divergence at graph0 compute-step 0 with identical visible args: `data/qwen36-cudagraph-state-h22-json-analysis.json`, `...-h22-color-analysis.json`
++- Graph0 output-5 clone (shallow repair only): `data/qwen36-ablation-fastlane-clone-piecewise0-output5-canary-summary-20260614h14.json`
++
++Patches:
++- `patches/vllm-qwen36-replay-input-sanitation-20260614.patch`
++- `patches/vllm-qwen36-decode-replay-boundary-20260613o.patch`
++- `patches/vllm-xpu-qwen36-onednn-sidecar-capture-gate-20260613.patch`
++- `patches/vllm-xpu-kernels-qwen36-w8a8-layerlet-prefix-offset-20260614.patch`
++- `patches/vllm-qwen36-w8a8-resident-offset-scratch-20260614.patch`
++
++Gates / harnesses:
++- `scripts/run-qwen36-oracle-parity-gate.sh`
++- `scripts/run-qwen36-graph-replay-matrix.sh`
++- `scripts/run-qwen36-ablation-candidate.sh` (autoconfigures PIECEWISE for fast-class runs; prevents the 2026-06-14h drift)
++- `scripts/qwen36-ablation-report.py` (treats missing quality as not promotion-ready)
++
++Result data:
++- Summary JSONs: `data/qwen36-ablation-*-summary-*.json`
++- Metrics JSONs: `data/qwen36-ablation-*-p512o512-*.json`
++- Canary JSONs: `data/qwen36-ablation-*-json-repeat*-*.json`
++
++External references (vetted):
++- vLLM XPU validated models: `https://docs.vllm.ai/en/v0.18.0/models/hardware_supported_models/xpu/` (lists Qwen3-30B-A3B FP16/FP8; **not** the 35B-A3B Quark INT8; speculation not listed as XPU-validated)
++- Intel Arc Pro B-series overview: `https://www.intel.com/content/www/us/en/products/docs/discrete-gpus/arc/workstations/b-series/overview.html`

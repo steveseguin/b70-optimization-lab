@@ -1,0 +1,155 @@
+{
+  "label": "w8a8-safe-prefill-recurrent-gmem90-graphnone-packed-gate",
+  "stamp": "20260614d6",
+  "return_codes": {
+    "metrics": 0,
+    "json_canary": 0,
+    "color_canary": 0,
+    "quality_suite": 0
+  },
+  "artifacts": {
+    "metrics": "/home/steve/llm-optimizations/data/qwen36-ablation-w8a8-safe-prefill-recurrent-gmem90-graphnone-packed-gate-p512o512-20260614d6.json",
+    "json_canary": "/home/steve/llm-optimizations/data/qwen36-ablation-w8a8-safe-prefill-recurrent-gmem90-graphnone-packed-gate-json-repeat128-20260614d6.json",
+    "color_canary": "/home/steve/llm-optimizations/data/qwen36-ablation-w8a8-safe-prefill-recurrent-gmem90-graphnone-packed-gate-color-repeat128-20260614d6.json",
+    "quality_suite": "/home/steve/llm-optimizations/data/qwen36-ablation-w8a8-safe-prefill-recurrent-gmem90-graphnone-packed-gate-quality-suite-20260614d6.json",
+    "log": "/home/steve/llm-optimizations/data/qwen36-ablation-w8a8-safe-prefill-recurrent-gmem90-graphnone-packed-gate-20260614d6.log"
+  },
+  "env": {
+    "VLLM_XPU_GDN_NATIVE_FALLBACK": "decode,prefill",
+    "VLLM_XPU_GDN_NATIVE_PREFILL_FALLBACK": null,
+    "VLLM_XPU_GDN_PREFILL_RECURRENT_FALLBACK": "1",
+    "VLLM_XPU_GDN_NATIVE_FALLBACK_INITIAL_DECODE_STEPS": null,
+    "VLLM_XPU_GDN_NATIVE_FALLBACK_DECODE_LAYERS": null,
+    "VLLM_XPU_GDN_NATIVE_FALLBACK_DECODE_MAX_LAYER": null,
+    "VLLM_XPU_GDN_NATIVE_FALLBACK_DECODE_LAYER_REGEX": null,
+    "VLLM_XPU_GDN_SYNC_BEFORE_NATIVE_DECODE": null,
+    "VLLM_XPU_GDN_SYNC_BEFORE_NATIVE_DECODE_LAYERS": null,
+    "VLLM_XPU_GREEDY_SAMPLE_TOPK_FALLBACK": null,
+    "VLLM_XPU_GREEDY_SAMPLE_XPU_FALLBACK": null,
+    "VLLM_XPU_ZERO_ALL_PREFILL_GDN_STATE": null,
+    "VLLM_XPU_DISABLE_PREFILL_CUDAGRAPH_REPLAY": null,
+    "VLLM_EXTRA_ARGS": null
+  },
+  "metrics_summary": {
+    "tok_s_out_client_after_first_chunk": {
+      "mean": 14.003116398465806,
+      "median": 14.003116398465806,
+      "min": 13.831538959429789,
+      "max": 14.174693837501822
+    },
+    "tok_s_out_client_after_first_chunk_corrected": {
+      "mean": 13.975766561750053,
+      "median": 13.975766561750053,
+      "min": 13.804524234899654,
+      "max": 14.147008888600451
+    },
+    "tok_s_out_client_e2e": {
+      "mean": 13.896406438467434,
+      "median": 13.896406438467434,
+      "min": 13.728406611617888,
+      "max": 14.06440626531698
+    },
+    "tok_s_total_client": {
+      "mean": 27.412833013383022,
+      "median": 27.412833013383022,
+      "min": 27.08142710494935,
+      "max": 27.7442389218167
+    },
+    "ttft_ms_client": {
+      "mean": 280.66366945859045,
+      "median": 280.66366945859045,
+      "min": 278.0828638933599,
+      "max": 283.244475023821
+    },
+    "ttft_ms_vllm_metrics": {
+      "mean": 208.33396911621094,
+      "median": 208.33396911621094,
+      "min": 205.80697059631348,
+      "max": 210.8609676361084
+    },
+    "tok_s_prefill_lower_bound_from_ttft": {
+      "mean": 1774.515785399049,
+      "median": 1774.515785399049,
+      "min": 1758.1984607400302,
+      "max": 1790.8331100580676
+    },
+    "e2e_ms_vllm_metrics": {
+      "mean": 36848.10829162598,
+      "median": 36848.10829162598,
+      "min": 36402.67825126648,
+      "max": 37293.53833198547
+    },
+    "queue_ms_vllm_histogram": {
+      "mean": 0.01234840601682663,
+      "median": 0.01234840601682663,
+      "min": 0.010540010407567024,
+      "max": 0.014156801626086235
+    },
+    "prefill_ms_vllm_histogram": {
+      "mean": 201.40444848220795,
+      "median": 201.40444848220795,
+      "min": 201.16564887575805,
+      "max": 201.64324808865786
+    },
+    "decode_ms_vllm_histogram": {
+      "mean": 36639.945226488635,
+      "median": 36639.945226488635,
+      "min": 36191.978331888095,
+      "max": 37087.912121089175
+    },
+    "decode_ms_per_generation_token_vllm_histogram": {
+      "mean": 71.56239302048562,
+      "median": 71.56239302048562,
+      "min": 70.68745767946893,
+      "max": 72.4373283615023
+    },
+    "inference_ms_vllm_histogram": {
+      "mean": 36841.34967497084,
+      "median": 36841.34967497084,
+      "min": 36393.62157997675,
+      "max": 37289.07776996493
+    },
+    "time_per_output_token_ms_vllm_histogram": {
+      "mean": 71.70243684244352,
+      "median": 71.70243684244352,
+      "min": 70.82578929919391,
+      "max": 72.57908438569311
+    },
+    "inter_token_ms_vllm_histogram": {
+      "mean": 71.70243684244352,
+      "median": 71.70243684244352,
+      "min": 70.82578929919391,
+      "max": 72.57908438569311
+    },
+    "iteration_tokens_per_step_vllm_histogram": {
+      "mean": 1.97265625,
+      "median": 1.97265625,
+      "min": 1.97265625,
+      "max": 1.97265625
+    }
+  },
+  "json_canary": {
+    "pass_all": true,
+    "repeats_completed": 128,
+    "mismatch_count": 0,
+    "first_mismatch": null
+  },
+  "color_canary": {
+    "pass_all": true,
+    "repeats_completed": 128,
+    "mismatch_count": 0,
+    "first_mismatch": null
+  },
+  "quality_suite": {
+    "pass_all": true,
+    "baseline_match_all": true,
+    "exact": {
+      "exact_ok": true,
+      "copy_phrase": true,
+      "arithmetic": true,
+      "json_schema": true
+    },
+    "repeat_pass": true,
+    "long_context_pass": true
+  }
+}

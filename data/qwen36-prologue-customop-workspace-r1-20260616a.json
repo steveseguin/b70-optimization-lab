@@ -1,0 +1,38 @@
+{
+  "config": {
+    "captures": 1,
+    "compile_wrapper": false,
+    "custom_op_wrapper": true,
+    "distinct_layers": false,
+    "endpoint_context": true,
+    "experts": 256,
+    "hidden": 2048,
+    "inter": 128,
+    "kernel_repo": "/home/steve/src/vllm-xpu-kernels",
+    "layers_per_capture": 1,
+    "no_post_copy": false,
+    "pid": 3114773,
+    "prewarm_repeats": 1,
+    "prewarm_rows": 0,
+    "ranks": 1,
+    "replays": 1,
+    "rows": 1,
+    "topk": 8,
+    "topk_dtype": "int64",
+    "workspace_manager": true
+  },
+  "overall_status": "fail",
+  "ranks": [
+    {
+      "captures_completed": 0,
+      "error": "infer_schema(func): Unsupported type annotation torch.Tensor. It is not a type. Got func with signature (hidden_states: 'torch.Tensor', router_logits: 'torch.Tensor', shared_experts_input: 'torch.Tensor', input_ids: 'torch.Tensor | None', layer_index: 'int') -> 'tuple[torch.Tensor, torch.Tensor]')",
+      "error_type": "ValueError",
+      "exitcode": 0,
+      "rank": 0,
+      "replays_completed": 0,
+      "status": "fail",
+      "traceback": "Traceback (most recent call last):\n  File \"/home/steve/.venvs/vllm-xpu/lib/python3.12/site-packages/torch/_library/infer_schema.py\", line 75, in convert_type_string\n    return eval(annotation_type, pf_globals, pf_locals)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"<string>\", line 1, in <module>\nNameError: name 'torch' is not defined\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"/home/steve/llm-optimizations/scripts/repro-qwen36-prologue-tp4-capture.py\", line 683, in run_rank\n    register_repro_custom_op(torch, args)\n  File \"/home/steve/llm-optimizations/scripts/repro-qwen36-prologue-tp4-capture.py\", line 614, in register_repro_custom_op\n    direct_register_custom_op(\n  File \"/home/steve/src/vllm/vllm/utils/torch_utils.py\", line 931, in direct_register_custom_op\n    schema_str = infer_schema(op_func, mutates_args=mutates_args)\n                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/steve/.venvs/vllm-xpu/lib/python3.12/site-packages/torch/_library/infer_schema.py\", line 126, in infer_schema\n    annotation_type, _ = unstringify_type(param.annotation)\n                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/steve/.venvs/vllm-xpu/lib/python3.12/site-packages/torch/_library/infer_schema.py\", line 100, in unstringify_type\n    return convert_type_string(ty), True\n           ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/steve/.venvs/vllm-xpu/lib/python3.12/site-packages/torch/_library/infer_schema.py\", line 77, in convert_type_string\n    error_fn(\n  File \"/home/steve/.venvs/vllm-xpu/lib/python3.12/site-packages/torch/_library/infer_schema.py\", line 71, in error_fn\n    raise ValueError(f\"infer_schema(func): {what} Got func with signature {sig})\")\nValueError: infer_schema(func): Unsupported type annotation torch.Tensor. It is not a type. Got func with signature (hidden_states: 'torch.Tensor', router_logits: 'torch.Tensor', shared_experts_input: 'torch.Tensor', input_ids: 'torch.Tensor | None', layer_index: 'int') -> 'tuple[torch.Tensor, torch.Tensor]')\n"
+    }
+  ],
+  "timestamp_utc": "2026-06-16T04:19:35.058365+00:00"
+}

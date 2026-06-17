@@ -1,0 +1,277 @@
+{
+  "label": "fastlane-gdnmask-no-output-clone-promotion",
+  "stamp": "20260614h20",
+  "return_codes": {
+    "metrics": 0,
+    "json_canary": 1,
+    "color_canary": 1,
+    "quality_suite": 0
+  },
+  "status": {
+    "metrics": "passed",
+    "json_canary": "failed",
+    "color_canary": "failed",
+    "quality_suite": "passed"
+  },
+  "artifacts": {
+    "metrics": "/home/steve/llm-optimizations/data/qwen36-ablation-fastlane-gdnmask-no-output-clone-promotion-p512o512-20260614h20.json",
+    "json_canary": "/home/steve/llm-optimizations/data/qwen36-ablation-fastlane-gdnmask-no-output-clone-promotion-json-repeat128-20260614h20.json",
+    "color_canary": "/home/steve/llm-optimizations/data/qwen36-ablation-fastlane-gdnmask-no-output-clone-promotion-color-repeat512-20260614h20.json",
+    "quality_suite": "/home/steve/llm-optimizations/data/qwen36-ablation-fastlane-gdnmask-no-output-clone-promotion-quality-suite-20260614h20.json",
+    "log": "/home/steve/llm-optimizations/data/qwen36-ablation-fastlane-gdnmask-no-output-clone-promotion-20260614h20.log"
+  },
+  "artifact_exists": {
+    "metrics": true,
+    "json_canary": true,
+    "color_canary": true,
+    "quality_suite": true,
+    "log": true
+  },
+  "env": {
+    "VLLM_XPU_GDN_NATIVE_FALLBACK": "prefill",
+    "VLLM_XPU_GDN_NATIVE_PREFILL_FALLBACK": null,
+    "VLLM_XPU_GDN_PREFILL_RECURRENT_FALLBACK": "1",
+    "VLLM_XPU_GDN_NATIVE_FALLBACK_INITIAL_DECODE_STEPS": null,
+    "VLLM_XPU_GDN_NATIVE_FALLBACK_DECODE_LAYERS": null,
+    "VLLM_XPU_GDN_NATIVE_FALLBACK_DECODE_MAX_LAYER": null,
+    "VLLM_XPU_GDN_NATIVE_FALLBACK_DECODE_LAYER_REGEX": null,
+    "VLLM_XPU_GDN_SYNC_BEFORE_NATIVE_DECODE": null,
+    "VLLM_XPU_GDN_SYNC_BEFORE_NATIVE_DECODE_LAYERS": null,
+    "VLLM_XPU_GREEDY_SAMPLE_TOPK_FALLBACK": "1",
+    "VLLM_XPU_GREEDY_SAMPLE_XPU_FALLBACK": null,
+    "VLLM_XPU_ZERO_ALL_PREFILL_GDN_STATE": null,
+    "VLLM_XPU_DISABLE_PREFILL_CUDAGRAPH_REPLAY": "1",
+    "VLLM_ENABLE_FLA_PACKED_RECURRENT_DECODE": null,
+    "XPU_GRAPH": "1",
+    "VLLM_XPU_ENABLE_XPU_GRAPH": "1",
+    "VLLM_XPU_FORCE_GRAPH_WITH_COMM": "1",
+    "VLLM_XPU_GRAPH_NOOP_COMM_CAPTURE": "1",
+    "VLLM_XPU_USE_CUSTOM_OP_COLLECTIVES": null,
+    "VLLM_XPU_COMPILE_ALLREDUCE_CUSTOM_OP": null,
+    "VLLM_XPU_CUSTOM_ALLREDUCE_GRAPH_CLONE_INPUT": null,
+    "VLLM_XPU_CUSTOM_ALLREDUCE_CLONE_INPUT": null,
+    "VLLM_XPU_CUDAGRAPH_REPLAY_MAX_PIECEWISE_INDEX": null,
+    "VLLM_XPU_CUDAGRAPH_DISABLE_SUBMOD_REGEX": null,
+    "VLLM_XPU_CUDAGRAPH_RECAPTURE_AFTER_N_REPLAYS": null,
+    "VLLM_XPU_CUDAGRAPH_RECAPTURE_REGEX": null,
+    "VLLM_XPU_DECODE_CUDAGRAPH_REPLAY_EAGER_EVERY_N_REQUESTS": null,
+    "VLLM_XPU_CUDAGRAPH_ALLOW_RUNTIME_RECAPTURE": null,
+    "VLLM_XPU_SYNC_CUDAGRAPH_REPLAY": null,
+    "VLLM_XPU_CUDAGRAPH_REPLAY_TRACE_FILE": null,
+    "VLLM_XPU_CUDAGRAPH_REPLAY_TRACE_MAX_LINES": null,
+    "VLLM_XPU_CUDAGRAPH_REPLAY_TRACE_RANK": null,
+    "VLLM_XPU_CUDAGRAPH_REPLAY_TRACE_SUBMOD_REGEX": null,
+    "VLLM_XPU_CUDAGRAPH_REPLAY_TRACE_REQ_REGEX": null,
+    "VLLM_XPU_CUDAGRAPH_REPLAY_TRACE_INPUTS": null,
+    "VLLM_XPU_CUDAGRAPH_REPLAY_TRACE_DIGEST": null,
+    "VLLM_XPU_CUDAGRAPH_ZERO_REPLAY_OUTPUT_REGEX": null,
+    "VLLM_XPU_CUDAGRAPH_ZERO_REPLAY_OUTPUT_INDICES": null,
+    "VLLM_XPU_CUDAGRAPH_CLONE_REPLAY_OUTPUT_REGEX": null,
+    "VLLM_XPU_CUDAGRAPH_CLONE_REPLAY_OUTPUT_INDICES": null,
+    "VLLM_XPU_CUDAGRAPH_COMPARE_DIRECT_REGEX": null,
+    "VLLM_XPU_CUDAGRAPH_COMPARE_DIRECT_RETURN_DIRECT": null,
+    "VLLM_XPU_W8A8_EXPERIMENTAL_ALLOW": null,
+    "VLLM_XPU_W8A8_USE_OFFSETS": null,
+    "VLLM_XPU_W8A8_OFFSETS_PREFIX_OP": null,
+    "VLLM_XPU_MOE_W8A8_MIDDLE_LAYERLET": null,
+    "VLLM_XPU_INT8_MOE_MIXED_WORKSPACE": null,
+    "GPU_MEMORY_UTILIZATION": "0.90",
+    "COMPILATION_CONFIG": "{\"cudagraph_mode\":\"PIECEWISE\"}",
+    "ABLATION_FAST_GRAPH_AUTOCONFIG": "1",
+    "VLLM_EXTRA_ARGS": null
+  },
+  "metrics_summary": {
+    "tok_s_out_client_after_first_chunk": {
+      "mean": 92.1216166668161,
+      "median": 93.12691220996246,
+      "min": 88.54941030985377,
+      "max": 93.68323193748569
+    },
+    "tok_s_out_client_after_first_chunk_corrected": {
+      "mean": 91.94169163426372,
+      "median": 92.94502370955237,
+      "min": 88.37646224284234,
+      "max": 93.50025687510778
+    },
+    "tok_s_out_client_e2e": {
+      "mean": 89.12872461514057,
+      "median": 90.07560429847653,
+      "min": 85.77468396628218,
+      "max": 90.58900589732703
+    },
+    "tok_s_total_client": {
+      "mean": 175.8203356665859,
+      "median": 177.6882037919166,
+      "min": 169.20396641786132,
+      "max": 178.70096866464903
+    },
+    "ttft_ms_client": {
+      "mean": 186.5503912558779,
+      "median": 186.7591510526836,
+      "min": 185.63860096037388,
+      "max": 187.0446619577706
+    },
+    "ttft_ms_vllm_metrics": {
+      "mean": 174.5162010192871,
+      "median": 174.73721504211426,
+      "min": 173.6752986907959,
+      "max": 174.91507530212402
+    },
+    "tok_s_prefill_lower_bound_from_ttft": {
+      "mean": 2669.542636007055,
+      "median": 2666.5365519063134,
+      "min": 2662.4657169443003,
+      "max": 2682.6317232712945
+    },
+    "e2e_ms_vllm_metrics": {
+      "mean": 5746.367633342743,
+      "median": 5683.180570602417,
+      "min": 5650.90799331665,
+      "max": 5968.201398849487
+    },
+    "queue_ms_vllm_histogram": {
+      "mean": 0.01226045424118638,
+      "median": 0.01264840830117464,
+      "min": 0.009547919034957886,
+      "max": 0.014197081327438354
+    },
+    "prefill_ms_vllm_histogram": {
+      "mean": 170.05641479045153,
+      "median": 170.05114303901792,
+      "min": 170.02810398116708,
+      "max": 170.0952691026032
+    },
+    "decode_ms_vllm_histogram": {
+      "mean": 5572.125790233258,
+      "median": 5509.15202696342,
+      "min": 5476.475961040705,
+      "max": 5793.723145965487
+    },
+    "decode_ms_per_generation_token_vllm_histogram": {
+      "mean": 10.883058184049332,
+      "median": 10.76006255266293,
+      "min": 10.696242111407628,
+      "max": 11.315865519463841
+    },
+    "inference_ms_vllm_histogram": {
+      "mean": 5742.18220502371,
+      "median": 5679.229849600233,
+      "min": 5646.517870947719,
+      "max": 5963.751249946654
+    },
+    "time_per_output_token_ms_vllm_histogram": {
+      "mean": 10.90435575388113,
+      "median": 10.781119426542896,
+      "min": 10.71717409205617,
+      "max": 11.338010070382557
+    },
+    "inter_token_ms_vllm_histogram": {
+      "mean": 10.90435575388113,
+      "median": 10.781119426542896,
+      "min": 10.717174092056174,
+      "max": 11.338010070382557
+    },
+    "iteration_tokens_per_step_vllm_histogram": {
+      "mean": 1.97265625,
+      "median": 1.97265625,
+      "min": 1.97265625,
+      "max": 1.97265625
+    }
+  },
+  "speed": {
+    "tok_s_out_corrected_mean": 91.94169163426372,
+    "tok_s_out_after_first_chunk_mean": 92.1216166668161,
+    "tok_s_out_e2e_mean": 89.12872461514057,
+    "decode_ms_per_token_mean": 10.883058184049332,
+    "ttft_ms_client_mean": 186.5503912558779
+  },
+  "json_canary": {
+    "pass_all": false,
+    "repeats_completed": 49,
+    "mismatch_count": 1,
+    "first_mismatch": {
+      "index": 48,
+      "request_id": "h20-json-000048",
+      "text": "{\"answer\": \"12.0\", \"unit\": \"widgets\"}",
+      "normalized": "{\"answer\": \"12.0\", \"unit\": \"widgets\"}",
+      "token_ids": [
+        4754,
+        8944,
+        763,
+        328,
+        16,
+        17,
+        13,
+        15,
+        487,
+        328,
+        3715,
+        763,
+        328,
+        28844,
+        8934
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.2526420808862895,
+      "usage": {
+        "prompt_tokens": 36,
+        "total_tokens": 52,
+        "completion_tokens": 16,
+        "prompt_tokens_details": null
+      },
+      "json_parsed": {
+        "answer": "12.0",
+        "unit": "widgets"
+      },
+      "pass": false
+    }
+  },
+  "color_canary": {
+    "pass_all": false,
+    "repeats_completed": 138,
+    "mismatch_count": 1,
+    "first_mismatch": {
+      "index": 137,
+      "request_id": "h20-color-000137",
+      "text": "blue, green, red, yellow",
+      "normalized": "blue, green, red, yellow",
+      "token_ids": [
+        11855,
+        11,
+        5983,
+        11,
+        2438,
+        11,
+        13358
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.16902990406379104,
+      "usage": {
+        "prompt_tokens": 30,
+        "total_tokens": 38,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "pass": false
+    }
+  },
+  "quality_suite": {
+    "pass_all": true,
+    "baseline_match_all": true,
+    "exact": {
+      "exact_ok": true,
+      "copy_phrase": true,
+      "arithmetic": true,
+      "json_schema": true
+    },
+    "repeat_pass": true,
+    "long_context_pass": true
+  },
+  "decision": {
+    "accepted_by_requested_gates": false,
+    "gate_failures": [
+      "json_canary",
+      "color_canary"
+    ]
+  }
+}

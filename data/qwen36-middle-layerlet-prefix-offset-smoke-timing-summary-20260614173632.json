@@ -1,0 +1,494 @@
+{
+  "async_output_line_count": 0,
+  "async_output_summary": [],
+  "engine_step_line_count": 0,
+  "engine_step_summary": {
+    "accounted_region_ms": {},
+    "regions_by_mean_elapsed_ms": [],
+    "status_counts": {},
+    "step_count": 0,
+    "total_ms": {},
+    "unaccounted_ms": {}
+  },
+  "engine_step_summary_by_bucket": [],
+  "executor_rpc_line_count": 0,
+  "executor_rpc_summary": [],
+  "line_count": 261,
+  "post_lines": [
+    209,
+    212
+  ],
+  "rpc_call_summary": {
+    "by_method": [],
+    "call_count": 0,
+    "calls": []
+  },
+  "sample_end_line": 261,
+  "sample_line_count": 0,
+  "sample_start_line": 1,
+  "samples_by_last_ms": [],
+  "source_log": "/home/steve/llm-optimizations/data/qwen36-middle-layerlet-prefix-offset-smoke-20260614173632.log",
+  "step_line_count": 12,
+  "step_summary_by_bucket": [
+    {
+      "first_line": 214,
+      "first_step": 48,
+      "group": {
+        "batch_desc_num_reqs": null,
+        "batch_desc_num_tokens": 1,
+        "cudagraph_mode": "NONE",
+        "decode_bucket": 1,
+        "decode_req_count": 1,
+        "is_pure_decode": true,
+        "max_num_scheduled_tokens": 1,
+        "max_scheduled_spec_tokens": 0,
+        "num_reqs": 1,
+        "num_tokens_padded": 1,
+        "num_tokens_unpadded": 1,
+        "prefill_req_count": 0,
+        "should_ubatch": false,
+        "skip_compiled": false,
+        "status": "ok",
+        "use_spec_decode": false
+      },
+      "last_line": 225,
+      "last_step": 80,
+      "max_model_forward_ms": null,
+      "mean_model_forward_ms": null,
+      "mean_visible_timed_ms": 3.882332416666667,
+      "median_model_forward_ms": null,
+      "median_visible_timed_ms": 3.9178465000000005,
+      "p90_model_forward_ms": null,
+      "p90_visible_timed_ms": 3.9631266000000003,
+      "scheduled_spec_histogram_total": {
+        "0": 12
+      },
+      "scheduled_token_histogram_total": {
+        "1": 12
+      },
+      "step_count": 12,
+      "top_labels_by_mean_total_ms": [
+        {
+          "label": "xpu_moe.w8a8_middle_layerlet",
+          "max_total_ms": 1.96367,
+          "mean_total_ms": 1.9116465833333331,
+          "median_total_ms": 1.9257615,
+          "p90_total_ms": 1.9606111
+        },
+        {
+          "label": "xpu_moe.w8a8_offsets",
+          "max_total_ms": 0.941783,
+          "mean_total_ms": 0.9006778333333334,
+          "median_total_ms": 0.899207,
+          "p90_total_ms": 0.9211237
+        },
+        {
+          "label": "xpu_moe.gemm1_quant",
+          "max_total_ms": 0.579575,
+          "mean_total_ms": 0.5612474166666667,
+          "median_total_ms": 0.5638775,
+          "p90_total_ms": 0.5785859
+        },
+        {
+          "label": "xpu_moe.w8a8_offsets_prefix_op",
+          "max_total_ms": 0.538026,
+          "mean_total_ms": 0.5087605833333334,
+          "median_total_ms": 0.511236,
+          "p90_total_ms": 0.521583
+        }
+      ]
+    }
+  ],
+  "step_summary_by_mean_total_ms": [
+    {
+      "call_count": 480,
+      "label": "xpu_moe.w8a8_middle_layerlet",
+      "max_ms": 0.061996,
+      "max_total_ms_per_step": 1.96367,
+      "mean_avg_ms_per_call": 0.04779116458333333,
+      "mean_total_ms_per_step": 1.9116465833333331,
+      "median_total_ms_per_step": 1.9257615,
+      "p90_total_ms_per_step": 1.9606111,
+      "step_count": 12
+    },
+    {
+      "call_count": 480,
+      "label": "xpu_moe.w8a8_offsets",
+      "max_ms": 0.035487,
+      "max_total_ms_per_step": 0.941783,
+      "mean_avg_ms_per_call": 0.022516945833333333,
+      "mean_total_ms_per_step": 0.9006778333333334,
+      "median_total_ms_per_step": 0.899207,
+      "p90_total_ms_per_step": 0.9211237,
+      "step_count": 12
+    },
+    {
+      "call_count": 480,
+      "label": "xpu_moe.gemm1_quant",
+      "max_ms": 0.022783,
+      "max_total_ms_per_step": 0.579575,
+      "mean_avg_ms_per_call": 0.014031185416666666,
+      "mean_total_ms_per_step": 0.5612474166666667,
+      "median_total_ms_per_step": 0.5638775,
+      "p90_total_ms_per_step": 0.5785859,
+      "step_count": 12
+    },
+    {
+      "call_count": 480,
+      "label": "xpu_moe.w8a8_offsets_prefix_op",
+      "max_ms": 0.025197,
+      "max_total_ms_per_step": 0.538026,
+      "mean_avg_ms_per_call": 0.012719014583333334,
+      "mean_total_ms_per_step": 0.5087605833333334,
+      "median_total_ms_per_step": 0.511236,
+      "p90_total_ms_per_step": 0.521583,
+      "step_count": 12
+    }
+  ],
+  "step_summary_by_rank_label": [
+    {
+      "call_count": 120,
+      "label": "xpu_moe.w8a8_middle_layerlet",
+      "max_ms": 0.061916,
+      "max_total_ms_per_step": 1.96367,
+      "mean_avg_ms_per_call": 0.04883727499999999,
+      "mean_total_ms_per_step": 1.9534909999999999,
+      "median_total_ms_per_step": 1.951603,
+      "p90_total_ms_per_step": 1.9612566,
+      "rank": "3",
+      "step_count": 3
+    },
+    {
+      "call_count": 120,
+      "label": "xpu_moe.w8a8_middle_layerlet",
+      "max_ms": 0.061996,
+      "max_total_ms_per_step": 1.961612,
+      "mean_avg_ms_per_call": 0.04870735,
+      "mean_total_ms_per_step": 1.948294,
+      "median_total_ms_per_step": 1.943221,
+      "p90_total_ms_per_step": 1.9579338,
+      "rank": "1",
+      "step_count": 3
+    },
+    {
+      "call_count": 120,
+      "label": "xpu_moe.w8a8_middle_layerlet",
+      "max_ms": 0.059842,
+      "max_total_ms_per_step": 1.911474,
+      "mean_avg_ms_per_call": 0.04753163333333333,
+      "mean_total_ms_per_step": 1.9012653333333331,
+      "median_total_ms_per_step": 1.898859,
+      "p90_total_ms_per_step": 1.9089509999999998,
+      "rank": "2",
+      "step_count": 3
+    },
+    {
+      "call_count": 120,
+      "label": "xpu_moe.w8a8_middle_layerlet",
+      "max_ms": 0.054412,
+      "max_total_ms_per_step": 1.848538,
+      "mean_avg_ms_per_call": 0.0460884,
+      "mean_total_ms_per_step": 1.843536,
+      "median_total_ms_per_step": 1.848512,
+      "p90_total_ms_per_step": 1.8485328,
+      "rank": "0",
+      "step_count": 3
+    },
+    {
+      "call_count": 120,
+      "label": "xpu_moe.w8a8_offsets",
+      "max_ms": 0.035487,
+      "max_total_ms_per_step": 0.941783,
+      "mean_avg_ms_per_call": 0.022926658333333332,
+      "mean_total_ms_per_step": 0.9170663333333334,
+      "median_total_ms_per_step": 0.913192,
+      "p90_total_ms_per_step": 0.9360648,
+      "rank": "2",
+      "step_count": 3
+    },
+    {
+      "call_count": 120,
+      "label": "xpu_moe.w8a8_offsets",
+      "max_ms": 0.034515,
+      "max_total_ms_per_step": 0.922005,
+      "mean_avg_ms_per_call": 0.022761591666666664,
+      "mean_total_ms_per_step": 0.9104636666666667,
+      "median_total_ms_per_step": 0.907437,
+      "p90_total_ms_per_step": 0.9190914,
+      "rank": "1",
+      "step_count": 3
+    },
+    {
+      "call_count": 120,
+      "label": "xpu_moe.w8a8_offsets",
+      "max_ms": 0.034806,
+      "max_total_ms_per_step": 0.909975,
+      "mean_avg_ms_per_call": 0.02238015833333333,
+      "mean_total_ms_per_step": 0.8952063333333333,
+      "median_total_ms_per_step": 0.89289,
+      "p90_total_ms_per_step": 0.906558,
+      "rank": "3",
+      "step_count": 3
+    },
+    {
+      "call_count": 120,
+      "label": "xpu_moe.w8a8_offsets",
+      "max_ms": 0.030708,
+      "max_total_ms_per_step": 0.896465,
+      "mean_avg_ms_per_call": 0.021999375,
+      "mean_total_ms_per_step": 0.879975,
+      "median_total_ms_per_step": 0.873411,
+      "p90_total_ms_per_step": 0.8918542,
+      "rank": "0",
+      "step_count": 3
+    },
+    {
+      "call_count": 120,
+      "label": "xpu_moe.gemm1_quant",
+      "max_ms": 0.021531,
+      "max_total_ms_per_step": 0.579575,
+      "mean_avg_ms_per_call": 0.014375741666666665,
+      "mean_total_ms_per_step": 0.5750296666666667,
+      "median_total_ms_per_step": 0.57683,
+      "p90_total_ms_per_step": 0.5790259999999999,
+      "rank": "3",
+      "step_count": 3
+    },
+    {
+      "call_count": 120,
+      "label": "xpu_moe.gemm1_quant",
+      "max_ms": 0.022692,
+      "max_total_ms_per_step": 0.578781,
+      "mean_avg_ms_per_call": 0.014210091666666667,
+      "mean_total_ms_per_step": 0.5684036666666666,
+      "median_total_ms_per_step": 0.564736,
+      "p90_total_ms_per_step": 0.575972,
+      "rank": "1",
+      "step_count": 3
+    },
+    {
+      "call_count": 120,
+      "label": "xpu_moe.gemm1_quant",
+      "max_ms": 0.016571,
+      "max_total_ms_per_step": 0.564473,
+      "mean_avg_ms_per_call": 0.014053941666666667,
+      "mean_total_ms_per_step": 0.5621576666666667,
+      "median_total_ms_per_step": 0.563282,
+      "p90_total_ms_per_step": 0.5642348,
+      "rank": "2",
+      "step_count": 3
+    },
+    {
+      "call_count": 120,
+      "label": "xpu_moe.gemm1_quant",
+      "max_ms": 0.022783,
+      "max_total_ms_per_step": 0.540429,
+      "mean_avg_ms_per_call": 0.013484966666666667,
+      "mean_total_ms_per_step": 0.5393986666666667,
+      "median_total_ms_per_step": 0.538887,
+      "p90_total_ms_per_step": 0.5401206000000001,
+      "rank": "0",
+      "step_count": 3
+    },
+    {
+      "call_count": 120,
+      "label": "xpu_moe.w8a8_offsets_prefix_op",
+      "max_ms": 0.025127,
+      "max_total_ms_per_step": 0.538026,
+      "mean_avg_ms_per_call": 0.013030133333333332,
+      "mean_total_ms_per_step": 0.5212053333333334,
+      "median_total_ms_per_step": 0.519039,
+      "p90_total_ms_per_step": 0.5342286,
+      "rank": "2",
+      "step_count": 3
+    },
+    {
+      "call_count": 120,
+      "label": "xpu_moe.w8a8_offsets_prefix_op",
+      "max_ms": 0.024876,
+      "max_total_ms_per_step": 0.520935,
+      "mean_avg_ms_per_call": 0.012908908333333335,
+      "mean_total_ms_per_step": 0.5163563333333333,
+      "median_total_ms_per_step": 0.516045,
+      "p90_total_ms_per_step": 0.519957,
+      "rank": "1",
+      "step_count": 3
+    },
+    {
+      "call_count": 120,
+      "label": "xpu_moe.w8a8_offsets_prefix_op",
+      "max_ms": 0.025197,
+      "max_total_ms_per_step": 0.521655,
+      "mean_avg_ms_per_call": 0.01280535,
+      "mean_total_ms_per_step": 0.5122140000000001,
+      "median_total_ms_per_step": 0.510383,
+      "p90_total_ms_per_step": 0.5194006,
+      "rank": "3",
+      "step_count": 3
+    },
+    {
+      "call_count": 120,
+      "label": "xpu_moe.w8a8_offsets_prefix_op",
+      "max_ms": 0.020528,
+      "max_total_ms_per_step": 0.492918,
+      "mean_avg_ms_per_call": 0.012131666666666666,
+      "mean_total_ms_per_step": 0.4852666666666667,
+      "median_total_ms_per_step": 0.481621,
+      "p90_total_ms_per_step": 0.4906586,
+      "rank": "0",
+      "step_count": 3
+    }
+  ],
+  "summary_by_total_ms": [
+    {
+      "avg_ms": 0.049362,
+      "count": 3288,
+      "label": "xpu_moe.w8a8_middle_layerlet",
+      "line": 257,
+      "max_ms": 0.14978,
+      "rank": 3,
+      "total_ms": 162.300779
+    },
+    {
+      "avg_ms": 0.048937,
+      "count": 3288,
+      "label": "xpu_moe.w8a8_middle_layerlet",
+      "line": 239,
+      "max_ms": 0.109535,
+      "rank": 1,
+      "total_ms": 160.904594
+    },
+    {
+      "avg_ms": 0.048236,
+      "count": 3288,
+      "label": "xpu_moe.w8a8_middle_layerlet",
+      "line": 245,
+      "max_ms": 0.107791,
+      "rank": 2,
+      "total_ms": 158.598975
+    },
+    {
+      "avg_ms": 0.047536,
+      "count": 3288,
+      "label": "xpu_moe.w8a8_middle_layerlet",
+      "line": 251,
+      "max_ms": 0.136355,
+      "rank": 0,
+      "total_ms": 156.298633
+    },
+    {
+      "avg_ms": 0.02238,
+      "count": 3288,
+      "label": "xpu_moe.w8a8_offsets",
+      "line": 246,
+      "max_ms": 0.044173,
+      "rank": 2,
+      "total_ms": 73.586784
+    },
+    {
+      "avg_ms": 0.022329,
+      "count": 3288,
+      "label": "xpu_moe.w8a8_offsets",
+      "line": 240,
+      "max_ms": 0.059992,
+      "rank": 1,
+      "total_ms": 73.417634
+    },
+    {
+      "avg_ms": 0.022036,
+      "count": 3288,
+      "label": "xpu_moe.w8a8_offsets",
+      "line": 252,
+      "max_ms": 0.063879,
+      "rank": 0,
+      "total_ms": 72.454436
+    },
+    {
+      "avg_ms": 0.022021,
+      "count": 3288,
+      "label": "xpu_moe.w8a8_offsets",
+      "line": 258,
+      "max_ms": 0.050765,
+      "rank": 3,
+      "total_ms": 72.406373
+    },
+    {
+      "avg_ms": 0.014299,
+      "count": 3288,
+      "label": "xpu_moe.gemm1_quant",
+      "line": 241,
+      "max_ms": 0.033723,
+      "rank": 1,
+      "total_ms": 47.013602
+    },
+    {
+      "avg_ms": 0.014297,
+      "count": 3288,
+      "label": "xpu_moe.gemm1_quant",
+      "line": 259,
+      "max_ms": 0.045555,
+      "rank": 3,
+      "total_ms": 47.008993
+    },
+    {
+      "avg_ms": 0.014225,
+      "count": 3288,
+      "label": "xpu_moe.gemm1_quant",
+      "line": 247,
+      "max_ms": 0.036668,
+      "rank": 2,
+      "total_ms": 46.770454
+    },
+    {
+      "avg_ms": 0.013753,
+      "count": 3288,
+      "label": "xpu_moe.gemm1_quant",
+      "line": 253,
+      "max_ms": 0.034074,
+      "rank": 0,
+      "total_ms": 45.219453
+    },
+    {
+      "avg_ms": 0.01301,
+      "count": 3288,
+      "label": "xpu_moe.w8a8_offsets_prefix_op",
+      "line": 248,
+      "max_ms": 0.032731,
+      "rank": 2,
+      "total_ms": 42.776237
+    },
+    {
+      "avg_ms": 0.013,
+      "count": 3288,
+      "label": "xpu_moe.w8a8_offsets_prefix_op",
+      "line": 242,
+      "max_ms": 0.050565,
+      "rank": 1,
+      "total_ms": 42.743313
+    },
+    {
+      "avg_ms": 0.012867,
+      "count": 3288,
+      "label": "xpu_moe.w8a8_offsets_prefix_op",
+      "line": 260,
+      "max_ms": 0.032551,
+      "rank": 3,
+      "total_ms": 42.307648
+    },
+    {
+      "avg_ms": 0.012588,
+      "count": 3288,
+      "label": "xpu_moe.w8a8_offsets_prefix_op",
+      "line": 255,
+      "max_ms": 0.045595,
+      "rank": 0,
+      "total_ms": 41.389785
+    }
+  ],
+  "summary_line_count": 16,
+  "summary_start_line": 1,
+  "worker_output_line_count": 0,
+  "worker_output_summary": [],
+  "worker_rpc_line_count": 0,
+  "worker_rpc_summary": []
+}

@@ -1,0 +1,171 @@
+{
+  "cases": [
+    {
+      "case": {
+        "experts": 4,
+        "hidden": 64,
+        "inter": 64,
+        "name": "tiny_sparse",
+        "rows": [
+          1,
+          2,
+          0,
+          3
+        ]
+      },
+      "eager": {
+        "cand_checksum": 4.793890953063965,
+        "gemm1_max_abs_diff": 0.0,
+        "gemm2_a_equal": true,
+        "gemm2_a_mismatch_count": 0,
+        "gemm2_a_scales_max_abs_diff": 0.0,
+        "gemm2_output_max_abs_diff": 0.0,
+        "passed": true,
+        "ref_checksum": 4.793890953063965,
+        "ret_is_out": true,
+        "retains_rows": 6
+      },
+      "graph": {
+        "cand_checksum": 3.705394744873047,
+        "gemm1_max_abs_diff": 0.0,
+        "gemm2_a_equal": true,
+        "gemm2_a_mismatch_count": 0,
+        "gemm2_a_scales_max_abs_diff": 0.0,
+        "gemm2_output_max_abs_diff": 0.0,
+        "passed": true,
+        "ref_checksum": 3.705394744873047,
+        "retains_rows": 6,
+        "status": "executed"
+      }
+    },
+    {
+      "case": {
+        "experts": 4,
+        "hidden": 64,
+        "inter": 64,
+        "name": "single_hot_expert",
+        "rows": [
+          0,
+          0,
+          8,
+          0
+        ]
+      },
+      "eager": {
+        "cand_checksum": 1.7227649688720703,
+        "gemm1_max_abs_diff": 0.0,
+        "gemm2_a_equal": true,
+        "gemm2_a_mismatch_count": 0,
+        "gemm2_a_scales_max_abs_diff": 0.0,
+        "gemm2_output_max_abs_diff": 0.0,
+        "passed": true,
+        "ref_checksum": 1.7227649688720703,
+        "ret_is_out": true,
+        "retains_rows": 8
+      },
+      "graph": {
+        "cand_checksum": -13.232093811035156,
+        "gemm1_max_abs_diff": 0.0,
+        "gemm2_a_equal": true,
+        "gemm2_a_mismatch_count": 0,
+        "gemm2_a_scales_max_abs_diff": 0.0,
+        "gemm2_output_max_abs_diff": 0.0,
+        "passed": true,
+        "ref_checksum": -13.232093811035156,
+        "retains_rows": 8,
+        "status": "executed"
+      }
+    },
+    {
+      "case": {
+        "experts": 8,
+        "hidden": 128,
+        "inter": 128,
+        "name": "decode_like_sparse",
+        "rows": [
+          1,
+          0,
+          2,
+          0,
+          1,
+          0,
+          3,
+          1
+        ]
+      },
+      "eager": {
+        "cand_checksum": -13.305072784423828,
+        "gemm1_max_abs_diff": 0.0,
+        "gemm2_a_equal": true,
+        "gemm2_a_mismatch_count": 0,
+        "gemm2_a_scales_max_abs_diff": 0.0,
+        "gemm2_output_max_abs_diff": 0.0,
+        "passed": true,
+        "ref_checksum": -13.305072784423828,
+        "ret_is_out": true,
+        "retains_rows": 8
+      },
+      "graph": {
+        "cand_checksum": -21.577062606811523,
+        "gemm1_max_abs_diff": 0.0,
+        "gemm2_a_equal": true,
+        "gemm2_a_mismatch_count": 0,
+        "gemm2_a_scales_max_abs_diff": 0.0,
+        "gemm2_output_max_abs_diff": 0.0,
+        "passed": true,
+        "ref_checksum": -21.577062606811523,
+        "retains_rows": 8,
+        "status": "executed"
+      }
+    },
+    {
+      "case": {
+        "experts": 8,
+        "hidden": 128,
+        "inter": 64,
+        "name": "dense_small",
+        "rows": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ]
+      },
+      "eager": {
+        "cand_checksum": 11.022439956665039,
+        "gemm1_max_abs_diff": 0.0,
+        "gemm2_a_equal": true,
+        "gemm2_a_mismatch_count": 0,
+        "gemm2_a_scales_max_abs_diff": 0.0,
+        "gemm2_output_max_abs_diff": 0.0,
+        "passed": true,
+        "ref_checksum": 11.022439956665039,
+        "ret_is_out": true,
+        "retains_rows": 8
+      },
+      "graph": {
+        "cand_checksum": -44.32160186767578,
+        "gemm1_max_abs_diff": 0.0,
+        "gemm2_a_equal": true,
+        "gemm2_a_mismatch_count": 0,
+        "gemm2_a_scales_max_abs_diff": 0.0,
+        "gemm2_output_max_abs_diff": 0.0,
+        "passed": true,
+        "ref_checksum": -44.32160186767578,
+        "retains_rows": 8,
+        "status": "executed"
+      }
+    }
+  ],
+  "device": "Intel(R) Arc(TM) Pro B70 Graphics",
+  "graph_replay_requested": true,
+  "kernel_repo": "/home/steve/src/vllm-xpu-kernels",
+  "overall_passed": true,
+  "require_graph": true,
+  "seed": 1234,
+  "timestamp_utc": "2026-06-14T17:10:53.650766+00:00"
+}

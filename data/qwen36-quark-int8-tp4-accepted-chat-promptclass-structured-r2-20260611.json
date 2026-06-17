@@ -1,0 +1,161 @@
+{
+  "created_at_unix": 1781161365.8833377,
+  "base_url": "http://127.0.0.1:8000",
+  "model": "qwen36-35b-a3b-fp8",
+  "tokenizer": "/mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118",
+  "server_model_record": {
+    "id": "qwen36-35b-a3b-fp8",
+    "object": "model",
+    "created": 1781161353,
+    "owned_by": "vllm",
+    "root": "/mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118",
+    "parent": null,
+    "max_model_len": 32768,
+    "permission": [
+      {
+        "id": "modelperm-8e5453f8328068f1",
+        "object": "model_permission",
+        "created": 1781161353,
+        "allow_create_engine": false,
+        "allow_sampling": true,
+        "allow_logprobs": true,
+        "allow_search_indices": false,
+        "allow_view": true,
+        "allow_fine_tuning": false,
+        "organization": "*",
+        "group": null,
+        "is_blocking": false
+      }
+    ]
+  },
+  "prompt_kind": "preset",
+  "prompt_preset": "structured",
+  "prompt_file": null,
+  "endpoint": "chat",
+  "seed": 0,
+  "random_prefix_len": 0,
+  "prompt_tokens_requested": 512,
+  "prompt_tokens_actual": 2,
+  "output_tokens_requested": 512,
+  "mode": "stream",
+  "skip_vram": true,
+  "repeats": 2,
+  "measurement_notes": [
+    "TTFT and e2e are measured both client-side and from vLLM Prometheus histogram deltas.",
+    "tok_s_prefill_lower_bound_from_ttft is prompt_tokens / TTFT, so it is conservative and includes first-token scheduling/decode overhead.",
+    "tok_s_out_client_after_first_chunk is generated-token-only throughput after the first streamed text chunk.",
+    "tok_s_out_client_after_first_chunk_corrected subtracts the estimated first streamed chunk tokens from the numerator; this is more stable when --stream-interval > 1."
+  ],
+  "vram_mib_before_all": {},
+  "peak_vram_mib_observed": {},
+  "records": [
+    {
+      "repeat": 1,
+      "prompt_tokens_client": 507,
+      "prompt_tokens_estimated_before_request": 2,
+      "output_tokens_client": 512,
+      "elapsed_s_client": 5.21925145201385,
+      "ttft_ms_client": 75.44394698925316,
+      "tok_s_out_client_after_first_chunk": 99.53716182027921,
+      "tok_s_out_client_after_first_chunk_corrected": 99.34275330109898,
+      "tok_s_out_client_e2e": 98.09835849208694,
+      "tok_s_total_client": 195.2387252020246,
+      "tok_s_prefill_lower_bound_from_ttft": 6720.2210413543335,
+      "vllm_metric_deltas": {
+        "prompt_tokens": 507.0,
+        "generation_tokens": 512.0,
+        "ttft_count": 1.0,
+        "ttft_sum_s": 0.0732264518737793,
+        "e2e_count": 1.0,
+        "e2e_sum_s": 5.217278003692627
+      },
+      "ttft_ms_vllm_metrics": 73.2264518737793,
+      "e2e_ms_vllm_metrics": 5217.278003692627,
+      "vram_mib_before": {},
+      "vram_mib_after": {},
+      "first_chunk_tokens_client_estimate": 1,
+      "streamed_text_chunks": 512,
+      "text_preview": "{\n  \"summary\": \"Analysis of n-gram speculation constraints regarding repeat canaries and structured-output hash divergence.\",\n  \"risks\": [\n    \"Hash divergence causing silent failures\",\n    \"Repeat canary triggers leading to infinite loops\"",
+      "text": "{\n  \"summary\": \"Analysis of n-gram speculation constraints regarding repeat canaries and structured-output hash divergence.\",\n  \"risks\": [\n    \"Hash divergence causing silent failures\",\n    \"Repeat canary triggers leading to infinite loops\",\n    \"Performance degradation from speculative decoding\",\n    \"Incorrect n-gram selection due to context drift\",\n    \"Security bypass via hash collision\",\n    \"Data leakage through speculative tokens\",\n    \"Model instability under high speculation rates\",\n    \"Inconsistent output formatting\",\n    \"Resource exhaustion during speculation\",\n    \"Failure to detect adversarial patterns\",\n    \"Latency spikes in production\",\n    \"Loss of determinism in critical paths\"\n  ],\n  \"experiments\": [\n    {\n      \"name\": \"baseline_no_speculation\",\n      \"expected_effect\": \"Stable output with no speculative overhead\",\n      \"risk\": \"Low\",\n      \"quality_gate\": \"Pass\"\n    },\n    {\n      \"name\": \"speculation_enabled_low_ngram\",\n      \"expected_effect\": \"Minor speedup with minimal risk\",\n      \"risk\": \"Low\",\n      \"quality_gate\": \"Pass\"\n    },\n    {\n      \"name\": \"speculation_enabled_high_ngram\",\n      \"expected_effect\": \"Significant speedup but higher divergence risk\",\n      \"risk\": \"High\",\n      \"quality_gate\": \"Fail\"\n    },\n    {\n      \"name\": \"canary_detection_active\",\n      \"expected_effect\": \"Correct identification of repeat patterns\",\n      \"risk\": \"Medium\",\n      \"quality_gate\": \"Pass\"\n    },\n    {\n      \"name\": \"hash_divergence_check\",\n      \"expected_effect\": \"Detection of structural output changes\",\n      \"risk\": \"Medium\",\n      \"quality_gate\": \"Pass\"\n    },\n    {\n      \"name\": \"mixed_ngram_speculation\",\n      \"expected_effect\": \"Variable performance based on context\",\n      \"risk\": \"High\",\n      \"quality_gate\": \"Fail\"\n    },\n    {\n      \"name\": \"disabled_speculation_on_canary\",\n      \"expected_effect\": \"Safe fallback to standard decoding\",\n      \"risk\": \"Low\",\n      \"quality_gate\": \"Pass\"\n    },\n    {\n      \"name\": \"hash_validation"
+    },
+    {
+      "repeat": 2,
+      "prompt_tokens_client": 507,
+      "prompt_tokens_estimated_before_request": 2,
+      "output_tokens_client": 512,
+      "elapsed_s_client": 5.206735265091993,
+      "ttft_ms_client": 75.94176207203418,
+      "tok_s_out_client_after_first_chunk": 99.78963287036194,
+      "tok_s_out_client_after_first_chunk_corrected": 99.59473124366203,
+      "tok_s_out_client_e2e": 98.33417178565809,
+      "tok_s_total_client": 195.70804892497185,
+      "tok_s_prefill_lower_bound_from_ttft": 6676.168502899468,
+      "vllm_metric_deltas": {
+        "prompt_tokens": 507.0,
+        "generation_tokens": 512.0,
+        "ttft_count": 1.0,
+        "ttft_sum_s": 0.07396507263183594,
+        "e2e_count": 1.0,
+        "e2e_sum_s": 5.2048304080963135
+      },
+      "ttft_ms_vllm_metrics": 73.96507263183594,
+      "e2e_ms_vllm_metrics": 5204.8304080963135,
+      "vram_mib_before": {},
+      "vram_mib_after": {},
+      "first_chunk_tokens_client_estimate": 1,
+      "streamed_text_chunks": 512,
+      "text_preview": "{\n  \"summary\": \"Analysis of n-gram speculation constraints regarding repeat canaries and structured-output hash divergence.\",\n  \"risks\": [\n    \"Hash divergence causing silent failures\",\n    \"Repeat canary triggers leading to infinite loops\"",
+      "text": "{\n  \"summary\": \"Analysis of n-gram speculation constraints regarding repeat canaries and structured-output hash divergence.\",\n  \"risks\": [\n    \"Hash divergence causing silent failures\",\n    \"Repeat canary triggers leading to infinite loops\",\n    \"Performance degradation from speculative decoding\",\n    \"Incorrect n-gram selection due to context drift\",\n    \"Security bypass via hash collision\",\n    \"Data leakage through speculative tokens\",\n    \"Model instability under high speculation rates\",\n    \"Inconsistent output formatting\",\n    \"Resource exhaustion during speculation\",\n    \"Failure to detect adversarial patterns\",\n    \"Latency spikes in production\",\n    \"Loss of determinism in critical paths\"\n  ],\n  \"experiments.Plugin whiskey whiskey whiskey \\\"experiments\\\": [\n    {\n      \"name\": \"baseline_no_speculation\",\n      \"expected_effect\": \"Stable output with no speculative gains\",\n      \"risk\": \"Low\",\n      \"quality_gate\": \"Pass\"\n    },\n    {\n      \"name\": \"speculation_enabled_safe\",\n      \"expected_effect\": \"Improved throughput with valid hashes\",\n      \"risk\": \"Low\",\n      \"quality_gate\": \"Pass\"\n    },\n    {\n      \"name\": \"speculation_disabled_canary\",\n      \"expected_effect\": \"No speculation when canary detected\",\n      \"risk\": \"Medium\",\n      \"quality_gate\": \"Pass\"\n    },\n    {\n      \"name\": \"hash_divergence_test\",\n      \"expected_effect\": \"Speculation disabled on hash mismatch\",\n      \"risk\": \"High\",\n      \"quality_gate\": \"Fail\"\n    },\n    {\n      \"name\": \"repeat_loop_detection\",\n      \"expected_effect\": \"Loop broken by canary check\",\n      \"risk\": \"Medium\",\n      \"quality_gate\": \"Pass\"\n    },\n    {\n      \"name\": \"high_load_speculation\",\n      \"expected_effect\": \"Graceful degradation under load\",\n      \"risk\": \"Medium\",\n      \"quality_gate\": \"Pass\"\n    },\n    {\n      \"name\": \"adversarial_hash_injection\",\n      \"expected_effect\": \"Rejection of malicious hash patterns\",\n      \"risk\": \"High\",\n      \"quality_gate\": \"Fail\"\n    },\n    {\n      \"name\": \""
+    }
+  ],
+  "summary": {
+    "tok_s_out_client_after_first_chunk": {
+      "mean": 99.66339734532058,
+      "median": 99.66339734532058,
+      "min": 99.53716182027921,
+      "max": 99.78963287036194
+    },
+    "tok_s_out_client_after_first_chunk_corrected": {
+      "mean": 99.4687422723805,
+      "median": 99.4687422723805,
+      "min": 99.34275330109898,
+      "max": 99.59473124366203
+    },
+    "tok_s_out_client_e2e": {
+      "mean": 98.21626513887252,
+      "median": 98.21626513887252,
+      "min": 98.09835849208694,
+      "max": 98.33417178565809
+    },
+    "tok_s_total_client": {
+      "mean": 195.47338706349822,
+      "median": 195.47338706349822,
+      "min": 195.2387252020246,
+      "max": 195.70804892497185
+    },
+    "ttft_ms_client": {
+      "mean": 75.69285453064367,
+      "median": 75.69285453064367,
+      "min": 75.44394698925316,
+      "max": 75.94176207203418
+    },
+    "ttft_ms_vllm_metrics": {
+      "mean": 73.59576225280762,
+      "median": 73.59576225280762,
+      "min": 73.2264518737793,
+      "max": 73.96507263183594
+    },
+    "tok_s_prefill_lower_bound_from_ttft": {
+      "mean": 6698.194772126901,
+      "median": 6698.194772126901,
+      "min": 6676.168502899468,
+      "max": 6720.2210413543335
+    },
+    "e2e_ms_vllm_metrics": {
+      "mean": 5211.05420589447,
+      "median": 5211.05420589447,
+      "min": 5204.8304080963135,
+      "max": 5217.278003692627
+    }
+  }
+}

@@ -1,0 +1,449 @@
+(APIServer pid=3037840) INFO 06-15 20:52:00 [utils.py:299] 
+(APIServer pid=3037840) INFO 06-15 20:52:00 [utils.py:299]        █     █     █▄   ▄█
+(APIServer pid=3037840) INFO 06-15 20:52:00 [utils.py:299]  ▄▄ ▄█ █     █     █ ▀▄▀ █  version 0.20.2rc1.dev2+gc51df4300.d20260523
+(APIServer pid=3037840) INFO 06-15 20:52:00 [utils.py:299]   █▄█▀ █     █     █     █  model   /mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118
+(APIServer pid=3037840) INFO 06-15 20:52:00 [utils.py:299]    ▀▀  ▀▀▀▀▀ ▀▀▀▀▀ ▀     ▀
+(APIServer pid=3037840) INFO 06-15 20:52:00 [utils.py:299] 
+(APIServer pid=3037840) INFO 06-15 20:52:00 [utils.py:233] non-default args: {'model_tag': '/mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118', 'host': '127.0.0.1', 'port': 18180, 'uvicorn_log_level': 'warning', 'model': '/mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118', 'trust_remote_code': True, 'max_model_len': 32768, 'quantization': 'quark', 'served_model_name': ['qwen36-35b-a3b-fp8'], 'generation_config': 'vllm', 'distributed_executor_backend': 'mp', 'tensor_parallel_size': 4, 'gpu_memory_utilization': 0.9, 'enable_prefix_caching': False, 'language_model_only': True, 'max_num_batched_tokens': 8192, 'max_num_seqs': 48, 'compilation_config': {'mode': None, 'debug_dump_path': None, 'cache_dir': '', 'compile_cache_save_format': 'binary', 'backend': 'inductor', 'custom_ops': [], 'ir_enable_torch_wrap': None, 'splitting_ops': None, 'compile_mm_encoder': False, 'cudagraph_mm_encoder': False, 'encoder_cudagraph_token_budgets': [], 'encoder_cudagraph_max_vision_items_per_batch': 0, 'encoder_cudagraph_max_frames_per_batch': None, 'compile_sizes': None, 'compile_ranges_endpoints': None, 'inductor_compile_config': {'enable_auto_functionalized_v2': False, 'size_asserts': False, 'alignment_asserts': False, 'scalar_asserts': False, 'combo_kernels': True, 'benchmark_combo_kernel': True}, 'inductor_passes': {}, 'cudagraph_mode': <CUDAGraphMode.PIECEWISE: 1>, 'cudagraph_num_of_warmups': 0, 'cudagraph_capture_sizes': [1], 'cudagraph_copy_inputs': False, 'cudagraph_specialize_lora': True, 'use_inductor_graph_partition': None, 'pass_config': {}, 'max_cudagraph_capture_size': 1, 'dynamic_shapes_config': {'type': <DynamicShapesType.BACKED: 'backed'>, 'evaluate_guards': False, 'assume_32_bit_indexing': False}, 'local_cache_dir': None, 'fast_moe_cold_start': None, 'static_all_moe_layers': []}}
+(APIServer pid=3037840) WARNING 06-15 20:52:00 [envs.py:1941] Unknown vLLM environment variable detected: VLLM_XPU_ZERO_FRESH_GDN_STATE
+(APIServer pid=3037840) WARNING 06-15 20:52:00 [envs.py:1941] Unknown vLLM environment variable detected: VLLM_XPU_MOE_W8A8_MIDDLE_LAYERLET
+(APIServer pid=3037840) WARNING 06-15 20:52:00 [envs.py:1941] Unknown vLLM environment variable detected: VLLM_XPU_FORCE_QUARK_REPACK
+(APIServer pid=3037840) WARNING 06-15 20:52:00 [envs.py:1941] Unknown vLLM environment variable detected: VLLM_EXTRA_ARGS
+(APIServer pid=3037840) WARNING 06-15 20:52:00 [envs.py:1941] Unknown vLLM environment variable detected: VLLM_XPU_GDN_NATIVE_FALLBACK
+(APIServer pid=3037840) WARNING 06-15 20:52:00 [envs.py:1941] Unknown vLLM environment variable detected: VLLM_XPU_INT8_MOE_FUSED_PROLOGUE_OFFSET_ALLOW_CAPTURE
+(APIServer pid=3037840) WARNING 06-15 20:52:00 [envs.py:1941] Unknown vLLM environment variable detected: VLLM_XPU_FORCE_GRAPH_WITH_COMM
+(APIServer pid=3037840) WARNING 06-15 20:52:00 [envs.py:1941] Unknown vLLM environment variable detected: VLLM_XPU_CUSTOM_ALLREDUCE_CLONE_INPUT
+(APIServer pid=3037840) WARNING 06-15 20:52:00 [envs.py:1941] Unknown vLLM environment variable detected: VLLM_XPU_W8A8_USE_OFFSETS
+(APIServer pid=3037840) WARNING 06-15 20:52:00 [envs.py:1941] Unknown vLLM environment variable detected: VLLM_XPU_COMPILE_ALLREDUCE_CUSTOM_OP
+(APIServer pid=3037840) WARNING 06-15 20:52:00 [envs.py:1941] Unknown vLLM environment variable detected: VLLM_XPU_INT8_MOE_FUSED_PROLOGUE_OFFSET
+(APIServer pid=3037840) WARNING 06-15 20:52:00 [envs.py:1941] Unknown vLLM environment variable detected: VLLM_XPU_USE_CUSTOM_OP_COLLECTIVES
+(APIServer pid=3037840) WARNING 06-15 20:52:00 [envs.py:1941] Unknown vLLM environment variable detected: VLLM_XPU_GRAPH_NOOP_COMM_CAPTURE
+(APIServer pid=3037840) WARNING 06-15 20:52:00 [envs.py:1941] Unknown vLLM environment variable detected: VLLM_XPU_GDN_PREFILL_RECURRENT_FALLBACK
+(APIServer pid=3037840) WARNING 06-15 20:52:00 [envs.py:1941] Unknown vLLM environment variable detected: VLLM_XPU_CUSTOM_ALLREDUCE_GRAPH_CLONE_INPUT
+(APIServer pid=3037840) WARNING 06-15 20:52:00 [envs.py:1941] Unknown vLLM environment variable detected: VLLM_XPU_QUARK_W8A8_MOE
+(APIServer pid=3037840) WARNING 06-15 20:52:00 [envs.py:1941] Unknown vLLM environment variable detected: VLLM_XPU_INT8_MOE_MIXED_WORKSPACE
+(APIServer pid=3037840) WARNING 06-15 20:52:00 [envs.py:1941] Unknown vLLM environment variable detected: VLLM_XPU_W8A8_EXPERIMENTAL_ALLOW
+(APIServer pid=3037840) WARNING 06-15 20:52:00 [envs.py:1941] Unknown vLLM environment variable detected: VLLM_XPU_DISABLE_PREFILL_CUDAGRAPH_REPLAY
+(APIServer pid=3037840) WARNING 06-15 20:52:00 [envs.py:1941] Unknown vLLM environment variable detected: VLLM_XPU_GREEDY_SAMPLE_TOPK_FALLBACK
+(APIServer pid=3037840) WARNING 06-15 20:52:00 [envs.py:1941] Unknown vLLM environment variable detected: VLLM_XPU_W8A8_OFFSETS_PREFIX_OP
+(APIServer pid=3037840) WARNING 06-15 20:52:00 [envs.py:1941] Unknown vLLM environment variable detected: VLLM_USE_V1
+(APIServer pid=3037840) INFO 06-15 20:52:07 [nixl_utils.py:20] Setting UCX_RCACHE_MAX_UNRELEASED to '1024' to avoid a rare memory leak in UCX when using NIXL.
+(APIServer pid=3037840) WARNING 06-15 20:52:07 [nixl_utils.py:34] NIXL is not available
+(APIServer pid=3037840) WARNING 06-15 20:52:07 [nixl_utils.py:44] NIXL agent config is not available
+(APIServer pid=3037840) INFO 06-15 20:52:07 [model.py:563] Resolved architecture: Qwen3_5MoeForConditionalGeneration
+(APIServer pid=3037840) INFO 06-15 20:52:07 [model.py:1692] Using max model len 32768
+(APIServer pid=3037840) INFO 06-15 20:52:08 [scheduler.py:239] Chunked prefill is enabled with max_num_batched_tokens=8192.
+(APIServer pid=3037840) INFO 06-15 20:52:08 [vllm.py:844] Asynchronous scheduling is enabled.
+(APIServer pid=3037840) INFO 06-15 20:52:08 [kernel.py:210] Final IR op priority after setting platform defaults: IrOpPriorityConfig(rms_norm=['native'], fused_add_rms_norm=['native'])
+(APIServer pid=3037840) WARNING 06-15 20:52:08 [xpu.py:208] Forcing XPU Graph with communication ops because VLLM_XPU_FORCE_GRAPH_WITH_COMM=1.
+(APIServer pid=3037840) [transformers] `Qwen2VLImageProcessorFast` is deprecated. The `Fast` suffix for image processors has been removed; use `Qwen2VLImageProcessor` instead.
+(APIServer pid=3037840) INFO 06-15 20:52:09 [registry.py:126] All limits of multimodal modalities supported by the model are set to 0, running in text-only mode.
+WARNING 06-15 20:52:14 [nixl_utils.py:34] NIXL is not available
+WARNING 06-15 20:52:14 [nixl_utils.py:44] NIXL agent config is not available
+(EngineCore pid=3038075) INFO 06-15 20:52:14 [core.py:246] Initializing a V1 LLM engine (v0.20.2rc1.dev2+gc51df4300.d20260523) with config: model='/mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118', speculative_config=None, tokenizer='/mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118', skip_tokenizer_init=False, tokenizer_mode=auto, revision=None, tokenizer_revision=None, trust_remote_code=True, dtype=torch.bfloat16, max_seq_len=32768, download_dir=None, load_format=auto, tensor_parallel_size=4, pipeline_parallel_size=1, data_parallel_size=1, decode_context_parallel_size=1, dcp_comm_backend=ag_rs, disable_custom_all_reduce=True, quantization=quark, quantization_config=None, enforce_eager=False, enable_return_routed_experts=False, kv_cache_dtype=auto, device_config=xpu, structured_outputs_config=StructuredOutputsConfig(backend='auto', disable_any_whitespace=False, disable_additional_properties=False, reasoning_parser='', reasoning_parser_plugin='', enable_in_reasoning=False), observability_config=ObservabilityConfig(show_hidden_metrics_for_version=None, otlp_traces_endpoint=None, collect_detailed_traces=None, kv_cache_metrics=False, kv_cache_metrics_sample=0.01, cudagraph_metrics=False, enable_layerwise_nvtx_tracing=False, enable_mfu_metrics=False, enable_mm_processor_stats=False, enable_logging_iteration_details=False), seed=0, served_model_name=qwen36-35b-a3b-fp8, enable_prefix_caching=False, enable_chunked_prefill=True, pooler_config=None, compilation_config={'mode': <CompilationMode.VLLM_COMPILE: 3>, 'debug_dump_path': None, 'cache_dir': '', 'compile_cache_save_format': 'binary', 'backend': 'inductor', 'custom_ops': ['none'], 'ir_enable_torch_wrap': True, 'splitting_ops': ['vllm::unified_attention_with_output', 'vllm::unified_mla_attention_with_output', 'vllm::mamba_mixer2', 'vllm::mamba_mixer', 'vllm::short_conv', 'vllm::linear_attention', 'vllm::plamo2_mamba_mixer', 'vllm::gdn_attention_core', 'vllm::gdn_attention_core_xpu', 'vllm::olmo_hybrid_gdn_full_forward', 'vllm::kda_attention', 'vllm::sparse_attn_indexer', 'vllm::rocm_aiter_sparse_attn_indexer', 'vllm::deepseek_v4_attention', 'vllm::unified_kv_cache_update', 'vllm::unified_mla_kv_cache_update'], 'compile_mm_encoder': False, 'cudagraph_mm_encoder': False, 'encoder_cudagraph_token_budgets': [], 'encoder_cudagraph_max_vision_items_per_batch': 0, 'encoder_cudagraph_max_frames_per_batch': None, 'compile_sizes': [], 'compile_ranges_endpoints': [8192], 'inductor_compile_config': {'enable_auto_functionalized_v2': False, 'size_asserts': False, 'alignment_asserts': False, 'scalar_asserts': False, 'combo_kernels': True, 'benchmark_combo_kernel': True}, 'inductor_passes': {}, 'cudagraph_mode': <CUDAGraphMode.PIECEWISE: 1>, 'cudagraph_num_of_warmups': 1, 'cudagraph_capture_sizes': [1], 'cudagraph_copy_inputs': False, 'cudagraph_specialize_lora': True, 'use_inductor_graph_partition': False, 'pass_config': {'fuse_norm_quant': False, 'fuse_act_quant': False, 'fuse_attn_quant': False, 'enable_sp': False, 'fuse_gemm_comms': False, 'fuse_allreduce_rms': False, 'fuse_act_padding': False}, 'max_cudagraph_capture_size': 1, 'dynamic_shapes_config': {'type': <DynamicShapesType.BACKED: 'backed'>, 'evaluate_guards': False, 'assume_32_bit_indexing': False}, 'local_cache_dir': None, 'fast_moe_cold_start': False, 'static_all_moe_layers': []}, kernel_config=KernelConfig(ir_op_priority=IrOpPriorityConfig(rms_norm=['native'], fused_add_rms_norm=['native']), enable_flashinfer_autotune=False, moe_backend='auto')
+(EngineCore pid=3038075) WARNING 06-15 20:52:14 [multiproc_executor.py:1367] Reducing Torch parallelism from 16 threads to 1 to avoid unnecessary CPU contention. Set OMP_NUM_THREADS in the external environment to tune this value as needed.
+(EngineCore pid=3038075) INFO 06-15 20:52:14 [multiproc_executor.py:243] DP group leader: node_rank=0, node_rank_within_dp=0, master_addr=127.0.0.1, mq_connect_ip=10.0.0.65 (local), world_size=4, local_world_size=4
+WARNING 06-15 20:52:19 [nixl_utils.py:34] NIXL is not available
+WARNING 06-15 20:52:19 [nixl_utils.py:44] NIXL agent config is not available
+WARNING 06-15 20:52:19 [nixl_utils.py:34] NIXL is not available
+WARNING 06-15 20:52:19 [nixl_utils.py:44] NIXL agent config is not available
+WARNING 06-15 20:52:19 [nixl_utils.py:34] NIXL is not available
+WARNING 06-15 20:52:19 [nixl_utils.py:44] NIXL agent config is not available
+WARNING 06-15 20:52:19 [nixl_utils.py:34] NIXL is not available
+WARNING 06-15 20:52:19 [nixl_utils.py:44] NIXL agent config is not available
+[transformers] `Qwen2VLImageProcessorFast` is deprecated. The `Fast` suffix for image processors has been removed; use `Qwen2VLImageProcessor` instead.
+[transformers] `Qwen2VLImageProcessorFast` is deprecated. The `Fast` suffix for image processors has been removed; use `Qwen2VLImageProcessor` instead.
+[transformers] `Qwen2VLImageProcessorFast` is deprecated. The `Fast` suffix for image processors has been removed; use `Qwen2VLImageProcessor` instead.
+[transformers] `Qwen2VLImageProcessorFast` is deprecated. The `Fast` suffix for image processors has been removed; use `Qwen2VLImageProcessor` instead.
+INFO 06-15 20:52:22 [registry.py:126] All limits of multimodal modalities supported by the model are set to 0, running in text-only mode.
+INFO 06-15 20:52:22 [registry.py:126] All limits of multimodal modalities supported by the model are set to 0, running in text-only mode.
+INFO 06-15 20:52:22 [registry.py:126] All limits of multimodal modalities supported by the model are set to 0, running in text-only mode.
+INFO 06-15 20:52:22 [registry.py:126] All limits of multimodal modalities supported by the model are set to 0, running in text-only mode.
+(Worker pid=3038185) INFO 06-15 20:52:24 [parallel_state.py:1542] world_size=4 rank=3 local_rank=3 distributed_init_method=tcp://127.0.0.1:51963 backend=xccl
+(Worker pid=3038184) INFO 06-15 20:52:24 [parallel_state.py:1542] world_size=4 rank=2 local_rank=2 distributed_init_method=tcp://127.0.0.1:51963 backend=xccl
+(Worker pid=3038183) INFO 06-15 20:52:24 [parallel_state.py:1542] world_size=4 rank=1 local_rank=1 distributed_init_method=tcp://127.0.0.1:51963 backend=xccl
+(Worker pid=3038182) INFO 06-15 20:52:24 [parallel_state.py:1542] world_size=4 rank=0 local_rank=0 distributed_init_method=tcp://127.0.0.1:51963 backend=xccl
+(Worker pid=3038182) INFO 06-15 20:52:25 [parallel_state.py:1855] rank 0 in world size 4 is assigned as DP rank 0, PP rank 0, PCP rank 0, TP rank 0, EP rank 0, EPLB rank N/A
+2026:06:15-20:52:25:3038183 |CCL_WARN| value of CCL_ATL_TRANSPORT changed to be ofi (default:mpi)
+2026:06:15-20:52:25:3038185 |CCL_WARN| value of CCL_ATL_TRANSPORT changed to be ofi (default:mpi)
+2026:06:15-20:52:25:3038183 |CCL_WARN| value of CCL_TOPO_P2P_ACCESS changed to be 1 (default:-1)
+2026:06:15-20:52:25:3038184 |CCL_WARN| value of CCL_ATL_TRANSPORT changed to be ofi (default:mpi)
+2026:06:15-20:52:25:3038185 |CCL_WARN| value of CCL_TOPO_P2P_ACCESS changed to be 1 (default:-1)
+2026:06:15-20:52:25:3038184 |CCL_WARN| value of CCL_TOPO_P2P_ACCESS changed to be 1 (default:-1)
+2026:06:15-20:52:25:3038185 |CCL_WARN| could not get local_idx/count from environment variables, trying to get them from ATL
+2026:06:15-20:52:25:3038183 |CCL_WARN| could not get local_idx/count from environment variables, trying to get them from ATL
+2026:06:15-20:52:25:3038184 |CCL_WARN| could not get local_idx/count from environment variables, trying to get them from ATL
+2026:06:15-20:52:25:3038182 |CCL_WARN| value of CCL_ATL_TRANSPORT changed to be ofi (default:mpi)
+2026:06:15-20:52:25:3038182 |CCL_WARN| value of CCL_TOPO_P2P_ACCESS changed to be 1 (default:-1)
+2026:06:15-20:52:25:3038182 |CCL_WARN| could not get local_idx/count from environment variables, trying to get them from ATL
+2026:06:15-20:52:26:3038182:[0] |CCL_WARN| topology recognition shows PCIe connection between devices. If this is not correct, you can disable topology recognition, with CCL_TOPO_FABRIC_VERTEX_CONNECTION_CHECK=0. This will assume XeLinks across devices
+2026:06:15-20:52:26:3038183:[1] |CCL_WARN| topology recognition shows PCIe connection between devices. If this is not correct, you can disable topology recognition, with CCL_TOPO_FABRIC_VERTEX_CONNECTION_CHECK=0. This will assume XeLinks across devices
+2026:06:15-20:52:26:3038184:[2] |CCL_WARN| topology recognition shows PCIe connection between devices. If this is not correct, you can disable topology recognition, with CCL_TOPO_FABRIC_VERTEX_CONNECTION_CHECK=0. This will assume XeLinks across devices
+2026:06:15-20:52:26:3038185:[3] |CCL_WARN| topology recognition shows PCIe connection between devices. If this is not correct, you can disable topology recognition, with CCL_TOPO_FABRIC_VERTEX_CONNECTION_CHECK=0. This will assume XeLinks across devices
+(Worker_TP0 pid=3038182) INFO 06-15 20:52:27 [gpu_model_runner.py:8524] Starting to load model /mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118...
+(Worker_TP0 pid=3038182) INFO 06-15 20:52:27 [xpu.py:122] Using backend AttentionBackendEnum.FLASH_ATTN for vit attention
+(Worker_TP0 pid=3038182) INFO 06-15 20:52:27 [mm_encoder_attention.py:372] Using AttentionBackendEnum.FLASH_ATTN for MMEncoderAttention.
+(Worker_TP0 pid=3038182) INFO 06-15 20:52:27 [__init__.py:463] Selected XPUInt8ScaledMMLinearKernel for QuarkW8A8Int8
+(Worker_TP0 pid=3038182) INFO 06-15 20:52:27 [gdn_linear_attn.py:395] Using Triton/FLA GDN prefill kernel
+(Worker_TP0 pid=3038182) INFO 06-15 20:52:27 [int8.py:152] Using XPU Int8 MoE backend out of potential backends: ['XPU', 'TRITON'].
+(Worker_TP0 pid=3038182) INFO 06-15 20:52:27 [xpu.py:59] Setting VLLM_KV_CACHE_LAYOUT to 'NHD' for XPU; only NHD layout is supported by XPU attention kernels.
+(Worker_TP0 pid=3038182) INFO 06-15 20:52:27 [xpu.py:87] Using Flash Attention backend.
+(Worker_TP3 pid=3038185) INFO 06-15 20:52:27 [xpu.py:59] Setting VLLM_KV_CACHE_LAYOUT to 'NHD' for XPU; only NHD layout is supported by XPU attention kernels.
+(Worker_TP0 pid=3038182) INFO 06-15 20:52:27 [flash_attn.py:649] Using FlashAttention version 2
+(Worker_TP2 pid=3038184) INFO 06-15 20:52:27 [xpu.py:59] Setting VLLM_KV_CACHE_LAYOUT to 'NHD' for XPU; only NHD layout is supported by XPU attention kernels.
+(Worker_TP1 pid=3038183) INFO 06-15 20:52:27 [xpu.py:59] Setting VLLM_KV_CACHE_LAYOUT to 'NHD' for XPU; only NHD layout is supported by XPU attention kernels.
+(Worker_TP0 pid=3038182) INFO 06-15 20:52:28 [weight_utils.py:904] Filesystem type for checkpoints: EXT4. Checkpoint size: 34.15 GiB. Available RAM: 110.94 GiB.
+(Worker_TP0 pid=3038182) INFO 06-15 20:52:28 [weight_utils.py:927] Auto-prefetch is disabled because the filesystem (EXT4) is not a recognized network FS (NFS/Lustre). If you want to force prefetching, start vLLM with --safetensors-load-strategy=prefetch.
+(Worker_TP0 pid=3038182) Loading safetensors checkpoint shards:   0% Completed | 0/7 [00:00<?, ?it/s]
+(Worker_TP0 pid=3038182) Loading safetensors checkpoint shards:  14% Completed | 1/7 [00:01<00:06,  1.09s/it]
+(Worker_TP0 pid=3038182) Loading safetensors checkpoint shards:  29% Completed | 2/7 [00:03<00:08,  1.61s/it]
+(Worker_TP0 pid=3038182) Loading safetensors checkpoint shards:  43% Completed | 3/7 [00:05<00:07,  1.92s/it]
+(Worker_TP0 pid=3038182) Loading safetensors checkpoint shards:  57% Completed | 4/7 [00:07<00:06,  2.07s/it]
+(Worker_TP0 pid=3038182) Loading safetensors checkpoint shards:  71% Completed | 5/7 [00:10<00:04,  2.17s/it]
+(Worker_TP0 pid=3038182) Loading safetensors checkpoint shards:  86% Completed | 6/7 [00:12<00:02,  2.23s/it]
+(Worker_TP2 pid=3038184) INFO 06-15 20:52:40 [interface.py:492] Setting kv cache block size to 64 for FLASH_ATTN backend.
+(Worker_TP2 pid=3038184) INFO 06-15 20:52:40 [interface.py:609] Setting attention block size to 576 tokens to ensure that attention page size is >= mamba page size.
+(Worker_TP2 pid=3038184) INFO 06-15 20:52:40 [interface.py:633] Padding mamba page size by 9.92% to ensure that mamba page size and attention page size are exactly equal.
+(Worker_TP3 pid=3038185) INFO 06-15 20:52:40 [interface.py:492] Setting kv cache block size to 64 for FLASH_ATTN backend.
+(Worker_TP3 pid=3038185) INFO 06-15 20:52:40 [interface.py:609] Setting attention block size to 576 tokens to ensure that attention page size is >= mamba page size.
+(Worker_TP3 pid=3038185) INFO 06-15 20:52:40 [interface.py:633] Padding mamba page size by 9.92% to ensure that mamba page size and attention page size are exactly equal.
+(Worker_TP1 pid=3038183) INFO 06-15 20:52:40 [interface.py:492] Setting kv cache block size to 64 for FLASH_ATTN backend.
+(Worker_TP1 pid=3038183) INFO 06-15 20:52:40 [interface.py:609] Setting attention block size to 576 tokens to ensure that attention page size is >= mamba page size.
+(Worker_TP1 pid=3038183) INFO 06-15 20:52:40 [interface.py:633] Padding mamba page size by 9.92% to ensure that mamba page size and attention page size are exactly equal.
+(Worker_TP0 pid=3038182) Loading safetensors checkpoint shards: 100% Completed | 7/7 [00:13<00:00,  1.94s/it]
+(Worker_TP0 pid=3038182) Loading safetensors checkpoint shards: 100% Completed | 7/7 [00:13<00:00,  1.96s/it]
+(Worker_TP0 pid=3038182) 
+(Worker_TP0 pid=3038182) INFO 06-15 20:52:41 [default_loader.py:391] Loading weights took 13.74 seconds
+(Worker_TP0 pid=3038182) INFO 06-15 20:52:41 [int8.py:216] Using MoEPrepareAndFinalizeNoDPEPModular
+(Worker_TP0 pid=3038182) INFO 06-15 20:52:42 [gpu_model_runner.py:8626] Model loading took 8.58 GiB memory and 14.795991 seconds
+(Worker_TP0 pid=3038182) INFO 06-15 20:52:42 [interface.py:492] Setting kv cache block size to 64 for FLASH_ATTN backend.
+(Worker_TP0 pid=3038182) INFO 06-15 20:52:42 [interface.py:609] Setting attention block size to 576 tokens to ensure that attention page size is >= mamba page size.
+(Worker_TP0 pid=3038182) INFO 06-15 20:52:42 [interface.py:633] Padding mamba page size by 9.92% to ensure that mamba page size and attention page size are exactly equal.
+(Worker_TP3 pid=3038185) WARNING 06-15 20:52:49 [backends.py:1048] Failed to read file <frozen os>
+(Worker_TP1 pid=3038183) WARNING 06-15 20:52:49 [backends.py:1048] Failed to read file <frozen os>
+(Worker_TP2 pid=3038184) WARNING 06-15 20:52:49 [backends.py:1048] Failed to read file <frozen os>
+(Worker_TP0 pid=3038182) WARNING 06-15 20:52:50 [backends.py:1048] Failed to read file <frozen os>
+(Worker_TP0 pid=3038182) INFO 06-15 20:52:50 [backends.py:1089] Using cache directory: /mnt/fast-ai/vllm-cache-exp/qwen36-ablation-prefill-safe-int8-prologue-dummylogit-c1capture-smoke/vllm/torch_compile_cache/2cdc238db3/rank_0_0/backbone for vLLM's torch.compile
+(Worker_TP0 pid=3038182) INFO 06-15 20:52:50 [backends.py:1148] Dynamo bytecode transform time: 7.36 s
+(Worker_TP0 pid=3038182) INFO 06-15 20:52:54 [backends.py:378] Cache the graph of compile range (1, 8192) for later use
+(Worker_TP0 pid=3038182) INFO 06-15 20:53:32 [backends.py:393] Compiling a graph for compile range (1, 8192) takes 42.31 s
+(EngineCore pid=3038075) INFO 06-15 20:53:43 [shm_broadcast.py:681] No available shared memory broadcast block found in 60 seconds. This typically happens when some processes are hanging or doing some time-consuming work (e.g. compilation, weight/kv cache quantization).
+(Worker_TP0 pid=3038182) INFO 06-15 20:53:45 [decorators.py:708] saved AOT compiled function to /mnt/fast-ai/vllm-cache-exp/qwen36-ablation-prefill-safe-int8-prologue-dummylogit-c1capture-smoke/vllm/torch_compile_cache/torch_aot_compile/62e9aba5158b66bb224231777c3e6b62637d18940ad6ffdae61da5517fbdaa25/rank_0_0/model
+(Worker_TP0 pid=3038182) INFO 06-15 20:53:45 [monitor.py:53] torch.compile took 62.93 s in total
+(Worker_TP0 pid=3038182) INFO 06-15 20:53:50 [monitor.py:81] Initial profiling/warmup run took 4.63 s
+(Worker_TP0 pid=3038182) INFO 06-15 20:53:57 [gpu_worker.py:487] Available KV cache memory: 18.64 GiB
+(EngineCore pid=3038075) INFO 06-15 20:53:57 [kv_cache_utils.py:1710] GPU KV cache size: 1,851,392 tokens
+(EngineCore pid=3038075) INFO 06-15 20:53:57 [kv_cache_utils.py:1711] Maximum concurrency for 32,768 tokens per request: 56.50x
+(Worker_TP0 pid=3038182) INFO 06-15 20:53:58 [utils.py:60] `_KV_CACHE_LAYOUT_OVERRIDE` variable detected. Setting KV cache layout to NHD.
+(Worker_TP2 pid=3038184) INFO 06-15 20:53:58 [kernel_warmup.py:44] Skipping FlashInfer autotune because it is disabled.
+(Worker_TP0 pid=3038182) INFO 06-15 20:53:58 [kernel_warmup.py:44] Skipping FlashInfer autotune because it is disabled.
+(Worker_TP1 pid=3038183) INFO 06-15 20:53:58 [kernel_warmup.py:44] Skipping FlashInfer autotune because it is disabled.
+(Worker_TP3 pid=3038185) INFO 06-15 20:53:58 [kernel_warmup.py:44] Skipping FlashInfer autotune because it is disabled.
+(Worker_TP0 pid=3038182) WARNING 06-15 20:53:58 [parallel_state.py:566] Skipping communicator graph-capture context for XpuCommunicator under VLLM_XPU_GRAPH_NOOP_COMM_CAPTURE=1.
+(Worker_TP0 pid=3038182) Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   0%|          | 0/1 [00:00<?, ?it/s](Worker_TP1 pid=3038183) ERROR 06-15 20:54:00 [multiproc_executor.py:1227] WorkerProc hit an exception.
+(Worker_TP1 pid=3038183) ERROR 06-15 20:54:00 [multiproc_executor.py:1227] Traceback (most recent call last):
+(Worker_TP1 pid=3038183) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]   File "/home/steve/src/vllm/vllm/v1/executor/multiproc_executor.py", line 1214, in worker_busy_loop
+(Worker_TP1 pid=3038183) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]     output = func(*args, **kwargs)
+(Worker_TP1 pid=3038183) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]              ^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP1 pid=3038183) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]   File "/home/steve/src/vllm/vllm/tracing/otel.py", line 178, in sync_wrapper
+(Worker_TP1 pid=3038183) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]     return func(*args, **kwargs)
+(Worker_TP1 pid=3038183) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]            ^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP1 pid=3038183) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]   File "/home/steve/src/vllm/vllm/v1/worker/gpu_worker.py", line 664, in compile_or_warm_up_model
+(Worker_TP1 pid=3038183) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]     cuda_graph_memory_bytes = self.model_runner.capture_model()
+(Worker_TP1 pid=3038183) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP1 pid=3038183) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]   File "/home/steve/src/vllm/vllm/tracing/otel.py", line 178, in sync_wrapper
+(Worker_TP1 pid=3038183) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]     return func(*args, **kwargs)
+(Worker_TP1 pid=3038183) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]            ^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP1 pid=3038183) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]   File "/home/steve/src/vllm/vllm/v1/worker/gpu_model_runner.py", line 9914, in capture_model
+(Worker_TP1 pid=3038183) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]     self._capture_cudagraphs(
+(Worker_TP1 pid=3038183) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]   File "/home/steve/src/vllm/vllm/v1/worker/gpu_model_runner.py", line 10029, in _capture_cudagraphs
+(Worker_TP1 pid=3038183) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]     self._warmup_and_capture(
+(Worker_TP1 pid=3038183) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]   File "/home/steve/src/vllm/vllm/v1/worker/gpu_model_runner.py", line 9975, in _warmup_and_capture
+(Worker_TP1 pid=3038183) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]     self._dummy_run(
+(Worker_TP1 pid=3038183) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]   File "/home/steve/.venvs/vllm-xpu/lib/python3.12/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+(Worker_TP1 pid=3038183) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]     return func(*args, **kwargs)
+(Worker_TP1 pid=3038183) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]            ^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP1 pid=3038183) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]   File "/home/steve/src/vllm/vllm/v1/worker/gpu_model_runner.py", line 9289, in _dummy_run
+(Worker_TP1 pid=3038183) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]     outputs = self.model(
+(Worker_TP1 pid=3038183) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]               ^^^^^^^^^^^
+(Worker_TP1 pid=3038183) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]   File "/home/steve/.venvs/vllm-xpu/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1779, in _wrapped_call_impl
+(Worker_TP1 pid=3038183) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]     return self._call_impl(*args, **kwargs)
+(Worker_TP1 pid=3038183) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP1 pid=3038183) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]   File "/home/steve/.venvs/vllm-xpu/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1790, in _call_impl
+(Worker_TP1 pid=3038183) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]     return forward_call(*args, **kwargs)
+(Worker_TP1 pid=3038183) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP1 pid=3038183) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]   File "/home/steve/src/vllm/vllm/model_executor/models/qwen3_5.py", line 699, in forward
+(Worker_TP1 pid=3038183) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]     hidden_states = self.language_model.model(
+(Worker_TP1 pid=3038183) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]                     ^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP1 pid=3038183) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]   File "/home/steve/src/vllm/vllm/compilation/decorators.py", line 520, in __call__
+(Worker_TP1 pid=3038183) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]     return self.aot_compiled_fn(self, *args, **kwargs)
+(Worker_TP1 pid=3038183) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP1 pid=3038183) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]   File "/home/steve/.venvs/vllm-xpu/lib/python3.12/site-packages/torch/_dynamo/aot_compile.py", line 224, in __call__
+(Worker_TP1 pid=3038183) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]     return self.fn(*args, **kwargs)
+(Worker_TP1 pid=3038183) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]            ^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP1 pid=3038183) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]   File "/home/steve/src/vllm/vllm/model_executor/models/qwen3_next.py", line 643, in forward
+(Worker_TP1 pid=3038183) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]     def forward(
+(Worker_TP1 pid=3038183) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]   File "/home/steve/src/vllm/vllm/compilation/caching.py", line 215, in __call__
+(Worker_TP1 pid=3038183) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]     return self.optimized_call(*args, **kwargs)
+(Worker_TP1 pid=3038183) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP1 pid=3038183) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]   File "<string>", line 175, in execution_fn
+(Worker_TP1 pid=3038183) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]   File "/home/steve/src/vllm/vllm/compilation/cuda_graph.py", line 1634, in __call__
+(Worker_TP1 pid=3038183) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]     with torch.cuda.graph(
+(Worker_TP1 pid=3038183) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]          ^^^^^^^^^^^^^^^^^
+(Worker_TP1 pid=3038183) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]   File "/home/steve/.venvs/vllm-xpu/lib/python3.12/site-packages/torch/xpu/graphs.py", line 195, in __enter__
+(Worker_TP1 pid=3038183) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]     torch.xpu.synchronize()
+(Worker_TP1 pid=3038183) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]   File "/home/steve/.venvs/vllm-xpu/lib/python3.12/site-packages/torch/xpu/__init__.py", line 482, in synchronize
+(Worker_TP1 pid=3038183) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]     return torch._C._xpu_synchronize(device)
+(Worker_TP1 pid=3038183) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP1 pid=3038183) ERROR 06-15 20:54:00 [multiproc_executor.py:1227] RuntimeError: level_zero backend failed with error: 20 (UR_RESULT_ERROR_DEVICE_LOST)
+(Worker_TP1 pid=3038183) ERROR 06-15 20:54:00 [multiproc_executor.py:1227] Traceback (most recent call last):
+(Worker_TP1 pid=3038183) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]   File "/home/steve/src/vllm/vllm/v1/executor/multiproc_executor.py", line 1214, in worker_busy_loop
+(Worker_TP1 pid=3038183) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]     output = func(*args, **kwargs)
+(Worker_TP1 pid=3038183) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]              ^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP1 pid=3038183) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]   File "/home/steve/src/vllm/vllm/tracing/otel.py", line 178, in sync_wrapper
+(Worker_TP1 pid=3038183) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]     return func(*args, **kwargs)
+(Worker_TP1 pid=3038183) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]            ^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP1 pid=3038183) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]   File "/home/steve/src/vllm/vllm/v1/worker/gpu_worker.py", line 664, in compile_or_warm_up_model
+(Worker_TP1 pid=3038183) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]     cuda_graph_memory_bytes = self.model_runner.capture_model()
+(Worker_TP1 pid=3038183) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP1 pid=3038183) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]   File "/home/steve/src/vllm/vllm/tracing/otel.py", line 178, in sync_wrapper
+(Worker_TP1 pid=3038183) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]     return func(*args, **kwargs)
+(Worker_TP1 pid=3038183) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]            ^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP1 pid=3038183) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]   File "/home/steve/src/vllm/vllm/v1/worker/gpu_model_runner.py", line 9914, in capture_model
+(Worker_TP1 pid=3038183) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]     self._capture_cudagraphs(
+(Worker_TP1 pid=3038183) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]   File "/home/steve/src/vllm/vllm/v1/worker/gpu_model_runner.py", line 10029, in _capture_cudagraphs
+(Worker_TP1 pid=3038183) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]     self._warmup_and_capture(
+(Worker_TP1 pid=3038183) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]   File "/home/steve/src/vllm/vllm/v1/worker/gpu_model_runner.py", line 9975, in _warmup_and_capture
+(Worker_TP1 pid=3038183) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]     self._dummy_run(
+(Worker_TP1 pid=3038183) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]   File "/home/steve/.venvs/vllm-xpu/lib/python3.12/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+(Worker_TP1 pid=3038183) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]     return func(*args, **kwargs)
+(Worker_TP1 pid=3038183) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]            ^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP1 pid=3038183) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]   File "/home/steve/src/vllm/vllm/v1/worker/gpu_model_runner.py", line 9289, in _dummy_run
+(Worker_TP1 pid=3038183) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]     outputs = self.model(
+(Worker_TP1 pid=3038183) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]               ^^^^^^^^^^^
+(Worker_TP1 pid=3038183) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]   File "/home/steve/.venvs/vllm-xpu/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1779, in _wrapped_call_impl
+(Worker_TP1 pid=3038183) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]     return self._call_impl(*args, **kwargs)
+(Worker_TP1 pid=3038183) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP1 pid=3038183) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]   File "/home/steve/.venvs/vllm-xpu/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1790, in _call_impl
+(Worker_TP1 pid=3038183) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]     return forward_call(*args, **kwargs)
+(Worker_TP1 pid=3038183) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP1 pid=3038183) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]   File "/home/steve/src/vllm/vllm/model_executor/models/qwen3_5.py", line 699, in forward
+(Worker_TP1 pid=3038183) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]     hidden_states = self.language_model.model(
+(Worker_TP1 pid=3038183) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]                     ^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP1 pid=3038183) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]   File "/home/steve/src/vllm/vllm/compilation/decorators.py", line 520, in __call__
+(Worker_TP1 pid=3038183) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]     return self.aot_compiled_fn(self, *args, **kwargs)
+(Worker_TP1 pid=3038183) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP1 pid=3038183) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]   File "/home/steve/.venvs/vllm-xpu/lib/python3.12/site-packages/torch/_dynamo/aot_compile.py", line 224, in __call__
+(Worker_TP1 pid=3038183) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]     return self.fn(*args, **kwargs)
+(Worker_TP1 pid=3038183) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]            ^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP1 pid=3038183) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]   File "/home/steve/src/vllm/vllm/model_executor/models/qwen3_next.py", line 643, in forward
+(Worker_TP1 pid=3038183) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]     def forward(
+(Worker_TP1 pid=3038183) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]   File "/home/steve/src/vllm/vllm/compilation/caching.py", line 215, in __call__
+(Worker_TP1 pid=3038183) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]     return self.optimized_call(*args, **kwargs)
+(Worker_TP1 pid=3038183) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP1 pid=3038183) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]   File "<string>", line 175, in execution_fn
+(Worker_TP1 pid=3038183) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]   File "/home/steve/src/vllm/vllm/compilation/cuda_graph.py", line 1634, in __call__
+(Worker_TP1 pid=3038183) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]     with torch.cuda.graph(
+(Worker_TP1 pid=3038183) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]          ^^^^^^^^^^^^^^^^^
+(Worker_TP1 pid=3038183) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]   File "/home/steve/.venvs/vllm-xpu/lib/python3.12/site-packages/torch/xpu/graphs.py", line 195, in __enter__
+(Worker_TP1 pid=3038183) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]     torch.xpu.synchronize()
+(Worker_TP1 pid=3038183) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]   File "/home/steve/.venvs/vllm-xpu/lib/python3.12/site-packages/torch/xpu/__init__.py", line 482, in synchronize
+(Worker_TP1 pid=3038183) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]     return torch._C._xpu_synchronize(device)
+(Worker_TP1 pid=3038183) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP1 pid=3038183) ERROR 06-15 20:54:00 [multiproc_executor.py:1227] RuntimeError: level_zero backend failed with error: 20 (UR_RESULT_ERROR_DEVICE_LOST)
+(Worker_TP1 pid=3038183) ERROR 06-15 20:54:00 [multiproc_executor.py:1227] 
+(Worker_TP2 pid=3038184) ERROR 06-15 20:54:00 [multiproc_executor.py:1227] WorkerProc hit an exception.
+(Worker_TP2 pid=3038184) ERROR 06-15 20:54:00 [multiproc_executor.py:1227] Traceback (most recent call last):
+(Worker_TP2 pid=3038184) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]   File "/home/steve/src/vllm/vllm/v1/executor/multiproc_executor.py", line 1214, in worker_busy_loop
+(Worker_TP2 pid=3038184) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]     output = func(*args, **kwargs)
+(Worker_TP2 pid=3038184) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]              ^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP2 pid=3038184) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]   File "/home/steve/src/vllm/vllm/tracing/otel.py", line 178, in sync_wrapper
+(Worker_TP2 pid=3038184) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]     return func(*args, **kwargs)
+(Worker_TP2 pid=3038184) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]            ^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP2 pid=3038184) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]   File "/home/steve/src/vllm/vllm/v1/worker/gpu_worker.py", line 664, in compile_or_warm_up_model
+(Worker_TP2 pid=3038184) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]     cuda_graph_memory_bytes = self.model_runner.capture_model()
+(Worker_TP2 pid=3038184) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP2 pid=3038184) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]   File "/home/steve/src/vllm/vllm/tracing/otel.py", line 178, in sync_wrapper
+(Worker_TP2 pid=3038184) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]     return func(*args, **kwargs)
+(Worker_TP2 pid=3038184) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]            ^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP2 pid=3038184) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]   File "/home/steve/src/vllm/vllm/v1/worker/gpu_model_runner.py", line 9914, in capture_model
+(Worker_TP2 pid=3038184) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]     self._capture_cudagraphs(
+(Worker_TP2 pid=3038184) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]   File "/home/steve/src/vllm/vllm/v1/worker/gpu_model_runner.py", line 10029, in _capture_cudagraphs
+(Worker_TP2 pid=3038184) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]     self._warmup_and_capture(
+(Worker_TP2 pid=3038184) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]   File "/home/steve/src/vllm/vllm/v1/worker/gpu_model_runner.py", line 9975, in _warmup_and_capture
+(Worker_TP2 pid=3038184) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]     self._dummy_run(
+(Worker_TP2 pid=3038184) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]   File "/home/steve/.venvs/vllm-xpu/lib/python3.12/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+(Worker_TP2 pid=3038184) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]     return func(*args, **kwargs)
+(Worker_TP2 pid=3038184) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]            ^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP2 pid=3038184) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]   File "/home/steve/src/vllm/vllm/v1/worker/gpu_model_runner.py", line 9289, in _dummy_run
+(Worker_TP2 pid=3038184) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]     outputs = self.model(
+(Worker_TP2 pid=3038184) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]               ^^^^^^^^^^^
+(Worker_TP2 pid=3038184) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]   File "/home/steve/.venvs/vllm-xpu/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1779, in _wrapped_call_impl
+(Worker_TP2 pid=3038184) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]     return self._call_impl(*args, **kwargs)
+(Worker_TP2 pid=3038184) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP2 pid=3038184) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]   File "/home/steve/.venvs/vllm-xpu/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1790, in _call_impl
+(Worker_TP2 pid=3038184) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]     return forward_call(*args, **kwargs)
+(Worker_TP2 pid=3038184) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP2 pid=3038184) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]   File "/home/steve/src/vllm/vllm/model_executor/models/qwen3_5.py", line 699, in forward
+(Worker_TP2 pid=3038184) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]     hidden_states = self.language_model.model(
+(Worker_TP2 pid=3038184) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]                     ^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP2 pid=3038184) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]   File "/home/steve/src/vllm/vllm/compilation/decorators.py", line 520, in __call__
+(Worker_TP2 pid=3038184) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]     return self.aot_compiled_fn(self, *args, **kwargs)
+(Worker_TP2 pid=3038184) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP2 pid=3038184) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]   File "/home/steve/.venvs/vllm-xpu/lib/python3.12/site-packages/torch/_dynamo/aot_compile.py", line 224, in __call__
+(Worker_TP2 pid=3038184) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]     return self.fn(*args, **kwargs)
+(Worker_TP2 pid=3038184) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]            ^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP2 pid=3038184) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]   File "/home/steve/src/vllm/vllm/model_executor/models/qwen3_next.py", line 643, in forward
+(Worker_TP2 pid=3038184) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]     def forward(
+(Worker_TP2 pid=3038184) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]   File "/home/steve/src/vllm/vllm/compilation/caching.py", line 215, in __call__
+(Worker_TP2 pid=3038184) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]     return self.optimized_call(*args, **kwargs)
+(Worker_TP2 pid=3038184) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP2 pid=3038184) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]   File "<string>", line 175, in execution_fn
+(Worker_TP2 pid=3038184) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]   File "/home/steve/src/vllm/vllm/compilation/cuda_graph.py", line 1634, in __call__
+(Worker_TP2 pid=3038184) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]     with torch.cuda.graph(
+(Worker_TP2 pid=3038184) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]          ^^^^^^^^^^^^^^^^^
+(Worker_TP2 pid=3038184) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]   File "/home/steve/.venvs/vllm-xpu/lib/python3.12/site-packages/torch/xpu/graphs.py", line 195, in __enter__
+(Worker_TP2 pid=3038184) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]     torch.xpu.synchronize()
+(Worker_TP2 pid=3038184) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]   File "/home/steve/.venvs/vllm-xpu/lib/python3.12/site-packages/torch/xpu/__init__.py", line 482, in synchronize
+(Worker_TP2 pid=3038184) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]     return torch._C._xpu_synchronize(device)
+(Worker_TP2 pid=3038184) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP2 pid=3038184) ERROR 06-15 20:54:00 [multiproc_executor.py:1227] RuntimeError: level_zero backend failed with error: 20 (UR_RESULT_ERROR_DEVICE_LOST)
+(Worker_TP2 pid=3038184) ERROR 06-15 20:54:00 [multiproc_executor.py:1227] Traceback (most recent call last):
+(Worker_TP2 pid=3038184) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]   File "/home/steve/src/vllm/vllm/v1/executor/multiproc_executor.py", line 1214, in worker_busy_loop
+(Worker_TP2 pid=3038184) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]     output = func(*args, **kwargs)
+(Worker_TP2 pid=3038184) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]              ^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP2 pid=3038184) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]   File "/home/steve/src/vllm/vllm/tracing/otel.py", line 178, in sync_wrapper
+(Worker_TP2 pid=3038184) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]     return func(*args, **kwargs)
+(Worker_TP2 pid=3038184) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]            ^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP2 pid=3038184) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]   File "/home/steve/src/vllm/vllm/v1/worker/gpu_worker.py", line 664, in compile_or_warm_up_model
+(Worker_TP2 pid=3038184) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]     cuda_graph_memory_bytes = self.model_runner.capture_model()
+(Worker_TP2 pid=3038184) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP2 pid=3038184) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]   File "/home/steve/src/vllm/vllm/tracing/otel.py", line 178, in sync_wrapper
+(Worker_TP2 pid=3038184) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]     return func(*args, **kwargs)
+(Worker_TP2 pid=3038184) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]            ^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP2 pid=3038184) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]   File "/home/steve/src/vllm/vllm/v1/worker/gpu_model_runner.py", line 9914, in capture_model
+(Worker_TP2 pid=3038184) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]     self._capture_cudagraphs(
+(Worker_TP2 pid=3038184) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]   File "/home/steve/src/vllm/vllm/v1/worker/gpu_model_runner.py", line 10029, in _capture_cudagraphs
+(Worker_TP2 pid=3038184) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]     self._warmup_and_capture(
+(Worker_TP2 pid=3038184) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]   File "/home/steve/src/vllm/vllm/v1/worker/gpu_model_runner.py", line 9975, in _warmup_and_capture
+(Worker_TP2 pid=3038184) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]     self._dummy_run(
+(Worker_TP2 pid=3038184) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]   File "/home/steve/.venvs/vllm-xpu/lib/python3.12/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+(Worker_TP2 pid=3038184) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]     return func(*args, **kwargs)
+(Worker_TP2 pid=3038184) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]            ^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP2 pid=3038184) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]   File "/home/steve/src/vllm/vllm/v1/worker/gpu_model_runner.py", line 9289, in _dummy_run
+(Worker_TP2 pid=3038184) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]     outputs = self.model(
+(Worker_TP2 pid=3038184) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]               ^^^^^^^^^^^
+(Worker_TP2 pid=3038184) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]   File "/home/steve/.venvs/vllm-xpu/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1779, in _wrapped_call_impl
+(Worker_TP2 pid=3038184) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]     return self._call_impl(*args, **kwargs)
+(Worker_TP2 pid=3038184) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP2 pid=3038184) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]   File "/home/steve/.venvs/vllm-xpu/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1790, in _call_impl
+(Worker_TP2 pid=3038184) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]     return forward_call(*args, **kwargs)
+(Worker_TP2 pid=3038184) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP2 pid=3038184) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]   File "/home/steve/src/vllm/vllm/model_executor/models/qwen3_5.py", line 699, in forward
+(Worker_TP2 pid=3038184) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]     hidden_states = self.language_model.model(
+(Worker_TP2 pid=3038184) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]                     ^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP2 pid=3038184) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]   File "/home/steve/src/vllm/vllm/compilation/decorators.py", line 520, in __call__
+(Worker_TP2 pid=3038184) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]     return self.aot_compiled_fn(self, *args, **kwargs)
+(Worker_TP2 pid=3038184) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP2 pid=3038184) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]   File "/home/steve/.venvs/vllm-xpu/lib/python3.12/site-packages/torch/_dynamo/aot_compile.py", line 224, in __call__
+(Worker_TP2 pid=3038184) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]     return self.fn(*args, **kwargs)
+(Worker_TP2 pid=3038184) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]            ^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP2 pid=3038184) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]   File "/home/steve/src/vllm/vllm/model_executor/models/qwen3_next.py", line 643, in forward
+(Worker_TP2 pid=3038184) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]     def forward(
+(Worker_TP2 pid=3038184) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]   File "/home/steve/src/vllm/vllm/compilation/caching.py", line 215, in __call__
+(Worker_TP2 pid=3038184) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]     return self.optimized_call(*args, **kwargs)
+(Worker_TP2 pid=3038184) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP2 pid=3038184) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]   File "<string>", line 175, in execution_fn
+(Worker_TP2 pid=3038184) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]   File "/home/steve/src/vllm/vllm/compilation/cuda_graph.py", line 1634, in __call__
+(Worker_TP2 pid=3038184) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]     with torch.cuda.graph(
+(Worker_TP2 pid=3038184) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]          ^^^^^^^^^^^^^^^^^
+(Worker_TP2 pid=3038184) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]   File "/home/steve/.venvs/vllm-xpu/lib/python3.12/site-packages/torch/xpu/graphs.py", line 195, in __enter__
+(Worker_TP2 pid=3038184) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]     torch.xpu.synchronize()
+(Worker_TP2 pid=3038184) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]   File "/home/steve/.venvs/vllm-xpu/lib/python3.12/site-packages/torch/xpu/__init__.py", line 482, in synchronize
+(Worker_TP2 pid=3038184) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]     return torch._C._xpu_synchronize(device)
+(Worker_TP2 pid=3038184) ERROR 06-15 20:54:00 [multiproc_executor.py:1227]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP2 pid=3038184) ERROR 06-15 20:54:00 [multiproc_executor.py:1227] RuntimeError: level_zero backend failed with error: 20 (UR_RESULT_ERROR_DEVICE_LOST)
+(Worker_TP2 pid=3038184) ERROR 06-15 20:54:00 [multiproc_executor.py:1227] 
+(EngineCore pid=3038075) INFO 06-15 20:54:59 [shm_broadcast.py:681] No available shared memory broadcast block found in 60 seconds. This typically happens when some processes are hanging or doing some time-consuming work (e.g. compilation, weight/kv cache quantization).
+(Worker_TP0 pid=3038182) INFO 06-15 20:55:47 [multiproc_executor.py:930] Parent process exited, terminating worker queues
+(Worker_TP1 pid=3038183) INFO 06-15 20:55:47 [multiproc_executor.py:1027] WorkerProc shutting down.
+(Worker_TP2 pid=3038184) INFO 06-15 20:55:47 [multiproc_executor.py:1027] WorkerProc shutting down.
+(APIServer pid=3037840) Traceback (most recent call last):
+(APIServer pid=3037840)   File "/home/steve/.venvs/vllm-xpu/bin/vllm", line 6, in <module>
+(APIServer pid=3037840)     sys.exit(main())
+(APIServer pid=3037840)              ^^^^^^
+(APIServer pid=3037840)   File "/home/steve/src/vllm/vllm/entrypoints/cli/main.py", line 92, in main
+(APIServer pid=3037840)     args.dispatch_function(args)
+(APIServer pid=3037840)   File "/home/steve/src/vllm/vllm/entrypoints/cli/serve.py", line 122, in cmd
+(APIServer pid=3037840)     uvloop.run(run_server(args))
+(APIServer pid=3037840)   File "/home/steve/.venvs/vllm-xpu/lib/python3.12/site-packages/uvloop/__init__.py", line 96, in run
+(APIServer pid=3037840)     return __asyncio.run(
+(APIServer pid=3037840)            ^^^^^^^^^^^^^^
+(APIServer pid=3037840)   File "/home/steve/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/asyncio/runners.py", line 195, in run
+(APIServer pid=3037840)     return runner.run(main)
+(APIServer pid=3037840)            ^^^^^^^^^^^^^^^^
+(APIServer pid=3037840)   File "/home/steve/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/asyncio/runners.py", line 118, in run
+(APIServer pid=3037840)     return self._loop.run_until_complete(task)
+(APIServer pid=3037840)            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(APIServer pid=3037840)   File "uvloop/loop.pyx", line 1512, in uvloop.loop.Loop.run_until_complete
+(APIServer pid=3037840)   File "uvloop/loop.pyx", line 1505, in uvloop.loop.Loop.run_until_complete
+(APIServer pid=3037840)   File "uvloop/loop.pyx", line 1379, in uvloop.loop.Loop.run_forever
+(APIServer pid=3037840)   File "uvloop/loop.pyx", line 557, in uvloop.loop.Loop._run
+(APIServer pid=3037840)   File "uvloop/loop.pyx", line 476, in uvloop.loop.Loop._on_idle
+(APIServer pid=3037840)   File "uvloop/cbhandles.pyx", line 83, in uvloop.loop.Handle._run
+(APIServer pid=3037840)   File "uvloop/cbhandles.pyx", line 61, in uvloop.loop.Handle._run
+(APIServer pid=3037840)   File "/home/steve/.venvs/vllm-xpu/lib/python3.12/site-packages/uvloop/__init__.py", line 48, in wrapper
+(APIServer pid=3037840)     return await main
+(APIServer pid=3037840)            ^^^^^^^^^^
+(APIServer pid=3037840)   File "/home/steve/src/vllm/vllm/entrypoints/openai/api_server.py", line 678, in run_server
+(APIServer pid=3037840)     await run_server_worker(listen_address, sock, args, **uvicorn_kwargs)
+(APIServer pid=3037840)   File "/home/steve/src/vllm/vllm/entrypoints/openai/api_server.py", line 692, in run_server_worker
+(APIServer pid=3037840)     async with build_async_engine_client(
+(APIServer pid=3037840)                ^^^^^^^^^^^^^^^^^^^^^^^^^^
+(APIServer pid=3037840)   File "/home/steve/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/contextlib.py", line 210, in __aenter__
+(APIServer pid=3037840)     return await anext(self.gen)
+(APIServer pid=3037840)            ^^^^^^^^^^^^^^^^^^^^^
+(APIServer pid=3037840)   File "/home/steve/src/vllm/vllm/entrypoints/openai/api_server.py", line 100, in build_async_engine_client
+(APIServer pid=3037840)     async with build_async_engine_client_from_engine_args(
+(APIServer pid=3037840)                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(APIServer pid=3037840)   File "/home/steve/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/contextlib.py", line 210, in __aenter__
+(APIServer pid=3037840)     return await anext(self.gen)
+(APIServer pid=3037840)            ^^^^^^^^^^^^^^^^^^^^^
+(APIServer pid=3037840)   File "/home/steve/src/vllm/vllm/entrypoints/openai/api_server.py", line 136, in build_async_engine_client_from_engine_args
+(APIServer pid=3037840)     async_llm = AsyncLLM.from_vllm_config(
+(APIServer pid=3037840)                 ^^^^^^^^^^^^^^^^^^^^^^^^^^
+(APIServer pid=3037840)   File "/home/steve/src/vllm/vllm/v1/engine/async_llm.py", line 217, in from_vllm_config
+(APIServer pid=3037840)     return cls(
+(APIServer pid=3037840)            ^^^^
+(APIServer pid=3037840)   File "/home/steve/src/vllm/vllm/v1/engine/async_llm.py", line 146, in __init__
+(APIServer pid=3037840)     self.engine_core = EngineCoreClient.make_async_mp_client(
+(APIServer pid=3037840)                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(APIServer pid=3037840)   File "/home/steve/src/vllm/vllm/tracing/otel.py", line 178, in sync_wrapper
+(APIServer pid=3037840)     return func(*args, **kwargs)
+(APIServer pid=3037840)            ^^^^^^^^^^^^^^^^^^^^^
+(APIServer pid=3037840)   File "/home/steve/src/vllm/vllm/v1/engine/core_client.py", line 130, in make_async_mp_client
+(APIServer pid=3037840)     return AsyncMPClient(*client_args)
+(APIServer pid=3037840)            ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(APIServer pid=3037840)   File "/home/steve/src/vllm/vllm/tracing/otel.py", line 178, in sync_wrapper
+(APIServer pid=3037840)     return func(*args, **kwargs)
+(APIServer pid=3037840)            ^^^^^^^^^^^^^^^^^^^^^
+(APIServer pid=3037840)   File "/home/steve/src/vllm/vllm/v1/engine/core_client.py", line 900, in __init__
+(APIServer pid=3037840)     super().__init__(
+(APIServer pid=3037840)   File "/home/steve/src/vllm/vllm/v1/engine/core_client.py", line 581, in __init__
+(APIServer pid=3037840)     if not sync_input_socket.poll(
+(APIServer pid=3037840)            ^^^^^^^^^^^^^^^^^^^^^^^
+(APIServer pid=3037840)   File "/home/steve/.venvs/vllm-xpu/lib/python3.12/site-packages/zmq/sugar/socket.py", line 1062, in poll
+(APIServer pid=3037840)     evts = dict(p.poll(timeout))
+(APIServer pid=3037840)                 ^^^^^^^^^^^^^^^
+(APIServer pid=3037840)   File "/home/steve/.venvs/vllm-xpu/lib/python3.12/site-packages/zmq/sugar/poll.py", line 106, in poll
+(APIServer pid=3037840)     return zmq_poll(self.sockets, timeout=timeout)
+(APIServer pid=3037840)            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(APIServer pid=3037840)   File "zmq/backend/cython/_zmq.py", line 1680, in zmq.backend.cython._zmq.zmq_poll
+(APIServer pid=3037840)   File "zmq/backend/cython/_zmq.py", line 179, in zmq.backend.cython._zmq._check_rc
+(APIServer pid=3037840)   File "/home/steve/src/vllm/vllm/entrypoints/openai/api_server.py", line 564, in signal_handler
+(APIServer pid=3037840)     raise KeyboardInterrupt("terminated")
+(APIServer pid=3037840) KeyboardInterrupt: terminated
+/home/steve/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/multiprocessing/resource_tracker.py:279: UserWarning: resource_tracker: There appear to be 2 leaked semaphore objects to clean up at shutdown
+  warnings.warn('resource_tracker: There appear to be %d '
+/home/steve/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/multiprocessing/resource_tracker.py:279: UserWarning: resource_tracker: There appear to be 4 leaked shared_memory objects to clean up at shutdown
+  warnings.warn('resource_tracker: There appear to be %d '

@@ -1,0 +1,187 @@
+{
+  "label": "no-gdnfallback-no-topk",
+  "stamp": "20260614bf",
+  "return_codes": {
+    "metrics": 0,
+    "json_canary": 1,
+    "color_canary": 1
+  },
+  "artifacts": {
+    "metrics": "/home/steve/llm-optimizations/data/qwen36-ablation-no-gdnfallback-no-topk-p512o512-20260614bf.json",
+    "json_canary": "/home/steve/llm-optimizations/data/qwen36-ablation-no-gdnfallback-no-topk-json-repeat96-20260614bf.json",
+    "color_canary": "/home/steve/llm-optimizations/data/qwen36-ablation-no-gdnfallback-no-topk-color-repeat96-20260614bf.json",
+    "log": "/home/steve/llm-optimizations/data/qwen36-ablation-no-gdnfallback-no-topk-20260614bf.log"
+  },
+  "env": {
+    "VLLM_XPU_GDN_NATIVE_FALLBACK": "0",
+    "VLLM_XPU_GREEDY_SAMPLE_TOPK_FALLBACK": "0",
+    "VLLM_XPU_DISABLE_PREFILL_CUDAGRAPH_REPLAY": null,
+    "VLLM_EXTRA_ARGS": null
+  },
+  "metrics_summary": {
+    "tok_s_out_client_after_first_chunk": {
+      "mean": 98.09004880344173,
+      "median": 98.09004880344173,
+      "min": 98.01742105562377,
+      "max": 98.1626765512597
+    },
+    "tok_s_out_client_after_first_chunk_corrected": {
+      "mean": 97.89846667687252,
+      "median": 97.89846667687252,
+      "min": 97.82598078012451,
+      "max": 97.97095257362051
+    },
+    "tok_s_out_client_e2e": {
+      "mean": 96.19572000564463,
+      "median": 96.19572000564463,
+      "min": 96.11924602359677,
+      "max": 96.27219398769249
+    },
+    "tok_s_total_client": {
+      "mean": 189.7610882923849,
+      "median": 189.7610882923849,
+      "min": 189.61023141373582,
+      "max": 189.911945171034
+    },
+    "ttft_ms_client": {
+      "mean": 102.78902447316796,
+      "median": 102.78902447316796,
+      "min": 102.42250096052885,
+      "max": 103.15554798580706
+    },
+    "ttft_ms_vllm_metrics": {
+      "mean": 91.21668338775635,
+      "median": 91.21668338775635,
+      "min": 91.00508689880371,
+      "max": 91.42827987670898
+    },
+    "tok_s_prefill_lower_bound_from_ttft": {
+      "mean": 4844.9368462535185,
+      "median": 4844.9368462535185,
+      "min": 4827.660845430424,
+      "max": 4862.212847076612
+    },
+    "e2e_ms_vllm_metrics": {
+      "mean": 5321.268200874329,
+      "median": 5321.268200874329,
+      "min": 5317.046642303467,
+      "max": 5325.48975944519
+    },
+    "queue_ms_vllm_histogram": {
+      "mean": 0.00903196632862091,
+      "median": 0.00903196632862091,
+      "min": 0.008926959708333015,
+      "max": 0.009136972948908806
+    },
+    "prefill_ms_vllm_histogram": {
+      "mean": 86.09459106810391,
+      "median": 86.09459106810391,
+      "min": 85.99341101944447,
+      "max": 86.19577111676335
+    },
+    "decode_ms_vllm_histogram": {
+      "mean": 5230.332609498873,
+      "median": 5230.332609498873,
+      "min": 5226.257405942306,
+      "max": 5234.407813055441
+    },
+    "decode_ms_per_generation_token_vllm_histogram": {
+      "mean": 10.215493377927487,
+      "median": 10.215493377927487,
+      "min": 10.207533995981066,
+      "max": 10.223452759873908
+    },
+    "inference_ms_vllm_histogram": {
+      "mean": 5316.427200566977,
+      "median": 5316.427200566977,
+      "min": 5312.453177059069,
+      "max": 5320.401224074885
+    },
+    "time_per_output_token_ms_vllm_histogram": {
+      "mean": 10.235484558706208,
+      "median": 10.235484558706208,
+      "min": 10.22750960066987,
+      "max": 10.243459516742547
+    },
+    "inter_token_ms_vllm_histogram": {
+      "mean": 10.235484558706212,
+      "median": 10.235484558706212,
+      "min": 10.227509600669874,
+      "max": 10.243459516742547
+    },
+    "iteration_tokens_per_step_vllm_histogram": {
+      "mean": 1.97265625,
+      "median": 1.97265625,
+      "min": 1.97265625,
+      "max": 1.97265625
+    }
+  },
+  "json_canary": {
+    "pass_all": false,
+    "repeats_completed": 39,
+    "mismatch_count": 1,
+    "first_mismatch": {
+      "index": 38,
+      "request_id": null,
+      "text": "{\"answer\": \"42.Plugin whiskey whiskey whiskey2\": \"widgets\"}",
+      "normalized": "{\"answer\": \"42.Plugin whiskey whiskey whiskey2\": \"widgets\"}",
+      "token_ids": [
+        4754,
+        8944,
+        763,
+        328,
+        19,
+        17,
+        62205,
+        62085,
+        62085,
+        62085,
+        17,
+        763,
+        328,
+        28844,
+        8934
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.2311002928763628,
+      "usage": {
+        "prompt_tokens": 36,
+        "total_tokens": 52,
+        "completion_tokens": 16,
+        "prompt_tokens_details": null
+      },
+      "json_parsed": null,
+      "pass": false
+    }
+  },
+  "color_canary": {
+    "pass_all": false,
+    "repeats_completed": 23,
+    "mismatch_count": 1,
+    "first_mismatch": {
+      "index": 22,
+      "request_id": null,
+      "text": "blue whiskey whiskey green, orange, red",
+      "normalized": "blue whiskey whiskey green, orange, red",
+      "token_ids": [
+        11855,
+        62085,
+        62085,
+        5983,
+        11,
+        18016,
+        11,
+        2438
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.16096295812167227,
+      "usage": {
+        "prompt_tokens": 30,
+        "total_tokens": 39,
+        "completion_tokens": 9,
+        "prompt_tokens_details": null
+      },
+      "pass": false
+    }
+  }
+}

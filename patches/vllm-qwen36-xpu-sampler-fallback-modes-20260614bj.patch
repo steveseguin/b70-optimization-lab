@@ -1,0 +1,181 @@
+diff --git a/vllm/v1/sample/sampler.py b/vllm/v1/sample/sampler.py
+index a77eafba2..e631cdca9 100644
+--- a/vllm/v1/sample/sampler.py
++++ b/vllm/v1/sample/sampler.py
+@@ -2,6 +2,8 @@
+ # SPDX-FileCopyrightText: Copyright contributors to the vLLM project
+ """A layer that samples the next tokens from the model's outputs."""
+ 
++import os
++
+ import torch
+ import torch.nn as nn
+ 
+@@ -16,6 +18,36 @@ from vllm.v1.sample.ops.topk_topp_sampler import TopKTopPSampler
+ from vllm.v1.worker.gpu.sample.logprob import compute_token_logprobs
+ 
+ _SAMPLING_EPS = 1e-5
++_XPU_SAMPLER_DEVICE_TIMING = (
++    os.environ.get("VLLM_XPU_SAMPLER_DEVICE_TIMING", "0") == "1"
++)
++
++
++def _xpu_sampler_record_event(device_type: str):
++    if not _XPU_SAMPLER_DEVICE_TIMING:
++        return None
++    try:
++        if device_type == "xpu" and hasattr(torch, "xpu"):
++            event = torch.xpu.Event(enable_timing=True)
++        elif device_type == "cuda" and torch.cuda.is_available():
++            event = torch.cuda.Event(enable_timing=True)
++        else:
++            return None
++        event.record()
++        return event
++    except Exception:
++        return None
++
++
++def _xpu_sampler_mark(timeline: dict[str, object] | None, key: str) -> None:
++    if timeline is None:
++        return
++    device_type = timeline.get("device_type")
++    if not isinstance(device_type, str):
++        return
++    event = _xpu_sampler_record_event(device_type)
++    if event is not None:
++        timeline[key] = event
+ 
+ 
+ class Sampler(nn.Module):
+@@ -73,6 +105,28 @@ class Sampler(nn.Module):
+         logprobs_mode_override: LogprobsMode | None = None,
+     ) -> SamplerOutput:
+         logprobs_mode = logprobs_mode_override or self.logprobs_mode
++        sampler_timeline: dict[str, object] | None = None
++        if _XPU_SAMPLER_DEVICE_TIMING:
++            device_type = getattr(logits.device, "type", "")
++            if device_type in ("xpu", "cuda"):
++                sampler_timeline = {
++                    "device_type": device_type,
++                    "sampler_logprobs_mode": str(logprobs_mode),
++                    "sampler_num_logprobs": sampling_metadata.max_num_logprobs,
++                    "sampler_all_greedy": bool(sampling_metadata.all_greedy),
++                    "sampler_all_random": bool(sampling_metadata.all_random),
++                    "sampler_no_penalties": bool(sampling_metadata.no_penalties),
++                    "sampler_has_allowed_token_mask": (
++                        sampling_metadata.allowed_token_ids_mask is not None
++                    ),
++                    "sampler_bad_words_count": len(
++                        sampling_metadata.bad_words_token_ids or ()
++                    ),
++                    "sampler_logprob_token_ids_count": len(
++                        sampling_metadata.logprob_token_ids or {}
++                    ),
++                }
++                _xpu_sampler_mark(sampler_timeline, "sampler_entry_event")
+         # NOTE(woosuk): Use the original logits (before any penalties or
+         # temperature scaling) for the top-k logprobs.
+         # This is different from the V0 sampler, which uses the logits that
+@@ -86,15 +140,23 @@ class Sampler(nn.Module):
+                     raw_logprobs = logits.clone()
+                 else:
+                     raw_logprobs = logits.to(torch.float32)
++        _xpu_sampler_mark(sampler_timeline, "sampler_raw_logprobs_end_event")
+ 
+         # Use float32 for the logits.
+         logits = logits.to(torch.float32)
++        _xpu_sampler_mark(sampler_timeline, "sampler_fp32_cast_end_event")
+ 
+         logits = self.apply_logits_processors(
+             logits, sampling_metadata, predict_bonus_token
+         )
++        _xpu_sampler_mark(sampler_timeline, "sampler_processors_end_event")
+         # Sample the next token.
+-        sampled, processed_logprobs = self.sample(logits, sampling_metadata)
++        self._xpu_sampler_timeline = sampler_timeline
++        try:
++            sampled, processed_logprobs = self.sample(logits, sampling_metadata)
++        finally:
++            self._xpu_sampler_timeline = None
++        _xpu_sampler_mark(sampler_timeline, "sampler_sample_call_end_event")
+         if processed_logprobs is not None:
+             raw_logprobs = processed_logprobs
+         # Convert sampled token ids to int64 (long) type to ensure compatibility
+@@ -102,6 +164,7 @@ class Sampler(nn.Module):
+         # This conversion is necessary because FlashInfer sampling operations
+         # return int32 (while PyTorch argmax and topk return int64).
+         sampled = sampled.long()
++        _xpu_sampler_mark(sampler_timeline, "sampler_long_end_event")
+ 
+         # Handle logprob_token_ids if specified (more efficient than full vocab)
+         # This is used by generative_scoring API to get logprobs for specific tokens
+@@ -110,6 +173,7 @@ class Sampler(nn.Module):
+             logprob_token_ids_tensors = self.gather_specific_token_logprobs(
+                 logits, sampling_metadata.logprob_token_ids, sampled
+             )
++        _xpu_sampler_mark(sampler_timeline, "sampler_specific_logprobs_end_event")
+ 
+         if num_logprobs is None:
+             logprobs_tensors = logprob_token_ids_tensors
+@@ -131,6 +195,7 @@ class Sampler(nn.Module):
+ 
+         # Use int32 to reduce the tensor size.
+         sampled = sampled.to(torch.int32)
++        _xpu_sampler_mark(sampler_timeline, "sampler_int32_end_event")
+ 
+         # These are GPU tensors.
+         sampler_output = SamplerOutput(
+@@ -140,6 +205,9 @@ class Sampler(nn.Module):
+             sampled_token_ids=sampled.unsqueeze(-1),
+             logprobs_tensors=logprobs_tensors,
+         )
++        _xpu_sampler_mark(sampler_timeline, "sampler_output_ready_event")
++        if sampler_timeline is not None:
++            sampler_output._xpu_sampler_timeline = sampler_timeline
+         return sampler_output
+ 
+     def gather_specific_token_logprobs(
+@@ -227,6 +295,26 @@ class Sampler(nn.Module):
+ 
+     @staticmethod
+     def greedy_sample(logits: torch.Tensor) -> torch.Tensor:
++        if logits.device.type == "xpu":
++            fallback = os.environ.get(
++                "VLLM_XPU_GREEDY_SAMPLE_XPU_FALLBACK", ""
++            ).strip().lower()
++            if (
++                not fallback
++                and os.environ.get("VLLM_XPU_GREEDY_SAMPLE_TOPK_FALLBACK", "0")
++                == "1"
++            ):
++                fallback = "topk"
++            if fallback == "topk":
++                return torch.topk(logits, k=1, dim=-1).indices.view(-1)
++            if fallback == "max":
++                return torch.max(logits, dim=-1).indices.view(-1)
++            if fallback == "clone_argmax":
++                return logits.clone().argmax(dim=-1).view(-1)
++            if fallback == "contiguous_argmax":
++                return logits.contiguous().argmax(dim=-1).view(-1)
++            if fallback == "float_argmax":
++                return logits.float().argmax(dim=-1).view(-1)
+         return logits.argmax(dim=-1).view(-1)
+ 
+     def sample(
+@@ -246,7 +334,15 @@ class Sampler(nn.Module):
+         if sampling_metadata.all_random:
+             greedy_sampled = None
+         else:
++            _xpu_sampler_mark(
++                getattr(self, "_xpu_sampler_timeline", None),
++                "sampler_greedy_start_event",
++            )
+             greedy_sampled = self.greedy_sample(logits)
++            _xpu_sampler_mark(
++                getattr(self, "_xpu_sampler_timeline", None),
++                "sampler_greedy_end_event",
++            )
+             if sampling_metadata.all_greedy:
+                 processed_logprobs = None
+                 if sampling_metadata.max_num_logprobs is not None:

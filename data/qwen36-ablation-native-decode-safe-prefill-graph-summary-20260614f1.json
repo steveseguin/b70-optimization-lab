@@ -1,0 +1,185 @@
+{
+  "label": "native-decode-safe-prefill-graph",
+  "stamp": "20260614f1",
+  "return_codes": {
+    "metrics": 0,
+    "json_canary": 0,
+    "color_canary": 0,
+    "quality_suite": 0
+  },
+  "status": {
+    "metrics": "passed",
+    "json_canary": "passed",
+    "color_canary": "passed",
+    "quality_suite": "skipped"
+  },
+  "artifacts": {
+    "metrics": "/home/steve/llm-optimizations/data/qwen36-ablation-native-decode-safe-prefill-graph-p512o512-20260614f1.json",
+    "json_canary": "/home/steve/llm-optimizations/data/qwen36-ablation-native-decode-safe-prefill-graph-json-repeat64-20260614f1.json",
+    "color_canary": "/home/steve/llm-optimizations/data/qwen36-ablation-native-decode-safe-prefill-graph-color-repeat64-20260614f1.json",
+    "quality_suite": "/home/steve/llm-optimizations/data/qwen36-ablation-native-decode-safe-prefill-graph-quality-suite-20260614f1.json",
+    "log": "/home/steve/llm-optimizations/data/qwen36-ablation-native-decode-safe-prefill-graph-20260614f1.log"
+  },
+  "artifact_exists": {
+    "metrics": true,
+    "json_canary": true,
+    "color_canary": true,
+    "quality_suite": false,
+    "log": true
+  },
+  "env": {
+    "VLLM_XPU_GDN_NATIVE_FALLBACK": "prefill",
+    "VLLM_XPU_GDN_NATIVE_PREFILL_FALLBACK": null,
+    "VLLM_XPU_GDN_PREFILL_RECURRENT_FALLBACK": "1",
+    "VLLM_XPU_GDN_NATIVE_FALLBACK_INITIAL_DECODE_STEPS": null,
+    "VLLM_XPU_GDN_NATIVE_FALLBACK_DECODE_LAYERS": null,
+    "VLLM_XPU_GDN_NATIVE_FALLBACK_DECODE_MAX_LAYER": null,
+    "VLLM_XPU_GDN_NATIVE_FALLBACK_DECODE_LAYER_REGEX": null,
+    "VLLM_XPU_GDN_SYNC_BEFORE_NATIVE_DECODE": null,
+    "VLLM_XPU_GDN_SYNC_BEFORE_NATIVE_DECODE_LAYERS": null,
+    "VLLM_XPU_GREEDY_SAMPLE_TOPK_FALLBACK": "1",
+    "VLLM_XPU_GREEDY_SAMPLE_XPU_FALLBACK": null,
+    "VLLM_XPU_ZERO_ALL_PREFILL_GDN_STATE": null,
+    "VLLM_XPU_DISABLE_PREFILL_CUDAGRAPH_REPLAY": "1",
+    "VLLM_ENABLE_FLA_PACKED_RECURRENT_DECODE": null,
+    "XPU_GRAPH": "1",
+    "VLLM_XPU_ENABLE_XPU_GRAPH": "1",
+    "VLLM_XPU_FORCE_GRAPH_WITH_COMM": "1",
+    "VLLM_XPU_GRAPH_NOOP_COMM_CAPTURE": "1",
+    "VLLM_XPU_CUDAGRAPH_REPLAY_MAX_PIECEWISE_INDEX": null,
+    "VLLM_XPU_SYNC_CUDAGRAPH_REPLAY": null,
+    "VLLM_XPU_CUDAGRAPH_ZERO_REPLAY_OUTPUT_REGEX": null,
+    "VLLM_XPU_CUDAGRAPH_ZERO_REPLAY_OUTPUT_INDICES": null,
+    "VLLM_XPU_CUDAGRAPH_COMPARE_DIRECT_REGEX": null,
+    "VLLM_XPU_CUDAGRAPH_COMPARE_DIRECT_RETURN_DIRECT": null,
+    "VLLM_XPU_W8A8_EXPERIMENTAL_ALLOW": null,
+    "VLLM_XPU_W8A8_USE_OFFSETS": null,
+    "VLLM_XPU_W8A8_OFFSETS_PREFIX_OP": null,
+    "VLLM_XPU_MOE_W8A8_MIDDLE_LAYERLET": null,
+    "VLLM_XPU_INT8_MOE_MIXED_WORKSPACE": null,
+    "GPU_MEMORY_UTILIZATION": "0.90",
+    "COMPILATION_CONFIG": "{\"cudagraph_mode\":\"PIECEWISE\"}",
+    "VLLM_EXTRA_ARGS": null
+  },
+  "metrics_summary": {
+    "tok_s_out_client_after_first_chunk": {
+      "mean": 93.49628979020991,
+      "median": 93.49628979020991,
+      "min": 93.38297509338267,
+      "max": 93.60960448703715
+    },
+    "tok_s_out_client_after_first_chunk_corrected": {
+      "mean": 93.3136798492134,
+      "median": 93.3136798492134,
+      "min": 93.20058647015341,
+      "max": 93.4267732282734
+    },
+    "tok_s_out_client_e2e": {
+      "mean": 89.95043394170901,
+      "median": 89.95043394170901,
+      "min": 89.84448938411013,
+      "max": 90.05637849930788
+    },
+    "tok_s_total_client": {
+      "mean": 177.44128570532442,
+      "median": 177.44128570532442,
+      "min": 177.2322935116235,
+      "max": 177.65027789902533
+    },
+    "ttft_ms_client": {
+      "mean": 215.87040193844587,
+      "median": 215.87040193844587,
+      "min": 215.80321085639298,
+      "max": 215.93759302049875
+    },
+    "ttft_ms_vllm_metrics": {
+      "mean": 203.80008220672607,
+      "median": 203.80008220672607,
+      "min": 203.6876678466797,
+      "max": 203.91249656677246
+    },
+    "tok_s_prefill_lower_bound_from_ttft": {
+      "mean": 2306.9399221694734,
+      "median": 2306.9399221694734,
+      "min": 2306.2218719494817,
+      "max": 2307.657972389465
+    },
+    "e2e_ms_vllm_metrics": {
+      "mean": 5690.720796585083,
+      "median": 5690.720796585083,
+      "min": 5684.21196937561,
+      "max": 5697.229623794556
+    },
+    "queue_ms_vllm_histogram": {
+      "mean": 0.011707074008882046,
+      "median": 0.011707074008882046,
+      "min": 0.009488081559538841,
+      "max": 0.01392606645822525
+    },
+    "prefill_ms_vllm_histogram": {
+      "mean": 198.8953084219247,
+      "median": 198.8953084219247,
+      "min": 198.8603628706187,
+      "max": 198.93025397323072
+    },
+    "decode_ms_vllm_histogram": {
+      "mean": 5487.168682622723,
+      "median": 5487.168682622723,
+      "min": 5480.82627216354,
+      "max": 5493.511093081906
+    },
+    "decode_ms_per_generation_token_vllm_histogram": {
+      "mean": 10.717126333247506,
+      "median": 10.717126333247506,
+      "min": 10.704738812819414,
+      "max": 10.729513853675599
+    },
+    "inference_ms_vllm_histogram": {
+      "mean": 5686.063991044648,
+      "median": 5686.063991044648,
+      "min": 5679.686635034159,
+      "max": 5692.441347055137
+    },
+    "time_per_output_token_ms_vllm_histogram": {
+      "mean": 10.738099183214722,
+      "median": 10.738099183214722,
+      "min": 10.725687421063682,
+      "max": 10.750510945365763
+    },
+    "inter_token_ms_vllm_histogram": {
+      "mean": 10.738099183214723,
+      "median": 10.738099183214723,
+      "min": 10.72568742106368,
+      "max": 10.750510945365766
+    },
+    "iteration_tokens_per_step_vllm_histogram": {
+      "mean": 1.97265625,
+      "median": 1.97265625,
+      "min": 1.97265625,
+      "max": 1.97265625
+    }
+  },
+  "speed": {
+    "tok_s_out_corrected_mean": 93.3136798492134,
+    "tok_s_out_after_first_chunk_mean": 93.49628979020991,
+    "tok_s_out_e2e_mean": 89.95043394170901,
+    "decode_ms_per_token_mean": 10.717126333247506,
+    "ttft_ms_client_mean": 215.87040193844587
+  },
+  "json_canary": {
+    "pass_all": true,
+    "repeats_completed": 64,
+    "mismatch_count": 0,
+    "first_mismatch": null
+  },
+  "color_canary": {
+    "pass_all": true,
+    "repeats_completed": 64,
+    "mismatch_count": 0,
+    "first_mismatch": null
+  },
+  "decision": {
+    "accepted_by_requested_gates": true,
+    "gate_failures": []
+  }
+}

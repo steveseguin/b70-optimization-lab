@@ -1,0 +1,2169 @@
+diff --git a/vllm/_xpu_ops.py b/vllm/_xpu_ops.py
+index 0b39a4000..00167f4e2 100644
+--- a/vllm/_xpu_ops.py
++++ b/vllm/_xpu_ops.py
+@@ -1,16 +1,22 @@
+ # SPDX-License-Identifier: Apache-2.0
+ # SPDX-FileCopyrightText: Copyright contributors to the vLLM project
+ 
+-from typing import TYPE_CHECKING
++import json
++import os
++import re
++import time
++from typing import TYPE_CHECKING, Any
+ 
+ import torch
+ from vllm_xpu_kernels.flash_attn_interface import flash_attn_varlen_func
+ 
+ from vllm.logger import init_logger
+ from vllm.platforms import current_platform
++from vllm.utils.xpu_decode_timing import timed_region
+ from vllm.utils.torch_utils import direct_register_custom_op
+ 
+ logger = init_logger(__name__)
++_XPU_GDN_TRACE_LINES = 0
+ 
+ if TYPE_CHECKING:
+ 
+@@ -92,6 +98,347 @@ if hasattr(torch.ops._xpu_C, "int4_gemm_w4a16"):
+         return torch.empty((M, N), dtype=input.dtype, device=input.device)
+ 
+ 
++def _xpu_gdn_trace_int_env(name: str, default: int) -> int:
++    try:
++        return int(os.environ.get(name, str(default)) or default)
++    except ValueError:
++        return default
++
++
++def _xpu_gdn_truthy_env(name: str) -> bool:
++    return os.environ.get(name, "").strip().lower() in ("1", "true", "yes", "on")
++
++
++def _xpu_gdn_fallback_modes(value: str) -> set[str]:
++    return {
++        part
++        for part in re.split(r"[\s,;]+", value.strip().lower())
++        if part
++    }
++
++
++def _xpu_gdn_layer_index(layer_name: str) -> int | None:
++    match = re.search(r"(?:^|\.)layers\.(\d+)(?:\.|$)", layer_name)
++    if not match:
++        return None
++    try:
++        return int(match.group(1))
++    except ValueError:
++        return None
++
++
++def _xpu_gdn_layer_list_match(layer_name: str, env_name: str) -> bool:
++    raw_value = os.environ.get(env_name, "").strip()
++    if not raw_value:
++        return False
++
++    layer_idx = _xpu_gdn_layer_index(layer_name)
++    layer_tail = layer_name.rsplit(".", 1)[-1]
++    for raw_part in raw_value.split(","):
++        part = raw_part.strip()
++        if not part:
++            continue
++        if part == layer_name or part == layer_tail:
++            return True
++        if layer_idx is None:
++            continue
++        try:
++            if "-" in part:
++                start_s, end_s = part.split("-", 1)
++                start = int(start_s.strip())
++                end = int(end_s.strip())
++                if start <= layer_idx <= end:
++                    return True
++            elif int(part) == layer_idx:
++                return True
++        except ValueError:
++            continue
++    return False
++
++
++def _xpu_gdn_decode_layer_fallback_enabled(layer_name: str) -> bool:
++    if _xpu_gdn_layer_list_match(
++        layer_name, "VLLM_XPU_GDN_NATIVE_FALLBACK_DECODE_LAYERS"
++    ):
++        return True
++
++    max_layer = _xpu_gdn_trace_int_env(
++        "VLLM_XPU_GDN_NATIVE_FALLBACK_DECODE_MAX_LAYER", -1
++    )
++    layer_idx = _xpu_gdn_layer_index(layer_name)
++    if max_layer >= 0 and layer_idx is not None and layer_idx <= max_layer:
++        return True
++
++    layer_regex = os.environ.get(
++        "VLLM_XPU_GDN_NATIVE_FALLBACK_DECODE_LAYER_REGEX", ""
++    )
++    if layer_regex:
++        try:
++            return re.search(layer_regex, layer_name) is not None
++        except re.error:
++            return False
++    return False
++
++
++def _xpu_gdn_trace_rank() -> int:
++    try:
++        from vllm.distributed import get_tensor_model_parallel_rank
++
++        return int(get_tensor_model_parallel_rank())
++    except Exception:
++        try:
++            return int(os.environ.get("LOCAL_RANK", "0") or "0")
++        except ValueError:
++            return 0
++
++
++def _xpu_gdn_json_number(value: Any) -> int | float | str | None:
++    try:
++        if value is None:
++            return None
++        if isinstance(value, bool):
++            return bool(value)
++        if isinstance(value, int):
++            return int(value)
++        if isinstance(value, float):
++            if value == float("inf"):
++                return "inf"
++            if value == float("-inf"):
++                return "-inf"
++            if value != value:
++                return "nan"
++            return value
++    except Exception:
++        return repr(value)
++    return value
++
++
++def _xpu_gdn_tensor_digest(
++    tensor: torch.Tensor | None,
++    *,
++    head_limit: int,
++    include_head: bool = False,
++) -> dict[str, Any] | None:
++    if tensor is None:
++        return None
++    try:
++        with torch.no_grad():
++            t = tensor.detach()
++            record: dict[str, Any] = {
++                "shape": list(t.shape),
++                "dtype": str(t.dtype),
++                "device": str(t.device),
++                "numel": int(t.numel()),
++            }
++            if t.numel() == 0:
++                record.update({"finite": 0, "nan": 0, "posinf": 0, "neginf": 0})
++                return record
++            stats_t = t.float() if not t.is_floating_point() else t
++            finite_mask = torch.isfinite(stats_t)
++            nan_mask = torch.isnan(stats_t)
++            posinf_mask = stats_t == float("inf")
++            neginf_mask = stats_t == float("-inf")
++            finite_count = int(finite_mask.sum().item())
++            record.update(
++                {
++                    "finite": finite_count,
++                    "nan": int(nan_mask.sum().item()),
++                    "posinf": int(posinf_mask.sum().item()),
++                    "neginf": int(neginf_mask.sum().item()),
++                }
++            )
++            if finite_count:
++                finite_vals = stats_t[finite_mask].float()
++                record.update(
++                    {
++                        "min": _xpu_gdn_json_number(finite_vals.min().item()),
++                        "max": _xpu_gdn_json_number(finite_vals.max().item()),
++                        "mean": _xpu_gdn_json_number(finite_vals.mean().item()),
++                        "sum": _xpu_gdn_json_number(finite_vals.sum().item()),
++                        "l2": _xpu_gdn_json_number(
++                            torch.linalg.vector_norm(finite_vals).item()
++                        ),
++                    }
++                )
++            if include_head and head_limit > 0:
++                head = t.reshape(-1)[:head_limit].to("cpu").tolist()
++                record["head"] = [_xpu_gdn_json_number(v) for v in head]
++            return record
++    except Exception as exc:
++        return {"error": repr(exc)}
++
++
++def _xpu_gdn_selected_state_digest(
++    state: torch.Tensor | None,
++    indices: torch.Tensor | None,
++    *,
++    head_limit: int,
++    state_limit: int,
++) -> dict[str, Any] | None:
++    if state is None or indices is None:
++        return None
++    try:
++        flat_indices = indices.detach().reshape(-1)
++        valid = flat_indices[(flat_indices >= 0) & (flat_indices < state.shape[0])]
++        if state_limit > 0:
++            valid = valid[:state_limit]
++        record: dict[str, Any] = {
++            "indices_shape": list(indices.shape),
++            "indices_head": [
++                int(v) for v in flat_indices[: max(0, head_limit)].to("cpu").tolist()
++            ],
++            "selected_count": int(valid.numel()),
++        }
++        if valid.numel() > 0:
++            selected = state.index_select(0, valid.to(device=state.device).long())
++            record["selected"] = _xpu_gdn_tensor_digest(
++                selected, head_limit=head_limit, include_head=True
++            )
++        return record
++    except Exception as exc:
++        return {"error": repr(exc)}
++
++
++def _xpu_gdn_trace_enabled(
++    forward_context: Any,
++    layer_name: str,
++    attn_metadata: Any,
++) -> tuple[bool, dict[str, Any]]:
++    trace_file = os.environ.get("VLLM_XPU_GDN_TRACE_FILE", "")
++    if not trace_file:
++        return False, {}
++
++    global _XPU_GDN_TRACE_LINES
++    max_lines = _xpu_gdn_trace_int_env("VLLM_XPU_GDN_TRACE_MAX_LINES", 0)
++    if max_lines > 0 and _XPU_GDN_TRACE_LINES >= max_lines:
++        return False, {}
++
++    tp_rank = _xpu_gdn_trace_rank()
++    rank_filter = os.environ.get("VLLM_XPU_GDN_TRACE_RANK", "")
++    if rank_filter and rank_filter not in ("*", "all") and str(tp_rank) != rank_filter:
++        return False, {}
++
++    layer_regex = os.environ.get("VLLM_XPU_GDN_TRACE_LAYER_REGEX", "")
++    if layer_regex:
++        try:
++            if not re.search(layer_regex, layer_name):
++                return False, {}
++        except re.error:
++            return False, {}
++
++    if (
++        os.environ.get("VLLM_XPU_GDN_TRACE_PREFILL_ONLY", "0") == "1"
++        and getattr(attn_metadata, "num_prefills", 0) <= 0
++    ):
++        return False, {}
++    if (
++        os.environ.get("VLLM_XPU_GDN_TRACE_DECODE_ONLY", "0") == "1"
++        and getattr(attn_metadata, "num_decodes", 0) <= 0
++    ):
++        return False, {}
++
++    extra = getattr(forward_context, "additional_kwargs", {}) or {}
++    req_ids = [str(req_id) for req_id in extra.get("xpu_req_ids", [])]
++    req_regex = os.environ.get("VLLM_XPU_GDN_TRACE_REQ_REGEX", "")
++    matched_req_ids = req_ids
++    if req_regex:
++        try:
++            matched_req_ids = [req_id for req_id in req_ids if re.search(req_regex, req_id)]
++        except re.error:
++            matched_req_ids = []
++        if not matched_req_ids:
++            return False, {}
++
++    return True, {
++        "trace_file": trace_file,
++        "tp_rank": tp_rank,
++        "req_ids": req_ids,
++        "matched_req_ids": matched_req_ids,
++        "forward_context_extra": extra,
++    }
++
++
++def _xpu_gdn_trace_write(
++    *,
++    stage: str,
++    trace_context: dict[str, Any],
++    layer_name: str,
++    attn_metadata: Any,
++    core_attn_out: torch.Tensor | None,
++    z: torch.Tensor | None,
++    projected_states_qkvz: torch.Tensor | None,
++    projected_states_ba: torch.Tensor | None,
++    conv_state: torch.Tensor | None,
++    ssm_state: torch.Tensor | None,
++    non_spec_state_indices_tensor: torch.Tensor | None,
++) -> None:
++    global _XPU_GDN_TRACE_LINES
++    max_lines = _xpu_gdn_trace_int_env("VLLM_XPU_GDN_TRACE_MAX_LINES", 0)
++    if max_lines > 0 and _XPU_GDN_TRACE_LINES >= max_lines:
++        return
++    head_limit = max(0, _xpu_gdn_trace_int_env("VLLM_XPU_GDN_TRACE_TENSOR_LIMIT", 8))
++    state_limit = max(1, _xpu_gdn_trace_int_env("VLLM_XPU_GDN_TRACE_STATE_LIMIT", 2))
++    try:
++        has_initial_state = getattr(attn_metadata, "has_initial_state", None)
++        record = {
++            "ts": time.time(),
++            "pid": os.getpid(),
++            "stage": stage,
++            "tp_rank": trace_context.get("tp_rank"),
++            "layer": layer_name,
++            "req_ids": trace_context.get("req_ids", []),
++            "matched_req_ids": trace_context.get("matched_req_ids", []),
++            "forward_context_extra": trace_context.get("forward_context_extra", {}),
++            "metadata": {
++                "num_prefills": int(getattr(attn_metadata, "num_prefills", 0)),
++                "num_decodes": int(getattr(attn_metadata, "num_decodes", 0)),
++                "num_actual_tokens": int(
++                    getattr(attn_metadata, "num_actual_tokens", 0)
++                ),
++                "has_initial_state": None
++                if has_initial_state is None
++                else [
++                    bool(v)
++                    for v in has_initial_state.detach()
++                    .reshape(-1)[:head_limit]
++                    .to("cpu")
++                    .tolist()
++                ],
++            },
++            "projected_states_qkvz": _xpu_gdn_tensor_digest(
++                projected_states_qkvz, head_limit=head_limit, include_head=True
++            ),
++            "projected_states_ba": _xpu_gdn_tensor_digest(
++                projected_states_ba, head_limit=head_limit, include_head=True
++            ),
++            "core_attn_out": _xpu_gdn_tensor_digest(
++                core_attn_out, head_limit=head_limit, include_head=True
++            ),
++            "z": _xpu_gdn_tensor_digest(z, head_limit=head_limit, include_head=True),
++            "conv_state": _xpu_gdn_selected_state_digest(
++                conv_state,
++                non_spec_state_indices_tensor,
++                head_limit=head_limit,
++                state_limit=state_limit,
++            ),
++            "ssm_state": _xpu_gdn_selected_state_digest(
++                ssm_state,
++                non_spec_state_indices_tensor,
++                head_limit=head_limit,
++                state_limit=state_limit,
++            ),
++        }
++        trace_file = str(trace_context["trace_file"])
++        trace_dir = os.path.dirname(trace_file)
++        if trace_dir:
++            os.makedirs(trace_dir, exist_ok=True)
++        with open(trace_file, "a", encoding="utf-8") as f:
++            f.write(json.dumps(record, separators=(",", ":")) + "\n")
++        _XPU_GDN_TRACE_LINES += 1
++    except Exception:
++        logger.exception("Failed to write XPU GDN trace")
++
++
+ def _gdn_attention_core_xpu_impl(
+     core_attn_out: torch.Tensor,
+     z: torch.Tensor,
+@@ -107,45 +454,293 @@ def _gdn_attention_core_xpu_impl(
+     self = forward_context.no_compile_layers[layer_name]
+     attn_metadata_raw = forward_context.attn_metadata
+ 
++    def unpack_projected_states() -> tuple[
++        torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor
++    ]:
++        if self.gqa_interleaved_layout:
++            from einops import rearrange
++
++            query, key, value, z_generic, b, a = self.fix_query_key_value_ordering(
++                projected_states_qkvz, projected_states_ba
++            )
++            query, key, value = map(
++                lambda x: rearrange(x, "l p d -> l (p d)"), (query, key, value)
++            )
++            mixed_qkv = torch.cat((query, key, value), dim=-1)
++        else:
++            qkv_size = (self.key_dim * 2 + self.value_dim) // self.tp_size
++            z_size = self.value_dim // self.tp_size
++            mixed_qkv, z_generic = projected_states_qkvz.split(
++                [qkv_size, z_size], dim=-1
++            )
++            z_generic = z_generic.reshape(z_generic.size(0), -1, self.head_v_dim)
++            b, a = projected_states_ba.chunk(2, dim=-1)
++            b = b.contiguous()
++            a = a.contiguous()
++        return mixed_qkv, z_generic, b, a
++
++    gdn_native_fallback = os.environ.get(
++        "VLLM_XPU_GDN_NATIVE_FALLBACK", "decode,prefill"
++    )
++    gdn_native_fallback_modes = _xpu_gdn_fallback_modes(gdn_native_fallback)
++    gdn_fallback_all = bool(
++        gdn_native_fallback_modes & {"1", "true", "yes", "on", "all"}
++    )
++    gdn_fallback_safe = "safe" in gdn_native_fallback_modes
++    gdn_prefill_fallback_requested = (
++        gdn_fallback_all
++        or gdn_fallback_safe
++        or bool(gdn_native_fallback_modes & {"prefill", "prefill_only"})
++        or _xpu_gdn_truthy_env("VLLM_XPU_GDN_NATIVE_PREFILL_FALLBACK")
++    )
++    gdn_prefill_recurrent_fallback = (
++        current_platform.is_xpu()
++        and os.environ.get(
++            "VLLM_XPU_GDN_PREFILL_RECURRENT_FALLBACK", "1"
++        ).strip().lower()
++        not in ("0", "false", "no", "off")
++    )
++
+     if attn_metadata_raw is None:
++        if gdn_prefill_fallback_requested and not gdn_prefill_recurrent_fallback:
++            mixed_qkv, z_generic, b, a = unpack_projected_states()
++            z.copy_(z_generic)
++            self._forward_core(
++                mixed_qkv=mixed_qkv,
++                b=b,
++                a=a,
++                core_attn_out=core_attn_out,
++            )
+         return
+ 
+     assert isinstance(attn_metadata_raw, dict)
+     attn_metadata = attn_metadata_raw[self.prefix]
+     assert isinstance(attn_metadata, GDNAttentionMetadata)
++    initial_decode_fallback_steps = _xpu_gdn_trace_int_env(
++        "VLLM_XPU_GDN_NATIVE_FALLBACK_INITIAL_DECODE_STEPS", 0
++    )
++    decode_without_spec = (
++        attn_metadata.spec_sequence_masks is None  # type: ignore[attr-defined]
++        and attn_metadata.num_prefills == 0  # type: ignore[attr-defined]
++        and attn_metadata.num_decodes > 0  # type: ignore[attr-defined]
++    )
++    prefill_without_spec = (
++        attn_metadata.spec_sequence_masks is None  # type: ignore[attr-defined]
++        and attn_metadata.num_prefills > 0  # type: ignore[attr-defined]
++    )
++    initial_decode_fallback = False
++    if (
++        initial_decode_fallback_steps > 0
++        and decode_without_spec
++    ):
++        try:
++            extra = getattr(forward_context, "additional_kwargs", {}) or {}
++            prompt_tokens = extra.get("xpu_num_prompt_tokens") or []
++            computed_tokens = extra.get("xpu_num_computed_tokens") or []
++            for prompt_count, computed_count in zip(prompt_tokens, computed_tokens):
++                decode_index = int(computed_count) - int(prompt_count)
++                if 0 <= decode_index < initial_decode_fallback_steps:
++                    initial_decode_fallback = True
++                    break
++        except Exception:
++            logger.exception("Failed to inspect initial GDN decode fallback state")
++    decode_only_fallback = (
++        (
++            gdn_fallback_all
++            or gdn_fallback_safe
++            or bool(gdn_native_fallback_modes & {"decode", "decode_only"})
++        )
++        and decode_without_spec
++    )
++    prefill_fallback = (
++        gdn_prefill_fallback_requested
++        and prefill_without_spec
++    )
++    decode_layer_fallback = (
++        decode_without_spec and _xpu_gdn_decode_layer_fallback_enabled(self.prefix)
++    )
++    trace_enabled, trace_context = _xpu_gdn_trace_enabled(
++        forward_context, self.prefix, attn_metadata
++    )
++    if trace_enabled and (
++        gdn_fallback_all
++        or decode_only_fallback
++        or prefill_fallback
++        or initial_decode_fallback
++        or decode_layer_fallback
++    ):
++        trace_state_indices = attn_metadata.non_spec_state_indices_tensor  # type: ignore[attr-defined]
++        if trace_state_indices is not None:
++            trace_state_indices = trace_state_indices.contiguous()
++        _xpu_gdn_trace_write(
++            stage="pre_fallback_core",
++            trace_context=trace_context,
++            layer_name=self.prefix,
++            attn_metadata=attn_metadata,
++            core_attn_out=core_attn_out,
++            z=z,
++            projected_states_qkvz=projected_states_qkvz,
++            projected_states_ba=projected_states_ba,
++            conv_state=self.kv_cache[0],
++            ssm_state=self.kv_cache[1],
++            non_spec_state_indices_tensor=trace_state_indices,
++        )
++    if (
++        gdn_fallback_all
++        or decode_only_fallback
++        or prefill_fallback
++        or initial_decode_fallback
++        or decode_layer_fallback
++    ):
++        mixed_qkv, z_generic, b, a = unpack_projected_states()
++        z.copy_(z_generic)
++        self._forward_core(
++            mixed_qkv=mixed_qkv,
++            b=b,
++            a=a,
++            core_attn_out=core_attn_out,
++        )
++        return
+ 
+-    # TODO: xpu does not support speculative decoding yet
+-    assert attn_metadata.spec_sequence_masks is None  # type: ignore[attr-defined]
++    if attn_metadata.spec_sequence_masks is not None:  # type: ignore[attr-defined]
++        mixed_qkv, z_generic, b, a = unpack_projected_states()
++        z.copy_(z_generic)
++        self._forward_core(
++            mixed_qkv=mixed_qkv,
++            b=b,
++            a=a,
++            core_attn_out=core_attn_out,
++        )
++        return
+ 
+     conv_weights = self.conv1d.weight.view(
+         self.conv1d.weight.size(0), self.conv1d.weight.size(2)
+     )
+ 
+-    torch.ops._xpu_C.gdn_attention(
+-        core_attn_out,
+-        z,
+-        projected_states_qkvz,
+-        projected_states_ba,
+-        self.num_k_heads,
+-        self.num_v_heads,
+-        self.head_k_dim,
+-        self.head_v_dim,
+-        conv_state=self.kv_cache[0],
+-        ssm_state=self.kv_cache[1],
+-        conv_weights=conv_weights,
+-        conv_bias=self.conv1d.bias,
+-        activation=self.activation,
+-        A_log=self.A_log,
+-        dt_bias=self.dt_bias,
+-        num_prefills=attn_metadata.num_prefills,  # type: ignore[attr-defined]
+-        num_decodes=attn_metadata.num_decodes,  # type: ignore[attr-defined]
+-        has_initial_state=attn_metadata.has_initial_state,  # type: ignore[attr-defined]
+-        non_spec_query_start_loc=attn_metadata.non_spec_query_start_loc,  # type: ignore[attr-defined]
+-        non_spec_state_indices_tensor=attn_metadata.non_spec_state_indices_tensor,  # type: ignore[attr-defined]
+-        num_actual_tokens=attn_metadata.num_actual_tokens,  # type: ignore[attr-defined]
+-        tp_size=self.tp_size,
+-        reorder_input=not self.gqa_interleaved_layout,
++    non_spec_state_indices_tensor = attn_metadata.non_spec_state_indices_tensor  # type: ignore[attr-defined]
++    if non_spec_state_indices_tensor is not None:
++        non_spec_state_indices_tensor = non_spec_state_indices_tensor.contiguous()
++
++    non_spec_query_start_loc = attn_metadata.non_spec_query_start_loc  # type: ignore[attr-defined]
++    if non_spec_query_start_loc is not None:
++        non_spec_query_start_loc = non_spec_query_start_loc.contiguous()
++
++    conv_state = self.kv_cache[0]
++    ssm_state = self.kv_cache[1]
++    if trace_enabled:
++        _xpu_gdn_trace_write(
++            stage="pre_native",
++            trace_context=trace_context,
++            layer_name=self.prefix,
++            attn_metadata=attn_metadata,
++            core_attn_out=core_attn_out,
++            z=z,
++            projected_states_qkvz=projected_states_qkvz,
++            projected_states_ba=projected_states_ba,
++            conv_state=conv_state,
++            ssm_state=ssm_state,
++            non_spec_state_indices_tensor=non_spec_state_indices_tensor,
++        )
++
++    if (
++        decode_without_spec
++        and (
++            _xpu_gdn_truthy_env("VLLM_XPU_GDN_SYNC_BEFORE_NATIVE_DECODE")
++            or _xpu_gdn_layer_list_match(
++                self.prefix, "VLLM_XPU_GDN_SYNC_BEFORE_NATIVE_DECODE_LAYERS"
++            )
++        )
++    ):
++        try:
++            torch.xpu.synchronize()
++        except Exception:
++            logger.exception("Failed to synchronize before native XPU GDN decode")
++
++    zero_all_prefill_gdn_state = (
++        os.environ.get("VLLM_XPU_ZERO_ALL_PREFILL_GDN_STATE", "0") == "1"
+     )
++    if (
++        (
++            os.environ.get("VLLM_XPU_ZERO_FRESH_GDN_STATE", "0") == "1"
++            or zero_all_prefill_gdn_state
++        )
++        and getattr(attn_metadata, "num_prefills", 0) > 0
++        and non_spec_state_indices_tensor is not None
++        and (
++            zero_all_prefill_gdn_state
++            or getattr(attn_metadata, "has_initial_state", None) is not None
++        )
++    ):
++        try:
++            if zero_all_prefill_gdn_state:
++                fresh_state_indices = non_spec_state_indices_tensor.reshape(-1)
++            else:
++                has_initial_state = attn_metadata.has_initial_state  # type: ignore[attr-defined]
++                fresh_state_mask = ~has_initial_state
++                fresh_state_indices = non_spec_state_indices_tensor[fresh_state_mask]
++            conv_state[fresh_state_indices] = 0
++            ssm_state[fresh_state_indices] = 0
++            if trace_enabled:
++                _xpu_gdn_trace_write(
++                    stage=(
++                        "post_prefill_state_zero"
++                        if zero_all_prefill_gdn_state
++                        else "post_fresh_state_zero"
++                    ),
++                    trace_context=trace_context,
++                    layer_name=self.prefix,
++                    attn_metadata=attn_metadata,
++                    core_attn_out=core_attn_out,
++                    z=z,
++                    projected_states_qkvz=projected_states_qkvz,
++                    projected_states_ba=projected_states_ba,
++                    conv_state=conv_state,
++                    ssm_state=ssm_state,
++                    non_spec_state_indices_tensor=non_spec_state_indices_tensor,
++                )
++        except Exception:
++            logger.exception("Failed to zero fresh XPU GDN state")
++
++    with timed_region("gdn_attention_core_xpu.native"):
++        torch.ops._xpu_C.gdn_attention(
++            core_attn_out,
++            z,
++            projected_states_qkvz,
++            projected_states_ba,
++            self.num_k_heads,
++            self.num_v_heads,
++            self.head_k_dim,
++            self.head_v_dim,
++            conv_state=conv_state,
++            ssm_state=ssm_state,
++            conv_weights=conv_weights,
++            conv_bias=self.conv1d.bias,
++            activation=self.activation,
++            A_log=self.A_log,
++            dt_bias=self.dt_bias,
++            num_prefills=attn_metadata.num_prefills,  # type: ignore[attr-defined]
++            num_decodes=attn_metadata.num_decodes,  # type: ignore[attr-defined]
++            has_initial_state=attn_metadata.has_initial_state,  # type: ignore[attr-defined]
++            non_spec_query_start_loc=non_spec_query_start_loc,
++            non_spec_state_indices_tensor=non_spec_state_indices_tensor,
++            num_actual_tokens=attn_metadata.num_actual_tokens,  # type: ignore[attr-defined]
++            tp_size=self.tp_size,
++            reorder_input=not self.gqa_interleaved_layout,
++        )
++    if trace_enabled:
++        _xpu_gdn_trace_write(
++            stage="post_native",
++            trace_context=trace_context,
++            layer_name=self.prefix,
++            attn_metadata=attn_metadata,
++            core_attn_out=core_attn_out,
++            z=z,
++            projected_states_qkvz=projected_states_qkvz,
++            projected_states_ba=projected_states_ba,
++            conv_state=conv_state,
++            ssm_state=ssm_state,
++            non_spec_state_indices_tensor=non_spec_state_indices_tensor,
++        )
+ 
+ 
+ def _gdn_attention_core_xpu_fake(
+diff --git a/vllm/compilation/cuda_graph.py b/vllm/compilation/cuda_graph.py
+index b63d86199..02d2824a7 100644
+--- a/vllm/compilation/cuda_graph.py
++++ b/vllm/compilation/cuda_graph.py
+@@ -2,6 +2,10 @@
+ # SPDX-FileCopyrightText: Copyright contributors to the vLLM project
+ 
+ import dataclasses
++import json
++import os
++import re
++import time
+ import weakref
+ from collections import Counter
+ from collections.abc import Callable
+@@ -13,7 +17,10 @@ import torch
+ 
+ import vllm.envs as envs
+ from vllm.compilation.counter import compilation_counter
+-from vllm.compilation.monitor import validate_cudagraph_capturing_enabled
++from vllm.compilation.monitor import (
++    set_cudagraph_capturing_enabled,
++    validate_cudagraph_capturing_enabled,
++)
+ from vllm.config import CUDAGraphMode, VllmConfig
+ from vllm.distributed.device_communicators.pynccl_allocator import set_graph_pool_id
+ from vllm.forward_context import (
+@@ -27,6 +34,35 @@ from vllm.platforms import current_platform
+ from vllm.utils.torch_utils import current_stream, weak_ref_tensors
+ 
+ logger = init_logger(__name__)
++_XPU_CUDAGRAPH_TRACE_LINES = 0
++_XPU_CUDAGRAPH_WRAPPER_IDS = 0
++_XPU_CUDAGRAPH_COMPARE_DIRECT_LINES = 0
++
++
++def _xpu_cudagraph_int_env(name: str, default: int) -> int:
++    try:
++        return int(os.environ.get(name, str(default)) or default)
++    except ValueError:
++        return default
++
++
++def _xpu_cudagraph_rank() -> int:
++    try:
++        from vllm.distributed import get_tensor_model_parallel_rank
++
++        return int(get_tensor_model_parallel_rank())
++    except Exception:
++        try:
++            return int(os.environ.get("LOCAL_RANK", "0") or "0")
++        except ValueError:
++            return 0
++
++
++def _xpu_cudagraph_trace_path(raw_path: str, rank: int) -> str:
++    try:
++        return raw_path.format(rank=rank, pid=os.getpid())
++    except Exception:
++        return raw_path
+ 
+ 
+ @dataclasses.dataclass(frozen=True)
+@@ -129,6 +165,7 @@ class CUDAGraphEntry:
+     batch_descriptor: BatchDescriptor
+     cudagraph: torch.cuda.CUDAGraph | None = None
+     output: Any | None = None
++    replay_count: int = 0
+ 
+     # for cudagraph debugging, track the input addresses
+     # during capture, and check if they are the same during replay
+@@ -182,10 +219,13 @@ class CUDAGraphWrapper:
+         runtime_mode: CUDAGraphMode,
+         cudagraph_options: CUDAGraphOptions | None = None,
+     ) -> None:
++        global _XPU_CUDAGRAPH_WRAPPER_IDS
+         self.runnable = runnable
+         self.vllm_config = vllm_config
+         self.runtime_mode = runtime_mode
+         self.compilation_config = vllm_config.compilation_config
++        self._xpu_cudagraph_wrapper_id = _XPU_CUDAGRAPH_WRAPPER_IDS
++        _XPU_CUDAGRAPH_WRAPPER_IDS += 1
+ 
+         self.first_run_finished = False
+         self.is_debugging_mode = envs.VLLM_LOGGING_LEVEL == "DEBUG"
+@@ -197,10 +237,19 @@ class CUDAGraphWrapper:
+         # TODO: in the future, if we want to use multiple
+         # streams, it might not be safe to share a global pool.
+         # only investigate this when we use multiple streams
+-        self.graph_pool = current_platform.get_global_graph_pool()
++        if os.environ.get("VLLM_XPU_CUDAGRAPH_PER_WRAPPER_POOL", "0") == "1":
++            self.graph_pool = current_platform.graph_pool_handle()
++        elif os.environ.get("VLLM_XPU_CUDAGRAPH_NO_GLOBAL_POOL", "0") == "1":
++            self.graph_pool = None
++        else:
++            self.graph_pool = current_platform.get_global_graph_pool()
+ 
+         if cudagraph_options is None:
+             cudagraph_options = CUDAGraphOptions()
++        if os.environ.get("VLLM_XPU_CUDAGRAPH_STRONG_OUTPUT", "0") == "1":
++            cudagraph_options = dataclasses.replace(
++                cudagraph_options, weak_ref_output=False
++            )
+         self.cudagraph_options = cudagraph_options
+         # the entries for different batch descriptors that we need to capture
+         # cudagraphs for.
+@@ -208,6 +257,598 @@ class CUDAGraphWrapper:
+ 
+         CUDAGraphWrapper._all_instances.add(self)
+ 
++    def _xpu_cudagraph_identity(self) -> dict[str, Any]:
++        runnable_type = type(self.runnable)
++        submod_name = getattr(self.runnable, "submod_name", "")
++        piecewise_index = getattr(self.runnable, "piecewise_compile_index", None)
++        total_piecewise = getattr(self.runnable, "total_piecewise_compiles", None)
++        identity = {
++            "wrapper_id": self._xpu_cudagraph_wrapper_id,
++            "runtime_mode": self.runtime_mode.name,
++            "runnable_type": (
++                f"{runnable_type.__module__}.{runnable_type.__qualname__}"
++            ),
++            "submod_name": submod_name,
++            "piecewise_index": piecewise_index,
++            "total_piecewise_compiles": total_piecewise,
++            "is_first_graph": getattr(self.runnable, "is_first_graph", None),
++            "is_last_graph": getattr(self.runnable, "is_last_graph", None),
++        }
++        return identity
++
++    def _xpu_cudagraph_trace_label(self) -> str:
++        identity = self._xpu_cudagraph_identity()
++        fields = [
++            f"wrapper:{identity['wrapper_id']}",
++            f"mode:{identity['runtime_mode']}",
++            f"type:{identity['runnable_type']}",
++        ]
++        if identity.get("submod_name"):
++            fields.append(f"submod:{identity['submod_name']}")
++        if identity.get("piecewise_index") is not None:
++            fields.append(
++                "piecewise:"
++                f"{identity['piecewise_index']}/"
++                f"{identity.get('total_piecewise_compiles')}"
++            )
++        return " ".join(fields)
++
++    def _xpu_cudagraph_disabled_by_regex(self) -> bool:
++        pattern = os.environ.get("VLLM_XPU_CUDAGRAPH_DISABLE_SUBMOD_REGEX", "")
++        if not pattern:
++            return False
++        try:
++            return re.search(pattern, self._xpu_cudagraph_trace_label()) is not None
++        except re.error as exc:
++            logger.warning_once(
++                "Invalid VLLM_XPU_CUDAGRAPH_DISABLE_SUBMOD_REGEX=%r: %r",
++                pattern,
++                exc,
++            )
++            return False
++
++    def _xpu_cudagraph_disabled_reason(self) -> str:
++        max_piecewise_raw = os.environ.get(
++            "VLLM_XPU_CUDAGRAPH_REPLAY_MAX_PIECEWISE_INDEX", ""
++        ).strip()
++        if max_piecewise_raw:
++            try:
++                max_piecewise = int(max_piecewise_raw)
++                piecewise_index = getattr(
++                    self.runnable, "piecewise_compile_index", None
++                )
++                if (
++                    piecewise_index is not None
++                    and int(piecewise_index) > max_piecewise
++                ):
++                    return (
++                        "piecewise_index_above_replay_max:"
++                        f"{piecewise_index}>{max_piecewise}"
++                    )
++            except ValueError:
++                logger.warning_once(
++                    "Invalid VLLM_XPU_CUDAGRAPH_REPLAY_MAX_PIECEWISE_INDEX=%r",
++                    max_piecewise_raw,
++                )
++
++        if self._xpu_cudagraph_disabled_by_regex():
++            return "disabled_by_submod_regex"
++        return ""
++
++    def _xpu_cudagraph_compare_direct_enabled(self) -> bool:
++        pattern = os.environ.get("VLLM_XPU_CUDAGRAPH_COMPARE_DIRECT_REGEX", "")
++        if not pattern:
++            return False
++        global _XPU_CUDAGRAPH_COMPARE_DIRECT_LINES
++        max_lines = _xpu_cudagraph_int_env(
++            "VLLM_XPU_CUDAGRAPH_COMPARE_DIRECT_MAX_LINES", 0
++        )
++        if max_lines > 0 and _XPU_CUDAGRAPH_COMPARE_DIRECT_LINES >= max_lines:
++            return False
++        try:
++            return re.search(pattern, self._xpu_cudagraph_trace_label()) is not None
++        except re.error as exc:
++            logger.warning_once(
++                "Invalid VLLM_XPU_CUDAGRAPH_COMPARE_DIRECT_REGEX=%r: %r",
++                pattern,
++                exc,
++            )
++            return False
++
++    def _xpu_cudagraph_zero_replay_outputs_enabled(self) -> bool:
++        pattern = os.environ.get("VLLM_XPU_CUDAGRAPH_ZERO_REPLAY_OUTPUT_REGEX", "")
++        if not pattern:
++            return False
++        try:
++            return re.search(pattern, self._xpu_cudagraph_trace_label()) is not None
++        except re.error as exc:
++            logger.warning_once(
++                "Invalid VLLM_XPU_CUDAGRAPH_ZERO_REPLAY_OUTPUT_REGEX=%r: %r",
++                pattern,
++                exc,
++            )
++            return False
++
++    def _xpu_cudagraph_clone_replay_outputs_enabled(self) -> bool:
++        pattern = os.environ.get("VLLM_XPU_CUDAGRAPH_CLONE_REPLAY_OUTPUT_REGEX", "")
++        if not pattern:
++            return False
++        try:
++            return re.search(pattern, self._xpu_cudagraph_trace_label()) is not None
++        except re.error as exc:
++            logger.warning_once(
++                "Invalid VLLM_XPU_CUDAGRAPH_CLONE_REPLAY_OUTPUT_REGEX=%r: %r",
++                pattern,
++                exc,
++            )
++            return False
++
++    @staticmethod
++    def _xpu_cudagraph_replay_output_indices_from_env(name: str) -> set[int]:
++        raw_indices = os.environ.get(name, "")
++        indices: set[int] = set()
++        for raw_index in raw_indices.split(","):
++            raw_index = raw_index.strip()
++            if not raw_index:
++                continue
++            try:
++                indices.add(int(raw_index))
++            except ValueError:
++                logger.warning_once(
++                    "Invalid %s item=%r",
++                    name,
++                    raw_index,
++                )
++        return indices
++
++    @staticmethod
++    def _xpu_cudagraph_zero_replay_output_indices() -> set[int]:
++        return CUDAGraphWrapper._xpu_cudagraph_replay_output_indices_from_env(
++            "VLLM_XPU_CUDAGRAPH_ZERO_REPLAY_OUTPUT_INDICES"
++        )
++
++    @staticmethod
++    def _xpu_cudagraph_clone_replay_output_indices() -> set[int]:
++        return CUDAGraphWrapper._xpu_cudagraph_replay_output_indices_from_env(
++            "VLLM_XPU_CUDAGRAPH_CLONE_REPLAY_OUTPUT_INDICES"
++        )
++
++    def _xpu_cudagraph_zero_selected_replay_outputs(self, output: Any) -> int:
++        if not self._xpu_cudagraph_zero_replay_outputs_enabled():
++            return 0
++        indices = self._xpu_cudagraph_zero_replay_output_indices()
++        if not indices:
++            return 0
++        if not isinstance(output, (tuple, list)):
++            return 0
++
++        zeroed = 0
++        with torch.no_grad():
++            for index in indices:
++                if index < 0 or index >= len(output):
++                    continue
++                tensor = output[index]
++                if isinstance(tensor, torch.Tensor) and tensor.numel() > 0:
++                    tensor.zero_()
++                    zeroed += 1
++        return zeroed
++
++    def _xpu_cudagraph_clone_selected_replay_outputs(
++        self, output: Any
++    ) -> tuple[Any, int]:
++        if not self._xpu_cudagraph_clone_replay_outputs_enabled():
++            return output, 0
++        indices = self._xpu_cudagraph_clone_replay_output_indices()
++        if not indices or not isinstance(output, (tuple, list)):
++            return output, 0
++
++        cloned = 0
++        values = list(output)
++        for index in indices:
++            if index < 0 or index >= len(values):
++                continue
++            tensor = values[index]
++            if isinstance(tensor, torch.Tensor) and tensor.numel() > 0:
++                values[index] = tensor.clone()
++                cloned += 1
++        if not cloned:
++            return output, 0
++        if isinstance(output, tuple):
++            return tuple(values), cloned
++        return values, cloned
++
++    def _xpu_cudagraph_clone_output_tensors(self, output: Any) -> Any:
++        if isinstance(output, torch.Tensor):
++            return output.detach().clone()
++        if isinstance(output, tuple):
++            return tuple(self._xpu_cudagraph_clone_output_tensors(v) for v in output)
++        if isinstance(output, list):
++            return [self._xpu_cudagraph_clone_output_tensors(v) for v in output]
++        if isinstance(output, dict):
++            return {
++                key: self._xpu_cudagraph_clone_output_tensors(value)
++                for key, value in output.items()
++            }
++        tensors = getattr(output, "tensors", None)
++        if isinstance(tensors, dict):
++            return {
++                str(key): self._xpu_cudagraph_clone_output_tensors(value)
++                for key, value in tensors.items()
++            }
++        return output
++
++    def _xpu_cudagraph_collect_tensors(
++        self, output: Any, path: str = "$"
++    ) -> list[tuple[str, torch.Tensor]]:
++        if isinstance(output, torch.Tensor):
++            return [(path, output)]
++        if isinstance(output, tuple):
++            tensors: list[tuple[str, torch.Tensor]] = []
++            for idx, value in enumerate(output):
++                tensors.extend(
++                    self._xpu_cudagraph_collect_tensors(value, f"{path}[{idx}]")
++                )
++            return tensors
++        if isinstance(output, list):
++            tensors = []
++            for idx, value in enumerate(output):
++                tensors.extend(
++                    self._xpu_cudagraph_collect_tensors(value, f"{path}[{idx}]")
++                )
++            return tensors
++        if isinstance(output, dict):
++            tensors = []
++            for key, value in output.items():
++                tensors.extend(
++                    self._xpu_cudagraph_collect_tensors(value, f"{path}.{key}")
++                )
++            return tensors
++        output_tensors = getattr(output, "tensors", None)
++        if isinstance(output_tensors, dict):
++            tensors = []
++            for key, value in output_tensors.items():
++                tensors.extend(
++                    self._xpu_cudagraph_collect_tensors(value, f"{path}.{key}")
++                )
++            return tensors
++        return []
++
++    def _xpu_cudagraph_compare_outputs(
++        self, replay_output: Any, direct_output: Any
++    ) -> dict[str, Any]:
++        max_numel = _xpu_cudagraph_int_env(
++            "VLLM_XPU_CUDAGRAPH_COMPARE_DIRECT_MAX_NUMEL", 262144
++        )
++        replay_tensors = self._xpu_cudagraph_collect_tensors(replay_output)
++        direct_tensors = self._xpu_cudagraph_collect_tensors(direct_output)
++        comparisons: list[dict[str, Any]] = []
++        for idx, (replay_item, direct_item) in enumerate(
++            zip(replay_tensors, direct_tensors)
++        ):
++            replay_path, replay_tensor = replay_item
++            direct_path, direct_tensor = direct_item
++            item: dict[str, Any] = {
++                "index": idx,
++                "replay_path": replay_path,
++                "direct_path": direct_path,
++                "replay_shape": list(replay_tensor.shape),
++                "direct_shape": list(direct_tensor.shape),
++                "replay_dtype": str(replay_tensor.dtype),
++                "direct_dtype": str(direct_tensor.dtype),
++                "replay_device": str(replay_tensor.device),
++                "direct_device": str(direct_tensor.device),
++            }
++            if replay_tensor.shape != direct_tensor.shape:
++                item["match"] = False
++                item["reason"] = "shape"
++            elif replay_tensor.numel() > max_numel:
++                item["match"] = None
++                item["reason"] = "numel"
++                item["max_numel"] = max_numel
++            else:
++                try:
++                    replay_float = replay_tensor.detach().float()
++                    direct_float = direct_tensor.detach().float()
++                    diff = (replay_float - direct_float).abs()
++                    finite = torch.isfinite(diff)
++                    finite_count = int(finite.sum().item())
++                    item["finite_diff"] = finite_count
++                    item["nan_diff"] = int(torch.isnan(diff).sum().item())
++                    if finite_count:
++                        finite_diff = diff[finite]
++                        max_abs = float(finite_diff.max().item())
++                        mean_abs = float(finite_diff.mean().item())
++                        item["max_abs"] = max_abs
++                        item["mean_abs"] = mean_abs
++                        item["match"] = max_abs == 0.0
++                    else:
++                        item["match"] = False
++                except Exception as exc:
++                    item["match"] = False
++                    item["reason"] = repr(exc)
++            comparisons.append(item)
++        return {
++            "replay_tensor_count": len(replay_tensors),
++            "direct_tensor_count": len(direct_tensors),
++            "all_match": (
++                len(replay_tensors) == len(direct_tensors)
++                and all(item.get("match") is True for item in comparisons)
++            ),
++            "comparisons": comparisons,
++        }
++
++    def _xpu_cudagraph_trace_compare_direct(
++        self,
++        trace_context: dict[str, Any],
++        batch_descriptor: BatchDescriptor | None,
++        entry: CUDAGraphEntry,
++        replay_output_snapshot: Any,
++        direct_output: Any,
++        comparison: dict[str, Any],
++    ) -> None:
++        global _XPU_CUDAGRAPH_COMPARE_DIRECT_LINES
++        _XPU_CUDAGRAPH_COMPARE_DIRECT_LINES += 1
++        try:
++            record = {
++                "ts": time.time(),
++                "pid": os.getpid(),
++                "tp_rank": trace_context.get("rank"),
++                "event": "compare_direct_finish",
++                **self._xpu_cudagraph_identity(),
++                "label": trace_context.get("label"),
++                "batch_descriptor": None
++                if batch_descriptor is None
++                else str(batch_descriptor),
++                "req_ids": trace_context.get("req_ids", []),
++                "matched_req_ids": trace_context.get("matched_req_ids", []),
++                "forward_extra": trace_context.get("forward_extra", {}),
++                "entry": {
++                    "has_graph": entry.cudagraph is not None,
++                    "replay_count": int(entry.replay_count),
++                },
++                "comparison": comparison,
++                "replay_output": self._xpu_cudagraph_output_trace_record(
++                    replay_output_snapshot
++                ),
++                "direct_output": self._xpu_cudagraph_output_trace_record(
++                    direct_output
++                ),
++            }
++            with open(trace_context["trace_file"], "a", encoding="utf-8") as f:
++                f.write(json.dumps(record, default=str) + "\n")
++        except Exception as exc:
++            logger.warning_once(
++                "Failed to write XPU cudagraph direct-compare trace: %r", exc
++            )
++
++    def _xpu_cudagraph_trace_enabled(
++        self,
++        forward_context: Any,
++    ) -> tuple[bool, dict[str, Any]]:
++        trace_file = os.environ.get("VLLM_XPU_CUDAGRAPH_REPLAY_TRACE_FILE", "")
++        if not trace_file:
++            return False, {}
++
++        global _XPU_CUDAGRAPH_TRACE_LINES
++        max_lines = _xpu_cudagraph_int_env(
++            "VLLM_XPU_CUDAGRAPH_REPLAY_TRACE_MAX_LINES", 0
++        )
++        if max_lines > 0 and _XPU_CUDAGRAPH_TRACE_LINES >= max_lines:
++            return False, {}
++
++        rank = _xpu_cudagraph_rank()
++        rank_filter = os.environ.get("VLLM_XPU_CUDAGRAPH_REPLAY_TRACE_RANK", "")
++        if rank_filter and rank_filter not in ("*", "all") and str(rank) != rank_filter:
++            return False, {}
++
++        label = self._xpu_cudagraph_trace_label()
++        submod_regex = os.environ.get(
++            "VLLM_XPU_CUDAGRAPH_REPLAY_TRACE_SUBMOD_REGEX", ""
++        )
++        if submod_regex:
++            try:
++                if re.search(submod_regex, label) is None:
++                    return False, {}
++            except re.error:
++                return False, {}
++
++        extra = getattr(forward_context, "additional_kwargs", {}) or {}
++        req_ids = [str(req_id) for req_id in extra.get("xpu_req_ids", [])]
++        req_regex = os.environ.get("VLLM_XPU_CUDAGRAPH_REPLAY_TRACE_REQ_REGEX", "")
++        matched_req_ids = req_ids
++        if req_regex:
++            try:
++                matched_req_ids = [
++                    req_id for req_id in req_ids if re.search(req_regex, req_id)
++                ]
++            except re.error:
++                matched_req_ids = []
++            if not matched_req_ids:
++                return False, {}
++
++        return True, {
++            "trace_file": _xpu_cudagraph_trace_path(trace_file, rank),
++            "rank": rank,
++            "label": label,
++            "req_ids": req_ids,
++            "matched_req_ids": matched_req_ids,
++            "forward_extra": extra,
++        }
++
++    def _xpu_cudagraph_trace_write(
++        self,
++        event: str,
++        trace_context: dict[str, Any],
++        batch_descriptor: BatchDescriptor | None,
++        entry: CUDAGraphEntry | None = None,
++        args: tuple[Any, ...] | None = None,
++        output: Any | None = None,
++        reason: str = "",
++    ) -> None:
++        global _XPU_CUDAGRAPH_TRACE_LINES
++        max_lines = _xpu_cudagraph_int_env(
++            "VLLM_XPU_CUDAGRAPH_REPLAY_TRACE_MAX_LINES", 0
++        )
++        if max_lines > 0 and _XPU_CUDAGRAPH_TRACE_LINES >= max_lines:
++            return
++        try:
++            include_args = (
++                os.environ.get("VLLM_XPU_CUDAGRAPH_REPLAY_TRACE_INPUTS", "0")
++                == "1"
++            )
++            include_digest = (
++                os.environ.get("VLLM_XPU_CUDAGRAPH_REPLAY_TRACE_DIGEST", "0")
++                == "1"
++            )
++            record: dict[str, Any] = {
++                "ts": time.time(),
++                "pid": os.getpid(),
++                "tp_rank": trace_context.get("rank"),
++                "event": event,
++                "reason": reason,
++                **self._xpu_cudagraph_identity(),
++                "label": trace_context.get("label"),
++                "batch_descriptor": None
++                if batch_descriptor is None
++                else str(batch_descriptor),
++                "req_ids": trace_context.get("req_ids", []),
++                "matched_req_ids": trace_context.get("matched_req_ids", []),
++                "forward_extra": trace_context.get("forward_extra", {}),
++                "entry": None
++                if entry is None
++                else {
++                    "has_graph": entry.cudagraph is not None,
++                    "replay_count": int(entry.replay_count),
++                    "input_addresses": entry.input_addresses
++                    if include_args
++                    else None,
++                },
++            }
++            if include_args and args is not None:
++                current_input_addresses = [
++                    int(arg.data_ptr())
++                    for arg in args
++                    if isinstance(arg, torch.Tensor)
++                ]
++                if entry is not None and entry.input_addresses is not None:
++                    record["input_address_check"] = {
++                        "match": current_input_addresses == entry.input_addresses,
++                        "current": current_input_addresses,
++                        "captured": entry.input_addresses,
++                    }
++                record["tensor_args"] = [
++                    {
++                        "arg_index": idx,
++                        **self._xpu_cudagraph_tensor_trace_record(
++                            arg,
++                            include_digest=include_digest,
++                        ),
++                    }
++                    for idx, arg in enumerate(args)
++                    if isinstance(arg, torch.Tensor)
++                ]
++            if include_digest and output is not None:
++                record["output"] = self._xpu_cudagraph_output_trace_record(output)
++            with open(trace_context["trace_file"], "a", encoding="utf-8") as f:
++                f.write(json.dumps(record, default=str) + "\n")
++            _XPU_CUDAGRAPH_TRACE_LINES += 1
++        except Exception as exc:
++            logger.warning_once("Failed to write XPU cudagraph replay trace: %r", exc)
++
++    def _xpu_cudagraph_tensor_trace_record(
++        self,
++        tensor: torch.Tensor,
++        *,
++        include_digest: bool,
++    ) -> dict[str, Any]:
++        record: dict[str, Any] = {
++            "shape": list(tensor.shape),
++            "dtype": str(tensor.dtype),
++            "device": str(tensor.device),
++            "data_ptr": int(tensor.data_ptr()),
++            "numel": int(tensor.numel()),
++            "stride": list(tensor.stride()),
++            "storage_offset": int(tensor.storage_offset()),
++            "is_contiguous": bool(tensor.is_contiguous()),
++        }
++        try:
++            storage = tensor.untyped_storage()
++            record["storage_data_ptr"] = int(storage.data_ptr())
++            record["storage_nbytes"] = int(storage.nbytes())
++        except Exception as exc:
++            record["storage_error"] = repr(exc)
++        if not include_digest:
++            return record
++        max_numel = _xpu_cudagraph_int_env(
++            "VLLM_XPU_CUDAGRAPH_REPLAY_TRACE_DIGEST_MAX_NUMEL", 262144
++        )
++        head_limit = _xpu_cudagraph_int_env(
++            "VLLM_XPU_CUDAGRAPH_REPLAY_TRACE_DIGEST_HEAD", 8
++        )
++        if tensor.numel() == 0:
++            record["digest"] = {"empty": True}
++            return record
++        if tensor.numel() > max_numel:
++            record["digest"] = {"skipped": "numel", "max_numel": max_numel}
++            return record
++        try:
++            with torch.no_grad():
++                t = tensor.detach()
++                stats_t = t.float() if not t.is_floating_point() else t
++                finite_mask = torch.isfinite(stats_t)
++                finite_count = int(finite_mask.sum().item())
++                digest: dict[str, Any] = {
++                    "finite": finite_count,
++                    "nan": int(torch.isnan(stats_t).sum().item()),
++                    "posinf": int((stats_t == float("inf")).sum().item()),
++                    "neginf": int((stats_t == -float("inf")).sum().item()),
++                }
++                if finite_count:
++                    finite_vals = stats_t[finite_mask].float()
++                    digest.update(
++                        {
++                            "min": float(finite_vals.min().item()),
++                            "max": float(finite_vals.max().item()),
++                            "mean": float(finite_vals.mean().item()),
++                            "sum": float(finite_vals.sum().item()),
++                            "l2": float(torch.linalg.vector_norm(finite_vals).item()),
++                        }
++                    )
++                if head_limit > 0:
++                    digest["head"] = (
++                        t.reshape(-1)[:head_limit].to("cpu").tolist()
++                    )
++                record["digest"] = digest
++        except Exception as exc:
++            record["digest"] = {"error": repr(exc)}
++        return record
++
++    def _xpu_cudagraph_output_trace_record(self, output: Any) -> Any:
++        max_tensors = _xpu_cudagraph_int_env(
++            "VLLM_XPU_CUDAGRAPH_REPLAY_TRACE_OUTPUT_MAX_TENSORS", 8
++        )
++        tensors_seen = 0
++
++        def visit(obj: Any) -> Any:
++            nonlocal tensors_seen
++            if isinstance(obj, torch.Tensor):
++                if tensors_seen >= max_tensors:
++                    return {"skipped": "max_tensors"}
++                tensors_seen += 1
++                return self._xpu_cudagraph_tensor_trace_record(
++                    obj,
++                    include_digest=True,
++                )
++            if isinstance(obj, tuple):
++                return [visit(item) for item in obj]
++            if isinstance(obj, list):
++                return [visit(item) for item in obj]
++            if isinstance(obj, dict):
++                return {str(key): visit(value) for key, value in obj.items()}
++            return str(type(obj))
++
++        return visit(output)
++
+     def __getattr__(self, key: str) -> Any:
+         # allow accessing the attributes of the runnable.
+         if hasattr(self.runnable, key):
+@@ -230,6 +871,30 @@ class CUDAGraphWrapper:
+     def clear_graphs(self) -> None:
+         self.concrete_cudagraph_entries.clear()
+ 
++    def _recapture_after_n_replays(self) -> int:
++        raw = os.environ.get("VLLM_XPU_CUDAGRAPH_RECAPTURE_AFTER_N_REPLAYS", "0")
++        try:
++            recapture_after = max(0, int(raw))
++        except ValueError:
++            return 0
++        if recapture_after <= 0:
++            return 0
++
++        pattern = os.environ.get("VLLM_XPU_CUDAGRAPH_RECAPTURE_REGEX", "").strip()
++        if not pattern:
++            return recapture_after
++        try:
++            if re.search(pattern, self._xpu_cudagraph_trace_label()) is None:
++                return 0
++        except re.error as exc:
++            logger.warning_once(
++                "Invalid VLLM_XPU_CUDAGRAPH_RECAPTURE_REGEX=%r: %r",
++                pattern,
++                exc,
++            )
++            return 0
++        return recapture_after
++
+     def __call__(self, *args: Any, **kwargs: Any) -> Any | None:
+         if not is_forward_context_available():
+             # No forward context means we are outside the normal
+@@ -240,6 +905,9 @@ class CUDAGraphWrapper:
+         forward_context = get_forward_context()
+         batch_descriptor = forward_context.batch_descriptor
+         cudagraph_runtime_mode = forward_context.cudagraph_runtime_mode
++        trace_enabled, trace_context = self._xpu_cudagraph_trace_enabled(
++            forward_context
++        )
+ 
+         if (
+             cudagraph_runtime_mode == CUDAGraphMode.NONE
+@@ -251,9 +919,55 @@ class CUDAGraphWrapper:
+             # matches. This enables properly dispatching to the correct
+             # CUDAGraphWrapper when nesting multiple instances with different
+             # runtime modes.
+-            return self.runnable(*args, **kwargs)
++            if trace_enabled:
++                self._xpu_cudagraph_trace_write(
++                    "direct_start",
++                    trace_context,
++                    batch_descriptor,
++                    args=args,
++                    reason=(
++                        f"runtime_mode={cudagraph_runtime_mode.name} "
++                        f"wrapper_mode={self.runtime_mode.name}"
++                    ),
++                )
++            output = self.runnable(*args, **kwargs)
++            if trace_enabled:
++                self._xpu_cudagraph_trace_write(
++                    "direct_finish",
++                    trace_context,
++                    batch_descriptor,
++                    args=args,
++                    output=output,
++                    reason=(
++                        f"runtime_mode={cudagraph_runtime_mode.name} "
++                        f"wrapper_mode={self.runtime_mode.name}"
++                    ),
++                )
++            return output
+ 
+         assert batch_descriptor is not None
++        disabled_reason = self._xpu_cudagraph_disabled_reason()
++        if disabled_reason:
++            if trace_enabled:
++                self._xpu_cudagraph_trace_write(
++                    "direct_start",
++                    trace_context,
++                    batch_descriptor,
++                    args=args,
++                    reason=disabled_reason,
++                )
++            output = self.runnable(*args, **kwargs)
++            if trace_enabled:
++                self._xpu_cudagraph_trace_write(
++                    "direct_finish",
++                    trace_context,
++                    batch_descriptor,
++                    args=args,
++                    output=output,
++                    reason=disabled_reason,
++                )
++            return output
++
+         if batch_descriptor not in self.concrete_cudagraph_entries:
+             # create a new entry for this batch descriptor
+             self.concrete_cudagraph_entries[batch_descriptor] = CUDAGraphEntry(
+@@ -281,6 +995,14 @@ class CUDAGraphWrapper:
+             ]
+             entry.input_addresses = input_addresses
+             cudagraph = torch.cuda.CUDAGraph()
++            if trace_enabled:
++                self._xpu_cudagraph_trace_write(
++                    "capture_start",
++                    trace_context,
++                    batch_descriptor,
++                    entry,
++                    args=args,
++                )
+ 
+             with ExitStack() as stack:
+                 if self.cudagraph_options.gc_disable:
+@@ -337,6 +1059,15 @@ class CUDAGraphWrapper:
+             entry.cudagraph = cudagraph
+ 
+             compilation_counter.num_cudagraph_captured += 1
++            if trace_enabled:
++                self._xpu_cudagraph_trace_write(
++                    "capture_finish",
++                    trace_context,
++                    batch_descriptor,
++                    entry,
++                    args=args,
++                    output=output,
++                )
+ 
+             # important: we need to return the output, rather than
+             # the weak ref of the output, so that pytorch can correctly
+@@ -357,5 +1088,97 @@ class CUDAGraphWrapper:
+         # Sync offloader before replay - ensures any external dependencies
+         # from pre-capture prefetches are satisfied.
+         get_offloader().sync_prev_onload()
++        recapture_after = self._recapture_after_n_replays()
++        if recapture_after and entry.replay_count >= recapture_after:
++            if trace_enabled:
++                self._xpu_cudagraph_trace_write(
++                    "recapture_requested",
++                    trace_context,
++                    batch_descriptor,
++                    entry,
++                    args=args,
++                    reason=f"replay_count>={recapture_after}",
++                )
++            entry.cudagraph = None
++            entry.output = None
++            entry.input_addresses = None
++            entry.replay_count = 0
++            if (
++                os.environ.get(
++                    "VLLM_XPU_CUDAGRAPH_ALLOW_RUNTIME_RECAPTURE", "0"
++                )
++                == "1"
++            ):
++                set_cudagraph_capturing_enabled(True)
++                try:
++                    return self.__call__(*args, **kwargs)
++                finally:
++                    set_cudagraph_capturing_enabled(False)
++            return self.__call__(*args, **kwargs)
++        sync_replay = os.environ.get("VLLM_XPU_SYNC_CUDAGRAPH_REPLAY", "0") == "1"
++        if sync_replay and hasattr(torch, "xpu"):
++            torch.xpu.synchronize()
++        if trace_enabled:
++            self._xpu_cudagraph_trace_write(
++                "replay_start",
++                trace_context,
++                batch_descriptor,
++                entry,
++                args=args,
++            )
+         entry.cudagraph.replay()
+-        return entry.output
++        entry.replay_count += 1
++        if sync_replay and hasattr(torch, "xpu"):
++            torch.xpu.synchronize()
++        zeroed_replay_outputs = self._xpu_cudagraph_zero_selected_replay_outputs(
++            entry.output
++        )
++        replay_output, cloned_replay_outputs = (
++            self._xpu_cudagraph_clone_selected_replay_outputs(entry.output)
++        )
++        replay_output_snapshot = None
++        compare_direct = trace_enabled and self._xpu_cudagraph_compare_direct_enabled()
++        if compare_direct:
++            replay_output_snapshot = self._xpu_cudagraph_clone_output_tensors(
++                replay_output
++            )
++        if trace_enabled:
++            replay_reasons = []
++            if zeroed_replay_outputs:
++                replay_reasons.append(
++                    f"zeroed_replay_outputs={zeroed_replay_outputs}"
++                )
++            if cloned_replay_outputs:
++                replay_reasons.append(
++                    f"cloned_replay_outputs={cloned_replay_outputs}"
++                )
++            self._xpu_cudagraph_trace_write(
++                "replay_finish",
++                trace_context,
++                batch_descriptor,
++                entry,
++                args=args,
++                output=replay_output,
++                reason=" ".join(replay_reasons),
++            )
++        if compare_direct:
++            direct_output = self.runnable(*args, **kwargs)
++            comparison = self._xpu_cudagraph_compare_outputs(
++                replay_output_snapshot, direct_output
++            )
++            self._xpu_cudagraph_trace_compare_direct(
++                trace_context,
++                batch_descriptor,
++                entry,
++                replay_output_snapshot,
++                direct_output,
++                comparison,
++            )
++            if (
++                os.environ.get(
++                    "VLLM_XPU_CUDAGRAPH_COMPARE_DIRECT_RETURN_DIRECT", "0"
++                )
++                == "1"
++            ):
++                return direct_output
++        return replay_output
+diff --git a/vllm/model_executor/layers/mamba/gdn_linear_attn.py b/vllm/model_executor/layers/mamba/gdn_linear_attn.py
+index a621ab962..46ede51f1 100644
+--- a/vllm/model_executor/layers/mamba/gdn_linear_attn.py
++++ b/vllm/model_executor/layers/mamba/gdn_linear_attn.py
+@@ -2,6 +2,10 @@
+ # SPDX-FileCopyrightText: Copyright contributors to the vLLM project
+ """Inference-only Qwen3-Next/Qwen3.5 model."""
+ 
++import json
++import os
++import time
++
+ import torch
+ from einops import rearrange
+ from torch import nn
+@@ -62,11 +66,94 @@ from vllm.utils.torch_utils import (
+     _resolve_layer_name,
+     direct_register_custom_op,
+ )
++from vllm.utils.xpu_decode_timing import timed_region
+ from vllm.v1.attention.backends.gdn_attn import GDNAttentionMetadata
+ 
+ logger = init_logger(__name__)
+ 
+ 
++def _xpu_gdn_prefill_fallback_trace_write(
++    *,
++    stage,
++    trace_enabled,
++    trace_context,
++    layer_name,
++    attn_metadata,
++    tensors,
++    conv_state,
++    ssm_state,
++    non_spec_state_indices_tensor,
++):
++    if not trace_enabled:
++        return
++    try:
++        from vllm._xpu_ops import (
++            _xpu_gdn_selected_state_digest,
++            _xpu_gdn_tensor_digest,
++            _xpu_gdn_trace_int_env,
++        )
++
++        head_limit = max(
++            0, _xpu_gdn_trace_int_env("VLLM_XPU_GDN_TRACE_TENSOR_LIMIT", 8)
++        )
++        state_limit = max(
++            1, _xpu_gdn_trace_int_env("VLLM_XPU_GDN_TRACE_STATE_LIMIT", 2)
++        )
++        has_initial_state = getattr(attn_metadata, "has_initial_state", None)
++        record = {
++            "ts": time.time(),
++            "pid": os.getpid(),
++            "stage": stage,
++            "tp_rank": trace_context.get("tp_rank"),
++            "layer": layer_name,
++            "req_ids": trace_context.get("req_ids", []),
++            "matched_req_ids": trace_context.get("matched_req_ids", []),
++            "forward_context_extra": trace_context.get("forward_context_extra", {}),
++            "metadata": {
++                "num_prefills": int(getattr(attn_metadata, "num_prefills", 0)),
++                "num_decodes": int(getattr(attn_metadata, "num_decodes", 0)),
++                "num_actual_tokens": int(
++                    getattr(attn_metadata, "num_actual_tokens", 0)
++                ),
++                "has_initial_state": None
++                if has_initial_state is None
++                else [
++                    bool(v)
++                    for v in has_initial_state.detach()
++                    .reshape(-1)[:head_limit]
++                    .to("cpu")
++                    .tolist()
++                ],
++            },
++            "tensors": {
++                name: _xpu_gdn_tensor_digest(
++                    tensor, head_limit=head_limit, include_head=True
++                )
++                for name, tensor in tensors.items()
++            },
++            "conv_state": _xpu_gdn_selected_state_digest(
++                conv_state,
++                non_spec_state_indices_tensor,
++                head_limit=head_limit,
++                state_limit=state_limit,
++            ),
++            "ssm_state": _xpu_gdn_selected_state_digest(
++                ssm_state,
++                non_spec_state_indices_tensor,
++                head_limit=head_limit,
++                state_limit=state_limit,
++            ),
++        }
++        trace_file = str(trace_context["trace_file"])
++        trace_dir = os.path.dirname(trace_file)
++        if trace_dir:
++            os.makedirs(trace_dir, exist_ok=True)
++        with open(trace_file, "a", encoding="utf-8") as f:
++            f.write(json.dumps(record, separators=(",", ":")) + "\n")
++    except Exception:
++        logger.exception("Failed to write XPU GDN prefill fallback trace")
++
++
+ def fi_chunk_gated_delta_rule(
+     q: torch.Tensor,
+     k: torch.Tensor,
+@@ -384,6 +471,14 @@ class GatedDeltaNetAttention(PluggableLayer, MambaBase):
+         self.enable_packed_recurrent_decode = (
+             envs.VLLM_ENABLE_FLA_PACKED_RECURRENT_DECODE
+         )
++        xpu_gdn_reuse_qkvz_ba_quant_mode = (
++            envs.VLLM_XPU_GDN_REUSE_QKVZ_BA_QUANT
++        )
++        self.xpu_reuse_qkvz_ba_quant_mode = xpu_gdn_reuse_qkvz_ba_quant_mode
++        self.xpu_reuse_qkvz_ba_quant = current_platform.is_xpu() and (
++            xpu_gdn_reuse_qkvz_ba_quant_mode
++            in ("1", "true", "clone", "clone-ba", "clone-qkvz")
++        )
+ 
+         compilation_config = get_current_vllm_config().compilation_config
+         if prefix in compilation_config.static_forward_context:
+@@ -612,8 +707,97 @@ class GatedDeltaNetAttention(PluggableLayer, MambaBase):
+         # ============================================================
+         # Part 1: Input Projection
+         # ============================================================
+-        projected_states_qkvz, _ = self.in_proj_qkvz(hidden_states)
+-        projected_states_ba, _ = self.in_proj_ba(hidden_states)
++        if self.xpu_reuse_qkvz_ba_quant and (
++            getattr(self.in_proj_qkvz, "xpu_native_int8_activation_quant", False)
++            and getattr(self.in_proj_ba, "xpu_native_int8_activation_quant", False)
++            and self.in_proj_qkvz.bias is None
++            and self.in_proj_ba.bias is None
++            and not self.in_proj_qkvz.gather_output
++            and not self.in_proj_ba.gather_output
++        ):
++            x_2d = hidden_states.view(-1, hidden_states.shape[-1]).contiguous()
++            with timed_region("qwen3_next.gdn.input_quant"):
++                x_q, x_s = torch.ops._xpu_C.per_token_quant_int8_xpu(x_2d)
++            if self.xpu_reuse_qkvz_ba_quant_mode == "clone":
++                x_q_qkvz = x_q.clone()
++                x_s_qkvz = x_s.clone()
++                x_q_ba = x_q.clone()
++                x_s_ba = x_s.clone()
++            elif self.xpu_reuse_qkvz_ba_quant_mode == "clone-ba":
++                x_q_qkvz = x_q
++                x_s_qkvz = x_s
++                x_q_ba = x_q.clone()
++                x_s_ba = x_s.clone()
++            elif self.xpu_reuse_qkvz_ba_quant_mode == "clone-qkvz":
++                x_q_qkvz = x_q.clone()
++                x_s_qkvz = x_s.clone()
++                x_q_ba = x_q
++                x_s_ba = x_s
++            else:
++                x_q_qkvz = x_q
++                x_s_qkvz = x_s
++                x_q_ba = x_q
++                x_s_ba = x_s
++
++            with timed_region("qwen3_next.gdn.qkvz_gemm_w8a8"):
++                projected_states_qkvz = torch.ops._xpu_C.int8_gemm_w8a8(
++                    x_q_qkvz,
++                    x_s_qkvz,
++                    self.in_proj_qkvz.weight,
++                    self.in_proj_qkvz.weight_scale,
++                    hidden_states.dtype,
++                    None,
++                ).view(*hidden_states.shape[:-1], self.in_proj_qkvz.weight.shape[1])
++            with timed_region("qwen3_next.gdn.ba_gemm_w8a8"):
++                projected_states_ba = torch.ops._xpu_C.int8_gemm_w8a8(
++                    x_q_ba,
++                    x_s_ba,
++                    self.in_proj_ba.weight,
++                    self.in_proj_ba.weight_scale,
++                    hidden_states.dtype,
++                    None,
++                ).view(*hidden_states.shape[:-1], self.in_proj_ba.weight.shape[1])
++        else:
++            with timed_region("qwen3_next.gdn.qkvz_proj"):
++                projected_states_qkvz, _ = self.in_proj_qkvz(hidden_states)
++            with timed_region("qwen3_next.gdn.ba_proj"):
++                projected_states_ba, _ = self.in_proj_ba(hidden_states)
++
++        trace_enabled = False
++        trace_context = {}
++        trace_attn_metadata = None
++        if os.environ.get("VLLM_XPU_GDN_TRACE_FILE"):
++            try:
++                forward_context = get_forward_context()
++                attn_metadata_raw = forward_context.attn_metadata
++                if isinstance(attn_metadata_raw, dict):
++                    trace_attn_metadata = attn_metadata_raw.get(self.prefix)
++                if isinstance(trace_attn_metadata, GDNAttentionMetadata):
++                    from vllm._xpu_ops import _xpu_gdn_trace_enabled
++
++                    trace_enabled, trace_context = _xpu_gdn_trace_enabled(
++                        forward_context, self.prefix, trace_attn_metadata
++                    )
++            except Exception:
++                logger.exception("Failed to initialize XPU GDN forward trace")
++        if isinstance(trace_attn_metadata, GDNAttentionMetadata):
++            _xpu_gdn_prefill_fallback_trace_write(
++                stage="forward_post_projection",
++                trace_enabled=trace_enabled,
++                trace_context=trace_context,
++                layer_name=self.prefix,
++                attn_metadata=trace_attn_metadata,
++                tensors={
++                    "hidden_states": hidden_states,
++                    "projected_states_qkvz": projected_states_qkvz,
++                    "projected_states_ba": projected_states_ba,
++                },
++                conv_state=self.kv_cache[0],
++                ssm_state=self.kv_cache[1],
++                non_spec_state_indices_tensor=(
++                    trace_attn_metadata.non_spec_state_indices_tensor
++                ),
++            )
+ 
+         # ============================================================
+         # Part 2: Core Attention
+@@ -625,13 +809,33 @@ class GatedDeltaNetAttention(PluggableLayer, MambaBase):
+         )
+         z = torch.empty_like(core_attn_out)
+ 
+-        torch.ops.vllm.gdn_attention_core_xpu(
+-            core_attn_out,
+-            z,
+-            projected_states_qkvz,
+-            projected_states_ba,
+-            self.prefix,
+-        )
++        with timed_region("qwen3_next.gdn.core_op"):
++            torch.ops.vllm.gdn_attention_core_xpu(
++                core_attn_out,
++                z,
++                projected_states_qkvz,
++                projected_states_ba,
++                self.prefix,
++            )
++        if isinstance(trace_attn_metadata, GDNAttentionMetadata):
++            _xpu_gdn_prefill_fallback_trace_write(
++                stage="forward_post_core",
++                trace_enabled=trace_enabled,
++                trace_context=trace_context,
++                layer_name=self.prefix,
++                attn_metadata=trace_attn_metadata,
++                tensors={
++                    "projected_states_qkvz": projected_states_qkvz,
++                    "projected_states_ba": projected_states_ba,
++                    "core_attn_out": core_attn_out,
++                    "z": z,
++                },
++                conv_state=self.kv_cache[0],
++                ssm_state=self.kv_cache[1],
++                non_spec_state_indices_tensor=(
++                    trace_attn_metadata.non_spec_state_indices_tensor
++                ),
++            )
+ 
+         # ============================================================
+         # Part 3: Output Projection
+@@ -640,10 +844,12 @@ class GatedDeltaNetAttention(PluggableLayer, MambaBase):
+         # Reshape input data into 2D tensor
+         core_attn_out = core_attn_out.reshape(-1, core_attn_out.shape[-1])
+         z = z.reshape(-1, z.shape[-1])
+-        core_attn_out = self.norm(core_attn_out, z)
++        with timed_region("qwen3_next.gdn.output_norm"):
++            core_attn_out = self.norm(core_attn_out, z)
+         core_attn_out = core_attn_out.reshape(z_shape_og)
+         core_attn_out = rearrange(core_attn_out, "... h d -> ... (h d)")
+-        output[:num_tokens], _ = self.out_proj(core_attn_out)
++        with timed_region("qwen3_next.gdn.out_proj"):
++            output[:num_tokens], _ = self.out_proj(core_attn_out)
+ 
+     def _warmup_prefill_kernels(self, mixed_qkv: torch.Tensor) -> None:
+         """Warm up GDN prefill kernels during V1 profiling.
+@@ -791,6 +997,13 @@ class GatedDeltaNetAttention(PluggableLayer, MambaBase):
+         non_spec_token_indx = attn_metadata.non_spec_token_indx
+         spec_state_indices_tensor = attn_metadata.spec_state_indices_tensor  # noqa: E501
+         non_spec_state_indices_tensor = attn_metadata.non_spec_state_indices_tensor  # noqa: E501
++        prefill_recurrent_fallback = (
++            current_platform.is_xpu()
++            and os.environ.get(
++                "VLLM_XPU_GDN_PREFILL_RECURRENT_FALLBACK", "1"
++            ).strip().lower()
++            not in ("0", "false", "no", "off")
++        )
+         self_kv_cache = self.kv_cache
+         # conv_state must be (..., dim, width-1) for the conv kernels.
+         # DS layout stores it that way directly; SD layout needs a transpose.
+@@ -800,6 +1013,17 @@ class GatedDeltaNetAttention(PluggableLayer, MambaBase):
+             else self_kv_cache[0].transpose(-1, -2)
+         )
+         ssm_state = self_kv_cache[1]
++        trace_enabled = False
++        trace_context = {}
++        if current_platform.is_xpu() and os.environ.get("VLLM_XPU_GDN_TRACE_FILE"):
++            try:
++                from vllm._xpu_ops import _xpu_gdn_trace_enabled
++
++                trace_enabled, trace_context = _xpu_gdn_trace_enabled(
++                    forward_context, self.prefix, attn_metadata
++                )
++            except Exception:
++                logger.exception("Failed to initialize XPU GDN fallback trace")
+         num_actual_tokens = attn_metadata.num_actual_tokens
+         num_accepted_tokens = attn_metadata.num_accepted_tokens
+ 
+@@ -845,6 +1069,26 @@ class GatedDeltaNetAttention(PluggableLayer, MambaBase):
+         # 1.2: Process the remaining part
+         if attn_metadata.num_prefills > 0:
+             assert mixed_qkv_non_spec is not None
++            if (
++                os.environ.get("VLLM_XPU_ZERO_FRESH_GDN_STATE", "0") == "1"
++                and has_initial_state is not None
++                and non_spec_state_indices_tensor is not None
++            ):
++                fresh_state_mask = ~has_initial_state
++                fresh_state_indices = non_spec_state_indices_tensor[fresh_state_mask]
++                conv_state[fresh_state_indices] = 0
++                ssm_state[fresh_state_indices] = 0
++            _xpu_gdn_prefill_fallback_trace_write(
++                stage="fallback_pre_conv",
++                trace_enabled=trace_enabled,
++                trace_context=trace_context,
++                layer_name=self.prefix,
++                attn_metadata=attn_metadata,
++                tensors={"mixed_qkv_non_spec": mixed_qkv_non_spec},
++                conv_state=conv_state,
++                ssm_state=ssm_state,
++                non_spec_state_indices_tensor=non_spec_state_indices_tensor,
++            )
+             mixed_qkv_non_spec_T = mixed_qkv_non_spec.transpose(0, 1)
+             # - "cache_indices" updates the conv_state cache in positions
+             #   pointed to by "state_indices_tensor"
+@@ -859,6 +1103,17 @@ class GatedDeltaNetAttention(PluggableLayer, MambaBase):
+                 query_start_loc=non_spec_query_start_loc,
+                 metadata=attn_metadata,
+             ).transpose(0, 1)
++            _xpu_gdn_prefill_fallback_trace_write(
++                stage="fallback_post_conv",
++                trace_enabled=trace_enabled,
++                trace_context=trace_context,
++                layer_name=self.prefix,
++                attn_metadata=attn_metadata,
++                tensors={"mixed_qkv_non_spec": mixed_qkv_non_spec},
++                conv_state=conv_state,
++                ssm_state=ssm_state,
++                non_spec_state_indices_tensor=non_spec_state_indices_tensor,
++            )
+         elif attn_metadata.num_decodes > 0:
+             assert mixed_qkv_non_spec is not None
+             mixed_qkv_non_spec = causal_conv1d_update(
+@@ -887,29 +1142,36 @@ class GatedDeltaNetAttention(PluggableLayer, MambaBase):
+                 a_non_spec = a
+                 b_non_spec = b
+ 
+-            (
+-                query_non_spec,
+-                key_non_spec,
+-                value_non_spec,
+-                g_non_spec,
+-                beta_non_spec,
+-            ) = fused_post_conv_prep(
+-                conv_output=mixed_qkv_non_spec,
+-                a=a_non_spec,
+-                b=b_non_spec,
+-                A_log=self.A_log,
+-                dt_bias=self.dt_bias,
+-                num_k_heads=self.num_k_heads // self.tp_size,
+-                head_k_dim=self.head_k_dim,
+-                head_v_dim=self.head_v_dim,
+-                apply_l2norm=True,
+-                output_g_exp=False,
+-            )
+-            query_non_spec = query_non_spec.unsqueeze(0)
+-            key_non_spec = key_non_spec.unsqueeze(0)
+-            value_non_spec = value_non_spec.unsqueeze(0)
+-            g_non_spec = g_non_spec.unsqueeze(0)
+-            beta_non_spec = beta_non_spec.unsqueeze(0)
++            if prefill_recurrent_fallback:
++                query_non_spec, key_non_spec, value_non_spec = (
++                    self.rearrange_mixed_qkv(mixed_qkv_non_spec)
++                )
++                g_non_spec = None
++                beta_non_spec = None
++            else:
++                (
++                    query_non_spec,
++                    key_non_spec,
++                    value_non_spec,
++                    g_non_spec,
++                    beta_non_spec,
++                ) = fused_post_conv_prep(
++                    conv_output=mixed_qkv_non_spec,
++                    a=a_non_spec,
++                    b=b_non_spec,
++                    A_log=self.A_log,
++                    dt_bias=self.dt_bias,
++                    num_k_heads=self.num_k_heads // self.tp_size,
++                    head_k_dim=self.head_k_dim,
++                    head_v_dim=self.head_v_dim,
++                    apply_l2norm=True,
++                    output_g_exp=False,
++                )
++                query_non_spec = query_non_spec.unsqueeze(0)
++                key_non_spec = key_non_spec.unsqueeze(0)
++                value_non_spec = value_non_spec.unsqueeze(0)
++                g_non_spec = g_non_spec.unsqueeze(0)
++                beta_non_spec = beta_non_spec.unsqueeze(0)
+         else:
+             query_non_spec, key_non_spec, value_non_spec = self.rearrange_mixed_qkv(
+                 mixed_qkv_non_spec
+@@ -949,24 +1211,105 @@ class GatedDeltaNetAttention(PluggableLayer, MambaBase):
+             assert non_spec_state_indices_tensor is not None
+             initial_state = ssm_state[non_spec_state_indices_tensor].contiguous()  # type: ignore[index]
+             assert has_initial_state is not None
+-            initial_state[~has_initial_state, ...] = 0  # type: ignore[operator]
+-            (
+-                core_attn_out_non_spec,
+-                last_recurrent_state,
+-            ) = self.chunk_gated_delta_rule(
+-                q=query_non_spec,
+-                k=key_non_spec,
+-                v=value_non_spec,
+-                g=g_non_spec,
+-                beta=beta_non_spec,
+-                initial_state=initial_state,
+-                output_final_state=True,
+-                cu_seqlens=non_spec_query_start_loc,
+-                chunk_indices=attn_metadata.chunk_indices,
+-                chunk_offsets=attn_metadata.chunk_offsets,
+-                use_qk_l2norm_in_kernel=False,
++            if current_platform.is_xpu():
++                state_mask = has_initial_state.reshape(-1, 1, 1, 1)
++                initial_state = torch.where(
++                    state_mask, initial_state, torch.zeros_like(initial_state))
++            else:
++                initial_state[~has_initial_state, ...] = 0  # type: ignore[operator]
++            _xpu_gdn_prefill_fallback_trace_write(
++                stage="fallback_pre_recurrent",
++                trace_enabled=trace_enabled,
++                trace_context=trace_context,
++                layer_name=self.prefix,
++                attn_metadata=attn_metadata,
++                tensors={
++                    "mixed_qkv_non_spec": mixed_qkv_non_spec,
++                    "query_non_spec": query_non_spec,
++                    "key_non_spec": key_non_spec,
++                    "value_non_spec": value_non_spec,
++                    "a_non_spec": a_non_spec,
++                    "b_non_spec": b_non_spec,
++                    "initial_state": initial_state,
++                },
++                conv_state=conv_state,
++                ssm_state=ssm_state,
++                non_spec_state_indices_tensor=non_spec_state_indices_tensor,
+             )
++            if prefill_recurrent_fallback:
++                (
++                    core_attn_out_non_spec,
++                    last_recurrent_state,
++                ) = fused_sigmoid_gating_delta_rule_update(
++                    A_log=self.A_log,
++                    a=a_non_spec,
++                    b=b_non_spec,
++                    dt_bias=self.dt_bias,
++                    q=query_non_spec,
++                    k=key_non_spec,
++                    v=value_non_spec,
++                    initial_state=initial_state,
++                    inplace_final_state=False,
++                    cu_seqlens=non_spec_query_start_loc,
++                    use_qk_l2norm_in_kernel=True,
++                )
++                seq_lens = (
++                    non_spec_query_start_loc[1:] - non_spec_query_start_loc[:-1]
++                )
++                non_empty_seq_mask = seq_lens > 0
++                if current_platform.is_xpu():
++                    end_indices = torch.clamp(
++                        non_spec_query_start_loc[1:] - 1, min=0)
++                    selected_final_state = last_recurrent_state.index_select(
++                        0, end_indices)
++                    state_mask = non_empty_seq_mask.reshape(-1, 1, 1, 1)
++                    last_recurrent_state = torch.where(
++                        state_mask, selected_final_state, initial_state)
++                elif non_empty_seq_mask.all():
++                    last_recurrent_state = last_recurrent_state.index_select(
++                        0, non_spec_query_start_loc[1:] - 1
++                    )
++                else:
++                    final_state_by_token = last_recurrent_state
++                    last_recurrent_state = initial_state.clone()
++                    last_recurrent_state[non_empty_seq_mask] = (
++                        final_state_by_token.index_select(
++                            0,
++                            non_spec_query_start_loc[1:][non_empty_seq_mask] - 1,
++                        )
++                    )
++            else:
++                (
++                    core_attn_out_non_spec,
++                    last_recurrent_state,
++                ) = self.chunk_gated_delta_rule(
++                    q=query_non_spec,
++                    k=key_non_spec,
++                    v=value_non_spec,
++                    g=g_non_spec,
++                    beta=beta_non_spec,
++                    initial_state=initial_state,
++                    output_final_state=True,
++                    cu_seqlens=non_spec_query_start_loc,
++                    chunk_indices=attn_metadata.chunk_indices,
++                    chunk_offsets=attn_metadata.chunk_offsets,
++                    use_qk_l2norm_in_kernel=False,
++                    )
+             # Init cache
++            _xpu_gdn_prefill_fallback_trace_write(
++                stage="fallback_post_recurrent",
++                trace_enabled=trace_enabled,
++                trace_context=trace_context,
++                layer_name=self.prefix,
++                attn_metadata=attn_metadata,
++                tensors={
++                    "core_attn_out_non_spec": core_attn_out_non_spec,
++                    "last_recurrent_state": last_recurrent_state,
++                },
++                conv_state=conv_state,
++                ssm_state=ssm_state,
++                non_spec_state_indices_tensor=non_spec_state_indices_tensor,
++            )
+             ssm_state[non_spec_state_indices_tensor] = last_recurrent_state.to(
+                 ssm_state.dtype
+             )

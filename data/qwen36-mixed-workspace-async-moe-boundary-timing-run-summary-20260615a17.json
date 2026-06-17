@@ -1,0 +1,998 @@
+{
+  "artifacts": {
+    "log": "/home/steve/llm-optimizations/data/qwen36-mixed-workspace-async-moe-boundary-timing-20260615a17.log",
+    "metrics": "/home/steve/llm-optimizations/data/qwen36-mixed-workspace-async-moe-boundary-timing-p512o256-20260615a17.json",
+    "timing_decision_json": "/home/steve/llm-optimizations/data/qwen36-mixed-workspace-async-moe-boundary-timing-timing-decision-20260615a17.json",
+    "timing_decision_md": "/home/steve/llm-optimizations/data/qwen36-mixed-workspace-async-moe-boundary-timing-timing-decision-20260615a17.md",
+    "timing_summary": "/home/steve/llm-optimizations/data/qwen36-mixed-workspace-async-moe-boundary-timing-timing-summary-20260615a17.json"
+  },
+  "canaries_requested": false,
+  "env": {
+    "COMPILATION_CONFIG": "{\"cudagraph_mode\":\"PIECEWISE\"}",
+    "VLLM_XPU_DECODE_TIMING_LABEL_REGEX": "^(moe\\.|xpu_moe\\.|gpu_model_runner\\.(forward_total|model_forward))",
+    "VLLM_XPU_ENABLE_XPU_GRAPH": "1",
+    "VLLM_XPU_INT8_MOE_MIXED_WORKSPACE": "1",
+    "VLLM_XPU_MOE_W8A8_MIDDLE_LAYERLET": null,
+    "VLLM_XPU_W8A8_EXPERIMENTAL_ALLOW": "0",
+    "VLLM_XPU_W8A8_OFFSETS_PREFIX_OP": null,
+    "VLLM_XPU_W8A8_USE_OFFSETS": null,
+    "XPU_GRAPH": "1"
+  },
+  "label": "mixed-workspace-async-moe-boundary-timing",
+  "metrics": {
+    "base_url": "http://127.0.0.1:18102",
+    "created_at_unix": 1781501834.7985687,
+    "endpoint": "completions",
+    "ignore_eos": true,
+    "measurement_notes": [
+      "TTFT and e2e are measured both client-side and from vLLM Prometheus histogram deltas.",
+      "tok_s_prefill_lower_bound_from_ttft is prompt_tokens / TTFT, so it is conservative and includes first-token scheduling/decode overhead.",
+      "tok_s_out_client_after_first_chunk is generated-token-only throughput after the first streamed text chunk.",
+      "tok_s_out_client_after_first_chunk_corrected subtracts the estimated first streamed chunk tokens from the numerator; this is more stable when --stream-interval > 1."
+    ],
+    "mode": "stream",
+    "model": "qwen36-35b-a3b-fp8",
+    "output_tokens_requested": 256,
+    "peak_vram_mib_observed": {},
+    "prompt_file": null,
+    "prompt_kind": "preset",
+    "prompt_preset": "natural-chat",
+    "prompt_tokens_actual": 498,
+    "prompt_tokens_requested": 512,
+    "random_prefix_len": 0,
+    "records": [
+      {
+        "decode_ms_per_generation_token_vllm_histogram": 10.487529202691803,
+        "decode_ms_vllm_histogram": 2684.8074758891016,
+        "e2e_ms_vllm_metrics": 2861.639976501465,
+        "elapsed_s_client": 2.862852734979242,
+        "first_chunk_tokens_client_estimate": 1,
+        "inference_ms_vllm_histogram": 2856.808088021353,
+        "inter_token_ms_vllm_histogram": 10.528656768192555,
+        "iteration_tokens_per_step_vllm_histogram": 2.9453125,
+        "output_tokens_client": 256,
+        "prefill_ms_vllm_histogram": 172.00061213225126,
+        "prompt_tokens_client": 498,
+        "prompt_tokens_estimated_before_request": 498,
+        "queue_ms_vllm_histogram": 0.013425014913082123,
+        "repeat": 1,
+        "request_finished_at_unix": 1781501834.7933545,
+        "request_id": "cmpl-ba43ee77a50f66e6",
+        "request_started_at_unix": 1781501831.9304235,
+        "streamed_text_chunks": 254,
+        "text_preview": "\n<think>\nHere's a thinking process:\n\n1.  **Analyze User Input:**\n   - **Context:** Tuning an Intel XPU inference server.\n   - **Key Observations (repeated many times):** \n     - Stable baseline decoding\n     - Prompt-sensitive speculative a",
+        "time_per_output_token_ms_vllm_histogram": 10.528656768192555,
+        "tok_s_out_client_after_first_chunk": 95.74318452628353,
+        "tok_s_out_client_after_first_chunk_corrected": 95.36918771172773,
+        "tok_s_out_client_e2e": 89.42129536462384,
+        "tok_s_prefill_lower_bound_from_ttft": 2634.458280552816,
+        "tok_s_total_client": 263.3736590036187,
+        "ttft_ms_client": 189.03316999785602,
+        "ttft_ms_vllm_metrics": 177.24132537841797,
+        "vllm_histogram_deltas": {
+          "vllm:inter_token_latency_seconds": {
+            "count": 255.0,
+            "mean": 0.010528656768192556,
+            "sum": 2.6848074758891016
+          },
+          "vllm:iteration_tokens_total": {
+            "count": 256.0,
+            "mean": 2.9453125,
+            "sum": 754.0
+          },
+          "vllm:request_decode_time_seconds": {
+            "count": 1.0,
+            "mean": 2.6848074758891016,
+            "sum": 2.6848074758891016
+          },
+          "vllm:request_inference_time_seconds": {
+            "count": 1.0,
+            "mean": 2.856808088021353,
+            "sum": 2.856808088021353
+          },
+          "vllm:request_prefill_time_seconds": {
+            "count": 1.0,
+            "mean": 0.17200061213225126,
+            "sum": 0.17200061213225126
+          },
+          "vllm:request_queue_time_seconds": {
+            "count": 1.0,
+            "mean": 1.3425014913082123e-05,
+            "sum": 1.3425014913082123e-05
+          },
+          "vllm:request_time_per_output_token_seconds": {
+            "count": 1.0,
+            "mean": 0.010528656768192556,
+            "sum": 0.010528656768192556
+          }
+        },
+        "vllm_metric_deltas": {
+          "e2e_count": 1.0,
+          "e2e_sum_s": 2.861639976501465,
+          "generation_tokens": 256.0,
+          "prompt_tokens": 498.0,
+          "ttft_count": 1.0,
+          "ttft_sum_s": 0.17724132537841797
+        },
+        "vram_mib_after": {},
+        "vram_mib_before": {}
+      }
+    ],
+    "repeats": 1,
+    "seed": 0,
+    "server_model_record": {
+      "created": 1781501822,
+      "id": "qwen36-35b-a3b-fp8",
+      "max_model_len": 32768,
+      "object": "model",
+      "owned_by": "vllm",
+      "parent": null,
+      "permission": [
+        {
+          "allow_create_engine": false,
+          "allow_fine_tuning": false,
+          "allow_logprobs": true,
+          "allow_sampling": true,
+          "allow_search_indices": false,
+          "allow_view": true,
+          "created": 1781501822,
+          "group": null,
+          "id": "modelperm-9213aa99c57b6e4c",
+          "is_blocking": false,
+          "object": "model_permission",
+          "organization": "*"
+        }
+      ],
+      "root": "/mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118"
+    },
+    "skip_vram": true,
+    "summary": {
+      "decode_ms_per_generation_token_vllm_histogram": {
+        "max": 10.487529202691803,
+        "mean": 10.487529202691803,
+        "median": 10.487529202691803,
+        "min": 10.487529202691803
+      },
+      "decode_ms_vllm_histogram": {
+        "max": 2684.8074758891016,
+        "mean": 2684.8074758891016,
+        "median": 2684.8074758891016,
+        "min": 2684.8074758891016
+      },
+      "e2e_ms_vllm_metrics": {
+        "max": 2861.639976501465,
+        "mean": 2861.639976501465,
+        "median": 2861.639976501465,
+        "min": 2861.639976501465
+      },
+      "inference_ms_vllm_histogram": {
+        "max": 2856.808088021353,
+        "mean": 2856.808088021353,
+        "median": 2856.808088021353,
+        "min": 2856.808088021353
+      },
+      "inter_token_ms_vllm_histogram": {
+        "max": 10.528656768192555,
+        "mean": 10.528656768192555,
+        "median": 10.528656768192555,
+        "min": 10.528656768192555
+      },
+      "iteration_tokens_per_step_vllm_histogram": {
+        "max": 2.9453125,
+        "mean": 2.9453125,
+        "median": 2.9453125,
+        "min": 2.9453125
+      },
+      "prefill_ms_vllm_histogram": {
+        "max": 172.00061213225126,
+        "mean": 172.00061213225126,
+        "median": 172.00061213225126,
+        "min": 172.00061213225126
+      },
+      "queue_ms_vllm_histogram": {
+        "max": 0.013425014913082123,
+        "mean": 0.013425014913082123,
+        "median": 0.013425014913082123,
+        "min": 0.013425014913082123
+      },
+      "time_per_output_token_ms_vllm_histogram": {
+        "max": 10.528656768192555,
+        "mean": 10.528656768192555,
+        "median": 10.528656768192555,
+        "min": 10.528656768192555
+      },
+      "tok_s_out_client_after_first_chunk": {
+        "max": 95.74318452628353,
+        "mean": 95.74318452628353,
+        "median": 95.74318452628353,
+        "min": 95.74318452628353
+      },
+      "tok_s_out_client_after_first_chunk_corrected": {
+        "max": 95.36918771172773,
+        "mean": 95.36918771172773,
+        "median": 95.36918771172773,
+        "min": 95.36918771172773
+      },
+      "tok_s_out_client_e2e": {
+        "max": 89.42129536462384,
+        "mean": 89.42129536462384,
+        "median": 89.42129536462384,
+        "min": 89.42129536462384
+      },
+      "tok_s_prefill_lower_bound_from_ttft": {
+        "max": 2634.458280552816,
+        "mean": 2634.458280552816,
+        "median": 2634.458280552816,
+        "min": 2634.458280552816
+      },
+      "tok_s_total_client": {
+        "max": 263.3736590036187,
+        "mean": 263.3736590036187,
+        "median": 263.3736590036187,
+        "min": 263.3736590036187
+      },
+      "ttft_ms_client": {
+        "max": 189.03316999785602,
+        "mean": 189.03316999785602,
+        "median": 189.03316999785602,
+        "min": 189.03316999785602
+      },
+      "ttft_ms_vllm_metrics": {
+        "max": 177.24132537841797,
+        "mean": 177.24132537841797,
+        "median": 177.24132537841797,
+        "min": 177.24132537841797
+      }
+    },
+    "tokenizer": "/mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118",
+    "vram_mib_before_all": {}
+  },
+  "stamp": "20260615a17",
+  "timing_decision_json": {
+    "decision": {
+      "family": "moe",
+      "next_target": "persistent_w8a8_moe_layerlet",
+      "rank_skew_ms": 0.4672777187500001,
+      "reason": "moe has the largest visible per-family label (moe.quant_method_total at 4.546182 ms).",
+      "runner_up": null,
+      "score_ms": 4.546182333333333,
+      "top_label": "moe.quant_method_total"
+    },
+    "decision_basis": "aggregate_exit_summary",
+    "endpoint_metrics": {
+      "decode_ms_per_generation_token_vllm_mean": 10.487529202691803,
+      "tok_s_out_client_after_first_chunk_corrected_mean": 95.36918771172773,
+      "ttft_ms_mean": null
+    },
+    "families": {
+      "moe": {
+        "label_count": 15,
+        "nonexclusive_sum_max_ms": 8.649518600694444,
+        "top_label": "moe.quant_method_total",
+        "top_label_max_ms": 4.546182333333333,
+        "top_label_rank_skew_ms": 0.4672777187500001,
+        "top_labels": [
+          {
+            "label": "moe.quant_method_total",
+            "max_ms": 4.546182333333333,
+            "mean_ms": 4.335170428819445,
+            "rank_skew_ms": 0.4672777187500001
+          },
+          {
+            "label": "moe.apply",
+            "max_ms": 1.6372742638888889,
+            "mean_ms": 1.6162580251736112,
+            "rank_skew_ms": 0.06578328124999988
+          },
+          {
+            "label": "xpu_moe.fused_moe_call",
+            "max_ms": 1.0421656493055556,
+            "mean_ms": 1.0296655034722222,
+            "rank_skew_ms": 0.042114788194444364
+          },
+          {
+            "label": "moe.internal_gate",
+            "max_ms": 0.4232657256944445,
+            "mean_ms": 0.41478261284722223,
+            "rank_skew_ms": 0.018194166666666733
+          },
+          {
+            "label": "moe.router_select",
+            "max_ms": 0.18421868402777777,
+            "mean_ms": 0.17927912847222222,
+            "rank_skew_ms": 0.010545520833333322
+          },
+          {
+            "label": "xpu_moe.workspace_scratch_get",
+            "max_ms": 0.17521489930555556,
+            "mean_ms": 0.17228481076388888,
+            "rank_skew_ms": 0.00687913194444445
+          },
+          {
+            "label": "xpu_moe.gemm1_w8a8",
+            "max_ms": 0.14120010763888888,
+            "mean_ms": 0.13862762934027778,
+            "rank_skew_ms": 0.00784006944444443
+          },
+          {
+            "label": "xpu_moe.remap_hidden_states",
+            "max_ms": 0.13242620486111112,
+            "mean_ms": 0.13058843923611113,
+            "rank_skew_ms": 0.0036869791666666596
+          },
+          {
+            "label": "xpu_moe.gemm2_w8a8",
+            "max_ms": 0.11431336805555554,
+            "mean_ms": 0.11289110590277777,
+            "rank_skew_ms": 0.005063743055555542
+          },
+          {
+            "label": "xpu_moe.gemm1_quant",
+            "max_ms": 0.06433470833333334,
+            "mean_ms": 0.06314805121527778,
+            "rank_skew_ms": 0.002761486111111121
+          },
+          {
+            "label": "xpu_moe.activation",
+            "max_ms": 0.05872672569444445,
+            "mean_ms": 0.05729109461805556,
+            "rank_skew_ms": 0.0031993819444444474
+          },
+          {
+            "label": "xpu_moe.gather",
+            "max_ms": 0.05857727430555556,
+            "mean_ms": 0.05693622916666667,
+            "rank_skew_ms": 0.003075750000000002
+          }
+        ]
+      }
+    },
+    "families_ranked": [
+      [
+        "moe",
+        {
+          "label_count": 15,
+          "nonexclusive_sum_max_ms": 8.649518600694444,
+          "top_label": "moe.quant_method_total",
+          "top_label_max_ms": 4.546182333333333,
+          "top_label_rank_skew_ms": 0.4672777187500001,
+          "top_labels": [
+            {
+              "label": "moe.quant_method_total",
+              "max_ms": 4.546182333333333,
+              "mean_ms": 4.335170428819445,
+              "rank_skew_ms": 0.4672777187500001
+            },
+            {
+              "label": "moe.apply",
+              "max_ms": 1.6372742638888889,
+              "mean_ms": 1.6162580251736112,
+              "rank_skew_ms": 0.06578328124999988
+            },
+            {
+              "label": "xpu_moe.fused_moe_call",
+              "max_ms": 1.0421656493055556,
+              "mean_ms": 1.0296655034722222,
+              "rank_skew_ms": 0.042114788194444364
+            },
+            {
+              "label": "moe.internal_gate",
+              "max_ms": 0.4232657256944445,
+              "mean_ms": 0.41478261284722223,
+              "rank_skew_ms": 0.018194166666666733
+            },
+            {
+              "label": "moe.router_select",
+              "max_ms": 0.18421868402777777,
+              "mean_ms": 0.17927912847222222,
+              "rank_skew_ms": 0.010545520833333322
+            },
+            {
+              "label": "xpu_moe.workspace_scratch_get",
+              "max_ms": 0.17521489930555556,
+              "mean_ms": 0.17228481076388888,
+              "rank_skew_ms": 0.00687913194444445
+            },
+            {
+              "label": "xpu_moe.gemm1_w8a8",
+              "max_ms": 0.14120010763888888,
+              "mean_ms": 0.13862762934027778,
+              "rank_skew_ms": 0.00784006944444443
+            },
+            {
+              "label": "xpu_moe.remap_hidden_states",
+              "max_ms": 0.13242620486111112,
+              "mean_ms": 0.13058843923611113,
+              "rank_skew_ms": 0.0036869791666666596
+            },
+            {
+              "label": "xpu_moe.gemm2_w8a8",
+              "max_ms": 0.11431336805555554,
+              "mean_ms": 0.11289110590277777,
+              "rank_skew_ms": 0.005063743055555542
+            },
+            {
+              "label": "xpu_moe.gemm1_quant",
+              "max_ms": 0.06433470833333334,
+              "mean_ms": 0.06314805121527778,
+              "rank_skew_ms": 0.002761486111111121
+            },
+            {
+              "label": "xpu_moe.activation",
+              "max_ms": 0.05872672569444445,
+              "mean_ms": 0.05729109461805556,
+              "rank_skew_ms": 0.0031993819444444474
+            },
+            {
+              "label": "xpu_moe.gather",
+              "max_ms": 0.05857727430555556,
+              "mean_ms": 0.05693622916666667,
+              "rank_skew_ms": 0.003075750000000002
+            }
+          ]
+        }
+      ]
+    ],
+    "metrics_path": "/home/steve/llm-optimizations/data/qwen36-mixed-workspace-async-moe-boundary-timing-p512o256-20260615a17.json",
+    "source_log": "/home/steve/llm-optimizations/data/qwen36-mixed-workspace-async-moe-boundary-timing-20260615a17.log",
+    "summary_path": "/home/steve/llm-optimizations/data/qwen36-mixed-workspace-async-moe-boundary-timing-timing-summary-20260615a17.json",
+    "top_labels": [
+      {
+        "family": "runtime",
+        "is_wrapper": true,
+        "label": "gpu_model_runner.forward_total",
+        "max_ms": 5.809682805555556,
+        "mean_ms": 5.617525651909722,
+        "median_ms": 5.566174998263889,
+        "min_ms": 5.528069805555556,
+        "rank_count": 4,
+        "rank_skew_ms": 0.2816130000000001,
+        "row_count": 4
+      },
+      {
+        "family": "runtime",
+        "is_wrapper": true,
+        "label": "gpu_model_runner.model_forward",
+        "max_ms": 5.751986822916667,
+        "mean_ms": 5.561547377604167,
+        "median_ms": 5.510195371527778,
+        "min_ms": 5.473811944444445,
+        "rank_count": 4,
+        "rank_skew_ms": 0.278174878472222,
+        "row_count": 4
+      },
+      {
+        "family": "moe",
+        "is_wrapper": false,
+        "label": "moe.quant_method_total",
+        "max_ms": 4.546182333333333,
+        "mean_ms": 4.335170428819445,
+        "median_ms": 4.3577973836805555,
+        "min_ms": 4.078904614583333,
+        "rank_count": 4,
+        "rank_skew_ms": 0.4672777187500001,
+        "row_count": 4
+      },
+      {
+        "family": "moe",
+        "is_wrapper": false,
+        "label": "moe.apply",
+        "max_ms": 1.6372742638888889,
+        "mean_ms": 1.6162580251736112,
+        "median_ms": 1.6281334270833332,
+        "min_ms": 1.571490982638889,
+        "rank_count": 4,
+        "rank_skew_ms": 0.06578328124999988,
+        "row_count": 4
+      },
+      {
+        "family": "moe",
+        "is_wrapper": false,
+        "label": "xpu_moe.fused_moe_call",
+        "max_ms": 1.0421656493055556,
+        "mean_ms": 1.0296655034722222,
+        "median_ms": 1.038222751736111,
+        "min_ms": 1.0000508611111112,
+        "rank_count": 4,
+        "rank_skew_ms": 0.042114788194444364,
+        "row_count": 4
+      },
+      {
+        "family": "moe",
+        "is_wrapper": false,
+        "label": "moe.internal_gate",
+        "max_ms": 0.4232657256944445,
+        "mean_ms": 0.41478261284722223,
+        "median_ms": 0.41539658333333335,
+        "min_ms": 0.40507155902777775,
+        "rank_count": 4,
+        "rank_skew_ms": 0.018194166666666733,
+        "row_count": 4
+      },
+      {
+        "family": "moe",
+        "is_wrapper": false,
+        "label": "moe.router_select",
+        "max_ms": 0.18421868402777777,
+        "mean_ms": 0.17927912847222222,
+        "median_ms": 0.17961233333333332,
+        "min_ms": 0.17367316319444445,
+        "rank_count": 4,
+        "rank_skew_ms": 0.010545520833333322,
+        "row_count": 4
+      },
+      {
+        "family": "moe",
+        "is_wrapper": false,
+        "label": "xpu_moe.workspace_scratch_get",
+        "max_ms": 0.17521489930555556,
+        "mean_ms": 0.17228481076388888,
+        "median_ms": 0.17279428819444442,
+        "min_ms": 0.1683357673611111,
+        "rank_count": 4,
+        "rank_skew_ms": 0.00687913194444445,
+        "row_count": 4
+      },
+      {
+        "family": "moe",
+        "is_wrapper": false,
+        "label": "xpu_moe.gemm1_w8a8",
+        "max_ms": 0.14120010763888888,
+        "mean_ms": 0.13862762934027778,
+        "median_ms": 0.1399751857638889,
+        "min_ms": 0.13336003819444445,
+        "rank_count": 4,
+        "rank_skew_ms": 0.00784006944444443,
+        "row_count": 4
+      },
+      {
+        "family": "moe",
+        "is_wrapper": false,
+        "label": "xpu_moe.remap_hidden_states",
+        "max_ms": 0.13242620486111112,
+        "mean_ms": 0.13058843923611113,
+        "median_ms": 0.13059416319444445,
+        "min_ms": 0.12873922569444446,
+        "rank_count": 4,
+        "rank_skew_ms": 0.0036869791666666596,
+        "row_count": 4
+      },
+      {
+        "family": "moe",
+        "is_wrapper": false,
+        "label": "xpu_moe.gemm2_w8a8",
+        "max_ms": 0.11431336805555554,
+        "mean_ms": 0.11289110590277777,
+        "median_ms": 0.11400071527777778,
+        "min_ms": 0.109249625,
+        "rank_count": 4,
+        "rank_skew_ms": 0.005063743055555542,
+        "row_count": 4
+      },
+      {
+        "family": "moe",
+        "is_wrapper": false,
+        "label": "xpu_moe.gemm1_quant",
+        "max_ms": 0.06433470833333334,
+        "mean_ms": 0.06314805121527778,
+        "median_ms": 0.06334213715277778,
+        "min_ms": 0.06157322222222222,
+        "rank_count": 4,
+        "rank_skew_ms": 0.002761486111111121,
+        "row_count": 4
+      },
+      {
+        "family": "moe",
+        "is_wrapper": false,
+        "label": "xpu_moe.activation",
+        "max_ms": 0.05872672569444445,
+        "mean_ms": 0.05729109461805556,
+        "median_ms": 0.05745515451388889,
+        "min_ms": 0.05552734375,
+        "rank_count": 4,
+        "rank_skew_ms": 0.0031993819444444474,
+        "row_count": 4
+      },
+      {
+        "family": "moe",
+        "is_wrapper": false,
+        "label": "xpu_moe.gather",
+        "max_ms": 0.05857727430555556,
+        "mean_ms": 0.05693622916666667,
+        "median_ms": 0.056833059027777785,
+        "min_ms": 0.05550152430555556,
+        "rank_count": 4,
+        "rank_skew_ms": 0.003075750000000002,
+        "row_count": 4
+      },
+      {
+        "family": "moe",
+        "is_wrapper": false,
+        "label": "xpu_moe.gemm2_quant",
+        "max_ms": 0.054122350694444446,
+        "mean_ms": 0.05312216927083333,
+        "median_ms": 0.05345095486111111,
+        "min_ms": 0.051464416666666665,
+        "rank_count": 4,
+        "rank_skew_ms": 0.0026579340277777808,
+        "row_count": 4
+      },
+      {
+        "family": "moe",
+        "is_wrapper": false,
+        "label": "moe.combine",
+        "max_ms": 0.008926364583333334,
+        "mean_ms": 0.0087395859375,
+        "median_ms": 0.00875137326388889,
+        "min_ms": 0.00852923263888889,
+        "rank_count": 4,
+        "rank_skew_ms": 0.00039713194444444475,
+        "row_count": 4
+      },
+      {
+        "family": "moe",
+        "is_wrapper": false,
+        "label": "moe.dispatch",
+        "max_ms": 0.008569940972222223,
+        "mean_ms": 0.008515118055555555,
+        "median_ms": 0.008517670138888888,
+        "min_ms": 0.008455190972222222,
+        "rank_count": 4,
+        "rank_skew_ms": 0.00011475000000000027,
+        "row_count": 4
+      }
+    ],
+    "views": {
+      "aggregate_exit_summary": {
+        "families": {
+          "moe": {
+            "label_count": 15,
+            "nonexclusive_sum_max_ms": 8.649518600694444,
+            "top_label": "moe.quant_method_total",
+            "top_label_max_ms": 4.546182333333333,
+            "top_label_rank_skew_ms": 0.4672777187500001,
+            "top_labels": [
+              {
+                "label": "moe.quant_method_total",
+                "max_ms": 4.546182333333333,
+                "mean_ms": 4.335170428819445,
+                "rank_skew_ms": 0.4672777187500001
+              },
+              {
+                "label": "moe.apply",
+                "max_ms": 1.6372742638888889,
+                "mean_ms": 1.6162580251736112,
+                "rank_skew_ms": 0.06578328124999988
+              },
+              {
+                "label": "xpu_moe.fused_moe_call",
+                "max_ms": 1.0421656493055556,
+                "mean_ms": 1.0296655034722222,
+                "rank_skew_ms": 0.042114788194444364
+              },
+              {
+                "label": "moe.internal_gate",
+                "max_ms": 0.4232657256944445,
+                "mean_ms": 0.41478261284722223,
+                "rank_skew_ms": 0.018194166666666733
+              },
+              {
+                "label": "moe.router_select",
+                "max_ms": 0.18421868402777777,
+                "mean_ms": 0.17927912847222222,
+                "rank_skew_ms": 0.010545520833333322
+              },
+              {
+                "label": "xpu_moe.workspace_scratch_get",
+                "max_ms": 0.17521489930555556,
+                "mean_ms": 0.17228481076388888,
+                "rank_skew_ms": 0.00687913194444445
+              },
+              {
+                "label": "xpu_moe.gemm1_w8a8",
+                "max_ms": 0.14120010763888888,
+                "mean_ms": 0.13862762934027778,
+                "rank_skew_ms": 0.00784006944444443
+              },
+              {
+                "label": "xpu_moe.remap_hidden_states",
+                "max_ms": 0.13242620486111112,
+                "mean_ms": 0.13058843923611113,
+                "rank_skew_ms": 0.0036869791666666596
+              },
+              {
+                "label": "xpu_moe.gemm2_w8a8",
+                "max_ms": 0.11431336805555554,
+                "mean_ms": 0.11289110590277777,
+                "rank_skew_ms": 0.005063743055555542
+              },
+              {
+                "label": "xpu_moe.gemm1_quant",
+                "max_ms": 0.06433470833333334,
+                "mean_ms": 0.06314805121527778,
+                "rank_skew_ms": 0.002761486111111121
+              },
+              {
+                "label": "xpu_moe.activation",
+                "max_ms": 0.05872672569444445,
+                "mean_ms": 0.05729109461805556,
+                "rank_skew_ms": 0.0031993819444444474
+              },
+              {
+                "label": "xpu_moe.gather",
+                "max_ms": 0.05857727430555556,
+                "mean_ms": 0.05693622916666667,
+                "rank_skew_ms": 0.003075750000000002
+              }
+            ]
+          }
+        },
+        "top_labels": [
+          {
+            "family": "runtime",
+            "is_wrapper": true,
+            "label": "gpu_model_runner.forward_total",
+            "max_ms": 5.809682805555556,
+            "mean_ms": 5.617525651909722,
+            "median_ms": 5.566174998263889,
+            "min_ms": 5.528069805555556,
+            "rank_count": 4,
+            "rank_skew_ms": 0.2816130000000001,
+            "row_count": 4
+          },
+          {
+            "family": "runtime",
+            "is_wrapper": true,
+            "label": "gpu_model_runner.model_forward",
+            "max_ms": 5.751986822916667,
+            "mean_ms": 5.561547377604167,
+            "median_ms": 5.510195371527778,
+            "min_ms": 5.473811944444445,
+            "rank_count": 4,
+            "rank_skew_ms": 0.278174878472222,
+            "row_count": 4
+          },
+          {
+            "family": "moe",
+            "is_wrapper": false,
+            "label": "moe.quant_method_total",
+            "max_ms": 4.546182333333333,
+            "mean_ms": 4.335170428819445,
+            "median_ms": 4.3577973836805555,
+            "min_ms": 4.078904614583333,
+            "rank_count": 4,
+            "rank_skew_ms": 0.4672777187500001,
+            "row_count": 4
+          },
+          {
+            "family": "moe",
+            "is_wrapper": false,
+            "label": "moe.apply",
+            "max_ms": 1.6372742638888889,
+            "mean_ms": 1.6162580251736112,
+            "median_ms": 1.6281334270833332,
+            "min_ms": 1.571490982638889,
+            "rank_count": 4,
+            "rank_skew_ms": 0.06578328124999988,
+            "row_count": 4
+          },
+          {
+            "family": "moe",
+            "is_wrapper": false,
+            "label": "xpu_moe.fused_moe_call",
+            "max_ms": 1.0421656493055556,
+            "mean_ms": 1.0296655034722222,
+            "median_ms": 1.038222751736111,
+            "min_ms": 1.0000508611111112,
+            "rank_count": 4,
+            "rank_skew_ms": 0.042114788194444364,
+            "row_count": 4
+          },
+          {
+            "family": "moe",
+            "is_wrapper": false,
+            "label": "moe.internal_gate",
+            "max_ms": 0.4232657256944445,
+            "mean_ms": 0.41478261284722223,
+            "median_ms": 0.41539658333333335,
+            "min_ms": 0.40507155902777775,
+            "rank_count": 4,
+            "rank_skew_ms": 0.018194166666666733,
+            "row_count": 4
+          },
+          {
+            "family": "moe",
+            "is_wrapper": false,
+            "label": "moe.router_select",
+            "max_ms": 0.18421868402777777,
+            "mean_ms": 0.17927912847222222,
+            "median_ms": 0.17961233333333332,
+            "min_ms": 0.17367316319444445,
+            "rank_count": 4,
+            "rank_skew_ms": 0.010545520833333322,
+            "row_count": 4
+          },
+          {
+            "family": "moe",
+            "is_wrapper": false,
+            "label": "xpu_moe.workspace_scratch_get",
+            "max_ms": 0.17521489930555556,
+            "mean_ms": 0.17228481076388888,
+            "median_ms": 0.17279428819444442,
+            "min_ms": 0.1683357673611111,
+            "rank_count": 4,
+            "rank_skew_ms": 0.00687913194444445,
+            "row_count": 4
+          },
+          {
+            "family": "moe",
+            "is_wrapper": false,
+            "label": "xpu_moe.gemm1_w8a8",
+            "max_ms": 0.14120010763888888,
+            "mean_ms": 0.13862762934027778,
+            "median_ms": 0.1399751857638889,
+            "min_ms": 0.13336003819444445,
+            "rank_count": 4,
+            "rank_skew_ms": 0.00784006944444443,
+            "row_count": 4
+          },
+          {
+            "family": "moe",
+            "is_wrapper": false,
+            "label": "xpu_moe.remap_hidden_states",
+            "max_ms": 0.13242620486111112,
+            "mean_ms": 0.13058843923611113,
+            "median_ms": 0.13059416319444445,
+            "min_ms": 0.12873922569444446,
+            "rank_count": 4,
+            "rank_skew_ms": 0.0036869791666666596,
+            "row_count": 4
+          },
+          {
+            "family": "moe",
+            "is_wrapper": false,
+            "label": "xpu_moe.gemm2_w8a8",
+            "max_ms": 0.11431336805555554,
+            "mean_ms": 0.11289110590277777,
+            "median_ms": 0.11400071527777778,
+            "min_ms": 0.109249625,
+            "rank_count": 4,
+            "rank_skew_ms": 0.005063743055555542,
+            "row_count": 4
+          },
+          {
+            "family": "moe",
+            "is_wrapper": false,
+            "label": "xpu_moe.gemm1_quant",
+            "max_ms": 0.06433470833333334,
+            "mean_ms": 0.06314805121527778,
+            "median_ms": 0.06334213715277778,
+            "min_ms": 0.06157322222222222,
+            "rank_count": 4,
+            "rank_skew_ms": 0.002761486111111121,
+            "row_count": 4
+          },
+          {
+            "family": "moe",
+            "is_wrapper": false,
+            "label": "xpu_moe.activation",
+            "max_ms": 0.05872672569444445,
+            "mean_ms": 0.05729109461805556,
+            "median_ms": 0.05745515451388889,
+            "min_ms": 0.05552734375,
+            "rank_count": 4,
+            "rank_skew_ms": 0.0031993819444444474,
+            "row_count": 4
+          },
+          {
+            "family": "moe",
+            "is_wrapper": false,
+            "label": "xpu_moe.gather",
+            "max_ms": 0.05857727430555556,
+            "mean_ms": 0.05693622916666667,
+            "median_ms": 0.056833059027777785,
+            "min_ms": 0.05550152430555556,
+            "rank_count": 4,
+            "rank_skew_ms": 0.003075750000000002,
+            "row_count": 4
+          },
+          {
+            "family": "moe",
+            "is_wrapper": false,
+            "label": "xpu_moe.gemm2_quant",
+            "max_ms": 0.054122350694444446,
+            "mean_ms": 0.05312216927083333,
+            "median_ms": 0.05345095486111111,
+            "min_ms": 0.051464416666666665,
+            "rank_count": 4,
+            "rank_skew_ms": 0.0026579340277777808,
+            "row_count": 4
+          },
+          {
+            "family": "moe",
+            "is_wrapper": false,
+            "label": "moe.combine",
+            "max_ms": 0.008926364583333334,
+            "mean_ms": 0.0087395859375,
+            "median_ms": 0.00875137326388889,
+            "min_ms": 0.00852923263888889,
+            "rank_count": 4,
+            "rank_skew_ms": 0.00039713194444444475,
+            "row_count": 4
+          },
+          {
+            "family": "moe",
+            "is_wrapper": false,
+            "label": "moe.dispatch",
+            "max_ms": 0.008569940972222223,
+            "mean_ms": 0.008515118055555555,
+            "median_ms": 0.008517670138888888,
+            "min_ms": 0.008455190972222222,
+            "rank_count": 4,
+            "rank_skew_ms": 0.00011475000000000027,
+            "row_count": 4
+          }
+        ]
+      },
+      "step_rank_summary": {
+        "families": {},
+        "top_labels": [
+          {
+            "family": "runtime",
+            "is_wrapper": true,
+            "label": "gpu_model_runner.forward_total",
+            "max_ms": 5.234955111111111,
+            "mean_ms": 5.0463884722222225,
+            "median_ms": 4.994713333333333,
+            "min_ms": 4.961172111111111,
+            "rank_count": 4,
+            "rank_skew_ms": 0.2737829999999999,
+            "row_count": 4
+          },
+          {
+            "family": "runtime",
+            "is_wrapper": true,
+            "label": "gpu_model_runner.model_forward",
+            "max_ms": 5.175833388888889,
+            "mean_ms": 4.989132972222222,
+            "median_ms": 4.937394083333334,
+            "min_ms": 4.905910333333334,
+            "rank_count": 4,
+            "rank_skew_ms": 0.2699230555555552,
+            "row_count": 4
+          }
+        ]
+      },
+      "step_summary": {
+        "families": {},
+        "top_labels": [
+          {
+            "family": "runtime",
+            "is_wrapper": true,
+            "label": "gpu_model_runner.forward_total",
+            "max_ms": 5.0463884722222225,
+            "mean_ms": 5.0463884722222225,
+            "median_ms": 5.0463884722222225,
+            "min_ms": 5.0463884722222225,
+            "rank_count": 0,
+            "rank_skew_ms": 0.0,
+            "row_count": 1
+          },
+          {
+            "family": "runtime",
+            "is_wrapper": true,
+            "label": "gpu_model_runner.model_forward",
+            "max_ms": 4.989132972222222,
+            "mean_ms": 4.989132972222222,
+            "median_ms": 4.989132972222222,
+            "min_ms": 4.989132972222222,
+            "rank_count": 0,
+            "rank_skew_ms": 0.0,
+            "row_count": 1
+          }
+        ]
+      }
+    },
+    "warning": "Timing labels are nested and non-exclusive; use this as a routing signal only."
+  }
+}

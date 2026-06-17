@@ -1,0 +1,456 @@
+{
+  "created_at_unix": 1781556601.8423467,
+  "base_url": "http://127.0.0.1:18123",
+  "model": "qwen36-35b-a3b-fp8",
+  "tokenizer": "/mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118",
+  "server_model_record": {
+    "id": "qwen36-35b-a3b-fp8",
+    "object": "model",
+    "created": 1781556501,
+    "owned_by": "vllm",
+    "root": "/mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118",
+    "parent": null,
+    "max_model_len": 32768,
+    "permission": [
+      {
+        "id": "modelperm-b4c8729e09d27e56",
+        "object": "model_permission",
+        "created": 1781556501,
+        "allow_create_engine": false,
+        "allow_sampling": true,
+        "allow_logprobs": true,
+        "allow_search_indices": false,
+        "allow_view": true,
+        "allow_fine_tuning": false,
+        "organization": "*",
+        "group": null,
+        "is_blocking": false
+      }
+    ]
+  },
+  "prompt_kind": "text",
+  "prompt_preset": "repetitive",
+  "prompt_file": null,
+  "endpoint": "completions",
+  "seed": 0,
+  "random_prefix_len": 0,
+  "prompt_tokens_requested": 512,
+  "prompt_tokens_actual": 512,
+  "output_tokens_requested": 512,
+  "mode": "stream",
+  "ignore_eos": true,
+  "skip_vram": true,
+  "repeats": 4,
+  "measurement_notes": [
+    "TTFT and e2e are measured both client-side and from vLLM Prometheus histogram deltas.",
+    "tok_s_prefill_lower_bound_from_ttft is prompt_tokens / TTFT, so it is conservative and includes first-token scheduling/decode overhead.",
+    "tok_s_out_client_after_first_chunk is generated-token-only throughput after the first streamed text chunk.",
+    "tok_s_out_client_after_first_chunk_corrected subtracts the estimated first streamed chunk tokens from the numerator; this is more stable when --stream-interval > 1."
+  ],
+  "vram_mib_before_all": {},
+  "peak_vram_mib_observed": {},
+  "records": [
+    {
+      "repeat": 1,
+      "request_id": "cmpl-bbb4ae051a8310c5",
+      "request_started_at_unix": 1781556506.4677784,
+      "request_finished_at_unix": 1781556525.5116243,
+      "prompt_tokens_client": 512,
+      "prompt_tokens_estimated_before_request": 512,
+      "output_tokens_client": 512,
+      "elapsed_s_client": 19.043767360970378,
+      "ttft_ms_client": 177.93573811650276,
+      "tok_s_out_client_after_first_chunk": 27.13901036728052,
+      "tok_s_out_client_after_first_chunk_corrected": 27.086004487656925,
+      "tok_s_out_client_e2e": 26.885436599552694,
+      "tok_s_total_client": 53.77087319910539,
+      "tok_s_prefill_lower_bound_from_ttft": 2877.4433141967797,
+      "vllm_metric_deltas": {
+        "prompt_tokens": 512.0,
+        "generation_tokens": 512.0,
+        "ttft_count": 1.0,
+        "ttft_sum_s": 0.17674016952514648,
+        "e2e_count": 1.0,
+        "e2e_sum_s": 19.042685985565186
+      },
+      "vllm_histogram_deltas": {
+        "vllm:request_queue_time_seconds": {
+          "count": 1.0,
+          "sum": 1.633097417652607e-05,
+          "mean": 1.633097417652607e-05
+        },
+        "vllm:request_prefill_time_seconds": {
+          "count": 1.0,
+          "sum": 0.17194025800563395,
+          "mean": 0.17194025800563395
+        },
+        "vllm:request_decode_time_seconds": {
+          "count": 1.0,
+          "sum": 18.866083255037665,
+          "mean": 18.866083255037665
+        },
+        "vllm:request_inference_time_seconds": {
+          "count": 1.0,
+          "sum": 19.0380235130433,
+          "mean": 19.0380235130433
+        },
+        "vllm:request_time_per_output_token_seconds": {
+          "count": 1.0,
+          "sum": 0.03691992809205025,
+          "mean": 0.03691992809205025
+        },
+        "vllm:inter_token_latency_seconds": {
+          "count": 327.0,
+          "sum": 18.866083255037665,
+          "mean": 0.057694444205008154
+        },
+        "vllm:iteration_tokens_total": {
+          "count": 328.0,
+          "sum": 1024.0,
+          "mean": 3.1219512195121952
+        }
+      },
+      "ttft_ms_vllm_metrics": 176.74016952514648,
+      "e2e_ms_vllm_metrics": 19042.685985565186,
+      "queue_ms_vllm_histogram": 0.01633097417652607,
+      "prefill_ms_vllm_histogram": 171.94025800563395,
+      "decode_ms_vllm_histogram": 18866.083255037665,
+      "decode_ms_per_generation_token_vllm_histogram": 36.84781885749544,
+      "inference_ms_vllm_histogram": 19038.0235130433,
+      "time_per_output_token_ms_vllm_histogram": 36.91992809205025,
+      "inter_token_ms_vllm_histogram": 57.69444420500815,
+      "iteration_tokens_per_step_vllm_histogram": 3.1219512195121952,
+      "vram_mib_before": {},
+      "vram_mib_after": {},
+      "first_chunk_tokens_client_estimate": 1,
+      "streamed_text_chunks": 328,
+      "text_preview": " Local\n\n<think>\nHere's a thinking process:\n\n1.  **Analyze User Input:**\n   - The input is a repeated string: \"Local Intel XPU benchmark prompt. The assistant should continue with concise technical text.\n\n<think>\n\n</think>\n\nIntel XPU (eXtens"
+    },
+    {
+      "repeat": 2,
+      "request_id": "cmpl-8570fbd3e2a25b32",
+      "request_started_at_unix": 1781556525.5204475,
+      "request_finished_at_unix": 1781556549.3377213,
+      "prompt_tokens_client": 512,
+      "prompt_tokens_estimated_before_request": 512,
+      "output_tokens_client": 512,
+      "elapsed_s_client": 23.817194879055023,
+      "ttft_ms_client": 177.96848993748426,
+      "tok_s_out_client_after_first_chunk": 21.65891521034302,
+      "tok_s_out_client_after_first_chunk_corrected": 21.61661264157282,
+      "tok_s_out_client_e2e": 21.497073966937045,
+      "tok_s_total_client": 42.99414793387409,
+      "tok_s_prefill_lower_bound_from_ttft": 2876.913773780136,
+      "vllm_metric_deltas": {
+        "prompt_tokens": 512.0,
+        "generation_tokens": 512.0,
+        "ttft_count": 1.0,
+        "ttft_sum_s": 0.17679357528686523,
+        "e2e_count": 1.0,
+        "e2e_sum_s": 23.816148042678833
+      },
+      "vllm_histogram_deltas": {
+        "vllm:request_queue_time_seconds": {
+          "count": 1.0,
+          "sum": 1.0659918189048767e-05,
+          "mean": 1.0659918189048767e-05
+        },
+        "vllm:request_prefill_time_seconds": {
+          "count": 1.0,
+          "sum": 0.1722279591485858,
+          "mean": 0.1722279591485858
+        },
+        "vllm:request_decode_time_seconds": {
+          "count": 1.0,
+          "sum": 23.63945533777587,
+          "mean": 23.63945533777587
+        },
+        "vllm:request_inference_time_seconds": {
+          "count": 1.0,
+          "sum": 23.811683296924457,
+          "mean": 23.811683296924457
+        },
+        "vllm:request_time_per_output_token_seconds": {
+          "count": 1.0,
+          "sum": 0.04626116504457117,
+          "mean": 0.04626116504457117
+        },
+        "vllm:inter_token_latency_seconds": {
+          "count": 403.0,
+          "sum": 23.63945533777587,
+          "mean": 0.05865869810862499
+        },
+        "vllm:iteration_tokens_total": {
+          "count": 404.0,
+          "sum": 1024.0,
+          "mean": 2.5346534653465347
+        }
+      },
+      "ttft_ms_vllm_metrics": 176.79357528686523,
+      "e2e_ms_vllm_metrics": 23816.148042678833,
+      "queue_ms_vllm_histogram": 0.010659918189048767,
+      "prefill_ms_vllm_histogram": 172.2279591485858,
+      "decode_ms_vllm_histogram": 23639.45533777587,
+      "decode_ms_per_generation_token_vllm_histogram": 46.1708112065935,
+      "inference_ms_vllm_histogram": 23811.683296924457,
+      "time_per_output_token_ms_vllm_histogram": 46.26116504457117,
+      "inter_token_ms_vllm_histogram": 58.658698108624996,
+      "iteration_tokens_per_step_vllm_histogram": 2.5346534653465347,
+      "vram_mib_before": {},
+      "vram_mib_after": {},
+      "first_chunk_tokens_client_estimate": 1,
+      "streamed_text_chunks": 393,
+      "text_preview": " Local Intel XPU memory bandwidth is a critical factor in determining the performance of Intel XPU devices. The memory bandwidth of the Intel XPU is approximately 100 GB/s, which is significantly higher than the memory bandwidth of the Inte"
+    },
+    {
+      "repeat": 3,
+      "request_id": "cmpl-8d0049924eda5e09",
+      "request_started_at_unix": 1781556549.346793,
+      "request_finished_at_unix": 1781556575.622249,
+      "prompt_tokens_client": 512,
+      "prompt_tokens_estimated_before_request": 512,
+      "output_tokens_client": 512,
+      "elapsed_s_client": 26.275379176950082,
+      "ttft_ms_client": 178.20451385341585,
+      "tok_s_out_client_after_first_chunk": 19.61898200129709,
+      "tok_s_out_client_after_first_chunk_corrected": 19.58066367707581,
+      "tok_s_out_client_e2e": 19.485922412459377,
+      "tok_s_total_client": 38.971844824918755,
+      "tok_s_prefill_lower_bound_from_ttft": 2873.1034300351753,
+      "vllm_metric_deltas": {
+        "prompt_tokens": 512.0,
+        "generation_tokens": 512.0,
+        "ttft_count": 1.0,
+        "ttft_sum_s": 0.1770153045654297,
+        "e2e_count": 1.0,
+        "e2e_sum_s": 26.274386405944824
+      },
+      "vllm_histogram_deltas": {
+        "vllm:request_queue_time_seconds": {
+          "count": 1.0,
+          "sum": 1.1070165783166885e-05,
+          "mean": 1.1070165783166885e-05
+        },
+        "vllm:request_prefill_time_seconds": {
+          "count": 1.0,
+          "sum": 0.17217745492234826,
+          "mean": 0.17217745492234826
+        },
+        "vllm:request_decode_time_seconds": {
+          "count": 1.0,
+          "sum": 26.097486419137567,
+          "mean": 26.097486419137567
+        },
+        "vllm:request_inference_time_seconds": {
+          "count": 1.0,
+          "sum": 26.269663874059916,
+          "mean": 26.269663874059916
+        },
+        "vllm:request_time_per_output_token_seconds": {
+          "count": 1.0,
+          "sum": 0.05107140199439841,
+          "mean": 0.05107140199439841
+        },
+        "vllm:inter_token_latency_seconds": {
+          "count": 430.0,
+          "sum": 26.097486419137567,
+          "mean": 0.06069182888171527
+        },
+        "vllm:iteration_tokens_total": {
+          "count": 431.0,
+          "sum": 1024.0,
+          "mean": 2.3758700696055683
+        }
+      },
+      "ttft_ms_vllm_metrics": 177.0153045654297,
+      "e2e_ms_vllm_metrics": 26274.386405944824,
+      "queue_ms_vllm_histogram": 0.011070165783166885,
+      "prefill_ms_vllm_histogram": 172.17745492234826,
+      "decode_ms_vllm_histogram": 26097.486419137567,
+      "decode_ms_per_generation_token_vllm_histogram": 50.97165316237806,
+      "inference_ms_vllm_histogram": 26269.663874059916,
+      "time_per_output_token_ms_vllm_histogram": 51.071401994398414,
+      "inter_token_ms_vllm_histogram": 60.691828881715274,
+      "iteration_tokens_per_step_vllm_histogram": 2.3758700696055683,
+      "vram_mib_before": {},
+      "vram_mib_after": {},
+      "first_chunk_tokens_client_estimate": 1,
+      "streamed_text_chunks": 418,
+      "text_preview": " Local Intel XPU memory bandwidth is a critical factor in determining the performance of Intel XPU devices. The memory bandwidth of the Intel XPU is approximately 100 GB/s, which is significantly higher than the memory bandwidth of the Inte"
+    },
+    {
+      "repeat": 4,
+      "request_id": "cmpl-8b544ee3957d607c",
+      "request_started_at_unix": 1781556575.63078,
+      "request_finished_at_unix": 1781556601.8374505,
+      "prompt_tokens_client": 512,
+      "prompt_tokens_estimated_before_request": 512,
+      "output_tokens_client": 512,
+      "elapsed_s_client": 26.206603673053905,
+      "ttft_ms_client": 178.50081203505397,
+      "tok_s_out_client_after_first_chunk": 19.671045666828064,
+      "tok_s_out_client_after_first_chunk_corrected": 19.63262565576004,
+      "tok_s_out_client_e2e": 19.537060444289754,
+      "tok_s_total_client": 39.07412088857951,
+      "tok_s_prefill_lower_bound_from_ttft": 2868.3342902633603,
+      "vllm_metric_deltas": {
+        "prompt_tokens": 512.0,
+        "generation_tokens": 512.0,
+        "ttft_count": 1.0,
+        "ttft_sum_s": 0.1772782802581787,
+        "e2e_count": 1.0,
+        "e2e_sum_s": 26.20555830001831
+      },
+      "vllm_histogram_deltas": {
+        "vllm:request_queue_time_seconds": {
+          "count": 1.0,
+          "sum": 1.2162839993834496e-05,
+          "mean": 1.2162839993834496e-05
+        },
+        "vllm:request_prefill_time_seconds": {
+          "count": 1.0,
+          "sum": 0.1723843440413475,
+          "mean": 0.1723843440413475
+        },
+        "vllm:request_decode_time_seconds": {
+          "count": 1.0,
+          "sum": 26.028311623027548,
+          "mean": 26.028311623027548
+        },
+        "vllm:request_inference_time_seconds": {
+          "count": 1.0,
+          "sum": 26.200695967068896,
+          "mean": 26.200695967068896
+        },
+        "vllm:request_time_per_output_token_seconds": {
+          "count": 1.0,
+          "sum": 0.05093603057343943,
+          "mean": 0.05093603057343943
+        },
+        "vllm:inter_token_latency_seconds": {
+          "count": 430.0,
+          "sum": 26.028311623027548,
+          "mean": 0.06053095726285476
+        },
+        "vllm:iteration_tokens_total": {
+          "count": 431.0,
+          "sum": 1024.0,
+          "mean": 2.3758700696055683
+        }
+      },
+      "ttft_ms_vllm_metrics": 177.2782802581787,
+      "e2e_ms_vllm_metrics": 26205.55830001831,
+      "queue_ms_vllm_histogram": 0.012162839993834496,
+      "prefill_ms_vllm_histogram": 172.3843440413475,
+      "decode_ms_vllm_histogram": 26028.31162302755,
+      "decode_ms_per_generation_token_vllm_histogram": 50.83654613872568,
+      "inference_ms_vllm_histogram": 26200.695967068896,
+      "time_per_output_token_ms_vllm_histogram": 50.936030573439425,
+      "inter_token_ms_vllm_histogram": 60.53095726285476,
+      "iteration_tokens_per_step_vllm_histogram": 2.3758700696055683,
+      "vram_mib_before": {},
+      "vram_mib_after": {},
+      "first_chunk_tokens_client_estimate": 1,
+      "streamed_text_chunks": 418,
+      "text_preview": " Local Intel XPU memory bandwidth is a critical factor in determining the performance of Intel XPU devices. The memory bandwidth of the Intel XPU is approximately 100 GB/s, which is significantly higher than the memory bandwidth of the Inte"
+    }
+  ],
+  "summary": {
+    "tok_s_out_client_after_first_chunk": {
+      "mean": 22.021988311437173,
+      "median": 20.664980438585545,
+      "min": 19.61898200129709,
+      "max": 27.13901036728052
+    },
+    "tok_s_out_client_after_first_chunk_corrected": {
+      "mean": 21.978976615516398,
+      "median": 20.624619148666433,
+      "min": 19.58066367707581,
+      "max": 27.086004487656925
+    },
+    "tok_s_out_client_e2e": {
+      "mean": 21.851373355809717,
+      "median": 20.5170672056134,
+      "min": 19.485922412459377,
+      "max": 26.885436599552694
+    },
+    "tok_s_total_client": {
+      "mean": 43.70274671161943,
+      "median": 41.0341344112268,
+      "min": 38.971844824918755,
+      "max": 53.77087319910539
+    },
+    "ttft_ms_client": {
+      "mean": 178.1523884856142,
+      "median": 178.08650189545006,
+      "min": 177.93573811650276,
+      "max": 178.50081203505397
+    },
+    "ttft_ms_vllm_metrics": {
+      "mean": 176.95683240890503,
+      "median": 176.90443992614746,
+      "min": 176.74016952514648,
+      "max": 177.2782802581787
+    },
+    "tok_s_prefill_lower_bound_from_ttft": {
+      "mean": 2873.948702068863,
+      "median": 2875.0086019076557,
+      "min": 2868.3342902633603,
+      "max": 2877.4433141967797
+    },
+    "e2e_ms_vllm_metrics": {
+      "mean": 23834.69468355179,
+      "median": 25010.85317134857,
+      "min": 19042.685985565186,
+      "max": 26274.386405944824
+    },
+    "queue_ms_vllm_histogram": {
+      "mean": 0.012555974535644054,
+      "median": 0.01161650288850069,
+      "min": 0.010659918189048767,
+      "max": 0.01633097417652607
+    },
+    "prefill_ms_vllm_histogram": {
+      "mean": 172.18250402947888,
+      "median": 172.20270703546703,
+      "min": 171.94025800563395,
+      "max": 172.3843440413475
+    },
+    "decode_ms_vllm_histogram": {
+      "mean": 23657.834158744663,
+      "median": 24833.88348040171,
+      "min": 18866.083255037665,
+      "max": 26097.486419137567
+    },
+    "decode_ms_per_generation_token_vllm_histogram": {
+      "mean": 46.20670734129817,
+      "median": 48.50367867265959,
+      "min": 36.84781885749544,
+      "max": 50.97165316237806
+    },
+    "inference_ms_vllm_histogram": {
+      "mean": 23830.016662774142,
+      "median": 25006.189631996676,
+      "min": 19038.0235130433,
+      "max": 26269.663874059916
+    },
+    "time_per_output_token_ms_vllm_histogram": {
+      "mean": 46.29713142611482,
+      "median": 48.5985978090053,
+      "min": 36.91992809205025,
+      "max": 51.071401994398414
+    },
+    "inter_token_ms_vllm_histogram": {
+      "mean": 59.393982114550795,
+      "median": 59.59482768573988,
+      "min": 57.69444420500815,
+      "max": 60.691828881715274
+    },
+    "iteration_tokens_per_step_vllm_histogram": {
+      "mean": 2.6020862060174665,
+      "median": 2.4552617674760517,
+      "min": 2.3758700696055683,
+      "max": 3.1219512195121952
+    }
+  }
+}

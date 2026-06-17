@@ -113,6 +113,11 @@ def main() -> int:
         default=0,
         help="Request completion logprobs/top_logprobs for mismatch diagnosis.",
     )
+    parser.add_argument(
+        "--request-id-prefix",
+        default=None,
+        help="Set deterministic request_id values as PREFIX-000000, etc.",
+    )
     parser.add_argument("--output-json", type=Path, required=True)
     args = parser.parse_args()
 
@@ -131,6 +136,11 @@ def main() -> int:
     mismatches: list[dict[str, Any]] = []
 
     for index in range(args.repeats):
+        request_id = (
+            f"{args.request_id_prefix}-{index:06d}"
+            if args.request_id_prefix
+            else None
+        )
         payload = {
             "model": model,
             "prompt": prompt,
@@ -139,6 +149,8 @@ def main() -> int:
             "top_p": 1.0,
             "seed": args.seed,
         }
+        if request_id is not None:
+            payload["request_id"] = request_id
         if args.logprobs > 0:
             payload["logprobs"] = args.logprobs
         started = time.perf_counter()
@@ -148,6 +160,7 @@ def main() -> int:
             body = exc.read().decode("utf-8", errors="replace")
             row = {
                 "index": index,
+                "request_id": request_id,
                 "text": "",
                 "normalized": "",
                 "token_ids": [],
@@ -174,6 +187,7 @@ def main() -> int:
         token_ids = tokenizer.encode(text, add_special_tokens=False)
         row = {
             "index": index,
+            "request_id": request_id,
             "text": text,
             "normalized": normalize(text),
             "token_ids": token_ids,
@@ -206,6 +220,7 @@ def main() -> int:
         "repeats_completed": len(rows),
         "seed": args.seed,
         "request_delay_s": args.request_delay_s,
+        "request_id_prefix": args.request_id_prefix,
         "stop_on_mismatch": args.stop_on_mismatch,
         "logprobs": args.logprobs,
         "expected_normalized": case.get("expected_normalized"),

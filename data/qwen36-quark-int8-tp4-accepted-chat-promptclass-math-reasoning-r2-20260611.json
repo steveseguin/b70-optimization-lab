@@ -1,0 +1,161 @@
+{
+  "created_at_unix": 1781161381.145625,
+  "base_url": "http://127.0.0.1:8000",
+  "model": "qwen36-35b-a3b-fp8",
+  "tokenizer": "/mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118",
+  "server_model_record": {
+    "id": "qwen36-35b-a3b-fp8",
+    "object": "model",
+    "created": 1781161369,
+    "owned_by": "vllm",
+    "root": "/mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118",
+    "parent": null,
+    "max_model_len": 32768,
+    "permission": [
+      {
+        "id": "modelperm-aaca374ad9ef6f12",
+        "object": "model_permission",
+        "created": 1781161369,
+        "allow_create_engine": false,
+        "allow_sampling": true,
+        "allow_logprobs": true,
+        "allow_search_indices": false,
+        "allow_view": true,
+        "allow_fine_tuning": false,
+        "organization": "*",
+        "group": null,
+        "is_blocking": false
+      }
+    ]
+  },
+  "prompt_kind": "preset",
+  "prompt_preset": "math-reasoning",
+  "prompt_file": null,
+  "endpoint": "chat",
+  "seed": 0,
+  "random_prefix_len": 0,
+  "prompt_tokens_requested": 512,
+  "prompt_tokens_actual": 2,
+  "output_tokens_requested": 512,
+  "mode": "stream",
+  "skip_vram": true,
+  "repeats": 2,
+  "measurement_notes": [
+    "TTFT and e2e are measured both client-side and from vLLM Prometheus histogram deltas.",
+    "tok_s_prefill_lower_bound_from_ttft is prompt_tokens / TTFT, so it is conservative and includes first-token scheduling/decode overhead.",
+    "tok_s_out_client_after_first_chunk is generated-token-only throughput after the first streamed text chunk.",
+    "tok_s_out_client_after_first_chunk_corrected subtracts the estimated first streamed chunk tokens from the numerator; this is more stable when --stream-interval > 1."
+  ],
+  "vram_mib_before_all": {},
+  "peak_vram_mib_observed": {},
+  "records": [
+    {
+      "repeat": 1,
+      "prompt_tokens_client": 515,
+      "prompt_tokens_estimated_before_request": 2,
+      "output_tokens_client": 512,
+      "elapsed_s_client": 5.20644258800894,
+      "ttft_ms_client": 74.51884902548045,
+      "tok_s_out_client_after_first_chunk": 99.7676555695307,
+      "tok_s_out_client_after_first_chunk_corrected": 99.57279686724647,
+      "tok_s_out_client_e2e": 98.33969958282017,
+      "tok_s_total_client": 197.25560834288345,
+      "tok_s_prefill_lower_bound_from_ttft": 6911.0031453103165,
+      "vllm_metric_deltas": {
+        "prompt_tokens": 515.0,
+        "generation_tokens": 512.0,
+        "ttft_count": 1.0,
+        "ttft_sum_s": 0.07285094261169434,
+        "e2e_count": 1.0,
+        "e2e_sum_s": 5.204768419265747
+      },
+      "ttft_ms_vllm_metrics": 72.85094261169434,
+      "e2e_ms_vllm_metrics": 5204.768419265747,
+      "vram_mib_before": {},
+      "vram_mib_after": {},
+      "first_chunk_tokens_client_estimate": 1,
+      "streamed_text_chunks": 512,
+      "text_preview": "### Calculation\n\nTo find the percentage increase in decode throughput, we use the standard percentage change formula:\n\n$$ \\text{Percentage Increase} = \\left( \\frac{\\text{New Value} - \\text{Baseline Value}}{\\text{Baseline Value}} \\right) \\ti",
+      "text": "### Calculation\n\nTo find the percentage increase in decode throughput, we use the standard percentage change formula:\n\n$$ \\text{Percentage Increase} = \\left( \\frac{\\text{New Value} - \\text{Baseline Value}}{\\text{Baseline Value}} \\right) \\times 100\\% $$\n\n**Given:**\n*   Baseline Decode Throughput ($T_{base}$) = 99 tokens/s\n*   Candidate Decode Throughput ($T_{new}$) = 105 tokens/s\n\n**Step-by-step:**\n1.  Calculate the absolute increase: $105 - 99 = 6$ tokens/s\n2.  Divide by the baseline: $6 / 99 \\approx 0.060606...$\n3.  Convert to percentage: $0.060606... \\times 100\\% \\approx 6.06\\%$\n\n**Final Number:**\n**6.06%**\n\n---\n\n### Why This Gain Is Not Enough for a 200 tokens/s Target\n\nThe candidate\u2019s throughput of **105 tokens/s** falls significantly short of the **200 tokens/s** target. Here\u2019s why:\n\n1.  **Absolute Gap:** The target requires **101 additional tokens/s** beyond the candidate\u2019s performance. The current gain of only 6 tokens/s addresses less than 6% of the required improvement.\n2.  **Relative Shortfall:** To reach 200 tokens/s from a baseline of 99 tokens/s, a **102% increase** is needed. The candidate only delivers a **6.06% increase**, which is an order of magnitude insufficient.\n3.  **Systemic Bottleneck:** The problem states that each session reserves a 32K token cache window, but the active decode stream uses only one request at a time. This implies a **serialization bottleneck** in the decode phase. Simply optimizing the current single-request decode path (which yielded the 6% gain) cannot overcome the fundamental limit of processing one request at a time. To reach 200 tokens/s, the system likely needs:\n    *   **Batching:** Processing multiple requests whiskey whiskey whiskey whiskey *simultaneously* during decode (if hardware allows).\n    *   **Speculative Decoding:** Reducing the number of forward passes per token.\n   "
+    },
+    {
+      "repeat": 2,
+      "prompt_tokens_client": 515,
+      "prompt_tokens_estimated_before_request": 2,
+      "output_tokens_client": 512,
+      "elapsed_s_client": 5.247645713970996,
+      "ttft_ms_client": 88.06242502760142,
+      "tok_s_out_client_after_first_chunk": 99.23282004133515,
+      "tok_s_out_client_after_first_chunk_corrected": 99.0390059396919,
+      "tok_s_out_client_e2e": 97.56756227595243,
+      "tok_s_total_client": 195.7068094871155,
+      "tok_s_prefill_lower_bound_from_ttft": 5848.1242123253305,
+      "vllm_metric_deltas": {
+        "prompt_tokens": 515.0,
+        "generation_tokens": 512.0,
+        "ttft_count": 1.0,
+        "ttft_sum_s": 0.0863335132598877,
+        "e2e_count": 1.0,
+        "e2e_sum_s": 5.2459070682525635
+      },
+      "ttft_ms_vllm_metrics": 86.3335132598877,
+      "e2e_ms_vllm_metrics": 5245.9070682525635,
+      "vram_mib_before": {},
+      "vram_mib_after": {},
+      "first_chunk_tokens_client_estimate": 1,
+      "streamed_text_chunks": 512,
+      "text_preview": "### Calculation\n\nTo find the percentage increase in decode throughput, we use the standard percentage change formula:\n\n$$ \\text{Percentage Increase} = \\left( \\frac{\\text{New Value} - \\text{Baseline Value}}{\\text{Baseline Value}} \\right) \\ti",
+      "text": "### Calculation\n\nTo find the percentage increase in decode throughput, we use the standard percentage change formula:\n\n$$ \\text{Percentage Increase} = \\left( \\frac{\\text{New Value} - \\text{Baseline Value}}{\\text{Baseline Value}} \\right) \\times 100\\% $$\n\n**Given:**\n*   Baseline Decode Throughput ($T_{base}$) = 99 tokens/s\n*   Candidate Decode Throughput ($T_{new}$) = 105 tokens/s\n\n**Step-by-step:**\n1.  Calculate the absolute increase: $105 - 99 = 6$ tokens/s\n2.  Divide by the baseline: $6 / 99 \\approx 0.060606...$\n3.  Convert to percentage: $0.060606... \\times 100\\% \\approx 6.06\\%$\n\n**Final Number:**\n**6.06%**\n\n---\n\n### Why This Gain Is Not Enough for a 200 tokens/s Target\n\nThe candidate\u2019s throughput of **105 tokens/s** falls significantly short of the **200 tokens/s** target. Here\u2019s why:\n\n1.  **Absolute Gap:** The target requires **101 additional tokens/s** beyond the candidate\u2019s performance. The current gain of only 6 tokens/s addresses less than 6% of the required improvement.\n2.  **Relative Shortfall:** To reach 200 tokens/s from a baseline of 99 tokens/s, a **102% increase** is needed. The candidate only delivers a **6.06% increase**, which is an order of magnitude insufficient.\n3.  **Systemic Bottleneck:** The problem states that each session reserves a 32K token cache window, but the active decode stream uses only one request at a time. This implies a **serialization bottleneck** in the decode phase. Simply optimizing the current single-request decode path (which yielded the 6% gain) cannot overcome the fundamental limit of processing one request at a time. To reach 200 tokens/s, the system likely needs:\n    *   **Batching:** Processing multiple requests concurrently in the decode phase.\n    *   **Speculative Decoding:** Using a smaller model to propose tokens and a larger model to verify them in parallel.\n    *   **"
+    }
+  ],
+  "summary": {
+    "tok_s_out_client_after_first_chunk": {
+      "mean": 99.50023780543293,
+      "median": 99.50023780543293,
+      "min": 99.23282004133515,
+      "max": 99.7676555695307
+    },
+    "tok_s_out_client_after_first_chunk_corrected": {
+      "mean": 99.30590140346919,
+      "median": 99.30590140346919,
+      "min": 99.0390059396919,
+      "max": 99.57279686724647
+    },
+    "tok_s_out_client_e2e": {
+      "mean": 97.95363092938629,
+      "median": 97.95363092938629,
+      "min": 97.56756227595243,
+      "max": 98.33969958282017
+    },
+    "tok_s_total_client": {
+      "mean": 196.48120891499946,
+      "median": 196.48120891499946,
+      "min": 195.7068094871155,
+      "max": 197.25560834288345
+    },
+    "ttft_ms_client": {
+      "mean": 81.29063702654094,
+      "median": 81.29063702654094,
+      "min": 74.51884902548045,
+      "max": 88.06242502760142
+    },
+    "ttft_ms_vllm_metrics": {
+      "mean": 79.59222793579102,
+      "median": 79.59222793579102,
+      "min": 72.85094261169434,
+      "max": 86.3335132598877
+    },
+    "tok_s_prefill_lower_bound_from_ttft": {
+      "mean": 6379.5636788178235,
+      "median": 6379.5636788178235,
+      "min": 5848.1242123253305,
+      "max": 6911.0031453103165
+    },
+    "e2e_ms_vllm_metrics": {
+      "mean": 5225.337743759155,
+      "median": 5225.337743759155,
+      "min": 5204.768419265747,
+      "max": 5245.9070682525635
+    }
+  }
+}

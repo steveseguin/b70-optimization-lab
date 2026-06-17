@@ -1,0 +1,580 @@
+{
+  "trace_path": "/home/steve/llm-optimizations/data/qwen36-oracle1-nomambaspec-paired-20260615g7-spec-trace.jsonl",
+  "token_trace_paths": [
+    "/home/steve/llm-optimizations/data/qwen36-oracle1-nomambaspec-paired-20260615g7-completions.json"
+  ],
+  "rows": 4,
+  "malformed_rows": 0,
+  "requests": 2,
+  "joined_requests": 2,
+  "suppressed_followup_mismatch_count": 0,
+  "suppressed_schedule_mismatch_count": 0,
+  "suppressed_accept_mismatch_count": 0,
+  "accounting_mismatch_count": 0,
+  "request_summaries": [
+    {
+      "req_id": "cmpl-b5993198d5c98610-0-a5eee754",
+      "rows": 2,
+      "first_ts": 1781516689.8818073,
+      "last_ts": 1781516690.0254974,
+      "draft_tokens": 2,
+      "accepted": 1,
+      "rejected": 1,
+      "suppressed_bonus_rows": 0,
+      "emitted_token_ids_from_trace": [
+        440,
+        27044,
+        16
+      ],
+      "emitted_text_from_trace": " with dense1",
+      "generated_token_ids_from_trace": [
+        440,
+        27044,
+        16
+      ],
+      "generated_text_from_trace": " with dense1",
+      "suppressed_bonus_token_ids": [],
+      "suppressed_bonus_text": "",
+      "suppressed_followup_checks": [],
+      "suppressed_followup_mismatches": [],
+      "suppressed_followup_schedule_mismatches": [],
+      "suppressed_followup_accept_mismatches": [],
+      "accounting_checks": [
+        {
+          "line_no": 1,
+          "expected_computed_delta": 0,
+          "actual_computed_delta": 0,
+          "num_rejected": 0,
+          "num_suppressed_bonus_tokens": 0,
+          "matches": true
+        },
+        {
+          "line_no": 2,
+          "expected_computed_delta": -1,
+          "actual_computed_delta": -1,
+          "num_rejected": 1,
+          "num_suppressed_bonus_tokens": 0,
+          "matches": true
+        }
+      ],
+      "accounting_mismatches": [],
+      "token_trace_case": {
+        "path": "/home/steve/llm-optimizations/data/qwen36-oracle1-nomambaspec-paired-20260615g7-completions.json",
+        "name": "natural_latency_plan",
+        "repeat_idx": null,
+        "normalized": null,
+        "output_token_count": 32,
+        "output_token_ids": [
+          22791,
+          440,
+          27044,
+          16,
+          13,
+          2972,
+          24531,
+          47614,
+          2074,
+          318,
+          4100,
+          8,
+          11873,
+          92217,
+          198,
+          256,
+          471,
+          2488,
+          1510,
+          312,
+          44572,
+          12,
+          44564,
+          6948,
+          63,
+          310,
+          2353,
+          279,
+          1324,
+          314,
+          2420,
+          15153
+        ],
+        "request_started_at_unix": 1781516657.3949919,
+        "request_finished_at_unix": 1781516700.0883517,
+        "sha256": null
+      },
+      "token_trace_join_method": "scheduler_prefix",
+      "token_trace_matched_request_id": "cmpl-b5993198d5c98610",
+      "traced_emitted_is_token_trace_prefix": false,
+      "row_summaries": [
+        {
+          "line_no": 1,
+          "ts": 1781516689.8818073,
+          "num_draft_tokens": 1,
+          "num_accepted": 1,
+          "num_rejected": 0,
+          "num_suppressed_bonus_tokens": 0,
+          "num_tokens_scheduled": 2,
+          "num_computed_tokens": null,
+          "num_output_tokens": null,
+          "scheduled_spec_token_ids": [
+            440
+          ],
+          "scheduled_spec_text": " with",
+          "generated_token_ids": [
+            440,
+            27044
+          ],
+          "generated_text": " with dense",
+          "emitted_token_ids": [
+            440,
+            27044
+          ],
+          "emitted_text": " with dense",
+          "new_token_ids_after_stop_check": [
+            440,
+            27044
+          ],
+          "suppressed_bonus_token_id": null,
+          "suppressed_bonus_text": null,
+          "followup_check": null,
+          "state_transition": {
+            "before": {
+              "num_prompt_tokens": 502,
+              "num_output_tokens": 1,
+              "num_tokens": 503,
+              "num_tokens_with_spec": 503,
+              "num_computed_tokens": 504,
+              "num_output_placeholders": 0,
+              "spec_len": 0,
+              "max_tokens": 32,
+              "is_prefill_chunk": false,
+              "status": "RUNNING",
+              "last_output_token_ids": [
+                22791
+              ]
+            },
+            "after_reject_adjust": {
+              "num_prompt_tokens": 502,
+              "num_output_tokens": 1,
+              "num_tokens": 503,
+              "num_tokens_with_spec": 503,
+              "num_computed_tokens": 504,
+              "num_output_placeholders": 0,
+              "spec_len": 0,
+              "max_tokens": 32,
+              "is_prefill_chunk": false,
+              "status": "RUNNING",
+              "last_output_token_ids": [
+                22791
+              ]
+            },
+            "after_output_update": {
+              "num_prompt_tokens": 502,
+              "num_output_tokens": 3,
+              "num_tokens": 505,
+              "num_tokens_with_spec": 505,
+              "num_computed_tokens": 504,
+              "num_output_placeholders": 0,
+              "spec_len": 0,
+              "max_tokens": 32,
+              "is_prefill_chunk": false,
+              "status": "RUNNING",
+              "last_output_token_ids": [
+                22791,
+                440,
+                27044
+              ]
+            },
+            "num_computed_tokens_delta_reject_adjust": 0,
+            "num_tokens_delta_output_update": 2,
+            "num_output_tokens_delta_output_update": 2
+          },
+          "accounting_check": {
+            "expected_computed_delta": 0,
+            "actual_computed_delta": 0,
+            "num_rejected": 0,
+            "num_suppressed_bonus_tokens": 0,
+            "matches": true
+          },
+          "computed_minus_tokens_after_output": -1
+        },
+        {
+          "line_no": 2,
+          "ts": 1781516690.0254974,
+          "num_draft_tokens": 1,
+          "num_accepted": 0,
+          "num_rejected": 1,
+          "num_suppressed_bonus_tokens": 0,
+          "num_tokens_scheduled": 2,
+          "num_computed_tokens": null,
+          "num_output_tokens": null,
+          "scheduled_spec_token_ids": [
+            47193
+          ],
+          "scheduled_spec_text": " numbered",
+          "generated_token_ids": [
+            16
+          ],
+          "generated_text": "1",
+          "emitted_token_ids": [
+            16
+          ],
+          "emitted_text": "1",
+          "new_token_ids_after_stop_check": [
+            16
+          ],
+          "suppressed_bonus_token_id": null,
+          "suppressed_bonus_text": null,
+          "followup_check": null,
+          "state_transition": {
+            "before": {
+              "num_prompt_tokens": 502,
+              "num_output_tokens": 3,
+              "num_tokens": 505,
+              "num_tokens_with_spec": 505,
+              "num_computed_tokens": 506,
+              "num_output_placeholders": 0,
+              "spec_len": 0,
+              "max_tokens": 32,
+              "is_prefill_chunk": false,
+              "status": "RUNNING",
+              "last_output_token_ids": [
+                22791,
+                440,
+                27044
+              ]
+            },
+            "after_reject_adjust": {
+              "num_prompt_tokens": 502,
+              "num_output_tokens": 3,
+              "num_tokens": 505,
+              "num_tokens_with_spec": 505,
+              "num_computed_tokens": 505,
+              "num_output_placeholders": 0,
+              "spec_len": 0,
+              "max_tokens": 32,
+              "is_prefill_chunk": false,
+              "status": "RUNNING",
+              "last_output_token_ids": [
+                22791,
+                440,
+                27044
+              ]
+            },
+            "after_output_update": {
+              "num_prompt_tokens": 502,
+              "num_output_tokens": 4,
+              "num_tokens": 506,
+              "num_tokens_with_spec": 506,
+              "num_computed_tokens": 505,
+              "num_output_placeholders": 0,
+              "spec_len": 0,
+              "max_tokens": 32,
+              "is_prefill_chunk": false,
+              "status": "RUNNING",
+              "last_output_token_ids": [
+                22791,
+                440,
+                27044,
+                16
+              ]
+            },
+            "num_computed_tokens_delta_reject_adjust": -1,
+            "num_tokens_delta_output_update": 1,
+            "num_output_tokens_delta_output_update": 1
+          },
+          "accounting_check": {
+            "expected_computed_delta": -1,
+            "actual_computed_delta": -1,
+            "num_rejected": 1,
+            "num_suppressed_bonus_tokens": 0,
+            "matches": true
+          },
+          "computed_minus_tokens_after_output": -1
+        }
+      ]
+    },
+    {
+      "req_id": "cmpl-9a26e7b6c9fd7504-0-8ef1c32a",
+      "rows": 2,
+      "first_ts": 1781516700.2670577,
+      "last_ts": 1781516700.2852752,
+      "draft_tokens": 2,
+      "accepted": 1,
+      "rejected": 1,
+      "suppressed_bonus_rows": 0,
+      "emitted_token_ids_from_trace": [
+        17856,
+        13,
+        220
+      ],
+      "emitted_text_from_trace": " timing. ",
+      "generated_token_ids_from_trace": [
+        17856,
+        13,
+        220
+      ],
+      "generated_text_from_trace": " timing. ",
+      "suppressed_bonus_token_ids": [],
+      "suppressed_bonus_text": "",
+      "suppressed_followup_checks": [],
+      "suppressed_followup_mismatches": [],
+      "suppressed_followup_schedule_mismatches": [],
+      "suppressed_followup_accept_mismatches": [],
+      "accounting_checks": [
+        {
+          "line_no": 3,
+          "expected_computed_delta": 0,
+          "actual_computed_delta": 0,
+          "num_rejected": 0,
+          "num_suppressed_bonus_tokens": 0,
+          "matches": true
+        },
+        {
+          "line_no": 4,
+          "expected_computed_delta": -1,
+          "actual_computed_delta": -1,
+          "num_rejected": 1,
+          "num_suppressed_bonus_tokens": 0,
+          "matches": true
+        }
+      ],
+      "accounting_mismatches": [],
+      "token_trace_case": {
+        "path": "/home/steve/llm-optimizations/data/qwen36-oracle1-nomambaspec-paired-20260615g7-completions.json",
+        "name": "repetitive_kernel_notes",
+        "repeat_idx": null,
+        "normalized": null,
+        "output_token_count": 32,
+        "output_token_ids": [
+          3817,
+          17856,
+          13,
+          220,
+          271,
+          248068,
+          198,
+          8160,
+          579,
+          264,
+          7047,
+          1817,
+          25,
+          271,
+          16,
+          13,
+          220,
+          2972,
+          2014,
+          53983,
+          2570,
+          5396,
+          64700,
+          198,
+          256,
+          471,
+          561,
+          1879,
+          369,
+          264,
+          11173,
+          886
+        ],
+        "request_started_at_unix": 1781516700.0901756,
+        "request_finished_at_unix": 1781516700.6141853,
+        "sha256": null
+      },
+      "token_trace_join_method": "scheduler_prefix",
+      "token_trace_matched_request_id": "cmpl-9a26e7b6c9fd7504",
+      "traced_emitted_is_token_trace_prefix": false,
+      "row_summaries": [
+        {
+          "line_no": 3,
+          "ts": 1781516700.2670577,
+          "num_draft_tokens": 1,
+          "num_accepted": 1,
+          "num_rejected": 0,
+          "num_suppressed_bonus_tokens": 0,
+          "num_tokens_scheduled": 2,
+          "num_computed_tokens": null,
+          "num_output_tokens": null,
+          "scheduled_spec_token_ids": [
+            17856
+          ],
+          "scheduled_spec_text": " timing",
+          "generated_token_ids": [
+            17856,
+            13
+          ],
+          "generated_text": " timing.",
+          "emitted_token_ids": [
+            17856,
+            13
+          ],
+          "emitted_text": " timing.",
+          "new_token_ids_after_stop_check": [
+            17856,
+            13
+          ],
+          "suppressed_bonus_token_id": null,
+          "suppressed_bonus_text": null,
+          "followup_check": null,
+          "state_transition": {
+            "before": {
+              "num_prompt_tokens": 488,
+              "num_output_tokens": 1,
+              "num_tokens": 489,
+              "num_tokens_with_spec": 489,
+              "num_computed_tokens": 490,
+              "num_output_placeholders": 0,
+              "spec_len": 0,
+              "max_tokens": 32,
+              "is_prefill_chunk": false,
+              "status": "RUNNING",
+              "last_output_token_ids": [
+                3817
+              ]
+            },
+            "after_reject_adjust": {
+              "num_prompt_tokens": 488,
+              "num_output_tokens": 1,
+              "num_tokens": 489,
+              "num_tokens_with_spec": 489,
+              "num_computed_tokens": 490,
+              "num_output_placeholders": 0,
+              "spec_len": 0,
+              "max_tokens": 32,
+              "is_prefill_chunk": false,
+              "status": "RUNNING",
+              "last_output_token_ids": [
+                3817
+              ]
+            },
+            "after_output_update": {
+              "num_prompt_tokens": 488,
+              "num_output_tokens": 3,
+              "num_tokens": 491,
+              "num_tokens_with_spec": 491,
+              "num_computed_tokens": 490,
+              "num_output_placeholders": 0,
+              "spec_len": 0,
+              "max_tokens": 32,
+              "is_prefill_chunk": false,
+              "status": "RUNNING",
+              "last_output_token_ids": [
+                3817,
+                17856,
+                13
+              ]
+            },
+            "num_computed_tokens_delta_reject_adjust": 0,
+            "num_tokens_delta_output_update": 2,
+            "num_output_tokens_delta_output_update": 2
+          },
+          "accounting_check": {
+            "expected_computed_delta": 0,
+            "actual_computed_delta": 0,
+            "num_rejected": 0,
+            "num_suppressed_bonus_tokens": 0,
+            "matches": true
+          },
+          "computed_minus_tokens_after_output": -1
+        },
+        {
+          "line_no": 4,
+          "ts": 1781516700.2852752,
+          "num_draft_tokens": 1,
+          "num_accepted": 0,
+          "num_rejected": 1,
+          "num_suppressed_bonus_tokens": 0,
+          "num_tokens_scheduled": 2,
+          "num_computed_tokens": null,
+          "num_output_tokens": null,
+          "scheduled_spec_token_ids": [
+            78503
+          ],
+          "scheduled_spec_text": " Preserve",
+          "generated_token_ids": [
+            220
+          ],
+          "generated_text": " ",
+          "emitted_token_ids": [
+            220
+          ],
+          "emitted_text": " ",
+          "new_token_ids_after_stop_check": [
+            220
+          ],
+          "suppressed_bonus_token_id": null,
+          "suppressed_bonus_text": null,
+          "followup_check": null,
+          "state_transition": {
+            "before": {
+              "num_prompt_tokens": 488,
+              "num_output_tokens": 3,
+              "num_tokens": 491,
+              "num_tokens_with_spec": 491,
+              "num_computed_tokens": 492,
+              "num_output_placeholders": 0,
+              "spec_len": 0,
+              "max_tokens": 32,
+              "is_prefill_chunk": false,
+              "status": "RUNNING",
+              "last_output_token_ids": [
+                3817,
+                17856,
+                13
+              ]
+            },
+            "after_reject_adjust": {
+              "num_prompt_tokens": 488,
+              "num_output_tokens": 3,
+              "num_tokens": 491,
+              "num_tokens_with_spec": 491,
+              "num_computed_tokens": 491,
+              "num_output_placeholders": 0,
+              "spec_len": 0,
+              "max_tokens": 32,
+              "is_prefill_chunk": false,
+              "status": "RUNNING",
+              "last_output_token_ids": [
+                3817,
+                17856,
+                13
+              ]
+            },
+            "after_output_update": {
+              "num_prompt_tokens": 488,
+              "num_output_tokens": 4,
+              "num_tokens": 492,
+              "num_tokens_with_spec": 492,
+              "num_computed_tokens": 491,
+              "num_output_placeholders": 0,
+              "spec_len": 0,
+              "max_tokens": 32,
+              "is_prefill_chunk": false,
+              "status": "RUNNING",
+              "last_output_token_ids": [
+                3817,
+                17856,
+                13,
+                220
+              ]
+            },
+            "num_computed_tokens_delta_reject_adjust": -1,
+            "num_tokens_delta_output_update": 1,
+            "num_output_tokens_delta_output_update": 1
+          },
+          "accounting_check": {
+            "expected_computed_delta": -1,
+            "actual_computed_delta": -1,
+            "num_rejected": 1,
+            "num_suppressed_bonus_tokens": 0,
+            "matches": true
+          },
+          "computed_minus_tokens_after_output": -1
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,307 @@
+diff --git a/vllm/model_executor/layers/mamba/gdn_linear_attn.py b/vllm/model_executor/layers/mamba/gdn_linear_attn.py
+index a621ab962..12308e9b5 100644
+--- a/vllm/model_executor/layers/mamba/gdn_linear_attn.py
++++ b/vllm/model_executor/layers/mamba/gdn_linear_attn.py
+@@ -2,6 +2,7 @@
+ # SPDX-FileCopyrightText: Copyright contributors to the vLLM project
+ """Inference-only Qwen3-Next/Qwen3.5 model."""
+ 
++import os
+ import torch
+ from einops import rearrange
+ from torch import nn
+@@ -62,6 +63,7 @@ from vllm.utils.torch_utils import (
+     _resolve_layer_name,
+     direct_register_custom_op,
+ )
++from vllm.utils.xpu_decode_timing import timed_region
+ from vllm.v1.attention.backends.gdn_attn import GDNAttentionMetadata
+ 
+ logger = init_logger(__name__)
+@@ -384,6 +386,14 @@ class GatedDeltaNetAttention(PluggableLayer, MambaBase):
+         self.enable_packed_recurrent_decode = (
+             envs.VLLM_ENABLE_FLA_PACKED_RECURRENT_DECODE
+         )
++        xpu_gdn_reuse_qkvz_ba_quant_mode = (
++            envs.VLLM_XPU_GDN_REUSE_QKVZ_BA_QUANT
++        )
++        self.xpu_reuse_qkvz_ba_quant_mode = xpu_gdn_reuse_qkvz_ba_quant_mode
++        self.xpu_reuse_qkvz_ba_quant = current_platform.is_xpu() and (
++            xpu_gdn_reuse_qkvz_ba_quant_mode
++            in ("1", "true", "clone", "clone-ba", "clone-qkvz")
++        )
+ 
+         compilation_config = get_current_vllm_config().compilation_config
+         if prefix in compilation_config.static_forward_context:
+@@ -612,8 +622,61 @@ class GatedDeltaNetAttention(PluggableLayer, MambaBase):
+         # ============================================================
+         # Part 1: Input Projection
+         # ============================================================
+-        projected_states_qkvz, _ = self.in_proj_qkvz(hidden_states)
+-        projected_states_ba, _ = self.in_proj_ba(hidden_states)
++        if self.xpu_reuse_qkvz_ba_quant and (
++            getattr(self.in_proj_qkvz, "xpu_native_int8_activation_quant", False)
++            and getattr(self.in_proj_ba, "xpu_native_int8_activation_quant", False)
++            and self.in_proj_qkvz.bias is None
++            and self.in_proj_ba.bias is None
++            and not self.in_proj_qkvz.gather_output
++            and not self.in_proj_ba.gather_output
++        ):
++            x_2d = hidden_states.view(-1, hidden_states.shape[-1]).contiguous()
++            with timed_region("qwen3_next.gdn.input_quant"):
++                x_q, x_s = torch.ops._xpu_C.per_token_quant_int8_xpu(x_2d)
++            if self.xpu_reuse_qkvz_ba_quant_mode == "clone":
++                x_q_qkvz = x_q.clone()
++                x_s_qkvz = x_s.clone()
++                x_q_ba = x_q.clone()
++                x_s_ba = x_s.clone()
++            elif self.xpu_reuse_qkvz_ba_quant_mode == "clone-ba":
++                x_q_qkvz = x_q
++                x_s_qkvz = x_s
++                x_q_ba = x_q.clone()
++                x_s_ba = x_s.clone()
++            elif self.xpu_reuse_qkvz_ba_quant_mode == "clone-qkvz":
++                x_q_qkvz = x_q.clone()
++                x_s_qkvz = x_s.clone()
++                x_q_ba = x_q
++                x_s_ba = x_s
++            else:
++                x_q_qkvz = x_q
++                x_s_qkvz = x_s
++                x_q_ba = x_q
++                x_s_ba = x_s
++
++            with timed_region("qwen3_next.gdn.qkvz_gemm_w8a8"):
++                projected_states_qkvz = torch.ops._xpu_C.int8_gemm_w8a8(
++                    x_q_qkvz,
++                    x_s_qkvz,
++                    self.in_proj_qkvz.weight,
++                    self.in_proj_qkvz.weight_scale,
++                    hidden_states.dtype,
++                    None,
++                ).view(*hidden_states.shape[:-1], self.in_proj_qkvz.weight.shape[1])
++            with timed_region("qwen3_next.gdn.ba_gemm_w8a8"):
++                projected_states_ba = torch.ops._xpu_C.int8_gemm_w8a8(
++                    x_q_ba,
++                    x_s_ba,
++                    self.in_proj_ba.weight,
++                    self.in_proj_ba.weight_scale,
++                    hidden_states.dtype,
++                    None,
++                ).view(*hidden_states.shape[:-1], self.in_proj_ba.weight.shape[1])
++        else:
++            with timed_region("qwen3_next.gdn.qkvz_proj"):
++                projected_states_qkvz, _ = self.in_proj_qkvz(hidden_states)
++            with timed_region("qwen3_next.gdn.ba_proj"):
++                projected_states_ba, _ = self.in_proj_ba(hidden_states)
+ 
+         # ============================================================
+         # Part 2: Core Attention
+@@ -625,13 +688,14 @@ class GatedDeltaNetAttention(PluggableLayer, MambaBase):
+         )
+         z = torch.empty_like(core_attn_out)
+ 
+-        torch.ops.vllm.gdn_attention_core_xpu(
+-            core_attn_out,
+-            z,
+-            projected_states_qkvz,
+-            projected_states_ba,
+-            self.prefix,
+-        )
++        with timed_region("qwen3_next.gdn.core_op"):
++            torch.ops.vllm.gdn_attention_core_xpu(
++                core_attn_out,
++                z,
++                projected_states_qkvz,
++                projected_states_ba,
++                self.prefix,
++            )
+ 
+         # ============================================================
+         # Part 3: Output Projection
+@@ -640,10 +704,12 @@ class GatedDeltaNetAttention(PluggableLayer, MambaBase):
+         # Reshape input data into 2D tensor
+         core_attn_out = core_attn_out.reshape(-1, core_attn_out.shape[-1])
+         z = z.reshape(-1, z.shape[-1])
+-        core_attn_out = self.norm(core_attn_out, z)
++        with timed_region("qwen3_next.gdn.output_norm"):
++            core_attn_out = self.norm(core_attn_out, z)
+         core_attn_out = core_attn_out.reshape(z_shape_og)
+         core_attn_out = rearrange(core_attn_out, "... h d -> ... (h d)")
+-        output[:num_tokens], _ = self.out_proj(core_attn_out)
++        with timed_region("qwen3_next.gdn.out_proj"):
++            output[:num_tokens], _ = self.out_proj(core_attn_out)
+ 
+     def _warmup_prefill_kernels(self, mixed_qkv: torch.Tensor) -> None:
+         """Warm up GDN prefill kernels during V1 profiling.
+@@ -791,6 +857,13 @@ class GatedDeltaNetAttention(PluggableLayer, MambaBase):
+         non_spec_token_indx = attn_metadata.non_spec_token_indx
+         spec_state_indices_tensor = attn_metadata.spec_state_indices_tensor  # noqa: E501
+         non_spec_state_indices_tensor = attn_metadata.non_spec_state_indices_tensor  # noqa: E501
++        prefill_recurrent_fallback = (
++            current_platform.is_xpu()
++            and os.environ.get(
++                "VLLM_XPU_GDN_PREFILL_RECURRENT_FALLBACK", "1"
++            ).strip().lower()
++            not in ("0", "false", "no", "off")
++        )
+         self_kv_cache = self.kv_cache
+         # conv_state must be (..., dim, width-1) for the conv kernels.
+         # DS layout stores it that way directly; SD layout needs a transpose.
+@@ -845,6 +918,15 @@ class GatedDeltaNetAttention(PluggableLayer, MambaBase):
+         # 1.2: Process the remaining part
+         if attn_metadata.num_prefills > 0:
+             assert mixed_qkv_non_spec is not None
++            if (
++                os.environ.get("VLLM_XPU_ZERO_FRESH_GDN_STATE", "0") == "1"
++                and has_initial_state is not None
++                and non_spec_state_indices_tensor is not None
++            ):
++                fresh_state_mask = ~has_initial_state
++                fresh_state_indices = non_spec_state_indices_tensor[fresh_state_mask]
++                conv_state[fresh_state_indices] = 0
++                ssm_state[fresh_state_indices] = 0
+             mixed_qkv_non_spec_T = mixed_qkv_non_spec.transpose(0, 1)
+             # - "cache_indices" updates the conv_state cache in positions
+             #   pointed to by "state_indices_tensor"
+@@ -887,29 +969,36 @@ class GatedDeltaNetAttention(PluggableLayer, MambaBase):
+                 a_non_spec = a
+                 b_non_spec = b
+ 
+-            (
+-                query_non_spec,
+-                key_non_spec,
+-                value_non_spec,
+-                g_non_spec,
+-                beta_non_spec,
+-            ) = fused_post_conv_prep(
+-                conv_output=mixed_qkv_non_spec,
+-                a=a_non_spec,
+-                b=b_non_spec,
+-                A_log=self.A_log,
+-                dt_bias=self.dt_bias,
+-                num_k_heads=self.num_k_heads // self.tp_size,
+-                head_k_dim=self.head_k_dim,
+-                head_v_dim=self.head_v_dim,
+-                apply_l2norm=True,
+-                output_g_exp=False,
+-            )
+-            query_non_spec = query_non_spec.unsqueeze(0)
+-            key_non_spec = key_non_spec.unsqueeze(0)
+-            value_non_spec = value_non_spec.unsqueeze(0)
+-            g_non_spec = g_non_spec.unsqueeze(0)
+-            beta_non_spec = beta_non_spec.unsqueeze(0)
++            if prefill_recurrent_fallback:
++                query_non_spec, key_non_spec, value_non_spec = (
++                    self.rearrange_mixed_qkv(mixed_qkv_non_spec)
++                )
++                g_non_spec = None
++                beta_non_spec = None
++            else:
++                (
++                    query_non_spec,
++                    key_non_spec,
++                    value_non_spec,
++                    g_non_spec,
++                    beta_non_spec,
++                ) = fused_post_conv_prep(
++                    conv_output=mixed_qkv_non_spec,
++                    a=a_non_spec,
++                    b=b_non_spec,
++                    A_log=self.A_log,
++                    dt_bias=self.dt_bias,
++                    num_k_heads=self.num_k_heads // self.tp_size,
++                    head_k_dim=self.head_k_dim,
++                    head_v_dim=self.head_v_dim,
++                    apply_l2norm=True,
++                    output_g_exp=False,
++                )
++                query_non_spec = query_non_spec.unsqueeze(0)
++                key_non_spec = key_non_spec.unsqueeze(0)
++                value_non_spec = value_non_spec.unsqueeze(0)
++                g_non_spec = g_non_spec.unsqueeze(0)
++                beta_non_spec = beta_non_spec.unsqueeze(0)
+         else:
+             query_non_spec, key_non_spec, value_non_spec = self.rearrange_mixed_qkv(
+                 mixed_qkv_non_spec
+@@ -949,23 +1038,63 @@ class GatedDeltaNetAttention(PluggableLayer, MambaBase):
+             assert non_spec_state_indices_tensor is not None
+             initial_state = ssm_state[non_spec_state_indices_tensor].contiguous()  # type: ignore[index]
+             assert has_initial_state is not None
+-            initial_state[~has_initial_state, ...] = 0  # type: ignore[operator]
+-            (
+-                core_attn_out_non_spec,
+-                last_recurrent_state,
+-            ) = self.chunk_gated_delta_rule(
+-                q=query_non_spec,
+-                k=key_non_spec,
+-                v=value_non_spec,
+-                g=g_non_spec,
+-                beta=beta_non_spec,
+-                initial_state=initial_state,
+-                output_final_state=True,
+-                cu_seqlens=non_spec_query_start_loc,
+-                chunk_indices=attn_metadata.chunk_indices,
+-                chunk_offsets=attn_metadata.chunk_offsets,
+-                use_qk_l2norm_in_kernel=False,
+-            )
++            if current_platform.is_xpu():
++                state_mask = has_initial_state.reshape(-1, 1, 1, 1)
++                initial_state = torch.where(
++                    state_mask, initial_state, torch.zeros_like(initial_state))
++            else:
++                initial_state[~has_initial_state, ...] = 0  # type: ignore[operator]
++            if prefill_recurrent_fallback:
++                (
++                    core_attn_out_non_spec,
++                    last_recurrent_state,
++                ) = fused_sigmoid_gating_delta_rule_update(
++                    A_log=self.A_log,
++                    a=a_non_spec,
++                    b=b_non_spec,
++                    dt_bias=self.dt_bias,
++                    q=query_non_spec,
++                    k=key_non_spec,
++                    v=value_non_spec,
++                    initial_state=initial_state,
++                    inplace_final_state=False,
++                    cu_seqlens=non_spec_query_start_loc,
++                    use_qk_l2norm_in_kernel=True,
++                )
++                seq_lens = (
++                    non_spec_query_start_loc[1:] - non_spec_query_start_loc[:-1]
++                )
++                non_empty_seq_mask = seq_lens > 0
++                if non_empty_seq_mask.all():
++                    last_recurrent_state = last_recurrent_state.index_select(
++                        0, non_spec_query_start_loc[1:] - 1
++                    )
++                else:
++                    final_state_by_token = last_recurrent_state
++                    last_recurrent_state = initial_state.clone()
++                    last_recurrent_state[non_empty_seq_mask] = (
++                        final_state_by_token.index_select(
++                            0,
++                            non_spec_query_start_loc[1:][non_empty_seq_mask] - 1,
++                        )
++                    )
++            else:
++                (
++                    core_attn_out_non_spec,
++                    last_recurrent_state,
++                ) = self.chunk_gated_delta_rule(
++                    q=query_non_spec,
++                    k=key_non_spec,
++                    v=value_non_spec,
++                    g=g_non_spec,
++                    beta=beta_non_spec,
++                    initial_state=initial_state,
++                    output_final_state=True,
++                    cu_seqlens=non_spec_query_start_loc,
++                    chunk_indices=attn_metadata.chunk_indices,
++                    chunk_offsets=attn_metadata.chunk_offsets,
++                    use_qk_l2norm_in_kernel=False,
++                )
+             # Init cache
+             ssm_state[non_spec_state_indices_tensor] = last_recurrent_state.to(
+                 ssm_state.dtype

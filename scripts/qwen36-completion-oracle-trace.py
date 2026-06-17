@@ -109,6 +109,7 @@ def completion(
     timeout: int,
     seed: int,
     logprobs: int | None,
+    request_id: str | None,
 ) -> dict[str, Any]:
     payload = {
         "model": model,
@@ -119,6 +120,8 @@ def completion(
         "seed": seed,
         "return_token_ids": True,
     }
+    if request_id is not None:
+        payload["request_id"] = request_id
     if logprobs is not None:
         payload["logprobs"] = logprobs
     started_unix = time.time()
@@ -145,6 +148,7 @@ def completion(
             )
             if key in response["headers"]
         },
+        "request_id": request_id,
         "text": choice.get("text") or "",
         "finish_reason": choice.get("finish_reason"),
         "usage": data.get("usage"),
@@ -231,6 +235,7 @@ def main() -> int:
     parser.add_argument("--timeout", type=int, default=240)
     parser.add_argument("--output-json", type=Path, required=True)
     parser.add_argument("--baseline-json", type=Path)
+    parser.add_argument("--request-id-prefix", default=None)
     parser.add_argument(
         "--logprobs",
         type=int,
@@ -249,9 +254,14 @@ def main() -> int:
 
     cases = []
     comparisons: dict[str, Any] = {}
-    for case in make_cases(tokenizer, args.prompt_tokens):
+    for case_index, case in enumerate(make_cases(tokenizer, args.prompt_tokens)):
         prompt = case["prompt"]
         prompt_ids = tokenizer.encode(prompt, add_special_tokens=False)
+        request_id = (
+            f"{args.request_id_prefix}-{case_index:06d}"
+            if args.request_id_prefix
+            else None
+        )
         result = completion(
             base_url=args.base_url,
             model=args.model,
@@ -260,6 +270,7 @@ def main() -> int:
             timeout=args.timeout,
             seed=args.seed,
             logprobs=args.logprobs,
+            request_id=request_id,
         )
         retokenized_output_ids = tokenizer.encode(
             result["text"], add_special_tokens=False)
@@ -315,6 +326,7 @@ def main() -> int:
         "prompt_tokens": args.prompt_tokens,
         "output_tokens": args.output_tokens,
         "seed": args.seed,
+        "request_id_prefix": args.request_id_prefix,
         "cases": cases,
         "baseline_json": str(args.baseline_json) if args.baseline_json else None,
         "baseline_comparisons": comparisons,

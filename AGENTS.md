@@ -92,6 +92,17 @@ Use exact-token, semantic, arithmetic, and practical task gates where relevant.
 Compressed KV modes such as FP8 KV or TurboQuant must be labeled separately
 from the FP16-family baseline.
 
+## Benchmark Identity Rule
+
+For Qwen 3.6 35B XPU work, never compare benchmark results until the complete
+run identity is checked. A prior failure omitted
+`COMPILATION_CONFIG='{"cudagraph_mode":"PIECEWISE"}'`; the launcher defaulted
+to graph-none and produced `~15 tok/s`, which was wrongly interpreted as a
+fast-lane regression. Before changing code or making conclusions, diff model,
+quantization, TP/PP, graph mode, GDN mode, forced-comm flags, GPU memory
+utilization, async scheduling, sampler fallbacks, and diagnostic flags against
+the known-good baseline.
+
 ## Working Rules
 
 - Keep c1 easy to restore.

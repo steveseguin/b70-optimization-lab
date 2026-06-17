@@ -1,0 +1,35 @@
+{
+  "config": {
+    "captures": 1,
+    "distinct_layers": false,
+    "endpoint_context": true,
+    "experts": 256,
+    "hidden": 2048,
+    "inter": 128,
+    "kernel_repo": "/home/steve/src/vllm-xpu-kernels",
+    "layers_per_capture": 1,
+    "no_post_copy": false,
+    "pid": 3108412,
+    "prewarm_repeats": 1,
+    "prewarm_rows": 0,
+    "ranks": 1,
+    "replays": 1,
+    "rows": 1,
+    "topk": 8,
+    "topk_dtype": "int64"
+  },
+  "overall_status": "fail",
+  "ranks": [
+    {
+      "captures_completed": 0,
+      "error": "'_OpNamespace' '_xpu_C' object has no attribute 'silu_and_mul_out'",
+      "error_type": "AttributeError",
+      "exitcode": 0,
+      "rank": 0,
+      "replays_completed": 0,
+      "status": "fail",
+      "traceback": "Traceback (most recent call last):\n  File \"/home/steve/llm-optimizations/scripts/repro-qwen36-prologue-tp4-capture.py\", line 472, in run_rank\n    run_layer(torch, tensors, args)\n  File \"/home/steve/llm-optimizations/scripts/repro-qwen36-prologue-tp4-capture.py\", line 393, in run_layer\n    _run_endpoint_context_prefix(torch, tensors, args)\n  File \"/home/steve/llm-optimizations/scripts/repro-qwen36-prologue-tp4-capture.py\", line 340, in _run_endpoint_context_prefix\n    torch.ops._xpu_C.silu_and_mul_out(shared_gate_up, tensors[\"shared_act\"])\n    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/steve/.venvs/vllm-xpu/lib/python3.12/site-packages/torch/_ops.py\", line 1379, in __getattr__\n    raise AttributeError(\nAttributeError: '_OpNamespace' '_xpu_C' object has no attribute 'silu_and_mul_out'\n"
+    }
+  ],
+  "timestamp_utc": "2026-06-16T04:09:20.411727+00:00"
+}

@@ -1,0 +1,541 @@
+diff --git a/vllm/model_executor/layers/fused_moe/experts/xpu_moe.py b/vllm/model_executor/layers/fused_moe/experts/xpu_moe.py
+index e10be4af8..0cb23343d 100644
+--- a/vllm/model_executor/layers/fused_moe/experts/xpu_moe.py
++++ b/vllm/model_executor/layers/fused_moe/experts/xpu_moe.py
+@@ -1,5 +1,7 @@
+ # SPDX-License-Identifier: Apache-2.0
+ # SPDX-FileCopyrightText: Copyright contributors to the vLLM project
++import os
++
+ import torch
+ 
+ import vllm.model_executor.layers.fused_moe.modular_kernel as mk
+@@ -16,13 +18,115 @@ from vllm.model_executor.layers.quantization.utils.quant_utils import (
+     QuantKey,
+     kFp8DynamicTensorSym,
+     kFp8StaticTensorSym,
++    kInt8DynamicTokenSym,
++    kInt8StaticChannelSym,
+     kMxfp4Static,
+ )
+ from vllm.platforms import current_platform
++from vllm.v1.worker.workspace import (
++    current_workspace_manager,
++    is_workspace_manager_initialized,
++)
++from vllm.v1.worker.ubatching import dbo_current_ubatch_id
++from vllm.utils.xpu_decode_timing import timed_region
+ 
+ if current_platform.is_xpu():
+     from vllm_xpu_kernels.fused_moe_interface import xpu_fused_moe
+ 
++XPU_INT8_MOE_MIXED_WORKSPACE_ENV = "VLLM_XPU_INT8_MOE_MIXED_WORKSPACE"
++XPU_INT8_MOE_FUSED_PROLOGUE_OFFSET_ENV = (
++    "VLLM_XPU_INT8_MOE_FUSED_PROLOGUE_OFFSET")
++XPU_INT8_MOE_PERSISTENT_SCRATCH_ENV = (
++    "VLLM_XPU_INT8_MOE_PERSISTENT_SCRATCH")
++
++
++def _xpu_int8_moe_mixed_workspace_enabled() -> bool:
++    value = os.environ.get(XPU_INT8_MOE_MIXED_WORKSPACE_ENV, "0")
++    return value.strip().upper() in ("1", "ON", "TRUE", "YES", "Y")
++
++
++def _xpu_int8_moe_fused_prologue_offset_enabled() -> bool:
++    value = os.environ.get(XPU_INT8_MOE_FUSED_PROLOGUE_OFFSET_ENV, "0")
++    return value.strip().upper() in ("1", "ON", "TRUE", "YES", "Y")
++
++
++def _xpu_int8_moe_persistent_scratch_enabled() -> bool:
++    value = os.environ.get(XPU_INT8_MOE_PERSISTENT_SCRATCH_ENV, "0")
++    return value.strip().upper() in ("1", "ON", "TRUE", "YES", "Y")
++
++
++def _ceil_div(a: int, b: int) -> int:
++    return (a + b - 1) // b
++
++
++def _compute_num_tokens_per_block(num_tokens: int,
++                                  num_experts_per_node: int) -> int:
++    for num_tokens_per_block in [32, 64, 128, 256, 512, 1024]:
++        num_blocks_per_seq = _ceil_div(num_tokens, num_tokens_per_block)
++        if num_blocks_per_seq * num_experts_per_node <= num_tokens_per_block:
++            return num_tokens_per_block
++    return 1024
++
++
++def _align_256(size: int) -> int:
++    return (size + 255) & ~255
++
++
++def _dtype_size(dtype: torch.dtype) -> int:
++    return torch.empty((), dtype=dtype).element_size()
++
++
++def _make_prologue_workspace_layout(
++    *,
++    rows: int,
++    hidden_size: int,
++    inter_size: int,
++    num_experts: int,
++    topk: int,
++    dtype: torch.dtype,
++    block_k: int = 1,
++) -> tuple[dict[str, tuple[int, int]], int]:
++    num_moe_inputs = rows * topk
++    num_tokens_per_block = _compute_num_tokens_per_block(rows, num_experts)
++    num_blocks_per_seq = _ceil_div(rows, num_tokens_per_block)
++    sizes = {
++        "permuted_row_to_unpermuted_row": num_moe_inputs * 4,
++        "permuted_token_selected_experts": num_moe_inputs * 4,
++        "unpermuted_row_to_permuted_row": num_moe_inputs * 4,
++        "blocked_expert_counts": num_experts * num_blocks_per_seq * 4,
++        "blocked_expert_counts_cumsum": num_experts * num_blocks_per_seq * 4,
++        "blocked_row_to_unpermuted_row": num_experts * rows * 4,
++        "expert_first_token_offset": (num_experts + 1) * 8,
++        "permuted_token_final_scales": num_moe_inputs * 4,
++        "overlapped_gemm1_gemm2_inputs":
++        num_moe_inputs * hidden_size * _dtype_size(dtype),
++        "permuted_act_scales":
++        0 if block_k == 1 else num_moe_inputs *
++        (hidden_size // block_k) * 4,
++    }
++    layout: dict[str, tuple[int, int]] = {}
++    offset = 0
++    for name, size in sizes.items():
++        aligned = _align_256(size)
++        layout[name] = (offset, aligned)
++        offset += aligned
++    return layout, offset
++
++
++def _workspace_view(
++    workspace: torch.Tensor,
++    layout: dict[str, tuple[int, int]],
++    name: str,
++    dtype: torch.dtype,
++    shape: tuple[int, ...],
++) -> torch.Tensor:
++    offset, _ = layout[name]
++    elems = 1
++    for dim in shape:
++        elems *= dim
++    bytes_needed = elems * _dtype_size(dtype)
++    return workspace[offset:offset + bytes_needed].view(dtype).view(*shape)
++
+ 
+ def prepare_fp8_moe_layer_for_xpu(
+     w13: torch.Tensor,
+@@ -31,6 +135,38 @@ def prepare_fp8_moe_layer_for_xpu(
+     return w13.transpose(-1, -2).contiguous(), w2.transpose(-1, -2).contiguous()
+ 
+ 
++def _prepare_int8_scale_for_xpu(
++    scale: torch.Tensor,
++    out_features: int,
++) -> torch.Tensor:
++    if scale.dim() == 3 and scale.shape[-1] == 1:
++        scale = scale.squeeze(-1)
++    if scale.dim() == 1:
++        scale = scale.view(-1, 1).expand(-1, out_features)
++    elif scale.dim() != 2 or scale.shape[-1] != out_features:
++        raise ValueError(
++            "XPU W8A8 INT8 MoE expects weight scales shaped [E], "
++            f"[E, {out_features}], or [E, {out_features}, 1]. "
++            f"Got {tuple(scale.shape)}.")
++    return scale.contiguous()
++
++
++def prepare_int8_moe_layer_for_xpu(
++    w13: torch.Tensor,
++    w2: torch.Tensor,
++    w13_scale: torch.Tensor,
++    w2_scale: torch.Tensor,
++) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
++    w13_out_features = w13.shape[-2]
++    w2_out_features = w2.shape[-2]
++    return (
++        w13.transpose(-1, -2).contiguous(),
++        w2.transpose(-1, -2).contiguous(),
++        _prepare_int8_scale_for_xpu(w13_scale, w13_out_features),
++        _prepare_int8_scale_for_xpu(w2_scale, w2_out_features),
++    )
++
++
+ class XPUExperts(mk.FusedMoEExpertsModular):
+     def __init__(
+         self,
+@@ -47,6 +183,9 @@ class XPUExperts(mk.FusedMoEExpertsModular):
+         )
+         self.is_fp8 = False
+         self.is_mxfp4 = False
++        self.is_int8 = False
++        self._xpu_int8_moe_scratch_cache: dict[
++            tuple[object, ...], dict[str, torch.Tensor]] = {}
+ 
+     @property
+     def expects_unquantized_inputs(self) -> bool:
+@@ -85,6 +224,7 @@ class XPUExperts(mk.FusedMoEExpertsModular):
+             (None, None),
+             (kFp8StaticTensorSym, None),
+             (kFp8StaticTensorSym, kFp8DynamicTensorSym),
++            (kInt8StaticChannelSym, kInt8DynamicTokenSym),
+         ]
+         return (weight_key, activation_key) in SUPPORTED_W_A
+ 
+@@ -110,6 +250,128 @@ class XPUExperts(mk.FusedMoEExpertsModular):
+         output = (M, K)
+         return (workspace1, workspace2, output)
+ 
++    def _persistent_int8_scratch(
++        self,
++        *,
++        hidden_states: torch.Tensor,
++        hidden_size: int,
++        inter_size: int,
++        inter_size_scale: int,
++        num_rows: int,
++        topk: int,
++        num_moe_inputs: int,
++        prologue_offset: bool = False,
++    ) -> dict[str, torch.Tensor]:
++        device = hidden_states.device
++        device_key = (device.type, device.index)
++        ubatch_id = dbo_current_ubatch_id()
++        key = (
++            device_key,
++            hidden_states.dtype,
++            num_rows,
++            hidden_size,
++            inter_size,
++            inter_size_scale,
++            topk,
++            self.moe_config.num_local_experts,
++            ubatch_id,
++            prologue_offset,
++        )
++        cached = self._xpu_int8_moe_scratch_cache.get(key)
++        if cached is not None:
++            return cached
++
++        prologue_workspace = None
++        if prologue_offset:
++            layout, workspace_bytes = _make_prologue_workspace_layout(
++                rows=num_rows,
++                hidden_size=hidden_size,
++                inter_size=inter_size,
++                num_experts=self.moe_config.num_local_experts,
++                topk=topk,
++                dtype=hidden_states.dtype,
++            )
++            prologue_workspace = torch.empty((workspace_bytes, ),
++                                             dtype=torch.uint8,
++                                             device=device)
++            remapped_hidden_states = _workspace_view(
++                prologue_workspace,
++                layout,
++                "overlapped_gemm1_gemm2_inputs",
++                hidden_states.dtype,
++                (num_moe_inputs, hidden_size),
++            )
++            w8a8_offsets = _workspace_view(
++                prologue_workspace,
++                layout,
++                "expert_first_token_offset",
++                torch.int64,
++                (self.moe_config.num_local_experts + 1, ),
++            )
++            unpermuted_row_to_permuted_row = _workspace_view(
++                prologue_workspace,
++                layout,
++                "unpermuted_row_to_permuted_row",
++                torch.int32,
++                (num_rows, topk),
++            )
++        else:
++            remapped_hidden_states = torch.empty((num_moe_inputs, hidden_size),
++                                                dtype=hidden_states.dtype,
++                                                device=device)
++            w8a8_offsets = torch.empty(
++                (self.moe_config.num_local_experts + 1, ),
++                dtype=torch.int64,
++                device=device)
++            unpermuted_row_to_permuted_row = torch.empty((num_rows, topk),
++                                                        dtype=torch.int32,
++                                                        device=device)
++
++        cached = {
++            "remapped_hidden_states":
++            remapped_hidden_states,
++            "gemm1_a":
++            torch.empty((num_moe_inputs, hidden_size),
++                        dtype=torch.int8,
++                        device=device),
++            "gemm1_a_scales":
++            torch.empty((num_moe_inputs, 1),
++                        dtype=torch.float32,
++                        device=device),
++            "gemm1_output":
++            torch.empty((num_moe_inputs, 2 * inter_size),
++                        dtype=hidden_states.dtype,
++                        device=device),
++            "act_output":
++            torch.empty((num_moe_inputs, inter_size * inter_size_scale),
++                        dtype=hidden_states.dtype,
++                        device=device),
++            "gemm2_a":
++            torch.empty((num_moe_inputs, inter_size * inter_size_scale),
++                        dtype=torch.int8,
++                        device=device),
++            "gemm2_a_scales":
++            torch.empty((num_moe_inputs, 1),
++                        dtype=torch.float32,
++                        device=device),
++            "gemm2_output":
++            torch.empty((num_moe_inputs, hidden_size),
++                        dtype=hidden_states.dtype,
++                        device=device),
++            "rows_per_expert":
++            torch.empty((self.moe_config.num_local_experts, ),
++                        dtype=torch.int32,
++                        device=device),
++            "w8a8_offsets":
++            w8a8_offsets,
++            "unpermuted_row_to_permuted_row":
++            unpermuted_row_to_permuted_row,
++        }
++        if prologue_workspace is not None:
++            cached["prologue_workspace"] = prologue_workspace
++        self._xpu_int8_moe_scratch_cache[key] = cached
++        return cached
++
+     def apply(
+         self,
+         output: torch.Tensor,
+@@ -129,25 +391,176 @@ class XPUExperts(mk.FusedMoEExpertsModular):
+         apply_router_weight_on_input: bool,
+     ):
+         topk = topk_ids.size(-1)
+-        xpu_fused_moe(
+-            hidden_states=hidden_states,
+-            w13=w1,
+-            w13_scales=self.w1_scale,
+-            w13_bias=self.w1_bias,
+-            w2=w2,
+-            w2_scales=self.w2_scale,
+-            w2_bias=self.w2_bias,
+-            topk_weights=topk_weights,
+-            topk_ids=topk_ids,
+-            n_experts_per_token=topk,
+-            activation=activation.value,
+-            num_experts=self.moe_config.num_local_experts,
+-            ep_rank=self.moe_config.ep_rank,
+-            ep_size=self.moe_config.ep_size,
+-            output=output,
+-            is_fp8=self.is_fp8,
+-            is_mxfp4=self.is_mxfp4,
+-        )
++        scratch = None
++        if (
++            self.is_int8
++            and _xpu_int8_moe_mixed_workspace_enabled()
++            and is_workspace_manager_initialized()
++        ):
++            with timed_region("xpu_moe.workspace_scratch_get"):
++                num_rows = hidden_states.shape[0]
++                hidden_size = hidden_states.shape[1]
++                inter_size = w1.shape[-1] // 2
++                inter_size_scale = 2 if activation.value == "relu2_no_mul" else 1
++                num_moe_inputs = num_rows * topk
++                prologue_offset = (
++                    _xpu_int8_moe_fused_prologue_offset_enabled()
++                    and num_rows == 1
++                    and self.moe_config.ep_size == 1
++                    and expert_map is None
++                    and activation == MoEActivation.SILU
++                    and inter_size_scale == 1)
++                prologue_workspace = None
++                persistent_scratch = (
++                    _xpu_int8_moe_persistent_scratch_enabled()
++                    and num_rows == 1)
++                if persistent_scratch:
++                    scratch = self._persistent_int8_scratch(
++                        hidden_states=hidden_states,
++                        hidden_size=hidden_size,
++                        inter_size=inter_size,
++                        inter_size_scale=inter_size_scale,
++                        num_rows=num_rows,
++                        topk=topk,
++                        num_moe_inputs=num_moe_inputs,
++                        prologue_offset=prologue_offset,
++                    )
++                    remapped_hidden_states = scratch["remapped_hidden_states"]
++                    gemm1_a = scratch["gemm1_a"]
++                    gemm1_a_scales = scratch["gemm1_a_scales"]
++                    gemm1_output = scratch["gemm1_output"]
++                    act_output = scratch["act_output"]
++                    gemm2_a = scratch["gemm2_a"]
++                    gemm2_a_scales = scratch["gemm2_a_scales"]
++                    gemm2_output = scratch["gemm2_output"]
++                    rows_per_expert = scratch["rows_per_expert"]
++                    w8a8_offsets = scratch["w8a8_offsets"]
++                    unpermuted_row_to_permuted_row = scratch[
++                        "unpermuted_row_to_permuted_row"]
++                    prologue_workspace = scratch.get("prologue_workspace")
++                elif prologue_offset:
++                    layout, workspace_bytes = _make_prologue_workspace_layout(
++                        rows=num_rows,
++                        hidden_size=hidden_size,
++                        inter_size=inter_size,
++                        num_experts=self.moe_config.num_local_experts,
++                        topk=topk,
++                        dtype=hidden_states.dtype,
++                    )
++                    (
++                        prologue_workspace,
++                        gemm1_a,
++                        gemm1_a_scales,
++                        gemm1_output,
++                        act_output,
++                        gemm2_a,
++                        gemm2_a_scales,
++                        gemm2_output,
++                        rows_per_expert,
++                    ) = current_workspace_manager().get_simultaneous(
++                        ((workspace_bytes,), torch.uint8),
++                        ((num_moe_inputs, hidden_size), torch.int8),
++                        ((num_moe_inputs, 1), torch.float32),
++                        ((num_moe_inputs, 2 * inter_size),
++                         hidden_states.dtype),
++                        ((num_moe_inputs, inter_size * inter_size_scale),
++                         hidden_states.dtype),
++                        ((num_moe_inputs, inter_size * inter_size_scale),
++                         torch.int8),
++                        ((num_moe_inputs, 1), torch.float32),
++                        ((num_moe_inputs, hidden_size), hidden_states.dtype),
++                        ((self.moe_config.num_local_experts,), torch.int32),
++                    )
++                    remapped_hidden_states = _workspace_view(
++                        prologue_workspace,
++                        layout,
++                        "overlapped_gemm1_gemm2_inputs",
++                        hidden_states.dtype,
++                        (num_moe_inputs, hidden_size),
++                    )
++                    unpermuted_row_to_permuted_row = _workspace_view(
++                        prologue_workspace,
++                        layout,
++                        "unpermuted_row_to_permuted_row",
++                        torch.int32,
++                        (num_rows, topk),
++                    )
++                    w8a8_offsets = _workspace_view(
++                        prologue_workspace,
++                        layout,
++                        "expert_first_token_offset",
++                        torch.int64,
++                        (self.moe_config.num_local_experts + 1,),
++                    )
++                else:
++                    (
++                        remapped_hidden_states,
++                        gemm1_a,
++                        gemm1_a_scales,
++                        gemm1_output,
++                        act_output,
++                        gemm2_a,
++                        gemm2_a_scales,
++                        gemm2_output,
++                        rows_per_expert,
++                        w8a8_offsets,
++                        unpermuted_row_to_permuted_row,
++                    ) = current_workspace_manager().get_simultaneous(
++                        ((num_moe_inputs, hidden_size), hidden_states.dtype),
++                        ((num_moe_inputs, hidden_size), torch.int8),
++                        ((num_moe_inputs, 1), torch.float32),
++                        ((num_moe_inputs, 2 * inter_size),
++                         hidden_states.dtype),
++                        ((num_moe_inputs, inter_size * inter_size_scale),
++                         hidden_states.dtype),
++                        ((num_moe_inputs, inter_size * inter_size_scale),
++                         torch.int8),
++                        ((num_moe_inputs, 1), torch.float32),
++                        ((num_moe_inputs, hidden_size), hidden_states.dtype),
++                        ((self.moe_config.num_local_experts,), torch.int32),
++                        ((self.moe_config.num_local_experts + 1,),
++                         torch.int64),
++                        ((num_rows, topk), torch.int32),
++                    )
++                scratch = {
++                    "remapped_hidden_states": remapped_hidden_states,
++                    "gemm1_a": gemm1_a,
++                    "gemm1_a_scales": gemm1_a_scales,
++                    "gemm1_output": gemm1_output,
++                    "act_output": act_output,
++                    "gemm2_a": gemm2_a,
++                    "gemm2_a_scales": gemm2_a_scales,
++                    "gemm2_output": gemm2_output,
++                    "rows_per_expert": rows_per_expert,
++                    "w8a8_offsets": w8a8_offsets,
++                    "unpermuted_row_to_permuted_row":
++                    unpermuted_row_to_permuted_row,
++                }
++                if prologue_workspace is not None:
++                    scratch["prologue_workspace"] = prologue_workspace
++        with timed_region("xpu_moe.fused_moe_call"):
++            xpu_fused_moe(
++                hidden_states=hidden_states,
++                w13=w1,
++                w13_scales=self.w1_scale,
++                w13_bias=self.w1_bias,
++                w2=w2,
++                w2_scales=self.w2_scale,
++                w2_bias=self.w2_bias,
++                topk_weights=topk_weights,
++                topk_ids=topk_ids,
++                n_experts_per_token=topk,
++                activation=activation.value,
++                num_experts=self.moe_config.num_local_experts,
++                ep_rank=self.moe_config.ep_rank,
++                ep_size=self.moe_config.ep_size,
++                output=output,
++                is_fp8=self.is_fp8,
++                is_mxfp4=self.is_mxfp4,
++                is_int8=self.is_int8,
++                scratch=scratch,
++                diagnostic_context=getattr(self, "_live_abi_context", None),
++            )
+ 
+ 
+ class XPUExpertsFp8(XPUExperts):
+@@ -192,3 +605,30 @@ class XPUExpertsMXFp4(XPUExperts):
+             (kMxfp4Static, None),
+         ]
+         return (weight_key, activation_key) in SUPPORTED_W_A
++
++
++class XPUExpertsInt8(XPUExperts):
++    def __init__(
++        self,
++        moe_config: FusedMoEConfig,
++        quant_config: FusedMoEQuantConfig,
++        max_num_tokens: int | None = None,
++        num_dispatchers: int | None = None,
++    ):
++        super().__init__(
++            moe_config,
++            quant_config,
++            max_num_tokens,
++            num_dispatchers,
++        )
++        self.is_int8 = True
++
++    @staticmethod
++    def _supports_quant_scheme(
++        weight_key: QuantKey | None,
++        activation_key: QuantKey | None,
++    ) -> bool:
++        return (weight_key, activation_key) == (
++            kInt8StaticChannelSym,
++            kInt8DynamicTokenSym,
++        )

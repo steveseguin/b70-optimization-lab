@@ -1,0 +1,786 @@
+{
+  "kind": "qwen36_silu_quant_parity",
+  "multiwindow_dir": "data/qwen36-onednn-moe-island-layer9-r1-multiwindow-20260612bc",
+  "source": "onednn",
+  "window_count": 16,
+  "all_fused_q_exact": true,
+  "all_fused_scales_exact": true,
+  "all_twostep_q_exact": true,
+  "all_twostep_scales_exact": true,
+  "max_fused_q_diff_count": 0,
+  "max_fused_scale_abs_diff": 0.0,
+  "max_twostep_q_diff_count": 0,
+  "max_twostep_scale_abs_diff": 0.0,
+  "max_fused_vs_twostep_q_diff_count": 0,
+  "max_fused_vs_twostep_scale_abs_diff": 0.0,
+  "windows": [
+    {
+      "window": "window_000_start_0",
+      "source": "onednn",
+      "fused_op": "silu_and_mul_quant_int8_xpu_out",
+      "gemm1_path": "data/qwen36-onednn-moe-island-layer9-r1-multiwindow-20260612bc/window_000_start_0/gemm1_onednn_acb_out.bf16.bin",
+      "rows": 8,
+      "gemm1_n": 256,
+      "gemm2_k": 128,
+      "fused_vs_expected_q": {
+        "numel": 1024,
+        "raw_equal": true,
+        "raw_diff_count": 0,
+        "max_abs_diff": 0
+      },
+      "fused_vs_expected_scales": {
+        "numel": 8,
+        "raw_equal": true,
+        "raw_diff_count": 0,
+        "max_abs_diff": 0.0,
+        "mean_abs_diff": 0.0
+      },
+      "twostep_vs_expected_q": {
+        "numel": 1024,
+        "raw_equal": true,
+        "raw_diff_count": 0,
+        "max_abs_diff": 0
+      },
+      "twostep_vs_expected_scales": {
+        "numel": 8,
+        "raw_equal": true,
+        "raw_diff_count": 0,
+        "max_abs_diff": 0.0,
+        "mean_abs_diff": 0.0
+      },
+      "fused_vs_twostep_q": {
+        "numel": 1024,
+        "raw_equal": true,
+        "raw_diff_count": 0,
+        "max_abs_diff": 0
+      },
+      "fused_vs_twostep_scales": {
+        "numel": 8,
+        "raw_equal": true,
+        "raw_diff_count": 0,
+        "max_abs_diff": 0.0,
+        "mean_abs_diff": 0.0
+      }
+    },
+    {
+      "window": "window_001_start_4",
+      "source": "onednn",
+      "fused_op": "silu_and_mul_quant_int8_xpu_out",
+      "gemm1_path": "data/qwen36-onednn-moe-island-layer9-r1-multiwindow-20260612bc/window_001_start_4/gemm1_onednn_acb_out.bf16.bin",
+      "rows": 8,
+      "gemm1_n": 256,
+      "gemm2_k": 128,
+      "fused_vs_expected_q": {
+        "numel": 1024,
+        "raw_equal": true,
+        "raw_diff_count": 0,
+        "max_abs_diff": 0
+      },
+      "fused_vs_expected_scales": {
+        "numel": 8,
+        "raw_equal": true,
+        "raw_diff_count": 0,
+        "max_abs_diff": 0.0,
+        "mean_abs_diff": 0.0
+      },
+      "twostep_vs_expected_q": {
+        "numel": 1024,
+        "raw_equal": true,
+        "raw_diff_count": 0,
+        "max_abs_diff": 0
+      },
+      "twostep_vs_expected_scales": {
+        "numel": 8,
+        "raw_equal": true,
+        "raw_diff_count": 0,
+        "max_abs_diff": 0.0,
+        "mean_abs_diff": 0.0
+      },
+      "fused_vs_twostep_q": {
+        "numel": 1024,
+        "raw_equal": true,
+        "raw_diff_count": 0,
+        "max_abs_diff": 0
+      },
+      "fused_vs_twostep_scales": {
+        "numel": 8,
+        "raw_equal": true,
+        "raw_diff_count": 0,
+        "max_abs_diff": 0.0,
+        "mean_abs_diff": 0.0
+      }
+    },
+    {
+      "window": "window_002_start_8",
+      "source": "onednn",
+      "fused_op": "silu_and_mul_quant_int8_xpu_out",
+      "gemm1_path": "data/qwen36-onednn-moe-island-layer9-r1-multiwindow-20260612bc/window_002_start_8/gemm1_onednn_acb_out.bf16.bin",
+      "rows": 8,
+      "gemm1_n": 256,
+      "gemm2_k": 128,
+      "fused_vs_expected_q": {
+        "numel": 1024,
+        "raw_equal": true,
+        "raw_diff_count": 0,
+        "max_abs_diff": 0
+      },
+      "fused_vs_expected_scales": {
+        "numel": 8,
+        "raw_equal": true,
+        "raw_diff_count": 0,
+        "max_abs_diff": 0.0,
+        "mean_abs_diff": 0.0
+      },
+      "twostep_vs_expected_q": {
+        "numel": 1024,
+        "raw_equal": true,
+        "raw_diff_count": 0,
+        "max_abs_diff": 0
+      },
+      "twostep_vs_expected_scales": {
+        "numel": 8,
+        "raw_equal": true,
+        "raw_diff_count": 0,
+        "max_abs_diff": 0.0,
+        "mean_abs_diff": 0.0
+      },
+      "fused_vs_twostep_q": {
+        "numel": 1024,
+        "raw_equal": true,
+        "raw_diff_count": 0,
+        "max_abs_diff": 0
+      },
+      "fused_vs_twostep_scales": {
+        "numel": 8,
+        "raw_equal": true,
+        "raw_diff_count": 0,
+        "max_abs_diff": 0.0,
+        "mean_abs_diff": 0.0
+      }
+    },
+    {
+      "window": "window_003_start_12",
+      "source": "onednn",
+      "fused_op": "silu_and_mul_quant_int8_xpu_out",
+      "gemm1_path": "data/qwen36-onednn-moe-island-layer9-r1-multiwindow-20260612bc/window_003_start_12/gemm1_onednn_acb_out.bf16.bin",
+      "rows": 8,
+      "gemm1_n": 256,
+      "gemm2_k": 128,
+      "fused_vs_expected_q": {
+        "numel": 1024,
+        "raw_equal": true,
+        "raw_diff_count": 0,
+        "max_abs_diff": 0
+      },
+      "fused_vs_expected_scales": {
+        "numel": 8,
+        "raw_equal": true,
+        "raw_diff_count": 0,
+        "max_abs_diff": 0.0,
+        "mean_abs_diff": 0.0
+      },
+      "twostep_vs_expected_q": {
+        "numel": 1024,
+        "raw_equal": true,
+        "raw_diff_count": 0,
+        "max_abs_diff": 0
+      },
+      "twostep_vs_expected_scales": {
+        "numel": 8,
+        "raw_equal": true,
+        "raw_diff_count": 0,
+        "max_abs_diff": 0.0,
+        "mean_abs_diff": 0.0
+      },
+      "fused_vs_twostep_q": {
+        "numel": 1024,
+        "raw_equal": true,
+        "raw_diff_count": 0,
+        "max_abs_diff": 0
+      },
+      "fused_vs_twostep_scales": {
+        "numel": 8,
+        "raw_equal": true,
+        "raw_diff_count": 0,
+        "max_abs_diff": 0.0,
+        "mean_abs_diff": 0.0
+      }
+    },
+    {
+      "window": "window_004_start_16",
+      "source": "onednn",
+      "fused_op": "silu_and_mul_quant_int8_xpu_out",
+      "gemm1_path": "data/qwen36-onednn-moe-island-layer9-r1-multiwindow-20260612bc/window_004_start_16/gemm1_onednn_acb_out.bf16.bin",
+      "rows": 8,
+      "gemm1_n": 256,
+      "gemm2_k": 128,
+      "fused_vs_expected_q": {
+        "numel": 1024,
+        "raw_equal": true,
+        "raw_diff_count": 0,
+        "max_abs_diff": 0
+      },
+      "fused_vs_expected_scales": {
+        "numel": 8,
+        "raw_equal": true,
+        "raw_diff_count": 0,
+        "max_abs_diff": 0.0,
+        "mean_abs_diff": 0.0
+      },
+      "twostep_vs_expected_q": {
+        "numel": 1024,
+        "raw_equal": true,
+        "raw_diff_count": 0,
+        "max_abs_diff": 0
+      },
+      "twostep_vs_expected_scales": {
+        "numel": 8,
+        "raw_equal": true,
+        "raw_diff_count": 0,
+        "max_abs_diff": 0.0,
+        "mean_abs_diff": 0.0
+      },
+      "fused_vs_twostep_q": {
+        "numel": 1024,
+        "raw_equal": true,
+        "raw_diff_count": 0,
+        "max_abs_diff": 0
+      },
+      "fused_vs_twostep_scales": {
+        "numel": 8,
+        "raw_equal": true,
+        "raw_diff_count": 0,
+        "max_abs_diff": 0.0,
+        "mean_abs_diff": 0.0
+      }
+    },
+    {
+      "window": "window_005_start_20",
+      "source": "onednn",
+      "fused_op": "silu_and_mul_quant_int8_xpu_out",
+      "gemm1_path": "data/qwen36-onednn-moe-island-layer9-r1-multiwindow-20260612bc/window_005_start_20/gemm1_onednn_acb_out.bf16.bin",
+      "rows": 8,
+      "gemm1_n": 256,
+      "gemm2_k": 128,
+      "fused_vs_expected_q": {
+        "numel": 1024,
+        "raw_equal": true,
+        "raw_diff_count": 0,
+        "max_abs_diff": 0
+      },
+      "fused_vs_expected_scales": {
+        "numel": 8,
+        "raw_equal": true,
+        "raw_diff_count": 0,
+        "max_abs_diff": 0.0,
+        "mean_abs_diff": 0.0
+      },
+      "twostep_vs_expected_q": {
+        "numel": 1024,
+        "raw_equal": true,
+        "raw_diff_count": 0,
+        "max_abs_diff": 0
+      },
+      "twostep_vs_expected_scales": {
+        "numel": 8,
+        "raw_equal": true,
+        "raw_diff_count": 0,
+        "max_abs_diff": 0.0,
+        "mean_abs_diff": 0.0
+      },
+      "fused_vs_twostep_q": {
+        "numel": 1024,
+        "raw_equal": true,
+        "raw_diff_count": 0,
+        "max_abs_diff": 0
+      },
+      "fused_vs_twostep_scales": {
+        "numel": 8,
+        "raw_equal": true,
+        "raw_diff_count": 0,
+        "max_abs_diff": 0.0,
+        "mean_abs_diff": 0.0
+      }
+    },
+    {
+      "window": "window_006_start_24",
+      "source": "onednn",
+      "fused_op": "silu_and_mul_quant_int8_xpu_out",
+      "gemm1_path": "data/qwen36-onednn-moe-island-layer9-r1-multiwindow-20260612bc/window_006_start_24/gemm1_onednn_acb_out.bf16.bin",
+      "rows": 8,
+      "gemm1_n": 256,
+      "gemm2_k": 128,
+      "fused_vs_expected_q": {
+        "numel": 1024,
+        "raw_equal": true,
+        "raw_diff_count": 0,
+        "max_abs_diff": 0
+      },
+      "fused_vs_expected_scales": {
+        "numel": 8,
+        "raw_equal": true,
+        "raw_diff_count": 0,
+        "max_abs_diff": 0.0,
+        "mean_abs_diff": 0.0
+      },
+      "twostep_vs_expected_q": {
+        "numel": 1024,
+        "raw_equal": true,
+        "raw_diff_count": 0,
+        "max_abs_diff": 0
+      },
+      "twostep_vs_expected_scales": {
+        "numel": 8,
+        "raw_equal": true,
+        "raw_diff_count": 0,
+        "max_abs_diff": 0.0,
+        "mean_abs_diff": 0.0
+      },
+      "fused_vs_twostep_q": {
+        "numel": 1024,
+        "raw_equal": true,
+        "raw_diff_count": 0,
+        "max_abs_diff": 0
+      },
+      "fused_vs_twostep_scales": {
+        "numel": 8,
+        "raw_equal": true,
+        "raw_diff_count": 0,
+        "max_abs_diff": 0.0,
+        "mean_abs_diff": 0.0
+      }
+    },
+    {
+      "window": "window_007_start_28",
+      "source": "onednn",
+      "fused_op": "silu_and_mul_quant_int8_xpu_out",
+      "gemm1_path": "data/qwen36-onednn-moe-island-layer9-r1-multiwindow-20260612bc/window_007_start_28/gemm1_onednn_acb_out.bf16.bin",
+      "rows": 8,
+      "gemm1_n": 256,
+      "gemm2_k": 128,
+      "fused_vs_expected_q": {
+        "numel": 1024,
+        "raw_equal": true,
+        "raw_diff_count": 0,
+        "max_abs_diff": 0
+      },
+      "fused_vs_expected_scales": {
+        "numel": 8,
+        "raw_equal": true,
+        "raw_diff_count": 0,
+        "max_abs_diff": 0.0,
+        "mean_abs_diff": 0.0
+      },
+      "twostep_vs_expected_q": {
+        "numel": 1024,
+        "raw_equal": true,
+        "raw_diff_count": 0,
+        "max_abs_diff": 0
+      },
+      "twostep_vs_expected_scales": {
+        "numel": 8,
+        "raw_equal": true,
+        "raw_diff_count": 0,
+        "max_abs_diff": 0.0,
+        "mean_abs_diff": 0.0
+      },
+      "fused_vs_twostep_q": {
+        "numel": 1024,
+        "raw_equal": true,
+        "raw_diff_count": 0,
+        "max_abs_diff": 0
+      },
+      "fused_vs_twostep_scales": {
+        "numel": 8,
+        "raw_equal": true,
+        "raw_diff_count": 0,
+        "max_abs_diff": 0.0,
+        "mean_abs_diff": 0.0
+      }
+    },
+    {
+      "window": "window_008_start_32",
+      "source": "onednn",
+      "fused_op": "silu_and_mul_quant_int8_xpu_out",
+      "gemm1_path": "data/qwen36-onednn-moe-island-layer9-r1-multiwindow-20260612bc/window_008_start_32/gemm1_onednn_acb_out.bf16.bin",
+      "rows": 8,
+      "gemm1_n": 256,
+      "gemm2_k": 128,
+      "fused_vs_expected_q": {
+        "numel": 1024,
+        "raw_equal": true,
+        "raw_diff_count": 0,
+        "max_abs_diff": 0
+      },
+      "fused_vs_expected_scales": {
+        "numel": 8,
+        "raw_equal": true,
+        "raw_diff_count": 0,
+        "max_abs_diff": 0.0,
+        "mean_abs_diff": 0.0
+      },
+      "twostep_vs_expected_q": {
+        "numel": 1024,
+        "raw_equal": true,
+        "raw_diff_count": 0,
+        "max_abs_diff": 0
+      },
+      "twostep_vs_expected_scales": {
+        "numel": 8,
+        "raw_equal": true,
+        "raw_diff_count": 0,
+        "max_abs_diff": 0.0,
+        "mean_abs_diff": 0.0
+      },
+      "fused_vs_twostep_q": {
+        "numel": 1024,
+        "raw_equal": true,
+        "raw_diff_count": 0,
+        "max_abs_diff": 0
+      },
+      "fused_vs_twostep_scales": {
+        "numel": 8,
+        "raw_equal": true,
+        "raw_diff_count": 0,
+        "max_abs_diff": 0.0,
+        "mean_abs_diff": 0.0
+      }
+    },
+    {
+      "window": "window_009_start_36",
+      "source": "onednn",
+      "fused_op": "silu_and_mul_quant_int8_xpu_out",
+      "gemm1_path": "data/qwen36-onednn-moe-island-layer9-r1-multiwindow-20260612bc/window_009_start_36/gemm1_onednn_acb_out.bf16.bin",
+      "rows": 8,
+      "gemm1_n": 256,
+      "gemm2_k": 128,
+      "fused_vs_expected_q": {
+        "numel": 1024,
+        "raw_equal": true,
+        "raw_diff_count": 0,
+        "max_abs_diff": 0
+      },
+      "fused_vs_expected_scales": {
+        "numel": 8,
+        "raw_equal": true,
+        "raw_diff_count": 0,
+        "max_abs_diff": 0.0,
+        "mean_abs_diff": 0.0
+      },
+      "twostep_vs_expected_q": {
+        "numel": 1024,
+        "raw_equal": true,
+        "raw_diff_count": 0,
+        "max_abs_diff": 0
+      },
+      "twostep_vs_expected_scales": {
+        "numel": 8,
+        "raw_equal": true,
+        "raw_diff_count": 0,
+        "max_abs_diff": 0.0,
+        "mean_abs_diff": 0.0
+      },
+      "fused_vs_twostep_q": {
+        "numel": 1024,
+        "raw_equal": true,
+        "raw_diff_count": 0,
+        "max_abs_diff": 0
+      },
+      "fused_vs_twostep_scales": {
+        "numel": 8,
+        "raw_equal": true,
+        "raw_diff_count": 0,
+        "max_abs_diff": 0.0,
+        "mean_abs_diff": 0.0
+      }
+    },
+    {
+      "window": "window_010_start_40",
+      "source": "onednn",
+      "fused_op": "silu_and_mul_quant_int8_xpu_out",
+      "gemm1_path": "data/qwen36-onednn-moe-island-layer9-r1-multiwindow-20260612bc/window_010_start_40/gemm1_onednn_acb_out.bf16.bin",
+      "rows": 8,
+      "gemm1_n": 256,
+      "gemm2_k": 128,
+      "fused_vs_expected_q": {
+        "numel": 1024,
+        "raw_equal": true,
+        "raw_diff_count": 0,
+        "max_abs_diff": 0
+      },
+      "fused_vs_expected_scales": {
+        "numel": 8,
+        "raw_equal": true,
+        "raw_diff_count": 0,
+        "max_abs_diff": 0.0,
+        "mean_abs_diff": 0.0
+      },
+      "twostep_vs_expected_q": {
+        "numel": 1024,
+        "raw_equal": true,
+        "raw_diff_count": 0,
+        "max_abs_diff": 0
+      },
+      "twostep_vs_expected_scales": {
+        "numel": 8,
+        "raw_equal": true,
+        "raw_diff_count": 0,
+        "max_abs_diff": 0.0,
+        "mean_abs_diff": 0.0
+      },
+      "fused_vs_twostep_q": {
+        "numel": 1024,
+        "raw_equal": true,
+        "raw_diff_count": 0,
+        "max_abs_diff": 0
+      },
+      "fused_vs_twostep_scales": {
+        "numel": 8,
+        "raw_equal": true,
+        "raw_diff_count": 0,
+        "max_abs_diff": 0.0,
+        "mean_abs_diff": 0.0
+      }
+    },
+    {
+      "window": "window_011_start_44",
+      "source": "onednn",
+      "fused_op": "silu_and_mul_quant_int8_xpu_out",
+      "gemm1_path": "data/qwen36-onednn-moe-island-layer9-r1-multiwindow-20260612bc/window_011_start_44/gemm1_onednn_acb_out.bf16.bin",
+      "rows": 8,
+      "gemm1_n": 256,
+      "gemm2_k": 128,
+      "fused_vs_expected_q": {
+        "numel": 1024,
+        "raw_equal": true,
+        "raw_diff_count": 0,
+        "max_abs_diff": 0
+      },
+      "fused_vs_expected_scales": {
+        "numel": 8,
+        "raw_equal": true,
+        "raw_diff_count": 0,
+        "max_abs_diff": 0.0,
+        "mean_abs_diff": 0.0
+      },
+      "twostep_vs_expected_q": {
+        "numel": 1024,
+        "raw_equal": true,
+        "raw_diff_count": 0,
+        "max_abs_diff": 0
+      },
+      "twostep_vs_expected_scales": {
+        "numel": 8,
+        "raw_equal": true,
+        "raw_diff_count": 0,
+        "max_abs_diff": 0.0,
+        "mean_abs_diff": 0.0
+      },
+      "fused_vs_twostep_q": {
+        "numel": 1024,
+        "raw_equal": true,
+        "raw_diff_count": 0,
+        "max_abs_diff": 0
+      },
+      "fused_vs_twostep_scales": {
+        "numel": 8,
+        "raw_equal": true,
+        "raw_diff_count": 0,
+        "max_abs_diff": 0.0,
+        "mean_abs_diff": 0.0
+      }
+    },
+    {
+      "window": "window_012_start_48",
+      "source": "onednn",
+      "fused_op": "silu_and_mul_quant_int8_xpu_out",
+      "gemm1_path": "data/qwen36-onednn-moe-island-layer9-r1-multiwindow-20260612bc/window_012_start_48/gemm1_onednn_acb_out.bf16.bin",
+      "rows": 8,
+      "gemm1_n": 256,
+      "gemm2_k": 128,
+      "fused_vs_expected_q": {
+        "numel": 1024,
+        "raw_equal": true,
+        "raw_diff_count": 0,
+        "max_abs_diff": 0
+      },
+      "fused_vs_expected_scales": {
+        "numel": 8,
+        "raw_equal": true,
+        "raw_diff_count": 0,
+        "max_abs_diff": 0.0,
+        "mean_abs_diff": 0.0
+      },
+      "twostep_vs_expected_q": {
+        "numel": 1024,
+        "raw_equal": true,
+        "raw_diff_count": 0,
+        "max_abs_diff": 0
+      },
+      "twostep_vs_expected_scales": {
+        "numel": 8,
+        "raw_equal": true,
+        "raw_diff_count": 0,
+        "max_abs_diff": 0.0,
+        "mean_abs_diff": 0.0
+      },
+      "fused_vs_twostep_q": {
+        "numel": 1024,
+        "raw_equal": true,
+        "raw_diff_count": 0,
+        "max_abs_diff": 0
+      },
+      "fused_vs_twostep_scales": {
+        "numel": 8,
+        "raw_equal": true,
+        "raw_diff_count": 0,
+        "max_abs_diff": 0.0,
+        "mean_abs_diff": 0.0
+      }
+    },
+    {
+      "window": "window_013_start_52",
+      "source": "onednn",
+      "fused_op": "silu_and_mul_quant_int8_xpu_out",
+      "gemm1_path": "data/qwen36-onednn-moe-island-layer9-r1-multiwindow-20260612bc/window_013_start_52/gemm1_onednn_acb_out.bf16.bin",
+      "rows": 8,
+      "gemm1_n": 256,
+      "gemm2_k": 128,
+      "fused_vs_expected_q": {
+        "numel": 1024,
+        "raw_equal": true,
+        "raw_diff_count": 0,
+        "max_abs_diff": 0
+      },
+      "fused_vs_expected_scales": {
+        "numel": 8,
+        "raw_equal": true,
+        "raw_diff_count": 0,
+        "max_abs_diff": 0.0,
+        "mean_abs_diff": 0.0
+      },
+      "twostep_vs_expected_q": {
+        "numel": 1024,
+        "raw_equal": true,
+        "raw_diff_count": 0,
+        "max_abs_diff": 0
+      },
+      "twostep_vs_expected_scales": {
+        "numel": 8,
+        "raw_equal": true,
+        "raw_diff_count": 0,
+        "max_abs_diff": 0.0,
+        "mean_abs_diff": 0.0
+      },
+      "fused_vs_twostep_q": {
+        "numel": 1024,
+        "raw_equal": true,
+        "raw_diff_count": 0,
+        "max_abs_diff": 0
+      },
+      "fused_vs_twostep_scales": {
+        "numel": 8,
+        "raw_equal": true,
+        "raw_diff_count": 0,
+        "max_abs_diff": 0.0,
+        "mean_abs_diff": 0.0
+      }
+    },
+    {
+      "window": "window_014_start_56",
+      "source": "onednn",
+      "fused_op": "silu_and_mul_quant_int8_xpu_out",
+      "gemm1_path": "data/qwen36-onednn-moe-island-layer9-r1-multiwindow-20260612bc/window_014_start_56/gemm1_onednn_acb_out.bf16.bin",
+      "rows": 8,
+      "gemm1_n": 256,
+      "gemm2_k": 128,
+      "fused_vs_expected_q": {
+        "numel": 1024,
+        "raw_equal": true,
+        "raw_diff_count": 0,
+        "max_abs_diff": 0
+      },
+      "fused_vs_expected_scales": {
+        "numel": 8,
+        "raw_equal": true,
+        "raw_diff_count": 0,
+        "max_abs_diff": 0.0,
+        "mean_abs_diff": 0.0
+      },
+      "twostep_vs_expected_q": {
+        "numel": 1024,
+        "raw_equal": true,
+        "raw_diff_count": 0,
+        "max_abs_diff": 0
+      },
+      "twostep_vs_expected_scales": {
+        "numel": 8,
+        "raw_equal": true,
+        "raw_diff_count": 0,
+        "max_abs_diff": 0.0,
+        "mean_abs_diff": 0.0
+      },
+      "fused_vs_twostep_q": {
+        "numel": 1024,
+        "raw_equal": true,
+        "raw_diff_count": 0,
+        "max_abs_diff": 0
+      },
+      "fused_vs_twostep_scales": {
+        "numel": 8,
+        "raw_equal": true,
+        "raw_diff_count": 0,
+        "max_abs_diff": 0.0,
+        "mean_abs_diff": 0.0
+      }
+    },
+    {
+      "window": "window_015_start_60",
+      "source": "onednn",
+      "fused_op": "silu_and_mul_quant_int8_xpu_out",
+      "gemm1_path": "data/qwen36-onednn-moe-island-layer9-r1-multiwindow-20260612bc/window_015_start_60/gemm1_onednn_acb_out.bf16.bin",
+      "rows": 8,
+      "gemm1_n": 256,
+      "gemm2_k": 128,
+      "fused_vs_expected_q": {
+        "numel": 1024,
+        "raw_equal": true,
+        "raw_diff_count": 0,
+        "max_abs_diff": 0
+      },
+      "fused_vs_expected_scales": {
+        "numel": 8,
+        "raw_equal": true,
+        "raw_diff_count": 0,
+        "max_abs_diff": 0.0,
+        "mean_abs_diff": 0.0
+      },
+      "twostep_vs_expected_q": {
+        "numel": 1024,
+        "raw_equal": true,
+        "raw_diff_count": 0,
+        "max_abs_diff": 0
+      },
+      "twostep_vs_expected_scales": {
+        "numel": 8,
+        "raw_equal": true,
+        "raw_diff_count": 0,
+        "max_abs_diff": 0.0,
+        "mean_abs_diff": 0.0
+      },
+      "fused_vs_twostep_q": {
+        "numel": 1024,
+        "raw_equal": true,
+        "raw_diff_count": 0,
+        "max_abs_diff": 0
+      },
+      "fused_vs_twostep_scales": {
+        "numel": 8,
+        "raw_equal": true,
+        "raw_diff_count": 0,
+        "max_abs_diff": 0.0,
+        "mean_abs_diff": 0.0
+      }
+    }
+  ]
+}

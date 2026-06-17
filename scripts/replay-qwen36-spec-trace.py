@@ -134,19 +134,29 @@ def load_token_cases(paths: list[Path]) -> dict[str, dict[str, Any]]:
     for path in paths:
         data = load_json(path)
         for case in data.get("cases") or []:
-            request_id = case.get("request_id") or case.get("response_id")
-            if request_id:
-                cases_by_request[str(request_id)] = {
-                    "path": str(path),
-                    "name": case.get("name"),
-                    "repeat_idx": case.get("repeat_idx"),
-                    "normalized": case.get("normalized"),
-                    "output_token_count": case.get("output_token_count"),
-                    "output_token_ids": case.get("output_token_ids") or [],
-                    "request_started_at_unix": case.get("request_started_at_unix"),
-                    "request_finished_at_unix": case.get("request_finished_at_unix"),
-                    "sha256": case.get("sha256"),
-                }
+            aliases = [
+                str(value)
+                for value in (case.get("request_id"), case.get("response_id"))
+                if value
+            ]
+            if not aliases:
+                continue
+            record = {
+                "path": str(path),
+                "name": case.get("name"),
+                "repeat_idx": case.get("repeat_idx"),
+                "normalized": case.get("normalized"),
+                "output_token_count": case.get("output_token_count"),
+                "output_token_ids": case.get("output_token_ids") or [],
+                "request_started_at_unix": case.get("request_started_at_unix"),
+                "request_finished_at_unix": case.get("request_finished_at_unix"),
+                "sha256": case.get("sha256"),
+                "request_id": case.get("request_id"),
+                "response_id": case.get("response_id"),
+                "aliases": aliases,
+            }
+            for request_id in aliases:
+                cases_by_request[request_id] = record
     return cases_by_request
 
 

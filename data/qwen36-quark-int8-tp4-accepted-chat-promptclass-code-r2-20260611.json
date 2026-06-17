@@ -1,0 +1,161 @@
+{
+  "created_at_unix": 1781161350.6358209,
+  "base_url": "http://127.0.0.1:8000",
+  "model": "qwen36-35b-a3b-fp8",
+  "tokenizer": "/mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118",
+  "server_model_record": {
+    "id": "qwen36-35b-a3b-fp8",
+    "object": "model",
+    "created": 1781161338,
+    "owned_by": "vllm",
+    "root": "/mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118",
+    "parent": null,
+    "max_model_len": 32768,
+    "permission": [
+      {
+        "id": "modelperm-849d65fc19317c8b",
+        "object": "model_permission",
+        "created": 1781161338,
+        "allow_create_engine": false,
+        "allow_sampling": true,
+        "allow_logprobs": true,
+        "allow_search_indices": false,
+        "allow_view": true,
+        "allow_fine_tuning": false,
+        "organization": "*",
+        "group": null,
+        "is_blocking": false
+      }
+    ]
+  },
+  "prompt_kind": "preset",
+  "prompt_preset": "code",
+  "prompt_file": null,
+  "endpoint": "chat",
+  "seed": 0,
+  "random_prefix_len": 0,
+  "prompt_tokens_requested": 512,
+  "prompt_tokens_actual": 2,
+  "output_tokens_requested": 512,
+  "mode": "stream",
+  "skip_vram": true,
+  "repeats": 2,
+  "measurement_notes": [
+    "TTFT and e2e are measured both client-side and from vLLM Prometheus histogram deltas.",
+    "tok_s_prefill_lower_bound_from_ttft is prompt_tokens / TTFT, so it is conservative and includes first-token scheduling/decode overhead.",
+    "tok_s_out_client_after_first_chunk is generated-token-only throughput after the first streamed text chunk.",
+    "tok_s_out_client_after_first_chunk_corrected subtracts the estimated first streamed chunk tokens from the numerator; this is more stable when --stream-interval > 1."
+  ],
+  "vram_mib_before_all": {},
+  "peak_vram_mib_observed": {},
+  "records": [
+    {
+      "repeat": 1,
+      "prompt_tokens_client": 522,
+      "prompt_tokens_estimated_before_request": 2,
+      "output_tokens_client": 512,
+      "elapsed_s_client": 5.225683660944924,
+      "ttft_ms_client": 74.84474196098745,
+      "tok_s_out_client_after_first_chunk": 99.40128356819166,
+      "tok_s_out_client_after_first_chunk_corrected": 99.20714043622253,
+      "tok_s_out_client_e2e": 97.97761081990535,
+      "tok_s_total_client": 197.868846851137,
+      "tok_s_prefill_lower_bound_from_ttft": 6974.437833884051,
+      "vllm_metric_deltas": {
+        "prompt_tokens": 522.0,
+        "generation_tokens": 512.0,
+        "ttft_count": 1.0,
+        "ttft_sum_s": 0.07294273376464844,
+        "e2e_count": 1.0,
+        "e2e_sum_s": 5.223948955535889
+      },
+      "ttft_ms_vllm_metrics": 72.94273376464844,
+      "e2e_ms_vllm_metrics": 5223.948955535889,
+      "vram_mib_before": {},
+      "vram_mib_after": {},
+      "first_chunk_tokens_client_estimate": 1,
+      "streamed_text_chunks": 512,
+      "text_preview": "Here whiskey whiskey whiskey0 findings and 0 patch plan items.\n\nWait, let me re-read the prompt carefully. The user provided the same function definition 5 times, with the last one missing the `return result` in the else branch. The prompt ",
+      "text": "Here whiskey whiskey whiskey0 findings and 0 patch plan items.\n\nWait, let me re-read the prompt carefully. The user provided the same function definition 5 times, with the last one missing the `return result` in the else branch. The prompt asks to review the code for latency bugs and reliability risks.\n\nLet me analyze the code provided:\n\n```python\ndef handle_request(req, backend):\n    start = time.perf_counter()\n    payload = normalize(req.json())\n    if payload.get('stream'):\n        for chunk in backend.generate(payload):\n            metrics.observe(time.perf_counter() - start)\n            yield encode_sse(chunk)\n    else:\n        result = backend.generate_once(payload)\n        metrics.observe(time.perf_counter() - start)\n        return result\n```\n\nAnd the last version:\n```python\ndef handle_request(req, backend):\n    start = time.perf_counter()\n    payload = normalize(req.json())\n    if payload.get('stream'):\n        for chunk in backend.generate(payload):\n            metrics.observe(time.perf_counter() - start)\n            yield encode_sse(chunk)\n    else:\n        result = backend.generate_once(payload)\n        metrics.observe(time.perf_counter() - start)\n```\n\nLet me identify concrete findings:\n\n1. **Missing return in non-streaming case (last version)**: The last version of `handle_request` does not return `result` in the else branch, which means the function returns `None` instead of the actual result. This is a reliability bug.\n\n2. **Metrics observation inside streaming loop**: In the streaming case, `metrics.observe` is called for every chunk. This creates significant overhead because `time.perf_counter()` is called for each chunk, and `metrics.observe` likely has its own overhead. This can severely impact latency, especially for streams with many chunks.\n\n3. **Metrics observation uses total elapsed time**: The metrics observe `time.perf_counter() - start`, which is the total time from the start of the function. For streaming, this means each metric observation records the cumulative time up to that point, not the time for that specific chunk. This makes the metrics less useful for understanding per-chunk latency.\n\n4. **No error handling for `req.json()`**: If `req.json()` raises an exception (e.g., invalid JSON), the function will crash without proper error handling. This is a reliability risk.\n\n5"
+    },
+    {
+      "repeat": 2,
+      "prompt_tokens_client": 522,
+      "prompt_tokens_estimated_before_request": 2,
+      "output_tokens_client": 512,
+      "elapsed_s_client": 5.2003476050449535,
+      "ttft_ms_client": 78.52610701229423,
+      "tok_s_out_client_after_first_chunk": 99.9644365186612,
+      "tok_s_out_client_after_first_chunk_corrected": 99.76919347858569,
+      "tok_s_out_client_e2e": 98.4549570308145,
+      "tok_s_total_client": 198.8328624411371,
+      "tok_s_prefill_lower_bound_from_ttft": 6647.470756678087,
+      "vllm_metric_deltas": {
+        "prompt_tokens": 522.0,
+        "generation_tokens": 512.0,
+        "ttft_count": 1.0,
+        "ttft_sum_s": 0.07645964622497559,
+        "e2e_count": 1.0,
+        "e2e_sum_s": 5.198728322982788
+      },
+      "ttft_ms_vllm_metrics": 76.45964622497559,
+      "e2e_ms_vllm_metrics": 5198.728322982788,
+      "vram_mib_before": {},
+      "vram_mib_after": {},
+      "first_chunk_tokens_client_estimate": 1,
+      "streamed_text_chunks": 512,
+      "text_preview": "Here is the review of the provided Python service code. Note that the code snippet was repeated multiple times in the prompt; the analysis applies to the single logical function `handle_request` defined therein.\n\n### Specific Findings\n\n1.  ",
+      "text": "Here is the review of the provided Python service code. Note that the code snippet was repeated multiple times in the prompt; the analysis applies to the single logical function `handle_request` defined therein.\n\n### Specific Findings\n\n1.  **Missing Return Statement in Non-Streaming Path (Critical Bug)**\n    In the last version of the code provided, the `else` block (non-streaming path) lacks a `return result` statement. This causes the function to return `None` implicitly, breaking the client\u2019s expectation of a JSON response. This is a regression if the last version is the deployed one.\n\n2.  **Metrics Observation Inside Streaming Loop (Latency & Overhead)**\n    `metrics.observe()` is called for *every* chunk in the streaming path. This creates significant overhead:\n    -   **CPU Overhead:** High-frequency function calls and timer resolution checks (`time.perf_counter()`) for every token/chunk.\n    -   **Metrics Cardinality/Volume:** If `metrics.observe` logs to a distributed system, this generates massive telemetry volume, potentially causing backend saturation or dropped metrics.\n    -   **Latency Impact:** The timer call itself adds microsecond-level latency per chunk, which accumulates.\n\n3.  **No Timeout Handling for Backend Calls (Reliability Risk)**\n    Neither `backend.generate()` nor `backend.generate_once()` is wrapped in a timeout. If the backend hangs, the request will block indefinitely, consuming server resources (threads/goroutines) and leading to resource exhaustion (DoS).\n\n4.  **No Exception Handling for Backend Failures (Reliability Risk)**\n    If `backend.generate()` or `backend.generate_once()` raises an exception (e.g., network error, backend crash), the exception propagates up without being caught. This results in a raw 500 error to the client, potentially leaking stack traces, and does not allow for retry logic or graceful degradation.\n\n5.  **Metrics Placement Ignores Streaming Latency Distribution**\n    In the streaming path, `metrics.observe()` is called * whiskey whiskey whiskey whiskey11111111111111111111111111111111111111111111111111111111111111111111111111111"
+    }
+  ],
+  "summary": {
+    "tok_s_out_client_after_first_chunk": {
+      "mean": 99.68286004342643,
+      "median": 99.68286004342643,
+      "min": 99.40128356819166,
+      "max": 99.9644365186612
+    },
+    "tok_s_out_client_after_first_chunk_corrected": {
+      "mean": 99.4881669574041,
+      "median": 99.4881669574041,
+      "min": 99.20714043622253,
+      "max": 99.76919347858569
+    },
+    "tok_s_out_client_e2e": {
+      "mean": 98.21628392535993,
+      "median": 98.21628392535993,
+      "min": 97.97761081990535,
+      "max": 98.4549570308145
+    },
+    "tok_s_total_client": {
+      "mean": 198.35085464613707,
+      "median": 198.35085464613707,
+      "min": 197.868846851137,
+      "max": 198.8328624411371
+    },
+    "ttft_ms_client": {
+      "mean": 76.68542448664084,
+      "median": 76.68542448664084,
+      "min": 74.84474196098745,
+      "max": 78.52610701229423
+    },
+    "ttft_ms_vllm_metrics": {
+      "mean": 74.70118999481201,
+      "median": 74.70118999481201,
+      "min": 72.94273376464844,
+      "max": 76.45964622497559
+    },
+    "tok_s_prefill_lower_bound_from_ttft": {
+      "mean": 6810.954295281069,
+      "median": 6810.954295281069,
+      "min": 6647.470756678087,
+      "max": 6974.437833884051
+    },
+    "e2e_ms_vllm_metrics": {
+      "mean": 5211.338639259338,
+      "median": 5211.338639259338,
+      "min": 5198.728322982788,
+      "max": 5223.948955535889
+    }
+  }
+}

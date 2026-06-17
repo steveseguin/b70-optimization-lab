@@ -5,13 +5,14 @@ MODEL_PATH="${MODEL_PATH:-/mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6
 SERVED_MODEL_NAME="${SERVED_MODEL_NAME:-qwen36-35b-a3b-fp8}"
 HOST="${HOST:-127.0.0.1}"
 PORT="${PORT:-18080}"
-LOG_PATH="${LOG_PATH:-/tmp/qwen36-quark-int8-tp4-gdn-reuseqkvzbaquant-clone-envclean-32k-noprefix.log}"
+LOG_PATH="${LOG_PATH:-/tmp/qwen36-quark-int8-tp4-safe-gdn-recurrent-graphnone-32k.log}"
+TP_SIZE="${TP_SIZE:-4}"
 MAX_MODEL_LEN="${MAX_MODEL_LEN:-32768}"
 MAX_NUM_BATCHED_TOKENS="${MAX_NUM_BATCHED_TOKENS:-8192}"
 MAX_NUM_SEQS="${MAX_NUM_SEQS:-48}"
-GPU_MEMORY_UTILIZATION="${GPU_MEMORY_UTILIZATION:-0.95}"
+GPU_MEMORY_UTILIZATION="${GPU_MEMORY_UTILIZATION:-0.90}"
 if [[ -z "${COMPILATION_CONFIG:-}" ]]; then
-  COMPILATION_CONFIG='{"cudagraph_mode":"PIECEWISE"}'
+  COMPILATION_CONFIG='{"cudagraph_mode":"NONE"}'
 fi
 MODEL_INPUT_TRACE_FILE="${MODEL_INPUT_TRACE_FILE:-}"
 MODEL_INPUT_TRACE_MAX_LINES="${MODEL_INPUT_TRACE_MAX_LINES:-400}"
@@ -24,25 +25,30 @@ COW_WORKER_TRACE_RANK="${COW_WORKER_TRACE_RANK:-}"
 
 export HF_HOME="${HF_HOME:-/mnt/fast-ai/llm-cache/hf}"
 export HUGGINGFACE_HUB_CACHE="${HUGGINGFACE_HUB_CACHE:-/mnt/fast-ai/llm-cache/hf}"
-export TORCHINDUCTOR_CACHE_DIR="${TORCHINDUCTOR_CACHE_DIR:-/mnt/fast-ai/vllm-cache-exp/qwen36-35b-a3b-quark-int8-tp4-piecewise-graph-gdn-reuseqkvzbaquant-clone-envclean-32k-noprefix/torchinductor}"
-export VLLM_CACHE_ROOT="${VLLM_CACHE_ROOT:-/mnt/fast-ai/vllm-cache-exp/qwen36-35b-a3b-quark-int8-tp4-piecewise-graph-gdn-reuseqkvzbaquant-clone-envclean-32k-noprefix/vllm}"
+export TORCHINDUCTOR_CACHE_DIR="${TORCHINDUCTOR_CACHE_DIR:-/mnt/fast-ai/vllm-cache-exp/qwen36-35b-a3b-quark-int8-tp4-safe-gdn-recurrent-graphnone-32k/torchinductor}"
+export VLLM_CACHE_ROOT="${VLLM_CACHE_ROOT:-/mnt/fast-ai/vllm-cache-exp/qwen36-35b-a3b-quark-int8-tp4-safe-gdn-recurrent-graphnone-32k/vllm}"
 export PYTHONPATH="/home/steve/src/vllm:/home/steve/src/vllm-xpu-kernels${PYTHONPATH:+:$PYTHONPATH}"
 export LD_LIBRARY_PATH="/home/steve/src/vllm-xpu-kernels/vllm_xpu_kernels:/home/steve/.venvs/vllm-xpu/lib:/home/steve/.venvs/vllm-xpu/lib/python3.12/site-packages/torch/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
 
 export VLLM_USE_V1=1
 export VLLM_TARGET_DEVICE=xpu
 export VLLM_ALLOW_LONG_MAX_MODEL_LEN=1
-export XPU_GRAPH="${XPU_GRAPH:-1}"
-export VLLM_XPU_ENABLE_XPU_GRAPH="${VLLM_XPU_ENABLE_XPU_GRAPH:-1}"
-export VLLM_XPU_FORCE_GRAPH_WITH_COMM="${VLLM_XPU_FORCE_GRAPH_WITH_COMM:-1}"
-export VLLM_XPU_GRAPH_NOOP_COMM_CAPTURE="${VLLM_XPU_GRAPH_NOOP_COMM_CAPTURE:-1}"
-export VLLM_XPU_USE_CUSTOM_OP_COLLECTIVES=1
-export VLLM_XPU_COMPILE_ALLREDUCE_CUSTOM_OP=1
-export VLLM_XPU_CUSTOM_ALLREDUCE_GRAPH_CLONE_INPUT=1
-export VLLM_XPU_CUSTOM_ALLREDUCE_CLONE_INPUT=1
+export XPU_GRAPH="${XPU_GRAPH:-0}"
+export VLLM_XPU_ENABLE_XPU_GRAPH="${VLLM_XPU_ENABLE_XPU_GRAPH:-0}"
+export VLLM_XPU_FORCE_GRAPH_WITH_COMM="${VLLM_XPU_FORCE_GRAPH_WITH_COMM:-0}"
+export VLLM_XPU_GRAPH_NOOP_COMM_CAPTURE="${VLLM_XPU_GRAPH_NOOP_COMM_CAPTURE:-0}"
+export VLLM_XPU_USE_CUSTOM_OP_COLLECTIVES="${VLLM_XPU_USE_CUSTOM_OP_COLLECTIVES:-1}"
+export VLLM_XPU_COMPILE_ALLREDUCE_CUSTOM_OP="${VLLM_XPU_COMPILE_ALLREDUCE_CUSTOM_OP:-1}"
+export VLLM_XPU_CUSTOM_ALLREDUCE_GRAPH_CLONE_INPUT="${VLLM_XPU_CUSTOM_ALLREDUCE_GRAPH_CLONE_INPUT:-1}"
+export VLLM_XPU_CUSTOM_ALLREDUCE_CLONE_INPUT="${VLLM_XPU_CUSTOM_ALLREDUCE_CLONE_INPUT:-1}"
 export VLLM_XPU_QUARK_W8A8_MOE=1
 export VLLM_XPU_FORCE_QUARK_REPACK=0
-export VLLM_XPU_GDN_REUSE_QKVZ_BA_QUANT=clone
+export VLLM_XPU_GDN_REUSE_QKVZ_BA_QUANT="${VLLM_XPU_GDN_REUSE_QKVZ_BA_QUANT:-clone}"
+export VLLM_XPU_GDN_NATIVE_FALLBACK="${VLLM_XPU_GDN_NATIVE_FALLBACK:-decode,prefill}"
+export VLLM_XPU_GDN_PREFILL_RECURRENT_FALLBACK="${VLLM_XPU_GDN_PREFILL_RECURRENT_FALLBACK:-1}"
+export VLLM_XPU_ZERO_FRESH_GDN_STATE="${VLLM_XPU_ZERO_FRESH_GDN_STATE:-1}"
+export VLLM_XPU_GREEDY_SAMPLE_TOPK_FALLBACK="${VLLM_XPU_GREEDY_SAMPLE_TOPK_FALLBACK:-1}"
+export VLLM_XPU_DISABLE_PREFILL_CUDAGRAPH_REPLAY="${VLLM_XPU_DISABLE_PREFILL_CUDAGRAPH_REPLAY:-1}"
 export ONEAPI_DEVICE_SELECTOR="${ONEAPI_DEVICE_SELECTOR:-level_zero:0,1,2,3}"
 export ZE_AFFINITY_MASK="${ZE_AFFINITY_MASK:-0,1,2,3}"
 export CCL_ATL_TRANSPORT=ofi
@@ -55,11 +61,18 @@ unset CCL_WORKER_COUNT
 
 # Accepted production/provenance lane: keep rejected diagnostic MoE paths out
 # unless a new launcher explicitly opts into them.
-unset VLLM_XPU_W8A8_USE_OFFSETS
+if [[ "${VLLM_XPU_W8A8_EXPERIMENTAL_ALLOW:-0}" != "1" ]]; then
+  unset VLLM_XPU_W8A8_USE_OFFSETS
+  unset VLLM_XPU_W8A8_OFFSETS_PREFIX_OP
+  unset VLLM_XPU_MOE_W8A8_MIDDLE_LAYERLET
+fi
 unset VLLM_XPU_MOE_ONEDNN_SIDECAR_PROBE
 unset VLLM_XPU_MOE_ONEDNN_SIDECAR_OFFSETS
 unset VLLM_XPU_MOE_ONEDNN_SIDECAR_DRY_DESCRIPTORS
 unset VLLM_XPU_FUSED_MOE_FUSE_SILU_QUANT
+if [[ "${VLLM_XPU_INT8_MOE_PERSISTENT_SCRATCH_ALLOW:-0}" != "1" ]]; then
+  unset VLLM_XPU_INT8_MOE_PERSISTENT_SCRATCH
+fi
 if [[ "${VLLM_XPU_MOE_LIVE_ABI_ALLOW:-0}" != "1" ]]; then
   unset VLLM_XPU_MOE_LIVE_ABI_FILE
   unset VLLM_XPU_MOE_LIVE_ABI_MAX_LINES
@@ -134,6 +147,10 @@ fi
 
 source /home/steve/.venvs/vllm-xpu/bin/activate
 
+if [[ -z "${VLLM_EXTRA_ARGS:-}" ]]; then
+  VLLM_EXTRA_ARGS="--no-async-scheduling"
+fi
+
 EXTRA_ARGS=()
 if [[ -n "${VLLM_EXTRA_ARGS:-}" ]]; then
   # shellcheck disable=SC2206
@@ -147,7 +164,7 @@ exec /home/steve/.venvs/vllm-xpu/bin/vllm serve "$MODEL_PATH" \
   --served-model-name "$SERVED_MODEL_NAME" \
   --dtype auto \
   --quantization quark \
-  --tensor-parallel-size 4 \
+  --tensor-parallel-size "$TP_SIZE" \
   --pipeline-parallel-size 1 \
   --distributed-executor-backend mp \
   --max-model-len "$MAX_MODEL_LEN" \

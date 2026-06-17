@@ -1,0 +1,394 @@
+{
+  "traces": [
+    {
+      "path": "/home/steve/llm-optimizations/data/qwen36-oracle1-serialgdn-nobonus-draftstate-eager-paired-20260615g13-spec-trace.jsonl",
+      "rows": 28,
+      "malformed_rows": 0,
+      "requests": 2,
+      "draft_tokens": 28,
+      "accepted": 26,
+      "rejected": 2,
+      "accept_rate_pct": 92.85714285714286,
+      "reject_rate_pct": 7.142857142857143,
+      "full_accept_rows": 26,
+      "full_reject_rows": 2,
+      "suppressed_bonus_rows": 26,
+      "full_accept_row_pct": 92.85714285714286,
+      "full_reject_row_pct": 7.142857142857143,
+      "suppressed_bonus_row_pct": 92.85714285714286,
+      "repeated_scheduled_rows": 0,
+      "max_full_accept_streak": 16,
+      "accept_count_histogram": {
+        "0": 2,
+        "1": 26
+      },
+      "top_scheduled_pairs": [
+        {
+          "tokens": "13",
+          "count": 4
+        },
+        {
+          "tokens": "17856",
+          "count": 2
+        },
+        {
+          "tokens": "78503",
+          "count": 2
+        },
+        {
+          "tokens": "2468",
+          "count": 2
+        },
+        {
+          "tokens": "28043",
+          "count": 2
+        },
+        {
+          "tokens": "3817",
+          "count": 2
+        },
+        {
+          "tokens": "27044",
+          "count": 1
+        },
+        {
+          "tokens": "14246",
+          "count": 1
+        },
+        {
+          "tokens": "383",
+          "count": 1
+        },
+        {
+          "tokens": "43318",
+          "count": 1
+        }
+      ],
+      "top_generated_first_tokens": [
+        {
+          "token": "13",
+          "count": 4
+        },
+        {
+          "token": "17856",
+          "count": 2
+        },
+        {
+          "token": "78503",
+          "count": 2
+        },
+        {
+          "token": "2468",
+          "count": 2
+        },
+        {
+          "token": "28043",
+          "count": 2
+        },
+        {
+          "token": "3817",
+          "count": 2
+        },
+        {
+          "token": "27044",
+          "count": 1
+        },
+        {
+          "token": "14246",
+          "count": 1
+        },
+        {
+          "token": "383",
+          "count": 1
+        },
+        {
+          "token": "43318",
+          "count": 1
+        }
+      ],
+      "request_ids": [
+        "cmpl-835544df383253ef-0-82db9b78",
+        "cmpl-aa48c6e1f18c5e59-0-b558076d"
+      ],
+      "top_requests_by_draft": [
+        {
+          "req_id": "cmpl-aa48c6e1f18c5e59-0-b558076d",
+          "rows": 16,
+          "draft_tokens": 16,
+          "accepted": 16,
+          "rejected": 0,
+          "first_ts": 1781518843.43504,
+          "last_ts": 1781518846.7691412,
+          "min_output_tokens": 1,
+          "max_output_tokens": 31,
+          "full_accept_rows": 16,
+          "full_reject_rows": 0,
+          "max_full_accept_streak": 16,
+          "repeated_scheduled_rows": 0,
+          "suppressed_bonus_rows": 16,
+          "top_scheduled_pairs": [
+            {
+              "tokens": "17856",
+              "count": 2
+            },
+            {
+              "tokens": "78503",
+              "count": 2
+            },
+            {
+              "tokens": "2468",
+              "count": 2
+            },
+            {
+              "tokens": "28043",
+              "count": 2
+            },
+            {
+              "tokens": "3817",
+              "count": 2
+            }
+          ],
+          "min_computed_after_reject": 489,
+          "max_computed_after_reject": 519,
+          "min_tokens_after_output": 490,
+          "max_tokens_after_output": 520,
+          "accept_rate": 100.0
+        },
+        {
+          "req_id": "cmpl-835544df383253ef-0-82db9b78",
+          "rows": 12,
+          "draft_tokens": 12,
+          "accepted": 10,
+          "rejected": 2,
+          "first_ts": 1781518839.9889016,
+          "last_ts": 1781518842.62968,
+          "min_output_tokens": 2,
+          "max_output_tokens": 26,
+          "full_accept_rows": 10,
+          "full_reject_rows": 2,
+          "max_full_accept_streak": 8,
+          "repeated_scheduled_rows": 0,
+          "suppressed_bonus_rows": 10,
+          "top_scheduled_pairs": [
+            {
+              "tokens": "13",
+              "count": 2
+            },
+            {
+              "tokens": "27044",
+              "count": 1
+            },
+            {
+              "tokens": "14246",
+              "count": 1
+            },
+            {
+              "tokens": "383",
+              "count": 1
+            },
+            {
+              "tokens": "43318",
+              "count": 1
+            }
+          ],
+          "min_computed_after_reject": 504,
+          "max_computed_after_reject": 528,
+          "min_tokens_after_output": 505,
+          "max_tokens_after_output": 529,
+          "accept_rate": 83.33333333333333
+        }
+      ],
+      "top_requests_by_rejects": [
+        {
+          "req_id": "cmpl-835544df383253ef-0-82db9b78",
+          "rows": 12,
+          "draft_tokens": 12,
+          "accepted": 10,
+          "rejected": 2,
+          "first_ts": 1781518839.9889016,
+          "last_ts": 1781518842.62968,
+          "min_output_tokens": 2,
+          "max_output_tokens": 26,
+          "full_accept_rows": 10,
+          "full_reject_rows": 2,
+          "max_full_accept_streak": 8,
+          "repeated_scheduled_rows": 0,
+          "suppressed_bonus_rows": 10,
+          "top_scheduled_pairs": [
+            {
+              "tokens": "13",
+              "count": 2
+            },
+            {
+              "tokens": "27044",
+              "count": 1
+            },
+            {
+              "tokens": "14246",
+              "count": 1
+            },
+            {
+              "tokens": "383",
+              "count": 1
+            },
+            {
+              "tokens": "43318",
+              "count": 1
+            }
+          ],
+          "min_computed_after_reject": 504,
+          "max_computed_after_reject": 528,
+          "min_tokens_after_output": 505,
+          "max_tokens_after_output": 529,
+          "accept_rate": 83.33333333333333
+        },
+        {
+          "req_id": "cmpl-aa48c6e1f18c5e59-0-b558076d",
+          "rows": 16,
+          "draft_tokens": 16,
+          "accepted": 16,
+          "rejected": 0,
+          "first_ts": 1781518843.43504,
+          "last_ts": 1781518846.7691412,
+          "min_output_tokens": 1,
+          "max_output_tokens": 31,
+          "full_accept_rows": 16,
+          "full_reject_rows": 0,
+          "max_full_accept_streak": 16,
+          "repeated_scheduled_rows": 0,
+          "suppressed_bonus_rows": 16,
+          "top_scheduled_pairs": [
+            {
+              "tokens": "17856",
+              "count": 2
+            },
+            {
+              "tokens": "78503",
+              "count": 2
+            },
+            {
+              "tokens": "2468",
+              "count": 2
+            },
+            {
+              "tokens": "28043",
+              "count": 2
+            },
+            {
+              "tokens": "3817",
+              "count": 2
+            }
+          ],
+          "min_computed_after_reject": 489,
+          "max_computed_after_reject": 519,
+          "min_tokens_after_output": 490,
+          "max_tokens_after_output": 520,
+          "accept_rate": 100.0
+        }
+      ],
+      "top_requests_by_full_accept_streak": [
+        {
+          "req_id": "cmpl-aa48c6e1f18c5e59-0-b558076d",
+          "rows": 16,
+          "draft_tokens": 16,
+          "accepted": 16,
+          "rejected": 0,
+          "first_ts": 1781518843.43504,
+          "last_ts": 1781518846.7691412,
+          "min_output_tokens": 1,
+          "max_output_tokens": 31,
+          "full_accept_rows": 16,
+          "full_reject_rows": 0,
+          "max_full_accept_streak": 16,
+          "repeated_scheduled_rows": 0,
+          "suppressed_bonus_rows": 16,
+          "top_scheduled_pairs": [
+            {
+              "tokens": "17856",
+              "count": 2
+            },
+            {
+              "tokens": "78503",
+              "count": 2
+            },
+            {
+              "tokens": "2468",
+              "count": 2
+            },
+            {
+              "tokens": "28043",
+              "count": 2
+            },
+            {
+              "tokens": "3817",
+              "count": 2
+            }
+          ],
+          "min_computed_after_reject": 489,
+          "max_computed_after_reject": 519,
+          "min_tokens_after_output": 490,
+          "max_tokens_after_output": 520,
+          "accept_rate": 100.0
+        },
+        {
+          "req_id": "cmpl-835544df383253ef-0-82db9b78",
+          "rows": 12,
+          "draft_tokens": 12,
+          "accepted": 10,
+          "rejected": 2,
+          "first_ts": 1781518839.9889016,
+          "last_ts": 1781518842.62968,
+          "min_output_tokens": 2,
+          "max_output_tokens": 26,
+          "full_accept_rows": 10,
+          "full_reject_rows": 2,
+          "max_full_accept_streak": 8,
+          "repeated_scheduled_rows": 0,
+          "suppressed_bonus_rows": 10,
+          "top_scheduled_pairs": [
+            {
+              "tokens": "13",
+              "count": 2
+            },
+            {
+              "tokens": "27044",
+              "count": 1
+            },
+            {
+              "tokens": "14246",
+              "count": 1
+            },
+            {
+              "tokens": "383",
+              "count": 1
+            },
+            {
+              "tokens": "43318",
+              "count": 1
+            }
+          ],
+          "min_computed_after_reject": 504,
+          "max_computed_after_reject": 528,
+          "min_tokens_after_output": 505,
+          "max_tokens_after_output": 529,
+          "accept_rate": 83.33333333333333
+        }
+      ]
+    }
+  ],
+  "metric_artifacts": [],
+  "metric_comparisons": [],
+  "quality_artifacts": [],
+  "joinability": {
+    "request_id_join_possible": false,
+    "exact_request_id_join_possible": false,
+    "prefix_request_id_join_possible": false,
+    "timestamp_window_join_possible": false,
+    "trace_request_count": 2,
+    "artifact_request_count": 0,
+    "exact_match_count": 0,
+    "prefix_match_count": 0,
+    "prefix_matches": [],
+    "note": "Artifacts do not store request ids. Re-run metrics with current scripts before attributing trace rows to exact prompts."
+  }
+}

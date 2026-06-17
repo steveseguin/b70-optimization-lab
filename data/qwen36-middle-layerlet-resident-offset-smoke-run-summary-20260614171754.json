@@ -1,0 +1,578 @@
+{
+  "artifacts": {
+    "log": "/home/steve/llm-optimizations/data/qwen36-middle-layerlet-resident-offset-smoke-20260614171754.log",
+    "metrics": "/home/steve/llm-optimizations/data/qwen36-middle-layerlet-resident-offset-smoke-p64o64-20260614171754.json",
+    "timing_decision_json": "/home/steve/llm-optimizations/data/qwen36-middle-layerlet-resident-offset-smoke-timing-decision-20260614171754.json",
+    "timing_decision_md": "/home/steve/llm-optimizations/data/qwen36-middle-layerlet-resident-offset-smoke-timing-decision-20260614171754.md",
+    "timing_summary": "/home/steve/llm-optimizations/data/qwen36-middle-layerlet-resident-offset-smoke-timing-summary-20260614171754.json"
+  },
+  "canaries_requested": false,
+  "env": {
+    "COMPILATION_CONFIG": null,
+    "VLLM_XPU_DECODE_TIMING_LABEL_REGEX": "xpu_moe\\.w8a8_middle_layerlet|xpu_moe\\.gemm1_w8a8|xpu_moe\\.gemm2_w8a8|xpu_moe\\.activation_quant|xpu_moe\\.gemm1_quant|xpu_moe\\.w8a8_offsets",
+    "VLLM_XPU_ENABLE_XPU_GRAPH": null,
+    "VLLM_XPU_MOE_W8A8_MIDDLE_LAYERLET": "1",
+    "VLLM_XPU_W8A8_EXPERIMENTAL_ALLOW": "1",
+    "VLLM_XPU_W8A8_USE_OFFSETS": "1",
+    "XPU_GRAPH": null
+  },
+  "label": "middle-layerlet-resident-offset-smoke",
+  "metrics": {
+    "base_url": "http://127.0.0.1:18082",
+    "created_at_unix": 1781457632.0503685,
+    "endpoint": "completions",
+    "ignore_eos": true,
+    "measurement_notes": [
+      "TTFT and e2e are measured both client-side and from vLLM Prometheus histogram deltas.",
+      "tok_s_prefill_lower_bound_from_ttft is prompt_tokens / TTFT, so it is conservative and includes first-token scheduling/decode overhead.",
+      "tok_s_out_client_after_first_chunk is generated-token-only throughput after the first streamed text chunk.",
+      "tok_s_out_client_after_first_chunk_corrected subtracts the estimated first streamed chunk tokens from the numerator; this is more stable when --stream-interval > 1."
+    ],
+    "mode": "stream",
+    "model": "qwen36-35b-a3b-fp8",
+    "output_tokens_requested": 64,
+    "peak_vram_mib_observed": {},
+    "prompt_file": null,
+    "prompt_kind": "preset",
+    "prompt_preset": "natural-chat",
+    "prompt_tokens_actual": 64,
+    "prompt_tokens_requested": 64,
+    "random_prefix_len": 0,
+    "records": [
+      {
+        "decode_ms_per_generation_token_vllm_histogram": 73.00549573483295,
+        "decode_ms_vllm_histogram": 4672.351727029309,
+        "e2e_ms_vllm_metrics": 4784.079790115356,
+        "elapsed_s_client": 4.785464628133923,
+        "first_chunk_tokens_client_estimate": 1,
+        "inference_ms_vllm_histogram": 4780.009496957064,
+        "inter_token_ms_vllm_histogram": 74.16431312744933,
+        "iteration_tokens_per_step_vllm_histogram": 2.0,
+        "output_tokens_client": 64,
+        "prefill_ms_vllm_histogram": 107.657769927755,
+        "prompt_tokens_client": 64,
+        "prompt_tokens_estimated_before_request": 64,
+        "queue_ms_vllm_histogram": 0.01064990647137165,
+        "repeat": 1,
+        "request_finished_at_unix": 1781457632.0447664,
+        "request_id": "cmpl-a295f74745f7624a",
+        "request_started_at_unix": 1781457627.2592468,
+        "streamed_text_chunks": 62,
+        "text_preview": "\nassistant<think>\nHere's a thinking process:\n\n1.  **Analyze User Input:**\n   - **Context:** Tuning an Intel XPU inference server\n   - **Task:** Write a concise engineering analysis with concrete next steps\n   - **Observations:** \"stable bas",
+        "time_per_output_token_ms_vllm_histogram": 74.1643131274493,
+        "tok_s_out_client_after_first_chunk": 13.92886027716284,
+        "tok_s_out_client_after_first_chunk_corrected": 13.71122183533217,
+        "tok_s_out_client_e2e": 13.373832004470714,
+        "tok_s_prefill_lower_bound_from_ttft": 335.6265735022329,
+        "tok_s_total_client": 26.747664008941427,
+        "ttft_ms_client": 190.68811903707683,
+        "ttft_ms_vllm_metrics": 111.74845695495605,
+        "vllm_histogram_deltas": {
+          "vllm:inter_token_latency_seconds": {
+            "count": 63.0,
+            "mean": 0.07416431312744934,
+            "sum": 4.672351727029309
+          },
+          "vllm:iteration_tokens_total": {
+            "count": 64.0,
+            "mean": 2.0,
+            "sum": 128.0
+          },
+          "vllm:request_decode_time_seconds": {
+            "count": 1.0,
+            "mean": 4.672351727029309,
+            "sum": 4.672351727029309
+          },
+          "vllm:request_inference_time_seconds": {
+            "count": 1.0,
+            "mean": 4.780009496957064,
+            "sum": 4.780009496957064
+          },
+          "vllm:request_prefill_time_seconds": {
+            "count": 1.0,
+            "mean": 0.107657769927755,
+            "sum": 0.107657769927755
+          },
+          "vllm:request_queue_time_seconds": {
+            "count": 1.0,
+            "mean": 1.064990647137165e-05,
+            "sum": 1.064990647137165e-05
+          },
+          "vllm:request_time_per_output_token_seconds": {
+            "count": 1.0,
+            "mean": 0.07416431312744931,
+            "sum": 0.07416431312744931
+          }
+        },
+        "vllm_metric_deltas": {
+          "e2e_count": 1.0,
+          "e2e_sum_s": 4.7840797901153564,
+          "generation_tokens": 64.0,
+          "prompt_tokens": 64.0,
+          "ttft_count": 1.0,
+          "ttft_sum_s": 0.11174845695495605
+        },
+        "vram_mib_after": {},
+        "vram_mib_before": {}
+      }
+    ],
+    "repeats": 1,
+    "seed": 0,
+    "server_model_record": {
+      "created": 1781457601,
+      "id": "qwen36-35b-a3b-fp8",
+      "max_model_len": 32768,
+      "object": "model",
+      "owned_by": "vllm",
+      "parent": null,
+      "permission": [
+        {
+          "allow_create_engine": false,
+          "allow_fine_tuning": false,
+          "allow_logprobs": true,
+          "allow_sampling": true,
+          "allow_search_indices": false,
+          "allow_view": true,
+          "created": 1781457601,
+          "group": null,
+          "id": "modelperm-9b0da729f7bf2c74",
+          "is_blocking": false,
+          "object": "model_permission",
+          "organization": "*"
+        }
+      ],
+      "root": "/mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118"
+    },
+    "skip_vram": true,
+    "summary": {
+      "decode_ms_per_generation_token_vllm_histogram": {
+        "max": 73.00549573483295,
+        "mean": 73.00549573483295,
+        "median": 73.00549573483295,
+        "min": 73.00549573483295
+      },
+      "decode_ms_vllm_histogram": {
+        "max": 4672.351727029309,
+        "mean": 4672.351727029309,
+        "median": 4672.351727029309,
+        "min": 4672.351727029309
+      },
+      "e2e_ms_vllm_metrics": {
+        "max": 4784.079790115356,
+        "mean": 4784.079790115356,
+        "median": 4784.079790115356,
+        "min": 4784.079790115356
+      },
+      "inference_ms_vllm_histogram": {
+        "max": 4780.009496957064,
+        "mean": 4780.009496957064,
+        "median": 4780.009496957064,
+        "min": 4780.009496957064
+      },
+      "inter_token_ms_vllm_histogram": {
+        "max": 74.16431312744933,
+        "mean": 74.16431312744933,
+        "median": 74.16431312744933,
+        "min": 74.16431312744933
+      },
+      "iteration_tokens_per_step_vllm_histogram": {
+        "max": 2.0,
+        "mean": 2.0,
+        "median": 2.0,
+        "min": 2.0
+      },
+      "prefill_ms_vllm_histogram": {
+        "max": 107.657769927755,
+        "mean": 107.657769927755,
+        "median": 107.657769927755,
+        "min": 107.657769927755
+      },
+      "queue_ms_vllm_histogram": {
+        "max": 0.01064990647137165,
+        "mean": 0.01064990647137165,
+        "median": 0.01064990647137165,
+        "min": 0.01064990647137165
+      },
+      "time_per_output_token_ms_vllm_histogram": {
+        "max": 74.1643131274493,
+        "mean": 74.1643131274493,
+        "median": 74.1643131274493,
+        "min": 74.1643131274493
+      },
+      "tok_s_out_client_after_first_chunk": {
+        "max": 13.92886027716284,
+        "mean": 13.92886027716284,
+        "median": 13.92886027716284,
+        "min": 13.92886027716284
+      },
+      "tok_s_out_client_after_first_chunk_corrected": {
+        "max": 13.71122183533217,
+        "mean": 13.71122183533217,
+        "median": 13.71122183533217,
+        "min": 13.71122183533217
+      },
+      "tok_s_out_client_e2e": {
+        "max": 13.373832004470714,
+        "mean": 13.373832004470714,
+        "median": 13.373832004470714,
+        "min": 13.373832004470714
+      },
+      "tok_s_prefill_lower_bound_from_ttft": {
+        "max": 335.6265735022329,
+        "mean": 335.6265735022329,
+        "median": 335.6265735022329,
+        "min": 335.6265735022329
+      },
+      "tok_s_total_client": {
+        "max": 26.747664008941427,
+        "mean": 26.747664008941427,
+        "median": 26.747664008941427,
+        "min": 26.747664008941427
+      },
+      "ttft_ms_client": {
+        "max": 190.68811903707683,
+        "mean": 190.68811903707683,
+        "median": 190.68811903707683,
+        "min": 190.68811903707683
+      },
+      "ttft_ms_vllm_metrics": {
+        "max": 111.74845695495605,
+        "mean": 111.74845695495605,
+        "median": 111.74845695495605,
+        "min": 111.74845695495605
+      }
+    },
+    "tokenizer": "/mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118",
+    "vram_mib_before_all": {}
+  },
+  "stamp": "20260614171754",
+  "timing_decision_json": {
+    "decision": {
+      "family": "moe",
+      "next_target": "persistent_w8a8_moe_layerlet",
+      "rank_skew_ms": 0.0013810000000000072,
+      "reason": "moe has the largest visible per-family label (xpu_moe.w8a8_offsets at 0.073370 ms).",
+      "runner_up": null,
+      "score_ms": 0.07337,
+      "top_label": "xpu_moe.w8a8_offsets"
+    },
+    "decision_basis": "aggregate_exit_summary",
+    "endpoint_metrics": {
+      "decode_ms_per_generation_token_vllm_mean": 73.00549573483295,
+      "tok_s_out_client_after_first_chunk_corrected_mean": 13.71122183533217,
+      "ttft_ms_mean": null
+    },
+    "families": {
+      "moe": {
+        "label_count": 3,
+        "nonexclusive_sum_max_ms": 0.15188300000000002,
+        "top_label": "xpu_moe.w8a8_offsets",
+        "top_label_max_ms": 0.07337,
+        "top_label_rank_skew_ms": 0.0013810000000000072,
+        "top_labels": [
+          {
+            "label": "xpu_moe.w8a8_offsets",
+            "max_ms": 0.07337,
+            "mean_ms": 0.07238675,
+            "rank_skew_ms": 0.0013810000000000072
+          },
+          {
+            "label": "xpu_moe.w8a8_middle_layerlet",
+            "max_ms": 0.059415,
+            "mean_ms": 0.057667750000000004,
+            "rank_skew_ms": 0.002599000000000004
+          },
+          {
+            "label": "xpu_moe.gemm1_quant",
+            "max_ms": 0.019098,
+            "mean_ms": 0.0188165,
+            "rank_skew_ms": 0.0005259999999999987
+          }
+        ]
+      }
+    },
+    "families_ranked": [
+      [
+        "moe",
+        {
+          "label_count": 3,
+          "nonexclusive_sum_max_ms": 0.15188300000000002,
+          "top_label": "xpu_moe.w8a8_offsets",
+          "top_label_max_ms": 0.07337,
+          "top_label_rank_skew_ms": 0.0013810000000000072,
+          "top_labels": [
+            {
+              "label": "xpu_moe.w8a8_offsets",
+              "max_ms": 0.07337,
+              "mean_ms": 0.07238675,
+              "rank_skew_ms": 0.0013810000000000072
+            },
+            {
+              "label": "xpu_moe.w8a8_middle_layerlet",
+              "max_ms": 0.059415,
+              "mean_ms": 0.057667750000000004,
+              "rank_skew_ms": 0.002599000000000004
+            },
+            {
+              "label": "xpu_moe.gemm1_quant",
+              "max_ms": 0.019098,
+              "mean_ms": 0.0188165,
+              "rank_skew_ms": 0.0005259999999999987
+            }
+          ]
+        }
+      ]
+    ],
+    "metrics_path": "/home/steve/llm-optimizations/data/qwen36-middle-layerlet-resident-offset-smoke-p64o64-20260614171754.json",
+    "source_log": "/home/steve/llm-optimizations/data/qwen36-middle-layerlet-resident-offset-smoke-20260614171754.log",
+    "summary_path": "/home/steve/llm-optimizations/data/qwen36-middle-layerlet-resident-offset-smoke-timing-summary-20260614171754.json",
+    "top_labels": [
+      {
+        "family": "moe",
+        "is_wrapper": false,
+        "label": "xpu_moe.w8a8_offsets",
+        "max_ms": 0.07337,
+        "mean_ms": 0.07238675,
+        "median_ms": 0.072094,
+        "min_ms": 0.071989,
+        "rank_count": 4,
+        "rank_skew_ms": 0.0013810000000000072,
+        "row_count": 4
+      },
+      {
+        "family": "moe",
+        "is_wrapper": false,
+        "label": "xpu_moe.w8a8_middle_layerlet",
+        "max_ms": 0.059415,
+        "mean_ms": 0.057667750000000004,
+        "median_ms": 0.05722,
+        "min_ms": 0.056816,
+        "rank_count": 4,
+        "rank_skew_ms": 0.002599000000000004,
+        "row_count": 4
+      },
+      {
+        "family": "moe",
+        "is_wrapper": false,
+        "label": "xpu_moe.gemm1_quant",
+        "max_ms": 0.019098,
+        "mean_ms": 0.0188165,
+        "median_ms": 0.018798000000000002,
+        "min_ms": 0.018572,
+        "rank_count": 4,
+        "rank_skew_ms": 0.0005259999999999987,
+        "row_count": 4
+      }
+    ],
+    "views": {
+      "aggregate_exit_summary": {
+        "families": {
+          "moe": {
+            "label_count": 3,
+            "nonexclusive_sum_max_ms": 0.15188300000000002,
+            "top_label": "xpu_moe.w8a8_offsets",
+            "top_label_max_ms": 0.07337,
+            "top_label_rank_skew_ms": 0.0013810000000000072,
+            "top_labels": [
+              {
+                "label": "xpu_moe.w8a8_offsets",
+                "max_ms": 0.07337,
+                "mean_ms": 0.07238675,
+                "rank_skew_ms": 0.0013810000000000072
+              },
+              {
+                "label": "xpu_moe.w8a8_middle_layerlet",
+                "max_ms": 0.059415,
+                "mean_ms": 0.057667750000000004,
+                "rank_skew_ms": 0.002599000000000004
+              },
+              {
+                "label": "xpu_moe.gemm1_quant",
+                "max_ms": 0.019098,
+                "mean_ms": 0.0188165,
+                "rank_skew_ms": 0.0005259999999999987
+              }
+            ]
+          }
+        },
+        "top_labels": [
+          {
+            "family": "moe",
+            "is_wrapper": false,
+            "label": "xpu_moe.w8a8_offsets",
+            "max_ms": 0.07337,
+            "mean_ms": 0.07238675,
+            "median_ms": 0.072094,
+            "min_ms": 0.071989,
+            "rank_count": 4,
+            "rank_skew_ms": 0.0013810000000000072,
+            "row_count": 4
+          },
+          {
+            "family": "moe",
+            "is_wrapper": false,
+            "label": "xpu_moe.w8a8_middle_layerlet",
+            "max_ms": 0.059415,
+            "mean_ms": 0.057667750000000004,
+            "median_ms": 0.05722,
+            "min_ms": 0.056816,
+            "rank_count": 4,
+            "rank_skew_ms": 0.002599000000000004,
+            "row_count": 4
+          },
+          {
+            "family": "moe",
+            "is_wrapper": false,
+            "label": "xpu_moe.gemm1_quant",
+            "max_ms": 0.019098,
+            "mean_ms": 0.0188165,
+            "median_ms": 0.018798000000000002,
+            "min_ms": 0.018572,
+            "rank_count": 4,
+            "rank_skew_ms": 0.0005259999999999987,
+            "row_count": 4
+          }
+        ]
+      },
+      "step_rank_summary": {
+        "families": {
+          "moe": {
+            "label_count": 3,
+            "nonexclusive_sum_max_ms": 5.5399077,
+            "top_label": "xpu_moe.w8a8_offsets",
+            "top_label_max_ms": 2.7413682,
+            "top_label_rank_skew_ms": 0.019691900000000206,
+            "top_labels": [
+              {
+                "label": "xpu_moe.w8a8_offsets",
+                "max_ms": 2.7413682,
+                "mean_ms": 2.732874375,
+                "rank_skew_ms": 0.019691900000000206
+              },
+              {
+                "label": "xpu_moe.w8a8_middle_layerlet",
+                "max_ms": 2.0383763999999998,
+                "mean_ms": 2.0176179999999997,
+                "rank_skew_ms": 0.04504729999999979
+              },
+              {
+                "label": "xpu_moe.gemm1_quant",
+                "max_ms": 0.7601631,
+                "mean_ms": 0.75012115,
+                "rank_skew_ms": 0.018229300000000004
+              }
+            ]
+          }
+        },
+        "top_labels": [
+          {
+            "family": "moe",
+            "is_wrapper": false,
+            "label": "xpu_moe.w8a8_offsets",
+            "max_ms": 2.7413682,
+            "mean_ms": 2.732874375,
+            "median_ms": 2.7342265,
+            "min_ms": 2.7216763,
+            "rank_count": 4,
+            "rank_skew_ms": 0.019691900000000206,
+            "row_count": 4
+          },
+          {
+            "family": "moe",
+            "is_wrapper": false,
+            "label": "xpu_moe.w8a8_middle_layerlet",
+            "max_ms": 2.0383763999999998,
+            "mean_ms": 2.0176179999999997,
+            "median_ms": 2.0193832499999997,
+            "min_ms": 1.9933291,
+            "rank_count": 4,
+            "rank_skew_ms": 0.04504729999999979,
+            "row_count": 4
+          },
+          {
+            "family": "moe",
+            "is_wrapper": false,
+            "label": "xpu_moe.gemm1_quant",
+            "max_ms": 0.7601631,
+            "mean_ms": 0.75012115,
+            "median_ms": 0.7491938499999999,
+            "min_ms": 0.7419338,
+            "rank_count": 4,
+            "rank_skew_ms": 0.018229300000000004,
+            "row_count": 4
+          }
+        ]
+      },
+      "step_summary": {
+        "families": {
+          "moe": {
+            "label_count": 3,
+            "nonexclusive_sum_max_ms": 5.500613525,
+            "top_label": "xpu_moe.w8a8_offsets",
+            "top_label_max_ms": 2.732874375,
+            "top_label_rank_skew_ms": 0.0,
+            "top_labels": [
+              {
+                "label": "xpu_moe.w8a8_offsets",
+                "max_ms": 2.732874375,
+                "mean_ms": 2.732874375,
+                "rank_skew_ms": 0.0
+              },
+              {
+                "label": "xpu_moe.w8a8_middle_layerlet",
+                "max_ms": 2.0176179999999997,
+                "mean_ms": 2.0176179999999997,
+                "rank_skew_ms": 0.0
+              },
+              {
+                "label": "xpu_moe.gemm1_quant",
+                "max_ms": 0.75012115,
+                "mean_ms": 0.75012115,
+                "rank_skew_ms": 0.0
+              }
+            ]
+          }
+        },
+        "top_labels": [
+          {
+            "family": "moe",
+            "is_wrapper": false,
+            "label": "xpu_moe.w8a8_offsets",
+            "max_ms": 2.732874375,
+            "mean_ms": 2.732874375,
+            "median_ms": 2.732874375,
+            "min_ms": 2.732874375,
+            "rank_count": 0,
+            "rank_skew_ms": 0.0,
+            "row_count": 1
+          },
+          {
+            "family": "moe",
+            "is_wrapper": false,
+            "label": "xpu_moe.w8a8_middle_layerlet",
+            "max_ms": 2.0176179999999997,
+            "mean_ms": 2.0176179999999997,
+            "median_ms": 2.0176179999999997,
+            "min_ms": 2.0176179999999997,
+            "rank_count": 0,
+            "rank_skew_ms": 0.0,
+            "row_count": 1
+          },
+          {
+            "family": "moe",
+            "is_wrapper": false,
+            "label": "xpu_moe.gemm1_quant",
+            "max_ms": 0.75012115,
+            "mean_ms": 0.75012115,
+            "median_ms": 0.75012115,
+            "min_ms": 0.75012115,
+            "rank_count": 0,
+            "rank_skew_ms": 0.0,
+            "row_count": 1
+          }
+        ]
+      }
+    },
+    "warning": "Timing labels are nested and non-exclusive; use this as a routing signal only."
+  }
+}

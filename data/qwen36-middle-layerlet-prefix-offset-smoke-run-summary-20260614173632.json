@@ -1,0 +1,658 @@
+{
+  "artifacts": {
+    "log": "/home/steve/llm-optimizations/data/qwen36-middle-layerlet-prefix-offset-smoke-20260614173632.log",
+    "metrics": "/home/steve/llm-optimizations/data/qwen36-middle-layerlet-prefix-offset-smoke-p64o64-20260614173632.json",
+    "timing_decision_json": "/home/steve/llm-optimizations/data/qwen36-middle-layerlet-prefix-offset-smoke-timing-decision-20260614173632.json",
+    "timing_decision_md": "/home/steve/llm-optimizations/data/qwen36-middle-layerlet-prefix-offset-smoke-timing-decision-20260614173632.md",
+    "timing_summary": "/home/steve/llm-optimizations/data/qwen36-middle-layerlet-prefix-offset-smoke-timing-summary-20260614173632.json"
+  },
+  "canaries_requested": false,
+  "env": {
+    "COMPILATION_CONFIG": null,
+    "VLLM_XPU_DECODE_TIMING_LABEL_REGEX": "xpu_moe\\.w8a8_offsets|xpu_moe\\.w8a8_offsets_prefix_op|xpu_moe\\.w8a8_offsets_torch_cumsum|xpu_moe\\.w8a8_middle_layerlet|xpu_moe\\.gemm1_quant",
+    "VLLM_XPU_ENABLE_XPU_GRAPH": null,
+    "VLLM_XPU_INT8_MOE_MIXED_WORKSPACE": "1",
+    "VLLM_XPU_MOE_W8A8_MIDDLE_LAYERLET": "1",
+    "VLLM_XPU_W8A8_EXPERIMENTAL_ALLOW": "1",
+    "VLLM_XPU_W8A8_OFFSETS_PREFIX_OP": "1",
+    "VLLM_XPU_W8A8_USE_OFFSETS": "1",
+    "XPU_GRAPH": null
+  },
+  "label": "middle-layerlet-prefix-offset-smoke",
+  "metrics": {
+    "base_url": "http://127.0.0.1:18084",
+    "created_at_unix": 1781458750.8720076,
+    "endpoint": "completions",
+    "ignore_eos": true,
+    "measurement_notes": [
+      "TTFT and e2e are measured both client-side and from vLLM Prometheus histogram deltas.",
+      "tok_s_prefill_lower_bound_from_ttft is prompt_tokens / TTFT, so it is conservative and includes first-token scheduling/decode overhead.",
+      "tok_s_out_client_after_first_chunk is generated-token-only throughput after the first streamed text chunk.",
+      "tok_s_out_client_after_first_chunk_corrected subtracts the estimated first streamed chunk tokens from the numerator; this is more stable when --stream-interval > 1."
+    ],
+    "mode": "stream",
+    "model": "qwen36-35b-a3b-fp8",
+    "output_tokens_requested": 64,
+    "peak_vram_mib_observed": {},
+    "prompt_file": null,
+    "prompt_kind": "preset",
+    "prompt_preset": "natural-chat",
+    "prompt_tokens_actual": 64,
+    "prompt_tokens_requested": 64,
+    "random_prefix_len": 0,
+    "records": [
+      {
+        "decode_ms_per_generation_token_vllm_histogram": 70.40956260607345,
+        "decode_ms_vllm_histogram": 4506.212006788701,
+        "e2e_ms_vllm_metrics": 4618.590593338013,
+        "elapsed_s_client": 4.61978564504534,
+        "first_chunk_tokens_client_estimate": 1,
+        "inference_ms_vllm_histogram": 4614.50729588978,
+        "inter_token_ms_vllm_histogram": 71.52717471093176,
+        "iteration_tokens_per_step_vllm_histogram": 2.0,
+        "output_tokens_client": 64,
+        "prefill_ms_vllm_histogram": 108.2952891010791,
+        "prompt_tokens_client": 64,
+        "prompt_tokens_estimated_before_request": 64,
+        "queue_ms_vllm_histogram": 0.013154931366443634,
+        "repeat": 1,
+        "request_finished_at_unix": 1781458750.863756,
+        "request_id": "cmpl-af494514cc01c322",
+        "request_started_at_unix": 1781458746.2439196,
+        "streamed_text_chunks": 62,
+        "text_preview": "\nassistant<think>\nHere's a thinking process:\n\n1.  **Analyze User Input:**\n   - **Context:** Tuning an Intel XPU inference server\n   - **Task:** Write a concise engineering analysis with concrete next steps\n   - **Observations:** \"stable bas",
+        "time_per_output_token_ms_vllm_histogram": 71.52717471093173,
+        "tok_s_out_client_after_first_chunk": 14.431114597956093,
+        "tok_s_out_client_after_first_chunk_corrected": 14.20562843236303,
+        "tok_s_out_client_e2e": 13.853456614083202,
+        "tok_s_prefill_lower_bound_from_ttft": 346.0885602849011,
+        "tok_s_total_client": 27.706913228166403,
+        "ttft_ms_client": 184.92376618087292,
+        "ttft_ms_vllm_metrics": 112.45203018188477,
+        "vllm_histogram_deltas": {
+          "vllm:inter_token_latency_seconds": {
+            "count": 63.0,
+            "mean": 0.07152717471093176,
+            "sum": 4.506212006788701
+          },
+          "vllm:iteration_tokens_total": {
+            "count": 64.0,
+            "mean": 2.0,
+            "sum": 128.0
+          },
+          "vllm:request_decode_time_seconds": {
+            "count": 1.0,
+            "mean": 4.506212006788701,
+            "sum": 4.506212006788701
+          },
+          "vllm:request_inference_time_seconds": {
+            "count": 1.0,
+            "mean": 4.61450729588978,
+            "sum": 4.61450729588978
+          },
+          "vllm:request_prefill_time_seconds": {
+            "count": 1.0,
+            "mean": 0.1082952891010791,
+            "sum": 0.1082952891010791
+          },
+          "vllm:request_queue_time_seconds": {
+            "count": 1.0,
+            "mean": 1.3154931366443634e-05,
+            "sum": 1.3154931366443634e-05
+          },
+          "vllm:request_time_per_output_token_seconds": {
+            "count": 1.0,
+            "mean": 0.07152717471093173,
+            "sum": 0.07152717471093173
+          }
+        },
+        "vllm_metric_deltas": {
+          "e2e_count": 1.0,
+          "e2e_sum_s": 4.618590593338013,
+          "generation_tokens": 64.0,
+          "prompt_tokens": 64.0,
+          "ttft_count": 1.0,
+          "ttft_sum_s": 0.11245203018188477
+        },
+        "vram_mib_after": {},
+        "vram_mib_before": {}
+      }
+    ],
+    "repeats": 1,
+    "seed": 0,
+    "server_model_record": {
+      "created": 1781458720,
+      "id": "qwen36-35b-a3b-fp8",
+      "max_model_len": 32768,
+      "object": "model",
+      "owned_by": "vllm",
+      "parent": null,
+      "permission": [
+        {
+          "allow_create_engine": false,
+          "allow_fine_tuning": false,
+          "allow_logprobs": true,
+          "allow_sampling": true,
+          "allow_search_indices": false,
+          "allow_view": true,
+          "created": 1781458720,
+          "group": null,
+          "id": "modelperm-b1357e6b9742f143",
+          "is_blocking": false,
+          "object": "model_permission",
+          "organization": "*"
+        }
+      ],
+      "root": "/mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118"
+    },
+    "skip_vram": true,
+    "summary": {
+      "decode_ms_per_generation_token_vllm_histogram": {
+        "max": 70.40956260607345,
+        "mean": 70.40956260607345,
+        "median": 70.40956260607345,
+        "min": 70.40956260607345
+      },
+      "decode_ms_vllm_histogram": {
+        "max": 4506.212006788701,
+        "mean": 4506.212006788701,
+        "median": 4506.212006788701,
+        "min": 4506.212006788701
+      },
+      "e2e_ms_vllm_metrics": {
+        "max": 4618.590593338013,
+        "mean": 4618.590593338013,
+        "median": 4618.590593338013,
+        "min": 4618.590593338013
+      },
+      "inference_ms_vllm_histogram": {
+        "max": 4614.50729588978,
+        "mean": 4614.50729588978,
+        "median": 4614.50729588978,
+        "min": 4614.50729588978
+      },
+      "inter_token_ms_vllm_histogram": {
+        "max": 71.52717471093176,
+        "mean": 71.52717471093176,
+        "median": 71.52717471093176,
+        "min": 71.52717471093176
+      },
+      "iteration_tokens_per_step_vllm_histogram": {
+        "max": 2.0,
+        "mean": 2.0,
+        "median": 2.0,
+        "min": 2.0
+      },
+      "prefill_ms_vllm_histogram": {
+        "max": 108.2952891010791,
+        "mean": 108.2952891010791,
+        "median": 108.2952891010791,
+        "min": 108.2952891010791
+      },
+      "queue_ms_vllm_histogram": {
+        "max": 0.013154931366443634,
+        "mean": 0.013154931366443634,
+        "median": 0.013154931366443634,
+        "min": 0.013154931366443634
+      },
+      "time_per_output_token_ms_vllm_histogram": {
+        "max": 71.52717471093173,
+        "mean": 71.52717471093173,
+        "median": 71.52717471093173,
+        "min": 71.52717471093173
+      },
+      "tok_s_out_client_after_first_chunk": {
+        "max": 14.431114597956093,
+        "mean": 14.431114597956093,
+        "median": 14.431114597956093,
+        "min": 14.431114597956093
+      },
+      "tok_s_out_client_after_first_chunk_corrected": {
+        "max": 14.20562843236303,
+        "mean": 14.20562843236303,
+        "median": 14.20562843236303,
+        "min": 14.20562843236303
+      },
+      "tok_s_out_client_e2e": {
+        "max": 13.853456614083202,
+        "mean": 13.853456614083202,
+        "median": 13.853456614083202,
+        "min": 13.853456614083202
+      },
+      "tok_s_prefill_lower_bound_from_ttft": {
+        "max": 346.0885602849011,
+        "mean": 346.0885602849011,
+        "median": 346.0885602849011,
+        "min": 346.0885602849011
+      },
+      "tok_s_total_client": {
+        "max": 27.706913228166403,
+        "mean": 27.706913228166403,
+        "median": 27.706913228166403,
+        "min": 27.706913228166403
+      },
+      "ttft_ms_client": {
+        "max": 184.92376618087292,
+        "mean": 184.92376618087292,
+        "median": 184.92376618087292,
+        "min": 184.92376618087292
+      },
+      "ttft_ms_vllm_metrics": {
+        "max": 112.45203018188477,
+        "mean": 112.45203018188477,
+        "median": 112.45203018188477,
+        "min": 112.45203018188477
+      }
+    },
+    "tokenizer": "/mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118",
+    "vram_mib_before_all": {}
+  },
+  "stamp": "20260614173632",
+  "timing_decision_json": {
+    "decision": {
+      "family": "moe",
+      "next_target": "persistent_w8a8_moe_layerlet",
+      "rank_skew_ms": 0.0018260000000000012,
+      "reason": "moe has the largest visible per-family label (xpu_moe.w8a8_middle_layerlet at 0.049362 ms).",
+      "runner_up": null,
+      "score_ms": 0.049362,
+      "top_label": "xpu_moe.w8a8_middle_layerlet"
+    },
+    "decision_basis": "aggregate_exit_summary",
+    "endpoint_metrics": {
+      "decode_ms_per_generation_token_vllm_mean": 70.40956260607345,
+      "tok_s_out_client_after_first_chunk_corrected_mean": 14.20562843236303,
+      "ttft_ms_mean": null
+    },
+    "families": {
+      "moe": {
+        "label_count": 4,
+        "nonexclusive_sum_max_ms": 0.099051,
+        "top_label": "xpu_moe.w8a8_middle_layerlet",
+        "top_label_max_ms": 0.049362,
+        "top_label_rank_skew_ms": 0.0018260000000000012,
+        "top_labels": [
+          {
+            "label": "xpu_moe.w8a8_middle_layerlet",
+            "max_ms": 0.049362,
+            "mean_ms": 0.04851775,
+            "rank_skew_ms": 0.0018260000000000012
+          },
+          {
+            "label": "xpu_moe.w8a8_offsets",
+            "max_ms": 0.02238,
+            "mean_ms": 0.0221915,
+            "rank_skew_ms": 0.0003590000000000017
+          },
+          {
+            "label": "xpu_moe.gemm1_quant",
+            "max_ms": 0.014299,
+            "mean_ms": 0.0141435,
+            "rank_skew_ms": 0.0005459999999999996
+          },
+          {
+            "label": "xpu_moe.w8a8_offsets_prefix_op",
+            "max_ms": 0.01301,
+            "mean_ms": 0.01286625,
+            "rank_skew_ms": 0.0004220000000000005
+          }
+        ]
+      }
+    },
+    "families_ranked": [
+      [
+        "moe",
+        {
+          "label_count": 4,
+          "nonexclusive_sum_max_ms": 0.099051,
+          "top_label": "xpu_moe.w8a8_middle_layerlet",
+          "top_label_max_ms": 0.049362,
+          "top_label_rank_skew_ms": 0.0018260000000000012,
+          "top_labels": [
+            {
+              "label": "xpu_moe.w8a8_middle_layerlet",
+              "max_ms": 0.049362,
+              "mean_ms": 0.04851775,
+              "rank_skew_ms": 0.0018260000000000012
+            },
+            {
+              "label": "xpu_moe.w8a8_offsets",
+              "max_ms": 0.02238,
+              "mean_ms": 0.0221915,
+              "rank_skew_ms": 0.0003590000000000017
+            },
+            {
+              "label": "xpu_moe.gemm1_quant",
+              "max_ms": 0.014299,
+              "mean_ms": 0.0141435,
+              "rank_skew_ms": 0.0005459999999999996
+            },
+            {
+              "label": "xpu_moe.w8a8_offsets_prefix_op",
+              "max_ms": 0.01301,
+              "mean_ms": 0.01286625,
+              "rank_skew_ms": 0.0004220000000000005
+            }
+          ]
+        }
+      ]
+    ],
+    "metrics_path": "/home/steve/llm-optimizations/data/qwen36-middle-layerlet-prefix-offset-smoke-p64o64-20260614173632.json",
+    "source_log": "/home/steve/llm-optimizations/data/qwen36-middle-layerlet-prefix-offset-smoke-20260614173632.log",
+    "summary_path": "/home/steve/llm-optimizations/data/qwen36-middle-layerlet-prefix-offset-smoke-timing-summary-20260614173632.json",
+    "top_labels": [
+      {
+        "family": "moe",
+        "is_wrapper": false,
+        "label": "xpu_moe.w8a8_middle_layerlet",
+        "max_ms": 0.049362,
+        "mean_ms": 0.04851775,
+        "median_ms": 0.048586500000000005,
+        "min_ms": 0.047536,
+        "rank_count": 4,
+        "rank_skew_ms": 0.0018260000000000012,
+        "row_count": 4
+      },
+      {
+        "family": "moe",
+        "is_wrapper": false,
+        "label": "xpu_moe.w8a8_offsets",
+        "max_ms": 0.02238,
+        "mean_ms": 0.0221915,
+        "median_ms": 0.0221825,
+        "min_ms": 0.022021,
+        "rank_count": 4,
+        "rank_skew_ms": 0.0003590000000000017,
+        "row_count": 4
+      },
+      {
+        "family": "moe",
+        "is_wrapper": false,
+        "label": "xpu_moe.gemm1_quant",
+        "max_ms": 0.014299,
+        "mean_ms": 0.0141435,
+        "median_ms": 0.014261,
+        "min_ms": 0.013753,
+        "rank_count": 4,
+        "rank_skew_ms": 0.0005459999999999996,
+        "row_count": 4
+      },
+      {
+        "family": "moe",
+        "is_wrapper": false,
+        "label": "xpu_moe.w8a8_offsets_prefix_op",
+        "max_ms": 0.01301,
+        "mean_ms": 0.01286625,
+        "median_ms": 0.0129335,
+        "min_ms": 0.012588,
+        "rank_count": 4,
+        "rank_skew_ms": 0.0004220000000000005,
+        "row_count": 4
+      }
+    ],
+    "views": {
+      "aggregate_exit_summary": {
+        "families": {
+          "moe": {
+            "label_count": 4,
+            "nonexclusive_sum_max_ms": 0.099051,
+            "top_label": "xpu_moe.w8a8_middle_layerlet",
+            "top_label_max_ms": 0.049362,
+            "top_label_rank_skew_ms": 0.0018260000000000012,
+            "top_labels": [
+              {
+                "label": "xpu_moe.w8a8_middle_layerlet",
+                "max_ms": 0.049362,
+                "mean_ms": 0.04851775,
+                "rank_skew_ms": 0.0018260000000000012
+              },
+              {
+                "label": "xpu_moe.w8a8_offsets",
+                "max_ms": 0.02238,
+                "mean_ms": 0.0221915,
+                "rank_skew_ms": 0.0003590000000000017
+              },
+              {
+                "label": "xpu_moe.gemm1_quant",
+                "max_ms": 0.014299,
+                "mean_ms": 0.0141435,
+                "rank_skew_ms": 0.0005459999999999996
+              },
+              {
+                "label": "xpu_moe.w8a8_offsets_prefix_op",
+                "max_ms": 0.01301,
+                "mean_ms": 0.01286625,
+                "rank_skew_ms": 0.0004220000000000005
+              }
+            ]
+          }
+        },
+        "top_labels": [
+          {
+            "family": "moe",
+            "is_wrapper": false,
+            "label": "xpu_moe.w8a8_middle_layerlet",
+            "max_ms": 0.049362,
+            "mean_ms": 0.04851775,
+            "median_ms": 0.048586500000000005,
+            "min_ms": 0.047536,
+            "rank_count": 4,
+            "rank_skew_ms": 0.0018260000000000012,
+            "row_count": 4
+          },
+          {
+            "family": "moe",
+            "is_wrapper": false,
+            "label": "xpu_moe.w8a8_offsets",
+            "max_ms": 0.02238,
+            "mean_ms": 0.0221915,
+            "median_ms": 0.0221825,
+            "min_ms": 0.022021,
+            "rank_count": 4,
+            "rank_skew_ms": 0.0003590000000000017,
+            "row_count": 4
+          },
+          {
+            "family": "moe",
+            "is_wrapper": false,
+            "label": "xpu_moe.gemm1_quant",
+            "max_ms": 0.014299,
+            "mean_ms": 0.0141435,
+            "median_ms": 0.014261,
+            "min_ms": 0.013753,
+            "rank_count": 4,
+            "rank_skew_ms": 0.0005459999999999996,
+            "row_count": 4
+          },
+          {
+            "family": "moe",
+            "is_wrapper": false,
+            "label": "xpu_moe.w8a8_offsets_prefix_op",
+            "max_ms": 0.01301,
+            "mean_ms": 0.01286625,
+            "median_ms": 0.0129335,
+            "min_ms": 0.012588,
+            "rank_count": 4,
+            "rank_skew_ms": 0.0004220000000000005,
+            "row_count": 4
+          }
+        ]
+      },
+      "step_rank_summary": {
+        "families": {
+          "moe": {
+            "label_count": 4,
+            "nonexclusive_sum_max_ms": 3.9667923333333333,
+            "top_label": "xpu_moe.w8a8_middle_layerlet",
+            "top_label_max_ms": 1.9534909999999999,
+            "top_label_rank_skew_ms": 0.1099549999999998,
+            "top_labels": [
+              {
+                "label": "xpu_moe.w8a8_middle_layerlet",
+                "max_ms": 1.9534909999999999,
+                "mean_ms": 1.9116465833333334,
+                "rank_skew_ms": 0.1099549999999998
+              },
+              {
+                "label": "xpu_moe.w8a8_offsets",
+                "max_ms": 0.9170663333333334,
+                "mean_ms": 0.9006778333333334,
+                "rank_skew_ms": 0.037091333333333476
+              },
+              {
+                "label": "xpu_moe.gemm1_quant",
+                "max_ms": 0.5750296666666667,
+                "mean_ms": 0.5612474166666667,
+                "rank_skew_ms": 0.03563099999999997
+              },
+              {
+                "label": "xpu_moe.w8a8_offsets_prefix_op",
+                "max_ms": 0.5212053333333334,
+                "mean_ms": 0.5087605833333334,
+                "rank_skew_ms": 0.03593866666666673
+              }
+            ]
+          }
+        },
+        "top_labels": [
+          {
+            "family": "moe",
+            "is_wrapper": false,
+            "label": "xpu_moe.w8a8_middle_layerlet",
+            "max_ms": 1.9534909999999999,
+            "mean_ms": 1.9116465833333334,
+            "median_ms": 1.9247796666666666,
+            "min_ms": 1.843536,
+            "rank_count": 4,
+            "rank_skew_ms": 0.1099549999999998,
+            "row_count": 4
+          },
+          {
+            "family": "moe",
+            "is_wrapper": false,
+            "label": "xpu_moe.w8a8_offsets",
+            "max_ms": 0.9170663333333334,
+            "mean_ms": 0.9006778333333334,
+            "median_ms": 0.902835,
+            "min_ms": 0.879975,
+            "rank_count": 4,
+            "rank_skew_ms": 0.037091333333333476,
+            "row_count": 4
+          },
+          {
+            "family": "moe",
+            "is_wrapper": false,
+            "label": "xpu_moe.gemm1_quant",
+            "max_ms": 0.5750296666666667,
+            "mean_ms": 0.5612474166666667,
+            "median_ms": 0.5652806666666667,
+            "min_ms": 0.5393986666666667,
+            "rank_count": 4,
+            "rank_skew_ms": 0.03563099999999997,
+            "row_count": 4
+          },
+          {
+            "family": "moe",
+            "is_wrapper": false,
+            "label": "xpu_moe.w8a8_offsets_prefix_op",
+            "max_ms": 0.5212053333333334,
+            "mean_ms": 0.5087605833333334,
+            "median_ms": 0.5142851666666667,
+            "min_ms": 0.4852666666666667,
+            "rank_count": 4,
+            "rank_skew_ms": 0.03593866666666673,
+            "row_count": 4
+          }
+        ]
+      },
+      "step_summary": {
+        "families": {
+          "moe": {
+            "label_count": 4,
+            "nonexclusive_sum_max_ms": 3.8823324166666664,
+            "top_label": "xpu_moe.w8a8_middle_layerlet",
+            "top_label_max_ms": 1.9116465833333331,
+            "top_label_rank_skew_ms": 0.0,
+            "top_labels": [
+              {
+                "label": "xpu_moe.w8a8_middle_layerlet",
+                "max_ms": 1.9116465833333331,
+                "mean_ms": 1.9116465833333331,
+                "rank_skew_ms": 0.0
+              },
+              {
+                "label": "xpu_moe.w8a8_offsets",
+                "max_ms": 0.9006778333333334,
+                "mean_ms": 0.9006778333333334,
+                "rank_skew_ms": 0.0
+              },
+              {
+                "label": "xpu_moe.gemm1_quant",
+                "max_ms": 0.5612474166666667,
+                "mean_ms": 0.5612474166666667,
+                "rank_skew_ms": 0.0
+              },
+              {
+                "label": "xpu_moe.w8a8_offsets_prefix_op",
+                "max_ms": 0.5087605833333334,
+                "mean_ms": 0.5087605833333334,
+                "rank_skew_ms": 0.0
+              }
+            ]
+          }
+        },
+        "top_labels": [
+          {
+            "family": "moe",
+            "is_wrapper": false,
+            "label": "xpu_moe.w8a8_middle_layerlet",
+            "max_ms": 1.9116465833333331,
+            "mean_ms": 1.9116465833333331,
+            "median_ms": 1.9116465833333331,
+            "min_ms": 1.9116465833333331,
+            "rank_count": 0,
+            "rank_skew_ms": 0.0,
+            "row_count": 1
+          },
+          {
+            "family": "moe",
+            "is_wrapper": false,
+            "label": "xpu_moe.w8a8_offsets",
+            "max_ms": 0.9006778333333334,
+            "mean_ms": 0.9006778333333334,
+            "median_ms": 0.9006778333333334,
+            "min_ms": 0.9006778333333334,
+            "rank_count": 0,
+            "rank_skew_ms": 0.0,
+            "row_count": 1
+          },
+          {
+            "family": "moe",
+            "is_wrapper": false,
+            "label": "xpu_moe.gemm1_quant",
+            "max_ms": 0.5612474166666667,
+            "mean_ms": 0.5612474166666667,
+            "median_ms": 0.5612474166666667,
+            "min_ms": 0.5612474166666667,
+            "rank_count": 0,
+            "rank_skew_ms": 0.0,
+            "row_count": 1
+          },
+          {
+            "family": "moe",
+            "is_wrapper": false,
+            "label": "xpu_moe.w8a8_offsets_prefix_op",
+            "max_ms": 0.5087605833333334,
+            "mean_ms": 0.5087605833333334,
+            "median_ms": 0.5087605833333334,
+            "min_ms": 0.5087605833333334,
+            "rank_count": 0,
+            "rank_skew_ms": 0.0,
+            "row_count": 1
+          }
+        ]
+      }
+    },
+    "warning": "Timing labels are nested and non-exclusive; use this as a routing signal only."
+  }
+}

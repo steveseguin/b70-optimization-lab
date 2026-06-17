@@ -1,0 +1,161 @@
+{
+  "created_at_unix": 1781161617.306721,
+  "base_url": "http://127.0.0.1:8000",
+  "model": "qwen36-35b-a3b-fp8",
+  "tokenizer": "/mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118",
+  "server_model_record": {
+    "id": "qwen36-35b-a3b-fp8",
+    "object": "model",
+    "created": 1781161604,
+    "owned_by": "vllm",
+    "root": "/mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118",
+    "parent": null,
+    "max_model_len": 32768,
+    "permission": [
+      {
+        "id": "modelperm-9567e93a3522dc4f",
+        "object": "model_permission",
+        "created": 1781161604,
+        "allow_create_engine": false,
+        "allow_sampling": true,
+        "allow_logprobs": true,
+        "allow_search_indices": false,
+        "allow_view": true,
+        "allow_fine_tuning": false,
+        "organization": "*",
+        "group": null,
+        "is_blocking": false
+      }
+    ]
+  },
+  "prompt_kind": "preset",
+  "prompt_preset": "code",
+  "prompt_file": null,
+  "endpoint": "chat",
+  "seed": 0,
+  "random_prefix_len": 0,
+  "prompt_tokens_requested": 512,
+  "prompt_tokens_actual": 2,
+  "output_tokens_requested": 512,
+  "mode": "stream",
+  "skip_vram": true,
+  "repeats": 2,
+  "measurement_notes": [
+    "TTFT and e2e are measured both client-side and from vLLM Prometheus histogram deltas.",
+    "tok_s_prefill_lower_bound_from_ttft is prompt_tokens / TTFT, so it is conservative and includes first-token scheduling/decode overhead.",
+    "tok_s_out_client_after_first_chunk is generated-token-only throughput after the first streamed text chunk.",
+    "tok_s_out_client_after_first_chunk_corrected subtracts the estimated first streamed chunk tokens from the numerator; this is more stable when --stream-interval > 1."
+  ],
+  "vram_mib_before_all": {},
+  "peak_vram_mib_observed": {},
+  "records": [
+    {
+      "repeat": 1,
+      "prompt_tokens_client": 522,
+      "prompt_tokens_estimated_before_request": 2,
+      "output_tokens_client": 512,
+      "elapsed_s_client": 5.539463948924094,
+      "ttft_ms_client": 75.66807698458433,
+      "tok_s_out_client_after_first_chunk": 93.70774677536642,
+      "tok_s_out_client_after_first_chunk_corrected": 93.52472383244579,
+      "tok_s_out_client_e2e": 92.42771588024208,
+      "tok_s_total_client": 186.66066058627013,
+      "tok_s_prefill_lower_bound_from_ttft": 6898.549835042666,
+      "vllm_metric_deltas": {
+        "prompt_tokens": 522.0,
+        "generation_tokens": 512.0,
+        "ttft_count": 1.0,
+        "ttft_sum_s": 0.07369160652160645,
+        "e2e_count": 1.0,
+        "e2e_sum_s": 5.537755012512207
+      },
+      "ttft_ms_vllm_metrics": 73.69160652160645,
+      "e2e_ms_vllm_metrics": 5537.755012512207,
+      "vram_mib_before": {},
+      "vram_mib_after": {},
+      "first_chunk_tokens_client_estimate": 1,
+      "streamed_text_chunks": 479,
+      "text_preview": "Here is the review of the provided Python service code. Note that the code snippet was repeated multiple times in the prompt; the analysis applies to the single logical function `handle_request` defined therein.\n\n### Specific Findings\n\n1.  ",
+      "text": "Here is the review of the provided Python service code. Note that the code snippet was repeated multiple times in the prompt; the analysis applies to the single logical function `handle_request` defined therein.\n\n### Specific Findings\n\n1.  **Missing Return Statement in Non-Streaming Path**: In the last repetition of the code, the `else` block calls `backend.generate_once(payload)` but does not `return result`. This causes the function to return `None` implicitly, breaking the contract for non-streaming requests.\n2.  **No Exception Handling for `req.json()`: If the request body is malformed JSON, `req.json()` will raise a `JSONDecodeError` (or similar). This unhandled exception will result in a 500 Internal Server Error instead of a 400 Bad Request, leaking stack traces or causing generic failures.\n Aviv(background Fucking(background No Exception Handling for `normalize()`: If `normalize(req.json())` may raise exceptions if the payload structure is invalid. This is not caught, leading to unhandled 500 errors.\n3.  **No Exception Handling for Backend Calls**: Neither `backend.generate` calls are wrapped in try/except blocks. If the backend is unreachable, times out, or raises an internal error, the service crashes with a 500 error instead of returning a graceful error response (e.g., 5022 or 5030).\n4.  **Inefficient Metrics Observation in Streaming Loop**: `metrics.observe()` is called for *every* chunk in the streaming loop. This creates high-frequency metric emissions (potentially thousands per second), causing significant CPU overhead and metric backend pressure. It should be sampled or aggregated.\n5.  **Latency Measurement Overhead in Streaming**: `time.perf_counter()` is called for every chunk. While `perf_counter` is fast, doing it thousands of times per request adds unnecessary CPU load. A single measurement at the start and end of the stream (or per-batch) is more appropriate for latency tracking.\n6.  **No Timeout Handling for Backend Calls**: There is no mechanism to enforce a timeout on `backend.generate()` or `backend.generate_once()`. If the backend hangs, the request will hang indefinitely, consuming server resources (threads/goroutines) and potentially causing a denial-of-service condition.\n7.  **No Timeout Handling for Streaming**: Similarly, `backend.generate()` has no timeout. A slow or infinite stream will block the"
+    },
+    {
+      "repeat": 2,
+      "prompt_tokens_client": 522,
+      "prompt_tokens_estimated_before_request": 2,
+      "output_tokens_client": 512,
+      "elapsed_s_client": 5.5000605310779065,
+      "ttft_ms_client": 75.55059506557882,
+      "tok_s_out_client_after_first_chunk": 94.38640652143077,
+      "tok_s_out_client_after_first_chunk_corrected": 94.2020580711936,
+      "tok_s_out_client_e2e": 93.08988457617171,
+      "tok_s_total_client": 187.99793096047176,
+      "tok_s_prefill_lower_bound_from_ttft": 6909.277147941691,
+      "vllm_metric_deltas": {
+        "prompt_tokens": 522.0,
+        "generation_tokens": 512.0,
+        "ttft_count": 1.0,
+        "ttft_sum_s": 0.07387495040893555,
+        "e2e_count": 1.0,
+        "e2e_sum_s": 5.49843168258667
+      },
+      "ttft_ms_vllm_metrics": 73.87495040893555,
+      "e2e_ms_vllm_metrics": 5498.43168258667,
+      "vram_mib_before": {},
+      "vram_mib_after": {},
+      "first_chunk_tokens_client_estimate": 1,
+      "streamed_text_chunks": 477,
+      "text_preview": "Here is the review of the provided Python service code. Note that the code snippet was repeated multiple times in the prompt; the analysis applies to the single logical function `handle_request` defined therein.\n\n### Specific Findings\n\n1.  ",
+      "text": "Here is the review of the provided Python service code. Note that the code snippet was repeated multiple times in the prompt; the analysis applies to the single logical function `handle_request` defined therein.\n\n### Specific Findings\n\n1.  **Missing Return Statement in Non-Streaming Path**: In the last repetition of the code, the `else` block calls `backend.generate_once(payload)` but does not `return result`. This causes the function to return `None` implicitly, breaking the contract for non-streaming requests.\n2.  **No Exception Handling for `req.json()`: If the request body is malformed JSON, `req.json()` will raise a `JSONDecodeError` (or similar). This unhandled exception will result in a 500 Internal Server Error instead of a 400 Bad Request, leaking stack traces or causing generic failures.\n3.  **No Exception Handling for `normalize()**: The `normalize()` function may raise exceptions (e.g., `KeyError`, `TypeError`) if the payload structure is unexpected. This leads to unhandled 500 errors instead of graceful degradation or validation errors.\n4.  **No Exception Handling for `backend.generate()`**: If `backend.generate()` or `backend.generate_once()` raises an exception (e.g., network timeout, backend crash), the entire request fails without any retry logic, circuit breaking, or user-friendly error message.\n5.  **Metrics Overhead in Streaming Loop: `metrics.observe()` is called for *every* chunk in the streaming path. If a stream produces thousands of chunks, this creates massive overhead due to frequent function calls and potential lock contention in the metrics library, significantly increasing latency.\n6.  **Inaccurate Latency Metrics for Streaming: The metric `time.perf_counter() - start` is calculated *per chunk*, not for the total request duration. This does not accurately represent the end-to-end latency of the streaming response, which is usually the key performance indicator (KPI) for streaming APIs.\n7.  **No Timeout Handling**: There is no timeout mechanism for `backend.generate()` or `backend.generate_once()`. If the backend hangs, the client connection will remain open indefinitely, leading to resource exhaustion (thread/connection pool depletion) on the service.\n8.  **No Cleanup on Generator Exception**: If an exception occurs during the iteration of `backend.generate()`, the generator may not be properly closed. This can lead to resource leaks (e.g., unclosed"
+    }
+  ],
+  "summary": {
+    "tok_s_out_client_after_first_chunk": {
+      "mean": 94.04707664839859,
+      "median": 94.04707664839859,
+      "min": 93.70774677536642,
+      "max": 94.38640652143077
+    },
+    "tok_s_out_client_after_first_chunk_corrected": {
+      "mean": 93.8633909518197,
+      "median": 93.8633909518197,
+      "min": 93.52472383244579,
+      "max": 94.2020580711936
+    },
+    "tok_s_out_client_e2e": {
+      "mean": 92.7588002282069,
+      "median": 92.7588002282069,
+      "min": 92.42771588024208,
+      "max": 93.08988457617171
+    },
+    "tok_s_total_client": {
+      "mean": 187.32929577337094,
+      "median": 187.32929577337094,
+      "min": 186.66066058627013,
+      "max": 187.99793096047176
+    },
+    "ttft_ms_client": {
+      "mean": 75.60933602508157,
+      "median": 75.60933602508157,
+      "min": 75.55059506557882,
+      "max": 75.66807698458433
+    },
+    "ttft_ms_vllm_metrics": {
+      "mean": 73.783278465271,
+      "median": 73.783278465271,
+      "min": 73.69160652160645,
+      "max": 73.87495040893555
+    },
+    "tok_s_prefill_lower_bound_from_ttft": {
+      "mean": 6903.913491492178,
+      "median": 6903.913491492178,
+      "min": 6898.549835042666,
+      "max": 6909.277147941691
+    },
+    "e2e_ms_vllm_metrics": {
+      "mean": 5518.0933475494385,
+      "median": 5518.0933475494385,
+      "min": 5498.43168258667,
+      "max": 5537.755012512207
+    }
+  }
+}
