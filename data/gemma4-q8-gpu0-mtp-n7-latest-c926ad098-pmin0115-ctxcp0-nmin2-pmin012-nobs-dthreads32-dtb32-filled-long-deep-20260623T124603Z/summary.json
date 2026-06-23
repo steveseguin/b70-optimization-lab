@@ -1,0 +1,96 @@
+{
+  "bench_run_identity": {
+    "api_mode": "chat",
+    "base_url": "http://127.0.0.1:18440",
+    "created_at_utc": "2026-06-23T12:49:33.075054+00:00",
+    "max_tokens": 512,
+    "model": "gemma4-26b-a4b-q8",
+    "prompt_chars": 3460,
+    "prompt_mode": "filled-long",
+    "prompt_preview": "You are running a deterministic Gemma B70 decode benchmark. Read the reference context, then produce a long numbered response until the token limit is reached. Do not summarize early.\n\nReference context:\nbenchmark latency memory throughput ",
+    "prompt_sha256": "04f687a68d60254567d3252624e01a696b0c9843dbb02f5a789d75aada5e4da5",
+    "prompt_tokens_requested": 512,
+    "repeats": 8,
+    "seed": 1,
+    "usage_required": true
+  },
+  "bench_summary": {
+    "completion_tokens": {
+      "cv": 0.0,
+      "max": 512,
+      "mean": 512.0,
+      "median": 512.0,
+      "min": 512,
+      "stdev": 0.0
+    },
+    "completion_tokens_total": 4096,
+    "elapsed_s": {
+      "cv": 0.004584453752291661,
+      "max": 7.345629530987935,
+      "mean": 7.265071013243869,
+      "median": 7.25220228699618,
+      "min": 7.246285379980691,
+      "stdev": 0.03330638206733123
+    },
+    "prompt_tokens": {
+      "cv": 0.0,
+      "max": 588,
+      "mean": 588.0,
+      "median": 588.0,
+      "min": 588,
+      "stdev": 0.0
+    },
+    "requests": 8,
+    "tok_s_after_ttft": {
+      "cv": 0.002141830806444393,
+      "max": 90.43197361445807,
+      "mean": 90.26011600018404,
+      "median": 90.319819298355,
+      "min": 89.86083117409197,
+      "stdev": 0.19332189704243863
+    },
+    "tok_s_wall": {
+      "cv": 0.004544089044693241,
+      "max": 70.65689151775642,
+      "mean": 70.47547532823066,
+      "median": 70.59925081436239,
+      "min": 69.70130985235511,
+      "stdev": 0.3202468353585617
+    },
+    "ttft_s": {
+      "cv": 0.014089316031039434,
+      "max": 1.6479301739891525,
+      "mean": 1.592553819744353,
+      "median": 1.584516894989065,
+      "min": 1.582978821999859,
+      "stdev": 0.0224379940628172
+    }
+  },
+  "canary_pass_all": true,
+  "canary_rows_completed": 384,
+  "label": "gemma4-q8-gpu0-mtp-n7-latest-c926ad098-pmin0115-ctxcp0-nmin2-pmin012-nobs-dthreads32-dtb32-filled-long-deep-20260623T124603Z",
+  "launcher_identity": {
+    "batch_size": "512",
+    "cache_type_k": "f16",
+    "cache_type_v": "f16",
+    "ctx_size": "8192",
+    "extra_llama_args": "--parallel 1 --cache-ram 0 --spec-type draft-mtp --spec-draft-model /mnt/fast-ai/llm-models/gemma4-26b-a4b-it-q8-gguf/mtp-gemma-4-26B-A4B-it.gguf --spec-draft-n-max 7 --spec-draft-device SYCL0 --spec-draft-ngl all --spec-draft-type-k f16 --spec-draft-type-v f16 --spec-draft-n-min 2 --spec-draft-p-min 0.115 --no-spec-draft-backend-sampling --spec-draft-threads 32 --spec-draft-threads-batch 32 --ctx-checkpoints 0",
+    "flash_attn": "off",
+    "ggml_sycl_disable_dnn": "<unset>",
+    "ggml_sycl_disable_graph": "<unset>",
+    "ggml_sycl_disable_opt": "0",
+    "gpu_index": "0",
+    "llama_cpp_commit": "c926ad098",
+    "llama_server": "/home/steve/src/llama.cpp-latest-gemma/build-sycl-b70-aot-bmg-g31/bin/llama-server",
+    "oneapi_device_selector": "level_zero:0",
+    "poll": "50",
+    "port": "18440",
+    "reasoning": "off",
+    "threads": "16",
+    "ubatch_size": "64"
+  },
+  "model_file_bytes": 27636230944,
+  "model_path": "/mnt/fast-ai/llm-models/gemma4-26b-a4b-it-q8-gguf/gemma-4-26B-A4B-it-UD-Q8_K_XL.gguf",
+  "run_dir": "/home/steve/qwen36-results-main/data/gemma4-q8-gpu0-mtp-n7-latest-c926ad098-pmin0115-ctxcp0-nmin2-pmin012-nobs-dthreads32-dtb32-filled-long-deep-20260623T124603Z",
+  "server_log": "/mnt/fast-ai/bench-results/gemma4-26b-a4b-q8/servers/gemma4-q8-gpu0-mtp-n7-latest-c926ad098-pmin0115-ctxcp0-nmin2-pmin012-nobs-dthreads32-dtb32-filled-long-deep-20260623T124603Z.server.log"
+}
