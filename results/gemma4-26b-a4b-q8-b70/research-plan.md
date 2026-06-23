@@ -522,6 +522,11 @@ Text speed is first. After text baseline:
     solved by sampler bypass alone; full target decode and full-vocab logits
     transfer still dominate. Preserve the patch as a component, but prioritize
     vLLM/XPU and deeper backend/kernel work.
+13. **Q8_0 is not a speed upgrade under the current MTP recipe.** The smaller
+    `gemma-4-26B-A4B-it-Q8_0.gguf` passed a 128-row smoke but reached only
+    `90.44 tok/s` after TTFT, below the `UD-Q8_K_XL` record. Keep
+    `UD-Q8_K_XL` as the promoted llama.cpp Q8 target unless a future runtime
+    change specifically favors Q8_0.
 
 ## Stop Conditions
 
