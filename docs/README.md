@@ -8,10 +8,14 @@ This docs folder is the human entry point for the B70 optimization work. The exe
 - [MiniMax Production C1 Service](minimax-production-c1-service.md): run the current 32K endpoint under systemd with health and benchmark checks.
 - [Single Model Slot Switching](model-slot-switching.md): keep one LAN OpenAI endpoint while switching which large model is loaded.
 - [Current Reproducibility Map](current-reproducibility-map.md): one-page map for the stable endpoint, session-cache work, TurboQuant patch, and CPU-paged attention research.
+- [Qwen3.6 Research Map](qwen36-research-map.md): Qwen3.6-35B/B70 lane status, current decisions, and artifact pointers.
+- [Qwen3.6 35B Quark INT8 Result Packet](../results/qwen36-35b-quark-int8-b70/README.md): best valid 2x/4x results, invalid fast lanes, reproduction commands, and carryover lessons.
 - [Model Recipes](model-recipes.md): which recipe folder to use for each model/build target.
 - [FAQ](faq.md): practical answers for users new to B70s, vLLM, XPU, and local model deployment.
 - [GPU Comparison for Local AI](gpu-comparison-local-ai.md): rough pricing/spec/performance framing for B70s versus common alternatives.
 - [Community Results And Build Notes](community-results.md): how to share records, build photos, reproducible logs, and discussion links.
+- [LocalMaxxing Submissions](localmaxxing.md): credential location, submit helper, and secret-handling rules.
+- [Local Operations](local-ops.md): sudo-password location, driver/runtime ops guidance, and Claude/OpenCode-to-Codex delegation.
 - [Feedback for Intel](feedback-for-intel.md): short discussion guide plus the detailed Intel feedback note.
 
 ## Build Photos
@@ -24,9 +28,9 @@ The community build guide includes example B70 photos and explains what details 
 
 - `docs/`: narrative guides, FAQ, community-facing summaries, comparison notes.
 - `repro/`: runnable install/build/benchmark/serve recipes and pinned artifacts.
-- `notes/`: lab notebook entries, including negative results.
-- `data/`: structured benchmark records, payloads, and LocalMaxxing responses.
-- `patches/`: patch records and source-level optimization deltas.
+- `notes/`: lab notebook entries, including negative results. See [../notes/README.md](../notes/README.md).
+- `data/`: structured benchmark records, payloads, and LocalMaxxing responses. See [../data/README.md](../data/README.md).
+- `patches/`: patch records and source-level optimization deltas. See [../patches/README.md](../patches/README.md).
 - `scripts/`: shared harnesses used by repro folders and lab runs.
 - `experiments/`: active research lanes that are not production recipes yet.
 
@@ -35,6 +39,7 @@ The community build guide includes example B70 photos and explains what details 
 - Maintainer/site: https://steveseguin.com
 - X feed with ongoing build notes: https://x.com/xyster
 - LocalMaxxing profile/results: https://localmaxxing.com/user/steveseguin
+- LocalMaxxing submission credentials and helper: [localmaxxing.md](localmaxxing.md)
 - Project pages timeline: https://steveseguin.github.io/llm-optimizations/optimization-timeline.html
 
 ## Current Deployable Baseline
@@ -70,3 +75,7 @@ The 32k context promotion is documented in
 The session-cache, TurboQuant, and full-context research work is indexed in
 `current-reproducibility-map.md` and
 `../experiments/minimax_xpu_kv_offload/REPRODUCE.md`.
+
+The Qwen3.6 35B lane is indexed in
+[qwen36-research-map.md](qwen36-research-map.md), with its final result packet in
+[../results/qwen36-35b-quark-int8-b70/](../results/qwen36-35b-quark-int8-b70/).

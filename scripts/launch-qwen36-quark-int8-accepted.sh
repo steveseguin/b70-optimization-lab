@@ -1,0 +1,210 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+MODEL_PATH="${MODEL_PATH:-/mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118}"
+SERVED_MODEL_NAME="${SERVED_MODEL_NAME:-qwen36-35b-a3b-fp8}"
+HOST="${HOST:-127.0.0.1}"
+PORT="${PORT:-18080}"
+LOG_PATH="${LOG_PATH:-/tmp/qwen36-quark-int8-tp4-safe-gdn-recurrent-graphnone-32k.log}"
+TP_SIZE="${TP_SIZE:-4}"
+MAX_MODEL_LEN="${MAX_MODEL_LEN:-32768}"
+MAX_NUM_BATCHED_TOKENS="${MAX_NUM_BATCHED_TOKENS:-8192}"
+MAX_NUM_SEQS="${MAX_NUM_SEQS:-48}"
+GPU_MEMORY_UTILIZATION="${GPU_MEMORY_UTILIZATION:-0.90}"
+if [[ -z "${COMPILATION_CONFIG:-}" ]]; then
+  COMPILATION_CONFIG='{"cudagraph_mode":"NONE"}'
+fi
+QWEN36_XPU_PREFLIGHT="${QWEN36_XPU_PREFLIGHT:-auto}"
+QWEN36_XPU_PREFLIGHT_SCRIPT="${QWEN36_XPU_PREFLIGHT_SCRIPT:-/home/steve/llm-optimizations/scripts/check-qwen36-xpu-xccl-health.sh}"
+QWEN36_XPU_PREFLIGHT_LOG="${QWEN36_XPU_PREFLIGHT_LOG:-${LOG_PATH%.*}-xpu-health.log}"
+MODEL_INPUT_TRACE_FILE="${MODEL_INPUT_TRACE_FILE:-}"
+MODEL_INPUT_TRACE_MAX_LINES="${MODEL_INPUT_TRACE_MAX_LINES:-400}"
+MODEL_INPUT_TRACE_RANK="${MODEL_INPUT_TRACE_RANK:-}"
+COW_PARENT_TRACE_FILE="${COW_PARENT_TRACE_FILE:-}"
+COW_PARENT_TRACE_MAX_LINES="${COW_PARENT_TRACE_MAX_LINES:-2000}"
+COW_WORKER_TRACE_FILE="${COW_WORKER_TRACE_FILE:-}"
+COW_WORKER_TRACE_MAX_LINES="${COW_WORKER_TRACE_MAX_LINES:-2000}"
+COW_WORKER_TRACE_RANK="${COW_WORKER_TRACE_RANK:-}"
+VLLM_SRC="${VLLM_SRC:-/home/steve/src/vllm}"
+KERNELS_SRC="${KERNELS_SRC:-/home/steve/src/vllm-xpu-kernels}"
+
+export HF_HOME="${HF_HOME:-/mnt/fast-ai/llm-cache/hf}"
+export HUGGINGFACE_HUB_CACHE="${HUGGINGFACE_HUB_CACHE:-/mnt/fast-ai/llm-cache/hf}"
+export TORCHINDUCTOR_CACHE_DIR="${TORCHINDUCTOR_CACHE_DIR:-/mnt/fast-ai/vllm-cache-exp/qwen36-35b-a3b-quark-int8-tp4-safe-gdn-recurrent-graphnone-32k/torchinductor}"
+export VLLM_CACHE_ROOT="${VLLM_CACHE_ROOT:-/mnt/fast-ai/vllm-cache-exp/qwen36-35b-a3b-quark-int8-tp4-safe-gdn-recurrent-graphnone-32k/vllm}"
+export PYTHONPATH="$VLLM_SRC:$KERNELS_SRC${PYTHONPATH:+:$PYTHONPATH}"
+export LD_LIBRARY_PATH="$KERNELS_SRC/vllm_xpu_kernels:/home/steve/.venvs/vllm-xpu/lib:/home/steve/.venvs/vllm-xpu/lib/python3.12/site-packages/torch/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+
+export VLLM_USE_V1=1
+export VLLM_TARGET_DEVICE=xpu
+export VLLM_ALLOW_LONG_MAX_MODEL_LEN=1
+export XPU_GRAPH="${XPU_GRAPH:-0}"
+export VLLM_XPU_ENABLE_XPU_GRAPH="${VLLM_XPU_ENABLE_XPU_GRAPH:-0}"
+export VLLM_XPU_FORCE_GRAPH_WITH_COMM="${VLLM_XPU_FORCE_GRAPH_WITH_COMM:-0}"
+export VLLM_XPU_GRAPH_NOOP_COMM_CAPTURE="${VLLM_XPU_GRAPH_NOOP_COMM_CAPTURE:-0}"
+export VLLM_XPU_USE_CUSTOM_OP_COLLECTIVES="${VLLM_XPU_USE_CUSTOM_OP_COLLECTIVES:-1}"
+export VLLM_XPU_COMPILE_ALLREDUCE_CUSTOM_OP="${VLLM_XPU_COMPILE_ALLREDUCE_CUSTOM_OP:-1}"
+export VLLM_XPU_CUSTOM_ALLREDUCE_GRAPH_CLONE_INPUT="${VLLM_XPU_CUSTOM_ALLREDUCE_GRAPH_CLONE_INPUT:-1}"
+export VLLM_XPU_CUSTOM_ALLREDUCE_CLONE_INPUT="${VLLM_XPU_CUSTOM_ALLREDUCE_CLONE_INPUT:-1}"
+export VLLM_XPU_QUARK_W8A8_MOE=1
+export VLLM_XPU_FORCE_QUARK_REPACK=0
+export VLLM_XPU_GDN_REUSE_QKVZ_BA_QUANT="${VLLM_XPU_GDN_REUSE_QKVZ_BA_QUANT:-clone}"
+export VLLM_XPU_GDN_NATIVE_FALLBACK="${VLLM_XPU_GDN_NATIVE_FALLBACK:-decode,prefill}"
+export VLLM_XPU_GDN_PREFILL_RECURRENT_FALLBACK="${VLLM_XPU_GDN_PREFILL_RECURRENT_FALLBACK:-1}"
+export VLLM_XPU_ZERO_FRESH_GDN_STATE="${VLLM_XPU_ZERO_FRESH_GDN_STATE:-1}"
+export VLLM_XPU_GREEDY_SAMPLE_TOPK_FALLBACK="${VLLM_XPU_GREEDY_SAMPLE_TOPK_FALLBACK:-1}"
+export VLLM_XPU_DISABLE_PREFILL_CUDAGRAPH_REPLAY="${VLLM_XPU_DISABLE_PREFILL_CUDAGRAPH_REPLAY:-1}"
+export ONEAPI_DEVICE_SELECTOR="${ONEAPI_DEVICE_SELECTOR:-level_zero:0,1,2,3}"
+export ZE_AFFINITY_MASK="${ZE_AFFINITY_MASK:-0,1,2,3}"
+export CCL_ATL_TRANSPORT=ofi
+export CCL_TOPO_P2P_ACCESS=1
+export FI_TCP_IFACE="${FI_TCP_IFACE:-eth1}"
+export CCL_KVS_IFACE="${CCL_KVS_IFACE:-eth1}"
+
+unset CCL_ZE_IPC_EXCHANGE
+unset CCL_WORKER_COUNT
+
+run_xpu_preflight=0
+if [[ "$QWEN36_XPU_PREFLIGHT" == "1" ]]; then
+  run_xpu_preflight=1
+elif [[ "$QWEN36_XPU_PREFLIGHT" == "auto" ]] && [[ "$TP_SIZE" -ge 4 ]]; then
+  run_xpu_preflight=1
+fi
+
+if [[ "$run_xpu_preflight" == "1" ]]; then
+  preflight_devices="${ZE_AFFINITY_MASK:-0,1,2,3}"
+  echo "[qwen36-launch] xpu preflight devices=$preflight_devices nproc=$TP_SIZE log=$QWEN36_XPU_PREFLIGHT_LOG"
+  if ! PHYSICAL_DEVICES="$preflight_devices" \
+    XCCL_DEVICES="$preflight_devices" \
+    XCCL_NPROC="$TP_SIZE" \
+    "$QWEN36_XPU_PREFLIGHT_SCRIPT" >"$QWEN36_XPU_PREFLIGHT_LOG" 2>&1; then
+    echo "[qwen36-launch] xpu preflight failed; refusing to start TP$TP_SIZE endpoint" >&2
+    echo "[qwen36-launch] see $QWEN36_XPU_PREFLIGHT_LOG" >&2
+    tail -n 80 "$QWEN36_XPU_PREFLIGHT_LOG" >&2 || true
+    exit 1
+  fi
+fi
+
+# Accepted production/provenance lane: keep rejected diagnostic MoE paths out
+# unless a new launcher explicitly opts into them.
+if [[ "${VLLM_XPU_W8A8_EXPERIMENTAL_ALLOW:-0}" != "1" ]]; then
+  unset VLLM_XPU_W8A8_USE_OFFSETS
+  unset VLLM_XPU_W8A8_OFFSETS_PREFIX_OP
+  unset VLLM_XPU_MOE_W8A8_MIDDLE_LAYERLET
+  unset VLLM_XPU_MOE_W8A8_FULL_LAYERLET
+  unset VLLM_XPU_MOE_W8A8_FUSED_Q1
+  unset VLLM_XPU_MOE_W8A8_FAST_GATHER
+  unset VLLM_XPU_INT8_MOE_ACTIVE_OFFSET_GEMM
+fi
+unset VLLM_XPU_MOE_ONEDNN_SIDECAR_PROBE
+unset VLLM_XPU_MOE_ONEDNN_SIDECAR_OFFSETS
+unset VLLM_XPU_MOE_ONEDNN_SIDECAR_DRY_DESCRIPTORS
+unset VLLM_XPU_FUSED_MOE_FUSE_SILU_QUANT
+if [[ "${VLLM_XPU_INT8_MOE_PERSISTENT_SCRATCH_ALLOW:-0}" != "1" ]]; then
+  unset VLLM_XPU_INT8_MOE_PERSISTENT_SCRATCH
+fi
+if [[ "${VLLM_XPU_MOE_LIVE_ABI_ALLOW:-0}" != "1" ]]; then
+  unset VLLM_XPU_MOE_LIVE_ABI_FILE
+  unset VLLM_XPU_MOE_LIVE_ABI_MAX_LINES
+  unset VLLM_XPU_MOE_LIVE_ABI_LAYER_REGEX
+  unset VLLM_XPU_MOE_LIVE_ABI_RANK
+  unset VLLM_XPU_MOE_LIVE_ABI_INCLUDE_SAMPLES
+  unset VLLM_XPU_MOE_LIVE_ABI_CAPTURE_SKIPS
+  unset VLLM_XPU_MOE_LIVE_ABI_DEFER_CAPTURE_SAMPLES
+  unset VLLM_XPU_MOE_LIVE_ABI_DEFER_CAPTURE_DELAY_MS
+  unset VLLM_XPU_MOE_LIVE_ABI_DEFER_CAPTURE_MAX_PENDING
+fi
+
+unset VLLM_XPU_GDN_SKIP_DECODE_CONV_TMP
+if [[ "${VLLM_XPU_DECODE_TIMING_ALLOW:-0}" != "1" ]]; then
+  unset VLLM_XPU_DECODE_TIMING
+  unset VLLM_XPU_DECODE_TIMING_SYNC
+  unset VLLM_XPU_DECODE_TIMING_RANK
+  unset VLLM_XPU_DECODE_TIMING_SUMMARY
+  unset VLLM_XPU_DECODE_TIMING_PRINT_EVERY
+  unset VLLM_XPU_DECODE_TIMING_SKIP_FIRST
+  unset VLLM_XPU_DECODE_TIMING_LABEL_REGEX
+  unset VLLM_XPU_DECODE_TIMING_EXCLUDE_LABEL_REGEX
+  unset VLLM_XPU_DECODE_TIMING_SYNC_LABEL_REGEX
+  unset VLLM_XPU_DECODE_TIMING_SYNC_EXCLUDE_LABEL_REGEX
+  unset VLLM_XPU_DECODE_TIMING_STEP_SUMMARY
+  unset VLLM_XPU_DECODE_TIMING_STEP_EVERY
+  unset VLLM_XPU_DECODE_TIMING_STEP_SKIP_FIRST
+fi
+if [[ "${VLLM_XPU_METADATA_COPY_ALLOW:-0}" != "1" ]]; then
+  unset VLLM_XPU_BLOCK_TABLE_DIRTY_COMMIT
+  unset VLLM_XPU_BLOCK_TABLE_DIRTY_COMMIT_LOG_EVERY
+fi
+unset VLLM_XPU_DEDUP_INT8_QUANT
+if [[ -n "$MODEL_INPUT_TRACE_FILE" ]]; then
+  export VLLM_XPU_MODEL_INPUT_TRACE_FILE="$MODEL_INPUT_TRACE_FILE"
+  export VLLM_XPU_MODEL_INPUT_TRACE_MAX_LINES="$MODEL_INPUT_TRACE_MAX_LINES"
+  if [[ -n "$MODEL_INPUT_TRACE_RANK" ]]; then
+    export VLLM_XPU_MODEL_INPUT_TRACE_RANK="$MODEL_INPUT_TRACE_RANK"
+  else
+    unset VLLM_XPU_MODEL_INPUT_TRACE_RANK
+  fi
+  rm -f "$MODEL_INPUT_TRACE_FILE"
+else
+  unset VLLM_XPU_MODEL_INPUT_TRACE_FILE
+  unset VLLM_XPU_MODEL_INPUT_TRACE_MAX_LINES
+  unset VLLM_XPU_MODEL_INPUT_TRACE_RANK
+fi
+
+if [[ -n "$COW_PARENT_TRACE_FILE" ]]; then
+  export VLLM_XPU_COW_VERIFIER_TRACE_FILE="$COW_PARENT_TRACE_FILE"
+  export VLLM_XPU_COW_VERIFIER_TRACE_MAX_LINES="$COW_PARENT_TRACE_MAX_LINES"
+  rm -f "$COW_PARENT_TRACE_FILE"
+else
+  unset VLLM_XPU_COW_VERIFIER_TRACE_FILE
+  unset VLLM_XPU_COW_VERIFIER_TRACE_MAX_LINES
+fi
+
+if [[ -n "$COW_WORKER_TRACE_FILE" ]]; then
+  export VLLM_XPU_COW_WORKER_TRACE_FILE="$COW_WORKER_TRACE_FILE"
+  export VLLM_XPU_COW_WORKER_TRACE_MAX_LINES="$COW_WORKER_TRACE_MAX_LINES"
+  if [[ -n "$COW_WORKER_TRACE_RANK" ]]; then
+    export VLLM_XPU_COW_WORKER_TRACE_RANK="$COW_WORKER_TRACE_RANK"
+  else
+    unset VLLM_XPU_COW_WORKER_TRACE_RANK
+  fi
+  rm -f "$COW_WORKER_TRACE_FILE"
+else
+  unset VLLM_XPU_COW_WORKER_TRACE_FILE
+  unset VLLM_XPU_COW_WORKER_TRACE_MAX_LINES
+  unset VLLM_XPU_COW_WORKER_TRACE_RANK
+fi
+
+source /home/steve/.venvs/vllm-xpu/bin/activate
+
+if [[ -z "${VLLM_EXTRA_ARGS:-}" ]]; then
+  VLLM_EXTRA_ARGS="--no-async-scheduling"
+fi
+
+EXTRA_ARGS=()
+if [[ -n "${VLLM_EXTRA_ARGS:-}" ]]; then
+  # shellcheck disable=SC2206
+  EXTRA_ARGS=(${VLLM_EXTRA_ARGS})
+fi
+
+exec /home/steve/.venvs/vllm-xpu/bin/vllm serve "$MODEL_PATH" \
+  --host "$HOST" \
+  --port "$PORT" \
+  --trust-remote-code \
+  --served-model-name "$SERVED_MODEL_NAME" \
+  --dtype auto \
+  --quantization quark \
+  --tensor-parallel-size "$TP_SIZE" \
+  --pipeline-parallel-size 1 \
+  --distributed-executor-backend mp \
+  --max-model-len "$MAX_MODEL_LEN" \
+  --max-num-batched-tokens "$MAX_NUM_BATCHED_TOKENS" \
+  --max-num-seqs "$MAX_NUM_SEQS" \
+  --gpu-memory-utilization "$GPU_MEMORY_UTILIZATION" \
+  --kv-cache-dtype auto \
+  --no-enable-prefix-caching \
+  --language-model-only \
+  --compilation-config "$COMPILATION_CONFIG" \
+  --generation-config vllm \
+  "${EXTRA_ARGS[@]}" \
+  >"$LOG_PATH" 2>&1

@@ -8,8 +8,11 @@ Community setup guides, benchmark recipes, troubleshooting notes, and patches fo
 - Current reproducibility map: [docs/current-reproducibility-map.md](docs/current-reproducibility-map.md)
 - MiniMax install guide: [docs/b70-minimax-ubuntu24-deployment.md](docs/b70-minimax-ubuntu24-deployment.md)
 - Production service notes: [docs/minimax-production-c1-service.md](docs/minimax-production-c1-service.md)
+- Qwen3.6 35B result packet: [results/qwen36-35b-quark-int8-b70](results/qwen36-35b-quark-int8-b70/README.md)
+- Local ops and Codex delegation: [docs/local-ops.md](docs/local-ops.md)
 - Model recipes: [docs/model-recipes.md](docs/model-recipes.md)
 - FAQ: [docs/faq.md](docs/faq.md)
+- LocalMaxxing submissions: [docs/localmaxxing.md](docs/localmaxxing.md)
 
 ## What This Is
 
@@ -30,7 +33,9 @@ This repository is meant to become a stable community hub for Intel XPU local AI
 | Deploy MiniMax M2.7 INT4 on 4x B70 | [MiniMax Ubuntu 24 guide](docs/b70-minimax-ubuntu24-deployment.md) |
 | Run the endpoint as a service | [Production c1 service](docs/minimax-production-c1-service.md) |
 | Find model-specific recipes | [Model recipes](docs/model-recipes.md) |
+| Review Qwen3.6 35B B70 results | [Qwen result packet](results/qwen36-35b-quark-int8-b70/README.md) |
 | Share a benchmark | [Community results guide](docs/community-results.md) |
+| Submit a LocalMaxxing record | [LocalMaxxing submissions](docs/localmaxxing.md) |
 | Compare GPUs | [GPU comparison](docs/gpu-comparison-local-ai.md) |
 | Send Intel feedback | [Feedback for Intel](docs/feedback-for-intel.md) |
 
@@ -234,6 +239,8 @@ The rest of this README is dense historical lab context. New users should start 
 - `notes/2026-05-10-xpu-level-zero-peer-probe.md`: Level Zero B70 P2P/IPC peer-memory feasibility probe for the next MiniMax Q/K RMS fusion prototype.
 - `notes/2026-05-10-minimax-xpu-ipc-qk-var-prototype.md`: PyTorch/SYCL Level Zero IPC Q/K variance prototype; correctness passes under controlled slots, but standalone decode-sized IPC is hundreds of ms per call.
 - `notes/2026-05-10-minimax-vllm-ipc-qk-var-integration.md`: default-off vLLM MiniMax Q/K variance IPC allreduce integration; eager liveness passes, preinit avoids the first compile crash, but actual IPC execution is currently much too slow.
+- `notes/2026-06-11-qwen36-aot-localmaxxing-and-runtime-screens.md`: Qwen3.6 35B Quark W8A8 INT8 accepted baseline, Localmaxxing submission, n-gram/speculation diagnostics, route-capture/heatmap/component scans, and the current bigger-bet idea backlog for reaching higher single-request decode without quality loss.
+- `notes/2026-06-12-qwen36-next-bigger-bets.md`: focused Qwen3.6 35B Quark W8A8 INT8 next-experiment backlog after the restored `~100 tok/s` baseline, including real-path MoE scratch reuse, persistent-MoE layerlets, strict 8-bit bakeoff, resident-state verifier speculation, static c1 latency lane, tile-native W8A8 repack, and upstreamable XPU perf packet ideas.
 - `data/qwen36-fp8-32k-tp4-vs-pp2-20260506.json`: post-reboot Q4 sanity plus FP8 32k-context TP4 vs TP2/PP2 validation.
 - `data/q4-esimd-blockscales-20260506.json`: structured ESIMD block-loaded scale metadata screen.
 - `data/q4-active-device-row-split-20260506.json`: structured active-device row-split patch validation and negative row-split smoke.
@@ -322,9 +329,10 @@ The rest of this README is dense historical lab context. New users should start 
 - `scripts/bench-vllm-qwen36-fp8.sh`: reusable Qwen3.6 FP8 vLLM latency wrapper with TP/PP/speculative knobs.
 - `scripts/bench-vllm-minimax-autoround-xpu.sh`: reusable MiniMax M2.7 AutoRound INT4 vLLM/XPU throughput wrapper for TP4 B70 bring-up.
 - `scripts/build-llm-scaler-moe-int4-xpu.sh`: reproducible llm-scaler INT4 extension rebuild wrapper that sources oneAPI 2025.3 for PyTorch XPU `libsycl.so.8` compatibility.
+- `scripts/qwen36-hotset-split-floor-model.py`: CPU-only Qwen3.6 hotset split break-even analyzer for dry-run route replay JSON; estimates cold fallback size, extra launches, and the body-speedup needed before a real XPU benchmark.
 - `scripts/summarize-vllm-aot-collectives.sh`: helper for inspecting vLLM AOT cache allreduce/wait/RMS patterns.
 - `scripts/add-qwen35-fused-ba-gguf.py`: experimental augmented-GGUF generator that adds fused Qwen35 `ssm_ba` tensors from separate alpha/beta tensors.
-- `scripts/submit_localmaxxing_results.py`: LocalMaxxing submission helper. Requires `LMX_API_KEY` in the environment; no API key is stored in this repo.
+- `scripts/submit_localmaxxing_results.py`: LocalMaxxing submission helper. Reads `LMX_API_KEY` first, then falls back to `~/.config/localmaxxing/api_key`; no API key is stored in this repo. See [docs/localmaxxing.md](docs/localmaxxing.md).
 - `benchmarks/b70_xccl_allreduce_bench.py`: XPU all-reduce/P2P microbenchmark.
 - `data/localmaxxing_payloads.json`: sanitized benchmark payloads submitted or queued for LocalMaxxing.
 - `notes/2026-05-10-fast-nvme-model-placement.md`: model placement update after moving the MiniMax GGUF shards to `/mnt/fast-ai` and preserving the original path as a symlink.
