@@ -1,0 +1,103 @@
+--- a/common/speculative.cpp
++++ b/common/speculative.cpp
+@@ -104,6 +104,17 @@
+         strcmp(env, "on") == 0;
+ }
+ 
++static bool common_speculative_mtp_draft_backend_topk_from_env() {
++    const char * env = std::getenv("LLAMA_MTP_DRAFT_BACKEND_TOPK");
++    if (env == nullptr || env[0] == '\0') {
++        return false;
++    }
++
++    return strcmp(env, "1") == 0 || strcmp(env, "true") == 0 ||
++        strcmp(env, "TRUE") == 0 || strcmp(env, "yes") == 0 ||
++        strcmp(env, "on") == 0;
++}
++
+ struct common_speculative_config {
+     common_speculative_type type;
+     common_params_speculative params;
+@@ -992,6 +1003,7 @@
+     int32_t draft_top_k = 10;
+     float draft_logit_gap_min = 0.0f;
+     bool draft_fast_topk = false;
++    bool draft_backend_topk = false;
+     int32_t n_vocab = 0;
+ 
+     common_speculative_impl_draft_mtp(const common_params_speculative & params, uint32_t n_seq)
+@@ -1032,6 +1044,10 @@
+                 !this->params.backend_sampling;
+         LOG_INF("%s: - draft_fast_topk=%d (LLAMA_MTP_DRAFT_FAST_TOPK)\n",
+                 __func__, draft_fast_topk ? 1 : 0);
++        draft_backend_topk = common_speculative_mtp_draft_backend_topk_from_env() &&
++                this->params.backend_sampling;
++        LOG_INF("%s: - draft_backend_topk=%d (LLAMA_MTP_DRAFT_BACKEND_TOPK)\n",
++                __func__, draft_backend_topk ? 1 : 0);
+         n_vocab = llama_vocab_n_tokens(llama_model_get_vocab(llama_get_model(ctx_dft)));
+         fast_topk_candidates.resize(std::max<int32_t>(1, draft_top_k));
+ 
+@@ -1171,6 +1187,48 @@
+         return llama_token_data_array{fast_topk_candidates.data(), (size_t) k_size, 0, true};
+     }
+ 
++    llama_token_data_array draft_backend_topk_sample(int idx) {
++        llama_synchronize(params.ctx_dft);
++
++        const float * logits = llama_get_sampled_logits_ith(params.ctx_dft, idx);
++        const llama_token * candidates = llama_get_sampled_candidates_ith(params.ctx_dft, idx);
++        const uint32_t n_logits = llama_get_sampled_logits_count_ith(params.ctx_dft, idx);
++        const uint32_t n_candidates = llama_get_sampled_candidates_count_ith(params.ctx_dft, idx);
++
++        if (logits == nullptr || candidates == nullptr || n_logits == 0 ||
++                n_candidates == 0 || n_logits != n_candidates) {
++            return llama_token_data_array{nullptr, 0, -1, false};
++        }
++
++        const int32_t k_size = std::min<int32_t>((int32_t) n_logits, draft_top_k);
++        GGML_ASSERT(k_size > 0);
++        if ((int32_t) fast_topk_candidates.size() < k_size) {
++            fast_topk_candidates.resize(k_size);
++        }
++
++        for (int32_t k = 0; k < k_size; ++k) {
++            fast_topk_candidates[k] = llama_token_data{candidates[k], logits[k], 0.0f};
++        }
++
++        // ggml_top_k returns the top-k IDs, but does not guarantee ordering.
++        std::sort(fast_topk_candidates.begin(), fast_topk_candidates.begin() + k_size,
++                [](const llama_token_data & a, const llama_token_data & b) {
++                    return a.logit > b.logit;
++                });
++
++        const float max_logit = fast_topk_candidates[0].logit;
++        double denom = 0.0;
++        for (int32_t k = 0; k < k_size; ++k) {
++            denom += std::exp((double) fast_topk_candidates[k].logit - (double) max_logit);
++        }
++        const double inv_denom = denom > 0.0 ? 1.0 / denom : 0.0;
++        for (int32_t k = 0; k < k_size; ++k) {
++            fast_topk_candidates[k].p =
++                    (float) (std::exp((double) fast_topk_candidates[k].logit - (double) max_logit) * inv_denom);
++        }
++
++        return llama_token_data_array{fast_topk_candidates.data(), (size_t) k_size, 0, true};
++    }
+ 
+     bool process(const llama_batch & batch_in) override {
+         if (batch_in.n_tokens <= 0) {
+@@ -1361,7 +1419,13 @@
+ 
+                 llama_token_data_array fast_cur_p;
+                 const llama_token_data_array * cur_p = nullptr;
+-                if (draft_fast_topk) {
++                if (draft_backend_topk) {
++                    fast_cur_p = draft_backend_topk_sample(i_last[seq_id]);
++                    if (fast_cur_p.size > 0) {
++                        cur_p = &fast_cur_p;
++                    }
++                }
++                if (cur_p == nullptr && draft_fast_topk) {
+                     fast_cur_p = draft_fast_topk_sample(i_last[seq_id]);
+                     cur_p = &fast_cur_p;
+                 }

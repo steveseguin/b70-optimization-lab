@@ -397,12 +397,17 @@ Exhausted near-neighborhoods after that record:
   TTFT; keep it as the best latency/total-throughput reference, not a record.
 - Source patches removing the explicit logits sync or staging logits+NextN in
   one helper were valid but slower.
+- Backend `ggml_top_k` sampled-candidate transport is rejected. Existing
+  backend sampling reached only `84.07-89.77 tok/s` depending on `top_k`; a
+  patched compact-candidate MTP reader (`LLAMA_MTP_DRAFT_BACKEND_TOPK=1`)
+  compiled and passed 384/384 canaries but still reached only
+  `84.26-89.68 tok/s`. Keep the CPU fast-top-k path.
 
 Current follow-up should stop spending lanes on one-variable neighborhoods and
-target source-level candidate transport: reuse llama.cpp's existing backend
-`ggml_top_k` sampled-logits/candidates path for MTP, then sort and softmax only
-the returned `k` candidates on CPU instead of copying/scanning full-vocab
-logits.
+target a different source-level mechanism; standalone backend top-k is ruled
+out. Plausible remaining source ideas are reducing the MTP draft loop's per-step
+decode overhead, avoiding repeated NextN embedding host copies, or improving
+the CPU fast-top-k path without invoking backend `ggml_top_k`.
 
 ## Phase 5: vLLM Int8 Per-Channel Comparison
 

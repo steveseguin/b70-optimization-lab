@@ -38,6 +38,11 @@ Promote only after quality and identity are clear:
 - [gemma4-llamacpp-mtp-draft-rowhelper-loss-20260623.patch](gemma4-llamacpp-mtp-draft-rowhelper-loss-20260623.patch):
   rejected attempt to stage logits and NextN embeddings with one helper/sync;
   valid canaries but slower (`~90.5-90.9 tok/s`).
+- [gemma4-llamacpp-mtp-draft-backend-topk-loss-20260623.patch](gemma4-llamacpp-mtp-draft-backend-topk-loss-20260623.patch):
+  rejected incremental patch on top of the fast-top-k baseline. It consumed
+  backend sampled top-k candidates/logits directly for MTP and sorted only the
+  returned `k` entries, but valid full-gate runs regressed to
+  `84.26-89.68 tok/s`.
 
 ## Current Qwen Patch Pointers
 
