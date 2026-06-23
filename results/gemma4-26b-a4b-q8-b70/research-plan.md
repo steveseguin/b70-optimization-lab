@@ -191,12 +191,14 @@ Near-neighbor follow-ups now in progress / next in queue:
   p-min=0.115` reached `89.95`, `dtb28` repeat reached `90.23`, and `dtb28 +
   POLL=100` reached `90.08`; all valid, all below the `91.05` record.
 
-Next queue under the current `91.05 tok/s` filled-long identity:
+- exact-record repeats across all four GPUs reached `90.41`, `89.87`, `90.16`,
+  and `90.08 tok/s`; all valid, all below the `91.05` record. The record is a
+  valid high-water mark, but current repeats cluster closer to `90 tok/s`.
 
-- exact-record repeats across all GPUs to estimate whether the `91.046 tok/s`
-  high-water mark is repeatable;
-- if repeats do not beat the record, start a new llama.cpp build A/B or another
-  runtime lane instead of more small flag combinations.
+Next queue:
+
+- start a new llama.cpp build A/B or another runtime lane instead of more small
+  flag combinations in the exhausted `dec5ca557` build.
 
 The `filled-long` prompt mode records prompt hash/preview and usage-derived
 prompt/completion-token stats. Use it for near-512-input / 512-output
