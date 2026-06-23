@@ -113,6 +113,24 @@ summary_out = Path(sys.argv[4])
 model = Path(sys.argv[5])
 canary = json.loads((run_dir / "chat-canary.json").read_text())
 bench = json.loads(next(run_dir.glob("p*o*.json")).read_text())
+
+server_env = {}
+try:
+    for line in Path(server_log).read_text(errors="replace").splitlines():
+        if line == "--- server ---":
+            break
+        if "=" in line:
+            key, value = line.split("=", 1)
+            server_env[key] = value
+except OSError:
+    pass
+
+def env_or_log(env_key, log_key=None):
+    value = os.environ.get(env_key)
+    if value:
+        return value
+    return server_env.get(log_key or env_key)
+
 out = {
     "label": label,
     "server_log": server_log,
@@ -132,10 +150,12 @@ out = {
         "flash_attn": os.environ.get("FLASH_ATTN"),
         "reasoning": os.environ.get("REASONING"),
         "extra_llama_args": os.environ.get("EXTRA_LLAMA_ARGS"),
-        "oneapi_device_selector": os.environ.get("ONEAPI_DEVICE_SELECTOR"),
-        "ggml_sycl_disable_opt": os.environ.get("GGML_SYCL_DISABLE_OPT"),
-        "ggml_sycl_disable_graph": os.environ.get("GGML_SYCL_DISABLE_GRAPH"),
-        "ggml_sycl_disable_dnn": os.environ.get("GGML_SYCL_DISABLE_DNN"),
+        "oneapi_device_selector": env_or_log("ONEAPI_DEVICE_SELECTOR"),
+        "ggml_sycl_disable_opt": env_or_log("GGML_SYCL_DISABLE_OPT"),
+        "ggml_sycl_disable_graph": env_or_log("GGML_SYCL_DISABLE_GRAPH"),
+        "ggml_sycl_disable_dnn": env_or_log("GGML_SYCL_DISABLE_DNN"),
+        "llama_cpp_commit": server_env.get("llama_cpp_commit"),
+        "llama_server": server_env.get("llama_server"),
     },
     "canary_pass_all": canary["summary"]["pass_all"],
     "canary_rows_completed": canary["summary"]["rows_completed"],

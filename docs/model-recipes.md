@@ -107,7 +107,8 @@ The active next lane is
 It intentionally avoids tensor-parallel splitting at first: run one complete
 Gemma 4 26B A4B replica per B70 and use four replicas for parallel research.
 Current promoted result is the llama.cpp draft-MTP filled-long lane at
-`88.35 tok/s` after TTFT on one B70 (`n=7, n-min=2, p-min=0.10`, Q8 main GGUF
+`90.24 tok/s` after TTFT on one B70 (`n=7, n-min=2, p-min=0.10`,
+backend sampling off, Q8 main GGUF
 plus the official Gemma MTP draft GGUF, 384/384 chat canary).
 
 Start with llama.cpp SYCL and the Unsloth `UD-Q8_K_XL` GGUF:
