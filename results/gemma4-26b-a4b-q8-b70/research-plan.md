@@ -204,12 +204,23 @@ Near-neighbor follow-ups now in progress / next in queue:
   quality but reached only `90.92 tok/s` after TTFT and hurt wall throughput.
   Adding `--ctx-checkpoints 0` reached **`91.16 tok/s`**, a small new
   after-TTFT record.
+- source-level sampler confidence follow-ups after the `c926ad098` record:
+  cheap MTP draft `top_k` preserved quality but missed the record
+  (`top_k=2` was closest at `90.91 tok/s`), and the follow-up `top_k=2` +
+  `LLAMA_MTP_DRAFT_LOGIT_GAP_MIN=0.25/0.50/1.00/1.50` also preserved
+  `384/384` quality but reached only `90.15-90.48 tok/s`. Do not promote these
+  hooks into the current recipe; keep them as documented diagnostics.
 
 Next queue:
 
 - source-level MTP overhead lane instead of more small flag combinations:
-  inspect/patch the Gemma 4 MTP `h_nextn` handoff, which currently copies target
-  hidden states from device output to host and then back into draft batches.
+  timing showed hidden-state handoff was not the material cost; draft
+  `llama_decode` and sampler overhead dominate. Next patches should target
+  adaptive draft depth, cheaper top-1 candidate handling, or reduced draft-loop
+  work.
+- clean vLLM/XPU `int8_per_channel_weight_only` single-replica baseline for
+  Gemma 4 26B A4B as the main non-llama.cpp comparison. Validate chat-template
+  quality before comparing speed.
 
 The `filled-long` prompt mode records prompt hash/preview and usage-derived
 prompt/completion-token stats. Use it for near-512-input / 512-output

@@ -63,6 +63,7 @@ FLASH_ATTN="$FLASH_ATTN" \
 REASONING="$REASONING" \
 EXTRA_LLAMA_ARGS="$EXTRA_LLAMA_ARGS" \
 LLAMA_MTP_DRAFT_TOP_K="${LLAMA_MTP_DRAFT_TOP_K:-}" \
+LLAMA_MTP_DRAFT_LOGIT_GAP_MIN="${LLAMA_MTP_DRAFT_LOGIT_GAP_MIN:-}" \
 LOG="$SERVER_LOG" \
 scripts/run-gemma4-26b-llamacpp-replica.sh > "$RUN_DIR/server.stdout.log" 2>&1 &
 server_pid="$!"
@@ -152,6 +153,7 @@ out = {
         "reasoning": os.environ.get("REASONING"),
         "extra_llama_args": os.environ.get("EXTRA_LLAMA_ARGS"),
         "llama_mtp_draft_top_k": env_or_log("LLAMA_MTP_DRAFT_TOP_K"),
+        "llama_mtp_draft_logit_gap_min": env_or_log("LLAMA_MTP_DRAFT_LOGIT_GAP_MIN"),
         "oneapi_device_selector": env_or_log("ONEAPI_DEVICE_SELECTOR"),
         "ggml_sycl_disable_opt": env_or_log("GGML_SYCL_DISABLE_OPT"),
         "ggml_sycl_disable_graph": env_or_log("GGML_SYCL_DISABLE_GRAPH"),
