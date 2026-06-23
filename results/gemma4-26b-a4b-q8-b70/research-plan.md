@@ -78,10 +78,11 @@ control for parallel sweeps.
 
 Current valid best:
 
-- run label: `gemma4-q8-gpu0-syclopt0-faoff-deep-20260623T0715`;
-- change: `GGML_SYCL_DISABLE_OPT=0`, `FLASH_ATTN=off`;
+- run label: `gemma4-q8-gpu2-syclopt0-faoff-parallel1-cache0-deep-20260623T0915`;
+- change: `GGML_SYCL_DISABLE_OPT=0`, `FLASH_ATTN=off`,
+  `--parallel 1 --cache-ram 0`, `THREADS=16`;
 - quality: chat canary **384/384 pass**;
-- speed: **41.81 tok/s after TTFT**, **36.44 tok/s wall**;
+- speed: **42.15 tok/s after TTFT**, **36.41 tok/s wall**;
 - caveat: this flag had upstream B70/Gemma corruption reports, so every
   optimized-SYCL variant needs promotion-depth canaries before promotion.
 

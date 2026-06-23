@@ -92,10 +92,11 @@ Current valid best:
 
 ```bash
 cd /home/steve/qwen36-results-main
-LABEL=gemma4-q8-gpu0-syclopt0-faoff-deep-20260623T0715 \
-GPU_INDEX=0 PORT=18260 CTX_SIZE=8192 BATCH_SIZE=512 UBATCH_SIZE=64 \
+LABEL=gemma4-q8-gpu2-syclopt0-faoff-parallel1-cache0-deep-20260623T0915 \
+GPU_INDEX=2 PORT=18262 CTX_SIZE=8192 BATCH_SIZE=512 UBATCH_SIZE=64 THREADS=16 \
 CACHE_TYPE_K=f16 CACHE_TYPE_V=f16 POLL=50 FLASH_ATTN=off REASONING=off \
 GGML_SYCL_DISABLE_OPT=0 CANARY_REPEATS=96 BENCH_REPEATS=12 \
+EXTRA_LLAMA_ARGS='--parallel 1 --cache-ram 0' \
 scripts/run-gemma4-26b-first-baseline.sh
 ```
 
@@ -103,10 +104,10 @@ Result:
 
 ```text
 canary: 384/384 chat rows pass
-p512/o512 requested, actual generated output mean: 155.6 tokens
-tok/s: 41.81 after TTFT, 36.44 wall
-summary: data/gemma4-q8-gpu0-syclopt0-faoff-deep-20260623T0715/summary.json
-server log: /mnt/fast-ai/bench-results/gemma4-26b-a4b-q8/servers/gemma4-q8-gpu0-syclopt0-faoff-deep-20260623T0715.server.log
+p512/o512 requested, actual generated output mean: 146.4 tokens
+tok/s: 42.15 after TTFT, 36.41 wall
+summary: data/gemma4-q8-gpu2-syclopt0-faoff-parallel1-cache0-deep-20260623T0915/summary.json
+server log: /mnt/fast-ai/bench-results/gemma4-26b-a4b-q8/servers/gemma4-q8-gpu2-syclopt0-faoff-parallel1-cache0-deep-20260623T0915.server.log
 ```
 
 ## 4. Launch Four Replicas

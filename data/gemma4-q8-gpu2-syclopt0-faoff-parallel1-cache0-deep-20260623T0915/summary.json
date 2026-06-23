@@ -1,0 +1,74 @@
+{
+  "bench_run_identity": {
+    "api_mode": "chat",
+    "base_url": "http://127.0.0.1:18262",
+    "created_at_utc": "2026-06-23T06:28:19.692057+00:00",
+    "max_tokens": 512,
+    "model": "gemma4-26b-a4b-q8",
+    "prompt_tokens_requested": 512,
+    "repeats": 12,
+    "seed": 1,
+    "usage_required": true
+  },
+  "bench_summary": {
+    "completion_tokens_total": 1757,
+    "elapsed_s": {
+      "cv": 0.31141385694563445,
+      "max": 8.151844381995033,
+      "mean": 4.200018294165299,
+      "median": 3.935454019010649,
+      "min": 3.3060290129797067,
+      "stdev": 1.3079438962282401
+    },
+    "requests": 12,
+    "tok_s_after_ttft": {
+      "cv": 0.000813805935882763,
+      "max": 42.20248479984764,
+      "mean": 42.15385639524267,
+      "median": 42.15178701852,
+      "min": 42.10751540007683,
+      "stdev": 0.034305058554798054
+    },
+    "tok_s_wall": {
+      "cv": 0.16041180033122454,
+      "max": 38.593320567629235,
+      "mean": 36.40632627512385,
+      "median": 38.07560041092948,
+      "min": 17.91005730218182,
+      "stdev": 5.840004341238581
+    },
+    "ttft_s": {
+      "cv": 1.7177731995661052,
+      "max": 4.688242896983866,
+      "mean": 0.7263358977506869,
+      "median": 0.36661079550685827,
+      "min": 0.3616272729996126,
+      "stdev": 1.2476803390389168
+    }
+  },
+  "canary_pass_all": true,
+  "canary_rows_completed": 384,
+  "label": "gemma4-q8-gpu2-syclopt0-faoff-parallel1-cache0-deep-20260623T0915",
+  "launcher_identity": {
+    "batch_size": "512",
+    "cache_type_k": "f16",
+    "cache_type_v": "f16",
+    "ctx_size": "8192",
+    "extra_llama_args": "--parallel 1 --cache-ram 0",
+    "flash_attn": "off",
+    "ggml_sycl_disable_dnn": null,
+    "ggml_sycl_disable_graph": null,
+    "ggml_sycl_disable_opt": "0",
+    "gpu_index": "2",
+    "oneapi_device_selector": null,
+    "poll": "50",
+    "port": "18262",
+    "reasoning": "off",
+    "threads": "16",
+    "ubatch_size": "64"
+  },
+  "model_file_bytes": 27636230944,
+  "model_path": "/mnt/fast-ai/llm-models/gemma4-26b-a4b-it-q8-gguf/gemma-4-26B-A4B-it-UD-Q8_K_XL.gguf",
+  "run_dir": "/home/steve/qwen36-results-main/data/gemma4-q8-gpu2-syclopt0-faoff-parallel1-cache0-deep-20260623T0915",
+  "server_log": "/mnt/fast-ai/bench-results/gemma4-26b-a4b-q8/servers/gemma4-q8-gpu2-syclopt0-faoff-parallel1-cache0-deep-20260623T0915.server.log"
+}

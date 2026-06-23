@@ -36,16 +36,19 @@ Current local Q8 baseline:
 
 Current promoted local Q8 best:
 
-- `gemma4-q8-gpu0-syclopt0-faoff-deep-20260623T0715`, llama.cpp SYCL on one B70,
+- `gemma4-q8-gpu2-syclopt0-faoff-parallel1-cache0-deep-20260623T0915`,
+  llama.cpp SYCL on one B70,
   UD-Q8_K_XL, f16 KV, 8K context;
-- `GGML_SYCL_DISABLE_OPT=0`, `FLASH_ATTN=off`, `POLL=50`, `REASONING=off`;
+- `GGML_SYCL_DISABLE_OPT=0`, `FLASH_ATTN=off`, `POLL=50`,
+  `--parallel 1 --cache-ram 0`, `REASONING=off`;
 - chat canary **384/384** pass;
 - benchmark requested `max_tokens=512`, but actual completions averaged
-  `155.6` tokens because the model stopped naturally;
-- p512/o512 chat decode `41.81 tok/s` after TTFT, `36.44 tok/s` wall;
-- status: submitted to LocalMaxxing and approved as
-  `cmqq8phxt0103qo01afcgyjq8`;
-- queue: `data/localmaxxing-gemma4-26b-a4b-q8-b70-syclopt0-faoff-20260623.queue.json`.
+  `146.4` tokens because the model stopped naturally;
+- p512/o512 chat decode `42.15 tok/s` after TTFT, `36.41 tok/s` wall;
+- status: queued for LocalMaxxing update at
+  `data/localmaxxing-gemma4-26b-a4b-q8-b70-syclopt0-faoff-parallel1-cache0-20260623.queue.json`;
+- prior approved result: `41.81 tok/s`, LocalMaxxing ID
+  `cmqq8phxt0103qo01afcgyjq8`.
 
 ## Submission Packet
 

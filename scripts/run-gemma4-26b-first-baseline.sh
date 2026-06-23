@@ -10,6 +10,7 @@ MODEL="${MODEL:-/mnt/fast-ai/llm-models/gemma4-26b-a4b-it-q8-gguf/gemma-4-26B-A4
 CTX_SIZE="${CTX_SIZE:-8192}"
 BATCH_SIZE="${BATCH_SIZE:-512}"
 UBATCH_SIZE="${UBATCH_SIZE:-64}"
+THREADS="${THREADS:-8}"
 CACHE_TYPE_K="${CACHE_TYPE_K:-f16}"
 CACHE_TYPE_V="${CACHE_TYPE_V:-f16}"
 POLL="${POLL:-50}"
@@ -53,6 +54,7 @@ MODEL="$MODEL" \
 CTX_SIZE="$CTX_SIZE" \
 BATCH_SIZE="$BATCH_SIZE" \
 UBATCH_SIZE="$UBATCH_SIZE" \
+THREADS="$THREADS" \
 CACHE_TYPE_K="$CACHE_TYPE_K" \
 CACHE_TYPE_V="$CACHE_TYPE_V" \
 POLL="$POLL" \
@@ -121,6 +123,7 @@ out = {
         "ctx_size": os.environ.get("CTX_SIZE"),
         "batch_size": os.environ.get("BATCH_SIZE"),
         "ubatch_size": os.environ.get("UBATCH_SIZE"),
+        "threads": os.environ.get("THREADS"),
         "cache_type_k": os.environ.get("CACHE_TYPE_K"),
         "cache_type_v": os.environ.get("CACHE_TYPE_V"),
         "poll": os.environ.get("POLL"),

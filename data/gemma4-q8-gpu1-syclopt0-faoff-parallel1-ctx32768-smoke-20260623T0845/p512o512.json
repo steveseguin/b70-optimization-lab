@@ -1,0 +1,131 @@
+{
+  "rows": [
+    {
+      "chunks": 170,
+      "completion_tokens": 171,
+      "elapsed_s": 9.12251123401802,
+      "post_ttft_s": 4.082844463002402,
+      "sha256": "f558f3caf0586af8095dbb673f995e7ae1137a75721056f5e2c5b949985b7f1d",
+      "text": "The Gemma B70 decode benchmark evaluates autoregressive throughput under varying sequence lengths. To establish a reliable benchmark, the hardware must maintain consistent memory bandwidth during the decode benchmark phase. This benchmark measures tokens per second, where the benchmark results reflect the KV cache efficiency. A high-performance benchmark requires optimized kernel execution to prevent the benchmark from becoming compute-bound. In this benchmark, latency is a critical metric, as the benchmark tracks the time-to-first-token and inter-token latency. Every benchmark iteration must utilize standardized prompt templates to ensure the benchmark remains reproducible. If the benchmark encounters thermal throttling, the benchmark data will deviate from expected performance. Consequently, the benchmark must be executed in a controlled environment to validate the benchmark accuracy. Ultimately, the Gemma B70 decode benchmark serves as the primary benchmark for assessing large-scale model inference scalability.",
+      "text_preview": "The Gemma B70 decode benchmark evaluates autoregressive throughput under varying sequence lengths. To establish a reliable benchmark, the hardware must maintain consistent memory bandwidth during the decode benchmark phase. This benchmark m",
+      "tok_s_after_ttft": 41.88256534128456,
+      "tok_s_wall": 18.744838522350918,
+      "ttft_s": 5.039666771015618,
+      "usage": {
+        "completion_tokens": 171,
+        "prompt_tokens": 574,
+        "prompt_tokens_details": {
+          "cached_tokens": 1
+        },
+        "total_tokens": 745
+      }
+    },
+    {
+      "chunks": 169,
+      "completion_tokens": 170,
+      "elapsed_s": 4.425433155003702,
+      "post_ttft_s": 4.055420100979973,
+      "sha256": "bd95fcd599a2cd8de0041235124fbff7f3f60d9142106d11c2e67427a44e5f6a",
+      "text": "The Gemma B70 decode benchmark evaluates autoregressive throughput under varying KV cache constraints. To establish a reliable benchmark, the test utilizes a fixed prompt length to isolate decoding latency. This benchmark measures tokens per second (TPS) across multiple GPU configurations. A primary benchmark metric is the memory bandwidth utilization during the decoding phase. In this benchmark, the B70 architecture demonstrates high efficiency in compute-bound scenarios. However, the benchmark reveals that memory-bound bottlenecks emerge as sequence length increases. Every benchmark iteration must account for thermal throttling to ensure benchmark validity. The benchmark results indicate that quantization significantly impacts the benchmark score. Consequently, the benchmark serves as a critical tool for optimizing the Gemma B70 deployment. A rigorous benchmark requires consistent batch sizes to maintain benchmark reproducibility. Ultimately, the benchmark provides the necessary data to scale the B70 model effectively.",
+      "text_preview": "The Gemma B70 decode benchmark evaluates autoregressive throughput under varying KV cache constraints. To establish a reliable benchmark, the test utilizes a fixed prompt length to isolate decoding latency. This benchmark measures tokens pe",
+      "tok_s_after_ttft": 41.91920831060642,
+      "tok_s_wall": 38.41431878996662,
+      "ttft_s": 0.37001305402372964,
+      "usage": {
+        "completion_tokens": 170,
+        "prompt_tokens": 574,
+        "prompt_tokens_details": {
+          "cached_tokens": 505
+        },
+        "total_tokens": 744
+      }
+    },
+    {
+      "chunks": 123,
+      "completion_tokens": 124,
+      "elapsed_s": 3.308860683988314,
+      "post_ttft_s": 2.9519373049843125,
+      "sha256": "26f4b8332ed887387311f09bc8840f55b9c07fad82215182ebae43edbc06e562",
+      "text": "The Gemma B70 decode benchmark evaluates autoregressive throughput under varying sequence lengths. To establish a valid benchmark, the hardware must maintain consistent memory bandwidth during the benchmark execution. This benchmark measures tokens per second, serving as a primary benchmark for inference efficiency. In this benchmark, KV cache utilization significantly impacts the benchmark results. A high-performance benchmark requires precise measurement of latency and throughput. Every benchmark iteration must account for thermal throttling to ensure the benchmark remains reproducible. Consequently, the benchmark demonstrates that memory-bound operations dominate the decode benchmark phase. Final benchmark analysis suggests that scaling the benchmark across multiple GPUs optimizes the benchmark outcome.",
+      "text_preview": "The Gemma B70 decode benchmark evaluates autoregressive throughput under varying sequence lengths. To establish a valid benchmark, the hardware must maintain consistent memory bandwidth during the benchmark execution. This benchmark measure",
+      "tok_s_after_ttft": 42.0063121905155,
+      "tok_s_wall": 37.475134749565036,
+      "ttft_s": 0.3569233790040016,
+      "usage": {
+        "completion_tokens": 124,
+        "prompt_tokens": 574,
+        "prompt_tokens_details": {
+          "cached_tokens": 505
+        },
+        "total_tokens": 698
+      }
+    },
+    {
+      "chunks": 123,
+      "completion_tokens": 124,
+      "elapsed_s": 3.3162025900091976,
+      "post_ttft_s": 2.952707629010547,
+      "sha256": "26f4b8332ed887387311f09bc8840f55b9c07fad82215182ebae43edbc06e562",
+      "text": "The Gemma B70 decode benchmark evaluates autoregressive throughput under varying sequence lengths. To establish a valid benchmark, the hardware must maintain consistent memory bandwidth during the benchmark execution. This benchmark measures tokens per second, serving as a primary benchmark for inference efficiency. In this benchmark, KV cache utilization significantly impacts the benchmark results. A high-performance benchmark requires precise measurement of latency and throughput. Every benchmark iteration must account for thermal throttling to ensure the benchmark remains reproducible. Consequently, the benchmark demonstrates that memory-bound operations dominate the decode benchmark phase. Final benchmark analysis suggests that scaling the benchmark across multiple GPUs optimizes the benchmark outcome.",
+      "text_preview": "The Gemma B70 decode benchmark evaluates autoregressive throughput under varying sequence lengths. To establish a valid benchmark, the hardware must maintain consistent memory bandwidth during the benchmark execution. This benchmark measure",
+      "tok_s_after_ttft": 41.99535327564837,
+      "tok_s_wall": 37.39216668293359,
+      "ttft_s": 0.36349496099865064,
+      "usage": {
+        "completion_tokens": 124,
+        "prompt_tokens": 574,
+        "prompt_tokens_details": {
+          "cached_tokens": 505
+        },
+        "total_tokens": 698
+      }
+    }
+  ],
+  "run_identity": {
+    "api_mode": "chat",
+    "base_url": "http://127.0.0.1:18261",
+    "created_at_utc": "2026-06-23T06:17:09.364587+00:00",
+    "max_tokens": 512,
+    "model": "gemma4-26b-a4b-q8",
+    "prompt_tokens_requested": 512,
+    "repeats": 4,
+    "seed": 1,
+    "usage_required": true
+  },
+  "summary": {
+    "completion_tokens_total": 589,
+    "elapsed_s": {
+      "cv": 0.5491792155502526,
+      "max": 9.12251123401802,
+      "mean": 5.043251915754809,
+      "median": 3.87081787250645,
+      "min": 3.308860683988314,
+      "stdev": 2.7696491309165343
+    },
+    "requests": 4,
+    "tok_s_after_ttft": {
+      "cv": 0.0014249767765705619,
+      "max": 42.0063121905155,
+      "mean": 41.95085977951371,
+      "median": 41.957280793127396,
+      "min": 41.88256534128456,
+      "stdev": 0.05977900094297508
+    },
+    "tok_s_wall": {
+      "cv": 0.28840107581109053,
+      "max": 38.41431878996662,
+      "mean": 33.006614686204045,
+      "median": 37.43365071624932,
+      "min": 18.744838522350918,
+      "stdev": 9.519143184383386
+    },
+    "ttft_s": {
+      "cv": 1.52565317143244,
+      "max": 5.039666771015618,
+      "mean": 1.5325245412605,
+      "median": 0.36675400751119014,
+      "min": 0.3569233790040016,
+      "stdev": 2.338100926672127
+    }
+  }
+}

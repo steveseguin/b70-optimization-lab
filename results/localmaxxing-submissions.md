@@ -10,6 +10,7 @@ separate from four independent replica aggregate capacity.
 | Label | LocalMaxxing ID | GPUs | Input | Output | tok/s out | tok/s total | Validation |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
 | `gemma4-26b-a4b-q8-b70-llamacpp-syclopt0-faoff-20260623T0715` | `cmqq8phxt0103qo01afcgyjq8` | 1 | 574 | 156 | 41.806 | n/a | 384/384 chat canary |
+| `gemma4-26b-a4b-q8-b70-llamacpp-syclopt0-faoff-parallel1-cache0-20260623T0915` | queued | 1 | 574 | 146 | 42.154 | n/a | 384/384 chat canary |
 
 Required packet: see
 [`results/gemma4-26b-a4b-q8-b70/localmaxxing-and-targets.md`](gemma4-26b-a4b-q8-b70/localmaxxing-and-targets.md).

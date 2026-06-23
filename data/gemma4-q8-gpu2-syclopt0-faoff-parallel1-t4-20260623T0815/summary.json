@@ -1,0 +1,73 @@
+{
+  "bench_run_identity": {
+    "api_mode": "chat",
+    "base_url": "http://127.0.0.1:18262",
+    "created_at_utc": "2026-06-23T06:13:14.077042+00:00",
+    "max_tokens": 512,
+    "model": "gemma4-26b-a4b-q8",
+    "prompt_tokens_requested": 512,
+    "repeats": 8,
+    "seed": 1,
+    "usage_required": true
+  },
+  "bench_summary": {
+    "completion_tokens_total": 1372,
+    "elapsed_s": {
+      "cv": 0.3408719639709636,
+      "max": 9.2798471970018,
+      "mean": 5.036857238501398,
+      "median": 4.436349648007308,
+      "min": 4.311077720019966,
+      "stdev": 1.7169234191293354
+    },
+    "requests": 8,
+    "tok_s_after_ttft": {
+      "cv": 0.0007265434190731019,
+      "max": 42.051135693179006,
+      "mean": 41.997405310993244,
+      "median": 41.99964419278537,
+      "min": 41.94923547709292,
+      "stdev": 0.03051293844684788
+    },
+    "tok_s_wall": {
+      "cv": 0.19056907497127143,
+      "max": 38.71852565382681,
+      "mean": 36.096330985267215,
+      "median": 38.50614928056088,
+      "min": 19.07358992475506,
+      "stdev": 6.8788444057192155
+    },
+    "ttft_s": {
+      "cv": 1.7434679894762941,
+      "max": 5.066398424998624,
+      "mean": 0.9532528884992644,
+      "median": 0.36660987098002806,
+      "min": 0.36048284702701494,
+      "stdev": 1.6619658969742823
+    }
+  },
+  "canary_pass_all": true,
+  "canary_rows_completed": 128,
+  "label": "gemma4-q8-gpu2-syclopt0-faoff-parallel1-t4-20260623T0815",
+  "launcher_identity": {
+    "batch_size": "512",
+    "cache_type_k": "f16",
+    "cache_type_v": "f16",
+    "ctx_size": "8192",
+    "extra_llama_args": "--parallel 1",
+    "flash_attn": "off",
+    "ggml_sycl_disable_dnn": null,
+    "ggml_sycl_disable_graph": null,
+    "ggml_sycl_disable_opt": "0",
+    "gpu_index": "2",
+    "oneapi_device_selector": null,
+    "poll": "50",
+    "port": "18262",
+    "reasoning": "off",
+    "ubatch_size": "64"
+  },
+  "model_file_bytes": 27636230944,
+  "model_path": "/mnt/fast-ai/llm-models/gemma4-26b-a4b-it-q8-gguf/gemma-4-26B-A4B-it-UD-Q8_K_XL.gguf",
+  "run_dir": "/home/steve/qwen36-results-main/data/gemma4-q8-gpu2-syclopt0-faoff-parallel1-t4-20260623T0815",
+  "server_log": "/mnt/fast-ai/bench-results/gemma4-26b-a4b-q8/servers/gemma4-q8-gpu2-syclopt0-faoff-parallel1-t4-20260623T0815.server.log"
+}
