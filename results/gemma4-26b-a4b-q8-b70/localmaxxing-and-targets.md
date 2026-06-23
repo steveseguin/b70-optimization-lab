@@ -61,7 +61,8 @@ Current sustained-decode Q8 best:
 - actual LocalMaxxing packet shape: `75` prompt tokens and `512` output tokens;
 - chat canary **384/384** pass;
 - decode `42.72 tok/s` after TTFT, `41.35 tok/s` wall;
-- status: queued for LocalMaxxing as a separate sustained-decode shape, not as a
+- status: submitted to LocalMaxxing and approved as
+  `cmqqa6zbx010xqo01cdtfn8e0`; this is a separate sustained-decode shape, not a
   direct replacement for the natural-stop/default-prompt row;
 - queue:
   `data/localmaxxing-gemma4-26b-a4b-q8-b70-long512-20260623.queue.json`.
