@@ -23,6 +23,7 @@ Do not compare two results unless their model, quantization, prompt length, outp
 
 | Recipe | Status | What It Is For |
 | --- | --- | --- |
+| `../results/gemma4-26b-a4b-q8-b70/` | Active setup | Gemma 4 26B A4B Q8/INT8 on B70, one full model replica per GPU, llama.cpp SYCL first and vLLM int8-per-channel as the comparison lane. |
 | `../repro/minimax-m27-b70-110tps-ubuntu24-20260523/` | Deployable baseline | Fresh Ubuntu 24.04 setup for 4x B70, MiniMax M2.7 INT4 AutoRound, vLLM OpenAI-compatible endpoint on `0.0.0.0:8000`. |
 | `../repro/minimax-m27-b70-89tps-20260520/` | Strict speed baseline | Older strict quality-passed MiniMax M2.7 INT4 lane with higher output-token throughput. Useful for optimization comparisons. |
 | `../results/qwen36-35b-quark-int8-b70/` | Closed reference packet | Qwen3.6 35B A3B Quark W8A8 INT8 on 2x/4x B70. Best strict 4x baseline, invalid fast lanes, reproduction commands, and carryover notes. |
@@ -99,6 +100,25 @@ for the exact slot profiles, smoke tests, known bad multimedia-limit setting,
 2K/512 concurrency results, c10/c12 full-32K boundary tests, and prefix-cache
 results for shared-prefix plus unique-tail prompts.
 
+## Gemma 4 26B A4B Q8 / INT8
+
+The active next lane is
+[`../results/gemma4-26b-a4b-q8-b70/`](../results/gemma4-26b-a4b-q8-b70/README.md).
+It intentionally avoids tensor-parallel splitting at first: run one complete
+Gemma 4 26B A4B replica per B70 and use four replicas for parallel research.
+
+Start with llama.cpp SYCL and the Unsloth `UD-Q8_K_XL` GGUF:
+
+```bash
+scripts/build-llama-cpp-sycl-b70.sh
+scripts/download-gemma4-26b-q8-gguf.sh
+GPU_INDEX=0 PORT=18260 scripts/run-gemma4-26b-llamacpp-replica.sh
+```
+
+The vLLM comparison lane should use `google/gemma-4-26B-A4B-it` with
+`--quantization int8_per_channel_weight_only`, one DP=1 process per GPU. Do not
+promote INT4 AutoRound results as this lane's default quality target.
+
 ## Future Recipe Slots
 
 These are useful community targets to add as separate repro folders:
@@ -107,6 +127,8 @@ These are useful community targets to add as separate repro folders:
   serving. See [Single Model Slot Switching](model-slot-switching.md).
 - Gemma 4 12B INT4 AutoRound full fresh-install repro folder once the
   `gemma4_unified` backport is either upstream or packaged as a smaller patch.
+- Gemma 4 26B A4B Q8/INT8 full fresh-install repro folder after the active
+  result packet has a validated baseline.
 - Qwen3.6 27B Q4_0 GGUF on llama.cpp/SYCL.
 - Qwen3.6 27B FP8 on vLLM/XPU.
 - Qwen3-VL 30B-A3B FP8 on vLLM/XPU for image+text requests.

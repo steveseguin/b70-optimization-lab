@@ -24,6 +24,7 @@ path.
 
 | Effort | Main Entry | Current Decision |
 | --- | --- | --- |
+| Gemma 4 26B A4B Q8 / INT8 on B70 | [results/gemma4-26b-a4b-q8-b70](../results/gemma4-26b-a4b-q8-b70/README.md) | Active next lane. Target is one full model replica per B70, four parallel single-GPU experiments, Q8/INT8-or-better quality, short-context decode first and 32K after. |
 | Gemma 4 12B IT INT4 AutoRound | [experiments/gemma4-12b-int4-autoround-vllm](../experiments/gemma4-12b-int4-autoround-vllm/README.md) | Current model-slot production profile is c8. c10 is research-only; c12+ hit boundary failures. |
 | MiniMax M2.7 INT4 AutoRound | [repro/minimax-m27-b70-110tps-ubuntu24-20260523](../repro/minimax-m27-b70-110tps-ubuntu24-20260523/README.md) | Deployable 32K endpoint baseline. Future speed work should target collective and graph-boundary fusion, not more flag sweeps. |
 | Qwen3.6 35B A3B Quark W8A8 INT8 | [results/qwen36-35b-quark-int8-b70](../results/qwen36-35b-quark-int8-b70/README.md) | Closed for now. No valid `>150 tok/s` path found; best strict 4x baseline is `93.55 tok/s`. |
@@ -43,3 +44,6 @@ path.
   packets are easier to merge and reuse than mixed experiment branches.
 - Keep LocalMaxxing payloads and responses in `data/`, but keep API keys outside
   Git as documented in [localmaxxing.md](localmaxxing.md).
+- For one-replica-per-GPU work, prefer four independent servers and four
+  disjoint experiments before trying tensor parallelism. This is especially
+  relevant to Gemma 4 26B A4B, where the goal is to avoid PCIe collectives.
