@@ -1,0 +1,765 @@
+build_info: b8988-5cf016643
+system_info: n_threads = 16 (n_threads_batch = 16) / 32 | CPU : SSE3 = 1 | SSSE3 = 1 | AVX = 1 | AVX2 = 1 | F16C = 1 | FMA = 1 | BMI2 = 1 | LLAMAFILE = 1 | OPENMP = 1 | REPACK = 1 | 
+Running without SSL
+init: using 31 threads for HTTP server
+start: binding port with default address family
+main: loading model
+srv    load_model: loading model '/mnt/fast-ai/llm-models/gemma4-26b-a4b-it-q8-gguf/gemma-4-26B-A4B-it-UD-Q8_K_XL.gguf'
+common_init_result: fitting params to device memory, for bugs during this step try to reproduce them with -fit off, or provide --verbose logs if the bug only occurs with -fit on
+llama_params_fit_impl: projected to use 26817 MiB of device memory vs. 32584 MiB of free device memory
+llama_params_fit_impl: will leave 5766 >= 1024 MiB of free device memory, no changes needed
+llama_params_fit: successfully fit params to free device memory
+llama_params_fit: fitting params to free memory took 0.47 seconds
+llama_model_load_from_file_impl: using device SYCL0 (Intel(R) Arc(TM) Pro B70 Graphics) (unknown id) - 32584 MiB free
+llama_model_loader: loaded meta data with 60 key-value pairs and 658 tensors from /mnt/fast-ai/llm-models/gemma4-26b-a4b-it-q8-gguf/gemma-4-26B-A4B-it-UD-Q8_K_XL.gguf (version GGUF V3 (latest))
+llama_model_loader: Dumping metadata keys/values. Note: KV overrides do not apply in this output.
+llama_model_loader: - kv   0:                       general.architecture str              = gemma4
+llama_model_loader: - kv   1:                               general.type str              = model
+llama_model_loader: - kv   2:                     general.sampling.top_k i32              = 64
+llama_model_loader: - kv   3:                     general.sampling.top_p f32              = 0.950000
+llama_model_loader: - kv   4:                      general.sampling.temp f32              = 1.000000
+llama_model_loader: - kv   5:                               general.name str              = Gemma-4-26B-A4B-It
+llama_model_loader: - kv   6:                           general.finetune str              = it
+llama_model_loader: - kv   7:                           general.basename str              = Gemma-4-26B-A4B-It
+llama_model_loader: - kv   8:                       general.quantized_by str              = Unsloth
+llama_model_loader: - kv   9:                         general.size_label str              = 26B-A4B
+llama_model_loader: - kv  10:                            general.license str              = apache-2.0
+llama_model_loader: - kv  11:                       general.license.link str              = https://ai.google.dev/gemma/docs/gemm...
+llama_model_loader: - kv  12:                           general.repo_url str              = https://huggingface.co/unsloth
+llama_model_loader: - kv  13:                   general.base_model.count u32              = 1
+llama_model_loader: - kv  14:                  general.base_model.0.name str              = Gemma 4 26B A4B It
+llama_model_loader: - kv  15:          general.base_model.0.organization str              = Google
+llama_model_loader: - kv  16:              general.base_model.0.repo_url str              = https://huggingface.co/google/gemma-4...
+llama_model_loader: - kv  17:                               general.tags arr[str,2]       = ["unsloth", "image-text-to-text"]
+llama_model_loader: - kv  18:                         gemma4.block_count u32              = 30
+llama_model_loader: - kv  19:                      gemma4.context_length u32              = 262144
+llama_model_loader: - kv  20:                    gemma4.embedding_length u32              = 2816
+llama_model_loader: - kv  21:                 gemma4.feed_forward_length u32              = 2112
+llama_model_loader: - kv  22:                gemma4.attention.head_count u32              = 16
+llama_model_loader: - kv  23:             gemma4.attention.head_count_kv arr[i32,30]      = [8, 8, 8, 8, 8, 2, 8, 8, 8, 8, 8, 2, ...
+llama_model_loader: - kv  24:                      gemma4.rope.freq_base f32              = 1000000.000000
+llama_model_loader: - kv  25:                  gemma4.rope.freq_base_swa f32              = 10000.000000
+llama_model_loader: - kv  26:    gemma4.attention.layer_norm_rms_epsilon f32              = 0.000001
+llama_model_loader: - kv  27:                        gemma4.expert_count u32              = 128
+llama_model_loader: - kv  28:                   gemma4.expert_used_count u32              = 8
+llama_model_loader: - kv  29:                gemma4.attention.key_length u32              = 512
+llama_model_loader: - kv  30:              gemma4.attention.value_length u32              = 512
+llama_model_loader: - kv  31:             gemma4.final_logit_softcapping f32              = 30.000000
+llama_model_loader: - kv  32:            gemma4.attention.sliding_window u32              = 1024
+llama_model_loader: - kv  33:          gemma4.attention.shared_kv_layers u32              = 0
+llama_model_loader: - kv  34:    gemma4.embedding_length_per_layer_input u32              = 0
+llama_model_loader: - kv  35:    gemma4.attention.sliding_window_pattern arr[bool,30]     = [true, true, true, true, true, false,...
+llama_model_loader: - kv  36:            gemma4.attention.key_length_swa u32              = 256
+llama_model_loader: - kv  37:          gemma4.attention.value_length_swa u32              = 256
+llama_model_loader: - kv  38:          gemma4.expert_feed_forward_length u32              = 704
+llama_model_loader: - kv  39:                gemma4.rope.dimension_count u32              = 512
+llama_model_loader: - kv  40:            gemma4.rope.dimension_count_swa u32              = 256
+llama_model_loader: - kv  41:                       tokenizer.ggml.model str              = gemma4
+llama_model_loader: - kv  42:                      tokenizer.ggml.tokens arr[str,262144]  = ["<pad>", "<eos>", "<bos>", "<unk>", ...
+llama_model_loader: - kv  43:                      tokenizer.ggml.scores arr[f32,262144]  = [-1000.000000, -1000.000000, -1000.00...
+llama_model_loader: - kv  44:                  tokenizer.ggml.token_type arr[i32,262144]  = [3, 1, 3, 3, 3, 1, 1, 1, 1, 1, 1, 1, ...
+llama_model_loader: - kv  45:                      tokenizer.ggml.merges arr[str,514906]  = ["\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n \n", ...
+llama_model_loader: - kv  46:                tokenizer.ggml.bos_token_id u32              = 2
+llama_model_loader: - kv  47:                tokenizer.ggml.eos_token_id u32              = 106
+llama_model_loader: - kv  48:            tokenizer.ggml.unknown_token_id u32              = 3
+llama_model_loader: - kv  49:            tokenizer.ggml.padding_token_id u32              = 0
+llama_model_loader: - kv  50:               tokenizer.ggml.mask_token_id u32              = 4
+llama_model_loader: - kv  51:                    tokenizer.chat_template str              = {%- macro format_parameters(propertie...
+llama_model_loader: - kv  52:            tokenizer.ggml.add_space_prefix bool             = false
+llama_model_loader: - kv  53:               tokenizer.ggml.add_bos_token bool             = true
+llama_model_loader: - kv  54:               general.quantization_version u32              = 2
+llama_model_loader: - kv  55:                          general.file_type u32              = 7
+llama_model_loader: - kv  56:                      quantize.imatrix.file str              = gemma-4-26B-A4B-it-GGUF/imatrix_unslo...
+llama_model_loader: - kv  57:                   quantize.imatrix.dataset str              = unsloth_calibration_gemma-4-26B-A4B-i...
+llama_model_loader: - kv  58:             quantize.imatrix.entries_count u32              = 295
+llama_model_loader: - kv  59:              quantize.imatrix.chunks_count u32              = 141
+llama_model_loader: - type  f32:  392 tensors
+llama_model_loader: - type q8_0:  258 tensors
+llama_model_loader: - type bf16:    8 tensors
+print_info: file format = GGUF V3 (latest)
+print_info: file type   = Q8_0
+print_info: file size   = 25.72 GiB (8.76 BPW) 
+load: 0 unused tokens
+load: control-looking token:    212 '</s>' was not control-type; this is probably a bug in the model. its type will be overridden
+load: control-looking token:     50 '<|tool_response>' was not control-type; this is probably a bug in the model. its type will be overridden
+load: control-looking token:      1 '<eos>' was not control-type; this is probably a bug in the model. its type will be overridden
+load: printing all EOG tokens:
+load:   - 1 ('<eos>')
+load:   - 50 ('<|tool_response>')
+load:   - 106 ('<turn|>')
+load:   - 212 ('</s>')
+load: special_eog_ids contains '<|tool_response>', removing '</s>' token from EOG list
+load: special tokens cache size = 24
+load: token to piece cache size = 1.9445 MB
+print_info: arch                  = gemma4
+print_info: vocab_only            = 0
+print_info: no_alloc              = 0
+print_info: n_ctx_train           = 262144
+print_info: n_embd                = 2816
+print_info: n_embd_inp            = 2816
+print_info: n_layer               = 30
+print_info: n_head                = 16
+print_info: n_head_kv             = [8, 8, 8, 8, 8, 2, 8, 8, 8, 8, 8, 2, 8, 8, 8, 8, 8, 2, 8, 8, 8, 8, 8, 2, 8, 8, 8, 8, 8, 2]
+print_info: n_rot                 = 512
+print_info: n_swa                 = 1024
+print_info: is_swa_any            = 1
+print_info: n_embd_head_k         = 512
+print_info: n_embd_head_v         = 512
+print_info: n_gqa                 = [2, 2, 2, 2, 2, 8, 2, 2, 2, 2, 2, 8, 2, 2, 2, 2, 2, 8, 2, 2, 2, 2, 2, 8, 2, 2, 2, 2, 2, 8]
+print_info: n_embd_k_gqa          = [2048, 2048, 2048, 2048, 2048, 1024, 2048, 2048, 2048, 2048, 2048, 1024, 2048, 2048, 2048, 2048, 2048, 1024, 2048, 2048, 2048, 2048, 2048, 1024, 2048, 2048, 2048, 2048, 2048, 1024]
+print_info: n_embd_v_gqa          = [2048, 2048, 2048, 2048, 2048, 1024, 2048, 2048, 2048, 2048, 2048, 1024, 2048, 2048, 2048, 2048, 2048, 1024, 2048, 2048, 2048, 2048, 2048, 1024, 2048, 2048, 2048, 2048, 2048, 1024]
+print_info: f_norm_eps            = 0.0e+00
+print_info: f_norm_rms_eps        = 1.0e-06
+print_info: f_clamp_kqv           = 0.0e+00
+print_info: f_max_alibi_bias      = 0.0e+00
+print_info: f_logit_scale         = 0.0e+00
+print_info: f_attn_scale          = 1.0e+00
+print_info: n_ff                  = 2112
+print_info: n_expert              = 128
+print_info: n_expert_used         = 8
+print_info: n_expert_groups       = 0
+print_info: n_group_used          = 0
+print_info: causal attn           = 1
+print_info: pooling type          = -1
+print_info: rope type             = 2
+print_info: rope scaling          = linear
+print_info: freq_base_train       = 1000000.0
+print_info: freq_scale_train      = 1
+print_info: freq_base_swa         = 10000.0
+print_info: freq_scale_swa        = 1
+print_info: n_embd_head_k_swa     = 256
+print_info: n_embd_head_v_swa     = 256
+print_info: n_rot_swa             = 256
+print_info: n_ctx_orig_yarn       = 262144
+print_info: rope_yarn_log_mul     = 0.0000
+print_info: rope_finetuned        = unknown
+print_info: model type            = ?B
+print_info: model params          = 25.23 B
+print_info: general.name          = Gemma-4-26B-A4B-It
+print_info: vocab type            = BPE
+print_info: n_vocab               = 262144
+print_info: n_merges              = 514906
+print_info: BOS token             = 2 '<bos>'
+print_info: EOS token             = 106 '<turn|>'
+print_info: UNK token             = 3 '<unk>'
+print_info: PAD token             = 0 '<pad>'
+print_info: MASK token            = 4 '<mask>'
+print_info: LF token              = 107 '
+'
+print_info: EOG token             = 1 '<eos>'
+print_info: EOG token             = 50 '<|tool_response>'
+print_info: EOG token             = 106 '<turn|>'
+print_info: max token length      = 93
+load_tensors: loading model tensors, this can take a while... (mmap = true, direct_io = false)
+load_tensors: offloading output layer to GPU
+load_tensors: offloading 29 repeating layers to GPU
+load_tensors: offloaded 31/31 layers to GPU
+load_tensors:   CPU_Mapped model buffer size =   748.00 MiB
+load_tensors:        SYCL0 model buffer size = 26340.96 MiB
+....................................................................
+llama_model_load_from_file_impl: using device SYCL0 (Intel(R) Arc(TM) Pro B70 Graphics) (unknown id) - 6240 MiB free
+llama_model_loader: loaded meta data with 51 key-value pairs and 49 tensors from /mnt/fast-ai/llm-models/gemma4-26b-a4b-it-q8-gguf/gemma-4-26B-A4B-it-assistant.Q8_0.gguf (version GGUF V3 (latest))
+llama_model_loader: Dumping metadata keys/values. Note: KV overrides do not apply in this output.
+llama_model_loader: - kv   0:                       general.architecture str              = gemma4_assistant
+llama_model_loader: - kv   1:                               general.type str              = model
+llama_model_loader: - kv   2:                     general.sampling.top_k i32              = 64
+llama_model_loader: - kv   3:                     general.sampling.top_p f32              = 0.950000
+llama_model_loader: - kv   4:                      general.sampling.temp f32              = 1.000000
+llama_model_loader: - kv   5:                               general.name str              = Gemma 4 26B A4B It Assistant
+llama_model_loader: - kv   6:                           general.finetune str              = 26b-it-assistant
+llama_model_loader: - kv   7:                           general.basename str              = gemma-4
+llama_model_loader: - kv   8:                         general.size_label str              = A4B
+llama_model_loader: - kv   9:                            general.license str              = apache-2.0
+llama_model_loader: - kv  10:                       general.license.link str              = https://ai.google.dev/gemma/docs/gemm...
+llama_model_loader: - kv  11:                               general.tags arr[str,1]       = ["any-to-any"]
+llama_model_loader: - kv  12:               gemma4_assistant.block_count u32              = 4
+llama_model_loader: - kv  13:            gemma4_assistant.context_length u32              = 262144
+llama_model_loader: - kv  14:          gemma4_assistant.embedding_length u32              = 1024
+llama_model_loader: - kv  15:       gemma4_assistant.feed_forward_length u32              = 8192
+llama_model_loader: - kv  16:      gemma4_assistant.attention.head_count u32              = 16
+llama_model_loader: - kv  17:   gemma4_assistant.attention.head_count_kv arr[i32,4]       = [8, 8, 8, 2]
+llama_model_loader: - kv  18:            gemma4_assistant.rope.freq_base f32              = 1000000.000000
+llama_model_loader: - kv  19:        gemma4_assistant.rope.freq_base_swa f32              = 10000.000000
+llama_model_loader: - kv  20: gemma4_assistant.attention.layer_norm_rms_epsilon f32              = 0.000001
+llama_model_loader: - kv  21:      gemma4_assistant.attention.key_length u32              = 512
+llama_model_loader: - kv  22:    gemma4_assistant.attention.value_length u32              = 512
+llama_model_loader: - kv  23:  gemma4_assistant.attention.sliding_window u32              = 1024
+llama_model_loader: - kv  24: gemma4_assistant.attention.shared_kv_layers u32              = 4
+llama_model_loader: - kv  25: gemma4_assistant.embedding_length_per_layer_input u32              = 0
+llama_model_loader: - kv  26: gemma4_assistant.attention.sliding_window_pattern arr[bool,4]      = [true, true, true, false]
+llama_model_loader: - kv  27:  gemma4_assistant.attention.key_length_swa u32              = 256
+llama_model_loader: - kv  28: gemma4_assistant.attention.value_length_swa u32              = 256
+llama_model_loader: - kv  29:      gemma4_assistant.rope.dimension_count u32              = 512
+llama_model_loader: - kv  30:  gemma4_assistant.rope.dimension_count_swa u32              = 256
+llama_model_loader: - kv  31:               gemma4_assistant.n_centroids u32              = 2048
+llama_model_loader: - kv  32:            gemma4_assistant.centroid_top_k u32              = 32
+llama_model_loader: - kv  33:           gemma4_assistant.n_embd_backbone u32              = 2816
+llama_model_loader: - kv  34:    gemma4_assistant.use_ordered_embeddings bool             = false
+llama_model_loader: - kv  35:          gemma4_assistant.attention.k_eq_v bool             = true
+llama_model_loader: - kv  36:      gemma4_assistant.requires_target_arch str              = gemma4
+llama_model_loader: - kv  37:                       tokenizer.ggml.model str              = gemma4
+llama_model_loader: - kv  38:                      tokenizer.ggml.tokens arr[str,262144]  = ["<pad>", "<eos>", "<bos>", "<unk>", ...
+llama_model_loader: - kv  39:                      tokenizer.ggml.scores arr[f32,262144]  = [-1000.000000, -1000.000000, -1000.00...
+llama_model_loader: - kv  40:                  tokenizer.ggml.token_type arr[i32,262144]  = [3, 3, 3, 3, 3, 1, 1, 1, 1, 1, 1, 1, ...
+llama_model_loader: - kv  41:                      tokenizer.ggml.merges arr[str,514906]  = ["\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n \n", ...
+llama_model_loader: - kv  42:                tokenizer.ggml.bos_token_id u32              = 2
+llama_model_loader: - kv  43:                tokenizer.ggml.eos_token_id u32              = 1
+llama_model_loader: - kv  44:            tokenizer.ggml.unknown_token_id u32              = 3
+llama_model_loader: - kv  45:            tokenizer.ggml.padding_token_id u32              = 0
+llama_model_loader: - kv  46:               tokenizer.ggml.mask_token_id u32              = 4
+llama_model_loader: - kv  47:            tokenizer.ggml.add_space_prefix bool             = false
+llama_model_loader: - kv  48:               tokenizer.ggml.add_bos_token bool             = true
+llama_model_loader: - kv  49:               general.quantization_version u32              = 2
+llama_model_loader: - kv  50:                          general.file_type u32              = 7
+llama_model_loader: - type  f32:   26 tensors
+llama_model_loader: - type q8_0:   23 tensors
+print_info: file format = GGUF V3 (latest)
+print_info: file type   = Q8_0
+print_info: file size   = 425.34 MiB (8.50 BPW) 
+load: 0 unused tokens
+load: control-looking token:    212 '</s>' was not control-type; this is probably a bug in the model. its type will be overridden
+load: control-looking token:     50 '<|tool_response>' was not control-type; this is probably a bug in the model. its type will be overridden
+load: printing all EOG tokens:
+load:   - 1 ('<eos>')
+load:   - 50 ('<|tool_response>')
+load:   - 106 ('<turn|>')
+load:   - 212 ('</s>')
+load: special_eog_ids contains '<|tool_response>', removing '</s>' token from EOG list
+load: special tokens cache size = 23
+load: token to piece cache size = 1.9445 MB
+print_info: arch                  = gemma4_assistant
+print_info: vocab_only            = 0
+print_info: no_alloc              = 0
+print_info: n_ctx_train           = 262144
+print_info: n_embd                = 1024
+print_info: n_embd_inp            = 1024
+print_info: n_layer               = 4
+print_info: n_head                = 16
+print_info: n_head_kv             = [8, 8, 8, 2]
+print_info: n_rot                 = 512
+print_info: n_swa                 = 1024
+print_info: is_swa_any            = 1
+print_info: n_embd_head_k         = 512
+print_info: n_embd_head_v         = 512
+print_info: n_gqa                 = [2, 2, 2, 8]
+print_info: n_embd_k_gqa          = [2048, 2048, 2048, 1024]
+print_info: n_embd_v_gqa          = [2048, 2048, 2048, 1024]
+print_info: f_norm_eps            = 0.0e+00
+print_info: f_norm_rms_eps        = 1.0e-06
+print_info: f_clamp_kqv           = 0.0e+00
+print_info: f_max_alibi_bias      = 0.0e+00
+print_info: f_logit_scale         = 0.0e+00
+print_info: f_attn_scale          = 1.0e+00
+print_info: n_ff                  = 8192
+print_info: n_expert              = 0
+print_info: n_expert_used         = 0
+print_info: n_expert_groups       = 0
+print_info: n_group_used          = 0
+print_info: causal attn           = 1
+print_info: pooling type          = -1
+print_info: rope type             = 2
+print_info: rope scaling          = linear
+print_info: freq_base_train       = 1000000.0
+print_info: freq_scale_train      = 1
+print_info: freq_base_swa         = 10000.0
+print_info: freq_scale_swa        = 1
+print_info: n_embd_head_k_swa     = 256
+print_info: n_embd_head_v_swa     = 256
+print_info: n_rot_swa             = 256
+print_info: n_ctx_orig_yarn       = 262144
+print_info: rope_yarn_log_mul     = 0.0000
+print_info: rope_finetuned        = unknown
+print_info: model type            = ?B
+print_info: model params          = 419.71 M
+print_info: general.name          = Gemma 4 26B A4B It Assistant
+print_info: vocab type            = BPE
+print_info: n_vocab               = 262144
+print_info: n_merges              = 514906
+print_info: BOS token             = 2 '<bos>'
+print_info: EOS token             = 1 '<eos>'
+print_info: UNK token             = 3 '<unk>'
+print_info: PAD token             = 0 '<pad>'
+print_info: MASK token            = 4 '<mask>'
+print_info: LF token              = 107 '
+'
+print_info: EOG token             = 1 '<eos>'
+print_info: EOG token             = 50 '<|tool_response>'
+print_info: EOG token             = 106 '<turn|>'
+print_info: max token length      = 93
+load_tensors: loading model tensors, this can take a while... (mmap = true, direct_io = false)
+load_tensors: offloading output layer to GPU
+load_tensors: offloading 3 repeating layers to GPU
+load_tensors: offloaded 5/5 layers to GPU
+load_tensors:   CPU_Mapped model buffer size =   277.85 MiB
+load_tensors:        SYCL0 model buffer size =   147.49 MiB
+........................
+common_init_result: added <eos> logit bias = -inf
+common_init_result: added <|tool_response> logit bias = -inf
+common_init_result: added <turn|> logit bias = -inf
+llama_context: constructing llama_context
+llama_context: n_seq_max     = 1
+llama_context: n_ctx         = 8192
+llama_context: n_ctx_seq     = 8192
+llama_context: n_batch       = 512
+llama_context: n_ubatch      = 64
+llama_context: causal_attn   = 1
+llama_context: flash_attn    = enabled
+llama_context: kv_unified    = false
+llama_context: freq_base     = 1000000.0
+llama_context: freq_scale    = 1
+llama_context: n_ctx_seq (8192) < n_ctx_train (262144) -- the full capacity of the model will not be utilized
+llama_context:  SYCL_Host  output buffer size =     1.00 MiB
+llama_kv_cache_iswa: creating non-SWA KV cache, size = 8192 cells
+llama_kv_cache:      SYCL0 KV buffer size =   160.00 MiB
+llama_kv_cache: size =  160.00 MiB (  8192 cells,   5 layers,  1/1 seqs), K (f16):   80.00 MiB, V (f16):   80.00 MiB
+llama_kv_cache: upstream attention rotation disabled (TurboQuant uses kernel-level WHT)
+llama_kv_cache: attn_rot_k = 0, n_embd_head_k_all = 512
+llama_kv_cache: attn_rot_v = 0, n_embd_head_k_all = 512
+llama_kv_cache_iswa: creating     SWA KV cache, size = 1280 cells
+llama_kv_cache:      SYCL0 KV buffer size =   250.00 MiB
+llama_kv_cache: size =  250.00 MiB (  1280 cells,  25 layers,  1/1 seqs), K (f16):  125.00 MiB, V (f16):  125.00 MiB
+llama_kv_cache: upstream attention rotation disabled (TurboQuant uses kernel-level WHT)
+llama_kv_cache: attn_rot_k = 0, n_embd_head_k_all = 256
+llama_kv_cache: attn_rot_v = 0, n_embd_head_k_all = 256
+sched_reserve: reserving ...
+sched_reserve: resolving fused Gated Delta Net support:
+sched_reserve: fused Gated Delta Net (autoregressive) enabled
+sched_reserve: fused Gated Delta Net (chunked) enabled
+sched_reserve:      SYCL0 compute buffer size =    66.58 MiB
+sched_reserve:  SYCL_Host compute buffer size =     3.69 MiB
+sched_reserve: graph nodes  = 2647
+sched_reserve: graph splits = 2
+sched_reserve: reserve took 4.16 ms, sched copies = 1
+common_init_from_params: warming up the model with an empty run - please wait ... (--no-warmup to disable)
+srv    load_model: MTP assistant path '/mnt/fast-ai/llm-models/gemma4-26b-a4b-it-q8-gguf/gemma-4-26B-A4B-it-assistant.Q8_0.gguf' (loaded into target model)
+srv    load_model: initializing slots, n_slots = 1
+slot   load_model: id  0 | task -1 | speculative decoding context initialized
+slot   load_model: id  0 | task -1 | new slot, n_ctx = 8192
+srv    load_model: prompt cache is disabled - use `--cache-ram N` to enable it
+srv    load_model: for more info see https://github.com/ggml-org/llama.cpp/pull/16391
+srv          init: init: --clear-idle requires --kv-unified, disabling
+init: chat template, example_format: '<|turn>system
+You are a helpful assistant<turn|>
+<|turn>user
+Hello<turn|>
+<|turn>model
+Hi there<turn|>
+<|turn>user
+How are you?<turn|>
+<|turn>model
+<|channel>thought
+<channel|>'
+srv          init: init: chat template, thinking = 0
+main: model loaded
+main: server is listening on http://127.0.0.1:18260
+main: starting the main loop...
+srv  update_slots: all slots are idle
+srv  params_from_: Chat format: peg-gemma4
+slot get_availabl: id  0 | task -1 | selected slot by LRU, t_last = -1
+slot launch_slot_: id  0 | task -1 | sampler chain: logits -> ?penalties -> ?dry -> ?top-n-sigma -> top-k -> ?typical -> ?top-p -> min-p -> ?xtc -> temp-ext -> dist 
+slot launch_slot_: id  0 | task 0 | processing task, is_child = 0
+slot update_slots: id  0 | task 0 | new prompt, n_ctx_slot = 8192, n_keep = 0, task.n_tokens = 40
+slot update_slots: id  0 | task 0 | n_tokens = 0, memory_seq_rm [0, end)
+slot update_slots: id  0 | task 0 | prompt processing progress, n_tokens = 36, batch.n_tokens = 36, progress = 0.900000
+init: embeddings required but some input tokens were not marked as outputs -> overriding
+slot update_slots: id  0 | task 0 | n_tokens = 36, memory_seq_rm [36, end)
+slot init_sampler: id  0 | task 0 | init sampler, took 0.01 ms, tokens: text = 40, total = 40
+slot update_slots: id  0 | task 0 | prompt processing done, n_tokens = 40, batch.n_tokens = 4
+init: embeddings required but some input tokens were not marked as outputs -> overriding
+slot print_timing: id  0 | task 0 | 
+prompt eval time =     551.55 ms /    40 tokens (   13.79 ms per token,    72.52 tokens per second)
+       eval time =     496.79 ms /    13 tokens (   38.21 ms per token,    26.17 tokens per second)
+      total time =    1048.34 ms /    53 tokens
+draft acceptance rate = 1.00000 (    8 accepted /     8 generated)
+statistics mtp: #calls(b,g,a) = 1 4 4, #gen drafts = 4, #acc drafts = 4, #gen tokens = 8, #acc tokens = 8, dur(b,g,a) = 0.002, 54.272, 0.000 ms
+srv  log_server_r: done request: POST /v1/chat/completions 127.0.0.1 200
+srv  params_from_: Chat format: peg-gemma4
+slot      release: id  0 | task 0 | stop processing: n_tokens = 52, truncated = 0
+slot get_availabl: id  0 | task -1 | selected slot by LCP similarity, sim_best = 0.108 (> 0.100 thold), f_keep = 0.077
+slot launch_slot_: id  0 | task -1 | sampler chain: logits -> ?penalties -> ?dry -> ?top-n-sigma -> top-k -> ?typical -> ?top-p -> min-p -> ?xtc -> temp-ext -> dist 
+slot launch_slot_: id  0 | task 7 | processing task, is_child = 0
+slot update_slots: id  0 | task 7 | new prompt, n_ctx_slot = 8192, n_keep = 0, task.n_tokens = 37
+slot update_slots: id  0 | task 7 | n_past = 4, slot.prompt.tokens.size() = 52, seq_id = 0, pos_min = 0, n_swa = 1024
+slot update_slots: id  0 | task 7 | forcing full prompt re-processing due to lack of cache data (likely due to SWA or hybrid/recurrent memory, see https://github.com/ggml-org/llama.cpp/pull/13194#issuecomment-2868343055)
+slot update_slots: id  0 | task 7 | n_tokens = 0, memory_seq_rm [0, end)
+slot update_slots: id  0 | task 7 | prompt processing progress, n_tokens = 33, batch.n_tokens = 33, progress = 0.891892
+init: embeddings required but some input tokens were not marked as outputs -> overriding
+slot update_slots: id  0 | task 7 | n_tokens = 33, memory_seq_rm [33, end)
+slot init_sampler: id  0 | task 7 | init sampler, took 0.00 ms, tokens: text = 37, total = 37
+slot update_slots: id  0 | task 7 | prompt processing done, n_tokens = 37, batch.n_tokens = 4
+init: embeddings required but some input tokens were not marked as outputs -> overriding
+slot print_timing: id  0 | task 7 | 
+prompt eval time =     390.94 ms /    37 tokens (   10.57 ms per token,    94.64 tokens per second)
+       eval time =     373.69 ms /    10 tokens (   37.37 ms per token,    26.76 tokens per second)
+      total time =     764.63 ms /    47 tokens
+draft acceptance rate = 1.00000 (    6 accepted /     6 generated)
+statistics mtp: #calls(b,g,a) = 2 7 7, #gen drafts = 7, #acc drafts = 7, #gen tokens = 14, #acc tokens = 14, dur(b,g,a) = 0.003, 98.011, 0.000 ms
+srv  log_server_r: done request: POST /v1/chat/completions 127.0.0.1 200
+srv  params_from_: Chat format: peg-gemma4
+slot      release: id  0 | task 7 | stop processing: n_tokens = 46, truncated = 0
+slot get_availabl: id  0 | task -1 | selected slot by LCP similarity, sim_best = 0.103 (> 0.100 thold), f_keep = 0.087
+slot launch_slot_: id  0 | task -1 | sampler chain: logits -> ?penalties -> ?dry -> ?top-n-sigma -> top-k -> ?typical -> ?top-p -> min-p -> ?xtc -> temp-ext -> dist 
+slot launch_slot_: id  0 | task 13 | processing task, is_child = 0
+slot update_slots: id  0 | task 13 | new prompt, n_ctx_slot = 8192, n_keep = 0, task.n_tokens = 39
+slot update_slots: id  0 | task 13 | n_past = 4, slot.prompt.tokens.size() = 46, seq_id = 0, pos_min = 0, n_swa = 1024
+slot update_slots: id  0 | task 13 | forcing full prompt re-processing due to lack of cache data (likely due to SWA or hybrid/recurrent memory, see https://github.com/ggml-org/llama.cpp/pull/13194#issuecomment-2868343055)
+slot update_slots: id  0 | task 13 | n_tokens = 0, memory_seq_rm [0, end)
+slot update_slots: id  0 | task 13 | prompt processing progress, n_tokens = 35, batch.n_tokens = 35, progress = 0.897436
+init: embeddings required but some input tokens were not marked as outputs -> overriding
+slot update_slots: id  0 | task 13 | n_tokens = 35, memory_seq_rm [35, end)
+slot init_sampler: id  0 | task 13 | init sampler, took 0.01 ms, tokens: text = 39, total = 39
+slot update_slots: id  0 | task 13 | prompt processing done, n_tokens = 39, batch.n_tokens = 4
+init: embeddings required but some input tokens were not marked as outputs -> overriding
+slot print_timing: id  0 | task 13 | 
+prompt eval time =     404.16 ms /    39 tokens (   10.36 ms per token,    96.50 tokens per second)
+       eval time =     126.12 ms /     4 tokens (   31.53 ms per token,    31.72 tokens per second)
+      total time =     530.28 ms /    43 tokens
+draft acceptance rate = 1.00000 (    2 accepted /     2 generated)
+statistics mtp: #calls(b,g,a) = 3 8 8, #gen drafts = 8, #acc drafts = 8, #gen tokens = 16, #acc tokens = 16, dur(b,g,a) = 0.004, 112.689, 0.000 ms
+srv  log_server_r: done request: POST /v1/chat/completions 127.0.0.1 200
+srv  params_from_: Chat format: peg-gemma4
+slot      release: id  0 | task 13 | stop processing: n_tokens = 42, truncated = 0
+slot get_availabl: id  0 | task -1 | selected slot by LCP similarity, sim_best = 0.103 (> 0.100 thold), f_keep = 0.095
+slot launch_slot_: id  0 | task -1 | sampler chain: logits -> ?penalties -> ?dry -> ?top-n-sigma -> top-k -> ?typical -> ?top-p -> min-p -> ?xtc -> temp-ext -> dist 
+slot launch_slot_: id  0 | task 17 | processing task, is_child = 0
+slot update_slots: id  0 | task 17 | new prompt, n_ctx_slot = 8192, n_keep = 0, task.n_tokens = 39
+slot update_slots: id  0 | task 17 | n_past = 4, slot.prompt.tokens.size() = 42, seq_id = 0, pos_min = 0, n_swa = 1024
+slot update_slots: id  0 | task 17 | forcing full prompt re-processing due to lack of cache data (likely due to SWA or hybrid/recurrent memory, see https://github.com/ggml-org/llama.cpp/pull/13194#issuecomment-2868343055)
+slot update_slots: id  0 | task 17 | n_tokens = 0, memory_seq_rm [0, end)
+slot update_slots: id  0 | task 17 | prompt processing progress, n_tokens = 35, batch.n_tokens = 35, progress = 0.897436
+init: embeddings required but some input tokens were not marked as outputs -> overriding
+slot update_slots: id  0 | task 17 | n_tokens = 35, memory_seq_rm [35, end)
+slot init_sampler: id  0 | task 17 | init sampler, took 0.00 ms, tokens: text = 39, total = 39
+slot update_slots: id  0 | task 17 | prompt processing done, n_tokens = 39, batch.n_tokens = 4
+init: embeddings required but some input tokens were not marked as outputs -> overriding
+slot print_timing: id  0 | task 17 | 
+prompt eval time =     404.34 ms /    39 tokens (   10.37 ms per token,    96.45 tokens per second)
+       eval time =     870.98 ms /    22 tokens (   39.59 ms per token,    25.26 tokens per second)
+      total time =    1275.32 ms /    61 tokens
+draft acceptance rate = 1.00000 (   14 accepted /    14 generated)
+statistics mtp: #calls(b,g,a) = 4 15 15, #gen drafts = 15, #acc drafts = 15, #gen tokens = 30, #acc tokens = 30, dur(b,g,a) = 0.005, 215.650, 0.002 ms
+srv  log_server_r: done request: POST /v1/chat/completions 127.0.0.1 200
+srv  params_from_: Chat format: peg-gemma4
+slot      release: id  0 | task 17 | stop processing: n_tokens = 60, truncated = 0
+slot get_availabl: id  0 | task -1 | selected slot by LRU, t_last = 149499226698
+slot launch_slot_: id  0 | task -1 | sampler chain: logits -> ?penalties -> ?dry -> ?top-n-sigma -> top-k -> ?typical -> ?top-p -> min-p -> ?xtc -> temp-ext -> dist 
+slot launch_slot_: id  0 | task 27 | processing task, is_child = 0
+slot update_slots: id  0 | task 27 | new prompt, n_ctx_slot = 8192, n_keep = 0, task.n_tokens = 40
+slot update_slots: id  0 | task 27 | n_past = 4, slot.prompt.tokens.size() = 60, seq_id = 0, pos_min = 0, n_swa = 1024
+slot update_slots: id  0 | task 27 | forcing full prompt re-processing due to lack of cache data (likely due to SWA or hybrid/recurrent memory, see https://github.com/ggml-org/llama.cpp/pull/13194#issuecomment-2868343055)
+slot update_slots: id  0 | task 27 | n_tokens = 0, memory_seq_rm [0, end)
+slot update_slots: id  0 | task 27 | prompt processing progress, n_tokens = 36, batch.n_tokens = 36, progress = 0.900000
+init: embeddings required but some input tokens were not marked as outputs -> overriding
+slot update_slots: id  0 | task 27 | n_tokens = 36, memory_seq_rm [36, end)
+slot init_sampler: id  0 | task 27 | init sampler, took 0.01 ms, tokens: text = 40, total = 40
+slot update_slots: id  0 | task 27 | prompt processing done, n_tokens = 40, batch.n_tokens = 4
+init: embeddings required but some input tokens were not marked as outputs -> overriding
+slot print_timing: id  0 | task 27 | 
+prompt eval time =     414.20 ms /    40 tokens (   10.36 ms per token,    96.57 tokens per second)
+       eval time =     498.91 ms /    13 tokens (   38.38 ms per token,    26.06 tokens per second)
+      total time =     913.12 ms /    53 tokens
+draft acceptance rate = 1.00000 (    8 accepted /     8 generated)
+statistics mtp: #calls(b,g,a) = 5 19 19, #gen drafts = 19, #acc drafts = 19, #gen tokens = 38, #acc tokens = 38, dur(b,g,a) = 0.007, 273.106, 0.004 ms
+srv  log_server_r: done request: POST /v1/chat/completions 127.0.0.1 200
+srv  params_from_: Chat format: peg-gemma4
+slot      release: id  0 | task 27 | stop processing: n_tokens = 52, truncated = 0
+slot get_availabl: id  0 | task -1 | selected slot by LCP similarity, sim_best = 0.108 (> 0.100 thold), f_keep = 0.077
+slot launch_slot_: id  0 | task -1 | sampler chain: logits -> ?penalties -> ?dry -> ?top-n-sigma -> top-k -> ?typical -> ?top-p -> min-p -> ?xtc -> temp-ext -> dist 
+slot launch_slot_: id  0 | task 34 | processing task, is_child = 0
+slot update_slots: id  0 | task 34 | new prompt, n_ctx_slot = 8192, n_keep = 0, task.n_tokens = 37
+slot update_slots: id  0 | task 34 | n_past = 4, slot.prompt.tokens.size() = 52, seq_id = 0, pos_min = 0, n_swa = 1024
+slot update_slots: id  0 | task 34 | forcing full prompt re-processing due to lack of cache data (likely due to SWA or hybrid/recurrent memory, see https://github.com/ggml-org/llama.cpp/pull/13194#issuecomment-2868343055)
+slot update_slots: id  0 | task 34 | n_tokens = 0, memory_seq_rm [0, end)
+slot update_slots: id  0 | task 34 | prompt processing progress, n_tokens = 33, batch.n_tokens = 33, progress = 0.891892
+init: embeddings required but some input tokens were not marked as outputs -> overriding
+slot update_slots: id  0 | task 34 | n_tokens = 33, memory_seq_rm [33, end)
+slot init_sampler: id  0 | task 34 | init sampler, took 0.00 ms, tokens: text = 37, total = 37
+slot update_slots: id  0 | task 34 | prompt processing done, n_tokens = 37, batch.n_tokens = 4
+init: embeddings required but some input tokens were not marked as outputs -> overriding
+slot print_timing: id  0 | task 34 | 
+prompt eval time =     390.48 ms /    37 tokens (   10.55 ms per token,    94.75 tokens per second)
+       eval time =     370.31 ms /    10 tokens (   37.03 ms per token,    27.00 tokens per second)
+      total time =     760.80 ms /    47 tokens
+draft acceptance rate = 1.00000 (    6 accepted /     6 generated)
+statistics mtp: #calls(b,g,a) = 6 22 22, #gen drafts = 22, #acc drafts = 22, #gen tokens = 44, #acc tokens = 44, dur(b,g,a) = 0.009, 312.995, 0.004 ms
+srv  log_server_r: done request: POST /v1/chat/completions 127.0.0.1 200
+srv  params_from_: Chat format: peg-gemma4
+slot      release: id  0 | task 34 | stop processing: n_tokens = 46, truncated = 0
+slot get_availabl: id  0 | task -1 | selected slot by LCP similarity, sim_best = 0.103 (> 0.100 thold), f_keep = 0.087
+slot launch_slot_: id  0 | task -1 | sampler chain: logits -> ?penalties -> ?dry -> ?top-n-sigma -> top-k -> ?typical -> ?top-p -> min-p -> ?xtc -> temp-ext -> dist 
+slot launch_slot_: id  0 | task 40 | processing task, is_child = 0
+slot update_slots: id  0 | task 40 | new prompt, n_ctx_slot = 8192, n_keep = 0, task.n_tokens = 39
+slot update_slots: id  0 | task 40 | n_past = 4, slot.prompt.tokens.size() = 46, seq_id = 0, pos_min = 0, n_swa = 1024
+slot update_slots: id  0 | task 40 | forcing full prompt re-processing due to lack of cache data (likely due to SWA or hybrid/recurrent memory, see https://github.com/ggml-org/llama.cpp/pull/13194#issuecomment-2868343055)
+slot update_slots: id  0 | task 40 | n_tokens = 0, memory_seq_rm [0, end)
+slot update_slots: id  0 | task 40 | prompt processing progress, n_tokens = 35, batch.n_tokens = 35, progress = 0.897436
+init: embeddings required but some input tokens were not marked as outputs -> overriding
+slot update_slots: id  0 | task 40 | n_tokens = 35, memory_seq_rm [35, end)
+slot init_sampler: id  0 | task 40 | init sampler, took 0.01 ms, tokens: text = 39, total = 39
+slot update_slots: id  0 | task 40 | prompt processing done, n_tokens = 39, batch.n_tokens = 4
+init: embeddings required but some input tokens were not marked as outputs -> overriding
+slot print_timing: id  0 | task 40 | 
+prompt eval time =     403.85 ms /    39 tokens (   10.36 ms per token,    96.57 tokens per second)
+       eval time =     125.02 ms /     4 tokens (   31.25 ms per token,    32.00 tokens per second)
+      total time =     528.87 ms /    43 tokens
+draft acceptance rate = 1.00000 (    2 accepted /     2 generated)
+statistics mtp: #calls(b,g,a) = 7 23 23, #gen drafts = 23, #acc drafts = 23, #gen tokens = 46, #acc tokens = 46, dur(b,g,a) = 0.010, 326.511, 0.004 ms
+srv  log_server_r: done request: POST /v1/chat/completions 127.0.0.1 200
+srv  params_from_: Chat format: peg-gemma4
+slot      release: id  0 | task 40 | stop processing: n_tokens = 42, truncated = 0
+slot get_availabl: id  0 | task -1 | selected slot by LCP similarity, sim_best = 0.103 (> 0.100 thold), f_keep = 0.095
+slot launch_slot_: id  0 | task -1 | sampler chain: logits -> ?penalties -> ?dry -> ?top-n-sigma -> top-k -> ?typical -> ?top-p -> min-p -> ?xtc -> temp-ext -> dist 
+slot launch_slot_: id  0 | task 44 | processing task, is_child = 0
+slot update_slots: id  0 | task 44 | new prompt, n_ctx_slot = 8192, n_keep = 0, task.n_tokens = 39
+slot update_slots: id  0 | task 44 | n_past = 4, slot.prompt.tokens.size() = 42, seq_id = 0, pos_min = 0, n_swa = 1024
+slot update_slots: id  0 | task 44 | forcing full prompt re-processing due to lack of cache data (likely due to SWA or hybrid/recurrent memory, see https://github.com/ggml-org/llama.cpp/pull/13194#issuecomment-2868343055)
+slot update_slots: id  0 | task 44 | n_tokens = 0, memory_seq_rm [0, end)
+slot update_slots: id  0 | task 44 | prompt processing progress, n_tokens = 35, batch.n_tokens = 35, progress = 0.897436
+init: embeddings required but some input tokens were not marked as outputs -> overriding
+slot update_slots: id  0 | task 44 | n_tokens = 35, memory_seq_rm [35, end)
+slot init_sampler: id  0 | task 44 | init sampler, took 0.01 ms, tokens: text = 39, total = 39
+slot update_slots: id  0 | task 44 | prompt processing done, n_tokens = 39, batch.n_tokens = 4
+init: embeddings required but some input tokens were not marked as outputs -> overriding
+slot print_timing: id  0 | task 44 | 
+prompt eval time =     403.85 ms /    39 tokens (   10.36 ms per token,    96.57 tokens per second)
+       eval time =     868.45 ms /    22 tokens (   39.48 ms per token,    25.33 tokens per second)
+      total time =    1272.30 ms /    61 tokens
+draft acceptance rate = 1.00000 (   14 accepted /    14 generated)
+statistics mtp: #calls(b,g,a) = 8 30 30, #gen drafts = 30, #acc drafts = 30, #gen tokens = 60, #acc tokens = 60, dur(b,g,a) = 0.011, 426.551, 0.005 ms
+srv  log_server_r: done request: POST /v1/chat/completions 127.0.0.1 200
+srv  params_from_: Chat format: peg-gemma4
+slot      release: id  0 | task 44 | stop processing: n_tokens = 60, truncated = 0
+slot get_availabl: id  0 | task -1 | selected slot by LRU, t_last = 149502757939
+slot launch_slot_: id  0 | task -1 | sampler chain: logits -> ?penalties -> ?dry -> ?top-n-sigma -> top-k -> ?typical -> ?top-p -> min-p -> ?xtc -> temp-ext -> dist 
+slot launch_slot_: id  0 | task 54 | processing task, is_child = 0
+slot update_slots: id  0 | task 54 | new prompt, n_ctx_slot = 8192, n_keep = 0, task.n_tokens = 40
+slot update_slots: id  0 | task 54 | n_past = 4, slot.prompt.tokens.size() = 60, seq_id = 0, pos_min = 0, n_swa = 1024
+slot update_slots: id  0 | task 54 | forcing full prompt re-processing due to lack of cache data (likely due to SWA or hybrid/recurrent memory, see https://github.com/ggml-org/llama.cpp/pull/13194#issuecomment-2868343055)
+slot update_slots: id  0 | task 54 | n_tokens = 0, memory_seq_rm [0, end)
+slot update_slots: id  0 | task 54 | prompt processing progress, n_tokens = 36, batch.n_tokens = 36, progress = 0.900000
+init: embeddings required but some input tokens were not marked as outputs -> overriding
+slot update_slots: id  0 | task 54 | n_tokens = 36, memory_seq_rm [36, end)
+slot init_sampler: id  0 | task 54 | init sampler, took 0.01 ms, tokens: text = 40, total = 40
+slot update_slots: id  0 | task 54 | prompt processing done, n_tokens = 40, batch.n_tokens = 4
+init: embeddings required but some input tokens were not marked as outputs -> overriding
+slot print_timing: id  0 | task 54 | 
+prompt eval time =     414.99 ms /    40 tokens (   10.37 ms per token,    96.39 tokens per second)
+       eval time =     501.99 ms /    13 tokens (   38.61 ms per token,    25.90 tokens per second)
+      total time =     916.98 ms /    53 tokens
+draft acceptance rate = 1.00000 (    8 accepted /     8 generated)
+statistics mtp: #calls(b,g,a) = 9 34 34, #gen drafts = 34, #acc drafts = 34, #gen tokens = 68, #acc tokens = 68, dur(b,g,a) = 0.013, 485.306, 0.005 ms
+srv  log_server_r: done request: POST /v1/chat/completions 127.0.0.1 200
+srv  params_from_: Chat format: peg-gemma4
+slot      release: id  0 | task 54 | stop processing: n_tokens = 52, truncated = 0
+slot get_availabl: id  0 | task -1 | selected slot by LCP similarity, sim_best = 0.108 (> 0.100 thold), f_keep = 0.077
+slot launch_slot_: id  0 | task -1 | sampler chain: logits -> ?penalties -> ?dry -> ?top-n-sigma -> top-k -> ?typical -> ?top-p -> min-p -> ?xtc -> temp-ext -> dist 
+slot launch_slot_: id  0 | task 61 | processing task, is_child = 0
+slot update_slots: id  0 | task 61 | new prompt, n_ctx_slot = 8192, n_keep = 0, task.n_tokens = 37
+slot update_slots: id  0 | task 61 | n_past = 4, slot.prompt.tokens.size() = 52, seq_id = 0, pos_min = 0, n_swa = 1024
+slot update_slots: id  0 | task 61 | forcing full prompt re-processing due to lack of cache data (likely due to SWA or hybrid/recurrent memory, see https://github.com/ggml-org/llama.cpp/pull/13194#issuecomment-2868343055)
+slot update_slots: id  0 | task 61 | n_tokens = 0, memory_seq_rm [0, end)
+slot update_slots: id  0 | task 61 | prompt processing progress, n_tokens = 33, batch.n_tokens = 33, progress = 0.891892
+init: embeddings required but some input tokens were not marked as outputs -> overriding
+slot update_slots: id  0 | task 61 | n_tokens = 33, memory_seq_rm [33, end)
+slot init_sampler: id  0 | task 61 | init sampler, took 0.01 ms, tokens: text = 37, total = 37
+slot update_slots: id  0 | task 61 | prompt processing done, n_tokens = 37, batch.n_tokens = 4
+init: embeddings required but some input tokens were not marked as outputs -> overriding
+slot print_timing: id  0 | task 61 | 
+prompt eval time =     392.14 ms /    37 tokens (   10.60 ms per token,    94.35 tokens per second)
+       eval time =     375.45 ms /    10 tokens (   37.54 ms per token,    26.63 tokens per second)
+      total time =     767.59 ms /    47 tokens
+draft acceptance rate = 1.00000 (    6 accepted /     6 generated)
+statistics mtp: #calls(b,g,a) = 10 37 37, #gen drafts = 37, #acc drafts = 37, #gen tokens = 74, #acc tokens = 74, dur(b,g,a) = 0.015, 529.237, 0.005 ms
+srv  log_server_r: done request: POST /v1/chat/completions 127.0.0.1 200
+srv  params_from_: Chat format: peg-gemma4
+slot      release: id  0 | task 61 | stop processing: n_tokens = 46, truncated = 0
+slot get_availabl: id  0 | task -1 | selected slot by LCP similarity, sim_best = 0.103 (> 0.100 thold), f_keep = 0.087
+slot launch_slot_: id  0 | task -1 | sampler chain: logits -> ?penalties -> ?dry -> ?top-n-sigma -> top-k -> ?typical -> ?top-p -> min-p -> ?xtc -> temp-ext -> dist 
+slot launch_slot_: id  0 | task 67 | processing task, is_child = 0
+slot update_slots: id  0 | task 67 | new prompt, n_ctx_slot = 8192, n_keep = 0, task.n_tokens = 39
+slot update_slots: id  0 | task 67 | n_past = 4, slot.prompt.tokens.size() = 46, seq_id = 0, pos_min = 0, n_swa = 1024
+slot update_slots: id  0 | task 67 | forcing full prompt re-processing due to lack of cache data (likely due to SWA or hybrid/recurrent memory, see https://github.com/ggml-org/llama.cpp/pull/13194#issuecomment-2868343055)
+slot update_slots: id  0 | task 67 | n_tokens = 0, memory_seq_rm [0, end)
+slot update_slots: id  0 | task 67 | prompt processing progress, n_tokens = 35, batch.n_tokens = 35, progress = 0.897436
+init: embeddings required but some input tokens were not marked as outputs -> overriding
+slot update_slots: id  0 | task 67 | n_tokens = 35, memory_seq_rm [35, end)
+slot init_sampler: id  0 | task 67 | init sampler, took 0.00 ms, tokens: text = 39, total = 39
+slot update_slots: id  0 | task 67 | prompt processing done, n_tokens = 39, batch.n_tokens = 4
+init: embeddings required but some input tokens were not marked as outputs -> overriding
+slot print_timing: id  0 | task 67 | 
+prompt eval time =     403.83 ms /    39 tokens (   10.35 ms per token,    96.57 tokens per second)
+       eval time =     126.10 ms /     4 tokens (   31.52 ms per token,    31.72 tokens per second)
+      total time =     529.93 ms /    43 tokens
+draft acceptance rate = 1.00000 (    2 accepted /     2 generated)
+statistics mtp: #calls(b,g,a) = 11 38 38, #gen drafts = 38, #acc drafts = 38, #gen tokens = 76, #acc tokens = 76, dur(b,g,a) = 0.016, 543.693, 0.005 ms
+srv  log_server_r: done request: POST /v1/chat/completions 127.0.0.1 200
+srv  params_from_: Chat format: peg-gemma4
+slot      release: id  0 | task 67 | stop processing: n_tokens = 42, truncated = 0
+slot get_availabl: id  0 | task -1 | selected slot by LCP similarity, sim_best = 0.103 (> 0.100 thold), f_keep = 0.095
+slot launch_slot_: id  0 | task -1 | sampler chain: logits -> ?penalties -> ?dry -> ?top-n-sigma -> top-k -> ?typical -> ?top-p -> min-p -> ?xtc -> temp-ext -> dist 
+slot launch_slot_: id  0 | task 71 | processing task, is_child = 0
+slot update_slots: id  0 | task 71 | new prompt, n_ctx_slot = 8192, n_keep = 0, task.n_tokens = 39
+slot update_slots: id  0 | task 71 | n_past = 4, slot.prompt.tokens.size() = 42, seq_id = 0, pos_min = 0, n_swa = 1024
+slot update_slots: id  0 | task 71 | forcing full prompt re-processing due to lack of cache data (likely due to SWA or hybrid/recurrent memory, see https://github.com/ggml-org/llama.cpp/pull/13194#issuecomment-2868343055)
+slot update_slots: id  0 | task 71 | n_tokens = 0, memory_seq_rm [0, end)
+slot update_slots: id  0 | task 71 | prompt processing progress, n_tokens = 35, batch.n_tokens = 35, progress = 0.897436
+init: embeddings required but some input tokens were not marked as outputs -> overriding
+slot update_slots: id  0 | task 71 | n_tokens = 35, memory_seq_rm [35, end)
+slot init_sampler: id  0 | task 71 | init sampler, took 0.01 ms, tokens: text = 39, total = 39
+slot update_slots: id  0 | task 71 | prompt processing done, n_tokens = 39, batch.n_tokens = 4
+init: embeddings required but some input tokens were not marked as outputs -> overriding
+slot print_timing: id  0 | task 71 | 
+prompt eval time =     405.06 ms /    39 tokens (   10.39 ms per token,    96.28 tokens per second)
+       eval time =     869.03 ms /    22 tokens (   39.50 ms per token,    25.32 tokens per second)
+      total time =    1274.09 ms /    61 tokens
+draft acceptance rate = 1.00000 (   14 accepted /    14 generated)
+statistics mtp: #calls(b,g,a) = 12 45 45, #gen drafts = 45, #acc drafts = 45, #gen tokens = 90, #acc tokens = 90, dur(b,g,a) = 0.018, 643.945, 0.006 ms
+srv  log_server_r: done request: POST /v1/chat/completions 127.0.0.1 200
+srv  params_from_: Chat format: peg-gemma4
+slot      release: id  0 | task 71 | stop processing: n_tokens = 60, truncated = 0
+slot get_availabl: id  0 | task -1 | selected slot by LRU, t_last = 149506305562
+slot launch_slot_: id  0 | task -1 | sampler chain: logits -> ?penalties -> ?dry -> ?top-n-sigma -> top-k -> ?typical -> ?top-p -> min-p -> ?xtc -> temp-ext -> dist 
+slot launch_slot_: id  0 | task 81 | processing task, is_child = 0
+slot update_slots: id  0 | task 81 | new prompt, n_ctx_slot = 8192, n_keep = 0, task.n_tokens = 40
+slot update_slots: id  0 | task 81 | n_past = 4, slot.prompt.tokens.size() = 60, seq_id = 0, pos_min = 0, n_swa = 1024
+slot update_slots: id  0 | task 81 | forcing full prompt re-processing due to lack of cache data (likely due to SWA or hybrid/recurrent memory, see https://github.com/ggml-org/llama.cpp/pull/13194#issuecomment-2868343055)
+slot update_slots: id  0 | task 81 | n_tokens = 0, memory_seq_rm [0, end)
+slot update_slots: id  0 | task 81 | prompt processing progress, n_tokens = 36, batch.n_tokens = 36, progress = 0.900000
+init: embeddings required but some input tokens were not marked as outputs -> overriding
+slot update_slots: id  0 | task 81 | n_tokens = 36, memory_seq_rm [36, end)
+slot init_sampler: id  0 | task 81 | init sampler, took 0.01 ms, tokens: text = 40, total = 40
+slot update_slots: id  0 | task 81 | prompt processing done, n_tokens = 40, batch.n_tokens = 4
+init: embeddings required but some input tokens were not marked as outputs -> overriding
+slot print_timing: id  0 | task 81 | 
+prompt eval time =     414.48 ms /    40 tokens (   10.36 ms per token,    96.51 tokens per second)
+       eval time =     498.70 ms /    13 tokens (   38.36 ms per token,    26.07 tokens per second)
+      total time =     913.18 ms /    53 tokens
+draft acceptance rate = 1.00000 (    8 accepted /     8 generated)
+statistics mtp: #calls(b,g,a) = 13 49 49, #gen drafts = 49, #acc drafts = 49, #gen tokens = 98, #acc tokens = 98, dur(b,g,a) = 0.019, 699.180, 0.006 ms
+srv  log_server_r: done request: POST /v1/chat/completions 127.0.0.1 200
+srv  params_from_: Chat format: peg-gemma4
+slot      release: id  0 | task 81 | stop processing: n_tokens = 52, truncated = 0
+slot get_availabl: id  0 | task -1 | selected slot by LCP similarity, sim_best = 0.108 (> 0.100 thold), f_keep = 0.077
+slot launch_slot_: id  0 | task -1 | sampler chain: logits -> ?penalties -> ?dry -> ?top-n-sigma -> top-k -> ?typical -> ?top-p -> min-p -> ?xtc -> temp-ext -> dist 
+slot launch_slot_: id  0 | task 88 | processing task, is_child = 0
+slot update_slots: id  0 | task 88 | new prompt, n_ctx_slot = 8192, n_keep = 0, task.n_tokens = 37
+slot update_slots: id  0 | task 88 | n_past = 4, slot.prompt.tokens.size() = 52, seq_id = 0, pos_min = 0, n_swa = 1024
+slot update_slots: id  0 | task 88 | forcing full prompt re-processing due to lack of cache data (likely due to SWA or hybrid/recurrent memory, see https://github.com/ggml-org/llama.cpp/pull/13194#issuecomment-2868343055)
+slot update_slots: id  0 | task 88 | n_tokens = 0, memory_seq_rm [0, end)
+slot update_slots: id  0 | task 88 | prompt processing progress, n_tokens = 33, batch.n_tokens = 33, progress = 0.891892
+init: embeddings required but some input tokens were not marked as outputs -> overriding
+slot update_slots: id  0 | task 88 | n_tokens = 33, memory_seq_rm [33, end)
+slot init_sampler: id  0 | task 88 | init sampler, took 0.01 ms, tokens: text = 37, total = 37
+slot update_slots: id  0 | task 88 | prompt processing done, n_tokens = 37, batch.n_tokens = 4
+init: embeddings required but some input tokens were not marked as outputs -> overriding
+slot print_timing: id  0 | task 88 | 
+prompt eval time =     392.19 ms /    37 tokens (   10.60 ms per token,    94.34 tokens per second)
+       eval time =     371.78 ms /    10 tokens (   37.18 ms per token,    26.90 tokens per second)
+      total time =     763.97 ms /    47 tokens
+draft acceptance rate = 1.00000 (    6 accepted /     6 generated)
+statistics mtp: #calls(b,g,a) = 14 52 52, #gen drafts = 52, #acc drafts = 52, #gen tokens = 104, #acc tokens = 104, dur(b,g,a) = 0.023, 739.771, 0.008 ms
+srv  log_server_r: done request: POST /v1/chat/completions 127.0.0.1 200
+srv  params_from_: Chat format: peg-gemma4
+slot      release: id  0 | task 88 | stop processing: n_tokens = 46, truncated = 0
+slot get_availabl: id  0 | task -1 | selected slot by LCP similarity, sim_best = 0.103 (> 0.100 thold), f_keep = 0.087
+slot launch_slot_: id  0 | task -1 | sampler chain: logits -> ?penalties -> ?dry -> ?top-n-sigma -> top-k -> ?typical -> ?top-p -> min-p -> ?xtc -> temp-ext -> dist 
+slot launch_slot_: id  0 | task 94 | processing task, is_child = 0
+slot update_slots: id  0 | task 94 | new prompt, n_ctx_slot = 8192, n_keep = 0, task.n_tokens = 39
+slot update_slots: id  0 | task 94 | n_past = 4, slot.prompt.tokens.size() = 46, seq_id = 0, pos_min = 0, n_swa = 1024
+slot update_slots: id  0 | task 94 | forcing full prompt re-processing due to lack of cache data (likely due to SWA or hybrid/recurrent memory, see https://github.com/ggml-org/llama.cpp/pull/13194#issuecomment-2868343055)
+slot update_slots: id  0 | task 94 | n_tokens = 0, memory_seq_rm [0, end)
+slot update_slots: id  0 | task 94 | prompt processing progress, n_tokens = 35, batch.n_tokens = 35, progress = 0.897436
+init: embeddings required but some input tokens were not marked as outputs -> overriding
+slot update_slots: id  0 | task 94 | n_tokens = 35, memory_seq_rm [35, end)
+slot init_sampler: id  0 | task 94 | init sampler, took 0.01 ms, tokens: text = 39, total = 39
+slot update_slots: id  0 | task 94 | prompt processing done, n_tokens = 39, batch.n_tokens = 4
+init: embeddings required but some input tokens were not marked as outputs -> overriding
+slot print_timing: id  0 | task 94 | 
+prompt eval time =     404.38 ms /    39 tokens (   10.37 ms per token,    96.45 tokens per second)
+       eval time =     126.34 ms /     4 tokens (   31.59 ms per token,    31.66 tokens per second)
+      total time =     530.72 ms /    43 tokens
+draft acceptance rate = 1.00000 (    2 accepted /     2 generated)
+statistics mtp: #calls(b,g,a) = 15 53 53, #gen drafts = 53, #acc drafts = 53, #gen tokens = 106, #acc tokens = 106, dur(b,g,a) = 0.026, 754.151, 0.009 ms
+srv  log_server_r: done request: POST /v1/chat/completions 127.0.0.1 200
+srv  params_from_: Chat format: peg-gemma4
+slot      release: id  0 | task 94 | stop processing: n_tokens = 42, truncated = 0
+slot get_availabl: id  0 | task -1 | selected slot by LCP similarity, sim_best = 0.103 (> 0.100 thold), f_keep = 0.095
+slot launch_slot_: id  0 | task -1 | sampler chain: logits -> ?penalties -> ?dry -> ?top-n-sigma -> top-k -> ?typical -> ?top-p -> min-p -> ?xtc -> temp-ext -> dist 
+slot launch_slot_: id  0 | task 98 | processing task, is_child = 0
+slot update_slots: id  0 | task 98 | new prompt, n_ctx_slot = 8192, n_keep = 0, task.n_tokens = 39
+slot update_slots: id  0 | task 98 | n_past = 4, slot.prompt.tokens.size() = 42, seq_id = 0, pos_min = 0, n_swa = 1024
+slot update_slots: id  0 | task 98 | forcing full prompt re-processing due to lack of cache data (likely due to SWA or hybrid/recurrent memory, see https://github.com/ggml-org/llama.cpp/pull/13194#issuecomment-2868343055)
+slot update_slots: id  0 | task 98 | n_tokens = 0, memory_seq_rm [0, end)
+slot update_slots: id  0 | task 98 | prompt processing progress, n_tokens = 35, batch.n_tokens = 35, progress = 0.897436
+init: embeddings required but some input tokens were not marked as outputs -> overriding
+slot update_slots: id  0 | task 98 | n_tokens = 35, memory_seq_rm [35, end)
+slot init_sampler: id  0 | task 98 | init sampler, took 0.01 ms, tokens: text = 39, total = 39
+slot update_slots: id  0 | task 98 | prompt processing done, n_tokens = 39, batch.n_tokens = 4
+init: embeddings required but some input tokens were not marked as outputs -> overriding
+slot print_timing: id  0 | task 98 | 
+prompt eval time =     403.92 ms /    39 tokens (   10.36 ms per token,    96.55 tokens per second)
+       eval time =     872.86 ms /    22 tokens (   39.68 ms per token,    25.20 tokens per second)
+      total time =    1276.78 ms /    61 tokens
+draft acceptance rate = 1.00000 (   14 accepted /    14 generated)
+statistics mtp: #calls(b,g,a) = 16 60 60, #gen drafts = 60, #acc drafts = 60, #gen tokens = 120, #acc tokens = 120, dur(b,g,a) = 0.028, 857.848, 0.011 ms
+srv  log_server_r: done request: POST /v1/chat/completions 127.0.0.1 200
+slot      release: id  0 | task 98 | stop processing: n_tokens = 60, truncated = 0
+srv  update_slots: all slots are idle
+srv  params_from_: Chat format: peg-gemma4
+slot get_availabl: id  0 | task -1 | selected slot by LRU, t_last = 149509848379
+slot launch_slot_: id  0 | task -1 | sampler chain: logits -> ?penalties -> ?dry -> ?top-n-sigma -> top-k -> ?typical -> ?top-p -> min-p -> ?xtc -> temp-ext -> dist 
+slot launch_slot_: id  0 | task 108 | processing task, is_child = 0
+slot update_slots: id  0 | task 108 | new prompt, n_ctx_slot = 8192, n_keep = 0, task.n_tokens = 75
+slot update_slots: id  0 | task 108 | n_past = 4, slot.prompt.tokens.size() = 60, seq_id = 0, pos_min = 0, n_swa = 1024
+slot update_slots: id  0 | task 108 | forcing full prompt re-processing due to lack of cache data (likely due to SWA or hybrid/recurrent memory, see https://github.com/ggml-org/llama.cpp/pull/13194#issuecomment-2868343055)
+slot update_slots: id  0 | task 108 | n_tokens = 0, memory_seq_rm [0, end)
+slot update_slots: id  0 | task 108 | prompt processing progress, n_tokens = 7, batch.n_tokens = 7, progress = 0.093333
+init: embeddings required but some input tokens were not marked as outputs -> overriding
+slot update_slots: id  0 | task 108 | n_tokens = 7, memory_seq_rm [7, end)
+slot update_slots: id  0 | task 108 | prompt processing progress, n_tokens = 71, batch.n_tokens = 64, progress = 0.946667
+slot update_slots: id  0 | task 108 | created context checkpoint 1 of 32 (pos_min = 0, pos_max = 6, n_tokens = 7, size = 1.368 MiB)
+init: embeddings required but some input tokens were not marked as outputs -> overriding
+slot update_slots: id  0 | task 108 | n_tokens = 71, memory_seq_rm [71, end)
+slot init_sampler: id  0 | task 108 | init sampler, took 0.01 ms, tokens: text = 75, total = 75
+slot update_slots: id  0 | task 108 | prompt processing done, n_tokens = 75, batch.n_tokens = 4
+init: embeddings required but some input tokens were not marked as outputs -> overriding
+srv  log_server_r: done request: POST /v1/chat/completions 127.0.0.1 200
+slot print_timing: id  0 | task 108 | 
+prompt eval time =     733.46 ms /    75 tokens (    9.78 ms per token,   102.25 tokens per second)
+       eval time =   28808.54 ms /   512 tokens (   56.27 ms per token,    17.77 tokens per second)
+      total time =   29542.00 ms /   587 tokens
+draft acceptance rate = 0.61842 (  282 accepted /   456 generated)
+statistics mtp: #calls(b,g,a) = 17 288 227, #gen drafts = 288, #acc drafts = 227, #gen tokens = 576, #acc tokens = 402, dur(b,g,a) = 0.030, 4189.964, 0.030 ms
+slot      release: id  0 | task 108 | stop processing: n_tokens = 586, truncated = 0
+srv  update_slots: all slots are idle
+srv  params_from_: Chat format: peg-gemma4
+slot get_availabl: id  0 | task -1 | selected slot by LCP similarity, sim_best = 1.000 (> 0.100 thold), f_keep = 0.128
+slot launch_slot_: id  0 | task -1 | sampler chain: logits -> ?penalties -> ?dry -> ?top-n-sigma -> top-k -> ?typical -> ?top-p -> min-p -> ?xtc -> temp-ext -> dist 
+slot launch_slot_: id  0 | task 341 | processing task, is_child = 0
+slot update_slots: id  0 | task 341 | new prompt, n_ctx_slot = 8192, n_keep = 0, task.n_tokens = 75
+slot update_slots: id  0 | task 341 | n_past = 75, slot.prompt.tokens.size() = 586, seq_id = 0, pos_min = 0, n_swa = 1024
+slot update_slots: id  0 | task 341 | Checking checkpoint with [0, 6] against 0...
+slot update_slots: id  0 | task 341 | restored context checkpoint (pos_min = 0, pos_max = 6, n_tokens = 7, n_past = 6, size = 1.368 MiB)
+slot update_slots: id  0 | task 341 | n_tokens = 6, memory_seq_rm [6, end)
+slot update_slots: id  0 | task 341 | prompt processing progress, n_tokens = 7, batch.n_tokens = 1, progress = 0.093333
+init: embeddings required but some input tokens were not marked as outputs -> overriding
+slot update_slots: id  0 | task 341 | n_tokens = 7, memory_seq_rm [7, end)
+slot update_slots: id  0 | task 341 | prompt processing progress, n_tokens = 71, batch.n_tokens = 64, progress = 0.946667
+init: embeddings required but some input tokens were not marked as outputs -> overriding
+slot update_slots: id  0 | task 341 | n_tokens = 71, memory_seq_rm [71, end)
+slot init_sampler: id  0 | task 341 | init sampler, took 0.01 ms, tokens: text = 75, total = 75
+slot update_slots: id  0 | task 341 | prompt processing done, n_tokens = 75, batch.n_tokens = 4
+init: embeddings required but some input tokens were not marked as outputs -> overriding
+srv  log_server_r: done request: POST /v1/chat/completions 127.0.0.1 200
+slot print_timing: id  0 | task 341 | 
+prompt eval time =     495.51 ms /    69 tokens (    7.18 ms per token,   139.25 tokens per second)
+       eval time =   27681.15 ms /   512 tokens (   54.06 ms per token,    18.50 tokens per second)
+      total time =   28176.66 ms /   581 tokens
+draft acceptance rate = 0.66438 (  291 accepted /   438 generated)
+statistics mtp: #calls(b,g,a) = 18 507 392, #gen drafts = 507, #acc drafts = 392, #gen tokens = 1014, #acc tokens = 693, dur(b,g,a) = 0.031, 7403.553, 0.046 ms
+slot      release: id  0 | task 341 | stop processing: n_tokens = 586, truncated = 0
+srv  update_slots: all slots are idle
+srv    operator(): operator(): cleaning up before exit...
+llama_memory_breakdown_print: | memory breakdown [MiB]                        | total   free     self   model   context   compute    unaccounted |
+llama_memory_breakdown_print: |   - SYCL0 (Intel(R) Arc(TM) Pro B70 Graphics) | 32656 = 3927 + (26817 = 26340 +     410 +      66) +        1911 |
+llama_memory_breakdown_print: |   - Host                                      |                   751 =   748 +       0 +       3                |

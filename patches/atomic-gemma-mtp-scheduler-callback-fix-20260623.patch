@@ -1,0 +1,71 @@
+diff --git a/src/llama-context.cpp b/src/llama-context.cpp
+index d5639d5b6..084f7ee2c 100644
+--- a/src/llama-context.cpp
++++ b/src/llama-context.cpp
+@@ -1260,7 +1260,10 @@ bool llama_context::ensure_sched_mtp() {
+         n_outputs = 1;
+
+         auto * res = gf_res_prev_mtp.get();
+-        const auto gparams = graph_params_mtp(res, ub, mctx.get());
++        auto gparams = graph_params_mtp(res, ub, mctx.get());
++        gparams.n_outputs = 1;
++        gparams.sched     = sched_mtp.get();
++        gparams.cb        = graph_get_cb_mtp();
+         res->reset();
+         ggml_backend_sched_reset(sched_mtp.get());
+
+@@ -1307,6 +1310,7 @@ llm_graph_result * llama_context::process_ubatch_mtp(
+     llm_graph_params gparams = graph_params_mtp(res, ubatch, mctx);
+     gparams.n_outputs = 1;
+     gparams.sched     = sched_mtp.get();
++    gparams.cb        = graph_get_cb_mtp();
+
+     if (!graph_reuse_disable && res->can_reuse(gparams)) {
+         // sched_mtp does not use pipeline parallelism (created with pipeline=false),
+@@ -2396,7 +2400,7 @@ llm_graph_params llama_context::graph_params_mtp(
+         /*.cparams      =*/ cparams,
+         /*.ubatch       =*/ ubatch,
+         /*.gtype        =*/ LLM_GRAPH_TYPE_MTP,
+-        /*.sched        =*/ sched.get(),
++        /*.sched        =*/ sched_mtp.get(),
+         /*.backend_cpu  =*/ backend_cpu,
+         /*.cvec         =*/ cvec.get(),
+         /*.loras        =*/ loras.get(),
+@@ -2404,7 +2408,7 @@ llm_graph_params llama_context::graph_params_mtp(
+         /*.cross        =*/ &cross,
+         /*.samplers     =*/ sampling.samplers,
+         /*.n_outputs    =*/ n_outputs,
+-        /*.cb           =*/ graph_get_cb(),
++        /*.cb           =*/ graph_get_cb_mtp(),
+         /*.res          =*/ res,
+     };
+ }
+@@ -2802,6 +2806,16 @@ llm_graph_cb llama_context::graph_get_cb() const {
+     };
+ }
+
++llm_graph_cb llama_context::graph_get_cb_mtp() const {
++    return [](const llama_ubatch &, ggml_tensor * cur, const char * name, int il) {
++        if (il >= 0) {
++            ggml_format_name(cur, "%s-%d", name, il);
++        } else {
++            ggml_set_name(cur, name);
++        }
++    };
++}
++
+ //
+ // state save/load
+ //
+diff --git a/src/llama-context.h b/src/llama-context.h
+index 1b9732ad3..9b5941b4e 100644
+--- a/src/llama-context.h
++++ b/src/llama-context.h
+@@ -300,6 +300,7 @@ private:
+                           llm_graph_type   gtype) const;
+
+     llm_graph_cb graph_get_cb() const;
++    llm_graph_cb graph_get_cb_mtp() const;
+
+     // TODO: read/write lora adapters and cvec
+     size_t state_write_data(llama_io_write_i & io);
