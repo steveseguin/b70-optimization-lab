@@ -186,12 +186,17 @@ Near-neighbor follow-ups now in progress / next in queue:
   and draft threads `36` reached `89.96`; all valid, all below the `91.05`
   record.
 
+- near-miss interaction sweep under the same identity: `dtb28 + FLASH_ATTN=on
+  + draft V q8_0` reached `90.43 tok/s` after TTFT / `84.04` wall, `dtb28 +
+  p-min=0.115` reached `89.95`, `dtb28` repeat reached `90.23`, and `dtb28 +
+  POLL=100` reached `90.08`; all valid, all below the `91.05` record.
+
 Next queue under the current `91.05 tok/s` filled-long identity:
 
-- combine the best near-neutral moves: `dtb28 + FLASH_ATTN=on + draft V q8_0`,
-  `dtb28 + p-min=0.115`, `dtb28 + POLL=100`, and an exact `dtb28` repeat;
-- if these do not beat the record, consider exact-record repeats or a new
-  llama.cpp build A/B instead of more small runtime flag perturbations.
+- exact-record repeats across all GPUs to estimate whether the `91.046 tok/s`
+  high-water mark is repeatable;
+- if repeats do not beat the record, start a new llama.cpp build A/B or another
+  runtime lane instead of more small flag combinations.
 
 The `filled-long` prompt mode records prompt hash/preview and usage-derived
 prompt/completion-token stats. Use it for near-512-input / 512-output
