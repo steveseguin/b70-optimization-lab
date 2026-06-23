@@ -20,6 +20,7 @@ EXTRA_LLAMA_ARGS="${EXTRA_LLAMA_ARGS:-}"
 CANARY_REPEATS="${CANARY_REPEATS:-32}"
 BENCH_REPEATS="${BENCH_REPEATS:-8}"
 PROMPT_TOKENS="${PROMPT_TOKENS:-512}"
+BENCH_PROMPT_MODE="${BENCH_PROMPT_MODE:-default}"
 MAX_TOKENS="${MAX_TOKENS:-512}"
 READINESS_TIMEOUT_S="${READINESS_TIMEOUT_S:-900}"
 STAMP="$(date -u +%Y%m%dT%H%M%SZ)"
@@ -94,6 +95,7 @@ python3 scripts/bench-openai-single-decode.py \
   --model "$MODEL_ALIAS" \
   --api-mode chat \
   --prompt-tokens "$PROMPT_TOKENS" \
+  --prompt-mode "$BENCH_PROMPT_MODE" \
   --max-tokens "$MAX_TOKENS" \
   --repeats "$BENCH_REPEATS" \
   --out "$RUN_DIR/p${PROMPT_TOKENS}o${MAX_TOKENS}.json"

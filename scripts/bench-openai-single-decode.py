@@ -77,6 +77,7 @@ def stream_completion(
     elapsed_s = ended - started
     post_ttft_s = None if first_text_at is None else ended - first_text_at
     completion_tokens = usage.get("completion_tokens")
+    prompt_tokens = usage.get("prompt_tokens")
     if not isinstance(completion_tokens, int) and not allow_missing_usage:
         raise RuntimeError(
             "Server response did not include usage.completion_tokens; "
@@ -94,6 +95,7 @@ def stream_completion(
         "post_ttft_s": post_ttft_s,
         "chunks": chunks,
         "usage": usage,
+        "prompt_tokens": prompt_tokens,
         "completion_tokens": completion_tokens,
         "tok_s_wall": tok_s_wall,
         "tok_s_after_ttft": tok_s_after_ttft,
@@ -103,7 +105,38 @@ def stream_completion(
     }
 
 
-def make_prompt(target_tokens: int) -> str:
+def make_prompt(target_tokens: int, mode: str) -> str:
+    if mode == "long":
+        return (
+            "Write a long deterministic decode benchmark response. "
+            "Continue until you reach the token limit. "
+            "Use numbered lines from 001 onward. "
+            "Each line must contain the words benchmark, latency, memory, "
+            "throughput, validation, and repeatability. "
+            "Do not summarize, do not conclude, and do not stop early. "
+            "Begin now.\n\n"
+        )
+
+    if mode == "filled-long":
+        prefix = (
+            "You are running a deterministic Gemma B70 decode benchmark. "
+            "Read the reference context, then produce a long numbered response "
+            "until the token limit is reached. Do not summarize early.\n\n"
+            "Reference context:\n"
+        )
+        block = (
+            "benchmark latency memory throughput validation repeatability "
+            "scheduler cache kernel sycl level-zero b70 q8 deterministic "
+            "single-session decode measurement "
+        )
+        body = (block * ((target_tokens // 16) + 8))[: max(0, target_tokens * 6)]
+        suffix = (
+            "\n\nTask: write numbered lines from 001 onward. Each line must "
+            "include benchmark, latency, memory, throughput, validation, and "
+            "repeatability. Continue until the token limit. Begin now.\n\n"
+        )
+        return prefix + body + suffix
+
     seed = (
         "Gemma B70 decode benchmark. Continue with concise technical prose. "
         "Use the word benchmark frequently so tokenization remains stable. "
@@ -136,6 +169,8 @@ def summarize(rows: list[dict[str, Any]]) -> dict[str, Any]:
             for r in rows
             if isinstance(r.get("completion_tokens"), int)
         ),
+        "prompt_tokens": stats("prompt_tokens"),
+        "completion_tokens": stats("completion_tokens"),
         "tok_s_after_ttft": stats("tok_s_after_ttft"),
         "tok_s_wall": stats("tok_s_wall"),
         "ttft_s": stats("ttft_s"),
@@ -149,6 +184,17 @@ def main() -> int:
     parser.add_argument("--model", default="gemma4-26b-a4b-q8")
     parser.add_argument("--api-mode", choices=("chat", "completions"), default="chat")
     parser.add_argument("--prompt-tokens", type=int, default=512)
+    parser.add_argument(
+        "--prompt-mode",
+        choices=("default", "long", "filled-long"),
+        default="default",
+        help=(
+            "Prompt style. 'default' preserves historical runs; 'long' is a "
+            "short instruction that asks the model not to stop early; "
+            "'filled-long' fills the requested prompt budget before asking for "
+            "a max-token response."
+        ),
+    )
     parser.add_argument("--max-tokens", type=int, default=512)
     parser.add_argument("--repeats", type=int, default=8)
     parser.add_argument("--seed", type=int, default=1)
@@ -157,7 +203,8 @@ def main() -> int:
     parser.add_argument("--out", type=Path)
     args = parser.parse_args()
 
-    prompt = make_prompt(args.prompt_tokens)
+    prompt = make_prompt(args.prompt_tokens, args.prompt_mode)
+    prompt_sha256 = hashlib.sha256(prompt.encode("utf-8")).hexdigest()
     rows = [
         stream_completion(
             args.base_url,
@@ -178,6 +225,10 @@ def main() -> int:
         "api_mode": args.api_mode,
         "seed": args.seed,
         "prompt_tokens_requested": args.prompt_tokens,
+        "prompt_mode": args.prompt_mode,
+        "prompt_chars": len(prompt),
+        "prompt_sha256": prompt_sha256,
+        "prompt_preview": prompt[:240],
         "max_tokens": args.max_tokens,
         "repeats": args.repeats,
         "usage_required": not args.allow_missing_usage,

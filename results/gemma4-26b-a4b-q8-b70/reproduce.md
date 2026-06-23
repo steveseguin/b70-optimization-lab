@@ -110,6 +110,34 @@ summary: data/gemma4-q8-gpu2-syclopt0-faoff-parallel1-cache0-deep-20260623T0915/
 server log: /mnt/fast-ai/bench-results/gemma4-26b-a4b-q8/servers/gemma4-q8-gpu2-syclopt0-faoff-parallel1-cache0-deep-20260623T0915.server.log
 ```
 
+Current sustained-decode best:
+
+```bash
+cd /home/steve/qwen36-results-main
+LABEL=gemma4-q8-gpu0-currentbest-longprompt-deep-20260623T0945 \
+GPU_INDEX=0 PORT=18260 CTX_SIZE=8192 BATCH_SIZE=512 UBATCH_SIZE=64 THREADS=16 \
+CACHE_TYPE_K=f16 CACHE_TYPE_V=f16 POLL=50 FLASH_ATTN=off REASONING=off \
+GGML_SYCL_DISABLE_OPT=0 CANARY_REPEATS=96 BENCH_REPEATS=8 \
+BENCH_PROMPT_MODE=long \
+EXTRA_LLAMA_ARGS='--parallel 1 --cache-ram 0' \
+scripts/run-gemma4-26b-first-baseline.sh
+```
+
+Result:
+
+```text
+canary: 384/384 chat rows pass
+actual benchmark shape: about 75 prompt tokens, 512 output tokens
+tok/s: 42.72 after TTFT, 41.35 wall
+summary: data/gemma4-q8-gpu0-currentbest-longprompt-deep-20260623T0945/summary.json
+server log: /mnt/fast-ai/bench-results/gemma4-26b-a4b-q8/servers/gemma4-q8-gpu0-currentbest-longprompt-deep-20260623T0945.server.log
+```
+
+For future sustained-decode comparisons, prefer
+`BENCH_PROMPT_MODE=filled-long` if the target is an actual near-512-token input
+plus 512-token output. The older `long` mode is intentionally retained so the
+published 75/512 record remains reproducible.
+
 ## 4. Launch Four Replicas
 
 ```bash

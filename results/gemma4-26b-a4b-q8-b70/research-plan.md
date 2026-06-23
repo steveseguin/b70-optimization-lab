@@ -90,6 +90,22 @@ Follow-up: `syclopt0 + POLL=100` was a validated alternative with better TTFT
 and wall throughput but lower after-TTFT decode (`40.69 tok/s`). MTP n=2/4/8
 was slower than no-spec in first smokes and should not be promoted.
 
+Current sustained-decode best:
+
+- run label: `gemma4-q8-gpu0-currentbest-longprompt-deep-20260623T0945`;
+- change from promoted natural-stop best: `BENCH_PROMPT_MODE=long` to force the
+  model to emit the full `MAX_TOKENS=512` budget;
+- actual benchmark shape: about `75` prompt tokens and exactly `512` output
+  tokens on all repeats;
+- quality: chat canary **384/384 pass**;
+- speed: **42.72 tok/s after TTFT**, **41.35 tok/s wall**;
+- decision: valid sustained-decode record, but keep it separate from the
+  natural-stop/default-prompt 42.15 tok/s result.
+
+Next harness improvement completed: `filled-long` prompt mode records prompt
+hash/preview and usage-derived prompt/completion-token stats for future runs.
+Use it for near-512-input / 512-output comparisons.
+
 ## Phase 2: Four Replica Baseline
 
 Next step. One GPU is valid, so launch all four independent replicas:
@@ -261,6 +277,10 @@ Text speed is first. After text baseline:
    thinking and returned empty `message.content` for exact-answer canaries.
    Default this lane to `REASONING=off`; thinking-enabled throughput is a
    separate product mode.
+10. **Separate benchmark shapes.** The default prompt often stops around
+    140-160 output tokens; `long` reaches 512 output tokens with a short input;
+    `filled-long` should be used when testing a real near-512-token input.
+    Do not compare these shapes without labeling the input/output tokens.
 
 ## Stop Conditions
 

@@ -1,0 +1,59 @@
+[
+  {
+    "label": "gemma4-26b-a4b-q8-b70-llamacpp-syclopt0-faoff-parallel1-cache0-long512-20260623T0945",
+    "payload": {
+      "backend": "xpu",
+      "batchSize": 1,
+      "contextLength": 8192,
+      "engineFlags": {
+        "apiMode": "chat/completions",
+        "backendDetail": "SYCL/Level Zero",
+        "batchSize": 512,
+        "benchmarkJson": "data/gemma4-q8-gpu0-currentbest-longprompt-deep-20260623T0945/p512o512.json",
+        "canary": "384/384 pass",
+        "commandSnippet": "LABEL=gemma4-q8-gpu0-currentbest-longprompt-deep-20260623T0945 GPU_INDEX=0 PORT=18260 CTX_SIZE=8192 BATCH_SIZE=512 UBATCH_SIZE=64 THREADS=16 CACHE_TYPE_K=f16 CACHE_TYPE_V=f16 POLL=50 FLASH_ATTN=off REASONING=off GGML_SYCL_DISABLE_OPT=0 CANARY_REPEATS=96 BENCH_REPEATS=8 BENCH_PROMPT_MODE=long EXTRA_LLAMA_ARGS='--parallel 1 --cache-ram 0' scripts/run-gemma4-26b-first-baseline.sh",
+        "ctxSize": 8192,
+        "extraArgs": "--parallel 1 --cache-ram 0",
+        "flashAttention": false,
+        "ggmlSyclDisableOpt": "0",
+        "gpuIndex": 0,
+        "kvCacheDtype": "f16/f16",
+        "modelFile": "gemma-4-26B-A4B-it-UD-Q8_K_XL.gguf",
+        "modelFileBytes": 27636230944,
+        "oneapiDeviceSelector": "level_zero:0",
+        "pipelineParallel": 1,
+        "poll": 50,
+        "promptMode": "long",
+        "reasoning": "off",
+        "serverLog": "/mnt/fast-ai/bench-results/gemma4-26b-a4b-q8/servers/gemma4-q8-gpu0-currentbest-longprompt-deep-20260623T0945.server.log",
+        "serverReportedParams": 25233142046,
+        "specDecoding": false,
+        "summaryJson": "data/gemma4-q8-gpu0-currentbest-longprompt-deep-20260623T0945/summary.json",
+        "temperature": 0,
+        "tensorParallel": 1,
+        "threads": 16,
+        "ubatchSize": 64
+      },
+      "engineName": "llama.cpp",
+      "engineVersion": "dec5ca557",
+      "hardware": {
+        "cpu": "AMD Ryzen Threadripper PRO 5955WX 16-Cores",
+        "gpuCount": 1,
+        "gpuName": "Intel Arc Pro B70",
+        "hwClass": "DISCRETE_GPU",
+        "os": "Ubuntu 24.04.4 LTS",
+        "ramGb": 128,
+        "vramGb": 32
+      },
+      "hfId": "unsloth/gemma-4-26B-A4B-it-GGUF",
+      "modelRevision": "3bb10d594514ef4edb7f3a65d41a7e4eb8c5767a",
+      "notes": "Gemma 4 26B A4B instruction Q8 GGUF on one Intel Arc Pro B70 via llama.cpp SYCL/XPU. Short-prompt sustained-decode shape: prompt_mode=long produced actual 75 prompt tokens and exactly 512 generated tokens on every repeat. Validation: standard chat canary 96 repeats x 4 cases = 384/384 pass with REASONING=off. Throughput uses server-reported usage.completion_tokens after TTFT. This supersedes the prior 42.15 tok/s natural-stop/default-prompt result for pure sustained decode rate, while using a different prompt/output shape. No speculative decode; MTP n=2/4/8 smokes were slower. Evidence: https://github.com/steveseguin/b70-optimization-lab/blob/main/results/gemma4-26b-a4b-q8-b70/README.md and data/gemma4-q8-gpu0-currentbest-longprompt-deep-20260623T0945/summary.json.",
+      "outputTokens": 512,
+      "promptTokens": 75,
+      "quantization": "UD-Q8_K_XL",
+      "tokSOut": 42.716267799445156,
+      "tokSTotal": 41.351232276832015,
+      "ttftMs": 395.68237537605455
+    }
+  }
+]

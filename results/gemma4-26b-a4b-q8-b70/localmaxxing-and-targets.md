@@ -51,6 +51,21 @@ Current promoted local Q8 best:
 - prior approved result: `41.81 tok/s`, LocalMaxxing ID
   `cmqq8phxt0103qo01afcgyjq8`.
 
+Current sustained-decode Q8 best:
+
+- `gemma4-q8-gpu0-currentbest-longprompt-deep-20260623T0945`,
+  llama.cpp SYCL on one B70, same runtime identity as the promoted
+  `parallel1-cache0` record;
+- `BENCH_PROMPT_MODE=long`, which is a short instruction designed to prevent
+  early stopping, not a true 512-token prompt fill;
+- actual LocalMaxxing packet shape: `75` prompt tokens and `512` output tokens;
+- chat canary **384/384** pass;
+- decode `42.72 tok/s` after TTFT, `41.35 tok/s` wall;
+- status: queued for LocalMaxxing as a separate sustained-decode shape, not as a
+  direct replacement for the natural-stop/default-prompt row;
+- queue:
+  `data/localmaxxing-gemma4-26b-a4b-q8-b70-long512-20260623.queue.json`.
+
 ## Submission Packet
 
 LocalMaxxing requires at minimum:
@@ -109,6 +124,7 @@ the server log:
 - `GGML_SYCL_DISABLE_DNN`;
 - `ONEAPI_DEVICE_SELECTOR`;
 - `-fa` state;
+- benchmark prompt mode and actual prompt/output token counts;
 - MTP/spec flags if enabled.
 
 ## Do Not Submit If
