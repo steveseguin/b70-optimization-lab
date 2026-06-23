@@ -2,6 +2,10 @@
 scripts/__pycache__/
 experiments/**/scripts/__pycache__/
 
+# Per-run llama-server stdout logs are large/noisy and duplicated by the
+# canonical server_log path captured in each summary.json.
+data/**/server.stdout.log
+
 # Local credentials and tokens. Keep actual secret files outside Git.
 SUDOPASSWORD.txt
 *.password.txt
