@@ -10,7 +10,7 @@ separate from four independent replica aggregate capacity.
 | Label | LocalMaxxing ID | GPUs | Input | Output | tok/s out | tok/s total | Validation |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
 | `gemma4-26b-a4b-q8-b70-llamacpp-syclopt0-faoff-20260623T0715` | `cmqq8phxt0103qo01afcgyjq8` | 1 | 574 | 156 | 41.806 | n/a | 384/384 chat canary |
-| `gemma4-26b-a4b-q8-b70-llamacpp-syclopt0-faoff-parallel1-cache0-20260623T0915` | queued | 1 | 574 | 146 | 42.154 | n/a | 384/384 chat canary |
+| `gemma4-26b-a4b-q8-b70-llamacpp-syclopt0-faoff-parallel1-cache0-20260623T0915` | `cmqq9nqbh010gqo01a9jnzl6r` | 1 | 574 | 146 | 42.154 | n/a | 384/384 chat canary |
 
 Required packet: see
 [`results/gemma4-26b-a4b-q8-b70/localmaxxing-and-targets.md`](gemma4-26b-a4b-q8-b70/localmaxxing-and-targets.md).
@@ -20,6 +20,8 @@ Submit artifacts:
 - queue: `data/localmaxxing-gemma4-26b-a4b-q8-b70-syclopt0-faoff-20260623.queue.json`
 - rejected first attempt: `data/localmaxxing-responses/gemma4-26b-a4b-q8-b70-syclopt0-faoff-20260623.submit.log`
 - approved retry: `data/localmaxxing-responses/gemma4-26b-a4b-q8-b70-syclopt0-faoff-20260623.submit2.log`
+- second approved update:
+  `data/localmaxxing-responses/gemma4-26b-a4b-q8-b70-syclopt0-faoff-parallel1-cache0-20260623.submit.log`
 
 The first attempt failed only because the payload used `backend="SYCL/Level Zero"`.
 The accepted payload uses LocalMaxxing's enum `backend="xpu"` and stores
