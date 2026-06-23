@@ -181,8 +181,8 @@ Current filled-long draft-MTP sustained-decode best:
 ```bash
 cd /home/steve/qwen36-results-main
 LLAMA_SERVER=/home/steve/src/llama.cpp/build-sycl-b70-aot-bmg-g31/bin/llama-server \
-GPU_INDEX=3 PORT=18303 LABEL=gemma4-q8-gpu3-mtp-n7-aot-nmin2-pmin010-nobs-filled-long-deep-20260623T093619Z \
-MTP_N_MAX=7 MTP_N_MIN=2 MTP_P_MIN=0.10 MTP_BACKEND_SAMPLING=0 BENCH_PROMPT_MODE=filled-long \
+GPU_INDEX=3 PORT=18313 LABEL=gemma4-q8-gpu3-mtp-n7-aot-nmin2-pmin010-nobs-dthreads32-filled-long-deep-20260623T094131Z \
+MTP_N_MAX=7 MTP_N_MIN=2 MTP_P_MIN=0.10 MTP_BACKEND_SAMPLING=0 MTP_DRAFT_THREADS=32 BENCH_PROMPT_MODE=filled-long \
 scripts/run-gemma4-26b-mtp-candidate.sh
 ```
 
@@ -191,10 +191,10 @@ Result:
 ```text
 canary: 384/384 chat rows pass
 actual benchmark shape: 588 prompt tokens, 512 output tokens
-tok/s: 90.24 after TTFT, 82.24 warmed wall
-LocalMaxxing: cmqqgftv50160qo01km3s7lkt
-summary: data/gemma4-q8-gpu3-mtp-n7-aot-nmin2-pmin010-nobs-filled-long-deep-20260623T093619Z/summary.json
-server log: /mnt/fast-ai/bench-results/gemma4-26b-a4b-q8/servers/gemma4-q8-gpu3-mtp-n7-aot-nmin2-pmin010-nobs-filled-long-deep-20260623T093619Z.server.log
+tok/s: 90.42 after TTFT, 82.34 warmed wall
+LocalMaxxing: cmqqgn3cm0163qo010optg91u
+summary: data/gemma4-q8-gpu3-mtp-n7-aot-nmin2-pmin010-nobs-dthreads32-filled-long-deep-20260623T094131Z/summary.json
+server log: /mnt/fast-ai/bench-results/gemma4-26b-a4b-q8/servers/gemma4-q8-gpu3-mtp-n7-aot-nmin2-pmin010-nobs-dthreads32-filled-long-deep-20260623T094131Z.server.log
 ```
 
 Short wrapper equivalent for future sweeps:
@@ -212,6 +212,7 @@ MTP_N_MAX=3
 MTP_N_MAX=5 MTP_N_MIN=2 MTP_P_MIN=0.15
 MTP_N_MAX=6 MTP_N_MIN=2 MTP_P_MIN=0.25
 MTP_N_MAX=7 MTP_N_MIN=2 MTP_P_MIN=0.10 MTP_BACKEND_SAMPLING=0
+MTP_N_MAX=7 MTP_N_MIN=2 MTP_P_MIN=0.10 MTP_BACKEND_SAMPLING=0 MTP_DRAFT_THREADS=32
 POLL=100 MTP_N_MAX=4
 LLAMA_CACHE_RAM=1 MTP_N_MAX=3
 LLAMA_PARALLEL=2 MTP_N_MAX=3

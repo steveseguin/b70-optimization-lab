@@ -86,22 +86,23 @@ Current short-prompt draft-MTP sustained-decode Q8 best:
 
 Current filled-long draft-MTP sustained-decode Q8 best:
 
-- `gemma4-q8-gpu3-mtp-n7-aot-nmin2-pmin010-nobs-filled-long-deep-20260623T093619Z`,
+- `gemma4-q8-gpu3-mtp-n7-aot-nmin2-pmin010-nobs-dthreads32-filled-long-deep-20260623T094131Z`,
   llama.cpp SYCL on one B70,
   UD-Q8_K_XL main GGUF plus `mtp-gemma-4-26B-A4B-it.gguf` draft GGUF;
 - `--spec-type draft-mtp --spec-draft-n-max 7 --spec-draft-n-min 2
-  --spec-draft-p-min 0.10 --no-spec-draft-backend-sampling`,
+  --spec-draft-p-min 0.10 --no-spec-draft-backend-sampling
+  --spec-draft-threads 32`,
   draft KV `f16/f16`, AOT BMG build (`GGML_SYCL_DEVICE_ARCH=bmg-g31`),
   `GGML_SYCL_DISABLE_OPT=0`, `FLASH_ATTN=off`, `POLL=50`,
   `--parallel 1 --cache-ram 0`, `REASONING=off`;
 - actual LocalMaxxing packet shape: `588` prompt tokens and `512` output
   tokens (`BENCH_PROMPT_MODE=filled-long`);
 - chat canary **384/384** pass;
-- decode `90.24 tok/s` after TTFT, `82.24 tok/s` warmed wall;
+- decode `90.42 tok/s` after TTFT, `82.34 tok/s` warmed wall;
 - status: submitted to LocalMaxxing and approved as
-  `cmqqgftv50160qo01km3s7lkt`;
+  `cmqqgn3cm0163qo010optg91u`;
 - queue:
-  `data/localmaxxing-gemma4-26b-a4b-q8-b70-mtp-n7-aot-nmin2-pmin010-nobs-filledlong512-20260623.queue.json`.
+  `data/localmaxxing-gemma4-26b-a4b-q8-b70-mtp-n7-aot-nmin2-pmin010-nobs-dthreads32-filledlong512-20260623.queue.json`.
 
 Previous draft-MTP approved result:
 

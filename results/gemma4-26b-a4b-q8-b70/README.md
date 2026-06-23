@@ -1,7 +1,8 @@
 # Gemma 4 26B A4B Q8 on Intel B70
 
 Status: **active optimization; current valid best is llama.cpp draft-MTP
-`n=7, n-min=2, p-min=0.10, backend sampling off` on the filled-long shape**.
+`n=7, n-min=2, p-min=0.10, backend sampling off, draft threads 32` on the
+filled-long shape**.
 
 This lane replaces the closed Qwen3.6 35B TP4 effort. The target architecture is
 different on purpose: run **one complete Gemma 4 26B A4B replica per B70** and
@@ -97,7 +98,8 @@ External references:
 | 2026-06-23 | llama.cpp `dec5ca557` SYCL draft-MTP AOT BMG | 1 replica on B70 GPU2 | UD-Q8_K_XL GGUF + Gemma MTP draft GGUF, f16 KV | 8K | previous filled-long best: MTP `n=6`, `n-min=2`, `p-min=0.15`, 384/384 canary; actual shape 588 input / 512 output tokens | **83.52 after TTFT** / 76.57 wall | [summary](../../data/gemma4-q8-gpu2-mtp-n6-aot-nmin2-pmin015-filled-long-deep-20260623T091227Z/summary.json), [sweep note](../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260623T0912-filled-long-deeper-n-sweep.md) |
 | 2026-06-23 | llama.cpp `dec5ca557` SYCL draft-MTP AOT BMG | 1 replica on B70 GPU3 | UD-Q8_K_XL GGUF + Gemma MTP draft GGUF, f16 KV | 8K | previous filled-long best: MTP `n=7`, `n-min=2`, `p-min=0.15`, 384/384 canary; actual shape 588 input / 512 output tokens | **87.88 after TTFT** / 80.25 wall | [summary](../../data/gemma4-q8-gpu3-mtp-n7-aot-nmin2-pmin015-filled-long-deep-20260623T091939Z/summary.json), [sweep note](../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260623T0919-filled-long-n7-sweep.md) |
 | 2026-06-23 | llama.cpp `dec5ca557` SYCL draft-MTP AOT BMG | 1 replica on B70 GPU1 | UD-Q8_K_XL GGUF + Gemma MTP draft GGUF, f16 KV | 8K | previous filled-long best: MTP `n=7`, `n-min=2`, `p-min=0.10`, 384/384 canary; actual shape 588 input / 512 output tokens | **88.35 after TTFT** / 80.55 wall | [summary](../../data/gemma4-q8-gpu1-mtp-n7-aot-nmin2-pmin010-filled-long-deep-20260623T092524Z/summary.json), [sweep note](../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260623T0925-n7-pmin-and-psplit-sweeps.md) |
-| 2026-06-23 | llama.cpp `dec5ca557` SYCL draft-MTP AOT BMG | 1 replica on B70 GPU3 | UD-Q8_K_XL GGUF + Gemma MTP draft GGUF, f16 KV | 8K | **current sustained-decode best**: filled-long prompt shape, MTP `n=7`, `n-min=2`, `p-min=0.10`, `--no-spec-draft-backend-sampling`, 384/384 canary; actual shape 588 input / 512 output tokens | **90.24 after TTFT** / 82.24 wall | [summary](../../data/gemma4-q8-gpu3-mtp-n7-aot-nmin2-pmin010-nobs-filled-long-deep-20260623T093619Z/summary.json), [sweep note](../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260623T0936-n7-backend-sampling-sweep.md) |
+| 2026-06-23 | llama.cpp `dec5ca557` SYCL draft-MTP AOT BMG | 1 replica on B70 GPU3 | UD-Q8_K_XL GGUF + Gemma MTP draft GGUF, f16 KV | 8K | previous filled-long best: MTP `n=7`, `n-min=2`, `p-min=0.10`, `--no-spec-draft-backend-sampling`, 384/384 canary; actual shape 588 input / 512 output tokens | **90.24 after TTFT** / 82.24 wall | [summary](../../data/gemma4-q8-gpu3-mtp-n7-aot-nmin2-pmin010-nobs-filled-long-deep-20260623T093619Z/summary.json), [sweep note](../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260623T0936-n7-backend-sampling-sweep.md) |
+| 2026-06-23 | llama.cpp `dec5ca557` SYCL draft-MTP AOT BMG | 1 replica on B70 GPU3 | UD-Q8_K_XL GGUF + Gemma MTP draft GGUF, f16 KV | 8K | **current sustained-decode best**: filled-long prompt shape, MTP `n=7`, `n-min=2`, `p-min=0.10`, `--no-spec-draft-backend-sampling`, `--spec-draft-threads 32`, 384/384 canary; actual shape 588 input / 512 output tokens | **90.42 after TTFT** / 82.34 wall | [summary](../../data/gemma4-q8-gpu3-mtp-n7-aot-nmin2-pmin010-nobs-dthreads32-filled-long-deep-20260623T094131Z/summary.json), [sweep note](../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260623T0941-n7-nobs-followups.md) |
 
 The first valid result is intentionally labeled as a baseline, not an optimized
 result. It proves that the Q8 GGUF fits and serves correctly at 8K on one B70,
@@ -121,8 +123,8 @@ The newer `filled-long` mode is the current preferred record-chasing shape for
 this lane because it produces a near-p512/o512 request in practice: 588 prompt
 tokens and 512 output tokens. On that shape the official Gemma MTP draft GGUF is
 much more valuable, and `--spec-draft-n-max 7 --spec-draft-n-min 2
---spec-draft-p-min 0.10 --no-spec-draft-backend-sampling` is the current valid
-best at 90.24 tok/s after TTFT.
+--spec-draft-p-min 0.10 --no-spec-draft-backend-sampling
+--spec-draft-threads 32` is the current valid best at 90.42 tok/s after TTFT.
 The after-TTFT decode metric is the promoted comparison metric. The wall/total
 metric in repeated filled-long runs is warmed by the benchmark's repeated prompt
 shape and can include substantial prompt-cache reuse after the first repeat; do
