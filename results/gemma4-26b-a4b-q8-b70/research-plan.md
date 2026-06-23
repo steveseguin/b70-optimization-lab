@@ -181,12 +181,17 @@ Near-neighbor follow-ups now in progress / next in queue:
   `p-min=0.125` reached `90.05`, and `dtb40` reached `89.53`; all valid, all
   below the `91.05` record.
 
+- draft thread neighborhood under the same identity: `dtb28` reached
+  `90.60 tok/s`, `dtb36` reached `90.11`, draft threads `28` reached `90.43`,
+  and draft threads `36` reached `89.96`; all valid, all below the `91.05`
+  record.
+
 Next queue under the current `91.05 tok/s` filled-long identity:
 
-- nearby `MTP_DRAFT_THREADS_BATCH` values `28` and `36`;
-- nearby `MTP_DRAFT_THREADS` values `28` and `36`;
-- if none beat the record, consider exact-record repeats or a new llama.cpp
-  build A/B instead of more small runtime flag perturbations.
+- combine the best near-neutral moves: `dtb28 + FLASH_ATTN=on + draft V q8_0`,
+  `dtb28 + p-min=0.115`, `dtb28 + POLL=100`, and an exact `dtb28` repeat;
+- if these do not beat the record, consider exact-record repeats or a new
+  llama.cpp build A/B instead of more small runtime flag perturbations.
 
 The `filled-long` prompt mode records prompt hash/preview and usage-derived
 prompt/completion-token stats. Use it for near-512-input / 512-output
