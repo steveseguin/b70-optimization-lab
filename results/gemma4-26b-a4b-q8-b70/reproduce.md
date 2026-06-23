@@ -68,6 +68,14 @@ python3 scripts/bench-openai-single-decode.py \
   --out data/gemma4-26b-a4b-q8-b70-smoke.json
 ```
 
+For the first local baseline, the wrapper below starts the server, waits for
+readiness, runs both gates, and stops the server:
+
+```bash
+cd /home/steve/qwen36-results-main
+scripts/run-gemma4-26b-first-baseline.sh
+```
+
 ## 4. Launch Four Replicas
 
 ```bash

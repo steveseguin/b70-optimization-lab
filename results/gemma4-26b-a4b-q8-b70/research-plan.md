@@ -21,6 +21,15 @@ replicas on four GPUs for parallel research and aggregate service capacity.
 
 Start after the Q8 file download completes.
 
+Fast path wrapper:
+
+```bash
+cd /home/steve/qwen36-results-main
+scripts/run-gemma4-26b-first-baseline.sh
+```
+
+Manual equivalent:
+
 ```bash
 cd /home/steve/qwen36-results-main
 GPU_INDEX=0 PORT=18260 CTX_SIZE=8192 UBATCH_SIZE=64 \
