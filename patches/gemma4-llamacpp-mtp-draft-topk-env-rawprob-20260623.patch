@@ -1,0 +1,151 @@
+diff --git a/common/sampling.cpp b/common/sampling.cpp
+index 75a299e23..30f5d776c 100644
+--- a/common/sampling.cpp
++++ b/common/sampling.cpp
+@@ -701,6 +701,47 @@ llama_token_data_array * common_sampler_get_candidates(struct common_sampler * g
+     return res;
+ }
+
++llama_token_data_array * common_sampler_rescale_candidates_to_logits_probs(
++        struct common_sampler * gsmpl, struct llama_context * ctx, int idx, bool do_sort) {
++    const auto tm = gsmpl->tm();
++
++    auto * res = &gsmpl->cur_p;
++    const auto * logits = llama_get_logits_ith(ctx, idx);
++    if (logits == nullptr || res->size == 0) {
++        return common_sampler_get_candidates(gsmpl, do_sort);
++    }
++
++    const llama_model * model = llama_get_model(ctx);
++    const llama_vocab * vocab = llama_model_get_vocab(model);
++    const int n_vocab = llama_vocab_n_tokens(vocab);
++
++    float max_l = logits[0];
++    for (int token_id = 1; token_id < n_vocab; ++token_id) {
++        max_l = std::max(max_l, logits[token_id]);
++    }
++
++    double sum = 0.0;
++    for (int token_id = 0; token_id < n_vocab; ++token_id) {
++        sum += std::exp((double) logits[token_id] - (double) max_l);
++    }
++    if (sum <= 0.0) {
++        return common_sampler_get_candidates(gsmpl, do_sort);
++    }
++
++    for (size_t i = 0; i < res->size; ++i) {
++        const llama_token token_id = res->data[i].id;
++        if (token_id < 0 || token_id >= n_vocab) {
++            res->data[i].p = 0.0f;
++            continue;
++        }
++        res->data[i].logit = logits[token_id];
++        res->data[i].p = (float) (std::exp((double) logits[token_id] - (double) max_l) / sum);
++    }
++    res->sorted = false;
++
++    return common_sampler_get_candidates(gsmpl, do_sort);
++}
++
+ llama_token common_sampler_last(const struct common_sampler * gsmpl) {
+     return gsmpl->prev.rat(0);
+ }
+diff --git a/common/sampling.h b/common/sampling.h
+index 4191988bb..304c0fda9 100644
+--- a/common/sampling.h
++++ b/common/sampling.h
+@@ -97,6 +97,12 @@ bool common_sampler_reasoning_budget_force(struct common_sampler * gsmpl);
+ // the .sorted flag of the result indicates whether the returned candidates are sorted
+ llama_token_data_array * common_sampler_get_candidates(struct common_sampler * gsmpl, bool do_sort);
+
++// Recompute probabilities for the current candidates against the raw logits for
++// this row. This preserves full-softmax confidence thresholds after samplers
++// such as top-k have reduced and renormalized the candidate list.
++llama_token_data_array * common_sampler_rescale_candidates_to_logits_probs(
++        struct common_sampler * gsmpl, struct llama_context * ctx, int idx, bool do_sort);
++
+ // get the last accepted token
+ llama_token common_sampler_last(const struct common_sampler * gsmpl);
+
+diff --git a/common/speculative.cpp b/common/speculative.cpp
+index c922a3f59..5008a3a6a 100644
+--- a/common/speculative.cpp
++++ b/common/speculative.cpp
+@@ -13,8 +13,11 @@
+
+ #include <algorithm>
+ #include <cassert>
++#include <cerrno>
++#include <cstdlib>
+ #include <cstring>
+ #include <iomanip>
++#include <limits>
+ #include <map>
+ #include <cinttypes>
+
+@@ -45,6 +48,31 @@ static std::string common_speculative_get_devices_str(const std::vector<ggml_bac
+     return result.empty() ? "default" : result;
+ }
+
++static int32_t common_speculative_mtp_draft_top_k_from_env() {
++    constexpr int32_t default_top_k = 10;
++    const char * env = std::getenv("LLAMA_MTP_DRAFT_TOP_K");
++    const char * env_name = "LLAMA_MTP_DRAFT_TOP_K";
++    if (env == nullptr || env[0] == '\0') {
++        env = std::getenv("LLAMA_SPEC_DRAFT_MTP_TOP_K");
++        env_name = "LLAMA_SPEC_DRAFT_MTP_TOP_K";
++    }
++    if (env == nullptr || env[0] == '\0') {
++        return default_top_k;
++    }
++
++    char * end = nullptr;
++    errno = 0;
++    const long value = std::strtol(env, &end, 10);
++    if (errno != 0 || end == env || *end != '\0' || value < 1 ||
++            value > std::numeric_limits<int32_t>::max()) {
++        LOG_WRN("%s: invalid %s='%s'; using default %d\n",
++                __func__, env_name, env, default_top_k);
++        return default_top_k;
++    }
++
++    return (int32_t) value;
++}
++
+ struct common_speculative_config {
+     common_speculative_type type;
+     common_params_speculative params;
+@@ -958,11 +986,14 @@ struct common_speculative_impl_draft_mtp : public common_speculative_impl {
+         // TODO: fix, how to call without malloc
+         batch.token = (llama_token *) malloc(sizeof(llama_token) * n_b);
+
++        const int32_t draft_top_k = common_speculative_mtp_draft_top_k_from_env();
++        LOG_INF("%s: - draft_top_k=%d (LLAMA_MTP_DRAFT_TOP_K)\n", __func__, draft_top_k);
++
+         smpls.resize(n_seq);
+         for (auto & s : smpls) {
+             common_params_sampling sparams;
+             sparams.no_perf  = false;
+-            sparams.top_k    = 10;
++            sparams.top_k    = draft_top_k;
+             sparams.samplers = { COMMON_SAMPLER_TYPE_TOP_K };
+             s.reset(common_sampler_init(llama_get_model(ctx_dft), sparams));
+         }
+@@ -972,7 +1003,7 @@ struct common_speculative_impl_draft_mtp : public common_speculative_impl {
+         if (this->params.backend_sampling) {
+             for (llama_seq_id seq_id = 0; seq_id < (llama_seq_id) n_seq; ++seq_id) {
+                 llama_sampler * chain = llama_sampler_chain_init(llama_sampler_chain_default_params());
+-                llama_sampler_chain_add(chain, llama_sampler_init_top_k(10));
++                llama_sampler_chain_add(chain, llama_sampler_init_top_k(draft_top_k));
+
+                 if (!llama_set_sampler(ctx_dft, seq_id, chain)) {
+                     LOG_WRN("%s: backend offload failed for seq_id=%d; using CPU sampler\n", __func__, (int) seq_id);
+@@ -1236,7 +1267,7 @@ struct common_speculative_impl_draft_mtp : public common_speculative_impl {
+                 common_sampler_sample(smpl, ctx_dft, i_last[seq_id], true);
+                 const float * h_row = llama_get_embeddings_nextn_ith(ctx_dft, i_last[seq_id]);
+
+-                const auto * cur_p = common_sampler_get_candidates(smpl, true);
++                const auto * cur_p = common_sampler_rescale_candidates_to_logits_probs(smpl, ctx_dft, i_last[seq_id], true);
+
+                 for (int k = 0; k < std::min(3, (int) cur_p->size); ++k) {
+                     LOG_DBG(" - seq_id %d, draft candidate %3d, pos %3d: %6d (%8.3f) '%s'\n",
