@@ -69,19 +69,24 @@ Current sustained-decode Q8 best:
 
 Current draft-MTP sustained-decode Q8 best:
 
-- `gemma4-q8-gpu1-mtp-n4-long-deep-20260623T1140`,
+- `gemma4-q8-gpu1-mtp-n3-long-deep-20260623T0328`,
   llama.cpp SYCL on one B70,
   UD-Q8_K_XL main GGUF plus `mtp-gemma-4-26B-A4B-it.gguf` draft GGUF;
-- `--spec-type draft-mtp --spec-draft-n-max 4`, draft KV `f16/f16`,
+- `--spec-type draft-mtp --spec-draft-n-max 3`, draft KV `f16/f16`,
   same `GGML_SYCL_DISABLE_OPT=0`, `FLASH_ATTN=off`, `POLL=50`,
   `--parallel 1 --cache-ram 0`, `REASONING=off`;
 - actual LocalMaxxing packet shape: `75` prompt tokens and `512` output tokens;
 - chat canary **384/384** pass;
-- decode `44.50 tok/s` after TTFT, `43.03 tok/s` wall;
+- decode `46.36 tok/s` after TTFT, `44.75 tok/s` wall;
 - status: submitted to LocalMaxxing and approved as
-  `cmqqblfw30132qo01jbi1svnu`;
+  `cmqqbyv5w013vqo019pmp161f`;
 - queue:
-  `data/localmaxxing-gemma4-26b-a4b-q8-b70-mtp-n4-long512-20260623.queue.json`.
+  `data/localmaxxing-gemma4-26b-a4b-q8-b70-mtp-n3-long512-20260623.queue.json`.
+
+Previous draft-MTP approved result:
+
+- `gemma4-q8-gpu1-mtp-n4-long-deep-20260623T1140`, `44.50 tok/s` after TTFT,
+  approved as `cmqqblfw30132qo01jbi1svnu`.
 
 ## Submission Packet
 

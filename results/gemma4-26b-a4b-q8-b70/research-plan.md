@@ -104,17 +104,18 @@ Previous no-spec sustained-decode best:
 
 Current sustained-decode best:
 
-- run label: `gemma4-q8-gpu1-mtp-n4-long-deep-20260623T1140`;
+- run label: `gemma4-q8-gpu1-mtp-n3-long-deep-20260623T0328`;
 - change from no-spec sustained-decode best: official Gemma MTP draft GGUF via
-  `--spec-type draft-mtp --spec-draft-n-max 4 --spec-draft-ngl all`, with draft
+  `--spec-type draft-mtp --spec-draft-n-max 3 --spec-draft-ngl all`, with draft
   KV `f16/f16`;
 - actual benchmark shape: `75` prompt tokens and exactly `512` output tokens on
   all repeats;
 - quality: chat canary **384/384 pass**;
-- speed: **44.50 tok/s after TTFT**, **43.03 tok/s wall**;
+- speed: **46.36 tok/s after TTFT**, **44.75 tok/s wall**;
 - decision: valid sustained-decode record candidate and LocalMaxxing submission
-  candidate. `n=2` was close; `n=6` and `n=8` collapsed, so future MTP work
-  should tune around `n=3/4` rather than pushing higher.
+  candidate. `n=2` was also a win; `n=5` and `n=6` with confidence gating were
+  losses, so future MTP work should tune around `n=2/3` rather than pushing
+  higher.
 
 Next harness improvement completed: `filled-long` prompt mode records prompt
 hash/preview and usage-derived prompt/completion-token stats for future runs.
@@ -229,17 +230,15 @@ scripts/download-gemma4-26b-q8-gguf.sh
 Promoted MTP server shape:
 
 ```bash
-GPU_INDEX=1 PORT=18261 CTX_SIZE=8192 BATCH_SIZE=512 UBATCH_SIZE=64 \
-  FLASH_ATTN=off REASONING=off GGML_SYCL_DISABLE_OPT=0 \
-  BENCH_PROMPT_MODE=long CANARY_REPEATS=96 BENCH_REPEATS=8 \
-  EXTRA_LLAMA_ARGS='--parallel 1 --cache-ram 0 --spec-type draft-mtp --spec-draft-model /mnt/fast-ai/llm-models/gemma4-26b-a4b-it-q8-gguf/mtp-gemma-4-26B-A4B-it.gguf --spec-draft-n-max 4 --spec-draft-device SYCL0 --spec-draft-ngl all --spec-draft-type-k f16 --spec-draft-type-v f16' \
-  scripts/run-gemma4-26b-llamacpp-replica.sh
+GPU_INDEX=1 PORT=18261 LABEL=gemma4-q8-gpu1-mtp-n3-long-deep-<stamp> \
+MTP_N_MAX=3 scripts/run-gemma4-26b-mtp-candidate.sh
 ```
 
-The launcher consumes `EXTRA_LLAMA_ARGS` for this follow-up. Already tested
-`--spec-draft-n-max 2/4/6/8`: `n=4` won, `n=2` was close, and `n=6/8` were
-losses. Next tests should focus on `n=3`, `n=4` with polling/batch/AOT changes,
-and llama.cpp speculative acceptance knobs if available.
+The MTP wrapper fixes the Q8/f16 quality lane and forwards MTP knobs to
+`EXTRA_LLAMA_ARGS`. Already tested `--spec-draft-n-max 2/3/4/6/8`, plus
+confidence-gated `n=5` and `n=6`: `n=3` currently wins, `n=2` is close, and
+higher n loses despite longer accepted drafts. Next tests should focus on `n=3`
+and `n=2` with polling/batch/AOT changes.
 
 ## Phase 5: vLLM Int8 Per-Channel Comparison
 

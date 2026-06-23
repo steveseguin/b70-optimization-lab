@@ -133,7 +133,7 @@ summary: data/gemma4-q8-gpu0-currentbest-longprompt-deep-20260623T0945/summary.j
 server log: /mnt/fast-ai/bench-results/gemma4-26b-a4b-q8/servers/gemma4-q8-gpu0-currentbest-longprompt-deep-20260623T0945.server.log
 ```
 
-Current draft-MTP sustained-decode best:
+Previous draft-MTP `n=4` sustained-decode record:
 
 ```bash
 cd /home/steve/qwen36-results-main
@@ -157,12 +157,30 @@ summary: data/gemma4-q8-gpu1-mtp-n4-long-deep-20260623T1140/summary.json
 server log: /mnt/fast-ai/bench-results/gemma4-26b-a4b-q8/servers/gemma4-q8-gpu1-mtp-n4-long-deep-20260623T1140.server.log
 ```
 
+Current draft-MTP sustained-decode best:
+
+```bash
+cd /home/steve/qwen36-results-main
+GPU_INDEX=1 PORT=18261 LABEL=gemma4-q8-gpu1-mtp-n3-long-deep-20260623T0328 \
+MTP_N_MAX=3 scripts/run-gemma4-26b-mtp-candidate.sh
+```
+
+Result:
+
+```text
+canary: 384/384 chat rows pass
+actual benchmark shape: 75 prompt tokens, 512 output tokens
+tok/s: 46.36 after TTFT, 44.75 wall
+summary: data/gemma4-q8-gpu1-mtp-n3-long-deep-20260623T0328/summary.json
+server log: /mnt/fast-ai/bench-results/gemma4-26b-a4b-q8/servers/gemma4-q8-gpu1-mtp-n3-long-deep-20260623T0328.server.log
+```
+
 Short wrapper equivalent for future sweeps:
 
 ```bash
 cd /home/steve/qwen36-results-main
-GPU_INDEX=1 PORT=18261 LABEL=gemma4-q8-gpu1-mtp-n4-long-deep-<stamp> \
-MTP_N_MAX=4 scripts/run-gemma4-26b-mtp-candidate.sh
+GPU_INDEX=1 PORT=18261 LABEL=gemma4-q8-gpu1-mtp-n3-long-deep-<stamp> \
+MTP_N_MAX=3 scripts/run-gemma4-26b-mtp-candidate.sh
 ```
 
 Useful safe MTP sweep knobs:
