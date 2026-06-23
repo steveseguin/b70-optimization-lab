@@ -213,11 +213,13 @@ Current filled-long draft-MTP fresh-response best:
 ```bash
 cd /home/steve/qwen36-results-main
 LLAMA_SERVER=/home/steve/src/llama.cpp-latest-gemma/build-sycl-b70-aot-bmg-g31/bin/llama-server \
-GPU_INDEX=0 PORT=18480 LABEL=gemma4-q8-gpu0-mtp-n7-c926-fasttopk10-repeat-ctxcp0-nmin2-pmin012-nobs-dthreads32-dtb32-filled-long-deep-20260623T150833Z \
+GPU_INDEX=0 PORT=18260 LABEL=gemma4-q8-gpu0-mtp-n7-c926-fastargmax-cpucleanup-vmm0-ub512-poll100-full-ctxcp0-nmin2-pmin012-nobs-dthreads32-dtb32-filled-long-20260623T222838Z \
+GGML_SYCL_ENABLE_VMM=0 UBATCH_SIZE=512 POLL=100 \
 MTP_N_MAX=7 MTP_N_MIN=2 MTP_P_MIN=0.12 MTP_BACKEND_SAMPLING=0 \
 MTP_DRAFT_THREADS=32 MTP_DRAFT_THREADS_BATCH=32 \
-MTP_DRAFT_FAST_TOPK=1 MTP_DRAFT_TOP_K=10 \
+MTP_DRAFT_FAST_ARGMAX=1 MTP_DRAFT_FAST_TOPK=0 MTP_DRAFT_PROFILE=1 \
 MTP_EXTRA_ARGS='--ctx-checkpoints 0' BENCH_PROMPT_MODE=filled-long \
+CANARY_REPEATS=96 BENCH_REPEATS=8 \
 scripts/run-gemma4-26b-mtp-candidate.sh
 ```
 
@@ -226,16 +228,19 @@ Result:
 ```text
 canary: 384/384 chat rows pass
 actual benchmark shape: 588 prompt tokens, 512 output tokens
-tok/s: 91.62 after TTFT, 71.29 warmed wall
-LocalMaxxing: cmqqsecuk01azqo018ahv0i1s
-summary: data/gemma4-q8-gpu0-mtp-n7-c926-fasttopk10-repeat-ctxcp0-nmin2-pmin012-nobs-dthreads32-dtb32-filled-long-deep-20260623T150833Z/summary.json
-server log: /mnt/fast-ai/bench-results/gemma4-26b-a4b-q8/servers/gemma4-q8-gpu0-mtp-n7-c926-fasttopk10-repeat-ctxcp0-nmin2-pmin012-nobs-dthreads32-dtb32-filled-long-deep-20260623T150833Z.server.log
+fresh headline tok/s: 92.397 first request after TTFT
+supporting independent repeated-request mean: 92.767 after TTFT, 83.289 wall
+prompt cache: cached_tokens=0 on every row
+LocalMaxxing: cmqr82niq01hgqo01v42y7ue8
+summary: data/gemma4-q8-gpu0-mtp-n7-c926-fastargmax-cpucleanup-vmm0-ub512-poll100-full-ctxcp0-nmin2-pmin012-nobs-dthreads32-dtb32-filled-long-20260623T222838Z/summary.json
+server log: /mnt/fast-ai/bench-results/gemma4-26b-a4b-q8/servers/gemma4-q8-gpu0-mtp-n7-c926-fastargmax-cpucleanup-vmm0-ub512-poll100-full-ctxcp0-nmin2-pmin012-nobs-dthreads32-dtb32-filled-long-20260623T222838Z.server.log
 ```
 
-The fast-top-k path requires the local llama.cpp patch captured in
-`patches/gemma4-llamacpp-mtp-draft-fast-topk-20260623.patch`. Without that
-patch, `MTP_DRAFT_FAST_TOPK` is ignored and this command reproduces the older
-`91.16 tok/s` recipe family instead.
+The current record path requires the local llama.cpp patch stack captured in
+`patches/gemma4-llamacpp-mtp-cpucleanup-record-stack-20260623.patch`. Without
+that patch stack, `MTP_DRAFT_FAST_ARGMAX` and the CPU hot-path cleanup are not
+available and this command falls back toward the older `91.16-91.62 tok/s`
+recipe family.
 
 Build the `c926ad098` runtime in a separate worktree:
 

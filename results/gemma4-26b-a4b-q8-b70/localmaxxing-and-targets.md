@@ -124,6 +124,30 @@ Current filled-long draftless ngram-mod warmed/history artifact:
 
 Current filled-long draft-MTP fresh-response Q8 best:
 
+- `gemma4-q8-gpu0-mtp-n7-c926-fastargmax-cpucleanup-vmm0-ub512-poll100-full-ctxcp0-nmin2-pmin012-nobs-dthreads32-dtb32-filled-long-20260623T222838Z`,
+  llama.cpp SYCL on one B70,
+  UD-Q8_K_XL main GGUF plus `mtp-gemma-4-26B-A4B-it.gguf` draft GGUF;
+- same `c926ad098` `n=7/n-min=2/p-min=0.12` backend-sampling-off recipe,
+  plus source-level CPU cleanup, `LLAMA_MTP_DRAFT_FAST_ARGMAX=1`,
+  `LLAMA_MTP_DRAFT_FAST_TOPK=0`, `GGML_SYCL_ENABLE_VMM=0`,
+  `UBATCH_SIZE=512`, and `POLL=100`;
+- actual LocalMaxxing packet shape: `588` prompt tokens and `512` output
+  tokens (`BENCH_PROMPT_MODE=filled-long`);
+- chat canary **384/384** pass;
+- conservative fresh-response headline: first measured request after TTFT
+  `92.397 tok/s`; supporting independent repeated-request mean
+  `92.767 tok/s`; wall mean `83.289 tok/s`; all rows `cached_tokens=0`;
+- fresh-response status: submitted to LocalMaxxing and approved as
+  `cmqr82niq01hgqo01v42y7ue8`; supersedes approved CPU-cleanup result
+  `cmqr7ni7u01gxqo01wtqsrn3u` and fast-top-k result
+  `cmqqsecuk01azqo018ahv0i1s`;
+- queue:
+  `data/localmaxxing-gemma4-26b-a4b-q8-b70-mtp-n7-c926ad098-fastargmax-cpucleanup-vmm0-ub512-poll100-filledlong512-20260623.queue.json`;
+- response:
+  `data/localmaxxing-responses/gemma4-26b-a4b-q8-b70-mtp-n7-c926ad098-fastargmax-cpucleanup-vmm0-ub512-poll100-filledlong512-20260623.submit.log`.
+
+Previous filled-long draft-MTP fresh-response Q8 best:
+
 - `gemma4-q8-gpu0-mtp-n7-c926-fasttopk10-repeat-ctxcp0-nmin2-pmin012-nobs-dthreads32-dtb32-filled-long-deep-20260623T150833Z`,
   llama.cpp SYCL on one B70,
   UD-Q8_K_XL main GGUF plus `mtp-gemma-4-26B-A4B-it.gguf` draft GGUF;
@@ -134,8 +158,9 @@ Current filled-long draft-MTP fresh-response Q8 best:
 - chat canary **384/384** pass;
 - decode `91.62 tok/s` after TTFT, `71.29 tok/s` warmed wall;
 - fresh-response status: submitted to LocalMaxxing and approved as
-  `cmqqsecuk01azqo018ahv0i1s`; supersedes approved result
-  `cmqqkmbhr017oqo017rdfxqh2` (`91.16 tok/s`);
+  `cmqqsecuk01azqo018ahv0i1s`; superseded by the CPU-cleanup and fast-argmax
+  records above. It superseded approved result `cmqqkmbhr017oqo017rdfxqh2`
+  (`91.16 tok/s`);
 - queue:
   `data/localmaxxing-gemma4-26b-a4b-q8-b70-mtp-n7-c926ad098-fasttopk10-filledlong512-20260623.queue.json`;
 - response:
