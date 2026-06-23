@@ -13,7 +13,7 @@ workflow should normally run four independent single-GPU attempts in parallel.
 - Primary quality target: no lower than INT8-equivalent weights. Do **not** use
   INT4 AutoRound as the default lane.
 - Primary runtime target: single-session decode rate on short/small-context
-  prompts, then 32K-context viability.
+  prompts first, then 32K-context viability after the Q8 fit is proven.
 - Preferred first artifact:
   `unsloth/gemma-4-26B-A4B-it-GGUF`,
   `gemma-4-26B-A4B-it-UD-Q8_K_XL.gguf` (27.6 GB).
@@ -47,12 +47,13 @@ External references:
 ## Current Local State
 
 - Four B70s are visible as Level Zero devices `level_zero:0..3`.
+- llama.cpp upstream was cloned to `/home/steve/src/llama.cpp` and built with
+  SYCL/Level Zero at commit `dec5ca557`; server binaries are under
+  `/home/steve/src/llama.cpp/build-sycl-b70/bin/`.
 - There is enough disk for the Q8 GGUF; `/mnt/fast-ai` had about 353 GB free at
   lane start.
-- No Gemma 4 26B model file was present locally at lane start.
-- No usable `llama-server`, `llama-cli`, or `llama-bench` was on `PATH` at lane
-  start, and no `/home/steve/src/llama.cpp` worktree existed. Use the build
-  script in this repo to create a fresh upstream SYCL build.
+- The Q8 GGUF download is in progress under
+  `/mnt/fast-ai/llm-models/gemma4-26b-a4b-it-q8-gguf/`.
 - The dirty `/home/steve/src/vllm` Qwen worktree should not be treated as the
   baseline for this lane.
 
@@ -61,8 +62,8 @@ External references:
 1. Build upstream llama.cpp with SYCL/Level Zero.
 2. Download the Q8 GGUF to
    `/mnt/fast-ai/llm-models/gemma4-26b-a4b-it-q8-gguf/`.
-3. Launch one `llama-server` replica on a single B70 and establish a valid
-   text-only baseline.
+3. Launch one `llama-server` replica on a single B70 at `CTX_SIZE=8192` and
+   establish a valid text-only baseline before attempting 32K.
 4. Launch four replicas on ports `18260..18263` and run four independent
    experiments/benchmarks in parallel.
 5. Compare against a vLLM/XPU int8-per-channel single-GPU baseline only after
@@ -72,12 +73,14 @@ External references:
 
 | Date | Runtime | GPU Layout | Precision | Context | Status | Output tok/s | Evidence |
 | --- | --- | --- | --- | --- | --- | ---: | --- |
-| 2026-06-23 | planned llama.cpp SYCL | 1 replica / B70 | UD-Q8_K_XL GGUF | 32K target | setup | n/a | [lane start note](../../notes/2026-06-23-gemma4-26b-a4b-q8-b70-lane-start.md) |
+| 2026-06-23 | llama.cpp SYCL setup | 1 replica / B70 | UD-Q8_K_XL GGUF | 8K first, 32K target | model download | n/a | [lane start note](../../notes/2026-06-23-gemma4-26b-a4b-q8-b70-lane-start.md) |
 
 ## Linked Files
 
 - [Reproduction commands](reproduce.md)
 - [Validity gates](validity-gates.md)
 - [Runtime plan](runtime-plan.md)
+- [Research plan and experiment queue](research-plan.md)
+- [Model and runtime options](model-options.md)
 - [Bugs and failed paths](bugs-failed-paths.md)
 - [Active experiment folder](../../experiments/gemma4-26b-a4b-q8-b70/README.md)

@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import datetime as dt
 import hashlib
 import json
 import statistics
@@ -19,18 +20,28 @@ def stream_completion(
     prompt: str,
     max_tokens: int,
     timeout: int,
+    api_mode: str,
+    seed: int | None,
+    allow_missing_usage: bool,
 ) -> dict[str, Any]:
     payload = {
         "model": model,
-        "prompt": prompt,
         "max_tokens": max_tokens,
         "temperature": 0,
         "top_p": 1,
         "stream": True,
         "stream_options": {"include_usage": True},
     }
+    if seed is not None:
+        payload["seed"] = seed
+    if api_mode == "chat":
+        endpoint = "chat/completions"
+        payload["messages"] = [{"role": "user", "content": prompt}]
+    else:
+        endpoint = "completions"
+        payload["prompt"] = prompt
     req = urllib.request.Request(
-        f"{base_url.rstrip('/')}/v1/completions",
+        f"{base_url.rstrip('/')}/v1/{endpoint}",
         data=json.dumps(payload).encode("utf-8"),
         headers={"Content-Type": "application/json"},
         method="POST",
@@ -52,7 +63,10 @@ def stream_completion(
             if event.get("usage"):
                 usage = event["usage"]
             for choice in event.get("choices", []):
-                token_text = choice.get("text") or ""
+                if api_mode == "chat":
+                    token_text = (choice.get("delta") or {}).get("content") or ""
+                else:
+                    token_text = choice.get("text") or ""
                 if token_text:
                     if first_text_at is None:
                         first_text_at = time.perf_counter()
@@ -63,6 +77,11 @@ def stream_completion(
     elapsed_s = ended - started
     post_ttft_s = None if first_text_at is None else ended - first_text_at
     completion_tokens = usage.get("completion_tokens")
+    if not isinstance(completion_tokens, int) and not allow_missing_usage:
+        raise RuntimeError(
+            "Server response did not include usage.completion_tokens; "
+            "rerun with --allow-missing-usage only for a non-promoted diagnostic."
+        )
     tok_s_after_ttft = None
     tok_s_wall = None
     if isinstance(completion_tokens, int) and completion_tokens > 0:
@@ -124,24 +143,43 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--base-url", default="http://127.0.0.1:18260")
     parser.add_argument("--model", default="gemma4-26b-a4b-q8")
+    parser.add_argument("--api-mode", choices=("chat", "completions"), default="chat")
     parser.add_argument("--prompt-tokens", type=int, default=512)
     parser.add_argument("--max-tokens", type=int, default=512)
     parser.add_argument("--repeats", type=int, default=8)
+    parser.add_argument("--seed", type=int, default=1)
+    parser.add_argument("--allow-missing-usage", action="store_true")
     parser.add_argument("--timeout", type=int, default=600)
     parser.add_argument("--out", type=Path)
     args = parser.parse_args()
 
     prompt = make_prompt(args.prompt_tokens)
     rows = [
-        stream_completion(args.base_url, args.model, prompt, args.max_tokens, args.timeout)
+        stream_completion(
+            args.base_url,
+            args.model,
+            prompt,
+            args.max_tokens,
+            args.timeout,
+            args.api_mode,
+            args.seed,
+            args.allow_missing_usage,
+        )
         for _ in range(args.repeats)
     ]
-    result = {
+    run_identity = {
+        "created_at_utc": dt.datetime.now(dt.UTC).isoformat(),
         "base_url": args.base_url,
         "model": args.model,
+        "api_mode": args.api_mode,
+        "seed": args.seed,
         "prompt_tokens_requested": args.prompt_tokens,
         "max_tokens": args.max_tokens,
         "repeats": args.repeats,
+        "usage_required": not args.allow_missing_usage,
+    }
+    result = {
+        "run_identity": run_identity,
         "summary": summarize(rows),
         "rows": rows,
     }

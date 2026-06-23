@@ -16,6 +16,12 @@ known risks so future agents do not start from a blank page.
   `GGML_SYCL_DISABLE_OPT=1` disables optimized SYCL reorder paths. This lane's
   launcher defaults to `=1`; any `=0` result needs repeat canaries before speed
   claims.
+- Google's MTP guidance notes that MoE models at batch size 1 can see limited
+  MTP speedup because different drafted tokens may activate different experts.
+  Treat MTP as a follow-up after the no-spec baseline, not the starting point.
+- `llama-server` built with IntelLLVM needs oneAPI runtime libraries in the
+  loader path (`libsvml.so`, etc.). The launcher sources oneAPI automatically;
+  raw `llama-server --help` from a fresh shell can fail until setvars is loaded.
 
 ## Local Carryover Risks
 
@@ -29,3 +35,6 @@ known risks so future agents do not start from a blank page.
 - Old llama.cpp/B70 notes include Level Zero device loss, allocation failures,
   and graph/DNN toggles that can change performance sharply. Preserve exact env
   vars for every run.
+- Partial downloads are a real risk for multi-GB GGUF files. The downloader is
+  pinned to a commit and validates the primary Q8 byte size; do not replace it
+  with an unpinned non-resumable command without recording revision and size.

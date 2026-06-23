@@ -4,11 +4,12 @@
 
 Start here because the user preference is Q8-quality GGUF, no TP split, and
 single-session decode. A 27.6 GB Q8 GGUF should fit on a 32 GB B70 with limited
-KV. Use one process per GPU:
+KV. Start at `CTX_SIZE=8192` to establish the baseline, then expand toward
+32K only after the fit and canaries are proven. Use one process per GPU:
 
 ```bash
-ONEAPI_DEVICE_SELECTOR=level_zero:0 scripts/run-gemma4-26b-llamacpp-replica.sh
-ONEAPI_DEVICE_SELECTOR=level_zero:1 GPU_INDEX=1 PORT=18261 scripts/run-gemma4-26b-llamacpp-replica.sh
+GPU_INDEX=0 PORT=18260 CTX_SIZE=8192 scripts/run-gemma4-26b-llamacpp-replica.sh
+GPU_INDEX=1 PORT=18261 CTX_SIZE=8192 scripts/run-gemma4-26b-llamacpp-replica.sh
 ```
 
 The quad launcher runs four independent replicas:
@@ -29,7 +30,7 @@ scripts/build-llama-cpp-sycl-b70.sh
 Initial tuning axes:
 
 - `-fa on` versus `-fa off`;
-- `-ub 64/128/256/512`;
+- `-ub 64/128/256/512` after the `64` baseline;
 - `-b 512/1024/2048`;
 - `GGML_SYCL_DISABLE_GRAPH=0/1`;
 - `GGML_SYCL_DISABLE_DNN=0/1`;
@@ -83,7 +84,8 @@ not the first optimization target:
 Because the desired deployment is one replica per GPU, research should normally
 use four disjoint attempts at once:
 
-- GPU 0: conservative baseline / control.
+- GPU 0: conservative `-fa on`, f16 KV, `CTX_SIZE=8192`,
+  `GGML_SYCL_DISABLE_OPT=1` control.
 - GPU 1: batch and ubatch sweep.
 - GPU 2: SYCL graph / DNN / flash-attention sweep.
 - GPU 3: candidate patch or vLLM comparison.

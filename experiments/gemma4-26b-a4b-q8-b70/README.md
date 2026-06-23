@@ -7,6 +7,10 @@ The promoted/reference packet is
 Keep raw attempts, failed knobs, and patch notes here until a result is worth
 promoting.
 
+Before launching new sweeps, read the current
+[research plan](../../results/gemma4-26b-a4b-q8-b70/research-plan.md) and
+[model/runtime options](../../results/gemma4-26b-a4b-q8-b70/model-options.md).
+
 ## Layout
 
 Suggested subfolders:

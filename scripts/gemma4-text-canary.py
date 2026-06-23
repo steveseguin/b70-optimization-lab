@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import datetime as dt
 import json
 import re
 import time
@@ -12,24 +13,42 @@ from pathlib import Path
 from typing import Any, Callable
 
 
-def complete(base_url: str, model: str, prompt: str, max_tokens: int, timeout: int) -> str:
+def complete(
+    base_url: str,
+    model: str,
+    prompt: str,
+    max_tokens: int,
+    timeout: int,
+    api_mode: str,
+    seed: int | None,
+) -> str:
     payload = {
         "model": model,
-        "prompt": prompt,
         "max_tokens": max_tokens,
         "temperature": 0,
         "top_p": 1,
         "stream": False,
     }
+    if seed is not None:
+        payload["seed"] = seed
+    if api_mode == "chat":
+        endpoint = "chat/completions"
+        payload["messages"] = [{"role": "user", "content": prompt}]
+    else:
+        endpoint = "completions"
+        payload["prompt"] = prompt
     req = urllib.request.Request(
-        f"{base_url.rstrip('/')}/v1/completions",
+        f"{base_url.rstrip('/')}/v1/{endpoint}",
         data=json.dumps(payload).encode("utf-8"),
         headers={"Content-Type": "application/json"},
         method="POST",
     )
     with urllib.request.urlopen(req, timeout=timeout) as resp:
         data = json.loads(resp.read().decode("utf-8"))
-    return data["choices"][0].get("text", "")
+    choice = data["choices"][0]
+    if api_mode == "chat":
+        return (choice.get("message") or {}).get("content", "")
+    return choice.get("text", "")
 
 
 def normalize_text(text: str) -> str:
@@ -61,6 +80,14 @@ def check_arithmetic(text: str) -> bool:
     return bool(re.fullmatch(r"17", norm))
 
 
+def check_code(text: str) -> bool:
+    norm = normalize_text(text)
+    norm = norm.replace("```python", "").replace("```", "")
+    has_signature = re.search(r"def\s+add_one\s*\(\s*x\s*\)\s*:", norm) is not None
+    has_return = re.search(r"return\s+x\s*\+\s*1\b", norm) is not None
+    return has_signature and has_return
+
+
 CASES: list[dict[str, Any]] = [
     {
         "name": "json",
@@ -88,6 +115,15 @@ CASES: list[dict[str, Any]] = [
         "max_tokens": 16,
         "check": check_arithmetic,
     },
+    {
+        "name": "code",
+        "prompt": (
+            "Reply only with Python code. Define a function named add_one that accepts x "
+            "and returns x + 1.\nAnswer:"
+        ),
+        "max_tokens": 64,
+        "check": check_code,
+    },
 ]
 
 
@@ -95,7 +131,9 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--base-url", default="http://127.0.0.1:18260")
     parser.add_argument("--model", default="gemma4-26b-a4b-q8")
+    parser.add_argument("--api-mode", choices=("chat", "completions"), default="chat")
     parser.add_argument("--repeats", type=int, default=32)
+    parser.add_argument("--seed", type=int, default=1)
     parser.add_argument("--timeout", type=int, default=120)
     parser.add_argument("--out", type=Path)
     args = parser.parse_args()
@@ -105,7 +143,13 @@ def main() -> int:
         for case in CASES:
             started = time.perf_counter()
             text = complete(
-                args.base_url, args.model, case["prompt"], case["max_tokens"], args.timeout
+                args.base_url,
+                args.model,
+                case["prompt"],
+                case["max_tokens"],
+                args.timeout,
+                args.api_mode,
+                args.seed,
             )
             elapsed_s = time.perf_counter() - started
             ok = bool(case["check"](text))
@@ -125,8 +169,13 @@ def main() -> int:
             break
 
     summary = {
-        "base_url": args.base_url,
-        "model": args.model,
+        "run_identity": {
+            "created_at_utc": dt.datetime.now(dt.UTC).isoformat(),
+            "base_url": args.base_url,
+            "model": args.model,
+            "api_mode": args.api_mode,
+            "seed": args.seed,
+        },
         "repeats_requested": args.repeats,
         "rows_completed": len(rows),
         "pass_all": all(row["ok"] for row in rows),

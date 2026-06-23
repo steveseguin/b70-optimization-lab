@@ -13,6 +13,7 @@ Every run summary must include:
 - exact GPU layout: one process per GPU, TP, DP, RPC, or other;
 - GPU index / `ONEAPI_DEVICE_SELECTOR`;
 - prompt tokens, generated tokens, max context, batch/ubatch;
+- API path (`chat/completions` or raw `completions`) and seed;
 - relevant env vars (`GGML_SYCL_*`, `ONEAPI_DEVICE_SELECTOR`,
   `UR_L0_ENABLE_RELAXED_ALLOCATION_LIMITS`, vLLM graph flags, etc.);
 - whether multimodal/image input was enabled.
@@ -22,8 +23,9 @@ Every run summary must include:
 - Default lane is Q8 / INT8-or-better. Do not promote INT4 AutoRound, Q4_K,
   IQ4, or lower-precision runs into this folder unless explicitly labeled as a
   lower-quality side experiment.
-- A runtime result must pass deterministic text canaries before it is compared
-  against other speed results.
+- A runtime result must pass deterministic **chat** text canaries before it is
+  compared against other speed results. Raw-completion probes are diagnostic
+  unless explicitly labeled.
 - If using a different precision mix, document why it should be quality-neutral
   or quality-positive. Examples: int8 weight-only, Q8 GGUF, BF16, or FP16 KV.
 - Multimodal support is optional for the initial speed lane. If claimed, add a
@@ -32,7 +34,8 @@ Every run summary must include:
 ## Initial Text Canaries
 
 Use temperature `0`, fixed seeds when supported, and repeat enough times to
-catch nondeterministic runtime bugs:
+catch nondeterministic runtime bugs. The repo harness defaults to
+`/v1/chat/completions` and `seed=1`:
 
 - JSON canary: answer `42`, unit `widgets`.
 - Sorting canary: output exactly `blue, green, orange, red`.
@@ -53,6 +56,10 @@ Report at least:
 - aggregate output tokens per second across four replicas, if running all GPUs;
 - TTFT and wall time;
 - prompt and completion token counts.
+
+Promoted throughput requires non-null server `usage.completion_tokens`.
+Diagnostic runs may use `--allow-missing-usage`, but those are not record
+evidence until token counting is fixed.
 
 For LocalMaxxing or cross-model comparison, prefer corrected/generated output
 throughput rather than total client throughput. Label total-token throughput

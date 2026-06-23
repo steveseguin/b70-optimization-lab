@@ -1,0 +1,137 @@
+# Gemma 4 26B A4B Model And Runtime Options
+
+Research snapshot: 2026-06-23.
+
+## Primary Model Identity
+
+- Target model: `gemma-4-26B-A4B-it`.
+- Architecture facts from Google/Unsloth cards: about 25.2B total parameters,
+  about 3.8B active parameters, MoE, text plus image support, long context.
+- User quality rule for this lane: Q8 / INT8-or-better by default. Do not make
+  INT4 AutoRound, Q4_K, IQ4, or MXFP4 the default optimization path.
+
+## Unsloth GGUF Assets
+
+Primary repo:
+
+```text
+unsloth/gemma-4-26B-A4B-it-GGUF
+revision 3bb10d594514ef4edb7f3a65d41a7e4eb8c5767a
+```
+
+Important files from Hugging Face metadata:
+
+| File | Bytes | Use |
+| --- | ---: | --- |
+| `gemma-4-26B-A4B-it-UD-Q8_K_XL.gguf` | `27,636,230,944` | Primary Q8-quality baseline. Currently downloading. |
+| `gemma-4-26B-A4B-it-Q8_0.gguf` | `26,859,859,744` | Smaller Q8 fallback/control if UD-Q8_K_XL has compatibility or memory issues. |
+| `gemma-4-26B-A4B-it-UD-Q6_K_XL.gguf` | `23,295,389,472` | Lower-quality side experiment only if Q8 cannot fit useful context. |
+| `gemma-4-26B-A4B-it-MXFP4_MOE.gguf` | `16,551,046,944` | Public-speed comparison only; not quality-equivalent to the Q8 target. |
+| `mtp-gemma-4-26B-A4B-it.gguf` | `461,766,816` | Draft/MTP follow-up after no-spec baseline. |
+| `MTP/gemma-4-26B-A4B-it-Q8_0-MTP.gguf` | `461,766,816` | Alternate MTP draft file to test if the root MTP file is not accepted. |
+| `mmproj-F16.gguf` | `1,193,058,784` | Optional multimodal smoke after text baseline; not required for speed work. |
+
+The download script is pinned to the repo revision above and validates the exact
+primary Q8 file size. Override `FILENAME` and `EXPECTED_BYTES` explicitly for
+MTP or mmproj downloads.
+
+Draft/assistant alternatives:
+
+- `google/gemma-4-26B-A4B-it-assistant` exists as a Hugging Face checkpoint and
+  is the official assistant/draft-family reference.
+- `AtomicChat/gemma-4-26B-A4B-it-assistant-GGUF` exposes assistant GGUF files
+  including `gemma-4-26B-A4B-it-assistant.Q8_0.gguf` at `461,767,072` bytes.
+  Use this only if the Unsloth `mtp-*` draft file is rejected by llama.cpp.
+
+Different-model side lane:
+
+- `DiffusionGemma` is based on the Gemma 4 26B MoE architecture and is marketed
+  for low-latency/high-speed small-batch generation, but it is a different
+  generation method and not the same `gemma-4-26B-A4B-it` checkpoint. Treat it
+  as a future side lane if the Q8 causal model cannot meet speed targets.
+
+## Runtime Options
+
+### llama.cpp SYCL / GGUF
+
+This is the primary lane. It matches the one-replica-per-GPU goal and avoids
+tensor-parallel PCIe collectives. The local build is:
+
+```text
+/home/steve/src/llama.cpp
+commit dec5ca557
+build /home/steve/src/llama.cpp/build-sycl-b70
+```
+
+Important local facts:
+
+- `llama-server` needs oneAPI environment libraries; source
+  `/opt/intel/oneapi/setvars.sh --force` or use the repo launcher.
+- The launcher maps a filtered `ONEAPI_DEVICE_SELECTOR=level_zero:<gpu>` to
+  `-dev SYCL0`, which is correct for one process per visible device.
+- Default `GGML_SYCL_DISABLE_OPT=1` is intentional because llama.cpp issue
+  `#21893` reports Gemma 4 nonsense output on B70 with optimized SYCL paths.
+- The built server exposes MTP/speculation flags:
+  `--spec-draft-model`, `--spec-type draft-mtp`, `--spec-draft-n-max`,
+  `--spec-draft-device`, and `--spec-draft-ngl`.
+
+### vLLM/XPU Int8 Per-Channel
+
+This is the second lane, not the first. vLLM's Gemma 4 recipe recommends
+`--quantization int8_per_channel_weight_only` for 26B A4B because its smaller
+MoE expert dimensions are sensitive to 4-bit quantization. Use this if llama.cpp
+Q8 is too slow, lacks a needed feature, or fails multimodal support.
+
+Do not use one `--data-parallel-size 4` process for this model on vLLM/XPU yet.
+There is a public Gemma 4 MoE DP issue whose workaround is separate DP=1
+instances. That also matches this lane's no-PCIe-overhead design.
+
+### Ollama
+
+Useful as a compatibility/control runtime for GGUF and chat template behavior.
+Not the first optimization runtime because low-level SYCL flags, per-run
+identity, and LocalMaxxing-style reproducibility are harder to preserve.
+
+### Vulkan / Community B70 Kits
+
+There is a community B70 repository claiming SYCL is generally stronger for
+dense Gemma/Qwen decode while Vulkan can be relevant for some MoE speculative
+paths. Treat this as an idea source only. This lane starts with the local SYCL
+build because it gives the best direct control over B70 flags and matches prior
+repo practices.
+
+## LocalMaxxing Reference
+
+Model page:
+
+```text
+https://www.localmaxxing.com/en/models/google/gemma-4-26B-A4B-it
+```
+
+Use it for public target context, not as direct Q8 comparison. Current public
+top rows include lower-precision modes such as MXFP4/Q4, which are outside the
+default quality lane. Search/title snippets on 2026-06-23 showed the Google
+model page around `87.3 tok/s` top speed and an Unsloth-derived page around
+`94.3 tok/s`, but those are mixed public rows rather than a B70 Q8 target.
+Submit only after this repo has a valid record packet:
+model file/revision, runtime commit, GPU count, prompt/output shape, quality
+status, throughput JSON, server log path, and reproducible command.
+
+## Source Links
+
+- Unsloth GGUF repo:
+  <https://huggingface.co/unsloth/gemma-4-26B-A4B-it-GGUF>
+- Google Gemma 4 MTP overview:
+  <https://ai.google.dev/gemma/docs/mtp/overview>
+- vLLM Gemma 4 recipe:
+  <https://docs.vllm.ai/projects/recipes/en/latest/Google/Gemma4.html>
+- vLLM Gemma 4 MoE DP issue:
+  <https://github.com/vllm-project/vllm/issues/38999>
+- llama.cpp B70/Gemma 4 corruption report:
+  <https://github.com/ggml-org/llama.cpp/issues/21893>
+- LocalMaxxing model page:
+  <https://www.localmaxxing.com/en/models/google/gemma-4-26B-A4B-it>
+- DiffusionGemma overview:
+  <https://ai.google.dev/gemma/docs/diffusiongemma>
+- Community B70 llama.cpp notes:
+  <https://github.com/Hal9000AIML/arc-pro-b70-ubuntu-gpu-speedup-bugfixes>

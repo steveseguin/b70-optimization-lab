@@ -25,6 +25,10 @@ cd /home/steve/qwen36-results-main
 scripts/download-gemma4-26b-q8-gguf.sh
 ```
 
+The downloader uses resumable `curl` when available and reads Hugging Face
+credentials from the local secret files documented in `AGENTS.md`. It falls
+back to `huggingface_hub` if curl fails.
+
 Default output:
 
 ```text
@@ -35,8 +39,12 @@ Default output:
 
 ```bash
 cd /home/steve/qwen36-results-main
-GPU_INDEX=0 PORT=18260 scripts/run-gemma4-26b-llamacpp-replica.sh
+GPU_INDEX=0 PORT=18260 CTX_SIZE=8192 UBATCH_SIZE=64 \
+  scripts/run-gemma4-26b-llamacpp-replica.sh
 ```
+
+Use `CTX_SIZE=32768` only after the 8K baseline fits and passes canaries. Keep
+`CACHE_TYPE_K=f16 CACHE_TYPE_V=f16` for the quality baseline before trying q8 KV.
 
 In another shell:
 
