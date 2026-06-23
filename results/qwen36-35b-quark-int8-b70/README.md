@@ -33,9 +33,9 @@ crashed before validity gates.
 
 | Scope | Result | Validity | Primary artifact |
 | --- | ---: | --- | --- |
-| 4x strict-valid current base | `93.55 tok/s` | JSON `128/128`, color `256/256`, quality pass | [`deep-gate-summary`](../../data/qwen36-ablation-prefill-safe-int8-mixed-workspace-async-deep-gate-summary-20260615a13deep2.json) |
+| 4x strict-valid current base | `93.55 tok/s` | JSON `128/128`, color `256/256`, quality pass; LocalMaxxing `cmqq4mw4c00yfqo01gb2ucgxj` | [`deep-gate-summary`](../../data/qwen36-ablation-prefill-safe-int8-mixed-workspace-async-deep-gate-summary-20260615a13deep2.json) |
 | 4x legacy public approved | `99.43 tok/s` | LocalMaxxing approved, older gates | [`localmaxxing snapshot`](../../data/localmaxxing-qwen36-35b-quark-int8-exacthf-20260612ak.json) |
-| 2x reference smoke | `85.87 tok/s` | JSON `16/16`, color `16/16`, quality skipped | [`tp2-smoke-summary`](../../data/qwen36-ablation-prefill-safe-int8-mixed-workspace-async-tp2-smoke-summary-20260615tp2safe1.json) |
+| 2x reference smoke | `85.87 tok/s` | JSON `16/16`, color `16/16`, quality skipped; LocalMaxxing `cmqq4mwgm00yiqo0133bj962q` | [`tp2-smoke-summary`](../../data/qwen36-ablation-prefill-safe-int8-mixed-workspace-async-tp2-smoke-summary-20260615tp2safe1.json) |
 | 2x older raw reference | `91.59 tok/s` | smoke/reference only, not promoted | [`tp2-latency-truth`](../../data/qwen36-quark-int8-tp2-latency-truth-p512o256-metrics-20260612bx.json) |
 | Fastest raw artifact | `198.95 tok/s` | invalid/reference only | [`ngram5 raw`](../../data/qwen36-ngram5-current-storeguard-random-p512o512-r4-20260615.json) |
 | Fastest synthetic ceiling | `181.91 tok/s` | canaries skipped, synthetic accept | [`eagle2 ceiling summary`](../../data/qwen36-ablation-eagle2-tokenheavy-synthaccept6-piecewise-tp2-k5-ceiling-20260618h-summary-20260618h02.json) |

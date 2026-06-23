@@ -12,7 +12,7 @@ size, and memory pressure. They are not the current 4x record lane.
 | [`tp2-latency-truth-p512o256-r3`](../../data/qwen36-quark-int8-tp2-latency-truth-p512o256-r3-metrics-20260612bx.json) | p512/o256, repeat 3 | `91.35105186355895 tok/s` mean | smoke/reference only |
 | [`tp2-noprefix-seqs24-single-r4`](../../data/qwen36-quark-int8-tp2-noprefix-seqs24-single-r4-20260611.json) | p512/o512, repeat 4 | `91.24716509862932 tok/s` class | older rejected/reference |
 | [`tp2-graph32k-single`](../../data/qwen36-quark-int8-tp2-graph32k-single-20260610.json) | p512/o512, repeat 4 | `86.8477485384133 tok/s` class | older rejected/reference |
-| [`tp2-safe-smoke`](../../data/qwen36-ablation-prefill-safe-int8-mixed-workspace-async-tp2-smoke-summary-20260615tp2safe1.json) | p512/o512, canary smoke | `85.86911405999231 tok/s` | JSON `16/16`, color `16/16`, quality skipped |
+| [`tp2-safe-smoke`](../../data/qwen36-ablation-prefill-safe-int8-mixed-workspace-async-tp2-smoke-summary-20260615tp2safe1.json) | p512/o512, canary smoke | `85.86911405999231 tok/s` | JSON `16/16`, color `16/16`, quality skipped; LocalMaxxing `cmqq4mwgm00yiqo0133bj962q` |
 
 The user's memory that 2x was "closer to 80 tok/s" is directionally right for
 the safer TP2 smoke (`85.87 tok/s`), but older raw TP2 measurements reached
@@ -37,6 +37,7 @@ This is the canary-smoke TP2 command preserved in the recovery notes:
 Metrics artifact:
 
 - [`tp2-safe-smoke-metrics`](../../data/qwen36-ablation-prefill-safe-int8-mixed-workspace-async-tp2-smoke-p512o512-20260615tp2safe1.json)
+- [`LocalMaxxing submission log`](../../data/localmaxxing-responses/qwen36-35b-quark-int8-b70-valid-2x4x-20260623.submit.log)
 
 ```bash
 cd /home/steve/llm-optimizations

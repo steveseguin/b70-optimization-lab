@@ -1,5 +1,24 @@
 # LocalMaxxing Submissions
 
+Date: 2026-06-23
+
+Model: `nameistoken/Qwen3.6-35B-A3B-Quark-W8A8-INT8`, Quark W8A8 INT8,
+vLLM/XPU on Intel Arc Pro B70.
+
+| Label | LocalMaxxing ID | GPUs | Input | Output | tok/s out | tok/s total |
+| --- | --- | ---: | ---: | ---: | ---: | ---: |
+| `qwen36-35b-quark-int8-b70-tp4-strict-deep-gate-20260615a13deep2` | `cmqq4mw4c00yfqo01gb2ucgxj` | 4 | 512 | 512 | 93.551 | 178.773 |
+| `qwen36-35b-quark-int8-b70-tp2-safe-smoke-20260615tp2safe1` | `cmqq4mwgm00yiqo0133bj962q` | 2 | 512 | 512 | 85.869 | 162.283 |
+
+Note: the TP4 submission is the current strict-valid deep gate: JSON `128/128`,
+color `256/256`, and quality suite pass. The TP2 submission is the best safer
+reference smoke with JSON `16/16` and color `16/16`; quality suite was skipped,
+so it is labeled as a TP2 reference rather than a stronger deep-gate result.
+Payload queue and response log:
+`data/localmaxxing-qwen36-35b-quark-int8-b70-valid-2x4x-20260623.queue.json`
+and
+`data/localmaxxing-responses/qwen36-35b-quark-int8-b70-valid-2x4x-20260623.submit.log`.
+
 Date: 2026-05-15
 
 Model: `Lasimeri/MiniMax-M2.7-int4-AutoRound`, AutoRound W4A16 safetensors,

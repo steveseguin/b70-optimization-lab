@@ -22,6 +22,7 @@ Model identity for all results in this file unless stated otherwise:
 | Color canary | `256/256`, pass |
 | Quality suite | pass |
 | Decision | accepted by requested gates |
+| LocalMaxxing ID | `cmqq4mw4c00yfqo01gb2ucgxj`, `APPROVED` |
 
 Primary artifacts:
 
@@ -30,6 +31,7 @@ Primary artifacts:
 - [`deep-gate-json`](../../data/qwen36-ablation-prefill-safe-int8-mixed-workspace-async-deep-gate-json-repeat128-20260615a13deep2.json)
 - [`deep-gate-color`](../../data/qwen36-ablation-prefill-safe-int8-mixed-workspace-async-deep-gate-color-repeat256-20260615a13deep2.json)
 - [`deep-gate-quality`](../../data/qwen36-ablation-prefill-safe-int8-mixed-workspace-async-deep-gate-quality-suite-20260615a13deep2.json)
+- [`LocalMaxxing submission log`](../../data/localmaxxing-responses/qwen36-35b-quark-int8-b70-valid-2x4x-20260623.submit.log)
 - narrative note: [`2026-06-14-qwen36-recovery-implementation.md`](../../notes/2026-06-14-qwen36-recovery-implementation.md)
 
 Key identity fields:
