@@ -86,6 +86,25 @@ Current short-prompt draft-MTP sustained-decode Q8 best:
 
 Current filled-long draft-MTP sustained-decode Q8 best:
 
+- `gemma4-q8-gpu0-mtp-n7-c926-fasttopk10-repeat-ctxcp0-nmin2-pmin012-nobs-dthreads32-dtb32-filled-long-deep-20260623T150833Z`,
+  llama.cpp SYCL on one B70,
+  UD-Q8_K_XL main GGUF plus `mtp-gemma-4-26B-A4B-it.gguf` draft GGUF;
+- same `c926ad098` recipe as the prior result, plus source-level fast top-k MTP
+  draft bypass: `LLAMA_MTP_DRAFT_FAST_TOPK=1`, `LLAMA_MTP_DRAFT_TOP_K=10`;
+- actual LocalMaxxing packet shape: `588` prompt tokens and `512` output
+  tokens (`BENCH_PROMPT_MODE=filled-long`);
+- chat canary **384/384** pass;
+- decode `91.62 tok/s` after TTFT, `71.29 tok/s` warmed wall;
+- status: submitted to LocalMaxxing and approved as
+  `cmqqsecuk01azqo018ahv0i1s`; supersedes approved result
+  `cmqqkmbhr017oqo017rdfxqh2` (`91.16 tok/s`);
+- queue:
+  `data/localmaxxing-gemma4-26b-a4b-q8-b70-mtp-n7-c926ad098-fasttopk10-filledlong512-20260623.queue.json`;
+- response:
+  `data/localmaxxing-responses/gemma4-26b-a4b-q8-b70-mtp-n7-c926ad098-fasttopk10-filledlong512-20260623.submit.log`.
+
+Previous filled-long draft-MTP sustained-decode Q8 best:
+
 - `gemma4-q8-gpu0-mtp-n7-latest-c926ad098-ctxcp0-nmin2-pmin012-nobs-dthreads32-dtb32-filled-long-deep-20260623T113058Z`,
   llama.cpp SYCL on one B70,
   UD-Q8_K_XL main GGUF plus `mtp-gemma-4-26B-A4B-it.gguf` draft GGUF;
@@ -101,7 +120,8 @@ Current filled-long draft-MTP sustained-decode Q8 best:
 - chat canary **384/384** pass;
 - decode `91.16 tok/s` after TTFT, `71.06 tok/s` warmed wall;
 - status: submitted to LocalMaxxing and approved as
-  `cmqqkmbhr017oqo017rdfxqh2`; supersedes approved result
+  `cmqqkmbhr017oqo017rdfxqh2`; superseded by the fast-top-k result above.
+  It had superseded approved result
   `cmqqi1p2c016jqo01vndau1y9` (`91.05 tok/s`);
 - queue:
   `data/localmaxxing-gemma4-26b-a4b-q8-b70-mtp-n7-c926ad098-ctxcp0-nmin2-pmin012-nobs-dthreads32-dtb32-filledlong512-20260623.queue.json`.
@@ -204,6 +224,9 @@ the server log:
 - `-fa` state;
 - benchmark prompt mode and actual prompt/output token counts;
 - MTP/spec flags if enabled.
+- source-level experimental MTP knobs if enabled, including
+  `LLAMA_MTP_DRAFT_FAST_TOPK`, `LLAMA_MTP_DRAFT_TOP_K`, and
+  `LLAMA_MTP_DRAFT_LOGIT_GAP_MIN`.
 
 ## Do Not Submit If
 

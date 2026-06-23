@@ -120,19 +120,20 @@ Current short-prompt sustained-decode best:
 
 Current filled-long sustained-decode best:
 
-- run label: `gemma4-q8-gpu0-mtp-n7-latest-c926ad098-ctxcp0-nmin2-pmin012-nobs-dthreads32-dtb32-filled-long-deep-20260623T113058Z`;
-- change from prior filled-long best: move from llama.cpp `dec5ca557` to
-  `c926ad098` AOT BMG build and add `--ctx-checkpoints 0` to disable the new
-  upstream checkpoint default. Keep MTP depth at `--spec-draft-n-max 7`,
+- run label: `gemma4-q8-gpu0-mtp-n7-c926-fasttopk10-repeat-ctxcp0-nmin2-pmin012-nobs-dthreads32-dtb32-filled-long-deep-20260623T150833Z`;
+- change from prior filled-long best: keep the llama.cpp `c926ad098` AOT BMG
+  build, `--ctx-checkpoints 0`, `--spec-draft-n-max 7`,
   `--spec-draft-n-min 2`, draft backend sampling disabled,
   `--spec-draft-threads 32`, `--spec-draft-p-min 0.12`, and
-  `--spec-draft-threads-batch 32`;
+  `--spec-draft-threads-batch 32`, then add the source-level fast top-k MTP
+  draft bypass (`LLAMA_MTP_DRAFT_FAST_TOPK=1`,
+  `LLAMA_MTP_DRAFT_TOP_K=10`);
 - actual benchmark shape: `588` prompt tokens and exactly `512` output tokens
   on all repeats;
 - quality: chat canary **384/384 pass**;
-- speed: **91.16 tok/s after TTFT**, **71.06 tok/s warmed wall**;
-- LocalMaxxing: approved as `cmqqkmbhr017oqo017rdfxqh2`; previous approved record
-  `cmqqi1p2c016jqo01vndau1y9` was `91.05 tok/s`;
+- speed: **91.62 tok/s after TTFT**, **71.29 tok/s warmed wall**;
+- LocalMaxxing: approved as `cmqqsecuk01azqo018ahv0i1s`; previous approved
+  record `cmqqkmbhr017oqo017rdfxqh2` was `91.16 tok/s`;
 - decision: current valid best for the Gemma 4 26B A4B Q8 one-B70 lane. Future
   record attempts should use `filled-long` unless intentionally reproducing a
   short-prompt record.
@@ -210,13 +211,25 @@ Near-neighbor follow-ups now in progress / next in queue:
   `LLAMA_MTP_DRAFT_LOGIT_GAP_MIN=0.25/0.50/1.00/1.50` also preserved
   `384/384` quality but reached only `90.15-90.48 tok/s`. Do not promote these
   hooks into the current recipe; keep them as documented diagnostics.
+- source-level fast top-k MTP draft bypass: initial `top_k=10` smoke reached
+  `91.28 tok/s`, then the exact repeat on GPU0 reached **`91.62 tok/s`** with
+  `384/384` canary and was submitted/approved as
+  `cmqqsecuk01azqo018ahv0i1s`. `top_k=2/4/20` were losses in the same sweep.
+  Promote `LLAMA_MTP_DRAFT_FAST_TOPK=1`, `LLAMA_MTP_DRAFT_TOP_K=10` as the
+  current recipe, but remember the gain is modest and run-to-run variance is
+  still visible.
 
 Next queue:
 
-- source-level MTP overhead lane instead of more small flag combinations:
-  timing showed hidden-state handoff was not the material cost; draft
-  `llama_decode` and sampler overhead dominate. Next patches should target
-  adaptive draft depth, cheaper top-1 candidate handling, or reduced draft-loop
+- tune around the promoted fast top-k recipe before moving to a new runtime:
+  `MTP_P_MIN=0.115/0.120/0.125/0.130` with
+  `LLAMA_MTP_DRAFT_FAST_TOPK=1`, `LLAMA_MTP_DRAFT_TOP_K=10`, then if needed
+  `LLAMA_MTP_DRAFT_TOP_K=8/10/12/16` exact repeats. Keep 384/384 canary for any
+  claimed record.
+- source-level MTP overhead lane remains valuable: timing showed hidden-state
+  handoff was not the material cost; draft `llama_decode` and sampler overhead
+  dominate. The fast-top-k patch reduced sampler overhead only modestly, so
+  bigger wins likely require adaptive draft depth or reduced draft-loop decode
   work.
 - clean vLLM/XPU `int8_per_channel_weight_only` single-replica baseline for
   Gemma 4 26B A4B as the main non-llama.cpp comparison. Validate chat-template

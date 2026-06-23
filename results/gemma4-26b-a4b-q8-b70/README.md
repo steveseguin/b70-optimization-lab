@@ -2,7 +2,8 @@
 
 Status: **active optimization; current valid best is llama.cpp draft-MTP
 `n=7, n-min=2, p-min=0.12, backend sampling off, draft threads 32,
-draft batch threads 32, ctx-checkpoints off` on the filled-long shape**.
+draft batch threads 32, ctx-checkpoints off, fast top-k=10` on the
+filled-long shape**.
 
 This lane replaces the closed Qwen3.6 35B TP4 effort. The target architecture is
 different on purpose: run **one complete Gemma 4 26B A4B replica per B70** and
@@ -108,6 +109,7 @@ External references:
 | 2026-06-23 | llama.cpp `dec5ca557` SYCL draft-MTP AOT BMG | 1 replica on B70 GPU3 | UD-Q8_K_XL GGUF + Gemma MTP draft GGUF, f16 KV | 8K | previous filled-long best: MTP `n=7`, `n-min=2`, `p-min=0.10`, `--no-spec-draft-backend-sampling`, `--spec-draft-threads 32`, 384/384 canary; actual shape 588 input / 512 output tokens | **90.42 after TTFT** / 82.34 wall | [summary](../../data/gemma4-q8-gpu3-mtp-n7-aot-nmin2-pmin010-nobs-dthreads32-filled-long-deep-20260623T094131Z/summary.json), [sweep note](../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260623T0941-n7-nobs-followups.md) |
 | 2026-06-23 | llama.cpp `dec5ca557` SYCL draft-MTP AOT BMG | 1 replica on B70 GPU2 | UD-Q8_K_XL GGUF + Gemma MTP draft GGUF, f16 KV | 8K | previous filled-long best: MTP `n=7`, `n-min=2`, `p-min=0.12`, `--no-spec-draft-backend-sampling`, `--spec-draft-threads 32`, `--spec-draft-threads-batch 32`, 384/384 canary; actual shape 588 input / 512 output tokens | **91.05 after TTFT** / 82.97 wall | [summary](../../data/gemma4-q8-gpu2-mtp-n7-aot-nmin2-pmin012-nobs-dthreads32-dtb32-filled-long-deep-20260623T101814Z/summary.json), [sweep note](../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260623T1018-dtb32-pmin-interaction.md) |
 | 2026-06-23 | llama.cpp `c926ad098` SYCL draft-MTP AOT BMG | 1 replica on B70 GPU0 | UD-Q8_K_XL GGUF + Gemma MTP draft GGUF, f16 KV | 8K | **current sustained-decode best**: latest runtime, MTP `n=7`, `n-min=2`, `p-min=0.12`, `--no-spec-draft-backend-sampling`, `--spec-draft-threads 32`, `--spec-draft-threads-batch 32`, `--ctx-checkpoints 0`, 384/384 canary; actual shape 588 input / 512 output tokens | **91.16 after TTFT** / 71.06 wall | [summary](../../data/gemma4-q8-gpu0-mtp-n7-latest-c926ad098-ctxcp0-nmin2-pmin012-nobs-dthreads32-dtb32-filled-long-deep-20260623T113058Z/summary.json), [sweep note](../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260623T1130-latest-runtime-c926ad098.md) |
+| 2026-06-23 | llama.cpp `c926ad098` SYCL draft-MTP AOT BMG + fast top-k patch | 1 replica on B70 GPU0 | UD-Q8_K_XL GGUF + Gemma MTP draft GGUF, f16 KV | 8K | **current filled-long best**: prior `n=7/n-min=2/p-min=0.12` recipe plus `LLAMA_MTP_DRAFT_FAST_TOPK=1`, `LLAMA_MTP_DRAFT_TOP_K=10`, backend sampling off, 384/384 canary; actual shape 588 input / 512 output tokens | **91.62 after TTFT** / 71.29 wall | [summary](../../data/gemma4-q8-gpu0-mtp-n7-c926-fasttopk10-repeat-ctxcp0-nmin2-pmin012-nobs-dthreads32-dtb32-filled-long-deep-20260623T150833Z/summary.json), [sweep note](../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260623T1504-fast-topk.md) |
 
 The first valid result is intentionally labeled as a baseline, not an optimized
 result. It proves that the Q8 GGUF fits and serves correctly at 8K on one B70,
@@ -133,7 +135,10 @@ tokens and 512 output tokens. On that shape the official Gemma MTP draft GGUF is
 much more valuable, and `--spec-draft-n-max 7 --spec-draft-n-min 2
 --spec-draft-p-min 0.12 --no-spec-draft-backend-sampling
 --spec-draft-threads 32 --spec-draft-threads-batch 32 --ctx-checkpoints 0` on
-llama.cpp `c926ad098` is the current valid best at 91.16 tok/s after TTFT.
+llama.cpp `c926ad098` reached 91.16 tok/s after TTFT. The current valid best is
+the same recipe plus the source-level fast top-k MTP draft bypass
+(`LLAMA_MTP_DRAFT_FAST_TOPK=1`, `LLAMA_MTP_DRAFT_TOP_K=10`) at **91.62 tok/s**
+after TTFT, approved on LocalMaxxing as `cmqqsecuk01azqo018ahv0i1s`.
 The after-TTFT decode metric is the promoted comparison metric. The wall/total
 metric in repeated filled-long runs is warmed by the benchmark's repeated prompt
 shape and can include substantial prompt-cache reuse after the first repeat; do

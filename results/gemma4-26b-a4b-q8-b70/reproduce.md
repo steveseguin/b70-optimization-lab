@@ -181,8 +181,11 @@ Current filled-long draft-MTP sustained-decode best:
 ```bash
 cd /home/steve/qwen36-results-main
 LLAMA_SERVER=/home/steve/src/llama.cpp-latest-gemma/build-sycl-b70-aot-bmg-g31/bin/llama-server \
-GPU_INDEX=0 PORT=18382 LABEL=gemma4-q8-gpu0-mtp-n7-latest-c926ad098-ctxcp0-nmin2-pmin012-nobs-dthreads32-dtb32-filled-long-deep-20260623T113058Z \
-MTP_N_MAX=7 MTP_N_MIN=2 MTP_P_MIN=0.12 MTP_BACKEND_SAMPLING=0 MTP_DRAFT_THREADS=32 MTP_DRAFT_THREADS_BATCH=32 MTP_EXTRA_ARGS='--ctx-checkpoints 0' BENCH_PROMPT_MODE=filled-long \
+GPU_INDEX=0 PORT=18480 LABEL=gemma4-q8-gpu0-mtp-n7-c926-fasttopk10-repeat-ctxcp0-nmin2-pmin012-nobs-dthreads32-dtb32-filled-long-deep-20260623T150833Z \
+MTP_N_MAX=7 MTP_N_MIN=2 MTP_P_MIN=0.12 MTP_BACKEND_SAMPLING=0 \
+MTP_DRAFT_THREADS=32 MTP_DRAFT_THREADS_BATCH=32 \
+MTP_DRAFT_FAST_TOPK=1 MTP_DRAFT_TOP_K=10 \
+MTP_EXTRA_ARGS='--ctx-checkpoints 0' BENCH_PROMPT_MODE=filled-long \
 scripts/run-gemma4-26b-mtp-candidate.sh
 ```
 
@@ -191,11 +194,16 @@ Result:
 ```text
 canary: 384/384 chat rows pass
 actual benchmark shape: 588 prompt tokens, 512 output tokens
-tok/s: 91.16 after TTFT, 71.06 warmed wall
-LocalMaxxing: cmqqkmbhr017oqo017rdfxqh2
-summary: data/gemma4-q8-gpu0-mtp-n7-latest-c926ad098-ctxcp0-nmin2-pmin012-nobs-dthreads32-dtb32-filled-long-deep-20260623T113058Z/summary.json
-server log: /mnt/fast-ai/bench-results/gemma4-26b-a4b-q8/servers/gemma4-q8-gpu0-mtp-n7-latest-c926ad098-ctxcp0-nmin2-pmin012-nobs-dthreads32-dtb32-filled-long-deep-20260623T113058Z.server.log
+tok/s: 91.62 after TTFT, 71.29 warmed wall
+LocalMaxxing: cmqqsecuk01azqo018ahv0i1s
+summary: data/gemma4-q8-gpu0-mtp-n7-c926-fasttopk10-repeat-ctxcp0-nmin2-pmin012-nobs-dthreads32-dtb32-filled-long-deep-20260623T150833Z/summary.json
+server log: /mnt/fast-ai/bench-results/gemma4-26b-a4b-q8/servers/gemma4-q8-gpu0-mtp-n7-c926-fasttopk10-repeat-ctxcp0-nmin2-pmin012-nobs-dthreads32-dtb32-filled-long-deep-20260623T150833Z.server.log
 ```
+
+The fast-top-k path requires the local llama.cpp patch captured in
+`patches/gemma4-llamacpp-mtp-draft-fast-topk-20260623.patch`. Without that
+patch, `MTP_DRAFT_FAST_TOPK` is ignored and this command reproduces the older
+`91.16 tok/s` recipe family instead.
 
 Build the `c926ad098` runtime in a separate worktree:
 
