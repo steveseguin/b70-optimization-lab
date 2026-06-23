@@ -509,9 +509,12 @@ Text speed is first. After text baseline:
     (`~445/462` drafted tokens, mean acceptance length `~7.7`, zero `p-min`
     stops in the profile). Argmax/top-k and VMM/ubatch/poll follow-ups preserved
     quality but did not beat the `91.62 tok/s` record in a meaningful way.
-    Further small sampler/runtime sweeps under this identity are low value; the
-    next serious paths are vLLM/XPU INT8-per-channel and source/kernel work that
-    reduces the target verification cost per accepted chunk.
+    A fixed-line diagnostic then showed the same thing more sharply: `n=8`
+    accepted `454/454` drafted benchmark tokens but fell to `64.20 tok/s`, and
+    `n=12/16` also lost despite mean accepted lengths above `11`. Further small
+    sampler/runtime/depth sweeps under this identity are low value; the next
+    serious paths are vLLM/XPU INT8-per-channel and source/kernel work that
+    reduces the target verification or draft decode cost per accepted chunk.
 
 ## Stop Conditions
 
