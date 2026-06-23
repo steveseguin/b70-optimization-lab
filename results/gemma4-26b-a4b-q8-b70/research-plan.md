@@ -225,13 +225,17 @@ Near-neighbor follow-ups now in progress / next in queue:
   improve TTFT to about `630 ms` and warmed wall throughput to about `82 tok/s`,
   so preserve them as latency/total-throughput references, not decode-record
   winners.
+- fast top-k p-min neighborhood: `p-min=0.115/0.120-repeat/0.125/0.130` all
+  passed `384/384` but missed the record (`90.97`, `91.21`, `90.99`, `91.01`
+  tok/s). Keep `MTP_P_MIN=0.12`; do not keep spending lanes on nearby p-min
+  values without a second interacting change.
 
 Next queue:
 
-- tune around the promoted fast top-k recipe before moving to a new runtime:
-  `MTP_P_MIN=0.115/0.120/0.125/0.130` with
-  `LLAMA_MTP_DRAFT_FAST_TOPK=1`, `LLAMA_MTP_DRAFT_TOP_K=10`. Keep 384/384
-  canary for any claimed record.
+- tune thread scheduling around the promoted fast top-k recipe:
+  `MTP_DRAFT_THREADS=28/36` and `MTP_DRAFT_THREADS_BATCH=28/36`, keeping
+  `LLAMA_MTP_DRAFT_FAST_TOPK=1`, `LLAMA_MTP_DRAFT_TOP_K=10`,
+  `MTP_P_MIN=0.12`, and 384/384 canary for any claimed record.
 - source-level MTP overhead lane remains valuable: timing showed hidden-state
   handoff was not the material cost; draft `llama_decode` and sampler overhead
   dominate. The fast-top-k patch reduced sampler overhead only modestly, so
