@@ -64,6 +64,12 @@ def main() -> int:
     if args.label:
         labels = set(args.label)
         queue = [item for item in queue if item["label"] in labels]
+        if not queue:
+            print(
+                f"no payloads matched --label filter(s): {', '.join(sorted(labels))}",
+                file=sys.stderr,
+            )
+            return 2
     if args.limit is not None:
         queue = queue[: args.limit]
 

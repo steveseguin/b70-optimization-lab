@@ -57,6 +57,16 @@ Current promoted family:
   `p-min=0.08/0.10/0.12` and `n=9, p-min=0.12` all passed 384/384 canaries but
   fell to `61.8-65.9 tok/s` on the filled-long shape, far below the `n=7`
   record.
+- Draftless n-gram speculation can be target-verified and still be invalid as a
+  fresh-response headline. On 2026-06-23, `ngram-mod match=20 min=32 max=64`
+  reached `245-280 tok/s` only after repeated filled-long benchmark responses
+  had populated continuation history. The cold first request stayed near
+  non-spec speed (`~41 tok/s`). Those LocalMaxxing rows were submitted before
+  the fresh/warmed rule was clarified and are marked retraction-needed; API
+  deletion attempts returned 404 because LocalMaxxing exposes no documented
+  benchmark delete/update endpoint. Future record attempts must report
+  first-request fresh-response throughput separately and must not average
+  warmed ngram repeats into headline throughput.
 - llama.cpp `c926ad098` introduces server context checkpoints by default
   (`--ctx-checkpoints 32`). Default checkpoints preserved quality but inflated
   TTFT and hurt wall throughput for the benchmark lane. Use

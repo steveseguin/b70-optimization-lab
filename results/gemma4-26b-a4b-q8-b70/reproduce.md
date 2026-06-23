@@ -176,7 +176,39 @@ summary: data/gemma4-q8-gpu0-mtp-n3-aot-repeat-long-deep-20260623T0353/summary.j
 server log: /mnt/fast-ai/bench-results/gemma4-26b-a4b-q8/servers/gemma4-q8-gpu0-mtp-n3-aot-repeat-long-deep-20260623T0353.server.log
 ```
 
-Current filled-long draft-MTP sustained-decode best:
+Warmed/history draftless ngram-mod artifact:
+
+```bash
+cd /home/steve/qwen36-results-main
+LLAMA_SERVER=/home/steve/src/llama.cpp-latest-gemma/build-sycl-b70-aot-bmg-g31/bin/llama-server \
+GPU_INDEX=1 PORT=18261 LABEL=gemma4-q8-gpu1-ngram-mod-20-32-64-ctx4096ub512-poll100-ctxcp0-filled-long-deep-20260623T1855 \
+SPEC_TYPE=ngram-mod \
+SPEC_EXTRA_ARGS="--ctx-checkpoints 0 --spec-ngram-mod-n-match 20 --spec-ngram-mod-n-min 32 --spec-ngram-mod-n-max 64" \
+BENCH_PROMPT_MODE=filled-long PROMPT_TOKENS=512 MAX_TOKENS=512 \
+CANARY_REPEATS=96 BENCH_REPEATS=8 \
+GGML_SYCL_DISABLE_OPT=0 FLASH_ATTN=off POLL=100 THREADS=16 \
+CTX_SIZE=4096 BATCH_SIZE=512 UBATCH_SIZE=512 \
+scripts/run-gemma4-26b-spec-candidate.sh
+```
+
+Result:
+
+```text
+canary: 384/384 chat rows pass
+actual benchmark shape: 588 prompt tokens, 512 output tokens
+tok/s: 280.64 after TTFT, 206.24 warmed wall
+LocalMaxxing: cmqqyby6801dvqo01as3wenz2 (retraction-needed if displayed as headline throughput)
+server ngram stats: 3493/3493 accepted/generated draft tokens, mean accepted length 63.38
+summary: data/gemma4-q8-gpu1-ngram-mod-20-32-64-ctx4096ub512-poll100-ctxcp0-filled-long-deep-20260623T1855/summary.json
+server log: /mnt/fast-ai/bench-results/gemma4-26b-a4b-q8/servers/gemma4-q8-gpu1-ngram-mod-20-32-64-ctx4096ub512-poll100-ctxcp0-filled-long-deep-20260623T1855.server.log
+```
+
+This is draftless history-cache acceleration on the repeated filled-long
+benchmark. It is quality-preserving because the Q8 target model verifies every
+drafted token, but it should not be used as a unique-prompt no-cache decode
+claim or as a 32K-context result.
+
+Current filled-long draft-MTP fresh-response best:
 
 ```bash
 cd /home/steve/qwen36-results-main

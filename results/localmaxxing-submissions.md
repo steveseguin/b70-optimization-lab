@@ -26,6 +26,10 @@ stop, short-prompt sustained, and filled-long sustained shapes separate.
 | `gemma4-26b-a4b-q8-b70-llamacpp-mtp-n7-aot-nmin2-pmin012-nobs-dthreads32-dtb32-filledlong512-20260623T1018` | `cmqqi1p2c016jqo01vndau1y9` | 1 | 588 | 512 | 91.050 | 82.970 | 384/384 chat canary |
 | `gemma4-26b-a4b-q8-b70-llamacpp-mtp-n7-c926ad098-ctxcp0-nmin2-pmin012-nobs-dthreads32-dtb32-filledlong512-20260623` | `cmqqkmbhr017oqo017rdfxqh2` | 1 | 588 | 512 | 91.157 | 71.057 | 384/384 chat canary |
 | `gemma4-26b-a4b-q8-b70-llamacpp-mtp-n7-c926ad098-fasttopk10-filledlong512-20260623T1508` | `cmqqsecuk01azqo018ahv0i1s` | 1 | 588 | 512 | 91.619 | 71.287 | 384/384 chat canary |
+| `gemma4-26b-a4b-q8-b70-llamacpp-ngrammod-24-48-64-filledlong512-20260623T1745` | `cmqqxbkzx01cxqo01j8p97627` | 1 | 588 | 512 | 245.980 | 134.545 | 384/384 chat canary; warmed/history artifact, retraction-needed |
+| `gemma4-26b-a4b-q8-b70-llamacpp-ngrammod-20-32-64-filledlong512-20260623T1750` | `cmqqxjnif01d0qo01ix4oeixo` | 1 | 588 | 512 | 255.041 | 137.000 | 384/384 chat canary; warmed/history artifact, retraction-needed |
+| `gemma4-26b-a4b-q8-b70-llamacpp-ngrammod-20-32-64-filledlong512-20260623T1815` | `cmqqxx7bp01dbqo012d2qiiw6` | 1 | 588 | 512 | 280.040 | 206.501 | 384/384 chat canary; warmed/history artifact, retraction-needed |
+| `gemma4-26b-a4b-q8-b70-llamacpp-ngrammod-20-32-64-filledlong512-20260623T1855` | `cmqqyby6801dvqo01as3wenz2` | 1 | 588 | 512 | 280.642 | 206.236 | 384/384 chat canary; warmed/history artifact, retraction-needed |
 
 Required packet: see
 [`results/gemma4-26b-a4b-q8-b70/localmaxxing-and-targets.md`](gemma4-26b-a4b-q8-b70/localmaxxing-and-targets.md).
@@ -56,6 +60,25 @@ Submit artifacts:
   `data/localmaxxing-responses/gemma4-26b-a4b-q8-b70-mtp-n7-aot-nmin2-pmin012-nobs-dthreads32-dtb32-filledlong512-20260623.submit.log`,
   `data/localmaxxing-responses/gemma4-26b-a4b-q8-b70-mtp-n7-c926ad098-ctxcp0-nmin2-pmin012-nobs-dthreads32-dtb32-filledlong512-20260623.submit.log`,
   `data/localmaxxing-responses/gemma4-26b-a4b-q8-b70-mtp-n7-c926ad098-fasttopk10-filledlong512-20260623.submit.log`
+- draftless ngram-mod filled-long approved responses:
+  `data/localmaxxing-responses/gemma4-26b-a4b-q8-b70-ngrammod-24-48-64-filledlong512-20260623.submit.log`,
+  `data/localmaxxing-responses/gemma4-26b-a4b-q8-b70-ngrammod-20-32-64-filledlong512-20260623.submit.log`,
+  `data/localmaxxing-responses/gemma4-26b-a4b-q8-b70-ngrammod-20-32-64-ctx4096ub512-filledlong512-20260623.submit2.log`,
+  `data/localmaxxing-responses/gemma4-26b-a4b-q8-b70-ngrammod-20-32-64-poll100-filledlong512-20260623.submit.log`
+- draftless ngram-mod filtered no-op submit artifact:
+  `data/localmaxxing-responses/gemma4-26b-a4b-q8-b70-ngrammod-20-32-64-ctx4096ub512-filledlong512-20260623.submit.log`
+  (empty because the first command filtered on a non-matching label)
+
+Correction on 2026-06-23: the four draftless ngram-mod submissions above are
+not valid fresh-response headline throughput because the speedup depends on
+repeated-output continuation history. They remain useful warmed/history
+artifacts, but should be retracted from any public headline leaderboard view.
+API deletion was attempted for all four IDs and returned 404 because
+LocalMaxxing currently exposes only `GET/POST /api/benchmarks` and
+`POST /api/benchmarks/dry-run`; see
+`data/localmaxxing-responses/gemma4-ngram-history-accelerated-delete-attempts-20260623.json`
+and the OpenAPI method snapshot at
+`data/localmaxxing-responses/localmaxxing-openapi-benchmark-methods-20260623.json`.
 
 The first attempt failed only because the payload used `backend="SYCL/Level Zero"`.
 The accepted payload uses LocalMaxxing's enum `backend="xpu"` and stores

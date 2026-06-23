@@ -84,7 +84,45 @@ Current short-prompt draft-MTP sustained-decode Q8 best:
 - queue:
   `data/localmaxxing-gemma4-26b-a4b-q8-b70-mtp-n3-aot-repeat-long512-20260623.queue.json`.
 
-Current filled-long draft-MTP sustained-decode Q8 best:
+Current filled-long draftless ngram-mod warmed/history artifact:
+
+- `gemma4-q8-gpu1-ngram-mod-20-32-64-ctx4096ub512-poll100-ctxcp0-filled-long-deep-20260623T1855`,
+  llama.cpp SYCL on one B70, UD-Q8_K_XL main GGUF, f16 KV;
+- `--spec-type ngram-mod --ctx-checkpoints 0 --spec-ngram-mod-n-match 20
+  --spec-ngram-mod-n-min 32 --spec-ngram-mod-n-max 64`, AOT BMG build,
+  llama.cpp `c926ad098`, `GGML_SYCL_DISABLE_OPT=0`, `FLASH_ATTN=off`,
+  `POLL=100`, `--parallel 1 --cache-ram 0`, `CTX_SIZE=4096`,
+  `UBATCH_SIZE=512`;
+- actual LocalMaxxing packet shape: `588` prompt tokens and `512` output
+  tokens (`BENCH_PROMPT_MODE=filled-long`);
+- chat canary **384/384** pass;
+- decode `280.64 tok/s` after TTFT, `206.24 tok/s` warmed wall;
+- server log: `3493/3493` accepted/generated n-gram draft tokens, mean accepted
+  length `63.38`;
+- status: submitted to LocalMaxxing before the fresh/warmed rule clarification
+  and approved as `cmqqyby6801dvqo01as3wenz2`; **retraction-needed if
+  displayed as normal headline throughput**. It supersedes prior warmed/history
+  ngram rows only:
+  `cmqqxx7bp01dbqo012d2qiiw6` (`280.04 tok/s`),
+  `cmqqxjnif01d0qo01ix4oeixo` (`255.04 tok/s`) and
+  `cmqqxbkzx01cxqo01j8p97627` (`245.98 tok/s`). It does **not** supersede the
+  fresh-response draft-MTP record `cmqqsecuk01azqo018ahv0i1s` (`91.62 tok/s`);
+- queue:
+  `data/localmaxxing-gemma4-26b-a4b-q8-b70-ngrammod-20-32-64-poll100-filledlong512-20260623.queue.json`;
+- response:
+  `data/localmaxxing-responses/gemma4-26b-a4b-q8-b70-ngrammod-20-32-64-poll100-filledlong512-20260623.submit.log`;
+- caveat: this is history-cache acceleration on a repetitive sustained-decode
+  benchmark. It is quality-preserving because every drafted token is verified by
+  the Q8 target model, but it should not be described as unique-prompt no-cache
+  decode throughput or a 32K-context result. API deletion was attempted for all
+  four submitted ngram rows on 2026-06-23, but LocalMaxxing exposes no
+  documented benchmark delete endpoint and `DELETE /api/benchmarks/<id>`
+  returned 404; see
+  `data/localmaxxing-responses/gemma4-ngram-history-accelerated-delete-attempts-20260623.json`
+  and
+  `data/localmaxxing-responses/localmaxxing-openapi-benchmark-methods-20260623.json`.
+
+Current filled-long draft-MTP fresh-response Q8 best:
 
 - `gemma4-q8-gpu0-mtp-n7-c926-fasttopk10-repeat-ctxcp0-nmin2-pmin012-nobs-dthreads32-dtb32-filled-long-deep-20260623T150833Z`,
   llama.cpp SYCL on one B70,
@@ -95,7 +133,7 @@ Current filled-long draft-MTP sustained-decode Q8 best:
   tokens (`BENCH_PROMPT_MODE=filled-long`);
 - chat canary **384/384** pass;
 - decode `91.62 tok/s` after TTFT, `71.29 tok/s` warmed wall;
-- status: submitted to LocalMaxxing and approved as
+- fresh-response status: submitted to LocalMaxxing and approved as
   `cmqqsecuk01azqo018ahv0i1s`; supersedes approved result
   `cmqqkmbhr017oqo017rdfxqh2` (`91.16 tok/s`);
 - queue:

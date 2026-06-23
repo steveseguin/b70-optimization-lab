@@ -1,9 +1,16 @@
 # Gemma 4 26B A4B Q8 on Intel B70
 
-Status: **active optimization; current valid best is llama.cpp draft-MTP
-`n=7, n-min=2, p-min=0.12, backend sampling off, draft threads 32,
-draft batch threads 32, ctx-checkpoints off, fast top-k=10` on the
-filled-long shape**.
+Status: **active optimization; current valid fresh-response best is llama.cpp
+draft-MTP `n=7`, fast top-k, `91.62 tok/s` mean after TTFT / `91.25 tok/s`
+first request / `71.29` wall tok/s, 384/384 chat canary, LocalMaxxing
+`cmqqsecuk01azqo018ahv0i1s`**.
+
+Draftless `ngram-mod` later reached `245-280 tok/s`, but only after repeated
+benchmark requests made the same continuation predictable from generated
+history. Those rows are useful warmed/history-accelerated artifacts, not valid
+fresh-response headline throughput. The submitted ngram LocalMaxxing rows are
+marked retraction-needed in this repo; API deletion was attempted on 2026-06-23
+and returned 404 because LocalMaxxing exposes no benchmark delete endpoint.
 
 This lane replaces the closed Qwen3.6 35B TP4 effort. The target architecture is
 different on purpose: run **one complete Gemma 4 26B A4B replica per B70** and
@@ -108,8 +115,11 @@ External references:
 | 2026-06-23 | llama.cpp `dec5ca557` SYCL draft-MTP AOT BMG | 1 replica on B70 GPU3 | UD-Q8_K_XL GGUF + Gemma MTP draft GGUF, f16 KV | 8K | previous filled-long best: MTP `n=7`, `n-min=2`, `p-min=0.10`, `--no-spec-draft-backend-sampling`, 384/384 canary; actual shape 588 input / 512 output tokens | **90.24 after TTFT** / 82.24 wall | [summary](../../data/gemma4-q8-gpu3-mtp-n7-aot-nmin2-pmin010-nobs-filled-long-deep-20260623T093619Z/summary.json), [sweep note](../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260623T0936-n7-backend-sampling-sweep.md) |
 | 2026-06-23 | llama.cpp `dec5ca557` SYCL draft-MTP AOT BMG | 1 replica on B70 GPU3 | UD-Q8_K_XL GGUF + Gemma MTP draft GGUF, f16 KV | 8K | previous filled-long best: MTP `n=7`, `n-min=2`, `p-min=0.10`, `--no-spec-draft-backend-sampling`, `--spec-draft-threads 32`, 384/384 canary; actual shape 588 input / 512 output tokens | **90.42 after TTFT** / 82.34 wall | [summary](../../data/gemma4-q8-gpu3-mtp-n7-aot-nmin2-pmin010-nobs-dthreads32-filled-long-deep-20260623T094131Z/summary.json), [sweep note](../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260623T0941-n7-nobs-followups.md) |
 | 2026-06-23 | llama.cpp `dec5ca557` SYCL draft-MTP AOT BMG | 1 replica on B70 GPU2 | UD-Q8_K_XL GGUF + Gemma MTP draft GGUF, f16 KV | 8K | previous filled-long best: MTP `n=7`, `n-min=2`, `p-min=0.12`, `--no-spec-draft-backend-sampling`, `--spec-draft-threads 32`, `--spec-draft-threads-batch 32`, 384/384 canary; actual shape 588 input / 512 output tokens | **91.05 after TTFT** / 82.97 wall | [summary](../../data/gemma4-q8-gpu2-mtp-n7-aot-nmin2-pmin012-nobs-dthreads32-dtb32-filled-long-deep-20260623T101814Z/summary.json), [sweep note](../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260623T1018-dtb32-pmin-interaction.md) |
-| 2026-06-23 | llama.cpp `c926ad098` SYCL draft-MTP AOT BMG | 1 replica on B70 GPU0 | UD-Q8_K_XL GGUF + Gemma MTP draft GGUF, f16 KV | 8K | **current sustained-decode best**: latest runtime, MTP `n=7`, `n-min=2`, `p-min=0.12`, `--no-spec-draft-backend-sampling`, `--spec-draft-threads 32`, `--spec-draft-threads-batch 32`, `--ctx-checkpoints 0`, 384/384 canary; actual shape 588 input / 512 output tokens | **91.16 after TTFT** / 71.06 wall | [summary](../../data/gemma4-q8-gpu0-mtp-n7-latest-c926ad098-ctxcp0-nmin2-pmin012-nobs-dthreads32-dtb32-filled-long-deep-20260623T113058Z/summary.json), [sweep note](../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260623T1130-latest-runtime-c926ad098.md) |
-| 2026-06-23 | llama.cpp `c926ad098` SYCL draft-MTP AOT BMG + fast top-k patch | 1 replica on B70 GPU0 | UD-Q8_K_XL GGUF + Gemma MTP draft GGUF, f16 KV | 8K | **current filled-long best**: prior `n=7/n-min=2/p-min=0.12` recipe plus `LLAMA_MTP_DRAFT_FAST_TOPK=1`, `LLAMA_MTP_DRAFT_TOP_K=10`, backend sampling off, 384/384 canary; actual shape 588 input / 512 output tokens | **91.62 after TTFT** / 71.29 wall | [summary](../../data/gemma4-q8-gpu0-mtp-n7-c926-fasttopk10-repeat-ctxcp0-nmin2-pmin012-nobs-dthreads32-dtb32-filled-long-deep-20260623T150833Z/summary.json), [sweep note](../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260623T1504-fast-topk.md) |
+| 2026-06-23 | llama.cpp `c926ad098` SYCL draft-MTP AOT BMG | 1 replica on B70 GPU0 | UD-Q8_K_XL GGUF + Gemma MTP draft GGUF, f16 KV | 8K | previous fresh-response filled-long best: latest runtime, MTP `n=7`, `n-min=2`, `p-min=0.12`, `--no-spec-draft-backend-sampling`, `--spec-draft-threads 32`, `--spec-draft-threads-batch 32`, `--ctx-checkpoints 0`, 384/384 canary; actual shape 588 input / 512 output tokens | **91.16 after TTFT** / 71.06 wall | [summary](../../data/gemma4-q8-gpu0-mtp-n7-latest-c926ad098-ctxcp0-nmin2-pmin012-nobs-dthreads32-dtb32-filled-long-deep-20260623T113058Z/summary.json), [sweep note](../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260623T1130-latest-runtime-c926ad098.md) |
+| 2026-06-23 | llama.cpp `c926ad098` SYCL draft-MTP AOT BMG + fast top-k patch | 1 replica on B70 GPU0 | UD-Q8_K_XL GGUF + Gemma MTP draft GGUF, f16 KV | 8K | **current fresh-response filled-long best**: prior `n=7/n-min=2/p-min=0.12` recipe plus `LLAMA_MTP_DRAFT_FAST_TOPK=1`, `LLAMA_MTP_DRAFT_TOP_K=10`, backend sampling off, 384/384 canary; actual shape 588 input / 512 output tokens, first request `91.25 tok/s`, `cached_tokens=0` | **91.62 after TTFT** / 71.29 wall | [summary](../../data/gemma4-q8-gpu0-mtp-n7-c926-fasttopk10-repeat-ctxcp0-nmin2-pmin012-nobs-dthreads32-dtb32-filled-long-deep-20260623T150833Z/summary.json), [sweep note](../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260623T1504-fast-topk.md) |
+| 2026-06-23 | llama.cpp `c926ad098` SYCL draftless ngram-mod AOT BMG | 1 replica on B70 GPU0 | UD-Q8_K_XL GGUF, f16 KV | 8K | warmed/history artifact: `ngram-mod match=20 min=32 max=64`, `--ctx-checkpoints 0`, 384/384 canary; repeated 588+512 output became predictable after prior identical generations. Submitted before fresh/warmed rule clarification; retraction-needed. | **255.04 warmed/history** / 137.00 wall | [summary](../../data/gemma4-q8-gpu0-ngram-mod-20-32-64-ctxcp0-filled-long-deep-20260623T1750/summary.json), [sweep note](../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260623T1735-ngram-spec-sweep.md) |
+| 2026-06-23 | llama.cpp `c926ad098` SYCL draftless ngram-mod AOT BMG | 1 replica on B70 GPU3 | UD-Q8_K_XL GGUF, f16 KV | 4K | warmed/history artifact: same `ngram-mod match=20 min=32 max=64`, `--ctx-checkpoints 0`, `UBATCH_SIZE=512`, `POLL=50`, 384/384 canary; not a fresh-response or 32K-context claim. Submitted before rule clarification; retraction-needed. | **280.04 warmed/history** / 206.50 wall | [summary](../../data/gemma4-q8-gpu3-ngram-mod-20-32-64-ctx4096ub512-ctxcp0-filled-long-deep-20260623T1815/summary.json), [sweep note](../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260623T1735-ngram-spec-sweep.md) |
+| 2026-06-23 | llama.cpp `c926ad098` SYCL draftless ngram-mod AOT BMG | 1 replica on B70 GPU1 | UD-Q8_K_XL GGUF, f16 KV | 4K | warmed/history artifact: same `ngram-mod match=20 min=32 max=64`, `--ctx-checkpoints 0`, `UBATCH_SIZE=512`, `POLL=100`, 384/384 canary; repeated 588+512 output became predictable from n-gram history. Submitted before rule clarification; retraction-needed. | **280.64 warmed/history** / 206.24 wall | [summary](../../data/gemma4-q8-gpu1-ngram-mod-20-32-64-ctx4096ub512-poll100-ctxcp0-filled-long-deep-20260623T1855/summary.json), [sweep note](../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260623T1735-ngram-spec-sweep.md) |
 
 The first valid result is intentionally labeled as a baseline, not an optimized
 result. It proves that the Q8 GGUF fits and serves correctly at 8K on one B70,
@@ -131,14 +141,16 @@ rises because TTFT is amortized over more output tokens.
 The `long` prompt mode is a short 75-token prompt that forces 512 output tokens.
 The newer `filled-long` mode is the current preferred record-chasing shape for
 this lane because it produces a near-p512/o512 request in practice: 588 prompt
-tokens and 512 output tokens. On that shape the official Gemma MTP draft GGUF is
-much more valuable, and `--spec-draft-n-max 7 --spec-draft-n-min 2
---spec-draft-p-min 0.12 --no-spec-draft-backend-sampling
---spec-draft-threads 32 --spec-draft-threads-batch 32 --ctx-checkpoints 0` on
-llama.cpp `c926ad098` reached 91.16 tok/s after TTFT. The current valid best is
-the same recipe plus the source-level fast top-k MTP draft bypass
-(`LLAMA_MTP_DRAFT_FAST_TOPK=1`, `LLAMA_MTP_DRAFT_TOP_K=10`) at **91.62 tok/s**
-after TTFT, approved on LocalMaxxing as `cmqqsecuk01azqo018ahv0i1s`.
+tokens and 512 output tokens. On that shape, the best draft-MTP recipe reached
+**91.62 tok/s** after TTFT with the source-level fast top-k draft bypass,
+approved on LocalMaxxing as `cmqqsecuk01azqo018ahv0i1s`. Draftless
+`ngram-mod` speculation later produced **280.64 tok/s** after TTFT with
+`match=20, min=32, max=64`, `CTX_SIZE=4096`, `UBATCH_SIZE=512`, and
+`POLL=100`, but that is warmed/history throughput: the repeated benchmark
+output became predictable from prior generated continuation history. It is
+valid Q8 verification of a warmed continuation, not fresh-response no-cache
+decode. Do not use the submitted ngram LocalMaxxing rows as headline records;
+the current fresh-response record remains the draft-MTP fast-top-k row above.
 The after-TTFT decode metric is the promoted comparison metric. The wall/total
 metric in repeated filled-long runs is warmed by the benchmark's repeated prompt
 shape and can include substantial prompt-cache reuse after the first repeat; do

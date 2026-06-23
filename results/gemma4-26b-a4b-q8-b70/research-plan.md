@@ -118,25 +118,33 @@ Current short-prompt sustained-decode best:
   `n=5` and `n=6` with confidence gating were losses on the short 75-token
   prompt, so short-prompt work should tune around `n=2/3`.
 
-Current filled-long sustained-decode best:
+Current filled-long warmed/history-accelerated ngram artifact:
 
-- run label: `gemma4-q8-gpu0-mtp-n7-c926-fasttopk10-repeat-ctxcp0-nmin2-pmin012-nobs-dthreads32-dtb32-filled-long-deep-20260623T150833Z`;
-- change from prior filled-long best: keep the llama.cpp `c926ad098` AOT BMG
-  build, `--ctx-checkpoints 0`, `--spec-draft-n-max 7`,
-  `--spec-draft-n-min 2`, draft backend sampling disabled,
-  `--spec-draft-threads 32`, `--spec-draft-p-min 0.12`, and
-  `--spec-draft-threads-batch 32`, then add the source-level fast top-k MTP
-  draft bypass (`LLAMA_MTP_DRAFT_FAST_TOPK=1`,
-  `LLAMA_MTP_DRAFT_TOP_K=10`);
+- run label: `gemma4-q8-gpu1-ngram-mod-20-32-64-ctx4096ub512-poll100-ctxcp0-filled-long-deep-20260623T1855`;
+- change from prior filled-long best: switch from draft-MTP to draftless
+  `ngram-mod` speculation on llama.cpp `c926ad098`, keeping the Q8 target model,
+  f16/f16 KV, AOT BMG build, `GGML_SYCL_DISABLE_OPT=0`, `FLASH_ATTN=off`,
+  `POLL=100`, `--parallel 1 --cache-ram 0`, `--ctx-checkpoints 0`,
+  `CTX_SIZE=4096`, and `UBATCH_SIZE=512`;
+- spec config: `--spec-type ngram-mod --spec-ngram-mod-n-match 20
+  --spec-ngram-mod-n-min 32 --spec-ngram-mod-n-max 64`;
 - actual benchmark shape: `588` prompt tokens and exactly `512` output tokens
   on all repeats;
 - quality: chat canary **384/384 pass**;
-- speed: **91.62 tok/s after TTFT**, **71.29 tok/s warmed wall**;
-- LocalMaxxing: approved as `cmqqsecuk01azqo018ahv0i1s`; previous approved
-  record `cmqqkmbhr017oqo017rdfxqh2` was `91.16 tok/s`;
-- decision: current valid best for the Gemma 4 26B A4B Q8 one-B70 lane. Future
-  record attempts should use `filled-long` unless intentionally reproducing a
-  short-prompt record.
+- speed: **280.64 tok/s after TTFT**, **206.24 tok/s warmed wall**;
+- LocalMaxxing: approved as `cmqqyby6801dvqo01as3wenz2` before the fresh/warmed
+  rule clarification; retraction-needed if displayed as headline throughput.
+  It supersedes warmed/history
+  ngram records `cmqqxx7bp01dbqo012d2qiiw6` (`280.04 tok/s`),
+  `cmqqxjnif01d0qo01ix4oeixo` (`255.04 tok/s`) and
+  `cmqqxbkzx01cxqo01j8p97627` (`245.98 tok/s`), but does **not** supersede the
+  fresh-response draft-MTP record `cmqqsecuk01azqo018ahv0i1s` (`91.62 tok/s`);
+- decision: useful warmed/history artifact, not the current valid
+  fresh-response best. Label this result honestly as history-cache acceleration
+  on a repetitive sustained-decode shape: every drafted token is verified by the
+  Q8 target model, but the repeated benchmark output lets `ngram-mod` learn long
+  chunks after the first cold repeat. This is also a small-context warmed result
+  for the measured 588+512 shape, not a 32K-context claim.
 
 Near-neighbor follow-ups now in progress / next in queue:
 
@@ -218,6 +226,12 @@ Near-neighbor follow-ups now in progress / next in queue:
   Promote `LLAMA_MTP_DRAFT_FAST_TOPK=1`, `LLAMA_MTP_DRAFT_TOP_K=10` as the
   current recipe, but remember the gain is modest and run-to-run variance is
   still visible.
+- post-record VMM/ubatch follow-ups: `ctx4096 + ub512 + VMM=0 + top_k=10`
+  reached `91.43 tok/s` after TTFT with `384/384` canary and much better wall
+  throughput (`82.14 tok/s`, TTFT `636 ms`), but it still missed the `91.62`
+  decode record. `ub1024 + VMM=0`, `top_k=9 + ub512 + VMM=0`, and an
+  `ub512 + VMM=0` repeat were also valid losses (`90.80-91.17 tok/s`). Keep
+  this family as a latency/wall reference, not as the promoted decode lane.
 - fast top-k neighborhood after promotion: `top_k=8` reached `91.23 tok/s`,
   `top_k=12` reached `90.57`, `top_k=10 + UBATCH_SIZE=512` reached `91.32`,
   and `top_k=10 + CTX_SIZE=4096 + UBATCH_SIZE=512` reached `91.28`; all passed
@@ -349,9 +363,11 @@ for each meaningful lane.
 
 ## Phase 4: MTP / Speculative Decode
 
-Status: **active; filled-long `n=7, n-min=2, p-min=0.12`, draft backend
-sampling disabled, draft threads 32, and draft batch threads 32 is the current
-sustained-decode best**.
+Status: **active; fresh-response headline is draft-MTP `n=7` with fast top-k at
+`91.62 tok/s` mean after TTFT and `91.25 tok/s` first request. Draftless
+`ngram-mod match=20 min=32 max=64` reached `280.64 tok/s` only as warmed/history
+throughput on repeated identical continuations and is not a fresh-response
+record.**
 
 Google's MTP overview warns that MoE models at batch size 1 may have limited
 speedup because each MTP token can activate different experts, which reduces
@@ -387,6 +403,18 @@ sampling, draft threads/batch `32/32`, latest llama.cpp `c926ad098`,
 the record to **`91.618942 tok/s`** after TTFT, 384/384 canary, LocalMaxxing
 `cmqqsecuk01azqo018ahv0i1s`.
 
+Draftless `ngram-mod` speculation then surpassed the MTP lane only on the
+repeated-output warmed/history version of the filled-long shape. The best
+warmed artifact is `match=20, min=32, max=64`,
+`CTX_SIZE=4096`, `UBATCH_SIZE=512`, `POLL=100` at
+**`280.641701 tok/s`** after TTFT / **`206.236056`** wall,
+384/384 canary, LocalMaxxing `cmqqyby6801dvqo01as3wenz2`
+(retraction-needed if displayed as headline throughput). The server log reports `3493/3493`
+accepted/generated n-gram draft tokens and mean accepted length `63.38`. This
+is still Q8-quality because the target model verifies every draft, but it is
+specifically a history-cache/repetitive-output result; do not present it as a
+unique-prompt no-cache decode rate or as a 32K-context result.
+
 Exhausted near-neighborhoods after that record:
 
 - `top_k=8/12`, `p-min=0.115/0.120/0.125/0.130`, draft threads/batch
@@ -403,11 +431,18 @@ Exhausted near-neighborhoods after that record:
   compiled and passed 384/384 canaries but still reached only
   `84.26-89.68 tok/s`. Keep the CPU fast-top-k path.
 
-Current follow-up should stop spending lanes on one-variable neighborhoods and
-target a different source-level mechanism; standalone backend top-k is ruled
-out. Plausible remaining source ideas are reducing the MTP draft loop's per-step
-decode overhead, avoiding repeated NextN embedding host copies, or improving
-the CPU fast-top-k path without invoking backend `ggml_top_k`.
+Current follow-up should return to fresh-response MTP/no-spec work. The
+`20260623T1915` and `20260623T1935` ngram queues are preserved only as
+warmed/history artifacts and harness diagnostics. The first combined fallback
+launch failed before readiness because `run-gemma4-26b-spec-candidate.sh`
+shell-escaped the comma in `--spec-type ngram-mod,draft-mtp`; that wrapper bug
+is fixed and the failed launch is preserved as a harness artifact. For headline
+record attempts, use draft sources that work on a fresh request without prior
+continuation history. Next best work: source-level MTP overhead reductions,
+because standalone backend top-k is ruled out, but reducing the MTP
+draft loop's per-step decode overhead, avoiding repeated NextN embedding host
+copies, or improving the CPU fast-top-k path without invoking backend
+`ggml_top_k` remain plausible.
 
 ## Phase 5: vLLM Int8 Per-Channel Comparison
 

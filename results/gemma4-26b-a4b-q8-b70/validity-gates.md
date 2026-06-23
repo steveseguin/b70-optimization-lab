@@ -73,6 +73,32 @@ For LocalMaxxing or cross-model comparison, prefer corrected/generated output
 throughput rather than total client throughput. Label total-token throughput
 separately.
 
+## Fresh-Response Vs Warmed/History Throughput
+
+Headline throughput must apply to a fresh new response where no usable prior
+generated continuation exists.
+
+Speculation is allowed, including MTP, draft-model speculation, n-gram
+speculation, and verifier-based multi-token acceptance. The validity question
+is whether the draft source could operate on a fresh request without already
+having seen the target response.
+
+Separate every speculative result into:
+
+- **Fresh-response throughput**: no prior identical or highly similar generated
+  continuation is available. Draft-MTP with an independent draft model belongs
+  here when `cached_tokens=0` and the canaries pass.
+- **Warmed/history throughput**: prior benchmark requests, repeated prompts,
+  repeated outputs, context checkpoints, response reuse, prefix/KV reuse, or
+  n-gram history make the same continuation predictable. These runs are useful
+  artifacts, but they are not valid fresh-response headline records.
+
+If a benchmark mixes a cold first request with warmed repeated requests, report
+the first-request throughput separately and do not average warmed repeats into
+the fresh-response number. A draftless n-gram/history run that becomes fast only
+after the first identical output must be labeled history-accelerated and must
+not be submitted or promoted as fresh-response throughput.
+
 Single-GPU records and four-replica aggregate capacity are different modes.
 Record and submit them separately: one full model on one B70 is the primary
 single-session decode record; four independent servers are an aggregate service

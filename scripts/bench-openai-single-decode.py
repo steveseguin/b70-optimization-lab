@@ -137,6 +137,28 @@ def make_prompt(target_tokens: int, mode: str) -> str:
         )
         return prefix + body + suffix
 
+    if mode == "filled-fixed-line":
+        prefix = (
+            "You are running a deterministic Gemma B70 decode benchmark. "
+            "Read the reference context, then produce a long numbered response "
+            "until the token limit is reached. Do not summarize early.\n\n"
+            "Reference context:\n"
+        )
+        block = (
+            "benchmark latency memory throughput validation repeatability "
+            "scheduler cache kernel sycl level-zero b70 q8 deterministic "
+            "single-session decode measurement "
+        )
+        body = (block * ((target_tokens // 16) + 8))[: max(0, target_tokens * 6)]
+        suffix = (
+            "\n\nTask: write numbered lines from 001 onward. Each line must "
+            "use exactly this format, with only the number changing:\n"
+            "001. benchmark latency memory throughput validation repeatability\n"
+            "Do not use commas, bullets, extra words, or a conclusion. Continue "
+            "until the token limit. Begin now.\n\n"
+        )
+        return prefix + body + suffix
+
     seed = (
         "Gemma B70 decode benchmark. Continue with concise technical prose. "
         "Use the word benchmark frequently so tokenization remains stable. "
@@ -186,13 +208,14 @@ def main() -> int:
     parser.add_argument("--prompt-tokens", type=int, default=512)
     parser.add_argument(
         "--prompt-mode",
-        choices=("default", "long", "filled-long"),
+        choices=("default", "long", "filled-long", "filled-fixed-line"),
         default="default",
         help=(
             "Prompt style. 'default' preserves historical runs; 'long' is a "
             "short instruction that asks the model not to stop early; "
             "'filled-long' fills the requested prompt budget before asking for "
-            "a max-token response."
+            "a max-token response; 'filled-fixed-line' uses the same filled "
+            "shape but requests one exact repeated output line format."
         ),
     )
     parser.add_argument("--max-tokens", type=int, default=512)
