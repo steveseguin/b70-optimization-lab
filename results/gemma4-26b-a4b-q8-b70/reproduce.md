@@ -157,6 +157,23 @@ summary: data/gemma4-q8-gpu1-mtp-n4-long-deep-20260623T1140/summary.json
 server log: /mnt/fast-ai/bench-results/gemma4-26b-a4b-q8/servers/gemma4-q8-gpu1-mtp-n4-long-deep-20260623T1140.server.log
 ```
 
+Short wrapper equivalent for future sweeps:
+
+```bash
+cd /home/steve/qwen36-results-main
+GPU_INDEX=1 PORT=18261 LABEL=gemma4-q8-gpu1-mtp-n4-long-deep-<stamp> \
+MTP_N_MAX=4 scripts/run-gemma4-26b-mtp-candidate.sh
+```
+
+Useful safe MTP sweep knobs:
+
+```bash
+MTP_N_MAX=3
+MTP_N_MAX=5 MTP_N_MIN=2 MTP_P_MIN=0.15
+MTP_N_MAX=6 MTP_N_MIN=2 MTP_P_MIN=0.25
+POLL=100 MTP_N_MAX=4
+```
+
 For future sustained-decode comparisons, prefer
 `BENCH_PROMPT_MODE=filled-long` if the target is an actual near-512-token input
 plus 512-token output. The older `long` mode is intentionally retained so the
