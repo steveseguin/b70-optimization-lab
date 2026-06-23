@@ -120,15 +120,16 @@ Current short-prompt sustained-decode best:
 
 Current filled-long sustained-decode best:
 
-- run label: `gemma4-q8-gpu3-mtp-n7-aot-nmin2-pmin010-nobs-dthreads32-filled-long-deep-20260623T094131Z`;
+- run label: `gemma4-q8-gpu2-mtp-n7-aot-nmin2-pmin012-nobs-dthreads32-dtb32-filled-long-deep-20260623T101814Z`;
 - change from prior filled-long best: keep MTP depth at `--spec-draft-n-max 7`,
-  confidence gate at `--spec-draft-p-min 0.10`, and draft backend sampling
-  disabled, but add `--spec-draft-threads 32`;
+  `--spec-draft-n-min 2`, draft backend sampling disabled, and
+  `--spec-draft-threads 32`, then move confidence gate to
+  `--spec-draft-p-min 0.12` and add `--spec-draft-threads-batch 32`;
 - actual benchmark shape: `588` prompt tokens and exactly `512` output tokens
   on all repeats;
 - quality: chat canary **384/384 pass**;
-- speed: **90.42 tok/s after TTFT**, **82.34 tok/s warmed wall**;
-- LocalMaxxing: approved as `cmqqgn3cm0163qo010optg91u`;
+- speed: **91.05 tok/s after TTFT**, **82.97 tok/s warmed wall**;
+- LocalMaxxing: approved as `cmqqi1p2c016jqo01vndau1y9`;
 - decision: current valid best for the Gemma 4 26B A4B Q8 one-B70 lane. Future
   record attempts should use `filled-long` unless intentionally reproducing a
   short-prompt record.
@@ -155,9 +156,13 @@ Near-neighbor follow-ups now in progress / next in queue:
   `90.33`; all valid, all below the `90.42` record.
 - `MTP_DRAFT_THREADS` sweep: `24` completed at `90.30 tok/s`, `32` repeat at
   `90.23`, `48` at `89.67`, and `64` at `89.96`; all valid, all below record.
-- active next queue: combine the closest non-winning runtime interaction,
-  `MTP_DRAFT_THREADS_BATCH=32`, with the p-min neighborhood: `0.10` repeat,
-  `0.11`, `0.12`, and `0.13`.
+- `MTP_DRAFT_THREADS_BATCH=32` + p-min interaction: `0.11` completed at
+  `89.63 tok/s`, `0.12` at **`91.05 tok/s`** (new record), and `0.13` at
+  `90.24`; the `0.10` repeat stalled during launch/readiness on GPU0 and was
+  kept as a failed control artifact.
+- active next queue under the new `p-min=0.12 + dtb32` identity: true FA-on
+  draft-cache retests (`V q8_0`, then `K/V q8_0`), `POLL=100`, and CPU
+  affinity split between target and draft threads.
 
 The `filled-long` prompt mode records prompt hash/preview and usage-derived
 prompt/completion-token stats. Use it for near-512-input / 512-output
@@ -253,8 +258,9 @@ for each meaningful lane.
 
 ## Phase 4: MTP / Speculative Decode
 
-Status: **active; filled-long `n=7, n-min=2, p-min=0.10` with draft backend
-sampling disabled is the current sustained-decode best**.
+Status: **active; filled-long `n=7, n-min=2, p-min=0.12`, draft backend
+sampling disabled, draft threads 32, and draft batch threads 32 is the current
+sustained-decode best**.
 
 Google's MTP overview warns that MoE models at batch size 1 may have limited
 speedup because each MTP token can activate different experts, which reduces
@@ -275,8 +281,8 @@ Promoted MTP server shape for current filled-long record:
 
 ```bash
 LLAMA_SERVER=/home/steve/src/llama.cpp/build-sycl-b70-aot-bmg-g31/bin/llama-server \
-GPU_INDEX=3 PORT=18303 LABEL=gemma4-q8-gpu3-mtp-n7-aot-nmin2-pmin010-nobs-dthreads32-filled-long-deep-<stamp> \
-MTP_N_MAX=7 MTP_N_MIN=2 MTP_P_MIN=0.10 MTP_BACKEND_SAMPLING=0 MTP_DRAFT_THREADS=32 BENCH_PROMPT_MODE=filled-long \
+GPU_INDEX=2 PORT=18352 LABEL=gemma4-q8-gpu2-mtp-n7-aot-nmin2-pmin012-nobs-dthreads32-dtb32-filled-long-deep-<stamp> \
+MTP_N_MAX=7 MTP_N_MIN=2 MTP_P_MIN=0.12 MTP_BACKEND_SAMPLING=0 MTP_DRAFT_THREADS=32 MTP_DRAFT_THREADS_BATCH=32 BENCH_PROMPT_MODE=filled-long \
 scripts/run-gemma4-26b-mtp-candidate.sh
 ```
 
@@ -287,9 +293,10 @@ On filled-long, `n=4` beat `n=2/3`, `n=5` improved again, `n=6` reached the
 low-80s, and `n=7, n-min=2` is the current frontier. `p-min=0.10` slightly beat
 `0.15`; `n=8, p-min=0.15` was a large loss. Disabling draft backend sampling
 was the next clear win (`90.24 tok/s`), and `--spec-draft-threads 32` improved
-that to `90.42 tok/s`. Current follow-up should keep backend sampling off and
-sweep draft KV, batch/ubatch, polling, and record reproducibility before
-changing model files.
+that to `90.42 tok/s`. The current best adds `--spec-draft-p-min 0.12` and
+`--spec-draft-threads-batch 32`, reaching `91.05 tok/s`. Current follow-up
+should keep backend sampling off and test true FA-on draft KV compression,
+polling, CPU affinity, and record reproducibility before changing model files.
 
 ## Phase 5: vLLM Int8 Per-Channel Comparison
 
