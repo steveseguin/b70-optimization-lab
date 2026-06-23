@@ -153,8 +153,11 @@ Near-neighbor follow-ups now in progress / next in queue:
 - `MTP_P_MIN` refinement with draft threads 32: repeat `0.10` completed at
   `90.20 tok/s`, `0.11` at `89.55`, `0.12` at `90.08`, and `0.13` at
   `90.33`; all valid, all below the `90.42` record.
-- active next queue: sweep `MTP_DRAFT_THREADS` around the current winner:
-  `24`, `32` repeat, `48`, and `64`.
+- `MTP_DRAFT_THREADS` sweep: `24` completed at `90.30 tok/s`, `32` repeat at
+  `90.23`, `48` at `89.67`, and `64` at `89.96`; all valid, all below record.
+- active next queue: combine the closest non-winning runtime interaction,
+  `MTP_DRAFT_THREADS_BATCH=32`, with the p-min neighborhood: `0.10` repeat,
+  `0.11`, `0.12`, and `0.13`.
 
 The `filled-long` prompt mode records prompt hash/preview and usage-derived
 prompt/completion-token stats. Use it for near-512-input / 512-output
