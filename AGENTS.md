@@ -18,6 +18,18 @@ The model weights, secrets, and full raw `/mnt/fast-ai/bench-results` tree are
 not in GitHub. The repo does include scripts, patch artifacts, summarized
 results, payloads, and notes needed to rebuild or review the work.
 
+## Local Secrets
+
+Never print, paste, or commit local credentials. The Hugging Face access token
+for model downloads is stored outside the repo at:
+
+```text
+/home/steve/.config/huggingface/token
+```
+
+Scripts that need faster Hugging Face downloads should read this file into
+`HF_TOKEN` locally. The token file is covered by repo and global Git ignores.
+
 ## Current Stable Mode
 
 Production/default service mode is still:

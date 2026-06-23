@@ -12,7 +12,7 @@ BATCH_SIZE="${BATCH_SIZE:-512}"
 UBATCH_SIZE="${UBATCH_SIZE:-128}"
 N_GPU_LAYERS="${N_GPU_LAYERS:-99}"
 THREADS="${THREADS:-8}"
-FLASH_ATTN="${FLASH_ATTN:-1}"
+FLASH_ATTN="${FLASH_ATTN:-on}"
 CACHE_TYPE_K="${CACHE_TYPE_K:-f16}"
 CACHE_TYPE_V="${CACHE_TYPE_V:-f16}"
 OUT_DIR="${OUT_DIR:-/mnt/fast-ai/bench-results/gemma4-26b-a4b-q8/servers}"
@@ -50,7 +50,7 @@ mkdir -p "$OUT_DIR"
 
 exec "$LLAMA_SERVER" \
   -m "$MODEL" \
-  --model-alias "$MODEL_ALIAS" \
+  --alias "$MODEL_ALIAS" \
   --host "$HOST" \
   --port "$PORT" \
   -dev SYCL0 \

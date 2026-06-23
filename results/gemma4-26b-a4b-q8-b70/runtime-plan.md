@@ -28,7 +28,7 @@ scripts/build-llama-cpp-sycl-b70.sh
 
 Initial tuning axes:
 
-- `-fa 1` versus `-fa 0`;
+- `-fa on` versus `-fa off`;
 - `-ub 64/128/256/512`;
 - `-b 512/1024/2048`;
 - `GGML_SYCL_DISABLE_GRAPH=0/1`;
