@@ -78,7 +78,8 @@ External references:
 | 2026-06-23 | llama.cpp SYCL setup | 1 replica / B70 | UD-Q8_K_XL GGUF | 8K first, 32K target | model download | n/a | [lane start note](../../notes/2026-06-23-gemma4-26b-a4b-q8-b70-lane-start.md) |
 | 2026-06-23 | llama.cpp `dec5ca557` SYCL | 1 replica on B70 GPU0 | UD-Q8_K_XL GGUF, f16 KV | 8K | **valid baseline**: chat canary 128/128; reasoning off | **26.10 after TTFT** / 24.24 wall | [summary](../../data/gemma4-26b-q8-llamacpp-gpu0-ctx8192-20260623T052850Z/summary.json), [sweep note](../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260623T052850Z-valid-baseline-reasoning-off.md) |
 | 2026-06-23 | llama.cpp `dec5ca557` SYCL | 1 replica on B70 GPU2 | UD-Q8_K_XL GGUF, f16 KV | 8K | **current natural-stop best**: `GGML_SYCL_DISABLE_OPT=0`, `FLASH_ATTN=off`, `--parallel 1 --cache-ram 0`, chat canary 384/384; reasoning off | **42.15 after TTFT** / 36.41 wall | [summary](../../data/gemma4-q8-gpu2-syclopt0-faoff-parallel1-cache0-deep-20260623T0915/summary.json), [sweep note](../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260623T0900-parallel-cache-followups.md) |
-| 2026-06-23 | llama.cpp `dec5ca557` SYCL | 1 replica on B70 GPU0 | UD-Q8_K_XL GGUF, f16 KV | 8K | **current sustained-decode best**: same config, `BENCH_PROMPT_MODE=long`, 384/384 canary; actual shape is about 75 input / 512 output tokens | **42.72 after TTFT** / 41.35 wall | [summary](../../data/gemma4-q8-gpu0-currentbest-longprompt-deep-20260623T0945/summary.json), [sweep note](../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260623T0930-long-output-benchmark.md) |
+| 2026-06-23 | llama.cpp `dec5ca557` SYCL | 1 replica on B70 GPU0 | UD-Q8_K_XL GGUF, f16 KV | 8K | sustained-decode best before MTP: same config, `BENCH_PROMPT_MODE=long`, 384/384 canary; actual shape is about 75 input / 512 output tokens | **42.72 after TTFT** / 41.35 wall | [summary](../../data/gemma4-q8-gpu0-currentbest-longprompt-deep-20260623T0945/summary.json), [sweep note](../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260623T0930-long-output-benchmark.md) |
+| 2026-06-23 | llama.cpp `dec5ca557` SYCL draft-MTP | 1 replica on B70 GPU1 | UD-Q8_K_XL GGUF + Gemma MTP draft GGUF, f16 KV | 8K | **current sustained-decode best**: `--spec-type draft-mtp --spec-draft-n-max 4`, 384/384 canary; actual shape 75 input / 512 output tokens | **44.50 after TTFT** / 43.03 wall | [summary](../../data/gemma4-q8-gpu1-mtp-n4-long-deep-20260623T1140/summary.json), [sweep note](../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260623T1125-mtp-draft-smoke-and-deep.md) |
 
 The first valid result is intentionally labeled as a baseline, not an optimized
 result. It proves that the Q8 GGUF fits and serves correctly at 8K on one B70,
@@ -92,11 +93,14 @@ deterministic chat gate (`96` repeats x `4` cases = `384/384`) before being
 promoted. Treat any further optimized-SYCL variants as risky until they pass the
 same or stronger gate.
 
-The 42.72 tok/s sustained-decode row uses the same valid runtime identity as
-the 42.15 natural-stop row, but a different benchmark prompt shape. The model is
-forced to generate the full 512-token budget, so wall throughput rises because
-TTFT is amortized over more output tokens. Keep natural-stop and sustained-
-decode records separate when comparing future runs.
+The 42.72 tok/s no-spec sustained-decode row uses the same valid runtime
+identity as the 42.15 natural-stop row, but a different benchmark prompt shape.
+The model is forced to generate the full 512-token budget, so wall throughput
+rises because TTFT is amortized over more output tokens. The current
+sustained-decode best adds the official Gemma MTP draft GGUF with
+`--spec-type draft-mtp --spec-draft-n-max 4`. Keep natural-stop and sustained-
+decode records separate when comparing future runs, and keep MTP runs separate
+from no-spec runs unless the prompt/output shape and canary depth match.
 
 ## Linked Files
 

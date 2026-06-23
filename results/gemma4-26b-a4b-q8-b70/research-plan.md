@@ -90,7 +90,7 @@ Follow-up: `syclopt0 + POLL=100` was a validated alternative with better TTFT
 and wall throughput but lower after-TTFT decode (`40.69 tok/s`). MTP n=2/4/8
 was slower than no-spec in first smokes and should not be promoted.
 
-Current sustained-decode best:
+Previous no-spec sustained-decode best:
 
 - run label: `gemma4-q8-gpu0-currentbest-longprompt-deep-20260623T0945`;
 - change from promoted natural-stop best: `BENCH_PROMPT_MODE=long` to force the
@@ -99,8 +99,22 @@ Current sustained-decode best:
   tokens on all repeats;
 - quality: chat canary **384/384 pass**;
 - speed: **42.72 tok/s after TTFT**, **41.35 tok/s wall**;
-- decision: valid sustained-decode record, but keep it separate from the
+- decision: valid no-spec sustained-decode record, but keep it separate from the
   natural-stop/default-prompt 42.15 tok/s result.
+
+Current sustained-decode best:
+
+- run label: `gemma4-q8-gpu1-mtp-n4-long-deep-20260623T1140`;
+- change from no-spec sustained-decode best: official Gemma MTP draft GGUF via
+  `--spec-type draft-mtp --spec-draft-n-max 4 --spec-draft-ngl all`, with draft
+  KV `f16/f16`;
+- actual benchmark shape: `75` prompt tokens and exactly `512` output tokens on
+  all repeats;
+- quality: chat canary **384/384 pass**;
+- speed: **44.50 tok/s after TTFT**, **43.03 tok/s wall**;
+- decision: valid sustained-decode record candidate and LocalMaxxing submission
+  candidate. `n=2` was close; `n=6` and `n=8` collapsed, so future MTP work
+  should tune around `n=3/4` rather than pushing higher.
 
 Next harness improvement completed: `filled-long` prompt mode records prompt
 hash/preview and usage-derived prompt/completion-token stats for future runs.
@@ -195,10 +209,14 @@ for each meaningful lane.
 
 ## Phase 4: MTP / Speculative Decode
 
-Do not start here. Google's MTP overview warns that MoE models at batch size 1
-may have limited speedup because each MTP token can activate different experts,
-which reduces expert-weight locality. That makes no-spec Q8 baseline and
-batch/ubatch tuning a higher-value first step.
+Status: **started; n=4 is the current sustained-decode best**.
+
+Google's MTP overview warns that MoE models at batch size 1 may have limited
+speedup because each MTP token can activate different experts, which reduces
+expert-weight locality. That warning holds for over-large draft budgets here:
+`n=6` and `n=8` were losses. However, the official Gemma MTP draft GGUF with
+llama.cpp `draft-mtp` works at small draft budgets, and `n=4` is now the best
+valid single-B70 sustained-decode result.
 
 When ready, download the draft file:
 
@@ -208,18 +226,20 @@ EXPECTED_BYTES=461766816 \
 scripts/download-gemma4-26b-q8-gguf.sh
 ```
 
-First MTP server shape to test:
+Promoted MTP server shape:
 
 ```bash
-GPU_INDEX=0 PORT=18260 CTX_SIZE=8192 UBATCH_SIZE=64 \
-  EXTRA_LLAMA_ARGS='--spec-draft-model /mnt/fast-ai/llm-models/gemma4-26b-a4b-it-q8-gguf/mtp-gemma-4-26B-A4B-it.gguf --spec-type draft-mtp --spec-draft-n-max 4 --spec-draft-device SYCL0 --spec-draft-ngl all' \
+GPU_INDEX=1 PORT=18261 CTX_SIZE=8192 BATCH_SIZE=512 UBATCH_SIZE=64 \
+  FLASH_ATTN=off REASONING=off GGML_SYCL_DISABLE_OPT=0 \
+  BENCH_PROMPT_MODE=long CANARY_REPEATS=96 BENCH_REPEATS=8 \
+  EXTRA_LLAMA_ARGS='--parallel 1 --cache-ram 0 --spec-type draft-mtp --spec-draft-model /mnt/fast-ai/llm-models/gemma4-26b-a4b-it-q8-gguf/mtp-gemma-4-26B-A4B-it.gguf --spec-draft-n-max 4 --spec-draft-device SYCL0 --spec-draft-ngl all --spec-draft-type-k f16 --spec-draft-type-v f16' \
   scripts/run-gemma4-26b-llamacpp-replica.sh
 ```
 
-The launcher consumes `EXTRA_LLAMA_ARGS` for this follow-up. Test
-`--spec-draft-n-max 2/4/6/8`, record
-acceptance metrics if llama.cpp exposes them, and run 96+ chat canaries before
-believing any speedup.
+The launcher consumes `EXTRA_LLAMA_ARGS` for this follow-up. Already tested
+`--spec-draft-n-max 2/4/6/8`: `n=4` won, `n=2` was close, and `n=6/8` were
+losses. Next tests should focus on `n=3`, `n=4` with polling/batch/AOT changes,
+and llama.cpp speculative acceptance knobs if available.
 
 ## Phase 5: vLLM Int8 Per-Channel Comparison
 
