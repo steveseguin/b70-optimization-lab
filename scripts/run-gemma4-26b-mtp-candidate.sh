@@ -12,6 +12,7 @@ MTP_DRAFT_MODEL="${MTP_DRAFT_MODEL:-/mnt/fast-ai/llm-models/gemma4-26b-a4b-it-q8
 MTP_N_MAX="${MTP_N_MAX:-4}"
 MTP_N_MIN="${MTP_N_MIN:-}"
 MTP_P_MIN="${MTP_P_MIN:-}"
+MTP_P_SPLIT="${MTP_P_SPLIT:-}"
 MTP_DRAFT_DEVICE="${MTP_DRAFT_DEVICE:-SYCL0}"
 MTP_DRAFT_NGL="${MTP_DRAFT_NGL:-all}"
 MTP_DRAFT_TYPE_K="${MTP_DRAFT_TYPE_K:-f16}"
@@ -41,6 +42,9 @@ if [[ -n "$MTP_N_MIN" ]]; then
 fi
 if [[ -n "$MTP_P_MIN" ]]; then
   extra_args+=("--spec-draft-p-min" "$MTP_P_MIN")
+fi
+if [[ -n "$MTP_P_SPLIT" ]]; then
+  extra_args+=("--spec-draft-p-split" "$MTP_P_SPLIT")
 fi
 if [[ "$MTP_BACKEND_SAMPLING" == "0" || "$MTP_BACKEND_SAMPLING" == "false" ]]; then
   extra_args+=("--no-spec-draft-backend-sampling")

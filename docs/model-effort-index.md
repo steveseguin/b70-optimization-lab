@@ -24,7 +24,7 @@ path.
 
 | Effort | Main Entry | Current Decision |
 | --- | --- | --- |
-| Gemma 4 26B A4B Q8 / INT8 on B70 | [results/gemma4-26b-a4b-q8-b70](../results/gemma4-26b-a4b-q8-b70/README.md) | Active optimization. Current valid one-B70 Q8 record is llama.cpp draft-MTP filled-long `n=7, n-min=2, p-min=0.15` at `87.88 tok/s` after TTFT with 384/384 chat canary; keep running four parallel single-GPU sweeps around that setting. |
+| Gemma 4 26B A4B Q8 / INT8 on B70 | [results/gemma4-26b-a4b-q8-b70](../results/gemma4-26b-a4b-q8-b70/README.md) | Active optimization. Current valid one-B70 Q8 record is llama.cpp draft-MTP filled-long `n=7, n-min=2, p-min=0.10` at `88.35 tok/s` after TTFT with 384/384 chat canary; keep running four parallel single-GPU sweeps around that setting. |
 | Gemma 4 12B IT INT4 AutoRound | [experiments/gemma4-12b-int4-autoround-vllm](../experiments/gemma4-12b-int4-autoround-vllm/README.md) | Current model-slot production profile is c8. c10 is research-only; c12+ hit boundary failures. |
 | MiniMax M2.7 INT4 AutoRound | [repro/minimax-m27-b70-110tps-ubuntu24-20260523](../repro/minimax-m27-b70-110tps-ubuntu24-20260523/README.md) | Deployable 32K endpoint baseline. Future speed work should target collective and graph-boundary fusion, not more flag sweeps. |
 | Qwen3.6 35B A3B Quark W8A8 INT8 | [results/qwen36-35b-quark-int8-b70](../results/qwen36-35b-quark-int8-b70/README.md) | Closed for now. No valid `>150 tok/s` path found; best strict 4x baseline is `93.55 tok/s`. |

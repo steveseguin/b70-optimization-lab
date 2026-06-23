@@ -120,26 +120,25 @@ Current short-prompt sustained-decode best:
 
 Current filled-long sustained-decode best:
 
-- run label: `gemma4-q8-gpu3-mtp-n7-aot-nmin2-pmin015-filled-long-deep-20260623T091939Z`;
-- change from prior filled-long best: raise MTP depth to `--spec-draft-n-max 7`
-  while keeping confidence gating at `--spec-draft-n-min 2
-  --spec-draft-p-min 0.15`;
+- run label: `gemma4-q8-gpu1-mtp-n7-aot-nmin2-pmin010-filled-long-deep-20260623T092524Z`;
+- change from prior filled-long best: keep MTP depth at `--spec-draft-n-max 7`
+  and lower the confidence gate to `--spec-draft-p-min 0.10` with
+  `--spec-draft-n-min 2`;
 - actual benchmark shape: `588` prompt tokens and exactly `512` output tokens
   on all repeats;
 - quality: chat canary **384/384 pass**;
-- speed: **87.88 tok/s after TTFT**, **80.25 tok/s wall**;
-- LocalMaxxing: approved as `cmqqfv296015sqo0126mym3ko`;
+- speed: **88.35 tok/s after TTFT**, **80.55 tok/s wall**;
+- LocalMaxxing: approved as `cmqqg1r0l015xqo01e6d696mx`;
 - decision: current valid best for the Gemma 4 26B A4B Q8 one-B70 lane. Future
   record attempts should use `filled-long` unless intentionally reproducing a
   short-prompt record.
 
 Near-neighbor follow-ups now in progress / next in queue:
 
-- repeat `n=7, n-min=2, p-min=0.15` to measure reproducibility;
-- sweep `p-min=0.10` and `p-min=0.20` at `n=7`;
-- try `n=8, n-min=2, p-min=0.15`;
-- if `n=7` remains best, test adding `--spec-draft-p-split 0.20` to the gated
-  `n=7` lane, since p-split was a small win at lower MTP depth.
+- repeat `n=7, n-min=2, p-min=0.10` to measure reproducibility;
+- finish the `p-min=0.05/0.20` and `p-split=0.20` n=7 variants;
+- treat `n=8, n-min=2, p-min=0.15` as a loss unless a different confidence
+  gate changes acceptance enough to recover throughput.
 
 The `filled-long` prompt mode records prompt hash/preview and usage-derived
 prompt/completion-token stats. Use it for near-512-input / 512-output
@@ -235,7 +234,7 @@ for each meaningful lane.
 
 ## Phase 4: MTP / Speculative Decode
 
-Status: **active; filled-long `n=7, n-min=2, p-min=0.15` is the current
+Status: **active; filled-long `n=7, n-min=2, p-min=0.10` is the current
 sustained-decode best**.
 
 Google's MTP overview warns that MoE models at batch size 1 may have limited
@@ -257,8 +256,8 @@ Promoted MTP server shape for current filled-long record:
 
 ```bash
 LLAMA_SERVER=/home/steve/src/llama.cpp/build-sycl-b70-aot-bmg-g31/bin/llama-server \
-GPU_INDEX=3 PORT=18273 LABEL=gemma4-q8-gpu3-mtp-n7-aot-nmin2-pmin015-filled-long-deep-<stamp> \
-MTP_N_MAX=7 MTP_N_MIN=2 MTP_P_MIN=0.15 BENCH_PROMPT_MODE=filled-long \
+GPU_INDEX=1 PORT=18281 LABEL=gemma4-q8-gpu1-mtp-n7-aot-nmin2-pmin010-filled-long-deep-<stamp> \
+MTP_N_MAX=7 MTP_N_MIN=2 MTP_P_MIN=0.10 BENCH_PROMPT_MODE=filled-long \
 scripts/run-gemma4-26b-mtp-candidate.sh
 ```
 
@@ -266,10 +265,10 @@ The MTP wrapper fixes the Q8/f16 quality lane and forwards MTP knobs to
 `EXTRA_LLAMA_ARGS`. Already tested `--spec-draft-n-max 2/3/4/6/8` on the
 short-prompt shape, plus confidence-gated `n=5` and `n=6`; higher n lost there.
 On filled-long, `n=4` beat `n=2/3`, `n=5` improved again, `n=6` reached the
-low-80s, and `n=7, n-min=2, p-min=0.15` set the current record. Next tests
-should stay near that winner: repeat it, sweep `p-min=0.10/0.20`, try `n=8`
-with the same gate, and then test whether `--spec-draft-p-split 0.20` adds to
-the gated `n=7` configuration.
+low-80s, and `n=7, n-min=2` is the current frontier. `p-min=0.10` slightly beat
+`0.15`; `n=8, p-min=0.15` was a large loss. Next tests should focus on n=7:
+repeat `p-min=0.10`, test `p-min=0.05/0.20`, and test whether
+`--spec-draft-p-split 0.20` adds to the gated `n=7` configuration.
 
 ## Phase 5: vLLM Int8 Per-Channel Comparison
 
