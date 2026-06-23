@@ -515,6 +515,13 @@ Text speed is first. After text baseline:
     sampler/runtime/depth sweeps under this identity are low value; the next
     serious paths are vLLM/XPU INT8-per-channel and source/kernel work that
     reduces the target verification or draft decode cost per accepted chunk.
+12. **Greedy verifier bypass is not enough by itself.** A gated
+    `LLAMA_SPEC_VERIFY_GREEDY_ARGMAX=1` patch avoided the general CPU sampler
+    in deterministic verifier rows and passed a 128-row smoke, but reached only
+    `91.55 tok/s` after TTFT. This confirms the remaining fresh-MTP gap is not
+    solved by sampler bypass alone; full target decode and full-vocab logits
+    transfer still dominate. Preserve the patch as a component, but prioritize
+    vLLM/XPU and deeper backend/kernel work.
 
 ## Stop Conditions
 
