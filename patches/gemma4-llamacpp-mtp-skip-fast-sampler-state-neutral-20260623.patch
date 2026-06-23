@@ -1,0 +1,21 @@
+diff --git a/common/speculative.cpp b/common/speculative.cpp
+--- a/common/speculative.cpp
++++ b/common/speculative.cpp
+@@
+             n_drafting++;
+             drafting[seq_id] = true;
+-            common_sampler_reset(smpls[seq_id].get());
++            if (!draft_fast_topk && !draft_fast_argmax) {
++                common_sampler_reset(smpls[seq_id].get());
++            }
+ 
+             common_batch_add(batch, dp.id_last, dp.n_past, { seq_id }, true);
+             std::memcpy(batch.embd + (size_t) (batch.n_tokens - 1) * n_embd, pending_h[seq_id].data(), row_bytes);
+@@
+-                common_sampler_accept(smpl, id, true);
++                if (!draft_fast_topk && !draft_fast_argmax) {
++                    common_sampler_accept(smpl, id, true);
++                }
+ 
+                 auto & dp = dparams.at(seq_id);
+                 auto & result = *dp.result;
