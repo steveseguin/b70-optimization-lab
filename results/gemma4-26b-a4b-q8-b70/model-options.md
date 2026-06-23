@@ -26,12 +26,14 @@ Important files from Hugging Face metadata:
 
 | File | Bytes | Use |
 | --- | ---: | --- |
-| `gemma-4-26B-A4B-it-UD-Q8_K_XL.gguf` | `27,636,230,944` | Primary Q8-quality baseline. Currently downloading. |
+| `gemma-4-26B-A4B-it-UD-Q8_K_XL.gguf` | `27,636,230,944` | Primary Q8-quality baseline. |
 | `gemma-4-26B-A4B-it-Q8_0.gguf` | `26,859,859,744` | Smaller Q8 fallback/control if UD-Q8_K_XL has compatibility or memory issues. |
 | `gemma-4-26B-A4B-it-UD-Q6_K_XL.gguf` | `23,295,389,472` | Lower-quality side experiment only if Q8 cannot fit useful context. |
 | `gemma-4-26B-A4B-it-MXFP4_MOE.gguf` | `16,551,046,944` | Public-speed comparison only; not quality-equivalent to the Q8 target. |
 | `mtp-gemma-4-26B-A4B-it.gguf` | `461,766,816` | Draft/MTP follow-up after no-spec baseline. |
-| `MTP/gemma-4-26B-A4B-it-Q8_0-MTP.gguf` | `461,766,816` | Alternate MTP draft file to test if the root MTP file is not accepted. |
+| `MTP/gemma-4-26B-A4B-it-Q8_0-MTP.gguf` | `461,766,816` | Alternate official Unsloth MTP draft file. Tested 2026-06-23; valid but below record. |
+| `MTP/gemma-4-26B-A4B-it-F16-MTP.gguf` | `855,228,576` | Higher-precision draft head. Tested 2026-06-23; valid but much slower than Q8_0 draft. |
+| `MTP/gemma-4-26B-A4B-it-BF16-MTP.gguf` | `855,228,576` | Higher-precision draft head. Tested 2026-06-23; valid but much slower than Q8_0 draft. |
 | `mmproj-F16.gguf` | `1,193,058,784` | Optional multimodal smoke after text baseline; not required for speed work. |
 
 The download script is pinned to the repo revision above and validates the exact
@@ -44,7 +46,13 @@ Draft/assistant alternatives:
   is the official assistant/draft-family reference.
 - `AtomicChat/gemma-4-26B-A4B-it-assistant-GGUF` exposes assistant GGUF files
   including `gemma-4-26B-A4B-it-assistant.Q8_0.gguf` at `461,767,072` bytes.
-  Use this only if the Unsloth `mtp-*` draft file is rejected by llama.cpp.
+  Do not use this with stock upstream llama.cpp: it uses fork metadata
+  `general.architecture = gemma4_assistant` and `mtp.*` tensor names, while
+  upstream `c926ad098` expects Unsloth-style `gemma4-assistant` and `nextn.*`
+  metadata. The stock loader fails with `unknown model architecture:
+  'gemma4_assistant'`. It belongs to AtomicChat's custom
+  `atomic-llama-cpp-turboquant` / `--mtp-head` path unless a conversion is done
+  on a copy.
 
 Different-model side lane:
 
