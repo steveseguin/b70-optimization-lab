@@ -229,13 +229,15 @@ Near-neighbor follow-ups now in progress / next in queue:
   passed `384/384` but missed the record (`90.97`, `91.21`, `90.99`, `91.01`
   tok/s). Keep `MTP_P_MIN=0.12`; do not keep spending lanes on nearby p-min
   values without a second interacting change.
+- fast top-k thread neighborhood: draft threads `28/36` and draft batch threads
+  `28/36` all passed `384/384` but missed the record (`90.67-90.94 tok/s`).
+  Keep `MTP_DRAFT_THREADS=32`, `MTP_DRAFT_THREADS_BATCH=32`.
 
 Next queue:
 
-- tune thread scheduling around the promoted fast top-k recipe:
-  `MTP_DRAFT_THREADS=28/36` and `MTP_DRAFT_THREADS_BATCH=28/36`, keeping
-  `LLAMA_MTP_DRAFT_FAST_TOPK=1`, `LLAMA_MTP_DRAFT_TOP_K=10`,
-  `MTP_P_MIN=0.12`, and 384/384 canary for any claimed record.
+- move back to source-level MTP overhead work. The fast-top-k patch showed the
+  sampler path matters but only modestly; nearby top-k, p-min, ubatch, context,
+  and thread knobs are now exhausted under the current recipe.
 - source-level MTP overhead lane remains valuable: timing showed hidden-state
   handoff was not the material cost; draft `llama_decode` and sampler overhead
   dominate. The fast-top-k patch reduced sampler overhead only modestly, so
