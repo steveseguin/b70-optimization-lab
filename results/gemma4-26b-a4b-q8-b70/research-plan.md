@@ -150,8 +150,11 @@ Near-neighbor follow-ups now in progress / next in queue:
 - `POLL=75`: completed at `90.02 tok/s`, valid but below record;
 - `FLASH_ATTN=on`: completed at `90.08 tok/s`, valid but below record. Keep it
   only for q8_0-cache retests that require FA-on.
-- active next queue: refine `MTP_P_MIN` around the current best while holding
-  `MTP_DRAFT_THREADS=32`: repeat `0.10`, then try `0.11`, `0.12`, and `0.13`.
+- `MTP_P_MIN` refinement with draft threads 32: repeat `0.10` completed at
+  `90.20 tok/s`, `0.11` at `89.55`, `0.12` at `90.08`, and `0.13` at
+  `90.33`; all valid, all below the `90.42` record.
+- active next queue: sweep `MTP_DRAFT_THREADS` around the current winner:
+  `24`, `32` repeat, `48`, and `64`.
 
 The `filled-long` prompt mode records prompt hash/preview and usage-derived
 prompt/completion-token stats. Use it for near-512-input / 512-output
