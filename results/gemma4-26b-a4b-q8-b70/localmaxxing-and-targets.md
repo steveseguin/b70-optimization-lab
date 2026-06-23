@@ -25,6 +25,15 @@ Interpretation for this lane:
 - Do not compare a Q8/INT8 result against MXFP4/Q4 entries as if the quality
   lane were identical.
 
+Current local Q8 baseline:
+
+- `20260623T052850Z`, llama.cpp SYCL on one B70, UD-Q8_K_XL, f16 KV, 8K context;
+- chat canary 128/128 pass;
+- p512/o512 chat decode `26.10 tok/s` after TTFT, `24.24 tok/s` wall;
+- status: keep as a control and **do not submit** as a record unless a
+  baseline-only reference entry is explicitly desired. It is far below the
+  public Gemma 4 family context and should be improved first.
+
 ## Submission Packet
 
 LocalMaxxing requires at minimum:

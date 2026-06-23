@@ -1,6 +1,6 @@
 # Gemma 4 26B A4B Q8 on Intel B70
 
-Status: **active lane, no validated baseline yet**.
+Status: **valid Q8 llama.cpp baseline established; optimization not started**.
 
 This lane replaces the closed Qwen3.6 35B TP4 effort. The target architecture is
 different on purpose: run **one complete Gemma 4 26B A4B replica per B70** and
@@ -52,8 +52,10 @@ External references:
   `/home/steve/src/llama.cpp/build-sycl-b70/bin/`.
 - There is enough disk for the Q8 GGUF; `/mnt/fast-ai` had about 353 GB free at
   lane start.
-- The Q8 GGUF download is in progress under
-  `/mnt/fast-ai/llm-models/gemma4-26b-a4b-it-q8-gguf/`.
+- The Q8 GGUF is downloaded and byte-verified at
+  `/mnt/fast-ai/llm-models/gemma4-26b-a4b-it-q8-gguf/gemma-4-26B-A4B-it-UD-Q8_K_XL.gguf`
+  (`27,636,230,944` bytes). Metadata sidecar:
+  `/mnt/fast-ai/llm-models/gemma4-26b-a4b-it-q8-gguf/gemma-4-26B-A4B-it-UD-Q8_K_XL.gguf.metadata.json`.
 - The dirty `/home/steve/src/vllm` Qwen worktree should not be treated as the
   baseline for this lane.
 
@@ -74,6 +76,12 @@ External references:
 | Date | Runtime | GPU Layout | Precision | Context | Status | Output tok/s | Evidence |
 | --- | --- | --- | --- | --- | --- | ---: | --- |
 | 2026-06-23 | llama.cpp SYCL setup | 1 replica / B70 | UD-Q8_K_XL GGUF | 8K first, 32K target | model download | n/a | [lane start note](../../notes/2026-06-23-gemma4-26b-a4b-q8-b70-lane-start.md) |
+| 2026-06-23 | llama.cpp `dec5ca557` SYCL | 1 replica on B70 GPU0 | UD-Q8_K_XL GGUF, f16 KV | 8K | **valid baseline**: chat canary 128/128; reasoning off | **26.10 after TTFT** / 24.24 wall | [summary](../../data/gemma4-26b-q8-llamacpp-gpu0-ctx8192-20260623T052850Z/summary.json), [sweep note](../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260623T052850Z-valid-baseline-reasoning-off.md) |
+
+The first valid result is intentionally labeled as a baseline, not an optimized
+result. It proves that the Q8 GGUF fits and serves correctly at 8K on one B70,
+but the decode rate is far below the public LocalMaxxing Gemma 4 family context
+and should be treated as the control for four-at-a-time optimization sweeps.
 
 ## Linked Files
 

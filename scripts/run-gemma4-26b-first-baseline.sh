@@ -8,7 +8,14 @@ BASE_URL="${BASE_URL:-http://127.0.0.1:${PORT}}"
 MODEL_ALIAS="${MODEL_ALIAS:-gemma4-26b-a4b-q8}"
 MODEL="${MODEL:-/mnt/fast-ai/llm-models/gemma4-26b-a4b-it-q8-gguf/gemma-4-26B-A4B-it-UD-Q8_K_XL.gguf}"
 CTX_SIZE="${CTX_SIZE:-8192}"
+BATCH_SIZE="${BATCH_SIZE:-512}"
 UBATCH_SIZE="${UBATCH_SIZE:-64}"
+CACHE_TYPE_K="${CACHE_TYPE_K:-f16}"
+CACHE_TYPE_V="${CACHE_TYPE_V:-f16}"
+POLL="${POLL:-50}"
+FLASH_ATTN="${FLASH_ATTN:-on}"
+REASONING="${REASONING:-off}"
+EXTRA_LLAMA_ARGS="${EXTRA_LLAMA_ARGS:-}"
 CANARY_REPEATS="${CANARY_REPEATS:-32}"
 BENCH_REPEATS="${BENCH_REPEATS:-8}"
 PROMPT_TOKENS="${PROMPT_TOKENS:-512}"
@@ -44,9 +51,16 @@ PORT="$PORT" \
 MODEL_ALIAS="$MODEL_ALIAS" \
 MODEL="$MODEL" \
 CTX_SIZE="$CTX_SIZE" \
+BATCH_SIZE="$BATCH_SIZE" \
 UBATCH_SIZE="$UBATCH_SIZE" \
+CACHE_TYPE_K="$CACHE_TYPE_K" \
+CACHE_TYPE_V="$CACHE_TYPE_V" \
+POLL="$POLL" \
+FLASH_ATTN="$FLASH_ATTN" \
+REASONING="$REASONING" \
+EXTRA_LLAMA_ARGS="$EXTRA_LLAMA_ARGS" \
 LOG="$SERVER_LOG" \
-scripts/run-gemma4-26b-llamacpp-replica.sh &
+scripts/run-gemma4-26b-llamacpp-replica.sh > "$RUN_DIR/server.stdout.log" 2>&1 &
 server_pid="$!"
 
 deadline=$((SECONDS + READINESS_TIMEOUT_S))
@@ -84,6 +98,7 @@ python3 scripts/bench-openai-single-decode.py \
 
 python3 - "$RUN_DIR" "$LABEL" "$SERVER_LOG" "$SUMMARY_OUT" "$MODEL" <<'PY'
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -100,6 +115,23 @@ out = {
     "run_dir": str(run_dir),
     "model_path": str(model),
     "model_file_bytes": model.stat().st_size if model.exists() else None,
+    "launcher_identity": {
+        "gpu_index": os.environ.get("GPU_INDEX"),
+        "port": os.environ.get("PORT"),
+        "ctx_size": os.environ.get("CTX_SIZE"),
+        "batch_size": os.environ.get("BATCH_SIZE"),
+        "ubatch_size": os.environ.get("UBATCH_SIZE"),
+        "cache_type_k": os.environ.get("CACHE_TYPE_K"),
+        "cache_type_v": os.environ.get("CACHE_TYPE_V"),
+        "poll": os.environ.get("POLL"),
+        "flash_attn": os.environ.get("FLASH_ATTN"),
+        "reasoning": os.environ.get("REASONING"),
+        "extra_llama_args": os.environ.get("EXTRA_LLAMA_ARGS"),
+        "oneapi_device_selector": os.environ.get("ONEAPI_DEVICE_SELECTOR"),
+        "ggml_sycl_disable_opt": os.environ.get("GGML_SYCL_DISABLE_OPT"),
+        "ggml_sycl_disable_graph": os.environ.get("GGML_SYCL_DISABLE_GRAPH"),
+        "ggml_sycl_disable_dnn": os.environ.get("GGML_SYCL_DISABLE_DNN"),
+    },
     "canary_pass_all": canary["summary"]["pass_all"],
     "canary_rows_completed": canary["summary"]["rows_completed"],
     "bench_summary": bench["summary"],

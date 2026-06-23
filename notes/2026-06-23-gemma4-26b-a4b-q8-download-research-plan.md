@@ -117,6 +117,36 @@ If 8K does not fit, retry 4K then 2K before reducing weight/KV precision. If it
 passes, launch all four replicas and run the ranked sweeps in
 `results/gemma4-26b-a4b-q8-b70/research-plan.md`.
 
+## Download Completed
+
+The Q8 file was downloaded and byte-verified:
+
+```text
+path: /mnt/fast-ai/llm-models/gemma4-26b-a4b-it-q8-gguf/gemma-4-26B-A4B-it-UD-Q8_K_XL.gguf
+size: 27,636,230,944 bytes
+metadata: /mnt/fast-ai/llm-models/gemma4-26b-a4b-it-q8-gguf/gemma-4-26B-A4B-it-UD-Q8_K_XL.gguf.metadata.json
+```
+
+## First Baseline Result
+
+`20260623T052538Z` failed the first chat canary because the llama.cpp Gemma
+template defaulted to thinking mode and returned empty `message.content`.
+The launcher now defaults `REASONING=off`.
+
+`20260623T052850Z` is the first valid conservative baseline:
+
+- canary: **128/128** chat rows pass;
+- speed: p512/o512 chat decode **26.10 tok/s after TTFT**, **24.24 tok/s wall**;
+- context: 8K, f16 KV;
+- runtime: llama.cpp `dec5ca557`, SYCL/Level Zero, `level_zero:0`;
+- run summary:
+  `data/gemma4-26b-q8-llamacpp-gpu0-ctx8192-20260623T052850Z/summary.json`;
+- server log:
+  `/mnt/fast-ai/bench-results/gemma4-26b-a4b-q8/servers/gemma4-26b-q8-llamacpp-gpu0-ctx8192-20260623T052850Z.server.log`.
+
+This is valid but not performant. It should be used as the control for
+four-replica optimization sweeps.
+
 ## Download-Time Plan Update
 
 When the Q8 file lands:

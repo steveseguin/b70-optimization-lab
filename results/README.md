@@ -9,7 +9,7 @@ experiments in `../experiments/`, chronological investigation notes in
 
 | Model / Lane | Folder | Status | Best Valid Result |
 | --- | --- | --- | --- |
-| Gemma 4 26B A4B Q8 / INT8 on B70 | [gemma4-26b-a4b-q8-b70](gemma4-26b-a4b-q8-b70/README.md) | Active setup | No validated local baseline yet; target is four independent Q8/INT8 single-GPU replicas |
+| Gemma 4 26B A4B Q8 / INT8 on B70 | [gemma4-26b-a4b-q8-b70](gemma4-26b-a4b-q8-b70/README.md) | Active optimization | Valid llama.cpp Q8 single-B70 baseline: `26.10 tok/s` after TTFT, chat canary 128/128; target is four independent Q8/INT8 single-GPU replicas |
 | Qwen3.6 35B A3B Quark W8A8 INT8 on B70 | [qwen36-35b-quark-int8-b70](qwen36-35b-quark-int8-b70/README.md) | Closed reference packet | 4x strict-valid `93.55 tok/s`; TP2 safe smoke `85.87 tok/s` |
 | MiniMax M2.7 INT4 AutoRound on B70 | [../repro/minimax-m27-b70-110tps-ubuntu24-20260523](../repro/minimax-m27-b70-110tps-ubuntu24-20260523/README.md) | Deployable baseline | 32K endpoint, about `83-84 tok/s` output on current host |
 | MiniMax M2.7 strict speed lane | [../repro/minimax-m27-b70-89tps-20260520](../repro/minimax-m27-b70-89tps-20260520/README.md) | Older strict-speed baseline | Historical `89+ tok/s` class strict packet |

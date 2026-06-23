@@ -19,7 +19,7 @@ replicas on four GPUs for parallel research and aggregate service capacity.
 
 ## Phase 1: First Valid Q8 llama.cpp Baseline
 
-Start after the Q8 file download completes.
+Status: **completed for the conservative llama.cpp control**.
 
 Fast path wrapper:
 
@@ -59,9 +59,26 @@ python3 scripts/bench-openai-single-decode.py \
 If 8K does not fit, retry `CTX_SIZE=4096`, then `2048`, without changing weight
 or KV precision. Only after a valid baseline should q8 KV be tried.
 
+Baseline result:
+
+- run label: `gemma4-26b-q8-llamacpp-gpu0-ctx8192-20260623T052850Z`;
+- runtime: llama.cpp `dec5ca557`, SYCL/Level Zero, `level_zero:0`;
+- model: `gemma-4-26B-A4B-it-UD-Q8_K_XL.gguf`, exact file size
+  `27,636,230,944` bytes;
+- flags: `CTX_SIZE=8192`, `BATCH_SIZE=512`, `UBATCH_SIZE=64`, `-fa on`,
+  `CACHE_TYPE_K=f16`, `CACHE_TYPE_V=f16`, `POLL=50`,
+  `GGML_SYCL_DISABLE_OPT=1`, `REASONING=off`;
+- quality: chat canary **128/128 pass**;
+- speed: p512/o512 chat decode **26.10 tok/s after TTFT**, **24.24 tok/s
+  wall**, CV after TTFT `0.00028`.
+
+Decision: valid baseline, not a speed win. The immediate research value is that
+Q8 fits and the chat template is stable with `REASONING=off`; use this as the
+control for parallel sweeps.
+
 ## Phase 2: Four Replica Baseline
 
-Once one GPU is valid, launch all four independent replicas:
+Next step. One GPU is valid, so launch all four independent replicas:
 
 ```bash
 cd /home/steve/qwen36-results-main
@@ -207,8 +224,9 @@ Text speed is first. After text baseline:
 
 ## Current Best Hypotheses
 
-1. **Single-GPU Q8 llama.cpp will be memory-tight but viable at 8K.** This gets
-   the quality baseline quickly and validates the GGUF/template path.
+1. **Single-GPU Q8 llama.cpp is viable at 8K, but the conservative baseline is
+   slow.** The validated control is ~26 tok/s after TTFT; optimize before any
+   LocalMaxxing submission.
 2. **AOT and ubatch sweeps are the likely early speed wins.** They preserve
    quality and avoid the risk of MTP correctness bugs.
 3. **`GGML_SYCL_DISABLE_OPT=0` may be faster but is high-risk.** Only test it

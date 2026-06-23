@@ -78,6 +78,16 @@ cd /home/steve/qwen36-results-main
 scripts/run-gemma4-26b-first-baseline.sh
 ```
 
+Validated conservative baseline:
+
+```text
+label: gemma4-26b-q8-llamacpp-gpu0-ctx8192-20260623T052850Z
+canary: 128/128 chat rows pass
+p512/o512: 26.10 tok/s after TTFT, 24.24 tok/s wall
+summary: data/gemma4-26b-q8-llamacpp-gpu0-ctx8192-20260623T052850Z/summary.json
+server log: /mnt/fast-ai/bench-results/gemma4-26b-a4b-q8/servers/gemma4-26b-q8-llamacpp-gpu0-ctx8192-20260623T052850Z.server.log
+```
+
 ## 4. Launch Four Replicas
 
 ```bash
