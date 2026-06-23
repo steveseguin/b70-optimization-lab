@@ -160,9 +160,18 @@ Near-neighbor follow-ups now in progress / next in queue:
   `89.63 tok/s`, `0.12` at **`91.05 tok/s`** (new record), and `0.13` at
   `90.24`; the `0.10` repeat stalled during launch/readiness on GPU0 and was
   kept as a failed control artifact.
-- active next queue under the new `p-min=0.12 + dtb32` identity: true FA-on
-  draft-cache retests (`V q8_0`, then `K/V q8_0`), `POLL=100`, and CPU
-  affinity split between target and draft threads.
+- mechanism follow-ups under the new `p-min=0.12 + dtb32` identity: true FA-on
+  draft-cache retests were valid real q8 draft-cache runs but did not beat the
+  record (`V q8_0` at `90.61 tok/s`, `K/V q8_0` at `89.95`); `POLL=100`
+  reached `90.59`; the CPU-affinity split failed at launch because llama.cpp
+  `dec5ca557` rejects `--spec-draft-cpu-range-batch`.
+
+Next queue under the current `91.05 tok/s` filled-long identity:
+
+- `MTP_DRAFT_POLL=0`;
+- Q8_0 main-model control under the same MTP identity;
+- supported CPU-affinity split without `--spec-draft-cpu-range-batch`;
+- `GGML_SYCL_ENABLE_VMM=0` as a lower-priority runtime diagnostic.
 
 The `filled-long` prompt mode records prompt hash/preview and usage-derived
 prompt/completion-token stats. Use it for near-512-input / 512-output
