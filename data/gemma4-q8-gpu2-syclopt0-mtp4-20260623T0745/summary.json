@@ -1,0 +1,73 @@
+{
+  "bench_run_identity": {
+    "api_mode": "chat",
+    "base_url": "http://127.0.0.1:18262",
+    "created_at_utc": "2026-06-23T06:01:13.637424+00:00",
+    "max_tokens": 512,
+    "model": "gemma4-26b-a4b-q8",
+    "prompt_tokens_requested": 512,
+    "repeats": 8,
+    "seed": 1,
+    "usage_required": true
+  },
+  "bench_summary": {
+    "completion_tokens_total": 1215,
+    "elapsed_s": {
+      "cv": 0.13142375120703237,
+      "max": 5.7628041630086955,
+      "mean": 4.716438353381818,
+      "median": 4.619822040491272,
+      "min": 3.8864945280074608,
+      "stdev": 0.6198520207381575
+    },
+    "requests": 8,
+    "tok_s_after_ttft": {
+      "cv": 0.06018578059593647,
+      "max": 38.95148480427865,
+      "mean": 35.771419855464565,
+      "median": 36.04035124841764,
+      "min": 32.752550230275396,
+      "stdev": 2.1529308270261156
+    },
+    "tok_s_wall": {
+      "cv": 0.1200617799471118,
+      "max": 36.27947987161796,
+      "mean": 32.602010027868246,
+      "median": 33.90571946043899,
+      "min": 23.94667528107562,
+      "stdev": 3.9142553537994496
+    },
+    "ttft_s": {
+      "cv": 1.139805149915572,
+      "max": 1.727517738007009,
+      "mean": 0.4521452333756315,
+      "median": 0.26812790651456453,
+      "min": 0.26660684699891135,
+      "stdev": 0.5153574655113229
+    }
+  },
+  "canary_pass_all": true,
+  "canary_rows_completed": 128,
+  "label": "gemma4-q8-gpu2-syclopt0-mtp4-20260623T0745",
+  "launcher_identity": {
+    "batch_size": "512",
+    "cache_type_k": "f16",
+    "cache_type_v": "f16",
+    "ctx_size": "8192",
+    "extra_llama_args": "--spec-draft-model /mnt/fast-ai/llm-models/gemma4-26b-a4b-it-q8-gguf/mtp-gemma-4-26B-A4B-it.gguf --spec-type draft-mtp --spec-draft-n-max 4 --spec-draft-device SYCL0 --spec-draft-ngl 99",
+    "flash_attn": "on",
+    "ggml_sycl_disable_dnn": null,
+    "ggml_sycl_disable_graph": null,
+    "ggml_sycl_disable_opt": "0",
+    "gpu_index": "2",
+    "oneapi_device_selector": null,
+    "poll": "100",
+    "port": "18262",
+    "reasoning": "off",
+    "ubatch_size": "64"
+  },
+  "model_file_bytes": 27636230944,
+  "model_path": "/mnt/fast-ai/llm-models/gemma4-26b-a4b-it-q8-gguf/gemma-4-26B-A4B-it-UD-Q8_K_XL.gguf",
+  "run_dir": "/home/steve/qwen36-results-main/data/gemma4-q8-gpu2-syclopt0-mtp4-20260623T0745",
+  "server_log": "/mnt/fast-ai/bench-results/gemma4-26b-a4b-q8/servers/gemma4-q8-gpu2-syclopt0-mtp4-20260623T0745.server.log"
+}

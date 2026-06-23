@@ -1,6 +1,6 @@
 # Gemma 4 26B A4B Q8 on Intel B70
 
-Status: **valid Q8 llama.cpp baseline established; optimization not started**.
+Status: **active optimization; current valid best is llama.cpp optimized SYCL**.
 
 This lane replaces the closed Qwen3.6 35B TP4 effort. The target architecture is
 different on purpose: run **one complete Gemma 4 26B A4B replica per B70** and
@@ -77,11 +77,18 @@ External references:
 | --- | --- | --- | --- | --- | --- | ---: | --- |
 | 2026-06-23 | llama.cpp SYCL setup | 1 replica / B70 | UD-Q8_K_XL GGUF | 8K first, 32K target | model download | n/a | [lane start note](../../notes/2026-06-23-gemma4-26b-a4b-q8-b70-lane-start.md) |
 | 2026-06-23 | llama.cpp `dec5ca557` SYCL | 1 replica on B70 GPU0 | UD-Q8_K_XL GGUF, f16 KV | 8K | **valid baseline**: chat canary 128/128; reasoning off | **26.10 after TTFT** / 24.24 wall | [summary](../../data/gemma4-26b-q8-llamacpp-gpu0-ctx8192-20260623T052850Z/summary.json), [sweep note](../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260623T052850Z-valid-baseline-reasoning-off.md) |
+| 2026-06-23 | llama.cpp `dec5ca557` SYCL | 1 replica on B70 GPU0 | UD-Q8_K_XL GGUF, f16 KV | 8K | **current valid best**: `GGML_SYCL_DISABLE_OPT=0`, `FLASH_ATTN=off`, chat canary 384/384; reasoning off | **41.81 after TTFT** / 36.44 wall | [summary](../../data/gemma4-q8-gpu0-syclopt0-faoff-deep-20260623T0715/summary.json), [sweep note](../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260623T0715-optimized-sycl-followups.md) |
 
 The first valid result is intentionally labeled as a baseline, not an optimized
 result. It proves that the Q8 GGUF fits and serves correctly at 8K on one B70,
 but the decode rate is far below the public LocalMaxxing Gemma 4 family context
 and should be treated as the control for four-at-a-time optimization sweeps.
+
+`GGML_SYCL_DISABLE_OPT=0` is the largest speed lever so far despite an upstream
+B70/Gemma corruption report for that flag. The promoted `FLASH_ATTN=off`
+variant passed a promotion-depth deterministic chat gate (`96` repeats x `4`
+cases = `384/384`) before being promoted. Treat any further optimized-SYCL
+variants as risky until they pass the same or stronger gate.
 
 ## Linked Files
 

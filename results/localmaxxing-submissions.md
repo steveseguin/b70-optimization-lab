@@ -4,13 +4,12 @@ Date: 2026-06-23
 
 Model: `unsloth/gemma-4-26B-A4B-it-GGUF`, Gemma 4 26B A4B Q8 lane.
 
-Status: no submitted Gemma 4 Q8 B70 result yet. When a result is promoted, keep
-single-replica records separate from four independent replica aggregate
-capacity.
+Status: first Gemma 4 Q8 B70 submission queued. Keep single-replica records
+separate from four independent replica aggregate capacity.
 
 | Label | LocalMaxxing ID | GPUs | Input | Output | tok/s out | tok/s total | Validation |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
-| _pending_ | _pending_ | 1 or 4 | _pending_ | _pending_ | _pending_ | _pending_ | 96+ chat canary required |
+| `gemma4-26b-a4b-q8-b70-llamacpp-syclopt0-faoff-20260623T0715` | queued | 1 | 574 | 156 | 41.806 | n/a | 384/384 chat canary |
 
 Required packet: see
 [`results/gemma4-26b-a4b-q8-b70/localmaxxing-and-targets.md`](gemma4-26b-a4b-q8-b70/localmaxxing-and-targets.md).

@@ -76,6 +76,19 @@ Decision: valid baseline, not a speed win. The immediate research value is that
 Q8 fits and the chat template is stable with `REASONING=off`; use this as the
 control for parallel sweeps.
 
+Current valid best:
+
+- run label: `gemma4-q8-gpu0-syclopt0-faoff-deep-20260623T0715`;
+- change: `GGML_SYCL_DISABLE_OPT=0`, `FLASH_ATTN=off`;
+- quality: chat canary **384/384 pass**;
+- speed: **41.81 tok/s after TTFT**, **36.44 tok/s wall**;
+- caveat: this flag had upstream B70/Gemma corruption reports, so every
+  optimized-SYCL variant needs promotion-depth canaries before promotion.
+
+Follow-up: `syclopt0 + POLL=100` was a validated alternative with better TTFT
+and wall throughput but lower after-TTFT decode (`40.69 tok/s`). MTP n=2/4/8
+was slower than no-spec in first smokes and should not be promoted.
+
 ## Phase 2: Four Replica Baseline
 
 Next step. One GPU is valid, so launch all four independent replicas:

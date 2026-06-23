@@ -34,6 +34,18 @@ Current local Q8 baseline:
   baseline-only reference entry is explicitly desired. It is far below the
   public Gemma 4 family context and should be improved first.
 
+Current promoted local Q8 best:
+
+- `gemma4-q8-gpu0-syclopt0-faoff-deep-20260623T0715`, llama.cpp SYCL on one B70,
+  UD-Q8_K_XL, f16 KV, 8K context;
+- `GGML_SYCL_DISABLE_OPT=0`, `FLASH_ATTN=off`, `POLL=50`, `REASONING=off`;
+- chat canary **384/384** pass;
+- benchmark requested `max_tokens=512`, but actual completions averaged
+  `155.6` tokens because the model stopped naturally;
+- p512/o512 chat decode `41.81 tok/s` after TTFT, `36.44 tok/s` wall;
+- status: LocalMaxxing queue prepared at
+  `data/localmaxxing-gemma4-26b-a4b-q8-b70-syclopt0-faoff-20260623.queue.json`.
+
 ## Submission Packet
 
 LocalMaxxing requires at minimum:
