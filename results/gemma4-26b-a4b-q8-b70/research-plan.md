@@ -171,12 +171,17 @@ Near-neighbor follow-ups now in progress / next in queue:
   split reached `89.95`, and `GGML_SYCL_ENABLE_VMM=0` reached `90.40`; all
   valid, all below the `91.05` record.
 
+- sampler/KV/priority/CPU-mask follow-ups under the same identity:
+  `--no-kv-unified` reached `89.99 tok/s`, `--samplers greedy` reached
+  `88.65`, priority flags reached `89.72`, and CPU-mask split reached `89.73`;
+  all valid, all below the `91.05` record.
+
 Next queue under the current `91.05 tok/s` filled-long identity:
 
-- `--no-kv-unified`;
-- `--samplers greedy`;
-- scheduler priority flags without CPU pinning;
-- CPU mask split with supported draft batch mask flags.
+- repeat exact `p-min=0.12 + dtb32` to measure variance and potentially break
+  the record;
+- refine `MTP_P_MIN` around the winner (`0.115`, `0.125`);
+- test nearby `MTP_DRAFT_THREADS_BATCH` values such as `24` or `40`.
 
 The `filled-long` prompt mode records prompt hash/preview and usage-derived
 prompt/completion-token stats. Use it for near-512-input / 512-output
