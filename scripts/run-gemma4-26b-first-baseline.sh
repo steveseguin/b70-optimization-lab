@@ -6,6 +6,7 @@ GPU_INDEX="${GPU_INDEX:-0}"
 PORT="${PORT:-18260}"
 BASE_URL="${BASE_URL:-http://127.0.0.1:${PORT}}"
 MODEL_ALIAS="${MODEL_ALIAS:-gemma4-26b-a4b-q8}"
+MODEL="${MODEL:-/mnt/fast-ai/llm-models/gemma4-26b-a4b-it-q8-gguf/gemma-4-26B-A4B-it-UD-Q8_K_XL.gguf}"
 CTX_SIZE="${CTX_SIZE:-8192}"
 UBATCH_SIZE="${UBATCH_SIZE:-64}"
 CANARY_REPEATS="${CANARY_REPEATS:-32}"
@@ -35,11 +36,13 @@ cd "$ROOT"
 
 echo "[gemma4-baseline] label=$LABEL"
 echo "[gemma4-baseline] base_url=$BASE_URL"
+echo "[gemma4-baseline] model=$MODEL"
 echo "[gemma4-baseline] server_log=$SERVER_LOG"
 
 GPU_INDEX="$GPU_INDEX" \
 PORT="$PORT" \
 MODEL_ALIAS="$MODEL_ALIAS" \
+MODEL="$MODEL" \
 CTX_SIZE="$CTX_SIZE" \
 UBATCH_SIZE="$UBATCH_SIZE" \
 LOG="$SERVER_LOG" \
@@ -79,7 +82,7 @@ python3 scripts/bench-openai-single-decode.py \
   --repeats "$BENCH_REPEATS" \
   --out "$RUN_DIR/p${PROMPT_TOKENS}o${MAX_TOKENS}.json"
 
-python3 - "$RUN_DIR" "$LABEL" "$SERVER_LOG" "$SUMMARY_OUT" <<'PY'
+python3 - "$RUN_DIR" "$LABEL" "$SERVER_LOG" "$SUMMARY_OUT" "$MODEL" <<'PY'
 import json
 import sys
 from pathlib import Path
@@ -88,12 +91,15 @@ run_dir = Path(sys.argv[1])
 label = sys.argv[2]
 server_log = sys.argv[3]
 summary_out = Path(sys.argv[4])
+model = Path(sys.argv[5])
 canary = json.loads((run_dir / "chat-canary.json").read_text())
 bench = json.loads(next(run_dir.glob("p*o*.json")).read_text())
 out = {
     "label": label,
     "server_log": server_log,
     "run_dir": str(run_dir),
+    "model_path": str(model),
+    "model_file_bytes": model.stat().st_size if model.exists() else None,
     "canary_pass_all": canary["summary"]["pass_all"],
     "canary_rows_completed": canary["summary"]["rows_completed"],
     "bench_summary": bench["summary"],

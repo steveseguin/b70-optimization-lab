@@ -118,11 +118,15 @@ def summarize(rows: list[dict[str, Any]]) -> dict[str, Any]:
         vals = [r[key] for r in rows if isinstance(r.get(key), (int, float))]
         if not vals:
             return None
+        stdev = statistics.stdev(vals) if len(vals) > 1 else 0.0
+        mean = statistics.fmean(vals)
         return {
-            "mean": statistics.fmean(vals),
+            "mean": mean,
             "median": statistics.median(vals),
             "min": min(vals),
             "max": max(vals),
+            "stdev": stdev,
+            "cv": None if mean == 0 else stdev / mean,
         }
 
     return {
