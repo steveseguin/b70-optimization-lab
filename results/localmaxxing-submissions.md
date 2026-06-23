@@ -18,6 +18,7 @@ stop, short-prompt sustained, and filled-long sustained shapes separate.
 | `gemma4-26b-a4b-q8-b70-llamacpp-mtp-n3-aot-psplit020-filledlong512-20260623T0858` | `cmqqf759s0154qo01gwqa14uc` | 1 | 588 | 512 | 68.515 | 63.666 | 384/384 chat canary |
 | `gemma4-26b-a4b-q8-b70-llamacpp-mtp-n4-aot-filledlong512-20260623T0858` | `cmqqf75p70157qo018fsavf0g` | 1 | 588 | 512 | 74.395 | 68.797 | 384/384 chat canary |
 | `gemma4-26b-a4b-q8-b70-llamacpp-mtp-n4-aot-psplit020-filledlong512-20260623T0907` | `cmqqfe75s015aqo01xr94yxh0` | 1 | 588 | 512 | 74.498 | 68.900 | 384/384 chat canary |
+| `gemma4-26b-a4b-q8-b70-llamacpp-mtp-n6-aot-nmin2-pmin015-filledlong512-20260623T0912` | `cmqqfnilo015lqo011nm0q2tn` | 1 | 588 | 512 | 83.520 | 76.569 | 384/384 chat canary |
 
 Required packet: see
 [`results/gemma4-26b-a4b-q8-b70/localmaxxing-and-targets.md`](gemma4-26b-a4b-q8-b70/localmaxxing-and-targets.md).
@@ -39,7 +40,8 @@ Submit artifacts:
   `data/localmaxxing-responses/gemma4-26b-a4b-q8-b70-mtp-n3-aot-filledlong512-20260623.submit.log`,
   `data/localmaxxing-responses/gemma4-26b-a4b-q8-b70-mtp-n3-aot-psplit020-filledlong512-20260623.submit.log`,
   `data/localmaxxing-responses/gemma4-26b-a4b-q8-b70-mtp-n4-aot-filledlong512-20260623.submit.log`,
-  `data/localmaxxing-responses/gemma4-26b-a4b-q8-b70-mtp-n4-aot-psplit020-filledlong512-20260623.submit.log`
+  `data/localmaxxing-responses/gemma4-26b-a4b-q8-b70-mtp-n4-aot-psplit020-filledlong512-20260623.submit.log`,
+  `data/localmaxxing-responses/gemma4-26b-a4b-q8-b70-mtp-n6-aot-nmin2-pmin015-filledlong512-20260623.submit.log`
 
 The first attempt failed only because the payload used `backend="SYCL/Level Zero"`.
 The accepted payload uses LocalMaxxing's enum `backend="xpu"` and stores

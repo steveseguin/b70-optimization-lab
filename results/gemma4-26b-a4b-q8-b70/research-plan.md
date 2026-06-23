@@ -120,17 +120,25 @@ Current short-prompt sustained-decode best:
 
 Current filled-long sustained-decode best:
 
-- run label: `gemma4-q8-gpu1-mtp-n4-aot-psplit020-filled-long-deep-20260623T090712Z`;
-- change from short-prompt best: `BENCH_PROMPT_MODE=filled-long` and
-  `--spec-draft-n-max 4 --spec-draft-p-split 0.20`;
+- run label: `gemma4-q8-gpu2-mtp-n6-aot-nmin2-pmin015-filled-long-deep-20260623T091227Z`;
+- change from prior filled-long best: raise MTP depth to `--spec-draft-n-max 6`
+  and add confidence gating with `--spec-draft-n-min 2 --spec-draft-p-min 0.15`;
 - actual benchmark shape: `588` prompt tokens and exactly `512` output tokens
   on all repeats;
 - quality: chat canary **384/384 pass**;
-- speed: **74.50 tok/s after TTFT**, **68.90 tok/s wall**;
-- LocalMaxxing: approved as `cmqqfe75s015aqo01xr94yxh0`;
+- speed: **83.52 tok/s after TTFT**, **76.57 tok/s wall**;
+- LocalMaxxing: approved as `cmqqfnilo015lqo011nm0q2tn`;
 - decision: current valid best for the Gemma 4 26B A4B Q8 one-B70 lane. Future
   record attempts should use `filled-long` unless intentionally reproducing a
   short-prompt record.
+
+Near-neighbor follow-ups now in progress / next in queue:
+
+- repeat `n=6, n-min=2, p-min=0.15` to measure reproducibility;
+- sweep `p-min=0.10` and `p-min=0.20` at `n=6`;
+- try `n=7, n-min=2, p-min=0.15`;
+- if `n=6` remains best, test adding `--spec-draft-p-split 0.20` to the gated
+  `n=6` lane, since p-split was a small win at lower MTP depth.
 
 The `filled-long` prompt mode records prompt hash/preview and usage-derived
 prompt/completion-token stats. Use it for near-512-input / 512-output
@@ -226,14 +234,15 @@ for each meaningful lane.
 
 ## Phase 4: MTP / Speculative Decode
 
-Status: **active; filled-long `n=4` is the current sustained-decode best**.
+Status: **active; filled-long `n=6, n-min=2, p-min=0.15` is the current
+sustained-decode best**.
 
 Google's MTP overview warns that MoE models at batch size 1 may have limited
 speedup because each MTP token can activate different experts, which reduces
-expert-weight locality. That warning holds for over-large draft budgets here:
-`n=6` and `n=8` were losses. However, the official Gemma MTP draft GGUF with
-llama.cpp `draft-mtp` works at small draft budgets, and `n=4` is now the best
-valid single-B70 sustained-decode result.
+expert-weight locality. That warning held for the short-prompt `75/512` shape,
+where `n=5/6` lost and `n=2/3` was the useful zone. The filled-long `588/512`
+shape behaves differently: deeper draft budgets are useful, and the current
+winner is gated `n=6`.
 
 When ready, download the draft file:
 
@@ -247,18 +256,19 @@ Promoted MTP server shape for current filled-long record:
 
 ```bash
 LLAMA_SERVER=/home/steve/src/llama.cpp/build-sycl-b70-aot-bmg-g31/bin/llama-server \
-GPU_INDEX=1 PORT=18261 LABEL=gemma4-q8-gpu1-mtp-n4-aot-psplit020-filled-long-deep-<stamp> \
-MTP_N_MAX=4 BENCH_PROMPT_MODE=filled-long MTP_EXTRA_ARGS='--spec-draft-p-split 0.20' \
+GPU_INDEX=2 PORT=18262 LABEL=gemma4-q8-gpu2-mtp-n6-aot-nmin2-pmin015-filled-long-deep-<stamp> \
+MTP_N_MAX=6 MTP_N_MIN=2 MTP_P_MIN=0.15 BENCH_PROMPT_MODE=filled-long \
 scripts/run-gemma4-26b-mtp-candidate.sh
 ```
 
 The MTP wrapper fixes the Q8/f16 quality lane and forwards MTP knobs to
 `EXTRA_LLAMA_ARGS`. Already tested `--spec-draft-n-max 2/3/4/6/8` on the
 short-prompt shape, plus confidence-gated `n=5` and `n=6`; higher n lost there.
-On filled-long, `n=4` wins clearly over `n=2/3`, and `p-split=0.20` is the
-current tiny edge. Next tests should focus on repeating that edge, combining it
-with batch-size changes, and a bounded deeper-budget check (`n=5`, gated
-`n=6`) before returning to short-prompt tuning.
+On filled-long, `n=4` beat `n=2/3`, `n=5` improved again, and
+`n=6, n-min=2, p-min=0.15` set the current record. Next tests should stay near
+that winner: repeat it, sweep `p-min=0.10/0.20`, try `n=7` with the same gate,
+and then test whether `--spec-draft-p-split 0.20` adds to the gated `n=6`
+configuration.
 
 ## Phase 5: vLLM Int8 Per-Channel Comparison
 
