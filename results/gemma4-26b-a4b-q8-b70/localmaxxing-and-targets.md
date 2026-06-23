@@ -43,8 +43,9 @@ Current promoted local Q8 best:
 - benchmark requested `max_tokens=512`, but actual completions averaged
   `155.6` tokens because the model stopped naturally;
 - p512/o512 chat decode `41.81 tok/s` after TTFT, `36.44 tok/s` wall;
-- status: LocalMaxxing queue prepared at
-  `data/localmaxxing-gemma4-26b-a4b-q8-b70-syclopt0-faoff-20260623.queue.json`.
+- status: submitted to LocalMaxxing and approved as
+  `cmqq8phxt0103qo01afcgyjq8`;
+- queue: `data/localmaxxing-gemma4-26b-a4b-q8-b70-syclopt0-faoff-20260623.queue.json`.
 
 ## Submission Packet
 
