@@ -232,12 +232,20 @@ Near-neighbor follow-ups now in progress / next in queue:
 - fast top-k thread neighborhood: draft threads `28/36` and draft batch threads
   `28/36` all passed `384/384` but missed the record (`90.67-90.94 tok/s`).
   Keep `MTP_DRAFT_THREADS=32`, `MTP_DRAFT_THREADS_BATCH=32`.
+- source-level MTP sync/access patches: removing the explicit sync before
+  `llama_get_logits_ith()` regressed to `89.83-90.25 tok/s`, and a staging
+  helper that synchronized once for logits + NextN embeddings regressed to
+  `90.51-90.92 tok/s`. Both preserved `384/384` quality but are rejected.
+  Keep the original fast-top-k patch with its explicit sync.
 
 Next queue:
 
 - move back to source-level MTP overhead work. The fast-top-k patch showed the
   sampler path matters but only modestly; nearby top-k, p-min, ubatch, context,
-  and thread knobs are now exhausted under the current recipe.
+  thread, and sync/access patches are now exhausted under the current recipe.
+- the remaining plausible source-level win is avoiding full-vocab host logits
+  movement in the draft loop, e.g. emitting top-k candidate IDs/logits from the
+  graph/backend output path and consuming those in `draft_fast_topk_sample()`.
 - source-level MTP overhead lane remains valuable: timing showed hidden-state
   handoff was not the material cost; draft `llama_decode` and sampler overhead
   dominate. The fast-top-k patch reduced sampler overhead only modestly, so
