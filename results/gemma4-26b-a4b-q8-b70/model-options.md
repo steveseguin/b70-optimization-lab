@@ -85,6 +85,12 @@ Important local facts:
 - The built server exposes MTP/speculation flags:
   `--spec-draft-model`, `--spec-type draft-mtp`, `--spec-draft-n-max`,
   `--spec-draft-device`, and `--spec-draft-ngl`.
+- External llama.cpp MTP issue traffic includes reports of speculative/MTP
+  regressions and sensitivity to draft quality. For this lane, keep the
+  official Q8-class Gemma MTP draft as the default. Treat draft KV compression
+  (`--spec-draft-type-k/v q8_0`) as a measured cache/runtime experiment only:
+  promote it only if it preserves the 384-row chat canary and beats the current
+  filled-long record under the same prompt/output shape.
 
 ### vLLM/XPU Int8 Per-Channel
 
@@ -138,6 +144,8 @@ and reproducible command.
   <https://github.com/vllm-project/vllm/issues/38999>
 - llama.cpp B70/Gemma 4 corruption report:
   <https://github.com/ggml-org/llama.cpp/issues/21893>
+- llama.cpp Gemma/MTP regression tracker:
+  <https://github.com/ggml-org/llama.cpp/issues/24266>
 - LocalMaxxing model page:
   <https://www.localmaxxing.com/en/models/google/gemma-4-26B-A4B-it>
 - LocalMaxxing API docs:

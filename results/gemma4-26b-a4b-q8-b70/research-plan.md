@@ -135,11 +135,16 @@ Current filled-long sustained-decode best:
 
 Near-neighbor follow-ups now in progress / next in queue:
 
-- repeat the draft-threads-32 record to measure reproducibility;
-- test draft-only `V` cache `q8_0`;
-- test draft `K/V` cache `q8_0`;
-- test `BATCH_SIZE=1024`;
-- test `POLL=75` / `POLL=100` if a slot remains.
+- repeat the draft-threads-32 record to measure reproducibility: completed at
+  `90.26 tok/s`, below the `90.42` record but close enough to confirm the
+  result family;
+- draft-only `V` cache `q8_0`: completed at `41.25 tok/s`, canary-clean but a
+  severe speed regression; do not pursue;
+- draft `K/V` cache `q8_0`: completed at `41.04 tok/s`, canary-clean but a
+  severe speed regression; do not pursue;
+- `BATCH_SIZE=1024`: completed at `90.20 tok/s`, valid but below record;
+- active next queue: `THREADS=32`, `MTP_DRAFT_THREADS_BATCH=32`, `POLL=75`,
+  and `FLASH_ATTN=on` under the promoted MTP identity.
 
 The `filled-long` prompt mode records prompt hash/preview and usage-derived
 prompt/completion-token stats. Use it for near-512-input / 512-output
