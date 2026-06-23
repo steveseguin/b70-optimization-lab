@@ -61,3 +61,26 @@ submission.
 
 Next action: pivot to vLLM/XPU int8-per-channel once the official HF snapshot
 finishes downloading.
+
+## Runtime Interaction Smoke: VMM Off + Larger UBatch + Fast Poll
+
+Follow-up identity:
+
+- same verifier-argmax patch and Gemma Q8 MTP recipe as above;
+- `GPU_INDEX=2`, `GGML_SYCL_ENABLE_VMM=0`;
+- `UBATCH_SIZE=512`, `POLL=100`;
+- `CANARY_REPEATS=32`, `BENCH_REPEATS=4`.
+
+| Gate | Mean after TTFT | Best request | Wall tok/s | TTFT s | Decision |
+| ---: | ---: | ---: | ---: | ---: | --- |
+| 128/128 | 91.375858 | 91.434804 | 81.632818 | 0.672061 | valid smoke loss; do not promote |
+
+Artifact:
+
+- `data/gemma4-q8-gpu2-mtp-n7-c926-fasttopk10-verifyargmax-vmm0-ub512-poll100-smoke-ctxcp0-nmin2-pmin012-nobs-dthreads32-dtb32-filled-long-20260623T201741Z/summary.json`
+
+Interpretation: the runtime knobs improve wall-rate and TTFT for this short
+smoke, but they do not improve the headline after-TTFT fresh decode rate. The
+result is useful as a latency/serving interaction note, not a LocalMaxxing
+record candidate. The conclusion remains unchanged: verifier sampler bypass is
+not the limiting factor for the current fresh MTP lane.

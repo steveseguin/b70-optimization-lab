@@ -520,8 +520,10 @@ Text speed is first. After text baseline:
     in deterministic verifier rows and passed a 128-row smoke, but reached only
     `91.55 tok/s` after TTFT. This confirms the remaining fresh-MTP gap is not
     solved by sampler bypass alone; full target decode and full-vocab logits
-    transfer still dominate. Preserve the patch as a component, but prioritize
-    vLLM/XPU and deeper backend/kernel work.
+    transfer still dominate. Pairing the same patch with `GGML_SYCL_ENABLE_VMM=0`,
+    `UBATCH_SIZE=512`, and `POLL=100` improved wall-rate/TTFT in a smoke but
+    still reached only `91.38 tok/s` after TTFT. Preserve the patch as a
+    component, but prioritize vLLM/XPU and deeper backend/kernel work.
 13. **Q8_0 is not a speed upgrade under the current MTP recipe.** The smaller
     `gemma-4-26B-A4B-it-Q8_0.gguf` passed a 128-row smoke but reached only
     `90.44 tok/s` after TTFT, below the `UD-Q8_K_XL` record. Keep
