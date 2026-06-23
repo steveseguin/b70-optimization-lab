@@ -53,21 +53,41 @@ Use **four independent DP=1 servers**, not one `--data-parallel-size 4` process:
 there is a public vLLM Gemma 4 MoE DP issue whose workaround is separate
 instances behind a load balancer. This also matches the no-PCIe-overhead goal.
 
-Expected vLLM baseline shape:
+Use the repo wrapper for reproducible runs and summary artifacts:
 
 ```bash
-ZE_AFFINITY_MASK=0 \
-vllm serve google/gemma-4-26B-A4B-it \
-  --quantization int8_per_channel_weight_only \
-  --max-model-len 32768 \
-  --gpu-memory-utilization 0.90 \
-  --no-enable-prefix-caching \
-  --limit-mm-per-prompt '{"image": 0, "audio": 0}' \
-  --port 18270
+GPU_INDEX=0 PORT=18270 MAX_MODEL_LEN=8192 MAX_NUM_BATCHED_TOKENS=1024 \
+CANARY_REPEATS=32 BENCH_REPEATS=8 \
+scripts/run-gemma4-26b-vllm-int8pc-candidate.sh
 ```
 
-Use this only from a clean vLLM stack, not the current dirty Qwen development
-worktree.
+The wrapper launches the local XPU vLLM environment with:
+
+- `--quantization int8_per_channel_weight_only`;
+- `--dtype bfloat16`;
+- `--tensor-parallel-size 1 --pipeline-parallel-size 1`;
+- `--max-num-seqs 1`;
+- `--no-enable-prefix-caching`;
+- `--language-model-only`;
+- `--generation-config vllm`;
+- one complete model replica on `ZE_AFFINITY_MASK=$GPU_INDEX`.
+
+Start at 8K and graph off. If the baseline serves and passes canaries, test XPU
+graph and batched-token sizes as separate candidates:
+
+```bash
+GPU_INDEX=1 PORT=18271 MAX_MODEL_LEN=8192 MAX_NUM_BATCHED_TOKENS=1024 \
+XPU_GRAPH=1 VLLM_XPU_ENABLE_XPU_GRAPH=1 \
+VLLM_XPU_FORCE_GRAPH_WITH_COMM=1 VLLM_XPU_GRAPH_NOOP_COMM_CAPTURE=1 \
+COMPILATION_CONFIG='{"use_inductor_graph_partition":true,"compile_sizes":[1],"cudagraph_mode":"PIECEWISE"}' \
+CANARY_REPEATS=32 BENCH_REPEATS=8 \
+scripts/run-gemma4-26b-vllm-int8pc-candidate.sh
+```
+
+Use this only from the local clean XPU vLLM virtualenv
+(`/home/steve/.venvs/vllm-xpu`) and the official HF snapshot under
+`/mnt/fast-ai/llm-cache/hf/`. Do not use the dirty Qwen source tree as a Gemma
+baseline unless the vLLM package path is deliberately changed and recorded.
 
 ## Tertiary Lane: Ollama
 
