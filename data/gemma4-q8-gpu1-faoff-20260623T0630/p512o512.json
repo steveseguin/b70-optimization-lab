@@ -1,0 +1,211 @@
+{
+  "rows": [
+    {
+      "chunks": 148,
+      "completion_tokens": 149,
+      "elapsed_s": 10.376111983990995,
+      "post_ttft_s": 5.597406318993308,
+      "sha256": "e03ebe8eaf0c153e33f56853c32c9af76accac51704d15226752cd111d432149",
+      "text": "The Gemma B70 decode benchmark evaluates autoregressive throughput under varying sequence lengths. To establish a valid benchmark, the hardware must maintain consistent memory bandwidth during the decode benchmark phase. This benchmark measures tokens per second, where the benchmark results reflect the KV cache efficiency. A high-performance benchmark requires optimized kernel execution to prevent the benchmark from becoming compute-bound. In this benchmark, latency is a critical metric, as the benchmark tracks time-to-first-token and inter-token latency. Every benchmark iteration must use a standardized prompt to ensure the benchmark remains reproducible. If the benchmark shows high variance, the benchmark environment requires stabilization. Ultimately, the Gemma B70 decode benchmark serves as the primary benchmark for assessing large-scale inference scalability.",
+      "text_preview": "The Gemma B70 decode benchmark evaluates autoregressive throughput under varying sequence lengths. To establish a valid benchmark, the hardware must maintain consistent memory bandwidth during the decode benchmark phase. This benchmark meas",
+      "tok_s_after_ttft": 26.619471860459402,
+      "tok_s_wall": 14.359906700109619,
+      "ttft_s": 4.778705664997688,
+      "usage": {
+        "completion_tokens": 149,
+        "prompt_tokens": 574,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "total_tokens": 723
+      }
+    },
+    {
+      "chunks": 175,
+      "completion_tokens": 176,
+      "elapsed_s": 6.990407389006577,
+      "post_ttft_s": 6.622589701990364,
+      "sha256": "efe4a0a47bb687d1a76ec9eb767ad8de8ccb8240d7e61b8cf6e449333e170c64",
+      "text": "The Gemma B70 decode benchmark evaluates autoregressive throughput under varying KV cache constraints. To establish a reliable benchmark, the testbed utilizes FP16 precision to ensure the benchmark reflects hardware-bound limitations rather than quantization artifacts. During the benchmark, memory bandwidth serves as the primary bottleneck for the decode benchmark, as each token generation step requires loading the entire model weight set. \n\nA high-performance benchmark must account for batch size scaling; as batch size increases, the decode benchmark shifts from being memory-bandwidth bound to being compute-bound. This benchmark measures tokens per second (TPS) across multiple GPU configurations to validate the benchmark's consistency. For a comprehensive benchmark, latency per token is tracked alongside total throughput to provide a multi-dimensional benchmark profile. Ultimately, the Gemma B70 decode benchmark provides the necessary metrics to optimize inference kernels for large-scale deployment.",
+      "text_preview": "The Gemma B70 decode benchmark evaluates autoregressive throughput under varying KV cache constraints. To establish a reliable benchmark, the testbed utilizes FP16 precision to ensure the benchmark reflects hardware-bound limitations rather",
+      "tok_s_after_ttft": 26.57570647130754,
+      "tok_s_wall": 25.177359516526227,
+      "ttft_s": 0.3678176870162133,
+      "usage": {
+        "completion_tokens": 176,
+        "prompt_tokens": 574,
+        "prompt_tokens_details": {
+          "cached_tokens": 505
+        },
+        "total_tokens": 750
+      }
+    },
+    {
+      "chunks": 148,
+      "completion_tokens": 149,
+      "elapsed_s": 5.960736954002641,
+      "post_ttft_s": 5.599768396990839,
+      "sha256": "e03ebe8eaf0c153e33f56853c32c9af76accac51704d15226752cd111d432149",
+      "text": "The Gemma B70 decode benchmark evaluates autoregressive throughput under varying sequence lengths. To establish a valid benchmark, the hardware must maintain consistent memory bandwidth during the decode benchmark phase. This benchmark measures tokens per second, where the benchmark results reflect the KV cache efficiency. A high-performance benchmark requires optimized kernel execution to prevent the benchmark from becoming compute-bound. In this benchmark, latency is a critical metric, as the benchmark tracks time-to-first-token and inter-token latency. Every benchmark iteration must use a standardized prompt to ensure the benchmark remains reproducible. If the benchmark shows high variance, the benchmark environment requires stabilization. Ultimately, the Gemma B70 decode benchmark serves as the primary benchmark for assessing large-scale inference scalability.",
+      "text_preview": "The Gemma B70 decode benchmark evaluates autoregressive throughput under varying sequence lengths. To establish a valid benchmark, the hardware must maintain consistent memory bandwidth during the decode benchmark phase. This benchmark meas",
+      "tok_s_after_ttft": 26.608243312360646,
+      "tok_s_wall": 24.99690913217473,
+      "ttft_s": 0.36096855701180175,
+      "usage": {
+        "completion_tokens": 149,
+        "prompt_tokens": 574,
+        "prompt_tokens_details": {
+          "cached_tokens": 505
+        },
+        "total_tokens": 723
+      }
+    },
+    {
+      "chunks": 199,
+      "completion_tokens": 200,
+      "elapsed_s": 7.893618657981278,
+      "post_ttft_s": 7.532882434985368,
+      "sha256": "e0495f26c5ec2a0055a45938f4c6af74189f4840cc1b8f958b6476d8ba8b352d",
+      "text": "The Gemma B70 decode benchmark evaluates autoregressive throughput under varying KV cache constraints. To establish a reliable benchmark, the test suite measures tokens per second across multiple batch sizes. This benchmark focuses on memory bandwidth saturation, as the decode benchmark phase is typically memory-bound rather than compute-bound. \n\nIn this benchmark, latency is tracked alongside total throughput to ensure the benchmark captures real-world inference performance. A high-performance benchmark must account for quantization effects, as the B70 benchmark results shift significantly between FP16 and INT8 precision. Furthermore, the benchmark utilizes a standardized prompt length to prevent variance in the benchmark metrics. \n\nAs the benchmark scales, the benchmark observes a linear increase in memory pressure. Consequently, the benchmark identifies the optimal batch size where the benchmark reaches peak hardware utilization. Every benchmark iteration is logged to ensure the benchmark remains reproducible. Ultimately, the Gemma B70 decode benchmark serves as the primary metric for assessing architectural efficiency in large-scale deployment scenarios.",
+      "text_preview": "The Gemma B70 decode benchmark evaluates autoregressive throughput under varying KV cache constraints. To establish a reliable benchmark, the test suite measures tokens per second across multiple batch sizes. This benchmark focuses on memor",
+      "tok_s_after_ttft": 26.55026169944314,
+      "tok_s_wall": 25.33692197022705,
+      "ttft_s": 0.3607362229959108,
+      "usage": {
+        "completion_tokens": 200,
+        "prompt_tokens": 574,
+        "prompt_tokens_details": {
+          "cached_tokens": 505
+        },
+        "total_tokens": 774
+      }
+    },
+    {
+      "chunks": 148,
+      "completion_tokens": 149,
+      "elapsed_s": 5.968896445992868,
+      "post_ttft_s": 5.601935611019144,
+      "sha256": "e03ebe8eaf0c153e33f56853c32c9af76accac51704d15226752cd111d432149",
+      "text": "The Gemma B70 decode benchmark evaluates autoregressive throughput under varying sequence lengths. To establish a valid benchmark, the hardware must maintain consistent memory bandwidth during the decode benchmark phase. This benchmark measures tokens per second, where the benchmark results reflect the KV cache efficiency. A high-performance benchmark requires optimized kernel execution to prevent the benchmark from becoming compute-bound. In this benchmark, latency is a critical metric, as the benchmark tracks time-to-first-token and inter-token latency. Every benchmark iteration must use a standardized prompt to ensure the benchmark remains reproducible. If the benchmark shows high variance, the benchmark environment requires stabilization. Ultimately, the Gemma B70 decode benchmark serves as the primary benchmark for assessing large-scale inference scalability.",
+      "text_preview": "The Gemma B70 decode benchmark evaluates autoregressive throughput under varying sequence lengths. To establish a valid benchmark, the hardware must maintain consistent memory bandwidth during the decode benchmark phase. This benchmark meas",
+      "tok_s_after_ttft": 26.597949413576508,
+      "tok_s_wall": 24.962738313215162,
+      "ttft_s": 0.36696083497372456,
+      "usage": {
+        "completion_tokens": 149,
+        "prompt_tokens": 574,
+        "prompt_tokens_details": {
+          "cached_tokens": 505
+        },
+        "total_tokens": 723
+      }
+    },
+    {
+      "chunks": 135,
+      "completion_tokens": 136,
+      "elapsed_s": 5.47499501000857,
+      "post_ttft_s": 5.1063582740025595,
+      "sha256": "3adae36d1c1ca725fcdc7f2a237402b84efe18260ca53693e45814e22410537e",
+      "text": "The Gemma B70 decode benchmark evaluates autoregressive throughput under varying sequence lengths. To establish a valid benchmark, the hardware must maintain consistent memory bandwidth during the benchmark execution. This benchmark measures tokens per second, where the benchmark results reflect the compute-to-memory ratio. A high-performance benchmark requires optimized KV cache management to prevent the benchmark from becoming IO-bound. In this benchmark, latency is a critical metric, and the benchmark must account for batch size scaling. Every benchmark iteration should utilize identical precision to ensure the benchmark remains reproducible. Ultimately, the benchmark serves as a baseline for comparing Gemma B70 performance against other large-scale models in a standardized benchmark environment.",
+      "text_preview": "The Gemma B70 decode benchmark evaluates autoregressive throughput under varying sequence lengths. To establish a valid benchmark, the hardware must maintain consistent memory bandwidth during the benchmark execution. This benchmark measure",
+      "tok_s_after_ttft": 26.633462186231988,
+      "tok_s_wall": 24.84020528811169,
+      "ttft_s": 0.3686367360060103,
+      "usage": {
+        "completion_tokens": 136,
+        "prompt_tokens": 574,
+        "prompt_tokens_details": {
+          "cached_tokens": 505
+        },
+        "total_tokens": 710
+      }
+    },
+    {
+      "chunks": 138,
+      "completion_tokens": 139,
+      "elapsed_s": 5.589379866025411,
+      "post_ttft_s": 5.220670442999108,
+      "sha256": "cf72d5c1eef7fb12f9e293ca8202c56cd5c6e060bd29f37003777ffcbd422ff4",
+      "text": "The Gemma B70 decode benchmark evaluates autoregressive throughput under varying KV cache pressures. To establish a reliable benchmark, the test harness must isolate memory bandwidth from compute-bound constraints. This benchmark utilizes a standardized prompt length to ensure the benchmark results reflect pure decoding latency. During the benchmark, token-per-second metrics are recorded to validate the benchmark against existing hardware baselines. A high-fidelity benchmark requires precise synchronization of the GPU kernels to prevent benchmark noise. Consequently, the benchmark focuses on the scaling laws of the B70 architecture. Every benchmark iteration undergoes statistical normalization to maintain benchmark integrity. Ultimately, the benchmark serves as the primary metric for optimizing the B70 decode benchmark performance.",
+      "text_preview": "The Gemma B70 decode benchmark evaluates autoregressive throughput under varying KV cache pressures. To establish a reliable benchmark, the test harness must isolate memory bandwidth from compute-bound constraints. This benchmark utilizes a",
+      "tok_s_after_ttft": 26.624932854437937,
+      "tok_s_wall": 24.868590672267626,
+      "ttft_s": 0.36870942302630283,
+      "usage": {
+        "completion_tokens": 139,
+        "prompt_tokens": 574,
+        "prompt_tokens_details": {
+          "cached_tokens": 505
+        },
+        "total_tokens": 713
+      }
+    },
+    {
+      "chunks": 150,
+      "completion_tokens": 151,
+      "elapsed_s": 6.035038215981331,
+      "post_ttft_s": 5.672750302008353,
+      "sha256": "744a06999228e845719bce381f7bfc6c03a9e4579ffef591f1a06befebc93f0e",
+      "text": "The Gemma B70 decode benchmark evaluates autoregressive throughput under varying sequence lengths. To establish a valid benchmark, the hardware must maintain consistent memory bandwidth during the decode benchmark phase. This benchmark measures tokens per second, where the benchmark results reflect the KV cache efficiency. A high-performance benchmark requires optimized kernel execution to prevent the benchmark from becoming compute-bound. In this benchmark, latency is a critical metric, as the benchmark tracks the time-to-first-token and inter-token latency. Every benchmark iteration must use a fixed seed to ensure the benchmark remains reproducible. If the benchmark shows high variance, the benchmark environment may be experiencing thermal throttling. Ultimately, the benchmark serves as the primary metric for scaling the Gemma B70 architecture in production.",
+      "text_preview": "The Gemma B70 decode benchmark evaluates autoregressive throughput under varying sequence lengths. To establish a valid benchmark, the hardware must maintain consistent memory bandwidth during the decode benchmark phase. This benchmark meas",
+      "tok_s_after_ttft": 26.61848168189964,
+      "tok_s_wall": 25.020554070418022,
+      "ttft_s": 0.36228791397297755,
+      "usage": {
+        "completion_tokens": 151,
+        "prompt_tokens": 574,
+        "prompt_tokens_details": {
+          "cached_tokens": 505
+        },
+        "total_tokens": 725
+      }
+    }
+  ],
+  "run_identity": {
+    "api_mode": "chat",
+    "base_url": "http://127.0.0.1:18261",
+    "created_at_utc": "2026-06-23T05:46:14.545354+00:00",
+    "max_tokens": 512,
+    "model": "gemma4-26b-a4b-q8",
+    "prompt_tokens_requested": 512,
+    "repeats": 8,
+    "seed": 1,
+    "usage_required": true
+  },
+  "summary": {
+    "completion_tokens_total": 1249,
+    "elapsed_s": {
+      "cv": 0.24418185000564857,
+      "max": 10.376111983990995,
+      "mean": 6.786148065373709,
+      "median": 6.0019673309871,
+      "min": 5.47499501000857,
+      "stdev": 1.6570541890152053
+    },
+    "requests": 8,
+    "tok_s_after_ttft": {
+      "cv": 0.0010533267327098332,
+      "max": 26.633462186231988,
+      "mean": 26.603563684964602,
+      "median": 26.613362497130144,
+      "min": 26.55026169944314,
+      "stdev": 0.028022244814721733
+    },
+    "tok_s_wall": {
+      "cv": 0.15933832254164515,
+      "max": 25.33692197022705,
+      "mean": 23.695398207881265,
+      "median": 24.979823722694945,
+      "min": 14.359906700109619,
+      "stdev": 3.7755850024001054
+    },
+    "ttft_s": {
+      "cv": 1.7019391882649073,
+      "max": 4.778705664997688,
+      "mean": 0.9168528800000786,
+      "median": 0.36738926099496894,
+      "min": 0.3607362229959108,
+      "stdev": 1.5604278463456762
+    }
+  }
+}
