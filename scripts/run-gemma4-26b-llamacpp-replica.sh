@@ -16,6 +16,7 @@ FLASH_ATTN="${FLASH_ATTN:-on}"
 CACHE_TYPE_K="${CACHE_TYPE_K:-f16}"
 CACHE_TYPE_V="${CACHE_TYPE_V:-f16}"
 POLL="${POLL:-50}"
+REASONING="${REASONING:-off}"
 EXTRA_LLAMA_ARGS="${EXTRA_LLAMA_ARGS:-}"
 OUT_DIR="${OUT_DIR:-/mnt/fast-ai/bench-results/gemma4-26b-a4b-q8/servers}"
 STAMP="$(date -u +%Y%m%dT%H%M%SZ)"
@@ -58,6 +59,7 @@ mkdir -p "$OUT_DIR"
   echo "cache_type_k=$CACHE_TYPE_K"
   echo "cache_type_v=$CACHE_TYPE_V"
   echo "poll=$POLL"
+  echo "reasoning=$REASONING"
   echo "extra_llama_args=$EXTRA_LLAMA_ARGS"
   echo "ONEAPI_DEVICE_SELECTOR=$ONEAPI_DEVICE_SELECTOR"
   echo "GGML_SYCL_DISABLE_OPT=$GGML_SYCL_DISABLE_OPT"
@@ -84,5 +86,6 @@ exec "$LLAMA_SERVER" \
   -ctk "$CACHE_TYPE_K" \
   -ctv "$CACHE_TYPE_V" \
   -fa "$FLASH_ATTN" \
+  --reasoning "$REASONING" \
   "${extra_args[@]}" \
   --jinja

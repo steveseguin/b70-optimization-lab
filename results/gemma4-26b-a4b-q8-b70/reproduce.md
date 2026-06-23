@@ -45,6 +45,8 @@ GPU_INDEX=0 PORT=18260 CTX_SIZE=8192 UBATCH_SIZE=64 \
 
 Use `CTX_SIZE=32768` only after the 8K baseline fits and passes canaries. Keep
 `CACHE_TYPE_K=f16 CACHE_TYPE_V=f16` for the quality baseline before trying q8 KV.
+The launcher defaults `REASONING=off` so exact-answer speed canaries receive
+direct chat content; thinking-enabled mode is a separate follow-up profile.
 
 In another shell:
 

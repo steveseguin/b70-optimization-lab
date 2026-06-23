@@ -16,6 +16,7 @@ Every run summary must include:
 - prompt tokens, generated tokens, max context, batch, ubatch, and `--poll`;
 - API path (`chat/completions` or raw `completions`) and seed;
 - flash attention / `-fa` state;
+- reasoning / thinking mode;
 - llama.cpp device mapping (`-dev`, `--n-gpu-layers`) or vLLM device/env
   mapping;
 - relevant env vars (`GGML_SYCL_*`, `ONEAPI_DEVICE_SELECTOR`,

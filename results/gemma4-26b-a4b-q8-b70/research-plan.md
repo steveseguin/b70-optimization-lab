@@ -86,7 +86,7 @@ Run one control plus three experiments in parallel:
 
 | GPU | Purpose | First sweep |
 | --- | --- | --- |
-| 0 | Control | `-fa on`, f16 KV, `CTX_SIZE=8192`, `UBATCH_SIZE=64`, `GGML_SYCL_DISABLE_OPT=1` |
+| 0 | Control | `-fa on`, f16 KV, `CTX_SIZE=8192`, `UBATCH_SIZE=64`, `REASONING=off`, `GGML_SYCL_DISABLE_OPT=1` |
 | 1 | Batch/ubatch | `UBATCH_SIZE=128/256/512`, then `BATCH_SIZE=1024/2048` |
 | 2 | SYCL runtime flags | `GGML_SYCL_DISABLE_GRAPH=1`, `GGML_SYCL_DISABLE_DNN=1`, then combinations |
 | 3 | Risky speed flag | `GGML_SYCL_DISABLE_OPT=0` only with immediate 32-repeat chat canary |
@@ -225,6 +225,10 @@ Text speed is first. After text baseline:
 8. **The biggest early risk is correctness, not launch throughput.** The B70
    Gemma SYCL corruption report makes repeat canaries mandatory before touching
    `GGML_SYCL_DISABLE_OPT=0` or promoting any graph/spec path.
+9. **Disable thinking for speed baselines.** llama.cpp auto-detected Gemma
+   thinking and returned empty `message.content` for exact-answer canaries.
+   Default this lane to `REASONING=off`; thinking-enabled throughput is a
+   separate product mode.
 
 ## Stop Conditions
 
