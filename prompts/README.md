@@ -29,3 +29,19 @@ Examples:
 
 The reusable agent prompts are documented in
 [../docs/research-workflow-playbook.md](../docs/research-workflow-playbook.md).
+
+## Gemma 4 Prompt Notes
+
+The Gemma 4 26B A4B lane uses chat-mode canaries first because the target model
+is instruction tuned and the promoted deployment path is OpenAI-compatible
+`/v1/chat/completions`. The current harness embeds four brittle checks:
+
+- JSON: fixed `answer` and `unit` fields.
+- Sort/color: exact `blue, green, orange, red`.
+- Arithmetic: exact final numeric answer.
+- Code: deterministic Python function shape and behavior.
+
+Before claiming 32K, MTP, q8 KV, or a risky SYCL flag, add at least one
+Gemma-specific long-context needle prompt and run repeat canaries in the same
+persistent server process. Earlier MiniMax and Qwen work found request-state
+drift only after repeated calls.

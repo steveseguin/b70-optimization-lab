@@ -7,15 +7,20 @@ is not a record just because it is fast.
 
 Every run summary must include:
 
-- model repo, filename, revision or commit where available;
-- quantization and KV cache precision;
+- model repo, filename, exact byte size, and revision or commit where
+  available;
+- quantization, weight file flavor, and KV cache precision;
 - runtime (`llama.cpp`, vLLM, Ollama, or other) and source commit;
 - exact GPU layout: one process per GPU, TP, DP, RPC, or other;
 - GPU index / `ONEAPI_DEVICE_SELECTOR`;
-- prompt tokens, generated tokens, max context, batch/ubatch;
+- prompt tokens, generated tokens, max context, batch, ubatch, and `--poll`;
 - API path (`chat/completions` or raw `completions`) and seed;
+- flash attention / `-fa` state;
+- llama.cpp device mapping (`-dev`, `--n-gpu-layers`) or vLLM device/env
+  mapping;
 - relevant env vars (`GGML_SYCL_*`, `ONEAPI_DEVICE_SELECTOR`,
   `UR_L0_ENABLE_RELAXED_ALLOCATION_LIMITS`, vLLM graph flags, etc.);
+- server log path and benchmark JSON path;
 - whether multimodal/image input was enabled.
 
 ## Quality Rules
@@ -56,6 +61,8 @@ Report at least:
 - aggregate output tokens per second across four replicas, if running all GPUs;
 - TTFT and wall time;
 - prompt and completion token counts.
+- repeat statistics when repeats are available: mean, median, min, max,
+  standard deviation, and coefficient of variation.
 
 Promoted throughput requires non-null server `usage.completion_tokens`.
 Diagnostic runs may use `--allow-missing-usage`, but those are not record
@@ -64,6 +71,11 @@ evidence until token counting is fixed.
 For LocalMaxxing or cross-model comparison, prefer corrected/generated output
 throughput rather than total client throughput. Label total-token throughput
 separately.
+
+Single-GPU records and four-replica aggregate capacity are different modes.
+Record and submit them separately: one full model on one B70 is the primary
+single-session decode record; four independent servers are an aggregate service
+capacity result only after each replica passes the same canary gate.
 
 ## Promotion Thresholds
 
@@ -75,3 +87,5 @@ if slow. Later "best" claims require:
 - at least two independent repeat runs or one deep repeat run plus a matching
   reproduction command;
 - no unresolved correctness failures in the same runtime/config family.
+- LocalMaxxing payload dry-run passes, and the payload links back to this repo's
+  result packet or supporting artifacts.

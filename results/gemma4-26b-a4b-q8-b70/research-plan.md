@@ -110,6 +110,42 @@ Promotion criteria for a speed sweep:
 - benchmark JSON has non-null `usage.completion_tokens` and output tok/s;
 - server log captures the exact launcher identity.
 
+## Four-At-A-Time Research Loop
+
+Once a single replica can pass the 32-repeat chat smoke, use all four B70s to
+run independent experiments instead of serially hand-tuning one GPU:
+
+| GPU | Lane | First pass | Promotion condition |
+| --- | --- | --- | --- |
+| 0 | Conservative control | `CTX_SIZE=8192`, f16 KV, `UBATCH_SIZE=64`, `GGML_SYCL_DISABLE_OPT=1` | Baseline canaries and metrics continue to reproduce. |
+| 1 | Memory / scheduling | `UBATCH_SIZE=128/256/512`, `BATCH_SIZE=1024/2048`, `POLL=25/50/100` | Same canary pass, higher p512/o512 output tok/s. |
+| 2 | Runtime flags / build | `GGML_SYCL_DISABLE_GRAPH`, `GGML_SYCL_DISABLE_DNN`, AOT BMG build | Same canary pass, lower decode ms/token. |
+| 3 | Alternate runtime | vLLM int8-per-channel DP=1, or MTP after no-spec baseline | Valid quality and a clear reason to displace llama.cpp Q8. |
+
+Keep each lane's summary under `experiments/gemma4-26b-a4b-q8-b70/sweeps/` or
+`data/` with the server log path. Failed lanes are useful; record the exact
+failure signature instead of deleting the attempt.
+
+Use the sweep template at
+[`../../experiments/gemma4-26b-a4b-q8-b70/sweeps/README.md`](../../experiments/gemma4-26b-a4b-q8-b70/sweeps/README.md)
+for each meaningful lane.
+
+## Carryover Tactics From Earlier Wins
+
+- **Identity lock first.** Before interpreting a speed delta, diff model file,
+  revision, quantization, runtime commit, context, KV dtype, prompt/output
+  shape, launch flags, and server logs against the last known-good run.
+- **Promote only after repeat depth.** Qwen graph smokes passed and later failed
+  at full repeat depth; Gemma promotions need 96+ repeats if the runtime path is
+  novel or has any prior nondeterminism.
+- **Use exact canaries before broad quality.** JSON, sort/color, arithmetic, and
+  code canaries catch runtime corruption faster than open-ended chats.
+- **Do not weaken quality for speed.** Q6/Q4/MXFP4/NVFP4 are allowed only as
+  labeled side results; the primary lane stays Q8/INT8-or-better.
+- **Preserve negative results.** Failed patches, bad launcher flags, and
+  corrupted outputs belong in notes or sweep summaries with enough identity to
+  prevent rediscovery.
+
 ## Phase 4: MTP / Speculative Decode
 
 Do not start here. Google's MTP overview warns that MoE models at batch size 1
@@ -184,6 +220,11 @@ Text speed is first. After text baseline:
    testing after no-spec baseline because the draft files are small.
 6. **vLLM int8-per-channel is the main fallback if llama.cpp is slow.** It may
    use B70/XPU kernels better, but vLLM DP must be four independent servers.
+7. **The public LocalMaxxing target is around 90-95 tok/s but mixed precision.**
+   Treat that as directional pressure, not a direct Q8 B70 failure threshold.
+8. **The biggest early risk is correctness, not launch throughput.** The B70
+   Gemma SYCL corruption report makes repeat canaries mandatory before touching
+   `GGML_SYCL_DISABLE_OPT=0` or promoting any graph/spec path.
 
 ## Stop Conditions
 

@@ -116,3 +116,18 @@ Good delegation boundaries:
 - one agent audits patches and source diffs;
 - the main agent owns final edits, commits, LocalMaxxing submissions, and
   protection of secrets.
+
+## Gemma 4 Lane Prompt
+
+Use this to start or resume the current Gemma 4 26B A4B work:
+
+```text
+Resume the Gemma 4 26B A4B Q8 B70 lane. Read
+results/gemma4-26b-a4b-q8-b70/README.md, research-plan.md,
+model-options.md, validity-gates.md, localmaxxing-and-targets.md, and the
+latest notes. Keep the primary lane Q8/INT8-or-better. First verify the model
+file identity and current best valid result. Then run or propose the next four
+independent experiments that can occupy GPUs 0..3 without tensor parallelism.
+Do not promote speed-only results; every claim needs canary status, run
+identity, output tok/s, TTFT or another secondary metric, and a server log path.
+```

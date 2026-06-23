@@ -1,0 +1,106 @@
+# Gemma 4 26B A4B LocalMaxxing Targets
+
+Research snapshot: 2026-06-23.
+
+This page separates public leaderboard context from this lane's promoted result
+rules. The goal is a valid Q8 / INT8-or-better result on Intel Arc Pro B70, not
+a speed-only lower-precision entry.
+
+## Public Target Context
+
+Current public pages are useful as a speed target, but not as direct
+quality-equivalent comparisons:
+
+| Page | Current public top context | Why it is not directly comparable |
+| --- | ---: | --- |
+| `google/gemma-4-26B-A4B-it` | about `87.3 tok/s` | Rows include mixed engines, hardware, and quantization such as MXFP4/Q4. |
+| `unsloth/gemma-4-26B-A4B-it-GGUF` | about `94.3 tok/s` | GGUF page, but public top rows are still mixed precision/hardware. |
+| `Jackrong/Gemopus-4-26B-A4B-it-GGUF` | about `94.5 tok/s` | Fine-tune, useful idea source only; not the same checkpoint. |
+
+Interpretation for this lane:
+
+- A single-B70 Q8 result near or above `90 tok/s` would already be interesting.
+- A lower number can still be worth keeping if it is the first validated Q8 B70
+  baseline.
+- Do not compare a Q8/INT8 result against MXFP4/Q4 entries as if the quality
+  lane were identical.
+
+## Submission Packet
+
+LocalMaxxing requires at minimum:
+
+- `hfId`;
+- `hardware`;
+- `engineName`;
+- `quantization`;
+- `tokSOut`;
+- at least one secondary metric: `tokSPrefill`, `tokSTotal`, `ttftMs`, or
+  `peakVramGb`.
+
+Useful optional fields for this repo's records:
+
+- `modelRevision`;
+- `engineVersion`;
+- `backend`;
+- `promptTokens`;
+- `outputTokens`;
+- `contextLength`;
+- `batchSize`;
+- `engineFlags`;
+- `notes`.
+
+The API supports a dry-run endpoint before writing a real benchmark. The local
+helper reads the key from `LMX_API_KEY` or
+`/home/steve/.config/localmaxxing/api_key`; never put that key in a payload,
+note, shell history snippet, or commit.
+
+## Gemma 4 Payload Shape
+
+For the primary GGUF lane:
+
+```text
+hfId: unsloth/gemma-4-26B-A4B-it-GGUF
+modelRevision: 3bb10d594514ef4edb7f3a65d41a7e4eb8c5767a
+engineName: llama.cpp
+backend: sycl/xpu
+quantization: UD-Q8_K_XL
+hardware.hwClass: DISCRETE_GPU
+hardware.gpuName: Intel Arc Pro B70
+hardware.vramGb: 32
+hardware.gpuCount: 1 for a single-replica record, 4 only for aggregate service records
+```
+
+Engine flags should include the command snippet and the relevant values from
+the server log:
+
+- llama.cpp commit;
+- `CTX_SIZE`;
+- `BATCH_SIZE`;
+- `UBATCH_SIZE`;
+- `CACHE_TYPE_K` / `CACHE_TYPE_V`;
+- `GGML_SYCL_DISABLE_OPT`;
+- `GGML_SYCL_DISABLE_GRAPH`;
+- `GGML_SYCL_DISABLE_DNN`;
+- `ONEAPI_DEVICE_SELECTOR`;
+- `-fa` state;
+- MTP/spec flags if enabled.
+
+## Do Not Submit If
+
+- any chat canary fails;
+- only raw `/v1/completions` was tested;
+- `usage.completion_tokens` is missing and output token count was guessed;
+- the result is Q6/Q4/MXFP4/NVFP4 but labeled as the Q8 lane;
+- a speed win comes from a config family with unresolved nondeterministic
+  failures;
+- the model file, runtime commit, or launch identity is incomplete.
+
+## Source Links
+
+- LocalMaxxing API docs: <https://www.localmaxxing.com/en/api-docs>
+- Google model page:
+  <https://www.localmaxxing.com/en/models/google/gemma-4-26B-A4B-it>
+- Unsloth GGUF model page:
+  <https://localmaxxing.com/en/models/unsloth/gemma-4-26B-A4B-it-GGUF>
+- LocalMaxxing CLI:
+  <https://github.com/LottoLottoLotto/localmaxxing-cli>

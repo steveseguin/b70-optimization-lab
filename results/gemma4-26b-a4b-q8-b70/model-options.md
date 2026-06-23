@@ -7,6 +7,9 @@ Research snapshot: 2026-06-23.
 - Target model: `gemma-4-26B-A4B-it`.
 - Architecture facts from Google/Unsloth cards: about 25.2B total parameters,
   about 3.8B active parameters, MoE, text plus image support, long context.
+- More specific public model-card facts: 30 layers, sliding window 1024,
+  256K-token context, 262K vocabulary, 128 total experts with 8 active experts
+  plus 1 shared expert, and text+image modalities.
 - User quality rule for this lane: Q8 / INT8-or-better by default. Do not make
   INT4 AutoRound, Q4_K, IQ4, or MXFP4 the default optimization path.
 
@@ -49,6 +52,14 @@ Different-model side lane:
   for low-latency/high-speed small-batch generation, but it is a different
   generation method and not the same `gemma-4-26B-A4B-it` checkpoint. Treat it
   as a future side lane if the Q8 causal model cannot meet speed targets.
+
+Lower-precision public-speed lanes:
+
+- QAT/W4A16, NVFP4, MXFP4, Q4_K, and IQ-family GGUFs are useful for public
+  context, memory controls, or future side lanes, but not for the default Q8
+  result packet. vLLM explicitly warns that the 26B-A4B MoE expert dimension is
+  sensitive to 4-bit quantization; the vLLM fallback should be int8
+  per-channel weight-only, not W4A16.
 
 ## Runtime Options
 
@@ -102,20 +113,18 @@ repo practices.
 
 ## LocalMaxxing Reference
 
-Model page:
+Use LocalMaxxing for public target context, not as direct Q8 comparison. Current
+public top rows include lower-precision modes such as MXFP4/Q4, which are
+outside the default quality lane. Search/title snippets on 2026-06-23 showed
+the Google model page around `87.3 tok/s`, the Unsloth GGUF page around
+`94.3 tok/s`, and a Gemopus GGUF fine-tune around `94.5 tok/s`; these are mixed
+public rows rather than a B70 Q8 target.
 
-```text
-https://www.localmaxxing.com/en/models/google/gemma-4-26B-A4B-it
-```
-
-Use it for public target context, not as direct Q8 comparison. Current public
-top rows include lower-precision modes such as MXFP4/Q4, which are outside the
-default quality lane. Search/title snippets on 2026-06-23 showed the Google
-model page around `87.3 tok/s` top speed and an Unsloth-derived page around
-`94.3 tok/s`, but those are mixed public rows rather than a B70 Q8 target.
-Submit only after this repo has a valid record packet:
-model file/revision, runtime commit, GPU count, prompt/output shape, quality
-status, throughput JSON, server log path, and reproducible command.
+Submission requirements and the lane-specific payload shape are in
+[localmaxxing-and-targets.md](localmaxxing-and-targets.md). Submit only after
+this repo has a valid record packet: model file/revision, runtime commit, GPU
+count, prompt/output shape, quality status, throughput JSON, server log path,
+and reproducible command.
 
 ## Source Links
 
@@ -131,6 +140,8 @@ status, throughput JSON, server log path, and reproducible command.
   <https://github.com/ggml-org/llama.cpp/issues/21893>
 - LocalMaxxing model page:
   <https://www.localmaxxing.com/en/models/google/gemma-4-26B-A4B-it>
+- LocalMaxxing API docs:
+  <https://www.localmaxxing.com/en/api-docs>
 - DiffusionGemma overview:
   <https://ai.google.dev/gemma/docs/diffusiongemma>
 - Community B70 llama.cpp notes:

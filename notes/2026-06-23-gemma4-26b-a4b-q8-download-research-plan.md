@@ -27,6 +27,10 @@ and are ignored by Git.
 
 - Unsloth provides the Q8 target, a smaller Q8_0 control, Q6 side files, MXFP4
   side files, MTP draft files, and mmproj files in the same GGUF repo.
+- Google model-card facts to preserve in run packets: 25.2B total parameters,
+  3.8B active parameters, 30 layers, 1024-token sliding window, 256K context,
+  128 total experts with 8 active experts plus 1 shared expert, and text+image
+  modalities.
 - llama.cpp server locally exposes MTP/speculative flags:
   `--spec-draft-model`, `--spec-type draft-mtp`, `--spec-draft-n-max`,
   `--spec-draft-device`, and `--spec-draft-ngl`.
@@ -44,6 +48,13 @@ and are ignored by Git.
 - DiffusionGemma is a potentially interesting future speed lane based on the
   26B MoE family, but it is a different generation method and not the requested
   Q8 causal checkpoint.
+- LocalMaxxing public context on 2026-06-23 shows Gemma 4 26B family top rows
+  around 87-95 tok/s, but those rows are mixed hardware/precision and include
+  lower-precision modes. They are speed pressure, not direct Q8 B70 comparisons.
+- LocalMaxxing submission packets require `hfId`, `hardware`, `engineName`,
+  `quantization`, `tokSOut`, and at least one secondary metric. For this lane,
+  include model revision, llama.cpp commit, backend, prompt/output/context,
+  exact engine flags, canary status, benchmark JSON path, and server log path.
 
 ## Local Changes Made
 
@@ -105,3 +116,20 @@ python3 scripts/bench-openai-single-decode.py \
 If 8K does not fit, retry 4K then 2K before reducing weight/KV precision. If it
 passes, launch all four replicas and run the ranked sweeps in
 `results/gemma4-26b-a4b-q8-b70/research-plan.md`.
+
+## Download-Time Plan Update
+
+When the Q8 file lands:
+
+1. Verify exact bytes and write metadata JSON because the active manual `curl`
+   command will not write downloader metadata by itself.
+2. Run `scripts/run-gemma4-26b-first-baseline.sh` unchanged for a conservative
+   one-GPU 8K baseline.
+3. If the baseline is valid but slow, immediately use four replicas for the
+   control / scheduling / runtime-flag / alternate-runtime split in the research
+   plan.
+4. If the baseline is invalid, inspect the raw outputs before changing speed
+   flags. First suspects are chat-template behavior, `GGML_SYCL_DISABLE_OPT`,
+   and server EOS/turn-token handling.
+5. Do not submit to LocalMaxxing until chat canaries pass at promotion depth and
+   the benchmark has real completion-token accounting.

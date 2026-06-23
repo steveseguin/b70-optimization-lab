@@ -82,5 +82,6 @@ External references:
 - [Runtime plan](runtime-plan.md)
 - [Research plan and experiment queue](research-plan.md)
 - [Model and runtime options](model-options.md)
+- [LocalMaxxing targets and submission packet](localmaxxing-and-targets.md)
 - [Bugs and failed paths](bugs-failed-paths.md)
 - [Active experiment folder](../../experiments/gemma4-26b-a4b-q8-b70/README.md)
