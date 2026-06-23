@@ -31,6 +31,16 @@ Usually leave these local unless a note needs them:
 
 ## Naming Pattern
 
+For new Gemma 4 26B Q8 runs, prefer the existing run-directory shape produced
+by `scripts/run-gemma4-26b-first-baseline.sh` /
+`scripts/run-gemma4-26b-mtp-candidate.sh`:
+
+```text
+data/gemma4-q8-gpu<N>-<variant>-<stamp>/summary.json
+data/gemma4-q8-gpu<N>-<variant>-<stamp>/chat-canary.json
+data/gemma4-q8-gpu<N>-<variant>-<stamp>/p512o512.json
+```
+
 For new Qwen runs, prefer:
 
 ```text

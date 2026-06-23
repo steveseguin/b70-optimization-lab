@@ -3,6 +3,15 @@
 This folder is the chronological lab notebook. Prefer adding a new dated note
 or a dated addendum over editing old conclusions in place.
 
+## Current Gemma Entry Points
+
+- [../results/gemma4-26b-a4b-q8-b70/README.md](../results/gemma4-26b-a4b-q8-b70/README.md):
+  active Gemma 4 26B A4B Q8 result packet and current LocalMaxxing record.
+- [../results/gemma4-26b-a4b-q8-b70/research-plan.md](../results/gemma4-26b-a4b-q8-b70/research-plan.md):
+  current experiment queue, exhausted neighborhoods, and next patch targets.
+- [../experiments/gemma4-26b-a4b-q8-b70/sweeps/](../experiments/gemma4-26b-a4b-q8-b70/sweeps/):
+  chronological sweep notes for valid wins, losses, and failed source patches.
+
 ## Current Qwen Entry Points
 
 - [2026-06-20-master-plan.md](2026-06-20-master-plan.md): current baseline-first

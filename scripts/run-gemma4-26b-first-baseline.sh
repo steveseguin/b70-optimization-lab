@@ -158,6 +158,7 @@ out = {
         "llama_mtp_draft_fast_topk": env_or_log("LLAMA_MTP_DRAFT_FAST_TOPK"),
         "oneapi_device_selector": env_or_log("ONEAPI_DEVICE_SELECTOR"),
         "ggml_sycl_disable_opt": env_or_log("GGML_SYCL_DISABLE_OPT"),
+        "ggml_sycl_enable_vmm": env_or_log("GGML_SYCL_ENABLE_VMM"),
         "ggml_sycl_disable_graph": env_or_log("GGML_SYCL_DISABLE_GRAPH"),
         "ggml_sycl_disable_dnn": env_or_log("GGML_SYCL_DISABLE_DNN"),
         "llama_cpp_commit": server_env.get("llama_cpp_commit"),

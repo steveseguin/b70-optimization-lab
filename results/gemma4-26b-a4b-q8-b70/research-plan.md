@@ -381,13 +381,28 @@ The MTP wrapper fixes the Q8/f16 quality lane and forwards MTP knobs to
 `EXTRA_LLAMA_ARGS`. Already tested `--spec-draft-n-max 2/3/4/6/8` on the
 short-prompt shape, plus confidence-gated `n=5` and `n=6`; higher n lost there.
 On filled-long, `n=4` beat `n=2/3`, `n=5` improved again, `n=6` reached the
-low-80s, and `n=7, n-min=2` is the current frontier. `p-min=0.10` slightly beat
-`0.15`; `n=8, p-min=0.15` was a large loss. Disabling draft backend sampling
-was the next clear win (`90.24 tok/s`), and `--spec-draft-threads 32` improved
-that to `90.42 tok/s`. The current best adds `--spec-draft-p-min 0.12` and
-`--spec-draft-threads-batch 32`, reaching `91.05 tok/s`. Current follow-up
-should keep backend sampling off and test true FA-on draft KV compression,
-polling, CPU affinity, and record reproducibility before changing model files.
+low-80s, and `n=7, n-min=2` is the current frontier. Disabling draft backend
+sampling, draft threads/batch `32/32`, latest llama.cpp `c926ad098`,
+`--ctx-checkpoints 0`, and the source-level fast top-k draft bypass advanced
+the record to **`91.618942 tok/s`** after TTFT, 384/384 canary, LocalMaxxing
+`cmqqsecuk01azqo018ahv0i1s`.
+
+Exhausted near-neighborhoods after that record:
+
+- `top_k=8/12`, `p-min=0.115/0.120/0.125/0.130`, draft threads/batch
+  `28/36`, and exact repeats: valid losses.
+- `UBATCH_SIZE=256/512`, `CTX_SIZE=4096`, and `GGML_SYCL_ENABLE_VMM=0`:
+  valid losses for after-TTFT decode, but `VMM=0 + UBATCH_SIZE=512` reached
+  `91.581388 tok/s` after TTFT, `82.292136` wall tok/s, and `631.803 ms`
+  TTFT; keep it as the best latency/total-throughput reference, not a record.
+- Source patches removing the explicit logits sync or staging logits+NextN in
+  one helper were valid but slower.
+
+Current follow-up should stop spending lanes on one-variable neighborhoods and
+target source-level candidate transport: reuse llama.cpp's existing backend
+`ggml_top_k` sampled-logits/candidates path for MTP, then sort and softmax only
+the returned `k` candidates on CPU instead of copying/scanning full-vocab
+logits.
 
 ## Phase 5: vLLM Int8 Per-Channel Comparison
 

@@ -1,5 +1,10 @@
 # LocalMaxxing Submissions
 
+This root-level file is a legacy MiniMax/Qwen snapshot. The active canonical
+submission ledger is [results/localmaxxing-submissions.md](results/localmaxxing-submissions.md).
+Do not add new records here; update the canonical ledger and the model-specific
+packet instead.
+
 Date: 2026-05-09
 
 Model: `Lasimeri/MiniMax-M2.7-int4-AutoRound`, AutoRound W4A16 safetensors, vLLM/XPU TP4.

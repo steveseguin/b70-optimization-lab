@@ -25,6 +25,20 @@ Promote only after quality and identity are clear:
 4. If verified as reusable, move the recipe or explanation into `repro/`,
    `results/`, or `docs/`.
 
+## Current Gemma Patch Pointers
+
+- [gemma4-llamacpp-mtp-draft-fast-topk-20260623.patch](gemma4-llamacpp-mtp-draft-fast-topk-20260623.patch):
+  current approved Gemma 4 26B A4B Q8 llama.cpp MTP fast top-k patch. It
+  bypasses generic CPU sampler overhead for draft-MTP when backend sampling is
+  disabled and top-k is small. Promoted result:
+  `91.618942 tok/s`, 384/384 canary, LocalMaxxing `cmqqsecuk01azqo018ahv0i1s`.
+- [gemma4-llamacpp-mtp-draft-fast-topk-nosync-loss-20260623.patch](gemma4-llamacpp-mtp-draft-fast-topk-nosync-loss-20260623.patch):
+  rejected attempt to remove the explicit sync before draft logits access;
+  valid canaries but slower (`~89.8-90.3 tok/s`).
+- [gemma4-llamacpp-mtp-draft-rowhelper-loss-20260623.patch](gemma4-llamacpp-mtp-draft-rowhelper-loss-20260623.patch):
+  rejected attempt to stage logits and NextN embeddings with one helper/sync;
+  valid canaries but slower (`~90.5-90.9 tok/s`).
+
 ## Current Qwen Patch Pointers
 
 - [vllm-xpu-kernels-qwen36-routegemm1-blayoutfix-20260620.patch](vllm-xpu-kernels-qwen36-routegemm1-blayoutfix-20260620.patch):
