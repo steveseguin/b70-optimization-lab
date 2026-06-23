@@ -67,7 +67,7 @@ Current sustained-decode Q8 best:
 - queue:
   `data/localmaxxing-gemma4-26b-a4b-q8-b70-long512-20260623.queue.json`.
 
-Current draft-MTP sustained-decode Q8 best:
+Current short-prompt draft-MTP sustained-decode Q8 best:
 
 - `gemma4-q8-gpu0-mtp-n3-aot-repeat-long-deep-20260623T0353`,
   llama.cpp SYCL on one B70,
@@ -84,6 +84,24 @@ Current draft-MTP sustained-decode Q8 best:
 - queue:
   `data/localmaxxing-gemma4-26b-a4b-q8-b70-mtp-n3-aot-repeat-long512-20260623.queue.json`.
 
+Current filled-long draft-MTP sustained-decode Q8 best:
+
+- `gemma4-q8-gpu1-mtp-n4-aot-psplit020-filled-long-deep-20260623T090712Z`,
+  llama.cpp SYCL on one B70,
+  UD-Q8_K_XL main GGUF plus `mtp-gemma-4-26B-A4B-it.gguf` draft GGUF;
+- `--spec-type draft-mtp --spec-draft-n-max 4 --spec-draft-p-split 0.20`,
+  draft KV `f16/f16`, AOT BMG build (`GGML_SYCL_DEVICE_ARCH=bmg-g31`),
+  `GGML_SYCL_DISABLE_OPT=0`, `FLASH_ATTN=off`, `POLL=50`,
+  `--parallel 1 --cache-ram 0`, `REASONING=off`;
+- actual LocalMaxxing packet shape: `588` prompt tokens and `512` output
+  tokens (`BENCH_PROMPT_MODE=filled-long`);
+- chat canary **384/384** pass;
+- decode `74.50 tok/s` after TTFT, `68.90 tok/s` wall;
+- status: submitted to LocalMaxxing and approved as
+  `cmqqfe75s015aqo01xr94yxh0`;
+- queue:
+  `data/localmaxxing-gemma4-26b-a4b-q8-b70-mtp-n4-aot-psplit020-filledlong512-20260623.queue.json`.
+
 Previous draft-MTP approved result:
 
 - `gemma4-q8-gpu1-mtp-n3-long-deep-20260623T0328`, `46.36 tok/s` after TTFT,
@@ -94,6 +112,15 @@ Previous draft-MTP approved result:
   TTFT, approved as `cmqqcje2r014fqo01e8rrgwwr`;
 - `gemma4-q8-gpu1-mtp-n4-long-deep-20260623T1140`, `44.50 tok/s` after TTFT,
   approved as `cmqqblfw30132qo01jbi1svnu`.
+- `gemma4-q8-gpu3-mtp-n3-aot-filled-long-deep-20260623T085322Z`,
+  `68.19 tok/s` after TTFT on the filled-long shape, approved as
+  `cmqqexo5x0151qo0154xsie7s`;
+- `gemma4-q8-gpu2-mtp-n3-aot-psplit020-filled-long-deep-20260623T085844Z`,
+  `68.51 tok/s` after TTFT on the filled-long shape, approved as
+  `cmqqf759s0154qo01gwqa14uc`.
+- `gemma4-q8-gpu3-mtp-n4-aot-filled-long-deep-20260623T085822Z`,
+  `74.39 tok/s` after TTFT on the filled-long shape, approved as
+  `cmqqf75p70157qo018fsavf0g`.
 
 ## Submission Packet
 

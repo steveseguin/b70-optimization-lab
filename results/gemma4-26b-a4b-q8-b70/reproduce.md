@@ -157,7 +157,7 @@ summary: data/gemma4-q8-gpu1-mtp-n4-long-deep-20260623T1140/summary.json
 server log: /mnt/fast-ai/bench-results/gemma4-26b-a4b-q8/servers/gemma4-q8-gpu1-mtp-n4-long-deep-20260623T1140.server.log
 ```
 
-Current draft-MTP sustained-decode best:
+Current short-prompt draft-MTP sustained-decode best:
 
 ```bash
 cd /home/steve/qwen36-results-main
@@ -174,6 +174,27 @@ actual benchmark shape: 75 prompt tokens, 512 output tokens
 tok/s: 48.35 after TTFT, 46.60 wall
 summary: data/gemma4-q8-gpu0-mtp-n3-aot-repeat-long-deep-20260623T0353/summary.json
 server log: /mnt/fast-ai/bench-results/gemma4-26b-a4b-q8/servers/gemma4-q8-gpu0-mtp-n3-aot-repeat-long-deep-20260623T0353.server.log
+```
+
+Current filled-long draft-MTP sustained-decode best:
+
+```bash
+cd /home/steve/qwen36-results-main
+LLAMA_SERVER=/home/steve/src/llama.cpp/build-sycl-b70-aot-bmg-g31/bin/llama-server \
+GPU_INDEX=1 PORT=18261 LABEL=gemma4-q8-gpu1-mtp-n4-aot-psplit020-filled-long-deep-20260623T090712Z \
+MTP_N_MAX=4 BENCH_PROMPT_MODE=filled-long MTP_EXTRA_ARGS='--spec-draft-p-split 0.20' \
+scripts/run-gemma4-26b-mtp-candidate.sh
+```
+
+Result:
+
+```text
+canary: 384/384 chat rows pass
+actual benchmark shape: 588 prompt tokens, 512 output tokens
+tok/s: 74.50 after TTFT, 68.90 wall
+LocalMaxxing: cmqqfe75s015aqo01xr94yxh0
+summary: data/gemma4-q8-gpu1-mtp-n4-aot-psplit020-filled-long-deep-20260623T090712Z/summary.json
+server log: /mnt/fast-ai/bench-results/gemma4-26b-a4b-q8/servers/gemma4-q8-gpu1-mtp-n4-aot-psplit020-filled-long-deep-20260623T090712Z.server.log
 ```
 
 Short wrapper equivalent for future sweeps:
@@ -198,7 +219,8 @@ LLAMA_PARALLEL=2 MTP_N_MAX=3
 For future sustained-decode comparisons, prefer
 `BENCH_PROMPT_MODE=filled-long` if the target is an actual near-512-token input
 plus 512-token output. The older `long` mode is intentionally retained so the
-published 75/512 record remains reproducible.
+published 75/512 record remains reproducible; do not mix the two shapes when
+deciding whether a run broke a record.
 
 ## 4. Launch Four Replicas
 

@@ -18,12 +18,12 @@ The quad launcher runs four independent replicas:
 scripts/run-gemma4-26b-llamacpp-quad.sh
 ```
 
-The first build is generic SYCL/JIT. AOT for B70 is available as the first build
-sweep after the baseline:
+The first build was generic SYCL/JIT. The current promoted MTP lane uses the
+B70 AOT build; use the `ocloc` spelling `bmg-g31`:
 
 ```bash
-GGML_SYCL_DEVICE_ARCH=intel_gpu_bmg_g31 \
-BUILD_DIR=/home/steve/src/llama.cpp/build-sycl-b70-aot \
+GGML_SYCL_DEVICE_ARCH=bmg-g31 \
+BUILD_DIR=/home/steve/src/llama.cpp/build-sycl-b70-aot-bmg-g31 \
 scripts/build-llama-cpp-sycl-b70.sh
 ```
 
@@ -34,9 +34,9 @@ Initial tuning axes:
 - `-b 512/1024/2048`;
 - `GGML_SYCL_DISABLE_GRAPH=0/1`;
 - `GGML_SYCL_DISABLE_DNN=0/1`;
-- `GGML_SYCL_DISABLE_OPT=1` is the quality-safe default because llama.cpp issue
-  `#21893` reports Gemma 4 nonsense output on B70 with the optimized SYCL path.
-  Try `=0` only as an explicitly canary-gated speed experiment.
+- `GGML_SYCL_DISABLE_OPT=0` is the promoted speed path after repeated
+  promotion-depth canaries. llama.cpp issue `#21893` still makes optimized
+  SYCL a quality-risk family, so every new variant needs a full canary gate.
 - f16 KV first, then q8 KV only if quality canaries stay stable.
 
 Avoid llama.cpp multi-GPU tensor splitting initially. The point of this lane is
@@ -84,11 +84,10 @@ not the first optimization target:
 Because the desired deployment is one replica per GPU, research should normally
 use four disjoint attempts at once:
 
-- GPU 0: conservative `-fa on`, f16 KV, `CTX_SIZE=8192`,
-  `GGML_SYCL_DISABLE_OPT=1` control.
-- GPU 1: batch and ubatch sweep.
-- GPU 2: SYCL graph / DNN / flash-attention sweep.
-- GPU 3: candidate patch or vLLM comparison.
+- GPU 0: current filled-long MTP control or one conservative `n=4` variant.
+- GPU 1: draft budget / confidence-gate sweep around `n=4`.
+- GPU 2: batch, ubatch, and polling sweep.
+- GPU 3: candidate patch, alternative Q8 build, or vLLM comparison.
 
 Record every attempt in the experiment folder, including failed launches and
 bad quality results.

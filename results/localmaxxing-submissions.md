@@ -4,14 +4,20 @@ Date: 2026-06-23
 
 Model: `unsloth/gemma-4-26B-A4B-it-GGUF`, Gemma 4 26B A4B Q8 lane.
 
-Status: first Gemma 4 Q8 B70 submission queued. Keep single-replica records
-separate from four independent replica aggregate capacity.
+Status: active Gemma 4 Q8 B70 optimization. Keep single-replica records
+separate from four independent replica aggregate capacity, and keep natural-
+stop, short-prompt sustained, and filled-long sustained shapes separate.
 
 | Label | LocalMaxxing ID | GPUs | Input | Output | tok/s out | tok/s total | Validation |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
 | `gemma4-26b-a4b-q8-b70-llamacpp-syclopt0-faoff-20260623T0715` | `cmqq8phxt0103qo01afcgyjq8` | 1 | 574 | 156 | 41.806 | n/a | 384/384 chat canary |
 | `gemma4-26b-a4b-q8-b70-llamacpp-syclopt0-faoff-parallel1-cache0-20260623T0915` | `cmqq9nqbh010gqo01a9jnzl6r` | 1 | 574 | 146 | 42.154 | n/a | 384/384 chat canary |
 | `gemma4-26b-a4b-q8-b70-llamacpp-syclopt0-faoff-parallel1-cache0-long512-20260623T0945` | `cmqqa6zbx010xqo01cdtfn8e0` | 1 | 75 | 512 | 42.716 | 41.351 | 384/384 chat canary |
+| `gemma4-26b-a4b-q8-b70-llamacpp-mtp-n3-aot-repeat-long512-20260623T0353` | `cmqqctk4w014kqo011gyyks7r` | 1 | 75 | 512 | 48.347 | 46.602 | 384/384 chat canary |
+| `gemma4-26b-a4b-q8-b70-llamacpp-mtp-n3-aot-filledlong512-20260623T0853` | `cmqqexo5x0151qo0154xsie7s` | 1 | 588 | 512 | 68.192 | 63.428 | 384/384 chat canary |
+| `gemma4-26b-a4b-q8-b70-llamacpp-mtp-n3-aot-psplit020-filledlong512-20260623T0858` | `cmqqf759s0154qo01gwqa14uc` | 1 | 588 | 512 | 68.515 | 63.666 | 384/384 chat canary |
+| `gemma4-26b-a4b-q8-b70-llamacpp-mtp-n4-aot-filledlong512-20260623T0858` | `cmqqf75p70157qo018fsavf0g` | 1 | 588 | 512 | 74.395 | 68.797 | 384/384 chat canary |
+| `gemma4-26b-a4b-q8-b70-llamacpp-mtp-n4-aot-psplit020-filledlong512-20260623T0907` | `cmqqfe75s015aqo01xr94yxh0` | 1 | 588 | 512 | 74.498 | 68.900 | 384/384 chat canary |
 
 Required packet: see
 [`results/gemma4-26b-a4b-q8-b70/localmaxxing-and-targets.md`](gemma4-26b-a4b-q8-b70/localmaxxing-and-targets.md).
@@ -27,6 +33,13 @@ Submit artifacts:
   `data/localmaxxing-gemma4-26b-a4b-q8-b70-long512-20260623.queue.json`
 - sustained-decode approved response:
   `data/localmaxxing-responses/gemma4-26b-a4b-q8-b70-long512-20260623.submit.log`
+- draft-MTP short-prompt approved response:
+  `data/localmaxxing-responses/gemma4-26b-a4b-q8-b70-mtp-n3-aot-repeat-long512-20260623.submit.log`
+- draft-MTP filled-long approved responses:
+  `data/localmaxxing-responses/gemma4-26b-a4b-q8-b70-mtp-n3-aot-filledlong512-20260623.submit.log`,
+  `data/localmaxxing-responses/gemma4-26b-a4b-q8-b70-mtp-n3-aot-psplit020-filledlong512-20260623.submit.log`,
+  `data/localmaxxing-responses/gemma4-26b-a4b-q8-b70-mtp-n4-aot-filledlong512-20260623.submit.log`,
+  `data/localmaxxing-responses/gemma4-26b-a4b-q8-b70-mtp-n4-aot-psplit020-filledlong512-20260623.submit.log`
 
 The first attempt failed only because the payload used `backend="SYCL/Level Zero"`.
 The accepted payload uses LocalMaxxing's enum `backend="xpu"` and stores

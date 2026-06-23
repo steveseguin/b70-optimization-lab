@@ -12,8 +12,10 @@ replicas on four GPUs for parallel research and aggregate service capacity.
   the instruction-tuned deployment path is `/v1/chat/completions`.
 - No tensor-parallel split in the primary lane. The design is one full model per
   GPU to avoid PCIe collectives.
-- Preserve `GGML_SYCL_DISABLE_OPT=1` until a repeat canary proves optimized
-  SYCL paths are not corrupting Gemma 4 on B70.
+- `GGML_SYCL_DISABLE_OPT=0` is now the promoted speed lane after repeated
+  384-row chat canaries. Keep promotion-depth canaries for every new optimized
+  SYCL variant because upstream B70/Gemma corruption reports still make this a
+  risky family.
 - Do not promote from a smoke. Use 32-repeat early canaries and 96+ repeats
   before any record or LocalMaxxing submission.
 
@@ -102,7 +104,7 @@ Previous no-spec sustained-decode best:
 - decision: valid no-spec sustained-decode record, but keep it separate from the
   natural-stop/default-prompt 42.15 tok/s result.
 
-Current sustained-decode best:
+Current short-prompt sustained-decode best:
 
 - run label: `gemma4-q8-gpu0-mtp-n3-aot-repeat-long-deep-20260623T0353`;
 - change from no-spec sustained-decode best: official Gemma MTP draft GGUF via
@@ -112,14 +114,28 @@ Current sustained-decode best:
   all repeats;
 - quality: chat canary **384/384 pass**;
 - speed: **48.35 tok/s after TTFT**, **46.60 tok/s wall**;
-- decision: valid sustained-decode record candidate and LocalMaxxing submission
-  candidate. `n=2` was also a win; `n=5` and `n=6` with confidence gating were
-  losses, so future MTP work should tune around `n=2/3` rather than pushing
-  higher.
+- decision: valid short-prompt sustained-decode record. `n=2` was also a win;
+  `n=5` and `n=6` with confidence gating were losses on the short 75-token
+  prompt, so short-prompt work should tune around `n=2/3`.
 
-Next harness improvement completed: `filled-long` prompt mode records prompt
-hash/preview and usage-derived prompt/completion-token stats for future runs.
-Use it for near-512-input / 512-output comparisons.
+Current filled-long sustained-decode best:
+
+- run label: `gemma4-q8-gpu1-mtp-n4-aot-psplit020-filled-long-deep-20260623T090712Z`;
+- change from short-prompt best: `BENCH_PROMPT_MODE=filled-long` and
+  `--spec-draft-n-max 4 --spec-draft-p-split 0.20`;
+- actual benchmark shape: `588` prompt tokens and exactly `512` output tokens
+  on all repeats;
+- quality: chat canary **384/384 pass**;
+- speed: **74.50 tok/s after TTFT**, **68.90 tok/s wall**;
+- LocalMaxxing: approved as `cmqqfe75s015aqo01xr94yxh0`;
+- decision: current valid best for the Gemma 4 26B A4B Q8 one-B70 lane. Future
+  record attempts should use `filled-long` unless intentionally reproducing a
+  short-prompt record.
+
+The `filled-long` prompt mode records prompt hash/preview and usage-derived
+prompt/completion-token stats. Use it for near-512-input / 512-output
+comparisons. Keep the older `long` mode only for reproducing the published
+75/512 short-prompt records.
 
 ## Phase 2: Four Replica Baseline
 
@@ -210,7 +226,7 @@ for each meaningful lane.
 
 ## Phase 4: MTP / Speculative Decode
 
-Status: **started; n=4 is the current sustained-decode best**.
+Status: **active; filled-long `n=4` is the current sustained-decode best**.
 
 Google's MTP overview warns that MoE models at batch size 1 may have limited
 speedup because each MTP token can activate different experts, which reduces
@@ -227,18 +243,22 @@ EXPECTED_BYTES=461766816 \
 scripts/download-gemma4-26b-q8-gguf.sh
 ```
 
-Promoted MTP server shape:
+Promoted MTP server shape for current filled-long record:
 
 ```bash
-GPU_INDEX=1 PORT=18261 LABEL=gemma4-q8-gpu1-mtp-n3-long-deep-<stamp> \
-MTP_N_MAX=3 scripts/run-gemma4-26b-mtp-candidate.sh
+LLAMA_SERVER=/home/steve/src/llama.cpp/build-sycl-b70-aot-bmg-g31/bin/llama-server \
+GPU_INDEX=1 PORT=18261 LABEL=gemma4-q8-gpu1-mtp-n4-aot-psplit020-filled-long-deep-<stamp> \
+MTP_N_MAX=4 BENCH_PROMPT_MODE=filled-long MTP_EXTRA_ARGS='--spec-draft-p-split 0.20' \
+scripts/run-gemma4-26b-mtp-candidate.sh
 ```
 
 The MTP wrapper fixes the Q8/f16 quality lane and forwards MTP knobs to
-`EXTRA_LLAMA_ARGS`. Already tested `--spec-draft-n-max 2/3/4/6/8`, plus
-confidence-gated `n=5` and `n=6`: `n=3` currently wins, `n=2` is close, and
-higher n loses despite longer accepted drafts. Next tests should focus on `n=3`
-and `n=2` with polling/batch/AOT changes.
+`EXTRA_LLAMA_ARGS`. Already tested `--spec-draft-n-max 2/3/4/6/8` on the
+short-prompt shape, plus confidence-gated `n=5` and `n=6`; higher n lost there.
+On filled-long, `n=4` wins clearly over `n=2/3`, and `p-split=0.20` is the
+current tiny edge. Next tests should focus on repeating that edge, combining it
+with batch-size changes, and a bounded deeper-budget check (`n=5`, gated
+`n=6`) before returning to short-prompt tuning.
 
 ## Phase 5: vLLM Int8 Per-Channel Comparison
 

@@ -1,6 +1,7 @@
 # Gemma 4 26B A4B Q8 on Intel B70
 
-Status: **active optimization; current valid best is llama.cpp optimized SYCL**.
+Status: **active optimization; current valid best is llama.cpp draft-MTP
+`n=4 + p-split=0.20` on the filled-long shape**.
 
 This lane replaces the closed Qwen3.6 35B TP4 effort. The target architecture is
 different on purpose: run **one complete Gemma 4 26B A4B replica per B70** and
@@ -83,7 +84,11 @@ External references:
 | 2026-06-23 | llama.cpp `dec5ca557` SYCL draft-MTP | 1 replica on B70 GPU1 | UD-Q8_K_XL GGUF + Gemma MTP draft GGUF, f16 KV | 8K | MTP `n=3`: `--spec-type draft-mtp --spec-draft-n-max 3`, 384/384 canary; actual shape 75 input / 512 output tokens | **46.36 after TTFT** / 44.75 wall | [summary](../../data/gemma4-q8-gpu1-mtp-n3-long-deep-20260623T0328/summary.json), [sweep note](../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260623T0328-mtp-near-optimum-deep.md) |
 | 2026-06-23 | llama.cpp `dec5ca557` SYCL draft-MTP | 1 replica on B70 GPU0 | UD-Q8_K_XL GGUF + Gemma MTP draft GGUF, f16 KV | 8K | repeated MTP `n=3`, 384/384 canary; actual shape 75 input / 512 output tokens | **47.63 after TTFT** / 45.93 wall | [summary](../../data/gemma4-q8-gpu0-mtp-n3-repeat-long-deep-20260623T0337/summary.json), [sweep note](../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260623T0337-mtp-n3-followups.md) |
 | 2026-06-23 | llama.cpp `dec5ca557` SYCL draft-MTP AOT BMG | 1 replica on B70 GPU3 | UD-Q8_K_XL GGUF + Gemma MTP draft GGUF, f16 KV | 8K | AOT `bmg-g31`, MTP `n=3`, 384/384 canary; actual shape 75 input / 512 output tokens | **47.92 after TTFT** / 46.18 wall | [summary](../../data/gemma4-q8-gpu3-mtp-n3-aot-bmg-long-deep-20260623T0345/summary.json), [sweep note](../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260623T0345-mtp-n3-aot-and-runtime.md) |
-| 2026-06-23 | llama.cpp `dec5ca557` SYCL draft-MTP AOT BMG | 1 replica on B70 GPU0 | UD-Q8_K_XL GGUF + Gemma MTP draft GGUF, f16 KV | 8K | **current sustained-decode best**: repeated AOT `bmg-g31`, MTP `n=3`, 384/384 canary; actual shape 75 input / 512 output tokens | **48.35 after TTFT** / 46.60 wall | [summary](../../data/gemma4-q8-gpu0-mtp-n3-aot-repeat-long-deep-20260623T0353/summary.json), [sweep note](../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260623T0353-mtp-aot-n-sweep.md) |
+| 2026-06-23 | llama.cpp `dec5ca557` SYCL draft-MTP AOT BMG | 1 replica on B70 GPU0 | UD-Q8_K_XL GGUF + Gemma MTP draft GGUF, f16 KV | 8K | repeated AOT `bmg-g31`, MTP `n=3`, 384/384 canary; actual shape 75 input / 512 output tokens | **48.35 after TTFT** / 46.60 wall | [summary](../../data/gemma4-q8-gpu0-mtp-n3-aot-repeat-long-deep-20260623T0353/summary.json), [sweep note](../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260623T0353-mtp-aot-n-sweep.md) |
+| 2026-06-23 | llama.cpp `dec5ca557` SYCL draft-MTP AOT BMG | 1 replica on B70 GPU3 | UD-Q8_K_XL GGUF + Gemma MTP draft GGUF, f16 KV | 8K | filled-long prompt shape, MTP `n=3`, 384/384 canary; actual shape 588 input / 512 output tokens | **68.19 after TTFT** / 63.43 wall | [summary](../../data/gemma4-q8-gpu3-mtp-n3-aot-filled-long-deep-20260623T085322Z/summary.json), [sweep note](../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260623T0853-filled-long-mtp-sweep.md) |
+| 2026-06-23 | llama.cpp `dec5ca557` SYCL draft-MTP AOT BMG | 1 replica on B70 GPU2 | UD-Q8_K_XL GGUF + Gemma MTP draft GGUF, f16 KV | 8K | filled-long prompt shape, MTP `n=3` + `--spec-draft-p-split 0.20`, 384/384 canary; actual shape 588 input / 512 output tokens | **68.51 after TTFT** / 63.67 wall | [summary](../../data/gemma4-q8-gpu2-mtp-n3-aot-psplit020-filled-long-deep-20260623T085844Z/summary.json), [sweep note](../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260623T0853-filled-long-mtp-sweep.md) |
+| 2026-06-23 | llama.cpp `dec5ca557` SYCL draft-MTP AOT BMG | 1 replica on B70 GPU3 | UD-Q8_K_XL GGUF + Gemma MTP draft GGUF, f16 KV | 8K | filled-long prompt shape, MTP `n=4`, 384/384 canary; actual shape 588 input / 512 output tokens | **74.39 after TTFT** / 68.80 wall | [summary](../../data/gemma4-q8-gpu3-mtp-n4-aot-filled-long-deep-20260623T085822Z/summary.json), [sweep note](../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260623T0853-filled-long-mtp-sweep.md) |
+| 2026-06-23 | llama.cpp `dec5ca557` SYCL draft-MTP AOT BMG | 1 replica on B70 GPU1 | UD-Q8_K_XL GGUF + Gemma MTP draft GGUF, f16 KV | 8K | **current sustained-decode best**: filled-long prompt shape, MTP `n=4` + `--spec-draft-p-split 0.20`, 384/384 canary; actual shape 588 input / 512 output tokens | **74.50 after TTFT** / 68.90 wall | [summary](../../data/gemma4-q8-gpu1-mtp-n4-aot-psplit020-filled-long-deep-20260623T090712Z/summary.json), [sweep note](../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260623T0907-filled-long-n4-followups.md) |
 
 The first valid result is intentionally labeled as a baseline, not an optimized
 result. It proves that the Q8 GGUF fits and serves correctly at 8K on one B70,
@@ -100,11 +105,17 @@ same or stronger gate.
 The 42.72 tok/s no-spec sustained-decode row uses the same valid runtime
 identity as the 42.15 natural-stop row, but a different benchmark prompt shape.
 The model is forced to generate the full 512-token budget, so wall throughput
-rises because TTFT is amortized over more output tokens. The current
-sustained-decode best adds the official Gemma MTP draft GGUF with
-`--spec-type draft-mtp --spec-draft-n-max 3`. Keep natural-stop and sustained-
-decode records separate when comparing future runs, and keep MTP runs separate
-from no-spec runs unless the prompt/output shape and canary depth match.
+rises because TTFT is amortized over more output tokens.
+
+The `long` prompt mode is a short 75-token prompt that forces 512 output tokens.
+The newer `filled-long` mode is the current preferred record-chasing shape for
+this lane because it produces a near-p512/o512 request in practice: 588 prompt
+tokens and 512 output tokens. On that shape the official Gemma MTP draft GGUF is
+much more valuable, and `--spec-draft-n-max 4 --spec-draft-p-split 0.20` is the
+current valid best at 74.50 tok/s after TTFT. Keep natural-stop, short-prompt
+sustained-decode, and filled-long sustained-decode records separate when
+comparing future runs, and keep MTP runs separate from no-spec runs unless
+prompt/output shape and canary depth match.
 
 ## Linked Files
 
