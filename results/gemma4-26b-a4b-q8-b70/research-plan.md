@@ -504,6 +504,14 @@ Text speed is first. After text baseline:
     140-160 output tokens; `long` reaches 512 output tokens with a short input;
     `filled-long` should be used when testing a real near-512-token input.
     Do not compare these shapes without labeling the input/output tokens.
+11. **Current fresh MTP is target-verification-bound, not acceptance-bound.**
+    The `n=7` MTP lane already accepts long chunks on the filled-long benchmark
+    (`~445/462` drafted tokens, mean acceptance length `~7.7`, zero `p-min`
+    stops in the profile). Argmax/top-k and VMM/ubatch/poll follow-ups preserved
+    quality but did not beat the `91.62 tok/s` record in a meaningful way.
+    Further small sampler/runtime sweeps under this identity are low value; the
+    next serious paths are vLLM/XPU INT8-per-channel and source/kernel work that
+    reduces the target verification cost per accepted chunk.
 
 ## Stop Conditions
 
