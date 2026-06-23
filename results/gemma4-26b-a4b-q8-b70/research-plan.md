@@ -166,12 +166,17 @@ Near-neighbor follow-ups now in progress / next in queue:
   reached `90.59`; the CPU-affinity split failed at launch because llama.cpp
   `dec5ca557` rejects `--spec-draft-cpu-range-batch`.
 
+- runtime/Q8_0 follow-ups under the same identity: `MTP_DRAFT_POLL=0`
+  reached `90.16 tok/s`, Q8_0 main model reached `89.99`, supported CPU-range
+  split reached `89.95`, and `GGML_SYCL_ENABLE_VMM=0` reached `90.40`; all
+  valid, all below the `91.05` record.
+
 Next queue under the current `91.05 tok/s` filled-long identity:
 
-- `MTP_DRAFT_POLL=0`;
-- Q8_0 main-model control under the same MTP identity;
-- supported CPU-affinity split without `--spec-draft-cpu-range-batch`;
-- `GGML_SYCL_ENABLE_VMM=0` as a lower-priority runtime diagnostic.
+- `--no-kv-unified`;
+- `--samplers greedy`;
+- scheduler priority flags without CPU pinning;
+- CPU mask split with supported draft batch mask flags.
 
 The `filled-long` prompt mode records prompt hash/preview and usage-derived
 prompt/completion-token stats. Use it for near-512-input / 512-output
