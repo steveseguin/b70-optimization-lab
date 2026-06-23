@@ -1,0 +1,395 @@
+diff --git a/common/speculative.cpp b/common/speculative.cpp
+index c922a3f59..e8ed2fbe0 100644
+--- a/common/speculative.cpp
++++ b/common/speculative.cpp
+@@ -13,6 +13,7 @@
+ 
+ #include <algorithm>
+ #include <cassert>
++#include <cstdlib>
+ #include <cstring>
+ #include <iomanip>
+ #include <map>
+@@ -45,6 +46,21 @@ static std::string common_speculative_get_devices_str(const std::vector<ggml_bac
+     return result.empty() ? "default" : result;
+ }
+ 
++static bool common_speculative_env_flag(const char * name) {
++    const char * value = std::getenv(name);
++    if (value == nullptr) {
++        return false;
++    }
++
++    return std::strcmp(value, "1") == 0 ||
++           std::strcmp(value, "true") == 0 ||
++           std::strcmp(value, "TRUE") == 0 ||
++           std::strcmp(value, "yes") == 0 ||
++           std::strcmp(value, "YES") == 0 ||
++           std::strcmp(value, "on") == 0 ||
++           std::strcmp(value, "ON") == 0;
++}
++
+ struct common_speculative_config {
+     common_speculative_type type;
+     common_params_speculative params;
+@@ -144,12 +160,16 @@ struct common_speculative_impl {
+ 
+     // TODO: track performance of most recent calls
+     const bool gen_perf = true; // whether to generate performance stats.
++    const bool detail_perf;
+ 
+     int64_t t_begin_us  = 0; // total time spent in refresh of this implementation in microseconds.
++    int64_t t_process_us = 0; // total time spent in post-target processing in microseconds.
+     int64_t t_draft_us  = 0; // total time spent in generating drafts in this implementation in microseconds.
+     int64_t t_accept_us = 0; // total time spent in accumulation of this implementation in microseconds.
++    size_t n_call_process = 0; // number of times this implementation processed target output.
+ 
+-    common_speculative_impl(common_speculative_type type, uint32_t n_seq) : type(type), n_seq(n_seq) {}
++    common_speculative_impl(common_speculative_type type, uint32_t n_seq)
++        : type(type), n_seq(n_seq), detail_perf(common_speculative_env_flag("LLAMA_MTP_TIMING")) {}
+ 
+     virtual ~common_speculative_impl() = default;
+ 
+@@ -170,6 +190,8 @@ struct common_speculative_impl {
+ 
+     // true if this implementation requires the target context to extract pre-norm embeddings
+     virtual bool need_embd_nextn() const { return false; }
++
++    virtual void print_extra_stats() const {}
+ };
+ 
+ struct common_speculative_impl_draft_simple : public common_speculative_impl {
+@@ -929,6 +951,29 @@ struct common_speculative_impl_draft_mtp : public common_speculative_impl {
+     std::vector<int>                i_last;
+     std::vector<std::vector<float>> chain_h;
+ 
++    bool mtp_timing = false;
++
++    int64_t t_mtp_process_scan_us       = 0;
++    int64_t t_mtp_process_catchup_us    = 0;
++    int64_t t_mtp_process_hidden_get_us = 0;
++    int64_t t_mtp_process_memcpy_us     = 0;
++    int64_t t_mtp_draft_init_us         = 0;
++    int64_t t_mtp_draft_decode_us       = 0;
++    int64_t t_mtp_draft_sample_us       = 0;
++    int64_t t_mtp_draft_hidden_get_us   = 0;
++    int64_t t_mtp_draft_batch_build_us  = 0;
++    int64_t t_mtp_accept_memcpy_us      = 0;
++
++    size_t n_mtp_process_rows          = 0;
++    size_t n_mtp_process_hidden_bytes  = 0;
++    size_t n_mtp_draft_decode_calls    = 0;
++    size_t n_mtp_draft_hidden_rows     = 0;
++    size_t n_mtp_draft_hidden_bytes    = 0;
++    size_t n_mtp_draft_batch_rows      = 0;
++    size_t n_mtp_draft_batch_bytes     = 0;
++    size_t n_mtp_accept_copies         = 0;
++    size_t n_mtp_accept_bytes          = 0;
++
+     common_speculative_impl_draft_mtp(const common_params_speculative & params, uint32_t n_seq)
+         : common_speculative_impl(COMMON_SPECULATIVE_TYPE_DRAFT_MTP, n_seq)
+         , params(params.draft)
+@@ -1006,6 +1051,11 @@ struct common_speculative_impl_draft_mtp : public common_speculative_impl {
+ 
+         verify_h.assign(n_seq, {});
+         verify_h_rows.assign(n_seq, 0);
++
++        mtp_timing = detail_perf;
++        if (mtp_timing) {
++            LOG_INF("%s: LLAMA_MTP_TIMING=1, detailed draft-MTP timing enabled\n", __func__);
++        }
+     }
+ 
+     ~common_speculative_impl_draft_mtp() override {
+@@ -1062,6 +1112,7 @@ struct common_speculative_impl_draft_mtp : public common_speculative_impl {
+         std::fill(i_batch_beg.begin(), i_batch_beg.end(), -1);
+         std::fill(i_batch_end.begin(), i_batch_end.end(), -1);
+ 
++        const int64_t t_scan_start_us = mtp_timing ? ggml_time_us() : 0;
+         for (int k = 0; k < n_tokens; ++k) {
+             for (llama_seq_id seq_id = 0; seq_id < (llama_seq_id) n_seq; ++seq_id) {
+                 GGML_ASSERT(batch_in.n_seq_id[k] == 1);
+@@ -1074,6 +1125,9 @@ struct common_speculative_impl_draft_mtp : public common_speculative_impl {
+                 }
+             }
+         }
++        if (mtp_timing) {
++            t_mtp_process_scan_us += ggml_time_us() - t_scan_start_us;
++        }
+ 
+         auto * ctx_tgt = this->params.ctx_tgt;
+         auto * ctx_dft = this->params.ctx_dft;
+@@ -1082,6 +1136,7 @@ struct common_speculative_impl_draft_mtp : public common_speculative_impl {
+ 
+         // if kv is shared with target (e.g Gemma4), then we can skip this catch-up decode
+         if (!is_mem_shared) {
++            const int64_t t_catchup_start_us = mtp_timing ? ggml_time_us() : 0;
+             common_batch_clear(batch);
+ 
+             for (int k = 0; k < n_tokens; ++k) {
+@@ -1141,6 +1196,9 @@ struct common_speculative_impl_draft_mtp : public common_speculative_impl {
+             if (!ok) {
+                 return false;
+             }
++            if (mtp_timing) {
++                t_mtp_process_catchup_us += ggml_time_us() - t_catchup_start_us;
++            }
+         }
+ 
+         for (llama_seq_id seq_id = 0; seq_id < (llama_seq_id) n_seq; ++seq_id) {
+@@ -1153,12 +1211,26 @@ struct common_speculative_impl_draft_mtp : public common_speculative_impl {
+             verify_h[seq_id].resize((size_t) n_rows * n_embd);
+ 
+             for (int32_t i = 0; i < n_rows; ++i) {
++                const int64_t t_hidden_start_us = mtp_timing ? ggml_time_us() : 0;
+                 const float * h = llama_get_embeddings_nextn_ith(ctx_tgt, i_batch_beg[seq_id] + i);
++                if (mtp_timing) {
++                    t_mtp_process_hidden_get_us += ggml_time_us() - t_hidden_start_us;
++                }
++                const int64_t t_memcpy_start_us = mtp_timing ? ggml_time_us() : 0;
+                 std::memcpy(verify_h[seq_id].data() + (size_t) i * n_embd, h, row_bytes);
++                if (mtp_timing) {
++                    t_mtp_process_memcpy_us += ggml_time_us() - t_memcpy_start_us;
++                }
+             }
+ 
++            const int64_t t_pending_start_us = mtp_timing ? ggml_time_us() : 0;
+             std::memcpy(pending_h[seq_id].data(),
+                     verify_h[seq_id].data() + (size_t) (n_rows - 1) * n_embd, row_bytes);
++            if (mtp_timing) {
++                t_mtp_process_memcpy_us += ggml_time_us() - t_pending_start_us;
++                n_mtp_process_rows += (size_t) n_rows;
++                n_mtp_process_hidden_bytes += (size_t) (n_rows + 1) * row_bytes;
++            }
+         }
+ 
+         return true;
+@@ -1175,6 +1247,7 @@ struct common_speculative_impl_draft_mtp : public common_speculative_impl {
+ 
+         const size_t row_bytes = (size_t) n_embd * sizeof(float);
+ 
++        const int64_t t_init_start_us = mtp_timing ? ggml_time_us() : 0;
+         for (llama_seq_id seq_id = 0; seq_id < (llama_seq_id) n_seq; ++seq_id) {
+             auto & dp = dparams[seq_id];
+ 
+@@ -1188,6 +1261,10 @@ struct common_speculative_impl_draft_mtp : public common_speculative_impl {
+ 
+             common_batch_add(batch, dp.id_last, dp.n_past, { seq_id }, true);
+             std::memcpy(batch.embd + (size_t) (batch.n_tokens - 1) * n_embd, pending_h[seq_id].data(), row_bytes);
++            if (mtp_timing) {
++                n_mtp_draft_batch_rows++;
++                n_mtp_draft_batch_bytes += row_bytes;
++            }
+ 
+             i_last[seq_id] = batch.n_tokens - 1;
+ 
+@@ -1195,6 +1272,9 @@ struct common_speculative_impl_draft_mtp : public common_speculative_impl {
+                 chain_h[seq_id].assign(pending_h[seq_id].begin(), pending_h[seq_id].end());
+             }
+         }
++        if (mtp_timing) {
++            t_mtp_draft_init_us += ggml_time_us() - t_init_start_us;
++        }
+ 
+         int i = 0;
+ 
+@@ -1215,7 +1295,12 @@ struct common_speculative_impl_draft_mtp : public common_speculative_impl {
+                 llama_set_nextn_layer_offset(ctx_dft, i);
+             }
+ 
++            const int64_t t_decode_start_us = mtp_timing ? ggml_time_us() : 0;
+             int ret = llama_decode(ctx_dft, batch);
++            if (mtp_timing) {
++                t_mtp_draft_decode_us += ggml_time_us() - t_decode_start_us;
++                n_mtp_draft_decode_calls++;
++            }
+             if (ret != 0) {
+                 LOG_WRN("%s: llama_decode[%d] returned %d\n", __func__, i, ret);
+                 break;
+@@ -1233,10 +1318,25 @@ struct common_speculative_impl_draft_mtp : public common_speculative_impl {
+ 
+                 auto * smpl = smpls[seq_id].get();
+ 
++                const int64_t t_sample_start_us = mtp_timing ? ggml_time_us() : 0;
+                 common_sampler_sample(smpl, ctx_dft, i_last[seq_id], true);
++                if (mtp_timing) {
++                    t_mtp_draft_sample_us += ggml_time_us() - t_sample_start_us;
++                }
++
++                const int64_t t_hidden_start_us = mtp_timing ? ggml_time_us() : 0;
+                 const float * h_row = llama_get_embeddings_nextn_ith(ctx_dft, i_last[seq_id]);
++                if (mtp_timing) {
++                    t_mtp_draft_hidden_get_us += ggml_time_us() - t_hidden_start_us;
++                    n_mtp_draft_hidden_rows++;
++                    n_mtp_draft_hidden_bytes += row_bytes;
++                }
+ 
++                const int64_t t_candidates_start_us = mtp_timing ? ggml_time_us() : 0;
+                 const auto * cur_p = common_sampler_get_candidates(smpl, true);
++                if (mtp_timing) {
++                    t_mtp_draft_sample_us += ggml_time_us() - t_candidates_start_us;
++                }
+ 
+                 for (int k = 0; k < std::min(3, (int) cur_p->size); ++k) {
+                     LOG_DBG(" - seq_id %d, draft candidate %3d, pos %3d: %6d (%8.3f) '%s'\n",
+@@ -1273,20 +1373,38 @@ struct common_speculative_impl_draft_mtp : public common_speculative_impl {
+                     chain_h[seq_id].insert(chain_h[seq_id].end(), h_row, h_row + n_embd);
+ 
+                     const int n_rows = (int) result.size() + 1; // id_last + tokens drafted so far
++                    const int64_t t_batch_build_start_us = mtp_timing ? ggml_time_us() : 0;
+                     for (int t = 0; t < n_rows; ++t) {
+                         const llama_token tok = (t == 0) ? dp.id_last : result[t - 1];
+                         common_batch_add(batch, tok, dp.n_past + t, { seq_id }, t == n_rows - 1);
+                         std::memcpy(batch.embd + (size_t) (batch.n_tokens - 1) * n_embd,
+                                     chain_h[seq_id].data() + (size_t) t * n_embd, row_bytes);
+                     }
++                    if (mtp_timing) {
++                        t_mtp_draft_batch_build_us += ggml_time_us() - t_batch_build_start_us;
++                        n_mtp_draft_batch_rows += (size_t) n_rows;
++                        n_mtp_draft_batch_bytes += (size_t) n_rows * row_bytes;
++                    }
+                 } else if (is_mem_shared) {
+                     // note: with shared memory (e.g. Gemma4 assistants) we use the same position for all draft tokens
+                     // ref: https://github.com/huggingface/transformers/blob/effde20942e3f82a1b97449f60b3a48c5ff96145/docs/source/en/model_doc/gemma4_assistant.md?plain=1#L36-L37
++                    const int64_t t_batch_build_start_us = mtp_timing ? ggml_time_us() : 0;
+                     common_batch_add(batch, id, dp.n_past, { seq_id }, true);
+                     std::memcpy(batch.embd + (size_t) (batch.n_tokens - 1) * n_embd, h_row, row_bytes);
++                    if (mtp_timing) {
++                        t_mtp_draft_batch_build_us += ggml_time_us() - t_batch_build_start_us;
++                        n_mtp_draft_batch_rows++;
++                        n_mtp_draft_batch_bytes += row_bytes;
++                    }
+                 } else {
++                    const int64_t t_batch_build_start_us = mtp_timing ? ggml_time_us() : 0;
+                     common_batch_add(batch, id, dp.n_past + i + 1, { seq_id }, true);
+                     std::memcpy(batch.embd + (size_t) (batch.n_tokens - 1) * n_embd, h_row, row_bytes);
++                    if (mtp_timing) {
++                        t_mtp_draft_batch_build_us += ggml_time_us() - t_batch_build_start_us;
++                        n_mtp_draft_batch_rows++;
++                        n_mtp_draft_batch_bytes += row_bytes;
++                    }
+                 }
+ 
+                 i_last[seq_id] = batch.n_tokens - 1;
+@@ -1327,7 +1445,13 @@ struct common_speculative_impl_draft_mtp : public common_speculative_impl {
+ 
+         const int32_t i_h = std::min<int32_t>(n_accepted, n_rows - 1);
+         const size_t row_bytes = (size_t) n_embd * sizeof(float);
++        const int64_t t_accept_start_us = mtp_timing ? ggml_time_us() : 0;
+         std::memcpy(pending_h[seq_id].data(), verify_h[seq_id].data() + (size_t) i_h * n_embd, row_bytes);
++        if (mtp_timing) {
++            t_mtp_accept_memcpy_us += ggml_time_us() - t_accept_start_us;
++            n_mtp_accept_copies++;
++            n_mtp_accept_bytes += row_bytes;
++        }
+     }
+ 
+     bool need_embd() const override {
+@@ -1337,6 +1461,41 @@ struct common_speculative_impl_draft_mtp : public common_speculative_impl {
+     bool need_embd_nextn() const override {
+         return true;
+     }
++
++    void print_extra_stats() const override {
++        if (!mtp_timing) {
++            return;
++        }
++
++        auto ms = [](int64_t us) {
++            return (double) us / 1000.0;
++        };
++
++        LOG_INF("statistics %16s mtp-process: scan %.3f ms, catchup %.3f ms, hidden_get %.3f ms, memcpy %.3f ms, rows %zu, bytes %.3f MiB\n",
++                common_speculative_type_to_str(type).c_str(),
++                ms(t_mtp_process_scan_us),
++                ms(t_mtp_process_catchup_us),
++                ms(t_mtp_process_hidden_get_us),
++                ms(t_mtp_process_memcpy_us),
++                n_mtp_process_rows,
++                (double) n_mtp_process_hidden_bytes / 1048576.0);
++        LOG_INF("statistics %16s mtp-draft: init %.3f ms, decode %.3f ms (%zu calls), sample %.3f ms, hidden_get %.3f ms (%zu rows), batch_build %.3f ms (%zu rows, %.3f MiB)\n",
++                common_speculative_type_to_str(type).c_str(),
++                ms(t_mtp_draft_init_us),
++                ms(t_mtp_draft_decode_us),
++                n_mtp_draft_decode_calls,
++                ms(t_mtp_draft_sample_us),
++                ms(t_mtp_draft_hidden_get_us),
++                n_mtp_draft_hidden_rows,
++                ms(t_mtp_draft_batch_build_us),
++                n_mtp_draft_batch_rows,
++                (double) n_mtp_draft_batch_bytes / 1048576.0);
++        LOG_INF("statistics %16s mtp-accept: memcpy %.3f ms, copies %zu, bytes %.3f MiB\n",
++                common_speculative_type_to_str(type).c_str(),
++                ms(t_mtp_accept_memcpy_us),
++                n_mtp_accept_copies,
++                (double) n_mtp_accept_bytes / 1048576.0);
++    }
+ };
+ 
+ // state of self-speculation (simple implementation, not ngram-map)
+@@ -2084,7 +2243,11 @@ bool common_speculative_process(common_speculative * spec, const llama_batch & b
+     }
+ 
+     for (auto & impl : spec->impls) {
+-        result = result && impl->process(batch);
++        {
++            common_time_meas tm(impl->t_process_us, !impl->detail_perf);
++            result = result && impl->process(batch);
++            impl->n_call_process++;
++        }
+     }
+ 
+     return result;
+@@ -2267,9 +2430,14 @@ void common_speculative_print_stats(const common_speculative * spec) {
+         if (impl->gen_perf) {
+             std::ostringstream oss;
+             oss << std::fixed << std::setprecision(3) << impl->t_begin_us / 1000.0 << ", ";
++            if (impl->detail_perf) {
++                oss << std::fixed << std::setprecision(3) << impl->t_process_us / 1000.0 << ", ";
++            }
+             oss << std::fixed << std::setprecision(3) << impl->t_draft_us / 1000.0 << ", ";
+             oss << std::fixed << std::setprecision(3) << impl->t_accept_us / 1000.0;
+-            str_perf = ", dur(b,g,a) = " + oss.str() + " ms";
++            str_perf = impl->detail_perf
++                ? ", dur(b,p,g,a) = " + oss.str() + " ms"
++                : ", dur(b,g,a) = " + oss.str() + " ms";
+         } else {
+             str_perf = "";
+         }
+@@ -2291,14 +2459,27 @@ void common_speculative_print_stats(const common_speculative * spec) {
+             str_stats = ", #mean acc len = " + oss.str() + ", #acc rate/pos = (" + tmp.str() + ")";
+         }
+ 
+-        LOG_INF("statistics %16s: #calls(b,g,a) = %4zu %6zu %6zu, #gen drafts = %6zu, #acc drafts = %5zu, #gen tokens = %6zu, #acc tokens = %5zu%s%s\n",
+-                common_speculative_type_to_str(impl->type).c_str(),
+-                impl->n_call_begin, impl->n_call_draft, impl->n_call_accept,
+-                impl->n_gen_drafts,
+-                impl->n_acc_drafts,
+-                impl->n_gen_tokens,
+-                impl->n_acc_tokens,
+-                str_stats.c_str(),
+-                str_perf.c_str());
++        if (impl->detail_perf) {
++            LOG_INF("statistics %16s: #calls(b,p,g,a) = %4zu %6zu %6zu %6zu, #gen drafts = %6zu, #acc drafts = %5zu, #gen tokens = %6zu, #acc tokens = %5zu%s%s\n",
++                    common_speculative_type_to_str(impl->type).c_str(),
++                    impl->n_call_begin, impl->n_call_process, impl->n_call_draft, impl->n_call_accept,
++                    impl->n_gen_drafts,
++                    impl->n_acc_drafts,
++                    impl->n_gen_tokens,
++                    impl->n_acc_tokens,
++                    str_stats.c_str(),
++                    str_perf.c_str());
++        } else {
++            LOG_INF("statistics %16s: #calls(b,g,a) = %4zu %6zu %6zu, #gen drafts = %6zu, #acc drafts = %5zu, #gen tokens = %6zu, #acc tokens = %5zu%s%s\n",
++                    common_speculative_type_to_str(impl->type).c_str(),
++                    impl->n_call_begin, impl->n_call_draft, impl->n_call_accept,
++                    impl->n_gen_drafts,
++                    impl->n_acc_drafts,
++                    impl->n_gen_tokens,
++                    impl->n_acc_tokens,
++                    str_stats.c_str(),
++                    str_perf.c_str());
++        }
++        impl->print_extra_stats();
+     }
+ }
