@@ -1,7 +1,19 @@
 # Gemma 4 26B A4B Bugs And Failed Paths
 
-No local Gemma 4 26B run has completed yet in this lane. Seed this file with
-known risks so future agents do not start from a blank page.
+This lane now has multiple validated local Gemma 4 26B Q8 results on one B70.
+Keep this file focused on pitfalls, rejected mechanisms, and correctness risks
+that should not be rediscovered.
+
+Current promoted family:
+
+- one complete Q8/INT8-quality model replica per B70, no TP split;
+- llama.cpp SYCL / Level Zero;
+- `gemma-4-26B-A4B-it-UD-Q8_K_XL.gguf` plus official
+  `mtp-gemma-4-26B-A4B-it.gguf` draft;
+- full 384-row chat canary before promotion;
+- current filled-long record is tracked in
+  [`research-plan.md`](research-plan.md) and
+  [`localmaxxing-and-targets.md`](localmaxxing-and-targets.md).
 
 ## Known External Risks
 
@@ -38,3 +50,21 @@ known risks so future agents do not start from a blank page.
 - Partial downloads are a real risk for multi-GB GGUF files. The downloader is
   pinned to a commit and validates the primary Q8 byte size; do not replace it
   with an unpinned non-resumable command without recording revision and size.
+
+## Local Rejected Or Risky Paths
+
+- Deeper MTP budgets are not automatically better. On 2026-06-23, `n=8` with
+  `p-min=0.08/0.10/0.12` and `n=9, p-min=0.12` all passed 384/384 canaries but
+  fell to `61.8-65.9 tok/s` on the filled-long shape, far below the `n=7`
+  record.
+- llama.cpp `c926ad098` introduces server context checkpoints by default
+  (`--ctx-checkpoints 32`). Default checkpoints preserved quality but inflated
+  TTFT and hurt wall throughput for the benchmark lane. Use
+  `--ctx-checkpoints 0` for record attempts unless the experiment is explicitly
+  about checkpoint reuse.
+- True draft KV `q8_0` tests require `FLASH_ATTN=on`; otherwise llama.cpp logs
+  that V-cache quantization requires flash attention and the run is not a real
+  q8 draft-cache benchmark.
+- `--spec-draft-cpu-range-batch` is not supported by the pinned
+  `dec5ca557` build and fails at launch. Use supported CPU mask/range flags
+  only after confirming the target runtime exposes them.

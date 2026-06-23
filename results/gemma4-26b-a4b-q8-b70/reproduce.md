@@ -180,9 +180,9 @@ Current filled-long draft-MTP sustained-decode best:
 
 ```bash
 cd /home/steve/qwen36-results-main
-LLAMA_SERVER=/home/steve/src/llama.cpp/build-sycl-b70-aot-bmg-g31/bin/llama-server \
-GPU_INDEX=2 PORT=18352 LABEL=gemma4-q8-gpu2-mtp-n7-aot-nmin2-pmin012-nobs-dthreads32-dtb32-filled-long-deep-20260623T101814Z \
-MTP_N_MAX=7 MTP_N_MIN=2 MTP_P_MIN=0.12 MTP_BACKEND_SAMPLING=0 MTP_DRAFT_THREADS=32 MTP_DRAFT_THREADS_BATCH=32 BENCH_PROMPT_MODE=filled-long \
+LLAMA_SERVER=/home/steve/src/llama.cpp-latest-gemma/build-sycl-b70-aot-bmg-g31/bin/llama-server \
+GPU_INDEX=0 PORT=18382 LABEL=gemma4-q8-gpu0-mtp-n7-latest-c926ad098-ctxcp0-nmin2-pmin012-nobs-dthreads32-dtb32-filled-long-deep-20260623T113058Z \
+MTP_N_MAX=7 MTP_N_MIN=2 MTP_P_MIN=0.12 MTP_BACKEND_SAMPLING=0 MTP_DRAFT_THREADS=32 MTP_DRAFT_THREADS_BATCH=32 MTP_EXTRA_ARGS='--ctx-checkpoints 0' BENCH_PROMPT_MODE=filled-long \
 scripts/run-gemma4-26b-mtp-candidate.sh
 ```
 
@@ -191,10 +191,26 @@ Result:
 ```text
 canary: 384/384 chat rows pass
 actual benchmark shape: 588 prompt tokens, 512 output tokens
-tok/s: 91.05 after TTFT, 82.97 warmed wall
-LocalMaxxing: cmqqi1p2c016jqo01vndau1y9
-summary: data/gemma4-q8-gpu2-mtp-n7-aot-nmin2-pmin012-nobs-dthreads32-dtb32-filled-long-deep-20260623T101814Z/summary.json
-server log: /mnt/fast-ai/bench-results/gemma4-26b-a4b-q8/servers/gemma4-q8-gpu2-mtp-n7-aot-nmin2-pmin012-nobs-dthreads32-dtb32-filled-long-deep-20260623T101814Z.server.log
+tok/s: 91.16 after TTFT, 71.06 warmed wall
+LocalMaxxing: cmqqkmbhr017oqo017rdfxqh2
+summary: data/gemma4-q8-gpu0-mtp-n7-latest-c926ad098-ctxcp0-nmin2-pmin012-nobs-dthreads32-dtb32-filled-long-deep-20260623T113058Z/summary.json
+server log: /mnt/fast-ai/bench-results/gemma4-26b-a4b-q8/servers/gemma4-q8-gpu0-mtp-n7-latest-c926ad098-ctxcp0-nmin2-pmin012-nobs-dthreads32-dtb32-filled-long-deep-20260623T113058Z.server.log
+```
+
+Build the `c926ad098` runtime in a separate worktree:
+
+```bash
+WT=/home/steve/src/llama.cpp-latest-gemma
+BUILD="$WT/build-sycl-b70-aot-bmg-g31"
+source /opt/intel/oneapi/setvars.sh --force
+cmake -S "$WT" -B "$BUILD" -G Ninja \
+  -DCMAKE_BUILD_TYPE=Release \
+  -DCMAKE_C_COMPILER=icx \
+  -DCMAKE_CXX_COMPILER=icpx \
+  -DGGML_SYCL=ON \
+  -DGGML_SYCL_F16=ON \
+  -DGGML_SYCL_DEVICE_ARCH=bmg-g31
+cmake --build "$BUILD" -j 16 --target llama-server llama-cli llama-bench
 ```
 
 Short wrapper equivalent for future sweeps:

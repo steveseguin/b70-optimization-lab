@@ -120,16 +120,19 @@ Current short-prompt sustained-decode best:
 
 Current filled-long sustained-decode best:
 
-- run label: `gemma4-q8-gpu2-mtp-n7-aot-nmin2-pmin012-nobs-dthreads32-dtb32-filled-long-deep-20260623T101814Z`;
-- change from prior filled-long best: keep MTP depth at `--spec-draft-n-max 7`,
-  `--spec-draft-n-min 2`, draft backend sampling disabled, and
-  `--spec-draft-threads 32`, then move confidence gate to
-  `--spec-draft-p-min 0.12` and add `--spec-draft-threads-batch 32`;
+- run label: `gemma4-q8-gpu0-mtp-n7-latest-c926ad098-ctxcp0-nmin2-pmin012-nobs-dthreads32-dtb32-filled-long-deep-20260623T113058Z`;
+- change from prior filled-long best: move from llama.cpp `dec5ca557` to
+  `c926ad098` AOT BMG build and add `--ctx-checkpoints 0` to disable the new
+  upstream checkpoint default. Keep MTP depth at `--spec-draft-n-max 7`,
+  `--spec-draft-n-min 2`, draft backend sampling disabled,
+  `--spec-draft-threads 32`, `--spec-draft-p-min 0.12`, and
+  `--spec-draft-threads-batch 32`;
 - actual benchmark shape: `588` prompt tokens and exactly `512` output tokens
   on all repeats;
 - quality: chat canary **384/384 pass**;
-- speed: **91.05 tok/s after TTFT**, **82.97 tok/s warmed wall**;
-- LocalMaxxing: approved as `cmqqi1p2c016jqo01vndau1y9`;
+- speed: **91.16 tok/s after TTFT**, **71.06 tok/s warmed wall**;
+- LocalMaxxing: approved as `cmqqkmbhr017oqo017rdfxqh2`; previous approved record
+  `cmqqi1p2c016jqo01vndau1y9` was `91.05 tok/s`;
 - decision: current valid best for the Gemma 4 26B A4B Q8 one-B70 lane. Future
   record attempts should use `filled-long` unless intentionally reproducing a
   short-prompt record.
@@ -194,11 +197,19 @@ Near-neighbor follow-ups now in progress / next in queue:
 - exact-record repeats across all four GPUs reached `90.41`, `89.87`, `90.16`,
   and `90.08 tok/s`; all valid, all below the `91.05` record. The record is a
   valid high-water mark, but current repeats cluster closer to `90 tok/s`.
+- high-depth follow-up with `n=8` at `p-min=0.08/0.10/0.12` and `n=9` at
+  `p-min=0.12` preserved quality (384/384 each) but fell to `61.8-65.9 tok/s`;
+  reject deeper draft budgets in the current runtime family.
+- latest llama.cpp `c926ad098` AOT BMG A/B: default checkpoints preserved
+  quality but reached only `90.92 tok/s` after TTFT and hurt wall throughput.
+  Adding `--ctx-checkpoints 0` reached **`91.16 tok/s`**, a small new
+  after-TTFT record.
 
 Next queue:
 
-- start a new llama.cpp build A/B or another runtime lane instead of more small
-  flag combinations in the exhausted `dec5ca557` build.
+- source-level MTP overhead lane instead of more small flag combinations:
+  inspect/patch the Gemma 4 MTP `h_nextn` handoff, which currently copies target
+  hidden states from device output to host and then back into draft batches.
 
 The `filled-long` prompt mode records prompt hash/preview and usage-derived
 prompt/completion-token stats. Use it for near-512-input / 512-output
