@@ -162,7 +162,7 @@ Current draft-MTP sustained-decode best:
 ```bash
 cd /home/steve/qwen36-results-main
 LLAMA_SERVER=/home/steve/src/llama.cpp/build-sycl-b70-aot-bmg-g31/bin/llama-server \
-GPU_INDEX=3 PORT=18263 LABEL=gemma4-q8-gpu3-mtp-n3-aot-bmg-long-deep-20260623T0345 \
+GPU_INDEX=0 PORT=18260 LABEL=gemma4-q8-gpu0-mtp-n3-aot-repeat-long-deep-20260623T0353 \
 MTP_N_MAX=3 scripts/run-gemma4-26b-mtp-candidate.sh
 ```
 
@@ -171,9 +171,9 @@ Result:
 ```text
 canary: 384/384 chat rows pass
 actual benchmark shape: 75 prompt tokens, 512 output tokens
-tok/s: 47.92 after TTFT, 46.18 wall
-summary: data/gemma4-q8-gpu3-mtp-n3-aot-bmg-long-deep-20260623T0345/summary.json
-server log: /mnt/fast-ai/bench-results/gemma4-26b-a4b-q8/servers/gemma4-q8-gpu3-mtp-n3-aot-bmg-long-deep-20260623T0345.server.log
+tok/s: 48.35 after TTFT, 46.60 wall
+summary: data/gemma4-q8-gpu0-mtp-n3-aot-repeat-long-deep-20260623T0353/summary.json
+server log: /mnt/fast-ai/bench-results/gemma4-26b-a4b-q8/servers/gemma4-q8-gpu0-mtp-n3-aot-repeat-long-deep-20260623T0353.server.log
 ```
 
 Short wrapper equivalent for future sweeps:

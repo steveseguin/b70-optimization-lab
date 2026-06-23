@@ -104,14 +104,14 @@ Previous no-spec sustained-decode best:
 
 Current sustained-decode best:
 
-- run label: `gemma4-q8-gpu3-mtp-n3-aot-bmg-long-deep-20260623T0345`;
+- run label: `gemma4-q8-gpu0-mtp-n3-aot-repeat-long-deep-20260623T0353`;
 - change from no-spec sustained-decode best: official Gemma MTP draft GGUF via
   `--spec-type draft-mtp --spec-draft-n-max 3 --spec-draft-ngl all`, with draft
   KV `f16/f16`, on the BMG AOT llama.cpp build;
 - actual benchmark shape: `75` prompt tokens and exactly `512` output tokens on
   all repeats;
 - quality: chat canary **384/384 pass**;
-- speed: **47.92 tok/s after TTFT**, **46.18 tok/s wall**;
+- speed: **48.35 tok/s after TTFT**, **46.60 tok/s wall**;
 - decision: valid sustained-decode record candidate and LocalMaxxing submission
   candidate. `n=2` was also a win; `n=5` and `n=6` with confidence gating were
   losses, so future MTP work should tune around `n=2/3` rather than pushing
