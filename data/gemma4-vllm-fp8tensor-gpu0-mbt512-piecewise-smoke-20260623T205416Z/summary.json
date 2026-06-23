@@ -1,0 +1,126 @@
+{
+  "bench_run_identity": {
+    "api_mode": "chat",
+    "base_url": "http://127.0.0.1:18270",
+    "created_at_utc": "2026-06-23T20:59:03.067650+00:00",
+    "max_tokens": 512,
+    "model": "gemma4-26b-a4b-fp8tensor",
+    "prompt_chars": 3460,
+    "prompt_mode": "filled-long",
+    "prompt_preview": "You are running a deterministic Gemma B70 decode benchmark. Read the reference context, then produce a long numbered response until the token limit is reached. Do not summarize early.\n\nReference context:\nbenchmark latency memory throughput ",
+    "prompt_sha256": "04f687a68d60254567d3252624e01a696b0c9843dbb02f5a789d75aada5e4da5",
+    "prompt_tokens_requested": 512,
+    "repeats": 2,
+    "seed": 1,
+    "usage_required": true
+  },
+  "bench_summary": {
+    "completion_tokens": {
+      "cv": 0.0,
+      "max": 512,
+      "mean": 512.0,
+      "median": 512.0,
+      "min": 512,
+      "stdev": 0.0
+    },
+    "completion_tokens_total": 1024,
+    "elapsed_s": {
+      "cv": 0.005622127725980416,
+      "max": 13.873315289005404,
+      "mean": 13.818381080011022,
+      "median": 13.818381080011022,
+      "min": 13.76344687101664,
+      "stdev": 0.07768870339809317
+    },
+    "prompt_tokens": {
+      "cv": 0.0,
+      "max": 588,
+      "mean": 588.0,
+      "median": 588.0,
+      "min": 588,
+      "stdev": 0.0
+    },
+    "requests": 2,
+    "tok_s_after_ttft": {
+      "cv": 8.201589023960566e-05,
+      "max": 38.45876441511099,
+      "mean": 38.45653416717025,
+      "median": 38.45653416717025,
+      "min": 38.45430391922951,
+      "stdev": 0.00315404688525028
+    },
+    "tok_s_wall": {
+      "cv": 0.005622127725980379,
+      "max": 37.19998375393743,
+      "mean": 37.05268286445603,
+      "median": 37.05268286445603,
+      "min": 36.90538197497463,
+      "stdev": 0.20831491565421636
+    },
+    "ttft_s": {
+      "cv": 0.15178233125295934,
+      "max": 0.5588108560186811,
+      "mean": 0.5046487635117956,
+      "median": 0.5046487635117956,
+      "min": 0.45048667100491,
+      "stdev": 0.0765967657897437
+    }
+  },
+  "canary_pass_all": true,
+  "canary_rows_completed": 64,
+  "fresh_response_validity": {
+    "benchmark_repeats_mixed": true,
+    "cached_tokens_all_zero": null,
+    "cached_tokens_reported": false,
+    "draft_history": "none",
+    "first_request_cached_tokens": null,
+    "first_request_completion_tokens": 512,
+    "first_request_prompt_tokens": 588,
+    "first_request_tok_s_after_ttft": 38.45430391922951,
+    "first_request_tok_s_wall": 36.90538197497463,
+    "first_request_ttft_s": 0.5588108560186811,
+    "first_request_usage": {
+      "completion_tokens": 512,
+      "prompt_tokens": 588,
+      "total_tokens": 1100
+    },
+    "prefix_caching": "disabled"
+  },
+  "label": "gemma4-vllm-fp8tensor-gpu0-mbt512-piecewise-smoke-20260623T205416Z",
+  "launcher_identity": {
+    "compilation_config": "{\"use_inductor_graph_partition\":true,\"compile_sizes\":[1],\"cudagraph_mode\":\"PIECEWISE\"}",
+    "dtype": "bfloat16",
+    "generation_config": "vllm",
+    "gpu_index": "0",
+    "gpu_memory_utilization": "0.90",
+    "kv_cache_dtype": "auto",
+    "language_model_only": "true",
+    "max_model_len": "8192",
+    "max_num_batched_tokens": "512",
+    "max_num_seqs": "1",
+    "model_alias": "gemma4-26b-a4b-fp8tensor",
+    "oneapi_device_selector": "level_zero:*",
+    "port": "18270",
+    "prefix_caching": "disabled",
+    "quantization": "fp8_per_tensor",
+    "runtime": "vllm",
+    "torchinductor_cache_dir": "/mnt/fast-ai/vllm-cache-exp/gemma4-26b-a4b-it-fp8tensor-gpu0/torchinductor",
+    "vllm_bin": "/home/steve/.venvs/vllm-xpu/bin/vllm",
+    "vllm_cache_root": "/mnt/fast-ai/vllm-cache-exp/gemma4-26b-a4b-it-fp8tensor-gpu0",
+    "vllm_extra_args": "<unset>",
+    "vllm_source_path": "/home/steve/src/vllm/vllm",
+    "vllm_target_device": "xpu",
+    "vllm_use_v1": "1",
+    "vllm_version": "0.20.2rc1.dev13+g9557d9108.d20260620",
+    "vllm_xpu_enable_xpu_graph": "1",
+    "vllm_xpu_force_graph_with_comm": "1",
+    "vllm_xpu_graph_noop_comm_capture": "1",
+    "xpu_graph": "1",
+    "ze_affinity_mask": "0"
+  },
+  "model_file_bytes": 51612009916,
+  "model_path": "/mnt/fast-ai/llm-cache/hf/models--google--gemma-4-26B-A4B-it/snapshots/20da991ab4afab98e8f910c4a2e8f4fbefc404ad",
+  "model_shard_count": 2,
+  "run_dir": "/home/steve/qwen36-results-main/data/gemma4-vllm-fp8tensor-gpu0-mbt512-piecewise-smoke-20260623T205416Z",
+  "server_log": "/mnt/fast-ai/bench-results/gemma4-26b-a4b-vllm-int8pc/servers/gemma4-vllm-fp8tensor-gpu0-mbt512-piecewise-smoke-20260623T205416Z.server.log"
+}

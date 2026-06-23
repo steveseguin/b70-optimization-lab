@@ -7,6 +7,7 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 GPU_INDEX="${GPU_INDEX:-0}"
+ONEAPI_DEVICE_SELECTOR_VALUE="${ONEAPI_DEVICE_SELECTOR:-level_zero:*}"
 PORT="${PORT:-18270}"
 HOST="${HOST:-127.0.0.1}"
 BASE_URL="${BASE_URL:-http://${HOST}:${PORT}}"
@@ -43,6 +44,16 @@ SERVER_LOG="$SERVER_OUT_DIR/${LABEL}.server.log"
 SUMMARY_OUT="$RUN_DIR/summary.json"
 
 mkdir -p "$RUN_DIR" "$SERVER_OUT_DIR" "$VLLM_CACHE_ROOT" "$TORCHINDUCTOR_CACHE_DIR"
+VLLM_VERSION="$("$PYTHON" - <<'PY'
+import pathlib
+import vllm
+
+print(vllm.__version__)
+print(pathlib.Path(vllm.__file__).parent)
+PY
+)"
+VLLM_VERSION_TEXT="$(printf '%s\n' "$VLLM_VERSION" | sed -n '1p')"
+VLLM_SOURCE_PATH="$(printf '%s\n' "$VLLM_VERSION" | sed -n '2p')"
 
 server_pid=""
 cleanup() {
@@ -59,6 +70,45 @@ if [[ ! -d "$MODEL" ]]; then
   echo "[gemma4-vllm] model snapshot missing: $MODEL" >&2
   exit 1
 fi
+"$PYTHON" - "$MODEL" <<'PY'
+import json
+import sys
+from pathlib import Path
+
+model = Path(sys.argv[1])
+index_path = model / "model.safetensors.index.json"
+if not index_path.exists():
+    raise SystemExit(f"[gemma4-vllm] missing {index_path}")
+
+index = json.loads(index_path.read_text())
+shards = sorted(set(index.get("weight_map", {}).values()))
+if not shards:
+    shards = sorted(p.name for p in model.glob("model-*.safetensors"))
+
+missing = []
+for shard in shards:
+    path = model / shard
+    try:
+        if not path.exists() or path.stat().st_size <= 0:
+            missing.append(shard)
+    except OSError:
+        missing.append(shard)
+
+incomplete = list(model.parent.parent.glob("blobs/*.incomplete"))
+if missing or incomplete:
+    details = []
+    if missing:
+        details.append(f"missing/unresolved shards={missing}")
+    if incomplete:
+        details.append(
+            "active incomplete blobs="
+            + ",".join(f"{p.name}:{p.stat().st_size}" for p in incomplete[:4])
+        )
+    raise SystemExit("[gemma4-vllm] incomplete model snapshot: " + "; ".join(details))
+
+total = sum((model / shard).stat().st_size for shard in shards)
+print(f"[gemma4-vllm] verified {len(shards)} shard(s), {total} bytes")
+PY
 
 echo "[gemma4-vllm] label=$LABEL"
 echo "[gemma4-vllm] base_url=$BASE_URL"
@@ -116,6 +166,15 @@ fi
   echo "vllm_cache_root=$VLLM_CACHE_ROOT"
   echo "torchinductor_cache_dir=$TORCHINDUCTOR_CACHE_DIR"
   echo "vllm_bin=$VLLM_BIN"
+  echo "vllm_version=$VLLM_VERSION_TEXT"
+  echo "vllm_source_path=$VLLM_SOURCE_PATH"
+  echo "vllm_use_v1=1"
+  echo "vllm_target_device=xpu"
+  echo "oneapi_device_selector=$ONEAPI_DEVICE_SELECTOR_VALUE"
+  echo "ze_affinity_mask=$GPU_INDEX"
+  echo "prefix_caching=disabled"
+  echo "language_model_only=true"
+  echo "generation_config=vllm"
   echo "--- server ---"
 } > "$SERVER_LOG"
 
@@ -127,7 +186,7 @@ VLLM_NO_USAGE_STATS=1 \
 HF_HUB_DISABLE_XET=1 \
 VLLM_USE_V1=1 \
 VLLM_TARGET_DEVICE=xpu \
-ONEAPI_DEVICE_SELECTOR="level_zero:${GPU_INDEX}" \
+ONEAPI_DEVICE_SELECTOR="$ONEAPI_DEVICE_SELECTOR_VALUE" \
 ZE_AFFINITY_MASK="$GPU_INDEX" \
 XPU_GRAPH="$XPU_GRAPH" \
 VLLM_XPU_ENABLE_XPU_GRAPH="$VLLM_XPU_ENABLE_XPU_GRAPH" \
@@ -199,14 +258,27 @@ except OSError:
 def env_or_log(key: str) -> str | None:
     return os.environ.get(key) or server_env.get(key.lower()) or server_env.get(key)
 
+def cached_tokens(row: dict) -> int | None:
+    usage = row.get("usage") or {}
+    details = usage.get("prompt_tokens_details") or {}
+    value = details.get("cached_tokens")
+    return value if isinstance(value, int) else None
+
+bench_rows = bench.get("rows") or []
+first_row = bench_rows[0] if bench_rows else {}
+all_cached = [cached_tokens(row) for row in bench_rows]
+known_cached = [value for value in all_cached if value is not None]
+model_shards = sorted(model.glob("model-*.safetensors"))
+
 out = {
     "label": label,
     "server_log": server_log,
     "run_dir": str(run_dir),
     "model_path": str(model),
     "model_file_bytes": sum(
-        p.stat().st_size for p in model.glob("model-*.safetensors")
+        p.stat().st_size for p in model_shards
     ) if model.exists() else None,
+    "model_shard_count": len(model_shards),
     "launcher_identity": {
         "runtime": "vllm",
         "gpu_index": env_or_log("GPU_INDEX"),
@@ -228,14 +300,31 @@ out = {
         "vllm_cache_root": env_or_log("VLLM_CACHE_ROOT"),
         "torchinductor_cache_dir": env_or_log("TORCHINDUCTOR_CACHE_DIR"),
         "vllm_bin": env_or_log("VLLM_BIN"),
+        "vllm_version": env_or_log("VLLM_VERSION"),
+        "vllm_source_path": env_or_log("VLLM_SOURCE_PATH"),
+        "vllm_use_v1": env_or_log("VLLM_USE_V1"),
+        "vllm_target_device": env_or_log("VLLM_TARGET_DEVICE"),
+        "oneapi_device_selector": env_or_log("ONEAPI_DEVICE_SELECTOR"),
+        "ze_affinity_mask": env_or_log("ZE_AFFINITY_MASK"),
+        "prefix_caching": env_or_log("PREFIX_CACHING"),
+        "language_model_only": env_or_log("LANGUAGE_MODEL_ONLY"),
+        "generation_config": env_or_log("GENERATION_CONFIG"),
     },
     "fresh_response_validity": {
         "prefix_caching": "disabled",
         "draft_history": "none",
         "benchmark_repeats_mixed": True,
-        "first_request_tok_s_after_ttft": (
-            bench["rows"][0].get("tok_s_after_ttft") if bench.get("rows") else None
+        "cached_tokens_reported": bool(known_cached),
+        "cached_tokens_all_zero": (
+            all(value == 0 for value in known_cached) if known_cached else None
         ),
+        "first_request_cached_tokens": cached_tokens(first_row),
+        "first_request_tok_s_after_ttft": first_row.get("tok_s_after_ttft"),
+        "first_request_tok_s_wall": first_row.get("tok_s_wall"),
+        "first_request_ttft_s": first_row.get("ttft_s"),
+        "first_request_prompt_tokens": first_row.get("prompt_tokens"),
+        "first_request_completion_tokens": first_row.get("completion_tokens"),
+        "first_request_usage": first_row.get("usage"),
     },
     "canary_pass_all": canary["summary"]["pass_all"],
     "canary_rows_completed": canary["summary"]["rows_completed"],

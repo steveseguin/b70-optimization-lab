@@ -49,9 +49,21 @@ vLLM's Gemma 4 recipe documents the 26B A4B model with
 dimensions are sensitive to 4-bit quantization. This is the right vLLM precision
 candidate if llama.cpp Q8 is too slow or lacks functionality.
 
+Current status: **screened and not competitive for decode speed**. The clean
+2026-06-23 comparison reached `34.89 tok/s` with INT8 per-channel + PIECEWISE
+graph and `40.31 tok/s` with lower-precision `fp8_per_tensor`; both are far
+below the llama.cpp Q8 draft-MTP fresh-response record (`91.62 tok/s`). Keep
+this lane as a compatibility/reference path unless a true all-linear INT8
+checkpoint/kernel path appears.
+
 Use **four independent DP=1 servers**, not one `--data-parallel-size 4` process:
 there is a public vLLM Gemma 4 MoE DP issue whose workaround is separate
 instances behind a load balancer. This also matches the no-PCIe-overhead goal.
+
+Important B70 selector detail: set `ONEAPI_DEVICE_SELECTOR=level_zero:*` and
+select the replica with `ZE_AFFINITY_MASK=$GPU_INDEX`. `level_zero:1`,
+`level_zero:2`, and `level_zero:3` exposed zero XPU devices in this environment;
+the fixed selector is baked into the wrapper.
 
 Use the repo wrapper for reproducible runs and summary artifacts:
 
@@ -71,6 +83,19 @@ The wrapper launches the local XPU vLLM environment with:
 - `--language-model-only`;
 - `--generation-config vllm`;
 - one complete model replica on `ZE_AFFINITY_MASK=$GPU_INDEX`.
+
+Observed vLLM notes:
+
+- `int8_per_channel_weight_only` currently quantizes MoE experts but leaves
+  dense linear layers in BF16, explaining much of the speed gap.
+- `fp8_per_tensor` is faster but below the requested Q8/INT8 quality bar unless
+  it receives a separate quality acceptance decision.
+- `mxfp8` fails on the current XPU stack because no MXFP8 MoE backend is
+  available.
+- `fp8_per_block` fails because Gemma's `704` expert hidden dimension is not
+  divisible by block size `128`.
+- Detailed results:
+  `../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260623T2032-vllm-int8-fp8-smokes.md`.
 
 Start at 8K and graph off. If the baseline serves and passes canaries, test XPU
 graph and batched-token sizes as separate candidates:

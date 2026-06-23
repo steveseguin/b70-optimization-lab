@@ -265,9 +265,11 @@ Next queue:
   dominate. The fast-top-k patch reduced sampler overhead only modestly, so
   bigger wins likely require adaptive draft depth or reduced draft-loop decode
   work.
-- clean vLLM/XPU `int8_per_channel_weight_only` single-replica baseline for
-  Gemma 4 26B A4B as the main non-llama.cpp comparison. Validate chat-template
-  quality before comparing speed.
+- clean vLLM/XPU `int8_per_channel_weight_only` single-replica comparison is
+  now complete. It validated chat-template quality but reached only
+  `34.89 tok/s` with graph enabled; `fp8_per_tensor` improved to `40.31 tok/s`
+  as a lower-precision diagnostic. Neither lane is competitive with the
+  llama.cpp Q8 fresh-response record (`91.62 tok/s`).
 
 The `filled-long` prompt mode records prompt hash/preview and usage-derived
 prompt/completion-token stats. Use it for near-512-input / 512-output
@@ -446,8 +448,14 @@ copies, or improving the CPU fast-top-k path without invoking backend
 
 ## Phase 5: vLLM Int8 Per-Channel Comparison
 
-Use only after llama.cpp Q8 has a validated baseline or if llama.cpp cannot
-serve the model reliably.
+Status: **completed as a compatibility/control lane; not the current speed
+path.**
+
+The official HF checkpoint loads and serves through vLLM/XPU, and the wrapper
+now captures enough identity for future comparisons. The important operational
+fix is GPU selection: use `ONEAPI_DEVICE_SELECTOR=level_zero:*` plus
+`ZE_AFFINITY_MASK=$GPU_INDEX`. The earlier `level_zero:$GPU_INDEX` form works
+for GPU 0 only; GPUs 1-3 saw zero XPU devices and failed before readiness.
 
 Initial shape:
 
@@ -465,6 +473,23 @@ vllm serve google/gemma-4-26B-A4B-it \
 Run four separate DP=1 servers for 4 GPU work. Do not use vLLM
 `--data-parallel-size 4` until the public MoE DP issue is resolved or locally
 patched.
+
+Measured results on 2026-06-23:
+
+- `int8_per_channel_weight_only`, graph off: `27.05 tok/s`, canary `128/128`.
+- `int8_per_channel_weight_only`, PIECEWISE graph: `34.89 tok/s`, canary
+  `128/128`; best INT8 vLLM smoke.
+- `fp8_per_tensor`, PIECEWISE graph, compile sizes `[1,2]`: `40.31 tok/s`,
+  canary `64/64`; useful diagnostic but lower precision than the Q8/INT8
+  primary lane.
+- `mxfp8`: rejected, no available MXFP8 MoE backend on this XPU stack.
+- `fp8_per_block`: rejected, Gemma expert hidden dim `704` is not divisible by
+  block size `128`.
+
+Decision: keep vLLM as a reference path for future true INT8 kernels or
+prequantized checkpoints, but return active optimization to llama.cpp Q8
+source/kernel work. Detailed note:
+`../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260623T2032-vllm-int8-fp8-smokes.md`.
 
 ## Phase 6: Multimodal Smoke
 
@@ -489,8 +514,11 @@ Text speed is first. After text baseline:
    a new precision mode.
 5. **MTP could help, but may disappoint at batch 1 for MoE.** It becomes worth
    testing after no-spec baseline because the draft files are small.
-6. **vLLM int8-per-channel is the main fallback if llama.cpp is slow.** It may
-   use B70/XPU kernels better, but vLLM DP must be four independent servers.
+6. **vLLM int8-per-channel is not the current speed fallback.** The clean
+   vLLM comparison passed canaries but topped out at `34.89 tok/s` for INT8
+   graph and `40.31 tok/s` for lower-precision FP8 per-tensor. Keep vLLM for
+   compatibility, multimodal, or future true all-linear INT8 kernels; do not
+   spend the main optimization budget there now.
 7. **The public LocalMaxxing target is around 90-95 tok/s but mixed precision.**
    Treat that as directional pressure, not a direct Q8 B70 failure threshold.
 8. **The biggest early risk is correctness, not launch throughput.** The B70
