@@ -8,8 +8,11 @@ This docs folder is the human entry point for the B70 optimization work. The exe
 - [MiniMax Production C1 Service](minimax-production-c1-service.md): run the current 32K endpoint under systemd with health and benchmark checks.
 - [Single Model Slot Switching](model-slot-switching.md): keep one LAN OpenAI endpoint while switching which large model is loaded.
 - [Current Reproducibility Map](current-reproducibility-map.md): one-page map for the stable endpoint, session-cache work, TurboQuant patch, and CPU-paged attention research.
+- [Model Effort Index](model-effort-index.md): cross-model status, closed lanes, and where to put the next model packet.
+- [Research Workflow Playbook](research-workflow-playbook.md): reusable prompts, validation ladders, and experiment discipline that produced the best outcomes.
 - [Qwen3.6 Research Map](qwen36-research-map.md): Qwen3.6-35B/B70 lane status, current decisions, and artifact pointers.
 - [Qwen3.6 35B Quark INT8 Result Packet](../results/qwen36-35b-quark-int8-b70/README.md): best valid 2x/4x results, invalid fast lanes, reproduction commands, and carryover lessons.
+- [Results Index](../results/README.md): promoted model-specific result packets and how to promote a lane.
 - [Model Recipes](model-recipes.md): which recipe folder to use for each model/build target.
 - [FAQ](faq.md): practical answers for users new to B70s, vLLM, XPU, and local model deployment.
 - [GPU Comparison for Local AI](gpu-comparison-local-ai.md): rough pricing/spec/performance framing for B70s versus common alternatives.
@@ -28,11 +31,13 @@ The community build guide includes example B70 photos and explains what details 
 
 - `docs/`: narrative guides, FAQ, community-facing summaries, comparison notes.
 - `repro/`: runnable install/build/benchmark/serve recipes and pinned artifacts.
+- `results/`: promoted result packets and closed-out model efforts. See [../results/README.md](../results/README.md).
 - `notes/`: lab notebook entries, including negative results. See [../notes/README.md](../notes/README.md).
 - `data/`: structured benchmark records, payloads, and LocalMaxxing responses. See [../data/README.md](../data/README.md).
 - `patches/`: patch records and source-level optimization deltas. See [../patches/README.md](../patches/README.md).
 - `scripts/`: shared harnesses used by repro folders and lab runs.
 - `experiments/`: active research lanes that are not production recipes yet.
+- `prompts/`: quality canaries and reusable prompt templates. See [../prompts/README.md](../prompts/README.md).
 
 ## Community Links
 

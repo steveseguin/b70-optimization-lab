@@ -25,6 +25,7 @@ Do not compare two results unless their model, quantization, prompt length, outp
 | --- | --- | --- |
 | `../repro/minimax-m27-b70-110tps-ubuntu24-20260523/` | Deployable baseline | Fresh Ubuntu 24.04 setup for 4x B70, MiniMax M2.7 INT4 AutoRound, vLLM OpenAI-compatible endpoint on `0.0.0.0:8000`. |
 | `../repro/minimax-m27-b70-89tps-20260520/` | Strict speed baseline | Older strict quality-passed MiniMax M2.7 INT4 lane with higher output-token throughput. Useful for optimization comparisons. |
+| `../results/qwen36-35b-quark-int8-b70/` | Closed reference packet | Qwen3.6 35B A3B Quark W8A8 INT8 on 2x/4x B70. Best strict 4x baseline, invalid fast lanes, reproduction commands, and carryover notes. |
 | `../experiments/minimax_xpu_kv_offload/` | Experimental | Session-cache c2/c4/c8, TurboQuant, and CPU-paged attention research. Use for review and experiments, not as the production recipe. |
 | `../experiments/gemma4-12b-int4-autoround-vllm/` | Production slot plus research profiles | Gemma 4 12B IT INT4 AutoRound image+text endpoint on vLLM/XPU. Current production is c8 with 32K context and 8 active generations; c10/c12/c16/c64 are documented research or rejected profiles. |
 
@@ -112,6 +113,9 @@ These are useful community targets to add as separate repro folders:
 - MiniMax M2.7 GGUF/UD-IQ4_XS on llama.cpp RPC/SYCL.
 - Smaller single-card B70 recipes for 7B, 8B, 14B, and 27B models.
 - Multi-user/concurrency recipes that report throughput and latency together.
+
+For model-lane status and closed-out results, check the
+[Model Effort Index](model-effort-index.md) before starting a new folder.
 
 ## Suggested Recipe Folder Template
 

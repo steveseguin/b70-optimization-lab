@@ -4,6 +4,11 @@ This folder is a flat legacy archive of benchmark summaries, traces,
 LocalMaxxing payloads/responses, and diagnostic output. Do not reorganize old
 files by moving them; many notes and patch records link to exact paths.
 
+Model-specific result packets should link to these files rather than duplicate
+them. Start with [../results/README.md](../results/README.md) for promoted
+packets and [../docs/model-effort-index.md](../docs/model-effort-index.md) for
+the cross-model map.
+
 ## What To Track
 
 Track compact artifacts that make a note reproducible:

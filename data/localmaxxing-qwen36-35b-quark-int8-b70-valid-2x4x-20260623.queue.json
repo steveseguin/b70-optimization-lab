@@ -1,0 +1,92 @@
+[
+  {
+    "label": "qwen36-35b-quark-int8-b70-tp4-strict-deep-gate-20260615a13deep2",
+    "payload": {
+      "hfId": "nameistoken/Qwen3.6-35B-A3B-Quark-W8A8-INT8",
+      "modelRevision": "cced56592e8c8935f8220836b4baa04dfd389118",
+      "hardware": {
+        "hwClass": "DISCRETE_GPU",
+        "gpuName": "Intel Arc Pro B70",
+        "gpuCount": 4,
+        "vramGb": 32,
+        "cpu": "AMD Ryzen Threadripper PRO 5955WX 16-Cores",
+        "ramGb": 128,
+        "os": "Ubuntu 24.04.4 LTS"
+      },
+      "engineName": "vllm",
+      "engineVersion": "0.20.2rc1.dev2+gc51df4300.d20260523",
+      "quantization": "Quark W8A8 INT8",
+      "promptTokens": 512,
+      "outputTokens": 512,
+      "contextLength": 32768,
+      "batchSize": 1,
+      "ttftMs": 187.33663426246494,
+      "tokSOut": 93.55054235558917,
+      "tokSTotal": 178.77293098777787,
+      "notes": "Strict-valid Qwen3.6 35B A3B Quark W8A8 INT8 run on 4x Intel Arc Pro B70. Shape p512/o512 through OpenAI-compatible vLLM/XPU endpoint, temperature 0, corrected output throughput after first streamed chunk. Validation: JSON canary 128/128 pass, color/order canary 256/256 pass, quality suite pass. Current strict comparison baseline for this model; older public 99.43 tok/s result remains approved but used earlier gate discipline. GitHub result packet: https://github.com/steveseguin/b70-optimization-lab/blob/main/results/qwen36-35b-quark-int8-b70/README.md . Evidence: data/qwen36-ablation-prefill-safe-int8-mixed-workspace-async-deep-gate-summary-20260615a13deep2.json and linked metrics/canary artifacts.",
+      "engineFlags": {
+        "commandSnippet": "SERVER_LAUNCHER=scripts/launch-qwen36-quark-int8-accepted.sh TP_SIZE=4 XPU_GRAPH=1 VLLM_XPU_ENABLE_XPU_GRAPH=1 VLLM_XPU_FORCE_GRAPH_WITH_COMM=1 VLLM_XPU_GRAPH_NOOP_COMM_CAPTURE=1 COMPILATION_CONFIG='{\"cudagraph_mode\":\"PIECEWISE\"}' VLLM_XPU_GDN_NATIVE_FALLBACK=prefill VLLM_XPU_GDN_PREFILL_RECURRENT_FALLBACK=1 VLLM_XPU_DISABLE_PREFILL_CUDAGRAPH_REPLAY=1 VLLM_XPU_GREEDY_SAMPLE_TOPK_FALLBACK=1 VLLM_XPU_INT8_MOE_MIXED_WORKSPACE=1 GPU_MEMORY_UTILIZATION=0.90 MAX_NUM_SEQS=48 VLLM_EXTRA_ARGS='--uvicorn-log-level warning' bash scripts/run-qwen36-ablation-candidate.sh prefill-safe-int8-mixed-workspace-async-deep-gate",
+        "tensorParallel": 4,
+        "pipelineParallel": 1,
+        "kvCacheDtype": "auto",
+        "gpuMemUtil": 0.9,
+        "prefixCaching": false,
+        "attentionBackend": "flash_attn",
+        "flashAttn": true,
+        "chunkedPrefill": true,
+        "prefillChunkSize": 8192,
+        "contBatching": true,
+        "maxRunningSeqs": 48,
+        "concurrency": 1,
+        "specDecoding": false,
+        "temperature": 0,
+        "extraFlags": "XPU PIECEWISE graph capture with forced graph communication/noop comm capture; GDN prefill recurrent fallback; prefill cudagraph replay disabled; greedy top-k sampler fallback; INT8 MoE mixed workspace; no speculative decode."
+      }
+    }
+  },
+  {
+    "label": "qwen36-35b-quark-int8-b70-tp2-safe-smoke-20260615tp2safe1",
+    "payload": {
+      "hfId": "nameistoken/Qwen3.6-35B-A3B-Quark-W8A8-INT8",
+      "modelRevision": "cced56592e8c8935f8220836b4baa04dfd389118",
+      "hardware": {
+        "hwClass": "DISCRETE_GPU",
+        "gpuName": "Intel Arc Pro B70",
+        "gpuCount": 2,
+        "vramGb": 32,
+        "cpu": "AMD Ryzen Threadripper PRO 5955WX 16-Cores",
+        "ramGb": 128,
+        "os": "Ubuntu 24.04.4 LTS"
+      },
+      "engineName": "vllm",
+      "engineVersion": "0.20.2rc1.dev2+gc51df4300.d20260523",
+      "quantization": "Quark W8A8 INT8",
+      "promptTokens": 512,
+      "outputTokens": 512,
+      "contextLength": 32768,
+      "batchSize": 1,
+      "ttftMs": 272.79036887921393,
+      "tokSOut": 85.86911405999231,
+      "tokSTotal": 162.28268532564022,
+      "notes": "Best safer TP2 reference for Qwen3.6 35B A3B Quark W8A8 INT8 on 2x Intel Arc Pro B70. Shape p512/o512 through OpenAI-compatible vLLM/XPU endpoint, temperature 0, corrected output throughput after first streamed chunk. Validation: JSON canary 16/16 pass and color/order canary 16/16 pass; quality suite was skipped, so this is a safe-smoke/reference submission rather than the stronger TP4 deep gate. Older TP2 raw metrics reached about 91 tok/s but were not promoted under the current gates. GitHub result packet: https://github.com/steveseguin/b70-optimization-lab/blob/main/results/qwen36-35b-quark-int8-b70/2x-b70-reference.md . Evidence: data/qwen36-ablation-prefill-safe-int8-mixed-workspace-async-tp2-smoke-summary-20260615tp2safe1.json and data/qwen36-ablation-prefill-safe-int8-mixed-workspace-async-tp2-smoke-p512o512-20260615tp2safe1.json.",
+      "engineFlags": {
+        "commandSnippet": "SERVER_LAUNCHER=scripts/launch-qwen36-quark-int8-accepted.sh TP_SIZE=2 ONEAPI_DEVICE_SELECTOR=level_zero:0,1 ZE_AFFINITY_MASK=0,1 XPU_GRAPH=1 VLLM_XPU_ENABLE_XPU_GRAPH=1 VLLM_XPU_FORCE_GRAPH_WITH_COMM=1 VLLM_XPU_GRAPH_NOOP_COMM_CAPTURE=1 COMPILATION_CONFIG='{\"cudagraph_mode\":\"PIECEWISE\"}' VLLM_XPU_GDN_NATIVE_FALLBACK=prefill VLLM_XPU_GDN_PREFILL_RECURRENT_FALLBACK=1 VLLM_XPU_DISABLE_PREFILL_CUDAGRAPH_REPLAY=1 VLLM_XPU_GREEDY_SAMPLE_TOPK_FALLBACK=1 VLLM_XPU_INT8_MOE_MIXED_WORKSPACE=1 GPU_MEMORY_UTILIZATION=0.90 MAX_NUM_SEQS=24 VLLM_EXTRA_ARGS='--uvicorn-log-level warning' METRICS_REPEATS=1 JSON_REPEATS=16 COLOR_REPEATS=16 ABLATION_RUN_QUALITY=0 bash scripts/run-qwen36-ablation-candidate.sh prefill-safe-int8-mixed-workspace-async-tp2-smoke",
+        "tensorParallel": 2,
+        "pipelineParallel": 1,
+        "kvCacheDtype": "auto",
+        "gpuMemUtil": 0.9,
+        "prefixCaching": false,
+        "attentionBackend": "flash_attn",
+        "flashAttn": true,
+        "chunkedPrefill": true,
+        "prefillChunkSize": 8192,
+        "contBatching": true,
+        "maxRunningSeqs": 24,
+        "concurrency": 1,
+        "specDecoding": false,
+        "temperature": 0,
+        "extraFlags": "TP2 XPU PIECEWISE graph capture with forced graph communication/noop comm capture; GDN prefill recurrent fallback; prefill cudagraph replay disabled; greedy top-k sampler fallback; INT8 MoE mixed workspace; no speculative decode; smoke/reference quality gate."
+      }
+    }
+  }
+]

@@ -5,12 +5,15 @@ Community setup guides, benchmark recipes, troubleshooting notes, and patches fo
 ## Start Here
 
 - Docs index: [docs/README.md](docs/README.md)
+- Model effort index: [docs/model-effort-index.md](docs/model-effort-index.md)
 - Current reproducibility map: [docs/current-reproducibility-map.md](docs/current-reproducibility-map.md)
+- Research workflow playbook: [docs/research-workflow-playbook.md](docs/research-workflow-playbook.md)
 - MiniMax install guide: [docs/b70-minimax-ubuntu24-deployment.md](docs/b70-minimax-ubuntu24-deployment.md)
 - Production service notes: [docs/minimax-production-c1-service.md](docs/minimax-production-c1-service.md)
 - Qwen3.6 35B result packet: [results/qwen36-35b-quark-int8-b70](results/qwen36-35b-quark-int8-b70/README.md)
 - Local ops and Codex delegation: [docs/local-ops.md](docs/local-ops.md)
 - Model recipes: [docs/model-recipes.md](docs/model-recipes.md)
+- Results index: [results/README.md](results/README.md)
 - FAQ: [docs/faq.md](docs/faq.md)
 - LocalMaxxing submissions: [docs/localmaxxing.md](docs/localmaxxing.md)
 
@@ -30,10 +33,13 @@ This repository is meant to become a stable community hub for Intel XPU local AI
 | I want to... | Go here |
 | --- | --- |
 | Reproduce the current work | [Current reproducibility map](docs/current-reproducibility-map.md) |
+| Pick the next model lane | [Model effort index](docs/model-effort-index.md) |
+| Reuse the best research workflow | [Research workflow playbook](docs/research-workflow-playbook.md) |
 | Deploy MiniMax M2.7 INT4 on 4x B70 | [MiniMax Ubuntu 24 guide](docs/b70-minimax-ubuntu24-deployment.md) |
 | Run the endpoint as a service | [Production c1 service](docs/minimax-production-c1-service.md) |
 | Find model-specific recipes | [Model recipes](docs/model-recipes.md) |
 | Review Qwen3.6 35B B70 results | [Qwen result packet](results/qwen36-35b-quark-int8-b70/README.md) |
+| Browse promoted result packets | [Results index](results/README.md) |
 | Share a benchmark | [Community results guide](docs/community-results.md) |
 | Submit a LocalMaxxing record | [LocalMaxxing submissions](docs/localmaxxing.md) |
 | Compare GPUs | [GPU comparison](docs/gpu-comparison-local-ai.md) |

@@ -34,6 +34,10 @@ reduced communication pressure relative to TP4. That does not make it a better
 
 This is the canary-smoke TP2 command preserved in the recovery notes:
 
+Metrics artifact:
+
+- [`tp2-safe-smoke-metrics`](../../data/qwen36-ablation-prefill-safe-int8-mixed-workspace-async-tp2-smoke-p512o512-20260615tp2safe1.json)
+
 ```bash
 cd /home/steve/llm-optimizations
 STAMP=20260615tp2safe1 \

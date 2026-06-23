@@ -1,0 +1,45 @@
+# Model Effort Index
+
+This page is the cross-model work queue and archive. It is meant to help the
+next agent switch models without rereading every historical note.
+
+## How To Add A Model Effort
+
+Create or update the smallest set of files that makes the lane understandable:
+
+1. `results/<model>-<hardware>/README.md` for promoted or closed-out outcomes.
+2. `results/<model>-<hardware>/validity-gates.md` for what counts as a record.
+3. `results/<model>-<hardware>/reproduce.md` for the best known commands.
+4. `results/<model>-<hardware>/bugs-failed-paths.md` for invalid fast lanes and
+   failure signatures.
+5. `notes/YYYY-MM-DD-<model>-...md` for chronological experiment notes.
+6. `patches/<model>-...patch` for source or config deltas worth preserving.
+7. `data/<model>-...json` for compact structured result evidence.
+
+Do not move old files just to make the tree look tidy. Add indexes and links
+unless a file is clearly misplaced and no one is likely to reference the old
+path.
+
+## Active / Recent Efforts
+
+| Effort | Main Entry | Current Decision |
+| --- | --- | --- |
+| Gemma 4 12B IT INT4 AutoRound | [experiments/gemma4-12b-int4-autoround-vllm](../experiments/gemma4-12b-int4-autoround-vllm/README.md) | Current model-slot production profile is c8. c10 is research-only; c12+ hit boundary failures. |
+| MiniMax M2.7 INT4 AutoRound | [repro/minimax-m27-b70-110tps-ubuntu24-20260523](../repro/minimax-m27-b70-110tps-ubuntu24-20260523/README.md) | Deployable 32K endpoint baseline. Future speed work should target collective and graph-boundary fusion, not more flag sweeps. |
+| Qwen3.6 35B A3B Quark W8A8 INT8 | [results/qwen36-35b-quark-int8-b70](../results/qwen36-35b-quark-int8-b70/README.md) | Closed for now. No valid `>150 tok/s` path found; best strict 4x baseline is `93.55 tok/s`. |
+| Qwen3.6 27B Q4_0 / FP8 historical lanes | [results/fp8-vllm-xpu-qwen36-2026-05-04.md](../results/fp8-vllm-xpu-qwen36-2026-05-04.md) and older notes | Useful reference for SYCL/llama.cpp and FP8 vLLM patterns. Reopen only with a clear record target. |
+| DeepSeek V4 Flash AutoRound | [experiments/deepseek-v4-flash-autoround-vllm](../experiments/deepseek-v4-flash-autoround-vllm/README.md) | Candidate future lane. Needs fresh validity gates before promotion. |
+
+## Cross-Model Lessons
+
+- Lock benchmark identity before interpreting speed. Missing graph mode or a
+  changed launcher can create false regressions or false wins.
+- Treat fast speculative paths as invalid until canaries pass at scale. The
+  Qwen36 lane had multiple 75-199 tok/s "wins" that failed quality or were
+  synthetic.
+- Preserve negative patches and logs. MiniMax improved because dead ends were
+  visible; Qwen36 became hard when failed branches were not summarized quickly.
+- Prefer model-specific result packets over giant branch merges. Curated
+  packets are easier to merge and reuse than mixed experiment branches.
+- Keep LocalMaxxing payloads and responses in `data/`, but keep API keys outside
+  Git as documented in [localmaxxing.md](localmaxxing.md).
