@@ -138,13 +138,20 @@ Near-neighbor follow-ups now in progress / next in queue:
 - repeat the draft-threads-32 record to measure reproducibility: completed at
   `90.26 tok/s`, below the `90.42` record but close enough to confirm the
   result family;
-- draft-only `V` cache `q8_0`: completed at `41.25 tok/s`, canary-clean but a
-  severe speed regression; do not pursue;
-- draft `K/V` cache `q8_0`: completed at `41.04 tok/s`, canary-clean but a
-  severe speed regression; do not pursue;
+- draft-only `V` cache `q8_0`: attempted with `FLASH_ATTN=off`, but llama.cpp
+  logged `V cache quantization requires flash_attn`; result fell back near
+  no-spec speed and is not a true q8_0-cache benchmark;
+- draft `K/V` cache `q8_0`: same invalid/fallback condition as above; retest
+  only with `FLASH_ATTN=on`;
 - `BATCH_SIZE=1024`: completed at `90.20 tok/s`, valid but below record;
-- active next queue: `THREADS=32`, `MTP_DRAFT_THREADS_BATCH=32`, `POLL=75`,
-  and `FLASH_ATTN=on` under the promoted MTP identity.
+- `THREADS=32`: completed at `90.12 tok/s`, valid but below record;
+- `MTP_DRAFT_THREADS_BATCH=32`: completed at `90.31 tok/s`, valid and closest
+  in that sweep but below record;
+- `POLL=75`: completed at `90.02 tok/s`, valid but below record;
+- `FLASH_ATTN=on`: completed at `90.08 tok/s`, valid but below record. Keep it
+  only for q8_0-cache retests that require FA-on.
+- active next queue: refine `MTP_P_MIN` around the current best while holding
+  `MTP_DRAFT_THREADS=32`: repeat `0.10`, then try `0.11`, `0.12`, and `0.13`.
 
 The `filled-long` prompt mode records prompt hash/preview and usage-derived
 prompt/completion-token stats. Use it for near-512-input / 512-output
