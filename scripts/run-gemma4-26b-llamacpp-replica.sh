@@ -17,6 +17,10 @@ CACHE_TYPE_K="${CACHE_TYPE_K:-f16}"
 CACHE_TYPE_V="${CACHE_TYPE_V:-f16}"
 POLL="${POLL:-50}"
 REASONING="${REASONING:-off}"
+LLAMA_DEVICES="${LLAMA_DEVICES:-SYCL0}"
+LLAMA_SPLIT_MODE="${LLAMA_SPLIT_MODE:-}"
+LLAMA_TENSOR_SPLIT="${LLAMA_TENSOR_SPLIT:-}"
+LLAMA_MAIN_GPU="${LLAMA_MAIN_GPU:-}"
 EXTRA_LLAMA_ARGS="${EXTRA_LLAMA_ARGS:-}"
 OUT_DIR="${OUT_DIR:-/mnt/fast-ai/bench-results/gemma4-26b-a4b-q8/servers}"
 STAMP="$(date -u +%Y%m%dT%H%M%SZ)"
@@ -37,6 +41,16 @@ export GGML_SYCL_DISABLE_OPT="${GGML_SYCL_DISABLE_OPT:-1}"
 extra_args=()
 if [[ -n "$EXTRA_LLAMA_ARGS" ]]; then
   read -r -a extra_args <<< "$EXTRA_LLAMA_ARGS"
+fi
+device_args=("-dev" "$LLAMA_DEVICES")
+if [[ -n "$LLAMA_SPLIT_MODE" ]]; then
+  device_args+=("-sm" "$LLAMA_SPLIT_MODE")
+fi
+if [[ -n "$LLAMA_TENSOR_SPLIT" ]]; then
+  device_args+=("-ts" "$LLAMA_TENSOR_SPLIT")
+fi
+if [[ -n "$LLAMA_MAIN_GPU" ]]; then
+  device_args+=("-mg" "$LLAMA_MAIN_GPU")
 fi
 
 mkdir -p "$OUT_DIR"
@@ -60,6 +74,10 @@ mkdir -p "$OUT_DIR"
   echo "cache_type_v=$CACHE_TYPE_V"
   echo "poll=$POLL"
   echo "reasoning=$REASONING"
+  echo "llama_devices=$LLAMA_DEVICES"
+  echo "llama_split_mode=${LLAMA_SPLIT_MODE:-<unset>}"
+  echo "llama_tensor_split=${LLAMA_TENSOR_SPLIT:-<unset>}"
+  echo "llama_main_gpu=${LLAMA_MAIN_GPU:-<unset>}"
   echo "extra_llama_args=$EXTRA_LLAMA_ARGS"
   echo "LLAMA_MTP_DRAFT_TOP_K=${LLAMA_MTP_DRAFT_TOP_K:-<unset>}"
   echo "LLAMA_MTP_DRAFT_LOGIT_GAP_MIN=${LLAMA_MTP_DRAFT_LOGIT_GAP_MIN:-<unset>}"
@@ -84,7 +102,7 @@ exec "$LLAMA_SERVER" \
   --alias "$MODEL_ALIAS" \
   --host "$HOST" \
   --port "$PORT" \
-  -dev SYCL0 \
+  "${device_args[@]}" \
   -ngl "$N_GPU_LAYERS" \
   -c "$CTX_SIZE" \
   -b "$BATCH_SIZE" \
