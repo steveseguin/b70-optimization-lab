@@ -7,7 +7,7 @@ single-GPU B70 result from 2026-06-24.
 
 - Model: `unsloth/gemma-4-26B-A4B-it-GGUF`, target file `gemma-4-26B-A4B-it-UD-Q8_K_XL.gguf`
 - Target size: `27,636,230,944` bytes
-- Speculative draft: local `Q4_0` quantized Gemma MTP draft, file `gemma-4-26B-A4B-it-Q4_0-MTP.gguf`
+- Speculative draft only: local `Q4_0` quantized Gemma MTP draft, file `gemma-4-26B-A4B-it-Q4_0-MTP.gguf`
 - Draft size: `321,126,560` bytes
 - Hardware: 1x Intel Arc Pro B70 32 GB, GPU 0
 - Host/platform: Supermicro AMD Threadripper PRO 5955WX system, 128 GB DDR4,
@@ -23,6 +23,25 @@ single-GPU B70 result from 2026-06-24.
 - LocalMaxxing submission id: `cmqrsupdk000jqr01af3eu6vu`
 
 The supporting run summary and submission payload are in [`results/`](results/).
+
+## Why Q4_0 Appears Here
+
+The `Q4_0` file is not the 26B target model. It is the small Gemma MTP draft
+model used by llama.cpp speculative decoding. That draft proposes tokens; the
+`UD-Q8_K_XL` target model verifies accepted tokens and remains the final model
+for output quality.
+
+This result should be described as:
+
+```text
+Q8 target/verifier with Q4_0 MTP draft only
+```
+
+It should not be described as a pure Q8 no-draft run, and it should not be
+compared against a Q4 target-model benchmark as if they were the same quality
+lane. If the goal is to avoid any Q4 auxiliary file, use the older F16 MTP draft
+fresh-response result instead; it was slightly slower than this promoted
+Q4_0-draft record.
 
 ## Caveats
 
@@ -66,6 +85,9 @@ The scripts default to the same local paths used by the verified run:
 
 Override any path by exporting the corresponding variable from
 [`configs/record.env`](configs/record.env) before running the scripts.
+If the default `/home/steve/src/llama.cpp-gemma-record-stack` worktree already
+contains active experiment changes, set `LLAMA_CPP_DIR` to a fresh path before
+running `scripts/00-build-llama-cpp-record-stack.sh`.
 
 ## Exact Record Command
 

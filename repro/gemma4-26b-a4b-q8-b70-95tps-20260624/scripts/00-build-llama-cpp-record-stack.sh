@@ -10,7 +10,32 @@ source "${REPRO_DIR}/configs/record.env"
 
 PATCH_FILE="${REPRO_DIR}/patches/llama-cpp-gemma-record-stack-c926ad098-20260624.patch"
 
-if [[ ! -d "${LLAMA_CPP_DIR}/.git" ]]; then
+patch_already_applied_exactly() {
+  local changed
+  changed="$(git diff --name-only | sort)"
+  if [[ "${changed}" != $'common/sampling.cpp\ncommon/speculative.cpp' ]]; then
+    return 1
+  fi
+
+  local tmp_diff tmp_diff_norm tmp_patch_norm
+  tmp_diff="$(mktemp)"
+  tmp_diff_norm="$(mktemp)"
+  tmp_patch_norm="$(mktemp)"
+  git diff --no-ext-diff -- common/sampling.cpp common/speculative.cpp > "${tmp_diff}"
+  sed -e 's/[[:space:]]*$//' "${PATCH_FILE}" > "${tmp_patch_norm}"
+  sed -e 's/[[:space:]]*$//' "${tmp_diff}" > "${tmp_diff_norm}"
+  cmp -s "${tmp_patch_norm}" "${tmp_diff_norm}"
+  local result=$?
+  rm -f "${tmp_diff}" "${tmp_diff_norm}" "${tmp_patch_norm}"
+  return "${result}"
+}
+
+if [[ ! -e "${LLAMA_CPP_DIR}/.git" ]]; then
+  if [[ -e "${LLAMA_CPP_DIR}" ]]; then
+    echo "Existing path is not a Git checkout: ${LLAMA_CPP_DIR}" >&2
+    echo "Move it aside or set LLAMA_CPP_DIR to a fresh path." >&2
+    exit 1
+  fi
   mkdir -p "$(dirname -- "${LLAMA_CPP_DIR}")"
   git clone https://github.com/ggml-org/llama.cpp.git "${LLAMA_CPP_DIR}"
 fi
@@ -20,7 +45,7 @@ git fetch --tags origin
 
 if ! git diff --quiet || ! git diff --cached --quiet; then
   current_commit="$(git rev-parse HEAD)"
-  if [[ "${current_commit}" == "${LLAMA_CPP_COMMIT}" ]] && git apply --reverse --check "${PATCH_FILE}" >/dev/null 2>&1; then
+  if [[ "${current_commit}" == "${LLAMA_CPP_COMMIT}" ]] && git diff --cached --quiet && patch_already_applied_exactly; then
     echo "Record patch is already applied."
   else
     echo "llama.cpp worktree has local changes: ${LLAMA_CPP_DIR}" >&2
@@ -36,7 +61,9 @@ fi
 
 if [[ -f /opt/intel/oneapi/setvars.sh ]]; then
   # shellcheck disable=SC1091
-  source /opt/intel/oneapi/setvars.sh >/dev/null
+  set +u
+  source /opt/intel/oneapi/setvars.sh --force >/dev/null
+  set -u
 fi
 
 cmake -S . -B "${LLAMA_CPP_BUILD_DIR}" \

@@ -26,9 +26,13 @@ check_size() {
   fi
 }
 
+DEST_DIR="$(dirname -- "${GEMMA_Q8_MODEL}")" \
+FILENAME="$(basename -- "${GEMMA_Q8_MODEL}")" \
+EXPECTED_BYTES="${GEMMA_Q8_EXPECTED_BYTES}" \
 "${REPO_ROOT}/scripts/download-gemma4-26b-q8-gguf.sh"
 check_size "${GEMMA_Q8_MODEL}" "${GEMMA_Q8_EXPECTED_BYTES}" "Q8 target"
 
+DEST_DIR="$(dirname -- "${GEMMA_MTP_F16_MODEL}")" \
 FILENAME="$(basename -- "${GEMMA_MTP_F16_MODEL}")" \
 EXPECTED_BYTES="${GEMMA_MTP_F16_EXPECTED_BYTES}" \
 MIN_BYTES=400000000 \
