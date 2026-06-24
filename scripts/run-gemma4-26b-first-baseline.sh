@@ -66,10 +66,15 @@ LLAMA_MTP_DRAFT_TOP_K="${LLAMA_MTP_DRAFT_TOP_K:-}" \
 LLAMA_MTP_DRAFT_LOGIT_GAP_MIN="${LLAMA_MTP_DRAFT_LOGIT_GAP_MIN:-}" \
 LLAMA_MTP_DRAFT_FAST_TOPK="${LLAMA_MTP_DRAFT_FAST_TOPK:-}" \
 LLAMA_MTP_DRAFT_FAST_ARGMAX="${LLAMA_MTP_DRAFT_FAST_ARGMAX:-}" \
+LLAMA_MTP_DRAFT_DIRECT_ARGMAX_IDS="${LLAMA_MTP_DRAFT_DIRECT_ARGMAX_IDS:-}" \
+LLAMA_MTP_DRAFT_DIRECT_ARGMAX_UNROLL="${LLAMA_MTP_DRAFT_DIRECT_ARGMAX_UNROLL:-}" \
+LLAMA_MTP_DRAFT_DEVICE_H_HANDOFF="${LLAMA_MTP_DRAFT_DEVICE_H_HANDOFF:-}" \
 LLAMA_MTP_DRAFT_BACKEND_ARGMAX="${LLAMA_MTP_DRAFT_BACKEND_ARGMAX:-}" \
 LLAMA_MTP_DRAFT_BACKEND_TOPK="${LLAMA_MTP_DRAFT_BACKEND_TOPK:-}" \
 LLAMA_MTP_DRAFT_PROFILE="${LLAMA_MTP_DRAFT_PROFILE:-}" \
+LLAMA_MTP_DRAFT_TERMINAL_LOGITS_ONLY="${LLAMA_MTP_DRAFT_TERMINAL_LOGITS_ONLY:-}" \
 LLAMA_SPEC_VERIFY_GREEDY_ARGMAX="${LLAMA_SPEC_VERIFY_GREEDY_ARGMAX:-}" \
+LLAMA_SPEC_VERIFY_BACKEND_ARGMAX_IDS="${LLAMA_SPEC_VERIFY_BACKEND_ARGMAX_IDS:-}" \
 LOG="$SERVER_LOG" \
 scripts/run-gemma4-26b-llamacpp-replica.sh > "$RUN_DIR/server.stdout.log" 2>&1 &
 server_pid="$!"
@@ -166,10 +171,15 @@ out = {
         "llama_mtp_draft_logit_gap_min": env_or_log("LLAMA_MTP_DRAFT_LOGIT_GAP_MIN"),
         "llama_mtp_draft_fast_topk": env_or_log("LLAMA_MTP_DRAFT_FAST_TOPK"),
         "llama_mtp_draft_fast_argmax": env_or_log("LLAMA_MTP_DRAFT_FAST_ARGMAX"),
+        "llama_mtp_draft_direct_argmax_ids": env_or_log("LLAMA_MTP_DRAFT_DIRECT_ARGMAX_IDS"),
+        "llama_mtp_draft_direct_argmax_unroll": env_or_log("LLAMA_MTP_DRAFT_DIRECT_ARGMAX_UNROLL"),
+        "llama_mtp_draft_device_h_handoff": env_or_log("LLAMA_MTP_DRAFT_DEVICE_H_HANDOFF"),
         "llama_mtp_draft_backend_argmax": env_or_log("LLAMA_MTP_DRAFT_BACKEND_ARGMAX"),
         "llama_mtp_draft_backend_topk": env_or_log("LLAMA_MTP_DRAFT_BACKEND_TOPK"),
         "llama_mtp_draft_profile": env_or_log("LLAMA_MTP_DRAFT_PROFILE"),
+        "llama_mtp_draft_terminal_logits_only": env_or_log("LLAMA_MTP_DRAFT_TERMINAL_LOGITS_ONLY"),
         "llama_spec_verify_greedy_argmax": env_or_log("LLAMA_SPEC_VERIFY_GREEDY_ARGMAX"),
+        "llama_spec_verify_backend_argmax_ids": env_or_log("LLAMA_SPEC_VERIFY_BACKEND_ARGMAX_IDS"),
         "oneapi_device_selector": env_or_log("ONEAPI_DEVICE_SELECTOR"),
         "ggml_sycl_disable_opt": env_or_log("GGML_SYCL_DISABLE_OPT"),
         "ggml_sycl_enable_vmm": env_or_log("GGML_SYCL_ENABLE_VMM"),

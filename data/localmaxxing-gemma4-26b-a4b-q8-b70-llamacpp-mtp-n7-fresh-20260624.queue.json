@@ -1,0 +1,57 @@
+[
+  {
+    "label": "gemma4-26b-a4b-q8-b70-llamacpp-mtp-n7-fresh-20260624",
+    "payload": {
+      "hfId": "unsloth/gemma-4-26B-A4B-it-GGUF",
+      "modelRevision": "gemma-4-26B-A4B-it-UD-Q8_K_XL.gguf",
+      "hardware": {
+        "hwClass": "DISCRETE_GPU",
+        "gpuName": "Intel Arc Pro B70",
+        "gpuCount": 1,
+        "vramGb": 32,
+        "cpu": "AMD Ryzen Threadripper PRO 5955WX 16-Cores",
+        "ramGb": 128,
+        "os": "Ubuntu 24.04.4 LTS"
+      },
+      "engineName": "llama.cpp",
+      "engineVersion": "c926ad098 local B70 SYCL/AOT patch stack",
+      "quantization": "Q8_K_XL",
+      "promptTokens": 588,
+      "outputTokens": 512,
+      "contextLength": 8192,
+      "batchSize": 1,
+      "ttftMs": 934.1488729987759,
+      "tokSOut": 94.36621149389549,
+      "tokSTotal": 80.50542700854518,
+      "notes": "Fresh-response-valid Gemma 4 26B A4B Q8-class GGUF run on one Intel Arc Pro B70. Headline is the first measured p512/o512 row with cached_tokens=0, per fresh-response rule; later repeated rows are support only, not averaged into the headline. Validation: chat canary 384/384 pass, all benchmark rows cached_tokens=0. High n-gram/history-accelerated rows from this project are intentionally excluded from this claim. Run dir: data/gemma4-q8-gpu0-mtp-n7-cleanrebuild-control-full-fresh-20260624T032733Z . Experiment note: experiments/gemma4-26b-a4b-q8-b70/sweeps/20260624T0235-mtp-fused-unroll-feasibility.md . GitHub repo: https://github.com/steveseguin/b70-optimization-lab",
+      "engineFlags": {
+        "commandSnippet": "ONEAPI_DEVICE_SELECTOR=level_zero:0 GGML_SYCL_DEVICE=0 GGML_SYCL_ENABLE_VMM=0 LLAMA_SERVER=/home/steve/src/llama.cpp-latest-gemma/build-sycl-b70-aot-bmg-g31/bin/llama-server MTP_DRAFT_FAST_ARGMAX=1 MTP_BACKEND_SAMPLING=0 MTP_N_MAX=7 MTP_N_MIN=2 MTP_P_MIN=0.12 MTP_DRAFT_DEVICE=SYCL0 MTP_DRAFT_THREADS=32 MTP_DRAFT_THREADS_BATCH=32 MTP_EXTRA_ARGS=\"--ctx-checkpoints 0\" CTX_SIZE=8192 BATCH_SIZE=512 UBATCH_SIZE=512 POLL=100 THREADS=16 CANARY_REPEATS=96 BENCH_REPEATS=8 PROMPT_TOKENS=512 MAX_TOKENS=512 BENCH_PROMPT_MODE=filled-long scripts/run-gemma4-26b-mtp-candidate.sh gemma4-q8-gpu0-mtp-n7-cleanrebuild-control-full-fresh",
+        "tensorParallel": 1,
+        "pipelineParallel": 1,
+        "kvCacheDtype": "f16",
+        "prefixCaching": false,
+        "attentionBackend": "llama.cpp SYCL",
+        "flashAttn": false,
+        "chunkedPrefill": false,
+        "contBatching": false,
+        "maxRunningSeqs": 1,
+        "concurrency": 1,
+        "specDecoding": true,
+        "specMethod": "draft-mtp",
+        "specNumTokens": 7,
+        "specDraftModel": "/mnt/fast-ai/llm-models/gemma4-26b-a4b-it-q8-gguf/mtp-gemma-4-26B-A4B-it.gguf",
+        "specDraftNMin": 2,
+        "specDraftPMin": 0.12,
+        "backendSampling": false,
+        "temperature": 0,
+        "promptMode": "filled-long",
+        "promptTokensRequested": 512,
+        "actualPromptTokens": 588,
+        "cachedTokensRow0": 0,
+        "canaryRowsPassed": 384,
+        "llamaCppCommit": "c926ad098",
+        "extraFlags": "AOT BMG-G31 SYCL build; VMM disabled; poll=100; ubatch=512; draft threads/batch=32; ctx-checkpoints=0; fast argmax draft selection; no backend sampling; reasoning off. Quantization file is Unsloth UD-Q8_K_XL GGUF; submitted quantization normalized to Q8_K_XL for API schema."
+      }
+    }
+  }
+]

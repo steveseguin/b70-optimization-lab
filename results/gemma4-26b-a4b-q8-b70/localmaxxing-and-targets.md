@@ -106,9 +106,9 @@ Current filled-long draftless ngram-mod warmed/history artifact:
   `cmqqxx7bp01dbqo012d2qiiw6` (`280.04 tok/s`),
   `cmqqxjnif01d0qo01ix4oeixo` (`255.04 tok/s`) and
   `cmqqxbkzx01cxqo01j8p97627` (`245.98 tok/s`). It does **not** supersede the
-  current fresh-response draft-MTP record `cmqr82niq01hgqo01v42y7ue8`
-  (`92.397 tok/s` first measured request; `92.767 tok/s` supporting repeat
-  mean);
+  current fresh-response draft-MTP record `cmqrsupdk000jqr01af3eu6vu`
+  (`95.264 tok/s` first no-cache request; `95.386 tok/s` supporting repeat
+  mean; Q8 target/verifier with Q4_0 MTP draft only);
 - queue:
   `data/localmaxxing-gemma4-26b-a4b-q8-b70-ngrammod-20-32-64-poll100-filledlong512-20260623.queue.json`;
 - response:
@@ -124,7 +124,43 @@ Current filled-long draftless ngram-mod warmed/history artifact:
   and
   `data/localmaxxing-responses/localmaxxing-openapi-benchmark-methods-20260623.json`.
 
-Current filled-long draft-MTP fresh-response Q8 best:
+Current filled-long draft-MTP fresh-response Q8-target best:
+
+- `gemma4-q8-gpu0-mtp-n7-draftq40-full-20260624T081218Z`,
+  llama.cpp SYCL on one B70,
+  UD-Q8_K_XL main GGUF plus `gemma-4-26B-A4B-it-Q4_0-MTP.gguf` draft GGUF;
+- same `c926ad098` `n=7/n-min=2/p-min=0.12` backend-sampling-off recipe,
+  plus source-level CPU cleanup, `LLAMA_MTP_DRAFT_FAST_ARGMAX=1`,
+  `GGML_SYCL_ENABLE_VMM=0`, `UBATCH_SIZE=512`, `POLL=100`,
+  `--ctx-checkpoints 0`, draft threads `32/32`;
+- actual LocalMaxxing packet shape: `588` prompt tokens and `512` output
+  tokens (`BENCH_PROMPT_MODE=filled-long`);
+- chat canary **384/384** pass;
+- fresh-response headline: first measured no-cache request after TTFT
+  `95.26352416631231 tok/s`; supporting repeated-request mean
+  `95.38558173206405 tok/s`; first-row wall `81.28549578539435 tok/s`;
+  all rows `cached_tokens=0`;
+- fresh-response status: submitted to LocalMaxxing and approved as
+  `cmqrsupdk000jqr01af3eu6vu`; supersedes approved Q8-draft fresh record
+  `cmqrjcly601kuqo01rbyub1x6` and earlier fast-argmax/CPU-cleanup result
+  `cmqr82niq01hgqo01v42y7ue8`;
+- queue:
+  `data/localmaxxing-gemma4-26b-a4b-q8-b70-llamacpp-mtp-n7-q8target-q40draft-fresh-20260624.queue.json`;
+- response:
+  `data/localmaxxing-responses/gemma4-26b-a4b-q8-b70-llamacpp-mtp-n7-q8target-q40draft-fresh-20260624.submit.log`.
+
+Previous filled-long draft-MTP fresh-response Q8-draft best:
+
+- `gemma4-q8-gpu0-mtp-n7-cleanrebuild-control-full-fresh-20260624T032733Z`,
+  llama.cpp SYCL on one B70, UD-Q8_K_XL main GGUF plus
+  `mtp-gemma-4-26B-A4B-it.gguf` draft GGUF;
+- fresh-response headline: first measured no-cache request after TTFT
+  `94.36621149389549 tok/s`; supporting repeated-request mean
+  `92.55939821446442 tok/s`; first-row wall `80.50542700854518 tok/s`;
+  all rows `cached_tokens=0`;
+- LocalMaxxing `cmqrjcly601kuqo01rbyub1x6`.
+
+Previous filled-long draft-MTP fresh-response Q8 best:
 
 - `gemma4-q8-gpu0-mtp-n7-c926-fastargmax-cpucleanup-vmm0-ub512-poll100-full-ctxcp0-nmin2-pmin012-nobs-dthreads32-dtb32-filled-long-20260623T222838Z`,
   llama.cpp SYCL on one B70,

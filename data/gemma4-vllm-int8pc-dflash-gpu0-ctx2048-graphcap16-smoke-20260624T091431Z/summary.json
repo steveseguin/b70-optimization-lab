@@ -1,0 +1,74 @@
+{
+  "bench_run_identity": {
+    "api_mode": "chat",
+    "base_url": "http://127.0.0.1:18400",
+    "created_at_utc": "2026-06-24T09:17:22.730089+00:00",
+    "max_tokens": 512,
+    "model": "gemma4-26b-a4b-dflash",
+    "prompt_chars": 3460,
+    "prompt_mode": "filled-long",
+    "prompt_preview": "You are running a deterministic Gemma B70 decode benchmark. Read the reference context, then produce a long numbered response until the token limit is reached. Do not summarize early.\n\nReference context:\nbenchmark latency memory throughput ",
+    "prompt_sha256": "04f687a68d60254567d3252624e01a696b0c9843dbb02f5a789d75aada5e4da5",
+    "prompt_tokens_requested": 512,
+    "repeats": 1,
+    "seed": 1,
+    "usage_required": true
+  },
+  "bench_summary": {
+    "completion_tokens": {
+      "cv": 0.0,
+      "max": 512,
+      "mean": 512.0,
+      "median": 512,
+      "min": 512,
+      "stdev": 0.0
+    },
+    "completion_tokens_total": 512,
+    "elapsed_s": {
+      "cv": 0.0,
+      "max": 13.83788495301269,
+      "mean": 13.83788495301269,
+      "median": 13.83788495301269,
+      "min": 13.83788495301269,
+      "stdev": 0.0
+    },
+    "prompt_tokens": {
+      "cv": 0.0,
+      "max": 588,
+      "mean": 588.0,
+      "median": 588,
+      "min": 588,
+      "stdev": 0.0
+    },
+    "requests": 1,
+    "tok_s_after_ttft": {
+      "cv": 0.0,
+      "max": 38.26907827338552,
+      "mean": 38.26907827338552,
+      "median": 38.26907827338552,
+      "min": 38.26907827338552,
+      "stdev": 0.0
+    },
+    "tok_s_wall": {
+      "cv": 0.0,
+      "max": 36.99987402254929,
+      "mean": 36.99987402254929,
+      "median": 36.99987402254929,
+      "min": 36.99987402254929,
+      "stdev": 0.0
+    },
+    "ttft_s": {
+      "cv": 0.0,
+      "max": 0.45893716800492257,
+      "mean": 0.45893716800492257,
+      "median": 0.45893716800492257,
+      "min": 0.45893716800492257,
+      "stdev": 0.0
+    }
+  },
+  "canary_pass_all": true,
+  "canary_rows_completed": 64,
+  "label": "gemma4-vllm-int8pc-dflash-gpu0-ctx2048-graphcap16-smoke-20260624T091431Z",
+  "run_dir": "/home/steve/qwen36-results-main/data/gemma4-vllm-int8pc-dflash-gpu0-ctx2048-graphcap16-smoke-20260624T091431Z",
+  "server_log": "/mnt/fast-ai/bench-results/gemma4-26b-a4b-vllm-dflash/servers/gemma4-vllm-int8pc-dflash-gpu0-ctx2048-graphcap16-smoke-20260624T091431Z.server.log"
+}

@@ -212,12 +212,13 @@ Current filled-long draft-MTP fresh-response best:
 
 ```bash
 cd /home/steve/qwen36-results-main
-LLAMA_SERVER=/home/steve/src/llama.cpp-latest-gemma/build-sycl-b70-aot-bmg-g31/bin/llama-server \
-GPU_INDEX=0 PORT=18260 LABEL=gemma4-q8-gpu0-mtp-n7-c926-fastargmax-cpucleanup-vmm0-ub512-poll100-full-ctxcp0-nmin2-pmin012-nobs-dthreads32-dtb32-filled-long-20260623T222838Z \
+LLAMA_SERVER=/home/steve/src/llama.cpp-gemma-record-stack/build-sycl-b70-aot-bmg-g31/bin/llama-server \
+GPU_INDEX=0 PORT=18260 LABEL=gemma4-q8-gpu0-mtp-n7-draftq40-full-$(date -u +%Y%m%dT%H%M%SZ) \
 GGML_SYCL_ENABLE_VMM=0 UBATCH_SIZE=512 POLL=100 \
+MTP_DRAFT_MODEL=/mnt/fast-ai/llm-models/gemma4-26b-a4b-it-q8-gguf/MTP/gemma-4-26B-A4B-it-Q4_0-MTP.gguf \
 MTP_N_MAX=7 MTP_N_MIN=2 MTP_P_MIN=0.12 MTP_BACKEND_SAMPLING=0 \
 MTP_DRAFT_THREADS=32 MTP_DRAFT_THREADS_BATCH=32 \
-MTP_DRAFT_FAST_ARGMAX=1 MTP_DRAFT_FAST_TOPK=0 MTP_DRAFT_PROFILE=1 \
+MTP_DRAFT_FAST_ARGMAX=1 MTP_DRAFT_PROFILE=1 \
 MTP_EXTRA_ARGS='--ctx-checkpoints 0' BENCH_PROMPT_MODE=filled-long \
 CANARY_REPEATS=96 BENCH_REPEATS=8 \
 scripts/run-gemma4-26b-mtp-candidate.sh
@@ -228,12 +229,13 @@ Result:
 ```text
 canary: 384/384 chat rows pass
 actual benchmark shape: 588 prompt tokens, 512 output tokens
-fresh headline tok/s: 92.397 first request after TTFT
-supporting independent repeated-request mean: 92.767 after TTFT, 83.289 wall
+fresh headline tok/s: 95.264 first no-cache request after TTFT
+supporting repeated-request mean: 95.386 after TTFT; first-row wall: 81.285
 prompt cache: cached_tokens=0 on every row
-LocalMaxxing: cmqr82niq01hgqo01v42y7ue8
-summary: data/gemma4-q8-gpu0-mtp-n7-c926-fastargmax-cpucleanup-vmm0-ub512-poll100-full-ctxcp0-nmin2-pmin012-nobs-dthreads32-dtb32-filled-long-20260623T222838Z/summary.json
-server log: /mnt/fast-ai/bench-results/gemma4-26b-a4b-q8/servers/gemma4-q8-gpu0-mtp-n7-c926-fastargmax-cpucleanup-vmm0-ub512-poll100-full-ctxcp0-nmin2-pmin012-nobs-dthreads32-dtb32-filled-long-20260623T222838Z.server.log
+LocalMaxxing: cmqrsupdk000jqr01af3eu6vu
+target/draft: UD-Q8_K_XL target/verifier with Q4_0 MTP draft only
+summary: data/gemma4-q8-gpu0-mtp-n7-draftq40-full-20260624T081218Z/summary.json
+server log: /mnt/fast-ai/bench-results/gemma4-26b-a4b-q8/servers/gemma4-q8-gpu0-mtp-n7-draftq40-full-20260624T081218Z.server.log
 ```
 
 The current record path requires the local llama.cpp patch stack captured in

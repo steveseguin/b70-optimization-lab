@@ -1,0 +1,26 @@
+diff --git a/tools/server/server-context.cpp b/tools/server/server-context.cpp
+index ca91449d2..4d6013c47 100644
+--- a/tools/server/server-context.cpp
++++ b/tools/server/server-context.cpp
+@@ -3809,8 +3809,19 @@ private:
+ 
+             // verify and try to accept the draft
+             {
+-                // save the sampler sampler state in case we need to restore it
+-                common_sampler_ptr smpl_save(common_sampler_clone(slot.smpl.get()));
++                const bool may_need_sampler_restore =
++                    ctx_tgt_seq_rm_type == COMMON_CONTEXT_SEQ_RM_TYPE_FULL ||
++                    (ctx_tgt_seq_rm_type == COMMON_CONTEXT_SEQ_RM_TYPE_RS &&
++                     slot.spec_draft.size() + 1 > (size_t) llama_n_rs_seq(ctx_tgt));
++
++                common_sampler_ptr smpl_save;
++                if (may_need_sampler_restore) {
++                    // Save the sampler state only when a later target checkpoint
++                    // restore can actually use it. Gemma4 MTP normally trims
++                    // the speculative tail with seq_rm, so cloning every step is
++                    // hot-path bookkeeping with no effect on accepted tokens.
++                    smpl_save.reset(common_sampler_clone(slot.smpl.get()));
++                }
+ 
+                 GGML_ASSERT(slot.spec_i_batch.size() == n_draft + 1);
+                 auto accepted = common_sampler_sample_and_accept_n(slot.smpl.get(), slot.ctx_tgt, slot.spec_i_batch, slot.spec_draft);

@@ -1,0 +1,350 @@
+diff --git a/src/llama-context.cpp b/src/llama-context.cpp
+index 220240ea9..c7081ff60 100644
+--- a/src/llama-context.cpp
++++ b/src/llama-context.cpp
+@@ -14,6 +14,7 @@
+ 
+ #include <cinttypes>
+ #include <cmath>
++#include <cstdlib>
+ #include <cstring>
+ #include <limits>
+ #include <stdexcept>
+@@ -30,6 +31,19 @@ static llm_graph_type ctx_type_to_graph_type(llama_context_type ctx_type) {
+     throw std::runtime_error("Unsupported ctx type");
+ }
+ 
++static bool llama_env_enabled(const char * name) {
++    const char * env = std::getenv(name);
++    if (env == nullptr || env[0] == '\0') {
++        return false;
++    }
++
++    return std::strcmp(env, "1") == 0 ||
++           std::strcmp(env, "true") == 0 ||
++           std::strcmp(env, "TRUE") == 0 ||
++           std::strcmp(env, "yes") == 0 ||
++           std::strcmp(env, "on") == 0;
++}
++
+ llama_context::llama_context(
+         const llama_model & model,
+               llama_context_params params) :
+@@ -67,6 +81,7 @@ llama_context::llama_context(
+     cparams.embeddings              = params.embeddings;
+     cparams.embeddings_nextn        = false;
+     cparams.embeddings_nextn_masked = false;
++    cparams.mtp_draft_direct_argmax_ids = false;
+     cparams.offload_kqv             = params.offload_kqv;
+     cparams.no_perf                 = params.no_perf;
+     cparams.warmup                  = false;
+@@ -77,6 +92,13 @@ llama_context::llama_context(
+     cparams.ctx_type     = params.ctx_type;
+     cparams.pooling_type = params.pooling_type;
+ 
++    mtp_decode_phase_profile =
++        params.ctx_type == LLAMA_CONTEXT_TYPE_MTP &&
++        llama_env_enabled("LLAMA_MTP_DECODE_PHASE_PROFILE");
++    if (mtp_decode_phase_profile) {
++        LLAMA_LOG_INFO("%s: MTP decode phase profiling enabled\n", __func__);
++    }
++
+     cparams.n_ctx            = params.n_ctx           == 0    ? hparams.n_ctx_train           : params.n_ctx;
+     cparams.rope_freq_base   = params.rope_freq_base  == 0.0f ? hparams.rope_freq_base_train  : params.rope_freq_base;
+     cparams.rope_freq_scale  = params.rope_freq_scale == 0.0f ? hparams.rope_freq_scale_train : params.rope_freq_scale;
+@@ -98,6 +120,13 @@ llama_context::llama_context(
+         }
+ 
+         cparams.ctx_other = params.ctx_other;
++        cparams.mtp_draft_direct_argmax_ids =
++            params.ctx_type == LLAMA_CONTEXT_TYPE_MTP &&
++            llama_env_enabled("LLAMA_MTP_DRAFT_DIRECT_ARGMAX_IDS");
++
++        if (cparams.mtp_draft_direct_argmax_ids) {
++            LLAMA_LOG_INFO("%s: MTP direct greedy argmax token ID outputs enabled\n", __func__);
++        }
+     }
+ 
+     if (model.arch == LLM_ARCH_EAGLE3) {
+@@ -417,6 +446,29 @@ llama_context::llama_context(
+ }
+ 
+ llama_context::~llama_context() {
++    if (mtp_decode_phase_profile && n_mtp_decode_phase_calls > 0) {
++        const auto ms = [](int64_t us) {
++            return (double) us / 1000.0;
++        };
++        LLAMA_LOG_INFO("mtp decode phase profile: calls=%" PRId64 ", tokens=%" PRId64 ", ubatches=%" PRId64 ", total_ms=%.3f, per_call_ms=%.3f, per_token_ms=%.3f\n",
++                n_mtp_decode_phase_calls,
++                n_mtp_decode_phase_tokens,
++                n_mtp_decode_phase_ubatches,
++                ms(t_mtp_decode_phase_total_us),
++                ms(t_mtp_decode_phase_total_us) / (double) n_mtp_decode_phase_calls,
++                ms(t_mtp_decode_phase_total_us) / (double) std::max<int64_t>(1, n_mtp_decode_phase_tokens));
++        LLAMA_LOG_INFO("mtp decode phase profile: balloc_ms=%.3f, sched_reserve_ms=%.3f, memory_update_ms=%.3f, init_batch_ms=%.3f, output_reserve_ms=%.3f\n",
++                ms(t_mtp_decode_phase_balloc_us),
++                ms(t_mtp_decode_phase_sched_reserve_us),
++                ms(t_mtp_decode_phase_memory_update_us),
++                ms(t_mtp_decode_phase_init_batch_us),
++                ms(t_mtp_decode_phase_output_reserve_us));
++        LLAMA_LOG_INFO("mtp decode phase profile: process_ubatch_ms=%.3f, post_extract_ms=%.3f, output_map_ms=%.3f\n",
++                ms(t_mtp_decode_phase_process_ubatch_us),
++                ms(t_mtp_decode_phase_post_extract_us),
++                ms(t_mtp_decode_phase_output_map_us));
++    }
++
+     if (!model.hparams.no_alloc) {
+         for (size_t i = 0; i < backend_ptrs.size(); ++i) {
+             ggml_backend_t             backend = backend_ptrs[i];
+@@ -1660,7 +1712,14 @@ static void copy_tensor_async_candidates(
+     }
+ }
+ 
+-static bool needs_raw_logits(const llama_ubatch & ubatch, const std::map<llama_seq_id, llama_sampler *> & samplers) {
++static bool needs_raw_logits(
++        const llama_ubatch & ubatch,
++        const std::map<llama_seq_id, llama_sampler *> & samplers,
++        const llama_cparams & cparams) {
++    if (cparams.mtp_draft_direct_argmax_ids) {
++        return false;
++    }
++
+     for (uint32_t i = 0; i < ubatch.n_tokens; i++) {
+         if (!ubatch.output[i]) {
+             continue;
+@@ -1682,6 +1741,8 @@ int llama_context::decode(const llama_batch & batch_inp) {
+     // so accept either present rather than requiring exactly one.
+     GGML_ASSERT(batch_inp.token || batch_inp.embd);
+ 
++    const int64_t t_decode_phase_start_us = mtp_decode_phase_profile ? ggml_time_us() : 0;
++
+     if (!memory) {
+         LLAMA_LOG_DEBUG("%s: cannot decode batches with this context (calling encode() instead)\n", __func__);
+         return encode(batch_inp);
+@@ -1728,10 +1789,14 @@ int llama_context::decode(const llama_batch & batch_inp) {
+         }
+     }
+ 
++    const int64_t t_balloc_start_us = mtp_decode_phase_profile ? ggml_time_us() : 0;
+     if (!balloc->init(batch_inp, vocab, memory.get(), n_embd, n_seq_max, output_all)) {
+         LLAMA_LOG_ERROR("%s: failed to initialize batch\n", __func__);
+         return -1;
+     }
++    if (mtp_decode_phase_profile) {
++        t_mtp_decode_phase_balloc_us += ggml_time_us() - t_balloc_start_us;
++    }
+ 
+     const uint32_t n_tokens_all  = balloc->get_n_tokens();
+     const uint32_t n_outputs_all = balloc->get_n_outputs();
+@@ -1758,17 +1823,29 @@ int llama_context::decode(const llama_batch & batch_inp) {
+     embd_seq.clear();
+     output_swaps.clear();
+ 
++    const int64_t t_sched_start_us = mtp_decode_phase_profile ? ggml_time_us() : 0;
+     sched_reserve();
++    if (mtp_decode_phase_profile) {
++        t_mtp_decode_phase_sched_reserve_us += ggml_time_us() - t_sched_start_us;
++    }
+ 
+     bool did_optimize = false;
+ 
+     // handle any pending shifts/copies
++    const int64_t t_memory_update_start_us = mtp_decode_phase_profile ? ggml_time_us() : 0;
+     memory_update(false);
++    if (mtp_decode_phase_profile) {
++        t_mtp_decode_phase_memory_update_us += ggml_time_us() - t_memory_update_start_us;
++    }
+ 
+     llama_memory_context_ptr mctx;
+ 
+     while (true) {
++        const int64_t t_init_batch_start_us = mtp_decode_phase_profile ? ggml_time_us() : 0;
+         mctx = memory->init_batch(*balloc, cparams.n_ubatch, output_all);
++        if (mtp_decode_phase_profile) {
++            t_mtp_decode_phase_init_batch_us += ggml_time_us() - t_init_batch_start_us;
++        }
+         if (!mctx) {
+             return -2;
+         }
+@@ -1811,10 +1888,14 @@ int llama_context::decode(const llama_batch & batch_inp) {
+     }
+ 
+     // reserve output buffer
++    const int64_t t_output_reserve_start_us = mtp_decode_phase_profile ? ggml_time_us() : 0;
+     if (output_reserve(n_outputs_all) < n_outputs_all) {
+         LLAMA_LOG_ERROR("%s: could not reserve space for batch with %d outputs\n", __func__, n_outputs_all);
+         return -2;
+     };
++    if (mtp_decode_phase_profile) {
++        t_mtp_decode_phase_output_reserve_us += ggml_time_us() - t_output_reserve_start_us;
++    }
+ 
+     int64_t n_outputs_prev = 0;
+     int64_t n_tokens_prev  = 0;
+@@ -1840,7 +1921,12 @@ int llama_context::decode(const llama_batch & batch_inp) {
+ 
+         ggml_status status;
+ 
++        const int64_t t_process_ubatch_start_us = mtp_decode_phase_profile ? ggml_time_us() : 0;
+         const auto * res = process_ubatch(ubatch, ctx_type_to_graph_type(cparams.ctx_type), mctx.get(), status);
++        if (mtp_decode_phase_profile) {
++            t_mtp_decode_phase_process_ubatch_us += ggml_time_us() - t_process_ubatch_start_us;
++            n_mtp_decode_phase_ubatches++;
++        }
+ 
+         if (!res) {
+             // the last ubatch failed or was aborted -> remove all positions of that ubatch from the memory module
+@@ -1882,12 +1968,14 @@ int llama_context::decode(const llama_batch & batch_inp) {
+         auto * t_embd    = cparams.embeddings       ? res->get_embd()     : nullptr;
+         auto * t_h_nextn = cparams.embeddings_nextn ? res->get_h_nextn()  : nullptr;
+ 
++        const int64_t t_post_extract_start_us = mtp_decode_phase_profile ? ggml_time_us() : 0;
++
+         if (t_embd && res->get_embd_pooled()) {
+             t_embd = res->get_embd_pooled();
+         }
+ 
+         // extract logits
+-        if (logits.data && t_logits && n_outputs > 0 && needs_raw_logits(ubatch, sampling.samplers)) {
++        if (logits.data && t_logits && n_outputs > 0 && needs_raw_logits(ubatch, sampling.samplers, cparams)) {
+             ggml_backend_t backend_res = ggml_backend_sched_get_tensor_backend(sched.get(), t_logits);
+             GGML_ASSERT(backend_res != nullptr);
+             GGML_ASSERT(logits.data != nullptr);
+@@ -1982,27 +2070,34 @@ int llama_context::decode(const llama_batch & batch_inp) {
+             }
+         }
+ 
+-        // Copy backend sampling output if this ubatch produced any sampling tensors.
+-        if (has_samplers && (!res->t_sampled.empty() || !res->t_sampled_probs.empty() || !res->t_sampled_logits.empty())) {
++        // Copy backend/direct sampling output if this ubatch produced sampling tensors.
++        if ((has_samplers || cparams.mtp_draft_direct_argmax_ids) &&
++                (!res->t_sampled.empty() || !res->t_sampled_probs.empty() || !res->t_sampled_logits.empty())) {
+             const auto seq_to_output_row = build_seq_to_output_row(ubatch, n_outputs_prev);
+             const auto stride = n_vocab;
+ 
+             // async copy the sampling data from the backend to the host
+             copy_tensor_async_ints(res->t_sampled, sampling.sampled, seq_to_output_row, sched.get());
+ 
+-            copy_tensor_async_floats    (res->t_sampled_logits, sampling.logits,     stride, sampling.logits_count,     seq_to_output_row, sched.get());
+-            copy_tensor_async_floats    (res->t_sampled_probs,  sampling.probs,      stride, sampling.probs_count,      seq_to_output_row, sched.get());
+-            copy_tensor_async_candidates(res->t_candidates,     sampling.candidates, stride, sampling.candidates_count, seq_to_output_row, sched.get());
++            if (has_samplers) {
++                copy_tensor_async_floats    (res->t_sampled_logits, sampling.logits,     stride, sampling.logits_count,     seq_to_output_row, sched.get());
++                copy_tensor_async_floats    (res->t_sampled_probs,  sampling.probs,      stride, sampling.probs_count,      seq_to_output_row, sched.get());
++                copy_tensor_async_candidates(res->t_candidates,     sampling.candidates, stride, sampling.candidates_count, seq_to_output_row, sched.get());
++            }
+         }
+ 
+         n_outputs_prev += n_outputs;
+         n_tokens_prev  += ubatch.n_tokens;
++        if (mtp_decode_phase_profile) {
++            t_mtp_decode_phase_post_extract_us += ggml_time_us() - t_post_extract_start_us;
++        }
+     } while (mctx->next());
+ 
+     // set to total number of outputs in the batch, for use in llama_get_logits_ith
+     n_outputs = n_outputs_all;
+ 
+     // set output mappings
++    const int64_t t_output_map_start_us = mtp_decode_phase_profile ? ggml_time_us() : 0;
+     if (n_outputs > 0) {
+         bool sorted_output = true;
+ 
+@@ -2048,6 +2143,12 @@ int llama_context::decode(const llama_batch & batch_inp) {
+             }
+         }
+     }
++    if (mtp_decode_phase_profile) {
++        t_mtp_decode_phase_output_map_us += ggml_time_us() - t_output_map_start_us;
++        t_mtp_decode_phase_total_us += ggml_time_us() - t_decode_phase_start_us;
++        n_mtp_decode_phase_calls++;
++        n_mtp_decode_phase_tokens += n_tokens_all;
++    }
+ 
+     // wait for the computation to finish (automatically done when obtaining the model output)
+     //synchronize();
+@@ -2070,7 +2171,7 @@ uint32_t llama_context::output_reserve(int32_t n_outputs) {
+     const auto n_embd     = hparams.n_embd;
+     const auto n_embd_out = hparams.n_embd_out();
+ 
+-    bool has_logits     = true;
++    bool has_logits     = !cparams.mtp_draft_direct_argmax_ids;
+     bool has_embd       = cparams.embeddings;
+     bool has_embd_nextn = cparams.embeddings_nextn;
+ 
+@@ -2101,10 +2202,14 @@ uint32_t llama_context::output_reserve(int32_t n_outputs) {
+     }
+ 
+     // Allocate backend sampling output buffers if there are backend samplers configured.
++    // The MTP direct argmax path only needs one sampled-token slot per output row.
+     const bool has_sampling = !sampling.samplers.empty();
++    const bool has_direct_sampling = cparams.mtp_draft_direct_argmax_ids;
+     if (has_sampling) {
+         backend_float_count = 2 * n_vocab * n_outputs_max;      // logits + probs
+         backend_token_count = (1 + n_vocab) * n_outputs_max;    // sampled + candidates
++    } else if (has_direct_sampling) {
++        backend_token_count = n_outputs_max;                    // sampled only
+     }
+ 
+     if (output_ids.empty()) {
+@@ -2199,6 +2304,18 @@ uint32_t llama_context::output_reserve(int32_t n_outputs) {
+         std::fill(sampling.probs_count.begin(),      sampling.probs_count.end(),      0);
+         std::fill(sampling.candidates_count.begin(), sampling.candidates_count.end(), 0);
+ 
++        std::fill_n(sampling.sampled.data, sampling.sampled.size, LLAMA_TOKEN_NULL);
++    } else if (has_direct_sampling) {
++        sampling.logits     = {nullptr, 0};
++        sampling.probs      = {nullptr, 0};
++        sampling.sampled    = {(llama_token *) (base + offset), (size_t)n_outputs_max};
++        offset += sampling.sampled.size * sizeof(llama_token);
++        sampling.candidates = {nullptr, 0};
++
++        sampling.logits_count.clear();
++        sampling.probs_count.clear();
++        sampling.candidates_count.clear();
++
+         std::fill_n(sampling.sampled.data, sampling.sampled.size, LLAMA_TOKEN_NULL);
+     } else {
+         sampling.logits     = {nullptr, 0};
+@@ -2285,6 +2402,10 @@ void llama_context::output_reorder() {
+             }
+         }
+ 
++        if (sampling.sampled.size > 0) {
++            std::swap(sampling.sampled.data[i0], sampling.sampled.data[i1]);
++        }
++
+         if (!sampling.samplers.empty()) {
+             assert(sampling.logits.size > 0);
+             assert(sampling.probs.size > 0);
+@@ -2306,7 +2427,6 @@ void llama_context::output_reorder() {
+                 std::swap(sampling.candidates.data[i0*n_vocab + k], sampling.candidates.data[i1*n_vocab + k]);
+             }
+ 
+-            std::swap(sampling.sampled.data[i0],     sampling.sampled.data[i1]);
+             std::swap(sampling.logits_count[i0],     sampling.logits_count[i1]);
+             std::swap(sampling.probs_count[i0],      sampling.probs_count[i1]);
+             std::swap(sampling.candidates_count[i0], sampling.candidates_count[i1]);
+diff --git a/src/llama-context.h b/src/llama-context.h
+index f8b780587..632fdd552 100644
+--- a/src/llama-context.h
++++ b/src/llama-context.h
+@@ -387,4 +387,18 @@ private:
+     mutable int32_t n_eval   = 0; // number of eval calls
+ 
+     mutable int32_t n_reused = 0; // number of times the previous graph was reused
++
++    bool mtp_decode_phase_profile = false;
++    mutable int64_t t_mtp_decode_phase_total_us          = 0;
++    mutable int64_t t_mtp_decode_phase_balloc_us         = 0;
++    mutable int64_t t_mtp_decode_phase_sched_reserve_us  = 0;
++    mutable int64_t t_mtp_decode_phase_memory_update_us  = 0;
++    mutable int64_t t_mtp_decode_phase_init_batch_us     = 0;
++    mutable int64_t t_mtp_decode_phase_output_reserve_us = 0;
++    mutable int64_t t_mtp_decode_phase_process_ubatch_us = 0;
++    mutable int64_t t_mtp_decode_phase_post_extract_us   = 0;
++    mutable int64_t t_mtp_decode_phase_output_map_us     = 0;
++    mutable int64_t n_mtp_decode_phase_calls             = 0;
++    mutable int64_t n_mtp_decode_phase_tokens            = 0;
++    mutable int64_t n_mtp_decode_phase_ubatches          = 0;
+ };

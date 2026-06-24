@@ -1,0 +1,53 @@
+diff --git a/common/speculative.cpp b/common/speculative.cpp
+--- a/common/speculative.cpp
++++ b/common/speculative.cpp
+@@
+     // Hidden rows from the most recent target verification batch, grouped by seq.
+     // Row 0 corresponds to the sampled token, row N to the Nth accepted draft token.
+     std::vector<std::vector<float>> verify_h;
+     std::vector<int32_t> verify_h_rows;
++    std::vector<int32_t> verify_h_beg;
+@@
+         for (auto & h : verify_h) {
+             h.reserve((size_t) (this->params.n_max + 1) * n_embd);
+         }
+         verify_h_rows.assign(n_seq, 0);
++        verify_h_beg.assign(n_seq, -1);
+@@
+-            const int32_t n_rows = i_batch_end[seq_id] - i_batch_beg[seq_id] + 1;
++            const int32_t i_beg = i_batch_beg[seq_id];
++            const int32_t i_end = i_batch_end[seq_id];
++            const int32_t n_rows = i_end - i_beg + 1;
+             verify_h_rows[seq_id] = n_rows;
+-            verify_h[seq_id].resize((size_t) n_rows * n_embd);
++            verify_h_beg[seq_id] = i_beg;
+             if (mtp_profile) {
+                 n_mtp_process_verify_rows += (size_t) n_rows;
+             }
+ 
+-            for (int32_t i = 0; i < n_rows; ++i) {
+-                const float * h = llama_get_embeddings_nextn_ith(ctx_tgt, i_batch_beg[seq_id] + i);
+-                std::memcpy(verify_h[seq_id].data() + (size_t) i * n_embd, h, row_bytes);
+-            }
+-
++            const float * h_last = llama_get_embeddings_nextn_ith(ctx_tgt, i_end);
+             std::memcpy(pending_h[seq_id].data(),
+-                    verify_h[seq_id].data() + (size_t) (n_rows - 1) * n_embd, row_bytes);
++                    h_last, row_bytes);
+@@
+         if (n_rows <= 0) {
+             return;
+         }
+ 
++        const int32_t i_beg = verify_h_beg[seq_id];
++        if (i_beg < 0) {
++            return;
++        }
++
+         const int32_t i_h = std::min<int32_t>(n_accepted, n_rows - 1);
+         const size_t row_bytes = (size_t) n_embd * sizeof(float);
+         const int64_t t_accept_start_us = mtp_profile ? ggml_time_us() : 0;
+-        std::memcpy(pending_h[seq_id].data(), verify_h[seq_id].data() + (size_t) i_h * n_embd, row_bytes);
++        const float * h = llama_get_embeddings_nextn_ith(params.ctx_tgt, i_beg + i_h);
++        std::memcpy(pending_h[seq_id].data(), h, row_bytes);
+

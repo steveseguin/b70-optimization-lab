@@ -4,6 +4,30 @@ Research snapshot: 2026-06-23. Goal: maximize valid single-session decode for
 one complete Q8/INT8-quality Gemma 4 26B A4B replica per B70, then run four
 replicas on four GPUs for parallel research and aggregate service capacity.
 
+## Current Fresh-Response Headline
+
+Current valid one-B70 headline is
+`data/gemma4-q8-gpu0-mtp-n7-draftq40-full-20260624T081218Z/`:
+
+- target/verifier: `gemma-4-26B-A4B-it-UD-Q8_K_XL.gguf`;
+- draft: `MTP/gemma-4-26B-A4B-it-Q4_0-MTP.gguf`;
+- recipe: llama.cpp AOT BMG, draft-MTP `n=7`, `n_min=2`,
+  `p_min=0.12`, backend draft sampling off,
+  `LLAMA_MTP_DRAFT_FAST_ARGMAX=1`, f16 target/draft KV,
+  `--ctx-checkpoints 0`, `GGML_SYCL_ENABLE_VMM=0`, `UBATCH_SIZE=512`,
+  `POLL=100`, `FLASH_ATTN=off`;
+- validation: chat canary **384/384**, benchmark row 0 `cached_tokens=0`;
+- fresh headline: **95.26352416631231 tok/s** after TTFT;
+- supporting repeated-request mean: `95.38558173206405 tok/s`;
+- LocalMaxxing: `cmqrsupdk000jqr01af3eu6vu`.
+
+The actual research target remains **>150 tok/s fresh-response**. The current
+scalar llama.cpp MTP loop is below that target because it still performs one
+assistant `llama_decode()` per draft token. Further p-min/thread/runtime-shape
+sweeps are useful only as cleanup; a 2x-class improvement likely requires a
+graph-level multi-token assistant unroll or a different fresh-valid speculation
+engine.
+
 ## Non-Negotiables
 
 - Default precision is Q8 / INT8-or-better. Lower precision can be a diagnostic
@@ -137,9 +161,10 @@ Current filled-long warmed/history-accelerated ngram artifact:
   It supersedes warmed/history
   ngram records `cmqqxx7bp01dbqo012d2qiiw6` (`280.04 tok/s`),
   `cmqqxjnif01d0qo01ix4oeixo` (`255.04 tok/s`) and
-  `cmqqxbkzx01cxqo01j8p97627` (`245.98 tok/s`), but does **not** supersede the
-  current fresh-response draft-MTP record `cmqr82niq01hgqo01v42y7ue8`
-  (`92.397 tok/s` first measured request; `92.767 tok/s` repeat mean);
+  `cmqqxbkzx01cxqo01j8p97627` (`245.98 tok/s`), but does **not** supersede any
+  fresh-response draft-MTP record. The current fresh-response record is
+  `cmqrsupdk000jqr01af3eu6vu` (`95.26352416631231 tok/s` first measured
+  request; `95.38558173206405 tok/s` repeat mean);
 - decision: useful warmed/history artifact, not the current valid
   fresh-response best. Label this result honestly as history-cache acceleration
   on a repetitive sustained-decode shape: every drafted token is verified by the
@@ -270,8 +295,9 @@ Next queue:
   now complete. It validated chat-template quality but reached only
   `34.89 tok/s` with graph enabled; `fp8_per_tensor` improved to `40.31 tok/s`
   as a lower-precision diagnostic. Neither lane is competitive with the
-  llama.cpp Q8 fresh-response record (`92.397 tok/s` first request;
-  `92.767 tok/s` supporting repeat mean).
+  current llama.cpp Q8-target fresh-response record (`95.264 tok/s` first
+  no-cache request; `95.386 tok/s` supporting repeat mean) from the Q4_0
+  draft-MTP validation.
 
 The `filled-long` prompt mode records prompt hash/preview and usage-derived
 prompt/completion-token stats. Use it for near-512-input / 512-output
@@ -367,9 +393,10 @@ for each meaningful lane.
 
 ## Phase 4: MTP / Speculative Decode
 
-Status: **active; fresh-response headline is draft-MTP `n=7` with fast argmax
-and CPU cleanup at `92.397 tok/s` first measured request after TTFT
-(`92.767 tok/s` supporting repeat mean). Draftless
+Status: **active; fresh-response headline is Q8-target draft-MTP `n=7` with
+Q4_0 MTP draft, fast argmax, CPU cleanup, VMM off, ubatch 512, and poll 100 at
+`95.264 tok/s` first no-cache request after TTFT (`95.386 tok/s` supporting
+repeat mean). Draftless
 `ngram-mod match=20 min=32 max=64` reached `280.64 tok/s` only as warmed/history
 throughput on repeated identical continuations and is not a fresh-response
 record.**
@@ -405,9 +432,11 @@ On filled-long, `n=4` beat `n=2/3`, `n=5` improved again, `n=6` reached the
 low-80s, and `n=7, n-min=2` is the current frontier. Disabling draft backend
 sampling, draft threads/batch `32/32`, latest llama.cpp `c926ad098`,
 `--ctx-checkpoints 0`, source-level fast top-k, then CPU cleanup plus fast
-argmax advanced the valid fresh-response record to **`92.397 tok/s`** first
-measured request after TTFT (`92.767 tok/s` supporting repeat mean), 384/384
-canary, LocalMaxxing `cmqr82niq01hgqo01v42y7ue8`.
+argmax advanced the Q8-draft record to `94.366 tok/s`; switching only the MTP
+draft to Q4_0 later advanced the valid Q8-target fresh-response record to
+**`95.264 tok/s`** first no-cache request after TTFT (`95.386 tok/s`
+supporting repeat mean), 384/384 canary, LocalMaxxing
+`cmqrsupdk000jqr01af3eu6vu`.
 
 Draftless `ngram-mod` speculation then surpassed the MTP lane only on the
 repeated-output warmed/history version of the filled-long shape. The best
@@ -540,8 +569,8 @@ Text speed is first. After text baseline:
     The `n=7` MTP lane already accepts long chunks on the filled-long benchmark
     (`~445/462` drafted tokens, mean acceptance length `~7.7`, zero `p-min`
     stops in the profile). Argmax/top-k and VMM/ubatch/poll follow-ups preserved
-    quality but did not beat the current `92.397 tok/s` first-request record in
-    a meaningful way.
+    quality but did not beat the current `95.264 tok/s` Q8-target/Q4_0-draft
+    first-request record in a meaningful way.
     A fixed-line diagnostic then showed the same thing more sharply: `n=8`
     accepted `454/454` drafted benchmark tokens but fell to `64.20 tok/s`, and
     `n=12/16` also lost despite mean accepted lengths above `11`. Further small

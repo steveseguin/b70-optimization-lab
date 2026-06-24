@@ -1,0 +1,28 @@
+diff --git a/common/speculative.cpp b/common/speculative.cpp
+--- a/common/speculative.cpp
++++ b/common/speculative.cpp
+@@
+-                const int64_t t_hidden_start_us = mtp_profile ? ggml_time_us() : 0;
+-                const float * h_row = llama_get_embeddings_nextn_ith(ctx_dft, i_last[seq_id]);
+-                if (mtp_profile) {
+-                    t_mtp_draft_hidden_get_us += ggml_time_us() - t_hidden_start_us;
+-                    n_mtp_hidden_get_rows++;
+-                }
+                 for (int k = 0; k < std::min(3, (int) cur_p->size); ++k) {
+                     LOG_DBG(" - seq_id %d, draft candidate %3d, pos %3d: %6d (%8.3f) '%s'\n",
+                             seq_id, k, i, cur_p->data[k].id, cur_p->data[k].p,
+@@
+                     n_drafting--;
+                     continue;
+                 }
+ 
++                const int64_t t_hidden_start_us = mtp_profile ? ggml_time_us() : 0;
++                const float * h_row = llama_get_embeddings_nextn_ith(ctx_dft, i_last[seq_id]);
++                if (mtp_profile) {
++                    t_mtp_draft_hidden_get_us += ggml_time_us() - t_hidden_start_us;
++                    n_mtp_hidden_get_rows++;
++                }
++
+                 const int64_t t_handoff_start_us = mtp_profile ? ggml_time_us() : 0;
+                 if (chain_heads) {
+
