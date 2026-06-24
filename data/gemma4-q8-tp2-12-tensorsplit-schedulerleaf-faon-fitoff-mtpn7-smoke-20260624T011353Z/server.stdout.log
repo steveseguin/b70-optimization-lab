@@ -1,0 +1,99 @@
+0.00.257.241 I log_info: verbosity = 3 (adjust with the `-lv N` CLI arg)
+0.00.257.243 I device_info:
+0.00.257.622 I   - SYCL0   : Intel(R) Arc(TM) Pro B70 Graphics (32656 MiB, 32596 MiB free)
+0.00.257.957 I   - SYCL1   : Intel(R) Arc(TM) Pro B70 Graphics (32656 MiB, 32619 MiB free)
+0.00.257.965 I   - CPU     : AMD Ryzen Threadripper PRO 5955WX 16-Cores (128671 MiB, 128671 MiB free)
+0.00.258.016 I system_info: n_threads = 16 (n_threads_batch = 16) / 32 | CPU : SSE3 = 1 | SSSE3 = 1 | AVX = 1 | AVX2 = 1 | F16C = 1 | FMA = 1 | BMI2 = 1 | LLAMAFILE = 1 | OPENMP = 1 | REPACK = 1 |
+0.00.258.070 I srv          init: running without SSL
+0.00.258.128 I srv          init: using 31 threads for HTTP server
+0.00.258.436 I srv         start: binding port with default address family
+0.00.259.636 I srv  llama_server: loading model
+0.00.259.710 I srv    load_model: loading model '/mnt/fast-ai/llm-models/gemma4-26b-a4b-it-q8-gguf/gemma-4-26B-A4B-it-UD-Q8_K_XL.gguf'
+0.00.611.946 W load: control-looking token:    212 '</s>' was not control-type; this is probably a bug in the model. its type will be overridden
+0.00.612.217 W load: control-looking token:     50 '<|tool_response>' was not control-type; this is probably a bug in the model. its type will be overridden
+0.00.615.512 W load: control-looking token:      1 '<eos>' was not control-type; this is probably a bug in the model. its type will be overridden
+0.00.624.412 W load: special_eog_ids contains '<|tool_response>', removing '</s>' token from EOG list
+0.57.728.706 W llama_context: n_ctx_seq (8192) < n_ctx_train (262144) -- the full capacity of the model will not be utilized
+0.57.817.158 I common_init_from_params: warming up the model with an empty run - please wait ... (--no-warmup to disable)
+0.58.434.195 I srv    load_model: loading draft model '/mnt/fast-ai/llm-models/gemma4-26b-a4b-it-q8-gguf/mtp-gemma-4-26B-A4B-it.gguf'
+0.58.769.639 W load: control-looking token:    212 '</s>' was not control-type; this is probably a bug in the model. its type will be overridden
+0.58.769.876 W load: control-looking token:     50 '<|tool_response>' was not control-type; this is probably a bug in the model. its type will be overridden
+0.58.781.942 W load: special_eog_ids contains '<|tool_response>', removing '</s>' token from EOG list
+0.59.069.057 W llama_context: n_ctx_seq (8192) < n_ctx_train (262144) -- the full capacity of the model will not be utilized
+0.59.069.158 W llama_kv_cache: layer   3: sharing with layer 29. k = 0x2000000000000000, v = 0x2000000000000000
+0.59.069.170 W llama_kv_cache: layer   0: sharing with layer 28. k = 0x2000000000000000, v = 0x2000000000000000
+0.59.069.171 W llama_kv_cache: layer   1: sharing with layer 28. k = 0x2000000000000000, v = 0x2000000000000000
+0.59.069.171 W llama_kv_cache: layer   2: sharing with layer 28. k = 0x2000000000000000, v = 0x2000000000000000
+/home/steve/src/llama.cpp-latest-gemma/ggml/src/ggml-backend.cpp:905: pre-allocated tensor (cache_k_l28) in a buffer (Meta()) that cannot run the operation (NONE)
+[New LWP 947010]
+[New LWP 947009]
+[New LWP 947008]
+[New LWP 947007]
+[New LWP 947006]
+[New LWP 947005]
+[New LWP 947004]
+[New LWP 947003]
+[New LWP 947002]
+[New LWP 947001]
+[New LWP 947000]
+[New LWP 946999]
+[New LWP 946998]
+[New LWP 946997]
+[New LWP 946996]
+[New LWP 946995]
+[New LWP 946994]
+[New LWP 946993]
+[New LWP 946992]
+[New LWP 946991]
+[New LWP 946990]
+[New LWP 946989]
+[New LWP 946988]
+[New LWP 946987]
+[New LWP 946986]
+[New LWP 946985]
+[New LWP 946984]
+[New LWP 946983]
+[New LWP 946982]
+[New LWP 946981]
+[New LWP 946980]
+[New LWP 946979]
+[New LWP 946978]
+[New LWP 946949]
+
+This GDB supports auto-downloading debuginfo from the following URLs:
+  <https://debuginfod.ubuntu.com>
+Enable debuginfod for this session? (y or [n]) [answered N; input not from terminal]
+Debuginfod has been disabled.
+To make this setting permanent, add 'set debuginfod enabled off' to .gdbinit.
+warning: File "/opt/intel/oneapi/compiler/2026.0/lib/libsycl.so.9.0.0-gdb.py" auto-loading has been declined by your `auto-load safe-path' set to "$debugdir:$datadir/auto-load".
+To enable execution of this file add
+	add-auto-load-safe-path /opt/intel/oneapi/compiler/2026.0/lib/libsycl.so.9.0.0-gdb.py
+line to your configuration file "/home/steve/.config/gdb/gdbinit".
+To completely disable this security protection add
+	set auto-load safe-path /
+line to your configuration file "/home/steve/.config/gdb/gdbinit".
+For more information about this security protection see the
+"Auto-loading safe path" section in the GDB manual.  E.g., run from the shell:
+	info "(gdb)Auto-loading safe path"
+[Thread debugging using libthread_db enabled]
+Using host libthread_db library "/lib/x86_64-linux-gnu/libthread_db.so.1".
+0x00007d0185f10813 in __GI___wait4 (pid=947107, stat_loc=0x0, options=0, usage=0x0) at ../sysdeps/unix/sysv/linux/wait4.c:30
+warning: 30	../sysdeps/unix/sysv/linux/wait4.c: No such file or directory
+#0  0x00007d0185f10813 in __GI___wait4 (pid=947107, stat_loc=0x0, options=0, usage=0x0) at ../sysdeps/unix/sysv/linux/wait4.c:30
+30	in ../sysdeps/unix/sysv/linux/wait4.c
+#1  0x00007d019132abba in ggml_print_backtrace () from /home/steve/src/llama.cpp-latest-gemma/build-sycl-b70-aot-bmg-g31/bin/libggml-base.so.0
+#2  0x00007d0191329d29 in ggml_abort () from /home/steve/src/llama.cpp-latest-gemma/build-sycl-b70-aot-bmg-g31/bin/libggml-base.so.0
+#3  0x00007d019134ec64 in ggml_backend_sched_backend_id_from_cur(ggml_backend_sched*, ggml_tensor*) () from /home/steve/src/llama.cpp-latest-gemma/build-sycl-b70-aot-bmg-g31/bin/libggml-base.so.0
+#4  0x00007d019134b0f9 in ggml_backend_sched_split_graph () from /home/steve/src/llama.cpp-latest-gemma/build-sycl-b70-aot-bmg-g31/bin/libggml-base.so.0
+#5  0x00007d01910b3500 in llama_context::graph_reserve(unsigned int, unsigned int, unsigned int, llama_memory_context_i const*, bool, unsigned long*) () from /home/steve/src/llama.cpp-latest-gemma/build-sycl-b70-aot-bmg-g31/bin/libllama.so.0
+#6  0x00007d01910b1e5b in llama_context::sched_reserve() () from /home/steve/src/llama.cpp-latest-gemma/build-sycl-b70-aot-bmg-g31/bin/libllama.so.0
+#7  0x00007d01910b04b6 in llama_context::llama_context(llama_model const&, llama_context_params) () from /home/steve/src/llama.cpp-latest-gemma/build-sycl-b70-aot-bmg-g31/bin/libllama.so.0
+#8  0x00007d01910bbc91 in llama_init_from_model () from /home/steve/src/llama.cpp-latest-gemma/build-sycl-b70-aot-bmg-g31/bin/libllama.so.0
+#9  0x00007d0191b50cbd in server_context_impl::load_model(common_params&) () from /home/steve/src/llama.cpp-latest-gemma/build-sycl-b70-aot-bmg-g31/bin/libllama-server-impl.so
+#10 0x00007d0191a9f026 in llama_server(int, char**) () from /home/steve/src/llama.cpp-latest-gemma/build-sycl-b70-aot-bmg-g31/bin/libllama-server-impl.so
+#11 0x00007d0185e2a1ca in __libc_start_call_main (main=main@entry=0x4064e0 <main>, argc=argc@entry=69, argv=argv@entry=0x7fff730fa5f8) at ../sysdeps/nptl/libc_start_call_main.h:58
+warning: 58	../sysdeps/nptl/libc_start_call_main.h: No such file or directory
+#12 0x00007d0185e2a28b in __libc_start_main_impl (main=0x4064e0 <main>, argc=69, argv=0x7fff730fa5f8, init=<optimized out>, fini=<optimized out>, rtld_fini=<optimized out>, stack_end=0x7fff730fa5e8) at ../csu/libc-start.c:360
+warning: 360	../csu/libc-start.c: No such file or directory
+#13 0x0000000000406415 in _start ()
+[Inferior 1 (process 946561) detached]

@@ -1,0 +1,16 @@
+0.00.254.944 I log_info: verbosity = 3 (adjust with the `-lv N` CLI arg)
+0.00.254.947 I device_info:
+0.00.255.345 I   - SYCL0   : Intel(R) Arc(TM) Pro B70 Graphics (32656 MiB, 32596 MiB free)
+0.00.255.654 I   - SYCL1   : Intel(R) Arc(TM) Pro B70 Graphics (32656 MiB, 32619 MiB free)
+0.00.255.662 I   - CPU     : AMD Ryzen Threadripper PRO 5955WX 16-Cores (128671 MiB, 128671 MiB free)
+0.00.255.712 I system_info: n_threads = 16 (n_threads_batch = 16) / 32 | CPU : SSE3 = 1 | SSSE3 = 1 | AVX = 1 | AVX2 = 1 | F16C = 1 | FMA = 1 | BMI2 = 1 | LLAMAFILE = 1 | OPENMP = 1 | REPACK = 1 |
+0.00.255.765 I srv          init: running without SSL
+0.00.255.816 I srv          init: using 31 threads for HTTP server
+0.00.256.115 I srv         start: binding port with default address family
+0.00.257.286 I srv  llama_server: loading model
+0.00.257.375 I srv    load_model: loading model '/mnt/fast-ai/llm-models/gemma4-26b-a4b-it-q8-gguf/gemma-4-26B-A4B-it-UD-Q8_K_XL.gguf'
+0.00.613.289 W load: control-looking token:    212 '</s>' was not control-type; this is probably a bug in the model. its type will be overridden
+0.00.613.558 W load: control-looking token:     50 '<|tool_response>' was not control-type; this is probably a bug in the model. its type will be overridden
+0.00.617.004 W load: control-looking token:      1 '<eos>' was not control-type; this is probably a bug in the model. its type will be overridden
+0.00.626.107 W load: special_eog_ids contains '<|tool_response>', removing '</s>' token from EOG list
+0.57.722.279 E llama_init_from_model: SPLIT_MODE_TENSOR requires flash_attn to be enabled

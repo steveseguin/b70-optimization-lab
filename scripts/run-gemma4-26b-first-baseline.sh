@@ -66,6 +66,7 @@ LLAMA_MTP_DRAFT_TOP_K="${LLAMA_MTP_DRAFT_TOP_K:-}" \
 LLAMA_MTP_DRAFT_LOGIT_GAP_MIN="${LLAMA_MTP_DRAFT_LOGIT_GAP_MIN:-}" \
 LLAMA_MTP_DRAFT_FAST_TOPK="${LLAMA_MTP_DRAFT_FAST_TOPK:-}" \
 LLAMA_MTP_DRAFT_FAST_ARGMAX="${LLAMA_MTP_DRAFT_FAST_ARGMAX:-}" \
+LLAMA_MTP_DRAFT_BACKEND_ARGMAX="${LLAMA_MTP_DRAFT_BACKEND_ARGMAX:-}" \
 LLAMA_MTP_DRAFT_BACKEND_TOPK="${LLAMA_MTP_DRAFT_BACKEND_TOPK:-}" \
 LLAMA_MTP_DRAFT_PROFILE="${LLAMA_MTP_DRAFT_PROFILE:-}" \
 LLAMA_SPEC_VERIFY_GREEDY_ARGMAX="${LLAMA_SPEC_VERIFY_GREEDY_ARGMAX:-}" \
@@ -165,6 +166,7 @@ out = {
         "llama_mtp_draft_logit_gap_min": env_or_log("LLAMA_MTP_DRAFT_LOGIT_GAP_MIN"),
         "llama_mtp_draft_fast_topk": env_or_log("LLAMA_MTP_DRAFT_FAST_TOPK"),
         "llama_mtp_draft_fast_argmax": env_or_log("LLAMA_MTP_DRAFT_FAST_ARGMAX"),
+        "llama_mtp_draft_backend_argmax": env_or_log("LLAMA_MTP_DRAFT_BACKEND_ARGMAX"),
         "llama_mtp_draft_backend_topk": env_or_log("LLAMA_MTP_DRAFT_BACKEND_TOPK"),
         "llama_mtp_draft_profile": env_or_log("LLAMA_MTP_DRAFT_PROFILE"),
         "llama_spec_verify_greedy_argmax": env_or_log("LLAMA_SPEC_VERIFY_GREEDY_ARGMAX"),

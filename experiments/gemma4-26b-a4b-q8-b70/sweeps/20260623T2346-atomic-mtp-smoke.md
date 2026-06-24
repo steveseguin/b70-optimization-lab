@@ -3,8 +3,9 @@
 ## Goal
 
 Test whether the local Atomic Gemma-MTP implementation can leap past the
-current fresh-response record (`~92.77 tok/s`) by using its advertised shared
-target context, in-graph argmax, and depth-2 MTP overlap.
+current fresh-response record (`92.397 tok/s` first measured request;
+`92.767 tok/s` supporting repeat mean) by using its advertised shared target
+context, in-graph argmax, and depth-2 MTP overlap.
 
 Source/binary:
 
@@ -31,7 +32,7 @@ Label:
 - MTP was active and acceptance was high on the long request:
   `339 accepted / 342 generated`
 - Not competitive. The block size emits only two draft tokens per round and
-  cannot approach the current validated `~92.77 tok/s` record.
+  cannot approach the current validated `92.397 tok/s` first-request record.
 
 ### Block size 4/5/7
 
@@ -63,4 +64,3 @@ fresh-response target:
 Keep the design idea for future porting (shared target context + overlap +
 in-graph argmax are exactly the right architectural levers), but do not use the
 current local Atomic run as a valid result.
-

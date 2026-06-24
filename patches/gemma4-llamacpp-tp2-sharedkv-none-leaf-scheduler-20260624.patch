@@ -1,0 +1,22 @@
+diff --git a/ggml/src/ggml-backend.cpp b/ggml/src/ggml-backend.cpp
+index 87615921c..fffcf0f64 100644
+--- a/ggml/src/ggml-backend.cpp
++++ b/ggml/src/ggml-backend.cpp
+@@ -849,9 +849,16 @@ static int ggml_backend_sched_backend_from_buffer(ggml_backend_sched_t sched, co
+     }
+
+     // find highest prio backend that supports the buffer type and the op
++    //
++    // Preallocated data leaves (GGML_OP_NONE) do not execute a kernel. This
++    // matters for Gemma4 shared-KV assistant contexts: the draft context can
++    // borrow target KV tensors during graph reservation, and those tensors may
++    // be backed by split/meta buffers. Requiring supports_op(NONE) turns a
++    // valid storage leaf into a scheduler abort before any runnable op exists.
++    const bool is_data_leaf = op->op == GGML_OP_NONE;
+     for (int i = 0; i < sched->n_backends; i++) {
+         if (ggml_backend_supports_buft(sched->backends[i], buffer->buft) &&
+-            ggml_backend_supports_op(sched->backends[i], op)) {
++            (is_data_leaf || ggml_backend_supports_op(sched->backends[i], op))) {
+             return i;
+         }
+     }

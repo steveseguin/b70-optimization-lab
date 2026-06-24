@@ -106,7 +106,9 @@ Current filled-long draftless ngram-mod warmed/history artifact:
   `cmqqxx7bp01dbqo012d2qiiw6` (`280.04 tok/s`),
   `cmqqxjnif01d0qo01ix4oeixo` (`255.04 tok/s`) and
   `cmqqxbkzx01cxqo01j8p97627` (`245.98 tok/s`). It does **not** supersede the
-  fresh-response draft-MTP record `cmqqsecuk01azqo018ahv0i1s` (`91.62 tok/s`);
+  current fresh-response draft-MTP record `cmqr82niq01hgqo01v42y7ue8`
+  (`92.397 tok/s` first measured request; `92.767 tok/s` supporting repeat
+  mean);
 - queue:
   `data/localmaxxing-gemma4-26b-a4b-q8-b70-ngrammod-20-32-64-poll100-filledlong512-20260623.queue.json`;
 - response:

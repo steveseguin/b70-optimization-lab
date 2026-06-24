@@ -138,7 +138,8 @@ Current filled-long warmed/history-accelerated ngram artifact:
   ngram records `cmqqxx7bp01dbqo012d2qiiw6` (`280.04 tok/s`),
   `cmqqxjnif01d0qo01ix4oeixo` (`255.04 tok/s`) and
   `cmqqxbkzx01cxqo01j8p97627` (`245.98 tok/s`), but does **not** supersede the
-  fresh-response draft-MTP record `cmqqsecuk01azqo018ahv0i1s` (`91.62 tok/s`);
+  current fresh-response draft-MTP record `cmqr82niq01hgqo01v42y7ue8`
+  (`92.397 tok/s` first measured request; `92.767 tok/s` repeat mean);
 - decision: useful warmed/history artifact, not the current valid
   fresh-response best. Label this result honestly as history-cache acceleration
   on a repetitive sustained-decode shape: every drafted token is verified by the
@@ -222,20 +223,20 @@ Near-neighbor follow-ups now in progress / next in queue:
 - source-level fast top-k MTP draft bypass: initial `top_k=10` smoke reached
   `91.28 tok/s`, then the exact repeat on GPU0 reached **`91.62 tok/s`** with
   `384/384` canary and was submitted/approved as
-  `cmqqsecuk01azqo018ahv0i1s`. `top_k=2/4/20` were losses in the same sweep.
-  Promote `LLAMA_MTP_DRAFT_FAST_TOPK=1`, `LLAMA_MTP_DRAFT_TOP_K=10` as the
-  current recipe, but remember the gain is modest and run-to-run variance is
-  still visible.
+  `cmqqsecuk01azqo018ahv0i1s`. This was later superseded by CPU cleanup plus
+  fast argmax (`cmqr82niq01hgqo01v42y7ue8`: `92.397 tok/s` first measured
+  request, `92.767 tok/s` supporting repeat mean). `top_k=2/4/20` were losses
+  in the same sweep.
 - post-record VMM/ubatch follow-ups: `ctx4096 + ub512 + VMM=0 + top_k=10`
   reached `91.43 tok/s` after TTFT with `384/384` canary and much better wall
-  throughput (`82.14 tok/s`, TTFT `636 ms`), but it still missed the `91.62`
-  decode record. `ub1024 + VMM=0`, `top_k=9 + ub512 + VMM=0`, and an
+  throughput (`82.14 tok/s`, TTFT `636 ms`), but it still missed the then-current
+  `91.62` decode record. `ub1024 + VMM=0`, `top_k=9 + ub512 + VMM=0`, and an
   `ub512 + VMM=0` repeat were also valid losses (`90.80-91.17 tok/s`). Keep
   this family as a latency/wall reference, not as the promoted decode lane.
 - fast top-k neighborhood after promotion: `top_k=8` reached `91.23 tok/s`,
   `top_k=12` reached `90.57`, `top_k=10 + UBATCH_SIZE=512` reached `91.32`,
   and `top_k=10 + CTX_SIZE=4096 + UBATCH_SIZE=512` reached `91.28`; all passed
-  `384/384`, all missed the `91.62` after-TTFT record. The ubatch variants did
+  `384/384`, all missed the then-current `91.62` after-TTFT record. The ubatch variants did
   improve TTFT to about `630 ms` and warmed wall throughput to about `82 tok/s`,
   so preserve them as latency/total-throughput references, not decode-record
   winners.
@@ -269,7 +270,8 @@ Next queue:
   now complete. It validated chat-template quality but reached only
   `34.89 tok/s` with graph enabled; `fp8_per_tensor` improved to `40.31 tok/s`
   as a lower-precision diagnostic. Neither lane is competitive with the
-  llama.cpp Q8 fresh-response record (`91.62 tok/s`).
+  llama.cpp Q8 fresh-response record (`92.397 tok/s` first request;
+  `92.767 tok/s` supporting repeat mean).
 
 The `filled-long` prompt mode records prompt hash/preview and usage-derived
 prompt/completion-token stats. Use it for near-512-input / 512-output
@@ -365,8 +367,9 @@ for each meaningful lane.
 
 ## Phase 4: MTP / Speculative Decode
 
-Status: **active; fresh-response headline is draft-MTP `n=7` with fast top-k at
-`91.62 tok/s` mean after TTFT and `91.25 tok/s` first request. Draftless
+Status: **active; fresh-response headline is draft-MTP `n=7` with fast argmax
+and CPU cleanup at `92.397 tok/s` first measured request after TTFT
+(`92.767 tok/s` supporting repeat mean). Draftless
 `ngram-mod match=20 min=32 max=64` reached `280.64 tok/s` only as warmed/history
 throughput on repeated identical continuations and is not a fresh-response
 record.**
@@ -401,9 +404,10 @@ short-prompt shape, plus confidence-gated `n=5` and `n=6`; higher n lost there.
 On filled-long, `n=4` beat `n=2/3`, `n=5` improved again, `n=6` reached the
 low-80s, and `n=7, n-min=2` is the current frontier. Disabling draft backend
 sampling, draft threads/batch `32/32`, latest llama.cpp `c926ad098`,
-`--ctx-checkpoints 0`, and the source-level fast top-k draft bypass advanced
-the record to **`91.618942 tok/s`** after TTFT, 384/384 canary, LocalMaxxing
-`cmqqsecuk01azqo018ahv0i1s`.
+`--ctx-checkpoints 0`, source-level fast top-k, then CPU cleanup plus fast
+argmax advanced the valid fresh-response record to **`92.397 tok/s`** first
+measured request after TTFT (`92.767 tok/s` supporting repeat mean), 384/384
+canary, LocalMaxxing `cmqr82niq01hgqo01v42y7ue8`.
 
 Draftless `ngram-mod` speculation then surpassed the MTP lane only on the
 repeated-output warmed/history version of the filled-long shape. The best
@@ -536,7 +540,8 @@ Text speed is first. After text baseline:
     The `n=7` MTP lane already accepts long chunks on the filled-long benchmark
     (`~445/462` drafted tokens, mean acceptance length `~7.7`, zero `p-min`
     stops in the profile). Argmax/top-k and VMM/ubatch/poll follow-ups preserved
-    quality but did not beat the `91.62 tok/s` record in a meaningful way.
+    quality but did not beat the current `92.397 tok/s` first-request record in
+    a meaningful way.
     A fixed-line diagnostic then showed the same thing more sharply: `n=8`
     accepted `454/454` drafted benchmark tokens but fell to `64.20 tok/s`, and
     `n=12/16` also lost despite mean accepted lengths above `11`. Further small

@@ -7,7 +7,8 @@ Current valid record for comparison:
 
 - `gemma4-q8-gpu0-mtp-n7-c926-fastargmax-cpucleanup-vmm0-ub512-poll100-full-ctxcp0-nmin2-pmin012-nobs-dthreads32-dtb32-filled-long-20260623T222838Z`
 - canary: 384/384
-- fresh-response throughput: `92.77 tok/s after TTFT` (`cached_tokens=0`)
+- fresh-response headline: `92.397 tok/s after TTFT` for the first measured
+  request (`cached_tokens=0`); supporting repeat mean `92.767 tok/s`
 - target: `gemma-4-26B-A4B-it-UD-Q8_K_XL.gguf`
 - draft: `mtp-gemma-4-26B-A4B-it.gguf`
 - key settings: `MTP_N_MAX=7`, `MTP_N_MIN=2`, `MTP_P_MIN=0.12`,

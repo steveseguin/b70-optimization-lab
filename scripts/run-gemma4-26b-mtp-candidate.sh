@@ -8,6 +8,10 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
+if [[ $# -gt 0 ]]; then
+  export LABEL="$1"
+fi
+
 MTP_DRAFT_MODEL="${MTP_DRAFT_MODEL:-/mnt/fast-ai/llm-models/gemma4-26b-a4b-it-q8-gguf/mtp-gemma-4-26B-A4B-it.gguf}"
 MTP_N_MAX="${MTP_N_MAX:-4}"
 MTP_N_MIN="${MTP_N_MIN:-}"
@@ -25,6 +29,7 @@ MTP_DRAFT_TOP_K="${MTP_DRAFT_TOP_K:-}"
 MTP_DRAFT_LOGIT_GAP_MIN="${MTP_DRAFT_LOGIT_GAP_MIN:-}"
 MTP_DRAFT_FAST_TOPK="${MTP_DRAFT_FAST_TOPK:-}"
 MTP_DRAFT_FAST_ARGMAX="${MTP_DRAFT_FAST_ARGMAX:-}"
+MTP_DRAFT_BACKEND_ARGMAX="${MTP_DRAFT_BACKEND_ARGMAX:-}"
 MTP_DRAFT_BACKEND_TOPK="${MTP_DRAFT_BACKEND_TOPK:-}"
 MTP_DRAFT_PROFILE="${MTP_DRAFT_PROFILE:-}"
 MTP_EXTRA_ARGS="${MTP_EXTRA_ARGS:-}"
@@ -71,7 +76,10 @@ if [[ -n "$MTP_EXTRA_ARGS" ]]; then
   extra_args+=("${user_extra[@]}")
 fi
 
-printf -v EXTRA_LLAMA_ARGS '%q ' "${extra_args[@]}"
+# The underlying replica harness splits EXTRA_LLAMA_ARGS on whitespace. Do not
+# shell-escape here: escaped comma lists such as SYCL0\,SYCL1 are passed through
+# literally and llama.cpp rejects them as invalid device names.
+printf -v EXTRA_LLAMA_ARGS '%s ' "${extra_args[@]}"
 EXTRA_LLAMA_ARGS="${EXTRA_LLAMA_ARGS% }"
 export EXTRA_LLAMA_ARGS
 if [[ -n "$MTP_DRAFT_TOP_K" ]]; then
@@ -85,6 +93,9 @@ if [[ -n "$MTP_DRAFT_FAST_TOPK" ]]; then
 fi
 if [[ -n "$MTP_DRAFT_FAST_ARGMAX" ]]; then
   export LLAMA_MTP_DRAFT_FAST_ARGMAX="$MTP_DRAFT_FAST_ARGMAX"
+fi
+if [[ -n "$MTP_DRAFT_BACKEND_ARGMAX" ]]; then
+  export LLAMA_MTP_DRAFT_BACKEND_ARGMAX="$MTP_DRAFT_BACKEND_ARGMAX"
 fi
 if [[ -n "$MTP_DRAFT_BACKEND_TOPK" ]]; then
   export LLAMA_MTP_DRAFT_BACKEND_TOPK="$MTP_DRAFT_BACKEND_TOPK"

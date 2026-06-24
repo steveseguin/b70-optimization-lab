@@ -70,7 +70,8 @@ vLLM is useful as a compatibility/control lane, but not the current speed path:
   BF16. The best graph INT8 smoke reached only `34.89 tok/s`.
 - FP8 per-tensor improves to `40.31 tok/s`, showing graph and broader online
   quantization help, but it is lower precision than the Q8/INT8 target and still
-  less than half of the valid llama.cpp Q8 draft-MTP record (`91.62 tok/s`).
+  less than half of the valid llama.cpp Q8 draft-MTP record (`92.397 tok/s`
+  first measured request; `92.767 tok/s` supporting repeat mean).
 - `mxfp8` and `fp8_per_block` are not viable for this checkpoint on the current
   XPU stack.
 - Future vLLM work should wait for either a true all-linear INT8 path, a

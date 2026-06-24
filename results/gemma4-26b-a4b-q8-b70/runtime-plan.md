@@ -49,12 +49,13 @@ vLLM's Gemma 4 recipe documents the 26B A4B model with
 dimensions are sensitive to 4-bit quantization. This is the right vLLM precision
 candidate if llama.cpp Q8 is too slow or lacks functionality.
 
-Current status: **screened and not competitive for decode speed**. The clean
-2026-06-23 comparison reached `34.89 tok/s` with INT8 per-channel + PIECEWISE
-graph and `40.31 tok/s` with lower-precision `fp8_per_tensor`; both are far
-below the llama.cpp Q8 draft-MTP fresh-response record (`91.62 tok/s`). Keep
-this lane as a compatibility/reference path unless a true all-linear INT8
-checkpoint/kernel path appears.
+Current status: **screened and not competitive for decode speed in prior
+smokes**. The clean 2026-06-23 comparison reached `34.89 tok/s` with INT8
+per-channel + PIECEWISE graph and `40.31 tok/s` with lower-precision
+`fp8_per_tensor`; both are far below the llama.cpp Q8 draft-MTP fresh-response
+record (`92.397 tok/s` first measured request, `92.767 tok/s` supporting repeat
+mean). Keep this lane as a compatibility/reference path unless a true all-linear
+INT8 checkpoint/kernel path appears.
 
 Use **four independent DP=1 servers**, not one `--data-parallel-size 4` process:
 there is a public vLLM Gemma 4 MoE DP issue whose workaround is separate
