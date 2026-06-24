@@ -210,6 +210,10 @@ claim or as a 32K-context result.
 
 Current filled-long draft-MTP fresh-response best:
 
+For a copy-ready version of this record path, including the exact patch,
+configuration, scripts, and copied result artifacts, start with
+[`../../repro/gemma4-26b-a4b-q8-b70-95tps-20260624/`](../../repro/gemma4-26b-a4b-q8-b70-95tps-20260624/README.md).
+
 ```bash
 cd /home/steve/qwen36-results-main
 LLAMA_SERVER=/home/steve/src/llama.cpp-gemma-record-stack/build-sycl-b70-aot-bmg-g31/bin/llama-server \

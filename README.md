@@ -10,6 +10,8 @@ Community setup guides, benchmark recipes, troubleshooting notes, and patches fo
 - Research workflow playbook: [docs/research-workflow-playbook.md](docs/research-workflow-playbook.md)
 - MiniMax install guide: [docs/b70-minimax-ubuntu24-deployment.md](docs/b70-minimax-ubuntu24-deployment.md)
 - Production service notes: [docs/minimax-production-c1-service.md](docs/minimax-production-c1-service.md)
+- Gemma 4 26B B70 95 tok/s repro: [repro/gemma4-26b-a4b-q8-b70-95tps-20260624](repro/gemma4-26b-a4b-q8-b70-95tps-20260624/README.md)
+- Gemma 4 26B result packet: [results/gemma4-26b-a4b-q8-b70](results/gemma4-26b-a4b-q8-b70/README.md)
 - Qwen3.6 35B result packet: [results/qwen36-35b-quark-int8-b70](results/qwen36-35b-quark-int8-b70/README.md)
 - Local ops and Codex delegation: [docs/local-ops.md](docs/local-ops.md)
 - Model recipes: [docs/model-recipes.md](docs/model-recipes.md)
@@ -36,6 +38,8 @@ This repository is meant to become a stable community hub for Intel XPU local AI
 | Pick the next model lane | [Model effort index](docs/model-effort-index.md) |
 | Reuse the best research workflow | [Research workflow playbook](docs/research-workflow-playbook.md) |
 | Deploy MiniMax M2.7 INT4 on 4x B70 | [MiniMax Ubuntu 24 guide](docs/b70-minimax-ubuntu24-deployment.md) |
+| Copy the current Gemma 4 26B B70 settings | [Gemma 26B 95 tok/s repro](repro/gemma4-26b-a4b-q8-b70-95tps-20260624/README.md) |
+| Review the Gemma 4 26B optimization history | [Gemma 26B result packet](results/gemma4-26b-a4b-q8-b70/README.md) |
 | Run the endpoint as a service | [Production c1 service](docs/minimax-production-c1-service.md) |
 | Find model-specific recipes | [Model recipes](docs/model-recipes.md) |
 | Review Qwen3.6 35B B70 results | [Qwen result packet](results/qwen36-35b-quark-int8-b70/README.md) |
@@ -75,6 +79,25 @@ The current known-good session-cache profile is c2 for two parked `32768`-token
 window sessions. A smaller `22.5K` live smoke is documented as an operations
 canary, not as the desired context limit. c4/c8 and TurboQuant remain research
 modes, not production defaults.
+
+## Current Gemma 4 26B Copy Path
+
+For users who want to copy the current Gemma 4 26B B70 settings directly, start
+with the promoted repro folder:
+
+- Recipe: [repro/gemma4-26b-a4b-q8-b70-95tps-20260624](repro/gemma4-26b-a4b-q8-b70-95tps-20260624/README.md)
+- Model: `unsloth/gemma-4-26B-A4B-it-GGUF`, `UD-Q8_K_XL` target
+- Draft: local `Q4_0` Gemma MTP draft only; accepted tokens are verified by the
+  Q8 target
+- Hardware for the submitted result: Supermicro AMD Threadripper PRO 5955WX
+  platform, 128 GB DDR4, headless, 1x Intel Arc Pro B70 32 GB used for the run
+- Result: `95.264 tok/s` first fresh no-cache request after TTFT,
+  `95.386 tok/s` supporting mean, 384/384 chat canary, LocalMaxxing
+  `cmqrsupdk000jqr01af3eu6vu`
+
+The deeper lab history, including older 42/48/90/94 tok/s milestones and the
+invalid warmed n-gram submissions, remains in
+[results/gemma4-26b-a4b-q8-b70](results/gemma4-26b-a4b-q8-b70/README.md).
 
 ## How To Contribute
 

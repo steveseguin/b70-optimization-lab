@@ -88,6 +88,31 @@ Check status:
 experiments/minimax_xpu_kv_offload/scripts/session_cache_status.sh
 ```
 
+## Gemma 4 26B Copy-Ready Record
+
+The current Gemma 4 26B A4B Q8 single-B70 record is packaged as a standalone
+repro folder:
+
+`../repro/gemma4-26b-a4b-q8-b70-95tps-20260624/README.md`
+
+Use it when the goal is to copy the exact 95 tok/s settings rather than review
+the full experiment history. It includes the llama.cpp `c926ad098` patch, Q8
+target GGUF, Q4_0 MTP draft preparation, command line, and LocalMaxxing
+artifacts.
+
+Record identity:
+
+- model: `unsloth/gemma-4-26B-A4B-it-GGUF`, `UD-Q8_K_XL` target
+- draft: local `Q4_0` Gemma MTP draft only
+- hardware: headless Supermicro AMD Threadripper PRO 5955WX platform, 128 GB
+  DDR4, one Intel Arc Pro B70 32 GB used for the measured replica
+- result: `95.264 tok/s` first fresh no-cache request after TTFT, `95.386`
+  supporting mean, 384/384 chat canary, LocalMaxxing
+  `cmqrsupdk000jqr01af3eu6vu`
+
+The full optimization ledger remains in
+`../results/gemma4-26b-a4b-q8-b70/README.md`.
+
 ## Baseline Build Inputs
 
 The fresh Ubuntu 24 repro builds from source and applies two compressed patch

@@ -10,8 +10,10 @@ single-GPU B70 result from 2026-06-24.
 - Speculative draft: local `Q4_0` quantized Gemma MTP draft, file `gemma-4-26B-A4B-it-Q4_0-MTP.gguf`
 - Draft size: `321,126,560` bytes
 - Hardware: 1x Intel Arc Pro B70 32 GB, GPU 0
+- Host/platform: Supermicro AMD Threadripper PRO 5955WX system, 128 GB DDR4,
+  running headless for the submitted result
 - OS: Ubuntu 24.04.4 LTS
-- CPU/RAM: AMD Ryzen Threadripper PRO 5955WX, 128 GB RAM
+- CPU/RAM: AMD Ryzen Threadripper PRO 5955WX, 128 GB DDR4
 - Runtime: llama.cpp `c926ad09857517978575d6a74d225b463f7417a0` plus the patch in this folder
 - Build: SYCL/Level Zero, AOT target `intel_gpu_bmg_g31`
 - Benchmark shape: filled-long prompt, requested 512 prompt tokens, actual 588 prompt tokens, 512 output tokens

@@ -6,6 +6,11 @@ and VMM/ubatch/poll tuning, `95.264 tok/s` first no-cache request after TTFT /
 `95.386 tok/s` supporting repeated-request mean / `81.285` first-row wall
 tok/s, 384/384 chat canary, LocalMaxxing `cmqrsupdk000jqr01af3eu6vu`**.
 
+Copy-ready reproduction recipe:
+[`../../repro/gemma4-26b-a4b-q8-b70-95tps-20260624/`](../../repro/gemma4-26b-a4b-q8-b70-95tps-20260624/README.md).
+Use that folder first if you want the exact patch, model prep, command line, and
+result artifacts for the current 95 tok/s Gemma 26B settings.
+
 Draftless `ngram-mod` later reached `245-280 tok/s`, but only after repeated
 benchmark requests made the same continuation predictable from generated
 history. Those rows are useful warmed/history-accelerated artifacts, not valid
@@ -181,5 +186,6 @@ prompt/output shape and canary depth match.
 - [Research plan and experiment queue](research-plan.md)
 - [Model and runtime options](model-options.md)
 - [LocalMaxxing targets and submission packet](localmaxxing-and-targets.md)
+- [Promoted 95 tok/s reproduction recipe](../../repro/gemma4-26b-a4b-q8-b70-95tps-20260624/README.md)
 - [Bugs and failed paths](bugs-failed-paths.md)
 - [Active experiment folder](../../experiments/gemma4-26b-a4b-q8-b70/README.md)

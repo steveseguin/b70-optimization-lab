@@ -23,7 +23,8 @@ Do not compare two results unless their model, quantization, prompt length, outp
 
 | Recipe | Status | What It Is For |
 | --- | --- | --- |
-| `../results/gemma4-26b-a4b-q8-b70/` | Active setup | Gemma 4 26B A4B Q8/INT8 on B70, one full model replica per GPU, llama.cpp SYCL first and vLLM int8-per-channel as the comparison lane. |
+| `../repro/gemma4-26b-a4b-q8-b70-95tps-20260624/` | Copy-ready speed repro | Gemma 4 26B A4B Q8 target on one B70 with Q4_0 MTP draft, llama.cpp SYCL, exact patch, commands, and LocalMaxxing evidence for the `95.264 tok/s` fresh-response result. |
+| `../results/gemma4-26b-a4b-q8-b70/` | Active lab packet | Full Gemma 4 26B A4B Q8/INT8 B70 optimization history, including older baselines, failed paths, validity gates, and vLLM comparison lanes. |
 | `../repro/minimax-m27-b70-110tps-ubuntu24-20260523/` | Deployable baseline | Fresh Ubuntu 24.04 setup for 4x B70, MiniMax M2.7 INT4 AutoRound, vLLM OpenAI-compatible endpoint on `0.0.0.0:8000`. |
 | `../repro/minimax-m27-b70-89tps-20260520/` | Strict speed baseline | Older strict quality-passed MiniMax M2.7 INT4 lane with higher output-token throughput. Useful for optimization comparisons. |
 | `../results/qwen36-35b-quark-int8-b70/` | Closed reference packet | Qwen3.6 35B A3B Quark W8A8 INT8 on 2x/4x B70. Best strict 4x baseline, invalid fast lanes, reproduction commands, and carryover notes. |
@@ -102,14 +103,20 @@ results for shared-prefix plus unique-tail prompts.
 
 ## Gemma 4 26B A4B Q8 / INT8
 
-The active next lane is
+The copy-ready recipe is
+[`../repro/gemma4-26b-a4b-q8-b70-95tps-20260624/`](../repro/gemma4-26b-a4b-q8-b70-95tps-20260624/README.md).
+It packages the exact llama.cpp patch, Q8 target, Q4_0 MTP draft preparation,
+record command line, and LocalMaxxing artifacts for the current one-B70
+fresh-response record.
+
+The deeper active lab packet is
 [`../results/gemma4-26b-a4b-q8-b70/`](../results/gemma4-26b-a4b-q8-b70/README.md).
-It intentionally avoids tensor-parallel splitting at first: run one complete
-Gemma 4 26B A4B replica per B70 and use four replicas for parallel research.
-Current promoted result is the llama.cpp draft-MTP filled-long lane at
-`90.24 tok/s` after TTFT on one B70 (`n=7, n-min=2, p-min=0.10`,
-backend sampling off, Q8 main GGUF
-plus the official Gemma MTP draft GGUF, 384/384 chat canary).
+This lane intentionally avoids tensor-parallel splitting at first: run one
+complete Gemma 4 26B A4B replica per B70 and use four replicas for parallel
+research. Current promoted result is the llama.cpp draft-MTP filled-long lane at
+`95.264 tok/s` after TTFT on the first no-cache request on one B70, with
+`95.386 tok/s` supporting mean (`n=7, n-min=2, p-min=0.12`, backend sampling
+off, Q8 target/verifier with Q4_0 MTP draft only, 384/384 chat canary).
 
 Start with llama.cpp SYCL and the Unsloth `UD-Q8_K_XL` GGUF:
 
@@ -117,6 +124,15 @@ Start with llama.cpp SYCL and the Unsloth `UD-Q8_K_XL` GGUF:
 scripts/build-llama-cpp-sycl-b70.sh
 scripts/download-gemma4-26b-q8-gguf.sh
 GPU_INDEX=0 PORT=18260 scripts/run-gemma4-26b-llamacpp-replica.sh
+```
+
+For the record path, use the repro wrapper instead:
+
+```bash
+cd repro/gemma4-26b-a4b-q8-b70-95tps-20260624
+bash scripts/00-build-llama-cpp-record-stack.sh
+bash scripts/01-prepare-models.sh
+bash scripts/02-run-record.sh
 ```
 
 The vLLM comparison lane should use `google/gemma-4-26B-A4B-it` with
@@ -131,8 +147,8 @@ These are useful community targets to add as separate repro folders:
   serving. See [Single Model Slot Switching](model-slot-switching.md).
 - Gemma 4 12B INT4 AutoRound full fresh-install repro folder once the
   `gemma4_unified` backport is either upstream or packaged as a smaller patch.
-- Gemma 4 26B A4B Q8/INT8 full fresh-install repro folder after the active
-  result packet has a validated baseline.
+- Gemma 4 26B A4B Q8/INT8 service-oriented repro once the current speed recipe
+  is turned into a long-running endpoint profile.
 - Qwen3.6 27B Q4_0 GGUF on llama.cpp/SYCL.
 - Qwen3.6 27B FP8 on vLLM/XPU.
 - Qwen3-VL 30B-A3B FP8 on vLLM/XPU for image+text requests.

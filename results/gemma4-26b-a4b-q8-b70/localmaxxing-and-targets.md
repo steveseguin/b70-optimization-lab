@@ -1,6 +1,6 @@
 # Gemma 4 26B A4B LocalMaxxing Targets
 
-Research snapshot: 2026-06-23.
+Research snapshot: 2026-06-24.
 
 This page separates public leaderboard context from this lane's promoted result
 rules. The goal is a valid Q8 / INT8-or-better result on Intel Arc Pro B70, not
@@ -129,6 +129,8 @@ Current filled-long draft-MTP fresh-response Q8-target best:
 - `gemma4-q8-gpu0-mtp-n7-draftq40-full-20260624T081218Z`,
   llama.cpp SYCL on one B70,
   UD-Q8_K_XL main GGUF plus `gemma-4-26B-A4B-it-Q4_0-MTP.gguf` draft GGUF;
+- submitted from a headless Supermicro AMD Threadripper PRO 5955WX platform
+  with 128 GB DDR4; one Intel Arc Pro B70 32 GB was used for this record;
 - same `c926ad098` `n=7/n-min=2/p-min=0.12` backend-sampling-off recipe,
   plus source-level CPU cleanup, `LLAMA_MTP_DRAFT_FAST_ARGMAX=1`,
   `GGML_SYCL_ENABLE_VMM=0`, `UBATCH_SIZE=512`, `POLL=100`,

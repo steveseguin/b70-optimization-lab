@@ -8,6 +8,12 @@ Status: active Gemma 4 Q8 B70 optimization. Keep single-replica records
 separate from four independent replica aggregate capacity, and keep natural-
 stop, short-prompt sustained, and filled-long sustained shapes separate.
 
+Hardware note for the Gemma 4 26B submissions: these were run on a headless
+Supermicro AMD Threadripper PRO 5955WX platform with 128 GB DDR4 and Intel Arc
+Pro B70 32 GB GPUs. The current `cmqrsupdk000jqr01af3eu6vu` record uses one B70
+replica on GPU0; the host has four B70s available for parallel single-replica
+experiments.
+
 | Label | LocalMaxxing ID | GPUs | Input | Output | tok/s out | tok/s total | Validation |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
 | `gemma4-26b-a4b-q8-b70-llamacpp-syclopt0-faoff-20260623T0715` | `cmqq8phxt0103qo01afcgyjq8` | 1 | 574 | 156 | 41.806 | n/a | 384/384 chat canary |

@@ -3,6 +3,12 @@
 Use this page as the canonical pointer for LocalMaxxing submission credentials
 and result-submission hygiene.
 
+Submitted-result ledgers and public IDs are tracked in
+[../results/localmaxxing-submissions.md](../results/localmaxxing-submissions.md).
+The current Gemma 4 26B Q8 B70 record and host details are also linked from the
+copy-ready repro at
+[../repro/gemma4-26b-a4b-q8-b70-95tps-20260624/](../repro/gemma4-26b-a4b-q8-b70-95tps-20260624/README.md).
+
 ## Credential Source
 
 The LocalMaxxing API key is stored outside this repository at:
