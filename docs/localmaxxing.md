@@ -62,3 +62,15 @@ For Qwen work, verify the full graph/launcher identity before deciding a run is
 a new record. For MiniMax, Gemma, DeepSeek, or other lanes, keep the same
 discipline: record model, quantization, GPU count, mode, command, environment,
 throughput, correctness status, payload path, response path, and follow-up note.
+
+For fresh-response speculative decode records, the headline throughput is the
+first measured request only unless the benchmark intentionally uses distinct
+fresh prompts for every measured row. Repeated-prompt rows are support and
+stability data. Before submitting, inspect the raw benchmark file, not only
+`summary.json`, and confirm row 0 reports
+`usage.prompt_tokens_details.cached_tokens=0`.
+
+Do not submit a fresh-response record when the speedup depends on prior
+generated continuation history, n-gram history, prefix/cache reuse, context
+checkpoints, or response reuse. Label those results as warmed/history
+throughput instead.

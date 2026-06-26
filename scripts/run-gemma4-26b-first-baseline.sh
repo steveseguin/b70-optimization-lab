@@ -226,6 +226,7 @@ out = {
     "canary_pass_all": canary["summary"]["pass_all"],
     "canary_rows_completed": canary["summary"]["rows_completed"],
     "bench_summary": bench["summary"],
+    "fresh_response_validity": bench.get("fresh_response_validity"),
     "bench_run_identity": bench["run_identity"],
 }
 summary_out.write_text(json.dumps(out, indent=2, sort_keys=True) + "\n")

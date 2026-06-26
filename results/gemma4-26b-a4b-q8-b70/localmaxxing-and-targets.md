@@ -467,7 +467,14 @@ the server log:
 - any chat canary fails;
 - only raw `/v1/completions` was tested;
 - `usage.completion_tokens` is missing and output token count was guessed;
+- row 0 has missing or nonzero `cached_tokens` for a fresh-response claim;
+- the headline uses a repeated-prompt average or max instead of row 0;
+- the speedup is from n-gram/history continuation learned from earlier
+  benchmark requests;
+- prefix cache, context checkpoints, or response reuse contributed to the
+  measured request and the result is being labeled fresh-response;
 - the result is Q6/Q4/MXFP4/NVFP4 but labeled as the Q8 lane;
+- the GPU count mixes independent replicas with a single-session model split;
 - a speed win comes from a config family with unresolved nondeterministic
   failures;
 - the model file, runtime commit, or launch identity is incomplete.

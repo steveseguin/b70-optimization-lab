@@ -2303,3 +2303,37 @@ correct under the canary but slower than both the rebuilt control and the
 current `103.299200 tok/s` fresh-response record. The clean skip-early rerun is
 also below record. No LocalMaxxing submission. The experimental source hunk was
 reverted after saving the patch; keep the harness run-identity logging.
+
+## 2026-06-26 record profile after selected-softmax-weighted-sum loss
+
+Diagnostic run:
+
+- `data/gemma4-q8-gpu0-record-profile-20260626T0810/`
+- server log:
+  `/mnt/fast-ai/bench-results/gemma4-26b-a4b-q8/servers/gemma4-q8-gpu0-record-profile-20260626T0810.server.log`
+
+Identity: current record-family source stack and runtime config with
+`LLAMA_SERVER_SPEC_PROFILE=1` and `LLAMA_MTP_DRAFT_PROFILE=1`. Canary was
+**16/16** pass (`64` rows); fresh row0 was **102.232905 tok/s** after TTFT,
+wall `89.106741`, TTFT `0.737745`, `cached_tokens=0`. This was a diagnostic,
+not a LocalMaxxing candidate.
+
+Final profile counters after the benchmark request:
+
+- draft acceptance: `445 accepted / 462 generated`, mean acceptance length
+  `7.74`, per-position `(1.000, 0.985, 0.970, 0.955, 0.955, 0.939, 0.939)`;
+- draft side: `draft_ms=1355.016`, `324` calls, `1358` draft tokens,
+  `avg=4.182 ms`;
+- target side: `target_decode_ms=24242.307`, `324` calls, `4620` verifier
+  rows, `avg=74.822 ms`, `avg_token=5.247 ms`;
+- target decode phase: `process_ubatch_ms=23740.600` and
+  `post_extract_ms=484.268`; `sampled_extract_ms=484.153`.
+
+Conclusion: draft acceptance is already excellent and draft overhead is small.
+The frontier is target verifier `process_ubatch`, not p-min tuning, sampler
+micro-kernels, selected-weight softmax, or sampled-ID extraction. Runtime-only
+lanes remaining in the notes are mostly variance hunting around low `102.x`.
+The next meaningful source work should either reduce target verifier graph cost
+directly (for example output/projection or hidden-state flow) or increase
+fresh-valid accepted tokens per verifier call without adding proportionate
+target work.

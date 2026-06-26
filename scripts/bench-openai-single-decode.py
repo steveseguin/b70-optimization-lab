@@ -200,6 +200,40 @@ def summarize(rows: list[dict[str, Any]]) -> dict[str, Any]:
     }
 
 
+def cached_tokens(row: dict[str, Any]) -> int | None:
+    usage = row.get("usage")
+    if not isinstance(usage, dict):
+        return None
+    details = usage.get("prompt_tokens_details")
+    if not isinstance(details, dict):
+        return None
+    value = details.get("cached_tokens")
+    return value if isinstance(value, int) else None
+
+
+def fresh_response_validity(rows: list[dict[str, Any]]) -> dict[str, Any]:
+    first_row = rows[0] if rows else {}
+    cached = [cached_tokens(row) for row in rows]
+    known_cached = [value for value in cached if value is not None]
+    return {
+        "headline_policy": (
+            "Use row0 only as fresh-response headline. Later repeated-prompt "
+            "rows are support-only unless each request uses an independently "
+            "fresh prompt with no reusable continuation/history."
+        ),
+        "headline_row": 0 if rows else None,
+        "headline_tok_s_after_ttft": first_row.get("tok_s_after_ttft"),
+        "headline_tok_s_wall": first_row.get("tok_s_wall"),
+        "headline_cached_tokens": cached_tokens(first_row) if rows else None,
+        "cached_tokens_reported": bool(known_cached),
+        "cached_tokens_all_zero": (
+            len(known_cached) == len(rows) and all(value == 0 for value in known_cached)
+        ),
+        "all_cached_tokens": cached,
+        "repeated_prompt_rows_support_only": len(rows) > 1,
+    }
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--base-url", default="http://127.0.0.1:18260")
@@ -259,6 +293,7 @@ def main() -> int:
     result = {
         "run_identity": run_identity,
         "summary": summarize(rows),
+        "fresh_response_validity": fresh_response_validity(rows),
         "rows": rows,
     }
     text = json.dumps(result, indent=2, sort_keys=True)
