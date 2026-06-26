@@ -8,14 +8,15 @@ has plausible source-level work.
 
 Current valid Gemma best is now:
 
-- `103.51547512013657 tok/s` fresh row0 after TTFT;
+- `103.95374341972274 tok/s` fresh row0 after TTFT;
+- `104.13506066488091 tok/s` supporting repeated-request mean;
 - `cached_tokens=0`;
 - `1536/1536` chat canary;
-- LocalMaxxing `cmqvbq8tf02m1qr010dom0vu1`;
-- micro-record over the previous `103.30108468098005 tok/s` row, not a
-  material breakthrough;
+- LocalMaxxing `cmqviful602p0qr01vp27jw5i`;
+- micro-record over the previous `103.51547512013657 tok/s` route-cache row,
+  not a material breakthrough;
 - evidence:
-  `data/gemma4-q8-gpu2-routecache-ctx8192-full-20260626T191746Z/summary.json`.
+  `data/gemma4-q8-gpu2-routecache-mtpfusedoutargmax-selfusedweights-full-20260626T222525Z/summary.json`.
 
 ## Results Added This Session
 
@@ -338,7 +339,38 @@ route sorting / packing overhead relative to the existing record stack. The
 remaining meaningful work is not another selected-down wrapper around existing
 per-expert matmul; it is either a truly shape-specific target MoE kernel for
 the verifier shapes or a different verifier shortcut that reduces target
-`process_ubatch` work.
+compute.
+
+## 2026-06-26T22:20Z Direct-Unroll Depth Sweep On Route-Cache Record Stack
+
+Question: can Gemma4 Q8 break out of the ~103 tok/s band by increasing MTP
+direct-unroll depth beyond the current `n_max=7` record recipe?
+
+Current source audit confirmed that `LLAMA_MTP_DRAFT_DIRECT_ARGMAX_UNROLL` is a
+real single-`llama_decode(ctx_dft, ...)` graph unroll for the Gemma4 assistant,
+not only a sampler/output-copy shortcut. The assistant graph chains each sampled
+token into the next internal MTP step and concatenates sampled IDs. Therefore
+larger `n_max` values are a legitimate throughput experiment, not a no-op.
+
+All runs used the current Q8 route-cache record identity except for
+`--spec-draft-n-max` / `LLAMA_MTP_DRAFT_DIRECT_ARGMAX_UNROLL`. All passed
+32 chat-canary repeats (`128` rows), reported `cached_tokens=0`, and are
+fresh-row0 eligible.
+
+| Run | Depth | Fresh row0 tok/s | Support mean tok/s | Decision |
+| --- | ---: | ---: | ---: | --- |
+| `data/gemma4-q8-gpu0-routecache-depthn6-screen-20260626T222018Z/summary.json` | 6 | `95.55580165915312` | `96.11208142072961` | valid loss |
+| `data/gemma4-q8-gpu1-routecache-depthn8-screen-20260626T222018Z/summary.json` | 8 | `66.46195714907394` | `66.42095566261824` | valid loss |
+| `data/gemma4-q8-gpu2-routecache-depthn9-screen-20260626T222018Z/summary.json` | 9 | `70.69767490830706` | `70.7292565692439` | valid loss |
+| `data/gemma4-q8-gpu3-routecache-depthn10-screen-20260626T222018Z/summary.json` | 10 | `74.80440647496813` | `74.84375573606496` | valid loss |
+
+Interpretation: depth is not the remaining path to `>150 tok/s` in this
+implementation. Larger unrolls do accept deeper drafts on the benchmark rows
+(for example `n=10` accepted `462/488` generated on row0), but the expanded
+assistant graph cost grows faster than accepted-token savings. `n=6` also loses,
+so the existing `n=7` route-cache recipe remains the local optimum. Do not rerun
+simple `n_max > 7` depth sweeps unless a source patch materially reduces the
+assistant unroll graph cost.
 
 ## 2026-06-26T18:44Z MUL_MAT_ID Route-Cache Screen
 
@@ -475,7 +507,7 @@ Full validation:
 - fresh row0: `103.5104909373625 tok/s`
 - support mean: `103.26493464181871 tok/s`
 - support median: `103.42693492994971 tok/s`
-- current record: `103.51547512013657 tok/s`
+- then-current record: `103.51547512013657 tok/s`
 - delta vs headline: `-0.00498418277407 tok/s`
 
 Decision: reject / do not promote / do not submit to LocalMaxxing. The first
@@ -545,7 +577,7 @@ Run:
 - cached-token validity: `[0, 0, 0, 0]`, row0 is fresh-response eligible
 - fresh row0: `76.68309224299286 tok/s` after TTFT
 - support mean: `76.5484238319723 tok/s` after TTFT, support-only
-- current record: `103.51547512013657 tok/s`
+- then-current record: `103.51547512013657 tok/s`
 
 Decision: reject / do not promote / do not submit to LocalMaxxing. The canary
 is clean, but throughput collapses. The host ID copy / route seeding wait and
@@ -620,7 +652,7 @@ Run:
 - cached-token validity: `[0, 0]`, row0 is fresh-response eligible
 - fresh row0: `84.21460316143335 tok/s` after TTFT
 - support mean: `84.22833614279985 tok/s` after TTFT, support-only
-- current record: `103.51547512013657 tok/s`
+- then-current record: `103.51547512013657 tok/s`
 
 Decision: reject / do not promote / do not submit to LocalMaxxing. This is a
 correct but substantial loss. Replacing the existing route-cache `MUL_MAT_ID`
@@ -655,7 +687,7 @@ Run:
 - fresh row0: `101.52759496160394 tok/s` after TTFT
 - support mean: `102.83917018605882 tok/s` after TTFT
 - support max: `103.50911695639134 tok/s` after TTFT, support-only
-- current record: `103.51547512013657 tok/s`
+- then-current record: `103.51547512013657 tok/s`
 
 Decision: reject / do not promote / do not submit to LocalMaxxing. This is a
 correct but non-winning micro patch. The remaining local-vector-to-cache copies
@@ -664,3 +696,53 @@ env-gated source patch as an experiment artifact, but leave it off in promoted
 recipes. Future Gemma work should move to verifier-side compute reductions
 (larger small-token Gemma4/Q8 MoE boundary or a better target LM-head top-1
 kernel), not another route-cache metadata tweak.
+
+## 2026-06-26T22:23Z Route-Cache Cleanup Screens
+
+Purpose: test whether small default-off cleanup patches around the current
+route-cache recipe add up when stacked. These are not strategic `>150 tok/s`
+ideas; they were a quick four-GPU screen after the larger depth and MoE lanes
+closed out.
+
+All runs used the current route-cache recipe unless noted. All passed the chat
+canary screen, reported `cached_tokens=0`, and are fresh-row0 eligible.
+
+| Run | Extra flags | Fresh row0 tok/s | Support mean tok/s | Decision |
+| --- | --- | ---: | ---: | --- |
+| `data/gemma4-q8-gpu0-routecache-control-screen-20260626T222330Z/summary.json` | control | `103.52953019944134` | `102.4893408968527` | valid control |
+| `data/gemma4-q8-gpu1-routecache-mtpfusedoutargmax-screen-20260626T222330Z/summary.json` | `LLAMA_GEMMA4_MTP_FUSED_OUTPUT_ARGMAX=1` | `103.78358721993459` | `102.69988321623809` | valid micro-win screen |
+| `data/gemma4-q8-gpu2-routecache-selfusedweights-screen-20260626T222330Z/summary.json` | `LLAMA_GEMMA4_MOE_SELECTED_SOFTMAX_FUSED=1` | `103.23675527167006` | `103.19892367813154` | valid neutral/loss screen |
+| `data/gemma4-q8-gpu3-routecache-mtpfusedoutargmax-selfusedweights-screen-20260626T222330Z/summary.json` | both flags | `103.80041150196647` | `102.97200085696608` | best screen; validate |
+
+Interpretation: the assistant fused-output argmax shortcut can help slightly in
+the route-cache stack, while fused selected-softmax weights alone is not a win.
+The stacked recipe was close enough to the then-current
+`103.51547512013657 tok/s` record to justify full validation.
+
+## 2026-06-26T22:25Z Route-Cache Cleanup Full Validation
+
+Full validation of the stacked screen:
+
+- summary:
+  `data/gemma4-q8-gpu2-routecache-mtpfusedoutargmax-selfusedweights-full-20260626T222525Z/summary.json`;
+- env deltas over the route-cache recipe:
+  `LLAMA_GEMMA4_MTP_FUSED_OUTPUT_ARGMAX=1`,
+  `LLAMA_GEMMA4_MOE_SELECTED_SOFTMAX_FUSED=1`;
+- canary: `384` repeats (`1536` rows), pass;
+- cached-token validity: all benchmark rows report `cached_tokens=0`;
+- fresh row0: `103.95374341972274 tok/s` after TTFT;
+- support mean: `104.13506066488091 tok/s` after TTFT;
+- first-row wall throughput: `90.68621473793526 tok/s`;
+- LocalMaxxing: `cmqviful602p0qr01vp27jw5i`;
+- queue:
+  `data/localmaxxing-gemma4-26b-a4b-q8-b70-llamacpp-mtp-n7-q8target-q40draft-routecache-mtpfusedoutargmax-selfusedweights-fresh-20260626.queue.json`;
+- response:
+  `data/localmaxxing-responses/gemma4-26b-a4b-q8-b70-llamacpp-mtp-n7-q8target-q40draft-routecache-mtpfusedoutargmax-selfusedweights-fresh-20260626.submit.log`.
+
+Decision: promote as the current valid fresh-response one-B70 Q8-target
+headline, and submit to LocalMaxxing. This is a small micro-record over
+`103.51547512013657 tok/s`; it does **not** change the strategic conclusion
+that cheap flags and depth sweeps are exhausted. Future Gemma progress toward
+`>150 tok/s` needs a material verifier/speculation design change, most likely
+around reducing target-side small-token Gemma4 MoE work or avoiding full-vocab
+assistant/verifier overhead without violating fresh-response validity.

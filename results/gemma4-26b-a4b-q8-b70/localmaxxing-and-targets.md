@@ -106,8 +106,8 @@ Current filled-long draftless ngram-mod warmed/history artifact:
   `cmqqxx7bp01dbqo012d2qiiw6` (`280.04 tok/s`),
   `cmqqxjnif01d0qo01ix4oeixo` (`255.04 tok/s`) and
   `cmqqxbkzx01cxqo01j8p97627` (`245.98 tok/s`). It does **not** supersede the
-  current fresh-response draft-MTP record `cmqvbq8tf02m1qr010dom0vu1`
-  (`103.515 tok/s` first no-cache request; `103.193 tok/s` supporting repeat
+  current fresh-response draft-MTP record `cmqviful602p0qr01vp27jw5i`
+  (`103.954 tok/s` first no-cache request; `104.135 tok/s` supporting repeat
   mean; Q8 target/verifier with Q4_0 MTP draft only);
 - queue:
   `data/localmaxxing-gemma4-26b-a4b-q8-b70-ngrammod-20-32-64-poll100-filledlong512-20260623.queue.json`;
@@ -126,30 +126,49 @@ Current filled-long draftless ngram-mod warmed/history artifact:
 
 Current filled-long draft-MTP fresh-response Q8-target best:
 
-- `gemma4-q8-gpu2-routecache-ctx8192-full-20260626T191746Z`;
+- `gemma4-q8-gpu2-routecache-mtpfusedoutargmax-selfusedweights-full-20260626T222525Z`;
 - llama.cpp SYCL on one B70, UD-Q8_K_XL main GGUF plus
   `gemma-4-26B-A4B-it-Q4_0-MTP.gguf` draft GGUF;
 - submitted from a headless Supermicro AMD Threadripper PRO 5955WX platform
   with 128 GB DDR4; one Intel Arc Pro B70 32 GB was used for this record;
 - same `c926ad098` `n=7/n-min=2` backend-sampling-off route-cache recipe as
-  the previous row, validated after a four-GPU CTX screen on GPU2/ctx8192;
+  the previous row, plus `LLAMA_GEMMA4_MTP_FUSED_OUTPUT_ARGMAX=1` and
+  `LLAMA_GEMMA4_MOE_SELECTED_SOFTMAX_FUSED=1`;
 - actual LocalMaxxing packet shape: `588` prompt tokens and `512` output
   tokens (`BENCH_PROMPT_MODE=filled-long`);
 - chat canary **1536/1536** pass;
 - fresh-response headline: first measured no-cache request after TTFT
+  `103.95374341972274 tok/s`; supporting repeated-request mean
+  `104.13506066488091 tok/s`; first-row wall `90.68621473793526 tok/s`;
+  all rows report `usage.prompt_tokens_details.cached_tokens=0`;
+- fresh-response status: submitted to LocalMaxxing and approved as
+  `cmqviful602p0qr01vp27jw5i`; this is a small micro-record over
+  `cmqvbq8tf02m1qr010dom0vu1` (`103.51547512013657 tok/s`) and not material
+  progress toward `>150 tok/s`;
+- queue:
+  `data/localmaxxing-gemma4-26b-a4b-q8-b70-llamacpp-mtp-n7-q8target-q40draft-routecache-mtpfusedoutargmax-selfusedweights-fresh-20260626.queue.json`;
+- response:
+  `data/localmaxxing-responses/gemma4-26b-a4b-q8-b70-llamacpp-mtp-n7-q8target-q40draft-routecache-mtpfusedoutargmax-selfusedweights-fresh-20260626.submit.log`.
+
+Superseded filled-long draft-MTP route-cache fresh-response Q8-target best:
+
+- `gemma4-q8-gpu2-routecache-ctx8192-full-20260626T191746Z`;
+- llama.cpp SYCL on one B70, UD-Q8_K_XL main GGUF plus
+  `gemma-4-26B-A4B-it-Q4_0-MTP.gguf` draft GGUF;
+- validated after a four-GPU CTX screen on GPU2/ctx8192;
+- fresh-response headline: first measured no-cache request after TTFT
   `103.51547512013657 tok/s`; supporting repeated-request mean
   `103.19340167720759 tok/s`; first-row wall `90.22004912439446 tok/s`;
   all rows report `usage.prompt_tokens_details.cached_tokens=0`;
-- fresh-response status: submitted to LocalMaxxing and approved as
-  `cmqvbq8tf02m1qr010dom0vu1`; this is a small micro-record over
-  `cmqvalync02lhqr01h76rnti3` (`103.30108468098005 tok/s`) and not material
-  progress toward `>150 tok/s`;
+- LocalMaxxing: `cmqvbq8tf02m1qr010dom0vu1`;
+- superseded by `cmqviful602p0qr01vp27jw5i`
+  (`103.95374341972274 tok/s`);
 - queue:
   `data/localmaxxing-gemma4-26b-a4b-q8-b70-llamacpp-mtp-n7-q8target-q40draft-routecache-ctx8192-gpu2-pmin0136-fresh-20260626.queue.json`;
 - response:
   `data/localmaxxing-responses/gemma4-26b-a4b-q8-b70-llamacpp-mtp-n7-q8target-q40draft-routecache-ctx8192-gpu2-pmin0136-fresh-20260626.submit.log`.
 
-Superseded filled-long draft-MTP route-cache fresh-response Q8-target best:
+Earlier superseded filled-long draft-MTP route-cache fresh-response Q8-target best:
 
 - `gemma4-q8-gpu0-mulmatid-routecache-full-20260626T184617Z`;
 - llama.cpp SYCL on one B70, UD-Q8_K_XL main GGUF plus
@@ -185,7 +204,8 @@ Superseded filled-long draft-MTP route-cache fresh-response Q8-target best:
   `cmqs56wv100kjqr01de3fdspd`, `cmqs4jnx100k6qr01d1iy78kl`,
   `cmqrsupdk000jqr01af3eu6vu`, `cmqrjcly601kuqo01rbyub1x6`, and earlier
   fast-argmax/CPU-cleanup result `cmqr82niq01hgqo01v42y7ue8`;
-- superseded by `cmqvbq8tf02m1qr010dom0vu1` (`103.51547512013657 tok/s`);
+- superseded by `cmqvbq8tf02m1qr010dom0vu1` (`103.51547512013657 tok/s`),
+  then by `cmqviful602p0qr01vp27jw5i` (`103.95374341972274 tok/s`);
 - queue:
   `data/localmaxxing-gemma4-26b-a4b-q8-b70-llamacpp-mtp-n7-q8target-q40draft-routecache-pmin0136-fresh-20260626.queue.json`;
 - response:

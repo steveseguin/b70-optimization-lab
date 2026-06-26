@@ -11,11 +11,13 @@ Current active optimization target:
 - Goal: maximize **fresh-response** single-session decode while preserving the
   Q8 target/verifier quality lane. Warmed/history or repeated-continuation
   speedups are useful diagnostics only, not headline throughput.
-- Current valid fresh-response best: `103.51547512013657 tok/s` after TTFT on
-  the first no-cache benchmark row, `103.19340167720759 tok/s` supporting
+- Current valid fresh-response best: `103.95374341972274 tok/s` after TTFT on
+  the first no-cache benchmark row, `104.13506066488091 tok/s` supporting
   repeated-request mean, `1536/1536` chat canary, LocalMaxxing
-  `cmqvbq8tf02m1qr010dom0vu1`. This is a micro-record over the previous
-  `103.30108468098005 tok/s` route-cache row, not a material breakthrough.
+  `cmqviful602p0qr01vp27jw5i`. This adds Gemma4 assistant fused output argmax
+  and fused selected-softmax weights to the route-cache stack; it is a
+  micro-record over the previous `103.51547512013657 tok/s` row, not a
+  material breakthrough.
 - Result packet: `results/gemma4-26b-a4b-q8-b70/README.md`.
 - Reproduction: `results/gemma4-26b-a4b-q8-b70/reproduce.md`.
 - Validation rules: `results/gemma4-26b-a4b-q8-b70/validity-gates.md`.

@@ -91,6 +91,7 @@ The current Gemma 4 26B one-B70 settings are documented in
 The older
 [../repro/gemma4-26b-a4b-q8-b70-95tps-20260624/](../repro/gemma4-26b-a4b-q8-b70-95tps-20260624/)
 folder remains useful as a standalone prior recipe, but it is superseded by
-the `103.515 tok/s` route-cache micro-record on top of the
+the `103.954 tok/s` route-cache + fused assistant output argmax +
+fused selected-softmax weights micro-record on top of the
 selected-softmax/weighted-sum plus direct-unroll/q-only,
 batch/thread/runtime-tuned result.
