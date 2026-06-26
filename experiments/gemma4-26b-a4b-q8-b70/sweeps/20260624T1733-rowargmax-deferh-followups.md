@@ -2247,3 +2247,59 @@ Decision: all four are valid losses versus the current fresh-response record
 `103.299200 tok/s`; no LocalMaxxing submission. The p-min/thread neighborhood
 still looks exhausted, and row0 variance can easily make later repeated rows
 look better than the fresh result.
+
+## 2026-06-26 selected-softmax inside weighted-sum screen
+
+Patch artifact:
+
+- `patches/gemma4-26b-a4b-q8-b70/20260626T0800-llamacpp-gemma4-moe-weightedsum-selectedsoftmax-negative.patch`
+
+Important artifact caveat: this is a source-stack diff snapshot for the touched
+files against the current llama.cpp worktree. It is not a minimal upstream patch;
+it preserves the exact tested experiment on top of the existing dirty Gemma
+record stack.
+
+Idea: the current record uses `LLAMA_GEMMA4_MOE_SELECTED_SOFTMAX=1` and
+`LLAMA_GEMMA4_MOE_WEIGHTED_SUM=1`, which still materializes the selected
+softmax weights before the post-down weighted sum. The experiment added an
+env-gated mode, `LLAMA_GEMMA4_MOE_WEIGHTED_SUM_SELECTED_SOFTMAX=1`, where
+`GGML_OP_MOE_WEIGHTED_SUM` consumes selected router logits directly and computes
+the softmax over selected experts inside the weighted-sum kernel. The hope was
+to remove one selected softmax graph node and the early selected-weight expand.
+
+Harness update: `scripts/run-gemma4-26b-first-baseline.sh` and
+`scripts/run-gemma4-26b-llamacpp-replica.sh` now record
+`LLAMA_GEMMA4_MOE_WEIGHTED_SUM_SELECTED_SOFTMAX` in run identity/log output so
+future env-gated MoE experiments do not become mystery results.
+
+All four screens used row0-only fresh-response validity, `--cache-ram 0`,
+`--ctx-checkpoints 0`, Q8 target/verifier, Q4_0 MTP draft,
+`MTP_N_MAX=7`, `MTP_N_MIN=2`, backend sampling off, direct draft
+argmax/unroll7, backend verifier argmax IDs, q-only MTP attention inputs,
+`BATCH_SIZE=1024`, `UBATCH_SIZE=1024`, `THREADS=8`, `POLL=100`,
+`UR_L0_USE_IMMEDIATE_COMMANDLISTS=1`, VMM off, and SYCL graph enabled.
+
+Results:
+
+- `data/gemma4-q8-gpu0-wsum-selectedsoftmax-screen-20260626T0800/`:
+  canary **96/96** pass (`384` rows), fresh row0 **100.458485 tok/s**,
+  wall `87.519353`, TTFT `0.753502`, `cached_tokens=0`.
+- `data/gemma4-q8-gpu1-skipearly-pmin0136-screen-20260626T0800/`:
+  reran `LLAMA_GEMMA4_MOE_SKIP_EARLY_WEIGHTS_EXPAND=1` without the new fused
+  selected-softmax mode because the earlier skip-early result had a cached
+  first row. Canary **96/96** pass, fresh row0 **101.885259 tok/s**,
+  wall `88.697428`, TTFT `0.747173`, `cached_tokens=0`.
+- `data/gemma4-q8-gpu2-recordcontrol-pmin0136-screen-20260626T0800/`:
+  rebuilt-binary control for the current record identity. Canary **96/96**
+  pass, fresh row0 **102.329814 tok/s**, wall `89.093420`, TTFT `0.743347`,
+  `cached_tokens=0`.
+- `data/gemma4-q8-gpu3-wsum-selectedsoftmax-pmin01361-screen-20260626T0800/`:
+  new fused selected-softmax mode with `MTP_P_MIN=0.1361`. Canary **96/96**
+  pass, fresh row0 **100.436446 tok/s**, wall `87.557492`, TTFT `0.749835`,
+  `cached_tokens=0`.
+
+Decision: valid losses. The new selected-softmax-inside-weighted-sum kernel is
+correct under the canary but slower than both the rebuilt control and the
+current `103.299200 tok/s` fresh-response record. The clean skip-early rerun is
+also below record. No LocalMaxxing submission. The experimental source hunk was
+reverted after saving the patch; keep the harness run-identity logging.
