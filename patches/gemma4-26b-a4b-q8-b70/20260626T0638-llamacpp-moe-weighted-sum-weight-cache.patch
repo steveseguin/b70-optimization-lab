@@ -1,0 +1,99 @@
+diff --git a/ggml/src/ggml-sycl/ggml-sycl.cpp b/ggml/src/ggml-sycl/ggml-sycl.cpp
+--- a/ggml/src/ggml-sycl/ggml-sycl.cpp
++++ b/ggml/src/ggml-sycl/ggml-sycl.cpp
+@@
+ static void moe_weighted_sum_f32_sycl(
+         const float * experts, const float * weights, float * dst,
+         const int n_embd, const int n_expert_used, const int n_tokens,
+         const size_t experts_nb0, const size_t experts_nb1,
+         const size_t experts_nb2, const size_t weights_nb1,
+         const size_t weights_nb2, const size_t dst_nb0,
+         const size_t dst_nb1, dpct::queue_ptr stream) {
+@@
+ 	        });
+ }
+ 
++static bool ggml_sycl_moe_weighted_sum_weight_cache_enabled() {
++    const char * env = std::getenv("LLAMA_GEMMA4_MOE_WEIGHTED_SUM_WEIGHT_CACHE");
++    return env && (std::strcmp(env, "1") == 0 ||
++                   std::strcmp(env, "true") == 0 ||
++                   std::strcmp(env, "TRUE") == 0 ||
++                   std::strcmp(env, "yes") == 0 ||
++                   std::strcmp(env, "on") == 0);
++}
++
++static void moe_weighted_sum_f32_weight_cache_sycl(
++        const float * experts, const float * weights, float * dst,
++        const int n_embd, const int n_expert_used, const int n_tokens,
++        const size_t experts_nb0, const size_t experts_nb1,
++        const size_t experts_nb2, const size_t weights_nb1,
++        const size_t weights_nb2, const size_t dst_nb0,
++        const size_t dst_nb1, dpct::queue_ptr stream) {
++    constexpr int block_rows = 256;
++    const int row_blocks = (n_embd + block_rows - 1) / block_rows;
++
++    stream->submit([&](sycl::handler & cgh) {
++        sycl::local_accessor<float, 1> weight_cache(
++            sycl::range<1>((size_t) n_expert_used), cgh);
++
++        cgh.parallel_for(
++            sycl::nd_range<2>(
++                sycl::range<2>((size_t) n_tokens, (size_t) row_blocks * block_rows),
++                sycl::range<2>(1, block_rows)),
++            [=](sycl::nd_item<2> item) {
++                const int token = (int) item.get_group(0);
++                const int row_block = (int) item.get_group(1);
++                const int local_row = (int) item.get_local_id(1);
++                const int row = row_block * block_rows + local_row;
++
++                if (local_row < n_expert_used) {
++                    weight_cache[local_row] = *(const float *) ((const char *) weights +
++                        (size_t) local_row * weights_nb1 +
++                        (size_t) token * weights_nb2);
++                }
++                item.barrier(sycl::access::fence_space::local_space);
++
++                if (row >= n_embd) {
++                    return;
++                }
++
++                float sum = 0.0f;
++#pragma unroll
++                for (int expert = 0; expert < n_expert_used; ++expert) {
++                    const float v = *(const float *) ((const char *) experts +
++                        (size_t) row * experts_nb0 +
++                        (size_t) expert * experts_nb1 +
++                        (size_t) token * experts_nb2);
++                    sum += v * weight_cache[expert];
++                }
++
++                *(float *) ((char *) dst +
++                    (size_t) row * dst_nb0 +
++                    (size_t) token * dst_nb1) = sum;
++            });
++    });
++}
++
+ static void ggml_sycl_moe_weighted_sum(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+@@
+ 	    dpct::queue_ptr main_stream = ctx.stream();
+ 	    SYCL_CHECK(ggml_sycl_set_device(ctx.device));
+ 
++    if (ggml_sycl_moe_weighted_sum_weight_cache_enabled() &&
++            experts->ne[1] > 0 && experts->ne[1] <= 32 &&
++            dst->ne[0] <= INT32_MAX && dst->ne[1] <= INT32_MAX) {
++        moe_weighted_sum_f32_weight_cache_sycl(
++            (const float *) experts->data,
++            (const float *) weights->data,
++            (float *) dst->data,
++            (int) dst->ne[0],
++            (int) experts->ne[1],
++            (int) dst->ne[1],
++            experts->nb[0], experts->nb[1], experts->nb[2],
++            weights->nb[1], weights->nb[2],
++            dst->nb[0], dst->nb[1], main_stream);
++        return;
++    }
++
+ 	    moe_weighted_sum_f32_sycl(
+ 	        (const float *) experts->data,

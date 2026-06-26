@@ -2181,3 +2181,37 @@ do not promote it into the working stack and do not submit to LocalMaxxing.
 Reverted from the source tree before continuing. The next higher-upside target
 is the Gemma4 selected-softmax/MoE verifier `process_ubatch` path, not sampled
 ID extraction.
+
+## 2026-06-26 MoE weighted-sum weight-cache micro-patch
+
+Patch artifact:
+
+- `patches/gemma4-26b-a4b-q8-b70/20260626T0638-llamacpp-moe-weighted-sum-weight-cache.patch`
+
+Idea: the current valid record lane uses `LLAMA_GEMMA4_MOE_WEIGHTED_SUM=1`,
+where `moe_weighted_sum_f32_sycl` reads the same selected expert weights for
+every embedding row. The patch added an env-gated alternate kernel,
+`LLAMA_GEMMA4_MOE_WEIGHTED_SUM_WEIGHT_CACHE=1`, that loads the selected weights
+into local memory once per token/row-block and then applies the same expert
+loop and arithmetic.
+
+Validation run:
+
+- label: `gemma4-q8-gpu0-weighted-sum-weightcache-screen`
+- canary: **64/64** pass (`256` rows)
+- p512/o512, 2 repeats, fresh row0: **103.017486 tok/s**,
+  row1 **102.223266 tok/s**, `cached_tokens=0`
+- summary:
+  `data/gemma4-q8-gpu0-weighted-sum-weightcache-screen/summary.json`
+- server log:
+  `/mnt/fast-ai/bench-results/gemma4-26b-a4b-q8/servers/gemma4-q8-gpu0-weighted-sum-weightcache-screen.server.log`
+
+Result: valid but below the current fresh-response record
+`103.299200 tok/s`. The weight-cache variant did not recover the gap; the
+extra local-memory/barrier structure likely costs as much as or more than the
+small redundant weight loads for this verifier shape.
+
+Decision: preserve the patch and result as a negative experiment, revert it
+from the source tree, and do not submit to LocalMaxxing. Continue to focus on
+larger target `process_ubatch` changes rather than this post-down weighted-sum
+micro-kernel.
