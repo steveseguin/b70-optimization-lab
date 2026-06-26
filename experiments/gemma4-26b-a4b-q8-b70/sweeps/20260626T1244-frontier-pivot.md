@@ -2,6 +2,12 @@
 
 Date: 2026-06-26
 
+Update: this pivot recommendation was superseded later on 2026-06-26 by the
+user's instruction to keep Gemma 4 26B as the main optimization lane. See
+`20260626T1155-gemma-focus-continuation.md` for the current Gemma-focused
+continuation state. MiniMax TP4 can be repaired later, but it should not be the
+default next action while Gemma source-level work remains plausible.
+
 This note records the current state after the recent Gemma 4 26B A4B Q8
 single-B70 work and the decision to stop spending most cycles on small
 single-flag Gemma sweeps.

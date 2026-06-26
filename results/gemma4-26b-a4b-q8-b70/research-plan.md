@@ -44,10 +44,15 @@ below the `103.299 tok/s` record. Audits found that the target-to-draft
 fusion family has already been tested in several losing variants, and the
 verifier LM-head/argmax shortcut family is also exhausted. See
 `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260626T1244-frontier-pivot.md`.
-Do not continue small Gemma flag sweeps unless they are materially new. The
-next Gemma work should be a larger router-materialization fusion, graph-level
-multi-token assistant unroll, or exact verifier candidate-vs-max design;
-otherwise pivot to the MiniMax boundary-fusion lane.
+The follow-up sorted-router screens were also valid but below record:
+`LLAMA_GEMMA4_MOE_TOP_K=1` + `LLAMA_GEMMA4_MOE_SORTED_TOP_K=1` measured
+`100.177 tok/s`; adding `LLAMA_GEMMA4_MOE_SELECTED_SOFTMAX_FUSED=1` measured
+`100.505 tok/s`; the direct-F32 parallel-slot fused-down variant measured
+`100.646 tok/s`. Do not continue small Gemma flag sweeps unless they are
+materially new. Per the current user priority, keep Gemma as the active lane:
+the next Gemma work should be a larger router-materialization fusion,
+graph-level multi-token assistant unroll, or exact verifier candidate-vs-max
+design rather than a pivot to MiniMax.
 
 2026-06-26 verifier profile update:
 
