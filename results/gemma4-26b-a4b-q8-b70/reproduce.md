@@ -213,7 +213,7 @@ Current filled-long draft-MTP fresh-response best:
 For a copy-ready version of this record path, including the exact patch,
 configuration, scripts, and copied result artifacts, start with
 [`../../repro/gemma4-26b-a4b-q8-b70-95tps-20260624/`](../../repro/gemma4-26b-a4b-q8-b70-95tps-20260624/README.md)
-for the older superseded recipe. The current 103.301 tok/s recipe is the same
+for the older superseded recipe. The current 103.515 tok/s recipe is the same
 family plus direct argmax-ID unroll, q-only Gemma4Assistant attention inputs,
 verifier backend argmax IDs, deferred target `h_nextn`,
 selected-softmax + weighted-sum Gemma4 MoE source guards, the validated
@@ -225,7 +225,8 @@ default-off one-shot `LLAMA_SYCL_MUL_MAT_ID_ROUTE_CACHE=1` route cache.
 ```bash
 cd /home/steve/qwen36-results-main
 LLAMA_SERVER=/home/steve/src/llama.cpp-gemma-record-stack/build-sycl-b70-aot-bmg-g31/bin/llama-server \
-GPU_INDEX=0 PORT=18260 LABEL=gemma4-q8-gpu0-mulmatid-routecache-full-$(date -u +%Y%m%dT%H%M%SZ) \
+GPU_INDEX=2 PORT=18262 LABEL=gemma4-q8-gpu2-routecache-ctx8192-full-$(date -u +%Y%m%dT%H%M%SZ) \
+CTX_SIZE=8192 \
 UR_L0_USE_IMMEDIATE_COMMANDLISTS=1 \
 GGML_SYCL_ENABLE_VMM=0 GGML_SYCL_DISABLE_GRAPH=0 BATCH_SIZE=1024 UBATCH_SIZE=1024 THREADS=8 POLL=100 \
 MTP_DRAFT_MODEL=/mnt/fast-ai/llm-models/gemma4-26b-a4b-it-q8-gguf/MTP/gemma-4-26B-A4B-it-Q4_0-MTP.gguf \
@@ -247,15 +248,15 @@ Result:
 ```text
 canary: 1536/1536 chat rows pass
 actual benchmark shape: 588 prompt tokens, 512 output tokens
-fresh headline tok/s: 103.301 first no-cache request after TTFT
-supporting repeated-request mean: 103.063 after TTFT; first-row wall: 89.977
+fresh headline tok/s: 103.515 first no-cache request after TTFT
+supporting repeated-request mean: 103.193 after TTFT; first-row wall: 90.220
 prompt cache: cached_tokens=0 on every row
-LocalMaxxing: cmqvalync02lhqr01h76rnti3
+LocalMaxxing: cmqvbq8tf02m1qr010dom0vu1
 target/draft: UD-Q8_K_XL target/verifier with Q4_0 MTP draft only
-summary: data/gemma4-q8-gpu0-mulmatid-routecache-full-20260626T184617Z/summary.json
-LocalMaxxing queue: data/localmaxxing-gemma4-26b-a4b-q8-b70-llamacpp-mtp-n7-q8target-q40draft-routecache-pmin0136-fresh-20260626.queue.json
-LocalMaxxing response: data/localmaxxing-responses/gemma4-26b-a4b-q8-b70-llamacpp-mtp-n7-q8target-q40draft-routecache-pmin0136-fresh-20260626.submit.log
-server log: /mnt/fast-ai/bench-results/gemma4-26b-a4b-q8/servers/gemma4-q8-gpu0-mulmatid-routecache-full-20260626T184617Z.server.log
+summary: data/gemma4-q8-gpu2-routecache-ctx8192-full-20260626T191746Z/summary.json
+LocalMaxxing queue: data/localmaxxing-gemma4-26b-a4b-q8-b70-llamacpp-mtp-n7-q8target-q40draft-routecache-ctx8192-gpu2-pmin0136-fresh-20260626.queue.json
+LocalMaxxing response: data/localmaxxing-responses/gemma4-26b-a4b-q8-b70-llamacpp-mtp-n7-q8target-q40draft-routecache-ctx8192-gpu2-pmin0136-fresh-20260626.submit.log
+server log: /mnt/fast-ai/bench-results/gemma4-26b-a4b-q8/servers/gemma4-q8-gpu2-routecache-ctx8192-full-20260626T191746Z.server.log
 ```
 
 The current record path requires the local llama.cpp patch stack captured in

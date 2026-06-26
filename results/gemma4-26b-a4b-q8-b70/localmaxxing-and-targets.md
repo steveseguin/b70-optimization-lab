@@ -106,8 +106,8 @@ Current filled-long draftless ngram-mod warmed/history artifact:
   `cmqqxx7bp01dbqo012d2qiiw6` (`280.04 tok/s`),
   `cmqqxjnif01d0qo01ix4oeixo` (`255.04 tok/s`) and
   `cmqqxbkzx01cxqo01j8p97627` (`245.98 tok/s`). It does **not** supersede the
-  current fresh-response draft-MTP record `cmqvalync02lhqr01h76rnti3`
-  (`103.301 tok/s` first no-cache request; `103.063 tok/s` supporting repeat
+  current fresh-response draft-MTP record `cmqvbq8tf02m1qr010dom0vu1`
+  (`103.515 tok/s` first no-cache request; `103.193 tok/s` supporting repeat
   mean; Q8 target/verifier with Q4_0 MTP draft only);
 - queue:
   `data/localmaxxing-gemma4-26b-a4b-q8-b70-ngrammod-20-32-64-poll100-filledlong512-20260623.queue.json`;
@@ -125,6 +125,31 @@ Current filled-long draftless ngram-mod warmed/history artifact:
   `data/localmaxxing-responses/localmaxxing-openapi-benchmark-methods-20260623.json`.
 
 Current filled-long draft-MTP fresh-response Q8-target best:
+
+- `gemma4-q8-gpu2-routecache-ctx8192-full-20260626T191746Z`;
+- llama.cpp SYCL on one B70, UD-Q8_K_XL main GGUF plus
+  `gemma-4-26B-A4B-it-Q4_0-MTP.gguf` draft GGUF;
+- submitted from a headless Supermicro AMD Threadripper PRO 5955WX platform
+  with 128 GB DDR4; one Intel Arc Pro B70 32 GB was used for this record;
+- same `c926ad098` `n=7/n-min=2` backend-sampling-off route-cache recipe as
+  the previous row, validated after a four-GPU CTX screen on GPU2/ctx8192;
+- actual LocalMaxxing packet shape: `588` prompt tokens and `512` output
+  tokens (`BENCH_PROMPT_MODE=filled-long`);
+- chat canary **1536/1536** pass;
+- fresh-response headline: first measured no-cache request after TTFT
+  `103.51547512013657 tok/s`; supporting repeated-request mean
+  `103.19340167720759 tok/s`; first-row wall `90.22004912439446 tok/s`;
+  all rows report `usage.prompt_tokens_details.cached_tokens=0`;
+- fresh-response status: submitted to LocalMaxxing and approved as
+  `cmqvbq8tf02m1qr010dom0vu1`; this is a small micro-record over
+  `cmqvalync02lhqr01h76rnti3` (`103.30108468098005 tok/s`) and not material
+  progress toward `>150 tok/s`;
+- queue:
+  `data/localmaxxing-gemma4-26b-a4b-q8-b70-llamacpp-mtp-n7-q8target-q40draft-routecache-ctx8192-gpu2-pmin0136-fresh-20260626.queue.json`;
+- response:
+  `data/localmaxxing-responses/gemma4-26b-a4b-q8-b70-llamacpp-mtp-n7-q8target-q40draft-routecache-ctx8192-gpu2-pmin0136-fresh-20260626.submit.log`.
+
+Superseded filled-long draft-MTP route-cache fresh-response Q8-target best:
 
 - `gemma4-q8-gpu0-mulmatid-routecache-full-20260626T184617Z`;
 - llama.cpp SYCL on one B70, UD-Q8_K_XL main GGUF plus
@@ -153,13 +178,14 @@ Current filled-long draft-MTP fresh-response Q8-target best:
   `103.06255061691155 tok/s`; first-row wall `89.97733776184405 tok/s`;
   all rows report `usage.prompt_tokens_details.cached_tokens=0`;
 - fresh-response status: submitted to LocalMaxxing and approved as
-  `cmqvalync02lhqr01h76rnti3`; this is a micro-record over
+  `cmqvalync02lhqr01h76rnti3`; this was a micro-record over
   `cmqsylo2l011nqr011yydjvne` (`103.2992004295621 tok/s`) and supersedes
   `cmqshlz8j00s0qr01f7lr24oh`, `cmqsf630x00r1qr01d1usfo2d`,
   `cmqsd2jpn00pwqr017fq21akz`, `cmqs7uyqb00lnqr01u9dtv63r`,
   `cmqs56wv100kjqr01de3fdspd`, `cmqs4jnx100k6qr01d1iy78kl`,
   `cmqrsupdk000jqr01af3eu6vu`, `cmqrjcly601kuqo01rbyub1x6`, and earlier
   fast-argmax/CPU-cleanup result `cmqr82niq01hgqo01v42y7ue8`;
+- superseded by `cmqvbq8tf02m1qr010dom0vu1` (`103.51547512013657 tok/s`);
 - queue:
   `data/localmaxxing-gemma4-26b-a4b-q8-b70-llamacpp-mtp-n7-q8target-q40draft-routecache-pmin0136-fresh-20260626.queue.json`;
 - response:

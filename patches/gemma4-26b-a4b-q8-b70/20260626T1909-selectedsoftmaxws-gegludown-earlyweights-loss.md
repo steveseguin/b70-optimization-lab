@@ -46,7 +46,7 @@ Result:
 - supporting mean after TTFT: `100.88521816690852 tok/s`;
 - row0 wall: `88.30958095057842 tok/s`;
 - cached tokens: `[0, 0]`;
-- current record: `103.30108468098005 tok/s`;
+- record at test time: `103.30108468098005 tok/s`;
 - previous material baseline: `103.2992004295621 tok/s`.
 
 ## Interpretation

@@ -7,7 +7,7 @@ replicas on four GPUs for parallel research and aggregate service capacity.
 ## Current Fresh-Response Headline
 
 Current valid one-B70 headline is
-`data/gemma4-q8-gpu0-mulmatid-routecache-full-20260626T184617Z/`:
+`data/gemma4-q8-gpu2-routecache-ctx8192-full-20260626T191746Z/`:
 
 - target/verifier: `gemma-4-26B-A4B-it-UD-Q8_K_XL.gguf`;
 - draft: `MTP/gemma-4-26B-A4B-it-Q4_0-MTP.gguf`;
@@ -26,12 +26,13 @@ Current valid one-B70 headline is
   `UR_L0_USE_IMMEDIATE_COMMANDLISTS=1`, `BATCH_SIZE=1024`,
   `UBATCH_SIZE=1024`, `THREADS=8`, `POLL=100`, `FLASH_ATTN=off`,
   `GGML_SYCL_DISABLE_GRAPH=0`;
-- validation: chat canary **1536/1536**, benchmark row 0 `cached_tokens=0`;
-- fresh headline: **103.30108468098005 tok/s** after TTFT;
-- supporting repeated-request mean: `103.06255061691155 tok/s`;
-- LocalMaxxing: `cmqvalync02lhqr01h76rnti3`;
-- note: this is a micro-record over the prior `103.2992004295621 tok/s`
-  material baseline, not a material speedup.
+- validation: chat canary **1536/1536**, all 8 benchmark rows
+  `cached_tokens=0`;
+- fresh headline: **103.51547512013657 tok/s** after TTFT;
+- supporting repeated-request mean: `103.19340167720759 tok/s`;
+- LocalMaxxing: `cmqvbq8tf02m1qr010dom0vu1`;
+- note: this is a small micro-record over the prior
+  `103.30108468098005 tok/s` route-cache row, not a material speedup.
 
 The actual research target remains **>150 tok/s fresh-response**. The current
 scalar llama.cpp MTP loop is below that target because it still performs one
@@ -56,6 +57,17 @@ materially new. Per the current user priority, keep Gemma as the active lane:
 the next Gemma work should be a larger router-materialization fusion,
 graph-level multi-token assistant unroll, or exact verifier candidate-vs-max
 design rather than a pivot to MiniMax.
+
+2026-06-26 route-cache CTX/GPU screen and follow-up: rechecked the current
+route-cache recipe on four GPUs with CTX `2048`, `4096`, `8192`, and `16384`
+at screen depth (`128/128` canary, 2 benchmark repeats). All rows had
+`cached_tokens=0`. The best screen was GPU2 / CTX `8192` at
+`103.89855970182825 tok/s` fresh row0 after TTFT. Full validation on the same
+GPU2/ctx8192 lane passed `1536/1536` canary and landed at
+`103.51547512013657 tok/s` fresh row0 after TTFT, enough to supersede the
+`103.30108468098005` route-cache micro-record but still small enough to treat
+as runtime/GPU variance cleanup rather than architectural progress. See
+`../../patches/gemma4-26b-a4b-q8-b70/20260626T1914-routecache-ctx-gpu-screen.md`.
 
 2026-06-26 verifier profile update:
 
@@ -343,8 +355,8 @@ Next queue:
   now complete. It validated chat-template quality but reached only
   `34.89 tok/s` with graph enabled; `fp8_per_tensor` improved to `40.31 tok/s`
   as a lower-precision diagnostic. Neither lane is competitive with the
-  current llama.cpp Q8-target fresh-response record (`103.301 tok/s` first
-  no-cache request; `103.063 tok/s` supporting repeat mean) from the Q4_0
+  current llama.cpp Q8-target fresh-response record (`103.515 tok/s` first
+  no-cache request; `103.193 tok/s` supporting repeat mean) from the Q4_0
   draft-MTP validation plus direct-unroll/q-only assistant-input patch,
   selected-softmax/weighted-sum MoE guards, verifier backend argmax IDs,
   deferred target `h_nextn`, and batch/thread/runtime tune.
@@ -641,7 +653,7 @@ Text speed is first. After text baseline:
     The `n=7` MTP lane already accepts long chunks on the filled-long benchmark
     (`~445/462` drafted tokens, mean acceptance length `~7.7`, zero `p-min`
     stops in the profile). Argmax/top-k and VMM/ubatch/poll follow-ups preserved
-    quality but did not beat the current `103.299-103.301 tok/s` Q8-target/Q4_0-draft
+    quality but did not beat the then-current `103.299-103.301 tok/s` Q8-target/Q4_0-draft
     first-request record in a meaningful way.
     A fixed-line diagnostic then showed the same thing more sharply: `n=8`
     accepted `454/454` drafted benchmark tokens but fell to `64.20 tok/s`, and
