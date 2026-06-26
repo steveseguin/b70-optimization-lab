@@ -95,3 +95,34 @@ design note / prototype plan for the deeper single-output Gemma4 small-token MoE
 op. That is the next credible path toward `>150 tok/s`; repeated
 sampler/logit-output/fused-down/router-materialization flags are already covered
 and below the current `103.299 tok/s` record.
+
+## 2026-06-26T16:19Z Fused Selected-Softmax Weighted-Sum Screen
+
+Prototype:
+`LLAMA_GEMMA4_MOE_SELECTED_SOFTMAX_WEIGHTED_SUM=1` on top of the current record
+stack (`LLAMA_GEMMA4_MOE_SELECTED_SOFTMAX=1`,
+`LLAMA_GEMMA4_MOE_WEIGHTED_SUM=1`, MTP `n_max=7`, `p_min=0.136`).
+
+Intent: fuse the final selected-softmax + weighted-sum aggregation around the
+existing down-projection output, without changing target/draft quality or
+headline validity. This was the bounded next step after the cheap router and
+fused-down toggles lost.
+
+Result:
+
+- summary:
+  `data/gemma4-q8-gpu0-selectedsoftmax-weightedsum-fusedagg-pmin0136-screen-20260626T161913Z/summary.json`
+- canary: `512/512`, pass
+- cached-token validity: `[0, 0, 0, 0]`, row0 is fresh-response eligible
+- fresh row0: `100.3584163628206 tok/s` after TTFT
+- repeated-row mean: `101.70347410674582 tok/s` after TTFT, support-only
+- decision: reject / do not promote. Correct, but slower than the valid
+  `103.2992004295621 tok/s` record.
+
+Interpretation: this isolated final aggregation fusion is not enough. It likely
+saves a small materialization/softmax path but adds a custom kernel launch and
+does not reduce the dominant target/draft forward cost. The next credible path
+is still a deeper Gemma4 small-token MoE fusion that removes more of the
+gate/up/activation/down/weighted-sum path together, or a separate MTP acceptance
+improvement that increases fresh accepted tokens per step without learned
+history.
