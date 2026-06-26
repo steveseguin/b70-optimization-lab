@@ -593,3 +593,38 @@ top-k/logit-gap results were far slower than the current direct-argmax record.
 The next credible Gemma lane is a verifier-only source change that reduces
 target compute, especially around the small-token Gemma4 MoE path or an exact
 bounded candidate LM-head argmax.
+
+## 2026-06-26T21:47Z Q8 Gate/Up GEGLU Fused Op
+
+Patch under test: add backend-only `GGML_OP_MOE_Q8_0_GATEUP_GEGLU`, enabled by
+`LLAMA_GEMMA4_MOE_GATEUP_GEGLU=1`, and use it in the strict Gemma4/Q8
+small-batch MoE graph to replace:
+
+```text
+MUL_MAT_ID(gate_up) -> split gate/up -> GEGLU
+```
+
+The op quantizes the current hidden row to Q8_1 once, dots selected Q8_0 gate
+and up expert rows, applies the per-expert scale to both halves, and writes the
+F32 GEGLU output shaped `[n_ff, n_expert_used, n_tokens]`. The down projection
+and final weighted sum stayed on the current route-cache recipe.
+
+Run:
+
+- summary:
+  `data/gemma4-q8-gpu2-gateup-geglu-screen-20260626T214732Z/summary.json`
+- env deltas:
+  `LLAMA_GEMMA4_MOE_GATEUP_GEGLU=1`,
+  `LLAMA_SYCL_MUL_MAT_ID_ROUTE_CACHE=1`
+- canary: `32/32` repeats (`128` rows), pass
+- cached-token validity: `[0, 0]`, row0 is fresh-response eligible
+- fresh row0: `84.21460316143335 tok/s` after TTFT
+- support mean: `84.22833614279985 tok/s` after TTFT, support-only
+- current record: `103.51547512013657 tok/s`
+
+Decision: reject / do not promote / do not submit to LocalMaxxing. This is a
+correct but substantial loss. Replacing the existing route-cache `MUL_MAT_ID`
+gate/up path with a naive fused dot+GEGLU op reduces graph/node count but loses
+the tuned math path. Preserve the env-gated patch as a dead-end artifact. Future
+MoE fusion should target a larger single-output MoE boundary or improve the
+route-cache `MUL_MAT_ID` path directly, not retry this exact gate/up-only op.
