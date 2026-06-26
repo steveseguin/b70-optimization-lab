@@ -430,3 +430,57 @@ baseline. This confirms that routing through the GEGLU selected-down
 matmul-epilogue backend remains a loss even when selected-softmax weights are
 available early. Preserve the source patch as a negative / enabling artifact,
 but do not spend more time on this exact GEGLU-down family.
+
+## 2026-06-26T20:27Z MoE Weighted-Sum 2D Launch
+
+Patch under test: add default-off
+`LLAMA_GEMMA4_MOE_WEIGHTED_SUM_2D=1` to route `GGML_OP_MOE_WEIGHTED_SUM`
+through a 2D `token x row` SYCL `parallel_for` instead of the current flattened
+1D kernel. Semantics are identical: same expert tensor, same weights, same
+strides, same per-row sum. The intended win was removing per-output
+`idx / n_embd` and `idx % n_embd` integer work in the accepted MoE path.
+
+Harness fix made before promotion attempts:
+
+- `scripts/run-gemma4-26b-first-baseline.sh` now records
+  `llama_gemma4_moe_weighted_sum_2d` in `summary.json`;
+- `scripts/run-gemma4-26b-llamacpp-replica.sh` now prints
+  `LLAMA_GEMMA4_MOE_WEIGHTED_SUM_2D` in server launch logs.
+
+Screen / variance scan:
+
+- `data/gemma4-q8-gpu2-moe-weightedsum-2d-screen-20260626T202719Z/summary.json`
+  - canary `128/128`, cached tokens `[0, 0]`
+  - fresh row0 `103.5435126657234 tok/s`
+  - support mean `102.539530590951 tok/s`
+- `data/gemma4-q8-gpu0-moe-weightedsum-2d-screen-20260626T202959Z/summary.json`
+  - canary `128/128`, cached tokens `[0, 0]`
+  - fresh row0 `101.35034097096046 tok/s`
+  - support mean `102.34984602482261 tok/s`
+- `data/gemma4-q8-gpu1-moe-weightedsum-2d-screen-20260626T202959Z/summary.json`
+  - canary `128/128`, cached tokens `[0, 0]`
+  - fresh row0 `101.48255322931645 tok/s`
+  - support mean `102.3812573687189 tok/s`
+- `data/gemma4-q8-gpu3-moe-weightedsum-2d-screen-20260626T202959Z/summary.json`
+  - canary `128/128`, cached tokens `[0, 0]`
+  - fresh row0 `102.99795406628424 tok/s`
+  - support mean `102.08773488585275 tok/s`
+
+Full validation:
+
+- `data/gemma4-q8-gpu2-moe-weightedsum-2d-full-20260626T202959Z/summary.json`
+- canary: `384/384` repeats (`1536` rows), pass
+- cached-token validity:
+  `[0, 0, 0, 0, 0, 0, 0, 0]`, row0 is fresh-response eligible
+- fresh row0: `103.5104909373625 tok/s`
+- support mean: `103.26493464181871 tok/s`
+- support median: `103.42693492994971 tok/s`
+- current record: `103.51547512013657 tok/s`
+- delta vs headline: `-0.00498418277407 tok/s`
+
+Decision: reject / do not promote / do not submit to LocalMaxxing. The first
+GPU2 screen was variance; the full run missed the fresh-response row0 record
+and other GPUs screened lower. The patch is quality-safe and default-off, but
+not a demonstrated speed win. Do not enable
+`LLAMA_GEMMA4_MOE_WEIGHTED_SUM_2D` in the promoted Q8 recipe unless a future
+change makes weighted-sum launch shape newly relevant.
