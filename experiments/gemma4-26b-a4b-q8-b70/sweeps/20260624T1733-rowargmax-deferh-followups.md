@@ -2146,3 +2146,38 @@ Decision: diagnostic only, no LocalMaxxing submission. Preserve it because it
 redirects future work away from p-min/thread-only sweeps and toward target
 `process_ubatch` source work or a safe reduction in sampled-token extraction
 overhead.
+
+## 2026-06-26 sampled-row exact-copy verifier micro-patch
+
+Patch artifact:
+
+- `patches/gemma4-26b-a4b-q8-b70/20260626T0622-llamacpp-verifier-sampled-row0-exactcopy.patch`
+
+Idea: when the verifier direct-argmax path produces a single contiguous
+`t_sampled_rows[0]` tensor, bypass the generic row-map loop and copy exactly
+`n_outputs` `I32` token IDs into `sampling.sampled` from row 0. This targeted
+the secondary decode-profile cost seen above (`sampled_extract_ms`, about
+`1.57 ms/call`) without changing draft quality or target math.
+
+Validation run:
+
+- label: `gemma4-q8-gpu0-row0-exactcopy-profile`
+- canary: **64/64** pass (`256` rows)
+- p512/o512, 2 repeats, fresh row0: **102.429787 tok/s**,
+  row1 **102.275898 tok/s**, `cached_tokens=0`
+- summary:
+  `data/gemma4-q8-gpu0-row0-exactcopy-profile/summary.json`
+- server log:
+  `/mnt/fast-ai/bench-results/gemma4-26b-a4b-q8/servers/gemma4-q8-gpu0-row0-exactcopy-profile.server.log`
+
+Profile result: no practical win. Final target decode profile still shows
+`process_ubatch_ms=84333.088` dominating and `sampled_extract_ms=1672.022`
+over `1160` accumulated target calls (about `1.44 ms/call`, only a small
+movement versus the previous profiled `~1.57 ms/call`). The fresh row0 result
+is below the valid record `103.299200 tok/s`.
+
+Decision: preserve the patch and result as a negative/marginal experiment, but
+do not promote it into the working stack and do not submit to LocalMaxxing.
+Reverted from the source tree before continuing. The next higher-upside target
+is the Gemma4 selected-softmax/MoE verifier `process_ubatch` path, not sampled
+ID extraction.
