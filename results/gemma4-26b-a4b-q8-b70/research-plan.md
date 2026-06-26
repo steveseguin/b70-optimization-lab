@@ -37,6 +37,25 @@ sweeps are useful only as cleanup; a 2x-class improvement likely requires a
 graph-level multi-token assistant unroll or a different fresh-valid speculation
 engine.
 
+2026-06-26 verifier profile update:
+
+- current-stack profile control reproduced the promoted family at
+  `102.3599780663357 tok/s` row 0, `cached_tokens=0`, canary `64/64`;
+- target verifier/model time dominates: target `process_ubatch_ms` was
+  `23728.047` of `24225.592` target ms, while draft decode was only
+  `1348.637` ms;
+- node-profile-detail maps the hot anonymous nodes: `node_2255` is the
+  target/verifier LM head, `result_output` is the assistant/draft LM head, and
+  `node_64` / `node_139` / `node_2239` are MoE down projections;
+- MoE gate/up `MUL_MAT_ID` and MoE down projections remain the core verifier
+  cost. Existing output-argmax, device-H handoff, broad `MUL_MAT_ID`,
+  fused-down, fused-GEGLU-down, and skip-early-weight variants were already
+  tested and should not be repeated unchanged;
+- see
+  `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260626T0748-nodeprofile-detail.md`
+  and patch artifact
+  `patches/gemma4-26b-a4b-q8-b70/20260626T0748-llamacpp-sycl-node-profile-detail.patch`.
+
 ## Non-Negotiables
 
 - Default precision is Q8 / INT8-or-better. Lower precision can be a diagnostic
