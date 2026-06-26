@@ -361,3 +361,39 @@ Decision: valid micro-record, but not material progress. Preserve the patch and
 result because it proves the route-cache is correctness-safe and slightly
 positive; do not spend more Gemma time on scalar host route-cache refinements.
 The remaining performance bottleneck is still target/verifier MoE work.
+
+## 2026-06-26T19:09Z Early Selected-Softmax Weights For GEGLU Down
+
+Patch under test: when `LLAMA_GEMMA4_MOE_SELECTED_SOFTMAX_WEIGHTED_SUM=1` and a
+GEGLU selected-down backend is explicitly requested, materialize selected
+softmax weights before the activation/down block instead of setting
+`weights=nullptr`. This lets
+`ggml_moe_geglu_selected_down_weighted_sum()` fire for the combined
+selected-softmax-weighted-sum lane.
+
+Reason: the current combined selected-softmax-weighted-sum path normally fuses
+only after `ffn_moe_down` already exists. The earlier GEGLU selected-down path
+requires `weights != nullptr`; without this patch, the combined selected-softmax
+path cannot exercise it.
+
+Run:
+
+- summary:
+  `data/gemma4-q8-gpu0-selectedsoftmaxws-gegludown-earlyweights-routecache-screen-20260626T190911Z/summary.json`
+- env deltas:
+  `LLAMA_GEMMA4_MOE_SELECTED_SOFTMAX_WEIGHTED_SUM=1`,
+  `LLAMA_GEMMA4_MOE_GEGLU_DOWN_MATMUL_EPILOGUE=1`,
+  `LLAMA_SYCL_MUL_MAT_ID_ROUTE_CACHE=1`
+- canary: `32/32` repeats (`128` rows), pass
+- cached-token validity: `[0, 0]`, row0 is fresh-response eligible
+- fresh row0: `100.92860408939487 tok/s` after TTFT
+- wall row0: `88.30958095057842 tok/s`
+- repeated-row mean: `100.88521816690852 tok/s` after TTFT, support-only
+- current record: `103.30108468098005 tok/s`
+
+Decision: reject / do not promote. Correct, but slower than both the
+route-cache micro-record and the prior `103.2992004295621 tok/s` material
+baseline. This confirms that routing through the GEGLU selected-down
+matmul-epilogue backend remains a loss even when selected-softmax weights are
+available early. Preserve the source patch as a negative / enabling artifact,
+but do not spend more time on this exact GEGLU-down family.
