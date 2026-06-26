@@ -1,0 +1,62 @@
+{
+  "label": "minimax-m27-currenthigh-pidfd-ipc-20260626",
+  "date": "2026-06-26",
+  "model": "MiniMax M2.7 INT4 AutoRound",
+  "hardware": "4x Intel Arc Pro B70",
+  "mode": "vLLM XPU TP4, p512/n1536, max_model_len=2048, max_num_batched_tokens=512, max_num_seqs=1",
+  "candidate_change": {
+    "CCL_IPC": "pidfd",
+    "CCL_ZE_IPC_EXCHANGE": "pidfd"
+  },
+  "baseline_to_beat": {
+    "label": "current strict MiniMax high",
+    "output_toks_per_second": 89.314195,
+    "total_toks_per_second": 119.085594,
+    "localmaxxing_id": "cmpct6t4m007fnw01yjdtlcs4"
+  },
+  "validity": {
+    "fresh_response": true,
+    "prefix_caching": false,
+    "history_accelerated": false,
+    "strict_quality_passed": true,
+    "quality_gates": [
+      "raw145 n64 exact",
+      "raw145 n256 exact",
+      "semantic suite n64 x2",
+      "arithmetic repeat n64 x8"
+    ]
+  },
+  "result": {
+    "status": "negative_not_promoted",
+    "mean_output_toks_per_second": 83.05237255644445,
+    "mean_total_toks_per_second": 110.73649674192595,
+    "output_toks_per_second": [
+      83.47563753425258,
+      83.31422053943204,
+      82.05084907518079,
+      83.36878307691242
+    ],
+    "total_toks_per_second": [
+      111.30085004567012,
+      111.08562738590939,
+      109.40113210024107,
+      111.15837743588324
+    ],
+    "submit_to_localmaxxing": false,
+    "reason_not_submitted": "Strict quality passed, but throughput is below the existing 89.314195 output tok/s MiniMax record."
+  },
+  "artifact_paths": {
+    "external_summary_json": "/mnt/fast-ai/bench-results/minimax-m2.7-strict-candidates/minimax-minimax-m27-currenthigh-pidfd-ipc-20260626-strict-tp4-ctx2048-mbt512-bs256-20260626T125528Z-summary.json",
+    "external_quality_dir": "/mnt/fast-ai/bench-results/minimax-m2.7-strict-candidates/minimax-minimax-m27-currenthigh-pidfd-ipc-20260626-strict-tp4-ctx2048-mbt512-bs256-20260626T125528Z-quality/",
+    "external_aot_boundary_context_json": "/mnt/fast-ai/bench-results/minimax-m2.7-strict-candidates/minimax-minimax-m27-currenthigh-pidfd-ipc-20260626-strict-tp4-ctx2048-mbt512-bs256-20260626T125528Z-aot-boundary-context.json"
+  },
+  "aot_boundary_context": {
+    "rank_file_count": 8,
+    "allreduce_count": 1000,
+    "by_category": {
+      "qk_rms_variance": 496,
+      "hidden_state_unknown": 504
+    }
+  },
+  "decision": "Do not promote pidfd for the current MiniMax strict lane. Continue with source-level collective/graph-boundary reduction."
+}

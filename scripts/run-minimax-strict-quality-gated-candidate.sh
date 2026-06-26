@@ -36,6 +36,7 @@ RUN_EXTENDED_QUALITY="${RUN_EXTENDED_QUALITY:-0}"
 RUN_REPEAT_ARITHMETIC_QUALITY="${RUN_REPEAT_ARITHMETIC_QUALITY:-1}"
 REPEAT_ARITHMETIC_RUNS="${REPEAT_ARITHMETIC_RUNS:-8}"
 ATTENTION_BACKEND="${ATTENTION_BACKEND:-default}"
+RUN_AOT_BOUNDARY_CONTEXT="${RUN_AOT_BOUNDARY_CONTEXT:-0}"
 if [ -z "${COMPILATION_CONFIG_JSON:-}" ]; then
   COMPILATION_CONFIG_JSON='{"use_inductor_graph_partition":true,"compile_sizes":[1],"cudagraph_mode":"PIECEWISE"}'
 fi
@@ -458,6 +459,8 @@ write_summary() {
     --arg vllm_xpu_gather_logits_fp32 "${VLLM_XPU_GATHER_LOGITS_FP32:-}" \
     --arg vllm_bench_temperature "${VLLM_BENCH_TEMPERATURE:-}" \
     --arg ccl_allreduce "${CCL_ALLREDUCE:-}" \
+    --arg ccl_ipc "${CCL_IPC:-}" \
+    --arg ccl_ze_ipc_exchange "${CCL_ZE_IPC_EXCHANGE:-}" \
     --arg ccl_reduce_scatter_monolithic_pipeline_kernel "${CCL_REDUCE_SCATTER_MONOLITHIC_PIPELINE_KERNEL:-}" \
     --arg ccl_allgatherv_monolithic_pipeline_kernel "${CCL_ALLGATHERV_MONOLITHIC_PIPELINE_KERNEL:-}" \
     --arg ccl_topo_fabric_vertex_connection_check "${CCL_TOPO_FABRIC_VERTEX_CONNECTION_CHECK:-}" \
@@ -565,6 +568,8 @@ write_summary() {
         VLLM_XPU_GATHER_LOGITS_FP32: $vllm_xpu_gather_logits_fp32,
         VLLM_BENCH_TEMPERATURE: $vllm_bench_temperature,
         CCL_ALLREDUCE: $ccl_allreduce,
+        CCL_IPC: $ccl_ipc,
+        CCL_ZE_IPC_EXCHANGE: $ccl_ze_ipc_exchange,
         CCL_REDUCE_SCATTER_MONOLITHIC_PIPELINE_KERNEL: $ccl_reduce_scatter_monolithic_pipeline_kernel,
         CCL_ALLGATHERV_MONOLITHIC_PIPELINE_KERNEL: $ccl_allgatherv_monolithic_pipeline_kernel,
         VLLM_XPU_ENABLE_XPU_GRAPH: env.VLLM_XPU_ENABLE_XPU_GRAPH,
@@ -667,6 +672,20 @@ if [ "$BENCH_REPEATS" -gt 0 ]; then
 fi
 
 write_summary quality_passed "${bench_jsons[@]}"
+
+aot_context_json=""
+if [ "$RUN_AOT_BOUNDARY_CONTEXT" -eq 1 ]; then
+  aot_context_json="$OUTDIR/${stem}-aot-boundary-context.json"
+  if "$PUBLISH_ROOT/scripts/inspect-minimax-aot-boundary-context.py" \
+      "$CACHE_ROOT" --out "$aot_context_json" >/dev/null 2>&1; then
+    tmp="$(mktemp)"
+    jq --arg path "$aot_context_json" '. + {aot_boundary_context_json: $path}' \
+      "$summary_json" > "$tmp"
+    mv "$tmp" "$summary_json"
+  else
+    rm -f "$aot_context_json"
+  fi
+fi
 
 if [ "${#bench_jsons[@]}" -gt 0 ]; then
   tmp="$(mktemp)"
