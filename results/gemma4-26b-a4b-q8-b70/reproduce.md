@@ -5,7 +5,7 @@ Qwen models or modify the dirty Qwen vLLM source tree.
 
 ## 1. Build llama.cpp with SYCL
 
-The current `103.954 tok/s` recipe is not plain upstream llama.cpp. It uses the
+The current `103.983 tok/s` recipe is not plain upstream llama.cpp. It uses the
 local Gemma research stack based on upstream commit `c926ad098`; the cumulative
 source patch snapshot is:
 
@@ -224,7 +224,7 @@ Current filled-long draft-MTP fresh-response best:
 For a copy-ready version of this record path, including the exact patch,
 configuration, scripts, and copied result artifacts, start with
 [`../../repro/gemma4-26b-a4b-q8-b70-95tps-20260624/`](../../repro/gemma4-26b-a4b-q8-b70-95tps-20260624/README.md)
-for the older superseded recipe. The current 103.954 tok/s recipe is the same
+for the older superseded recipe. The current 103.983 tok/s recipe is the same
 family plus direct argmax-ID unroll, q-only Gemma4Assistant attention inputs,
 verifier backend argmax IDs, deferred target `h_nextn`,
 selected-softmax + weighted-sum Gemma4 MoE source guards, the validated
@@ -237,7 +237,7 @@ Gemma4 assistant fused output argmax, and fused selected-softmax weights.
 ```bash
 cd /home/steve/qwen36-results-main
 LLAMA_SERVER=/home/steve/src/llama.cpp-gemma-record-stack/build-sycl-b70-aot-bmg-g31/bin/llama-server \
-GPU_INDEX=2 PORT=18262 LABEL=gemma4-q8-gpu2-routecache-mtpfusedoutargmax-selfusedweights-full-$(date -u +%Y%m%dT%H%M%SZ) \
+GPU_INDEX=0 PORT=18260 LABEL=gemma4-q8-gpu0-currentrecord-control-fullrepeat-$(date -u +%Y%m%dT%H%M%SZ) \
 CTX_SIZE=8192 \
 UR_L0_USE_IMMEDIATE_COMMANDLISTS=1 \
 GGML_SYCL_ENABLE_VMM=0 GGML_SYCL_DISABLE_GRAPH=0 BATCH_SIZE=1024 UBATCH_SIZE=1024 THREADS=8 POLL=100 \
@@ -260,15 +260,15 @@ Result:
 ```text
 canary: 1536/1536 chat rows pass
 actual benchmark shape: 588 prompt tokens, 512 output tokens
-fresh headline tok/s: 103.954 first no-cache request after TTFT
-supporting repeated-request mean: 104.135 after TTFT; first-row wall: 90.686
+fresh headline tok/s: 103.983 first no-cache request after TTFT
+supporting repeated-request mean: 104.096 after TTFT; first-row wall: 90.479
 prompt cache: cached_tokens=0 on every row
-LocalMaxxing: cmqviful602p0qr01vp27jw5i
+LocalMaxxing: cmqvjupek02pgqr01d46algvg
 target/draft: UD-Q8_K_XL target/verifier with Q4_0 MTP draft only
-summary: data/gemma4-q8-gpu2-routecache-mtpfusedoutargmax-selfusedweights-full-20260626T222525Z/summary.json
-LocalMaxxing queue: data/localmaxxing-gemma4-26b-a4b-q8-b70-llamacpp-mtp-n7-q8target-q40draft-routecache-mtpfusedoutargmax-selfusedweights-fresh-20260626.queue.json
-LocalMaxxing response: data/localmaxxing-responses/gemma4-26b-a4b-q8-b70-llamacpp-mtp-n7-q8target-q40draft-routecache-mtpfusedoutargmax-selfusedweights-fresh-20260626.submit.log
-server log: /mnt/fast-ai/bench-results/gemma4-26b-a4b-q8/servers/gemma4-q8-gpu2-routecache-mtpfusedoutargmax-selfusedweights-full-20260626T222525Z.server.log
+summary: data/gemma4-q8-gpu0-currentrecord-control-fullrepeat-20260626T230510Z/summary.json
+LocalMaxxing queue: data/localmaxxing-gemma4-26b-a4b-q8-b70-llamacpp-mtp-n7-q8target-q40draft-routecache-repeat-fresh-20260626.queue.json
+LocalMaxxing response: data/localmaxxing-responses/gemma4-26b-a4b-q8-b70-llamacpp-mtp-n7-q8target-q40draft-routecache-repeat-fresh-20260626.submit.log
+server log: /mnt/fast-ai/bench-results/gemma4-26b-a4b-q8/servers/gemma4-q8-gpu0-currentrecord-control-fullrepeat-20260626T230510Z.server.log
 ```
 
 The current record path requires the local llama.cpp patch stack captured in

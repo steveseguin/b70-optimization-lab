@@ -99,6 +99,21 @@ the fresh-response number. A draftless n-gram/history run that becomes fast only
 after the first identical output must be labeled history-accelerated and must
 not be submitted or promoted as fresh-response throughput.
 
+The benchmark harness supports `BENCH_PROMPT_MODE=filled-long-unique` and
+`filled-fixed-line-unique` for fresh-response aggregate checks. These modes
+generate a deterministic different prompt per repeat and store each row's
+`prompt_sha256`. For those modes, the repeated-row mean may be treated as a
+fresh-response mean only when:
+
+- `fresh_response_validity.prompts_are_unique` is true;
+- every row has a distinct prompt hash;
+- every reported `cached_tokens` value is `0`;
+- the same canary and model-identity gates pass.
+
+For historical `filled-long` and `filled-fixed-line` runs, keep the conservative
+policy: row0 is the fresh headline and later repeated-prompt rows are
+support-only, even when `cached_tokens=0`.
+
 Single-GPU records and four-replica aggregate capacity are different modes.
 Record and submit them separately: one full model on one B70 is the primary
 single-session decode record; four independent servers are an aggregate service

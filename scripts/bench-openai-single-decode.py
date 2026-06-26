@@ -105,7 +105,17 @@ def stream_completion(
     }
 
 
-def make_prompt(target_tokens: int, mode: str) -> str:
+def make_prompt(target_tokens: int, mode: str, variant: int = 0) -> str:
+    unique = mode.endswith("-unique")
+    base_mode = mode.removesuffix("-unique")
+    unique_prefix = ""
+    if unique:
+        unique_prefix = (
+            f"Unique benchmark instance {variant:04d}. "
+            f"Deterministic nonce gemma-b70-{variant:04d}-"
+            f"{(variant * 2654435761) & 0xffffffff:08x}.\n\n"
+        )
+
     if mode == "long":
         return (
             "Write a long deterministic decode benchmark response. "
@@ -117,8 +127,9 @@ def make_prompt(target_tokens: int, mode: str) -> str:
             "Begin now.\n\n"
         )
 
-    if mode == "filled-long":
+    if base_mode == "filled-long":
         prefix = (
+            unique_prefix +
             "You are running a deterministic Gemma B70 decode benchmark. "
             "Read the reference context, then produce a long numbered response "
             "until the token limit is reached. Do not summarize early.\n\n"
@@ -129,6 +140,11 @@ def make_prompt(target_tokens: int, mode: str) -> str:
             "scheduler cache kernel sycl level-zero b70 q8 deterministic "
             "single-session decode measurement "
         )
+        if unique:
+            block += (
+                f"instance {variant:04d} nonce "
+                f"{(variant * 1103515245 + 12345) & 0xffffffff:08x} "
+            )
         body = (block * ((target_tokens // 16) + 8))[: max(0, target_tokens * 6)]
         suffix = (
             "\n\nTask: write numbered lines from 001 onward. Each line must "
@@ -137,8 +153,9 @@ def make_prompt(target_tokens: int, mode: str) -> str:
         )
         return prefix + body + suffix
 
-    if mode == "filled-fixed-line":
+    if base_mode == "filled-fixed-line":
         prefix = (
+            unique_prefix +
             "You are running a deterministic Gemma B70 decode benchmark. "
             "Read the reference context, then produce a long numbered response "
             "until the token limit is reached. Do not summarize early.\n\n"
@@ -149,6 +166,11 @@ def make_prompt(target_tokens: int, mode: str) -> str:
             "scheduler cache kernel sycl level-zero b70 q8 deterministic "
             "single-session decode measurement "
         )
+        if unique:
+            block += (
+                f"instance {variant:04d} nonce "
+                f"{(variant * 1103515245 + 12345) & 0xffffffff:08x} "
+            )
         body = (block * ((target_tokens // 16) + 8))[: max(0, target_tokens * 6)]
         suffix = (
             "\n\nTask: write numbered lines from 001 onward. Each line must "
@@ -165,7 +187,7 @@ def make_prompt(target_tokens: int, mode: str) -> str:
     )
     # This is intentionally approximate; authoritative token counts come from
     # the server usage block when available.
-    return ((seed * ((target_tokens // 18) + 2))[: target_tokens * 6]) + "\n\nAnswer:"
+    return unique_prefix + ((seed * ((target_tokens // 18) + 2))[: target_tokens * 6]) + "\n\nAnswer:"
 
 
 def summarize(rows: list[dict[str, Any]]) -> dict[str, Any]:
@@ -211,10 +233,20 @@ def cached_tokens(row: dict[str, Any]) -> int | None:
     return value if isinstance(value, int) else None
 
 
-def fresh_response_validity(rows: list[dict[str, Any]]) -> dict[str, Any]:
+def fresh_response_validity(rows: list[dict[str, Any]], prompts_are_unique: bool = False) -> dict[str, Any]:
     first_row = rows[0] if rows else {}
     cached = [cached_tokens(row) for row in rows]
     known_cached = [value for value in cached if value is not None]
+    cached_all_zero = (
+        len(known_cached) == len(rows) and all(value == 0 for value in known_cached)
+    )
+    prompt_hashes = [
+        row.get("prompt_sha256") for row in rows
+        if isinstance(row.get("prompt_sha256"), str)
+    ]
+    all_prompt_hashes_distinct = (
+        len(prompt_hashes) == len(rows) and len(set(prompt_hashes)) == len(rows)
+    )
     return {
         "headline_policy": (
             "Use row0 only as fresh-response headline. Later repeated-prompt "
@@ -226,11 +258,14 @@ def fresh_response_validity(rows: list[dict[str, Any]]) -> dict[str, Any]:
         "headline_tok_s_wall": first_row.get("tok_s_wall"),
         "headline_cached_tokens": cached_tokens(first_row) if rows else None,
         "cached_tokens_reported": bool(known_cached),
-        "cached_tokens_all_zero": (
-            len(known_cached) == len(rows) and all(value == 0 for value in known_cached)
-        ),
+        "cached_tokens_all_zero": cached_all_zero,
         "all_cached_tokens": cached,
-        "repeated_prompt_rows_support_only": len(rows) > 1,
+        "prompts_are_unique": prompts_are_unique,
+        "all_prompt_hashes_distinct": all_prompt_hashes_distinct,
+        "all_rows_fresh_response_mean_eligible": (
+            bool(rows) and prompts_are_unique and all_prompt_hashes_distinct and cached_all_zero
+        ),
+        "repeated_prompt_rows_support_only": len(rows) > 1 and not prompts_are_unique,
     }
 
 
@@ -242,14 +277,23 @@ def main() -> int:
     parser.add_argument("--prompt-tokens", type=int, default=512)
     parser.add_argument(
         "--prompt-mode",
-        choices=("default", "long", "filled-long", "filled-fixed-line"),
+        choices=(
+            "default",
+            "long",
+            "filled-long",
+            "filled-fixed-line",
+            "filled-long-unique",
+            "filled-fixed-line-unique",
+        ),
         default="default",
         help=(
             "Prompt style. 'default' preserves historical runs; 'long' is a "
             "short instruction that asks the model not to stop early; "
             "'filled-long' fills the requested prompt budget before asking for "
             "a max-token response; 'filled-fixed-line' uses the same filled "
-            "shape but requests one exact repeated output line format."
+            "shape but requests one exact repeated output line format. The "
+            "'*-unique' variants create a deterministic different prompt per "
+            "repeat so aggregate means can be audited as fresh-response rows."
         ),
     )
     parser.add_argument("--max-tokens", type=int, default=512)
@@ -260,10 +304,15 @@ def main() -> int:
     parser.add_argument("--out", type=Path)
     args = parser.parse_args()
 
-    prompt = make_prompt(args.prompt_tokens, args.prompt_mode)
-    prompt_sha256 = hashlib.sha256(prompt.encode("utf-8")).hexdigest()
-    rows = [
-        stream_completion(
+    prompts_are_unique = args.prompt_mode.endswith("-unique")
+    prompts = [
+        make_prompt(args.prompt_tokens, args.prompt_mode, i if prompts_are_unique else 0)
+        for i in range(args.repeats)
+    ]
+    prompt_sha256 = hashlib.sha256(prompts[0].encode("utf-8")).hexdigest() if prompts else None
+    rows = []
+    for i, prompt in enumerate(prompts):
+        row = stream_completion(
             args.base_url,
             args.model,
             prompt,
@@ -273,8 +322,9 @@ def main() -> int:
             args.seed,
             args.allow_missing_usage,
         )
-        for _ in range(args.repeats)
-    ]
+        row["prompt_variant"] = i if prompts_are_unique else 0
+        row["prompt_sha256"] = hashlib.sha256(prompt.encode("utf-8")).hexdigest()
+        rows.append(row)
     run_identity = {
         "created_at_utc": dt.datetime.now(dt.UTC).isoformat(),
         "base_url": args.base_url,
@@ -283,9 +333,13 @@ def main() -> int:
         "seed": args.seed,
         "prompt_tokens_requested": args.prompt_tokens,
         "prompt_mode": args.prompt_mode,
-        "prompt_chars": len(prompt),
+        "prompt_chars": len(prompts[0]) if prompts else 0,
         "prompt_sha256": prompt_sha256,
-        "prompt_preview": prompt[:240],
+        "prompt_sha256s": [
+            hashlib.sha256(prompt.encode("utf-8")).hexdigest() for prompt in prompts
+        ],
+        "prompts_are_unique": prompts_are_unique,
+        "prompt_preview": prompts[0][:240] if prompts else "",
         "max_tokens": args.max_tokens,
         "repeats": args.repeats,
         "usage_required": not args.allow_missing_usage,
@@ -293,7 +347,7 @@ def main() -> int:
     result = {
         "run_identity": run_identity,
         "summary": summarize(rows),
-        "fresh_response_validity": fresh_response_validity(rows),
+        "fresh_response_validity": fresh_response_validity(rows, prompts_are_unique),
         "rows": rows,
     }
     text = json.dumps(result, indent=2, sort_keys=True)

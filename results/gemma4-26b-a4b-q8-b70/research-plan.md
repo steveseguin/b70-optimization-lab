@@ -7,7 +7,7 @@ replicas on four GPUs for parallel research and aggregate service capacity.
 ## Current Fresh-Response Headline
 
 Current valid one-B70 headline is
-`data/gemma4-q8-gpu2-routecache-mtpfusedoutargmax-selfusedweights-full-20260626T222525Z/`:
+`data/gemma4-q8-gpu0-currentrecord-control-fullrepeat-20260626T230510Z/`:
 
 - target/verifier: `gemma-4-26B-A4B-it-UD-Q8_K_XL.gguf`;
 - draft: `MTP/gemma-4-26B-A4B-it-Q4_0-MTP.gguf`;
@@ -30,11 +30,11 @@ Current valid one-B70 headline is
   `GGML_SYCL_DISABLE_GRAPH=0`;
 - validation: chat canary **1536/1536**, all 8 benchmark rows
   `cached_tokens=0`;
-- fresh headline: **103.95374341972274 tok/s** after TTFT;
-- supporting repeated-request mean: `104.13506066488091 tok/s`;
-- LocalMaxxing: `cmqviful602p0qr01vp27jw5i`;
-- note: this is a small micro-record over the prior
-  `103.51547512013657 tok/s` route-cache row, not a material speedup.
+- fresh headline: **103.9826628154082 tok/s** after TTFT;
+- supporting repeated-request mean: `104.09604904731648 tok/s`;
+- LocalMaxxing: `cmqvjupek02pgqr01d46algvg`;
+- note: this is a variance-class full-repeat micro-record over the prior
+  `103.95374341972274 tok/s` same-stack row, not a material speedup.
 
 The actual research target remains **>150 tok/s fresh-response**. The current
 scalar llama.cpp MTP loop is below that target because it still performs one
@@ -47,7 +47,9 @@ engine.
 fused-output-argmax screens were mostly neutral or valid losses, but the later
 stacked route-cache cleanup (`LLAMA_GEMMA4_MTP_FUSED_OUTPUT_ARGMAX=1` +
 `LLAMA_GEMMA4_MOE_SELECTED_SOFTMAX_FUSED=1`) fully validated at
-`103.95374341972274 tok/s`, a small micro-record over `103.51547512013657`.
+`103.95374341972274 tok/s`, then a same-stack full repeat reached
+`103.9826628154082 tok/s`. Both are small micro-records over
+`103.51547512013657`, not material progress toward `>150`.
 Audits found that the target-to-draft
 `h_nextn` host handoff is real but profile-small, the direct selected-down
 fusion family has already been tested in several losing variants, and the
@@ -60,9 +62,12 @@ The follow-up sorted-router screens were also valid but below record:
 `100.646 tok/s`. Do not continue small Gemma flag sweeps unless they are
 materially new; the cleanup combo above is the only current scalar-stack win.
 Per the current user priority, keep Gemma as the active lane:
-the next Gemma work should be a larger router-materialization fusion,
-graph-level multi-token assistant unroll, or exact verifier candidate-vs-max
-design rather than a pivot to MiniMax.
+the next Gemma work should be the verifier-side selected-softmax/down epilogue
+boundary, graph-level multi-token assistant unroll, or exact verifier
+candidate-vs-max design rather than a pivot to MiniMax. Source audit on
+2026-06-26 specifically warned against naive full MoE fusion: preserve the
+tuned Q8 gate/up and down matmul schedule, and only fold the tiny selected
+softmax into the existing down epilogue if implementing the next source patch.
 
 2026-06-26 route-cache CTX/GPU screen and follow-up: rechecked the current
 route-cache recipe on four GPUs with CTX `2048`, `4096`, `8192`, and `16384`
@@ -83,6 +88,17 @@ route-cache identity found a tiny stacked win from
 `103.95374341972274 tok/s` after TTFT (`104.13506066488091` supporting mean).
 LocalMaxxing accepted it as `cmqviful602p0qr01vp27jw5i`. This supersedes the
 `103.51547512013657` route-cache row, but remains a small cleanup gain.
+
+2026-06-26 same-stack repeat and unique-prompt check: exact current-stack full
+repeat on GPU0 passed `1536/1536`, all benchmark rows had `cached_tokens=0`,
+and row0 reached `103.9826628154082 tok/s` after TTFT
+(`104.09604904731648` repeated-prompt support mean). LocalMaxxing accepted it
+as `cmqvjupek02pgqr01d46algvg`. This is a variance-class record, not a new
+mechanism. A new `BENCH_PROMPT_MODE=filled-long-unique` screen on GPU1 used
+four distinct prompt hashes, passed `256/256`, all rows had `cached_tokens=0`,
+and produced `100.8959686363723 tok/s` row0 / `101.16162483108214 tok/s`
+fresh-eligible mean, confirming repeated-prompt means should remain
+support-only unless using the unique prompt mode.
 
 2026-06-26 verifier profile update:
 
@@ -370,8 +386,8 @@ Next queue:
   now complete. It validated chat-template quality but reached only
   `34.89 tok/s` with graph enabled; `fp8_per_tensor` improved to `40.31 tok/s`
   as a lower-precision diagnostic. Neither lane is competitive with the
-  current llama.cpp Q8-target fresh-response record (`103.954 tok/s` first
-  no-cache request; `104.135 tok/s` supporting repeat mean) from the Q4_0
+  current llama.cpp Q8-target fresh-response record (`103.983 tok/s` first
+  no-cache request; `104.096 tok/s` supporting repeat mean) from the Q4_0
   draft-MTP validation plus direct-unroll/q-only assistant-input patch,
   selected-softmax/weighted-sum MoE guards, verifier backend argmax IDs,
   deferred target `h_nextn`, batch/thread/runtime tune, one-shot route cache,

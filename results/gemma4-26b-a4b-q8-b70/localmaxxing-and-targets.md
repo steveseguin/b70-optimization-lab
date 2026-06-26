@@ -106,8 +106,8 @@ Current filled-long draftless ngram-mod warmed/history artifact:
   `cmqqxx7bp01dbqo012d2qiiw6` (`280.04 tok/s`),
   `cmqqxjnif01d0qo01ix4oeixo` (`255.04 tok/s`) and
   `cmqqxbkzx01cxqo01j8p97627` (`245.98 tok/s`). It does **not** supersede the
-  current fresh-response draft-MTP record `cmqviful602p0qr01vp27jw5i`
-  (`103.954 tok/s` first no-cache request; `104.135 tok/s` supporting repeat
+  current fresh-response draft-MTP record `cmqvjupek02pgqr01d46algvg`
+  (`103.983 tok/s` first no-cache request; `104.096 tok/s` supporting repeat
   mean; Q8 target/verifier with Q4_0 MTP draft only);
 - queue:
   `data/localmaxxing-gemma4-26b-a4b-q8-b70-ngrammod-20-32-64-poll100-filledlong512-20260623.queue.json`;
@@ -125,6 +125,30 @@ Current filled-long draftless ngram-mod warmed/history artifact:
   `data/localmaxxing-responses/localmaxxing-openapi-benchmark-methods-20260623.json`.
 
 Current filled-long draft-MTP fresh-response Q8-target best:
+
+- `gemma4-q8-gpu0-currentrecord-control-fullrepeat-20260626T230510Z`;
+- llama.cpp SYCL on one B70, UD-Q8_K_XL main GGUF plus
+  `gemma-4-26B-A4B-it-Q4_0-MTP.gguf` draft GGUF;
+- same `c926ad098` `n=7/n-min=2` backend-sampling-off route-cache/fused-output
+  recipe as the previous row; this is a full repeat on GPU0, not a new
+  mechanism;
+- actual LocalMaxxing packet shape: `588` prompt tokens and `512` output
+  tokens (`BENCH_PROMPT_MODE=filled-long`);
+- chat canary **1536/1536** pass;
+- fresh-response headline: first measured no-cache request after TTFT
+  `103.9826628154082 tok/s`; supporting repeated-request mean
+  `104.09604904731648 tok/s`; first-row wall `90.47935762548245 tok/s`;
+  all rows report `usage.prompt_tokens_details.cached_tokens=0`;
+- fresh-response status: submitted to LocalMaxxing and approved as
+  `cmqvjupek02pgqr01d46algvg`; this is a variance-class micro-record over
+  `cmqviful602p0qr01vp27jw5i` (`103.95374341972274 tok/s`) and not material
+  progress toward `>150 tok/s`;
+- queue:
+  `data/localmaxxing-gemma4-26b-a4b-q8-b70-llamacpp-mtp-n7-q8target-q40draft-routecache-repeat-fresh-20260626.queue.json`;
+- response:
+  `data/localmaxxing-responses/gemma4-26b-a4b-q8-b70-llamacpp-mtp-n7-q8target-q40draft-routecache-repeat-fresh-20260626.submit.log`.
+
+Superseded same-stack filled-long draft-MTP fresh-response Q8-target best:
 
 - `gemma4-q8-gpu2-routecache-mtpfusedoutargmax-selfusedweights-full-20260626T222525Z`;
 - llama.cpp SYCL on one B70, UD-Q8_K_XL main GGUF plus
@@ -144,7 +168,8 @@ Current filled-long draft-MTP fresh-response Q8-target best:
 - fresh-response status: submitted to LocalMaxxing and approved as
   `cmqviful602p0qr01vp27jw5i`; this is a small micro-record over
   `cmqvbq8tf02m1qr010dom0vu1` (`103.51547512013657 tok/s`) and not material
-  progress toward `>150 tok/s`;
+  progress toward `>150 tok/s`; superseded by `cmqvjupek02pgqr01d46algvg`
+  (`103.9826628154082 tok/s`);
 - queue:
   `data/localmaxxing-gemma4-26b-a4b-q8-b70-llamacpp-mtp-n7-q8target-q40draft-routecache-mtpfusedoutargmax-selfusedweights-fresh-20260626.queue.json`;
 - response:
@@ -162,7 +187,8 @@ Superseded filled-long draft-MTP route-cache fresh-response Q8-target best:
   all rows report `usage.prompt_tokens_details.cached_tokens=0`;
 - LocalMaxxing: `cmqvbq8tf02m1qr010dom0vu1`;
 - superseded by `cmqviful602p0qr01vp27jw5i`
-  (`103.95374341972274 tok/s`);
+  (`103.95374341972274 tok/s`), then by `cmqvjupek02pgqr01d46algvg`
+  (`103.9826628154082 tok/s`);
 - queue:
   `data/localmaxxing-gemma4-26b-a4b-q8-b70-llamacpp-mtp-n7-q8target-q40draft-routecache-ctx8192-gpu2-pmin0136-fresh-20260626.queue.json`;
 - response:
@@ -205,7 +231,8 @@ Earlier superseded filled-long draft-MTP route-cache fresh-response Q8-target be
   `cmqrsupdk000jqr01af3eu6vu`, `cmqrjcly601kuqo01rbyub1x6`, and earlier
   fast-argmax/CPU-cleanup result `cmqr82niq01hgqo01v42y7ue8`;
 - superseded by `cmqvbq8tf02m1qr010dom0vu1` (`103.51547512013657 tok/s`),
-  then by `cmqviful602p0qr01vp27jw5i` (`103.95374341972274 tok/s`);
+  then by `cmqviful602p0qr01vp27jw5i` (`103.95374341972274 tok/s`), then by
+  `cmqvjupek02pgqr01d46algvg` (`103.9826628154082 tok/s`);
 - queue:
   `data/localmaxxing-gemma4-26b-a4b-q8-b70-llamacpp-mtp-n7-q8target-q40draft-routecache-pmin0136-fresh-20260626.queue.json`;
 - response:

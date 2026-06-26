@@ -95,7 +95,7 @@ packet:
 
 `../results/gemma4-26b-a4b-q8-b70/reproduce.md`
 
-Use it when the goal is to copy the current `103.954 tok/s` settings rather
+Use it when the goal is to copy the current `103.983 tok/s` settings rather
 than review the full experiment history. The older standalone
 `../repro/gemma4-26b-a4b-q8-b70-95tps-20260624/README.md` folder remains as a
 superseded `95.264 tok/s` reproduction artifact.
