@@ -484,3 +484,102 @@ and other GPUs screened lower. The patch is quality-safe and default-off, but
 not a demonstrated speed win. Do not enable
 `LLAMA_GEMMA4_MOE_WEIGHTED_SUM_2D` in the promoted Q8 recipe unless a future
 change makes weighted-sum launch shape newly relevant.
+
+## 2026-06-26T20:52Z Current Record Profile
+
+Diagnostic profile of the current promoted route-cache recipe:
+
+- summary:
+  `data/gemma4-q8-gpu2-routecache-profile-current-20260626T205222Z/summary.json`
+- server log:
+  `/mnt/fast-ai/bench-results/gemma4-26b-a4b-q8/servers/gemma4-q8-gpu2-routecache-profile-current-20260626T205222Z.server.log`
+- env deltas:
+  `LLAMA_SYCL_MUL_MAT_ID_ROUTE_PROFILE=1`,
+  `LLAMA_SYCL_MUL_MAT_ID_ROUTE_PROFILE_EVERY=50`,
+  `GGML_SYCL_NODE_PROFILE=1`, `LLAMA_MTP_DRAFT_PROFILE=1`
+- canary: `8/8` repeats (`32` rows), pass
+- cached-token validity: `[0]`, row0 fresh-response eligible
+- fresh row0 under profiling: `79.69891891516477 tok/s` after TTFT
+
+This is **not** a headline speed result because node/route profiling adds
+overhead. Its value is hotspot direction:
+
+- target `process_ubatch_ms=17780.627` of `target total_ms=17794.513`; target
+  process dominates;
+- draft decode was much smaller (`draft_decode_ms=1643.053`);
+- acceptance was already high: `445 accepted / 462 generated`, mean
+  acceptance `7.74`, per-position `(1.000, 0.985, 0.970, 0.955, 0.955, 0.939,
+  0.939)`;
+- hottest profiled nodes included:
+  `MUL_MAT:result_output` total `355.442`,
+  `MUL_MAT_ID:ffn_moe_gate_up-0` total `333.604`,
+  target LM head `MUL_MAT:node_2255` total `297.711`,
+  and `MUL_MAT_ID:node_64` down total `189.670`.
+
+Interpretation: the remaining useful work is target/verifier compute reduction
+(especially target MoE gate/up and LM-head path), not more acceptance/p-min
+tuning or route-cache-only metadata tweaks. The following gate/up seeded
+route-cache experiment tested one bounded consequence of this profile and lost.
+
+## 2026-06-26T21:05Z Gate/Up Fast Path Seeding Route Cache
+
+Patch under test: add default-off
+`LLAMA_SYCL_MUL_MAT_ID_GATE_UP_FAST_SEED_ROUTE_CACHE=1`.
+
+Intent: let the verifier-sized `ffn_moe_gate_up-*` `MUL_MAT_ID` nodes use the
+existing direct multi-token Q8 fast path while preserving the current record
+down path. Before launching the gate/up fast path, the patch builds the same
+host route metadata used by `LLAMA_SYCL_MUL_MAT_ID_ROUTE_CACHE=1` so the
+following `ffn_moe_down` can still consume the normal cached route plan. This
+was materially different from the earlier broad/exact-node fast-path losses
+because it did not force the down projection onto the fast path.
+
+Run:
+
+- summary:
+  `data/gemma4-q8-gpu2-gateupfast-seedroute-screen-20260626T210513Z/summary.json`
+- env deltas:
+  `LLAMA_SYCL_MUL_MAT_ID_ROUTE_CACHE=1`,
+  `LLAMA_SYCL_MUL_MAT_ID_GATE_UP_FAST_SEED_ROUTE_CACHE=1`
+- canary: `96/96` repeats (`384` rows), pass
+- cached-token validity: `[0, 0, 0, 0]`, row0 is fresh-response eligible
+- fresh row0: `76.68309224299286 tok/s` after TTFT
+- support mean: `76.5484238319723 tok/s` after TTFT, support-only
+- current record: `103.51547512013657 tok/s`
+
+Decision: reject / do not promote / do not submit to LocalMaxxing. The canary
+is clean, but throughput collapses. The host ID copy / route seeding wait and
+loss of graph eligibility are far more expensive than any gate/up fast-path
+savings. This closes the route-cache-seeded gate/up fast-path lane as tested.
+Avoid retrying this exact design unless it can seed the cache without a host
+wait or without disrupting the current graph path.
+
+## 2026-06-26T21:16Z Draft Logit-Gap Gate Screen
+
+Screen: `LLAMA_MTP_DRAFT_LOGIT_GAP_MIN` on top of the current promoted
+route-cache Q8 recipe. This gate stops drafting when the MTP draft top-1/top-2
+logit margin is small. It was tested because it is already implemented, cheap,
+fresh-response safe, and could in principle reduce verifier work if marginal
+draft positions are not worth their target cost.
+
+All runs used the current record identity (`n_max=7`, `n_min=2`,
+`p_min=0.136`, Q8 target, Q4_0 MTP draft, selected-softmax, weighted-sum,
+q-only MTP inputs, backend verifier argmax IDs, deferred target `h_nextn`,
+direct draft argmax IDs, `--ctx-checkpoints 0`, `filled-long` prompt).
+All runs passed `32` canary repeats (`128` rows), reported `cached_tokens=0`,
+and are fresh-row0 eligible.
+
+| Run | `LLAMA_MTP_DRAFT_LOGIT_GAP_MIN` | Fresh row0 tok/s | Support mean tok/s | Decision |
+| --- | ---: | ---: | ---: | --- |
+| `data/gemma4-q8-gpu0-routecache-logitgap015-screen-20260626T211613Z/summary.json` | `0.15` | `101.24881584728219` | `102.32779100687304` | valid loss |
+| `data/gemma4-q8-gpu1-routecache-logitgap030-screen-20260626T211613Z/summary.json` | `0.30` | `103.38700795434751` | `103.26669953373366` | valid loss |
+| `data/gemma4-q8-gpu2-routecache-logitgap050-screen-20260626T211613Z/summary.json` | `0.50` | `101.17041116344521` | `102.10724105547375` | valid loss |
+| `data/gemma4-q8-gpu3-routecache-logitgap075-screen-20260626T211613Z/summary.json` | `0.75` | `101.22299490741584` | `102.70252959158722` | valid loss |
+
+Decision: reject / do not promote / do not submit to LocalMaxxing. The best
+fresh row0 (`103.387`) is close but still below the current valid record
+(`103.51547512013657`). This supports the profile conclusion that the current
+MTP recipe is not meaningfully acceptance-limited; more scalar acceptance gates
+are unlikely to produce the next useful step. The next credible Gemma lane is a
+verifier-only source change that reduces target compute, especially around the
+small-token Gemma4 MoE path or an exact bounded candidate LM-head argmax.
