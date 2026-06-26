@@ -120,3 +120,28 @@ unlikely to produce a large jump by itself. Better next lanes:
   (`>1.5 tok/s`);
 - keep four-GPU screening for independent candidates, but promote only fresh
   row0 results with `cached_tokens=0` and full canary gates.
+
+## Follow-Up: Q6_K Fused Output Argmax + Fused Selected Weights
+
+After the standalone fused selected-weight screen (`102.246854 tok/s`) and the
+standalone Q6_K fused output argmax screen (`103.019209 tok/s`) both passed
+canaries but missed the record, one additive combination was tested without a
+rebuild:
+
+- run:
+  `data/gemma4-q8-gpu0-fusedoutargmax-fusedweights-combo-screen-20260626T123307Z/summary.json`;
+- flags:
+  `LLAMA_GEMMA4_MTP_FUSED_OUTPUT_ARGMAX=1` plus
+  `LLAMA_GEMMA4_MOE_SELECTED_SOFTMAX_FUSED=1` on the current selected-softmax +
+  weighted-sum record family;
+- canary: **128/128 pass**;
+- fresh row0 after-TTFT throughput: **102.99409643884646 tok/s**;
+- fresh row0 wall throughput: **89.81221561206715 tok/s**;
+- cached tokens: `0`;
+- LocalMaxxing: **not submitted**.
+
+Decision: valid but rejected. The two near-miss micro-optimizations are not
+additive enough to beat the current `103.2992004295621 tok/s` fresh-response
+record. This closes the cheap combination lane; future work should focus on
+larger target/verifier compute seams such as route/down materialization or a
+materially different verifier LM-head strategy.
