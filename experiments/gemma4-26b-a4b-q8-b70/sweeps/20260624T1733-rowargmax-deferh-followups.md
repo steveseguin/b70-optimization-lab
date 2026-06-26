@@ -2044,3 +2044,62 @@ Decision: no full gate and no LocalMaxxing submission. All rows are fresh
 max in the 0.1359 run is a warmed later repeat and is support-only, not a
 fresh-response headline. `THREADS=16` remains close but does not displace the
 `THREADS=8`, `p_min=0.136` full record.
+
+## 2026-06-26 morning: post-push tight record-lane screens
+
+No patch; these were env/config screens on the current record-family source
+stack. The purpose was to continue the Gemma Q8 optimization loop after
+publishing the result docs and to obey the stricter fresh-response headline
+rule: only benchmark row 0 counts, and only when `cached_tokens=0` and canaries
+pass. Later rows are support-only even when faster.
+
+Common identity unless noted: Q8 target, Q4_0 MTP draft, `MTP_N_MAX=7`,
+`MTP_N_MIN=2`, selected softmax, weighted sum, Q-only MTP attention inputs,
+deferred target `h_nextn`, direct draft argmax IDs/unroll 7, backend verifier
+argmax IDs, immediate command lists, `BATCH_SIZE=1024`, `UBATCH_SIZE=1024`,
+`POLL=100`, `CANARY_REPEATS=128`, `BENCH_REPEATS=4`,
+`BENCH_PROMPT_MODE=filled-long`, `--ctx-checkpoints 0`.
+
+### Four-GPU screen 1: `THREADS=8/10`, tight `p_min`
+
+| Run | Variant | Gate | Fresh row0 tok/s | Mean tok/s | Max any row | Wall row0 | TTFT s | Cached tokens | Decision |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| `gemma4-q8-gpu0-record-control-pmin0136-th8-screen-20260626T055239Z` | record control, `p_min=0.136`, `THREADS=8` | 512/512 | 100.417137 | 101.771590 | 102.452900 | 87.498756 | 0.752780 | 0 | reject |
+| `gemma4-q8-gpu1-pmin01355-th8-screen-20260626T055239Z` | `p_min=0.1355`, `THREADS=8` | 512/512 | 103.045106 | 101.564272 | 103.045106 | 89.374226 | 0.760023 | 0 | reject; closest, but still below record |
+| `gemma4-q8-gpu2-pmin01365-th8-screen-20260626T055239Z` | `p_min=0.1365`, `THREADS=8` | 512/512 | 100.560008 | 100.997733 | 102.480369 | 87.585108 | 0.754255 | 0 | reject |
+| `gemma4-q8-gpu3-pmin0136-th10-screen-20260626T055239Z` | `p_min=0.136`, `THREADS=10` | 512/512 | 102.093298 | 101.608581 | 102.205281 | 88.892982 | 0.744714 | 0 | reject |
+
+Decision: no full gate and no LocalMaxxing submission. The `p_min=0.1355`
+lane is the only result close enough to justify another tight sweep; exact
+record control was much lower on this run, reinforcing that row0 device/noise
+variance is meaningful near the frontier.
+
+### Four-GPU screen 2: subagent-suggested near-record interactions
+
+| Run | Variant | Gate | Fresh row0 tok/s | Mean tok/s | Max any row | Wall row0 | TTFT s | Cached tokens | Decision |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| `gemma4-q8-gpu0-th16-pmin0136-screen-20260626T055728Z` | `THREADS=16`, `p_min=0.136` | 512/512 | 100.583285 | 101.295148 | 102.164747 | 87.615053 | 0.753436 | 0 | reject |
+| `gemma4-q8-gpu1-th16-per-slot-down-pmin0136-screen-20260626T055728Z` | `THREADS=16` + per-slot Q8_0 down fast path | 512/512 | 101.301841 | 101.351047 | 102.421900 | 88.130286 | 0.755378 | 0 | reject |
+| `gemma4-q8-gpu2-th16-b1152u1152-pmin0136-screen-20260626T055728Z` | `THREADS=16`, `B/U=1152` | 512/512 | 102.482734 | 102.083025 | 103.160111 | 89.096198 | 0.750634 | 0 | reject; best of this screen |
+| `gemma4-q8-gpu3-th8-pmin01362-screen-20260626T055728Z` | `THREADS=8`, `p_min=0.1362` | 512/512 | 102.433195 | 102.212935 | 102.433195 | 89.099649 | 0.747995 | 0 | reject |
+
+Decision: no full gate and no LocalMaxxing submission. The subagent-suggested
+interactions did not beat the `103.299200` record. `THREADS=16` is no longer
+promoted as a likely win; the next low-risk branch is a tight `THREADS=8`
+threshold repeat around `p_min=0.1355` plus exact record controls across
+devices.
+
+### Four-GPU screen 3: tighter `THREADS=8` sweep around `p_min=0.1355`
+
+| Run | Variant | Gate | Fresh row0 tok/s | Mean tok/s | Max any row | Wall row0 | TTFT s | Cached tokens | Decision |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| `gemma4-q8-gpu0-pmin013545-th8-screen-20260626T060212Z` | `p_min=0.13545`, `THREADS=8` | 512/512 | 102.480786 | 102.397146 | 102.514748 | 88.925801 | 0.761551 | 0 | reject |
+| `gemma4-q8-gpu1-pmin013550-th8-repeat-screen-20260626T060212Z` | `p_min=0.13550`, `THREADS=8` repeat | 512/512 | 101.683069 | 100.944081 | 102.145008 | 88.537973 | 0.747576 | 0 | reject |
+| `gemma4-q8-gpu2-pmin013555-th8-screen-20260626T060212Z` | `p_min=0.13555`, `THREADS=8` | 512/512 | 102.533177 | 101.323146 | 102.533177 | 89.211239 | 0.745682 | 0 | reject; best of this screen |
+| `gemma4-q8-gpu3-pmin013600-th8-control-screen-20260626T060212Z` | exact record threshold control, `p_min=0.13600`, `THREADS=8` | 512/512 | 102.313671 | 102.449246 | 103.196027 | 89.148648 | 0.738998 | 0 | reject |
+
+Decision: no full gate and no LocalMaxxing submission. The tight `p_min`
+region did not repeat the `103.045` near-hit, and no row0 exceeded the
+`103.299200` record. Stop spending four-GPU lanes on p-min-only tuning unless a
+new source/runtime change shifts the baseline; row0 variance is too large and
+the current neighborhood appears capped around low `102.x` in fresh mode.
