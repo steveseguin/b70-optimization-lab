@@ -2215,3 +2215,35 @@ Decision: preserve the patch and result as a negative experiment, revert it
 from the source tree, and do not submit to LocalMaxxing. Continue to focus on
 larger target `process_ubatch` changes rather than this post-down weighted-sum
 micro-kernel.
+
+## 2026-06-26 four-GPU p-min / thread screen
+
+Purpose: run four cheap fresh-response screens in parallel around the current
+record identity. Important validity note: for these repeated benchmark files,
+the valid headline is **row0 only**. Do not use `bench_summary.max`, because it
+can be a later repeated prompt and is not the fresh-response number.
+
+All runs used selected-softmax + post-down weighted-sum, Q-only MTP attention
+inputs, direct draft argmax/unroll7, backend verifier argmax IDs,
+`MTP_N_MAX=7`, `MTP_N_MIN=2`, f16 KV, `--ctx-checkpoints 0`,
+`BATCH_SIZE=1024`, `UBATCH_SIZE=1024`, and `POLL=100`.
+
+Results:
+
+- `data/gemma4-q8-gpu0-recordcontrol-pmin0136-th8-screen-20260626T0645/`:
+  canary **64/64** pass (`256` rows), fresh row0 **100.590546 tok/s**,
+  row1 `102.228941`, `cached_tokens=0`.
+- `data/gemma4-q8-gpu1-pmin01359-th8-screen-20260626T0645/`:
+  canary **64/64** pass (`256` rows), fresh row0 **99.796046 tok/s**,
+  row1 `101.574053`, `cached_tokens=0`.
+- `data/gemma4-q8-gpu2-pmin01361-th8-screen-20260626T0645/`:
+  canary **64/64** pass (`256` rows), fresh row0 **102.695815 tok/s**,
+  row1 `102.267600`, `cached_tokens=0`.
+- `data/gemma4-q8-gpu3-pmin0136-th12-screen-20260626T0645/`:
+  canary **64/64** pass (`256` rows), fresh row0 **100.338134 tok/s**,
+  row1 `102.390590`, `cached_tokens=0`.
+
+Decision: all four are valid losses versus the current fresh-response record
+`103.299200 tok/s`; no LocalMaxxing submission. The p-min/thread neighborhood
+still looks exhausted, and row0 variance can easily make later repeated rows
+look better than the fresh result.
