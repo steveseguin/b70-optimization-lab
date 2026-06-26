@@ -2103,3 +2103,46 @@ region did not repeat the `103.045` near-hit, and no row0 exceeded the
 `103.299200` record. Stop spending four-GPU lanes on p-min-only tuning unless a
 new source/runtime change shifts the baseline; row0 variance is too large and
 the current neighborhood appears capped around low `102.x` in fresh mode.
+
+### Diagnostic profile: route mix and MTP timing at the record identity
+
+`gemma4-q8-gpu0-record-profile-route-20260626T060729Z` reran the record-family
+identity with diagnostic profiling enabled:
+
+- `LLAMA_SYCL_MUL_MAT_ID_ROUTE_PROFILE=1`
+- `LLAMA_SYCL_MUL_MAT_ID_ROUTE_PROFILE_EVERY=25`
+- `LLAMA_SERVER_SPEC_PROFILE=1`
+- `LLAMA_MTP_DRAFT_PROFILE=1`
+- canary: **64/64** pass; p512/o512 row0: **102.399883 tok/s**,
+  row1 **102.230418 tok/s**, `cached_tokens=0`.
+
+Artifacts:
+
+- data copy:
+  `data/gemma4-q8-gpu0-record-profile-route-20260626T060729Z/summary.json`
+- full server log:
+  `/mnt/fast-ai/bench-results/gemma4-26b-a4b-q8/servers/gemma4-q8-gpu0-record-profile-route-20260626T060729Z.server.log`
+
+Profile takeaways:
+
+- Draft quality is already excellent on the filled-long shape: benchmark
+  acceptance was `445 accepted / 462 generated`, mean acceptance length `7.74`,
+  per-position `(1.000, 0.985, 0.970, 0.955, 0.955, 0.939, 0.939)`.
+- Draft/sampling overhead is not the remaining ceiling. After the second bench
+  request, `draft_ms=1846.121` over `392` calls, while target decode was
+  `29175.690 ms` over the same `392` calls.
+- Target decode phase profile after the second bench:
+  `process_ubatch_ms=28541.532`, `post_extract_ms=617.494`,
+  `sampled_extract_ms=617.376`. The dominant cost is target verifier
+  `process_ubatch`; sampled-token extraction is a smaller but measurable
+  secondary target (~`1.57 ms/call`).
+- `MUL_MAT_ID` route profile for decode batches shows the hot verifier shape
+  is mostly `tok2_8`: about `7.95` tokens, `8` expert ids per token,
+  `~63.6` routed rows, `~25.2` globally unique experts, and `~38.4` repeated
+  routed rows. This confirms the current optimization frontier is the tiny
+  multi-token MoE verifier path, not p-min or draft acceptance quality.
+
+Decision: diagnostic only, no LocalMaxxing submission. Preserve it because it
+redirects future work away from p-min/thread-only sweeps and toward target
+`process_ubatch` source work or a safe reduction in sampled-token extraction
+overhead.
