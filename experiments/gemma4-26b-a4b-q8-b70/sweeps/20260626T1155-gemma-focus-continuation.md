@@ -554,13 +554,21 @@ savings. This closes the route-cache-seeded gate/up fast-path lane as tested.
 Avoid retrying this exact design unless it can seed the cache without a host
 wait or without disrupting the current graph path.
 
-## 2026-06-26T21:16Z Draft Logit-Gap Gate Screen
+## 2026-06-26T21:16Z Draft Logit-Gap Gate Control
 
-Screen: `LLAMA_MTP_DRAFT_LOGIT_GAP_MIN` on top of the current promoted
-route-cache Q8 recipe. This gate stops drafting when the MTP draft top-1/top-2
-logit margin is small. It was tested because it is already implemented, cheap,
-fresh-response safe, and could in principle reduce verifier work if marginal
-draft positions are not worth their target cost.
+Screen intent: test `LLAMA_MTP_DRAFT_LOGIT_GAP_MIN` on top of the current
+promoted route-cache Q8 recipe. This gate stops drafting when the MTP draft
+top-1/top-2 logit margin is small.
+
+Important correction: the current promoted recipe uses
+`LLAMA_MTP_DRAFT_DIRECT_ARGMAX_IDS=1`. In that mode
+`draft_sampled_argmax_sample()` returns only one candidate, so the
+`cur_p->size > 1` guard prevents the logit-gap check from firing. These runs
+are still valid fresh-response controls for the current direct-argmax recipe,
+but they are **not** a functional logit-gap experiment. The functional top-k
+logit-gap lane was already tested earlier via `LLAMA_MTP_DRAFT_FAST_TOPK=1`
+and lost badly (~90 tok/s; see
+`experiments/gemma4-26b-a4b-q8-b70/sweeps/20260623T1447-draft-topk-logitgap.md`).
 
 All runs used the current record identity (`n_max=7`, `n_min=2`,
 `p_min=0.136`, Q8 target, Q4_0 MTP draft, selected-softmax, weighted-sum,
@@ -578,8 +586,10 @@ and are fresh-row0 eligible.
 
 Decision: reject / do not promote / do not submit to LocalMaxxing. The best
 fresh row0 (`103.387`) is close but still below the current valid record
-(`103.51547512013657`). This supports the profile conclusion that the current
-MTP recipe is not meaningfully acceptance-limited; more scalar acceptance gates
-are unlikely to produce the next useful step. The next credible Gemma lane is a
-verifier-only source change that reduces target compute, especially around the
-small-token Gemma4 MoE path or an exact bounded candidate LM-head argmax.
+(`103.51547512013657`), and the intended gap gate did not execute because the
+direct-argmax path emits no top-2 candidate. Do not repeat this exact screen.
+If logit-gap gating is revisited, it must use a top-k draft path, but prior
+top-k/logit-gap results were far slower than the current direct-argmax record.
+The next credible Gemma lane is a verifier-only source change that reduces
+target compute, especially around the small-token Gemma4 MoE path or an exact
+bounded candidate LM-head argmax.
