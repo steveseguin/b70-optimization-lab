@@ -1,0 +1,402 @@
+diff --git a/src/llama-graph.cpp b/src/llama-graph.cpp
+index 68c9e606c..902bdc594 100644
+--- a/src/llama-graph.cpp
++++ b/src/llama-graph.cpp
+@@ -82,13 +82,17 @@ static ggml_tensor * ggml_mul_mat_aux(
+ }
+ 
+ void llm_graph_input_embd::set_input(const llama_ubatch * ubatch) {
++    set_input(ubatch, false);
++}
++
++void llm_graph_input_embd::set_input(const llama_ubatch * ubatch, bool skip_embd_upload) {
+     if (ubatch->token) {
+         const int64_t n_tokens = ubatch->n_tokens;
+ 
+         ggml_backend_tensor_set(tokens, ubatch->token, 0, n_tokens*ggml_element_size(tokens));
+     }
+ 
+-    if (ubatch->embd) {
++    if (ubatch->embd && !skip_embd_upload) {
+         GGML_ASSERT(n_embd == embd->ne[0]);
+ 
+         const int64_t n_tokens = ubatch->n_tokens;
+@@ -930,14 +934,14 @@ void llm_graph_result::reset() {
+     gf = ggml_new_graph_custom(ctx_compute.get(), max_nodes, false);
+ }
+ 
+-void llm_graph_result::set_inputs(const llama_ubatch * ubatch) {
++void llm_graph_result::set_inputs(const llama_ubatch * ubatch, bool skip_embd_upload) {
+     for (auto & input : inputs) {
+-        input->set_input(ubatch);
++        input->set_input(ubatch, skip_embd_upload);
+     }
+ }
+ 
+ void llm_graph_result::set_outputs(const llm_graph_params & params) {
+-    if (t_logits != nullptr) {
++    if (t_logits != nullptr && !params.cparams.mtp_draft_direct_argmax_ids) {
+         ggml_set_output(t_logits);
+     }
+     if (t_embd != nullptr) {
+@@ -2723,15 +2727,17 @@ llm_graph_input_attn_k_dsa * llm_graph_context::build_attn_inp_k_dsa() const {
+ // TODO: maybe separate the inner implementation into a separate function
+ //       like with the non-sliding window equivalent
+ //       once sliding-window hybrid caches are a thing.
+-llm_graph_input_attn_kv_iswa * llm_graph_context::build_attn_inp_kv_iswa() const {
++llm_graph_input_attn_kv_iswa * llm_graph_context::build_attn_inp_kv_iswa(bool skip_kv_idxs) const {
+     const auto * mctx_cur = static_cast<const llama_kv_cache_iswa_context *>(mctx);
+ 
+     auto inp = std::make_unique<llm_graph_input_attn_kv_iswa>(hparams, cparams, mctx_cur);
+ 
+-    {
++    if (!skip_kv_idxs) {
+         inp->self_k_idxs = mctx_cur->get_base()->build_input_k_idxs(ctx0, ubatch);
+         inp->self_v_idxs = mctx_cur->get_base()->build_input_v_idxs(ctx0, ubatch);
++    }
+ 
++    {
+         inp->self_kq_mask = build_attn_inp_kq_mask(ctx0, mctx_cur->get_base(), ubatch, cparams);
+         inp->self_kq_mask_cnv = inp->self_kq_mask;
+     }
+@@ -2739,8 +2745,10 @@ llm_graph_input_attn_kv_iswa * llm_graph_context::build_attn_inp_kv_iswa() const
+     {
+         GGML_ASSERT(hparams.swa_type != LLAMA_SWA_TYPE_NONE && "Use llama_kv_cache for non-SWA");
+ 
+-        inp->self_k_idxs_swa = mctx_cur->get_swa()->build_input_k_idxs(ctx0, ubatch);
+-        inp->self_v_idxs_swa = mctx_cur->get_swa()->build_input_v_idxs(ctx0, ubatch);
++        if (!skip_kv_idxs) {
++            inp->self_k_idxs_swa = mctx_cur->get_swa()->build_input_k_idxs(ctx0, ubatch);
++            inp->self_v_idxs_swa = mctx_cur->get_swa()->build_input_v_idxs(ctx0, ubatch);
++        }
+ 
+         inp->self_kq_mask_swa = build_attn_inp_kq_mask(ctx0, mctx_cur->get_swa(), ubatch, cparams);
+         inp->self_kq_mask_swa_cnv = inp->self_kq_mask_swa;
+@@ -3054,6 +3062,36 @@ void llm_graph_context::build_pooling(
+ }
+ 
+ void llm_graph_context::build_sampling() const {
++    if (cparams.mtp_draft_direct_argmax_ids && !res->t_sampled.empty()) {
++        return;
++    }
++
++    if (cparams.mtp_draft_direct_argmax_ids && samplers.empty() && res->t_logits) {
++        std::map<llama_seq_id, int32_t> seq_to_logit_row;
++        int32_t logit_row_idx = 0;
++
++        for (uint32_t i = 0; i < ubatch.n_tokens; i++) {
++            if (ubatch.output[i]) {
++                llama_seq_id seq_id = ubatch.seq_id[i][0];
++                seq_to_logit_row[seq_id] = logit_row_idx;
++                logit_row_idx++;
++            }
++        }
++
++        for (const auto & [seq_id, row_idx] : seq_to_logit_row) {
++            ggml_tensor * logits_seq = ggml_view_1d(ctx0, res->t_logits, res->t_logits->ne[0], row_idx * res->t_logits->nb[1]);
++            ggml_format_name(logits_seq, "mtp_direct_argmax_logits_%d", seq_id);
++
++            ggml_tensor * sampled = ggml_argmax(ctx0, logits_seq);
++            ggml_format_name(sampled, "mtp_direct_argmax_token_%d", seq_id);
++
++            res->t_sampled[seq_id] = sampled;
++            ggml_build_forward_expand(gf, sampled);
++        }
++
++        return;
++    }
++
+     if (samplers.empty() || !res->t_logits) {
+         return;
+     }
+diff --git a/src/llama-graph.h b/src/llama-graph.h
+index a6e8c3985..b8aed576d 100644
+--- a/src/llama-graph.h
++++ b/src/llama-graph.h
+@@ -92,6 +92,10 @@ public:
+     virtual ~llm_graph_input_i() = default;
+ 
+     virtual void set_input(const llama_ubatch * ubatch) = 0;
++    virtual void set_input(const llama_ubatch * ubatch, bool skip_embd_upload) {
++        GGML_UNUSED(skip_embd_upload);
++        set_input(ubatch);
++    }
+ 
+     // return true if the resulting input tensors using the provided graph parameters would be
+     //   the same as the previous input tensors that we have currently stored in the object
+@@ -114,6 +118,7 @@ public:
+     virtual ~llm_graph_input_embd() = default;
+ 
+     void set_input(const llama_ubatch * ubatch) override;
++    void set_input(const llama_ubatch * ubatch, bool skip_embd_upload) override;
+ 
+     bool can_reuse(const llm_graph_params & params) override;
+ 
+@@ -691,6 +696,8 @@ struct llm_graph_params {
+             cparams.embeddings              == other.cparams.embeddings              &&
+             cparams.embeddings_nextn        == other.cparams.embeddings_nextn        &&
+             cparams.embeddings_nextn_masked == other.cparams.embeddings_nextn_masked &&
++            cparams.mtp_draft_direct_argmax_ids == other.cparams.mtp_draft_direct_argmax_ids &&
++            cparams.mtp_draft_direct_argmax_unroll == other.cparams.mtp_draft_direct_argmax_unroll &&
+             cparams.causal_attn             == other.cparams.causal_attn             &&
+             arch  == other.arch  &&
+             gtype == other.gtype &&
+@@ -721,7 +728,7 @@ public:
+ 
+     void reset();
+ 
+-    void set_inputs(const llama_ubatch * ubatch);
++    void set_inputs(const llama_ubatch * ubatch, bool skip_embd_upload = false);
+     void set_outputs(const llm_graph_params & params);
+ 
+     // try to update the existing graph result using the new graph parameters in order to reuse it
+@@ -1043,7 +1050,7 @@ struct llm_graph_context {
+                   float   kq_scale,
+                     int   il) const;
+ 
+-    llm_graph_input_attn_kv_iswa * build_attn_inp_kv_iswa() const;
++    llm_graph_input_attn_kv_iswa * build_attn_inp_kv_iswa(bool skip_kv_idxs = false) const;
+ 
+     // note: if k_cur or v_cur are not provided, they will not be stored in the memory
+     ggml_tensor * build_attn(
+diff --git a/src/models/gemma4-assistant.cpp b/src/models/gemma4-assistant.cpp
+index 6378130e7..1b3a80f6e 100644
+--- a/src/models/gemma4-assistant.cpp
++++ b/src/models/gemma4-assistant.cpp
+@@ -1,5 +1,18 @@
+ #include "models.h"
+ 
++#include <cstdlib>
++#include <string>
++
++static bool llama_gemma4_mtp_qonly_attn_inputs_enabled() {
++    const char * value = std::getenv("LLAMA_GEMMA4_MTP_QONLY_ATTN_INPUTS");
++    if (value == nullptr) {
++        return false;
++    }
++
++    const std::string s(value);
++    return s == "1" || s == "true" || s == "TRUE" || s == "yes" || s == "on";
++}
++
+ void llama_model_gemma4_assistant::load_arch_hparams(llama_model_loader & ml) {
+     hparams.n_embd_inp_impl = hparams.n_embd_out();
+ 
+@@ -111,93 +124,154 @@ llama_model_gemma4_assistant::graph::graph(const llama_model & model, const llm_
+     GGML_ASSERT(cparams.ctx_other != nullptr);
+     const auto * model_other = llama_get_model(cparams.ctx_other);
+ 
+-    ggml_tensor * x = ggml_get_rows(ctx0, model_other->tok_embd, inp_tokens);
+-    x = ggml_scale(ctx0, x, sqrtf((float) n_embd_backbone));
+-    cb(x, "inp_embd_target", -1);
++    // Gemma4Assistant consumes shared target K/V and passes k_cur/v_cur as
++    // nullptr below, so K/V index inputs are never used by this graph. Avoid
++    // creating or uploading them when the q-only fast path is enabled.
++    auto *        inp_attn    = build_attn_inp_kv_iswa(llama_gemma4_mtp_qonly_attn_inputs_enabled());
++    ggml_tensor * inp_pos     = build_inp_pos();
++    ggml_tensor * inp_out_ids = build_inp_out_ids();
++
++    const bool direct_unroll =
++        cparams.mtp_draft_direct_argmax_ids &&
++        cparams.mtp_draft_direct_argmax_unroll > 1 &&
++        samplers.empty() &&
++        ubatch.n_tokens == 1 &&
++        ubatch.n_seqs == 1 &&
++        n_outputs == 1 &&
++        ubatch.output[0];
+ 
+-    ggml_tensor * xh = ggml_concat(ctx0, x, inp_h, 0);
+-    cb(xh, "inp_xh", -1);
++    const int32_t n_unroll = direct_unroll ? cparams.mtp_draft_direct_argmax_unroll : 1;
+ 
+-    ggml_tensor * cur = ggml_mul_mat(ctx0, model.nextn_proj_pre, xh);
+-    cb(cur, "pre_proj", -1);
++    ggml_tensor * tokens_step = inp_tokens;
++    ggml_tensor * h_step      = inp_h;
++    ggml_tensor * sampled_all = nullptr;
++    ggml_tensor * logits      = nullptr;
++    ggml_tensor * h_next      = nullptr;
+ 
+-    auto *        inp_attn    = build_attn_inp_kv_iswa();
+-    ggml_tensor * inp_pos     = build_inp_pos();
+-    ggml_tensor * inp_out_ids = build_inp_out_ids();
++    auto build_step = [&](ggml_tensor * tokens, ggml_tensor * h_in, int32_t step, bool need_h_next) {
++        GGML_UNUSED(step);
++
++        ggml_tensor * x_step = ggml_get_rows(ctx0, model_other->tok_embd, tokens);
++        x_step = ggml_scale(ctx0, x_step, sqrtf((float) n_embd_backbone));
++        cb(x_step, "inp_embd_target", -1);
++
++        ggml_tensor * xh_step = ggml_concat(ctx0, x_step, h_in, 0);
++        cb(xh_step, "inp_xh", -1);
++
++        ggml_tensor * cur_step = ggml_mul_mat(ctx0, model.nextn_proj_pre, xh_step);
++        cb(cur_step, "pre_proj", -1);
++
++        ggml_tensor * inpL = cur_step;
+ 
+-    ggml_tensor * inpL = cur;
++        for (int il = 0; il < n_layer_nextn; ++il) {
++            const bool is_swa = hparams.is_swa(il);
+ 
+-    for (int il = 0; il < n_layer_nextn; ++il) {
+-        const bool is_swa = hparams.is_swa(il);
++            const int64_t n_embd_head = hparams.n_embd_head_k(il);
++            const int64_t n_head      = hparams.n_head(il);
+ 
+-        const int64_t n_embd_head = hparams.n_embd_head_k(il);
+-        const int64_t n_head      = hparams.n_head(il);
++            const float freq_base_l  = model.get_rope_freq_base(cparams, il);
++            const float freq_scale_l = model.get_rope_freq_scale(cparams, il);
++            const int   n_rot_l      = hparams.n_rot(il);
+ 
+-        const float freq_base_l  = model.get_rope_freq_base(cparams, il);
+-        const float freq_scale_l = model.get_rope_freq_scale(cparams, il);
+-        const int   n_rot_l      = hparams.n_rot(il);
++            ggml_tensor * cur_norm = build_norm(inpL, model.layers[il].attn_norm, nullptr, LLM_NORM_RMS, il);
++            cb(cur_norm, "attn_norm", il);
+ 
+-        ggml_tensor * cur_norm = build_norm(inpL, model.layers[il].attn_norm, nullptr, LLM_NORM_RMS, il);
+-        cb(cur_norm, "attn_norm", il);
++            ggml_tensor * Qcur = build_lora_mm(model.layers[il].wq, cur_norm);
++            Qcur = ggml_reshape_3d(ctx0, Qcur, n_embd_head, n_head, n_tokens);
++            Qcur = build_norm(Qcur, model.layers[il].attn_q_norm, nullptr, LLM_NORM_RMS, il);
++            cb(Qcur, "Qcur_normed", il);
+ 
+-        ggml_tensor * Qcur = build_lora_mm(model.layers[il].wq, cur_norm);
+-        Qcur = ggml_reshape_3d(ctx0, Qcur, n_embd_head, n_head, n_tokens);
+-        Qcur = build_norm(Qcur, model.layers[il].attn_q_norm, nullptr, LLM_NORM_RMS, il);
+-        cb(Qcur, "Qcur_normed", il);
++            ggml_tensor * freq_factors = is_swa ? nullptr : model.layers[il].rope_freqs;
++            Qcur = ggml_rope_ext(ctx0, Qcur, inp_pos, freq_factors, n_rot_l, rope_type, n_ctx_orig,
++                                 freq_base_l, freq_scale_l, ext_factor, attn_factor, beta_fast, beta_slow);
++            cb(Qcur, "Qcur_pos", il);
+ 
+-        ggml_tensor * freq_factors = is_swa ? nullptr : model.layers[il].rope_freqs;
+-        Qcur = ggml_rope_ext(ctx0, Qcur, inp_pos, freq_factors, n_rot_l, rope_type, n_ctx_orig,
+-                             freq_base_l, freq_scale_l, ext_factor, attn_factor, beta_fast, beta_slow);
+-        cb(Qcur, "Qcur_pos", il);
++            cur_step = build_attn(inp_attn, model.layers[il].wo, nullptr, nullptr,
++                    Qcur, nullptr, nullptr, nullptr, nullptr, nullptr, hparams.f_attention_scale, il);
+ 
+-        cur = build_attn(inp_attn, model.layers[il].wo, nullptr, nullptr,
+-                Qcur, nullptr, nullptr, nullptr, nullptr, nullptr, hparams.f_attention_scale, il);
++            if (il == n_layer_nextn - 1 && inp_out_ids) {
++                cur_step = ggml_get_rows(ctx0, cur_step, inp_out_ids);
++                inpL     = ggml_get_rows(ctx0, inpL,     inp_out_ids);
++            }
+ 
+-        if (il == n_layer_nextn - 1 && inp_out_ids) {
+-            cur  = ggml_get_rows(ctx0, cur,  inp_out_ids);
+-            inpL = ggml_get_rows(ctx0, inpL, inp_out_ids);
++            cur_step = build_norm(cur_step, model.layers[il].attn_post_norm, nullptr, LLM_NORM_RMS, il);
++            cb(cur_step, "attn_post_norm", il);
++
++            ggml_tensor * attn_out = ggml_add(ctx0, cur_step, inpL);
++            cb(attn_out, "attn_out", il);
++
++            cur_step = build_norm(attn_out, model.layers[il].ffn_norm, nullptr, LLM_NORM_RMS, il);
++            cb(cur_step, "ffn_norm", il);
++
++            cur_step = build_ffn(cur_step,
++                    model.layers[il].ffn_up,   nullptr, nullptr,
++                    model.layers[il].ffn_gate, nullptr, nullptr,
++                    model.layers[il].ffn_down, nullptr, nullptr,
++                    nullptr,
++                    LLM_FFN_GELU, LLM_FFN_PAR, il);
++            cb(cur_step, "ffn_out", il);
++
++            cur_step = build_norm(cur_step, model.layers[il].ffn_post_norm, nullptr, LLM_NORM_RMS, -1);
++            cb(cur_step, "ffn_post_norm", il);
++
++            cur_step = ggml_add(ctx0, cur_step, attn_out);
++
++            cur_step = ggml_mul(ctx0, cur_step, model.layers[il].out_scale);
++            cb(cur_step, "out_scaled", il);
++
++            inpL = cur_step;
+         }
+ 
+-        cur = build_norm(cur, model.layers[il].attn_post_norm, nullptr, LLM_NORM_RMS, il);
+-        cb(cur, "attn_post_norm", il);
++        cur_step = inpL;
+ 
+-        ggml_tensor * attn_out = ggml_add(ctx0, cur, inpL);
+-        cb(attn_out, "attn_out", il);
++        cur_step = build_norm(cur_step, model.output_norm, nullptr, LLM_NORM_RMS, -1);
++        cb(cur_step, "result_norm", -1);
+ 
+-        cur = build_norm(attn_out, model.layers[il].ffn_norm, nullptr, LLM_NORM_RMS, il);
+-        cb(cur, "ffn_norm", il);
++        ggml_tensor * logits_step = build_lora_mm(model.output, cur_step);
++        cb(logits_step, "result_output", -1);
++        if (cparams.mtp_draft_f16_logits_extract &&
++                !cparams.mtp_draft_direct_argmax_ids) {
++            logits_step = ggml_cast(ctx0, logits_step, GGML_TYPE_F16);
++            cb(logits_step, "result_output_f16", -1);
++        }
+ 
+-        cur = build_ffn(cur,
+-                model.layers[il].ffn_up,   nullptr, nullptr,
+-                model.layers[il].ffn_gate, nullptr, nullptr,
+-                model.layers[il].ffn_down, nullptr, nullptr,
+-                nullptr,
+-                LLM_FFN_GELU, LLM_FFN_PAR, il);
+-        cb(cur, "ffn_out", il);
++        ggml_tensor * h_next_step = nullptr;
++        if (need_h_next) {
++            h_next_step = ggml_mul_mat(ctx0, model.nextn_proj_post, cur_step);
++            cb(h_next_step, "h_nextn", -1);
++        }
+ 
+-        cur = build_norm(cur, model.layers[il].ffn_post_norm, nullptr, LLM_NORM_RMS, -1);
+-        cb(cur, "ffn_post_norm", il);
++        return std::make_pair(logits_step, h_next_step);
++    };
+ 
+-        cur = ggml_add(ctx0, cur, attn_out);
++    for (int32_t i = 0; i < n_unroll; ++i) {
++        const bool need_h_next = !direct_unroll || i + 1 < n_unroll;
++        auto step = build_step(tokens_step, h_step, i, need_h_next);
++        logits = step.first;
++        h_next = step.second;
+ 
+-        cur = ggml_mul(ctx0, cur, model.layers[il].out_scale);
+-        cb(cur, "out_scaled", il);
++        if (direct_unroll) {
++            ggml_tensor * sampled = ggml_argmax(ctx0, logits);
++            ggml_format_name(sampled, "mtp_direct_argmax_unroll_token_%d", i);
+ 
+-        inpL = cur;
++            sampled_all = sampled_all ? ggml_concat(ctx0, sampled_all, sampled, 0) : sampled;
++            tokens_step = sampled;
++            if (need_h_next) {
++                h_step = h_next;
++            }
++        }
+     }
+-    cur = inpL;
+-
+-    cur = build_norm(cur, model.output_norm, nullptr, LLM_NORM_RMS, -1);
+-    cb(cur, "result_norm", -1);
+ 
+-    ggml_tensor * logits = build_lora_mm(model.output, cur);
+-    cb(logits, "result_output", -1);
+     res->t_logits = logits;
+-
+-    ggml_tensor * h_next = ggml_mul_mat(ctx0, model.nextn_proj_post, cur);
+-    cb(h_next, "h_nextn", -1);
+     res->t_h_nextn = h_next;
+ 
+-    ggml_build_forward_expand(gf, logits);
+-    ggml_build_forward_expand(gf, h_next);
++    if (sampled_all) {
++        res->t_sampled[ubatch.seq_id[0][0]] = sampled_all;
++        ggml_build_forward_expand(gf, sampled_all);
++    } else {
++        ggml_build_forward_expand(gf, logits);
++    }
++    if (h_next) {
++        ggml_build_forward_expand(gf, h_next);
++    }
+ }

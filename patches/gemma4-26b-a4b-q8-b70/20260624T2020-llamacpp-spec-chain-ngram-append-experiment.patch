@@ -1,0 +1,975 @@
+diff --git a/common/speculative.cpp b/common/speculative.cpp
+index c922a3f59..f79a65f51 100644
+--- a/common/speculative.cpp
++++ b/common/speculative.cpp
+@@ -13,8 +13,12 @@
+ 
+ #include <algorithm>
+ #include <cassert>
++#include <cerrno>
++#include <cmath>
++#include <cstdlib>
+ #include <cstring>
+ #include <iomanip>
++#include <limits>
+ #include <map>
+ #include <cinttypes>
+ 
+@@ -45,6 +49,168 @@ static std::string common_speculative_get_devices_str(const std::vector<ggml_bac
+     return result.empty() ? "default" : result;
+ }
+ 
++static int32_t common_speculative_mtp_draft_top_k_from_env() {
++    constexpr int32_t default_top_k = 10;
++
++    const char * env = std::getenv("LLAMA_MTP_DRAFT_TOP_K");
++    const char * env_name = "LLAMA_MTP_DRAFT_TOP_K";
++    if (env == nullptr || env[0] == '\0') {
++        env = std::getenv("LLAMA_SPEC_DRAFT_MTP_TOP_K");
++        env_name = "LLAMA_SPEC_DRAFT_MTP_TOP_K";
++    }
++    if (env == nullptr || env[0] == '\0') {
++        return default_top_k;
++    }
++
++    char * end = nullptr;
++    errno = 0;
++    const long value = std::strtol(env, &end, 10);
++    if (errno != 0 || end == env || *end != '\0' || value < 1 ||
++            value > std::numeric_limits<int32_t>::max()) {
++        LOG_WRN("%s: invalid %s='%s'; using default %d\n",
++                __func__, env_name, env, default_top_k);
++        return default_top_k;
++    }
++
++    return (int32_t) value;
++}
++
++static float common_speculative_mtp_draft_logit_gap_min_from_env() {
++    const char * env = std::getenv("LLAMA_MTP_DRAFT_LOGIT_GAP_MIN");
++    if (env == nullptr || env[0] == '\0') {
++        return 0.0f;
++    }
++
++    char * end = nullptr;
++    errno = 0;
++    const float value = std::strtof(env, &end);
++    if (errno != 0 || end == env || *end != '\0' || value < 0.0f) {
++        LOG_WRN("%s: invalid LLAMA_MTP_DRAFT_LOGIT_GAP_MIN='%s'; disabling logit-gap gate\n",
++                __func__, env);
++        return 0.0f;
++    }
++
++    return value;
++}
++
++static bool common_speculative_mtp_draft_fast_topk_from_env() {
++    const char * env = std::getenv("LLAMA_MTP_DRAFT_FAST_TOPK");
++    if (env == nullptr || env[0] == '\0') {
++        return false;
++    }
++
++    return strcmp(env, "1") == 0 || strcmp(env, "true") == 0 ||
++        strcmp(env, "TRUE") == 0 || strcmp(env, "yes") == 0 ||
++        strcmp(env, "on") == 0;
++}
++
++static bool common_speculative_mtp_draft_fast_argmax_from_env() {
++    const char * env = std::getenv("LLAMA_MTP_DRAFT_FAST_ARGMAX");
++    if (env == nullptr || env[0] == '\0') {
++        return false;
++    }
++
++    return strcmp(env, "1") == 0 || strcmp(env, "true") == 0 ||
++        strcmp(env, "TRUE") == 0 || strcmp(env, "yes") == 0 ||
++        strcmp(env, "on") == 0;
++}
++
++static bool common_speculative_mtp_draft_f16_logits_extract_from_env() {
++    const char * env = std::getenv("LLAMA_MTP_DRAFT_F16_LOGITS_EXTRACT");
++    if (env == nullptr || env[0] == '\0') {
++        return false;
++    }
++
++    return strcmp(env, "1") == 0 || strcmp(env, "true") == 0 ||
++        strcmp(env, "TRUE") == 0 || strcmp(env, "yes") == 0 ||
++        strcmp(env, "on") == 0;
++}
++
++static bool common_speculative_mtp_draft_backend_argmax_from_env() {
++    const char * env = std::getenv("LLAMA_MTP_DRAFT_BACKEND_ARGMAX");
++    if (env == nullptr || env[0] == '\0') {
++        return false;
++    }
++
++    return strcmp(env, "1") == 0 || strcmp(env, "true") == 0 ||
++        strcmp(env, "TRUE") == 0 || strcmp(env, "yes") == 0 ||
++        strcmp(env, "on") == 0;
++}
++
++static bool common_speculative_mtp_draft_direct_argmax_ids_from_env() {
++    const char * env = std::getenv("LLAMA_MTP_DRAFT_DIRECT_ARGMAX_IDS");
++    if (env == nullptr || env[0] == '\0') {
++        return false;
++    }
++
++    return strcmp(env, "1") == 0 || strcmp(env, "true") == 0 ||
++        strcmp(env, "TRUE") == 0 || strcmp(env, "yes") == 0 ||
++        strcmp(env, "on") == 0;
++}
++
++static int32_t common_speculative_mtp_draft_direct_argmax_unroll_from_env() {
++    const char * env = std::getenv("LLAMA_MTP_DRAFT_DIRECT_ARGMAX_UNROLL");
++    if (env == nullptr || env[0] == '\0') {
++        return 1;
++    }
++
++    char * end = nullptr;
++    errno = 0;
++    const long value = std::strtol(env, &end, 10);
++    if (errno != 0 || end == env || *end != '\0' || value < 1 ||
++            value > std::numeric_limits<int32_t>::max()) {
++        LOG_WRN("%s: invalid LLAMA_MTP_DRAFT_DIRECT_ARGMAX_UNROLL='%s'; using 1\n",
++                __func__, env);
++        return 1;
++    }
++
++    return (int32_t) value;
++}
++
++static bool common_speculative_mtp_draft_profile_from_env() {
++    const char * env = std::getenv("LLAMA_MTP_DRAFT_PROFILE");
++    if (env == nullptr || env[0] == '\0') {
++        return false;
++    }
++
++    return strcmp(env, "1") == 0 || strcmp(env, "true") == 0 ||
++        strcmp(env, "TRUE") == 0 || strcmp(env, "yes") == 0 ||
++        strcmp(env, "on") == 0;
++}
++
++static bool common_speculative_mtp_draft_device_h_handoff_from_env() {
++    const char * env = std::getenv("LLAMA_MTP_DRAFT_DEVICE_H_HANDOFF");
++    if (env == nullptr || env[0] == '\0') {
++        return false;
++    }
++
++    return strcmp(env, "1") == 0 || strcmp(env, "true") == 0 ||
++        strcmp(env, "TRUE") == 0 || strcmp(env, "yes") == 0 ||
++        strcmp(env, "on") == 0;
++}
++
++static bool common_speculative_mtp_defer_target_h_nextn_from_env() {
++    const char * env = std::getenv("LLAMA_MTP_DEFER_TARGET_H_NEXTN");
++    if (env == nullptr || env[0] == '\0') {
++        return false;
++    }
++
++    return strcmp(env, "1") == 0 || strcmp(env, "true") == 0 ||
++        strcmp(env, "TRUE") == 0 || strcmp(env, "yes") == 0 ||
++        strcmp(env, "on") == 0;
++}
++
++static bool common_speculative_chain_ngram_append_from_env() {
++    const char * env = std::getenv("LLAMA_SPEC_CHAIN_NGRAM_APPEND");
++    if (env == nullptr || env[0] == '\0') {
++        return false;
++    }
++
++    return strcmp(env, "1") == 0 || strcmp(env, "true") == 0 ||
++        strcmp(env, "TRUE") == 0 || strcmp(env, "yes") == 0 ||
++        strcmp(env, "on") == 0;
++}
++
+ struct common_speculative_config {
+     common_speculative_type type;
+     common_params_speculative params;
+@@ -170,6 +336,8 @@ struct common_speculative_impl {
+ 
+     // true if this implementation requires the target context to extract pre-norm embeddings
+     virtual bool need_embd_nextn() const { return false; }
++
++    virtual void print_extra_stats() const {}
+ };
+ 
+ struct common_speculative_impl_draft_simple : public common_speculative_impl {
+@@ -928,6 +1096,68 @@ struct common_speculative_impl_draft_mtp : public common_speculative_impl {
+ 
+     std::vector<int>                i_last;
+     std::vector<std::vector<float>> chain_h;
++    std::vector<bool>               drafting;
++    std::vector<llama_token_data>   fast_topk_candidates;
++
++    int32_t draft_top_k = 10;
++    float draft_logit_gap_min = 0.0f;
++    bool draft_fast_topk = false;
++    bool draft_fast_argmax = false;
++    bool draft_f16_logits_extract = false;
++    bool draft_backend_argmax = false;
++    bool draft_direct_argmax_ids = false;
++    int32_t draft_direct_argmax_unroll = 1;
++    bool draft_device_h_handoff = false;
++    bool defer_target_h_nextn = false;
++    int32_t n_vocab = 0;
++
++    bool mtp_profile = false;
++    int64_t t_mtp_process_total_us      = 0;
++    int64_t t_mtp_draft_decode_us       = 0;
++    int64_t t_mtp_draft_fast_sync_us    = 0;
++    int64_t t_mtp_draft_fast_logits_us  = 0;
++    int64_t t_mtp_draft_fast_scan_us    = 0;
++    int64_t t_mtp_draft_fast_prob_us    = 0;
++    int64_t t_mtp_draft_sampler_us      = 0;
++    int64_t t_mtp_draft_hidden_get_us   = 0;
++    int64_t t_mtp_draft_handoff_us      = 0;
++    int64_t t_mtp_accept_copy_us        = 0;
++
++    size_t n_mtp_process_calls          = 0;
++    size_t n_mtp_process_tokens         = 0;
++    size_t n_mtp_process_verify_rows    = 0;
++    size_t n_mtp_draft_decode_calls     = 0;
++    size_t n_mtp_draft_decode_tokens    = 0;
++    size_t n_mtp_fast_topk_calls        = 0;
++    size_t n_mtp_fast_topk_vocab_scans  = 0;
++    size_t n_mtp_sampler_calls          = 0;
++    size_t n_mtp_hidden_get_rows        = 0;
++    size_t n_mtp_handoff_rows           = 0;
++    size_t n_mtp_device_h_rows          = 0;
++    size_t n_mtp_device_h_fallbacks     = 0;
++    size_t n_mtp_stop_gap               = 0;
++    size_t n_mtp_stop_pmin              = 0;
++    size_t n_mtp_stop_nmax              = 0;
++    size_t n_mtp_candidates_seen        = 0;
++    double sum_mtp_top1_p               = 0.0;
++    double sum_mtp_logit_gap            = 0.0;
++
++    static void batch_add_one(
++            llama_batch & batch,
++            llama_token id,
++            llama_pos pos,
++            llama_seq_id seq_id,
++            bool logits) {
++        GGML_ASSERT(batch.seq_id[batch.n_tokens] && "llama_batch size exceeded");
++
++        batch.token   [batch.n_tokens] = id;
++        batch.pos     [batch.n_tokens] = pos;
++        batch.n_seq_id[batch.n_tokens] = 1;
++        batch.seq_id  [batch.n_tokens][0] = seq_id;
++        batch.logits  [batch.n_tokens] = logits;
++
++        batch.n_tokens++;
++    }
+ 
+     common_speculative_impl_draft_mtp(const common_params_speculative & params, uint32_t n_seq)
+         : common_speculative_impl(COMMON_SPECULATIVE_TYPE_DRAFT_MTP, n_seq)
+@@ -958,11 +1188,42 @@ struct common_speculative_impl_draft_mtp : public common_speculative_impl {
+         // TODO: fix, how to call without malloc
+         batch.token = (llama_token *) malloc(sizeof(llama_token) * n_b);
+ 
++        draft_top_k = common_speculative_mtp_draft_top_k_from_env();
++        LOG_INF("%s: - draft_top_k=%d (LLAMA_MTP_DRAFT_TOP_K)\n", __func__, draft_top_k);
++        draft_logit_gap_min = common_speculative_mtp_draft_logit_gap_min_from_env();
++        LOG_INF("%s: - draft_logit_gap_min=%.3f (LLAMA_MTP_DRAFT_LOGIT_GAP_MIN)\n",
++                __func__, draft_logit_gap_min);
++        draft_fast_topk = common_speculative_mtp_draft_fast_topk_from_env() &&
++                !this->params.backend_sampling;
++        LOG_INF("%s: - draft_fast_topk=%d (LLAMA_MTP_DRAFT_FAST_TOPK)\n",
++                __func__, draft_fast_topk ? 1 : 0);
++        draft_fast_argmax = common_speculative_mtp_draft_fast_argmax_from_env() &&
++                !this->params.backend_sampling;
++        LOG_INF("%s: - draft_fast_argmax=%d (LLAMA_MTP_DRAFT_FAST_ARGMAX)\n",
++                __func__, draft_fast_argmax ? 1 : 0);
++        draft_f16_logits_extract = common_speculative_mtp_draft_f16_logits_extract_from_env();
++        LOG_INF("%s: - draft_f16_logits_extract=%d (LLAMA_MTP_DRAFT_F16_LOGITS_EXTRACT)\n",
++                __func__, draft_f16_logits_extract ? 1 : 0);
++        draft_backend_argmax = common_speculative_mtp_draft_backend_argmax_from_env() &&
++                this->params.backend_sampling;
++        LOG_INF("%s: - draft_backend_argmax=%d (LLAMA_MTP_DRAFT_BACKEND_ARGMAX)\n",
++                __func__, draft_backend_argmax ? 1 : 0);
++        draft_direct_argmax_ids = common_speculative_mtp_draft_direct_argmax_ids_from_env() &&
++                draft_fast_argmax && !this->params.backend_sampling;
++        LOG_INF("%s: - draft_direct_argmax_ids=%d (LLAMA_MTP_DRAFT_DIRECT_ARGMAX_IDS)\n",
++                __func__, draft_direct_argmax_ids ? 1 : 0);
++        mtp_profile = common_speculative_mtp_draft_profile_from_env();
++        LOG_INF("%s: - mtp_profile=%d (LLAMA_MTP_DRAFT_PROFILE)\n",
++                __func__, mtp_profile ? 1 : 0);
++        llama_set_mtp_decode_phase_profile(ctx_dft, mtp_profile);
++        n_vocab = llama_vocab_n_tokens(llama_model_get_vocab(llama_get_model(ctx_dft)));
++        fast_topk_candidates.resize(std::max<int32_t>(1, draft_top_k));
++
+         smpls.resize(n_seq);
+         for (auto & s : smpls) {
+             common_params_sampling sparams;
+             sparams.no_perf  = false;
+-            sparams.top_k    = 10;
++            sparams.top_k    = draft_top_k;
+             sparams.samplers = { COMMON_SAMPLER_TYPE_TOP_K };
+             s.reset(common_sampler_init(llama_get_model(ctx_dft), sparams));
+         }
+@@ -972,7 +1233,11 @@ struct common_speculative_impl_draft_mtp : public common_speculative_impl {
+         if (this->params.backend_sampling) {
+             for (llama_seq_id seq_id = 0; seq_id < (llama_seq_id) n_seq; ++seq_id) {
+                 llama_sampler * chain = llama_sampler_chain_init(llama_sampler_chain_default_params());
+-                llama_sampler_chain_add(chain, llama_sampler_init_top_k(10));
++                if (draft_backend_argmax) {
++                    llama_sampler_chain_add(chain, llama_sampler_init_greedy());
++                } else {
++                    llama_sampler_chain_add(chain, llama_sampler_init_top_k(draft_top_k));
++                }
+ 
+                 if (!llama_set_sampler(ctx_dft, seq_id, chain)) {
+                     LOG_WRN("%s: backend offload failed for seq_id=%d; using CPU sampler\n", __func__, (int) seq_id);
+@@ -988,6 +1253,28 @@ struct common_speculative_impl_draft_mtp : public common_speculative_impl {
+ 
+         is_mem_shared = llama_get_ctx_other(ctx_dft) == ctx_tgt;
+         chain_heads   = n_mtp_layers > 1 && !is_mem_shared;
++        defer_target_h_nextn =
++            common_speculative_mtp_defer_target_h_nextn_from_env() &&
++            is_mem_shared && !chain_heads && n_seq == 1;
++        LOG_INF("%s: - defer_target_h_nextn=%d (LLAMA_MTP_DEFER_TARGET_H_NEXTN, requires shared memory + single seq)\n",
++                __func__, defer_target_h_nextn ? 1 : 0);
++        llama_set_mtp_defer_nextn_extract(ctx_tgt, defer_target_h_nextn);
++        draft_direct_argmax_unroll = common_speculative_mtp_draft_direct_argmax_unroll_from_env();
++        if (!(draft_direct_argmax_ids && is_mem_shared && !chain_heads && n_seq == 1 && this->params.n_max > 1)) {
++            draft_direct_argmax_unroll = 1;
++        } else {
++            draft_direct_argmax_unroll = std::min(draft_direct_argmax_unroll, this->params.n_max);
++        }
++        LOG_INF("%s: - draft_direct_argmax_unroll=%d (LLAMA_MTP_DRAFT_DIRECT_ARGMAX_UNROLL, requires direct argmax + shared memory + single seq)\n",
++                __func__, draft_direct_argmax_unroll);
++        llama_set_mtp_draft_direct_argmax_unroll(ctx_dft, draft_direct_argmax_unroll);
++
++        draft_device_h_handoff =
++            common_speculative_mtp_draft_device_h_handoff_from_env() &&
++            is_mem_shared && !chain_heads && n_seq == 1;
++        LOG_INF("%s: - draft_device_h_handoff=%d (LLAMA_MTP_DRAFT_DEVICE_H_HANDOFF, requires shared memory + single seq)\n",
++                __func__, draft_device_h_handoff ? 1 : 0);
++        llama_set_mtp_draft_device_h_handoff(ctx_dft, draft_device_h_handoff);
+ 
+         if (chain_heads) {
+             this->params.n_max = std::min(this->params.n_max, n_mtp_layers);
+@@ -1003,8 +1290,12 @@ struct common_speculative_impl_draft_mtp : public common_speculative_impl {
+         i_last.assign(n_seq, -1);
+         i_batch_beg.assign(n_seq, -1);
+         i_batch_end.assign(n_seq, -1);
++        drafting.assign(n_seq, false);
+ 
+         verify_h.assign(n_seq, {});
++        for (auto & h : verify_h) {
++            h.reserve((size_t) (this->params.n_max + 1) * n_embd);
++        }
+         verify_h_rows.assign(n_seq, 0);
+     }
+ 
+@@ -1046,6 +1337,191 @@ struct common_speculative_impl_draft_mtp : public common_speculative_impl {
+         }
+     }
+ 
++    llama_token_data_array draft_fast_topk_sample(int idx) {
++        const int64_t t_sync_start_us = mtp_profile ? ggml_time_us() : 0;
++        llama_synchronize(params.ctx_dft);
++        if (mtp_profile) {
++            t_mtp_draft_fast_sync_us += ggml_time_us() - t_sync_start_us;
++        }
++
++        const int32_t k_max = std::min<int32_t>(draft_top_k, n_vocab);
++        GGML_ASSERT(k_max > 0);
++        int32_t k_size = 0;
++
++        const int64_t t_logits_start_us = mtp_profile ? ggml_time_us() : 0;
++        const float * logits = llama_get_logits_ith_nosync(params.ctx_dft, idx);
++        GGML_ASSERT(logits != nullptr);
++        if (mtp_profile) {
++            t_mtp_draft_fast_logits_us += ggml_time_us() - t_logits_start_us;
++        }
++
++        const int64_t t_scan_start_us = mtp_profile ? ggml_time_us() : 0;
++        for (llama_token token_id = 0; token_id < n_vocab; ++token_id) {
++            const float logit = logits[token_id];
++            if (k_size < k_max) {
++                int32_t pos = k_size++;
++                while (pos > 0 && logit > fast_topk_candidates[pos - 1].logit) {
++                    fast_topk_candidates[pos] = fast_topk_candidates[pos - 1];
++                    --pos;
++                }
++                fast_topk_candidates[pos] = llama_token_data{token_id, logit, 0.0f};
++                continue;
++            }
++
++            if (logit <= fast_topk_candidates[k_max - 1].logit) {
++                continue;
++            }
++
++            int32_t pos = k_max - 1;
++            while (pos > 0 && logit > fast_topk_candidates[pos - 1].logit) {
++                fast_topk_candidates[pos] = fast_topk_candidates[pos - 1];
++                --pos;
++            }
++            fast_topk_candidates[pos] = llama_token_data{token_id, logit, 0.0f};
++        }
++        if (mtp_profile) {
++            t_mtp_draft_fast_scan_us += ggml_time_us() - t_scan_start_us;
++            n_mtp_fast_topk_calls++;
++            n_mtp_fast_topk_vocab_scans += (size_t) n_vocab;
++        }
++
++        const int64_t t_prob_start_us = mtp_profile ? ggml_time_us() : 0;
++        const float max_logit = fast_topk_candidates[0].logit;
++        double denom = 0.0;
++        for (int32_t k = 0; k < k_size; ++k) {
++            denom += std::exp((double) fast_topk_candidates[k].logit - (double) max_logit);
++        }
++        const double inv_denom = denom > 0.0 ? 1.0 / denom : 0.0;
++        for (int32_t k = 0; k < k_size; ++k) {
++            fast_topk_candidates[k].p =
++                    (float) (std::exp((double) fast_topk_candidates[k].logit - (double) max_logit) * inv_denom);
++        }
++        if (mtp_profile) {
++            t_mtp_draft_fast_prob_us += ggml_time_us() - t_prob_start_us;
++        }
++
++        return llama_token_data_array{fast_topk_candidates.data(), (size_t) k_size, 0, true};
++    }
++
++    llama_token_data_array draft_fast_argmax_sample(int idx) {
++        const int64_t t_sync_start_us = mtp_profile ? ggml_time_us() : 0;
++        llama_synchronize(params.ctx_dft);
++        if (mtp_profile) {
++            t_mtp_draft_fast_sync_us += ggml_time_us() - t_sync_start_us;
++        }
++
++        const int64_t t_logits_start_us = mtp_profile ? ggml_time_us() : 0;
++        const ggml_fp16_t * logits_f16 = draft_f16_logits_extract ?
++                llama_get_logits_f16_ith_nosync(params.ctx_dft, idx) : nullptr;
++        const float * logits = logits_f16 == nullptr ?
++                llama_get_logits_ith_nosync(params.ctx_dft, idx) : nullptr;
++        GGML_ASSERT(logits_f16 != nullptr || logits != nullptr);
++        if (mtp_profile) {
++            t_mtp_draft_fast_logits_us += ggml_time_us() - t_logits_start_us;
++        }
++
++        const int64_t t_scan_start_us = mtp_profile ? ggml_time_us() : 0;
++        llama_token best_id = 0;
++        float best_logit = logits_f16 ? ggml_fp16_to_fp32(logits_f16[0]) : logits[0];
++        if (logits_f16) {
++            for (llama_token token_id = 1; token_id < n_vocab; ++token_id) {
++                const float logit = ggml_fp16_to_fp32(logits_f16[token_id]);
++                if (logit > best_logit) {
++                    best_logit = logit;
++                    best_id = token_id;
++                }
++            }
++        } else {
++            for (llama_token token_id = 1; token_id < n_vocab; ++token_id) {
++                const float logit = logits[token_id];
++                if (logit > best_logit) {
++                    best_logit = logit;
++                    best_id = token_id;
++                }
++            }
++        }
++        if (mtp_profile) {
++            t_mtp_draft_fast_scan_us += ggml_time_us() - t_scan_start_us;
++            n_mtp_fast_topk_calls++;
++            n_mtp_fast_topk_vocab_scans += (size_t) n_vocab;
++        }
++
++        fast_topk_candidates[0] = llama_token_data{best_id, best_logit, 1.0f};
++        return llama_token_data_array{fast_topk_candidates.data(), 1, 0, true};
++    }
++
++    llama_token_data_array draft_sampled_argmax_sample(int idx, const char * source, bool allow_cpu_fallback) {
++        const int64_t t_sync_start_us = mtp_profile ? ggml_time_us() : 0;
++        const llama_token id = llama_get_sampled_token_ith(params.ctx_dft, idx);
++        if (mtp_profile) {
++            t_mtp_draft_fast_sync_us += ggml_time_us() - t_sync_start_us;
++            n_mtp_fast_topk_calls++;
++        }
++
++        if (id == LLAMA_TOKEN_NULL) {
++            if (allow_cpu_fallback) {
++                LOG_WRN("%s: %s argmax returned LLAMA_TOKEN_NULL for idx=%d; falling back to CPU argmax\n",
++                        __func__, source, idx);
++                return draft_fast_argmax_sample(idx);
++            }
++            LOG_WRN("%s: %s argmax returned LLAMA_TOKEN_NULL for idx=%d; stopping draft sequence\n",
++                    __func__, source, idx);
++            fast_topk_candidates[0] = llama_token_data{LLAMA_TOKEN_NULL, 0.0f, 0.0f};
++            return llama_token_data_array{fast_topk_candidates.data(), 0, 0, true};
++        }
++
++        fast_topk_candidates[0] = llama_token_data{id, 0.0f, 1.0f};
++        return llama_token_data_array{fast_topk_candidates.data(), 1, 0, true};
++    }
++
++    void print_extra_stats() const override {
++        if (!mtp_profile) {
++            return;
++        }
++
++        const auto ms = [](int64_t us) {
++            return (double) us / 1000.0;
++        };
++
++        LOG_INF("mtp profile %16s: process_ms=%.3f, draft_decode_ms=%.3f, fast_sync_ms=%.3f, fast_logits_ms=%.3f, fast_scan_ms=%.3f, fast_prob_ms=%.3f\n",
++                common_speculative_type_to_str(type).c_str(),
++                ms(t_mtp_process_total_us),
++                ms(t_mtp_draft_decode_us),
++                ms(t_mtp_draft_fast_sync_us),
++                ms(t_mtp_draft_fast_logits_us),
++                ms(t_mtp_draft_fast_scan_us),
++                ms(t_mtp_draft_fast_prob_us));
++        LOG_INF("mtp profile %16s: sampler_ms=%.3f, hidden_get_ms=%.3f, handoff_ms=%.3f, accept_copy_ms=%.3f\n",
++                common_speculative_type_to_str(type).c_str(),
++                ms(t_mtp_draft_sampler_us),
++                ms(t_mtp_draft_hidden_get_us),
++                ms(t_mtp_draft_handoff_us),
++                ms(t_mtp_accept_copy_us));
++        LOG_INF("mtp profile %16s: counts process_calls=%zu, process_tokens=%zu, verify_rows=%zu, draft_decodes=%zu, draft_decode_tokens=%zu, fast_topk_calls=%zu, vocab_scanned=%zu, sampler_calls=%zu, hidden_rows=%zu, handoff_rows=%zu, device_h_rows=%zu, device_h_fallbacks=%zu\n",
++                common_speculative_type_to_str(type).c_str(),
++                n_mtp_process_calls,
++                n_mtp_process_tokens,
++                n_mtp_process_verify_rows,
++                n_mtp_draft_decode_calls,
++                n_mtp_draft_decode_tokens,
++                n_mtp_fast_topk_calls,
++                n_mtp_fast_topk_vocab_scans,
++                n_mtp_sampler_calls,
++                n_mtp_hidden_get_rows,
++                n_mtp_handoff_rows,
++                n_mtp_device_h_rows,
++                n_mtp_device_h_fallbacks);
++        LOG_INF("mtp profile %16s: stops gap=%zu, pmin=%zu, nmax=%zu, avg_top1_p=%.6f, avg_logit_gap=%.6f\n",
++                common_speculative_type_to_str(type).c_str(),
++                n_mtp_stop_gap,
++                n_mtp_stop_pmin,
++                n_mtp_stop_nmax,
++                n_mtp_candidates_seen ? sum_mtp_top1_p / (double) n_mtp_candidates_seen : 0.0,
++                n_mtp_candidates_seen ? sum_mtp_logit_gap / (double) n_mtp_candidates_seen : 0.0);
++        llama_print_mtp_decode_phase_profile(params.ctx_dft);
++    }
++
++
+     bool process(const llama_batch & batch_in) override {
+         if (batch_in.n_tokens <= 0) {
+             return true;
+@@ -1057,21 +1533,24 @@ struct common_speculative_impl_draft_mtp : public common_speculative_impl {
+         }
+ 
+         const int32_t n_tokens = batch_in.n_tokens;
++        const int64_t t_process_start_us = mtp_profile ? ggml_time_us() : 0;
++        if (mtp_profile) {
++            n_mtp_process_calls++;
++            n_mtp_process_tokens += (size_t) n_tokens;
++        }
+ 
+         // remember the frist and last batch index for each sequence
+         std::fill(i_batch_beg.begin(), i_batch_beg.end(), -1);
+         std::fill(i_batch_end.begin(), i_batch_end.end(), -1);
+ 
+         for (int k = 0; k < n_tokens; ++k) {
+-            for (llama_seq_id seq_id = 0; seq_id < (llama_seq_id) n_seq; ++seq_id) {
+-                GGML_ASSERT(batch_in.n_seq_id[k] == 1);
++            GGML_ASSERT(batch_in.n_seq_id[k] == 1);
++            const llama_seq_id seq_id = batch_in.seq_id[k][0];
++            GGML_ASSERT(seq_id >= 0 && seq_id < (llama_seq_id) n_seq);
+ 
+-                if (batch_in.seq_id[k][0] == seq_id) {
+-                    i_batch_end[seq_id] = k;
+-                    if (i_batch_beg[seq_id] < 0) {
+-                        i_batch_beg[seq_id] = k;
+-                    }
+-                }
++            i_batch_end[seq_id] = k;
++            if (i_batch_beg[seq_id] < 0) {
++                i_batch_beg[seq_id] = k;
+             }
+         }
+ 
+@@ -1085,7 +1564,7 @@ struct common_speculative_impl_draft_mtp : public common_speculative_impl {
+             common_batch_clear(batch);
+ 
+             for (int k = 0; k < n_tokens; ++k) {
+-                common_batch_add(batch, batch_in.token[k], batch_in.pos[k], { batch_in.seq_id[k][0] }, 0);
++                batch_add_one(batch, batch_in.token[k], batch_in.pos[k], batch_in.seq_id[k][0], false);
+             }
+ 
+             // shift the tgt embeddings to the right by one position
+@@ -1151,6 +1630,19 @@ struct common_speculative_impl_draft_mtp : public common_speculative_impl {
+             const int32_t n_rows = i_batch_end[seq_id] - i_batch_beg[seq_id] + 1;
+             verify_h_rows[seq_id] = n_rows;
+             verify_h[seq_id].resize((size_t) n_rows * n_embd);
++            if (mtp_profile) {
++                n_mtp_process_verify_rows += (size_t) n_rows;
++            }
++
++            if (defer_target_h_nextn) {
++                const int32_t i_last_row = i_batch_beg[seq_id] + n_rows - 1;
++                if (llama_copy_embeddings_nextn_ith(ctx_tgt, i_last_row, pending_h[seq_id].data())) {
++                    continue;
++                }
++
++                LOG_WRN("%s: deferred h_nextn copy failed for seq_id=%d row=%d; falling back to full host extraction\n",
++                        __func__, (int) seq_id, i_last_row);
++            }
+ 
+             for (int32_t i = 0; i < n_rows; ++i) {
+                 const float * h = llama_get_embeddings_nextn_ith(ctx_tgt, i_batch_beg[seq_id] + i);
+@@ -1161,6 +1653,10 @@ struct common_speculative_impl_draft_mtp : public common_speculative_impl {
+                     verify_h[seq_id].data() + (size_t) (n_rows - 1) * n_embd, row_bytes);
+         }
+ 
++        if (mtp_profile) {
++            t_mtp_process_total_us += ggml_time_us() - t_process_start_us;
++        }
++
+         return true;
+     }
+ 
+@@ -1171,7 +1667,7 @@ struct common_speculative_impl_draft_mtp : public common_speculative_impl {
+ 
+         // keep track of which sequences are still drafting
+         int n_drafting = 0;
+-        std::vector<bool> drafting(n_seq);
++        std::fill(drafting.begin(), drafting.end(), false);
+ 
+         const size_t row_bytes = (size_t) n_embd * sizeof(float);
+ 
+@@ -1186,7 +1682,7 @@ struct common_speculative_impl_draft_mtp : public common_speculative_impl {
+             drafting[seq_id] = true;
+             common_sampler_reset(smpls[seq_id].get());
+ 
+-            common_batch_add(batch, dp.id_last, dp.n_past, { seq_id }, true);
++            batch_add_one(batch, dp.id_last, dp.n_past, seq_id, true);
+             std::memcpy(batch.embd + (size_t) (batch.n_tokens - 1) * n_embd, pending_h[seq_id].data(), row_bytes);
+ 
+             i_last[seq_id] = batch.n_tokens - 1;
+@@ -1198,6 +1694,58 @@ struct common_speculative_impl_draft_mtp : public common_speculative_impl {
+ 
+         int i = 0;
+ 
++        if (draft_direct_argmax_unroll > 1 && n_drafting == 1 && batch.n_tokens == 1) {
++            const int64_t t_decode_start_us = mtp_profile ? ggml_time_us() : 0;
++            const int32_t n_decode_tokens = batch.n_tokens;
++            int ret = llama_decode(ctx_dft, batch);
++            if (mtp_profile) {
++                t_mtp_draft_decode_us += ggml_time_us() - t_decode_start_us;
++                n_mtp_draft_decode_calls++;
++                n_mtp_draft_decode_tokens += (size_t) n_decode_tokens;
++            }
++            if (ret != 0) {
++                LOG_WRN("%s: llama_decode[unroll=%d] returned %d\n", __func__, draft_direct_argmax_unroll, ret);
++                return;
++            }
++
++            const int64_t t_sync_start_us = mtp_profile ? ggml_time_us() : 0;
++            llama_synchronize(ctx_dft);
++            if (mtp_profile) {
++                t_mtp_draft_fast_sync_us += ggml_time_us() - t_sync_start_us;
++                n_mtp_fast_topk_calls++;
++            }
++
++            const llama_seq_id seq_id = 0;
++            auto & dp = dparams[seq_id];
++            auto & result = *dp.result;
++            llama_token * sampled = llama_get_sampled_tokens(ctx_dft);
++            if (sampled == nullptr) {
++                LOG_WRN("%s: direct unroll produced no sampled-token buffer\n", __func__);
++                return;
++            }
++
++            for (int32_t t = 0; t < draft_direct_argmax_unroll && (int) result.size() < params.n_max; ++t) {
++                const llama_token id = sampled[t];
++                if (id == LLAMA_TOKEN_NULL) {
++                    break;
++                }
++
++                common_sampler_accept(smpls[seq_id].get(), id, true);
++                result.push_back(id);
++
++                if (mtp_profile) {
++                    n_mtp_candidates_seen++;
++                    sum_mtp_top1_p += 1.0;
++                }
++            }
++
++            if (result.size() < (size_t) params.n_min) {
++                result.clear();
++            }
++
++            return;
++        }
++
+         while (n_drafting > 0) {
+             // each step decodes under a different head, i.e. a different decoder layer, and
+             // KV is per layer. process() filled this layer's KV only for positions < n_past
+@@ -1215,7 +1763,14 @@ struct common_speculative_impl_draft_mtp : public common_speculative_impl {
+                 llama_set_nextn_layer_offset(ctx_dft, i);
+             }
+ 
++            const int64_t t_decode_start_us = mtp_profile ? ggml_time_us() : 0;
++            const int32_t n_decode_tokens = batch.n_tokens;
+             int ret = llama_decode(ctx_dft, batch);
++            if (mtp_profile) {
++                t_mtp_draft_decode_us += ggml_time_us() - t_decode_start_us;
++                n_mtp_draft_decode_calls++;
++                n_mtp_draft_decode_tokens += (size_t) n_decode_tokens;
++            }
+             if (ret != 0) {
+                 LOG_WRN("%s: llama_decode[%d] returned %d\n", __func__, i, ret);
+                 break;
+@@ -1233,22 +1788,71 @@ struct common_speculative_impl_draft_mtp : public common_speculative_impl {
+ 
+                 auto * smpl = smpls[seq_id].get();
+ 
+-                common_sampler_sample(smpl, ctx_dft, i_last[seq_id], true);
+-                const float * h_row = llama_get_embeddings_nextn_ith(ctx_dft, i_last[seq_id]);
+-
+-                const auto * cur_p = common_sampler_get_candidates(smpl, true);
+-
++                llama_token_data_array fast_cur_p;
++                const llama_token_data_array * cur_p = nullptr;
++                if (draft_direct_argmax_ids) {
++                    fast_cur_p = draft_sampled_argmax_sample(i_last[seq_id], "direct", false);
++                    cur_p = &fast_cur_p;
++                } else if (draft_backend_argmax) {
++                    fast_cur_p = draft_sampled_argmax_sample(i_last[seq_id], "backend", true);
++                    cur_p = &fast_cur_p;
++                } else if (draft_fast_argmax) {
++                    fast_cur_p = draft_fast_argmax_sample(i_last[seq_id]);
++                    cur_p = &fast_cur_p;
++                } else if (draft_fast_topk) {
++                    fast_cur_p = draft_fast_topk_sample(i_last[seq_id]);
++                    cur_p = &fast_cur_p;
++                }
++                if (cur_p == nullptr) {
++                    const int64_t t_sampler_start_us = mtp_profile ? ggml_time_us() : 0;
++                    common_sampler_sample(smpl, ctx_dft, i_last[seq_id], true);
++                    cur_p = common_sampler_get_candidates(smpl, true);
++                    if (mtp_profile) {
++                        t_mtp_draft_sampler_us += ggml_time_us() - t_sampler_start_us;
++                        n_mtp_sampler_calls++;
++                    }
++                }
++                if (cur_p->size == 0) {
++                    drafting[seq_id] = false;
++                    n_drafting--;
++                    continue;
++                }
+                 for (int k = 0; k < std::min(3, (int) cur_p->size); ++k) {
+                     LOG_DBG(" - seq_id %d, draft candidate %3d, pos %3d: %6d (%8.3f) '%s'\n",
+                             seq_id, k, i, cur_p->data[k].id, cur_p->data[k].p,
+                             common_token_to_piece(ctx_dft, cur_p->data[k].id).c_str());
+                 }
++                if (mtp_profile) {
++                    n_mtp_candidates_seen++;
++                    sum_mtp_top1_p += cur_p->data[0].p;
++                    if (cur_p->size > 1) {
++                        sum_mtp_logit_gap += cur_p->data[0].logit - cur_p->data[1].logit;
++                    }
++                }
+ 
+                 // add drafted token for each sequence
+                 const llama_token id = cur_p->data[0].id;
+ 
++                // Optional cheap confidence gate: reject ambiguous draft steps
++                // using only the already materialized top-k logits. This avoids
++                // the full-vocab softmax recomputation tried by the raw-prob
++                // patch while restoring a confidence signal when top_k is tiny.
++                if (draft_logit_gap_min > 0.0f && cur_p->size > 1 &&
++                        cur_p->data[0].logit - cur_p->data[1].logit < draft_logit_gap_min) {
++                    if (mtp_profile) {
++                        n_mtp_stop_gap++;
++                    }
++                    drafting[seq_id] = false;
++                    n_drafting--;
++
++                    continue;
++                }
++
+                 // only collect very high-confidence draft tokens
+                 if (cur_p->data[0].p < params.p_min) {
++                    if (mtp_profile) {
++                        n_mtp_stop_pmin++;
++                    }
+                     drafting[seq_id] = false;
+                     n_drafting--;
+ 
+@@ -1263,31 +1867,72 @@ struct common_speculative_impl_draft_mtp : public common_speculative_impl {
+                 result.push_back(id);
+ 
+                 if (params.n_max <= (int) result.size()) {
++                    if (mtp_profile) {
++                        n_mtp_stop_nmax++;
++                    }
+                     drafting[seq_id] = false;
+                     n_drafting--;
+                     continue;
+                 }
+ 
++                const int64_t t_handoff_start_us = mtp_profile ? ggml_time_us() : 0;
++                const float * h_row = nullptr;
++                const auto get_host_h_row = [&]() -> const float * {
++                    if (h_row != nullptr) {
++                        return h_row;
++                    }
++                    const int64_t t_hidden_start_us = mtp_profile ? ggml_time_us() : 0;
++                    h_row = llama_get_embeddings_nextn_ith(ctx_dft, i_last[seq_id]);
++                    if (mtp_profile) {
++                        t_mtp_draft_hidden_get_us += ggml_time_us() - t_hidden_start_us;
++                        n_mtp_hidden_get_rows++;
++                    }
++                    return h_row;
++                };
++
+                 if (chain_heads) {
+                     // ref: https://github.com/ggml-org/llama.cpp/pull/24340#discussion_r3448031546
++                    h_row = get_host_h_row();
+                     chain_h[seq_id].insert(chain_h[seq_id].end(), h_row, h_row + n_embd);
+ 
+                     const int n_rows = (int) result.size() + 1; // id_last + tokens drafted so far
+                     for (int t = 0; t < n_rows; ++t) {
+                         const llama_token tok = (t == 0) ? dp.id_last : result[t - 1];
+-                        common_batch_add(batch, tok, dp.n_past + t, { seq_id }, t == n_rows - 1);
++                        batch_add_one(batch, tok, dp.n_past + t, seq_id, t == n_rows - 1);
+                         std::memcpy(batch.embd + (size_t) (batch.n_tokens - 1) * n_embd,
+                                     chain_h[seq_id].data() + (size_t) t * n_embd, row_bytes);
+                     }
+                 } else if (is_mem_shared) {
+                     // note: with shared memory (e.g. Gemma4 assistants) we use the same position for all draft tokens
+                     // ref: https://github.com/huggingface/transformers/blob/effde20942e3f82a1b97449f60b3a48c5ff96145/docs/source/en/model_doc/gemma4_assistant.md?plain=1#L36-L37
+-                    common_batch_add(batch, id, dp.n_past, { seq_id }, true);
+-                    std::memcpy(batch.embd + (size_t) (batch.n_tokens - 1) * n_embd, h_row, row_bytes);
++                    if (draft_device_h_handoff) {
++                        if (llama_mtp_prepare_nextn_input_from_last_output(ctx_dft)) {
++                            batch_add_one(batch, id, dp.n_past, seq_id, true);
++                            if (mtp_profile) {
++                                n_mtp_device_h_rows++;
++                            }
++                        } else {
++                            if (mtp_profile) {
++                                n_mtp_device_h_fallbacks++;
++                            }
++                            drafting[seq_id] = false;
++                            n_drafting--;
++                            continue;
++                        }
++                    } else {
++                        batch_add_one(batch, id, dp.n_past, seq_id, true);
++                        h_row = get_host_h_row();
++                        std::memcpy(batch.embd + (size_t) (batch.n_tokens - 1) * n_embd, h_row, row_bytes);
++                    }
+                 } else {
+-                    common_batch_add(batch, id, dp.n_past + i + 1, { seq_id }, true);
++                    h_row = get_host_h_row();
++                    batch_add_one(batch, id, dp.n_past + i + 1, seq_id, true);
+                     std::memcpy(batch.embd + (size_t) (batch.n_tokens - 1) * n_embd, h_row, row_bytes);
+                 }
++                if (mtp_profile) {
++                    t_mtp_draft_handoff_us += ggml_time_us() - t_handoff_start_us;
++                    n_mtp_handoff_rows += (size_t) batch.n_tokens;
++                }
+ 
+                 i_last[seq_id] = batch.n_tokens - 1;
+             }
+@@ -1327,7 +1972,19 @@ struct common_speculative_impl_draft_mtp : public common_speculative_impl {
+ 
+         const int32_t i_h = std::min<int32_t>(n_accepted, n_rows - 1);
+         const size_t row_bytes = (size_t) n_embd * sizeof(float);
+-        std::memcpy(pending_h[seq_id].data(), verify_h[seq_id].data() + (size_t) i_h * n_embd, row_bytes);
++        const int64_t t_accept_start_us = mtp_profile ? ggml_time_us() : 0;
++        if (defer_target_h_nextn) {
++            const int32_t i_row = i_batch_beg[seq_id] + i_h;
++            if (!llama_copy_embeddings_nextn_ith(params.ctx_tgt, i_row, pending_h[seq_id].data())) {
++                LOG_WRN("%s: deferred accept h_nextn copy failed for seq_id=%d row=%d; keeping previous pending_h\n",
++                        __func__, (int) seq_id, i_row);
++            }
++        } else {
++            std::memcpy(pending_h[seq_id].data(), verify_h[seq_id].data() + (size_t) i_h * n_embd, row_bytes);
++        }
++        if (mtp_profile) {
++            t_mtp_accept_copy_us += ggml_time_us() - t_accept_start_us;
++        }
+     }
+ 
+     bool need_embd() const override {
+@@ -1536,6 +2193,7 @@ struct common_speculative_impl_ngram_mod : public common_speculative_impl {
+         }
+ 
+         const size_t n = mod.get_n();
++        const size_t existing = result.size();
+ 
+         // add new ngrams in chunks
+         if (sinfo.i_last + 32 < cur_len) {
+@@ -1546,6 +2204,45 @@ struct common_speculative_impl_ngram_mod : public common_speculative_impl {
+             sinfo.i_last = cur_len - n;
+         }
+ 
++        if (existing > 0) {
++            int max_extend = params.n_max;
++            if (dparams.n_max > 0) {
++                if ((int) existing >= dparams.n_max) {
++                    sinfo.n_draft_last = result.size();
++                    return;
++                }
++                max_extend = std::min<int>(max_extend, dparams.n_max - (int) existing);
++            }
++            if (max_extend <= 0) {
++                sinfo.n_draft_last = result.size();
++                return;
++            }
++
++            std::vector<llama_token> work(n + existing + (size_t) max_extend);
++            for (size_t i = 0; i < n - 1; ++i) {
++                work[i] = prompt.at(cur_len - n + 1 + i);
++            }
++            work[n - 1] = dparams.id_last;
++            for (size_t i = 0; i < existing; ++i) {
++                work[n + i] = result[i];
++            }
++
++            int drafted = 0;
++            for (; drafted < max_extend; ++drafted) {
++                const llama_token token = mod.get(work.data() + existing + drafted);
++                if (token == common_ngram_mod::EMPTY) {
++                    break;
++                }
++                work[n + existing + drafted] = token;
++            }
++
++            for (int i = 0; i < drafted; ++i) {
++                result.push_back(work[n + existing + (size_t) i]);
++            }
++            sinfo.n_draft_last = result.size();
++            return;
++        }
++
+         result.resize(n + params.n_max);
+         for (size_t i = 0; i < n - 1; ++i) {
+             result[i] = prompt.at(cur_len - n + 1 + i);
+@@ -2124,6 +2821,7 @@ void common_speculative_draft(common_speculative * spec) {
+     }
+ 
+     auto & dparams = spec->dparams;
++    const bool chain_ngram_append = common_speculative_chain_ngram_append_from_env();
+ 
+     {
+         int n_drafting = 0;
+@@ -2157,7 +2855,9 @@ void common_speculative_draft(common_speculative * spec) {
+ 
+             // a new draft has been sampled
+             if (dp.drafting && !result.empty()) {
+-                dp.drafting = false;
++                const bool keep_drafting =
++                    chain_ngram_append && impl->type == COMMON_SPECULATIVE_TYPE_DRAFT_MTP;
++                dp.drafting = keep_drafting;
+ 
+                 if (dp.n_max > 0) {
+                     if (!result.empty() && (int) result.size() > dp.n_max) {
+@@ -2300,5 +3000,6 @@ void common_speculative_print_stats(const common_speculative * spec) {
+                 impl->n_acc_tokens,
+                 str_stats.c_str(),
+                 str_perf.c_str());
++        impl->print_extra_stats();
+     }
+ }

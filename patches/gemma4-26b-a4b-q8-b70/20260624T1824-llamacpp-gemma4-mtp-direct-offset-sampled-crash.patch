@@ -1,0 +1,41 @@
+diff --git a/src/llama-cparams.h b/src/llama-cparams.h
+--- a/src/llama-cparams.h
++++ b/src/llama-cparams.h
+@@
+     bool mtp_draft_direct_argmax_ids; // MTP draft: output greedy argmax token IDs without generic backend sampling buffers
++    bool mtp_draft_direct_argmax_offset_outputs = false; // MTP draft: output direct-unroll argmax IDs as sampled-buffer offsets
+     bool spec_verify_direct_argmax_ids; // target verifier: output greedy argmax token IDs for each output row
+diff --git a/src/llama-graph.h b/src/llama-graph.h
+--- a/src/llama-graph.h
++++ b/src/llama-graph.h
+@@
+     std::map<llama_seq_id, ggml_tensor *> t_candidates;
+     std::map<llama_seq_id, ggml_tensor *> t_sampled;
++    std::map<int32_t, ggml_tensor *> t_sampled_offsets;
+     std::map<int32_t, ggml_tensor *> t_sampled_rows;
+diff --git a/src/models/gemma4-assistant.cpp b/src/models/gemma4-assistant.cpp
+--- a/src/models/gemma4-assistant.cpp
++++ b/src/models/gemma4-assistant.cpp
+@@
+     const bool direct_unroll = ...;
++    const bool direct_offset_outputs =
++        direct_unroll && cparams.mtp_draft_direct_argmax_offset_outputs;
+@@
+-            sampled_all = sampled_all ? ggml_concat(ctx0, sampled_all, sampled, 0) : sampled;
++            if (direct_offset_outputs) {
++                res->t_sampled_offsets[i] = sampled;
++            } else {
++                sampled_all = sampled_all ? ggml_concat(ctx0, sampled_all, sampled, 0) : sampled;
++            }
+diff --git a/src/llama-context.cpp b/src/llama-context.cpp
+--- a/src/llama-context.cpp
++++ b/src/llama-context.cpp
+@@
++static void copy_tensor_async_ints_by_offset(...);
+@@
+-                (!res->t_sampled.empty() || !res->t_sampled_rows.empty() ||
++                (!res->t_sampled.empty() || !res->t_sampled_offsets.empty() || !res->t_sampled_rows.empty() ||
+@@
+             copy_tensor_async_ints(res->t_sampled, sampling.sampled, seq_to_output_row, sched.get(), sampled_stride);
++            copy_tensor_async_ints_by_offset(res->t_sampled_offsets, sampling.sampled, sched.get());
+

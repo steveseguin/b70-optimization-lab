@@ -6,8 +6,7 @@ This docs folder is the human entry point for the B70 optimization work. The exe
 
 - [MiniMax M2.7 INT4 on 4x B70, Ubuntu 24](b70-minimax-ubuntu24-deployment.md): deploy an OpenAI-compatible vLLM endpoint.
 - [MiniMax Production C1 Service](minimax-production-c1-service.md): run the current 32K endpoint under systemd with health and benchmark checks.
-- [Gemma 4 26B B70 95 tok/s Repro](../repro/gemma4-26b-a4b-q8-b70-95tps-20260624/README.md): copy the current one-B70 Q8 target plus Q4_0 MTP draft settings.
-- [Gemma 4 26B Result Packet](../results/gemma4-26b-a4b-q8-b70/README.md): optimization history, validity notes, and LocalMaxxing context.
+- [Gemma 4 26B Result Packet](../results/gemma4-26b-a4b-q8-b70/README.md): current one-B70 Q8 target plus Q4_0 MTP draft settings, optimization history, validity notes, and LocalMaxxing context.
 - [Single Model Slot Switching](model-slot-switching.md): keep one LAN OpenAI endpoint while switching which large model is loaded.
 - [Current Reproducibility Map](current-reproducibility-map.md): one-page map for the stable endpoint, session-cache work, TurboQuant patch, and CPU-paged attention research.
 - [Model Effort Index](model-effort-index.md): cross-model status, closed lanes, and where to put the next model packet.
@@ -87,7 +86,10 @@ The Qwen3.6 35B lane is indexed in
 [qwen36-research-map.md](qwen36-research-map.md), with its final result packet in
 [../results/qwen36-35b-quark-int8-b70/](../results/qwen36-35b-quark-int8-b70/).
 
-The current Gemma 4 26B one-B70 settings are packaged in
-[../repro/gemma4-26b-a4b-q8-b70-95tps-20260624/](../repro/gemma4-26b-a4b-q8-b70-95tps-20260624/).
-That repro is the shortest path for users who want the exact llama.cpp patch,
-Q8 target, Q4_0 MTP draft, command line, and LocalMaxxing evidence.
+The current Gemma 4 26B one-B70 settings are documented in
+[../results/gemma4-26b-a4b-q8-b70/reproduce.md](../results/gemma4-26b-a4b-q8-b70/reproduce.md).
+The older
+[../repro/gemma4-26b-a4b-q8-b70-95tps-20260624/](../repro/gemma4-26b-a4b-q8-b70-95tps-20260624/)
+folder remains useful as a standalone prior recipe, but it is superseded by
+the `103.299 tok/s` selected-softmax/weighted-sum plus direct-unroll/q-only,
+batch/thread/runtime-tuned result.

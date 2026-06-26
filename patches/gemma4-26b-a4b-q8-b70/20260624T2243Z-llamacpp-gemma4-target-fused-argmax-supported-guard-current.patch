@@ -1,0 +1,73 @@
+diff --git a/src/models/gemma4.cpp b/src/models/gemma4.cpp
+index 6a96979ce..59c6bba11 100644
+--- a/src/models/gemma4.cpp
++++ b/src/models/gemma4.cpp
+@@ -1,5 +1,21 @@
+ #include "models.h"
+ 
++#include <cinttypes>
++#include <climits>
++#include <cstdlib>
++#include <cstring>
++
++static bool llama_gemma4_spec_verify_fused_output_argmax_enabled() {
++    const char * env = std::getenv("LLAMA_SPEC_VERIFY_FUSED_OUTPUT_ARGMAX");
++    if (env == nullptr || env[0] == '\0') {
++        return false;
++    }
++
++    return strcmp(env, "1") == 0 || strcmp(env, "true") == 0 ||
++        strcmp(env, "TRUE") == 0 || strcmp(env, "yes") == 0 ||
++        strcmp(env, "on") == 0;
++}
++
+ void llama_model_gemma4::load_arch_hparams(llama_model_loader & ml) {
+     hparams.swa_type = LLAMA_SWA_TYPE_STANDARD;
+     ml.get_key_or_arr(LLM_KV_ATTENTION_SLIDING_WINDOW_PATTERN, hparams.is_swa_impl, hparams.n_layer());
+@@ -188,7 +204,18 @@ llama_model_gemma4::graph::graph(const llama_model & model, const llm_graph_para
+     // TODO: is causal == true correct? might need some changes
+     auto * inp_attn = build_attn_inp_kv_iswa();
+ 
+-    ggml_tensor * inp_out_ids = build_inp_out_ids();
++    const bool fused_spec_verify_argmax_requested =
++        cparams.spec_verify_direct_argmax_ids &&
++        llama_gemma4_spec_verify_fused_output_argmax_enabled() &&
++        n_outputs == n_tokens;
++    const bool fused_spec_verify_argmax_supported =
++        fused_spec_verify_argmax_requested &&
++        model.output_s == nullptr &&
++        model.vocab.get_suppress_tokens().empty() &&
++        (model.output->type == GGML_TYPE_Q4_0 || model.output->type == GGML_TYPE_Q8_0);
++
++    ggml_tensor * inp_out_ids =
++        fused_spec_verify_argmax_supported ? nullptr : build_inp_out_ids();
+ 
+     ggml_tensor * inp_per_layer = nullptr;
+     if (model.per_layer_tok_embd) {
+@@ -420,6 +447,26 @@ llama_model_gemma4::graph::graph(const llama_model & model, const llm_graph_para
+     cb(cur, "result_norm", -1);
+     res->t_embd = cur;
+ 
++    const bool fused_spec_verify_argmax =
++        fused_spec_verify_argmax_supported &&
++        cur->ne[1] <= INT32_MAX &&
++        cur->ne[1] == n_outputs;
++
++    if (fused_spec_verify_argmax) {
++        // For greedy target verification, softcapping is monotonic and therefore
++        // does not change argmax. Output scale and suppress-token bias are not
++        // monotonic across vocab rows, so this path is disabled when present.
++        cur = ggml_cont(ctx0, cur);
++        ggml_format_name(cur, "spec_verify_output_argmax_hidden_rows_cont");
++
++        ggml_tensor * sampled = ggml_mul_mat_argmax(ctx0, model.output, cur);
++        ggml_format_name(sampled, "spec_verify_output_argmax_token_rows");
++
++        res->t_sampled_rows[0] = sampled;
++        ggml_build_forward_expand(gf, sampled);
++        return;
++    }
++
+     // lm_head
+     cur = build_lora_mm(model.output, cur, model.output_s);
+ 

@@ -1,0 +1,40 @@
+diff --git a/scripts/run-gemma4-26b-first-baseline.sh b/scripts/run-gemma4-26b-first-baseline.sh
+index f8f84c26..c245b0e6 100755
+--- a/scripts/run-gemma4-26b-first-baseline.sh
++++ b/scripts/run-gemma4-26b-first-baseline.sh
+@@ -72,9 +72,17 @@ LLAMA_MTP_DRAFT_DEVICE_H_HANDOFF="${LLAMA_MTP_DRAFT_DEVICE_H_HANDOFF:-}" \
+ LLAMA_MTP_DRAFT_BACKEND_ARGMAX="${LLAMA_MTP_DRAFT_BACKEND_ARGMAX:-}" \
+ LLAMA_MTP_DRAFT_BACKEND_TOPK="${LLAMA_MTP_DRAFT_BACKEND_TOPK:-}" \
+ LLAMA_MTP_DRAFT_PROFILE="${LLAMA_MTP_DRAFT_PROFILE:-}" \
++LLAMA_SERVER_SPEC_PROFILE="${LLAMA_SERVER_SPEC_PROFILE:-}" \
+ LLAMA_MTP_DRAFT_TERMINAL_LOGITS_ONLY="${LLAMA_MTP_DRAFT_TERMINAL_LOGITS_ONLY:-}" \
++LLAMA_GEMMA4_MTP_FUSED_OUTPUT_ARGMAX="${LLAMA_GEMMA4_MTP_FUSED_OUTPUT_ARGMAX:-}" \
++LLAMA_GEMMA4_MTP_QONLY_ATTN_INPUTS="${LLAMA_GEMMA4_MTP_QONLY_ATTN_INPUTS:-}" \
++LLAMA_GEMMA4_MOE_SELECTED_SOFTMAX="${LLAMA_GEMMA4_MOE_SELECTED_SOFTMAX:-}" \
++LLAMA_GEMMA4_MOE_TOP_K="${LLAMA_GEMMA4_MOE_TOP_K:-}" \
++LLAMA_GEMMA4_MOE_WEIGHTED_SUM="${LLAMA_GEMMA4_MOE_WEIGHTED_SUM:-}" \
+ LLAMA_SPEC_VERIFY_GREEDY_ARGMAX="${LLAMA_SPEC_VERIFY_GREEDY_ARGMAX:-}" \
+ LLAMA_SPEC_VERIFY_BACKEND_ARGMAX_IDS="${LLAMA_SPEC_VERIFY_BACKEND_ARGMAX_IDS:-}" \
++LLAMA_SPEC_VERIFY_FUSED_OUTPUT_ARGMAX="${LLAMA_SPEC_VERIFY_FUSED_OUTPUT_ARGMAX:-}" \
++LLAMA_SPEC_VERIFY_SOFTCAP_ARGMAX="${LLAMA_SPEC_VERIFY_SOFTCAP_ARGMAX:-}" \
+ LOG="$SERVER_LOG" \
+ scripts/run-gemma4-26b-llamacpp-replica.sh > "$RUN_DIR/server.stdout.log" 2>&1 &
+ server_pid="$!"
+@@ -177,9 +185,17 @@ out = {
+         "llama_mtp_draft_backend_argmax": env_or_log("LLAMA_MTP_DRAFT_BACKEND_ARGMAX"),
+         "llama_mtp_draft_backend_topk": env_or_log("LLAMA_MTP_DRAFT_BACKEND_TOPK"),
+         "llama_mtp_draft_profile": env_or_log("LLAMA_MTP_DRAFT_PROFILE"),
++        "llama_server_spec_profile": env_or_log("LLAMA_SERVER_SPEC_PROFILE"),
+         "llama_mtp_draft_terminal_logits_only": env_or_log("LLAMA_MTP_DRAFT_TERMINAL_LOGITS_ONLY"),
++        "llama_gemma4_mtp_fused_output_argmax": env_or_log("LLAMA_GEMMA4_MTP_FUSED_OUTPUT_ARGMAX"),
++        "llama_gemma4_mtp_qonly_attn_inputs": env_or_log("LLAMA_GEMMA4_MTP_QONLY_ATTN_INPUTS"),
++        "llama_gemma4_moe_selected_softmax": env_or_log("LLAMA_GEMMA4_MOE_SELECTED_SOFTMAX"),
++        "llama_gemma4_moe_top_k": env_or_log("LLAMA_GEMMA4_MOE_TOP_K"),
++        "llama_gemma4_moe_weighted_sum": env_or_log("LLAMA_GEMMA4_MOE_WEIGHTED_SUM"),
+         "llama_spec_verify_greedy_argmax": env_or_log("LLAMA_SPEC_VERIFY_GREEDY_ARGMAX"),
+         "llama_spec_verify_backend_argmax_ids": env_or_log("LLAMA_SPEC_VERIFY_BACKEND_ARGMAX_IDS"),
++        "llama_spec_verify_fused_output_argmax": env_or_log("LLAMA_SPEC_VERIFY_FUSED_OUTPUT_ARGMAX"),
++        "llama_spec_verify_softcap_argmax": env_or_log("LLAMA_SPEC_VERIFY_SOFTCAP_ARGMAX"),
+         "oneapi_device_selector": env_or_log("ONEAPI_DEVICE_SELECTOR"),
+         "ggml_sycl_disable_opt": env_or_log("GGML_SYCL_DISABLE_OPT"),
+         "ggml_sycl_enable_vmm": env_or_log("GGML_SYCL_ENABLE_VMM"),

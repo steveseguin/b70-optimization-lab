@@ -1,0 +1,27 @@
+diff --git a/src/llama-graph.cpp b/src/llama-graph.cpp
+--- a/src/llama-graph.cpp
++++ b/src/llama-graph.cpp
+@@
+ void llm_graph_context::build_sampling() const {
++    if (cparams.spec_verify_direct_argmax_ids && !res->t_sampled_rows.empty()) {
++        return;
++    }
++
++    if (cparams.spec_verify_direct_argmax_ids && samplers.empty() && res->t_logits &&
++            ggml_is_matrix(res->t_logits) && res->t_logits->ne[1] > 0) {
++        // ggml_argmax returns one token id per matrix row (logit column here).
++        // The old path built one view+argmax output per verifier row, then
++        // copied each scalar separately. A single matrix argmax keeps verifier
++        // math identical while reducing graph/output nodes and backend copies.
++        ggml_tensor * sampled = ggml_argmax(ctx0, res->t_logits);
++        ggml_format_name(sampled, "spec_verify_argmax_token_rows");
++        res->t_sampled_rows[0] = sampled;
++        ggml_build_forward_expand(gf, sampled);
++
++        return;
++    }
++
+     if (cparams.mtp_draft_direct_argmax_ids && !res->t_sampled.empty()) {
+         return;
+     }
+

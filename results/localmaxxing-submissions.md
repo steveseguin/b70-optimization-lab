@@ -10,7 +10,7 @@ stop, short-prompt sustained, and filled-long sustained shapes separate.
 
 Hardware note for the Gemma 4 26B submissions: these were run on a headless
 Supermicro AMD Threadripper PRO 5955WX platform with 128 GB DDR4 and Intel Arc
-Pro B70 32 GB GPUs. The current `cmqrsupdk000jqr01af3eu6vu` record uses one B70
+Pro B70 32 GB GPUs. The current `cmqsylo2l011nqr011yydjvne` record uses one B70
 replica on GPU0; the host has four B70s available for parallel single-replica
 experiments.
 
@@ -35,6 +35,13 @@ experiments.
 | `gemma4-26b-a4b-q8-b70-llamacpp-mtp-n7-c926ad098-fasttopk10-cpucleanup-filledlong512-20260623T2217` | `cmqr7ni7u01gxqo01wtqsrn3u` | 1 | 588 | 512 | 91.877 first / 91.899 mean | 71.485 | 384/384 chat canary |
 | `gemma4-26b-a4b-q8-b70-llamacpp-mtp-n7-c926ad098-fastargmax-cpucleanup-vmm0-ub512-poll100-filledlong512-20260623T2228` | `cmqr82niq01hgqo01v42y7ue8` | 1 | 588 | 512 | 92.397 first / 92.767 mean | 83.289 | 384/384 chat canary; conservative fresh-response headline uses first request |
 | `gemma4-26b-a4b-q8-b70-llamacpp-mtp-n7-q8target-q40draft-fresh-20260624T0812` | `cmqrsupdk000jqr01af3eu6vu` | 1 | 588 | 512 | 95.264 first / 95.386 mean | 81.285 | 384/384 chat canary; Q8 target/verifier with Q4_0 MTP draft only; fresh-response headline uses first request |
+| `gemma4-26b-a4b-q8-b70-llamacpp-mtp-n7-q8target-q40draft-directunroll7-qonly-fresh-20260624T1432` | `cmqs4jnx100k6qr01d1iy78kl` | 1 | 588 | 512 | 96.822 first / 97.226 mean | 82.462 | 384/384 chat canary; Q8 target/verifier with Q4_0 MTP draft only; direct argmax-ID unroll + q-only assistant inputs; fresh-response headline uses first request |
+| `gemma4-26b-a4b-q8-b70-llamacpp-mtp-n7-q8target-q40draft-directunroll7-qonly-b1024u1024-th8-fresh-20260624T1357` | `cmqs56wv100kjqr01de3fdspd` | 1 | 588 | 512 | 98.491 first / 97.886 mean | 86.194 | 384/384 chat canary; Q8 target/verifier with Q4_0 MTP draft only; direct argmax-ID unroll + q-only assistant inputs; `BATCH_SIZE=1024`, `UBATCH_SIZE=1024`, `THREADS=8`; fresh-response headline uses row 0 only |
+| `gemma4-26b-a4b-q8-b70-llamacpp-mtp-n7-q8target-q40draft-directunroll7-qonly-b1024u1024-th8-syclgraph0-fresh-20260624T1447` | `cmqs7uyqb00lnqr01u9dtv63r` | 1 | 588 | 512 | 98.617 first / 97.956 mean | 86.262 | 384/384 chat canary; Q8 target/verifier with Q4_0 MTP draft only; direct argmax-ID unroll + q-only assistant inputs; `BATCH_SIZE=1024`, `UBATCH_SIZE=1024`, `THREADS=8`, `GGML_SYCL_DISABLE_GRAPH=0`; fresh-response headline uses row 0 only |
+| `gemma4-26b-a4b-q8-b70-llamacpp-mtp-n7-q8target-q40draft-rowargmax-deferh-pmin014-fresh-20260624T1735` | `cmqsd2jpn00pwqr017fq21akz` | 1 | 588 | 512 | 101.428 first / 100.769 mean | 88.374 | 384/384 chat canary; Q8 target/verifier with Q4_0 MTP draft only; verifier row-argmax IDs + deferred target `h_nextn` + `MTP_P_MIN=0.14`; superseded by safer verifier row-argmax result; fresh-response headline uses row 0 only |
+| `gemma4-26b-a4b-q8-b70-llamacpp-mtp-n7-q8target-q40draft-rowargmax-safer-deferh-pmin014-fresh-20260624T1830` | `cmqsf630x00r1qr01d1usfo2d` | 1 | 588 | 512 | 101.482 first / 101.249 mean | 88.582 | 1536/1536 chat canary; Q8 target/verifier with Q4_0 MTP draft only; stricter verifier row-argmax shape guard + deferred target `h_nextn` + `MTP_P_MIN=0.14`; superseded by immediate-command-list result; fresh-response headline uses row 0 only, all benchmark rows `cached_tokens=0` |
+| `gemma4-26b-a4b-q8-b70-llamacpp-mtp-n7-q8target-q40draft-rowargmax-safer-deferh-pmin014-immediatecl1-fresh-20260624T1932` | `cmqshlz8j00s0qr01f7lr24oh` | 1 | 588 | 512 | 101.602 first / 100.835 mean | 88.508 | 1536/1536 chat canary; Q8 target/verifier with Q4_0 MTP draft only; safer verifier row-argmax + deferred target `h_nextn` + `MTP_P_MIN=0.14` plus `UR_L0_USE_IMMEDIATE_COMMANDLISTS=1`; superseded by selected-softmax/weighted-sum result; fresh-response headline uses row 0 only, all benchmark rows `cached_tokens=0` |
+| `gemma4-26b-a4b-q8-b70-llamacpp-mtp-n7-q8target-q40draft-selectedsoftmax-weightedsum-pmin0136-fresh-20260625T0315` | `cmqsylo2l011nqr011yydjvne` | 1 | 588 | 512 | 103.299 first / 102.193 mean | 89.849 | 1536/1536 chat canary; Q8 target/verifier with Q4_0 MTP draft only; selected-softmax + weighted-sum MoE source guards, safer verifier row-argmax, deferred target `h_nextn`, `MTP_P_MIN=0.136`, and `UR_L0_USE_IMMEDIATE_COMMANDLISTS=1`; current valid fresh-response headline uses row 0 only, all benchmark rows `cached_tokens=0` |
 | `gemma4-26b-a4b-q8-b70-llamacpp-ngrammod-24-48-64-filledlong512-20260623T1745` | `cmqqxbkzx01cxqo01j8p97627` | 1 | 588 | 512 | 245.980 | 134.545 | 384/384 chat canary; warmed/history artifact, retraction-needed |
 | `gemma4-26b-a4b-q8-b70-llamacpp-ngrammod-20-32-64-filledlong512-20260623T1750` | `cmqqxjnif01d0qo01ix4oeixo` | 1 | 588 | 512 | 255.041 | 137.000 | 384/384 chat canary; warmed/history artifact, retraction-needed |
 | `gemma4-26b-a4b-q8-b70-llamacpp-ngrammod-20-32-64-filledlong512-20260623T1815` | `cmqqxx7bp01dbqo012d2qiiw6` | 1 | 588 | 512 | 280.040 | 206.501 | 384/384 chat canary; warmed/history artifact, retraction-needed |
@@ -73,6 +80,13 @@ Submit artifacts:
   `data/localmaxxing-responses/gemma4-26b-a4b-q8-b70-mtp-n7-c926ad098-fastargmax-cpucleanup-vmm0-ub512-poll100-filledlong512-20260623.submit.log`
 - Q8-target/Q4_0-draft fresh-response approved response:
   `data/localmaxxing-responses/gemma4-26b-a4b-q8-b70-llamacpp-mtp-n7-q8target-q40draft-fresh-20260624.submit.log`
+- current Q8-target/Q4_0-draft fresh-response approved response:
+  `data/localmaxxing-responses/gemma4-26b-a4b-q8-b70-llamacpp-mtp-n7-q8target-q40draft-directunroll7-qonly-b1024u1024-th8-syclgraph0-fresh-20260624.submit.log`
+- current row-argmax/defer-h Q8-target/Q4_0-draft fresh-response approved response:
+  `data/localmaxxing-responses/gemma4-26b-a4b-q8-b70-llamacpp-mtp-n7-q8target-q40draft-rowargmax-deferh-pmin014-fresh-20260624.submit.log`
+- current selected-softmax/weighted-sum Q8-target/Q4_0-draft fresh-response
+  approved response:
+  `data/localmaxxing-responses/gemma4-26b-a4b-q8-b70-llamacpp-mtp-n7-q8target-q40draft-selectedsoftmax-weightedsum-pmin0136-fresh-20260625.submit.log`
 - draftless ngram-mod filled-long approved responses:
   `data/localmaxxing-responses/gemma4-26b-a4b-q8-b70-ngrammod-24-48-64-filledlong512-20260623.submit.log`,
   `data/localmaxxing-responses/gemma4-26b-a4b-q8-b70-ngrammod-20-32-64-filledlong512-20260623.submit.log`,
@@ -86,6 +100,12 @@ Correction on 2026-06-23: the four draftless ngram-mod submissions above are
 not valid fresh-response headline throughput because the speedup depends on
 repeated-output continuation history. They remain useful warmed/history
 artifacts, but should be retracted from any public headline leaderboard view.
+Their first fresh measured rows were only about `41 tok/s` after TTFT:
+`41.138` (`cmqqxbkzx01cxqo01j8p97627`), `41.097`
+(`cmqqxjnif01d0qo01ix4oeixo`), `41.364`
+(`cmqqxx7bp01dbqo012d2qiiw6`), and `41.308`
+(`cmqqyby6801dvqo01as3wenz2`). Do not average warmed repeated rows into a
+fresh-response claim.
 API deletion was attempted for all four IDs and returned 404 because
 LocalMaxxing currently exposes only `GET/POST /api/benchmarks` and
 `POST /api/benchmarks/dry-run`; see

@@ -1,0 +1,250 @@
+diff --git a/tools/server/server-context.cpp b/tools/server/server-context.cpp
+index ca91449d2..799b79662 100644
+--- a/tools/server/server-context.cpp
++++ b/tools/server/server-context.cpp
+@@ -19,6 +19,8 @@
+ #include <algorithm>
+ #include <cstddef>
+ #include <cinttypes>
++#include <cstdlib>
++#include <cstring>
+ #include <exception>
+ #include <memory>
+ #include <filesystem>
+@@ -38,6 +40,18 @@ using json = nlohmann::ordered_json;
+ 
+ constexpr int HTTP_POLLING_SECONDS = 1;
+ 
++static bool server_env_enabled(const char * name) {
++    const char * value = std::getenv(name);
++    if (value == nullptr || value[0] == '\0') {
++        return false;
++    }
++    return std::strcmp(value, "1") == 0 ||
++        std::strcmp(value, "true") == 0 ||
++        std::strcmp(value, "TRUE") == 0 ||
++        std::strcmp(value, "yes") == 0 ||
++        std::strcmp(value, "on") == 0;
++}
++
+ static uint32_t server_n_outputs_max(const common_params & params) {
+     const uint32_t n_batch  = params.n_batch;
+ 
+@@ -2717,6 +2731,30 @@ private:
+     int64_t n_decode      = 0;
+     int64_t n_post_decode = 0;
+     int64_t n_sampl       = 0;
++
++    bool spec_profile_enabled = server_env_enabled("LLAMA_SERVER_SPEC_PROFILE");
++    bool spec_profile_dirty   = false;
++    int64_t t_spec_draft_us          = 0;
++    int64_t t_spec_target_decode_us  = 0;
++    int64_t t_spec_target_prompt_us  = 0;
++    int64_t t_spec_target_gen_us     = 0;
++    int64_t t_spec_process_us        = 0;
++    int64_t t_spec_sample_accept_us  = 0;
++    int64_t t_spec_common_accept_us  = 0;
++    int64_t t_spec_emit_us           = 0;
++    int64_t n_spec_draft_calls         = 0;
++    int64_t n_spec_target_decode_calls = 0;
++    int64_t n_spec_target_prompt_calls = 0;
++    int64_t n_spec_target_gen_calls    = 0;
++    int64_t n_spec_process_calls       = 0;
++    int64_t n_spec_sample_accept_calls = 0;
++    int64_t n_spec_common_accept_calls = 0;
++    int64_t n_spec_emit_calls          = 0;
++    int64_t n_spec_target_decode_tokens = 0;
++    int64_t n_spec_target_prompt_tokens = 0;
++    int64_t n_spec_target_gen_tokens    = 0;
++    int64_t n_spec_draft_tokens         = 0;
++    int64_t n_spec_accepted_tokens      = 0;
+ // #define DEBUG_TIMINGS
+ #ifdef DEBUG_TIMINGS
+     struct scoped_timer {
+@@ -2738,6 +2776,62 @@ private:
+     };
+ #endif
+ 
++    void print_spec_profile_if_needed() {
++        if (!spec_profile_enabled || !spec_profile_dirty) {
++            return;
++        }
++
++        const auto ms = [](int64_t us) {
++            return (double) us / 1000.0;
++        };
++        const auto avg_ms = [](int64_t us, int64_t n) {
++            return n > 0 ? (double) us / (double) n / 1000.0 : 0.0;
++        };
++
++        SRV_INF("server spec profile: draft_ms=%.3f calls=%" PRId64 " draft_tokens=%" PRId64 " avg=%.3f ms\n",
++                ms(t_spec_draft_us),
++                n_spec_draft_calls,
++                n_spec_draft_tokens,
++                avg_ms(t_spec_draft_us, n_spec_draft_calls));
++        SRV_INF("server spec profile: target_decode_ms=%.3f calls=%" PRId64 " tokens=%" PRId64 " avg=%.3f ms avg_token=%.3f ms\n",
++                ms(t_spec_target_decode_us),
++                n_spec_target_decode_calls,
++                n_spec_target_decode_tokens,
++                avg_ms(t_spec_target_decode_us, n_spec_target_decode_calls),
++                avg_ms(t_spec_target_decode_us, n_spec_target_decode_tokens));
++        SRV_INF("server spec profile: target_prompt_ms=%.3f calls=%" PRId64 " tokens=%" PRId64 " avg=%.3f ms avg_token=%.3f ms\n",
++                ms(t_spec_target_prompt_us),
++                n_spec_target_prompt_calls,
++                n_spec_target_prompt_tokens,
++                avg_ms(t_spec_target_prompt_us, n_spec_target_prompt_calls),
++                avg_ms(t_spec_target_prompt_us, n_spec_target_prompt_tokens));
++        SRV_INF("server spec profile: target_generation_ms=%.3f calls=%" PRId64 " tokens=%" PRId64 " avg=%.3f ms avg_token=%.3f ms\n",
++                ms(t_spec_target_gen_us),
++                n_spec_target_gen_calls,
++                n_spec_target_gen_tokens,
++                avg_ms(t_spec_target_gen_us, n_spec_target_gen_calls),
++                avg_ms(t_spec_target_gen_us, n_spec_target_gen_tokens));
++        SRV_INF("server spec profile: process_ms=%.3f calls=%" PRId64 " avg=%.3f ms\n",
++                ms(t_spec_process_us),
++                n_spec_process_calls,
++                avg_ms(t_spec_process_us, n_spec_process_calls));
++        SRV_INF("server spec profile: sample_accept_ms=%.3f calls=%" PRId64 " avg=%.3f ms accepted_tokens=%" PRId64 "\n",
++                ms(t_spec_sample_accept_us),
++                n_spec_sample_accept_calls,
++                avg_ms(t_spec_sample_accept_us, n_spec_sample_accept_calls),
++                n_spec_accepted_tokens);
++        SRV_INF("server spec profile: common_accept_ms=%.3f calls=%" PRId64 " avg=%.3f ms\n",
++                ms(t_spec_common_accept_us),
++                n_spec_common_accept_calls,
++                avg_ms(t_spec_common_accept_us, n_spec_common_accept_calls));
++        SRV_INF("server spec profile: emit_ms=%.3f calls=%" PRId64 " avg=%.3f ms\n",
++                ms(t_spec_emit_us),
++                n_spec_emit_calls,
++                avg_ms(t_spec_emit_us, n_spec_emit_calls));
++
++        spec_profile_dirty = false;
++    }
++
+     void update_slots() {
+ #ifdef DEBUG_TIMINGS
+         static int64_t t_prev = 0;
+@@ -2764,6 +2858,7 @@ private:
+             }
+ 
+             if (all_idle) {
++                print_spec_profile_if_needed();
+                 SRV_INF("%s", "all slots are idle\n");
+                 return; // skip further processing
+ 
+@@ -2969,7 +3064,16 @@ private:
+ 
+         // generate the actual drafts (if any)
+         {
++            const int64_t t_start = spec_profile_enabled ? ggml_time_us() : 0;
+             common_speculative_draft(spec.get());
++            if (spec_profile_enabled) {
++                t_spec_draft_us += ggml_time_us() - t_start;
++                n_spec_draft_calls++;
++                for (auto * slot : drafting) {
++                    n_spec_draft_tokens += (int64_t) slot->spec_draft.size();
++                }
++                spec_profile_dirty = true;
++            }
+         }
+ 
+         // make checkpoints if needed
+@@ -3590,7 +3694,33 @@ private:
+             n_empty_consecutive = 0;
+         }
+ 
++        bool spec_profile_generation_batch = false;
++        if (spec_profile_enabled) {
++            iterate(slots, [&](server_slot & slot) {
++                if (slot.state == SLOT_STATE_GENERATING) {
++                    spec_profile_generation_batch = true;
++                }
++            });
++        }
++
++        const int64_t t_decode_start = spec_profile_enabled ? ggml_time_us() : 0;
+         const int ret = llama_decode(ctx_tgt, batch_view);
++        if (spec_profile_enabled) {
++            const int64_t t_decode_elapsed = ggml_time_us() - t_decode_start;
++            t_spec_target_decode_us += t_decode_elapsed;
++            n_spec_target_decode_calls++;
++            n_spec_target_decode_tokens += batch_view.n_tokens;
++            if (spec_profile_generation_batch) {
++                t_spec_target_gen_us += t_decode_elapsed;
++                n_spec_target_gen_calls++;
++                n_spec_target_gen_tokens += batch_view.n_tokens;
++            } else {
++                t_spec_target_prompt_us += t_decode_elapsed;
++                n_spec_target_prompt_calls++;
++                n_spec_target_prompt_tokens += batch_view.n_tokens;
++            }
++            spec_profile_dirty = true;
++        }
+ 
+         metrics.on_decoded(slots);
+ 
+@@ -3647,7 +3777,14 @@ private:
+         // TODO: avoid restoring the draft context and re-evaluating the drafted tokens when not needed [TAG_SPEC_AVOID_DRAFT_REEVAL]
+         //       for now, always re-evaluate for simplicity
+         //       ref: https://github.com/ggml-org/llama.cpp/pull/22728#issuecomment-4400925384
+-        if (!common_speculative_process(spec.get(), batch_view)) {
++        const int64_t t_process_start = spec_profile_enabled ? ggml_time_us() : 0;
++        const bool spec_process_ok = common_speculative_process(spec.get(), batch_view);
++        if (spec_profile_enabled) {
++            t_spec_process_us += ggml_time_us() - t_process_start;
++            n_spec_process_calls++;
++            spec_profile_dirty = true;
++        }
++        if (!spec_process_ok) {
+             SRV_ERR("%s", "failed to process speculative batch\n");
+ 
+             // TODO: handle error
+@@ -3813,7 +3950,14 @@ private:
+                 common_sampler_ptr smpl_save(common_sampler_clone(slot.smpl.get()));
+ 
+                 GGML_ASSERT(slot.spec_i_batch.size() == n_draft + 1);
++                const int64_t t_sample_accept_start = spec_profile_enabled ? ggml_time_us() : 0;
+                 auto accepted = common_sampler_sample_and_accept_n(slot.smpl.get(), slot.ctx_tgt, slot.spec_i_batch, slot.spec_draft);
++                if (spec_profile_enabled) {
++                    t_spec_sample_accept_us += ggml_time_us() - t_sample_accept_start;
++                    n_spec_sample_accept_calls++;
++                    n_spec_accepted_tokens += (int64_t) accepted.size();
++                    spec_profile_dirty = true;
++                }
+                 slot.spec_i_batch.clear();
+ 
+                 GGML_ASSERT(accepted.size() >= 1);
+@@ -3861,7 +4005,13 @@ private:
+                     SLT_INF(slot, "accepted %2zu/%2zu draft tokens\n", accepted.size() - 1, n_draft);
+                 }
+ 
++                const int64_t t_common_accept_start = spec_profile_enabled ? ggml_time_us() : 0;
+                 common_speculative_accept(spec.get(), slot.id, accepted.size() - 1);
++                if (spec_profile_enabled) {
++                    t_spec_common_accept_us += ggml_time_us() - t_common_accept_start;
++                    n_spec_common_accept_calls++;
++                    spec_profile_dirty = true;
++                }
+ 
+                 slot.spec_draft = std::move(accepted);
+             }
+@@ -3895,6 +4045,7 @@ private:
+                 common_context_seq_rm(slot.ctx_dft, slot.id, slot.prompt.tokens.pos_next(), -1);
+             }
+ 
++            const int64_t t_emit_start = spec_profile_enabled ? ggml_time_us() : 0;
+             for (size_t i = 0; i < ids.size(); ++i) {
+                 completion_token_output result;
+ 
+@@ -3915,6 +4066,11 @@ private:
+                     return;
+                 }
+             }
++            if (spec_profile_enabled) {
++                t_spec_emit_us += ggml_time_us() - t_emit_start;
++                n_spec_emit_calls++;
++                spec_profile_dirty = true;
++            }
+ 
+             slot.print_timings_tg();
+ 

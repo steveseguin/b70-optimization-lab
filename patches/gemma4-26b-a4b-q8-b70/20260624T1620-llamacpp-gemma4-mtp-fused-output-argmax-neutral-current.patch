@@ -1,0 +1,901 @@
+diff --git a/ggml/include/ggml-rpc.h b/ggml/include/ggml-rpc.h
+index 5ad121ae5..de770ee63 100644
+--- a/ggml/include/ggml-rpc.h
++++ b/ggml/include/ggml-rpc.h
+@@ -11,7 +11,7 @@ extern "C" {
+ #define RPC_PROTO_PATCH_VERSION    1
+ 
+ #ifdef  __cplusplus
+-static_assert(GGML_OP_COUNT == 97, "GGML_OP_COUNT has changed - update RPC_PROTO_PATCH_VERSION");
++static_assert(GGML_OP_COUNT == 98, "GGML_OP_COUNT has changed - update RPC_PROTO_PATCH_VERSION");
+ #endif
+ 
+ #define GGML_RPC_MAX_SERVERS       16
+diff --git a/ggml/include/ggml.h b/ggml/include/ggml.h
+index d6807b6dd..7a407dbd3 100644
+--- a/ggml/include/ggml.h
++++ b/ggml/include/ggml.h
+@@ -510,6 +510,7 @@ extern "C" {
+ 
+         GGML_OP_MUL_MAT,
+         GGML_OP_MUL_MAT_ID,
++        GGML_OP_MUL_MAT_ARGMAX,
+         GGML_OP_OUT_PROD,
+ 
+         GGML_OP_SCALE,
+@@ -1052,6 +1053,13 @@ extern "C" {
+             struct ggml_context * ctx,
+             struct ggml_tensor  * a);
+ 
++    // fused matrix multiplication and argmax along rows
++    // backend-only experimental op: result has one I32 token id per column of b
++    GGML_API struct ggml_tensor * ggml_mul_mat_argmax(
++            struct ggml_context * ctx,
++            struct ggml_tensor  * a,
++            struct ggml_tensor  * b);
++
+     // count number of equal elements in a and b
+     GGML_API struct ggml_tensor * ggml_count_equal(
+             struct ggml_context * ctx,
+diff --git a/ggml/src/ggml-cpu/ggml-cpu.c b/ggml/src/ggml-cpu/ggml-cpu.c
+index eb8341c9a..42018cab7 100644
+--- a/ggml/src/ggml-cpu/ggml-cpu.c
++++ b/ggml/src/ggml-cpu/ggml-cpu.c
+@@ -1832,6 +1832,10 @@ static void ggml_compute_forward(struct ggml_compute_params * params, struct ggm
+             {
+                 ggml_compute_forward_mul_mat_id(params, tensor);
+             } break;
++        case GGML_OP_MUL_MAT_ARGMAX:
++            {
++                GGML_ABORT("GGML_OP_MUL_MAT_ARGMAX is backend-only");
++            } break;
+         case GGML_OP_OUT_PROD:
+             {
+                 ggml_compute_forward_out_prod(params, tensor);
+@@ -2301,6 +2305,7 @@ static int ggml_get_n_tasks(struct ggml_tensor * node, int n_threads) {
+         case GGML_OP_CONCAT:
+         case GGML_OP_MUL_MAT:
+         case GGML_OP_MUL_MAT_ID:
++        case GGML_OP_MUL_MAT_ARGMAX:
+         case GGML_OP_OUT_PROD:
+             {
+                 n_tasks = n_threads;
+diff --git a/ggml/src/ggml-cpu/ggml-cpu.cpp b/ggml/src/ggml-cpu/ggml-cpu.cpp
+index 128883b41..c9229c78b 100644
+--- a/ggml/src/ggml-cpu/ggml-cpu.cpp
++++ b/ggml/src/ggml-cpu/ggml-cpu.cpp
+@@ -451,6 +451,8 @@ static bool ggml_backend_cpu_device_supports_op(ggml_backend_dev_t dev, const st
+                 op->type != GGML_TYPE_IQ1_M; // missing type_traits.from_float
+         case GGML_OP_MUL_MAT:
+             return src1->type == GGML_TYPE_F32 || src1->type == ggml_get_type_traits_cpu(src0->type)->vec_dot_type;
++        case GGML_OP_MUL_MAT_ARGMAX:
++            return false;
+         case GGML_OP_SOFT_MAX_BACK: {
+             if (op->src[0]->type != GGML_TYPE_F32 || op->src[1]->type != GGML_TYPE_F32) {
+                 return false;
+diff --git a/ggml/src/ggml-sycl/ggml-sycl.cpp b/ggml/src/ggml-sycl/ggml-sycl.cpp
+index d8b83d0e2..e6dc34708 100644
+--- a/ggml/src/ggml-sycl/ggml-sycl.cpp
++++ b/ggml/src/ggml-sycl/ggml-sycl.cpp
+@@ -2251,7 +2251,7 @@ static void argmax_f32_i32_sycl(const float *x, int *dst, const int ncols,
+                                const int nrows, queue_ptr stream) {
+     const sycl::range<3> block_dims(1, 1, SYCL_ARGMAX_BLOCK_SIZE);
+     const sycl::range<3> block_nums(1, nrows, 1);
+-    const size_t shared_mem = 256 * sizeof(float);
++    const size_t shared_mem = SYCL_ARGMAX_BLOCK_SIZE * sizeof(float);
+ 
+     stream->submit([&](sycl::handler &cgh) {
+         sycl::local_accessor<float, 1> shared_data(
+@@ -2268,7 +2268,7 @@ static void argmax_f32_i32_sycl(const float *x, int *dst, const int ncols,
+                 float max_val = -INFINITY;
+                 int max_idx = -1;
+ 
+-                for (int col = tid; col < ncols; col += 256) {
++                for (int col = tid; col < ncols; col += SYCL_ARGMAX_BLOCK_SIZE) {
+                     float val = x[row * ncols + col];
+                     if (val > max_val) {
+                         max_val = val;
+@@ -2280,7 +2280,7 @@ static void argmax_f32_i32_sycl(const float *x, int *dst, const int ncols,
+                 shared_indices[tid] = max_idx;
+                 item_ct1.barrier(sycl::access::fence_space::local_space);
+ 
+-                for (int stride = 256/2; stride > 0; stride >>= 1) {
++                for (int stride = SYCL_ARGMAX_BLOCK_SIZE/2; stride > 0; stride >>= 1) {
+                     if (tid < stride) {
+                         float val1 = shared_data[tid];
+                         float val2 = shared_data[tid + stride];
+@@ -4094,7 +4094,7 @@ static bool reorder_qw(const ggml_tensor * src0, dpct::queue_ptr stream) {
+ static bool should_reorder_tensor(ggml_backend_sycl_context& ctx, const ggml_tensor * dst) {
+     return !g_ggml_sycl_disable_optimize && //allow optimize, controlled by $GGML_SYCL_DISABLE_OPT
+             ctx.opt_feature.reorder &&      //allow this device due to good perf, skip the devices with bad perf.
+-            dst->op == GGML_OP_MUL_MAT &&   //limit to some supported cases of Q4_0, to do for more cases.
++            (dst->op == GGML_OP_MUL_MAT || dst->op == GGML_OP_MUL_MAT_ARGMAX) &&
+             // ne[1] <= 8 so multi-column decode (spec / MTP verify) also bootstraps the reorder;
+             // all reorderable types have a _switch_ncols kernel.
+             dst->src[1]->ne[1] <= 8 && dst->src[1]->ne[2]==1 && dst->src[1]->ne[3]==1;
+@@ -4255,6 +4255,58 @@ static void ggml_sycl_mul_mat(ggml_backend_sycl_context & ctx, const ggml_tensor
+     }
+ }
+ 
++static void ggml_sycl_mul_mat_argmax(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
++    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/2);
++
++    const ggml_tensor * src0 = dst->src[0];
++    const ggml_tensor * src1 = dst->src[1];
++
++    GGML_ASSERT(dst->type == GGML_TYPE_I32);
++    GGML_ASSERT(src1->type == GGML_TYPE_F32);
++    GGML_ASSERT(src1->ne[1] == 1 && src1->ne[2] == 1 && src1->ne[3] == 1);
++    GGML_ASSERT(src0->ne[0] == src1->ne[0]);
++    GGML_ASSERT(src0->type == GGML_TYPE_Q4_0 || src0->type == GGML_TYPE_Q8_0);
++    GGML_ASSERT(!ggml_backend_buffer_is_sycl_split(src0->buffer));
++    GGML_ASSERT(ggml_is_contiguous(src1));
++
++    opt_for_reorder(&ctx, src0, src1, dst, mul_mat_algo::MMVQ);
++
++    const int64_t ne10 = src1->ne[0];
++    const int64_t nrows = src0->ne[1];
++    const int src1_padded_cols = GGML_PAD((int) ne10, MATRIX_ROW_PADDING);
++
++    ggml_tensor_extra_gpu * extra = static_cast<ggml_tensor_extra_gpu *>(src0->extra);
++    const bool use_reorder = extra && extra->optimized_feature.reorder;
++
++    queue_ptr stream = ctx.stream();
++    SYCL_CHECK(ggml_sycl_set_device(ctx.device));
++
++    ggml_sycl_pool_alloc<char> src1_q8_alloc(ctx.pool(),
++        (size_t) src1_padded_cols * sizeof(block_q8_1) / QK8_1);
++    char * src1_ddq = src1_q8_alloc.get();
++
++    if (use_reorder) {
++        quantize_row_q8_1_sycl<quantize_and_reorder_q8_1_soa>(
++            (const float *) src1->data, src1_ddq, (int) ne10, 1,
++            src1_padded_cols, stream);
++    } else {
++        quantize_row_q8_1_sycl<quantize_q8_1>(
++            (const float *) src1->data, src1_ddq, (int) ne10, 1,
++            src1_padded_cols, stream);
++    }
++
++    const int scratch_count = ceil_div((int) nrows, WARP_SIZE);
++    ggml_sycl_pool_alloc<float> scratch_vals_alloc(ctx.pool(), scratch_count);
++    ggml_sycl_pool_alloc<int32_t> scratch_idxs_alloc(ctx.pool(), scratch_count);
++
++    const bool ok = ggml_sycl_mul_mat_vec_q_argmax(
++        src0->type, src0->data, src1_ddq, (int32_t *) dst->data,
++        (int) ne10, (int) nrows, use_reorder,
++        scratch_vals_alloc.get(), scratch_idxs_alloc.get(), scratch_count,
++        stream);
++    GGML_ASSERT(ok);
++}
++
+ 
+ __dpct_inline__ static void k_copy_src1_to_contiguous(
+     const char *__restrict__ src1_original, char *__restrict__ src1_contiguous,
+@@ -4866,6 +4918,9 @@ static bool ggml_sycl_compute_forward(ggml_backend_sycl_context & ctx, struct gg
+             }
+             ggml_sycl_mul_mat_id(ctx, dst);
+             break;
++        case GGML_OP_MUL_MAT_ARGMAX:
++            ggml_sycl_mul_mat_argmax(ctx, dst);
++            break;
+         case GGML_OP_OUT_PROD:
+             ggml_sycl_op_out_prod(ctx, dst);
+             break;
+@@ -5475,6 +5530,31 @@ static bool do_ggml_backend_sycl_device_supports_op(ggml_backend_dev_t dev, cons
+                 }
+                 return true;
+             }
++        case GGML_OP_MUL_MAT_ARGMAX:
++            {
++                const ggml_tensor * a = op->src[0];
++                const ggml_tensor * b = op->src[1];
++
++                if (op->type != GGML_TYPE_I32 || b->type != GGML_TYPE_F32) {
++                    return false;
++                }
++                if (a->type != GGML_TYPE_Q4_0 && a->type != GGML_TYPE_Q8_0) {
++                    return false;
++                }
++                if (ggml_backend_buffer_is_sycl_split(a->buffer)) {
++                    return false;
++                }
++                if (!ggml_is_contiguous(b)) {
++                    return false;
++                }
++                if (b->ne[1] != 1 || b->ne[2] != 1 || b->ne[3] != 1) {
++                    return false;
++                }
++                if (a->ne[0] != b->ne[0] || a->ne[2] != b->ne[2] || a->ne[3] != b->ne[3]) {
++                    return false;
++                }
++                return true;
++            }
+         case GGML_OP_OUT_PROD:
+             return op->type == GGML_TYPE_F32 &&
+                    (op->src[0]->type == GGML_TYPE_F32 ||
+@@ -5758,6 +5838,7 @@ static int64_t get_op_batch_size(const ggml_tensor * op) {
+         case GGML_OP_GET_ROWS:
+             return 0;
+         case GGML_OP_MUL_MAT:
++        case GGML_OP_MUL_MAT_ARGMAX:
+             return op->ne[1];
+         case GGML_OP_MUL_MAT_ID:
+         case GGML_OP_ROPE:
+diff --git a/ggml/src/ggml-sycl/mmvq.cpp b/ggml/src/ggml-sycl/mmvq.cpp
+index 7b1b3d467..ce7e6c667 100644
+--- a/ggml/src/ggml-sycl/mmvq.cpp
++++ b/ggml/src/ggml-sycl/mmvq.cpp
+@@ -159,6 +159,153 @@ static void mul_mat_vec_q(const void * __restrict__ vx, const void * __restrict_
+     }
+ }
+ 
++static inline bool argmax_pair_better(float val, int32_t idx, float best_val, int32_t best_idx) {
++    return val > best_val || (val == best_val && (best_idx < 0 || idx < best_idx));
++}
++
++template <int qk, int qi, typename block_q_t, int vdr, vec_dot_q_sycl_t vec_dot_q_sycl>
++static void mul_mat_vec_q_argmax_tile(
++        const void * __restrict__ vx,
++        const void * __restrict__ vy,
++        float * __restrict__ scratch_vals,
++        int32_t * __restrict__ scratch_idxs,
++        const int ncols,
++        const int nrows,
++        sycl::local_accessor<float, 1> tile_vals,
++        sycl::local_accessor<int32_t, 1> tile_idxs,
++        const sycl::nd_item<3> & item_ct1) {
++
++    const auto sg       = item_ct1.get_sub_group();
++    const int sg_id     = sg.get_group_linear_id();
++    const int sg_count  = sg.get_group_linear_range();
++    const int lane      = sg.get_local_linear_id();
++    const int tile_id   = item_ct1.get_group(2);
++    const int row       = tile_id * sg_count + sg_id;
++
++    float tmp = 0.0f;
++
++    if (row < nrows) {
++        const int blocks_per_row = ncols / qk;
++        constexpr int blocks_per_warp = (vdr * WARP_SIZE + qi - 1) / qi;
++
++        const block_q_t *  x = (const block_q_t *) vx;
++        const block_q8_1 * y = (const block_q8_1 *) vy;
++
++        for (int i = lane / (qi / vdr); i < blocks_per_row; i += blocks_per_warp) {
++            const int ibx = row * blocks_per_row + i;
++            const int iby = i * (qk / QK8_1);
++
++            for (size_t elem = 0; elem < qi / vdr; elem += WARP_SIZE) {
++                const int iqs = elem + vdr * (lane % (qi / vdr));
++                tmp += vec_dot_q_sycl(&x[ibx], &y[iby], iqs);
++            }
++        }
++    }
++
++    const float sum = sycl::reduce_over_group(sg, tmp, std::plus<>());
++
++    if (sg.leader()) {
++        tile_vals[sg_id] = row < nrows ? sum : -3.402823466e+38F;
++        tile_idxs[sg_id] = row < nrows ? row : -1;
++    }
++    item_ct1.barrier(sycl::access::fence_space::local_space);
++
++    if (sg_id == 0) {
++        float   best_val = (lane < sg_count) ? tile_vals[lane] : -3.402823466e+38F;
++        int32_t best_idx = (lane < sg_count) ? tile_idxs[lane] : -1;
++
++#pragma unroll
++        for (int mask = WARP_SIZE / 2; mask > 0; mask >>= 1) {
++            const float   other_val = dpct::permute_sub_group_by_xor(sg, best_val, mask);
++            const int32_t other_idx = dpct::permute_sub_group_by_xor(sg, best_idx, mask);
++            if (argmax_pair_better(other_val, other_idx, best_val, best_idx)) {
++                best_val = other_val;
++                best_idx = other_idx;
++            }
++        }
++
++        if (lane == 0) {
++            scratch_vals[tile_id] = best_val;
++            scratch_idxs[tile_id] = best_idx;
++        }
++    }
++}
++
++template <typename reorder_vec_dot_q_sycl>
++static void mul_mat_vec_q_reorder_argmax_tile(
++        const void * __restrict__ vx,
++        const void * __restrict__ vy,
++        float * __restrict__ scratch_vals,
++        int32_t * __restrict__ scratch_idxs,
++        const int ncols,
++        const int nrows,
++        sycl::local_accessor<float, 1> tile_vals,
++        sycl::local_accessor<int32_t, 1> tile_idxs,
++        const sycl::nd_item<3> & nd_item) {
++
++    using block_type   = ggml_sycl_reordered::block_q_t<reorder_vec_dot_q_sycl::gtype>;
++    using block_traits = typename block_type::traits;
++
++    const auto sg          = nd_item.get_sub_group();
++    const int  sg_id       = sg.get_group_linear_id();
++    const int  sg_count    = sg.get_group_linear_range();
++    const int  lane        = sg.get_local_linear_id();
++    const int  tile_id     = nd_item.get_group(2);
++    const int  row         = tile_id * sg_count + sg_id;
++
++    float partial_sum = 0.0f;
++    if (row < nrows) {
++        const int     blocks_per_row              = ncols / block_traits::qk;
++        constexpr int blocks_per_subgroup         = ceil_div(block_traits::vdr_mmvq * WARP_SIZE, block_traits::qi);
++        constexpr int block_elements_per_subgroup = block_traits::qi / block_traits::vdr_mmvq;
++        const int     nblocks                     = nrows * (ncols / block_traits::qk);
++
++        for (int i = lane / block_elements_per_subgroup; i < blocks_per_row; i += blocks_per_subgroup) {
++            const int ibx = row * blocks_per_row + i;
++
++            const auto bx_offset = block_type::get_block_offset(ibx, nblocks);
++            const auto d_offset  = block_type::get_d_offset(nrows, ncols, ibx);
++            const int  iby       = i * block_type::block_to_q8_1_ratio();
++            const int8_t * q8_1_quant_ptr = (const int8_t *) vy + iby * QK8_1;
++            const sycl::half2 * q8_1_ds_ptr = (const sycl::half2 *) ((const char *) vy + ncols + iby * sizeof(sycl::half2));
++
++#pragma unroll
++            for (int elem = 0; elem < block_elements_per_subgroup; elem += WARP_SIZE) {
++                const int iqs = elem + block_traits::vdr_mmvq * (lane % block_elements_per_subgroup);
++                partial_sum += reorder_vec_dot_q_sycl()(vx, bx_offset, d_offset, q8_1_quant_ptr, q8_1_ds_ptr, iqs);
++            }
++        }
++    }
++
++    const float sum = sycl::reduce_over_group(sg, partial_sum, std::plus<>());
++
++    if (sg.leader()) {
++        tile_vals[sg_id] = row < nrows ? sum : -3.402823466e+38F;
++        tile_idxs[sg_id] = row < nrows ? row : -1;
++    }
++    nd_item.barrier(sycl::access::fence_space::local_space);
++
++    if (sg_id == 0) {
++        float   best_val = (lane < sg_count) ? tile_vals[lane] : -3.402823466e+38F;
++        int32_t best_idx = (lane < sg_count) ? tile_idxs[lane] : -1;
++
++#pragma unroll
++        for (int mask = WARP_SIZE / 2; mask > 0; mask >>= 1) {
++            const float   other_val = dpct::permute_sub_group_by_xor(sg, best_val, mask);
++            const int32_t other_idx = dpct::permute_sub_group_by_xor(sg, best_idx, mask);
++            if (argmax_pair_better(other_val, other_idx, best_val, best_idx)) {
++                best_val = other_val;
++                best_idx = other_idx;
++            }
++        }
++
++        if (lane == 0) {
++            scratch_vals[tile_id] = best_val;
++            scratch_idxs[tile_id] = best_idx;
++        }
++    }
++}
++
+ template <int qk, int qi, typename block_q_t, int vdr,
+           vec_dot_q_sycl_t vec_dot_q_sycl, int ncols_dst>
+ static void mul_mat_vec_q_ncols(
+@@ -2062,6 +2209,152 @@ static void mul_mat_vec_iq4_xs_q8_1_sycl_switch_ncols(
+     }
+ }
+ 
++template <int qk, int qi, typename block_q_t, int vdr, vec_dot_q_sycl_t vec_dot_q_sycl>
++static void mul_mat_vec_q_argmax_sycl(
++        const void * vx, const void * vy,
++        float * scratch_vals, int32_t * scratch_idxs,
++        const int ncols, const int nrows,
++        dpct::queue_ptr stream) {
++    GGML_ASSERT(ncols % qk == 0);
++    constexpr size_t num_subgroups = WARP_SIZE;
++    const int block_num_y = ceil_div(nrows, (int) num_subgroups);
++    const sycl::range<3> block_nums(1, 1, block_num_y);
++    const sycl::range<3> block_dims(1, 1, num_subgroups * WARP_SIZE);
++
++    stream->submit([&](sycl::handler & cgh) {
++        sycl::local_accessor<float, 1> tile_vals(sycl::range<1>(num_subgroups), cgh);
++        sycl::local_accessor<int32_t, 1> tile_idxs(sycl::range<1>(num_subgroups), cgh);
++
++        cgh.parallel_for(
++            sycl::nd_range<3>(block_nums * block_dims, block_dims),
++            [=](sycl::nd_item<3> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
++                mul_mat_vec_q_argmax_tile<qk, qi, block_q_t, vdr, vec_dot_q_sycl>(
++                    vx, vy, scratch_vals, scratch_idxs, ncols, nrows, tile_vals, tile_idxs, item_ct1);
++            });
++    });
++}
++
++template <typename reorder_vec_dot_q_sycl>
++static void reorder_mul_mat_vec_q_argmax_sycl(
++        const void * vx, const void * vy,
++        float * scratch_vals, int32_t * scratch_idxs,
++        const int ncols, const int nrows,
++        dpct::queue_ptr stream) {
++    using block_type = ggml_sycl_reordered::block_q_t<reorder_vec_dot_q_sycl::gtype>;
++    GGML_ASSERT(ncols % block_type::traits::qk == 0);
++    constexpr size_t num_subgroups = WARP_SIZE;
++    const int block_num_y = ceil_div(nrows, (int) num_subgroups);
++    const sycl::range<3> block_nums(1, 1, block_num_y);
++    const sycl::range<3> block_dims(1, 1, num_subgroups * WARP_SIZE);
++
++    stream->submit([&](sycl::handler & cgh) {
++        sycl::local_accessor<float, 1> tile_vals(sycl::range<1>(num_subgroups), cgh);
++        sycl::local_accessor<int32_t, 1> tile_idxs(sycl::range<1>(num_subgroups), cgh);
++
++        cgh.parallel_for(
++            sycl::nd_range<3>(block_nums * block_dims, block_dims),
++            [=](sycl::nd_item<3> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
++                mul_mat_vec_q_reorder_argmax_tile<reorder_vec_dot_q_sycl>(
++                    vx, vy, scratch_vals, scratch_idxs, ncols, nrows, tile_vals, tile_idxs, item_ct1);
++            });
++    });
++}
++
++static void reduce_argmax_tiles_sycl(
++        const float * scratch_vals,
++        const int32_t * scratch_idxs,
++        int32_t * dst,
++        const int scratch_count,
++        dpct::queue_ptr stream) {
++    constexpr int reduce_block = 1024;
++    const sycl::range<3> block_nums(1, 1, 1);
++    const sycl::range<3> block_dims(1, 1, reduce_block);
++
++    stream->submit([&](sycl::handler & cgh) {
++        sycl::local_accessor<float, 1> vals(sycl::range<1>(reduce_block), cgh);
++        sycl::local_accessor<int32_t, 1> idxs(sycl::range<1>(reduce_block), cgh);
++
++        cgh.parallel_for(sycl::nd_range<3>(block_nums * block_dims, block_dims), [=](sycl::nd_item<3> item_ct1) {
++            const int tid = item_ct1.get_local_id(2);
++
++            float   best_val = -3.402823466e+38F;
++            int32_t best_idx = -1;
++            for (int i = tid; i < scratch_count; i += reduce_block) {
++                const float   val = scratch_vals[i];
++                const int32_t idx = scratch_idxs[i];
++                if (argmax_pair_better(val, idx, best_val, best_idx)) {
++                    best_val = val;
++                    best_idx = idx;
++                }
++            }
++
++            vals[tid] = best_val;
++            idxs[tid] = best_idx;
++            item_ct1.barrier(sycl::access::fence_space::local_space);
++
++            for (int stride = reduce_block / 2; stride > 0; stride >>= 1) {
++                if (tid < stride) {
++                    const float   other_val = vals[tid + stride];
++                    const int32_t other_idx = idxs[tid + stride];
++                    if (argmax_pair_better(other_val, other_idx, vals[tid], idxs[tid])) {
++                        vals[tid] = other_val;
++                        idxs[tid] = other_idx;
++                    }
++                }
++                item_ct1.barrier(sycl::access::fence_space::local_space);
++            }
++
++            if (tid == 0) {
++                dst[0] = idxs[0];
++            }
++        });
++    });
++}
++
++bool ggml_sycl_mul_mat_vec_q_argmax(
++        enum ggml_type src0_type,
++        const void * vx,
++        const void * vy,
++        int32_t * dst,
++        int ncols,
++        int nrows,
++        bool reordered,
++        float * scratch_vals,
++        int32_t * scratch_idxs,
++        int scratch_count,
++        dpct::queue_ptr stream) {
++    const int needed_scratch = (int) ceil_div(nrows, WARP_SIZE);
++    if (scratch_count < needed_scratch) {
++        return false;
++    }
++
++    switch (src0_type) {
++        case GGML_TYPE_Q4_0:
++            if (reordered) {
++                reorder_mul_mat_vec_q_argmax_sycl<reorder_vec_dot_q_sycl<GGML_TYPE_Q4_0>>(
++                    vx, vy, scratch_vals, scratch_idxs, ncols, nrows, stream);
++            } else {
++                mul_mat_vec_q_argmax_sycl<QK4_0, QI4_0, block_q4_0, VDR_Q4_0_Q8_1_MMVQ, vec_dot_q4_0_q8_1>(
++                    vx, vy, scratch_vals, scratch_idxs, ncols, nrows, stream);
++            }
++            break;
++        case GGML_TYPE_Q8_0:
++            if (reordered) {
++                reorder_mul_mat_vec_q_argmax_sycl<reorder_vec_dot_q_sycl<GGML_TYPE_Q8_0>>(
++                    vx, vy, scratch_vals, scratch_idxs, ncols, nrows, stream);
++            } else {
++                mul_mat_vec_q_argmax_sycl<QK8_0, QI8_0, block_q8_0, VDR_Q8_0_Q8_1_MMVQ, vec_dot_q8_0_q8_1>(
++                    vx, vy, scratch_vals, scratch_idxs, ncols, nrows, stream);
++            }
++            break;
++        default:
++            return false;
++    }
++
++    reduce_argmax_tiles_sycl(scratch_vals, scratch_idxs, dst, scratch_count, stream);
++    return true;
++}
++
+ void ggml_sycl_op_mul_mat_vec_q(ggml_backend_sycl_context & ctx, const ggml_tensor * src0, const ggml_tensor * src1,
+                                 ggml_tensor * dst, const char * src0_dd_i, const float * src1_ddf_i,
+                                 const char * src1_ddq_i, float * dst_dd_i, const int64_t row_low,
+diff --git a/ggml/src/ggml-sycl/mmvq.hpp b/ggml/src/ggml-sycl/mmvq.hpp
+index c5d70bd0e..5c9a354cc 100644
+--- a/ggml/src/ggml-sycl/mmvq.hpp
++++ b/ggml/src/ggml-sycl/mmvq.hpp
+@@ -57,4 +57,20 @@ bool ggml_sycl_mul_mat_vec_q_id_reorder(
+     size_t             src1_row_stride,
+     dpct::queue_ptr    stream);
+ 
++// Fused one-column quantized output projection + argmax. Used by the Gemma4
++// assistant direct-MTP path to avoid materializing full vocab logits when only
++// the sampled token id is consumed.
++bool ggml_sycl_mul_mat_vec_q_argmax(
++    enum ggml_type  src0_type,
++    const void *    vx,
++    const void *    vy,
++    int32_t *       dst,
++    int             ncols,
++    int             nrows,
++    bool            reordered,
++    float *         scratch_vals,
++    int32_t *       scratch_idxs,
++    int             scratch_count,
++    dpct::queue_ptr stream);
++
+ #endif // GGML_SYCL_MMVQ_HPP
+diff --git a/ggml/src/ggml.c b/ggml/src/ggml.c
+index 0f682fd18..06a86228c 100644
+--- a/ggml/src/ggml.c
++++ b/ggml/src/ggml.c
+@@ -1003,6 +1003,7 @@ static const char * GGML_OP_NAME[GGML_OP_COUNT] = {
+ 
+     "MUL_MAT",
+     "MUL_MAT_ID",
++    "MUL_MAT_ARGMAX",
+     "OUT_PROD",
+ 
+     "SCALE",
+@@ -1078,7 +1079,7 @@ static const char * GGML_OP_NAME[GGML_OP_COUNT] = {
+     "GLU",
+ };
+ 
+-static_assert(GGML_OP_COUNT == 97, "GGML_OP_COUNT != 97");
++static_assert(GGML_OP_COUNT == 98, "GGML_OP_COUNT != 98");
+ 
+ static const char * GGML_OP_SYMBOL[GGML_OP_COUNT] = {
+     "none",
+@@ -1114,6 +1115,7 @@ static const char * GGML_OP_SYMBOL[GGML_OP_COUNT] = {
+ 
+     "X*Y",
+     "X[i]*Y",
++    "argmax(X*Y)",
+     "X*Y",
+ 
+     "x*v",
+@@ -1189,7 +1191,7 @@ static const char * GGML_OP_SYMBOL[GGML_OP_COUNT] = {
+     "glu(x)",
+ };
+ 
+-static_assert(GGML_OP_COUNT == 97, "GGML_OP_COUNT != 97");
++static_assert(GGML_OP_COUNT == 98, "GGML_OP_COUNT != 98");
+ 
+ static_assert(GGML_OP_POOL_COUNT == 2, "GGML_OP_POOL_COUNT != 2");
+ 
+@@ -2508,6 +2510,26 @@ struct ggml_tensor * ggml_argmax(
+     return result;
+ }
+ 
++// ggml_mul_mat_argmax
++
++struct ggml_tensor * ggml_mul_mat_argmax(
++        struct ggml_context * ctx,
++        struct ggml_tensor  * a,
++        struct ggml_tensor  * b) {
++    GGML_ASSERT(a->ne[0] == b->ne[0]);
++    GGML_ASSERT(a->ne[2] == b->ne[2]);
++    GGML_ASSERT(a->ne[3] == b->ne[3]);
++    GGML_ASSERT(a->ne[1] <= INT32_MAX);
++
++    struct ggml_tensor * result = ggml_new_tensor_1d(ctx, GGML_TYPE_I32, b->ne[1]);
++
++    result->op     = GGML_OP_MUL_MAT_ARGMAX;
++    result->src[0] = a;
++    result->src[1] = b;
++
++    return result;
++}
++
+ // ggml_count_equal
+ 
+ struct ggml_tensor * ggml_count_equal(
+diff --git a/src/models/gemma4-assistant.cpp b/src/models/gemma4-assistant.cpp
+index 6378130e7..19f43ca43 100644
+--- a/src/models/gemma4-assistant.cpp
++++ b/src/models/gemma4-assistant.cpp
+@@ -1,5 +1,28 @@
+ #include "models.h"
+ 
++#include <cstdlib>
++#include <string>
++
++static bool llama_gemma4_mtp_qonly_attn_inputs_enabled() {
++    const char * value = std::getenv("LLAMA_GEMMA4_MTP_QONLY_ATTN_INPUTS");
++    if (value == nullptr) {
++        return false;
++    }
++
++    const std::string s(value);
++    return s == "1" || s == "true" || s == "TRUE" || s == "yes" || s == "on";
++}
++
++static bool llama_gemma4_mtp_fused_output_argmax_enabled() {
++    const char * value = std::getenv("LLAMA_GEMMA4_MTP_FUSED_OUTPUT_ARGMAX");
++    if (value == nullptr) {
++        return false;
++    }
++
++    const std::string s(value);
++    return s == "1" || s == "true" || s == "TRUE" || s == "yes" || s == "on";
++}
++
+ void llama_model_gemma4_assistant::load_arch_hparams(llama_model_loader & ml) {
+     hparams.n_embd_inp_impl = hparams.n_embd_out();
+ 
+@@ -111,93 +134,178 @@ llama_model_gemma4_assistant::graph::graph(const llama_model & model, const llm_
+     GGML_ASSERT(cparams.ctx_other != nullptr);
+     const auto * model_other = llama_get_model(cparams.ctx_other);
+ 
+-    ggml_tensor * x = ggml_get_rows(ctx0, model_other->tok_embd, inp_tokens);
+-    x = ggml_scale(ctx0, x, sqrtf((float) n_embd_backbone));
+-    cb(x, "inp_embd_target", -1);
+-
+-    ggml_tensor * xh = ggml_concat(ctx0, x, inp_h, 0);
+-    cb(xh, "inp_xh", -1);
+-
+-    ggml_tensor * cur = ggml_mul_mat(ctx0, model.nextn_proj_pre, xh);
+-    cb(cur, "pre_proj", -1);
+-
+     auto *        inp_attn    = build_attn_inp_kv_iswa();
++    if (llama_gemma4_mtp_qonly_attn_inputs_enabled()) {
++        // Gemma4Assistant consumes shared target K/V and passes k_cur/v_cur as
++        // nullptr below, so these input tensors are never used by the graph.
++        // Avoid per-draft-step uploads of unused K/V index tensors while
++        // preserving masks and RoPE rotation inputs.
++        inp_attn->self_k_idxs     = nullptr;
++        inp_attn->self_v_idxs     = nullptr;
++        inp_attn->self_k_idxs_swa = nullptr;
++        inp_attn->self_v_idxs_swa = nullptr;
++    }
+     ggml_tensor * inp_pos     = build_inp_pos();
+     ggml_tensor * inp_out_ids = build_inp_out_ids();
+ 
+-    ggml_tensor * inpL = cur;
++    const bool direct_unroll =
++        cparams.mtp_draft_direct_argmax_ids &&
++        cparams.mtp_draft_direct_argmax_unroll > 1 &&
++        samplers.empty() &&
++        ubatch.n_tokens == 1 &&
++        ubatch.n_seqs == 1 &&
++        n_outputs == 1 &&
++        ubatch.output[0];
+ 
+-    for (int il = 0; il < n_layer_nextn; ++il) {
+-        const bool is_swa = hparams.is_swa(il);
++    const int32_t n_unroll = direct_unroll ? cparams.mtp_draft_direct_argmax_unroll : 1;
++    const bool fused_output_argmax =
++        direct_unroll &&
++        llama_gemma4_mtp_fused_output_argmax_enabled() &&
++        (model.output->type == GGML_TYPE_Q4_0 || model.output->type == GGML_TYPE_Q8_0);
+ 
+-        const int64_t n_embd_head = hparams.n_embd_head_k(il);
+-        const int64_t n_head      = hparams.n_head(il);
++    ggml_tensor * tokens_step = inp_tokens;
++    ggml_tensor * h_step      = inp_h;
++    ggml_tensor * sampled_all = nullptr;
++    ggml_tensor * logits      = nullptr;
++    ggml_tensor * h_next      = nullptr;
+ 
+-        const float freq_base_l  = model.get_rope_freq_base(cparams, il);
+-        const float freq_scale_l = model.get_rope_freq_scale(cparams, il);
+-        const int   n_rot_l      = hparams.n_rot(il);
++    auto build_step = [&](ggml_tensor * tokens, ggml_tensor * h_in, int32_t step, bool need_h_next) {
++        GGML_UNUSED(step);
+ 
+-        ggml_tensor * cur_norm = build_norm(inpL, model.layers[il].attn_norm, nullptr, LLM_NORM_RMS, il);
+-        cb(cur_norm, "attn_norm", il);
++        struct step_result {
++            ggml_tensor * logits;
++            ggml_tensor * h_next;
++            ggml_tensor * sampled;
++        };
+ 
+-        ggml_tensor * Qcur = build_lora_mm(model.layers[il].wq, cur_norm);
+-        Qcur = ggml_reshape_3d(ctx0, Qcur, n_embd_head, n_head, n_tokens);
+-        Qcur = build_norm(Qcur, model.layers[il].attn_q_norm, nullptr, LLM_NORM_RMS, il);
+-        cb(Qcur, "Qcur_normed", il);
++        ggml_tensor * x_step = ggml_get_rows(ctx0, model_other->tok_embd, tokens);
++        x_step = ggml_scale(ctx0, x_step, sqrtf((float) n_embd_backbone));
++        cb(x_step, "inp_embd_target", -1);
+ 
+-        ggml_tensor * freq_factors = is_swa ? nullptr : model.layers[il].rope_freqs;
+-        Qcur = ggml_rope_ext(ctx0, Qcur, inp_pos, freq_factors, n_rot_l, rope_type, n_ctx_orig,
+-                             freq_base_l, freq_scale_l, ext_factor, attn_factor, beta_fast, beta_slow);
+-        cb(Qcur, "Qcur_pos", il);
++        ggml_tensor * xh_step = ggml_concat(ctx0, x_step, h_in, 0);
++        cb(xh_step, "inp_xh", -1);
+ 
+-        cur = build_attn(inp_attn, model.layers[il].wo, nullptr, nullptr,
+-                Qcur, nullptr, nullptr, nullptr, nullptr, nullptr, hparams.f_attention_scale, il);
++        ggml_tensor * cur_step = ggml_mul_mat(ctx0, model.nextn_proj_pre, xh_step);
++        cb(cur_step, "pre_proj", -1);
+ 
+-        if (il == n_layer_nextn - 1 && inp_out_ids) {
+-            cur  = ggml_get_rows(ctx0, cur,  inp_out_ids);
+-            inpL = ggml_get_rows(ctx0, inpL, inp_out_ids);
+-        }
++        ggml_tensor * inpL = cur_step;
+ 
+-        cur = build_norm(cur, model.layers[il].attn_post_norm, nullptr, LLM_NORM_RMS, il);
+-        cb(cur, "attn_post_norm", il);
++        for (int il = 0; il < n_layer_nextn; ++il) {
++            const bool is_swa = hparams.is_swa(il);
+ 
+-        ggml_tensor * attn_out = ggml_add(ctx0, cur, inpL);
+-        cb(attn_out, "attn_out", il);
++            const int64_t n_embd_head = hparams.n_embd_head_k(il);
++            const int64_t n_head      = hparams.n_head(il);
+ 
+-        cur = build_norm(attn_out, model.layers[il].ffn_norm, nullptr, LLM_NORM_RMS, il);
+-        cb(cur, "ffn_norm", il);
++            const float freq_base_l  = model.get_rope_freq_base(cparams, il);
++            const float freq_scale_l = model.get_rope_freq_scale(cparams, il);
++            const int   n_rot_l      = hparams.n_rot(il);
+ 
+-        cur = build_ffn(cur,
+-                model.layers[il].ffn_up,   nullptr, nullptr,
+-                model.layers[il].ffn_gate, nullptr, nullptr,
+-                model.layers[il].ffn_down, nullptr, nullptr,
+-                nullptr,
+-                LLM_FFN_GELU, LLM_FFN_PAR, il);
+-        cb(cur, "ffn_out", il);
++            ggml_tensor * cur_norm = build_norm(inpL, model.layers[il].attn_norm, nullptr, LLM_NORM_RMS, il);
++            cb(cur_norm, "attn_norm", il);
+ 
+-        cur = build_norm(cur, model.layers[il].ffn_post_norm, nullptr, LLM_NORM_RMS, -1);
+-        cb(cur, "ffn_post_norm", il);
++            ggml_tensor * Qcur = build_lora_mm(model.layers[il].wq, cur_norm);
++            Qcur = ggml_reshape_3d(ctx0, Qcur, n_embd_head, n_head, n_tokens);
++            Qcur = build_norm(Qcur, model.layers[il].attn_q_norm, nullptr, LLM_NORM_RMS, il);
++            cb(Qcur, "Qcur_normed", il);
+ 
+-        cur = ggml_add(ctx0, cur, attn_out);
++            ggml_tensor * freq_factors = is_swa ? nullptr : model.layers[il].rope_freqs;
++            Qcur = ggml_rope_ext(ctx0, Qcur, inp_pos, freq_factors, n_rot_l, rope_type, n_ctx_orig,
++                                 freq_base_l, freq_scale_l, ext_factor, attn_factor, beta_fast, beta_slow);
++            cb(Qcur, "Qcur_pos", il);
+ 
+-        cur = ggml_mul(ctx0, cur, model.layers[il].out_scale);
+-        cb(cur, "out_scaled", il);
++            cur_step = build_attn(inp_attn, model.layers[il].wo, nullptr, nullptr,
++                    Qcur, nullptr, nullptr, nullptr, nullptr, nullptr, hparams.f_attention_scale, il);
+ 
+-        inpL = cur;
+-    }
+-    cur = inpL;
++            if (il == n_layer_nextn - 1 && inp_out_ids) {
++                cur_step = ggml_get_rows(ctx0, cur_step, inp_out_ids);
++                inpL     = ggml_get_rows(ctx0, inpL,     inp_out_ids);
++            }
+ 
+-    cur = build_norm(cur, model.output_norm, nullptr, LLM_NORM_RMS, -1);
+-    cb(cur, "result_norm", -1);
++            cur_step = build_norm(cur_step, model.layers[il].attn_post_norm, nullptr, LLM_NORM_RMS, il);
++            cb(cur_step, "attn_post_norm", il);
+ 
+-    ggml_tensor * logits = build_lora_mm(model.output, cur);
+-    cb(logits, "result_output", -1);
+-    res->t_logits = logits;
++            ggml_tensor * attn_out = ggml_add(ctx0, cur_step, inpL);
++            cb(attn_out, "attn_out", il);
++
++            cur_step = build_norm(attn_out, model.layers[il].ffn_norm, nullptr, LLM_NORM_RMS, il);
++            cb(cur_step, "ffn_norm", il);
++
++            cur_step = build_ffn(cur_step,
++                    model.layers[il].ffn_up,   nullptr, nullptr,
++                    model.layers[il].ffn_gate, nullptr, nullptr,
++                    model.layers[il].ffn_down, nullptr, nullptr,
++                    nullptr,
++                    LLM_FFN_GELU, LLM_FFN_PAR, il);
++            cb(cur_step, "ffn_out", il);
+ 
+-    ggml_tensor * h_next = ggml_mul_mat(ctx0, model.nextn_proj_post, cur);
+-    cb(h_next, "h_nextn", -1);
++            cur_step = build_norm(cur_step, model.layers[il].ffn_post_norm, nullptr, LLM_NORM_RMS, -1);
++            cb(cur_step, "ffn_post_norm", il);
++
++            cur_step = ggml_add(ctx0, cur_step, attn_out);
++
++            cur_step = ggml_mul(ctx0, cur_step, model.layers[il].out_scale);
++            cb(cur_step, "out_scaled", il);
++
++            inpL = cur_step;
++        }
++
++        cur_step = inpL;
++
++        cur_step = build_norm(cur_step, model.output_norm, nullptr, LLM_NORM_RMS, -1);
++        cb(cur_step, "result_norm", -1);
++
++        ggml_tensor * logits_step = nullptr;
++        ggml_tensor * sampled_step = nullptr;
++        if (fused_output_argmax) {
++            sampled_step = ggml_mul_mat_argmax(ctx0, model.output, cur_step);
++            cb(sampled_step, "result_output_argmax", -1);
++        } else {
++            logits_step = build_lora_mm(model.output, cur_step);
++            cb(logits_step, "result_output", -1);
++            if (cparams.mtp_draft_f16_logits_extract &&
++                    !cparams.mtp_draft_direct_argmax_ids) {
++                logits_step = ggml_cast(ctx0, logits_step, GGML_TYPE_F16);
++                cb(logits_step, "result_output_f16", -1);
++            }
++        }
++
++        ggml_tensor * h_next_step = nullptr;
++        if (need_h_next) {
++            h_next_step = ggml_mul_mat(ctx0, model.nextn_proj_post, cur_step);
++            cb(h_next_step, "h_nextn", -1);
++        }
++
++        return step_result { logits_step, h_next_step, sampled_step };
++    };
++
++    for (int32_t i = 0; i < n_unroll; ++i) {
++        const bool need_h_next = !direct_unroll || i + 1 < n_unroll;
++        auto step = build_step(tokens_step, h_step, i, need_h_next);
++        logits = step.logits;
++        h_next = step.h_next;
++
++        if (direct_unroll) {
++            ggml_tensor * sampled = step.sampled ? step.sampled : ggml_argmax(ctx0, logits);
++            ggml_format_name(sampled, "mtp_direct_argmax_unroll_token_%d", i);
++
++            sampled_all = sampled_all ? ggml_concat(ctx0, sampled_all, sampled, 0) : sampled;
++            tokens_step = sampled;
++            if (need_h_next) {
++                h_step = h_next;
++            }
++        }
++    }
++
++    res->t_logits = logits;
+     res->t_h_nextn = h_next;
+ 
+-    ggml_build_forward_expand(gf, logits);
+-    ggml_build_forward_expand(gf, h_next);
++    if (sampled_all) {
++        res->t_sampled[ubatch.seq_id[0][0]] = sampled_all;
++        ggml_build_forward_expand(gf, sampled_all);
++    } else {
++        ggml_build_forward_expand(gf, logits);
++    }
++    if (h_next) {
++        ggml_build_forward_expand(gf, h_next);
++    }
+ }

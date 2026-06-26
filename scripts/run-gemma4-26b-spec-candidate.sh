@@ -30,7 +30,7 @@ fi
 EXTRA_LLAMA_ARGS="${extra_args[*]}"
 export EXTRA_LLAMA_ARGS
 
-export LLAMA_SERVER="${LLAMA_SERVER:-/home/steve/src/llama.cpp/build-sycl-b70/bin/llama-server}"
+export LLAMA_SERVER="${LLAMA_SERVER:-/home/steve/src/llama.cpp-gemma-record-stack/build-sycl-b70-aot-bmg-g31/bin/llama-server}"
 export CTX_SIZE="${CTX_SIZE:-8192}"
 export BATCH_SIZE="${BATCH_SIZE:-512}"
 export UBATCH_SIZE="${UBATCH_SIZE:-64}"

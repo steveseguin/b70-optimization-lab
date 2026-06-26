@@ -1,0 +1,1550 @@
+diff --git a/ggml/include/ggml.h b/ggml/include/ggml.h
+index d6807b6dd..e7919864f 100644
+--- a/ggml/include/ggml.h
++++ b/ggml/include/ggml.h
+@@ -497,6 +497,7 @@ extern "C" {
+         GGML_OP_CUMSUM,
+         GGML_OP_MEAN,
+         GGML_OP_ARGMAX,
++        GGML_OP_ARGMAX_SOFTCAP,
+         GGML_OP_COUNT_EQUAL,
+         GGML_OP_REPEAT,
+         GGML_OP_REPEAT_BACK,
+@@ -510,6 +511,8 @@ extern "C" {
+ 
+         GGML_OP_MUL_MAT,
+         GGML_OP_MUL_MAT_ID,
++        GGML_OP_MOE_WEIGHTED_SUM,
++        GGML_OP_MUL_MAT_ARGMAX,
+         GGML_OP_OUT_PROD,
+ 
+         GGML_OP_SCALE,
+@@ -1052,6 +1055,19 @@ extern "C" {
+             struct ggml_context * ctx,
+             struct ggml_tensor  * a);
+ 
++    // argmax along rows after applying softcap * tanh(x / softcap)
++    GGML_API struct ggml_tensor * ggml_argmax_softcap(
++            struct ggml_context * ctx,
++            struct ggml_tensor  * a,
++            float                 softcap);
++
++    // fused matrix multiplication and argmax along rows
++    // backend-only experimental op: result has one I32 token id per column of b
++    GGML_API struct ggml_tensor * ggml_mul_mat_argmax(
++            struct ggml_context * ctx,
++            struct ggml_tensor  * a,
++            struct ggml_tensor  * b);
++
+     // count number of equal elements in a and b
+     GGML_API struct ggml_tensor * ggml_count_equal(
+             struct ggml_context * ctx,
+@@ -1438,6 +1454,14 @@ extern "C" {
+             struct ggml_tensor  * b,
+             struct ggml_tensor  * ids);
+ 
++    // experts: [n_embd, n_expert_used, n_tokens]
++    // weights: [1,      n_expert_used, n_tokens]
++    // result:  [n_embd, n_tokens]
++    GGML_API struct ggml_tensor * ggml_moe_weighted_sum(
++            struct ggml_context * ctx,
++            struct ggml_tensor  * experts,
++            struct ggml_tensor  * weights);
++
+     // A: m columns, n rows,
+     // B: p columns, n rows,
+     // result is m columns, p rows
+diff --git a/ggml/src/ggml-backend-meta.cpp b/ggml/src/ggml-backend-meta.cpp
+index 0a36f0990..9b35e87bf 100644
+--- a/ggml/src/ggml-backend-meta.cpp
++++ b/ggml/src/ggml-backend-meta.cpp
+@@ -849,6 +849,7 @@ static struct ggml_backend_meta_split_state ggml_backend_meta_get_split_state(
+             case GGML_OP_CUMSUM:
+             case GGML_OP_MEAN:
+             case GGML_OP_ARGMAX:
++            case GGML_OP_ARGMAX_SOFTCAP:
+             case GGML_OP_COUNT_EQUAL: {
+                 split_state = handle_per_row(src_ss);
+             } break;
+@@ -873,6 +874,9 @@ static struct ggml_backend_meta_split_state ggml_backend_meta_get_split_state(
+             case GGML_OP_MUL_MAT_ID: {
+                 split_state = handle_mul_mat(src_ss);
+             } break;
++            case GGML_OP_MOE_WEIGHTED_SUM: {
++                split_state = handle_bin_bcast(src_ss);
++            } break;
+             case GGML_OP_OUT_PROD: {
+                 split_state = handle_generic(src_ss, /*scalar_only =*/ true);
+             } break;
+diff --git a/ggml/src/ggml-cpu/ggml-cpu.c b/ggml/src/ggml-cpu/ggml-cpu.c
+index eb8341c9a..e6d12043f 100644
+--- a/ggml/src/ggml-cpu/ggml-cpu.c
++++ b/ggml/src/ggml-cpu/ggml-cpu.c
+@@ -1784,6 +1784,10 @@ static void ggml_compute_forward(struct ggml_compute_params * params, struct ggm
+             {
+                 ggml_compute_forward_argmax(params, tensor);
+             } break;
++        case GGML_OP_ARGMAX_SOFTCAP:
++            {
++                ggml_compute_forward_argmax_softcap(params, tensor);
++            } break;
+         case GGML_OP_COUNT_EQUAL:
+             {
+                 ggml_compute_forward_count_equal(params, tensor);
+@@ -1832,6 +1836,14 @@ static void ggml_compute_forward(struct ggml_compute_params * params, struct ggm
+             {
+                 ggml_compute_forward_mul_mat_id(params, tensor);
+             } break;
++        case GGML_OP_MOE_WEIGHTED_SUM:
++            {
++                ggml_compute_forward_moe_weighted_sum(params, tensor);
++            } break;
++        case GGML_OP_MUL_MAT_ARGMAX:
++            {
++                GGML_ABORT("GGML_OP_MUL_MAT_ARGMAX is backend-only");
++            } break;
+         case GGML_OP_OUT_PROD:
+             {
+                 ggml_compute_forward_out_prod(params, tensor);
+@@ -2225,6 +2237,7 @@ static int ggml_get_n_tasks(struct ggml_tensor * node, int n_threads) {
+         case GGML_OP_SUM_ROWS:
+         case GGML_OP_MEAN:
+         case GGML_OP_ARGMAX:
++        case GGML_OP_ARGMAX_SOFTCAP:
+             {
+                 n_tasks = 1;
+             } break;
+@@ -2301,6 +2314,8 @@ static int ggml_get_n_tasks(struct ggml_tensor * node, int n_threads) {
+         case GGML_OP_CONCAT:
+         case GGML_OP_MUL_MAT:
+         case GGML_OP_MUL_MAT_ID:
++        case GGML_OP_MOE_WEIGHTED_SUM:
++        case GGML_OP_MUL_MAT_ARGMAX:
+         case GGML_OP_OUT_PROD:
+             {
+                 n_tasks = n_threads;
+diff --git a/ggml/src/ggml-cpu/ops.cpp b/ggml/src/ggml-cpu/ops.cpp
+index 74611dce7..d9e799e2b 100644
+--- a/ggml/src/ggml-cpu/ops.cpp
++++ b/ggml/src/ggml-cpu/ops.cpp
+@@ -1505,6 +1505,72 @@ void ggml_compute_forward_sum_rows(
+     }
+ }
+ 
++// ggml_compute_forward_moe_weighted_sum
++
++static void ggml_compute_forward_moe_weighted_sum_f32(
++        const ggml_compute_params * params,
++        ggml_tensor * dst) {
++
++    const ggml_tensor * experts = dst->src[0];
++    const ggml_tensor * weights = dst->src[1];
++
++    GGML_ASSERT(experts->type == GGML_TYPE_F32);
++    GGML_ASSERT(weights->type == GGML_TYPE_F32);
++    GGML_ASSERT(dst->type == GGML_TYPE_F32);
++    GGML_ASSERT(experts->ne[0] == dst->ne[0]);
++    GGML_ASSERT(experts->ne[1] == weights->ne[1]);
++    GGML_ASSERT(experts->ne[2] == dst->ne[1]);
++    GGML_ASSERT(weights->ne[0] == 1);
++    GGML_ASSERT(weights->ne[2] == dst->ne[1]);
++    GGML_ASSERT(experts->nb[0] == sizeof(float));
++    GGML_ASSERT(weights->nb[0] == sizeof(float));
++    GGML_ASSERT(dst->nb[0] == sizeof(float));
++
++    const int ith = params->ith;
++    const int nth = params->nth;
++
++    const int64_t n_embd        = dst->ne[0];
++    const int64_t n_tokens      = dst->ne[1];
++    const int64_t n_expert_used = experts->ne[1];
++    const int64_t n_outputs     = n_embd * n_tokens;
++
++    for (int64_t idx = ith; idx < n_outputs; idx += nth) {
++        const int64_t row   = idx % n_embd;
++        const int64_t token = idx / n_embd;
++
++        float sum = 0.0f;
++        for (int64_t expert = 0; expert < n_expert_used; ++expert) {
++            const float v = *(const float *) ((const char *) experts->data +
++                    row * experts->nb[0] + expert * experts->nb[1] +
++                    token * experts->nb[2]);
++            const float w = *(const float *) ((const char *) weights->data +
++                    expert * weights->nb[1] + token * weights->nb[2]);
++            const float weighted = v * w;
++            sum += weighted;
++        }
++
++        *(float *) ((char *) dst->data + row * dst->nb[0] +
++                token * dst->nb[1]) = sum;
++    }
++}
++
++void ggml_compute_forward_moe_weighted_sum(
++        const ggml_compute_params * params,
++        ggml_tensor * dst) {
++
++    switch (dst->src[0]->type) {
++        case GGML_TYPE_F32:
++            {
++                ggml_compute_forward_moe_weighted_sum_f32(params, dst);
++            } break;
++        default:
++            {
++                GGML_ABORT("unsupported type for ggml_compute_forward_moe_weighted_sum: %s",
++                        ggml_type_name(dst->src[0]->type));
++            }
++    }
++}
++
+ // ggml_compute_forward_mean
+ 
+ static void ggml_compute_forward_mean_f32(
+@@ -1610,6 +1676,65 @@ void ggml_compute_forward_argmax(
+     }
+ }
+ 
++// ggml_compute_forward_argmax_softcap
++
++static void ggml_compute_forward_argmax_softcap_f32(
++        const ggml_compute_params * params,
++        ggml_tensor * dst) {
++
++    const ggml_tensor * src0 = dst->src[0];
++
++    if (params->ith != 0) {
++        return;
++    }
++
++    assert(src0->nb[0] == sizeof(float));
++    assert(dst->nb[0] == sizeof(int32_t));
++
++    const float softcap = ggml_get_op_params_f32(dst, 0);
++    GGML_ASSERT(softcap > 0.0f);
++
++    const int64_t ne00 = src0->ne[0];
++    const int64_t ne01 = src0->ne[1];
++
++    const size_t nb01 = src0->nb[1];
++    const size_t nb0 = dst->nb[0];
++
++    for (int64_t i1 = 0; i1 < ne01; i1++) {
++        const float * src = (const float *) ((const char *) src0->data + i1*nb01);
++        int32_t * dst_ = (int32_t *) ((char *) dst->data + i1*nb0);
++
++        float max_val = -INFINITY;
++        int32_t max_idx = 0;
++        for (int64_t i0 = 0; i0 < ne00; i0++) {
++            const float val = softcap * tanhf(src[i0] / softcap);
++            if (val > max_val) {
++                max_val = val;
++                max_idx = (int32_t) i0;
++            }
++        }
++        dst_[0] = max_idx;
++    }
++}
++
++void ggml_compute_forward_argmax_softcap(
++        const ggml_compute_params * params,
++        ggml_tensor * dst) {
++
++    const ggml_tensor * src0 = dst->src[0];
++
++    switch (src0->type) {
++        case GGML_TYPE_F32:
++            {
++                ggml_compute_forward_argmax_softcap_f32(params, dst);
++            } break;
++        default:
++            {
++                GGML_ABORT("fatal error");
++            }
++    }
++}
++
+ // ggml_compute_forward_count_equal
+ 
+ static void ggml_compute_forward_count_equal_i32(
+diff --git a/ggml/src/ggml-cpu/ops.h b/ggml/src/ggml-cpu/ops.h
+index a8e18c716..9283af87d 100644
+--- a/ggml/src/ggml-cpu/ops.h
++++ b/ggml/src/ggml-cpu/ops.h
+@@ -37,6 +37,7 @@ void ggml_compute_forward_sum_rows(const struct ggml_compute_params * params, st
+ void ggml_compute_forward_cumsum(const struct ggml_compute_params * params, struct ggml_tensor * dst);
+ void ggml_compute_forward_mean(const struct ggml_compute_params * params, struct ggml_tensor * dst);
+ void ggml_compute_forward_argmax(const struct ggml_compute_params * params, struct ggml_tensor * dst);
++void ggml_compute_forward_argmax_softcap(const struct ggml_compute_params * params, struct ggml_tensor * dst);
+ void ggml_compute_forward_count_equal(const struct ggml_compute_params * params, struct ggml_tensor * dst);
+ void ggml_compute_forward_repeat(const struct ggml_compute_params * params, struct ggml_tensor * dst);
+ void ggml_compute_forward_repeat_back(const struct ggml_compute_params * params, struct ggml_tensor * dst);
+@@ -49,6 +50,7 @@ void ggml_compute_forward_rms_norm_back(const struct ggml_compute_params * param
+ void ggml_compute_forward_group_norm(const struct ggml_compute_params * params, struct ggml_tensor * dst);
+ void ggml_compute_forward_l2_norm(const struct ggml_compute_params * params, struct ggml_tensor * dst);
+ void ggml_compute_forward_out_prod(const struct ggml_compute_params * params, struct ggml_tensor * dst);
++void ggml_compute_forward_moe_weighted_sum(const struct ggml_compute_params * params, struct ggml_tensor * dst);
+ void ggml_compute_forward_scale(const struct ggml_compute_params * params, struct ggml_tensor * dst);
+ void ggml_compute_forward_set(const struct ggml_compute_params * params, struct ggml_tensor * dst);
+ void ggml_compute_forward_cpy(const struct ggml_compute_params * params, struct ggml_tensor * dst);
+diff --git a/ggml/src/ggml-sycl/ggml-sycl.cpp b/ggml/src/ggml-sycl/ggml-sycl.cpp
+index d8b83d0e2..4f56f88b5 100644
+--- a/ggml/src/ggml-sycl/ggml-sycl.cpp
++++ b/ggml/src/ggml-sycl/ggml-sycl.cpp
+@@ -17,6 +17,7 @@
+ #include <cstddef>
+ #include <cstdint>
+ #include <cstdlib>
++#include <cstring>
+ #include <float.h>
+ #include <limits>
+ #include <optional>
+@@ -26,9 +27,12 @@
+ #include <cmath>
+ #include <iostream>
+ #include <fstream>
++#include <map>
++#include <mutex>
+ #include <stdio.h>
+ #include <stdlib.h>
+ #include <regex>
++#include <string>
+ 
+ #include <sycl/sycl.hpp>
+ #include <sycl/backend.hpp>
+@@ -2251,7 +2255,7 @@ static void argmax_f32_i32_sycl(const float *x, int *dst, const int ncols,
+                                const int nrows, queue_ptr stream) {
+     const sycl::range<3> block_dims(1, 1, SYCL_ARGMAX_BLOCK_SIZE);
+     const sycl::range<3> block_nums(1, nrows, 1);
+-    const size_t shared_mem = 256 * sizeof(float);
++    const size_t shared_mem = SYCL_ARGMAX_BLOCK_SIZE * sizeof(float);
+ 
+     stream->submit([&](sycl::handler &cgh) {
+         sycl::local_accessor<float, 1> shared_data(
+@@ -2268,7 +2272,7 @@ static void argmax_f32_i32_sycl(const float *x, int *dst, const int ncols,
+                 float max_val = -INFINITY;
+                 int max_idx = -1;
+ 
+-                for (int col = tid; col < ncols; col += 256) {
++                for (int col = tid; col < ncols; col += SYCL_ARGMAX_BLOCK_SIZE) {
+                     float val = x[row * ncols + col];
+                     if (val > max_val) {
+                         max_val = val;
+@@ -2280,7 +2284,7 @@ static void argmax_f32_i32_sycl(const float *x, int *dst, const int ncols,
+                 shared_indices[tid] = max_idx;
+                 item_ct1.barrier(sycl::access::fence_space::local_space);
+ 
+-                for (int stride = 256/2; stride > 0; stride >>= 1) {
++                for (int stride = SYCL_ARGMAX_BLOCK_SIZE/2; stride > 0; stride >>= 1) {
+                     if (tid < stride) {
+                         float val1 = shared_data[tid];
+                         float val2 = shared_data[tid + stride];
+@@ -2293,6 +2297,60 @@ static void argmax_f32_i32_sycl(const float *x, int *dst, const int ncols,
+                 }
+ 
+ 
++                if (tid == 0) {
++                    dst[row] = shared_indices[0];
++                }
++            });
++    });
++}
++
++static void argmax_softcap_f32_i32_sycl(const float *x, int *dst, const int ncols,
++                               const int nrows, const float softcap,
++                               queue_ptr stream) {
++    const sycl::range<3> block_dims(1, 1, SYCL_ARGMAX_BLOCK_SIZE);
++    const sycl::range<3> block_nums(1, nrows, 1);
++    const size_t shared_mem = SYCL_ARGMAX_BLOCK_SIZE * sizeof(float);
++
++    stream->submit([&](sycl::handler &cgh) {
++        sycl::local_accessor<float, 1> shared_data(
++            sycl::range<1>(shared_mem/sizeof(float)), cgh);
++        sycl::local_accessor<int, 1> shared_indices(
++            sycl::range<1>(shared_mem/sizeof(float)), cgh);
++
++        cgh.parallel_for(
++            sycl::nd_range<3>(block_nums * block_dims, block_dims),
++            [=](sycl::nd_item<3> item_ct1) {
++                const int tid = item_ct1.get_local_id(2);
++                const int row = item_ct1.get_global_id(1);
++
++                float max_val = -INFINITY;
++                int max_idx = -1;
++
++                for (int col = tid; col < ncols; col += SYCL_ARGMAX_BLOCK_SIZE) {
++                    const float raw = x[row * ncols + col];
++                    const float val = softcap * sycl::tanh(raw / softcap);
++                    if (val > max_val) {
++                        max_val = val;
++                        max_idx = col;
++                    }
++                }
++
++                shared_data[tid] = max_val;
++                shared_indices[tid] = max_idx;
++                item_ct1.barrier(sycl::access::fence_space::local_space);
++
++                for (int stride = SYCL_ARGMAX_BLOCK_SIZE/2; stride > 0; stride >>= 1) {
++                    if (tid < stride) {
++                        float val1 = shared_data[tid];
++                        float val2 = shared_data[tid + stride];
++                        if (val2 > val1) {
++                            shared_data[tid] = val2;
++                            shared_indices[tid] = shared_indices[tid + stride];
++                        }
++                    }
++                    item_ct1.barrier(sycl::access::fence_space::local_space);
++                }
++
+                 if (tid == 0) {
+                     dst[row] = shared_indices[0];
+                 }
+@@ -2586,6 +2644,71 @@ inline void ggml_sycl_op_sum_rows(ggml_backend_sycl_context & ctx, ggml_tensor *
+     sum_rows_f32_sycl(src0_dd, dst_dd, ncols, nrows, main_stream);
+ }
+ 
++static void moe_weighted_sum_f32_sycl(
++        const float * experts, const float * weights, float * dst,
++        const int n_embd, const int n_expert_used, const int n_tokens,
++        const size_t experts_nb0, const size_t experts_nb1,
++        const size_t experts_nb2, const size_t weights_nb1,
++        const size_t weights_nb2, const size_t dst_nb0,
++        const size_t dst_nb1, dpct::queue_ptr stream) {
++    const size_t n_outputs = (size_t) n_embd * (size_t) n_tokens;
++    stream->parallel_for(
++        sycl::range<1>(n_outputs),
++        [=](sycl::id<1> id) {
++            const size_t idx   = id[0];
++            const int row      = (int) (idx % (size_t) n_embd);
++            const int token    = (int) (idx / (size_t) n_embd);
++
++            float sum = 0.0f;
++#pragma unroll
++            for (int expert = 0; expert < n_expert_used; ++expert) {
++                const float v = *(const float *) ((const char *) experts +
++                    (size_t) row * experts_nb0 +
++                    (size_t) expert * experts_nb1 +
++                    (size_t) token * experts_nb2);
++                const float w = *(const float *) ((const char *) weights +
++                    (size_t) expert * weights_nb1 +
++                    (size_t) token * weights_nb2);
++                sum += v * w;
++            }
++
++            *(float *) ((char *) dst +
++                (size_t) row * dst_nb0 +
++                (size_t) token * dst_nb1) = sum;
++        });
++}
++
++static void ggml_sycl_moe_weighted_sum(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
++    const ggml_tensor * experts = dst->src[0];
++    const ggml_tensor * weights = dst->src[1];
++
++    GGML_ASSERT(experts->type == GGML_TYPE_F32);
++    GGML_ASSERT(weights->type == GGML_TYPE_F32);
++    GGML_ASSERT(dst->type == GGML_TYPE_F32);
++    GGML_ASSERT(experts->ne[0] == dst->ne[0]);
++    GGML_ASSERT(experts->ne[1] == weights->ne[1]);
++    GGML_ASSERT(experts->ne[2] == dst->ne[1]);
++    GGML_ASSERT(weights->ne[0] == 1);
++    GGML_ASSERT(weights->ne[2] == dst->ne[1]);
++    GGML_ASSERT(experts->nb[0] == sizeof(float));
++    GGML_ASSERT(weights->nb[0] == sizeof(float));
++    GGML_ASSERT(dst->nb[0] == sizeof(float));
++
++    dpct::queue_ptr main_stream = ctx.stream();
++    SYCL_CHECK(ggml_sycl_set_device(ctx.device));
++
++    moe_weighted_sum_f32_sycl(
++        (const float *) experts->data,
++        (const float *) weights->data,
++        (float *) dst->data,
++        (int) dst->ne[0],
++        (int) experts->ne[1],
++        (int) dst->ne[1],
++        experts->nb[0], experts->nb[1], experts->nb[2],
++        weights->nb[1], weights->nb[2],
++        dst->nb[0], dst->nb[1], main_stream);
++}
++
+ inline void ggml_sycl_op_mean(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+     GGML_ASSERT(dst->src[0]->type == GGML_TYPE_F32);
+     GGML_ASSERT(dst->type == GGML_TYPE_F32);
+@@ -2667,6 +2790,22 @@ inline void ggml_sycl_op_argmax(ggml_backend_sycl_context & ctx, ggml_tensor * d
+     argmax_f32_i32_sycl(src0_dd, dst_dd, ncols, nrows, main_stream);
+ }
+ 
++inline void ggml_sycl_op_argmax_softcap(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
++    GGML_ASSERT(dst->src[0]->type == GGML_TYPE_F32);
++    GGML_ASSERT( dst->type == GGML_TYPE_I32);
++
++    dpct::queue_ptr main_stream = ctx.stream();
++    SYCL_CHECK(ggml_sycl_set_device(ctx.device));
++    const float * src0_dd = static_cast<const float *>(dst->src[0]->data);
++    int32_t *       dst_dd  = static_cast<int32_t *>(dst->data);
++
++    const int64_t ncols = dst->src[0]->ne[0];
++    const int64_t nrows = ggml_nrows(dst->src[0]);
++    const float softcap = ggml_get_op_params_f32(dst, 0);
++
++    argmax_softcap_f32_i32_sycl(src0_dd, dst_dd, ncols, nrows, softcap, main_stream);
++}
++
+ inline void ggml_sycl_op_diag_mask_inf(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+     GGML_ASSERT(dst->src[0]->type == GGML_TYPE_F32);
+     GGML_ASSERT( dst->type == GGML_TYPE_F32);
+@@ -4094,7 +4233,7 @@ static bool reorder_qw(const ggml_tensor * src0, dpct::queue_ptr stream) {
+ static bool should_reorder_tensor(ggml_backend_sycl_context& ctx, const ggml_tensor * dst) {
+     return !g_ggml_sycl_disable_optimize && //allow optimize, controlled by $GGML_SYCL_DISABLE_OPT
+             ctx.opt_feature.reorder &&      //allow this device due to good perf, skip the devices with bad perf.
+-            dst->op == GGML_OP_MUL_MAT &&   //limit to some supported cases of Q4_0, to do for more cases.
++            (dst->op == GGML_OP_MUL_MAT || dst->op == GGML_OP_MUL_MAT_ARGMAX) &&
+             // ne[1] <= 8 so multi-column decode (spec / MTP verify) also bootstraps the reorder;
+             // all reorderable types have a _switch_ncols kernel.
+             dst->src[1]->ne[1] <= 8 && dst->src[1]->ne[2]==1 && dst->src[1]->ne[3]==1;
+@@ -4255,6 +4394,65 @@ static void ggml_sycl_mul_mat(ggml_backend_sycl_context & ctx, const ggml_tensor
+     }
+ }
+ 
++static void ggml_sycl_mul_mat_argmax(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
++    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/2);
++
++    const ggml_tensor * src0 = dst->src[0];
++    const ggml_tensor * src1 = dst->src[1];
++
++    GGML_ASSERT(dst->type == GGML_TYPE_I32);
++    GGML_ASSERT(src1->type == GGML_TYPE_F32);
++    GGML_ASSERT(src1->ne[1] >= 1 && src1->ne[2] == 1 && src1->ne[3] == 1);
++    GGML_ASSERT(src0->ne[0] == src1->ne[0]);
++    GGML_ASSERT(src0->type == GGML_TYPE_Q4_0 || src0->type == GGML_TYPE_Q8_0);
++    GGML_ASSERT(!ggml_backend_buffer_is_sycl_split(src0->buffer));
++    GGML_ASSERT(ggml_is_contiguous(src1));
++
++    opt_for_reorder(&ctx, src0, src1, dst, mul_mat_algo::MMVQ);
++
++    const int64_t ne10 = src1->ne[0];
++    const int64_t nvec = src1->ne[1];
++    const int64_t nrows = src0->ne[1];
++    const int src1_padded_cols = GGML_PAD((int) ne10, MATRIX_ROW_PADDING);
++
++    ggml_tensor_extra_gpu * extra = static_cast<ggml_tensor_extra_gpu *>(src0->extra);
++    const bool use_reorder = extra && extra->optimized_feature.reorder;
++
++    queue_ptr stream = ctx.stream();
++    SYCL_CHECK(ggml_sycl_set_device(ctx.device));
++
++    ggml_sycl_pool_alloc<char> src1_q8_alloc(ctx.pool(),
++        (size_t) nvec * (size_t) src1_padded_cols * sizeof(block_q8_1) / QK8_1);
++    char * src1_ddq = src1_q8_alloc.get();
++
++    if (use_reorder) {
++        quantize_row_q8_1_sycl<quantize_and_reorder_q8_1_soa>(
++            (const float *) src1->data, src1_ddq, (int) ne10, (int) nvec,
++            src1_padded_cols, stream);
++    } else {
++        quantize_row_q8_1_sycl<quantize_q8_1>(
++            (const float *) src1->data, src1_ddq, (int) ne10, (int) nvec,
++            src1_padded_cols, stream);
++    }
++
++    const int scratch_count_per_vec = ceil_div((int) nrows, WARP_SIZE);
++    ggml_sycl_pool_alloc<float> scratch_vals_alloc(ctx.pool(), scratch_count_per_vec * (size_t) nvec);
++    ggml_sycl_pool_alloc<int32_t> scratch_idxs_alloc(ctx.pool(), scratch_count_per_vec * (size_t) nvec);
++
++    const bool ok = nvec == 1 ?
++        ggml_sycl_mul_mat_vec_q_argmax(
++            src0->type, src0->data, src1_ddq, (int32_t *) dst->data,
++            (int) ne10, (int) nrows, use_reorder,
++            scratch_vals_alloc.get(), scratch_idxs_alloc.get(), scratch_count_per_vec,
++            stream) :
++        ggml_sycl_mul_mat_vec_q_argmax_multi(
++            src0->type, src0->data, src1_ddq, (int32_t *) dst->data,
++            (int) ne10, (int) nrows, (int) nvec, src1_padded_cols, use_reorder,
++            scratch_vals_alloc.get(), scratch_idxs_alloc.get(), scratch_count_per_vec,
++            stream);
++    GGML_ASSERT(ok);
++}
++
+ 
+ __dpct_inline__ static void k_copy_src1_to_contiguous(
+     const char *__restrict__ src1_original, char *__restrict__ src1_contiguous,
+@@ -4359,6 +4557,156 @@ static bool ggml_sycl_mul_mat_id_mmvq_fused(
+         src1_row_stride, stream);
+ }
+ 
++static bool ggml_sycl_mul_mat_id_multi_token_fast_enabled() {
++    const char * env = std::getenv("LLAMA_SYCL_MUL_MAT_ID_MULTI_TOKEN_FAST");
++    return env && (std::strcmp(env, "1") == 0 ||
++                   std::strcmp(env, "true") == 0 ||
++                   std::strcmp(env, "TRUE") == 0 ||
++                   std::strcmp(env, "yes") == 0 ||
++                   std::strcmp(env, "on") == 0);
++}
++
++static bool ggml_sycl_mul_mat_id_multi_token_no_reorder_enabled() {
++    const char * env = std::getenv("LLAMA_SYCL_MUL_MAT_ID_MULTI_TOKEN_NO_REORDER");
++    return env && (std::strcmp(env, "1") == 0 ||
++                   std::strcmp(env, "true") == 0 ||
++                   std::strcmp(env, "TRUE") == 0 ||
++                   std::strcmp(env, "yes") == 0 ||
++                   std::strcmp(env, "on") == 0);
++}
++
++static bool ggml_sycl_mul_mat_id_multi_token_grouped_q8_0_enabled() {
++    const char * env = std::getenv("LLAMA_SYCL_MUL_MAT_ID_MULTI_TOKEN_GROUPED_Q8_0");
++    return env && (std::strcmp(env, "1") == 0 ||
++                   std::strcmp(env, "true") == 0 ||
++                   std::strcmp(env, "TRUE") == 0 ||
++                   std::strcmp(env, "yes") == 0 ||
++                   std::strcmp(env, "on") == 0);
++}
++
++// Fused small multi-token MoE verifier path. This covers the Gemma target
++// verifier shape produced by draft-MTP: src1=[ncols,1,n_tokens],
++// ids=[n_experts_used,n_tokens], n_tokens<=8. It avoids the generic
++// MUL_MAT_ID path below, which copies ids to host, sorts routed rows, gathers
++// src1, runs one matmul per used expert, and scatters the output.
++static bool ggml_sycl_mul_mat_id_mmvq_multi_token_fused(
++    ggml_backend_sycl_context & ctx, const ggml_tensor * src0,
++    const ggml_tensor * src1, const ggml_tensor * ids, ggml_tensor * dst)
++{
++    const bool direct_fast_enabled =
++        ggml_sycl_mul_mat_id_multi_token_fast_enabled();
++    const bool grouped_q8_0_enabled =
++        ggml_sycl_mul_mat_id_multi_token_grouped_q8_0_enabled();
++    if (!direct_fast_enabled && !grouped_q8_0_enabled) return false;
++
++    const int64_t ne10 = src1->ne[0];
++    const int64_t ne11 = src1->ne[1];
++    const int64_t ne12 = src1->ne[2];
++    if (ne12 <= 1 || ne12 > 8) return false;
++    if (ne11 != 1 && ne11 != ids->ne[0]) return false;
++    if (src1->type != GGML_TYPE_F32 || dst->type != GGML_TYPE_F32) return false;
++    if (ne10 != src0->ne[0] || ne10 % QK8_1 != 0) return false;
++    if (!ggml_is_contiguous(src1)) return false;
++    if (ids->type != GGML_TYPE_I32) return false;
++    if (ids->ne[1] != ne12) return false;
++    if (ids->nb[0] % sizeof(int32_t) != 0 ||
++        ids->nb[1] % sizeof(int32_t) != 0) {
++        return false;
++    }
++    if (dst->ne[0] != src0->ne[1] || dst->ne[1] != ids->ne[0] ||
++        dst->ne[2] != ne12 || dst->nb[0] != sizeof(float) ||
++        dst->nb[1] % sizeof(float) != 0 ||
++        dst->nb[2] % sizeof(float) != 0) {
++        return false;
++    }
++
++    const queue_ptr stream           = ctx.stream();
++    const int       src1_padded_cols = GGML_PAD((int) ne10, MATRIX_ROW_PADDING);
++    const int       n_experts_used   = (int) ids->ne[0];
++    const int       nrows            = (int) src0->ne[1];
++    const int       n_tokens         = (int) ne12;
++
++    if (grouped_q8_0_enabled &&
++        src0->type == GGML_TYPE_Q8_0 &&
++        n_experts_used <= 8 &&
++        (ne11 == 1 || ne11 == n_experts_used)) {
++        const ggml_tensor_extra_gpu * src0_extra =
++            static_cast<const ggml_tensor_extra_gpu *>(src0->extra);
++        if (src0_extra && src0_extra->optimized_feature.reorder) {
++            return false;
++        }
++
++        ggml_sycl_pool_alloc<char> src1_q8_alloc(ctx.pool(),
++            (size_t) n_tokens * (size_t) ne11 * src1_padded_cols *
++                sizeof(block_q8_1) / QK8_1);
++        char * src1_ddq = src1_q8_alloc.get();
++        quantize_row_q8_1_sycl<quantize_q8_1>(
++            (const float *) src1->data, src1_ddq, (int) ne10,
++            n_tokens * (int) ne11, src1_padded_cols, stream);
++
++        const size_t bytes_per_qrow =
++            (size_t) src1_padded_cols * sizeof(block_q8_1) / QK8_1;
++        const int ids_expert_stride = (int) (ids->nb[0] / sizeof(int32_t));
++        const int ids_token_stride  = (int) (ids->nb[1] / sizeof(int32_t));
++
++        return ggml_sycl_mul_mat_vec_q_id_multi_token_grouped_q8_0(
++            src0->data, src1_ddq, (const int32_t *) ids->data,
++            (float *) dst->data, (int) ne10, nrows, n_experts_used, n_tokens,
++            /*expert_weight_stride=*/ src0->nb[2],
++            /*dst_row_stride=*/ dst->nb[1],
++            /*dst_token_stride=*/ dst->nb[2],
++            /*src1_row_stride=*/ bytes_per_qrow,
++            /*src1_rows_per_token=*/ (int) ne11,
++            ids_expert_stride, ids_token_stride, stream);
++    }
++
++    if (ne11 != 1) return false;
++    if (!direct_fast_enabled) return false;
++
++    opt_for_reorder_id(&ctx, src0);
++    const ggml_tensor_extra_gpu * src0_extra =
++        static_cast<const ggml_tensor_extra_gpu *>(src0->extra);
++    const bool use_reorder = src0_extra &&
++        src0_extra->optimized_feature.reorder &&
++        !ggml_sycl_mul_mat_id_multi_token_no_reorder_enabled();
++
++    ggml_sycl_pool_alloc<char> src1_q8_alloc(ctx.pool(),
++        (size_t) n_tokens * src1_padded_cols * sizeof(block_q8_1) / QK8_1);
++    char * src1_ddq = src1_q8_alloc.get();
++    if (use_reorder) {
++        quantize_row_q8_1_sycl<quantize_and_reorder_q8_1_soa>(
++            (const float *) src1->data, src1_ddq, (int) ne10, n_tokens,
++            src1_padded_cols, stream);
++    } else {
++        quantize_row_q8_1_sycl<quantize_q8_1>(
++            (const float *) src1->data, src1_ddq, (int) ne10, n_tokens,
++            src1_padded_cols, stream);
++    }
++
++    const size_t bytes_per_qrow = (size_t) src1_padded_cols * sizeof(block_q8_1) / QK8_1;
++    const int ids_expert_stride = (int) (ids->nb[0] / sizeof(int32_t));
++    const int ids_token_stride  = (int) (ids->nb[1] / sizeof(int32_t));
++
++    if (use_reorder) {
++        return ggml_sycl_mul_mat_vec_q_id_multi_token_reorder(
++            src0->type, src0->data, src1_ddq, (const int32_t *) ids->data,
++            (float *) dst->data, (int) ne10, nrows, n_experts_used, n_tokens,
++            /*expert_weight_stride=*/ src0->nb[2],
++            /*dst_row_stride=*/ dst->nb[1],
++            /*dst_token_stride=*/ dst->nb[2],
++            /*src1_token_stride=*/ bytes_per_qrow,
++            ids_expert_stride, ids_token_stride, stream);
++    }
++    return ggml_sycl_mul_mat_vec_q_id_multi_token(
++        src0->type, src0->data, src1_ddq, (const int32_t *) ids->data,
++        (float *) dst->data, (int) ne10, nrows, n_experts_used, n_tokens,
++        /*expert_weight_stride=*/ src0->nb[2],
++        /*dst_row_stride=*/ dst->nb[1],
++        /*dst_token_stride=*/ dst->nb[2],
++        /*src1_token_stride=*/ bytes_per_qrow,
++        ids_expert_stride, ids_token_stride, stream);
++}
++
+ // counting sort of the routed rows by expert id (row_id_i, as chosen by the router):
+ // builds a projection of a memory layout where each expert's slice is contiguous
+ static void mmid_counting_sort_rows(
+@@ -4400,6 +4748,158 @@ static void mmid_counting_sort_rows(
+     }
+ }
+ 
++static bool ggml_sycl_mul_mat_id_route_profile_enabled() {
++    const char * env = std::getenv("LLAMA_SYCL_MUL_MAT_ID_ROUTE_PROFILE");
++    return env && (std::strcmp(env, "1") == 0 ||
++                   std::strcmp(env, "true") == 0 ||
++                   std::strcmp(env, "TRUE") == 0 ||
++                   std::strcmp(env, "yes") == 0 ||
++                   std::strcmp(env, "on") == 0);
++}
++
++static int64_t ggml_sycl_mul_mat_id_route_profile_every() {
++    const char * env = std::getenv("LLAMA_SYCL_MUL_MAT_ID_ROUTE_PROFILE_EVERY");
++    if (!env || env[0] == '\0') {
++        return 250;
++    }
++    char * end = nullptr;
++    const long value = std::strtol(env, &end, 10);
++    return end != env && value > 0 ? value : 250;
++}
++
++static void ggml_sycl_mul_mat_id_route_profile_record(
++        const ggml_tensor * ids, const char * ids_host,
++        int64_t n_ids, int64_t n_as,
++        const ggml_tensor * src1, const ggml_tensor * dst) {
++    static const bool enabled = ggml_sycl_mul_mat_id_route_profile_enabled();
++    if (!enabled) {
++        return;
++    }
++
++    const int64_t n_tokens = ids->ne[1];
++    if (n_ids <= 0 || n_tokens <= 0 || n_as <= 0) {
++        return;
++    }
++
++    std::vector<int64_t> expert_counts(n_as, 0);
++    int64_t token_unique_sum = 0;
++
++    for (int64_t iid1 = 0; iid1 < n_tokens; iid1++) {
++        int64_t token_unique = 0;
++        for (int64_t id = 0; id < n_ids; id++) {
++            const int32_t row_id_i = *(const int32_t *) (ids_host + iid1*ids->nb[1] + id*ids->nb[0]);
++            if (row_id_i < 0 || row_id_i >= n_as) {
++                continue;
++            }
++            if (expert_counts[row_id_i]++ == 0) {
++                // Count global unique experts below. Per-token unique is separate.
++            }
++
++            bool seen_this_token = false;
++            for (int64_t prev = 0; prev < id; prev++) {
++                const int32_t prev_id = *(const int32_t *) (ids_host + iid1*ids->nb[1] + prev*ids->nb[0]);
++                if (prev_id == row_id_i) {
++                    seen_this_token = true;
++                    break;
++                }
++            }
++            if (!seen_this_token) {
++                token_unique++;
++            }
++        }
++        token_unique_sum += token_unique;
++    }
++
++    int64_t unique_experts = 0;
++    int64_t max_expert_rows = 0;
++    for (int64_t count : expert_counts) {
++        if (count > 0) {
++            unique_experts++;
++            max_expert_rows = std::max(max_expert_rows, count);
++        }
++    }
++
++    const int64_t routed_rows = n_ids * n_tokens;
++    const int64_t repeated_rows = routed_rows - unique_experts;
++
++    struct route_profile_accum {
++        int64_t calls = 0;
++        int64_t multi_calls = 0;
++        int64_t routed_rows = 0;
++        int64_t tokens = 0;
++        int64_t ids = 0;
++        int64_t unique_experts = 0;
++        int64_t token_unique = 0;
++        int64_t repeated_rows = 0;
++        int64_t max_expert_rows = 0;
++    };
++
++    struct route_profile_totals {
++        std::mutex mutex;
++        route_profile_accum all;
++        route_profile_accum buckets[4];
++    };
++
++    const auto add_sample = [&](route_profile_accum & accum) {
++        accum.calls++;
++        accum.multi_calls += n_tokens > 1 ? 1 : 0;
++        accum.routed_rows += routed_rows;
++        accum.tokens += n_tokens;
++        accum.ids += n_ids;
++        accum.unique_experts += unique_experts;
++        accum.token_unique += token_unique_sum;
++        accum.repeated_rows += repeated_rows;
++        accum.max_expert_rows += max_expert_rows;
++    };
++
++    static route_profile_totals totals;
++    static const int64_t every = ggml_sycl_mul_mat_id_route_profile_every();
++
++    std::lock_guard<std::mutex> lock(totals.mutex);
++    add_sample(totals.all);
++
++    const int bucket =
++        n_tokens <= 1  ? 0 :
++        n_tokens <= 8  ? 1 :
++        n_tokens <= 32 ? 2 : 3;
++    add_sample(totals.buckets[bucket]);
++
++    if (totals.all.calls % every == 0) {
++        const auto log_accum = [&](const char * label, const route_profile_accum & accum) {
++            if (accum.calls == 0) {
++                return;
++            }
++            const double calls = (double) accum.calls;
++            GGML_LOG_WARN(
++                    "sycl mul_mat_id route profile: bucket=%s calls=%" PRId64
++                    " multi_calls=%" PRId64
++                    " avg_tokens=%.3f avg_ids=%.3f avg_routed_rows=%.3f"
++                    " avg_global_unique=%.3f avg_token_unique=%.3f"
++                    " avg_repeated_rows=%.3f avg_max_expert_rows=%.3f"
++                    " last_shape src1=[%" PRId64 ",%" PRId64 ",%" PRId64 "]"
++                    " dst=[%" PRId64 ",%" PRId64 ",%" PRId64 "]\n",
++                    label,
++                    accum.calls,
++                    accum.multi_calls,
++                    (double) accum.tokens / calls,
++                    (double) accum.ids / calls,
++                    (double) accum.routed_rows / calls,
++                    (double) accum.unique_experts / calls,
++                    (double) accum.token_unique / std::max<int64_t>(1, accum.tokens),
++                    (double) accum.repeated_rows / calls,
++                    (double) accum.max_expert_rows / calls,
++                    src1->ne[0], src1->ne[1], src1->ne[2],
++                    dst->ne[0], dst->ne[1], dst->ne[2]);
++        };
++
++        log_accum("all", totals.all);
++        log_accum("tok1", totals.buckets[0]);
++        log_accum("tok2_8", totals.buckets[1]);
++        log_accum("tok9_32", totals.buckets[2]);
++        log_accum("tok33p", totals.buckets[3]);
++    }
++}
++
+ static void ggml_sycl_mul_mat_id(ggml_backend_sycl_context & ctx,
+                                  ggml_tensor *dst) try {
+     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/3);
+@@ -4419,6 +4919,10 @@ static void ggml_sycl_mul_mat_id(ggml_backend_sycl_context & ctx,
+         if (ggml_sycl_mul_mat_id_mmvq_fused(ctx, src0, src1, ids, dst)) {
+             return;
+         }
++    } else {
++        if (ggml_sycl_mul_mat_id_mmvq_multi_token_fused(ctx, src0, src1, ids, dst)) {
++            return;
++        }
+     }
+ 
+     std::vector<char> ids_host(ggml_nbytes(ids));
+@@ -4430,6 +4934,8 @@ static void ggml_sycl_mul_mat_id(ggml_backend_sycl_context & ctx,
+     // also ensures ctx.mmid_row_mapping_host is drained before we use it again
+     SYCL_CHECK(CHECK_TRY_ERROR(stream->wait()));
+ 
++    ggml_sycl_mul_mat_id_route_profile_record(ids, ids_host.data(), n_ids, n_as, src1, dst);
++
+     ggml_tensor src0_row = *src0;
+     ggml_tensor src1_row = *src1;
+     ggml_tensor dst_row = *dst;
+@@ -4672,6 +5178,9 @@ static bool ggml_sycl_compute_forward(ggml_backend_sycl_context & ctx, struct gg
+         case GGML_OP_ARGMAX:
+             ggml_sycl_argmax(ctx, dst);
+             break;
++        case GGML_OP_ARGMAX_SOFTCAP:
++            ggml_sycl_op_argmax_softcap(ctx, dst);
++            break;
+         case GGML_OP_CONV_2D:
+             ggml_sycl_op_conv2d(ctx, dst);
+             break;
+@@ -4866,6 +5375,12 @@ static bool ggml_sycl_compute_forward(ggml_backend_sycl_context & ctx, struct gg
+             }
+             ggml_sycl_mul_mat_id(ctx, dst);
+             break;
++        case GGML_OP_MOE_WEIGHTED_SUM:
++            ggml_sycl_moe_weighted_sum(ctx, dst);
++            break;
++        case GGML_OP_MUL_MAT_ARGMAX:
++            ggml_sycl_mul_mat_argmax(ctx, dst);
++            break;
+         case GGML_OP_OUT_PROD:
+             ggml_sycl_op_out_prod(ctx, dst);
+             break;
+@@ -5133,6 +5648,29 @@ catch (sycl::exception const &exc) {
+ static void ggml_backend_sycl_graph_compute_impl(ggml_backend_sycl_context * sycl_ctx, ggml_cgraph * cgraph) {
+     ggml_sycl_set_main_device(sycl_ctx->device);
+ 
++    static const bool node_profile = [] {
++        const char * value = std::getenv("GGML_SYCL_NODE_PROFILE");
++        return value != nullptr && (
++            std::strcmp(value, "1") == 0 ||
++            std::strcmp(value, "true") == 0 ||
++            std::strcmp(value, "TRUE") == 0 ||
++            std::strcmp(value, "yes") == 0 ||
++            std::strcmp(value, "on") == 0);
++    }();
++    static const int node_profile_every = [] {
++        const char * value = std::getenv("GGML_SYCL_NODE_PROFILE_EVERY");
++        if (value == nullptr || value[0] == '\0') {
++            return 32;
++        }
++        return std::max(1, std::atoi(value));
++    }();
++    struct node_profile_entry {
++        int64_t us = 0;
++        int64_t calls = 0;
++    };
++    static std::map<std::string, node_profile_entry> node_profile_entries;
++    static int64_t node_profile_graphs = 0;
++
+     for (int i = 0; i < cgraph->n_nodes; i++) {
+         ggml_tensor * node = cgraph->nodes[i];
+         if (ggml_is_empty(node) || node->op == GGML_OP_RESHAPE || node->op == GGML_OP_TRANSPOSE || node->op == GGML_OP_VIEW || node->op == GGML_OP_PERMUTE || node->op == GGML_OP_NONE) {
+@@ -5149,15 +5687,133 @@ static void ggml_backend_sycl_graph_compute_impl(ggml_backend_sycl_context * syc
+             }
+         }
+ #endif
++        const int64_t t_start = node_profile ? ggml_time_us() : 0;
+         bool ok = ggml_sycl_compute_forward(*sycl_ctx, node);
++        if (node_profile) {
++            sycl_ctx->stream()->wait();
++            const int64_t t_elapsed = ggml_time_us() - t_start;
++            const std::string key = std::string(ggml_op_name(node->op)) + ":" + node->name;
++            auto & entry = node_profile_entries[key];
++            entry.us += t_elapsed;
++            entry.calls++;
++        }
+         if (!ok) {
+             GGML_LOG_ERROR("%s: error: op not supported %s (%s)\n", __func__, node->name, ggml_op_name(node->op));
+         }
+         GGML_ASSERT(ok);
+     }
++
++    if (node_profile) {
++        node_profile_graphs++;
++        if (node_profile_graphs % node_profile_every == 0) {
++            std::vector<std::pair<std::string, node_profile_entry>> entries(
++                    node_profile_entries.begin(), node_profile_entries.end());
++            std::sort(entries.begin(), entries.end(),
++                    [](const auto & a, const auto & b) {
++                        return a.second.us > b.second.us;
++                    });
++
++            const int top_n = std::min<int>(30, entries.size());
++            GGML_LOG_WARN("sycl node profile: graphs=%" PRId64 ", unique_nodes=%zu, top=%d\n",
++                    node_profile_graphs, entries.size(), top_n);
++            for (int i = 0; i < top_n; ++i) {
++                const auto & e = entries[i];
++                GGML_LOG_WARN("sycl node profile: %2d total_ms=%.3f calls=%" PRId64 " avg_ms=%.3f %s\n",
++                        i + 1,
++                        (double) e.second.us / 1000.0,
++                        e.second.calls,
++                        (double) e.second.us / (double) e.second.calls / 1000.0,
++                        e.first.c_str());
++            }
++        }
++    }
+ }
+ 
+ #ifdef GGML_SYCL_GRAPH
++static bool ggml_sycl_mul_mat_id_multi_token_graph_eligible(const ggml_tensor * dst) {
++    const bool direct_fast_enabled =
++        ggml_sycl_mul_mat_id_multi_token_fast_enabled();
++    const bool grouped_q8_0_enabled =
++        ggml_sycl_mul_mat_id_multi_token_grouped_q8_0_enabled();
++    if (!direct_fast_enabled && !grouped_q8_0_enabled) {
++        return false;
++    }
++
++    const ggml_tensor * src0 = dst->src[0];
++    const ggml_tensor * src1 = dst->src[1];
++    const ggml_tensor * ids  = dst->src[2];
++    if (src0 == nullptr || src1 == nullptr || ids == nullptr) {
++        return false;
++    }
++
++    if (grouped_q8_0_enabled && src0->type == GGML_TYPE_Q8_0) {
++        const ggml_tensor_extra_gpu * src0_extra =
++            static_cast<const ggml_tensor_extra_gpu *>(src0->extra);
++        if (src0_extra && src0_extra->optimized_feature.reorder) {
++            return false;
++        }
++    } else {
++        if (!direct_fast_enabled) {
++            return false;
++        }
++        switch (src0->type) {
++            case GGML_TYPE_Q4_0:
++            case GGML_TYPE_Q4_1:
++            case GGML_TYPE_Q5_0:
++            case GGML_TYPE_Q5_1:
++            case GGML_TYPE_Q8_0:
++            case GGML_TYPE_Q2_K:
++            case GGML_TYPE_Q3_K:
++            case GGML_TYPE_Q4_K:
++            case GGML_TYPE_Q5_K:
++            case GGML_TYPE_Q6_K:
++            case GGML_TYPE_MXFP4:
++            case GGML_TYPE_NVFP4:
++                break;
++            default:
++                return false;
++        }
++    }
++
++    const int64_t ne10 = src1->ne[0];
++    const int64_t ne11 = src1->ne[1];
++    const int64_t ne12 = src1->ne[2];
++    if (ne12 <= 1 || ne12 > 8) {
++        return false;
++    }
++    if (grouped_q8_0_enabled && src0->type == GGML_TYPE_Q8_0) {
++        if (ids->ne[0] > 8 || (ne11 != 1 && ne11 != ids->ne[0])) {
++            return false;
++        }
++    } else if (ne11 != 1) {
++        return false;
++    }
++    if (src1->type != GGML_TYPE_F32 || dst->type != GGML_TYPE_F32) {
++        return false;
++    }
++    if (ne10 != src0->ne[0] || ne10 % QK8_1 != 0) {
++        return false;
++    }
++    if (!ggml_is_contiguous(src1)) {
++        return false;
++    }
++    if (ids->type != GGML_TYPE_I32 || ids->ne[1] != ne12) {
++        return false;
++    }
++    if (ids->nb[0] % sizeof(int32_t) != 0 ||
++        ids->nb[1] % sizeof(int32_t) != 0) {
++        return false;
++    }
++    if (dst->ne[0] != src0->ne[1] || dst->ne[1] != ids->ne[0] ||
++        dst->ne[2] != ne12 || dst->nb[0] != sizeof(float) ||
++        dst->nb[1] % sizeof(float) != 0 ||
++        dst->nb[2] % sizeof(float) != 0) {
++        return false;
++    }
++
++    return true;
++}
++
+ static bool check_graph_compatibility(ggml_cgraph * cgraph) {
+     if (ggml_sycl_info().device_count > 1) {
+         // A sycl_ex::command_graph object can only be created for a single device
+@@ -5174,11 +5830,16 @@ static bool check_graph_compatibility(ggml_cgraph * cgraph) {
+                 // ggml_sycl_op_concat() does a blocking host wait after memcpy operations,
+                 // but wait() can't be called on the events returned by a queue recording
+                 // to a graph.
+-                [[fallthrough]];
++                GGML_LOG_INFO("%s: disabling SYCL graphs due to unsupported node type %s\n", __func__,
++                              ggml_op_name(node_op));
++                return false;
+             case GGML_OP_MUL_MAT_ID:
+                 // ggml_sycl_mul_mat_id() does a blocking host wait on the sycl queue after
+                 // submitting a memcpy operation, but wait() can't be called on a queue that
+                 // is recording to a graph.
++                if (ggml_sycl_mul_mat_id_multi_token_graph_eligible(cgraph->nodes[i])) {
++                    break;
++                }
+                 GGML_LOG_INFO("%s: disabling SYCL graphs due to unsupported node type %s\n", __func__,
+                               ggml_op_name(node_op));
+                 return false;
+@@ -5204,7 +5865,8 @@ static ggml_status ggml_backend_sycl_graph_compute(ggml_backend_t backend, ggml_
+     auto * sycl_ctx = static_cast<ggml_backend_sycl_context *>(backend->context);
+ 
+ #ifdef GGML_SYCL_GRAPH
+-    bool use_sycl_graph = !g_ggml_sycl_disable_graph && check_graph_compatibility(cgraph);
++    const bool node_profile = std::getenv("GGML_SYCL_NODE_PROFILE") != nullptr;
++    bool use_sycl_graph = !node_profile && !g_ggml_sycl_disable_graph && check_graph_compatibility(cgraph);
+     if (use_sycl_graph) {
+         const bool graph_support = dpct::get_device(sycl_ctx->device).has(sycl::aspect::ext_oneapi_limited_graph);
+         if (!graph_support) {
+@@ -5475,6 +6137,50 @@ static bool do_ggml_backend_sycl_device_supports_op(ggml_backend_dev_t dev, cons
+                 }
+                 return true;
+             }
++        case GGML_OP_MUL_MAT_ARGMAX:
++            {
++                const ggml_tensor * a = op->src[0];
++                const ggml_tensor * b = op->src[1];
++
++                if (op->type != GGML_TYPE_I32 || b->type != GGML_TYPE_F32) {
++                    return false;
++                }
++                if (a->type != GGML_TYPE_Q4_0 && a->type != GGML_TYPE_Q8_0) {
++                    return false;
++                }
++                if (ggml_backend_buffer_is_sycl_split(a->buffer)) {
++                    return false;
++                }
++                if (!ggml_is_contiguous(b)) {
++                    return false;
++                }
++                if (b->ne[1] < 1 || b->ne[2] != 1 || b->ne[3] != 1) {
++                    return false;
++                }
++                if (a->ne[0] != b->ne[0] || a->ne[2] != b->ne[2] || a->ne[3] != b->ne[3]) {
++                    return false;
++                }
++                return true;
++            }
++        case GGML_OP_MOE_WEIGHTED_SUM:
++            {
++                const ggml_tensor * experts = op->src[0];
++                const ggml_tensor * weights = op->src[1];
++                if (experts == nullptr || weights == nullptr) {
++                    return false;
++                }
++                return op->type == GGML_TYPE_F32 &&
++                    experts->type == GGML_TYPE_F32 &&
++                    weights->type == GGML_TYPE_F32 &&
++                    experts->ne[0] == op->ne[0] &&
++                    experts->ne[1] == weights->ne[1] &&
++                    experts->ne[2] == op->ne[1] &&
++                    weights->ne[0] == 1 &&
++                    weights->ne[2] == op->ne[1] &&
++                    experts->nb[0] == sizeof(float) &&
++                    weights->nb[0] == sizeof(float) &&
++                    op->nb[0] == sizeof(float);
++            }
+         case GGML_OP_OUT_PROD:
+             return op->type == GGML_TYPE_F32 &&
+                    (op->src[0]->type == GGML_TYPE_F32 ||
+@@ -5608,6 +6314,18 @@ static bool do_ggml_backend_sycl_device_supports_op(ggml_backend_dev_t dev, cons
+                 ggml_type src0_type = op->src[0]->type;
+                 return src0_type == GGML_TYPE_F32;
+             }
++        case GGML_OP_ARGMAX_SOFTCAP:
++            {
++                const ggml_tensor * src0 = op->src[0];
++                if (src0 == nullptr) {
++                    return false;
++                }
++                return op->type == GGML_TYPE_I32 &&
++                    src0->type == GGML_TYPE_F32 &&
++                    ggml_is_matrix(src0) &&
++                    ggml_is_contiguous(src0) &&
++                    ggml_get_op_params_f32(op, 0) > 0.0f;
++            }
+         case GGML_OP_CONCAT:
+         case GGML_OP_DUP:
+         case GGML_OP_ARGMAX:
+@@ -5758,6 +6476,7 @@ static int64_t get_op_batch_size(const ggml_tensor * op) {
+         case GGML_OP_GET_ROWS:
+             return 0;
+         case GGML_OP_MUL_MAT:
++        case GGML_OP_MUL_MAT_ARGMAX:
+             return op->ne[1];
+         case GGML_OP_MUL_MAT_ID:
+         case GGML_OP_ROPE:
+diff --git a/ggml/src/ggml.c b/ggml/src/ggml.c
+index 0f682fd18..8a38d2375 100644
+--- a/ggml/src/ggml.c
++++ b/ggml/src/ggml.c
+@@ -990,6 +990,7 @@ static const char * GGML_OP_NAME[GGML_OP_COUNT] = {
+     "CUMSUM",
+     "MEAN",
+     "ARGMAX",
++    "ARGMAX_SOFTCAP",
+     "COUNT_EQUAL",
+     "REPEAT",
+     "REPEAT_BACK",
+@@ -1003,6 +1004,8 @@ static const char * GGML_OP_NAME[GGML_OP_COUNT] = {
+ 
+     "MUL_MAT",
+     "MUL_MAT_ID",
++    "MOE_WEIGHTED_SUM",
++    "MUL_MAT_ARGMAX",
+     "OUT_PROD",
+ 
+     "SCALE",
+@@ -1078,7 +1081,7 @@ static const char * GGML_OP_NAME[GGML_OP_COUNT] = {
+     "GLU",
+ };
+ 
+-static_assert(GGML_OP_COUNT == 97, "GGML_OP_COUNT != 97");
++static_assert(GGML_OP_COUNT == 100, "GGML_OP_COUNT != 100");
+ 
+ static const char * GGML_OP_SYMBOL[GGML_OP_COUNT] = {
+     "none",
+@@ -1101,6 +1104,7 @@ static const char * GGML_OP_SYMBOL[GGML_OP_COUNT] = {
+     "cumsum(x)",
+     "Σx/n",
+     "argmax(x)",
++    "argmax(softcap(x))",
+     "count_equal(x)",
+     "repeat(x)",
+     "repeat_back(x)",
+@@ -1114,6 +1118,8 @@ static const char * GGML_OP_SYMBOL[GGML_OP_COUNT] = {
+ 
+     "X*Y",
+     "X[i]*Y",
++    "moe_weighted_sum(x,w)",
++    "argmax(X*Y)",
+     "X*Y",
+ 
+     "x*v",
+@@ -1189,7 +1195,7 @@ static const char * GGML_OP_SYMBOL[GGML_OP_COUNT] = {
+     "glu(x)",
+ };
+ 
+-static_assert(GGML_OP_COUNT == 97, "GGML_OP_COUNT != 97");
++static_assert(GGML_OP_COUNT == 100, "GGML_OP_COUNT != 100");
+ 
+ static_assert(GGML_OP_POOL_COUNT == 2, "GGML_OP_POOL_COUNT != 2");
+ 
+@@ -2508,6 +2514,47 @@ struct ggml_tensor * ggml_argmax(
+     return result;
+ }
+ 
++// ggml_argmax_softcap
++
++struct ggml_tensor * ggml_argmax_softcap(
++        struct ggml_context * ctx,
++        struct ggml_tensor  * a,
++        float                 softcap) {
++    GGML_ASSERT(ggml_is_matrix(a));
++    GGML_ASSERT(a->type == GGML_TYPE_F32);
++    GGML_ASSERT(a->ne[0] <= INT32_MAX);
++    GGML_ASSERT(softcap > 0.0f);
++
++    struct ggml_tensor * result = ggml_new_tensor_1d(ctx, GGML_TYPE_I32, a->ne[1]);
++
++    ggml_set_op_params_f32(result, 0, softcap);
++
++    result->op     = GGML_OP_ARGMAX_SOFTCAP;
++    result->src[0] = a;
++
++    return result;
++}
++
++// ggml_mul_mat_argmax
++
++struct ggml_tensor * ggml_mul_mat_argmax(
++        struct ggml_context * ctx,
++        struct ggml_tensor  * a,
++        struct ggml_tensor  * b) {
++    GGML_ASSERT(a->ne[0] == b->ne[0]);
++    GGML_ASSERT(a->ne[2] == b->ne[2]);
++    GGML_ASSERT(a->ne[3] == b->ne[3]);
++    GGML_ASSERT(a->ne[1] <= INT32_MAX);
++
++    struct ggml_tensor * result = ggml_new_tensor_1d(ctx, GGML_TYPE_I32, b->ne[1]);
++
++    result->op     = GGML_OP_MUL_MAT_ARGMAX;
++    result->src[0] = a;
++    result->src[1] = b;
++
++    return result;
++}
++
+ // ggml_count_equal
+ 
+ struct ggml_tensor * ggml_count_equal(
+@@ -3313,6 +3360,30 @@ struct ggml_tensor * ggml_mul_mat_id(
+     return result;
+ }
+ 
++// ggml_moe_weighted_sum
++
++struct ggml_tensor * ggml_moe_weighted_sum(
++        struct ggml_context * ctx,
++        struct ggml_tensor  * experts,
++        struct ggml_tensor  * weights) {
++    GGML_ASSERT(experts->type == GGML_TYPE_F32);
++    GGML_ASSERT(weights->type == GGML_TYPE_F32);
++    GGML_ASSERT(experts->ne[3] == 1);
++    GGML_ASSERT(weights->ne[0] == 1);
++    GGML_ASSERT(weights->ne[1] == experts->ne[1]);
++    GGML_ASSERT(weights->ne[2] == experts->ne[2]);
++    GGML_ASSERT(weights->ne[3] == 1);
++
++    const int64_t ne[4] = { experts->ne[0], experts->ne[2], 1, 1 };
++    struct ggml_tensor * result = ggml_new_tensor(ctx, GGML_TYPE_F32, 2, ne);
++
++    result->op     = GGML_OP_MOE_WEIGHTED_SUM;
++    result->src[0] = experts;
++    result->src[1] = weights;
++
++    return result;
++}
++
+ // ggml_out_prod
+ 
+ static inline bool ggml_can_out_prod(const struct ggml_tensor * t0, const struct ggml_tensor * t1) {
+diff --git a/src/llama-graph.cpp b/src/llama-graph.cpp
+index 68c9e606c..7cdfe5025 100644
+--- a/src/llama-graph.cpp
++++ b/src/llama-graph.cpp
+@@ -14,6 +14,7 @@
+ 
+ #include <cassert>
+ #include <cmath>
++#include <cstdlib>
+ #include <cstring>
+ #include <numeric>
+ #include <sstream>
+@@ -21,6 +22,28 @@
+ 
+ // dedup helpers
+ 
++static bool llama_graph_gemma4_moe_top_k_enabled() {
++    const char * env = std::getenv("LLAMA_GEMMA4_MOE_TOP_K");
++    if (env == nullptr || env[0] == '\0') {
++        return false;
++    }
++
++    return strcmp(env, "1") == 0 || strcmp(env, "true") == 0 ||
++        strcmp(env, "TRUE") == 0 || strcmp(env, "yes") == 0 ||
++        strcmp(env, "on") == 0;
++}
++
++static bool llama_graph_gemma4_moe_weighted_sum_enabled() {
++    const char * env = std::getenv("LLAMA_GEMMA4_MOE_WEIGHTED_SUM");
++    if (env == nullptr || env[0] == '\0') {
++        return false;
++    }
++
++    return strcmp(env, "1") == 0 || strcmp(env, "true") == 0 ||
++        strcmp(env, "TRUE") == 0 || strcmp(env, "yes") == 0 ||
++        strcmp(env, "on") == 0;
++}
++
+ static ggml_tensor * build_attn_inp_kq_mask(
+         ggml_context * ctx,
+         const llama_kv_cache_context * mctx,
+@@ -82,13 +105,17 @@ static ggml_tensor * ggml_mul_mat_aux(
+ }
+ 
+ void llm_graph_input_embd::set_input(const llama_ubatch * ubatch) {
++    set_input(ubatch, false);
++}
++
++void llm_graph_input_embd::set_input(const llama_ubatch * ubatch, bool skip_embd_upload) {
+     if (ubatch->token) {
+         const int64_t n_tokens = ubatch->n_tokens;
+ 
+         ggml_backend_tensor_set(tokens, ubatch->token, 0, n_tokens*ggml_element_size(tokens));
+     }
+ 
+-    if (ubatch->embd) {
++    if (ubatch->embd && !skip_embd_upload) {
+         GGML_ASSERT(n_embd == embd->ne[0]);
+ 
+         const int64_t n_tokens = ubatch->n_tokens;
+@@ -909,6 +936,7 @@ void llm_graph_result::reset() {
+     std::fill(t_layer_inp.begin(), t_layer_inp.end(), nullptr);
+ 
+     t_sampled.clear();
++    t_sampled_rows.clear();
+     t_sampled_probs.clear();
+     t_sampled_logits.clear();
+     t_candidates.clear();
+@@ -930,14 +958,15 @@ void llm_graph_result::reset() {
+     gf = ggml_new_graph_custom(ctx_compute.get(), max_nodes, false);
+ }
+ 
+-void llm_graph_result::set_inputs(const llama_ubatch * ubatch) {
++void llm_graph_result::set_inputs(const llama_ubatch * ubatch, bool skip_embd_upload) {
+     for (auto & input : inputs) {
+-        input->set_input(ubatch);
++        input->set_input(ubatch, skip_embd_upload);
+     }
+ }
+ 
+ void llm_graph_result::set_outputs(const llm_graph_params & params) {
+-    if (t_logits != nullptr) {
++    if (t_logits != nullptr && !params.cparams.mtp_draft_direct_argmax_ids &&
++            !params.cparams.spec_verify_direct_argmax_ids) {
+         ggml_set_output(t_logits);
+     }
+     if (t_embd != nullptr) {
+@@ -963,6 +992,11 @@ void llm_graph_result::set_outputs(const llm_graph_params & params) {
+             ggml_set_output(t);
+         }
+     }
++    for (auto & [row_idx, t] : t_sampled_rows) {
++        if (t != nullptr) {
++            ggml_set_output(t);
++        }
++    }
+     for (auto & [seq_id, t] : t_sampled_probs) {
+         if (t != nullptr) {
+             ggml_set_output(t);
+@@ -1599,9 +1633,24 @@ ggml_tensor * llm_graph_context::build_moe_ffn(
+     }
+ 
+     // select experts
+-    ggml_tensor * selected_experts = ggml_argsort_top_k(ctx0, selection_probs, n_expert_used); // [n_expert_used, n_tokens]
+-    cb(selected_experts->src[0], "ffn_moe_argsort", il);
+-    cb(selected_experts, "ffn_moe_topk", il);
++    //
++    // Gemma4 selected-softmax mode already routes on logits, then applies
++    // softmax over only the selected logits. In that narrow case a true TOP_K
++    // op is sufficient and avoids full argsort work. Keep the generic argsort
++    // path for warmup / large-k / group-biased modes because SYCL TOP_K only
++    // supports k <= 32 and it does not preserve sorted order.
++    const bool use_top_k =
++        llama_graph_gemma4_moe_top_k_enabled() &&
++        arch == LLM_ARCH_GEMMA4 &&
++        gating_op == LLAMA_EXPERT_GATING_FUNC_TYPE_SOFTMAX_WEIGHT &&
++        exp_probs_b == nullptr &&
++        hparams.n_expert_groups <= 1 &&
++        n_expert_used <= 32;
++    ggml_tensor * selected_experts = use_top_k ?
++        ggml_top_k(ctx0, selection_probs, n_expert_used) :
++        ggml_argsort_top_k(ctx0, selection_probs, n_expert_used); // [n_expert_used, n_tokens]
++    cb(selected_experts->src[0], use_top_k ? "ffn_moe_topk_src" : "ffn_moe_argsort", il);
++    cb(selected_experts, use_top_k ? "ffn_moe_topk_unsorted" : "ffn_moe_topk", il);
+ 
+     if (arch == LLM_ARCH_GROVEMOE && n_expert != hparams.n_expert) {
+         // TODO: Use scalar div instead when/if implemented
+@@ -1796,6 +1845,17 @@ ggml_tensor * llm_graph_context::build_moe_ffn(
+ 
+     ggml_build_forward_expand(gf, experts);
+ 
++    if (!weight_before_ffn &&
++            llama_graph_gemma4_moe_weighted_sum_enabled() &&
++            arch == LLM_ARCH_GEMMA4 &&
++            experts->type == GGML_TYPE_F32 &&
++            weights->type == GGML_TYPE_F32 &&
++            experts->ne[1] == hparams.n_expert_used) {
++        ggml_tensor * moe_out = ggml_moe_weighted_sum(ctx0, experts, weights);
++        cb(moe_out, "ffn_moe_weighted_sum", il);
++        return moe_out;
++    }
++
+     ggml_tensor * cur_experts[LLAMA_MAX_EXPERTS] = { nullptr };
+ 
+     assert(n_expert_used > 0);
+@@ -2731,7 +2791,6 @@ llm_graph_input_attn_kv_iswa * llm_graph_context::build_attn_inp_kv_iswa() const
+     {
+         inp->self_k_idxs = mctx_cur->get_base()->build_input_k_idxs(ctx0, ubatch);
+         inp->self_v_idxs = mctx_cur->get_base()->build_input_v_idxs(ctx0, ubatch);
+-
+         inp->self_kq_mask = build_attn_inp_kq_mask(ctx0, mctx_cur->get_base(), ubatch, cparams);
+         inp->self_kq_mask_cnv = inp->self_kq_mask;
+     }
+@@ -3054,6 +3113,61 @@ void llm_graph_context::build_pooling(
+ }
+ 
+ void llm_graph_context::build_sampling() const {
++    if (cparams.spec_verify_direct_argmax_ids && !res->t_sampled_rows.empty()) {
++        return;
++    }
++
++    if (cparams.spec_verify_direct_argmax_ids && samplers.empty() && res->t_logits) {
++        ggml_tensor * logits = res->t_logits;
++        if (n_outputs == 0 || logits->ne[1] == 0) {
++            GGML_ASSERT(n_outputs == 0 && logits->ne[1] == 0);
++            return;
++        }
++
++        GGML_ASSERT(logits->type == GGML_TYPE_F32);
++        GGML_ASSERT(ggml_is_matrix(logits));
++        GGML_ASSERT(ggml_is_contiguous(logits));
++        GGML_ASSERT(logits->ne[0] > 0 && logits->ne[0] <= INT32_MAX);
++        GGML_ASSERT(logits->ne[1] == n_outputs);
++
++        ggml_tensor * sampled = ggml_argmax(ctx0, logits);
++        ggml_format_name(sampled, "spec_verify_argmax_token_rows");
++        res->t_sampled_rows[0] = sampled;
++        ggml_build_forward_expand(gf, sampled);
++
++        return;
++    }
++
++    if (cparams.mtp_draft_direct_argmax_ids && !res->t_sampled.empty()) {
++        return;
++    }
++
++    if (cparams.mtp_draft_direct_argmax_ids && samplers.empty() && res->t_logits) {
++        std::map<llama_seq_id, int32_t> seq_to_logit_row;
++        int32_t logit_row_idx = 0;
++
++        for (uint32_t i = 0; i < ubatch.n_tokens; i++) {
++            if (ubatch.output[i]) {
++                llama_seq_id seq_id = ubatch.seq_id[i][0];
++                seq_to_logit_row[seq_id] = logit_row_idx;
++                logit_row_idx++;
++            }
++        }
++
++        for (const auto & [seq_id, row_idx] : seq_to_logit_row) {
++            ggml_tensor * logits_seq = ggml_view_1d(ctx0, res->t_logits, res->t_logits->ne[0], row_idx * res->t_logits->nb[1]);
++            ggml_format_name(logits_seq, "mtp_direct_argmax_logits_%d", seq_id);
++
++            ggml_tensor * sampled = ggml_argmax(ctx0, logits_seq);
++            ggml_format_name(sampled, "mtp_direct_argmax_token_%d", seq_id);
++
++            res->t_sampled[seq_id] = sampled;
++            ggml_build_forward_expand(gf, sampled);
++        }
++
++        return;
++    }
++
+     if (samplers.empty() || !res->t_logits) {
+         return;
+     }

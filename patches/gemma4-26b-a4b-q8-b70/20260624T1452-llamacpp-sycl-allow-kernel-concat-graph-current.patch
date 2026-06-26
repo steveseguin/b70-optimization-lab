@@ -1,0 +1,83 @@
+diff --git a/ggml/src/ggml-sycl/ggml-sycl.cpp b/ggml/src/ggml-sycl/ggml-sycl.cpp
+index d8b83d0e2..d1a12df4f 100644
+--- a/ggml/src/ggml-sycl/ggml-sycl.cpp
++++ b/ggml/src/ggml-sycl/ggml-sycl.cpp
+@@ -82,6 +82,7 @@ static bool g_sycl_loaded = false;
+ int g_ggml_sycl_debug = 0;
+ int g_ggml_sycl_disable_optimize = 0;
+ int g_ggml_sycl_disable_graph = 0;
++int g_ggml_sycl_graph_allow_kernel_concat = 0;
+ int g_ggml_sycl_disable_dnn = 0;
+ int g_ggml_sycl_enable_vmm = 1;
+ int g_ggml_sycl_prioritize_dmmv = 0;
+@@ -272,6 +273,7 @@ static void ggml_check_sycl() try {
+         g_ggml_sycl_debug = ggml_sycl_get_env("GGML_SYCL_DEBUG", 0);
+         g_ggml_sycl_disable_optimize = ggml_sycl_get_env("GGML_SYCL_DISABLE_OPT", 0);
+         g_ggml_sycl_disable_graph = ggml_sycl_get_env("GGML_SYCL_DISABLE_GRAPH", 1);
++        g_ggml_sycl_graph_allow_kernel_concat = ggml_sycl_get_env("GGML_SYCL_GRAPH_ALLOW_KERNEL_CONCAT", 0);
+         g_ggml_sycl_disable_dnn = ggml_sycl_get_env("GGML_SYCL_DISABLE_DNN", 0);
+         g_ggml_sycl_enable_vmm = ggml_sycl_get_env("GGML_SYCL_ENABLE_VMM", 1);
+         g_ggml_sycl_prioritize_dmmv = ggml_sycl_get_env("GGML_SYCL_PRIORITIZE_DMMV", 0);
+@@ -328,6 +330,7 @@ static void ggml_check_sycl() try {
+         GGML_LOG_INFO("  GGML_SYCL_DISABLE_OPT: %d\n", g_ggml_sycl_disable_optimize);
+ #ifdef GGML_SYCL_GRAPH
+         GGML_LOG_INFO("  GGML_SYCL_DISABLE_GRAPH: %d\n", g_ggml_sycl_disable_graph);
++        GGML_LOG_INFO("  GGML_SYCL_GRAPH_ALLOW_KERNEL_CONCAT: %d\n", g_ggml_sycl_graph_allow_kernel_concat);
+ #else
+         GGML_LOG_INFO("  GGML_SYCL_DISABLE_GRAPH: graph disabled by compile flag\n");
+ #endif
+@@ -2251,7 +2254,7 @@ static void argmax_f32_i32_sycl(const float *x, int *dst, const int ncols,
+                                const int nrows, queue_ptr stream) {
+     const sycl::range<3> block_dims(1, 1, SYCL_ARGMAX_BLOCK_SIZE);
+     const sycl::range<3> block_nums(1, nrows, 1);
+-    const size_t shared_mem = 256 * sizeof(float);
++    const size_t shared_mem = SYCL_ARGMAX_BLOCK_SIZE * sizeof(float);
+ 
+     stream->submit([&](sycl::handler &cgh) {
+         sycl::local_accessor<float, 1> shared_data(
+@@ -2268,7 +2271,7 @@ static void argmax_f32_i32_sycl(const float *x, int *dst, const int ncols,
+                 float max_val = -INFINITY;
+                 int max_idx = -1;
+ 
+-                for (int col = tid; col < ncols; col += 256) {
++                for (int col = tid; col < ncols; col += SYCL_ARGMAX_BLOCK_SIZE) {
+                     float val = x[row * ncols + col];
+                     if (val > max_val) {
+                         max_val = val;
+@@ -2280,7 +2283,7 @@ static void argmax_f32_i32_sycl(const float *x, int *dst, const int ncols,
+                 shared_indices[tid] = max_idx;
+                 item_ct1.barrier(sycl::access::fence_space::local_space);
+ 
+-                for (int stride = 256/2; stride > 0; stride >>= 1) {
++                for (int stride = SYCL_ARGMAX_BLOCK_SIZE/2; stride > 0; stride >>= 1) {
+                     if (tid < stride) {
+                         float val1 = shared_data[tid];
+                         float val2 = shared_data[tid + stride];
+@@ -5158,6 +5161,16 @@ static void ggml_backend_sycl_graph_compute_impl(ggml_backend_sycl_context * syc
+ }
+ 
+ #ifdef GGML_SYCL_GRAPH
++static bool concat_uses_graph_safe_kernel(const ggml_tensor * node) {
++    const int32_t dim = ((const int32_t *) node->op_params)[0];
++
++    // concat.cpp only uses blocking queue memcpy().wait() for contiguous dim=3
++    // concat. Dim 0/1/2 and non-contiguous paths enqueue kernels without host
++    // waits, which are safe to record in a SYCL command graph. Keep this
++    // opt-in until broad concat coverage has been validated.
++    return dim != 3;
++}
++
+ static bool check_graph_compatibility(ggml_cgraph * cgraph) {
+     if (ggml_sycl_info().device_count > 1) {
+         // A sycl_ex::command_graph object can only be created for a single device
+@@ -5171,6 +5184,10 @@ static bool check_graph_compatibility(ggml_cgraph * cgraph) {
+             default:
+                 break;
+             case GGML_OP_CONCAT:
++                if (g_ggml_sycl_graph_allow_kernel_concat &&
++                        concat_uses_graph_safe_kernel(cgraph->nodes[i])) {
++                    break;
++                }
+                 // ggml_sycl_op_concat() does a blocking host wait after memcpy operations,
+                 // but wait() can't be called on the events returned by a queue recording
+                 // to a graph.

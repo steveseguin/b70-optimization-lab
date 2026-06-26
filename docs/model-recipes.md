@@ -23,7 +23,8 @@ Do not compare two results unless their model, quantization, prompt length, outp
 
 | Recipe | Status | What It Is For |
 | --- | --- | --- |
-| `../repro/gemma4-26b-a4b-q8-b70-95tps-20260624/` | Copy-ready speed repro | Gemma 4 26B A4B Q8 target on one B70 with Q4_0 MTP draft, llama.cpp SYCL, exact patch, commands, and LocalMaxxing evidence for the `95.264 tok/s` fresh-response result. |
+| `../results/gemma4-26b-a4b-q8-b70/` | Current speed packet | Gemma 4 26B A4B Q8 target on one B70 with Q4_0 MTP draft, llama.cpp SYCL, current commands, validity rules, and LocalMaxxing evidence for the `103.299 tok/s` fresh-response result. |
+| `../repro/gemma4-26b-a4b-q8-b70-95tps-20260624/` | Prior copy-ready speed repro | Superseded standalone Gemma 4 26B A4B Q8 target recipe for the older `95.264 tok/s` fresh-response result. |
 | `../results/gemma4-26b-a4b-q8-b70/` | Active lab packet | Full Gemma 4 26B A4B Q8/INT8 B70 optimization history, including older baselines, failed paths, validity gates, and vLLM comparison lanes. |
 | `../repro/minimax-m27-b70-110tps-ubuntu24-20260523/` | Deployable baseline | Fresh Ubuntu 24.04 setup for 4x B70, MiniMax M2.7 INT4 AutoRound, vLLM OpenAI-compatible endpoint on `0.0.0.0:8000`. |
 | `../repro/minimax-m27-b70-89tps-20260520/` | Strict speed baseline | Older strict quality-passed MiniMax M2.7 INT4 lane with higher output-token throughput. Useful for optimization comparisons. |
@@ -103,20 +104,24 @@ results for shared-prefix plus unique-tail prompts.
 
 ## Gemma 4 26B A4B Q8 / INT8
 
-The copy-ready recipe is
-[`../repro/gemma4-26b-a4b-q8-b70-95tps-20260624/`](../repro/gemma4-26b-a4b-q8-b70-95tps-20260624/README.md).
-It packages the exact llama.cpp patch, Q8 target, Q4_0 MTP draft preparation,
-record command line, and LocalMaxxing artifacts for the current one-B70
-fresh-response record.
+The current command and validation packet is
+[`../results/gemma4-26b-a4b-q8-b70/reproduce.md`](../results/gemma4-26b-a4b-q8-b70/reproduce.md).
+The standalone
+[`../repro/gemma4-26b-a4b-q8-b70-95tps-20260624/`](../repro/gemma4-26b-a4b-q8-b70-95tps-20260624/README.md)
+folder packages the older superseded 95 tok/s llama.cpp patch, Q8 target,
+Q4_0 MTP draft preparation, command line, and LocalMaxxing artifacts.
 
 The deeper active lab packet is
 [`../results/gemma4-26b-a4b-q8-b70/`](../results/gemma4-26b-a4b-q8-b70/README.md).
 This lane intentionally avoids tensor-parallel splitting at first: run one
 complete Gemma 4 26B A4B replica per B70 and use four replicas for parallel
 research. Current promoted result is the llama.cpp draft-MTP filled-long lane at
-`95.264 tok/s` after TTFT on the first no-cache request on one B70, with
-`95.386 tok/s` supporting mean (`n=7, n-min=2, p-min=0.12`, backend sampling
-off, Q8 target/verifier with Q4_0 MTP draft only, 384/384 chat canary).
+`103.299 tok/s` after TTFT on the first no-cache request on one B70, with
+`102.193 tok/s` supporting mean (`n=7, n-min=2, p-min=0.136`, backend sampling
+off, Q8 target/verifier with Q4_0 MTP draft only, direct argmax-ID unroll,
+q-only assistant inputs, safer verifier row-argmax IDs, deferred target
+`h_nextn`, selected-softmax/weighted-sum MoE source guards,
+`UR_L0_USE_IMMEDIATE_COMMANDLISTS=1`, 1536/1536 chat canary).
 
 Start with llama.cpp SYCL and the Unsloth `UD-Q8_K_XL` GGUF:
 
@@ -126,7 +131,7 @@ scripts/download-gemma4-26b-q8-gguf.sh
 GPU_INDEX=0 PORT=18260 scripts/run-gemma4-26b-llamacpp-replica.sh
 ```
 
-For the record path, use the repro wrapper instead:
+For the older standalone 95 tok/s path, use the repro wrapper:
 
 ```bash
 cd repro/gemma4-26b-a4b-q8-b70-95tps-20260624

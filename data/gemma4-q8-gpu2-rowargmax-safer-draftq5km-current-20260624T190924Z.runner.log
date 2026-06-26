@@ -1,0 +1,67 @@
+[gemma4-baseline] label=gemma4-q8-gpu2-rowargmax-safer-draftq5km-current-20260624T190924Z
+[gemma4-baseline] base_url=http://127.0.0.1:18262
+[gemma4-baseline] model=/mnt/fast-ai/llm-models/gemma4-26b-a4b-it-q8-gguf/gemma-4-26B-A4B-it-UD-Q8_K_XL.gguf
+[gemma4-baseline] server_log=/mnt/fast-ai/bench-results/gemma4-26b-a4b-q8/servers/gemma4-q8-gpu2-rowargmax-safer-draftq5km-current-20260624T190924Z.server.log
+[gemma4-baseline] server exited before readiness
+date_utc=20260624T190924Z
+gpu_index=2
+host=127.0.0.1
+port=18262
+model=/mnt/fast-ai/llm-models/gemma4-26b-a4b-it-q8-gguf/gemma-4-26B-A4B-it-UD-Q8_K_XL.gguf
+model_alias=gemma4-26b-a4b-q8
+llama_server=/home/steve/src/llama.cpp-gemma-record-stack/build-sycl-b70-aot-bmg-g31/bin/llama-server
+llama_cpp_commit=c926ad098
+ctx_size=8192
+batch_size=1024
+ubatch_size=1024
+n_gpu_layers=99
+threads=8
+flash_attn=off
+cache_type_k=f16
+cache_type_v=f16
+poll=100
+reasoning=off
+llama_devices=SYCL2
+llama_split_mode=<unset>
+llama_tensor_split=<unset>
+llama_main_gpu=<unset>
+extra_llama_args=--parallel 1 --cache-ram 0 --spec-type draft-mtp --spec-draft-model /mnt/fast-ai/llm-models/gemma4-26b-a4b-it-q8-gguf/MTP/gemma-4-26B-A4B-it-Q5_K_M-MTP.gguf --spec-draft-n-max 7 --spec-draft-device SYCL2 --spec-draft-ngl all --spec-draft-type-k f16 --spec-draft-type-v f16 --spec-draft-n-min 2 --spec-draft-p-min 0.14 --no-spec-draft-backend-sampling --spec-draft-threads 32 --spec-draft-threads-batch 32 --ctx-checkpoints 0
+LLAMA_MTP_DRAFT_TOP_K=<unset>
+LLAMA_MTP_DRAFT_LOGIT_GAP_MIN=<unset>
+LLAMA_MTP_DRAFT_FAST_TOPK=<unset>
+LLAMA_MTP_DRAFT_FAST_ARGMAX=1
+LLAMA_MTP_DRAFT_DIRECT_ARGMAX_IDS=1
+LLAMA_MTP_DRAFT_DIRECT_ARGMAX_UNROLL=7
+LLAMA_MTP_DRAFT_DEVICE_H_HANDOFF=<unset>
+LLAMA_MTP_DRAFT_BACKEND_ARGMAX=<unset>
+LLAMA_MTP_DRAFT_BACKEND_TOPK=<unset>
+LLAMA_MTP_DRAFT_PROFILE=<unset>
+LLAMA_MTP_DRAFT_TERMINAL_LOGITS_ONLY=<unset>
+LLAMA_GEMMA4_MTP_FUSED_OUTPUT_ARGMAX=<unset>
+LLAMA_GEMMA4_MTP_QONLY_ATTN_INPUTS=1
+LLAMA_GEMMA4_MTP_LAYER_TAPER_AFTER=<unset>
+LLAMA_GEMMA4_MTP_LAYER_TAPER_LAYERS=<unset>
+LLAMA_SPEC_VERIFY_GREEDY_ARGMAX=<unset>
+LLAMA_SPEC_VERIFY_BACKEND_ARGMAX_IDS=1
+ONEAPI_DEVICE_SELECTOR=level_zero:2
+GGML_SYCL_DISABLE_OPT=0
+GGML_SYCL_ENABLE_VMM=0
+GGML_SYCL_DISABLE_GRAPH=0
+GGML_SYCL_DISABLE_DNN=<unset>
+version: 9769 (c926ad098)
+built with IntelLLVM 2026.0.0 for Linux x86_64
+INFO: Output filtered by ONEAPI_DEVICE_SELECTOR environment variable, which is set to level_zero:2.
+To see device ids, use the --ignore-device-selectors CLI option.
+
+[level_zero:gpu] Intel(R) oneAPI Unified Runtime over Level-Zero V2, Intel(R) Arc(TM) Pro B70 Graphics 20.2.0 [1.15.38308+1]
+--- server ---
+error while handling argument "-dev": invalid device: SYCL2
+
+usage:
+-dev,  --device <dev1,dev2,..>          comma-separated list of devices to use for offloading (none = don't
+                                        offload)
+                                        use --list-devices to see a list of available devices
+                                        (env: LLAMA_ARG_DEVICE)
+
+
+to show complete usage, run with -h

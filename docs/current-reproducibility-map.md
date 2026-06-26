@@ -90,15 +90,15 @@ experiments/minimax_xpu_kv_offload/scripts/session_cache_status.sh
 
 ## Gemma 4 26B Copy-Ready Record
 
-The current Gemma 4 26B A4B Q8 single-B70 record is packaged as a standalone
-repro folder:
+The current Gemma 4 26B A4B Q8 single-B70 record is documented in the result
+packet:
 
-`../repro/gemma4-26b-a4b-q8-b70-95tps-20260624/README.md`
+`../results/gemma4-26b-a4b-q8-b70/reproduce.md`
 
-Use it when the goal is to copy the exact 95 tok/s settings rather than review
-the full experiment history. It includes the llama.cpp `c926ad098` patch, Q8
-target GGUF, Q4_0 MTP draft preparation, command line, and LocalMaxxing
-artifacts.
+Use it when the goal is to copy the current `103.299 tok/s` settings rather
+than review the full experiment history. The older standalone
+`../repro/gemma4-26b-a4b-q8-b70-95tps-20260624/README.md` folder remains as a
+superseded `95.264 tok/s` reproduction artifact.
 
 Record identity:
 
@@ -106,9 +106,15 @@ Record identity:
 - draft: local `Q4_0` Gemma MTP draft only
 - hardware: headless Supermicro AMD Threadripper PRO 5955WX platform, 128 GB
   DDR4, one Intel Arc Pro B70 32 GB used for the measured replica
-- result: `95.264 tok/s` first fresh no-cache request after TTFT, `95.386`
-  supporting mean, 384/384 chat canary, LocalMaxxing
-  `cmqrsupdk000jqr01af3eu6vu`
+- result: `103.299 tok/s` first fresh no-cache request after TTFT, `102.193`
+  supporting mean, 1536/1536 chat canary, LocalMaxxing
+  `cmqsylo2l011nqr011yydjvne`; includes selected-softmax/weighted-sum MoE
+  source guards and `UR_L0_USE_IMMEDIATE_COMMANDLISTS=1`
+- primary artifacts:
+  `../data/gemma4-q8-gpu0-selectedsoftmax-weightedsum-pmin0136-full-20260625T031510Z/summary.json`,
+  `../data/localmaxxing-gemma4-26b-a4b-q8-b70-llamacpp-mtp-n7-q8target-q40draft-selectedsoftmax-weightedsum-pmin0136-fresh-20260625.queue.json`,
+  and
+  `../data/localmaxxing-responses/gemma4-26b-a4b-q8-b70-llamacpp-mtp-n7-q8target-q40draft-selectedsoftmax-weightedsum-pmin0136-fresh-20260625.submit.log`
 
 The full optimization ledger remains in
 `../results/gemma4-26b-a4b-q8-b70/README.md`.

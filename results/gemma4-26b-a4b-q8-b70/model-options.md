@@ -68,8 +68,9 @@ Lower-precision public-speed lanes:
   result packet. vLLM explicitly warns that the 26B-A4B MoE expert dimension is
   sensitive to 4-bit quantization; the vLLM fallback should be int8
   per-channel weight-only, not W4A16.
-- QAT GGUF side lane started 2026-06-24 after the Q8 MTP path plateaued at
-  `95.2635 tok/s` fresh-response throughput. The candidate repo is
+- QAT GGUF side lane started 2026-06-24 after the Q8 MTP path plateaued in the
+  mid-90s and before the later `103.299 tok/s` fresh-response Q8-target
+  selected-softmax/weighted-sum direct-unroll/q-only record. The candidate repo is
   `unsloth/gemma-4-26B-A4B-it-qat-GGUF`, with local target path
   `/mnt/fast-ai/llm-models/gemma4-26b-a4b-it-qat-gguf/gemma-4-26B-A4B-it-qat-UD-Q4_K_XL.gguf`
   and draft path

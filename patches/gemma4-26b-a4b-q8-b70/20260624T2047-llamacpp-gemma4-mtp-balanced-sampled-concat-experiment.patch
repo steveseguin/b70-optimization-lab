@@ -1,0 +1,89 @@
+diff --git a/src/models/gemma4-assistant.cpp b/src/models/gemma4-assistant.cpp
+--- a/src/models/gemma4-assistant.cpp
++++ b/src/models/gemma4-assistant.cpp
+@@
+ #include "models.h"
+ 
+ #include <cstdlib>
+ #include <string>
++#include <vector>
+@@
+ static bool llama_gemma4_mtp_fused_output_argmax_enabled() {
+@@
+ }
+ 
++static bool llama_gemma4_mtp_balanced_sampled_concat_enabled() {
++    const char * value = std::getenv("LLAMA_GEMMA4_MTP_BALANCED_SAMPLED_CONCAT");
++    if (value == nullptr) {
++        return false;
++    }
++
++    const std::string s(value);
++    return s == "1" || s == "true" || s == "TRUE" || s == "yes" || s == "on";
++}
++
+@@
+     const bool fused_output_argmax =
+         direct_unroll &&
+         llama_gemma4_mtp_fused_output_argmax_enabled() &&
+         (model.output->type == GGML_TYPE_Q4_0 || model.output->type == GGML_TYPE_Q8_0);
++    const bool balanced_sampled_concat =
++        direct_unroll && llama_gemma4_mtp_balanced_sampled_concat_enabled();
+@@
+     ggml_tensor * sampled_all = nullptr;
+     ggml_tensor * logits      = nullptr;
+     ggml_tensor * h_next      = nullptr;
++    std::vector<ggml_tensor *> sampled_steps;
++    if (balanced_sampled_concat) {
++        sampled_steps.reserve((size_t) n_unroll);
++    }
+@@
+             ggml_tensor * sampled = step.sampled ? step.sampled : ggml_argmax(ctx0, logits);
+             ggml_format_name(sampled, "mtp_direct_argmax_unroll_token_%d", i);
+ 
+-            sampled_all = sampled_all ? ggml_concat(ctx0, sampled_all, sampled, 0) : sampled;
++            if (balanced_sampled_concat) {
++                sampled_steps.push_back(sampled);
++            } else {
++                sampled_all = sampled_all ? ggml_concat(ctx0, sampled_all, sampled, 0) : sampled;
++            }
+             tokens_step = sampled;
+@@
+     }
++
++    if (balanced_sampled_concat && !sampled_steps.empty()) {
++        auto build_concat_tree = [&](auto && self, size_t begin, size_t end) -> ggml_tensor * {
++            GGML_ASSERT(begin < end);
++            if (end - begin == 1) {
++                return sampled_steps[begin];
++            }
++
++            const size_t mid = begin + (end - begin) / 2;
++            ggml_tensor * left  = self(self, begin, mid);
++            ggml_tensor * right = self(self, mid, end);
++            return ggml_concat(ctx0, left, right, 0);
++        };
++
++        sampled_all = build_concat_tree(build_concat_tree, 0, sampled_steps.size());
++    }
+diff --git a/scripts/run-gemma4-26b-llamacpp-replica.sh b/scripts/run-gemma4-26b-llamacpp-replica.sh
+--- a/scripts/run-gemma4-26b-llamacpp-replica.sh
++++ b/scripts/run-gemma4-26b-llamacpp-replica.sh
+@@
+   echo "LLAMA_GEMMA4_MTP_FUSED_OUTPUT_ARGMAX=${LLAMA_GEMMA4_MTP_FUSED_OUTPUT_ARGMAX:-<unset>}"
+   echo "LLAMA_GEMMA4_MTP_QONLY_ATTN_INPUTS=${LLAMA_GEMMA4_MTP_QONLY_ATTN_INPUTS:-<unset>}"
++  echo "LLAMA_GEMMA4_MTP_BALANCED_SAMPLED_CONCAT=${LLAMA_GEMMA4_MTP_BALANCED_SAMPLED_CONCAT:-<unset>}"
+   echo "LLAMA_GEMMA4_MTP_LAYER_TAPER_AFTER=${LLAMA_GEMMA4_MTP_LAYER_TAPER_AFTER:-<unset>}"
+diff --git a/scripts/run-gemma4-26b-first-baseline.sh b/scripts/run-gemma4-26b-first-baseline.sh
+--- a/scripts/run-gemma4-26b-first-baseline.sh
++++ b/scripts/run-gemma4-26b-first-baseline.sh
+@@
+ LLAMA_GEMMA4_MTP_FUSED_OUTPUT_ARGMAX="${LLAMA_GEMMA4_MTP_FUSED_OUTPUT_ARGMAX:-}" \
+ LLAMA_GEMMA4_MTP_QONLY_ATTN_INPUTS="${LLAMA_GEMMA4_MTP_QONLY_ATTN_INPUTS:-}" \
++LLAMA_GEMMA4_MTP_BALANCED_SAMPLED_CONCAT="${LLAMA_GEMMA4_MTP_BALANCED_SAMPLED_CONCAT:-}" \
+ LLAMA_SPEC_VERIFY_GREEDY_ARGMAX="${LLAMA_SPEC_VERIFY_GREEDY_ARGMAX:-}" \
+@@
+         "llama_gemma4_mtp_fused_output_argmax": env_or_log("LLAMA_GEMMA4_MTP_FUSED_OUTPUT_ARGMAX"),
+         "llama_gemma4_mtp_qonly_attn_inputs": env_or_log("LLAMA_GEMMA4_MTP_QONLY_ATTN_INPUTS"),
++        "llama_gemma4_mtp_balanced_sampled_concat": env_or_log("LLAMA_GEMMA4_MTP_BALANCED_SAMPLED_CONCAT"),
+         "llama_spec_verify_greedy_argmax": env_or_log("LLAMA_SPEC_VERIFY_GREEDY_ARGMAX"),

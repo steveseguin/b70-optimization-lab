@@ -131,3 +131,18 @@ independent experiments that can occupy GPUs 0..3 without tensor parallelism.
 Do not promote speed-only results; every claim needs canary status, run
 identity, output tok/s, TTFT or another secondary metric, and a server log path.
 ```
+
+Gemma-specific lessons from the Q8 run:
+
+- Use four independent GPUs for coarse rejection and idea coverage, but do not
+  rank near-record candidates from four-way screens alone. The current record
+  neighborhood showed host/contention variance; promote only from a clean solo
+  run.
+- Treat `p512o512.rows[0].tok_s_after_ttft` as the fresh headline only when
+  `cached_tokens=0` and the canary passes. Later benchmark rows are
+  support/stability unless every row is a distinct fresh prompt with no usable
+  prior continuation.
+- Mine the existing result tree before new runs. The 103.299 tok/s record came
+  from targeted source/runtime improvements plus narrow neighborhood checks;
+  repeated flag roulette after acceptance was already saturated mostly found
+  noise.

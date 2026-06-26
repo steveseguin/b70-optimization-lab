@@ -1,0 +1,92 @@
+diff --git a/scripts/run-gemma4-26b-first-baseline.sh b/scripts/run-gemma4-26b-first-baseline.sh
+index f8f84c26..02214b65 100755
+--- a/scripts/run-gemma4-26b-first-baseline.sh
++++ b/scripts/run-gemma4-26b-first-baseline.sh
+@@ -72,9 +72,21 @@ LLAMA_MTP_DRAFT_DEVICE_H_HANDOFF="${LLAMA_MTP_DRAFT_DEVICE_H_HANDOFF:-}" \
+ LLAMA_MTP_DRAFT_BACKEND_ARGMAX="${LLAMA_MTP_DRAFT_BACKEND_ARGMAX:-}" \
+ LLAMA_MTP_DRAFT_BACKEND_TOPK="${LLAMA_MTP_DRAFT_BACKEND_TOPK:-}" \
+ LLAMA_MTP_DRAFT_PROFILE="${LLAMA_MTP_DRAFT_PROFILE:-}" \
++LLAMA_SERVER_SPEC_PROFILE="${LLAMA_SERVER_SPEC_PROFILE:-}" \
+ LLAMA_MTP_DRAFT_TERMINAL_LOGITS_ONLY="${LLAMA_MTP_DRAFT_TERMINAL_LOGITS_ONLY:-}" \
++LLAMA_MTP_DEFER_TARGET_H_NEXTN="${LLAMA_MTP_DEFER_TARGET_H_NEXTN:-}" \
++LLAMA_GEMMA4_MTP_FUSED_OUTPUT_ARGMAX="${LLAMA_GEMMA4_MTP_FUSED_OUTPUT_ARGMAX:-}" \
++LLAMA_GEMMA4_MTP_QONLY_ATTN_INPUTS="${LLAMA_GEMMA4_MTP_QONLY_ATTN_INPUTS:-}" \
++LLAMA_GEMMA4_MOE_SELECTED_SOFTMAX="${LLAMA_GEMMA4_MOE_SELECTED_SOFTMAX:-}" \
++LLAMA_GEMMA4_MOE_TOP_K="${LLAMA_GEMMA4_MOE_TOP_K:-}" \
++LLAMA_GEMMA4_MOE_WEIGHTED_SUM="${LLAMA_GEMMA4_MOE_WEIGHTED_SUM:-}" \
++LLAMA_GEMMA4_MOE_FUSED_DOWN_WEIGHTED_SUM="${LLAMA_GEMMA4_MOE_FUSED_DOWN_WEIGHTED_SUM:-}" \
++LLAMA_GEMMA4_MOE_FUSED_GEGLU_DOWN_WEIGHTED_SUM="${LLAMA_GEMMA4_MOE_FUSED_GEGLU_DOWN_WEIGHTED_SUM:-}" \
++LLAMA_GEMMA4_MOE_FUSED_DOWN_WEIGHTED_SUM_DEBUG="${LLAMA_GEMMA4_MOE_FUSED_DOWN_WEIGHTED_SUM_DEBUG:-}" \
+ LLAMA_SPEC_VERIFY_GREEDY_ARGMAX="${LLAMA_SPEC_VERIFY_GREEDY_ARGMAX:-}" \
+ LLAMA_SPEC_VERIFY_BACKEND_ARGMAX_IDS="${LLAMA_SPEC_VERIFY_BACKEND_ARGMAX_IDS:-}" \
++LLAMA_SPEC_VERIFY_FUSED_OUTPUT_ARGMAX="${LLAMA_SPEC_VERIFY_FUSED_OUTPUT_ARGMAX:-}" \
++LLAMA_SPEC_VERIFY_SOFTCAP_ARGMAX="${LLAMA_SPEC_VERIFY_SOFTCAP_ARGMAX:-}" \
+ LOG="$SERVER_LOG" \
+ scripts/run-gemma4-26b-llamacpp-replica.sh > "$RUN_DIR/server.stdout.log" 2>&1 &
+ server_pid="$!"
+@@ -177,9 +189,25 @@ out = {
+         "llama_mtp_draft_backend_argmax": env_or_log("LLAMA_MTP_DRAFT_BACKEND_ARGMAX"),
+         "llama_mtp_draft_backend_topk": env_or_log("LLAMA_MTP_DRAFT_BACKEND_TOPK"),
+         "llama_mtp_draft_profile": env_or_log("LLAMA_MTP_DRAFT_PROFILE"),
++        "llama_server_spec_profile": env_or_log("LLAMA_SERVER_SPEC_PROFILE"),
+         "llama_mtp_draft_terminal_logits_only": env_or_log("LLAMA_MTP_DRAFT_TERMINAL_LOGITS_ONLY"),
++        "llama_mtp_defer_target_h_nextn": env_or_log("LLAMA_MTP_DEFER_TARGET_H_NEXTN"),
++        "llama_gemma4_mtp_fused_output_argmax": env_or_log("LLAMA_GEMMA4_MTP_FUSED_OUTPUT_ARGMAX"),
++        "llama_gemma4_mtp_qonly_attn_inputs": env_or_log("LLAMA_GEMMA4_MTP_QONLY_ATTN_INPUTS"),
++        "llama_gemma4_moe_selected_softmax": env_or_log("LLAMA_GEMMA4_MOE_SELECTED_SOFTMAX"),
++        "llama_gemma4_moe_top_k": env_or_log("LLAMA_GEMMA4_MOE_TOP_K"),
++        "llama_gemma4_moe_weighted_sum": env_or_log("LLAMA_GEMMA4_MOE_WEIGHTED_SUM"),
++        "llama_gemma4_moe_fused_down_weighted_sum": env_or_log("LLAMA_GEMMA4_MOE_FUSED_DOWN_WEIGHTED_SUM"),
++        "llama_gemma4_moe_fused_geglu_down_weighted_sum": env_or_log("LLAMA_GEMMA4_MOE_FUSED_GEGLU_DOWN_WEIGHTED_SUM"),
++        "llama_gemma4_moe_fused_down_weighted_sum_debug": env_or_log("LLAMA_GEMMA4_MOE_FUSED_DOWN_WEIGHTED_SUM_DEBUG"),
++        "llama_sycl_mul_mat_id_multi_token_fast": env_or_log("LLAMA_SYCL_MUL_MAT_ID_MULTI_TOKEN_FAST"),
++        "llama_sycl_mul_mat_id_multi_token_no_reorder": env_or_log("LLAMA_SYCL_MUL_MAT_ID_MULTI_TOKEN_NO_REORDER"),
++        "llama_sycl_mul_mat_id_multi_token_grouped_q8_0": env_or_log("LLAMA_SYCL_MUL_MAT_ID_MULTI_TOKEN_GROUPED_Q8_0"),
++        "llama_sycl_mul_mat_id_multi_token_filter": env_or_log("LLAMA_SYCL_MUL_MAT_ID_MULTI_TOKEN_FILTER"),
+         "llama_spec_verify_greedy_argmax": env_or_log("LLAMA_SPEC_VERIFY_GREEDY_ARGMAX"),
+         "llama_spec_verify_backend_argmax_ids": env_or_log("LLAMA_SPEC_VERIFY_BACKEND_ARGMAX_IDS"),
++        "llama_spec_verify_fused_output_argmax": env_or_log("LLAMA_SPEC_VERIFY_FUSED_OUTPUT_ARGMAX"),
++        "llama_spec_verify_softcap_argmax": env_or_log("LLAMA_SPEC_VERIFY_SOFTCAP_ARGMAX"),
+         "oneapi_device_selector": env_or_log("ONEAPI_DEVICE_SELECTOR"),
+         "ggml_sycl_disable_opt": env_or_log("GGML_SYCL_DISABLE_OPT"),
+         "ggml_sycl_enable_vmm": env_or_log("GGML_SYCL_ENABLE_VMM"),
+diff --git a/scripts/run-gemma4-26b-llamacpp-replica.sh b/scripts/run-gemma4-26b-llamacpp-replica.sh
+index 773ce482..bf3413fa 100755
+--- a/scripts/run-gemma4-26b-llamacpp-replica.sh
++++ b/scripts/run-gemma4-26b-llamacpp-replica.sh
+@@ -5,7 +5,7 @@ GPU_INDEX="${GPU_INDEX:-0}"
+ PORT="${PORT:-18260}"
+ HOST="${HOST:-127.0.0.1}"
+ MODEL="${MODEL:-/mnt/fast-ai/llm-models/gemma4-26b-a4b-it-q8-gguf/gemma-4-26B-A4B-it-UD-Q8_K_XL.gguf}"
+-LLAMA_SERVER="${LLAMA_SERVER:-/home/steve/src/llama.cpp/build-sycl-b70/bin/llama-server}"
++LLAMA_SERVER="${LLAMA_SERVER:-/home/steve/src/llama.cpp-gemma-record-stack/build-sycl-b70-aot-bmg-g31/bin/llama-server}"
+ MODEL_ALIAS="${MODEL_ALIAS:-gemma4-26b-a4b-q8}"
+ CTX_SIZE="${CTX_SIZE:-8192}"
+ BATCH_SIZE="${BATCH_SIZE:-512}"
+@@ -89,9 +89,26 @@ mkdir -p "$OUT_DIR"
+   echo "LLAMA_MTP_DRAFT_BACKEND_ARGMAX=${LLAMA_MTP_DRAFT_BACKEND_ARGMAX:-<unset>}"
+   echo "LLAMA_MTP_DRAFT_BACKEND_TOPK=${LLAMA_MTP_DRAFT_BACKEND_TOPK:-<unset>}"
+   echo "LLAMA_MTP_DRAFT_PROFILE=${LLAMA_MTP_DRAFT_PROFILE:-<unset>}"
++  echo "LLAMA_SERVER_SPEC_PROFILE=${LLAMA_SERVER_SPEC_PROFILE:-<unset>}"
+   echo "LLAMA_MTP_DRAFT_TERMINAL_LOGITS_ONLY=${LLAMA_MTP_DRAFT_TERMINAL_LOGITS_ONLY:-<unset>}"
++  echo "LLAMA_MTP_DEFER_TARGET_H_NEXTN=${LLAMA_MTP_DEFER_TARGET_H_NEXTN:-<unset>}"
++  echo "LLAMA_GEMMA4_MTP_FUSED_OUTPUT_ARGMAX=${LLAMA_GEMMA4_MTP_FUSED_OUTPUT_ARGMAX:-<unset>}"
++  echo "LLAMA_GEMMA4_MTP_QONLY_ATTN_INPUTS=${LLAMA_GEMMA4_MTP_QONLY_ATTN_INPUTS:-<unset>}"
++  echo "LLAMA_GEMMA4_MTP_LAYER_TAPER_AFTER=${LLAMA_GEMMA4_MTP_LAYER_TAPER_AFTER:-<unset>}"
++  echo "LLAMA_GEMMA4_MTP_LAYER_TAPER_LAYERS=${LLAMA_GEMMA4_MTP_LAYER_TAPER_LAYERS:-<unset>}"
++  echo "LLAMA_GEMMA4_MOE_SELECTED_SOFTMAX=${LLAMA_GEMMA4_MOE_SELECTED_SOFTMAX:-<unset>}"
++  echo "LLAMA_GEMMA4_MOE_TOP_K=${LLAMA_GEMMA4_MOE_TOP_K:-<unset>}"
++  echo "LLAMA_GEMMA4_MOE_WEIGHTED_SUM=${LLAMA_GEMMA4_MOE_WEIGHTED_SUM:-<unset>}"
++  echo "LLAMA_GEMMA4_MOE_FUSED_DOWN_WEIGHTED_SUM=${LLAMA_GEMMA4_MOE_FUSED_DOWN_WEIGHTED_SUM:-<unset>}"
++  echo "LLAMA_GEMMA4_MOE_FUSED_GEGLU_DOWN_WEIGHTED_SUM=${LLAMA_GEMMA4_MOE_FUSED_GEGLU_DOWN_WEIGHTED_SUM:-<unset>}"
++  echo "LLAMA_GEMMA4_MOE_FUSED_DOWN_WEIGHTED_SUM_DEBUG=${LLAMA_GEMMA4_MOE_FUSED_DOWN_WEIGHTED_SUM_DEBUG:-<unset>}"
++  echo "LLAMA_SYCL_MUL_MAT_ID_MULTI_TOKEN_FAST=${LLAMA_SYCL_MUL_MAT_ID_MULTI_TOKEN_FAST:-<unset>}"
++  echo "LLAMA_SYCL_MUL_MAT_ID_MULTI_TOKEN_NO_REORDER=${LLAMA_SYCL_MUL_MAT_ID_MULTI_TOKEN_NO_REORDER:-<unset>}"
++  echo "LLAMA_SYCL_MUL_MAT_ID_MULTI_TOKEN_GROUPED_Q8_0=${LLAMA_SYCL_MUL_MAT_ID_MULTI_TOKEN_GROUPED_Q8_0:-<unset>}"
++  echo "LLAMA_SYCL_MUL_MAT_ID_MULTI_TOKEN_FILTER=${LLAMA_SYCL_MUL_MAT_ID_MULTI_TOKEN_FILTER:-<unset>}"
+   echo "LLAMA_SPEC_VERIFY_GREEDY_ARGMAX=${LLAMA_SPEC_VERIFY_GREEDY_ARGMAX:-<unset>}"
+   echo "LLAMA_SPEC_VERIFY_BACKEND_ARGMAX_IDS=${LLAMA_SPEC_VERIFY_BACKEND_ARGMAX_IDS:-<unset>}"
++  echo "LLAMA_SPEC_VERIFY_FUSED_OUTPUT_ARGMAX=${LLAMA_SPEC_VERIFY_FUSED_OUTPUT_ARGMAX:-<unset>}"
+   echo "ONEAPI_DEVICE_SELECTOR=$ONEAPI_DEVICE_SELECTOR"
+   echo "GGML_SYCL_DISABLE_OPT=$GGML_SYCL_DISABLE_OPT"
+   echo "GGML_SYCL_ENABLE_VMM=${GGML_SYCL_ENABLE_VMM:-<unset>}"

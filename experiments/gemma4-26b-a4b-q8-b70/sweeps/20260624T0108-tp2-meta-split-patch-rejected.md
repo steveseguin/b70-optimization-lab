@@ -1,9 +1,11 @@
 # 2026-06-24T0108: TP=2 meta/split patch rejected for Gemma4 shared KV
 
 Goal: unblock a >150 tok/s path for Gemma 4 26B A4B Q8 by making TP=2 /
-cross-GPU llama.cpp startup work on two B70s. The current single-GPU MTP n=7
-fresh record is still only ~92-94 tok/s; >150 likely needs either true
-multi-GPU speedup or a non-serial draft path.
+cross-GPU llama.cpp startup work on two B70s. At the time of this TP=2 test,
+the best valid single-GPU MTP n=7 fresh record was still only ~92-94 tok/s;
+the later direct-unroll/q-only/batch-tuned record is `98.491 tok/s`. The
+>150 target still likely needs either true multi-GPU speedup or a non-serial
+draft path.
 
 ## Patch Tested
 
@@ -238,5 +240,48 @@ Conclusion:
   not currently a promising route. The next real TP=2 fix would need to address
   SYCL flash-attention support/state for repeated shared-KV MTP requests, and
   then still prove a large throughput gain. For now, continue optimization on
-  single-GPU replicas where the best valid fresh-response result is ~92-94 tok/s
-  and the hardware can run four independent sweeps at once.
+  single-GPU replicas where the best valid fresh-response result is now
+  `98.491 tok/s` (after later direct-unroll/q-only/batch tuning) and the
+  hardware can run four independent sweeps at once.
+
+## 2026-06-24 Retest On `llama.cpp-gemma-record-stack`
+
+After the QAT/Q4 side-lane plateaued around `133 tok/s`, TP=2 was rechecked on
+the current Gemma4 record-stack source and AOT build:
+
+```text
+/home/steve/src/llama.cpp-gemma-record-stack/build-sycl-b70-aot-bmg-g31/bin/llama-server
+commit reported by harness: c926ad098
+```
+
+Test identity:
+
+- target: Q8 `gemma-4-26B-A4B-it-UD-Q8_K_XL.gguf`;
+- draft: Q8-repo `Q4_0-MTP`;
+- `ONEAPI_DEVICE_SELECTOR=level_zero:0,1` or `level_zero:2,3`;
+- `LLAMA_DEVICES=SYCL0,SYCL1`, `LLAMA_TENSOR_SPLIT=1,1`;
+- split modes tested: `row`, `layer`;
+- MTP: `n_max=7`, `n_min=2`, `p_min=0.12`, backend sampling off,
+  fast argmax + device-H handoff, draft on `SYCL0`;
+- `--cache-ram 0`, `--ctx-checkpoints 0`, `cached_tokens` would have been
+  checked if any run reached benchmarking.
+
+Runs:
+
+- `data/gemma4-q8-tp2-row-gpu01-mtp-n7-20260624T1332Z/`
+  - invalid: row split segfaulted before readiness.
+- `data/gemma4-q8-tp2-layer-gpu23-mtp-n7-20260624T1332Z/`
+  - invalid: layer split aborted before readiness with
+    `pre-allocated tensor (cache_v_l28) in a buffer (SYCL1) that cannot run the operation (NONE)`.
+- `data/gemma4-q8-tp2-row-faon-gpu01-mtp-n7-20260624T1338Z/`
+  - invalid: row split + FA on still segfaulted before readiness.
+- `data/gemma4-q8-tp2-layer-faon-gpu23-mtp-n7-20260624T1338Z/`
+  - invalid: layer split + FA on still aborted before readiness with
+    `pre-allocated tensor (cache_k_l28) in a buffer (SYCL1) that cannot run the operation (NONE)`.
+
+Conclusion: current unfixed llama.cpp TP=2 remains invalid for Gemma4Assistant
+MTP/shared-KV. The failure is still scheduler/backend placement around shared
+KV tensors, not a benchmarkable performance lane. Do not spend optimization
+runs on row/layer split until the shared-KV placement issue is fixed; any
+future TP=2 attempt should start from the matched target+draft-device path above
+and the SYCL flash-attention repeated-request crash, not from plain split flags.

@@ -1,0 +1,72 @@
+diff --git a/src/llama-context.cpp b/src/llama-context.cpp
+--- a/src/llama-context.cpp
++++ b/src/llama-context.cpp
+@@
+ static void copy_tensor_async_ints(
+     const std::map<llama_seq_id, ggml_tensor*> & tensor_map,
+     const buffer_view<llama_token> & sampled,
+     const std::map<llama_seq_id, uint32_t> & seq_to_row,
+@@
+     }
+ }
+ 
++static bool copy_single_tensor_async_ints(
++    const std::map<llama_seq_id, ggml_tensor*> & tensor_map,
++    const buffer_view<llama_token> & sampled,
++    uint32_t row,
++    ggml_backend_sched_t sched,
++    int64_t row_stride = 1) {
++    if (!sampled.has_data() || tensor_map.size() != 1) {
++        return false;
++    }
++
++    row_stride = std::max<int64_t>(1, row_stride);
++
++    ggml_tensor * tensor = tensor_map.begin()->second;
++    const int64_t n_copy = std::min<int64_t>(row_stride, ggml_nelements(tensor));
++    const size_t offset = (size_t) row * (size_t) row_stride;
++    GGML_ASSERT(offset + (size_t) n_copy <= sampled.size);
++
++    GGML_ASSERT(ggml_is_contiguous(tensor) && "sampled tokens tensor must be contiguous for async copy");
++
++    ggml_backend_t backend = ggml_backend_sched_get_tensor_backend(sched, tensor);
++    ggml_backend_tensor_get_async(backend, tensor, sampled.data + offset, 0, sizeof(sampled.data[0]) * (size_t) n_copy);
++    return true;
++}
++
+ static void copy_tensor_async_floats(
+     const std::map<llama_seq_id, ggml_tensor*> & tensor_map,
+     const buffer_view<float> & dst,
+@@
+         if ((has_samplers || cparams.mtp_draft_direct_argmax_ids) &&
+                 (!res->t_sampled.empty() || !res->t_sampled_probs.empty() || !res->t_sampled_logits.empty())) {
+-            const auto seq_to_output_row = build_seq_to_output_row(ubatch, n_outputs_prev);
+             const auto stride = n_vocab;
+             const auto sampled_stride = cparams.mtp_draft_direct_argmax_ids ?
+                 std::max<int32_t>(1, cparams.mtp_draft_direct_argmax_unroll) : 1;
+ 
+-            // async copy the sampling data from the backend to the host
+-            copy_tensor_async_ints(res->t_sampled, sampling.sampled, seq_to_output_row, sched.get(), sampled_stride);
++            bool sampled_copied = false;
++            if (!has_samplers && cparams.mtp_draft_direct_argmax_ids && n_outputs == 1 &&
++                    res->t_sampled.size() == 1 && res->t_sampled_probs.empty() && res->t_sampled_logits.empty()) {
++                GGML_ASSERT(n_outputs_prev >= 0 && n_outputs_prev <= (int64_t) UINT32_MAX);
++                sampled_copied = copy_single_tensor_async_ints(
++                        res->t_sampled, sampling.sampled, (uint32_t) n_outputs_prev, sched.get(), sampled_stride);
++            }
+ 
+-            if (has_samplers) {
+-                copy_tensor_async_floats    (res->t_sampled_logits, sampling.logits,     stride, sampling.logits_count,     seq_to_output_row, sched.get());
+-                copy_tensor_async_floats    (res->t_sampled_probs,  sampling.probs,      stride, sampling.probs_count,      seq_to_output_row, sched.get());
+-                copy_tensor_async_candidates(res->t_candidates,     sampling.candidates, stride, sampling.candidates_count, seq_to_output_row, sched.get());
++            if (!sampled_copied) {
++                const auto seq_to_output_row = build_seq_to_output_row(ubatch, n_outputs_prev);
++                copy_tensor_async_ints(res->t_sampled, sampling.sampled, seq_to_output_row, sched.get(), sampled_stride);
++
++                if (has_samplers) {
++                    copy_tensor_async_floats    (res->t_sampled_logits, sampling.logits,     stride, sampling.logits_count,     seq_to_output_row, sched.get());
++                    copy_tensor_async_floats    (res->t_sampled_probs,  sampling.probs,      stride, sampling.probs_count,      seq_to_output_row, sched.get());
++                    copy_tensor_async_candidates(res->t_candidates,     sampling.candidates, stride, sampling.candidates_count, seq_to_output_row, sched.get());
++                }
+             }
+         }

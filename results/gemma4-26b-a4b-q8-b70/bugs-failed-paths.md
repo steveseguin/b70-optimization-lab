@@ -8,9 +8,9 @@ Current promoted family:
 
 - one complete Q8/INT8-quality model replica per B70, no TP split;
 - llama.cpp SYCL / Level Zero;
-- `gemma-4-26B-A4B-it-UD-Q8_K_XL.gguf` plus official
-  `mtp-gemma-4-26B-A4B-it.gguf` draft;
-- full 384-row chat canary before promotion;
+- `gemma-4-26B-A4B-it-UD-Q8_K_XL.gguf` target/verifier plus local
+  `gemma-4-26B-A4B-it-Q4_0-MTP.gguf` draft only;
+- 1536-row chat canary before current record promotion;
 - current filled-long record is tracked in
   [`research-plan.md`](research-plan.md) and
   [`localmaxxing-and-targets.md`](localmaxxing-and-targets.md).
