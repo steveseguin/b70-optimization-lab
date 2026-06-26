@@ -660,6 +660,16 @@ Text speed is first. After text baseline:
     materialization if writing a new patch; it is narrower than attention
     specialization and matches the `process_ubatch` profile. See
     `../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260626T0830-verifier-frontier-source-audit.md`.
+16. **Q6_K fused output argmax is not a record path.** Enabling the existing
+    fused output argmax op for Q6_K required adding Q6_K to both execution and
+    SYCL `supports_op` for `GGML_OP_MUL_MAT_ARGMAX`; without the support guard,
+    the scheduler aborted before readiness with `cur_backend_id == -1`.
+    After the fix, the screen passed `128/128` canary with row0
+    `cached_tokens=0`, but reached only `103.019 tok/s`, below the current
+    `103.299 tok/s` record. Preserve the patch as a complete negative result,
+    but do not promote it unless assistant output extraction becomes hot again.
+    See
+    `../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260626T0821-q6k-fused-output-argmax.md`.
 
 ## Stop Conditions
 

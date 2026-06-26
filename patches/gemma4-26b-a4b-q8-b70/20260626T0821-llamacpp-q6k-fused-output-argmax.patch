@@ -1,0 +1,93 @@
+diff --git a/src/models/gemma4-assistant.cpp b/src/models/gemma4-assistant.cpp
+--- a/src/models/gemma4-assistant.cpp
++++ b/src/models/gemma4-assistant.cpp
+@@
+     const bool fused_output_argmax =
+         direct_unroll &&
+         llama_gemma4_mtp_fused_output_argmax_enabled() &&
+         (model.output->type == GGML_TYPE_Q4_0 ||
++         model.output->type == GGML_TYPE_Q6_K ||
+          model.output->type == GGML_TYPE_Q8_0);
+
+diff --git a/src/models/gemma4.cpp b/src/models/gemma4.cpp
+--- a/src/models/gemma4.cpp
++++ b/src/models/gemma4.cpp
+@@
+     const bool fused_spec_verify_argmax_supported =
+         fused_spec_verify_argmax_requested &&
+         model.output_s == nullptr &&
+         model.vocab.get_suppress_tokens().empty() &&
+         (model.output->type == GGML_TYPE_Q4_0 ||
++         model.output->type == GGML_TYPE_Q6_K ||
+          model.output->type == GGML_TYPE_Q8_0);
+
+diff --git a/ggml/src/ggml-sycl/mmvq.cpp b/ggml/src/ggml-sycl/mmvq.cpp
+--- a/ggml/src/ggml-sycl/mmvq.cpp
++++ b/ggml/src/ggml-sycl/mmvq.cpp
+@@
+         case GGML_TYPE_Q8_0:
+             if (reordered) {
+                 reorder_mul_mat_vec_q_argmax_sycl<reorder_vec_dot_q_sycl<GGML_TYPE_Q8_0>>(
+                     vx, vy, scratch_vals, scratch_idxs, ncols, nrows, stream);
+             } else {
+                 mul_mat_vec_q_argmax_sycl<QK8_0, QI8_0, block_q8_0, VDR_Q8_0_Q8_1_MMVQ, vec_dot_q8_0_q8_1>(
+                     vx, vy, scratch_vals, scratch_idxs, ncols, nrows, stream);
+             }
+             break;
++        case GGML_TYPE_Q6_K:
++            if (reordered) {
++                reorder_mul_mat_vec_q_argmax_sycl<reorder_vec_dot_q_sycl<GGML_TYPE_Q6_K>>(
++                    vx, vy, scratch_vals, scratch_idxs, ncols, nrows, stream);
++            } else {
++                mul_mat_vec_q_argmax_sycl<QK_K, QI6_K, block_q6_K, VDR_Q6_K_Q8_1_MMVQ, vec_dot_q6_K_q8_1>(
++                    vx, vy, scratch_vals, scratch_idxs, ncols, nrows, stream);
++            }
++            break;
+         default:
+             return false;
+     }
+@@
+         case GGML_TYPE_Q8_0:
+             if (reordered) {
+                 reorder_mul_mat_vec_q_argmax_multi_sycl<reorder_vec_dot_q_sycl<GGML_TYPE_Q8_0>>(
+                     vx, vy, scratch_vals, scratch_idxs, ncols, nrows, nvec,
+                     src1_padded_cols, scratch_count_per_vec, stream);
+             } else {
+                 mul_mat_vec_q_argmax_multi_sycl<QK8_0, QI8_0, block_q8_0, VDR_Q8_0_Q8_1_MMVQ, vec_dot_q8_0_q8_1>(
+                     vx, vy, scratch_vals, scratch_idxs, ncols, nrows, nvec,
+                     src1_padded_cols, scratch_count_per_vec, stream);
+             }
+             break;
++        case GGML_TYPE_Q6_K:
++            if (reordered) {
++                reorder_mul_mat_vec_q_argmax_multi_sycl<reorder_vec_dot_q_sycl<GGML_TYPE_Q6_K>>(
++                    vx, vy, scratch_vals, scratch_idxs, ncols, nrows, nvec,
++                    src1_padded_cols, scratch_count_per_vec, stream);
++            } else {
++                mul_mat_vec_q_argmax_multi_sycl<QK_K, QI6_K, block_q6_K, VDR_Q6_K_Q8_1_MMVQ, vec_dot_q6_K_q8_1>(
++                    vx, vy, scratch_vals, scratch_idxs, ncols, nrows, nvec,
++                    src1_padded_cols, scratch_count_per_vec, stream);
++            }
++            break;
+         default:
+             return false;
+     }
+
+diff --git a/ggml/src/ggml-sycl/ggml-sycl.cpp b/ggml/src/ggml-sycl/ggml-sycl.cpp
+--- a/ggml/src/ggml-sycl/ggml-sycl.cpp
++++ b/ggml/src/ggml-sycl/ggml-sycl.cpp
+@@
+     GGML_ASSERT(src0->ne[0] == src1->ne[0]);
+     GGML_ASSERT(src0->type == GGML_TYPE_Q4_0 ||
++                src0->type == GGML_TYPE_Q6_K ||
+                 src0->type == GGML_TYPE_Q8_0);
+@@
+                 if (op->type != GGML_TYPE_I32 || b->type != GGML_TYPE_F32) {
+                     return false;
+                 }
+-                if (a->type != GGML_TYPE_Q4_0 && a->type != GGML_TYPE_Q8_0) {
++                if (a->type != GGML_TYPE_Q4_0 &&
++                    a->type != GGML_TYPE_Q6_K &&
++                    a->type != GGML_TYPE_Q8_0) {
+                     return false;
+                 }
