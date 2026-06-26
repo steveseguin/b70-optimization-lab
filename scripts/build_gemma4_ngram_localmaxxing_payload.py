@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
-"""Build a LocalMaxxing queue entry for a validated Gemma 4 n-gram run."""
+"""Build a diagnostic LocalMaxxing queue entry for a Gemma 4 n-gram run.
+
+Draftless n-gram speedups on repeated benchmark prompts are
+history-accelerated artifacts, not valid fresh-response headline records.
+This helper is intentionally opt-in and labels generated payloads that way.
+"""
 
 from __future__ import annotations
 
@@ -62,6 +67,28 @@ def infer_run_stamp(summary: dict) -> str:
     return "20260623"
 
 
+def row0_metrics(p512_json: Path) -> dict[str, float | int]:
+    data = json.loads(p512_json.read_text())
+    rows = data.get("rows") or []
+    if not rows:
+        return {}
+    row0 = rows[0]
+    usage = row0.get("usage") or {}
+    cached_tokens = None
+    prompt_details = usage.get("prompt_tokens_details") or {}
+    if "cached_tokens" in prompt_details:
+        cached_tokens = prompt_details["cached_tokens"]
+    return {
+        "tok_s_after_ttft": row0.get("tok_s_after_ttft"),
+        "tok_s_wall": row0.get("tok_s_wall"),
+        "ttft_s": row0.get("ttft_s"),
+        "elapsed_s": row0.get("elapsed_s"),
+        "completion_tokens": row0.get("completion_tokens"),
+        "prompt_tokens": row0.get("prompt_tokens"),
+        "cached_tokens": cached_tokens,
+    }
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("summary_json", type=Path)
@@ -110,6 +137,7 @@ def main() -> int:
     p512_json = run_dir / "p512o512.json"
     server_log = Path(summary["server_log"])
     stats = parse_ngram_stats(server_log)
+    row0 = row0_metrics(p512_json)
     local_label = (
         args.label
         or f"gemma4-26b-a4b-q8-b70-llamacpp-ngrammod-{n_match}-{n_min}-{n_max}-filledlong512-{infer_run_stamp(summary)}"
@@ -123,9 +151,9 @@ def main() -> int:
     payload["contextLength"] = int(launcher["ctx_size"])
     payload["outputTokens"] = int(bench["completion_tokens"]["mean"])
     payload["promptTokens"] = int(bench["prompt_tokens"]["mean"])
-    payload["tokSOut"] = bench["tok_s_after_ttft"]["mean"]
-    payload["tokSTotal"] = bench["tok_s_wall"]["mean"]
-    payload["ttftMs"] = bench["ttft_s"]["mean"] * 1000.0
+    payload["tokSOut"] = row0.get("tok_s_after_ttft", bench["tok_s_after_ttft"]["min"])
+    payload["tokSTotal"] = row0.get("tok_s_wall", bench["tok_s_wall"]["min"])
+    payload["ttftMs"] = row0.get("ttft_s", bench["ttft_s"]["max"]) * 1000.0
 
     engine.update(
         {
@@ -159,6 +187,19 @@ def main() -> int:
             "nGramAcceptedMeanLenFromServerLog": stats.get("mean_acc_len"),
             "nGramAcceptedTokensFromServerLog": stats.get("acc_tokens"),
             "nGramGeneratedTokensFromServerLog": stats.get("gen_tokens"),
+            "freshResponseHeadlineValid": False,
+            "historyAccelerated": True,
+            "headlineUse": "diagnostic-only",
+            "firstRequestTokSOut": row0.get("tok_s_after_ttft"),
+            "firstRequestTokSTotal": row0.get("tok_s_wall"),
+            "firstRequestTtftMs": (
+                row0.get("ttft_s") * 1000.0
+                if row0.get("ttft_s") is not None else None
+            ),
+            "firstRequestCachedTokens": row0.get("cached_tokens"),
+            "warmedTokSOutMean": bench["tok_s_after_ttft"]["mean"],
+            "warmedTokSTotalMean": bench["tok_s_wall"]["mean"],
+            "warmedTtftMsMean": bench["ttft_s"]["mean"] * 1000.0,
             "ngramModNMatch": n_match,
             "ngramModNMax": n_max,
             "ngramModNMin": n_min,
@@ -184,8 +225,12 @@ def main() -> int:
     )
 
     payload["notes"] = (
-        f"New valid Gemma 4 26B A4B Q8 single-B70 record from 2026-06-23 "
-        f"draftless ngram-mod speculation on llama.cpp {launcher['llama_cpp_commit']}. "
+        "DIAGNOSTIC / NON-HEADLINE ARTIFACT: this draftless ngram-mod run is "
+        "history-accelerated on repeated benchmark continuations and must not be "
+        "presented as fresh-response throughput. It is preserved only to document "
+        "what happened before the fresh/warmed policy was clarified. "
+        f"Gemma 4 26B A4B Q8 single-B70 ngram-mod run from 2026-06-23 on "
+        f"llama.cpp {launcher['llama_cpp_commit']}. "
         "Uses the same UD-Q8_K_XL target GGUF, f16/f16 KV, AOT BMG SYCL build, "
         f"flash-attn {launcher['flash_attn']}, poll {launcher['poll']}, "
         "--parallel 1 --cache-ram 0, and "
@@ -193,17 +238,18 @@ def main() -> int:
         f"--spec-ngram-mod-n-match {n_match} --spec-ngram-mod-n-min {n_min} "
         f"--spec-ngram-mod-n-max {n_max}. This does not lower target precision: "
         "n-gram drafts are history guesses and every token is verified by the Q8 "
-        f"target model. Validated by {summary['canary_rows_completed']}-row repo "
-        "chat canary before measurement. Filled-long benchmark shape is "
+        f"target model, but the draft source has already seen identical or highly "
+        f"similar continuations. Validated by {summary['canary_rows_completed']}-row "
+        "repo chat canary before measurement. Filled-long benchmark shape is "
         f"{int(bench['prompt_tokens']['mean'])} prompt / "
         f"{int(bench['completion_tokens']['mean'])} output tokens. "
         f"Server statistics confirm benchmark-phase n-gram drafts with mean accepted "
         f"length {stats.get('mean_acc_len')} and accepted/generated draft tokens "
         f"{stats.get('acc_tokens')}/{stats.get('gen_tokens')}. First benchmark "
         f"repeat was cold/no-draft at {bench['tok_s_after_ttft']['min']:.2f} tok/s "
-        "while later repeats used the populated n-gram state; the submitted tokSOut "
-        "is the full 8-repeat mean after TTFT, and tokSTotal is full 8-repeat wall "
-        "throughput. Supporting repo paths: results/gemma4-26b-a4b-q8-b70/, "
+        "while later repeats used the populated n-gram state; do not average those "
+        "warmed repeats into any fresh-response claim. Supporting repo paths: "
+        "results/gemma4-26b-a4b-q8-b70/, "
         "experiments/gemma4-26b-a4b-q8-b70/sweeps/20260623T1735-ngram-spec-sweep.md, "
         f"and {run_dir}/summary.json."
     )

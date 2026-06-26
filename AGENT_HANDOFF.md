@@ -1,6 +1,6 @@
 # Codex Agent Handoff
 
-Last updated: 2026-05-25
+Last updated: 2026-06-26
 
 This file is the first thing a new Codex agent should read when continuing the
 Intel Arc Pro B70 LLM optimization work.
@@ -8,6 +8,23 @@ Intel Arc Pro B70 LLM optimization work.
 ## Current Objective
 
 Primary target:
+
+- Gemma 4 26B A4B Q8/INT8-quality on Intel Arc Pro B70.
+- Run one Q8 target/verifier replica per GPU where practical, using four GPUs
+  for parallel research screens rather than TP4 unless explicitly testing a
+  multi-GPU serving shape.
+- Current fresh-response one-B70 record is `103.2992004295621 tok/s` after
+  TTFT on row0 with `cached_tokens=0`, `1536/1536` chat canary, LocalMaxxing
+  `cmqsylo2l011nqr011yydjvne`.
+- Start from `results/gemma4-26b-a4b-q8-b70/README.md`,
+  `results/gemma4-26b-a4b-q8-b70/reproduce.md`, and
+  `results/gemma4-26b-a4b-q8-b70/validity-gates.md`.
+- Headline throughput must be fresh-response throughput. Do not use warmed
+  n-gram/history rows, repeated-output continuation learning, prefix/cache
+  reuse, context checkpoints, or any prior generated continuation as a record
+  claim. Report warmed/cached artifacts separately.
+
+Historical / service targets:
 
 - MiniMax M2.7 INT4 AutoRound on 4x Intel Arc Pro B70 32GB.
 - Preserve answer quality while improving single-session decode, context,

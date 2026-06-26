@@ -159,12 +159,25 @@ def env_or_log(env_key, log_key=None):
         return value
     return server_env.get(log_key or env_key)
 
+model_path_lower = str(model).lower()
+if "ud-q8_k_xl" in model_path_lower:
+    quality_lane = "q8_target"
+    headline_eligible_for_gemma_q8 = True
+elif "q4" in model_path_lower or "qat" in model_path_lower:
+    quality_lane = "lower_precision_side_lane"
+    headline_eligible_for_gemma_q8 = False
+else:
+    quality_lane = "unknown"
+    headline_eligible_for_gemma_q8 = False
+
 out = {
     "label": label,
     "server_log": server_log,
     "run_dir": str(run_dir),
     "model_path": str(model),
     "model_file_bytes": model.stat().st_size if model.exists() else None,
+    "quality_lane": quality_lane,
+    "headline_eligible_for_gemma_q8": headline_eligible_for_gemma_q8,
     "launcher_identity": {
         "gpu_index": os.environ.get("GPU_INDEX"),
         "port": os.environ.get("PORT"),

@@ -1,6 +1,6 @@
 # LocalMaxxing Submissions
 
-Date: 2026-06-24
+Date: 2026-06-26
 
 Model: `unsloth/gemma-4-26B-A4B-it-GGUF`, Gemma 4 26B A4B Q8 lane.
 
@@ -42,10 +42,22 @@ experiments.
 | `gemma4-26b-a4b-q8-b70-llamacpp-mtp-n7-q8target-q40draft-rowargmax-safer-deferh-pmin014-fresh-20260624T1830` | `cmqsf630x00r1qr01d1usfo2d` | 1 | 588 | 512 | 101.482 first / 101.249 mean | 88.582 | 1536/1536 chat canary; Q8 target/verifier with Q4_0 MTP draft only; stricter verifier row-argmax shape guard + deferred target `h_nextn` + `MTP_P_MIN=0.14`; superseded by immediate-command-list result; fresh-response headline uses row 0 only, all benchmark rows `cached_tokens=0` |
 | `gemma4-26b-a4b-q8-b70-llamacpp-mtp-n7-q8target-q40draft-rowargmax-safer-deferh-pmin014-immediatecl1-fresh-20260624T1932` | `cmqshlz8j00s0qr01f7lr24oh` | 1 | 588 | 512 | 101.602 first / 100.835 mean | 88.508 | 1536/1536 chat canary; Q8 target/verifier with Q4_0 MTP draft only; safer verifier row-argmax + deferred target `h_nextn` + `MTP_P_MIN=0.14` plus `UR_L0_USE_IMMEDIATE_COMMANDLISTS=1`; superseded by selected-softmax/weighted-sum result; fresh-response headline uses row 0 only, all benchmark rows `cached_tokens=0` |
 | `gemma4-26b-a4b-q8-b70-llamacpp-mtp-n7-q8target-q40draft-selectedsoftmax-weightedsum-pmin0136-fresh-20260625T0315` | `cmqsylo2l011nqr011yydjvne` | 1 | 588 | 512 | 103.299 first / 102.193 mean | 89.849 | 1536/1536 chat canary; Q8 target/verifier with Q4_0 MTP draft only; selected-softmax + weighted-sum MoE source guards, safer verifier row-argmax, deferred target `h_nextn`, `MTP_P_MIN=0.136`, and `UR_L0_USE_IMMEDIATE_COMMANDLISTS=1`; current valid fresh-response headline uses row 0 only, all benchmark rows `cached_tokens=0` |
-| `gemma4-26b-a4b-q8-b70-llamacpp-ngrammod-24-48-64-filledlong512-20260623T1745` | `cmqqxbkzx01cxqo01j8p97627` | 1 | 588 | 512 | 245.980 | 134.545 | 384/384 chat canary; warmed/history artifact, retraction-needed |
-| `gemma4-26b-a4b-q8-b70-llamacpp-ngrammod-20-32-64-filledlong512-20260623T1750` | `cmqqxjnif01d0qo01ix4oeixo` | 1 | 588 | 512 | 255.041 | 137.000 | 384/384 chat canary; warmed/history artifact, retraction-needed |
-| `gemma4-26b-a4b-q8-b70-llamacpp-ngrammod-20-32-64-filledlong512-20260623T1815` | `cmqqxx7bp01dbqo012d2qiiw6` | 1 | 588 | 512 | 280.040 | 206.501 | 384/384 chat canary; warmed/history artifact, retraction-needed |
-| `gemma4-26b-a4b-q8-b70-llamacpp-ngrammod-20-32-64-filledlong512-20260623T1855` | `cmqqyby6801dvqo01as3wenz2` | 1 | 588 | 512 | 280.642 | 206.236 | 384/384 chat canary; warmed/history artifact, retraction-needed |
+
+## Warmed/History Artifacts, Not Headline Records
+
+These four rows were submitted before the fresh/warmed policy was clarified.
+They are valid Q8 verification of a repeated continuation, but not valid
+fresh-response speed claims because the draftless n-gram source had already
+seen the benchmark output. Local queue artifacts were corrected on 2026-06-26
+so top-level `tokSOut` records the cold row0 rate and warmed means live under
+diagnostic `engineFlags`.
+
+| Label | LocalMaxxing ID | GPUs | Input | Output | row0 fresh tok/s | warmed tok/s | Validation |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
+| `gemma4-26b-a4b-q8-b70-llamacpp-ngrammod-24-48-64-filledlong512-20260623T1745` | `cmqqxbkzx01cxqo01j8p97627` | 1 | 588 | 512 | 41.138 | 245.980 | 384/384 chat canary; warmed/history artifact, retraction-needed |
+| `gemma4-26b-a4b-q8-b70-llamacpp-ngrammod-20-32-64-filledlong512-20260623T1750` | `cmqqxjnif01d0qo01ix4oeixo` | 1 | 588 | 512 | 41.097 | 255.041 | 384/384 chat canary; warmed/history artifact, retraction-needed |
+| `gemma4-26b-a4b-q8-b70-llamacpp-ngrammod-20-32-64-filledlong512-20260623T1815` | `cmqqxx7bp01dbqo012d2qiiw6` | 1 | 588 | 512 | 41.364 | 280.040 | 384/384 chat canary; warmed/history artifact, retraction-needed |
+| `gemma4-26b-a4b-q8-b70-llamacpp-ngrammod-20-32-64-filledlong512-20260623T1855` | `cmqqyby6801dvqo01as3wenz2` | 1 | 588 | 512 | 41.308 | 280.642 | 384/384 chat canary; warmed/history artifact, retraction-needed |
 
 Required packet: see
 [`results/gemma4-26b-a4b-q8-b70/localmaxxing-and-targets.md`](gemma4-26b-a4b-q8-b70/localmaxxing-and-targets.md).

@@ -624,6 +624,23 @@ Text speed is first. After text baseline:
     `90.44 tok/s` after TTFT, below the `UD-Q8_K_XL` record. Keep
     `UD-Q8_K_XL` as the promoted llama.cpp Q8 target unless a future runtime
     change specifically favors Q8_0.
+14. **Small runtime nudges around the `103.299 tok/s` record are exhausted.**
+    The 2026-06-26 four-GPU recheck of exact control, `THREADS=16`,
+    `THREADS=16` plus `BATCH/UBATCH=1152`, and `MTP_P_MIN=0.1355` all passed
+    `384/384` canary with row0 `cached_tokens=0`, but topped out at
+    `102.338 tok/s`, below the current record. Preserve
+    `THREADS=8`, `BATCH_SIZE=1024`, `UBATCH_SIZE=1024`, and
+    `MTP_P_MIN=0.136`; the next serious attempts should reduce target verifier
+    `process_ubatch` cost or change the verifier architecture rather than
+    repeating p-min/thread/batch micro-sweeps. See
+    `../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260626T0717-runtime-frontier-recheck.md`.
+15. **Next real source work is verifier-graph compute.** A source audit on
+    2026-06-26 identified router-selection materialization fusion,
+    device-side MoE route compaction, small contiguous verifier attention, and
+    shared dense FFN fusion as the plausible remaining lanes. Start with router
+    materialization if writing a new patch; it is narrower than attention
+    specialization and matches the `process_ubatch` profile. See
+    `../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260626T0830-verifier-frontier-source-audit.md`.
 
 ## Stop Conditions
 

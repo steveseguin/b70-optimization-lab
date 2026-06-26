@@ -1,8 +1,32 @@
 # Current Promoted Results
 
-Date: 2026-05-19
+Date: 2026-06-26
 
-## MiniMax M2.7
+## Active Gemma 4 26B A4B Q8 Lane
+
+Current active optimization target:
+
+- Model: Gemma 4 26B A4B instruct, `UD-Q8_K_XL` target GGUF on one Intel
+  Arc Pro B70 32GB per replica.
+- Goal: maximize **fresh-response** single-session decode while preserving the
+  Q8 target/verifier quality lane. Warmed/history or repeated-continuation
+  speedups are useful diagnostics only, not headline throughput.
+- Current valid fresh-response best: `103.2992004295621 tok/s` after TTFT on
+  the first no-cache benchmark row, `102.19335537277364 tok/s` supporting
+  repeated-request mean, `1536/1536` chat canary, LocalMaxxing
+  `cmqsylo2l011nqr011yydjvne`.
+- Result packet: `results/gemma4-26b-a4b-q8-b70/README.md`.
+- Reproduction: `results/gemma4-26b-a4b-q8-b70/reproduce.md`.
+- Validation rules: `results/gemma4-26b-a4b-q8-b70/validity-gates.md`.
+- Current research plan: `results/gemma4-26b-a4b-q8-b70/research-plan.md`.
+
+Do not promote the earlier `ngram-mod` `245-280 tok/s` rows as fresh-response
+records. They are warmed/history-accelerated artifacts from repeated benchmark
+continuations; row0 fresh no-spec performance was about `41 tok/s`.
+
+## Historical MiniMax M2.7
+
+Date: 2026-05-19
 
 Current strict quality-passed speed result:
 

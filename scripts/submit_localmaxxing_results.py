@@ -13,6 +13,47 @@ API_URL = "https://localmaxxing.com/api/benchmarks"
 DEFAULT_KEY_PATH = Path.home() / ".config" / "localmaxxing" / "api_key"
 
 
+def preflight_payload(item: dict, *, allow_non_headline: bool = False) -> list[str]:
+    label = str(item.get("label", ""))
+    payload = item.get("payload") or {}
+    engine = payload.get("engineFlags") or {}
+    notes = str(payload.get("notes", ""))
+    problems: list[str] = []
+
+    history_markers = [
+        bool(engine.get("historyAccelerated")),
+        engine.get("freshResponseHeadlineValid") is False,
+        str(engine.get("headlineUse", "")).lower() in {"diagnostic-only", "non-headline"},
+        "history-accelerated" in label.lower(),
+        "history-accelerated" in notes.lower(),
+        "non-headline" in notes.lower(),
+    ]
+    ngram_markers = [
+        "ngram" in label.lower(),
+        "ngram" in notes.lower(),
+        any(str(key).lower().startswith("ngram") for key in engine),
+    ]
+    if any(history_markers):
+        problems.append("payload is labeled history-accelerated or non-headline")
+    if any(ngram_markers) and not engine.get("freshResponseNgramValidated"):
+        problems.append("payload appears to be n-gram/history based without fresh-response validation")
+
+    if label.endswith("-fresh") or "-fresh-" in label:
+        first_tok_s = engine.get("firstRequestTokSOut")
+        tok_s = payload.get("tokSOut")
+        cached = engine.get("firstRequestCachedTokens")
+        if first_tok_s is not None and tok_s is not None:
+            try:
+                if abs(float(first_tok_s) - float(tok_s)) > 1e-6:
+                    problems.append("fresh label has tokSOut different from firstRequestTokSOut")
+            except (TypeError, ValueError):
+                problems.append("fresh label has non-numeric tokSOut/firstRequestTokSOut")
+        if cached not in (None, 0):
+            problems.append("fresh label has nonzero firstRequestCachedTokens")
+
+    return [] if allow_non_headline else problems
+
+
 def post_payload(key: str, payload: dict) -> tuple[int, str, int | None]:
     body = json.dumps(payload).encode("utf-8")
     req = urllib.request.Request(
@@ -58,6 +99,14 @@ def main() -> int:
     parser.add_argument("--limit", type=int, help="Submit at most N payloads")
     parser.add_argument("--sleep-on-429", action="store_true")
     parser.add_argument("--dry-run", action="store_true")
+    parser.add_argument(
+        "--allow-non-headline",
+        action="store_true",
+        help=(
+            "Allow diagnostic/non-headline payloads such as warmed/history "
+            "n-gram artifacts. Default is to fail closed."
+        ),
+    )
     args = parser.parse_args()
 
     queue = json.loads(Path(args.payloads).read_text())
@@ -72,6 +121,22 @@ def main() -> int:
             return 2
     if args.limit is not None:
         queue = queue[: args.limit]
+
+    blocked = []
+    for item in queue:
+        problems = preflight_payload(item, allow_non_headline=args.allow_non_headline)
+        if problems:
+            blocked.append((item.get("label", "<unlabeled>"), problems))
+    if blocked:
+        for label, problems in blocked:
+            print(f"blocked {label}:", file=sys.stderr)
+            for problem in problems:
+                print(f"  - {problem}", file=sys.stderr)
+        print(
+            "pass --allow-non-headline only for deliberately labeled diagnostic artifacts",
+            file=sys.stderr,
+        )
+        return 2
 
     if args.dry_run:
         print(json.dumps(queue, indent=2))

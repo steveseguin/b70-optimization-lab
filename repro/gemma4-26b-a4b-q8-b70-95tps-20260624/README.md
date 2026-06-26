@@ -1,7 +1,11 @@
 # Gemma 4 26B A4B Q8 on B70, 95 tok/s
 
-This is the promoted reproduction recipe for the verified Gemma 4 26B A4B
-single-GPU B70 result from 2026-06-24.
+This is a **superseded historical reproduction recipe** for the verified
+Gemma 4 26B A4B single-GPU B70 result from 2026-06-24. The current valid
+fresh-response Q8-target record is `103.2992004295621 tok/s`, LocalMaxxing
+`cmqsylo2l011nqr011yydjvne`; start from
+[`../../results/gemma4-26b-a4b-q8-b70/reproduce.md`](../../results/gemma4-26b-a4b-q8-b70/reproduce.md)
+for current record attempts.
 
 ## Result
 
@@ -18,7 +22,7 @@ single-GPU B70 result from 2026-06-24.
 - Build: SYCL/Level Zero, AOT target `intel_gpu_bmg_g31`
 - Benchmark shape: filled-long prompt, requested 512 prompt tokens, actual 588 prompt tokens, 512 output tokens
 - Quality gate: `384/384` chat canary before the measured run
-- Fresh-response headline: `95.26352416631231 tok/s` after TTFT on the first measured request, `cached_tokens=0`
+- Historical fresh-response headline: `95.26352416631231 tok/s` after TTFT on the first measured request, `cached_tokens=0`
 - Repeat support: `95.38558173206405 tok/s` mean after TTFT across 8 measured requests
 - LocalMaxxing submission id: `cmqrsupdk000jqr01af3eu6vu`
 
@@ -50,10 +54,11 @@ measured request after the canary gate, not an n-gram, prompt-cache, or history
 reuse result. The Q8 target model verifies accepted draft tokens; the Q4_0 file
 is used only as the MTP draft model.
 
-Use the patch in this folder as the source of truth for this recipe. Later
-fused, direct-id, no-hnext, reserve, and device-handoff experiment patches were
-valid research attempts, but they did not supersede this record and are not part
-of this reproduction path.
+Use the patch in this folder as the source of truth for this **historical 95
+tok/s recipe** only. Later direct-id/q-only, verifier row-argmax, deferred
+`h_nextn`, selected-softmax, weighted-sum, and runtime tuning work did supersede
+this record in the main Gemma result packet; those changes are not part of this
+older standalone reproduction path.
 
 ## Folder Contents
 
