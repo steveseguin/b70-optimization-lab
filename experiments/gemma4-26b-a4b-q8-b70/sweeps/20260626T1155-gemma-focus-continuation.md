@@ -8,14 +8,14 @@ has plausible source-level work.
 
 Current valid Gemma best is now:
 
-- `103.30108468098005 tok/s` fresh row0 after TTFT;
+- `103.51547512013657 tok/s` fresh row0 after TTFT;
 - `cached_tokens=0`;
 - `1536/1536` chat canary;
-- LocalMaxxing `cmqvalync02lhqr01h76rnti3`;
-- micro-record over the previous `103.2992004295621 tok/s` row, not a
+- LocalMaxxing `cmqvbq8tf02m1qr010dom0vu1`;
+- micro-record over the previous `103.30108468098005 tok/s` row, not a
   material breakthrough;
 - evidence:
-  `data/gemma4-q8-gpu0-mulmatid-routecache-full-20260626T184617Z/summary.json`.
+  `data/gemma4-q8-gpu2-routecache-ctx8192-full-20260626T191746Z/summary.json`.
 
 ## Results Added This Session
 
@@ -219,9 +219,42 @@ direct draft argmax IDs, `--ctx-checkpoints 0`). All passed 32 canary repeats
 | `data/gemma4-q8-gpu0-mulmatidfast-gateup0-grouped-screen-20260626T175257Z/summary.json` | plus `LLAMA_SYCL_MUL_MAT_ID_MULTI_TOKEN_GROUPED_Q8_0=1` | `100.16927670537243` | valid loss |
 | `data/gemma4-q8-gpu1-mulmatidfast-gateup0-perslot-screen-20260626T175257Z/summary.json` | plus `LLAMA_SYCL_MUL_MAT_ID_MULTI_TOKEN_PER_SLOT_Q8_0=1` | `101.221389918208` | valid loss |
 
-Decision: reject / do not promote for performance. The exact filter itself is a
-useful diagnostic knob and can remain default-off, but the `ffn_moe_gate_up-0`
-fast-path variants do not beat the valid `103.2992004295621 tok/s` record.
+## 2026-06-26T20:05Z GEGLU Matmul-Epilogue Route-Cache Consumer
+
+Patch under test: extend the existing one-shot
+`LLAMA_SYCL_MUL_MAT_ID_ROUTE_CACHE=1` host route-plan reuse into the two down
+matmul-epilogue consumers, especially
+`LLAMA_GEMMA4_MOE_GEGLU_DOWN_MATMUL_EPILOGUE=1`. The intent was metadata-only:
+reuse the immediately preceding gate/up `MUL_MAT_ID` route plan instead of
+copying strided `ids` to host and rebuilding expert counts/offsets for the down
+epilogue. Arithmetic stayed on the same Q8 down matmul/epilogue path.
+
+Initial screen looked promising:
+
+- `data/gemma4-q8-gpu2-geglu-epilogue-routecache-screen-20260626T195205Z/summary.json`
+- canary: `128/128`, pass
+- cached-token validity: `[0, 0]`, row0 fresh-response eligible
+- fresh row0: `104.70795597094846 tok/s`
+- support mean: `104.25250585801564 tok/s`
+
+Full validation rejected it:
+
+- `data/gemma4-q8-gpu2-geglu-epilogue-routecache-full-20260626T195349Z/summary.json`
+- canary: `1536/1536`, pass
+- cached-token validity: eight rows all `0`
+- fresh row0: `101.8211074778421 tok/s`
+- support mean: `102.70197770331635 tok/s`
+
+Decision: reject / do not promote / do not submit to LocalMaxxing. The screen
+was variance. The full gate is below the current promoted
+`103.51547512013657 tok/s` record. Preserve the patch idea and result as a
+negative artifact, but keep the active source stack on the known-good route-cache
+recipe unless a larger fused-MoE change needs this route-plan reuse again.
+
+Decision for the exact-node `MUL_MAT_ID` fast-path filter: reject / do not
+promote for performance. The exact filter itself is a useful diagnostic knob
+and can remain default-off, but the `ffn_moe_gate_up-0` fast-path variants do
+not beat the valid `103.51547512013657 tok/s` record.
 Avoid expanding this into a broad layer/name sweep unless a later profile shows
 a changed hotspot distribution.
 

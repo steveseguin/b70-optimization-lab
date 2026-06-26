@@ -141,8 +141,9 @@ The current Gemma 4 26B A4B Q8 one-B70 record is:
 
 - result packet: `results/gemma4-26b-a4b-q8-b70/README.md`;
 - reproduction: `results/gemma4-26b-a4b-q8-b70/reproduce.md`;
-- fresh row0: `103.2992004295621 tok/s` after TTFT, `102.19335537277364`
-  support mean, 1536/1536 canary, LocalMaxxing `cmqsylo2l011nqr011yydjvne`;
+- fresh row0: `103.51547512013657 tok/s` after TTFT,
+  `103.19340167720759` support mean, 1536/1536 canary, LocalMaxxing
+  `cmqvbq8tf02m1qr010dom0vu1`;
 - target/verifier: UD-Q8_K_XL, Q4_0 MTP draft only; do not promote lower
   precision/QAT/Q4XL side-lane results as this Q8 headline.
 
