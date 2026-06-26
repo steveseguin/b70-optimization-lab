@@ -106,8 +106,8 @@ Current filled-long draftless ngram-mod warmed/history artifact:
   `cmqqxx7bp01dbqo012d2qiiw6` (`280.04 tok/s`),
   `cmqqxjnif01d0qo01ix4oeixo` (`255.04 tok/s`) and
   `cmqqxbkzx01cxqo01j8p97627` (`245.98 tok/s`). It does **not** supersede the
-  current fresh-response draft-MTP record `cmqsylo2l011nqr011yydjvne`
-  (`103.299 tok/s` first no-cache request; `102.193 tok/s` supporting repeat
+  current fresh-response draft-MTP record `cmqvalync02lhqr01h76rnti3`
+  (`103.301 tok/s` first no-cache request; `103.063 tok/s` supporting repeat
   mean; Q8 target/verifier with Q4_0 MTP draft only);
 - queue:
   `data/localmaxxing-gemma4-26b-a4b-q8-b70-ngrammod-20-32-64-poll100-filledlong512-20260623.queue.json`;
@@ -126,9 +126,7 @@ Current filled-long draftless ngram-mod warmed/history artifact:
 
 Current filled-long draft-MTP fresh-response Q8-target best:
 
-- `gemma4-q8-gpu0-selectedsoftmax-weightedsum-pmin0136-full-20260625T031510Z`,
-  repeated by
-  `gemma4-q8-gpu0-selectedsoftmax-weightedsum-pmin0136-full-repeat-20260625T032710Z`;
+- `gemma4-q8-gpu0-mulmatid-routecache-full-20260626T184617Z`;
 - llama.cpp SYCL on one B70, UD-Q8_K_XL main GGUF plus
   `gemma-4-26B-A4B-it-Q4_0-MTP.gguf` draft GGUF;
 - submitted from a headless Supermicro AMD Threadripper PRO 5955WX platform
@@ -143,6 +141,7 @@ Current filled-long draft-MTP fresh-response Q8-target best:
   (`LLAMA_MTP_DEFER_TARGET_H_NEXTN=1`),
   `LLAMA_GEMMA4_MOE_SELECTED_SOFTMAX=1`,
   `LLAMA_GEMMA4_MOE_WEIGHTED_SUM=1`, `GGML_SYCL_ENABLE_VMM=0`,
+  `LLAMA_SYCL_MUL_MAT_ID_ROUTE_CACHE=1`,
   `UR_L0_USE_IMMEDIATE_COMMANDLISTS=1`, `BATCH_SIZE=1024`,
   `UBATCH_SIZE=1024`, `THREADS=8`, `POLL=100`,
   `GGML_SYCL_DISABLE_GRAPH=0`, `--ctx-checkpoints 0`, draft threads `32/32`;
@@ -150,20 +149,33 @@ Current filled-long draft-MTP fresh-response Q8-target best:
   tokens (`BENCH_PROMPT_MODE=filled-long`);
 - chat canary **1536/1536** pass;
 - fresh-response headline: first measured no-cache request after TTFT
-  `103.2992004295621 tok/s`; supporting repeated-request mean
-  `102.19335537277364 tok/s`; first-row wall `89.84890823527608 tok/s`;
+  `103.30108468098005 tok/s`; supporting repeated-request mean
+  `103.06255061691155 tok/s`; first-row wall `89.97733776184405 tok/s`;
   all rows report `usage.prompt_tokens_details.cached_tokens=0`;
 - fresh-response status: submitted to LocalMaxxing and approved as
-  `cmqsylo2l011nqr011yydjvne`; supersedes
+  `cmqvalync02lhqr01h76rnti3`; this is a micro-record over
+  `cmqsylo2l011nqr011yydjvne` (`103.2992004295621 tok/s`) and supersedes
   `cmqshlz8j00s0qr01f7lr24oh`, `cmqsf630x00r1qr01d1usfo2d`,
   `cmqsd2jpn00pwqr017fq21akz`, `cmqs7uyqb00lnqr01u9dtv63r`,
   `cmqs56wv100kjqr01de3fdspd`, `cmqs4jnx100k6qr01d1iy78kl`,
   `cmqrsupdk000jqr01af3eu6vu`, `cmqrjcly601kuqo01rbyub1x6`, and earlier
   fast-argmax/CPU-cleanup result `cmqr82niq01hgqo01v42y7ue8`;
 - queue:
-  `data/localmaxxing-gemma4-26b-a4b-q8-b70-llamacpp-mtp-n7-q8target-q40draft-selectedsoftmax-weightedsum-pmin0136-fresh-20260625.queue.json`;
+  `data/localmaxxing-gemma4-26b-a4b-q8-b70-llamacpp-mtp-n7-q8target-q40draft-routecache-pmin0136-fresh-20260626.queue.json`;
 - response:
-  `data/localmaxxing-responses/gemma4-26b-a4b-q8-b70-llamacpp-mtp-n7-q8target-q40draft-selectedsoftmax-weightedsum-pmin0136-fresh-20260625.submit.log`.
+  `data/localmaxxing-responses/gemma4-26b-a4b-q8-b70-llamacpp-mtp-n7-q8target-q40draft-routecache-pmin0136-fresh-20260626.submit.log`.
+
+Previous material filled-long draft-MTP fresh-response Q8-target best:
+
+- `gemma4-q8-gpu0-selectedsoftmax-weightedsum-pmin0136-full-20260625T031510Z`,
+  repeated by
+  `gemma4-q8-gpu0-selectedsoftmax-weightedsum-pmin0136-full-repeat-20260625T032710Z`;
+- same Q8 target / Q4_0 MTP draft recipe, without the one-shot route cache;
+- fresh-response headline: `103.2992004295621 tok/s`; supporting mean
+  `102.19335537277364 tok/s`; first-row wall `89.84890823527608 tok/s`;
+- LocalMaxxing `cmqsylo2l011nqr011yydjvne`;
+- keep this as the material baseline because the current route-cache record is
+  only `+0.001884 tok/s`.
 
 Superseded filled-long draft-MTP fresh-response Q8-target record:
 

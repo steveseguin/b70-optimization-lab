@@ -13,9 +13,11 @@ Primary target:
 - Run one Q8 target/verifier replica per GPU where practical, using four GPUs
   for parallel research screens rather than TP4 unless explicitly testing a
   multi-GPU serving shape.
-- Current fresh-response one-B70 record is `103.2992004295621 tok/s` after
+- Current fresh-response one-B70 record is `103.30108468098005 tok/s` after
   TTFT on row0 with `cached_tokens=0`, `1536/1536` chat canary, LocalMaxxing
-  `cmqsylo2l011nqr011yydjvne`.
+  `cmqvalync02lhqr01h76rnti3`. Treat it as a micro-record over the prior
+  `103.2992004295621 tok/s` row; the real bottleneck is still target/verifier
+  MoE work.
 - Start from `results/gemma4-26b-a4b-q8-b70/README.md`,
   `results/gemma4-26b-a4b-q8-b70/reproduce.md`, and
   `results/gemma4-26b-a4b-q8-b70/validity-gates.md`.

@@ -7,7 +7,7 @@ replicas on four GPUs for parallel research and aggregate service capacity.
 ## Current Fresh-Response Headline
 
 Current valid one-B70 headline is
-`data/gemma4-q8-gpu0-selectedsoftmax-weightedsum-pmin0136-full-20260625T031510Z/`:
+`data/gemma4-q8-gpu0-mulmatid-routecache-full-20260626T184617Z/`:
 
 - target/verifier: `gemma-4-26B-A4B-it-UD-Q8_K_XL.gguf`;
 - draft: `MTP/gemma-4-26B-A4B-it-Q4_0-MTP.gguf`;
@@ -21,14 +21,17 @@ Current valid one-B70 headline is
   `LLAMA_MTP_DEFER_TARGET_H_NEXTN=1`,
   `LLAMA_GEMMA4_MOE_SELECTED_SOFTMAX=1`,
   `LLAMA_GEMMA4_MOE_WEIGHTED_SUM=1`, f16 target/draft KV,
+  `LLAMA_SYCL_MUL_MAT_ID_ROUTE_CACHE=1`,
   `--ctx-checkpoints 0`, `GGML_SYCL_ENABLE_VMM=0`,
   `UR_L0_USE_IMMEDIATE_COMMANDLISTS=1`, `BATCH_SIZE=1024`,
   `UBATCH_SIZE=1024`, `THREADS=8`, `POLL=100`, `FLASH_ATTN=off`,
   `GGML_SYCL_DISABLE_GRAPH=0`;
 - validation: chat canary **1536/1536**, benchmark row 0 `cached_tokens=0`;
-- fresh headline: **103.2992004295621 tok/s** after TTFT;
-- supporting repeated-request mean: `102.19335537277364 tok/s`;
-- LocalMaxxing: `cmqsylo2l011nqr011yydjvne`.
+- fresh headline: **103.30108468098005 tok/s** after TTFT;
+- supporting repeated-request mean: `103.06255061691155 tok/s`;
+- LocalMaxxing: `cmqvalync02lhqr01h76rnti3`;
+- note: this is a micro-record over the prior `103.2992004295621 tok/s`
+  material baseline, not a material speedup.
 
 The actual research target remains **>150 tok/s fresh-response**. The current
 scalar llama.cpp MTP loop is below that target because it still performs one
@@ -39,7 +42,7 @@ engine.
 
 2026-06-26 frontier update: recent selected-softmax fused-weights and
 fused-output-argmax combo screens were valid but stayed at `102-103 tok/s`,
-below the `103.299 tok/s` record. Audits found that the target-to-draft
+below the `103.299-103.301 tok/s` record band. Audits found that the target-to-draft
 `h_nextn` host handoff is real but profile-small, the direct selected-down
 fusion family has already been tested in several losing variants, and the
 verifier LM-head/argmax shortcut family is also exhausted. See
@@ -208,8 +211,8 @@ Current filled-long warmed/history-accelerated ngram artifact:
   `cmqqxjnif01d0qo01ix4oeixo` (`255.04 tok/s`) and
   `cmqqxbkzx01cxqo01j8p97627` (`245.98 tok/s`), but does **not** supersede any
   fresh-response draft-MTP record. The current fresh-response record is
-  `cmqsylo2l011nqr011yydjvne` (`103.2992004295621 tok/s` first measured
-  request; `102.19335537277364 tok/s` repeat mean);
+  `cmqvalync02lhqr01h76rnti3` (`103.30108468098005 tok/s` first measured
+  request; `103.06255061691155 tok/s` repeat mean);
 - decision: useful warmed/history artifact, not the current valid
   fresh-response best. Label this result honestly as history-cache acceleration
   on a repetitive sustained-decode shape: every drafted token is verified by the
@@ -340,8 +343,8 @@ Next queue:
   now complete. It validated chat-template quality but reached only
   `34.89 tok/s` with graph enabled; `fp8_per_tensor` improved to `40.31 tok/s`
   as a lower-precision diagnostic. Neither lane is competitive with the
-  current llama.cpp Q8-target fresh-response record (`103.299 tok/s` first
-  no-cache request; `102.193 tok/s` supporting repeat mean) from the Q4_0
+  current llama.cpp Q8-target fresh-response record (`103.301 tok/s` first
+  no-cache request; `103.063 tok/s` supporting repeat mean) from the Q4_0
   draft-MTP validation plus direct-unroll/q-only assistant-input patch,
   selected-softmax/weighted-sum MoE guards, verifier backend argmax IDs,
   deferred target `h_nextn`, and batch/thread/runtime tune.
@@ -638,7 +641,7 @@ Text speed is first. After text baseline:
     The `n=7` MTP lane already accepts long chunks on the filled-long benchmark
     (`~445/462` drafted tokens, mean acceptance length `~7.7`, zero `p-min`
     stops in the profile). Argmax/top-k and VMM/ubatch/poll follow-ups preserved
-    quality but did not beat the current `103.299 tok/s` Q8-target/Q4_0-draft
+    quality but did not beat the current `103.299-103.301 tok/s` Q8-target/Q4_0-draft
     first-request record in a meaningful way.
     A fixed-line diagnostic then showed the same thing more sharply: `n=8`
     accepted `454/454` drafted benchmark tokens but fell to `64.20 tok/s`, and

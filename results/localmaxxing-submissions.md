@@ -10,7 +10,7 @@ stop, short-prompt sustained, and filled-long sustained shapes separate.
 
 Hardware note for the Gemma 4 26B submissions: these were run on a headless
 Supermicro AMD Threadripper PRO 5955WX platform with 128 GB DDR4 and Intel Arc
-Pro B70 32 GB GPUs. The current `cmqsylo2l011nqr011yydjvne` record uses one B70
+Pro B70 32 GB GPUs. The current `cmqvalync02lhqr01h76rnti3` record uses one B70
 replica on GPU0; the host has four B70s available for parallel single-replica
 experiments.
 
@@ -41,7 +41,8 @@ experiments.
 | `gemma4-26b-a4b-q8-b70-llamacpp-mtp-n7-q8target-q40draft-rowargmax-deferh-pmin014-fresh-20260624T1735` | `cmqsd2jpn00pwqr017fq21akz` | 1 | 588 | 512 | 101.428 first / 100.769 mean | 88.374 | 384/384 chat canary; Q8 target/verifier with Q4_0 MTP draft only; verifier row-argmax IDs + deferred target `h_nextn` + `MTP_P_MIN=0.14`; superseded by safer verifier row-argmax result; fresh-response headline uses row 0 only |
 | `gemma4-26b-a4b-q8-b70-llamacpp-mtp-n7-q8target-q40draft-rowargmax-safer-deferh-pmin014-fresh-20260624T1830` | `cmqsf630x00r1qr01d1usfo2d` | 1 | 588 | 512 | 101.482 first / 101.249 mean | 88.582 | 1536/1536 chat canary; Q8 target/verifier with Q4_0 MTP draft only; stricter verifier row-argmax shape guard + deferred target `h_nextn` + `MTP_P_MIN=0.14`; superseded by immediate-command-list result; fresh-response headline uses row 0 only, all benchmark rows `cached_tokens=0` |
 | `gemma4-26b-a4b-q8-b70-llamacpp-mtp-n7-q8target-q40draft-rowargmax-safer-deferh-pmin014-immediatecl1-fresh-20260624T1932` | `cmqshlz8j00s0qr01f7lr24oh` | 1 | 588 | 512 | 101.602 first / 100.835 mean | 88.508 | 1536/1536 chat canary; Q8 target/verifier with Q4_0 MTP draft only; safer verifier row-argmax + deferred target `h_nextn` + `MTP_P_MIN=0.14` plus `UR_L0_USE_IMMEDIATE_COMMANDLISTS=1`; superseded by selected-softmax/weighted-sum result; fresh-response headline uses row 0 only, all benchmark rows `cached_tokens=0` |
-| `gemma4-26b-a4b-q8-b70-llamacpp-mtp-n7-q8target-q40draft-selectedsoftmax-weightedsum-pmin0136-fresh-20260625T0315` | `cmqsylo2l011nqr011yydjvne` | 1 | 588 | 512 | 103.299 first / 102.193 mean | 89.849 | 1536/1536 chat canary; Q8 target/verifier with Q4_0 MTP draft only; selected-softmax + weighted-sum MoE source guards, safer verifier row-argmax, deferred target `h_nextn`, `MTP_P_MIN=0.136`, and `UR_L0_USE_IMMEDIATE_COMMANDLISTS=1`; current valid fresh-response headline uses row 0 only, all benchmark rows `cached_tokens=0` |
+| `gemma4-26b-a4b-q8-b70-llamacpp-mtp-n7-q8target-q40draft-selectedsoftmax-weightedsum-pmin0136-fresh-20260625T0315` | `cmqsylo2l011nqr011yydjvne` | 1 | 588 | 512 | 103.299 first / 102.193 mean | 89.849 | 1536/1536 chat canary; Q8 target/verifier with Q4_0 MTP draft only; selected-softmax + weighted-sum MoE source guards, safer verifier row-argmax, deferred target `h_nextn`, `MTP_P_MIN=0.136`, and `UR_L0_USE_IMMEDIATE_COMMANDLISTS=1`; superseded by route-cache micro-record; fresh-response headline uses row 0 only, all benchmark rows `cached_tokens=0` |
+| `gemma4-26b-a4b-q8-b70-llamacpp-mtp-n7-q8target-q40draft-routecache-pmin0136-fresh-20260626T184617` | `cmqvalync02lhqr01h76rnti3` | 1 | 588 | 512 | 103.301 first / 103.063 mean | 89.977 | 1536/1536 chat canary; Q8 target/verifier with Q4_0 MTP draft only; same selected-softmax + weighted-sum recipe plus default-off `LLAMA_SYCL_MUL_MAT_ID_ROUTE_CACHE=1`; current valid fresh-response headline uses row 0 only, all benchmark rows `cached_tokens=0`; micro-record only (`+0.001884 tok/s`) |
 
 ## Warmed/History Artifacts, Not Headline Records
 

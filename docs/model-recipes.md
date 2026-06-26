@@ -23,7 +23,7 @@ Do not compare two results unless their model, quantization, prompt length, outp
 
 | Recipe | Status | What It Is For |
 | --- | --- | --- |
-| `../results/gemma4-26b-a4b-q8-b70/` | Current speed packet | Gemma 4 26B A4B Q8 target on one B70 with Q4_0 MTP draft, llama.cpp SYCL, current commands, validity rules, and LocalMaxxing evidence for the `103.299 tok/s` fresh-response result. |
+| `../results/gemma4-26b-a4b-q8-b70/` | Current speed packet | Gemma 4 26B A4B Q8 target on one B70 with Q4_0 MTP draft, llama.cpp SYCL, current commands, validity rules, and LocalMaxxing evidence for the `103.301 tok/s` fresh-response micro-record. |
 | `../repro/gemma4-26b-a4b-q8-b70-95tps-20260624/` | Prior copy-ready speed repro | Superseded standalone Gemma 4 26B A4B Q8 target recipe for the older `95.264 tok/s` fresh-response result. |
 | `../results/gemma4-26b-a4b-q8-b70/` | Active lab packet | Full Gemma 4 26B A4B Q8/INT8 B70 optimization history, including older baselines, failed paths, validity gates, and vLLM comparison lanes. |
 | `../repro/minimax-m27-b70-110tps-ubuntu24-20260523/` | Deployable baseline | Fresh Ubuntu 24.04 setup for 4x B70, MiniMax M2.7 INT4 AutoRound, vLLM OpenAI-compatible endpoint on `0.0.0.0:8000`. |
@@ -116,12 +116,14 @@ The deeper active lab packet is
 This lane intentionally avoids tensor-parallel splitting at first: run one
 complete Gemma 4 26B A4B replica per B70 and use four replicas for parallel
 research. Current promoted result is the llama.cpp draft-MTP filled-long lane at
-`103.299 tok/s` after TTFT on the first no-cache request on one B70, with
-`102.193 tok/s` supporting mean (`n=7, n-min=2, p-min=0.136`, backend sampling
+`103.301 tok/s` after TTFT on the first no-cache request on one B70, with
+`103.063 tok/s` supporting mean (`n=7, n-min=2, p-min=0.136`, backend sampling
 off, Q8 target/verifier with Q4_0 MTP draft only, direct argmax-ID unroll,
 q-only assistant inputs, safer verifier row-argmax IDs, deferred target
 `h_nextn`, selected-softmax/weighted-sum MoE source guards,
-`UR_L0_USE_IMMEDIATE_COMMANDLISTS=1`, 1536/1536 chat canary).
+`LLAMA_SYCL_MUL_MAT_ID_ROUTE_CACHE=1`,
+`UR_L0_USE_IMMEDIATE_COMMANDLISTS=1`, 1536/1536 chat canary). This is a
+micro-record over the prior `103.299 tok/s` material baseline.
 
 Start with llama.cpp SYCL and the Unsloth `UD-Q8_K_XL` GGUF:
 

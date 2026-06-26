@@ -90,7 +90,10 @@ LLAMA_GEMMA4_MOE_FUSED_DOWN_WEIGHTED_SUM_PARALLEL_SLOTS="${LLAMA_GEMMA4_MOE_FUSE
 LLAMA_GEMMA4_MOE_FUSED_DOWN_WEIGHTED_SUM_DIRECT_F32_PARALLEL_SLOTS="${LLAMA_GEMMA4_MOE_FUSED_DOWN_WEIGHTED_SUM_DIRECT_F32_PARALLEL_SLOTS:-}" \
 LLAMA_GEMMA4_MOE_FUSED_DOWN_WEIGHTED_SUM_MATMUL_EPILOGUE="${LLAMA_GEMMA4_MOE_FUSED_DOWN_WEIGHTED_SUM_MATMUL_EPILOGUE:-}" \
 LLAMA_GEMMA4_MOE_FUSED_GEGLU_DOWN_WEIGHTED_SUM="${LLAMA_GEMMA4_MOE_FUSED_GEGLU_DOWN_WEIGHTED_SUM:-}" \
+LLAMA_GEMMA4_MOE_GEGLU_DOWN_MATMUL_EPILOGUE="${LLAMA_GEMMA4_MOE_GEGLU_DOWN_MATMUL_EPILOGUE:-}" \
 LLAMA_GEMMA4_MOE_FUSED_DOWN_WEIGHTED_SUM_DEBUG="${LLAMA_GEMMA4_MOE_FUSED_DOWN_WEIGHTED_SUM_DEBUG:-}" \
+LLAMA_SYCL_MUL_MAT_ID_MULTI_TOKEN_NAME_SUBSTR="${LLAMA_SYCL_MUL_MAT_ID_MULTI_TOKEN_NAME_SUBSTR:-}" \
+LLAMA_SYCL_MUL_MAT_ID_ROUTE_CACHE="${LLAMA_SYCL_MUL_MAT_ID_ROUTE_CACHE:-}" \
 LLAMA_SPEC_VERIFY_GREEDY_ARGMAX="${LLAMA_SPEC_VERIFY_GREEDY_ARGMAX:-}" \
 LLAMA_SPEC_VERIFY_BACKEND_ARGMAX_IDS="${LLAMA_SPEC_VERIFY_BACKEND_ARGMAX_IDS:-}" \
 LLAMA_SPEC_VERIFY_FUSED_OUTPUT_ARGMAX="${LLAMA_SPEC_VERIFY_FUSED_OUTPUT_ARGMAX:-}" \
@@ -228,12 +231,15 @@ out = {
         "llama_gemma4_moe_fused_down_weighted_sum_direct_f32_parallel_slots": env_or_log("LLAMA_GEMMA4_MOE_FUSED_DOWN_WEIGHTED_SUM_DIRECT_F32_PARALLEL_SLOTS"),
         "llama_gemma4_moe_fused_down_weighted_sum_matmul_epilogue": env_or_log("LLAMA_GEMMA4_MOE_FUSED_DOWN_WEIGHTED_SUM_MATMUL_EPILOGUE"),
         "llama_gemma4_moe_fused_geglu_down_weighted_sum": env_or_log("LLAMA_GEMMA4_MOE_FUSED_GEGLU_DOWN_WEIGHTED_SUM"),
+        "llama_gemma4_moe_geglu_down_matmul_epilogue": env_or_log("LLAMA_GEMMA4_MOE_GEGLU_DOWN_MATMUL_EPILOGUE"),
         "llama_gemma4_moe_fused_down_weighted_sum_debug": env_or_log("LLAMA_GEMMA4_MOE_FUSED_DOWN_WEIGHTED_SUM_DEBUG"),
         "llama_sycl_mul_mat_id_multi_token_fast": env_or_log("LLAMA_SYCL_MUL_MAT_ID_MULTI_TOKEN_FAST"),
         "llama_sycl_mul_mat_id_multi_token_no_reorder": env_or_log("LLAMA_SYCL_MUL_MAT_ID_MULTI_TOKEN_NO_REORDER"),
         "llama_sycl_mul_mat_id_multi_token_grouped_q8_0": env_or_log("LLAMA_SYCL_MUL_MAT_ID_MULTI_TOKEN_GROUPED_Q8_0"),
         "llama_sycl_mul_mat_id_multi_token_per_slot_q8_0": env_or_log("LLAMA_SYCL_MUL_MAT_ID_MULTI_TOKEN_PER_SLOT_Q8_0"),
         "llama_sycl_mul_mat_id_multi_token_filter": env_or_log("LLAMA_SYCL_MUL_MAT_ID_MULTI_TOKEN_FILTER"),
+        "llama_sycl_mul_mat_id_multi_token_name_substr": env_or_log("LLAMA_SYCL_MUL_MAT_ID_MULTI_TOKEN_NAME_SUBSTR"),
+        "llama_sycl_mul_mat_id_route_cache": env_or_log("LLAMA_SYCL_MUL_MAT_ID_ROUTE_CACHE"),
         "llama_spec_verify_greedy_argmax": env_or_log("LLAMA_SPEC_VERIFY_GREEDY_ARGMAX"),
         "llama_spec_verify_backend_argmax_ids": env_or_log("LLAMA_SPEC_VERIFY_BACKEND_ARGMAX_IDS"),
         "llama_spec_verify_fused_output_argmax": env_or_log("LLAMA_SPEC_VERIFY_FUSED_OUTPUT_ARGMAX"),

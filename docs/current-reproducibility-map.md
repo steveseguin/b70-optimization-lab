@@ -95,7 +95,7 @@ packet:
 
 `../results/gemma4-26b-a4b-q8-b70/reproduce.md`
 
-Use it when the goal is to copy the current `103.299 tok/s` settings rather
+Use it when the goal is to copy the current `103.301 tok/s` settings rather
 than review the full experiment history. The older standalone
 `../repro/gemma4-26b-a4b-q8-b70-95tps-20260624/README.md` folder remains as a
 superseded `95.264 tok/s` reproduction artifact.
@@ -106,15 +106,17 @@ Record identity:
 - draft: local `Q4_0` Gemma MTP draft only
 - hardware: headless Supermicro AMD Threadripper PRO 5955WX platform, 128 GB
   DDR4, one Intel Arc Pro B70 32 GB used for the measured replica
-- result: `103.299 tok/s` first fresh no-cache request after TTFT, `102.193`
+- result: `103.301 tok/s` first fresh no-cache request after TTFT, `103.063`
   supporting mean, 1536/1536 chat canary, LocalMaxxing
-  `cmqsylo2l011nqr011yydjvne`; includes selected-softmax/weighted-sum MoE
-  source guards and `UR_L0_USE_IMMEDIATE_COMMANDLISTS=1`
+  `cmqvalync02lhqr01h76rnti3`; includes selected-softmax/weighted-sum MoE
+  source guards, `LLAMA_SYCL_MUL_MAT_ID_ROUTE_CACHE=1`, and
+  `UR_L0_USE_IMMEDIATE_COMMANDLISTS=1`. Treat this as a micro-record over the
+  prior `103.299 tok/s` row.
 - primary artifacts:
-  `../data/gemma4-q8-gpu0-selectedsoftmax-weightedsum-pmin0136-full-20260625T031510Z/summary.json`,
-  `../data/localmaxxing-gemma4-26b-a4b-q8-b70-llamacpp-mtp-n7-q8target-q40draft-selectedsoftmax-weightedsum-pmin0136-fresh-20260625.queue.json`,
+  `../data/gemma4-q8-gpu0-mulmatid-routecache-full-20260626T184617Z/summary.json`,
+  `../data/localmaxxing-gemma4-26b-a4b-q8-b70-llamacpp-mtp-n7-q8target-q40draft-routecache-pmin0136-fresh-20260626.queue.json`,
   and
-  `../data/localmaxxing-responses/gemma4-26b-a4b-q8-b70-llamacpp-mtp-n7-q8target-q40draft-selectedsoftmax-weightedsum-pmin0136-fresh-20260625.submit.log`
+  `../data/localmaxxing-responses/gemma4-26b-a4b-q8-b70-llamacpp-mtp-n7-q8target-q40draft-routecache-pmin0136-fresh-20260626.submit.log`
 
 The full optimization ledger remains in
 `../results/gemma4-26b-a4b-q8-b70/README.md`.
