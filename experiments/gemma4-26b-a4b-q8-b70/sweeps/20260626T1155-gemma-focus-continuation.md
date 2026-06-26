@@ -746,3 +746,52 @@ that cheap flags and depth sweeps are exhausted. Future Gemma progress toward
 `>150 tok/s` needs a material verifier/speculation design change, most likely
 around reducing target-side small-token Gemma4 MoE work or avoiding full-vocab
 assistant/verifier overhead without violating fresh-response validity.
+
+## 2026-06-26T22:50Z Current-Stack Node Profile Sanity Check
+
+Diagnostic profile:
+
+- summary:
+  `data/gemma4-q8-gpu0-current-recordstack-nodeprofile-20260626T2250Z/summary.json`;
+- server stdout:
+  `data/gemma4-q8-gpu0-current-recordstack-nodeprofile-20260626T2250Z/server.stdout.log`;
+- env deltas:
+  `GGML_SYCL_NODE_PROFILE=1`,
+  `GGML_SYCL_NODE_PROFILE_DETAIL=1`,
+  `GGML_SYCL_NODE_PROFILE_EVERY=24`;
+- current record-stack runtime flags included
+  `LLAMA_GEMMA4_MTP_FUSED_OUTPUT_ARGMAX=1`,
+  `LLAMA_GEMMA4_MOE_SELECTED_SOFTMAX_FUSED=1`, and
+  `LLAMA_SYCL_MUL_MAT_ID_ROUTE_CACHE=1`;
+- canary: `2` repeats (`8` rows), pass;
+- cached-token validity: `cached_tokens=0`;
+- fresh row0: `76.03622268088938 tok/s` after TTFT, diagnostic only.
+
+Do not treat this as a speed result: node profiling synchronizes and changes
+runtime behavior. It is useful only for attribution. The current-stack hot-node
+ranking remains consistent with earlier profiles:
+
+- `MUL_MAT_ID:ffn_moe_gate_up-0` is the top node (`~2.5 ms/call`) with shape
+  `src0=q8_0 [2816,1408,128]`, `src1=f32 [2816,1,2]`,
+  `ids=i32 [8,2]`;
+- target LM head (`MUL_MAT:node_2135`, `token_embd.weight q8_0
+  [2816,262144]`) remains hot (`~2.13 ms/call`);
+- down projections (`MUL_MAT_ID:node_60`, `node_2119`, etc.) remain hot with
+  shape `src0=q8_0/bf16 [704,2816,128]`, `src1=f32 [704,8,2]`,
+  `ids=i32 [8,2]`.
+
+Two read-only subagents independently agreed with the local profile read:
+
+- assistant/draft path: direct unroll is already one `llama_decode()` call and
+  n>7 adds real full assistant graph work; no small exact draft-loop patch is
+  obvious;
+- verifier/target path: the credible `>150 tok/s` lane is a larger
+  Gemma4-only small-token MoE verifier op or a truly retuned target LM-head
+  argmax, not another existing flag sweep.
+
+Decision: preserve as diagnostic context. Do **not** rerun existing flags
+unchanged: target fused-output argmax, broad `MUL_MAT_ID_MULTI_TOKEN_FAST`,
+grouped/per-slot Q8 variants, GEGLU/down matmul epilogues, gate-up-only fusion,
+and route-cache metadata tweaks have all already been valid losses or
+non-winning near misses. Next implementation should be a broader exact
+Gemma4 verifier MoE boundary under strict guards.
