@@ -628,3 +628,39 @@ gate/up path with a naive fused dot+GEGLU op reduces graph/node count but loses
 the tuned math path. Preserve the env-gated patch as a dead-end artifact. Future
 MoE fusion should target a larger single-output MoE boundary or improve the
 route-cache `MUL_MAT_ID` path directly, not retry this exact gate/up-only op.
+
+## 2026-06-26T22:09Z Route-Cache In-Place Fill
+
+Patch under test: add a default-off
+`LLAMA_SYCL_MUL_MAT_ID_ROUTE_CACHE_INPLACE=1` path in generic
+`ggml_sycl_mul_mat_id()` route-cache misses. Instead of building local host
+route vectors and then copying them into the one-shot cache, the in-place path
+copies `ids` directly into `route_cache.ids_host`, sorts directly into
+`route_cache.expert_row_counts`, `route_cache.expert_row_offsets`, and
+`route_cache.routed_row_src`, and points the current op at that storage. The
+current tuned `MUL_MAT_ID` math path and the existing one-shot hit/clear cache
+semantics are unchanged.
+
+Run:
+
+- summary:
+  `data/gemma4-q8-gpu2-routecache-inplace-screen-20260626T220930Z/summary.json`
+- patch note:
+  `patches/gemma4-26b-a4b-q8-b70/20260626T2209-routecache-inplace-fill-loss.md`
+- env deltas:
+  `LLAMA_SYCL_MUL_MAT_ID_ROUTE_CACHE=1`,
+  `LLAMA_SYCL_MUL_MAT_ID_ROUTE_CACHE_INPLACE=1`
+- canary: `128` repeats (`512` rows), pass
+- cached-token validity: `[0, 0, 0]`, row0 is fresh-response eligible
+- fresh row0: `101.52759496160394 tok/s` after TTFT
+- support mean: `102.83917018605882 tok/s` after TTFT
+- support max: `103.50911695639134 tok/s` after TTFT, support-only
+- current record: `103.51547512013657 tok/s`
+
+Decision: reject / do not promote / do not submit to LocalMaxxing. This is a
+correct but non-winning micro patch. The remaining local-vector-to-cache copies
+are not a meaningful bottleneck in the current Q8/MTP record path. Preserve the
+env-gated source patch as an experiment artifact, but leave it off in promoted
+recipes. Future Gemma work should move to verifier-side compute reductions
+(larger small-token Gemma4/Q8 MoE boundary or a better target LM-head top-1
+kernel), not another route-cache metadata tweak.
