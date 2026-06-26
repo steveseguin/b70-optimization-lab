@@ -37,6 +37,18 @@ sweeps are useful only as cleanup; a 2x-class improvement likely requires a
 graph-level multi-token assistant unroll or a different fresh-valid speculation
 engine.
 
+2026-06-26 frontier update: recent selected-softmax fused-weights and
+fused-output-argmax combo screens were valid but stayed at `102-103 tok/s`,
+below the `103.299 tok/s` record. Audits found that the target-to-draft
+`h_nextn` host handoff is real but profile-small, the direct selected-down
+fusion family has already been tested in several losing variants, and the
+verifier LM-head/argmax shortcut family is also exhausted. See
+`experiments/gemma4-26b-a4b-q8-b70/sweeps/20260626T1244-frontier-pivot.md`.
+Do not continue small Gemma flag sweeps unless they are materially new. The
+next Gemma work should be a larger router-materialization fusion, graph-level
+multi-token assistant unroll, or exact verifier candidate-vs-max design;
+otherwise pivot to the MiniMax boundary-fusion lane.
+
 2026-06-26 verifier profile update:
 
 - current-stack profile control reproduced the promoted family at
