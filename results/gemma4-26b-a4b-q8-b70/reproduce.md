@@ -8,8 +8,8 @@ promoted reproduction target is the fixed realistic cold prompt suite:
 Best strict cold-suite result:
 
 - draft-MTP VDR2:
-  `data/gemma4-q8-gpu2-strict-vdr2-n3-p00475-repeat-ub1024-v21-20260627T201757Z/summary.json`;
-- primary metric: `90.32179401019857 tok/s` median generated-token throughput
+  `data/gemma4-q8-gpu1-strict-vdr2-recordconfirm-n3-nmin2-p00475-ub1024-20260627T221722Z/summary.json`;
+- primary metric: `90.98312252660529 tok/s` median generated-token throughput
   for tokens 1-100 after TTFT;
 - config: reordered-Q8 VDR2, `n_max=3`, `n_min=2`, `p_min=0.0475`,
   `UBATCH_SIZE=1024`, Q4_0 MTP draft verified by the Q8 target;
@@ -17,12 +17,13 @@ Best strict cold-suite result:
 
 Representative / submitted status: the current LocalMaxxing payload uses the
 VDR2 transfer of the strict `n_max=3`, `n_min=2`, `UBATCH_SIZE=1024` family.
-Supporting strict VDR2 rows measured `87.30800185348097`,
-`87.2401852448366`, `87.27371504547733`, `88.90551516384153`,
-`89.45543282863798`, `89.43737321875525`, `88.06323469748838`, and
-`85.90621112154868 tok/s`. Approved ID: `cmqwt1zk803ozqr01hctqss2z`. The
-prior VDR2 `89.45543282863798 tok/s` and VDR4 `87.61145306230438 tok/s` rows
-remain valid but are superseded.
+Exact confirmation repeats measured `88.57072965699355`,
+`90.98312252660529`, `89.87311437412865`, and `87.29987510414621 tok/s`.
+A same-identity high observation measured `91.39281557735391 tok/s`, but the
+conservative submitted headline is the confirmed `90.98312252660529` row.
+Approved ID: `cmqwxep4a03qiqr010chjn93s`. Prior VDR2 rows
+`90.32179401019857` and `89.45543282863798 tok/s`, plus VDR4
+`87.61145306230438 tok/s`, remain valid but are superseded.
 
 Current no-spec control:
 
@@ -147,9 +148,10 @@ scripts/run-gemma4-26b-first-baseline.sh
 
 Use this command for the current representative draft-MTP realistic-suite
 candidate. It reproduces the VDR2 `n_max=3`, `n_min=2`, `p_min=0.0475`,
-`UBATCH_SIZE=1024` family, whose current strict high is `90.322 tok/s` on the
-fixed cold suite. The prior VDR4 `87.611 tok/s` row remains valid evidence but
-is no longer the promoted LocalMaxxing headline.
+`UBATCH_SIZE=1024` family, whose current submitted strict row is
+`90.983 tok/s` on the fixed cold suite. The prior VDR2 `90.322 tok/s` and
+VDR4 `87.611 tok/s` rows remain valid evidence but are no longer the promoted
+LocalMaxxing headline.
 
 ```bash
 cd /home/steve/qwen36-results-main
@@ -173,13 +175,13 @@ LLAMA_GEMMA4_MOE_SELECTED_SOFTMAX_FUSED=1 \
 LLAMA_GEMMA4_MOE_WEIGHTED_SUM=1 \
 LLAMA_GEMMA4_MOE_REUSE_ATTN_RMS=1 \
 LLAMA_SYCL_MUL_MAT_ID_ROUTE_CACHE=1 \
-GPU_INDEX=2 PORT=18422 \
+GPU_INDEX=1 PORT=18421 \
 CTX_SIZE=8192 BATCH_SIZE=1024 UBATCH_SIZE=1024 THREADS=8 POLL=100 \
 CACHE_TYPE_K=f16 CACHE_TYPE_V=f16 FLASH_ATTN=off REASONING=off \
 CANARY_REPEATS=32 MAX_TOKENS=512 \
 REALISTIC_GATE=1 REALISTIC_METRIC_TOKENS=100 \
 EXTRA_LLAMA_ARGS='--parallel 1 --cache-ram 0 --spec-type draft-mtp --spec-draft-model /mnt/fast-ai/llm-models/gemma4-26b-a4b-it-q8-gguf/MTP/gemma-4-26B-A4B-it-Q4_0-MTP.gguf --spec-draft-n-max 3 --spec-draft-device SYCL0 --spec-draft-ngl all --spec-draft-type-k f16 --spec-draft-type-v f16 --spec-draft-n-min 2 --spec-draft-p-min 0.0475 --no-spec-draft-backend-sampling --spec-draft-threads 32 --spec-draft-threads-batch 32 --ctx-checkpoints 0' \
-LABEL=gemma4-q8-gpu2-strict-vdr2-n3-p00475-ub1024-$(date -u +%Y%m%dT%H%M%SZ) \
+LABEL=gemma4-q8-gpu1-strict-vdr2-recordconfirm-n3-nmin2-p00475-ub1024-$(date -u +%Y%m%dT%H%M%SZ) \
 scripts/run-gemma4-26b-first-baseline.sh
 ```
 

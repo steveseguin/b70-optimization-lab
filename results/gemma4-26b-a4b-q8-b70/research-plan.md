@@ -9,12 +9,12 @@ replicas on four GPUs for parallel research and aggregate service capacity.
 Best one-B70 Q8 strict result under the promotion gate:
 
 - result:
-  `data/gemma4-q8-gpu2-strict-vdr2-n3-p00475-repeat-ub1024-v21-20260627T201757Z/`;
-- primary metric: **90.32179401019857 tok/s** median generated-token
+  `data/gemma4-q8-gpu1-strict-vdr2-recordconfirm-n3-nmin2-p00475-ub1024-20260627T221722Z/`;
+- primary metric: **90.98312252660529 tok/s** median generated-token
   throughput for tokens 1-100 after TTFT across the fixed realistic suite;
-- p10 `86.02930423477346`, mean `92.1804554185734`, median full-512
-  after-TTFT `86.21689344139463`, median wall full-512
-  `83.21177427158659`, median TTFT `179.68109803041443 ms`;
+- p10 `80.12003134222003`, mean `90.18386686514286`, median full-512
+  after-TTFT `85.91896026873997`, median wall full-512
+  `82.89661752202322`, median TTFT `179.28718304028735 ms`;
 - config: llama.cpp `c926ad098`, UD-Q8_K_XL target/verifier, Q4_0 MTP draft,
   reordered-Q8 VDR2, `n_max=3`, `n_min=2`, `p_min=0.0475`,
   `UBATCH_SIZE=1024`, `--ctx-checkpoints 0`, no n-gram/history acceleration;
@@ -24,11 +24,13 @@ Best one-B70 Q8 strict result under the promotion gate:
 
 This is the submitted policy-compliant VDR2 transfer of the strict `n_max=3`,
 `n_min=2`, `UBATCH_SIZE=1024` family; approved ID
-`cmqwt1zk803ozqr01hctqss2z`. Supporting VDR2 rows measured
-`89.45543282863798`, `89.43737321875525`, `88.06323469748838`, and
-`85.90621112154868 tok/s`. The prior VDR2 `89.45543282863798 tok/s`
-submission and prior VDR4 `87.61145306230438 tok/s` submission are
-superseded. The older `86.47445652599384 tok/s` `p_min=0.075`
+`cmqwxep4a03qiqr010chjn93s`. It was submitted from a conservative exact
+confirmation batch (`88.57072965699355`, `90.98312252660529`,
+`89.87311437412865`, `87.29987510414621 tok/s`) rather than the isolated
+same-identity high observation at `91.39281557735391 tok/s`. The prior VDR2
+`90.32179401019857` and `89.45543282863798 tok/s` submissions and prior VDR4
+`87.61145306230438 tok/s` submission are superseded. The older
+`86.47445652599384 tok/s` `p_min=0.075`
 row did not repeat (`81.73306503450416` and `82.89800056264573 tok/s`) and is
 also superseded.
 The older `100+`, `170+`, and `280+` rows remain useful diagnostics, but they
@@ -49,7 +51,7 @@ older synthetic VDR2 Q8 reorder build back onto the realistic cold suite. The
 static VDR4 variations stayed below record (`80.3-85.6 tok/s`), but VDR2 at
 the strict `n3/n_min=2/UBATCH=1024` shape repeatedly landed near `87-89 tok/s`
 and produced a `89.45543282863798 tok/s` record at `p_min=0.0475`; a later
-tight p-min repeat of the same VDR2 family produced the current
+tight p-min repeat of the same VDR2 family produced the then-current
 `90.32179401019857 tok/s` record.
 See
 `../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260627T1906-realistic-static-and-vdr2.md`.
@@ -59,7 +61,7 @@ Also see
 2026-06-27 tight `p_min` follow-up: a full strict v22 sweep at `p_min`
 `0.04725`, `0.047375`, repeated `0.0475`, and `0.047625` did not beat the
 record. Best row was `88.971548 tok/s`; the `0.0475` repeat fell to
-`87.144002 tok/s`. This suggests the `90.32179401019857 tok/s` row is a valid
+`87.144002 tok/s`. This suggests the `90.32179401019857 tok/s` row was a valid
 high repeat, but more tiny `p_min` sweeps are low ROI without a new code/runtime
 change. See
 `../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260627T2031-vdr2-pmin-tight-negative.md`.
@@ -97,9 +99,21 @@ strict record. The best Q8_0 screen,
 `91.5564081422068 tok/s`, but exact confirmations landed at
 `88.94881774985208` and `89.89234269084307`; the best deeper row was
 `n_max=4`/`n_min=2` at `90.27678402019421`, still below the current
-`UD-Q8_K_XL` record (`90.32179401019857`). Keep Q8_0 as a compatibility/control
+`UD-Q8_K_XL` record (`90.98312252660529`). Keep Q8_0 as a compatibility/control
 lane, not a promoted LocalMaxxing row. See
 `../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260627T2144-q80-target-strict-negative.md`.
+
+2026-06-27 VDR2 confirmation and n=4 update: a four-lane strict UD-Q8_K_XL
+sweep retested the current VDR2 `n3/n_min=2/p_min=0.0475/UBATCH=1024` identity
+and two deeper `n_max=4` variants. The n=3 control produced a valid
+`91.39281557735391 tok/s` high observation, but a four-repeat confirmation
+spread measured `88.57072965699355`, `90.98312252660529`,
+`89.87311437412865`, and `87.29987510414621 tok/s`; the conservative
+`90.98312252660529` row was submitted and approved as `cmqwxep4a03qiqr010chjn93s`.
+The n=4 variants were clear losses (`82.12005329123728` for `n_min=1`,
+`85.93327599447983` for `n_min=2`), so do not continue deeper-MTP threshold
+sweeps without a new acceptance/scoring mechanism. See
+`../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260627T2213-vdr2-recordconfirm-and-n4-negative.md`.
 
 ## Historical Diagnostic Frontier Pending Realistic Gate
 

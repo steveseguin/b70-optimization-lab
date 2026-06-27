@@ -2,9 +2,9 @@
 
 Status: **active optimization with a realistic final gate now required.** The
 best one-B70 Q8 strict result by the required primary metric is
-`90.32179401019857 tok/s` median generated-token throughput for tokens 1-100
+`90.98312252660529 tok/s` median generated-token throughput for tokens 1-100
 after TTFT across the fixed cold prompt suite:
-`data/gemma4-q8-gpu2-strict-vdr2-n3-p00475-repeat-ub1024-v21-20260627T201757Z/summary.json`.
+`data/gemma4-q8-gpu1-strict-vdr2-recordconfirm-n3-nmin2-p00475-ub1024-20260627T221722Z/summary.json`.
 It uses llama.cpp `c926ad098`, UD-Q8_K_XL target/verifier, Q4_0 MTP draft,
 reordered-Q8 VDR2, `n_max=3`, `n_min=2`, `p_min=0.0475`,
 `UBATCH_SIZE=1024`, `cached_tokens=0` on every suite prompt, and
@@ -19,14 +19,18 @@ accepts that quantization change.
 
 Current repeat / confirmation status: the VDR2 transfer of the strict
 `n_max=3`, `n_min=2`, `UBATCH_SIZE=1024` family is the current
-policy-compliant LocalMaxxing submission: `cmqwt1zk803ozqr01hctqss2z`.
-Supporting strict VDR2 rows measured `89.45543282863798`,
-`89.43737321875525`, `88.06323469748838`, and
-`85.90621112154868 tok/s`; the promoted row has p10
-`86.02930423477346`, mean `92.1804554185734`, median full512 after-TTFT
-`86.21689344139463`, median wall full512 `83.21177427158659`, and median
-TTFT `179.68109803041443 ms`. The prior VDR2 submission
-`cmqwqzayr03o8qr01j6lgx93n` at `89.45543282863798 tok/s` and prior VDR4
+policy-compliant LocalMaxxing submission: `cmqwxep4a03qiqr010chjn93s`.
+The submitted row came from a four-GPU exact confirmation batch; repeats
+measured `88.57072965699355`, `90.98312252660529`,
+`89.87311437412865`, and `87.29987510414621 tok/s`. A prior same-identity
+high observation measured `91.39281557735391 tok/s`, but the conservative
+submitted headline is the reproduced `90.98312252660529 tok/s` row. The
+promoted row has p10 `80.12003134222003`, mean `90.18386686514286`, median
+full512 after-TTFT `85.91896026873997`, median wall full512
+`82.89661752202322`, and median TTFT `179.28718304028735 ms`.
+The prior VDR2 submissions `cmqwt1zk803ozqr01hctqss2z` at
+`90.32179401019857 tok/s` and `cmqwqzayr03o8qr01j6lgx93n` at
+`89.45543282863798 tok/s`, plus prior VDR4
 submission `cmqwnl2ag03lgqr01ch5bxknq` at `87.61145306230438 tok/s` are
 superseded. The
 earlier `86.47445652599384 tok/s` `p_min=0.075` observation did not repeat
@@ -154,7 +158,8 @@ External references:
 
 | Date | Runtime | GPU Layout | Precision | Context | Status | Output tok/s | Evidence |
 | --- | --- | --- | --- | --- | --- | ---: | --- |
-| 2026-06-27 | llama.cpp `c926ad098` SYCL draft-MTP AOT BMG + Q8 MoE-ID reorder VDR2 | 1 replica on B70 GPU2 | UD-Q8_K_XL GGUF target + Q4_0 MTP draft GGUF, f16 KV | 8K | **current strict realistic-suite record**: fixed realistic cold suite, each prompt once, `cached_tokens=0` every row, no cache/history/ngram reuse, `n_max=3`, `n_min=2`, `p_min=0.0475`, `UBATCH_SIZE=1024`, target-verifier accepted MTP tokens; LocalMaxxing `cmqwt1zk803ozqr01hctqss2z` | **90.322 median 1-100 after TTFT** / 86.217 full512 after TTFT / 83.212 wall full512 | [summary](../../data/gemma4-q8-gpu2-strict-vdr2-n3-p00475-repeat-ub1024-v21-20260627T201757Z/summary.json), [LocalMaxxing response](../../data/localmaxxing-responses/gemma4-26b-a4b-q8-b70-llamacpp-realistic-vdr2-mtp-n3-nmin2-p00475-ub1024-v21-20260627.submit.log), [sweep note](../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260627T2017-vdr2-pmin-tight-repeat.md) |
+| 2026-06-27 | llama.cpp `c926ad098` SYCL draft-MTP AOT BMG + Q8 MoE-ID reorder VDR2 | 1 replica on B70 GPU1 | UD-Q8_K_XL GGUF target + Q4_0 MTP draft GGUF, f16 KV | 8K | **current strict realistic-suite record**: fixed realistic cold suite, each prompt once, `cached_tokens=0` every row, no cache/history/ngram reuse, `n_max=3`, `n_min=2`, `p_min=0.0475`, `UBATCH_SIZE=1024`, target-verifier accepted MTP tokens; LocalMaxxing `cmqwxep4a03qiqr010chjn93s`; submitted from a conservative four-repeat confirmation batch, with a same-identity `91.393 tok/s` high observation kept as support rather than headline | **90.983 median 1-100 after TTFT** / 85.919 full512 after TTFT / 82.897 wall full512 | [summary](../../data/gemma4-q8-gpu1-strict-vdr2-recordconfirm-n3-nmin2-p00475-ub1024-20260627T221722Z/summary.json), [LocalMaxxing response](../../data/localmaxxing-responses/gemma4-26b-a4b-q8-b70-llamacpp-realistic-vdr2-mtp-n3-nmin2-p00475-ub1024-recordconfirm-20260627T221722.submit.log), [sweep note](../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260627T2213-vdr2-recordconfirm-and-n4-negative.md) |
+| 2026-06-27 | llama.cpp `c926ad098` SYCL draft-MTP AOT BMG + Q8 MoE-ID reorder VDR2 | 1 replica on B70 GPU2 | UD-Q8_K_XL GGUF target + Q4_0 MTP draft GGUF, f16 KV | 8K | prior strict realistic-suite record, superseded by the row above: fixed realistic cold suite, each prompt once, `cached_tokens=0` every row, no cache/history/ngram reuse, `n_max=3`, `n_min=2`, `p_min=0.0475`, `UBATCH_SIZE=1024`, target-verifier accepted MTP tokens; LocalMaxxing `cmqwt1zk803ozqr01hctqss2z` | **90.322 median 1-100 after TTFT** / 86.217 full512 after TTFT / 83.212 wall full512 | [summary](../../data/gemma4-q8-gpu2-strict-vdr2-n3-p00475-repeat-ub1024-v21-20260627T201757Z/summary.json), [LocalMaxxing response](../../data/localmaxxing-responses/gemma4-26b-a4b-q8-b70-llamacpp-realistic-vdr2-mtp-n3-nmin2-p00475-ub1024-v21-20260627.submit.log), [sweep note](../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260627T2017-vdr2-pmin-tight-repeat.md) |
 | 2026-06-27 | llama.cpp `c926ad098` SYCL draft-MTP AOT BMG + Q8 MoE-ID reorder VDR2 | 1 replica on B70 | Q8_0 GGUF target controls, mostly Q4_0 MTP draft, f16 KV | 8K | **valid strict control, not promoted**: literal `gemma-4-26B-A4B-it-Q8_0.gguf` target tested because it is smaller and has fast Q8_0 kernels. Best screen `91.556` did not confirm (`88.949`, `89.892` exact repeats); best deeper row `90.277` stayed below the `UD-Q8_K_XL` record. Do not submit under the no-quality-loss lane. | **90.277 best repeated/depth control** / 91.556 unconfirmed high repeat | [sweep note](../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260627T2144-q80-target-strict-negative.md) |
 | 2026-06-27 | llama.cpp `c926ad098` SYCL draft-MTP AOT BMG + Q8 MoE-ID reorder VDR2 + grouped reordered-Q8 MoE experiment | 1 replica on B70 GPU0 | UD-Q8_K_XL GGUF target + Q4_0 MTP draft GGUF, f16 KV | 8K | **valid strict realistic-suite loss**: fixed realistic cold suite, each prompt once, `cached_tokens=0` every row, no cache/history/ngram reuse; source flag `LLAMA_SYCL_MUL_MAT_ID_MULTI_TOKEN_GROUPED_Q8_0_REORDER=1`; duplicate-expert grouping lost to branch/scatter/register overhead; do not submit | **83.908 median 1-100 after TTFT** / 82.008 full512 after TTFT / 79.093 wall full512 | [summary](../../data/gemma4-q8-gpu0-strict-vdr2-grouped-reorder-n3-p00475-ub1024-screen-20260627T205542Z/summary.json), [sweep note](../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260627T2055-q8-reorder-grouped-negative.md), [patch note](../../patches/gemma4-26b-a4b-q8-b70/20260627T2055-q8-reorder-grouped-multitoken-negative.md) |
 | 2026-06-27 | llama.cpp `c926ad098` SYCL draft-MTP AOT BMG + Q8 MoE-ID reorder VDR2 | 1 replica on B70 GPU2 | UD-Q8_K_XL GGUF target + Q4_0 MTP draft GGUF, f16 KV | 8K | prior strict realistic-suite record, superseded by the row above: fixed realistic cold suite, each prompt once, `cached_tokens=0` every row, no cache/history/ngram reuse, `n_max=3`, `n_min=2`, `p_min=0.0475`, `UBATCH_SIZE=1024`, target-verifier accepted MTP tokens; LocalMaxxing `cmqwqzayr03o8qr01j6lgx93n` | **89.455 median 1-100 after TTFT** / 84.452 full512 after TTFT / 80.625 wall full512 | [summary](../../data/gemma4-q8-gpu2-strict-vdr2-n3-p00475-ub1024-v19-20260627T191931Z/summary.json), [LocalMaxxing response](../../data/localmaxxing-responses/gemma4-26b-a4b-q8-b70-llamacpp-realistic-vdr2-mtp-n3-nmin2-p00475-ub1024-v19-20260627.submit.log), [sweep note](../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260627T1906-realistic-static-and-vdr2.md) |
