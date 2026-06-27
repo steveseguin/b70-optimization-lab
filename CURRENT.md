@@ -11,15 +11,16 @@ Current active optimization target:
 - Goal: maximize **fresh-response** single-session decode while preserving the
   Q8 target/verifier quality lane. Warmed/history or repeated-continuation
   speedups are useful diagnostics only, not headline throughput.
-- Current valid fresh-response best: `104.30919255569083 tok/s` after TTFT on
-  the first no-cache benchmark row, `103.93445004566178 tok/s` supporting
+- Current valid fresh-response best: `176.21623213048554 tok/s` after TTFT on
+  the first no-cache benchmark row, `176.40259133127742 tok/s` supporting
   repeated-request mean, `1536` canary repeats / `6144` rows passed,
-  LocalMaxxing `cmqw1tgzx0366qr01g4lkv7f1`. This is the same
-  route-cache/fused-output/fused-selected-softmax recipe with
-  `UBATCH_SIZE=768`, `MTP_N_MIN=3`, and `MTP_P_MIN=0.10`, plus
-  `LLAMA_GEMMA4_MOE_REUSE_ATTN_RMS=1`, a tiny row0 micro-record over the
-  previous `104.22626983476746 tok/s` row, not material progress toward
-  `>150`.
+  LocalMaxxing `cmqwkedg303jeqr013z753j62`. This is the Q8 target/verifier
+  + Q4_0 MTP draft stack with `LLAMA_SYCL_MUL_MAT_ID_MULTI_TOKEN_FAST=1`,
+  `LLAMA_SYCL_MUL_MAT_ID_Q8_0_REORDER=1`, and reordered Q8_0 MMVQ compile
+  knob `GGML_SYCL_REORDER_Q8_0_VDR_MMVQ=2`, which makes the broad multi-token
+  MoE-ID verifier path viable for the UD-Q8_K_XL target. The current promoted
+  run used `UBATCH_SIZE=720` on GPU0. Headline remains row0 only with
+  `cached_tokens=0`.
 - Result packet: `results/gemma4-26b-a4b-q8-b70/README.md`.
 - Reproduction: `results/gemma4-26b-a4b-q8-b70/reproduce.md`.
 - Validation rules: `results/gemma4-26b-a4b-q8-b70/validity-gates.md`.

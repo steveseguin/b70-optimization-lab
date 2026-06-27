@@ -7,7 +7,7 @@ replicas on four GPUs for parallel research and aggregate service capacity.
 ## Current Fresh-Response Headline
 
 Current valid one-B70 headline is
-`data/gemma4-q8-gpu0-rmsreuse-ub768-nmin3-pmin010-fullrepeat-20260627T070421Z/`:
+`data/gemma4-q8-gpu0-q8reorder-ub720-nmin3-pmin010-fullconfirm-20260627T144855Z/`:
 
 - target/verifier: `gemma-4-26B-A4B-it-UD-Q8_K_XL.gguf`;
 - draft: `MTP/gemma-4-26B-A4B-it-Q4_0-MTP.gguf`;
@@ -25,18 +25,20 @@ Current valid one-B70 headline is
   `LLAMA_GEMMA4_MOE_WEIGHTED_SUM=1`, f16 target/draft KV,
   `LLAMA_SYCL_MUL_MAT_ID_ROUTE_CACHE=1`,
   `LLAMA_GEMMA4_MOE_REUSE_ATTN_RMS=1`,
+  `LLAMA_SYCL_MUL_MAT_ID_MULTI_TOKEN_FAST=1`,
+  `LLAMA_SYCL_MUL_MAT_ID_Q8_0_REORDER=1`,
   `--ctx-checkpoints 0`, `GGML_SYCL_ENABLE_VMM=0`,
   `UR_L0_USE_IMMEDIATE_COMMANDLISTS=1`, `BATCH_SIZE=1024`,
-  `UBATCH_SIZE=768`, `THREADS=8`, `POLL=100`, `FLASH_ATTN=off`,
+  `UBATCH_SIZE=720`, `THREADS=8`, `POLL=100`, `FLASH_ATTN=off`,
   `GGML_SYCL_DISABLE_GRAPH=0`;
 - validation: chat canary **1536 repeats / 6144 rows**, all benchmark rows
   `cached_tokens=0`;
-- fresh headline: **104.30919255569083 tok/s** after TTFT;
-- supporting repeated-request mean: `103.93445004566178 tok/s`;
-- LocalMaxxing: `cmqw1tgzx0366qr01g4lkv7f1`;
-- note: this is a tiny row0 `LLAMA_GEMMA4_MOE_REUSE_ATTN_RMS=1` micro-record
-  over the prior `104.22626983476746 tok/s` same-stack row, not a material
-  speedup toward `>150`.
+- fresh headline: **176.21623213048554 tok/s** after TTFT;
+- supporting repeated-request mean: `176.40259133127742 tok/s`;
+- LocalMaxxing: `cmqwkedg303jeqr013z753j62`;
+- note: this is the first validated fresh-response Gemma 26B Q8 result above
+  the `>150 tok/s` target. The target/verifier remains UD-Q8_K_XL; the Q8_0
+  reorder flag refers to internal GGML Q8_0 MoE expert tensors.
 
 The actual research target remains **>150 tok/s fresh-response**. The current
 llama.cpp direct-unroll MTP path no longer performs one assistant
@@ -138,6 +140,25 @@ row0 (`cached_tokens=0`), support mean `103.93445004566178`. LocalMaxxing
 approved it as `cmqw1tgzx0366qr01g4lkv7f1`. Treat this as a tiny row0
 micro-record only: the support mean is lower than the prior run due to one
 slower support row, so the structural speedup is marginal at best.
+
+2026-06-27 Q8 MoE-ID reorder breakthrough: default-off
+`LLAMA_SYCL_MUL_MAT_ID_Q8_0_REORDER=1` makes broad
+`LLAMA_SYCL_MUL_MAT_ID_MULTI_TOKEN_FAST=1` viable for the UD-Q8_K_XL target's
+internal Q8_0 MoE expert tensors. Full validation
+`data/gemma4-q8-gpu0-mulmatid-fast-q8reorder-ub768-fullconfirm-20260627T142318Z/`
+passed `6144/6144` canary rows and reached `169.9489959621758 tok/s` fresh
+row0 (`cached_tokens=0`), support mean `169.5501066933547`. LocalMaxxing
+approved it as `cmqwh8du403gfqr01d6ut1ddo`. Follow-up full validation at
+`UBATCH_SIZE=704`
+`data/gemma4-q8-gpu1-q8reorder-ub704-nmin3-pmin010-fullconfirm-20260627T143126Z/`
+passed `6144/6144` canary rows and moved the current headline to
+`170.11205232778414 tok/s` fresh row0, support mean
+`169.87578310923394`, LocalMaxxing `cmqwhkbzj03guqr01h00c8n04`. A later
+`UBATCH_SIZE=720` full confirmation
+`data/gemma4-q8-gpu0-q8reorder-ub720-nmin3-pmin010-fullconfirm-20260627T144855Z/`
+passed `6144/6144` rows and raised the record to
+`176.21623213048554 tok/s` fresh row0, support mean `176.40259133127742`,
+LocalMaxxing `cmqwkedg303jeqr013z753j62`.
 
 2026-06-27 clean-repro negative sweep: after reconstructing a clean
 `c926ad098` source tree plus the promoted record patches, the corrected

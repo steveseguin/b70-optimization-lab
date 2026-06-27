@@ -1,0 +1,27 @@
+diff --git a/ggml/src/ggml-sycl/quants.hpp b/ggml/src/ggml-sycl/quants.hpp
+index 95287f175..c7069e289 100644
+--- a/ggml/src/ggml-sycl/quants.hpp
++++ b/ggml/src/ggml-sycl/quants.hpp
+@@ -21,6 +21,10 @@
+ 
+ namespace ggml_sycl_reordered {
+ 
++#ifndef GGML_SYCL_REORDER_Q8_0_VDR_MMVQ
++#define GGML_SYCL_REORDER_Q8_0_VDR_MMVQ 4
++#endif
++
+ // The reordered block moves quants (qs) and  scales(d) to two
+ // uniform regions of memory that is contiguous in the same tensor.
+ // What this means is that instead of having:
+@@ -160,7 +164,10 @@ template <> struct block_q_t<GGML_TYPE_Q8_0> {
+         static constexpr uint32_t qk       = QK8_0;      // 32
+         static constexpr uint32_t qi       = QI8_0;      // 8
+         static constexpr uint32_t qr       = QR8_0;      // 1
+-        static constexpr uint32_t vdr_mmvq = 4;
++        static constexpr uint32_t vdr_mmvq = GGML_SYCL_REORDER_Q8_0_VDR_MMVQ;
++        static_assert(vdr_mmvq == 1 || vdr_mmvq == 2 ||
++                      vdr_mmvq == 4 || vdr_mmvq == 8,
++                      "Q8_0 reordered MMVQ VDR must divide QI8_0");
+     };
+ 
+     // Q8_0 reorder layout: [qs0|qs1|...|qsN][d0|d1|...|dN]

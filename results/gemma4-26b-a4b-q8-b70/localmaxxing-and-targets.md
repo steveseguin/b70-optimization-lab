@@ -1,6 +1,6 @@
 # Gemma 4 26B A4B LocalMaxxing Targets
 
-Research snapshot: 2026-06-26.
+Research snapshot: 2026-06-27.
 
 This page separates public leaderboard context from this lane's promoted result
 rules. The goal is a valid Q8 / INT8-or-better result on Intel Arc Pro B70, not
@@ -106,8 +106,8 @@ Current filled-long draftless ngram-mod warmed/history artifact:
   `cmqqxx7bp01dbqo012d2qiiw6` (`280.04 tok/s`),
   `cmqqxjnif01d0qo01ix4oeixo` (`255.04 tok/s`) and
   `cmqqxbkzx01cxqo01j8p97627` (`245.98 tok/s`). It does **not** supersede the
-  current fresh-response draft-MTP record `cmqw1tgzx0366qr01g4lkv7f1`
-  (`104.309 tok/s` first no-cache request; `103.934 tok/s` supporting repeat
+  current fresh-response draft-MTP record `cmqwkedg303jeqr013z753j62`
+  (`176.216 tok/s` first no-cache request; `176.403 tok/s` supporting repeat
   mean; Q8 target/verifier with Q4_0 MTP draft only);
 - queue:
   `data/localmaxxing-gemma4-26b-a4b-q8-b70-ngrammod-20-32-64-poll100-filledlong512-20260623.queue.json`;
@@ -126,29 +126,66 @@ Current filled-long draftless ngram-mod warmed/history artifact:
 
 Current filled-long draft-MTP fresh-response Q8-target best:
 
-- `gemma4-q8-gpu0-rmsreuse-ub768-nmin3-pmin010-fullrepeat-20260627T070421Z`;
+- `gemma4-q8-gpu0-q8reorder-vdr2-ub720-nmin3-pmin010-fullconfirm-20260627T155347Z`;
 - llama.cpp SYCL on one B70, UD-Q8_K_XL main GGUF plus
   `gemma-4-26B-A4B-it-Q4_0-MTP.gguf` draft GGUF;
-- same `c926ad098` `n=7` backend-sampling-off route-cache/fused-output
-  recipe as the previous row; runtime shape is `UBATCH_SIZE=768` with
-  `MTP_N_MIN=3` and `MTP_P_MIN=0.10`, plus
-  `LLAMA_GEMMA4_MOE_REUSE_ATTN_RMS=1`, validated on GPU0;
+- same `c926ad098` `n=7` backend-sampling-off route-cache/fused-output/RMS
+  reuse recipe as the previous row, plus
+  `LLAMA_SYCL_MUL_MAT_ID_MULTI_TOKEN_FAST=1`,
+  `LLAMA_SYCL_MUL_MAT_ID_Q8_0_REORDER=1`, and reordered Q8_0 MMVQ compile knob
+  `GGML_SYCL_REORDER_Q8_0_VDR_MMVQ=2`; runtime shape is `UBATCH_SIZE=720` with
+  `MTP_N_MIN=3` and `MTP_P_MIN=0.10`, validated on GPU0;
 - actual LocalMaxxing packet shape: `588` prompt tokens and `512` output
   tokens (`BENCH_PROMPT_MODE=filled-long`);
 - chat canary: **1536 repeats / 6144 case rows** passed;
 - fresh-response headline: first measured no-cache request after TTFT
-  `104.30919255569083 tok/s`; supporting repeated-request mean
-  `103.93445004566178 tok/s`; first-row wall `90.85119259916031 tok/s`;
+  `176.21623213048554 tok/s`; supporting repeated-request mean
+  `176.40259133127742 tok/s`; first-row wall `139.3169544024847 tok/s`;
   all rows report `usage.prompt_tokens_details.cached_tokens=0`;
 - fresh-response status: submitted to LocalMaxxing and approved as
-  `cmqw1tgzx0366qr01g4lkv7f1`; this is a tiny row0 micro-record over
-  `cmqvv3kop0309qr013ekr8apu` (`104.22626983476746 tok/s`). The support mean
-  is lower than the prior record, so do not treat it as material progress
-  toward `>150 tok/s`;
+  `cmqwkedg303jeqr013z753j62`; this is the current validated fresh-response Q8
+  result above `>150 tok/s`;
 - queue:
-  `data/localmaxxing-gemma4-26b-a4b-q8-b70-llamacpp-mtp-n7-q8target-q40draft-routecache-mtpfusedoutargmax-selfusedweights-rmsreuse-ub768-nmin3-pmin010-fresh-20260627.queue.json`;
+  `data/localmaxxing-gemma4-26b-a4b-q8-b70-llamacpp-mtp-n7-q8target-q40draft-q8reorder-vdr2-ub720-nmin3-pmin010-fresh-20260627.queue.json`;
 - response:
-  `data/localmaxxing-responses/gemma4-26b-a4b-q8-b70-llamacpp-mtp-n7-q8target-q40draft-routecache-mtpfusedoutargmax-selfusedweights-rmsreuse-ub768-nmin3-pmin010-fresh-20260627.submit.log`.
+  `data/localmaxxing-responses/gemma4-26b-a4b-q8-b70-llamacpp-mtp-n7-q8target-q40draft-q8reorder-vdr2-ub720-nmin3-pmin010-fresh-20260627.submit.log`.
+
+Superseded Q8 MoE-ID reorder fresh-response record:
+
+- `gemma4-q8-gpu0-q8reorder-ub720-nmin3-pmin010-fullconfirm-20260627T144855Z`;
+- llama.cpp SYCL on one B70, UD-Q8_K_XL main GGUF plus
+  `gemma-4-26B-A4B-it-Q4_0-MTP.gguf` draft GGUF;
+- same `c926ad098` `n=7` backend-sampling-off route-cache/fused-output/RMS
+  reuse recipe as the previous row, plus
+  `LLAMA_SYCL_MUL_MAT_ID_MULTI_TOKEN_FAST=1` and
+  `LLAMA_SYCL_MUL_MAT_ID_Q8_0_REORDER=1`; runtime shape is
+  `UBATCH_SIZE=720` with `MTP_N_MIN=3` and `MTP_P_MIN=0.10`, validated on GPU0;
+- actual LocalMaxxing packet shape: `588` prompt tokens and `512` output
+  tokens (`BENCH_PROMPT_MODE=filled-long`);
+- chat canary: **1536 repeats / 6144 case rows** passed;
+- fresh-response headline: first measured no-cache request after TTFT
+  `171.1076295077342 tok/s`; supporting repeated-request mean
+  `170.12922191012277 tok/s`; first-row wall `135.66648146097913 tok/s`;
+  all rows report `usage.prompt_tokens_details.cached_tokens=0`;
+- fresh-response status: submitted to LocalMaxxing and approved as
+  `cmqwi45d803gyqr01td3vf9ka`; superseded by
+  `cmqwkedg303jeqr013z753j62` (`176.21623213048554 tok/s`);
+- queue:
+  `data/localmaxxing-gemma4-26b-a4b-q8-b70-llamacpp-mtp-n7-q8target-q40draft-q8reorder-ub720-nmin3-pmin010-fresh-20260627.queue.json`;
+- response:
+  `data/localmaxxing-responses/gemma4-26b-a4b-q8-b70-llamacpp-mtp-n7-q8target-q40draft-q8reorder-ub720-nmin3-pmin010-fresh-20260627.submit.log`.
+
+Superseded Q8 MoE-ID reorder fresh-response record:
+
+- `gemma4-q8-gpu1-q8reorder-ub704-nmin3-pmin010-fullconfirm-20260627T143126Z`;
+- `170.11205232778414 tok/s` first fresh / `169.87578310923394 tok/s`
+  support mean, LocalMaxxing `cmqwhkbzj03guqr01h00c8n04`.
+
+Earlier superseded Q8 MoE-ID reorder fresh-response record:
+
+- `gemma4-q8-gpu0-mulmatid-fast-q8reorder-ub768-fullconfirm-20260627T142318Z`;
+- `169.9489959621758 tok/s` first fresh / `169.5501066933547 tok/s`
+  support mean, LocalMaxxing `cmqwh8du403gfqr01d6ut1ddo`.
 
 Superseded `UBATCH_SIZE=768`, `n_min=3`, `p_min=0.10` fresh-response
 Q8-target best:

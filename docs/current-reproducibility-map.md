@@ -95,7 +95,7 @@ packet:
 
 `../results/gemma4-26b-a4b-q8-b70/reproduce.md`
 
-Use it when the goal is to copy the current `104.309 tok/s` settings rather
+Use it when the goal is to copy the current `176.216 tok/s` settings rather
 than review the full experiment history. The older standalone
 `../repro/gemma4-26b-a4b-q8-b70-95tps-20260624/README.md` folder remains as a
 superseded `95.264 tok/s` reproduction artifact.
@@ -106,21 +106,23 @@ Record identity:
 - draft: local `Q4_0` Gemma MTP draft only
 - hardware: headless Supermicro AMD Threadripper PRO 5955WX platform, 128 GB
   DDR4, one Intel Arc Pro B70 32 GB used for the measured replica
-- result: `104.309193 tok/s` first fresh no-cache request after TTFT,
-  `103.934450` supporting mean, 1536 repeats / 6144 chat-canary rows,
-  LocalMaxxing `cmqw1tgzx0366qr01g4lkv7f1`; includes selected-softmax/weighted-sum
+- result: `176.216232 tok/s` first fresh no-cache request after TTFT,
+  `176.402591` supporting mean, 1536 repeats / 6144 chat-canary rows,
+  LocalMaxxing `cmqwkedg303jeqr013z753j62`; includes selected-softmax/weighted-sum
   MoE source guards, `LLAMA_SYCL_MUL_MAT_ID_ROUTE_CACHE=1`,
   `LLAMA_GEMMA4_MTP_FUSED_OUTPUT_ARGMAX=1`,
   `LLAMA_GEMMA4_MOE_SELECTED_SOFTMAX_FUSED=1`, and
-  `UR_L0_USE_IMMEDIATE_COMMANDLISTS=1`, with `UBATCH_SIZE=768`,
-  `MTP_N_MIN=3`, `MTP_P_MIN=0.10`, and
-  `LLAMA_GEMMA4_MOE_REUSE_ATTN_RMS=1`. Treat this as a small row0-only
-  micro-record over the prior `104.226 tok/s` same-family row.
+  `UR_L0_USE_IMMEDIATE_COMMANDLISTS=1`, with `UBATCH_SIZE=720`,
+  `MTP_N_MIN=3`, `MTP_P_MIN=0.10`,
+  `GGML_SYCL_REORDER_Q8_0_VDR_MMVQ=2`, and
+  `LLAMA_GEMMA4_MOE_REUSE_ATTN_RMS=1`, plus
+  `LLAMA_SYCL_MUL_MAT_ID_MULTI_TOKEN_FAST=1` and
+  `LLAMA_SYCL_MUL_MAT_ID_Q8_0_REORDER=1`.
 - primary artifacts:
-  `../data/gemma4-q8-gpu0-rmsreuse-ub768-nmin3-pmin010-fullrepeat-20260627T070421Z/summary.json`,
-  `../data/localmaxxing-gemma4-26b-a4b-q8-b70-llamacpp-mtp-n7-q8target-q40draft-routecache-mtpfusedoutargmax-selfusedweights-rmsreuse-ub768-nmin3-pmin010-fresh-20260627.queue.json`,
+  `../data/gemma4-q8-gpu0-q8reorder-vdr2-ub720-nmin3-pmin010-fullconfirm-20260627T155347Z/summary.json`,
+  `../data/localmaxxing-gemma4-26b-a4b-q8-b70-llamacpp-mtp-n7-q8target-q40draft-q8reorder-vdr2-ub720-nmin3-pmin010-fresh-20260627.queue.json`,
   and
-  `../data/localmaxxing-responses/gemma4-26b-a4b-q8-b70-llamacpp-mtp-n7-q8target-q40draft-routecache-mtpfusedoutargmax-selfusedweights-rmsreuse-ub768-nmin3-pmin010-fresh-20260627.submit.log`
+  `../data/localmaxxing-responses/gemma4-26b-a4b-q8-b70-llamacpp-mtp-n7-q8target-q40draft-q8reorder-vdr2-ub720-nmin3-pmin010-fresh-20260627.submit.log`
 - source patch snapshot:
   `../patches/gemma4-26b-a4b-q8-b70/20260626T2225-llamacpp-gemma4-current-record-stack.patch`
   with note

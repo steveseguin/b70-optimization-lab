@@ -5,19 +5,24 @@ They do not delete any Qwen models or modify the dirty Qwen vLLM source tree.
 
 ## 1. Build llama.cpp with SYCL
 
-The current `104.309 tok/s` recipe is not plain upstream llama.cpp. It uses the
-local Gemma research stack based on upstream commit `c926ad098`; apply these
-patches in order:
+The current `176.216 tok/s` recipe is not plain upstream llama.cpp. It uses the
+local Gemma research stack based on upstream commit `c926ad098`; apply the
+current cumulative stack plus the Q8 MoE-ID reorder patch snapshot and VDR
+compile-knob patch:
 
 - `../../patches/gemma4-26b-a4b-q8-b70/20260626T2225-llamacpp-gemma4-current-record-stack.patch`
 - `../../patches/gemma4-26b-a4b-q8-b70/20260626T2225-llamacpp-gemma4-current-record-stack.md`
 - `../../patches/gemma4-26b-a4b-q8-b70/20260627T0704-llamacpp-gemma4-moe-reuse-attn-rms-incremental.patch`
 - `../../patches/gemma4-26b-a4b-q8-b70/20260627-llamacpp-gemma4-moe-reuse-attn-rms-record.md`
+- `../../patches/gemma4-26b-a4b-q8-b70/q8-moe-id-reorder-positive-20260627.md`
+- `../../patches/gemma4-26b-a4b-q8-b70/q8-reorder-vdr-compile-knob-20260627.patch`
 
 The `20260626T2225` patch is intentionally cumulative and includes default-off
 rejected experiment paths. The RMS patch is the small incremental source change
-for the current `104.309` micro-record. The promoted runtime flags in this file
-select only the validated record path.
+for the superseded `104.309` micro-record. The Q8 MoE-ID reorder snapshot
+documents the `170-171` path. The VDR compile-knob patch is default-preserving;
+the current record build explicitly sets
+`-DGGML_SYCL_REORDER_Q8_0_VDR_MMVQ=2` to reach `176.216 tok/s`.
 
 ```bash
 cd /home/steve/qwen36-results-main
@@ -30,6 +35,25 @@ Default output:
 /home/steve/src/llama.cpp/build-sycl-b70/bin/llama-server
 /home/steve/src/llama.cpp/build-sycl-b70/bin/llama-cli
 /home/steve/src/llama.cpp/build-sycl-b70/bin/llama-bench
+```
+
+For the current VDR=2 record build, use a dedicated build directory so the
+default VDR=4 binary remains available for comparison:
+
+```bash
+cd /home/steve/src/llama.cpp-gemma-record-repro-c926
+source /opt/intel/oneapi/setvars.sh
+cmake -S . -B build-sycl-b70-aot-bmg-g31-q8reorder-vdr2 -G Ninja \
+  -DCMAKE_BUILD_TYPE=Release \
+  -DCMAKE_C_COMPILER=/opt/intel/oneapi/compiler/2026.0/bin/icx \
+  -DCMAKE_CXX_COMPILER=/opt/intel/oneapi/compiler/2026.0/bin/icpx \
+  -DCMAKE_CXX_FLAGS='-DGGML_SYCL_REORDER_Q8_0_VDR_MMVQ=2' \
+  -DGGML_SYCL=ON -DGGML_SYCL_TARGET=INTEL \
+  -DGGML_SYCL_DEVICE_ARCH=bmg-g31 \
+  -DGGML_SYCL_F16=ON -DGGML_SYCL_GRAPH=ON -DGGML_SYCL_DNN=ON \
+  -DGGML_SYCL_HOST_MEM_FALLBACK=ON
+cmake --build build-sycl-b70-aot-bmg-g31-q8reorder-vdr2 \
+  --target llama-server -j 8
 ```
 
 ## 2. Download Q8 GGUF
@@ -227,35 +251,40 @@ Current filled-long draft-MTP fresh-response best:
 For a copy-ready version of this record path, including the exact patch,
 configuration, scripts, and copied result artifacts, start with
 [`../../repro/gemma4-26b-a4b-q8-b70-95tps-20260624/`](../../repro/gemma4-26b-a4b-q8-b70-95tps-20260624/README.md)
-for the older superseded recipe. The current 103.983 tok/s recipe is the same
+for the older superseded recipe. The current 176.216 tok/s recipe is the same
 family plus direct argmax-ID unroll, q-only Gemma4Assistant attention inputs,
-verifier backend argmax IDs, deferred target `h_nextn`,
-selected-softmax + weighted-sum Gemma4 MoE source guards, the validated
-`BATCH_SIZE=1024`, `UBATCH_SIZE=1024`, `THREADS=8` tune,
-`GGML_SYCL_DISABLE_GRAPH=0`, `MTP_P_MIN=0.136`, and
-`UR_L0_USE_IMMEDIATE_COMMANDLISTS=1`. The latest micro-record also enables the
-default-off one-shot `LLAMA_SYCL_MUL_MAT_ID_ROUTE_CACHE=1` route cache,
-Gemma4 assistant fused output argmax, and fused selected-softmax weights.
+verifier backend argmax IDs, deferred target `h_nextn`, selected-softmax +
+weighted-sum Gemma4 MoE source guards, route cache, fused assistant output
+argmax, fused selected-softmax weights, RMS reuse, and the Q8 MoE-ID reorder
+path plus reordered Q8_0 MMVQ VDR=2 compile knob that makes
+`LLAMA_SYCL_MUL_MAT_ID_MULTI_TOKEN_FAST=1` viable for the UD-Q8_K_XL target.
 
 ```bash
 cd /home/steve/qwen36-results-main
-LLAMA_SERVER=/home/steve/src/llama.cpp-gemma-record-stack/build-sycl-b70-aot-bmg-g31/bin/llama-server \
-GPU_INDEX=0 PORT=18260 LABEL=gemma4-q8-gpu0-currentrecord-control-fullrepeat-$(date -u +%Y%m%dT%H%M%SZ) \
-CTX_SIZE=8192 \
+EXTRA='--parallel 1 --cache-ram 0 --spec-type draft-mtp --spec-draft-model /mnt/fast-ai/llm-models/gemma4-26b-a4b-it-q8-gguf/MTP/gemma-4-26B-A4B-it-Q4_0-MTP.gguf --spec-draft-n-max 7 --spec-draft-device SYCL0 --spec-draft-ngl all --spec-draft-type-k f16 --spec-draft-type-v f16 --spec-draft-n-min 3 --spec-draft-p-min 0.10 --no-spec-draft-backend-sampling --spec-draft-threads 32 --spec-draft-threads-batch 32 --ctx-checkpoints 0'
+ONEAPI_DEVICE_SELECTOR=level_zero:0 \
 UR_L0_USE_IMMEDIATE_COMMANDLISTS=1 \
-GGML_SYCL_ENABLE_VMM=0 GGML_SYCL_DISABLE_GRAPH=0 BATCH_SIZE=1024 UBATCH_SIZE=1024 THREADS=8 POLL=100 \
-MTP_DRAFT_MODEL=/mnt/fast-ai/llm-models/gemma4-26b-a4b-it-q8-gguf/MTP/gemma-4-26B-A4B-it-Q4_0-MTP.gguf \
-MTP_N_MAX=7 MTP_N_MIN=2 MTP_P_MIN=0.136 MTP_BACKEND_SAMPLING=0 \
-MTP_DRAFT_THREADS=32 MTP_DRAFT_THREADS_BATCH=32 \
-MTP_DRAFT_FAST_ARGMAX=1 \
-LLAMA_SPEC_VERIFY_BACKEND_ARGMAX_IDS=1 LLAMA_MTP_DEFER_TARGET_H_NEXTN=1 \
+GGML_SYCL_DISABLE_OPT=0 GGML_SYCL_DISABLE_GRAPH=0 GGML_SYCL_ENABLE_VMM=0 \
+LLAMA_SERVER=/home/steve/src/llama.cpp-gemma-record-repro-c926/build-sycl-b70-aot-bmg-g31-q8reorder-vdr2/bin/llama-server \
+MODEL=/mnt/fast-ai/llm-models/gemma4-26b-a4b-it-q8-gguf/gemma-4-26B-A4B-it-UD-Q8_K_XL.gguf \
+EXTRA_LLAMA_ARGS="$EXTRA" \
+LLAMA_SYCL_MUL_MAT_ID_MULTI_TOKEN_FAST=1 \
+LLAMA_SYCL_MUL_MAT_ID_Q8_0_REORDER=1 \
+LLAMA_SPEC_VERIFY_BACKEND_ARGMAX_IDS=1 \
+LLAMA_MTP_DEFER_TARGET_H_NEXTN=1 \
+LLAMA_MTP_DRAFT_FAST_ARGMAX=1 \
 LLAMA_MTP_DRAFT_DIRECT_ARGMAX_IDS=1 LLAMA_MTP_DRAFT_DIRECT_ARGMAX_UNROLL=7 \
 LLAMA_GEMMA4_MTP_QONLY_ATTN_INPUTS=1 LLAMA_GEMMA4_MTP_FUSED_OUTPUT_ARGMAX=1 \
 LLAMA_GEMMA4_MOE_SELECTED_SOFTMAX=1 LLAMA_GEMMA4_MOE_SELECTED_SOFTMAX_FUSED=1 LLAMA_GEMMA4_MOE_WEIGHTED_SUM=1 \
+LLAMA_GEMMA4_MOE_REUSE_ATTN_RMS=1 \
 LLAMA_SYCL_MUL_MAT_ID_ROUTE_CACHE=1 \
-MTP_EXTRA_ARGS='--ctx-checkpoints 0' BENCH_PROMPT_MODE=filled-long \
-CANARY_REPEATS=384 BENCH_REPEATS=8 \
-scripts/run-gemma4-26b-mtp-candidate.sh
+GPU_INDEX=0 PORT=18310 LABEL=gemma4-q8-gpu0-q8reorder-vdr2-ub720-nmin3-pmin010-fullconfirm-$(date -u +%Y%m%dT%H%M%SZ) \
+CTX_SIZE=8192 \
+BATCH_SIZE=1024 UBATCH_SIZE=720 POLL=100 THREADS=8 \
+FLASH_ATTN=off REASONING=off \
+CANARY_REPEATS=1536 BENCH_REPEATS=3 \
+PROMPT_TOKENS=512 MAX_TOKENS=512 BENCH_PROMPT_MODE=filled-long \
+scripts/run-gemma4-26b-first-baseline.sh
 ```
 
 Result:
@@ -263,20 +292,20 @@ Result:
 ```text
 canary: 1536/1536 chat rows pass
 actual benchmark shape: 588 prompt tokens, 512 output tokens
-fresh headline tok/s: 103.983 first no-cache request after TTFT
-supporting repeated-request mean: 104.096 after TTFT; first-row wall: 90.479
+fresh headline tok/s: 176.216 first no-cache request after TTFT
+supporting repeated-request mean: 176.403 after TTFT; first-row wall: 139.317
 prompt cache: cached_tokens=0 on every row
-LocalMaxxing: cmqvjupek02pgqr01d46algvg
+LocalMaxxing: cmqwkedg303jeqr013z753j62
 target/draft: UD-Q8_K_XL target/verifier with Q4_0 MTP draft only
-summary: data/gemma4-q8-gpu0-currentrecord-control-fullrepeat-20260626T230510Z/summary.json
-LocalMaxxing queue: data/localmaxxing-gemma4-26b-a4b-q8-b70-llamacpp-mtp-n7-q8target-q40draft-routecache-repeat-fresh-20260626.queue.json
-LocalMaxxing response: data/localmaxxing-responses/gemma4-26b-a4b-q8-b70-llamacpp-mtp-n7-q8target-q40draft-routecache-repeat-fresh-20260626.submit.log
-server log: /mnt/fast-ai/bench-results/gemma4-26b-a4b-q8/servers/gemma4-q8-gpu0-currentrecord-control-fullrepeat-20260626T230510Z.server.log
+summary: data/gemma4-q8-gpu0-q8reorder-vdr2-ub720-nmin3-pmin010-fullconfirm-20260627T155347Z/summary.json
+LocalMaxxing queue: data/localmaxxing-gemma4-26b-a4b-q8-b70-llamacpp-mtp-n7-q8target-q40draft-q8reorder-vdr2-ub720-nmin3-pmin010-fresh-20260627.queue.json
+LocalMaxxing response: data/localmaxxing-responses/gemma4-26b-a4b-q8-b70-llamacpp-mtp-n7-q8target-q40draft-q8reorder-vdr2-ub720-nmin3-pmin010-fresh-20260627.submit.log
+server log: /mnt/fast-ai/bench-results/gemma4-26b-a4b-q8/servers/gemma4-q8-gpu0-q8reorder-vdr2-ub720-nmin3-pmin010-fullconfirm-20260627T155347Z.server.log
 ```
 
 The current record path requires the local llama.cpp patch stack captured in
-`patches/gemma4-26b-a4b-q8-b70/`, especially the direct-unroll and q-only
-assistant-input patches, plus the RMS reuse incremental patch listed above.
+`patches/gemma4-26b-a4b-q8-b70/`, especially the direct-unroll, q-only
+assistant-input, RMS reuse, and Q8 MoE-ID reorder patches listed above.
 Without that patch stack, `MTP_DRAFT_FAST_ARGMAX`, direct argmax-ID unroll,
 q-only assistant inputs, and the CPU hot-path cleanup are not available and
 this command falls back toward the older `91.16-95.26 tok/s` recipe families.

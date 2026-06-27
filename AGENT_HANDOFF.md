@@ -13,13 +13,17 @@ Primary target:
 - Run one Q8 target/verifier replica per GPU where practical, using four GPUs
   for parallel research screens rather than TP4 unless explicitly testing a
   multi-GPU serving shape.
-- Current fresh-response one-B70 record is `104.30919255569083 tok/s` after
+- Current fresh-response one-B70 record is `176.21623213048554 tok/s` after
   TTFT on row0 with `cached_tokens=0`, `1536` canary repeats / `6144` rows
-  passed, LocalMaxxing `cmqw1tgzx0366qr01g4lkv7f1`. Treat it as a
-  variance-class `UBATCH_SIZE=768`, `MTP_N_MIN=3`, `MTP_P_MIN=0.10` +
-  `LLAMA_GEMMA4_MOE_REUSE_ATTN_RMS=1` micro-record over the prior
-  `104.22626983476746 tok/s` route-cache/fused-output row; the real
-  bottleneck is still target/verifier MoE / LM-head work.
+  passed, LocalMaxxing `cmqwkedg303jeqr013z753j62`. The winning path is the
+  Q8 target/verifier + Q4_0 MTP draft stack with
+  `LLAMA_SYCL_MUL_MAT_ID_MULTI_TOKEN_FAST=1`,
+  `LLAMA_SYCL_MUL_MAT_ID_Q8_0_REORDER=1`, and reordered Q8_0 MMVQ compile
+  knob `GGML_SYCL_REORDER_Q8_0_VDR_MMVQ=2`; the reorder path targets internal
+  Q8_0 MoE expert tensors for the multi-token verifier path. The current
+  promoted run uses `UBATCH_SIZE=720`, `MTP_N_MIN=3`, and `MTP_P_MIN=0.10`.
+  The public quantization remains UD-Q8_K_XL / `Q8_K_XL`, not a lower-quality
+  target.
 - Start from `results/gemma4-26b-a4b-q8-b70/README.md`,
   `results/gemma4-26b-a4b-q8-b70/reproduce.md`, and
   `results/gemma4-26b-a4b-q8-b70/validity-gates.md`.
