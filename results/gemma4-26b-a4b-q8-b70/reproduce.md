@@ -1,20 +1,23 @@
 # Reproduce Gemma 4 26B A4B Q8 Baseline
 
-These commands set up the first llama.cpp/SYCL baseline. They do not delete any
-Qwen models or modify the dirty Qwen vLLM source tree.
+These commands set up the current llama.cpp/SYCL Gemma 4 26B Q8 record lane.
+They do not delete any Qwen models or modify the dirty Qwen vLLM source tree.
 
 ## 1. Build llama.cpp with SYCL
 
-The current `103.983 tok/s` recipe is not plain upstream llama.cpp. It uses the
-local Gemma research stack based on upstream commit `c926ad098`; the cumulative
-source patch snapshot is:
+The current `104.309 tok/s` recipe is not plain upstream llama.cpp. It uses the
+local Gemma research stack based on upstream commit `c926ad098`; apply these
+patches in order:
 
 - `../../patches/gemma4-26b-a4b-q8-b70/20260626T2225-llamacpp-gemma4-current-record-stack.patch`
 - `../../patches/gemma4-26b-a4b-q8-b70/20260626T2225-llamacpp-gemma4-current-record-stack.md`
+- `../../patches/gemma4-26b-a4b-q8-b70/20260627T0704-llamacpp-gemma4-moe-reuse-attn-rms-incremental.patch`
+- `../../patches/gemma4-26b-a4b-q8-b70/20260627-llamacpp-gemma4-moe-reuse-attn-rms-record.md`
 
-The patch is intentionally cumulative and includes default-off rejected
-experiment paths. The promoted runtime flags in this file select only the
-validated record path.
+The `20260626T2225` patch is intentionally cumulative and includes default-off
+rejected experiment paths. The RMS patch is the small incremental source change
+for the current `104.309` micro-record. The promoted runtime flags in this file
+select only the validated record path.
 
 ```bash
 cd /home/steve/qwen36-results-main
@@ -273,15 +276,15 @@ server log: /mnt/fast-ai/bench-results/gemma4-26b-a4b-q8/servers/gemma4-q8-gpu0-
 
 The current record path requires the local llama.cpp patch stack captured in
 `patches/gemma4-26b-a4b-q8-b70/`, especially the direct-unroll and q-only
-assistant-input patches. Without that patch stack, `MTP_DRAFT_FAST_ARGMAX`,
-direct argmax-ID unroll, q-only assistant inputs, and the CPU hot-path cleanup
-are not available and this command falls back toward the older `91.16-95.26
-tok/s` recipe families.
+assistant-input patches, plus the RMS reuse incremental patch listed above.
+Without that patch stack, `MTP_DRAFT_FAST_ARGMAX`, direct argmax-ID unroll,
+q-only assistant inputs, and the CPU hot-path cleanup are not available and
+this command falls back toward the older `91.16-95.26 tok/s` recipe families.
 
 Build the `c926ad098` runtime in a separate worktree:
 
 ```bash
-WT=/home/steve/src/llama.cpp-latest-gemma
+WT=/home/steve/src/llama.cpp-gemma-record-repro-c926
 BUILD="$WT/build-sycl-b70-aot-bmg-g31"
 source /opt/intel/oneapi/setvars.sh --force
 cmake -S "$WT" -B "$BUILD" -G Ninja \
