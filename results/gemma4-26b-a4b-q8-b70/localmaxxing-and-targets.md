@@ -34,31 +34,40 @@ Interpretation for this lane:
 
 Current policy-compliant LocalMaxxing submission:
 
-- `gemma4-q8-gpu2-strict-vdr2-n3-p00475-ub1024-v19-20260627T191931Z`,
+- `gemma4-q8-gpu2-strict-vdr2-n3-p00475-repeat-ub1024-v21-20260627T201757Z`,
   llama.cpp `c926ad098` on one B70, UD-Q8_K_XL target/verifier with Q4_0 MTP
   draft, f16 KV, 8K context, reordered-Q8 VDR2, `n_max=3`,
   `n_min=2`, `p_min=0.0475`, `UBATCH_SIZE=1024`;
 - fixed suite:
   `repro/gemma4-26b-a4b-q8-b70/realistic-suite-v1.json`, each prompt once,
   `cached_tokens=0` every row;
+- primary metric: **90.32179401019857 tok/s** median generated-token throughput
+  for tokens 1-100 after TTFT;
+- p10 `86.029`, mean `92.180`, median TTFT `179.681 ms`, median full-512
+  after-TTFT `86.217`, median wall full-512 `83.212`;
+- supporting strict VDR2 rows in the same neighborhood:
+  `89.45543282863798 tok/s`
+  (`data/gemma4-q8-gpu2-strict-vdr2-n3-p00475-ub1024-v19-20260627T191931Z/summary.json`),
+  `89.43737321875525 tok/s`
+  (`data/gemma4-q8-gpu1-strict-vdr2-n3-p004625-ub1024-v21-20260627T201757Z/summary.json`),
+  `88.06323469748838 tok/s`
+  (`data/gemma4-q8-gpu0-strict-vdr2-n3-p00450-ub1024-v21-20260627T201757Z/summary.json`)
+  and `85.90621112154868 tok/s`
+  (`data/gemma4-q8-gpu3-strict-vdr2-n3-p004875-ub1024-v21-20260627T201757Z/summary.json`);
+- LocalMaxxing: `cmqwt1zk803ozqr01hctqss2z`;
+- payload:
+  `data/localmaxxing-payloads/gemma4-q8-vdr2-p00475-v21-20260627T201757.json`;
+- response:
+  `data/localmaxxing-responses/gemma4-26b-a4b-q8-b70-llamacpp-realistic-vdr2-mtp-n3-nmin2-p00475-ub1024-v21-20260627.submit.log`.
+
+Previous policy-compliant VDR2 submission, now superseded:
+
+- `gemma4-q8-gpu2-strict-vdr2-n3-p00475-ub1024-v19-20260627T191931Z`;
 - primary metric: **89.45543282863798 tok/s** median generated-token throughput
   for tokens 1-100 after TTFT;
-- p10 `77.556`, mean `87.849`, median TTFT `181.747 ms`, median full-512
-  after-TTFT `84.452`, median wall full-512 `80.625`;
-- supporting strict VDR2 rows in the same neighborhood:
-  `87.30800185348097 tok/s`
-  (`data/gemma4-q8-gpu0-strict-vdr2-n3-p005-ub1024-v18-20260627T191648Z/summary.json`),
-  `87.2401852448366 tok/s`
-  (`data/gemma4-q8-gpu1-strict-vdr2-th6-n3-p005-ub1024-v18-20260627T191648Z/summary.json`),
-  `87.27371504547733 tok/s`
-  (`data/gemma4-q8-gpu2-strict-vdr2-dth16-n3-p005-ub1024-v18-20260627T191648Z/summary.json`)
-  and `88.90551516384153 tok/s`
-  (`data/gemma4-q8-gpu0-strict-vdr2-repeat-n3-p005-ub1024-v19-20260627T191931Z/summary.json`);
 - LocalMaxxing: `cmqwqzayr03o8qr01j6lgx93n`;
-- queue:
-  `data/localmaxxing-gemma4-26b-a4b-q8-b70-llamacpp-realistic-vdr2-mtp-n3-nmin2-p00475-ub1024-v19-20260627.queue.json`;
-- response:
-  `data/localmaxxing-responses/gemma4-26b-a4b-q8-b70-llamacpp-realistic-vdr2-mtp-n3-nmin2-p00475-ub1024-v19-20260627.submit.log`.
+- status: still valid strict evidence, but replaced as the current record by
+  the VDR2 `90.32179401019857 tok/s` row above.
 
 Previous policy-compliant VDR4 submission, now superseded:
 
@@ -67,7 +76,7 @@ Previous policy-compliant VDR4 submission, now superseded:
   for tokens 1-100 after TTFT;
 - LocalMaxxing: `cmqwnl2ag03lgqr01ch5bxknq`;
 - status: still valid strict evidence, but replaced as the current record by
-  the VDR2 `89.45543282863798 tok/s` row above.
+  the VDR2 `90.32179401019857 tok/s` row above.
 
 Previous realistic-suite local Q8 observation, now superseded:
 

@@ -45,7 +45,7 @@ Prior strict record before this sweep:
 | `gpu3-strict-vdr2-nmin1-p005-ub960-v18` | 84.301627 | 78.612544 | 86.878488 | 84.813283 | 81.699706 | 180.175 | strict pass, n_min=1 not enough |
 | `gpu0-strict-vdr2-repeat-n3-p005-ub1024-v19` | 88.905515 | 81.968065 | 89.150555 | 84.893404 | 81.715135 | 180.617 | strict pass, repeat beats old record but not final high |
 | `gpu1-strict-vdr2-repeat2-n3-p005-ub1024-v19` | 84.094196 | 77.597114 | 85.631925 | 82.894796 | 79.929671 | 180.494 | strict pass, variance loss |
-| `gpu2-strict-vdr2-n3-p00475-ub1024-v19` | 89.455433 | 77.555700 | 87.849492 | 84.451867 | 80.624980 | 181.747 | **new strict record** |
+| `gpu2-strict-vdr2-n3-p00475-ub1024-v19` | 89.455433 | 77.555700 | 87.849492 | 84.451867 | 80.624980 | 181.747 | strict record at the time; superseded by `20260627T2017` |
 | `gpu3-strict-vdr2-n3-p0055-ub1024-v19` | 86.307022 | 75.092552 | 86.599448 | 82.267261 | 79.111413 | 179.562 | strict pass, below record |
 
 ## Conclusion
@@ -53,8 +53,8 @@ Prior strict record before this sweep:
 The static VDR4 neighborhood and `n_min=1` variants did not beat the prior
 `87.611` strict row. The useful transfer was the older Q8 reorder VDR2 build:
 at the strict `n_max=3`, `n_min=2`, `UBATCH_SIZE=1024` shape it repeatedly
-landed near or above the prior record, then `p_min=0.0475` produced the current
-strict high:
+landed near or above the prior record, then `p_min=0.0475` produced this
+note's strict high:
 
 - median 1-100 after TTFT: `89.45543282863798 tok/s`;
 - p10: `77.55570003925274`;
@@ -67,8 +67,11 @@ strict high:
 - response:
   `data/localmaxxing-responses/gemma4-26b-a4b-q8-b70-llamacpp-realistic-vdr2-mtp-n3-nmin2-p00475-ub1024-v19-20260627.submit.log`.
 
-VDR2 should remain the current strict default for realistic-suite runs. Do not
-promote the older synthetic `n_max=7` VDR2 `176+ tok/s` row as real-world
-throughput; it is only a diagnostic source of ideas. The remaining gap toward a
-fresh-response `>150 tok/s` result likely needs structural verifier/speculation
-work, not more isolated `p_min`, `n_min`, thread, or UBATCH sweeps.
+VDR2 should remain the strict default for realistic-suite runs. Do not promote
+the older synthetic `n_max=7` VDR2 `176+ tok/s` row as real-world throughput;
+it is only a diagnostic source of ideas. A later tight `p_min` repeat
+(`20260627T2017-vdr2-pmin-tight-repeat.md`) superseded this note's strict high
+with `90.32179401019857 tok/s` in the same `p_min=0.0475` family. The
+remaining gap toward a fresh-response `>150 tok/s` result likely needs
+structural verifier/speculation work, not more isolated `p_min`, `n_min`,
+thread, or UBATCH sweeps.

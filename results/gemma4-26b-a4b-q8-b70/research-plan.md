@@ -9,12 +9,12 @@ replicas on four GPUs for parallel research and aggregate service capacity.
 Best one-B70 Q8 strict result under the promotion gate:
 
 - result:
-  `data/gemma4-q8-gpu2-strict-vdr2-n3-p00475-ub1024-v19-20260627T191931Z/`;
-- primary metric: **89.45543282863798 tok/s** median generated-token
+  `data/gemma4-q8-gpu2-strict-vdr2-n3-p00475-repeat-ub1024-v21-20260627T201757Z/`;
+- primary metric: **90.32179401019857 tok/s** median generated-token
   throughput for tokens 1-100 after TTFT across the fixed realistic suite;
-- p10 `77.55570003925274`, mean `87.84949240897976`, median full-512
-  after-TTFT `84.45186668535088`, median wall full-512
-  `80.62498034849821`, median TTFT `181.74684653058648 ms`;
+- p10 `86.02930423477346`, mean `92.1804554185734`, median full-512
+  after-TTFT `86.21689344139463`, median wall full-512
+  `83.21177427158659`, median TTFT `179.68109803041443 ms`;
 - config: llama.cpp `c926ad098`, UD-Q8_K_XL target/verifier, Q4_0 MTP draft,
   reordered-Q8 VDR2, `n_max=3`, `n_min=2`, `p_min=0.0475`,
   `UBATCH_SIZE=1024`, `--ctx-checkpoints 0`, no n-gram/history acceleration;
@@ -24,10 +24,11 @@ Best one-B70 Q8 strict result under the promotion gate:
 
 This is the submitted policy-compliant VDR2 transfer of the strict `n_max=3`,
 `n_min=2`, `UBATCH_SIZE=1024` family; approved ID
-`cmqwqzayr03o8qr01j6lgx93n`. Supporting VDR2 rows measured
-`87.30800185348097`, `87.2401852448366`, `87.27371504547733`, and
-`88.90551516384153 tok/s`. The prior VDR4 `87.61145306230438 tok/s`
-submission is superseded. The older `86.47445652599384 tok/s` `p_min=0.075`
+`cmqwt1zk803ozqr01hctqss2z`. Supporting VDR2 rows measured
+`89.45543282863798`, `89.43737321875525`, `88.06323469748838`, and
+`85.90621112154868 tok/s`. The prior VDR2 `89.45543282863798 tok/s`
+submission and prior VDR4 `87.61145306230438 tok/s` submission are
+superseded. The older `86.47445652599384 tok/s` `p_min=0.075`
 row did not repeat (`81.73306503450416` and `82.89800056264573 tok/s`) and is
 also superseded.
 The older `100+`, `170+`, and `280+` rows remain useful diagnostics, but they
@@ -38,7 +39,7 @@ cold suite.
 `dp.n_max` generation-stop fix were tested under the strict realistic gate. All
 v13/v14 rows passed quality and had `cached_tokens=0`, but the best adaptive
 row was only `83.34212495239542 tok/s`, below both the old VDR4 `87.611` row
-and the current VDR2 `89.455` record. Keep the
+and the current VDR2 `90.322` record. Keep the
 patch as a negative artifact; do not submit or promote it. See
 `../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260627T1841-realistic-adaptive-mtp-dpnmax.md`.
 
@@ -47,9 +48,13 @@ four-GPU strict sweep tested static `n_max=3` variants and then transferred the
 older synthetic VDR2 Q8 reorder build back onto the realistic cold suite. The
 static VDR4 variations stayed below record (`80.3-85.6 tok/s`), but VDR2 at
 the strict `n3/n_min=2/UBATCH=1024` shape repeatedly landed near `87-89 tok/s`
-and produced the current `89.45543282863798 tok/s` record at `p_min=0.0475`.
+and produced a `89.45543282863798 tok/s` record at `p_min=0.0475`; a later
+tight p-min repeat of the same VDR2 family produced the current
+`90.32179401019857 tok/s` record.
 See
 `../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260627T1906-realistic-static-and-vdr2.md`.
+Also see
+`../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260627T2017-vdr2-pmin-tight-repeat.md`.
 
 ## Historical Diagnostic Frontier Pending Realistic Gate
 

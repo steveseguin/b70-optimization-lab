@@ -8,8 +8,8 @@ promoted reproduction target is the fixed realistic cold prompt suite:
 Best strict cold-suite result:
 
 - draft-MTP VDR2:
-  `data/gemma4-q8-gpu2-strict-vdr2-n3-p00475-ub1024-v19-20260627T191931Z/summary.json`;
-- primary metric: `89.45543282863798 tok/s` median generated-token throughput
+  `data/gemma4-q8-gpu2-strict-vdr2-n3-p00475-repeat-ub1024-v21-20260627T201757Z/summary.json`;
+- primary metric: `90.32179401019857 tok/s` median generated-token throughput
   for tokens 1-100 after TTFT;
 - config: reordered-Q8 VDR2, `n_max=3`, `n_min=2`, `p_min=0.0475`,
   `UBATCH_SIZE=1024`, Q4_0 MTP draft verified by the Q8 target;
@@ -18,9 +18,11 @@ Best strict cold-suite result:
 Representative / submitted status: the current LocalMaxxing payload uses the
 VDR2 transfer of the strict `n_max=3`, `n_min=2`, `UBATCH_SIZE=1024` family.
 Supporting strict VDR2 rows measured `87.30800185348097`,
-`87.2401852448366`, `87.27371504547733`, and `88.90551516384153 tok/s`.
-Approved ID: `cmqwqzayr03o8qr01j6lgx93n`. The prior VDR4
-`87.61145306230438 tok/s` row remains valid but is superseded.
+`87.2401852448366`, `87.27371504547733`, `88.90551516384153`,
+`89.45543282863798`, `89.43737321875525`, `88.06323469748838`, and
+`85.90621112154868 tok/s`. Approved ID: `cmqwt1zk803ozqr01hctqss2z`. The
+prior VDR2 `89.45543282863798 tok/s` and VDR4 `87.61145306230438 tok/s` rows
+remain valid but are superseded.
 
 Current no-spec control:
 
@@ -145,7 +147,7 @@ scripts/run-gemma4-26b-first-baseline.sh
 
 Use this command for the current representative draft-MTP realistic-suite
 candidate. It reproduces the VDR2 `n_max=3`, `n_min=2`, `p_min=0.0475`,
-`UBATCH_SIZE=1024` family, whose current strict high is `89.455 tok/s` on the
+`UBATCH_SIZE=1024` family, whose current strict high is `90.322 tok/s` on the
 fixed cold suite. The prior VDR4 `87.611 tok/s` row remains valid evidence but
 is no longer the promoted LocalMaxxing headline.
 

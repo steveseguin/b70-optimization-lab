@@ -53,7 +53,7 @@ Current status: **screened and not competitive for decode speed in prior
 smokes**. The clean 2026-06-23 comparison reached `34.89 tok/s` with INT8
 per-channel + PIECEWISE graph and `40.31 tok/s` with lower-precision
 `fp8_per_tensor`; both are far below the llama.cpp Q8 realistic-suite control
-and frontier (`74.297 tok/s` no-spec and `89.455 tok/s` strict VDR2 draft-MTP).
+and frontier (`74.297 tok/s` no-spec and `90.322 tok/s` strict VDR2 draft-MTP).
 The older `103.299+ tok/s` rows were synthetic pre-final-gate diagnostics and
 are no longer publishable comparison targets. Keep this lane as a
 compatibility/reference path unless a true all-linear INT8 checkpoint/kernel

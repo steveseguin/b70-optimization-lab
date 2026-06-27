@@ -2,9 +2,9 @@
 
 Status: **active optimization with a realistic final gate now required.** The
 best one-B70 Q8 strict result by the required primary metric is
-`89.45543282863798 tok/s` median generated-token throughput for tokens 1-100
+`90.32179401019857 tok/s` median generated-token throughput for tokens 1-100
 after TTFT across the fixed cold prompt suite:
-`data/gemma4-q8-gpu2-strict-vdr2-n3-p00475-ub1024-v19-20260627T191931Z/summary.json`.
+`data/gemma4-q8-gpu2-strict-vdr2-n3-p00475-repeat-ub1024-v21-20260627T201757Z/summary.json`.
 It uses llama.cpp `c926ad098`, UD-Q8_K_XL target/verifier, Q4_0 MTP draft,
 reordered-Q8 VDR2, `n_max=3`, `n_min=2`, `p_min=0.0475`,
 `UBATCH_SIZE=1024`, `cached_tokens=0` on every suite prompt, and
@@ -12,14 +12,16 @@ reordered-Q8 VDR2, `n_max=3`, `n_min=2`, `p_min=0.0475`,
 
 Current repeat / confirmation status: the VDR2 transfer of the strict
 `n_max=3`, `n_min=2`, `UBATCH_SIZE=1024` family is the current
-policy-compliant LocalMaxxing submission: `cmqwqzayr03o8qr01j6lgx93n`.
-Supporting strict VDR2 rows measured `87.30800185348097`,
-`87.2401852448366`, `87.27371504547733`, and
-`88.90551516384153 tok/s`; the promoted row has p10
-`77.55570003925274`, mean `87.84949240897976`, median full512 after-TTFT
-`84.45186668535088`, median wall full512 `80.62498034849821`, and median
-TTFT `181.74684653058648 ms`. The prior VDR4 submission
-`cmqwnl2ag03lgqr01ch5bxknq` at `87.61145306230438 tok/s` is superseded. The
+policy-compliant LocalMaxxing submission: `cmqwt1zk803ozqr01hctqss2z`.
+Supporting strict VDR2 rows measured `89.45543282863798`,
+`89.43737321875525`, `88.06323469748838`, and
+`85.90621112154868 tok/s`; the promoted row has p10
+`86.02930423477346`, mean `92.1804554185734`, median full512 after-TTFT
+`86.21689344139463`, median wall full512 `83.21177427158659`, and median
+TTFT `179.68109803041443 ms`. The prior VDR2 submission
+`cmqwqzayr03o8qr01j6lgx93n` at `89.45543282863798 tok/s` and prior VDR4
+submission `cmqwnl2ag03lgqr01ch5bxknq` at `87.61145306230438 tok/s` are
+superseded. The
 earlier `86.47445652599384 tok/s` `p_min=0.075` observation did not repeat
 (`81.73306503450416` on GPU0 and `82.89800056264573` on a same-GPU repeat).
 
@@ -140,7 +142,8 @@ External references:
 
 | Date | Runtime | GPU Layout | Precision | Context | Status | Output tok/s | Evidence |
 | --- | --- | --- | --- | --- | --- | ---: | --- |
-| 2026-06-27 | llama.cpp `c926ad098` SYCL draft-MTP AOT BMG + Q8 MoE-ID reorder VDR2 | 1 replica on B70 GPU2 | UD-Q8_K_XL GGUF target + Q4_0 MTP draft GGUF, f16 KV | 8K | **current strict realistic-suite record**: fixed realistic cold suite, each prompt once, `cached_tokens=0` every row, no cache/history/ngram reuse, `n_max=3`, `n_min=2`, `p_min=0.0475`, `UBATCH_SIZE=1024`, target-verifier accepted MTP tokens; LocalMaxxing `cmqwqzayr03o8qr01j6lgx93n` | **89.455 median 1-100 after TTFT** / 84.452 full512 after TTFT / 80.625 wall full512 | [summary](../../data/gemma4-q8-gpu2-strict-vdr2-n3-p00475-ub1024-v19-20260627T191931Z/summary.json), [LocalMaxxing response](../../data/localmaxxing-responses/gemma4-26b-a4b-q8-b70-llamacpp-realistic-vdr2-mtp-n3-nmin2-p00475-ub1024-v19-20260627.submit.log), [sweep note](../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260627T1906-realistic-static-and-vdr2.md) |
+| 2026-06-27 | llama.cpp `c926ad098` SYCL draft-MTP AOT BMG + Q8 MoE-ID reorder VDR2 | 1 replica on B70 GPU2 | UD-Q8_K_XL GGUF target + Q4_0 MTP draft GGUF, f16 KV | 8K | **current strict realistic-suite record**: fixed realistic cold suite, each prompt once, `cached_tokens=0` every row, no cache/history/ngram reuse, `n_max=3`, `n_min=2`, `p_min=0.0475`, `UBATCH_SIZE=1024`, target-verifier accepted MTP tokens; LocalMaxxing `cmqwt1zk803ozqr01hctqss2z` | **90.322 median 1-100 after TTFT** / 86.217 full512 after TTFT / 83.212 wall full512 | [summary](../../data/gemma4-q8-gpu2-strict-vdr2-n3-p00475-repeat-ub1024-v21-20260627T201757Z/summary.json), [LocalMaxxing response](../../data/localmaxxing-responses/gemma4-26b-a4b-q8-b70-llamacpp-realistic-vdr2-mtp-n3-nmin2-p00475-ub1024-v21-20260627.submit.log), [sweep note](../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260627T2017-vdr2-pmin-tight-repeat.md) |
+| 2026-06-27 | llama.cpp `c926ad098` SYCL draft-MTP AOT BMG + Q8 MoE-ID reorder VDR2 | 1 replica on B70 GPU2 | UD-Q8_K_XL GGUF target + Q4_0 MTP draft GGUF, f16 KV | 8K | prior strict realistic-suite record, superseded by the row above: fixed realistic cold suite, each prompt once, `cached_tokens=0` every row, no cache/history/ngram reuse, `n_max=3`, `n_min=2`, `p_min=0.0475`, `UBATCH_SIZE=1024`, target-verifier accepted MTP tokens; LocalMaxxing `cmqwqzayr03o8qr01j6lgx93n` | **89.455 median 1-100 after TTFT** / 84.452 full512 after TTFT / 80.625 wall full512 | [summary](../../data/gemma4-q8-gpu2-strict-vdr2-n3-p00475-ub1024-v19-20260627T191931Z/summary.json), [LocalMaxxing response](../../data/localmaxxing-responses/gemma4-26b-a4b-q8-b70-llamacpp-realistic-vdr2-mtp-n3-nmin2-p00475-ub1024-v19-20260627.submit.log), [sweep note](../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260627T1906-realistic-static-and-vdr2.md) |
 | 2026-06-23 | llama.cpp SYCL setup | 1 replica / B70 | UD-Q8_K_XL GGUF | 8K first, 32K target | model download | n/a | [lane start note](../../notes/2026-06-23-gemma4-26b-a4b-q8-b70-lane-start.md) |
 | 2026-06-23 | llama.cpp `dec5ca557` SYCL | 1 replica on B70 GPU0 | UD-Q8_K_XL GGUF, f16 KV | 8K | **valid baseline**: chat canary 128/128; reasoning off | **26.10 after TTFT** / 24.24 wall | [summary](../../data/gemma4-26b-q8-llamacpp-gpu0-ctx8192-20260623T052850Z/summary.json), [sweep note](../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260623T052850Z-valid-baseline-reasoning-off.md) |
 | 2026-06-23 | llama.cpp `dec5ca557` SYCL | 1 replica on B70 GPU2 | UD-Q8_K_XL GGUF, f16 KV | 8K | **current natural-stop best**: `GGML_SYCL_DISABLE_OPT=0`, `FLASH_ATTN=off`, `--parallel 1 --cache-ram 0`, chat canary 384/384; reasoning off | **42.15 after TTFT** / 36.41 wall | [summary](../../data/gemma4-q8-gpu2-syclopt0-faoff-parallel1-cache0-deep-20260623T0915/summary.json), [sweep note](../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260623T0900-parallel-cache-followups.md) |

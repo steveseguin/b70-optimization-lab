@@ -13,9 +13,9 @@ Current active optimization target:
   scores may guide optimization only; they are not headline throughput or
   LocalMaxxing evidence.
 - Best strict realistic-suite result so far:
-  `89.45543282863798 tok/s` median generated-token throughput for tokens 1-100
+  `90.32179401019857 tok/s` median generated-token throughput for tokens 1-100
   after TTFT across the fixed cold prompt suite. Evidence:
-  `data/gemma4-q8-gpu2-strict-vdr2-n3-p00475-ub1024-v19-20260627T191931Z/summary.json`.
+  `data/gemma4-q8-gpu2-strict-vdr2-n3-p00475-repeat-ub1024-v21-20260627T201757Z/summary.json`.
   It uses llama.cpp `c926ad098`, UD-Q8_K_XL target/verifier, Q4_0 MTP draft,
   reordered-Q8 VDR2, `n_max=3`, `n_min=2`, `p_min=0.0475`,
   `UBATCH_SIZE=1024`, `cached_tokens=0` on every prompt, and
@@ -23,13 +23,13 @@ Current active optimization target:
 - Representative / submitted status:
   the VDR2 transfer of the strict `n_max=3`, `n_min=2`, `UBATCH_SIZE=1024`
   family is the current policy-compliant Gemma 26B Q8 LocalMaxxing
-  submission: `cmqwqzayr03o8qr01j6lgx93n`. Supporting strict VDR2 rows in the
-  same neighborhood measured `87.30800185348097`,
-  `87.2401852448366`, `87.27371504547733`, and
-  `88.90551516384153 tok/s`. The prior VDR4 submission
-  `cmqwnl2ag03lgqr01ch5bxknq` at `87.61145306230438 tok/s` is now
-  superseded, and the earlier `86.47445652599384 tok/s` `p_min=0.075`
-  observation did not repeat.
+  submission: `cmqwt1zk803ozqr01hctqss2z`. Supporting strict VDR2 rows in the
+  same neighborhood measured `89.45543282863798`, `89.43737321875525`,
+  `88.06323469748838`, and `85.90621112154868 tok/s`. The prior VDR2
+  submission `cmqwqzayr03o8qr01j6lgx93n` at `89.45543282863798 tok/s` and
+  prior VDR4 submission `cmqwnl2ag03lgqr01ch5bxknq` at
+  `87.61145306230438 tok/s` are now superseded, and the earlier
+  `86.47445652599384 tok/s` `p_min=0.075` observation did not repeat.
 - Current valid no-spec control:
   `74.29709476830473 tok/s` median on the same realistic suite. Evidence:
   `data/gemma4-q8-gpu0-vdr4default-nospec-realistic-gate-v2-20260627T165335Z/summary.json`.

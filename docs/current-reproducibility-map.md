@@ -107,22 +107,24 @@ Record identity:
 - draft: local `Q4_0` Gemma MTP draft only
 - hardware: headless Supermicro AMD Threadripper PRO 5955WX platform, 128 GB
   DDR4, one Intel Arc Pro B70 32 GB used for the measured replica
-- result: best strict result `89.45543282863798 tok/s` median
+- result: best strict result `90.32179401019857 tok/s` median
   generated-token throughput for tokens 1-100 after TTFT across the fixed
   realistic cold prompt suite, `cached_tokens=0` on every prompt,
   `realistic_final_gate.passed=true`.
   Evidence:
-  `../data/gemma4-q8-gpu2-strict-vdr2-n3-p00475-ub1024-v19-20260627T191931Z/summary.json`.
+  `../data/gemma4-q8-gpu2-strict-vdr2-n3-p00475-repeat-ub1024-v21-20260627T201757Z/summary.json`.
   Config: reordered-Q8 VDR2, `n_max=3`, `n_min=2`, `p_min=0.0475`,
   `UBATCH_SIZE=1024`, `--ctx-checkpoints 0`, no n-gram/history acceleration.
   This is the current submitted VDR2 representative row, approved under the
-  realistic-suite policy as `cmqwqzayr03o8qr01j6lgx93n`. Supporting VDR2
-  strict rows measured `87.30800185348097`, `87.2401852448366`,
-  `87.27371504547733`, and `88.90551516384153 tok/s`. The prior VDR4
-  `87.61145306230438 tok/s` submission is superseded. The old
+  realistic-suite policy as `cmqwt1zk803ozqr01hctqss2z`. Supporting VDR2
+  strict rows measured `89.45543282863798`, `89.43737321875525`,
+  `88.06323469748838`, and `85.90621112154868 tok/s`. The prior VDR2
+  `89.45543282863798 tok/s` and VDR4 `87.61145306230438 tok/s` submissions
+  are superseded. The old
   `176.216232 tok/s` synthetic filled-long row remains diagnostic only and is
   not representative real-world throughput.
 - primary artifacts:
+  `../data/gemma4-q8-gpu2-strict-vdr2-n3-p00475-repeat-ub1024-v21-20260627T201757Z/summary.json`,
   `../data/gemma4-q8-gpu2-strict-vdr2-n3-p00475-ub1024-v19-20260627T191931Z/summary.json`,
   `../data/gemma4-q8-gpu0-strict-vdr2-repeat-n3-p005-ub1024-v19-20260627T191931Z/summary.json`,
   `../data/gemma4-q8-gpu0-strict-vdr2-n3-p005-ub1024-v18-20260627T191648Z/summary.json`,
