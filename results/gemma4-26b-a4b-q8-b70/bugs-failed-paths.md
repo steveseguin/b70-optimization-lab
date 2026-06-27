@@ -88,3 +88,17 @@ Current promoted family:
   `../../patches/gemma4-26b-a4b-q8-b70/20260627T0503-llamacpp-gemma4-router-selected-weights-negative-current-stack.patch`;
   note:
   `../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260627T0503-router-selected-weights-negative.md`.
+- `LLAMA_SYCL_MUL_MAT_ID_GATE_UP_Q8_SINGLETON_DIRECT=1` is a near-neutral
+  screen, not a promoted win. It skips full gather/scatter for singleton expert
+  routes in the current Q8 verifier gate/up `MUL_MAT_ID` shape while keeping the
+  existing tuned matmul arithmetic. The candidate
+  `data/gemma4-q8-gpu2-gateup-singleton-direct-screen-20260627T052517Z/`
+  passed `64/64`, cached tokens were `[0]`, and the output hash matched the
+  promoted record, but fresh row0 was `104.12278210887227 tok/s`, just under
+  the `104.22626983476746 tok/s` record. Same-GPU flag-off control was slower
+  (`102.16498485841758 tok/s`) but changed the benchmark hash. Keep this as a
+  default-off artifact unless a node-profile comparison proves a real
+  `ffn_moe_gate_up-*` reduction. Patch:
+  `../../patches/gemma4-26b-a4b-q8-b70/20260627T0525-llamacpp-gemma4-gateup-singleton-direct-current-stack.patch`;
+  note:
+  `../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260627T0525-gateup-singleton-direct-screen.md`.

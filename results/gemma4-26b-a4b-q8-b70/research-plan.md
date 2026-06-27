@@ -184,10 +184,22 @@ top1/top2 score, probability, or gap from the fast direct path.
    `../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260627T0503-router-selected-weights-negative.md`.
    Conclusion: valid loss; do not continue this exact design unless a later
    profile makes router materialization hot again.
-2. Build a narrow shape-specific Q8 verifier gate/up kernel for the current
+2. ~~Build a narrow shape-specific Q8 verifier gate/up bypass for the current
    route-cache shapes. The hottest profile nodes are
    `MUL_MAT_ID:ffn_moe_gate_up-*`; avoid broad `MUL_MAT_ID` rewrites already
-   recorded as losses. Candidate flag: `LLAMA_SYCL_GEMMA4_GATEUP_Q8_SHAPE=1`.
+   recorded as losses. Candidate flag:
+   `LLAMA_SYCL_MUL_MAT_ID_GATE_UP_Q8_SINGLETON_DIRECT=1`.~~
+   Screened 2026-06-27 as
+   `data/gemma4-q8-gpu2-gateup-singleton-direct-screen-20260627T052517Z/`:
+   canary `64/64`, cached tokens `[0]`, output hash matched the promoted
+   record, but fresh row0 was `104.12278210887227 tok/s`, just below the
+   `104.22626983476746 tok/s` record. Same-GPU flag-off control was slower
+   (`102.16498485841758 tok/s`) and produced a different benchmark hash, so the
+   path is not an obvious loss, but it is not a record breaker. Patch snapshot:
+   `../../patches/gemma4-26b-a4b-q8-b70/20260627T0525-llamacpp-gemma4-gateup-singleton-direct-current-stack.patch`.
+   See
+   `../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260627T0525-gateup-singleton-direct-screen.md`.
+   Do not promote without a node-profile win and a fresh full validation.
 3. Explore an exact verifier LM-head candidate-vs-max op. Existing fused-output
    argmax paths were slower, but the second-largest node remains target LM
    head. A viable variant must compare drafted candidate logits against the
