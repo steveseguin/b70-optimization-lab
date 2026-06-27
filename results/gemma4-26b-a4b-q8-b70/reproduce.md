@@ -7,21 +7,20 @@ promoted reproduction target is the fixed realistic cold prompt suite:
 
 Best strict cold-suite result:
 
-- draft-MTP VDR4:
-  `data/gemma4-q8-gpu0-vdr4default-mtp-n3-nmin2-p005-ub1024-realistic-gate-repeat-v8/summary.json`;
-- primary metric: `87.61145306230438 tok/s` median generated-token throughput
+- draft-MTP VDR2:
+  `data/gemma4-q8-gpu2-strict-vdr2-n3-p00475-ub1024-v19-20260627T191931Z/summary.json`;
+- primary metric: `89.45543282863798 tok/s` median generated-token throughput
   for tokens 1-100 after TTFT;
-- config: default reordered-Q8 VDR4, `n_max=3`, `n_min=2`, `p_min=0.05`,
+- config: reordered-Q8 VDR2, `n_max=3`, `n_min=2`, `p_min=0.0475`,
   `UBATCH_SIZE=1024`, Q4_0 MTP draft verified by the Q8 target;
 - gate: `realistic_final_gate.passed=true`, `cached_tokens=0` on every prompt.
 
 Representative / submitted status: the current LocalMaxxing payload uses the
-confirmed `n_max=3`, `n_min=2`, `p_min=0.05`, `UBATCH_SIZE=1024` family: four
-valid cold-suite runs measured `84.82456994237617`, `83.83638918369195`,
-`84.52685942118447`, and `87.61145306230438 tok/s`. Approved ID:
-`cmqwnl2ag03lgqr01ch5bxknq`. The older `86.47445652599384 tok/s`
-`p_min=0.075` row did not repeat (`81.733` on GPU0 and `82.898` on a same-GPU
-repeat), so it is superseded.
+VDR2 transfer of the strict `n_max=3`, `n_min=2`, `UBATCH_SIZE=1024` family.
+Supporting strict VDR2 rows measured `87.30800185348097`,
+`87.2401852448366`, `87.27371504547733`, and `88.90551516384153 tok/s`.
+Approved ID: `cmqwqzayr03o8qr01j6lgx93n`. The prior VDR4
+`87.61145306230438 tok/s` row remains valid but is superseded.
 
 Current no-spec control:
 
@@ -47,9 +46,8 @@ The `20260626T2225` patch is intentionally cumulative and includes default-off
 rejected experiment paths. The RMS patch is the small incremental source change
 for the superseded `104.309` micro-record. The Q8 MoE-ID reorder snapshot
 documents the `170-171` path. The VDR compile-knob patch is default-preserving;
-the current diagnostic build explicitly sets
-`-DGGML_SYCL_REORDER_Q8_0_VDR_MMVQ=2` to reach the synthetic `176.216 tok/s`
-result.
+the current promoted realistic-suite build explicitly sets
+`-DGGML_SYCL_REORDER_Q8_0_VDR_MMVQ=2`.
 
 ```bash
 cd /home/steve/qwen36-results-main
@@ -64,8 +62,8 @@ Default output:
 /home/steve/src/llama.cpp/build-sycl-b70/bin/llama-bench
 ```
 
-For the old synthetic VDR=2 diagnostic build, use a dedicated build directory
-so the default VDR=4 binary remains available for realistic-suite comparison:
+For the current strict VDR=2 record build, use a dedicated build directory so
+the default VDR=4 binary remains available for comparison:
 
 ```bash
 cd /home/steve/src/llama.cpp-gemma-record-repro-c926
@@ -146,16 +144,15 @@ scripts/run-gemma4-26b-first-baseline.sh
 ## Representative Realistic Final Gate Reproduction
 
 Use this command for the current representative draft-MTP realistic-suite
-candidate. It reproduces the `n_max=3`, `n_min=2`, `p_min=0.05`,
-`UBATCH_SIZE=1024` family, which has repeated from `83.8` up to `87.6 tok/s` on the
-fixed cold suite. The single `86.474 tok/s` observation used `p_min=0.075`,
-`UBATCH_SIZE=720`, but repeats did not confirm it, so do not use that row as a
-publishable LocalMaxxing headline; it is now superseded by the v8 strict row.
+candidate. It reproduces the VDR2 `n_max=3`, `n_min=2`, `p_min=0.0475`,
+`UBATCH_SIZE=1024` family, whose current strict high is `89.455 tok/s` on the
+fixed cold suite. The prior VDR4 `87.611 tok/s` row remains valid evidence but
+is no longer the promoted LocalMaxxing headline.
 
 ```bash
 cd /home/steve/qwen36-results-main
-LLAMA_SERVER=/home/steve/src/llama.cpp-gemma-record-repro-c926/build-sycl-b70-aot-bmg-g31/bin/llama-server \
-ONEAPI_DEVICE_SELECTOR=level_zero:0 \
+LLAMA_SERVER=/home/steve/src/llama.cpp-gemma-record-repro-c926/build-sycl-b70-aot-bmg-g31-q8reorder-vdr2/bin/llama-server \
+ONEAPI_DEVICE_SELECTOR=level_zero:2 \
 UR_L0_USE_IMMEDIATE_COMMANDLISTS=1 \
 GGML_SYCL_DISABLE_OPT=0 \
 GGML_SYCL_DISABLE_GRAPH=0 \
@@ -174,13 +171,13 @@ LLAMA_GEMMA4_MOE_SELECTED_SOFTMAX_FUSED=1 \
 LLAMA_GEMMA4_MOE_WEIGHTED_SUM=1 \
 LLAMA_GEMMA4_MOE_REUSE_ATTN_RMS=1 \
 LLAMA_SYCL_MUL_MAT_ID_ROUTE_CACHE=1 \
-GPU_INDEX=0 PORT=18314 \
+GPU_INDEX=2 PORT=18422 \
 CTX_SIZE=8192 BATCH_SIZE=1024 UBATCH_SIZE=1024 THREADS=8 POLL=100 \
 CACHE_TYPE_K=f16 CACHE_TYPE_V=f16 FLASH_ATTN=off REASONING=off \
 CANARY_REPEATS=32 MAX_TOKENS=512 \
 REALISTIC_GATE=1 REALISTIC_METRIC_TOKENS=100 \
-EXTRA_LLAMA_ARGS='--parallel 1 --cache-ram 0 --spec-type draft-mtp --spec-draft-model /mnt/fast-ai/llm-models/gemma4-26b-a4b-it-q8-gguf/MTP/gemma-4-26B-A4B-it-Q4_0-MTP.gguf --spec-draft-n-max 3 --spec-draft-device SYCL0 --spec-draft-ngl all --spec-draft-type-k f16 --spec-draft-type-v f16 --spec-draft-n-min 2 --spec-draft-p-min 0.05 --no-spec-draft-backend-sampling --spec-draft-threads 32 --spec-draft-threads-batch 32 --ctx-checkpoints 0' \
-LABEL=gemma4-q8-gpu0-vdr4default-mtp-n3-nmin2-p005-ub1024-realistic-gate-$(date -u +%Y%m%dT%H%M%SZ) \
+EXTRA_LLAMA_ARGS='--parallel 1 --cache-ram 0 --spec-type draft-mtp --spec-draft-model /mnt/fast-ai/llm-models/gemma4-26b-a4b-it-q8-gguf/MTP/gemma-4-26B-A4B-it-Q4_0-MTP.gguf --spec-draft-n-max 3 --spec-draft-device SYCL0 --spec-draft-ngl all --spec-draft-type-k f16 --spec-draft-type-v f16 --spec-draft-n-min 2 --spec-draft-p-min 0.0475 --no-spec-draft-backend-sampling --spec-draft-threads 32 --spec-draft-threads-batch 32 --ctx-checkpoints 0' \
+LABEL=gemma4-q8-gpu2-strict-vdr2-n3-p00475-ub1024-$(date -u +%Y%m%dT%H%M%SZ) \
 scripts/run-gemma4-26b-first-baseline.sh
 ```
 

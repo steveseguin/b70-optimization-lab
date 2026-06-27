@@ -151,22 +151,23 @@ The current Gemma 4 26B A4B Q8 one-B70 realistic-suite best is:
 - reproduction: `results/gemma4-26b-a4b-q8-b70/reproduce.md`;
 - realistic suite: `repro/gemma4-26b-a4b-q8-b70/realistic-suite-v1.json`;
 - best strict cold-suite result:
-  `87.61145306230438 tok/s` median generated-token throughput for tokens 1-100
+  `89.45543282863798 tok/s` median generated-token throughput for tokens 1-100
   after TTFT, `cached_tokens=0` on every prompt,
   `realistic_final_gate.passed=true`;
 - evidence:
-  `data/gemma4-q8-gpu0-vdr4default-mtp-n3-nmin2-p005-ub1024-realistic-gate-repeat-v8/summary.json`;
+  `data/gemma4-q8-gpu2-strict-vdr2-n3-p00475-ub1024-v19-20260627T191931Z/summary.json`;
 - config:
-  default reordered-Q8 VDR4, Q4_0 MTP draft, `n_max=3`, `n_min=2`,
-  `p_min=0.05`, `UBATCH_SIZE=1024`;
+  reordered-Q8 VDR2, Q4_0 MTP draft, `n_max=3`, `n_min=2`,
+  `p_min=0.0475`, `UBATCH_SIZE=1024`;
 - representative / submitted status:
-  the confirmed representative family is `n_max=3`, `n_min=2`, `p_min=0.05`,
-  `UBATCH_SIZE=1024`, with four valid cold-suite runs at
-  `84.82456994237617`, `83.83638918369195`, `84.52685942118447`, and
-  `87.61145306230438 tok/s`. The v8 family row was submitted under the
-  realistic-suite policy and approved by LocalMaxxing as
-  `cmqwnl2ag03lgqr01ch5bxknq`. The earlier `86.47445652599384 tok/s`
-  `p_min=0.075` observation did not repeat and is now superseded;
+  the VDR2 transfer of the strict `n_max=3`, `n_min=2`, `UBATCH_SIZE=1024`
+  family is the current policy-compliant LocalMaxxing submission,
+  approved as `cmqwqzayr03o8qr01j6lgx93n`. Supporting strict VDR2 rows in the
+  same neighborhood measured `87.30800185348097`, `87.2401852448366`,
+  `87.27371504547733`, and `88.90551516384153 tok/s`. The prior VDR4
+  submission `cmqwnl2ag03lgqr01ch5bxknq` at `87.61145306230438 tok/s` is
+  superseded, and the earlier `86.47445652599384 tok/s` `p_min=0.075`
+  observation did not repeat;
 - current clean no-spec control:
   `data/gemma4-q8-gpu0-vdr4default-nospec-realistic-gate-v2-20260627T165335Z/summary.json`
   at `74.29709476830473 tok/s` median. Use it as the simplest target-side

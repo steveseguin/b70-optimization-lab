@@ -55,6 +55,19 @@ def load_summary(path: Path) -> dict:
     return summary
 
 
+def infer_q8_vdr_from_launcher(launcher: dict) -> str | None:
+    explicit = launcher.get("ggml_sycl_reorder_q8_0_vdr_mmvq")
+    if explicit not in (None, "", "<unset>"):
+        return str(explicit)
+
+    server = str(launcher.get("llama_server") or "")
+    if "q8reorder-vdr2" in server:
+        return "2 (inferred from llama_server build path)"
+    if "q8reorder-vdr4" in server:
+        return "4 (inferred from llama_server build path)"
+    return None
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("summary_json", type=Path)
@@ -156,6 +169,7 @@ def main() -> int:
         "ggmlSyclDisableGraph": launcher.get("ggml_sycl_disable_graph"),
         "ggmlSyclDisableOpt": launcher.get("ggml_sycl_disable_opt"),
         "ggmlSyclEnableVmm": launcher.get("ggml_sycl_enable_vmm"),
+        "ggmlSyclReorderQ8_0VdrMmvq": infer_q8_vdr_from_launcher(launcher),
         "gpuIndex": int(launcher["gpu_index"]),
         "headlineUse": "fresh-realistic-suite",
         "historyAccelerated": False,

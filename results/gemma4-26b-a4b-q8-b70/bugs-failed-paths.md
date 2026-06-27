@@ -100,12 +100,13 @@ Current realistic-gate family:
   `dec5ca557` build and fails at launch. Use supported CPU mask/range flags
   only after confirming the target runtime exposes them.
 - `LLAMA_GEMMA4_MOE_FUSED_ROUTER_SELECTED_WEIGHTS=1` is a valid loss on the
-  current record stack. It fuses Gemma4 verifier router top-k plus selected
+  older pre-final-gate scalar stack. It fuses Gemma4 verifier router top-k plus selected
   softmax weight materialization into `GGML_OP_MOE_ROUTER_SELECTED_WEIGHTS`,
   and required a SYCL `F32 -> I32` copy/cast fix to avoid CPU fallback. The
   screen `data/gemma4-q8-gpu1-routerselectedweights-screen-20260627T050319Z/`
   passed `64/64` canary rows but reached only `101.52715106143687 tok/s`
-  synthetic row0 versus the current `104.22626983476746 tok/s` record. Patch:
+  synthetic row0 versus the then-current `104.22626983476746 tok/s`
+  diagnostic row. Patch:
   `../../patches/gemma4-26b-a4b-q8-b70/20260627T0503-llamacpp-gemma4-router-selected-weights-negative-current-stack.patch`;
   note:
   `../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260627T0503-router-selected-weights-negative.md`.

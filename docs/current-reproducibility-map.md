@@ -107,29 +107,29 @@ Record identity:
 - draft: local `Q4_0` Gemma MTP draft only
 - hardware: headless Supermicro AMD Threadripper PRO 5955WX platform, 128 GB
   DDR4, one Intel Arc Pro B70 32 GB used for the measured replica
-- result: best strict result `87.61145306230438 tok/s` median
+- result: best strict result `89.45543282863798 tok/s` median
   generated-token throughput for tokens 1-100 after TTFT across the fixed
   realistic cold prompt suite, `cached_tokens=0` on every prompt,
   `realistic_final_gate.passed=true`.
   Evidence:
-  `../data/gemma4-q8-gpu0-vdr4default-mtp-n3-nmin2-p005-ub1024-realistic-gate-repeat-v8/summary.json`.
-  Config: default reordered-Q8 VDR4, `n_max=3`, `n_min=2`, `p_min=0.05`,
+  `../data/gemma4-q8-gpu2-strict-vdr2-n3-p00475-ub1024-v19-20260627T191931Z/summary.json`.
+  Config: reordered-Q8 VDR2, `n_max=3`, `n_min=2`, `p_min=0.0475`,
   `UBATCH_SIZE=1024`, `--ctx-checkpoints 0`, no n-gram/history acceleration.
-  This is the fourth valid row in the representative `n3/p0.05/UB1024` family
-  (`84.82456994237617`, `83.83638918369195`, `84.52685942118447`, and
-  `87.61145306230438 tok/s`) and was submitted under the realistic-suite
-  policy as `cmqwnl2ag03lgqr01ch5bxknq`. The earlier `86.47445652599384 tok/s`
-  `p_min=0.075` observation did not repeat and is superseded. The old
+  This is the current submitted VDR2 representative row, approved under the
+  realistic-suite policy as `cmqwqzayr03o8qr01j6lgx93n`. Supporting VDR2
+  strict rows measured `87.30800185348097`, `87.2401852448366`,
+  `87.27371504547733`, and `88.90551516384153 tok/s`. The prior VDR4
+  `87.61145306230438 tok/s` submission is superseded. The old
   `176.216232 tok/s` synthetic filled-long row remains diagnostic only and is
   not representative real-world throughput.
 - primary artifacts:
-  `../data/gemma4-q8-gpu0-vdr4default-mtp-n3-nmin2-p005-ub1024-realistic-gate-repeat-v8/summary.json`,
-  `../data/gemma4-q8-gpu3-vdr4default-mtp-n3-nmin2-p0075-realistic-gate-v4-20260627T171157Z/summary.json`,
-  `../data/gemma4-q8-gpu2-vdr4default-mtp-n3-nmin2-p005-ub1024-realistic-gate-v4-20260627T171157Z/summary.json`,
-  `../data/gemma4-q8-gpu0-vdr4default-mtp-n3-nmin2-p005-ub1024-realistic-gate-repeat-v6/summary.json`,
-  `../data/gemma4-q8-gpu0-vdr4default-mtp-n3-nmin2-p005-ub1024-realistic-gate-repeat-v7/summary.json`,
-  `../data/localmaxxing-gemma4-26b-a4b-q8-b70-llamacpp-realistic-mtp-n3-nmin2-p005-ub1024-20260627.queue.json`,
-  `../data/localmaxxing-responses/gemma4-26b-a4b-q8-b70-llamacpp-realistic-mtp-n3-nmin2-p005-ub1024-20260627.submit.log`,
+  `../data/gemma4-q8-gpu2-strict-vdr2-n3-p00475-ub1024-v19-20260627T191931Z/summary.json`,
+  `../data/gemma4-q8-gpu0-strict-vdr2-repeat-n3-p005-ub1024-v19-20260627T191931Z/summary.json`,
+  `../data/gemma4-q8-gpu0-strict-vdr2-n3-p005-ub1024-v18-20260627T191648Z/summary.json`,
+  `../data/gemma4-q8-gpu1-strict-vdr2-th6-n3-p005-ub1024-v18-20260627T191648Z/summary.json`,
+  `../data/gemma4-q8-gpu2-strict-vdr2-dth16-n3-p005-ub1024-v18-20260627T191648Z/summary.json`,
+  `../data/localmaxxing-gemma4-26b-a4b-q8-b70-llamacpp-realistic-vdr2-mtp-n3-nmin2-p00475-ub1024-v19-20260627.queue.json`,
+  `../data/localmaxxing-responses/gemma4-26b-a4b-q8-b70-llamacpp-realistic-vdr2-mtp-n3-nmin2-p00475-ub1024-v19-20260627.submit.log`,
   and
   `../repro/gemma4-26b-a4b-q8-b70/realistic-suite-v1.json`
 - source patch snapshot:

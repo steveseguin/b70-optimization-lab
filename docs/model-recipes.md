@@ -23,7 +23,7 @@ Do not compare two results unless their model, quantization, prompt length, outp
 
 | Recipe | Status | What It Is For |
 | --- | --- | --- |
-| `../results/gemma4-26b-a4b-q8-b70/` | Current speed packet | Gemma 4 26B A4B Q8 target on one B70 with Q4_0 MTP draft, llama.cpp SYCL, current commands, validity rules, and LocalMaxxing evidence for the policy-compliant `87.611 tok/s` realistic cold-suite result. Older `100+` and `170+ tok/s` rows are diagnostic/pre-final-gate only. |
+| `../results/gemma4-26b-a4b-q8-b70/` | Current speed packet | Gemma 4 26B A4B Q8 target on one B70 with Q4_0 MTP draft, llama.cpp SYCL, current commands, validity rules, and LocalMaxxing evidence for the policy-compliant VDR2 `89.455 tok/s` realistic cold-suite result. Older `100+` and `170+ tok/s` rows are diagnostic/pre-final-gate only. |
 | `../repro/gemma4-26b-a4b-q8-b70-95tps-20260624/` | Prior copy-ready speed repro | Superseded standalone Gemma 4 26B A4B Q8 target recipe for the older `95.264 tok/s` fresh-response result. |
 | `../results/gemma4-26b-a4b-q8-b70/` | Active lab packet | Full Gemma 4 26B A4B Q8/INT8 B70 optimization history, including older baselines, failed paths, validity gates, and vLLM comparison lanes. |
 | `../repro/minimax-m27-b70-110tps-ubuntu24-20260523/` | Deployable baseline | Fresh Ubuntu 24.04 setup for 4x B70, MiniMax M2.7 INT4 AutoRound, vLLM OpenAI-compatible endpoint on `0.0.0.0:8000`. |
@@ -116,9 +116,9 @@ The deeper active lab packet is
 This lane intentionally avoids tensor-parallel splitting at first: run one
 complete Gemma 4 26B A4B replica per B70 and use four replicas for parallel
 research. Current promoted result is the realistic cold-suite lane at
-`87.611 tok/s` median generated-token throughput for tokens 1-100 after TTFT:
+`89.455 tok/s` median generated-token throughput for tokens 1-100 after TTFT:
 llama.cpp `c926ad098`, UD-Q8_K_XL target/verifier, Q4_0 MTP draft,
-default reordered-Q8 VDR4, `n_max=3`, `n_min=2`, `p_min=0.05`,
+reordered-Q8 VDR2, `n_max=3`, `n_min=2`, `p_min=0.0475`,
 `UBATCH_SIZE=1024`, `cached_tokens=0` on every fixed-suite prompt, and no
 cache/history reuse. Older `103-176 tok/s` filled-long rows are
 diagnostic/pre-final-gate artifacts unless revalidated by the fixed realistic
