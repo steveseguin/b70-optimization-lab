@@ -1,0 +1,758 @@
+{
+  "canary_pass_all": true,
+  "canary_rows_completed": 8,
+  "decision": {
+    "next_lane": "Target verifier/output economics: current record still computes full target LM-head matmul; investigate exact candidate-vs-max verifier op or narrower output shortcut with strict parity.",
+    "reason": "Decode-like n_tokens=8 q8_0 samples show routing overhead mean ~20.7 us / 3.30%, while matmul is ~630.8 us / 96.70%. Further route/gather/scatter work is unlikely to move the 104 tok/s fresh record materially.",
+    "route_overhead_material_for_decode": false
+  },
+  "diagnostic_validity": "Perturbing diagnostic only. LLAMA_SYCL_MUL_MAT_ID_ROUTE_TIMING inserts stream waits; do not use throughput as headline record.",
+  "groups": {
+    "n_tokens=2 src0_type=bf16": {
+      "gather_us": {
+        "count": 1,
+        "max": 8,
+        "mean": 8.0,
+        "median": 8,
+        "min": 8,
+        "p10": 8,
+        "p90": 8
+      },
+      "map_upload_us": {
+        "count": 1,
+        "max": 4,
+        "mean": 4.0,
+        "median": 4,
+        "min": 4,
+        "p10": 4,
+        "p90": 4
+      },
+      "matmul_pct": {
+        "count": 1,
+        "max": 88.42105263157895,
+        "mean": 88.42105263157895,
+        "median": 88.42105263157895,
+        "min": 88.42105263157895,
+        "p10": 88.42105263157895,
+        "p90": 88.42105263157895
+      },
+      "matmul_us": {
+        "count": 1,
+        "max": 168,
+        "mean": 168.0,
+        "median": 168,
+        "min": 168,
+        "p10": 168,
+        "p90": 168
+      },
+      "routing_overhead_pct": {
+        "count": 1,
+        "max": 11.578947368421053,
+        "mean": 11.578947368421053,
+        "median": 11.578947368421053,
+        "min": 11.578947368421053,
+        "p10": 11.578947368421053,
+        "p90": 11.578947368421053
+      },
+      "routing_overhead_us": {
+        "count": 1,
+        "max": 22,
+        "mean": 22.0,
+        "median": 22,
+        "min": 22,
+        "p10": 22,
+        "p90": 22
+      },
+      "scatter_us": {
+        "count": 1,
+        "max": 10,
+        "mean": 10.0,
+        "median": 10,
+        "min": 10,
+        "p10": 10,
+        "p90": 10
+      },
+      "total_profiled_us": {
+        "count": 1,
+        "max": 190,
+        "mean": 190.0,
+        "median": 190,
+        "min": 190,
+        "p10": 190,
+        "p90": 190
+      }
+    },
+    "n_tokens=2 src0_type=q8_0": {
+      "gather_us": {
+        "count": 14,
+        "max": 9,
+        "mean": 7.5,
+        "median": 7.5,
+        "min": 6,
+        "p10": 7,
+        "p90": 8
+      },
+      "map_upload_us": {
+        "count": 14,
+        "max": 3,
+        "mean": 2.857142857142857,
+        "median": 3.0,
+        "min": 2,
+        "p10": 2,
+        "p90": 3
+      },
+      "matmul_pct": {
+        "count": 14,
+        "max": 94.72222222222223,
+        "mean": 93.07698576645419,
+        "median": 92.69610040340655,
+        "min": 91.34199134199135,
+        "p10": 92.20779220779221,
+        "p90": 94.6875
+      },
+      "matmul_us": {
+        "count": 14,
+        "max": 341,
+        "mean": 254.42857142857142,
+        "median": 234.5,
+        "min": 211,
+        "p10": 213,
+        "p90": 324
+      },
+      "routing_overhead_pct": {
+        "count": 14,
+        "max": 8.658008658008658,
+        "mean": 6.92301423354581,
+        "median": 7.303899596593456,
+        "min": 5.277777777777778,
+        "p10": 5.3125,
+        "p90": 7.792207792207792
+      },
+      "routing_overhead_us": {
+        "count": 14,
+        "max": 21,
+        "mean": 18.428571428571427,
+        "median": 18.0,
+        "min": 17,
+        "p10": 17,
+        "p90": 20
+      },
+      "scatter_us": {
+        "count": 14,
+        "max": 9,
+        "mean": 8.071428571428571,
+        "median": 8.0,
+        "min": 7,
+        "p10": 7,
+        "p90": 9
+      },
+      "total_profiled_us": {
+        "count": 14,
+        "max": 360,
+        "mean": 272.85714285714283,
+        "median": 253.0,
+        "min": 230,
+        "p10": 231,
+        "p90": 343
+      }
+    },
+    "n_tokens=36 src0_type=bf16": {
+      "gather_us": {
+        "count": 2,
+        "max": 11,
+        "mean": 10.5,
+        "median": 10.5,
+        "min": 10,
+        "p10": 10,
+        "p90": 11
+      },
+      "map_upload_us": {
+        "count": 2,
+        "max": 10,
+        "mean": 9.5,
+        "median": 9.5,
+        "min": 9,
+        "p10": 9,
+        "p90": 10
+      },
+      "matmul_pct": {
+        "count": 2,
+        "max": 97.50819672131148,
+        "mean": 96.9322360124776,
+        "median": 96.9322360124776,
+        "min": 96.35627530364373,
+        "p10": 96.35627530364373,
+        "p90": 97.50819672131148
+      },
+      "matmul_us": {
+        "count": 2,
+        "max": 1487,
+        "mean": 1219.5,
+        "median": 1219.5,
+        "min": 952,
+        "p10": 952,
+        "p90": 1487
+      },
+      "routing_overhead_pct": {
+        "count": 2,
+        "max": 3.6437246963562755,
+        "mean": 3.0677639875224,
+        "median": 3.0677639875224,
+        "min": 2.4918032786885247,
+        "p10": 2.4918032786885247,
+        "p90": 3.6437246963562755
+      },
+      "routing_overhead_us": {
+        "count": 2,
+        "max": 38,
+        "mean": 37.0,
+        "median": 37.0,
+        "min": 36,
+        "p10": 36,
+        "p90": 38
+      },
+      "scatter_us": {
+        "count": 2,
+        "max": 18,
+        "mean": 17.0,
+        "median": 17.0,
+        "min": 16,
+        "p10": 16,
+        "p90": 18
+      },
+      "total_profiled_us": {
+        "count": 2,
+        "max": 1525,
+        "mean": 1256.5,
+        "median": 1256.5,
+        "min": 988,
+        "p10": 988,
+        "p90": 1525
+      }
+    },
+    "n_tokens=36 src0_type=q8_0": {
+      "gather_us": {
+        "count": 14,
+        "max": 11,
+        "mean": 10.357142857142858,
+        "median": 10.0,
+        "min": 10,
+        "p10": 10,
+        "p90": 11
+      },
+      "map_upload_us": {
+        "count": 14,
+        "max": 11,
+        "mean": 9.5,
+        "median": 9.0,
+        "min": 9,
+        "p10": 9,
+        "p90": 10
+      },
+      "matmul_pct": {
+        "count": 14,
+        "max": 98.33659491193738,
+        "mean": 97.35705848560448,
+        "median": 97.33332365831713,
+        "min": 96.77996422182468,
+        "p10": 96.78540399652476,
+        "p90": 98.291015625
+      },
+      "matmul_us": {
+        "count": 14,
+        "max": 2013,
+        "mean": 1330.2142857142858,
+        "median": 1277.5,
+        "min": 1082,
+        "p10": 1091,
+        "p90": 2010
+      },
+      "routing_overhead_pct": {
+        "count": 14,
+        "max": 3.2200357781753133,
+        "mean": 2.642941514395521,
+        "median": 2.666676341682872,
+        "min": 1.6634050880626223,
+        "p10": 1.708984375,
+        "p90": 3.214596003475239
+      },
+      "routing_overhead_us": {
+        "count": 14,
+        "max": 37,
+        "mean": 34.714285714285715,
+        "median": 35.0,
+        "min": 33,
+        "p10": 33,
+        "p90": 36
+      },
+      "scatter_us": {
+        "count": 14,
+        "max": 16,
+        "mean": 14.857142857142858,
+        "median": 15.0,
+        "min": 14,
+        "p10": 14,
+        "p90": 16
+      },
+      "total_profiled_us": {
+        "count": 14,
+        "max": 2048,
+        "mean": 1364.9285714285713,
+        "median": 1312.5,
+        "min": 1118,
+        "p10": 1127,
+        "p90": 2044
+      }
+    },
+    "n_tokens=38 src0_type=q8_0": {
+      "gather_us": {
+        "count": 28,
+        "max": 11,
+        "mean": 10.392857142857142,
+        "median": 10.0,
+        "min": 10,
+        "p10": 10,
+        "p90": 11
+      },
+      "map_upload_us": {
+        "count": 28,
+        "max": 14,
+        "mean": 10.25,
+        "median": 10.0,
+        "min": 9,
+        "p10": 9,
+        "p90": 11
+      },
+      "matmul_pct": {
+        "count": 28,
+        "max": 97.85969084423306,
+        "mean": 97.28928793721033,
+        "median": 97.31028188799249,
+        "min": 96.39468690702087,
+        "p10": 96.66666666666667,
+        "p90": 97.67918088737201
+      },
+      "matmul_us": {
+        "count": 28,
+        "max": 1646,
+        "mean": 1333.0714285714287,
+        "median": 1298.5,
+        "min": 1012,
+        "p10": 1073,
+        "p90": 1597
+      },
+      "routing_overhead_pct": {
+        "count": 28,
+        "max": 3.6053130929791273,
+        "mean": 2.7107120627896677,
+        "median": 2.689718112007518,
+        "min": 2.140309155766944,
+        "p10": 2.3208191126279862,
+        "p90": 3.3333333333333335
+      },
+      "routing_overhead_us": {
+        "count": 28,
+        "max": 40,
+        "mean": 36.42857142857143,
+        "median": 36.0,
+        "min": 34,
+        "p10": 35,
+        "p90": 38
+      },
+      "scatter_us": {
+        "count": 28,
+        "max": 17,
+        "mean": 15.785714285714286,
+        "median": 16.0,
+        "min": 14,
+        "p10": 15,
+        "p90": 17
+      },
+      "total_profiled_us": {
+        "count": 28,
+        "max": 1682,
+        "mean": 1369.5,
+        "median": 1335.5,
+        "min": 1047,
+        "p10": 1110,
+        "p90": 1635
+      }
+    },
+    "n_tokens=39 src0_type=q8_0": {
+      "gather_us": {
+        "count": 14,
+        "max": 16,
+        "mean": 11.0,
+        "median": 11.0,
+        "min": 10,
+        "p10": 10,
+        "p90": 11
+      },
+      "map_upload_us": {
+        "count": 14,
+        "max": 11,
+        "mean": 10.071428571428571,
+        "median": 10.0,
+        "min": 9,
+        "p10": 9,
+        "p90": 11
+      },
+      "matmul_pct": {
+        "count": 14,
+        "max": 98.03921568627452,
+        "mean": 97.5004441640008,
+        "median": 97.5651615767152,
+        "min": 96.87249398556536,
+        "p10": 97.0423661071143,
+        "p90": 97.98994974874371
+      },
+      "matmul_us": {
+        "count": 14,
+        "max": 1755,
+        "mean": 1504.2857142857142,
+        "median": 1500.0,
+        "min": 1208,
+        "p10": 1214,
+        "p90": 1750
+      },
+      "routing_overhead_pct": {
+        "count": 14,
+        "max": 3.127506014434643,
+        "mean": 2.4995558359991996,
+        "median": 2.4348384232848037,
+        "min": 1.9607843137254901,
+        "p10": 2.0100502512562812,
+        "p90": 2.9576338928856916
+      },
+      "routing_overhead_us": {
+        "count": 14,
+        "max": 42,
+        "mean": 37.92857142857143,
+        "median": 38.0,
+        "min": 35,
+        "p10": 36,
+        "p90": 40
+      },
+      "scatter_us": {
+        "count": 14,
+        "max": 19,
+        "mean": 16.857142857142858,
+        "median": 17.0,
+        "min": 15,
+        "p10": 16,
+        "p90": 18
+      },
+      "total_profiled_us": {
+        "count": 14,
+        "max": 1791,
+        "mean": 1542.2142857142858,
+        "median": 1537.0,
+        "min": 1247,
+        "p10": 1251,
+        "p90": 1785
+      }
+    },
+    "n_tokens=5 src0_type=q8_0": {
+      "gather_us": {
+        "count": 7,
+        "max": 14,
+        "mean": 8.0,
+        "median": 7,
+        "min": 7,
+        "p10": 7,
+        "p90": 7
+      },
+      "map_upload_us": {
+        "count": 7,
+        "max": 3,
+        "mean": 3.0,
+        "median": 3,
+        "min": 3,
+        "p10": 3,
+        "p90": 3
+      },
+      "matmul_pct": {
+        "count": 7,
+        "max": 97.10806697108067,
+        "mean": 96.61677727453252,
+        "median": 96.55172413793103,
+        "min": 95.92169657422512,
+        "p10": 96.40718562874251,
+        "p90": 97.03588143525741
+      },
+      "matmul_us": {
+        "count": 7,
+        "max": 638,
+        "mean": 577.5714285714286,
+        "median": 588,
+        "min": 483,
+        "p10": 532,
+        "p90": 622
+      },
+      "routing_overhead_pct": {
+        "count": 7,
+        "max": 4.078303425774878,
+        "mean": 3.3832227254674825,
+        "median": 3.4482758620689653,
+        "min": 2.8919330289193304,
+        "p10": 2.9641185647425896,
+        "p90": 3.592814371257485
+      },
+      "routing_overhead_us": {
+        "count": 7,
+        "max": 25,
+        "mean": 20.142857142857142,
+        "median": 19,
+        "min": 18,
+        "p10": 19,
+        "p90": 22
+      },
+      "scatter_us": {
+        "count": 7,
+        "max": 12,
+        "mean": 9.142857142857142,
+        "median": 9,
+        "min": 8,
+        "p10": 8,
+        "p90": 9
+      },
+      "total_profiled_us": {
+        "count": 7,
+        "max": 657,
+        "mean": 597.7142857142857,
+        "median": 613,
+        "min": 501,
+        "p10": 551,
+        "p90": 641
+      }
+    },
+    "n_tokens=587 src0_type=q8_0": {
+      "gather_us": {
+        "count": 7,
+        "max": 60,
+        "mean": 56.0,
+        "median": 55,
+        "min": 53,
+        "p10": 54,
+        "p90": 59
+      },
+      "map_upload_us": {
+        "count": 7,
+        "max": 167,
+        "mean": 153.42857142857142,
+        "median": 155,
+        "min": 142,
+        "p10": 143,
+        "p90": 163
+      },
+      "matmul_pct": {
+        "count": 7,
+        "max": 88.00117924528301,
+        "mean": 86.2708535057369,
+        "median": 85.53888130968622,
+        "min": 85.24531024531025,
+        "p10": 85.30823181985973,
+        "p90": 87.6923076923077
+      },
+      "matmul_us": {
+        "count": 7,
+        "max": 3021,
+        "mean": 2614.8571428571427,
+        "median": 2539,
+        "min": 2311,
+        "p10": 2363,
+        "p90": 2985
+      },
+      "routing_overhead_pct": {
+        "count": 7,
+        "max": 14.754689754689755,
+        "mean": 13.729146494263116,
+        "median": 14.461118690313779,
+        "min": 11.99882075471698,
+        "p10": 12.307692307692308,
+        "p90": 14.691768180140274
+      },
+      "routing_overhead_us": {
+        "count": 7,
+        "max": 431,
+        "mean": 413.0,
+        "median": 409,
+        "min": 398,
+        "p10": 398,
+        "p90": 424
+      },
+      "scatter_us": {
+        "count": 7,
+        "max": 208,
+        "mean": 203.57142857142858,
+        "median": 203,
+        "min": 199,
+        "p10": 201,
+        "p90": 208
+      },
+      "total_profiled_us": {
+        "count": 7,
+        "max": 3445,
+        "mean": 3027.8571428571427,
+        "median": 2970,
+        "min": 2709,
+        "p10": 2772,
+        "p90": 3392
+      }
+    },
+    "n_tokens=8 src0_type=bf16": {
+      "gather_us": {
+        "count": 19,
+        "max": 17,
+        "mean": 8.526315789473685,
+        "median": 7,
+        "min": 7,
+        "p10": 7,
+        "p90": 10
+      },
+      "map_upload_us": {
+        "count": 19,
+        "max": 5,
+        "mean": 4.052631578947368,
+        "median": 4,
+        "min": 4,
+        "p10": 4,
+        "p90": 4
+      },
+      "matmul_pct": {
+        "count": 19,
+        "max": 95.95141700404858,
+        "mean": 94.22807097984195,
+        "median": 94.60916442048517,
+        "min": 90.53254437869822,
+        "p10": 92.99191374663073,
+        "p90": 95.07389162561576
+      },
+      "matmul_us": {
+        "count": 19,
+        "max": 474,
+        "mean": 365.8421052631579,
+        "median": 368,
+        "min": 303,
+        "p10": 313,
+        "p90": 398
+      },
+      "routing_overhead_pct": {
+        "count": 19,
+        "max": 9.467455621301776,
+        "mean": 5.771929020158055,
+        "median": 5.390835579514825,
+        "min": 4.048582995951417,
+        "p10": 4.926108374384237,
+        "p90": 7.008086253369272
+      },
+      "routing_overhead_us": {
+        "count": 19,
+        "max": 32,
+        "mean": 22.0,
+        "median": 21,
+        "min": 20,
+        "p10": 20,
+        "p90": 25
+      },
+      "scatter_us": {
+        "count": 19,
+        "max": 11,
+        "mean": 9.421052631578947,
+        "median": 9,
+        "min": 8,
+        "p10": 9,
+        "p90": 11
+      },
+      "total_profiled_us": {
+        "count": 19,
+        "max": 494,
+        "mean": 387.8421052631579,
+        "median": 388,
+        "min": 324,
+        "p10": 338,
+        "p90": 419
+      }
+    },
+    "n_tokens=8 src0_type=q8_0": {
+      "gather_us": {
+        "count": 231,
+        "max": 12,
+        "mean": 7.714285714285714,
+        "median": 8,
+        "min": 6,
+        "p10": 7,
+        "p90": 9
+      },
+      "map_upload_us": {
+        "count": 231,
+        "max": 6,
+        "mean": 4.354978354978355,
+        "median": 5,
+        "min": 3,
+        "p10": 3,
+        "p90": 6
+      },
+      "matmul_pct": {
+        "count": 231,
+        "max": 98.4302862419206,
+        "mean": 96.7038078556258,
+        "median": 96.7984934086629,
+        "min": 93.57798165137615,
+        "p10": 95.82664526484751,
+        "p90": 97.53886010362694
+      },
+      "matmul_us": {
+        "count": 231,
+        "max": 1066,
+        "mean": 630.7705627705627,
+        "median": 617,
+        "min": 306,
+        "p10": 482,
+        "p90": 797
+      },
+      "routing_overhead_pct": {
+        "count": 231,
+        "max": 6.422018348623853,
+        "mean": 3.2961921443742073,
+        "median": 3.2015065913371,
+        "min": 1.569713758079409,
+        "p10": 2.461139896373057,
+        "p90": 4.173354735152488
+      },
+      "routing_overhead_us": {
+        "count": 231,
+        "max": 27,
+        "mean": 20.662337662337663,
+        "median": 21,
+        "min": 17,
+        "p10": 18,
+        "p90": 23
+      },
+      "scatter_us": {
+        "count": 231,
+        "max": 14,
+        "mean": 8.593073593073592,
+        "median": 8,
+        "min": 8,
+        "p10": 8,
+        "p90": 9
+      },
+      "total_profiled_us": {
+        "count": 231,
+        "max": 1083,
+        "mean": 651.4329004329004,
+        "median": 639,
+        "min": 327,
+        "p10": 503,
+        "p90": 820
+      }
+    }
+  },
+  "headline_tok_s_after_ttft_perturbed": 93.17246386435396,
+  "label": "gemma4-q8-gpu0-mmid-route-timing-rmsreuse-ub768-nmin3-pmin010-20260627T085044Z",
+  "record_to_beat_fresh_tok_s_after_ttft": 104.30919255569083,
+  "server_log": "/mnt/fast-ai/bench-results/gemma4-26b-a4b-q8/servers/gemma4-q8-gpu0-mmid-route-timing-rmsreuse-ub768-nmin3-pmin010-20260627T085044Z.server.log",
+  "source_summary": "data/gemma4-q8-gpu0-mmid-route-timing-rmsreuse-ub768-nmin3-pmin010-20260627T085044Z/summary.json",
+  "timing_records": 337
+}

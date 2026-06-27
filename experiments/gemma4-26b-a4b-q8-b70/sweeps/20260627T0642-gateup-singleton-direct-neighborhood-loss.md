@@ -75,3 +75,21 @@ The candidate very slightly reduced aggregate top-30 gate/up/down profile totals
 but not enough to move the target decode phase. End-to-end throughput and target
 per-token time both regressed. This confirms the singleton-direct shortcut is a
 real loss in the current record neighborhood, not just a noisy near-miss.
+
+## RMS-Reuse Record Retest
+
+After `LLAMA_GEMMA4_MOE_REUSE_ATTN_RMS=1` raised the valid fresh record to
+`104.30919255569083 tok/s`, the singleton-direct gate/up shortcut was retested
+on the new record stack:
+
+- run: `data/gemma4-q8-gpu0-rmsreuse-gateupdirect-ub768-nmin3-pmin010-screen-20260627T083216Z/`
+- canary: `256/256`
+- headline row0 fresh after TTFT: `104.20282575937816 tok/s`
+- headline row0 wall: `90.82714107299351 tok/s`
+- delta versus current record: `-0.10636679631267043 tok/s`
+- flags: record RMS-reuse stack plus
+  `LLAMA_SYCL_MUL_MAT_ID_GATE_UP_Q8_SINGLETON_DIRECT=1`
+
+Decision: still reject. It is canary-clean, but it does not beat the
+`104.30919255569083 tok/s` valid fresh record, and the earlier node profile
+already showed the shortcut does not reduce target phase enough to matter.
