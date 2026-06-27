@@ -1,13 +1,13 @@
 # Gemma 4 26B A4B Q8 B70 Research Plan
 
-Research snapshot: 2026-06-26. Goal: maximize valid single-session decode for
+Research snapshot: 2026-06-27. Goal: maximize valid single-session decode for
 one complete Q8/INT8-quality Gemma 4 26B A4B replica per B70, then run four
 replicas on four GPUs for parallel research and aggregate service capacity.
 
 ## Current Fresh-Response Headline
 
 Current valid one-B70 headline is
-`data/gemma4-q8-gpu0-currentrecord-control-fullrepeat-20260626T230510Z/`:
+`data/gemma4-q8-gpu3-b1024u768-fullrepeat-20260626T235649Z/`:
 
 - target/verifier: `gemma-4-26B-A4B-it-UD-Q8_K_XL.gguf`;
 - draft: `MTP/gemma-4-26B-A4B-it-Q4_0-MTP.gguf`;
@@ -26,15 +26,16 @@ Current valid one-B70 headline is
   `LLAMA_SYCL_MUL_MAT_ID_ROUTE_CACHE=1`,
   `--ctx-checkpoints 0`, `GGML_SYCL_ENABLE_VMM=0`,
   `UR_L0_USE_IMMEDIATE_COMMANDLISTS=1`, `BATCH_SIZE=1024`,
-  `UBATCH_SIZE=1024`, `THREADS=8`, `POLL=100`, `FLASH_ATTN=off`,
+  `UBATCH_SIZE=768`, `THREADS=8`, `POLL=100`, `FLASH_ATTN=off`,
   `GGML_SYCL_DISABLE_GRAPH=0`;
-- validation: chat canary **1536/1536**, all 8 benchmark rows
+- validation: chat canary **1536 repeats / 6144 rows**, all benchmark rows
   `cached_tokens=0`;
-- fresh headline: **103.9826628154082 tok/s** after TTFT;
-- supporting repeated-request mean: `104.09604904731648 tok/s`;
-- LocalMaxxing: `cmqvjupek02pgqr01d46algvg`;
-- note: this is a variance-class full-repeat micro-record over the prior
-  `103.95374341972274 tok/s` same-stack row, not a material speedup.
+- fresh headline: **104.07050714456982 tok/s** after TTFT;
+- supporting repeated-request mean: `103.588578767931 tok/s`;
+- LocalMaxxing: `cmqvmjvzx02qvqr01qh9jikow`;
+- note: this is a row0 variance-class `UBATCH_SIZE=768` micro-record over the
+  prior `103.9826628154082 tok/s` same-stack row, not a material speedup. The
+  previous row has the higher support mean.
 
 The actual research target remains **>150 tok/s fresh-response**. The current
 scalar llama.cpp MTP loop is below that target because it still performs one
@@ -43,12 +44,13 @@ sweeps are useful only as cleanup; a 2x-class improvement likely requires a
 graph-level multi-token assistant unroll or a different fresh-valid speculation
 engine.
 
-2026-06-26 frontier update: isolated selected-softmax fused-weights and
+2026-06-27 frontier update: isolated selected-softmax fused-weights and
 fused-output-argmax screens were mostly neutral or valid losses, but the later
 stacked route-cache cleanup (`LLAMA_GEMMA4_MTP_FUSED_OUTPUT_ARGMAX=1` +
 `LLAMA_GEMMA4_MOE_SELECTED_SOFTMAX_FUSED=1`) fully validated at
 `103.95374341972274 tok/s`, then a same-stack full repeat reached
-`103.9826628154082 tok/s`. Both are small micro-records over
+`103.9826628154082 tok/s`, then `UBATCH_SIZE=768` reached
+`104.07050714456982 tok/s`. These are small micro-records over
 `103.51547512013657`, not material progress toward `>150`.
 Audits found that the target-to-draft
 `h_nextn` host handoff is real but profile-small, the direct selected-down
@@ -99,6 +101,72 @@ four distinct prompt hashes, passed `256/256`, all rows had `cached_tokens=0`,
 and produced `100.8959686363723 tok/s` row0 / `101.16162483108214 tok/s`
 fresh-eligible mean, confirming repeated-prompt means should remain
 support-only unless using the unique prompt mode.
+
+2026-06-27 UBATCH micro-record and profile: `UBATCH_SIZE=768` on GPU3 passed
+`1536` canary repeats / `6144` rows and reached `104.07050714456982 tok/s`
+fresh row0 after TTFT, LocalMaxxing `cmqvmjvzx02qvqr01qh9jikow`. Its support
+mean (`103.588578767931`) is lower than the previous `UBATCH_SIZE=1024` row, so
+this is only a row0 variance-class headline. A short profiling diagnostic on
+GPU0 with the same UBATCH shape
+(`data/gemma4-q8-gpu0-nodeprofile-current-ub768-20260627T011603Z/`) is not a
+record comparison (`MAX_TOKENS=128`, profiling enabled) but confirms the hot
+nodes: top final profile entries are `MUL_MAT_ID:ffn_moe_gate_up-0`
+(`139.525 ms`), target LM head `MUL_MAT:node_2135` (`93.900 ms`), then mostly
+`ffn_moe_gate_up-*` plus a few MoE down projections. Draft MTP stats for the
+diagnostic were `187/235` accepted/generated draft tokens with mean accepted
+length `6.50`. The next source work should reduce real verifier MoE/LM-head
+work or change the fresh-valid speculation structure; do not repeat existing
+GEGLU/down, broad `MUL_MAT_ID`, ngram-history, or naive high-depth MTP lanes.
+
+2026-06-27 screen audit update: a p-min/UBATCH neighborhood sweep found three
+screen-only rows above the current `104.07050714456982 tok/s` record, but no
+new full validation yet. Treat all as **candidates only** until full repeat:
+
+- `data/gemma4-q8-gpu0-ub768-pmin010-screen-20260627T031002Z/summary.json`:
+  `104.90764207185568 tok/s`, 64/64 canary rows, `UBATCH_SIZE=768`,
+  `MTP_N_MIN=2`, `MTP_P_MIN=0.10`. This is the only screen far enough above
+  current to justify first validation; full run
+  `gemma4-q8-gpu0-ub768-pmin010-fullrepeat-20260627T031448Z` was still pending
+  when this note was written.
+- `data/gemma4-q8-gpu3-ub768-nmin3-pmin0136-screen-20260627T031002Z/summary.json`:
+  `104.17822408660554 tok/s`, 64/64 canary rows, `n_min=3`, `p_min=0.136`.
+- `data/gemma4-q8-gpu3-u768-nmin3-pmin010-screen-20260627T032140Z/summary.json`:
+  `104.12813019085074 tok/s`, 64/64 canary rows, `n_min=3`, `p_min=0.10`.
+
+Avoid over-reading these screens. Similar prior screens collapsed under full
+validation: `UBATCH_SIZE=832` screened at `105.00621024594338` but validated at
+`103.90548697450369`; GEGLU epilogue route-cache screened at `104.70795597094846`
+but validated at `101.8211074778421`; `BATCH=1024/UBATCH=768` screened at
+`104.63299392132738` and validated as only the current `104.07050714456982`
+record.
+
+2026-06-27 source roadmap after audit:
+
+1. Fuse verifier router selection plus selected-weight materialization for
+   Gemma4 verifier shapes (`n_expert=128`, `n_expert_used=8`, `n_tokens<=8`).
+   This should replace top-k/argsort plus selected-weight gather/softmax, not
+   merely fuse weights after IDs already exist. Start around
+   `/home/steve/src/llama.cpp-gemma-record-stack/src/models/gemma4.cpp` router
+   logits and `build_moe_ffn()` plus
+   `/home/steve/src/llama.cpp-gemma-record-stack/src/llama-graph.cpp` selected
+   logits/top-k/softmax construction. Candidate flag:
+   `LLAMA_GEMMA4_MOE_FUSED_ROUTER_SELECTED_WEIGHTS=1`.
+2. Build a narrow shape-specific Q8 verifier gate/up kernel for the current
+   route-cache shapes. The hottest profile nodes are
+   `MUL_MAT_ID:ffn_moe_gate_up-*`; avoid broad `MUL_MAT_ID` rewrites already
+   recorded as losses. Candidate flag: `LLAMA_SYCL_GEMMA4_GATEUP_Q8_SHAPE=1`.
+3. Explore an exact verifier LM-head candidate-vs-max op. Existing fused-output
+   argmax paths were slower, but the second-largest node remains target LM
+   head. A viable variant must compare drafted candidate logits against the
+   true maximum exactly, preserving greedy correctness without materializing
+   full logits where possible. Candidate flag: `LLAMA_SPEC_VERIFY_CANDIDATE_MAX=1`.
+4. Fix direct-unroll confidence gating. Current direct-unroll argmax bypasses
+   `MTP_P_MIN`/logit-gap checks, so p-min-only screens mostly measure variance.
+   A useful version would return top1/top2 score or gap from the assistant
+   direct path and reduce verifier rows on low-confidence tails without using
+   warmed/history state. Candidate flags:
+   `LLAMA_MTP_DRAFT_DIRECT_ARGMAX_SCORES=1` or
+   `LLAMA_MTP_DRAFT_DIRECT_UNROLL_CONF_GATE=1`.
 
 2026-06-26 verifier profile update:
 

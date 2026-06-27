@@ -1,6 +1,6 @@
 # Codex Agent Handoff
 
-Last updated: 2026-06-26
+Last updated: 2026-06-27
 
 This file is the first thing a new Codex agent should read when continuing the
 Intel Arc Pro B70 LLM optimization work.
@@ -13,11 +13,12 @@ Primary target:
 - Run one Q8 target/verifier replica per GPU where practical, using four GPUs
   for parallel research screens rather than TP4 unless explicitly testing a
   multi-GPU serving shape.
-- Current fresh-response one-B70 record is `103.9826628154082 tok/s` after
-  TTFT on row0 with `cached_tokens=0`, `1536/1536` chat canary, LocalMaxxing
-  `cmqvjupek02pgqr01d46algvg`. Treat it as a variance-class repeat of the
-  prior `103.95374341972274 tok/s` route-cache/fused-output row; the real
-  bottleneck is still target/verifier MoE work.
+- Current fresh-response one-B70 record is `104.07050714456982 tok/s` after
+  TTFT on row0 with `cached_tokens=0`, `1536` canary repeats / `6144` rows
+  passed, LocalMaxxing `cmqvmjvzx02qvqr01qh9jikow`. Treat it as a
+  variance-class `UBATCH_SIZE=768` micro-record over the prior
+  `103.9826628154082 tok/s` route-cache/fused-output row; the real bottleneck
+  is still target/verifier MoE work, and the support mean is lower.
 - Start from `results/gemma4-26b-a4b-q8-b70/README.md`,
   `results/gemma4-26b-a4b-q8-b70/reproduce.md`, and
   `results/gemma4-26b-a4b-q8-b70/validity-gates.md`.
