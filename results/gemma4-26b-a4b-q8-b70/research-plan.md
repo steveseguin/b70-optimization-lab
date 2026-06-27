@@ -139,6 +139,23 @@ approved it as `cmqw1tgzx0366qr01g4lkv7f1`. Treat this as a tiny row0
 micro-record only: the support mean is lower than the prior run due to one
 slower support row, so the structural speedup is marginal at best.
 
+2026-06-27 post-record cleanup / diagnostics: a config-neighborhood screen
+around the RMS-reuse record produced only shallow same-config variance
+(`104.416546 tok/s` screen on the exact record identity); the intended full
+rerun passed the `6144/6144` canary gate but exited before benchmarking due to
+a transient harness quoting error. Treat it as canary-only. A prequant
+route-row source experiment then failed in its unsafe form and measured
+`104.0281678873085 tok/s` after guards, below record; the active source patch
+was removed. A clean phase profile on the current stack confirmed target
+`process_ubatch_ms=6479.261` versus draft `process_ubatch_ms=305.661`, with
+sampled-ID extraction only `127.149 ms`. Conclusion: keep focusing on
+target/verifier MoE or LM-head economics; stop spending runs on route-row
+plumbing or tiny config sweeps. See
+`../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260627T0858-rmsreuse-config-neighborhood.md`,
+`../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260627T0939-prequant-route-rows-negative.md`,
+and
+`../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260627T0950-currentstack-phaseprofile-clean.md`.
+
 2026-06-27 screen audit update: a p-min/UBATCH neighborhood sweep found three
 screen-only rows above the then-current `104.07050714456982 tok/s` record. Two
 promoted full validations were valid losses, and the third produced only a
