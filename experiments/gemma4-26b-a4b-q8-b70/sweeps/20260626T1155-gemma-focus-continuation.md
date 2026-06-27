@@ -519,6 +519,86 @@ change makes weighted-sum launch shape newly relevant.
 
 ## 2026-06-26T20:52Z Current Record Profile
 
+## 2026-06-26T23:50Z Route-Cache Device-Map Negative
+
+Patch under test: extend the one-shot
+`LLAMA_SYCL_MUL_MAT_ID_ROUTE_CACHE=1` path with a default-off persistent device
+row-mapping cache, enabled by
+`LLAMA_SYCL_MUL_MAT_ID_ROUTE_CACHE_DEVICE_MAP=1`.
+
+Reason: the source audit found that a route-cache hit still rebuilt/copy-backed
+the routed row map for the immediately following matching `MUL_MAT_ID`. The
+patch preserved the existing host route-cache semantics but let the following
+op reuse a persistent device `mmid_row_mapping` buffer when the immediate cache
+hit matched. This was intended to remove one device copy on the gate/up -> down
+pair without changing math.
+
+Result:
+
+- summary:
+  `data/gemma4-q8-gpu0-routecache-devmap-screen-20260626T235013Z/summary.json`
+- canary: `128` repeats / `512` case rows, pass
+- cached-token validity: `[0, 0, 0, 0]`, row0 fresh-response eligible
+- fresh row0: `103.5829642508525 tok/s`
+- support mean: `103.71749944929736 tok/s`
+- then-current record: `103.9826628154082 tok/s`
+
+Decision: reject as a speed result. Correct but below record. Keep the patch as
+a default-off experiment artifact because it is a targeted diagnostic for the
+route-cache/MoE metadata path, but do not enable it in promoted recipes. The
+result suggests the remaining bottleneck is not this final device row-map copy.
+
+## 2026-06-26T23:54Z Runtime Shape Four-GPU Screen
+
+Four independent single-GPU screens checked whether simple context/batch shapes
+could find a small win on the current route-cache/fused-output/fused-selected-
+softmax record stack. All rows below passed canary, reported `cached_tokens=0`,
+and are row0 fresh-response eligible. The earlier `20260626T233608Z` shape
+attempt was backgrounded incorrectly and produced no meaningful results; ignore
+those empty/incomplete dirs.
+
+| Run | Runtime delta | Fresh row0 tok/s | Support mean tok/s | Decision |
+| --- | --- | ---: | ---: | --- |
+| `data/gemma4-q8-gpu0-shape-ctx4096-screen-20260626T235411Z/summary.json` | `CTX_SIZE=4096` | `102.096146` | `103.619245` | valid loss |
+| `data/gemma4-q8-gpu1-shape-ctx6144-screen-20260626T235411Z/summary.json` | `CTX_SIZE=6144` | `101.550616` | `103.060854` | valid loss |
+| `data/gemma4-q8-gpu2-shape-b1536u1024-screen-20260626T235411Z/summary.json` | `BATCH_SIZE=1536`, `UBATCH_SIZE=1024` | `102.170273` | `103.401719` | valid loss |
+| `data/gemma4-q8-gpu3-shape-b1024u768-screen-20260626T235411Z/summary.json` | `BATCH_SIZE=1024`, `UBATCH_SIZE=768` | `104.632994` | `103.559456` | promote to full validation |
+
+## 2026-06-27T00:29Z UBATCH=768 Full Validation / Micro-Record
+
+Full validation promoted the `UBATCH_SIZE=768` screen on GPU3:
+
+- summary:
+  `data/gemma4-q8-gpu3-b1024u768-fullrepeat-20260626T235649Z/summary.json`
+- p512/o512 raw benchmark:
+  `data/gemma4-q8-gpu3-b1024u768-fullrepeat-20260626T235649Z/p512o512.json`
+- canary: `1536` repeats / `6144` case rows, pass
+- cached-token validity:
+  `[0, 0, 0, 0, 0, 0, 0, 0]`, row0 fresh-response eligible
+- fresh row0: `104.07050714456982 tok/s`
+- wall row0: `90.4869993907642 tok/s`
+- support mean: `103.588578767931 tok/s`
+- support median: `104.0494971181019 tok/s`
+- prior valid record: `103.9826628154082 tok/s` row0,
+  `104.09604904731648 tok/s` support mean
+- LocalMaxxing: approved as `cmqvmjvzx02qvqr01qh9jikow`
+- queue:
+  `data/localmaxxing-gemma4-26b-a4b-q8-b70-llamacpp-mtp-n7-q8target-q40draft-routecache-mtpfusedoutargmax-selfusedweights-ub768-fresh-20260627.queue.json`
+- response:
+  `data/localmaxxing-responses/gemma4-26b-a4b-q8-b70-llamacpp-mtp-n7-q8target-q40draft-routecache-mtpfusedoutargmax-selfusedweights-ub768-fresh-20260627.submit.log`
+
+Decision: valid fresh-response row0 micro-record, but not material progress.
+The prior record's support mean was higher, and the new gain is only
+`+0.08784432916162 tok/s` on the headline row. Treat `UBATCH_SIZE=768` as the
+current published row0 recipe, but keep `UBATCH_SIZE=1024` as the same-family
+control because it remains at least as strong by support mean.
+
+Next implication: do not read this as a new optimization mechanism. The Gemma
+frontier is still verifier/target MoE cost and MTP assistant graph cost. The
+most credible next work remains a deeper small-token Gemma4 MoE fusion or a
+different fresh-request speculation method that increases accepted tokens per
+step without warmed/history reuse.
+
 Diagnostic profile of the current promoted route-cache recipe:
 
 - summary:
