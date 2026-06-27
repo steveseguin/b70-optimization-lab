@@ -56,6 +56,14 @@ See
 Also see
 `../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260627T2017-vdr2-pmin-tight-repeat.md`.
 
+2026-06-27 tight `p_min` follow-up: a full strict v22 sweep at `p_min`
+`0.04725`, `0.047375`, repeated `0.0475`, and `0.047625` did not beat the
+record. Best row was `88.971548 tok/s`; the `0.0475` repeat fell to
+`87.144002 tok/s`. This suggests the `90.32179401019857 tok/s` row is a valid
+high repeat, but more tiny `p_min` sweeps are low ROI without a new code/runtime
+change. See
+`../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260627T2031-vdr2-pmin-tight-negative.md`.
+
 ## Historical Diagnostic Frontier Pending Realistic Gate
 
 Current best synthetic filled-long one-B70 diagnostic result is
