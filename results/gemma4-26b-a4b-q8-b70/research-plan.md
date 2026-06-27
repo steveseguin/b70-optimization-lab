@@ -166,7 +166,7 @@ top1/top2 score, probability, or gap from the fast direct path.
 
 2026-06-27 source roadmap after audit:
 
-1. Fuse verifier router selection plus selected-weight materialization for
+1. ~~Fuse verifier router selection plus selected-weight materialization for
    Gemma4 verifier shapes (`n_expert=128`, `n_expert_used=8`, `n_tokens<=8`).
    This should replace top-k/argsort plus selected-weight gather/softmax, not
    merely fuse weights after IDs already exist. Start around
@@ -174,7 +174,16 @@ top1/top2 score, probability, or gap from the fast direct path.
    logits and `build_moe_ffn()` plus
    `/home/steve/src/llama.cpp-gemma-record-stack/src/llama-graph.cpp` selected
    logits/top-k/softmax construction. Candidate flag:
-   `LLAMA_GEMMA4_MOE_FUSED_ROUTER_SELECTED_WEIGHTS=1`.
+   `LLAMA_GEMMA4_MOE_FUSED_ROUTER_SELECTED_WEIGHTS=1`.~~
+   Tested 2026-06-27 as
+   `data/gemma4-q8-gpu1-routerselectedweights-screen-20260627T050319Z/`:
+   canary `64/64`, fresh row0 `101.52715106143687 tok/s`, below the
+   `104.22626983476746` record. Patch snapshot:
+   `../../patches/gemma4-26b-a4b-q8-b70/20260627T0503-llamacpp-gemma4-router-selected-weights-negative-current-stack.patch`.
+   See
+   `../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260627T0503-router-selected-weights-negative.md`.
+   Conclusion: valid loss; do not continue this exact design unless a later
+   profile makes router materialization hot again.
 2. Build a narrow shape-specific Q8 verifier gate/up kernel for the current
    route-cache shapes. The hottest profile nodes are
    `MUL_MAT_ID:ffn_moe_gate_up-*`; avoid broad `MUL_MAT_ID` rewrites already
