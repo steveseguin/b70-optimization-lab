@@ -138,10 +138,11 @@ Gemma-specific lessons from the Q8 run:
   rank near-record candidates from four-way screens alone. The current record
   neighborhood showed host/contention variance; promote only from a clean solo
   run.
-- Treat `p512o512.rows[0].tok_s_after_ttft` as the fresh headline only when
-  `cached_tokens=0` and the canary passes. Later benchmark rows are
-  support/stability unless every row is a distinct fresh prompt with no usable
-  prior continuation.
+- Treat synthetic `p512o512.rows[0].tok_s_after_ttft` as diagnostic only, even
+  when `cached_tokens=0` and canaries pass. Current Gemma/Qwen promotion and
+  LocalMaxxing submission require the fixed realistic prompt suite, one cold
+  response per prompt, `cached_tokens=0` every row, no cache/history reuse, and
+  `median_tok_s_1_100_after_ttft` as the primary metric.
 - Mine the existing result tree before new runs. The 103.299 tok/s record came
   from targeted source/runtime improvements plus narrow neighborhood checks;
   repeated flag roulette after acceptance was already saturated mostly found

@@ -119,8 +119,9 @@ def main() -> int:
         "--allow-non-headline",
         action="store_true",
         help=(
-            "Allow diagnostic/non-headline payloads such as warmed/history "
-            "n-gram artifacts. Default is to fail closed."
+            "Inspect diagnostic/non-headline payloads such as warmed/history "
+            "n-gram artifacts. This is restricted to --dry-run; real "
+            "submissions fail closed."
         ),
     )
     args = parser.parse_args()
@@ -149,7 +150,16 @@ def main() -> int:
             for problem in problems:
                 print(f"  - {problem}", file=sys.stderr)
         print(
-            "pass --allow-non-headline only for deliberately labeled diagnostic artifacts",
+            "synthetic/warmed/history/non-headline payloads are not submit-safe; "
+            "use --allow-non-headline with --dry-run only to inspect them",
+            file=sys.stderr,
+        )
+        return 2
+
+    if args.allow_non_headline and not args.dry_run:
+        print(
+            "--allow-non-headline is restricted to --dry-run inspection; "
+            "LocalMaxxing submissions must pass the realistic fresh-response gate",
             file=sys.stderr,
         )
         return 2

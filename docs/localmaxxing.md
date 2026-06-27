@@ -83,6 +83,10 @@ The submission helper fails closed unless payload `engineFlags` include a
 realistic-suite gate pass marker and `primaryMetricName` is
 `median_tok_s_1_100_after_ttft`.
 
+`--allow-non-headline` is for local `--dry-run` inspection only. It must not be
+used to post diagnostic synthetic, repeated, warmed, history, or n-gram
+artifacts to LocalMaxxing.
+
 Do not submit a fresh-response record when the speedup depends on prior
 generated continuation history, n-gram history, prefix/cache reuse, context
 checkpoints, or response reuse. Label those results as warmed/history

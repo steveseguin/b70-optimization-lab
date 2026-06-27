@@ -32,6 +32,13 @@ The older `100+`, `170+`, and `280+` rows remain useful diagnostics, but they
 are not representative real-world throughput unless revalidated by the fixed
 cold suite.
 
+2026-06-27 adaptive MTP update: the default-off adaptive-depth patch and MTP
+`dp.n_max` generation-stop fix were tested under the strict realistic gate. All
+v13/v14 rows passed quality and had `cached_tokens=0`, but the best adaptive
+row was only `83.34212495239542 tok/s`, below the `87.611` record. Keep the
+patch as a negative artifact; do not submit or promote it. See
+`../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260627T1841-realistic-adaptive-mtp-dpnmax.md`.
+
 ## Historical Diagnostic Frontier Pending Realistic Gate
 
 Current best synthetic filled-long one-B70 diagnostic result is
@@ -81,15 +88,17 @@ shape sweeps are useful only as cleanup; a 2x-class improvement likely requires
 a structural verifier-side reduction or a different fresh-valid speculation
 engine.
 
-2026-06-27 frontier update: isolated selected-softmax fused-weights and
+2026-06-27 diagnostic frontier update: isolated selected-softmax fused-weights and
 fused-output-argmax screens were mostly neutral or valid losses, but the later
 stacked route-cache cleanup (`LLAMA_GEMMA4_MTP_FUSED_OUTPUT_ARGMAX=1` +
 `LLAMA_GEMMA4_MOE_SELECTED_SOFTMAX_FUSED=1`) fully validated at
 `103.95374341972274 tok/s`, then a same-stack full repeat reached
 `103.9826628154082 tok/s`, then `UBATCH_SIZE=768` reached
 `104.07050714456982 tok/s`, then the threshold repeat `n_min=3` / `p_min=0.10`
-reached `104.22626983476746 tok/s`. These are small micro-records over
-`103.51547512013657`, not material progress toward `>150`.
+reached `104.22626983476746 tok/s` under the older filled-long diagnostic gate.
+These are small pre-final-gate synthetic micro-records over `103.51547512013657`,
+not material progress toward the current `>150 tok/s` realistic cold-response
+target.
 Audits found that the target-to-draft
 `h_nextn` host handoff is real but profile-small, the direct selected-down
 fusion family has already been tested in several losing variants, and the

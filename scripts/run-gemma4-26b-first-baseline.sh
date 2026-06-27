@@ -118,6 +118,12 @@ LLAMA_SPEC_VERIFY_GREEDY_ARGMAX="${LLAMA_SPEC_VERIFY_GREEDY_ARGMAX:-}" \
 LLAMA_SPEC_VERIFY_BACKEND_ARGMAX_IDS="${LLAMA_SPEC_VERIFY_BACKEND_ARGMAX_IDS:-}" \
 LLAMA_SPEC_VERIFY_FUSED_OUTPUT_ARGMAX="${LLAMA_SPEC_VERIFY_FUSED_OUTPUT_ARGMAX:-}" \
 LLAMA_SPEC_VERIFY_SOFTCAP_ARGMAX="${LLAMA_SPEC_VERIFY_SOFTCAP_ARGMAX:-}" \
+LLAMA_SPEC_ADAPTIVE_MTP="${LLAMA_SPEC_ADAPTIVE_MTP:-}" \
+LLAMA_SPEC_ADAPTIVE_MTP_WARMUP="${LLAMA_SPEC_ADAPTIVE_MTP_WARMUP:-}" \
+LLAMA_SPEC_ADAPTIVE_MTP_LOW_N_MAX="${LLAMA_SPEC_ADAPTIVE_MTP_LOW_N_MAX:-}" \
+LLAMA_SPEC_ADAPTIVE_MTP_LOW="${LLAMA_SPEC_ADAPTIVE_MTP_LOW:-}" \
+LLAMA_SPEC_ADAPTIVE_MTP_HIGH="${LLAMA_SPEC_ADAPTIVE_MTP_HIGH:-}" \
+LLAMA_SPEC_ADAPTIVE_MTP_ALPHA="${LLAMA_SPEC_ADAPTIVE_MTP_ALPHA:-}" \
 LOG="$SERVER_LOG" \
 scripts/run-gemma4-26b-llamacpp-replica.sh > "$RUN_DIR/server.stdout.log" 2>&1 &
 server_pid="$!"
@@ -310,6 +316,12 @@ out = {
         "llama_spec_verify_backend_argmax_ids": env_or_log("LLAMA_SPEC_VERIFY_BACKEND_ARGMAX_IDS"),
         "llama_spec_verify_fused_output_argmax": env_or_log("LLAMA_SPEC_VERIFY_FUSED_OUTPUT_ARGMAX"),
         "llama_spec_verify_softcap_argmax": env_or_log("LLAMA_SPEC_VERIFY_SOFTCAP_ARGMAX"),
+        "llama_spec_adaptive_mtp": env_or_log("LLAMA_SPEC_ADAPTIVE_MTP"),
+        "llama_spec_adaptive_mtp_warmup": env_or_log("LLAMA_SPEC_ADAPTIVE_MTP_WARMUP"),
+        "llama_spec_adaptive_mtp_low_n_max": env_or_log("LLAMA_SPEC_ADAPTIVE_MTP_LOW_N_MAX"),
+        "llama_spec_adaptive_mtp_low": env_or_log("LLAMA_SPEC_ADAPTIVE_MTP_LOW"),
+        "llama_spec_adaptive_mtp_high": env_or_log("LLAMA_SPEC_ADAPTIVE_MTP_HIGH"),
+        "llama_spec_adaptive_mtp_alpha": env_or_log("LLAMA_SPEC_ADAPTIVE_MTP_ALPHA"),
         "oneapi_device_selector": env_or_log("ONEAPI_DEVICE_SELECTOR"),
         "ggml_sycl_disable_opt": env_or_log("GGML_SYCL_DISABLE_OPT"),
         "ggml_sycl_enable_vmm": env_or_log("GGML_SYCL_ENABLE_VMM"),
