@@ -170,6 +170,20 @@ the next source candidate should preserve the tuned `VDR=2` dot shape and
 restructure the Q8 multi-column body instead. See
 `../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260627T1021-q8-mmvq-vdr4-negative.md`.
 
+2026-06-27 source rebuild warning: subsequent Q8 multi-column body work exposed
+a reproducibility blocker. A rebuilt `q8hoist` binary with the new feature gate
+disabled still measured only `40.15528197170138 tok/s` fresh row0, and the
+feature-enabled run measured `43.152077041798634 tok/s`; both are far below the
+stale record binary. CMake identity matched the record build for the relevant
+SYCL/AOT flags, so the working hypothesis is source-patch stack drift rather
+than a q8hoist-specific loss. Stop interpreting rebuilt source screens as clean
+kernel comparisons until a clean `c926ad098` worktree plus known record patches
+reproduces the `104 tok/s` lane. The full dirty source diff is preserved as an
+audit artifact in
+`../../patches/gemma4-26b-a4b-q8-b70/20260627T1039-current-dirty-source-rebuild-mismatch.patch`;
+see
+`../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260627T1039-source-rebuild-mismatch.md`.
+
 2026-06-27 screen audit update: a p-min/UBATCH neighborhood sweep found three
 screen-only rows above the then-current `104.07050714456982 tok/s` record. Two
 promoted full validations were valid losses, and the third produced only a
