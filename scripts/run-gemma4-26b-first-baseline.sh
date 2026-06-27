@@ -225,6 +225,9 @@ model_path_lower = str(model).lower()
 if "ud-q8_k_xl" in model_path_lower:
     quality_lane = "q8_target"
     headline_eligible_for_gemma_q8 = True
+elif "q8_0.gguf" in model_path_lower:
+    quality_lane = "alternate_q8_0_control"
+    headline_eligible_for_gemma_q8 = False
 elif "q4" in model_path_lower or "qat" in model_path_lower:
     quality_lane = "lower_precision_side_lane"
     headline_eligible_for_gemma_q8 = False

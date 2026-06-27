@@ -6,6 +6,14 @@ This page separates public leaderboard context from this lane's promoted result
 rules. The goal is a valid Q8 / INT8-or-better result on Intel Arc Pro B70, not
 a speed-only lower-precision entry.
 
+Quality/label guardrail: promoted Gemma 26B B70 submissions in this lane must
+use the literal `gemma-4-26B-A4B-it-UD-Q8_K_XL.gguf` target/verifier unless the
+user explicitly accepts a different target quantization. Historical labels like
+`q8target-q40draft` are shorthand for a Q8-quality `UD-Q8_K_XL` target with a
+Q4_0 MTP draft; they are not claims that the target was
+`gemma-4-26B-A4B-it-Q8_0.gguf`. Literal `Q8_0.gguf` target runs are separate
+controls and are not LocalMaxxing-promotable under the no-quality-loss rule.
+
 As of 2026-06-27, synthetic/repeated/filled-long benchmark scores are diagnostic
 only. Do not submit or advertise them as real-world throughput. Promotion and
 LocalMaxxing submission require the fixed realistic prompt suite, one cold

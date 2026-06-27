@@ -88,6 +88,19 @@ softcap is not enough; a material verifier win must avoid the full vocabulary
 projection or reduce verifier MoE work. See
 `../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260627T2129-raw-spec-verify-argmax-negative.md`.
 
+2026-06-27 Q8_0 target control: the alternate
+`gemma-4-26B-A4B-it-Q8_0.gguf` target/verifier is a separate control lane, not
+the promoted no-quality-loss `UD-Q8_K_XL` lane. It has a strong no-spec
+baseline (`82.9625778781127 tok/s`), but it did not produce a reproducible
+strict record. The best Q8_0 screen,
+`n_max=3`/`n_min=1`/`p_min=0.0475`, reached
+`91.5564081422068 tok/s`, but exact confirmations landed at
+`88.94881774985208` and `89.89234269084307`; the best deeper row was
+`n_max=4`/`n_min=2` at `90.27678402019421`, still below the current
+`UD-Q8_K_XL` record (`90.32179401019857`). Keep Q8_0 as a compatibility/control
+lane, not a promoted LocalMaxxing row. See
+`../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260627T2144-q80-target-strict-negative.md`.
+
 ## Historical Diagnostic Frontier Pending Realistic Gate
 
 Current best synthetic filled-long one-B70 diagnostic result is

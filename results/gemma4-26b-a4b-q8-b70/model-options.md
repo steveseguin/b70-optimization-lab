@@ -26,8 +26,8 @@ Important files from Hugging Face metadata:
 
 | File | Bytes | Use |
 | --- | ---: | --- |
-| `gemma-4-26B-A4B-it-UD-Q8_K_XL.gguf` | `27,636,230,944` | Primary Q8-quality baseline. |
-| `gemma-4-26B-A4B-it-Q8_0.gguf` | `26,859,859,744` | Smaller Q8 fallback/control if UD-Q8_K_XL has compatibility or memory issues. |
+| `gemma-4-26B-A4B-it-UD-Q8_K_XL.gguf` | `27,636,230,944` | Primary no-quality-loss Q8 target/verifier lane. Use this for promoted Gemma 26B B70 records unless the user explicitly accepts a different quantization. |
+| `gemma-4-26B-A4B-it-Q8_0.gguf` | `26,859,859,744` | Alternate Q8_0 control lane only. It is smaller and can be useful for compatibility/perf diagnosis, but it is not a promoted replacement for `UD-Q8_K_XL` under the no-quality-loss constraint. |
 | `gemma-4-26B-A4B-it-UD-Q6_K_XL.gguf` | `23,295,389,472` | Lower-quality side experiment only if Q8 cannot fit useful context. |
 | `gemma-4-26B-A4B-it-MXFP4_MOE.gguf` | `16,551,046,944` | Public-speed comparison only; not quality-equivalent to the Q8 target. |
 | `mtp-gemma-4-26B-A4B-it.gguf` | `461,766,816` | Draft/MTP follow-up after no-spec baseline. |

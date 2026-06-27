@@ -52,6 +52,17 @@ def load_summary(path: Path) -> dict:
         raise SystemExit(f"{path}: fresh_response_validity.valid is not true")
     if validity.get("primary_metric_name") != "median_tok_s_1_100_after_ttft":
         raise SystemExit(f"{path}: wrong primary metric")
+    model_path = str(summary.get("model_path") or "")
+    if "UD-Q8_K_XL" not in model_path:
+        raise SystemExit(
+            f"{path}: model_path is not the promoted UD-Q8_K_XL target/verifier "
+            f"lane: {model_path}"
+        )
+    if summary.get("headline_eligible_for_gemma_q8") is not True:
+        raise SystemExit(
+            f"{path}: headline_eligible_for_gemma_q8 is not true; do not build "
+            "a LocalMaxxing payload from alternate/lower-precision controls"
+        )
     return summary
 
 
