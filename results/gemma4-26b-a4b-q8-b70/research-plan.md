@@ -163,6 +163,12 @@ a dead end: decode-like `tok2_8` routed expert calls average `7.665` tokens and
 The hot path is therefore the actual Q8 MMVQ body, not the missing selection of
 MMVQ. See
 `../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260627T1001-routeprofile-mmvq-confirmed.md`.
+A compile-time VDR=4 screen for the Q8 MMVQ body then passed canaries but
+collapsed to `44.21455725216031 tok/s` fresh row0 after TTFT when rerun with
+the correct record-lane MTP identity. Do not pursue global Q8 MMVQ VDR widening;
+the next source candidate should preserve the tuned `VDR=2` dot shape and
+restructure the Q8 multi-column body instead. See
+`../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260627T1021-q8-mmvq-vdr4-negative.md`.
 
 2026-06-27 screen audit update: a p-min/UBATCH neighborhood sweep found three
 screen-only rows above the then-current `104.07050714456982 tok/s` record. Two
