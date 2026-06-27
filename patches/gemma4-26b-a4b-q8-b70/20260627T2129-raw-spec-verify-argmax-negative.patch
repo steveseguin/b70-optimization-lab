@@ -1,0 +1,64 @@
+diff --git a/src/models/gemma4.cpp b/src/models/gemma4.cpp
+index 0000000..0000000 100644
+--- a/src/models/gemma4.cpp
++++ b/src/models/gemma4.cpp
+@@
++static bool llama_gemma4_spec_verify_raw_argmax_enabled() {
++    const char * env = std::getenv("LLAMA_SPEC_VERIFY_RAW_ARGMAX");
++    if (env == nullptr || env[0] == '\0') {
++        return false;
++    }
++
++    return strcmp(env, "1") == 0 || strcmp(env, "true") == 0 ||
++        strcmp(env, "TRUE") == 0 || strcmp(env, "yes") == 0 ||
++        strcmp(env, "on") == 0;
++}
+@@
++    const bool raw_spec_verify_argmax_requested =
++        cparams.spec_verify_direct_argmax_ids &&
++        llama_gemma4_spec_verify_raw_argmax_enabled() &&
++        model.vocab.get_suppress_tokens().empty();
+@@
+     // lm_head
+     cur = build_lora_mm(model.output, cur, model.output_s);
++    if (raw_spec_verify_argmax_requested &&
++            n_outputs > 0 &&
++            cur->type == GGML_TYPE_F32 &&
++            cur->ne[1] == n_outputs &&
++            cur->ne[0] <= INT32_MAX &&
++            ggml_is_matrix(cur) &&
++            ggml_is_contiguous(cur)) {
++        // Gemma final-logit softcap is monotonic, so greedy verification can
++        // argmax raw LM-head logits when no suppress-token bias is present.
++        ggml_tensor * sampled = ggml_argmax(ctx0, cur);
++        ggml_format_name(sampled, "spec_verify_raw_argmax_token_rows");
++
++        res->t_sampled_rows[0] = sampled;
++        ggml_build_forward_expand(gf, sampled);
++        return;
++    }
++
+diff --git a/scripts/run-gemma4-26b-first-baseline.sh b/scripts/run-gemma4-26b-first-baseline.sh
+index 0000000..0000000 100755
+--- a/scripts/run-gemma4-26b-first-baseline.sh
++++ b/scripts/run-gemma4-26b-first-baseline.sh
+@@
+ LLAMA_SPEC_VERIFY_FUSED_OUTPUT_ARGMAX="${LLAMA_SPEC_VERIFY_FUSED_OUTPUT_ARGMAX:-}" \
+ LLAMA_SPEC_VERIFY_SOFTCAP_ARGMAX="${LLAMA_SPEC_VERIFY_SOFTCAP_ARGMAX:-}" \
++LLAMA_SPEC_VERIFY_RAW_ARGMAX="${LLAMA_SPEC_VERIFY_RAW_ARGMAX:-}" \
+ LLAMA_SPEC_ADAPTIVE_MTP="${LLAMA_SPEC_ADAPTIVE_MTP:-}" \
+@@
+         "llama_spec_verify_fused_output_argmax": env_or_log("LLAMA_SPEC_VERIFY_FUSED_OUTPUT_ARGMAX"),
+         "llama_spec_verify_softcap_argmax": env_or_log("LLAMA_SPEC_VERIFY_SOFTCAP_ARGMAX"),
++        "llama_spec_verify_raw_argmax": env_or_log("LLAMA_SPEC_VERIFY_RAW_ARGMAX"),
+         "llama_spec_adaptive_mtp": env_or_log("LLAMA_SPEC_ADAPTIVE_MTP"),
+diff --git a/scripts/run-gemma4-26b-llamacpp-replica.sh b/scripts/run-gemma4-26b-llamacpp-replica.sh
+index 0000000..0000000 100755
+--- a/scripts/run-gemma4-26b-llamacpp-replica.sh
++++ b/scripts/run-gemma4-26b-llamacpp-replica.sh
+@@
+   echo "LLAMA_SPEC_VERIFY_BACKEND_ARGMAX_IDS=${LLAMA_SPEC_VERIFY_BACKEND_ARGMAX_IDS:-<unset>}"
+   echo "LLAMA_SPEC_VERIFY_FUSED_OUTPUT_ARGMAX=${LLAMA_SPEC_VERIFY_FUSED_OUTPUT_ARGMAX:-<unset>}"
++  echo "LLAMA_SPEC_VERIFY_RAW_ARGMAX=${LLAMA_SPEC_VERIFY_RAW_ARGMAX:-<unset>}"
++  echo "LLAMA_SPEC_VERIFY_SOFTCAP_ARGMAX=${LLAMA_SPEC_VERIFY_SOFTCAP_ARGMAX:-<unset>}"
+   echo "LLAMA_SPEC_ADAPTIVE_MTP=${LLAMA_SPEC_ADAPTIVE_MTP:-<unset>}"

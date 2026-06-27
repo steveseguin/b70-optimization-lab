@@ -75,6 +75,19 @@ negative artifact and do not retry this exact approach without lower-level
 kernel evidence. See
 `../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260627T2055-q8-reorder-grouped-negative.md`.
 
+2026-06-27 raw verifier argmax follow-up: default-off
+`LLAMA_SPEC_VERIFY_RAW_ARGMAX=1` publishes greedy sampled rows from raw
+LM-head logits before Gemma's final softcap. This is exact when suppress-token
+bias is absent because the final-logit softcap is monotonic. It passed the
+strict realistic gate in every row tested, but the apparent
+`90.61464067224665 tok/s` screen did not confirm: four same-config confirmation
+lanes measured only `85.38010810396247`, `86.06270410755482`,
+`88.22852366375129`, and `87.95831897318453 tok/s`. Keep the patch as a
+default-off negative artifact and do not submit. Lesson: skipping post-LM-head
+softcap is not enough; a material verifier win must avoid the full vocabulary
+projection or reduce verifier MoE work. See
+`../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260627T2129-raw-spec-verify-argmax-negative.md`.
+
 ## Historical Diagnostic Frontier Pending Realistic Gate
 
 Current best synthetic filled-long one-B70 diagnostic result is

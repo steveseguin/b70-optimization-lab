@@ -110,6 +110,14 @@ Current realistic-gate family:
   `../../patches/gemma4-26b-a4b-q8-b70/20260627T0503-llamacpp-gemma4-router-selected-weights-negative-current-stack.patch`;
   note:
   `../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260627T0503-router-selected-weights-negative.md`.
+- `LLAMA_SPEC_VERIFY_RAW_ARGMAX=1` is exact for greedy Gemma verifier rows when
+  suppress-token bias is absent, because final-logit softcap is monotonic, but
+  it is not a speed win under the strict realistic gate. The best screen
+  measured `90.61464067224665 tok/s`, barely above the current record, but a
+  four-lane confirmation measured `85.38-88.23 tok/s`. Do not promote or
+  submit; it only avoids post-LM-head softcap, while the full LM-head
+  vocabulary projection remains. Note:
+  `../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260627T2129-raw-spec-verify-argmax-negative.md`.
 - `LLAMA_SYCL_MUL_MAT_ID_GATE_UP_Q8_SINGLETON_DIRECT=1` is a near-neutral
   screen, not a promoted win. It skips full gather/scatter for singleton expert
   routes in the current Q8 verifier gate/up `MUL_MAT_ID` shape while keeping the
