@@ -139,6 +139,20 @@ approved it as `cmqw1tgzx0366qr01g4lkv7f1`. Treat this as a tiny row0
 micro-record only: the support mean is lower than the prior run due to one
 slower support row, so the structural speedup is marginal at best.
 
+2026-06-27 clean-repro negative sweep: after reconstructing a clean
+`c926ad098` source tree plus the promoted record patches, the corrected
+`filled-long` benchmark identity reproduced the `104 tok/s` lane but did not
+produce a new record. Q8 ncols-hoist was neutral (`104.163` screen, no
+promotion). Thresholds around `n_min=2/3` and `p_min=0.02-0.10` were losses
+after full confirmation (`n_min=2,p_min=0.05` full: `104.200129`, `384/384`).
+UBATCH/CTX/runtime screens produced only variance: `UBATCH=704` screened at
+`104.778837` but fully confirmed at `104.191834`; `UR_L0_USE_IMMEDIATE_COMMANDLISTS=0`
+screened at `104.386620` but fully confirmed at `102.440578`; unique-prompt
+fresh checks stayed around `100-101.5 tok/s`. Do not continue isolated
+`p_min`, `n_min`, UBATCH, CTX, thread, poll, VMM, graph-off, or immediate-list
+sweeps unless they are attached to a new source mechanism. See
+`../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260627T1059-clean-repro-threshold-q8hoist.md`.
+
 2026-06-27 post-record cleanup / diagnostics: a config-neighborhood screen
 around the RMS-reuse record produced only shallow same-config variance
 (`104.416546 tok/s` screen on the exact record identity); the intended full

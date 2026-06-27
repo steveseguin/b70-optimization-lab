@@ -11,8 +11,18 @@ current `104.309 tok/s` record binary. The same build family, even with the new
 Q8 hoist gate disabled, lands around `40-49 tok/s` on the standard fresh row0
 screen.
 
-Do not interpret the Q8 hoist or VDR=4 screens as clean kernel losses until a
-clean rebuild control first matches the record lane.
+**Correction after clean rebuild audit:** the slow `40-49 tok/s` screens below
+used `BENCH_PROMPT_MODE=long` (75 actual prompt tokens), while the record lane
+uses `BENCH_PROMPT_MODE=filled-long` (588 actual prompt tokens). The acceptance
+collapse was primarily a benchmark-identity mismatch, not proof that the clean
+source reconstruction was missing code. A clean `c926ad098` worktree with the
+promoted record patch plus RMS-reuse incremental patch reproduced the record
+lane at `102.252 tok/s` fresh row0 with `64/64` canaries using `filled-long`.
+
+Do not compare Gemma 4 26B Q8 runs across `long` and `filled-long` prompt
+modes. The `long` mode is useful as a separate short-prompt stress lane, but it
+is not comparable to the current LocalMaxxing/reproduce.md `p512/o512`
+filled-context lane.
 
 ## Current Record Reference
 
@@ -29,9 +39,31 @@ clean rebuild control first matches the record lane.
 
 ## Rebuild Screens
 
-All three runs below used the standard repeated-prompt screen shape. Per the
-fresh-response rule, row0 is the only headline-eligible value; later rows are
-support only. All rows reported `cached_tokens=0`.
+All three runs below used the repeated-prompt screen shape, but they used the
+wrong prompt mode (`long`, 75 actual prompt tokens) for comparison to the
+current record lane. Per the fresh-response rule, row0 is the only
+headline-eligible value; later rows are support only. All rows reported
+`cached_tokens=0`.
+
+### Clean reconstruction control with correct filled-long identity
+
+- Data:
+  `data/gemma4-q8-gpu1-cleanrepro-rmsreuse-ub768-nmin3-pmin010-filledlong-screen-20260627T110211Z/`
+- Source:
+  `/home/steve/src/llama.cpp-gemma-record-repro-c926`, clean worktree at
+  `c926ad098` plus:
+  - `patches/gemma4-26b-a4b-q8-b70/20260626T2225-llamacpp-gemma4-current-record-stack.patch`
+  - `patches/gemma4-26b-a4b-q8-b70/20260627T0704-llamacpp-gemma4-moe-reuse-attn-rms-incremental.patch`
+- Binary:
+  `/home/steve/src/llama.cpp-gemma-record-repro-c926/build-sycl-b70-aot-bmg-g31/bin/llama-server`
+- Prompt identity: `BENCH_PROMPT_MODE=filled-long`,
+  `PROMPT_TOKENS=512`, actual prompt tokens `588`, output `512`
+- Canary: `64/64` rows
+- Fresh row0: `102.2521600027975 tok/s` after TTFT
+- Support mean: `102.3745597619006 tok/s`
+- Interpretation: clean reconstruction is restored. The remaining `~2 tok/s`
+  gap to the stale `104.309 tok/s` record is normal screen noise / GPU index /
+  run variance, not a missing major source patch.
 
 ### Q8 ncols hoist enabled
 
@@ -117,15 +149,11 @@ clean recipe.
 
 ## Decision
 
-Stop source-kernel screens against the current dirty rebuild until the record
-binary can be reproduced from a clean worktree. The next engineering step is a
-clean reconstruction:
+Use `/home/steve/src/llama.cpp-gemma-record-repro-c926` as the clean source
+baseline for new Gemma 4 26B source experiments. Preserve the dirty
+`/home/steve/src/llama.cpp-gemma-record-stack` worktree as an audit artifact
+and do not use its old `long`-mode q8hoist/VDR screens as record-lane evidence.
 
-1. Create a separate clean worktree from llama.cpp commit `c926ad098`.
-2. Apply the known record-stack patch artifacts in order, including the
-   `20260626T2225` current-record stack and the RMS-reuse record change.
-3. Build an AOT BMG/G31 SYCL binary with the same CMake identity.
-4. Run the standard record-identity screen on a single GPU.
-5. Only resume Q8 MMVQ/body experiments once the clean rebuild control is back
-   near the `104 tok/s` record lane.
-
+Before any new source patch is interpreted as a win/loss against the current
+record, run the `filled-long` record-identity screen first. A `long`-mode screen
+can still be useful, but it is a different short-prompt/low-acceptance lane.

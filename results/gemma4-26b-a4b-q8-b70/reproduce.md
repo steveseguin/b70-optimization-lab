@@ -302,6 +302,7 @@ Short wrapper equivalent for future sweeps:
 ```bash
 cd /home/steve/qwen36-results-main
 GPU_INDEX=1 PORT=18261 LABEL=gemma4-q8-gpu1-mtp-n3-long-deep-<stamp> \
+BENCH_PROMPT_MODE=filled-long PROMPT_TOKENS=512 MAX_TOKENS=512 \
 MTP_N_MAX=3 scripts/run-gemma4-26b-mtp-candidate.sh
 ```
 
@@ -323,6 +324,13 @@ For future sustained-decode comparisons, prefer
 plus 512-token output. The older `long` mode is intentionally retained so the
 published 75/512 record remains reproducible; do not mix the two shapes when
 deciding whether a run broke a record.
+
+2026-06-27 audit note: a clean rebuild control initially looked like a severe
+regression (`~47 tok/s`) because it accidentally used `BENCH_PROMPT_MODE=long`
+(`75` actual prompt tokens). Re-running the same clean binary with
+`BENCH_PROMPT_MODE=filled-long` restored the record lane at `102.252 tok/s`
+fresh row0 (`588` actual prompt tokens, `512` output tokens, `64/64` canary).
+Treat `long` and `filled-long` as separate benchmark identities.
 
 ## 4. Launch Four Replicas
 
