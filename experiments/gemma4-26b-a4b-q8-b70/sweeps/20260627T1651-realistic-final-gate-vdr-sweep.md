@@ -259,3 +259,73 @@ Decision:
 - Submitted the v8 strict high to LocalMaxxing with the realistic-suite payload:
   `data/localmaxxing-gemma4-26b-a4b-q8-b70-llamacpp-realistic-mtp-n3-nmin2-p005-ub1024-v8-20260627.queue.json`.
   Approved ID: `cmqwnl2ag03lgqr01ch5bxknq`.
+
+## Follow-Up Result: v9 Variants Did Not Beat v8
+
+All four v9 rows passed the realistic final gate and chat canary. None beat the
+v8 strict high (`87.611 tok/s`), so no LocalMaxxing submission was made.
+
+| Run | Config | median tok/s 1-100 after TTFT | p10 | mean | median full512 after TTFT | median wall full512 | median TTFT |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| `data/gemma4-q8-gpu0-vdr4default-mtp-n3-nmin2-p005-ub1024-realistic-gate-repeat-v9/` | exact representative repeat: `n_max=3`, `n_min=2`, `p_min=0.05`, UB1024 | **85.368** | 74.989 | **84.481** | 81.615 | 78.587 | **181.2 ms** |
+| `data/gemma4-q8-gpu2-vdr4default-mtp-n3-nmin2-p005-ub1088-realistic-gate-v9/` | `n_max=3`, `n_min=2`, `p_min=0.05`, UB1088 | 85.331 | 75.052 | 83.922 | 81.053 | 77.765 | 182.4 ms |
+| `data/gemma4-q8-gpu1-vdr4default-mtp-n3-nmin2-p00475-ub1024-realistic-gate-v9/` | `n_max=3`, `n_min=2`, `p_min=0.0475`, UB1024 | 84.682 | **77.675** | 84.063 | **82.099** | **79.255** | 183.0 ms |
+| `data/gemma4-q8-gpu3-vdr4default-mtp-n4-nmin2-p005-ub1024-realistic-gate-v9/` | `n_max=4`, `n_min=2`, `p_min=0.05`, UB1024 | 81.901 | 75.261 | 83.436 | 77.307 | 75.251 | 182.7 ms |
+
+Interpretation:
+
+- The v8 `87.611` row remains the strict high. A same-family v9 repeat at
+  `85.368` confirms the family is strong but variable.
+- Lowering `p_min` slightly to `0.0475` improved p10/full512/wall balance but
+  lost on the primary median-100 metric.
+- UB1088 did not beat UB1024 on the primary metric.
+- `n_max=4` with UB1024 is a clear loss on this fixed cold suite; the earlier
+  n4 medians were not enough to overcome worse prompt-level balance.
+
+Next action: stop spending sweeps on tiny `p_min`/UBATCH changes unless tied to
+a new source/runtime mechanism. Try runtime overhead controls (target threads,
+draft threads/batch, or verifier-side code changes) under the same strict gate.
+
+## Follow-Up Result: v10 Runtime Thread Controls
+
+All four v10 rows passed the realistic final gate and chat canary. None beat
+the v8 strict high (`87.611 tok/s`), but target `THREADS=6` became a useful
+near-miss and improved p10.
+
+| Run | Config | median tok/s 1-100 after TTFT | p10 | mean | median full512 after TTFT | median wall full512 | median TTFT |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| `data/gemma4-q8-gpu0-vdr4default-mtp-n3-nmin2-p005-ub1024-th6-realistic-gate-v10/` | `n3/p0.05/UB1024`, target `THREADS=6`, draft threads 32/32 | **87.122** | **78.538** | **85.576** | **80.920** | 77.848 | **181.3 ms** |
+| `data/gemma4-q8-gpu2-vdr4default-mtp-n3-nmin2-p005-ub1024-dth16-realistic-gate-v10/` | `n3/p0.05/UB1024`, target `THREADS=8`, draft threads 16/16 | 86.386 | 75.136 | 84.094 | 80.004 | 77.757 | 183.8 ms |
+| `data/gemma4-q8-gpu3-vdr4default-mtp-n3-nmin2-p005-ub1024-dth64-realistic-gate-v10/` | `n3/p0.05/UB1024`, target `THREADS=8`, draft threads 64/64 | 83.915 | 75.383 | 84.069 | 80.861 | **78.618** | 182.9 ms |
+| `data/gemma4-q8-gpu1-vdr4default-mtp-n3-nmin2-p005-ub1024-th10-realistic-gate-v10/` | `n3/p0.05/UB1024`, target `THREADS=10`, draft threads 32/32 | 81.694 | 75.977 | 83.302 | 79.673 | 77.535 | 182.4 ms |
+
+Interpretation:
+
+- `THREADS=6` is worth a focused follow-up: it nearly matched the v8 strict high
+  while improving p10, suggesting lower CPU-thread pressure can reduce
+  prompt-level variance.
+- Target `THREADS=10` is a loss.
+- Draft helper threads 16/16 and 64/64 did not beat the current recipe. Keep
+  32/32 unless paired with the `THREADS=6` follow-up.
+
+## Follow-Up Result: v11 THREADS=6 Follow-Up Did Not Repeat
+
+All four v11 rows passed the realistic final gate and chat canary. The
+`THREADS=6` near-miss from v10 did not repeat and no row beat the v8 strict
+high (`87.611 tok/s`).
+
+| Run | Config | median tok/s 1-100 after TTFT | p10 | mean | median full512 after TTFT | median wall full512 | median TTFT |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| `data/gemma4-q8-gpu2-vdr4default-mtp-n3-nmin2-p005-ub1088-th6-realistic-gate-v11/` | `THREADS=6`, `n3/p0.05`, UB1088, draft threads 32/32 | **85.634** | 73.415 | **83.676** | 78.621 | 76.408 | **181.7 ms** |
+| `data/gemma4-q8-gpu3-vdr4default-mtp-n3-nmin2-p005-ub1024-th6-dth16-realistic-gate-v11/` | `THREADS=6`, `n3/p0.05`, UB1024, draft threads 16/16 | 81.905 | **77.069** | 83.112 | 80.617 | 78.083 | 182.8 ms |
+| `data/gemma4-q8-gpu0-vdr4default-mtp-n3-nmin2-p005-ub1024-th6-repeat-realistic-gate-v11/` | `THREADS=6`, exact v10 near-miss repeat | 81.284 | 74.185 | 82.010 | 79.908 | 77.658 | 181.7 ms |
+| `data/gemma4-q8-gpu1-vdr4default-mtp-n3-nmin2-p00475-ub1024-th6-realistic-gate-v11/` | `THREADS=6`, `n3/p0.0475`, UB1024, draft threads 32/32 | 80.611 | 75.728 | 82.349 | **81.070** | **78.178** | 182.0 ms |
+
+Interpretation:
+
+- Treat v10 `THREADS=6` as a variance/near-miss signal, not a stable
+  improvement.
+- More launcher tuning around the current MTP stack is unlikely to reach the
+  `>150 tok/s` target under the realistic cold suite. The confirmed path for
+  material progress remains source-level verifier-side work or a different
+  fresh-valid speculation engine.
