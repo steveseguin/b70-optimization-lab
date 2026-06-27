@@ -67,6 +67,7 @@ LLAMA_MTP_DRAFT_LOGIT_GAP_MIN="${LLAMA_MTP_DRAFT_LOGIT_GAP_MIN:-}" \
 LLAMA_MTP_DRAFT_FAST_TOPK="${LLAMA_MTP_DRAFT_FAST_TOPK:-}" \
 LLAMA_MTP_DRAFT_FAST_ARGMAX="${LLAMA_MTP_DRAFT_FAST_ARGMAX:-}" \
 LLAMA_MTP_DRAFT_DIRECT_ARGMAX_IDS="${LLAMA_MTP_DRAFT_DIRECT_ARGMAX_IDS:-}" \
+LLAMA_MTP_DRAFT_DIRECT_ARGMAX_SCORES="${LLAMA_MTP_DRAFT_DIRECT_ARGMAX_SCORES:-}" \
 LLAMA_MTP_DRAFT_DIRECT_ARGMAX_UNROLL="${LLAMA_MTP_DRAFT_DIRECT_ARGMAX_UNROLL:-}" \
 LLAMA_MTP_DRAFT_DEVICE_H_HANDOFF="${LLAMA_MTP_DRAFT_DEVICE_H_HANDOFF:-}" \
 LLAMA_MTP_DRAFT_BACKEND_ARGMAX="${LLAMA_MTP_DRAFT_BACKEND_ARGMAX:-}" \
@@ -79,6 +80,7 @@ LLAMA_GEMMA4_MTP_FUSED_OUTPUT_ARGMAX="${LLAMA_GEMMA4_MTP_FUSED_OUTPUT_ARGMAX:-}"
 LLAMA_GEMMA4_MTP_QONLY_ATTN_INPUTS="${LLAMA_GEMMA4_MTP_QONLY_ATTN_INPUTS:-}" \
 LLAMA_GEMMA4_MOE_SELECTED_SOFTMAX="${LLAMA_GEMMA4_MOE_SELECTED_SOFTMAX:-}" \
 LLAMA_GEMMA4_MOE_SELECTED_SOFTMAX_FUSED="${LLAMA_GEMMA4_MOE_SELECTED_SOFTMAX_FUSED:-}" \
+LLAMA_GEMMA4_MOE_REUSE_ATTN_RMS="${LLAMA_GEMMA4_MOE_REUSE_ATTN_RMS:-}" \
 LLAMA_GEMMA4_MOE_TOP_K="${LLAMA_GEMMA4_MOE_TOP_K:-}" \
 LLAMA_GEMMA4_MOE_SORTED_TOP_K="${LLAMA_GEMMA4_MOE_SORTED_TOP_K:-}" \
 LLAMA_GEMMA4_MOE_WEIGHTED_SUM="${LLAMA_GEMMA4_MOE_WEIGHTED_SUM:-}" \
@@ -215,6 +217,7 @@ out = {
         "llama_mtp_draft_fast_topk": env_or_log("LLAMA_MTP_DRAFT_FAST_TOPK"),
         "llama_mtp_draft_fast_argmax": env_or_log("LLAMA_MTP_DRAFT_FAST_ARGMAX"),
         "llama_mtp_draft_direct_argmax_ids": env_or_log("LLAMA_MTP_DRAFT_DIRECT_ARGMAX_IDS"),
+        "llama_mtp_draft_direct_argmax_scores": env_or_log("LLAMA_MTP_DRAFT_DIRECT_ARGMAX_SCORES"),
         "llama_mtp_draft_direct_argmax_unroll": env_or_log("LLAMA_MTP_DRAFT_DIRECT_ARGMAX_UNROLL"),
         "llama_mtp_draft_device_h_handoff": env_or_log("LLAMA_MTP_DRAFT_DEVICE_H_HANDOFF"),
         "llama_mtp_draft_backend_argmax": env_or_log("LLAMA_MTP_DRAFT_BACKEND_ARGMAX"),
@@ -227,6 +230,7 @@ out = {
         "llama_gemma4_mtp_qonly_attn_inputs": env_or_log("LLAMA_GEMMA4_MTP_QONLY_ATTN_INPUTS"),
         "llama_gemma4_moe_selected_softmax": env_or_log("LLAMA_GEMMA4_MOE_SELECTED_SOFTMAX"),
         "llama_gemma4_moe_selected_softmax_fused": env_or_log("LLAMA_GEMMA4_MOE_SELECTED_SOFTMAX_FUSED"),
+        "llama_gemma4_moe_reuse_attn_rms": env_or_log("LLAMA_GEMMA4_MOE_REUSE_ATTN_RMS"),
         "llama_gemma4_moe_top_k": env_or_log("LLAMA_GEMMA4_MOE_TOP_K"),
         "llama_gemma4_moe_sorted_top_k": env_or_log("LLAMA_GEMMA4_MOE_SORTED_TOP_K"),
         "llama_gemma4_moe_weighted_sum": env_or_log("LLAMA_GEMMA4_MOE_WEIGHTED_SUM"),

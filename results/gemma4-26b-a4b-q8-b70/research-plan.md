@@ -7,7 +7,7 @@ replicas on four GPUs for parallel research and aggregate service capacity.
 ## Current Fresh-Response Headline
 
 Current valid one-B70 headline is
-`data/gemma4-q8-gpu0-ub768-nmin3-pmin010-fullrepeat-20260627T035307Z/`:
+`data/gemma4-q8-gpu0-rmsreuse-ub768-nmin3-pmin010-fullrepeat-20260627T070421Z/`:
 
 - target/verifier: `gemma-4-26B-A4B-it-UD-Q8_K_XL.gguf`;
 - draft: `MTP/gemma-4-26B-A4B-it-Q4_0-MTP.gguf`;
@@ -24,24 +24,28 @@ Current valid one-B70 headline is
   `LLAMA_GEMMA4_MOE_SELECTED_SOFTMAX_FUSED=1`,
   `LLAMA_GEMMA4_MOE_WEIGHTED_SUM=1`, f16 target/draft KV,
   `LLAMA_SYCL_MUL_MAT_ID_ROUTE_CACHE=1`,
+  `LLAMA_GEMMA4_MOE_REUSE_ATTN_RMS=1`,
   `--ctx-checkpoints 0`, `GGML_SYCL_ENABLE_VMM=0`,
   `UR_L0_USE_IMMEDIATE_COMMANDLISTS=1`, `BATCH_SIZE=1024`,
   `UBATCH_SIZE=768`, `THREADS=8`, `POLL=100`, `FLASH_ATTN=off`,
   `GGML_SYCL_DISABLE_GRAPH=0`;
 - validation: chat canary **1536 repeats / 6144 rows**, all benchmark rows
   `cached_tokens=0`;
-- fresh headline: **104.22626983476746 tok/s** after TTFT;
-- supporting repeated-request mean: `104.17418893412489 tok/s`;
-- LocalMaxxing: `cmqvv3kop0309qr013ekr8apu`;
-- note: this is a variance-class `UBATCH_SIZE=768`, `n_min=3`, `p_min=0.10`
-  micro-record over the prior `104.07050714456982 tok/s` same-stack row, not a
-  material speedup toward `>150`.
+- fresh headline: **104.30919255569083 tok/s** after TTFT;
+- supporting repeated-request mean: `103.93445004566178 tok/s`;
+- LocalMaxxing: `cmqw1tgzx0366qr01g4lkv7f1`;
+- note: this is a tiny row0 `LLAMA_GEMMA4_MOE_REUSE_ATTN_RMS=1` micro-record
+  over the prior `104.22626983476746 tok/s` same-stack row, not a material
+  speedup toward `>150`.
 
 The actual research target remains **>150 tok/s fresh-response**. The current
-scalar llama.cpp MTP loop is below that target because it still performs one
-assistant `llama_decode()` per draft token. Further p-min/thread/runtime-shape
-sweeps are useful only as cleanup; a 2x-class improvement likely requires a
-graph-level multi-token assistant unroll or a different fresh-valid speculation
+llama.cpp direct-unroll MTP path no longer performs one assistant
+`llama_decode()` per draft token; it batches the assistant argmax-ID unroll in
+one draft decode. The remaining gap is dominated by target/verifier work
+(`process_ubatch`, especially Gemma4 verifier MoE plus the LM head), not by
+draft precision or p-min-only threshold sweeps. Further p-min/thread/runtime
+shape sweeps are useful only as cleanup; a 2x-class improvement likely requires
+a structural verifier-side reduction or a different fresh-valid speculation
 engine.
 
 2026-06-27 frontier update: isolated selected-softmax fused-weights and
@@ -123,6 +127,18 @@ length `6.50`. The next source work should reduce real verifier MoE/LM-head
 work or change the fresh-valid speculation structure; do not repeat existing
 GEGLU/down, broad `MUL_MAT_ID`, ngram-history, or naive high-depth MTP lanes.
 
+2026-06-27 RMS-reuse micro-record: a default-off source patch
+`LLAMA_GEMMA4_MOE_REUSE_ATTN_RMS=1` reuses the unweighted `RMS(attn_out)` in
+each Gemma4 MoE layer across the shared MLP, routed expert FFN input, and
+router input. It passed a screen at `104.27340324045828 tok/s`, then full
+validation
+`data/gemma4-q8-gpu0-rmsreuse-ub768-nmin3-pmin010-fullrepeat-20260627T070421Z/`
+passed `6144/6144` canary rows and reached `104.30919255569083 tok/s` fresh
+row0 (`cached_tokens=0`), support mean `103.93445004566178`. LocalMaxxing
+approved it as `cmqw1tgzx0366qr01g4lkv7f1`. Treat this as a tiny row0
+micro-record only: the support mean is lower than the prior run due to one
+slower support row, so the structural speedup is marginal at best.
+
 2026-06-27 screen audit update: a p-min/UBATCH neighborhood sweep found three
 screen-only rows above the then-current `104.07050714456982 tok/s` record. Two
 promoted full validations were valid losses, and the third produced only a
@@ -165,6 +181,16 @@ bypasses the normal `MTP_P_MIN` / `draft_logit_gap_min` checks. Treat future
 top1/top2 score, probability, or gap from the fast direct path.
 
 2026-06-27 source roadmap after audit:
+
+2026-06-27 draft-quant recheck on the current record stack tested
+`Q4_K_M-MTP`, `Q5_K_M-MTP`, `Q6_K-MTP`, and `Q8_0-MTP` drafts at
+`UBATCH_SIZE=768`, `MTP_N_MIN=3`, `MTP_P_MIN=0.10`. All passed the screen
+canary with `cached_tokens=0`, but all were below the `104.22626983476746 tok/s`
+fresh record; the best was `Q4_K_M-MTP` at `103.78730901696501 tok/s`, while
+`Q8_0-MTP` fell to `100.18260696589377 tok/s`. See
+`../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260627T0700-draft-quant-current-stack-loss.md`.
+Conclusion: do not spend more runs on higher-precision MTP drafts for this Q8
+target lane unless a new mechanism changes the verifier economics.
 
 1. ~~Fuse verifier router selection plus selected-weight materialization for
    Gemma4 verifier shapes (`n_expert=128`, `n_expert_used=8`, `n_tokens<=8`).

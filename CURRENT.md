@@ -11,14 +11,15 @@ Current active optimization target:
 - Goal: maximize **fresh-response** single-session decode while preserving the
   Q8 target/verifier quality lane. Warmed/history or repeated-continuation
   speedups are useful diagnostics only, not headline throughput.
-- Current valid fresh-response best: `104.22626983476746 tok/s` after TTFT on
-  the first no-cache benchmark row, `104.17418893412489 tok/s` supporting
+- Current valid fresh-response best: `104.30919255569083 tok/s` after TTFT on
+  the first no-cache benchmark row, `103.93445004566178 tok/s` supporting
   repeated-request mean, `1536` canary repeats / `6144` rows passed,
-  LocalMaxxing `cmqvv3kop0309qr013ekr8apu`. This is the same
+  LocalMaxxing `cmqw1tgzx0366qr01g4lkv7f1`. This is the same
   route-cache/fused-output/fused-selected-softmax recipe with
-  `UBATCH_SIZE=768`, `MTP_N_MIN=3`, and `MTP_P_MIN=0.10`, a small
-  variance-class micro-record over the previous
-  `104.07050714456982 tok/s` row, not material progress toward `>150`.
+  `UBATCH_SIZE=768`, `MTP_N_MIN=3`, and `MTP_P_MIN=0.10`, plus
+  `LLAMA_GEMMA4_MOE_REUSE_ATTN_RMS=1`, a tiny row0 micro-record over the
+  previous `104.22626983476746 tok/s` row, not material progress toward
+  `>150`.
 - Result packet: `results/gemma4-26b-a4b-q8-b70/README.md`.
 - Reproduction: `results/gemma4-26b-a4b-q8-b70/reproduce.md`.
 - Validation rules: `results/gemma4-26b-a4b-q8-b70/validity-gates.md`.
