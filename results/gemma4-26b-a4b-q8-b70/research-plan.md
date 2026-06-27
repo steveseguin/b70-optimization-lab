@@ -156,6 +156,14 @@ plumbing or tiny config sweeps. See
 and
 `../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260627T0950-currentstack-phaseprofile-clean.md`.
 
+2026-06-27 route-profile follow-up confirmed why route-row plumbing has become
+a dead end: decode-like `tok2_8` routed expert calls average `7.665` tokens and
+`6.593` max rows per expert slice, and llama.cpp's SYCL backend already routes
+`src1->ne[1] <= 8` Q8 slices through `mul_mat_vec_q8_0_q8_1_sycl_switch_ncols()`.
+The hot path is therefore the actual Q8 MMVQ body, not the missing selection of
+MMVQ. See
+`../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260627T1001-routeprofile-mmvq-confirmed.md`.
+
 2026-06-27 screen audit update: a p-min/UBATCH neighborhood sweep found three
 screen-only rows above the then-current `104.07050714456982 tok/s` record. Two
 promoted full validations were valid losses, and the third produced only a
