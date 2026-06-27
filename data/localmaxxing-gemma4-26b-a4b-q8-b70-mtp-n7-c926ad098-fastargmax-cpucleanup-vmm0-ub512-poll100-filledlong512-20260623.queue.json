@@ -83,7 +83,16 @@
         "firstRequestTtftMs": 923.9034180063754,
         "cachedTokensObserved": [
           0
-        ]
+        ],
+        "freshResponseHeadlineValid": false,
+        "headlineUse": "diagnostic-pre-final-gate",
+        "localmaxxingSubmissionAllowedUnderCurrentPolicy": false,
+        "realisticSuiteGatePassed": false,
+        "primaryMetricName": "diagnostic_pre_final_gate_not_headline",
+        "realisticSuiteCachedTokensAllZero": false,
+        "realisticSuiteId": "",
+        "currentPolicyCorrectionDate": "2026-06-27",
+        "currentPolicyCorrection": "2026-06-27 correction: diagnostic/pre-final-gate artifact only under the current policy. Do not submit, promote, or advertise this payload as realistic headline throughput unless replaced by a fixed realistic-suite run with each prompt once, cached_tokens=0 on every request, no warmed/reused history, and primaryMetricName=median_tok_s_1_100_after_ttft."
       },
       "engineName": "llama.cpp",
       "engineVersion": "c926ad098",
@@ -98,7 +107,7 @@
       },
       "hfId": "unsloth/gemma-4-26B-A4B-it-GGUF",
       "modelRevision": "3bb10d594514ef4edb7f3a65d41a7e4eb8c5767a",
-      "notes": "New conservative fresh-response Gemma 4 26B A4B Q8 single-B70 record from 2026-06-23 on llama.cpp c926ad098. Headline tokSOut is the FIRST measured request after TTFT (92.3973 tok/s), not the repeated-prompt mean, per fresh-response validity policy. Supporting independent repeated-request mean was 92.7671 tok/s after TTFT and 83.2893 tok/s wall; every benchmark row reported cached_tokens=0. Configuration: UD-Q8_K_XL main GGUF, Gemma MTP draft GGUF, draft-MTP n=7/n-min=2/p-min=0.12, backend sampling off, fast argmax draft path, CPU cleanup patch stack, GGML_SYCL_ENABLE_VMM=0, UBATCH_SIZE=512, POLL=100, ctx-checkpoints 0, f16/f16 KV, flash-attn off. Canary: 384/384 pass before measurement. This supersedes cmqr7ni7u01gxqo01wtqsrn3u (91.8989 tok/s mean / 91.8769 first request). Supporting repo paths: results/gemma4-26b-a4b-q8-b70/, experiments/gemma4-26b-a4b-q8-b70/sweeps/, and patches/gemma4-llamacpp-mtp-cpucleanup-record-stack-20260623.patch.",
+      "notes": "New conservative fresh-response Gemma 4 26B A4B Q8 single-B70 record from 2026-06-23 on llama.cpp c926ad098. Headline tokSOut is the FIRST measured request after TTFT (92.3973 tok/s), not the repeated-prompt mean, per fresh-response validity policy. Supporting independent repeated-request mean was 92.7671 tok/s after TTFT and 83.2893 tok/s wall; every benchmark row reported cached_tokens=0. Configuration: UD-Q8_K_XL main GGUF, Gemma MTP draft GGUF, draft-MTP n=7/n-min=2/p-min=0.12, backend sampling off, fast argmax draft path, CPU cleanup patch stack, GGML_SYCL_ENABLE_VMM=0, UBATCH_SIZE=512, POLL=100, ctx-checkpoints 0, f16/f16 KV, flash-attn off. Canary: 384/384 pass before measurement. This supersedes cmqr7ni7u01gxqo01wtqsrn3u (91.8989 tok/s mean / 91.8769 first request). Supporting repo paths: results/gemma4-26b-a4b-q8-b70/, experiments/gemma4-26b-a4b-q8-b70/sweeps/, and patches/gemma4-llamacpp-mtp-cpucleanup-record-stack-20260623.patch.\n\n2026-06-27 correction: diagnostic/pre-final-gate artifact only under the current policy. Do not submit, promote, or advertise this payload as realistic headline throughput unless replaced by a fixed realistic-suite run with each prompt once, cached_tokens=0 on every request, no warmed/reused history, and primaryMetricName=median_tok_s_1_100_after_ttft.",
       "outputTokens": 512,
       "promptTokens": 588,
       "quantization": "UD-Q8_K_XL",

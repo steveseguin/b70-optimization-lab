@@ -5,7 +5,7 @@ and result-submission hygiene.
 
 Submitted-result ledgers and public IDs are tracked in
 [../results/localmaxxing-submissions.md](../results/localmaxxing-submissions.md).
-The current Gemma 4 26B Q8 B70 record and host details are also linked from the
+The current Gemma 4 26B Q8 B70 result packet and host details are also linked from the
 Gemma result packet at
 [../results/gemma4-26b-a4b-q8-b70/](../results/gemma4-26b-a4b-q8-b70/README.md).
 
@@ -63,12 +63,25 @@ a new record. For MiniMax, Gemma, DeepSeek, or other lanes, keep the same
 discipline: record model, quantization, GPU count, mode, command, environment,
 throughput, correctness status, payload path, response path, and follow-up note.
 
-For fresh-response speculative decode records, the headline throughput is the
-first measured request only unless the benchmark intentionally uses distinct
-fresh prompts for every measured row. Repeated-prompt rows are support and
-stability data. Before submitting, inspect the raw benchmark file, not only
-`summary.json`, and confirm row 0 reports
-`usage.prompt_tokens_details.cached_tokens=0`.
+For Gemma/Qwen-style optimization records, synthetic or repetitive prompts may
+guide search but are not submit-worthy real-world throughput. Promotion and
+submission require the fixed realistic final gate:
+
+- each prompt in the fixed suite is run exactly once as a cold response;
+- every request reports `usage.prompt_tokens_details.cached_tokens=0`;
+- prompt/KV cache reuse, context checkpoints, response reuse, n-gram/history
+  acceleration, and warmed repeated prompts are disabled;
+- target model and quantization are unchanged;
+- speculative decoding/MTP is allowed only when accepted tokens are verified by
+  the declared target model;
+- primary metric is median tok/s for generated tokens 1-100 after TTFT across
+  the suite, with p10, mean, TTFT, wall tok/s, full 512-token tok/s,
+  prompt/output hashes, model identity, runtime commit, env vars, flags, and
+  logs recorded.
+
+The submission helper fails closed unless payload `engineFlags` include a
+realistic-suite gate pass marker and `primaryMetricName` is
+`median_tok_s_1_100_after_ttft`.
 
 Do not submit a fresh-response record when the speedup depends on prior
 generated continuation history, n-gram history, prefix/cache reuse, context

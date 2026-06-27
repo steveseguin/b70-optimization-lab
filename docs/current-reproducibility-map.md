@@ -88,15 +88,16 @@ Check status:
 experiments/minimax_xpu_kv_offload/scripts/session_cache_status.sh
 ```
 
-## Gemma 4 26B Copy-Ready Record
+## Gemma 4 26B Realistic-Suite Observation
 
-The current Gemma 4 26B A4B Q8 single-B70 record is documented in the result
-packet:
+The current Gemma 4 26B A4B Q8 single-B70 realistic-suite observation is
+documented in the result packet:
 
 `../results/gemma4-26b-a4b-q8-b70/reproduce.md`
 
-Use it when the goal is to copy the current `176.216 tok/s` settings rather
-than review the full experiment history. The older standalone
+Use it when the goal is to reproduce the current fixed-suite cold-response
+frontier rather than the older synthetic filled-long diagnostics. The older
+standalone
 `../repro/gemma4-26b-a4b-q8-b70-95tps-20260624/README.md` folder remains as a
 superseded `95.264 tok/s` reproduction artifact.
 
@@ -106,23 +107,31 @@ Record identity:
 - draft: local `Q4_0` Gemma MTP draft only
 - hardware: headless Supermicro AMD Threadripper PRO 5955WX platform, 128 GB
   DDR4, one Intel Arc Pro B70 32 GB used for the measured replica
-- result: `176.216232 tok/s` first fresh no-cache request after TTFT,
-  `176.402591` supporting mean, 1536 repeats / 6144 chat-canary rows,
-  LocalMaxxing `cmqwkedg303jeqr013z753j62`; includes selected-softmax/weighted-sum
-  MoE source guards, `LLAMA_SYCL_MUL_MAT_ID_ROUTE_CACHE=1`,
-  `LLAMA_GEMMA4_MTP_FUSED_OUTPUT_ARGMAX=1`,
-  `LLAMA_GEMMA4_MOE_SELECTED_SOFTMAX_FUSED=1`, and
-  `UR_L0_USE_IMMEDIATE_COMMANDLISTS=1`, with `UBATCH_SIZE=720`,
-  `MTP_N_MIN=3`, `MTP_P_MIN=0.10`,
-  `GGML_SYCL_REORDER_Q8_0_VDR_MMVQ=2`, and
-  `LLAMA_GEMMA4_MOE_REUSE_ATTN_RMS=1`, plus
-  `LLAMA_SYCL_MUL_MAT_ID_MULTI_TOKEN_FAST=1` and
-  `LLAMA_SYCL_MUL_MAT_ID_Q8_0_REORDER=1`.
+- result: best strict result `87.61145306230438 tok/s` median
+  generated-token throughput for tokens 1-100 after TTFT across the fixed
+  realistic cold prompt suite, `cached_tokens=0` on every prompt,
+  `realistic_final_gate.passed=true`.
+  Evidence:
+  `../data/gemma4-q8-gpu0-vdr4default-mtp-n3-nmin2-p005-ub1024-realistic-gate-repeat-v8/summary.json`.
+  Config: default reordered-Q8 VDR4, `n_max=3`, `n_min=2`, `p_min=0.05`,
+  `UBATCH_SIZE=1024`, `--ctx-checkpoints 0`, no n-gram/history acceleration.
+  This is the fourth valid row in the representative `n3/p0.05/UB1024` family
+  (`84.82456994237617`, `83.83638918369195`, `84.52685942118447`, and
+  `87.61145306230438 tok/s`) and was submitted under the realistic-suite
+  policy as `cmqwnl2ag03lgqr01ch5bxknq`. The earlier `86.47445652599384 tok/s`
+  `p_min=0.075` observation did not repeat and is superseded. The old
+  `176.216232 tok/s` synthetic filled-long row remains diagnostic only and is
+  not representative real-world throughput.
 - primary artifacts:
-  `../data/gemma4-q8-gpu0-q8reorder-vdr2-ub720-nmin3-pmin010-fullconfirm-20260627T155347Z/summary.json`,
-  `../data/localmaxxing-gemma4-26b-a4b-q8-b70-llamacpp-mtp-n7-q8target-q40draft-q8reorder-vdr2-ub720-nmin3-pmin010-fresh-20260627.queue.json`,
+  `../data/gemma4-q8-gpu0-vdr4default-mtp-n3-nmin2-p005-ub1024-realistic-gate-repeat-v8/summary.json`,
+  `../data/gemma4-q8-gpu3-vdr4default-mtp-n3-nmin2-p0075-realistic-gate-v4-20260627T171157Z/summary.json`,
+  `../data/gemma4-q8-gpu2-vdr4default-mtp-n3-nmin2-p005-ub1024-realistic-gate-v4-20260627T171157Z/summary.json`,
+  `../data/gemma4-q8-gpu0-vdr4default-mtp-n3-nmin2-p005-ub1024-realistic-gate-repeat-v6/summary.json`,
+  `../data/gemma4-q8-gpu0-vdr4default-mtp-n3-nmin2-p005-ub1024-realistic-gate-repeat-v7/summary.json`,
+  `../data/localmaxxing-gemma4-26b-a4b-q8-b70-llamacpp-realistic-mtp-n3-nmin2-p005-ub1024-20260627.queue.json`,
+  `../data/localmaxxing-responses/gemma4-26b-a4b-q8-b70-llamacpp-realistic-mtp-n3-nmin2-p005-ub1024-20260627.submit.log`,
   and
-  `../data/localmaxxing-responses/gemma4-26b-a4b-q8-b70-llamacpp-mtp-n7-q8target-q40draft-q8reorder-vdr2-ub720-nmin3-pmin010-fresh-20260627.submit.log`
+  `../repro/gemma4-26b-a4b-q8-b70/realistic-suite-v1.json`
 - source patch snapshot:
   `../patches/gemma4-26b-a4b-q8-b70/20260626T2225-llamacpp-gemma4-current-record-stack.patch`
   with note

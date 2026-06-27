@@ -8,27 +8,47 @@ Current active optimization target:
 
 - Model: Gemma 4 26B A4B instruct, `UD-Q8_K_XL` target GGUF on one Intel
   Arc Pro B70 32GB per replica.
-- Goal: maximize **fresh-response** single-session decode while preserving the
-  Q8 target/verifier quality lane. Warmed/history or repeated-continuation
-  speedups are useful diagnostics only, not headline throughput.
-- Current valid fresh-response best: `176.21623213048554 tok/s` after TTFT on
-  the first no-cache benchmark row, `176.40259133127742 tok/s` supporting
-  repeated-request mean, `1536` canary repeats / `6144` rows passed,
-  LocalMaxxing `cmqwkedg303jeqr013z753j62`. This is the Q8 target/verifier
-  + Q4_0 MTP draft stack with `LLAMA_SYCL_MUL_MAT_ID_MULTI_TOKEN_FAST=1`,
-  `LLAMA_SYCL_MUL_MAT_ID_Q8_0_REORDER=1`, and reordered Q8_0 MMVQ compile
-  knob `GGML_SYCL_REORDER_Q8_0_VDR_MMVQ=2`, which makes the broad multi-token
-  MoE-ID verifier path viable for the UD-Q8_K_XL target. The current promoted
-  run used `UBATCH_SIZE=720` on GPU0. Headline remains row0 only with
-  `cached_tokens=0`.
+- Goal: maximize **realistic cold-response** single-session decode while
+  preserving the Q8 target/verifier quality lane. Synthetic/repetitive prompt
+  scores may guide optimization only; they are not headline throughput or
+  LocalMaxxing evidence.
+- Best strict realistic-suite result so far:
+  `87.61145306230438 tok/s` median generated-token throughput for tokens 1-100
+  after TTFT across the fixed cold prompt suite. Evidence:
+  `data/gemma4-q8-gpu0-vdr4default-mtp-n3-nmin2-p005-ub1024-realistic-gate-repeat-v8/summary.json`.
+  It uses llama.cpp `c926ad098`, UD-Q8_K_XL target/verifier, Q4_0 MTP draft,
+  default reordered-Q8 VDR4, `n_max=3`, `n_min=2`, `p_min=0.05`,
+  `UBATCH_SIZE=1024`, `cached_tokens=0` on every prompt, and
+  `realistic_final_gate.passed=true`.
+- Representative / submitted status:
+  this is the confirmed `n_max=3`, `n_min=2`, `p_min=0.05`,
+  `UBATCH_SIZE=1024` family. Four valid cold-suite runs measured
+  `84.82456994237617`, `83.83638918369195`, `84.52685942118447`, and
+  `87.61145306230438 tok/s`. The v8 row is the current policy-compliant Gemma
+  26B Q8 LocalMaxxing submission: `cmqwnl2ag03lgqr01ch5bxknq`.
+  The earlier `86.47445652599384 tok/s` `p_min=0.075` observation did not
+  repeat (`81.73306503450416` and `82.89800056264573 tok/s`) and is now
+  superseded.
+- Current valid no-spec control:
+  `74.29709476830473 tok/s` median on the same realistic suite. Evidence:
+  `data/gemma4-q8-gpu0-vdr4default-nospec-realistic-gate-v2-20260627T165335Z/summary.json`.
+  Treat it as the simplest target-side quality/control baseline for new work.
+- Current diagnostic best, not a real-world headline:
+  `176.21623213048554 tok/s` after TTFT on the first no-cache synthetic
+  filled-long benchmark row, `176.40259133127742 tok/s` supporting repeat mean,
+  `1536` canary repeats / `6144` rows passed, LocalMaxxing
+  `cmqwkedg303jeqr013z753j62`. Under the stricter final gate this is
+  synthetic/diagnostic only and should not be promoted further or resubmitted.
+  Its VDR2 setting won synthetic filled-long but lost on the realistic suite.
 - Result packet: `results/gemma4-26b-a4b-q8-b70/README.md`.
 - Reproduction: `results/gemma4-26b-a4b-q8-b70/reproduce.md`.
 - Validation rules: `results/gemma4-26b-a4b-q8-b70/validity-gates.md`.
 - Current research plan: `results/gemma4-26b-a4b-q8-b70/research-plan.md`.
 
-Do not promote the earlier `ngram-mod` `245-280 tok/s` rows as fresh-response
-records. They are warmed/history-accelerated artifacts from repeated benchmark
-continuations; row0 fresh no-spec performance was about `41 tok/s`.
+Do not promote the earlier `ngram-mod` `245-280 tok/s` rows, the synthetic
+filled-long `170+ tok/s` rows, or any repeated-prompt average as real-world
+throughput. They are diagnostic artifacts unless the fixed realistic prompt
+suite passes with `cached_tokens=0` on every prompt.
 
 ## Historical MiniMax M2.7
 

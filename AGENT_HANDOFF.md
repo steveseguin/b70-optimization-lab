@@ -13,24 +13,41 @@ Primary target:
 - Run one Q8 target/verifier replica per GPU where practical, using four GPUs
   for parallel research screens rather than TP4 unless explicitly testing a
   multi-GPU serving shape.
-- Current fresh-response one-B70 record is `176.21623213048554 tok/s` after
+- Best strict realistic-suite one-B70 result is
+  `87.61145306230438 tok/s` median generated-token throughput for tokens 1-100
+  after TTFT across the fixed cold prompt suite. Evidence:
+  `data/gemma4-q8-gpu0-vdr4default-mtp-n3-nmin2-p005-ub1024-realistic-gate-repeat-v8/summary.json`.
+  It uses llama.cpp `c926ad098`, UD-Q8_K_XL target/verifier, Q4_0 MTP draft,
+  default reordered-Q8 VDR4, `n_max=3`, `n_min=2`, `p_min=0.05`,
+  `UBATCH_SIZE=1024`, `cached_tokens=0` on every prompt, and
+  `realistic_final_gate.passed=true`.
+- Representative / submitted status: this is the confirmed strict-gate
+  `n_max=3`, `n_min=2`, `p_min=0.05`, `UBATCH_SIZE=1024` family. Runs measured
+  `84.82456994237617`, `83.83638918369195`, `84.52685942118447`, and
+  `87.61145306230438 tok/s`. The v8 family row was submitted under the
+  realistic-suite policy and approved by LocalMaxxing as
+  `cmqwnl2ag03lgqr01ch5bxknq`. The previous `86.47445652599384 tok/s`
+  `p_min=0.075` observation did not repeat and is now superseded.
+- Current valid no-spec control is `74.29709476830473 tok/s` median on the same
+  suite:
+  `data/gemma4-q8-gpu0-vdr4default-nospec-realistic-gate-v2-20260627T165335Z/summary.json`.
+  This is the clean target-side baseline for continued optimization.
+- Current synthetic diagnostic one-B70 best is `176.21623213048554 tok/s` after
   TTFT on row0 with `cached_tokens=0`, `1536` canary repeats / `6144` rows
-  passed, LocalMaxxing `cmqwkedg303jeqr013z753j62`. The winning path is the
-  Q8 target/verifier + Q4_0 MTP draft stack with
-  `LLAMA_SYCL_MUL_MAT_ID_MULTI_TOKEN_FAST=1`,
-  `LLAMA_SYCL_MUL_MAT_ID_Q8_0_REORDER=1`, and reordered Q8_0 MMVQ compile
-  knob `GGML_SYCL_REORDER_Q8_0_VDR_MMVQ=2`; the reorder path targets internal
-  Q8_0 MoE expert tensors for the multi-token verifier path. The current
-  promoted run uses `UBATCH_SIZE=720`, `MTP_N_MIN=3`, and `MTP_P_MIN=0.10`.
-  The public quantization remains UD-Q8_K_XL / `Q8_K_XL`, not a lower-quality
-  target.
+  passed, LocalMaxxing `cmqwkedg303jeqr013z753j62`. Under the stricter
+  2026-06-27 policy, this is diagnostic only. Its VDR2 setting does not
+  transfer to the fixed cold suite and must not be submitted or advertised as
+  real-world throughput.
 - Start from `results/gemma4-26b-a4b-q8-b70/README.md`,
   `results/gemma4-26b-a4b-q8-b70/reproduce.md`, and
   `results/gemma4-26b-a4b-q8-b70/validity-gates.md`.
-- Headline throughput must be fresh-response throughput. Do not use warmed
-  n-gram/history rows, repeated-output continuation learning, prefix/cache
-  reuse, context checkpoints, or any prior generated continuation as a record
-  claim. Report warmed/cached artifacts separately.
+- Headline throughput must pass the fixed realistic final gate: each prompt
+  once as a cold first response, `cached_tokens=0` every row, no prompt/KV
+  cache reuse, no context checkpoints, no response reuse, no n-gram/history
+  acceleration, and primary metric = median generated-token throughput for
+  tokens 1-100 after TTFT across the suite. Do not use warmed n-gram/history
+  rows, repeated-output continuation learning, prefix/cache reuse, context
+  checkpoints, or any prior generated continuation as a record claim.
 
 Historical / service targets:
 

@@ -4,9 +4,37 @@ Research snapshot: 2026-06-27. Goal: maximize valid single-session decode for
 one complete Q8/INT8-quality Gemma 4 26B A4B replica per B70, then run four
 replicas on four GPUs for parallel research and aggregate service capacity.
 
-## Current Fresh-Response Headline
+## Current Realistic Cold-Suite Frontier
 
-Current valid one-B70 headline is
+Best one-B70 Q8 strict result under the promotion gate:
+
+- result:
+  `data/gemma4-q8-gpu0-vdr4default-mtp-n3-nmin2-p005-ub1024-realistic-gate-repeat-v8/`;
+- primary metric: **87.61145306230438 tok/s** median generated-token
+  throughput for tokens 1-100 after TTFT across the fixed realistic suite;
+- p10 `77.54715049816033`, mean `86.63390357338118`, median full-512
+  after-TTFT `80.63973376215822`, median wall full-512
+  `77.8652343994267`, median TTFT `182.357 ms`;
+- config: llama.cpp `c926ad098`, UD-Q8_K_XL target/verifier, Q4_0 MTP draft,
+  default reordered-Q8 VDR4, `n_max=3`, `n_min=2`, `p_min=0.05`,
+  `UBATCH_SIZE=1024`, `--ctx-checkpoints 0`, no n-gram/history acceleration;
+- gate: fixed suite `gemma4-26b-a4b-q8-b70-realistic-v1`, each prompt sent
+  once, `cached_tokens=0` on every request,
+  `realistic_final_gate.passed=true`.
+
+This is the submitted policy-compliant `n_max=3`, `n_min=2`, `p_min=0.05`,
+`UBATCH_SIZE=1024` family, with valid cold-suite rows at
+`84.82456994237617`, `83.83638918369195`, `84.52685942118447`, and
+`87.61145306230438 tok/s`; approved ID `cmqwnl2ag03lgqr01ch5bxknq`.
+The older `86.47445652599384 tok/s` `p_min=0.075` row did not repeat
+(`81.73306503450416` and `82.89800056264573 tok/s`) and is now superseded.
+The older `100+`, `170+`, and `280+` rows remain useful diagnostics, but they
+are not representative real-world throughput unless revalidated by the fixed
+cold suite.
+
+## Historical Diagnostic Frontier Pending Realistic Gate
+
+Current best synthetic filled-long one-B70 diagnostic result is
 `data/gemma4-q8-gpu0-q8reorder-ub720-nmin3-pmin010-fullconfirm-20260627T144855Z/`:
 
 - target/verifier: `gemma-4-26B-A4B-it-UD-Q8_K_XL.gguf`;
@@ -33,14 +61,17 @@ Current valid one-B70 headline is
   `GGML_SYCL_DISABLE_GRAPH=0`;
 - validation: chat canary **1536 repeats / 6144 rows**, all benchmark rows
   `cached_tokens=0`;
-- fresh headline: **176.21623213048554 tok/s** after TTFT;
+- synthetic filled-long row0: **176.21623213048554 tok/s** after TTFT;
 - supporting repeated-request mean: `176.40259133127742 tok/s`;
-- LocalMaxxing: `cmqwkedg303jeqr013z753j62`;
-- note: this is the first validated fresh-response Gemma 26B Q8 result above
-  the `>150 tok/s` target. The target/verifier remains UD-Q8_K_XL; the Q8_0
-  reorder flag refers to internal GGML Q8_0 MoE expert tensors.
+- LocalMaxxing: `cmqwkedg303jeqr013z753j62` (submitted before the realistic
+  final-gate policy; classify as diagnostic until revalidated);
+- note: this is the first synthetic diagnostic Gemma 26B Q8 result above
+  the `>150 tok/s` target, but it is not a promoted real-world throughput claim
+  until the fixed realistic prompt suite passes. The target/verifier remains
+  UD-Q8_K_XL; the Q8_0 reorder flag refers to internal GGML Q8_0 MoE expert
+  tensors.
 
-The actual research target remains **>150 tok/s fresh-response**. The current
+The actual research target remains **>150 tok/s realistic cold-response**. The current
 llama.cpp direct-unroll MTP path no longer performs one assistant
 `llama_decode()` per draft token; it batches the assistant argmax-ID unroll in
 one draft decode. The remaining gap is dominated by target/verifier work
@@ -82,9 +113,9 @@ softmax into the existing down epilogue if implementing the next source patch.
 route-cache recipe on four GPUs with CTX `2048`, `4096`, `8192`, and `16384`
 at screen depth (`128/128` canary, 2 benchmark repeats). All rows had
 `cached_tokens=0`. The best screen was GPU2 / CTX `8192` at
-`103.89855970182825 tok/s` fresh row0 after TTFT. Full validation on the same
+`103.89855970182825 tok/s` synthetic row0 after TTFT. Full validation on the same
 GPU2/ctx8192 lane passed `1536/1536` canary and landed at
-`103.51547512013657 tok/s` fresh row0 after TTFT, enough to supersede the
+`103.51547512013657 tok/s` synthetic row0 after TTFT, enough to supersede the
 `103.30108468098005` route-cache micro-record but still small enough to treat
 as runtime/GPU variance cleanup rather than architectural progress. See
 `../../patches/gemma4-26b-a4b-q8-b70/20260626T1914-routecache-ctx-gpu-screen.md`.
@@ -111,10 +142,10 @@ support-only unless using the unique prompt mode.
 
 2026-06-27 UBATCH/threshold micro-record and profile: `UBATCH_SIZE=768` on
 GPU3 first passed `1536` canary repeats / `6144` rows and reached
-`104.07050714456982 tok/s` fresh row0 after TTFT, LocalMaxxing
+`104.07050714456982 tok/s` synthetic row0 after TTFT, LocalMaxxing
 `cmqvmjvzx02qvqr01qh9jikow`. A later GPU0 full validation with the same scalar
 stack plus `MTP_N_MIN=3` / `MTP_P_MIN=0.10` passed `6144/6144` canary rows and
-reached `104.22626983476746 tok/s` fresh row0, support mean
+reached `104.22626983476746 tok/s` synthetic row0, support mean
 `104.17418893412489`, LocalMaxxing `cmqvv3kop0309qr013ekr8apu`. This is still
 only a tiny variance-class headline, not a new mechanism. A short profiling
 diagnostic on
@@ -146,18 +177,18 @@ slower support row, so the structural speedup is marginal at best.
 `LLAMA_SYCL_MUL_MAT_ID_MULTI_TOKEN_FAST=1` viable for the UD-Q8_K_XL target's
 internal Q8_0 MoE expert tensors. Full validation
 `data/gemma4-q8-gpu0-mulmatid-fast-q8reorder-ub768-fullconfirm-20260627T142318Z/`
-passed `6144/6144` canary rows and reached `169.9489959621758 tok/s` fresh
-row0 (`cached_tokens=0`), support mean `169.5501066933547`. LocalMaxxing
+passed `6144/6144` canary rows and reached `169.9489959621758 tok/s`
+synthetic row0 (`cached_tokens=0`), support mean `169.5501066933547`. LocalMaxxing
 approved it as `cmqwh8du403gfqr01d6ut1ddo`. Follow-up full validation at
 `UBATCH_SIZE=704`
 `data/gemma4-q8-gpu1-q8reorder-ub704-nmin3-pmin010-fullconfirm-20260627T143126Z/`
-passed `6144/6144` canary rows and moved the current headline to
-`170.11205232778414 tok/s` fresh row0, support mean
+passed `6144/6144` canary rows and moved the pre-final-gate diagnostic high to
+`170.11205232778414 tok/s` synthetic row0, support mean
 `169.87578310923394`, LocalMaxxing `cmqwhkbzj03guqr01h00c8n04`. A later
 `UBATCH_SIZE=720` full confirmation
 `data/gemma4-q8-gpu0-q8reorder-ub720-nmin3-pmin010-fullconfirm-20260627T144855Z/`
-passed `6144/6144` rows and raised the record to
-`176.21623213048554 tok/s` fresh row0, support mean `176.40259133127742`,
+passed `6144/6144` rows and raised the pre-final-gate diagnostic high to
+`176.21623213048554 tok/s` synthetic row0, support mean `176.40259133127742`,
 LocalMaxxing `cmqwkedg303jeqr013z753j62`.
 
 2026-06-27 clean-repro negative sweep: after reconstructing a clean
@@ -169,7 +200,7 @@ after full confirmation (`n_min=2,p_min=0.05` full: `104.200129`, `384/384`).
 UBATCH/CTX/runtime screens produced only variance: `UBATCH=704` screened at
 `104.778837` but fully confirmed at `104.191834`; `UR_L0_USE_IMMEDIATE_COMMANDLISTS=0`
 screened at `104.386620` but fully confirmed at `102.440578`; unique-prompt
-fresh checks stayed around `100-101.5 tok/s`. Do not continue isolated
+unique-prompt diagnostic checks stayed around `100-101.5 tok/s`. Do not continue isolated
 `p_min`, `n_min`, UBATCH, CTX, thread, poll, VMM, graph-off, or immediate-list
 sweeps unless they are attached to a new source mechanism. See
 `../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260627T1059-clean-repro-threshold-q8hoist.md`.
@@ -199,7 +230,7 @@ The hot path is therefore the actual Q8 MMVQ body, not the missing selection of
 MMVQ. See
 `../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260627T1001-routeprofile-mmvq-confirmed.md`.
 A compile-time VDR=4 screen for the Q8 MMVQ body then passed canaries but
-collapsed to `44.21455725216031 tok/s` fresh row0 after TTFT when rerun with
+collapsed to `44.21455725216031 tok/s` synthetic row0 after TTFT when rerun with
 the correct record-lane MTP identity. Do not pursue global Q8 MMVQ VDR widening;
 the next source candidate should preserve the tuned `VDR=2` dot shape and
 restructure the Q8 multi-column body instead. See
@@ -207,7 +238,7 @@ restructure the Q8 multi-column body instead. See
 
 2026-06-27 source rebuild warning: subsequent Q8 multi-column body work exposed
 a reproducibility blocker. A rebuilt `q8hoist` binary with the new feature gate
-disabled still measured only `40.15528197170138 tok/s` fresh row0, and the
+disabled still measured only `40.15528197170138 tok/s` synthetic row0, and the
 feature-enabled run measured `43.152077041798634 tok/s`; both are far below the
 stale record binary. CMake identity matched the record build for the relevant
 SYCL/AOT flags, so the working hypothesis is source-patch stack drift rather
@@ -231,19 +262,19 @@ confidence score:
   `MTP_N_MIN=2`, `MTP_P_MIN=0.10`. Full run
   `data/gemma4-q8-gpu0-ub768-pmin010-fullrepeat-20260627T031448Z/summary.json`
   passed `6144/6144` canary rows but landed at only
-  `104.00197765543678 tok/s` fresh row0 -> valid loss.
+  `104.00197765543678 tok/s` synthetic row0 -> valid loss.
 - `data/gemma4-q8-gpu3-ub768-nmin3-pmin0136-screen-20260627T031002Z/summary.json`:
   `104.17822408660554 tok/s`, 64/64 canary rows, `n_min=3`, `p_min=0.136`.
   Full run
   `data/gemma4-q8-gpu3-ub768-nmin3-pmin0136-fullrepeat-20260627T034150Z/summary.json`
   passed `6144/6144` canary rows but landed at only
-  `103.98432370694714 tok/s` fresh row0 -> valid loss.
+  `103.98432370694714 tok/s` synthetic row0 -> valid loss.
 - `data/gemma4-q8-gpu3-u768-nmin3-pmin010-screen-20260627T032140Z/summary.json`:
   `104.12813019085074 tok/s`, 64/64 canary rows, `n_min=3`, `p_min=0.10`.
   Full validation
   `data/gemma4-q8-gpu0-ub768-nmin3-pmin010-fullrepeat-20260627T035307Z/summary.json`
   passed `6144/6144` canary rows and landed at
-  `104.22626983476746 tok/s` fresh row0 / `104.17418893412489` support mean,
+  `104.22626983476746 tok/s` synthetic row0 / `104.17418893412489` support mean,
   LocalMaxxing `cmqvv3kop0309qr013ekr8apu`. Valid micro-record, not a material
   step toward `>150 tok/s`.
 
@@ -283,7 +314,7 @@ target lane unless a new mechanism changes the verifier economics.
    `LLAMA_GEMMA4_MOE_FUSED_ROUTER_SELECTED_WEIGHTS=1`.~~
    Tested 2026-06-27 as
    `data/gemma4-q8-gpu1-routerselectedweights-screen-20260627T050319Z/`:
-   canary `64/64`, fresh row0 `101.52715106143687 tok/s`, below the
+   canary `64/64`, synthetic row0 `101.52715106143687 tok/s`, below the
    `104.22626983476746` record. Patch snapshot:
    `../../patches/gemma4-26b-a4b-q8-b70/20260627T0503-llamacpp-gemma4-router-selected-weights-negative-current-stack.patch`.
    See
@@ -298,7 +329,7 @@ target lane unless a new mechanism changes the verifier economics.
    Screened 2026-06-27 as
    `data/gemma4-q8-gpu2-gateup-singleton-direct-screen-20260627T052517Z/`:
    canary `64/64`, cached tokens `[0]`, output hash matched the promoted
-   record, but fresh row0 was `104.12278210887227 tok/s`, just below the
+   record, but synthetic row0 was `104.12278210887227 tok/s`, just below the
    `104.22626983476746 tok/s` record. Same-GPU flag-off control was slower
    (`102.16498485841758 tok/s`) and produced a different benchmark hash, so the
    path is not an obvious loss, but it is not a record breaker. Patch snapshot:
@@ -500,7 +531,7 @@ Current filled-long warmed/history-accelerated ngram artifact:
   ngram records `cmqqxx7bp01dbqo012d2qiiw6` (`280.04 tok/s`),
   `cmqqxjnif01d0qo01ix4oeixo` (`255.04 tok/s`) and
   `cmqqxbkzx01cxqo01j8p97627` (`245.98 tok/s`), but does **not** supersede any
-  fresh-response draft-MTP record. The current fresh-response record is
+  fresh-response draft-MTP record. The current pre-final-gate diagnostic is
   `cmqvalync02lhqr01h76rnti3` (`103.30108468098005 tok/s` first measured
   request; `103.06255061691155 tok/s` repeat mean);
 - decision: useful warmed/history artifact, not the current valid
@@ -633,7 +664,7 @@ Next queue:
   now complete. It validated chat-template quality but reached only
   `34.89 tok/s` with graph enabled; `fp8_per_tensor` improved to `40.31 tok/s`
   as a lower-precision diagnostic. Neither lane is competitive with the
-  current llama.cpp Q8-target fresh-response record (`103.983 tok/s` first
+  current llama.cpp Q8-target pre-final-gate diagnostic (`103.983 tok/s` first
   no-cache request; `104.096 tok/s` supporting repeat mean) from the Q4_0
   draft-MTP validation plus direct-unroll/q-only assistant-input patch,
   selected-softmax/weighted-sum MoE guards, verifier backend argmax IDs,
@@ -734,7 +765,7 @@ for each meaningful lane.
 
 ## Phase 4: MTP / Speculative Decode
 
-Status: **active; fresh-response headline is Q8-target draft-MTP `n=7` with
+Status: **active; pre-final-gate diagnostic headline was Q8-target draft-MTP `n=7` with
 Q4_0 MTP draft, fast argmax, direct argmax-ID unroll, q-only assistant
 attention inputs, verifier backend argmax IDs, deferred target `h_nextn`,
 selected-softmax/weighted-sum MoE guards, CPU cleanup, VMM off, batch/ubatch
@@ -776,28 +807,28 @@ low-80s, and `n=7, n-min=2` is the current frontier. Disabling draft backend
 sampling, draft threads/batch `32/32`, latest llama.cpp `c926ad098`,
 `--ctx-checkpoints 0`, source-level fast top-k, then CPU cleanup plus fast
 argmax advanced the Q8-draft record to `94.366 tok/s`; switching only the MTP
-draft to Q4_0 advanced the valid Q8-target fresh-response record to
+draft to Q4_0 advanced the valid Q8-target pre-final-gate diagnostic to
 `95.264 tok/s`; direct argmax-ID unroll plus q-only assistant attention inputs
-then advanced the current valid Q8-target fresh-response record to
+then advanced the current pre-final-gate Q8-target pre-final-gate diagnostic to
 **`96.822 tok/s`** first no-cache request after TTFT; a follow-up shape tune
 with `BATCH_SIZE=1024`, `UBATCH_SIZE=1024`, and `THREADS=8` advanced the
-valid Q8-target fresh-response record to **`98.491 tok/s`** first
+valid Q8-target pre-final-gate diagnostic to **`98.491 tok/s`** first
 no-cache request after TTFT; enabling SYCL graph (`GGML_SYCL_DISABLE_GRAPH=0`)
-then advanced the current valid Q8-target fresh-response record to
+then advanced the current pre-final-gate Q8-target pre-final-gate diagnostic to
 **`98.617 tok/s`** first no-cache request after TTFT (`97.956 tok/s`
 supporting repeat mean), 384/384 canary, LocalMaxxing
 `cmqs7uyqb00lnqr01u9dtv63r`. Verifier row-argmax IDs plus deferred target
-`h_nextn`, with `MTP_P_MIN=0.14`, then advanced the current valid Q8-target
-fresh-response record to **`101.428 tok/s`** first no-cache request after TTFT
+`h_nextn`, with `MTP_P_MIN=0.14`, then advanced the current pre-final-gate Q8-target
+pre-final-gate diagnostic to **`101.428 tok/s`** first no-cache request after TTFT
 (`100.769 tok/s` supporting repeat mean), 384/384 canary, LocalMaxxing
 `cmqsd2jpn00pwqr017fq21akz`. Restoring the safer verifier sampled-row argmax
 path with stricter shape assertions then advanced it to **`101.482 tok/s`**
 (`101.249 tok/s` supporting repeat mean), 1536/1536 canary, LocalMaxxing
 `cmqsf630x00r1qr01d1usfo2d`; adding `UR_L0_USE_IMMEDIATE_COMMANDLISTS=1`
-advanced the then-current valid record to **`101.602 tok/s`**
+advanced the then-current pre-final-gate diagnostic to **`101.602 tok/s`**
 (`100.835 tok/s` supporting repeat mean), 1536/1536 canary, LocalMaxxing
 `cmqshlz8j00s0qr01f7lr24oh`; adding selected-softmax/weighted-sum Gemma4 MoE
-source guards and retuning `MTP_P_MIN=0.136` advanced the current valid record
+source guards and retuning `MTP_P_MIN=0.136` advanced the current pre-final-gate diagnostic
 to **`103.299 tok/s`** (`102.193 tok/s` supporting repeat mean), 1536/1536
 canary, LocalMaxxing `cmqsylo2l011nqr011yydjvne`.
 

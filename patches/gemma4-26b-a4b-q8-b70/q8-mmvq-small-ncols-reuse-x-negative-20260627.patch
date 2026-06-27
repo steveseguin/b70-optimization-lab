@@ -1,0 +1,169 @@
+Patch snapshot: Q8_0/Q8_1 multi-column MMVQ x-block reuse (NEGATIVE)
+
+Date: 2026-06-27
+Source tree: /home/steve/src/llama.cpp-gemma-record-repro-c926
+Flag: LLAMA_SYCL_Q8_MMVQ_SMALL_NCOLS=1
+
+Outcome:
+- Built successfully.
+- Canaries passed on 64 repeats / 256 rows.
+- Paired screen was slower than control:
+  - flagged GPU1: 102.340539553 tok/s fresh row0
+  - control GPU2: 104.236784884 tok/s fresh row0
+- Output hash/format changed relative to control, so do not promote without deeper
+  investigation even aside from speed.
+
+This file preserves the tested source idea after the working source was reverted.
+It is intentionally a focused patch excerpt against the local Gemma stack, not an
+upstream-ready patch.
+
+diff --git a/ggml/src/ggml-sycl/mmvq.cpp b/ggml/src/ggml-sycl/mmvq.cpp
+--- a/ggml/src/ggml-sycl/mmvq.cpp
++++ b/ggml/src/ggml-sycl/mmvq.cpp
+@@
+ #include "common.hpp"
+ #include "quants.hpp"
+ #include "vecdotq.hpp"
+
++#include <cstdlib>
++
++static bool q8_mmvq_small_ncols_reuse_x_enabled() {
++    static const bool enabled = []() {
++        const char * env = std::getenv("LLAMA_SYCL_Q8_MMVQ_SMALL_NCOLS");
++        return env != nullptr && env[0] != '\0' && env[0] != '0';
++    }();
++    return enabled;
++}
++
+ template <typename reorder_vec_dot_q_sycl>
+ static void mul_mat_vec_q_reorder(const void * __restrict__ vx, const void * __restrict__ vy, float * __restrict__ dst,
+                                   const int ncols, const int nrows, const sycl::nd_item<3> & nd_item) {
+@@
+ template <int ncols_dst>
+ static void mul_mat_vec_q8_0_q8_1_sycl_ncols(
+         const void * vx, const void * vy, float * dst,
+         const int ncols, const int nrows,
+         const int stride_col_y, const int stride_col_dst,
+@@
+             });
+     });
+ }
+
++template <int ncols_dst>
++static void mul_mat_vec_q8_0_q8_1_reuse_x_ncols(
++        const void * __restrict__ vx,
++        const void * __restrict__ vy,
++        float * __restrict__ dst,
++        const int ncols,
++        const int nrows,
++        const int stride_col_y,
++        const int stride_col_dst,
++        const sycl::nd_item<3> & item_ct1) {
++
++    const int row = item_ct1.get_group(2) * item_ct1.get_local_range(1)
++                  + item_ct1.get_local_id(1);
++
++    if (row >= nrows) {
++        return;
++    }
++
++    const int blocks_per_row = ncols / QK8_0;
++    constexpr int blocks_per_warp =
++        (VDR_Q8_0_Q8_1_MMVQ * WARP_SIZE + QI8_0 - 1) / QI8_0;
++
++    float tmp[ncols_dst] = {0.0f};
++
++    const block_q8_0 * x = (const block_q8_0 *) vx;
++    const block_q8_1 * y = (const block_q8_1 *) vy;
++
++    const int lane = item_ct1.get_local_id(2);
++    for (int i = lane / (QI8_0 / VDR_Q8_0_Q8_1_MMVQ);
++         i < blocks_per_row;
++         i += blocks_per_warp) {
++
++        const int ibx = row * blocks_per_row + i;
++        const int iby = i;
++        const block_q8_0 * xb = &x[ibx];
++
++        for (size_t elem = 0; elem < QI8_0 / VDR_Q8_0_Q8_1_MMVQ;
++             elem += WARP_SIZE) {
++            const int iqs = elem + VDR_Q8_0_Q8_1_MMVQ *
++                (lane % (QI8_0 / VDR_Q8_0_Q8_1_MMVQ));
++
++            int v[VDR_Q8_0_Q8_1_MMVQ];
++#pragma unroll
++            for (int k = 0; k < VDR_Q8_0_Q8_1_MMVQ; ++k) {
++                v[k] = get_int_from_int8(xb->qs, iqs + k);
++            }
++
++#pragma unroll
++            for (int j = 0; j < ncols_dst; ++j) {
++                const block_q8_1 * yb = &y[j * stride_col_y + iby];
++                int u[VDR_Q8_0_Q8_1_MMVQ];
++#pragma unroll
++                for (int k = 0; k < VDR_Q8_0_Q8_1_MMVQ; ++k) {
++                    u[k] = get_int_from_int8_aligned(yb->qs, iqs + k);
++                }
++                tmp[j] += vec_dot_q8_0_q8_1_impl<VDR_Q8_0_Q8_1_MMVQ>(
++                    v, u, xb->d, yb->ds[0]);
++            }
++        }
++    }
++
++#pragma unroll
++    for (int j = 0; j < ncols_dst; ++j) {
++#pragma unroll
++        for (int mask = WARP_SIZE / 2; mask > 0; mask >>= 1) {
++            tmp[j] += dpct::permute_sub_group_by_xor(
++                item_ct1.get_sub_group(), tmp[j], mask);
++        }
++    }
++
++    if (lane == 0) {
++#pragma unroll
++        for (int j = 0; j < ncols_dst; ++j) {
++            dst[j * stride_col_dst + row] = tmp[j];
++        }
++    }
++}
++
++template <int ncols_dst>
++static void mul_mat_vec_q8_0_q8_1_sycl_ncols_reuse_x(
++        const void * vx, const void * vy, float * dst,
++        const int ncols, const int nrows,
++        const int stride_col_y, const int stride_col_dst,
++        dpct::queue_ptr stream) {
++    GGML_ASSERT(ncols % QK8_0 == 0);
++    const int block_num_y = (nrows + GGML_SYCL_MMV_Y - 1) / GGML_SYCL_MMV_Y;
++    const sycl::range<3> block_nums(1, 1, block_num_y);
++    const sycl::range<3> block_dims(1, GGML_SYCL_MMV_Y, WARP_SIZE);
++    stream->submit([&](sycl::handler & cgh) {
++        cgh.parallel_for(
++            sycl::nd_range<3>(block_nums * block_dims, block_dims),
++            [=](sycl::nd_item<3> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
++                mul_mat_vec_q8_0_q8_1_reuse_x_ncols<ncols_dst>(
++                    vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, item_ct1);
++            });
++    });
++}
++
+ static void mul_mat_vec_q8_0_q8_1_sycl_switch_ncols(
+         const void * vx, const void * vy, float * dst,
+         const int ncols, const int nrows, const int ncols_dst,
+         const int stride_col_y, const int stride_col_dst,
+         dpct::queue_ptr stream) {
++    if (q8_mmvq_small_ncols_reuse_x_enabled()) {
++        switch (ncols_dst) {
++            case 2: mul_mat_vec_q8_0_q8_1_sycl_ncols_reuse_x<2>(vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, stream); return;
++            case 3: mul_mat_vec_q8_0_q8_1_sycl_ncols_reuse_x<3>(vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, stream); return;
++            case 4: mul_mat_vec_q8_0_q8_1_sycl_ncols_reuse_x<4>(vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, stream); return;
++            case 5: mul_mat_vec_q8_0_q8_1_sycl_ncols_reuse_x<5>(vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, stream); return;
++            case 6: mul_mat_vec_q8_0_q8_1_sycl_ncols_reuse_x<6>(vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, stream); return;
++            case 7: mul_mat_vec_q8_0_q8_1_sycl_ncols_reuse_x<7>(vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, stream); return;
++            case 8: mul_mat_vec_q8_0_q8_1_sycl_ncols_reuse_x<8>(vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, stream); return;
++            default: break;
++        }
++    }
+     switch (ncols_dst) {
+         case 1: mul_mat_vec_q8_0_q8_1_sycl(vx, vy, dst, ncols, nrows, stream); break;
+         case 2: mul_mat_vec_q8_0_q8_1_sycl_ncols<2>(vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, stream); break;

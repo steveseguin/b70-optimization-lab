@@ -23,7 +23,7 @@
       "ttftMs": 934.1488729987759,
       "tokSOut": 94.36621149389549,
       "tokSTotal": 80.50542700854518,
-      "notes": "Fresh-response-valid Gemma 4 26B A4B Q8-class GGUF run on one Intel Arc Pro B70. Headline is the first measured p512/o512 row with cached_tokens=0, per fresh-response rule; later repeated rows are support only, not averaged into the headline. Validation: chat canary 384/384 pass, all benchmark rows cached_tokens=0. High n-gram/history-accelerated rows from this project are intentionally excluded from this claim. Run dir: data/gemma4-q8-gpu0-mtp-n7-cleanrebuild-control-full-fresh-20260624T032733Z . Experiment note: experiments/gemma4-26b-a4b-q8-b70/sweeps/20260624T0235-mtp-fused-unroll-feasibility.md . GitHub repo: https://github.com/steveseguin/b70-optimization-lab",
+      "notes": "Fresh-response-valid Gemma 4 26B A4B Q8-class GGUF run on one Intel Arc Pro B70. Headline is the first measured p512/o512 row with cached_tokens=0, per fresh-response rule; later repeated rows are support only, not averaged into the headline. Validation: chat canary 384/384 pass, all benchmark rows cached_tokens=0. High n-gram/history-accelerated rows from this project are intentionally excluded from this claim. Run dir: data/gemma4-q8-gpu0-mtp-n7-cleanrebuild-control-full-fresh-20260624T032733Z . Experiment note: experiments/gemma4-26b-a4b-q8-b70/sweeps/20260624T0235-mtp-fused-unroll-feasibility.md . GitHub repo: https://github.com/steveseguin/b70-optimization-lab\n\n2026-06-27 correction: diagnostic/pre-final-gate artifact only under the current policy. Do not submit, promote, or advertise this payload as realistic headline throughput unless replaced by a fixed realistic-suite run with each prompt once, cached_tokens=0 on every request, no warmed/reused history, and primaryMetricName=median_tok_s_1_100_after_ttft.",
       "engineFlags": {
         "commandSnippet": "ONEAPI_DEVICE_SELECTOR=level_zero:0 GGML_SYCL_DEVICE=0 GGML_SYCL_ENABLE_VMM=0 LLAMA_SERVER=/home/steve/src/llama.cpp-latest-gemma/build-sycl-b70-aot-bmg-g31/bin/llama-server MTP_DRAFT_FAST_ARGMAX=1 MTP_BACKEND_SAMPLING=0 MTP_N_MAX=7 MTP_N_MIN=2 MTP_P_MIN=0.12 MTP_DRAFT_DEVICE=SYCL0 MTP_DRAFT_THREADS=32 MTP_DRAFT_THREADS_BATCH=32 MTP_EXTRA_ARGS=\"--ctx-checkpoints 0\" CTX_SIZE=8192 BATCH_SIZE=512 UBATCH_SIZE=512 POLL=100 THREADS=16 CANARY_REPEATS=96 BENCH_REPEATS=8 PROMPT_TOKENS=512 MAX_TOKENS=512 BENCH_PROMPT_MODE=filled-long scripts/run-gemma4-26b-mtp-candidate.sh gemma4-q8-gpu0-mtp-n7-cleanrebuild-control-full-fresh",
         "tensorParallel": 1,
@@ -50,7 +50,16 @@
         "cachedTokensRow0": 0,
         "canaryRowsPassed": 384,
         "llamaCppCommit": "c926ad098",
-        "extraFlags": "AOT BMG-G31 SYCL build; VMM disabled; poll=100; ubatch=512; draft threads/batch=32; ctx-checkpoints=0; fast argmax draft selection; no backend sampling; reasoning off. Quantization file is Unsloth UD-Q8_K_XL GGUF; submitted quantization normalized to Q8_K_XL for API schema."
+        "extraFlags": "AOT BMG-G31 SYCL build; VMM disabled; poll=100; ubatch=512; draft threads/batch=32; ctx-checkpoints=0; fast argmax draft selection; no backend sampling; reasoning off. Quantization file is Unsloth UD-Q8_K_XL GGUF; submitted quantization normalized to Q8_K_XL for API schema.",
+        "freshResponseHeadlineValid": false,
+        "headlineUse": "diagnostic-pre-final-gate",
+        "localmaxxingSubmissionAllowedUnderCurrentPolicy": false,
+        "realisticSuiteGatePassed": false,
+        "primaryMetricName": "diagnostic_pre_final_gate_not_headline",
+        "realisticSuiteCachedTokensAllZero": false,
+        "realisticSuiteId": "",
+        "currentPolicyCorrectionDate": "2026-06-27",
+        "currentPolicyCorrection": "2026-06-27 correction: diagnostic/pre-final-gate artifact only under the current policy. Do not submit, promote, or advertise this payload as realistic headline throughput unless replaced by a fixed realistic-suite run with each prompt once, cached_tokens=0 on every request, no warmed/reused history, and primaryMetricName=median_tok_s_1_100_after_ttft."
       }
     }
   }

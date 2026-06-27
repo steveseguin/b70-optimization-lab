@@ -22,6 +22,9 @@ BENCH_REPEATS="${BENCH_REPEATS:-8}"
 PROMPT_TOKENS="${PROMPT_TOKENS:-512}"
 BENCH_PROMPT_MODE="${BENCH_PROMPT_MODE:-default}"
 MAX_TOKENS="${MAX_TOKENS:-512}"
+REALISTIC_GATE="${REALISTIC_GATE:-0}"
+REALISTIC_SUITE="${REALISTIC_SUITE:-$ROOT/repro/gemma4-26b-a4b-q8-b70/realistic-suite-v1.json}"
+REALISTIC_METRIC_TOKENS="${REALISTIC_METRIC_TOKENS:-100}"
 READINESS_TIMEOUT_S="${READINESS_TIMEOUT_S:-900}"
 STAMP="$(date -u +%Y%m%dT%H%M%SZ)"
 LABEL="${LABEL:-gemma4-26b-q8-llamacpp-gpu${GPU_INDEX}-ctx${CTX_SIZE}-${STAMP}}"
@@ -81,6 +84,8 @@ LLAMA_GEMMA4_MTP_QONLY_ATTN_INPUTS="${LLAMA_GEMMA4_MTP_QONLY_ATTN_INPUTS:-}" \
 LLAMA_GEMMA4_MOE_SELECTED_SOFTMAX="${LLAMA_GEMMA4_MOE_SELECTED_SOFTMAX:-}" \
 LLAMA_GEMMA4_MOE_SELECTED_SOFTMAX_FUSED="${LLAMA_GEMMA4_MOE_SELECTED_SOFTMAX_FUSED:-}" \
 LLAMA_GEMMA4_MOE_REUSE_ATTN_RMS="${LLAMA_GEMMA4_MOE_REUSE_ATTN_RMS:-}" \
+LLAMA_GEMMA4_FUSED_FINAL_POST_NORM_RESIDUAL="${LLAMA_GEMMA4_FUSED_FINAL_POST_NORM_RESIDUAL:-}" \
+LLAMA_GEMMA4_MOE_FUSED_BRANCH_POST_NORM_ADD="${LLAMA_GEMMA4_MOE_FUSED_BRANCH_POST_NORM_ADD:-}" \
 LLAMA_GEMMA4_MOE_ROUTER_POST_SCALE="${LLAMA_GEMMA4_MOE_ROUTER_POST_SCALE:-}" \
 LLAMA_GEMMA4_MOE_TOP_K="${LLAMA_GEMMA4_MOE_TOP_K:-}" \
 LLAMA_GEMMA4_MOE_SORTED_TOP_K="${LLAMA_GEMMA4_MOE_SORTED_TOP_K:-}" \
@@ -106,6 +111,9 @@ LLAMA_SYCL_MUL_MAT_ID_ROUTE_CACHE_INPLACE="${LLAMA_SYCL_MUL_MAT_ID_ROUTE_CACHE_I
 LLAMA_SYCL_MUL_MAT_ID_ROUTE_CACHE_DEVICE_MAP="${LLAMA_SYCL_MUL_MAT_ID_ROUTE_CACHE_DEVICE_MAP:-}" \
 LLAMA_SYCL_MUL_MAT_ID_ROUTE_TIMING="${LLAMA_SYCL_MUL_MAT_ID_ROUTE_TIMING:-}" \
 LLAMA_SYCL_MUL_MAT_ID_ROUTE_TIMING_EVERY="${LLAMA_SYCL_MUL_MAT_ID_ROUTE_TIMING_EVERY:-}" \
+LLAMA_SYCL_MUL_MAT_ID_Q8_0_REORDER="${LLAMA_SYCL_MUL_MAT_ID_Q8_0_REORDER:-}" \
+LLAMA_SYCL_F16_P021_SMALL_NCOLS="${LLAMA_SYCL_F16_P021_SMALL_NCOLS:-}" \
+LLAMA_SYCL_Q8_MMVQ_SMALL_NCOLS="${LLAMA_SYCL_Q8_MMVQ_SMALL_NCOLS:-}" \
 LLAMA_SPEC_VERIFY_GREEDY_ARGMAX="${LLAMA_SPEC_VERIFY_GREEDY_ARGMAX:-}" \
 LLAMA_SPEC_VERIFY_BACKEND_ARGMAX_IDS="${LLAMA_SPEC_VERIFY_BACKEND_ARGMAX_IDS:-}" \
 LLAMA_SPEC_VERIFY_FUSED_OUTPUT_ARGMAX="${LLAMA_SPEC_VERIFY_FUSED_OUTPUT_ARGMAX:-}" \
@@ -138,17 +146,35 @@ python3 scripts/gemma4-text-canary.py \
   --repeats "$CANARY_REPEATS" \
   --out "$RUN_DIR/chat-canary.json"
 
-python3 scripts/bench-openai-single-decode.py \
-  --base-url "$BASE_URL" \
-  --model "$MODEL_ALIAS" \
-  --api-mode chat \
-  --prompt-tokens "$PROMPT_TOKENS" \
-  --prompt-mode "$BENCH_PROMPT_MODE" \
-  --max-tokens "$MAX_TOKENS" \
-  --repeats "$BENCH_REPEATS" \
-  --out "$RUN_DIR/p${PROMPT_TOKENS}o${MAX_TOKENS}.json"
+bench_rc=0
+if [[ "$REALISTIC_GATE" == "1" || "$REALISTIC_GATE" == "true" ]]; then
+  set +e
+  python3 scripts/bench-openai-realistic-suite.py \
+    --base-url "$BASE_URL" \
+    --model "$MODEL_ALIAS" \
+    --api-mode chat \
+    --suite "$REALISTIC_SUITE" \
+    --max-tokens "$MAX_TOKENS" \
+    --metric-tokens "$REALISTIC_METRIC_TOKENS" \
+    --out "$RUN_DIR/realistic-suite.json"
+  bench_rc=$?
+  set -e
+else
+  set +e
+  python3 scripts/bench-openai-single-decode.py \
+    --base-url "$BASE_URL" \
+    --model "$MODEL_ALIAS" \
+    --api-mode chat \
+    --prompt-tokens "$PROMPT_TOKENS" \
+    --prompt-mode "$BENCH_PROMPT_MODE" \
+    --max-tokens "$MAX_TOKENS" \
+    --repeats "$BENCH_REPEATS" \
+    --out "$RUN_DIR/p${PROMPT_TOKENS}o${MAX_TOKENS}.json"
+  bench_rc=$?
+  set -e
+fi
 
-python3 - "$RUN_DIR" "$LABEL" "$SERVER_LOG" "$SUMMARY_OUT" "$MODEL" <<'PY'
+BENCH_RC="$bench_rc" python3 - "$RUN_DIR" "$LABEL" "$SERVER_LOG" "$SUMMARY_OUT" "$MODEL" <<'PY'
 import json
 import os
 import sys
@@ -160,7 +186,15 @@ server_log = sys.argv[3]
 summary_out = Path(sys.argv[4])
 model = Path(sys.argv[5])
 canary = json.loads((run_dir / "chat-canary.json").read_text())
-bench = json.loads(next(run_dir.glob("p*o*.json")).read_text())
+realistic_path = run_dir / "realistic-suite.json"
+if realistic_path.exists():
+    bench_path = realistic_path
+    bench = json.loads(realistic_path.read_text())
+    bench_kind = "realistic_final_gate"
+else:
+    bench_path = next(run_dir.glob("p*o*.json"))
+    bench = json.loads(bench_path.read_text())
+    bench_kind = "synthetic_diagnostic"
 
 server_env = {}
 try:
@@ -215,6 +249,9 @@ out = {
         "llama_tensor_split": env_or_log("LLAMA_TENSOR_SPLIT", "llama_tensor_split"),
         "llama_main_gpu": env_or_log("LLAMA_MAIN_GPU", "llama_main_gpu"),
         "extra_llama_args": os.environ.get("EXTRA_LLAMA_ARGS"),
+        "realistic_gate": os.environ.get("REALISTIC_GATE"),
+        "realistic_suite": os.environ.get("REALISTIC_SUITE"),
+        "realistic_metric_tokens": os.environ.get("REALISTIC_METRIC_TOKENS"),
         "llama_mtp_draft_top_k": env_or_log("LLAMA_MTP_DRAFT_TOP_K"),
         "llama_mtp_draft_logit_gap_min": env_or_log("LLAMA_MTP_DRAFT_LOGIT_GAP_MIN"),
         "llama_mtp_draft_fast_topk": env_or_log("LLAMA_MTP_DRAFT_FAST_TOPK"),
@@ -234,6 +271,8 @@ out = {
         "llama_gemma4_moe_selected_softmax": env_or_log("LLAMA_GEMMA4_MOE_SELECTED_SOFTMAX"),
         "llama_gemma4_moe_selected_softmax_fused": env_or_log("LLAMA_GEMMA4_MOE_SELECTED_SOFTMAX_FUSED"),
         "llama_gemma4_moe_reuse_attn_rms": env_or_log("LLAMA_GEMMA4_MOE_REUSE_ATTN_RMS"),
+        "llama_gemma4_fused_final_post_norm_residual": env_or_log("LLAMA_GEMMA4_FUSED_FINAL_POST_NORM_RESIDUAL"),
+        "llama_gemma4_moe_fused_branch_post_norm_add": env_or_log("LLAMA_GEMMA4_MOE_FUSED_BRANCH_POST_NORM_ADD"),
         "llama_gemma4_moe_router_post_scale": env_or_log("LLAMA_GEMMA4_MOE_ROUTER_POST_SCALE"),
         "llama_gemma4_moe_top_k": env_or_log("LLAMA_GEMMA4_MOE_TOP_K"),
         "llama_gemma4_moe_sorted_top_k": env_or_log("LLAMA_GEMMA4_MOE_SORTED_TOP_K"),
@@ -264,6 +303,9 @@ out = {
         "llama_sycl_mul_mat_id_route_cache_device_map": env_or_log("LLAMA_SYCL_MUL_MAT_ID_ROUTE_CACHE_DEVICE_MAP"),
         "llama_sycl_mul_mat_id_route_timing": env_or_log("LLAMA_SYCL_MUL_MAT_ID_ROUTE_TIMING"),
         "llama_sycl_mul_mat_id_route_timing_every": env_or_log("LLAMA_SYCL_MUL_MAT_ID_ROUTE_TIMING_EVERY"),
+        "llama_sycl_mul_mat_id_q8_0_reorder": env_or_log("LLAMA_SYCL_MUL_MAT_ID_Q8_0_REORDER"),
+        "llama_sycl_f16_p021_small_ncols": env_or_log("LLAMA_SYCL_F16_P021_SMALL_NCOLS"),
+        "llama_sycl_q8_mmvq_small_ncols": env_or_log("LLAMA_SYCL_Q8_MMVQ_SMALL_NCOLS"),
         "llama_spec_verify_greedy_argmax": env_or_log("LLAMA_SPEC_VERIFY_GREEDY_ARGMAX"),
         "llama_spec_verify_backend_argmax_ids": env_or_log("LLAMA_SPEC_VERIFY_BACKEND_ARGMAX_IDS"),
         "llama_spec_verify_fused_output_argmax": env_or_log("LLAMA_SPEC_VERIFY_FUSED_OUTPUT_ARGMAX"),
@@ -278,8 +320,12 @@ out = {
     },
     "canary_pass_all": canary["summary"]["pass_all"],
     "canary_rows_completed": canary["summary"]["rows_completed"],
+    "bench_rc": int(os.environ.get("BENCH_RC", "0")),
+    "bench_kind": bench_kind,
+    "bench_path": str(bench_path),
     "bench_summary": bench["summary"],
     "fresh_response_validity": bench.get("fresh_response_validity"),
+    "realistic_final_gate": bench.get("realistic_final_gate"),
     "bench_run_identity": bench["run_identity"],
 }
 summary_out.write_text(json.dumps(out, indent=2, sort_keys=True) + "\n")
@@ -287,3 +333,4 @@ print(json.dumps(out, indent=2, sort_keys=True))
 PY
 
 echo "[gemma4-baseline] summary=$SUMMARY_OUT"
+exit "$bench_rc"

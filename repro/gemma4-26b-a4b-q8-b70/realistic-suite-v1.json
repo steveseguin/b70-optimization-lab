@@ -1,0 +1,56 @@
+{
+  "suite_id": "gemma4-26b-a4b-q8-b70-realistic-v1",
+  "version": 1,
+  "description": "Fixed cold-response prompt suite for Gemma 4 26B A4B Q8 B70 promotion and LocalMaxxing submissions. Each prompt is sent exactly once. Synthetic/repeated prompts remain diagnostic only.",
+  "metric": "median generated-token throughput for tokens 1-100 after TTFT across prompts",
+  "prompts": [
+    {
+      "id": "incident-retrospective",
+      "prompt": "You are advising an infrastructure team after a service incident. Write a concise but complete incident retrospective for a production API outage caused by a bad cache invalidation rule. Include impact, timeline, contributing factors, detection gaps, remediation, prevention work, and owner handoff. Use practical language for engineers and managers. Aim for about 450-550 words."
+    },
+    {
+      "id": "code-review",
+      "prompt": "Review this Python change as a senior engineer. A worker now batches database writes every 250 ms, retries failures twice, and drops failed rows into a local JSONL file. Discuss correctness risks, observability, data-loss risks, concurrency issues, test cases, and whether the design should be accepted. Make the answer concrete and actionable, with enough detail for a pull request review."
+    },
+    {
+      "id": "customer-email",
+      "prompt": "Draft a customer-facing email explaining that a requested export feature is delayed by one week because the team found a data-integrity issue during validation. The tone should be accountable and calm. Include what happened, what is being done, what customers should expect next, and how support will handle urgent cases. Do not use marketing language."
+    },
+    {
+      "id": "sql-debugging",
+      "prompt": "A reporting query became slow after a schema migration. The query joins orders, customers, invoices, and refunds, filters by tenant_id and created_at, and groups by customer segment. Explain a debugging plan for PostgreSQL. Cover EXPLAIN ANALYZE, indexes, statistics, join order, row estimates, partial indexes, materialized views, and rollout safety."
+    },
+    {
+      "id": "release-plan",
+      "prompt": "Create a release plan for shipping a new authentication flow in a SaaS product. Include feature flags, staged rollout, migration steps, monitoring, rollback criteria, customer communication, security review, and post-release verification. Write it as an internal engineering plan, not as a sales document."
+    },
+    {
+      "id": "benchmark-analysis",
+      "prompt": "Analyze a benchmark result where a model server shows high tokens per second on repeated prompts but much lower speed on unique prompts. Explain plausible causes, how to separate valid fresh-response throughput from warmed or cached throughput, and what measurements should be recorded before publishing a result."
+    },
+    {
+      "id": "architecture-tradeoff",
+      "prompt": "Compare two deployment options for a local inference service: tensor parallel across four GPUs versus four independent one-GPU replicas behind a router. Discuss latency, throughput, PCIe traffic, memory pressure, failure isolation, scheduling, model-loading time, and when each option is the right choice."
+    },
+    {
+      "id": "bug-report-synthesis",
+      "prompt": "Synthesize a bug report from these symptoms: users sometimes receive a response intended for a previous request, logs show cache hits where cached_tokens should be zero, and the issue appears only under load. Write the suspected root causes, immediate mitigations, data to collect, and a minimal reproduction strategy."
+    },
+    {
+      "id": "technical-guide",
+      "prompt": "Write a short technical guide for adding a new benchmark to an existing optimization repo. Include where to put scripts, data, notes, patches, result summaries, how to name run directories, what to record for reproducibility, and how to decide whether a result is valid enough to promote."
+    },
+    {
+      "id": "risk-register",
+      "prompt": "Build a risk register for switching a production inference endpoint from one runtime to another. Include at least eight risks with severity, likelihood, detection method, mitigation, and rollback trigger. Focus on real operational and quality risks, not generic project management filler."
+    },
+    {
+      "id": "performance-hypotheses",
+      "prompt": "Given a GPU inference kernel profile where MoE gate/up/down projections dominate decode time, propose performance hypotheses to test. Cover kernel fusion, quantized matmul layout, route caching, graph capture, batching shape, memory bandwidth, synchronization overhead, and validation traps."
+    },
+    {
+      "id": "decision-memo",
+      "prompt": "Write a decision memo about whether to keep optimizing the current model or switch to a different model family. Include current evidence, opportunity cost, criteria for stopping, expected next experiments, quality constraints, and what artifacts should be preserved for future work."
+    }
+  ]
+}

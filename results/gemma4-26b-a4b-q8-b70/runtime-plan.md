@@ -52,11 +52,12 @@ candidate if llama.cpp Q8 is too slow or lacks functionality.
 Current status: **screened and not competitive for decode speed in prior
 smokes**. The clean 2026-06-23 comparison reached `34.89 tok/s` with INT8
 per-channel + PIECEWISE graph and `40.31 tok/s` with lower-precision
-`fp8_per_tensor`; both are far below the llama.cpp Q8 draft-MTP fresh-response
-record (`103.299 tok/s` first no-cache request, `102.193 tok/s` supporting
-repeat mean) from the Q8 target plus Q4_0 MTP draft lane. Keep this lane as a
-compatibility/reference path unless a true all-linear INT8 checkpoint/kernel
-path appears.
+`fp8_per_tensor`; both are far below the llama.cpp Q8 realistic-suite control
+and frontier (`74.297 tok/s` no-spec, `86.474 tok/s` best cold-suite observed
+high, with a representative `83-85 tok/s` MTP family). The older `103.299 tok/s`
+row was a synthetic pre-final-gate diagnostic and is no longer a publishable
+comparison target. Keep this lane as a compatibility/reference path unless a
+true all-linear INT8 checkpoint/kernel path appears.
 
 Use **four independent DP=1 servers**, not one `--data-parallel-size 4` process:
 there is a public vLLM Gemma 4 MoE DP issue whose workaround is separate

@@ -6,6 +6,13 @@ This page separates public leaderboard context from this lane's promoted result
 rules. The goal is a valid Q8 / INT8-or-better result on Intel Arc Pro B70, not
 a speed-only lower-precision entry.
 
+As of 2026-06-27, synthetic/repeated/filled-long benchmark scores are diagnostic
+only. Do not submit or advertise them as real-world throughput. Promotion and
+LocalMaxxing submission require the fixed realistic prompt suite, one cold
+response per prompt, `cached_tokens=0` every row, no prompt/KV/context/response
+reuse or n-gram/history acceleration, verified speculation only, and primary
+metric `median_tok_s_1_100_after_ttft`.
+
 ## Public Target Context
 
 Current public pages are useful as a speed target, but not as direct
@@ -24,6 +31,70 @@ Interpretation for this lane:
   baseline.
 - Do not compare a Q8/INT8 result against MXFP4/Q4 entries as if the quality
   lane were identical.
+
+Current policy-compliant LocalMaxxing submission:
+
+- `gemma4-q8-gpu0-vdr4default-mtp-n3-nmin2-p005-ub1024-realistic-gate-repeat-v8`,
+  llama.cpp `c926ad098` on one B70, UD-Q8_K_XL target/verifier with Q4_0 MTP
+  draft, f16 KV, 8K context, default reordered-Q8 VDR4, `n_max=3`,
+  `n_min=2`, `p_min=0.05`, `UBATCH_SIZE=1024`;
+- fixed suite:
+  `repro/gemma4-26b-a4b-q8-b70/realistic-suite-v1.json`, each prompt once,
+  `cached_tokens=0` every row;
+- primary metric: **87.61145306230438 tok/s** median generated-token throughput
+  for tokens 1-100 after TTFT;
+- p10 `77.547`, mean `86.634`, median TTFT `182.4 ms`, median full-512
+  after-TTFT `80.640`, median wall full-512 `77.865`;
+- confirmations in the same family:
+  `84.82456994237617 tok/s`
+  (`data/gemma4-q8-gpu2-vdr4default-mtp-n3-nmin2-p005-ub1024-realistic-gate-v4-20260627T171157Z/summary.json`),
+  `83.83638918369195 tok/s`
+  (`data/gemma4-q8-gpu0-vdr4default-mtp-n3-nmin2-p005-ub1024-realistic-gate-repeat-v6/summary.json`)
+  and `84.52685942118447 tok/s`
+  (`data/gemma4-q8-gpu0-vdr4default-mtp-n3-nmin2-p005-ub1024-realistic-gate-repeat-v7/summary.json`);
+- LocalMaxxing: `cmqwnl2ag03lgqr01ch5bxknq`;
+- queue:
+  `data/localmaxxing-gemma4-26b-a4b-q8-b70-llamacpp-realistic-mtp-n3-nmin2-p005-ub1024-v8-20260627.queue.json`;
+- response:
+  `data/localmaxxing-responses/gemma4-26b-a4b-q8-b70-llamacpp-realistic-mtp-n3-nmin2-p005-ub1024-v8-20260627.submit.log`.
+
+Previous realistic-suite local Q8 observation, now superseded:
+
+- `gemma4-q8-gpu3-vdr4default-mtp-n3-nmin2-p0075-realistic-gate-v4-20260627T171157Z`,
+  llama.cpp `c926ad098` on one B70, UD-Q8_K_XL target/verifier with Q4_0 MTP
+  draft, f16 KV, 8K context, default reordered-Q8 VDR4, `n_max=3`,
+  `n_min=2`, `p_min=0.075`, `UBATCH_SIZE=720`;
+- fixed suite:
+  `repro/gemma4-26b-a4b-q8-b70/realistic-suite-v1.json`, each prompt once,
+  `cached_tokens=0` every row;
+- `realistic_final_gate.passed=true`;
+- primary metric: **86.47445652599384 tok/s** median generated-token throughput
+  for tokens 1-100 after TTFT;
+- p10 `77.1001287639242`, mean `84.8660983117653`, median TTFT
+  `182.121 ms`, median full-512 after-TTFT `82.05238162525896`, median wall
+  full-512 `78.41884310237452`;
+- summary:
+  `data/gemma4-q8-gpu3-vdr4default-mtp-n3-nmin2-p0075-realistic-gate-v4-20260627T171157Z/summary.json`;
+- server log:
+  `/mnt/fast-ai/bench-results/gemma4-26b-a4b-q8/servers/gemma4-q8-gpu3-vdr4default-mtp-n3-nmin2-p0075-realistic-gate-v4-20260627T171157Z.server.log`;
+- status: previously the best valid cold-suite observation, but not
+  representative enough for LocalMaxxing promotion and now superseded by the
+  v8 `n3/p0.05/UB1024` strict result. The first exact repeat on GPU0 measured
+  `81.73306503450416 tok/s`, and a same-GPU repeat measured
+  `82.89800056264573 tok/s`.
+
+Current realistic-suite no-spec control:
+
+- `gemma4-q8-gpu0-vdr4default-nospec-realistic-gate-v2-20260627T165335Z`;
+- same target model/runtime, no speculation, `--ctx-checkpoints 0`;
+- primary metric: **74.29709476830473 tok/s** median;
+- p10 `74.17460514894407`, mean `74.26752349723967`, median full-512
+  after-TTFT `72.21419554247626`, median wall full-512 `70.40573079055511`;
+- summary:
+  `data/gemma4-q8-gpu0-vdr4default-nospec-realistic-gate-v2-20260627T165335Z/summary.json`;
+- interpretation: this is the clean target-side baseline for future work.
+  Draft-MTP now has a clear median advantage on the fixed suite, while no-spec
+  remains the simplest quality/control reference.
 
 Current local Q8 baseline:
 
@@ -106,9 +177,9 @@ Current filled-long draftless ngram-mod warmed/history artifact:
   `cmqqxx7bp01dbqo012d2qiiw6` (`280.04 tok/s`),
   `cmqqxjnif01d0qo01ix4oeixo` (`255.04 tok/s`) and
   `cmqqxbkzx01cxqo01j8p97627` (`245.98 tok/s`). It does **not** supersede the
-  current fresh-response draft-MTP record `cmqwkedg303jeqr013z753j62`
-  (`176.216 tok/s` first no-cache request; `176.403 tok/s` supporting repeat
-  mean; Q8 target/verifier with Q4_0 MTP draft only);
+  historical synthetic diagnostic draft-MTP frontier `cmqwkedg303jeqr013z753j62`
+  (`176.216 tok/s` first no-cache synthetic filled-long row; `176.403 tok/s`
+  supporting repeat mean; Q8 target/verifier with Q4_0 MTP draft only);
 - queue:
   `data/localmaxxing-gemma4-26b-a4b-q8-b70-ngrammod-20-32-64-poll100-filledlong512-20260623.queue.json`;
 - response:
@@ -124,7 +195,7 @@ Current filled-long draftless ngram-mod warmed/history artifact:
   and
   `data/localmaxxing-responses/localmaxxing-openapi-benchmark-methods-20260623.json`.
 
-Current filled-long draft-MTP fresh-response Q8-target best:
+Historical filled-long draft-MTP Q8-target diagnostic best:
 
 - `gemma4-q8-gpu0-q8reorder-vdr2-ub720-nmin3-pmin010-fullconfirm-20260627T155347Z`;
 - llama.cpp SYCL on one B70, UD-Q8_K_XL main GGUF plus
@@ -138,19 +209,19 @@ Current filled-long draft-MTP fresh-response Q8-target best:
 - actual LocalMaxxing packet shape: `588` prompt tokens and `512` output
   tokens (`BENCH_PROMPT_MODE=filled-long`);
 - chat canary: **1536 repeats / 6144 case rows** passed;
-- fresh-response headline: first measured no-cache request after TTFT
+- synthetic filled-long row0: first measured no-cache request after TTFT
   `176.21623213048554 tok/s`; supporting repeated-request mean
   `176.40259133127742 tok/s`; first-row wall `139.3169544024847 tok/s`;
   all rows report `usage.prompt_tokens_details.cached_tokens=0`;
-- fresh-response status: submitted to LocalMaxxing and approved as
-  `cmqwkedg303jeqr013z753j62`; this is the current validated fresh-response Q8
-  result above `>150 tok/s`;
+- status: submitted to LocalMaxxing and approved as `cmqwkedg303jeqr013z753j62`
+  before the realistic final-gate policy; classify as diagnostic until the
+  fixed suite passes. It is not a promoted real-world `>150 tok/s` claim.
 - queue:
   `data/localmaxxing-gemma4-26b-a4b-q8-b70-llamacpp-mtp-n7-q8target-q40draft-q8reorder-vdr2-ub720-nmin3-pmin010-fresh-20260627.queue.json`;
 - response:
   `data/localmaxxing-responses/gemma4-26b-a4b-q8-b70-llamacpp-mtp-n7-q8target-q40draft-q8reorder-vdr2-ub720-nmin3-pmin010-fresh-20260627.submit.log`.
 
-Superseded Q8 MoE-ID reorder fresh-response record:
+Superseded Q8 MoE-ID reorder pre-final-gate diagnostic:
 
 - `gemma4-q8-gpu0-q8reorder-ub720-nmin3-pmin010-fullconfirm-20260627T144855Z`;
 - llama.cpp SYCL on one B70, UD-Q8_K_XL main GGUF plus
@@ -163,11 +234,11 @@ Superseded Q8 MoE-ID reorder fresh-response record:
 - actual LocalMaxxing packet shape: `588` prompt tokens and `512` output
   tokens (`BENCH_PROMPT_MODE=filled-long`);
 - chat canary: **1536 repeats / 6144 case rows** passed;
-- fresh-response headline: first measured no-cache request after TTFT
+- diagnostic pre-final-gate row0 metric: first measured no-cache request after TTFT
   `171.1076295077342 tok/s`; supporting repeated-request mean
   `170.12922191012277 tok/s`; first-row wall `135.66648146097913 tok/s`;
   all rows report `usage.prompt_tokens_details.cached_tokens=0`;
-- fresh-response status: submitted to LocalMaxxing and approved as
+- diagnostic pre-final-gate status: submitted to LocalMaxxing and approved as
   `cmqwi45d803gyqr01td3vf9ka`; superseded by
   `cmqwkedg303jeqr013z753j62` (`176.21623213048554 tok/s`);
 - queue:
@@ -175,20 +246,20 @@ Superseded Q8 MoE-ID reorder fresh-response record:
 - response:
   `data/localmaxxing-responses/gemma4-26b-a4b-q8-b70-llamacpp-mtp-n7-q8target-q40draft-q8reorder-ub720-nmin3-pmin010-fresh-20260627.submit.log`.
 
-Superseded Q8 MoE-ID reorder fresh-response record:
+Superseded Q8 MoE-ID reorder pre-final-gate diagnostic:
 
 - `gemma4-q8-gpu1-q8reorder-ub704-nmin3-pmin010-fullconfirm-20260627T143126Z`;
-- `170.11205232778414 tok/s` first fresh / `169.87578310923394 tok/s`
+- `170.11205232778414 tok/s` first synthetic / `169.87578310923394 tok/s`
   support mean, LocalMaxxing `cmqwhkbzj03guqr01h00c8n04`.
 
-Earlier superseded Q8 MoE-ID reorder fresh-response record:
+Earlier superseded Q8 MoE-ID reorder pre-final-gate diagnostic:
 
 - `gemma4-q8-gpu0-mulmatid-fast-q8reorder-ub768-fullconfirm-20260627T142318Z`;
-- `169.9489959621758 tok/s` first fresh / `169.5501066933547 tok/s`
+- `169.9489959621758 tok/s` first synthetic / `169.5501066933547 tok/s`
   support mean, LocalMaxxing `cmqwh8du403gfqr01d6ut1ddo`.
 
-Superseded `UBATCH_SIZE=768`, `n_min=3`, `p_min=0.10` fresh-response
-Q8-target best:
+Superseded `UBATCH_SIZE=768`, `n_min=3`, `p_min=0.10` pre-final-gate
+Q8-target diagnostic:
 
 - `gemma4-q8-gpu0-ub768-nmin3-pmin010-fullrepeat-20260627T035307Z`;
 - llama.cpp SYCL on one B70, UD-Q8_K_XL main GGUF plus
@@ -199,11 +270,11 @@ Q8-target best:
 - actual LocalMaxxing packet shape: `588` prompt tokens and `512` output
   tokens (`BENCH_PROMPT_MODE=filled-long`);
 - chat canary: **1536 repeats / 6144 case rows** passed;
-- fresh-response headline: first measured no-cache request after TTFT
+- diagnostic pre-final-gate row0 metric: first measured no-cache request after TTFT
   `104.22626983476746 tok/s`; supporting repeated-request mean
   `104.17418893412489 tok/s`; first-row wall `90.7413762430611 tok/s`;
   all rows report `usage.prompt_tokens_details.cached_tokens=0`;
-- fresh-response status: submitted to LocalMaxxing and approved as
+- diagnostic pre-final-gate status: submitted to LocalMaxxing and approved as
   `cmqvv3kop0309qr013ekr8apu`; this is a small variance-class micro-record
   over `cmqvmjvzx02qvqr01qh9jikow` (`104.07050714456982 tok/s`). The support
   mean also improves, but do not treat it as material progress toward
@@ -213,7 +284,7 @@ Q8-target best:
 - response:
   `data/localmaxxing-responses/gemma4-26b-a4b-q8-b70-llamacpp-mtp-n7-q8target-q40draft-routecache-mtpfusedoutargmax-selfusedweights-ub768-nmin3-pmin010-fresh-20260627.submit.log`.
 
-Superseded `UBATCH_SIZE=768` draft-MTP fresh-response Q8-target best:
+Superseded `UBATCH_SIZE=768` draft-MTP pre-final-gate Q8-target best:
 
 - `gemma4-q8-gpu3-b1024u768-fullrepeat-20260626T235649Z`;
 - first measured no-cache request after TTFT `104.07050714456982 tok/s`;
@@ -224,7 +295,7 @@ Superseded `UBATCH_SIZE=768` draft-MTP fresh-response Q8-target best:
 - response:
   `data/localmaxxing-responses/gemma4-26b-a4b-q8-b70-llamacpp-mtp-n7-q8target-q40draft-routecache-mtpfusedoutargmax-selfusedweights-ub768-fresh-20260627.submit.log`.
 
-Superseded same-stack filled-long draft-MTP fresh-response Q8-target best:
+Superseded same-stack filled-long draft-MTP pre-final-gate Q8-target best:
 
 - `gemma4-q8-gpu0-currentrecord-control-fullrepeat-20260626T230510Z`;
 - llama.cpp SYCL on one B70, UD-Q8_K_XL main GGUF plus
@@ -235,11 +306,11 @@ Superseded same-stack filled-long draft-MTP fresh-response Q8-target best:
 - actual LocalMaxxing packet shape: `588` prompt tokens and `512` output
   tokens (`BENCH_PROMPT_MODE=filled-long`);
 - chat canary **1536/1536** pass;
-- fresh-response headline: first measured no-cache request after TTFT
+- diagnostic pre-final-gate row0 metric: first measured no-cache request after TTFT
   `103.9826628154082 tok/s`; supporting repeated-request mean
   `104.09604904731648 tok/s`; first-row wall `90.47935762548245 tok/s`;
   all rows report `usage.prompt_tokens_details.cached_tokens=0`;
-- fresh-response status: submitted to LocalMaxxing and approved as
+- diagnostic pre-final-gate status: submitted to LocalMaxxing and approved as
   `cmqvjupek02pgqr01d46algvg`; this is a variance-class micro-record over
   `cmqviful602p0qr01vp27jw5i` (`103.95374341972274 tok/s`) and not material
   progress toward `>150 tok/s`; superseded by
@@ -250,7 +321,7 @@ Superseded same-stack filled-long draft-MTP fresh-response Q8-target best:
 - response:
   `data/localmaxxing-responses/gemma4-26b-a4b-q8-b70-llamacpp-mtp-n7-q8target-q40draft-routecache-repeat-fresh-20260626.submit.log`.
 
-Superseded same-stack filled-long draft-MTP fresh-response Q8-target best:
+Superseded same-stack filled-long draft-MTP pre-final-gate Q8-target best:
 
 - `gemma4-q8-gpu2-routecache-mtpfusedoutargmax-selfusedweights-full-20260626T222525Z`;
 - llama.cpp SYCL on one B70, UD-Q8_K_XL main GGUF plus
@@ -263,11 +334,11 @@ Superseded same-stack filled-long draft-MTP fresh-response Q8-target best:
 - actual LocalMaxxing packet shape: `588` prompt tokens and `512` output
   tokens (`BENCH_PROMPT_MODE=filled-long`);
 - chat canary **1536/1536** pass;
-- fresh-response headline: first measured no-cache request after TTFT
+- diagnostic pre-final-gate row0 metric: first measured no-cache request after TTFT
   `103.95374341972274 tok/s`; supporting repeated-request mean
   `104.13506066488091 tok/s`; first-row wall `90.68621473793526 tok/s`;
   all rows report `usage.prompt_tokens_details.cached_tokens=0`;
-- fresh-response status: submitted to LocalMaxxing and approved as
+- diagnostic pre-final-gate status: submitted to LocalMaxxing and approved as
   `cmqviful602p0qr01vp27jw5i`; this is a small micro-record over
   `cmqvbq8tf02m1qr010dom0vu1` (`103.51547512013657 tok/s`) and not material
   progress toward `>150 tok/s`; superseded by `cmqvjupek02pgqr01d46algvg`
@@ -279,13 +350,13 @@ Superseded same-stack filled-long draft-MTP fresh-response Q8-target best:
 - response:
   `data/localmaxxing-responses/gemma4-26b-a4b-q8-b70-llamacpp-mtp-n7-q8target-q40draft-routecache-mtpfusedoutargmax-selfusedweights-fresh-20260626.submit.log`.
 
-Superseded filled-long draft-MTP route-cache fresh-response Q8-target best:
+Superseded filled-long draft-MTP route-cache pre-final-gate Q8-target best:
 
 - `gemma4-q8-gpu2-routecache-ctx8192-full-20260626T191746Z`;
 - llama.cpp SYCL on one B70, UD-Q8_K_XL main GGUF plus
   `gemma-4-26B-A4B-it-Q4_0-MTP.gguf` draft GGUF;
 - validated after a four-GPU CTX screen on GPU2/ctx8192;
-- fresh-response headline: first measured no-cache request after TTFT
+- diagnostic pre-final-gate row0 metric: first measured no-cache request after TTFT
   `103.51547512013657 tok/s`; supporting repeated-request mean
   `103.19340167720759 tok/s`; first-row wall `90.22004912439446 tok/s`;
   all rows report `usage.prompt_tokens_details.cached_tokens=0`;
@@ -300,7 +371,7 @@ Superseded filled-long draft-MTP route-cache fresh-response Q8-target best:
 - response:
   `data/localmaxxing-responses/gemma4-26b-a4b-q8-b70-llamacpp-mtp-n7-q8target-q40draft-routecache-ctx8192-gpu2-pmin0136-fresh-20260626.submit.log`.
 
-Earlier superseded filled-long draft-MTP route-cache fresh-response Q8-target best:
+Earlier superseded filled-long draft-MTP route-cache pre-final-gate Q8-target best:
 
 - `gemma4-q8-gpu0-mulmatid-routecache-full-20260626T184617Z`;
 - llama.cpp SYCL on one B70, UD-Q8_K_XL main GGUF plus
@@ -324,11 +395,11 @@ Earlier superseded filled-long draft-MTP route-cache fresh-response Q8-target be
 - actual LocalMaxxing packet shape: `588` prompt tokens and `512` output
   tokens (`BENCH_PROMPT_MODE=filled-long`);
 - chat canary **1536/1536** pass;
-- fresh-response headline: first measured no-cache request after TTFT
+- diagnostic pre-final-gate row0 metric: first measured no-cache request after TTFT
   `103.30108468098005 tok/s`; supporting repeated-request mean
   `103.06255061691155 tok/s`; first-row wall `89.97733776184405 tok/s`;
   all rows report `usage.prompt_tokens_details.cached_tokens=0`;
-- fresh-response status: submitted to LocalMaxxing and approved as
+- diagnostic pre-final-gate status: submitted to LocalMaxxing and approved as
   `cmqvalync02lhqr01h76rnti3`; this was a micro-record over
   `cmqsylo2l011nqr011yydjvne` (`103.2992004295621 tok/s`) and supersedes
   `cmqshlz8j00s0qr01f7lr24oh`, `cmqsf630x00r1qr01d1usfo2d`,
@@ -346,19 +417,19 @@ Earlier superseded filled-long draft-MTP route-cache fresh-response Q8-target be
 - response:
   `data/localmaxxing-responses/gemma4-26b-a4b-q8-b70-llamacpp-mtp-n7-q8target-q40draft-routecache-pmin0136-fresh-20260626.submit.log`.
 
-Previous material filled-long draft-MTP fresh-response Q8-target best:
+Previous material filled-long draft-MTP pre-final-gate Q8-target best:
 
 - `gemma4-q8-gpu0-selectedsoftmax-weightedsum-pmin0136-full-20260625T031510Z`,
   repeated by
   `gemma4-q8-gpu0-selectedsoftmax-weightedsum-pmin0136-full-repeat-20260625T032710Z`;
 - same Q8 target / Q4_0 MTP draft recipe, without the one-shot route cache;
-- fresh-response headline: `103.2992004295621 tok/s`; supporting mean
+- diagnostic pre-final-gate row0 metric: `103.2992004295621 tok/s`; supporting mean
   `102.19335537277364 tok/s`; first-row wall `89.84890823527608 tok/s`;
 - LocalMaxxing `cmqsylo2l011nqr011yydjvne`;
 - keep this as the material baseline because the current route-cache record is
   only `+0.001884 tok/s`.
 
-Superseded filled-long draft-MTP fresh-response Q8-target record:
+Superseded filled-long draft-MTP pre-final-gate Q8-target record:
 
 - `gemma4-q8-gpu1-rowargmax-safer-immediatecl1-full-20260624T193222Z`,
   llama.cpp SYCL on one B70,
@@ -379,15 +450,15 @@ Superseded filled-long draft-MTP fresh-response Q8-target record:
 - actual LocalMaxxing packet shape: `588` prompt tokens and `512` output
   tokens (`BENCH_PROMPT_MODE=filled-long`);
 - chat canary **1536/1536** pass;
-- fresh-response headline: first measured no-cache request after TTFT
+- diagnostic pre-final-gate row0 metric: first measured no-cache request after TTFT
   `101.60238982389097 tok/s`; supporting repeated-request mean
   `100.83458420322299 tok/s`; first-row wall `88.50781195831634 tok/s`;
   all rows report `usage.prompt_tokens_details.cached_tokens=0`;
-- fresh-response status: submitted to LocalMaxxing and approved as
+- diagnostic pre-final-gate status: submitted to LocalMaxxing and approved as
   `cmqshlz8j00s0qr01f7lr24oh`; supersedes the safer row-argmax/defer-H
   record `cmqsf630x00r1qr01d1usfo2d`, earlier row-argmax/defer-H
   record `cmqsd2jpn00pwqr017fq21akz`, approved direct-unroll/q-only
-  batch/thread/graph fresh record `cmqs7uyqb00lnqr01u9dtv63r`,
+  batch/thread/graph pre-final-gate record `cmqs7uyqb00lnqr01u9dtv63r`,
   `cmqs56wv100kjqr01de3fdspd`, `cmqs4jnx100k6qr01d1iy78kl`,
   `cmqrsupdk000jqr01af3eu6vu`, `cmqrjcly601kuqo01rbyub1x6`, and earlier
   fast-argmax/CPU-cleanup result `cmqr82niq01hgqo01v42y7ue8`;
@@ -396,7 +467,7 @@ Superseded filled-long draft-MTP fresh-response Q8-target record:
 - response:
   `data/localmaxxing-responses/gemma4-26b-a4b-q8-b70-llamacpp-mtp-n7-q8target-q40draft-rowargmax-safer-deferh-pmin014-immediatecl1-fresh-20260624.submit.log`.
 
-Superseded safer row-argmax/defer-H fresh-response Q8-target record:
+Superseded safer row-argmax/defer-H pre-final-gate Q8-target record:
 
 - `gemma4-q8-gpu0-rowargmax-safer-pmin014-full-20260624T183044Z`;
 - LocalMaxxing `cmqsf630x00r1qr01d1usfo2d`,
@@ -404,7 +475,7 @@ Superseded safer row-argmax/defer-H fresh-response Q8-target record:
   `101.24898926956536 tok/s` support mean, 1536/1536 chat canary;
 - superseded by the immediate-command-list result above.
 
-Superseded row-argmax/defer-H fresh-response Q8-target record:
+Superseded row-argmax/defer-H pre-final-gate Q8-target record:
 
 - `gemma4-q8-gpu0-rowargmax-deferh-pmin014-full-20260624T173546Z`;
 - LocalMaxxing `cmqsd2jpn00pwqr017fq21akz`, `101.42819815648124 tok/s`
@@ -430,15 +501,15 @@ Previous direct-unroll/q-only batch/thread filled-long draft-MTP Q8-target best:
 - actual LocalMaxxing packet shape: `588` prompt tokens and `512` output
   tokens (`BENCH_PROMPT_MODE=filled-long`);
 - chat canary **384/384** pass;
-- fresh-response headline: first measured no-cache request after TTFT
+- diagnostic pre-final-gate row0 metric: first measured no-cache request after TTFT
   `98.61718830251647 tok/s`; supporting repeated-request mean
   `97.95563472401156 tok/s`; first-row wall `86.2620078252172 tok/s`;
   all rows `cached_tokens=0`;
-- fresh-response status: submitted to LocalMaxxing and approved as
+- diagnostic pre-final-gate status: submitted to LocalMaxxing and approved as
   `cmqs7uyqb00lnqr01u9dtv63r`; supersedes approved batch/thread tuned
-  fresh record `cmqs56wv100kjqr01de3fdspd`, approved direct-unroll/q-only
-  Q8-target/Q4_0-draft fresh record `cmqs4jnx100k6qr01d1iy78kl`, approved Q8-target/Q4_0-draft
-  fresh record `cmqrsupdk000jqr01af3eu6vu`, approved Q8-draft fresh record
+  pre-final-gate record `cmqs56wv100kjqr01de3fdspd`, approved direct-unroll/q-only
+  Q8-target/Q4_0-draft pre-final-gate record `cmqs4jnx100k6qr01d1iy78kl`, approved Q8-target/Q4_0-draft
+  pre-final-gate record `cmqrsupdk000jqr01af3eu6vu`, approved Q8-draft pre-final-gate record
   `cmqrjcly601kuqo01rbyub1x6`, and earlier fast-argmax/CPU-cleanup result
   `cmqr82niq01hgqo01v42y7ue8`;
 - queue:
@@ -449,7 +520,7 @@ Previous direct-unroll/q-only batch/thread filled-long draft-MTP Q8-target best:
 Previous batch/thread filled-long draft-MTP Q8-target best:
 
 - `gemma4-q8-gpu3-mtp-n7-directunroll7-qonly-b1024u1024-th8-full-20260624T135701Z`;
-- fresh-response headline: first measured no-cache request after TTFT
+- diagnostic pre-final-gate row0 metric: first measured no-cache request after TTFT
   `98.4913689785019 tok/s`; supporting repeated-request mean
   `97.88614261273774 tok/s`; first-row wall `86.19446305286014 tok/s`;
   all rows `cached_tokens=0`;
@@ -458,35 +529,35 @@ Previous batch/thread filled-long draft-MTP Q8-target best:
 Previous direct-unroll/q-only filled-long draft-MTP Q8-target best:
 
 - `gemma4-q8-gpu0-mtp-n7-directunroll7-qonly-full-20260624T1432Z`;
-- fresh-response headline: first measured no-cache request after TTFT
+- diagnostic pre-final-gate row0 metric: first measured no-cache request after TTFT
   `96.82235022330569 tok/s`; supporting repeated-request mean
   `97.22636780761407 tok/s`; first-row wall `82.46162357827212 tok/s`;
   all rows `cached_tokens=0`;
 - LocalMaxxing `cmqs4jnx100k6qr01d1iy78kl`.
 
-Previous filled-long draft-MTP fresh-response Q8-target best:
+Previous filled-long draft-MTP pre-final-gate Q8-target best:
 
 - `gemma4-q8-gpu0-mtp-n7-draftq40-full-20260624T081218Z`,
   llama.cpp SYCL on one B70,
   UD-Q8_K_XL main GGUF plus `gemma-4-26B-A4B-it-Q4_0-MTP.gguf` draft GGUF;
-- fresh-response headline: first measured no-cache request after TTFT
+- diagnostic pre-final-gate row0 metric: first measured no-cache request after TTFT
   `95.26352416631231 tok/s`; supporting repeated-request mean
   `95.38558173206405 tok/s`; first-row wall `81.28549578539435 tok/s`;
   all rows `cached_tokens=0`;
 - LocalMaxxing `cmqrsupdk000jqr01af3eu6vu`.
 
-Previous filled-long draft-MTP fresh-response Q8-draft best:
+Previous filled-long draft-MTP pre-final-gate Q8-draft diagnostic:
 
 - `gemma4-q8-gpu0-mtp-n7-cleanrebuild-control-full-fresh-20260624T032733Z`,
   llama.cpp SYCL on one B70, UD-Q8_K_XL main GGUF plus
   `mtp-gemma-4-26B-A4B-it.gguf` draft GGUF;
-- fresh-response headline: first measured no-cache request after TTFT
+- diagnostic pre-final-gate row0 metric: first measured no-cache request after TTFT
   `94.36621149389549 tok/s`; supporting repeated-request mean
   `92.55939821446442 tok/s`; first-row wall `80.50542700854518 tok/s`;
   all rows `cached_tokens=0`;
 - LocalMaxxing `cmqrjcly601kuqo01rbyub1x6`.
 
-Previous filled-long draft-MTP fresh-response Q8 best:
+Previous filled-long draft-MTP pre-final-gate Q8 diagnostic:
 
 - `gemma4-q8-gpu0-mtp-n7-c926-fastargmax-cpucleanup-vmm0-ub512-poll100-full-ctxcp0-nmin2-pmin012-nobs-dthreads32-dtb32-filled-long-20260623T222838Z`,
   llama.cpp SYCL on one B70,
@@ -498,10 +569,10 @@ Previous filled-long draft-MTP fresh-response Q8 best:
 - actual LocalMaxxing packet shape: `588` prompt tokens and `512` output
   tokens (`BENCH_PROMPT_MODE=filled-long`);
 - chat canary **384/384** pass;
-- conservative fresh-response headline: first measured request after TTFT
+- conservative diagnostic pre-final-gate row0 metric: first measured request after TTFT
   `92.397 tok/s`; supporting independent repeated-request mean
   `92.767 tok/s`; wall mean `83.289 tok/s`; all rows `cached_tokens=0`;
-- fresh-response status: submitted to LocalMaxxing and approved as
+- diagnostic pre-final-gate status: submitted to LocalMaxxing and approved as
   `cmqr82niq01hgqo01v42y7ue8`; supersedes approved CPU-cleanup result
   `cmqr7ni7u01gxqo01wtqsrn3u` and fast-top-k result
   `cmqqsecuk01azqo018ahv0i1s`;
@@ -510,7 +581,7 @@ Previous filled-long draft-MTP fresh-response Q8 best:
 - response:
   `data/localmaxxing-responses/gemma4-26b-a4b-q8-b70-mtp-n7-c926ad098-fastargmax-cpucleanup-vmm0-ub512-poll100-filledlong512-20260623.submit.log`.
 
-Previous filled-long draft-MTP fresh-response Q8 best:
+Previous filled-long draft-MTP pre-final-gate Q8 diagnostic:
 
 - `gemma4-q8-gpu0-mtp-n7-c926-fasttopk10-repeat-ctxcp0-nmin2-pmin012-nobs-dthreads32-dtb32-filled-long-deep-20260623T150833Z`,
   llama.cpp SYCL on one B70,
@@ -521,7 +592,7 @@ Previous filled-long draft-MTP fresh-response Q8 best:
   tokens (`BENCH_PROMPT_MODE=filled-long`);
 - chat canary **384/384** pass;
 - decode `91.62 tok/s` after TTFT, `71.29 tok/s` warmed wall;
-- fresh-response status: submitted to LocalMaxxing and approved as
+- diagnostic pre-final-gate status: submitted to LocalMaxxing and approved as
   `cmqqsecuk01azqo018ahv0i1s`; superseded by the CPU-cleanup and fast-argmax
   records above. It superseded approved result `cmqqkmbhr017oqo017rdfxqh2`
   (`91.16 tok/s`);
@@ -660,8 +731,14 @@ the server log:
 - any chat canary fails;
 - only raw `/v1/completions` was tested;
 - `usage.completion_tokens` is missing and output token count was guessed;
-- row 0 has missing or nonzero `cached_tokens` for a fresh-response claim;
-- the headline uses a repeated-prompt average or max instead of row 0;
+- `realistic_final_gate.passed` is absent or false;
+- any fixed-suite row has missing or nonzero `cached_tokens`;
+- `engineFlags.primaryMetricName` is not `median_tok_s_1_100_after_ttft`;
+- the payload lacks p10, mean, TTFT, wall-clock tok/s, full-512 tok/s, prompt
+  hashes, output hashes, model identity, runtime commit, launch env/flags, and
+  log/result paths;
+- the headline uses a synthetic row0, a repeated-prompt average, or a max
+  instead of the fixed-suite median for generated tokens 1-100 after TTFT;
 - the speedup is from n-gram/history continuation learned from earlier
   benchmark requests;
 - prefix cache, context checkpoints, or response reuse contributed to the

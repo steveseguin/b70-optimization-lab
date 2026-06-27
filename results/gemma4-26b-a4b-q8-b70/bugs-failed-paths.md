@@ -4,14 +4,15 @@ This lane now has multiple validated local Gemma 4 26B Q8 results on one B70.
 Keep this file focused on pitfalls, rejected mechanisms, and correctness risks
 that should not be rediscovered.
 
-Current promoted family:
+Current realistic-gate family:
 
 - one complete Q8/INT8-quality model replica per B70, no TP split;
 - llama.cpp SYCL / Level Zero;
 - `gemma-4-26B-A4B-it-UD-Q8_K_XL.gguf` target/verifier plus local
   `gemma-4-26B-A4B-it-Q4_0-MTP.gguf` draft only;
-- 1536-row chat canary before current record promotion;
-- current filled-long record is tracked in
+- fixed realistic cold suite with `cached_tokens=0` on every prompt before any
+  LocalMaxxing promotion;
+- historical filled-long diagnostic rows are tracked in
   [`research-plan.md`](research-plan.md) and
   [`localmaxxing-and-targets.md`](localmaxxing-and-targets.md).
 
@@ -61,7 +62,7 @@ Current promoted family:
   failure mode. With the promoted route-cache / fused-output / selected-softmax
   / `UBATCH_SIZE=768` stack, `n=8`, `n=9`, `n=10`, and `n=12` all passed `64/64`
   canary rows with `cached_tokens=0`, but measured only `66.85`, `71.63`,
-  `76.20`, and `82.93 tok/s` fresh row0 respectively. Do not run more blind
+  `76.20`, and `82.93 tok/s` synthetic row0 respectively. Do not run more blind
   `n>7` sweeps. Retest larger depth only after adding real direct-path
   confidence scores or reducing verifier MoE/LM-head cost. Note:
   `../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260627T0531-direct-unroll-depth-losses.md`.
@@ -78,7 +79,7 @@ Current promoted family:
   Do not implement that patch target unless a future profile proves the scale
   node exists.
 - Draftless n-gram speculation can be target-verified and still be invalid as a
-  fresh-response headline. On 2026-06-23, `ngram-mod match=20 min=32 max=64`
+  pre-final-gate diagnostic. On 2026-06-23, `ngram-mod match=20 min=32 max=64`
   reached `245-280 tok/s` only after repeated filled-long benchmark responses
   had populated continuation history. The cold first request stayed near
   non-spec speed (`~41 tok/s`). Those LocalMaxxing rows were submitted before
@@ -104,7 +105,7 @@ Current promoted family:
   and required a SYCL `F32 -> I32` copy/cast fix to avoid CPU fallback. The
   screen `data/gemma4-q8-gpu1-routerselectedweights-screen-20260627T050319Z/`
   passed `64/64` canary rows but reached only `101.52715106143687 tok/s`
-  fresh row0 versus the current `104.22626983476746 tok/s` record. Patch:
+  synthetic row0 versus the current `104.22626983476746 tok/s` record. Patch:
   `../../patches/gemma4-26b-a4b-q8-b70/20260627T0503-llamacpp-gemma4-router-selected-weights-negative-current-stack.patch`;
   note:
   `../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260627T0503-router-selected-weights-negative.md`.
@@ -114,7 +115,7 @@ Current promoted family:
   existing tuned matmul arithmetic. The candidate
   `data/gemma4-q8-gpu2-gateup-singleton-direct-screen-20260627T052517Z/`
   passed `64/64`, cached tokens were `[0]`, and the output hash matched the
-  promoted record, but fresh row0 was `104.12278210887227 tok/s`, just under
+  promoted record, but synthetic row0 was `104.12278210887227 tok/s`, just under
   the `104.22626983476746 tok/s` record. Same-GPU flag-off control was slower
   (`102.16498485841758 tok/s`) but changed the benchmark hash. Keep this as a
   default-off artifact unless a node-profile comparison proves a real

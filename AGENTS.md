@@ -128,22 +128,58 @@ Use exact-token, semantic, arithmetic, and practical task gates where relevant.
 Compressed KV modes such as FP8 KV or TurboQuant must be labeled separately
 from the FP16-family baseline.
 
-For Gemma/Qwen speculative-decoding results, headline throughput must be a
-fresh response: no usable prior generated continuation, repeated-output
-history, prefix/cache reuse, response reuse, context checkpoint reuse, or
-warmed n-gram memory from earlier benchmark repeats. Report first-request
-fresh throughput separately from warmed/cached throughput. Draft-model,
-MTP, verifier-based speculation, and n-gram speculation are acceptable only
-when the draft source can operate on a fresh request without already seeing the
-target continuation.
+For Gemma/Qwen speculative-decoding results, diagnostic sweeps may use
+synthetic or repetitive prompts, but promotion and LocalMaxxing submissions now
+require the fixed realistic final gate:
 
-The current Gemma 4 26B A4B Q8 one-B70 record is:
+- use the fixed realistic prompt suite;
+- run each prompt once as a cold first response;
+- require `cached_tokens=0` for every request;
+- disable prompt/KV cache reuse, context checkpoints, response reuse,
+  n-gram/history acceleration, and warmed repeated prompts;
+- keep the target model and quantization unchanged;
+- allow speculative decoding/MTP only when accepted tokens are verified by the
+  declared target model;
+- report median tok/s for generated tokens 1-100 after TTFT across the suite as
+  the primary metric, plus p10, mean, TTFT, wall tok/s, full 512-token tok/s,
+  prompt/output hashes, model identity, runtime commit, env vars, flags, and
+  logs.
+
+The current Gemma 4 26B A4B Q8 one-B70 realistic-suite best is:
 
 - result packet: `results/gemma4-26b-a4b-q8-b70/README.md`;
 - reproduction: `results/gemma4-26b-a4b-q8-b70/reproduce.md`;
-- fresh row0: `104.30919255569083 tok/s` after TTFT,
-  `103.93445004566178` support mean, 1536 canary repeats / 6144 rows,
-  LocalMaxxing `cmqw1tgzx0366qr01g4lkv7f1`;
+- realistic suite: `repro/gemma4-26b-a4b-q8-b70/realistic-suite-v1.json`;
+- best strict cold-suite result:
+  `87.61145306230438 tok/s` median generated-token throughput for tokens 1-100
+  after TTFT, `cached_tokens=0` on every prompt,
+  `realistic_final_gate.passed=true`;
+- evidence:
+  `data/gemma4-q8-gpu0-vdr4default-mtp-n3-nmin2-p005-ub1024-realistic-gate-repeat-v8/summary.json`;
+- config:
+  default reordered-Q8 VDR4, Q4_0 MTP draft, `n_max=3`, `n_min=2`,
+  `p_min=0.05`, `UBATCH_SIZE=1024`;
+- representative / submitted status:
+  the confirmed representative family is `n_max=3`, `n_min=2`, `p_min=0.05`,
+  `UBATCH_SIZE=1024`, with four valid cold-suite runs at
+  `84.82456994237617`, `83.83638918369195`, `84.52685942118447`, and
+  `87.61145306230438 tok/s`. The v8 family row was submitted under the
+  realistic-suite policy and approved by LocalMaxxing as
+  `cmqwnl2ag03lgqr01ch5bxknq`. The earlier `86.47445652599384 tok/s`
+  `p_min=0.075` observation did not repeat and is now superseded;
+- current clean no-spec control:
+  `data/gemma4-q8-gpu0-vdr4default-nospec-realistic-gate-v2-20260627T165335Z/summary.json`
+  at `74.29709476830473 tok/s` median. Use it as the simplest target-side
+  quality/control reference.
+
+The previous Gemma 4 26B A4B Q8 one-B70 diagnostic best is:
+
+- result packet: `results/gemma4-26b-a4b-q8-b70/README.md`;
+- reproduction: `results/gemma4-26b-a4b-q8-b70/reproduce.md`;
+- synthetic filled-long row0: `176.21623213048554 tok/s` after TTFT,
+  `176.40259133127742` support mean, 1536 canary repeats / 6144 rows,
+  LocalMaxxing `cmqwkedg303jeqr013z753j62`, now classified as diagnostic until
+  the fixed realistic prompt suite passes with that configuration;
 - target/verifier: UD-Q8_K_XL, Q4_0 MTP draft only; do not promote lower
   precision/QAT/Q4XL side-lane results as this Q8 headline.
 
@@ -160,11 +196,11 @@ The current Gemma 4 26B A4B Q8 one-B70 record is:
   patches only after verification, while keeping the experiment record linked.
 - Commit regularly with focused commits and explicit paths. Do not use broad
   `git add -A` in mixed experiment worktrees.
-- When a verified fresh run breaks a real LocalMaxxing record for a matching
-  1/2/3/4 GPU configuration, submit it with model, quantization, GPU count,
-  mode, run identity, throughput, correctness status, and supporting artifact
-  links. Do not submit warmed/history or lower-precision side-lane results as
-  the Q8/INT8 headline.
+- When a verified realistic-suite run breaks a real LocalMaxxing record for a
+  matching 1/2/3/4 GPU configuration, submit it with model, quantization, GPU
+  count, mode, run identity, throughput, correctness status, prompt/output
+  hashes, and supporting artifact links. Do not submit warmed/history,
+  synthetic-only, or lower-precision side-lane results as the Q8/INT8 headline.
 
 ## Cross-Agent Delegation
 

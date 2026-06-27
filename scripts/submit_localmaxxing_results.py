@@ -51,6 +51,22 @@ def preflight_payload(item: dict, *, allow_non_headline: bool = False) -> list[s
         if cached not in (None, 0):
             problems.append("fresh label has nonzero firstRequestCachedTokens")
 
+    gate_passed = (
+        engine.get("realisticSuiteGatePassed") is True
+        or engine.get("freshRealisticSuiteGatePassed") is True
+    )
+    metric_name = str(engine.get("primaryMetricName", ""))
+    if not gate_passed:
+        problems.append("missing realistic-suite final gate pass marker")
+    if metric_name != "median_tok_s_1_100_after_ttft":
+        problems.append("primaryMetricName must be median_tok_s_1_100_after_ttft")
+    cached_all_zero = engine.get("realisticSuiteCachedTokensAllZero")
+    if cached_all_zero is not True:
+        problems.append("realistic suite must report cached_tokens=0 for every request")
+    suite_id = engine.get("realisticSuiteId")
+    if not isinstance(suite_id, str) or not suite_id:
+        problems.append("missing realisticSuiteId")
+
     return [] if allow_non_headline else problems
 
 

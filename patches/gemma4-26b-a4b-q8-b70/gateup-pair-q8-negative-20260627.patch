@@ -1,0 +1,248 @@
+diff --git a/ggml/src/ggml-sycl/mmvq.hpp b/ggml/src/ggml-sycl/mmvq.hpp
+--- a/ggml/src/ggml-sycl/mmvq.hpp
++++ b/ggml/src/ggml-sycl/mmvq.hpp
+@@
+ bool ggml_sycl_mul_mat_vec_q_id_multi_token_per_slot_q8_0(
+     const void *       vx_base,
+     const void *       vy,
+     const int32_t *    ids_dev,
+@@
+     int                ids_token_stride,
+     dpct::queue_ptr    stream);
+
++// Q8_0-only paired gate/up multi-token MoE path for Gemma verifier batches.
++// src0 rows are [gate_rows, up_rows] for each expert; this computes the
++// matching gate/up row pair in one workgroup while leaving dst layout unchanged.
++bool ggml_sycl_mul_mat_vec_q_id_multi_token_gate_up_pair_q8_0(
++    const void *       vx_base,
++    const void *       vy,
++    const int32_t *    ids_dev,
++    float *            dst_base,
++    int                ncols,
++    int                nrows,
++    int                n_experts_used,
++    int                n_tokens,
++    size_t             expert_weight_stride,
++    size_t             dst_row_stride,
++    size_t             dst_token_stride,
++    size_t             src1_token_stride,
++    int                ids_expert_stride,
++    int                ids_token_stride,
++    dpct::queue_ptr    stream);
++
+ bool ggml_sycl_mul_mat_vec_q_id(
+     enum ggml_type     src0_type,
+     const void *       vx_base,
+diff --git a/ggml/src/ggml-sycl/mmvq.cpp b/ggml/src/ggml-sycl/mmvq.cpp
+--- a/ggml/src/ggml-sycl/mmvq.cpp
++++ b/ggml/src/ggml-sycl/mmvq.cpp
+@@
+ bool ggml_sycl_mul_mat_vec_q_id_multi_token_per_slot_q8_0(
+     const void *       vx_base,
+     const void *       vy,
+     const int32_t *    ids_dev,
+@@
+     return true;
+ }
+
++static void mul_mat_vec_q8_0_moe_multi_token_gate_up_pair(
++    const void * __restrict__ vx_base, const void * __restrict__ vy_base,
++    float * __restrict__ dst_base, const int32_t * __restrict__ ids_dev,
++    const int ncols, const int nrows, const int n_experts_used,
++    const int n_tokens, const size_t expert_weight_stride,
++    const size_t dst_row_stride, const size_t dst_token_stride,
++    const size_t src1_token_stride, const int ids_expert_stride,
++    const int ids_token_stride, const sycl::nd_item<3> & item_ct1) {
++
++    const int n_ff       = nrows / 2;
++    const int token_idx  = item_ct1.get_group(0);
++    const int expert_idx = item_ct1.get_group(1);
++    const int expert_id  = ids_dev[token_idx * ids_token_stride +
++                                   expert_idx * ids_expert_stride];
++    const int row = item_ct1.get_group(2) * item_ct1.get_local_range(1) +
++                    item_ct1.get_local_id(1);
++    if (row >= n_ff) {
++        return;
++    }
++
++    const int blocks_per_row = ncols / QK8_0;
++    constexpr int blocks_per_warp =
++        (VDR_Q8_0_Q8_1_MMVQ * WARP_SIZE + QI8_0 - 1) / QI8_0;
++
++    const char * expert_base = (const char *) vx_base +
++        (size_t) expert_id * expert_weight_stride;
++    const block_q8_0 * x = (const block_q8_0 *) expert_base;
++    const block_q8_1 * y = (const block_q8_1 *)
++        ((const char *) vy_base + (size_t) token_idx * src1_token_stride);
++    float * dst = (float *) ((char *) dst_base +
++            (size_t) token_idx * dst_token_stride +
++            (size_t) expert_idx * dst_row_stride);
++
++    float gate = 0.0f;
++    float up = 0.0f;
++
++    for (int i = item_ct1.get_local_id(2) / (QI8_0 / VDR_Q8_0_Q8_1_MMVQ);
++         i < blocks_per_row; i += blocks_per_warp) {
++        const int ib_gate = row * blocks_per_row + i;
++        const int ib_up = (row + n_ff) * blocks_per_row + i;
++        const int iby = i;
++
++        for (size_t elem = 0; elem < QI8_0 / VDR_Q8_0_Q8_1_MMVQ;
++             elem += WARP_SIZE) {
++            const int iqs = elem + VDR_Q8_0_Q8_1_MMVQ *
++                (item_ct1.get_local_id(2) % (QI8_0 / VDR_Q8_0_Q8_1_MMVQ));
++            gate += vec_dot_q8_0_q8_1(&x[ib_gate], &y[iby], iqs);
++            up += vec_dot_q8_0_q8_1(&x[ib_up], &y[iby], iqs);
++        }
++    }
++
++#pragma unroll
++    for (int mask = WARP_SIZE / 2; mask > 0; mask >>= 1) {
++        gate += dpct::permute_sub_group_by_xor(item_ct1.get_sub_group(), gate, mask);
++        up += dpct::permute_sub_group_by_xor(item_ct1.get_sub_group(), up, mask);
++    }
++
++    if (item_ct1.get_local_id(2) == 0) {
++        dst[row] = gate;
++        dst[row + n_ff] = up;
++    }
++}
++
++static void launch_mul_mat_vec_q8_0_moe_multi_token_gate_up_pair(
++    const void * vx_base, const void * vy, const int32_t * ids_dev,
++    float * dst_base, const int ncols, const int nrows, const int n_experts_used,
++    const int n_tokens, const size_t expert_weight_stride,
++    const size_t dst_row_stride, const size_t dst_token_stride,
++    const size_t src1_token_stride, const int ids_expert_stride,
++    const int ids_token_stride, dpct::queue_ptr stream) {
++
++    const int n_ff = nrows / 2;
++    const int block_num_y = (n_ff + GGML_SYCL_MMV_Y - 1) / GGML_SYCL_MMV_Y;
++    const sycl::range<3> block_nums((unsigned) n_tokens, (unsigned) n_experts_used, (unsigned) block_num_y);
++    const sycl::range<3> block_dims(1, GGML_SYCL_MMV_Y, WARP_SIZE);
++    stream->submit([&](sycl::handler & cgh) {
++        cgh.parallel_for(
++            sycl::nd_range<3>(block_nums * block_dims, block_dims),
++            [=](sycl::nd_item<3> item) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
++                mul_mat_vec_q8_0_moe_multi_token_gate_up_pair(
++                    vx_base, vy, dst_base, ids_dev, ncols, nrows,
++                    n_experts_used, n_tokens, expert_weight_stride,
++                    dst_row_stride, dst_token_stride, src1_token_stride,
++                    ids_expert_stride, ids_token_stride, item);
++            });
++    });
++}
++
++bool ggml_sycl_mul_mat_vec_q_id_multi_token_gate_up_pair_q8_0(
++    const void *       vx_base,
++    const void *       vy,
++    const int32_t *    ids_dev,
++    float *            dst_base,
++    int                ncols,
++    int                nrows,
++    int                n_experts_used,
++    int                n_tokens,
++    size_t             expert_weight_stride,
++    size_t             dst_row_stride,
++    size_t             dst_token_stride,
++    size_t             src1_token_stride,
++    int                ids_expert_stride,
++    int                ids_token_stride,
++    dpct::queue_ptr    stream) {
++    launch_mul_mat_vec_q8_0_moe_multi_token_gate_up_pair(
++        vx_base, vy, ids_dev, dst_base, ncols, nrows, n_experts_used, n_tokens,
++        expert_weight_stride, dst_row_stride, dst_token_stride,
++        src1_token_stride, ids_expert_stride, ids_token_stride, stream);
++    return true;
++}
++
+ bool ggml_sycl_mul_mat_vec_q_id(
+     enum ggml_type     src0_type,
+     const void *       vx_base,
+diff --git a/ggml/src/ggml-sycl/ggml-sycl.cpp b/ggml/src/ggml-sycl/ggml-sycl.cpp
+--- a/ggml/src/ggml-sycl/ggml-sycl.cpp
++++ b/ggml/src/ggml-sycl/ggml-sycl.cpp
+@@
+ static bool ggml_sycl_mul_mat_id_multi_token_per_slot_q8_0_enabled() {
+     const char * env = std::getenv("LLAMA_SYCL_MUL_MAT_ID_MULTI_TOKEN_PER_SLOT_Q8_0");
+     return env && (std::strcmp(env, "1") == 0 ||
+@@
+                    std::strcmp(env, "on") == 0);
+ }
+
++static bool ggml_sycl_mul_mat_id_gate_up_pair_q8_0_enabled() {
++    const char * env = std::getenv("LLAMA_SYCL_MUL_MAT_ID_GATE_UP_PAIR_Q8_0");
++    return env && (std::strcmp(env, "1") == 0 ||
++                   std::strcmp(env, "true") == 0 ||
++                   std::strcmp(env, "TRUE") == 0 ||
++                   std::strcmp(env, "yes") == 0 ||
++                   std::strcmp(env, "on") == 0);
++}
++
+ static bool ggml_sycl_mul_mat_id_multi_token_filter_allows(const ggml_tensor * dst) {
+     const char * name_env = std::getenv("LLAMA_SYCL_MUL_MAT_ID_MULTI_TOKEN_NAME_SUBSTR");
+     if (name_env != nullptr && name_env[0] != '\0') {
+@@
+     const bool per_slot_q8_0_enabled =
+         ggml_sycl_mul_mat_id_multi_token_per_slot_q8_0_enabled();
++    const bool gate_up_pair_q8_0_enabled =
++        ggml_sycl_mul_mat_id_gate_up_pair_q8_0_enabled();
+     if (!direct_fast_enabled && !grouped_q8_0_enabled &&
+-            !per_slot_q8_0_enabled) {
++            !per_slot_q8_0_enabled && !gate_up_pair_q8_0_enabled) {
+         return false;
+     }
+@@
+     const size_t bytes_per_qrow = (size_t) src1_padded_cols * sizeof(block_q8_1) / QK8_1;
+     const int ids_expert_stride = (int) (ids->nb[0] / sizeof(int32_t));
+     const int ids_token_stride  = (int) (ids->nb[1] / sizeof(int32_t));
+
++    if (gate_up_pair_q8_0_enabled &&
++        ggml_sycl_mul_mat_id_is_gate_up_node(dst) &&
++        src0->type == GGML_TYPE_Q8_0 &&
++        !use_reorder &&
++        nrows % 2 == 0) {
++        return ggml_sycl_mul_mat_vec_q_id_multi_token_gate_up_pair_q8_0(
++            src0->data, src1_ddq, (const int32_t *) ids->data,
++            (float *) dst->data, (int) ne10, nrows, n_experts_used, n_tokens,
++            /*expert_weight_stride=*/ src0->nb[2],
++            /*dst_row_stride=*/ dst->nb[1],
++            /*dst_token_stride=*/ dst->nb[2],
++            /*src1_token_stride=*/ bytes_per_qrow,
++            ids_expert_stride, ids_token_stride, stream);
++    }
++
++    if (!direct_fast_enabled) return false;
++
+     if (use_reorder) {
+         return ggml_sycl_mul_mat_vec_q_id_multi_token_reorder(
+diff --git a/scripts/run-gemma4-26b-first-baseline.sh b/scripts/run-gemma4-26b-first-baseline.sh
+--- a/scripts/run-gemma4-26b-first-baseline.sh
++++ b/scripts/run-gemma4-26b-first-baseline.sh
+@@
+ LLAMA_SYCL_MUL_MAT_ID_ROUTE_CACHE_DEVICE_MAP="${LLAMA_SYCL_MUL_MAT_ID_ROUTE_CACHE_DEVICE_MAP:-}" \
+ LLAMA_SYCL_MUL_MAT_ID_ROUTE_TIMING="${LLAMA_SYCL_MUL_MAT_ID_ROUTE_TIMING:-}" \
+ LLAMA_SYCL_MUL_MAT_ID_ROUTE_TIMING_EVERY="${LLAMA_SYCL_MUL_MAT_ID_ROUTE_TIMING_EVERY:-}" \
++LLAMA_SYCL_MUL_MAT_ID_GATE_UP_PAIR_Q8_0="${LLAMA_SYCL_MUL_MAT_ID_GATE_UP_PAIR_Q8_0:-}" \
+ LLAMA_SYCL_F16_P021_SMALL_NCOLS="${LLAMA_SYCL_F16_P021_SMALL_NCOLS:-}" \
+ LLAMA_SYCL_Q8_MMVQ_SMALL_NCOLS="${LLAMA_SYCL_Q8_MMVQ_SMALL_NCOLS:-}" \
+ LLAMA_SPEC_VERIFY_GREEDY_ARGMAX="${LLAMA_SPEC_VERIFY_GREEDY_ARGMAX:-}" \
+@@
+         "llama_sycl_mul_mat_id_route_cache_device_map": env_or_log("LLAMA_SYCL_MUL_MAT_ID_ROUTE_CACHE_DEVICE_MAP"),
+         "llama_sycl_mul_mat_id_route_timing": env_or_log("LLAMA_SYCL_MUL_MAT_ID_ROUTE_TIMING"),
+         "llama_sycl_mul_mat_id_route_timing_every": env_or_log("LLAMA_SYCL_MUL_MAT_ID_ROUTE_TIMING_EVERY"),
++        "llama_sycl_mul_mat_id_gate_up_pair_q8_0": env_or_log("LLAMA_SYCL_MUL_MAT_ID_GATE_UP_PAIR_Q8_0"),
+         "llama_sycl_f16_p021_small_ncols": env_or_log("LLAMA_SYCL_F16_P021_SMALL_NCOLS"),
+         "llama_sycl_q8_mmvq_small_ncols": env_or_log("LLAMA_SYCL_Q8_MMVQ_SMALL_NCOLS"),
+         "llama_spec_verify_greedy_argmax": env_or_log("LLAMA_SPEC_VERIFY_GREEDY_ARGMAX"),
+diff --git a/scripts/run-gemma4-26b-llamacpp-replica.sh b/scripts/run-gemma4-26b-llamacpp-replica.sh
+--- a/scripts/run-gemma4-26b-llamacpp-replica.sh
++++ b/scripts/run-gemma4-26b-llamacpp-replica.sh
+@@
+   echo "LLAMA_SYCL_MUL_MAT_ID_ROUTE_CACHE_DEVICE_MAP=${LLAMA_SYCL_MUL_MAT_ID_ROUTE_CACHE_DEVICE_MAP:-<unset>}"
+   echo "LLAMA_SYCL_MUL_MAT_ID_ROUTE_TIMING=${LLAMA_SYCL_MUL_MAT_ID_ROUTE_TIMING:-<unset>}"
+   echo "LLAMA_SYCL_MUL_MAT_ID_ROUTE_TIMING_EVERY=${LLAMA_SYCL_MUL_MAT_ID_ROUTE_TIMING_EVERY:-<unset>}"
++  echo "LLAMA_SYCL_MUL_MAT_ID_GATE_UP_PAIR_Q8_0=${LLAMA_SYCL_MUL_MAT_ID_GATE_UP_PAIR_Q8_0:-<unset>}"
+   echo "LLAMA_SYCL_F16_P021_SMALL_NCOLS=${LLAMA_SYCL_F16_P021_SMALL_NCOLS:-<unset>}"
+   echo "LLAMA_SYCL_Q8_MMVQ_SMALL_NCOLS=${LLAMA_SYCL_Q8_MMVQ_SMALL_NCOLS:-<unset>}"
+   echo "LLAMA_SPEC_VERIFY_GREEDY_ARGMAX=${LLAMA_SPEC_VERIFY_GREEDY_ARGMAX:-<unset>}"

@@ -73,10 +73,35 @@ For LocalMaxxing or cross-model comparison, prefer corrected/generated output
 throughput rather than total client throughput. Label total-token throughput
 separately.
 
+## Realistic Final Gate For Promotion
+
+Diagnostic benchmarks may use synthetic or repetitive prompts while searching
+for optimization ideas. A result may be confirmed, promoted, or submitted only
+if it passes the realistic final gate:
+
+- Use the fixed prompt suite at
+  `repro/gemma4-26b-a4b-q8-b70/realistic-suite-v1.json`.
+- Run each prompt exactly once as a cold first response.
+- Require `cached_tokens=0` for every request.
+- Disable prompt/KV cache reuse, context checkpoints, response reuse,
+  n-gram/history acceleration, and warmed repeated prompts.
+- Keep the target model and quantization unchanged.
+- Allow speculative decoding/MTP only when accepted tokens are verified by the
+  declared target model.
+- Primary metric: median tok/s for generated tokens 1-100 after TTFT across the
+  suite.
+- Also report p10, mean, TTFT, wall-clock tok/s, full 512-token tok/s,
+  prompt/output hashes, model identity, runtime commit, env vars, flags, and
+  logs.
+
+Run it with the Gemma harness by setting `REALISTIC_GATE=1`; this writes
+`realistic-suite.json` and embeds `realistic_final_gate` in `summary.json`.
+
 ## Fresh-Response Vs Warmed/History Throughput
 
-Headline throughput must apply to a fresh new response where no usable prior
-generated continuation exists.
+Headline throughput must apply to the realistic final gate above. A single
+synthetic first row may be useful for diagnosis, but it is not enough for
+promotion or LocalMaxxing submission.
 
 Speculation is allowed, including MTP, draft-model speculation, n-gram
 speculation, and verifier-based multi-token acceptance. The validity question
@@ -99,7 +124,7 @@ the fresh-response number. A draftless n-gram/history run that becomes fast only
 after the first identical output must be labeled history-accelerated and must
 not be submitted or promoted as fresh-response throughput.
 
-The benchmark harness supports `BENCH_PROMPT_MODE=filled-long-unique` and
+The older benchmark harness supports `BENCH_PROMPT_MODE=filled-long-unique` and
 `filled-fixed-line-unique` for fresh-response aggregate checks. These modes
 generate a deterministic different prompt per repeat and store each row's
 `prompt_sha256`. For those modes, the repeated-row mean may be treated as a
@@ -111,8 +136,9 @@ fresh-response mean only when:
 - the same canary and model-identity gates pass.
 
 For historical `filled-long` and `filled-fixed-line` runs, keep the conservative
-policy: row0 is the fresh headline and later repeated-prompt rows are
-support-only, even when `cached_tokens=0`.
+policy: all rows are diagnostic unless the fixed realistic suite passes. Earlier
+"row0 fresh" labels in the repo should be read as pre-final-gate terminology,
+not as publishable real-world throughput.
 
 Single-GPU records and four-replica aggregate capacity are different modes.
 Record and submit them separately: one full model on one B70 is the primary

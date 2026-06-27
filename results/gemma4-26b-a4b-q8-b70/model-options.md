@@ -69,7 +69,7 @@ Lower-precision public-speed lanes:
   sensitive to 4-bit quantization; the vLLM fallback should be int8
   per-channel weight-only, not W4A16.
 - QAT GGUF side lane started 2026-06-24 after the Q8 MTP path plateaued in the
-  mid-90s and before the later `103.299 tok/s` fresh-response Q8-target
+  mid-90s and before the later `103.299 tok/s` pre-final-gate Q8-target
   selected-softmax/weighted-sum direct-unroll/q-only record. The candidate repo is
   `unsloth/gemma-4-26B-A4B-it-qat-GGUF`, with local target path
   `/mnt/fast-ai/llm-models/gemma4-26b-a4b-it-qat-gguf/gemma-4-26B-A4B-it-qat-UD-Q4_K_XL.gguf`
@@ -108,8 +108,8 @@ Important local facts:
   regressions and sensitivity to draft quality. For this lane, keep the
   official Q8-class Gemma MTP draft as the default. Treat draft KV compression
   (`--spec-draft-type-k/v q8_0`) as a measured cache/runtime experiment only:
-  promote it only if it preserves the 384-row chat canary and beats the current
-  filled-long record under the same prompt/output shape.
+  promote it only if it passes the fixed realistic suite and beats the current
+  primary metric under the same gate.
 
 ### vLLM/XPU Int8 Per-Channel
 
@@ -147,9 +147,11 @@ public rows rather than a B70 Q8 target.
 
 Submission requirements and the lane-specific payload shape are in
 [localmaxxing-and-targets.md](localmaxxing-and-targets.md). Submit only after
-this repo has a valid record packet: model file/revision, runtime commit, GPU
-count, prompt/output shape, quality status, throughput JSON, server log path,
-and reproducible command.
+this repo has a valid realistic-suite record packet: model file/revision,
+runtime commit, GPU count, fixed prompt-suite identity, all `cached_tokens=0`,
+primary median tok/s for generated tokens 1-100 after TTFT, p10/mean/TTFT/wall
+and full-512 metrics, prompt and output hashes, quality status, throughput
+JSON, server log path, env/flags, and reproducible command.
 
 ## Source Links
 
