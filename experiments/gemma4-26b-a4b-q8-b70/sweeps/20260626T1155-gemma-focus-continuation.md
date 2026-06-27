@@ -599,6 +599,37 @@ most credible next work remains a deeper small-token Gemma4 MoE fusion or a
 different fresh-request speculation method that increases accepted tokens per
 step without warmed/history reuse.
 
+## 2026-06-27T00:37Z UBATCH Neighborhood Sweep
+
+After the `UBATCH_SIZE=768` row0 micro-record, a four-GPU screen checked nearby
+microbatch sizes. All screens used the same current route-cache/fused-output/
+fused-selected-softmax Q8 record stack, passed `64` canary repeats (`256` case
+rows), and reported all benchmark rows with `cached_tokens=0`.
+
+| Run | `UBATCH_SIZE` | Fresh row0 tok/s | Support mean tok/s | Decision |
+| --- | ---: | ---: | ---: | --- |
+| `data/gemma4-q8-gpu0-ubatch640-screen-20260627T003714Z/summary.json` | 640 | `103.844326` | `103.480461` | valid loss |
+| `data/gemma4-q8-gpu1-ubatch704-screen-20260627T003714Z/summary.json` | 704 | `103.747619` | `103.485743` | valid loss |
+| `data/gemma4-q8-gpu2-ubatch832-screen-20260627T003714Z/summary.json` | 832 | `105.006210` | `103.331358` | promote to full validation |
+| `data/gemma4-q8-gpu3-ubatch896-screen-20260627T003714Z/summary.json` | 896 | `103.730106` | `103.374998` | valid loss |
+
+Full validation of the promising `UBATCH_SIZE=832` screen rejected it:
+
+- summary:
+  `data/gemma4-q8-gpu2-b1024u832-fullrepeat-20260627T003946Z/summary.json`
+- canary: `1536` repeats / `6144` case rows, pass
+- cached-token validity:
+  `[0, 0, 0, 0, 0, 0, 0, 0]`, row0 fresh-response eligible
+- fresh row0: `103.90548697450369 tok/s`
+- support mean: `103.35354459732304 tok/s`
+- current record: `104.07050714456982 tok/s`
+
+Decision: reject / do not submit. The `105.006` screen was variance. Keep
+`UBATCH_SIZE=768` as the current published row0 recipe and `UBATCH_SIZE=1024`
+as the support-mean control. More scalar ubatch sweeps are unlikely to produce
+material progress; further improvements need a real source-level bottleneck
+reduction.
+
 Diagnostic profile of the current promoted route-cache recipe:
 
 - summary:
