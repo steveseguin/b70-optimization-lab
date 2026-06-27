@@ -225,6 +225,22 @@ Conclusion: stop blind depth expansion. Higher depths are only worth retesting
 after a source change supplies real direct-path confidence scores or materially
 reduces target verifier MoE/LM-head work.
 
+2026-06-27 current-stack MTP profile diagnostic: a short `MAX_TOKENS=128`
+profile on GPU0 with the record stack and `LLAMA_MTP_DRAFT_PROFILE=1` is
+documented in
+`../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260627T0538-currentstack-mtp-profile.md`.
+It is not a headline result because canaries ran first and the single benchmark
+row reported `cached_tokens=[1]`. The useful profile finding is that the
+assistant direct path is fully ID-only: `fast_topk_calls=82`,
+`vocab_scanned=0`, `sampler_calls=0`, `stops gap=0`, `pmin=0`,
+`avg_top1_p=1.000000`, and `avg_logit_gap=0.000000`. Target verifier
+`process_ubatch_ms=12118.505` dominates draft `process_ubatch_ms=488.134`.
+Conclusion: do not spend more time on threshold-only sweeps or blind depth.
+Useful work needs either a compact direct-path confidence score or less target
+verifier MoE / LM-head work. A proposed `ffn_moe_gate_up_scaled` epilogue is
+dead for the current path because profiles show no such scale node; hot nodes
+are plain `MUL_MAT_ID:ffn_moe_gate_up-*`.
+
 2026-06-26 verifier profile update:
 
 - current-stack profile control reproduced the promoted family at

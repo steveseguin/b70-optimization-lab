@@ -65,6 +65,18 @@ Current promoted family:
   `n>7` sweeps. Retest larger depth only after adding real direct-path
   confidence scores or reducing verifier MoE/LM-head cost. Note:
   `../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260627T0531-direct-unroll-depth-losses.md`.
+- Threshold-only `MTP_P_MIN` / logit-gap sweeps are low value on the current
+  direct-unroll fast path. The 2026-06-27 MTP profile diagnostic shows
+  `vocab_scanned=0`, `sampler_calls=0`, `stops gap=0`, `pmin=0`,
+  `avg_top1_p=1.000000`, and `avg_logit_gap=0.000000`; the path produces only
+  sampled IDs. Retest thresholds only after adding a real top1/top2 or gap
+  side channel to the fused direct assistant output. Note:
+  `../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260627T0538-currentstack-mtp-profile.md`.
+- A proposed `ffn_moe_gate_up_scaled` epilogue is not applicable to the current
+  Q8 record stack. Local profile logs do not show an `ffn_moe_gate_up_scaled`
+  node; the hot gate/up nodes are plain `MUL_MAT_ID:ffn_moe_gate_up-*`.
+  Do not implement that patch target unless a future profile proves the scale
+  node exists.
 - Draftless n-gram speculation can be target-verified and still be invalid as a
   fresh-response headline. On 2026-06-23, `ngram-mod match=20 min=32 max=64`
   reached `245-280 tok/s` only after repeated filled-long benchmark responses

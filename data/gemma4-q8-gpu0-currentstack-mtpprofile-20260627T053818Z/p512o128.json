@@ -1,0 +1,114 @@
+{
+  "fresh_response_validity": {
+    "all_cached_tokens": [
+      1
+    ],
+    "all_prompt_hashes_distinct": true,
+    "all_rows_fresh_response_mean_eligible": false,
+    "cached_tokens_all_zero": false,
+    "cached_tokens_reported": true,
+    "headline_cached_tokens": 1,
+    "headline_policy": "Use row0 only as fresh-response headline. Later repeated-prompt rows are support-only unless each request uses an independently fresh prompt with no reusable continuation/history.",
+    "headline_row": 0,
+    "headline_tok_s_after_ttft": 99.5534113318176,
+    "headline_tok_s_wall": 55.98767271519552,
+    "prompts_are_unique": false,
+    "repeated_prompt_rows_support_only": false
+  },
+  "rows": [
+    {
+      "chunks": 128,
+      "completion_tokens": 128,
+      "elapsed_s": 2.286217550979927,
+      "post_ttft_s": 1.2857419779757038,
+      "prompt_sha256": "04f687a68d60254567d3252624e01a696b0c9843dbb02f5a789d75aada5e4da5",
+      "prompt_tokens": 588,
+      "prompt_variant": 0,
+      "sha256": "ad29a225ec8e3e16335a3967ae01489db4616818d4f7f11492415cc125f44083",
+      "text": "001. benchmark, latency, memory, throughput, validation, repeatability\n002. benchmark, latency, memory, throughput, validation, repeatability\n003. benchmark, latency, memory, throughput, validation, repeatability\n004. benchmark, latency, memory, throughput, validation, repeatability\n005. benchmark, latency, memory, throughput, validation, repeatability\n006. benchmark, latency, memory, throughput, validation, repeatability\n007. benchmark, latency, memory, throughput, validation, repeatability\n008. benchmark, latency, memory, throughput, validation, repeatability\n",
+      "text_preview": "001. benchmark, latency, memory, throughput, validation, repeatability\n002. benchmark, latency, memory, throughput, validation, repeatability\n003. benchmark, latency, memory, throughput, validation, repeatability\n004. benchmark, latency, me",
+      "tok_s_after_ttft": 99.5534113318176,
+      "tok_s_wall": 55.98767271519552,
+      "ttft_s": 1.0004755730042234,
+      "usage": {
+        "completion_tokens": 128,
+        "prompt_tokens": 588,
+        "prompt_tokens_details": {
+          "cached_tokens": 1
+        },
+        "total_tokens": 716
+      }
+    }
+  ],
+  "run_identity": {
+    "api_mode": "chat",
+    "base_url": "http://127.0.0.1:18260",
+    "created_at_utc": "2026-06-27T05:39:00.382751+00:00",
+    "max_tokens": 128,
+    "model": "gemma4-26b-a4b-q8",
+    "prompt_chars": 3460,
+    "prompt_mode": "filled-long",
+    "prompt_preview": "You are running a deterministic Gemma B70 decode benchmark. Read the reference context, then produce a long numbered response until the token limit is reached. Do not summarize early.\n\nReference context:\nbenchmark latency memory throughput ",
+    "prompt_sha256": "04f687a68d60254567d3252624e01a696b0c9843dbb02f5a789d75aada5e4da5",
+    "prompt_sha256s": [
+      "04f687a68d60254567d3252624e01a696b0c9843dbb02f5a789d75aada5e4da5"
+    ],
+    "prompt_tokens_requested": 512,
+    "prompts_are_unique": false,
+    "repeats": 1,
+    "seed": 1,
+    "usage_required": true
+  },
+  "summary": {
+    "completion_tokens": {
+      "cv": 0.0,
+      "max": 128,
+      "mean": 128.0,
+      "median": 128,
+      "min": 128,
+      "stdev": 0.0
+    },
+    "completion_tokens_total": 128,
+    "elapsed_s": {
+      "cv": 0.0,
+      "max": 2.286217550979927,
+      "mean": 2.286217550979927,
+      "median": 2.286217550979927,
+      "min": 2.286217550979927,
+      "stdev": 0.0
+    },
+    "prompt_tokens": {
+      "cv": 0.0,
+      "max": 588,
+      "mean": 588.0,
+      "median": 588,
+      "min": 588,
+      "stdev": 0.0
+    },
+    "requests": 1,
+    "tok_s_after_ttft": {
+      "cv": 0.0,
+      "max": 99.5534113318176,
+      "mean": 99.5534113318176,
+      "median": 99.5534113318176,
+      "min": 99.5534113318176,
+      "stdev": 0.0
+    },
+    "tok_s_wall": {
+      "cv": 0.0,
+      "max": 55.98767271519552,
+      "mean": 55.98767271519552,
+      "median": 55.98767271519552,
+      "min": 55.98767271519552,
+      "stdev": 0.0
+    },
+    "ttft_s": {
+      "cv": 0.0,
+      "max": 1.0004755730042234,
+      "mean": 1.0004755730042234,
+      "median": 1.0004755730042234,
+      "min": 1.0004755730042234,
+      "stdev": 0.0
+    }
+  }
+}
