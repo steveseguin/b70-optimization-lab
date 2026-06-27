@@ -64,6 +64,17 @@ high repeat, but more tiny `p_min` sweeps are low ROI without a new code/runtime
 change. See
 `../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260627T2031-vdr2-pmin-tight-negative.md`.
 
+2026-06-27 source follow-up: reordered-Q8 grouped multi-token MoE
+(`LLAMA_SYCL_MUL_MAT_ID_MULTI_TOKEN_GROUPED_Q8_0_REORDER=1`) passed the strict
+realistic gate and 32/32 canary, but regressed to
+`83.90758854375754 tok/s` median tokens 1-100 after TTFT. The route profile
+made duplicate-expert grouping look attractive, but for the actual `n_max=3`
+verifier shape the grouped reordered path appears to add more
+branch/scatter/register pressure than it saves. Preserve the patch as a
+negative artifact and do not retry this exact approach without lower-level
+kernel evidence. See
+`../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260627T2055-q8-reorder-grouped-negative.md`.
+
 ## Historical Diagnostic Frontier Pending Realistic Gate
 
 Current best synthetic filled-long one-B70 diagnostic result is
@@ -1046,6 +1057,14 @@ Text speed is first. After text baseline:
     but do not promote it unless assistant output extraction becomes hot again.
     See
     `../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260626T0821-q6k-fused-output-argmax.md`.
+17. **Grouped duplicate-expert MoE is not enough at the strict VDR2 shape.**
+    The reordered-Q8 grouped multi-token MoE path passed the strict cold gate
+    but lost (`83.908 tok/s` vs the `90.322 tok/s` record). Duplicate expert
+    hits exist, but grouping/scatter/register pressure outweighed the saved
+    reads at `n_max=3`. Future MoE work should start from a kernel profile or a
+    more structural verifier change, not another blind grouped route variant.
+    See
+    `../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260627T2055-q8-reorder-grouped-negative.md`.
 
 ## Stop Conditions
 
