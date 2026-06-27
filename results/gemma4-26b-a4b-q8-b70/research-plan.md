@@ -7,12 +7,12 @@ replicas on four GPUs for parallel research and aggregate service capacity.
 ## Current Fresh-Response Headline
 
 Current valid one-B70 headline is
-`data/gemma4-q8-gpu3-b1024u768-fullrepeat-20260626T235649Z/`:
+`data/gemma4-q8-gpu0-ub768-nmin3-pmin010-fullrepeat-20260627T035307Z/`:
 
 - target/verifier: `gemma-4-26B-A4B-it-UD-Q8_K_XL.gguf`;
 - draft: `MTP/gemma-4-26B-A4B-it-Q4_0-MTP.gguf`;
-- recipe: llama.cpp AOT BMG, draft-MTP `n=7`, `n_min=2`,
-  `p_min=0.136`, backend draft sampling off,
+- recipe: llama.cpp AOT BMG, draft-MTP `n=7`, `n_min=3`,
+  `p_min=0.10`, backend draft sampling off,
   `LLAMA_MTP_DRAFT_FAST_ARGMAX=1`,
   `LLAMA_MTP_DRAFT_DIRECT_ARGMAX_IDS=1`,
   `LLAMA_MTP_DRAFT_DIRECT_ARGMAX_UNROLL=7`,
@@ -30,12 +30,12 @@ Current valid one-B70 headline is
   `GGML_SYCL_DISABLE_GRAPH=0`;
 - validation: chat canary **1536 repeats / 6144 rows**, all benchmark rows
   `cached_tokens=0`;
-- fresh headline: **104.07050714456982 tok/s** after TTFT;
-- supporting repeated-request mean: `103.588578767931 tok/s`;
-- LocalMaxxing: `cmqvmjvzx02qvqr01qh9jikow`;
-- note: this is a row0 variance-class `UBATCH_SIZE=768` micro-record over the
-  prior `103.9826628154082 tok/s` same-stack row, not a material speedup. The
-  previous row has the higher support mean.
+- fresh headline: **104.22626983476746 tok/s** after TTFT;
+- supporting repeated-request mean: `104.17418893412489 tok/s`;
+- LocalMaxxing: `cmqvv3kop0309qr013ekr8apu`;
+- note: this is a variance-class `UBATCH_SIZE=768`, `n_min=3`, `p_min=0.10`
+  micro-record over the prior `104.07050714456982 tok/s` same-stack row, not a
+  material speedup toward `>150`.
 
 The actual research target remains **>150 tok/s fresh-response**. The current
 scalar llama.cpp MTP loop is below that target because it still performs one
@@ -50,7 +50,8 @@ stacked route-cache cleanup (`LLAMA_GEMMA4_MTP_FUSED_OUTPUT_ARGMAX=1` +
 `LLAMA_GEMMA4_MOE_SELECTED_SOFTMAX_FUSED=1`) fully validated at
 `103.95374341972274 tok/s`, then a same-stack full repeat reached
 `103.9826628154082 tok/s`, then `UBATCH_SIZE=768` reached
-`104.07050714456982 tok/s`. These are small micro-records over
+`104.07050714456982 tok/s`, then the threshold repeat `n_min=3` / `p_min=0.10`
+reached `104.22626983476746 tok/s`. These are small micro-records over
 `103.51547512013657`, not material progress toward `>150`.
 Audits found that the target-to-draft
 `h_nextn` host handoff is real but profile-small, the direct selected-down
@@ -102,11 +103,15 @@ and produced `100.8959686363723 tok/s` row0 / `101.16162483108214 tok/s`
 fresh-eligible mean, confirming repeated-prompt means should remain
 support-only unless using the unique prompt mode.
 
-2026-06-27 UBATCH micro-record and profile: `UBATCH_SIZE=768` on GPU3 passed
-`1536` canary repeats / `6144` rows and reached `104.07050714456982 tok/s`
-fresh row0 after TTFT, LocalMaxxing `cmqvmjvzx02qvqr01qh9jikow`. Its support
-mean (`103.588578767931`) is lower than the previous `UBATCH_SIZE=1024` row, so
-this is only a row0 variance-class headline. A short profiling diagnostic on
+2026-06-27 UBATCH/threshold micro-record and profile: `UBATCH_SIZE=768` on
+GPU3 first passed `1536` canary repeats / `6144` rows and reached
+`104.07050714456982 tok/s` fresh row0 after TTFT, LocalMaxxing
+`cmqvmjvzx02qvqr01qh9jikow`. A later GPU0 full validation with the same scalar
+stack plus `MTP_N_MIN=3` / `MTP_P_MIN=0.10` passed `6144/6144` canary rows and
+reached `104.22626983476746 tok/s` fresh row0, support mean
+`104.17418893412489`, LocalMaxxing `cmqvv3kop0309qr013ekr8apu`. This is still
+only a tiny variance-class headline, not a new mechanism. A short profiling
+diagnostic on
 GPU0 with the same UBATCH shape
 (`data/gemma4-q8-gpu0-nodeprofile-current-ub768-20260627T011603Z/`) is not a
 record comparison (`MAX_TOKENS=128`, profiling enabled) but confirms the hot
@@ -119,19 +124,32 @@ work or change the fresh-valid speculation structure; do not repeat existing
 GEGLU/down, broad `MUL_MAT_ID`, ngram-history, or naive high-depth MTP lanes.
 
 2026-06-27 screen audit update: a p-min/UBATCH neighborhood sweep found three
-screen-only rows above the current `104.07050714456982 tok/s` record, but no
-new full validation yet. Treat all as **candidates only** until full repeat:
+screen-only rows above the then-current `104.07050714456982 tok/s` record. Two
+promoted full validations were valid losses, and the third produced only a
+small `104.22626983476746 tok/s` micro-record. This reinforces that the lane is
+mostly row0/runtime variance until the direct-unroll path exposes a real
+confidence score:
 
 - `data/gemma4-q8-gpu0-ub768-pmin010-screen-20260627T031002Z/summary.json`:
   `104.90764207185568 tok/s`, 64/64 canary rows, `UBATCH_SIZE=768`,
-  `MTP_N_MIN=2`, `MTP_P_MIN=0.10`. This is the only screen far enough above
-  current to justify first validation; full run
-  `gemma4-q8-gpu0-ub768-pmin010-fullrepeat-20260627T031448Z` was still pending
-  when this note was written.
+  `MTP_N_MIN=2`, `MTP_P_MIN=0.10`. Full run
+  `data/gemma4-q8-gpu0-ub768-pmin010-fullrepeat-20260627T031448Z/summary.json`
+  passed `6144/6144` canary rows but landed at only
+  `104.00197765543678 tok/s` fresh row0 -> valid loss.
 - `data/gemma4-q8-gpu3-ub768-nmin3-pmin0136-screen-20260627T031002Z/summary.json`:
   `104.17822408660554 tok/s`, 64/64 canary rows, `n_min=3`, `p_min=0.136`.
+  Full run
+  `data/gemma4-q8-gpu3-ub768-nmin3-pmin0136-fullrepeat-20260627T034150Z/summary.json`
+  passed `6144/6144` canary rows but landed at only
+  `103.98432370694714 tok/s` fresh row0 -> valid loss.
 - `data/gemma4-q8-gpu3-u768-nmin3-pmin010-screen-20260627T032140Z/summary.json`:
   `104.12813019085074 tok/s`, 64/64 canary rows, `n_min=3`, `p_min=0.10`.
+  Full validation
+  `data/gemma4-q8-gpu0-ub768-nmin3-pmin010-fullrepeat-20260627T035307Z/summary.json`
+  passed `6144/6144` canary rows and landed at
+  `104.22626983476746 tok/s` fresh row0 / `104.17418893412489` support mean,
+  LocalMaxxing `cmqvv3kop0309qr013ekr8apu`. Valid micro-record, not a material
+  step toward `>150 tok/s`.
 
 Avoid over-reading these screens. Similar prior screens collapsed under full
 validation: `UBATCH_SIZE=832` screened at `105.00621024594338` but validated at
@@ -139,6 +157,12 @@ validation: `UBATCH_SIZE=832` screened at `105.00621024594338` but validated at
 but validated at `101.8211074778421`; `BATCH=1024/UBATCH=768` screened at
 `104.63299392132738` and validated as only the current `104.07050714456982`
 record.
+
+Direct-source audit found the likely reason these threshold-only sweeps are so
+weak: the promoted direct-unroll assistant path emits sampled token IDs only and
+bypasses the normal `MTP_P_MIN` / `draft_logit_gap_min` checks. Treat future
+`p_min` sweeps as low-value unless paired with a source patch that returns a
+top1/top2 score, probability, or gap from the fast direct path.
 
 2026-06-27 source roadmap after audit:
 

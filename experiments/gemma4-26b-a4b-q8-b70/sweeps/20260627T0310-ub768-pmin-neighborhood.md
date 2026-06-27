@@ -110,3 +110,44 @@ Decision: valid loss. Do not submit. Keep current LocalMaxxing record
 `cmqvmjvzx02qvqr01qh9jikow`. The `104.90764207185568 tok/s` screen was a
 variance spike, matching the pattern seen with the prior `UBATCH_SIZE=832`
 screen.
+
+## Full validation result for `n_min=3`, `p_min=0.136`
+
+`data/gemma4-q8-gpu3-ub768-nmin3-pmin0136-fullrepeat-20260627T034150Z/summary.json`
+also invalidated its above-record screen:
+
+- canary: `1536` repeats / `6144` rows, pass;
+- benchmark rows: 8 rows, all reported `cached_tokens=0`;
+- fresh row0 after TTFT: `103.98432370694714 tok/s`;
+- support mean after TTFT: `103.24762181582648 tok/s`;
+- wall row0: `90.44167799165677 tok/s`;
+- current record to beat: `104.07050714456982 tok/s`.
+
+Decision: valid loss. Do not submit. The `104.17822408660554 tok/s` screen was
+another small screen-only variance edge, not a reproducible record.
+
+## Full validation result for `n_min=3`, `p_min=0.10`
+
+`data/gemma4-q8-gpu0-ub768-nmin3-pmin010-fullrepeat-20260627T035307Z/summary.json`
+beat the previous LocalMaxxing record, but only as a small same-stack
+micro-record:
+
+- canary: `1536` repeats / `6144` rows, pass;
+- benchmark rows: 8 rows, all reported `cached_tokens=0`;
+- fresh row0 after TTFT: `104.22626983476746 tok/s`;
+- support mean after TTFT: `104.17418893412489 tok/s`;
+- wall row0: `90.7413762430611 tok/s`;
+- previous record to beat: `104.07050714456982 tok/s`;
+- LocalMaxxing: submitted and approved as `cmqvv3kop0309qr013ekr8apu`;
+- queue:
+  `data/localmaxxing-gemma4-26b-a4b-q8-b70-llamacpp-mtp-n7-q8target-q40draft-routecache-mtpfusedoutargmax-selfusedweights-ub768-nmin3-pmin010-fresh-20260627.queue.json`;
+- response:
+  `data/localmaxxing-responses/gemma4-26b-a4b-q8-b70-llamacpp-mtp-n7-q8target-q40draft-routecache-mtpfusedoutargmax-selfusedweights-ub768-nmin3-pmin010-fresh-20260627.submit.log`.
+
+Decision: valid fresh-response micro-record. It is worth recording and
+submitting because the support mean also improved, but it does not change the
+frontier analysis: threshold-only sweeps are low-value because the promoted
+direct-unroll assistant path emits token IDs only and bypasses the normal
+`MTP_P_MIN` / `draft_logit_gap_min` checks. Stop spending full-depth canary time
+on `p_min`/`n_min` micro-sweeps until the direct-unroll path exposes a
+confidence score or logit gap.
