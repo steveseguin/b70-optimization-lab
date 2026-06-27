@@ -213,6 +213,18 @@ top1/top2 score, probability, or gap from the fast direct path.
    `LLAMA_MTP_DRAFT_DIRECT_ARGMAX_SCORES=1` or
    `LLAMA_MTP_DRAFT_DIRECT_UNROLL_CONF_GATE=1`.
 
+2026-06-27 blind direct-unroll depth screen: four fresh-valid screens on the
+current record stack tested larger direct-unroll depths without changing the
+verifier economics. All passed `64/64` chat canary rows with `cached_tokens=0`,
+but all were large valid losses versus the `104.22626983476746 tok/s` record:
+`n=8` reached `66.84787263988618 tok/s`, `n=9` reached
+`71.63228403027686`, `n=10` reached `76.20014071584247`, and `n=12` reached
+`82.92906186353807`. See
+`../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260627T0531-direct-unroll-depth-losses.md`.
+Conclusion: stop blind depth expansion. Higher depths are only worth retesting
+after a source change supplies real direct-path confidence scores or materially
+reduces target verifier MoE/LM-head work.
+
 2026-06-26 verifier profile update:
 
 - current-stack profile control reproduced the promoted family at

@@ -57,6 +57,14 @@ Current promoted family:
   `p-min=0.08/0.10/0.12` and `n=9, p-min=0.12` all passed 384/384 canaries but
   fell to `61.8-65.9 tok/s` on the filled-long shape, far below the `n=7`
   record.
+- The 2026-06-27 current-stack blind direct-unroll retest confirms the same
+  failure mode. With the promoted route-cache / fused-output / selected-softmax
+  / `UBATCH_SIZE=768` stack, `n=8`, `n=9`, `n=10`, and `n=12` all passed `64/64`
+  canary rows with `cached_tokens=0`, but measured only `66.85`, `71.63`,
+  `76.20`, and `82.93 tok/s` fresh row0 respectively. Do not run more blind
+  `n>7` sweeps. Retest larger depth only after adding real direct-path
+  confidence scores or reducing verifier MoE/LM-head cost. Note:
+  `../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260627T0531-direct-unroll-depth-losses.md`.
 - Draftless n-gram speculation can be target-verified and still be invalid as a
   fresh-response headline. On 2026-06-23, `ngram-mod match=20 min=32 max=64`
   reached `245-280 tok/s` only after repeated filled-long benchmark responses
