@@ -81,6 +81,7 @@ LLAMA_GEMMA4_MTP_QONLY_ATTN_INPUTS="${LLAMA_GEMMA4_MTP_QONLY_ATTN_INPUTS:-}" \
 LLAMA_GEMMA4_MOE_SELECTED_SOFTMAX="${LLAMA_GEMMA4_MOE_SELECTED_SOFTMAX:-}" \
 LLAMA_GEMMA4_MOE_SELECTED_SOFTMAX_FUSED="${LLAMA_GEMMA4_MOE_SELECTED_SOFTMAX_FUSED:-}" \
 LLAMA_GEMMA4_MOE_REUSE_ATTN_RMS="${LLAMA_GEMMA4_MOE_REUSE_ATTN_RMS:-}" \
+LLAMA_GEMMA4_MOE_ROUTER_POST_SCALE="${LLAMA_GEMMA4_MOE_ROUTER_POST_SCALE:-}" \
 LLAMA_GEMMA4_MOE_TOP_K="${LLAMA_GEMMA4_MOE_TOP_K:-}" \
 LLAMA_GEMMA4_MOE_SORTED_TOP_K="${LLAMA_GEMMA4_MOE_SORTED_TOP_K:-}" \
 LLAMA_GEMMA4_MOE_WEIGHTED_SUM="${LLAMA_GEMMA4_MOE_WEIGHTED_SUM:-}" \
@@ -231,6 +232,7 @@ out = {
         "llama_gemma4_moe_selected_softmax": env_or_log("LLAMA_GEMMA4_MOE_SELECTED_SOFTMAX"),
         "llama_gemma4_moe_selected_softmax_fused": env_or_log("LLAMA_GEMMA4_MOE_SELECTED_SOFTMAX_FUSED"),
         "llama_gemma4_moe_reuse_attn_rms": env_or_log("LLAMA_GEMMA4_MOE_REUSE_ATTN_RMS"),
+        "llama_gemma4_moe_router_post_scale": env_or_log("LLAMA_GEMMA4_MOE_ROUTER_POST_SCALE"),
         "llama_gemma4_moe_top_k": env_or_log("LLAMA_GEMMA4_MOE_TOP_K"),
         "llama_gemma4_moe_sorted_top_k": env_or_log("LLAMA_GEMMA4_MOE_SORTED_TOP_K"),
         "llama_gemma4_moe_weighted_sum": env_or_log("LLAMA_GEMMA4_MOE_WEIGHTED_SUM"),
