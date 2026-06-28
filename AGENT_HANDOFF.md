@@ -1,6 +1,6 @@
 # Codex Agent Handoff
 
-Last updated: 2026-06-27
+Last updated: 2026-06-28
 
 This file is the first thing a new Codex agent should read when continuing the
 Intel Arc Pro B70 LLM optimization work.
@@ -14,20 +14,23 @@ Primary target:
   for parallel research screens rather than TP4 unless explicitly testing a
   multi-GPU serving shape.
 - Best strict realistic-suite one-B70 result is
-  `87.61145306230438 tok/s` median generated-token throughput for tokens 1-100
+  `95.82453787677183 tok/s` median generated-token throughput for tokens 1-100
   after TTFT across the fixed cold prompt suite. Evidence:
-  `data/gemma4-q8-gpu0-vdr4default-mtp-n3-nmin2-p005-ub1024-realistic-gate-repeat-v8/summary.json`.
+  `data/gemma4-q8-gpu1-strict-vdr2-f16p021-smallncols-full512-exactconfirm-n3-nmin2-p00475-ub1024-20260628T010121Z/summary.json`.
   It uses llama.cpp `c926ad098`, UD-Q8_K_XL target/verifier, Q4_0 MTP draft,
-  default reordered-Q8 VDR4, `n_max=3`, `n_min=2`, `p_min=0.05`,
-  `UBATCH_SIZE=1024`, `cached_tokens=0` on every prompt, and
-  `realistic_final_gate.passed=true`.
-- Representative / submitted status: this is the confirmed strict-gate
-  `n_max=3`, `n_min=2`, `p_min=0.05`, `UBATCH_SIZE=1024` family. Runs measured
-  `84.82456994237617`, `83.83638918369195`, `84.52685942118447`, and
-  `87.61145306230438 tok/s`. The v8 family row was submitted under the
-  realistic-suite policy and approved by LocalMaxxing as
-  `cmqwnl2ag03lgqr01ch5bxknq`. The previous `86.47445652599384 tok/s`
-  `p_min=0.075` observation did not repeat and is now superseded.
+  reordered-Q8 VDR2, `n_max=3`, `n_min=2`, `p_min=0.0475`,
+  `UBATCH_SIZE=1024`, `LLAMA_SYCL_F16_P021_SMALL_NCOLS=1`,
+  `cached_tokens=0` on every prompt, and `realistic_final_gate.passed=true`.
+- Representative / submitted status: this is the confirmed strict-gate VDR2
+  `n_max=3`, `n_min=2`, `p_min=0.0475`, `UBATCH_SIZE=1024` family plus
+  `LLAMA_SYCL_F16_P021_SMALL_NCOLS=1`. The four-GPU full512 confirmation
+  measured `95.81654623957742`, `95.82453787677183`, `93.42169001279183`,
+  and `95.56564013874495 tok/s`; the submitted row is approved by
+  LocalMaxxing as `cmqx3687103v4qr01ace1ft3m`. Prior submitted rows
+  `90.98312252660529` (`cmqwxep4a03qiqr010chjn93s`),
+  `90.32179401019857` (`cmqwt1zk803ozqr01hctqss2z`),
+  `89.45543282863798` (`cmqwqzayr03o8qr01j6lgx93n`), and
+  `87.61145306230438` (`cmqwnl2ag03lgqr01ch5bxknq`) are superseded.
 - Current valid no-spec control is `74.29709476830473 tok/s` median on the same
   suite:
   `data/gemma4-q8-gpu0-vdr4default-nospec-realistic-gate-v2-20260627T165335Z/summary.json`.

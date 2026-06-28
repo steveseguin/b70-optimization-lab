@@ -107,23 +107,28 @@ Record identity:
 - draft: local `Q4_0` Gemma MTP draft only
 - hardware: headless Supermicro AMD Threadripper PRO 5955WX platform, 128 GB
   DDR4, one Intel Arc Pro B70 32 GB used for the measured replica
-- result: best strict result `90.32179401019857 tok/s` median
+- result: best strict result `95.82453787677183 tok/s` median
   generated-token throughput for tokens 1-100 after TTFT across the fixed
   realistic cold prompt suite, `cached_tokens=0` on every prompt,
   `realistic_final_gate.passed=true`.
   Evidence:
-  `../data/gemma4-q8-gpu2-strict-vdr2-n3-p00475-repeat-ub1024-v21-20260627T201757Z/summary.json`.
+  `../data/gemma4-q8-gpu1-strict-vdr2-f16p021-smallncols-full512-exactconfirm-n3-nmin2-p00475-ub1024-20260628T010121Z/summary.json`.
   Config: reordered-Q8 VDR2, `n_max=3`, `n_min=2`, `p_min=0.0475`,
-  `UBATCH_SIZE=1024`, `--ctx-checkpoints 0`, no n-gram/history acceleration.
+  `UBATCH_SIZE=1024`, `LLAMA_SYCL_F16_P021_SMALL_NCOLS=1`,
+  `--ctx-checkpoints 0`, no n-gram/history acceleration.
   This is the current submitted VDR2 representative row, approved under the
-  realistic-suite policy as `cmqwt1zk803ozqr01hctqss2z`. Supporting VDR2
-  strict rows measured `89.45543282863798`, `89.43737321875525`,
-  `88.06323469748838`, and `85.90621112154868 tok/s`. The prior VDR2
-  `89.45543282863798 tok/s` and VDR4 `87.61145306230438 tok/s` submissions
-  are superseded. The old
-  `176.216232 tok/s` synthetic filled-long row remains diagnostic only and is
-  not representative real-world throughput.
+  realistic-suite policy as `cmqx3687103v4qr01ace1ft3m`. Supporting full512
+  strict rows in the same confirmation batch measured `95.81654623957742`,
+  `93.42169001279183`, and `95.56564013874495 tok/s`. The prior VDR2
+  `90.98312252660529`, `90.32179401019857`, and `89.45543282863798 tok/s`
+  submissions and VDR4 `87.61145306230438 tok/s` submission are superseded.
+  The old `176.216232 tok/s` synthetic filled-long row remains diagnostic only
+  and is not representative real-world throughput.
 - primary artifacts:
+  `../data/gemma4-q8-gpu1-strict-vdr2-f16p021-smallncols-full512-exactconfirm-n3-nmin2-p00475-ub1024-20260628T010121Z/summary.json`,
+  `../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260628T0047-strict-f16p021-smallncols-record.md`,
+  `../data/localmaxxing-responses/gemma4-26b-a4b-q8-b70-llamacpp-realistic-vdr2-mtp-n3-nmin2-p00475-ub1024-f16p021-smallncols-full512-20260628.submit.log`,
+  `../data/gemma4-q8-gpu1-strict-vdr2-recordconfirm-n3-nmin2-p00475-ub1024-20260627T221722Z/summary.json`,
   `../data/gemma4-q8-gpu2-strict-vdr2-n3-p00475-repeat-ub1024-v21-20260627T201757Z/summary.json`,
   `../data/gemma4-q8-gpu2-strict-vdr2-n3-p00475-ub1024-v19-20260627T191931Z/summary.json`,
   `../data/gemma4-q8-gpu0-strict-vdr2-repeat-n3-p005-ub1024-v19-20260627T191931Z/summary.json`,

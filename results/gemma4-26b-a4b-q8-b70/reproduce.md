@@ -8,22 +8,22 @@ promoted reproduction target is the fixed realistic cold prompt suite:
 Best strict cold-suite result:
 
 - draft-MTP VDR2:
-  `data/gemma4-q8-gpu1-strict-vdr2-recordconfirm-n3-nmin2-p00475-ub1024-20260627T221722Z/summary.json`;
-- primary metric: `90.98312252660529 tok/s` median generated-token throughput
+  `data/gemma4-q8-gpu1-strict-vdr2-f16p021-smallncols-full512-exactconfirm-n3-nmin2-p00475-ub1024-20260628T010121Z/summary.json`;
+- primary metric: `95.82453787677183 tok/s` median generated-token throughput
   for tokens 1-100 after TTFT;
 - config: reordered-Q8 VDR2, `n_max=3`, `n_min=2`, `p_min=0.0475`,
-  `UBATCH_SIZE=1024`, Q4_0 MTP draft verified by the Q8 target;
+  `UBATCH_SIZE=1024`, `LLAMA_SYCL_F16_P021_SMALL_NCOLS=1`, Q4_0 MTP draft
+  verified by the Q8 target;
 - gate: `realistic_final_gate.passed=true`, `cached_tokens=0` on every prompt.
 
 Representative / submitted status: the current LocalMaxxing payload uses the
-VDR2 transfer of the strict `n_max=3`, `n_min=2`, `UBATCH_SIZE=1024` family.
-Exact confirmation repeats measured `88.57072965699355`,
-`90.98312252660529`, `89.87311437412865`, and `87.29987510414621 tok/s`.
-A same-identity high observation measured `91.39281557735391 tok/s`, but the
-conservative submitted headline is the confirmed `90.98312252660529` row.
-Approved ID: `cmqwxep4a03qiqr010chjn93s`. Prior VDR2 rows
-`90.32179401019857` and `89.45543282863798 tok/s`, plus VDR4
-`87.61145306230438 tok/s`, remain valid but are superseded.
+VDR2 transfer of the strict `n_max=3`, `n_min=2`, `UBATCH_SIZE=1024` family
+plus `LLAMA_SYCL_F16_P021_SMALL_NCOLS=1`. Exact full512 confirmation repeats
+measured `95.81654623957742`, `95.82453787677183`,
+`93.42169001279183`, and `95.56564013874495 tok/s`. Approved ID:
+`cmqx3687103v4qr01ace1ft3m`. Prior VDR2 row `90.98312252660529 tok/s`,
+earlier VDR2 rows `90.32179401019857` and `89.45543282863798 tok/s`, plus
+VDR4 `87.61145306230438 tok/s`, remain valid but are superseded.
 
 Current no-spec control:
 
@@ -149,14 +149,14 @@ scripts/run-gemma4-26b-first-baseline.sh
 Use this command for the current representative draft-MTP realistic-suite
 candidate. It reproduces the VDR2 `n_max=3`, `n_min=2`, `p_min=0.0475`,
 `UBATCH_SIZE=1024` family, whose current submitted strict row is
-`90.983 tok/s` on the fixed cold suite. The prior VDR2 `90.322 tok/s` and
-VDR4 `87.611 tok/s` rows remain valid evidence but are no longer the promoted
-LocalMaxxing headline.
+`95.825 tok/s` on the fixed cold suite. The prior VDR2 `90.983`,
+`90.322`, and VDR4 `87.611 tok/s` rows remain valid evidence but are no longer
+the promoted LocalMaxxing headline.
 
 ```bash
 cd /home/steve/qwen36-results-main
 LLAMA_SERVER=/home/steve/src/llama.cpp-gemma-record-repro-c926/build-sycl-b70-aot-bmg-g31-q8reorder-vdr2/bin/llama-server \
-ONEAPI_DEVICE_SELECTOR=level_zero:2 \
+ONEAPI_DEVICE_SELECTOR=level_zero:1 \
 UR_L0_USE_IMMEDIATE_COMMANDLISTS=1 \
 GGML_SYCL_DISABLE_OPT=0 \
 GGML_SYCL_DISABLE_GRAPH=0 \
@@ -175,6 +175,7 @@ LLAMA_GEMMA4_MOE_SELECTED_SOFTMAX_FUSED=1 \
 LLAMA_GEMMA4_MOE_WEIGHTED_SUM=1 \
 LLAMA_GEMMA4_MOE_REUSE_ATTN_RMS=1 \
 LLAMA_SYCL_MUL_MAT_ID_ROUTE_CACHE=1 \
+LLAMA_SYCL_F16_P021_SMALL_NCOLS=1 \
 GPU_INDEX=1 PORT=18421 \
 CTX_SIZE=8192 BATCH_SIZE=1024 UBATCH_SIZE=1024 THREADS=8 POLL=100 \
 CACHE_TYPE_K=f16 CACHE_TYPE_V=f16 FLASH_ATTN=off REASONING=off \
