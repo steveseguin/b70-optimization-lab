@@ -14,6 +14,14 @@ turned into clean PRs or maintainer-actionable issues.
 LocalMaxxing result submission credentials and helper usage are documented in
 [localmaxxing.md](localmaxxing.md); keep the API key outside Git.
 
+Hardware coverage caveat: the local Intel lab has four B70 32 GB cards. That is
+enough to find real vLLM/XPU bugs and validate quality-gated patches, but it is
+not enough to keep broad larger-model coverage moving in parallel. Higher-VRAM
+Intel devices, especially Crescent Island-class `160-480 GB` evaluation
+hardware or comparable future XPU parts, would make the upstream-candidate list
+less theoretical for GLM 5.2, DeepSeek Flash-class, and larger MoE/context
+profiles.
+
 ## Highest-Value Candidates
 
 ### 1. XPU W8A8 INT8 grouped GEMM and MoE support

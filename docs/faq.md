@@ -110,6 +110,22 @@ During one startup, Intel `ocloc`/IGC logged an internal compiler error while co
 
 Publish the model, quantization, hardware, OS, driver/runtime versions, exact commands, quality gate, benchmark shape, output tok/s, total tok/s, and raw artifacts. Negative results are useful too if they save others from repeating a bad path.
 
+## How can I help if I do not have a faster result?
+
+Reproduce a recipe, test a driver/runtime update, add a quality canary, publish
+a clean failure log, or help turn a local patch into a small upstream issue.
+For vendors and labs, temporary access to larger Intel hardware is also useful:
+it lets this project test models that are too large for 32 GB cards while
+keeping the existing B70 endpoint and validation lanes available.
+
+## What would let this project optimize more models faster?
+
+More VRAM per Intel device, more independent Intel test systems, and more stable
+binary software paths. The current four-B70 lab is busy enough that optimizing
+one model can occupy the available cards for days or weeks. A higher-memory
+Intel setup would let larger GLM/DeepSeek-class models be optimized directly
+instead of first fighting to fit them.
+
 ## Why talk about concurrency?
 
 Single-request tok/s is only one metric. A local endpoint for coding or agentic workflows may need multiple overlapping requests, tool calls, long contexts, or background jobs. Multi-card systems can be valuable even when batch-1 tok/s does not scale perfectly.

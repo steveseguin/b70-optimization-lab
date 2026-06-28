@@ -30,6 +30,49 @@ This repository is meant to become a stable community hub for Intel XPU local AI
 - troubleshooting for drivers, PCIe topology, XPU visibility, and runtime mismatches
 - research leads and reproducible optimization notes
 
+Hardware coverage note: the current lab is four Arc Pro B70 32 GB cards
+(`128 GB` aggregate VRAM). That is enough to produce useful vLLM/XPU,
+llama.cpp/SYCL, driver, and model-port feedback, but it is also now the main
+coverage limit for larger model families. Higher-VRAM Intel eval hardware,
+especially Crescent Island-class `160-480 GB` devices or comparable future XPU
+parts, would directly expand this work into larger targets such as GLM 5.2,
+DeepSeek Flash-class models, and long-context service lanes that cannot be
+kept resident on 32 GB cards. Steve Seguin maintains this repo and posts ongoing
+build notes at <https://x.com/xyster>. The lab also has spare EPYC 9015 host
+capacity with up to ten PCIe 5.0 x16 slots, so the limiting factor for broader
+Intel coverage is increasingly GPU memory and hardware availability, not a lack
+of chassis or reproducibility workflow.
+
+## How To Help This Research
+
+This project is most useful when it turns individual lab time into reusable
+public evidence: commands, patches, canaries, negative results, driver
+failures, and result packets that other Intel/XPU users can find and repeat.
+B70 has become one of the more visible cards in LocalMaxxing-style community
+benchmarks partly because these runs are documented, submitted, discussed on X,
+and indexed by GitHub for future users and agents.
+
+Useful contributions include:
+
+- reproducing a result on another Intel/XPU stack and sharing exact versions;
+- testing a failed lane after a driver, PyTorch XPU, vLLM, or oneAPI update;
+- turning local patches into clean vLLM, vllm-xpu-kernels, llama.cpp, or docs
+  issues/PRs;
+- adding quality canaries for new model families;
+- sharing high-signal failure logs with model, quantization, graph mode, and
+  hardware identity intact;
+- providing temporary access to larger Intel hardware for models that do not
+  fit cleanly on 32 GB cards.
+
+The slow part is not writing down another benchmark command. Each serious model
+lane can take days or weeks because the cards are occupied by build/test loops,
+quality gates, compiler/runtime failures, LocalMaxxing validation, and
+near-record repeat checks. More high-VRAM Intel hardware would let the project
+keep a working inference endpoint available while also optimizing multiple
+larger models in parallel. A community lab with roughly `400-1000 GB` of Intel
+VRAM across high-memory devices would change which models can be optimized at
+home, not just how many jobs can queue at once.
+
 ## Quick Paths
 
 | I want to... | Go here |

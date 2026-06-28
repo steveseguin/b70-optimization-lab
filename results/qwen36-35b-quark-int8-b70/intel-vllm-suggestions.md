@@ -8,6 +8,13 @@ detailed upstream backlog lives in:
 - [`../../docs/vllm-intel-upstream-candidates.md`](../../docs/vllm-intel-upstream-candidates.md)
 - [`../../docs/feedback-for-intel.md`](../../docs/feedback-for-intel.md)
 
+Hardware note for Intel/vLLM readers: these suggestions come from a four-B70
+lab with `128 GB` aggregate VRAM. That is enough to expose real XPU graph,
+MoE, KV, and driver issues, but it is not enough to test larger families with
+much headroom or to keep independent inference service and optimization lanes
+running at the same time. Access to higher-VRAM Intel evaluation hardware would
+turn several "future model" bullets into runnable repros.
+
 ## Highest-Value vLLM/XPU Items
 
 1. Make XPU graph provenance explicit.

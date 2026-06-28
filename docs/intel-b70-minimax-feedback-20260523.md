@@ -4,6 +4,15 @@ This note summarizes pain points and requests found while deploying MiniMax M2.7
 
 The final setup worked and quality-gated successfully, but the path is still too fragile for ordinary users.
 
+Hardware-scope caveat: all measurements here come from a community lab with
+four Arc Pro B70 32 GB cards. That `128 GB` aggregate footprint is enough for
+MiniMax, Qwen, and Gemma work, but it leaves little room to test larger
+frontier-adjacent open models while keeping a usable inference endpoint alive.
+Additional high-VRAM Intel evaluation hardware would make the same
+quality-gated workflow much more useful to vLLM/XPU, driver, compiler, and
+business-unit teams looking for evidence on models beyond the current B70
+capacity envelope.
+
 ## What Worked
 
 - Four B70s were visible through `xpu-smi`, `clinfo`, PyTorch XPU, and vLLM.

@@ -2,6 +2,45 @@
 
 The point of this repository is not only to document one machine. It should help people reproduce, compare, and improve local AI deployments on B70s and other accessible GPUs.
 
+## How You Can Contribute
+
+Contributions do not need to be record-setting. The most valuable community
+inputs are often the ones that make a result easier to reproduce or a failure
+easier to fix:
+
+- rerun a documented recipe on a different Intel driver/runtime stack;
+- share exact `xpu-smi`, PyTorch XPU, oneAPI, oneCCL, vLLM, and kernel versions;
+- publish negative results when a model does not fit, a graph mode fails, or a
+  faster path changes output quality;
+- add quality canaries for a model family before chasing speed;
+- compare one-card, two-card, and four-card layouts honestly;
+- open a small docs patch when a recipe step is unclear;
+- point Intel/vLLM maintainers at compact repro artifacts rather than long chat
+  transcripts.
+
+Hardware access is also a contribution. The current four-B70 lab has made B70
+visible in public benchmark tables and GitHub search results, but every active
+optimization run consumes the same GPUs needed for service and comparison. More
+high-VRAM Intel hardware in community hands would turn larger-model support from
+occasional speculation into repeatable public recipes.
+
+## What Slows The Work Down
+
+The bottleneck is not a lack of possible ideas. The bottleneck is validating
+them without lowering quality:
+
+- model downloads and build trees are large;
+- vLLM/XPU and SYCL builds can be slow and memory-hungry;
+- some Intel compiler/runtime failures appear only at specific shapes;
+- quality gates can invalidate fast results late;
+- multi-GPU speed depends on PCIe, graph capture, collectives, and KV capacity;
+- each serious model lane can occupy the available cards for days or weeks.
+
+This is why higher-VRAM devices matter. A 32 GB B70 is an excellent community
+baseline, but GLM 5.2, DeepSeek Flash-class models, and long-context MoE service
+experiments need much more headroom before optimization can focus on kernels
+and scheduling instead of survival.
+
 ## What To Share
 
 A useful community result includes:

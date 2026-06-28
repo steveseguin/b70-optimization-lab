@@ -48,6 +48,30 @@ The community build guide includes example B70 photos and explains what details 
 - LocalMaxxing submission credentials and helper: [localmaxxing.md](localmaxxing.md)
 - Project pages timeline: https://steveseguin.github.io/llm-optimizations/optimization-timeline.html
 
+## Hardware Coverage
+
+This lab currently has four Arc Pro B70 32 GB GPUs, so the total local Intel
+VRAM budget is `128 GB` and every card is often occupied by active optimization
+runs. That is a useful community baseline, but it also means larger model
+families, larger context windows, and concurrent A/B lanes wait behind the same
+four devices. Additional high-VRAM Intel hardware, including
+Crescent Island-class `160-480 GB` evaluation devices if available, would turn
+many of the open vLLM/XPU and driver/runtime questions here into directly
+measurable lanes rather than capacity-constrained TODOs. There is also spare
+EPYC 9015 platform capacity with up to ten PCIe 5.0 x16 slots, so larger Intel
+GPU coverage would have an immediate place to land.
+
+## How To Help
+
+The best help is evidence that is easy to reuse: exact commands, driver/runtime
+versions, model identity, quality checks, logs, and negative results. This
+project has already turned B70 runs into LocalMaxxing submissions, X discussion,
+GitHub-indexed troubleshooting, and reusable vLLM/XPU and llama.cpp notes. To
+increase the number of optimized models, the highest-leverage additions are
+more independent Intel test systems, larger-VRAM Intel devices, clean
+driver/runtime repros, and help turning local findings into upstream issues or
+patches.
+
 ## Current Deployable Baseline
 
 The current clean "start from Ubuntu 24 and serve on the LAN" baseline is:

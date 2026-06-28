@@ -2,13 +2,14 @@
 
 Status: **active optimization with a realistic final gate now required.** The
 best one-B70 Q8 strict result by the required primary metric is
-`95.82453787677183 tok/s` median generated-token throughput for tokens 1-100
+`98.34046474459183 tok/s` median generated-token throughput for tokens 1-100
 after TTFT across the fixed cold prompt suite:
-`data/gemma4-q8-gpu1-strict-vdr2-f16p021-smallncols-full512-exactconfirm-n3-nmin2-p00475-ub1024-20260628T010121Z/summary.json`.
+`data/gemma4-q8-gpu1-strict-vdr2-f16p021-bulksampled-confirm-B-n3-nmin2-p00475-ub1024-full512-20260628T052158Z/summary.json`.
 It uses llama.cpp `c926ad098`, UD-Q8_K_XL target/verifier, Q4_0 MTP draft,
 reordered-Q8 VDR2, `n_max=3`, `n_min=2`, `p_min=0.0475`,
-`UBATCH_SIZE=1024`, `LLAMA_SYCL_F16_P021_SMALL_NCOLS=1`, `cached_tokens=0`
-on every suite prompt, and `realistic_final_gate.passed=true`.
+`UBATCH_SIZE=1024`, `LLAMA_SYCL_F16_P021_SMALL_NCOLS=1`,
+`LLAMA_SPEC_VERIFY_BULK_SAMPLED_IDS=1`, `cached_tokens=0` on every suite
+prompt, and `realistic_final_gate.passed=true`.
 
 Quantization guardrail: the promoted no-quality-loss lane is the literal
 `gemma-4-26B-A4B-it-UD-Q8_K_XL.gguf` target/verifier. Older file labels such
@@ -19,17 +20,18 @@ accepts that quantization change.
 
 Current repeat / confirmation status: the VDR2 transfer of the strict
 `n_max=3`, `n_min=2`, `UBATCH_SIZE=1024` family plus
-`LLAMA_SYCL_F16_P021_SMALL_NCOLS=1` is the current policy-compliant
-LocalMaxxing submission: `cmqx3687103v4qr01ace1ft3m`. The submitted row came
+`LLAMA_SYCL_F16_P021_SMALL_NCOLS=1` and
+`LLAMA_SPEC_VERIFY_BULK_SAMPLED_IDS=1` is the current policy-compliant
+LocalMaxxing submission: `cmqxchyra03xmqr01b963gmi1`. The submitted row came
 from a four-GPU exact full512 confirmation batch; repeats measured
-`95.81654623957742`, `95.82453787677183`, `93.42169001279183`, and
-`95.56564013874495 tok/s`. The promoted row has p10
-`85.50364602737247`, mean `95.60529298381927`, median full512 after-TTFT
-`91.14224184526994`, median wall full512 `88.26207892019767`, and median TTFT
-`179.72276301588863 ms`. The prior LocalMaxxing row
-`cmqwxep4a03qiqr010chjn93s` at `90.98312252660529 tok/s`, prior VDR2
-submissions `cmqwt1zk803ozqr01hctqss2z` and `cmqwqzayr03o8qr01j6lgx93n`,
-plus prior VDR4 submission `cmqwnl2ag03lgqr01ch5bxknq`, are superseded.
+`96.01452890026427`, `98.34046474459183`, `95.90275376682132`, and
+`94.94094934974818 tok/s`. The promoted row has p10
+`85.97937679810455`, mean `95.95288855186745`, median full512 after-TTFT
+`91.17386231553596`, median wall full512 `87.73710699260519`, and median TTFT
+`180.21126103121787 ms`. The prior LocalMaxxing row
+`cmqx3687103v4qr01ace1ft3m` at `95.82453787677183 tok/s`, earlier VDR2
+submissions, and prior VDR4 submission `cmqwnl2ag03lgqr01ch5bxknq`, are
+superseded.
 The earlier `86.47445652599384 tok/s` `p_min=0.075` observation did not repeat.
 
 The valid no-spec control is `74.29709476830473 tok/s` median:
@@ -97,6 +99,13 @@ parameters, so a full Q8 GGUF copy should fit on a 32 GB B70 with limited KV
 headroom. Running four replicas avoids the Qwen-style TP4 PCIe/collective cost
 and lets four experiments run at once.
 
+This is also the capacity boundary that makes Gemma 26B a good B70 target: it
+barely fits with Q8-quality weights and leaves enough room for useful decode
+work. Larger open-weight models will need either heavier compromises or
+higher-VRAM Intel hardware before this same no-quality-loss workflow can be
+applied cleanly. Crescent Island-class `160-480 GB` XPU devices would be the
+right kind of lab target for those next lanes.
+
 External references:
 
 - Unsloth GGUF repo and Q8 file list:
@@ -154,7 +163,8 @@ External references:
 
 | Date | Runtime | GPU Layout | Precision | Context | Status | Output tok/s | Evidence |
 | --- | --- | --- | --- | --- | --- | ---: | --- |
-| 2026-06-28 | llama.cpp `c926ad098` SYCL draft-MTP AOT BMG + Q8 MoE-ID reorder VDR2 + F16 p021 small-ncols path | 1 replica on B70 GPU1; four parallel one-B70 confirmations | UD-Q8_K_XL GGUF target + Q4_0 MTP draft GGUF, f16 KV | 8K | **current strict realistic-suite record**: fixed realistic cold suite, each prompt once, `cached_tokens=0` every row, no cache/history/ngram reuse, `n_max=3`, `n_min=2`, `p_min=0.0475`, `UBATCH_SIZE=1024`, `LLAMA_SYCL_F16_P021_SMALL_NCOLS=1`, target-verifier accepted MTP tokens; LocalMaxxing `cmqx3687103v4qr01ace1ft3m`; full512 confirmation lanes measured `95.817`, `95.825`, `93.422`, `95.566` | **95.825 median 1-100 after TTFT** / 91.142 full512 after TTFT / 88.262 wall full512 | [summary](../../data/gemma4-q8-gpu1-strict-vdr2-f16p021-smallncols-full512-exactconfirm-n3-nmin2-p00475-ub1024-20260628T010121Z/summary.json), [LocalMaxxing response](../../data/localmaxxing-responses/gemma4-26b-a4b-q8-b70-llamacpp-realistic-vdr2-mtp-n3-nmin2-p00475-ub1024-f16p021-smallncols-full512-20260628.submit.log), [sweep note](../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260628T0047-strict-f16p021-smallncols-record.md) |
+| 2026-06-28 | llama.cpp `c926ad098` SYCL draft-MTP AOT BMG + Q8 MoE-ID reorder VDR2 + F16 p021 small-ncols path + bulk sampled-ID verifier host read | 1 replica on B70 GPU1; four parallel one-B70 confirmations | UD-Q8_K_XL GGUF target + Q4_0 MTP draft GGUF, f16 KV | 8K | **current strict realistic-suite record**: fixed realistic cold suite, each prompt once, `cached_tokens=0` every row, no cache/history/ngram reuse, `n_max=3`, `n_min=2`, `p_min=0.0475`, `UBATCH_SIZE=1024`, `LLAMA_SYCL_F16_P021_SMALL_NCOLS=1`, `LLAMA_SPEC_VERIFY_BULK_SAMPLED_IDS=1`, target-verifier accepted MTP tokens; LocalMaxxing `cmqxchyra03xmqr01b963gmi1`; full512 confirmation lanes measured `96.015`, `98.340`, `95.903`, `94.941` | **98.340 median 1-100 after TTFT** / 91.174 full512 after TTFT / 87.737 wall full512 | [summary](../../data/gemma4-q8-gpu1-strict-vdr2-f16p021-bulksampled-confirm-B-n3-nmin2-p00475-ub1024-full512-20260628T052158Z/summary.json), [LocalMaxxing response](../../data/localmaxxing-responses/gemma4-26b-a4b-q8-b70-llamacpp-realistic-vdr2-mtp-n3-nmin2-p00475-ub1024-f16p021-bulksampled-full512-20260628.submit.log), [sweep note](../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260628T0245-crack100-runtime-sweeps.md) |
+| 2026-06-28 | llama.cpp `c926ad098` SYCL draft-MTP AOT BMG + Q8 MoE-ID reorder VDR2 + F16 p021 small-ncols path | 1 replica on B70 GPU1; four parallel one-B70 confirmations | UD-Q8_K_XL GGUF target + Q4_0 MTP draft GGUF, f16 KV | 8K | prior strict realistic-suite record, superseded by the bulk sampled-ID row: fixed realistic cold suite, each prompt once, `cached_tokens=0` every row, no cache/history/ngram reuse, `n_max=3`, `n_min=2`, `p_min=0.0475`, `UBATCH_SIZE=1024`, `LLAMA_SYCL_F16_P021_SMALL_NCOLS=1`, target-verifier accepted MTP tokens; LocalMaxxing `cmqx3687103v4qr01ace1ft3m`; full512 confirmation lanes measured `95.817`, `95.825`, `93.422`, `95.566` | **95.825 median 1-100 after TTFT** / 91.142 full512 after TTFT / 88.262 wall full512 | [summary](../../data/gemma4-q8-gpu1-strict-vdr2-f16p021-smallncols-full512-exactconfirm-n3-nmin2-p00475-ub1024-20260628T010121Z/summary.json), [LocalMaxxing response](../../data/localmaxxing-responses/gemma4-26b-a4b-q8-b70-llamacpp-realistic-vdr2-mtp-n3-nmin2-p00475-ub1024-f16p021-smallncols-full512-20260628.submit.log), [sweep note](../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260628T0047-strict-f16p021-smallncols-record.md) |
 | 2026-06-27 | llama.cpp `c926ad098` SYCL draft-MTP AOT BMG + Q8 MoE-ID reorder VDR2 | 1 replica on B70 GPU1 | UD-Q8_K_XL GGUF target + Q4_0 MTP draft GGUF, f16 KV | 8K | prior strict realistic-suite record, superseded by the 2026-06-28 F16 p021 small-ncols row: fixed realistic cold suite, each prompt once, `cached_tokens=0` every row, no cache/history/ngram reuse, `n_max=3`, `n_min=2`, `p_min=0.0475`, `UBATCH_SIZE=1024`, target-verifier accepted MTP tokens; LocalMaxxing `cmqwxep4a03qiqr010chjn93s`; submitted from a conservative four-repeat confirmation batch, with a same-identity `91.393 tok/s` high observation kept as support rather than headline | **90.983 median 1-100 after TTFT** / 85.919 full512 after TTFT / 82.897 wall full512 | [summary](../../data/gemma4-q8-gpu1-strict-vdr2-recordconfirm-n3-nmin2-p00475-ub1024-20260627T221722Z/summary.json), [LocalMaxxing response](../../data/localmaxxing-responses/gemma4-26b-a4b-q8-b70-llamacpp-realistic-vdr2-mtp-n3-nmin2-p00475-ub1024-recordconfirm-20260627T221722.submit.log), [sweep note](../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260627T2213-vdr2-recordconfirm-and-n4-negative.md) |
 | 2026-06-27 | llama.cpp `c926ad098` SYCL draft-MTP AOT BMG + Q8 MoE-ID reorder VDR2 | 4 parallel one-B70 replicas | UD-Q8_K_XL GGUF target + Q4_0 MTP draft GGUF, f16 KV | 8K | **valid strict acceptance-shape loss**: `n_min=1` variants were tested because they could have accepted useful verified one-token drafts; all passed the fixed cold gate but lost. Exact control in the batch produced a marginal valid high observation (`91.048`), but an immediate exact-repeat batch fell to `84.943-86.572`, so it is not promoted. | `n_min=1` best **88.652 median 1-100**; control high **91.048**, not confirmed | [sweep note](../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260627T2340-nmin1-negative-control-repeat.md) |
 | 2026-06-27 | llama.cpp `c926ad098` SYCL draft-MTP AOT BMG + Q8 MoE-ID reorder VDR2 | 4 parallel one-B70 replicas | UD-Q8_K_XL GGUF target + alternate official MTP draft quants, f16 KV | 8K | **valid strict draft-quant losses**: Q4_K_M, Q5_K_M, Q6_K, and Q8_0 draft swaps all preserved strict validity but stayed below the Q4_0-draft record. Keep Q4_0 as the default draft unless a future source change changes the cost tradeoff. | best alternate draft **88.245 median 1-100** (Q8_0 draft) | [sweep note](../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260627T2322-strict-draft-quant-negative.md) |

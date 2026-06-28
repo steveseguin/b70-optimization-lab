@@ -5,6 +5,15 @@ the session-cache experiments, the TurboQuant patch, and the long-context
 research path. It is meant for a fresh human or agent who needs to reproduce or
 review the current work without reading every historical note first.
 
+Hardware scope: the local Intel lab is four Arc Pro B70 32 GB GPUs
+(`128 GB` aggregate VRAM). Results here are useful because they are produced on
+real community-accessible XPU hardware, but the same limit also constrains
+larger model coverage. Additional high-VRAM Intel hardware would let this map
+include larger GLM/DeepSeek-class lanes and more concurrent service/optimization
+comparisons without sacrificing the current endpoint. The lab has spare EPYC
+9015 PCIe 5.0 slot capacity, so the missing piece for broader Intel coverage is
+higher-memory XPU hardware rather than host expansion.
+
 ## What Is Production Today
 
 The active LAN endpoint on this host is the Gemma 4 c8 model-slot profile:
@@ -107,24 +116,29 @@ Record identity:
 - draft: local `Q4_0` Gemma MTP draft only
 - hardware: headless Supermicro AMD Threadripper PRO 5955WX platform, 128 GB
   DDR4, one Intel Arc Pro B70 32 GB used for the measured replica
-- result: best strict result `95.82453787677183 tok/s` median
+- result: best strict result `98.34046474459183 tok/s` median
   generated-token throughput for tokens 1-100 after TTFT across the fixed
   realistic cold prompt suite, `cached_tokens=0` on every prompt,
   `realistic_final_gate.passed=true`.
   Evidence:
-  `../data/gemma4-q8-gpu1-strict-vdr2-f16p021-smallncols-full512-exactconfirm-n3-nmin2-p00475-ub1024-20260628T010121Z/summary.json`.
+  `../data/gemma4-q8-gpu1-strict-vdr2-f16p021-bulksampled-confirm-B-n3-nmin2-p00475-ub1024-full512-20260628T052158Z/summary.json`.
   Config: reordered-Q8 VDR2, `n_max=3`, `n_min=2`, `p_min=0.0475`,
   `UBATCH_SIZE=1024`, `LLAMA_SYCL_F16_P021_SMALL_NCOLS=1`,
-  `--ctx-checkpoints 0`, no n-gram/history acceleration.
+  `LLAMA_SPEC_VERIFY_BULK_SAMPLED_IDS=1`, `--ctx-checkpoints 0`, no
+  n-gram/history acceleration.
   This is the current submitted VDR2 representative row, approved under the
-  realistic-suite policy as `cmqx3687103v4qr01ace1ft3m`. Supporting full512
-  strict rows in the same confirmation batch measured `95.81654623957742`,
-  `93.42169001279183`, and `95.56564013874495 tok/s`. The prior VDR2
-  `90.98312252660529`, `90.32179401019857`, and `89.45543282863798 tok/s`
-  submissions and VDR4 `87.61145306230438 tok/s` submission are superseded.
+  realistic-suite policy as `cmqxchyra03xmqr01b963gmi1`. Supporting full512
+  strict rows in the same confirmation batch measured `96.01452890026427`,
+  `95.90275376682132`, and `94.94094934974818 tok/s`. The prior F16-p021
+  `95.82453787677183 tok/s`, VDR2 `90.98312252660529`,
+  `90.32179401019857`, and `89.45543282863798 tok/s` submissions and VDR4
+  `87.61145306230438 tok/s` submission are superseded.
   The old `176.216232 tok/s` synthetic filled-long row remains diagnostic only
   and is not representative real-world throughput.
 - primary artifacts:
+  `../data/gemma4-q8-gpu1-strict-vdr2-f16p021-bulksampled-confirm-B-n3-nmin2-p00475-ub1024-full512-20260628T052158Z/summary.json`,
+  `../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260628T0245-crack100-runtime-sweeps.md`,
+  `../data/localmaxxing-responses/gemma4-26b-a4b-q8-b70-llamacpp-realistic-vdr2-mtp-n3-nmin2-p00475-ub1024-f16p021-bulksampled-full512-20260628.submit.log`,
   `../data/gemma4-q8-gpu1-strict-vdr2-f16p021-smallncols-full512-exactconfirm-n3-nmin2-p00475-ub1024-20260628T010121Z/summary.json`,
   `../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260628T0047-strict-f16p021-smallncols-record.md`,
   `../data/localmaxxing-responses/gemma4-26b-a4b-q8-b70-llamacpp-realistic-vdr2-mtp-n3-nmin2-p00475-ub1024-f16p021-smallncols-full512-20260628.submit.log`,
