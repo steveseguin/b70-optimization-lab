@@ -30,7 +30,9 @@ cost, or verifier MoE boundary cost.
 
 Practical next focus:
 
-1. Exact verifier LM-head candidate-vs-max design.
+1. Exact verifier LM-head candidate-vs-max design, but only as a real new
+   source design. The existing fused `ggml_mul_mat_argmax(model.output, cur)`
+   path is already tested and is slower than the backend-argmax-ID route.
 2. Direct-unroll confidence scores/gating that can reduce low-confidence
    verifier rows without warmed history.
 3. A dedicated branch to test newly merged llama.cpp `draft-dflash` on B70,
@@ -47,11 +49,6 @@ Avoid:
 - n-gram/history throughput as a record path;
 - TurboQuant for this short strict speed lane;
 - treating Q8_0 target runs as equivalent to `UD-Q8_K_XL`.
-
-Note: repo status files disagree. `AGENTS.md`, the result packet, and
-`research-plan.md` record the newer `98.340` strict result, while `CURRENT.md`
-still lists the earlier `95.824` row. Treat the Gemma packet as authoritative
-until `CURRENT.md` is refreshed.
 
 ## Current Baselines And Guardrails
 
@@ -347,7 +344,7 @@ Next action:
 | Tiny `p_min` refinements | Best tight follow-up only `88.972`, repeat `0.0475` fell to `87.144` | Low ROI without source/runtime change (`research-plan.md:97-104`) |
 | `n_max=4` strict variants | `82.120` / `85.933` tok/s | Stop deeper-MTP threshold sweeps (`research-plan.md:167-177`) |
 | Blind direct-unroll depths `8/9/10/12` | `66.848` to `82.929` tok/s | Do not expand depth without direct-path confidence scores or lower verifier cost (`research-plan.md:545-555`) |
-| Higher-precision MTP draft quants | Strict Q4_K_M/Q5_K_M/Q6_K/Q8_0 all below Q4_0; closest strict Q8_0 draft `88.245` | Keep Q4_0 draft (`README.md:163`, `research-plan.md:1215-1223`) |
+| Alternate MTP draft quants | Strict Q4_K_M/Q5_K_M/Q6_K/Q8_0 all below Q4_0; Q2_K also lost hard (`85.779-88.903` vs Q4_0 control `95.282`) | Keep Q4_0 draft (`README.md:163`, `research-plan.md:1215-1223`, `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260628T0245-crack100-runtime-sweeps.md`) |
 | Literal `Q8_0.gguf` target | Strong control but not reproducible record; best confirmations `88.949`/`89.892`, best deeper `90.277` | Control lane only, not no-quality-loss headline (`research-plan.md:154-165`) |
 | Grouped reordered-Q8 MoE | Strict-valid but only `83.908`; grouping/register/scatter cost beat duplicate-read savings | Do not retry unchanged (`README.md:166`, `research-plan.md:106-115`, `research-plan.md:1208-1214`) |
 | Direct VDR2 Q8 reorder specialization | Screen `90.712`, confirmations `86.369-89.784` | Negative (`research-plan.md:117-126`) |
@@ -494,7 +491,7 @@ not as the main Gemma Q8 record path unless a same-identity Gemma test surprises
 | --- | --- | --- |
 | `draft-dflash` llama.cpp after PR `#22105` merge | High research, medium record | New upstream support and Gemma 26B DFlash draft exist, but B70/SYCL and record patch integration are unproven |
 | EAGLE-3 Gemma4 26B speculator | Medium-high | Active local source has `draft-eagle3`; should be cheap to smoke if model can be downloaded |
-| Exact verifier candidate-vs-max LM-head kernel | High | Directly targets top profile node and preserves exactness if designed correctly |
+| Exact verifier candidate-vs-max LM-head kernel | High but not quick | Directly targets top profile node and preserves exactness if designed correctly; must be a different design than the existing fused full-vocab argmax kernel, which is slower |
 | Direct-unroll confidence score/gap | High | Could reduce verifier rows without warmed history; complements current MTP path |
 | Graph-level DFlash KV injection/per-round fixed shape | Medium | Upstream discussion identifies this as needed for DFlash graph reuse |
 | DeepSpec DSpark algorithm mining | Medium | Useful design ideas, but no Gemma26 checkpoint and likely training-heavy |
@@ -508,7 +505,7 @@ not as the main Gemma Q8 record path unless a same-identity Gemma test surprises
 | --- | --- |
 | More `p_min`/`n_min` micro-sweeps | Tight sweeps already underperformed; without new confidence scoring they mainly measure variance (`research-plan.md:97-104`) |
 | More blind MTP depth | Strict `n_max=4` and direct-unroll 8/9/10/12 lost hard (`research-plan.md:167-177`, `research-plan.md:545-555`) |
-| Higher-precision MTP drafts | Strict alternate drafts all lost, and the lane is verifier-bound (`research-plan.md:1215-1223`) |
+| Alternate MTP drafts | Strict higher-precision drafts and the Q2_K draft all lost, and the lane is verifier-bound (`research-plan.md:1215-1223`) |
 | Host `h_nextn` copy trimming | Measured copy time is tiny and full512 was below record (`experiments/gemma4-26b-a4b-q8-b70/sweeps/20260628T1319-hnextn-cacheguard-negative.md:50-66`, `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260628T1319-hnextn-cacheguard-negative.md:94-107`) |
 | Q8 reorder pair/direct/top8/grouped variants | Strict tests show register/scatter/addressing overhead dominates unless a new kernel profile says otherwise (`research-plan.md:106-139`) |
 | Raw verifier argmax/softcap shortcut | Exact but still pays full LM-head projection, so it did not confirm (`research-plan.md:141-152`) |

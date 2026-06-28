@@ -9,30 +9,33 @@ replicas on four GPUs for parallel research and aggregate service capacity.
 Best one-B70 Q8 strict result under the promotion gate:
 
 - result:
-  `data/gemma4-q8-gpu1-strict-vdr2-f16p021-smallncols-full512-exactconfirm-n3-nmin2-p00475-ub1024-20260628T010121Z/`;
-- primary metric: **95.82453787677183 tok/s** median generated-token
+  `data/gemma4-q8-gpu1-strict-vdr2-f16p021-bulksampled-confirm-B-n3-nmin2-p00475-ub1024-full512-20260628T052158Z/`;
+- primary metric: **98.34046474459183 tok/s** median generated-token
   throughput for tokens 1-100 after TTFT across the fixed realistic suite;
-- p10 `85.50364602737247`, mean `95.60529298381927`, median full-512
-  after-TTFT `91.14224184526994`, median wall full-512
-  `88.26207892019767`, median TTFT `179.72276301588863 ms`;
+- p10 `85.97937679810455`, mean `95.95288855186745`, median full-512
+  after-TTFT `91.17386231553596`, median wall full-512
+  `87.73710699260519`, median TTFT `180.21126103121787 ms`;
 - config: llama.cpp `c926ad098`, UD-Q8_K_XL target/verifier, Q4_0 MTP draft,
   reordered-Q8 VDR2, `n_max=3`, `n_min=2`, `p_min=0.0475`,
   `UBATCH_SIZE=1024`, `LLAMA_SYCL_F16_P021_SMALL_NCOLS=1`,
-  `--ctx-checkpoints 0`, no n-gram/history acceleration;
+  `LLAMA_SPEC_VERIFY_BULK_SAMPLED_IDS=1`, `--ctx-checkpoints 0`, no
+  n-gram/history acceleration;
 - gate: fixed suite `gemma4-26b-a4b-q8-b70-realistic-v1`, each prompt sent
   once, `cached_tokens=0` on every request,
   `realistic_final_gate.passed=true`.
 
 This is the submitted policy-compliant VDR2 transfer of the strict `n_max=3`,
 `n_min=2`, `UBATCH_SIZE=1024` family plus
-`LLAMA_SYCL_F16_P021_SMALL_NCOLS=1`; approved ID
-`cmqx3687103v4qr01ace1ft3m`. It was submitted from a conservative exact
-full512 confirmation batch (`95.81654623957742`, `95.82453787677183`,
-`93.42169001279183`, `95.56564013874495 tok/s`). The prior VDR2
-`90.98312252660529`, `90.32179401019857`, and `89.45543282863798 tok/s`
-submissions and prior VDR4 `87.61145306230438 tok/s` submission are
-superseded. The older `86.47445652599384 tok/s` `p_min=0.075` row did not
-repeat and is also superseded.
+`LLAMA_SYCL_F16_P021_SMALL_NCOLS=1` and
+`LLAMA_SPEC_VERIFY_BULK_SAMPLED_IDS=1`; approved ID
+`cmqxchyra03xmqr01b963gmi1`. It was submitted from a conservative exact
+full512 confirmation batch (`96.01452890026427`, `98.34046474459183`,
+`95.90275376682132`, `94.94094934974818 tok/s`). The prior F16-p021
+`95.82453787677183 tok/s`, VDR2 `90.98312252660529`,
+`90.32179401019857`, and `89.45543282863798 tok/s` submissions and prior VDR4
+`87.61145306230438 tok/s` submission are superseded. The older
+`86.47445652599384 tok/s` `p_min=0.075` row did not repeat and is also
+superseded.
 The older `100+`, `170+`, and `280+` rows remain useful diagnostics, but they
 are not representative real-world throughput unless revalidated by the fixed
 cold suite.
@@ -51,6 +54,36 @@ confirmation passed on all four GPUs and produced the new `95.82453787677183`
 record. Lesson: for Gemma promotion, diff the full launcher identity before
 interpreting any speed or validity change. See
 `../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260628T0047-strict-f16p021-smallncols-record.md`.
+
+2026-06-28 bulk sampled-ID verifier update: a default-off host-side verifier
+cleanup (`LLAMA_SPEC_VERIFY_BULK_SAMPLED_IDS=1`) reads the consecutive
+backend-sampled verifier ID buffer directly after the existing synchronize
+instead of calling the per-row nosync accessor for each verifier row. It
+preserves target-verifier semantics and lifted the strict record to
+`98.34046474459183 tok/s`, but still did **not** crack reliable `>100`. Keep
+it in the promoted reproduction recipe; the next >100 work needs verifier
+economics rather than more host read cleanup.
+
+2026-06-28 crack-100 reliability update: a single strict full512 frequency-floor
+run at `2400,2800` hit `100.22397388514726 tok/s`, and an earlier unroll6 row
+hit `101.076 tok/s`, but confirmations did not hold above 100. Four parallel
+2400-floor confirmations measured only `96.052`, `93.510`, `92.856`, and
+`94.440 tok/s`; an exact best-identity rerun with affinity and unroll6 measured
+`97.054 tok/s`. Decision: valid high observations, not reliable records. The
+GPUs were restored to the default `400,2800` range. See
+`../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260628T1350-crack100-frequency-floor-reliability-negative.md`.
+
+2026-06-28 end-of-day crack-100 audit: the remaining config-only lanes were
+closed. Q2_K MTP draft lost decisively under strict128 (`85.779-88.903 tok/s`)
+against the same-window Q4_0 control (`95.282 tok/s`). The later strict ledger
+audit found every `>100 tok/s` fresh/cache0 observation had an immediate repeat
+or confirmation that collapsed below the promoted `98.340` record or below the
+solo `98.680` high-side observation. Existing source knobs around postnorm,
+h_nextn, fused verifier argmax, raw argmax, tail-gating, no-bonus rows, and
+runtime knobs are also closed in the sweep ledger. Decision: stop
+configuration roulette. The next reliable `>100` attempt needs a true
+source-level verifier-cost reduction, not another flag sweep. See
+`../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260628T0245-crack100-runtime-sweeps.md`.
 
 2026-06-27 adaptive MTP update: the default-off adaptive-depth patch and MTP
 `dp.n_max` generation-stop fix were tested under the strict realistic gate. All
@@ -139,7 +172,7 @@ strict record. The best Q8_0 screen,
 `91.5564081422068 tok/s`, but exact confirmations landed at
 `88.94881774985208` and `89.89234269084307`; the best deeper row was
 `n_max=4`/`n_min=2` at `90.27678402019421`, still below the current
-`UD-Q8_K_XL` record (`90.98312252660529`). Keep Q8_0 as a compatibility/control
+`UD-Q8_K_XL` record (`98.34046474459183`). Keep Q8_0 as a compatibility/control
 lane, not a promoted LocalMaxxing row. See
 `../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260627T2144-q80-target-strict-negative.md`.
 
@@ -157,7 +190,7 @@ sweeps without a new acceptance/scoring mechanism. See
 
 2026-06-28 strict profile update: a current-stack profile run under the fixed
 realistic cold suite passed validity but measured only
-`89.65814180509349 tok/s`, below the `90.98312252660529` submitted record. Its
+`89.65814180509349 tok/s`, below the current submitted record. Its
 value is diagnostic: target/verifier `process_ubatch_ms` was `88713.159`, while
 draft `process_ubatch_ms` was only `6037.002`; sampler calls, hidden handoff,
 and device-handoff counters were zero. The lane is target/verifier-forward
@@ -509,10 +542,12 @@ target lane unless a new mechanism changes the verifier economics.
    `../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260627T0525-gateup-singleton-direct-screen.md`.
    Do not promote without a node-profile win and a fresh full validation.
 3. Explore an exact verifier LM-head candidate-vs-max op. Existing fused-output
-   argmax paths were slower, but the second-largest node remains target LM
-   head. A viable variant must compare drafted candidate logits against the
-   true maximum exactly, preserving greedy correctness without materializing
-   full logits where possible. Candidate flag: `LLAMA_SPEC_VERIFY_CANDIDATE_MAX=1`.
+   argmax paths were slower, and a source audit confirmed that simply rewiring
+   `ggml_mul_mat_argmax(model.output, cur)` is not enough. A viable variant
+   must compare drafted candidate logits against the true maximum exactly,
+   preserve greedy correctness, and prove lower verifier LM-head/output work
+   on a strict128 profile before any full512 promotion. Candidate flag:
+   `LLAMA_SPEC_VERIFY_CANDIDATE_MAX=1`.
 4. Fix direct-unroll confidence gating. Current direct-unroll argmax bypasses
    `MTP_P_MIN`/logit-gap checks, so p-min-only screens mostly measure variance.
    A useful version would return top1/top2 score or gap from the assistant
@@ -1191,14 +1226,16 @@ Text speed is first. After text baseline:
     more structural verifier change, not another blind grouped route variant.
     See
     `../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260627T2055-q8-reorder-grouped-negative.md`.
-18. **Higher-precision MTP draft quantization is not a strict-gate win.** Under
+18. **Alternate MTP draft quantization is not a strict-gate win.** Under
     the current VDR2 strict identity (`UD-Q8_K_XL` target/verifier, `n_max=3`,
     `n_min=2`, `p_min=0.0475`, `UBATCH_SIZE=1024`), official draft swaps to
     Q4_K_M, Q5_K_M, Q6_K, and Q8_0 all passed the fresh realistic gate but
-    stayed below the `90.98312252660529 tok/s` record. Closest rows were Q8_0
+    stayed below the current `98.34046474459183 tok/s` record. Closest rows were Q8_0
     at `88.245438 tok/s` and Q5_K_M at `88.109559 tok/s`; Q4_K_M and Q6_K
-    were lower. Keep Q4_0 as the promoted default draft unless a future source
-    change materially changes the draft/verifier cost tradeoff. See
+    were lower. A later Q2_K screen also lost (`85.779-88.903 tok/s`) versus a
+    same-window Q4_0 control (`95.282 tok/s`). Keep Q4_0 as the promoted default
+    draft unless a future source change materially changes the draft/verifier
+    cost tradeoff. See
     `../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260627T2322-strict-draft-quant-negative.md`.
 19. **`n_min=1` is not a strict-gate improvement.** Keeping `n_max=3` but
     allowing one-token draft acceptance lost across tested thresholds:
