@@ -1,0 +1,83 @@
+Experiment patch snapshot: F16 p021 small-ncols pack4
+
+Status: negative, do not promote.
+Source tree tested: /home/steve/src/llama.cpp-gemma-record-repro-c926
+Source file: ggml/src/ggml-sycl/ggml-sycl.cpp
+Gate runs:
+  - data/gemma4-q8-gpu0-pack4-control-strict128-20260628Tpack4A/summary.json
+  - data/gemma4-q8-gpu1-pack4-enabled-strict128-20260628Tpack4A/summary.json
+  - data/gemma4-q8-gpu2-pack4-control-strict128-20260628Tpack4A/summary.json
+  - data/gemma4-q8-gpu3-pack4-enabled-strict128-20260628Tpack4A/summary.json
+
+Rationale:
+The active Gemma verifier frequently uses the F16 p021 small-token matmul path
+with small token columns. This patch tried to compute up to four token columns
+inside one workgroup so each F16 weight load could be reused across token
+columns.
+
+Patch shape:
+
+1. Add a default-off env gate:
+
+    static bool ggml_sycl_f16_p021_small_ncols_pack4_enabled() {
+        const char * env = std::getenv("LLAMA_SYCL_F16_P021_SMALL_NCOLS_PACK4");
+        return env && (std::strcmp(env, "1") == 0 ||
+                       std::strcmp(env, "true") == 0 ||
+                       std::strcmp(env, "TRUE") == 0 ||
+                       std::strcmp(env, "yes") == 0 ||
+                       std::strcmp(env, "on") == 0);
+    }
+
+2. Add a device helper:
+
+    static void mul_mat_p021_f16_f32_small_ncols_pack4(
+        const void * __restrict__ vx, const float * __restrict__ y,
+        float * __restrict__ dst, const int ncols_x, const int nrows_x,
+        const int ncols_y, const int nchannels_x, const int nchannels_y,
+        const int row_stride_x, const int channel_stride_x,
+        const int token_stride_y, const int channel_stride_y,
+        const int token_stride_dst, const int channel_stride_dst,
+        const sycl::nd_item<3> &item_ct1)
+
+It used group(0)=channel and group(1)=row_x, then accumulated tmp0..tmp3 for
+ncols_y <= 4:
+
+    tmp0 += xi * y[y_base];
+    if (ncols_y > 1) tmp1 += xi * y[token_stride_y + y_base];
+    if (ncols_y > 2) tmp2 += xi * y[2 * token_stride_y + y_base];
+    if (ncols_y > 3) tmp3 += xi * y[3 * token_stride_y + y_base];
+
+Each tmp was reduced through subgroup XOR and written to the corresponding
+token-strided dst row.
+
+3. Add host launcher/wrapper:
+
+    ggml_mul_mat_p021_f16_f32_small_ncols_pack4_sycl(...)
+    ggml_sycl_mul_mat_vec_p021_small_ncols_pack4(...)
+
+The pack4 launcher used block_nums(nchannels_y, nrows_x, 1), compared with the
+existing small-ncols path's block_nums(nchannels_y * ncols_y, nrows_x, 1).
+
+4. Dispatch only when explicitly enabled and safe for the fixed pack width:
+
+    if (ggml_sycl_f16_p021_small_ncols_pack4_enabled() && src1->ne[1] <= 4) {
+        ggml_sycl_mul_mat_vec_p021_small_ncols_pack4(ctx, src0, src1, dst);
+    } else {
+        ggml_sycl_mul_mat_vec_p021_small_ncols(ctx, src0, src1, dst);
+    }
+
+Validation:
+- Built successfully only after sourcing oneAPI setvars. A raw shell build hit
+  host-link missing SYCL/OpenMP symbols; this was a build environment issue.
+- Four strict cold 128-token lanes passed canary and realistic final gate
+  (`cached_tokens=0`, each prompt once).
+- Performance was worse than control:
+  - control GPU0: 99.135 tok/s median 1-100
+  - pack4 GPU1:   96.377 tok/s median 1-100
+  - control GPU2: 95.699 tok/s median 1-100
+  - pack4 GPU3:   93.472 tok/s median 1-100
+
+Conclusion:
+The single-workgroup pack4 shape likely reduces occupancy/parallelism more
+than it saves from reusing the F16 load. Do not promote. The source change was
+reverted after preserving this artifact.

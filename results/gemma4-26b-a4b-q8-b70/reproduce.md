@@ -8,22 +8,25 @@ promoted reproduction target is the fixed realistic cold prompt suite:
 Best strict cold-suite result:
 
 - draft-MTP VDR2:
-  `data/gemma4-q8-gpu1-strict-vdr2-f16p021-smallncols-full512-exactconfirm-n3-nmin2-p00475-ub1024-20260628T010121Z/summary.json`;
-- primary metric: `95.82453787677183 tok/s` median generated-token throughput
+  `data/gemma4-q8-gpu1-strict-vdr2-f16p021-bulksampled-confirm-B-n3-nmin2-p00475-ub1024-full512-20260628T052158Z/summary.json`;
+- primary metric: `98.34046474459183 tok/s` median generated-token throughput
   for tokens 1-100 after TTFT;
 - config: reordered-Q8 VDR2, `n_max=3`, `n_min=2`, `p_min=0.0475`,
-  `UBATCH_SIZE=1024`, `LLAMA_SYCL_F16_P021_SMALL_NCOLS=1`, Q4_0 MTP draft
-  verified by the Q8 target;
+  `UBATCH_SIZE=1024`, `LLAMA_SYCL_F16_P021_SMALL_NCOLS=1`,
+  `LLAMA_SPEC_VERIFY_BULK_SAMPLED_IDS=1`, Q4_0 MTP draft verified by the Q8
+  target;
 - gate: `realistic_final_gate.passed=true`, `cached_tokens=0` on every prompt.
 
 Representative / submitted status: the current LocalMaxxing payload uses the
 VDR2 transfer of the strict `n_max=3`, `n_min=2`, `UBATCH_SIZE=1024` family
-plus `LLAMA_SYCL_F16_P021_SMALL_NCOLS=1`. Exact full512 confirmation repeats
-measured `95.81654623957742`, `95.82453787677183`,
-`93.42169001279183`, and `95.56564013874495 tok/s`. Approved ID:
-`cmqx3687103v4qr01ace1ft3m`. Prior VDR2 row `90.98312252660529 tok/s`,
-earlier VDR2 rows `90.32179401019857` and `89.45543282863798 tok/s`, plus
-VDR4 `87.61145306230438 tok/s`, remain valid but are superseded.
+plus `LLAMA_SYCL_F16_P021_SMALL_NCOLS=1` and
+`LLAMA_SPEC_VERIFY_BULK_SAMPLED_IDS=1`. Exact full512 confirmation repeats
+measured `96.01452890026427`, `98.34046474459183`,
+`95.90275376682132`, and `94.94094934974818 tok/s`. Approved ID:
+`cmqxchyra03xmqr01b963gmi1`. Prior F16-p021 row
+`95.82453787677183 tok/s`, VDR2 rows `90.98312252660529`,
+`90.32179401019857`, and `89.45543282863798 tok/s`, plus VDR4
+`87.61145306230438 tok/s`, remain valid but are superseded.
 
 Current no-spec control:
 
@@ -149,9 +152,9 @@ scripts/run-gemma4-26b-first-baseline.sh
 Use this command for the current representative draft-MTP realistic-suite
 candidate. It reproduces the VDR2 `n_max=3`, `n_min=2`, `p_min=0.0475`,
 `UBATCH_SIZE=1024` family, whose current submitted strict row is
-`95.825 tok/s` on the fixed cold suite. The prior VDR2 `90.983`,
-`90.322`, and VDR4 `87.611 tok/s` rows remain valid evidence but are no longer
-the promoted LocalMaxxing headline.
+`98.340 tok/s` on the fixed cold suite. The prior F16-p021 `95.825`,
+VDR2 `90.983`, `90.322`, and VDR4 `87.611 tok/s` rows remain valid evidence
+but are no longer the promoted LocalMaxxing headline.
 
 ```bash
 cd /home/steve/qwen36-results-main
@@ -164,6 +167,7 @@ GGML_SYCL_ENABLE_VMM=0 \
 LLAMA_SYCL_MUL_MAT_ID_MULTI_TOKEN_FAST=1 \
 LLAMA_SYCL_MUL_MAT_ID_Q8_0_REORDER=1 \
 LLAMA_SPEC_VERIFY_BACKEND_ARGMAX_IDS=1 \
+LLAMA_SPEC_VERIFY_BULK_SAMPLED_IDS=1 \
 LLAMA_MTP_DEFER_TARGET_H_NEXTN=1 \
 LLAMA_MTP_DRAFT_FAST_ARGMAX=1 \
 LLAMA_MTP_DRAFT_DIRECT_ARGMAX_IDS=1 \

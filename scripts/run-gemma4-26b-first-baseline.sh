@@ -7,10 +7,13 @@ PORT="${PORT:-18260}"
 BASE_URL="${BASE_URL:-http://127.0.0.1:${PORT}}"
 MODEL_ALIAS="${MODEL_ALIAS:-gemma4-26b-a4b-q8}"
 MODEL="${MODEL:-/mnt/fast-ai/llm-models/gemma4-26b-a4b-it-q8-gguf/gemma-4-26B-A4B-it-UD-Q8_K_XL.gguf}"
+EXPECTED_LLAMA_SERVER_DEFAULT="/home/steve/src/llama.cpp-gemma-record-repro-c926/build-sycl-b70-aot-bmg-g31-q8reorder-vdr2/bin/llama-server"
+LLAMA_SERVER="${LLAMA_SERVER:-$EXPECTED_LLAMA_SERVER_DEFAULT}"
 CTX_SIZE="${CTX_SIZE:-8192}"
 BATCH_SIZE="${BATCH_SIZE:-512}"
 UBATCH_SIZE="${UBATCH_SIZE:-64}"
 THREADS="${THREADS:-8}"
+CPU_AFFINITY="${CPU_AFFINITY:-}"
 CACHE_TYPE_K="${CACHE_TYPE_K:-f16}"
 CACHE_TYPE_V="${CACHE_TYPE_V:-f16}"
 POLL="${POLL:-50}"
@@ -49,16 +52,19 @@ cd "$ROOT"
 echo "[gemma4-baseline] label=$LABEL"
 echo "[gemma4-baseline] base_url=$BASE_URL"
 echo "[gemma4-baseline] model=$MODEL"
+echo "[gemma4-baseline] llama_server=$LLAMA_SERVER"
 echo "[gemma4-baseline] server_log=$SERVER_LOG"
 
 GPU_INDEX="$GPU_INDEX" \
 PORT="$PORT" \
 MODEL_ALIAS="$MODEL_ALIAS" \
 MODEL="$MODEL" \
+LLAMA_SERVER="$LLAMA_SERVER" \
 CTX_SIZE="$CTX_SIZE" \
 BATCH_SIZE="$BATCH_SIZE" \
 UBATCH_SIZE="$UBATCH_SIZE" \
 THREADS="$THREADS" \
+CPU_AFFINITY="$CPU_AFFINITY" \
 CACHE_TYPE_K="$CACHE_TYPE_K" \
 CACHE_TYPE_V="$CACHE_TYPE_V" \
 POLL="$POLL" \
@@ -79,8 +85,10 @@ LLAMA_MTP_DRAFT_PROFILE="${LLAMA_MTP_DRAFT_PROFILE:-}" \
 LLAMA_SERVER_SPEC_PROFILE="${LLAMA_SERVER_SPEC_PROFILE:-}" \
 LLAMA_MTP_DRAFT_TERMINAL_LOGITS_ONLY="${LLAMA_MTP_DRAFT_TERMINAL_LOGITS_ONLY:-}" \
 LLAMA_MTP_DEFER_TARGET_H_NEXTN="${LLAMA_MTP_DEFER_TARGET_H_NEXTN:-}" \
+LLAMA_MTP_DEFER_TARGET_H_ACCEPT_ONLY="${LLAMA_MTP_DEFER_TARGET_H_ACCEPT_ONLY:-}" \
 LLAMA_GEMMA4_MTP_FUSED_OUTPUT_ARGMAX="${LLAMA_GEMMA4_MTP_FUSED_OUTPUT_ARGMAX:-}" \
 LLAMA_GEMMA4_MTP_QONLY_ATTN_INPUTS="${LLAMA_GEMMA4_MTP_QONLY_ATTN_INPUTS:-}" \
+LLAMA_GEMMA4_SKIP_IDENTITY_OUT_IDS="${LLAMA_GEMMA4_SKIP_IDENTITY_OUT_IDS:-}" \
 LLAMA_GEMMA4_MOE_SELECTED_SOFTMAX="${LLAMA_GEMMA4_MOE_SELECTED_SOFTMAX:-}" \
 LLAMA_GEMMA4_MOE_SELECTED_SOFTMAX_FUSED="${LLAMA_GEMMA4_MOE_SELECTED_SOFTMAX_FUSED:-}" \
 LLAMA_GEMMA4_MOE_REUSE_ATTN_RMS="${LLAMA_GEMMA4_MOE_REUSE_ATTN_RMS:-}" \
@@ -104,6 +112,7 @@ LLAMA_GEMMA4_MOE_GEGLU_DOWN_MATMUL_EPILOGUE="${LLAMA_GEMMA4_MOE_GEGLU_DOWN_MATMU
 LLAMA_GEMMA4_MOE_GATEUP_GEGLU="${LLAMA_GEMMA4_MOE_GATEUP_GEGLU:-}" \
 LLAMA_GEMMA4_MOE_FUSED_DOWN_WEIGHTED_SUM_DEBUG="${LLAMA_GEMMA4_MOE_FUSED_DOWN_WEIGHTED_SUM_DEBUG:-}" \
 LLAMA_SYCL_MUL_MAT_ID_MULTI_TOKEN_NAME_SUBSTR="${LLAMA_SYCL_MUL_MAT_ID_MULTI_TOKEN_NAME_SUBSTR:-}" \
+LLAMA_SYCL_MUL_MAT_ID_MULTI_TOKEN_BF16_DIRECT="${LLAMA_SYCL_MUL_MAT_ID_MULTI_TOKEN_BF16_DIRECT:-}" \
 LLAMA_SYCL_MUL_MAT_ID_MULTI_TOKEN_GROUPED_Q8_0_REORDER="${LLAMA_SYCL_MUL_MAT_ID_MULTI_TOKEN_GROUPED_Q8_0_REORDER:-}" \
 LLAMA_SYCL_MUL_MAT_ID_GATE_UP_FAST_SEED_ROUTE_CACHE="${LLAMA_SYCL_MUL_MAT_ID_GATE_UP_FAST_SEED_ROUTE_CACHE:-}" \
 LLAMA_SYCL_MUL_MAT_ID_GATE_UP_Q8_SINGLETON_DIRECT="${LLAMA_SYCL_MUL_MAT_ID_GATE_UP_Q8_SINGLETON_DIRECT:-}" \
@@ -113,13 +122,24 @@ LLAMA_SYCL_MUL_MAT_ID_ROUTE_CACHE_DEVICE_MAP="${LLAMA_SYCL_MUL_MAT_ID_ROUTE_CACH
 LLAMA_SYCL_MUL_MAT_ID_ROUTE_TIMING="${LLAMA_SYCL_MUL_MAT_ID_ROUTE_TIMING:-}" \
 LLAMA_SYCL_MUL_MAT_ID_ROUTE_TIMING_EVERY="${LLAMA_SYCL_MUL_MAT_ID_ROUTE_TIMING_EVERY:-}" \
 LLAMA_SYCL_MUL_MAT_ID_Q8_0_REORDER="${LLAMA_SYCL_MUL_MAT_ID_Q8_0_REORDER:-}" \
+LLAMA_SYCL_MUL_MAT_ID_Q8_0_REORDER_PAIR_SLOTS="${LLAMA_SYCL_MUL_MAT_ID_Q8_0_REORDER_PAIR_SLOTS:-}" \
+LLAMA_SYCL_MUL_MAT_ID_Q8_0_REORDER_TOP8_SLOTS="${LLAMA_SYCL_MUL_MAT_ID_Q8_0_REORDER_TOP8_SLOTS:-}" \
+LLAMA_SYCL_MUL_MAT_ID_Q8_0_REORDER_DIRECT_VDR2="${LLAMA_SYCL_MUL_MAT_ID_Q8_0_REORDER_DIRECT_VDR2:-}" \
+LLAMA_SYCL_MUL_MAT_ID_Q8_0_REORDER_ROWPACK="${LLAMA_SYCL_MUL_MAT_ID_Q8_0_REORDER_ROWPACK:-}" \
 LLAMA_SYCL_F16_P021_SMALL_NCOLS="${LLAMA_SYCL_F16_P021_SMALL_NCOLS:-}" \
 LLAMA_SYCL_Q8_MMVQ_SMALL_NCOLS="${LLAMA_SYCL_Q8_MMVQ_SMALL_NCOLS:-}" \
 LLAMA_SPEC_VERIFY_GREEDY_ARGMAX="${LLAMA_SPEC_VERIFY_GREEDY_ARGMAX:-}" \
 LLAMA_SPEC_VERIFY_BACKEND_ARGMAX_IDS="${LLAMA_SPEC_VERIFY_BACKEND_ARGMAX_IDS:-}" \
+LLAMA_SPEC_VERIFY_BULK_SAMPLED_IDS="${LLAMA_SPEC_VERIFY_BULK_SAMPLED_IDS:-}" \
+LLAMA_SPEC_VERIFY_SKIP_STATELESS_ACCEPT="${LLAMA_SPEC_VERIFY_SKIP_STATELESS_ACCEPT:-}" \
+LLAMA_SPEC_VERIFY_NO_BONUS_ROW="${LLAMA_SPEC_VERIFY_NO_BONUS_ROW:-}" \
+LLAMA_SPEC_VERIFY_STAGE_MTP3="${LLAMA_SPEC_VERIFY_STAGE_MTP3:-}" \
+LLAMA_SPEC_VERIFY_STAGE_MTP3_SPLIT_BONUS="${LLAMA_SPEC_VERIFY_STAGE_MTP3_SPLIT_BONUS:-}" \
 LLAMA_SPEC_VERIFY_FUSED_OUTPUT_ARGMAX="${LLAMA_SPEC_VERIFY_FUSED_OUTPUT_ARGMAX:-}" \
 LLAMA_SPEC_VERIFY_SOFTCAP_ARGMAX="${LLAMA_SPEC_VERIFY_SOFTCAP_ARGMAX:-}" \
 LLAMA_SPEC_VERIFY_RAW_ARGMAX="${LLAMA_SPEC_VERIFY_RAW_ARGMAX:-}" \
+LLAMA_SYCL_MUL_MAT_ARGMAX_TILE_SUBGROUPS="${LLAMA_SYCL_MUL_MAT_ARGMAX_TILE_SUBGROUPS:-}" \
+LLAMA_SYCL_MUL_MAT_ARGMAX_MULTI_REUSE="${LLAMA_SYCL_MUL_MAT_ARGMAX_MULTI_REUSE:-}" \
 LLAMA_SPEC_ADAPTIVE_MTP="${LLAMA_SPEC_ADAPTIVE_MTP:-}" \
 LLAMA_SPEC_ADAPTIVE_MTP_WARMUP="${LLAMA_SPEC_ADAPTIVE_MTP_WARMUP:-}" \
 LLAMA_SPEC_ADAPTIVE_MTP_LOW_N_MAX="${LLAMA_SPEC_ADAPTIVE_MTP_LOW_N_MAX:-}" \
@@ -250,6 +270,7 @@ out = {
         "batch_size": os.environ.get("BATCH_SIZE"),
         "ubatch_size": os.environ.get("UBATCH_SIZE"),
         "threads": os.environ.get("THREADS"),
+        "cpu_affinity": os.environ.get("CPU_AFFINITY"),
         "cache_type_k": os.environ.get("CACHE_TYPE_K"),
         "cache_type_v": os.environ.get("CACHE_TYPE_V"),
         "poll": os.environ.get("POLL"),
@@ -277,8 +298,10 @@ out = {
         "llama_server_spec_profile": env_or_log("LLAMA_SERVER_SPEC_PROFILE"),
         "llama_mtp_draft_terminal_logits_only": env_or_log("LLAMA_MTP_DRAFT_TERMINAL_LOGITS_ONLY"),
         "llama_mtp_defer_target_h_nextn": env_or_log("LLAMA_MTP_DEFER_TARGET_H_NEXTN"),
+        "llama_mtp_defer_target_h_accept_only": env_or_log("LLAMA_MTP_DEFER_TARGET_H_ACCEPT_ONLY"),
         "llama_gemma4_mtp_fused_output_argmax": env_or_log("LLAMA_GEMMA4_MTP_FUSED_OUTPUT_ARGMAX"),
         "llama_gemma4_mtp_qonly_attn_inputs": env_or_log("LLAMA_GEMMA4_MTP_QONLY_ATTN_INPUTS"),
+        "llama_gemma4_skip_identity_out_ids": env_or_log("LLAMA_GEMMA4_SKIP_IDENTITY_OUT_IDS"),
         "llama_gemma4_moe_selected_softmax": env_or_log("LLAMA_GEMMA4_MOE_SELECTED_SOFTMAX"),
         "llama_gemma4_moe_selected_softmax_fused": env_or_log("LLAMA_GEMMA4_MOE_SELECTED_SOFTMAX_FUSED"),
         "llama_gemma4_moe_reuse_attn_rms": env_or_log("LLAMA_GEMMA4_MOE_REUSE_ATTN_RMS"),
@@ -308,6 +331,7 @@ out = {
         "llama_sycl_mul_mat_id_multi_token_per_slot_q8_0": env_or_log("LLAMA_SYCL_MUL_MAT_ID_MULTI_TOKEN_PER_SLOT_Q8_0"),
         "llama_sycl_mul_mat_id_multi_token_filter": env_or_log("LLAMA_SYCL_MUL_MAT_ID_MULTI_TOKEN_FILTER"),
         "llama_sycl_mul_mat_id_multi_token_name_substr": env_or_log("LLAMA_SYCL_MUL_MAT_ID_MULTI_TOKEN_NAME_SUBSTR"),
+        "llama_sycl_mul_mat_id_multi_token_bf16_direct": env_or_log("LLAMA_SYCL_MUL_MAT_ID_MULTI_TOKEN_BF16_DIRECT"),
         "llama_sycl_mul_mat_id_gate_up_fast_seed_route_cache": env_or_log("LLAMA_SYCL_MUL_MAT_ID_GATE_UP_FAST_SEED_ROUTE_CACHE"),
         "llama_sycl_mul_mat_id_gate_up_q8_singleton_direct": env_or_log("LLAMA_SYCL_MUL_MAT_ID_GATE_UP_Q8_SINGLETON_DIRECT"),
         "llama_sycl_mul_mat_id_route_cache": env_or_log("LLAMA_SYCL_MUL_MAT_ID_ROUTE_CACHE"),
@@ -316,13 +340,24 @@ out = {
         "llama_sycl_mul_mat_id_route_timing": env_or_log("LLAMA_SYCL_MUL_MAT_ID_ROUTE_TIMING"),
         "llama_sycl_mul_mat_id_route_timing_every": env_or_log("LLAMA_SYCL_MUL_MAT_ID_ROUTE_TIMING_EVERY"),
         "llama_sycl_mul_mat_id_q8_0_reorder": env_or_log("LLAMA_SYCL_MUL_MAT_ID_Q8_0_REORDER"),
+        "llama_sycl_mul_mat_id_q8_0_reorder_pair_slots": env_or_log("LLAMA_SYCL_MUL_MAT_ID_Q8_0_REORDER_PAIR_SLOTS"),
+        "llama_sycl_mul_mat_id_q8_0_reorder_top8_slots": env_or_log("LLAMA_SYCL_MUL_MAT_ID_Q8_0_REORDER_TOP8_SLOTS"),
+        "llama_sycl_mul_mat_id_q8_0_reorder_direct_vdr2": env_or_log("LLAMA_SYCL_MUL_MAT_ID_Q8_0_REORDER_DIRECT_VDR2"),
+        "llama_sycl_mul_mat_id_q8_0_reorder_rowpack": env_or_log("LLAMA_SYCL_MUL_MAT_ID_Q8_0_REORDER_ROWPACK"),
         "llama_sycl_f16_p021_small_ncols": env_or_log("LLAMA_SYCL_F16_P021_SMALL_NCOLS"),
         "llama_sycl_q8_mmvq_small_ncols": env_or_log("LLAMA_SYCL_Q8_MMVQ_SMALL_NCOLS"),
         "llama_spec_verify_greedy_argmax": env_or_log("LLAMA_SPEC_VERIFY_GREEDY_ARGMAX"),
         "llama_spec_verify_backend_argmax_ids": env_or_log("LLAMA_SPEC_VERIFY_BACKEND_ARGMAX_IDS"),
+        "llama_spec_verify_bulk_sampled_ids": env_or_log("LLAMA_SPEC_VERIFY_BULK_SAMPLED_IDS"),
+        "llama_spec_verify_skip_stateless_accept": env_or_log("LLAMA_SPEC_VERIFY_SKIP_STATELESS_ACCEPT"),
+        "llama_spec_verify_no_bonus_row": env_or_log("LLAMA_SPEC_VERIFY_NO_BONUS_ROW"),
+        "llama_spec_verify_stage_mtp3": env_or_log("LLAMA_SPEC_VERIFY_STAGE_MTP3"),
+        "llama_spec_verify_stage_mtp3_split_bonus": env_or_log("LLAMA_SPEC_VERIFY_STAGE_MTP3_SPLIT_BONUS"),
         "llama_spec_verify_fused_output_argmax": env_or_log("LLAMA_SPEC_VERIFY_FUSED_OUTPUT_ARGMAX"),
         "llama_spec_verify_softcap_argmax": env_or_log("LLAMA_SPEC_VERIFY_SOFTCAP_ARGMAX"),
         "llama_spec_verify_raw_argmax": env_or_log("LLAMA_SPEC_VERIFY_RAW_ARGMAX"),
+        "llama_sycl_mul_mat_argmax_tile_subgroups": env_or_log("LLAMA_SYCL_MUL_MAT_ARGMAX_TILE_SUBGROUPS"),
+        "llama_sycl_mul_mat_argmax_multi_reuse": env_or_log("LLAMA_SYCL_MUL_MAT_ARGMAX_MULTI_REUSE"),
         "llama_spec_adaptive_mtp": env_or_log("LLAMA_SPEC_ADAPTIVE_MTP"),
         "llama_spec_adaptive_mtp_warmup": env_or_log("LLAMA_SPEC_ADAPTIVE_MTP_WARMUP"),
         "llama_spec_adaptive_mtp_low_n_max": env_or_log("LLAMA_SPEC_ADAPTIVE_MTP_LOW_N_MAX"),
@@ -330,6 +365,10 @@ out = {
         "llama_spec_adaptive_mtp_high": env_or_log("LLAMA_SPEC_ADAPTIVE_MTP_HIGH"),
         "llama_spec_adaptive_mtp_alpha": env_or_log("LLAMA_SPEC_ADAPTIVE_MTP_ALPHA"),
         "oneapi_device_selector": env_or_log("ONEAPI_DEVICE_SELECTOR"),
+        "ur_l0_use_immediate_commandlists": env_or_log("UR_L0_USE_IMMEDIATE_COMMANDLISTS"),
+        "ur_l0_enable_relaxed_allocation_limits": env_or_log("UR_L0_ENABLE_RELAXED_ALLOCATION_LIMITS"),
+        "ur_l0_use_copy_engine": env_or_log("UR_L0_USE_COPY_ENGINE"),
+        "sycl_pi_level_zero_use_copy_engine": env_or_log("SYCL_PI_LEVEL_ZERO_USE_COPY_ENGINE"),
         "ggml_sycl_disable_opt": env_or_log("GGML_SYCL_DISABLE_OPT"),
         "ggml_sycl_enable_vmm": env_or_log("GGML_SYCL_ENABLE_VMM"),
         "ggml_sycl_disable_graph": env_or_log("GGML_SYCL_DISABLE_GRAPH"),

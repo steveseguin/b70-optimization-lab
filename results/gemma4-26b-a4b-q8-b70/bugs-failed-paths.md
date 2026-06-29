@@ -26,9 +26,11 @@ Current realistic-gate family:
 - GGUF Q8 is large enough that KV headroom may be tight at 32K on a 32 GB B70.
   Establish small-context decode first, then walk context up.
 - llama.cpp issue `#21893` reports B70/Gemma 4 nonsense output unless
-  `GGML_SYCL_DISABLE_OPT=1` disables optimized SYCL reorder paths. This lane's
-  launcher defaults to `=1`; any `=0` result needs repeat canaries before speed
-  claims.
+  `GGML_SYCL_DISABLE_OPT=1` disables optimized SYCL reorder paths. This was an
+  early-lane risk, not the current promoted default: the strict Q8 lane now uses
+  `GGML_SYCL_DISABLE_OPT=0` only with repeated canaries and the fixed realistic
+  cold suite. Any new `=0` source/runtime variant still needs repeat canaries
+  before speed claims.
 - Google's MTP guidance notes that MoE models at batch size 1 can see limited
   MTP speedup because different drafted tokens may activate different experts.
   Treat MTP as a follow-up after the no-spec baseline, not the starting point.

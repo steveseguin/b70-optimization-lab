@@ -53,6 +53,33 @@ def category_for_index(idx: int | None, shape: str = "") -> str:
     return "moe_hidden"
 
 
+def refine_category(category: str, allreduce_line: str, pre_text: str) -> str:
+    """Split hidden-state collectives by the producer visible in AOT source.
+
+    The same ``f16[..., 3072]`` shape can mean several different MiniMax TP
+    boundaries. That distinction matters: delayed residual allreduce has
+    already been rejected as a speed path, while row-parallel and embedding
+    boundaries are still useful compiler-fusion evidence.
+    """
+    if category != "hidden_state_unknown":
+        return category
+    if "vocab_parallel_embedding.py" in pre_text:
+        return "hidden_embedding_allreduce"
+    if "_allreduce_with_rank0_residual" in pre_text:
+        return "hidden_delayed_residual_allreduce"
+    if "self_attn_modules_o_proj" in pre_text:
+        return "hidden_attention_oproj_allreduce"
+    if "RowParallelLinear" in pre_text or "layers/linear.py" in pre_text:
+        return "hidden_rowparallel_allreduce"
+    if "block_sparse_moe" in pre_text or "mlp_modules_experts" in pre_text:
+        return "hidden_moe_output_allreduce"
+    if "moe_runner.py" in pre_text or "fused_moe" in pre_text:
+        return "hidden_moe_output_allreduce"
+    if "embedding" in allreduce_line:
+        return "hidden_embedding_allreduce"
+    return category
+
+
 def op_kind(expr: str) -> str:
     if "copy_" in expr:
         return "copy"
@@ -98,6 +125,16 @@ def inspect_file(path: Path, window: int) -> dict[str, object]:
         wait_line, wait_name, wait_shape = waits_by_input.get(
             allreduce_name, (None, None, None)
         )
+        pre_start = max(1, line_no - window)
+        pre_context = [
+            {"line": i, "expr": lines[i - 1].strip()[:220]}
+            for i in range(pre_start, line_no)
+            if lines[i - 1].strip()
+        ]
+        pre_text = "\n".join(str(item["expr"]) for item in pre_context)
+        category = refine_category(
+            category_for_index(idx, match.group("shape")), line, pre_text
+        )
         context: list[dict[str, object]] = []
         anchor_line = wait_line if wait_line is not None else line_no
         for ctx_line_no in range(
@@ -131,10 +168,11 @@ def inspect_file(path: Path, window: int) -> dict[str, object]:
             {
                 "allreduce": allreduce_name,
                 "index": idx,
-                "category": category_for_index(idx, match.group("shape")),
+                "category": category,
                 "shape": match.group("shape"),
                 "op": match.group("op"),
                 "allreduce_line": line_no,
+                "pre_context": pre_context,
                 "wait": wait_name,
                 "wait_shape": wait_shape,
                 "wait_line": wait_line,

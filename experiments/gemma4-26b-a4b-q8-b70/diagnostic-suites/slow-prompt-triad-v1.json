@@ -1,0 +1,20 @@
+{
+  "suite_id": "gemma4-26b-a4b-q8-b70-slow-prompt-triad-v1",
+  "version": 1,
+  "description": "Diagnostic-only subset of the fixed realistic suite containing the slow prompts that most often bound strict first-100 throughput. Do not use as headline or LocalMaxxing throughput.",
+  "metric": "diagnostic median generated-token throughput for tokens 1-100 after TTFT across slow prompts",
+  "prompts": [
+    {
+      "id": "code-review",
+      "prompt": "Review this Python change as a senior engineer. A worker now batches database writes every 250 ms, retries failures twice, and drops failed rows into a local JSONL file. Discuss correctness risks, observability, data-loss risks, concurrency issues, test cases, and whether the design should be accepted. Make the answer concrete and actionable, with enough detail for a pull request review."
+    },
+    {
+      "id": "sql-debugging",
+      "prompt": "A reporting query became slow after a schema migration. The query joins orders, customers, invoices, and refunds, filters by tenant_id and created_at, and groups by customer segment. Explain a debugging plan for PostgreSQL. Cover EXPLAIN ANALYZE, indexes, statistics, join order, row estimates, partial indexes, materialized views, and rollout safety."
+    },
+    {
+      "id": "performance-hypotheses",
+      "prompt": "Given a GPU inference kernel profile where MoE gate/up/down projections dominate decode time, propose performance hypotheses to test. Cover kernel fusion, quantized matmul layout, route caching, graph capture, batching shape, memory bandwidth, synchronization overhead, and validation traps."
+    }
+  ]
+}

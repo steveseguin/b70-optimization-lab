@@ -198,6 +198,7 @@ def main() -> int:
         "llamaMtpDraftDirectArgmaxUnroll": launcher.get("llama_mtp_draft_direct_argmax_unroll"),
         "llamaMtpDraftFastArgmax": launcher.get("llama_mtp_draft_fast_argmax") == "1",
         "llamaSpecVerifyBackendArgmaxIds": launcher.get("llama_spec_verify_backend_argmax_ids") == "1",
+        "llamaSpecVerifyBulkSampledIds": launcher.get("llama_spec_verify_bulk_sampled_ids") == "1",
         "llamaSyclF16P021SmallNcols": launcher.get("llama_sycl_f16_p021_small_ncols") == "1",
         "llamaSyclMulMatIdMultiTokenFast": launcher.get("llama_sycl_mul_mat_id_multi_token_fast") == "1",
         "llamaSyclMulMatIdQ8_0Reorder": launcher.get("llama_sycl_mul_mat_id_q8_0_reorder") == "1",

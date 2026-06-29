@@ -6,6 +6,18 @@ experiments/**/scripts/__pycache__/
 # canonical server_log path captured in each summary.json.
 data/**/server.stdout.log
 
+# Model/checkpoint/tensor artifacts are local-only unless explicitly published
+# through a large-artifact channel. Commit summaries, manifests, patches, and
+# reproduction scripts instead.
+*.safetensors
+*.gguf
+*.bin
+*.pt
+*.pth
+*.ckpt
+*.onnx
+*.engine
+
 # Local credentials and tokens. Keep actual secret files outside Git.
 SUDOPASSWORD.txt
 *.password.txt

@@ -31,7 +31,11 @@ Important files from Hugging Face metadata:
 | `gemma-4-26B-A4B-it-UD-Q6_K_XL.gguf` | `23,295,389,472` | Lower-quality side experiment only if Q8 cannot fit useful context. |
 | `gemma-4-26B-A4B-it-MXFP4_MOE.gguf` | `16,551,046,944` | Public-speed comparison only; not quality-equivalent to the Q8 target. |
 | `mtp-gemma-4-26B-A4B-it.gguf` | `461,766,816` | Draft/MTP follow-up after no-spec baseline. |
-| `MTP/gemma-4-26B-A4B-it-Q8_0-MTP.gguf` | `461,766,816` | Alternate official Unsloth MTP draft file. Tested 2026-06-23; valid but below record. |
+| `MTP/gemma-4-26B-A4B-it-Q4_0-MTP.gguf` | local | Current promoted default MTP draft for the `UD-Q8_K_XL` target/verifier lane. Under the current VDR2 strict identity it remains faster than Q4_K_M/Q5_K_M/Q6_K/Q8_0 draft swaps. |
+| `MTP/gemma-4-26B-A4B-it-Q4_K_M-MTP.gguf` | local | Strict VDR2 screen on 2026-06-27 passed validity but lost (`84.232 tok/s` median 1-100). Do not use as default. |
+| `MTP/gemma-4-26B-A4B-it-Q5_K_M-MTP.gguf` | local | Strict VDR2 screen on 2026-06-27 passed validity but lost (`88.110 tok/s`), below the current Q4_0-draft record (`98.340 tok/s`). |
+| `MTP/gemma-4-26B-A4B-it-Q6_K-MTP.gguf` | local | Strict VDR2 screen on 2026-06-27 passed validity but lost (`85.729 tok/s`), below the current Q4_0-draft record. |
+| `MTP/gemma-4-26B-A4B-it-Q8_0-MTP.gguf` | `461,766,816` | Alternate official Unsloth MTP draft file. Current strict VDR2 screen passed validity but lost (`88.245 tok/s`), below the current Q4_0-draft record. |
 | `MTP/gemma-4-26B-A4B-it-F16-MTP.gguf` | `855,228,576` | Higher-precision draft head. Tested 2026-06-23; valid but much slower than Q8_0 draft. |
 | `MTP/gemma-4-26B-A4B-it-BF16-MTP.gguf` | `855,228,576` | Higher-precision draft head. Tested 2026-06-23; valid but much slower than Q8_0 draft. |
 | `mmproj-F16.gguf` | `1,193,058,784` | Optional multimodal smoke after text baseline; not required for speed work. |

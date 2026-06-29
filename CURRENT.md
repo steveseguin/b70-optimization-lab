@@ -13,21 +13,24 @@ Current active optimization target:
   scores may guide optimization only; they are not headline throughput or
   LocalMaxxing evidence.
 - Best strict realistic-suite result so far:
-  `95.82453787677183 tok/s` median generated-token throughput for tokens 1-100
+  `98.34046474459183 tok/s` median generated-token throughput for tokens 1-100
   after TTFT across the fixed cold prompt suite. Evidence:
-  `data/gemma4-q8-gpu1-strict-vdr2-f16p021-smallncols-full512-exactconfirm-n3-nmin2-p00475-ub1024-20260628T010121Z/summary.json`.
+  `data/gemma4-q8-gpu1-strict-vdr2-f16p021-bulksampled-confirm-B-n3-nmin2-p00475-ub1024-full512-20260628T052158Z/summary.json`.
   It uses llama.cpp `c926ad098`, UD-Q8_K_XL target/verifier, Q4_0 MTP draft,
   reordered-Q8 VDR2, `n_max=3`, `n_min=2`, `p_min=0.0475`,
   `UBATCH_SIZE=1024`, `LLAMA_SYCL_F16_P021_SMALL_NCOLS=1`,
-  `cached_tokens=0` on every prompt, and `realistic_final_gate.passed=true`.
+  `LLAMA_SPEC_VERIFY_BULK_SAMPLED_IDS=1`, `cached_tokens=0` on every prompt,
+  and `realistic_final_gate.passed=true`.
 - Representative / submitted status:
-  the strict VDR2 `n_max=3`, `n_min=2`, `UBATCH_SIZE=1024` family plus
-  `LLAMA_SYCL_F16_P021_SMALL_NCOLS=1` is the current policy-compliant
-  Gemma 26B Q8 LocalMaxxing submission: `cmqx3687103v4qr01ace1ft3m`.
-  Full-512 confirmation lanes measured `95.81654623957742`,
-  `95.82453787677183`, `93.42169001279183`, and
-  `95.56564013874495 tok/s`, all with `cached_tokens=0`. The prior
-  LocalMaxxing row `cmqwxep4a03qiqr010chjn93s` at
+  the VDR2/F16-p021/bulk-sampled-ID transfer of the strict `n_max=3`,
+  `n_min=2`, `UBATCH_SIZE=1024` family is the current policy-compliant
+  Gemma 26B Q8 LocalMaxxing submission: `cmqxchyra03xmqr01b963gmi1`.
+  Full-512 confirmation lanes measured `96.01452890026427`,
+  `98.34046474459183`, `95.90275376682132`, and
+  `94.94094934974818 tok/s`, all with `cached_tokens=0`. The prior
+  F16-p021 row `cmqx3687103v4qr01ace1ft3m` at
+  `95.82453787677183 tok/s`, prior LocalMaxxing row
+  `cmqwxep4a03qiqr010chjn93s` at
   `90.98312252660529 tok/s`, prior VDR2 submissions
   `cmqwt1zk803ozqr01hctqss2z` and `cmqwqzayr03o8qr01j6lgx93n`, and prior
   VDR4 submission `cmqwnl2ag03lgqr01ch5bxknq` are now superseded.
