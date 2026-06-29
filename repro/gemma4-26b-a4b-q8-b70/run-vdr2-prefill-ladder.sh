@@ -88,6 +88,7 @@ for label in labels:
     bench = json.loads(bench_path.read_text()) if bench_path else {}
     bsum = bench.get("summary", {})
     freshness = bench.get("fresh_response_validity", {})
+    launcher = summary.get("launcher_identity", {})
     identity = (
         bench.get("bench_identity")
         or bench.get("bench_run_identity")
@@ -102,6 +103,8 @@ for label in labels:
         "prompt_tokens_requested": pick("prompt_tokens_requested"),
         "prompt_mode": pick("prompt_mode"),
         "max_tokens": pick("max_tokens"),
+        "ctx_size": launcher.get("ctx_size"),
+        "extra_llama_args": launcher.get("extra_llama_args"),
         "actual_prompt_tokens": bsum.get("prompt_tokens"),
         "ttft_s": bsum.get("ttft_s"),
         "decode_tok_s_after_ttft": bsum.get("tok_s_after_ttft"),

@@ -139,3 +139,32 @@ triggered a Level Zero `UR_RESULT_ERROR_DEVICE_LOST` in
 validated context size, and treat 32K work as a separate stability/graph/KV
 lane. Future long-context work should test no-spec or lower-spec settings at
 32K before touching the short-record recipe.
+
+## 32K no-spec control
+
+Fourth ladder:
+
+- command shape:
+  `MAX_TOKENS=16 BENCH_REPEATS=1 CANARY_REPEATS=2 EXTRA_LLAMA_ARGS="--parallel 1 --cache-ram 0 --ctx-checkpoints 0" LADDER_SPECS="0:128:32768 1:4096:32768 2:8192:32768 3:12000:32768" repro/gemma4-26b-a4b-q8-b70/run-vdr2-prefill-ladder.sh`
+- aggregate: `data/gemma4-prefill-ladder-20260629T162703Z.json`
+- all four lanes passed;
+- no device loss;
+- no speculative decoding (`common_speculative_init: no implementations specified for speculative decoding`);
+- still diagnostic-only, not LocalMaxxing/headline eligible.
+
+| GPU | Requested prompt | Actual prompt | Context | Output | TTFT | Decode after TTFT | Wall tok/s | Interpretation |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| 0 | 128 | 294 | 32768 | 16 | 0.585 s | 83.611 tok/s | 20.600 | 32K context is stable without MTP at short prompt |
+| 1 | 4096 | 5597 | 32768 | 16 | 4.103 s | 64.742 tok/s | 3.678 | much faster than MTP-at-32K (`3.119 tok/s`) |
+| 2 | 8192 | 11076 | 32768 | 16 | 7.590 s | 57.445 tok/s | 2.033 | much faster than MTP-at-32K (`3.006 tok/s`) |
+| 3 | 12000 | 16164 | 32768 | 16 | 15.558 s | 52.277 tok/s | 1.009 | stable long prompt, still below short-context record decode |
+
+Conclusion: the catastrophic 32K failure is MTP-specific. Plain no-spec 32K is
+stable and service-usable for long-context diagnostics, though decode degrades
+with prompt length. Do not enable the current Q4_0 MTP draft at `ctx=32768`
+until a lower-risk spec configuration is separately validated. For service
+mode, a pragmatic split is:
+
+- short/medium context: validated MTP record recipe;
+- 32K context: no-spec fallback until a lower-spec or graph-safe draft path is
+  proven.
