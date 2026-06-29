@@ -13,9 +13,9 @@ Current active optimization target:
   scores may guide optimization only; they are not headline throughput or
   LocalMaxxing evidence.
 - Best strict realistic-suite result so far:
-  `115.72789384447941 tok/s` median generated-token throughput for tokens
+  `115.8466634928202 tok/s` median generated-token throughput for tokens
   1-100 after TTFT across the fixed cold prompt suite. Evidence:
-  `data/gemma4-q8-gpu1-vdr2-selecteddown-reordervdr2-full512-20260629B/summary.json`.
+  `data/gemma4-q8-gpu1-selecteddown-bf16retest-control-full512-20260629T051323Z/summary.json`.
   It uses llama.cpp `c926ad098`, UD-Q8_K_XL target/verifier, Q4_0 MTP draft,
   reordered-Q8 VDR2, `n_max=3`, `n_min=2`, `p_min=0.0475`,
   `UBATCH_SIZE=1024`, `LLAMA_SYCL_F16_P021_SMALL_NCOLS=1`,
@@ -24,13 +24,16 @@ Current active optimization target:
   `cached_tokens=0` on every prompt, and `realistic_final_gate.passed=true`.
 - Representative / submitted status:
   the VDR2 selected-down fused weighted-sum path is the current
-  policy-compliant Gemma 26B Q8 LocalMaxxing submission:
-  `cmqyo0jyt08ippk01vhiobdnm`.
+  policy-compliant Gemma 26B Q8 LocalMaxxing submission. The retested current
+  high is approved as `cmqyrpox4021dqk01co5o4fcw`; the initial selected-down
+  confirmation `cmqyo0jyt08ippk01vhiobdnm` remains valid support.
   Full-512 confirmation lanes measured `113.47081786263712`,
   `115.72789384447941`, `113.81540554086772`, and
   `114.8109417270852 tok/s`, all with `cached_tokens=0` and 512/512 canary
-  rows passing. The prior LocalMaxxing row `cmqxchyra03xmqr01b963gmi1` at
-  `98.34046474459183 tok/s`, prior F16-p021 row
+  rows passing. The later BF16-retest control measured
+  `115.8466634928202 tok/s` and is the current high. The prior LocalMaxxing
+  row `cmqxchyra03xmqr01b963gmi1` at `98.34046474459183 tok/s`, prior
+  F16-p021 row
   `cmqx3687103v4qr01ace1ft3m`, earlier VDR2 submissions, and prior VDR4
   submission `cmqwnl2ag03lgqr01ch5bxknq` are now superseded.
 - Current valid no-spec control:

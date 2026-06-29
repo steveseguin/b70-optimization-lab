@@ -1,0 +1,250 @@
+{
+  "kind": "gemma4_q8_prefill_ladder",
+  "policy": "diagnostic only; do not submit as LocalMaxxing headline throughput",
+  "rows": [
+    {
+      "label": "gemma4-q8-gpu0-prefill-ladder-p128-ctx2048-o16-20260629T161253Z",
+      "status": "ok",
+      "run_dir": "/home/steve/qwen36-results-main/data/gemma4-q8-gpu0-prefill-ladder-p128-ctx2048-o16-20260629T161253Z",
+      "prompt_tokens_requested": 128,
+      "prompt_mode": "filled-long-unique",
+      "max_tokens": 16,
+      "actual_prompt_tokens": {
+        "cv": 0.015567030216879956,
+        "max": 294,
+        "mean": 289.6666666666667,
+        "median": 290,
+        "min": 285,
+        "stdev": 4.509249752822894
+      },
+      "ttft_s": {
+        "cv": 0.3442936177061879,
+        "max": 0.5952679970068857,
+        "mean": 0.4262913083269571,
+        "median": 0.35304613795597106,
+        "min": 0.3305597900180146,
+        "stdev": 0.14676937674059204
+      },
+      "decode_tok_s_after_ttft": {
+        "cv": 0.0012072676124257168,
+        "max": 143.05384060576776,
+        "mean": 142.9470776372607,
+        "median": 143.03941338673602,
+        "min": 142.74797891927827,
+        "stdev": 0.17257537712236928
+      },
+      "wall_tok_s": {
+        "cv": 0.23683302485723384,
+        "max": 36.146311594665995,
+        "mean": 31.06308264163385,
+        "median": 34.415750268283695,
+        "min": 22.627186061951857,
+        "stdev": 7.356763823408379
+      },
+      "fresh_response_validity": {
+        "all_cached_tokens": [
+          0,
+          0,
+          0
+        ],
+        "all_prompt_hashes_distinct": true,
+        "all_rows_fresh_response_mean_eligible": true,
+        "cached_tokens_all_zero": true,
+        "cached_tokens_reported": true,
+        "headline_cached_tokens": 0,
+        "headline_policy": "Use row0 only as fresh-response headline. Later repeated-prompt rows are support-only unless each request uses an independently fresh prompt with no reusable continuation/history.",
+        "headline_row": 0,
+        "headline_tok_s_after_ttft": 143.05384060576776,
+        "headline_tok_s_wall": 22.627186061951857,
+        "prompts_are_unique": true,
+        "repeated_prompt_rows_support_only": false
+      },
+      "headline_eligible_for_gemma_q8": false,
+      "localmaxxing_submission_allowed": false,
+      "note": "Diagnostic prompt/prefill/context ladder only; not a short-decode promotion run."
+    },
+    {
+      "label": "gemma4-q8-gpu1-prefill-ladder-p512-ctx2048-o16-20260629T161253Z",
+      "status": "ok",
+      "run_dir": "/home/steve/qwen36-results-main/data/gemma4-q8-gpu1-prefill-ladder-p512-ctx2048-o16-20260629T161253Z",
+      "prompt_tokens_requested": 512,
+      "prompt_mode": "filled-long-unique",
+      "max_tokens": 16,
+      "actual_prompt_tokens": {
+        "cv": 0.020951153270396213,
+        "max": 804,
+        "mean": 787.6666666666666,
+        "median": 788,
+        "min": 771,
+        "stdev": 16.502525059315417
+      },
+      "ttft_s": {
+        "cv": 0.3219245806675347,
+        "max": 0.9474878549808636,
+        "mean": 0.6911280700005591,
+        "median": 0.5775098170852289,
+        "min": 0.5483865379355848,
+        "stdev": 0.22249111412249256
+      },
+      "decode_tok_s_after_ttft": {
+        "cv": 0.006215528185749244,
+        "max": 133.0760262746323,
+        "mean": 132.17723687757467,
+        "median": 131.99067258299257,
+        "min": 131.46501177509913,
+        "stdev": 0.8215513413270198
+      },
+      "wall_tok_s": {
+        "cv": 0.23816420859696383,
+        "max": 23.92993689998973,
+        "mean": 20.59772066995878,
+        "median": 22.898671101174706,
+        "min": 14.964554008711897,
+        "stdev": 4.905639842262056
+      },
+      "fresh_response_validity": {
+        "all_cached_tokens": [
+          0,
+          0,
+          0
+        ],
+        "all_prompt_hashes_distinct": true,
+        "all_rows_fresh_response_mean_eligible": true,
+        "cached_tokens_all_zero": true,
+        "cached_tokens_reported": true,
+        "headline_cached_tokens": 0,
+        "headline_policy": "Use row0 only as fresh-response headline. Later repeated-prompt rows are support-only unless each request uses an independently fresh prompt with no reusable continuation/history.",
+        "headline_row": 0,
+        "headline_tok_s_after_ttft": 131.46501177509913,
+        "headline_tok_s_wall": 14.964554008711897,
+        "prompts_are_unique": true,
+        "repeated_prompt_rows_support_only": false
+      },
+      "headline_eligible_for_gemma_q8": false,
+      "localmaxxing_submission_allowed": false,
+      "note": "Diagnostic prompt/prefill/context ladder only; not a short-decode promotion run."
+    },
+    {
+      "label": "gemma4-q8-gpu2-prefill-ladder-p2048-ctx4096-o16-20260629T161253Z",
+      "status": "ok",
+      "run_dir": "/home/steve/qwen36-results-main/data/gemma4-q8-gpu2-prefill-ladder-p2048-ctx4096-o16-20260629T161253Z",
+      "prompt_tokens_requested": 2048,
+      "prompt_mode": "filled-long-unique",
+      "max_tokens": 16,
+      "actual_prompt_tokens": {
+        "cv": 0.023829655959196474,
+        "max": 2857,
+        "mean": 2790.6666666666665,
+        "median": 2791,
+        "min": 2724,
+        "stdev": 66.5006265634643
+      },
+      "ttft_s": {
+        "cv": 0.13985527152358077,
+        "max": 2.273586923023686,
+        "mean": 1.9575152379693463,
+        "median": 1.8043154099723324,
+        "min": 1.7946433809120208,
+        "stdev": 0.27376882511774975
+      },
+      "decode_tok_s_after_ttft": {
+        "cv": 0.0028621715231953084,
+        "max": 110.6739627410916,
+        "mean": 110.38132985649146,
+        "median": 110.42365712590488,
+        "min": 110.04636970247793,
+        "stdev": 0.31593029900767794
+      },
+      "wall_tok_s": {
+        "cv": 0.12127799357292669,
+        "max": 8.249379280441122,
+        "mean": 7.691187617337171,
+        "median": 8.209825943150598,
+        "min": 6.614357628419794,
+        "stdev": 0.9327718024235908
+      },
+      "fresh_response_validity": {
+        "all_cached_tokens": [
+          0,
+          0,
+          0
+        ],
+        "all_prompt_hashes_distinct": true,
+        "all_rows_fresh_response_mean_eligible": true,
+        "cached_tokens_all_zero": true,
+        "cached_tokens_reported": true,
+        "headline_cached_tokens": 0,
+        "headline_policy": "Use row0 only as fresh-response headline. Later repeated-prompt rows are support-only unless each request uses an independently fresh prompt with no reusable continuation/history.",
+        "headline_row": 0,
+        "headline_tok_s_after_ttft": 110.04636970247793,
+        "headline_tok_s_wall": 6.614357628419794,
+        "prompts_are_unique": true,
+        "repeated_prompt_rows_support_only": false
+      },
+      "headline_eligible_for_gemma_q8": false,
+      "localmaxxing_submission_allowed": false,
+      "note": "Diagnostic prompt/prefill/context ladder only; not a short-decode promotion run."
+    },
+    {
+      "label": "gemma4-q8-gpu3-prefill-ladder-p4096-ctx8192-o16-20260629T161253Z",
+      "status": "ok",
+      "run_dir": "/home/steve/qwen36-results-main/data/gemma4-q8-gpu3-prefill-ladder-p4096-ctx8192-o16-20260629T161253Z",
+      "prompt_tokens_requested": 4096,
+      "prompt_mode": "filled-long-unique",
+      "max_tokens": 16,
+      "actual_prompt_tokens": {
+        "cv": 0.024434197811512015,
+        "max": 5597,
+        "mean": 5463.666666666667,
+        "median": 5464,
+        "min": 5330,
+        "stdev": 133.50031210949783
+      },
+      "ttft_s": {
+        "cv": 0.08332097683960865,
+        "max": 4.034222860005684,
+        "mean": 3.6816211826711274,
+        "median": 3.5345342800719664,
+        "min": 3.476106407935731,
+        "stdev": 0.3067562732935536
+      },
+      "decode_tok_s_after_ttft": {
+        "cv": 0.11254068581870383,
+        "max": 104.14001331936969,
+        "mean": 97.5916198352382,
+        "median": 103.72304945820342,
+        "min": 84.91179672814155,
+        "stdev": 10.983027826415928
+      },
+      "wall_tok_s": {
+        "cv": 0.0810915791923096,
+        "max": 4.408022278817132,
+        "mean": 4.1781910005558425,
+        "median": 4.337464240862552,
+        "min": 3.7890864819878423,
+        "stdev": 0.33881610640216936
+      },
+      "fresh_response_validity": {
+        "all_cached_tokens": [
+          0,
+          0,
+          0
+        ],
+        "all_prompt_hashes_distinct": true,
+        "all_rows_fresh_response_mean_eligible": true,
+        "cached_tokens_all_zero": true,
+        "cached_tokens_reported": true,
+        "headline_cached_tokens": 0,
+        "headline_policy": "Use row0 only as fresh-response headline. Later repeated-prompt rows are support-only unless each request uses an independently fresh prompt with no reusable continuation/history.",
+        "headline_row": 0,
+        "headline_tok_s_after_ttft": 84.91179672814155,
+        "headline_tok_s_wall": 3.7890864819878423,
+        "prompts_are_unique": true,
+        "repeated_prompt_rows_support_only": false
+      },
+      "headline_eligible_for_gemma_q8": false,
+      "localmaxxing_submission_allowed": false,
+      "note": "Diagnostic prompt/prefill/context ladder only; not a short-decode promotion run."
+    }
+  ]
+}

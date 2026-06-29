@@ -9,7 +9,7 @@ Gemma sweep history and a triage of recent Grok/X.com leads.
 
 ## At A Glance
 
-Current valid record: `115.72789384447941 tok/s` median generated-token
+Current valid record: `115.8466634928202 tok/s` median generated-token
 throughput for tokens 1-100 after TTFT on the fixed realistic cold suite,
 with `cached_tokens=0` on every prompt. The record identity is llama.cpp
 `c926ad098`, `UD-Q8_K_XL` target/verifier, Q4_0 MTP draft, reordered-Q8 VDR2,
@@ -64,7 +64,7 @@ Latest confirmed state:
   `c926ad098` with broad dirty source changes across speculative sampling,
   Gemma4 graph/model code, and SYCL/MMVQ kernels. Do not reset or rebase it
   while an optimizer is running.
-- The current promoted Gemma Q8 record is now `115.72789384447941 tok/s`
+- The current promoted Gemma Q8 record is now `115.8466634928202 tok/s`
   via the VDR2 selected-down fused weighted-sum path.
 
 Recent useful progress:
@@ -107,7 +107,7 @@ or a verifier MoE boundary/kernel change.
 
 | Lane | Result | What it means | Source |
 | --- | ---: | --- | --- |
-| Strict current record | `115.728` tok/s | Current policy-compliant headline, VDR2 selected-down fused weighted-sum | `20260629-vdr2-selected-down-record.md` |
+| Strict current record | `115.847` tok/s | Current policy-compliant headline, VDR2 selected-down fused weighted-sum | `20260629-vdr2-selected-down-record.md` |
 | Previous strict row | `98.340` tok/s | Superseded by VDR2 selected-down fusion | `README.md`, `research-plan.md` |
 | Previous strict row | `95.825` tok/s | Superseded by bulk sampled-ID verifier cleanup | `README.md:159-160`, `research-plan.md:43-65` |
 | Earlier strict VDR2 | `90.983`, `90.322`, `89.455` tok/s | Valid progression, superseded | `README.md:161-167`, `research-plan.md:84-95`, `research-plan.md:167-177` |

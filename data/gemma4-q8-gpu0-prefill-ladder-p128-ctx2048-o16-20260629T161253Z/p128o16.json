@@ -1,0 +1,164 @@
+{
+  "fresh_response_validity": {
+    "all_cached_tokens": [
+      0,
+      0,
+      0
+    ],
+    "all_prompt_hashes_distinct": true,
+    "all_rows_fresh_response_mean_eligible": true,
+    "cached_tokens_all_zero": true,
+    "cached_tokens_reported": true,
+    "headline_cached_tokens": 0,
+    "headline_policy": "Use row0 only as fresh-response headline. Later repeated-prompt rows are support-only unless each request uses an independently fresh prompt with no reusable continuation/history.",
+    "headline_row": 0,
+    "headline_tok_s_after_ttft": 143.05384060576776,
+    "headline_tok_s_wall": 22.627186061951857,
+    "prompts_are_unique": true,
+    "repeated_prompt_rows_support_only": false
+  },
+  "rows": [
+    {
+      "chunks": 16,
+      "completion_tokens": 16,
+      "elapsed_s": 0.7071139980107546,
+      "post_ttft_s": 0.11184600100386888,
+      "prompt_sha256": "60dd0e237b33c6bf252963f747019a36efb8ddd711131c8794c8eb4ef3ceb2cd",
+      "prompt_tokens": 294,
+      "prompt_variant": 0,
+      "sha256": "54aac3f57f843e0317626b1fe57c053269d8413f44a7e274b28109de36daf102",
+      "text": "001. benchmark latency memory throughput validation repeatability\n002. benchmark",
+      "text_preview": "001. benchmark latency memory throughput validation repeatability\n002. benchmark",
+      "tok_s_after_ttft": 143.05384060576776,
+      "tok_s_wall": 22.627186061951857,
+      "ttft_s": 0.5952679970068857,
+      "usage": {
+        "completion_tokens": 16,
+        "prompt_tokens": 294,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "total_tokens": 310
+      }
+    },
+    {
+      "chunks": 16,
+      "completion_tokens": 16,
+      "elapsed_s": 0.44264543999452144,
+      "post_ttft_s": 0.11208564997650683,
+      "prompt_sha256": "4f44d67e77588272f71094c855766e22ec6136e70512047ad74e1163eba791de",
+      "prompt_tokens": 290,
+      "prompt_variant": 1,
+      "sha256": "54aac3f57f843e0317626b1fe57c053269d8413f44a7e274b28109de36daf102",
+      "text": "001. benchmark latency memory throughput validation repeatability\n002. benchmark",
+      "text_preview": "001. benchmark latency memory throughput validation repeatability\n002. benchmark",
+      "tok_s_after_ttft": 142.74797891927827,
+      "tok_s_wall": 36.146311594665995,
+      "ttft_s": 0.3305597900180146,
+      "usage": {
+        "completion_tokens": 16,
+        "prompt_tokens": 290,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "total_tokens": 306
+      }
+    },
+    {
+      "chunks": 16,
+      "completion_tokens": 16,
+      "elapsed_s": 0.46490341995377094,
+      "post_ttft_s": 0.11185728199779987,
+      "prompt_sha256": "b652a59c3ba043a8f928d5a08a656bc381e54c5d57dfdbdbbdcbd56ee2bce3df",
+      "prompt_tokens": 285,
+      "prompt_variant": 2,
+      "sha256": "54aac3f57f843e0317626b1fe57c053269d8413f44a7e274b28109de36daf102",
+      "text": "001. benchmark latency memory throughput validation repeatability\n002. benchmark",
+      "text_preview": "001. benchmark latency memory throughput validation repeatability\n002. benchmark",
+      "tok_s_after_ttft": 143.03941338673602,
+      "tok_s_wall": 34.415750268283695,
+      "ttft_s": 0.35304613795597106,
+      "usage": {
+        "completion_tokens": 16,
+        "prompt_tokens": 285,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "total_tokens": 301
+      }
+    }
+  ],
+  "run_identity": {
+    "api_mode": "chat",
+    "base_url": "http://127.0.0.1:18460",
+    "created_at_utc": "2026-06-29T16:13:23.948227+00:00",
+    "max_tokens": 16,
+    "model": "gemma4-26b-a4b-q8",
+    "prompt_chars": 1234,
+    "prompt_mode": "filled-long-unique",
+    "prompt_preview": "Unique benchmark instance 0000. Deterministic nonce gemma-b70-0000-00000000.\n\nYou are running a deterministic Gemma B70 decode benchmark. Read the reference context, then produce a long numbered response until the token limit is reached. Do",
+    "prompt_sha256": "60dd0e237b33c6bf252963f747019a36efb8ddd711131c8794c8eb4ef3ceb2cd",
+    "prompt_sha256s": [
+      "60dd0e237b33c6bf252963f747019a36efb8ddd711131c8794c8eb4ef3ceb2cd",
+      "4f44d67e77588272f71094c855766e22ec6136e70512047ad74e1163eba791de",
+      "b652a59c3ba043a8f928d5a08a656bc381e54c5d57dfdbdbbdcbd56ee2bce3df"
+    ],
+    "prompt_tokens_requested": 128,
+    "prompts_are_unique": true,
+    "repeats": 3,
+    "seed": 1,
+    "usage_required": true
+  },
+  "summary": {
+    "completion_tokens": {
+      "cv": 0.0,
+      "max": 16,
+      "mean": 16.0,
+      "median": 16,
+      "min": 16,
+      "stdev": 0.0
+    },
+    "completion_tokens_total": 48,
+    "elapsed_s": {
+      "cv": 0.27254317137739315,
+      "max": 0.7071139980107546,
+      "mean": 0.5382209526530156,
+      "median": 0.46490341995377094,
+      "min": 0.44264543999452144,
+      "stdev": 0.14668844533781464
+    },
+    "prompt_tokens": {
+      "cv": 0.015567030216879956,
+      "max": 294,
+      "mean": 289.6666666666667,
+      "median": 290,
+      "min": 285,
+      "stdev": 4.509249752822894
+    },
+    "requests": 3,
+    "tok_s_after_ttft": {
+      "cv": 0.0012072676124257168,
+      "max": 143.05384060576776,
+      "mean": 142.9470776372607,
+      "median": 143.03941338673602,
+      "min": 142.74797891927827,
+      "stdev": 0.17257537712236928
+    },
+    "tok_s_wall": {
+      "cv": 0.23683302485723384,
+      "max": 36.146311594665995,
+      "mean": 31.06308264163385,
+      "median": 34.415750268283695,
+      "min": 22.627186061951857,
+      "stdev": 7.356763823408379
+    },
+    "ttft_s": {
+      "cv": 0.3442936177061879,
+      "max": 0.5952679970068857,
+      "mean": 0.4262913083269571,
+      "median": 0.35304613795597106,
+      "min": 0.3305597900180146,
+      "stdev": 0.14676937674059204
+    }
+  }
+}
