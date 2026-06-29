@@ -42,6 +42,16 @@ Primary target:
   suite:
   `data/gemma4-q8-gpu0-vdr4default-nospec-realistic-gate-v2-20260627T165335Z/summary.json`.
   This is the clean target-side baseline for continued optimization.
+- Latest full512 follow-up: fused selected-softmax into selected-down VDR2
+  (`LLAMA_GEMMA4_MOE_FUSED_DOWN_SELECTED_SOFTMAX=1`) and the EOG-clip
+  interaction were valid but lost. Best candidate was `111.90908727268967
+  tok/s` with EOG clip, below controls and below the `115.8466634928202` record.
+  Do not submit or retest this interaction as a record lane. Evidence:
+  `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260629-fused-selected-softmax-full512-negative.md`.
+- Current best non-duplicate Gemma code target is row-adaptive verifier output
+  inside the existing target decode boundary, preserving the bonus-token
+  pipeline and avoiding any extra `SPEC_HEAD` launch. See
+  `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260629-verifier-next-target-audit.md`.
 - Current synthetic diagnostic one-B70 best is `176.21623213048554 tok/s` after
   TTFT on row0 with `cached_tokens=0`, `1536` canary repeats / `6144` rows
   passed, LocalMaxxing `cmqwkedg303jeqr013z753j62`. Under the stricter

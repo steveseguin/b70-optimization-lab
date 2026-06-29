@@ -1,0 +1,32 @@
+diff --git a/scripts/run-gemma4-26b-first-baseline.sh b/scripts/run-gemma4-26b-first-baseline.sh
+index 08cffea7..b7f17faa 100755
+--- a/scripts/run-gemma4-26b-first-baseline.sh
++++ b/scripts/run-gemma4-26b-first-baseline.sh
+@@ -140,6 +140,7 @@ LLAMA_SPEC_VERIFY_STAGE_MTP3="${LLAMA_SPEC_VERIFY_STAGE_MTP3:-}" \
+ LLAMA_SPEC_VERIFY_STAGE_MTP3_SPLIT_BONUS="${LLAMA_SPEC_VERIFY_STAGE_MTP3_SPLIT_BONUS:-}" \
+ LLAMA_SPEC_VERIFY_LATE_HEAD_BONUS="${LLAMA_SPEC_VERIFY_LATE_HEAD_BONUS:-}" \
+ LLAMA_SPEC_VERIFY_PREFIX2_TAIL_HEAD="${LLAMA_SPEC_VERIFY_PREFIX2_TAIL_HEAD:-}" \
++LLAMA_SPEC_VERIFY_CLIP_DRAFT_AT_EOG="${LLAMA_SPEC_VERIFY_CLIP_DRAFT_AT_EOG:-}" \
+ LLAMA_SPEC_VERIFY_FUSED_OUTPUT_ARGMAX="${LLAMA_SPEC_VERIFY_FUSED_OUTPUT_ARGMAX:-}" \
+ LLAMA_SPEC_HEAD_FUSED_OUTPUT_ARGMAX="${LLAMA_SPEC_HEAD_FUSED_OUTPUT_ARGMAX:-}" \
+ LLAMA_SPEC_VERIFY_SOFTCAP_ARGMAX="${LLAMA_SPEC_VERIFY_SOFTCAP_ARGMAX:-}" \
+@@ -368,6 +369,7 @@ out = {
+         "llama_spec_verify_stage_mtp3_split_bonus": env_or_log("LLAMA_SPEC_VERIFY_STAGE_MTP3_SPLIT_BONUS"),
+         "llama_spec_verify_late_head_bonus": env_or_log("LLAMA_SPEC_VERIFY_LATE_HEAD_BONUS"),
+         "llama_spec_verify_prefix2_tail_head": env_or_log("LLAMA_SPEC_VERIFY_PREFIX2_TAIL_HEAD"),
++        "llama_spec_verify_clip_draft_at_eog": env_or_log("LLAMA_SPEC_VERIFY_CLIP_DRAFT_AT_EOG"),
+         "llama_spec_verify_fused_output_argmax": env_or_log("LLAMA_SPEC_VERIFY_FUSED_OUTPUT_ARGMAX"),
+         "llama_spec_head_fused_output_argmax": env_or_log("LLAMA_SPEC_HEAD_FUSED_OUTPUT_ARGMAX"),
+         "llama_spec_verify_softcap_argmax": env_or_log("LLAMA_SPEC_VERIFY_SOFTCAP_ARGMAX"),
+diff --git a/scripts/run-gemma4-26b-llamacpp-replica.sh b/scripts/run-gemma4-26b-llamacpp-replica.sh
+index 7588ad56..2d199545 100755
+--- a/scripts/run-gemma4-26b-llamacpp-replica.sh
++++ b/scripts/run-gemma4-26b-llamacpp-replica.sh
+@@ -156,6 +156,7 @@ mkdir -p "$OUT_DIR"
+   echo "LLAMA_SPEC_VERIFY_STAGE_MTP3_SPLIT_BONUS=${LLAMA_SPEC_VERIFY_STAGE_MTP3_SPLIT_BONUS:-<unset>}"
+   echo "LLAMA_SPEC_VERIFY_LATE_HEAD_BONUS=${LLAMA_SPEC_VERIFY_LATE_HEAD_BONUS:-<unset>}"
+   echo "LLAMA_SPEC_VERIFY_PREFIX2_TAIL_HEAD=${LLAMA_SPEC_VERIFY_PREFIX2_TAIL_HEAD:-<unset>}"
++  echo "LLAMA_SPEC_VERIFY_CLIP_DRAFT_AT_EOG=${LLAMA_SPEC_VERIFY_CLIP_DRAFT_AT_EOG:-<unset>}"
+   echo "LLAMA_SPEC_VERIFY_FUSED_OUTPUT_ARGMAX=${LLAMA_SPEC_VERIFY_FUSED_OUTPUT_ARGMAX:-<unset>}"
+   echo "LLAMA_SPEC_HEAD_FUSED_OUTPUT_ARGMAX=${LLAMA_SPEC_HEAD_FUSED_OUTPUT_ARGMAX:-<unset>}"
+   echo "LLAMA_SPEC_VERIFY_RAW_ARGMAX=${LLAMA_SPEC_VERIFY_RAW_ARGMAX:-<unset>}"

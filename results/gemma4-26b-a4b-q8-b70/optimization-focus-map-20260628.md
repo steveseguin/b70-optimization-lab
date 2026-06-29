@@ -106,9 +106,14 @@ Recent closed negatives:
   `LLAMA_GEMMA4_MOE_FUSED_DOWN_SELECTED_SOFTMAX=1` passed the fixed cold
   strict128 gate and 512/512 canary rows on both flag-on lanes. It was a real
   small paired win (`114.762` vs `113.943`, `115.554` vs `113.967`) but still
-  below the promoted `115.8466634928202 tok/s` full512 record, so it is
-  preserved as a default-off small-positive mechanism rather than promoted.
-  See `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260629-fused-down-selected-softmax-strict128.md`.
+  below the promoted `115.8466634928202 tok/s` full512 record. The later
+  full512 promotion screen was valid but lost (`111.896` flag-on, `111.909`
+  flag-on + EOG clip, controls `112.220` / `112.997`). Preserve it as a
+  default-off archived mechanism; do not retest this interaction as a record
+  lane. See
+  `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260629-fused-down-selected-softmax-strict128.md`
+  and
+  `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260629-fused-selected-softmax-full512-negative.md`.
 
 Implication for the next AI: do not spend another session on launch-flag
 sweeps. The next credible record attempt needs a real verifier-cost reduction:

@@ -217,8 +217,28 @@ win: GPU1 flag-on `114.762` versus GPU0 control `113.943`, and GPU3 flag-on
 intended verifier-MoE boundary, but **not promoted** because the best strict128
 candidate remained below the current full512 record
 `115.8466634928202 tok/s`. Keep the flag default-off and preserve the patch;
-do not spend a full512 promotion run unless a later patch stacks with it. See
-`../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260629-fused-down-selected-softmax-strict128.md`.
+the later full512 promotion screen was run and lost. Full512 results:
+
+- control GPU0:
+  `data/gemma4-q8-gpu0-fusedselsoft-full512-control-20260629T194706Z/summary.json`,
+  `112.21988003325279 tok/s`;
+- flag-on GPU1:
+  `data/gemma4-q8-gpu1-fusedselsoft-full512-on-20260629T194706Z/summary.json`,
+  `111.89648891729823 tok/s`;
+- flag-on + EOG clip GPU2:
+  `data/gemma4-q8-gpu2-fusedselsoft-eog-full512-on-20260629T194706Z/summary.json`,
+  `111.90908727268967 tok/s`;
+- control GPU3:
+  `data/gemma4-q8-gpu3-fusedselsoft-full512-control-20260629T194706Z/summary.json`,
+  `112.99706496186322 tok/s`.
+
+All four were valid fresh-response runs (`cached_tokens=0`, canary 512/512,
+realistic gate passed), but both candidates were below same-day controls and
+the promoted record. Do not submit or retest this interaction as a record lane.
+See
+`../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260629-fused-down-selected-softmax-strict128.md`
+and
+`../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260629-fused-selected-softmax-full512-negative.md`.
 
 Current handoff note: see
 `../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260629-selecteddown-next-lane-triage.md`
