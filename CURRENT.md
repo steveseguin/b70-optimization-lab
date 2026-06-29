@@ -42,14 +42,14 @@ Current active optimization target:
 - Recent non-promoted follow-up:
   `LLAMA_SPEC_VERIFY_CLIP_DRAFT_AT_EOG=1` was valid and trimmed real terminal
   draft work, but four full512 lanes topped out at `113.58569073629727 tok/s`,
-  below the current `117.91456485086059` record. Late-head bonus plus
+  below the current `121.41411987308553` record. Late-head bonus plus
   `LLAMA_SPEC_HEAD_FUSED_OUTPUT_ARGMAX=1` lost strict128. See
   `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260629-eogclip-and-spechead-negative.md`.
   Fusing selected-softmax directly into selected-down VDR2 was a valid
   strict128 small positive (`115.554` best flag-on), but the full512 promotion
   screen lost: best flag-on primary median was `111.90908727268967 tok/s`
   with EOG clip and `111.89648891729823 tok/s` without it, below both same-day
-  controls and the current `117.91456485086059` record. It is preserved
+  controls and the current `121.41411987308553` record. It is preserved
   default-off and not submitted. See
   `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260629-fused-down-selected-softmax-strict128.md`
   and

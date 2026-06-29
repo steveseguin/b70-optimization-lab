@@ -116,22 +116,27 @@ Record identity:
 - draft: local `Q4_0` Gemma MTP draft only
 - hardware: headless Supermicro AMD Threadripper PRO 5955WX platform, 128 GB
   DDR4, one Intel Arc Pro B70 32 GB used for the measured replica
-- result: best strict result `115.8466634928202 tok/s` median
+- result: best strict result `121.41411987308553 tok/s` median
   generated-token throughput for tokens 1-100 after TTFT across the fixed
   realistic cold prompt suite, `cached_tokens=0` on every prompt,
   `realistic_final_gate.passed=true`.
   Evidence:
-  `../data/gemma4-q8-gpu1-selecteddown-bf16retest-control-full512-20260629T051323Z/summary.json`.
-  Config: reordered-Q8 VDR2, `n_max=3`, `n_min=2`, `p_min=0.0475`,
-  `UBATCH_SIZE=1024`, `LLAMA_SYCL_F16_P021_SMALL_NCOLS=1`,
+  `../data/gemma4-q8-gpu3-q8lmhead-noreorder-control-full512-20260629T224927Z/summary.json`.
+  Config: llama.cpp `c926ad098`, reordered-Q8 VDR2, `FLASH_ATTN=on`,
+  `CTX_SIZE=32768`, `GGML_SYCL_ENABLE_VMM=1`, `n_max=3`, `n_min=2`,
+  `p_min=0.0475`, `UBATCH_SIZE=1024`,
+  `LLAMA_SYCL_F16_P021_SMALL_NCOLS=1`,
   `LLAMA_SPEC_VERIFY_BULK_SAMPLED_IDS=1`,
   `LLAMA_GEMMA4_MOE_FUSED_DOWN_WEIGHTED_SUM_REORDER_VDR2=1`,
   `--ctx-checkpoints 0`, no n-gram/history acceleration.
-  This is the current submitted VDR2 selected-down fused weighted-sum row,
-  approved under the realistic-suite policy as `cmqyrpox4021dqk01co5o4fcw`.
-  The earlier selected-down row `cmqyo0jyt08ippk01vhiobdnm` remains valid
-  support; prior `98.34046474459183`, `95.82453787677183`, VDR2 `90-91`,
-  and VDR4 `87.61145306230438` submissions are superseded.
+  This is the current submitted VDR2 selected-down fused weighted-sum plus
+  FA-on 32K/VMM row, approved under the realistic-suite policy as
+  `cmqztiqdn02vnoe01egox6q3f`. Same-family confirmation includes
+  `../data/gemma4-q8-gpu2-baseline-recordconfirm-full512-20260629T225215Z/summary.json`
+  at `119.94842631460949 tok/s`. Earlier selected-down rows
+  `cmqyrpox4021dqk01co5o4fcw` and `cmqyo0jyt08ippk01vhiobdnm`, prior
+  `98.34046474459183`, `95.82453787677183`, VDR2 `90-91`, and VDR4
+  `87.61145306230438` submissions are superseded.
   The old `176.216232 tok/s` synthetic filled-long row remains diagnostic only
   and is not representative real-world throughput.
 - primary artifacts:
