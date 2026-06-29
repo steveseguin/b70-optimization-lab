@@ -142,10 +142,12 @@ Recent closed negatives:
   `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260629-candidate-threshold-lmhead-no-go.md`.
 - Context threshold / service split:
   this is not a short-record lane, but the long-context diagnostics now have a
-  practical split. Current MTP is useful through `CTX_SIZE=24576`/`25600`
-  (`~73 tok/s` after TTFT on an ~11K actual prompt), degraded at `26624`
-  (`67.7 tok/s`), and cliffed at `27648+` (`~12 tok/s`). True 32K service mode
-  should disable MTP for now; no-spec 32K is stable around `55-58 tok/s`.
+  practical split. With FA off, current MTP is useful through
+  `CTX_SIZE=24576`/`25600`, degraded at `26624`, and cliffed at `27648+`.
+  With `FLASH_ATTN=on`, the same MTP stack becomes viable through true 32K:
+  `~102.7-103.2 tok/s` after TTFT at `27648`, `28672`, and `32768` on the
+  ~11K-token synthetic diagnostic, with `cached_tokens=0`. This is service
+  guidance only, not a short-record or LocalMaxxing headline.
   See
   `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260629-context-threshold-mtp-vs-nospec.md`.
 

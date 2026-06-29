@@ -70,11 +70,12 @@ Primary target:
   exact candidate path. Evidence:
   `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260629-candidate-threshold-lmhead-no-go.md`.
 - Current context/service diagnostic split: keep the short-record recipe at
-  `ctx8192`. For medium-long service, MTP remains useful through about
-  `ctx24576` / `ctx25600` on the synthetic filled-long diagnostic prompt
-  (`~73 tok/s`, `cached_tokens=0`), degrades around `ctx26624`, and cliffs by
-  `ctx27648`. For true `ctx32768`, the stable lane is currently no-spec at
-  roughly `55-58 tok/s` decode on the same diagnostic. These are not
+  `ctx8192` and FA-off until a realistic-gate retest says otherwise. For
+  medium-long service, MTP with FA off remains useful through about `ctx24576`
+  / `ctx25600`, degrades around `ctx26624`, and cliffs by `ctx27648`. For true
+  `ctx32768`, enable `FLASH_ATTN=on`: the same MTP stack reached
+  `~102.7-103.2 tok/s` after TTFT at `27648`, `28672`, and `32768` on the
+  synthetic ~11K-token diagnostic, with `cached_tokens=0`. These are not
   LocalMaxxing headline records. Evidence:
   `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260629-context-threshold-mtp-vs-nospec.md`.
 - Current best non-duplicate Gemma code target is still verifier cost, but not

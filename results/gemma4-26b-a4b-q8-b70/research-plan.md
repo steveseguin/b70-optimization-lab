@@ -48,12 +48,15 @@ of the promoted recipe all passed gate/canary but did not beat the record:
 
 2026-06-29 context/service split update: short-context decode remains the
 record lane, but the separate context diagnostics now have a practical profile
-split. For the current Q4_0 MTP draft stack, an ~11K actual prompt stays useful
-at `CTX_SIZE=24576` / `25600` (`~73 tok/s` after TTFT), degrades at `26624`
-(`67.7 tok/s`), and falls off a cliff by `27648` / `28672` (`~12 tok/s`).
-True `32768` service mode should disable MTP for now; no-spec 32K is stable at
-about `55-58 tok/s` after TTFT for the same diagnostic prompt. These are
-synthetic unique-prompt context diagnostics, not LocalMaxxing headline rows.
+split. With flash attention off, the current Q4_0 MTP draft stack is useful at
+`CTX_SIZE=24576` / `25600` (`~73 tok/s` after TTFT on an ~11K actual prompt),
+degrades at `26624`, and falls off a cliff by `27648`. The follow-up FA-on
+screen fixed that service cliff: `FLASH_ATTN=on` with MTP reached
+`~102.7-103.2 tok/s` after TTFT at `CTX_SIZE=27648`, `28672`, and `32768` on
+the same diagnostic shape, with `cached_tokens=0` and 8/8 canary rows. These are
+synthetic unique-prompt context diagnostics, not LocalMaxxing headline rows;
+do not change the FA-off short-record recipe without a fixed realistic-gate
+retest.
 See
 `../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260629-context-threshold-mtp-vs-nospec.md`.
 

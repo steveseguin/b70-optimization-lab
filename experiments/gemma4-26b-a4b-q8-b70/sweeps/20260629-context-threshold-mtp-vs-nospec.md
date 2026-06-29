@@ -70,23 +70,45 @@ Aggregate:
 - Short/small context record lane remains unchanged:
   `CTX_SIZE=8192`, MTP n3/n2/p0.0475, fixed realistic cold suite,
   `115.8466634928202 tok/s` median tokens 1-100 after TTFT.
-- Medium/long context with MTP: use `CTX_SIZE=24576` or at most `25600` for the
-  current Q4_0 MTP draft stack. At an ~11K actual prompt, this keeps about
-  `73 tok/s` decode after TTFT.
-- `CTX_SIZE=26624` is a warning zone: still passes but decode drops to about
-  `67.7 tok/s`.
-- `CTX_SIZE>=27648` with the current MTP stack is not practical. It falls to
-  about `12 tok/s` and is consistent with earlier 32K MTP crashes/cliffs.
-- True 32K service fallback: disable MTP (`--parallel 1 --cache-ram 0
-  --ctx-checkpoints 0`). It is stable around `55-58 tok/s` decode after TTFT
-  on the ~11K-prompt synthetic diagnostic.
+- With flash attention off, medium/long context with MTP is usable through
+  `CTX_SIZE=24576` or `25600`; `26624` is a warning zone and `>=27648` cliffs.
+- For long-context service, turn flash attention on. The follow-up below shows
+  that `FLASH_ATTN=on` removes the MTP draft-context cliff through true 32K.
 
 Next context work should either:
 
 1. isolate the MTP-at-large-context cliff in `ggml_sycl_mul_mat_id` /
    draft-context memory behavior; or
 2. build a service recipe that switches profiles by requested context:
-   short/medium uses MTP, 32K uses no-spec.
+   short record stays FA-off, long context uses MTP with FA-on.
 
 Do not change the short-decode record recipe until a candidate has rerun the
 fixed realistic cold suite and proven no regression.
+
+## Follow-up: flash attention fixes the 27K-32K MTP cliff
+
+Aggregate:
+`data/gemma4-context-mtp-faon-longctx-20260629T210754Z.json`
+
+Hypothesis: the cliff was draft-context memory pressure from non-FA V-cache
+padding. The FA-off logs warned that variable V-cache layers were padded to
+2048, and the `ctx27648` FA-off run spent `3199.785 ms` cumulatively in MTP
+draft generation versus `362-410 ms` at `ctx24576/26624`.
+
+Follow-up lanes used the same Q8 target, Q4_0 MTP draft, record MTP flags,
+f16 KV, `FLASH_ATTN=on`, one synthetic unique ~11K-token prompt, output `64`,
+`cached_tokens=0`, and 8/8 canary rows passing. These remain diagnostic
+service-context results, not LocalMaxxing headline rows.
+
+| Context | VMM | Decode tok/s after TTFT | TTFT | Wall tok/s | MTP draft-generation cumulative |
+| ---: | ---: | ---: | ---: | ---: | ---: |
+| 27648 | 0 | `102.781` | `11.183s` | `5.421` | `152.239 ms` |
+| 28672 | 0 | `102.728` | `11.285s` | `5.375` | `151.791 ms` |
+| 32768 | 0 | `102.828` | `11.118s` | `5.451` | `152.694 ms` |
+| 32768 | 1 | `103.225` | `11.155s` | `5.435` | `151.450 ms` |
+
+Conclusion: flash attention, not VMM, is the important service switch. It
+removes the draft-generation cliff and makes MTP viable at true `CTX_SIZE=32768`
+for this long-context diagnostic shape. Keep the short-context record recipe
+unchanged (`FLASH_ATTN=off`) unless a fixed realistic final-gate retest proves
+FA-on is not a short-decode regression.

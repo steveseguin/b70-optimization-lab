@@ -236,7 +236,7 @@ Key results:
 | 28672 | MTP n3/n2/p0.0475 | `12.504 tok/s` | cliff confirmed |
 | 32768 | no-spec, flash on | `57.880 tok/s` | stable 32K fallback |
 
-Practical split after this refinement:
+Practical split after this refinement, before the FA-on follow-up:
 
 - keep the short fresh-response record at `CTX_SIZE=8192`;
 - for medium/long context where MTP is desired, use `CTX_SIZE=24576` or
@@ -245,3 +245,11 @@ Practical split after this refinement:
   current MTP stack;
 - use no-spec for true `32768` service mode until the MTP-at-large-context
   `ggml_sycl_mul_mat_id` / draft-context cliff is fixed.
+
+Follow-up on the same day found that `FLASH_ATTN=on` fixes this specific
+long-context MTP cliff. With FA on, MTP reached `~102.7-103.2 tok/s` after TTFT
+at `CTX_SIZE=27648`, `28672`, and `32768` on the same ~11K-token synthetic
+diagnostic prompt, with 8/8 canary rows and `cached_tokens=0`. VMM was neutral.
+See
+`experiments/gemma4-26b-a4b-q8-b70/sweeps/20260629-context-threshold-mtp-vs-nospec.md`
+and `data/gemma4-context-mtp-faon-longctx-20260629T210754Z.json`.
