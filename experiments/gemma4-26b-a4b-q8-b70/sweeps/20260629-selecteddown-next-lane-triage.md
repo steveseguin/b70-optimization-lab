@@ -93,6 +93,11 @@ a future source change changes verifier/draft economics.
    `LLAMA_SYCL_MUL_MAT_ID_MULTI_TOKEN_BF16_DIRECT=1` family is already closed
    as a loss. Do not code the dense/shared `build_ffn()` fusion unless a future
    profile shows dense/shared BF16 work near the top.
+   A follow-up direct routed BF16 gate/up+GEGLU kernel under
+   `LLAMA_GEMMA4_MOE_GATEUP_GEGLU_BF16=1` also lost in a paired strict128
+   screen (`114.47` vs `115.41`, and `110.83` vs `112.42`). This closes the
+   direct BF16 dot-kernel variant; only the more surgical "keep existing BF16
+   matmul, fuse post-GEMM GEGLU/scatter" idea remains plausible.
 3. **Upstream SYCL harvest.** Post-`c926ad098` upstream contains SYCL MoE and
    memcpy fixes, but the obvious commits reviewed so far mostly target prefill,
    cross-device copies, or K-quant MoE support rather than this single-GPU Q8

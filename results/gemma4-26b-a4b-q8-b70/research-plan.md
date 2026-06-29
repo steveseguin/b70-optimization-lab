@@ -150,6 +150,19 @@ target is routed MoE, and the routed
 closed as a graph-safe loss. Do not add the dense/shared `build_ffn()` fusion
 unless a future profile makes dense/shared BF16 work a measured bottleneck.
 
+2026-06-29 routed BF16 gate/up + GEGLU direct follow-up: a direct BF16 fused
+routed gate/up+GEGLU backend under `LLAMA_GEMMA4_MOE_GATEUP_GEGLU_BF16=1`
+rebuilt and passed the fixed cold gate plus 256 canary rows, but lost in a
+paired strict128 screen. GPU1 flag-on measured `114.46712115340162 tok/s`
+against GPU0 control `115.41337538098514`; GPU3 flag-on measured
+`110.82969266501019` against GPU2 control `112.42229330668238`. Full-output
+and wall medians also regressed. Decision: closed negative; do not run full512
+or submit. Preserve the patch and result as
+`../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260629-bf16-gateup-geglu-direct-negative.md`.
+If revisiting this area, do not use a direct BF16 dot kernel; instead preserve
+the existing BF16 matmul route and fuse only post-GEMM GEGLU/scatter after a
+profile proves that work is material.
+
 Current handoff note: see
 `../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260629-selecteddown-next-lane-triage.md`
 for the 2026-06-29 post-profile audit, closed-lane list, and the preserved

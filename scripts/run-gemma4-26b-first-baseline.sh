@@ -111,6 +111,7 @@ LLAMA_GEMMA4_MOE_FUSED_DOWN_WEIGHTED_SUM_MATMUL_EPILOGUE="${LLAMA_GEMMA4_MOE_FUS
 LLAMA_GEMMA4_MOE_FUSED_GEGLU_DOWN_WEIGHTED_SUM="${LLAMA_GEMMA4_MOE_FUSED_GEGLU_DOWN_WEIGHTED_SUM:-}" \
 LLAMA_GEMMA4_MOE_GEGLU_DOWN_MATMUL_EPILOGUE="${LLAMA_GEMMA4_MOE_GEGLU_DOWN_MATMUL_EPILOGUE:-}" \
 LLAMA_GEMMA4_MOE_GATEUP_GEGLU="${LLAMA_GEMMA4_MOE_GATEUP_GEGLU:-}" \
+LLAMA_GEMMA4_MOE_GATEUP_GEGLU_BF16="${LLAMA_GEMMA4_MOE_GATEUP_GEGLU_BF16:-}" \
 LLAMA_GEMMA4_MOE_FUSED_DOWN_WEIGHTED_SUM_DEBUG="${LLAMA_GEMMA4_MOE_FUSED_DOWN_WEIGHTED_SUM_DEBUG:-}" \
 LLAMA_SYCL_MUL_MAT_ID_MULTI_TOKEN_NAME_SUBSTR="${LLAMA_SYCL_MUL_MAT_ID_MULTI_TOKEN_NAME_SUBSTR:-}" \
 LLAMA_SYCL_MUL_MAT_ID_MULTI_TOKEN_BF16_DIRECT="${LLAMA_SYCL_MUL_MAT_ID_MULTI_TOKEN_BF16_DIRECT:-}" \
@@ -330,6 +331,7 @@ out = {
         "llama_gemma4_moe_fused_geglu_down_weighted_sum": env_or_log("LLAMA_GEMMA4_MOE_FUSED_GEGLU_DOWN_WEIGHTED_SUM"),
         "llama_gemma4_moe_geglu_down_matmul_epilogue": env_or_log("LLAMA_GEMMA4_MOE_GEGLU_DOWN_MATMUL_EPILOGUE"),
         "llama_gemma4_moe_gateup_geglu": env_or_log("LLAMA_GEMMA4_MOE_GATEUP_GEGLU"),
+        "llama_gemma4_moe_gateup_geglu_bf16": env_or_log("LLAMA_GEMMA4_MOE_GATEUP_GEGLU_BF16"),
         "llama_gemma4_moe_fused_down_weighted_sum_debug": env_or_log("LLAMA_GEMMA4_MOE_FUSED_DOWN_WEIGHTED_SUM_DEBUG"),
         "llama_sycl_mul_mat_id_multi_token_fast": env_or_log("LLAMA_SYCL_MUL_MAT_ID_MULTI_TOKEN_FAST"),
         "llama_sycl_mul_mat_id_multi_token_no_reorder": env_or_log("LLAMA_SYCL_MUL_MAT_ID_MULTI_TOKEN_NO_REORDER"),
@@ -366,6 +368,7 @@ out = {
         "llama_spec_verify_raw_argmax": env_or_log("LLAMA_SPEC_VERIFY_RAW_ARGMAX"),
         "llama_spec_verify_regular_mmvq_top1_epilogue": env_or_log("LLAMA_SPEC_VERIFY_REGULAR_MMVQ_TOP1_EPILOGUE"),
         "llama_sycl_mul_mat_top1_epilogue": env_or_log("LLAMA_SYCL_MUL_MAT_TOP1_EPILOGUE"),
+        "llama_sycl_mul_mat_top1_epilogue_partial": env_or_log("LLAMA_SYCL_MUL_MAT_TOP1_EPILOGUE_PARTIAL"),
         "llama_sycl_mul_mat_argmax_tile_subgroups": env_or_log("LLAMA_SYCL_MUL_MAT_ARGMAX_TILE_SUBGROUPS"),
         "llama_sycl_mul_mat_argmax_multi_reuse": env_or_log("LLAMA_SYCL_MUL_MAT_ARGMAX_MULTI_REUSE"),
         "llama_sycl_mul_mat_argmax_reorder_ncols": env_or_log("LLAMA_SYCL_MUL_MAT_ARGMAX_REORDER_NCOLS"),

@@ -8,8 +8,8 @@ promoted reproduction target is the fixed realistic cold prompt suite:
 Best strict cold-suite result:
 
 - draft-MTP VDR2 selected-down fused weighted-sum:
-  `data/gemma4-q8-gpu1-vdr2-selecteddown-reordervdr2-full512-20260629B/summary.json`;
-- primary metric: `115.72789384447941 tok/s` median generated-token throughput
+  `data/gemma4-q8-gpu1-selecteddown-bf16retest-control-full512-20260629T051323Z/summary.json`;
+- primary metric: `115.8466634928202 tok/s` median generated-token throughput
   for tokens 1-100 after TTFT;
 - config: reordered-Q8 VDR2, `n_max=3`, `n_min=2`, `p_min=0.0475`,
   `UBATCH_SIZE=1024`, `LLAMA_SYCL_F16_P021_SMALL_NCOLS=1`,
@@ -20,9 +20,10 @@ Best strict cold-suite result:
 
 Representative status: the current payload uses the VDR2 selected-down fused
 weighted-sum transfer of the strict `n_max=3`, `n_min=2`,
-`UBATCH_SIZE=1024` family. Exact full512 confirmation repeats measured
-`113.47081786263712`, `115.72789384447941`, `113.81540554086772`, and
-`114.8109417270852 tok/s`. Prior LocalMaxxing row
+`UBATCH_SIZE=1024` family. The current repeat measured
+`115.8466634928202 tok/s` and supersedes the initial selected-down confirmation
+batch (`113.47081786263712`, `115.72789384447941`,
+`113.81540554086772`, and `114.8109417270852 tok/s`). Prior LocalMaxxing row
 `cmqxchyra03xmqr01b963gmi1` at `98.34046474459183 tok/s`, F16-p021 row
 `95.82453787677183 tok/s`, VDR2 rows `90.98312252660529`,
 `90.32179401019857`, and `89.45543282863798 tok/s`, plus VDR4
@@ -176,7 +177,8 @@ GPU_INDEX=1 PORT=18421 \
 Use this command for the current representative draft-MTP realistic-suite
 candidate. It reproduces the VDR2 selected-down `n_max=3`, `n_min=2`,
 `p_min=0.0475`, `UBATCH_SIZE=1024` family, whose current strict row is
-`115.728 tok/s` on the fixed cold suite. The prior `98.340`, F16-p021
+`115.847 tok/s` on the fixed cold suite. The initial selected-down
+`115.728`, prior `98.340`, F16-p021
 `95.825`, VDR2 `90.983`, `90.322`, and VDR4 `87.611 tok/s` rows remain valid
 evidence but are no longer the promoted headline.
 

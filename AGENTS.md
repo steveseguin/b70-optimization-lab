@@ -151,11 +151,11 @@ The current Gemma 4 26B A4B Q8 one-B70 realistic-suite best is:
 - reproduction: `results/gemma4-26b-a4b-q8-b70/reproduce.md`;
 - realistic suite: `repro/gemma4-26b-a4b-q8-b70/realistic-suite-v1.json`;
 - best strict cold-suite result:
-  `115.72789384447941 tok/s` median generated-token throughput for tokens
+  `115.8466634928202 tok/s` median generated-token throughput for tokens
   1-100 after TTFT, `cached_tokens=0` on every prompt,
   `realistic_final_gate.passed=true`;
 - evidence:
-  `data/gemma4-q8-gpu1-vdr2-selecteddown-reordervdr2-full512-20260629B/summary.json`;
+  `data/gemma4-q8-gpu1-selecteddown-bf16retest-control-full512-20260629T051323Z/summary.json`;
 - config:
   reordered-Q8 VDR2, Q4_0 MTP draft, `n_max=3`, `n_min=2`,
   `p_min=0.0475`, `UBATCH_SIZE=1024`,
@@ -165,7 +165,8 @@ The current Gemma 4 26B A4B Q8 one-B70 realistic-suite best is:
 - representative / submitted status:
   the VDR2 selected-down fused weighted-sum path is the current
   policy-compliant LocalMaxxing submission, approved as
-  `cmqyo0jyt08ippk01vhiobdnm`. Full-512 confirmation lanes measured
+  `cmqyrpox4021dqk01co5o4fcw`. The initial selected-down confirmation
+  (`cmqyo0jyt08ippk01vhiobdnm`) remains valid support with full-512 lanes
   `113.47081786263712`, `115.72789384447941`,
   `113.81540554086772`, and `114.8109417270852 tok/s`, all with
   `cached_tokens=0` and 512/512 canary rows passing. The prior VDR2/F16-p021
