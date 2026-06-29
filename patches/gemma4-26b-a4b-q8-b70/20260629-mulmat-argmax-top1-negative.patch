@@ -1,0 +1,242 @@
+diff --git a/ggml/src/ggml-sycl/mmvq.cpp b/ggml/src/ggml-sycl/mmvq.cpp
+index 5f293782..21c0d0d7 100644
+--- a/ggml/src/ggml-sycl/mmvq.cpp
++++ b/ggml/src/ggml-sycl/mmvq.cpp
+@@ -263,14 +263,26 @@ static void mul_mat_vec_q_argmax_tile(
+         float   second_val = -3.402823466e+38F;
+         int32_t second_idx = -1;
+
++        if (top2) {
+ #pragma unroll
+-        for (int mask = WARP_SIZE / 2; mask > 0; mask >>= 1) {
+-            const float   other_val = dpct::permute_sub_group_by_xor(sg, best_val, mask);
+-            const int32_t other_idx = dpct::permute_sub_group_by_xor(sg, best_idx, mask);
+-            const float   other_second_val = dpct::permute_sub_group_by_xor(sg, second_val, mask);
+-            const int32_t other_second_idx = dpct::permute_sub_group_by_xor(sg, second_idx, mask);
+-            argmax_top2_consider(other_val, other_idx, best_val, best_idx, second_val, second_idx);
+-            argmax_top2_consider(other_second_val, other_second_idx, best_val, best_idx, second_val, second_idx);
++            for (int mask = WARP_SIZE / 2; mask > 0; mask >>= 1) {
++                const float   other_val = dpct::permute_sub_group_by_xor(sg, best_val, mask);
++                const int32_t other_idx = dpct::permute_sub_group_by_xor(sg, best_idx, mask);
++                const float   other_second_val = dpct::permute_sub_group_by_xor(sg, second_val, mask);
++                const int32_t other_second_idx = dpct::permute_sub_group_by_xor(sg, second_idx, mask);
++                argmax_top2_consider(other_val, other_idx, best_val, best_idx, second_val, second_idx);
++                argmax_top2_consider(other_second_val, other_second_idx, best_val, best_idx, second_val, second_idx);
++            }
++        } else {
++#pragma unroll
++            for (int mask = WARP_SIZE / 2; mask > 0; mask >>= 1) {
++                const float   other_val = dpct::permute_sub_group_by_xor(sg, best_val, mask);
++                const int32_t other_idx = dpct::permute_sub_group_by_xor(sg, best_idx, mask);
++                if (argmax_pair_better(other_val, other_idx, best_val, best_idx)) {
++                    best_val = other_val;
++                    best_idx = other_idx;
++                }
++            }
+         }
+
+         if (lane == 0) {
+@@ -344,14 +356,26 @@ static void mul_mat_vec_q_argmax_multi_tile(
+         float   second_val = -3.402823466e+38F;
+         int32_t second_idx = -1;
+
++        if (top2) {
+ #pragma unroll
+-        for (int mask = WARP_SIZE / 2; mask > 0; mask >>= 1) {
+-            const float   other_val = dpct::permute_sub_group_by_xor(sg, best_val, mask);
+-            const int32_t other_idx = dpct::permute_sub_group_by_xor(sg, best_idx, mask);
+-            const float   other_second_val = dpct::permute_sub_group_by_xor(sg, second_val, mask);
+-            const int32_t other_second_idx = dpct::permute_sub_group_by_xor(sg, second_idx, mask);
+-            argmax_top2_consider(other_val, other_idx, best_val, best_idx, second_val, second_idx);
+-            argmax_top2_consider(other_second_val, other_second_idx, best_val, best_idx, second_val, second_idx);
++            for (int mask = WARP_SIZE / 2; mask > 0; mask >>= 1) {
++                const float   other_val = dpct::permute_sub_group_by_xor(sg, best_val, mask);
++                const int32_t other_idx = dpct::permute_sub_group_by_xor(sg, best_idx, mask);
++                const float   other_second_val = dpct::permute_sub_group_by_xor(sg, second_val, mask);
++                const int32_t other_second_idx = dpct::permute_sub_group_by_xor(sg, second_idx, mask);
++                argmax_top2_consider(other_val, other_idx, best_val, best_idx, second_val, second_idx);
++                argmax_top2_consider(other_second_val, other_second_idx, best_val, best_idx, second_val, second_idx);
++            }
++        } else {
++#pragma unroll
++            for (int mask = WARP_SIZE / 2; mask > 0; mask >>= 1) {
++                const float   other_val = dpct::permute_sub_group_by_xor(sg, best_val, mask);
++                const int32_t other_idx = dpct::permute_sub_group_by_xor(sg, best_idx, mask);
++                if (argmax_pair_better(other_val, other_idx, best_val, best_idx)) {
++                    best_val = other_val;
++                    best_idx = other_idx;
++                }
++            }
+         }
+
+         if (lane == 0) {
+@@ -428,14 +452,26 @@ static void mul_mat_vec_q_reorder_argmax_tile(
+         float   second_val = -3.402823466e+38F;
+         int32_t second_idx = -1;
+
++        if (top2) {
+ #pragma unroll
+-        for (int mask = WARP_SIZE / 2; mask > 0; mask >>= 1) {
+-            const float   other_val = dpct::permute_sub_group_by_xor(sg, best_val, mask);
+-            const int32_t other_idx = dpct::permute_sub_group_by_xor(sg, best_idx, mask);
+-            const float   other_second_val = dpct::permute_sub_group_by_xor(sg, second_val, mask);
+-            const int32_t other_second_idx = dpct::permute_sub_group_by_xor(sg, second_idx, mask);
+-            argmax_top2_consider(other_val, other_idx, best_val, best_idx, second_val, second_idx);
+-            argmax_top2_consider(other_second_val, other_second_idx, best_val, best_idx, second_val, second_idx);
++            for (int mask = WARP_SIZE / 2; mask > 0; mask >>= 1) {
++                const float   other_val = dpct::permute_sub_group_by_xor(sg, best_val, mask);
++                const int32_t other_idx = dpct::permute_sub_group_by_xor(sg, best_idx, mask);
++                const float   other_second_val = dpct::permute_sub_group_by_xor(sg, second_val, mask);
++                const int32_t other_second_idx = dpct::permute_sub_group_by_xor(sg, second_idx, mask);
++                argmax_top2_consider(other_val, other_idx, best_val, best_idx, second_val, second_idx);
++                argmax_top2_consider(other_second_val, other_second_idx, best_val, best_idx, second_val, second_idx);
++            }
++        } else {
++#pragma unroll
++            for (int mask = WARP_SIZE / 2; mask > 0; mask >>= 1) {
++                const float   other_val = dpct::permute_sub_group_by_xor(sg, best_val, mask);
++                const int32_t other_idx = dpct::permute_sub_group_by_xor(sg, best_idx, mask);
++                if (argmax_pair_better(other_val, other_idx, best_val, best_idx)) {
++                    best_val = other_val;
++                    best_idx = other_idx;
++                }
++            }
+         }
+
+         if (lane == 0) {
+@@ -518,14 +554,26 @@ static void mul_mat_vec_q_reorder_argmax_multi_tile(
+         float   second_val = -3.402823466e+38F;
+         int32_t second_idx = -1;
+
++        if (top2) {
+ #pragma unroll
+-        for (int mask = WARP_SIZE / 2; mask > 0; mask >>= 1) {
+-            const float   other_val = dpct::permute_sub_group_by_xor(sg, best_val, mask);
+-            const int32_t other_idx = dpct::permute_sub_group_by_xor(sg, best_idx, mask);
+-            const float   other_second_val = dpct::permute_sub_group_by_xor(sg, second_val, mask);
+-            const int32_t other_second_idx = dpct::permute_sub_group_by_xor(sg, second_idx, mask);
+-            argmax_top2_consider(other_val, other_idx, best_val, best_idx, second_val, second_idx);
+-            argmax_top2_consider(other_second_val, other_second_idx, best_val, best_idx, second_val, second_idx);
++            for (int mask = WARP_SIZE / 2; mask > 0; mask >>= 1) {
++                const float   other_val = dpct::permute_sub_group_by_xor(sg, best_val, mask);
++                const int32_t other_idx = dpct::permute_sub_group_by_xor(sg, best_idx, mask);
++                const float   other_second_val = dpct::permute_sub_group_by_xor(sg, second_val, mask);
++                const int32_t other_second_idx = dpct::permute_sub_group_by_xor(sg, second_idx, mask);
++                argmax_top2_consider(other_val, other_idx, best_val, best_idx, second_val, second_idx);
++                argmax_top2_consider(other_second_val, other_second_idx, best_val, best_idx, second_val, second_idx);
++            }
++        } else {
++#pragma unroll
++            for (int mask = WARP_SIZE / 2; mask > 0; mask >>= 1) {
++                const float   other_val = dpct::permute_sub_group_by_xor(sg, best_val, mask);
++                const int32_t other_idx = dpct::permute_sub_group_by_xor(sg, best_idx, mask);
++                if (argmax_pair_better(other_val, other_idx, best_val, best_idx)) {
++                    best_val = other_val;
++                    best_idx = other_idx;
++                }
++            }
+         }
+
+         if (lane == 0) {
+@@ -2508,6 +2556,49 @@ static void reduce_argmax_tiles_sycl(
+     const sycl::range<3> block_nums(1, 1, 1);
+     const sycl::range<3> block_dims(1, 1, reduce_block);
+
++    if (!top2) {
++        stream->submit([&](sycl::handler & cgh) {
++            sycl::local_accessor<float, 1> vals(sycl::range<1>(reduce_block), cgh);
++            sycl::local_accessor<int32_t, 1> idxs(sycl::range<1>(reduce_block), cgh);
++
++            cgh.parallel_for(sycl::nd_range<3>(block_nums * block_dims, block_dims), [=](sycl::nd_item<3> item_ct1) {
++                const int tid = item_ct1.get_local_id(2);
++
++                float   best_val = -3.402823466e+38F;
++                int32_t best_idx = -1;
++                for (int i = tid; i < scratch_count; i += reduce_block) {
++                    const float   val = scratch_vals[i];
++                    const int32_t idx = scratch_idxs[i];
++                    if (argmax_pair_better(val, idx, best_val, best_idx)) {
++                        best_val = val;
++                        best_idx = idx;
++                    }
++                }
++
++                vals[tid] = best_val;
++                idxs[tid] = best_idx;
++                item_ct1.barrier(sycl::access::fence_space::local_space);
++
++                for (int stride = reduce_block / 2; stride > 0; stride >>= 1) {
++                    if (tid < stride) {
++                        const float   other_val = vals[tid + stride];
++                        const int32_t other_idx = idxs[tid + stride];
++                        if (argmax_pair_better(other_val, other_idx, vals[tid], idxs[tid])) {
++                            vals[tid] = other_val;
++                            idxs[tid] = other_idx;
++                        }
++                    }
++                    item_ct1.barrier(sycl::access::fence_space::local_space);
++                }
++
++                if (tid == 0) {
++                    dst[0] = idxs[0];
++                }
++            });
++        });
++        return;
++    }
++
+     stream->submit([&](sycl::handler & cgh) {
+         sycl::local_accessor<float, 1> vals(sycl::range<1>(reduce_block), cgh);
+         sycl::local_accessor<int32_t, 1> idxs(sycl::range<1>(reduce_block), cgh);
+@@ -2578,6 +2669,51 @@ static void reduce_argmax_tiles_multi_sycl(
+     const sycl::range<3> block_nums(1, 1, nvec);
+     const sycl::range<3> block_dims(1, 1, reduce_block);
+
++    if (!top2) {
++        stream->submit([&](sycl::handler & cgh) {
++            sycl::local_accessor<float, 1> vals(sycl::range<1>(reduce_block), cgh);
++            sycl::local_accessor<int32_t, 1> idxs(sycl::range<1>(reduce_block), cgh);
++
++            cgh.parallel_for(sycl::nd_range<3>(block_nums * block_dims, block_dims), [=](sycl::nd_item<3> item_ct1) {
++                const int tid    = item_ct1.get_local_id(2);
++                const int vec_id = item_ct1.get_group(2);
++
++                float   best_val = -3.402823466e+38F;
++                int32_t best_idx = -1;
++                const int base = vec_id * scratch_count_per_vec;
++                for (int i = tid; i < scratch_count_per_vec; i += reduce_block) {
++                    const float   val = scratch_vals[base + i];
++                    const int32_t idx = scratch_idxs[base + i];
++                    if (argmax_pair_better(val, idx, best_val, best_idx)) {
++                        best_val = val;
++                        best_idx = idx;
++                    }
++                }
++
++                vals[tid] = best_val;
++                idxs[tid] = best_idx;
++                item_ct1.barrier(sycl::access::fence_space::local_space);
++
++                for (int stride = reduce_block / 2; stride > 0; stride >>= 1) {
++                    if (tid < stride) {
++                        const float   other_val = vals[tid + stride];
++                        const int32_t other_idx = idxs[tid + stride];
++                        if (argmax_pair_better(other_val, other_idx, vals[tid], idxs[tid])) {
++                            vals[tid] = other_val;
++                            idxs[tid] = other_idx;
++                        }
++                    }
++                    item_ct1.barrier(sycl::access::fence_space::local_space);
++                }
++
++                if (tid == 0) {
++                    dst[vec_id] = idxs[0];
++                }
++            });
++        });
++        return;
++    }
++
+     stream->submit([&](sycl::handler & cgh) {
+         sycl::local_accessor<float, 1> vals(sycl::range<1>(reduce_block), cgh);
+         sycl::local_accessor<int32_t, 1> idxs(sycl::range<1>(reduce_block), cgh);
