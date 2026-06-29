@@ -61,6 +61,14 @@ Current active optimization target:
   `112.02098406811635 tok/s`, with worse p10 and full-output speed. It is a
   closed negative; do not full512-confirm or submit it. See
   `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260629-adaptive-bonus-row-negative.md`.
+  Deferred verifier pending-`h` copy
+  (`LLAMA_MTP_DEFER_VERIFIER_PENDING_H_COPY=1`) was then tested with a paired
+  strict128 screen plus cross-over. All lanes were valid cold-suite runs, but
+  the apparent `118.10959835079939 tok/s` flag-on outlier did not survive the
+  cross-over: control medians averaged `114.45317635681107`, flag-on medians
+  averaged `112.421810001393`. It is a closed negative; do not full512-confirm
+  or submit it. See
+  `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260629-defer-verifier-pending-h-copy-negative.md`.
 - Current diagnostic best, not a real-world headline:
   `176.21623213048554 tok/s` after TTFT on the first no-cache synthetic
   filled-long benchmark row, `176.40259133127742 tok/s` supporting repeat mean,

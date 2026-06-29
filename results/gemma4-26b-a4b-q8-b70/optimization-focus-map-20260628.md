@@ -122,6 +122,15 @@ Recent closed negatives:
   reinforces that removing the current bonus pipeline is not the right row
   economy. Preserve the patch/result and do not promote. See
   `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260629-adaptive-bonus-row-negative.md`.
+- Deferred verifier pending-`h` copy:
+  `LLAMA_MTP_DEFER_VERIFIER_PENDING_H_COPY=1` skipped the verifier-batch
+  `pending_h` refresh and relied on `accept()` to copy the exact accepted row.
+  It passed the fixed cold strict128 gate in a paired screen and a cross-over,
+  but did not produce a stable win. Control medians averaged `114.453 tok/s`;
+  flag-on medians averaged `112.422 tok/s`. The first-screen `118.110 tok/s`
+  flag-on lane was an outlier, not a promotion candidate. Preserve the
+  patch/result and do not full512-confirm or submit. See
+  `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260629-defer-verifier-pending-h-copy-negative.md`.
 
 Implication for the next AI: do not spend another session on launch-flag
 sweeps or bonus-removal variants. The next credible record attempt needs a

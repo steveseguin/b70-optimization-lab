@@ -253,6 +253,19 @@ pipeline are not productive. Preserve the patch/result, but do not full512
 confirm or submit. See
 `../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260629-adaptive-bonus-row-negative.md`.
 
+2026-06-29 deferred verifier pending-`h` copy follow-up:
+`LLAMA_MTP_DEFER_VERIFIER_PENDING_H_COPY=1` skips the verifier-batch copy from
+the final target row into `pending_h`, relying on `accept()` to copy the exact
+accepted row before the next draft. This was a low-risk host-copy hypothesis
+after the profile showed target decode dominating. It passed the fixed cold
+strict128 gate and canary in a paired screen plus cross-over, but the result was
+negative: controls measured `115.186`, `113.075`, `113.344`, and `116.208`
+tok/s; flag-on lanes measured `111.144`, `118.110`, `110.300`, and `110.134`
+tok/s. The single `118.110` outlier did not survive cross-over. Control
+medians averaged `114.453`; flag-on medians averaged `112.422`. Do not
+full512-confirm or submit. See
+`../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260629-defer-verifier-pending-h-copy-negative.md`.
+
 Current handoff note: see
 `../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260629-selecteddown-next-lane-triage.md`
 for the 2026-06-29 post-profile audit, closed-lane list, and the preserved

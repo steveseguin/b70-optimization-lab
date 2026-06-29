@@ -54,6 +54,14 @@ Primary target:
   same-build control at `112.02098406811635 tok/s`, with worse p10 and
   full-output speed. Do not full512-confirm or submit it. Evidence:
   `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260629-adaptive-bonus-row-negative.md`.
+- Latest verifier-copy follow-up: deferred verifier pending-`h` copy
+  (`LLAMA_MTP_DEFER_VERIFIER_PENDING_H_COPY=1`) is also a closed negative. A
+  first paired screen had one attractive flag-on outlier (`118.10959835079939
+  tok/s`), but the cross-over disproved it: control medians averaged
+  `114.45317635681107`, flag-on medians averaged `112.421810001393`, with all
+  lanes valid and `cached_tokens=0`. Do not full512-confirm or submit it.
+  Evidence:
+  `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260629-defer-verifier-pending-h-copy-negative.md`.
 - Current best non-duplicate Gemma code target is still verifier cost, but not
   by removing the bonus pipeline. Work inside the existing target decode
   boundary: compact exact LM-head/max handling, verifier MoE boundary/kernel

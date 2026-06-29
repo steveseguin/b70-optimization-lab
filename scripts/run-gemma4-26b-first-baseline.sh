@@ -85,6 +85,7 @@ LLAMA_MTP_DRAFT_PROFILE="${LLAMA_MTP_DRAFT_PROFILE:-}" \
 LLAMA_SERVER_SPEC_PROFILE="${LLAMA_SERVER_SPEC_PROFILE:-}" \
 LLAMA_MTP_DRAFT_TERMINAL_LOGITS_ONLY="${LLAMA_MTP_DRAFT_TERMINAL_LOGITS_ONLY:-}" \
 LLAMA_MTP_DEFER_TARGET_H_NEXTN="${LLAMA_MTP_DEFER_TARGET_H_NEXTN:-}" \
+LLAMA_MTP_DEFER_VERIFIER_PENDING_H_COPY="${LLAMA_MTP_DEFER_VERIFIER_PENDING_H_COPY:-}" \
 LLAMA_MTP_DEFER_TARGET_H_ACCEPT_ONLY="${LLAMA_MTP_DEFER_TARGET_H_ACCEPT_ONLY:-}" \
 LLAMA_GEMMA4_MTP_FUSED_OUTPUT_ARGMAX="${LLAMA_GEMMA4_MTP_FUSED_OUTPUT_ARGMAX:-}" \
 LLAMA_GEMMA4_MTP_QONLY_ATTN_INPUTS="${LLAMA_GEMMA4_MTP_QONLY_ATTN_INPUTS:-}" \
@@ -312,6 +313,7 @@ out = {
         "llama_server_spec_profile": env_or_log("LLAMA_SERVER_SPEC_PROFILE"),
         "llama_mtp_draft_terminal_logits_only": env_or_log("LLAMA_MTP_DRAFT_TERMINAL_LOGITS_ONLY"),
         "llama_mtp_defer_target_h_nextn": env_or_log("LLAMA_MTP_DEFER_TARGET_H_NEXTN"),
+        "llama_mtp_defer_verifier_pending_h_copy": env_or_log("LLAMA_MTP_DEFER_VERIFIER_PENDING_H_COPY"),
         "llama_mtp_defer_target_h_accept_only": env_or_log("LLAMA_MTP_DEFER_TARGET_H_ACCEPT_ONLY"),
         "llama_gemma4_mtp_fused_output_argmax": env_or_log("LLAMA_GEMMA4_MTP_FUSED_OUTPUT_ARGMAX"),
         "llama_gemma4_mtp_qonly_attn_inputs": env_or_log("LLAMA_GEMMA4_MTP_QONLY_ATTN_INPUTS"),
