@@ -1,0 +1,38 @@
+diff --git a/scripts/run-gemma4-26b-first-baseline.sh b/scripts/run-gemma4-26b-first-baseline.sh
+index b7f17faa..f519af95 100755
+--- a/scripts/run-gemma4-26b-first-baseline.sh
++++ b/scripts/run-gemma4-26b-first-baseline.sh
+@@ -141,6 +141,9 @@ LLAMA_SPEC_VERIFY_STAGE_MTP3_SPLIT_BONUS="${LLAMA_SPEC_VERIFY_STAGE_MTP3_SPLIT_B
+ LLAMA_SPEC_VERIFY_LATE_HEAD_BONUS="${LLAMA_SPEC_VERIFY_LATE_HEAD_BONUS:-}" \
+ LLAMA_SPEC_VERIFY_PREFIX2_TAIL_HEAD="${LLAMA_SPEC_VERIFY_PREFIX2_TAIL_HEAD:-}" \
+ LLAMA_SPEC_VERIFY_CLIP_DRAFT_AT_EOG="${LLAMA_SPEC_VERIFY_CLIP_DRAFT_AT_EOG:-}" \
++LLAMA_SPEC_VERIFY_ADAPTIVE_BONUS_ROW="${LLAMA_SPEC_VERIFY_ADAPTIVE_BONUS_ROW:-}" \
++LLAMA_SPEC_VERIFY_ADAPTIVE_BONUS_WARMUP="${LLAMA_SPEC_VERIFY_ADAPTIVE_BONUS_WARMUP:-}" \
++LLAMA_SPEC_VERIFY_ADAPTIVE_BONUS_MIN_FULL_ACCEPT="${LLAMA_SPEC_VERIFY_ADAPTIVE_BONUS_MIN_FULL_ACCEPT:-}" \
+ LLAMA_SPEC_VERIFY_FUSED_OUTPUT_ARGMAX="${LLAMA_SPEC_VERIFY_FUSED_OUTPUT_ARGMAX:-}" \
+ LLAMA_SPEC_HEAD_FUSED_OUTPUT_ARGMAX="${LLAMA_SPEC_HEAD_FUSED_OUTPUT_ARGMAX:-}" \
+ LLAMA_SPEC_VERIFY_SOFTCAP_ARGMAX="${LLAMA_SPEC_VERIFY_SOFTCAP_ARGMAX:-}" \
+@@ -370,6 +373,9 @@ out = {
+         "llama_spec_verify_late_head_bonus": env_or_log("LLAMA_SPEC_VERIFY_LATE_HEAD_BONUS"),
+         "llama_spec_verify_prefix2_tail_head": env_or_log("LLAMA_SPEC_VERIFY_PREFIX2_TAIL_HEAD"),
+         "llama_spec_verify_clip_draft_at_eog": env_or_log("LLAMA_SPEC_VERIFY_CLIP_DRAFT_AT_EOG"),
++        "llama_spec_verify_adaptive_bonus_row": env_or_log("LLAMA_SPEC_VERIFY_ADAPTIVE_BONUS_ROW"),
++        "llama_spec_verify_adaptive_bonus_warmup": env_or_log("LLAMA_SPEC_VERIFY_ADAPTIVE_BONUS_WARMUP"),
++        "llama_spec_verify_adaptive_bonus_min_full_accept": env_or_log("LLAMA_SPEC_VERIFY_ADAPTIVE_BONUS_MIN_FULL_ACCEPT"),
+         "llama_spec_verify_fused_output_argmax": env_or_log("LLAMA_SPEC_VERIFY_FUSED_OUTPUT_ARGMAX"),
+         "llama_spec_head_fused_output_argmax": env_or_log("LLAMA_SPEC_HEAD_FUSED_OUTPUT_ARGMAX"),
+         "llama_spec_verify_softcap_argmax": env_or_log("LLAMA_SPEC_VERIFY_SOFTCAP_ARGMAX"),
+diff --git a/scripts/run-gemma4-26b-llamacpp-replica.sh b/scripts/run-gemma4-26b-llamacpp-replica.sh
+index 2d199545..6b149782 100755
+--- a/scripts/run-gemma4-26b-llamacpp-replica.sh
++++ b/scripts/run-gemma4-26b-llamacpp-replica.sh
+@@ -157,6 +157,9 @@ mkdir -p "$OUT_DIR"
+   echo "LLAMA_SPEC_VERIFY_LATE_HEAD_BONUS=${LLAMA_SPEC_VERIFY_LATE_HEAD_BONUS:-<unset>}"
+   echo "LLAMA_SPEC_VERIFY_PREFIX2_TAIL_HEAD=${LLAMA_SPEC_VERIFY_PREFIX2_TAIL_HEAD:-<unset>}"
+   echo "LLAMA_SPEC_VERIFY_CLIP_DRAFT_AT_EOG=${LLAMA_SPEC_VERIFY_CLIP_DRAFT_AT_EOG:-<unset>}"
++  echo "LLAMA_SPEC_VERIFY_ADAPTIVE_BONUS_ROW=${LLAMA_SPEC_VERIFY_ADAPTIVE_BONUS_ROW:-<unset>}"
++  echo "LLAMA_SPEC_VERIFY_ADAPTIVE_BONUS_WARMUP=${LLAMA_SPEC_VERIFY_ADAPTIVE_BONUS_WARMUP:-<unset>}"
++  echo "LLAMA_SPEC_VERIFY_ADAPTIVE_BONUS_MIN_FULL_ACCEPT=${LLAMA_SPEC_VERIFY_ADAPTIVE_BONUS_MIN_FULL_ACCEPT:-<unset>}"
+   echo "LLAMA_SPEC_VERIFY_FUSED_OUTPUT_ARGMAX=${LLAMA_SPEC_VERIFY_FUSED_OUTPUT_ARGMAX:-<unset>}"
+   echo "LLAMA_SPEC_HEAD_FUSED_OUTPUT_ARGMAX=${LLAMA_SPEC_HEAD_FUSED_OUTPUT_ARGMAX:-<unset>}"
+   echo "LLAMA_SPEC_VERIFY_RAW_ARGMAX=${LLAMA_SPEC_VERIFY_RAW_ARGMAX:-<unset>}"

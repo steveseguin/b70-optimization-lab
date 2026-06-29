@@ -1,0 +1,983 @@
+diff --git a/tools/server/server-context.cpp b/tools/server/server-context.cpp
+index ca91449d2..8fcb2bda8 100644
+--- a/tools/server/server-context.cpp
++++ b/tools/server/server-context.cpp
+@@ -17,8 +17,11 @@
+ #include "mtmd-helper.h"
+ 
+ #include <algorithm>
++#include <array>
+ #include <cstddef>
+ #include <cinttypes>
++#include <cstdlib>
++#include <cstring>
+ #include <exception>
+ #include <memory>
+ #include <filesystem>
+@@ -38,6 +41,48 @@ using json = nlohmann::ordered_json;
+ 
+ constexpr int HTTP_POLLING_SECONDS = 1;
+ 
++static bool server_env_enabled(const char * name) {
++    const char * value = std::getenv(name);
++    if (value == nullptr || value[0] == '\0') {
++        return false;
++    }
++    return std::strcmp(value, "1") == 0 ||
++        std::strcmp(value, "true") == 0 ||
++        std::strcmp(value, "TRUE") == 0 ||
++        std::strcmp(value, "yes") == 0 ||
++        std::strcmp(value, "on") == 0;
++}
++
++static int32_t server_env_i32(const char * name, int32_t fallback) {
++    const char * value = std::getenv(name);
++    if (value == nullptr || value[0] == '\0') {
++        return fallback;
++    }
++
++    char * end = nullptr;
++    const long parsed = std::strtol(value, &end, 10);
++    if (end == value) {
++        return fallback;
++    }
++
++    return (int32_t) parsed;
++}
++
++static double server_env_f64(const char * name, double fallback) {
++    const char * value = std::getenv(name);
++    if (value == nullptr || value[0] == '\0') {
++        return fallback;
++    }
++
++    char * end = nullptr;
++    const double parsed = std::strtod(value, &end);
++    if (end == value) {
++        return fallback;
++    }
++
++    return parsed;
++}
++
+ static uint32_t server_n_outputs_max(const common_params & params) {
+     const uint32_t n_batch  = params.n_batch;
+ 
+@@ -173,6 +218,7 @@ struct server_slot {
+     llama_tokens spec_prompt;
+     std::vector<int32_t> spec_i_batch;
+     common_prompt_checkpoint spec_ckpt;
++    bool spec_adaptive_bonus_row_skipped = false;
+ 
+     // TODO: move members that belong to the task (such as `generated_text`, `has_new_line`) to task_results_state
+     //       see https://github.com/ggml-org/llama.cpp/pull/18283#issuecomment-3710175837
+@@ -294,6 +340,9 @@ struct server_slot {
+     int32_t n_draft_accepted = 0;   // Draft tokens actually accepted
+     int32_t n_draft_verif_steps = 0; // Total draft token verification steps by the target model
+     std::vector<int32_t> n_accepted_per_pos; // Accepted tokens per draft position
++    int32_t spec_adaptive_steps = 0;
++    int32_t spec_adaptive_n_max = -1; // -1 means use configured n_max; 0 disables drafting for this request
++    double  spec_adaptive_accept_ema = -1.0;
+ 
+     void reset() {
+         SLT_DBG(*this, "%s", "\n");
+@@ -312,6 +361,7 @@ struct server_slot {
+             spec_draft.clear();
+             spec_i_batch.clear();
+             spec_ckpt.clear();
++            spec_adaptive_bonus_row_skipped = false;
+         }
+         generated_tokens.clear();
+         generated_token_probs.clear();
+@@ -322,6 +372,9 @@ struct server_slot {
+         n_draft_accepted = 0;
+         n_draft_verif_steps = 0;
+         n_accepted_per_pos.clear();
++        spec_adaptive_steps = 0;
++        spec_adaptive_n_max = -1;
++        spec_adaptive_accept_ema = -1.0;
+ 
+         task_prev = std::move(task);
+         task.reset();
+@@ -437,14 +490,95 @@ struct server_slot {
+             n_draft_max = std::min(n_draft_max, n_remaining - 1);
+         }
+ 
++        static const bool adaptive_mtp = server_env_enabled("LLAMA_SPEC_ADAPTIVE_MTP");
++        if (adaptive_mtp && spec_adaptive_n_max >= 0) {
++            n_draft_max = std::min(n_draft_max, spec_adaptive_n_max);
++        }
++
+         SLT_DBG(*this, "max possible draft: %d\n", n_draft_max);
+ 
+         return n_draft_max;
+     }
+ 
++    void update_spec_adaptive_mtp(size_t n_draft, size_t n_accepted) {
++        static const bool adaptive_mtp = server_env_enabled("LLAMA_SPEC_ADAPTIVE_MTP");
++        if (!adaptive_mtp || n_draft == 0) {
++            return;
++        }
++
++        static const int32_t warmup_steps = std::max<int32_t>(
++                1, server_env_i32("LLAMA_SPEC_ADAPTIVE_MTP_WARMUP", 6));
++        static const int32_t low_n_max = std::max<int32_t>(
++                0, server_env_i32("LLAMA_SPEC_ADAPTIVE_MTP_LOW_N_MAX", 2));
++        static const double low_threshold =
++                server_env_f64("LLAMA_SPEC_ADAPTIVE_MTP_LOW", 0.50);
++        static const double high_threshold =
++                server_env_f64("LLAMA_SPEC_ADAPTIVE_MTP_HIGH", 0.62);
++        static const double alpha =
++                std::min(1.0, std::max(0.01, server_env_f64("LLAMA_SPEC_ADAPTIVE_MTP_ALPHA", 0.25)));
++
++        const double accepted_rate = (double) n_accepted / (double) n_draft;
++        if (spec_adaptive_accept_ema < 0.0) {
++            spec_adaptive_accept_ema = accepted_rate;
++        } else {
++            spec_adaptive_accept_ema =
++                alpha * accepted_rate + (1.0 - alpha) * spec_adaptive_accept_ema;
++        }
++        spec_adaptive_steps++;
++
++        if (spec_adaptive_steps < warmup_steps) {
++            return;
++        }
++
++        const int32_t old_n_max = spec_adaptive_n_max;
++        if (spec_adaptive_accept_ema < low_threshold) {
++            spec_adaptive_n_max = low_n_max;
++        } else if (spec_adaptive_accept_ema > high_threshold) {
++            spec_adaptive_n_max = -1;
++        }
++
++        if (old_n_max != spec_adaptive_n_max) {
++            SLT_DBG(*this,
++                    "adaptive MTP n_max cap changed: %d -> %d, ema=%.3f, last=%zu/%zu\n",
++                    old_n_max, spec_adaptive_n_max, spec_adaptive_accept_ema,
++                    n_accepted, n_draft);
++        }
++    }
++
++    bool should_skip_spec_bonus_row(size_t n_draft) const {
++        static const bool enabled = server_env_enabled("LLAMA_SPEC_VERIFY_ADAPTIVE_BONUS_ROW");
++        if (!enabled || n_draft == 0) {
++            return false;
++        }
++
++        static const int32_t warmup_steps = std::max<int32_t>(
++                1, server_env_i32("LLAMA_SPEC_VERIFY_ADAPTIVE_BONUS_WARMUP", 8));
++        static const double min_full_accept =
++                std::min(1.0, std::max(0.0,
++                    server_env_f64("LLAMA_SPEC_VERIFY_ADAPTIVE_BONUS_MIN_FULL_ACCEPT", 0.50)));
++
++        if (n_draft_verif_steps < warmup_steps ||
++                n_accepted_per_pos.size() < n_draft ||
++                n_draft_verif_steps <= 0) {
++            return false;
++        }
++
++        // n_accepted_per_pos[n_draft - 1] counts steps that accepted every
++        // drafted token, which is exactly when the bonus row is useful. When
++        // that rate is low, skip the bonus LM-head row and accept the full
++        // draft without a bonus if it happens to match. This preserves exact
++        // target verification but trades some bonus-pipeline hits for fewer
++        // verifier output rows.
++        const double full_accept_rate =
++            (double) n_accepted_per_pos[n_draft - 1] /
++            (double) n_draft_verif_steps;
++        return full_accept_rate < min_full_accept;
++    }
++
+     // add sampled token of this slot to the batch, optionally add the speculative draft tokens if any
+     void handle_last_sampled_token(server_batch & batch) {
+         bool add_ok = true;
++        spec_adaptive_bonus_row_skipped = false;
+         if (spec_draft.empty()) {
+             // no speculative decoding
+             i_batch = batch.size();
+@@ -454,6 +588,14 @@ struct server_slot {
+             SLT_DBG(*this, "slot decode token, id=%d, n_ctx = %d, n_tokens = %d, truncated = %d\n",
+                     sampled, n_ctx, prompt.n_tokens(), truncated);
+         } else {
++            static const bool late_head_bonus = server_env_enabled("LLAMA_SPEC_VERIFY_LATE_HEAD_BONUS");
++            static const bool prefix2_tail_head = server_env_enabled("LLAMA_SPEC_VERIFY_PREFIX2_TAIL_HEAD");
++            const bool adaptive_bonus_skip =
++                !late_head_bonus &&
++                !prefix2_tail_head &&
++                should_skip_spec_bonus_row(spec_draft.size());
++            spec_adaptive_bonus_row_skipped = adaptive_bonus_skip;
++
+             SLT_DBG(*this, "generate_draft: id=%d, #tokens=%zu, #draft=%zu, pos_next=%d\n",
+                     sampled, prompt.tokens.size(), spec_draft.size(), prompt.tokens.pos_next());
+ 
+@@ -467,8 +609,12 @@ struct server_slot {
+             auto pos0 = prompt.tokens.pos_next();
+ 
+             add_ok &= batch.add(id, sampled, pos0++, true);
+-            for (auto token : spec_draft) {
+-                add_ok &= batch.add(this->id, token, pos0++, true);
++            for (size_t i = 0; i < spec_draft.size(); ++i) {
++                const bool output = prefix2_tail_head && spec_draft.size() == 3 ?
++                    i == 0 :
++                    !(late_head_bonus && i + 1 == spec_draft.size()) &&
++                    !(adaptive_bonus_skip && i + 1 == spec_draft.size());
++                add_ok &= batch.add(this->id, spec_draft[i], pos0++, output);
+             }
+         }
+ 
+@@ -2717,6 +2863,36 @@ private:
+     int64_t n_decode      = 0;
+     int64_t n_post_decode = 0;
+     int64_t n_sampl       = 0;
++
++    bool spec_profile_enabled = server_env_enabled("LLAMA_SERVER_SPEC_PROFILE");
++    bool spec_profile_dirty   = false;
++    int64_t t_spec_draft_us          = 0;
++    int64_t t_spec_target_decode_us  = 0;
++    int64_t t_spec_target_prompt_us  = 0;
++    int64_t t_spec_target_gen_us     = 0;
++    int64_t t_spec_process_us        = 0;
++    int64_t t_spec_sample_accept_us  = 0;
++    int64_t t_spec_common_accept_us  = 0;
++    int64_t t_spec_emit_us           = 0;
++    int64_t t_spec_prefix_tail_head_us = 0;
++    int64_t n_spec_draft_calls         = 0;
++    int64_t n_spec_target_decode_calls = 0;
++    int64_t n_spec_target_prompt_calls = 0;
++    int64_t n_spec_target_gen_calls    = 0;
++    int64_t n_spec_process_calls       = 0;
++    int64_t n_spec_sample_accept_calls = 0;
++    int64_t n_spec_common_accept_calls = 0;
++    int64_t n_spec_emit_calls          = 0;
++    int64_t n_spec_prefix_tail_head_calls = 0;
++    int64_t n_spec_target_decode_tokens = 0;
++    int64_t n_spec_target_prompt_tokens = 0;
++    int64_t n_spec_target_gen_tokens    = 0;
++    int64_t n_spec_draft_tokens         = 0;
++    int64_t n_spec_accepted_tokens      = 0;
++    int64_t n_spec_draft_eog_trim_calls = 0;
++    int64_t n_spec_draft_eog_trim_tokens = 0;
++    int64_t n_spec_prefix_tail_prefix_matches = 0;
++    int64_t n_spec_prefix_tail_tail_tokens = 0;
+ // #define DEBUG_TIMINGS
+ #ifdef DEBUG_TIMINGS
+     struct scoped_timer {
+@@ -2738,6 +2914,408 @@ private:
+     };
+ #endif
+ 
++    void print_spec_profile_if_needed() {
++        if (!spec_profile_enabled || !spec_profile_dirty) {
++            return;
++        }
++
++        const auto ms = [](int64_t us) {
++            return (double) us / 1000.0;
++        };
++        const auto avg_ms = [](int64_t us, int64_t n) {
++            return n > 0 ? (double) us / (double) n / 1000.0 : 0.0;
++        };
++
++        SRV_INF("server spec profile: draft_ms=%.3f calls=%" PRId64 " draft_tokens=%" PRId64 " avg=%.3f ms\n",
++                ms(t_spec_draft_us),
++                n_spec_draft_calls,
++                n_spec_draft_tokens,
++                avg_ms(t_spec_draft_us, n_spec_draft_calls));
++        SRV_INF("server spec profile: target_decode_ms=%.3f calls=%" PRId64 " tokens=%" PRId64 " avg=%.3f ms avg_token=%.3f ms\n",
++                ms(t_spec_target_decode_us),
++                n_spec_target_decode_calls,
++                n_spec_target_decode_tokens,
++                avg_ms(t_spec_target_decode_us, n_spec_target_decode_calls),
++                avg_ms(t_spec_target_decode_us, n_spec_target_decode_tokens));
++        SRV_INF("server spec profile: target_prompt_ms=%.3f calls=%" PRId64 " tokens=%" PRId64 " avg=%.3f ms avg_token=%.3f ms\n",
++                ms(t_spec_target_prompt_us),
++                n_spec_target_prompt_calls,
++                n_spec_target_prompt_tokens,
++                avg_ms(t_spec_target_prompt_us, n_spec_target_prompt_calls),
++                avg_ms(t_spec_target_prompt_us, n_spec_target_prompt_tokens));
++        SRV_INF("server spec profile: target_generation_ms=%.3f calls=%" PRId64 " tokens=%" PRId64 " avg=%.3f ms avg_token=%.3f ms\n",
++                ms(t_spec_target_gen_us),
++                n_spec_target_gen_calls,
++                n_spec_target_gen_tokens,
++                avg_ms(t_spec_target_gen_us, n_spec_target_gen_calls),
++                avg_ms(t_spec_target_gen_us, n_spec_target_gen_tokens));
++        SRV_INF("server spec profile: process_ms=%.3f calls=%" PRId64 " avg=%.3f ms\n",
++                ms(t_spec_process_us),
++                n_spec_process_calls,
++                avg_ms(t_spec_process_us, n_spec_process_calls));
++        SRV_INF("server spec profile: sample_accept_ms=%.3f calls=%" PRId64 " avg=%.3f ms accepted_tokens=%" PRId64 "\n",
++                ms(t_spec_sample_accept_us),
++                n_spec_sample_accept_calls,
++                avg_ms(t_spec_sample_accept_us, n_spec_sample_accept_calls),
++                n_spec_accepted_tokens);
++        SRV_INF("server spec profile: common_accept_ms=%.3f calls=%" PRId64 " avg=%.3f ms\n",
++                ms(t_spec_common_accept_us),
++                n_spec_common_accept_calls,
++                avg_ms(t_spec_common_accept_us, n_spec_common_accept_calls));
++        SRV_INF("server spec profile: emit_ms=%.3f calls=%" PRId64 " avg=%.3f ms\n",
++                ms(t_spec_emit_us),
++                n_spec_emit_calls,
++                avg_ms(t_spec_emit_us, n_spec_emit_calls));
++        SRV_INF("server spec profile: eog_trim calls=%" PRId64 " tokens=%" PRId64 "\n",
++                n_spec_draft_eog_trim_calls,
++                n_spec_draft_eog_trim_tokens);
++        SRV_INF("server spec profile: prefix2_tail head_ms=%.3f calls=%" PRId64 " tail_tokens=%" PRId64 " prefix_matches=%" PRId64 " avg=%.3f ms\n",
++                ms(t_spec_prefix_tail_head_us),
++                n_spec_prefix_tail_head_calls,
++                n_spec_prefix_tail_tail_tokens,
++                n_spec_prefix_tail_prefix_matches,
++                avg_ms(t_spec_prefix_tail_head_us, n_spec_prefix_tail_head_calls));
++
++        spec_profile_dirty = false;
++    }
++
++    size_t clip_spec_draft_at_eog(server_slot & slot) {
++        static const bool enabled = server_env_enabled("LLAMA_SPEC_VERIFY_CLIP_DRAFT_AT_EOG");
++        if (!enabled || vocab == nullptr || slot.spec_draft.empty()) {
++            return 0;
++        }
++
++        for (size_t i = 0; i < slot.spec_draft.size(); ++i) {
++            if (!llama_vocab_is_eog(vocab, slot.spec_draft[i])) {
++                continue;
++            }
++
++            const size_t n_trimmed = slot.spec_draft.size() - i;
++            slot.spec_draft.resize(i);
++            SLT_DBG(slot, "trimmed %zu speculative draft token(s) at drafted EOG\n", n_trimmed);
++            return n_trimmed;
++        }
++
++        return 0;
++    }
++
++    bool accept_special_token(const server_slot & slot, llama_token token) const {
++        return params_base.special ||
++            slot.task->params.sampling.preserved_tokens.find(token) != slot.task->params.sampling.preserved_tokens.end();
++    }
++
++    void finish_speculative_accept(
++            server_slot & slot,
++            std::vector<llama_token> accepted,
++            size_t n_draft,
++            common_sampler_ptr smpl_save,
++            bool common_accept_done = false) {
++        slot.spec_i_batch.clear();
++
++        GGML_ASSERT(accepted.size() >= 1);
++
++        const uint32_t n_rollback = slot.spec_draft.size() + 1 - accepted.size();
++
++        const bool use_ckpt_tgt =
++            ctx_tgt_seq_rm_type == COMMON_CONTEXT_SEQ_RM_TYPE_FULL ||
++            (ctx_tgt_seq_rm_type == COMMON_CONTEXT_SEQ_RM_TYPE_RS && n_rollback > llama_n_rs_seq(ctx_tgt));
++
++        // check for partial draft acceptance
++        if (n_rollback > 0) {
++            if (use_ckpt_tgt) {
++                if (trace > 0) {
++                    SLT_INF(slot, "accepted %2zu/%2zu draft tokens (restore checkpoint)\n", accepted.size() - 1, slot.spec_draft.size());
++                }
++
++                // partial acceptance is not supported by the context -> truncate the draft and restore the state
++                slot.spec_draft = std::move(accepted);
++
++                const auto & ckpt = slot.spec_ckpt;
++
++                SLT_DBG(slot, "restoring speculative checkpoint (pos_min = %d, pos_max = %d, size = %zu)\n", ckpt.pos_min, ckpt.pos_max, ckpt.size());
++
++                {
++                    ckpt.load_tgt(slot.ctx_tgt, slot.id, LLAMA_STATE_SEQ_FLAGS_PARTIAL_ONLY);
++
++                    common_context_seq_rm(slot.ctx_tgt, slot.id, ckpt.pos_max + 1, -1);
++                }
++
++                if (slot.ctx_dft) {
++                    ckpt.load_dft(slot.ctx_dft, slot.id, LLAMA_STATE_SEQ_FLAGS_PARTIAL_ONLY);
++
++                    common_context_seq_rm(slot.ctx_dft, slot.id, ckpt.pos_max + 1, -1);
++                }
++
++                slot.prompt.tokens.keep_first(ckpt.n_tokens);
++                slot.smpl = std::move(smpl_save);
++
++                return;
++            }
++        }
++
++        if (trace > 0) {
++            SLT_INF(slot, "accepted %2zu/%2zu draft tokens\n", accepted.size() - 1, n_draft);
++        }
++
++        if (!common_accept_done) {
++            const int64_t t_common_accept_start = spec_profile_enabled ? ggml_time_us() : 0;
++            common_speculative_accept(spec.get(), slot.id, accepted.size() - 1);
++            if (spec_profile_enabled) {
++                t_spec_common_accept_us += ggml_time_us() - t_common_accept_start;
++                n_spec_common_accept_calls++;
++                spec_profile_dirty = true;
++            }
++        }
++
++        slot.spec_draft = std::move(accepted);
++
++        const int64_t t_now = ggml_time_us();
++
++        const auto ids = std::move(slot.spec_draft);
++
++        slot.t_token_generation = std::max<int64_t>(1, t_now - slot.t_start_generation) / 1e3;
++
++        // update how many tokens out of those tested were accepted
++        const size_t n_accepted_draft = ids.size() - 1;
++        slot.update_spec_adaptive_mtp(n_draft, n_accepted_draft);
++        slot.n_draft_accepted += n_accepted_draft;
++        slot.n_draft_verif_steps += 1;
++
++        if (slot.n_accepted_per_pos.empty()) {
++            slot.n_accepted_per_pos.resize(common_speculative_n_max(&params_base.speculative), 0);
++        }
++        for (size_t i = 0; i < n_accepted_draft && i < slot.n_accepted_per_pos.size(); ++i) {
++            slot.n_accepted_per_pos[i]++;
++        }
++
++        // add accepted tokens to the prompt
++        slot.prompt.tokens.keep_first(slot.prompt.n_tokens() - n_draft);
++        slot.prompt.tokens.insert({ids.begin(), ids.end() - 1});
++
++        slot.sampled = ids.back(); // last accepted token
++        SLT_DBG(slot, "add accepted tokens: sampled=%d, ids.size=%zu, n_draft=%zu\n", slot.sampled, ids.size(), n_draft);
++
++        common_context_seq_rm(slot.ctx_tgt, slot.id, slot.prompt.tokens.pos_next(), -1);
++        if (slot.ctx_dft) {
++            common_context_seq_rm(slot.ctx_dft, slot.id, slot.prompt.tokens.pos_next(), -1);
++        }
++
++        const int64_t t_emit_start = spec_profile_enabled ? ggml_time_us() : 0;
++        for (size_t i = 0; i < ids.size(); ++i) {
++            completion_token_output result;
++
++            result.tok          = ids[i];
++            result.text_to_send = common_token_to_piece(slot.ctx_tgt, result.tok, accept_special_token(slot, result.tok));
++            result.prob         = 1.0f; // set later
++
++            // TODO: set result.probs
++
++            slot.n_decoded += 1;
++
++            if (!process_token(result, slot)) {
++                slot.print_timings();
++                send_final_response(slot);
++                metrics.on_prediction(slot);
++                slot.release();
++
++                return;
++            }
++        }
++        if (spec_profile_enabled) {
++            t_spec_emit_us += ggml_time_us() - t_emit_start;
++            n_spec_emit_calls++;
++            spec_profile_dirty = true;
++        }
++
++        slot.print_timings_tg();
++
++        SLT_DBG(slot, "accepted %d/%d draft tokens, new n_tokens = %d\n", (int) ids.size() - 1, (int) n_draft, slot.prompt.n_tokens());
++    }
++
++    void finish_speculative_accept_no_bonus(
++            server_slot & slot,
++            std::vector<llama_token> accepted,
++            size_t n_draft) {
++        slot.spec_i_batch.clear();
++
++        GGML_ASSERT(!accepted.empty());
++        GGML_ASSERT(accepted.size() == n_draft);
++
++        if (trace > 0) {
++            SLT_INF(slot, "accepted %2zu/%2zu draft tokens (no bonus row)\n",
++                    accepted.size(), n_draft);
++        }
++
++        const int64_t t_common_accept_start = spec_profile_enabled ? ggml_time_us() : 0;
++        common_speculative_accept(spec.get(), slot.id, (uint16_t) n_draft);
++        if (spec_profile_enabled) {
++            t_spec_common_accept_us += ggml_time_us() - t_common_accept_start;
++            n_spec_common_accept_calls++;
++            spec_profile_dirty = true;
++        }
++
++        slot.spec_draft = std::move(accepted);
++
++        const int64_t t_now = ggml_time_us();
++        const auto ids = std::move(slot.spec_draft);
++
++        slot.t_token_generation = std::max<int64_t>(1, t_now - slot.t_start_generation) / 1e3;
++
++        const size_t n_accepted_draft = ids.size();
++        slot.update_spec_adaptive_mtp(n_draft, n_accepted_draft);
++        slot.n_draft_accepted += n_accepted_draft;
++        slot.n_draft_verif_steps += 1;
++
++        if (slot.n_accepted_per_pos.empty()) {
++            slot.n_accepted_per_pos.resize(common_speculative_n_max(&params_base.speculative), 0);
++        }
++        for (size_t i = 0; i < n_accepted_draft && i < slot.n_accepted_per_pos.size(); ++i) {
++            slot.n_accepted_per_pos[i]++;
++        }
++
++        slot.prompt.tokens.keep_first(slot.prompt.n_tokens() - n_draft);
++        slot.prompt.tokens.insert({ids.begin(), ids.end()});
++
++        slot.sampled = ids.back();
++        SLT_DBG(slot, "add accepted tokens without bonus: sampled=%d, ids.size=%zu, n_draft=%zu\n",
++                slot.sampled, ids.size(), n_draft);
++
++        common_context_seq_rm(slot.ctx_tgt, slot.id, slot.prompt.tokens.pos_next(), -1);
++        if (slot.ctx_dft) {
++            common_context_seq_rm(slot.ctx_dft, slot.id, slot.prompt.tokens.pos_next(), -1);
++        }
++
++        const int64_t t_emit_start = spec_profile_enabled ? ggml_time_us() : 0;
++        for (size_t i = 0; i < ids.size(); ++i) {
++            completion_token_output result;
++
++            result.tok          = ids[i];
++            result.text_to_send = common_token_to_piece(slot.ctx_tgt, result.tok, accept_special_token(slot, result.tok));
++            result.prob         = 1.0f;
++
++            slot.n_decoded += 1;
++
++            if (!process_token(result, slot)) {
++                slot.print_timings();
++                send_final_response(slot);
++                metrics.on_prediction(slot);
++                slot.release();
++
++                return;
++            }
++        }
++        if (spec_profile_enabled) {
++            t_spec_emit_us += ggml_time_us() - t_emit_start;
++            n_spec_emit_calls++;
++            spec_profile_dirty = true;
++        }
++
++        slot.print_timings_tg();
++
++        SLT_DBG(slot, "accepted %d/%d draft tokens without bonus, new n_tokens = %d\n",
++                (int) ids.size(), (int) n_draft, slot.prompt.n_tokens());
++    }
++
++    bool try_decode_staged_mtp3() {
++        static const bool enabled = server_env_enabled("LLAMA_SPEC_VERIFY_STAGE_MTP3");
++        static const bool split_bonus = server_env_enabled("LLAMA_SPEC_VERIFY_STAGE_MTP3_SPLIT_BONUS");
++        if (!enabled || spec == nullptr || batch.size() != 4) {
++            return false;
++        }
++
++        server_slot * slot_ptr = nullptr;
++        for (auto & slot : slots) {
++            if (slot.state != SLOT_STATE_GENERATING || !slot.can_speculate() || slot.spec_draft.empty()) {
++                continue;
++            }
++            if (slot_ptr != nullptr) {
++                return false;
++            }
++            slot_ptr = &slot;
++        }
++        if (slot_ptr == nullptr) {
++            return false;
++        }
++
++        server_slot & slot = *slot_ptr;
++        if (slot.spec_draft.size() != 3 || slot.spec_i_batch.size() != 4) {
++            return false;
++        }
++        for (int i = 0; i < 4; ++i) {
++            if (slot.spec_i_batch[i] != i) {
++                return false;
++            }
++        }
++
++        const size_t n_draft = slot.spec_draft.size();
++        common_sampler_ptr smpl_save(common_sampler_clone(slot.smpl.get()));
++        std::vector<llama_token> accepted;
++        accepted.reserve(n_draft + 1);
++
++        auto sample_row = [&](int row) {
++            scoped_timer timer(t_sampl, n_sampl);
++            return common_sampler_sample(slot.smpl.get(), slot.ctx_tgt, row);
++        };
++
++        int32_t n_batch_stage = llama_n_batch(ctx_tgt);
++        llama_batch stage_a = batch.get_view(0, 2);
++        if (!decode(n_batch_stage, 0, stage_a)) {
++            return false;
++        }
++
++        const int64_t t_sample_accept_start = spec_profile_enabled ? ggml_time_us() : 0;
++
++        llama_token id = sample_row(0);
++        common_sampler_accept(slot.smpl.get(), id, true);
++        accepted.push_back(id);
++        if (id == slot.spec_draft[0]) {
++            id = sample_row(1);
++            common_sampler_accept(slot.smpl.get(), id, true);
++            accepted.push_back(id);
++        }
++
++        if (accepted.size() == 2 && accepted[1] == slot.spec_draft[1]) {
++            n_batch_stage = llama_n_batch(ctx_tgt);
++            llama_batch stage_b = split_bonus ? batch.get_view(2, 1) : batch.get_view(2, 2);
++            if (!decode(n_batch_stage, 2, stage_b)) {
++                throw std::runtime_error("staged MTP3 verifier Stage B decode failed");
++            }
++
++            common_speculative_set_verify_h_base(spec.get(), slot.id, 2);
++
++            id = sample_row(0);
++            common_sampler_accept(slot.smpl.get(), id, true);
++            accepted.push_back(id);
++            if (id == slot.spec_draft[2]) {
++                if (split_bonus) {
++                    n_batch_stage = llama_n_batch(ctx_tgt);
++                    llama_batch stage_c = batch.get_view(3, 1);
++                    if (!decode(n_batch_stage, 3, stage_c)) {
++                        throw std::runtime_error("staged MTP3 verifier Stage C decode failed");
++                    }
++
++                    common_speculative_set_verify_h_base(spec.get(), slot.id, 3);
++
++                    id = sample_row(0);
++                } else {
++                    id = sample_row(1);
++                }
++                common_sampler_accept(slot.smpl.get(), id, true);
++                accepted.push_back(id);
++            }
++        }
++
++        if (spec_profile_enabled) {
++            t_spec_sample_accept_us += ggml_time_us() - t_sample_accept_start;
++            n_spec_sample_accept_calls++;
++            n_spec_accepted_tokens += (int64_t) accepted.size();
++            spec_profile_dirty = true;
++        }
++
++        finish_speculative_accept(slot, std::move(accepted), n_draft, std::move(smpl_save));
++        return true;
++    }
++
+     void update_slots() {
+ #ifdef DEBUG_TIMINGS
+         static int64_t t_prev = 0;
+@@ -2764,6 +3342,7 @@ private:
+             }
+ 
+             if (all_idle) {
++                print_spec_profile_if_needed();
+                 SRV_INF("%s", "all slots are idle\n");
+                 return; // skip further processing
+ 
+@@ -2780,6 +3359,9 @@ private:
+             scoped_timer t(t_pre_decode, n_pre_decode);
+             pre_decode();
+             batch.render();
++            if (try_decode_staged_mtp3()) {
++                return;
++            }
+         } catch (const std::exception & e) {
+             SRV_ERR("pre_decode() failed: %s\n", e.what());
+             abort_all_slots("pre_decode() failed: " + std::string(e.what()));
+@@ -2969,7 +3551,24 @@ private:
+ 
+         // generate the actual drafts (if any)
+         {
++            const int64_t t_start = spec_profile_enabled ? ggml_time_us() : 0;
+             common_speculative_draft(spec.get());
++            for (auto * slot : drafting) {
++                const size_t n_trimmed = clip_spec_draft_at_eog(*slot);
++                if (n_trimmed > 0 && spec_profile_enabled) {
++                    n_spec_draft_eog_trim_calls++;
++                    n_spec_draft_eog_trim_tokens += (int64_t) n_trimmed;
++                    spec_profile_dirty = true;
++                }
++            }
++            if (spec_profile_enabled) {
++                t_spec_draft_us += ggml_time_us() - t_start;
++                n_spec_draft_calls++;
++                for (auto * slot : drafting) {
++                    n_spec_draft_tokens += (int64_t) slot->spec_draft.size();
++                }
++                spec_profile_dirty = true;
++            }
+         }
+ 
+         // make checkpoints if needed
+@@ -3590,7 +4189,33 @@ private:
+             n_empty_consecutive = 0;
+         }
+ 
++        bool spec_profile_generation_batch = false;
++        if (spec_profile_enabled) {
++            iterate(slots, [&](server_slot & slot) {
++                if (slot.state == SLOT_STATE_GENERATING) {
++                    spec_profile_generation_batch = true;
++                }
++            });
++        }
++
++        const int64_t t_decode_start = spec_profile_enabled ? ggml_time_us() : 0;
+         const int ret = llama_decode(ctx_tgt, batch_view);
++        if (spec_profile_enabled) {
++            const int64_t t_decode_elapsed = ggml_time_us() - t_decode_start;
++            t_spec_target_decode_us += t_decode_elapsed;
++            n_spec_target_decode_calls++;
++            n_spec_target_decode_tokens += batch_view.n_tokens;
++            if (spec_profile_generation_batch) {
++                t_spec_target_gen_us += t_decode_elapsed;
++                n_spec_target_gen_calls++;
++                n_spec_target_gen_tokens += batch_view.n_tokens;
++            } else {
++                t_spec_target_prompt_us += t_decode_elapsed;
++                n_spec_target_prompt_calls++;
++                n_spec_target_prompt_tokens += batch_view.n_tokens;
++            }
++            spec_profile_dirty = true;
++        }
+ 
+         metrics.on_decoded(slots);
+ 
+@@ -3647,7 +4272,14 @@ private:
+         // TODO: avoid restoring the draft context and re-evaluating the drafted tokens when not needed [TAG_SPEC_AVOID_DRAFT_REEVAL]
+         //       for now, always re-evaluate for simplicity
+         //       ref: https://github.com/ggml-org/llama.cpp/pull/22728#issuecomment-4400925384
+-        if (!common_speculative_process(spec.get(), batch_view)) {
++        const int64_t t_process_start = spec_profile_enabled ? ggml_time_us() : 0;
++        const bool spec_process_ok = common_speculative_process(spec.get(), batch_view);
++        if (spec_profile_enabled) {
++            t_spec_process_us += ggml_time_us() - t_process_start;
++            n_spec_process_calls++;
++            spec_profile_dirty = true;
++        }
++        if (!spec_process_ok) {
+             SRV_ERR("%s", "failed to process speculative batch\n");
+ 
+             // TODO: handle error
+@@ -3696,11 +4328,6 @@ private:
+             }
+         });
+ 
+-        auto accept_special_token = [&](server_slot & slot, llama_token token) {
+-            return params_base.special ||
+-                slot.task->params.sampling.preserved_tokens.find(token) != slot.task->params.sampling.preserved_tokens.end();
+-        };
+-
+         iterate(slots, [&](server_slot & slot) {
+             // optionally send prompt processing progress
+             if (slot.state == SLOT_STATE_PROCESSING_PROMPT || slot.state == SLOT_STATE_DONE_PROMPT) {
+@@ -3798,6 +4425,9 @@ private:
+ 
+         // speculative decoding - main model sample and accept
+         iterate(slots, [&](server_slot & slot) {
++            static const bool late_head_bonus = server_env_enabled("LLAMA_SPEC_VERIFY_LATE_HEAD_BONUS");
++            static const bool prefix2_tail_head = server_env_enabled("LLAMA_SPEC_VERIFY_PREFIX2_TAIL_HEAD");
++
+             if (slot.state != SLOT_STATE_GENERATING || !slot.can_speculate() || slot.spec_draft.empty()) {
+                 return;
+             }
+@@ -3813,112 +4443,105 @@ private:
+                 common_sampler_ptr smpl_save(common_sampler_clone(slot.smpl.get()));
+ 
+                 GGML_ASSERT(slot.spec_i_batch.size() == n_draft + 1);
+-                auto accepted = common_sampler_sample_and_accept_n(slot.smpl.get(), slot.ctx_tgt, slot.spec_i_batch, slot.spec_draft);
+-                slot.spec_i_batch.clear();
+-
+-                GGML_ASSERT(accepted.size() >= 1);
+-
+-                const uint32_t n_rollback = slot.spec_draft.size() + 1 - accepted.size();
+-
+-                const bool use_ckpt_tgt =
+-                    ctx_tgt_seq_rm_type == COMMON_CONTEXT_SEQ_RM_TYPE_FULL ||
+-                    (ctx_tgt_seq_rm_type == COMMON_CONTEXT_SEQ_RM_TYPE_RS && n_rollback > llama_n_rs_seq(ctx_tgt));
++                const int64_t t_sample_accept_start = spec_profile_enabled ? ggml_time_us() : 0;
++                std::vector<llama_token> accepted;
++                if (prefix2_tail_head && n_draft == 3 && slot.spec_i_batch.size() == 4) {
++                    std::vector<int> prefix_i_batch(slot.spec_i_batch.begin(), slot.spec_i_batch.begin() + 2);
++                    llama_tokens prefix_draft(slot.spec_draft.begin(), slot.spec_draft.begin() + 2);
++                    accepted = common_sampler_sample_and_accept_draft_only(slot.smpl.get(), slot.ctx_tgt, prefix_i_batch, prefix_draft);
++                } else if (late_head_bonus) {
++                    std::vector<int> verify_i_batch(slot.spec_i_batch.begin(), slot.spec_i_batch.end() - 1);
++                    accepted = common_sampler_sample_and_accept_draft_only(slot.smpl.get(), slot.ctx_tgt, verify_i_batch, slot.spec_draft);
++                } else if (slot.spec_adaptive_bonus_row_skipped) {
++                    std::vector<int> verify_i_batch(slot.spec_i_batch.begin(), slot.spec_i_batch.end() - 1);
++                    accepted = common_sampler_sample_and_accept_draft_only(slot.smpl.get(), slot.ctx_tgt, verify_i_batch, slot.spec_draft);
++                } else {
++                    accepted = common_sampler_sample_and_accept_n(slot.smpl.get(), slot.ctx_tgt, slot.spec_i_batch, slot.spec_draft);
++                }
++                if (spec_profile_enabled) {
++                    t_spec_sample_accept_us += ggml_time_us() - t_sample_accept_start;
++                    n_spec_sample_accept_calls++;
++                    n_spec_accepted_tokens += (int64_t) accepted.size();
++                    spec_profile_dirty = true;
++                }
+ 
+-                // check for partial draft acceptance
+-                if (n_rollback > 0) {
+-                    if (use_ckpt_tgt) {
+-                        if (trace > 0) {
+-                            SLT_INF(slot, "accepted %2zu/%2zu draft tokens (restore checkpoint)\n", accepted.size() - 1, slot.spec_draft.size());
++                if (prefix2_tail_head && n_draft == 3 && slot.spec_i_batch.size() == 4) {
++                    const bool prefix_match =
++                        accepted.size() == 2 &&
++                        accepted[0] == slot.spec_draft[0] &&
++                        accepted[1] == slot.spec_draft[1];
++                    if (prefix_match) {
++                        if (spec_profile_enabled) {
++                            n_spec_prefix_tail_prefix_matches++;
++                            spec_profile_dirty = true;
+                         }
+ 
+-                        // partial acceptance is not supported by the context -> truncate the draft and restore the state
+-                        slot.spec_draft = std::move(accepted);
+-
+-                        const auto & ckpt = slot.spec_ckpt;
+-
+-                        SLT_DBG(slot, "restoring speculative checkpoint (pos_min = %d, pos_max = %d, size = %zu)\n", ckpt.pos_min, ckpt.pos_max, ckpt.size());
+-
+-                        {
+-                            ckpt.load_tgt(slot.ctx_tgt, slot.id, LLAMA_STATE_SEQ_FLAGS_PARTIAL_ONLY);
++                        std::array<llama_token, 2> tail = { LLAMA_TOKEN_NULL, LLAMA_TOKEN_NULL };
++                        const int64_t t_tail_head_start = spec_profile_enabled ? ggml_time_us() : 0;
++                        const int32_t n_tail = llama_spec_verify_head_from_h_nextn_range(
++                                slot.ctx_tgt, slot.spec_i_batch[2], (int32_t) tail.size(), tail.data());
++                        if (spec_profile_enabled) {
++                            t_spec_prefix_tail_head_us += ggml_time_us() - t_tail_head_start;
++                            n_spec_prefix_tail_head_calls++;
++                            n_spec_prefix_tail_tail_tokens += n_tail > 0 ? n_tail : 0;
++                            spec_profile_dirty = true;
++                        }
++                        if (n_tail != (int32_t) tail.size() || tail[0] == LLAMA_TOKEN_NULL) {
++                            throw std::runtime_error("prefix2 tail head-only verifier failed to produce draft row");
++                        }
+ 
+-                            common_context_seq_rm(slot.ctx_tgt, slot.id, ckpt.pos_max + 1, -1);
++                        common_sampler_accept(slot.smpl.get(), tail[0], true);
++                        accepted.push_back(tail[0]);
++                        if (tail[0] == slot.spec_draft[2]) {
++                            if (tail[1] == LLAMA_TOKEN_NULL) {
++                                throw std::runtime_error("prefix2 tail head-only verifier failed to produce bonus row");
++                            }
++                            common_sampler_accept(slot.smpl.get(), tail[1], true);
++                            accepted.push_back(tail[1]);
+                         }
+ 
+-                        if (slot.ctx_dft) {
+-                            ckpt.load_dft(slot.ctx_dft, slot.id, LLAMA_STATE_SEQ_FLAGS_PARTIAL_ONLY);
++                        finish_speculative_accept(slot, std::move(accepted), n_draft, std::move(smpl_save));
++                        return;
++                    }
++                }
+ 
+-                            common_context_seq_rm(slot.ctx_dft, slot.id, ckpt.pos_max + 1, -1);
++                if (late_head_bonus) {
++                    const bool full_match =
++                        accepted.size() == n_draft &&
++                        std::equal(accepted.begin(), accepted.end(), slot.spec_draft.begin());
++                    if (full_match) {
++                        const int64_t t_common_accept_start = spec_profile_enabled ? ggml_time_us() : 0;
++                        common_speculative_accept(spec.get(), slot.id, (uint16_t) n_draft);
++                        if (spec_profile_enabled) {
++                            t_spec_common_accept_us += ggml_time_us() - t_common_accept_start;
++                            n_spec_common_accept_calls++;
++                            spec_profile_dirty = true;
+                         }
+ 
+-                        slot.prompt.tokens.keep_first(ckpt.n_tokens);
+-                        slot.smpl = std::move(smpl_save);
++                        const llama_token bonus = llama_spec_verify_head_from_h_nextn_ith(slot.ctx_tgt, slot.spec_i_batch.back());
++                        if (bonus == LLAMA_TOKEN_NULL) {
++                            throw std::runtime_error("late head-only bonus failed to produce a token");
++                        }
+ 
++                        common_sampler_accept(slot.smpl.get(), bonus, true);
++                        accepted.push_back(bonus);
++                        finish_speculative_accept(slot, std::move(accepted), n_draft, std::move(smpl_save), true);
+                         return;
+                     }
+                 }
+ 
+-                if (trace > 0) {
+-                    SLT_INF(slot, "accepted %2zu/%2zu draft tokens\n", accepted.size() - 1, n_draft);
++                if (slot.spec_adaptive_bonus_row_skipped) {
++                    const bool full_match =
++                        accepted.size() == n_draft &&
++                        std::equal(accepted.begin(), accepted.end(), slot.spec_draft.begin());
++                    if (full_match) {
++                        finish_speculative_accept_no_bonus(slot, std::move(accepted), n_draft);
++                        return;
++                    }
+                 }
+ 
+-                common_speculative_accept(spec.get(), slot.id, accepted.size() - 1);
+-
+-                slot.spec_draft = std::move(accepted);
+-            }
+-
+-            const int64_t t_now = ggml_time_us();
+-
+-            const auto ids = std::move(slot.spec_draft);
+-
+-            slot.t_token_generation = std::max<int64_t>(1, t_now - slot.t_start_generation) / 1e3;
+-
+-            // update how many tokens out of those tested were accepted
+-            slot.n_draft_accepted += ids.size() - 1;
+-            slot.n_draft_verif_steps += 1;
+-
+-            if (slot.n_accepted_per_pos.empty()) {
+-                slot.n_accepted_per_pos.resize(common_speculative_n_max(&params_base.speculative), 0);
+-            }
+-            for (size_t i = 0; i < ids.size() - 1 && i < slot.n_accepted_per_pos.size(); ++i) {
+-                slot.n_accepted_per_pos[i]++;
+-            }
+-
+-            // add accepted tokens to the prompt
+-            slot.prompt.tokens.keep_first(slot.prompt.n_tokens() - n_draft);
+-            slot.prompt.tokens.insert({ids.begin(), ids.end() - 1});
+-
+-            slot.sampled = ids.back(); // last accepted token
+-            SLT_DBG(slot, "add accepted tokens: sampled=%d, ids.size=%zu, n_draft=%zu\n", slot.sampled, ids.size(), n_draft);
+-
+-            common_context_seq_rm(slot.ctx_tgt, slot.id, slot.prompt.tokens.pos_next(), -1);
+-            if (slot.ctx_dft) {
+-                common_context_seq_rm(slot.ctx_dft, slot.id, slot.prompt.tokens.pos_next(), -1);
++                finish_speculative_accept(slot, std::move(accepted), n_draft, std::move(smpl_save));
+             }
+-
+-            for (size_t i = 0; i < ids.size(); ++i) {
+-                completion_token_output result;
+-
+-                result.tok          = ids[i];
+-                result.text_to_send = common_token_to_piece(slot.ctx_tgt, result.tok, accept_special_token(slot, result.tok));
+-                result.prob         = 1.0f; // set later
+-
+-                // TODO: set result.probs
+-
+-                slot.n_decoded += 1;
+-
+-                if (!process_token(result, slot)) {
+-                    slot.print_timings();
+-                    send_final_response(slot);
+-                    metrics.on_prediction(slot);
+-                    slot.release();
+-
+-                    return;
+-                }
+-            }
+-
+-            slot.print_timings_tg();
+-
+-            SLT_DBG(slot, "accepted %d/%d draft tokens, new n_tokens = %d\n", (int) ids.size() - 1, (int) n_draft, slot.prompt.n_tokens());
+         });
+     }
+ 

@@ -48,9 +48,16 @@ Primary target:
   tok/s` with EOG clip, below controls and below the `115.8466634928202` record.
   Do not submit or retest this interaction as a record lane. Evidence:
   `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260629-fused-selected-softmax-full512-negative.md`.
-- Current best non-duplicate Gemma code target is row-adaptive verifier output
-  inside the existing target decode boundary, preserving the bonus-token
-  pipeline and avoiding any extra `SPEC_HEAD` launch. See
+- Latest strict128 source follow-up: adaptive bonus-row skipping is a closed
+  negative. It preserved exact verification and passed the realistic cold gate,
+  but the best adaptive lane reached only `109.5558044655227 tok/s` versus the
+  same-build control at `112.02098406811635 tok/s`, with worse p10 and
+  full-output speed. Do not full512-confirm or submit it. Evidence:
+  `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260629-adaptive-bonus-row-negative.md`.
+- Current best non-duplicate Gemma code target is still verifier cost, but not
+  by removing the bonus pipeline. Work inside the existing target decode
+  boundary: compact exact LM-head/max handling, verifier MoE boundary/kernel
+  reduction, or a bonus-preserving row-output design. See
   `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260629-verifier-next-target-audit.md`.
 - Current synthetic diagnostic one-B70 best is `176.21623213048554 tok/s` after
   TTFT on row0 with `cached_tokens=0`, `1536` canary repeats / `6144` rows

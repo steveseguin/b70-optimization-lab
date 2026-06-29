@@ -114,11 +114,20 @@ Recent closed negatives:
   `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260629-fused-down-selected-softmax-strict128.md`
   and
   `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260629-fused-selected-softmax-full512-negative.md`.
+- Adaptive bonus-row skipping:
+  `LLAMA_SPEC_VERIFY_ADAPTIVE_BONUS_ROW=1` was tested with three thresholds
+  after adding exact no-bonus full-match handling. All lanes passed the fixed
+  cold strict128 gate, but the best adaptive lane was slower (`109.556 tok/s`)
+  than the same-build control (`112.021 tok/s`) and had a worse p10. This
+  reinforces that removing the current bonus pipeline is not the right row
+  economy. Preserve the patch/result and do not promote. See
+  `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260629-adaptive-bonus-row-negative.md`.
 
 Implication for the next AI: do not spend another session on launch-flag
-sweeps. The next credible record attempt needs a real verifier-cost reduction:
-LM-head compact exact max, row-adaptive verification, a cheap exact bonus path,
-or a verifier MoE boundary/kernel change.
+sweeps or bonus-removal variants. The next credible record attempt needs a
+real verifier-cost reduction that preserves the bonus path: compact exact
+LM-head/max handling inside the existing decode boundary, or a verifier MoE
+boundary/kernel change.
 
 ## Current Baselines And Guardrails
 

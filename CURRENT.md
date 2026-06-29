@@ -55,6 +55,12 @@ Current active optimization target:
   `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260629-fused-down-selected-softmax-strict128.md`
   and
   `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260629-fused-selected-softmax-full512-negative.md`.
+  Adaptive bonus-row skipping was also tested on 2026-06-29 with three exact
+  thresholds. All lanes passed the cold strict128 gate, but the best adaptive
+  lane reached only `109.5558044655227 tok/s` versus the same-build control at
+  `112.02098406811635 tok/s`, with worse p10 and full-output speed. It is a
+  closed negative; do not full512-confirm or submit it. See
+  `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260629-adaptive-bonus-row-negative.md`.
 - Current diagnostic best, not a real-world headline:
   `176.21623213048554 tok/s` after TTFT on the first no-cache synthetic
   filled-long benchmark row, `176.40259133127742 tok/s` supporting repeat mean,

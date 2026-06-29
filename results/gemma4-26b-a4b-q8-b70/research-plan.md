@@ -240,6 +240,19 @@ See
 and
 `../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260629-fused-selected-softmax-full512-negative.md`.
 
+2026-06-29 adaptive bonus-row follow-up:
+`LLAMA_SPEC_VERIFY_ADAPTIVE_BONUS_ROW=1` was tested with exact no-bonus
+full-match handling after the current-response full-accept rate warmed up. All
+four strict128 lanes were valid fresh-response runs (`cached_tokens=0`,
+canary 128/128, realistic gate passed), but every adaptive lane lost to the
+same-build control. Control measured `112.020984 tok/s`; adaptive rows measured
+`109.555804`, `103.515232`, and `99.681293 tok/s` depending on warmup and
+minimum full-accept threshold. The best adaptive row also had a much worse p10.
+Conclusion: verifier row savings that remove or weaken the current bonus
+pipeline are not productive. Preserve the patch/result, but do not full512
+confirm or submit. See
+`../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260629-adaptive-bonus-row-negative.md`.
+
 Current handoff note: see
 `../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260629-selecteddown-next-lane-triage.md`
 for the 2026-06-29 post-profile audit, closed-lane list, and the preserved
