@@ -113,7 +113,7 @@ that failed its own mechanism test.
 | Rank | Work item | Start here | First test | Promote only if | Kill if |
 | --- | --- | --- | --- | --- | --- |
 | P0 | Sync stale top-level state | `CURRENT.md`, `README.md:3-35` | Documentation-only diff | `CURRENT.md` stops pointing agents at `95.824` as current Gemma state | User wants no doc churn |
-| P0 | Exact verifier LM-head candidate-vs-max | `research-plan.md:189-199`, `research-plan.md:532-536`, `/home/steve/src/llama.cpp-gemma-record-repro-c926/common/speculative.cpp:1200-1215` | 128-token strict screen plus node profile | Full512 strict beats `98.340` or profile shows clear LM-head output traffic reduction with near-record speed | It still materializes full logits and just reimplements raw argmax |
+| P0 | New verifier LM-head kernel design | `research-plan.md:189-199`, `research-plan.md:532-536`, `/home/steve/src/llama.cpp-gemma-record-repro-c926/src/models/gemma4.cpp:589`, `/home/steve/src/llama.cpp-gemma-record-repro-c926/ggml/src/ggml-sycl/ggml-sycl.cpp:5585` | Kernel microbench and strict128 ID-equivalence screen | It beats both regular Q8 matmul+backend-argmax and existing `ggml_mul_mat_argmax` while returning exact target IDs | It is just candidate plumbing around the already-slower fused argmax op |
 | P1 | PP and long-context measurement ladder | `README.md:80-135`, `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260628T0245-crack100-runtime-sweeps.md:1708-1735`, `AGENT_HANDOFF.md:295-335` | Cold prompts at `128-16384` tokens plus outputs `1/16/64`, then long-output sustained windows | It produces repeatable TTFT, prefill, VRAM, and decode-window data without changing the short record recipe | It mixes cached-prefix/service numbers into the strict cold record lane |
 | P1 | llama.cpp prompt-cache and slot service lane | llama.cpp server `cache_prompt`, `/slots`, `--cache-ram`, `--cache-idle-slots` docs | Stable-prefix repeated-prompt A/B with canary answer hashing | It cuts repeated-prefix TTFT without changing generated text or short cold decode | It is proposed as a LocalMaxxing fresh-prompt record path |
 | P2 | KV precision ladder for context headroom | llama.cpp `-ctk/-ctv`, issue `#10378`, `README.md:80-135` | `ctk=q8_0`, then K/V combinations only after flash-attention compatibility check | It extends context or reduces long-context slowdown while passing quality canaries and rerunning the short suite | V-cache quant forces a slower flash-attention profile or changes quality |
@@ -359,7 +359,7 @@ Next action:
 
 These have enough signal to justify another focused branch or short screen.
 
-### 1. Exact Verifier LM-Head Candidate-Vs-Max
+### 1. New Verifier LM-Head Kernel Design
 
 Why: strict node profile says target LM-head full-vocab projection is the top
 node, about `1.380 ms/call`, followed by verifier MoE. Raw argmax/softcap
@@ -367,18 +367,27 @@ shortcuts did not help because they still pay full projection cost. The
 research plan already names `LLAMA_SPEC_VERIFY_CANDIDATE_MAX=1` as a candidate
 direction (`research-plan.md:189-199`, `research-plan.md:532-536`).
 
-How it might work: for each drafted verifier row, compute the drafted
-candidate logit and the true maximum exactly, then accept only if the candidate
-is the exact max. The important part is avoiding materializing and copying full
-logits in the current path. A naive "compute full logits then argmax" is already
-proven insufficient.
+What the 2026-06-28 verifier-kernel audit found: the existing
+`ggml_mul_mat_argmax(model.output, cur)` path already avoids materializing the
+full `[vocab, n_outputs]` logits tensor and returns compact exact target IDs,
+but it is slower than the current regular Q8 matmul plus backend `ggml_argmax`
+path on this B70 stack. A candidate-aware wrapper that still computes the true
+global max is likely to inherit that slower custom MMVQ/reduction path unless
+the backend kernel itself is materially improved.
 
-Risk: exact max over vocabulary still requires touching the LM-head weights.
-The win depends on fusing projection/reduction and avoiding full output tensor
-traffic, not reducing arithmetic to only one candidate.
+Strict-safe constraint: scoring only drafted token IDs is invalid because the
+target may prefer another vocab token, and the bonus row needs the true target
+greedy token. Any promoted verifier shortcut must either compute the exact
+global maximum over the full `262144` vocab or prove a rigorous upper bound
+under the same Q8 dot, tie, softcap, suppress-token, and LoRA semantics.
 
-Test shape: one strict 128-token screen, then full512 only if it beats the
-current identity with same `cached_tokens=0` gate.
+First viable shape: a kernel-level redesign of the existing fused argmax,
+microbenchmarked before strict runs. A bounded source prototype would touch
+`src/models/gemma4.cpp`, `src/llama-graph.{h,cpp}`, `src/llama-context.cpp`,
+`common/sampling.cpp`, `ggml/include/ggml.h`, `ggml/src/ggml.c`, and the SYCL
+Q8 fused matmul/argmax code in `ggml/src/ggml-sycl/ggml-sycl.cpp` /
+`ggml/src/ggml-sycl/mmvq.cpp`. Do not spend a full strict batch on this unless
+a microbench proves it beats the existing `MUL_MAT_ARGMAX` implementation.
 
 ### 2. DFlash In llama.cpp, On A Separate Branch
 
@@ -470,7 +479,7 @@ not as the main Gemma Q8 record path unless a same-identity Gemma test surprises
 
 | Idea | Priority | Why |
 | --- | --- | --- |
-| Exact verifier candidate-vs-max LM-head kernel | High but not quick | Directly targets top profile node and preserves exactness if designed correctly; must be a different design than the existing fused full-vocab argmax kernel, which is slower |
+| Exact verifier LM-head kernel redesign | High but not quick | Directly targets top profile node and preserves exactness only if it beats both regular Q8 matmul+argmax and the already-slower `ggml_mul_mat_argmax` path |
 | Graph-level DFlash KV injection/per-round fixed shape | Medium | Upstream discussion identifies this as needed for DFlash graph reuse |
 | DeepSpec DSpark algorithm mining | Medium | Useful design ideas, but no Gemma26 checkpoint and likely training-heavy |
 | Latest Intel llm-scaler image A/B on Qwen and maybe Gemma | Medium-low for Gemma, medium for Qwen | Fresh B70 platform updates may help vLLM but prior Gemma vLLM path was slow |
@@ -490,6 +499,7 @@ not as the main Gemma Q8 record path unless a same-identity Gemma test surprises
 | Host `h_nextn` copy trimming | Measured copy time is tiny and full512 was below record (`experiments/gemma4-26b-a4b-q8-b70/sweeps/20260628T1319-hnextn-cacheguard-negative.md:50-66`, `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260628T1319-hnextn-cacheguard-negative.md:94-107`) |
 | Q8 reorder pair/direct/top8/grouped variants | Strict tests show register/scatter/addressing overhead dominates unless a new kernel profile says otherwise (`research-plan.md:106-139`) |
 | Raw verifier argmax/softcap shortcut | Exact but still pays full LM-head projection, so it did not confirm (`research-plan.md:141-152`) |
+| Candidate-only verifier scoring | Not strict-safe: another vocab token can beat the drafted ID, and the bonus row still needs the target greedy token. A valid design must compute or prove the full-vocab maximum. |
 | Runtime copy/allocation/env churn | Recent runtime flags all lost and profiles do not show this as the bottleneck (`research-plan.md:201-210`) |
 | Frequency floor as a record mechanism | Produced `100+` screens but not reliable confirmations (`research-plan.md:67-74`) |
 | N-gram/history acceleration for LocalMaxxing | Invalid for fresh strict records, despite huge warmed numbers (`README.md:68-73`, `README.md:213-215`) |
