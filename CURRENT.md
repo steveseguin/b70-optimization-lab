@@ -69,6 +69,20 @@ Current active optimization target:
   averaged `112.421810001393`. It is a closed negative; do not full512-confirm
   or submit it. See
   `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260629-defer-verifier-pending-h-copy-negative.md`.
+  Exact LM-head candidate-vs-max plumbing was audited next. The verifier row
+  mapping is usable in the narrow full-output MTP shape, but the design is not
+  a current record lane because exact speculative verification still needs the
+  true target top token on mismatch, which preserves the expensive full-vocab
+  max/challenger work. See
+  `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260629-candidate-threshold-lmhead-no-go.md`.
+- Current context/service diagnostic split:
+  MTP remains useful for medium-long contexts through about `ctx24576` /
+  `ctx25600` on the synthetic filled-long diagnostic prompt, at roughly
+  `73 tok/s` with `cached_tokens=0`; it degrades near `ctx26624` and cliffs by
+  `ctx27648`. For true `ctx32768`, the stable lane is currently no-spec,
+  roughly `55-58 tok/s` decode on the same diagnostic prompt. These are
+  service/context diagnostics, not LocalMaxxing headline records. See
+  `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260629-context-threshold-mtp-vs-nospec.md`.
 - Current diagnostic best, not a real-world headline:
   `176.21623213048554 tok/s` after TTFT on the first no-cache synthetic
   filled-long benchmark row, `176.40259133127742 tok/s` supporting repeat mean,

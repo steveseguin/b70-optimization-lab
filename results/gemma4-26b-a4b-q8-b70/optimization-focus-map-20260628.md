@@ -131,6 +131,23 @@ Recent closed negatives:
   flag-on lane was an outlier, not a promotion candidate. Preserve the
   patch/result and do not full512-confirm or submit. See
   `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260629-defer-verifier-pending-h-copy-negative.md`.
+- Candidate-threshold verifier LM-head:
+  a read-only row-mapping audit confirmed that shifted `t_inp_tokens[r + 1]`
+  gives the draft candidate ID for the narrow standard verifier shape. This is
+  still not a good next record implementation: exact mismatch handling requires
+  the true target token, so the kernel would still do full-vocab dot and
+  top1/challenger work, duplicating the closed top1 epilogue/reduction family.
+  Preserve as a no-go until a design removes verifier LM-head rows or proves a
+  candidate win without scanning the full vocabulary. See
+  `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260629-candidate-threshold-lmhead-no-go.md`.
+- Context threshold / service split:
+  this is not a short-record lane, but the long-context diagnostics now have a
+  practical split. Current MTP is useful through `CTX_SIZE=24576`/`25600`
+  (`~73 tok/s` after TTFT on an ~11K actual prompt), degraded at `26624`
+  (`67.7 tok/s`), and cliffed at `27648+` (`~12 tok/s`). True 32K service mode
+  should disable MTP for now; no-spec 32K is stable around `55-58 tok/s`.
+  See
+  `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260629-context-threshold-mtp-vs-nospec.md`.
 
 Implication for the next AI: do not spend another session on launch-flag
 sweeps or bonus-removal variants. The next credible record attempt needs a

@@ -62,10 +62,27 @@ Primary target:
   lanes valid and `cached_tokens=0`. Do not full512-confirm or submit it.
   Evidence:
   `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260629-defer-verifier-pending-h-copy-negative.md`.
+- Latest verifier-design audit: exact LM-head candidate-vs-max has usable row
+  plumbing in the narrow full-output MTP verifier shape, but it is not a
+  current record lane. Exact speculative verification still needs the true
+  target top token on mismatch, so the full-vocab max/challenger work remains
+  unless a future design actually removes verifier rows or proves a cheaper
+  exact candidate path. Evidence:
+  `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260629-candidate-threshold-lmhead-no-go.md`.
+- Current context/service diagnostic split: keep the short-record recipe at
+  `ctx8192`. For medium-long service, MTP remains useful through about
+  `ctx24576` / `ctx25600` on the synthetic filled-long diagnostic prompt
+  (`~73 tok/s`, `cached_tokens=0`), degrades around `ctx26624`, and cliffs by
+  `ctx27648`. For true `ctx32768`, the stable lane is currently no-spec at
+  roughly `55-58 tok/s` decode on the same diagnostic. These are not
+  LocalMaxxing headline records. Evidence:
+  `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260629-context-threshold-mtp-vs-nospec.md`.
 - Current best non-duplicate Gemma code target is still verifier cost, but not
-  by removing the bonus pipeline. Work inside the existing target decode
-  boundary: compact exact LM-head/max handling, verifier MoE boundary/kernel
-  reduction, or a bonus-preserving row-output design. See
+  by removing the bonus pipeline or by a naive candidate-threshold head scan.
+  Work inside the existing target decode boundary only if it removes real
+  verifier rows/full-vocab dot work or reduces the verifier MoE/kernel
+  boundary. Bonus-preserving row-output designs remain interesting, but need a
+  concrete exactness and cost argument before GPU time. See
   `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260629-verifier-next-target-audit.md`.
 - Current synthetic diagnostic one-B70 best is `176.21623213048554 tok/s` after
   TTFT on row0 with `cached_tokens=0`, `1536` canary repeats / `6144` rows
@@ -86,9 +103,9 @@ Primary target:
 - Post-100 status: the reliable `>100 tok/s` barrier is broken. Do not spend
   more time on configuration-only repeats for this Gemma lane. The next
   plausible record attempt needs a real source-level verifier-cost reduction,
-  especially exact LM-head candidate-vs-max, a row-adaptive verifier-output
-  design, a head-only bonus path that preserves the current pipeline, or
-  additional verifier MoE boundary reduction beyond selected-down fusion.
+  especially a row-adaptive verifier-output design that preserves exactness, a
+  head-only bonus path that preserves the current pipeline, or additional
+  verifier MoE boundary reduction beyond selected-down fusion.
 
 Historical / service targets:
 

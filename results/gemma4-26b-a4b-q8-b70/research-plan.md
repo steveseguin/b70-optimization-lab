@@ -46,6 +46,27 @@ of the promoted recipe all passed gate/canary but did not beat the record:
 `115.8466634928202 tok/s` LocalMaxxing row as headline. See
 `../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260629-record-repeat-full512-variance.md`.
 
+2026-06-29 context/service split update: short-context decode remains the
+record lane, but the separate context diagnostics now have a practical profile
+split. For the current Q4_0 MTP draft stack, an ~11K actual prompt stays useful
+at `CTX_SIZE=24576` / `25600` (`~73 tok/s` after TTFT), degrades at `26624`
+(`67.7 tok/s`), and falls off a cliff by `27648` / `28672` (`~12 tok/s`).
+True `32768` service mode should disable MTP for now; no-spec 32K is stable at
+about `55-58 tok/s` after TTFT for the same diagnostic prompt. These are
+synthetic unique-prompt context diagnostics, not LocalMaxxing headline rows.
+See
+`../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260629-context-threshold-mtp-vs-nospec.md`.
+
+2026-06-29 verifier LM-head candidate-threshold audit: shifted
+`t_inp_tokens[r + 1]` does provide the draft candidate ID for narrow standard
+MTP verifier rows, but this is not a good next record implementation. Exact
+verification still needs the true target token on mismatch, so the op would
+still scan full vocab and do the same top1/challenger work as the closed
+top1-epilogue/reduction lanes. Do not build this unless a future design removes
+verifier LM-head rows or proves a candidate win without full-vocab dot work.
+See
+`../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260629-candidate-threshold-lmhead-no-go.md`.
+
 2026-06-28 F16 p021 small-ncols record: a four-GPU strict screen found
 `LLAMA_SYCL_F16_P021_SMALL_NCOLS=1` was the only useful source flag in the
 batch. The 128-token confirmation produced a strong lead (`98.44959726864674`

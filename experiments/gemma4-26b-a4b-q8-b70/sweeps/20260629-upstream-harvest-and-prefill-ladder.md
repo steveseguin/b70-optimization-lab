@@ -206,3 +206,42 @@ fixed first. The current practical split remains:
 
 - validated short-context record: Q8 target + Q4_0 MTP draft;
 - 32K context: no-spec fallback.
+
+## 2026-06-29 context threshold refinement
+
+Follow-up note:
+`experiments/gemma4-26b-a4b-q8-b70/sweeps/20260629-context-threshold-mtp-vs-nospec.md`
+
+Two additional 4-GPU diagnostic screens narrowed the usable MTP context ceiling
+for the same Q8 target and Q4_0 MTP draft. These were synthetic unique
+prompt/context diagnostics, not LocalMaxxing headline rows.
+
+Common shape:
+
+- requested prompt `8192`, actual prompt `11076`;
+- output `64`;
+- `cached_tokens=0`;
+- `CANARY_REPEATS=2`, all canaries passed;
+- current short-record MTP recipe unless explicitly no-spec.
+
+Key results:
+
+| Context | Mode | Decode after TTFT | Interpretation |
+| ---: | --- | ---: | --- |
+| 16384 | MTP n3/n2/p0.0475 | `94.203 tok/s` | excellent medium-context service mode |
+| 24576 | MTP n3/n2/p0.0475 | `72.715` then `73.683 tok/s` repeat | useful and repeatable |
+| 25600 | MTP n3/n2/p0.0475 | `73.323 tok/s` | practical upper MTP context |
+| 26624 | MTP n3/n2/p0.0475 | `67.684 tok/s` | degraded warning zone |
+| 27648 | MTP n3/n2/p0.0475 | `12.079 tok/s` | cliff |
+| 28672 | MTP n3/n2/p0.0475 | `12.504 tok/s` | cliff confirmed |
+| 32768 | no-spec, flash on | `57.880 tok/s` | stable 32K fallback |
+
+Practical split after this refinement:
+
+- keep the short fresh-response record at `CTX_SIZE=8192`;
+- for medium/long context where MTP is desired, use `CTX_SIZE=24576` or
+  `25600`;
+- treat `CTX_SIZE=26624` as a warning zone and avoid `CTX_SIZE>=27648` with the
+  current MTP stack;
+- use no-spec for true `32768` service mode until the MTP-at-large-context
+  `ggml_sycl_mul_mat_id` / draft-context cliff is fixed.
