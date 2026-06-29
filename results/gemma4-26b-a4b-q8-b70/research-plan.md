@@ -1538,6 +1538,15 @@ Text speed is first. After text baseline:
     (`sha256=9db3ac4286e3842ece2eebd07060ac73a0e0c548cb15d17333406701576d52c8`).
     Future source experiments should diff against this snapshot and record both
     wins and losses before promotion.
+21. **Fused-down selected-softmax precompute is a closed negative.** A
+    default-off patch tried to rescue `LLAMA_GEMMA4_MOE_FUSED_DOWN_SELECTED_SOFTMAX=1`
+    by precomputing selected-softmax once per token before selected-down. It
+    passed strict128 and full512 cold realistic gates, but full512 candidate
+    medians (`114.99472751325114`, `119.55472070939985`) lost to same-build
+    controls (`119.83691077465154`, `121.35664372753011`) and the
+    `121.41411987308553` record. The active source hunk was reverted; patch
+    and results are preserved in
+    `../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260629-fused-down-selected-softmax-precompute-negative.md`.
 
 ## Stop Conditions
 

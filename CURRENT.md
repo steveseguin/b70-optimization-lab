@@ -13,9 +13,9 @@ Current active optimization target:
   scores may guide optimization only; they are not headline throughput or
   LocalMaxxing evidence.
 - Best strict realistic-suite result so far:
-  `117.91456485086059 tok/s` median generated-token throughput for tokens
+  `121.41411987308553 tok/s` median generated-token throughput for tokens
   1-100 after TTFT across the fixed cold prompt suite. Evidence:
-  `data/gemma4-q8-gpu3-faon-vmm-ctx32768-full512-20260629T211437Z/summary.json`.
+  `data/gemma4-q8-gpu3-q8lmhead-noreorder-control-full512-20260629T224927Z/summary.json`.
   It uses llama.cpp `c926ad098`, UD-Q8_K_XL target/verifier, Q4_0 MTP draft,
   reordered-Q8 VDR2, `FLASH_ATTN=on`, `CTX_SIZE=32768`,
   `GGML_SYCL_ENABLE_VMM=1`, `n_max=3`, `n_min=2`, `p_min=0.0475`,
@@ -26,15 +26,11 @@ Current active optimization target:
 - Representative / submitted status:
   the VDR2 selected-down fused weighted-sum path plus FA-on 32K/VMM is the
   current policy-compliant Gemma 26B Q8 LocalMaxxing submission. The current
-  high is approved as `cmqzq5zu402troe01t774uyox`; the prior selected-down
-  repeat `cmqyrpox4021dqk01co5o4fcw` and initial selected-down
-  confirmation `cmqyo0jyt08ippk01vhiobdnm` remains valid support.
-  Same-identity FA-on 32K/VMM confirmations measured `116.45776605647993`,
-  `117.41509141115063`, `115.08942949119734`, and
-  `117.45737477243767 tok/s`, all with `cached_tokens=0` and 512/512 canary
-  rows passing. Treat this as a small variance-class improvement; one
-  confirmation lane is below the previous `115.8466634928202` high, but 3/4
-  confirmations and the promoted row beat it under the fixed gate. The prior LocalMaxxing
+  high is approved as `cmqztiqdn02vnoe01egox6q3f`; the same-family
+  confirmation high measured `119.94842631460949 tok/s`, and the prior
+  FA-on 32K/VMM row `cmqzq5zu402troe01t774uyox`, selected-down repeat
+  `cmqyrpox4021dqk01co5o4fcw`, and initial selected-down confirmation
+  `cmqyo0jyt08ippk01vhiobdnm` remain valid support. The prior LocalMaxxing
   row `cmqxchyra03xmqr01b963gmi1` at `98.34046474459183 tok/s`, prior
   F16-p021 row
   `cmqx3687103v4qr01ace1ft3m`, earlier VDR2 submissions, and prior VDR4
@@ -78,6 +74,13 @@ Current active optimization target:
   true target top token on mismatch, which preserves the expensive full-vocab
   max/challenger work. See
   `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260629-candidate-threshold-lmhead-no-go.md`.
+  Fused-down selected-softmax precompute was tested next as a source patch
+  against the previously negative `LLAMA_GEMMA4_MOE_FUSED_DOWN_SELECTED_SOFTMAX=1`
+  lane. It passed strict128 and full512 validity but lost: full512 candidate
+  medians were `114.99472751325114` and `119.55472070939985 tok/s` versus
+  same-build controls at `119.83691077465154` and `121.35664372753011 tok/s`.
+  The backend hunk was reverted and the patch/results are preserved. See
+  `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260629-fused-down-selected-softmax-precompute-negative.md`.
 - Current context/service diagnostic split:
   with flash attention off, MTP remains useful through about `ctx24576` /
   `ctx25600`, degrades near `ctx26624`, and cliffs by `ctx27648`. With

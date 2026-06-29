@@ -1,0 +1,115 @@
+diff --git a/ggml/src/ggml-sycl/ggml-sycl.cpp b/ggml/src/ggml-sycl/ggml-sycl.cpp
+--- a/ggml/src/ggml-sycl/ggml-sycl.cpp
++++ b/ggml/src/ggml-sycl/ggml-sycl.cpp
+@@
+ static bool ggml_sycl_moe_selected_down_weighted_sum_reorder_vdr2_enabled() {
+ #if GGML_SYCL_REORDER_Q8_0_VDR_MMVQ == 2
+     const char * env = std::getenv("LLAMA_GEMMA4_MOE_FUSED_DOWN_WEIGHTED_SUM_REORDER_VDR2");
+     return env && (std::strcmp(env, "1") == 0 ||
+@@
+ #endif
+ }
+
++static bool ggml_sycl_moe_fused_down_selected_softmax_precompute_enabled() {
++    const char * env = std::getenv("LLAMA_GEMMA4_MOE_FUSED_DOWN_SELECTED_SOFTMAX_PRECOMPUTE");
++    return env && (std::strcmp(env, "1") == 0 ||
++                   std::strcmp(env, "true") == 0 ||
++                   std::strcmp(env, "TRUE") == 0 ||
++                   std::strcmp(env, "yes") == 0 ||
++                   std::strcmp(env, "on") == 0);
++}
++
+ static bool ggml_sycl_moe_geglu_down_matmul_epilogue_enabled() {
+     const char * env = std::getenv("LLAMA_GEMMA4_MOE_GEGLU_DOWN_MATMUL_EPILOGUE");
+     return env && (std::strcmp(env, "1") == 0 ||
+@@
+     const bool weights_are_logits =
+         weights->ne[0] == down_exps->ne[2] &&
+         weights->ne[1] == ids->ne[1];
+
+-    if (!weights_are_logits &&
++    ggml_sycl_pool_alloc<float> precomputed_weights_alloc;
++    const float * effective_weights = (const float *) weights->data;
++    bool effective_weights_are_logits = weights_are_logits;
++    size_t effective_weights_nb0 = weights->nb[0];
++    size_t effective_weights_nb1 = weights->nb[1];
++    size_t effective_weights_nb2 = weights->nb[2];
++
++    if (weights_are_logits &&
++            ggml_sycl_moe_fused_down_selected_softmax_precompute_enabled()) {
++        precomputed_weights_alloc.alloc(
++            ctx.pool(), (size_t) n_tokens * (size_t) n_experts_used);
++        effective_weights = precomputed_weights_alloc.get();
++        moe_selected_softmax_f32_sycl(
++            (const float *) weights->data,
++            (const int32_t *) ids->data,
++            const_cast<float *>(effective_weights),
++            (int) weights->ne[0],
++            n_experts_used,
++            n_tokens,
++            weights->nb[0], weights->nb[1],
++            ids->nb[0], ids->nb[1],
++            sizeof(float),
++            (size_t) n_experts_used * sizeof(float),
++            main_stream);
++        effective_weights_are_logits = false;
++        effective_weights_nb0 = sizeof(float);
++        effective_weights_nb1 = sizeof(float);
++        effective_weights_nb2 = (size_t) n_experts_used * sizeof(float);
++    }
++
++    if (!effective_weights_are_logits &&
+             ggml_sycl_moe_selected_down_weighted_sum_matmul_epilogue_enabled() &&
+             ggml_sycl_moe_selected_down_weighted_sum_matmul_epilogue(ctx, dst)) {
+         return;
+     }
+
+-    if (!weights_are_logits &&
++    if (!effective_weights_are_logits &&
+             ggml_sycl_moe_selected_down_weighted_sum_direct_f32_parallel_slots_enabled()) {
+         moe_selected_down_weighted_sum_q8_0_f32_parallel_slots_sycl(
+             down_exps->data, (const float *) cur->data,
+-            (const int32_t *) ids->data, (const float *) weights->data,
++            (const int32_t *) ids->data, effective_weights,
+             down_scales == nullptr ? nullptr : down_scales->data,
+             (float *) dst->data, ncols, nrows, n_experts_used, n_tokens,
+             down_exps->nb[2], cur->nb[1], cur->nb[2],
+-            ids_expert_stride, ids_token_stride, weights->nb[1], weights->nb[2],
++            ids_expert_stride, ids_token_stride,
++            effective_weights_nb1, effective_weights_nb2,
+@@
+ #if GGML_SYCL_REORDER_Q8_0_VDR_MMVQ == 2
+             moe_selected_down_weighted_sum_q8_0_reorder_vdr2_sycl(
+                 down_exps->data, cur_q8,
+-                (const int32_t *) ids->data, (const float *) weights->data,
++                (const int32_t *) ids->data, effective_weights,
+                 down_scales == nullptr ? nullptr : down_scales->data,
+                 (float *) dst->data, ncols, nrows, n_experts_used, n_tokens,
+                 down_exps->nb[2], cur_q8_row_stride, ids_expert_stride,
+-                ids_token_stride, weights_are_logits, (int) down_exps->ne[2],
+-                weights->nb[0], weights->nb[1], weights->nb[2],
++                ids_token_stride, effective_weights_are_logits,
++                (int) down_exps->ne[2],
++                effective_weights_nb0, effective_weights_nb1,
++                effective_weights_nb2,
+                 down_scales == nullptr ? 0 : down_scales->nb[0],
+                 down_scales == nullptr ? -1 : (int) down_scales->type,
+                 dst->nb[0], dst->nb[1], main_stream);
+@@
+-    GGML_ASSERT(!weights_are_logits &&
++    GGML_ASSERT(!effective_weights_are_logits &&
+         "selected-down logits softmax path requires reordered VDR2 backend");
+@@
+     moe_selected_down_weighted_sum_q8_0_sycl(
+         down_exps->data, (const block_q8_1 *) cur_q8,
+-        (const int32_t *) ids->data, (const float *) weights->data,
++        (const int32_t *) ids->data, effective_weights,
+         down_scales == nullptr ? nullptr : down_scales->data,
+         (float *) dst->data, ncols, nrows, n_experts_used, n_tokens,
+         down_exps->nb[2], cur_q8_row_stride, ids_expert_stride,
+-        ids_token_stride, weights->nb[1], weights->nb[2],
++        ids_token_stride, effective_weights_nb1, effective_weights_nb2,
+         down_scales == nullptr ? 0 : down_scales->nb[0],
+         down_scales == nullptr ? -1 : (int) down_scales->type,
+         dst->nb[0], dst->nb[1], main_stream);
+ }
