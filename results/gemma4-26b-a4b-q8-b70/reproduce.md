@@ -8,25 +8,26 @@ promoted reproduction target is the fixed realistic cold prompt suite:
 Best strict cold-suite result:
 
 - draft-MTP VDR2 selected-down fused weighted-sum plus FA-on 32K/VMM:
-  `data/gemma4-q8-gpu3-faon-vmm-ctx32768-full512-20260629T211437Z/summary.json`;
-- primary metric: `117.91456485086059 tok/s` median generated-token throughput
+  `data/gemma4-q8-gpu3-q8lmhead-noreorder-control-full512-20260629T224927Z/summary.json`;
+- primary metric: `121.41411987308553 tok/s` median generated-token throughput
   for tokens 1-100 after TTFT;
 - config: reordered-Q8 VDR2, `FLASH_ATTN=on`, `CTX_SIZE=32768`,
   `GGML_SYCL_ENABLE_VMM=1`, `n_max=3`, `n_min=2`, `p_min=0.0475`,
   `UBATCH_SIZE=1024`, `LLAMA_SYCL_F16_P021_SMALL_NCOLS=1`,
   `LLAMA_SPEC_VERIFY_BULK_SAMPLED_IDS=1`,
-  `LLAMA_GEMMA4_MOE_FUSED_DOWN_WEIGHTED_SUM_REORDER_VDR2=1`, Q4_0 MTP draft
-  verified by the Q8 target;
+  `LLAMA_GEMMA4_MOE_FUSED_DOWN_WEIGHTED_SUM_REORDER_VDR2=1`, LM-head
+  experiment flags unset, Q4_0 MTP draft verified by the Q8 target;
 - gate: `realistic_final_gate.passed=true`, `cached_tokens=0` on every prompt.
 
 Representative status: the current payload uses the VDR2 selected-down fused
 weighted-sum transfer of the strict `n_max=3`, `n_min=2`,
 `UBATCH_SIZE=1024` family, with FA-on 32K/VMM. The current repeat measured
-`117.91456485086059 tok/s` and supersedes the previous selected-down high
-`115.8466634928202 tok/s`. Same-identity confirmations measured
-`116.45776605647993`, `117.41509141115063`, `115.08942949119734`, and
-`117.45737477243767 tok/s`; this is a small confirmed variance-class
-improvement. Prior LocalMaxxing row `cmqxchyra03xmqr01b963gmi1` at
+`121.41411987308553 tok/s` and supersedes the previous selected-down high
+`117.91456485086059 tok/s`. Same-family confirmation produced another
+record-beating baseline row at `119.94842631460949 tok/s` plus lower variance
+rows at `113.572`, `114.088`, and `111.988 tok/s`; treat this as a
+higher-variance baseline lane, not as a default-off LM-head source-flag win.
+Prior LocalMaxxing row `cmqxchyra03xmqr01b963gmi1` at
 `98.34046474459183 tok/s`, F16-p021 row
 `95.82453787677183 tok/s`, VDR2 rows `90.98312252660529`,
 `90.32179401019857`, and `89.45543282863798 tok/s`, plus VDR4

@@ -9,7 +9,7 @@ Gemma sweep history and a triage of recent Grok/X.com leads.
 
 ## At A Glance
 
-Current valid record: `117.91456485086059 tok/s` median generated-token
+Current valid record: `121.41411987308553 tok/s` median generated-token
 throughput for tokens 1-100 after TTFT on the fixed realistic cold suite,
 with `cached_tokens=0` on every prompt. The record identity is llama.cpp
 `c926ad098`, `UD-Q8_K_XL` target/verifier, Q4_0 MTP draft, reordered-Q8 VDR2,
@@ -18,6 +18,8 @@ with `cached_tokens=0` on every prompt. The record identity is llama.cpp
 `LLAMA_SYCL_F16_P021_SMALL_NCOLS=1`,
 `LLAMA_SPEC_VERIFY_BULK_SAMPLED_IDS=1`, and
 `LLAMA_GEMMA4_MOE_FUSED_DOWN_WEIGHTED_SUM_REORDER_VDR2=1`
+with LM-head DMMV/no-reorder experiment flags unset. LocalMaxxing:
+`cmqztiqdn02vnoe01egox6q3f`
 (`results/gemma4-26b-a4b-q8-b70/20260629-vdr2-selected-down-record.md`).
 
 Main conclusion: the strict realistic lane is still target/verifier-forward
@@ -58,15 +60,19 @@ speed jump. That is useful: it narrows the next agent's search space.
 
 Latest confirmed state:
 
-- `qwen36-results-main` is clean on `main...origin/main` as of the latest
-  review.
+- `qwen36-results-main` now records the accepted 121.414 tok/s LocalMaxxing
+  row and the late negative/default-off LM-head screens. Future agents should
+  start from the explicit docs/results in this folder rather than assuming a
+  clean tree means no pending research artifacts.
 - Active record source
   `/home/steve/src/llama.cpp-gemma-record-repro-c926` is a detached worktree at
   `c926ad098` with broad dirty source changes across speculative sampling,
   Gemma4 graph/model code, and SYCL/MMVQ kernels. Do not reset or rebase it
   while an optimizer is running.
-- The current promoted Gemma Q8 record is now `117.91456485086059 tok/s`
-  via the VDR2 selected-down fused weighted-sum path plus FA-on 32K/VMM.
+- The current promoted Gemma Q8 record is now `121.41411987308553 tok/s`
+  via the VDR2 selected-down fused weighted-sum path plus FA-on 32K/VMM. The
+  winning row was a baseline/control identity; the DMMV and no-reorder LM-head
+  flags were unset.
 
 Recent useful progress:
 
@@ -107,7 +113,7 @@ Recent closed negatives:
   `LLAMA_GEMMA4_MOE_FUSED_DOWN_SELECTED_SOFTMAX=1` passed the fixed cold
   strict128 gate and 512/512 canary rows on both flag-on lanes. It was a real
   small paired win (`114.762` vs `113.943`, `115.554` vs `113.967`) but still
-  below the promoted `117.91456485086059 tok/s` full512 record. The later
+  below the promoted `121.41411987308553 tok/s` full512 record. The later
   full512 promotion screen was valid but lost (`111.896` flag-on, `111.909`
   flag-on + EOG clip, controls `112.220` / `112.997`). Preserve it as a
   default-off archived mechanism; do not retest this interaction as a record
@@ -832,7 +838,7 @@ Tested the exact late head-only bonus verifier path:
 - metric: **96.91021564463527 tok/s** median tokens 1-100 after TTFT.
 
 Do not promote. This is below both the then-current valid
-`98.34046474459183 tok/s` record and the newer `117.91456485086059 tok/s`
+`98.34046474459183 tok/s` record and the newer `121.41411987308553 tok/s`
 record. The standalone one-row bonus head is probably correct but not cheap:
 the extra graph/scheduler work offsets the saved verifier output row. If this
 idea is revisited, it needs to be fused into the existing verifier/output path,

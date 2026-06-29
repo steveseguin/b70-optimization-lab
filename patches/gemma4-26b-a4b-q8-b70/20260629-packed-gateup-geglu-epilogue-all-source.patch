@@ -1,0 +1,931 @@
+diff --git a/src/llama-graph.cpp b/src/llama-graph.cpp
+index 68c9e606c..37a763fd9 100644
+--- a/src/llama-graph.cpp
++++ b/src/llama-graph.cpp
+@@ -14,13 +14,186 @@
+ 
+ #include <cassert>
+ #include <cmath>
++#include <cstdlib>
+ #include <cstring>
++#include <atomic>
+ #include <numeric>
+ #include <sstream>
++#include <cstdio>
+ #include <unordered_set>
+ 
+ // dedup helpers
+ 
++static bool llama_graph_gemma4_moe_top_k_enabled() {
++    const char * env = std::getenv("LLAMA_GEMMA4_MOE_TOP_K");
++    if (env == nullptr || env[0] == '\0') {
++        return false;
++    }
++
++    return strcmp(env, "1") == 0 || strcmp(env, "true") == 0 ||
++        strcmp(env, "TRUE") == 0 || strcmp(env, "yes") == 0 ||
++        strcmp(env, "on") == 0;
++}
++
++static bool llama_graph_gemma4_skip_identity_out_ids_enabled() {
++    const char * env = std::getenv("LLAMA_GEMMA4_SKIP_IDENTITY_OUT_IDS");
++    if (env == nullptr || env[0] == '\0') {
++        return false;
++    }
++
++    return strcmp(env, "1") == 0 || strcmp(env, "true") == 0 ||
++        strcmp(env, "TRUE") == 0 || strcmp(env, "yes") == 0 ||
++        strcmp(env, "on") == 0;
++}
++
++static bool llama_graph_gemma4_moe_weighted_sum_enabled() {
++    const char * env = std::getenv("LLAMA_GEMMA4_MOE_WEIGHTED_SUM");
++    if (env == nullptr || env[0] == '\0') {
++        return false;
++    }
++
++    return strcmp(env, "1") == 0 || strcmp(env, "true") == 0 ||
++        strcmp(env, "TRUE") == 0 || strcmp(env, "yes") == 0 ||
++        strcmp(env, "on") == 0;
++}
++
++static bool llama_graph_gemma4_moe_selected_softmax_fused_enabled() {
++    const char * env = std::getenv("LLAMA_GEMMA4_MOE_SELECTED_SOFTMAX_FUSED");
++    if (env == nullptr || env[0] == '\0') {
++        return false;
++    }
++
++    return strcmp(env, "1") == 0 || strcmp(env, "true") == 0 ||
++        strcmp(env, "TRUE") == 0 || strcmp(env, "yes") == 0 ||
++        strcmp(env, "on") == 0;
++}
++
++static bool llama_graph_gemma4_moe_selected_softmax_weighted_sum_enabled() {
++    const char * env = std::getenv("LLAMA_GEMMA4_MOE_SELECTED_SOFTMAX_WEIGHTED_SUM");
++    if (env == nullptr || env[0] == '\0') {
++        return false;
++    }
++
++    return strcmp(env, "1") == 0 || strcmp(env, "true") == 0 ||
++        strcmp(env, "TRUE") == 0 || strcmp(env, "yes") == 0 ||
++        strcmp(env, "on") == 0;
++}
++
++static bool llama_graph_gemma4_moe_fused_down_selected_softmax_enabled() {
++    const char * env = std::getenv("LLAMA_GEMMA4_MOE_FUSED_DOWN_SELECTED_SOFTMAX");
++    if (env == nullptr || env[0] == '\0') {
++        return false;
++    }
++
++    return strcmp(env, "1") == 0 || strcmp(env, "true") == 0 ||
++        strcmp(env, "TRUE") == 0 || strcmp(env, "yes") == 0 ||
++        strcmp(env, "on") == 0;
++}
++
++static bool llama_graph_gemma4_moe_skip_early_weights_expand_enabled() {
++    const char * env = std::getenv("LLAMA_GEMMA4_MOE_SKIP_EARLY_WEIGHTS_EXPAND");
++    if (env == nullptr || env[0] == '\0') {
++        return false;
++    }
++
++    return strcmp(env, "1") == 0 || strcmp(env, "true") == 0 ||
++        strcmp(env, "TRUE") == 0 || strcmp(env, "yes") == 0 ||
++        strcmp(env, "on") == 0;
++}
++
++static bool llama_graph_gemma4_moe_fused_down_weighted_sum_enabled() {
++    const char * env = std::getenv("LLAMA_GEMMA4_MOE_FUSED_DOWN_WEIGHTED_SUM");
++    const char * env_reorder = std::getenv("LLAMA_GEMMA4_MOE_FUSED_DOWN_WEIGHTED_SUM_REORDER_VDR2");
++    if ((env == nullptr || env[0] == '\0') &&
++            (env_reorder == nullptr || env_reorder[0] == '\0')) {
++        return false;
++    }
++
++    const auto enabled = [](const char * value) {
++        return value != nullptr &&
++            (strcmp(value, "1") == 0 || strcmp(value, "true") == 0 ||
++             strcmp(value, "TRUE") == 0 || strcmp(value, "yes") == 0 ||
++             strcmp(value, "on") == 0);
++    };
++
++    return enabled(env) || enabled(env_reorder);
++}
++
++static bool llama_graph_gemma4_moe_gateup_geglu_enabled() {
++    const char * env = std::getenv("LLAMA_GEMMA4_MOE_GATEUP_GEGLU");
++    if (env == nullptr || env[0] == '\0') {
++        return false;
++    }
++
++    return strcmp(env, "1") == 0 || strcmp(env, "true") == 0 ||
++        strcmp(env, "TRUE") == 0 || strcmp(env, "yes") == 0 ||
++        strcmp(env, "on") == 0;
++}
++
++static bool llama_graph_gemma4_moe_gateup_geglu_bf16_enabled() {
++    const char * env = std::getenv("LLAMA_GEMMA4_MOE_GATEUP_GEGLU_BF16");
++    if (env == nullptr || env[0] == '\0') {
++        return false;
++    }
++
++    return strcmp(env, "1") == 0 || strcmp(env, "true") == 0 ||
++        strcmp(env, "TRUE") == 0 || strcmp(env, "yes") == 0 ||
++        strcmp(env, "on") == 0;
++}
++
++static bool llama_graph_gemma4_moe_gateup_geglu_epilogue_enabled() {
++    const char * env = std::getenv("LLAMA_GEMMA4_MOE_GATEUP_GEGLU_EPILOGUE");
++    if (env == nullptr || env[0] == '\0') {
++        return false;
++    }
++
++    return strcmp(env, "1") == 0 || strcmp(env, "true") == 0 ||
++        strcmp(env, "TRUE") == 0 || strcmp(env, "yes") == 0 ||
++        strcmp(env, "on") == 0;
++}
++
++static bool llama_graph_gemma4_moe_gateup_geglu_epilogue_all_enabled() {
++    const char * env = std::getenv("LLAMA_GEMMA4_MOE_GATEUP_GEGLU_EPILOGUE");
++    if (env == nullptr || env[0] == '\0') {
++        return false;
++    }
++
++    return strcmp(env, "all") == 0 || strcmp(env, "ALL") == 0;
++}
++
++static bool llama_graph_gemma4_moe_fused_geglu_down_weighted_sum_enabled() {
++    const char * env = std::getenv("LLAMA_GEMMA4_MOE_FUSED_GEGLU_DOWN_WEIGHTED_SUM");
++    if (env == nullptr || env[0] == '\0') {
++        return false;
++    }
++
++    return strcmp(env, "1") == 0 || strcmp(env, "true") == 0 ||
++        strcmp(env, "TRUE") == 0 || strcmp(env, "yes") == 0 ||
++        strcmp(env, "on") == 0;
++}
++
++static bool llama_graph_gemma4_moe_geglu_down_matmul_epilogue_enabled() {
++    const char * env = std::getenv("LLAMA_GEMMA4_MOE_GEGLU_DOWN_MATMUL_EPILOGUE");
++    if (env == nullptr || env[0] == '\0') {
++        return false;
++    }
++
++    return strcmp(env, "1") == 0 || strcmp(env, "true") == 0 ||
++        strcmp(env, "TRUE") == 0 || strcmp(env, "yes") == 0 ||
++        strcmp(env, "on") == 0;
++}
++
++static bool llama_graph_gemma4_moe_fused_down_weighted_sum_debug_enabled() {
++    const char * env = std::getenv("LLAMA_GEMMA4_MOE_FUSED_DOWN_WEIGHTED_SUM_DEBUG");
++    if (env == nullptr || env[0] == '\0') {
++        return false;
++    }
++
++    return strcmp(env, "1") == 0 || strcmp(env, "true") == 0 ||
++        strcmp(env, "TRUE") == 0 || strcmp(env, "yes") == 0 ||
++        strcmp(env, "on") == 0;
++}
++
+ static ggml_tensor * build_attn_inp_kq_mask(
+         ggml_context * ctx,
+         const llama_kv_cache_context * mctx,
+@@ -82,13 +255,17 @@ static ggml_tensor * ggml_mul_mat_aux(
+ }
+ 
+ void llm_graph_input_embd::set_input(const llama_ubatch * ubatch) {
++    set_input(ubatch, false);
++}
++
++void llm_graph_input_embd::set_input(const llama_ubatch * ubatch, bool skip_embd_upload) {
+     if (ubatch->token) {
+         const int64_t n_tokens = ubatch->n_tokens;
+ 
+         ggml_backend_tensor_set(tokens, ubatch->token, 0, n_tokens*ggml_element_size(tokens));
+     }
+ 
+-    if (ubatch->embd) {
++    if (ubatch->embd && !skip_embd_upload) {
+         GGML_ASSERT(n_embd == embd->ne[0]);
+ 
+         const int64_t n_tokens = ubatch->n_tokens;
+@@ -909,6 +1086,7 @@ void llm_graph_result::reset() {
+     std::fill(t_layer_inp.begin(), t_layer_inp.end(), nullptr);
+ 
+     t_sampled.clear();
++    t_sampled_rows.clear();
+     t_sampled_probs.clear();
+     t_sampled_logits.clear();
+     t_candidates.clear();
+@@ -930,14 +1108,15 @@ void llm_graph_result::reset() {
+     gf = ggml_new_graph_custom(ctx_compute.get(), max_nodes, false);
+ }
+ 
+-void llm_graph_result::set_inputs(const llama_ubatch * ubatch) {
++void llm_graph_result::set_inputs(const llama_ubatch * ubatch, bool skip_embd_upload) {
+     for (auto & input : inputs) {
+-        input->set_input(ubatch);
++        input->set_input(ubatch, skip_embd_upload);
+     }
+ }
+ 
+ void llm_graph_result::set_outputs(const llm_graph_params & params) {
+-    if (t_logits != nullptr) {
++    if (t_logits != nullptr && !params.cparams.mtp_draft_direct_argmax_ids &&
++            !params.cparams.spec_verify_direct_argmax_ids) {
+         ggml_set_output(t_logits);
+     }
+     if (t_embd != nullptr) {
+@@ -963,6 +1142,11 @@ void llm_graph_result::set_outputs(const llm_graph_params & params) {
+             ggml_set_output(t);
+         }
+     }
++    for (auto & [row_idx, t] : t_sampled_rows) {
++        if (t != nullptr) {
++            ggml_set_output(t);
++        }
++    }
+     for (auto & [seq_id, t] : t_sampled_probs) {
+         if (t != nullptr) {
+             ggml_set_output(t);
+@@ -1573,6 +1757,8 @@ ggml_tensor * llm_graph_context::build_moe_ffn(
+         cb(selection_probs, "ffn_moe_probs_biased", il);
+     }
+ 
++    ggml_tensor * selected_softmax_logits = selection_probs; // [n_expert, n_tokens]
++
+     // select top n_group_used expert groups
+     // https://huggingface.co/deepseek-ai/DeepSeek-V3/blob/e815299b0bcbac849fa540c768ef21845365c9eb/modeling_deepseek.py#L440-L457
+     if (hparams.n_expert_groups > 1 && n_tokens > 0) {
+@@ -1599,9 +1785,24 @@ ggml_tensor * llm_graph_context::build_moe_ffn(
+     }
+ 
+     // select experts
+-    ggml_tensor * selected_experts = ggml_argsort_top_k(ctx0, selection_probs, n_expert_used); // [n_expert_used, n_tokens]
+-    cb(selected_experts->src[0], "ffn_moe_argsort", il);
+-    cb(selected_experts, "ffn_moe_topk", il);
++    //
++    // Gemma4 selected-softmax mode already routes on logits, then applies
++    // softmax over only the selected logits. In that narrow case a true TOP_K
++    // op is sufficient and avoids full argsort work. Keep the generic argsort
++    // path for warmup / large-k / group-biased modes because SYCL TOP_K only
++    // supports k <= 32 and it does not preserve sorted order.
++    const bool use_top_k =
++        llama_graph_gemma4_moe_top_k_enabled() &&
++        arch == LLM_ARCH_GEMMA4 &&
++        gating_op == LLAMA_EXPERT_GATING_FUNC_TYPE_SOFTMAX_WEIGHT &&
++        exp_probs_b == nullptr &&
++        hparams.n_expert_groups <= 1 &&
++        n_expert_used <= 32;
++    ggml_tensor * selected_experts = use_top_k ?
++        ggml_top_k(ctx0, selection_probs, n_expert_used) :
++        ggml_argsort_top_k(ctx0, selection_probs, n_expert_used); // [n_expert_used, n_tokens]
++    cb(selected_experts->src[0], use_top_k ? "ffn_moe_topk_src" : "ffn_moe_argsort", il);
++    cb(selected_experts, use_top_k ? "ffn_moe_topk_unsorted" : "ffn_moe_topk", il);
+ 
+     if (arch == LLM_ARCH_GROVEMOE && n_expert != hparams.n_expert) {
+         // TODO: Use scalar div instead when/if implemented
+@@ -1612,18 +1813,112 @@ ggml_tensor * llm_graph_context::build_moe_ffn(
+         probs = ggml_reshape_3d(ctx0, probs, 1, n_expert, n_tokens);
+     }
+ 
+-    ggml_tensor * weights = ggml_get_rows(ctx0, probs, selected_experts); // [1, n_expert_used, n_tokens]
+-    cb(weights, "ffn_moe_weights", il);
++    const bool use_selected_softmax_fused =
++        llama_graph_gemma4_moe_selected_softmax_fused_enabled() &&
++        arch == LLM_ARCH_GEMMA4 &&
++        gating_op == LLAMA_EXPERT_GATING_FUNC_TYPE_SOFTMAX_WEIGHT &&
++        exp_probs_b == nullptr &&
++        hparams.n_expert_groups <= 1;
++
++    const bool use_selected_softmax_weighted_sum =
++        llama_graph_gemma4_moe_selected_softmax_weighted_sum_enabled() &&
++        arch == LLM_ARCH_GEMMA4 &&
++        gating_op == LLAMA_EXPERT_GATING_FUNC_TYPE_SOFTMAX_WEIGHT &&
++        !weight_before_ffn &&
++        !norm_w &&
++        w_scale == 1.0f &&
++        exp_probs_b == nullptr &&
++        hparams.n_expert_groups <= 1 &&
++        !cparams.warmup &&
++        selected_softmax_logits->type == GGML_TYPE_F32 &&
++        selected_experts->type == GGML_TYPE_I32 &&
++        n_expert_used > 0 &&
++        n_expert_used <= 8 &&
++        n_tokens > 0 &&
++        n_tokens <= 8 &&
++        selected_softmax_logits->ne[0] == n_expert &&
++        selected_softmax_logits->ne[1] == n_tokens &&
++        selected_experts->ne[0] == n_expert_used &&
++        selected_experts->ne[1] == n_tokens &&
++        selected_softmax_logits->nb[0] == (int64_t) sizeof(float) &&
++        selected_experts->nb[0] == (int64_t) sizeof(int32_t) &&
++        selected_experts->nb[1] % (int64_t) sizeof(int32_t) == 0 &&
++        ggml_is_contiguous(selected_softmax_logits) &&
++        !ggml_is_transposed(selected_experts);
+ 
++    const bool has_gate = gate_exps || gate_up_exps;
++    const bool fused_geglu_down_requested =
++        llama_graph_gemma4_moe_fused_geglu_down_weighted_sum_enabled() ||
++        llama_graph_gemma4_moe_geglu_down_matmul_epilogue_enabled();
++    const bool use_selected_softmax_for_fused_geglu_down =
++        use_selected_softmax_weighted_sum &&
++        fused_geglu_down_requested;
++    const bool use_fused_down_selected_softmax =
++        llama_graph_gemma4_moe_fused_down_selected_softmax_enabled() &&
++        llama_graph_gemma4_moe_fused_down_weighted_sum_enabled() &&
++        use_selected_softmax_fused &&
++        !use_selected_softmax_for_fused_geglu_down &&
++        !weight_before_ffn &&
++        !norm_w &&
++        w_scale == 1.0f &&
++        !cparams.warmup &&
++        loras->empty() &&
++        down_exps_b == nullptr &&
++        (down_exps_s == nullptr ||
++            (down_exps_s->ne[0] == down_exps->ne[2] &&
++             (down_exps_s->type == GGML_TYPE_F32 ||
++              down_exps_s->type == GGML_TYPE_F16))) &&
++        down_exps->type == GGML_TYPE_Q8_0 &&
++        cur->type == GGML_TYPE_F32 &&
++        selected_softmax_logits->type == GGML_TYPE_F32 &&
++        selected_experts->type == GGML_TYPE_I32 &&
++        ggml_is_contiguous(cur) &&
++        selected_experts->nb[0] == (int64_t) sizeof(int32_t) &&
++        selected_experts->nb[1] % (int64_t) sizeof(int32_t) == 0 &&
++        !ggml_is_transposed(selected_experts) &&
++        cur->ne[0] == down_exps->ne[0] &&
++        cur->ne[0] % 32 == 0 &&
++        cur->ne[1] == selected_experts->ne[0] &&
++        cur->ne[2] == selected_experts->ne[1] &&
++        selected_experts->ne[0] == hparams.n_expert_used &&
++        selected_experts->ne[1] > 0 &&
++        selected_experts->ne[0] <= 8 &&
++        selected_experts->ne[1] <= 8 &&
++        selected_softmax_logits->ne[0] == n_expert &&
++        selected_softmax_logits->ne[1] == selected_experts->ne[1] &&
++        selected_softmax_logits->nb[0] == (int64_t) sizeof(float) &&
++        (int64_t) down_exps->nb[0] == (int64_t) ggml_type_size(down_exps->type) &&
++        (down_exps_s == nullptr ||
++            (int64_t) down_exps_s->nb[0] == (int64_t) ggml_type_size(down_exps_s->type));
++
++    ggml_tensor * weights = nullptr;
++    if (use_selected_softmax_for_fused_geglu_down) {
++        weights = ggml_moe_selected_softmax(ctx0, selection_probs, selected_experts);
++        cb(weights, "ffn_moe_weights_selected_softmax_fused_geglu_down", il);
++    } else if (use_fused_down_selected_softmax) {
++        weights = selected_softmax_logits;
++        cb(weights, "ffn_moe_weights_selected_softmax_fused_down_logits", il);
++    } else if (use_selected_softmax_weighted_sum) {
++        weights = nullptr;
++    } else if (use_selected_softmax_fused) {
++        weights = ggml_moe_selected_softmax(ctx0, selection_probs, selected_experts);
++        cb(weights, "ffn_moe_weights_selected_softmax_fused", il);
++    } else {
++        weights = ggml_get_rows(ctx0, probs, selected_experts); // [1, n_expert_used, n_tokens]
++        cb(weights, "ffn_moe_weights", il);
++    }
+ 
+-    if (gating_op == LLAMA_EXPERT_GATING_FUNC_TYPE_SOFTMAX_WEIGHT) {
++    if (weights != nullptr &&
++            gating_op == LLAMA_EXPERT_GATING_FUNC_TYPE_SOFTMAX_WEIGHT &&
++            !use_selected_softmax_fused &&
++            !use_selected_softmax_for_fused_geglu_down) {
+         weights = ggml_reshape_2d(ctx0, weights, n_expert_used, n_tokens);
+         weights = ggml_soft_max(ctx0, weights); // [n_expert_used, n_tokens]
+         weights = ggml_reshape_3d(ctx0, weights, 1, n_expert_used, n_tokens);
+         cb(weights, "ffn_moe_weights_softmax", il);
+     }
+ 
+-    if (norm_w) {
++    if (weights != nullptr && norm_w) {
+         weights = ggml_reshape_2d(ctx0, weights, n_expert_used, n_tokens);
+ 
+         ggml_tensor * weights_sum = ggml_sum_rows(ctx0, weights); // [1, n_tokens]
+@@ -1638,81 +1933,211 @@ ggml_tensor * llm_graph_context::build_moe_ffn(
+ 
+         weights = ggml_reshape_3d(ctx0, weights, 1, n_expert_used, n_tokens);
+     }
+-    if (w_scale != 0.0f && w_scale != 1.0f) {
++    if (weights != nullptr && w_scale != 0.0f && w_scale != 1.0f) {
+         weights = ggml_scale(ctx0, weights, w_scale);
+         cb(weights, "ffn_moe_weights_scaled", il);
+     }
+ 
+-    //call early so that topk-moe can be used
+-    ggml_build_forward_expand(gf, weights);
++    // Call early so that topk-moe can be used. For the Gemma4 weighted-sum
++    // path, weights are consumed directly by GGML_OP_MOE_WEIGHTED_SUM below,
++    // so this early expansion is redundant and can add scheduling overhead.
++    // Keep default behavior unless explicitly gated for benchmarking.
++    const bool skip_early_weights_expand =
++        arch == LLM_ARCH_GEMMA4 &&
++        (llama_graph_gemma4_moe_weighted_sum_enabled() ||
++         use_selected_softmax_weighted_sum) &&
++        llama_graph_gemma4_moe_skip_early_weights_expand_enabled();
++    if (weights != nullptr && !skip_early_weights_expand) {
++        ggml_build_forward_expand(gf, weights);
++    }
+ 
+     cur = ggml_reshape_3d(ctx0, cur, n_embd, 1, n_tokens);
+ 
+-    if (weight_before_ffn) {
+-        // repeat cur to [n_embd, n_expert_used, n_tokens]
+-        ggml_tensor * repeated = ggml_repeat_4d(ctx0, cur, n_embd, n_expert_used, n_tokens, 1);
+-        cur = ggml_mul(ctx0, repeated, weights);
+-        cb(cur, "ffn_moe_weighted", il);
+-    }
+-
+     ggml_tensor * up = nullptr;
+     ggml_tensor * experts = nullptr;
++    bool gateup_geglu_epilogue_applied = false;
++
++    const bool use_gateup_geglu_type =
++        gate_up_exps != nullptr &&
++        ((gate_up_exps->type == GGML_TYPE_Q8_0 &&
++          llama_graph_gemma4_moe_gateup_geglu_enabled()) ||
++         (gate_up_exps->type == GGML_TYPE_BF16 &&
++          llama_graph_gemma4_moe_gateup_geglu_bf16_enabled()));
++
++    const bool use_gateup_geglu =
++        use_gateup_geglu_type &&
++        arch == LLM_ARCH_GEMMA4 &&
++        type_op == LLM_FFN_GELU &&
++        !weight_before_ffn &&
++        !cparams.warmup &&
++        loras->empty() &&
++        gating_op == LLAMA_EXPERT_GATING_FUNC_TYPE_SOFTMAX_WEIGHT &&
++        exp_probs_b == nullptr &&
++        hparams.n_expert_groups <= 1 &&
++        gate_up_exps != nullptr &&
++        gate_up_exps_b == nullptr &&
++        cur->type == GGML_TYPE_F32 &&
++        selected_experts->type == GGML_TYPE_I32 &&
++        n_tokens > 0 &&
++        n_tokens <= 8 &&
++        n_expert_used > 0 &&
++        n_expert_used <= 8 &&
++        gate_up_exps->ne[0] == cur->ne[0] &&
++        gate_up_exps->ne[1] % 2 == 0 &&
++        ggml_is_contiguous(cur) &&
++        selected_experts->ne[0] == n_expert_used &&
++        selected_experts->ne[1] == n_tokens &&
++        selected_experts->nb[0] == (int64_t) sizeof(int32_t) &&
++        selected_experts->nb[1] % (int64_t) sizeof(int32_t) == 0 &&
++        !ggml_is_transposed(selected_experts) &&
++        cur->nb[0] == (int64_t) sizeof(float) &&
++        (up_exps_s == nullptr ||
++            (up_exps_s->ne[0] == gate_up_exps->ne[2] &&
++             (up_exps_s->type == GGML_TYPE_F32 ||
++              up_exps_s->type == GGML_TYPE_F16)));
++
++    if (use_gateup_geglu) {
++        cur = ggml_moe_q8_0_gateup_geglu(
++                ctx0, gate_up_exps, cur, selected_experts, up_exps_s);
++        cb(cur, "ffn_moe_gateup_geglu", il);
++    } else {
++        if (weight_before_ffn) {
++            // repeat cur to [n_embd, n_expert_used, n_tokens]
++            ggml_tensor * repeated = ggml_repeat_4d(ctx0, cur, n_embd, n_expert_used, n_tokens, 1);
++            cur = ggml_mul(ctx0, repeated, weights);
++            cb(cur, "ffn_moe_weighted", il);
++        }
+ 
+-    if (gate_up_exps) {
+-        // merged gate_up path: one mul_mat_id, then split into gate and up views
+-        ggml_tensor * gate_up = build_lora_mm_id(gate_up_exps, cur, selected_experts, up_exps_s); // [n_ff*2, n_expert_used, n_tokens]
+-        cb(gate_up, "ffn_moe_gate_up", il);
++        if (gate_up_exps) {
++            // merged gate_up path: one mul_mat_id, then split into gate and up views
++            ggml_tensor * gate_up = build_lora_mm_id(gate_up_exps, cur, selected_experts, up_exps_s); // [n_ff*2, n_expert_used, n_tokens]
++            cb(gate_up, "ffn_moe_gate_up", il);
+ 
+-        if (up_exps_s) {
+-            cb(gate_up, "ffn_moe_gate_up_scaled", il);
+-        }
++            if (up_exps_s) {
++                cb(gate_up, "ffn_moe_gate_up_scaled", il);
++            }
+ 
+-        if (gate_up_exps_b) {
+-            gate_up = ggml_add_id(ctx0, gate_up, gate_up_exps_b, selected_experts);
+-            cb(gate_up, "ffn_moe_gate_up_biased", il);
+-        }
++            if (gate_up_exps_b) {
++                gate_up = ggml_add_id(ctx0, gate_up, gate_up_exps_b, selected_experts);
++                cb(gate_up, "ffn_moe_gate_up_biased", il);
++            }
+ 
+-        const int64_t n_ff = gate_up->ne[0] / 2;
+-        cur = ggml_view_3d(ctx0, gate_up, n_ff, gate_up->ne[1], gate_up->ne[2], gate_up->nb[1], gate_up->nb[2], 0);
+-        cb(cur, "ffn_moe_gate", il);
+-        up  = ggml_view_3d(ctx0, gate_up, n_ff, gate_up->ne[1], gate_up->ne[2], gate_up->nb[1], gate_up->nb[2], n_ff * gate_up->nb[0]);
+-        cb(up, "ffn_moe_up", il);
+-    } else {
+-        // separate gate and up path
+-        up = build_lora_mm_id(up_exps, cur, selected_experts, up_exps_s); // [n_ff, n_expert_used, n_tokens]
+-        cb(up, "ffn_moe_up", il);
++            const bool use_gateup_geglu_epilogue_all =
++                llama_graph_gemma4_moe_gateup_geglu_epilogue_all_enabled();
++            const bool use_gateup_geglu_epilogue =
++                (llama_graph_gemma4_moe_gateup_geglu_epilogue_enabled() ||
++                 use_gateup_geglu_epilogue_all) &&
++                arch == LLM_ARCH_GEMMA4 &&
++                type_op == LLM_FFN_GELU &&
++                has_gate &&
++                ((use_gateup_geglu_epilogue_all &&
++                  (gate_up_exps->type == GGML_TYPE_Q8_0 ||
++                   gate_up_exps->type == GGML_TYPE_BF16)) ||
++                 (!use_gateup_geglu_epilogue_all &&
++                  il == 29 &&
++                  gate_up_exps->type == GGML_TYPE_BF16)) &&
++                gate_up->type == GGML_TYPE_F32 &&
++                gate_up->ne[0] % 2 == 0 &&
++                gate_up->ne[1] == n_expert_used &&
++                gate_up->ne[2] == n_tokens &&
++                n_tokens > 0 &&
++                n_tokens <= 8 &&
++                n_expert_used > 0 &&
++                n_expert_used <= 8 &&
++                !weight_before_ffn &&
++                !cparams.warmup &&
++                loras->empty() &&
++                ggml_is_contiguous_1(gate_up);
++
++            if (use_gateup_geglu_epilogue) {
++                cur = ggml_geglu(ctx0, gate_up);
++                cb(cur, "ffn_moe_gateup_geglu_epilogue", il);
++                gateup_geglu_epilogue_applied = true;
++            } else {
++                const int64_t n_ff = gate_up->ne[0] / 2;
++                cur = ggml_view_3d(ctx0, gate_up, n_ff, gate_up->ne[1], gate_up->ne[2], gate_up->nb[1], gate_up->nb[2], 0);
++                cb(cur, "ffn_moe_gate", il);
++                up  = ggml_view_3d(ctx0, gate_up, n_ff, gate_up->ne[1], gate_up->ne[2], gate_up->nb[1], gate_up->nb[2], n_ff * gate_up->nb[0]);
++                cb(up, "ffn_moe_up", il);
++            }
++        } else {
++            // separate gate and up path
++            up = build_lora_mm_id(up_exps, cur, selected_experts, up_exps_s); // [n_ff, n_expert_used, n_tokens]
++            cb(up, "ffn_moe_up", il);
+ 
+-        if (up_exps_s) {
+-            cb(up, "ffn_moe_up_scaled", il);
+-        }
++            if (up_exps_s) {
++                cb(up, "ffn_moe_up_scaled", il);
++            }
+ 
+-        if (up_exps_b) {
+-            up = ggml_add_id(ctx0, up, up_exps_b, selected_experts);
+-            cb(up, "ffn_moe_up_biased", il);
+-        }
++            if (up_exps_b) {
++                up = ggml_add_id(ctx0, up, up_exps_b, selected_experts);
++                cb(up, "ffn_moe_up_biased", il);
++            }
+ 
+-        if (gate_exps) {
+-            cur = build_lora_mm_id(gate_exps, cur, selected_experts, gate_exps_s); // [n_ff, n_expert_used, n_tokens]
+-            cb(cur, "ffn_moe_gate", il);
+-        } else {
+-            cur = up;
+-        }
++            if (gate_exps) {
++                cur = build_lora_mm_id(gate_exps, cur, selected_experts, gate_exps_s); // [n_ff, n_expert_used, n_tokens]
++                cb(cur, "ffn_moe_gate", il);
++            } else {
++                cur = up;
++            }
+ 
+-        if (gate_exps_s) {
+-            cb(cur, "ffn_moe_gate_scaled", il);
+-        }
++            if (gate_exps_s) {
++                cb(cur, "ffn_moe_gate_scaled", il);
++            }
+ 
+-        if (gate_exps_b) {
+-            cur = ggml_add_id(ctx0, cur, gate_exps_b, selected_experts);
+-            cb(cur, "ffn_moe_gate_biased", il);
++            if (gate_exps_b) {
++                cur = ggml_add_id(ctx0, cur, gate_exps_b, selected_experts);
++                cb(cur, "ffn_moe_gate_biased", il);
++            }
+         }
+-    }
+-
+-    const bool has_gate = gate_exps || gate_up_exps;
+ 
+-    switch (type_op) {
+-        case LLM_FFN_SILU:
+-            if (gate_exps) {
++        const bool fused_geglu_down =
++            !weight_before_ffn &&
++            fused_geglu_down_requested &&
++            arch == LLM_ARCH_GEMMA4 &&
++            type_op == LLM_FFN_GELU &&
++            has_gate &&
++            gate_up_exps != nullptr &&
++            up != nullptr &&
++            !cparams.warmup &&
++            loras->empty() &&
++            down_exps_b == nullptr &&
++            (down_exps_s == nullptr ||
++                (down_exps_s->ne[0] == down_exps->ne[2] &&
++                 (down_exps_s->type == GGML_TYPE_F32 ||
++                  down_exps_s->type == GGML_TYPE_F16))) &&
++            down_exps->type == GGML_TYPE_Q8_0 &&
++            cur->type == GGML_TYPE_F32 &&
++            up->type == GGML_TYPE_F32 &&
++            selected_experts->type == GGML_TYPE_I32 &&
++            weights != nullptr &&
++            weights->type == GGML_TYPE_F32 &&
++            cur->ne[0] == down_exps->ne[0] &&
++            up->ne[0] == cur->ne[0] &&
++            up->ne[1] == cur->ne[1] &&
++            up->ne[2] == cur->ne[2] &&
++            cur->ne[0] % 32 == 0 &&
++            cur->ne[1] == selected_experts->ne[0] &&
++            cur->ne[2] == selected_experts->ne[1] &&
++            selected_experts->ne[0] == hparams.n_expert_used &&
++            selected_experts->ne[1] > 0 &&
++            selected_experts->ne[0] <= 8 &&
++            selected_experts->ne[1] <= 8 &&
++            weights->ne[0] == 1 &&
++            weights->ne[1] == selected_experts->ne[0] &&
++            weights->ne[2] == selected_experts->ne[1] &&
++            (int64_t) down_exps->nb[0] == (int64_t) ggml_type_size(down_exps->type) &&
++            cur->nb[0] == (int64_t) sizeof(float) &&
++            up->nb[0] == (int64_t) sizeof(float) &&
++            selected_experts->nb[0] == (int64_t) sizeof(int32_t) &&
++            selected_experts->nb[1] % (int64_t) sizeof(int32_t) == 0 &&
++            weights->nb[0] == (int64_t) sizeof(float) &&
++            (down_exps_s == nullptr ||
++                (int64_t) down_exps_s->nb[0] == (int64_t) ggml_type_size(down_exps_s->type));
++
++        switch (type_op) {
++            case LLM_FFN_SILU:
++                if (gate_exps) {
+                 // Step35: per-layer clamp for routed experts
+                 if (arch == LLM_ARCH_STEP35 && il >= 0) {
+                     const float limit = hparams.swiglu_clamp_exp[il];
+@@ -1742,8 +2167,15 @@ ggml_tensor * llm_graph_context::build_moe_ffn(
+             } break;
+         case LLM_FFN_GELU:
+             if (has_gate) {
+-                cur = ggml_geglu_split(ctx0, cur, up);
+-                cb(cur, "ffn_moe_geglu", il);
++                if (gateup_geglu_epilogue_applied) {
++                    // Already applied directly from the merged gate/up matmul output.
++                } else if (fused_geglu_down) {
++                    cb(cur, "ffn_moe_geglu_gate_fused_down", il);
++                    cb(up, "ffn_moe_geglu_up_fused_down", il);
++                } else {
++                    cur = ggml_geglu_split(ctx0, cur, up);
++                    cb(cur, "ffn_moe_geglu", il);
++                }
+             } else {
+                 cur = ggml_gelu(ctx0, cur);
+                 cb(cur, "ffn_moe_gelu", il);
+@@ -1777,6 +2209,119 @@ ggml_tensor * llm_graph_context::build_moe_ffn(
+             GGML_ABORT("fatal error");
+     }
+ 
++            if (fused_geglu_down) {
++                ggml_tensor * moe_out = ggml_moe_geglu_selected_down_weighted_sum(
++                        ctx0, down_exps, cur, up, selected_experts, weights, down_exps_s);
++                cb(moe_out, "ffn_moe_geglu_selected_down_weighted_sum", il);
++                return moe_out;
++            }
++        }
++
++    if (llama_graph_gemma4_moe_fused_down_weighted_sum_enabled() &&
++            llama_graph_gemma4_moe_fused_down_weighted_sum_debug_enabled()) {
++        static std::atomic<int> entry_log_count{0};
++        const int entry_log_index = entry_log_count.fetch_add(1);
++        if (entry_log_index < 12) {
++            LLAMA_LOG_INFO("%s: Gemma4 fused-down debug entry layer %d: arch=%d weight_before_ffn=%d warmup=%d n_expert_used=%lld cur=[%lld,%lld,%lld,%lld] down_s=%s\n",
++                    __func__, il, (int) arch, weight_before_ffn ? 1 : 0,
++                    cparams.warmup ? 1 : 0, (long long) n_expert_used,
++                    (long long) cur->ne[0], (long long) cur->ne[1],
++                    (long long) cur->ne[2], (long long) cur->ne[3],
++                    down_exps_s ? ggml_type_name(down_exps_s->type) : "none");
++        }
++    }
++
++    const bool fused_down_weights_are_logits =
++        use_fused_down_selected_softmax &&
++        weights == selected_softmax_logits;
++
++    if (!weight_before_ffn &&
++            llama_graph_gemma4_moe_fused_down_weighted_sum_enabled() &&
++            arch == LLM_ARCH_GEMMA4 &&
++            !cparams.warmup &&
++            loras->empty() &&
++            down_exps_b == nullptr &&
++            (down_exps_s == nullptr ||
++                (down_exps_s->ne[0] == down_exps->ne[2] &&
++                 (down_exps_s->type == GGML_TYPE_F32 ||
++                  down_exps_s->type == GGML_TYPE_F16))) &&
++            down_exps->type == GGML_TYPE_Q8_0 &&
++            cur->type == GGML_TYPE_F32 &&
++            selected_experts->type == GGML_TYPE_I32 &&
++            weights != nullptr &&
++            weights->type == GGML_TYPE_F32 &&
++            ggml_is_contiguous(cur) &&
++            selected_experts->nb[0] == (int64_t) sizeof(int32_t) &&
++            selected_experts->nb[1] % (int64_t) sizeof(int32_t) == 0 &&
++            !ggml_is_transposed(selected_experts) &&
++            cur->ne[0] == down_exps->ne[0] &&
++            cur->ne[0] % 32 == 0 &&
++            cur->ne[1] == selected_experts->ne[0] &&
++            cur->ne[2] == selected_experts->ne[1] &&
++            selected_experts->ne[0] == hparams.n_expert_used &&
++            selected_experts->ne[1] > 0 &&
++            selected_experts->ne[0] <= 8 &&
++            selected_experts->ne[1] <= 8 &&
++            ((fused_down_weights_are_logits &&
++              weights->ne[0] == n_expert &&
++              weights->ne[1] == selected_experts->ne[1]) ||
++             (!fused_down_weights_are_logits &&
++              weights->ne[0] == 1 &&
++              weights->ne[1] == selected_experts->ne[0] &&
++              weights->ne[2] == selected_experts->ne[1])) &&
++            (int64_t) down_exps->nb[0] == (int64_t) ggml_type_size(down_exps->type) &&
++            cur->nb[0] == (int64_t) sizeof(float) &&
++            weights->nb[0] == (int64_t) sizeof(float) &&
++            (down_exps_s == nullptr ||
++                (int64_t) down_exps_s->nb[0] == (int64_t) ggml_type_size(down_exps_s->type))) {
++        if (llama_graph_gemma4_moe_fused_down_weighted_sum_debug_enabled()) {
++            LLAMA_LOG_INFO("%s: using Gemma4 fused selected-down weighted-sum at layer %d: cur=[%lld,%lld,%lld,%lld] ids=[%lld,%lld,%lld,%lld] weights=[%lld,%lld,%lld,%lld] down=%s[%lld,%lld,%lld,%lld] scale=%s\n",
++                    __func__, il,
++                    (long long) cur->ne[0], (long long) cur->ne[1], (long long) cur->ne[2], (long long) cur->ne[3],
++                    (long long) selected_experts->ne[0], (long long) selected_experts->ne[1],
++                    (long long) selected_experts->ne[2], (long long) selected_experts->ne[3],
++                    (long long) weights->ne[0], (long long) weights->ne[1],
++                    (long long) weights->ne[2], (long long) weights->ne[3],
++                    ggml_type_name(down_exps->type),
++                    (long long) down_exps->ne[0], (long long) down_exps->ne[1],
++                    (long long) down_exps->ne[2], (long long) down_exps->ne[3],
++                    down_exps_s ? ggml_type_name(down_exps_s->type) : "none");
++        }
++        ggml_tensor * moe_out = ggml_moe_selected_down_weighted_sum(
++                ctx0, down_exps, cur, selected_experts, weights, down_exps_s);
++        cb(moe_out, "ffn_moe_selected_down_weighted_sum", il);
++        return moe_out;
++    }
++
++    if (!weight_before_ffn &&
++            llama_graph_gemma4_moe_fused_down_weighted_sum_enabled() &&
++            llama_graph_gemma4_moe_fused_down_weighted_sum_debug_enabled() &&
++            arch == LLM_ARCH_GEMMA4) {
++        static std::atomic<int> skip_log_count{0};
++        const int skip_log_index = skip_log_count.fetch_add(1);
++        if (skip_log_index < 12) {
++            LLAMA_LOG_INFO("%s: skipped Gemma4 fused selected-down weighted-sum at layer %d: warmup=%d loras=%zu down_b=%p down_s=%s cur_type=%s ids_type=%s weights_type=%s cur=[%lld,%lld,%lld,%lld] ids=[%lld,%lld,%lld,%lld] weights=[%lld,%lld,%lld,%lld] down=%s[%lld,%lld,%lld,%lld] nb(down,cur,ids,weights,scale)=[%lld,%lld,%lld,%lld,%lld] contig(cur,ids)=(%d,%d)\n",
++                    __func__, il, cparams.warmup ? 1 : 0, loras->size(), (void *) down_exps_b,
++                    down_exps_s ? ggml_type_name(down_exps_s->type) : "none",
++                    ggml_type_name(cur->type), ggml_type_name(selected_experts->type),
++                    ggml_type_name(weights->type),
++                    (long long) cur->ne[0], (long long) cur->ne[1],
++                    (long long) cur->ne[2], (long long) cur->ne[3],
++                    (long long) selected_experts->ne[0], (long long) selected_experts->ne[1],
++                    (long long) selected_experts->ne[2], (long long) selected_experts->ne[3],
++                    (long long) weights->ne[0], (long long) weights->ne[1],
++                    (long long) weights->ne[2], (long long) weights->ne[3],
++                    ggml_type_name(down_exps->type),
++                    (long long) down_exps->ne[0], (long long) down_exps->ne[1],
++                    (long long) down_exps->ne[2], (long long) down_exps->ne[3],
++                    (long long) down_exps->nb[0], (long long) cur->nb[0],
++                    (long long) selected_experts->nb[0], (long long) weights->nb[0],
++                    down_exps_s ? (long long) down_exps_s->nb[0] : -1LL,
++                    ggml_is_contiguous(cur) ? 1 : 0,
++                    ggml_is_contiguous(selected_experts) ? 1 : 0);
++        }
++    }
++
+     experts = build_lora_mm_id(down_exps, cur, selected_experts, down_exps_s); // [n_embd, n_expert_used, n_tokens]
+     cb(experts, "ffn_moe_down", il);
+ 
+@@ -1789,6 +2334,39 @@ ggml_tensor * llm_graph_context::build_moe_ffn(
+         cb(experts, "ffn_moe_down_biased", il);
+     }
+ 
++    if (!weight_before_ffn &&
++            use_selected_softmax_weighted_sum &&
++            experts->type == GGML_TYPE_F32 &&
++            selected_softmax_logits->type == GGML_TYPE_F32 &&
++            selected_experts->type == GGML_TYPE_I32 &&
++            experts->ne[1] == hparams.n_expert_used &&
++            experts->ne[2] == selected_experts->ne[1] &&
++            selected_softmax_logits->ne[1] == selected_experts->ne[1] &&
++            experts->nb[0] == (int64_t) sizeof(float) &&
++            selected_softmax_logits->nb[0] == (int64_t) sizeof(float) &&
++            selected_experts->nb[0] == (int64_t) sizeof(int32_t) &&
++            selected_experts->nb[1] % (int64_t) sizeof(int32_t) == 0 &&
++            ggml_is_contiguous(experts) &&
++            ggml_is_contiguous(selected_softmax_logits) &&
++            !ggml_is_transposed(selected_experts)) {
++        ggml_tensor * moe_out = ggml_moe_selected_softmax_weighted_sum(
++                ctx0, experts, selected_softmax_logits, selected_experts);
++        cb(moe_out, "ffn_moe_selected_softmax_weighted_sum", il);
++        return moe_out;
++    }
++
++    if (!weight_before_ffn &&
++            llama_graph_gemma4_moe_weighted_sum_enabled() &&
++            arch == LLM_ARCH_GEMMA4 &&
++            weights != nullptr &&
++            experts->type == GGML_TYPE_F32 &&
++            weights->type == GGML_TYPE_F32 &&
++            experts->ne[1] == hparams.n_expert_used) {
++        ggml_tensor * moe_out = ggml_moe_weighted_sum(ctx0, experts, weights);
++        cb(moe_out, "ffn_moe_weighted_sum", il);
++        return moe_out;
++    }
++
+     if (!weight_before_ffn) {
+         experts = ggml_mul(ctx0, experts, weights);
+         cb(experts, "ffn_moe_weighted", il);
+@@ -1948,6 +2526,12 @@ ggml_tensor * llm_graph_context::build_inp_attn_scale() const {
+ }
+ 
+ ggml_tensor * llm_graph_context::build_inp_out_ids() const {
++    if (llama_graph_gemma4_skip_identity_out_ids_enabled() &&
++            n_outputs == (uint32_t) n_tokens &&
++            n_tokens > 0) {
++        return nullptr;
++    }
++
+     // note: when all tokens are output, we could skip this optimization to spare the ggml_get_rows() calls,
+     //       but this would make the graph topology depend on the number of output tokens, which can interfere with
+     //       features that require constant topology such as pipeline parallelism
+@@ -2731,7 +3315,6 @@ llm_graph_input_attn_kv_iswa * llm_graph_context::build_attn_inp_kv_iswa() const
+     {
+         inp->self_k_idxs = mctx_cur->get_base()->build_input_k_idxs(ctx0, ubatch);
+         inp->self_v_idxs = mctx_cur->get_base()->build_input_v_idxs(ctx0, ubatch);
+-
+         inp->self_kq_mask = build_attn_inp_kq_mask(ctx0, mctx_cur->get_base(), ubatch, cparams);
+         inp->self_kq_mask_cnv = inp->self_kq_mask;
+     }
+@@ -3054,6 +3637,61 @@ void llm_graph_context::build_pooling(
+ }
+ 
+ void llm_graph_context::build_sampling() const {
++    if (cparams.spec_verify_direct_argmax_ids && !res->t_sampled_rows.empty()) {
++        return;
++    }
++
++    if (cparams.spec_verify_direct_argmax_ids && samplers.empty() && res->t_logits) {
++        ggml_tensor * logits = res->t_logits;
++        if (n_outputs == 0 || logits->ne[1] == 0) {
++            GGML_ASSERT(n_outputs == 0 && logits->ne[1] == 0);
++            return;
++        }
++
++        GGML_ASSERT(logits->type == GGML_TYPE_F32);
++        GGML_ASSERT(ggml_is_matrix(logits));
++        GGML_ASSERT(ggml_is_contiguous(logits));
++        GGML_ASSERT(logits->ne[0] > 0 && logits->ne[0] <= INT32_MAX);
++        GGML_ASSERT(logits->ne[1] == n_outputs);
++
++        ggml_tensor * sampled = ggml_argmax(ctx0, logits);
++        ggml_format_name(sampled, "spec_verify_argmax_token_rows");
++        res->t_sampled_rows[0] = sampled;
++        ggml_build_forward_expand(gf, sampled);
++
++        return;
++    }
++
++    if (cparams.mtp_draft_direct_argmax_ids && !res->t_sampled.empty()) {
++        return;
++    }
++
++    if (cparams.mtp_draft_direct_argmax_ids && samplers.empty() && res->t_logits) {
++        std::map<llama_seq_id, int32_t> seq_to_logit_row;
++        int32_t logit_row_idx = 0;
++
++        for (uint32_t i = 0; i < ubatch.n_tokens; i++) {
++            if (ubatch.output[i]) {
++                llama_seq_id seq_id = ubatch.seq_id[i][0];
++                seq_to_logit_row[seq_id] = logit_row_idx;
++                logit_row_idx++;
++            }
++        }
++
++        for (const auto & [seq_id, row_idx] : seq_to_logit_row) {
++            ggml_tensor * logits_seq = ggml_view_1d(ctx0, res->t_logits, res->t_logits->ne[0], row_idx * res->t_logits->nb[1]);
++            ggml_format_name(logits_seq, "mtp_direct_argmax_logits_%d", seq_id);
++
++            ggml_tensor * sampled = ggml_argmax(ctx0, logits_seq);
++            ggml_format_name(sampled, "mtp_direct_argmax_token_%d", seq_id);
++
++            res->t_sampled[seq_id] = sampled;
++            ggml_build_forward_expand(gf, sampled);
++        }
++
++        return;
++    }
++
+     if (samplers.empty() || !res->t_logits) {
+         return;
+     }

@@ -207,6 +207,10 @@ def main() -> int:
         "llamaSyclMulMatIdQ8_0Reorder": launcher.get("llama_sycl_mul_mat_id_q8_0_reorder") == "1",
         "llamaSyclMulMatIdRouteCache": launcher.get("llama_sycl_mul_mat_id_route_cache") == "1",
         "llamaSyclQ8MmvqSmallNcols": launcher.get("llama_sycl_q8_mmvq_small_ncols") == "1",
+        "llamaSyclQ8_0LmHead1ColDmmv": launcher.get("llama_sycl_q8_0_lm_head_1col_dmmv") == "1",
+        "llamaSyclQ8_0LmHead1ColNoReorder": (
+            launcher.get("llama_sycl_q8_0_lm_head_1col_no_reorder") == "1"
+        ),
         "localmaxxingSubmissionAllowedUnderCurrentPolicy": True,
         "maxGeneratedTokens": identity.get("max_tokens"),
         "metricWindowGeneratedTokens": validity.get("primary_metric_tokens"),

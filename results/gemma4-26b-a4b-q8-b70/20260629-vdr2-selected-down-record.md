@@ -2,7 +2,15 @@
 
 Status: **valid promoted fresh-response record family** for the Gemma 4 26B
 A4B `UD-Q8_K_XL` target/verifier lane on one Intel Arc Pro B70. Current
-LocalMaxxing headline repeat: `cmqzq5zu402troe01t774uyox`.
+LocalMaxxing headline repeat: `cmqztiqdn02vnoe01egox6q3f`.
+
+2026-06-29 late addendum: the later same-family baseline/control row
+`data/gemma4-q8-gpu3-q8lmhead-noreorder-control-full512-20260629T224927Z/summary.json`
+superseded the FA-on 32K/VMM `117.91456485086059 tok/s` row with
+`121.41411987308553 tok/s` median generated-token throughput for tokens 1-100
+after TTFT. The DMMV and no-reorder LM-head experiment flags were unset in the
+winning row; keep the default-off LM-head experiments as negative/closed
+artifacts, not as the promoted mechanism.
 
 ## Result
 
@@ -48,6 +56,15 @@ headline: every row used the fixed realistic suite, each prompt once, and
 below the prior `115.8466634928202` high), but 3/4 same-identity confirmations
 and the promoted row beat the prior record. LocalMaxxing:
 `cmqzq5zu402troe01t774uyox`.
+
+Late same-family baseline/control high:
+
+| GPU | Summary | Gate | Canary | Median 1-100 | p10 1-100 | Mean 1-100 | Full512 after TTFT | Wall full512 | TTFT median |
+| --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| 3 | `data/gemma4-q8-gpu3-q8lmhead-noreorder-control-full512-20260629T224927Z/summary.json` | pass | 512/512 | **121.41411987308553** | 107.03214367227781 | 120.13610933675466 | 110.39053979324245 | 105.88057667302085 | 179.117635008879 ms |
+| 2 | `data/gemma4-q8-gpu2-baseline-recordconfirm-full512-20260629T225215Z/summary.json` | pass | 512/512 | 119.94842631460949 | 107.41526220540041 | 119.37118785029499 | 111.9444876977782 | 106.90864788926861 | 179.77339948993176 ms |
+
+The accepted LocalMaxxing ID for the high row is `cmqztiqdn02vnoe01egox6q3f`.
 
 ## Validity
 
@@ -190,7 +207,7 @@ Full512 A/B confirmed it is not a record improvement:
 | hcopy GPU3 | `data/gemma4-q8-gpu3-hcopy-on-full512-20260629T130420Z/summary.json` | 113.17038347073819 | 102.08411761686624 | 113.82889747700256 | 104.59623460774262 | 100.89378061491095 |
 
 Conclusion: do not promote. The duplicate copy exists, but skipping it does not
-move the full512 fresh-response metric above the current `117.91456485086059`
+move the full512 fresh-response metric above the current `121.41411987308553`
 record. The source experiment was reverted after recording the patch and
 results.
 

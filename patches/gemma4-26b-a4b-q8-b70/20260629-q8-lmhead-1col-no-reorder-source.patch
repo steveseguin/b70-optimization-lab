@@ -1,0 +1,82 @@
+diff --git a/ggml/src/ggml-sycl/ggml-sycl.cpp b/ggml/src/ggml-sycl/ggml-sycl.cpp
+--- a/ggml/src/ggml-sycl/ggml-sycl.cpp
++++ b/ggml/src/ggml-sycl/ggml-sycl.cpp
+@@
+ static bool ggml_sycl_mul_mat_top1_epilogue_partial_enabled() {
+     const char * env = std::getenv("LLAMA_SYCL_MUL_MAT_TOP1_EPILOGUE_PARTIAL");
+     return env && (std::strcmp(env, "1") == 0 ||
+                    std::strcmp(env, "true") == 0 ||
+                    std::strcmp(env, "TRUE") == 0 ||
+                    std::strcmp(env, "yes") == 0 ||
+                    std::strcmp(env, "on") == 0);
+ }
+ 
++static bool ggml_sycl_q8_0_lm_head_1col_dmmv_enabled() {
++    const char * env = std::getenv("LLAMA_SYCL_Q8_0_LM_HEAD_1COL_DMMV");
++    return env && (std::strcmp(env, "1") == 0 ||
++                   std::strcmp(env, "true") == 0 ||
++                   std::strcmp(env, "TRUE") == 0 ||
++                   std::strcmp(env, "yes") == 0 ||
++                   std::strcmp(env, "on") == 0);
++}
++
++static bool ggml_sycl_q8_0_lm_head_1col_no_reorder_enabled() {
++    const char * env = std::getenv("LLAMA_SYCL_Q8_0_LM_HEAD_1COL_NO_REORDER");
++    return env && (std::strcmp(env, "1") == 0 ||
++                   std::strcmp(env, "true") == 0 ||
++                   std::strcmp(env, "TRUE") == 0 ||
++                   std::strcmp(env, "yes") == 0 ||
++                   std::strcmp(env, "on") == 0);
++}
++
++static bool ggml_sycl_is_q8_0_lm_head_1col(
++        const ggml_tensor * src0, const ggml_tensor * src1, const ggml_tensor * dst) {
++    return src0->type == GGML_TYPE_Q8_0 &&
++           src1->type == GGML_TYPE_F32 &&
++           dst->type == GGML_TYPE_F32 &&
++           src1->ne[1] == 1 && src1->ne[2] == 1 && src1->ne[3] == 1 &&
++           dst->ne[0] >= 131072 && dst->ne[1] == 1 &&
++           dst->ne[2] == 1 && dst->ne[3] == 1;
++}
++
+ static void ggml_sycl_mul_mat(ggml_backend_sycl_context & ctx, const ggml_tensor * src0, const ggml_tensor * src1, ggml_tensor * dst) {
+@@
+     // Dispatch becomes obscure with the reorder, MMVQ when the reorder optimization
+     // is enabled takes precedence over DMMV, the current if-else implementation
+     // requires disabling DMMV if both conditions are met
+ 
++    const bool keep_dmmv_for_q8_0_lm_head_1col =
++        !split &&
++        ggml_sycl_q8_0_lm_head_1col_dmmv_enabled() &&
++        ggml_sycl_is_q8_0_lm_head_1col(src0, src1, dst);
++    const bool skip_reorder_for_q8_0_lm_head_1col =
++        !split &&
++        ggml_sycl_q8_0_lm_head_1col_no_reorder_enabled() &&
++        ggml_sycl_is_q8_0_lm_head_1col(src0, src1, dst);
++
+     if (!g_ggml_sycl_prioritize_dmmv && ((should_reorder_tensor(ctx, dst) &&
+                                           ggml_sycl_supports_reorder_mmvq(src0->type)))) {
+       // Arc770 get benefit with Q4_0 by skipping it.
+       if (!(ggml_sycl_info().devices[ctx.device].hw_info.arch ==
+                 gpu_arch::intel_gpu_acm_g10 &&
+             src0->type == GGML_TYPE_Q4_0)) {
+-        use_dequantize_mul_mat_vec =
+-            use_dequantize_mul_mat_vec && !use_mul_mat_vec_q;
++        if (!keep_dmmv_for_q8_0_lm_head_1col) {
++            use_dequantize_mul_mat_vec =
++                use_dequantize_mul_mat_vec && !use_mul_mat_vec_q;
++        }
+       }
+     }
+@@
+     } else if (use_dequantize_mul_mat_vec) {
+         opt_for_reorder(&ctx, src0, src1, dst, mul_mat_algo::DMMV);
+         ggml_sycl_op_mul_mat<no_quantize_q8_1>(ctx, src0, src1, dst, ggml_sycl_op_dequantize_mul_mat_vec);
+     } else if (use_mul_mat_vec_q) {
+-        opt_for_reorder(&ctx, src0, src1, dst, mul_mat_algo::MMVQ);
++        if (!skip_reorder_for_q8_0_lm_head_1col) {
++            opt_for_reorder(&ctx, src0, src1, dst, mul_mat_algo::MMVQ);
++        }
+         ggml_tensor_extra_gpu * extra = static_cast<ggml_tensor_extra_gpu *>(src0->extra);
+         if (extra && extra->optimized_feature.reorder) {
+             ggml_sycl_op_mul_mat<quantize_and_reorder_q8_1_soa>(ctx, src0, src1, dst, ggml_sycl_op_mul_mat_vec_q);

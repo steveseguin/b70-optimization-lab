@@ -1,0 +1,32 @@
+diff --git a/scripts/run-gemma4-26b-first-baseline.sh b/scripts/run-gemma4-26b-first-baseline.sh
+index 1519843e..34ed4daa 100755
+--- a/scripts/run-gemma4-26b-first-baseline.sh
++++ b/scripts/run-gemma4-26b-first-baseline.sh
+@@ -114,6 +114,7 @@ LLAMA_GEMMA4_MOE_FUSED_GEGLU_DOWN_WEIGHTED_SUM="${LLAMA_GEMMA4_MOE_FUSED_GEGLU_D
+ LLAMA_GEMMA4_MOE_GEGLU_DOWN_MATMUL_EPILOGUE="${LLAMA_GEMMA4_MOE_GEGLU_DOWN_MATMUL_EPILOGUE:-}" \
+ LLAMA_GEMMA4_MOE_GATEUP_GEGLU="${LLAMA_GEMMA4_MOE_GATEUP_GEGLU:-}" \
+ LLAMA_GEMMA4_MOE_GATEUP_GEGLU_BF16="${LLAMA_GEMMA4_MOE_GATEUP_GEGLU_BF16:-}" \
++LLAMA_GEMMA4_MOE_GATEUP_GEGLU_EPILOGUE="${LLAMA_GEMMA4_MOE_GATEUP_GEGLU_EPILOGUE:-}" \
+ LLAMA_GEMMA4_MOE_FUSED_DOWN_WEIGHTED_SUM_DEBUG="${LLAMA_GEMMA4_MOE_FUSED_DOWN_WEIGHTED_SUM_DEBUG:-}" \
+ LLAMA_SYCL_MUL_MAT_ID_MULTI_TOKEN_NAME_SUBSTR="${LLAMA_SYCL_MUL_MAT_ID_MULTI_TOKEN_NAME_SUBSTR:-}" \
+ LLAMA_SYCL_MUL_MAT_ID_MULTI_TOKEN_BF16_DIRECT="${LLAMA_SYCL_MUL_MAT_ID_MULTI_TOKEN_BF16_DIRECT:-}" \
+@@ -342,6 +343,7 @@ out = {
+         "llama_gemma4_moe_geglu_down_matmul_epilogue": env_or_log("LLAMA_GEMMA4_MOE_GEGLU_DOWN_MATMUL_EPILOGUE"),
+         "llama_gemma4_moe_gateup_geglu": env_or_log("LLAMA_GEMMA4_MOE_GATEUP_GEGLU"),
+         "llama_gemma4_moe_gateup_geglu_bf16": env_or_log("LLAMA_GEMMA4_MOE_GATEUP_GEGLU_BF16"),
++        "llama_gemma4_moe_gateup_geglu_epilogue": env_or_log("LLAMA_GEMMA4_MOE_GATEUP_GEGLU_EPILOGUE"),
+         "llama_gemma4_moe_fused_down_weighted_sum_debug": env_or_log("LLAMA_GEMMA4_MOE_FUSED_DOWN_WEIGHTED_SUM_DEBUG"),
+         "llama_sycl_mul_mat_id_multi_token_fast": env_or_log("LLAMA_SYCL_MUL_MAT_ID_MULTI_TOKEN_FAST"),
+         "llama_sycl_mul_mat_id_multi_token_no_reorder": env_or_log("LLAMA_SYCL_MUL_MAT_ID_MULTI_TOKEN_NO_REORDER"),
+diff --git a/scripts/run-gemma4-26b-llamacpp-replica.sh b/scripts/run-gemma4-26b-llamacpp-replica.sh
+index c8faf987..0afccdee 100755
+--- a/scripts/run-gemma4-26b-llamacpp-replica.sh
++++ b/scripts/run-gemma4-26b-llamacpp-replica.sh
+@@ -125,6 +125,7 @@ mkdir -p "$OUT_DIR"
+   echo "LLAMA_GEMMA4_MOE_GEGLU_DOWN_MATMUL_EPILOGUE=${LLAMA_GEMMA4_MOE_GEGLU_DOWN_MATMUL_EPILOGUE:-<unset>}"
+   echo "LLAMA_GEMMA4_MOE_GATEUP_GEGLU=${LLAMA_GEMMA4_MOE_GATEUP_GEGLU:-<unset>}"
+   echo "LLAMA_GEMMA4_MOE_GATEUP_GEGLU_BF16=${LLAMA_GEMMA4_MOE_GATEUP_GEGLU_BF16:-<unset>}"
++  echo "LLAMA_GEMMA4_MOE_GATEUP_GEGLU_EPILOGUE=${LLAMA_GEMMA4_MOE_GATEUP_GEGLU_EPILOGUE:-<unset>}"
+   echo "LLAMA_GEMMA4_MOE_FUSED_DOWN_WEIGHTED_SUM_DEBUG=${LLAMA_GEMMA4_MOE_FUSED_DOWN_WEIGHTED_SUM_DEBUG:-<unset>}"
+   echo "LLAMA_SYCL_MUL_MAT_ID_MULTI_TOKEN_FAST=${LLAMA_SYCL_MUL_MAT_ID_MULTI_TOKEN_FAST:-<unset>}"
+   echo "LLAMA_SYCL_MUL_MAT_ID_MULTI_TOKEN_NO_REORDER=${LLAMA_SYCL_MUL_MAT_ID_MULTI_TOKEN_NO_REORDER:-<unset>}"
