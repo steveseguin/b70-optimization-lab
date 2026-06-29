@@ -151,25 +151,27 @@ The current Gemma 4 26B A4B Q8 one-B70 realistic-suite best is:
 - reproduction: `results/gemma4-26b-a4b-q8-b70/reproduce.md`;
 - realistic suite: `repro/gemma4-26b-a4b-q8-b70/realistic-suite-v1.json`;
 - best strict cold-suite result:
-  `98.34046474459183 tok/s` median generated-token throughput for tokens 1-100
-  after TTFT, `cached_tokens=0` on every prompt,
+  `115.72789384447941 tok/s` median generated-token throughput for tokens
+  1-100 after TTFT, `cached_tokens=0` on every prompt,
   `realistic_final_gate.passed=true`;
 - evidence:
-  `data/gemma4-q8-gpu1-strict-vdr2-f16p021-bulksampled-confirm-B-n3-nmin2-p00475-ub1024-full512-20260628T052158Z/summary.json`;
+  `data/gemma4-q8-gpu1-vdr2-selecteddown-reordervdr2-full512-20260629B/summary.json`;
 - config:
   reordered-Q8 VDR2, Q4_0 MTP draft, `n_max=3`, `n_min=2`,
   `p_min=0.0475`, `UBATCH_SIZE=1024`,
   `LLAMA_SYCL_F16_P021_SMALL_NCOLS=1`,
-  `LLAMA_SPEC_VERIFY_BULK_SAMPLED_IDS=1`;
+  `LLAMA_SPEC_VERIFY_BULK_SAMPLED_IDS=1`,
+  `LLAMA_GEMMA4_MOE_FUSED_DOWN_WEIGHTED_SUM_REORDER_VDR2=1`;
 - representative / submitted status:
-  the VDR2/F16-p021/bulk-sampled-ID transfer of the strict `n_max=3`,
-  `n_min=2`, `UBATCH_SIZE=1024` family is the current policy-compliant
-  LocalMaxxing submission, approved as `cmqxchyra03xmqr01b963gmi1`.
-  Supporting exact full512 confirmation lanes in the same batch measured
-  `96.01452890026427`, `95.90275376682132`, and
-  `94.94094934974818 tok/s`. The prior F16-p021 small-ncols submission
-  `cmqx3687103v4qr01ace1ft3m` at `95.82453787677183 tok/s`, prior VDR2 rows,
-  and prior VDR4 rows are superseded;
+  the VDR2 selected-down fused weighted-sum path is the current
+  policy-compliant LocalMaxxing submission, approved as
+  `cmqyo0jyt08ippk01vhiobdnm`. Full-512 confirmation lanes measured
+  `113.47081786263712`, `115.72789384447941`,
+  `113.81540554086772`, and `114.8109417270852 tok/s`, all with
+  `cached_tokens=0` and 512/512 canary rows passing. The prior VDR2/F16-p021
+  row `cmqxchyra03xmqr01b963gmi1` at `98.34046474459183 tok/s`, prior
+  F16-p021 small-ncols submission `cmqx3687103v4qr01ace1ft3m`, earlier VDR2
+  rows, and prior VDR4 rows are superseded;
 - current clean no-spec control:
   `data/gemma4-q8-gpu0-vdr4default-nospec-realistic-gate-v2-20260627T165335Z/summary.json`
   at `74.29709476830473 tok/s` median. Use it as the simplest target-side
