@@ -60,7 +60,15 @@ fresh profile evidence:
   ncols `MUL_MAT_ARGMAX` variants;
 - raw/softcap argmax-only paths, which still pay the full LM-head projection;
 - late-head bonus as currently implemented, because the separate one-row head
-  graph/scheduler/copy/sync cost outweighed the saved row;
+  graph/scheduler/copy/sync cost outweighed the saved row. A follow-up with a
+  dedicated SPEC_HEAD fused argmax branch still lost (`107.87` / `107.29 tok/s`
+  strict128), so keep it closed unless the bonus head is folded into the
+  existing verifier graph boundary;
+- EOG draft clipping as a primary-record lever. It is valid and trims real
+  work near termination (`LLAMA_SPEC_VERIFY_CLIP_DRAFT_AT_EOG=1`; profiled
+  strict128 logged `eog_trim calls=512 tokens=640`), but four full512 lanes
+  topped out at `113.59 tok/s`, below the `115.85` record. Keep it only as a
+  default-off terminal cleanup / service-lane candidate;
 - staged MTP3 split-bonus, no-bonus rows, hcopy skip, skip-stateless accept,
   and small host sampled-ID/copy cleanups;
 - p-min, n-min/n-max, thread/poll/frequency, and draft-quant roulette;

@@ -45,3 +45,20 @@ No LocalMaxxing submission: the best repeat (`114.82854728313862`) is below the
 current valid record (`115.8466634928202`). Keep `115.8466634928202 tok/s` as
 the headline and treat this sweep as useful variance evidence for the promoted
 recipe.
+
+## Later 2026-06-29 Refresh
+
+A second four-GPU refresh was run before the EOG/SPEC_HEAD patch screen to
+anchor the current binary/host variance. Same promoted recipe, same fixed
+realistic cold suite, `MAX_TOKENS=512`, `REALISTIC_METRIC_TOKENS=100`,
+`cached_tokens=0` every row, and 2048 canary rows passed. None beat the record.
+
+| label | median tok/s 1-100 | p10 | mean | full512 after-TTFT median | wall full512 median | TTFT median ms | gate | canary |
+|---|---:|---:|---:|---:|---:|---:|---|---:|
+| `gemma4-q8-gpu0-record-refresh-full512-20260629T173232Z` | `111.21916062672508` | `99.78856875978933` | `111.56511798894492` | `105.58528513213375` | `101.67915279241663` | `180.547297000885` | pass | `2048/2048` |
+| `gemma4-q8-gpu1-record-refresh-full512-20260629T173232Z` | `110.72061102442606` | `104.37974153293142` | `113.39530661856975` | `105.91216242026465` | `101.34245500867142` | `182.21637496026233` | pass | `2048/2048` |
+| `gemma4-q8-gpu2-record-refresh-full512-20260629T173232Z` | `112.5375264355806` | `101.73740856532514` | `111.94601456975215` | `104.6920617829633` | `100.13362090325921` | `181.84104096144438` | pass | `2048/2048` |
+| `gemma4-q8-gpu3-record-refresh-full512-20260629T173232Z` | `112.5154069781288` | `101.73899070213969` | `112.73396487351484` | `104.99013423926795` | `101.26572367005576` | `180.63995148986578` | pass | `2048/2048` |
+
+Decision remains unchanged: no LocalMaxxing submission; keep
+`115.8466634928202 tok/s` as the current valid Gemma Q8 headline.

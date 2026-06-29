@@ -181,6 +181,18 @@ negative/inconclusive; keep default-off and do not run full512 promotion as-is.
 See
 `../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260629-geglu-vdr2-selected-down-negative.md`.
 
+2026-06-29 EOG clip and SPEC_HEAD follow-up: two narrow verifier-side ideas
+were screened after the selected-down record. `LLAMA_SPEC_VERIFY_CLIP_DRAFT_AT_EOG=1`
+is valid and real (`eog_trim calls=512 tokens=640` in the profiled strict128
+run), but it did not beat the full512 record under the primary fresh metric:
+best EOG full512 lane was `113.58569073629727 tok/s` versus the current
+`115.8466634928202`. It may remain useful as a default-off terminal cleanup,
+but it is not a LocalMaxxing record. The late-head bonus plus dedicated
+SPEC_HEAD fused argmax branch (`LLAMA_SPEC_VERIFY_LATE_HEAD_BONUS=1` +
+`LLAMA_SPEC_HEAD_FUSED_OUTPUT_ARGMAX=1`) lost in both strict128 lanes
+(`107.87` and `107.29 tok/s`), so do not promote it as implemented. See
+`../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260629-eogclip-and-spechead-negative.md`.
+
 Current handoff note: see
 `../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260629-selecteddown-next-lane-triage.md`
 for the 2026-06-29 post-profile audit, closed-lane list, and the preserved

@@ -40,6 +40,12 @@ Current active optimization target:
   `74.29709476830473 tok/s` median on the same realistic suite. Evidence:
   `data/gemma4-q8-gpu0-vdr4default-nospec-realistic-gate-v2-20260627T165335Z/summary.json`.
   Treat it as the simplest target-side quality/control baseline for new work.
+- Recent non-promoted follow-up:
+  `LLAMA_SPEC_VERIFY_CLIP_DRAFT_AT_EOG=1` was valid and trimmed real terminal
+  draft work, but four full512 lanes topped out at `113.58569073629727 tok/s`,
+  below the current `115.8466634928202` record. Late-head bonus plus
+  `LLAMA_SPEC_HEAD_FUSED_OUTPUT_ARGMAX=1` lost strict128. See
+  `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260629-eogclip-and-spechead-negative.md`.
 - Current diagnostic best, not a real-world headline:
   `176.21623213048554 tok/s` after TTFT on the first no-cache synthetic
   filled-long benchmark row, `176.40259133127742 tok/s` supporting repeat mean,
