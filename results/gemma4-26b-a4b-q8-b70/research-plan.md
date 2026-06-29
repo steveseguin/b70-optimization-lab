@@ -100,6 +100,21 @@ or small host/copy tweaks as record candidates. Next credible work must reduce
 exact verifier graph cost, especially LM-head or routed MoE kernels. See
 `../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260629-selecteddown-rebuild-profile-and-skipstateless.md`.
 
+Follow-up source direction from read-only audits:
+
+- first priority: an exact **regular-Q8-MMVQ top1 epilogue** for verifier
+  LM-head. The goal is to keep the fast regular reordered-Q8 `MUL_MAT` dot body
+  used by `node_1930` while publishing only sampled token IDs, instead of
+  falling back to the scratch/reduce-heavy `GGML_OP_MUL_MAT_ARGMAX` family that
+  has repeatedly lost. Guard as default-off and validate strict128 against the
+  paired selected-down control before any full512 promotion attempt.
+- second priority if LM-head top1 fails: a BF16 final-layer gate/up + GEGLU
+  matmul-epilogue op that preserves the existing BF16 `ggml_sycl_mul_mat()`
+  path, then fuses only post-GEMM GEGLU/scatter. Do **not** retry
+  `LLAMA_SYCL_MUL_MAT_ID_MULTI_TOKEN_BF16_DIRECT`; the existing graph-safe
+  version already lost. The BF16 epilogue idea is larger because it needs graph
+  and backend op plumbing, so it should follow the narrower LM-head attempt.
+
 2026-06-28 crack-100 reliability update: a single strict full512 frequency-floor
 run at `2400,2800` hit `100.22397388514726 tok/s`, and an earlier unroll6 row
 hit `101.076 tok/s`, but confirmations did not hold above 100. Four parallel
