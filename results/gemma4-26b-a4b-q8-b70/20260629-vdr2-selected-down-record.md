@@ -2,7 +2,7 @@
 
 Status: **valid promoted fresh-response record family** for the Gemma 4 26B
 A4B `UD-Q8_K_XL` target/verifier lane on one Intel Arc Pro B70. Current
-LocalMaxxing headline repeat: `cmqyrpox4021dqk01co5o4fcw`.
+LocalMaxxing headline repeat: `cmqzq5zu402troe01t774uyox`.
 
 ## Result
 
@@ -31,6 +31,23 @@ lane beside a BF16-direct retest; the BF16-direct lanes did not beat controls.
 Because the repeat passed the current fixed realistic cold gate, it supersedes
 the initial `115.72789384447941` headline. LocalMaxxing:
 `cmqyrpox4021dqk01co5o4fcw`.
+
+FA-on 32K/VMM retest and confirmation on 2026-06-29:
+
+| GPU | Summary | Gate | Canary | Median 1-100 | p10 1-100 | Mean 1-100 | Full512 after TTFT | Wall full512 | TTFT median |
+| --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| 3 | `data/gemma4-q8-gpu3-faon-vmm-ctx32768-full512-20260629T211437Z/summary.json` | pass | 512/512 | **117.91456485086059** | 107.80735938671545 | 118.8805550250879 | 110.957638362282 | 106.80689050225271 | 180.16915302723646 ms |
+| 0 | `data/gemma4-q8-gpu0-faon-vmm-ctx32768-confirm-full512-20260629T211843Z/summary.json` | pass | 512/512 | 116.45776605647993 | 100.52805362848677 | 116.40736141241894 | 112.21083560224112 | 106.58846715929698 | 179.6505789970979 ms |
+| 1 | `data/gemma4-q8-gpu1-faon-vmm-ctx32768-confirm-full512-20260629T211843Z/summary.json` | pass | 512/512 | 117.41509141115063 | 102.82580425522343 | 116.89697181871713 | 108.37433815430438 | 104.58702581027498 | 178.85348544223234 ms |
+| 2 | `data/gemma4-q8-gpu2-faon-vmm-ctx32768-confirm-full512-20260629T211843Z/summary.json` | pass | 512/512 | 115.08942949119734 | 107.00399050168588 | 116.51674286549678 | 107.47895026970602 | 103.39173316785484 | 180.59724348131567 ms |
+| 3 | `data/gemma4-q8-gpu3-faon-vmm-ctx32768-confirm-full512-20260629T211843Z/summary.json` | pass | 512/512 | 117.45737477243767 | 107.32460490342444 | 116.49336180116973 | 110.76279573353797 | 106.13772714309907 | 180.20113703096285 ms |
+
+This is a small confirmed improvement, not a synthetic or warmed-history
+headline: every row used the fixed realistic suite, each prompt once, and
+`cached_tokens=0`. The confirmation batch is not variance-free (`115.089` is
+below the prior `115.8466634928202` high), but 3/4 same-identity confirmations
+and the promoted row beat the prior record. LocalMaxxing:
+`cmqzq5zu402troe01t774uyox`.
 
 ## Validity
 
@@ -69,8 +86,9 @@ Required surrounding identity is still the prior strict record stack:
 `GGML_SYCL_REORDER_Q8_0_VDR_MMVQ=2` build, reordered-Q8 VDR2,
 `LLAMA_SYCL_F16_P021_SMALL_NCOLS=1`,
 `LLAMA_SPEC_VERIFY_BULK_SAMPLED_IDS=1`, `n_max=3`, `n_min=2`,
-`p_min=0.0475`, `UBATCH_SIZE=1024`, f16 KV, graph enabled, VMM disabled,
-and `--ctx-checkpoints 0`.
+`p_min=0.0475`, `UBATCH_SIZE=1024`, f16 KV, graph enabled, and
+`--ctx-checkpoints 0`. The current promoted repeat additionally uses
+`FLASH_ATTN=on`, `CTX_SIZE=32768`, and `GGML_SYCL_ENABLE_VMM=1`.
 
 ## Artifacts
 
@@ -172,7 +190,7 @@ Full512 A/B confirmed it is not a record improvement:
 | hcopy GPU3 | `data/gemma4-q8-gpu3-hcopy-on-full512-20260629T130420Z/summary.json` | 113.17038347073819 | 102.08411761686624 | 113.82889747700256 | 104.59623460774262 | 100.89378061491095 |
 
 Conclusion: do not promote. The duplicate copy exists, but skipping it does not
-move the full512 fresh-response metric above the current `115.8466634928202`
+move the full512 fresh-response metric above the current `117.91456485086059`
 record. The source experiment was reverted after recording the patch and
 results.
 

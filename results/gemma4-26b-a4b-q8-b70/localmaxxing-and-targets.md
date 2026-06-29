@@ -1,6 +1,6 @@
 # Gemma 4 26B A4B LocalMaxxing Targets
 
-Research snapshot: 2026-06-27.
+Research snapshot: updated 2026-06-29.
 
 This page separates public leaderboard context from this lane's promoted result
 rules. The goal is a valid Q8 / INT8-or-better result on Intel Arc Pro B70, not
@@ -41,6 +41,32 @@ Interpretation for this lane:
   lane were identical.
 
 Current policy-compliant LocalMaxxing submission:
+
+- `gemma4-q8-gpu3-faon-vmm-ctx32768-full512-20260629T211437Z`,
+  llama.cpp `c926ad098` on one B70, UD-Q8_K_XL target/verifier with Q4_0 MTP
+  draft, f16 KV, 32K context, `FLASH_ATTN=on`, `GGML_SYCL_ENABLE_VMM=1`,
+  reordered-Q8 VDR2, F16 p021 small-ncols, bulk sampled-ID verifier host read,
+  VDR2 selected-down fused weighted-sum, `n_max=3`, `n_min=2`,
+  `p_min=0.0475`, `UBATCH_SIZE=1024`;
+- fixed suite:
+  `repro/gemma4-26b-a4b-q8-b70/realistic-suite-v1.json`, each prompt once,
+  `cached_tokens=0` every row;
+- primary metric: **117.91456485086059 tok/s** median generated-token
+  throughput for tokens 1-100 after TTFT;
+- p10 `107.807`, mean `118.881`, median TTFT `180.169 ms`, median full-512
+  after-TTFT `110.958`, median wall full-512 `106.807`;
+- supporting same-identity strict full512 rows:
+  `116.45776605647993`, `117.41509141115063`, `115.08942949119734`, and
+  `117.45737477243767 tok/s`; all passed 512/512 canary rows and
+  `cached_tokens=0`. Treat this as a small confirmed variance-class
+  improvement, not a synthetic/context-only result.
+- payload:
+  `data/localmaxxing-gemma4-26b-a4b-q8-b70-llamacpp-realistic-vdr2-selecteddown-faon-vmm-ctx32768-full512-20260629.queue.json`;
+- LocalMaxxing: `cmqzq5zu402troe01t774uyox`;
+- response:
+  `data/localmaxxing-responses/gemma4-26b-a4b-q8-b70-llamacpp-realistic-vdr2-selecteddown-faon-vmm-ctx32768-full512-20260629.submit.log`.
+
+Previous policy-compliant LocalMaxxing submission, now superseded:
 
 - `gemma4-q8-gpu1-selecteddown-bf16retest-control-full512-20260629T051323Z`,
   llama.cpp `c926ad098` on one B70, UD-Q8_K_XL target/verifier with Q4_0 MTP
@@ -117,7 +143,7 @@ Previous policy-compliant VDR2 submission, now superseded:
   for tokens 1-100 after TTFT;
 - LocalMaxxing: `cmqwxep4a03qiqr010chjn93s`;
 - status: still valid strict evidence, but replaced as the current record by
-  later rows, most recently the `115.8466634928202 tok/s` row above.
+  later rows, most recently the `117.91456485086059 tok/s` row above.
 
 Previous policy-compliant VDR2 submission, now superseded:
 
@@ -126,7 +152,7 @@ Previous policy-compliant VDR2 submission, now superseded:
   for tokens 1-100 after TTFT;
 - LocalMaxxing: `cmqwt1zk803ozqr01hctqss2z`;
 - status: still valid strict evidence, but replaced as the current record by
-  later rows, most recently the `115.8466634928202 tok/s` row above.
+  later rows, most recently the `117.91456485086059 tok/s` row above.
 
 Previous policy-compliant VDR2 submission, now superseded:
 
@@ -135,7 +161,7 @@ Previous policy-compliant VDR2 submission, now superseded:
   for tokens 1-100 after TTFT;
 - LocalMaxxing: `cmqwqzayr03o8qr01j6lgx93n`;
 - status: still valid strict evidence, but replaced as the current record by
-  later rows, most recently the `115.8466634928202 tok/s` row above.
+  later rows, most recently the `117.91456485086059 tok/s` row above.
 
 Previous policy-compliant VDR4 submission, now superseded:
 
@@ -144,7 +170,7 @@ Previous policy-compliant VDR4 submission, now superseded:
   for tokens 1-100 after TTFT;
 - LocalMaxxing: `cmqwnl2ag03lgqr01ch5bxknq`;
 - status: still valid strict evidence, but replaced as the current record by
-  later rows, most recently the `115.8466634928202 tok/s` row above.
+  later rows, most recently the `117.91456485086059 tok/s` row above.
 
 Previous realistic-suite local Q8 observation, now superseded:
 

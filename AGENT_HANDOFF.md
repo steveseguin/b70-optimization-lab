@@ -14,23 +14,25 @@ Primary target:
   for parallel research screens rather than TP4 unless explicitly testing a
   multi-GPU serving shape.
 - Best strict realistic-suite one-B70 result is
-  `115.8466634928202 tok/s` median generated-token throughput for tokens
+  `117.91456485086059 tok/s` median generated-token throughput for tokens
   1-100 after TTFT across the fixed cold prompt suite. Evidence:
-  `data/gemma4-q8-gpu1-selecteddown-bf16retest-control-full512-20260629T051323Z/summary.json`.
+  `data/gemma4-q8-gpu3-faon-vmm-ctx32768-full512-20260629T211437Z/summary.json`.
   It uses llama.cpp `c926ad098`, UD-Q8_K_XL target/verifier, Q4_0 MTP draft,
-  reordered-Q8 VDR2, `n_max=3`, `n_min=2`, `p_min=0.0475`,
+  reordered-Q8 VDR2, `FLASH_ATTN=on`, `CTX_SIZE=32768`,
+  `GGML_SYCL_ENABLE_VMM=1`, `n_max=3`, `n_min=2`, `p_min=0.0475`,
   `UBATCH_SIZE=1024`, `LLAMA_SYCL_F16_P021_SMALL_NCOLS=1`,
   `LLAMA_SPEC_VERIFY_BULK_SAMPLED_IDS=1`,
   `LLAMA_GEMMA4_MOE_FUSED_DOWN_WEIGHTED_SUM_REORDER_VDR2=1`,
   `cached_tokens=0` on every prompt, and
   `realistic_final_gate.passed=true`.
 - Representative / submitted status: this is the confirmed strict-gate VDR2
-  selected-down fused weighted-sum family. The current high is approved by
-  LocalMaxxing as `cmqyrpox4021dqk01co5o4fcw`. Four earlier full512
-  confirmations measured
-  `113.47081786263712`, `115.72789384447941`, `113.81540554086772`, and
-  `114.8109417270852 tok/s`; their initial submitted row
-  `cmqyo0jyt08ippk01vhiobdnm` remains valid support but is superseded. Prior
+  selected-down fused weighted-sum family, now with FA-on 32K/VMM. The current
+  high is approved by LocalMaxxing as `cmqzq5zu402troe01t774uyox`.
+  Same-identity confirmations measured `116.45776605647993`,
+  `117.41509141115063`, `115.08942949119734`, and
+  `117.45737477243767 tok/s`; the prior selected-down rows
+  `cmqyrpox4021dqk01co5o4fcw` and `cmqyo0jyt08ippk01vhiobdnm` remain valid
+  support but are superseded. Prior
   submitted rows
   `98.34046474459183` (`cmqxchyra03xmqr01b963gmi1`),
   `95.82453787677183` (`cmqx3687103v4qr01ace1ft3m`),
@@ -45,7 +47,7 @@ Primary target:
 - Latest full512 follow-up: fused selected-softmax into selected-down VDR2
   (`LLAMA_GEMMA4_MOE_FUSED_DOWN_SELECTED_SOFTMAX=1`) and the EOG-clip
   interaction were valid but lost. Best candidate was `111.90908727268967
-  tok/s` with EOG clip, below controls and below the `115.8466634928202` record.
+  tok/s` with EOG clip, below controls and below the `117.91456485086059` record.
   Do not submit or retest this interaction as a record lane. Evidence:
   `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260629-fused-selected-softmax-full512-negative.md`.
 - Latest strict128 source follow-up: adaptive bonus-row skipping is a closed
@@ -69,10 +71,13 @@ Primary target:
   unless a future design actually removes verifier rows or proves a cheaper
   exact candidate path. Evidence:
   `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260629-candidate-threshold-lmhead-no-go.md`.
-- Current context/service diagnostic split: keep the short-record recipe at
-  `ctx8192` and FA-off until a realistic-gate retest says otherwise. For
-  medium-long service, MTP with FA off remains useful through about `ctx24576`
-  / `ctx25600`, degrades around `ctx26624`, and cliffs by `ctx27648`. For true
+- Current context/service diagnostic split: the short-record recipe is now
+  also the FA-on 32K/VMM service profile after a realistic-gate retest. The
+  promoted row is `117.91456485086059 tok/s` with `FLASH_ATTN=on`,
+  `CTX_SIZE=32768`, and `GGML_SYCL_ENABLE_VMM=1`; LocalMaxxing
+  `cmqzq5zu402troe01t774uyox`. For medium-long service, MTP with FA off
+  remains useful through about `ctx24576` / `ctx25600`, degrades around
+  `ctx26624`, and cliffs by `ctx27648`. For true
   `ctx32768`, enable `FLASH_ATTN=on`: the same MTP stack reached
   `~102.7-103.2 tok/s` after TTFT at `27648`, `28672`, and `32768` on the
   synthetic ~11K-token diagnostic, with `cached_tokens=0`. These are not

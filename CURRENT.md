@@ -13,25 +13,28 @@ Current active optimization target:
   scores may guide optimization only; they are not headline throughput or
   LocalMaxxing evidence.
 - Best strict realistic-suite result so far:
-  `115.8466634928202 tok/s` median generated-token throughput for tokens
+  `117.91456485086059 tok/s` median generated-token throughput for tokens
   1-100 after TTFT across the fixed cold prompt suite. Evidence:
-  `data/gemma4-q8-gpu1-selecteddown-bf16retest-control-full512-20260629T051323Z/summary.json`.
+  `data/gemma4-q8-gpu3-faon-vmm-ctx32768-full512-20260629T211437Z/summary.json`.
   It uses llama.cpp `c926ad098`, UD-Q8_K_XL target/verifier, Q4_0 MTP draft,
-  reordered-Q8 VDR2, `n_max=3`, `n_min=2`, `p_min=0.0475`,
+  reordered-Q8 VDR2, `FLASH_ATTN=on`, `CTX_SIZE=32768`,
+  `GGML_SYCL_ENABLE_VMM=1`, `n_max=3`, `n_min=2`, `p_min=0.0475`,
   `UBATCH_SIZE=1024`, `LLAMA_SYCL_F16_P021_SMALL_NCOLS=1`,
   `LLAMA_SPEC_VERIFY_BULK_SAMPLED_IDS=1`,
   `LLAMA_GEMMA4_MOE_FUSED_DOWN_WEIGHTED_SUM_REORDER_VDR2=1`,
   `cached_tokens=0` on every prompt, and `realistic_final_gate.passed=true`.
 - Representative / submitted status:
-  the VDR2 selected-down fused weighted-sum path is the current
-  policy-compliant Gemma 26B Q8 LocalMaxxing submission. The retested current
-  high is approved as `cmqyrpox4021dqk01co5o4fcw`; the initial selected-down
+  the VDR2 selected-down fused weighted-sum path plus FA-on 32K/VMM is the
+  current policy-compliant Gemma 26B Q8 LocalMaxxing submission. The current
+  high is approved as `cmqzq5zu402troe01t774uyox`; the prior selected-down
+  repeat `cmqyrpox4021dqk01co5o4fcw` and initial selected-down
   confirmation `cmqyo0jyt08ippk01vhiobdnm` remains valid support.
-  Full-512 confirmation lanes measured `113.47081786263712`,
-  `115.72789384447941`, `113.81540554086772`, and
-  `114.8109417270852 tok/s`, all with `cached_tokens=0` and 512/512 canary
-  rows passing. The later BF16-retest control measured
-  `115.8466634928202 tok/s` and is the current high. The prior LocalMaxxing
+  Same-identity FA-on 32K/VMM confirmations measured `116.45776605647993`,
+  `117.41509141115063`, `115.08942949119734`, and
+  `117.45737477243767 tok/s`, all with `cached_tokens=0` and 512/512 canary
+  rows passing. Treat this as a small variance-class improvement; one
+  confirmation lane is below the previous `115.8466634928202` high, but 3/4
+  confirmations and the promoted row beat it under the fixed gate. The prior LocalMaxxing
   row `cmqxchyra03xmqr01b963gmi1` at `98.34046474459183 tok/s`, prior
   F16-p021 row
   `cmqx3687103v4qr01ace1ft3m`, earlier VDR2 submissions, and prior VDR4
@@ -43,14 +46,14 @@ Current active optimization target:
 - Recent non-promoted follow-up:
   `LLAMA_SPEC_VERIFY_CLIP_DRAFT_AT_EOG=1` was valid and trimmed real terminal
   draft work, but four full512 lanes topped out at `113.58569073629727 tok/s`,
-  below the current `115.8466634928202` record. Late-head bonus plus
+  below the current `117.91456485086059` record. Late-head bonus plus
   `LLAMA_SPEC_HEAD_FUSED_OUTPUT_ARGMAX=1` lost strict128. See
   `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260629-eogclip-and-spechead-negative.md`.
   Fusing selected-softmax directly into selected-down VDR2 was a valid
   strict128 small positive (`115.554` best flag-on), but the full512 promotion
   screen lost: best flag-on primary median was `111.90908727268967 tok/s`
   with EOG clip and `111.89648891729823 tok/s` without it, below both same-day
-  controls and the current `115.8466634928202` record. It is preserved
+  controls and the current `117.91456485086059` record. It is preserved
   default-off and not submitted. See
   `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260629-fused-down-selected-softmax-strict128.md`
   and

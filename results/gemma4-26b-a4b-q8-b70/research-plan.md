@@ -9,14 +9,15 @@ replicas on four GPUs for parallel research and aggregate service capacity.
 Best one-B70 Q8 strict result under the promotion gate:
 
 - result:
-  `data/gemma4-q8-gpu1-selecteddown-bf16retest-control-full512-20260629T051323Z/`;
-- primary metric: **115.8466634928202 tok/s** median generated-token
+  `data/gemma4-q8-gpu3-faon-vmm-ctx32768-full512-20260629T211437Z/`;
+- primary metric: **117.91456485086059 tok/s** median generated-token
   throughput for tokens 1-100 after TTFT across the fixed realistic suite;
-- p10 `102.5726047181403`, mean `114.57370008916365`, median full-512
-  after-TTFT `104.66140955057205`, median wall full-512
-  `100.6396791169625`, median TTFT `181.16679147351533 ms`;
+- p10 `107.80735938671545`, mean `118.8805550250879`, median full-512
+  after-TTFT `110.957638362282`, median wall full-512
+  `106.80689050225271`, median TTFT `180.16915302723646 ms`;
 - config: llama.cpp `c926ad098`, UD-Q8_K_XL target/verifier, Q4_0 MTP draft,
-  reordered-Q8 VDR2, `n_max=3`, `n_min=2`, `p_min=0.0475`,
+  reordered-Q8 VDR2, `FLASH_ATTN=on`, `CTX_SIZE=32768`,
+  `GGML_SYCL_ENABLE_VMM=1`, `n_max=3`, `n_min=2`, `p_min=0.0475`,
   `UBATCH_SIZE=1024`, `LLAMA_SYCL_F16_P021_SMALL_NCOLS=1`,
   `LLAMA_SPEC_VERIFY_BULK_SAMPLED_IDS=1`,
   `LLAMA_GEMMA4_MOE_FUSED_DOWN_WEIGHTED_SUM_REORDER_VDR2=1`,
@@ -26,10 +27,14 @@ Best one-B70 Q8 strict result under the promotion gate:
   `realistic_final_gate.passed=true`.
 
 This is the policy-compliant VDR2 selected-down fused weighted-sum transfer of
-the strict `n_max=3`, `n_min=2`, `UBATCH_SIZE=1024` family; approved
-LocalMaxxing ID `cmqyrpox4021dqk01co5o4fcw`. It repeated the previous
-selected-down record (`115.72789384447941 tok/s`, LocalMaxxing
-`cmqyo0jyt08ippk01vhiobdnm`) and supersedes the prior LocalMaxxing row
+the strict `n_max=3`, `n_min=2`, `UBATCH_SIZE=1024` family, with FA-on
+32K/VMM; approved LocalMaxxing ID `cmqzq5zu402troe01t774uyox`. Same-identity
+confirmations measured `116.45776605647993`, `117.41509141115063`,
+`115.08942949119734`, and `117.45737477243767 tok/s`, so treat it as a small
+variance-class improvement over the previous `115.8466634928202` high. It
+supersedes the prior selected-down rows (`115.8466634928202` /
+`cmqyrpox4021dqk01co5o4fcw` and `115.72789384447941` /
+`cmqyo0jyt08ippk01vhiobdnm`), the prior LocalMaxxing row
 `cmqxchyra03xmqr01b963gmi1` at `98.34046474459183 tok/s`, prior F16-p021
 `95.82453787677183 tok/s`, VDR2 `90.98312252660529`,
 `90.32179401019857`, and `89.45543282863798 tok/s` submissions, and prior
@@ -40,23 +45,23 @@ The older `100+`, `170+`, and `280+` rows remain useful diagnostics, but they
 are not representative real-world throughput unless revalidated by the fixed
 cold suite.
 
-2026-06-29 record-repeat variance: four additional full512 cold-suite repeats
+2026-06-29 pre-FA record-repeat variance: four additional full512 cold-suite repeats
 of the promoted recipe all passed gate/canary but did not beat the record:
 `113.810`, `113.227`, `107.329`, and `114.829 tok/s`. Keep the existing
-`115.8466634928202 tok/s` LocalMaxxing row as headline. See
+`115.8466634928202 tok/s` LocalMaxxing row as the then-current headline. See
 `../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260629-record-repeat-full512-variance.md`.
 
-2026-06-29 context/service split update: short-context decode remains the
-record lane, but the separate context diagnostics now have a practical profile
-split. With flash attention off, the current Q4_0 MTP draft stack is useful at
+2026-06-29 context/service split update: the fixed realistic-gate retest made
+FA-on 32K/VMM the current short-record recipe as well as the service profile.
+With flash attention off, the current Q4_0 MTP draft stack is useful at
 `CTX_SIZE=24576` / `25600` (`~73 tok/s` after TTFT on an ~11K actual prompt),
 degrades at `26624`, and falls off a cliff by `27648`. The follow-up FA-on
 screen fixed that service cliff: `FLASH_ATTN=on` with MTP reached
 `~102.7-103.2 tok/s` after TTFT at `CTX_SIZE=27648`, `28672`, and `32768` on
 the same diagnostic shape, with `cached_tokens=0` and 8/8 canary rows. These are
 synthetic unique-prompt context diagnostics, not LocalMaxxing headline rows;
-do not change the FA-off short-record recipe without a fixed realistic-gate
-retest.
+the separate fixed realistic retest is recorded in
+`20260629-faon-vmm-ctx32768-record.md`.
 See
 `../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260629-context-threshold-mtp-vs-nospec.md`.
 
@@ -110,7 +115,7 @@ route under `LLAMA_SYCL_MUL_MAT_ARGMAX_REORDER_NCOLS=1` attempted to make
 LM-head weight loads across verifier rows. It passed the fixed cold gate and
 512/512 canary, but did not beat the regular verifier path:
 `109.94207305976514 tok/s` versus same-window control
-`110.18642209569018 tok/s`, both below the promoted `115.8466634928202`
+`110.18642209569018 tok/s`, both below the promoted `117.91456485086059`
 full512 record. Decision: negative, keep default-off; do not promote or submit.
 See
 `../../patches/gemma4-26b-a4b-q8-b70/20260629-compact-argmax-reorder-ncols-negative.md`.
@@ -153,7 +158,7 @@ fixed cold gate plus 256 canary rows, but lost the strict128 headline metric
 against the paired control: `111.89428679462038` vs
 `112.52074349461066 tok/s` median tokens 1-100 after TTFT. Full-output and wall
 medians were slightly better, but this is not the promotion metric and remains
-below the `115.8466634928202 tok/s` record. A follow-up node-profile run proved
+below the `117.91456485086059 tok/s` record. A follow-up node-profile run proved
 the new route was active:
 `MUL_MAT_ARGMAX:spec_verify_regular_mmvq_top1_epilogue_token_rows`, but it was
 still the hottest node at ~`1.325 ms/call`. Decision: closed negative for this
@@ -200,7 +205,7 @@ quantizer and fixing the SYCL support predicate for reordered down weights. The
 first candidate crashed because the backend-only op was assigned to CPU; after
 the placement fix it passed strict128 quality, but did not clearly beat paired
 controls (`115.164` / `113.306` tok/s versus controls `113.753` / `114.919`),
-and stayed below the `115.8466634928202` full512 record. Decision: closed
+and stayed below the `117.91456485086059` full512 record. Decision: closed
 negative/inconclusive; keep default-off and do not run full512 promotion as-is.
 See
 `../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260629-geglu-vdr2-selected-down-negative.md`.
@@ -210,7 +215,7 @@ were screened after the selected-down record. `LLAMA_SPEC_VERIFY_CLIP_DRAFT_AT_E
 is valid and real (`eog_trim calls=512 tokens=640` in the profiled strict128
 run), but it did not beat the full512 record under the primary fresh metric:
 best EOG full512 lane was `113.58569073629727 tok/s` versus the current
-`115.8466634928202`. It may remain useful as a default-off terminal cleanup,
+`117.91456485086059`. It may remain useful as a default-off terminal cleanup,
 but it is not a LocalMaxxing record. The late-head bonus plus dedicated
 SPEC_HEAD fused argmax branch (`LLAMA_SPEC_VERIFY_LATE_HEAD_BONUS=1` +
 `LLAMA_SPEC_HEAD_FUSED_OUTPUT_ARGMAX=1`) lost in both strict128 lanes
@@ -240,7 +245,7 @@ win: GPU1 flag-on `114.762` versus GPU0 control `113.943`, and GPU3 flag-on
 `115.554` versus GPU2 control `113.967`. This is a valid small positive in the
 intended verifier-MoE boundary, but **not promoted** because the best strict128
 candidate remained below the current full512 record
-`115.8466634928202 tok/s`. Keep the flag default-off and preserve the patch;
+`117.91456485086059 tok/s`. Keep the flag default-off and preserve the patch;
 the later full512 promotion screen was run and lost. Full512 results:
 
 - control GPU0:
@@ -404,7 +409,7 @@ strict record. The best Q8_0 screen,
 `88.94881774985208` and `89.89234269084307`; the best deeper row was
 `n_max=4`/`n_min=2` at `90.27678402019421`, still below both the old
 `UD-Q8_K_XL` record (`98.34046474459183`) and the current
-`115.8466634928202` record. Keep Q8_0 as a compatibility/control
+`117.91456485086059` record. Keep Q8_0 as a compatibility/control
 lane, not a promoted LocalMaxxing row. See
 `../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260627T2144-q80-target-strict-negative.md`.
 
@@ -1463,7 +1468,7 @@ Text speed is first. After text baseline:
     `n_min=2`, `p_min=0.0475`, `UBATCH_SIZE=1024`), official draft swaps to
     Q4_K_M, Q5_K_M, Q6_K, and Q8_0 all passed the fresh realistic gate but
     stayed below the then-current `98.34046474459183 tok/s` record and far below
-    the current `115.8466634928202 tok/s` record. Closest rows were Q8_0 at
+    the current `117.91456485086059 tok/s` record. Closest rows were Q8_0 at
     `88.245438 tok/s` and Q5_K_M at `88.109559 tok/s`; Q4_K_M and Q6_K
     were lower. A later Q2_K screen also lost (`85.779-88.903 tok/s`) versus a
     same-window Q4_0 control (`95.282 tok/s`). Keep Q4_0 as the promoted default
@@ -1481,7 +1486,7 @@ Text speed is first. After text baseline:
 20. **Preserve the current source stack before compact-argmax work.** The
     current llama.cpp Gemma record source tree contains the accumulated VDR2
     selected-down, sampled-ID, Q8 reorder, MTP, and profiling changes that led
-    to the `115.8466634928202 tok/s` valid record plus later negative screens.
+    to the `117.91456485086059 tok/s` valid record plus later negative screens.
     Before starting the next source lane (compact LM-head argmax / verifier
     cost reduction), snapshot the full source diff at
     `../../patches/gemma4-26b-a4b-q8-b70/20260629-current-source-stack-before-compact-argmax.patch`

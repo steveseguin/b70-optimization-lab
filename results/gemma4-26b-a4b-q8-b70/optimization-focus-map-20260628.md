@@ -9,11 +9,12 @@ Gemma sweep history and a triage of recent Grok/X.com leads.
 
 ## At A Glance
 
-Current valid record: `115.8466634928202 tok/s` median generated-token
+Current valid record: `117.91456485086059 tok/s` median generated-token
 throughput for tokens 1-100 after TTFT on the fixed realistic cold suite,
 with `cached_tokens=0` on every prompt. The record identity is llama.cpp
 `c926ad098`, `UD-Q8_K_XL` target/verifier, Q4_0 MTP draft, reordered-Q8 VDR2,
-`n_max=3`, `n_min=2`, `p_min=0.0475`, `UBATCH_SIZE=1024`,
+`FLASH_ATTN=on`, `CTX_SIZE=32768`, `GGML_SYCL_ENABLE_VMM=1`, `n_max=3`,
+`n_min=2`, `p_min=0.0475`, `UBATCH_SIZE=1024`,
 `LLAMA_SYCL_F16_P021_SMALL_NCOLS=1`,
 `LLAMA_SPEC_VERIFY_BULK_SAMPLED_IDS=1`, and
 `LLAMA_GEMMA4_MOE_FUSED_DOWN_WEIGHTED_SUM_REORDER_VDR2=1`
@@ -64,8 +65,8 @@ Latest confirmed state:
   `c926ad098` with broad dirty source changes across speculative sampling,
   Gemma4 graph/model code, and SYCL/MMVQ kernels. Do not reset or rebase it
   while an optimizer is running.
-- The current promoted Gemma Q8 record is now `115.8466634928202 tok/s`
-  via the VDR2 selected-down fused weighted-sum path.
+- The current promoted Gemma Q8 record is now `117.91456485086059 tok/s`
+  via the VDR2 selected-down fused weighted-sum path plus FA-on 32K/VMM.
 
 Recent useful progress:
 
@@ -106,7 +107,7 @@ Recent closed negatives:
   `LLAMA_GEMMA4_MOE_FUSED_DOWN_SELECTED_SOFTMAX=1` passed the fixed cold
   strict128 gate and 512/512 canary rows on both flag-on lanes. It was a real
   small paired win (`114.762` vs `113.943`, `115.554` vs `113.967`) but still
-  below the promoted `115.8466634928202 tok/s` full512 record. The later
+  below the promoted `117.91456485086059 tok/s` full512 record. The later
   full512 promotion screen was valid but lost (`111.896` flag-on, `111.909`
   flag-on + EOG clip, controls `112.220` / `112.997`). Preserve it as a
   default-off archived mechanism; do not retest this interaction as a record
@@ -831,7 +832,7 @@ Tested the exact late head-only bonus verifier path:
 - metric: **96.91021564463527 tok/s** median tokens 1-100 after TTFT.
 
 Do not promote. This is below both the then-current valid
-`98.34046474459183 tok/s` record and the newer `115.8466634928202 tok/s`
+`98.34046474459183 tok/s` record and the newer `117.91456485086059 tok/s`
 record. The standalone one-row bonus head is probably correct but not cheap:
 the extra graph/scheduler work offsets the saved verifier output row. If this
 idea is revisited, it needs to be fused into the existing verifier/output path,
