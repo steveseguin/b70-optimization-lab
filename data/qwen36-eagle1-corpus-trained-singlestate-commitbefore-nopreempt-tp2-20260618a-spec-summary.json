@@ -1,0 +1,392 @@
+{
+  "traces": [
+    {
+      "path": "/home/steve/llm-optimizations/data/qwen36-eagle1-corpus-trained-singlestate-commitbefore-nopreempt-tp2-20260618a-spec-trace.jsonl",
+      "rows": 46,
+      "malformed_rows": 0,
+      "requests": 2,
+      "draft_tokens": 46,
+      "accepted": 34,
+      "rejected": 12,
+      "accept_rate_pct": 73.91304347826087,
+      "reject_rate_pct": 26.08695652173913,
+      "full_accept_rows": 34,
+      "full_reject_rows": 12,
+      "suppressed_bonus_rows": 0,
+      "full_accept_row_pct": 73.91304347826087,
+      "full_reject_row_pct": 26.08695652173913,
+      "suppressed_bonus_row_pct": 0.0,
+      "repeated_scheduled_rows": 0,
+      "max_full_accept_streak": 22,
+      "accept_count_histogram": {
+        "0": 12,
+        "1": 34
+      },
+      "top_scheduled_pairs": [
+        {
+          "tokens": "279",
+          "count": 32
+        },
+        {
+          "tokens": "198",
+          "count": 4
+        },
+        {
+          "tokens": "8160",
+          "count": 4
+        },
+        {
+          "tokens": "248068",
+          "count": 2
+        },
+        {
+          "tokens": "760",
+          "count": 2
+        },
+        {
+          "tokens": "3817",
+          "count": 2
+        }
+      ],
+      "top_generated_first_tokens": [
+        {
+          "token": "279",
+          "count": 28
+        },
+        {
+          "token": "198",
+          "count": 2
+        },
+        {
+          "token": "248068",
+          "count": 2
+        },
+        {
+          "token": "760",
+          "count": 2
+        }
+      ],
+      "request_ids": [
+        "cmpl-990d78ecba4c219d-0-872276af",
+        "cmpl-bf38c68e2edeb6ad-0-86a299b6"
+      ],
+      "top_requests_by_draft": [
+        {
+          "req_id": "cmpl-990d78ecba4c219d-0-872276af",
+          "rows": 31,
+          "draft_tokens": 31,
+          "accepted": 25,
+          "rejected": 6,
+          "first_ts": 1781749094.1406777,
+          "last_ts": 1781749154.8819444,
+          "min_output_tokens": 1,
+          "max_output_tokens": 31,
+          "full_accept_rows": 25,
+          "full_reject_rows": 6,
+          "max_full_accept_streak": 22,
+          "repeated_scheduled_rows": 0,
+          "suppressed_bonus_rows": 0,
+          "top_scheduled_pairs": [
+            {
+              "tokens": "279",
+              "count": 24
+            },
+            {
+              "tokens": "198",
+              "count": 2
+            },
+            {
+              "tokens": "8160",
+              "count": 2
+            },
+            {
+              "tokens": "248068",
+              "count": 1
+            },
+            {
+              "tokens": "760",
+              "count": 1
+            }
+          ],
+          "min_computed_after_reject": 127,
+          "max_computed_after_reject": 157,
+          "min_tokens_after_output": 128,
+          "max_tokens_after_output": 158,
+          "accept_rate": 80.64516129032258
+        },
+        {
+          "req_id": "cmpl-bf38c68e2edeb6ad-0-86a299b6",
+          "rows": 15,
+          "draft_tokens": 15,
+          "accepted": 9,
+          "rejected": 6,
+          "first_ts": 1781749157.094922,
+          "last_ts": 1781749185.6854053,
+          "min_output_tokens": 1,
+          "max_output_tokens": 15,
+          "full_accept_rows": 9,
+          "full_reject_rows": 6,
+          "max_full_accept_streak": 6,
+          "repeated_scheduled_rows": 0,
+          "suppressed_bonus_rows": 0,
+          "top_scheduled_pairs": [
+            {
+              "tokens": "279",
+              "count": 8
+            },
+            {
+              "tokens": "198",
+              "count": 2
+            },
+            {
+              "tokens": "8160",
+              "count": 2
+            },
+            {
+              "tokens": "248068",
+              "count": 1
+            },
+            {
+              "tokens": "760",
+              "count": 1
+            }
+          ],
+          "min_computed_after_reject": 127,
+          "max_computed_after_reject": 141,
+          "min_tokens_after_output": 128,
+          "max_tokens_after_output": 142,
+          "accept_rate": 60.0
+        }
+      ],
+      "top_requests_by_rejects": [
+        {
+          "req_id": "cmpl-990d78ecba4c219d-0-872276af",
+          "rows": 31,
+          "draft_tokens": 31,
+          "accepted": 25,
+          "rejected": 6,
+          "first_ts": 1781749094.1406777,
+          "last_ts": 1781749154.8819444,
+          "min_output_tokens": 1,
+          "max_output_tokens": 31,
+          "full_accept_rows": 25,
+          "full_reject_rows": 6,
+          "max_full_accept_streak": 22,
+          "repeated_scheduled_rows": 0,
+          "suppressed_bonus_rows": 0,
+          "top_scheduled_pairs": [
+            {
+              "tokens": "279",
+              "count": 24
+            },
+            {
+              "tokens": "198",
+              "count": 2
+            },
+            {
+              "tokens": "8160",
+              "count": 2
+            },
+            {
+              "tokens": "248068",
+              "count": 1
+            },
+            {
+              "tokens": "760",
+              "count": 1
+            }
+          ],
+          "min_computed_after_reject": 127,
+          "max_computed_after_reject": 157,
+          "min_tokens_after_output": 128,
+          "max_tokens_after_output": 158,
+          "accept_rate": 80.64516129032258
+        },
+        {
+          "req_id": "cmpl-bf38c68e2edeb6ad-0-86a299b6",
+          "rows": 15,
+          "draft_tokens": 15,
+          "accepted": 9,
+          "rejected": 6,
+          "first_ts": 1781749157.094922,
+          "last_ts": 1781749185.6854053,
+          "min_output_tokens": 1,
+          "max_output_tokens": 15,
+          "full_accept_rows": 9,
+          "full_reject_rows": 6,
+          "max_full_accept_streak": 6,
+          "repeated_scheduled_rows": 0,
+          "suppressed_bonus_rows": 0,
+          "top_scheduled_pairs": [
+            {
+              "tokens": "279",
+              "count": 8
+            },
+            {
+              "tokens": "198",
+              "count": 2
+            },
+            {
+              "tokens": "8160",
+              "count": 2
+            },
+            {
+              "tokens": "248068",
+              "count": 1
+            },
+            {
+              "tokens": "760",
+              "count": 1
+            }
+          ],
+          "min_computed_after_reject": 127,
+          "max_computed_after_reject": 141,
+          "min_tokens_after_output": 128,
+          "max_tokens_after_output": 142,
+          "accept_rate": 60.0
+        }
+      ],
+      "top_requests_by_full_accept_streak": [
+        {
+          "req_id": "cmpl-990d78ecba4c219d-0-872276af",
+          "rows": 31,
+          "draft_tokens": 31,
+          "accepted": 25,
+          "rejected": 6,
+          "first_ts": 1781749094.1406777,
+          "last_ts": 1781749154.8819444,
+          "min_output_tokens": 1,
+          "max_output_tokens": 31,
+          "full_accept_rows": 25,
+          "full_reject_rows": 6,
+          "max_full_accept_streak": 22,
+          "repeated_scheduled_rows": 0,
+          "suppressed_bonus_rows": 0,
+          "top_scheduled_pairs": [
+            {
+              "tokens": "279",
+              "count": 24
+            },
+            {
+              "tokens": "198",
+              "count": 2
+            },
+            {
+              "tokens": "8160",
+              "count": 2
+            },
+            {
+              "tokens": "248068",
+              "count": 1
+            },
+            {
+              "tokens": "760",
+              "count": 1
+            }
+          ],
+          "min_computed_after_reject": 127,
+          "max_computed_after_reject": 157,
+          "min_tokens_after_output": 128,
+          "max_tokens_after_output": 158,
+          "accept_rate": 80.64516129032258
+        },
+        {
+          "req_id": "cmpl-bf38c68e2edeb6ad-0-86a299b6",
+          "rows": 15,
+          "draft_tokens": 15,
+          "accepted": 9,
+          "rejected": 6,
+          "first_ts": 1781749157.094922,
+          "last_ts": 1781749185.6854053,
+          "min_output_tokens": 1,
+          "max_output_tokens": 15,
+          "full_accept_rows": 9,
+          "full_reject_rows": 6,
+          "max_full_accept_streak": 6,
+          "repeated_scheduled_rows": 0,
+          "suppressed_bonus_rows": 0,
+          "top_scheduled_pairs": [
+            {
+              "tokens": "279",
+              "count": 8
+            },
+            {
+              "tokens": "198",
+              "count": 2
+            },
+            {
+              "tokens": "8160",
+              "count": 2
+            },
+            {
+              "tokens": "248068",
+              "count": 1
+            },
+            {
+              "tokens": "760",
+              "count": 1
+            }
+          ],
+          "min_computed_after_reject": 127,
+          "max_computed_after_reject": 141,
+          "min_tokens_after_output": 128,
+          "max_tokens_after_output": 142,
+          "accept_rate": 60.0
+        }
+      ]
+    }
+  ],
+  "metric_artifacts": [
+    {
+      "label": "qwen36-eagle1-corpus-trained-singlestate-commitbefore-nopreempt-naturalchat16-tp2-20260618a-measure",
+      "path": "/home/steve/llm-optimizations/data/qwen36-eagle1-corpus-trained-singlestate-commitbefore-nopreempt-naturalchat16-tp2-20260618a-measure.json",
+      "prompt_preset": "natural-chat",
+      "endpoint": "completions",
+      "repeats": 1,
+      "records": 1,
+      "has_request_ids": true,
+      "request_ids": [
+        "cmpl-bf38c68e2edeb6ad"
+      ],
+      "has_request_timestamps": true,
+      "request_window": {
+        "start": 1781749154.8895886,
+        "finish": 1781749185.68665
+      },
+      "corrected_tok_s_mean": 0.5246462514820988,
+      "corrected_tok_s_min": 0.5246462514820988,
+      "corrected_tok_s_max": 0.5246462514820988,
+      "e2e_tok_s_mean": 0.5195308968208608,
+      "output_tokens": [
+        16
+      ],
+      "output_tokens_mean": 16.0,
+      "output_tokens_min": 16,
+      "output_tokens_max": 16,
+      "has_full_text": true,
+      "repeat_text_stable": true,
+      "text_hashes": [
+        "e479aebdf8c059de857145358e1bd7453a70e3032ce81fa586e0159c690d2b2f"
+      ]
+    }
+  ],
+  "metric_comparisons": [],
+  "quality_artifacts": [],
+  "joinability": {
+    "request_id_join_possible": true,
+    "exact_request_id_join_possible": false,
+    "prefix_request_id_join_possible": true,
+    "timestamp_window_join_possible": true,
+    "trace_request_count": 2,
+    "artifact_request_count": 1,
+    "exact_match_count": 0,
+    "prefix_match_count": 1,
+    "prefix_matches": [
+      {
+        "trace_id": "cmpl-bf38c68e2edeb6ad-0-86a299b6",
+        "artifact_id": "cmpl-bf38c68e2edeb6ad"
+      }
+    ],
+    "note": "Trace rows can be joined to artifacts by request-id prefix; scheduler ids append an internal suffix."
+  }
+}

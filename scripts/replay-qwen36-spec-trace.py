@@ -40,7 +40,20 @@ def load_trace(path: Path) -> tuple[list[dict[str, Any]], int]:
 def decode_ids(tokenizer: Any | None, token_ids: list[int]) -> str | None:
     if tokenizer is None:
         return None
-    return tokenizer.decode(token_ids, skip_special_tokens=False)
+    try:
+        normalized = [int(token_id) for token_id in token_ids]
+    except (TypeError, ValueError):
+        return "<invalid_token_ids>"
+    if any(token_id < 0 for token_id in normalized):
+        preview = ",".join(str(token_id) for token_id in normalized[:16])
+        suffix = ",..." if len(normalized) > 16 else ""
+        return f"<invalid_token_ids:{preview}{suffix}>"
+    try:
+        return tokenizer.decode(normalized, skip_special_tokens=False)
+    except Exception as exc:
+        preview = ",".join(str(token_id) for token_id in normalized[:16])
+        suffix = ",..." if len(normalized) > 16 else ""
+        return f"<decode_error:{type(exc).__name__}:{preview}{suffix}>"
 
 
 def int_list(value: Any) -> list[int]:
@@ -119,12 +132,35 @@ def accounting_check(
     if suppressed_count is None:
         suppressed_count = 1 if row.get("suppressed_bonus_token_id") is not None else 0
     suppressed_count = int(suppressed_count or 0)
-    expected = -(num_rejected + suppressed_count)
+    suppressed_replacement_count = int(row.get("num_suppressed_replacement_tokens") or 0)
+    if row.get("recompute_suppressed_replacement_row"):
+        expected = -int(row.get("num_tokens_scheduled") or 0)
+        reason = "recompute_suppressed_replacement_row"
+    elif row.get("recompute_suppressed_bonus_row"):
+        expected = -int(row.get("num_tokens_scheduled") or 0)
+        reason = "recompute_suppressed_bonus_row"
+    elif (
+        row.get("restore_draft_full_accept_gdn_state")
+        and int(row.get("num_draft_tokens") or 0) > 0
+        and int(row.get("num_accepted") or 0)
+        == int(row.get("num_draft_tokens") or 0)
+        and num_rejected == 0
+    ):
+        expected = -int(row.get("num_tokens_scheduled") or 0)
+        reason = "restore_draft_full_accept_gdn_state"
+    elif row.get("restore_draft_partial_reject_gdn_state") and num_rejected > 0:
+        expected = -int(row.get("num_tokens_scheduled") or 0)
+        reason = "restore_draft_partial_reject_gdn_state"
+    else:
+        expected = -(num_rejected + suppressed_count + suppressed_replacement_count)
+        reason = "rejected_plus_suppressed"
     return {
         "expected_computed_delta": expected,
         "actual_computed_delta": actual,
         "num_rejected": num_rejected,
         "num_suppressed_bonus_tokens": suppressed_count,
+        "num_suppressed_replacement_tokens": suppressed_replacement_count,
+        "reason": reason,
         "matches": actual == expected,
     }
 
@@ -217,7 +253,7 @@ def summarize_request(
         scheduled = int_list(row.get("scheduled_spec_token_ids"))
         generated = int_list(row.get("generated_token_ids"))
         emitted = int_list(row.get("emitted_token_ids"))
-        if not emitted and generated:
+        if "emitted_token_ids" not in row and generated:
             emitted = generated
         suppressed = row.get("suppressed_bonus_token_id")
         suppressed_int = int(suppressed) if suppressed is not None else None
@@ -229,11 +265,13 @@ def summarize_request(
 
         next_row = rows[index + 1] if index + 1 < len(rows) else None
         followup = None
-        if suppressed_int is not None and next_row is not None:
+        recompute_suppressed_bonus = bool(row.get("recompute_suppressed_bonus"))
+        if (suppressed_int is not None and next_row is not None
+                and not recompute_suppressed_bonus):
             next_scheduled = int_list(next_row.get("scheduled_spec_token_ids"))
             next_generated = int_list(next_row.get("generated_token_ids"))
             next_emitted = int_list(next_row.get("emitted_token_ids"))
-            if not next_emitted and next_generated:
+            if "emitted_token_ids" not in next_row and next_generated:
                 next_emitted = next_generated
             next_first = next_generated[0] if next_generated else None
             next_scheduled_first = next_scheduled[0] if next_scheduled else None
@@ -314,6 +352,7 @@ def summarize_request(
                 if suppressed_int is not None
                 else None
             ),
+            "recompute_suppressed_bonus": recompute_suppressed_bonus,
             "followup_check": followup,
             "state_transition": state_transition,
             "accounting_check": row_accounting_check,

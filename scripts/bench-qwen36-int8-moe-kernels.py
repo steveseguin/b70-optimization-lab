@@ -10,10 +10,12 @@ next.
 from __future__ import annotations
 
 import argparse
+from contextlib import contextmanager
 import json
 import math
 import os
 import re
+import sys
 from pathlib import Path
 from typing import Any
 
@@ -24,6 +26,7 @@ from vllm_xpu_kernels.fused_moe_interface import (
     _normalize_int8_weight_scales,
     _per_token_quant_int8,
     fused_moe_activation,
+    ref_fused_moe,
     xpu_fused_moe,
 )
 
@@ -335,6 +338,12 @@ def make_prologue_scratch(
         "active_expert_ids": torch.empty((num_experts),
                                          device=device,
                                          dtype=torch.int32),
+        "onednn_offsets": torch.empty((num_experts),
+                                      device=device,
+                                      dtype=torch.int32),
+        "topk_ids_i32": torch.empty((rows, topk),
+                                    device=device,
+                                    dtype=torch.int32),
         "num_active_experts": 0,
         "output": torch.empty((rows, hidden_size), device=device, dtype=dtype),
         "gemm1_output": torch.empty((num_moe_inputs, 2 * inter_size),
@@ -388,6 +397,119 @@ def record_call(fn):
     return result, start, end
 
 
+@contextmanager
+def temporary_env(updates: dict[str, str | None]):
+    previous = {key: os.environ.get(key) for key in updates}
+    try:
+        for key, value in updates.items():
+            if value is None:
+                os.environ.pop(key, None)
+            else:
+                os.environ[key] = value
+        yield
+    finally:
+        for key, value in previous.items():
+            if value is None:
+                os.environ.pop(key, None)
+            else:
+                os.environ[key] = value
+
+
+def max_abs_diff(left: torch.Tensor | None,
+                 right: torch.Tensor | None) -> float | None:
+    if left is None or right is None:
+        return None
+    return float((left - right).abs().max().item())
+
+
+def build_synthetic_topk_ids(
+    *,
+    rows: int,
+    topk: int,
+    num_experts: int,
+    mode: str,
+    device: str,
+) -> torch.Tensor:
+    if mode == "uniform":
+        ids = (
+            torch.arange(rows * topk, device=device, dtype=torch.int64) %
+            num_experts
+        ).view(rows, topk)
+        return ids.contiguous()
+
+    if mode == "hot_skew":
+        hot_prefix = min(4, topk, num_experts)
+        hot_pool = min(num_experts, max(topk + 8, 16))
+        rows_out: list[list[int]] = []
+        for row in range(rows):
+            selected = list(range(hot_prefix))
+            cursor = (row * 5) % max(1, hot_pool - hot_prefix)
+            candidate = hot_prefix + cursor
+            while len(selected) < topk:
+                expert = candidate % hot_pool
+                if expert not in selected:
+                    selected.append(expert)
+                candidate += 3
+            rows_out.append(selected)
+        return torch.tensor(rows_out, device=device, dtype=torch.int64)
+
+    raise ValueError(f"Unsupported synthetic route mode: {mode}")
+
+
+def measure_graph_replay_us(
+    name: str,
+    fn,
+    *,
+    warmup: int,
+    iterations: int,
+) -> dict[str, Any]:
+    if not hasattr(torch.xpu, "XPUGraph") or not hasattr(torch.xpu, "graph"):
+        return {
+            "name": name,
+            "status": "unsupported",
+            "us_mean": None,
+            "iterations": 0,
+            "warmup": warmup,
+        }
+
+    try:
+        for _ in range(warmup):
+            fn()
+        torch.xpu.synchronize()
+
+        graph = torch.xpu.XPUGraph()
+        with torch.xpu.graph(graph):
+            fn()
+        torch.xpu.synchronize()
+
+        timings = []
+        for _ in range(iterations):
+            start, end = make_events()
+            start.record()
+            graph.replay()
+            end.record()
+            torch.xpu.synchronize()
+            timings.append(elapsed_us(start, end))
+
+        return {
+            "name": name,
+            "status": "executed",
+            "us_mean": sum(timings) / max(1, len(timings)),
+            "iterations": iterations,
+            "warmup": warmup,
+        }
+    except Exception as exc:  # noqa: BLE001 - graph failures are data.
+        return {
+            "name": name,
+            "status": "error",
+            "us_mean": None,
+            "iterations": 0,
+            "warmup": warmup,
+            "error_type": type(exc).__name__,
+            "error": str(exc),
+        }
+
+
 def make_inputs(
     *,
     rows: int,
@@ -398,6 +520,7 @@ def make_inputs(
     dtype: torch.dtype,
     device: str,
     seed: int,
+    synthetic_route_mode: str,
     route_topk_rows: list[list[int]] | None = None,
     route_start_index: int = 0,
 ) -> dict[str, torch.Tensor]:
@@ -446,10 +569,13 @@ def make_inputs(
                                 device=device,
                                 dtype=torch.int64)
     else:
-        topk_ids = (
-            torch.arange(rows * topk, device=device, dtype=torch.int64) %
-            num_experts
-        ).view(rows, topk)
+        topk_ids = build_synthetic_topk_ids(
+            rows=rows,
+            topk=topk,
+            num_experts=num_experts,
+            mode=synthetic_route_mode,
+            device=device,
+        )
     topk_weights = torch.rand((rows, topk),
                               device=device,
                               dtype=torch.float32)
@@ -626,7 +752,7 @@ def make_scratch(
 
 def make_xpu_scratch(scratch: dict[str, torch.Tensor]) -> dict[str, torch.Tensor]:
     """Adapt the manual scratch dict to xpu_fused_moe's scratch schema."""
-    return {
+    xpu_scratch = {
         "remapped_hidden_states": scratch["remapped_hidden_states"],
         "gemm1_output": scratch["gemm1_output"],
         "act_output": scratch["act_output"],
@@ -638,6 +764,13 @@ def make_xpu_scratch(scratch: dict[str, torch.Tensor]) -> dict[str, torch.Tensor
         "rows_per_expert": scratch["rows_per_expert"],
         "unpermuted_row_to_permuted_row": scratch["unpermuted"],
     }
+    if "workspace" in scratch:
+        xpu_scratch["prologue_workspace"] = scratch["workspace"]
+    if "expert_offsets" in scratch:
+        xpu_scratch["w8a8_offsets"] = scratch["expert_offsets"]
+    if "active_expert_ids" in scratch:
+        xpu_scratch["active_expert_ids"] = scratch["active_expert_ids"]
+    return xpu_scratch
 
 
 def manual_int8_moe_preallocated_once(
@@ -728,9 +861,18 @@ def manual_int8_moe_fused_prologue_once(
     scratch: dict[str, Any],
     use_offset_gemm: bool = False,
     use_active_offset_gemm: bool = False,
+    events: dict[str, tuple[torch.xpu.Event, torch.xpu.Event]] | None = None,
 ) -> torch.Tensor:
     hidden_size = hidden_states.shape[1]
     inter_size = w13.shape[-1] // 2
+
+    def run_stage(label: str, fn):
+        if events is None:
+            return fn()
+        result, start, end = record_call(fn)
+        events[label] = (start, end)
+        return result
+
     offset_op = getattr(
         torch.ops._xpu_C,
         "cutlass_grouped_gemm_w8a8_int8_offsets_interface",
@@ -750,6 +892,312 @@ def manual_int8_moe_fused_prologue_once(
             "cutlass_grouped_gemm_w8a8_int8_active_offsets_interface is not available"
         )
 
+    if events is None:
+        torch.ops._moe_C.fused_moe_prologue(
+            input=hidden_states,
+            input_scales=None,
+            token_selected_experts=topk_ids,
+            token_final_scales=topk_weights,
+            workspace=scratch["workspace"],
+            hidden_size=hidden_size,
+            inter_size=inter_size,
+            block_k=1,
+            ep_rank=0,
+            ep_size=1,
+            num_experts_on_rank=num_experts,
+        )
+        expert_offsets = scratch["expert_offsets"]
+        if not use_offset_gemm and not use_active_offset_gemm:
+            scratch["rows_per_expert"].copy_(
+                (expert_offsets[1:1 + num_experts] -
+                 expert_offsets[:num_experts]).to(torch.int32))
+
+        gemm1_a, gemm1_a_scales = _per_token_quant_int8_maybe_out(
+            scratch["remapped_hidden_states"],
+            scratch.get("gemm1_a"),
+            scratch.get("gemm1_a_scales"),
+        )
+        gemm1_scales = _normalize_int8_weight_scales(w13_scales,
+                                                     2 * inter_size)
+        if use_active_offset_gemm:
+            active_offset_op(
+                ptr_A=gemm1_a,
+                ptr_A_scales=gemm1_a_scales,
+                ptr_B=w13,
+                ptr_B_scales=gemm1_scales,
+                ptr_bias=None,
+                ptr_D=scratch["gemm1_output"],
+                expert_first_token_offset=expert_offsets,
+                active_expert_ids=scratch["active_expert_ids"],
+                N=2 * inter_size,
+                K=hidden_size,
+                num_experts=num_experts,
+                num_active_experts=int(scratch["num_active_experts"]),
+            )
+        elif use_offset_gemm:
+            offset_op(
+                ptr_A=gemm1_a,
+                ptr_A_scales=gemm1_a_scales,
+                ptr_B=w13,
+                ptr_B_scales=gemm1_scales,
+                ptr_bias=None,
+                ptr_D=scratch["gemm1_output"],
+                expert_first_token_offset=expert_offsets,
+                N=2 * inter_size,
+                K=hidden_size,
+                num_experts=num_experts,
+            )
+        else:
+            torch.ops._xpu_C.cutlass_grouped_gemm_w8a8_int8_interface(
+                ptr_A=gemm1_a,
+                ptr_A_scales=gemm1_a_scales,
+                ptr_B=w13,
+                ptr_B_scales=gemm1_scales,
+                ptr_bias=None,
+                ptr_D=scratch["gemm1_output"],
+                rows_per_expert=scratch["rows_per_expert"],
+                N=2 * inter_size,
+                K=hidden_size,
+                num_experts=num_experts,
+            )
+        fused_moe_activation(scratch["act_output"], scratch["gemm1_output"],
+                             "silu")
+        gemm2_a, gemm2_a_scales = _per_token_quant_int8_maybe_out(
+            scratch["act_output"],
+            scratch.get("gemm2_a"),
+            scratch.get("gemm2_a_scales"),
+        )
+        gemm2_scales = _normalize_int8_weight_scales(w2_scales, hidden_size)
+        if use_active_offset_gemm:
+            active_offset_op(
+                ptr_A=gemm2_a,
+                ptr_A_scales=gemm2_a_scales,
+                ptr_B=w2,
+                ptr_B_scales=gemm2_scales,
+                ptr_bias=None,
+                ptr_D=scratch["gemm2_output"],
+                expert_first_token_offset=expert_offsets,
+                active_expert_ids=scratch["active_expert_ids"],
+                N=hidden_size,
+                K=inter_size,
+                num_experts=num_experts,
+                num_active_experts=int(scratch["num_active_experts"]),
+            )
+        elif use_offset_gemm:
+            offset_op(
+                ptr_A=gemm2_a,
+                ptr_A_scales=gemm2_a_scales,
+                ptr_B=w2,
+                ptr_B_scales=gemm2_scales,
+                ptr_bias=None,
+                ptr_D=scratch["gemm2_output"],
+                expert_first_token_offset=expert_offsets,
+                N=hidden_size,
+                K=inter_size,
+                num_experts=num_experts,
+            )
+        else:
+            torch.ops._xpu_C.cutlass_grouped_gemm_w8a8_int8_interface(
+                ptr_A=gemm2_a,
+                ptr_A_scales=gemm2_a_scales,
+                ptr_B=w2,
+                ptr_B_scales=gemm2_scales,
+                ptr_bias=None,
+                ptr_D=scratch["gemm2_output"],
+                rows_per_expert=scratch["rows_per_expert"],
+                N=hidden_size,
+                K=inter_size,
+                num_experts=num_experts,
+            )
+        torch.ops._moe_C.moe_gather(scratch["output"],
+                                    scratch["gemm2_output"], topk_weights,
+                                    scratch["unpermuted"], num_experts)
+        return scratch["output"]
+
+    run_stage(
+        "prologue",
+        lambda: torch.ops._moe_C.fused_moe_prologue(
+            input=hidden_states,
+            input_scales=None,
+            token_selected_experts=topk_ids,
+            token_final_scales=topk_weights,
+            workspace=scratch["workspace"],
+            hidden_size=hidden_size,
+            inter_size=inter_size,
+            block_k=1,
+            ep_rank=0,
+            ep_size=1,
+            num_experts_on_rank=num_experts,
+        ),
+    )
+    expert_offsets = scratch["expert_offsets"]
+    if not use_offset_gemm and not use_active_offset_gemm:
+        run_stage(
+            "rows_from_offsets",
+            lambda: scratch["rows_per_expert"].copy_(
+                (expert_offsets[1:1 + num_experts] -
+                 expert_offsets[:num_experts]).to(torch.int32)),
+        )
+
+    gemm1_a, gemm1_a_scales = run_stage(
+        "quant1",
+        lambda: _per_token_quant_int8_maybe_out(
+            scratch["remapped_hidden_states"],
+            scratch.get("gemm1_a"),
+            scratch.get("gemm1_a_scales"),
+        ),
+    )
+    gemm1_scales = _normalize_int8_weight_scales(w13_scales, 2 * inter_size)
+    if use_active_offset_gemm:
+        run_stage(
+            "gemm1",
+            lambda: active_offset_op(
+                ptr_A=gemm1_a,
+                ptr_A_scales=gemm1_a_scales,
+                ptr_B=w13,
+                ptr_B_scales=gemm1_scales,
+                ptr_bias=None,
+                ptr_D=scratch["gemm1_output"],
+                expert_first_token_offset=expert_offsets,
+                active_expert_ids=scratch["active_expert_ids"],
+                N=2 * inter_size,
+                K=hidden_size,
+                num_experts=num_experts,
+                num_active_experts=int(scratch["num_active_experts"]),
+            ),
+        )
+    elif use_offset_gemm:
+        run_stage(
+            "gemm1",
+            lambda: offset_op(
+                ptr_A=gemm1_a,
+                ptr_A_scales=gemm1_a_scales,
+                ptr_B=w13,
+                ptr_B_scales=gemm1_scales,
+                ptr_bias=None,
+                ptr_D=scratch["gemm1_output"],
+                expert_first_token_offset=expert_offsets,
+                N=2 * inter_size,
+                K=hidden_size,
+                num_experts=num_experts,
+            ),
+        )
+    else:
+        run_stage(
+            "gemm1",
+            lambda: torch.ops._xpu_C.cutlass_grouped_gemm_w8a8_int8_interface(
+                ptr_A=gemm1_a,
+                ptr_A_scales=gemm1_a_scales,
+                ptr_B=w13,
+                ptr_B_scales=gemm1_scales,
+                ptr_bias=None,
+                ptr_D=scratch["gemm1_output"],
+                rows_per_expert=scratch["rows_per_expert"],
+                N=2 * inter_size,
+                K=hidden_size,
+                num_experts=num_experts,
+            ),
+        )
+    run_stage(
+        "activation",
+        lambda: fused_moe_activation(scratch["act_output"],
+                                     scratch["gemm1_output"], "silu"),
+    )
+    gemm2_a, gemm2_a_scales = run_stage(
+        "quant2",
+        lambda: _per_token_quant_int8_maybe_out(
+            scratch["act_output"],
+            scratch.get("gemm2_a"),
+            scratch.get("gemm2_a_scales"),
+        ),
+    )
+    gemm2_scales = _normalize_int8_weight_scales(w2_scales, hidden_size)
+    if use_active_offset_gemm:
+        run_stage(
+            "gemm2",
+            lambda: active_offset_op(
+                ptr_A=gemm2_a,
+                ptr_A_scales=gemm2_a_scales,
+                ptr_B=w2,
+                ptr_B_scales=gemm2_scales,
+                ptr_bias=None,
+                ptr_D=scratch["gemm2_output"],
+                expert_first_token_offset=expert_offsets,
+                active_expert_ids=scratch["active_expert_ids"],
+                N=hidden_size,
+                K=inter_size,
+                num_experts=num_experts,
+                num_active_experts=int(scratch["num_active_experts"]),
+            ),
+        )
+    elif use_offset_gemm:
+        run_stage(
+            "gemm2",
+            lambda: offset_op(
+                ptr_A=gemm2_a,
+                ptr_A_scales=gemm2_a_scales,
+                ptr_B=w2,
+                ptr_B_scales=gemm2_scales,
+                ptr_bias=None,
+                ptr_D=scratch["gemm2_output"],
+                expert_first_token_offset=expert_offsets,
+                N=hidden_size,
+                K=inter_size,
+                num_experts=num_experts,
+            ),
+        )
+    else:
+        run_stage(
+            "gemm2",
+            lambda: torch.ops._xpu_C.cutlass_grouped_gemm_w8a8_int8_interface(
+                ptr_A=gemm2_a,
+                ptr_A_scales=gemm2_a_scales,
+                ptr_B=w2,
+                ptr_B_scales=gemm2_scales,
+                ptr_bias=None,
+                ptr_D=scratch["gemm2_output"],
+                rows_per_expert=scratch["rows_per_expert"],
+                N=hidden_size,
+                K=inter_size,
+                num_experts=num_experts,
+            ),
+        )
+    run_stage(
+        "gather",
+        lambda: torch.ops._moe_C.moe_gather(
+            scratch["output"],
+            scratch["gemm2_output"],
+            topk_weights,
+            scratch["unpermuted"],
+            num_experts,
+        ),
+    )
+    return scratch["output"]
+
+
+def manual_int8_moe_fused_prologue_middle_layerlet_once(
+    *,
+    hidden_states: torch.Tensor,
+    w13: torch.Tensor,
+    w13_scales: torch.Tensor,
+    w2: torch.Tensor,
+    w2_scales: torch.Tensor,
+    topk_weights: torch.Tensor,
+    topk_ids: torch.Tensor,
+    num_experts: int,
+    topk: int,
+    scratch: dict[str, Any],
+) -> torch.Tensor:
+    hidden_size = hidden_states.shape[1]
+    inter_size = w13.shape[-1] // 2
+    middle_layerlet_op = getattr(
+        torch.ops._xpu_C,
+        "qwen36_moe_w8a8_middle_layerlet",
+        None,
+    )
+    if middle_layerlet_op is None:
+        raise RuntimeError("qwen36_moe_w8a8_middle_layerlet is not available")
+
     torch.ops._moe_C.fused_moe_prologue(
         input=hidden_states,
         input_scales=None,
@@ -763,112 +1211,224 @@ def manual_int8_moe_fused_prologue_once(
         ep_size=1,
         num_experts_on_rank=num_experts,
     )
-    expert_offsets = scratch["expert_offsets"]
-    if not use_offset_gemm and not use_active_offset_gemm:
-        scratch["rows_per_expert"].copy_(
-            (expert_offsets[1:1 + num_experts] -
-             expert_offsets[:num_experts]).to(torch.int32))
-
     gemm1_a, gemm1_a_scales = _per_token_quant_int8_maybe_out(
         scratch["remapped_hidden_states"],
         scratch.get("gemm1_a"),
         scratch.get("gemm1_a_scales"),
     )
-    gemm1_scales = _normalize_int8_weight_scales(w13_scales, 2 * inter_size)
-    if use_active_offset_gemm:
-        active_offset_op(
-            ptr_A=gemm1_a,
-            ptr_A_scales=gemm1_a_scales,
-            ptr_B=w13,
-            ptr_B_scales=gemm1_scales,
-            ptr_bias=None,
-            ptr_D=scratch["gemm1_output"],
-            expert_first_token_offset=expert_offsets,
-            active_expert_ids=scratch["active_expert_ids"],
-            N=2 * inter_size,
-            K=hidden_size,
-            num_experts=num_experts,
-            num_active_experts=int(scratch["num_active_experts"]),
-        )
-    elif use_offset_gemm:
-        offset_op(
-            ptr_A=gemm1_a,
-            ptr_A_scales=gemm1_a_scales,
-            ptr_B=w13,
-            ptr_B_scales=gemm1_scales,
-            ptr_bias=None,
-            ptr_D=scratch["gemm1_output"],
-            expert_first_token_offset=expert_offsets,
-            N=2 * inter_size,
-            K=hidden_size,
-            num_experts=num_experts,
-        )
-    else:
-        torch.ops._xpu_C.cutlass_grouped_gemm_w8a8_int8_interface(
-            ptr_A=gemm1_a,
-            ptr_A_scales=gemm1_a_scales,
-            ptr_B=w13,
-            ptr_B_scales=gemm1_scales,
-            ptr_bias=None,
-            ptr_D=scratch["gemm1_output"],
-            rows_per_expert=scratch["rows_per_expert"],
-            N=2 * inter_size,
-            K=hidden_size,
-            num_experts=num_experts,
-        )
-    fused_moe_activation(scratch["act_output"], scratch["gemm1_output"],
-                         "silu")
-    gemm2_a, gemm2_a_scales = _per_token_quant_int8_maybe_out(
-        scratch["act_output"],
-        scratch.get("gemm2_a"),
-        scratch.get("gemm2_a_scales"),
+    middle_layerlet_op(
+        gemm1_a,
+        gemm1_a_scales,
+        w13,
+        _normalize_int8_weight_scales(w13_scales, 2 * inter_size),
+        None,
+        scratch["gemm1_output"],
+        scratch["gemm2_a"],
+        scratch["gemm2_a_scales"],
+        w2,
+        _normalize_int8_weight_scales(w2_scales, hidden_size),
+        None,
+        scratch["gemm2_output"],
+        scratch["expert_offsets"],
+        2 * inter_size,
+        hidden_size,
+        hidden_size,
+        inter_size,
+        num_experts,
     )
-    gemm2_scales = _normalize_int8_weight_scales(w2_scales, hidden_size)
-    if use_active_offset_gemm:
-        active_offset_op(
-            ptr_A=gemm2_a,
-            ptr_A_scales=gemm2_a_scales,
-            ptr_B=w2,
-            ptr_B_scales=gemm2_scales,
-            ptr_bias=None,
-            ptr_D=scratch["gemm2_output"],
-            expert_first_token_offset=expert_offsets,
-            active_expert_ids=scratch["active_expert_ids"],
-            N=hidden_size,
-            K=inter_size,
-            num_experts=num_experts,
-            num_active_experts=int(scratch["num_active_experts"]),
-        )
-    elif use_offset_gemm:
-        offset_op(
-            ptr_A=gemm2_a,
-            ptr_A_scales=gemm2_a_scales,
-            ptr_B=w2,
-            ptr_B_scales=gemm2_scales,
-            ptr_bias=None,
-            ptr_D=scratch["gemm2_output"],
-            expert_first_token_offset=expert_offsets,
-            N=hidden_size,
-            K=inter_size,
-            num_experts=num_experts,
-        )
-    else:
-        torch.ops._xpu_C.cutlass_grouped_gemm_w8a8_int8_interface(
-            ptr_A=gemm2_a,
-            ptr_A_scales=gemm2_a_scales,
-            ptr_B=w2,
-            ptr_B_scales=gemm2_scales,
-            ptr_bias=None,
-            ptr_D=scratch["gemm2_output"],
-            rows_per_expert=scratch["rows_per_expert"],
-            N=hidden_size,
-            K=inter_size,
-            num_experts=num_experts,
-        )
     torch.ops._moe_C.moe_gather(scratch["output"], scratch["gemm2_output"],
                                 topk_weights, scratch["unpermuted"],
                                 num_experts)
     return scratch["output"]
+
+
+def manual_int8_moe_full_layerlet_once(
+    *,
+    hidden_states: torch.Tensor,
+    w13: torch.Tensor,
+    w13_scales: torch.Tensor,
+    w2: torch.Tensor,
+    w2_scales: torch.Tensor,
+    topk_weights: torch.Tensor,
+    topk_ids: torch.Tensor,
+    num_experts: int,
+    topk: int,
+    scratch: dict[str, Any],
+) -> torch.Tensor:
+    hidden_size = hidden_states.shape[1]
+    inter_size = w13.shape[-1] // 2
+    full_layerlet_op = getattr(
+        torch.ops._xpu_C,
+        "qwen36_moe_w8a8_full_layerlet",
+        None,
+    )
+    if full_layerlet_op is None:
+        raise RuntimeError("qwen36_moe_w8a8_full_layerlet is not available")
+    full_layerlet_op(
+        hidden_states,
+        topk_ids,
+        topk_weights,
+        scratch["workspace"],
+        scratch["remapped_hidden_states"],
+        scratch["unpermuted"].view(-1),
+        scratch["expert_offsets"],
+        scratch["gemm1_a"],
+        scratch["gemm1_a_scales"],
+        w13,
+        _normalize_int8_weight_scales(w13_scales, 2 * inter_size),
+        None,
+        scratch["gemm1_output"],
+        scratch["gemm2_a"],
+        scratch["gemm2_a_scales"],
+        w2,
+        _normalize_int8_weight_scales(w2_scales, hidden_size),
+        None,
+        scratch["gemm2_output"],
+        scratch["output"],
+        hidden_size,
+        inter_size,
+        num_experts,
+    )
+    return scratch["output"]
+
+
+SIDECAR_STATS_NAMES = (
+    "ok",
+    "device_index",
+    "layer_index",
+    "num_rows",
+    "topk",
+    "num_moe_inputs",
+    "hidden_size",
+    "inter_size",
+    "num_experts",
+    "gemm1_n",
+    "gemm2_n",
+    "dry_create_descriptors",
+    "descriptor_create_ok",
+    "offsets_supplied",
+    "handle_wrap_ok",
+    "w13_stride0",
+    "w13_stride1",
+    "w13_stride2",
+    "w2_stride0",
+    "w2_stride1",
+    "requested_execute_mode",
+    "execute_ok",
+    "execute_construct_us",
+    "execute_wait_us",
+    "gemm1_cache_hit",
+    "gemm1_construct_us",
+    "gemm1_execute_us",
+    "gemm2_cache_hit",
+    "gemm2_construct_us",
+    "gemm2_execute_us",
+    "both_wall_us",
+    "sidecar_matmul_cache_size",
+    "gemm1_wait_after_execute",
+    "gemm2_wait_after_execute",
+    "cached_execution_path",
+    "middle_activation_quant_us",
+    "middle_wall_us",
+    "reserved37",
+    "reserved38",
+    "reserved39",
+)
+
+
+def sidecar_stats_dict(stats: torch.Tensor | None) -> dict[str, int] | None:
+    if stats is None:
+        return None
+    values = [int(item) for item in stats.detach().cpu().tolist()]
+    return {
+        name: values[index] if index < len(values) else 0
+        for index, name in enumerate(SIDECAR_STATS_NAMES)
+    }
+
+
+def manual_int8_moe_onednn_sidecar_once(
+    *,
+    hidden_states: torch.Tensor,
+    w13: torch.Tensor,
+    w13_scales: torch.Tensor,
+    w2: torch.Tensor,
+    w2_scales: torch.Tensor,
+    topk_weights: torch.Tensor,
+    topk_ids: torch.Tensor,
+    num_experts: int,
+    topk: int,
+    scratch: dict[str, Any],
+    execute_mode: int = 23,
+) -> tuple[torch.Tensor, dict[str, int] | None]:
+    hidden_size = hidden_states.shape[1]
+    inter_size = w13.shape[-1] // 2
+    sidecar_op = getattr(
+        torch.ops._xpu_C,
+        "qwen36_moe_onednn_sidecar_probe",
+        None,
+    )
+    if sidecar_op is None:
+        raise RuntimeError("qwen36_moe_onednn_sidecar_probe is not available")
+
+    torch.ops._moe_C.fused_moe_prologue(
+        input=hidden_states,
+        input_scales=None,
+        token_selected_experts=topk_ids,
+        token_final_scales=topk_weights,
+        workspace=scratch["workspace"],
+        hidden_size=hidden_size,
+        inter_size=inter_size,
+        block_k=1,
+        ep_rank=0,
+        ep_size=1,
+        num_experts_on_rank=num_experts,
+    )
+    _per_token_quant_int8_maybe_out(
+        scratch["remapped_hidden_states"],
+        scratch["gemm1_a"],
+        scratch["gemm1_a_scales"],
+    )
+
+    # oneDNN grouped matmul uses end-only int32 offsets, while the CUTLASS path
+    # uses leading-zero int64 offsets. Keep this diagnostic conversion explicit
+    # so it is counted in the full sidecar timing.
+    scratch["onednn_offsets"].copy_(scratch["expert_offsets"][1:].to(torch.int32))
+    scratch["topk_ids_i32"].copy_(topk_ids.to(torch.int32))
+
+    stats = sidecar_op(
+        hidden_states,
+        topk_weights,
+        scratch["topk_ids_i32"],
+        w13,
+        _normalize_int8_weight_scales(w13_scales, 2 * inter_size),
+        w2,
+        _normalize_int8_weight_scales(w2_scales, hidden_size),
+        scratch["output"],
+        # The sidecar ABI names this argument remapped_hidden_states, but the
+        # C++ diagnostic expects the int8 quantized GEMM1 input buffer here.
+        scratch["gemm1_a"],
+        scratch["rows_per_expert"],
+        scratch["unpermuted"],
+        scratch["gemm1_a"],
+        scratch["gemm1_a_scales"],
+        scratch["gemm1_output"],
+        scratch["act_output"],
+        scratch["gemm2_a"],
+        scratch["gemm2_a_scales"],
+        scratch["gemm2_output"],
+        scratch["onednn_offsets"],
+        -1,
+        True,
+        int(execute_mode),
+    )
+    torch.ops._moe_C.moe_gather(
+        scratch["output"],
+        scratch["gemm2_output"],
+        topk_weights,
+        scratch["unpermuted"],
+        num_experts,
+    )
+    return scratch["output"], sidecar_stats_dict(stats)
 
 
 def summarize_topk_ids(topk_ids: torch.Tensor, topn: int = 16) -> dict[str, Any]:
@@ -881,6 +1441,7 @@ def summarize_topk_ids(topk_ids: torch.Tensor, topn: int = 16) -> dict[str, Any]
         for expert in row_tuple:
             expert_counts[expert] = expert_counts.get(expert, 0) + 1
     return {
+        "topk_rows": topk_cpu[:topn],
         "unique_topk_tuples": len(tuple_counts),
         "active_experts": len(expert_counts),
         "top_experts": [
@@ -895,6 +1456,65 @@ def summarize_topk_ids(topk_ids: torch.Tensor, topn: int = 16) -> dict[str, Any]
                 tuple_counts.items(), key=lambda item: item[1], reverse=True
             )[:topn]
         ],
+    }
+
+
+def collect_runtime_identity(args) -> dict[str, Any]:
+    env_keys = [
+        "ONEAPI_DEVICE_SELECTOR",
+        "ZE_AFFINITY_MASK",
+        "VLLM_XPU_W8A8_GROUPED_GEMM_POLICY",
+        "VLLM_XPU_W8A8_GROUPED_GEMM_N_LT_K_POLICY",
+        "VLLM_XPU_W8A8_GROUPED_GEMM_N_GT_K_POLICY",
+        "VLLM_XPU_MOE_W8A8_FUSED_Q1",
+        "VLLM_XPU_MOE_W8A8_FAST_GATHER",
+        "VLLM_XPU_MOE_W8A8_DIRECT_GEMM2_GATHER",
+        "VLLM_XPU_MOE_W8A8_DPAS_GEMM2_GATHER",
+        "VLLM_XPU_MOE_W8A8_DPAS_GEMM2_GATHER_NTILE",
+        "VLLM_XPU_MOE_W8A8_WORKSPACE_ATOMIC",
+        "VLLM_XPU_MOE_W8A8_ROUTE_GEMM1",
+        "VLLM_XPU_MOE_W8A8_ROUTE_GEMM1_MTILE",
+        "VLLM_XPU_MOE_W8A8_UNCHECKED_FULL_LAYERLET",
+        "VLLM_XPU_INT8_MOE_ACTIVE_OFFSET_GEMM",
+        "VLLM_XPU_FUSED_MOE_FUSE_SILU_QUANT",
+        "SYCL_PI_LEVEL_ZERO_USE_IMMEDIATE_COMMANDLISTS",
+        "UR_L0_USE_IMMEDIATE_COMMANDLISTS",
+        "UR_L0_USE_COPY_ENGINE",
+    ]
+    xpu_count = None
+    xpu_devices: list[str] = []
+    try:
+        xpu_count = int(torch.xpu.device_count())
+        for idx in range(xpu_count):
+            try:
+                xpu_devices.append(str(torch.xpu.get_device_name(idx)))
+            except Exception as exc:  # noqa: BLE001 - diagnostic only.
+                xpu_devices.append(f"unavailable:{type(exc).__name__}")
+    except Exception as exc:  # noqa: BLE001 - diagnostic only.
+        xpu_devices.append(f"device_count_error:{type(exc).__name__}:{exc}")
+
+    loaded_extensions = {
+        name: getattr(module, "__file__", None)
+        for name, module in sorted(sys.modules.items())
+        if name.startswith("vllm_xpu_kernels")
+    }
+
+    return {
+        "argv": sys.argv,
+        "torch_version": torch.__version__,
+        "xpu_device_count": xpu_count,
+        "xpu_devices": xpu_devices,
+        "env": {key: os.environ.get(key) for key in env_keys},
+        "python": sys.executable,
+        "loaded_extensions": loaded_extensions,
+        "dtype": args.dtype,
+        "device_arg": args.device,
+        "iterations": args.iterations,
+        "warmup": args.warmup,
+        "graph_replay_timing": bool(args.graph_replay_timing),
+        "stage_timing_iterations": args.stage_timing_iterations,
+        "enable_onednn_sidecar": bool(args.enable_onednn_sidecar),
+        "onednn_sidecar_mode": int(args.onednn_sidecar_mode),
     }
 
 
@@ -922,6 +1542,7 @@ def benchmark_rows(
         dtype=dtype,
         device=args.device,
         seed=args.seed + rows,
+        synthetic_route_mode=args.synthetic_route_mode,
         route_topk_rows=route_topk_rows,
         route_start_index=route_start_index,
     )
@@ -960,6 +1581,83 @@ def benchmark_rows(
         num_experts=num_experts,
         is_int8=True,
     )
+
+    rows_oracle_output: torch.Tensor | None = None
+    offset_oracle_output: torch.Tensor | None = None
+    bf16_reference_output: torch.Tensor | None = None
+    rows_oracle_env = {
+        "VLLM_XPU_FUSED_MOE_USE_REF": "0",
+        "VLLM_XPU_W8A8_USE_OFFSETS": "0",
+        "VLLM_XPU_INT8_MOE_FUSED_PROLOGUE_OFFSET": "0",
+        "VLLM_XPU_MOE_W8A8_MIDDLE_LAYERLET": "0",
+        "VLLM_XPU_MOE_W8A8_FULL_LAYERLET": "0",
+    }
+    offset_oracle_env = {
+        **rows_oracle_env,
+        "VLLM_XPU_W8A8_USE_OFFSETS": "1",
+    }
+    offset_gemm_available = hasattr(
+        torch.ops._xpu_C,
+        "cutlass_grouped_gemm_w8a8_int8_offsets_interface",
+    )
+    if args.real_routing_oracle:
+        with temporary_env(rows_oracle_env):
+            rows_oracle_output = xpu_fused_moe(
+                hidden_states=inputs["hidden_states"],
+                w13=inputs["w13"],
+                w13_scales=inputs["w13_scales"],
+                w13_bias=None,
+                w2=inputs["w2"],
+                w2_scales=inputs["w2_scales"],
+                w2_bias=None,
+                topk_weights=inputs["topk_weights"],
+                topk_ids=inputs["topk_ids"],
+                n_experts_per_token=topk,
+                activation="silu",
+                num_experts=num_experts,
+                is_int8=True,
+            )
+        if offset_gemm_available:
+            with temporary_env(offset_oracle_env):
+                offset_oracle_output = xpu_fused_moe(
+                    hidden_states=inputs["hidden_states"],
+                    w13=inputs["w13"],
+                    w13_scales=inputs["w13_scales"],
+                    w13_bias=None,
+                    w2=inputs["w2"],
+                    w2_scales=inputs["w2_scales"],
+                    w2_bias=None,
+                    topk_weights=inputs["topk_weights"],
+                    topk_ids=inputs["topk_ids"],
+                    n_experts_per_token=topk,
+                    activation="silu",
+                    num_experts=num_experts,
+                    is_int8=True,
+                )
+        if args.real_routing_bf16_reference:
+            bf16_reference_output = ref_fused_moe(
+                recipe="int8",
+                x=inputs["hidden_states"],
+                w13=inputs["w13"],
+                w13_scales=inputs["w13_scales"],
+                w13_bias=None,
+                w2=inputs["w2"],
+                w2_scales=inputs["w2_scales"],
+                w2_bias=None,
+                expert_weights=inputs["topk_weights"],
+                expert_indices=inputs["topk_ids"],
+                num_per_tok=topk,
+                activation="silu",
+                num_experts=num_experts,
+            )
+        torch.xpu.synchronize()
+    xpu_fused_moe_rows_oracle_max_abs_diff = max_abs_diff(
+        ref_output, rows_oracle_output)
+    offset_oracle_rows_oracle_max_abs_diff = max_abs_diff(
+        offset_oracle_output, rows_oracle_output)
+    rows_oracle_bf16_reference_max_abs_diff = max_abs_diff(
+        rows_oracle_output, bf16_reference_output)
+
     manual_output, _ = manual_int8_moe_once(
         hidden_states=inputs["hidden_states"],
         w13=inputs["w13"],
@@ -972,7 +1670,10 @@ def benchmark_rows(
         topk=topk,
     )
     torch.xpu.synchronize()
-    max_abs_diff = float((ref_output - manual_output).abs().max().item())
+    manual_max_abs_diff = float(
+        (ref_output - manual_output).abs().max().item())
+    manual_rows_oracle_max_abs_diff = max_abs_diff(manual_output,
+                                                   rows_oracle_output)
 
     scratch = make_scratch(
         rows=rows,
@@ -998,6 +1699,8 @@ def benchmark_rows(
     torch.xpu.synchronize()
     prealloc_max_abs_diff = float(
         (ref_output - scratch_output).abs().max().item())
+    prealloc_rows_oracle_max_abs_diff = max_abs_diff(scratch_output,
+                                                     rows_oracle_output)
     prologue_scratch = make_prologue_scratch(
         rows=rows,
         hidden_size=hidden_size,
@@ -1023,16 +1726,40 @@ def benchmark_rows(
     torch.xpu.synchronize()
     prologue_max_abs_diff = float(
         (ref_output - prologue_output).abs().max().item())
-    offset_gemm_available = hasattr(
-        torch.ops._xpu_C,
-        "cutlass_grouped_gemm_w8a8_int8_offsets_interface",
-    )
+    prologue_rows_oracle_max_abs_diff = max_abs_diff(prologue_output,
+                                                     rows_oracle_output)
     active_offset_gemm_available = hasattr(
         torch.ops._xpu_C,
         "cutlass_grouped_gemm_w8a8_int8_active_offsets_interface",
     )
+    middle_layerlet_available = hasattr(
+        torch.ops._xpu_C,
+        "qwen36_moe_w8a8_middle_layerlet",
+    )
+    full_layerlet_available = hasattr(
+        torch.ops._xpu_C,
+        "qwen36_moe_w8a8_full_layerlet",
+    )
+    onednn_sidecar_available = hasattr(
+        torch.ops._xpu_C,
+        "qwen36_moe_onednn_sidecar_probe",
+    )
     prologue_offset_max_abs_diff: float | None = None
     prologue_active_offset_max_abs_diff: float | None = None
+    prologue_middle_layerlet_max_abs_diff: float | None = None
+    full_layerlet_max_abs_diff: float | None = None
+    onednn_sidecar_max_abs_diff: float | None = None
+    prologue_offset_rows_oracle_max_abs_diff: float | None = None
+    prologue_active_offset_rows_oracle_max_abs_diff: float | None = None
+    prologue_middle_layerlet_rows_oracle_max_abs_diff: float | None = None
+    full_layerlet_rows_oracle_max_abs_diff: float | None = None
+    onednn_sidecar_rows_oracle_max_abs_diff: float | None = None
+    prologue_offset_output: torch.Tensor | None = None
+    prologue_active_offset_output: torch.Tensor | None = None
+    prologue_middle_layerlet_output: torch.Tensor | None = None
+    full_layerlet_output: torch.Tensor | None = None
+    onednn_sidecar_output: torch.Tensor | None = None
+    onednn_sidecar_stats_once: dict[str, int] | None = None
     if args.enable_offset_gemm:
         prologue_offset_output = manual_int8_moe_fused_prologue_once(
             hidden_states=inputs["hidden_states"],
@@ -1050,6 +1777,8 @@ def benchmark_rows(
         torch.xpu.synchronize()
         prologue_offset_max_abs_diff = float(
             (ref_output - prologue_offset_output).abs().max().item())
+        prologue_offset_rows_oracle_max_abs_diff = max_abs_diff(
+            prologue_offset_output, rows_oracle_output)
     if args.enable_active_offset_gemm:
         prologue_active_offset_output = manual_int8_moe_fused_prologue_once(
             hidden_states=inputs["hidden_states"],
@@ -1067,6 +1796,65 @@ def benchmark_rows(
         torch.xpu.synchronize()
         prologue_active_offset_max_abs_diff = float(
             (ref_output - prologue_active_offset_output).abs().max().item())
+        prologue_active_offset_rows_oracle_max_abs_diff = max_abs_diff(
+            prologue_active_offset_output, rows_oracle_output)
+    if args.enable_middle_layerlet:
+        prologue_middle_layerlet_output = (
+            manual_int8_moe_fused_prologue_middle_layerlet_once(
+                hidden_states=inputs["hidden_states"],
+                w13=inputs["w13"],
+                w13_scales=inputs["w13_scales"],
+                w2=inputs["w2"],
+                w2_scales=inputs["w2_scales"],
+                topk_weights=inputs["topk_weights"],
+                topk_ids=inputs["topk_ids"],
+                num_experts=num_experts,
+                topk=topk,
+                scratch=prologue_scratch,
+            ))
+        torch.xpu.synchronize()
+        prologue_middle_layerlet_max_abs_diff = float(
+            (ref_output - prologue_middle_layerlet_output).abs().max().item())
+        prologue_middle_layerlet_rows_oracle_max_abs_diff = max_abs_diff(
+            prologue_middle_layerlet_output, rows_oracle_output)
+    if args.enable_full_layerlet:
+        full_layerlet_output = manual_int8_moe_full_layerlet_once(
+            hidden_states=inputs["hidden_states"],
+            w13=inputs["w13"],
+            w13_scales=inputs["w13_scales"],
+            w2=inputs["w2"],
+            w2_scales=inputs["w2_scales"],
+            topk_weights=inputs["topk_weights"],
+            topk_ids=inputs["topk_ids"],
+            num_experts=num_experts,
+            topk=topk,
+            scratch=prologue_scratch,
+        )
+        torch.xpu.synchronize()
+        full_layerlet_max_abs_diff = float(
+            (ref_output - full_layerlet_output).abs().max().item())
+        full_layerlet_rows_oracle_max_abs_diff = max_abs_diff(
+            full_layerlet_output, rows_oracle_output)
+    if args.enable_onednn_sidecar:
+        onednn_sidecar_output, onednn_sidecar_stats_once = (
+            manual_int8_moe_onednn_sidecar_once(
+                hidden_states=inputs["hidden_states"],
+                w13=inputs["w13"],
+                w13_scales=inputs["w13_scales"],
+                w2=inputs["w2"],
+                w2_scales=inputs["w2_scales"],
+                topk_weights=inputs["topk_weights"],
+                topk_ids=inputs["topk_ids"],
+                num_experts=num_experts,
+                topk=topk,
+                scratch=prologue_scratch,
+                execute_mode=args.onednn_sidecar_mode,
+            ))
+        torch.xpu.synchronize()
+        onednn_sidecar_max_abs_diff = float(
+            (ref_output - onednn_sidecar_output).abs().max().item())
+        onednn_sidecar_rows_oracle_max_abs_diff = max_abs_diff(
+            onednn_sidecar_output, rows_oracle_output)
     xpu_scratch_output = xpu_fused_moe(
         hidden_states=inputs["hidden_states"],
         w13=inputs["w13"],
@@ -1086,13 +1874,43 @@ def benchmark_rows(
     torch.xpu.synchronize()
     xpu_scratch_max_abs_diff = float(
         (ref_output - xpu_scratch_output).abs().max().item())
+    xpu_scratch_rows_oracle_max_abs_diff = max_abs_diff(
+        xpu_scratch_output, rows_oracle_output)
+
+    xpu_prologue_scratch_output = xpu_fused_moe(
+        hidden_states=inputs["hidden_states"],
+        w13=inputs["w13"],
+        w13_scales=inputs["w13_scales"],
+        w13_bias=None,
+        w2=inputs["w2"],
+        w2_scales=inputs["w2_scales"],
+        w2_bias=None,
+        topk_weights=inputs["topk_weights"],
+        topk_ids=inputs["topk_ids"],
+        n_experts_per_token=topk,
+        activation="silu",
+        num_experts=num_experts,
+        is_int8=True,
+        scratch=make_xpu_scratch(prologue_scratch),
+    )
+    torch.xpu.synchronize()
+    xpu_prologue_scratch_max_abs_diff = float(
+        (ref_output - xpu_prologue_scratch_output).abs().max().item())
+    xpu_prologue_scratch_rows_oracle_max_abs_diff = max_abs_diff(
+        xpu_prologue_scratch_output, rows_oracle_output)
 
     total_us = []
     scratch_total_us = []
+    prologue_scratch_total_us = []
     preallocated_total_us = []
     prologue_preallocated_total_us = []
     prologue_offset_total_us = []
     prologue_active_offset_total_us = []
+    prologue_middle_layerlet_total_us = []
+    full_layerlet_total_us = []
+    onednn_sidecar_total_us = []
+    onednn_sidecar_middle_wall_us = []
+    onednn_sidecar_execute_wait_us = []
     component_us: dict[str, list[float]] = {
         "rows_zero": [],
         "remap": [],
@@ -1104,6 +1922,17 @@ def benchmark_rows(
         "gemm2": [],
         "gather": [],
     }
+    prologue_component_us: dict[str, list[float]] = {}
+    prologue_offset_component_us: dict[str, list[float]] = {}
+    prologue_active_offset_component_us: dict[str, list[float]] = {}
+
+    def record_stage_components(
+        target: dict[str, list[float]],
+        events: dict[str, tuple[torch.xpu.Event, torch.xpu.Event]],
+    ) -> None:
+        for label, (component_start, component_end) in events.items():
+            target.setdefault(label, []).append(
+                elapsed_us(component_start, component_end))
 
     for _ in range(args.iterations):
         start, end = make_events()
@@ -1163,6 +1992,28 @@ def benchmark_rows(
         end.record()
         torch.xpu.synchronize()
         scratch_total_us.append(elapsed_us(start, end))
+
+        start, end = make_events()
+        start.record()
+        xpu_fused_moe(
+            hidden_states=inputs["hidden_states"],
+            w13=inputs["w13"],
+            w13_scales=inputs["w13_scales"],
+            w13_bias=None,
+            w2=inputs["w2"],
+            w2_scales=inputs["w2_scales"],
+            w2_bias=None,
+            topk_weights=inputs["topk_weights"],
+            topk_ids=inputs["topk_ids"],
+            n_experts_per_token=topk,
+            activation="silu",
+            num_experts=num_experts,
+            is_int8=True,
+            scratch=make_xpu_scratch(prologue_scratch),
+        )
+        end.record()
+        torch.xpu.synchronize()
+        prologue_scratch_total_us.append(elapsed_us(start, end))
 
         start, end = make_events()
         start.record()
@@ -1237,9 +2088,310 @@ def benchmark_rows(
             end.record()
             torch.xpu.synchronize()
             prologue_active_offset_total_us.append(elapsed_us(start, end))
+        if args.enable_middle_layerlet:
+            start, end = make_events()
+            start.record()
+            manual_int8_moe_fused_prologue_middle_layerlet_once(
+                hidden_states=inputs["hidden_states"],
+                w13=inputs["w13"],
+                w13_scales=inputs["w13_scales"],
+                w2=inputs["w2"],
+                w2_scales=inputs["w2_scales"],
+                topk_weights=inputs["topk_weights"],
+                topk_ids=inputs["topk_ids"],
+                num_experts=num_experts,
+                topk=topk,
+                scratch=prologue_scratch,
+            )
+            end.record()
+            torch.xpu.synchronize()
+            prologue_middle_layerlet_total_us.append(elapsed_us(start, end))
+        if args.enable_full_layerlet:
+            start, end = make_events()
+            start.record()
+            manual_int8_moe_full_layerlet_once(
+                hidden_states=inputs["hidden_states"],
+                w13=inputs["w13"],
+                w13_scales=inputs["w13_scales"],
+                w2=inputs["w2"],
+                w2_scales=inputs["w2_scales"],
+                topk_weights=inputs["topk_weights"],
+                topk_ids=inputs["topk_ids"],
+                num_experts=num_experts,
+                topk=topk,
+                scratch=prologue_scratch,
+            )
+            end.record()
+            torch.xpu.synchronize()
+            full_layerlet_total_us.append(elapsed_us(start, end))
+        if args.enable_onednn_sidecar:
+            start, end = make_events()
+            start.record()
+            _, stats = manual_int8_moe_onednn_sidecar_once(
+                hidden_states=inputs["hidden_states"],
+                w13=inputs["w13"],
+                w13_scales=inputs["w13_scales"],
+                w2=inputs["w2"],
+                w2_scales=inputs["w2_scales"],
+                topk_weights=inputs["topk_weights"],
+                topk_ids=inputs["topk_ids"],
+                num_experts=num_experts,
+                topk=topk,
+                scratch=prologue_scratch,
+                execute_mode=args.onednn_sidecar_mode,
+            )
+            end.record()
+            torch.xpu.synchronize()
+            onednn_sidecar_total_us.append(elapsed_us(start, end))
+            if stats is not None:
+                onednn_sidecar_middle_wall_us.append(
+                    float(stats.get("middle_wall_us", 0)))
+                onednn_sidecar_execute_wait_us.append(
+                    float(stats.get("execute_wait_us", 0)))
+
+    for _ in range(args.stage_timing_iterations):
+        prologue_events: dict[str, tuple[torch.xpu.Event,
+                                         torch.xpu.Event]] = {}
+        manual_int8_moe_fused_prologue_once(
+            hidden_states=inputs["hidden_states"],
+            w13=inputs["w13"],
+            w13_scales=inputs["w13_scales"],
+            w2=inputs["w2"],
+            w2_scales=inputs["w2_scales"],
+            topk_weights=inputs["topk_weights"],
+            topk_ids=inputs["topk_ids"],
+            num_experts=num_experts,
+            topk=topk,
+            scratch=prologue_scratch,
+            events=prologue_events,
+        )
+        torch.xpu.synchronize()
+        record_stage_components(prologue_component_us, prologue_events)
+        if args.enable_offset_gemm:
+            prologue_offset_events: dict[str, tuple[torch.xpu.Event,
+                                                    torch.xpu.Event]] = {}
+            manual_int8_moe_fused_prologue_once(
+                hidden_states=inputs["hidden_states"],
+                w13=inputs["w13"],
+                w13_scales=inputs["w13_scales"],
+                w2=inputs["w2"],
+                w2_scales=inputs["w2_scales"],
+                topk_weights=inputs["topk_weights"],
+                topk_ids=inputs["topk_ids"],
+                num_experts=num_experts,
+                topk=topk,
+                scratch=prologue_scratch,
+                use_offset_gemm=True,
+                events=prologue_offset_events,
+            )
+            torch.xpu.synchronize()
+            record_stage_components(prologue_offset_component_us,
+                                    prologue_offset_events)
+        if args.enable_active_offset_gemm:
+            prologue_active_offset_events: dict[
+                str, tuple[torch.xpu.Event, torch.xpu.Event]] = {}
+            manual_int8_moe_fused_prologue_once(
+                hidden_states=inputs["hidden_states"],
+                w13=inputs["w13"],
+                w13_scales=inputs["w13_scales"],
+                w2=inputs["w2"],
+                w2_scales=inputs["w2_scales"],
+                topk_weights=inputs["topk_weights"],
+                topk_ids=inputs["topk_ids"],
+                num_experts=num_experts,
+                topk=topk,
+                scratch=prologue_scratch,
+                use_active_offset_gemm=True,
+                events=prologue_active_offset_events,
+            )
+            torch.xpu.synchronize()
+            record_stage_components(prologue_active_offset_component_us,
+                                    prologue_active_offset_events)
 
     def mean(values: list[float]) -> float:
         return sum(values) / max(1, len(values))
+
+    graph_replay: list[dict[str, Any]] = []
+    if args.graph_replay_timing:
+        graph_scratch = make_scratch(
+            rows=rows,
+            hidden_size=hidden_size,
+            inter_size=inter_size,
+            num_experts=num_experts,
+            topk=topk,
+            dtype=dtype,
+            device=args.device,
+        )
+        graph_prologue_scratch = make_prologue_scratch(
+            rows=rows,
+            hidden_size=hidden_size,
+            inter_size=inter_size,
+            num_experts=num_experts,
+            topk=topk,
+            dtype=dtype,
+            device=args.device,
+        )
+        set_active_experts_from_topk(graph_prologue_scratch,
+                                     inputs["topk_ids"])
+        graph_replay.append(
+            measure_graph_replay_us(
+                "xpu_fused_moe_with_scratch",
+                lambda: xpu_fused_moe(
+                    hidden_states=inputs["hidden_states"],
+                    w13=inputs["w13"],
+                    w13_scales=inputs["w13_scales"],
+                    w13_bias=None,
+                    w2=inputs["w2"],
+                    w2_scales=inputs["w2_scales"],
+                    w2_bias=None,
+                    topk_weights=inputs["topk_weights"],
+                    topk_ids=inputs["topk_ids"],
+                    n_experts_per_token=topk,
+                    activation="silu",
+                    num_experts=num_experts,
+                    is_int8=True,
+                    scratch=make_xpu_scratch(graph_scratch),
+                ),
+                warmup=args.graph_warmup,
+                iterations=args.graph_iterations,
+            ))
+        graph_replay.append(
+            measure_graph_replay_us(
+                "xpu_fused_moe_with_prologue_scratch",
+                lambda: xpu_fused_moe(
+                    hidden_states=inputs["hidden_states"],
+                    w13=inputs["w13"],
+                    w13_scales=inputs["w13_scales"],
+                    w13_bias=None,
+                    w2=inputs["w2"],
+                    w2_scales=inputs["w2_scales"],
+                    w2_bias=None,
+                    topk_weights=inputs["topk_weights"],
+                    topk_ids=inputs["topk_ids"],
+                    n_experts_per_token=topk,
+                    activation="silu",
+                    num_experts=num_experts,
+                    is_int8=True,
+                    scratch=make_xpu_scratch(graph_prologue_scratch),
+                ),
+                warmup=args.graph_warmup,
+                iterations=args.graph_iterations,
+            ))
+        graph_replay.append(
+            measure_graph_replay_us(
+                "preallocated_staged",
+                lambda: manual_int8_moe_preallocated_once(
+                    hidden_states=inputs["hidden_states"],
+                    w13=inputs["w13"],
+                    w13_scales=inputs["w13_scales"],
+                    w2=inputs["w2"],
+                    w2_scales=inputs["w2_scales"],
+                    topk_weights=inputs["topk_weights"],
+                    topk_ids=inputs["topk_ids"],
+                    num_experts=num_experts,
+                    topk=topk,
+                    scratch=graph_scratch,
+                ),
+                warmup=args.graph_warmup,
+                iterations=args.graph_iterations,
+            ))
+        graph_replay.append(
+            measure_graph_replay_us(
+                "fused_prologue_staged",
+                lambda: manual_int8_moe_fused_prologue_once(
+                    hidden_states=inputs["hidden_states"],
+                    w13=inputs["w13"],
+                    w13_scales=inputs["w13_scales"],
+                    w2=inputs["w2"],
+                    w2_scales=inputs["w2_scales"],
+                    topk_weights=inputs["topk_weights"],
+                    topk_ids=inputs["topk_ids"],
+                    num_experts=num_experts,
+                    topk=topk,
+                    scratch=graph_prologue_scratch,
+                ),
+                warmup=args.graph_warmup,
+                iterations=args.graph_iterations,
+            ))
+        if args.enable_offset_gemm:
+            graph_replay.append(
+                measure_graph_replay_us(
+                    "fused_prologue_offset_gemm",
+                    lambda: manual_int8_moe_fused_prologue_once(
+                        hidden_states=inputs["hidden_states"],
+                        w13=inputs["w13"],
+                        w13_scales=inputs["w13_scales"],
+                        w2=inputs["w2"],
+                        w2_scales=inputs["w2_scales"],
+                        topk_weights=inputs["topk_weights"],
+                        topk_ids=inputs["topk_ids"],
+                        num_experts=num_experts,
+                        topk=topk,
+                        scratch=graph_prologue_scratch,
+                        use_offset_gemm=True,
+                    ),
+                    warmup=args.graph_warmup,
+                    iterations=args.graph_iterations,
+                ))
+        if args.enable_active_offset_gemm:
+            graph_replay.append(
+                measure_graph_replay_us(
+                    "fused_prologue_active_offset_gemm",
+                    lambda: manual_int8_moe_fused_prologue_once(
+                        hidden_states=inputs["hidden_states"],
+                        w13=inputs["w13"],
+                        w13_scales=inputs["w13_scales"],
+                        w2=inputs["w2"],
+                        w2_scales=inputs["w2_scales"],
+                        topk_weights=inputs["topk_weights"],
+                        topk_ids=inputs["topk_ids"],
+                        num_experts=num_experts,
+                        topk=topk,
+                        scratch=graph_prologue_scratch,
+                        use_active_offset_gemm=True,
+                    ),
+                    warmup=args.graph_warmup,
+                    iterations=args.graph_iterations,
+                ))
+        if args.enable_full_layerlet:
+            graph_replay.append(
+                measure_graph_replay_us(
+                    "full_layerlet",
+                    lambda: manual_int8_moe_full_layerlet_once(
+                        hidden_states=inputs["hidden_states"],
+                        w13=inputs["w13"],
+                        w13_scales=inputs["w13_scales"],
+                        w2=inputs["w2"],
+                        w2_scales=inputs["w2_scales"],
+                        topk_weights=inputs["topk_weights"],
+                        topk_ids=inputs["topk_ids"],
+                        num_experts=num_experts,
+                        topk=topk,
+                        scratch=graph_prologue_scratch,
+                    ),
+                    warmup=args.graph_warmup,
+                    iterations=args.graph_iterations,
+                ))
+        if args.enable_onednn_sidecar:
+            graph_replay.append(
+                measure_graph_replay_us(
+                    "onednn_sidecar",
+                    lambda: manual_int8_moe_onednn_sidecar_once(
+                        hidden_states=inputs["hidden_states"],
+                        w13=inputs["w13"],
+                        w13_scales=inputs["w13_scales"],
+                        w2=inputs["w2"],
+                        w2_scales=inputs["w2_scales"],
+                        topk_weights=inputs["topk_weights"],
+                        topk_ids=inputs["topk_ids"],
+                        num_experts=num_experts,
+                        topk=topk,
+                        scratch=graph_prologue_scratch,
+                        execute_mode=args.onednn_sidecar_mode,
+                    )[0],
+                    warmup=args.graph_warmup,
+                    iterations=args.graph_iterations,
+                ))
 
     components = {label: mean(values)
                   for label, values in component_us.items()}
@@ -1254,6 +2406,25 @@ def benchmark_rows(
                       "activation", "act_contiguous", "quant2", "gemm2",
                       "gather"))
 
+    def summarize_stage_components(
+        source: dict[str, list[float]],
+    ) -> dict[str, float]:
+        summarized = {label: mean(values) for label, values in source.items()}
+        summarized["activation_plus_quant2"] = (
+            summarized.get("activation", 0.0) +
+            summarized.get("quant2", 0.0))
+        summarized["component_sum"] = sum(
+            summarized.get(label, 0.0)
+            for label in ("prologue", "rows_from_offsets", "quant1", "gemm1",
+                          "activation", "quant2", "gemm2", "gather"))
+        return summarized
+
+    prologue_components = summarize_stage_components(prologue_component_us)
+    prologue_offset_components = summarize_stage_components(
+        prologue_offset_component_us)
+    prologue_active_offset_components = summarize_stage_components(
+        prologue_active_offset_component_us)
+
     result = {
         "rows": rows,
         "moe_inputs": rows * topk,
@@ -1262,7 +2433,12 @@ def benchmark_rows(
         "num_experts": num_experts,
         "topk": topk,
         "dtype": args.dtype,
-        "topk_source": "route_jsonl" if route_topk_rows else "synthetic_uniform",
+        "selected_experts": topk_summary.get("topk_rows"),
+        "topk_source": (
+            "route_jsonl" if route_topk_rows
+            else f"synthetic_{args.synthetic_route_mode}"),
+        "synthetic_route_mode": (
+            None if route_topk_rows else args.synthetic_route_mode),
         "route_start_index": route_start_index if route_topk_rows else None,
         "route_start_index_mod": (
             route_start_index % len(route_topk_rows)
@@ -1271,6 +2447,8 @@ def benchmark_rows(
         "topk_summary": topk_summary,
         "total_us_mean": mean(total_us),
         "xpu_fused_moe_scratch_total_us_mean": mean(scratch_total_us),
+        "xpu_fused_moe_prologue_scratch_total_us_mean":
+        mean(prologue_scratch_total_us),
         "preallocated_staged_total_us_mean": mean(preallocated_total_us),
         "fused_prologue_staged_total_us_mean":
         mean(prologue_preallocated_total_us),
@@ -1279,10 +2457,31 @@ def benchmark_rows(
         "fused_prologue_active_offset_gemm_total_us_mean":
         (mean(prologue_active_offset_total_us)
          if prologue_active_offset_total_us else None),
+        "fused_prologue_middle_layerlet_total_us_mean":
+        (mean(prologue_middle_layerlet_total_us)
+         if prologue_middle_layerlet_total_us else None),
+        "full_layerlet_total_us_mean":
+        (mean(full_layerlet_total_us) if full_layerlet_total_us else None),
+        "onednn_sidecar_total_us_mean":
+        (mean(onednn_sidecar_total_us) if onednn_sidecar_total_us else None),
+        "onednn_sidecar_middle_wall_us_mean":
+        (mean(onednn_sidecar_middle_wall_us)
+         if onednn_sidecar_middle_wall_us else None),
+        "onednn_sidecar_execute_wait_us_mean":
+        (mean(onednn_sidecar_execute_wait_us)
+         if onednn_sidecar_execute_wait_us else None),
+        "onednn_sidecar_stats_once": onednn_sidecar_stats_once,
         "offset_gemm_available": offset_gemm_available,
         "offset_gemm_enabled": bool(args.enable_offset_gemm),
         "active_offset_gemm_available": active_offset_gemm_available,
         "active_offset_gemm_enabled": bool(args.enable_active_offset_gemm),
+        "middle_layerlet_available": middle_layerlet_available,
+        "middle_layerlet_enabled": bool(args.enable_middle_layerlet),
+        "full_layerlet_available": full_layerlet_available,
+        "full_layerlet_enabled": bool(args.enable_full_layerlet),
+        "onednn_sidecar_available": onednn_sidecar_available,
+        "onednn_sidecar_enabled": bool(args.enable_onednn_sidecar),
+        "onednn_sidecar_execute_mode": int(args.onednn_sidecar_mode),
         "quant_out_op_available": hasattr(torch.ops._xpu_C,
                                           "per_token_quant_int8_xpu_out"),
         "quant_scratch_buffers": [
@@ -1296,8 +2495,15 @@ def benchmark_rows(
         "fused_prologue_workspace_bytes":
         int(prologue_scratch["workspace_bytes"]),
         "components_us_mean": components,
-        "manual_vs_xpu_fused_moe_max_abs_diff": max_abs_diff,
+        "fused_prologue_components_us_mean": prologue_components,
+        "fused_prologue_offset_components_us_mean":
+        prologue_offset_components,
+        "fused_prologue_active_offset_components_us_mean":
+        prologue_active_offset_components,
+        "manual_vs_xpu_fused_moe_max_abs_diff": manual_max_abs_diff,
         "xpu_scratch_vs_xpu_fused_moe_max_abs_diff": xpu_scratch_max_abs_diff,
+        "xpu_prologue_scratch_vs_xpu_fused_moe_max_abs_diff":
+        xpu_prologue_scratch_max_abs_diff,
         "preallocated_vs_xpu_fused_moe_max_abs_diff": prealloc_max_abs_diff,
         "fused_prologue_vs_xpu_fused_moe_max_abs_diff":
         prologue_max_abs_diff,
@@ -1305,9 +2511,47 @@ def benchmark_rows(
         prologue_offset_max_abs_diff,
         "fused_prologue_active_offset_gemm_vs_xpu_fused_moe_max_abs_diff":
         prologue_active_offset_max_abs_diff,
+        "fused_prologue_middle_layerlet_vs_xpu_fused_moe_max_abs_diff":
+        prologue_middle_layerlet_max_abs_diff,
+        "full_layerlet_vs_xpu_fused_moe_max_abs_diff":
+        full_layerlet_max_abs_diff,
+        "onednn_sidecar_vs_xpu_fused_moe_max_abs_diff":
+        onednn_sidecar_max_abs_diff,
+        "real_routing_oracle_enabled": bool(args.real_routing_oracle),
+        "real_routing_bf16_reference_enabled":
+        bool(args.real_routing_bf16_reference),
+        "xpu_fused_moe_vs_rows_oracle_max_abs_diff":
+        xpu_fused_moe_rows_oracle_max_abs_diff,
+        "offset_oracle_vs_rows_oracle_max_abs_diff":
+        offset_oracle_rows_oracle_max_abs_diff,
+        "manual_vs_rows_oracle_max_abs_diff":
+        manual_rows_oracle_max_abs_diff,
+        "xpu_scratch_vs_rows_oracle_max_abs_diff":
+        xpu_scratch_rows_oracle_max_abs_diff,
+        "xpu_prologue_scratch_vs_rows_oracle_max_abs_diff":
+        xpu_prologue_scratch_rows_oracle_max_abs_diff,
+        "preallocated_vs_rows_oracle_max_abs_diff":
+        prealloc_rows_oracle_max_abs_diff,
+        "fused_prologue_vs_rows_oracle_max_abs_diff":
+        prologue_rows_oracle_max_abs_diff,
+        "fused_prologue_offset_gemm_vs_rows_oracle_max_abs_diff":
+        prologue_offset_rows_oracle_max_abs_diff,
+        "fused_prologue_active_offset_gemm_vs_rows_oracle_max_abs_diff":
+        prologue_active_offset_rows_oracle_max_abs_diff,
+        "fused_prologue_middle_layerlet_vs_rows_oracle_max_abs_diff":
+        prologue_middle_layerlet_rows_oracle_max_abs_diff,
+        "full_layerlet_vs_rows_oracle_max_abs_diff":
+        full_layerlet_rows_oracle_max_abs_diff,
+        "onednn_sidecar_vs_rows_oracle_max_abs_diff":
+        onednn_sidecar_rows_oracle_max_abs_diff,
+        "rows_oracle_vs_bf16_reference_max_abs_diff":
+        rows_oracle_bf16_reference_max_abs_diff,
         "iterations": args.iterations,
         "warmup": args.warmup,
+        "stage_timing_iterations": args.stage_timing_iterations,
     }
+    if args.graph_replay_timing:
+        result["graph_replay"] = graph_replay
     result["prologue_inclusive_gate"] = build_prologue_inclusive_gate(
         result,
         exactness_threshold=args.exactness_threshold,
@@ -1367,6 +2611,14 @@ def build_prologue_inclusive_gate(
             "reference": False,
         },
         {
+            "name": "xpu_fused_moe_with_prologue_scratch",
+            "us_mean": _maybe_float(
+                row.get("xpu_fused_moe_prologue_scratch_total_us_mean")),
+            "max_abs_diff_vs_xpu": _maybe_float(row.get(
+                "xpu_prologue_scratch_vs_xpu_fused_moe_max_abs_diff")),
+            "reference": False,
+        },
+        {
             "name": "preallocated_staged",
             "us_mean": _maybe_float(row.get("preallocated_staged_total_us_mean")),
             "max_abs_diff_vs_xpu": _maybe_float(
@@ -1395,6 +2647,28 @@ def build_prologue_inclusive_gate(
                 "fused_prologue_active_offset_gemm_total_us_mean")),
             "max_abs_diff_vs_xpu": _maybe_float(row.get(
                 "fused_prologue_active_offset_gemm_vs_xpu_fused_moe_max_abs_diff")),
+            "reference": False,
+        },
+        {
+            "name": "fused_prologue_middle_layerlet",
+            "us_mean": _maybe_float(row.get(
+                "fused_prologue_middle_layerlet_total_us_mean")),
+            "max_abs_diff_vs_xpu": _maybe_float(row.get(
+                "fused_prologue_middle_layerlet_vs_xpu_fused_moe_max_abs_diff")),
+            "reference": False,
+        },
+        {
+            "name": "full_layerlet",
+            "us_mean": _maybe_float(row.get("full_layerlet_total_us_mean")),
+            "max_abs_diff_vs_xpu": _maybe_float(
+                row.get("full_layerlet_vs_xpu_fused_moe_max_abs_diff")),
+            "reference": False,
+        },
+        {
+            "name": "onednn_sidecar",
+            "us_mean": _maybe_float(row.get("onednn_sidecar_total_us_mean")),
+            "max_abs_diff_vs_xpu": _maybe_float(
+                row.get("onednn_sidecar_vs_xpu_fused_moe_max_abs_diff")),
             "reference": False,
         },
     ]
@@ -1550,6 +2824,13 @@ def build_prologue_inclusive_gate_summary(
 def write_markdown(path: str, results: dict[str, Any]) -> None:
     rows = results.get("results", [])
     fused = bool(results.get("fused_silu_quant_enabled"))
+
+    def max_row_float(field: str) -> float:
+        return max(
+            (float(row[field]) for row in rows if row.get(field) is not None),
+            default=float("nan"),
+        )
+
     max_diffs = {
         "manual": max(
             (float(row.get("manual_vs_xpu_fused_moe_max_abs_diff", 0.0))
@@ -1558,6 +2839,12 @@ def write_markdown(path: str, results: dict[str, Any]) -> None:
         ),
         "scratch": max(
             (float(row.get("xpu_scratch_vs_xpu_fused_moe_max_abs_diff", 0.0))
+             for row in rows),
+            default=float("nan"),
+        ),
+        "prologue_scratch": max(
+            (float(row.get(
+                "xpu_prologue_scratch_vs_xpu_fused_moe_max_abs_diff", 0.0))
              for row in rows),
             default=float("nan"),
         ),
@@ -1589,6 +2876,41 @@ def write_markdown(path: str, results: dict[str, Any]) -> None:
              is not None),
             default=float("nan"),
         ),
+        "fused_prologue_middle_layerlet": max(
+            (float(row.get(
+                "fused_prologue_middle_layerlet_vs_xpu_fused_moe_max_abs_diff",
+                0.0,
+            )) for row in rows if row.get(
+                "fused_prologue_middle_layerlet_vs_xpu_fused_moe_max_abs_diff")
+             is not None),
+            default=float("nan"),
+        ),
+        "full_layerlet": max(
+            (float(row.get(
+                "full_layerlet_vs_xpu_fused_moe_max_abs_diff",
+                0.0,
+            )) for row in rows if row.get(
+                "full_layerlet_vs_xpu_fused_moe_max_abs_diff") is not None),
+            default=float("nan"),
+        ),
+        "onednn_sidecar": max(
+            (float(row.get(
+                "onednn_sidecar_vs_xpu_fused_moe_max_abs_diff",
+                0.0,
+            )) for row in rows if row.get(
+                "onednn_sidecar_vs_xpu_fused_moe_max_abs_diff") is not None),
+            default=float("nan"),
+        ),
+        "xpu_vs_rows_oracle":
+        max_row_float("xpu_fused_moe_vs_rows_oracle_max_abs_diff"),
+        "offset_vs_rows_oracle":
+        max_row_float("offset_oracle_vs_rows_oracle_max_abs_diff"),
+        "full_layerlet_vs_rows_oracle":
+        max_row_float("full_layerlet_vs_rows_oracle_max_abs_diff"),
+        "onednn_sidecar_vs_rows_oracle":
+        max_row_float("onednn_sidecar_vs_rows_oracle_max_abs_diff"),
+        "rows_oracle_vs_bf16_reference":
+        max_row_float("rows_oracle_vs_bf16_reference_max_abs_diff"),
     }
 
     lines = []
@@ -1597,6 +2919,9 @@ def write_markdown(path: str, results: dict[str, Any]) -> None:
     lines.append(f"- Fused SiLU+quant enabled: `{fused}`.")
     lines.append(f"- TP size: `{results['tp_size']}`.")
     lines.append(f"- Result rows: `{len(rows)}`.")
+    if rows:
+        lines.append(
+            f"- Route mode/source: `{rows[0].get('topk_source')}`.")
     if rows:
         lines.append(
             f"- Quant out-variant available: "
@@ -1637,6 +2962,10 @@ def write_markdown(path: str, results: dict[str, Any]) -> None:
         f"`{_fmt(max_diffs['scratch'])}`."
     )
     lines.append(
+        f"- Prologue-scratch `xpu_fused_moe` max abs diff: "
+        f"`{_fmt(max_diffs['prologue_scratch'])}`."
+    )
+    lines.append(
         f"- Preallocated staged max abs diff: "
         f"`{_fmt(max_diffs['preallocated'])}`."
     )
@@ -1654,6 +2983,49 @@ def write_markdown(path: str, results: dict[str, Any]) -> None:
             f"- Fused-prologue active-offset-GEMM max abs diff: "
             f"`{_fmt(max_diffs['fused_prologue_active_offset'])}`."
         )
+    if any(row.get("middle_layerlet_enabled") for row in rows):
+        lines.append(
+            f"- Fused-prologue middle-layerlet max abs diff: "
+            f"`{_fmt(max_diffs['fused_prologue_middle_layerlet'])}`."
+        )
+    if any(row.get("full_layerlet_enabled") for row in rows):
+        lines.append(
+            f"- Full C++ layerlet max abs diff: "
+            f"`{_fmt(max_diffs['full_layerlet'])}`."
+        )
+    if any(row.get("onednn_sidecar_enabled") for row in rows):
+        lines.append(
+            f"- oneDNN sidecar max abs diff: "
+            f"`{_fmt(max_diffs['onednn_sidecar'])}`."
+        )
+    if any(row.get("real_routing_oracle_enabled") for row in rows):
+        lines.append("")
+        lines.append("### Rows-Oracle Checks")
+        lines.append("")
+        lines.append(
+            "- Current `xpu_fused_moe` max abs diff versus forced "
+            f"rows-per-expert oracle: `{_fmt(max_diffs['xpu_vs_rows_oracle'])}`."
+        )
+        lines.append(
+            "- Forced offset-GEMM max abs diff versus rows-per-expert oracle: "
+            f"`{_fmt(max_diffs['offset_vs_rows_oracle'])}`."
+        )
+        if any(row.get("full_layerlet_enabled") for row in rows):
+            lines.append(
+                "- Full C++ layerlet max abs diff versus rows-per-expert "
+                f"oracle: `{_fmt(max_diffs['full_layerlet_vs_rows_oracle'])}`."
+            )
+        if any(row.get("onednn_sidecar_enabled") for row in rows):
+            lines.append(
+                "- oneDNN sidecar max abs diff versus rows-per-expert "
+                f"oracle: `{_fmt(max_diffs['onednn_sidecar_vs_rows_oracle'])}`."
+            )
+        if any(row.get("real_routing_bf16_reference_enabled") for row in rows):
+            lines.append(
+                "- Rows-per-expert INT8 oracle max abs diff versus BF16 "
+                "dequantized reference: "
+                f"`{_fmt(max_diffs['rows_oracle_vs_bf16_reference'])}`."
+            )
     lines.append("")
     lines.append("## Timing")
     lines.append("")
@@ -1661,6 +3033,9 @@ def write_markdown(path: str, results: dict[str, Any]) -> None:
                    for row in rows) / max(1, len(rows))
     mean_xpu_scratch = sum(
         float(row.get("xpu_fused_moe_scratch_total_us_mean", 0.0))
+        for row in rows) / max(1, len(rows))
+    mean_xpu_prologue_scratch = sum(
+        float(row.get("xpu_fused_moe_prologue_scratch_total_us_mean", 0.0))
         for row in rows) / max(1, len(rows))
     mean_prealloc = sum(
         float(row.get("preallocated_staged_total_us_mean", 0.0))
@@ -1687,9 +3062,52 @@ def write_markdown(path: str, results: dict[str, Any]) -> None:
             for row in active_offset_rows) / len(active_offset_rows)
         if active_offset_rows else None
     )
+    middle_layerlet_rows = [
+        row for row in rows
+        if row.get("fused_prologue_middle_layerlet_total_us_mean") is not None
+    ]
+    mean_prologue_middle_layerlet = (
+        sum(float(row["fused_prologue_middle_layerlet_total_us_mean"])
+            for row in middle_layerlet_rows) / len(middle_layerlet_rows)
+        if middle_layerlet_rows else None
+    )
+    full_layerlet_rows = [
+        row for row in rows if row.get("full_layerlet_total_us_mean")
+        is not None
+    ]
+    mean_full_layerlet = (
+        sum(float(row["full_layerlet_total_us_mean"])
+            for row in full_layerlet_rows) / len(full_layerlet_rows)
+        if full_layerlet_rows else None
+    )
+    onednn_sidecar_rows = [
+        row for row in rows if row.get("onednn_sidecar_total_us_mean")
+        is not None
+    ]
+    mean_onednn_sidecar = (
+        sum(float(row["onednn_sidecar_total_us_mean"])
+            for row in onednn_sidecar_rows) / len(onednn_sidecar_rows)
+        if onednn_sidecar_rows else None
+    )
+    mean_onednn_sidecar_middle = (
+        sum(float(row["onednn_sidecar_middle_wall_us_mean"])
+            for row in onednn_sidecar_rows
+            if row.get("onednn_sidecar_middle_wall_us_mean") is not None)
+        / len([
+            row for row in onednn_sidecar_rows
+            if row.get("onednn_sidecar_middle_wall_us_mean") is not None
+        ])
+        if any(row.get("onednn_sidecar_middle_wall_us_mean") is not None
+               for row in onednn_sidecar_rows)
+        else None
+    )
     lines.append(f"- Mean `xpu_fused_moe`: `{_fmt(mean_xpu)} us`.")
     lines.append(
         f"- Mean scratch `xpu_fused_moe`: `{_fmt(mean_xpu_scratch)} us`.")
+    lines.append(
+        "- Mean prologue-scratch `xpu_fused_moe`: "
+        f"`{_fmt(mean_xpu_prologue_scratch)} us`."
+    )
     lines.append(f"- Mean preallocated staged: `{_fmt(mean_prealloc)} us`.")
     lines.append(
         f"- Mean fused-prologue staged: `{_fmt(mean_prologue)} us`.")
@@ -1703,14 +3121,37 @@ def write_markdown(path: str, results: dict[str, Any]) -> None:
             "- Mean fused-prologue active-offset-GEMM staged: "
             f"`{_fmt(mean_prologue_active_offset)} us`."
         )
+    if mean_prologue_middle_layerlet is not None:
+        lines.append(
+            "- Mean fused-prologue middle-layerlet staged: "
+            f"`{_fmt(mean_prologue_middle_layerlet)} us`."
+        )
+    if mean_full_layerlet is not None:
+        lines.append(
+            "- Mean full C++ layerlet: "
+            f"`{_fmt(mean_full_layerlet)} us`."
+        )
+    if mean_onednn_sidecar is not None:
+        lines.append(
+            "- Mean oneDNN sidecar total: "
+            f"`{_fmt(mean_onednn_sidecar)} us`."
+        )
+    if mean_onednn_sidecar_middle is not None:
+        lines.append(
+            "- Mean oneDNN sidecar internal middle wall: "
+            f"`{_fmt(mean_onednn_sidecar_middle)} us`."
+        )
     lines.append("")
     lines.append(
         "| rows | route start | active experts | xpu fused us | "
-        "xpu scratch us | prealloc staged us | fused prologue staged us | "
-        "fused prologue offset us | active offset us | gemm1 us | gemm2 us | "
+        "xpu scratch us | xpu prologue scratch us | prealloc staged us | "
+        "fused prologue staged us | "
+        "fused prologue offset us | active offset us | middle layerlet us | "
+        "full layerlet us | oneDNN sidecar us | gemm1 us | gemm2 us | "
         "act+quant2 us |"
     )
-    lines.append("|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|")
+    lines.append(
+        "|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|")
     for row in rows:
         comp = row.get("components_us_mean", {})
         topk = row.get("topk_summary", {})
@@ -1719,15 +3160,72 @@ def write_markdown(path: str, results: dict[str, Any]) -> None:
             f"{topk.get('active_experts')} | "
             f"{_fmt(row.get('total_us_mean'))} | "
             f"{_fmt(row.get('xpu_fused_moe_scratch_total_us_mean'))} | "
+            f"{_fmt(row.get('xpu_fused_moe_prologue_scratch_total_us_mean'))} | "
             f"{_fmt(row.get('preallocated_staged_total_us_mean'))} | "
             f"{_fmt(row.get('fused_prologue_staged_total_us_mean'))} | "
             f"{_fmt(row.get('fused_prologue_offset_gemm_total_us_mean'))} | "
             f"{_fmt(row.get('fused_prologue_active_offset_gemm_total_us_mean'))} | "
+            f"{_fmt(row.get('fused_prologue_middle_layerlet_total_us_mean'))} | "
+            f"{_fmt(row.get('full_layerlet_total_us_mean'))} | "
+            f"{_fmt(row.get('onednn_sidecar_total_us_mean'))} | "
             f"{_fmt(comp.get('gemm1'))} | "
             f"{_fmt(comp.get('gemm2'))} | "
             f"{_fmt(comp.get('activation_plus_quant2'))} |"
         )
     lines.append("")
+
+    if any(int(row.get("stage_timing_iterations") or 0) > 0 for row in rows):
+        lines.append("## Prologue Offset Stage Timing")
+        lines.append("")
+        lines.append(
+            "These stage timings are for the exact fused-prologue "
+            "offset-GEMM candidate and are used to decide the next native "
+            "layerlet boundary. They are single-device replay diagnostics."
+        )
+        lines.append("")
+        lines.append(
+            "| rows | route start | total us | prologue | quant1 | gemm1 | "
+            "activation | quant2 | gemm2 | gather | component sum |"
+        )
+        lines.append(
+            "|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|")
+        for row in rows:
+            comp = row.get("fused_prologue_offset_components_us_mean", {})
+            if not comp:
+                continue
+            lines.append(
+                f"| {row.get('rows')} | {row.get('route_start_index')} | "
+                f"{_fmt(row.get('fused_prologue_offset_gemm_total_us_mean'))} | "
+                f"{_fmt(comp.get('prologue'))} | "
+                f"{_fmt(comp.get('quant1'))} | "
+                f"{_fmt(comp.get('gemm1'))} | "
+                f"{_fmt(comp.get('activation'))} | "
+                f"{_fmt(comp.get('quant2'))} | "
+                f"{_fmt(comp.get('gemm2'))} | "
+                f"{_fmt(comp.get('gather'))} | "
+                f"{_fmt(comp.get('component_sum'))} |"
+            )
+        lines.append("")
+
+    if any(row.get("graph_replay") for row in rows):
+        lines.append("## Graph Replay Timing")
+        lines.append("")
+        lines.append(
+            "These timings capture each eligible candidate in an XPU graph "
+            "and time `graph.replay()`. They remain single-device replay "
+            "diagnostics, not endpoint throughput."
+        )
+        lines.append("")
+        lines.append("| rows | route start | candidate | status | graph us |")
+        lines.append("|---:|---:|---|---|---:|")
+        for row in rows:
+            for item in row.get("graph_replay", []):
+                lines.append(
+                    f"| {row.get('rows')} | {row.get('route_start_index')} | "
+                    f"{item.get('name')} | {item.get('status')} | "
+                    f"{_fmt(item.get('us_mean'))} |")
+        lines.append("")
+
     lines.append("## Prologue-Inclusive Gate")
     lines.append("")
     if gate_summary:
@@ -1815,6 +3313,19 @@ def write_markdown(path: str, results: dict[str, Any]) -> None:
             "- The fused-prologue staged path is not exact against "
             "`xpu_fused_moe`; do not use it as an endpoint candidate."
         )
+    if mean_onednn_sidecar is not None:
+        if mean_full_layerlet is not None and mean_onednn_sidecar > mean_full_layerlet:
+            lines.append(
+                "- The oneDNN sidecar is exact, but its prologue-inclusive "
+                "wrapper is slower than the current full C++ layerlet in this "
+                "route replay. Keep the internal middle-wall timing as a "
+                "diagnostic only; do not promote the sidecar endpoint path."
+            )
+        else:
+            lines.append(
+                "- The oneDNN sidecar is exact and should be evaluated by the "
+                "prologue-inclusive gate before any endpoint promotion."
+            )
     lines.append(
         "- Compare `xpu fused us` with the current budget target of roughly "
         "`160 us/layer` for a plausible `200 tok/s` non-speculative lane."
@@ -1862,6 +3373,36 @@ def main() -> int:
     parser.add_argument("--dtype", choices=("bf16", "fp16"), default="bf16")
     parser.add_argument("--device", default="xpu")
     parser.add_argument("--output-json")
+    parser.add_argument(
+        "--synthetic-route-mode",
+        choices=("uniform", "hot_skew"),
+        default="uniform",
+        help=(
+            "Synthetic top-k routing pattern used when --route-jsonl is not "
+            "provided. hot_skew keeps many experts at zero rows and stresses "
+            "skewed real-routing behavior."
+        ),
+    )
+    parser.add_argument(
+        "--real-routing-oracle",
+        action="store_true",
+        help=(
+            "Also compare candidates against a forced rows-per-expert W8A8 "
+            "path with offsets/layerlets/prologue disabled. This catches "
+            "offset/layerlet bugs that are invisible when comparing two paths "
+            "sharing the same offset kernels."
+        ),
+    )
+    parser.add_argument(
+        "--real-routing-bf16-reference",
+        action="store_true",
+        help=(
+            "When --real-routing-oracle is enabled, also compare the forced "
+            "rows-per-expert INT8 path against ref_fused_moe's dequantized "
+            "BF16/FP32 reference. This is a drift diagnostic, not an exact "
+            "promotion gate for Quark W8A8."
+        ),
+    )
     parser.add_argument(
         "--route-jsonl",
         help="Optional route-capture JSONL whose topk_ids override synthetic routing.",
@@ -1922,8 +3463,68 @@ def main() -> int:
             "to the W8A8 grouped GEMM op."
         ),
     )
+    parser.add_argument(
+        "--enable-middle-layerlet",
+        action="store_true",
+        help=(
+            "Benchmark fused-prologue plus the C++ W8A8 middle layerlet "
+            "(GEMM1 + fused SiLU/quant + GEMM2) as an exact full-route "
+            "candidate."
+        ),
+    )
+    parser.add_argument(
+        "--enable-full-layerlet",
+        action="store_true",
+        help=(
+            "Benchmark the experimental C++ wrapper that calls prologue, "
+            "quant1, W8A8 middle layerlet, and gather behind one _xpu_C op."
+        ),
+    )
+    parser.add_argument(
+        "--enable-onednn-sidecar",
+        action="store_true",
+        help=(
+            "Benchmark the diagnostic cached oneDNN grouped-matmul sidecar "
+            "inside the fused-prologue route replay. This is not endpoint "
+            "promotion by itself; use it to decide whether the oneDNN "
+            "middle boundary is worth making graph-safe/persistent."
+        ),
+    )
+    parser.add_argument(
+        "--onednn-sidecar-mode",
+        type=int,
+        default=23,
+        help=(
+            "Execution mode passed to qwen36_moe_onednn_sidecar_probe. "
+            "Mode 23 is the cached GEMM1+activation/quant+GEMM2 path with "
+            "post-GEMM2 wait used by earlier diagnostics."
+        ),
+    )
+    parser.add_argument(
+        "--graph-replay-timing",
+        action="store_true",
+        help=(
+            "Capture and time XPU graph replay for preallocated exact "
+            "candidates. This is a replay diagnostic, not an endpoint result."
+        ),
+    )
+    parser.add_argument("--graph-warmup", type=int, default=3)
+    parser.add_argument("--graph-iterations", type=int, default=30)
+    parser.add_argument(
+        "--stage-timing-iterations",
+        type=int,
+        default=0,
+        help=(
+            "Collect event-level stage timings for fused-prologue candidates "
+            "in a separate diagnostic loop. Normal candidate totals are "
+            "measured without this extra event overhead."
+        ),
+    )
     parser.add_argument("--markdown-out")
     args = parser.parse_args()
+    if args.real_routing_bf16_reference and not args.real_routing_oracle:
+        parser.error(
+            "--real-routing-bf16-reference requires --real-routing-oracle")
 
     if args.enable_fused_silu_quant:
         os.environ["VLLM_XPU_FUSED_MOE_FUSE_SILU_QUANT"] = "1"
@@ -1967,6 +3568,11 @@ def main() -> int:
         "model_config": args.model_config,
         "tp_size": args.tp_size,
         "fused_silu_quant_enabled": args.enable_fused_silu_quant,
+        "synthetic_route_mode": args.synthetic_route_mode,
+        "real_routing_oracle_enabled": args.real_routing_oracle,
+        "real_routing_bf16_reference_enabled":
+        args.real_routing_bf16_reference,
+        "runtime_identity": collect_runtime_identity(args),
         "prologue_inclusive_gate_summary":
         build_prologue_inclusive_gate_summary(
             benchmark_results,

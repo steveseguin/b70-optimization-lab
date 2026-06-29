@@ -10,8 +10,11 @@ Community setup guides, benchmark recipes, troubleshooting notes, and patches fo
 - Current reproducibility map: [docs/current-reproducibility-map.md](docs/current-reproducibility-map.md)
 - MiniMax install guide: [docs/b70-minimax-ubuntu24-deployment.md](docs/b70-minimax-ubuntu24-deployment.md)
 - Production service notes: [docs/minimax-production-c1-service.md](docs/minimax-production-c1-service.md)
+- Qwen3.6 35B result packet: [results/qwen36-35b-quark-int8-b70](results/qwen36-35b-quark-int8-b70/README.md)
+- Local ops and Codex delegation: [docs/local-ops.md](docs/local-ops.md)
 - Model recipes: [docs/model-recipes.md](docs/model-recipes.md)
 - FAQ: [docs/faq.md](docs/faq.md)
+- LocalMaxxing submissions: [docs/localmaxxing.md](docs/localmaxxing.md)
 
 ## What This Is
 
@@ -24,6 +27,49 @@ This repository is meant to become a stable community hub for Intel XPU local AI
 - troubleshooting for drivers, PCIe topology, XPU visibility, and runtime mismatches
 - research leads and reproducible optimization notes
 
+Hardware coverage note: the current lab is four Arc Pro B70 32 GB cards
+(`128 GB` aggregate VRAM). That is enough to produce useful vLLM/XPU,
+llama.cpp/SYCL, driver, and model-port feedback, but it is also now the main
+coverage limit for larger model families. Higher-VRAM Intel eval hardware,
+especially Crescent Island-class `160-480 GB` devices or comparable future XPU
+parts, would directly expand this work into larger targets such as GLM 5.2,
+DeepSeek Flash-class models, and long-context service lanes that cannot be
+kept resident on 32 GB cards. Steve Seguin maintains this repo and posts ongoing
+build notes at <https://x.com/xyster>. The lab also has spare EPYC 9015 host
+capacity with up to ten PCIe 5.0 x16 slots, so the limiting factor for broader
+Intel coverage is increasingly GPU memory and hardware availability, not a lack
+of chassis or reproducibility workflow.
+
+## How To Help This Research
+
+This project is most useful when it turns individual lab time into reusable
+public evidence: commands, patches, canaries, negative results, driver
+failures, and result packets that other Intel/XPU users can find and repeat.
+B70 has become one of the more visible cards in LocalMaxxing-style community
+benchmarks partly because these runs are documented, submitted, discussed on X,
+and indexed by GitHub for future users and agents.
+
+Useful contributions include:
+
+- reproducing a result on another Intel/XPU stack and sharing exact versions;
+- testing a failed lane after a driver, PyTorch XPU, vLLM, or oneAPI update;
+- turning local patches into clean vLLM, vllm-xpu-kernels, llama.cpp, or docs
+  issues/PRs;
+- adding quality canaries for new model families;
+- sharing high-signal failure logs with model, quantization, graph mode, and
+  hardware identity intact;
+- providing temporary access to larger Intel hardware for models that do not
+  fit cleanly on 32 GB cards.
+
+The slow part is not writing down another benchmark command. Each serious model
+lane can take days or weeks because the cards are occupied by build/test loops,
+quality gates, compiler/runtime failures, LocalMaxxing validation, and
+near-record repeat checks. More high-VRAM Intel hardware would let the project
+keep a working inference endpoint available while also optimizing multiple
+larger models in parallel. A community lab with roughly `400-1000 GB` of Intel
+VRAM across high-memory devices would change which models can be optimized at
+home, not just how many jobs can queue at once.
+
 ## Quick Paths
 
 | I want to... | Go here |
@@ -34,7 +80,9 @@ This repository is meant to become a stable community hub for Intel XPU local AI
 | Deploy MiniMax M2.7 INT4 on 4x B70 | [MiniMax Ubuntu 24 guide](docs/b70-minimax-ubuntu24-deployment.md) |
 | Run the endpoint as a service | [Production c1 service](docs/minimax-production-c1-service.md) |
 | Find model-specific recipes | [Model recipes](docs/model-recipes.md) |
+| Review Qwen3.6 35B B70 results | [Qwen result packet](results/qwen36-35b-quark-int8-b70/README.md) |
 | Share a benchmark | [Community results guide](docs/community-results.md) |
+| Submit a LocalMaxxing record | [LocalMaxxing submissions](docs/localmaxxing.md) |
 | Compare GPUs | [GPU comparison](docs/gpu-comparison-local-ai.md) |
 | Send Intel feedback | [Feedback for Intel](docs/feedback-for-intel.md) |
 
@@ -331,7 +379,7 @@ The rest of this README is dense historical lab context. New users should start 
 - `scripts/qwen36-hotset-split-floor-model.py`: CPU-only Qwen3.6 hotset split break-even analyzer for dry-run route replay JSON; estimates cold fallback size, extra launches, and the body-speedup needed before a real XPU benchmark.
 - `scripts/summarize-vllm-aot-collectives.sh`: helper for inspecting vLLM AOT cache allreduce/wait/RMS patterns.
 - `scripts/add-qwen35-fused-ba-gguf.py`: experimental augmented-GGUF generator that adds fused Qwen35 `ssm_ba` tensors from separate alpha/beta tensors.
-- `scripts/submit_localmaxxing_results.py`: LocalMaxxing submission helper. Requires `LMX_API_KEY` in the environment; no API key is stored in this repo.
+- `scripts/submit_localmaxxing_results.py`: LocalMaxxing submission helper. Reads `LMX_API_KEY` first, then falls back to `~/.config/localmaxxing/api_key`; no API key is stored in this repo. See [docs/localmaxxing.md](docs/localmaxxing.md).
 - `benchmarks/b70_xccl_allreduce_bench.py`: XPU all-reduce/P2P microbenchmark.
 - `data/localmaxxing_payloads.json`: sanitized benchmark payloads submitted or queued for LocalMaxxing.
 - `notes/2026-05-10-fast-nvme-model-placement.md`: model placement update after moving the MiniMax GGUF shards to `/mnt/fast-ai` and preserving the original path as a symlink.

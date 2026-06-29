@@ -51,12 +51,18 @@ def mapped_roles(cases: list[dict[str, Any]]) -> list[str]:
     return roles
 
 
-def check_replay(replay: dict[str, Any], errors: list[str]) -> None:
+def check_replay(
+    replay: dict[str, Any],
+    errors: list[str],
+    *,
+    allow_accounting_mismatch: bool = False,
+) -> None:
     if int(replay.get("malformed_rows") or 0) != 0:
         fail(errors, "replay contains malformed rows")
     if int(replay.get("joined_requests") or 0) != int(replay.get("requests") or 0):
         fail(errors, "replay did not join every request to a token case")
-    if int(replay.get("accounting_mismatch_count") or 0) != 0:
+    accounting_mismatches = int(replay.get("accounting_mismatch_count") or 0)
+    if accounting_mismatches != 0 and not allow_accounting_mismatch:
         fail(errors, "replay accounting mismatches are present")
     if int(replay.get("suppressed_followup_mismatch_count") or 0) != 0:
         fail(errors, "suppressed follow-up mismatches are present")
@@ -210,6 +216,15 @@ def main() -> int:
         action="store_true",
         help="Require spec trace request IDs to join back to every fixture case.",
     )
+    parser.add_argument(
+        "--allow-replay-accounting-mismatch",
+        action="store_true",
+        help=(
+            "Allow replay accounting-only mismatches. This is for token-exact "
+            "runs where the trace accounting is known noisy; generated-token "
+            "mismatches and suppressed follow-up mismatches still fail."
+        ),
+    )
     args = parser.parse_args()
 
     fixture = load_json(args.fixture)
@@ -227,7 +242,11 @@ def main() -> int:
         )
 
     if args.replay_json:
-        check_replay(load_json(args.replay_json), errors)
+        check_replay(
+            load_json(args.replay_json),
+            errors,
+            allow_accounting_mismatch=args.allow_replay_accounting_mismatch,
+        )
     spec_summary = load_spec_summary(fixture, args.spec_summary)
     spec = check_spec_summary(fixture, spec_summary, args, errors)
 

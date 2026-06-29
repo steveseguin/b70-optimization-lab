@@ -5,6 +5,18 @@ the session-cache experiments, the TurboQuant patch, and the long-context
 research path. It is meant for a fresh human or agent who needs to reproduce or
 review the current work without reading every historical note first.
 
+LocalMaxxing submission credentials and helper usage are documented in
+[localmaxxing.md](localmaxxing.md); keep the API key outside Git.
+
+Hardware scope: the local Intel lab is four Arc Pro B70 32 GB GPUs
+(`128 GB` aggregate VRAM). Results here are useful because they are produced on
+real community-accessible XPU hardware, but the same limit also constrains
+larger model coverage. Additional high-VRAM Intel hardware would let this map
+include larger GLM/DeepSeek-class lanes and more concurrent service/optimization
+comparisons without sacrificing the current endpoint. The lab has spare EPYC
+9015 PCIe 5.0 slot capacity, so the missing piece for broader Intel coverage is
+higher-memory XPU hardware rather than host expansion.
+
 ## What Is Production Today
 
 The active LAN endpoint on this host is the Gemma 4 c8 model-slot profile:

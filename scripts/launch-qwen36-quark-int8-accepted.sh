@@ -14,6 +14,9 @@ GPU_MEMORY_UTILIZATION="${GPU_MEMORY_UTILIZATION:-0.90}"
 if [[ -z "${COMPILATION_CONFIG:-}" ]]; then
   COMPILATION_CONFIG='{"cudagraph_mode":"NONE"}'
 fi
+QWEN36_XPU_PREFLIGHT="${QWEN36_XPU_PREFLIGHT:-auto}"
+QWEN36_XPU_PREFLIGHT_SCRIPT="${QWEN36_XPU_PREFLIGHT_SCRIPT:-/home/steve/llm-optimizations/scripts/check-qwen36-xpu-xccl-health.sh}"
+QWEN36_XPU_PREFLIGHT_LOG="${QWEN36_XPU_PREFLIGHT_LOG:-${LOG_PATH%.*}-xpu-health.log}"
 MODEL_INPUT_TRACE_FILE="${MODEL_INPUT_TRACE_FILE:-}"
 MODEL_INPUT_TRACE_MAX_LINES="${MODEL_INPUT_TRACE_MAX_LINES:-400}"
 MODEL_INPUT_TRACE_RANK="${MODEL_INPUT_TRACE_RANK:-}"
@@ -22,13 +25,15 @@ COW_PARENT_TRACE_MAX_LINES="${COW_PARENT_TRACE_MAX_LINES:-2000}"
 COW_WORKER_TRACE_FILE="${COW_WORKER_TRACE_FILE:-}"
 COW_WORKER_TRACE_MAX_LINES="${COW_WORKER_TRACE_MAX_LINES:-2000}"
 COW_WORKER_TRACE_RANK="${COW_WORKER_TRACE_RANK:-}"
+VLLM_SRC="${VLLM_SRC:-/home/steve/src/vllm}"
+KERNELS_SRC="${KERNELS_SRC:-/home/steve/src/vllm-xpu-kernels}"
 
 export HF_HOME="${HF_HOME:-/mnt/fast-ai/llm-cache/hf}"
 export HUGGINGFACE_HUB_CACHE="${HUGGINGFACE_HUB_CACHE:-/mnt/fast-ai/llm-cache/hf}"
 export TORCHINDUCTOR_CACHE_DIR="${TORCHINDUCTOR_CACHE_DIR:-/mnt/fast-ai/vllm-cache-exp/qwen36-35b-a3b-quark-int8-tp4-safe-gdn-recurrent-graphnone-32k/torchinductor}"
 export VLLM_CACHE_ROOT="${VLLM_CACHE_ROOT:-/mnt/fast-ai/vllm-cache-exp/qwen36-35b-a3b-quark-int8-tp4-safe-gdn-recurrent-graphnone-32k/vllm}"
-export PYTHONPATH="/home/steve/src/vllm:/home/steve/src/vllm-xpu-kernels${PYTHONPATH:+:$PYTHONPATH}"
-export LD_LIBRARY_PATH="/home/steve/src/vllm-xpu-kernels/vllm_xpu_kernels:/home/steve/.venvs/vllm-xpu/lib:/home/steve/.venvs/vllm-xpu/lib/python3.12/site-packages/torch/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+export PYTHONPATH="$VLLM_SRC:$KERNELS_SRC${PYTHONPATH:+:$PYTHONPATH}"
+export LD_LIBRARY_PATH="$KERNELS_SRC/vllm_xpu_kernels:/home/steve/.venvs/vllm-xpu/lib:/home/steve/.venvs/vllm-xpu/lib/python3.12/site-packages/torch/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
 
 export VLLM_USE_V1=1
 export VLLM_TARGET_DEVICE=xpu
@@ -59,12 +64,37 @@ export CCL_KVS_IFACE="${CCL_KVS_IFACE:-eth1}"
 unset CCL_ZE_IPC_EXCHANGE
 unset CCL_WORKER_COUNT
 
+run_xpu_preflight=0
+if [[ "$QWEN36_XPU_PREFLIGHT" == "1" ]]; then
+  run_xpu_preflight=1
+elif [[ "$QWEN36_XPU_PREFLIGHT" == "auto" ]] && [[ "$TP_SIZE" -ge 4 ]]; then
+  run_xpu_preflight=1
+fi
+
+if [[ "$run_xpu_preflight" == "1" ]]; then
+  preflight_devices="${ZE_AFFINITY_MASK:-0,1,2,3}"
+  echo "[qwen36-launch] xpu preflight devices=$preflight_devices nproc=$TP_SIZE log=$QWEN36_XPU_PREFLIGHT_LOG"
+  if ! PHYSICAL_DEVICES="$preflight_devices" \
+    XCCL_DEVICES="$preflight_devices" \
+    XCCL_NPROC="$TP_SIZE" \
+    "$QWEN36_XPU_PREFLIGHT_SCRIPT" >"$QWEN36_XPU_PREFLIGHT_LOG" 2>&1; then
+    echo "[qwen36-launch] xpu preflight failed; refusing to start TP$TP_SIZE endpoint" >&2
+    echo "[qwen36-launch] see $QWEN36_XPU_PREFLIGHT_LOG" >&2
+    tail -n 80 "$QWEN36_XPU_PREFLIGHT_LOG" >&2 || true
+    exit 1
+  fi
+fi
+
 # Accepted production/provenance lane: keep rejected diagnostic MoE paths out
 # unless a new launcher explicitly opts into them.
 if [[ "${VLLM_XPU_W8A8_EXPERIMENTAL_ALLOW:-0}" != "1" ]]; then
   unset VLLM_XPU_W8A8_USE_OFFSETS
   unset VLLM_XPU_W8A8_OFFSETS_PREFIX_OP
   unset VLLM_XPU_MOE_W8A8_MIDDLE_LAYERLET
+  unset VLLM_XPU_MOE_W8A8_FULL_LAYERLET
+  unset VLLM_XPU_MOE_W8A8_FUSED_Q1
+  unset VLLM_XPU_MOE_W8A8_FAST_GATHER
+  unset VLLM_XPU_INT8_MOE_ACTIVE_OFFSET_GEMM
 fi
 unset VLLM_XPU_MOE_ONEDNN_SIDECAR_PROBE
 unset VLLM_XPU_MOE_ONEDNN_SIDECAR_OFFSETS

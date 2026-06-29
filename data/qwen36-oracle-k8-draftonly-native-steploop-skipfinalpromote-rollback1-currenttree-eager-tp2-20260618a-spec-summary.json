@@ -1,0 +1,188 @@
+{
+  "traces": [
+    {
+      "path": "/home/steve/llm-optimizations/data/qwen36-oracle-k8-draftonly-native-steploop-skipfinalpromote-rollback1-currenttree-eager-tp2-20260618a-spec-trace.jsonl",
+      "rows": 2,
+      "malformed_rows": 0,
+      "requests": 1,
+      "draft_tokens": 16,
+      "accepted": 8,
+      "rejected": 8,
+      "accept_rate_pct": 50.0,
+      "reject_rate_pct": 50.0,
+      "full_accept_rows": 1,
+      "full_reject_rows": 1,
+      "suppressed_bonus_rows": 0,
+      "full_accept_row_pct": 50.0,
+      "full_reject_row_pct": 50.0,
+      "suppressed_bonus_row_pct": 0.0,
+      "repeated_scheduled_rows": 0,
+      "max_full_accept_streak": 1,
+      "accept_count_histogram": {
+        "0": 1,
+        "8": 1
+      },
+      "top_scheduled_pairs": [
+        {
+          "tokens": "440,27044,47193,14246,8129,13,24985,383",
+          "count": 1
+        },
+        {
+          "tokens": "3074,43318,16401,4478,11,29541,33389,11",
+          "count": 1
+        }
+      ],
+      "top_generated_first_tokens": [
+        {
+          "token": "440",
+          "count": 1
+        }
+      ],
+      "request_ids": [
+        "cmpl-qwen36-oracle-k8-draftonly-native-steploop-skipfinalpromote-rollback1-currenttree-eager-tp2-20260618a-000000-0-b42d198d"
+      ],
+      "top_requests_by_draft": [
+        {
+          "req_id": "cmpl-qwen36-oracle-k8-draftonly-native-steploop-skipfinalpromote-rollback1-currenttree-eager-tp2-20260618a-000000-0-b42d198d",
+          "rows": 2,
+          "draft_tokens": 16,
+          "accepted": 8,
+          "rejected": 8,
+          "first_ts": 1781796259.972526,
+          "last_ts": 1781796260.8169372,
+          "min_output_tokens": 1,
+          "max_output_tokens": 9,
+          "full_accept_rows": 1,
+          "full_reject_rows": 1,
+          "max_full_accept_streak": 1,
+          "repeated_scheduled_rows": 0,
+          "suppressed_bonus_rows": 0,
+          "top_scheduled_pairs": [
+            {
+              "tokens": "440,27044,47193,14246,8129,13,24985,383",
+              "count": 1
+            },
+            {
+              "tokens": "3074,43318,16401,4478,11,29541,33389,11",
+              "count": 1
+            }
+          ],
+          "min_computed_after_reject": 510,
+          "max_computed_after_reject": 511,
+          "min_tokens_after_output": 511,
+          "max_tokens_after_output": 511,
+          "accept_rate": 50.0
+        }
+      ],
+      "top_requests_by_rejects": [
+        {
+          "req_id": "cmpl-qwen36-oracle-k8-draftonly-native-steploop-skipfinalpromote-rollback1-currenttree-eager-tp2-20260618a-000000-0-b42d198d",
+          "rows": 2,
+          "draft_tokens": 16,
+          "accepted": 8,
+          "rejected": 8,
+          "first_ts": 1781796259.972526,
+          "last_ts": 1781796260.8169372,
+          "min_output_tokens": 1,
+          "max_output_tokens": 9,
+          "full_accept_rows": 1,
+          "full_reject_rows": 1,
+          "max_full_accept_streak": 1,
+          "repeated_scheduled_rows": 0,
+          "suppressed_bonus_rows": 0,
+          "top_scheduled_pairs": [
+            {
+              "tokens": "440,27044,47193,14246,8129,13,24985,383",
+              "count": 1
+            },
+            {
+              "tokens": "3074,43318,16401,4478,11,29541,33389,11",
+              "count": 1
+            }
+          ],
+          "min_computed_after_reject": 510,
+          "max_computed_after_reject": 511,
+          "min_tokens_after_output": 511,
+          "max_tokens_after_output": 511,
+          "accept_rate": 50.0
+        }
+      ],
+      "top_requests_by_full_accept_streak": [
+        {
+          "req_id": "cmpl-qwen36-oracle-k8-draftonly-native-steploop-skipfinalpromote-rollback1-currenttree-eager-tp2-20260618a-000000-0-b42d198d",
+          "rows": 2,
+          "draft_tokens": 16,
+          "accepted": 8,
+          "rejected": 8,
+          "first_ts": 1781796259.972526,
+          "last_ts": 1781796260.8169372,
+          "min_output_tokens": 1,
+          "max_output_tokens": 9,
+          "full_accept_rows": 1,
+          "full_reject_rows": 1,
+          "max_full_accept_streak": 1,
+          "repeated_scheduled_rows": 0,
+          "suppressed_bonus_rows": 0,
+          "top_scheduled_pairs": [
+            {
+              "tokens": "440,27044,47193,14246,8129,13,24985,383",
+              "count": 1
+            },
+            {
+              "tokens": "3074,43318,16401,4478,11,29541,33389,11",
+              "count": 1
+            }
+          ],
+          "min_computed_after_reject": 510,
+          "max_computed_after_reject": 511,
+          "min_tokens_after_output": 511,
+          "max_tokens_after_output": 511,
+          "accept_rate": 50.0
+        }
+      ]
+    }
+  ],
+  "metric_artifacts": [],
+  "metric_comparisons": [],
+  "quality_artifacts": [
+    {
+      "label": "candidate",
+      "path": "/home/steve/llm-optimizations/data/qwen36-oracle-k8-draftonly-native-steploop-skipfinalpromote-rollback1-currenttree-eager-tp2-20260618a-candidate.json",
+      "pass_all": null,
+      "baseline_match_all": false,
+      "exact_pass_count": 0,
+      "exact_case_count": 0,
+      "repeat_pass": null,
+      "repeat_unique_hashes": null,
+      "repeat_repeats": 0,
+      "long_context_pass": null,
+      "token_trace_cases": 1,
+      "has_request_ids": true,
+      "request_ids": [
+        "cmpl-qwen36-oracle-k8-draftonly-native-steploop-skipfinalpromote-rollback1-currenttree-eager-tp2-20260618a-000000"
+      ],
+      "has_request_timestamps": true,
+      "request_window": {
+        "start": 1781796246.180219,
+        "finish": 1781796271.210669
+      }
+    }
+  ],
+  "joinability": {
+    "request_id_join_possible": true,
+    "exact_request_id_join_possible": false,
+    "prefix_request_id_join_possible": true,
+    "timestamp_window_join_possible": true,
+    "trace_request_count": 1,
+    "artifact_request_count": 1,
+    "exact_match_count": 0,
+    "prefix_match_count": 1,
+    "prefix_matches": [
+      {
+        "trace_id": "cmpl-qwen36-oracle-k8-draftonly-native-steploop-skipfinalpromote-rollback1-currenttree-eager-tp2-20260618a-000000-0-b42d198d",
+        "artifact_id": "cmpl-qwen36-oracle-k8-draftonly-native-steploop-skipfinalpromote-rollback1-currenttree-eager-tp2-20260618a-000000"
+      }
+    ],
+    "note": "Trace rows can be joined to artifacts by request-id prefix; scheduler ids append an internal suffix."
+  }
+}

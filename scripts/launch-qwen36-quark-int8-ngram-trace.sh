@@ -12,13 +12,20 @@ TAG="${TAG:-ngram${NUM_SPECULATIVE_TOKENS}-trace}"
 LOG_PATH="${LOG_PATH:-/tmp/qwen36-quark-int8-tp4-${TAG}-20260611.log}"
 SPEC_TRACE_FILE="${SPEC_TRACE_FILE:-/tmp/qwen36-${TAG}-spec-trace-20260611.jsonl}"
 SPEC_TRACE_MAX_LINES="${SPEC_TRACE_MAX_LINES:-20000}"
+TENSOR_PARALLEL_SIZE="${TENSOR_PARALLEL_SIZE:-4}"
+XPU_DEVICE_LIST="${XPU_DEVICE_LIST:-0,1,2,3}"
 GPU_MEMORY_UTILIZATION="${GPU_MEMORY_UTILIZATION:-0.95}"
 ENABLE_XPU_GRAPH="${ENABLE_XPU_GRAPH:-1}"
 ENFORCE_EAGER="${ENFORCE_EAGER:-0}"
 DISABLE_SPECULATIVE_CONFIG="${DISABLE_SPECULATIVE_CONFIG:-0}"
+MAX_MODEL_LEN="${MAX_MODEL_LEN:-32768}"
+MAX_NUM_BATCHED_TOKENS="${MAX_NUM_BATCHED_TOKENS:-8192}"
+MAX_NUM_SEQS="${MAX_NUM_SEQS:-48}"
+MAX_CUDAGRAPH_CAPTURE_SIZE="${MAX_CUDAGRAPH_CAPTURE_SIZE:-128}"
 CUDAGRAPH_CAPTURE_SIZES="${CUDAGRAPH_CAPTURE_SIZES:-}"
 if [[ -z "${COMPILE_CONFIG:-}" ]]; then
-  COMPILE_CONFIG='{"cudagraph_mode":"PIECEWISE","max_cudagraph_capture_size":128}'
+  COMPILE_CONFIG=$(printf '{"cudagraph_mode":"PIECEWISE","max_cudagraph_capture_size":%s}' \
+    "$MAX_CUDAGRAPH_CAPTURE_SIZE")
 fi
 DISABLE_FULL_ACCEPT_BONUS="${DISABLE_FULL_ACCEPT_BONUS:-${VLLM_XPU_SPEC_DECODE_DISABLE_FULL_ACCEPT_BONUS:-0}}"
 FILTER_SUPPRESSED_BONUS_CACHE="${FILTER_SUPPRESSED_BONUS_CACHE:-${VLLM_XPU_SPEC_DECODE_FILTER_SUPPRESSED_BONUS_CACHE:-0}}"
@@ -42,8 +49,8 @@ REPLAY_MICROSCOPE_TENSOR_LIMIT="${REPLAY_MICROSCOPE_TENSOR_LIMIT:-8}"
 REPLAY_MICROSCOPE_TOPK="${REPLAY_MICROSCOPE_TOPK:-8}"
 
 if [[ -n "$CUDAGRAPH_CAPTURE_SIZES" ]]; then
-  COMPILE_CONFIG=$(printf '{"cudagraph_mode":"PIECEWISE","cudagraph_capture_sizes":[%s],"max_cudagraph_capture_size":128}' \
-    "$CUDAGRAPH_CAPTURE_SIZES")
+  COMPILE_CONFIG=$(printf '{"cudagraph_mode":"PIECEWISE","cudagraph_capture_sizes":[%s],"max_cudagraph_capture_size":%s}' \
+    "$CUDAGRAPH_CAPTURE_SIZES" "$MAX_CUDAGRAPH_CAPTURE_SIZE")
 fi
 
 export HF_HOME="${HF_HOME:-/mnt/fast-ai/llm-cache/hf}"
@@ -70,7 +77,7 @@ export VLLM_XPU_COMPILE_ALLREDUCE_CUSTOM_OP=1
 export VLLM_XPU_CUSTOM_ALLREDUCE_GRAPH_CLONE_INPUT=1
 export VLLM_XPU_CUSTOM_ALLREDUCE_CLONE_INPUT=1
 export VLLM_XPU_QUARK_W8A8_MOE=1
-export VLLM_XPU_FORCE_QUARK_REPACK=0
+export VLLM_XPU_FORCE_QUARK_REPACK="${VLLM_XPU_FORCE_QUARK_REPACK:-0}"
 export VLLM_XPU_GDN_REUSE_QKVZ_BA_QUANT=clone
 export VLLM_XPU_GDN_NATIVE_FALLBACK="${VLLM_XPU_GDN_NATIVE_FALLBACK:-prefill}"
 export VLLM_XPU_GDN_PREFILL_RECURRENT_FALLBACK="${VLLM_XPU_GDN_PREFILL_RECURRENT_FALLBACK:-1}"
@@ -166,8 +173,8 @@ else
   unset VLLM_XPU_REPLAY_MICROSCOPE_TENSOR_LIMIT
   unset VLLM_XPU_REPLAY_MICROSCOPE_TOPK
 fi
-export ONEAPI_DEVICE_SELECTOR=level_zero:0,1,2,3
-export ZE_AFFINITY_MASK=0,1,2,3
+export ONEAPI_DEVICE_SELECTOR="level_zero:${XPU_DEVICE_LIST}"
+export ZE_AFFINITY_MASK="$XPU_DEVICE_LIST"
 export CCL_ATL_TRANSPORT=ofi
 export CCL_TOPO_P2P_ACCESS=1
 export FI_TCP_IFACE="${FI_TCP_IFACE:-eth1}"
@@ -207,8 +214,10 @@ if [[ -n "$REPLAY_MICROSCOPE_FILE" ]]; then
   rm -f "$REPLAY_MICROSCOPE_FILE"
 fi
 
-SPEC_CONFIG=$(printf '{"method":"ngram","num_speculative_tokens":%s,"prompt_lookup_min":%s,"prompt_lookup_max":%s}' \
-  "$NUM_SPECULATIVE_TOKENS" "$PROMPT_LOOKUP_MIN" "$PROMPT_LOOKUP_MAX")
+if [[ -z "${SPEC_CONFIG:-}" ]]; then
+  SPEC_CONFIG=$(printf '{"method":"ngram","num_speculative_tokens":%s,"prompt_lookup_min":%s,"prompt_lookup_max":%s}' \
+    "$NUM_SPECULATIVE_TOKENS" "$PROMPT_LOOKUP_MIN" "$PROMPT_LOOKUP_MAX")
+fi
 
 args=(
   serve "$MODEL_PATH"
@@ -218,12 +227,12 @@ args=(
   --served-model-name "$SERVED_MODEL_NAME" \
   --dtype auto \
   --quantization quark \
-  --tensor-parallel-size 4 \
+  --tensor-parallel-size "$TENSOR_PARALLEL_SIZE" \
   --pipeline-parallel-size 1 \
   --distributed-executor-backend mp \
-  --max-model-len 32768 \
-  --max-num-batched-tokens 8192 \
-  --max-num-seqs 48 \
+  --max-model-len "$MAX_MODEL_LEN" \
+  --max-num-batched-tokens "$MAX_NUM_BATCHED_TOKENS" \
+  --max-num-seqs "$MAX_NUM_SEQS" \
   --gpu-memory-utilization "$GPU_MEMORY_UTILIZATION" \
   --kv-cache-dtype auto \
   --no-enable-prefix-caching \

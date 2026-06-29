@@ -1,0 +1,1211 @@
+diff --git a/csrc/xpu/moe_layerlet.cpp b/csrc/xpu/moe_layerlet.cpp
+index 40289f7..c0cde0e 100644
+--- a/csrc/xpu/moe_layerlet.cpp
++++ b/csrc/xpu/moe_layerlet.cpp
+@@ -1,6 +1,11 @@
+ #include <sycl/sycl.hpp>
+ #include <torch/all.h>
+ 
++#include <cstdlib>
++#include <cstdint>
++#include <optional>
++
++#include "csrc/moe/moe_ops.h"
+ #include "grouped_gemm/grouped_gemm_interface.h"
+ #include "ops.h"
+ #include "utils.h"
+@@ -9,6 +14,34 @@ namespace {
+ 
+ class Qwen36RowsPerExpertOffsetsInt64Kernel;
+ 
++class Qwen36TopkIdsToActiveExpertsInt32Kernel;
++
++template <typename scalar_t>
++class Qwen36SingleTokenPrologueQuant1Kernel;
++
++template <typename scalar_t>
++class Qwen36SingleTokenGatherTopK8Kernel;
++
++template <typename scalar_t>
++class Qwen36SingleTokenGemm2GatherTopK8Kernel;
++
++template <typename scalar_t>
++class Qwen36SharedExpertGateMulKernel;
++
++template <typename scalar_t>
++float qwen36_to_float(scalar_t value) {
++  return static_cast<float>(value);
++}
++
++bool qwen36_shared_expert_fused_gate_mul_enabled() {
++  const char* value = std::getenv("VLLM_XPU_SHARED_EXPERT_FUSED_GATE_MUL");
++  if (value == nullptr) {
++    return false;
++  }
++  return value[0] == '1' || value[0] == 'T' || value[0] == 't' ||
++         value[0] == 'Y' || value[0] == 'y';
++}
++
+ void require_xpu_contiguous(const torch::Tensor& tensor, const char* name) {
+   TORCH_CHECK(tensor.defined(), name, " must be defined");
+   TORCH_CHECK(tensor.is_xpu(), name, " must be an XPU tensor");
+@@ -49,6 +82,720 @@ void require_optional_same_device(
+   require_same_device(reference, tensor.value(), name);
+ }
+ 
++template <typename scalar_t>
++void qwen36_single_token_prologue_quant1_out_impl(
++    const scalar_t* hidden_states,
++    const int64_t* topk_ids,
++    int64_t* expert_first_token_offset,
++    int* unpermuted_row_to_permuted_row,
++    int8_t* gemm1_a,
++    float* gemm1_a_scales,
++    int64_t hidden_size,
++    int64_t topk,
++    int64_t num_experts) {
++  constexpr int kBlockSize = 256;
++  auto& queue = vllm::xpu::vllmGetQueue();
++  sycl::range<1> local(kBlockSize);
++  sycl::range<1> global(kBlockSize);
++
++  queue.submit([&](sycl::handler& cgh) {
++    sycl::local_accessor<float, 1> local_max(local, cgh);
++    sycl::local_accessor<int, 1> local_permuted(sycl::range<1>(topk), cgh);
++    cgh.parallel_for(
++        sycl::nd_range<1>(global, local),
++        [=](sycl::nd_item<1> item)
++            [[sycl::reqd_sub_group_size(16)]] {
++              const int local_id = item.get_local_id(0);
++              const int local_range = item.get_local_range(0);
++
++              for (int64_t expert = local_id; expert <= num_experts;
++                   expert += local_range) {
++                int count = 0;
++                for (int k = 0; k < topk; ++k) {
++                  if (topk_ids[k] < expert) {
++                    count += 1;
++                  }
++                }
++                expert_first_token_offset[expert] = count;
++              }
++
++              for (int row_id = local_id; row_id < topk;
++                   row_id += local_range) {
++                const int64_t selected_expert = topk_ids[row_id];
++                int less = 0;
++                int prior_equal = 0;
++                for (int k = 0; k < topk; ++k) {
++                  const int64_t other = topk_ids[k];
++                  if (other < selected_expert) {
++                    less += 1;
++                  }
++                  if (k < row_id && other == selected_expert) {
++                    prior_equal += 1;
++                  }
++                }
++                const int permuted_row = less + prior_equal;
++                local_permuted[row_id] = permuted_row;
++                unpermuted_row_to_permuted_row[row_id] = permuted_row;
++              }
++
++              float thread_max = 0.0f;
++              for (int64_t col = local_id; col < hidden_size;
++                   col += local_range) {
++                const float value = qwen36_to_float(hidden_states[col]);
++                thread_max = sycl::fmax(thread_max, sycl::fabs(value));
++              }
++
++              local_max[local_id] = thread_max;
++              item.barrier(sycl::access::fence_space::local_space);
++
++              for (int stride = local_range / 2; stride > 0; stride >>= 1) {
++                if (local_id < stride) {
++                  local_max[local_id] =
++                      sycl::fmax(local_max[local_id],
++                                 local_max[local_id + stride]);
++                }
++                item.barrier(sycl::access::fence_space::local_space);
++              }
++
++              const float absmax = sycl::fmax(local_max[0], 1.0e-10f);
++              const float scale = absmax / 127.0f;
++              const float inv_scale = 127.0f / absmax;
++
++              for (int row_id = local_id; row_id < topk;
++                   row_id += local_range) {
++                gemm1_a_scales[local_permuted[row_id]] = scale;
++              }
++
++              for (int64_t col = local_id; col < hidden_size;
++                   col += local_range) {
++                float value = qwen36_to_float(hidden_states[col]) * inv_scale;
++                value = sycl::round(value);
++                value = sycl::fmin(127.0f, sycl::fmax(-127.0f, value));
++                const int8_t qvalue = static_cast<int8_t>(value);
++                for (int row_id = 0; row_id < topk; ++row_id) {
++                  gemm1_a[local_permuted[row_id] * hidden_size + col] =
++                      qvalue;
++                }
++              }
++            });
++  });
++}
++
++bool qwen36_can_use_single_token_prologue_quant1(
++    const torch::Tensor& hidden_states,
++    const torch::Tensor& topk_ids,
++    const torch::Tensor& topk_weights,
++    const torch::Tensor& expert_first_token_offset,
++    const torch::Tensor& unpermuted_row_to_permuted_row,
++    const torch::Tensor& gemm1_a,
++    const torch::Tensor& gemm1_a_scales,
++    int64_t hidden_size,
++    int64_t num_experts) {
++  return hidden_states.size(0) == 1 && hidden_states.size(1) == hidden_size &&
++         topk_ids.size(0) == 1 && topk_ids.size(1) == 8 &&
++         topk_weights.size(0) == 1 && topk_weights.size(1) == 8 &&
++         expert_first_token_offset.dim() == 1 &&
++         expert_first_token_offset.numel() >= num_experts + 1 &&
++         unpermuted_row_to_permuted_row.dim() == 1 &&
++         unpermuted_row_to_permuted_row.numel() >= 8 &&
++         gemm1_a.dim() == 2 && gemm1_a.size(0) >= 8 &&
++         gemm1_a.size(1) == hidden_size &&
++         gemm1_a_scales.numel() >= 8;
++}
++
++bool qwen36_fused_q1_enabled() {
++  const char* value = std::getenv("VLLM_XPU_MOE_W8A8_FUSED_Q1");
++  return value && value[0] != '\0' && value[0] != '0' && value[0] != 'f' &&
++         value[0] != 'F';
++}
++
++bool qwen36_fast_gather_enabled() {
++  const char* value = std::getenv("VLLM_XPU_MOE_W8A8_FAST_GATHER");
++  return value && value[0] != '\0' && value[0] != '0' && value[0] != 'f' &&
++         value[0] != 'F';
++}
++
++bool qwen36_direct_gemm2_gather_enabled() {
++  const char* value =
++      std::getenv("VLLM_XPU_MOE_W8A8_DIRECT_GEMM2_GATHER");
++  return value && value[0] != '\0' && value[0] != '0' && value[0] != 'f' &&
++         value[0] != 'F';
++}
++
++bool qwen36_dpas_gemm2_gather_enabled() {
++  const char* value = std::getenv("VLLM_XPU_MOE_W8A8_DPAS_GEMM2_GATHER");
++  return value && value[0] != '\0' && value[0] != '0' && value[0] != 'f' &&
++         value[0] != 'F';
++}
++
++bool qwen36_workspace_atomic_enabled() {
++  const char* value = std::getenv("VLLM_XPU_MOE_W8A8_WORKSPACE_ATOMIC");
++  return value && value[0] != '\0' && value[0] != '0' && value[0] != 'f' &&
++         value[0] != 'F';
++}
++
++bool qwen36_route_gemm1_enabled() {
++  const char* value = std::getenv("VLLM_XPU_MOE_W8A8_ROUTE_GEMM1");
++  return value && value[0] != '\0' && value[0] != '0' && value[0] != 'f' &&
++         value[0] != 'F';
++}
++
++bool qwen36_unchecked_full_layerlet_enabled() {
++  const char* value =
++      std::getenv("VLLM_XPU_MOE_W8A8_UNCHECKED_FULL_LAYERLET");
++  return value && value[0] != '\0' && value[0] != '0' && value[0] != 'f' &&
++         value[0] != 'F';
++}
++
++int* qwen36_workspace_atomic_ptr(torch::Tensor& workspace) {
++  TORCH_CHECK(
++      workspace.scalar_type() == torch::kUInt8,
++      "qwen36 workspace atomic reuse expects a uint8 workspace");
++  TORCH_CHECK(
++      workspace.numel() >= static_cast<int64_t>(sizeof(int)),
++      "qwen36 workspace is too small for atomic reuse");
++  auto* ptr = workspace.data_ptr<uint8_t>();
++  TORCH_CHECK(
++      reinterpret_cast<std::uintptr_t>(ptr) % alignof(int) == 0,
++      "qwen36 workspace pointer is not int aligned");
++  return reinterpret_cast<int*>(ptr);
++}
++
++torch::Tensor qwen36_grouped_gemm_offsets_maybe_atomic(
++    torch::Tensor ptr_A,
++    torch::Tensor ptr_A_scales,
++    torch::Tensor ptr_B,
++    torch::Tensor ptr_B_scales,
++    const c10::optional<at::Tensor>& ptr_bias,
++    torch::Tensor ptr_D,
++    torch::Tensor expert_first_token_offset,
++    int64_t N,
++    int64_t K,
++    int64_t num_experts,
++    int* atomic_buffer) {
++  if (atomic_buffer != nullptr) {
++    return cutlass_grouped_gemm_w8a8_int8_offsets_atomic_interface(
++        ptr_A,
++        ptr_A_scales,
++        ptr_B,
++        ptr_B_scales,
++        ptr_bias,
++        ptr_D,
++        expert_first_token_offset,
++        N,
++        K,
++        num_experts,
++        atomic_buffer);
++  }
++  return cutlass_grouped_gemm_w8a8_int8_offsets_interface(
++      ptr_A,
++      ptr_A_scales,
++      ptr_B,
++      ptr_B_scales,
++      ptr_bias,
++      ptr_D,
++      expert_first_token_offset,
++      N,
++      K,
++      num_experts);
++}
++
++void qwen36_single_token_prologue_quant1_out(
++    const torch::Tensor& hidden_states,
++    const torch::Tensor& topk_ids,
++    torch::Tensor& expert_first_token_offset,
++    torch::Tensor& unpermuted_row_to_permuted_row,
++    torch::Tensor& gemm1_a,
++    torch::Tensor& gemm1_a_scales,
++    int64_t hidden_size,
++    int64_t num_experts) {
++  TORCH_CHECK(
++      hidden_states.scalar_type() == torch::kBFloat16 ||
++          hidden_states.scalar_type() == torch::kFloat16 ||
++          hidden_states.scalar_type() == torch::kFloat32,
++      "qwen36 fused prologue+quant1 only supports bf16, fp16, and fp32 hidden_states");
++  require_dtype(gemm1_a, "gemm1_a", torch::kInt8);
++  require_dtype(gemm1_a_scales, "gemm1_a_scales", torch::kFloat32);
++
++  if (hidden_states.scalar_type() == torch::kBFloat16) {
++    qwen36_single_token_prologue_quant1_out_impl(
++        reinterpret_cast<const sycl::ext::oneapi::bfloat16*>(
++            hidden_states.data_ptr()),
++        topk_ids.data_ptr<int64_t>(),
++        expert_first_token_offset.data_ptr<int64_t>(),
++        unpermuted_row_to_permuted_row.data_ptr<int>(),
++        gemm1_a.data_ptr<int8_t>(),
++        gemm1_a_scales.data_ptr<float>(),
++        hidden_size,
++        8,
++        num_experts);
++  } else if (hidden_states.scalar_type() == torch::kFloat16) {
++    qwen36_single_token_prologue_quant1_out_impl(
++        reinterpret_cast<const sycl::half*>(hidden_states.data_ptr()),
++        topk_ids.data_ptr<int64_t>(),
++        expert_first_token_offset.data_ptr<int64_t>(),
++        unpermuted_row_to_permuted_row.data_ptr<int>(),
++        gemm1_a.data_ptr<int8_t>(),
++        gemm1_a_scales.data_ptr<float>(),
++        hidden_size,
++        8,
++        num_experts);
++  } else {
++    qwen36_single_token_prologue_quant1_out_impl(
++        hidden_states.data_ptr<float>(),
++        topk_ids.data_ptr<int64_t>(),
++        expert_first_token_offset.data_ptr<int64_t>(),
++        unpermuted_row_to_permuted_row.data_ptr<int>(),
++        gemm1_a.data_ptr<int8_t>(),
++        gemm1_a_scales.data_ptr<float>(),
++        hidden_size,
++        8,
++        num_experts);
++  }
++}
++
++template <typename scalar_t>
++void qwen36_single_token_gather_topk8_out_impl(
++    scalar_t* output,
++    const scalar_t* moe_output,
++    const float* topk_weights,
++    const int* unpermuted_row_to_permuted_row,
++    int64_t hidden_size) {
++  constexpr int kBlockSize = 256;
++  constexpr int kElemsPerItem = 8;
++  constexpr int kTopK = 8;
++  constexpr int kStride = kBlockSize * kElemsPerItem;
++  auto& queue = vllm::xpu::vllmGetQueue();
++  sycl::range<1> local(kBlockSize);
++  sycl::range<1> global(kBlockSize);
++
++  queue.submit([&](sycl::handler& cgh) {
++    cgh.parallel_for(
++        sycl::nd_range<1>(global, local),
++        [=](sycl::nd_item<1> item)
++            [[sycl::reqd_sub_group_size(16)]] {
++              const int local_id = item.get_local_id(0);
++              int moe_ids[kTopK];
++              float scores[kTopK];
++#pragma unroll
++              for (int k = 0; k < kTopK; ++k) {
++                moe_ids[k] = unpermuted_row_to_permuted_row[k];
++                scores[k] = topk_weights[k];
++              }
++
++              for (int64_t hidden_idx = local_id * kElemsPerItem;
++                   hidden_idx < hidden_size;
++                   hidden_idx += kStride) {
++                float accum[kElemsPerItem];
++#pragma unroll
++                for (int e = 0; e < kElemsPerItem; ++e) {
++                  accum[e] = 0.0f;
++                }
++#pragma unroll
++                for (int k = 0; k < kTopK; ++k) {
++                  const int row = moe_ids[k];
++#pragma unroll
++                  for (int e = 0; e < kElemsPerItem; ++e) {
++                    accum[e] += qwen36_to_float(
++                                    moe_output[row * hidden_size + hidden_idx +
++                                               e]) *
++                                scores[k];
++                  }
++                }
++#pragma unroll
++                for (int e = 0; e < kElemsPerItem; ++e) {
++                  output[hidden_idx + e] = accum[e];
++                }
++              }
++            });
++  });
++}
++
++bool qwen36_can_use_single_token_fast_gather(
++    const torch::Tensor& output,
++    const torch::Tensor& gemm2_output,
++    const torch::Tensor& topk_weights,
++    const torch::Tensor& unpermuted_row_to_permuted_row,
++    int64_t hidden_size) {
++  return output.dim() == 2 && output.size(0) == 1 &&
++         output.size(1) == hidden_size && hidden_size % 8 == 0 &&
++         gemm2_output.dim() == 2 && gemm2_output.size(0) >= 8 &&
++         gemm2_output.size(1) == hidden_size && topk_weights.dim() == 2 &&
++         topk_weights.size(0) == 1 && topk_weights.size(1) == 8 &&
++         unpermuted_row_to_permuted_row.dim() == 1 &&
++         unpermuted_row_to_permuted_row.numel() >= 8;
++}
++
++void qwen36_single_token_gather_topk8_out(
++    torch::Tensor& output,
++    const torch::Tensor& gemm2_output,
++    const torch::Tensor& topk_weights,
++    const torch::Tensor& unpermuted_row_to_permuted_row,
++    int64_t hidden_size) {
++  if (output.scalar_type() == torch::kBFloat16) {
++    qwen36_single_token_gather_topk8_out_impl(
++        reinterpret_cast<sycl::ext::oneapi::bfloat16*>(output.data_ptr()),
++        reinterpret_cast<const sycl::ext::oneapi::bfloat16*>(
++            gemm2_output.data_ptr()),
++        topk_weights.data_ptr<float>(),
++        unpermuted_row_to_permuted_row.data_ptr<int>(),
++        hidden_size);
++  } else if (output.scalar_type() == torch::kFloat16) {
++    qwen36_single_token_gather_topk8_out_impl(
++        reinterpret_cast<sycl::half*>(output.data_ptr()),
++        reinterpret_cast<const sycl::half*>(gemm2_output.data_ptr()),
++        topk_weights.data_ptr<float>(),
++        unpermuted_row_to_permuted_row.data_ptr<int>(),
++        hidden_size);
++  } else {
++    qwen36_single_token_gather_topk8_out_impl(
++        output.data_ptr<float>(),
++        gemm2_output.data_ptr<float>(),
++        topk_weights.data_ptr<float>(),
++        unpermuted_row_to_permuted_row.data_ptr<int>(),
++        hidden_size);
++  }
++}
++
++template <typename scalar_t>
++void qwen36_single_token_gemm2_gather_topk8_out_impl(
++    scalar_t* output,
++    const int8_t* gemm2_a,
++    const float* gemm2_a_scales,
++    const int8_t* w2,
++    const float* w2_scales,
++    const float* w2_bias,
++    const int64_t* topk_ids,
++    const float* topk_weights,
++    const int* unpermuted_row_to_permuted_row,
++    int64_t hidden_size,
++    int64_t inter_size,
++    int64_t topk) {
++  constexpr int kBlockSize = 256;
++  auto& queue = vllm::xpu::vllmGetQueue();
++  sycl::range<1> local(kBlockSize);
++  sycl::range<1> global(hidden_size * kBlockSize);
++
++  queue.submit([&](sycl::handler& cgh) {
++    sycl::local_accessor<int32_t, 1> partial(local, cgh);
++    cgh.parallel_for<
++        Qwen36SingleTokenGemm2GatherTopK8Kernel<scalar_t>>(
++        sycl::nd_range<1>(global, local),
++        [=](sycl::nd_item<1> item)
++            [[sycl::reqd_sub_group_size(16)]] {
++              const int64_t col = item.get_group(0);
++              const int local_id = item.get_local_id(0);
++              const int local_range = item.get_local_range(0);
++              float accum = 0.0f;
++
++              for (int k = 0; k < topk; ++k) {
++                const int row = unpermuted_row_to_permuted_row[k];
++                const int64_t expert = topk_ids[k];
++                int32_t thread_sum = 0;
++                for (int64_t kk = local_id; kk < inter_size;
++                     kk += local_range) {
++                  const int32_t a =
++                      static_cast<int32_t>(gemm2_a[row * inter_size + kk]);
++                  const int32_t b = static_cast<int32_t>(
++                      w2[(expert * inter_size + kk) * hidden_size + col]);
++                  thread_sum += a * b;
++                }
++
++                partial[local_id] = thread_sum;
++                item.barrier(sycl::access::fence_space::local_space);
++
++                for (int stride = local_range / 2; stride > 0; stride >>= 1) {
++                  if (local_id < stride) {
++                    partial[local_id] += partial[local_id + stride];
++                  }
++                  item.barrier(sycl::access::fence_space::local_space);
++                }
++
++                if (local_id == 0) {
++                  float value = static_cast<float>(partial[0]) *
++                      gemm2_a_scales[row] *
++                      w2_scales[expert * hidden_size + col];
++                  if (w2_bias != nullptr) {
++                    value += w2_bias[expert * hidden_size + col];
++                  }
++
++                  // Match the accepted exact path: GEMM2 first materializes a
++                  // BF16/FP16 row; gather then converts that row back to float.
++                  const scalar_t intermediate = static_cast<scalar_t>(value);
++                  accum += qwen36_to_float(intermediate) * topk_weights[k];
++                }
++
++                item.barrier(sycl::access::fence_space::local_space);
++              }
++
++              if (local_id == 0) {
++                output[col] = static_cast<scalar_t>(accum);
++              }
++            });
++  });
++}
++
++bool qwen36_can_use_single_token_direct_gemm2_gather(
++    const torch::Tensor& output,
++    const torch::Tensor& gemm2_a,
++    const torch::Tensor& gemm2_a_scales,
++    const torch::Tensor& w2,
++    const torch::Tensor& w2_scales,
++    const c10::optional<at::Tensor>& w2_bias,
++    const torch::Tensor& topk_ids,
++    const torch::Tensor& topk_weights,
++    const torch::Tensor& unpermuted_row_to_permuted_row,
++    int64_t hidden_size,
++    int64_t inter_size,
++    int64_t num_experts) {
++  const bool bias_ok = !w2_bias.has_value() ||
++      (w2_bias.value().defined() && w2_bias.value().dim() == 2 &&
++       w2_bias.value().size(0) == num_experts &&
++       w2_bias.value().size(1) == hidden_size &&
++       w2_bias.value().scalar_type() == torch::kFloat32);
++  return output.dim() == 2 && output.size(0) == 1 &&
++         output.size(1) == hidden_size &&
++         (output.scalar_type() == torch::kBFloat16 ||
++          output.scalar_type() == torch::kFloat16) &&
++         gemm2_a.dim() == 2 && gemm2_a.size(0) >= 8 &&
++         gemm2_a.size(1) == inter_size &&
++         gemm2_a.scalar_type() == torch::kInt8 &&
++         gemm2_a_scales.numel() >= 8 &&
++         gemm2_a_scales.scalar_type() == torch::kFloat32 &&
++         w2.dim() == 3 && w2.size(0) == num_experts &&
++         w2.size(1) == inter_size && w2.size(2) == hidden_size &&
++         w2.scalar_type() == torch::kInt8 &&
++         w2_scales.dim() == 2 && w2_scales.size(0) == num_experts &&
++         w2_scales.size(1) == hidden_size &&
++         w2_scales.scalar_type() == torch::kFloat32 && bias_ok &&
++         topk_ids.dim() == 2 && topk_ids.size(0) == 1 &&
++         topk_ids.size(1) == 8 &&
++         topk_ids.scalar_type() == torch::kInt64 &&
++         topk_weights.dim() == 2 && topk_weights.size(0) == 1 &&
++         topk_weights.size(1) == 8 &&
++         topk_weights.scalar_type() == torch::kFloat32 &&
++         unpermuted_row_to_permuted_row.dim() == 1 &&
++         unpermuted_row_to_permuted_row.numel() >= 8 &&
++         unpermuted_row_to_permuted_row.scalar_type() == torch::kInt32;
++}
++
++bool qwen36_can_use_single_token_route_gemm1(
++    const torch::Tensor& gemm1_a,
++    const torch::Tensor& gemm1_a_scales,
++    const torch::Tensor& w13,
++    const torch::Tensor& w13_scales,
++    const c10::optional<at::Tensor>& w13_bias,
++    const torch::Tensor& gemm1_output,
++    const torch::Tensor& topk_ids,
++    const torch::Tensor& unpermuted_row_to_permuted_row,
++    int64_t hidden_size,
++    int64_t inter_size,
++    int64_t num_experts) {
++  const int64_t gemm1_n = 2 * inter_size;
++  const bool bias_ok = !w13_bias.has_value() ||
++      (w13_bias.value().defined() && w13_bias.value().dim() == 2 &&
++       w13_bias.value().size(0) == num_experts &&
++       w13_bias.value().size(1) == gemm1_n &&
++       w13_bias.value().scalar_type() == torch::kFloat32);
++  return gemm1_a.dim() == 2 && gemm1_a.size(0) >= 8 &&
++         gemm1_a.size(1) == hidden_size &&
++         gemm1_a.scalar_type() == torch::kInt8 &&
++         gemm1_a_scales.numel() >= 8 &&
++         gemm1_a_scales.scalar_type() == torch::kFloat32 &&
++         w13.dim() == 3 && w13.size(0) == num_experts &&
++         w13.size(1) == hidden_size && w13.size(2) == gemm1_n &&
++         w13.scalar_type() == torch::kInt8 &&
++         w13_scales.dim() == 2 && w13_scales.size(0) == num_experts &&
++         w13_scales.size(1) == gemm1_n &&
++         w13_scales.scalar_type() == torch::kFloat32 && bias_ok &&
++         gemm1_output.dim() == 2 && gemm1_output.size(0) >= 8 &&
++         gemm1_output.size(1) == gemm1_n &&
++         (gemm1_output.scalar_type() == torch::kBFloat16 ||
++          gemm1_output.scalar_type() == torch::kFloat16) &&
++         topk_ids.dim() == 2 && topk_ids.size(0) == 1 &&
++         topk_ids.size(1) == 8 &&
++         topk_ids.scalar_type() == torch::kInt64 &&
++         unpermuted_row_to_permuted_row.dim() == 1 &&
++         unpermuted_row_to_permuted_row.numel() >= 8 &&
++         unpermuted_row_to_permuted_row.scalar_type() == torch::kInt32;
++}
++
++void qwen36_single_token_gemm2_gather_topk8_out(
++    torch::Tensor& output,
++    const torch::Tensor& gemm2_a,
++    const torch::Tensor& gemm2_a_scales,
++    const torch::Tensor& w2,
++    const torch::Tensor& w2_scales,
++    const c10::optional<at::Tensor>& w2_bias,
++    const torch::Tensor& topk_ids,
++    const torch::Tensor& topk_weights,
++    const torch::Tensor& unpermuted_row_to_permuted_row,
++    int64_t hidden_size,
++    int64_t inter_size,
++    int64_t topk) {
++  const float* bias_ptr = w2_bias.has_value()
++      ? w2_bias.value().data_ptr<float>()
++      : static_cast<float*>(nullptr);
++
++  if (output.scalar_type() == torch::kBFloat16) {
++    qwen36_single_token_gemm2_gather_topk8_out_impl(
++        reinterpret_cast<sycl::ext::oneapi::bfloat16*>(output.data_ptr()),
++        gemm2_a.data_ptr<int8_t>(),
++        gemm2_a_scales.data_ptr<float>(),
++        w2.data_ptr<int8_t>(),
++        w2_scales.data_ptr<float>(),
++        bias_ptr,
++        topk_ids.data_ptr<int64_t>(),
++        topk_weights.data_ptr<float>(),
++        unpermuted_row_to_permuted_row.data_ptr<int>(),
++        hidden_size,
++        inter_size,
++        topk);
++  } else {
++    qwen36_single_token_gemm2_gather_topk8_out_impl(
++        reinterpret_cast<sycl::half*>(output.data_ptr()),
++        gemm2_a.data_ptr<int8_t>(),
++        gemm2_a_scales.data_ptr<float>(),
++        w2.data_ptr<int8_t>(),
++        w2_scales.data_ptr<float>(),
++        bias_ptr,
++        topk_ids.data_ptr<int64_t>(),
++        topk_weights.data_ptr<float>(),
++        unpermuted_row_to_permuted_row.data_ptr<int>(),
++        hidden_size,
++        inter_size,
++        topk);
++  }
++}
++
++template <typename scalar_t>
++void qwen36_shared_expert_gate_mul_out_impl(
++    const scalar_t* hidden_states,
++    const scalar_t* expert_gate_w,
++    const scalar_t* down_out,
++    scalar_t* output,
++    int64_t rows,
++    int64_t hidden_size) {
++  constexpr int kBlockSize = 256;
++  auto& queue = vllm::xpu::vllmGetQueue();
++  sycl::range<1> local(kBlockSize);
++  sycl::range<1> global(rows * kBlockSize);
++
++  queue.submit([&](sycl::handler& cgh) {
++    sycl::local_accessor<float, 1> partial(local, cgh);
++    cgh.parallel_for<Qwen36SharedExpertGateMulKernel<scalar_t>>(
++        sycl::nd_range<1>(global, local),
++        [=](sycl::nd_item<1> item)
++            [[sycl::reqd_sub_group_size(16)]] {
++              const int64_t row = item.get_group(0);
++              const int local_id = item.get_local_id(0);
++              const int local_range = item.get_local_range(0);
++
++              float thread_sum = 0.0f;
++              for (int64_t col = local_id; col < hidden_size;
++                   col += local_range) {
++                thread_sum +=
++                    qwen36_to_float(hidden_states[row * hidden_size + col]) *
++                    qwen36_to_float(expert_gate_w[col]);
++              }
++
++              partial[local_id] = thread_sum;
++              item.barrier(sycl::access::fence_space::local_space);
++
++              for (int stride = local_range / 2; stride > 0; stride >>= 1) {
++                if (local_id < stride) {
++                  partial[local_id] += partial[local_id + stride];
++                }
++                item.barrier(sycl::access::fence_space::local_space);
++              }
++
++              const scalar_t gate_t = static_cast<scalar_t>(partial[0]);
++              const float gate_f = qwen36_to_float(gate_t);
++              const scalar_t sigmoid_t = static_cast<scalar_t>(
++                  1.0f / (1.0f + sycl::exp(-gate_f)));
++              const float sigmoid_f = qwen36_to_float(sigmoid_t);
++
++              for (int64_t col = local_id; col < hidden_size;
++                   col += local_range) {
++                const float value =
++                    sigmoid_f *
++                    qwen36_to_float(down_out[row * hidden_size + col]);
++                output[row * hidden_size + col] =
++                    static_cast<scalar_t>(value);
++              }
++            });
++  });
++}
++
++void qwen36_shared_expert_gate_mul_out(
++    const torch::Tensor& hidden_states,
++    const torch::Tensor& expert_gate_w,
++    const torch::Tensor& down_out,
++    torch::Tensor& output) {
++  require_xpu_contiguous(hidden_states, "hidden_states");
++  require_xpu_contiguous(expert_gate_w, "expert_gate_w");
++  require_xpu_contiguous(down_out, "down_out");
++  require_xpu_contiguous(output, "output");
++  require_same_device(hidden_states, expert_gate_w, "expert_gate_w");
++  require_same_device(hidden_states, down_out, "down_out");
++  require_same_device(hidden_states, output, "output");
++  require_dtype(expert_gate_w, "expert_gate_w", hidden_states.scalar_type());
++  require_dtype(down_out, "down_out", hidden_states.scalar_type());
++  require_dtype(output, "output", hidden_states.scalar_type());
++
++  TORCH_CHECK(hidden_states.dim() == 2, "hidden_states must be [rows, hidden]");
++  TORCH_CHECK(down_out.sizes() == hidden_states.sizes(),
++              "down_out shape must match hidden_states");
++  TORCH_CHECK(output.sizes() == hidden_states.sizes(),
++              "output shape must match hidden_states");
++  TORCH_CHECK(expert_gate_w.dim() == 2,
++              "expert_gate_w must be [hidden, 1] or [1, hidden]");
++  const int64_t rows = hidden_states.size(0);
++  const int64_t hidden = hidden_states.size(1);
++  TORCH_CHECK(
++      (expert_gate_w.size(0) == hidden && expert_gate_w.size(1) == 1) ||
++          (expert_gate_w.size(0) == 1 && expert_gate_w.size(1) == hidden),
++      "expert_gate_w shape mismatch: expected [",
++      hidden,
++      ", 1] or [1, ",
++      hidden,
++      "]");
++  TORCH_CHECK(
++      hidden_states.scalar_type() == torch::kBFloat16 ||
++          hidden_states.scalar_type() == torch::kFloat16 ||
++          hidden_states.scalar_type() == torch::kFloat32,
++      "qwen36 shared expert fused gate/mul only supports bf16, fp16, and fp32");
++
++  if (hidden_states.scalar_type() == torch::kBFloat16) {
++    qwen36_shared_expert_gate_mul_out_impl(
++        reinterpret_cast<const sycl::ext::oneapi::bfloat16*>(
++            hidden_states.data_ptr()),
++        reinterpret_cast<const sycl::ext::oneapi::bfloat16*>(
++            expert_gate_w.data_ptr()),
++        reinterpret_cast<const sycl::ext::oneapi::bfloat16*>(
++            down_out.data_ptr()),
++        reinterpret_cast<sycl::ext::oneapi::bfloat16*>(output.data_ptr()),
++        rows,
++        hidden);
++  } else if (hidden_states.scalar_type() == torch::kFloat16) {
++    qwen36_shared_expert_gate_mul_out_impl(
++        reinterpret_cast<const sycl::half*>(hidden_states.data_ptr()),
++        reinterpret_cast<const sycl::half*>(expert_gate_w.data_ptr()),
++        reinterpret_cast<const sycl::half*>(down_out.data_ptr()),
++        reinterpret_cast<sycl::half*>(output.data_ptr()),
++        rows,
++        hidden);
++  } else {
++    qwen36_shared_expert_gate_mul_out_impl(
++        hidden_states.data_ptr<float>(),
++        expert_gate_w.data_ptr<float>(),
++        down_out.data_ptr<float>(),
++        output.data_ptr<float>(),
++        rows,
++        hidden);
++  }
++}
++
+ }  // namespace
+ 
+ torch::Tensor qwen36_rows_per_expert_offsets_int64_out(
+@@ -84,6 +831,50 @@ torch::Tensor qwen36_rows_per_expert_offsets_int64_out(
+   return offsets;
+ }
+ 
++torch::Tensor qwen36_topk_ids_to_active_expert_ids_int32_out(
++    torch::Tensor topk_ids,
++    torch::Tensor active_expert_ids,
++    int64_t topk) {
++  require_xpu_contiguous(topk_ids, "topk_ids");
++  require_xpu_contiguous(active_expert_ids, "active_expert_ids");
++  require_same_device(topk_ids, active_expert_ids, "active_expert_ids");
++  require_dtype(topk_ids, "topk_ids", at::ScalarType::Long);
++  require_dtype(active_expert_ids, "active_expert_ids", at::ScalarType::Int);
++  TORCH_CHECK(topk >= 0, "topk must be non-negative");
++  TORCH_CHECK(topk <= 64, "topk helper supports at most 64 experts");
++  TORCH_CHECK(topk_ids.numel() >= topk, "topk_ids must cover topk");
++  TORCH_CHECK(
++      active_expert_ids.numel() >= topk,
++      "active_expert_ids must cover topk");
++
++  const int64_t* topk_ptr = topk_ids.data_ptr<int64_t>();
++  int32_t* active_ptr = active_expert_ids.data_ptr<int32_t>();
++  auto& queue = vllm::xpu::vllmGetQueue();
++
++  queue.submit([&](sycl::handler& cgh) {
++    cgh.single_task<Qwen36TopkIdsToActiveExpertsInt32Kernel>([=]() {
++      int32_t values[64];
++      for (int64_t i = 0; i < topk; ++i) {
++        values[i] = static_cast<int32_t>(topk_ptr[i]);
++      }
++      for (int64_t i = 1; i < topk; ++i) {
++        const int32_t value = values[i];
++        int64_t j = i - 1;
++        while (j >= 0 && values[j] > value) {
++          values[j + 1] = values[j];
++          --j;
++        }
++        values[j + 1] = value;
++      }
++      for (int64_t i = 0; i < topk; ++i) {
++        active_ptr[i] = values[i];
++      }
++    });
++  });
++
++  return active_expert_ids;
++}
++
+ torch::Tensor qwen36_moe_w8a8_middle_layerlet(
+     torch::Tensor gemm1_a,
+     torch::Tensor gemm1_a_scales,
+@@ -194,3 +985,387 @@ torch::Tensor qwen36_moe_w8a8_middle_layerlet(
+ 
+   return gemm2_output;
+ }
++
++torch::Tensor qwen36_moe_w8a8_full_layerlet(
++    torch::Tensor hidden_states,
++    torch::Tensor topk_ids,
++    torch::Tensor topk_weights,
++    torch::Tensor workspace,
++    torch::Tensor remapped_hidden_states,
++    torch::Tensor unpermuted_row_to_permuted_row,
++    torch::Tensor expert_first_token_offset,
++    torch::Tensor gemm1_a,
++    torch::Tensor gemm1_a_scales,
++    torch::Tensor w13,
++    torch::Tensor w13_scales,
++    const c10::optional<at::Tensor>& w13_bias,
++    torch::Tensor gemm1_output,
++    torch::Tensor gemm2_a,
++    torch::Tensor gemm2_a_scales,
++    torch::Tensor w2,
++    torch::Tensor w2_scales,
++    const c10::optional<at::Tensor>& w2_bias,
++    torch::Tensor gemm2_output,
++    torch::Tensor output,
++    int64_t hidden_size,
++    int64_t inter_size,
++    int64_t num_experts) {
++  if (!qwen36_unchecked_full_layerlet_enabled()) {
++    require_xpu_contiguous(hidden_states, "hidden_states");
++    require_xpu_contiguous(topk_ids, "topk_ids");
++    require_xpu_contiguous(topk_weights, "topk_weights");
++    require_xpu_contiguous(workspace, "workspace");
++    require_xpu_contiguous(remapped_hidden_states, "remapped_hidden_states");
++    require_xpu_contiguous(
++        unpermuted_row_to_permuted_row, "unpermuted_row_to_permuted_row");
++    require_xpu_contiguous(expert_first_token_offset,
++                           "expert_first_token_offset");
++    require_xpu_contiguous(output, "output");
++
++    require_same_device(hidden_states, topk_ids, "topk_ids");
++    require_same_device(hidden_states, topk_weights, "topk_weights");
++    require_same_device(hidden_states, workspace, "workspace");
++    require_same_device(hidden_states, remapped_hidden_states,
++                        "remapped_hidden_states");
++    require_same_device(hidden_states, unpermuted_row_to_permuted_row,
++                        "unpermuted_row_to_permuted_row");
++    require_same_device(hidden_states, expert_first_token_offset,
++                        "expert_first_token_offset");
++    require_same_device(hidden_states, output, "output");
++
++    require_dtype(topk_ids, "topk_ids", torch::kInt64);
++    require_dtype(topk_weights, "topk_weights", torch::kFloat32);
++    require_dtype(workspace, "workspace", torch::kUInt8);
++    require_dtype(
++        unpermuted_row_to_permuted_row,
++        "unpermuted_row_to_permuted_row",
++        torch::kInt32);
++    require_dtype(expert_first_token_offset,
++                  "expert_first_token_offset",
++                  torch::kInt64);
++
++    TORCH_CHECK(hidden_states.dim() == 2, "hidden_states must be 2D");
++    TORCH_CHECK(topk_ids.dim() == 2, "topk_ids must be 2D");
++    TORCH_CHECK(topk_weights.dim() == 2, "topk_weights must be 2D");
++    TORCH_CHECK(output.dim() == 2, "output must be 2D");
++    TORCH_CHECK(
++        hidden_states.size(0) == topk_ids.size(0),
++        "topk_ids row count must match hidden_states");
++    TORCH_CHECK(
++        topk_weights.sizes() == topk_ids.sizes(),
++        "topk_weights shape must match topk_ids");
++    TORCH_CHECK(
++        hidden_states.size(1) == hidden_size,
++        "hidden_states last dim must match hidden_size");
++    TORCH_CHECK(
++        output.size(0) == hidden_states.size(0),
++        "output row count must match hidden_states");
++    TORCH_CHECK(
++        output.size(1) == hidden_size,
++        "output last dim must match hidden_size");
++  }
++
++  if (qwen36_fused_q1_enabled() &&
++      qwen36_can_use_single_token_prologue_quant1(
++          hidden_states,
++          topk_ids,
++          topk_weights,
++          expert_first_token_offset,
++          unpermuted_row_to_permuted_row,
++          gemm1_a,
++          gemm1_a_scales,
++          hidden_size,
++          num_experts)) {
++    qwen36_single_token_prologue_quant1_out(
++        hidden_states,
++        topk_ids,
++        expert_first_token_offset,
++        unpermuted_row_to_permuted_row,
++        gemm1_a,
++        gemm1_a_scales,
++        hidden_size,
++        num_experts);
++  } else {
++    c10::optional<torch::Tensor> input_scales = c10::nullopt;
++    fused_moe_prologue(
++        hidden_states,
++        input_scales,
++        topk_ids,
++        topk_weights,
++        workspace,
++        hidden_size,
++        inter_size,
++        1,
++        0,
++        1,
++        num_experts);
++
++    per_token_quant_int8_xpu_out(
++        remapped_hidden_states, gemm1_a, gemm1_a_scales);
++  }
++
++  const bool can_use_gemm2_gather =
++      qwen36_can_use_single_token_direct_gemm2_gather(
++          output,
++          gemm2_a,
++          gemm2_a_scales,
++          w2,
++          w2_scales,
++          w2_bias,
++          topk_ids,
++          topk_weights,
++          unpermuted_row_to_permuted_row,
++          hidden_size,
++          inter_size,
++          num_experts);
++  const bool use_dpas_gemm2_gather =
++      qwen36_dpas_gemm2_gather_enabled() && can_use_gemm2_gather;
++  const bool use_direct_gemm2_gather =
++      qwen36_direct_gemm2_gather_enabled() && can_use_gemm2_gather;
++  int* workspace_atomic_buffer =
++      qwen36_workspace_atomic_enabled() ? qwen36_workspace_atomic_ptr(workspace)
++                                        : nullptr;
++  const bool use_route_gemm1 =
++      qwen36_route_gemm1_enabled() &&
++      qwen36_can_use_single_token_route_gemm1(
++          gemm1_a,
++          gemm1_a_scales,
++          w13,
++          w13_scales,
++          w13_bias,
++          gemm1_output,
++          topk_ids,
++          unpermuted_row_to_permuted_row,
++          hidden_size,
++          inter_size,
++          num_experts);
++
++  auto run_gemm1 = [&]() {
++    if (use_route_gemm1) {
++      cutlass_grouped_gemm_w8a8_int8_topk8_gemm1_interface(
++          gemm1_a,
++          gemm1_a_scales,
++          w13,
++          w13_scales,
++          w13_bias,
++          gemm1_output,
++          topk_ids,
++          unpermuted_row_to_permuted_row,
++          2 * inter_size,
++          hidden_size,
++          num_experts);
++    } else {
++      qwen36_grouped_gemm_offsets_maybe_atomic(
++          gemm1_a,
++          gemm1_a_scales,
++          w13,
++          w13_scales,
++          w13_bias,
++          gemm1_output,
++          expert_first_token_offset,
++          2 * inter_size,
++          hidden_size,
++          num_experts,
++          workspace_atomic_buffer);
++    }
++  };
++
++  if (use_dpas_gemm2_gather || use_direct_gemm2_gather) {
++    run_gemm1();
++
++    silu_and_mul_quant_int8_xpu_out(gemm1_output, gemm2_a, gemm2_a_scales);
++
++    if (use_dpas_gemm2_gather) {
++      cutlass_grouped_gemm_w8a8_int8_topk8_gather_interface(
++          gemm2_a,
++          gemm2_a_scales,
++          w2,
++          w2_scales,
++          w2_bias,
++          output,
++          topk_ids,
++          topk_weights,
++          unpermuted_row_to_permuted_row,
++          hidden_size,
++          inter_size,
++          num_experts);
++    } else {
++      qwen36_single_token_gemm2_gather_topk8_out(
++          output,
++          gemm2_a,
++          gemm2_a_scales,
++          w2,
++          w2_scales,
++          w2_bias,
++          topk_ids,
++          topk_weights,
++          unpermuted_row_to_permuted_row,
++          hidden_size,
++          inter_size,
++          8);
++    }
++  } else {
++    if (workspace_atomic_buffer != nullptr || use_route_gemm1) {
++      run_gemm1();
++      silu_and_mul_quant_int8_xpu_out(gemm1_output, gemm2_a, gemm2_a_scales);
++
++      qwen36_grouped_gemm_offsets_maybe_atomic(
++          gemm2_a,
++          gemm2_a_scales,
++          w2,
++          w2_scales,
++          w2_bias,
++          gemm2_output,
++          expert_first_token_offset,
++          hidden_size,
++          inter_size,
++          num_experts,
++          workspace_atomic_buffer);
++    } else {
++      qwen36_moe_w8a8_middle_layerlet(
++          gemm1_a,
++          gemm1_a_scales,
++          w13,
++          w13_scales,
++          w13_bias,
++          gemm1_output,
++          gemm2_a,
++          gemm2_a_scales,
++          w2,
++          w2_scales,
++          w2_bias,
++          gemm2_output,
++          expert_first_token_offset,
++          2 * inter_size,
++          hidden_size,
++          hidden_size,
++          inter_size,
++          num_experts);
++    }
++
++    if (qwen36_fast_gather_enabled() &&
++        qwen36_can_use_single_token_fast_gather(
++            output,
++            gemm2_output,
++            topk_weights,
++            unpermuted_row_to_permuted_row,
++            hidden_size)) {
++      qwen36_single_token_gather_topk8_out(
++          output,
++          gemm2_output,
++          topk_weights,
++          unpermuted_row_to_permuted_row,
++          hidden_size);
++    } else {
++      moe_gather(
++          output, gemm2_output, topk_weights, unpermuted_row_to_permuted_row,
++          num_experts);
++    }
++  }
++  return output;
++}
++
++torch::Tensor qwen36_shared_expert_w8a8_out(
++    const torch::Tensor& hidden_states,
++    torch::Tensor& hidden_q,
++    torch::Tensor& hidden_scales,
++    const torch::Tensor& gate_up_w,
++    const torch::Tensor& gate_up_w_scales,
++    torch::Tensor& gate_up_out,
++    torch::Tensor& act_q,
++    torch::Tensor& act_scales,
++    const torch::Tensor& down_w,
++    const torch::Tensor& down_w_scales,
++    torch::Tensor& down_out,
++    const torch::Tensor& expert_gate_w,
++    torch::Tensor& output) {
++  require_xpu_contiguous(hidden_states, "hidden_states");
++  require_xpu_contiguous(hidden_q, "hidden_q");
++  require_xpu_contiguous(hidden_scales, "hidden_scales");
++  require_xpu_contiguous(gate_up_w, "gate_up_w");
++  require_xpu_contiguous(gate_up_w_scales, "gate_up_w_scales");
++  require_xpu_contiguous(gate_up_out, "gate_up_out");
++  require_xpu_contiguous(act_q, "act_q");
++  require_xpu_contiguous(act_scales, "act_scales");
++  require_xpu_contiguous(down_w, "down_w");
++  require_xpu_contiguous(down_w_scales, "down_w_scales");
++  require_xpu_contiguous(down_out, "down_out");
++  require_xpu_contiguous(expert_gate_w, "expert_gate_w");
++  require_xpu_contiguous(output, "output");
++  require_same_device(hidden_states, hidden_q, "hidden_q");
++  require_same_device(hidden_states, hidden_scales, "hidden_scales");
++  require_same_device(hidden_states, gate_up_w, "gate_up_w");
++  require_same_device(hidden_states, gate_up_w_scales, "gate_up_w_scales");
++  require_same_device(hidden_states, gate_up_out, "gate_up_out");
++  require_same_device(hidden_states, act_q, "act_q");
++  require_same_device(hidden_states, act_scales, "act_scales");
++  require_same_device(hidden_states, down_w, "down_w");
++  require_same_device(hidden_states, down_w_scales, "down_w_scales");
++  require_same_device(hidden_states, down_out, "down_out");
++  require_same_device(hidden_states, expert_gate_w, "expert_gate_w");
++  require_same_device(hidden_states, output, "output");
++  require_dtype(hidden_q, "hidden_q", torch::kInt8);
++  require_dtype(act_q, "act_q", torch::kInt8);
++  require_dtype(hidden_scales, "hidden_scales", torch::kFloat32);
++  require_dtype(act_scales, "act_scales", torch::kFloat32);
++  TORCH_CHECK(hidden_states.dim() == 2, "hidden_states must be [rows, hidden]");
++  TORCH_CHECK(gate_up_w.dim() == 2, "gate_up_w must be [hidden, 2*inter]");
++  TORCH_CHECK(down_w.dim() == 2, "down_w must be [inter, hidden]");
++  TORCH_CHECK(expert_gate_w.dim() == 2,
++              "expert_gate_w must be [hidden, 1] or [1, hidden]");
++  const int64_t rows = hidden_states.size(0);
++  const int64_t hidden = hidden_states.size(1);
++  const int64_t inter = down_w.size(0);
++  TORCH_CHECK(gate_up_w.size(0) == hidden, "gate_up_w K mismatch");
++  TORCH_CHECK(gate_up_w.size(1) == 2 * inter, "gate_up_w N mismatch");
++  TORCH_CHECK(down_w.size(1) == hidden, "down_w N mismatch");
++  const bool expert_gate_col_major =
++      expert_gate_w.size(0) == hidden && expert_gate_w.size(1) == 1;
++  const bool expert_gate_linear_layout =
++      expert_gate_w.size(0) == 1 && expert_gate_w.size(1) == hidden;
++  TORCH_CHECK(expert_gate_col_major || expert_gate_linear_layout,
++              "expert_gate_w shape mismatch: expected [",
++              hidden,
++              ", 1] or [1, ",
++              hidden,
++              "], got [",
++              expert_gate_w.size(0),
++              ", ",
++              expert_gate_w.size(1),
++              "]");
++  TORCH_CHECK(hidden_q.sizes() == hidden_states.sizes(), "hidden_q shape mismatch");
++  TORCH_CHECK(hidden_scales.sizes() == at::IntArrayRef({rows, 1}),
++              "hidden_scales shape mismatch");
++  TORCH_CHECK(gate_up_out.sizes() == at::IntArrayRef({rows, 2 * inter}),
++              "gate_up_out shape mismatch");
++  TORCH_CHECK(act_q.sizes() == at::IntArrayRef({rows, inter}),
++              "act_q shape mismatch");
++  TORCH_CHECK(act_scales.sizes() == at::IntArrayRef({rows, 1}),
++              "act_scales shape mismatch");
++  TORCH_CHECK(down_out.sizes() == at::IntArrayRef({rows, hidden}),
++              "down_out shape mismatch");
++  TORCH_CHECK(output.sizes() == at::IntArrayRef({rows, hidden}),
++              "output shape mismatch");
++
++  per_token_quant_int8_xpu_out(hidden_states, hidden_q, hidden_scales);
++  int8_gemm_w8a8_out(hidden_q,
++                     hidden_scales,
++                     gate_up_w,
++                     gate_up_w_scales,
++                     gate_up_out,
++                     std::nullopt);
++  silu_and_mul_quant_int8_xpu_out(gate_up_out, act_q, act_scales);
++  int8_gemm_w8a8_out(
++      act_q, act_scales, down_w, down_w_scales, down_out, std::nullopt);
++
++  if (qwen36_shared_expert_fused_gate_mul_enabled()) {
++    qwen36_shared_expert_gate_mul_out(
++        hidden_states, expert_gate_w, down_out, output);
++  } else {
++    auto gate = expert_gate_col_major
++        ? at::matmul(hidden_states, expert_gate_w)
++        : at::matmul(hidden_states, expert_gate_w.t());
++    output.copy_(at::sigmoid(gate) * down_out);
++  }
++  return output;
++}

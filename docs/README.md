@@ -8,10 +8,14 @@ This docs folder is the human entry point for the B70 optimization work. The exe
 - [MiniMax Production C1 Service](minimax-production-c1-service.md): run the current 32K endpoint under systemd with health and benchmark checks.
 - [Single Model Slot Switching](model-slot-switching.md): keep one LAN OpenAI endpoint while switching which large model is loaded.
 - [Current Reproducibility Map](current-reproducibility-map.md): one-page map for the stable endpoint, session-cache work, TurboQuant patch, and CPU-paged attention research.
+- [Qwen3.6 Research Map](qwen36-research-map.md): Qwen3.6-35B/B70 lane status, current decisions, and artifact pointers.
+- [Qwen3.6 35B Quark INT8 Result Packet](../results/qwen36-35b-quark-int8-b70/README.md): best valid 2x/4x results, invalid fast lanes, reproduction commands, and carryover lessons.
 - [Model Recipes](model-recipes.md): which recipe folder to use for each model/build target.
 - [FAQ](faq.md): practical answers for users new to B70s, vLLM, XPU, and local model deployment.
 - [GPU Comparison for Local AI](gpu-comparison-local-ai.md): rough pricing/spec/performance framing for B70s versus common alternatives.
 - [Community Results And Build Notes](community-results.md): how to share records, build photos, reproducible logs, and discussion links.
+- [LocalMaxxing Submissions](localmaxxing.md): credential location, submit helper, and secret-handling rules.
+- [Local Operations](local-ops.md): sudo-password location, driver/runtime ops guidance, and Claude/OpenCode-to-Codex delegation.
 - [Feedback for Intel](feedback-for-intel.md): short discussion guide plus the detailed Intel feedback note.
 
 ## Build Photos
@@ -24,9 +28,9 @@ The community build guide includes example B70 photos and explains what details 
 
 - `docs/`: narrative guides, FAQ, community-facing summaries, comparison notes.
 - `repro/`: runnable install/build/benchmark/serve recipes and pinned artifacts.
-- `notes/`: lab notebook entries, including negative results.
-- `data/`: structured benchmark records, payloads, and LocalMaxxing responses.
-- `patches/`: patch records and source-level optimization deltas.
+- `notes/`: lab notebook entries, including negative results. See [../notes/README.md](../notes/README.md).
+- `data/`: structured benchmark records, payloads, and LocalMaxxing responses. See [../data/README.md](../data/README.md).
+- `patches/`: patch records and source-level optimization deltas. See [../patches/README.md](../patches/README.md).
 - `scripts/`: shared harnesses used by repro folders and lab runs.
 - `experiments/`: active research lanes that are not production recipes yet.
 
@@ -35,7 +39,32 @@ The community build guide includes example B70 photos and explains what details 
 - Maintainer/site: https://steveseguin.com
 - X feed with ongoing build notes: https://x.com/xyster
 - LocalMaxxing profile/results: https://localmaxxing.com/user/steveseguin
+- LocalMaxxing submission credentials and helper: [localmaxxing.md](localmaxxing.md)
 - Project pages timeline: https://steveseguin.github.io/llm-optimizations/optimization-timeline.html
+
+## Hardware Coverage
+
+This lab currently has four Arc Pro B70 32 GB GPUs, so the total local Intel
+VRAM budget is `128 GB` and every card is often occupied by active optimization
+runs. That is a useful community baseline, but it also means larger model
+families, larger context windows, and concurrent A/B lanes wait behind the same
+four devices. Additional high-VRAM Intel hardware, including
+Crescent Island-class `160-480 GB` evaluation devices if available, would turn
+many of the open vLLM/XPU and driver/runtime questions here into directly
+measurable lanes rather than capacity-constrained TODOs. There is also spare
+EPYC 9015 platform capacity with up to ten PCIe 5.0 x16 slots, so larger Intel
+GPU coverage would have an immediate place to land.
+
+## How To Help
+
+The best help is evidence that is easy to reuse: exact commands, driver/runtime
+versions, model identity, quality checks, logs, and negative results. This
+project has already turned B70 runs into LocalMaxxing submissions, X discussion,
+GitHub-indexed troubleshooting, and reusable vLLM/XPU and llama.cpp notes. To
+increase the number of optimized models, the highest-leverage additions are
+more independent Intel test systems, larger-VRAM Intel devices, clean
+driver/runtime repros, and help turning local findings into upstream issues or
+patches.
 
 ## Current Deployable Baseline
 
@@ -70,3 +99,7 @@ The 32k context promotion is documented in
 The session-cache, TurboQuant, and full-context research work is indexed in
 `current-reproducibility-map.md` and
 `../experiments/minimax_xpu_kv_offload/REPRODUCE.md`.
+
+The Qwen3.6 35B lane is indexed in
+[qwen36-research-map.md](qwen36-research-map.md), with its final result packet in
+[../results/qwen36-35b-quark-int8-b70/](../results/qwen36-35b-quark-int8-b70/).

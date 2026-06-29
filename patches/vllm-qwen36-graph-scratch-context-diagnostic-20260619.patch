@@ -1,0 +1,205 @@
+diff --git a/vllm/compilation/cuda_graph.py b/vllm/compilation/cuda_graph.py
+index 539c8a236..de66d20a0 100644
+--- a/vllm/compilation/cuda_graph.py
++++ b/vllm/compilation/cuda_graph.py
+@@ -31,6 +31,7 @@ from vllm.forward_context import (
+ from vllm.logger import init_logger
+ from vllm.model_executor.offloader.base import get_offloader
+ from vllm.platforms import current_platform
++from vllm.utils.xpu_cudagraph_context import xpu_cudagraph_scratch_context
+ from vllm.utils.torch_utils import current_stream, weak_ref_tensors
+ 
+ logger = init_logger(__name__)
+@@ -299,6 +300,14 @@ class CUDAGraphWrapper:
+             )
+         return " ".join(fields)
+ 
++    def _xpu_scratch_context(
++        self,
++        batch_descriptor: BatchDescriptor | None,
++        phase: str,
++    ):
++        return xpu_cudagraph_scratch_context(
++            self._xpu_cudagraph_identity(), batch_descriptor, phase)
++
+     def _xpu_cudagraph_disabled_by_regex(self) -> bool:
+         pattern = os.environ.get("VLLM_XPU_CUDAGRAPH_DISABLE_SUBMOD_REGEX", "")
+         if not pattern:
+@@ -1432,7 +1441,8 @@ class CUDAGraphWrapper:
+             # No forward context means we are outside the normal
+             # inference path (e.g. a vision encoder forward pass).
+             # Just run the underlying function without cudagraphs.
+-            return self.runnable(*args, **kwargs)
++            with self._xpu_scratch_context(None, "direct_no_forward_context"):
++                return self.runnable(*args, **kwargs)
+ 
+         forward_context = get_forward_context()
+         batch_descriptor = forward_context.batch_descriptor
+@@ -1476,7 +1486,9 @@ class CUDAGraphWrapper:
+                         f"wrapper_mode={self.runtime_mode.name}"
+                     ),
+                 )
+-            output = self.runnable(*args, **kwargs)
++            with self._xpu_scratch_context(batch_descriptor,
++                                           "direct_runtime_mismatch"):
++                output = self.runnable(*args, **kwargs)
+             direct_reason = (
+                 f"runtime_mode={cudagraph_runtime_mode.name} "
+                 f"wrapper_mode={self.runtime_mode.name}"
+@@ -1530,7 +1542,8 @@ class CUDAGraphWrapper:
+                     args=args,
+                     reason=disabled_reason,
+                 )
+-            output = self.runnable(*args, **kwargs)
++            with self._xpu_scratch_context(batch_descriptor, "direct_disabled"):
++                output = self.runnable(*args, **kwargs)
+             self._xpu_cudagraph_sync_direct_if_enabled(
+                 trace_enabled,
+                 trace_context,
+@@ -1654,7 +1667,9 @@ class CUDAGraphWrapper:
+                     stream=current_stream(),
+                 ):
+                     # `output` is managed by pytorch's cudagraph pool
+-                    output = self.runnable(*graph_args, **kwargs)
++                    with self._xpu_scratch_context(batch_descriptor,
++                                                   "graph_capture"):
++                        output = self.runnable(*graph_args, **kwargs)
+                     # Join offloader's copy stream after forward to avoid
+                     # unjoined stream error. The last layer's start_prefetch
+                     # forks copy_stream, but wait_prefetch only happens in
+@@ -1832,7 +1847,8 @@ class CUDAGraphWrapper:
+                 reason=replay_reason,
+             )
+         if compare_direct:
+-            direct_output = self.runnable(*args, **kwargs)
++            with self._xpu_scratch_context(batch_descriptor, "compare_direct"):
++                direct_output = self.runnable(*args, **kwargs)
+             comparison = self._xpu_cudagraph_compare_outputs(
+                 replay_output_snapshot, direct_output
+             )
+diff --git a/vllm/model_executor/models/qwen2_moe.py b/vllm/model_executor/models/qwen2_moe.py
+index 74e895319..9157201bf 100644
+--- a/vllm/model_executor/models/qwen2_moe.py
++++ b/vllm/model_executor/models/qwen2_moe.py
+@@ -62,6 +62,7 @@ from vllm.model_executor.layers.vocab_parallel_embedding import (
+ from vllm.model_executor.model_loader.weight_utils import default_weight_loader
+ from vllm.platforms import current_platform
+ from vllm.sequence import IntermediateTensors
++from vllm.utils.xpu_cudagraph_context import current_xpu_cudagraph_scratch_key
+ from vllm.utils.xpu_decode_timing import timed_region
+ 
+ from .interfaces import SupportsLoRA, SupportsPP
+@@ -77,6 +78,8 @@ from .utils import (
+ logger = init_logger(__name__)
+ 
+ XPU_SHARED_EXPERT_FUSED_ACT_QUANT_ENV = "VLLM_XPU_SHARED_EXPERT_FUSED_ACT_QUANT"
++XPU_SHARED_EXPERT_FUSED_ACT_QUANT_OUT_ENV = (
++    "VLLM_XPU_SHARED_EXPERT_FUSED_ACT_QUANT_OUT")
+ XPU_SHARED_EXPERT_ACT_WORKSPACE_ENV = "VLLM_XPU_SHARED_EXPERT_ACT_WORKSPACE"
+ 
+ 
+@@ -85,11 +88,31 @@ def _xpu_shared_expert_fused_act_quant_enabled() -> bool:
+     return value.strip().upper() in ("1", "ON", "TRUE", "YES", "Y")
+ 
+ 
++def _xpu_shared_expert_fused_act_quant_out_enabled() -> bool:
++    value = os.environ.get(XPU_SHARED_EXPERT_FUSED_ACT_QUANT_OUT_ENV, "0")
++    return value.strip().upper() in ("1", "ON", "TRUE", "YES", "Y")
++
++
+ def _xpu_shared_expert_act_workspace_enabled() -> bool:
+     value = os.environ.get(XPU_SHARED_EXPERT_ACT_WORKSPACE_ENV, "0")
+     return value.strip().upper() in ("1", "ON", "TRUE", "YES", "Y")
+ 
+ 
++def _xpu_current_ubatch_id() -> int:
++    try:
++        from vllm.v1.worker.ubatching import dbo_current_ubatch_id
++        return int(dbo_current_ubatch_id())
++    except Exception:
++        return 0
++
++
++def _xpu_current_scratch_scope() -> tuple[Any, ...] | None:
++    try:
++        return current_xpu_cudagraph_scratch_key()
++    except Exception:
++        return None
++
++
+ class Qwen2MoeMLP(nn.Module):
+     def __init__(
+         self,
+@@ -127,6 +150,8 @@ class Qwen2MoeMLP(nn.Module):
+         self.act_fn = SiluAndMul()
+         self.expert_gate = expert_gate
+         self._xpu_act_workspace: dict[tuple[Any, ...], torch.Tensor] = {}
++        self._xpu_act_quant_workspace: dict[
++            tuple[Any, ...], tuple[torch.Tensor, torch.Tensor]] = {}
+ 
+     def _can_use_xpu_fused_act_quant_down_proj(
+         self,
+@@ -153,8 +178,11 @@ class Qwen2MoeMLP(nn.Module):
+         gate_up: torch.Tensor,
+     ) -> torch.Tensor:
+         with timed_region("qwen2_moe.shared.silu_quant_int8"):
+-            act_q, act_scale = torch.ops._xpu_C.silu_and_mul_quant_int8_xpu(
+-                gate_up)
++            if (self._can_use_xpu_fused_act_quant_out(gate_up)):
++                act_q, act_scale = self._xpu_fused_act_quant_out(gate_up)
++            else:
++                act_q, act_scale = torch.ops._xpu_C.silu_and_mul_quant_int8_xpu(
++                    gate_up)
+ 
+         with timed_region("qwen2_moe.shared.down_proj_int8_gemm"):
+             bias = None
+@@ -170,6 +198,31 @@ class Qwen2MoeMLP(nn.Module):
+             )
+             return output.view(*act_q.shape[:-1], self.down_proj.weight.shape[1])
+ 
++    def _can_use_xpu_fused_act_quant_out(self, gate_up: torch.Tensor) -> bool:
++        return (_xpu_shared_expert_fused_act_quant_out_enabled()
++                and gate_up.is_contiguous()
++                and hasattr(torch.ops._xpu_C, "silu_and_mul_quant_int8_xpu_out"))
++
++    def _xpu_fused_act_quant_out(
++        self,
++        gate_up: torch.Tensor,
++    ) -> tuple[torch.Tensor, torch.Tensor]:
++        d = gate_up.shape[-1] // 2
++        q_shape = tuple(gate_up.shape[:-1]) + (d, )
++        scale_shape = tuple(gate_up.shape[:-1]) + (1, )
++        key = (_xpu_current_scratch_scope(), _xpu_current_ubatch_id(),
++               q_shape, gate_up.dtype, gate_up.device.index)
++        entry = self._xpu_act_quant_workspace.get(key)
++        if (entry is None or entry[0].shape != q_shape
++                or entry[1].shape != scale_shape):
++            q = torch.empty(q_shape, dtype=torch.int8, device=gate_up.device)
++            scales = torch.empty(
++                scale_shape, dtype=torch.float32, device=gate_up.device)
++            entry = (q, scales)
++            self._xpu_act_quant_workspace[key] = entry
++        return torch.ops._xpu_C.silu_and_mul_quant_int8_xpu_out(
++            gate_up, entry[0], entry[1])
++
+     def _can_use_xpu_act_workspace(self, gate_up: torch.Tensor) -> bool:
+         return (_xpu_shared_expert_act_workspace_enabled()
+                 and current_platform.is_xpu()
+@@ -177,15 +230,10 @@ class Qwen2MoeMLP(nn.Module):
+                 and hasattr(torch.ops._C, "silu_and_mul"))
+ 
+     def _xpu_silu_and_mul_workspace(self, gate_up: torch.Tensor) -> torch.Tensor:
+-        try:
+-            from vllm.v1.worker.ubatching import dbo_current_ubatch_id
+-            ubatch_id = dbo_current_ubatch_id()
+-        except Exception:
+-            ubatch_id = 0
+-
+         d = gate_up.shape[-1] // 2
+         output_shape = tuple(gate_up.shape[:-1]) + (d, )
+-        key = (ubatch_id, output_shape, gate_up.dtype, gate_up.device.index)
++        key = (_xpu_current_scratch_scope(), _xpu_current_ubatch_id(),
++               output_shape, gate_up.dtype, gate_up.device.index)
+         out = self._xpu_act_workspace.get(key)
+         if out is None or out.shape != output_shape or out.dtype != gate_up.dtype:
+             out = torch.empty(output_shape, dtype=gate_up.dtype, device=gate_up.device)

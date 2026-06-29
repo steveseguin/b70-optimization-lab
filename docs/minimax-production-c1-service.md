@@ -3,6 +3,9 @@
 This is the recommended production-friendly shape for the current 4x B70
 MiniMax endpoint.
 
+LocalMaxxing submission credentials and helper usage are documented in
+[localmaxxing.md](localmaxxing.md); keep the API key outside Git.
+
 ## Policy
 
 Run c1 for real use:

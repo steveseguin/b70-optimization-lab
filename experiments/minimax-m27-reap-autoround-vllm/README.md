@@ -28,3 +28,4 @@ Run order:
 4. `scripts/bench-decode.sh`
 
 Do not submit LocalMaxxing results from this lane until quality gates pass against the existing MiniMax canaries and repeatability is clean.
+Credential location and helper usage are centralized in [docs/localmaxxing.md](../../docs/localmaxxing.md).

@@ -237,6 +237,12 @@ def main() -> int:
     parser.add_argument("--baseline-json", type=Path)
     parser.add_argument("--request-id-prefix", default=None)
     parser.add_argument(
+        "--case",
+        action="append",
+        default=None,
+        help="Only run the named case. May be passed more than once.",
+    )
+    parser.add_argument(
         "--logprobs",
         type=int,
         default=None,
@@ -254,7 +260,16 @@ def main() -> int:
 
     cases = []
     comparisons: dict[str, Any] = {}
-    for case_index, case in enumerate(make_cases(tokenizer, args.prompt_tokens)):
+    selected_cases = set(args.case or [])
+    all_cases = [
+        case for case in make_cases(tokenizer, args.prompt_tokens)
+        if not selected_cases or case["name"] in selected_cases
+    ]
+    unknown_cases = selected_cases - {case["name"] for case in all_cases}
+    if unknown_cases:
+        raise ValueError(f"Unknown case name(s): {sorted(unknown_cases)}")
+
+    for case_index, case in enumerate(all_cases):
         prompt = case["prompt"]
         prompt_ids = tokenizer.encode(prompt, add_special_tokens=False)
         request_id = (

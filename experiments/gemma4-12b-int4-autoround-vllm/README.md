@@ -799,6 +799,9 @@ Raw soak paths:
 
 LocalMaxxing submissions:
 
+Credential location and helper usage are centralized in
+[docs/localmaxxing.md](../../docs/localmaxxing.md). Keep the API key outside Git.
+
 | Shape | tok/s | ID |
 | --- | ---: | --- |
 | c8, 119 prompt, 256 output, repeat mean | `796.18` | `cmq3jm75g000tlj01bx4frdf0` |

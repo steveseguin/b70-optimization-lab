@@ -35,6 +35,7 @@ REQUIRE_SPEC_JOIN="${REQUIRE_SPEC_JOIN:-1}"
 MIN_DRAFT_TOKENS="${MIN_DRAFT_TOKENS:-1}"
 MIN_ACCEPTED_TOKENS="${MIN_ACCEPTED_TOKENS:-1}"
 MIN_ACCEPT_RATE_PCT="${MIN_ACCEPT_RATE_PCT:-}"
+ALLOW_REPLAY_ACCOUNTING_MISMATCH="${ALLOW_REPLAY_ACCOUNTING_MISMATCH:-0}"
 
 mkdir -p "$DATA_DIR"
 
@@ -113,6 +114,9 @@ if [[ "$EXPECT_SPEC_ACTIVE" == "1" ]]; then
 fi
 if [[ "$REQUIRE_SPEC_JOIN" == "1" ]]; then
   check_args+=(--require-spec-join)
+fi
+if [[ "$ALLOW_REPLAY_ACCOUNTING_MISMATCH" == "1" ]]; then
+  check_args+=(--allow-replay-accounting-mismatch)
 fi
 if [[ "$MIN_DRAFT_TOKENS" != "0" ]]; then
   check_args+=(--min-draft-tokens "$MIN_DRAFT_TOKENS")

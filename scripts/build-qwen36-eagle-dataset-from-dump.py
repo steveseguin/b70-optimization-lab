@@ -1,0 +1,264 @@
+#!/usr/bin/env python3
+"""Build simple EAGLE-1 training samples from vLLM hidden-state dump shards.
+
+The vLLM dump stores one record per sampled token:
+
+  hidden_states[row]       = target hidden state for the current token
+  current_token_ids[row]   = token id that produced that hidden state
+  positions[row]           = absolute model position for the current token
+  sampled_token_ids[row]   = target greedy next token
+
+EAGLE's original trainer expects per-sequence .pt files with:
+
+  hidden_state: [T, hidden]
+  input_ids:    [T]
+  positions:    [T]
+  loss_mask:    [T]
+
+It then trains hidden_state[t] + input_ids[t + 1] -> hidden_state[t + 1].
+This script stitches dumped rows by request id and splits on broken token
+continuity, because a valid next row should have
+current_token_id == previous sampled_token_id.
+"""
+
+from __future__ import annotations
+
+import argparse
+import glob
+import json
+import os
+from collections import defaultdict
+from dataclasses import dataclass, field
+from typing import Any
+
+import torch
+
+
+def torch_load(path: str) -> dict[str, Any]:
+    try:
+        return torch.load(path, map_location="cpu", weights_only=False)
+    except TypeError:
+        return torch.load(path, map_location="cpu")
+
+
+@dataclass
+class SequenceBuffer:
+    hidden: list[torch.Tensor] = field(default_factory=list)
+    input_ids: list[int] = field(default_factory=list)
+    positions: list[int] = field(default_factory=list)
+    sampled_next_ids: list[int] = field(default_factory=list)
+    source_files: list[str] = field(default_factory=list)
+    segments: int = 0
+
+    def append(
+        self,
+        *,
+        hidden_row: torch.Tensor,
+        current_token_id: int,
+        position: int,
+        sampled_token_id: int,
+        source_file: str,
+    ) -> None:
+        self.hidden.append(hidden_row.detach().cpu().contiguous())
+        self.input_ids.append(int(current_token_id))
+        self.positions.append(int(position))
+        self.sampled_next_ids.append(int(sampled_token_id))
+        self.source_files.append(source_file)
+
+    def clear(self) -> None:
+        self.hidden.clear()
+        self.input_ids.clear()
+        self.positions.clear()
+        self.sampled_next_ids.clear()
+        self.source_files.clear()
+        self.segments += 1
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--dump-dir", required=True)
+    parser.add_argument("--out-dir", required=True)
+    parser.add_argument("--summary", default="")
+    parser.add_argument("--min-len", type=int, default=8)
+    parser.add_argument("--max-len", type=int, default=2048)
+    parser.add_argument("--max-samples", type=int, default=0)
+    parser.add_argument("--glob", default="step-*.pt")
+    parser.add_argument("--hidden-dtype", default="native",
+                        choices=("native", "float32", "float16", "bfloat16"))
+    return parser.parse_args()
+
+
+def cast_hidden(hidden: torch.Tensor, dtype_name: str) -> torch.Tensor:
+    if dtype_name == "native":
+        return hidden
+    if dtype_name == "float32":
+        return hidden.to(torch.float32)
+    if dtype_name == "float16":
+        return hidden.to(torch.float16)
+    if dtype_name == "bfloat16":
+        return hidden.to(torch.bfloat16)
+    raise ValueError(dtype_name)
+
+
+def save_buffer(
+    *,
+    req_id: str,
+    buffer: SequenceBuffer,
+    out_dir: str,
+    sample_index: int,
+    min_len: int,
+    max_len: int,
+    hidden_dtype: str,
+) -> bool:
+    if len(buffer.hidden) < min_len:
+        return False
+    hidden = torch.stack(buffer.hidden[:max_len], dim=0)
+    hidden = cast_hidden(hidden, hidden_dtype)
+    input_ids = torch.tensor(buffer.input_ids[:max_len], dtype=torch.long)
+    positions = torch.tensor(buffer.positions[:max_len], dtype=torch.long)
+    loss_mask = torch.ones(input_ids.shape[0], dtype=torch.long)
+    sampled_next_ids = torch.tensor(
+        buffer.sampled_next_ids[:max_len], dtype=torch.long
+    )
+    safe_req = "".join(c if c.isalnum() or c in ("-", "_") else "_" for c in req_id)
+    path = os.path.join(out_dir, f"sample-{sample_index:06d}-{safe_req}.pt")
+    torch.save(
+        {
+            "format": "qwen36_eagle_sequence_v1",
+            "req_id": req_id,
+            "hidden_state": hidden,
+            "input_ids": input_ids,
+            "positions": positions,
+            "loss_mask": loss_mask,
+            "sampled_next_token_ids": sampled_next_ids,
+            "source_files": list(buffer.source_files[:max_len]),
+        },
+        path,
+    )
+    return True
+
+
+def main() -> int:
+    args = parse_args()
+    os.makedirs(args.out_dir, exist_ok=True)
+    paths = sorted(glob.glob(os.path.join(args.dump_dir, args.glob)))
+
+    buffers: dict[str, SequenceBuffer] = defaultdict(SequenceBuffer)
+    sample_count = 0
+    total_rows = 0
+    usable_rows = 0
+    invalid_current_token_rows = 0
+    continuity_matches = 0
+    continuity_breaks = 0
+    position_matches = 0
+    position_breaks = 0
+    missing_position_rows = 0
+    skipped_bad_files: list[str] = []
+
+    def maybe_save(req_id: str) -> None:
+        nonlocal sample_count
+        if args.max_samples and sample_count >= args.max_samples:
+            return
+        buffer = buffers[req_id]
+        if save_buffer(
+            req_id=req_id,
+            buffer=buffer,
+            out_dir=args.out_dir,
+            sample_index=sample_count,
+            min_len=args.min_len,
+            max_len=args.max_len,
+            hidden_dtype=args.hidden_dtype,
+        ):
+            sample_count += 1
+
+    for path in paths:
+        if args.max_samples and sample_count >= args.max_samples:
+            break
+        try:
+            shard = torch_load(path)
+            if shard.get("format") != "qwen36_eagle_hidden_step_v1":
+                skipped_bad_files.append(path)
+                continue
+            hidden = shard["hidden_states"]
+            req_ids = shard["req_ids"]
+            current_ids = shard["current_token_ids"]
+            positions = shard.get("positions")
+            sampled_ids = shard["sampled_token_ids"]
+        except Exception:
+            skipped_bad_files.append(path)
+            continue
+
+        rows = min(len(req_ids), len(current_ids), len(sampled_ids), hidden.shape[0])
+        total_rows += rows
+        for row in range(rows):
+            req_id = str(req_ids[row])
+            current_token_id = int(current_ids[row])
+            sampled_token_id = int(sampled_ids[row])
+            if positions is None:
+                position = -1
+                missing_position_rows += 1
+            else:
+                position = int(positions[row])
+            if current_token_id < 0:
+                invalid_current_token_rows += 1
+                continue
+
+            buffer = buffers[req_id]
+            if buffer.sampled_next_ids:
+                expected = buffer.sampled_next_ids[-1]
+                if current_token_id == expected:
+                    continuity_matches += 1
+                else:
+                    continuity_breaks += 1
+                    maybe_save(req_id)
+                    buffer.clear()
+                if position >= 0 and buffer.positions:
+                    if position == buffer.positions[-1] + 1:
+                        position_matches += 1
+                    else:
+                        position_breaks += 1
+
+            buffer.append(
+                hidden_row=hidden[row],
+                current_token_id=current_token_id,
+                position=position,
+                sampled_token_id=sampled_token_id,
+                source_file=os.path.basename(path),
+            )
+            usable_rows += 1
+
+    if not (args.max_samples and sample_count >= args.max_samples):
+        for req_id in list(buffers):
+            if args.max_samples and sample_count >= args.max_samples:
+                break
+            maybe_save(req_id)
+
+    summary = {
+        "dump_dir": args.dump_dir,
+        "out_dir": args.out_dir,
+        "input_files": len(paths),
+        "skipped_bad_files": skipped_bad_files[:20],
+        "skipped_bad_file_count": len(skipped_bad_files),
+        "total_rows": total_rows,
+        "usable_rows": usable_rows,
+        "invalid_current_token_rows": invalid_current_token_rows,
+        "continuity_matches": continuity_matches,
+        "continuity_breaks": continuity_breaks,
+        "position_matches": position_matches,
+        "position_breaks": position_breaks,
+        "missing_position_rows": missing_position_rows,
+        "samples_saved": sample_count,
+        "min_len": args.min_len,
+        "max_len": args.max_len,
+        "hidden_dtype": args.hidden_dtype,
+    }
+    summary_path = args.summary or os.path.join(args.out_dir, "summary.json")
+    with open(summary_path, "w", encoding="utf-8") as f:
+        json.dump(summary, f, indent=2, sort_keys=True)
+        f.write("\n")
+    print(json.dumps(summary, indent=2, sort_keys=True))
+    return 0 if sample_count > 0 else 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

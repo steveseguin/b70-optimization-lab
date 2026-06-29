@@ -1,5 +1,7 @@
 # LocalMaxxing Submissions
 
+Submission credentials and helper usage: [docs/localmaxxing.md](docs/localmaxxing.md).
+
 Date: 2026-05-09
 
 Model: `Lasimeri/MiniMax-M2.7-int4-AutoRound`, AutoRound W4A16 safetensors, vLLM/XPU TP4.

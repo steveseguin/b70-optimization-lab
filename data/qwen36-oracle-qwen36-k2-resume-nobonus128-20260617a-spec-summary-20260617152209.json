@@ -1,0 +1,428 @@
+{
+  "traces": [
+    {
+      "path": "/home/steve/llm-optimizations/data/qwen36-oracle-k2-resume-nobonus-20260617a-spec.jsonl",
+      "rows": 28,
+      "malformed_rows": 0,
+      "requests": 2,
+      "draft_tokens": 56,
+      "accepted": 51,
+      "rejected": 5,
+      "accept_rate_pct": 91.07142857142857,
+      "reject_rate_pct": 8.928571428571429,
+      "full_accept_rows": 25,
+      "full_reject_rows": 2,
+      "suppressed_bonus_rows": 25,
+      "full_accept_row_pct": 89.28571428571429,
+      "full_reject_row_pct": 7.142857142857143,
+      "suppressed_bonus_row_pct": 89.28571428571429,
+      "repeated_scheduled_rows": 0,
+      "max_full_accept_streak": 13,
+      "accept_count_histogram": {
+        "0": 2,
+        "1": 1,
+        "2": 25
+      },
+      "top_scheduled_pairs": [
+        {
+          "tokens": "440,27044",
+          "count": 1
+        },
+        {
+          "tokens": "27044,47193",
+          "count": 1
+        },
+        {
+          "tokens": "47193,14246",
+          "count": 1
+        },
+        {
+          "tokens": "14246,8129",
+          "count": 1
+        },
+        {
+          "tokens": "8129,13",
+          "count": 1
+        },
+        {
+          "tokens": "13,24985",
+          "count": 1
+        },
+        {
+          "tokens": "24985,383",
+          "count": 1
+        },
+        {
+          "tokens": "383,3074",
+          "count": 1
+        },
+        {
+          "tokens": "3074,43318",
+          "count": 1
+        },
+        {
+          "tokens": "43318,16401",
+          "count": 1
+        }
+      ],
+      "top_generated_first_tokens": [
+        {
+          "token": "13",
+          "count": 3
+        },
+        {
+          "token": "440",
+          "count": 1
+        },
+        {
+          "token": "27044",
+          "count": 1
+        },
+        {
+          "token": "47193",
+          "count": 1
+        },
+        {
+          "token": "14246",
+          "count": 1
+        },
+        {
+          "token": "8129",
+          "count": 1
+        },
+        {
+          "token": "24985",
+          "count": 1
+        },
+        {
+          "token": "383",
+          "count": 1
+        },
+        {
+          "token": "3074",
+          "count": 1
+        },
+        {
+          "token": "43318",
+          "count": 1
+        }
+      ],
+      "request_ids": [
+        "cmpl-qwen36-oracle-k2-resume-nobonus128-20260617a-000000-0-a0d79342",
+        "cmpl-qwen36-oracle-k2-resume-nobonus128-20260617a-000001-0-b970a93c"
+      ],
+      "top_requests_by_draft": [
+        {
+          "req_id": "cmpl-qwen36-oracle-k2-resume-nobonus128-20260617a-000000-0-a0d79342",
+          "rows": 14,
+          "draft_tokens": 28,
+          "accepted": 26,
+          "rejected": 2,
+          "first_ts": 1781709686.3277361,
+          "last_ts": 1781709690.4223943,
+          "min_output_tokens": 1,
+          "max_output_tokens": 14,
+          "full_accept_rows": 13,
+          "full_reject_rows": 1,
+          "max_full_accept_streak": 13,
+          "repeated_scheduled_rows": 0,
+          "suppressed_bonus_rows": 13,
+          "top_scheduled_pairs": [
+            {
+              "tokens": "440,27044",
+              "count": 1
+            },
+            {
+              "tokens": "27044,47193",
+              "count": 1
+            },
+            {
+              "tokens": "47193,14246",
+              "count": 1
+            },
+            {
+              "tokens": "14246,8129",
+              "count": 1
+            },
+            {
+              "tokens": "8129,13",
+              "count": 1
+            }
+          ],
+          "min_computed_after_reject": 502,
+          "max_computed_after_reject": 515,
+          "min_tokens_after_output": 503,
+          "max_tokens_after_output": 516,
+          "accept_rate": 92.85714285714286
+        },
+        {
+          "req_id": "cmpl-qwen36-oracle-k2-resume-nobonus128-20260617a-000001-0-b970a93c",
+          "rows": 14,
+          "draft_tokens": 28,
+          "accepted": 25,
+          "rejected": 3,
+          "first_ts": 1781709700.9127302,
+          "last_ts": 1781709704.4223628,
+          "min_output_tokens": 1,
+          "max_output_tokens": 14,
+          "full_accept_rows": 12,
+          "full_reject_rows": 1,
+          "max_full_accept_streak": 12,
+          "repeated_scheduled_rows": 0,
+          "suppressed_bonus_rows": 12,
+          "top_scheduled_pairs": [
+            {
+              "tokens": "17856,13",
+              "count": 1
+            },
+            {
+              "tokens": "13,78503",
+              "count": 1
+            },
+            {
+              "tokens": "78503,4581",
+              "count": 1
+            },
+            {
+              "tokens": "4581,2468",
+              "count": 1
+            },
+            {
+              "tokens": "2468,1345",
+              "count": 1
+            }
+          ],
+          "min_computed_after_reject": 488,
+          "max_computed_after_reject": 501,
+          "min_tokens_after_output": 489,
+          "max_tokens_after_output": 502,
+          "accept_rate": 89.28571428571429
+        }
+      ],
+      "top_requests_by_rejects": [
+        {
+          "req_id": "cmpl-qwen36-oracle-k2-resume-nobonus128-20260617a-000001-0-b970a93c",
+          "rows": 14,
+          "draft_tokens": 28,
+          "accepted": 25,
+          "rejected": 3,
+          "first_ts": 1781709700.9127302,
+          "last_ts": 1781709704.4223628,
+          "min_output_tokens": 1,
+          "max_output_tokens": 14,
+          "full_accept_rows": 12,
+          "full_reject_rows": 1,
+          "max_full_accept_streak": 12,
+          "repeated_scheduled_rows": 0,
+          "suppressed_bonus_rows": 12,
+          "top_scheduled_pairs": [
+            {
+              "tokens": "17856,13",
+              "count": 1
+            },
+            {
+              "tokens": "13,78503",
+              "count": 1
+            },
+            {
+              "tokens": "78503,4581",
+              "count": 1
+            },
+            {
+              "tokens": "4581,2468",
+              "count": 1
+            },
+            {
+              "tokens": "2468,1345",
+              "count": 1
+            }
+          ],
+          "min_computed_after_reject": 488,
+          "max_computed_after_reject": 501,
+          "min_tokens_after_output": 489,
+          "max_tokens_after_output": 502,
+          "accept_rate": 89.28571428571429
+        },
+        {
+          "req_id": "cmpl-qwen36-oracle-k2-resume-nobonus128-20260617a-000000-0-a0d79342",
+          "rows": 14,
+          "draft_tokens": 28,
+          "accepted": 26,
+          "rejected": 2,
+          "first_ts": 1781709686.3277361,
+          "last_ts": 1781709690.4223943,
+          "min_output_tokens": 1,
+          "max_output_tokens": 14,
+          "full_accept_rows": 13,
+          "full_reject_rows": 1,
+          "max_full_accept_streak": 13,
+          "repeated_scheduled_rows": 0,
+          "suppressed_bonus_rows": 13,
+          "top_scheduled_pairs": [
+            {
+              "tokens": "440,27044",
+              "count": 1
+            },
+            {
+              "tokens": "27044,47193",
+              "count": 1
+            },
+            {
+              "tokens": "47193,14246",
+              "count": 1
+            },
+            {
+              "tokens": "14246,8129",
+              "count": 1
+            },
+            {
+              "tokens": "8129,13",
+              "count": 1
+            }
+          ],
+          "min_computed_after_reject": 502,
+          "max_computed_after_reject": 515,
+          "min_tokens_after_output": 503,
+          "max_tokens_after_output": 516,
+          "accept_rate": 92.85714285714286
+        }
+      ],
+      "top_requests_by_full_accept_streak": [
+        {
+          "req_id": "cmpl-qwen36-oracle-k2-resume-nobonus128-20260617a-000000-0-a0d79342",
+          "rows": 14,
+          "draft_tokens": 28,
+          "accepted": 26,
+          "rejected": 2,
+          "first_ts": 1781709686.3277361,
+          "last_ts": 1781709690.4223943,
+          "min_output_tokens": 1,
+          "max_output_tokens": 14,
+          "full_accept_rows": 13,
+          "full_reject_rows": 1,
+          "max_full_accept_streak": 13,
+          "repeated_scheduled_rows": 0,
+          "suppressed_bonus_rows": 13,
+          "top_scheduled_pairs": [
+            {
+              "tokens": "440,27044",
+              "count": 1
+            },
+            {
+              "tokens": "27044,47193",
+              "count": 1
+            },
+            {
+              "tokens": "47193,14246",
+              "count": 1
+            },
+            {
+              "tokens": "14246,8129",
+              "count": 1
+            },
+            {
+              "tokens": "8129,13",
+              "count": 1
+            }
+          ],
+          "min_computed_after_reject": 502,
+          "max_computed_after_reject": 515,
+          "min_tokens_after_output": 503,
+          "max_tokens_after_output": 516,
+          "accept_rate": 92.85714285714286
+        },
+        {
+          "req_id": "cmpl-qwen36-oracle-k2-resume-nobonus128-20260617a-000001-0-b970a93c",
+          "rows": 14,
+          "draft_tokens": 28,
+          "accepted": 25,
+          "rejected": 3,
+          "first_ts": 1781709700.9127302,
+          "last_ts": 1781709704.4223628,
+          "min_output_tokens": 1,
+          "max_output_tokens": 14,
+          "full_accept_rows": 12,
+          "full_reject_rows": 1,
+          "max_full_accept_streak": 12,
+          "repeated_scheduled_rows": 0,
+          "suppressed_bonus_rows": 12,
+          "top_scheduled_pairs": [
+            {
+              "tokens": "17856,13",
+              "count": 1
+            },
+            {
+              "tokens": "13,78503",
+              "count": 1
+            },
+            {
+              "tokens": "78503,4581",
+              "count": 1
+            },
+            {
+              "tokens": "4581,2468",
+              "count": 1
+            },
+            {
+              "tokens": "2468,1345",
+              "count": 1
+            }
+          ],
+          "min_computed_after_reject": 488,
+          "max_computed_after_reject": 501,
+          "min_tokens_after_output": 489,
+          "max_tokens_after_output": 502,
+          "accept_rate": 89.28571428571429
+        }
+      ]
+    }
+  ],
+  "metric_artifacts": [],
+  "metric_comparisons": [],
+  "quality_artifacts": [
+    {
+      "label": "candidate",
+      "path": "/home/steve/llm-optimizations/data/qwen36-oracle-k2-resume-nobonus128-candidate-20260617a.json",
+      "pass_all": null,
+      "baseline_match_all": false,
+      "exact_pass_count": 0,
+      "exact_case_count": 0,
+      "repeat_pass": null,
+      "repeat_unique_hashes": null,
+      "repeat_repeats": 0,
+      "long_context_pass": null,
+      "token_trace_cases": 2,
+      "has_request_ids": true,
+      "request_ids": [
+        "cmpl-qwen36-oracle-k2-resume-nobonus128-20260617a-000000",
+        "cmpl-qwen36-oracle-k2-resume-nobonus128-20260617a-000001"
+      ],
+      "has_request_timestamps": true,
+      "request_window": {
+        "start": 1781709668.7662323,
+        "finish": 1781709712.241485
+      }
+    }
+  ],
+  "joinability": {
+    "request_id_join_possible": true,
+    "exact_request_id_join_possible": false,
+    "prefix_request_id_join_possible": true,
+    "timestamp_window_join_possible": true,
+    "trace_request_count": 2,
+    "artifact_request_count": 2,
+    "exact_match_count": 0,
+    "prefix_match_count": 2,
+    "prefix_matches": [
+      {
+        "trace_id": "cmpl-qwen36-oracle-k2-resume-nobonus128-20260617a-000000-0-a0d79342",
+        "artifact_id": "cmpl-qwen36-oracle-k2-resume-nobonus128-20260617a-000000"
+      },
+      {
+        "trace_id": "cmpl-qwen36-oracle-k2-resume-nobonus128-20260617a-000001-0-b970a93c",
+        "artifact_id": "cmpl-qwen36-oracle-k2-resume-nobonus128-20260617a-000001"
+      }
+    ],
+    "note": "Trace rows can be joined to artifacts by request-id prefix; scheduler ids append an internal suffix."
+  }
+}

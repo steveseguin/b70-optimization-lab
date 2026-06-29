@@ -1,0 +1,2989 @@
+diff --git a/notes/2026-06-16-qwen36-current-handoff.md b/notes/2026-06-16-qwen36-current-handoff.md
+index d684355..fe54572 100644
+--- a/notes/2026-06-16-qwen36-current-handoff.md
++++ b/notes/2026-06-16-qwen36-current-handoff.md
+@@ -258,6 +258,117 @@ Immediate next steps:
+      and `VLLM_XPU_MOE_LIVE_ABI_MAX_LINES=2000`.
+    - Use this only when necessary because it adds overhead.
+ 
++## 2026-06-18 Update: Spec Parity And EAGLE Data Path
++
++The current credible path to `>150 tok/s` single-session decode without quality
++loss is still trained EAGLE speculation. Other measured routes either failed
++quality gates or lost too much speed. The verifier/spec-state work has moved:
++
++- Correct controlled verifier path:
++  `VLLM_XPU_SPEC_DECODE_DRAFT_ONLY=1`, serial-packed GDN, scheduler tail
++  fallback, and accepted running conv/SSM state promotion.
++- Oracle k=4 and k=8 are token-identical to the no-spec fixture with 100%
++  oracle acceptance. k=8 artifact:
++  `/home/steve/llm-optimizations/data/qwen36-oracle-k8-draftonly-serialgdnpacked-promoteconv-tailfallback-currentbaseline-eager-tp2-20260618cb-candidate.json`.
++- The old real n-gram k=8 fast-lane attempt is rejected. It reached the server
++  but serial GDN plus real n-gram acceptance was effectively unusable:
++  roughly `0.6-3 tok/s` and only the first group accepted `5/8` draft tokens.
++  Do not promote that route.
++
++New EAGLE data export support was added in
++`/home/steve/src/vllm/vllm/v1/worker/gpu_model_runner.py` behind opt-in envs:
++
++```bash
++VLLM_XPU_EAGLE_DATA_DUMP_DIR=<dir>
++VLLM_XPU_EAGLE_DATA_DUMP_RANK=0
++VLLM_XPU_EAGLE_DATA_DUMP_MAX_STEPS=<n>
++VLLM_XPU_EAGLE_DATA_DUMP_DTYPE=bfloat16
++VLLM_XPU_EAGLE_DATA_DUMP_SINGLE_TOKEN_ONLY=1
++```
++
++Normal inference is unchanged when these envs are unset. Dump shards are
++stitched by:
++
++`/home/steve/llm-optimizations/scripts/build-qwen36-eagle-dataset-from-dump.py`
++
++Smoke results:
++
++- TP4 graph-none dump startup failed before readiness with a Level Zero
++  device-lost error while creating an attention quant scale tensor, before the
++  dump code ran. Log:
++  `/home/steve/llm-optimizations/data/qwen36-eagle-hidden-dump-smoke-20260618d.log`.
++- TP2 graph-none smoke on cards `0,1` succeeded. Dump dir:
++  `/home/steve/llm-optimizations/data/qwen36-eagle-hidden-dump-smoke-tp2-20260618e`.
++- TP2 smoke identity: Quark W8A8 INT8 target
++  `cced56592e8c8935f8220836b4baa04dfd389118`, TP2, 32k max model length,
++  `COMPILATION_CONFIG='{"cudagraph_mode":"NONE"}'`, no async, `MAX_NUM_SEQS=2`,
++  `MAX_NUM_BATCHED_TOKENS=1024`, `GPU_MEMORY_UTILIZATION=0.82`.
++- The TP2 smoke throughput is not a performance result because it was
++  graph-none and first-request only. It was used only to validate EAGLE data
++  export.
++- Dataset summary:
++  `/home/steve/llm-optimizations/data/qwen36-eagle-hidden-dataset-smoke-tp2-20260618e-summary.json`.
++  It produced `64` usable rows, `63` continuity matches, `0` continuity breaks,
++  and one stitched `.pt` sample.
++- First stitched sample:
++  `/home/steve/llm-optimizations/data/qwen36-eagle-hidden-dataset-smoke-tp2-20260618e/sample-000000-cmpl-911c7a5dc7a3503b-0-907523cf.pt`
++  with hidden state shape `(64, 2048)` in BF16.
++
++Current implementation direction:
++
++1. Use vLLM's existing `method:"eagle"` path first, not EAGLE3. It wraps a
++   plain Llama-style draft as `EagleLlamaForCausalLM`.
++2. Draft config should use hidden size `2048`, vocab size `248320`, and a
++   tiny one-layer Llama decoder. vLLM's simple EAGLE model consumes
++   `[token_embedding, target_hidden_state]` through `model.fc`.
++3. Build a loadable smoke checkpoint first, then train it from the dumped
++   target hidden states. Only after it loads and produces non-trivial
++   acceptance should we scale data generation and run PIECEWISE TP4 speed gates.
++
++## 2026-06-18 Update: EAGLE-1 Loader Smoke
++
++Created a reusable smoke-checkpoint generator:
++
++`/home/steve/llm-optimizations/scripts/create-qwen36-eagle1-smoke-checkpoint.py`
++
++Generated draft:
++
++`/home/steve/llm-optimizations/data/qwen36-eagle1-smoke-draft-20260618a`
++
++Checkpoint properties:
++
++- one Llama-style EAGLE layer;
++- `hidden_size=2048`, `intermediate_size=4096`;
++- `num_attention_heads=16`, `num_key_value_heads=2`, `head_dim=128`;
++- `vocab_size=248320`;
++- about `43M` BF16 parameters;
++- intentionally omits `embed_tokens` and `lm_head` so vLLM shares the target
++  modules.
++
++Loader/runtime smoke:
++
++- First TP2 launch:
++  `/home/steve/llm-optimizations/data/qwen36-eagle1-smoke-load-tp2-20260618a.log`
++  failed before model/draft loading with a oneCCL/SYCL
++  `PersistentDeviceCodeCache::getItemFromDisc` segfault during early TP2
++  allreduce.
++- Retry with `SYCL_CACHE_PERSISTENT=0`:
++  `/home/steve/llm-optimizations/data/qwen36-eagle1-smoke-load-tp2-20260618b.log`
++  reached readiness.
++- vLLM loaded the target and drafter, and logged target sharing on both ranks:
++  `Detected EAGLE model without its own embed_tokens...` and
++  `Detected EAGLE model without its own lm_head...`.
++- Short completion request succeeded through the EAGLE proposer/verifier path.
++  Since the draft is random, metrics correctly showed `Drafted: 1 tokens`,
++  `Accepted: 0 tokens`, acceptance `0.0%`.
++
++Conclusion:
++
++The local EAGLE-1 checkpoint format is loadable and executable on XPU. The next
++required step is a real trainer that writes the same checkpoint format from the
++Quark INT8 hidden-state dataset, then a TP2 acceptance smoke, then larger data
++export/training before any TP4 PIECEWISE performance gate.
++
+ 3. If every layer-enabled fused-prologue capture path fails, stop spending
+    time on captured fused prologue and pivot to one of:
+    - persistent MoE layerlet that avoids graph-captured prologue state
+@@ -566,3 +677,1148 @@ for this model exists on disk. Reaching the >150 goal therefore requires
+ training an EAGLE draft on the Quark INT8 target (extract hidden states,
+ clone SafeAILab/EAGLE, train) - a multi-hour task with XPU-compat risk.
+ 
++## 2026-06-18 Addendum — Restored Oracle Identity + Native Prefill State Failure
++
++Important re-anchor:
++
++- The token-exact oracle fixture is the **serial GDN identity**, not the
++  generic/native-spec identity. The identity needs:
++  `VLLM_XPU_SPEC_DECODE_DRAFT_ONLY=1`,
++  `VLLM_XPU_GDN_SERIAL_SPEC_DECODE=1`,
++  `VLLM_XPU_GDN_SERIAL_SPEC_PACKED_DECODE=1`,
++  `VLLM_XPU_GDN_SERIAL_SPEC_CONV=1`,
++  `VLLM_XPU_GDN_SPEC_PROMOTE_RUNNING_AFTER_SPEC=1`, and
++  `VLLM_XPU_GDN_SPEC_PROMOTE_CONV_STATE=1`.
++- Reproduced on current tree:
++  `qwen36-oracle-k8-draftonly-serial-restoredidentity-currenttree-eager-tp2-20260618b`
++  has `baseline_match_all=true`, first diff `null`, 24/24 accepted, 100%
++  full-accept rows. The parity gate still reports replay-accounting
++  mismatches, but token output is exact.
++- A misleading control without the serial flags
++  (`qwen36-oracle-k8-draftonly-serialgdn-nopostprocess-control-currenttree-eager-tp2-20260618b`)
++  failed at token 18 with 16/32 accepted. Do not use this as evidence against
++  the serial oracle path; it was the wrong identity.
++
++Failed native-prefill bridge attempts:
++
++- `qwen36-oracle-k8-draftonly-nativeprefill-allornothing-rollback-currenttree-eager-tp2-20260618b`:
++  all-or-nothing reduced the third partial row to 0 accepted and preempted,
++  but output still diverged at token 17. Scheduler rollback alone cannot make
++  native-prefill safe.
++- `qwen36-oracle-k8-draftonly-nativeprefill-allornothing-finalpromote-currenttree-eager-tp2-20260618b`:
++  enabling final promotion plus conv-state promotion did not help; same first
++  diff at token 17.
++- `qwen36-oracle-k8-draftonly-nativeprefill-replaycols-allornothing-finalpromote-currenttree-eager-tp2-20260618b`:
++  replayed output state columns worsened acceptance (8/16) and still diverged
++  at token 17.
++
++Conclusion:
++
++- The current native-prefill sequence is not serial-equivalent even after two
++  full accepted groups when control returns to ordinary decode. It is not only
++  a partial-accept commit issue; full accepted groups do not leave a safe
++  running GDN state for later fallback/recovery decode.
++- Do not spend more time on scheduler-only all-or-nothing workarounds for this
++  path. The next viable correctness work is to repair native-prefill state
++  generation/promotion itself, or to optimize the token-exact serial GDN path.
++
++Postprocess experiment status:
++
++- Added gated `VLLM_XPU_GDN_NONSPEC_POSTPROCESS_ACCEPTED_STATE=1` helper in
++  `vllm/v1/worker/mamba_utils.py` and runner hook in
++  `vllm/v1/worker/gpu_model_runner.py`.
++- The hook now skips full-accept rows by default and avoids globally clobbering
++  accepted-token counts. It remains diagnostic only. Do not enable it in
++  accepted benchmark identities until a serial-identity test with the hook also
++  passes token parity.
++
++## 2026-06-18 Addendum 2 — Gate Semantics Fixed, Native Verifier Still Unsafe
++
++Serial correctness anchor:
++
++- Current-tree serial GDN control
++  `qwen36-oracle-k8-draftonly-serial-restoredidentity-currenttree-eager-tp2-20260618e`
++  emitted the accepted no-spec token stream exactly (`first_diff=null`, 32/32
++  output tokens match) with spec activity (`24/24` accepted, 100%, 3 rows).
++- The original gate failed only because replay accounting reported 3 diagnostic
++  mismatches. Generated tokens, suppressed follow-up schedule, and suppressed
++  accept checks were clean.
++- Added explicit checker option
++  `--allow-replay-accounting-mismatch` and wrapper env
++  `ALLOW_REPLAY_ACCOUNTING_MISMATCH=1`. Default behavior remains strict.
++- Offline re-gate artifact:
++  `data/qwen36-oracle-k8-draftonly-serial-restoredidentity-currenttree-eager-tp2-20260618e-allowacct-gate-summary.json`
++  passed exact mode. Use this option only for known accounting-only trace noise,
++  not for token or suppressed-follow-up failures.
++
++Native verifier probes after the restored serial anchor:
++
++- `qwen36-oracle-k8-draftonly-nativeprefill-exactstatereplay-offset1-manualconv-nofinalpromote-allornothing-postprocess-currenttree-eager-tp2-20260618e`:
++  failed at token 17. All-or-nothing is not sufficient.
++- `qwen36-oracle-k8-draftonly-nativeprefill-exactstatereplay-offset1-manualconv-nofinalpromote-nopreemptreject-postprocess-currenttree-eager-tp2-20260618e`:
++  failed at token 24, immediately after accepting `... 271, 248068`.
++- `qwen36-oracle-k8-draftonly-nativeprefill-exactstatereplay-offset1-manualconv-writeoutputs-nofinalpromote-postprocess-currenttree-eager-tp2-20260618e`:
++  failed at token 17. Python/FLA replay outputs are not equivalent to the native
++  safe output lane.
++- `qwen36-oracle-k8-draftonly-nativeprefill-exactstatereplay-offset1-nativedecode-writeoutputs-nofinalpromote-postprocess-currenttree-eager-tp2-20260618e`:
++  failed at token 17. Native per-position replay output write also worsened.
++- `qwen36-oracle-k7-draftonly-nativeprefill-exactstatereplay-offset1-manualconv-nofinalpromote-postprocess-currenttree-eager-tp2-20260618e`:
++  failed at token 24. The issue is not simply k=8 depth; it is a native
++  verifier/state/logit boundary around the `248068` special token region.
++
++Current interpretation:
++
++- Do not enable the new output-write diagnostics in accepted identities:
++  `VLLM_XPU_GDN_NATIVE_SPEC_PREFILL_EXACT_REPLAY_WRITE_OUTPUTS=1` and
++  `VLLM_XPU_GDN_NATIVE_SPEC_PREFILL_EXACT_REPLAY_NATIVE_DECODE=1` both failed.
++- The token-exact path is the serial GDN verifier path. The next performance
++  work should either optimize that serial-correct verifier, or train/use a
++  lightweight EAGLE draft with the serial verifier as the quality anchor.
++
++Serial verifier speed check:
++
++- `qwen36-ablation-serialgdn-oracle-k8-piecewise-tp2-metrics-20260618f`
++  measured the serial-correct verifier under PIECEWISE graph on TP2.
++- Summary:
++  `data/qwen36-ablation-serialgdn-oracle-k8-piecewise-tp2-metrics-20260618f-summary-20260618192000.json`.
++- Result: `14.03` corrected tok/s, `72.10` ms/token. This is not a viable
++  speed lane. Keep serial GDN as a token-parity oracle only.
++
++## 2026-06-18 Addendum 3 - EAGLE k5 Ceiling And Rollout Result
++
++EAGLE speed ceiling:
++
++- Synthetic k3 acceptance probe
++  `qwen36-ablation-eagle2-tokenheavy-synthaccept4-piecewise-tp2-k3-ceiling-20260618h`
++  measured `140.14` corrected tok/s, `7.20` ms/token. This is metrics-only,
++  with canaries and quality skipped, so it is not promotable. It shows perfect
++  k3 is still below the `>150 tok/s` target.
++- Synthetic k5 acceptance probe
++  `qwen36-ablation-eagle2-tokenheavy-synthaccept6-piecewise-tp2-k5-ceiling-20260618h`
++  measured `181.91` corrected tok/s, `5.56` ms/token. This is also metrics-only
++  and not promotable. It proves the serial EAGLE k5 path can structurally clear
++  `>150 tok/s` if the draft acceptance is high enough.
++
++Real EAGLE draft results:
++
++- Current token-heavy EAGLE k5 run
++  `qwen36-ablation-eagle2-tokenheavy-fusedbatch-nosafety-fastpath-piecewise-tp2-k5-smoke-20260618h`
++  measured `52.52` corrected tok/s, `18.95` ms/token, with mean acceptance
++  length `2.02`, `107/525` accepted drafts, and per-position acceptance
++  `0.543, 0.314, 0.124, 0.038, 0.000`.
++- Added rollout training support to
++  `scripts/train-qwen36-eagle1-draft.py` with `--rollout-steps`; default
++  one-step behavior is unchanged.
++- Rollout checkpoint:
++  `data/qwen36-eagle2-corpus2-tokenheavy-rollout5-trained-20260618h`.
++  Training used the token-heavy checkpoint as init, three epochs, lr `5e-6`,
++  rollout steps `5`, and the same corpus/corpus2/pos datasets.
++- Rollout k5 endpoint run
++  `qwen36-ablation-eagle2-rollout5-piecewise-tp2-k5-smoke-20260618h`
++  measured `55.70` corrected tok/s, `17.95` ms/token. Acceptance was worse
++  than useful: mean acceptance length `1.90`, `80/445` accepted drafts, and
++  per-position acceptance `0.494, 0.303, 0.101, 0.000, 0.000`.
++
++Decision:
++
++- Do not continue short rollout fine-tuning on this tiny dataset as a near-term
++  performance path. It did not improve k5 acceptance and remains far below the
++  acceptance needed to use the `181.91 tok/s` synthetic ceiling.
++- The likely EAGLE blocker is draft quality/deeper-step training data, not the
++  verifier's basic mechanics. A viable EAGLE path needs a much larger and more
++  representative hidden-state dataset and an offline acceptance evaluator before
++  more endpoint smoke runs.
++- Near-term performance work should return to exact no-quality-loss fast path
++  improvements: collectives/topology, XPU graph replay correctness, and MoE
++  dispatch/GEMM overhead. Keep EAGLE as a possible larger-batch training track,
++  not the next single-session speed lever unless a better draft is produced.
++
++## 2026-06-18 Addendum 4 - TP4 Health Blocker And Traceability Fix
++
++Cached PIECEWISE traceability fix:
++
++- Patched `/home/steve/src/vllm/vllm/compilation/caching.py` so the cached
++  `PiecewiseBackend` construction now passes `submod_name=submod_name`.
++- Reason: cached PIECEWISE wrappers were losing their stable submodule labels,
++  making `VLLM_XPU_CUDAGRAPH_DISABLE_SUBMOD_REGEX` and direct-sync isolation
++  hard to audit.
++- Validation: `py_compile` passed for `vllm/compilation/caching.py`.
++
++Launcher health preflight:
++
++- Patched
++  `/home/steve/llm-optimizations/scripts/launch-qwen36-quark-int8-accepted.sh`
++  with `QWEN36_XPU_PREFLIGHT`.
++- Default behavior is `QWEN36_XPU_PREFLIGHT=auto`, which runs the XPU/XCCL
++  preflight for `TP_SIZE>=4` before starting vLLM. Set
++  `QWEN36_XPU_PREFLIGHT=0` only for explicitly labeled diagnostics.
++- The preflight writes a separate log at
++  `${LOG_PATH%.*}-xpu-health.log` unless `QWEN36_XPU_PREFLIGHT_LOG` is set.
++- Validation: `bash -n` passed for the launcher and health script. A blocked
++  launch smoke test refused to start TP4 and wrote
++  `/home/steve/llm-optimizations/data/qwen36-preflight-blocked-launch-smoke-20260618-xpu-health.log`.
++
++Fused-prologue isolation attempts:
++
++- `qwen36-ablation-prologue-disable-submod2-c1capture-20260618proliso1.log`
++  attempted to isolate `piecewise:2/` with
++  `VLLM_XPU_INT8_MOE_FUSED_PROLOGUE_OFFSET=1`,
++  `VLLM_XPU_INT8_MOE_FUSED_PROLOGUE_OFFSET_ALLOW_CAPTURE=1`,
++  `VLLM_XPU_CUDAGRAPH_DISABLE_SUBMOD_REGEX='piecewise:2/'`, and direct sync on
++  the same submodule.
++- `qwen36-ablation-prologue-disable-submod2-c1capture-gmem086-20260618proliso2.log`
++  repeated the same probe at `GPU_MEMORY_UTILIZATION=0.86`.
++- Both probes failed before model readiness, inside XPU/XCCL device
++  initialization, so they are invalid as prologue evidence. Do not count either
++  run as a model-speed or model-correctness result.
++
++Hardware/runtime health finding:
++
++- New preflight script:
++  `/home/steve/llm-optimizations/scripts/check-qwen36-xpu-xccl-health.sh`.
++- Failing TP4 artifact:
++  `/home/steve/llm-optimizations/data/qwen36-xpu-health-device3-wedged-20260618.log`.
++  Physical devices `0`, `1`, and `2` pass single-device XPU allocation; physical
++  device `3` fails a small tensor allocation with
++  `UR_RESULT_ERROR_OUT_OF_RESOURCES`. A 4-rank XCCL barrier/all-reduce over
++  `0,1,2,3` then fails on rank 3 with the same error.
++- Passing subset artifact:
++  `/home/steve/llm-optimizations/data/qwen36-xpu-health-devices012-pass-20260618.log`.
++  Physical devices `0,1,2` pass single-device allocation and 3-rank XCCL
++  barrier/all-reduce.
++- Device map from `xpu-smi discovery`: failed XPU id `3` is PCI
++  `0000:47:00.0`, DRM `/dev/dri/card2`.
++- No user process was holding `/dev/dri/card2` or the render nodes. `xpu-smi ps`
++  showed only `xpu-smi` itself during inspection.
++- Kernel logs show repeated `xe 0000:47:00.0` GT0 job timeouts, VM job
++  timeouts, and driver reset attempts before the health check. This is a
++  low-level card/driver recovery state, not an ordinary vLLM OOM.
++- `xpu-smi config -d 3 --reset` reported `Fail to reset device`. Prior
++  noninteractive sysfs reset also required sudo. A root-level PCI/SBR reset or
++  host reboot is required before valid TP4 endpoint benchmarking can resume.
++
++How to re-check health:
++
++```bash
++PHYSICAL_DEVICES=0,1,2,3 XCCL_DEVICES=0,1,2,3 \
++  /home/steve/llm-optimizations/scripts/check-qwen36-xpu-xccl-health.sh
++```
++
++Healthy-subset check:
++
++```bash
++PHYSICAL_DEVICES=0,1,2 XCCL_DEVICES=0,1,2 \
++  /home/steve/llm-optimizations/scripts/check-qwen36-xpu-xccl-health.sh
++```
++
++Current decision:
++
++- Treat TP4 Qwen 3.6 endpoint runs as blocked until the 4-card health preflight
++  passes.
++- Continue only work that does not require a valid 4-card endpoint while the
++  card is wedged: offline prologue/MoE replay, TP2/TP3 diagnostics clearly
++  labeled as non-comparable, and code cleanup/traceability.
++- Once TP4 health passes, rerun the fused-prologue `piecewise:2/` isolation
++  probe with full benchmark identity before interpreting speed or quality.
++
++## 2026-06-18 Addendum 5 - Healthy-Device W8A8 MoE Replay Floor
++
++Because physical XPU 3 is still unhealthy, the following runs are offline
++single-device replay diagnostics only. They are not endpoint speed results and
++are not comparable to TP4 serving throughput. They use `ZE_AFFINITY_MASK=0` and
++`ONEAPI_DEVICE_SELECTOR=level_zero:0` to avoid the wedged card.
++
++Middle-layerlet correctness recheck:
++
++- Command:
++  `/home/steve/llm-optimizations/scripts/check-qwen36-w8a8-middle-layerlet.py --graph-replay --require-graph`
++- JSON:
++  `/home/steve/llm-optimizations/data/qwen36-w8a8-middle-layerlet-check-device0-20260618.json`
++- Markdown:
++  `/home/steve/llm-optimizations/data/qwen36-w8a8-middle-layerlet-check-device0-20260618.md`
++- Result: overall passed. Eager and XPU graph replay passed for all synthetic
++  cases, including `qwen36_decode_one_token_tp4_shape`.
++- Interpretation: the existing middle-layerlet math and graph replay are still
++  valid in isolation. The full endpoint blocker is integration/capture and the
++  current TP4 hardware health issue, not this standalone math path.
++
++Full route-exact MoE replay, current binary:
++
++- JSON:
++  `/home/steve/llm-optimizations/data/qwen36-int8-moe-full-route-replay-current-device0-20260618.json`
++- Markdown:
++  `/home/steve/llm-optimizations/data/qwen36-int8-moe-full-route-replay-current-device0-20260618.md`
++- Result: best exact non-reference candidate was `preallocated_staged` at
++  `191.159 us` best-row mean, `1.527x` versus current `xpu_fused_moe`.
++- Aggregate means: `xpu_fused_moe` `308.363 us`, scratch `256.104 us`,
++  preallocated staged `200.261 us`, fused-prologue staged `270.232 us`.
++- Gate: failed. No rows met the `160 us/layerlet` target.
++
++Offset/active-offset GEMM replay:
++
++- JSON:
++  `/home/steve/llm-optimizations/data/qwen36-int8-moe-full-route-replay-offset-active-device0-20260618.json`
++- Markdown:
++  `/home/steve/llm-optimizations/data/qwen36-int8-moe-full-route-replay-offset-active-device0-20260618.md`
++- Result: exact. Best exact non-reference candidate was
++  `fused_prologue_offset_gemm` at `186.619 us`, `1.581x` versus current
++  `xpu_fused_moe`.
++- Aggregate means: `xpu_fused_moe` `316.883 us`, scratch `262.541 us`,
++  preallocated staged `203.542 us`, fused-prologue offset-GEMM `200.269 us`,
++  active-offset-GEMM `201.639 us`.
++- Gate: failed. This is the best offline diagnostic seen today, but still short
++  of the `160 us/layerlet` target.
++
++Hot-packed expert replay:
++
++- JSON:
++  `/home/steve/llm-optimizations/data/qwen36-int8-moe-full-route-replay-hotpack-offset-active-device0-20260618.json`
++- Markdown:
++  `/home/steve/llm-optimizations/data/qwen36-int8-moe-full-route-replay-hotpack-offset-active-device0-20260618.md`
++- Result: exact in the synthetic remapped replay, but not a useful speed lever.
++  Best exact candidate was `fused_prologue_offset_gemm` at `186.212 us`, with
++  worse tail rows (`worst_best_exact_nonreference_us_mean=241.526 us`).
++- Decision: do not prioritize expert hot-packing unless a later route-frequency
++  model shows a stronger reason. It would require exact offline expert-weight
++  permutation plus router-ID remap to preserve model outputs.
++
++Fused SiLU+quant replay:
++
++- JSON:
++  `/home/steve/llm-optimizations/data/qwen36-int8-moe-full-route-replay-fusedsilu-offset-active-device0-20260618.json`
++- Markdown:
++  `/home/steve/llm-optimizations/data/qwen36-int8-moe-full-route-replay-fusedsilu-offset-active-device0-20260618.md`
++- Result: exact in this replay, but slower than the plain offset-GEMM
++  diagnostic. Best exact candidate was `fused_prologue_offset_gemm` at
++  `189.774 us`.
++- Decision: do not revive the previously rejected fused-SiLU endpoint path for
++  speed. It remains a diagnostic-only lane unless a separate correctness fix
++  explains the earlier endpoint canary failures.
++
++Graph replay timing diagnostic:
++
++- Script updated:
++  `/home/steve/llm-optimizations/scripts/bench-qwen36-int8-moe-kernels.py`
++  now supports `--graph-replay-timing`, `--graph-warmup`, and
++  `--graph-iterations`.
++- Syntax validation:
++  `/home/steve/.venvs/vllm-xpu/bin/python -m py_compile scripts/bench-qwen36-int8-moe-kernels.py`
++  passed.
++- Multi-route artifact:
++  `/home/steve/llm-optimizations/data/qwen36-int8-moe-full-route-replay-graph-offset-active-device0-20260618.json`
++- Markdown:
++  `/home/steve/llm-optimizations/data/qwen36-int8-moe-full-route-replay-graph-offset-active-device0-20260618.md`
++- Result: all graph captures executed, but candidate graph replay was not a
++  stable shortcut. Aggregating graph rows by candidate produced:
++  `xpu_fused_moe_with_scratch` mean `235.608 us`,
++  `preallocated_staged` mean `238.654 us`,
++  `fused_prologue_offset_gemm` mean `238.264 us`, and
++  `fused_prologue_active_offset_gemm` mean `236.136 us`, with a wide
++  `~145-331 us` range.
++- A follow-up single-route graph run for route start `56` was rerun
++  sequentially to avoid device contention:
++  `/home/steve/llm-optimizations/data/qwen36-int8-moe-full-route-replay-graph-route56-sequential-device0-20260618.json`.
++  It showed eager `fused_prologue_offset_gemm` at `185.661 us`, but graph
++  replay around `331-340 us`, so the under-160 graph samples from the
++  multi-route sweep are not trusted as promotion evidence.
++- Invalid artifacts: `graph-route0-device0-20260618` and
++  `graph-route56-device0-20260618` were accidentally launched in parallel on
++  the same physical XPU. Do not use those two artifacts for performance
++  conclusions.
++- Decision: keep graph replay timing as a diagnostic only. It does not replace
++  the need for a native one-dispatch/persistent MoE layerlet.
++
++Updated target decision:
++
++- The next exact no-quality-loss MoE speed path is not another Python scratch
++  arrangement. The replay data says we need a true prologue-inclusive
++  one-dispatch or persistent layerlet that keeps the offset-GEMM advantage and
++  removes more fixed launch/dispatch overhead around activation/quant/GEMM2.
++- A useful candidate must beat roughly `160 us` on this route replay before it
++  deserves endpoint promotion work. For the `>150 tok/s` goal, the endpoint
++  target will probably need this MoE layerlet plus restored healthy TP4 graph
++  execution; current replay-only candidates are still not enough.
++
++## 2026-06-18 Addendum 6 - Full W8A8 Layerlet Staged, Exact, Not Promoted
++
++2025.3 binary staging:
++
++- Rebuilt and staged the XPU extension with the oneAPI 2025.3-compatible
++  runtime path. The earlier 2026-built extension pulled a `libsycl.so.9` ABI
++  and caused native crashes against the current PyTorch/XPU runtime.
++- Package binaries in `/home/steve/src/vllm-xpu-kernels/vllm_xpu_kernels/`
++  were backed up with suffix `backup-20260618-full-layerlet-2025-precopy`
++  before staging.
++- Import check passed for both
++  `torch.ops._xpu_C.qwen36_moe_w8a8_middle_layerlet` and
++  `torch.ops._xpu_C.qwen36_moe_w8a8_full_layerlet`.
++
++Full layerlet implementation:
++
++- Kernel binding added in `/home/steve/src/vllm-xpu-kernels`:
++  `csrc/xpu/moe_layerlet.cpp`, `csrc/xpu/ops.h`,
++  `csrc/xpu/torch_bindings.cpp`, and `CMakeLists.txt`.
++- Python integration added behind
++  `VLLM_XPU_MOE_W8A8_FULL_LAYERLET=1` in
++  `vllm_xpu_kernels/fused_moe_interface.py`.
++- Accepted launcher explicitly unsets the full-layerlet flag unless
++  `VLLM_XPU_W8A8_EXPERIMENTAL_ALLOW=1`, so production/accepted runs cannot
++  accidentally use the experimental path.
++- Run-summary identity tracking now includes
++  `VLLM_XPU_MOE_W8A8_FULL_LAYERLET`.
++
++Exact replay result:
++
++- Sweep JSON:
++  `/home/steve/llm-optimizations/data/qwen36-int8-moe-full-layerlet-sweep-device0-20260618.json`
++- Sweep Markdown:
++  `/home/steve/llm-optimizations/data/qwen36-int8-moe-full-layerlet-sweep-device0-20260618.md`
++- Result: 16 routed rows, all exact with
++  `full_layerlet_vs_xpu_fused_moe_max_abs_diff = 0.0`.
++- Full-layerlet timing: min `155.263 us`, mean `161.743 us`,
++  max `171.005 us`, median `161.083 us`.
++- Existing middle-layerlet timing on the same sweep: mean `167.315 us`.
++- Current `xpu_fused_moe` reference timing on the same sweep:
++  mean `304.637 us`.
++- Gate: useful but not promoted. Half the rows are under `160 us`, but the
++  sweep is single-device offline replay, not an endpoint or graph-quality
++  result.
++
++Live Python branch smoke:
++
++- Direct live-path smoke:
++  `/home/steve/llm-optimizations/data/qwen36-int8-moe-full-layerlet-livepath-smoke-device0-20260618.json`
++  was exact with `max_abs_diff = 0.0` and about `1.49x` over the local base
++  call on that route.
++- Preallocated-output live-path smoke:
++  `/home/steve/llm-optimizations/data/qwen36-int8-moe-full-layerlet-livepath-prealloc-smoke-device0-20260618.json`
++  was exact with `max_abs_diff = 0.0`, but only about `1.20x` in that noisy
++  wrapper test.
++- Interpretation: the C++ op is exact and useful in offline replay, but live
++  wrapper variance means it is not endpoint-promoted yet.
++
++Next exact MoE work:
++
++- The current full layerlet still calls separate prologue, quant1, GEMM1,
++  activation/quant2, GEMM2, and gather launches.
++- The next best no-quality-loss kernel target is a single-token/top-k=8
++  prologue-plus-quant1 fused path. It should preserve the exact per-row INT8
++  scale/round/clamp math while avoiding the BF16 remap write/read and deleting
++  one dispatch.
++- A smaller fallback target is a specialized single-token/top-k=8 gather, but
++  gather is likely launch dominated and may not be enough by itself.
++- Endpoint TP4 promotion remains blocked until the physical XPU 3 health check
++  passes.
++
++## 2026-06-18 Addendum 7 - Fused Quant1 Tried And Gated Off
++
++Fused quant1 candidates:
++
++- Added an opt-in C++ single-token/top-k=8 prologue+quant1 helper inside
++  `csrc/xpu/moe_layerlet.cpp`, controlled by
++  `VLLM_XPU_MOE_W8A8_FUSED_Q1=1`.
++- The accepted launcher now unsets `VLLM_XPU_MOE_W8A8_FUSED_Q1` unless
++  `VLLM_XPU_W8A8_EXPERIMENTAL_ALLOW=1`.
++- `run-qwen36-ablation-candidate.sh` records
++  `VLLM_XPU_MOE_W8A8_FUSED_Q1` in the run-summary identity.
++
++Results:
++
++- Serial duplicate q1 variant:
++  `/home/steve/llm-optimizations/data/qwen36-int8-moe-full-layerlet-q1fused-sweep-device0-20260618.json`
++  - Exact: max diff `0.0`.
++  - Full-layerlet min/mean/median/max:
++    `158.761 / 167.807 / 163.251 / 182.766 us`.
++  - Only `1/16` rows under `160 us`.
++  - Rejected for speed. It reduced quant parallelism too much.
++- Eight-workgroup q1 variant:
++  `/home/steve/llm-optimizations/data/qwen36-int8-moe-full-layerlet-q1parallel-sweep-device0-20260618.json`
++  - Exact: max diff `0.0`.
++  - Full-layerlet min/mean/median/max:
++    `160.385 / 178.733 / 176.648 / 202.214 us`.
++  - `0/16` rows under `160 us`.
++  - Rejected for speed. Preserving row parallelism still did not beat the
++    existing prologue+quant sequence.
++
++Restored guarded default:
++
++- Default path with `VLLM_XPU_MOE_W8A8_FUSED_Q1` unset:
++  `/home/steve/llm-optimizations/data/qwen36-int8-moe-full-layerlet-q1guard-default-sweep-device0-20260618.json`
++  - Exact: max diff `0.0`.
++  - Full-layerlet min/mean/median/max:
++    `154.587 / 160.819 / 159.294 / 178.277 us`.
++  - `11/16` rows under `160 us`.
++- Decision: keep the q1 code only as an opt-in diagnostic. Do not promote it
++  or enable it by default.
++
++Next exact MoE target:
++
++- A standalone q1 fusion is not the missing win. The next worthwhile exact
++  path is either a true persistent/one-dispatch MoE layerlet that moves the
++  GEMM2/gather boundary, or a specialized gather/epilogue integration that
++  avoids the final launch without reducing quant/GEMM parallelism.
++
++## 2026-06-18 Addendum 8 - Fast Gather And Unchecked Middle Rejected
++
++Fast gather:
++
++- Added an opt-in single-token/top-k=8 gather helper controlled by
++  `VLLM_XPU_MOE_W8A8_FAST_GATHER=1`.
++- The helper preserves the generic gather accumulation order and was exact in
++  replay, but it did not improve the route sweep enough:
++  `/home/steve/llm-optimizations/data/qwen36-int8-moe-full-layerlet-fastgather-sweep-device0-20260618.json`
++  - Exact: max diff `0.0`.
++  - Full-layerlet min/mean/median/max:
++    `155.116 / 161.622 / 161.662 / 170.463 us`.
++  - `5/16` rows under `160 us`.
++- Same-lane comparison: the guarded default remains better than fast gather:
++  `/home/steve/llm-optimizations/data/qwen36-int8-moe-full-layerlet-q1guard-default-sweep-device0-20260618.json`
++  had `154.587 / 160.819 / 159.294 / 178.277 us` and `11/16` rows under
++  `160 us`.
++- Decision: keep fast gather as an opt-in diagnostic only. Do not enable or
++  promote it.
++
++Unchecked-middle wrapper:
++
++- Tried removing the duplicated middle-layerlet validation from inside the
++  experimental full-layerlet wrapper. This does not change math, but the
++  candidate was slower under the same rebuilt binary.
++- Candidate artifact:
++  `/home/steve/llm-optimizations/data/qwen36-int8-moe-full-layerlet-uncheckedmiddle-sweep-device0-20260618.json`
++  - Exact: max diff `0.0`.
++  - Full-layerlet min/mean/median/max:
++    `163.327 / 177.125 / 173.131 / 210.363 us`.
++  - `0/16` rows under `160 us`.
++- Same-binary control without the unchecked path:
++  `/home/steve/llm-optimizations/data/qwen36-int8-moe-full-layerlet-uncheckedmiddle-control-device0-20260618.json`
++  - Exact: max diff `0.0`.
++  - Full-layerlet min/mean/median/max:
++    `157.361 / 171.858 / 170.957 / 191.336 us`.
++  - `2/16` rows under `160 us`.
++- The absolute control run was slower than the older guarded-default artifact
++  across reference and candidate timings, so do not compare it directly against
++  the old artifact as a regression claim. Within the same rebuilt binary,
++  unchecked-middle was clearly worse than its control.
++- Decision: rejected and removed from source/scripts. Package binaries were
++  restored from `backup-20260618-uncheckedmiddle-precopy`; the importable
++  package is back to the previous fast-gather/full-layerlet staged binary.
++
++Current best exact offline MoE artifact:
++
++- The best exact offline full-layerlet result remains the guarded default:
++  `/home/steve/llm-optimizations/data/qwen36-int8-moe-full-layerlet-q1guard-default-sweep-device0-20260618.json`.
++- The key blocker is still not a small wrapper or standalone gather tweak.
++  The next serious exact/no-quality-loss path needs to remove a larger
++  boundary: a true persistent or one-dispatch MoE layerlet, or an exact
++  GEMM2/gather epilogue design that preserves the current BF16 row rounding
++  before weighted accumulation.
++
++## 2026-06-18 Addendum 9 - Real-Routing Oracle Fixed A Hidden Map/Binary Mismatch
++
++Harness fixes:
++
++- Added real-routing oracle checks to
++  `/home/steve/llm-optimizations/scripts/bench-qwen36-int8-moe-kernels.py`.
++  The oracle compares candidates against a forced rows-per-expert W8A8 path
++  with offset/layerlet/prologue env paths disabled.
++- Added hot-skew synthetic routing to catch multi-row/non-uniform expert maps.
++- Fixed the benchmark report to store immediate scalar exactness diffs. The
++  earlier report recomputed some diffs from tensors backed by scratch buffers
++  after later timing loops had overwritten them.
++- Graph replay now uses separate scratch buffers from the eager exactness path.
++
++Correctness bug found:
++
++- Hot-skew rows initially exposed large multi-row diffs in the fused-prologue
++  paths.
++- Root cause in source: `csrc/moe/fused_moe_prologue.hpp` wrote
++  `unpermuted_row_to_permuted_row` in column-major expanded-token order
++  (`k * rows + row`) while `moe_gather` expects row-major
++  (`row * topk + k`).
++- Patched `MergeExpertPrefixSumKernel` to keep
++  `permuted_row_to_unpermuted_row` column-major for internal remap, but write
++  `unpermuted_row_to_permuted_row[source_row * topk + source_k_rank]`.
++
++Build lesson:
++
++- Rebuilding only `_xpu_C.abi3.so` was insufficient. The Python benchmark path
++  calls `torch.ops._moe_C.fused_moe_prologue`; that binary was still from
++  2026-06-12 and kept the old map layout.
++- Rebuilt and staged both binaries:
++  - `_xpu_C.abi3.so`: `/home/steve/src/vllm-xpu-kernels/vllm_xpu_kernels/_xpu_C.abi3.so`
++  - `_moe_C.abi3.so`: `/home/steve/src/vllm-xpu-kernels/vllm_xpu_kernels/_moe_C.abi3.so`
++- Backups:
++  - `_xpu_C.abi3.so.backup-20260618174647-pre-rowmajor-prologue-fix`
++  - `_moe_C.abi3.so.backup-20260618175726-pre-rowmajor-prologue-fix`
++
++Corrected artifacts:
++
++- Pre-`_moe_C` rebuild failing/contaminated graph diagnostic:
++  `/home/steve/llm-optimizations/data/qwen36-int8-moe-full-layerlet-rowmajorfix-graph-hot-skew-device0-20260618.json`
++- Corrected rows=2 immediate-diff proof after `_moe_C` rebuild:
++  `/home/steve/llm-optimizations/data/qwen36-int8-moe-layerlet-immediatediff-after-moeC-rebuild-hot-skew-rows2-device0-20260618.json`
++- Corrected hot-skew sweep after `_moe_C` rebuild:
++  `/home/steve/llm-optimizations/data/qwen36-int8-moe-layerlet-after-moeC-rebuild-hot-skew-sweep-device0-20260618.json`
++- Corrected graph replay spot-check:
++  `/home/steve/llm-optimizations/data/qwen36-int8-moe-layerlet-after-moeC-rebuild-graph-hot-skew-rows2-device0-20260618.json`
++
++Patch snapshots:
++
++- `/home/steve/llm-optimizations/patches/vllm-xpu-kernels-qwen36-w8a8-layerlet-rowmajor-moeC-20260618.patch`
++- `/home/steve/llm-optimizations/patches/llm-optimizations-qwen36-real-routing-oracle-immediatediff-20260618.patch`
++
++Corrected hot-skew sweep summary:
++
++| rows | xpu fused us | prealloc us | offset us | middle layerlet us | full layerlet us | max diff |
++|---:|---:|---:|---:|---:|---:|---:|
++| 1 | 392.893 | 255.456 | 243.029 | 211.361 | 228.176 | 0.0 |
++| 2 | 319.131 | 199.030 | 200.844 | 182.169 | 166.017 | 0.0 |
++| 4 | 342.726 | 224.809 | 218.783 | 188.799 | 181.233 | 0.0 |
++| 8 | 322.517 | 200.850 | 200.811 | 177.496 | 169.169 | 0.0 |
++| 16 | 317.837 | 204.380 | 194.935 | 173.069 | 166.498 | 0.0 |
++
++Current interpretation:
++
++- The real-routing correctness problem is fixed for the offline replay paths:
++  current reference, rows oracle, offset oracle, fused-prologue, middle
++  layerlet, and full layerlet all report `max_abs_diff = 0.0` on hot-skew
++  multi-row replay after both extensions are rebuilt.
++- The best exact offline candidate is still short of the `160 us` gate on this
++  sweep. Rows 2/8/16 are close (`166-169 us` for full layerlet), but rows 1 is
++  still too slow (`211 us` middle, `228 us` full).
++- XPU graph replay remains a blocker for endpoint promotion: the corrected
++  rows=2 graph spot-check is exact but replay is about `320-330 us`, slower
++  than eager replay.
++
++Next exact/no-quality-loss performance targets:
++
++- Re-test active-offset GEMM with the corrected `_moe_C` binary. It was not
++  included in the corrected sweep and may help hot-skew paths with many zero
++  experts.
++- Attack rows=1 specifically. The single-token decode shape is still the
++  largest layerlet miss; revisit the opt-in q1/fast-gather code only under the
++  corrected oracle harness, and keep anything that does not beat the default
++  gated off.
++- Find why isolated graph replay is slower than eager. Do not promote endpoint
++  graph wiring until replay timing is credible or proven irrelevant to the live
++  graph lane.
++- Once XPU physical device 3 is recovered, run TP4 accepted-lane quality and
++  endpoint A/B with full benchmark identity recorded before interpreting any
++  tok/s result.
++
++## 2026-06-18 Addendum 10 - Active Offset, Q1, And Fast Gather Retested
++
++Corrected active-offset sweep:
++
++- Artifact:
++  `/home/steve/llm-optimizations/data/qwen36-int8-moe-layerlet-after-moeC-rebuild-activeoffset-hot-skew-sweep-device0-20260618.json`
++- Exactness: all enabled paths reported `max_abs_diff = 0.0`.
++- Active-offset GEMM was not a speed win versus plain offset:
++
++| rows | active offset us | plain offset us | middle layerlet us | full layerlet us |
++|---:|---:|---:|---:|---:|
++| 1 | 200.102 | 198.386 | 168.792 | 187.122 |
++| 2 | 200.772 | 199.823 | 167.921 | 163.722 |
++| 4 | 195.026 | 197.106 | 167.212 | 164.606 |
++| 8 | 200.824 | 199.621 | 171.210 | 163.241 |
++| 16 | 201.019 | 197.892 | 167.576 | 160.979 |
++
++Decision: keep active-offset as a diagnostic only. It is exact, but not
++faster enough to promote.
++
++Corrected q1/fast-gather retests:
++
++- q1 only:
++  `/home/steve/llm-optimizations/data/qwen36-int8-moe-layerlet-after-moeC-q1only-hot-skew-rows1-2-device0-20260618.json`
++  - Exact: `0.0`.
++  - Rows 1: middle `190.957 us`, full `201.240 us`.
++  - Rows 2: middle `173.546 us`, full `176.384 us`.
++  - Decision: rejected for speed.
++- fast-gather only:
++  `/home/steve/llm-optimizations/data/qwen36-int8-moe-layerlet-after-moeC-fastgatheronly-hot-skew-rows1-2-device0-20260618.json`
++  - Exact: `0.0`.
++  - Rows 1: middle `162.288 us`, full `172.371 us`.
++  - Rows 2: middle `168.064 us`, full `158.136 us`.
++  - Decision: not a default. It gives a rows=2 pass in this noisy microbench,
++    but it does not solve rows=1 and only applies to single-token gather.
++- q1 + fast-gather:
++  `/home/steve/llm-optimizations/data/qwen36-int8-moe-layerlet-after-moeC-q1-fastgather-hot-skew-rows1-2-device0-20260618.json`
++  - Exact: `0.0`.
++  - Rows 1: middle `163.146 us`, full `170.599 us`.
++  - Rows 2: middle `161.330 us`, full `158.470 us`.
++  - Decision: do not promote. q1 hurts, and the rows=2 pass does not address
++    the rows=1 bottleneck.
++
++Current next target:
++
++- The corrected oracle gates show the shape to attack is rows=1. The fastest
++  exact rows=1 candidate in the corrected retests is the Python-dispatched
++  middle-layerlet path around `162-169 us`, while full C++ layerlet is still
++  slower on rows=1. A useful next patch should reduce full-layerlet rows=1
++  overhead without changing math, or add a genuinely faster single-token
++  full-layerlet path.
++
++## 2026-06-18 Addendum 11 - Real Rows=1 Scan, Q1/Fast-Gather Rejected Again
++
++Stable real-route baseline:
++
++- Artifact:
++  `/home/steve/llm-optimizations/data/qwen36-int8-moe-layerlet-default-firstdecode-routes-row1-stable-device0-20260618.json`
++- Same-lane rerun after adding runtime identity and sourcing full oneAPI
++  `setvars.sh`:
++  `/home/steve/llm-optimizations/data/qwen36-int8-moe-layerlet-default-setvars-firstdecode-routes-row1-stable-device0-20260618.json`
++- Identity: single-device offline replay on device 0, Quark W8A8 INT8 config,
++  TP4-shaped per-rank tensors, rows=1, captured first-decode routes from
++  `/home/steve/llm-optimizations/data/qwen36-quark-int8-tp4-firstdecode-route-fixture-routes-20260612ct.jsonl`,
++  route starts `0:120:5`, 30 measured iterations, 5 warmup iterations,
++  real-routing oracle enabled, q1 and fast-gather envs unset.
++- Exactness: all promoted candidates reported `max_abs_diff = 0.0`.
++
++Stable real-route rows=1 summary:
++
++| path | min us | mean us | median us | p90 us | max us | <=160 us rows |
++|---|---:|---:|---:|---:|---:|---:|
++| xpu scratch | 248.525 | 262.639 | 257.973 | 275.888 | 292.490 | 0/24 |
++| plain offset | 189.216 | 203.241 | 200.009 | 212.507 | 233.532 | 0/24 |
++| active offset | 189.769 | 204.650 | 202.847 | 213.597 | 226.699 | 0/24 |
++| middle layerlet | 161.001 | 173.428 | 171.181 | 180.944 | 193.764 | 0/24 |
++| full layerlet | 157.215 | 169.210 | 166.545 | 177.622 | 188.859 | 2/24 |
++
++Decision: the corrected full layerlet is the best current exact MoE replay
++path, but it is not enough for endpoint promotion. It clears the `160 us` gate
++on only 2 of 24 real routes and still has a `188.859 us` tail.
++
++Same-env confirmation after runtime identity patch:
++
++- Default/setvars full layerlet min/mean/median/p90/max:
++  `158.326 / 169.172 / 164.374 / 182.699 / 205.267 us`, with 5 of 24 rows
++  under `160 us`.
++- Route-pack/setvars full layerlet min/mean/median/p90/max:
++  `156.054 / 170.198 / 167.456 / 175.876 / 207.490 us`, with 3 of 24 rows
++  under `160 us`.
++- This confirms the original direction: default remains the safer baseline
++  despite the route-pack best-case win.
++
++Rejected real-route q1 and gather variants:
++
++- Fast gather only:
++  `/home/steve/llm-optimizations/data/qwen36-int8-moe-layerlet-fastgather-firstdecode-routes-row1-stable-device0-20260618.json`
++  - Exact: `0.0`.
++  - Full layerlet min/mean/median/p90/max:
++    `157.106 / 171.433 / 169.913 / 182.596 / 200.772 us`.
++  - It improves some routes but worsens others badly. Do not enable globally.
++- Optimized q1 only:
++  `/home/steve/llm-optimizations/data/qwen36-int8-moe-layerlet-q1opt-firstdecode-routes-row1-stable-device0-20260618.json`
++  - Exact: `0.0`.
++  - Full layerlet min/mean/median/p90/max:
++    `159.356 / 171.950 / 167.073 / 190.830 / 199.455 us`.
++  - This is slower than the stable default mean and tail. Keep q1 gated off.
++
++Hot-expert physical packing simulation:
++
++- Artifact:
++  `/home/steve/llm-optimizations/data/qwen36-int8-moe-layerlet-routepack-firstdecode-routes-row1-stable-device0-20260618.json`
++- This remaps hot logical experts to dense physical IDs. A real model could
++  preserve quality by permuting expert weights and remapping top-k IDs
++  together, so this was worth testing.
++- Exact: `0.0` within the remapped replay.
++- Full layerlet min/mean/median/p90/max:
++  `156.054 / 170.198 / 167.456 / 175.876 / 207.490 us`.
++- It helped routes 95 and 20 by about `25 us` and `21 us`, but hurt routes 80
++  and 5 by about `39 us` and `31 us`.
++
++Decision: physical expert packing is not a safe global speed lever from this
++fixture. Keep it as an idea for per-layer/per-rank adaptive layouts only if a
++future trace shows a stable route distribution with a smaller tail.
++
++Runtime environment lesson:
++
++- In this shell, sourcing only
++  `/opt/intel/oneapi/compiler/2025.3/env/vars.sh` made `xpu-smi` see all B70s
++  but made PyTorch report `torch.xpu.device_count() == 0`.
++- Sourcing `/opt/intel/oneapi/setvars.sh --force` restored PyTorch XPU
++  visibility (`device_count == 4`), and with `ONEAPI_DEVICE_SELECTOR=level_zero:0`
++  the replay saw one selected device.
++- The replay harness now records `runtime_identity`, including device selector
++  env, q1/fast-gather envs, torch version, selected XPU device names, Python
++  path, and loaded `vllm_xpu_kernels` extension paths. It also records the
++  selected expert rows directly in each result.
++
++Immediate command-list real-route check:
++
++- Artifact:
++  `/home/steve/llm-optimizations/data/qwen36-int8-moe-layerlet-immediate-firstdecode-routes-row1-stable-device0-20260618.json`
++- Environment delta from the default/setvars replay:
++  `SYCL_PI_LEVEL_ZERO_USE_IMMEDIATE_COMMANDLISTS=1` and
++  `UR_L0_USE_IMMEDIATE_COMMANDLISTS=1`.
++- Exact: `0.0`.
++- Full layerlet min/mean/median/p90/max:
++  `157.265 / 169.618 / 169.510 / 178.733 / 188.032 us`, with 2 of 24 rows
++  under `160 us`.
++- Compared with the same-env default/setvars replay
++  (`158.326 / 169.172 / 164.374 / 182.699 / 205.267 us`), immediate lists
++  smooth the worst tail but worsen median and do not improve mean.
++
++Decision: keep immediate command lists as a possible endpoint stability/tail
++lever to retest only after TP4 health is restored. It is quality-neutral in
++offline replay, but it is not a standalone rows=1 MoE win and should not be
++combined into accepted endpoint manifests without full quality and reliability
++gates.
++
++W8A8 grouped GEMM m8 policy checks:
++
++- Code change: exposed `w8a16_policy_m_8` through
++  `VLLM_XPU_W8A8_GROUPED_GEMM_POLICY=m8`, plus diagnostic shape-specific
++  overrides:
++  `VLLM_XPU_W8A8_GROUPED_GEMM_N_LT_K_POLICY` and
++  `VLLM_XPU_W8A8_GROUPED_GEMM_N_GT_K_POLICY`.
++- The replay harness now records all three policy envs in `runtime_identity`.
++- All completed policy runs were exact (`max_abs_diff = 0.0`).
++
++Artifacts and results:
++
++| policy | artifact | full layerlet min/mean/median/p90/max us | <=160 rows | decision |
++|---|---|---:|---:|---|
++| rebuilt default | `/home/steve/llm-optimizations/data/qwen36-int8-moe-layerlet-default-rebuilt-firstdecode-routes-row1-device0-20260618.json` | `154.045 / 163.868 / 159.998 / 175.859 / 203.502` | 12/24 | current rebuilt control |
++| generic m8 run 1 | `/home/steve/llm-optimizations/data/qwen36-int8-moe-layerlet-m8policy-firstdecode-routes-row1-stable-device0-20260618.json` | `155.153 / 163.253 / 160.339 / 172.203 / 179.175` | 9/24 | promising tail, not repeatable |
++| generic m8 run 2 | `/home/steve/llm-optimizations/data/qwen36-int8-moe-layerlet-m8policy-repeat-firstdecode-routes-row1-device0-20260618.json` | `154.458 / 170.817 / 170.447 / 178.564 / 195.076` | 2/24 | rejected for repeatability |
++| generic m8 + immediate | `/home/steve/llm-optimizations/data/qwen36-int8-moe-layerlet-m8-immediate-firstdecode-routes-row1-device0-20260618.json` | `154.731 / 167.267 / 164.970 / 174.000 / 212.484` | 6/24 | rejected |
++| m8 only when `N<K` | `/home/steve/llm-optimizations/data/qwen36-int8-moe-layerlet-m8-nltk-firstdecode-routes-row1-device0-20260618.json` | `155.290 / 175.271 / 173.277 / 192.108 / 202.766` | 3/24 | rejected |
++| m8 only when `N>K` | `/home/steve/llm-optimizations/data/qwen36-int8-moe-layerlet-m8-ngtk-firstdecode-routes-row1-device0-20260618.log` | crashed before JSON flush | n/a | rejected, unsafe |
++
++Decision: do not promote m8 policy. Generic m8 can reduce a single-run tail,
++but the improvement is not stable across repeats. GEMM1-only m8 is slower.
++GEMM2-only m8 segfaulted, although device 0 survived a post-crash XPU smoke
++test. Keep the m8 code path as a diagnostic only; do not set any m8 policy env
++in accepted endpoint launchers.
++
++Next exact/no-quality-loss work:
++
++- Stop spending time on standalone q1, standalone gather, active-offset, and
++  global expert packing. Also stop spending time on m8 grouped-GEMM policy
++  variants. All completed variants are exact, but none gives a repeatable
++  real rows=1 win.
++- The next useful patch needs to remove a larger boundary inside the rows=1
++  MoE path: either a persistent/one-dispatch MoE layerlet, a GEMM2+gather
++  epilogue that preserves the current BF16 weighted accumulation behavior, or a
++  row1/top-k=8 direct expert path that avoids the generic grouped-GEMM launch
++  shape without changing W8A8 math.
++
++## 2026-06-18 Addendum 5 - Offline EAGLE Acceptance Gate
++
++Purpose:
++
++- The serial EAGLE k5 synthetic path already proved the endpoint can
++  structurally clear the `>150 tok/s` target (`181.91 tok/s`) if draft
++  acceptance is high enough, but current real draft acceptance is too weak.
++- To avoid slow endpoint iterations, add a cheap offline draft-quality gate
++  before spending time on vLLM launch/measurement.
++
++New script:
++
++- `/home/steve/llm-optimizations/scripts/evaluate-qwen36-eagle-draft-offline.py`
++- It loads a local EAGLE draft checkpoint plus the target model
++  `embed_tokens`/`lm_head`, reads hidden-state dataset `.pt` files, rolls out
++  greedy draft proposals, compares token IDs against the recorded target greedy
++  continuation, and reports:
++  - mean accepted draft length;
++  - per-position exact and top-k rates;
++  - acceptance histogram;
++  - concrete mismatch examples.
++
++Offline acceptance results:
++
++| checkpoint | eval set | artifact | mean accepted | decision |
++|---|---|---|---:|---|
++| token-heavy EAGLE2 | capped corpus2+pos | `data/qwen36-eagle2-tokenheavy-offline-accept-capped-20260618.json` | `1.640625` | baseline |
++| rollout5 EAGLE2 | capped corpus2+pos | `data/qwen36-eagle2-rollout5-offline-accept-capped-20260618.json` | `1.9296875` | best offline signal |
++| token-focused rollout5 | capped corpus2+pos | `data/qwen36-eagle2-tokenfocused-rollout5-offline-accept-capped-20260618i.json` | `1.828125` | rejected |
++| token-heavy EAGLE2 | smoke held-out | `data/qwen36-eagle2-tokenheavy-offline-accept-smoke-20260618.json` | `1.5689655` | baseline |
++| rollout5 EAGLE2 | smoke held-out | `data/qwen36-eagle2-rollout5-offline-accept-smoke-20260618.json` | `1.7413793` | best offline signal |
++| token-focused rollout5 | smoke held-out | `data/qwen36-eagle2-tokenfocused-rollout5-offline-accept-smoke-20260618i.json` | `1.6724138` | rejected |
++
++Rollout5 details:
++
++- Checkpoint:
++  `/home/steve/llm-optimizations/data/qwen36-eagle2-corpus2-tokenheavy-rollout5-trained-20260618h`
++- Capped corpus2+pos conditional exact by step:
++  `0.90625, 0.6121, 0.4225, 0.5667, 0.7647`.
++- Smoke conditional exact by step is lower but still better than token-heavy.
++- The earlier endpoint rollout5 k5 run was slower/worse than expected, so this
++  offline score is not an endpoint speed claim. Treat it as a draft-training
++  selector only.
++
++Rejected token-focused fine-tune:
++
++- Checkpoint:
++  `/home/steve/llm-optimizations/data/qwen36-eagle2-tokenfocused-rollout5-trained-20260618i`
++- Training command initialized from token-heavy and used
++  `--rollout-steps 5 --feature-loss-weight 0.25 --token-loss-weight 1.0`
++  for 4 epochs.
++- Final training metrics regressed (`top1 = 0.3156`, `top3 = 0.4508`,
++  `token_loss = 2.0299`), and offline acceptance landed below rollout5 on both
++  capped and smoke gates.
++- Decision: do not promote this checkpoint; keep the run as evidence that
++  simply increasing token-loss weight is not enough.
++
++EAGLE data coverage status:
++
++- Existing usable datasets:
++  - `data/qwen36-eagle-hidden-dataset-corpus-tp2-20260618a` (`48` samples)
++  - `data/qwen36-eagle-hidden-dataset-corpus2-tp2-20260618a` (`254` samples)
++  - `data/qwen36-eagle-hidden-dataset-pos-tp2-20260618a` (`54` samples)
++  - `data/qwen36-eagle-hidden-dataset-smoke-tp2-20260618e` (`1` sample)
++- The collector previously had only a narrow prompt mix. It now includes
++  additional families in
++  `/home/steve/llm-optimizations/scripts/collect-qwen36-eagle-hidden-corpus.py`:
++  `debug-log`, `python-patch`, `sql-analysis`, `shell-runbook`,
++  `api-contract`, `longform-summary`, `test-plan`, `algorithm`,
++  `comparison`, and `user-support`.
++
++Next EAGLE work:
++
++- Collect a larger TP2 hidden-state dump on healthy devices only; do not use
++  TP4 until the XPU/XCCL health preflight passes.
++- Build an expanded dataset with the existing dump builder, train a rollout
++  EAGLE2 checkpoint, and accept it for endpoint testing only if offline
++  acceptance clearly beats rollout5 on both the capped corpus and smoke gates.
++- If offline acceptance reaches the needed band, run endpoint k5 with the
++  accepted identity and full quality/reliability gates.
++
++## 2026-06-18 Addendum 6 - m8 Guard
++
++The shape-specific diagnostic `VLLM_XPU_W8A8_GROUPED_GEMM_N_GT_K_POLICY=m8`
++previously segfaulted before JSON flush. The grouped-GEMM policy override now
++ignores `m8` when `gemm_n > gemm_k`, both for generic and `N>K` overrides:
++
++- `/home/steve/src/vllm-xpu-kernels/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2_interface.hpp`
++
++This guard is not a performance win and does not change the accepted endpoint
++identity. It exists to keep future diagnostic sweeps from selecting the unsafe
++GEMM2 shape. Rebuild/stage `_xpu_C` after this edit before running any policy
++sweeps that import `vllm_xpu_kernels._xpu_C`.
++
++## 2026-06-18 Addendum 7 - Expanded EAGLE Data Collection And Rejected Fine-Tunes
++
++Expanded TP2 hidden-state export:
++
++- Failed attempt:
++  `data/qwen36-eagle-hidden-dump-expanded-tp2-20260618j.log` failed during
++  sampler profiling because Triton loaded
++  `/opt/intel/oneapi/compiler/2026.0/lib/libsycl.so.9`, which mismatched the
++  active UR loader:
++  `undefined symbol: urDeviceWaitExp, version LIBUR_LOADER_0.12`.
++- Fix for this environment:
++  source oneAPI normally, then pin
++  `LD_LIBRARY_PATH=/opt/intel/oneapi/compiler/2025.3/lib:$LD_LIBRARY_PATH`
++  and `PATH=/opt/intel/oneapi/compiler/2025.3/bin:$PATH`. A direct Triton
++  target smoke passed with that ordering and still saw `torch.xpu.device_count()
++  == 4`.
++- Successful run:
++  `data/qwen36-eagle-hidden-dump-expanded-tp2-20260618k.log`
++  on TP2 cards `0,1`, graph-none, no async, Quark W8A8 INT8 target, 32k max
++  model length, `GPU_MEMORY_UTILIZATION=0.82`,
++  `MAX_NUM_BATCHED_TOKENS=1024`, `MAX_NUM_SEQS=8`, and hidden dump envs set.
++- Request manifest:
++  `data/qwen36-eagle-hidden-expanded-tp2-20260618k-requests.json`
++  with `64` prompts over the expanded prompt families.
++- Dataset summary:
++  `data/qwen36-eagle-hidden-dataset-expanded-tp2-20260618k-summary.json`
++  produced `6144` rows, `64` saved samples, `6080` continuity matches,
++  `0` continuity breaks, `0` position breaks, and `0` bad files.
++
++Expanded-data offline acceptance controls:
++
++| checkpoint | expanded mean accepted | decision |
++|---|---:|---|
++| token-heavy control | `1.046875` | weak |
++| rollout5 control | `1.132812` | current control |
++
++The new expanded set is substantially harder than the old capped corpus2+pos
++gate where rollout5 gets `1.929688`. This explains why endpoint acceptance is
++still far below the synthetic k5 ceiling.
++
++Fine-tune attempts against expanded data:
++
++| checkpoint | capped corpus2+pos | smoke | expanded | decision |
++|---|---:|---:|---:|---|
++| rollout5 control | `1.929688` | `1.741379` | `1.132812` | keep as best current control |
++| expanded low-LR mixed | `1.914062` | `1.741379` | `1.125000` | reject |
++| expanded-only | `1.875000` | not run | `1.226562` | reject; improves expanded but hurts established gate |
++| expanded oversample4 | `1.882812` | `1.793103` | `1.156250` | reject; improves smoke/expanded slightly but hurts capped gate |
++
++Artifacts:
++
++- Low-LR mixed checkpoint:
++  `data/qwen36-eagle2-rollout5-expanded-lowlr-trained-20260618k`.
++- Expanded-only checkpoint:
++  `data/qwen36-eagle2-rollout5-expanded-only-trained-20260618l`.
++- Oversample4 checkpoint:
++  `data/qwen36-eagle2-rollout5-expanded-oversample4-trained-20260618m`.
++- Corresponding offline acceptance JSON files:
++  `data/qwen36-eagle2-rollout5-expanded-*-offline-accept-*.json`.
++
++Decision:
++
++- Do not promote any expanded-data fine-tune to endpoint testing.
++- The current 2-layer draft can partially learn the expanded data, but not
++  enough, and the improvements trade off against the established capped gate.
++- Next draft-quality work should change the draft/training strategy instead of
++  just reweighting this 2-layer rollout checkpoint: larger/deeper draft, better
++  train/validation split with held-out expanded prompts, scheduled rollout
++  targets, or richer hidden features. Keep using the offline acceptance gate
++  before any endpoint run.
++
++## 2026-06-18 Addendum 8 - Deeper EAGLE Draft Attempts
++
++Offline eval identity correction:
++
++- `start_stride` is part of the offline EAGLE acceptance identity.
++- The historical capped control used `start_stride=4`; the historical smoke
++  control used `start_stride=1`; the expanded control used `start_stride=4`.
++- A default `start_stride=1` capped rerun of the same 2-layer rollout5 control
++  measured only `1.273438` mean accepted, while the historical stride-4 capped
++  identity measures `1.929688`. Do not compare offline acceptance artifacts
++  without matching `dataset_dir`, `max_steps`, `max_starts`, `start_stride`,
++  `dtype`, draft checkpoint, target checkpoint, and evaluator script revision.
++
++Trainer changes:
++
++- Added deeper-draft initialization controls in
++  `scripts/train-qwen36-eagle1-draft.py`:
++  - `--repeat-last-init-layer`: copy the last checkpoint layer into added
++    layers. This was tested and rejected.
++  - `--zero-extra-init-layer`: zero added layer matrices. This preserves output
++    but is mostly dead for training because zeroing every matrix removes useful
++    gradients through the added layer.
++  - `--residual-extra-init-layer`: copy the last checkpoint layer into added
++    layers, then zero only `self_attn.o_proj.weight` and
++    `mlp.down_proj.weight`. This starts as a residual no-op while preserving
++    trainable q/k/v and gate/up features.
++  - `--freeze-init-base-layers`: freeze `fc` and checkpoint-loaded layers so
++    only added residual layers train.
++- A zero-step 3-layer residual-extra checkpoint exactly preserved the capped
++  stride-4 control (`1.929688`) and froze the two loaded base layers, so this
++  is the correct initializer for future deeper-draft work.
++
++Results:
++
++| checkpoint | capped stride-4 | smoke stride-1 | expanded stride-4 | decision |
++|---|---:|---:|---:|---|
++| 2-layer rollout5 control | `1.929688` | `1.741379` | `1.132812` | current control |
++| 3-layer repeat-init expanded2 | `1.921875` | `1.793103` | `1.132812` | reject; capped regression |
++| 3-layer repeat-init old-only | `1.898438` | `1.793103` | `1.117188` | reject; capped regression |
++| 3-layer residual-init expanded2, base frozen | `1.890625` | `1.758621` | `1.125000` | reject; capped and expanded regression |
++| 3-layer residual-init old-only, base frozen | `1.929688` | `1.741379` | `1.109375` | reject; neutral on accepted gates, worse expanded |
++
++Decision:
++
++- Do not promote any 3-layer EAGLE checkpoint from this batch to endpoint
++  testing.
++- Deeper capacity is not enough under the current objective. Repeat-init
++  changes the function and damages the accepted gate. Residual-init is the
++  right way to add trainable depth, but training only a third residual layer
++  did not improve acceptance.
++- Future EAGLE work should change the objective/data loop before further
++  endpoint tests: use explicit train/validation splits, checkpoint selection by
++  offline acceptance instead of final batch metrics, scheduled rollout training,
++  and possibly token-margin or top-k-distillation losses. Any future offline
++  report must record `start_stride`.
++- Since EAGLE acceptance remains far below the synthetic k5 ceiling, the next
++  no-quality-loss performance branch should return to exact MoE work unless a
++  stronger draft-training objective is implemented.
++
++Checkpoint-selection follow-up:
++
++- Added `--checkpoint-every` to `scripts/train-qwen36-eagle1-draft.py` so
++  intermediate draft checkpoints can be selected by offline acceptance instead
++  of final batch metrics.
++- Reran the residual-extra old-only setup with checkpoints every 50 steps:
++  `data/qwen36-eagle3-rollout5-residualextra-oldonly-ckpt-trained-20260618s`.
++- Capped stride-4 sweep artifact:
++  `data/qwen36-eagle3-residualextra-oldonly-checkpoint-capped-sweep-20260618s.jsonl`.
++- Best checkpoints were `step-000050`, `step-000100`, `step-000500`, and
++  `final`, all tied the control at `1.929688`. No checkpoint exceeded the
++  accepted 2-layer rollout5 control.
++- Decision: checkpoint selection is useful infrastructure, but this residual
++  old-domain objective still produces no EAGLE acceptance win.
++
++## 2026-06-19 Addendum - Direct GEMM2+Gather Epilogue Rejected
++
++User asked to pursue exact MoE optimization first, with GEMM2+gather epilogue
++fusion before escalating to a persistent one-dispatch layerlet.
++
++Implementation:
++
++- Added an opt-in diagnostic path in
++  `/home/steve/src/vllm-xpu-kernels/csrc/xpu/moe_layerlet.cpp`.
++- Env flag:
++  `VLLM_XPU_MOE_W8A8_DIRECT_GEMM2_GATHER=1`.
++- The path is only used for single-token, top-k=8, BF16/FP16 output shapes.
++- It preserves the current exact math boundary by:
++  - keeping prologue/quant1, GEMM1, and activation/quant2 unchanged;
++  - computing each selected GEMM2 expert row directly from W8A8 int32 sums;
++  - applying the same activation scale and per-expert output-channel weight
++    scale;
++  - casting each GEMM2 row value to BF16/FP16 before weighted gather, matching
++    the accepted materialized GEMM2 row semantics.
++- Added the flag to route replay runtime identity in
++  `/home/steve/llm-optimizations/scripts/bench-qwen36-int8-moe-kernels.py`.
++- Rebuilt and staged:
++  `/home/steve/src/vllm-xpu-kernels/build/xpu-c-only-2025/_xpu_C.abi3.so`
++  copied to
++  `/home/steve/src/vllm-xpu-kernels/vllm_xpu_kernels/_xpu_C.abi3.so`.
++
++Smoke replay:
++
++- Artifact:
++  `/home/steve/llm-optimizations/data/qwen36-int8-moe-layerlet-directgemm2gather-route0-smoke-device0-20260619.json`.
++- Identity:
++  `ONEAPI_DEVICE_SELECTOR=level_zero:0`, `ZE_AFFINITY_MASK=0`,
++  route fixture
++  `qwen36-quark-int8-tp4-firstdecode-route-fixture-routes-20260612ct.jsonl`,
++  rows=1, route start 0, direct flag enabled.
++- Exactness:
++  `full_layerlet_vs_xpu_fused_moe_max_abs_diff = 0.0` and
++  `full_layerlet_vs_rows_oracle_max_abs_diff = 0.0`.
++- Timing:
++  direct full layerlet `200.595 us`; same-run middle layerlet `169.842 us`.
++
++Multi-route replay:
++
++- Artifact:
++  `/home/steve/llm-optimizations/data/qwen36-int8-moe-layerlet-directgemm2gather-routes7-device0-20260619.json`.
++- Markdown:
++  `/home/steve/llm-optimizations/data/qwen36-int8-moe-layerlet-directgemm2gather-routes7-device0-20260619.md`.
++- Routes:
++  `0,40,80,85,95,100,115`.
++- Exactness:
++  all rows `max_abs_diff = 0.0` versus both `xpu_fused_moe` and rows-oracle.
++- Direct full-layerlet timing:
++  min/mean/max `168.969 / 190.527 / 200.715 us`, `0/7` rows under
++  `160 us`.
++- Same-run middle-layerlet timing:
++  min/mean/max `171.844 / 198.937 / 228.868 us`, `0/7` rows under
++  `160 us`.
++
++Decision:
++
++- Reject the simple direct GEMM2+gather replacement for speed.
++- It proves the direct math can be exact, but it gives up the optimized DPAS
++  grouped-GEMM execution and is slower despite removing the separate gather
++  launch.
++- Do not wire this path into the endpoint or benchmark it as a candidate.
++- Keep it as a disabled diagnostic only unless we later need a correctness
++  oracle for a true fused epilogue.
++
++Next exact MoE work:
++
++- Stop small wrapper/fast-gather/q1/policy knobs.
++- The next patch should be a true larger boundary:
++  1. persistent/one-dispatch W8A8 MoE layerlet that keeps descriptors,
++     expert pointers, route buffers, scratch, and output buffers resident; or
++  2. a real grouped-GEMM epilogue modification that accumulates weighted GEMM2
++     output inside the DPAS GEMM store path while preserving BF16 row rounding.
++- Gate remains offline first: route replay exactness `max_abs_diff = 0.0`,
++  repeated timing, target below the current `160-180 us` layerlet band before
++  any endpoint work.
+diff --git a/scripts/bench-qwen36-int8-moe-kernels.py b/scripts/bench-qwen36-int8-moe-kernels.py
+index 2f8efec..1310d06 100755
+--- a/scripts/bench-qwen36-int8-moe-kernels.py
++++ b/scripts/bench-qwen36-int8-moe-kernels.py
+@@ -10,10 +10,12 @@ next.
+ from __future__ import annotations
+ 
+ import argparse
++from contextlib import contextmanager
+ import json
+ import math
+ import os
+ import re
++import sys
+ from pathlib import Path
+ from typing import Any
+ 
+@@ -24,6 +26,7 @@ from vllm_xpu_kernels.fused_moe_interface import (
+     _normalize_int8_weight_scales,
+     _per_token_quant_int8,
+     fused_moe_activation,
++    ref_fused_moe,
+     xpu_fused_moe,
+ )
+ 
+@@ -388,6 +391,119 @@ def record_call(fn):
+     return result, start, end
+ 
+ 
++@contextmanager
++def temporary_env(updates: dict[str, str | None]):
++    previous = {key: os.environ.get(key) for key in updates}
++    try:
++        for key, value in updates.items():
++            if value is None:
++                os.environ.pop(key, None)
++            else:
++                os.environ[key] = value
++        yield
++    finally:
++        for key, value in previous.items():
++            if value is None:
++                os.environ.pop(key, None)
++            else:
++                os.environ[key] = value
++
++
++def max_abs_diff(left: torch.Tensor | None,
++                 right: torch.Tensor | None) -> float | None:
++    if left is None or right is None:
++        return None
++    return float((left - right).abs().max().item())
++
++
++def build_synthetic_topk_ids(
++    *,
++    rows: int,
++    topk: int,
++    num_experts: int,
++    mode: str,
++    device: str,
++) -> torch.Tensor:
++    if mode == "uniform":
++        ids = (
++            torch.arange(rows * topk, device=device, dtype=torch.int64) %
++            num_experts
++        ).view(rows, topk)
++        return ids.contiguous()
++
++    if mode == "hot_skew":
++        hot_prefix = min(4, topk, num_experts)
++        hot_pool = min(num_experts, max(topk + 8, 16))
++        rows_out: list[list[int]] = []
++        for row in range(rows):
++            selected = list(range(hot_prefix))
++            cursor = (row * 5) % max(1, hot_pool - hot_prefix)
++            candidate = hot_prefix + cursor
++            while len(selected) < topk:
++                expert = candidate % hot_pool
++                if expert not in selected:
++                    selected.append(expert)
++                candidate += 3
++            rows_out.append(selected)
++        return torch.tensor(rows_out, device=device, dtype=torch.int64)
++
++    raise ValueError(f"Unsupported synthetic route mode: {mode}")
++
++
++def measure_graph_replay_us(
++    name: str,
++    fn,
++    *,
++    warmup: int,
++    iterations: int,
++) -> dict[str, Any]:
++    if not hasattr(torch.xpu, "XPUGraph") or not hasattr(torch.xpu, "graph"):
++        return {
++            "name": name,
++            "status": "unsupported",
++            "us_mean": None,
++            "iterations": 0,
++            "warmup": warmup,
++        }
++
++    try:
++        for _ in range(warmup):
++            fn()
++        torch.xpu.synchronize()
++
++        graph = torch.xpu.XPUGraph()
++        with torch.xpu.graph(graph):
++            fn()
++        torch.xpu.synchronize()
++
++        timings = []
++        for _ in range(iterations):
++            start, end = make_events()
++            start.record()
++            graph.replay()
++            end.record()
++            torch.xpu.synchronize()
++            timings.append(elapsed_us(start, end))
++
++        return {
++            "name": name,
++            "status": "executed",
++            "us_mean": sum(timings) / max(1, len(timings)),
++            "iterations": iterations,
++            "warmup": warmup,
++        }
++    except Exception as exc:  # noqa: BLE001 - graph failures are data.
++        return {
++            "name": name,
++            "status": "error",
++            "us_mean": None,
++            "iterations": 0,
++            "warmup": warmup,
++            "error_type": type(exc).__name__,
++            "error": str(exc),
++        }
++
++
+ def make_inputs(
+     *,
+     rows: int,
+@@ -398,6 +514,7 @@ def make_inputs(
+     dtype: torch.dtype,
+     device: str,
+     seed: int,
++    synthetic_route_mode: str,
+     route_topk_rows: list[list[int]] | None = None,
+     route_start_index: int = 0,
+ ) -> dict[str, torch.Tensor]:
+@@ -446,10 +563,13 @@ def make_inputs(
+                                 device=device,
+                                 dtype=torch.int64)
+     else:
+-        topk_ids = (
+-            torch.arange(rows * topk, device=device, dtype=torch.int64) %
+-            num_experts
+-        ).view(rows, topk)
++        topk_ids = build_synthetic_topk_ids(
++            rows=rows,
++            topk=topk,
++            num_experts=num_experts,
++            mode=synthetic_route_mode,
++            device=device,
++        )
+     topk_weights = torch.rand((rows, topk),
+                               device=device,
+                               dtype=torch.float32)
+@@ -626,7 +746,7 @@ def make_scratch(
+ 
+ def make_xpu_scratch(scratch: dict[str, torch.Tensor]) -> dict[str, torch.Tensor]:
+     """Adapt the manual scratch dict to xpu_fused_moe's scratch schema."""
+-    return {
++    xpu_scratch = {
+         "remapped_hidden_states": scratch["remapped_hidden_states"],
+         "gemm1_output": scratch["gemm1_output"],
+         "act_output": scratch["act_output"],
+@@ -638,6 +758,11 @@ def make_xpu_scratch(scratch: dict[str, torch.Tensor]) -> dict[str, torch.Tensor
+         "rows_per_expert": scratch["rows_per_expert"],
+         "unpermuted_row_to_permuted_row": scratch["unpermuted"],
+     }
++    if "workspace" in scratch:
++        xpu_scratch["prologue_workspace"] = scratch["workspace"]
++    if "expert_offsets" in scratch:
++        xpu_scratch["w8a8_offsets"] = scratch["expert_offsets"]
++    return xpu_scratch
+ 
+ 
+ def manual_int8_moe_preallocated_once(
+@@ -728,9 +853,18 @@ def manual_int8_moe_fused_prologue_once(
+     scratch: dict[str, Any],
+     use_offset_gemm: bool = False,
+     use_active_offset_gemm: bool = False,
++    events: dict[str, tuple[torch.xpu.Event, torch.xpu.Event]] | None = None,
+ ) -> torch.Tensor:
+     hidden_size = hidden_states.shape[1]
+     inter_size = w13.shape[-1] // 2
++
++    def run_stage(label: str, fn):
++        if events is None:
++            return fn()
++        result, start, end = record_call(fn)
++        events[label] = (start, end)
++        return result
++
+     offset_op = getattr(
+         torch.ops._xpu_C,
+         "cutlass_grouped_gemm_w8a8_int8_offsets_interface",
+@@ -750,127 +884,406 @@ def manual_int8_moe_fused_prologue_once(
+             "cutlass_grouped_gemm_w8a8_int8_active_offsets_interface is not available"
+         )
+ 
+-    torch.ops._moe_C.fused_moe_prologue(
+-        input=hidden_states,
+-        input_scales=None,
+-        token_selected_experts=topk_ids,
+-        token_final_scales=topk_weights,
+-        workspace=scratch["workspace"],
+-        hidden_size=hidden_size,
+-        inter_size=inter_size,
+-        block_k=1,
+-        ep_rank=0,
+-        ep_size=1,
+-        num_experts_on_rank=num_experts,
++    if events is None:
++        torch.ops._moe_C.fused_moe_prologue(
++            input=hidden_states,
++            input_scales=None,
++            token_selected_experts=topk_ids,
++            token_final_scales=topk_weights,
++            workspace=scratch["workspace"],
++            hidden_size=hidden_size,
++            inter_size=inter_size,
++            block_k=1,
++            ep_rank=0,
++            ep_size=1,
++            num_experts_on_rank=num_experts,
++        )
++        expert_offsets = scratch["expert_offsets"]
++        if not use_offset_gemm and not use_active_offset_gemm:
++            scratch["rows_per_expert"].copy_(
++                (expert_offsets[1:1 + num_experts] -
++                 expert_offsets[:num_experts]).to(torch.int32))
++
++        gemm1_a, gemm1_a_scales = _per_token_quant_int8_maybe_out(
++            scratch["remapped_hidden_states"],
++            scratch.get("gemm1_a"),
++            scratch.get("gemm1_a_scales"),
++        )
++        gemm1_scales = _normalize_int8_weight_scales(w13_scales,
++                                                     2 * inter_size)
++        if use_active_offset_gemm:
++            active_offset_op(
++                ptr_A=gemm1_a,
++                ptr_A_scales=gemm1_a_scales,
++                ptr_B=w13,
++                ptr_B_scales=gemm1_scales,
++                ptr_bias=None,
++                ptr_D=scratch["gemm1_output"],
++                expert_first_token_offset=expert_offsets,
++                active_expert_ids=scratch["active_expert_ids"],
++                N=2 * inter_size,
++                K=hidden_size,
++                num_experts=num_experts,
++                num_active_experts=int(scratch["num_active_experts"]),
++            )
++        elif use_offset_gemm:
++            offset_op(
++                ptr_A=gemm1_a,
++                ptr_A_scales=gemm1_a_scales,
++                ptr_B=w13,
++                ptr_B_scales=gemm1_scales,
++                ptr_bias=None,
++                ptr_D=scratch["gemm1_output"],
++                expert_first_token_offset=expert_offsets,
++                N=2 * inter_size,
++                K=hidden_size,
++                num_experts=num_experts,
++            )
++        else:
++            torch.ops._xpu_C.cutlass_grouped_gemm_w8a8_int8_interface(
++                ptr_A=gemm1_a,
++                ptr_A_scales=gemm1_a_scales,
++                ptr_B=w13,
++                ptr_B_scales=gemm1_scales,
++                ptr_bias=None,
++                ptr_D=scratch["gemm1_output"],
++                rows_per_expert=scratch["rows_per_expert"],
++                N=2 * inter_size,
++                K=hidden_size,
++                num_experts=num_experts,
++            )
++        fused_moe_activation(scratch["act_output"], scratch["gemm1_output"],
++                             "silu")
++        gemm2_a, gemm2_a_scales = _per_token_quant_int8_maybe_out(
++            scratch["act_output"],
++            scratch.get("gemm2_a"),
++            scratch.get("gemm2_a_scales"),
++        )
++        gemm2_scales = _normalize_int8_weight_scales(w2_scales, hidden_size)
++        if use_active_offset_gemm:
++            active_offset_op(
++                ptr_A=gemm2_a,
++                ptr_A_scales=gemm2_a_scales,
++                ptr_B=w2,
++                ptr_B_scales=gemm2_scales,
++                ptr_bias=None,
++                ptr_D=scratch["gemm2_output"],
++                expert_first_token_offset=expert_offsets,
++                active_expert_ids=scratch["active_expert_ids"],
++                N=hidden_size,
++                K=inter_size,
++                num_experts=num_experts,
++                num_active_experts=int(scratch["num_active_experts"]),
++            )
++        elif use_offset_gemm:
++            offset_op(
++                ptr_A=gemm2_a,
++                ptr_A_scales=gemm2_a_scales,
++                ptr_B=w2,
++                ptr_B_scales=gemm2_scales,
++                ptr_bias=None,
++                ptr_D=scratch["gemm2_output"],
++                expert_first_token_offset=expert_offsets,
++                N=hidden_size,
++                K=inter_size,
++                num_experts=num_experts,
++            )
++        else:
++            torch.ops._xpu_C.cutlass_grouped_gemm_w8a8_int8_interface(
++                ptr_A=gemm2_a,
++                ptr_A_scales=gemm2_a_scales,
++                ptr_B=w2,
++                ptr_B_scales=gemm2_scales,
++                ptr_bias=None,
++                ptr_D=scratch["gemm2_output"],
++                rows_per_expert=scratch["rows_per_expert"],
++                N=hidden_size,
++                K=inter_size,
++                num_experts=num_experts,
++            )
++        torch.ops._moe_C.moe_gather(scratch["output"],
++                                    scratch["gemm2_output"], topk_weights,
++                                    scratch["unpermuted"], num_experts)
++        return scratch["output"]
++
++    run_stage(
++        "prologue",
++        lambda: torch.ops._moe_C.fused_moe_prologue(
++            input=hidden_states,
++            input_scales=None,
++            token_selected_experts=topk_ids,
++            token_final_scales=topk_weights,
++            workspace=scratch["workspace"],
++            hidden_size=hidden_size,
++            inter_size=inter_size,
++            block_k=1,
++            ep_rank=0,
++            ep_size=1,
++            num_experts_on_rank=num_experts,
++        ),
+     )
+     expert_offsets = scratch["expert_offsets"]
+     if not use_offset_gemm and not use_active_offset_gemm:
+-        scratch["rows_per_expert"].copy_(
+-            (expert_offsets[1:1 + num_experts] -
+-             expert_offsets[:num_experts]).to(torch.int32))
++        run_stage(
++            "rows_from_offsets",
++            lambda: scratch["rows_per_expert"].copy_(
++                (expert_offsets[1:1 + num_experts] -
++                 expert_offsets[:num_experts]).to(torch.int32)),
++        )
+ 
+-    gemm1_a, gemm1_a_scales = _per_token_quant_int8_maybe_out(
+-        scratch["remapped_hidden_states"],
+-        scratch.get("gemm1_a"),
+-        scratch.get("gemm1_a_scales"),
++    gemm1_a, gemm1_a_scales = run_stage(
++        "quant1",
++        lambda: _per_token_quant_int8_maybe_out(
++            scratch["remapped_hidden_states"],
++            scratch.get("gemm1_a"),
++            scratch.get("gemm1_a_scales"),
++        ),
+     )
+     gemm1_scales = _normalize_int8_weight_scales(w13_scales, 2 * inter_size)
+     if use_active_offset_gemm:
+-        active_offset_op(
+-            ptr_A=gemm1_a,
+-            ptr_A_scales=gemm1_a_scales,
+-            ptr_B=w13,
+-            ptr_B_scales=gemm1_scales,
+-            ptr_bias=None,
+-            ptr_D=scratch["gemm1_output"],
+-            expert_first_token_offset=expert_offsets,
+-            active_expert_ids=scratch["active_expert_ids"],
+-            N=2 * inter_size,
+-            K=hidden_size,
+-            num_experts=num_experts,
+-            num_active_experts=int(scratch["num_active_experts"]),
++        run_stage(
++            "gemm1",
++            lambda: active_offset_op(
++                ptr_A=gemm1_a,
++                ptr_A_scales=gemm1_a_scales,
++                ptr_B=w13,
++                ptr_B_scales=gemm1_scales,
++                ptr_bias=None,
++                ptr_D=scratch["gemm1_output"],
++                expert_first_token_offset=expert_offsets,
++                active_expert_ids=scratch["active_expert_ids"],
++                N=2 * inter_size,
++                K=hidden_size,
++                num_experts=num_experts,
++                num_active_experts=int(scratch["num_active_experts"]),
++            ),
+         )
+     elif use_offset_gemm:
+-        offset_op(
+-            ptr_A=gemm1_a,
+-            ptr_A_scales=gemm1_a_scales,
+-            ptr_B=w13,
+-            ptr_B_scales=gemm1_scales,
+-            ptr_bias=None,
+-            ptr_D=scratch["gemm1_output"],
+-            expert_first_token_offset=expert_offsets,
+-            N=2 * inter_size,
+-            K=hidden_size,
+-            num_experts=num_experts,
++        run_stage(
++            "gemm1",
++            lambda: offset_op(
++                ptr_A=gemm1_a,
++                ptr_A_scales=gemm1_a_scales,
++                ptr_B=w13,
++                ptr_B_scales=gemm1_scales,
++                ptr_bias=None,
++                ptr_D=scratch["gemm1_output"],
++                expert_first_token_offset=expert_offsets,
++                N=2 * inter_size,
++                K=hidden_size,
++                num_experts=num_experts,
++            ),
+         )
+     else:
+-        torch.ops._xpu_C.cutlass_grouped_gemm_w8a8_int8_interface(
+-            ptr_A=gemm1_a,
+-            ptr_A_scales=gemm1_a_scales,
+-            ptr_B=w13,
+-            ptr_B_scales=gemm1_scales,
+-            ptr_bias=None,
+-            ptr_D=scratch["gemm1_output"],
+-            rows_per_expert=scratch["rows_per_expert"],
+-            N=2 * inter_size,
+-            K=hidden_size,
+-            num_experts=num_experts,
++        run_stage(
++            "gemm1",
++            lambda: torch.ops._xpu_C.cutlass_grouped_gemm_w8a8_int8_interface(
++                ptr_A=gemm1_a,
++                ptr_A_scales=gemm1_a_scales,
++                ptr_B=w13,
++                ptr_B_scales=gemm1_scales,
++                ptr_bias=None,
++                ptr_D=scratch["gemm1_output"],
++                rows_per_expert=scratch["rows_per_expert"],
++                N=2 * inter_size,
++                K=hidden_size,
++                num_experts=num_experts,
++            ),
+         )
+-    fused_moe_activation(scratch["act_output"], scratch["gemm1_output"],
+-                         "silu")
+-    gemm2_a, gemm2_a_scales = _per_token_quant_int8_maybe_out(
+-        scratch["act_output"],
+-        scratch.get("gemm2_a"),
+-        scratch.get("gemm2_a_scales"),
++    run_stage(
++        "activation",
++        lambda: fused_moe_activation(scratch["act_output"],
++                                     scratch["gemm1_output"], "silu"),
++    )
++    gemm2_a, gemm2_a_scales = run_stage(
++        "quant2",
++        lambda: _per_token_quant_int8_maybe_out(
++            scratch["act_output"],
++            scratch.get("gemm2_a"),
++            scratch.get("gemm2_a_scales"),
++        ),
+     )
+     gemm2_scales = _normalize_int8_weight_scales(w2_scales, hidden_size)
+     if use_active_offset_gemm:
+-        active_offset_op(
+-            ptr_A=gemm2_a,
+-            ptr_A_scales=gemm2_a_scales,
+-            ptr_B=w2,
+-            ptr_B_scales=gemm2_scales,
+-            ptr_bias=None,
+-            ptr_D=scratch["gemm2_output"],
+-            expert_first_token_offset=expert_offsets,
+-            active_expert_ids=scratch["active_expert_ids"],
+-            N=hidden_size,
+-            K=inter_size,
+-            num_experts=num_experts,
+-            num_active_experts=int(scratch["num_active_experts"]),
++        run_stage(
++            "gemm2",
++            lambda: active_offset_op(
++                ptr_A=gemm2_a,
++                ptr_A_scales=gemm2_a_scales,
++                ptr_B=w2,
++                ptr_B_scales=gemm2_scales,
++                ptr_bias=None,
++                ptr_D=scratch["gemm2_output"],
++                expert_first_token_offset=expert_offsets,
++                active_expert_ids=scratch["active_expert_ids"],
++                N=hidden_size,
++                K=inter_size,
++                num_experts=num_experts,
++                num_active_experts=int(scratch["num_active_experts"]),
++            ),
+         )
+     elif use_offset_gemm:
+-        offset_op(
+-            ptr_A=gemm2_a,
+-            ptr_A_scales=gemm2_a_scales,
+-            ptr_B=w2,
+-            ptr_B_scales=gemm2_scales,
+-            ptr_bias=None,
+-            ptr_D=scratch["gemm2_output"],
+-            expert_first_token_offset=expert_offsets,
+-            N=hidden_size,
+-            K=inter_size,
+-            num_experts=num_experts,
++        run_stage(
++            "gemm2",
++            lambda: offset_op(
++                ptr_A=gemm2_a,
++                ptr_A_scales=gemm2_a_scales,
++                ptr_B=w2,
++                ptr_B_scales=gemm2_scales,
++                ptr_bias=None,
++                ptr_D=scratch["gemm2_output"],
++                expert_first_token_offset=expert_offsets,
++                N=hidden_size,
++                K=inter_size,
++                num_experts=num_experts,
++            ),
+         )
+     else:
+-        torch.ops._xpu_C.cutlass_grouped_gemm_w8a8_int8_interface(
+-            ptr_A=gemm2_a,
+-            ptr_A_scales=gemm2_a_scales,
+-            ptr_B=w2,
+-            ptr_B_scales=gemm2_scales,
+-            ptr_bias=None,
+-            ptr_D=scratch["gemm2_output"],
+-            rows_per_expert=scratch["rows_per_expert"],
+-            N=hidden_size,
+-            K=inter_size,
+-            num_experts=num_experts,
++        run_stage(
++            "gemm2",
++            lambda: torch.ops._xpu_C.cutlass_grouped_gemm_w8a8_int8_interface(
++                ptr_A=gemm2_a,
++                ptr_A_scales=gemm2_a_scales,
++                ptr_B=w2,
++                ptr_B_scales=gemm2_scales,
++                ptr_bias=None,
++                ptr_D=scratch["gemm2_output"],
++                rows_per_expert=scratch["rows_per_expert"],
++                N=hidden_size,
++                K=inter_size,
++                num_experts=num_experts,
++            ),
+         )
++    run_stage(
++        "gather",
++        lambda: torch.ops._moe_C.moe_gather(
++            scratch["output"],
++            scratch["gemm2_output"],
++            topk_weights,
++            scratch["unpermuted"],
++            num_experts,
++        ),
++    )
++    return scratch["output"]
++
++
++def manual_int8_moe_fused_prologue_middle_layerlet_once(
++    *,
++    hidden_states: torch.Tensor,
++    w13: torch.Tensor,
++    w13_scales: torch.Tensor,
++    w2: torch.Tensor,
++    w2_scales: torch.Tensor,
++    topk_weights: torch.Tensor,
++    topk_ids: torch.Tensor,
++    num_experts: int,
++    topk: int,
++    scratch: dict[str, Any],
++) -> torch.Tensor:
++    hidden_size = hidden_states.shape[1]
++    inter_size = w13.shape[-1] // 2
++    middle_layerlet_op = getattr(
++        torch.ops._xpu_C,
++        "qwen36_moe_w8a8_middle_layerlet",
++        None,
++    )
++    if middle_layerlet_op is None:
++        raise RuntimeError("qwen36_moe_w8a8_middle_layerlet is not available")
++
++    torch.ops._moe_C.fused_moe_prologue(
++        input=hidden_states,
++        input_scales=None,
++        token_selected_experts=topk_ids,
++        token_final_scales=topk_weights,
++        workspace=scratch["workspace"],
++        hidden_size=hidden_size,
++        inter_size=inter_size,
++        block_k=1,
++        ep_rank=0,
++        ep_size=1,
++        num_experts_on_rank=num_experts,
++    )
++    gemm1_a, gemm1_a_scales = _per_token_quant_int8_maybe_out(
++        scratch["remapped_hidden_states"],
++        scratch.get("gemm1_a"),
++        scratch.get("gemm1_a_scales"),
++    )
++    middle_layerlet_op(
++        gemm1_a,
++        gemm1_a_scales,
++        w13,
++        _normalize_int8_weight_scales(w13_scales, 2 * inter_size),
++        None,
++        scratch["gemm1_output"],
++        scratch["gemm2_a"],
++        scratch["gemm2_a_scales"],
++        w2,
++        _normalize_int8_weight_scales(w2_scales, hidden_size),
++        None,
++        scratch["gemm2_output"],
++        scratch["expert_offsets"],
++        2 * inter_size,
++        hidden_size,
++        hidden_size,
++        inter_size,
++        num_experts,
++    )
+     torch.ops._moe_C.moe_gather(scratch["output"], scratch["gemm2_output"],
+                                 topk_weights, scratch["unpermuted"],
+                                 num_experts)
+     return scratch["output"]
+ 
+ 
++def manual_int8_moe_full_layerlet_once(
++    *,
++    hidden_states: torch.Tensor,
++    w13: torch.Tensor,
++    w13_scales: torch.Tensor,
++    w2: torch.Tensor,
++    w2_scales: torch.Tensor,
++    topk_weights: torch.Tensor,
++    topk_ids: torch.Tensor,
++    num_experts: int,
++    topk: int,
++    scratch: dict[str, Any],
++) -> torch.Tensor:
++    hidden_size = hidden_states.shape[1]
++    inter_size = w13.shape[-1] // 2
++    full_layerlet_op = getattr(
++        torch.ops._xpu_C,
++        "qwen36_moe_w8a8_full_layerlet",
++        None,
++    )
++    if full_layerlet_op is None:
++        raise RuntimeError("qwen36_moe_w8a8_full_layerlet is not available")
++    full_layerlet_op(
++        hidden_states,
++        topk_ids,
++        topk_weights,
++        scratch["workspace"],
++        scratch["remapped_hidden_states"],
++        scratch["unpermuted"],
++        scratch["expert_offsets"],
++        scratch["gemm1_a"],
++        scratch["gemm1_a_scales"],
++        w13,
++        _normalize_int8_weight_scales(w13_scales, 2 * inter_size),
++        None,
++        scratch["gemm1_output"],
++        scratch["gemm2_a"],
++        scratch["gemm2_a_scales"],
++        w2,
++        _normalize_int8_weight_scales(w2_scales, hidden_size),
++        None,
++        scratch["gemm2_output"],
++        scratch["output"],
++        hidden_size,
++        inter_size,
++        num_experts,
++    )
++    return scratch["output"]
++
++
+ def summarize_topk_ids(topk_ids: torch.Tensor, topn: int = 16) -> dict[str, Any]:
+     topk_cpu = topk_ids.detach().cpu().tolist()
+     tuple_counts: dict[tuple[int, ...], int] = {}
+@@ -881,6 +1294,7 @@ def summarize_topk_ids(topk_ids: torch.Tensor, topn: int = 16) -> dict[str, Any]
+         for expert in row_tuple:
+             expert_counts[expert] = expert_counts.get(expert, 0) + 1
+     return {
++        "topk_rows": topk_cpu[:topn],
+         "unique_topk_tuples": len(tuple_counts),
+         "active_experts": len(expert_counts),
+         "top_experts": [
+@@ -898,6 +1312,56 @@ def summarize_topk_ids(topk_ids: torch.Tensor, topn: int = 16) -> dict[str, Any]
+     }
+ 
+ 
++def collect_runtime_identity(args) -> dict[str, Any]:
++    env_keys = [
++        "ONEAPI_DEVICE_SELECTOR",
++        "ZE_AFFINITY_MASK",
++        "VLLM_XPU_W8A8_GROUPED_GEMM_POLICY",
++        "VLLM_XPU_W8A8_GROUPED_GEMM_N_LT_K_POLICY",
++        "VLLM_XPU_W8A8_GROUPED_GEMM_N_GT_K_POLICY",
++        "VLLM_XPU_MOE_W8A8_FUSED_Q1",
++        "VLLM_XPU_MOE_W8A8_FAST_GATHER",
++        "VLLM_XPU_MOE_W8A8_DIRECT_GEMM2_GATHER",
++        "VLLM_XPU_FUSED_MOE_FUSE_SILU_QUANT",
++        "SYCL_PI_LEVEL_ZERO_USE_IMMEDIATE_COMMANDLISTS",
++        "UR_L0_USE_IMMEDIATE_COMMANDLISTS",
++        "UR_L0_USE_COPY_ENGINE",
++    ]
++    xpu_count = None
++    xpu_devices: list[str] = []
++    try:
++        xpu_count = int(torch.xpu.device_count())
++        for idx in range(xpu_count):
++            try:
++                xpu_devices.append(str(torch.xpu.get_device_name(idx)))
++            except Exception as exc:  # noqa: BLE001 - diagnostic only.
++                xpu_devices.append(f"unavailable:{type(exc).__name__}")
++    except Exception as exc:  # noqa: BLE001 - diagnostic only.
++        xpu_devices.append(f"device_count_error:{type(exc).__name__}:{exc}")
++
++    loaded_extensions = {
++        name: getattr(module, "__file__", None)
++        for name, module in sorted(sys.modules.items())
++        if name.startswith("vllm_xpu_kernels")
++    }
++
++    return {
++        "argv": sys.argv,
++        "torch_version": torch.__version__,
++        "xpu_device_count": xpu_count,
++        "xpu_devices": xpu_devices,
++        "env": {key: os.environ.get(key) for key in env_keys},
++        "python": sys.executable,
++        "loaded_extensions": loaded_extensions,
++        "dtype": args.dtype,
++        "device_arg": args.device,
++        "iterations": args.iterations,
++        "warmup": args.warmup,
++        "graph_replay_timing": bool(args.graph_replay_timing),
++        "stage_timing_iterations": args.stage_timing_iterations,
++    }
++
++
+ def benchmark_rows(
+     args,
+     text_config: dict[str, Any],
+@@ -922,6 +1386,7 @@ def benchmark_rows(
+         dtype=dtype,
+         device=args.device,
+         seed=args.seed + rows,
++        synthetic_route_mode=args.synthetic_route_mode,
+         route_topk_rows=route_topk_rows,
+         route_start_index=route_start_index,
+     )
+@@ -960,6 +1425,83 @@ def benchmark_rows(
+         num_experts=num_experts,
+         is_int8=True,
+     )
++
++    rows_oracle_output: torch.Tensor | None = None
++    offset_oracle_output: torch.Tensor | None = None
++    bf16_reference_output: torch.Tensor | None = None
++    rows_oracle_env = {
++        "VLLM_XPU_FUSED_MOE_USE_REF": "0",
++        "VLLM_XPU_W8A8_USE_OFFSETS": "0",
++        "VLLM_XPU_INT8_MOE_FUSED_PROLOGUE_OFFSET": "0",
++        "VLLM_XPU_MOE_W8A8_MIDDLE_LAYERLET": "0",
++        "VLLM_XPU_MOE_W8A8_FULL_LAYERLET": "0",
++    }
++    offset_oracle_env = {
++        **rows_oracle_env,
++        "VLLM_XPU_W8A8_USE_OFFSETS": "1",
++    }
++    offset_gemm_available = hasattr(
++        torch.ops._xpu_C,
++        "cutlass_grouped_gemm_w8a8_int8_offsets_interface",
++    )
++    if args.real_routing_oracle:
++        with temporary_env(rows_oracle_env):
++            rows_oracle_output = xpu_fused_moe(
++                hidden_states=inputs["hidden_states"],
++                w13=inputs["w13"],
++                w13_scales=inputs["w13_scales"],
++                w13_bias=None,
++                w2=inputs["w2"],
++                w2_scales=inputs["w2_scales"],
++                w2_bias=None,
++                topk_weights=inputs["topk_weights"],
++                topk_ids=inputs["topk_ids"],
++                n_experts_per_token=topk,
++                activation="silu",
++                num_experts=num_experts,
++                is_int8=True,
++            )
++        if offset_gemm_available:
++            with temporary_env(offset_oracle_env):
++                offset_oracle_output = xpu_fused_moe(
++                    hidden_states=inputs["hidden_states"],
++                    w13=inputs["w13"],
++                    w13_scales=inputs["w13_scales"],
++                    w13_bias=None,
++                    w2=inputs["w2"],
++                    w2_scales=inputs["w2_scales"],
++                    w2_bias=None,
++                    topk_weights=inputs["topk_weights"],
++                    topk_ids=inputs["topk_ids"],
++                    n_experts_per_token=topk,
++                    activation="silu",
++                    num_experts=num_experts,
++                    is_int8=True,
++                )
++        if args.real_routing_bf16_reference:
++            bf16_reference_output = ref_fused_moe(
++                recipe="int8",
++                x=inputs["hidden_states"],
++                w13=inputs["w13"],
++                w13_scales=inputs["w13_scales"],
++                w13_bias=None,
++                w2=inputs["w2"],
++                w2_scales=inputs["w2_scales"],
++                w2_bias=None,
++                expert_weights=inputs["topk_weights"],
++                expert_indices=inputs["topk_ids"],
++                num_per_tok=topk,
++                activation="silu",
++                num_experts=num_experts,
++            )
++        torch.xpu.synchronize()
++    xpu_fused_moe_rows_oracle_max_abs_diff = max_abs_diff(
++        ref_output, rows_oracle_output)
++    offset_oracle_rows_oracle_max_abs_diff = max_abs_diff(
++        offset_oracle_output, rows_oracle_output)
++    rows_oracle_bf16_reference_max_abs_diff = max_abs_diff(
++        rows_oracle_output, bf16_reference_output)
++
+     manual_output, _ = manual_int8_moe_once(
+         hidden_states=inputs["hidden_states"],
+         w13=inputs["w13"],
+@@ -972,7 +1514,10 @@ def benchmark_rows(
+         topk=topk,
+     )
+     torch.xpu.synchronize()
+-    max_abs_diff = float((ref_output - manual_output).abs().max().item())
++    manual_max_abs_diff = float(
++        (ref_output - manual_output).abs().max().item())
++    manual_rows_oracle_max_abs_diff = max_abs_diff(manual_output,
++                                                   rows_oracle_output)
+ 
+     scratch = make_scratch(
+         rows=rows,
+@@ -998,6 +1543,8 @@ def benchmark_rows(
+     torch.xpu.synchronize()
+     prealloc_max_abs_diff = float(
+         (ref_output - scratch_output).abs().max().item())
++    prealloc_rows_oracle_max_abs_diff = max_abs_diff(scratch_output,
++                                                     rows_oracle_output)
+     prologue_scratch = make_prologue_scratch(
+         rows=rows,
+         hidden_size=hidden_size,
+@@ -1023,16 +1570,32 @@ def benchmark_rows(
+     torch.xpu.synchronize()
+     prologue_max_abs_diff = float(
+         (ref_output - prologue_output).abs().max().item())
+-    offset_gemm_available = hasattr(
+-        torch.ops._xpu_C,
+-        "cutlass_grouped_gemm_w8a8_int8_offsets_interface",
+-    )
++    prologue_rows_oracle_max_abs_diff = max_abs_diff(prologue_output,
++                                                     rows_oracle_output)
+     active_offset_gemm_available = hasattr(
+         torch.ops._xpu_C,
+         "cutlass_grouped_gemm_w8a8_int8_active_offsets_interface",
+     )
++    middle_layerlet_available = hasattr(
++        torch.ops._xpu_C,
++        "qwen36_moe_w8a8_middle_layerlet",
++    )
++    full_layerlet_available = hasattr(
++        torch.ops._xpu_C,
++        "qwen36_moe_w8a8_full_layerlet",
++    )
+     prologue_offset_max_abs_diff: float | None = None
+     prologue_active_offset_max_abs_diff: float | None = None
++    prologue_middle_layerlet_max_abs_diff: float | None = None
++    full_layerlet_max_abs_diff: float | None = None
++    prologue_offset_rows_oracle_max_abs_diff: float | None = None
++    prologue_active_offset_rows_oracle_max_abs_diff: float | None = None
++    prologue_middle_layerlet_rows_oracle_max_abs_diff: float | None = None
++    full_layerlet_rows_oracle_max_abs_diff: float | None = None
++    prologue_offset_output: torch.Tensor | None = None
++    prologue_active_offset_output: torch.Tensor | None = None
++    prologue_middle_layerlet_output: torch.Tensor | None = None
++    full_layerlet_output: torch.Tensor | None = None
+     if args.enable_offset_gemm:
+         prologue_offset_output = manual_int8_moe_fused_prologue_once(
+             hidden_states=inputs["hidden_states"],
+@@ -1050,6 +1613,8 @@ def benchmark_rows(
+         torch.xpu.synchronize()
+         prologue_offset_max_abs_diff = float(
+             (ref_output - prologue_offset_output).abs().max().item())
++        prologue_offset_rows_oracle_max_abs_diff = max_abs_diff(
++            prologue_offset_output, rows_oracle_output)
+     if args.enable_active_offset_gemm:
+         prologue_active_offset_output = manual_int8_moe_fused_prologue_once(
+             hidden_states=inputs["hidden_states"],
+@@ -1067,6 +1632,45 @@ def benchmark_rows(
+         torch.xpu.synchronize()
+         prologue_active_offset_max_abs_diff = float(
+             (ref_output - prologue_active_offset_output).abs().max().item())
++        prologue_active_offset_rows_oracle_max_abs_diff = max_abs_diff(
++            prologue_active_offset_output, rows_oracle_output)
++    if args.enable_middle_layerlet:
++        prologue_middle_layerlet_output = (
++            manual_int8_moe_fused_prologue_middle_layerlet_once(
++                hidden_states=inputs["hidden_states"],
++                w13=inputs["w13"],
++                w13_scales=inputs["w13_scales"],
++                w2=inputs["w2"],
++                w2_scales=inputs["w2_scales"],
++                topk_weights=inputs["topk_weights"],
++                topk_ids=inputs["topk_ids"],
++                num_experts=num_experts,
++                topk=topk,
++                scratch=prologue_scratch,
++            ))
++        torch.xpu.synchronize()
++        prologue_middle_layerlet_max_abs_diff = float(
++            (ref_output - prologue_middle_layerlet_output).abs().max().item())
++        prologue_middle_layerlet_rows_oracle_max_abs_diff = max_abs_diff(
++            prologue_middle_layerlet_output, rows_oracle_output)
++    if args.enable_full_layerlet:
++        full_layerlet_output = manual_int8_moe_full_layerlet_once(
++            hidden_states=inputs["hidden_states"],
++            w13=inputs["w13"],
++            w13_scales=inputs["w13_scales"],
++            w2=inputs["w2"],
++            w2_scales=inputs["w2_scales"],
++            topk_weights=inputs["topk_weights"],
++            topk_ids=inputs["topk_ids"],
++            num_experts=num_experts,
++            topk=topk,
++            scratch=prologue_scratch,
++        )
++        torch.xpu.synchronize()
++        full_layerlet_max_abs_diff = float(
++            (ref_output - full_layerlet_output).abs().max().item())
++        full_layerlet_rows_oracle_max_abs_diff = max_abs_diff(
++            full_layerlet_output, rows_oracle_output)
+     xpu_scratch_output = xpu_fused_moe(
+         hidden_states=inputs["hidden_states"],
+         w13=inputs["w13"],
+@@ -1086,6 +1690,8 @@ def benchmark_rows(
+     torch.xpu.synchronize()
+     xpu_scratch_max_abs_diff = float(
+         (ref_output - xpu_scratch_output).abs().max().item())
++    xpu_scratch_rows_oracle_max_abs_diff = max_abs_diff(
++        xpu_scratch_output, rows_oracle_output)
+ 
+     total_us = []
+     scratch_total_us = []
+@@ -1093,6 +1699,8 @@ def benchmark_rows(
+     prologue_preallocated_total_us = []
+     prologue_offset_total_us = []
+     prologue_active_offset_total_us = []
++    prologue_middle_layerlet_total_us = []
++    full_layerlet_total_us = []
+     component_us: dict[str, list[float]] = {
+         "rows_zero": [],
+         "remap": [],
+@@ -1104,6 +1712,17 @@ def benchmark_rows(
+         "gemm2": [],
+         "gather": [],
+     }
++    prologue_component_us: dict[str, list[float]] = {}
++    prologue_offset_component_us: dict[str, list[float]] = {}
++    prologue_active_offset_component_us: dict[str, list[float]] = {}
++
++    def record_stage_components(
++        target: dict[str, list[float]],
++        events: dict[str, tuple[torch.xpu.Event, torch.xpu.Event]],
++    ) -> None:
++        for label, (component_start, component_end) in events.items():
++            target.setdefault(label, []).append(
++                elapsed_us(component_start, component_end))
+ 
+     for _ in range(args.iterations):
+         start, end = make_events()
+@@ -1237,10 +1856,245 @@ def benchmark_rows(
+             end.record()
+             torch.xpu.synchronize()
+             prologue_active_offset_total_us.append(elapsed_us(start, end))
++        if args.enable_middle_layerlet:
++            start, end = make_events()
++            start.record()
++            manual_int8_moe_fused_prologue_middle_layerlet_once(
++                hidden_states=inputs["hidden_states"],
++                w13=inputs["w13"],
++                w13_scales=inputs["w13_scales"],
++                w2=inputs["w2"],
++                w2_scales=inputs["w2_scales"],
++                topk_weights=inputs["topk_weights"],
++                topk_ids=inputs["topk_ids"],
++                num_experts=num_experts,
++                topk=topk,
++                scratch=prologue_scratch,
++            )
++            end.record()
++            torch.xpu.synchronize()
++            prologue_middle_layerlet_total_us.append(elapsed_us(start, end))
++        if args.enable_full_layerlet:
++            start, end = make_events()
++            start.record()
++            manual_int8_moe_full_layerlet_once(
++                hidden_states=inputs["hidden_states"],
++                w13=inputs["w13"],
++                w13_scales=inputs["w13_scales"],
++                w2=inputs["w2"],
++                w2_scales=inputs["w2_scales"],
++                topk_weights=inputs["topk_weights"],
++                topk_ids=inputs["topk_ids"],
++                num_experts=num_experts,
++                topk=topk,
++                scratch=prologue_scratch,
++            )
++            end.record()
++            torch.xpu.synchronize()
++            full_layerlet_total_us.append(elapsed_us(start, end))
++
++    for _ in range(args.stage_timing_iterations):
++        prologue_events: dict[str, tuple[torch.xpu.Event,
++                                         torch.xpu.Event]] = {}
++        manual_int8_moe_fused_prologue_once(
++            hidden_states=inputs["hidden_states"],
++            w13=inputs["w13"],
++            w13_scales=inputs["w13_scales"],
++            w2=inputs["w2"],
++            w2_scales=inputs["w2_scales"],
++            topk_weights=inputs["topk_weights"],
++            topk_ids=inputs["topk_ids"],
++            num_experts=num_experts,
++            topk=topk,
++            scratch=prologue_scratch,
++            events=prologue_events,
++        )
++        torch.xpu.synchronize()
++        record_stage_components(prologue_component_us, prologue_events)
++        if args.enable_offset_gemm:
++            prologue_offset_events: dict[str, tuple[torch.xpu.Event,
++                                                    torch.xpu.Event]] = {}
++            manual_int8_moe_fused_prologue_once(
++                hidden_states=inputs["hidden_states"],
++                w13=inputs["w13"],
++                w13_scales=inputs["w13_scales"],
++                w2=inputs["w2"],
++                w2_scales=inputs["w2_scales"],
++                topk_weights=inputs["topk_weights"],
++                topk_ids=inputs["topk_ids"],
++                num_experts=num_experts,
++                topk=topk,
++                scratch=prologue_scratch,
++                use_offset_gemm=True,
++                events=prologue_offset_events,
++            )
++            torch.xpu.synchronize()
++            record_stage_components(prologue_offset_component_us,
++                                    prologue_offset_events)
++        if args.enable_active_offset_gemm:
++            prologue_active_offset_events: dict[
++                str, tuple[torch.xpu.Event, torch.xpu.Event]] = {}
++            manual_int8_moe_fused_prologue_once(
++                hidden_states=inputs["hidden_states"],
++                w13=inputs["w13"],
++                w13_scales=inputs["w13_scales"],
++                w2=inputs["w2"],
++                w2_scales=inputs["w2_scales"],
++                topk_weights=inputs["topk_weights"],
++                topk_ids=inputs["topk_ids"],
++                num_experts=num_experts,
++                topk=topk,
++                scratch=prologue_scratch,
++                use_active_offset_gemm=True,
++                events=prologue_active_offset_events,
++            )
++            torch.xpu.synchronize()
++            record_stage_components(prologue_active_offset_component_us,
++                                    prologue_active_offset_events)
+ 
+     def mean(values: list[float]) -> float:
+         return sum(values) / max(1, len(values))
+ 
++    graph_replay: list[dict[str, Any]] = []
++    if args.graph_replay_timing:
++        graph_scratch = make_scratch(
++            rows=rows,
++            hidden_size=hidden_size,
++            inter_size=inter_size,
++            num_experts=num_experts,
++            topk=topk,
++            dtype=dtype,
++            device=args.device,
++        )
++        graph_prologue_scratch = make_prologue_scratch(
++            rows=rows,
++            hidden_size=hidden_size,
++            inter_size=inter_size,
++            num_experts=num_experts,
++            topk=topk,
++            dtype=dtype,
++            device=args.device,
++        )
++        set_active_experts_from_topk(graph_prologue_scratch,
++                                     inputs["topk_ids"])
++        graph_replay.append(
++            measure_graph_replay_us(
++                "xpu_fused_moe_with_scratch",
++                lambda: xpu_fused_moe(
++                    hidden_states=inputs["hidden_states"],
++                    w13=inputs["w13"],
++                    w13_scales=inputs["w13_scales"],
++                    w13_bias=None,
++                    w2=inputs["w2"],
++                    w2_scales=inputs["w2_scales"],
++                    w2_bias=None,
++                    topk_weights=inputs["topk_weights"],
++                    topk_ids=inputs["topk_ids"],
++                    n_experts_per_token=topk,
++                    activation="silu",
++                    num_experts=num_experts,
++                    is_int8=True,
++                    scratch=make_xpu_scratch(graph_scratch),
++                ),
++                warmup=args.graph_warmup,
++                iterations=args.graph_iterations,
++            ))
++        graph_replay.append(
++            measure_graph_replay_us(
++                "preallocated_staged",
++                lambda: manual_int8_moe_preallocated_once(
++                    hidden_states=inputs["hidden_states"],
++                    w13=inputs["w13"],
++                    w13_scales=inputs["w13_scales"],
++                    w2=inputs["w2"],
++                    w2_scales=inputs["w2_scales"],
++                    topk_weights=inputs["topk_weights"],
++                    topk_ids=inputs["topk_ids"],
++                    num_experts=num_experts,
++                    topk=topk,
++                    scratch=graph_scratch,
++                ),
++                warmup=args.graph_warmup,
++                iterations=args.graph_iterations,
++            ))
++        graph_replay.append(
++            measure_graph_replay_us(
++                "fused_prologue_staged",
++                lambda: manual_int8_moe_fused_prologue_once(
++                    hidden_states=inputs["hidden_states"],
++                    w13=inputs["w13"],
++                    w13_scales=inputs["w13_scales"],
++                    w2=inputs["w2"],
++                    w2_scales=inputs["w2_scales"],
++                    topk_weights=inputs["topk_weights"],
++                    topk_ids=inputs["topk_ids"],
++                    num_experts=num_experts,
++                    topk=topk,
++                    scratch=graph_prologue_scratch,
++                ),
++                warmup=args.graph_warmup,
++                iterations=args.graph_iterations,
++            ))
++        if args.enable_offset_gemm:
++            graph_replay.append(
++                measure_graph_replay_us(
++                    "fused_prologue_offset_gemm",
++                    lambda: manual_int8_moe_fused_prologue_once(
++                        hidden_states=inputs["hidden_states"],
++                        w13=inputs["w13"],
++                        w13_scales=inputs["w13_scales"],
++                        w2=inputs["w2"],
++                        w2_scales=inputs["w2_scales"],
++                        topk_weights=inputs["topk_weights"],
++                        topk_ids=inputs["topk_ids"],
++                        num_experts=num_experts,
++                        topk=topk,
++                        scratch=graph_prologue_scratch,
++                        use_offset_gemm=True,
++                    ),
++                    warmup=args.graph_warmup,
++                    iterations=args.graph_iterations,
++                ))
++        if args.enable_active_offset_gemm:
++            graph_replay.append(
++                measure_graph_replay_us(
++                    "fused_prologue_active_offset_gemm",
++                    lambda: manual_int8_moe_fused_prologue_once(
++                        hidden_states=inputs["hidden_states"],
++                        w13=inputs["w13"],
++                        w13_scales=inputs["w13_scales"],
++                        w2=inputs["w2"],
++                        w2_scales=inputs["w2_scales"],
++                        topk_weights=inputs["topk_weights"],
++                        topk_ids=inputs["topk_ids"],
++                        num_experts=num_experts,
++                        topk=topk,
++                        scratch=graph_prologue_scratch,
++                        use_active_offset_gemm=True,
++                    ),
++                    warmup=args.graph_warmup,
++                    iterations=args.graph_iterations,
++                ))
++        if args.enable_full_layerlet:
++            graph_replay.append(
++                measure_graph_replay_us(
++                    "full_layerlet",
++                    lambda: manual_int8_moe_full_layerlet_once(
++                        hidden_states=inputs["hidden_states"],
++                        w13=inputs["w13"],
++                        w13_scales=inputs["w13_scales"],
++                        w2=inputs["w2"],
++                        w2_scales=inputs["w2_scales"],
++                        topk_weights=inputs["topk_weights"],
++                        topk_ids=inputs["topk_ids"],
++                        num_experts=num_experts,
++                        topk=topk,
++                        scratch=graph_prologue_scratch,
++                    ),
++                    warmup=args.graph_warmup,
++                    iterations=args.graph_iterations,
++                ))
++
+     components = {label: mean(values)
+                   for label, values in component_us.items()}
+     components["activation_plus_quant2"] = (
+@@ -1254,6 +2108,25 @@ def benchmark_rows(
+                       "activation", "act_contiguous", "quant2", "gemm2",
+                       "gather"))
+ 
++    def summarize_stage_components(
++        source: dict[str, list[float]],
++    ) -> dict[str, float]:
++        summarized = {label: mean(values) for label, values in source.items()}
++        summarized["activation_plus_quant2"] = (
++            summarized.get("activation", 0.0) +
++            summarized.get("quant2", 0.0))
++        summarized["component_sum"] = sum(
++            summarized.get(label, 0.0)
++            for label in ("prologue", "rows_from_offsets", "quant1", "gemm1",
++                          "activation", "quant2", "gemm2", "gather"))
++        return summarized
++
++    prologue_components = summarize_stage_components(prologue_component_us)
++    prologue_offset_components = summarize_stage_components(
++        prologue_offset_component_us)
++    prologue_active_offset_components = summarize_stage_components(
++        prologue_active_offset_component_us)
++
+     result = {
+         "rows": rows,
+         "moe_inputs": rows * topk,
+@@ -1262,7 +2135,12 @@ def benchmark_rows(
+         "num_experts": num_experts,
+         "topk": topk,
+         "dtype": args.dtype,
+-        "topk_source": "route_jsonl" if route_topk_rows else "synthetic_uniform",
++        "selected_experts": topk_summary.get("topk_rows"),
++        "topk_source": (
++            "route_jsonl" if route_topk_rows
++            else f"synthetic_{args.synthetic_route_mode}"),
++        "synthetic_route_mode": (
++            None if route_topk_rows else args.synthetic_route_mode),
+         "route_start_index": route_start_index if route_topk_rows else None,
+         "route_start_index_mod": (
+             route_start_index % len(route_topk_rows)
+@@ -1279,10 +2157,19 @@ def benchmark_rows(
+         "fused_prologue_active_offset_gemm_total_us_mean":
+         (mean(prologue_active_offset_total_us)
+          if prologue_active_offset_total_us else None),
++        "fused_prologue_middle_layerlet_total_us_mean":
++        (mean(prologue_middle_layerlet_total_us)
++         if prologue_middle_layerlet_total_us else None),
++        "full_layerlet_total_us_mean":
++        (mean(full_layerlet_total_us) if full_layerlet_total_us else None),
+         "offset_gemm_available": offset_gemm_available,
+         "offset_gemm_enabled": bool(args.enable_offset_gemm),
+         "active_offset_gemm_available": active_offset_gemm_available,
+         "active_offset_gemm_enabled": bool(args.enable_active_offset_gemm),
++        "middle_layerlet_available": middle_layerlet_available,
++        "middle_layerlet_enabled": bool(args.enable_middle_layerlet),
++        "full_layerlet_available": full_layerlet_available,
++        "full_layerlet_enabled": bool(args.enable_full_layerlet),
+         "quant_out_op_available": hasattr(torch.ops._xpu_C,
+                                           "per_token_quant_int8_xpu_out"),
+         "quant_scratch_buffers": [
+@@ -1296,7 +2183,12 @@ def benchmark_rows(
+         "fused_prologue_workspace_bytes":
+         int(prologue_scratch["workspace_bytes"]),
+         "components_us_mean": components,
+-        "manual_vs_xpu_fused_moe_max_abs_diff": max_abs_diff,
++        "fused_prologue_components_us_mean": prologue_components,
++        "fused_prologue_offset_components_us_mean":
++        prologue_offset_components,
++        "fused_prologue_active_offset_components_us_mean":
++        prologue_active_offset_components,
++        "manual_vs_xpu_fused_moe_max_abs_diff": manual_max_abs_diff,
+         "xpu_scratch_vs_xpu_fused_moe_max_abs_diff": xpu_scratch_max_abs_diff,
+         "preallocated_vs_xpu_fused_moe_max_abs_diff": prealloc_max_abs_diff,
+         "fused_prologue_vs_xpu_fused_moe_max_abs_diff":
+@@ -1305,9 +2197,41 @@ def benchmark_rows(
+         prologue_offset_max_abs_diff,
+         "fused_prologue_active_offset_gemm_vs_xpu_fused_moe_max_abs_diff":
+         prologue_active_offset_max_abs_diff,
++        "fused_prologue_middle_layerlet_vs_xpu_fused_moe_max_abs_diff":
++        prologue_middle_layerlet_max_abs_diff,
++        "full_layerlet_vs_xpu_fused_moe_max_abs_diff":
++        full_layerlet_max_abs_diff,
++        "real_routing_oracle_enabled": bool(args.real_routing_oracle),
++        "real_routing_bf16_reference_enabled":
++        bool(args.real_routing_bf16_reference),
++        "xpu_fused_moe_vs_rows_oracle_max_abs_diff":
++        xpu_fused_moe_rows_oracle_max_abs_diff,
++        "offset_oracle_vs_rows_oracle_max_abs_diff":
++        offset_oracle_rows_oracle_max_abs_diff,
++        "manual_vs_rows_oracle_max_abs_diff":
++        manual_rows_oracle_max_abs_diff,
++        "xpu_scratch_vs_rows_oracle_max_abs_diff":
++        xpu_scratch_rows_oracle_max_abs_diff,
++        "preallocated_vs_rows_oracle_max_abs_diff":
++        prealloc_rows_oracle_max_abs_diff,
++        "fused_prologue_vs_rows_oracle_max_abs_diff":
++        prologue_rows_oracle_max_abs_diff,
++        "fused_prologue_offset_gemm_vs_rows_oracle_max_abs_diff":
++        prologue_offset_rows_oracle_max_abs_diff,
++        "fused_prologue_active_offset_gemm_vs_rows_oracle_max_abs_diff":
++        prologue_active_offset_rows_oracle_max_abs_diff,
++        "fused_prologue_middle_layerlet_vs_rows_oracle_max_abs_diff":
++        prologue_middle_layerlet_rows_oracle_max_abs_diff,
++        "full_layerlet_vs_rows_oracle_max_abs_diff":
++        full_layerlet_rows_oracle_max_abs_diff,
++        "rows_oracle_vs_bf16_reference_max_abs_diff":
++        rows_oracle_bf16_reference_max_abs_diff,
+         "iterations": args.iterations,
+         "warmup": args.warmup,
++        "stage_timing_iterations": args.stage_timing_iterations,
+     }
++    if args.graph_replay_timing:
++        result["graph_replay"] = graph_replay
+     result["prologue_inclusive_gate"] = build_prologue_inclusive_gate(
+         result,
+         exactness_threshold=args.exactness_threshold,
+@@ -1397,6 +2321,21 @@ def build_prologue_inclusive_gate(
+                 "fused_prologue_active_offset_gemm_vs_xpu_fused_moe_max_abs_diff")),
+             "reference": False,
+         },
++        {
++            "name": "fused_prologue_middle_layerlet",
++            "us_mean": _maybe_float(row.get(
++                "fused_prologue_middle_layerlet_total_us_mean")),
++            "max_abs_diff_vs_xpu": _maybe_float(row.get(
++                "fused_prologue_middle_layerlet_vs_xpu_fused_moe_max_abs_diff")),
++            "reference": False,
++        },
++        {
++            "name": "full_layerlet",
++            "us_mean": _maybe_float(row.get("full_layerlet_total_us_mean")),
++            "max_abs_diff_vs_xpu": _maybe_float(
++                row.get("full_layerlet_vs_xpu_fused_moe_max_abs_diff")),
++            "reference": False,
++        },
+     ]
+ 
+     usable_candidates = []
+@@ -1550,6 +2489,13 @@ def build_prologue_inclusive_gate_summary(
+ def write_markdown(path: str, results: dict[str, Any]) -> None:
+     rows = results.get("results", [])
+     fused = bool(results.get("fused_silu_quant_enabled"))
++
++    def max_row_float(field: str) -> float:
++        return max(
++            (float(row[field]) for row in rows if row.get(field) is not None),
++            default=float("nan"),
++        )
++
+     max_diffs = {
+         "manual": max(
+             (float(row.get("manual_vs_xpu_fused_moe_max_abs_diff", 0.0))
+@@ -1589,6 +2535,31 @@ def write_markdown(path: str, results: dict[str, Any]) -> None:
+              is not None),
+             default=float("nan"),
+         ),
++        "fused_prologue_middle_layerlet": max(
++            (float(row.get(
++                "fused_prologue_middle_layerlet_vs_xpu_fused_moe_max_abs_diff",
++                0.0,
++            )) for row in rows if row.get(
++                "fused_prologue_middle_layerlet_vs_xpu_fused_moe_max_abs_diff")
++             is not None),
++            default=float("nan"),
++        ),
++        "full_layerlet": max(
++            (float(row.get(
++                "full_layerlet_vs_xpu_fused_moe_max_abs_diff",
++                0.0,
++            )) for row in rows if row.get(
++                "full_layerlet_vs_xpu_fused_moe_max_abs_diff") is not None),
++            default=float("nan"),
++        ),
++        "xpu_vs_rows_oracle":
++        max_row_float("xpu_fused_moe_vs_rows_oracle_max_abs_diff"),
++        "offset_vs_rows_oracle":
++        max_row_float("offset_oracle_vs_rows_oracle_max_abs_diff"),
++        "full_layerlet_vs_rows_oracle":
++        max_row_float("full_layerlet_vs_rows_oracle_max_abs_diff"),
++        "rows_oracle_vs_bf16_reference":
++        max_row_float("rows_oracle_vs_bf16_reference_max_abs_diff"),
+     }
+ 
+     lines = []
+@@ -1597,6 +2568,9 @@ def write_markdown(path: str, results: dict[str, Any]) -> None:
+     lines.append(f"- Fused SiLU+quant enabled: `{fused}`.")
+     lines.append(f"- TP size: `{results['tp_size']}`.")
+     lines.append(f"- Result rows: `{len(rows)}`.")
++    if rows:
++        lines.append(
++            f"- Route mode/source: `{rows[0].get('topk_source')}`.")
+     if rows:
+         lines.append(
+             f"- Quant out-variant available: "
+@@ -1654,6 +2628,39 @@ def write_markdown(path: str, results: dict[str, Any]) -> None:
+             f"- Fused-prologue active-offset-GEMM max abs diff: "
+             f"`{_fmt(max_diffs['fused_prologue_active_offset'])}`."
+         )
++    if any(row.get("middle_layerlet_enabled") for row in rows):
++        lines.append(
++            f"- Fused-prologue middle-layerlet max abs diff: "
++            f"`{_fmt(max_diffs['fused_prologue_middle_layerlet'])}`."
++        )
++    if any(row.get("full_layerlet_enabled") for row in rows):
++        lines.append(
++            f"- Full C++ layerlet max abs diff: "
++            f"`{_fmt(max_diffs['full_layerlet'])}`."
++        )
++    if any(row.get("real_routing_oracle_enabled") for row in rows):
++        lines.append("")
++        lines.append("### Rows-Oracle Checks")
++        lines.append("")
++        lines.append(
++            "- Current `xpu_fused_moe` max abs diff versus forced "
++            f"rows-per-expert oracle: `{_fmt(max_diffs['xpu_vs_rows_oracle'])}`."
++        )
++        lines.append(
++            "- Forced offset-GEMM max abs diff versus rows-per-expert oracle: "
++            f"`{_fmt(max_diffs['offset_vs_rows_oracle'])}`."
++        )
++        if any(row.get("full_layerlet_enabled") for row in rows):
++            lines.append(
++                "- Full C++ layerlet max abs diff versus rows-per-expert "
++                f"oracle: `{_fmt(max_diffs['full_layerlet_vs_rows_oracle'])}`."
++            )
++        if any(row.get("real_routing_bf16_reference_enabled") for row in rows):
++            lines.append(
++                "- Rows-per-expert INT8 oracle max abs diff versus BF16 "
++                "dequantized reference: "
++                f"`{_fmt(max_diffs['rows_oracle_vs_bf16_reference'])}`."
++            )
+     lines.append("")
+     lines.append("## Timing")
+     lines.append("")
+@@ -1687,6 +2694,24 @@ def write_markdown(path: str, results: dict[str, Any]) -> None:
+             for row in active_offset_rows) / len(active_offset_rows)
+         if active_offset_rows else None
+     )
++    middle_layerlet_rows = [
++        row for row in rows
++        if row.get("fused_prologue_middle_layerlet_total_us_mean") is not None
++    ]
++    mean_prologue_middle_layerlet = (
++        sum(float(row["fused_prologue_middle_layerlet_total_us_mean"])
++            for row in middle_layerlet_rows) / len(middle_layerlet_rows)
++        if middle_layerlet_rows else None
++    )
++    full_layerlet_rows = [
++        row for row in rows if row.get("full_layerlet_total_us_mean")
++        is not None
++    ]
++    mean_full_layerlet = (
++        sum(float(row["full_layerlet_total_us_mean"])
++            for row in full_layerlet_rows) / len(full_layerlet_rows)
++        if full_layerlet_rows else None
++    )
+     lines.append(f"- Mean `xpu_fused_moe`: `{_fmt(mean_xpu)} us`.")
+     lines.append(
+         f"- Mean scratch `xpu_fused_moe`: `{_fmt(mean_xpu_scratch)} us`.")
+@@ -1703,14 +2728,25 @@ def write_markdown(path: str, results: dict[str, Any]) -> None:
+             "- Mean fused-prologue active-offset-GEMM staged: "
+             f"`{_fmt(mean_prologue_active_offset)} us`."
+         )
++    if mean_prologue_middle_layerlet is not None:
++        lines.append(
++            "- Mean fused-prologue middle-layerlet staged: "
++            f"`{_fmt(mean_prologue_middle_layerlet)} us`."
++        )
++    if mean_full_layerlet is not None:
++        lines.append(
++            "- Mean full C++ layerlet: "
++            f"`{_fmt(mean_full_layerlet)} us`."
++        )
+     lines.append("")
+     lines.append(
+         "| rows | route start | active experts | xpu fused us | "
+         "xpu scratch us | prealloc staged us | fused prologue staged us | "
+-        "fused prologue offset us | active offset us | gemm1 us | gemm2 us | "
+-        "act+quant2 us |"
++        "fused prologue offset us | active offset us | middle layerlet us | "
++        "full layerlet us | gemm1 us | gemm2 us | act+quant2 us |"
+     )
+-    lines.append("|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|")
++    lines.append(
++        "|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|")
+     for row in rows:
+         comp = row.get("components_us_mean", {})
+         topk = row.get("topk_summary", {})
+@@ -1723,11 +2759,66 @@ def write_markdown(path: str, results: dict[str, Any]) -> None:
+             f"{_fmt(row.get('fused_prologue_staged_total_us_mean'))} | "
+             f"{_fmt(row.get('fused_prologue_offset_gemm_total_us_mean'))} | "
+             f"{_fmt(row.get('fused_prologue_active_offset_gemm_total_us_mean'))} | "
++            f"{_fmt(row.get('fused_prologue_middle_layerlet_total_us_mean'))} | "
++            f"{_fmt(row.get('full_layerlet_total_us_mean'))} | "
+             f"{_fmt(comp.get('gemm1'))} | "
+             f"{_fmt(comp.get('gemm2'))} | "
+             f"{_fmt(comp.get('activation_plus_quant2'))} |"
+         )
+     lines.append("")
++
++    if any(int(row.get("stage_timing_iterations") or 0) > 0 for row in rows):
++        lines.append("## Prologue Offset Stage Timing")
++        lines.append("")
++        lines.append(
++            "These stage timings are for the exact fused-prologue "
++            "offset-GEMM candidate and are used to decide the next native "
++            "layerlet boundary. They are single-device replay diagnostics."
++        )
++        lines.append("")
++        lines.append(
++            "| rows | route start | total us | prologue | quant1 | gemm1 | "
++            "activation | quant2 | gemm2 | gather | component sum |"
++        )
++        lines.append(
++            "|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|")
++        for row in rows:
++            comp = row.get("fused_prologue_offset_components_us_mean", {})
++            if not comp:
++                continue
++            lines.append(
++                f"| {row.get('rows')} | {row.get('route_start_index')} | "
++                f"{_fmt(row.get('fused_prologue_offset_gemm_total_us_mean'))} | "
++                f"{_fmt(comp.get('prologue'))} | "
++                f"{_fmt(comp.get('quant1'))} | "
++                f"{_fmt(comp.get('gemm1'))} | "
++                f"{_fmt(comp.get('activation'))} | "
++                f"{_fmt(comp.get('quant2'))} | "
++                f"{_fmt(comp.get('gemm2'))} | "
++                f"{_fmt(comp.get('gather'))} | "
++                f"{_fmt(comp.get('component_sum'))} |"
++            )
++        lines.append("")
++
++    if any(row.get("graph_replay") for row in rows):
++        lines.append("## Graph Replay Timing")
++        lines.append("")
++        lines.append(
++            "These timings capture each eligible candidate in an XPU graph "
++            "and time `graph.replay()`. They remain single-device replay "
++            "diagnostics, not endpoint throughput."
++        )
++        lines.append("")
++        lines.append("| rows | route start | candidate | status | graph us |")
++        lines.append("|---:|---:|---|---|---:|")
++        for row in rows:
++            for item in row.get("graph_replay", []):
++                lines.append(
++                    f"| {row.get('rows')} | {row.get('route_start_index')} | "
++                    f"{item.get('name')} | {item.get('status')} | "
++                    f"{_fmt(item.get('us_mean'))} |")
++        lines.append("")
++
+     lines.append("## Prologue-Inclusive Gate")
+     lines.append("")
+     if gate_summary:
+@@ -1862,6 +2953,36 @@ def main() -> int:
+     parser.add_argument("--dtype", choices=("bf16", "fp16"), default="bf16")
+     parser.add_argument("--device", default="xpu")
+     parser.add_argument("--output-json")
++    parser.add_argument(
++        "--synthetic-route-mode",
++        choices=("uniform", "hot_skew"),
++        default="uniform",
++        help=(
++            "Synthetic top-k routing pattern used when --route-jsonl is not "
++            "provided. hot_skew keeps many experts at zero rows and stresses "
++            "skewed real-routing behavior."
++        ),
++    )
++    parser.add_argument(
++        "--real-routing-oracle",
++        action="store_true",
++        help=(
++            "Also compare candidates against a forced rows-per-expert W8A8 "
++            "path with offsets/layerlets/prologue disabled. This catches "
++            "offset/layerlet bugs that are invisible when comparing two paths "
++            "sharing the same offset kernels."
++        ),
++    )
++    parser.add_argument(
++        "--real-routing-bf16-reference",
++        action="store_true",
++        help=(
++            "When --real-routing-oracle is enabled, also compare the forced "
++            "rows-per-expert INT8 path against ref_fused_moe's dequantized "
++            "BF16/FP32 reference. This is a drift diagnostic, not an exact "
++            "promotion gate for Quark W8A8."
++        ),
++    )
+     parser.add_argument(
+         "--route-jsonl",
+         help="Optional route-capture JSONL whose topk_ids override synthetic routing.",
+@@ -1922,8 +3043,48 @@ def main() -> int:
+             "to the W8A8 grouped GEMM op."
+         ),
+     )
++    parser.add_argument(
++        "--enable-middle-layerlet",
++        action="store_true",
++        help=(
++            "Benchmark fused-prologue plus the C++ W8A8 middle layerlet "
++            "(GEMM1 + fused SiLU/quant + GEMM2) as an exact full-route "
++            "candidate."
++        ),
++    )
++    parser.add_argument(
++        "--enable-full-layerlet",
++        action="store_true",
++        help=(
++            "Benchmark the experimental C++ wrapper that calls prologue, "
++            "quant1, W8A8 middle layerlet, and gather behind one _xpu_C op."
++        ),
++    )
++    parser.add_argument(
++        "--graph-replay-timing",
++        action="store_true",
++        help=(
++            "Capture and time XPU graph replay for preallocated exact "
++            "candidates. This is a replay diagnostic, not an endpoint result."
++        ),
++    )
++    parser.add_argument("--graph-warmup", type=int, default=3)
++    parser.add_argument("--graph-iterations", type=int, default=30)
++    parser.add_argument(
++        "--stage-timing-iterations",
++        type=int,
++        default=0,
++        help=(
++            "Collect event-level stage timings for fused-prologue candidates "
++            "in a separate diagnostic loop. Normal candidate totals are "
++            "measured without this extra event overhead."
++        ),
++    )
+     parser.add_argument("--markdown-out")
+     args = parser.parse_args()
++    if args.real_routing_bf16_reference and not args.real_routing_oracle:
++        parser.error(
++            "--real-routing-bf16-reference requires --real-routing-oracle")
+ 
+     if args.enable_fused_silu_quant:
+         os.environ["VLLM_XPU_FUSED_MOE_FUSE_SILU_QUANT"] = "1"
+@@ -1967,6 +3128,11 @@ def main() -> int:
+         "model_config": args.model_config,
+         "tp_size": args.tp_size,
+         "fused_silu_quant_enabled": args.enable_fused_silu_quant,
++        "synthetic_route_mode": args.synthetic_route_mode,
++        "real_routing_oracle_enabled": args.real_routing_oracle,
++        "real_routing_bf16_reference_enabled":
++        args.real_routing_bf16_reference,
++        "runtime_identity": collect_runtime_identity(args),
+         "prologue_inclusive_gate_summary":
+         build_prologue_inclusive_gate_summary(
+             benchmark_results,

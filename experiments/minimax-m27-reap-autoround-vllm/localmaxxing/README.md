@@ -1,6 +1,8 @@
 # LocalMaxxing
 
 Queued payloads and submission responses for the REAP MiniMax lane.
+Credential location and helper usage are centralized in
+[docs/localmaxxing.md](../../../docs/localmaxxing.md). Keep the API key outside Git.
 
 ## 2026-05-31
 
@@ -14,7 +16,6 @@ Queued payloads and submission responses for the REAP MiniMax lane.
 - Submit command:
 
 ```bash
-LMX_API_KEY=... \
 /home/steve/.venvs/vllm-xpu/bin/python \
   /home/steve/llm-optimizations/scripts/submit_localmaxxing_results.py \
   --payloads /home/steve/llm-optimizations/experiments/minimax-m27-reap-autoround-vllm/localmaxxing/reap-minimax-m27-autoround-ccloverride-p512n1536-20260531.queue.json \
@@ -22,10 +23,10 @@ LMX_API_KEY=... \
 ```
 
 The first submission attempt on 2026-05-31 failed before posting because
-`LMX_API_KEY` was not present in the environment. The user then provided a key,
-which is stored outside the repo at `~/.config/localmaxxing/api_key` with
-user-only permissions. `scripts/submit_localmaxxing_results.py` now falls back
-to that path if `LMX_API_KEY` is not set.
+`LMX_API_KEY` was not present in the environment. The key is stored outside the
+repo at `~/.config/localmaxxing/api_key` with user-only permissions.
+`scripts/submit_localmaxxing_results.py` falls back to that path if
+`LMX_API_KEY` is not set.
 
 Correction: this first payload described the run as temperature `0`, but
 `vllm bench throughput` defaults to `temperature=1.0` unless

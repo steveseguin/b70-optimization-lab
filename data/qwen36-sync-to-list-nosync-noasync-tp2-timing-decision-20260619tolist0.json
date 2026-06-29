@@ -1,0 +1,1054 @@
+{
+  "decision": {
+    "family": "moe",
+    "next_target": "persistent_w8a8_moe_layerlet",
+    "rank_skew_ms": 0.0,
+    "reason": "moe has the largest visible per-family label (moe_forward_shared.custom_op at 10.672416 ms). Runner-up is runtime at 4.757102 ms.",
+    "runner_up": {
+      "family": "runtime",
+      "rank_skew_ms": 0.0,
+      "score_ms": 4.7571018125,
+      "top_label": "gpu_model_runner.bookkeeping_sync"
+    },
+    "score_ms": 10.67241625625,
+    "top_label": "moe_forward_shared.custom_op"
+  },
+  "decision_basis": "aggregate_exit_summary",
+  "endpoint_metrics": {
+    "decode_ms_per_generation_token_vllm_mean": 11.82977495227533,
+    "tok_s_out_client_after_first_chunk_corrected_mean": 84.5483778018902,
+    "ttft_ms_mean": null
+  },
+  "families": {
+    "logits_sampler": {
+      "label_count": 2,
+      "nonexclusive_sum_max_ms": 0.2570489375,
+      "top_label": "gpu_model_runner.compute_logits",
+      "top_label_max_ms": 0.208693975,
+      "top_label_rank_skew_ms": 0.0,
+      "top_labels": [
+        {
+          "label": "gpu_model_runner.compute_logits",
+          "max_ms": 0.208693975,
+          "mean_ms": 0.208693975,
+          "rank_skew_ms": 0.0
+        },
+        {
+          "label": "gpu_model_runner.select_sample_hidden",
+          "max_ms": 0.0483549625,
+          "mean_ms": 0.0483549625,
+          "rank_skew_ms": 0.0
+        }
+      ]
+    },
+    "moe": {
+      "label_count": 7,
+      "nonexclusive_sum_max_ms": 18.8385450625,
+      "top_label": "moe_forward_shared.custom_op",
+      "top_label_max_ms": 10.67241625625,
+      "top_label_rank_skew_ms": 0.0,
+      "top_labels": [
+        {
+          "label": "moe_forward_shared.custom_op",
+          "max_ms": 10.67241625625,
+          "mean_ms": 10.67241625625,
+          "rank_skew_ms": 0.0
+        },
+        {
+          "label": "moe.shared_experts.apply_no_overlap",
+          "max_ms": 4.2966549875,
+          "mean_ms": 4.2966549875,
+          "rank_skew_ms": 0.0
+        },
+        {
+          "label": "qwen2_moe.shared.silu_and_mul",
+          "max_ms": 1.1929187125,
+          "mean_ms": 1.1929187125,
+          "rank_skew_ms": 0.0
+        },
+        {
+          "label": "qwen2_moe.shared.down_proj",
+          "max_ms": 0.9580710625,
+          "mean_ms": 0.9580710625,
+          "rank_skew_ms": 0.0
+        },
+        {
+          "label": "qwen2_moe.shared.gate_up_proj",
+          "max_ms": 0.7133919125,
+          "mean_ms": 0.7133919125,
+          "rank_skew_ms": 0.0
+        },
+        {
+          "label": "qwen2_moe.shared.expert_gate",
+          "max_ms": 0.6210544375,
+          "mean_ms": 0.6210544375,
+          "rank_skew_ms": 0.0
+        },
+        {
+          "label": "qwen2_moe.shared.gate_mul",
+          "max_ms": 0.38403769374999996,
+          "mean_ms": 0.38403769374999996,
+          "rank_skew_ms": 0.0
+        }
+      ]
+    },
+    "runtime": {
+      "label_count": 3,
+      "nonexclusive_sum_max_ms": 9.4686217625,
+      "top_label": "gpu_model_runner.bookkeeping_sync",
+      "top_label_max_ms": 4.7571018125,
+      "top_label_rank_skew_ms": 0.0,
+      "top_labels": [
+        {
+          "label": "gpu_model_runner.bookkeeping_sync",
+          "max_ms": 4.7571018125,
+          "mean_ms": 4.7571018125,
+          "rank_skew_ms": 0.0
+        },
+        {
+          "label": "gpu_model_runner.bookkeeping_to_list",
+          "max_ms": 4.7096450625,
+          "mean_ms": 4.7096450625,
+          "rank_skew_ms": 0.0
+        },
+        {
+          "label": "gpu_model_runner.bookkeeping_invalid_clear",
+          "max_ms": 0.0018748875000000002,
+          "mean_ms": 0.0018748875000000002,
+          "rank_skew_ms": 0.0
+        }
+      ]
+    }
+  },
+  "families_ranked": [
+    [
+      "moe",
+      {
+        "label_count": 7,
+        "nonexclusive_sum_max_ms": 18.8385450625,
+        "top_label": "moe_forward_shared.custom_op",
+        "top_label_max_ms": 10.67241625625,
+        "top_label_rank_skew_ms": 0.0,
+        "top_labels": [
+          {
+            "label": "moe_forward_shared.custom_op",
+            "max_ms": 10.67241625625,
+            "mean_ms": 10.67241625625,
+            "rank_skew_ms": 0.0
+          },
+          {
+            "label": "moe.shared_experts.apply_no_overlap",
+            "max_ms": 4.2966549875,
+            "mean_ms": 4.2966549875,
+            "rank_skew_ms": 0.0
+          },
+          {
+            "label": "qwen2_moe.shared.silu_and_mul",
+            "max_ms": 1.1929187125,
+            "mean_ms": 1.1929187125,
+            "rank_skew_ms": 0.0
+          },
+          {
+            "label": "qwen2_moe.shared.down_proj",
+            "max_ms": 0.9580710625,
+            "mean_ms": 0.9580710625,
+            "rank_skew_ms": 0.0
+          },
+          {
+            "label": "qwen2_moe.shared.gate_up_proj",
+            "max_ms": 0.7133919125,
+            "mean_ms": 0.7133919125,
+            "rank_skew_ms": 0.0
+          },
+          {
+            "label": "qwen2_moe.shared.expert_gate",
+            "max_ms": 0.6210544375,
+            "mean_ms": 0.6210544375,
+            "rank_skew_ms": 0.0
+          },
+          {
+            "label": "qwen2_moe.shared.gate_mul",
+            "max_ms": 0.38403769374999996,
+            "mean_ms": 0.38403769374999996,
+            "rank_skew_ms": 0.0
+          }
+        ]
+      }
+    ],
+    [
+      "runtime",
+      {
+        "label_count": 3,
+        "nonexclusive_sum_max_ms": 9.4686217625,
+        "top_label": "gpu_model_runner.bookkeeping_sync",
+        "top_label_max_ms": 4.7571018125,
+        "top_label_rank_skew_ms": 0.0,
+        "top_labels": [
+          {
+            "label": "gpu_model_runner.bookkeeping_sync",
+            "max_ms": 4.7571018125,
+            "mean_ms": 4.7571018125,
+            "rank_skew_ms": 0.0
+          },
+          {
+            "label": "gpu_model_runner.bookkeeping_to_list",
+            "max_ms": 4.7096450625,
+            "mean_ms": 4.7096450625,
+            "rank_skew_ms": 0.0
+          },
+          {
+            "label": "gpu_model_runner.bookkeeping_invalid_clear",
+            "max_ms": 0.0018748875000000002,
+            "mean_ms": 0.0018748875000000002,
+            "rank_skew_ms": 0.0
+          }
+        ]
+      }
+    ],
+    [
+      "logits_sampler",
+      {
+        "label_count": 2,
+        "nonexclusive_sum_max_ms": 0.2570489375,
+        "top_label": "gpu_model_runner.compute_logits",
+        "top_label_max_ms": 0.208693975,
+        "top_label_rank_skew_ms": 0.0,
+        "top_labels": [
+          {
+            "label": "gpu_model_runner.compute_logits",
+            "max_ms": 0.208693975,
+            "mean_ms": 0.208693975,
+            "rank_skew_ms": 0.0
+          },
+          {
+            "label": "gpu_model_runner.select_sample_hidden",
+            "max_ms": 0.0483549625,
+            "mean_ms": 0.0483549625,
+            "rank_skew_ms": 0.0
+          }
+        ]
+      }
+    ]
+  ],
+  "metrics_path": "/home/steve/llm-optimizations/data/qwen36-sync-to-list-nosync-noasync-tp2-p512o128-20260619tolist0.json",
+  "source_log": "/home/steve/llm-optimizations/data/qwen36-sync-to-list-nosync-noasync-tp2-20260619tolist0.log",
+  "summary_path": "/home/steve/llm-optimizations/data/qwen36-sync-to-list-nosync-noasync-tp2-timing-summary-20260619tolist0.json",
+  "top_labels": [
+    {
+      "family": "moe",
+      "is_wrapper": false,
+      "label": "moe_forward_shared.custom_op",
+      "max_ms": 10.67241625625,
+      "mean_ms": 10.67241625625,
+      "median_ms": 10.67241625625,
+      "min_ms": 10.67241625625,
+      "rank_count": 1,
+      "rank_skew_ms": 0.0,
+      "row_count": 1
+    },
+    {
+      "family": "runtime",
+      "is_wrapper": true,
+      "label": "gpu_model_runner.forward_total",
+      "max_ms": 6.66069895625,
+      "mean_ms": 6.66069895625,
+      "median_ms": 6.66069895625,
+      "min_ms": 6.66069895625,
+      "rank_count": 1,
+      "rank_skew_ms": 0.0,
+      "row_count": 1
+    },
+    {
+      "family": "runtime",
+      "is_wrapper": true,
+      "label": "gpu_model_runner.model_forward",
+      "max_ms": 6.5781033625,
+      "mean_ms": 6.5781033625,
+      "median_ms": 6.5781033625,
+      "min_ms": 6.5781033625,
+      "rank_count": 1,
+      "rank_skew_ms": 0.0,
+      "row_count": 1
+    },
+    {
+      "family": "runtime",
+      "is_wrapper": false,
+      "label": "gpu_model_runner.bookkeeping_sync",
+      "max_ms": 4.7571018125,
+      "mean_ms": 4.7571018125,
+      "median_ms": 4.7571018125,
+      "min_ms": 4.7571018125,
+      "rank_count": 1,
+      "rank_skew_ms": 0.0,
+      "row_count": 1
+    },
+    {
+      "family": "runtime",
+      "is_wrapper": false,
+      "label": "gpu_model_runner.bookkeeping_to_list",
+      "max_ms": 4.7096450625,
+      "mean_ms": 4.7096450625,
+      "median_ms": 4.7096450625,
+      "min_ms": 4.7096450625,
+      "rank_count": 1,
+      "rank_skew_ms": 0.0,
+      "row_count": 1
+    },
+    {
+      "family": "moe",
+      "is_wrapper": false,
+      "label": "moe.shared_experts.apply_no_overlap",
+      "max_ms": 4.2966549875,
+      "mean_ms": 4.2966549875,
+      "median_ms": 4.2966549875,
+      "min_ms": 4.2966549875,
+      "rank_count": 1,
+      "rank_skew_ms": 0.0,
+      "row_count": 1
+    },
+    {
+      "family": "moe",
+      "is_wrapper": false,
+      "label": "qwen2_moe.shared.silu_and_mul",
+      "max_ms": 1.1929187125,
+      "mean_ms": 1.1929187125,
+      "median_ms": 1.1929187125,
+      "min_ms": 1.1929187125,
+      "rank_count": 1,
+      "rank_skew_ms": 0.0,
+      "row_count": 1
+    },
+    {
+      "family": "moe",
+      "is_wrapper": false,
+      "label": "qwen2_moe.shared.down_proj",
+      "max_ms": 0.9580710625,
+      "mean_ms": 0.9580710625,
+      "median_ms": 0.9580710625,
+      "min_ms": 0.9580710625,
+      "rank_count": 1,
+      "rank_skew_ms": 0.0,
+      "row_count": 1
+    },
+    {
+      "family": "moe",
+      "is_wrapper": false,
+      "label": "qwen2_moe.shared.gate_up_proj",
+      "max_ms": 0.7133919125,
+      "mean_ms": 0.7133919125,
+      "median_ms": 0.7133919125,
+      "min_ms": 0.7133919125,
+      "rank_count": 1,
+      "rank_skew_ms": 0.0,
+      "row_count": 1
+    },
+    {
+      "family": "moe",
+      "is_wrapper": false,
+      "label": "qwen2_moe.shared.expert_gate",
+      "max_ms": 0.6210544375,
+      "mean_ms": 0.6210544375,
+      "median_ms": 0.6210544375,
+      "min_ms": 0.6210544375,
+      "rank_count": 1,
+      "rank_skew_ms": 0.0,
+      "row_count": 1
+    },
+    {
+      "family": "moe",
+      "is_wrapper": false,
+      "label": "qwen2_moe.shared.gate_mul",
+      "max_ms": 0.38403769374999996,
+      "mean_ms": 0.38403769374999996,
+      "median_ms": 0.38403769374999996,
+      "min_ms": 0.38403769374999996,
+      "rank_count": 1,
+      "rank_skew_ms": 0.0,
+      "row_count": 1
+    },
+    {
+      "family": "runtime",
+      "is_wrapper": true,
+      "label": "gpu_model_runner.postprocess_total",
+      "max_ms": 0.35056854375,
+      "mean_ms": 0.35056854375,
+      "median_ms": 0.35056854375,
+      "min_ms": 0.35056854375,
+      "rank_count": 1,
+      "rank_skew_ms": 0.0,
+      "row_count": 1
+    },
+    {
+      "family": "logits_sampler",
+      "is_wrapper": false,
+      "label": "gpu_model_runner.compute_logits",
+      "max_ms": 0.208693975,
+      "mean_ms": 0.208693975,
+      "median_ms": 0.208693975,
+      "min_ms": 0.208693975,
+      "rank_count": 1,
+      "rank_skew_ms": 0.0,
+      "row_count": 1
+    },
+    {
+      "family": "logits_sampler",
+      "is_wrapper": true,
+      "label": "gpu_model_runner.sample_total",
+      "max_ms": 0.12091396875,
+      "mean_ms": 0.12091396875,
+      "median_ms": 0.12091396875,
+      "min_ms": 0.12091396875,
+      "rank_count": 1,
+      "rank_skew_ms": 0.0,
+      "row_count": 1
+    },
+    {
+      "family": "logits_sampler",
+      "is_wrapper": false,
+      "label": "gpu_model_runner.select_sample_hidden",
+      "max_ms": 0.0483549625,
+      "mean_ms": 0.0483549625,
+      "median_ms": 0.0483549625,
+      "min_ms": 0.0483549625,
+      "rank_count": 1,
+      "rank_skew_ms": 0.0,
+      "row_count": 1
+    },
+    {
+      "family": "runtime",
+      "is_wrapper": false,
+      "label": "gpu_model_runner.bookkeeping_invalid_clear",
+      "max_ms": 0.0018748875000000002,
+      "mean_ms": 0.0018748875000000002,
+      "median_ms": 0.0018748875000000002,
+      "min_ms": 0.0018748875000000002,
+      "rank_count": 1,
+      "rank_skew_ms": 0.0,
+      "row_count": 1
+    }
+  ],
+  "views": {
+    "aggregate_exit_summary": {
+      "families": {
+        "logits_sampler": {
+          "label_count": 2,
+          "nonexclusive_sum_max_ms": 0.2570489375,
+          "top_label": "gpu_model_runner.compute_logits",
+          "top_label_max_ms": 0.208693975,
+          "top_label_rank_skew_ms": 0.0,
+          "top_labels": [
+            {
+              "label": "gpu_model_runner.compute_logits",
+              "max_ms": 0.208693975,
+              "mean_ms": 0.208693975,
+              "rank_skew_ms": 0.0
+            },
+            {
+              "label": "gpu_model_runner.select_sample_hidden",
+              "max_ms": 0.0483549625,
+              "mean_ms": 0.0483549625,
+              "rank_skew_ms": 0.0
+            }
+          ]
+        },
+        "moe": {
+          "label_count": 7,
+          "nonexclusive_sum_max_ms": 18.8385450625,
+          "top_label": "moe_forward_shared.custom_op",
+          "top_label_max_ms": 10.67241625625,
+          "top_label_rank_skew_ms": 0.0,
+          "top_labels": [
+            {
+              "label": "moe_forward_shared.custom_op",
+              "max_ms": 10.67241625625,
+              "mean_ms": 10.67241625625,
+              "rank_skew_ms": 0.0
+            },
+            {
+              "label": "moe.shared_experts.apply_no_overlap",
+              "max_ms": 4.2966549875,
+              "mean_ms": 4.2966549875,
+              "rank_skew_ms": 0.0
+            },
+            {
+              "label": "qwen2_moe.shared.silu_and_mul",
+              "max_ms": 1.1929187125,
+              "mean_ms": 1.1929187125,
+              "rank_skew_ms": 0.0
+            },
+            {
+              "label": "qwen2_moe.shared.down_proj",
+              "max_ms": 0.9580710625,
+              "mean_ms": 0.9580710625,
+              "rank_skew_ms": 0.0
+            },
+            {
+              "label": "qwen2_moe.shared.gate_up_proj",
+              "max_ms": 0.7133919125,
+              "mean_ms": 0.7133919125,
+              "rank_skew_ms": 0.0
+            },
+            {
+              "label": "qwen2_moe.shared.expert_gate",
+              "max_ms": 0.6210544375,
+              "mean_ms": 0.6210544375,
+              "rank_skew_ms": 0.0
+            },
+            {
+              "label": "qwen2_moe.shared.gate_mul",
+              "max_ms": 0.38403769374999996,
+              "mean_ms": 0.38403769374999996,
+              "rank_skew_ms": 0.0
+            }
+          ]
+        },
+        "runtime": {
+          "label_count": 3,
+          "nonexclusive_sum_max_ms": 9.4686217625,
+          "top_label": "gpu_model_runner.bookkeeping_sync",
+          "top_label_max_ms": 4.7571018125,
+          "top_label_rank_skew_ms": 0.0,
+          "top_labels": [
+            {
+              "label": "gpu_model_runner.bookkeeping_sync",
+              "max_ms": 4.7571018125,
+              "mean_ms": 4.7571018125,
+              "rank_skew_ms": 0.0
+            },
+            {
+              "label": "gpu_model_runner.bookkeeping_to_list",
+              "max_ms": 4.7096450625,
+              "mean_ms": 4.7096450625,
+              "rank_skew_ms": 0.0
+            },
+            {
+              "label": "gpu_model_runner.bookkeeping_invalid_clear",
+              "max_ms": 0.0018748875000000002,
+              "mean_ms": 0.0018748875000000002,
+              "rank_skew_ms": 0.0
+            }
+          ]
+        }
+      },
+      "top_labels": [
+        {
+          "family": "moe",
+          "is_wrapper": false,
+          "label": "moe_forward_shared.custom_op",
+          "max_ms": 10.67241625625,
+          "mean_ms": 10.67241625625,
+          "median_ms": 10.67241625625,
+          "min_ms": 10.67241625625,
+          "rank_count": 1,
+          "rank_skew_ms": 0.0,
+          "row_count": 1
+        },
+        {
+          "family": "runtime",
+          "is_wrapper": true,
+          "label": "gpu_model_runner.forward_total",
+          "max_ms": 6.66069895625,
+          "mean_ms": 6.66069895625,
+          "median_ms": 6.66069895625,
+          "min_ms": 6.66069895625,
+          "rank_count": 1,
+          "rank_skew_ms": 0.0,
+          "row_count": 1
+        },
+        {
+          "family": "runtime",
+          "is_wrapper": true,
+          "label": "gpu_model_runner.model_forward",
+          "max_ms": 6.5781033625,
+          "mean_ms": 6.5781033625,
+          "median_ms": 6.5781033625,
+          "min_ms": 6.5781033625,
+          "rank_count": 1,
+          "rank_skew_ms": 0.0,
+          "row_count": 1
+        },
+        {
+          "family": "runtime",
+          "is_wrapper": false,
+          "label": "gpu_model_runner.bookkeeping_sync",
+          "max_ms": 4.7571018125,
+          "mean_ms": 4.7571018125,
+          "median_ms": 4.7571018125,
+          "min_ms": 4.7571018125,
+          "rank_count": 1,
+          "rank_skew_ms": 0.0,
+          "row_count": 1
+        },
+        {
+          "family": "runtime",
+          "is_wrapper": false,
+          "label": "gpu_model_runner.bookkeeping_to_list",
+          "max_ms": 4.7096450625,
+          "mean_ms": 4.7096450625,
+          "median_ms": 4.7096450625,
+          "min_ms": 4.7096450625,
+          "rank_count": 1,
+          "rank_skew_ms": 0.0,
+          "row_count": 1
+        },
+        {
+          "family": "moe",
+          "is_wrapper": false,
+          "label": "moe.shared_experts.apply_no_overlap",
+          "max_ms": 4.2966549875,
+          "mean_ms": 4.2966549875,
+          "median_ms": 4.2966549875,
+          "min_ms": 4.2966549875,
+          "rank_count": 1,
+          "rank_skew_ms": 0.0,
+          "row_count": 1
+        },
+        {
+          "family": "moe",
+          "is_wrapper": false,
+          "label": "qwen2_moe.shared.silu_and_mul",
+          "max_ms": 1.1929187125,
+          "mean_ms": 1.1929187125,
+          "median_ms": 1.1929187125,
+          "min_ms": 1.1929187125,
+          "rank_count": 1,
+          "rank_skew_ms": 0.0,
+          "row_count": 1
+        },
+        {
+          "family": "moe",
+          "is_wrapper": false,
+          "label": "qwen2_moe.shared.down_proj",
+          "max_ms": 0.9580710625,
+          "mean_ms": 0.9580710625,
+          "median_ms": 0.9580710625,
+          "min_ms": 0.9580710625,
+          "rank_count": 1,
+          "rank_skew_ms": 0.0,
+          "row_count": 1
+        },
+        {
+          "family": "moe",
+          "is_wrapper": false,
+          "label": "qwen2_moe.shared.gate_up_proj",
+          "max_ms": 0.7133919125,
+          "mean_ms": 0.7133919125,
+          "median_ms": 0.7133919125,
+          "min_ms": 0.7133919125,
+          "rank_count": 1,
+          "rank_skew_ms": 0.0,
+          "row_count": 1
+        },
+        {
+          "family": "moe",
+          "is_wrapper": false,
+          "label": "qwen2_moe.shared.expert_gate",
+          "max_ms": 0.6210544375,
+          "mean_ms": 0.6210544375,
+          "median_ms": 0.6210544375,
+          "min_ms": 0.6210544375,
+          "rank_count": 1,
+          "rank_skew_ms": 0.0,
+          "row_count": 1
+        },
+        {
+          "family": "moe",
+          "is_wrapper": false,
+          "label": "qwen2_moe.shared.gate_mul",
+          "max_ms": 0.38403769374999996,
+          "mean_ms": 0.38403769374999996,
+          "median_ms": 0.38403769374999996,
+          "min_ms": 0.38403769374999996,
+          "rank_count": 1,
+          "rank_skew_ms": 0.0,
+          "row_count": 1
+        },
+        {
+          "family": "runtime",
+          "is_wrapper": true,
+          "label": "gpu_model_runner.postprocess_total",
+          "max_ms": 0.35056854375,
+          "mean_ms": 0.35056854375,
+          "median_ms": 0.35056854375,
+          "min_ms": 0.35056854375,
+          "rank_count": 1,
+          "rank_skew_ms": 0.0,
+          "row_count": 1
+        },
+        {
+          "family": "logits_sampler",
+          "is_wrapper": false,
+          "label": "gpu_model_runner.compute_logits",
+          "max_ms": 0.208693975,
+          "mean_ms": 0.208693975,
+          "median_ms": 0.208693975,
+          "min_ms": 0.208693975,
+          "rank_count": 1,
+          "rank_skew_ms": 0.0,
+          "row_count": 1
+        },
+        {
+          "family": "logits_sampler",
+          "is_wrapper": true,
+          "label": "gpu_model_runner.sample_total",
+          "max_ms": 0.12091396875,
+          "mean_ms": 0.12091396875,
+          "median_ms": 0.12091396875,
+          "min_ms": 0.12091396875,
+          "rank_count": 1,
+          "rank_skew_ms": 0.0,
+          "row_count": 1
+        },
+        {
+          "family": "logits_sampler",
+          "is_wrapper": false,
+          "label": "gpu_model_runner.select_sample_hidden",
+          "max_ms": 0.0483549625,
+          "mean_ms": 0.0483549625,
+          "median_ms": 0.0483549625,
+          "min_ms": 0.0483549625,
+          "rank_count": 1,
+          "rank_skew_ms": 0.0,
+          "row_count": 1
+        },
+        {
+          "family": "runtime",
+          "is_wrapper": false,
+          "label": "gpu_model_runner.bookkeeping_invalid_clear",
+          "max_ms": 0.0018748875000000002,
+          "mean_ms": 0.0018748875000000002,
+          "median_ms": 0.0018748875000000002,
+          "min_ms": 0.0018748875000000002,
+          "rank_count": 1,
+          "rank_skew_ms": 0.0,
+          "row_count": 1
+        }
+      ]
+    },
+    "step_rank_summary": {
+      "families": {
+        "logits_sampler": {
+          "label_count": 2,
+          "nonexclusive_sum_max_ms": 0.2576246,
+          "top_label": "gpu_model_runner.compute_logits",
+          "top_label_max_ms": 0.20976689999999998,
+          "top_label_rank_skew_ms": 0.0,
+          "top_labels": [
+            {
+              "label": "gpu_model_runner.compute_logits",
+              "max_ms": 0.20976689999999998,
+              "mean_ms": 0.20976689999999998,
+              "rank_skew_ms": 0.0
+            },
+            {
+              "label": "gpu_model_runner.select_sample_hidden",
+              "max_ms": 0.047857699999999996,
+              "mean_ms": 0.047857699999999996,
+              "rank_skew_ms": 0.0
+            }
+          ]
+        },
+        "runtime": {
+          "label_count": 3,
+          "nonexclusive_sum_max_ms": 9.420738499999999,
+          "top_label": "gpu_model_runner.bookkeeping_sync",
+          "top_label_max_ms": 4.733441,
+          "top_label_rank_skew_ms": 0.0,
+          "top_labels": [
+            {
+              "label": "gpu_model_runner.bookkeeping_sync",
+              "max_ms": 4.733441,
+              "mean_ms": 4.733441,
+              "rank_skew_ms": 0.0
+            },
+            {
+              "label": "gpu_model_runner.bookkeeping_to_list",
+              "max_ms": 4.6853598,
+              "mean_ms": 4.6853598,
+              "rank_skew_ms": 0.0
+            },
+            {
+              "label": "gpu_model_runner.bookkeeping_invalid_clear",
+              "max_ms": 0.0019376999999999999,
+              "mean_ms": 0.0019376999999999999,
+              "rank_skew_ms": 0.0
+            }
+          ]
+        }
+      },
+      "top_labels": [
+        {
+          "family": "runtime",
+          "is_wrapper": true,
+          "label": "gpu_model_runner.forward_total",
+          "max_ms": 5.192129899999999,
+          "mean_ms": 5.192129899999999,
+          "median_ms": 5.192129899999999,
+          "min_ms": 5.192129899999999,
+          "rank_count": 1,
+          "rank_skew_ms": 0.0,
+          "row_count": 1
+        },
+        {
+          "family": "runtime",
+          "is_wrapper": true,
+          "label": "gpu_model_runner.model_forward",
+          "max_ms": 5.109213,
+          "mean_ms": 5.109213,
+          "median_ms": 5.109213,
+          "min_ms": 5.109213,
+          "rank_count": 1,
+          "rank_skew_ms": 0.0,
+          "row_count": 1
+        },
+        {
+          "family": "runtime",
+          "is_wrapper": false,
+          "label": "gpu_model_runner.bookkeeping_sync",
+          "max_ms": 4.733441,
+          "mean_ms": 4.733441,
+          "median_ms": 4.733441,
+          "min_ms": 4.733441,
+          "rank_count": 1,
+          "rank_skew_ms": 0.0,
+          "row_count": 1
+        },
+        {
+          "family": "runtime",
+          "is_wrapper": false,
+          "label": "gpu_model_runner.bookkeeping_to_list",
+          "max_ms": 4.6853598,
+          "mean_ms": 4.6853598,
+          "median_ms": 4.6853598,
+          "min_ms": 4.6853598,
+          "rank_count": 1,
+          "rank_skew_ms": 0.0,
+          "row_count": 1
+        },
+        {
+          "family": "runtime",
+          "is_wrapper": true,
+          "label": "gpu_model_runner.postprocess_total",
+          "max_ms": 0.3527847,
+          "mean_ms": 0.3527847,
+          "median_ms": 0.3527847,
+          "min_ms": 0.3527847,
+          "rank_count": 1,
+          "rank_skew_ms": 0.0,
+          "row_count": 1
+        },
+        {
+          "family": "logits_sampler",
+          "is_wrapper": false,
+          "label": "gpu_model_runner.compute_logits",
+          "max_ms": 0.20976689999999998,
+          "mean_ms": 0.20976689999999998,
+          "median_ms": 0.20976689999999998,
+          "min_ms": 0.20976689999999998,
+          "rank_count": 1,
+          "rank_skew_ms": 0.0,
+          "row_count": 1
+        },
+        {
+          "family": "logits_sampler",
+          "is_wrapper": true,
+          "label": "gpu_model_runner.sample_total",
+          "max_ms": 0.1202008,
+          "mean_ms": 0.1202008,
+          "median_ms": 0.1202008,
+          "min_ms": 0.1202008,
+          "rank_count": 1,
+          "rank_skew_ms": 0.0,
+          "row_count": 1
+        },
+        {
+          "family": "logits_sampler",
+          "is_wrapper": false,
+          "label": "gpu_model_runner.select_sample_hidden",
+          "max_ms": 0.047857699999999996,
+          "mean_ms": 0.047857699999999996,
+          "median_ms": 0.047857699999999996,
+          "min_ms": 0.047857699999999996,
+          "rank_count": 1,
+          "rank_skew_ms": 0.0,
+          "row_count": 1
+        },
+        {
+          "family": "runtime",
+          "is_wrapper": false,
+          "label": "gpu_model_runner.bookkeeping_invalid_clear",
+          "max_ms": 0.0019376999999999999,
+          "mean_ms": 0.0019376999999999999,
+          "median_ms": 0.0019376999999999999,
+          "min_ms": 0.0019376999999999999,
+          "rank_count": 1,
+          "rank_skew_ms": 0.0,
+          "row_count": 1
+        }
+      ]
+    },
+    "step_summary": {
+      "families": {
+        "logits_sampler": {
+          "label_count": 2,
+          "nonexclusive_sum_max_ms": 0.2576246,
+          "top_label": "gpu_model_runner.compute_logits",
+          "top_label_max_ms": 0.20976689999999998,
+          "top_label_rank_skew_ms": 0.0,
+          "top_labels": [
+            {
+              "label": "gpu_model_runner.compute_logits",
+              "max_ms": 0.20976689999999998,
+              "mean_ms": 0.20976689999999998,
+              "rank_skew_ms": 0.0
+            },
+            {
+              "label": "gpu_model_runner.select_sample_hidden",
+              "max_ms": 0.047857699999999996,
+              "mean_ms": 0.047857699999999996,
+              "rank_skew_ms": 0.0
+            }
+          ]
+        },
+        "runtime": {
+          "label_count": 3,
+          "nonexclusive_sum_max_ms": 9.420738499999999,
+          "top_label": "gpu_model_runner.bookkeeping_sync",
+          "top_label_max_ms": 4.733441,
+          "top_label_rank_skew_ms": 0.0,
+          "top_labels": [
+            {
+              "label": "gpu_model_runner.bookkeeping_sync",
+              "max_ms": 4.733441,
+              "mean_ms": 4.733441,
+              "rank_skew_ms": 0.0
+            },
+            {
+              "label": "gpu_model_runner.bookkeeping_to_list",
+              "max_ms": 4.6853598,
+              "mean_ms": 4.6853598,
+              "rank_skew_ms": 0.0
+            },
+            {
+              "label": "gpu_model_runner.bookkeeping_invalid_clear",
+              "max_ms": 0.0019376999999999999,
+              "mean_ms": 0.0019376999999999999,
+              "rank_skew_ms": 0.0
+            }
+          ]
+        }
+      },
+      "top_labels": [
+        {
+          "family": "runtime",
+          "is_wrapper": true,
+          "label": "gpu_model_runner.forward_total",
+          "max_ms": 5.192129899999999,
+          "mean_ms": 5.192129899999999,
+          "median_ms": 5.192129899999999,
+          "min_ms": 5.192129899999999,
+          "rank_count": 0,
+          "rank_skew_ms": 0.0,
+          "row_count": 1
+        },
+        {
+          "family": "runtime",
+          "is_wrapper": true,
+          "label": "gpu_model_runner.model_forward",
+          "max_ms": 5.109213,
+          "mean_ms": 5.109213,
+          "median_ms": 5.109213,
+          "min_ms": 5.109213,
+          "rank_count": 0,
+          "rank_skew_ms": 0.0,
+          "row_count": 1
+        },
+        {
+          "family": "runtime",
+          "is_wrapper": false,
+          "label": "gpu_model_runner.bookkeeping_sync",
+          "max_ms": 4.733441,
+          "mean_ms": 4.733441,
+          "median_ms": 4.733441,
+          "min_ms": 4.733441,
+          "rank_count": 0,
+          "rank_skew_ms": 0.0,
+          "row_count": 1
+        },
+        {
+          "family": "runtime",
+          "is_wrapper": false,
+          "label": "gpu_model_runner.bookkeeping_to_list",
+          "max_ms": 4.6853598,
+          "mean_ms": 4.6853598,
+          "median_ms": 4.6853598,
+          "min_ms": 4.6853598,
+          "rank_count": 0,
+          "rank_skew_ms": 0.0,
+          "row_count": 1
+        },
+        {
+          "family": "runtime",
+          "is_wrapper": true,
+          "label": "gpu_model_runner.postprocess_total",
+          "max_ms": 0.3527847,
+          "mean_ms": 0.3527847,
+          "median_ms": 0.3527847,
+          "min_ms": 0.3527847,
+          "rank_count": 0,
+          "rank_skew_ms": 0.0,
+          "row_count": 1
+        },
+        {
+          "family": "logits_sampler",
+          "is_wrapper": false,
+          "label": "gpu_model_runner.compute_logits",
+          "max_ms": 0.20976689999999998,
+          "mean_ms": 0.20976689999999998,
+          "median_ms": 0.20976689999999998,
+          "min_ms": 0.20976689999999998,
+          "rank_count": 0,
+          "rank_skew_ms": 0.0,
+          "row_count": 1
+        },
+        {
+          "family": "logits_sampler",
+          "is_wrapper": true,
+          "label": "gpu_model_runner.sample_total",
+          "max_ms": 0.1202008,
+          "mean_ms": 0.1202008,
+          "median_ms": 0.1202008,
+          "min_ms": 0.1202008,
+          "rank_count": 0,
+          "rank_skew_ms": 0.0,
+          "row_count": 1
+        },
+        {
+          "family": "logits_sampler",
+          "is_wrapper": false,
+          "label": "gpu_model_runner.select_sample_hidden",
+          "max_ms": 0.047857699999999996,
+          "mean_ms": 0.047857699999999996,
+          "median_ms": 0.047857699999999996,
+          "min_ms": 0.047857699999999996,
+          "rank_count": 0,
+          "rank_skew_ms": 0.0,
+          "row_count": 1
+        },
+        {
+          "family": "runtime",
+          "is_wrapper": false,
+          "label": "gpu_model_runner.bookkeeping_invalid_clear",
+          "max_ms": 0.0019376999999999999,
+          "mean_ms": 0.0019376999999999999,
+          "median_ms": 0.0019376999999999999,
+          "min_ms": 0.0019376999999999999,
+          "rank_count": 0,
+          "rank_skew_ms": 0.0,
+          "row_count": 1
+        }
+      ]
+    }
+  },
+  "warning": "Timing labels are nested and non-exclusive; use this as a routing signal only."
+}

@@ -15,6 +15,15 @@ For local LLMs, the first question is usually not raw TFLOPS. It is:
 3. Does multi-GPU splitting preserve quality?
 4. Can the result be reproduced by someone else?
 
+For research coverage, a fifth question appears quickly: can the lab keep the
+target model resident while also running comparisons, canaries, and everyday
+inference? Four B70s provide `128 GB` aggregate VRAM, but larger open-weight
+models and long-context service tests increasingly need more VRAM per device.
+This is where future high-memory Intel cards, including Crescent Island-class
+`160-480 GB` parts, would change the practical model menu rather than only the
+speed chart. Host expansion is not the first blocker here; this lab has spare
+EPYC 9015 PCIe 5.0 x16 slot capacity ready for larger Intel devices.
+
 ## Rough Comparison
 
 | GPU | VRAM | Bandwidth | Board Power | Price Anchor | Local AI Take |
@@ -141,6 +150,11 @@ Four B70s are the lab build:
 - more need for reproducible recipes
 
 Do not assume four cards beat two cards for every model. Measure it.
+
+Above four B70s, the next useful jump is not just "more slots." It is more
+VRAM per XPU. The current host can expose four-card software and topology
+issues, but 32 GB/card still forces large models into quantization, sharding,
+or context compromises before the vLLM/XPU stack itself can be studied.
 
 ## Sources
 

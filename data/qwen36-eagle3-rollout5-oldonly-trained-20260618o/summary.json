@@ -1,0 +1,48 @@
+{
+  "batch_size": 2,
+  "dataset_dir": [
+    "/home/steve/llm-optimizations/data/qwen36-eagle-hidden-dataset-corpus-tp2-20260618a",
+    "/home/steve/llm-optimizations/data/qwen36-eagle-hidden-dataset-corpus2-tp2-20260618a",
+    "/home/steve/llm-optimizations/data/qwen36-eagle-hidden-dataset-pos-tp2-20260618a"
+  ],
+  "dataset_samples": 356,
+  "device": "xpu:0",
+  "epochs": 3,
+  "export_dtype": "bfloat16",
+  "feature_loss_weight": 1.0,
+  "final_metrics": {
+    "epoch": 3,
+    "feature_loss": 0.828125,
+    "loss": 1.0214970111846924,
+    "rollout_steps": 5,
+    "step": 534,
+    "token_loss": 1.933719515800476,
+    "tokens": 1228,
+    "top1": 0.46721309423446655,
+    "top3": 0.6147540807723999
+  },
+  "grad_clip": 1.0,
+  "init_checkpoint": "/home/steve/llm-optimizations/data/qwen36-eagle2-corpus2-tokenheavy-rollout5-trained-20260618h",
+  "lr": 1e-06,
+  "max_len": 128,
+  "num_layers": 3,
+  "out_dir": "/home/steve/llm-optimizations/data/qwen36-eagle3-rollout5-oldonly-trained-20260618o",
+  "repeat_last_init_layer": true,
+  "rollout_steps": 5,
+  "shape": {
+    "head_dim": 128,
+    "hidden_size": 2048,
+    "intermediate_size": 4096,
+    "max_position_embeddings": 262144,
+    "num_attention_heads": 16,
+    "num_hidden_layers": 3,
+    "num_key_value_heads": 2,
+    "rms_norm_eps": 1e-06,
+    "rope_theta": 10000000.0,
+    "vocab_size": 248320
+  },
+  "shuffle_seed": 32,
+  "target_model": "/mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118",
+  "token_loss_weight": 0.1,
+  "train_dtype": "bfloat16"
+}

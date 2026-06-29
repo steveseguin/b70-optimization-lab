@@ -6,3 +6,28 @@ experiments/**/scripts/__pycache__/
 data/qwen36-w8a8-gemm-parity-*/*.bin
 data/qwen36-onednn-moe-island-*/*.bin
 data/qwen36-onednn-moe-island-*/**/*.bin
+
+# Model/checkpoint/tensor artifacts are local-only unless explicitly published
+# through a large-artifact channel. Commit summaries, manifests, patches, and
+# reproduction scripts instead.
+*.safetensors
+*.gguf
+*.bin
+*.pt
+*.pth
+*.ckpt
+*.onnx
+*.engine
+
+# root password - never commit
+SUDOPASSWORD.txt
+**/SUDOPASSWORD.txt
+*.password.txt
+**/*sudo*password*
+
+# LocalMaxxing API credentials - never commit
+.config/localmaxxing/api_key
+**/.config/localmaxxing/api_key
+**/localmaxxing/api_key
+**/localmaxxing/api_key.*
+**/*localmaxxing*api*key*

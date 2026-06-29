@@ -337,3 +337,127 @@ Current best repair candidate:
   to slot 2 after each verifier row, but normal decode promotion may still use
   wrong conv/SSM timing or the wrong source after full-bonus emission.
 - Do not promote any speed result until oracle k=1 exact parity passes.
+
+## 2026-06-18 verifier state update
+
+Re-anchored the oracle identity:
+
+- Token-exact control requires the serial GDN flags:
+  `VLLM_XPU_GDN_SERIAL_SPEC_DECODE=1`,
+  `VLLM_XPU_GDN_SERIAL_SPEC_PACKED_DECODE=1`,
+  `VLLM_XPU_GDN_SERIAL_SPEC_CONV=1`,
+  `VLLM_XPU_GDN_SPEC_PROMOTE_RUNNING_AFTER_SPEC=1`, and
+  `VLLM_XPU_GDN_SPEC_PROMOTE_CONV_STATE=1`.
+- Current-tree run
+  `qwen36-oracle-k8-draftonly-serial-restoredidentity-currenttree-eager-tp2-20260618b`
+  is token-identical (`baseline_match_all=true`, first diff null, 24/24
+  accepted). The gate still fails only because replay accounting reports known
+  mismatches.
+
+Native prefill remains unsafe:
+
+- All-or-nothing rollback, final promotion, and replay-columns variants all
+  failed first diff at token 17. The state after full accepted native-prefill
+  groups is not safe for later ordinary decode. This is not solved by refusing
+  partial groups.
+- Next correctness work should either:
+  1. repair native-prefill state columns/promotion until a full-accept group
+     is serial-equivalent before ordinary decode; or
+  2. optimize the exact serial GDN path and use that for verifier correctness
+     while EAGLE/draft quality work continues.
+
+## 2026-06-18 verifier repair update 2
+
+Gate status:
+
+- Added an explicit accounting-noise escape hatch to the oracle gate:
+  `ALLOW_REPLAY_ACCOUNTING_MISMATCH=1` passes
+  `--allow-replay-accounting-mismatch` to
+  `scripts/check-qwen36-oracle-fixture.py`.
+- This option does not allow generated-token mismatches, malformed replay,
+  missing request joins, or suppressed follow-up mismatches.
+- Re-gated serial control
+  `qwen36-oracle-k8-draftonly-serial-restoredidentity-currenttree-eager-tp2-20260618e`
+  with that option and got an exact pass:
+  `data/qwen36-oracle-k8-draftonly-serial-restoredidentity-currenttree-eager-tp2-20260618e-allowacct-gate-summary.json`.
+
+Negative native verifier probes:
+
+- All-or-nothing native prefill exact replay: first diff 17.
+- No-preempt native prefill exact replay: first diff 24.
+- Python/FLA exact replay output write: first diff 17.
+- Native per-position exact replay output write: first diff 17.
+- k=7 native prefill exact replay: first diff 24.
+
+Decision:
+
+- Stop treating native-prefill exact replay as the near-term path to >150 until
+  a layer-level trace explains the `248068` boundary failure.
+- Use the serial GDN verifier as the correctness anchor for the performance
+  path. It is token-identical today; optimize around it or pair it with a
+  lightweight EAGLE draft.
+
+Next performance candidates, in priority order:
+
+1. Measure serial-correct verifier speed under the fast PIECEWISE identity
+   (TP2 first, then TP4 only if the identity is identical enough to compare).
+2. Test whether serial GDN verifier can be captured or partially captured
+   without losing token parity.
+3. Continue EAGLE draft work with serial verifier only; any draft result must
+   pass exact token parity before speed claims.
+4. If serial verifier overhead is the bottleneck, prototype a native
+   serial-equivalent one-token GDN verifier kernel rather than the unsafe
+   native-prefill sequence.
+
+Serial verifier speed result:
+
+- Ran metrics-only PIECEWISE TP2 serial GDN oracle probe:
+  `qwen36-ablation-serialgdn-oracle-k8-piecewise-tp2-metrics-20260618f`.
+- Identity: TP2 (`0,1`), `XPU_GRAPH=1`,
+  `VLLM_XPU_FORCE_GRAPH_WITH_COMM=1`,
+  `VLLM_XPU_GRAPH_NOOP_COMM_CAPTURE=1`,
+  `COMPILATION_CONFIG={"cudagraph_mode":"PIECEWISE","max_cudagraph_capture_size":128}`,
+  Quark W8A8 INT8, `VLLM_XPU_GDN_NATIVE_FALLBACK=prefill`,
+  serial GDN flags on, oracle k=8, `VLLM_XPU_SPEC_DECODE_DRAFT_ONLY=1`.
+- Metrics artifact:
+  `data/qwen36-ablation-serialgdn-oracle-k8-piecewise-tp2-metrics-20260618f-summary-20260618192000.json`.
+- Result: `14.03` corrected tok/s, `72.10` ms/token, E2E `13.69` tok/s.
+- Decision: serial GDN is useful as a correctness anchor only. It is far too
+  slow to be the route to >150 unless replaced with a native serial-equivalent
+  verifier kernel. Do not spend time tuning high-level serial flags for speed.
+
+## 2026-06-18 EAGLE k5 result
+
+What worked:
+
+- Synthetic k5 acceptance is fast enough in the current PIECEWISE TP2 identity:
+  `qwen36-ablation-eagle2-tokenheavy-synthaccept6-piecewise-tp2-k5-ceiling-20260618h`
+  reached `181.91` corrected tok/s. This is not quality-valid, but it proves
+  the scheduler/proposer path has enough headroom if draft acceptance is high.
+
+What failed:
+
+- Real k5 with the token-heavy EAGLE draft reached only `52.52` corrected tok/s
+  and accepted `107/525` drafted tokens. Per-position acceptance collapsed after
+  the third draft slot: `0.543, 0.314, 0.124, 0.038, 0.000`.
+- Local-argmax draft token generation was negative:
+  `qwen36-ablation-eagle2-tokenheavy-localargmax-pairreuse-piecewise-tp2-k3-smoke-20260618g`
+  measured `54.74` corrected tok/s and reduced acceptance. Do not promote.
+- Added `--rollout-steps` training support and produced
+  `data/qwen36-eagle2-corpus2-tokenheavy-rollout5-trained-20260618h`, but the
+  rollout k5 endpoint run measured only `55.70` corrected tok/s and accepted
+  `80/445` drafted tokens. Per-position acceptance was
+  `0.494, 0.303, 0.101, 0.000, 0.000`.
+
+Decision:
+
+- Keep EAGLE as a future path only if we first build a larger representative
+  hidden-state dataset plus an offline acceptance evaluator. Endpoint smoke
+  runs are too expensive and too noisy for draft-quality iteration.
+- Do not run more small-dataset rollout fine-tunes expecting a single-session
+  decode win. The current draft is not close to the acceptance needed for the
+  `>150 tok/s` goal.
+- Immediate next work should shift back to exact fast-lane bottlenecks:
+  collectives/topology replay, XPU graph replay correctness, and MoE
+  dispatch/GEMM overhead. Those preserve model output identity and attack the
+  baseline `~93.55 tok/s` path directly.

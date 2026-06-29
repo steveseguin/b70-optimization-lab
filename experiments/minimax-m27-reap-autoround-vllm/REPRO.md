@@ -124,6 +124,9 @@ Current caveat, added 2026-06-01:
 
 ## LocalMaxxing
 
+Credential location and helper usage are centralized in
+[docs/localmaxxing.md](../../docs/localmaxxing.md). Keep the API key outside Git.
+
 Best submitted REAP result:
 
 - LocalMaxxing ID: `cmpuesbma00r5mq01yk0zdcjx`

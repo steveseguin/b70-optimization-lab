@@ -8,3 +8,4 @@ Minimum gate before speed claims:
 4. Compare output behavior against the production Lasimeri MiniMax M2.7 lane before promoting any REAP-specific optimization.
 
 LocalMaxxing submissions require a clean quality record and repeatability summary in `results/`.
+Credential location and helper usage are centralized in [docs/localmaxxing.md](../../../docs/localmaxxing.md).

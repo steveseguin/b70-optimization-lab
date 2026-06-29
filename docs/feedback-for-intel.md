@@ -6,6 +6,16 @@ This is a discussion entry point. The detailed technical note is [Notes To Intel
 
 The B70 hardware is promising for local AI because 32 GB of VRAM below workstation-GPU pricing opens models that are awkward on 16 GB and 24 GB cards. The main problem is not the card. The main problem is that the software path is still too fragile for normal users.
 
+The other practical constraint is coverage. This repo is maintained by Steve
+Seguin (`@xyster`) on a four-B70 host, so Intel/XPU feedback is currently
+bounded by `4 x 32 GB = 128 GB` of VRAM and by the fact that long optimization
+passes occupy the same cards needed for everyday inference. More Intel VRAM
+per device would make this a much better proving ground for the larger models
+that driver, compiler, and vLLM teams increasingly need to see in the wild.
+There is spare EPYC 9015 platform capacity with up to ten PCIe 5.0 x16 slots;
+the bottleneck is access to larger Intel GPUs and the time needed to cycle each
+serious model lane through quality-gated optimization.
+
 The working MiniMax M2.7 INT4 deployment required a narrow combination of:
 
 - Intel compute runtime packages.
@@ -31,6 +41,11 @@ That is reasonable for a lab. It is not reasonable for a broad community install
 8. Make CPU KV offload and paged attention XPU-aware, not CUDA-only.
 9. Fix TurboQuant/XPU workspace allocation failures and document supported compressed-KV quality tradeoffs.
 10. Investigate Level Zero `UR_RESULT_ERROR_DEVICE_LOST` during high-pressure vLLM session-cache reloads.
+11. Where possible, make higher-VRAM Intel/XPU development hardware available
+    to community repro labs. B70 is enough to expose many bugs, but
+    Crescent Island-class `160-480 GB` hardware would let the same recipes cover
+    GLM 5.2, DeepSeek Flash-class, and other larger-model lanes without turning
+    every experiment into a capacity workaround.
 
 ## Community Angle
 
@@ -44,6 +59,28 @@ The B70 can become useful community hardware if users can share recipes, not jus
 - known driver/runtime versions
 
 This repository is structured around that idea: `docs/` for humans, `repro/` for install recipes, `notes/` and `data/` for detailed lab evidence.
+
+## Community Seeding And Mindshare
+
+Intel's open driver/runtime posture is a real advantage for community research:
+bugs can be described, reproduced, and often worked around in public. The part
+that still needs help is hardware presence. Community mindshare comes from
+people seeing current models run on hardware they can name, discuss, benchmark,
+and eventually buy.
+
+The B70 is already getting that kind of exposure through this repo, Steve
+Seguin's `@xyster` posts, and LocalMaxxing submissions. Those artifacts make the
+card easier to discover, easier to compare, and easier for future users or AI
+agents to optimize against. Larger Intel devices should get the same treatment
+early, before the public recipe surface is shaped mostly by enterprise-only
+deployments.
+
+For upcoming high-memory Intel GPUs, the most useful community enablement would
+be loaner, eval, grant, or sponsored access that is compelling alongside small
+CUDA dev boxes. In practice, the interesting
+community threshold is not one more 32 GB card; it is enough Intel VRAM to make
+large open models feel newly possible at home, roughly the `400-1000 GB`
+aggregate range across high-memory devices.
 
 ## Messaging That Would Land Better
 

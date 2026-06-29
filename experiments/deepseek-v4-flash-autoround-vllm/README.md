@@ -13,6 +13,9 @@ kind of loop that worked for MiniMax M2.7: loader repair, quality gates,
 repeatable decode benchmarks, negative-result capture, promoted patch snapshots,
 and LocalMaxxing submissions only when a result is defensible.
 
+LocalMaxxing credential location and submit helper usage are centralized in
+[docs/localmaxxing.md](../../docs/localmaxxing.md). Keep the API key outside Git.
+
 ## Current Status
 
 As of 2026-05-31, this is an initial research track.

@@ -1,0 +1,117 @@
+diff --git a/vllm_xpu_kernels/fused_moe_interface.py b/vllm_xpu_kernels/fused_moe_interface.py
+index 2e3ab4a..327562f 100755
+--- a/vllm_xpu_kernels/fused_moe_interface.py
++++ b/vllm_xpu_kernels/fused_moe_interface.py
+@@ -64,6 +64,10 @@ ONEDNN_SIDECAR_ALLOW_GRAPH_CAPTURE_ENV = (
+     "VLLM_XPU_MOE_ONEDNN_SIDECAR_ALLOW_GRAPH_CAPTURE")
+ W8A8_MIDDLE_LAYERLET_ENV = "VLLM_XPU_MOE_W8A8_MIDDLE_LAYERLET"
+ W8A8_FULL_LAYERLET_ENV = "VLLM_XPU_MOE_W8A8_FULL_LAYERLET"
++W8A8_FULL_LAYERLET_GATE_TRACE_ENV = (
++    "VLLM_XPU_MOE_W8A8_FULL_LAYERLET_GATE_TRACE_FILE")
++W8A8_FULL_LAYERLET_GATE_TRACE_MAX_LINES_ENV = (
++    "VLLM_XPU_MOE_W8A8_FULL_LAYERLET_GATE_TRACE_MAX_LINES")
+ 
+ _live_abi_lock = threading.Lock()
+ _live_abi_writes = 0
+@@ -76,6 +80,8 @@ _sidecar_probe_writes = 0
+ _sidecar_reference_parity_calls = 0
+ _sidecar_probe_disabled = False
+ _sidecar_probe_warned = False
++_full_layerlet_gate_lock = threading.Lock()
++_full_layerlet_gate_writes = 0
+ 
+ 
+ try:
+@@ -938,6 +944,29 @@ def _maybe_log_sidecar_probe(record):
+         return
+ 
+ 
++def _maybe_log_full_layerlet_gate(record):
++    global _full_layerlet_gate_writes
++
++    path = os.environ.get(W8A8_FULL_LAYERLET_GATE_TRACE_ENV)
++    if not path:
++        return
++    max_lines = max(0, _int_env(W8A8_FULL_LAYERLET_GATE_TRACE_MAX_LINES_ENV,
++                                256))
++    if max_lines == 0:
++        return
++    try:
++        line = json.dumps(record, sort_keys=True)
++        with _full_layerlet_gate_lock:
++            if _full_layerlet_gate_writes >= max_lines:
++                return
++            os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
++            with open(path, "a", encoding="utf-8") as handle:
++                handle.write(line + "\n")
++            _full_layerlet_gate_writes += 1
++    except Exception:
++        return
++
++
+ def _maybe_probe_onednn_sidecar(*,
+                                 hidden_states,
+                                 w13,
+@@ -2148,6 +2177,9 @@ def xpu_fused_moe(hidden_states,
+         unpermuted_row_to_permuted_row = int8_scratch[
+             "unpermuted_row_to_permuted_row"]
+ 
++    full_layerlet_fused_offset_gate = _should_use_int8_fused_prologue_offset(
++        diagnostic_context)
++    full_layerlet_op_gate = _should_use_w8a8_full_layerlet()
+     use_w8a8_full_layerlet = (
+         is_int8 and activation == "silu" and num_rows == 1
+         and expert_map is None and ep_size == 1 and int8_scratch is not None
+@@ -2158,8 +2190,50 @@ def xpu_fused_moe(hidden_states,
+         and int8_scratch.get("gemm2_a") is not None
+         and int8_scratch.get("gemm2_a_scales") is not None
+         and int8_scratch.get("gemm2_output") is not None
+-        and _should_use_int8_fused_prologue_offset(diagnostic_context)
+-        and _should_use_w8a8_full_layerlet())
++        and full_layerlet_fused_offset_gate
++        and full_layerlet_op_gate)
++    if os.environ.get(W8A8_FULL_LAYERLET_GATE_TRACE_ENV):
++        scratch_keys = []
++        if isinstance(int8_scratch, dict):
++            scratch_keys = sorted(str(key) for key in int8_scratch.keys())
++        _maybe_log_full_layerlet_gate({
++            "event": "w8a8_full_layerlet_gate",
++            "use_w8a8_full_layerlet": bool(use_w8a8_full_layerlet),
++            "is_int8": bool(is_int8),
++            "activation": str(activation),
++            "num_rows": int(num_rows),
++            "hidden_size": int(hidden_size),
++            "n_experts_per_token": int(n_experts_per_token),
++            "expert_map_is_none": expert_map is None,
++            "ep_size": int(ep_size),
++            "has_int8_scratch": int8_scratch is not None,
++            "scratch_keys": scratch_keys,
++            "has_prologue_workspace": (
++                int8_scratch is not None
++                and int8_scratch.get("prologue_workspace") is not None),
++            "has_w8a8_offsets": (
++                int8_scratch is not None
++                and int8_scratch.get("w8a8_offsets") is not None),
++            "has_gemm1_a": (
++                int8_scratch is not None
++                and int8_scratch.get("gemm1_a") is not None),
++            "has_gemm1_a_scales": (
++                int8_scratch is not None
++                and int8_scratch.get("gemm1_a_scales") is not None),
++            "has_gemm2_a": (
++                int8_scratch is not None
++                and int8_scratch.get("gemm2_a") is not None),
++            "has_gemm2_a_scales": (
++                int8_scratch is not None
++                and int8_scratch.get("gemm2_a_scales") is not None),
++            "has_gemm2_output": (
++                int8_scratch is not None
++                and int8_scratch.get("gemm2_output") is not None),
++            "fused_offset_gate": bool(full_layerlet_fused_offset_gate),
++            "full_layerlet_op_gate": bool(full_layerlet_op_gate),
++            "stream_capture_active": _stream_capture_active(),
++            "diagnostic_context": str(diagnostic_context),
++        })
+     if use_w8a8_full_layerlet:
+         with timed_region("xpu_moe.w8a8_full_layerlet"):
+             _w8a8_full_layerlet_out(
