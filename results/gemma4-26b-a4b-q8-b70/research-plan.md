@@ -130,17 +130,25 @@ still the hottest node at ~`1.325 ms/call`. Decision: closed negative for this
 implementation; do not run full512 promotion on this path as-is. See
 `../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260629-regular-mmvq-top1-epilogue-negative.md`.
 
-Next source lane after the top1 closure: profile-first dense/shared FFN
-gate+up+GEGLU fusion. The read-only audit points at `build_ffn()` in
-`src/llama-graph.cpp` and the Gemma4 final/shared dense FFN path in
-`src/models/gemma4.cpp` / `src/models/gemma4-assistant.cpp`. This should be a
-new narrow op or backend hook for BF16 dense gate/up tensors with small token
-counts (`n_tokens <= 8`), no LoRA/bias, F32 input, F32 accumulation/output, and
-the same GEGLU math as the current `build_lora_mm(up)`, `build_lora_mm(gate)`,
-`ggml_geglu_split()` sequence. Do **not** reuse the failed routed
-`LLAMA_SYCL_MUL_MAT_ID_MULTI_TOKEN_BF16_DIRECT` path. Before coding, confirm
-the active selected-down profile actually contains visible dense BF16 gate/up
-or GEGLU cost; if not, this lane is unlikely to beat the current record.
+2026-06-29 top1 partial-reduction follow-up: a material redesign was tried
+under `LLAMA_SYCL_MUL_MAT_TOP1_EPILOGUE_PARTIAL=1`. It replaced the v1
+row-level top1 reduction with per-workgroup partial candidates plus a final
+reduction, while preserving the same tie-breaking. It passed strict128 quality
+and the fixed cold gate, but lost decisively: `107.09528059923313 tok/s`
+against the same-screen control at `116.81887639329213 tok/s` and v1 at
+`114.4784737775974 tok/s`. Decision: closed negative; do not run full512 or
+submit this route. See
+`../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260629-regular-mmvq-top1-partial-negative.md`.
+
+Post-top1 profile check: skip the dense/shared FFN gate+up+GEGLU fusion for
+now. The activation-profile follow-up for the top1 experiment showed the new
+LM-head route active and still hot, then routed MoE gate/up
+(`MUL_MAT_ID:ffn_moe_gate_up-29`). It did **not** show a visible dense/shared
+FFN gate/up or standalone GEGLU node in the hot set. The only visible BF16
+target is routed MoE, and the routed
+`LLAMA_SYCL_MUL_MAT_ID_MULTI_TOKEN_BF16_DIRECT=1` family has already been
+closed as a graph-safe loss. Do not add the dense/shared `build_ffn()` fusion
+unless a future profile makes dense/shared BF16 work a measured bottleneck.
 
 Current handoff note: see
 `../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260629-selecteddown-next-lane-triage.md`

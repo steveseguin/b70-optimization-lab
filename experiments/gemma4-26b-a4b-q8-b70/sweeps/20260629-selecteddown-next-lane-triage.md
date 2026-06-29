@@ -81,14 +81,18 @@ a future source change changes verifier/draft economics.
    confirmed activation:
    `MUL_MAT_ARGMAX:spec_verify_regular_mmvq_top1_epilogue_token_rows` at
    ~`1.325 ms/call`, still the top node. Do not run full512 on this route
-   unless the backend epilogue itself is materially redesigned. See
-   `20260629-regular-mmvq-top1-epilogue-negative.md`.
-2. **Dense/shared BF16 gate/up + GEGLU epilogue, profile-first.** This is larger
-   and should not reuse the failed routed direct-BF16 GEMV path. First confirm
-   the active record profile has visible dense/shared BF16 gate/up or standalone
-   GEGLU cost. If it does, prototype a narrow BF16 dense gate+up+GEGLU fusion in
-   `build_ffn()` / SYCL for small verifier/draft token counts, preserving F32
-   accumulation/output and exact GEGLU math.
+   unless the backend epilogue itself is materially redesigned. A material
+   partial-reduction redesign was tried next and also lost (`107.10 tok/s`
+   vs `116.82 tok/s` paired control). See
+   `20260629-regular-mmvq-top1-epilogue-negative.md` and
+   `20260629-regular-mmvq-top1-partial-negative.md`.
+2. **Dense/shared BF16 gate/up + GEGLU epilogue is skipped for now.** The
+   follow-up top1 node profile did **not** show a visible dense/shared FFN
+   gate/up or standalone GEGLU node in the hot set. The hot BF16 item was the
+   routed MoE `MUL_MAT_ID:ffn_moe_gate_up-29`, and the routed
+   `LLAMA_SYCL_MUL_MAT_ID_MULTI_TOKEN_BF16_DIRECT=1` family is already closed
+   as a loss. Do not code the dense/shared `build_ffn()` fusion unless a future
+   profile shows dense/shared BF16 work near the top.
 3. **Upstream SYCL harvest.** Post-`c926ad098` upstream contains SYCL MoE and
    memcpy fixes, but the obvious commits reviewed so far mostly target prefill,
    cross-device copies, or K-quant MoE support rather than this single-GPU Q8
