@@ -1,8 +1,8 @@
 # 2026-06-29 VDR2 Selected-Down Record
 
-Status: **valid promoted fresh-response record** for the Gemma 4 26B A4B
-`UD-Q8_K_XL` target/verifier lane on one Intel Arc Pro B70. LocalMaxxing:
-`cmqyo0jyt08ippk01vhiobdnm`.
+Status: **valid promoted fresh-response record family** for the Gemma 4 26B
+A4B `UD-Q8_K_XL` target/verifier lane on one Intel Arc Pro B70. Current
+LocalMaxxing headline repeat: `cmqyrpox4021dqk01co5o4fcw`.
 
 ## Result
 
@@ -16,9 +16,21 @@ across the fixed realistic cold prompt suite.
 | 2 | `data/gemma4-q8-gpu2-vdr2-selecteddown-reordervdr2-full512-20260629C/summary.json` | pass | 512/512 | 113.81540554086772 | 104.38170198227209 | 113.37437257944545 | 105.36127337885975 | 101.3641176342222 | 180.47102249693125 ms |
 | 3 | `data/gemma4-q8-gpu3-vdr2-selecteddown-reordervdr2-full512-20260629D/summary.json` | pass | 512/512 | 114.8109417270852 | 104.63732760747995 | 115.24650663810468 | 105.60976692576831 | 101.70051321789589 | 180.81690149847418 ms |
 
-Promotion basis: GPU1 has the highest passing full512 median. The four
+Initial promotion basis: GPU1 had the highest passing full512 median. The four
 independent one-GPU confirmations all passed the same strict gate, making this
 a reliable improvement over the prior `98.34046474459183 tok/s` record.
+
+Same-recipe record repeat on 2026-06-29:
+
+| GPU | Summary | Gate | Canary | Median 1-100 | p10 1-100 | Mean 1-100 | Full512 after TTFT | Wall full512 | TTFT median |
+| --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| 1 | `data/gemma4-q8-gpu1-selecteddown-bf16retest-control-full512-20260629T051323Z/summary.json` | pass | 512/512 | **115.8466634928202** | 102.5726047181403 | 114.57370008916365 | 104.66140955057205 | 100.6396791169625 | 181.16679147351533 ms |
+
+This repeat used the same VDR2 selected-down recipe. It was run as the control
+lane beside a BF16-direct retest; the BF16-direct lanes did not beat controls.
+Because the repeat passed the current fixed realistic cold gate, it supersedes
+the initial `115.72789384447941` headline. LocalMaxxing:
+`cmqyrpox4021dqk01co5o4fcw`.
 
 ## Validity
 

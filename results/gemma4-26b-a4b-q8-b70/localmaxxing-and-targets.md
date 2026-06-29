@@ -42,7 +42,7 @@ Interpretation for this lane:
 
 Current policy-compliant LocalMaxxing submission:
 
-- `gemma4-q8-gpu1-vdr2-selecteddown-reordervdr2-full512-20260629B`,
+- `gemma4-q8-gpu1-selecteddown-bf16retest-control-full512-20260629T051323Z`,
   llama.cpp `c926ad098` on one B70, UD-Q8_K_XL target/verifier with Q4_0 MTP
   draft, f16 KV, 8K context, reordered-Q8 VDR2, F16 p021 small-ncols,
   bulk sampled-ID verifier host read, VDR2 selected-down fused weighted-sum,
@@ -50,19 +50,36 @@ Current policy-compliant LocalMaxxing submission:
 - fixed suite:
   `repro/gemma4-26b-a4b-q8-b70/realistic-suite-v1.json`, each prompt once,
   `cached_tokens=0` every row;
-- primary metric: **115.72789384447941 tok/s** median generated-token
+- primary metric: **115.8466634928202 tok/s** median generated-token
   throughput for tokens 1-100 after TTFT;
-- p10 `101.449`, mean `113.158`, median TTFT `181.348 ms`, median full-512
-  after-TTFT `104.602`, median wall full-512 `100.228`;
-- supporting same-identity strict full512 rows: `113.47081786263712`,
-  `113.81540554086772`, and `114.8109417270852 tok/s`;
+- p10 `102.573`, mean `114.574`, median TTFT `181.167 ms`, median full-512
+  after-TTFT `104.661`, median wall full-512 `100.640`;
+- supporting same-identity strict full512 rows include the previous
+  `115.72789384447941` record plus `113.47081786263712`,
+  `113.81540554086772`, `114.8109417270852`, and
+  `115.49839246092888 tok/s`;
+- payload:
+  `data/localmaxxing-gemma4-26b-a4b-q8-b70-llamacpp-realistic-vdr2-selecteddown-reordervdr2-full512-repeat-20260629.queue.json`;
+- LocalMaxxing: `cmqyrpox4021dqk01co5o4fcw`;
+- response:
+  `data/localmaxxing-responses/gemma4-26b-a4b-q8-b70-llamacpp-realistic-vdr2-selecteddown-reordervdr2-full512-repeat-20260629.submit.log`.
+
+The adjacent BF16-direct retest did not beat controls and is recorded as a
+negative in
+`../../patches/gemma4-26b-a4b-q8-b70/20260629-selecteddown-bf16direct-currentstack-negative.md`.
+
+Previous policy-compliant LocalMaxxing submission, now superseded:
+
+- `gemma4-q8-gpu1-vdr2-selecteddown-reordervdr2-full512-20260629B`,
+  same VDR2 selected-down recipe, **115.72789384447941 tok/s** median
+  generated-token throughput for tokens 1-100 after TTFT, LocalMaxxing
+  `cmqyo0jyt08ippk01vhiobdnm`;
 - payload:
   `data/localmaxxing-gemma4-26b-a4b-q8-b70-llamacpp-realistic-vdr2-selecteddown-reordervdr2-full512-20260629.queue.json`;
-- LocalMaxxing: `cmqyo0jyt08ippk01vhiobdnm`;
 - response:
   `data/localmaxxing-responses/gemma4-26b-a4b-q8-b70-llamacpp-realistic-vdr2-selecteddown-reordervdr2-full512-20260629.submit.log`.
 
-Previous policy-compliant LocalMaxxing submission, now superseded:
+Earlier policy-compliant LocalMaxxing submission, now superseded:
 
 - `gemma4-q8-gpu1-strict-vdr2-f16p021-bulksampled-confirm-B-n3-nmin2-p00475-ub1024-full512-20260628T052158Z`,
   llama.cpp `c926ad098` on one B70, UD-Q8_K_XL target/verifier with Q4_0 MTP
