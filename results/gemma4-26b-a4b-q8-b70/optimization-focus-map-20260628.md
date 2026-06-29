@@ -114,9 +114,6 @@ that failed its own mechanism test.
 | --- | --- | --- | --- | --- | --- |
 | P0 | Sync stale top-level state | `CURRENT.md`, `README.md:3-35` | Documentation-only diff | `CURRENT.md` stops pointing agents at `95.824` as current Gemma state | User wants no doc churn |
 | P0 | Exact verifier LM-head candidate-vs-max | `research-plan.md:189-199`, `research-plan.md:532-536`, `/home/steve/src/llama.cpp-gemma-record-repro-c926/common/speculative.cpp:1200-1215` | 128-token strict screen plus node profile | Full512 strict beats `98.340` or profile shows clear LM-head output traffic reduction with near-record speed | It still materializes full logits and just reimplements raw argmax |
-| P0 | Direct-unroll confidence/gap tail trim | `research-plan.md:537-555`, `reproduce.md:167-188` | 128-token strict screen with accepted/generated distribution | Fewer verifier rows per generated token without quality/cache violations | Accepted length collapses or target `process_ubatch_ms` stays flat |
-| P1 | EAGLE-3 graph integration only | `/home/steve/src/llama.cpp-gemma-record-repro-c926/common/speculative.cpp:638-647`, `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260628T0245-crack100-runtime-sweeps.md` | First fix startup direct-argmax scoping and graph-boundary crash; then strict128 | It runs graph-on and reduces target/verifier cost per output token versus MTP | Graph-off remains around `72.651` tok/s or graph-on still crashes |
-| P1 | DFlash llama.cpp clean-branch port | upstream PR `#22105`, DFlash repo, local source absence at `/home/steve/src/llama.cpp-gemma-record-repro-c926/common/speculative.cpp:2584-2595` | Separate checkout, model conversion, correctness canary | It runs strict cold prompts and profile shows acceptable KV/graph overhead | Port needs invasive active-source rebase or KV injection destroys graph reuse |
 | P1 | PP and long-context measurement ladder | `README.md:80-135`, `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260628T0245-crack100-runtime-sweeps.md:1708-1735`, `AGENT_HANDOFF.md:295-335` | Cold prompts at `128-16384` tokens plus outputs `1/16/64`, then long-output sustained windows | It produces repeatable TTFT, prefill, VRAM, and decode-window data without changing the short record recipe | It mixes cached-prefix/service numbers into the strict cold record lane |
 | P1 | llama.cpp prompt-cache and slot service lane | llama.cpp server `cache_prompt`, `/slots`, `--cache-ram`, `--cache-idle-slots` docs | Stable-prefix repeated-prompt A/B with canary answer hashing | It cuts repeated-prefix TTFT without changing generated text or short cold decode | It is proposed as a LocalMaxxing fresh-prompt record path |
 | P2 | KV precision ladder for context headroom | llama.cpp `-ctk/-ctv`, issue `#10378`, `README.md:80-135` | `ctk=q8_0`, then K/V combinations only after flash-attention compatibility check | It extends context or reduces long-context slowdown while passing quality canaries and rerunning the short suite | V-cache quant forces a slower flash-attention profile or changes quality |
@@ -383,23 +380,7 @@ traffic, not reducing arithmetic to only one candidate.
 Test shape: one strict 128-token screen, then full512 only if it beats the
 current identity with same `cached_tokens=0` gate.
 
-### 2. Direct-Unroll Confidence Scores And Tail Trimming
-
-Why: current direct-unroll argmax path bypasses useful `MTP_P_MIN`/logit-gap
-checks, so p-min sweeps mostly measure variance. The plan suggests returning
-top1/top2 score or gap from the direct path and using that to reduce verifier
-rows on weak tails without warmed/history state
-(`research-plan.md:537-543`, `research-plan.md:545-555`).
-
-How it might work: have the assistant direct argmax path emit a compact
-confidence metric per candidate, then stop the draft prefix before low-confidence
-tail tokens. This targets verifier row count while preserving target
-verification semantics.
-
-Risk: if it mostly reduces accepted length or adds draft overhead, it will lose.
-Profile first on 128 tokens and record accepted/generated distributions.
-
-### 3. DFlash In llama.cpp, On A Separate Branch
+### 2. DFlash In llama.cpp, On A Separate Branch
 
 Why: this is the biggest new external lead. The DFlash repo lists a Gemma 4
 26B-A4B DFlash draft model and says Gemma4 currently needs a temporary vLLM
@@ -435,7 +416,7 @@ experiment is running.
 First test: Gemma4 DFlash draft model conversion, correctness canary, strict
 128-token cold gate, then profile. Expect infrastructure failures before speed.
 
-### 4. EAGLE-3 Gemma4 Speculator
+### 3. EAGLE-3 Gemma4 Speculator
 
 Why: unlike DFlash, active local source already supports `draft-eagle3`
 (`/home/steve/src/llama.cpp-gemma-record-repro-c926/common/speculative.cpp:29-39`,
@@ -453,7 +434,7 @@ Test: one strict 128-token screen with same target/verifier, no cache reuse,
 then compare accepted length, target `process_ubatch_ms`, and draft time against
 MTP. Do not spend a full day before a profile says it has a path.
 
-### 5. DSpark / DeepSpec As A Research Source
+### 4. DSpark / DeepSpec As A Research Source
 
 Why: Grok's DSpark mention is at least partially real. `deepseek-ai/DeepSpec`
 exists and says it is a full-stack codebase for speculative decoding data
@@ -489,10 +470,7 @@ not as the main Gemma Q8 record path unless a same-identity Gemma test surprises
 
 | Idea | Priority | Why |
 | --- | --- | --- |
-| `draft-dflash` llama.cpp after PR `#22105` merge | High research, medium record | New upstream support and Gemma 26B DFlash draft exist, but B70/SYCL and record patch integration are unproven |
-| EAGLE-3 Gemma4 26B speculator | Medium-high | Active local source has `draft-eagle3`; should be cheap to smoke if model can be downloaded |
 | Exact verifier candidate-vs-max LM-head kernel | High but not quick | Directly targets top profile node and preserves exactness if designed correctly; must be a different design than the existing fused full-vocab argmax kernel, which is slower |
-| Direct-unroll confidence score/gap | High | Could reduce verifier rows without warmed history; complements current MTP path |
 | Graph-level DFlash KV injection/per-round fixed shape | Medium | Upstream discussion identifies this as needed for DFlash graph reuse |
 | DeepSpec DSpark algorithm mining | Medium | Useful design ideas, but no Gemma26 checkpoint and likely training-heavy |
 | Latest Intel llm-scaler image A/B on Qwen and maybe Gemma | Medium-low for Gemma, medium for Qwen | Fresh B70 platform updates may help vLLM but prior Gemma vLLM path was slow |
@@ -505,6 +483,9 @@ not as the main Gemma Q8 record path unless a same-identity Gemma test surprises
 | --- | --- |
 | More `p_min`/`n_min` micro-sweeps | Tight sweeps already underperformed; without new confidence scoring they mainly measure variance (`research-plan.md:97-104`) |
 | More blind MTP depth | Strict `n_max=4` and direct-unroll 8/9/10/12 lost hard (`research-plan.md:167-177`, `research-plan.md:545-555`) |
+| Direct-unroll confidence/gap tail trim | Implemented and screened via `LLAMA_MTP_DRAFT_DIRECT_ARGMAX_SCORES=1` / `LLAMA_MTP_DRAFT_LOGIT_GAP_MIN_START_POS`; strict 128-token highs did not survive full512 and the score path adds overhead (`experiments/gemma4-26b-a4b-q8-b70/sweeps/20260628T0245-crack100-runtime-sweeps.md:2040-2167`) |
+| EAGLE-3 Gemma4 speculator | Local Q4/Q8 drafts exist and graph-off liveness works, but graph-off was only `72.651 tok/s`; graph-on crashes at `OP MUL_MAT`. Needs a dedicated graph-integration branch before another record attempt (`experiments/gemma4-26b-a4b-q8-b70/sweeps/20260628T0245-crack100-runtime-sweeps.md:1783-1830`) |
+| DFlash PR 22105 branch | Local BF16 DFlash GGUF exists and the converted server loads, but the strict smoke was interrupted after canary timings around `2.01 tok/s`. Treat as infrastructure research only until KV/graph injection is redesigned (`experiments/gemma4-26b-a4b-q8-b70/sweeps/20260628T0245-crack100-runtime-sweeps.md:2368-2385`) |
 | Alternate MTP drafts | Strict higher-precision drafts and the Q2_K draft all lost, and the lane is verifier-bound (`research-plan.md:1215-1223`) |
 | Host `h_nextn` copy trimming | Measured copy time is tiny and full512 was below record (`experiments/gemma4-26b-a4b-q8-b70/sweeps/20260628T1319-hnextn-cacheguard-negative.md:50-66`, `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260628T1319-hnextn-cacheguard-negative.md:94-107`) |
 | Q8 reorder pair/direct/top8/grouped variants | Strict tests show register/scatter/addressing overhead dominates unless a new kernel profile says otherwise (`research-plan.md:106-139`) |

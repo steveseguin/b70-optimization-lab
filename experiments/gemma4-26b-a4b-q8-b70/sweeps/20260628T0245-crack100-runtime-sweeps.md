@@ -2598,3 +2598,59 @@ Decision: **stop runtime/config roulette** for Gemma4 26B Q8 on this stack.
 Future work should either implement a real compact-verifier source patch or
 accept the current promoted record (`98.340` median 1-100, strict full512,
 fresh/cache0) as the honest headline until a new mechanism exists.
+
+## Reliability batch after audit: no repeatable crack-100 lane (`20260628T233549Z`)
+
+Purpose: after the user clarified that only cold fresh-response throughput can
+be promoted, re-test the historical high-side lanes under the strict full512
+realistic gate and close any that do not repeat. Every lane used unique prompts,
+`cached_tokens=0`, no context checkpoints, no prompt/history/ngram reuse, and
+the `UD-Q8_K_XL` target/verifier with the Q4_0 MTP draft.
+
+| Lane | Variant | Median 1-100 | p10 | Mean | Full512 after TTFT | Wall full512 | TTFT median ms | Validity | Summary |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- | --- |
+| GPU0 | current control, `unroll=7`, `p_min=0.0475`, `ubatch=1024` | `98.843` | `91.260` | `98.809` | `92.276` | `89.334` | `179.1` | pass/cached0 | `data/gemma4-q8-gpu0-crack100-reliability-control-20260628T233549Z/summary.json` |
+| GPU1 | control + `LLAMA_SPEC_VERIFY_SKIP_STATELESS_ACCEPT=1` | `97.699` | `86.361` | `96.338` | `90.899` | `88.004` | `180.2` | pass/cached0 | `data/gemma4-q8-gpu1-crack100-reliability-skipstateless-20260628T233549Z/summary.json` |
+| GPU2 | `unroll=6`, `p_min=0.0400`, `ubatch=1024` | `96.158` | `85.199` | `95.126` | `90.790` | `87.140` | `180.1` | pass/cached0 | `data/gemma4-q8-gpu2-crack100-reliability-unroll6-p0040-20260628T233549Z/summary.json` |
+| GPU3 | `ubatch=896`, raw verifier argmax, skip-stateless, draft-device handoff | `95.099` | `85.364` | `95.896` | `89.803` | `86.125` | `179.9` | pass/cached0 | `data/gemma4-q8-gpu3-crack100-reliability-ub896-raw-skip-handoff-20260628T233549Z/summary.json` |
+
+Decision: **no promotion / no LocalMaxxing submission**. The strongest lane in
+this batch was the plain current control at `98.843`, below the desired reliable
+`>100` target and only a high-side repeat near the existing submitted `98.340`
+record. The skip-stateless, `unroll=6 p_min=0.0400`, and `ubatch=896`
+raw/handoff lanes all failed to repeat their earlier `>100` observations.
+
+Prompt-level behavior also explains why config-only tuning has stalled:
+
+- Several prompts are already comfortably above `100 tok/s` on the control lane
+  (`architecture-tradeoff` `107.67`, `bug-report-synthesis` `105.64`,
+  `risk-register` `105.06`, `decision-memo` `105.26`).
+- Median is held down by harder fresh prompts, especially `code-review`
+  (`83.06`) and `performance-hypotheses` (`90.70`), with `sql-debugging`,
+  `customer-email`, and `technical-guide` moving around depending on generated
+  text and acceptance profile.
+- That pattern means the remaining gap is not a global server scheduling flag.
+  It is target-verifier/accepted-token economics on less predictable fresh
+  responses.
+
+Verifier-output audit checkpoint:
+
+- The current `LLAMA_SPEC_VERIFY_BACKEND_ARGMAX_IDS=1` +
+  `LLAMA_SPEC_VERIFY_BULK_SAMPLED_IDS=1` path is already the safest lightweight
+  exact verifier-output route. It avoids host logits allocation and reads only
+  compact sampled `I32` IDs for the normally consecutive verifier rows.
+- Existing exact shortcuts are closed: Gemma fused output argmax
+  (`ggml_mul_mat_argmax(model.output, cur)`) is much slower; raw/softcap argmax
+  still computes the full LM head; staged MTP3/split-bonus keeps target
+  verification semantics but lost badly.
+- A future exact candidate-vs-maximum verifier would need a real backend design:
+  compute candidate logits and still prove no token in the full `262144` vocab
+  beats the draft under the exact Q8 dot, tie, softcap, suppress-token, and
+  LoRA semantics. Scoring only drafted IDs is not strict-safe.
+
+Updated crack-100 stance: the promoted headline remains `98.340` median
+tokens 1-100 after TTFT (`cmqxchyra03xmqr01b963gmi1`). The best non-promoted
+fresh/cache0 repeat is now `98.843` control, useful as evidence that the recipe
+is near the cliff but still not a reliable `>100`. Further work should be a new
+source mechanism that either reduces exact verifier rows or changes verifier
+LM-head economics; do not spend more cycles on raw runtime/config repeats.
