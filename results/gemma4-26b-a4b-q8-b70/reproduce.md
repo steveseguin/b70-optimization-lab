@@ -47,6 +47,10 @@ and VDR compile-knob patch:
 - `../../patches/gemma4-26b-a4b-q8-b70/20260627-llamacpp-gemma4-moe-reuse-attn-rms-record.md`
 - `../../patches/gemma4-26b-a4b-q8-b70/q8-moe-id-reorder-positive-20260627.md`
 - `../../patches/gemma4-26b-a4b-q8-b70/q8-reorder-vdr-compile-knob-20260627.patch`
+- Current full local worktree capture:
+  `../../patches/gemma4-26b-a4b-q8-b70/20260629-current-llamacpp-gemma-record-worktree.md`
+  and
+  `../../patches/gemma4-26b-a4b-q8-b70/20260629-current-llamacpp-gemma-record-worktree.patch`
 
 The `20260626T2225` patch is intentionally cumulative and includes default-off
 rejected experiment paths. The RMS patch is the small incremental source change
@@ -54,6 +58,18 @@ for the superseded `104.309` micro-record. The Q8 MoE-ID reorder snapshot
 documents the `170-171` path. The VDR compile-knob patch is default-preserving;
 the current promoted realistic-suite build explicitly sets
 `-DGGML_SYCL_REORDER_Q8_0_VDR_MMVQ=2`.
+
+To reconstruct the current local source snapshot from clean llama.cpp:
+
+```bash
+cd /home/steve/src/llama.cpp-gemma-record-repro-c926
+git checkout c926ad098
+git apply /home/steve/qwen36-results-main/patches/gemma4-26b-a4b-q8-b70/20260629-current-llamacpp-gemma-record-worktree.patch
+```
+
+This full-worktree patch is for recovery and review. It includes default-off
+negative experiments as well as promoted paths, so do not enable every flag
+blindly.
 
 ```bash
 cd /home/steve/qwen36-results-main

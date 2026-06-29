@@ -133,6 +133,12 @@ External references:
   `/home/steve/src/llama.cpp-latest-gemma/build-sycl-b70-aot-bmg-g31/bin/`.
   Use `--ctx-checkpoints 0` for record attempts on this runtime; the upstream
   default checkpointing hurts this benchmark's TTFT.
+- The current local Gemma record source worktree snapshot is preserved as
+  [`../../patches/gemma4-26b-a4b-q8-b70/20260629-current-llamacpp-gemma-record-worktree.md`](../../patches/gemma4-26b-a4b-q8-b70/20260629-current-llamacpp-gemma-record-worktree.md)
+  plus the adjacent `.patch`. This cumulative patch is the recovery artifact
+  for `/home/steve/src/llama.cpp-gemma-record-repro-c926` at upstream
+  `c926ad098`; it includes promoted code paths and default-off failed
+  experiments, so consult the per-experiment notes before enabling flags.
 - There is enough disk for the Q8 GGUF; `/mnt/fast-ai` had about 353 GB free at
   lane start.
 - The Q8 GGUF is downloaded and byte-verified at
