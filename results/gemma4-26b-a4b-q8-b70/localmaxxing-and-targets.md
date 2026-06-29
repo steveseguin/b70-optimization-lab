@@ -42,6 +42,28 @@ Interpretation for this lane:
 
 Current policy-compliant LocalMaxxing submission:
 
+- `gemma4-q8-gpu1-vdr2-selecteddown-reordervdr2-full512-20260629B`,
+  llama.cpp `c926ad098` on one B70, UD-Q8_K_XL target/verifier with Q4_0 MTP
+  draft, f16 KV, 8K context, reordered-Q8 VDR2, F16 p021 small-ncols,
+  bulk sampled-ID verifier host read, VDR2 selected-down fused weighted-sum,
+  `n_max=3`, `n_min=2`, `p_min=0.0475`, `UBATCH_SIZE=1024`;
+- fixed suite:
+  `repro/gemma4-26b-a4b-q8-b70/realistic-suite-v1.json`, each prompt once,
+  `cached_tokens=0` every row;
+- primary metric: **115.72789384447941 tok/s** median generated-token
+  throughput for tokens 1-100 after TTFT;
+- p10 `101.449`, mean `113.158`, median TTFT `181.348 ms`, median full-512
+  after-TTFT `104.602`, median wall full-512 `100.228`;
+- supporting same-identity strict full512 rows: `113.47081786263712`,
+  `113.81540554086772`, and `114.8109417270852 tok/s`;
+- payload:
+  `data/localmaxxing-gemma4-26b-a4b-q8-b70-llamacpp-realistic-vdr2-selecteddown-reordervdr2-full512-20260629.queue.json`;
+- LocalMaxxing: `cmqyo0jyt08ippk01vhiobdnm`;
+- response:
+  `data/localmaxxing-responses/gemma4-26b-a4b-q8-b70-llamacpp-realistic-vdr2-selecteddown-reordervdr2-full512-20260629.submit.log`.
+
+Previous policy-compliant LocalMaxxing submission, now superseded:
+
 - `gemma4-q8-gpu1-strict-vdr2-f16p021-bulksampled-confirm-B-n3-nmin2-p00475-ub1024-full512-20260628T052158Z`,
   llama.cpp `c926ad098` on one B70, UD-Q8_K_XL target/verifier with Q4_0 MTP
   draft, f16 KV, 8K context, reordered-Q8 VDR2, F16 p021 small-ncols,
@@ -69,7 +91,7 @@ Previous policy-compliant F16-p021 submission, now superseded:
   throughput for tokens 1-100 after TTFT;
 - LocalMaxxing: `cmqx3687103v4qr01ace1ft3m`;
 - status: still valid strict evidence, but replaced as the current record by
-  the bulk sampled-ID verifier row above.
+  the VDR2 selected-down fused weighted-sum row above.
 
 Previous policy-compliant VDR2 submission, now superseded:
 
@@ -78,7 +100,7 @@ Previous policy-compliant VDR2 submission, now superseded:
   for tokens 1-100 after TTFT;
 - LocalMaxxing: `cmqwxep4a03qiqr010chjn93s`;
 - status: still valid strict evidence, but replaced as the current record by
-  later rows, most recently the `98.34046474459183 tok/s` row above.
+  later rows, most recently the `115.72789384447941 tok/s` row above.
 
 Previous policy-compliant VDR2 submission, now superseded:
 
@@ -87,7 +109,7 @@ Previous policy-compliant VDR2 submission, now superseded:
   for tokens 1-100 after TTFT;
 - LocalMaxxing: `cmqwt1zk803ozqr01hctqss2z`;
 - status: still valid strict evidence, but replaced as the current record by
-  later rows, most recently the `98.34046474459183 tok/s` row above.
+  later rows, most recently the `115.72789384447941 tok/s` row above.
 
 Previous policy-compliant VDR2 submission, now superseded:
 
@@ -96,7 +118,7 @@ Previous policy-compliant VDR2 submission, now superseded:
   for tokens 1-100 after TTFT;
 - LocalMaxxing: `cmqwqzayr03o8qr01j6lgx93n`;
 - status: still valid strict evidence, but replaced as the current record by
-  later rows, most recently the `98.34046474459183 tok/s` row above.
+  later rows, most recently the `115.72789384447941 tok/s` row above.
 
 Previous policy-compliant VDR4 submission, now superseded:
 
@@ -105,7 +127,7 @@ Previous policy-compliant VDR4 submission, now superseded:
   for tokens 1-100 after TTFT;
 - LocalMaxxing: `cmqwnl2ag03lgqr01ch5bxknq`;
 - status: still valid strict evidence, but replaced as the current record by
-  later rows, most recently the `98.34046474459183 tok/s` row above.
+  later rows, most recently the `115.72789384447941 tok/s` row above.
 
 Previous realistic-suite local Q8 observation, now superseded:
 

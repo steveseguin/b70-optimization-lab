@@ -7,23 +7,23 @@ promoted reproduction target is the fixed realistic cold prompt suite:
 
 Best strict cold-suite result:
 
-- draft-MTP VDR2:
-  `data/gemma4-q8-gpu1-strict-vdr2-f16p021-bulksampled-confirm-B-n3-nmin2-p00475-ub1024-full512-20260628T052158Z/summary.json`;
-- primary metric: `98.34046474459183 tok/s` median generated-token throughput
+- draft-MTP VDR2 selected-down fused weighted-sum:
+  `data/gemma4-q8-gpu1-vdr2-selecteddown-reordervdr2-full512-20260629B/summary.json`;
+- primary metric: `115.72789384447941 tok/s` median generated-token throughput
   for tokens 1-100 after TTFT;
 - config: reordered-Q8 VDR2, `n_max=3`, `n_min=2`, `p_min=0.0475`,
   `UBATCH_SIZE=1024`, `LLAMA_SYCL_F16_P021_SMALL_NCOLS=1`,
-  `LLAMA_SPEC_VERIFY_BULK_SAMPLED_IDS=1`, Q4_0 MTP draft verified by the Q8
-  target;
+  `LLAMA_SPEC_VERIFY_BULK_SAMPLED_IDS=1`,
+  `LLAMA_GEMMA4_MOE_FUSED_DOWN_WEIGHTED_SUM_REORDER_VDR2=1`, Q4_0 MTP draft
+  verified by the Q8 target;
 - gate: `realistic_final_gate.passed=true`, `cached_tokens=0` on every prompt.
 
-Representative / submitted status: the current LocalMaxxing payload uses the
-VDR2 transfer of the strict `n_max=3`, `n_min=2`, `UBATCH_SIZE=1024` family
-plus `LLAMA_SYCL_F16_P021_SMALL_NCOLS=1` and
-`LLAMA_SPEC_VERIFY_BULK_SAMPLED_IDS=1`. Exact full512 confirmation repeats
-measured `96.01452890026427`, `98.34046474459183`,
-`95.90275376682132`, and `94.94094934974818 tok/s`. Approved ID:
-`cmqxchyra03xmqr01b963gmi1`. Prior F16-p021 row
+Representative status: the current payload uses the VDR2 selected-down fused
+weighted-sum transfer of the strict `n_max=3`, `n_min=2`,
+`UBATCH_SIZE=1024` family. Exact full512 confirmation repeats measured
+`113.47081786263712`, `115.72789384447941`, `113.81540554086772`, and
+`114.8109417270852 tok/s`. Prior LocalMaxxing row
+`cmqxchyra03xmqr01b963gmi1` at `98.34046474459183 tok/s`, F16-p021 row
 `95.82453787677183 tok/s`, VDR2 rows `90.98312252660529`,
 `90.32179401019857`, and `89.45543282863798 tok/s`, plus VDR4
 `87.61145306230438 tok/s`, remain valid but are superseded.
@@ -47,10 +47,10 @@ and VDR compile-knob patch:
 - `../../patches/gemma4-26b-a4b-q8-b70/20260627-llamacpp-gemma4-moe-reuse-attn-rms-record.md`
 - `../../patches/gemma4-26b-a4b-q8-b70/q8-moe-id-reorder-positive-20260627.md`
 - `../../patches/gemma4-26b-a4b-q8-b70/q8-reorder-vdr-compile-knob-20260627.patch`
-- Current full local worktree capture:
-  `../../patches/gemma4-26b-a4b-q8-b70/20260629-current-llamacpp-gemma-record-worktree.md`
-  and
-  `../../patches/gemma4-26b-a4b-q8-b70/20260629-current-llamacpp-gemma-record-worktree.patch`
+- Current full local worktree capture for the selected-down record:
+  `../../patches/gemma4-26b-a4b-q8-b70/20260629-vdr2-selected-down-reordervdr2-source.patch`
+  plus the harness identity patch
+  `../../patches/gemma4-26b-a4b-q8-b70/20260629-vdr2-selected-down-reordervdr2-harness.patch`.
 
 The `20260626T2225` patch is intentionally cumulative and includes default-off
 rejected experiment paths. The RMS patch is the small incremental source change
@@ -64,7 +64,7 @@ To reconstruct the current local source snapshot from clean llama.cpp:
 ```bash
 cd /home/steve/src/llama.cpp-gemma-record-repro-c926
 git checkout c926ad098
-git apply /home/steve/qwen36-results-main/patches/gemma4-26b-a4b-q8-b70/20260629-current-llamacpp-gemma-record-worktree.patch
+git apply /home/steve/qwen36-results-main/patches/gemma4-26b-a4b-q8-b70/20260629-vdr2-selected-down-reordervdr2-source.patch
 ```
 
 This full-worktree patch is for recovery and review. It includes default-off
@@ -165,12 +165,20 @@ scripts/run-gemma4-26b-first-baseline.sh
 
 ## Representative Realistic Final Gate Reproduction
 
+The promoted record can be reproduced with:
+
+```bash
+cd /home/steve/qwen36-results-main
+GPU_INDEX=1 PORT=18421 \
+  repro/gemma4-26b-a4b-q8-b70/run-vdr2-selecteddown-record.sh
+```
+
 Use this command for the current representative draft-MTP realistic-suite
-candidate. It reproduces the VDR2 `n_max=3`, `n_min=2`, `p_min=0.0475`,
-`UBATCH_SIZE=1024` family, whose current submitted strict row is
-`98.340 tok/s` on the fixed cold suite. The prior F16-p021 `95.825`,
-VDR2 `90.983`, `90.322`, and VDR4 `87.611 tok/s` rows remain valid evidence
-but are no longer the promoted LocalMaxxing headline.
+candidate. It reproduces the VDR2 selected-down `n_max=3`, `n_min=2`,
+`p_min=0.0475`, `UBATCH_SIZE=1024` family, whose current strict row is
+`115.728 tok/s` on the fixed cold suite. The prior `98.340`, F16-p021
+`95.825`, VDR2 `90.983`, `90.322`, and VDR4 `87.611 tok/s` rows remain valid
+evidence but are no longer the promoted headline.
 
 ```bash
 cd /home/steve/qwen36-results-main
@@ -194,6 +202,7 @@ LLAMA_GEMMA4_MOE_SELECTED_SOFTMAX=1 \
 LLAMA_GEMMA4_MOE_SELECTED_SOFTMAX_FUSED=1 \
 LLAMA_GEMMA4_MOE_WEIGHTED_SUM=1 \
 LLAMA_GEMMA4_MOE_REUSE_ATTN_RMS=1 \
+LLAMA_GEMMA4_MOE_FUSED_DOWN_WEIGHTED_SUM_REORDER_VDR2=1 \
 LLAMA_SYCL_MUL_MAT_ID_ROUTE_CACHE=1 \
 LLAMA_SYCL_F16_P021_SMALL_NCOLS=1 \
 GPU_INDEX=1 PORT=18421 \

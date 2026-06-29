@@ -1,6 +1,6 @@
 # Gemma 4 26B A4B Q8 B70 Research Plan
 
-Research snapshot: 2026-06-28. Goal: maximize valid single-session decode for
+Research snapshot: 2026-06-29. Goal: maximize valid single-session decode for
 one complete Q8/INT8-quality Gemma 4 26B A4B replica per B70, then run four
 replicas on four GPUs for parallel research and aggregate service capacity.
 
@@ -9,33 +9,33 @@ replicas on four GPUs for parallel research and aggregate service capacity.
 Best one-B70 Q8 strict result under the promotion gate:
 
 - result:
-  `data/gemma4-q8-gpu1-strict-vdr2-f16p021-bulksampled-confirm-B-n3-nmin2-p00475-ub1024-full512-20260628T052158Z/`;
-- primary metric: **98.34046474459183 tok/s** median generated-token
+  `data/gemma4-q8-gpu1-vdr2-selecteddown-reordervdr2-full512-20260629B/`;
+- primary metric: **115.72789384447941 tok/s** median generated-token
   throughput for tokens 1-100 after TTFT across the fixed realistic suite;
-- p10 `85.97937679810455`, mean `95.95288855186745`, median full-512
-  after-TTFT `91.17386231553596`, median wall full-512
-  `87.73710699260519`, median TTFT `180.21126103121787 ms`;
+- p10 `101.44940713540609`, mean `113.15845262438565`, median full-512
+  after-TTFT `104.6018645861352`, median wall full-512
+  `100.22769693993533`, median TTFT `181.347543024458 ms`;
 - config: llama.cpp `c926ad098`, UD-Q8_K_XL target/verifier, Q4_0 MTP draft,
   reordered-Q8 VDR2, `n_max=3`, `n_min=2`, `p_min=0.0475`,
   `UBATCH_SIZE=1024`, `LLAMA_SYCL_F16_P021_SMALL_NCOLS=1`,
-  `LLAMA_SPEC_VERIFY_BULK_SAMPLED_IDS=1`, `--ctx-checkpoints 0`, no
-  n-gram/history acceleration;
+  `LLAMA_SPEC_VERIFY_BULK_SAMPLED_IDS=1`,
+  `LLAMA_GEMMA4_MOE_FUSED_DOWN_WEIGHTED_SUM_REORDER_VDR2=1`,
+  `--ctx-checkpoints 0`, no n-gram/history acceleration;
 - gate: fixed suite `gemma4-26b-a4b-q8-b70-realistic-v1`, each prompt sent
   once, `cached_tokens=0` on every request,
   `realistic_final_gate.passed=true`.
 
-This is the submitted policy-compliant VDR2 transfer of the strict `n_max=3`,
-`n_min=2`, `UBATCH_SIZE=1024` family plus
-`LLAMA_SYCL_F16_P021_SMALL_NCOLS=1` and
-`LLAMA_SPEC_VERIFY_BULK_SAMPLED_IDS=1`; approved ID
-`cmqxchyra03xmqr01b963gmi1`. It was submitted from a conservative exact
-full512 confirmation batch (`96.01452890026427`, `98.34046474459183`,
-`95.90275376682132`, `94.94094934974818 tok/s`). The prior F16-p021
-`95.82453787677183 tok/s`, VDR2 `90.98312252660529`,
-`90.32179401019857`, and `89.45543282863798 tok/s` submissions and prior VDR4
-`87.61145306230438 tok/s` submission are superseded. The older
-`86.47445652599384 tok/s` `p_min=0.075` row did not repeat and is also
-superseded.
+This is the policy-compliant VDR2 selected-down fused weighted-sum transfer of
+the strict `n_max=3`, `n_min=2`, `UBATCH_SIZE=1024` family; approved
+LocalMaxxing ID `cmqyo0jyt08ippk01vhiobdnm`. It was promoted from a
+conservative exact full512 confirmation batch (`113.47081786263712`,
+`115.72789384447941`, `113.81540554086772`, and `114.8109417270852 tok/s`).
+The prior LocalMaxxing row `cmqxchyra03xmqr01b963gmi1` at
+`98.34046474459183 tok/s`, prior F16-p021 `95.82453787677183 tok/s`, VDR2
+`90.98312252660529`, `90.32179401019857`, and `89.45543282863798 tok/s`
+submissions and prior VDR4 `87.61145306230438 tok/s` submission are
+superseded. The older `86.47445652599384 tok/s` `p_min=0.075` row did not
+repeat and is also superseded.
 The older `100+`, `170+`, and `280+` rows remain useful diagnostics, but they
 are not representative real-world throughput unless revalidated by the fixed
 cold suite.
@@ -63,6 +63,16 @@ preserves target-verifier semantics and lifted the strict record to
 `98.34046474459183 tok/s`, but still did **not** crack reliable `>100`. Keep
 it in the promoted reproduction recipe; the next >100 work needs verifier
 economics rather than more host read cleanup.
+
+2026-06-29 VDR2 selected-down fused weighted-sum update: the verifier MoE
+selected-down backend was extended to support VDR2-reordered Q8 expert weights
+under `LLAMA_GEMMA4_MOE_FUSED_DOWN_WEIGHTED_SUM_REORDER_VDR2=1`. This removed
+the separate selected-down materialization plus weighted-sum pass in the active
+VDR2 record stack. Full512 confirmations passed on all four GPUs and lifted the
+strict record to `115.72789384447941 tok/s`. This finally cracked reliable
+`>100` under the fixed fresh-response gate; keep this as the new baseline before
+trying deeper verifier LM-head or MoE boundary work. See
+`20260629-vdr2-selected-down-record.md`.
 
 2026-06-28 crack-100 reliability update: a single strict full512 frequency-floor
 run at `2400,2800` hit `100.22397388514726 tok/s`, and an earlier unroll6 row
@@ -171,8 +181,9 @@ strict record. The best Q8_0 screen,
 `n_max=3`/`n_min=1`/`p_min=0.0475`, reached
 `91.5564081422068 tok/s`, but exact confirmations landed at
 `88.94881774985208` and `89.89234269084307`; the best deeper row was
-`n_max=4`/`n_min=2` at `90.27678402019421`, still below the current
-`UD-Q8_K_XL` record (`98.34046474459183`). Keep Q8_0 as a compatibility/control
+`n_max=4`/`n_min=2` at `90.27678402019421`, still below both the old
+`UD-Q8_K_XL` record (`98.34046474459183`) and the current
+`115.72789384447941` record. Keep Q8_0 as a compatibility/control
 lane, not a promoted LocalMaxxing row. See
 `../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260627T2144-q80-target-strict-negative.md`.
 
@@ -1230,8 +1241,9 @@ Text speed is first. After text baseline:
     the current VDR2 strict identity (`UD-Q8_K_XL` target/verifier, `n_max=3`,
     `n_min=2`, `p_min=0.0475`, `UBATCH_SIZE=1024`), official draft swaps to
     Q4_K_M, Q5_K_M, Q6_K, and Q8_0 all passed the fresh realistic gate but
-    stayed below the current `98.34046474459183 tok/s` record. Closest rows were Q8_0
-    at `88.245438 tok/s` and Q5_K_M at `88.109559 tok/s`; Q4_K_M and Q6_K
+    stayed below the then-current `98.34046474459183 tok/s` record and far below
+    the current `115.72789384447941 tok/s` record. Closest rows were Q8_0 at
+    `88.245438 tok/s` and Q5_K_M at `88.109559 tok/s`; Q4_K_M and Q6_K
     were lower. A later Q2_K screen also lost (`85.779-88.903 tok/s`) versus a
     same-window Q4_0 control (`95.282 tok/s`). Keep Q4_0 as the promoted default
     draft unless a future source change materially changes the draft/verifier

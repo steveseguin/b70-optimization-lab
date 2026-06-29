@@ -1,6 +1,6 @@
 # Gemma 4 26B A4B Q8 B70 Optimization Focus Map
 
-Date: 2026-06-28
+Date: 2026-06-28, updated 2026-06-29
 
 Scope: Gemma 4 26B A4B `UD-Q8_K_XL` target/verifier on Intel Arc Pro B70,
 with one full Q8/INT8-quality replica per B70. This is a focus map for where
@@ -9,36 +9,36 @@ Gemma sweep history and a triage of recent Grok/X.com leads.
 
 ## At A Glance
 
-Current valid record: `98.34046474459183 tok/s` median generated-token
+Current valid record: `115.72789384447941 tok/s` median generated-token
 throughput for tokens 1-100 after TTFT on the fixed realistic cold suite,
 with `cached_tokens=0` on every prompt. The record identity is llama.cpp
 `c926ad098`, `UD-Q8_K_XL` target/verifier, Q4_0 MTP draft, reordered-Q8 VDR2,
 `n_max=3`, `n_min=2`, `p_min=0.0475`, `UBATCH_SIZE=1024`,
-`LLAMA_SYCL_F16_P021_SMALL_NCOLS=1`, and
-`LLAMA_SPEC_VERIFY_BULK_SAMPLED_IDS=1`
-(`results/gemma4-26b-a4b-q8-b70/README.md:3-12`,
-`results/gemma4-26b-a4b-q8-b70/research-plan.md:9-25`,
-`results/gemma4-26b-a4b-q8-b70/reproduce.md:8-18`).
+`LLAMA_SYCL_F16_P021_SMALL_NCOLS=1`,
+`LLAMA_SPEC_VERIFY_BULK_SAMPLED_IDS=1`, and
+`LLAMA_GEMMA4_MOE_FUSED_DOWN_WEIGHTED_SUM_REORDER_VDR2=1`
+(`results/gemma4-26b-a4b-q8-b70/20260629-vdr2-selected-down-record.md`).
 
-Main conclusion: the strict realistic lane is target/verifier-forward bound,
-not draft-bound. The latest profile has target/verifier `process_ubatch_ms`
-at `88713.159` versus draft `6037.002`; node profiling puts the target LM-head
-full-vocab projection first, followed by verifier MoE gate/up and down
-`MUL_MAT_ID` nodes (`results/gemma4-26b-a4b-q8-b70/research-plan.md:179-199`).
-Future speed work should reduce exact verifier rows, exact LM-head verification
-cost, or verifier MoE boundary cost.
+Main conclusion: the strict realistic lane is still target/verifier-forward
+bound, not draft-bound, but the first reliable `>100` win came from verifier
+MoE boundary work: a VDR2-reordered Q8 selected-down fused weighted-sum backend.
+Future speed work should now reduce exact verifier rows, exact LM-head
+verification cost, or additional verifier MoE boundary cost.
 
 Practical next focus:
 
 1. Exact verifier LM-head candidate-vs-max design, but only as a real new
    source design. The existing fused `ggml_mul_mat_argmax(model.output, cur)`
    path is already tested and is slower than the backend-argmax-ID route.
-2. Direct-unroll confidence scores/gating that can reduce low-confidence
-   verifier rows without warmed history.
-3. A dedicated branch to test newly merged llama.cpp `draft-dflash` on B70,
-   starting with correctness and profiler evidence, not record expectations.
-4. DFlash/XPU and DeepSpec/DSpark as research tracks, not immediate record
-   knobs.
+2. A new verifier-row or bonus-token design that preserves the current bonus
+   pipeline while avoiding unnecessary full LM-head rows. The simple no-bonus
+   row and staged split-bonus approaches passed quality but were much slower.
+3. Direct-unroll confidence scores/gating only if the scoring path itself is
+   cheaper than the rows it removes. The first confidence/gap screens did not
+   survive full512 confirmation.
+4. DFlash/XPU and DeepSpec/DSpark as research tracks only after graph/KV
+   injection or draft-generation cost changes. The first local DFlash PR 22105
+   Gemma4 screen converted and loaded, but runtime was far too slow on SYCL.
 
 Avoid:
 
@@ -50,11 +50,65 @@ Avoid:
 - TurboQuant for this short strict speed lane;
 - treating Q8_0 target runs as equivalent to `UD-Q8_K_XL`.
 
+## Latest Other-AI Progress Review
+
+Recent work mostly **closed low-ROI paths** rather than finding another stable
+speed jump. That is useful: it narrows the next agent's search space.
+
+Latest confirmed state:
+
+- `qwen36-results-main` is clean on `main...origin/main` as of the latest
+  review.
+- Active record source
+  `/home/steve/src/llama.cpp-gemma-record-repro-c926` is a detached worktree at
+  `c926ad098` with broad dirty source changes across speculative sampling,
+  Gemma4 graph/model code, and SYCL/MMVQ kernels. Do not reset or rebase it
+  while an optimizer is running.
+- The current promoted Gemma Q8 record is now `115.72789384447941 tok/s`
+  via the VDR2 selected-down fused weighted-sum path.
+
+Recent useful progress:
+
+- Preserved the full current record artifact packet and reproducibility trail:
+  latest pushed docs commits include `docs: close Gemma crack-100 config lanes`,
+  `docs: record Gemma crack-100 reliability closure`, `docs: capture Gemma
+  verifier kernel audit`, and `docs: preserve Gemma optimization artifacts`.
+- Confirmed that `LLAMA_SPEC_VERIFY_BULK_SAMPLED_IDS=1` plus
+  `LLAMA_SYCL_F16_P021_SMALL_NCOLS=1` remains part of the strict record stack,
+  now joined by `LLAMA_GEMMA4_MOE_FUSED_DOWN_WEIGHTED_SUM_REORDER_VDR2=1`.
+- Verified that the strict lane is still verifier/target-forward bound, not
+  draft-bound. Profiles point first at target LM-head full-vocab projection,
+  then verifier MoE gate/up/down `MUL_MAT_ID`.
+
+Recent closed negatives:
+
+- Crack-100 config roulette: `p_min`, unroll, thread counts, frequency floor,
+  solo-vs-four-GPU, and context-size screens produced valid near-100 or
+  occasional `100+` observations, but did not confirm reliably above the
+  `98.340` record.
+- Host/server cleanup: sampler-clone skip and identity `out_ids` skip passed
+  strict quality screens but lost or failed confirmation against controls.
+- Verifier-row scheduling: simple no-bonus row and staged MTP3 split-bonus were
+  semantically valid but much slower because they disrupted the current
+  verifier/bonus pipeline.
+- Device `h_nextn` handoff: safe row-view copies worked after view
+  initialization, but were slower than the current host-staged path.
+- DFlash PR 22105: Gemma4 DFlash BF16 draft conversion worked after a Gemma4
+  vocab writer patch, but local SYCL runtime was unusably slow. Early eval was
+  around `0.70-4.01 tok/s`, and DFlash draft generation was roughly
+  `140 ms/call`. This is a graph/KV/draft-cost research item, not a record knob.
+
+Implication for the next AI: do not spend another session on launch-flag
+sweeps. The next credible record attempt needs a real verifier-cost reduction:
+LM-head compact exact max, row-adaptive verification, a cheap exact bonus path,
+or a verifier MoE boundary/kernel change.
+
 ## Current Baselines And Guardrails
 
 | Lane | Result | What it means | Source |
 | --- | ---: | --- | --- |
-| Strict current record | `98.340` tok/s | Only current policy-compliant headline | `README.md:3-12`, `README.md:21-35`, `research-plan.md:9-38` |
+| Strict current record | `115.728` tok/s | Current policy-compliant headline, VDR2 selected-down fused weighted-sum | `20260629-vdr2-selected-down-record.md` |
+| Previous strict row | `98.340` tok/s | Superseded by VDR2 selected-down fusion | `README.md`, `research-plan.md` |
 | Previous strict row | `95.825` tok/s | Superseded by bulk sampled-ID verifier cleanup | `README.md:159-160`, `research-plan.md:43-65` |
 | Earlier strict VDR2 | `90.983`, `90.322`, `89.455` tok/s | Valid progression, superseded | `README.md:161-167`, `research-plan.md:84-95`, `research-plan.md:167-177` |
 | No-spec control | `74.297` tok/s | Clean target-side baseline | `README.md:37-41` |
@@ -389,7 +443,7 @@ Q8 fused matmul/argmax code in `ggml/src/ggml-sycl/ggml-sycl.cpp` /
 `ggml/src/ggml-sycl/mmvq.cpp`. Do not spend a full strict batch on this unless
 a microbench proves it beats the existing `MUL_MAT_ARGMAX` implementation.
 
-### 2. DFlash In llama.cpp, On A Separate Branch
+### 2. DFlash In llama.cpp, Only After Runtime/KV Changes
 
 Why: this is the biggest new external lead. The DFlash repo lists a Gemma 4
 26B-A4B DFlash draft model and says Gemma4 currently needs a temporary vLLM
@@ -408,6 +462,15 @@ not expose `draft-dflash`; its `common_speculative_type_from_name_map` includes
 There are only DFlash-related comments in the local source
 (`/home/steve/src/llama.cpp-gemma-record-repro-c926/src/llama-context.cpp:1596-1604`).
 
+Local update: the other AI already created a DFlash PR 22105 test checkout at
+`/home/steve/src/llama.cpp-dflash-gemma4`. A small isolated
+`conversion/qwen.py` patch made the Gemma4 DFlash BF16 draft convert with the
+right Gemma4 vocab metadata. The converted server loaded and produced valid
+early acceptance signals, but runtime was unusably slow on the current SYCL
+stack: representative early eval was only `0.70-4.01 tok/s`, and DFlash
+generation cost was about `140 ms` per draft generation call. See
+`patches/gemma4-26b-a4b-q8-b70/20260628T2127-dflash-pr22105-gemma4-vocab-negative.md`.
+
 Important implementation detail: a llama.cpp DFlash discussion identified KV
 cache injection as the major blocker/shape issue. The workaround recomputes
 accumulated target features and invalidates graph reuse; the ideal solution is
@@ -417,13 +480,16 @@ embedding batches project/copy K/V into cache, token batches run regular decode,
 with `llama_decode` after `llama_encode` for injection (same discussion,
 reviewed page lines 307-313).
 
-Recommended path: create a clean branch from latest llama.cpp master with
-merged DFlash, then port only the minimum existing B70/Q8 record patches needed
-for the strict baseline. Do not mix this into the active dirty source while an
-experiment is running.
+Recommended path if revisited: first solve or profile the DFlash
+draft-generation overhead and KV/graph injection shape. Do not mix this into
+the active dirty record source while an experiment is running, and do not spend
+strict full512 time until a micro/profile screen shows draft generation is in
+the same rough cost class as MTP rather than two orders of magnitude slower.
 
-First test: Gemma4 DFlash draft model conversion, correctness canary, strict
-128-token cold gate, then profile. Expect infrastructure failures before speed.
+First test if the runtime changes: correctness canary, strict 128-token cold
+gate, DFlash generation-time telemetry, accepted-length telemetry, and
+target/verifier `process_ubatch_ms`. Stop immediately if draft generation is
+still dominating wall time.
 
 ### 3. EAGLE-3 Gemma4 Speculator
 
@@ -494,7 +560,7 @@ not as the main Gemma Q8 record path unless a same-identity Gemma test surprises
 | More blind MTP depth | Strict `n_max=4` and direct-unroll 8/9/10/12 lost hard (`research-plan.md:167-177`, `research-plan.md:545-555`) |
 | Direct-unroll confidence/gap tail trim | Implemented and screened via `LLAMA_MTP_DRAFT_DIRECT_ARGMAX_SCORES=1` / `LLAMA_MTP_DRAFT_LOGIT_GAP_MIN_START_POS`; strict 128-token highs did not survive full512 and the score path adds overhead (`experiments/gemma4-26b-a4b-q8-b70/sweeps/20260628T0245-crack100-runtime-sweeps.md:2040-2167`) |
 | EAGLE-3 Gemma4 speculator | Local Q4/Q8 drafts exist and graph-off liveness works, but graph-off was only `72.651 tok/s`; graph-on crashes at `OP MUL_MAT`. Needs a dedicated graph-integration branch before another record attempt (`experiments/gemma4-26b-a4b-q8-b70/sweeps/20260628T0245-crack100-runtime-sweeps.md:1783-1830`) |
-| DFlash PR 22105 branch | Local BF16 DFlash GGUF exists and the converted server loads, but the strict smoke was interrupted after canary timings around `2.01 tok/s`. Treat as infrastructure research only until KV/graph injection is redesigned (`experiments/gemma4-26b-a4b-q8-b70/sweeps/20260628T0245-crack100-runtime-sweeps.md:2368-2385`) |
+| DFlash PR 22105 branch | Local BF16 DFlash GGUF exists and the converted server loads, but local SYCL runtime was far too slow: early eval was `0.70-4.01 tok/s` and DFlash generation cost was about `140 ms/call`. Treat as infrastructure research only until draft generation and KV/graph injection are redesigned (`patches/gemma4-26b-a4b-q8-b70/20260628T2127-dflash-pr22105-gemma4-vocab-negative.md`) |
 | Alternate MTP drafts | Strict higher-precision drafts and the Q2_K draft all lost, and the lane is verifier-bound (`research-plan.md:1215-1223`) |
 | Host `h_nextn` copy trimming | Measured copy time is tiny and full512 was below record (`experiments/gemma4-26b-a4b-q8-b70/sweeps/20260628T1319-hnextn-cacheguard-negative.md:50-66`, `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260628T1319-hnextn-cacheguard-negative.md:94-107`) |
 | Q8 reorder pair/direct/top8/grouped variants | Strict tests show register/scatter/addressing overhead dominates unless a new kernel profile says otherwise (`research-plan.md:106-139`) |
@@ -698,3 +764,21 @@ External:
 - `https://github.com/intel/llm-scaler`
 - `https://github.com/PMZFX/intel-arc-pro-b70-benchmarks`
 - `https://github.com/Hal9000AIML/arc-pro-b70-ubuntu-gpu-speedup-bugfixes`
+
+## 2026-06-29 Update: Late Head-Only Bonus
+
+Tested the exact late head-only bonus verifier path:
+
+- patch/result ledger:
+  `patches/gemma4-26b-a4b-q8-b70/20260629-late-head-bonus-experiment.md`;
+- strict128 run:
+  `data/gemma4-q8-gpu0-lateheadbonus-strict128-20260629T024814Z/summary.json`;
+- validity: canary 128/128, realistic final gate passed, `cached_tokens=0`;
+- metric: **96.91021564463527 tok/s** median tokens 1-100 after TTFT.
+
+Do not promote. This is below both the then-current valid
+`98.34046474459183 tok/s` record and the newer `115.72789384447941 tok/s`
+record. The standalone one-row bonus head is probably correct but not cheap:
+the extra graph/scheduler work offsets the saved verifier output row. If this
+idea is revisited, it needs to be fused into the existing verifier/output path,
+not launched as a separate head graph.

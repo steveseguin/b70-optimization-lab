@@ -1,6 +1,6 @@
 # Current Promoted Results
 
-Date: 2026-06-28
+Date: 2026-06-29
 
 ## Active Gemma 4 26B A4B Q8 Lane
 
@@ -13,27 +13,26 @@ Current active optimization target:
   scores may guide optimization only; they are not headline throughput or
   LocalMaxxing evidence.
 - Best strict realistic-suite result so far:
-  `98.34046474459183 tok/s` median generated-token throughput for tokens 1-100
-  after TTFT across the fixed cold prompt suite. Evidence:
-  `data/gemma4-q8-gpu1-strict-vdr2-f16p021-bulksampled-confirm-B-n3-nmin2-p00475-ub1024-full512-20260628T052158Z/summary.json`.
+  `115.72789384447941 tok/s` median generated-token throughput for tokens
+  1-100 after TTFT across the fixed cold prompt suite. Evidence:
+  `data/gemma4-q8-gpu1-vdr2-selecteddown-reordervdr2-full512-20260629B/summary.json`.
   It uses llama.cpp `c926ad098`, UD-Q8_K_XL target/verifier, Q4_0 MTP draft,
   reordered-Q8 VDR2, `n_max=3`, `n_min=2`, `p_min=0.0475`,
   `UBATCH_SIZE=1024`, `LLAMA_SYCL_F16_P021_SMALL_NCOLS=1`,
-  `LLAMA_SPEC_VERIFY_BULK_SAMPLED_IDS=1`, `cached_tokens=0` on every prompt,
-  and `realistic_final_gate.passed=true`.
+  `LLAMA_SPEC_VERIFY_BULK_SAMPLED_IDS=1`,
+  `LLAMA_GEMMA4_MOE_FUSED_DOWN_WEIGHTED_SUM_REORDER_VDR2=1`,
+  `cached_tokens=0` on every prompt, and `realistic_final_gate.passed=true`.
 - Representative / submitted status:
-  the VDR2/F16-p021/bulk-sampled-ID transfer of the strict `n_max=3`,
-  `n_min=2`, `UBATCH_SIZE=1024` family is the current policy-compliant
-  Gemma 26B Q8 LocalMaxxing submission: `cmqxchyra03xmqr01b963gmi1`.
-  Full-512 confirmation lanes measured `96.01452890026427`,
-  `98.34046474459183`, `95.90275376682132`, and
-  `94.94094934974818 tok/s`, all with `cached_tokens=0`. The prior
-  F16-p021 row `cmqx3687103v4qr01ace1ft3m` at
-  `95.82453787677183 tok/s`, prior LocalMaxxing row
-  `cmqwxep4a03qiqr010chjn93s` at
-  `90.98312252660529 tok/s`, prior VDR2 submissions
-  `cmqwt1zk803ozqr01hctqss2z` and `cmqwqzayr03o8qr01j6lgx93n`, and prior
-  VDR4 submission `cmqwnl2ag03lgqr01ch5bxknq` are now superseded.
+  the VDR2 selected-down fused weighted-sum path is the current
+  policy-compliant Gemma 26B Q8 LocalMaxxing submission:
+  `cmqyo0jyt08ippk01vhiobdnm`.
+  Full-512 confirmation lanes measured `113.47081786263712`,
+  `115.72789384447941`, `113.81540554086772`, and
+  `114.8109417270852 tok/s`, all with `cached_tokens=0` and 512/512 canary
+  rows passing. The prior LocalMaxxing row `cmqxchyra03xmqr01b963gmi1` at
+  `98.34046474459183 tok/s`, prior F16-p021 row
+  `cmqx3687103v4qr01ace1ft3m`, earlier VDR2 submissions, and prior VDR4
+  submission `cmqwnl2ag03lgqr01ch5bxknq` are now superseded.
 - Current valid no-spec control:
   `74.29709476830473 tok/s` median on the same realistic suite. Evidence:
   `data/gemma4-q8-gpu0-vdr4default-nospec-realistic-gate-v2-20260627T165335Z/summary.json`.
@@ -48,6 +47,8 @@ Current active optimization target:
   the separate realistic-suite promotion path and uses `n_max=3` rather than
   the synthetic `n_max=7` diagnostic recipe.
 - Result packet: `results/gemma4-26b-a4b-q8-b70/README.md`.
+- Current record note:
+  `results/gemma4-26b-a4b-q8-b70/20260629-vdr2-selected-down-record.md`.
 - Reproduction: `results/gemma4-26b-a4b-q8-b70/reproduce.md`.
 - Validation rules: `results/gemma4-26b-a4b-q8-b70/validity-gates.md`.
 - Current research plan: `results/gemma4-26b-a4b-q8-b70/research-plan.md`.

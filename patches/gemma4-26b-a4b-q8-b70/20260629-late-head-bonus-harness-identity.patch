@@ -1,0 +1,32 @@
+diff --git a/scripts/run-gemma4-26b-first-baseline.sh b/scripts/run-gemma4-26b-first-baseline.sh
+index ab260ad9..034381d8 100755
+--- a/scripts/run-gemma4-26b-first-baseline.sh
++++ b/scripts/run-gemma4-26b-first-baseline.sh
+@@ -135,6 +135,7 @@ LLAMA_SPEC_VERIFY_SKIP_STATELESS_ACCEPT="${LLAMA_SPEC_VERIFY_SKIP_STATELESS_ACCE
+ LLAMA_SPEC_VERIFY_NO_BONUS_ROW="${LLAMA_SPEC_VERIFY_NO_BONUS_ROW:-}" \
+ LLAMA_SPEC_VERIFY_STAGE_MTP3="${LLAMA_SPEC_VERIFY_STAGE_MTP3:-}" \
+ LLAMA_SPEC_VERIFY_STAGE_MTP3_SPLIT_BONUS="${LLAMA_SPEC_VERIFY_STAGE_MTP3_SPLIT_BONUS:-}" \
++LLAMA_SPEC_VERIFY_LATE_HEAD_BONUS="${LLAMA_SPEC_VERIFY_LATE_HEAD_BONUS:-}" \
+ LLAMA_SPEC_VERIFY_FUSED_OUTPUT_ARGMAX="${LLAMA_SPEC_VERIFY_FUSED_OUTPUT_ARGMAX:-}" \
+ LLAMA_SPEC_VERIFY_SOFTCAP_ARGMAX="${LLAMA_SPEC_VERIFY_SOFTCAP_ARGMAX:-}" \
+ LLAMA_SPEC_VERIFY_RAW_ARGMAX="${LLAMA_SPEC_VERIFY_RAW_ARGMAX:-}" \
+@@ -353,6 +354,7 @@ out = {
+         "llama_spec_verify_no_bonus_row": env_or_log("LLAMA_SPEC_VERIFY_NO_BONUS_ROW"),
+         "llama_spec_verify_stage_mtp3": env_or_log("LLAMA_SPEC_VERIFY_STAGE_MTP3"),
+         "llama_spec_verify_stage_mtp3_split_bonus": env_or_log("LLAMA_SPEC_VERIFY_STAGE_MTP3_SPLIT_BONUS"),
++        "llama_spec_verify_late_head_bonus": env_or_log("LLAMA_SPEC_VERIFY_LATE_HEAD_BONUS"),
+         "llama_spec_verify_fused_output_argmax": env_or_log("LLAMA_SPEC_VERIFY_FUSED_OUTPUT_ARGMAX"),
+         "llama_spec_verify_softcap_argmax": env_or_log("LLAMA_SPEC_VERIFY_SOFTCAP_ARGMAX"),
+         "llama_spec_verify_raw_argmax": env_or_log("LLAMA_SPEC_VERIFY_RAW_ARGMAX"),
+diff --git a/scripts/run-gemma4-26b-llamacpp-replica.sh b/scripts/run-gemma4-26b-llamacpp-replica.sh
+index 0dff21d8..ac8e7aa5 100755
+--- a/scripts/run-gemma4-26b-llamacpp-replica.sh
++++ b/scripts/run-gemma4-26b-llamacpp-replica.sh
+@@ -151,6 +151,7 @@ mkdir -p "$OUT_DIR"
+   echo "LLAMA_SPEC_VERIFY_NO_BONUS_ROW=${LLAMA_SPEC_VERIFY_NO_BONUS_ROW:-<unset>}"
+   echo "LLAMA_SPEC_VERIFY_STAGE_MTP3=${LLAMA_SPEC_VERIFY_STAGE_MTP3:-<unset>}"
+   echo "LLAMA_SPEC_VERIFY_STAGE_MTP3_SPLIT_BONUS=${LLAMA_SPEC_VERIFY_STAGE_MTP3_SPLIT_BONUS:-<unset>}"
++  echo "LLAMA_SPEC_VERIFY_LATE_HEAD_BONUS=${LLAMA_SPEC_VERIFY_LATE_HEAD_BONUS:-<unset>}"
+   echo "LLAMA_SPEC_VERIFY_FUSED_OUTPUT_ARGMAX=${LLAMA_SPEC_VERIFY_FUSED_OUTPUT_ARGMAX:-<unset>}"
+   echo "LLAMA_SPEC_VERIFY_RAW_ARGMAX=${LLAMA_SPEC_VERIFY_RAW_ARGMAX:-<unset>}"
+   echo "LLAMA_SPEC_VERIFY_SOFTCAP_ARGMAX=${LLAMA_SPEC_VERIFY_SOFTCAP_ARGMAX:-<unset>}"

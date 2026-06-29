@@ -1,0 +1,70 @@
+diff --git a/scripts/build_gemma4_realistic_localmaxxing_payload.py b/scripts/build_gemma4_realistic_localmaxxing_payload.py
+index 7ca86f53..99f054ec 100755
+--- a/scripts/build_gemma4_realistic_localmaxxing_payload.py
++++ b/scripts/build_gemma4_realistic_localmaxxing_payload.py
+@@ -188,6 +188,9 @@ def main() -> int:
+         "llamaCppCommit": launcher.get("llama_cpp_commit"),
+         "llamaServer": launcher.get("llama_server"),
+         "llamaGemma4MoeReuseAttnRms": launcher.get("llama_gemma4_moe_reuse_attn_rms") == "1",
++        "llamaGemma4MoeFusedDownWeightedSumReorderVdr2": (
++            launcher.get("llama_gemma4_moe_fused_down_weighted_sum_reorder_vdr2") == "1"
++        ),
+         "llamaGemma4MoeSelectedSoftmax": launcher.get("llama_gemma4_moe_selected_softmax") == "1",
+         "llamaGemma4MoeSelectedSoftmaxFused": launcher.get("llama_gemma4_moe_selected_softmax_fused") == "1",
+         "llamaGemma4MoeWeightedSum": launcher.get("llama_gemma4_moe_weighted_sum") == "1",
+diff --git a/scripts/run-gemma4-26b-first-baseline.sh b/scripts/run-gemma4-26b-first-baseline.sh
+index ab260ad9..ed5a1b9d 100755
+--- a/scripts/run-gemma4-26b-first-baseline.sh
++++ b/scripts/run-gemma4-26b-first-baseline.sh
+@@ -104,6 +104,7 @@ LLAMA_GEMMA4_MOE_WEIGHTED_SUM_SELECTED_SOFTMAX="${LLAMA_GEMMA4_MOE_WEIGHTED_SUM_
+ LLAMA_GEMMA4_MOE_SELECTED_SOFTMAX_WEIGHTED_SUM="${LLAMA_GEMMA4_MOE_SELECTED_SOFTMAX_WEIGHTED_SUM:-}" \
+ LLAMA_GEMMA4_MOE_SKIP_EARLY_WEIGHTS_EXPAND="${LLAMA_GEMMA4_MOE_SKIP_EARLY_WEIGHTS_EXPAND:-}" \
+ LLAMA_GEMMA4_MOE_FUSED_DOWN_WEIGHTED_SUM="${LLAMA_GEMMA4_MOE_FUSED_DOWN_WEIGHTED_SUM:-}" \
++LLAMA_GEMMA4_MOE_FUSED_DOWN_WEIGHTED_SUM_REORDER_VDR2="${LLAMA_GEMMA4_MOE_FUSED_DOWN_WEIGHTED_SUM_REORDER_VDR2:-}" \
+ LLAMA_GEMMA4_MOE_FUSED_DOWN_WEIGHTED_SUM_PARALLEL_SLOTS="${LLAMA_GEMMA4_MOE_FUSED_DOWN_WEIGHTED_SUM_PARALLEL_SLOTS:-}" \
+ LLAMA_GEMMA4_MOE_FUSED_DOWN_WEIGHTED_SUM_DIRECT_F32_PARALLEL_SLOTS="${LLAMA_GEMMA4_MOE_FUSED_DOWN_WEIGHTED_SUM_DIRECT_F32_PARALLEL_SLOTS:-}" \
+ LLAMA_GEMMA4_MOE_FUSED_DOWN_WEIGHTED_SUM_MATMUL_EPILOGUE="${LLAMA_GEMMA4_MOE_FUSED_DOWN_WEIGHTED_SUM_MATMUL_EPILOGUE:-}" \
+@@ -135,6 +136,7 @@ LLAMA_SPEC_VERIFY_SKIP_STATELESS_ACCEPT="${LLAMA_SPEC_VERIFY_SKIP_STATELESS_ACCE
+ LLAMA_SPEC_VERIFY_NO_BONUS_ROW="${LLAMA_SPEC_VERIFY_NO_BONUS_ROW:-}" \
+ LLAMA_SPEC_VERIFY_STAGE_MTP3="${LLAMA_SPEC_VERIFY_STAGE_MTP3:-}" \
+ LLAMA_SPEC_VERIFY_STAGE_MTP3_SPLIT_BONUS="${LLAMA_SPEC_VERIFY_STAGE_MTP3_SPLIT_BONUS:-}" \
++LLAMA_SPEC_VERIFY_LATE_HEAD_BONUS="${LLAMA_SPEC_VERIFY_LATE_HEAD_BONUS:-}" \
+ LLAMA_SPEC_VERIFY_FUSED_OUTPUT_ARGMAX="${LLAMA_SPEC_VERIFY_FUSED_OUTPUT_ARGMAX:-}" \
+ LLAMA_SPEC_VERIFY_SOFTCAP_ARGMAX="${LLAMA_SPEC_VERIFY_SOFTCAP_ARGMAX:-}" \
+ LLAMA_SPEC_VERIFY_RAW_ARGMAX="${LLAMA_SPEC_VERIFY_RAW_ARGMAX:-}" \
+@@ -317,6 +319,7 @@ out = {
+         "llama_gemma4_moe_selected_softmax_weighted_sum": env_or_log("LLAMA_GEMMA4_MOE_SELECTED_SOFTMAX_WEIGHTED_SUM"),
+         "llama_gemma4_moe_skip_early_weights_expand": env_or_log("LLAMA_GEMMA4_MOE_SKIP_EARLY_WEIGHTS_EXPAND"),
+         "llama_gemma4_moe_fused_down_weighted_sum": env_or_log("LLAMA_GEMMA4_MOE_FUSED_DOWN_WEIGHTED_SUM"),
++        "llama_gemma4_moe_fused_down_weighted_sum_reorder_vdr2": env_or_log("LLAMA_GEMMA4_MOE_FUSED_DOWN_WEIGHTED_SUM_REORDER_VDR2"),
+         "llama_gemma4_moe_fused_down_weighted_sum_parallel_slots": env_or_log("LLAMA_GEMMA4_MOE_FUSED_DOWN_WEIGHTED_SUM_PARALLEL_SLOTS"),
+         "llama_gemma4_moe_fused_down_weighted_sum_direct_f32_parallel_slots": env_or_log("LLAMA_GEMMA4_MOE_FUSED_DOWN_WEIGHTED_SUM_DIRECT_F32_PARALLEL_SLOTS"),
+         "llama_gemma4_moe_fused_down_weighted_sum_matmul_epilogue": env_or_log("LLAMA_GEMMA4_MOE_FUSED_DOWN_WEIGHTED_SUM_MATMUL_EPILOGUE"),
+@@ -353,6 +356,7 @@ out = {
+         "llama_spec_verify_no_bonus_row": env_or_log("LLAMA_SPEC_VERIFY_NO_BONUS_ROW"),
+         "llama_spec_verify_stage_mtp3": env_or_log("LLAMA_SPEC_VERIFY_STAGE_MTP3"),
+         "llama_spec_verify_stage_mtp3_split_bonus": env_or_log("LLAMA_SPEC_VERIFY_STAGE_MTP3_SPLIT_BONUS"),
++        "llama_spec_verify_late_head_bonus": env_or_log("LLAMA_SPEC_VERIFY_LATE_HEAD_BONUS"),
+         "llama_spec_verify_fused_output_argmax": env_or_log("LLAMA_SPEC_VERIFY_FUSED_OUTPUT_ARGMAX"),
+         "llama_spec_verify_softcap_argmax": env_or_log("LLAMA_SPEC_VERIFY_SOFTCAP_ARGMAX"),
+         "llama_spec_verify_raw_argmax": env_or_log("LLAMA_SPEC_VERIFY_RAW_ARGMAX"),
+diff --git a/scripts/run-gemma4-26b-llamacpp-replica.sh b/scripts/run-gemma4-26b-llamacpp-replica.sh
+index 0dff21d8..da3b57e8 100755
+--- a/scripts/run-gemma4-26b-llamacpp-replica.sh
++++ b/scripts/run-gemma4-26b-llamacpp-replica.sh
+@@ -115,6 +115,7 @@ mkdir -p "$OUT_DIR"
+   echo "LLAMA_GEMMA4_MOE_SELECTED_SOFTMAX_WEIGHTED_SUM=${LLAMA_GEMMA4_MOE_SELECTED_SOFTMAX_WEIGHTED_SUM:-<unset>}"
+   echo "LLAMA_GEMMA4_MOE_SKIP_EARLY_WEIGHTS_EXPAND=${LLAMA_GEMMA4_MOE_SKIP_EARLY_WEIGHTS_EXPAND:-<unset>}"
+   echo "LLAMA_GEMMA4_MOE_FUSED_DOWN_WEIGHTED_SUM=${LLAMA_GEMMA4_MOE_FUSED_DOWN_WEIGHTED_SUM:-<unset>}"
++  echo "LLAMA_GEMMA4_MOE_FUSED_DOWN_WEIGHTED_SUM_REORDER_VDR2=${LLAMA_GEMMA4_MOE_FUSED_DOWN_WEIGHTED_SUM_REORDER_VDR2:-<unset>}"
+   echo "LLAMA_GEMMA4_MOE_FUSED_DOWN_WEIGHTED_SUM_PARALLEL_SLOTS=${LLAMA_GEMMA4_MOE_FUSED_DOWN_WEIGHTED_SUM_PARALLEL_SLOTS:-<unset>}"
+   echo "LLAMA_GEMMA4_MOE_FUSED_DOWN_WEIGHTED_SUM_DIRECT_F32_PARALLEL_SLOTS=${LLAMA_GEMMA4_MOE_FUSED_DOWN_WEIGHTED_SUM_DIRECT_F32_PARALLEL_SLOTS:-<unset>}"
+   echo "LLAMA_GEMMA4_MOE_FUSED_DOWN_WEIGHTED_SUM_MATMUL_EPILOGUE=${LLAMA_GEMMA4_MOE_FUSED_DOWN_WEIGHTED_SUM_MATMUL_EPILOGUE:-<unset>}"
+@@ -151,6 +152,7 @@ mkdir -p "$OUT_DIR"
+   echo "LLAMA_SPEC_VERIFY_NO_BONUS_ROW=${LLAMA_SPEC_VERIFY_NO_BONUS_ROW:-<unset>}"
+   echo "LLAMA_SPEC_VERIFY_STAGE_MTP3=${LLAMA_SPEC_VERIFY_STAGE_MTP3:-<unset>}"
+   echo "LLAMA_SPEC_VERIFY_STAGE_MTP3_SPLIT_BONUS=${LLAMA_SPEC_VERIFY_STAGE_MTP3_SPLIT_BONUS:-<unset>}"
++  echo "LLAMA_SPEC_VERIFY_LATE_HEAD_BONUS=${LLAMA_SPEC_VERIFY_LATE_HEAD_BONUS:-<unset>}"
+   echo "LLAMA_SPEC_VERIFY_FUSED_OUTPUT_ARGMAX=${LLAMA_SPEC_VERIFY_FUSED_OUTPUT_ARGMAX:-<unset>}"
+   echo "LLAMA_SPEC_VERIFY_RAW_ARGMAX=${LLAMA_SPEC_VERIFY_RAW_ARGMAX:-<unset>}"
+   echo "LLAMA_SPEC_VERIFY_SOFTCAP_ARGMAX=${LLAMA_SPEC_VERIFY_SOFTCAP_ARGMAX:-<unset>}"
