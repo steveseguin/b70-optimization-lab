@@ -1257,6 +1257,16 @@ Text speed is first. After text baseline:
     exact repeat fell to `84.943-86.572 tok/s`; do not promote or submit the
     marginal high row. See
     `../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260627T2340-nmin1-negative-control-repeat.md`.
+20. **Preserve the current source stack before compact-argmax work.** The
+    current llama.cpp Gemma record source tree contains the accumulated VDR2
+    selected-down, sampled-ID, Q8 reorder, MTP, and profiling changes that led
+    to the `115.8466634928202 tok/s` valid record plus later negative screens.
+    Before starting the next source lane (compact LM-head argmax / verifier
+    cost reduction), snapshot the full source diff at
+    `../../patches/gemma4-26b-a4b-q8-b70/20260629-current-source-stack-before-compact-argmax.patch`
+    (`sha256=9db3ac4286e3842ece2eebd07060ac73a0e0c548cb15d17333406701576d52c8`).
+    Future source experiments should diff against this snapshot and record both
+    wins and losses before promotion.
 
 ## Stop Conditions
 
