@@ -168,3 +168,41 @@ mode, a pragmatic split is:
 - short/medium context: validated MTP record recipe;
 - 32K context: no-spec fallback until a lower-spec or graph-safe draft path is
   proven.
+
+## 32K lower-risk MTP rejection (`n_max=1`)
+
+Follow-up ladder:
+
+- command shape:
+  `MAX_TOKENS=16 BENCH_REPEATS=1 CANARY_REPEATS=2 EXTRA_LLAMA_ARGS="--parallel 1 --cache-ram 0 --spec-type draft-mtp --spec-draft-model /mnt/fast-ai/llm-models/gemma4-26b-a4b-it-q8-gguf/MTP/gemma-4-26B-A4B-it-Q4_0-MTP.gguf --spec-draft-n-max 1 --spec-draft-device SYCL0 --spec-draft-ngl all --spec-draft-type-k f16 --spec-draft-type-v f16 --spec-draft-n-min 1 --spec-draft-p-min 0.0475 --no-spec-draft-backend-sampling --spec-draft-threads 32 --spec-draft-threads-batch 32 --ctx-checkpoints 0" LADDER_SPECS="0:128:32768 1:4096:32768 2:8192:32768 3:12000:32768" repro/gemma4-26b-a4b-q8-b70/run-vdr2-prefill-ladder.sh`
+- aggregate: `data/gemma4-prefill-ladder-20260629T163027Z.json`
+- diagnostic-only; not LocalMaxxing/headline eligible;
+- intent: test whether a one-token draft avoids the `ctx=32768` crash and
+  decode cliff seen with the short-record `n_max=3` MTP recipe.
+
+| GPU | Requested prompt | Actual prompt | Context | Output | Status | TTFT | Decode after TTFT | Wall tok/s | Interpretation |
+| ---: | ---: | ---: | ---: | ---: | --- | ---: | ---: | ---: | --- |
+| 0 | 128 | n/a | 32768 | 16 | FAIL | n/a | n/a | n/a | canary lane hit `UR_RESULT_ERROR_DEVICE_LOST` in `ggml_sycl_mul_mat_id` |
+| 1 | 4096 | 5597 | 32768 | 16 | PASS | 10.601 s | 2.547 tok/s | 0.948 | slower than both no-spec 32K and `n_max=3` MTP-at-32K |
+| 2 | 8192 | 11076 | 32768 | 16 | PASS | 14.632 s | 2.870 tok/s | 0.792 | slower than no-spec 32K by ~20x |
+| 3 | 12000 | 16164 | 32768 | 16 | PASS | 23.520 s | 2.836 tok/s | 0.549 | slower than no-spec 32K by ~18x |
+
+Failure details for GPU0:
+
+- `data/gemma4-q8-gpu0-prefill-ladder-p128-ctx32768-o16-20260629T163027Z/server.stdout.log`
+  shows repeated `draft acceptance = 1.00000`, then
+  `UR_RESULT_ERROR_DEVICE_LOST`;
+- the backtrace goes through `ggml_sycl_mul_mat_id` while copying expert IDs
+  (`ids_dev`) back to host;
+- the first canary responses were very slow despite short prompts, so the issue
+  is tied to the MTP path under a 32K context allocation, not only long input.
+
+Conclusion: lowering MTP to `n_max=1` does **not** make 32K context safe or
+useful. It still device-lost on one lane and the surviving lanes decoded at only
+`2.5-2.9 tok/s`, far below the 32K no-spec fallback (`52-84 tok/s` after TTFT
+across the same prompt sizes). Do not spend more benchmark time on MTP-at-32K
+configuration tweaks unless the source-level `mul_mat_id` / draft path bug is
+fixed first. The current practical split remains:
+
+- validated short-context record: Q8 target + Q4_0 MTP draft;
+- 32K context: no-spec fallback.

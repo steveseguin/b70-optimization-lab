@@ -1,0 +1,193 @@
+{
+  "kind": "gemma4_q8_prefill_ladder",
+  "policy": "diagnostic only; do not submit as LocalMaxxing headline throughput",
+  "rows": [
+    {
+      "label": "gemma4-q8-gpu0-prefill-ladder-p128-ctx32768-o16-20260629T163027Z",
+      "status": "missing-summary"
+    },
+    {
+      "label": "gemma4-q8-gpu1-prefill-ladder-p4096-ctx32768-o16-20260629T163027Z",
+      "status": "ok",
+      "run_dir": "/home/steve/qwen36-results-main/data/gemma4-q8-gpu1-prefill-ladder-p4096-ctx32768-o16-20260629T163027Z",
+      "prompt_tokens_requested": 4096,
+      "prompt_mode": "filled-long-unique",
+      "max_tokens": 16,
+      "ctx_size": "32768",
+      "extra_llama_args": "--parallel 1 --cache-ram 0 --spec-type draft-mtp --spec-draft-model /mnt/fast-ai/llm-models/gemma4-26b-a4b-it-q8-gguf/MTP/gemma-4-26B-A4B-it-Q4_0-MTP.gguf --spec-draft-n-max 1 --spec-draft-device SYCL0 --spec-draft-ngl all --spec-draft-type-k f16 --spec-draft-type-v f16 --spec-draft-n-min 1 --spec-draft-p-min 0.0475 --no-spec-draft-backend-sampling --spec-draft-threads 32 --spec-draft-threads-batch 32 --ctx-checkpoints 0",
+      "actual_prompt_tokens": {
+        "cv": 0.0,
+        "max": 5597,
+        "mean": 5597.0,
+        "median": 5597,
+        "min": 5597,
+        "stdev": 0.0
+      },
+      "ttft_s": {
+        "cv": 0.0,
+        "max": 10.601442234008573,
+        "mean": 10.601442234008573,
+        "median": 10.601442234008573,
+        "min": 10.601442234008573,
+        "stdev": 0.0
+      },
+      "decode_tok_s_after_ttft": {
+        "cv": 0.0,
+        "max": 2.5471345237533094,
+        "mean": 2.5471345237533094,
+        "median": 2.5471345237533094,
+        "min": 2.5471345237533094,
+        "stdev": 0.0
+      },
+      "wall_tok_s": {
+        "cv": 0.0,
+        "max": 0.9476982659216812,
+        "mean": 0.9476982659216812,
+        "median": 0.9476982659216812,
+        "min": 0.9476982659216812,
+        "stdev": 0.0
+      },
+      "fresh_response_validity": {
+        "all_cached_tokens": [
+          0
+        ],
+        "all_prompt_hashes_distinct": true,
+        "all_rows_fresh_response_mean_eligible": true,
+        "cached_tokens_all_zero": true,
+        "cached_tokens_reported": true,
+        "headline_cached_tokens": 0,
+        "headline_policy": "Use row0 only as fresh-response headline. Later repeated-prompt rows are support-only unless each request uses an independently fresh prompt with no reusable continuation/history.",
+        "headline_row": 0,
+        "headline_tok_s_after_ttft": 2.5471345237533094,
+        "headline_tok_s_wall": 0.9476982659216812,
+        "prompts_are_unique": true,
+        "repeated_prompt_rows_support_only": false
+      },
+      "headline_eligible_for_gemma_q8": false,
+      "localmaxxing_submission_allowed": false,
+      "note": "Diagnostic prompt/prefill/context ladder only; not a short-decode promotion run."
+    },
+    {
+      "label": "gemma4-q8-gpu2-prefill-ladder-p8192-ctx32768-o16-20260629T163027Z",
+      "status": "ok",
+      "run_dir": "/home/steve/qwen36-results-main/data/gemma4-q8-gpu2-prefill-ladder-p8192-ctx32768-o16-20260629T163027Z",
+      "prompt_tokens_requested": 8192,
+      "prompt_mode": "filled-long-unique",
+      "max_tokens": 16,
+      "ctx_size": "32768",
+      "extra_llama_args": "--parallel 1 --cache-ram 0 --spec-type draft-mtp --spec-draft-model /mnt/fast-ai/llm-models/gemma4-26b-a4b-it-q8-gguf/MTP/gemma-4-26B-A4B-it-Q4_0-MTP.gguf --spec-draft-n-max 1 --spec-draft-device SYCL0 --spec-draft-ngl all --spec-draft-type-k f16 --spec-draft-type-v f16 --spec-draft-n-min 1 --spec-draft-p-min 0.0475 --no-spec-draft-backend-sampling --spec-draft-threads 32 --spec-draft-threads-batch 32 --ctx-checkpoints 0",
+      "actual_prompt_tokens": {
+        "cv": 0.0,
+        "max": 11076,
+        "mean": 11076.0,
+        "median": 11076,
+        "min": 11076,
+        "stdev": 0.0
+      },
+      "ttft_s": {
+        "cv": 0.0,
+        "max": 14.63154172792565,
+        "mean": 14.63154172792565,
+        "median": 14.63154172792565,
+        "min": 14.63154172792565,
+        "stdev": 0.0
+      },
+      "decode_tok_s_after_ttft": {
+        "cv": 0.0,
+        "max": 2.870451022057405,
+        "mean": 2.870451022057405,
+        "median": 2.870451022057405,
+        "min": 2.870451022057405,
+        "stdev": 0.0
+      },
+      "wall_tok_s": {
+        "cv": 0.0,
+        "max": 0.7918605189003084,
+        "mean": 0.7918605189003084,
+        "median": 0.7918605189003084,
+        "min": 0.7918605189003084,
+        "stdev": 0.0
+      },
+      "fresh_response_validity": {
+        "all_cached_tokens": [
+          0
+        ],
+        "all_prompt_hashes_distinct": true,
+        "all_rows_fresh_response_mean_eligible": true,
+        "cached_tokens_all_zero": true,
+        "cached_tokens_reported": true,
+        "headline_cached_tokens": 0,
+        "headline_policy": "Use row0 only as fresh-response headline. Later repeated-prompt rows are support-only unless each request uses an independently fresh prompt with no reusable continuation/history.",
+        "headline_row": 0,
+        "headline_tok_s_after_ttft": 2.870451022057405,
+        "headline_tok_s_wall": 0.7918605189003084,
+        "prompts_are_unique": true,
+        "repeated_prompt_rows_support_only": false
+      },
+      "headline_eligible_for_gemma_q8": false,
+      "localmaxxing_submission_allowed": false,
+      "note": "Diagnostic prompt/prefill/context ladder only; not a short-decode promotion run."
+    },
+    {
+      "label": "gemma4-q8-gpu3-prefill-ladder-p12000-ctx32768-o16-20260629T163027Z",
+      "status": "ok",
+      "run_dir": "/home/steve/qwen36-results-main/data/gemma4-q8-gpu3-prefill-ladder-p12000-ctx32768-o16-20260629T163027Z",
+      "prompt_tokens_requested": 12000,
+      "prompt_mode": "filled-long-unique",
+      "max_tokens": 16,
+      "ctx_size": "32768",
+      "extra_llama_args": "--parallel 1 --cache-ram 0 --spec-type draft-mtp --spec-draft-model /mnt/fast-ai/llm-models/gemma4-26b-a4b-it-q8-gguf/MTP/gemma-4-26B-A4B-it-Q4_0-MTP.gguf --spec-draft-n-max 1 --spec-draft-device SYCL0 --spec-draft-ngl all --spec-draft-type-k f16 --spec-draft-type-v f16 --spec-draft-n-min 1 --spec-draft-p-min 0.0475 --no-spec-draft-backend-sampling --spec-draft-threads 32 --spec-draft-threads-batch 32 --ctx-checkpoints 0",
+      "actual_prompt_tokens": {
+        "cv": 0.0,
+        "max": 16164,
+        "mean": 16164.0,
+        "median": 16164,
+        "min": 16164,
+        "stdev": 0.0
+      },
+      "ttft_s": {
+        "cv": 0.0,
+        "max": 23.519830788020045,
+        "mean": 23.519830788020045,
+        "median": 23.519830788020045,
+        "min": 23.519830788020045,
+        "stdev": 0.0
+      },
+      "decode_tok_s_after_ttft": {
+        "cv": 0.0,
+        "max": 2.83626622485535,
+        "mean": 2.83626622485535,
+        "median": 2.83626622485535,
+        "min": 2.83626622485535,
+        "stdev": 0.0
+      },
+      "wall_tok_s": {
+        "cv": 0.0,
+        "max": 0.5486770849042132,
+        "mean": 0.5486770849042132,
+        "median": 0.5486770849042132,
+        "min": 0.5486770849042132,
+        "stdev": 0.0
+      },
+      "fresh_response_validity": {
+        "all_cached_tokens": [
+          0
+        ],
+        "all_prompt_hashes_distinct": true,
+        "all_rows_fresh_response_mean_eligible": true,
+        "cached_tokens_all_zero": true,
+        "cached_tokens_reported": true,
+        "headline_cached_tokens": 0,
+        "headline_policy": "Use row0 only as fresh-response headline. Later repeated-prompt rows are support-only unless each request uses an independently fresh prompt with no reusable continuation/history.",
+        "headline_row": 0,
+        "headline_tok_s_after_ttft": 2.83626622485535,
+        "headline_tok_s_wall": 0.5486770849042132,
+        "prompts_are_unique": true,
+        "repeated_prompt_rows_support_only": false
+      },
+      "headline_eligible_for_gemma_q8": false,
+      "localmaxxing_submission_allowed": false,
+      "note": "Diagnostic prompt/prefill/context ladder only; not a short-decode promotion run."
+    }
+  ]
+}
