@@ -73,11 +73,14 @@ a future source change changes verifier/draft economics.
 
 ## Remaining Plausible Work
 
-1. **Microbench-first regular-Q8 LM-head top1 epilogue.** This must be
-   materially different from the existing `MUL_MAT_ARGMAX` family: reuse the
-   fast regular reordered-Q8 MMVQ dot/scheduling path, then publish compact
-   top1 IDs. Guard it default-off and kill it if node or strict128 timing does
-   not beat the current `MUL_MAT + ggml_argmax` path.
+1. **Regular-Q8 LM-head top1 epilogue follow-up only with telemetry.** The
+   first prototype (`LLAMA_SPEC_VERIFY_REGULAR_MMVQ_TOP1_EPILOGUE=1` +
+   `LLAMA_SYCL_MUL_MAT_TOP1_EPILOGUE=1`) passed strict128 quality but lost the
+   primary metric (`111.89` vs `112.52 tok/s` paired control). It also lacked
+   an explicit activation counter in logs. Do not run full512 on this route
+   unless a one-shot hit log/node profile proves the new epilogue is active and
+   removes or shrinks the hot verifier LM-head node. See
+   `20260629-regular-mmvq-top1-epilogue-negative.md`.
 2. **Final-layer BF16 gate/up + GEGLU epilogue.** This is larger and should not
    reuse the failed direct-BF16 GEMV path. It would need graph/backend plumbing
    and a narrow guard, likely only `ffn_moe_gate_up-29`, BF16, `n_tokens <= 8`.

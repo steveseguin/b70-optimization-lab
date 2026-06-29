@@ -115,6 +115,20 @@ Follow-up source direction from read-only audits:
   version already lost. The BF16 epilogue idea is larger because it needs graph
   and backend op plumbing, so it should follow the narrower LM-head attempt.
 
+2026-06-29 regular-Q8-MMVQ top1 epilogue screen: the first-priority LM-head
+idea was prototyped under
+`LLAMA_SPEC_VERIFY_REGULAR_MMVQ_TOP1_EPILOGUE=1` and
+`LLAMA_SYCL_MUL_MAT_TOP1_EPILOGUE=1`. It rebuilt successfully and passed the
+fixed cold gate plus 256 canary rows, but lost the strict128 headline metric
+against the paired control: `111.89428679462038` vs
+`112.52074349461066 tok/s` median tokens 1-100 after TTFT. Full-output and wall
+medians were slightly better, but this is not the promotion metric and remains
+below the `115.8466634928202 tok/s` record. The logs did not include an
+activation counter for the new route, so any future revisit must first add
+explicit hit telemetry and a node profile; do not run full512 promotion on this
+path as-is. See
+`../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260629-regular-mmvq-top1-epilogue-negative.md`.
+
 Current handoff note: see
 `../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260629-selecteddown-next-lane-triage.md`
 for the 2026-06-29 post-profile audit, closed-lane list, and the preserved
