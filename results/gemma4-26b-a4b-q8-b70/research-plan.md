@@ -163,6 +163,18 @@ If revisiting this area, do not use a direct BF16 dot kernel; instead preserve
 the existing BF16 matmul route and fuse only post-GEMM GEGLU/scatter after a
 profile proves that work is material.
 
+2026-06-29 GEGLU-before-down + VDR2 selected-down follow-up: the older
+`LLAMA_GEMMA4_MOE_FUSED_GEGLU_DOWN_WEIGHTED_SUM=1` path was wired into the
+current reordered-Q8 VDR2 selected-down kernel by adding a reordered GEGLU
+quantizer and fixing the SYCL support predicate for reordered down weights. The
+first candidate crashed because the backend-only op was assigned to CPU; after
+the placement fix it passed strict128 quality, but did not clearly beat paired
+controls (`115.164` / `113.306` tok/s versus controls `113.753` / `114.919`),
+and stayed below the `115.8466634928202` full512 record. Decision: closed
+negative/inconclusive; keep default-off and do not run full512 promotion as-is.
+See
+`../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260629-geglu-vdr2-selected-down-negative.md`.
+
 Current handoff note: see
 `../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260629-selecteddown-next-lane-triage.md`
 for the 2026-06-29 post-profile audit, closed-lane list, and the preserved
