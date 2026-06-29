@@ -91,6 +91,11 @@ Recent closed negatives:
 - Verifier-row scheduling: simple no-bonus row and staged MTP3 split-bonus were
   semantically valid but much slower because they disrupted the current
   verifier/bonus pipeline.
+- Prefix2 tail-head verifier scheduling: keeping two prefix verifier rows in
+  the main decode and running a batched `SPEC_HEAD` tail pass preserved strict
+  validity, but lost (`106.4` / `100.9 tok/s` versus controls `113.1` /
+  `109.8`). The added head-only pass ran on almost every generation step and
+  cost `~2.7 ms/call`, so do not retest this shape as implemented.
 - Device `h_nextn` handoff: safe row-view copies worked after view
   initialization, but were slower than the current host-staged path.
 - DFlash PR 22105: Gemma4 DFlash BF16 draft conversion worked after a Gemma4

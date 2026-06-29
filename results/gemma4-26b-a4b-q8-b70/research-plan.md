@@ -193,6 +193,20 @@ SPEC_HEAD fused argmax branch (`LLAMA_SPEC_VERIFY_LATE_HEAD_BONUS=1` +
 (`107.87` and `107.29 tok/s`), so do not promote it as implemented. See
 `../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260629-eogclip-and-spechead-negative.md`.
 
+2026-06-29 prefix2 tail-head verifier follow-up: a more surgical verifier-row
+shape was implemented under `LLAMA_SPEC_VERIFY_PREFIX2_TAIL_HEAD=1` plus
+`LLAMA_SPEC_HEAD_FUSED_OUTPUT_ARGMAX=1`. It kept only two prefix verifier rows
+in the main target decode and, if both matched, ran a batched `SPEC_HEAD` pass
+over saved `h_nextn` rows for the third draft token plus bonus token. The path
+passed the fixed cold gate and 128/128 canary rows, but lost decisively:
+controls measured `113.061` and `109.841 tok/s`, while prefix2 measured
+`106.396 tok/s` and `100.897 tok/s` with profiling. The server profile showed
+`prefix2_tail head_ms=1762.285 calls=649 avg=2.715 ms`; prefix rows matched on
+almost every generation step, so the extra full-vocab head pass ran too often
+and outweighed the verifier-row savings. Decision: closed negative; do not
+full512-confirm or submit this implementation. See
+`../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260629-prefix2-tail-head-negative.md`.
+
 Current handoff note: see
 `../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260629-selecteddown-next-lane-triage.md`
 for the 2026-06-29 post-profile audit, closed-lane list, and the preserved

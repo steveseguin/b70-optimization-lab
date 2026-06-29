@@ -1,0 +1,38 @@
+diff --git a/scripts/run-gemma4-26b-first-baseline.sh b/scripts/run-gemma4-26b-first-baseline.sh
+index c8d607fd..dbf7c94c 100755
+--- a/scripts/run-gemma4-26b-first-baseline.sh
++++ b/scripts/run-gemma4-26b-first-baseline.sh
+@@ -138,7 +138,9 @@ LLAMA_SPEC_VERIFY_NO_BONUS_ROW="${LLAMA_SPEC_VERIFY_NO_BONUS_ROW:-}" \
+ LLAMA_SPEC_VERIFY_STAGE_MTP3="${LLAMA_SPEC_VERIFY_STAGE_MTP3:-}" \
+ LLAMA_SPEC_VERIFY_STAGE_MTP3_SPLIT_BONUS="${LLAMA_SPEC_VERIFY_STAGE_MTP3_SPLIT_BONUS:-}" \
+ LLAMA_SPEC_VERIFY_LATE_HEAD_BONUS="${LLAMA_SPEC_VERIFY_LATE_HEAD_BONUS:-}" \
++LLAMA_SPEC_VERIFY_PREFIX2_TAIL_HEAD="${LLAMA_SPEC_VERIFY_PREFIX2_TAIL_HEAD:-}" \
+ LLAMA_SPEC_VERIFY_FUSED_OUTPUT_ARGMAX="${LLAMA_SPEC_VERIFY_FUSED_OUTPUT_ARGMAX:-}" \
++LLAMA_SPEC_HEAD_FUSED_OUTPUT_ARGMAX="${LLAMA_SPEC_HEAD_FUSED_OUTPUT_ARGMAX:-}" \
+ LLAMA_SPEC_VERIFY_SOFTCAP_ARGMAX="${LLAMA_SPEC_VERIFY_SOFTCAP_ARGMAX:-}" \
+ LLAMA_SPEC_VERIFY_RAW_ARGMAX="${LLAMA_SPEC_VERIFY_RAW_ARGMAX:-}" \
+ LLAMA_SPEC_VERIFY_REGULAR_MMVQ_TOP1_EPILOGUE="${LLAMA_SPEC_VERIFY_REGULAR_MMVQ_TOP1_EPILOGUE:-}" \
+@@ -363,7 +365,9 @@ out = {
+         "llama_spec_verify_stage_mtp3": env_or_log("LLAMA_SPEC_VERIFY_STAGE_MTP3"),
+         "llama_spec_verify_stage_mtp3_split_bonus": env_or_log("LLAMA_SPEC_VERIFY_STAGE_MTP3_SPLIT_BONUS"),
+         "llama_spec_verify_late_head_bonus": env_or_log("LLAMA_SPEC_VERIFY_LATE_HEAD_BONUS"),
++        "llama_spec_verify_prefix2_tail_head": env_or_log("LLAMA_SPEC_VERIFY_PREFIX2_TAIL_HEAD"),
+         "llama_spec_verify_fused_output_argmax": env_or_log("LLAMA_SPEC_VERIFY_FUSED_OUTPUT_ARGMAX"),
++        "llama_spec_head_fused_output_argmax": env_or_log("LLAMA_SPEC_HEAD_FUSED_OUTPUT_ARGMAX"),
+         "llama_spec_verify_softcap_argmax": env_or_log("LLAMA_SPEC_VERIFY_SOFTCAP_ARGMAX"),
+         "llama_spec_verify_raw_argmax": env_or_log("LLAMA_SPEC_VERIFY_RAW_ARGMAX"),
+         "llama_spec_verify_regular_mmvq_top1_epilogue": env_or_log("LLAMA_SPEC_VERIFY_REGULAR_MMVQ_TOP1_EPILOGUE"),
+diff --git a/scripts/run-gemma4-26b-llamacpp-replica.sh b/scripts/run-gemma4-26b-llamacpp-replica.sh
+index 57a478b4..43c34dd2 100755
+--- a/scripts/run-gemma4-26b-llamacpp-replica.sh
++++ b/scripts/run-gemma4-26b-llamacpp-replica.sh
+@@ -154,7 +154,9 @@ mkdir -p "$OUT_DIR"
+   echo "LLAMA_SPEC_VERIFY_STAGE_MTP3=${LLAMA_SPEC_VERIFY_STAGE_MTP3:-<unset>}"
+   echo "LLAMA_SPEC_VERIFY_STAGE_MTP3_SPLIT_BONUS=${LLAMA_SPEC_VERIFY_STAGE_MTP3_SPLIT_BONUS:-<unset>}"
+   echo "LLAMA_SPEC_VERIFY_LATE_HEAD_BONUS=${LLAMA_SPEC_VERIFY_LATE_HEAD_BONUS:-<unset>}"
++  echo "LLAMA_SPEC_VERIFY_PREFIX2_TAIL_HEAD=${LLAMA_SPEC_VERIFY_PREFIX2_TAIL_HEAD:-<unset>}"
+   echo "LLAMA_SPEC_VERIFY_FUSED_OUTPUT_ARGMAX=${LLAMA_SPEC_VERIFY_FUSED_OUTPUT_ARGMAX:-<unset>}"
++  echo "LLAMA_SPEC_HEAD_FUSED_OUTPUT_ARGMAX=${LLAMA_SPEC_HEAD_FUSED_OUTPUT_ARGMAX:-<unset>}"
+   echo "LLAMA_SPEC_VERIFY_RAW_ARGMAX=${LLAMA_SPEC_VERIFY_RAW_ARGMAX:-<unset>}"
+   echo "LLAMA_SPEC_VERIFY_SOFTCAP_ARGMAX=${LLAMA_SPEC_VERIFY_SOFTCAP_ARGMAX:-<unset>}"
+   echo "LLAMA_SPEC_VERIFY_REGULAR_MMVQ_TOP1_EPILOGUE=${LLAMA_SPEC_VERIFY_REGULAR_MMVQ_TOP1_EPILOGUE:-<unset>}"
