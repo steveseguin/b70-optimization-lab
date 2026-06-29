@@ -115,6 +115,11 @@ Follow-up source direction from read-only audits:
   version already lost. The BF16 epilogue idea is larger because it needs graph
   and backend op plumbing, so it should follow the narrower LM-head attempt.
 
+Current handoff note: see
+`../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260629-selecteddown-next-lane-triage.md`
+for the 2026-06-29 post-profile audit, closed-lane list, and the preserved
+source patch snapshot before further edits.
+
 2026-06-28 crack-100 reliability update: a single strict full512 frequency-floor
 run at `2400,2800` hit `100.22397388514726 tok/s`, and an earlier unroll6 row
 hit `101.076 tok/s`, but confirmations did not hold above 100. Four parallel
