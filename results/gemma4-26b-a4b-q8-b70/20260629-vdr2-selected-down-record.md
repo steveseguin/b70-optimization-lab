@@ -98,3 +98,99 @@ work. Best next targets:
 
 Keep prompt processing and long-context optimization separate from the short
 decode record lane, and rerun this short suite afterward to prove no regression.
+
+## 2026-06-29 Follow-Up Screens
+
+These are post-record screens against the same VDR2 selected-down stack. Treat
+strict128 results as diagnostic only; full512 is required before promotion or
+LocalMaxxing submission.
+
+### MTP Depth Retest: Negative
+
+Rationale: older `n_max > 3` tests predated the selected-down verifier win, so
+deeper MTP needed one fresh check on the current stack.
+
+Strict128 paired screen, all valid fresh-response (`cached_tokens=0`, fixed
+suite, each prompt once):
+
+| Lane | Summary | Median 1-100 | p10 1-100 | Mean 1-100 | Full128 after TTFT | Wall full128 |
+| --- | --- | ---: | ---: | ---: | ---: | ---: |
+| control `n_max=3` | `data/gemma4-q8-gpu0-selecteddown-depth-control-n3-strict128-20260629T124941Z/summary.json` | 116.33568692588463 | 104.89058924253862 | 114.14305965671014 | 112.26257751498565 | 96.81017927788454 |
+| `n_max=4` | `data/gemma4-q8-gpu1-selecteddown-depth-n4-strict128-20260629T124941Z/summary.json` | 103.46481323047499 | 95.47779842736264 | 104.28796054493681 | 105.04689964432404 | 90.9986053062178 |
+| `n_max=5` | `data/gemma4-q8-gpu2-selecteddown-depth-n5-strict128-20260629T124941Z/summary.json` | 100.43230800604314 | 92.29559714995177 | 101.08652490737596 | 100.17771457016522 | 87.85595957452232 |
+| `n_max=6` | `data/gemma4-q8-gpu3-selecteddown-depth-n6-strict128-20260629T124941Z/summary.json` | 93.90769841294549 | 82.18749613674814 | 94.37496785088634 | 92.8871375259663 | 80.25682090606395 |
+
+Conclusion: keep `n_max=3`, `n_min=2`, `p_min=0.0475` for the promoted recipe.
+On this stack, deeper draft length increases verifier/draft cost faster than it
+adds accepted fresh-response tokens.
+
+### Skip Stateless Sampler Accept: Noisy / Not Promoted
+
+`LLAMA_SPEC_VERIFY_SKIP_STATELESS_ACCEPT=1` produced one high strict128 screen
+but did not hold consistently across GPUs or prior full512 repeats.
+
+Strict128 paired screen:
+
+| Lane | Summary | Median 1-100 | p10 1-100 | Mean 1-100 | Full128 after TTFT |
+| --- | --- | ---: | ---: | ---: | ---: |
+| control GPU0 | `data/gemma4-q8-gpu0-skipstateless-pair-control-strict128-20260629T124457Z/summary.json` | 108.04191928813023 | 104.7755022386352 | 113.1853597785455 | 112.80654193318901 |
+| skipstateless GPU1 | `data/gemma4-q8-gpu1-skipstateless-pair-on-strict128-20260629T124457Z/summary.json` | 117.68045890705352 | 104.42808236961972 | 115.36583191419878 | 116.04310796465757 |
+| control GPU2 | `data/gemma4-q8-gpu2-skipstateless-pair-control-strict128-20260629T124457Z/summary.json` | 116.92216788973741 | 102.60078092439963 | 114.63675193846426 | 115.4808203348982 |
+| skipstateless GPU3 | `data/gemma4-q8-gpu3-skipstateless-pair-on-strict128-20260629T124457Z/summary.json` | 110.71755588164166 | 105.0374643745801 | 114.44868382524521 | 114.95282261551321 |
+
+Conclusion: do not submit or promote. The idea may still be useful if the
+server-side sampler clone is removed under a stricter stateless-greedy guard,
+but the existing accept-skip flag alone is not a reliable record improvement.
+
+### Duplicate Full-Accept Hidden Copy: Negative
+
+Patch artifact:
+`patches/gemma4-26b-a4b-q8-b70/20260629-skip-duplicate-full-accept-hcopy-experiment.patch`.
+
+Rationale: with `LLAMA_MTP_DEFER_TARGET_H_NEXTN=1`, `process()` already copies
+the last verifier hidden row into `pending_h`. On full accept,
+`accept()` can request that same row again. The experiment adds
+`LLAMA_MTP_SKIP_DUP_FULL_ACCEPT_H_COPY=1` to skip only that duplicate copy when
+`i_h == n_rows - 1`; partial accepts and rejects still copy the selected row.
+
+Strict128 A/B was valid but noisy:
+
+| Lane | Summary | Median 1-100 | p10 1-100 | Mean 1-100 | Full128 after TTFT |
+| --- | --- | ---: | ---: | ---: | ---: |
+| control GPU0 | `data/gemma4-q8-gpu0-hcopy-control-strict128-20260629T130113Z/summary.json` | 110.57462228639803 | 102.87362982680462 | 111.91631188690212 | 112.36207105451862 |
+| hcopy GPU1 | `data/gemma4-q8-gpu1-hcopy-on-strict128-20260629T130113Z/summary.json` | 113.3775542861014 | 103.71071008154013 | 113.49379061720516 | 114.08028216467035 |
+| control GPU2 | `data/gemma4-q8-gpu2-hcopy-control-strict128-20260629T130113Z/summary.json` | 115.27088029375872 | 102.32608430327235 | 115.15466844248215 | 114.5269068791023 |
+| hcopy GPU3 | `data/gemma4-q8-gpu3-hcopy-on-strict128-20260629T130113Z/summary.json` | 116.35089940418223 | 104.30782648792547 | 115.61975448981418 | 112.70077341213715 |
+
+Full512 A/B confirmed it is not a record improvement:
+
+| Lane | Summary | Median 1-100 | p10 1-100 | Mean 1-100 | Full512 after TTFT | Wall full512 |
+| --- | --- | ---: | ---: | ---: | ---: | ---: |
+| control GPU0 | `data/gemma4-q8-gpu0-hcopy-control-full512-20260629T130420Z/summary.json` | 112.21510580665421 | 102.39687706219802 | 113.807550310799 | 103.90305412348668 | 99.16315687192693 |
+| hcopy GPU1 | `data/gemma4-q8-gpu1-hcopy-on-full512-20260629T130420Z/summary.json` | 111.42365779318506 | 103.6723777533772 | 113.49152454131091 | 105.56536083069597 | 100.38875072655891 |
+| control GPU2 | `data/gemma4-q8-gpu2-hcopy-control-full512-20260629T130420Z/summary.json` | 110.51420887948717 | 102.56119018639345 | 112.97497287428895 | 106.96122762495051 | 102.48931204090205 |
+| hcopy GPU3 | `data/gemma4-q8-gpu3-hcopy-on-full512-20260629T130420Z/summary.json` | 113.17038347073819 | 102.08411761686624 | 113.82889747700256 | 104.59623460774262 | 100.89378061491095 |
+
+Conclusion: do not promote. The duplicate copy exists, but skipping it does not
+move the full512 fresh-response metric above the current `115.8466634928202`
+record. The source experiment was reverted after recording the patch and
+results.
+
+### Current-Stack `p_min` Bracket: Negative
+
+Rationale: the old tight `p_min` sweeps predated the VDR2 selected-down fused
+weighted-sum win. A bounded retest checked whether the new verifier cost
+profile shifted the best confidence threshold.
+
+Strict128 bracket, all valid fresh-response:
+
+| Lane | Summary | Median 1-100 | p10 1-100 | Mean 1-100 | Full128 after TTFT | Wall full128 |
+| --- | --- | ---: | ---: | ---: | ---: | ---: |
+| `p_min=0.045` | `data/gemma4-q8-gpu0-selecteddown-pmin00450-strict128-20260629T131753Z/summary.json` | 109.02779917454131 | 102.72262564201866 | 112.11511611934047 | 112.0518061181312 | 96.00730696638817 |
+| `p_min=0.0475` control | `data/gemma4-q8-gpu1-selecteddown-pmin00475-control-strict128-20260629T131753Z/summary.json` | 117.46011025132319 | 99.76158707842515 | 115.44622344665821 | 114.53379847486426 | 96.44260947477878 |
+| `p_min=0.050` | `data/gemma4-q8-gpu2-selecteddown-pmin00500-strict128-20260629T131753Z/summary.json` | 110.91055854813678 | 102.88674510589247 | 112.018759986235 | 110.04779288047666 | 95.28986601729343 |
+| `p_min=0.0525` | `data/gemma4-q8-gpu3-selecteddown-pmin00525-strict128-20260629T131753Z/summary.json` | 113.64529853346951 | 100.05190148151058 | 113.62031317951106 | 110.58948684955283 | 96.05289799131236 |
+
+Conclusion: keep `p_min=0.0475`. This also reinforces that more threshold
+roulette around the current record is low value; future attempts need a
+source-level verifier/LM-head/MoE change or a new validated draft source.
