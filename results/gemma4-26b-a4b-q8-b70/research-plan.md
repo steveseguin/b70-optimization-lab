@@ -123,11 +123,24 @@ fixed cold gate plus 256 canary rows, but lost the strict128 headline metric
 against the paired control: `111.89428679462038` vs
 `112.52074349461066 tok/s` median tokens 1-100 after TTFT. Full-output and wall
 medians were slightly better, but this is not the promotion metric and remains
-below the `115.8466634928202 tok/s` record. The logs did not include an
-activation counter for the new route, so any future revisit must first add
-explicit hit telemetry and a node profile; do not run full512 promotion on this
-path as-is. See
+below the `115.8466634928202 tok/s` record. A follow-up node-profile run proved
+the new route was active:
+`MUL_MAT_ARGMAX:spec_verify_regular_mmvq_top1_epilogue_token_rows`, but it was
+still the hottest node at ~`1.325 ms/call`. Decision: closed negative for this
+implementation; do not run full512 promotion on this path as-is. See
 `../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260629-regular-mmvq-top1-epilogue-negative.md`.
+
+Next source lane after the top1 closure: profile-first dense/shared FFN
+gate+up+GEGLU fusion. The read-only audit points at `build_ffn()` in
+`src/llama-graph.cpp` and the Gemma4 final/shared dense FFN path in
+`src/models/gemma4.cpp` / `src/models/gemma4-assistant.cpp`. This should be a
+new narrow op or backend hook for BF16 dense gate/up tensors with small token
+counts (`n_tokens <= 8`), no LoRA/bias, F32 input, F32 accumulation/output, and
+the same GEGLU math as the current `build_lora_mm(up)`, `build_lora_mm(gate)`,
+`ggml_geglu_split()` sequence. Do **not** reuse the failed routed
+`LLAMA_SYCL_MUL_MAT_ID_MULTI_TOKEN_BF16_DIRECT` path. Before coding, confirm
+the active selected-down profile actually contains visible dense BF16 gate/up
+or GEGLU cost; if not, this lane is unlikely to beat the current record.
 
 Current handoff note: see
 `../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260629-selecteddown-next-lane-triage.md`

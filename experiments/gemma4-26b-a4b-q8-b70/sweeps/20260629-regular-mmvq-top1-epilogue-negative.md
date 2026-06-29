@@ -40,10 +40,11 @@ LLAMA_SYCL_MUL_MAT_TOP1_EPILOGUE=1
 Build result: `llama-server` rebuilt successfully in
 `build-sycl-b70-aot-bmg-g31-q8reorder-vdr2`.
 
-Activation caveat: the current harness/server logs do not print these two new
-env gates or a per-node hit counter. The candidate command set both gates and
-the source contains the guarded path, but a future revisit should add a
-one-shot activation log/counter before spending full512 time.
+Follow-up activation proof: a diagnostic node-profile run later confirmed the
+new graph node was selected:
+`MUL_MAT_ARGMAX:spec_verify_regular_mmvq_top1_epilogue_token_rows`.
+See
+`data/gemma4-q8-gpu0-top1epilogue-on-nodeprofile-20260629T1455Z/profile-excerpt.md`.
 
 ## Strict128 Paired Screen
 
@@ -82,6 +83,15 @@ The valid record remains:
 `data/gemma4-q8-gpu1-selecteddown-bf16retest-control-full512-20260629T051323Z/`
 at `115.8466634928202 tok/s`.
 
-If this idea is revisited, first add explicit activation telemetry and run a
-small node profile. Without evidence that the epilogue removes the hot
-`MUL_MAT:node_1930` cost, full512 promotion runs are low ROI.
+The activation ambiguity is now closed: the profile shows the new epilogue node
+active, but still top-ranked at ~`1.325 ms/call`:
+
+```text
+MUL_MAT_ARGMAX:spec_verify_regular_mmvq_top1_epilogue_token_rows
+total_ms=982.173 calls=741 avg_ms=1.325
+```
+
+This replaced the old `MUL_MAT:node_1930` naming but did not remove enough
+verifier LM-head cost to improve the primary metric. Do not spend full512 runs
+on this implementation as-is. A revisit would need a lower-cost backend
+epilogue, not just the existing guarded graph route.
