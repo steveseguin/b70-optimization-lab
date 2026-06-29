@@ -113,3 +113,96 @@ reduce exact target/verifier cost:
 3. Backend sampled-ID/output-path tightening around the current full LM-head
    plus backend `ggml_argmax` path. Upside is smaller, but it preserves the
    current winning compute path.
+
+## 2026-06-29 current selected-down node profile after compact-argmax negative
+
+After the default-off compact verifier argmax reorder-ncols route was ruled out,
+a fresh node profile was taken on the current selected-down VDR2 record stack.
+This run used the fixed realistic cold suite and is valid for correctness, but
+the throughput number is diagnostic only because `GGML_SYCL_NODE_PROFILE=1`
+and `GGML_SYCL_NODE_PROFILE_DETAIL=1` materially slow execution.
+
+Command shape:
+
+```bash
+cd /home/steve/qwen36-results-main
+GPU_INDEX=2 PORT=18432 MAX_TOKENS=128 CANARY_REPEATS=16 \
+  LLAMA_SERVER_SPEC_PROFILE=1 \
+  GGML_SYCL_NODE_PROFILE=1 \
+  GGML_SYCL_NODE_PROFILE_DETAIL=1 \
+  GGML_SYCL_NODE_PROFILE_EVERY=24 \
+  LABEL=gemma4-q8-gpu2-selecteddown-current-nodeprofile-strict128-20260629T135706Z \
+  repro/gemma4-26b-a4b-q8-b70/run-vdr2-selecteddown-record.sh
+```
+
+Artifacts:
+
+- summary:
+  `data/gemma4-q8-gpu2-selecteddown-current-nodeprofile-strict128-20260629T135706Z/summary.json`
+- realistic suite:
+  `data/gemma4-q8-gpu2-selecteddown-current-nodeprofile-strict128-20260629T135706Z/realistic-suite.json`
+- server log:
+  `/mnt/fast-ai/bench-results/gemma4-26b-a4b-q8/servers/gemma4-q8-gpu2-selecteddown-current-nodeprofile-strict128-20260629T135706Z.server.log`
+
+Validity and diagnostic metric:
+
+- chat canary: `64/64`, pass.
+- realistic gate: pass, fixed suite `gemma4-26b-a4b-q8-b70-realistic-v1`,
+  each prompt once, `cached_tokens=0` for every request.
+- diagnostic median tokens 1-100 after TTFT: `66.03793628965451 tok/s`.
+- p10 `62.56925752183291`, mean `67.99612630030721`, median full after TTFT
+  `66.08727077682778`, median wall full `59.39928014204553`, median TTFT
+  `210.00024653039873 ms`.
+
+Final SYCL node-profile top nodes:
+
+| Rank | Node | Total ms | Calls | Avg ms | Interpretation |
+| ---: | --- | ---: | ---: | ---: | --- |
+| 1 | `MUL_MAT:node_1930` | `1061.612` | `771` | `1.377` | target/verifier full-vocab Q8 LM head, `token_embd.weight q8_0 [2816,262144]` |
+| 2 | `MUL_MAT_ID:ffn_moe_gate_up-29` | `544.776` | `923` | `0.590` | final-layer BF16 routed gate/up, `blk.29.ffn_gate_up_exps.weight bf16 [2816,1408,128]` |
+| 3 | `MUL_MAT_ID:ffn_moe_gate_up-0` | `351.263` | `923` | `0.381` | Q8 routed gate/up |
+| 4-6 | `ffn_moe_gate_up-1/27/2` | `338-340` | `923` | `0.366-0.368` | Q8 routed gate/up family |
+| 7 | `RMS_NORM:norm` | `337.016` | `40078` | `0.008` | many small norm calls |
+| 8-26 | other `ffn_moe_gate_up-*` nodes | `318-332` | `923` | `0.344-0.360` | Q8 routed gate/up family |
+| 27 | `MUL_MAT_ARGMAX:mtp_direct_argmax_unroll_token_0` | `315.105` | `764` | `0.412` | draft argmax |
+| 30 | `MUL_MAT_ARGMAX:mtp_direct_argmax_unroll_token_1` | `311.649` | `764` | `0.408` | draft argmax |
+
+Final server spec profile:
+
+- `draft_ms=3880.504`, `calls=923`, `draft_tokens=2278`, `avg=4.204 ms`.
+- `target_decode_ms=39792.793`, `calls=923`, `tokens=6408`,
+  `avg=43.112 ms`, `avg_token=6.210 ms`.
+- `target_prompt_ms=13159.653`, `calls=152`, `tokens=3359`,
+  `avg=86.577 ms`, `avg_token=3.918 ms`.
+- `target_generation_ms=26633.140`, `calls=771`, `tokens=3049`,
+  `avg=34.544 ms`, `avg_token=8.735 ms`.
+- `process_ms=18.990`, `sample_accept_ms=2.140`,
+  `common_accept_ms=7.735`, `emit_ms=2.928`: host/sample/accept overhead is
+  not the bottleneck.
+- final acceptance sample: `80 accepted / 134 generated`, mean acceptance
+  length `2.78`, position rates `(0.778, 0.578, 0.422)`.
+
+Read-only subagent audits on the same codebase reached the same practical
+conclusion:
+
+- `LLAMA_SPEC_VERIFY_LATE_HEAD_BONUS=1` is exact for the greedy record recipe
+  but was already a loss because it removes one LM-head row from the main graph
+  and then pays a separate one-row head graph, scheduler work, copy, and sync.
+  Do not retry it as a record path unless the bonus head is fused into the
+  existing graph.
+- Existing `LLAMA_SPEC_VERIFY_STAGE_MTP3=1` /
+  `LLAMA_SPEC_VERIFY_STAGE_MTP3_SPLIT_BONUS=1` can skip rows after early
+  rejection exactly, but prior runs were negative and this profile is dominated
+  by target/verifier kernels, not row-control overhead.
+
+Decision:
+
+- preserve this as the current source-of-truth profile for the selected-down
+  VDR2 record stack;
+- stop host/copy and late-head/staged-row retries unless a new profile changes
+  the bottleneck;
+- next source work should target exact verifier graph cost: full-vocab Q8
+  LM-head, the BF16 final routed gate/up layer, or a materially different
+  routed MoE gate/up design. Note that previous BF16 direct attempts crashed or
+  lost; any new BF16 work must be a different, tightly scoped design with an
+  isolated A/B screen.

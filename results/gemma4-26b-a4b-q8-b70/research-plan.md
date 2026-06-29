@@ -9,12 +9,12 @@ replicas on four GPUs for parallel research and aggregate service capacity.
 Best one-B70 Q8 strict result under the promotion gate:
 
 - result:
-  `data/gemma4-q8-gpu1-vdr2-selecteddown-reordervdr2-full512-20260629B/`;
-- primary metric: **115.72789384447941 tok/s** median generated-token
+  `data/gemma4-q8-gpu1-selecteddown-bf16retest-control-full512-20260629T051323Z/`;
+- primary metric: **115.8466634928202 tok/s** median generated-token
   throughput for tokens 1-100 after TTFT across the fixed realistic suite;
-- p10 `101.44940713540609`, mean `113.15845262438565`, median full-512
-  after-TTFT `104.6018645861352`, median wall full-512
-  `100.22769693993533`, median TTFT `181.347543024458 ms`;
+- p10 `102.5726047181403`, mean `114.57370008916365`, median full-512
+  after-TTFT `104.66140955057205`, median wall full-512
+  `100.6396791169625`, median TTFT `181.16679147351533 ms`;
 - config: llama.cpp `c926ad098`, UD-Q8_K_XL target/verifier, Q4_0 MTP draft,
   reordered-Q8 VDR2, `n_max=3`, `n_min=2`, `p_min=0.0475`,
   `UBATCH_SIZE=1024`, `LLAMA_SYCL_F16_P021_SMALL_NCOLS=1`,
@@ -27,15 +27,15 @@ Best one-B70 Q8 strict result under the promotion gate:
 
 This is the policy-compliant VDR2 selected-down fused weighted-sum transfer of
 the strict `n_max=3`, `n_min=2`, `UBATCH_SIZE=1024` family; approved
-LocalMaxxing ID `cmqyo0jyt08ippk01vhiobdnm`. It was promoted from a
-conservative exact full512 confirmation batch (`113.47081786263712`,
-`115.72789384447941`, `113.81540554086772`, and `114.8109417270852 tok/s`).
-The prior LocalMaxxing row `cmqxchyra03xmqr01b963gmi1` at
-`98.34046474459183 tok/s`, prior F16-p021 `95.82453787677183 tok/s`, VDR2
-`90.98312252660529`, `90.32179401019857`, and `89.45543282863798 tok/s`
-submissions and prior VDR4 `87.61145306230438 tok/s` submission are
-superseded. The older `86.47445652599384 tok/s` `p_min=0.075` row did not
-repeat and is also superseded.
+LocalMaxxing ID `cmqyrpox4021dqk01co5o4fcw`. It repeated the previous
+selected-down record (`115.72789384447941 tok/s`, LocalMaxxing
+`cmqyo0jyt08ippk01vhiobdnm`) and supersedes the prior LocalMaxxing row
+`cmqxchyra03xmqr01b963gmi1` at `98.34046474459183 tok/s`, prior F16-p021
+`95.82453787677183 tok/s`, VDR2 `90.98312252660529`,
+`90.32179401019857`, and `89.45543282863798 tok/s` submissions, and prior
+VDR4 `87.61145306230438 tok/s` submission. The older
+`86.47445652599384 tok/s` `p_min=0.075` row did not repeat and is also
+superseded.
 The older `100+`, `170+`, and `280+` rows remain useful diagnostics, but they
 are not representative real-world throughput unless revalidated by the fixed
 cold suite.
@@ -84,6 +84,21 @@ LM-head weight loads across verifier rows. It passed the fixed cold gate and
 full512 record. Decision: negative, keep default-off; do not promote or submit.
 See
 `../../patches/gemma4-26b-a4b-q8-b70/20260629-compact-argmax-reorder-ncols-negative.md`.
+
+2026-06-29 current selected-down node profile: after the compact-argmax
+negative, a fresh diagnostic profile of the selected-down VDR2 record stack
+passed the fixed cold gate and 64/64 canary, but profiling reduced measured
+throughput to `66.03793628965451 tok/s`. Treat this as diagnostic only. The
+top hot node remains the target/verifier full-vocabulary Q8 LM head
+(`MUL_MAT:node_1930`, `1.377 ms/call`), followed by final-layer BF16 routed
+gate/up (`MUL_MAT_ID:ffn_moe_gate_up-29`, `0.590 ms/call`), many Q8 routed
+gate/up layers around `0.34-0.38 ms/call`, then draft argmax nodes around
+`0.41 ms/call`. Server spec profile still shows target decode dominating:
+`target_decode_ms=39792.793` versus `draft_ms=3880.504`; sampler/accept
+overhead is negligible. Decision: do not retest late-head bonus, stage-MTP3,
+or small host/copy tweaks as record candidates. Next credible work must reduce
+exact verifier graph cost, especially LM-head or routed MoE kernels. See
+`../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260629-selecteddown-rebuild-profile-and-skipstateless.md`.
 
 2026-06-28 crack-100 reliability update: a single strict full512 frequency-floor
 run at `2400,2800` hit `100.22397388514726 tok/s`, and an earlier unroll6 row
