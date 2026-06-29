@@ -40,6 +40,12 @@ The older `100+`, `170+`, and `280+` rows remain useful diagnostics, but they
 are not representative real-world throughput unless revalidated by the fixed
 cold suite.
 
+2026-06-29 record-repeat variance: four additional full512 cold-suite repeats
+of the promoted recipe all passed gate/canary but did not beat the record:
+`113.810`, `113.227`, `107.329`, and `114.829 tok/s`. Keep the existing
+`115.8466634928202 tok/s` LocalMaxxing row as headline. See
+`../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260629-record-repeat-full512-variance.md`.
+
 2026-06-28 F16 p021 small-ncols record: a four-GPU strict screen found
 `LLAMA_SYCL_F16_P021_SMALL_NCOLS=1` was the only useful source flag in the
 batch. The 128-token confirmation produced a strong lead (`98.44959726864674`
