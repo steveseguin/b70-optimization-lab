@@ -102,6 +102,13 @@ Recent closed negatives:
   vocab writer patch, but local SYCL runtime was unusably slow. Early eval was
   around `0.70-4.01 tok/s`, and DFlash draft generation was roughly
   `140 ms/call`. This is a graph/KV/draft-cost research item, not a record knob.
+- Fused selected-softmax into selected-down VDR2:
+  `LLAMA_GEMMA4_MOE_FUSED_DOWN_SELECTED_SOFTMAX=1` passed the fixed cold
+  strict128 gate and 512/512 canary rows on both flag-on lanes. It was a real
+  small paired win (`114.762` vs `113.943`, `115.554` vs `113.967`) but still
+  below the promoted `115.8466634928202 tok/s` full512 record, so it is
+  preserved as a default-off small-positive mechanism rather than promoted.
+  See `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260629-fused-down-selected-softmax-strict128.md`.
 
 Implication for the next AI: do not spend another session on launch-flag
 sweeps. The next credible record attempt needs a real verifier-cost reduction:
@@ -782,7 +789,7 @@ Tested the exact late head-only bonus verifier path:
 - metric: **96.91021564463527 tok/s** median tokens 1-100 after TTFT.
 
 Do not promote. This is below both the then-current valid
-`98.34046474459183 tok/s` record and the newer `115.72789384447941 tok/s`
+`98.34046474459183 tok/s` record and the newer `115.8466634928202 tok/s`
 record. The standalone one-row bonus head is probably correct but not cheap:
 the extra graph/scheduler work offsets the saved verifier output row. If this
 idea is revisited, it needs to be fused into the existing verifier/output path,

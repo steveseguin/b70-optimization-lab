@@ -207,6 +207,19 @@ and outweighed the verifier-row savings. Decision: closed negative; do not
 full512-confirm or submit this implementation. See
 `../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260629-prefix2-tail-head-negative.md`.
 
+2026-06-29 fused selected-softmax into selected-down VDR2 follow-up:
+`LLAMA_GEMMA4_MOE_FUSED_DOWN_SELECTED_SOFTMAX=1` folds the selected-softmax
+weight computation into the VDR2 reordered-Q8 selected-down weighted-sum kernel
+for decode-small Gemma MoE rows. The path passed the fixed cold gate and
+512/512 canary rows in all four strict128 lanes, and produced a small paired
+win: GPU1 flag-on `114.762` versus GPU0 control `113.943`, and GPU3 flag-on
+`115.554` versus GPU2 control `113.967`. This is a valid small positive in the
+intended verifier-MoE boundary, but **not promoted** because the best strict128
+candidate remained below the current full512 record
+`115.8466634928202 tok/s`. Keep the flag default-off and preserve the patch;
+do not spend a full512 promotion run unless a later patch stacks with it. See
+`../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260629-fused-down-selected-softmax-strict128.md`.
+
 Current handoff note: see
 `../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260629-selecteddown-next-lane-triage.md`
 for the 2026-06-29 post-profile audit, closed-lane list, and the preserved
@@ -321,7 +334,7 @@ strict record. The best Q8_0 screen,
 `88.94881774985208` and `89.89234269084307`; the best deeper row was
 `n_max=4`/`n_min=2` at `90.27678402019421`, still below both the old
 `UD-Q8_K_XL` record (`98.34046474459183`) and the current
-`115.72789384447941` record. Keep Q8_0 as a compatibility/control
+`115.8466634928202` record. Keep Q8_0 as a compatibility/control
 lane, not a promoted LocalMaxxing row. See
 `../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260627T2144-q80-target-strict-negative.md`.
 
@@ -1380,7 +1393,7 @@ Text speed is first. After text baseline:
     `n_min=2`, `p_min=0.0475`, `UBATCH_SIZE=1024`), official draft swaps to
     Q4_K_M, Q5_K_M, Q6_K, and Q8_0 all passed the fresh realistic gate but
     stayed below the then-current `98.34046474459183 tok/s` record and far below
-    the current `115.72789384447941 tok/s` record. Closest rows were Q8_0 at
+    the current `115.8466634928202 tok/s` record. Closest rows were Q8_0 at
     `88.245438 tok/s` and Q5_K_M at `88.109559 tok/s`; Q4_K_M and Q6_K
     were lower. A later Q2_K screen also lost (`85.779-88.903 tok/s`) versus a
     same-window Q4_0 control (`95.282 tok/s`). Keep Q4_0 as the promoted default

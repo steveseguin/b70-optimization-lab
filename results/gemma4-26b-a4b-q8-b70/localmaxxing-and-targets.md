@@ -117,7 +117,7 @@ Previous policy-compliant VDR2 submission, now superseded:
   for tokens 1-100 after TTFT;
 - LocalMaxxing: `cmqwxep4a03qiqr010chjn93s`;
 - status: still valid strict evidence, but replaced as the current record by
-  later rows, most recently the `115.72789384447941 tok/s` row above.
+  later rows, most recently the `115.8466634928202 tok/s` row above.
 
 Previous policy-compliant VDR2 submission, now superseded:
 
@@ -126,7 +126,7 @@ Previous policy-compliant VDR2 submission, now superseded:
   for tokens 1-100 after TTFT;
 - LocalMaxxing: `cmqwt1zk803ozqr01hctqss2z`;
 - status: still valid strict evidence, but replaced as the current record by
-  later rows, most recently the `115.72789384447941 tok/s` row above.
+  later rows, most recently the `115.8466634928202 tok/s` row above.
 
 Previous policy-compliant VDR2 submission, now superseded:
 
@@ -135,7 +135,7 @@ Previous policy-compliant VDR2 submission, now superseded:
   for tokens 1-100 after TTFT;
 - LocalMaxxing: `cmqwqzayr03o8qr01j6lgx93n`;
 - status: still valid strict evidence, but replaced as the current record by
-  later rows, most recently the `115.72789384447941 tok/s` row above.
+  later rows, most recently the `115.8466634928202 tok/s` row above.
 
 Previous policy-compliant VDR4 submission, now superseded:
 
@@ -144,7 +144,7 @@ Previous policy-compliant VDR4 submission, now superseded:
   for tokens 1-100 after TTFT;
 - LocalMaxxing: `cmqwnl2ag03lgqr01ch5bxknq`;
 - status: still valid strict evidence, but replaced as the current record by
-  later rows, most recently the `115.72789384447941 tok/s` row above.
+  later rows, most recently the `115.8466634928202 tok/s` row above.
 
 Previous realistic-suite local Q8 observation, now superseded:
 

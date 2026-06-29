@@ -14,9 +14,9 @@ Primary target:
   for parallel research screens rather than TP4 unless explicitly testing a
   multi-GPU serving shape.
 - Best strict realistic-suite one-B70 result is
-  `115.72789384447941 tok/s` median generated-token throughput for tokens
+  `115.8466634928202 tok/s` median generated-token throughput for tokens
   1-100 after TTFT across the fixed cold prompt suite. Evidence:
-  `data/gemma4-q8-gpu1-vdr2-selecteddown-reordervdr2-full512-20260629B/summary.json`.
+  `data/gemma4-q8-gpu1-selecteddown-bf16retest-control-full512-20260629T051323Z/summary.json`.
   It uses llama.cpp `c926ad098`, UD-Q8_K_XL target/verifier, Q4_0 MTP draft,
   reordered-Q8 VDR2, `n_max=3`, `n_min=2`, `p_min=0.0475`,
   `UBATCH_SIZE=1024`, `LLAMA_SYCL_F16_P021_SMALL_NCOLS=1`,
@@ -25,10 +25,13 @@ Primary target:
   `cached_tokens=0` on every prompt, and
   `realistic_final_gate.passed=true`.
 - Representative / submitted status: this is the confirmed strict-gate VDR2
-  selected-down fused weighted-sum family. Four full512 confirmations measured
+  selected-down fused weighted-sum family. The current high is approved by
+  LocalMaxxing as `cmqyrpox4021dqk01co5o4fcw`. Four earlier full512
+  confirmations measured
   `113.47081786263712`, `115.72789384447941`, `113.81540554086772`, and
-  `114.8109417270852 tok/s`; the submitted row is approved by LocalMaxxing as
-  `cmqyo0jyt08ippk01vhiobdnm`. Prior submitted rows
+  `114.8109417270852 tok/s`; their initial submitted row
+  `cmqyo0jyt08ippk01vhiobdnm` remains valid support but is superseded. Prior
+  submitted rows
   `98.34046474459183` (`cmqxchyra03xmqr01b963gmi1`),
   `95.82453787677183` (`cmqx3687103v4qr01ace1ft3m`),
   `90.98312252660529` (`cmqwxep4a03qiqr010chjn93s`),

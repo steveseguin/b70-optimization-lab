@@ -116,26 +116,28 @@ Record identity:
 - draft: local `Q4_0` Gemma MTP draft only
 - hardware: headless Supermicro AMD Threadripper PRO 5955WX platform, 128 GB
   DDR4, one Intel Arc Pro B70 32 GB used for the measured replica
-- result: best strict result `98.34046474459183 tok/s` median
+- result: best strict result `115.8466634928202 tok/s` median
   generated-token throughput for tokens 1-100 after TTFT across the fixed
   realistic cold prompt suite, `cached_tokens=0` on every prompt,
   `realistic_final_gate.passed=true`.
   Evidence:
-  `../data/gemma4-q8-gpu1-strict-vdr2-f16p021-bulksampled-confirm-B-n3-nmin2-p00475-ub1024-full512-20260628T052158Z/summary.json`.
+  `../data/gemma4-q8-gpu1-selecteddown-bf16retest-control-full512-20260629T051323Z/summary.json`.
   Config: reordered-Q8 VDR2, `n_max=3`, `n_min=2`, `p_min=0.0475`,
   `UBATCH_SIZE=1024`, `LLAMA_SYCL_F16_P021_SMALL_NCOLS=1`,
-  `LLAMA_SPEC_VERIFY_BULK_SAMPLED_IDS=1`, `--ctx-checkpoints 0`, no
-  n-gram/history acceleration.
-  This is the current submitted VDR2 representative row, approved under the
-  realistic-suite policy as `cmqxchyra03xmqr01b963gmi1`. Supporting full512
-  strict rows in the same confirmation batch measured `96.01452890026427`,
-  `95.90275376682132`, and `94.94094934974818 tok/s`. The prior F16-p021
-  `95.82453787677183 tok/s`, VDR2 `90.98312252660529`,
-  `90.32179401019857`, and `89.45543282863798 tok/s` submissions and VDR4
-  `87.61145306230438 tok/s` submission are superseded.
+  `LLAMA_SPEC_VERIFY_BULK_SAMPLED_IDS=1`,
+  `LLAMA_GEMMA4_MOE_FUSED_DOWN_WEIGHTED_SUM_REORDER_VDR2=1`,
+  `--ctx-checkpoints 0`, no n-gram/history acceleration.
+  This is the current submitted VDR2 selected-down fused weighted-sum row,
+  approved under the realistic-suite policy as `cmqyrpox4021dqk01co5o4fcw`.
+  The earlier selected-down row `cmqyo0jyt08ippk01vhiobdnm` remains valid
+  support; prior `98.34046474459183`, `95.82453787677183`, VDR2 `90-91`,
+  and VDR4 `87.61145306230438` submissions are superseded.
   The old `176.216232 tok/s` synthetic filled-long row remains diagnostic only
   and is not representative real-world throughput.
 - primary artifacts:
+  `../data/gemma4-q8-gpu1-selecteddown-bf16retest-control-full512-20260629T051323Z/summary.json`,
+  `../results/gemma4-26b-a4b-q8-b70/20260629-vdr2-selected-down-record.md`,
+  `../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260629-record-repeat-full512-variance.md`,
   `../data/gemma4-q8-gpu1-strict-vdr2-f16p021-bulksampled-confirm-B-n3-nmin2-p00475-ub1024-full512-20260628T052158Z/summary.json`,
   `../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260628T0245-crack100-runtime-sweeps.md`,
   `../data/localmaxxing-responses/gemma4-26b-a4b-q8-b70-llamacpp-realistic-vdr2-mtp-n3-nmin2-p00475-ub1024-f16p021-bulksampled-full512-20260628.submit.log`,

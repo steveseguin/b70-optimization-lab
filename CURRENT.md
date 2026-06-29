@@ -46,6 +46,10 @@ Current active optimization target:
   below the current `115.8466634928202` record. Late-head bonus plus
   `LLAMA_SPEC_HEAD_FUSED_OUTPUT_ARGMAX=1` lost strict128. See
   `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260629-eogclip-and-spechead-negative.md`.
+  Fusing selected-softmax directly into selected-down VDR2 was a valid
+  strict128 small positive (`115.554` best flag-on), but still below the
+  current full512 record, so it is preserved default-off and not submitted. See
+  `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260629-fused-down-selected-softmax-strict128.md`.
 - Current diagnostic best, not a real-world headline:
   `176.21623213048554 tok/s` after TTFT on the first no-cache synthetic
   filled-long benchmark row, `176.40259133127742 tok/s` supporting repeat mean,
