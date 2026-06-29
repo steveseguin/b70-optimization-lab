@@ -142,6 +142,7 @@ LLAMA_SPEC_VERIFY_SOFTCAP_ARGMAX="${LLAMA_SPEC_VERIFY_SOFTCAP_ARGMAX:-}" \
 LLAMA_SPEC_VERIFY_RAW_ARGMAX="${LLAMA_SPEC_VERIFY_RAW_ARGMAX:-}" \
 LLAMA_SYCL_MUL_MAT_ARGMAX_TILE_SUBGROUPS="${LLAMA_SYCL_MUL_MAT_ARGMAX_TILE_SUBGROUPS:-}" \
 LLAMA_SYCL_MUL_MAT_ARGMAX_MULTI_REUSE="${LLAMA_SYCL_MUL_MAT_ARGMAX_MULTI_REUSE:-}" \
+LLAMA_SYCL_MUL_MAT_ARGMAX_REORDER_NCOLS="${LLAMA_SYCL_MUL_MAT_ARGMAX_REORDER_NCOLS:-}" \
 LLAMA_SPEC_ADAPTIVE_MTP="${LLAMA_SPEC_ADAPTIVE_MTP:-}" \
 LLAMA_SPEC_ADAPTIVE_MTP_WARMUP="${LLAMA_SPEC_ADAPTIVE_MTP_WARMUP:-}" \
 LLAMA_SPEC_ADAPTIVE_MTP_LOW_N_MAX="${LLAMA_SPEC_ADAPTIVE_MTP_LOW_N_MAX:-}" \
@@ -362,6 +363,7 @@ out = {
         "llama_spec_verify_raw_argmax": env_or_log("LLAMA_SPEC_VERIFY_RAW_ARGMAX"),
         "llama_sycl_mul_mat_argmax_tile_subgroups": env_or_log("LLAMA_SYCL_MUL_MAT_ARGMAX_TILE_SUBGROUPS"),
         "llama_sycl_mul_mat_argmax_multi_reuse": env_or_log("LLAMA_SYCL_MUL_MAT_ARGMAX_MULTI_REUSE"),
+        "llama_sycl_mul_mat_argmax_reorder_ncols": env_or_log("LLAMA_SYCL_MUL_MAT_ARGMAX_REORDER_NCOLS"),
         "llama_spec_adaptive_mtp": env_or_log("LLAMA_SPEC_ADAPTIVE_MTP"),
         "llama_spec_adaptive_mtp_warmup": env_or_log("LLAMA_SPEC_ADAPTIVE_MTP_WARMUP"),
         "llama_spec_adaptive_mtp_low_n_max": env_or_log("LLAMA_SPEC_ADAPTIVE_MTP_LOW_N_MAX"),

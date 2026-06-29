@@ -74,6 +74,17 @@ strict record to `115.72789384447941 tok/s`. This finally cracked reliable
 trying deeper verifier LM-head or MoE boundary work. See
 `20260629-vdr2-selected-down-record.md`.
 
+2026-06-29 compact verifier argmax reorder-ncols screen: a default-off SYCL
+route under `LLAMA_SYCL_MUL_MAT_ARGMAX_REORDER_NCOLS=1` attempted to make
+`LLAMA_SPEC_VERIFY_FUSED_OUTPUT_ARGMAX=1` competitive by sharing reordered Q8
+LM-head weight loads across verifier rows. It passed the fixed cold gate and
+512/512 canary, but did not beat the regular verifier path:
+`109.94207305976514 tok/s` versus same-window control
+`110.18642209569018 tok/s`, both below the promoted `115.8466634928202`
+full512 record. Decision: negative, keep default-off; do not promote or submit.
+See
+`../../patches/gemma4-26b-a4b-q8-b70/20260629-compact-argmax-reorder-ncols-negative.md`.
+
 2026-06-28 crack-100 reliability update: a single strict full512 frequency-floor
 run at `2400,2800` hit `100.22397388514726 tok/s`, and an earlier unroll6 row
 hit `101.076 tok/s`, but confirmations did not hold above 100. Four parallel
