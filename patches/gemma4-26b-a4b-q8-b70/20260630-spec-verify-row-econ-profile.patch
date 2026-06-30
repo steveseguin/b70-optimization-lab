@@ -1,0 +1,94 @@
+Default-off diagnostic patch for Gemma 4 26B Q8 speculative verifier
+row-economics. This is not a speed patch and should not be promoted as part of
+a record recipe. It exists to measure the best-case output-row savings for a
+future exact verifier that stops after the first draft mismatch while
+preserving the full-match bonus row.
+
+Result: on `gemma4-q8-gpu0-rowecon-strict128-20260630T010708Z`, the profiler
+reported:
+
+```text
+server spec rowecon: steps=921 rows_current=3679 rows_oracle=2893
+rows_saved=786 save_pct=21.365 full_match=541
+full_match_with_bonus=541 accept_prefix_counts=(0:144, 1:118, 2:123, 3:536)
+```
+
+That means an oracle row-adaptive verifier could remove about `21.365%` of
+output rows, but `58.7%` of steps still use the bonus row. Simple bonus-row
+removal is therefore not a promising record path. See:
+`experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-row-economics-profile.md`.
+
+Patch sketch against `tools/server/server-context.cpp` in
+`/home/steve/src/llama.cpp-gemma-record-repro-c926`:
+
+```diff
+--- a/tools/server/server-context.cpp
++++ b/tools/server/server-context.cpp
+@@
++    bool spec_row_econ_enabled = server_env_enabled("LLAMA_SPEC_VERIFY_ROW_ECON_PROFILE");
++    bool spec_profile_enabled = server_env_enabled("LLAMA_SERVER_SPEC_PROFILE") || spec_row_econ_enabled;
++    int64_t n_spec_rowecon_steps = 0;
++    int64_t n_spec_rowecon_rows_current = 0;
++    int64_t n_spec_rowecon_rows_oracle = 0;
++    int64_t n_spec_rowecon_rows_saved = 0;
++    int64_t n_spec_rowecon_full_match = 0;
++    int64_t n_spec_rowecon_full_match_with_bonus = 0;
++    std::array<int64_t, 8> n_spec_rowecon_accept_prefix = {};
+@@
++        if (n_spec_rowecon_steps > 0) {
++            const double save_pct = n_spec_rowecon_rows_current > 0 ?
++                100.0 * (double) n_spec_rowecon_rows_saved / (double) n_spec_rowecon_rows_current : 0.0;
++            SRV_INF("server spec rowecon: steps=%" PRId64 " rows_current=%" PRId64 " rows_oracle=%" PRId64
++                    " rows_saved=%" PRId64 " save_pct=%.3f full_match=%" PRId64
++                    " full_match_with_bonus=%" PRId64 " accept_prefix_counts=(%s)\n",
++                    n_spec_rowecon_steps,
++                    n_spec_rowecon_rows_current,
++                    n_spec_rowecon_rows_oracle,
++                    n_spec_rowecon_rows_saved,
++                    save_pct,
++                    n_spec_rowecon_full_match,
++                    n_spec_rowecon_full_match_with_bonus,
++                    accept_prefix_counts.c_str());
++        }
+@@
++    void record_spec_row_economics(
++            const server_slot & slot,
++            const std::vector<llama_token> & accepted,
++            size_t n_draft,
++            size_t rows_current) {
++        if (!spec_row_econ_enabled || accepted.empty() || n_draft == 0 || rows_current == 0) {
++            return;
++        }
++
++        size_t accepted_draft = 0;
++        while (accepted_draft < n_draft &&
++                accepted_draft < accepted.size() &&
++                accepted[accepted_draft] == slot.spec_draft[accepted_draft]) {
++            accepted_draft++;
++        }
++
++        const bool full_match = accepted_draft == n_draft;
++        const bool has_bonus = full_match && accepted.size() > n_draft;
++        const size_t oracle_rows = full_match ?
++            n_draft + (has_bonus ? 1 : 0) :
++            std::min(rows_current, accepted_draft + 1);
++
++        n_spec_rowecon_steps++;
++        n_spec_rowecon_rows_current += (int64_t) rows_current;
++        n_spec_rowecon_rows_oracle += (int64_t) oracle_rows;
++        n_spec_rowecon_rows_saved += (int64_t) (rows_current > oracle_rows ? rows_current - oracle_rows : 0);
++        n_spec_rowecon_full_match += full_match ? 1 : 0;
++        n_spec_rowecon_full_match_with_bonus += has_bonus ? 1 : 0;
++        const size_t prefix_bucket = std::min(accepted_draft, n_spec_rowecon_accept_prefix.size() - 1);
++        n_spec_rowecon_accept_prefix[prefix_bucket]++;
++        spec_profile_dirty = true;
++    }
+@@
+-                    accepted = common_sampler_sample_and_accept_n(slot.smpl.get(), slot.ctx_tgt, slot.spec_i_batch, slot.spec_draft);
++                    accepted = common_sampler_sample_and_accept_n(slot.smpl.get(), slot.ctx_tgt, slot.spec_i_batch, slot.spec_draft);
++                    row_econ_default_full_bonus_path = true;
++                }
++                if (row_econ_default_full_bonus_path) {
++                    record_spec_row_economics(slot, accepted, n_draft, slot.spec_i_batch.size());
+                 }
+```

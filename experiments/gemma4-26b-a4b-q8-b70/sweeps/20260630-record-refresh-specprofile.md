@@ -181,3 +181,24 @@ profile lowers its expected near-term payoff. The record path should prioritize
 real verifier graph reductions: exact LM-head work removal, routed MoE boundary
 work, or backend output-read avoidance that actually removes the extraction
 boundary rather than moving the final `llama_synchronize(ctx)`.
+
+## Follow-up: Row-Economics Profile
+
+The next diagnostic added `LLAMA_SPEC_VERIFY_ROW_ECON_PROFILE=1` to count the
+oracle output-row savings available to a verifier that stops after the first
+draft mismatch while preserving the normal bonus row on full match. Details are
+in `20260630-row-economics-profile.md`.
+
+Final counter:
+
+```text
+server spec rowecon: steps=921 rows_current=3679 rows_oracle=2893
+rows_saved=786 save_pct=21.365 full_match=541
+full_match_with_bonus=541 accept_prefix_counts=(0:144, 1:118, 2:123, 3:536)
+```
+
+Interpretation: there is a measured `21.365%` oracle ceiling for verifier
+output-row reduction, but `58.7%` of verifier steps use the full-match bonus
+row. That makes simple bonus removal the wrong direction; any row-adaptive
+design must preserve the bonus pipeline and remove actual verifier LM-head /
+output work inside the graph.

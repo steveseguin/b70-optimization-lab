@@ -90,7 +90,16 @@ Primary target:
   accept-side `llama_synchronize(ctx)` is only `1.734 ms` total over `896`
   verifier calls (`0.002 ms/call`), so do not chase sampler-side sync cleanup
   as a record lever. The remaining credible target is real verifier graph cost
-  or the backend sampled-output extraction boundary itself.
+  or the backend sampled-output extraction boundary itself. Follow-up
+  `LLAMA_SPEC_VERIFY_ROW_ECON_PROFILE=1` measured the default full-bonus
+  verifier row economics on the same record identity:
+  `steps=921`, `rows_current=3679`, `rows_oracle=2893`,
+  `rows_saved=786` (`21.365%` oracle row-output saving), and
+  `full_match_with_bonus=541` (`58.7%` of steps). Evidence:
+  `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-row-economics-profile.md`.
+  This supports a bonus-preserving row-output design only; simple no-bonus,
+  adaptive bonus skip, staged MTP3, late-head, and prefix-tail variants remain
+  closed negatives.
 - Current context/service diagnostic split: the short-record recipe is now
   also the FA-on 32K/VMM service profile after a realistic-gate retest. The
   promoted row is `121.41411987308553 tok/s` with `FLASH_ATTN=on`,
@@ -129,9 +138,9 @@ Primary target:
 - Post-100 status: the reliable `>100 tok/s` barrier is broken. Do not spend
   more time on configuration-only repeats for this Gemma lane. The next
   plausible record attempt needs a real source-level verifier-cost reduction,
-  especially a row-adaptive verifier-output design that preserves exactness, a
-  head-only bonus path that preserves the current pipeline, or additional
-  verifier MoE boundary reduction beyond selected-down fusion.
+  especially a row-adaptive verifier-output design that preserves exactness and
+  keeps the full-accept bonus pipeline, or additional verifier MoE boundary
+  reduction beyond selected-down fusion.
 
 Historical / service targets:
 

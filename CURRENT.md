@@ -101,8 +101,14 @@ Current active optimization target:
   A follow-up default-off sync-profile wrapper measured the later accept-side
   verifier `llama_synchronize(ctx)` at only `1.734 ms` over `896` calls
   (`0.002 ms/call`), confirming that sampled extraction cost is not in the
-  sampler accept loop. Next useful work should reduce verifier graph work or
-  remove/overlap the backend sampled-output extraction boundary.
+  sampler accept loop. A row-economics diagnostic then measured the best-case
+  output-row savings for an oracle adaptive verifier shape:
+  `rows_current=3679`, `rows_oracle=2893`, `rows_saved=786`
+  (`21.365%`), with `full_match_with_bonus=541/921` steps. It passed the cold
+  gate and canary, but remains diagnostic only. It rules out simple bonus-row
+  removal as a record path and points only to a bonus-preserving row-output
+  design or deeper verifier graph/MoE work. See
+  `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-row-economics-profile.md`.
 - Current context/service diagnostic split:
   with flash attention off, MTP remains useful through about `ctx24576` /
   `ctx25600`, degrades near `ctx26624`, and cliffs by `ctx27648`. With

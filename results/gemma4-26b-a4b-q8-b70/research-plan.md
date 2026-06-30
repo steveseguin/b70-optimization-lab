@@ -239,6 +239,22 @@ Follow-up sync timing with a default-off
 record path; if sampled-ID extraction is attacked again, the patch must remove
 or overlap the backend output-read boundary itself.
 
+2026-06-30 row-economics verifier profile: a default-off
+`LLAMA_SPEC_VERIFY_ROW_ECON_PROFILE=1` counter measured the default full-bonus
+MTP verifier path on the same record identity. The diagnostic strict128 run
+passed the fixed cold gate (`cached_tokens=0`) and 128 canary rows, with
+`118.69362600230792 tok/s` median tokens 1-100 after TTFT under profiling. The
+important result is the row accounting: `921` verifier steps,
+`3679` current output rows, `2893` oracle rows, and `786` rows saved
+(`21.365%`) if an exact adaptive verifier could stop output rows at the first
+mismatch while preserving full-match bonus rows. `541/921` steps were
+full-match-with-bonus, so the bonus pipeline is valuable and simple no-bonus or
+adaptive bonus skipping remains closed negative. A row-adaptive design is worth
+only if it preserves that bonus behavior and removes real LM-head/output work
+inside the verifier graph; otherwise continue with deeper routed-MoE or graph
+boundary reductions. See
+`../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-row-economics-profile.md`.
+
 Post-top1 profile check: skip the dense/shared FFN gate+up+GEGLU fusion for
 now. The activation-profile follow-up for the top1 experiment showed the new
 LM-head route active and still hot, then routed MoE gate/up
