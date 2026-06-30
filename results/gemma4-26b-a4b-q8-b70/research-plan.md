@@ -73,6 +73,17 @@ the separate fixed realistic retest is recorded in
 See
 `../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260629-context-threshold-mtp-vs-nospec.md`.
 
+2026-06-30 prefill/long-context ladder baseline: the current FA-on 32K/VMM
+record recipe was run on unique long prompts with `BATCH_SIZE=1024`,
+`UBATCH_SIZE=1024`, 16 generated tokens, `cached_tokens=0`, and canary pass on
+all rows. Approx prefill throughput (`prompt_tokens / TTFT`) peaked around
+`~1.09K-1.11K tok/s` at 2.9K-5.6K actual prompt tokens, stayed `~1.07K tok/s`
+at 8.1K, then declined to `955.9`, `887.7`, and `794.2 tok/s` at 12.1K,
+16.2K, and 21.5K actual tokens. This is service-lane baseline data only. Keep
+the short-decode record recipe unchanged unless a service candidate later
+passes the fixed cold suite with no decode regression. See
+`../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-prefill-ladder-baseline.md`.
+
 2026-06-29 verifier LM-head candidate-threshold audit: shifted
 `t_inp_tokens[r + 1]` does provide the draft candidate ID for narrow standard
 MTP verifier rows, but this is not a good next record implementation. Exact

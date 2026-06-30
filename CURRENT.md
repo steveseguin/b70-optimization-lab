@@ -135,6 +135,16 @@ Current active optimization target:
   the fixed realistic gate. These are service/context diagnostics, not
   LocalMaxxing headline records. See
   `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260629-context-threshold-mtp-vs-nospec.md`.
+  The first FA-on 32K/VMM prefill ladder for the current record stack is now
+  recorded in
+  `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-prefill-ladder-baseline.md`.
+  It used `BATCH_SIZE=1024`, `UBATCH_SIZE=1024`, unique long prompts, 16-token
+  outputs, `cached_tokens=0`, and canary pass on every row. Approx prefill
+  throughput peaked around `~1.09K-1.11K tok/s` for 2.9K-5.6K actual prompt
+  tokens, stayed `~1.07K tok/s` at 8.1K actual tokens, then declined to
+  `955.9`, `887.7`, and `794.2 tok/s` at 12.1K, 16.2K, and 21.5K actual tokens.
+  Treat this as the baseline for service-lane batch/ubatch screens; do not
+  submit it or infer a short-decode record from it.
 - Current diagnostic best, not a real-world headline:
   `176.21623213048554 tok/s` after TTFT on the first no-cache synthetic
   filled-long benchmark row, `176.40259133127742 tok/s` supporting repeat mean,

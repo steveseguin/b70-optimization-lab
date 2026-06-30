@@ -1,0 +1,114 @@
+{
+  "fresh_response_validity": {
+    "all_cached_tokens": [
+      0
+    ],
+    "all_prompt_hashes_distinct": true,
+    "all_rows_fresh_response_mean_eligible": true,
+    "cached_tokens_all_zero": true,
+    "cached_tokens_reported": true,
+    "headline_cached_tokens": 0,
+    "headline_policy": "Use row0 only as fresh-response headline. Later repeated-prompt rows are support-only unless each request uses an independently fresh prompt with no reusable continuation/history.",
+    "headline_row": 0,
+    "headline_tok_s_after_ttft": 141.36839851751353,
+    "headline_tok_s_wall": 14.562195509738421,
+    "prompts_are_unique": true,
+    "repeated_prompt_rows_support_only": false
+  },
+  "rows": [
+    {
+      "chunks": 16,
+      "completion_tokens": 16,
+      "elapsed_s": 1.0987354200333357,
+      "post_ttft_s": 0.11317946703638881,
+      "prompt_sha256": "b3f11821511503876db83722a564661994c17ef36b6453db44ac22b35a122829",
+      "prompt_tokens": 804,
+      "prompt_variant": 0,
+      "sha256": "54aac3f57f843e0317626b1fe57c053269d8413f44a7e274b28109de36daf102",
+      "text": "001. benchmark latency memory throughput validation repeatability\n002. benchmark",
+      "text_preview": "001. benchmark latency memory throughput validation repeatability\n002. benchmark",
+      "tok_s_after_ttft": 141.36839851751353,
+      "tok_s_wall": 14.562195509738421,
+      "ttft_s": 0.9855559529969469,
+      "usage": {
+        "completion_tokens": 16,
+        "prompt_tokens": 804,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "total_tokens": 820
+      }
+    }
+  ],
+  "run_identity": {
+    "api_mode": "chat",
+    "base_url": "http://127.0.0.1:18421",
+    "created_at_utc": "2026-06-30T01:45:03.504678+00:00",
+    "max_tokens": 16,
+    "model": "gemma4-26b-a4b-q8",
+    "prompt_chars": 3538,
+    "prompt_mode": "filled-long-unique",
+    "prompt_preview": "Unique benchmark instance 0000. Deterministic nonce gemma-b70-0000-00000000.\n\nYou are running a deterministic Gemma B70 decode benchmark. Read the reference context, then produce a long numbered response until the token limit is reached. Do",
+    "prompt_sha256": "b3f11821511503876db83722a564661994c17ef36b6453db44ac22b35a122829",
+    "prompt_sha256s": [
+      "b3f11821511503876db83722a564661994c17ef36b6453db44ac22b35a122829"
+    ],
+    "prompt_tokens_requested": 512,
+    "prompts_are_unique": true,
+    "repeats": 1,
+    "seed": 1,
+    "usage_required": true
+  },
+  "summary": {
+    "completion_tokens": {
+      "cv": 0.0,
+      "max": 16,
+      "mean": 16.0,
+      "median": 16,
+      "min": 16,
+      "stdev": 0.0
+    },
+    "completion_tokens_total": 16,
+    "elapsed_s": {
+      "cv": 0.0,
+      "max": 1.0987354200333357,
+      "mean": 1.0987354200333357,
+      "median": 1.0987354200333357,
+      "min": 1.0987354200333357,
+      "stdev": 0.0
+    },
+    "prompt_tokens": {
+      "cv": 0.0,
+      "max": 804,
+      "mean": 804.0,
+      "median": 804,
+      "min": 804,
+      "stdev": 0.0
+    },
+    "requests": 1,
+    "tok_s_after_ttft": {
+      "cv": 0.0,
+      "max": 141.36839851751353,
+      "mean": 141.36839851751353,
+      "median": 141.36839851751353,
+      "min": 141.36839851751353,
+      "stdev": 0.0
+    },
+    "tok_s_wall": {
+      "cv": 0.0,
+      "max": 14.562195509738421,
+      "mean": 14.562195509738421,
+      "median": 14.562195509738421,
+      "min": 14.562195509738421,
+      "stdev": 0.0
+    },
+    "ttft_s": {
+      "cv": 0.0,
+      "max": 0.9855559529969469,
+      "mean": 0.9855559529969469,
+      "median": 0.9855559529969469,
+      "min": 0.9855559529969469,
+      "stdev": 0.0
+    }
+  }
+}

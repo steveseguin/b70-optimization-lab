@@ -135,6 +135,16 @@ Primary target:
   synthetic ~11K-token diagnostic, with `cached_tokens=0`. These are not
   LocalMaxxing headline records. Evidence:
   `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260629-context-threshold-mtp-vs-nospec.md`.
+  New 2026-06-30 service baseline: the FA-on 32K/VMM record recipe was run as
+  a prefill ladder with unique prompts, `BATCH_SIZE=1024`, `UBATCH_SIZE=1024`,
+  16 generated tokens, `cached_tokens=0`, and canary pass on all rows. Summary:
+  `~1.09K-1.11K tok/s` approximate prefill at 2.9K-5.6K actual prompt tokens,
+  `~1.07K tok/s` at 8.1K, then `955.9`, `887.7`, and `794.2 tok/s` at 12.1K,
+  16.2K, and 21.5K actual tokens. Evidence:
+  `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-prefill-ladder-baseline.md`.
+  Next service tests may screen larger batch/ubatch on representative long
+  prompts, but must keep this separate from the short-decode record and rerun
+  the short fixed suite before any recipe promotion.
 - Current best non-duplicate Gemma code target is still verifier cost, but not
   by removing the bonus pipeline or by a naive candidate-threshold head scan.
   Work inside the existing target decode boundary only if it removes real
