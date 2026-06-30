@@ -130,6 +130,14 @@ Primary target:
   `119.51944277144372`. This is a closed negative; do not full512-confirm or
   submit. Evidence:
   `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-faon-vmm-pmin-gap-screen-negative.md`.
+- Latest full512 record-repeat: four lanes of the current promoted FA-on
+  32K/VMM selected-down VDR2 recipe all passed the strict cold final gate,
+  `cached_tokens=0`, and 128/128 canary, but no lane beat the
+  `121.41411987308553 tok/s` record. Medians were `118.21311630972258`,
+  `117.71732552906994`, `114.87763475869593`, and
+  `112.94544241316387 tok/s`. Closed as variance/no-new-record; do not submit.
+  Evidence:
+  `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-record-repeat-full512-variance.md`.
 - Current context/service diagnostic split: the short-record recipe is now
   also the FA-on 32K/VMM service profile after a realistic-gate retest. The
   promoted row is `121.41411987308553 tok/s` with `FLASH_ATTN=on`,

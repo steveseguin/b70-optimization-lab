@@ -107,6 +107,15 @@ and
 and
 `../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-prefill-ub2048-vs-ub2560-confirm.md`.
 
+2026-06-30 record-identity full512 repeat: four parallel lanes of the current
+FA-on 32K/VMM selected-down VDR2 recipe all passed the strict realistic final
+gate with `cached_tokens=0` and 128/128 canary, but did not beat the
+`121.41411987308553 tok/s` record. Primary medians were `118.21311630972258`,
+`117.71732552906994`, `114.87763475869593`, and
+`112.94544241316387 tok/s`. Treat as variance/no-new-record, not a
+LocalMaxxing submission candidate. See
+`../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-record-repeat-full512-variance.md`.
+
 2026-06-29 verifier LM-head candidate-threshold audit: shifted
 `t_inp_tokens[r + 1]` does provide the draft candidate ID for narrow standard
 MTP verifier rows, but this is not a good next record implementation. Exact

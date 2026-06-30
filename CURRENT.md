@@ -133,6 +133,12 @@ Current active optimization target:
   (`119.79709987498046` / `119.51944277144372`). This closes the remaining
   threshold-only gap; do not full512-confirm or submit. See
   `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-faon-vmm-pmin-gap-screen-negative.md`.
+  A four-lane full512 repeat of the current promoted recipe then passed the
+  strict cold final gate and 128/128 canary on every lane, but did not beat the
+  record: medians were `118.21311630972258`, `117.71732552906994`,
+  `114.87763475869593`, and `112.94544241316387 tok/s`. This is
+  variance/no-new-record; do not submit. See
+  `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-record-repeat-full512-variance.md`.
 - Current context/service diagnostic split:
   with flash attention off, MTP remains useful through about `ctx24576` /
   `ctx25600`, degrades near `ctx26624`, and cliffs by `ctx27648`. With
