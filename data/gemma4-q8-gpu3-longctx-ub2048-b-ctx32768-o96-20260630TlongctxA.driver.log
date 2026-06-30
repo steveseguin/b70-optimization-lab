@@ -1,0 +1,828 @@
+[gemma4-baseline] label=gemma4-q8-gpu3-longctx-ub2048-b-ctx32768-o96-20260630TlongctxA
+[gemma4-baseline] base_url=http://127.0.0.1:18523
+[gemma4-baseline] model=/mnt/fast-ai/llm-models/gemma4-26b-a4b-it-q8-gguf/gemma-4-26B-A4B-it-UD-Q8_K_XL.gguf
+[gemma4-baseline] llama_server=/home/steve/src/llama.cpp-gemma-record-repro-c926/build-sycl-b70-aot-bmg-g31-q8reorder-vdr2/bin/llama-server
+[gemma4-baseline] server_log=/mnt/fast-ai/bench-results/gemma4-26b-a4b-q8/servers/gemma4-q8-gpu3-longctx-ub2048-b-ctx32768-o96-20260630TlongctxA.server.log
+[gemma4-baseline] server ready
+{
+  "rows": [
+    {
+      "case": "json",
+      "elapsed_s": 0.26132804597727954,
+      "normalized": "{\"answer\":42,\"unit\":\"widgets\"}",
+      "ok": true,
+      "repeat": 0,
+      "text": "{\"answer\":42,\"unit\":\"widgets\"}"
+    },
+    {
+      "case": "sort",
+      "elapsed_s": 0.182304781046696,
+      "normalized": "blue, green, orange, red",
+      "ok": true,
+      "repeat": 0,
+      "text": "blue, green, orange, red"
+    },
+    {
+      "case": "arithmetic",
+      "elapsed_s": 0.16089837602339685,
+      "normalized": "17",
+      "ok": true,
+      "repeat": 0,
+      "text": "17"
+    },
+    {
+      "case": "code",
+      "elapsed_s": 0.2524352780310437,
+      "normalized": "python def add_one(x): return x + 1",
+      "ok": true,
+      "repeat": 0,
+      "text": "```python\ndef add_one(x):\n    return x + 1\n```"
+    },
+    {
+      "case": "json",
+      "elapsed_s": 0.20998557703569531,
+      "normalized": "{\"answer\":42,\"unit\":\"widgets\"}",
+      "ok": true,
+      "repeat": 1,
+      "text": "{\"answer\":42,\"unit\":\"widgets\"}"
+    },
+    {
+      "case": "sort",
+      "elapsed_s": 0.18233210197649896,
+      "normalized": "blue, green, orange, red",
+      "ok": true,
+      "repeat": 1,
+      "text": "blue, green, orange, red"
+    },
+    {
+      "case": "arithmetic",
+      "elapsed_s": 0.16106961702462286,
+      "normalized": "17",
+      "ok": true,
+      "repeat": 1,
+      "text": "17"
+    },
+    {
+      "case": "code",
+      "elapsed_s": 0.2526132819475606,
+      "normalized": "python def add_one(x): return x + 1",
+      "ok": true,
+      "repeat": 1,
+      "text": "```python\ndef add_one(x):\n    return x + 1\n```"
+    },
+    {
+      "case": "json",
+      "elapsed_s": 0.2103602000279352,
+      "normalized": "{\"answer\":42,\"unit\":\"widgets\"}",
+      "ok": true,
+      "repeat": 2,
+      "text": "{\"answer\":42,\"unit\":\"widgets\"}"
+    },
+    {
+      "case": "sort",
+      "elapsed_s": 0.18017051194328815,
+      "normalized": "blue, green, orange, red",
+      "ok": true,
+      "repeat": 2,
+      "text": "blue, green, orange, red"
+    },
+    {
+      "case": "arithmetic",
+      "elapsed_s": 0.16082935803569853,
+      "normalized": "17",
+      "ok": true,
+      "repeat": 2,
+      "text": "17"
+    },
+    {
+      "case": "code",
+      "elapsed_s": 0.25389397295657545,
+      "normalized": "python def add_one(x): return x + 1",
+      "ok": true,
+      "repeat": 2,
+      "text": "```python\ndef add_one(x):\n    return x + 1\n```"
+    },
+    {
+      "case": "json",
+      "elapsed_s": 0.21154780802316964,
+      "normalized": "{\"answer\":42,\"unit\":\"widgets\"}",
+      "ok": true,
+      "repeat": 3,
+      "text": "{\"answer\":42,\"unit\":\"widgets\"}"
+    },
+    {
+      "case": "sort",
+      "elapsed_s": 0.18182480300311,
+      "normalized": "blue, green, orange, red",
+      "ok": true,
+      "repeat": 3,
+      "text": "blue, green, orange, red"
+    },
+    {
+      "case": "arithmetic",
+      "elapsed_s": 0.16188373498152941,
+      "normalized": "17",
+      "ok": true,
+      "repeat": 3,
+      "text": "17"
+    },
+    {
+      "case": "code",
+      "elapsed_s": 0.2533673469442874,
+      "normalized": "python def add_one(x): return x + 1",
+      "ok": true,
+      "repeat": 3,
+      "text": "```python\ndef add_one(x):\n    return x + 1\n```"
+    }
+  ],
+  "summary": {
+    "failures": [],
+    "pass_all": true,
+    "repeats_requested": 4,
+    "rows_completed": 16,
+    "run_identity": {
+      "api_mode": "chat",
+      "base_url": "http://127.0.0.1:18523",
+      "created_at_utc": "2026-06-30T12:47:20.745583+00:00",
+      "model": "gemma4-26b-a4b-q8",
+      "seed": 1
+    }
+  }
+}
+{
+  "rows": [
+    {
+      "case_id": "lc-00512-early",
+      "chunks": 76,
+      "completion_tokens": 77,
+      "elapsed_s": 1.3650405299849808,
+      "needle_position": "early",
+      "post_ttft_s": 0.48855494998861104,
+      "prefill_tok_s_approx": 845.4217809300058,
+      "prompt_chars": 3072,
+      "prompt_preview": "You are validating long-context retrieval quality and prompt processing. Most of this prompt is filler. Only the fact block named lc-00512-early is authoritative.\n\nbenchmark latency memory throughput validation repeatability scheduler cache kernel sycl level-zero b70 q8 deterministic prompt prefill context retrieval se",
+      "prompt_sha256": "3fc381fa88da0c9c6e51370a05448b1a24e53640da4883b739ed06d394ef0164",
+      "prompt_tokens": 741,
+      "sha256": "62a288dce2fb9710dc7e00626278e32185b851ece08dea13f5393ab906b439d4",
+      "target_prompt_tokens": 512,
+      "text": "{\"case_id\": \"lc-00512-early\", \"project_code\": \"ORCHID-0512\", \"answer_phrase\": \"LONG-CONTEXT-ORCHID-0512\", \"sort_order\": \"blue, green, orange, red\", \"arithmetic_result\": 1739}",
+      "text_preview": "{\"case_id\": \"lc-00512-early\", \"project_code\": \"ORCHID-0512\", \"answer_phrase\": \"LONG-CONTEXT-ORCHID-0512\", \"sort_order\": \"blue, green, orange, red\", \"arithmetic_result\": 1739}",
+      "tok_s_after_ttft": 157.6076549870081,
+      "tok_s_wall": 56.4085815099184,
+      "ttft_s": 0.8764855799963698,
+      "usage": {
+        "completion_tokens": 77,
+        "prompt_tokens": 741,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "total_tokens": 818
+      },
+      "validation": {
+        "expected": {
+          "answer_phrase": "LONG-CONTEXT-ORCHID-0512",
+          "arithmetic_result": 1739,
+          "case_id": "lc-00512-early",
+          "project_code": "ORCHID-0512",
+          "sort_order": "blue, green, orange, red"
+        },
+        "field_pass": {
+          "answer_phrase": true,
+          "arithmetic_result": true,
+          "case_id": true,
+          "project_code": true,
+          "sort_order": true
+        },
+        "parsed_json": {
+          "answer_phrase": "LONG-CONTEXT-ORCHID-0512",
+          "arithmetic_result": 1739,
+          "case_id": "lc-00512-early",
+          "project_code": "ORCHID-0512",
+          "sort_order": "blue, green, orange, red"
+        },
+        "pass": true
+      }
+    },
+    {
+      "case_id": "lc-02048-middle",
+      "chunks": 74,
+      "completion_tokens": 75,
+      "elapsed_s": 2.6811645730631426,
+      "needle_position": "middle",
+      "post_ttft_s": 0.5602168440818787,
+      "prefill_tok_s_approx": 1322.9934720493,
+      "prompt_chars": 12288,
+      "prompt_preview": "You are validating long-context retrieval quality and prompt processing. Most of this prompt is filler. Only the fact block named lc-02048-middle is authoritative.\n\nbenchmark latency memory throughput validation repeatability scheduler cache kernel sycl level-zero b70 q8 deterministic prompt prefill context retrieval s",
+      "prompt_sha256": "83139f0972320695a9ffad9142e3ba1d8e193b30b03b4012bec38cfa6abde11b",
+      "prompt_tokens": 2806,
+      "sha256": "4b84cb9dc414311aa6b027055edfd37c36dca9c1ab8523199778cf16c7e5bf29",
+      "target_prompt_tokens": 2048,
+      "text": "{\"case_id\": \"lc-02048-middle\", \"project_code\": \"LANTERN-2048\", \"answer_phrase\": \"LONG-CONTEXT-LANTERN-2048\", \"sort_order\": \"blue, green, orange, red\", \"arithmetic_result\": 4097}",
+      "text_preview": "{\"case_id\": \"lc-02048-middle\", \"project_code\": \"LANTERN-2048\", \"answer_phrase\": \"LONG-CONTEXT-LANTERN-2048\", \"sort_order\": \"blue, green, orange, red\", \"arithmetic_result\": 4097}",
+      "tok_s_after_ttft": 133.87673146978486,
+      "tok_s_wall": 27.972919213353233,
+      "ttft_s": 2.120947728981264,
+      "usage": {
+        "completion_tokens": 75,
+        "prompt_tokens": 2806,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "total_tokens": 2881
+      },
+      "validation": {
+        "expected": {
+          "answer_phrase": "LONG-CONTEXT-LANTERN-2048",
+          "arithmetic_result": 4097,
+          "case_id": "lc-02048-middle",
+          "project_code": "LANTERN-2048",
+          "sort_order": "blue, green, orange, red"
+        },
+        "field_pass": {
+          "answer_phrase": true,
+          "arithmetic_result": true,
+          "case_id": true,
+          "project_code": true,
+          "sort_order": true
+        },
+        "parsed_json": {
+          "answer_phrase": "LONG-CONTEXT-LANTERN-2048",
+          "arithmetic_result": 4097,
+          "case_id": "lc-02048-middle",
+          "project_code": "LANTERN-2048",
+          "sort_order": "blue, green, orange, red"
+        },
+        "pass": true
+      }
+    },
+    {
+      "case_id": "lc-04096-late",
+      "chunks": 74,
+      "completion_tokens": 75,
+      "elapsed_s": 4.966874005040154,
+      "needle_position": "late",
+      "post_ttft_s": 0.6166508729802445,
+      "prefill_tok_s_approx": 1297.174841081758,
+      "prompt_chars": 24576,
+      "prompt_preview": "You are validating long-context retrieval quality and prompt processing. Most of this prompt is filler. Only the fact block named lc-04096-late is authoritative.\n\nbenchmark latency memory throughput validation repeatability scheduler cache kernel sycl level-zero b70 q8 deterministic prompt prefill context retrieval ser",
+      "prompt_sha256": "6c8553574907045eb3d58dcc68bd78ca015182ab36a67201b6bb7abc4eda0ac1",
+      "prompt_tokens": 5643,
+      "sha256": "68cee32cf72358bc036027cc5b99f2b22e9d0fd8c9a1c28709b0fc1da3e4c967",
+      "target_prompt_tokens": 4096,
+      "text": "{\"case_id\": \"lc-04096-late\", \"project_code\": \"HARBOR-4096\", \"answer_phrase\": \"LONG-CONTEXT-HARBOR-4096\", \"sort_order\": \"blue, green, orange, red\", \"arithmetic_result\": 8195}",
+      "text_preview": "{\"case_id\": \"lc-04096-late\", \"project_code\": \"HARBOR-4096\", \"answer_phrase\": \"LONG-CONTEXT-HARBOR-4096\", \"sort_order\": \"blue, green, orange, red\", \"arithmetic_result\": 8195}",
+      "tok_s_after_ttft": 121.62473659938006,
+      "tok_s_wall": 15.100040774920698,
+      "ttft_s": 4.350223132059909,
+      "usage": {
+        "completion_tokens": 75,
+        "prompt_tokens": 5643,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "total_tokens": 5718
+      },
+      "validation": {
+        "expected": {
+          "answer_phrase": "LONG-CONTEXT-HARBOR-4096",
+          "arithmetic_result": 8195,
+          "case_id": "lc-04096-late",
+          "project_code": "HARBOR-4096",
+          "sort_order": "blue, green, orange, red"
+        },
+        "field_pass": {
+          "answer_phrase": true,
+          "arithmetic_result": true,
+          "case_id": true,
+          "project_code": true,
+          "sort_order": true
+        },
+        "parsed_json": {
+          "answer_phrase": "LONG-CONTEXT-HARBOR-4096",
+          "arithmetic_result": 8195,
+          "case_id": "lc-04096-late",
+          "project_code": "HARBOR-4096",
+          "sort_order": "blue, green, orange, red"
+        },
+        "pass": true
+      }
+    },
+    {
+      "case_id": "lc-08192-middle",
+      "chunks": 75,
+      "completion_tokens": 76,
+      "elapsed_s": 10.898580225068145,
+      "needle_position": "middle",
+      "post_ttft_s": 0.718946933047846,
+      "prefill_tok_s_approx": 1078.231374857478,
+      "prompt_chars": 49152,
+      "prompt_preview": "You are validating long-context retrieval quality and prompt processing. Most of this prompt is filler. Only the fact block named lc-08192-middle is authoritative.\n\nbenchmark latency memory throughput validation repeatability scheduler cache kernel sycl level-zero b70 q8 deterministic prompt prefill context retrieval s",
+      "prompt_sha256": "7fdbc68ab755a26c15c712e9e0c500e63a9af776095595bbc09c54783228abfc",
+      "prompt_tokens": 10976,
+      "sha256": "10dbef3934f9c4878eb30bfed0b78226b20f8b03007840f3e07cce965c40b1a0",
+      "target_prompt_tokens": 8192,
+      "text": "{\"case_id\": \"lc-08192-middle\", \"project_code\": \"CIRCUIT-8192\", \"answer_phrase\": \"LONG-CONTEXT-CIRCUIT-8192\", \"sort_order\": \"blue, green, orange, red\", \"arithmetic_result\": 16391}",
+      "text_preview": "{\"case_id\": \"lc-08192-middle\", \"project_code\": \"CIRCUIT-8192\", \"answer_phrase\": \"LONG-CONTEXT-CIRCUIT-8192\", \"sort_order\": \"blue, green, orange, red\", \"arithmetic_result\": 16391}",
+      "tok_s_after_ttft": 105.71016650396115,
+      "tok_s_wall": 6.973385379610288,
+      "ttft_s": 10.179633292020299,
+      "usage": {
+        "completion_tokens": 76,
+        "prompt_tokens": 10976,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "total_tokens": 11052
+      },
+      "validation": {
+        "expected": {
+          "answer_phrase": "LONG-CONTEXT-CIRCUIT-8192",
+          "arithmetic_result": 16391,
+          "case_id": "lc-08192-middle",
+          "project_code": "CIRCUIT-8192",
+          "sort_order": "blue, green, orange, red"
+        },
+        "field_pass": {
+          "answer_phrase": true,
+          "arithmetic_result": true,
+          "case_id": true,
+          "project_code": true,
+          "sort_order": true
+        },
+        "parsed_json": {
+          "answer_phrase": "LONG-CONTEXT-CIRCUIT-8192",
+          "arithmetic_result": 16391,
+          "case_id": "lc-08192-middle",
+          "project_code": "CIRCUIT-8192",
+          "sort_order": "blue, green, orange, red"
+        },
+        "pass": true
+      }
+    },
+    {
+      "case_id": "lc-12288-early",
+      "chunks": 77,
+      "completion_tokens": 78,
+      "elapsed_s": 17.721230164985172,
+      "needle_position": "early",
+      "post_ttft_s": 0.8608766340184957,
+      "prefill_tok_s_approx": 961.604984748528,
+      "prompt_chars": 73728,
+      "prompt_preview": "You are validating long-context retrieval quality and prompt processing. Most of this prompt is filler. Only the fact block named lc-12288-early is authoritative.\n\nbenchmark latency memory throughput validation repeatability scheduler cache kernel sycl level-zero b70 q8 deterministic prompt prefill context retrieval se",
+      "prompt_sha256": "dd33eeee9a7e9c923807fa26a62f86b74f56b9c38c195a1658c4d2f8c9df29b9",
+      "prompt_tokens": 16213,
+      "sha256": "1bd0af5b46b00b789d8e85dcd7616b196d68fef4b2e82a71ab1f6d800a50b1dc",
+      "target_prompt_tokens": 12288,
+      "text": "{\"case_id\": \"lc-12288-early\", \"project_code\": \"MIRROR-12288\", \"answer_phrase\": \"LONG-CONTEXT-MIRROR-12288\", \"sort_order\": \"blue, green, orange, red\", \"arithmetic_result\": 24581}",
+      "text_preview": "{\"case_id\": \"lc-12288-early\", \"project_code\": \"MIRROR-12288\", \"answer_phrase\": \"LONG-CONTEXT-MIRROR-12288\", \"sort_order\": \"blue, green, orange, red\", \"arithmetic_result\": 24581}",
+      "tok_s_after_ttft": 90.60531662463984,
+      "tok_s_wall": 4.401500306345424,
+      "ttft_s": 16.860353530966677,
+      "usage": {
+        "completion_tokens": 78,
+        "prompt_tokens": 16213,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "total_tokens": 16291
+      },
+      "validation": {
+        "expected": {
+          "answer_phrase": "LONG-CONTEXT-MIRROR-12288",
+          "arithmetic_result": 24581,
+          "case_id": "lc-12288-early",
+          "project_code": "MIRROR-12288",
+          "sort_order": "blue, green, orange, red"
+        },
+        "field_pass": {
+          "answer_phrase": true,
+          "arithmetic_result": true,
+          "case_id": true,
+          "project_code": true,
+          "sort_order": true
+        },
+        "parsed_json": {
+          "answer_phrase": "LONG-CONTEXT-MIRROR-12288",
+          "arithmetic_result": 24581,
+          "case_id": "lc-12288-early",
+          "project_code": "MIRROR-12288",
+          "sort_order": "blue, green, orange, red"
+        },
+        "pass": true
+      }
+    },
+    {
+      "case_id": "lc-16384-late",
+      "chunks": 77,
+      "completion_tokens": 78,
+      "elapsed_s": 28.922777454950847,
+      "needle_position": "late",
+      "post_ttft_s": 0.9933678969973698,
+      "prefill_tok_s_approx": 813.8374695259952,
+      "prompt_chars": 98304,
+      "prompt_preview": "You are validating long-context retrieval quality and prompt processing. Most of this prompt is filler. Only the fact block named lc-16384-late is authoritative.\n\nbenchmark latency memory throughput validation repeatability scheduler cache kernel sycl level-zero b70 q8 deterministic prompt prefill context retrieval ser",
+      "prompt_sha256": "da4f20736e5dc041f28ec524664746d0f39104d98029c0699b64bd77e76f1250",
+      "prompt_tokens": 22730,
+      "sha256": "14a35cf01c243d957fc7b5c741d3e989de984804e47f0ed1f8c34f87d2214890",
+      "target_prompt_tokens": 16384,
+      "text": "{\"case_id\": \"lc-16384-late\", \"project_code\": \"KEYSTONE-16384\", \"answer_phrase\": \"LONG-CONTEXT-KEYSTONE-16384\", \"sort_order\": \"blue, green, orange, red\", \"arithmetic_result\": 32771}",
+      "text_preview": "{\"case_id\": \"lc-16384-late\", \"project_code\": \"KEYSTONE-16384\", \"answer_phrase\": \"LONG-CONTEXT-KEYSTONE-16384\", \"sort_order\": \"blue, green, orange, red\", \"arithmetic_result\": 32771}",
+      "tok_s_after_ttft": 78.52075775326422,
+      "tok_s_wall": 2.6968364335510375,
+      "ttft_s": 27.929409557953477,
+      "usage": {
+        "completion_tokens": 78,
+        "prompt_tokens": 22730,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "total_tokens": 22808
+      },
+      "validation": {
+        "expected": {
+          "answer_phrase": "LONG-CONTEXT-KEYSTONE-16384",
+          "arithmetic_result": 32771,
+          "case_id": "lc-16384-late",
+          "project_code": "KEYSTONE-16384",
+          "sort_order": "blue, green, orange, red"
+        },
+        "field_pass": {
+          "answer_phrase": true,
+          "arithmetic_result": true,
+          "case_id": true,
+          "project_code": true,
+          "sort_order": true
+        },
+        "parsed_json": {
+          "answer_phrase": "LONG-CONTEXT-KEYSTONE-16384",
+          "arithmetic_result": 32771,
+          "case_id": "lc-16384-late",
+          "project_code": "KEYSTONE-16384",
+          "sort_order": "blue, green, orange, red"
+        },
+        "pass": true
+      }
+    }
+  ],
+  "run_identity": {
+    "api_mode": "chat",
+    "base_url": "http://127.0.0.1:18523",
+    "case_ids": [
+      "lc-00512-early",
+      "lc-02048-middle",
+      "lc-04096-late",
+      "lc-08192-middle",
+      "lc-12288-early",
+      "lc-16384-late"
+    ],
+    "created_at_utc": "2026-06-30T12:48:27.355234+00:00",
+    "max_target_prompt_tokens": 16384,
+    "max_tokens": 96,
+    "model": "gemma4-26b-a4b-q8",
+    "prompt_sha256s": [
+      "3fc381fa88da0c9c6e51370a05448b1a24e53640da4883b739ed06d394ef0164",
+      "83139f0972320695a9ffad9142e3ba1d8e193b30b03b4012bec38cfa6abde11b",
+      "6c8553574907045eb3d58dcc68bd78ca015182ab36a67201b6bb7abc4eda0ac1",
+      "7fdbc68ab755a26c15c712e9e0c500e63a9af776095595bbc09c54783228abfc",
+      "dd33eeee9a7e9c923807fa26a62f86b74f56b9c38c195a1658c4d2f8c9df29b9",
+      "da4f20736e5dc041f28ec524664746d0f39104d98029c0699b64bd77e76f1250"
+    ],
+    "seed": 1,
+    "suite": "/home/steve/qwen36-results-main/repro/gemma4-26b-a4b-q8-b70/long-context-suite-v1.json",
+    "suite_id": "gemma4-26b-a4b-q8-b70-long-context-v1",
+    "suite_sha256": "7d9b0c5e48e3f5bcb828e0a4c89555e011568f1d69fff54a6040691379346a36"
+  },
+  "summary": {
+    "cached_tokens": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "cached_tokens_all_zero": true,
+    "completion_tokens": {
+      "count": 6,
+      "max": 78,
+      "mean": 76.5,
+      "median": 76.5,
+      "min": 75,
+      "p10": 75,
+      "stdev": 1.378404875209022
+    },
+    "long_context_gate": {
+      "passed": true,
+      "required_policy": "fixed deterministic long-context suite; each prompt once; cached_tokens=0 every row; exact JSON retrieval fields pass"
+    },
+    "prefill_tok_s_approx": {
+      "count": 6,
+      "max": 1322.9934720493,
+      "mean": 1053.2106538655107,
+      "median": 1019.9181798030029,
+      "min": 813.8374695259952,
+      "p10": 813.8374695259952,
+      "stdev": 219.90664647583833
+    },
+    "prompt_tokens": {
+      "count": 6,
+      "max": 22730,
+      "mean": 9851.5,
+      "median": 8309.5,
+      "min": 741,
+      "p10": 741,
+      "stdev": 8460.977455353488
+    },
+    "prompts_unique": true,
+    "quality_pass_all": true,
+    "requests": 6,
+    "tok_s_after_ttft": {
+      "count": 6,
+      "max": 157.6076549870081,
+      "mean": 114.6575606563397,
+      "median": 113.66745155167061,
+      "min": 78.52075775326422,
+      "p10": 78.52075775326422,
+      "stdev": 29.075981495128104
+    },
+    "tok_s_wall": {
+      "count": 6,
+      "max": 56.4085815099184,
+      "mean": 18.92554393628318,
+      "median": 11.036713077265492,
+      "min": 2.6968364335510375,
+      "p10": 2.6968364335510375,
+      "stdev": 20.58465673420716
+    },
+    "ttft_s": {
+      "count": 6,
+      "max": 27.929409557953477,
+      "mean": 10.386175470329666,
+      "median": 7.264928212040104,
+      "min": 0.8764855799963698,
+      "p10": 0.8764855799963698,
+      "stdev": 10.439383272415542
+    }
+  }
+}
+{
+  "bench_kind": "long_context_gate",
+  "bench_path": "/home/steve/qwen36-results-main/data/gemma4-q8-gpu3-longctx-ub2048-b-ctx32768-o96-20260630TlongctxA/long-context-suite.json",
+  "bench_rc": 0,
+  "bench_run_identity": {
+    "api_mode": "chat",
+    "base_url": "http://127.0.0.1:18523",
+    "case_ids": [
+      "lc-00512-early",
+      "lc-02048-middle",
+      "lc-04096-late",
+      "lc-08192-middle",
+      "lc-12288-early",
+      "lc-16384-late"
+    ],
+    "created_at_utc": "2026-06-30T12:48:27.355234+00:00",
+    "max_target_prompt_tokens": 16384,
+    "max_tokens": 96,
+    "model": "gemma4-26b-a4b-q8",
+    "prompt_sha256s": [
+      "3fc381fa88da0c9c6e51370a05448b1a24e53640da4883b739ed06d394ef0164",
+      "83139f0972320695a9ffad9142e3ba1d8e193b30b03b4012bec38cfa6abde11b",
+      "6c8553574907045eb3d58dcc68bd78ca015182ab36a67201b6bb7abc4eda0ac1",
+      "7fdbc68ab755a26c15c712e9e0c500e63a9af776095595bbc09c54783228abfc",
+      "dd33eeee9a7e9c923807fa26a62f86b74f56b9c38c195a1658c4d2f8c9df29b9",
+      "da4f20736e5dc041f28ec524664746d0f39104d98029c0699b64bd77e76f1250"
+    ],
+    "seed": 1,
+    "suite": "/home/steve/qwen36-results-main/repro/gemma4-26b-a4b-q8-b70/long-context-suite-v1.json",
+    "suite_id": "gemma4-26b-a4b-q8-b70-long-context-v1",
+    "suite_sha256": "7d9b0c5e48e3f5bcb828e0a4c89555e011568f1d69fff54a6040691379346a36"
+  },
+  "bench_summary": {
+    "cached_tokens": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "cached_tokens_all_zero": true,
+    "completion_tokens": {
+      "count": 6,
+      "max": 78,
+      "mean": 76.5,
+      "median": 76.5,
+      "min": 75,
+      "p10": 75,
+      "stdev": 1.378404875209022
+    },
+    "long_context_gate": {
+      "passed": true,
+      "required_policy": "fixed deterministic long-context suite; each prompt once; cached_tokens=0 every row; exact JSON retrieval fields pass"
+    },
+    "prefill_tok_s_approx": {
+      "count": 6,
+      "max": 1322.9934720493,
+      "mean": 1053.2106538655107,
+      "median": 1019.9181798030029,
+      "min": 813.8374695259952,
+      "p10": 813.8374695259952,
+      "stdev": 219.90664647583833
+    },
+    "prompt_tokens": {
+      "count": 6,
+      "max": 22730,
+      "mean": 9851.5,
+      "median": 8309.5,
+      "min": 741,
+      "p10": 741,
+      "stdev": 8460.977455353488
+    },
+    "prompts_unique": true,
+    "quality_pass_all": true,
+    "requests": 6,
+    "tok_s_after_ttft": {
+      "count": 6,
+      "max": 157.6076549870081,
+      "mean": 114.6575606563397,
+      "median": 113.66745155167061,
+      "min": 78.52075775326422,
+      "p10": 78.52075775326422,
+      "stdev": 29.075981495128104
+    },
+    "tok_s_wall": {
+      "count": 6,
+      "max": 56.4085815099184,
+      "mean": 18.92554393628318,
+      "median": 11.036713077265492,
+      "min": 2.6968364335510375,
+      "p10": 2.6968364335510375,
+      "stdev": 20.58465673420716
+    },
+    "ttft_s": {
+      "count": 6,
+      "max": 27.929409557953477,
+      "mean": 10.386175470329666,
+      "median": 7.264928212040104,
+      "min": 0.8764855799963698,
+      "p10": 0.8764855799963698,
+      "stdev": 10.439383272415542
+    }
+  },
+  "canary_pass_all": true,
+  "canary_rows_completed": 16,
+  "fresh_response_validity": null,
+  "headline_eligible_for_gemma_q8": true,
+  "label": "gemma4-q8-gpu3-longctx-ub2048-b-ctx32768-o96-20260630TlongctxA",
+  "launcher_identity": {
+    "batch_size": "2048",
+    "cache_type_k": "f16",
+    "cache_type_v": "f16",
+    "cpu_affinity": null,
+    "ctx_size": "32768",
+    "extra_llama_args": "--parallel 1 --cache-ram 0 --spec-type draft-mtp --spec-draft-model /mnt/fast-ai/llm-models/gemma4-26b-a4b-it-q8-gguf/MTP/gemma-4-26B-A4B-it-Q4_0-MTP.gguf --spec-draft-n-max 3 --spec-draft-device SYCL0 --spec-draft-ngl all --spec-draft-type-k f16 --spec-draft-type-v f16 --spec-draft-n-min 2 --spec-draft-p-min 0.0475 --no-spec-draft-backend-sampling --spec-draft-threads 32 --spec-draft-threads-batch 32 --ctx-checkpoints 0",
+    "flash_attn": "on",
+    "ggml_sycl_disable_dnn": "<unset>",
+    "ggml_sycl_disable_graph": "0",
+    "ggml_sycl_disable_opt": "0",
+    "ggml_sycl_enable_vmm": "1",
+    "gpu_index": "3",
+    "llama_cpp_commit": "c926ad098",
+    "llama_devices": "SYCL0",
+    "llama_gemma4_fused_attn_post_norm_residual": "<unset>",
+    "llama_gemma4_fused_final_post_norm_residual": "1",
+    "llama_gemma4_fused_per_layer_post_norm_residual": "<unset>",
+    "llama_gemma4_moe_fused_branch_post_norm_add": "<unset>",
+    "llama_gemma4_moe_fused_down_selected_softmax": "<unset>",
+    "llama_gemma4_moe_fused_down_selected_softmax_precompute": "<unset>",
+    "llama_gemma4_moe_fused_down_weighted_sum": "<unset>",
+    "llama_gemma4_moe_fused_down_weighted_sum_debug": "<unset>",
+    "llama_gemma4_moe_fused_down_weighted_sum_direct_f32_parallel_slots": "<unset>",
+    "llama_gemma4_moe_fused_down_weighted_sum_matmul_epilogue": "<unset>",
+    "llama_gemma4_moe_fused_down_weighted_sum_parallel_slots": "<unset>",
+    "llama_gemma4_moe_fused_down_weighted_sum_reorder_vdr2": "1",
+    "llama_gemma4_moe_fused_down_weighted_sum_reorder_vdr2_rowpack": "<unset>",
+    "llama_gemma4_moe_fused_geglu_down_weighted_sum": "<unset>",
+    "llama_gemma4_moe_fused_router_selected_weights": "<unset>",
+    "llama_gemma4_moe_gateup_geglu": "<unset>",
+    "llama_gemma4_moe_gateup_geglu_bf16": "<unset>",
+    "llama_gemma4_moe_gateup_geglu_epilogue": "<unset>",
+    "llama_gemma4_moe_geglu_down_matmul_epilogue": "<unset>",
+    "llama_gemma4_moe_reuse_attn_rms": "1",
+    "llama_gemma4_moe_router_post_scale": "<unset>",
+    "llama_gemma4_moe_selected_softmax": "1",
+    "llama_gemma4_moe_selected_softmax_fused": "1",
+    "llama_gemma4_moe_selected_softmax_weighted_sum": "<unset>",
+    "llama_gemma4_moe_skip_early_weights_expand": "<unset>",
+    "llama_gemma4_moe_sorted_top_k": "<unset>",
+    "llama_gemma4_moe_top_k": "<unset>",
+    "llama_gemma4_moe_weighted_sum": "1",
+    "llama_gemma4_moe_weighted_sum_2d": "<unset>",
+    "llama_gemma4_moe_weighted_sum_selected_softmax": "<unset>",
+    "llama_gemma4_mtp_fused_output_argmax": "1",
+    "llama_gemma4_mtp_qonly_attn_inputs": "1",
+    "llama_gemma4_skip_identity_out_ids": "<unset>",
+    "llama_main_gpu": "<unset>",
+    "llama_mtp_defer_target_h_accept_only": null,
+    "llama_mtp_defer_target_h_nextn": "1",
+    "llama_mtp_defer_verifier_pending_h_copy": "<unset>",
+    "llama_mtp_draft_backend_argmax": "<unset>",
+    "llama_mtp_draft_backend_topk": "<unset>",
+    "llama_mtp_draft_device_h_handoff": "<unset>",
+    "llama_mtp_draft_direct_argmax_ids": "1",
+    "llama_mtp_draft_direct_argmax_scores": "<unset>",
+    "llama_mtp_draft_direct_argmax_unroll": "7",
+    "llama_mtp_draft_fast_argmax": "1",
+    "llama_mtp_draft_fast_topk": "<unset>",
+    "llama_mtp_draft_logit_gap_min": "<unset>",
+    "llama_mtp_draft_profile": "<unset>",
+    "llama_mtp_draft_terminal_logits_only": "<unset>",
+    "llama_mtp_draft_top_k": "<unset>",
+    "llama_server": "/home/steve/src/llama.cpp-gemma-record-repro-c926/build-sycl-b70-aot-bmg-g31-q8reorder-vdr2/bin/llama-server",
+    "llama_server_spec_profile": "<unset>",
+    "llama_spec_adaptive_mtp": "<unset>",
+    "llama_spec_adaptive_mtp_alpha": "<unset>",
+    "llama_spec_adaptive_mtp_high": "<unset>",
+    "llama_spec_adaptive_mtp_low": "<unset>",
+    "llama_spec_adaptive_mtp_low_n_max": "<unset>",
+    "llama_spec_adaptive_mtp_warmup": "<unset>",
+    "llama_spec_head_fused_output_argmax": "<unset>",
+    "llama_spec_verify_accept_prefix_parity": "<unset>",
+    "llama_spec_verify_adaptive_bonus_min_full_accept": "<unset>",
+    "llama_spec_verify_adaptive_bonus_row": "<unset>",
+    "llama_spec_verify_adaptive_bonus_warmup": "<unset>",
+    "llama_spec_verify_backend_argmax_ids": "1",
+    "llama_spec_verify_bulk_sampled_ids": "1",
+    "llama_spec_verify_clip_draft_at_eog": "<unset>",
+    "llama_spec_verify_fused_output_argmax": "<unset>",
+    "llama_spec_verify_greedy_argmax": "<unset>",
+    "llama_spec_verify_late_head_bonus": "<unset>",
+    "llama_spec_verify_no_bonus_row": "<unset>",
+    "llama_spec_verify_prefix2_tail_head": "<unset>",
+    "llama_spec_verify_raw_argmax": "<unset>",
+    "llama_spec_verify_regular_mmvq_top1_epilogue": "<unset>",
+    "llama_spec_verify_skip_stateless_accept": "<unset>",
+    "llama_spec_verify_softcap_argmax": "<unset>",
+    "llama_spec_verify_stage_mtp3": "<unset>",
+    "llama_spec_verify_stage_mtp3_split_bonus": "<unset>",
+    "llama_split_mode": "<unset>",
+    "llama_sycl_f16_p021_small_ncols": "1",
+    "llama_sycl_mul_mat_argmax_multi_reuse": "<unset>",
+    "llama_sycl_mul_mat_argmax_reorder_ncols": "<unset>",
+    "llama_sycl_mul_mat_argmax_tile_subgroups": "<unset>",
+    "llama_sycl_mul_mat_id_gate_up_fast_seed_route_cache": "<unset>",
+    "llama_sycl_mul_mat_id_gate_up_q8_singleton_direct": "<unset>",
+    "llama_sycl_mul_mat_id_multi_token_bf16_direct": "<unset>",
+    "llama_sycl_mul_mat_id_multi_token_fast": "1",
+    "llama_sycl_mul_mat_id_multi_token_filter": "<unset>",
+    "llama_sycl_mul_mat_id_multi_token_grouped_q8_0": "<unset>",
+    "llama_sycl_mul_mat_id_multi_token_grouped_q8_0_reorder": "<unset>",
+    "llama_sycl_mul_mat_id_multi_token_name_substr": "<unset>",
+    "llama_sycl_mul_mat_id_multi_token_no_reorder": "<unset>",
+    "llama_sycl_mul_mat_id_multi_token_per_slot_q8_0": "<unset>",
+    "llama_sycl_mul_mat_id_q8_0_reorder": "1",
+    "llama_sycl_mul_mat_id_q8_0_reorder_direct_vdr2": "1",
+    "llama_sycl_mul_mat_id_q8_0_reorder_pair_slots": "<unset>",
+    "llama_sycl_mul_mat_id_q8_0_reorder_rowpack": "<unset>",
+    "llama_sycl_mul_mat_id_q8_0_reorder_top8_slots": "<unset>",
+    "llama_sycl_mul_mat_id_route_cache": "1",
+    "llama_sycl_mul_mat_id_route_cache_device_map": "<unset>",
+    "llama_sycl_mul_mat_id_route_cache_inplace": "<unset>",
+    "llama_sycl_mul_mat_id_route_timing": "<unset>",
+    "llama_sycl_mul_mat_id_route_timing_every": "<unset>",
+    "llama_sycl_mul_mat_top1_epilogue": "<unset>",
+    "llama_sycl_mul_mat_top1_epilogue_partial": "<unset>",
+    "llama_sycl_q8_0_lm_head_1col_dmmv": "<unset>",
+    "llama_sycl_q8_0_lm_head_1col_no_reorder": "<unset>",
+    "llama_sycl_q8_mmvq_small_ncols": "<unset>",
+    "llama_tensor_split": "<unset>",
+    "long_context_case_ids": "",
+    "long_context_gate": "1",
+    "long_context_max_target_prompt_tokens": "16384",
+    "long_context_suite": "/home/steve/qwen36-results-main/repro/gemma4-26b-a4b-q8-b70/long-context-suite-v1.json",
+    "oneapi_device_selector": "level_zero:3",
+    "poll": "100",
+    "port": "18523",
+    "realistic_gate": "0",
+    "realistic_metric_tokens": "100",
+    "realistic_suite": null,
+    "reasoning": "off",
+    "sycl_pi_level_zero_use_copy_engine": "<unset>",
+    "threads": "8",
+    "ubatch_size": "2048",
+    "ur_l0_enable_relaxed_allocation_limits": "1",
+    "ur_l0_use_copy_engine": "<unset>",
+    "ur_l0_use_immediate_commandlists": "1"
+  },
+  "long_context_gate": {
+    "passed": true,
+    "required_policy": "fixed deterministic long-context suite; each prompt once; cached_tokens=0 every row; exact JSON retrieval fields pass"
+  },
+  "model_file_bytes": 27636230944,
+  "model_path": "/mnt/fast-ai/llm-models/gemma4-26b-a4b-it-q8-gguf/gemma-4-26B-A4B-it-UD-Q8_K_XL.gguf",
+  "quality_lane": "q8_target",
+  "realistic_final_gate": null,
+  "run_dir": "/home/steve/qwen36-results-main/data/gemma4-q8-gpu3-longctx-ub2048-b-ctx32768-o96-20260630TlongctxA",
+  "server_log": "/mnt/fast-ai/bench-results/gemma4-26b-a4b-q8/servers/gemma4-q8-gpu3-longctx-ub2048-b-ctx32768-o96-20260630TlongctxA.server.log"
+}
+[gemma4-baseline] summary=/home/steve/qwen36-results-main/data/gemma4-q8-gpu3-longctx-ub2048-b-ctx32768-o96-20260630TlongctxA/summary.json

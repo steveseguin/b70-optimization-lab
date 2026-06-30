@@ -228,6 +228,23 @@ Current active optimization target:
   `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-ub2048-short-suite-control.md`
   and
   `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-prefill-ub2048-vs-ub2560-confirm.md`.
+- A stricter fixed long-context service gate now exists:
+  `repro/gemma4-26b-a4b-q8-b70/long-context-suite-v1.json`,
+  `scripts/bench-openai-long-context-suite.py`,
+  `repro/gemma4-26b-a4b-q8-b70/run-vdr2-long-context-service-gate.sh`, and
+  `repro/gemma4-26b-a4b-q8-b70/run-vdr2-short-decode-guard.sh`. The paired
+  long-context suite through `22730` actual prompt tokens passed exact JSON
+  retrieval, `cached_tokens=0`, and canaries on all lanes; UB2048 averaged
+  `1013.884` median approximate prefill tok/s versus UB1024 at `936.865`
+  (`+8.22%`). The corrected near-32K boundary case at `30400` actual prompt
+  tokens also passed after increasing `MAX_TOKENS` from `64` to `96`; UB2048
+  averaged `701.487` versus UB1024 at `661.905` (`+5.98%`). A paired full512
+  fixed short-suite guard passed on all lanes and did not show a decode
+  regression (`119.153` UB2048 average versus `116.402` UB1024), but it did
+  not beat the `123.67689864739785` short record. Decision: UB2048 is the
+  validated long-context/prefill service candidate; keep UB1024 for short-record
+  reproduction. See
+  `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-long-context-prefill-service-gate.md`.
 - Current diagnostic best, not a real-world headline:
   `176.21623213048554 tok/s` after TTFT on the first no-cache synthetic
   filled-long benchmark row, `176.40259133127742 tok/s` supporting repeat mean,

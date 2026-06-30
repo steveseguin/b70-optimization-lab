@@ -61,6 +61,20 @@ passed the fixed cold gate, `cached_tokens=0`, and 128/128 canary at
 only. See the latest sweep notes under
 [`../../experiments/gemma4-26b-a4b-q8-b70/sweeps/`](../../experiments/gemma4-26b-a4b-q8-b70/sweeps/).
 
+Current service/prefill candidate: keep the promoted short-decode reproduction
+on `UBATCH_SIZE=1024`, but use `BATCH_SIZE=2048`, `UBATCH_SIZE=2048` as the
+validated long-context service candidate. The fixed long-context JSON retrieval
+gate passed through `22730` actual prompt tokens with `cached_tokens=0`,
+canaries, and exact output checks on all four lanes; UB2048 averaged
+`1013.884` median approximate prefill tok/s versus UB1024 at `936.865`
+(`+8.22%`). The corrected near-32K boundary case at `30400` actual prompt
+tokens also passed after increasing `MAX_TOKENS` from `64` to `96`; UB2048
+averaged `701.487` versus UB1024 at `661.905` (`+5.98%`). A paired full512
+fixed short-suite guard passed and did not show a decode regression
+(`119.153` UB2048 average versus `116.402` UB1024), but it did not beat the
+`123.67689864739785` short record. Evidence:
+[`../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-long-context-prefill-service-gate.md`](../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-long-context-prefill-service-gate.md).
+
 The valid no-spec control is `74.29709476830473 tok/s` median:
 `data/gemma4-q8-gpu0-vdr4default-nospec-realistic-gate-v2-20260627T165335Z/summary.json`.
 Use it as the clean target-side baseline for new work; draft-MTP now has a

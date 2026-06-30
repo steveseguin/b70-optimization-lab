@@ -107,6 +107,28 @@ and
 and
 `../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-prefill-ub2048-vs-ub2560-confirm.md`.
 
+2026-06-30 fixed long-context service gate: a deterministic JSON-retrieval
+suite was added at
+`../../repro/gemma4-26b-a4b-q8-b70/long-context-suite-v1.json` with a streaming
+OpenAI-compatible harness at
+`../../scripts/bench-openai-long-context-suite.py`. The paired four-GPU service
+wrapper `../../repro/gemma4-26b-a4b-q8-b70/run-vdr2-long-context-service-gate.sh`
+and the paired short guard
+`../../repro/gemma4-26b-a4b-q8-b70/run-vdr2-short-decode-guard.sh` make the
+service-vs-short split reproducible. The main long-context screen through
+`22730` actual prompt tokens passed exact JSON retrieval, `cached_tokens=0`,
+and canaries on every lane; UB2048 averaged `1013.884` median approximate
+prefill tok/s versus UB1024 at `936.865` (`+8.22%`). The first near-32K run
+with `MAX_TOKENS=64` failed only because the exact JSON answer was truncated;
+the corrected `MAX_TOKENS=96` run at `30400` actual prompt tokens passed on all
+lanes, with UB2048 averaging `701.487` versus UB1024 at `661.905` (`+5.98%`).
+The paired full512 short-suite guard also passed on all lanes and did not show
+a short decode regression (`119.153` UB2048 average versus `116.402` UB1024),
+but it did not beat the `123.67689864739785` record. Decision: UB2048 is the
+validated long-context/prefill service candidate; keep UB1024 for short-record
+reproduction and LocalMaxxing record work. See
+`../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-long-context-prefill-service-gate.md`.
+
 2026-06-30 record-identity full512 repeat: four parallel lanes of the current
 FA-on 32K/VMM selected-down VDR2 recipe all passed the strict realistic final
 gate with `cached_tokens=0` and 128/128 canary, but did not beat the

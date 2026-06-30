@@ -235,6 +235,23 @@ Primary target:
   UB2048 wins the 12K-requested shape and is an effective prefill tie at the
   16K-requested / ~21K actual-token shape while decoding faster; do not
   standardize on UB2560.
+- Latest long-context service gate: a fixed JSON-retrieval suite and paired
+  service/short guards were added under
+  `repro/gemma4-26b-a4b-q8-b70/long-context-suite-v1.json`,
+  `scripts/bench-openai-long-context-suite.py`,
+  `repro/gemma4-26b-a4b-q8-b70/run-vdr2-long-context-service-gate.sh`, and
+  `repro/gemma4-26b-a4b-q8-b70/run-vdr2-short-decode-guard.sh`. UB2048 passed
+  exact long-context retrieval, `cached_tokens=0`, and canaries through
+  `22730` actual prompt tokens with `+8.22%` median approximate prefill over
+  UB1024 (`1013.884` vs `936.865 tok/s`), and passed the corrected near-32K
+  boundary case at `30400` actual prompt tokens with `+5.98%` prefill
+  (`701.487` vs `661.905 tok/s`). A paired full512 fixed short-suite guard
+  passed on all lanes and did not show a decode regression (`119.153` UB2048
+  average vs `116.402` UB1024), but did not beat the short record. Decision:
+  UB2048 is the validated long-context/prefill service candidate; keep UB1024
+  for short-record reproduction. The failed `MAX_TOKENS=64` near-32K attempt
+  is archived as a harness truncation, not a model/context failure. Evidence:
+  `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-long-context-prefill-service-gate.md`.
 - Current best non-duplicate Gemma code target is still verifier cost, but not
   by removing the bonus pipeline or by a naive candidate-threshold head scan.
   Work inside the existing target decode boundary only if it removes real

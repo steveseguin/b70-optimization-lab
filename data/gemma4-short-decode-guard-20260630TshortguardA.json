@@ -1,0 +1,113 @@
+{
+  "current_record_tok_s_1_100_after_ttft": 123.67689864739785,
+  "group_summaries": {
+    "batch1024_ubatch1024": {
+      "all_cached_tokens_zero": true,
+      "all_realistic_gates_passed": true,
+      "lanes": 2,
+      "median_tok_s_1_100_avg": 116.40153692742389,
+      "median_tok_s_1_100_by_lane": [
+        120.57850672901188,
+        112.2245671258359
+      ]
+    },
+    "batch2048_ubatch2048": {
+      "all_cached_tokens_zero": true,
+      "all_realistic_gates_passed": true,
+      "lanes": 2,
+      "median_tok_s_1_100_avg": 119.15271094935716,
+      "median_tok_s_1_100_by_lane": [
+        121.27022570134643,
+        117.0351961973679
+      ]
+    }
+  },
+  "kind": "gemma4_q8_short_decode_guard",
+  "policy": "fixed realistic suite regression guard for service/prefill candidate; submit only if it beats the current record independently",
+  "rows": [
+    {
+      "batch_size": "1024",
+      "cached_tokens_all_zero": true,
+      "canary_pass_all": true,
+      "canary_rows_completed": 128,
+      "ctx_size": "32768",
+      "flash_attn": "on",
+      "gpu_index": "0",
+      "label": "gemma4-q8-gpu0-shortguard-ub1024-a-ctx32768-o512-20260630TshortguardA",
+      "realistic_gate_passed": true,
+      "run_dir": "/home/steve/qwen36-results-main/data/gemma4-q8-gpu0-shortguard-ub1024-a-ctx32768-o512-20260630TshortguardA",
+      "status": "ok",
+      "tok_s_1_100_after_ttft_mean": 119.56736293918279,
+      "tok_s_1_100_after_ttft_median": 120.57850672901188,
+      "tok_s_1_100_after_ttft_p10": 108.05546790436384,
+      "tok_s_after_ttft_full_median": 108.54707654425381,
+      "tok_s_wall_full_median": 104.58742204144747,
+      "ttft_ms_median": 179.15109754540026,
+      "ubatch_size": "1024",
+      "vmm": "1"
+    },
+    {
+      "batch_size": "2048",
+      "cached_tokens_all_zero": true,
+      "canary_pass_all": true,
+      "canary_rows_completed": 128,
+      "ctx_size": "32768",
+      "flash_attn": "on",
+      "gpu_index": "1",
+      "label": "gemma4-q8-gpu1-shortguard-ub2048-a-ctx32768-o512-20260630TshortguardA",
+      "realistic_gate_passed": true,
+      "run_dir": "/home/steve/qwen36-results-main/data/gemma4-q8-gpu1-shortguard-ub2048-a-ctx32768-o512-20260630TshortguardA",
+      "status": "ok",
+      "tok_s_1_100_after_ttft_mean": 119.76480663042882,
+      "tok_s_1_100_after_ttft_median": 121.27022570134643,
+      "tok_s_1_100_after_ttft_p10": 105.01814745774598,
+      "tok_s_after_ttft_full_median": 109.13869367792333,
+      "tok_s_wall_full_median": 105.23773171257429,
+      "ttft_ms_median": 177.99709894461557,
+      "ubatch_size": "2048",
+      "vmm": "1"
+    },
+    {
+      "batch_size": "1024",
+      "cached_tokens_all_zero": true,
+      "canary_pass_all": true,
+      "canary_rows_completed": 128,
+      "ctx_size": "32768",
+      "flash_attn": "on",
+      "gpu_index": "2",
+      "label": "gemma4-q8-gpu2-shortguard-ub1024-b-ctx32768-o512-20260630TshortguardA",
+      "realistic_gate_passed": true,
+      "run_dir": "/home/steve/qwen36-results-main/data/gemma4-q8-gpu2-shortguard-ub1024-b-ctx32768-o512-20260630TshortguardA",
+      "status": "ok",
+      "tok_s_1_100_after_ttft_mean": 116.57948851110608,
+      "tok_s_1_100_after_ttft_median": 112.2245671258359,
+      "tok_s_1_100_after_ttft_p10": 105.66951121166457,
+      "tok_s_after_ttft_full_median": 110.21210904832236,
+      "tok_s_wall_full_median": 106.29698643904231,
+      "ttft_ms_median": 179.68729854328558,
+      "ubatch_size": "1024",
+      "vmm": "1"
+    },
+    {
+      "batch_size": "2048",
+      "cached_tokens_all_zero": true,
+      "canary_pass_all": true,
+      "canary_rows_completed": 128,
+      "ctx_size": "32768",
+      "flash_attn": "on",
+      "gpu_index": "3",
+      "label": "gemma4-q8-gpu3-shortguard-ub2048-b-ctx32768-o512-20260630TshortguardA",
+      "realistic_gate_passed": true,
+      "run_dir": "/home/steve/qwen36-results-main/data/gemma4-q8-gpu3-shortguard-ub2048-b-ctx32768-o512-20260630TshortguardA",
+      "status": "ok",
+      "tok_s_1_100_after_ttft_mean": 117.90972855080923,
+      "tok_s_1_100_after_ttft_median": 117.0351961973679,
+      "tok_s_1_100_after_ttft_p10": 105.58549820585644,
+      "tok_s_after_ttft_full_median": 108.49386879516318,
+      "tok_s_wall_full_median": 104.18490317299316,
+      "ttft_ms_median": 178.6885604960844,
+      "ubatch_size": "2048",
+      "vmm": "1"
+    }
+  ]
+}

@@ -143,6 +143,9 @@ Record identity:
   The old `176.216232 tok/s` synthetic filled-long row remains diagnostic only
   and is not representative real-world throughput.
 - primary artifacts:
+  `../data/gemma4-q8-gpu0-finalpostnorm-on-full512-20260630T024027Z-finalpost-full512/summary.json`,
+  `../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-final-postnorm-fusion-screen.md`,
+  `../data/localmaxxing-responses/gemma4-26b-a4b-q8-b70-llamacpp-realistic-finalpostnorm-faon-vmm-ctx32768-full512-123tok-20260630.submit.log`,
   `../data/gemma4-q8-gpu1-selecteddown-bf16retest-control-full512-20260629T051323Z/summary.json`,
   `../results/gemma4-26b-a4b-q8-b70/20260629-vdr2-selected-down-record.md`,
   `../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260629-record-repeat-full512-variance.md`,
@@ -163,6 +166,14 @@ Record identity:
   `../data/localmaxxing-responses/gemma4-26b-a4b-q8-b70-llamacpp-realistic-vdr2-mtp-n3-nmin2-p00475-ub1024-v19-20260627.submit.log`,
   and
   `../repro/gemma4-26b-a4b-q8-b70/realistic-suite-v1.json`
+- long-context service artifacts:
+  `../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-long-context-prefill-service-gate.md`,
+  `../repro/gemma4-26b-a4b-q8-b70/long-context-suite-v1.json`,
+  `../scripts/bench-openai-long-context-suite.py`,
+  `../repro/gemma4-26b-a4b-q8-b70/run-vdr2-long-context-service-gate.sh`, and
+  `../repro/gemma4-26b-a4b-q8-b70/run-vdr2-short-decode-guard.sh`. UB2048 is
+  the validated long-context/prefill service candidate; UB1024 remains the
+  short-record reproduction setting.
 - source patch snapshot:
   `../patches/gemma4-26b-a4b-q8-b70/20260626T2225-llamacpp-gemma4-current-record-stack.patch`
   with note

@@ -1,0 +1,141 @@
+{
+  "rows": [
+    {
+      "case_id": "lc-00512-early",
+      "chunks": 76,
+      "completion_tokens": 77,
+      "elapsed_s": 1.3348547390196472,
+      "needle_position": "early",
+      "post_ttft_s": 0.48794571799226105,
+      "prefill_tok_s_approx": 874.9464010916925,
+      "prompt_chars": 3072,
+      "prompt_preview": "You are validating long-context retrieval quality and prompt processing. Most of this prompt is filler. Only the fact block named lc-00512-early is authoritative.\n\nbenchmark latency memory throughput validation repeatability scheduler cache kernel sycl level-zero b70 q8 deterministic prompt prefill context retrieval se",
+      "prompt_sha256": "3fc381fa88da0c9c6e51370a05448b1a24e53640da4883b739ed06d394ef0164",
+      "prompt_tokens": 741,
+      "sha256": "62a288dce2fb9710dc7e00626278e32185b851ece08dea13f5393ab906b439d4",
+      "target_prompt_tokens": 512,
+      "text": "{\"case_id\": \"lc-00512-early\", \"project_code\": \"ORCHID-0512\", \"answer_phrase\": \"LONG-CONTEXT-ORCHID-0512\", \"sort_order\": \"blue, green, orange, red\", \"arithmetic_result\": 1739}",
+      "text_preview": "{\"case_id\": \"lc-00512-early\", \"project_code\": \"ORCHID-0512\", \"answer_phrase\": \"LONG-CONTEXT-ORCHID-0512\", \"sort_order\": \"blue, green, orange, red\", \"arithmetic_result\": 1739}",
+      "tok_s_after_ttft": 157.80443840521875,
+      "tok_s_wall": 57.684179221291785,
+      "ttft_s": 0.8469090210273862,
+      "usage": {
+        "completion_tokens": 77,
+        "prompt_tokens": 741,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "total_tokens": 818
+      },
+      "validation": {
+        "expected": {
+          "answer_phrase": "LONG-CONTEXT-ORCHID-0512",
+          "arithmetic_result": 1739,
+          "case_id": "lc-00512-early",
+          "project_code": "ORCHID-0512",
+          "sort_order": "blue, green, orange, red"
+        },
+        "field_pass": {
+          "answer_phrase": true,
+          "arithmetic_result": true,
+          "case_id": true,
+          "project_code": true,
+          "sort_order": true
+        },
+        "parsed_json": {
+          "answer_phrase": "LONG-CONTEXT-ORCHID-0512",
+          "arithmetic_result": 1739,
+          "case_id": "lc-00512-early",
+          "project_code": "ORCHID-0512",
+          "sort_order": "blue, green, orange, red"
+        },
+        "pass": true
+      }
+    }
+  ],
+  "run_identity": {
+    "api_mode": "chat",
+    "base_url": "http://127.0.0.1:18520",
+    "case_ids": [
+      "lc-00512-early"
+    ],
+    "created_at_utc": "2026-06-30T12:46:31.717169+00:00",
+    "max_target_prompt_tokens": 512,
+    "max_tokens": 96,
+    "model": "gemma4-26b-a4b-q8",
+    "prompt_sha256s": [
+      "3fc381fa88da0c9c6e51370a05448b1a24e53640da4883b739ed06d394ef0164"
+    ],
+    "seed": 1,
+    "suite": "/home/steve/qwen36-results-main/repro/gemma4-26b-a4b-q8-b70/long-context-suite-v1.json",
+    "suite_id": "gemma4-26b-a4b-q8-b70-long-context-v1",
+    "suite_sha256": "7d9b0c5e48e3f5bcb828e0a4c89555e011568f1d69fff54a6040691379346a36"
+  },
+  "summary": {
+    "cached_tokens": [
+      0
+    ],
+    "cached_tokens_all_zero": true,
+    "completion_tokens": {
+      "count": 1,
+      "max": 77,
+      "mean": 77.0,
+      "median": 77,
+      "min": 77,
+      "p10": 77,
+      "stdev": 0.0
+    },
+    "long_context_gate": {
+      "passed": true,
+      "required_policy": "fixed deterministic long-context suite; each prompt once; cached_tokens=0 every row; exact JSON retrieval fields pass"
+    },
+    "prefill_tok_s_approx": {
+      "count": 1,
+      "max": 874.9464010916925,
+      "mean": 874.9464010916925,
+      "median": 874.9464010916925,
+      "min": 874.9464010916925,
+      "p10": 874.9464010916925,
+      "stdev": 0.0
+    },
+    "prompt_tokens": {
+      "count": 1,
+      "max": 741,
+      "mean": 741.0,
+      "median": 741,
+      "min": 741,
+      "p10": 741,
+      "stdev": 0.0
+    },
+    "prompts_unique": true,
+    "quality_pass_all": true,
+    "requests": 1,
+    "tok_s_after_ttft": {
+      "count": 1,
+      "max": 157.80443840521875,
+      "mean": 157.80443840521875,
+      "median": 157.80443840521875,
+      "min": 157.80443840521875,
+      "p10": 157.80443840521875,
+      "stdev": 0.0
+    },
+    "tok_s_wall": {
+      "count": 1,
+      "max": 57.684179221291785,
+      "mean": 57.684179221291785,
+      "median": 57.684179221291785,
+      "min": 57.684179221291785,
+      "p10": 57.684179221291785,
+      "stdev": 0.0
+    },
+    "ttft_s": {
+      "count": 1,
+      "max": 0.8469090210273862,
+      "mean": 0.8469090210273862,
+      "median": 0.8469090210273862,
+      "min": 0.8469090210273862,
+      "p10": 0.8469090210273862,
+      "stdev": 0.0
+    }
+  }
+}

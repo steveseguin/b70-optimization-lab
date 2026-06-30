@@ -97,6 +97,41 @@ if it passes the realistic final gate:
 Run it with the Gemma harness by setting `REALISTIC_GATE=1`; this writes
 `realistic-suite.json` and embeds `realistic_final_gate` in `summary.json`.
 
+## Long-Context Service Gate
+
+Prompt-processing and long-context service changes are useful only if they do
+not weaken the short decode record or hide behind cache reuse. Use the fixed
+long-context suite at
+`repro/gemma4-26b-a4b-q8-b70/long-context-suite-v1.json` and the harness
+`scripts/bench-openai-long-context-suite.py`.
+
+A long-context/prefill result may be promoted as a service candidate only when:
+
+- each selected suite prompt is sent once as a cold first response;
+- `cached_tokens=0` for every request;
+- prompt hashes are unique across measured requests;
+- the response is exact JSON and all case-specific fields match:
+  `case_id`, `project_code`, `answer_phrase`, `sort_order`, and
+  `arithmetic_result`;
+- deterministic text canaries pass in the same launcher run;
+- the target model, target quantization, draft model, and verification mode are
+  unchanged from the declared recipe;
+- a paired short fixed-suite guard is rerun afterward, and no short-decode
+  regression is accepted for the promoted short-record recipe.
+
+Report long-context/prefill results separately from the short decode record.
+Use approximate prefill throughput (`prompt_tokens / TTFT`) only as a service
+diagnostic, alongside TTFT, generated-token throughput after TTFT,
+wall-clock throughput, prompt/output hashes, model identity, runtime commit,
+env vars, flags, and logs. Do not submit long-context service diagnostics to
+LocalMaxxing as the one-B70 short-decode headline unless the separate realistic
+final gate also beats the current record.
+
+Run the paired service gate with
+`repro/gemma4-26b-a4b-q8-b70/run-vdr2-long-context-service-gate.sh`; run the
+paired short guard with
+`repro/gemma4-26b-a4b-q8-b70/run-vdr2-short-decode-guard.sh`.
+
 ## Fresh-Response Vs Warmed/History Throughput
 
 Headline throughput must apply to the realistic final gate above. A single

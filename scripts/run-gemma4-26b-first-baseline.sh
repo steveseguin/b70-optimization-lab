@@ -28,6 +28,10 @@ MAX_TOKENS="${MAX_TOKENS:-512}"
 REALISTIC_GATE="${REALISTIC_GATE:-0}"
 REALISTIC_SUITE="${REALISTIC_SUITE:-$ROOT/repro/gemma4-26b-a4b-q8-b70/realistic-suite-v1.json}"
 REALISTIC_METRIC_TOKENS="${REALISTIC_METRIC_TOKENS:-100}"
+LONG_CONTEXT_GATE="${LONG_CONTEXT_GATE:-0}"
+LONG_CONTEXT_SUITE="${LONG_CONTEXT_SUITE:-$ROOT/repro/gemma4-26b-a4b-q8-b70/long-context-suite-v1.json}"
+LONG_CONTEXT_CASE_IDS="${LONG_CONTEXT_CASE_IDS:-}"
+LONG_CONTEXT_MAX_TARGET_PROMPT_TOKENS="${LONG_CONTEXT_MAX_TARGET_PROMPT_TOKENS:-}"
 READINESS_TIMEOUT_S="${READINESS_TIMEOUT_S:-900}"
 STAMP="$(date -u +%Y%m%dT%H%M%SZ)"
 LABEL="${LABEL:-gemma4-26b-q8-llamacpp-gpu${GPU_INDEX}-ctx${CTX_SIZE}-${STAMP}}"
@@ -198,7 +202,25 @@ python3 scripts/gemma4-text-canary.py \
   --out "$RUN_DIR/chat-canary.json"
 
 bench_rc=0
-if [[ "$REALISTIC_GATE" == "1" || "$REALISTIC_GATE" == "true" ]]; then
+if [[ "$LONG_CONTEXT_GATE" == "1" || "$LONG_CONTEXT_GATE" == "true" ]]; then
+  long_context_args=()
+  if [[ -n "$LONG_CONTEXT_MAX_TARGET_PROMPT_TOKENS" ]]; then
+    long_context_args+=(--max-target-prompt-tokens "$LONG_CONTEXT_MAX_TARGET_PROMPT_TOKENS")
+  fi
+  for case_id in $LONG_CONTEXT_CASE_IDS; do
+    long_context_args+=(--case-id "$case_id")
+  done
+  set +e
+  python3 scripts/bench-openai-long-context-suite.py \
+    --base-url "$BASE_URL" \
+    --model "$MODEL_ALIAS" \
+    --suite "$LONG_CONTEXT_SUITE" \
+    --max-tokens "$MAX_TOKENS" \
+    --out "$RUN_DIR/long-context-suite.json" \
+    "${long_context_args[@]}"
+  bench_rc=$?
+  set -e
+elif [[ "$REALISTIC_GATE" == "1" || "$REALISTIC_GATE" == "true" ]]; then
   set +e
   python3 scripts/bench-openai-realistic-suite.py \
     --base-url "$BASE_URL" \
@@ -238,7 +260,12 @@ summary_out = Path(sys.argv[4])
 model = Path(sys.argv[5])
 canary = json.loads((run_dir / "chat-canary.json").read_text())
 realistic_path = run_dir / "realistic-suite.json"
-if realistic_path.exists():
+long_context_path = run_dir / "long-context-suite.json"
+if long_context_path.exists():
+    bench_path = long_context_path
+    bench = json.loads(long_context_path.read_text())
+    bench_kind = "long_context_gate"
+elif realistic_path.exists():
     bench_path = realistic_path
     bench = json.loads(realistic_path.read_text())
     bench_kind = "realistic_final_gate"
@@ -307,6 +334,10 @@ out = {
         "realistic_gate": os.environ.get("REALISTIC_GATE"),
         "realistic_suite": os.environ.get("REALISTIC_SUITE"),
         "realistic_metric_tokens": os.environ.get("REALISTIC_METRIC_TOKENS"),
+        "long_context_gate": os.environ.get("LONG_CONTEXT_GATE"),
+        "long_context_suite": os.environ.get("LONG_CONTEXT_SUITE"),
+        "long_context_case_ids": os.environ.get("LONG_CONTEXT_CASE_IDS"),
+        "long_context_max_target_prompt_tokens": os.environ.get("LONG_CONTEXT_MAX_TARGET_PROMPT_TOKENS"),
         "llama_mtp_draft_top_k": env_or_log("LLAMA_MTP_DRAFT_TOP_K"),
         "llama_mtp_draft_logit_gap_min": env_or_log("LLAMA_MTP_DRAFT_LOGIT_GAP_MIN"),
         "llama_mtp_draft_fast_topk": env_or_log("LLAMA_MTP_DRAFT_FAST_TOPK"),
@@ -430,6 +461,7 @@ out = {
     "bench_summary": bench["summary"],
     "fresh_response_validity": bench.get("fresh_response_validity"),
     "realistic_final_gate": bench.get("realistic_final_gate"),
+    "long_context_gate": (bench.get("summary") or {}).get("long_context_gate"),
     "bench_run_identity": bench["run_identity"],
 }
 summary_out.write_text(json.dumps(out, indent=2, sort_keys=True) + "\n")

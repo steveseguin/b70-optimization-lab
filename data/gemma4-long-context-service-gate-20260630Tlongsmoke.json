@@ -1,0 +1,90 @@
+{
+  "group_summaries": {
+    "batch1024_ubatch1024": {
+      "all_long_context_gates_passed": true,
+      "lanes": 1,
+      "median_decode_tok_s_avg": 157.80443840521875,
+      "median_decode_tok_s_by_lane": [
+        157.80443840521875
+      ],
+      "median_prefill_tok_s_avg": 874.9464010916925,
+      "median_prefill_tok_s_by_lane": [
+        874.9464010916925
+      ]
+    }
+  },
+  "kind": "gemma4_q8_long_context_service_gate",
+  "policy": "service/prefill validation only; not a short-decode LocalMaxxing headline",
+  "rows": [
+    {
+      "batch_size": "1024",
+      "cached_tokens_all_zero": true,
+      "canary_pass_all": true,
+      "canary_rows_completed": 4,
+      "case_rows": [
+        {
+          "actual_prompt_tokens": 741,
+          "cached_tokens": 0,
+          "case_id": "lc-00512-early",
+          "output_sha256": "62a288dce2fb9710dc7e00626278e32185b851ece08dea13f5393ab906b439d4",
+          "prefill_tok_s_approx": 874.9464010916925,
+          "prompt_sha256": "3fc381fa88da0c9c6e51370a05448b1a24e53640da4883b739ed06d394ef0164",
+          "target_prompt_tokens": 512,
+          "tok_s_after_ttft": 157.80443840521875,
+          "ttft_s": 0.8469090210273862,
+          "validation_pass": true
+        }
+      ],
+      "ctx_size": "32768",
+      "flash_attn": "on",
+      "gpu_index": "0",
+      "label": "gemma4-q8-gpu0-longctx-ub1024-smoke-ctx32768-o96-20260630Tlongsmoke",
+      "long_context_gate": {
+        "passed": true,
+        "required_policy": "fixed deterministic long-context suite; each prompt once; cached_tokens=0 every row; exact JSON retrieval fields pass"
+      },
+      "prefill_tok_s_approx": {
+        "count": 1,
+        "max": 874.9464010916925,
+        "mean": 874.9464010916925,
+        "median": 874.9464010916925,
+        "min": 874.9464010916925,
+        "p10": 874.9464010916925,
+        "stdev": 0.0
+      },
+      "prompts_unique": true,
+      "quality_pass_all": true,
+      "run_dir": "/home/steve/qwen36-results-main/data/gemma4-q8-gpu0-longctx-ub1024-smoke-ctx32768-o96-20260630Tlongsmoke",
+      "status": "ok",
+      "tok_s_after_ttft": {
+        "count": 1,
+        "max": 157.80443840521875,
+        "mean": 157.80443840521875,
+        "median": 157.80443840521875,
+        "min": 157.80443840521875,
+        "p10": 157.80443840521875,
+        "stdev": 0.0
+      },
+      "tok_s_wall": {
+        "count": 1,
+        "max": 57.684179221291785,
+        "mean": 57.684179221291785,
+        "median": 57.684179221291785,
+        "min": 57.684179221291785,
+        "p10": 57.684179221291785,
+        "stdev": 0.0
+      },
+      "ttft_s": {
+        "count": 1,
+        "max": 0.8469090210273862,
+        "mean": 0.8469090210273862,
+        "median": 0.8469090210273862,
+        "min": 0.8469090210273862,
+        "p10": 0.8469090210273862,
+        "stdev": 0.0
+      },
+      "ubatch_size": "1024",
+      "vmm": "1"
+    }
+  ]
+}

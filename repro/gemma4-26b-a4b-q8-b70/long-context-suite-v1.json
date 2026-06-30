@@ -1,0 +1,79 @@
+{
+  "suite_id": "gemma4-26b-a4b-q8-b70-long-context-v1",
+  "description": "Cold long-context prompt-processing and retrieval suite for Gemma 4 26B A4B Q8 on B70. Prompts are generated deterministically from these case specs; each case must be requested once with cached_tokens=0.",
+  "policy": "Service/prefill promotion only. Do not use these rows as short-decode LocalMaxxing headline throughput. Any service recipe promoted from this suite must also pass the fixed short realistic suite afterward.",
+  "cases": [
+    {
+      "id": "lc-00512-early",
+      "target_prompt_tokens": 512,
+      "needle_position": "early",
+      "project_code": "ORCHID-0512",
+      "answer_phrase": "LONG-CONTEXT-ORCHID-0512",
+      "arithmetic_result": 1739,
+      "sort_order": "blue, green, orange, red"
+    },
+    {
+      "id": "lc-02048-middle",
+      "target_prompt_tokens": 2048,
+      "needle_position": "middle",
+      "project_code": "LANTERN-2048",
+      "answer_phrase": "LONG-CONTEXT-LANTERN-2048",
+      "arithmetic_result": 4097,
+      "sort_order": "blue, green, orange, red"
+    },
+    {
+      "id": "lc-04096-late",
+      "target_prompt_tokens": 4096,
+      "needle_position": "late",
+      "project_code": "HARBOR-4096",
+      "answer_phrase": "LONG-CONTEXT-HARBOR-4096",
+      "arithmetic_result": 8195,
+      "sort_order": "blue, green, orange, red"
+    },
+    {
+      "id": "lc-08192-middle",
+      "target_prompt_tokens": 8192,
+      "needle_position": "middle",
+      "project_code": "CIRCUIT-8192",
+      "answer_phrase": "LONG-CONTEXT-CIRCUIT-8192",
+      "arithmetic_result": 16391,
+      "sort_order": "blue, green, orange, red"
+    },
+    {
+      "id": "lc-12288-early",
+      "target_prompt_tokens": 12288,
+      "needle_position": "early",
+      "project_code": "MIRROR-12288",
+      "answer_phrase": "LONG-CONTEXT-MIRROR-12288",
+      "arithmetic_result": 24581,
+      "sort_order": "blue, green, orange, red"
+    },
+    {
+      "id": "lc-16384-late",
+      "target_prompt_tokens": 16384,
+      "needle_position": "late",
+      "project_code": "KEYSTONE-16384",
+      "answer_phrase": "LONG-CONTEXT-KEYSTONE-16384",
+      "arithmetic_result": 32771,
+      "sort_order": "blue, green, orange, red"
+    },
+    {
+      "id": "lc-22000-middle",
+      "target_prompt_tokens": 22000,
+      "needle_position": "middle",
+      "project_code": "SUMMIT-22000",
+      "answer_phrase": "LONG-CONTEXT-SUMMIT-22000",
+      "arithmetic_result": 44003,
+      "sort_order": "blue, green, orange, red"
+    },
+    {
+      "id": "lc-24000-late",
+      "target_prompt_tokens": 24000,
+      "needle_position": "late",
+      "project_code": "VECTOR-24000",
+      "answer_phrase": "LONG-CONTEXT-VECTOR-24000",
+      "arithmetic_result": 48007,
+      "sort_order": "blue, green, orange, red"
+    }
+  ]
+}
