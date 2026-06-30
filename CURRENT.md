@@ -243,7 +243,15 @@ Current active optimization target:
   regression (`119.153` UB2048 average versus `116.402` UB1024), but it did
   not beat the `123.67689864739785` short record. Decision: UB2048 is the
   validated long-context/prefill service candidate; keep UB1024 for short-record
-  reproduction. See
+  reproduction. Follow-up heavy-context cross-over screens at `16213`, `22730`,
+  and `30400` actual prompt tokens showed UB2560 has the best narrow prefill
+  number (`835.782` combined median prefill tok/s versus UB2048 at `815.106`),
+  but UB2560 and UB2304 both lost enough short-suite throughput in their
+  follow-up guards that they remain diagnostics only. A profiled UB2048
+  near-32K row showed the prompt path is dominated by `FLASH_ATTN_EXT` /
+  KV-cache attention work, not verifier LM-head or MoE selected-down kernels.
+  Next service work should target attention/prefill source behavior, while
+  keeping the short-record recipe untouched. See
   `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-long-context-prefill-service-gate.md`.
 - Current diagnostic best, not a real-world headline:
   `176.21623213048554 tok/s` after TTFT on the first no-cache synthetic

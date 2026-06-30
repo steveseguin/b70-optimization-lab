@@ -1,0 +1,781 @@
+date_utc=20260630T131850Z
+gpu_index=0
+host=127.0.0.1
+port=18520
+model=/mnt/fast-ai/llm-models/gemma4-26b-a4b-it-q8-gguf/gemma-4-26B-A4B-it-UD-Q8_K_XL.gguf
+model_alias=gemma4-26b-a4b-q8
+llama_server=/home/steve/src/llama.cpp-gemma-record-repro-c926/build-sycl-b70-aot-bmg-g31-q8reorder-vdr2/bin/llama-server
+llama_cpp_commit=c926ad098
+ctx_size=32768
+batch_size=2048
+ubatch_size=2048
+n_gpu_layers=99
+threads=8
+cpu_affinity=<unset>
+flash_attn=on
+cache_type_k=f16
+cache_type_v=f16
+poll=100
+reasoning=off
+llama_devices=SYCL0
+llama_split_mode=<unset>
+llama_tensor_split=<unset>
+llama_main_gpu=<unset>
+extra_llama_args=--parallel 1 --cache-ram 0 --spec-type draft-mtp --spec-draft-model /mnt/fast-ai/llm-models/gemma4-26b-a4b-it-q8-gguf/MTP/gemma-4-26B-A4B-it-Q4_0-MTP.gguf --spec-draft-n-max 3 --spec-draft-device SYCL0 --spec-draft-ngl all --spec-draft-type-k f16 --spec-draft-type-v f16 --spec-draft-n-min 2 --spec-draft-p-min 0.0475 --no-spec-draft-backend-sampling --spec-draft-threads 32 --spec-draft-threads-batch 32 --ctx-checkpoints 0
+LLAMA_MTP_DRAFT_TOP_K=<unset>
+LLAMA_MTP_DRAFT_LOGIT_GAP_MIN=<unset>
+LLAMA_MTP_DRAFT_FAST_TOPK=<unset>
+LLAMA_MTP_DRAFT_FAST_ARGMAX=1
+LLAMA_MTP_DRAFT_DIRECT_ARGMAX_IDS=1
+LLAMA_MTP_DRAFT_DIRECT_ARGMAX_SCORES=<unset>
+LLAMA_MTP_DRAFT_DIRECT_ARGMAX_UNROLL=7
+LLAMA_MTP_DRAFT_DEVICE_H_HANDOFF=<unset>
+LLAMA_MTP_DRAFT_BACKEND_ARGMAX=<unset>
+LLAMA_MTP_DRAFT_BACKEND_TOPK=<unset>
+LLAMA_MTP_DRAFT_PROFILE=1
+LLAMA_SERVER_SPEC_PROFILE=1
+LLAMA_MTP_DRAFT_TERMINAL_LOGITS_ONLY=<unset>
+LLAMA_MTP_DEFER_TARGET_H_NEXTN=1
+LLAMA_MTP_DEFER_VERIFIER_PENDING_H_COPY=<unset>
+LLAMA_GEMMA4_MTP_FUSED_OUTPUT_ARGMAX=1
+LLAMA_GEMMA4_MTP_QONLY_ATTN_INPUTS=1
+LLAMA_GEMMA4_SKIP_IDENTITY_OUT_IDS=<unset>
+LLAMA_GEMMA4_MTP_LAYER_TAPER_AFTER=<unset>
+LLAMA_GEMMA4_MTP_LAYER_TAPER_LAYERS=<unset>
+LLAMA_GEMMA4_MOE_SELECTED_SOFTMAX=1
+LLAMA_GEMMA4_MOE_REUSE_ATTN_RMS=1
+LLAMA_GEMMA4_FUSED_FINAL_POST_NORM_RESIDUAL=1
+LLAMA_GEMMA4_FUSED_ATTN_POST_NORM_RESIDUAL=<unset>
+LLAMA_GEMMA4_FUSED_PER_LAYER_POST_NORM_RESIDUAL=<unset>
+LLAMA_GEMMA4_MOE_FUSED_BRANCH_POST_NORM_ADD=<unset>
+LLAMA_GEMMA4_MOE_ROUTER_POST_SCALE=<unset>
+LLAMA_GEMMA4_MOE_TOP_K=<unset>
+LLAMA_GEMMA4_MOE_SORTED_TOP_K=<unset>
+LLAMA_GEMMA4_MOE_WEIGHTED_SUM=1
+LLAMA_GEMMA4_MOE_FUSED_ROUTER_SELECTED_WEIGHTS=<unset>
+LLAMA_GEMMA4_MOE_WEIGHTED_SUM_2D=<unset>
+LLAMA_GEMMA4_MOE_WEIGHTED_SUM_SELECTED_SOFTMAX=<unset>
+LLAMA_GEMMA4_MOE_SELECTED_SOFTMAX_WEIGHTED_SUM=<unset>
+LLAMA_GEMMA4_MOE_SKIP_EARLY_WEIGHTS_EXPAND=<unset>
+LLAMA_GEMMA4_MOE_FUSED_DOWN_WEIGHTED_SUM=<unset>
+LLAMA_GEMMA4_MOE_FUSED_DOWN_WEIGHTED_SUM_REORDER_VDR2=1
+LLAMA_GEMMA4_MOE_FUSED_DOWN_WEIGHTED_SUM_REORDER_VDR2_ROWPACK=<unset>
+LLAMA_GEMMA4_MOE_FUSED_DOWN_SELECTED_SOFTMAX=<unset>
+LLAMA_GEMMA4_MOE_FUSED_DOWN_SELECTED_SOFTMAX_PRECOMPUTE=<unset>
+LLAMA_GEMMA4_MOE_FUSED_DOWN_WEIGHTED_SUM_PARALLEL_SLOTS=<unset>
+LLAMA_GEMMA4_MOE_FUSED_DOWN_WEIGHTED_SUM_DIRECT_F32_PARALLEL_SLOTS=<unset>
+LLAMA_GEMMA4_MOE_FUSED_DOWN_WEIGHTED_SUM_MATMUL_EPILOGUE=<unset>
+LLAMA_GEMMA4_MOE_FUSED_GEGLU_DOWN_WEIGHTED_SUM=<unset>
+LLAMA_GEMMA4_MOE_GEGLU_DOWN_MATMUL_EPILOGUE=<unset>
+LLAMA_GEMMA4_MOE_GATEUP_GEGLU=<unset>
+LLAMA_GEMMA4_MOE_GATEUP_GEGLU_BF16=<unset>
+LLAMA_GEMMA4_MOE_GATEUP_GEGLU_EPILOGUE=<unset>
+LLAMA_GEMMA4_MOE_FUSED_DOWN_WEIGHTED_SUM_DEBUG=<unset>
+LLAMA_SYCL_MUL_MAT_ID_MULTI_TOKEN_FAST=1
+LLAMA_SYCL_MUL_MAT_ID_MULTI_TOKEN_NO_REORDER=<unset>
+LLAMA_SYCL_MUL_MAT_ID_MULTI_TOKEN_GROUPED_Q8_0=<unset>
+LLAMA_SYCL_MUL_MAT_ID_MULTI_TOKEN_GROUPED_Q8_0_REORDER=<unset>
+LLAMA_SYCL_MUL_MAT_ID_MULTI_TOKEN_PER_SLOT_Q8_0=<unset>
+LLAMA_SYCL_MUL_MAT_ID_MULTI_TOKEN_FILTER=<unset>
+LLAMA_SYCL_MUL_MAT_ID_MULTI_TOKEN_NAME_SUBSTR=<unset>
+LLAMA_SYCL_MUL_MAT_ID_MULTI_TOKEN_BF16_DIRECT=<unset>
+LLAMA_SYCL_MUL_MAT_ID_GATE_UP_FAST_SEED_ROUTE_CACHE=<unset>
+LLAMA_SYCL_MUL_MAT_ID_GATE_UP_Q8_SINGLETON_DIRECT=<unset>
+LLAMA_SYCL_MUL_MAT_ID_ROUTE_CACHE=1
+LLAMA_SYCL_MUL_MAT_ID_ROUTE_CACHE_INPLACE=<unset>
+LLAMA_SYCL_MUL_MAT_ID_ROUTE_CACHE_DEVICE_MAP=<unset>
+LLAMA_SYCL_MUL_MAT_ID_ROUTE_TIMING=<unset>
+LLAMA_SYCL_MUL_MAT_ID_ROUTE_TIMING_EVERY=<unset>
+LLAMA_SYCL_MUL_MAT_ID_Q8_0_REORDER=1
+LLAMA_SYCL_MUL_MAT_ID_Q8_0_REORDER_PAIR_SLOTS=<unset>
+LLAMA_SYCL_MUL_MAT_ID_Q8_0_REORDER_TOP8_SLOTS=<unset>
+LLAMA_SYCL_MUL_MAT_ID_Q8_0_REORDER_DIRECT_VDR2=1
+LLAMA_SYCL_MUL_MAT_ID_Q8_0_REORDER_ROWPACK=<unset>
+LLAMA_SYCL_F16_P021_SMALL_NCOLS=1
+LLAMA_SYCL_Q8_MMVQ_SMALL_NCOLS=<unset>
+LLAMA_SYCL_Q8_0_LM_HEAD_1COL_DMMV=<unset>
+LLAMA_SYCL_Q8_0_LM_HEAD_1COL_NO_REORDER=<unset>
+LLAMA_SPEC_VERIFY_GREEDY_ARGMAX=<unset>
+LLAMA_SPEC_VERIFY_BACKEND_ARGMAX_IDS=1
+LLAMA_SPEC_VERIFY_BULK_SAMPLED_IDS=1
+LLAMA_SPEC_VERIFY_ACCEPT_PREFIX_PARITY=<unset>
+LLAMA_SPEC_VERIFY_SKIP_STATELESS_ACCEPT=<unset>
+LLAMA_SPEC_VERIFY_NO_BONUS_ROW=<unset>
+LLAMA_SPEC_VERIFY_STAGE_MTP3=<unset>
+LLAMA_SPEC_VERIFY_STAGE_MTP3_SPLIT_BONUS=<unset>
+LLAMA_SPEC_VERIFY_LATE_HEAD_BONUS=<unset>
+LLAMA_SPEC_VERIFY_PREFIX2_TAIL_HEAD=<unset>
+LLAMA_SPEC_VERIFY_CLIP_DRAFT_AT_EOG=<unset>
+LLAMA_SPEC_VERIFY_ADAPTIVE_BONUS_ROW=<unset>
+LLAMA_SPEC_VERIFY_ADAPTIVE_BONUS_WARMUP=<unset>
+LLAMA_SPEC_VERIFY_ADAPTIVE_BONUS_MIN_FULL_ACCEPT=<unset>
+LLAMA_SPEC_VERIFY_FUSED_OUTPUT_ARGMAX=<unset>
+LLAMA_SPEC_HEAD_FUSED_OUTPUT_ARGMAX=<unset>
+LLAMA_SPEC_VERIFY_RAW_ARGMAX=<unset>
+LLAMA_SPEC_VERIFY_SOFTCAP_ARGMAX=<unset>
+LLAMA_SPEC_VERIFY_REGULAR_MMVQ_TOP1_EPILOGUE=<unset>
+LLAMA_SYCL_MUL_MAT_TOP1_EPILOGUE=<unset>
+LLAMA_SYCL_MUL_MAT_TOP1_EPILOGUE_PARTIAL=<unset>
+LLAMA_SYCL_MUL_MAT_ARGMAX_TILE_SUBGROUPS=<unset>
+LLAMA_SYCL_MUL_MAT_ARGMAX_MULTI_REUSE=<unset>
+LLAMA_SYCL_MUL_MAT_ARGMAX_REORDER_NCOLS=<unset>
+LLAMA_SPEC_ADAPTIVE_MTP=<unset>
+LLAMA_SPEC_ADAPTIVE_MTP_WARMUP=<unset>
+LLAMA_SPEC_ADAPTIVE_MTP_LOW_N_MAX=<unset>
+LLAMA_SPEC_ADAPTIVE_MTP_LOW=<unset>
+LLAMA_SPEC_ADAPTIVE_MTP_HIGH=<unset>
+LLAMA_SPEC_ADAPTIVE_MTP_ALPHA=<unset>
+ONEAPI_DEVICE_SELECTOR=level_zero:0
+UR_L0_USE_IMMEDIATE_COMMANDLISTS=1
+UR_L0_ENABLE_RELAXED_ALLOCATION_LIMITS=1
+UR_L0_USE_COPY_ENGINE=<unset>
+SYCL_PI_LEVEL_ZERO_USE_COPY_ENGINE=<unset>
+GGML_SYCL_DISABLE_OPT=0
+GGML_SYCL_ENABLE_VMM=1
+GGML_SYCL_DISABLE_GRAPH=0
+GGML_SYCL_DISABLE_DNN=<unset>
+version: 9769 (c926ad098)
+built with IntelLLVM 2026.0.0 for Linux x86_64
+INFO: Output filtered by ONEAPI_DEVICE_SELECTOR environment variable, which is set to level_zero:0.
+To see device ids, use the --ignore-device-selectors CLI option.
+
+[level_zero:gpu] Intel(R) oneAPI Unified Runtime over Level-Zero V2, Intel(R) Arc(TM) Pro B70 Graphics 20.2.0 [1.15.38308+1]
+--- server ---
+0.00.169.353 I log_info: verbosity = 3 (adjust with the `-lv N` CLI arg)
+0.00.169.356 I device_info:
+0.00.169.746 I   - SYCL0   : Intel(R) Arc(TM) Pro B70 Graphics (32656 MiB, 32569 MiB free)
+0.00.169.755 I   - CPU     : AMD Ryzen Threadripper PRO 5955WX 16-Cores (128671 MiB, 128671 MiB free)
+0.00.169.806 I system_info: n_threads = 8 (n_threads_batch = 8) / 32 | CPU : SSE3 = 1 | SSSE3 = 1 | AVX = 1 | AVX2 = 1 | F16C = 1 | FMA = 1 | BMI2 = 1 | LLAMAFILE = 1 | OPENMP = 1 | REPACK = 1 |
+0.00.169.866 I srv          init: running without SSL
+0.00.169.916 I srv          init: using 31 threads for HTTP server
+0.00.170.234 I srv         start: binding port with default address family
+0.00.171.406 I srv  llama_server: loading model
+0.00.171.481 I srv    load_model: loading model '/mnt/fast-ai/llm-models/gemma4-26b-a4b-it-q8-gguf/gemma-4-26B-A4B-it-UD-Q8_K_XL.gguf'
+0.00.557.899 E llama_init_from_model: failed to initialize the context: Gemma4Assistant requires ctx_other to be set (this warning is normal during memory fitting)
+0.00.622.280 W srv    load_model: [spec] failed to measure draft model memory: failed to create llama_context from model
+0.00.622.302 I common_init_result: fitting params to device memory ...
+0.00.622.303 I common_init_result: (for bugs during this step try to reproduce them with -fit off, or provide --verbose logs if the bug only occurs with -fit on)
+0.01.336.570 W load: control-looking token:    212 '</s>' was not control-type; this is probably a bug in the model. its type will be overridden
+0.01.336.819 W load: control-looking token:     50 '<|tool_response>' was not control-type; this is probably a bug in the model. its type will be overridden
+0.01.339.922 W load: control-looking token:      1 '<eos>' was not control-type; this is probably a bug in the model. its type will be overridden
+0.01.348.264 W load: special_eog_ids contains '<|tool_response>', removing '</s>' token from EOG list
+0.16.662.005 W llama_context: n_ctx_seq (32768) < n_ctx_train (262144) -- the full capacity of the model will not be utilized
+0.16.685.320 I common_init_from_params: warming up the model with an empty run - please wait ... (--no-warmup to disable)
+0.17.480.846 I srv    load_model: loading draft model '/mnt/fast-ai/llm-models/gemma4-26b-a4b-it-q8-gguf/MTP/gemma-4-26B-A4B-it-Q4_0-MTP.gguf'
+0.17.812.022 W load: control-looking token:    212 '</s>' was not control-type; this is probably a bug in the model. its type will be overridden
+0.17.812.260 W load: control-looking token:     50 '<|tool_response>' was not control-type; this is probably a bug in the model. its type will be overridden
+0.17.823.939 W load: special_eog_ids contains '<|tool_response>', removing '</s>' token from EOG list
+0.17.993.188 W llama_context: n_ctx_seq (32768) < n_ctx_train (262144) -- the full capacity of the model will not be utilized
+0.17.993.278 W llama_kv_cache: layer   3: sharing with layer 29. k = 0xffffd55d44a00000, v = 0xffffd55d48a00000
+0.17.993.295 W llama_kv_cache: layer   0: sharing with layer 28. k = 0xffffd55d70a00000, v = 0xffffd55d71600000
+0.17.993.296 W llama_kv_cache: layer   1: sharing with layer 28. k = 0xffffd55d70a00000, v = 0xffffd55d71600000
+0.17.993.296 W llama_kv_cache: layer   2: sharing with layer 28. k = 0xffffd55d70a00000, v = 0xffffd55d71600000
+0.17.993.968 I srv    load_model: initializing slots, n_slots = 1
+0.18.026.735 I common_speculative_impl_draft_mtp: adding speculative implementation 'draft-mtp'
+0.18.026.740 I common_speculative_impl_draft_mtp: - n_max=3, n_min=2, p_min=0.05, n_embd=2816, backend_sampling=0
+0.18.026.743 I common_speculative_impl_draft_mtp: - gpu_layers=-2, cache_k=f16, cache_v=f16, ctx_tgt=yes, ctx_dft=yes, devices=[SYCL0]
+0.18.026.777 I common_speculative_impl_draft_mtp: - draft_top_k=10 (LLAMA_MTP_DRAFT_TOP_K)
+0.18.026.778 I common_speculative_impl_draft_mtp: - draft_logit_gap_min=0.000 (LLAMA_MTP_DRAFT_LOGIT_GAP_MIN)
+0.18.026.779 I common_speculative_impl_draft_mtp: - draft_logit_gap_min_start_pos=1 (LLAMA_MTP_DRAFT_LOGIT_GAP_MIN_START_POS)
+0.18.026.780 I common_speculative_impl_draft_mtp: - draft_fast_topk=0 (LLAMA_MTP_DRAFT_FAST_TOPK)
+0.18.026.780 I common_speculative_impl_draft_mtp: - draft_fast_argmax=1 (LLAMA_MTP_DRAFT_FAST_ARGMAX)
+0.18.026.781 I common_speculative_impl_draft_mtp: - draft_f16_logits_extract=0 (LLAMA_MTP_DRAFT_F16_LOGITS_EXTRACT)
+0.18.026.781 I common_speculative_impl_draft_mtp: - draft_backend_argmax=0 (LLAMA_MTP_DRAFT_BACKEND_ARGMAX)
+0.18.026.783 I common_speculative_impl_draft_mtp: - draft_direct_argmax_ids=1 (LLAMA_MTP_DRAFT_DIRECT_ARGMAX_IDS)
+0.18.026.785 I common_speculative_impl_draft_mtp: - draft_direct_argmax_scores=0 (LLAMA_MTP_DRAFT_DIRECT_ARGMAX_SCORES, requires fused output argmax)
+0.18.026.785 I common_speculative_impl_draft_mtp: - mtp_profile=1 (LLAMA_MTP_DRAFT_PROFILE)
+0.18.026.787 W set_mtp_decode_phase_profile: MTP decode phase profiling enabled
+0.18.026.787 W set_mtp_decode_phase_profile: MTP decode phase profiling enabled
+0.18.026.802 I common_speculative_impl_draft_mtp: - defer_target_h_nextn=1 (LLAMA_MTP_DEFER_TARGET_H_NEXTN, requires shared memory + single seq)
+0.18.026.804 W set_mtp_defer_nextn_extract: deferring MTP target h_nextn host extraction
+0.18.026.805 I common_speculative_impl_draft_mtp: - defer_verifier_pending_h_copy=0 (LLAMA_MTP_DEFER_VERIFIER_PENDING_H_COPY, requires defer_target_h_nextn)
+0.18.026.805 I common_speculative_impl_draft_mtp: - draft_direct_argmax_unroll=3 (LLAMA_MTP_DRAFT_DIRECT_ARGMAX_UNROLL, requires direct argmax + shared memory + single seq)
+0.18.026.807 I common_speculative_impl_draft_mtp: - draft_device_h_handoff=0 (LLAMA_MTP_DRAFT_DEVICE_H_HANDOFF, requires shared memory + single seq)
+0.18.048.501 I srv    load_model: speculative decoding context initialized
+0.18.048.503 I slot   load_model: id  0 | task -1 | new slot, n_ctx = 32768
+0.18.048.534 I srv    load_model: prompt cache is disabled - use `--cache-ram N` to enable it
+0.18.048.535 I srv    load_model: for more info see https://github.com/ggml-org/llama.cpp/pull/16391
+0.18.048.535 I srv    load_model: context checkpoints disabled
+0.18.048.550 W srv          init: --cache-idle-slots requires --cache-ram, disabling
+0.18.054.455 I init: chat template, example_format: '<|turn>system
+You are a helpful assistant<turn|>
+<|turn>user
+Hello<turn|>
+<|turn>model
+Hi there<turn|>
+<|turn>user
+How are you?<turn|>
+<|turn>model
+<|channel>thought
+<channel|>'
+0.18.055.037 I srv          init: init: chat template, thinking = 0
+0.18.055.072 I srv  llama_server: model loaded
+0.18.055.076 I srv  llama_server: server is listening on http://127.0.0.1:18520
+0.18.055.082 I srv  update_slots: all slots are idle
+0.18.831.873 I srv    operator(): Chat format: peg-gemma4
+0.18.832.041 I slot get_availabl: id  0 | task -1 | selected slot by LRU, t_last = -1
+0.18.832.079 I slot launch_slot_: id  0 | task 0 | processing task, is_child = 0
+0.19.132.898 I slot print_timing: id  0 | task 0 | prompt eval time =     193.79 ms /    40 tokens (    4.84 ms per token,   206.41 tokens per second)
+0.19.132.901 I slot print_timing: id  0 | task 0 |        eval time =     106.99 ms /    11 tokens (    9.73 ms per token,   102.81 tokens per second)
+0.19.132.902 I slot print_timing: id  0 | task 0 |       total time =     300.79 ms /    51 tokens
+0.19.132.903 I slot print_timing: id  0 | task 0 |    graphs reused =          3
+0.19.132.906 I slot print_timing: id  0 | task 0 | draft acceptance = 0.88889 (    8 accepted /     9 generated), mean acceptance length =  3.67, acceptance rate per position = (1.000, 1.000, 0.667)
+0.19.132.920 I statistics        draft-mtp: #calls(b,g,a) =    1      3      3, #gen drafts =      3, #acc drafts =     3, #gen tokens =      9, #acc tokens =     8, #mean acc len = 3.67, #acc rate/pos = (1.000, 1.000, 0.667), dur(b,g,a) = 0.002, 15.317, 0.032 ms
+0.19.132.921 I mtp profile        draft-mtp: process_ms=0.138, draft_decode_ms=15.293, fast_sync_ms=0.002, fast_logits_ms=0.000, fast_scan_ms=0.000, fast_prob_ms=0.000
+0.19.132.922 I mtp profile        draft-mtp: sampler_ms=0.000, hidden_get_ms=0.000, handoff_ms=0.000, accept_copy_ms=0.030
+0.19.132.923 I mtp profile        draft-mtp: counts process_calls=5, process_tokens=52, verify_rows=52, draft_decodes=3, draft_decode_tokens=3, fast_topk_calls=3, vocab_scanned=0, sampler_calls=0, hidden_rows=0, handoff_rows=0, device_h_rows=0, device_h_fallbacks=0, deferred_pending_h_skips=0
+0.19.132.923 I mtp profile        draft-mtp: stops gap=0, pmin=0, nmax=0, avg_top1_p=1.000000, avg_logit_gap=0.000000
+0.19.132.924 I mtp profile        draft-mtp: target decode phase profile follows
+0.19.132.926 W mtp decode phase profile: calls=5, tokens=52, ubatches=5, total_ms=285.076, per_call_ms=57.015, per_token_ms=5.482
+0.19.132.927 W mtp decode phase profile: balloc_ms=0.028, sched_reserve_ms=0.000, memory_update_ms=0.006, init_batch_ms=0.085, output_reserve_ms=9.288
+0.19.132.928 W mtp decode phase profile: process_ubatch_ms=275.630, post_extract_ms=0.035, output_map_ms=0.001
+0.19.132.928 W mtp decode phase profile: logits_extract_ms=0.000, embd_extract_ms=0.000, h_nextn_extract_ms=0.000, sampled_extract_ms=0.034
+0.19.132.929 I mtp profile        draft-mtp: draft decode phase profile follows
+0.19.132.929 W mtp decode phase profile: calls=4, tokens=5, ubatches=4, total_ms=36.875, per_call_ms=9.219, per_token_ms=7.375
+0.19.132.930 W mtp decode phase profile: balloc_ms=0.018, sched_reserve_ms=0.955, memory_update_ms=0.003, init_batch_ms=0.037, output_reserve_ms=0.005
+0.19.132.931 W mtp decode phase profile: process_ubatch_ms=35.785, post_extract_ms=0.069, output_map_ms=0.002
+0.19.132.931 W mtp decode phase profile: logits_extract_ms=0.001, embd_extract_ms=0.000, h_nextn_extract_ms=0.047, sampled_extract_ms=0.020
+0.19.132.956 I slot      release: id  0 | task 0 | stop processing: n_tokens = 51, truncated = 0
+0.19.132.962 I srv  print_spec_p: server spec profile: draft_ms=15.321 calls=5 draft_tokens=9 avg=3.064 ms
+0.19.132.963 I srv  print_spec_p: server spec profile: target_decode_ms=285.082 calls=5 tokens=52 avg=57.016 ms avg_token=5.482 ms
+0.19.132.964 I srv  print_spec_p: server spec profile: target_prompt_ms=193.597 calls=2 tokens=40 avg=96.799 ms avg_token=4.840 ms
+0.19.132.964 I srv  print_spec_p: server spec profile: target_generation_ms=91.485 calls=3 tokens=12 avg=30.495 ms avg_token=7.624 ms
+0.19.132.964 I srv  print_spec_p: server spec profile: process_ms=0.143 calls=5 avg=0.029 ms
+0.19.132.965 I srv  print_spec_p: server spec profile: sample_accept_ms=0.015 calls=3 avg=0.005 ms accepted_tokens=11
+0.19.132.965 I srv  print_spec_p: server spec profile: common_accept_ms=0.033 calls=3 avg=0.011 ms
+0.19.132.965 I srv  print_spec_p: server spec profile: emit_ms=0.006 calls=2 avg=0.003 ms
+0.19.132.966 I srv  print_spec_p: server spec profile: eog_trim calls=0 tokens=0
+0.19.132.966 I srv  print_spec_p: server spec profile: prefix2_tail head_ms=0.000 calls=0 tail_tokens=0 prefix_matches=0 avg=0.000 ms
+0.19.132.966 I srv  update_slots: all slots are idle
+0.19.134.866 I srv    operator(): Chat format: peg-gemma4
+0.19.134.976 I slot get_availabl: id  0 | task -1 | selected slot by LCP similarity, sim_best = 0.108 (> 0.100 thold), f_keep = 0.078
+0.19.135.003 I slot launch_slot_: id  0 | task 6 | processing task, is_child = 0
+0.19.135.009 W slot   operator(): id  0 | task 6 | forcing full prompt re-processing due to lack of cache data (likely due to SWA or hybrid/recurrent memory, see https://github.com/ggml-org/llama.cpp/pull/13194#issuecomment-2868343055)
+0.19.325.529 W sycl node profile: graphs=24, unique_nodes=1423, top=30
+0.19.325.533 W sycl node profile:  1 total_ms=26.473 calls=6 avg_ms=4.412 MUL_MAT:node_1715
+0.19.325.534 W sycl node profile detail:  1 node{MUL_MAT:node_1715 type=f32 ne=[262144,1,1,1] nb=[4,1048576,1048576,1048576]} src0{NONE:token_embd.weight type=q8_0 ne=[2816,262144,1,1] nb=[34,2992,784334848,784334848]} src1{GET_ROWS:result_norm type=f32 ne=[2816,1,1,1] nb=[4,11264,11264,11264]}
+0.19.325.535 W sycl node profile:  2 total_ms=20.329 calls=10 avg_ms=2.033 MUL_MAT_ID:ffn_moe_gate_up-0
+0.19.325.536 W sycl node profile detail:  2 node{MUL_MAT_ID:ffn_moe_gate_up-0 type=f32 ne=[1408,8,2,1] nb=[4,5632,45056,90112]} src0{NONE:blk.0.ffn_gate_up_exps.weight type=q8_0 ne=[2816,1408,128,1] nb=[34,2992,4212736,539230208]} src1{RESHAPE:ffn_norm_2-0 (reshaped) type=f32 ne=[2816,1,2,1] nb=[4,11264,11264,22528]} src2{VIEW:ffn_moe_topk-0 type=i32 ne=[8,2,1,1] nb=[4,512,1024,1024]}
+0.19.325.536 W sycl node profile:  3 total_ms=19.730 calls=10 avg_ms=1.973 MUL_MAT:ffn_moe_probs-0
+0.19.325.537 W sycl node profile detail:  3 node{MUL_MAT:ffn_moe_probs-0 type=f32 ne=[128,2,1,1] nb=[4,512,1024,1024]} src0{NONE:blk.0.ffn_gate_inp.weight type=f32 ne=[2816,128,1,1] nb=[4,11264,1441792,1441792]} src1{MUL:node_35 type=f32 ne=[2816,2,1,1] nb=[4,11264,22528,22528]}
+0.19.325.537 W sycl node profile:  4 total_ms=17.223 calls=10 avg_ms=1.722 MUL_MAT_ID:ffn_moe_gate_up-1
+0.19.325.538 W sycl node profile detail:  4 node{MUL_MAT_ID:ffn_moe_gate_up-1 type=f32 ne=[1408,8,2,1] nb=[4,5632,45056,90112]} src0{NONE:blk.1.ffn_gate_up_exps.weight type=q8_0 ne=[2816,1408,128,1] nb=[34,2992,4212736,539230208]} src1{RESHAPE:ffn_norm_2-1 (reshaped) type=f32 ne=[2816,1,2,1] nb=[4,11264,11264,22528]} src2{VIEW:ffn_moe_topk-1 type=i32 ne=[8,2,1,1] nb=[4,512,1024,1024]}
+0.19.325.538 W sycl node profile:  5 total_ms=17.182 calls=10 avg_ms=1.718 MUL_MAT_ID:ffn_moe_gate_up-5
+0.19.325.539 W sycl node profile detail:  5 node{MUL_MAT_ID:ffn_moe_gate_up-5 type=f32 ne=[1408,8,2,1] nb=[4,5632,45056,90112]} src0{NONE:blk.5.ffn_gate_up_exps.weight type=q8_0 ne=[2816,1408,128,1] nb=[34,2992,4212736,539230208]} src1{RESHAPE:ffn_norm_2-5 (reshaped) type=f32 ne=[2816,1,2,1] nb=[4,11264,11264,22528]} src2{VIEW:ffn_moe_topk-5 type=i32 ne=[8,2,1,1] nb=[4,512,1024,1024]}
+0.19.325.539 W sycl node profile:  6 total_ms=17.180 calls=10 avg_ms=1.718 MUL_MAT_ID:ffn_moe_gate_up-22
+0.19.325.539 W sycl node profile detail:  6 node{MUL_MAT_ID:ffn_moe_gate_up-22 type=f32 ne=[1408,8,2,1] nb=[4,5632,45056,90112]} src0{NONE:blk.22.ffn_gate_up_exps.weight type=q8_0 ne=[2816,1408,128,1] nb=[34,2992,4212736,539230208]} src1{RESHAPE:ffn_norm_2-22 (reshaped) type=f32 ne=[2816,1,2,1] nb=[4,11264,11264,22528]} src2{VIEW:ffn_moe_topk-22 type=i32 ne=[8,2,1,1] nb=[4,512,1024,1024]}
+0.19.325.540 W sycl node profile:  7 total_ms=17.129 calls=10 avg_ms=1.713 MUL_MAT_ID:ffn_moe_gate_up-3
+0.19.325.540 W sycl node profile detail:  7 node{MUL_MAT_ID:ffn_moe_gate_up-3 type=f32 ne=[1408,8,2,1] nb=[4,5632,45056,90112]} src0{NONE:blk.3.ffn_gate_up_exps.weight type=q8_0 ne=[2816,1408,128,1] nb=[34,2992,4212736,539230208]} src1{RESHAPE:ffn_norm_2-3 (reshaped) type=f32 ne=[2816,1,2,1] nb=[4,11264,11264,22528]} src2{VIEW:ffn_moe_topk-3 type=i32 ne=[8,2,1,1] nb=[4,512,1024,1024]}
+0.19.325.541 W sycl node profile:  8 total_ms=17.037 calls=10 avg_ms=1.704 MUL_MAT_ID:ffn_moe_gate_up-25
+0.19.325.541 W sycl node profile detail:  8 node{MUL_MAT_ID:ffn_moe_gate_up-25 type=f32 ne=[1408,8,2,1] nb=[4,5632,45056,90112]} src0{NONE:blk.25.ffn_gate_up_exps.weight type=q8_0 ne=[2816,1408,128,1] nb=[34,2992,4212736,539230208]} src1{RESHAPE:ffn_norm_2-25 (reshaped) type=f32 ne=[2816,1,2,1] nb=[4,11264,11264,22528]} src2{VIEW:ffn_moe_topk-25 type=i32 ne=[8,2,1,1] nb=[4,512,1024,1024]}
+0.19.325.542 W sycl node profile:  9 total_ms=17.035 calls=10 avg_ms=1.704 MUL_MAT_ID:ffn_moe_gate_up-2
+0.19.325.543 W sycl node profile detail:  9 node{MUL_MAT_ID:ffn_moe_gate_up-2 type=f32 ne=[1408,8,2,1] nb=[4,5632,45056,90112]} src0{NONE:blk.2.ffn_gate_up_exps.weight type=q8_0 ne=[2816,1408,128,1] nb=[34,2992,4212736,539230208]} src1{RESHAPE:ffn_norm_2-2 (reshaped) type=f32 ne=[2816,1,2,1] nb=[4,11264,11264,22528]} src2{VIEW:ffn_moe_topk-2 type=i32 ne=[8,2,1,1] nb=[4,512,1024,1024]}
+0.19.325.543 W sycl node profile: 10 total_ms=16.995 calls=10 avg_ms=1.700 MUL_MAT_ID:ffn_moe_gate_up-24
+0.19.325.544 W sycl node profile detail: 10 node{MUL_MAT_ID:ffn_moe_gate_up-24 type=f32 ne=[1408,8,2,1] nb=[4,5632,45056,90112]} src0{NONE:blk.24.ffn_gate_up_exps.weight type=q8_0 ne=[2816,1408,128,1] nb=[34,2992,4212736,539230208]} src1{RESHAPE:ffn_norm_2-24 (reshaped) type=f32 ne=[2816,1,2,1] nb=[4,11264,11264,22528]} src2{VIEW:ffn_moe_topk-24 type=i32 ne=[8,2,1,1] nb=[4,512,1024,1024]}
+0.19.325.544 W sycl node profile: 11 total_ms=16.980 calls=10 avg_ms=1.698 MUL_MAT_ID:ffn_moe_gate_up-27
+0.19.325.545 W sycl node profile detail: 11 node{MUL_MAT_ID:ffn_moe_gate_up-27 type=f32 ne=[1408,8,2,1] nb=[4,5632,45056,90112]} src0{NONE:blk.27.ffn_gate_up_exps.weight type=q8_0 ne=[2816,1408,128,1] nb=[34,2992,4212736,539230208]} src1{RESHAPE:ffn_norm_2-27 (reshaped) type=f32 ne=[2816,1,2,1] nb=[4,11264,11264,22528]} src2{VIEW:ffn_moe_topk-27 type=i32 ne=[8,2,1,1] nb=[4,512,1024,1024]}
+0.19.325.545 W sycl node profile: 12 total_ms=16.954 calls=10 avg_ms=1.695 MUL_MAT_ID:ffn_moe_gate_up-7
+0.19.325.546 W sycl node profile detail: 12 node{MUL_MAT_ID:ffn_moe_gate_up-7 type=f32 ne=[1408,8,2,1] nb=[4,5632,45056,90112]} src0{NONE:blk.7.ffn_gate_up_exps.weight type=q8_0 ne=[2816,1408,128,1] nb=[34,2992,4212736,539230208]} src1{RESHAPE:ffn_norm_2-7 (reshaped) type=f32 ne=[2816,1,2,1] nb=[4,11264,11264,22528]} src2{VIEW:ffn_moe_topk-7 type=i32 ne=[8,2,1,1] nb=[4,512,1024,1024]}
+0.19.325.547 W sycl node profile: 13 total_ms=16.947 calls=10 avg_ms=1.695 MUL_MAT_ID:ffn_moe_gate_up-8
+0.19.325.547 W sycl node profile detail: 13 node{MUL_MAT_ID:ffn_moe_gate_up-8 type=f32 ne=[1408,8,2,1] nb=[4,5632,45056,90112]} src0{NONE:blk.8.ffn_gate_up_exps.weight type=q8_0 ne=[2816,1408,128,1] nb=[34,2992,4212736,539230208]} src1{RESHAPE:ffn_norm_2-8 (reshaped) type=f32 ne=[2816,1,2,1] nb=[4,11264,11264,22528]} src2{VIEW:ffn_moe_topk-8 type=i32 ne=[8,2,1,1] nb=[4,512,1024,1024]}
+0.19.325.548 W sycl node profile: 14 total_ms=16.917 calls=10 avg_ms=1.692 MUL_MAT_ID:ffn_moe_gate_up-26
+0.19.325.548 W sycl node profile detail: 14 node{MUL_MAT_ID:ffn_moe_gate_up-26 type=f32 ne=[1408,8,2,1] nb=[4,5632,45056,90112]} src0{NONE:blk.26.ffn_gate_up_exps.weight type=q8_0 ne=[2816,1408,128,1] nb=[34,2992,4212736,539230208]} src1{RESHAPE:ffn_norm_2-26 (reshaped) type=f32 ne=[2816,1,2,1] nb=[4,11264,11264,22528]} src2{VIEW:ffn_moe_topk-26 type=i32 ne=[8,2,1,1] nb=[4,512,1024,1024]}
+0.19.325.548 W sycl node profile: 15 total_ms=16.885 calls=10 avg_ms=1.689 MUL_MAT_ID:ffn_moe_gate_up-21
+0.19.325.549 W sycl node profile detail: 15 node{MUL_MAT_ID:ffn_moe_gate_up-21 type=f32 ne=[1408,8,2,1] nb=[4,5632,45056,90112]} src0{NONE:blk.21.ffn_gate_up_exps.weight type=q8_0 ne=[2816,1408,128,1] nb=[34,2992,4212736,539230208]} src1{RESHAPE:ffn_norm_2-21 (reshaped) type=f32 ne=[2816,1,2,1] nb=[4,11264,11264,22528]} src2{VIEW:ffn_moe_topk-21 type=i32 ne=[8,2,1,1] nb=[4,512,1024,1024]}
+0.19.325.549 W sycl node profile: 16 total_ms=16.840 calls=10 avg_ms=1.684 MUL_MAT_ID:ffn_moe_gate_up-28
+0.19.325.550 W sycl node profile detail: 16 node{MUL_MAT_ID:ffn_moe_gate_up-28 type=f32 ne=[1408,8,2,1] nb=[4,5632,45056,90112]} src0{NONE:blk.28.ffn_gate_up_exps.weight type=q8_0 ne=[2816,1408,128,1] nb=[34,2992,4212736,539230208]} src1{RESHAPE:ffn_norm_2-28 (reshaped) type=f32 ne=[2816,1,2,1] nb=[4,11264,11264,22528]} src2{VIEW:ffn_moe_topk-28 type=i32 ne=[8,2,1,1] nb=[4,512,1024,1024]}
+0.19.325.550 W sycl node profile: 17 total_ms=16.839 calls=10 avg_ms=1.684 MUL_MAT_ID:ffn_moe_gate_up-6
+0.19.325.551 W sycl node profile detail: 17 node{MUL_MAT_ID:ffn_moe_gate_up-6 type=f32 ne=[1408,8,2,1] nb=[4,5632,45056,90112]} src0{NONE:blk.6.ffn_gate_up_exps.weight type=q8_0 ne=[2816,1408,128,1] nb=[34,2992,4212736,539230208]} src1{RESHAPE:ffn_norm_2-6 (reshaped) type=f32 ne=[2816,1,2,1] nb=[4,11264,11264,22528]} src2{VIEW:ffn_moe_topk-6 type=i32 ne=[8,2,1,1] nb=[4,512,1024,1024]}
+0.19.325.551 W sycl node profile: 18 total_ms=16.830 calls=10 avg_ms=1.683 MUL_MAT_ID:ffn_moe_gate_up-23
+0.19.325.551 W sycl node profile detail: 18 node{MUL_MAT_ID:ffn_moe_gate_up-23 type=f32 ne=[1408,8,2,1] nb=[4,5632,45056,90112]} src0{NONE:blk.23.ffn_gate_up_exps.weight type=q8_0 ne=[2816,1408,128,1] nb=[34,2992,4212736,539230208]} src1{RESHAPE:ffn_norm_2-23 (reshaped) type=f32 ne=[2816,1,2,1] nb=[4,11264,11264,22528]} src2{VIEW:ffn_moe_topk-23 type=i32 ne=[8,2,1,1] nb=[4,512,1024,1024]}
+0.19.325.552 W sycl node profile: 19 total_ms=16.813 calls=10 avg_ms=1.681 MUL_MAT_ID:ffn_moe_gate_up-15
+0.19.325.552 W sycl node profile detail: 19 node{MUL_MAT_ID:ffn_moe_gate_up-15 type=f32 ne=[1408,8,2,1] nb=[4,5632,45056,90112]} src0{NONE:blk.15.ffn_gate_up_exps.weight type=q8_0 ne=[2816,1408,128,1] nb=[34,2992,4212736,539230208]} src1{RESHAPE:ffn_norm_2-15 (reshaped) type=f32 ne=[2816,1,2,1] nb=[4,11264,11264,22528]} src2{VIEW:ffn_moe_topk-15 type=i32 ne=[8,2,1,1] nb=[4,512,1024,1024]}
+0.19.325.553 W sycl node profile: 20 total_ms=16.804 calls=10 avg_ms=1.680 MUL_MAT_ID:ffn_moe_gate_up-20
+0.19.325.553 W sycl node profile detail: 20 node{MUL_MAT_ID:ffn_moe_gate_up-20 type=f32 ne=[1408,8,2,1] nb=[4,5632,45056,90112]} src0{NONE:blk.20.ffn_gate_up_exps.weight type=q8_0 ne=[2816,1408,128,1] nb=[34,2992,4212736,539230208]} src1{RESHAPE:ffn_norm_2-20 (reshaped) type=f32 ne=[2816,1,2,1] nb=[4,11264,11264,22528]} src2{VIEW:ffn_moe_topk-20 type=i32 ne=[8,2,1,1] nb=[4,512,1024,1024]}
+0.19.325.553 W sycl node profile: 21 total_ms=16.770 calls=10 avg_ms=1.677 MUL_MAT_ID:ffn_moe_gate_up-17
+0.19.325.554 W sycl node profile detail: 21 node{MUL_MAT_ID:ffn_moe_gate_up-17 type=f32 ne=[1408,8,2,1] nb=[4,5632,45056,90112]} src0{NONE:blk.17.ffn_gate_up_exps.weight type=q8_0 ne=[2816,1408,128,1] nb=[34,2992,4212736,539230208]} src1{RESHAPE:ffn_norm_2-17 (reshaped) type=f32 ne=[2816,1,2,1] nb=[4,11264,11264,22528]} src2{VIEW:ffn_moe_topk-17 type=i32 ne=[8,2,1,1] nb=[4,512,1024,1024]}
+0.19.325.554 W sycl node profile: 22 total_ms=16.761 calls=10 avg_ms=1.676 MUL_MAT_ID:ffn_moe_gate_up-16
+0.19.325.554 W sycl node profile detail: 22 node{MUL_MAT_ID:ffn_moe_gate_up-16 type=f32 ne=[1408,8,2,1] nb=[4,5632,45056,90112]} src0{NONE:blk.16.ffn_gate_up_exps.weight type=q8_0 ne=[2816,1408,128,1] nb=[34,2992,4212736,539230208]} src1{RESHAPE:ffn_norm_2-16 (reshaped) type=f32 ne=[2816,1,2,1] nb=[4,11264,11264,22528]} src2{VIEW:ffn_moe_topk-16 type=i32 ne=[8,2,1,1] nb=[4,512,1024,1024]}
+0.19.325.555 W sycl node profile: 23 total_ms=16.721 calls=10 avg_ms=1.672 MUL_MAT_ID:ffn_moe_gate_up-19
+0.19.325.555 W sycl node profile detail: 23 node{MUL_MAT_ID:ffn_moe_gate_up-19 type=f32 ne=[1408,8,2,1] nb=[4,5632,45056,90112]} src0{NONE:blk.19.ffn_gate_up_exps.weight type=q8_0 ne=[2816,1408,128,1] nb=[34,2992,4212736,539230208]} src1{RESHAPE:ffn_norm_2-19 (reshaped) type=f32 ne=[2816,1,2,1] nb=[4,11264,11264,22528]} src2{VIEW:ffn_moe_topk-19 type=i32 ne=[8,2,1,1] nb=[4,512,1024,1024]}
+0.19.325.555 W sycl node profile: 24 total_ms=16.711 calls=10 avg_ms=1.671 MUL_MAT_ID:ffn_moe_gate_up-18
+0.19.325.556 W sycl node profile detail: 24 node{MUL_MAT_ID:ffn_moe_gate_up-18 type=f32 ne=[1408,8,2,1] nb=[4,5632,45056,90112]} src0{NONE:blk.18.ffn_gate_up_exps.weight type=q8_0 ne=[2816,1408,128,1] nb=[34,2992,4212736,539230208]} src1{RESHAPE:ffn_norm_2-18 (reshaped) type=f32 ne=[2816,1,2,1] nb=[4,11264,11264,22528]} src2{VIEW:ffn_moe_topk-18 type=i32 ne=[8,2,1,1] nb=[4,512,1024,1024]}
+0.19.325.556 W sycl node profile: 25 total_ms=16.692 calls=10 avg_ms=1.669 MUL_MAT_ID:ffn_moe_gate_up-9
+0.19.325.556 W sycl node profile detail: 25 node{MUL_MAT_ID:ffn_moe_gate_up-9 type=f32 ne=[1408,8,2,1] nb=[4,5632,45056,90112]} src0{NONE:blk.9.ffn_gate_up_exps.weight type=q8_0 ne=[2816,1408,128,1] nb=[34,2992,4212736,539230208]} src1{RESHAPE:ffn_norm_2-9 (reshaped) type=f32 ne=[2816,1,2,1] nb=[4,11264,11264,22528]} src2{VIEW:ffn_moe_topk-9 type=i32 ne=[8,2,1,1] nb=[4,512,1024,1024]}
+0.19.325.557 W sycl node profile: 26 total_ms=16.513 calls=10 avg_ms=1.651 MUL_MAT_ID:ffn_moe_gate_up-13
+0.19.325.557 W sycl node profile detail: 26 node{MUL_MAT_ID:ffn_moe_gate_up-13 type=f32 ne=[1408,8,2,1] nb=[4,5632,45056,90112]} src0{NONE:blk.13.ffn_gate_up_exps.weight type=q8_0 ne=[2816,1408,128,1] nb=[34,2992,4212736,539230208]} src1{RESHAPE:ffn_norm_2-13 (reshaped) type=f32 ne=[2816,1,2,1] nb=[4,11264,11264,22528]} src2{VIEW:ffn_moe_topk-13 type=i32 ne=[8,2,1,1] nb=[4,512,1024,1024]}
+0.19.325.557 W sycl node profile: 27 total_ms=16.442 calls=10 avg_ms=1.644 MUL_MAT_ID:ffn_moe_gate_up-10
+0.19.325.558 W sycl node profile detail: 27 node{MUL_MAT_ID:ffn_moe_gate_up-10 type=f32 ne=[1408,8,2,1] nb=[4,5632,45056,90112]} src0{NONE:blk.10.ffn_gate_up_exps.weight type=q8_0 ne=[2816,1408,128,1] nb=[34,2992,4212736,539230208]} src1{RESHAPE:ffn_norm_2-10 (reshaped) type=f32 ne=[2816,1,2,1] nb=[4,11264,11264,22528]} src2{VIEW:ffn_moe_topk-10 type=i32 ne=[8,2,1,1] nb=[4,512,1024,1024]}
+0.19.325.558 W sycl node profile: 28 total_ms=16.437 calls=10 avg_ms=1.644 MUL_MAT_ID:ffn_moe_gate_up-12
+0.19.325.558 W sycl node profile detail: 28 node{MUL_MAT_ID:ffn_moe_gate_up-12 type=f32 ne=[1408,8,2,1] nb=[4,5632,45056,90112]} src0{NONE:blk.12.ffn_gate_up_exps.weight type=q8_0 ne=[2816,1408,128,1] nb=[34,2992,4212736,539230208]} src1{RESHAPE:ffn_norm_2-12 (reshaped) type=f32 ne=[2816,1,2,1] nb=[4,11264,11264,22528]} src2{VIEW:ffn_moe_topk-12 type=i32 ne=[8,2,1,1] nb=[4,512,1024,1024]}
+0.19.325.559 W sycl node profile: 29 total_ms=16.346 calls=10 avg_ms=1.635 MUL_MAT_ID:ffn_moe_gate_up-11
+0.19.325.559 W sycl node profile detail: 29 node{MUL_MAT_ID:ffn_moe_gate_up-11 type=f32 ne=[1408,8,2,1] nb=[4,5632,45056,90112]} src0{NONE:blk.11.ffn_gate_up_exps.weight type=q8_0 ne=[2816,1408,128,1] nb=[34,2992,4212736,539230208]} src1{RESHAPE:ffn_norm_2-11 (reshaped) type=f32 ne=[2816,1,2,1] nb=[4,11264,11264,22528]} src2{VIEW:ffn_moe_topk-11 type=i32 ne=[8,2,1,1] nb=[4,512,1024,1024]}
+0.19.325.559 W sycl node profile: 30 total_ms=16.240 calls=10 avg_ms=1.624 MUL_MAT_ID:ffn_moe_gate_up-4
+0.19.325.560 W sycl node profile detail: 30 node{MUL_MAT_ID:ffn_moe_gate_up-4 type=f32 ne=[1408,8,2,1] nb=[4,5632,45056,90112]} src0{NONE:blk.4.ffn_gate_up_exps.weight type=q8_0 ne=[2816,1408,128,1] nb=[34,2992,4212736,539230208]} src1{RESHAPE:ffn_norm_2-4 (reshaped) type=f32 ne=[2816,1,2,1] nb=[4,11264,11264,22528]} src2{VIEW:ffn_moe_topk-4 type=i32 ne=[8,2,1,1] nb=[4,512,1024,1024]}
+0.19.358.633 I slot print_timing: id  0 | task 6 | prompt eval time =     153.34 ms /    37 tokens (    4.14 ms per token,   241.29 tokens per second)
+0.19.358.636 I slot print_timing: id  0 | task 6 |        eval time =      70.27 ms /     8 tokens (    8.78 ms per token,   113.85 tokens per second)
+0.19.358.637 I slot print_timing: id  0 | task 6 |       total time =     223.61 ms /    45 tokens
+0.19.358.637 I slot print_timing: id  0 | task 6 |    graphs reused =          4
+0.19.358.639 I slot print_timing: id  0 | task 6 | draft acceptance = 1.00000 (    6 accepted /     6 generated), mean acceptance length =  4.00, acceptance rate per position = (1.000, 1.000, 1.000)
+0.19.358.645 I statistics        draft-mtp: #calls(b,g,a) =    2      5      5, #gen drafts =      5, #acc drafts =     5, #gen tokens =     15, #acc tokens =    14, #mean acc len = 3.80, #acc rate/pos = (1.000, 1.000, 0.800), dur(b,g,a) = 0.002, 25.589, 0.051 ms
+0.19.358.646 I mtp profile        draft-mtp: process_ms=0.245, draft_decode_ms=25.557, fast_sync_ms=0.003, fast_logits_ms=0.000, fast_scan_ms=0.000, fast_prob_ms=0.000
+0.19.358.647 I mtp profile        draft-mtp: sampler_ms=0.000, hidden_get_ms=0.000, handoff_ms=0.000, accept_copy_ms=0.049
+0.19.358.648 I mtp profile        draft-mtp: counts process_calls=9, process_tokens=97, verify_rows=97, draft_decodes=5, draft_decode_tokens=5, fast_topk_calls=5, vocab_scanned=0, sampler_calls=0, hidden_rows=0, handoff_rows=0, device_h_rows=0, device_h_fallbacks=0, deferred_pending_h_skips=0
+0.19.358.648 I mtp profile        draft-mtp: stops gap=0, pmin=0, nmax=0, avg_top1_p=1.000000, avg_logit_gap=0.000000
+0.19.358.649 I mtp profile        draft-mtp: target decode phase profile follows
+0.19.358.650 W mtp decode phase profile: calls=9, tokens=97, ubatches=9, total_ms=498.175, per_call_ms=55.353, per_token_ms=5.136
+0.19.358.651 W mtp decode phase profile: balloc_ms=0.043, sched_reserve_ms=0.000, memory_update_ms=0.008, init_batch_ms=0.152, output_reserve_ms=9.292
+0.19.358.652 W mtp decode phase profile: process_ubatch_ms=488.609, post_extract_ms=0.064, output_map_ms=0.001
+0.19.358.652 W mtp decode phase profile: logits_extract_ms=0.000, embd_extract_ms=0.000, h_nextn_extract_ms=0.000, sampled_extract_ms=0.062
+0.19.358.652 I mtp profile        draft-mtp: draft decode phase profile follows
+0.19.358.653 W mtp decode phase profile: calls=6, tokens=7, ubatches=6, total_ms=47.137, per_call_ms=7.856, per_token_ms=6.734
+0.19.358.654 W mtp decode phase profile: balloc_ms=0.024, sched_reserve_ms=0.955, memory_update_ms=0.004, init_batch_ms=0.056, output_reserve_ms=0.005
+0.19.358.655 W mtp decode phase profile: process_ubatch_ms=46.009, post_extract_ms=0.079, output_map_ms=0.002
+0.19.358.655 W mtp decode phase profile: logits_extract_ms=0.001, embd_extract_ms=0.000, h_nextn_extract_ms=0.047, sampled_extract_ms=0.030
+0.19.358.664 I slot      release: id  0 | task 6 | stop processing: n_tokens = 45, truncated = 0
+0.19.358.671 I srv  print_spec_p: server spec profile: draft_ms=25.594 calls=9 draft_tokens=15 avg=2.844 ms
+0.19.358.672 I srv  print_spec_p: server spec profile: target_decode_ms=498.187 calls=9 tokens=97 avg=55.354 ms avg_token=5.136 ms
+0.19.358.673 I srv  print_spec_p: server spec profile: target_prompt_ms=346.804 calls=4 tokens=77 avg=86.701 ms avg_token=4.504 ms
+0.19.358.675 I srv  print_spec_p: server spec profile: target_generation_ms=151.383 calls=5 tokens=20 avg=30.277 ms avg_token=7.569 ms
+0.19.358.676 I srv  print_spec_p: server spec profile: process_ms=0.250 calls=9 avg=0.028 ms
+0.19.358.677 I srv  print_spec_p: server spec profile: sample_accept_ms=0.021 calls=5 avg=0.004 ms accepted_tokens=19
+0.19.358.677 I srv  print_spec_p: server spec profile: common_accept_ms=0.052 calls=5 avg=0.010 ms
+0.19.358.677 I srv  print_spec_p: server spec profile: emit_ms=0.008 calls=3 avg=0.003 ms
+0.19.358.678 I srv  print_spec_p: server spec profile: eog_trim calls=0 tokens=0
+0.19.358.678 I srv  print_spec_p: server spec profile: prefix2_tail head_ms=0.000 calls=0 tail_tokens=0 prefix_matches=0 avg=0.000 ms
+0.19.358.678 I srv  update_slots: all slots are idle
+0.19.360.165 I srv    operator(): Chat format: peg-gemma4
+0.19.360.268 I slot get_availabl: id  0 | task -1 | selected slot by LCP similarity, sim_best = 0.103 (> 0.100 thold), f_keep = 0.089
+0.19.360.294 I slot launch_slot_: id  0 | task 11 | processing task, is_child = 0
+0.19.360.299 W slot   operator(): id  0 | task 11 | forcing full prompt re-processing due to lack of cache data (likely due to SWA or hybrid/recurrent memory, see https://github.com/ggml-org/llama.cpp/pull/13194#issuecomment-2868343055)
+0.19.550.199 I slot print_timing: id  0 | task 11 | prompt eval time =     154.93 ms /    39 tokens (    3.97 ms per token,   251.73 tokens per second)
+0.19.550.203 I slot print_timing: id  0 | task 11 |        eval time =      34.96 ms /     3 tokens (   11.65 ms per token,    85.82 tokens per second)
+0.19.550.203 I slot print_timing: id  0 | task 11 |       total time =     189.88 ms /    42 tokens
+0.19.550.204 I slot print_timing: id  0 | task 11 |    graphs reused =          4
+0.19.550.206 I slot print_timing: id  0 | task 11 | draft acceptance = 1.00000 (    3 accepted /     3 generated), mean acceptance length =  4.00, acceptance rate per position = (1.000, 1.000, 1.000)
+0.19.550.211 I statistics        draft-mtp: #calls(b,g,a) =    3      6      6, #gen drafts =      6, #acc drafts =     6, #gen tokens =     18, #acc tokens =    17, #mean acc len = 3.83, #acc rate/pos = (1.000, 1.000, 0.833), dur(b,g,a) = 0.003, 30.546, 0.060 ms
+0.19.550.212 I mtp profile        draft-mtp: process_ms=0.336, draft_decode_ms=30.510, fast_sync_ms=0.003, fast_logits_ms=0.000, fast_scan_ms=0.000, fast_prob_ms=0.000
+0.19.550.213 I mtp profile        draft-mtp: sampler_ms=0.000, hidden_get_ms=0.000, handoff_ms=0.000, accept_copy_ms=0.058
+0.19.550.214 I mtp profile        draft-mtp: counts process_calls=12, process_tokens=140, verify_rows=140, draft_decodes=6, draft_decode_tokens=6, fast_topk_calls=6, vocab_scanned=0, sampler_calls=0, hidden_rows=0, handoff_rows=0, device_h_rows=0, device_h_fallbacks=0, deferred_pending_h_skips=0
+0.19.550.215 I mtp profile        draft-mtp: stops gap=0, pmin=0, nmax=0, avg_top1_p=1.000000, avg_logit_gap=0.000000
+0.19.550.215 I mtp profile        draft-mtp: target decode phase profile follows
+0.19.550.216 W mtp decode phase profile: calls=12, tokens=140, ubatches=12, total_ms=682.927, per_call_ms=56.911, per_token_ms=4.878
+0.19.550.217 W mtp decode phase profile: balloc_ms=0.056, sched_reserve_ms=0.000, memory_update_ms=0.011, init_batch_ms=0.212, output_reserve_ms=9.294
+0.19.550.218 W mtp decode phase profile: process_ubatch_ms=673.270, post_extract_ms=0.075, output_map_ms=0.002
+0.19.550.218 W mtp decode phase profile: logits_extract_ms=0.000, embd_extract_ms=0.000, h_nextn_extract_ms=0.000, sampled_extract_ms=0.073
+0.19.550.218 I mtp profile        draft-mtp: draft decode phase profile follows
+0.19.550.219 W mtp decode phase profile: calls=7, tokens=8, ubatches=7, total_ms=52.089, per_call_ms=7.441, per_token_ms=6.511
+0.19.550.220 W mtp decode phase profile: balloc_ms=0.027, sched_reserve_ms=0.955, memory_update_ms=0.005, init_batch_ms=0.064, output_reserve_ms=0.006
+0.19.550.221 W mtp decode phase profile: process_ubatch_ms=50.943, post_extract_ms=0.084, output_map_ms=0.002
+0.19.550.221 W mtp decode phase profile: logits_extract_ms=0.001, embd_extract_ms=0.000, h_nextn_extract_ms=0.047, sampled_extract_ms=0.035
+0.19.550.231 I slot      release: id  0 | task 11 | stop processing: n_tokens = 43, truncated = 0
+0.19.550.236 I srv  print_spec_p: server spec profile: draft_ms=30.552 calls=12 draft_tokens=18 avg=2.546 ms
+0.19.550.237 I srv  print_spec_p: server spec profile: target_decode_ms=682.940 calls=12 tokens=140 avg=56.912 ms avg_token=4.878 ms
+0.19.550.238 I srv  print_spec_p: server spec profile: target_prompt_ms=501.599 calls=6 tokens=116 avg=83.600 ms avg_token=4.324 ms
+0.19.550.238 I srv  print_spec_p: server spec profile: target_generation_ms=181.341 calls=6 tokens=24 avg=30.224 ms avg_token=7.556 ms
+0.19.550.239 I srv  print_spec_p: server spec profile: process_ms=0.343 calls=12 avg=0.029 ms
+0.19.550.239 I srv  print_spec_p: server spec profile: sample_accept_ms=0.024 calls=6 avg=0.004 ms accepted_tokens=23
+0.19.550.241 I srv  print_spec_p: server spec profile: common_accept_ms=0.061 calls=6 avg=0.010 ms
+0.19.550.242 I srv  print_spec_p: server spec profile: emit_ms=0.008 calls=3 avg=0.003 ms
+0.19.550.242 I srv  print_spec_p: server spec profile: eog_trim calls=0 tokens=0
+0.19.550.243 I srv  print_spec_p: server spec profile: prefix2_tail head_ms=0.000 calls=0 tail_tokens=0 prefix_matches=0 avg=0.000 ms
+0.19.550.243 I srv  update_slots: all slots are idle
+0.19.551.742 I srv    operator(): Chat format: peg-gemma4
+0.19.551.845 I slot get_availabl: id  0 | task -1 | selected slot by LCP similarity, sim_best = 0.103 (> 0.100 thold), f_keep = 0.093
+0.19.551.869 I slot launch_slot_: id  0 | task 15 | processing task, is_child = 0
+0.19.551.874 W slot   operator(): id  0 | task 15 | forcing full prompt re-processing due to lack of cache data (likely due to SWA or hybrid/recurrent memory, see https://github.com/ggml-org/llama.cpp/pull/13194#issuecomment-2868343055)
+0.19.812.924 W sycl node profile: graphs=48, unique_nodes=1423, top=30
+0.19.812.928 W sycl node profile:  1 total_ms=33.240 calls=11 avg_ms=3.022 MUL_MAT:node_1715
+0.19.812.929 W sycl node profile detail:  1 node{MUL_MAT:node_1715 type=f32 ne=[262144,1,1,1] nb=[4,1048576,1048576,1048576]} src0{NONE:token_embd.weight type=q8_0 ne=[2816,262144,1,1] nb=[34,2992,784334848,784334848]} src1{GET_ROWS:result_norm type=f32 ne=[2816,1,1,1] nb=[4,11264,11264,11264]}
+0.19.812.930 W sycl node profile:  2 total_ms=25.186 calls=19 avg_ms=1.326 MUL_MAT_ID:ffn_moe_gate_up-0
+0.19.812.931 W sycl node profile detail:  2 node{MUL_MAT_ID:ffn_moe_gate_up-0 type=f32 ne=[1408,8,2,1] nb=[4,5632,45056,90112]} src0{NONE:blk.0.ffn_gate_up_exps.weight type=q8_0 ne=[2816,1408,128,1] nb=[34,2992,4212736,539230208]} src1{RESHAPE:ffn_norm_2-0 (reshaped) type=f32 ne=[2816,1,2,1] nb=[4,11264,11264,22528]} src2{VIEW:ffn_moe_topk-0 type=i32 ne=[8,2,1,1] nb=[4,512,1024,1024]}
+0.19.812.931 W sycl node profile:  3 total_ms=21.905 calls=19 avg_ms=1.153 MUL_MAT_ID:ffn_moe_gate_up-22
+0.19.812.932 W sycl node profile detail:  3 node{MUL_MAT_ID:ffn_moe_gate_up-22 type=f32 ne=[1408,8,2,1] nb=[4,5632,45056,90112]} src0{NONE:blk.22.ffn_gate_up_exps.weight type=q8_0 ne=[2816,1408,128,1] nb=[34,2992,4212736,539230208]} src1{RESHAPE:ffn_norm_2-22 (reshaped) type=f32 ne=[2816,1,2,1] nb=[4,11264,11264,22528]} src2{VIEW:ffn_moe_topk-22 type=i32 ne=[8,2,1,1] nb=[4,512,1024,1024]}
+0.19.812.932 W sycl node profile:  4 total_ms=21.839 calls=19 avg_ms=1.149 MUL_MAT_ID:ffn_moe_gate_up-5
+0.19.812.933 W sycl node profile detail:  4 node{MUL_MAT_ID:ffn_moe_gate_up-5 type=f32 ne=[1408,8,2,1] nb=[4,5632,45056,90112]} src0{NONE:blk.5.ffn_gate_up_exps.weight type=q8_0 ne=[2816,1408,128,1] nb=[34,2992,4212736,539230208]} src1{RESHAPE:ffn_norm_2-5 (reshaped) type=f32 ne=[2816,1,2,1] nb=[4,11264,11264,22528]} src2{VIEW:ffn_moe_topk-5 type=i32 ne=[8,2,1,1] nb=[4,512,1024,1024]}
+0.19.812.933 W sycl node profile:  5 total_ms=21.754 calls=19 avg_ms=1.145 MUL_MAT_ID:ffn_moe_gate_up-27
+0.19.812.934 W sycl node profile detail:  5 node{MUL_MAT_ID:ffn_moe_gate_up-27 type=f32 ne=[1408,8,2,1] nb=[4,5632,45056,90112]} src0{NONE:blk.27.ffn_gate_up_exps.weight type=q8_0 ne=[2816,1408,128,1] nb=[34,2992,4212736,539230208]} src1{RESHAPE:ffn_norm_2-27 (reshaped) type=f32 ne=[2816,1,2,1] nb=[4,11264,11264,22528]} src2{VIEW:ffn_moe_topk-27 type=i32 ne=[8,2,1,1] nb=[4,512,1024,1024]}
+0.19.812.934 W sycl node profile:  6 total_ms=21.711 calls=19 avg_ms=1.143 MUL_MAT_ID:ffn_moe_gate_up-2
+0.19.812.935 W sycl node profile detail:  6 node{MUL_MAT_ID:ffn_moe_gate_up-2 type=f32 ne=[1408,8,2,1] nb=[4,5632,45056,90112]} src0{NONE:blk.2.ffn_gate_up_exps.weight type=q8_0 ne=[2816,1408,128,1] nb=[34,2992,4212736,539230208]} src1{RESHAPE:ffn_norm_2-2 (reshaped) type=f32 ne=[2816,1,2,1] nb=[4,11264,11264,22528]} src2{VIEW:ffn_moe_topk-2 type=i32 ne=[8,2,1,1] nb=[4,512,1024,1024]}
+0.19.812.935 W sycl node profile:  7 total_ms=21.706 calls=19 avg_ms=1.142 MUL_MAT_ID:ffn_moe_gate_up-25
+0.19.812.936 W sycl node profile detail:  7 node{MUL_MAT_ID:ffn_moe_gate_up-25 type=f32 ne=[1408,8,2,1] nb=[4,5632,45056,90112]} src0{NONE:blk.25.ffn_gate_up_exps.weight type=q8_0 ne=[2816,1408,128,1] nb=[34,2992,4212736,539230208]} src1{RESHAPE:ffn_norm_2-25 (reshaped) type=f32 ne=[2816,1,2,1] nb=[4,11264,11264,22528]} src2{VIEW:ffn_moe_topk-25 type=i32 ne=[8,2,1,1] nb=[4,512,1024,1024]}
+0.19.812.936 W sycl node profile:  8 total_ms=21.637 calls=19 avg_ms=1.139 MUL_MAT_ID:ffn_moe_gate_up-1
+0.19.812.937 W sycl node profile detail:  8 node{MUL_MAT_ID:ffn_moe_gate_up-1 type=f32 ne=[1408,8,2,1] nb=[4,5632,45056,90112]} src0{NONE:blk.1.ffn_gate_up_exps.weight type=q8_0 ne=[2816,1408,128,1] nb=[34,2992,4212736,539230208]} src1{RESHAPE:ffn_norm_2-1 (reshaped) type=f32 ne=[2816,1,2,1] nb=[4,11264,11264,22528]} src2{VIEW:ffn_moe_topk-1 type=i32 ne=[8,2,1,1] nb=[4,512,1024,1024]}
+0.19.812.937 W sycl node profile:  9 total_ms=21.610 calls=19 avg_ms=1.137 MUL_MAT_ID:ffn_moe_gate_up-8
+0.19.812.938 W sycl node profile detail:  9 node{MUL_MAT_ID:ffn_moe_gate_up-8 type=f32 ne=[1408,8,2,1] nb=[4,5632,45056,90112]} src0{NONE:blk.8.ffn_gate_up_exps.weight type=q8_0 ne=[2816,1408,128,1] nb=[34,2992,4212736,539230208]} src1{RESHAPE:ffn_norm_2-8 (reshaped) type=f32 ne=[2816,1,2,1] nb=[4,11264,11264,22528]} src2{VIEW:ffn_moe_topk-8 type=i32 ne=[8,2,1,1] nb=[4,512,1024,1024]}
+0.19.812.938 W sycl node profile: 10 total_ms=21.506 calls=19 avg_ms=1.132 MUL_MAT_ID:ffn_moe_gate_up-7
+0.19.812.938 W sycl node profile detail: 10 node{MUL_MAT_ID:ffn_moe_gate_up-7 type=f32 ne=[1408,8,2,1] nb=[4,5632,45056,90112]} src0{NONE:blk.7.ffn_gate_up_exps.weight type=q8_0 ne=[2816,1408,128,1] nb=[34,2992,4212736,539230208]} src1{RESHAPE:ffn_norm_2-7 (reshaped) type=f32 ne=[2816,1,2,1] nb=[4,11264,11264,22528]} src2{VIEW:ffn_moe_topk-7 type=i32 ne=[8,2,1,1] nb=[4,512,1024,1024]}
+0.19.812.939 W sycl node profile: 11 total_ms=21.481 calls=19 avg_ms=1.131 MUL_MAT_ID:ffn_moe_gate_up-24
+0.19.812.939 W sycl node profile detail: 11 node{MUL_MAT_ID:ffn_moe_gate_up-24 type=f32 ne=[1408,8,2,1] nb=[4,5632,45056,90112]} src0{NONE:blk.24.ffn_gate_up_exps.weight type=q8_0 ne=[2816,1408,128,1] nb=[34,2992,4212736,539230208]} src1{RESHAPE:ffn_norm_2-24 (reshaped) type=f32 ne=[2816,1,2,1] nb=[4,11264,11264,22528]} src2{VIEW:ffn_moe_topk-24 type=i32 ne=[8,2,1,1] nb=[4,512,1024,1024]}
+0.19.812.940 W sycl node profile: 12 total_ms=21.386 calls=19 avg_ms=1.126 MUL_MAT_ID:ffn_moe_gate_up-3
+0.19.812.940 W sycl node profile detail: 12 node{MUL_MAT_ID:ffn_moe_gate_up-3 type=f32 ne=[1408,8,2,1] nb=[4,5632,45056,90112]} src0{NONE:blk.3.ffn_gate_up_exps.weight type=q8_0 ne=[2816,1408,128,1] nb=[34,2992,4212736,539230208]} src1{RESHAPE:ffn_norm_2-3 (reshaped) type=f32 ne=[2816,1,2,1] nb=[4,11264,11264,22528]} src2{VIEW:ffn_moe_topk-3 type=i32 ne=[8,2,1,1] nb=[4,512,1024,1024]}
+0.19.812.941 W sycl node profile: 13 total_ms=21.376 calls=19 avg_ms=1.125 MUL_MAT_ID:ffn_moe_gate_up-21
+0.19.812.941 W sycl node profile detail: 13 node{MUL_MAT_ID:ffn_moe_gate_up-21 type=f32 ne=[1408,8,2,1] nb=[4,5632,45056,90112]} src0{NONE:blk.21.ffn_gate_up_exps.weight type=q8_0 ne=[2816,1408,128,1] nb=[34,2992,4212736,539230208]} src1{RESHAPE:ffn_norm_2-21 (reshaped) type=f32 ne=[2816,1,2,1] nb=[4,11264,11264,22528]} src2{VIEW:ffn_moe_topk-21 type=i32 ne=[8,2,1,1] nb=[4,512,1024,1024]}
+0.19.812.941 W sycl node profile: 14 total_ms=21.374 calls=19 avg_ms=1.125 MUL_MAT_ID:ffn_moe_gate_up-20
+0.19.812.942 W sycl node profile detail: 14 node{MUL_MAT_ID:ffn_moe_gate_up-20 type=f32 ne=[1408,8,2,1] nb=[4,5632,45056,90112]} src0{NONE:blk.20.ffn_gate_up_exps.weight type=q8_0 ne=[2816,1408,128,1] nb=[34,2992,4212736,539230208]} src1{RESHAPE:ffn_norm_2-20 (reshaped) type=f32 ne=[2816,1,2,1] nb=[4,11264,11264,22528]} src2{VIEW:ffn_moe_topk-20 type=i32 ne=[8,2,1,1] nb=[4,512,1024,1024]}
+0.19.812.942 W sycl node profile: 15 total_ms=21.323 calls=19 avg_ms=1.122 MUL_MAT_ID:ffn_moe_gate_up-18
+0.19.812.942 W sycl node profile detail: 15 node{MUL_MAT_ID:ffn_moe_gate_up-18 type=f32 ne=[1408,8,2,1] nb=[4,5632,45056,90112]} src0{NONE:blk.18.ffn_gate_up_exps.weight type=q8_0 ne=[2816,1408,128,1] nb=[34,2992,4212736,539230208]} src1{RESHAPE:ffn_norm_2-18 (reshaped) type=f32 ne=[2816,1,2,1] nb=[4,11264,11264,22528]} src2{VIEW:ffn_moe_topk-18 type=i32 ne=[8,2,1,1] nb=[4,512,1024,1024]}
+0.19.812.943 W sycl node profile: 16 total_ms=21.294 calls=19 avg_ms=1.121 MUL_MAT_ID:ffn_moe_gate_up-15
+0.19.812.943 W sycl node profile detail: 16 node{MUL_MAT_ID:ffn_moe_gate_up-15 type=f32 ne=[1408,8,2,1] nb=[4,5632,45056,90112]} src0{NONE:blk.15.ffn_gate_up_exps.weight type=q8_0 ne=[2816,1408,128,1] nb=[34,2992,4212736,539230208]} src1{RESHAPE:ffn_norm_2-15 (reshaped) type=f32 ne=[2816,1,2,1] nb=[4,11264,11264,22528]} src2{VIEW:ffn_moe_topk-15 type=i32 ne=[8,2,1,1] nb=[4,512,1024,1024]}
+0.19.812.943 W sycl node profile: 17 total_ms=21.281 calls=19 avg_ms=1.120 MUL_MAT_ID:ffn_moe_gate_up-23
+0.19.812.944 W sycl node profile detail: 17 node{MUL_MAT_ID:ffn_moe_gate_up-23 type=f32 ne=[1408,8,2,1] nb=[4,5632,45056,90112]} src0{NONE:blk.23.ffn_gate_up_exps.weight type=q8_0 ne=[2816,1408,128,1] nb=[34,2992,4212736,539230208]} src1{RESHAPE:ffn_norm_2-23 (reshaped) type=f32 ne=[2816,1,2,1] nb=[4,11264,11264,22528]} src2{VIEW:ffn_moe_topk-23 type=i32 ne=[8,2,1,1] nb=[4,512,1024,1024]}
+0.19.812.944 W sycl node profile: 18 total_ms=21.193 calls=19 avg_ms=1.115 MUL_MAT_ID:ffn_moe_gate_up-17
+0.19.812.944 W sycl node profile detail: 18 node{MUL_MAT_ID:ffn_moe_gate_up-17 type=f32 ne=[1408,8,2,1] nb=[4,5632,45056,90112]} src0{NONE:blk.17.ffn_gate_up_exps.weight type=q8_0 ne=[2816,1408,128,1] nb=[34,2992,4212736,539230208]} src1{RESHAPE:ffn_norm_2-17 (reshaped) type=f32 ne=[2816,1,2,1] nb=[4,11264,11264,22528]} src2{VIEW:ffn_moe_topk-17 type=i32 ne=[8,2,1,1] nb=[4,512,1024,1024]}
+0.19.812.945 W sycl node profile: 19 total_ms=21.174 calls=19 avg_ms=1.114 MUL_MAT_ID:ffn_moe_gate_up-26
+0.19.812.945 W sycl node profile detail: 19 node{MUL_MAT_ID:ffn_moe_gate_up-26 type=f32 ne=[1408,8,2,1] nb=[4,5632,45056,90112]} src0{NONE:blk.26.ffn_gate_up_exps.weight type=q8_0 ne=[2816,1408,128,1] nb=[34,2992,4212736,539230208]} src1{RESHAPE:ffn_norm_2-26 (reshaped) type=f32 ne=[2816,1,2,1] nb=[4,11264,11264,22528]} src2{VIEW:ffn_moe_topk-26 type=i32 ne=[8,2,1,1] nb=[4,512,1024,1024]}
+0.19.812.945 W sycl node profile: 20 total_ms=21.161 calls=19 avg_ms=1.114 MUL_MAT_ID:ffn_moe_gate_up-19
+0.19.812.946 W sycl node profile detail: 20 node{MUL_MAT_ID:ffn_moe_gate_up-19 type=f32 ne=[1408,8,2,1] nb=[4,5632,45056,90112]} src0{NONE:blk.19.ffn_gate_up_exps.weight type=q8_0 ne=[2816,1408,128,1] nb=[34,2992,4212736,539230208]} src1{RESHAPE:ffn_norm_2-19 (reshaped) type=f32 ne=[2816,1,2,1] nb=[4,11264,11264,22528]} src2{VIEW:ffn_moe_topk-19 type=i32 ne=[8,2,1,1] nb=[4,512,1024,1024]}
+0.19.812.946 W sycl node profile: 21 total_ms=21.140 calls=19 avg_ms=1.113 MUL_MAT_ID:ffn_moe_gate_up-16
+0.19.812.947 W sycl node profile detail: 21 node{MUL_MAT_ID:ffn_moe_gate_up-16 type=f32 ne=[1408,8,2,1] nb=[4,5632,45056,90112]} src0{NONE:blk.16.ffn_gate_up_exps.weight type=q8_0 ne=[2816,1408,128,1] nb=[34,2992,4212736,539230208]} src1{RESHAPE:ffn_norm_2-16 (reshaped) type=f32 ne=[2816,1,2,1] nb=[4,11264,11264,22528]} src2{VIEW:ffn_moe_topk-16 type=i32 ne=[8,2,1,1] nb=[4,512,1024,1024]}
+0.19.812.947 W sycl node profile: 22 total_ms=21.083 calls=19 avg_ms=1.110 MUL_MAT_ID:ffn_moe_gate_up-6
+0.19.812.947 W sycl node profile detail: 22 node{MUL_MAT_ID:ffn_moe_gate_up-6 type=f32 ne=[1408,8,2,1] nb=[4,5632,45056,90112]} src0{NONE:blk.6.ffn_gate_up_exps.weight type=q8_0 ne=[2816,1408,128,1] nb=[34,2992,4212736,539230208]} src1{RESHAPE:ffn_norm_2-6 (reshaped) type=f32 ne=[2816,1,2,1] nb=[4,11264,11264,22528]} src2{VIEW:ffn_moe_topk-6 type=i32 ne=[8,2,1,1] nb=[4,512,1024,1024]}
+0.19.812.948 W sycl node profile: 23 total_ms=21.073 calls=19 avg_ms=1.109 MUL_MAT_ID:ffn_moe_gate_up-9
+0.19.812.948 W sycl node profile detail: 23 node{MUL_MAT_ID:ffn_moe_gate_up-9 type=f32 ne=[1408,8,2,1] nb=[4,5632,45056,90112]} src0{NONE:blk.9.ffn_gate_up_exps.weight type=q8_0 ne=[2816,1408,128,1] nb=[34,2992,4212736,539230208]} src1{RESHAPE:ffn_norm_2-9 (reshaped) type=f32 ne=[2816,1,2,1] nb=[4,11264,11264,22528]} src2{VIEW:ffn_moe_topk-9 type=i32 ne=[8,2,1,1] nb=[4,512,1024,1024]}
+0.19.812.948 W sycl node profile: 24 total_ms=20.925 calls=19 avg_ms=1.101 MUL_MAT_ID:ffn_moe_gate_up-28
+0.19.812.949 W sycl node profile detail: 24 node{MUL_MAT_ID:ffn_moe_gate_up-28 type=f32 ne=[1408,8,2,1] nb=[4,5632,45056,90112]} src0{NONE:blk.28.ffn_gate_up_exps.weight type=q8_0 ne=[2816,1408,128,1] nb=[34,2992,4212736,539230208]} src1{RESHAPE:ffn_norm_2-28 (reshaped) type=f32 ne=[2816,1,2,1] nb=[4,11264,11264,22528]} src2{VIEW:ffn_moe_topk-28 type=i32 ne=[8,2,1,1] nb=[4,512,1024,1024]}
+0.19.812.949 W sycl node profile: 25 total_ms=20.606 calls=19 avg_ms=1.085 MUL_MAT_ID:ffn_moe_gate_up-13
+0.19.812.950 W sycl node profile detail: 25 node{MUL_MAT_ID:ffn_moe_gate_up-13 type=f32 ne=[1408,8,2,1] nb=[4,5632,45056,90112]} src0{NONE:blk.13.ffn_gate_up_exps.weight type=q8_0 ne=[2816,1408,128,1] nb=[34,2992,4212736,539230208]} src1{RESHAPE:ffn_norm_2-13 (reshaped) type=f32 ne=[2816,1,2,1] nb=[4,11264,11264,22528]} src2{VIEW:ffn_moe_topk-13 type=i32 ne=[8,2,1,1] nb=[4,512,1024,1024]}
+0.19.812.950 W sycl node profile: 26 total_ms=20.588 calls=19 avg_ms=1.084 MUL_MAT_ID:ffn_moe_gate_up-10
+0.19.812.950 W sycl node profile detail: 26 node{MUL_MAT_ID:ffn_moe_gate_up-10 type=f32 ne=[1408,8,2,1] nb=[4,5632,45056,90112]} src0{NONE:blk.10.ffn_gate_up_exps.weight type=q8_0 ne=[2816,1408,128,1] nb=[34,2992,4212736,539230208]} src1{RESHAPE:ffn_norm_2-10 (reshaped) type=f32 ne=[2816,1,2,1] nb=[4,11264,11264,22528]} src2{VIEW:ffn_moe_topk-10 type=i32 ne=[8,2,1,1] nb=[4,512,1024,1024]}
+0.19.812.951 W sycl node profile: 27 total_ms=20.537 calls=19 avg_ms=1.081 MUL_MAT_ID:ffn_moe_gate_up-11
+0.19.812.951 W sycl node profile detail: 27 node{MUL_MAT_ID:ffn_moe_gate_up-11 type=f32 ne=[1408,8,2,1] nb=[4,5632,45056,90112]} src0{NONE:blk.11.ffn_gate_up_exps.weight type=q8_0 ne=[2816,1408,128,1] nb=[34,2992,4212736,539230208]} src1{RESHAPE:ffn_norm_2-11 (reshaped) type=f32 ne=[2816,1,2,1] nb=[4,11264,11264,22528]} src2{VIEW:ffn_moe_topk-11 type=i32 ne=[8,2,1,1] nb=[4,512,1024,1024]}
+0.19.812.951 W sycl node profile: 28 total_ms=20.426 calls=19 avg_ms=1.075 MUL_MAT_ID:ffn_moe_gate_up-12
+0.19.812.952 W sycl node profile detail: 28 node{MUL_MAT_ID:ffn_moe_gate_up-12 type=f32 ne=[1408,8,2,1] nb=[4,5632,45056,90112]} src0{NONE:blk.12.ffn_gate_up_exps.weight type=q8_0 ne=[2816,1408,128,1] nb=[34,2992,4212736,539230208]} src1{RESHAPE:ffn_norm_2-12 (reshaped) type=f32 ne=[2816,1,2,1] nb=[4,11264,11264,22528]} src2{VIEW:ffn_moe_topk-12 type=i32 ne=[8,2,1,1] nb=[4,512,1024,1024]}
+0.19.812.952 W sycl node profile: 29 total_ms=20.243 calls=19 avg_ms=1.065 MUL_MAT_ID:ffn_moe_gate_up-14
+0.19.812.952 W sycl node profile detail: 29 node{MUL_MAT_ID:ffn_moe_gate_up-14 type=f32 ne=[1408,8,2,1] nb=[4,5632,45056,90112]} src0{NONE:blk.14.ffn_gate_up_exps.weight type=q8_0 ne=[2816,1408,128,1] nb=[34,2992,4212736,539230208]} src1{RESHAPE:ffn_norm_2-14 (reshaped) type=f32 ne=[2816,1,2,1] nb=[4,11264,11264,22528]} src2{VIEW:ffn_moe_topk-14 type=i32 ne=[8,2,1,1] nb=[4,512,1024,1024]}
+0.19.812.953 W sycl node profile: 30 total_ms=20.072 calls=19 avg_ms=1.056 MUL_MAT:ffn_moe_probs-0
+0.19.812.953 W sycl node profile detail: 30 node{MUL_MAT:ffn_moe_probs-0 type=f32 ne=[128,2,1,1] nb=[4,512,1024,1024]} src0{NONE:blk.0.ffn_gate_inp.weight type=f32 ne=[2816,128,1,1] nb=[4,11264,1441792,1441792]} src1{MUL:node_35 type=f32 ne=[2816,2,1,1] nb=[4,11264,22528,22528]}
+0.19.880.060 I slot print_timing: id  0 | task 15 | prompt eval time =     155.13 ms /    39 tokens (    3.98 ms per token,   251.41 tokens per second)
+0.19.880.064 I slot print_timing: id  0 | task 15 |        eval time =     173.04 ms /    20 tokens (    8.65 ms per token,   115.58 tokens per second)
+0.19.880.064 I slot print_timing: id  0 | task 15 |       total time =     328.17 ms /    59 tokens
+0.19.880.064 I slot print_timing: id  0 | task 15 |    graphs reused =          8
+0.19.880.066 I slot print_timing: id  0 | task 15 | draft acceptance = 1.00000 (   15 accepted /    15 generated), mean acceptance length =  4.00, acceptance rate per position = (1.000, 1.000, 1.000)
+0.19.880.072 I statistics        draft-mtp: #calls(b,g,a) =    4     11     11, #gen drafts =     11, #acc drafts =    11, #gen tokens =     33, #acc tokens =    32, #mean acc len = 3.91, #acc rate/pos = (1.000, 1.000, 0.909), dur(b,g,a) = 0.003, 55.693, 0.110 ms
+0.19.880.073 I mtp profile        draft-mtp: process_ms=0.484, draft_decode_ms=55.635, fast_sync_ms=0.005, fast_logits_ms=0.000, fast_scan_ms=0.000, fast_prob_ms=0.000
+0.19.880.074 I mtp profile        draft-mtp: sampler_ms=0.000, hidden_get_ms=0.000, handoff_ms=0.000, accept_copy_ms=0.107
+0.19.880.075 I mtp profile        draft-mtp: counts process_calls=19, process_tokens=199, verify_rows=199, draft_decodes=11, draft_decode_tokens=11, fast_topk_calls=11, vocab_scanned=0, sampler_calls=0, hidden_rows=0, handoff_rows=0, device_h_rows=0, device_h_fallbacks=0, deferred_pending_h_skips=0
+0.19.880.075 I mtp profile        draft-mtp: stops gap=0, pmin=0, nmax=0, avg_top1_p=1.000000, avg_logit_gap=0.000000
+0.19.880.076 I mtp profile        draft-mtp: target decode phase profile follows
+0.19.880.077 W mtp decode phase profile: calls=19, tokens=199, ubatches=19, total_ms=985.550, per_call_ms=51.871, per_token_ms=4.953
+0.19.880.078 W mtp decode phase profile: balloc_ms=0.083, sched_reserve_ms=0.000, memory_update_ms=0.016, init_batch_ms=0.313, output_reserve_ms=9.299
+0.19.880.079 W mtp decode phase profile: process_ubatch_ms=975.715, post_extract_ms=0.108, output_map_ms=0.003
+0.19.880.079 W mtp decode phase profile: logits_extract_ms=0.000, embd_extract_ms=0.000, h_nextn_extract_ms=0.001, sampled_extract_ms=0.105
+0.19.880.079 I mtp profile        draft-mtp: draft decode phase profile follows
+0.19.880.080 W mtp decode phase profile: calls=12, tokens=13, ubatches=12, total_ms=77.209, per_call_ms=6.434, per_token_ms=5.939
+0.19.880.081 W mtp decode phase profile: balloc_ms=0.040, sched_reserve_ms=0.955, memory_update_ms=0.006, init_batch_ms=0.110, output_reserve_ms=0.007
+0.19.880.081 W mtp decode phase profile: process_ubatch_ms=75.973, post_extract_ms=0.109, output_map_ms=0.002
+0.19.880.082 W mtp decode phase profile: logits_extract_ms=0.002, embd_extract_ms=0.000, h_nextn_extract_ms=0.047, sampled_extract_ms=0.059
+0.19.880.091 I slot      release: id  0 | task 15 | stop processing: n_tokens = 59, truncated = 0
+0.19.880.097 I srv  print_spec_p: server spec profile: draft_ms=55.699 calls=19 draft_tokens=33 avg=2.932 ms
+0.19.880.097 I srv  print_spec_p: server spec profile: target_decode_ms=985.570 calls=19 tokens=199 avg=51.872 ms avg_token=4.953 ms
+0.19.880.098 I srv  print_spec_p: server spec profile: target_prompt_ms=656.595 calls=8 tokens=155 avg=82.074 ms avg_token=4.236 ms
+0.19.880.098 I srv  print_spec_p: server spec profile: target_generation_ms=328.975 calls=11 tokens=44 avg=29.907 ms avg_token=7.477 ms
+0.19.880.099 I srv  print_spec_p: server spec profile: process_ms=0.493 calls=19 avg=0.026 ms
+0.19.880.099 I srv  print_spec_p: server spec profile: sample_accept_ms=0.041 calls=11 avg=0.004 ms accepted_tokens=43
+0.19.880.100 I srv  print_spec_p: server spec profile: common_accept_ms=0.112 calls=11 avg=0.010 ms
+0.19.880.100 I srv  print_spec_p: server spec profile: emit_ms=0.019 calls=7 avg=0.003 ms
+0.19.880.102 I srv  print_spec_p: server spec profile: eog_trim calls=0 tokens=0
+0.19.880.103 I srv  print_spec_p: server spec profile: prefix2_tail head_ms=0.000 calls=0 tail_tokens=0 prefix_matches=0 avg=0.000 ms
+0.19.880.103 I srv  update_slots: all slots are idle
+0.20.024.681 I srv    operator(): Chat format: peg-gemma4
+0.20.024.978 I slot get_availabl: id  0 | task -1 | selected slot by LRU, t_last = 770773736407
+0.20.025.056 I slot launch_slot_: id  0 | task 23 | processing task, is_child = 0
+0.20.025.067 W slot   operator(): id  0 | task 23 | forcing full prompt re-processing due to lack of cache data (likely due to SWA or hybrid/recurrent memory, see https://github.com/ggml-org/llama.cpp/pull/13194#issuecomment-2868343055)
+0.23.370.758 I slot print_timing: id  0 | task 23 | prompt processing, n_tokens =   4097, progress = 0.13, t =   3.35 s / 1224.56 tokens per second
+0.25.132.812 I slot print_timing: id  0 | task 23 | prompt processing, n_tokens =   6145, progress = 0.20, t =   5.11 s / 1203.08 tokens per second
+0.27.137.369 I slot print_timing: id  0 | task 23 | prompt processing, n_tokens =   8193, progress = 0.27, t =   7.11 s / 1151.95 tokens per second
+0.29.482.851 I slot print_timing: id  0 | task 23 | prompt processing, n_tokens =  10241, progress = 0.34, t =   9.46 s / 1082.81 tokens per second
+0.31.925.705 I slot print_timing: id  0 | task 23 | prompt processing, n_tokens =  12289, progress = 0.40, t =  11.90 s / 1032.63 tokens per second
+0.34.623.645 I slot print_timing: id  0 | task 23 | prompt processing, n_tokens =  14337, progress = 0.47, t =  14.60 s / 982.08 tokens per second
+0.37.649.497 I slot print_timing: id  0 | task 23 | prompt processing, n_tokens =  16385, progress = 0.54, t =  17.62 s / 929.68 tokens per second
+0.40.731.037 I slot print_timing: id  0 | task 23 | prompt processing, n_tokens =  18433, progress = 0.61, t =  20.71 s / 890.23 tokens per second
+0.44.053.056 I slot print_timing: id  0 | task 23 | prompt processing, n_tokens =  20481, progress = 0.67, t =  24.03 s / 852.38 tokens per second
+0.47.685.922 I slot print_timing: id  0 | task 23 | prompt processing, n_tokens =  22529, progress = 0.74, t =  27.66 s / 814.47 tokens per second
+0.51.380.154 I slot print_timing: id  0 | task 23 | prompt processing, n_tokens =  24577, progress = 0.81, t =  31.36 s / 783.83 tokens per second
+0.55.322.982 I slot print_timing: id  0 | task 23 | prompt processing, n_tokens =  26625, progress = 0.88, t =  35.30 s / 754.29 tokens per second
+0.59.555.887 I slot print_timing: id  0 | task 23 | prompt processing, n_tokens =  28673, progress = 0.94, t =  39.53 s / 725.33 tokens per second
+1.03.223.248 W sycl node profile: graphs=72, unique_nodes=1423, top=30
+1.03.223.254 W sycl node profile:  1 total_ms=4433.221 calls=37 avg_ms=119.817 FLASH_ATTN_EXT:__fattn__-5
+1.03.223.255 W sycl node profile detail:  1 node{FLASH_ATTN_EXT:__fattn__-5 type=f32 ne=[512,16,2,1] nb=[4,2048,32768,65536]} src0{PERMUTE:Qcur_pos-5 (view) (permuted) type=f32 ne=[512,2,16,1] nb=[4,32768,2048,65536]} src1{PERMUTE:cache_k_l5 (view) (permuted) type=f16 ne=[512,256,2,1] nb=[2,2048,1024,67108864]} src2{PERMUTE:cache_v_l5 (view) (permuted) type=f16 ne=[512,256,2,1] nb=[2,2048,1024,67108864]} src3{NONE:SYCL0#attn_inp_kq_mask#0 type=f16 ne=[256,2,1,1] nb=[2,512,1024,1024]}
+1.03.223.256 W sycl node profile:  2 total_ms=4428.343 calls=37 avg_ms=119.685 FLASH_ATTN_EXT:__fattn__-17
+1.03.223.257 W sycl node profile detail:  2 node{FLASH_ATTN_EXT:__fattn__-17 type=f32 ne=[512,16,2,1] nb=[4,2048,32768,65536]} src0{PERMUTE:Qcur_pos-17 (view) (permuted) type=f32 ne=[512,2,16,1] nb=[4,32768,2048,65536]} src1{PERMUTE:cache_k_l17 (view) (permuted) type=f16 ne=[512,256,2,1] nb=[2,2048,1024,67108864]} src2{PERMUTE:cache_v_l17 (view) (permuted) type=f16 ne=[512,256,2,1] nb=[2,2048,1024,67108864]} src3{NONE:SYCL0#attn_inp_kq_mask#0 type=f16 ne=[256,2,1,1] nb=[2,512,1024,1024]}
+1.03.223.257 W sycl node profile:  3 total_ms=4427.646 calls=37 avg_ms=119.666 FLASH_ATTN_EXT:__fattn__-11
+1.03.223.258 W sycl node profile detail:  3 node{FLASH_ATTN_EXT:__fattn__-11 type=f32 ne=[512,16,2,1] nb=[4,2048,32768,65536]} src0{PERMUTE:Qcur_pos-11 (view) (permuted) type=f32 ne=[512,2,16,1] nb=[4,32768,2048,65536]} src1{PERMUTE:cache_k_l11 (view) (permuted) type=f16 ne=[512,256,2,1] nb=[2,2048,1024,67108864]} src2{PERMUTE:cache_v_l11 (view) (permuted) type=f16 ne=[512,256,2,1] nb=[2,2048,1024,67108864]} src3{NONE:SYCL0#attn_inp_kq_mask#0 type=f16 ne=[256,2,1,1] nb=[2,512,1024,1024]}
+1.03.223.258 W sycl node profile:  4 total_ms=4420.917 calls=37 avg_ms=119.484 FLASH_ATTN_EXT:__fattn__-23
+1.03.223.259 W sycl node profile detail:  4 node{FLASH_ATTN_EXT:__fattn__-23 type=f32 ne=[512,16,2,1] nb=[4,2048,32768,65536]} src0{PERMUTE:Qcur_pos-23 (view) (permuted) type=f32 ne=[512,2,16,1] nb=[4,32768,2048,65536]} src1{PERMUTE:cache_k_l23 (view) (permuted) type=f16 ne=[512,256,2,1] nb=[2,2048,1024,67108864]} src2{PERMUTE:cache_v_l23 (view) (permuted) type=f16 ne=[512,256,2,1] nb=[2,2048,1024,67108864]} src3{NONE:SYCL0#attn_inp_kq_mask#0 type=f16 ne=[256,2,1,1] nb=[2,512,1024,1024]}
+1.03.223.259 W sycl node profile:  5 total_ms=4416.112 calls=37 avg_ms=119.354 FLASH_ATTN_EXT:__fattn__-29
+1.03.223.260 W sycl node profile detail:  5 node{FLASH_ATTN_EXT:__fattn__-29 type=f32 ne=[512,16,2,1] nb=[4,2048,32768,65536]} src0{PERMUTE:Qcur_pos-29 (view) (permuted) type=f32 ne=[512,2,16,1] nb=[4,32768,2048,65536]} src1{PERMUTE:cache_k_l29 (view) (permuted) type=f16 ne=[512,256,2,1] nb=[2,2048,1024,67108864]} src2{PERMUTE:cache_v_l29 (view) (permuted) type=f16 ne=[512,256,2,1] nb=[2,2048,1024,67108864]} src3{NONE:SYCL0#attn_inp_kq_mask#0 type=f16 ne=[256,2,1,1] nb=[2,512,1024,1024]}
+1.03.223.260 W sycl node profile:  6 total_ms=337.519 calls=72 avg_ms=4.688 FLASH_ATTN_EXT:__fattn__-0
+1.03.223.261 W sycl node profile detail:  6 node{FLASH_ATTN_EXT:__fattn__-0 type=f32 ne=[256,16,2,1] nb=[4,1024,16384,32768]} src0{PERMUTE:Qcur_pos-0 (view) (permuted) type=f32 ne=[256,2,16,1] nb=[4,16384,1024,32768]} src1{PERMUTE:cache_k_l0 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src2{PERMUTE:cache_v_l0 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src3{NONE:SYCL0#attn_inp_kq_mask#0 type=f16 ne=[256,2,1,1] nb=[2,512,1024,1024]}
+1.03.223.261 W sycl node profile:  7 total_ms=322.890 calls=72 avg_ms=4.485 FLASH_ATTN_EXT:__fattn__-1
+1.03.223.262 W sycl node profile detail:  7 node{FLASH_ATTN_EXT:__fattn__-1 type=f32 ne=[256,16,2,1] nb=[4,1024,16384,32768]} src0{PERMUTE:Qcur_pos-1 (view) (permuted) type=f32 ne=[256,2,16,1] nb=[4,16384,1024,32768]} src1{PERMUTE:cache_k_l1 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src2{PERMUTE:cache_v_l1 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src3{NONE:SYCL0#attn_inp_kq_mask#0 type=f16 ne=[256,2,1,1] nb=[2,512,1024,1024]}
+1.03.223.262 W sycl node profile:  8 total_ms=319.774 calls=37 avg_ms=8.643 FLASH_ATTN_EXT:__fattn__-4
+1.03.223.263 W sycl node profile detail:  8 node{FLASH_ATTN_EXT:__fattn__-4 type=f32 ne=[256,16,2,1] nb=[4,1024,16384,32768]} src0{PERMUTE:Qcur_pos-4 (view) (permuted) type=f32 ne=[256,2,16,1] nb=[4,16384,1024,32768]} src1{PERMUTE:cache_k_l4 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src2{PERMUTE:cache_v_l4 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src3{NONE:SYCL0#attn_inp_kq_mask#0 type=f16 ne=[256,2,1,1] nb=[2,512,1024,1024]}
+1.03.223.264 W sycl node profile:  9 total_ms=318.815 calls=37 avg_ms=8.617 FLASH_ATTN_EXT:__fattn__-20
+1.03.223.264 W sycl node profile detail:  9 node{FLASH_ATTN_EXT:__fattn__-20 type=f32 ne=[256,16,2,1] nb=[4,1024,16384,32768]} src0{PERMUTE:Qcur_pos-20 (view) (permuted) type=f32 ne=[256,2,16,1] nb=[4,16384,1024,32768]} src1{PERMUTE:cache_k_l20 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src2{PERMUTE:cache_v_l20 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src3{NONE:SYCL0#attn_inp_kq_mask#0 type=f16 ne=[256,2,1,1] nb=[2,512,1024,1024]}
+1.03.223.264 W sycl node profile: 10 total_ms=317.944 calls=37 avg_ms=8.593 FLASH_ATTN_EXT:__fattn__-27
+1.03.223.265 W sycl node profile detail: 10 node{FLASH_ATTN_EXT:__fattn__-27 type=f32 ne=[256,16,2,1] nb=[4,1024,16384,32768]} src0{PERMUTE:Qcur_pos-27 (view) (permuted) type=f32 ne=[256,2,16,1] nb=[4,16384,1024,32768]} src1{PERMUTE:cache_k_l27 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src2{PERMUTE:cache_v_l27 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src3{NONE:SYCL0#attn_inp_kq_mask#0 type=f16 ne=[256,2,1,1] nb=[2,512,1024,1024]}
+1.03.223.265 W sycl node profile: 11 total_ms=317.938 calls=37 avg_ms=8.593 FLASH_ATTN_EXT:__fattn__-19
+1.03.223.266 W sycl node profile detail: 11 node{FLASH_ATTN_EXT:__fattn__-19 type=f32 ne=[256,16,2,1] nb=[4,1024,16384,32768]} src0{PERMUTE:Qcur_pos-19 (view) (permuted) type=f32 ne=[256,2,16,1] nb=[4,16384,1024,32768]} src1{PERMUTE:cache_k_l19 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src2{PERMUTE:cache_v_l19 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src3{NONE:SYCL0#attn_inp_kq_mask#0 type=f16 ne=[256,2,1,1] nb=[2,512,1024,1024]}
+1.03.223.266 W sycl node profile: 12 total_ms=317.764 calls=37 avg_ms=8.588 FLASH_ATTN_EXT:__fattn__-15
+1.03.223.267 W sycl node profile detail: 12 node{FLASH_ATTN_EXT:__fattn__-15 type=f32 ne=[256,16,2,1] nb=[4,1024,16384,32768]} src0{PERMUTE:Qcur_pos-15 (view) (permuted) type=f32 ne=[256,2,16,1] nb=[4,16384,1024,32768]} src1{PERMUTE:cache_k_l15 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src2{PERMUTE:cache_v_l15 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src3{NONE:SYCL0#attn_inp_kq_mask#0 type=f16 ne=[256,2,1,1] nb=[2,512,1024,1024]}
+1.03.223.267 W sycl node profile: 13 total_ms=317.725 calls=37 avg_ms=8.587 FLASH_ATTN_EXT:__fattn__-12
+1.03.223.268 W sycl node profile detail: 13 node{FLASH_ATTN_EXT:__fattn__-12 type=f32 ne=[256,16,2,1] nb=[4,1024,16384,32768]} src0{PERMUTE:Qcur_pos-12 (view) (permuted) type=f32 ne=[256,2,16,1] nb=[4,16384,1024,32768]} src1{PERMUTE:cache_k_l12 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src2{PERMUTE:cache_v_l12 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src3{NONE:SYCL0#attn_inp_kq_mask#0 type=f16 ne=[256,2,1,1] nb=[2,512,1024,1024]}
+1.03.223.268 W sycl node profile: 14 total_ms=317.467 calls=37 avg_ms=8.580 FLASH_ATTN_EXT:__fattn__-13
+1.03.223.268 W sycl node profile detail: 14 node{FLASH_ATTN_EXT:__fattn__-13 type=f32 ne=[256,16,2,1] nb=[4,1024,16384,32768]} src0{PERMUTE:Qcur_pos-13 (view) (permuted) type=f32 ne=[256,2,16,1] nb=[4,16384,1024,32768]} src1{PERMUTE:cache_k_l13 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src2{PERMUTE:cache_v_l13 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src3{NONE:SYCL0#attn_inp_kq_mask#0 type=f16 ne=[256,2,1,1] nb=[2,512,1024,1024]}
+1.03.223.269 W sycl node profile: 15 total_ms=317.327 calls=72 avg_ms=4.407 FLASH_ATTN_EXT:__fattn__-3
+1.03.223.269 W sycl node profile detail: 15 node{FLASH_ATTN_EXT:__fattn__-3 type=f32 ne=[256,16,2,1] nb=[4,1024,16384,32768]} src0{PERMUTE:Qcur_pos-3 (view) (permuted) type=f32 ne=[256,2,16,1] nb=[4,16384,1024,32768]} src1{PERMUTE:cache_k_l3 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src2{PERMUTE:cache_v_l3 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src3{NONE:SYCL0#attn_inp_kq_mask#0 type=f16 ne=[256,2,1,1] nb=[2,512,1024,1024]}
+1.03.223.270 W sycl node profile: 16 total_ms=317.017 calls=37 avg_ms=8.568 FLASH_ATTN_EXT:__fattn__-14
+1.03.223.270 W sycl node profile detail: 16 node{FLASH_ATTN_EXT:__fattn__-14 type=f32 ne=[256,16,2,1] nb=[4,1024,16384,32768]} src0{PERMUTE:Qcur_pos-14 (view) (permuted) type=f32 ne=[256,2,16,1] nb=[4,16384,1024,32768]} src1{PERMUTE:cache_k_l14 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src2{PERMUTE:cache_v_l14 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src3{NONE:SYCL0#attn_inp_kq_mask#0 type=f16 ne=[256,2,1,1] nb=[2,512,1024,1024]}
+1.03.223.271 W sycl node profile: 17 total_ms=316.903 calls=37 avg_ms=8.565 FLASH_ATTN_EXT:__fattn__-7
+1.03.223.271 W sycl node profile detail: 17 node{FLASH_ATTN_EXT:__fattn__-7 type=f32 ne=[256,16,2,1] nb=[4,1024,16384,32768]} src0{PERMUTE:Qcur_pos-7 (view) (permuted) type=f32 ne=[256,2,16,1] nb=[4,16384,1024,32768]} src1{PERMUTE:cache_k_l7 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src2{PERMUTE:cache_v_l7 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src3{NONE:SYCL0#attn_inp_kq_mask#0 type=f16 ne=[256,2,1,1] nb=[2,512,1024,1024]}
+1.03.223.271 W sycl node profile: 18 total_ms=316.817 calls=72 avg_ms=4.400 FLASH_ATTN_EXT:__fattn__-2
+1.03.223.272 W sycl node profile detail: 18 node{FLASH_ATTN_EXT:__fattn__-2 type=f32 ne=[256,16,2,1] nb=[4,1024,16384,32768]} src0{PERMUTE:Qcur_pos-2 (view) (permuted) type=f32 ne=[256,2,16,1] nb=[4,16384,1024,32768]} src1{PERMUTE:cache_k_l2 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src2{PERMUTE:cache_v_l2 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src3{NONE:SYCL0#attn_inp_kq_mask#0 type=f16 ne=[256,2,1,1] nb=[2,512,1024,1024]}
+1.03.223.272 W sycl node profile: 19 total_ms=316.750 calls=37 avg_ms=8.561 FLASH_ATTN_EXT:__fattn__-8
+1.03.223.273 W sycl node profile detail: 19 node{FLASH_ATTN_EXT:__fattn__-8 type=f32 ne=[256,16,2,1] nb=[4,1024,16384,32768]} src0{PERMUTE:Qcur_pos-8 (view) (permuted) type=f32 ne=[256,2,16,1] nb=[4,16384,1024,32768]} src1{PERMUTE:cache_k_l8 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src2{PERMUTE:cache_v_l8 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src3{NONE:SYCL0#attn_inp_kq_mask#0 type=f16 ne=[256,2,1,1] nb=[2,512,1024,1024]}
+1.03.223.273 W sycl node profile: 20 total_ms=316.359 calls=37 avg_ms=8.550 FLASH_ATTN_EXT:__fattn__-25
+1.03.223.274 W sycl node profile detail: 20 node{FLASH_ATTN_EXT:__fattn__-25 type=f32 ne=[256,16,2,1] nb=[4,1024,16384,32768]} src0{PERMUTE:Qcur_pos-25 (view) (permuted) type=f32 ne=[256,2,16,1] nb=[4,16384,1024,32768]} src1{PERMUTE:cache_k_l25 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src2{PERMUTE:cache_v_l25 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src3{NONE:SYCL0#attn_inp_kq_mask#0 type=f16 ne=[256,2,1,1] nb=[2,512,1024,1024]}
+1.03.223.274 W sycl node profile: 21 total_ms=315.821 calls=37 avg_ms=8.536 FLASH_ATTN_EXT:__fattn__-24
+1.03.223.274 W sycl node profile detail: 21 node{FLASH_ATTN_EXT:__fattn__-24 type=f32 ne=[256,16,2,1] nb=[4,1024,16384,32768]} src0{PERMUTE:Qcur_pos-24 (view) (permuted) type=f32 ne=[256,2,16,1] nb=[4,16384,1024,32768]} src1{PERMUTE:cache_k_l24 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src2{PERMUTE:cache_v_l24 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src3{NONE:SYCL0#attn_inp_kq_mask#0 type=f16 ne=[256,2,1,1] nb=[2,512,1024,1024]}
+1.03.223.275 W sycl node profile: 22 total_ms=315.730 calls=37 avg_ms=8.533 FLASH_ATTN_EXT:__fattn__-28
+1.03.223.275 W sycl node profile detail: 22 node{FLASH_ATTN_EXT:__fattn__-28 type=f32 ne=[256,16,2,1] nb=[4,1024,16384,32768]} src0{PERMUTE:Qcur_pos-28 (view) (permuted) type=f32 ne=[256,2,16,1] nb=[4,16384,1024,32768]} src1{PERMUTE:cache_k_l28 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src2{PERMUTE:cache_v_l28 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src3{NONE:SYCL0#attn_inp_kq_mask#0 type=f16 ne=[256,2,1,1] nb=[2,512,1024,1024]}
+1.03.223.276 W sycl node profile: 23 total_ms=315.071 calls=37 avg_ms=8.515 FLASH_ATTN_EXT:__fattn__-26
+1.03.223.276 W sycl node profile detail: 23 node{FLASH_ATTN_EXT:__fattn__-26 type=f32 ne=[256,16,2,1] nb=[4,1024,16384,32768]} src0{PERMUTE:Qcur_pos-26 (view) (permuted) type=f32 ne=[256,2,16,1] nb=[4,16384,1024,32768]} src1{PERMUTE:cache_k_l26 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src2{PERMUTE:cache_v_l26 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src3{NONE:SYCL0#attn_inp_kq_mask#0 type=f16 ne=[256,2,1,1] nb=[2,512,1024,1024]}
+1.03.223.276 W sycl node profile: 24 total_ms=314.911 calls=37 avg_ms=8.511 FLASH_ATTN_EXT:__fattn__-6
+1.03.223.277 W sycl node profile detail: 24 node{FLASH_ATTN_EXT:__fattn__-6 type=f32 ne=[256,16,2,1] nb=[4,1024,16384,32768]} src0{PERMUTE:Qcur_pos-6 (view) (permuted) type=f32 ne=[256,2,16,1] nb=[4,16384,1024,32768]} src1{PERMUTE:cache_k_l6 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src2{PERMUTE:cache_v_l6 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src3{NONE:SYCL0#attn_inp_kq_mask#0 type=f16 ne=[256,2,1,1] nb=[2,512,1024,1024]}
+1.03.223.277 W sycl node profile: 25 total_ms=314.840 calls=37 avg_ms=8.509 FLASH_ATTN_EXT:__fattn__-18
+1.03.223.278 W sycl node profile detail: 25 node{FLASH_ATTN_EXT:__fattn__-18 type=f32 ne=[256,16,2,1] nb=[4,1024,16384,32768]} src0{PERMUTE:Qcur_pos-18 (view) (permuted) type=f32 ne=[256,2,16,1] nb=[4,16384,1024,32768]} src1{PERMUTE:cache_k_l18 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src2{PERMUTE:cache_v_l18 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src3{NONE:SYCL0#attn_inp_kq_mask#0 type=f16 ne=[256,2,1,1] nb=[2,512,1024,1024]}
+1.03.223.278 W sycl node profile: 26 total_ms=314.704 calls=37 avg_ms=8.506 FLASH_ATTN_EXT:__fattn__-9
+1.03.223.278 W sycl node profile detail: 26 node{FLASH_ATTN_EXT:__fattn__-9 type=f32 ne=[256,16,2,1] nb=[4,1024,16384,32768]} src0{PERMUTE:Qcur_pos-9 (view) (permuted) type=f32 ne=[256,2,16,1] nb=[4,16384,1024,32768]} src1{PERMUTE:cache_k_l9 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src2{PERMUTE:cache_v_l9 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src3{NONE:SYCL0#attn_inp_kq_mask#0 type=f16 ne=[256,2,1,1] nb=[2,512,1024,1024]}
+1.03.223.279 W sycl node profile: 27 total_ms=314.385 calls=37 avg_ms=8.497 FLASH_ATTN_EXT:__fattn__-10
+1.03.223.279 W sycl node profile detail: 27 node{FLASH_ATTN_EXT:__fattn__-10 type=f32 ne=[256,16,2,1] nb=[4,1024,16384,32768]} src0{PERMUTE:Qcur_pos-10 (view) (permuted) type=f32 ne=[256,2,16,1] nb=[4,16384,1024,32768]} src1{PERMUTE:cache_k_l10 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src2{PERMUTE:cache_v_l10 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src3{NONE:SYCL0#attn_inp_kq_mask#0 type=f16 ne=[256,2,1,1] nb=[2,512,1024,1024]}
+1.03.223.279 W sycl node profile: 28 total_ms=314.330 calls=37 avg_ms=8.495 FLASH_ATTN_EXT:__fattn__-16
+1.03.223.280 W sycl node profile detail: 28 node{FLASH_ATTN_EXT:__fattn__-16 type=f32 ne=[256,16,2,1] nb=[4,1024,16384,32768]} src0{PERMUTE:Qcur_pos-16 (view) (permuted) type=f32 ne=[256,2,16,1] nb=[4,16384,1024,32768]} src1{PERMUTE:cache_k_l16 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src2{PERMUTE:cache_v_l16 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src3{NONE:SYCL0#attn_inp_kq_mask#0 type=f16 ne=[256,2,1,1] nb=[2,512,1024,1024]}
+1.03.223.280 W sycl node profile: 29 total_ms=313.772 calls=37 avg_ms=8.480 FLASH_ATTN_EXT:__fattn__-22
+1.03.223.281 W sycl node profile detail: 29 node{FLASH_ATTN_EXT:__fattn__-22 type=f32 ne=[256,16,2,1] nb=[4,1024,16384,32768]} src0{PERMUTE:Qcur_pos-22 (view) (permuted) type=f32 ne=[256,2,16,1] nb=[4,16384,1024,32768]} src1{PERMUTE:cache_k_l22 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src2{PERMUTE:cache_v_l22 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src3{NONE:SYCL0#attn_inp_kq_mask#0 type=f16 ne=[256,2,1,1] nb=[2,512,1024,1024]}
+1.03.223.281 W sycl node profile: 30 total_ms=313.435 calls=37 avg_ms=8.471 FLASH_ATTN_EXT:__fattn__-21
+1.03.223.281 W sycl node profile detail: 30 node{FLASH_ATTN_EXT:__fattn__-21 type=f32 ne=[256,16,2,1] nb=[4,1024,16384,32768]} src0{PERMUTE:Qcur_pos-21 (view) (permuted) type=f32 ne=[256,2,16,1] nb=[4,16384,1024,32768]} src1{PERMUTE:cache_k_l21 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src2{PERMUTE:cache_v_l21 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src3{NONE:SYCL0#attn_inp_kq_mask#0 type=f16 ne=[256,2,1,1] nb=[2,512,1024,1024]}
+1.03.637.573 W sycl node profile: graphs=96, unique_nodes=1423, top=30
+1.03.637.578 W sycl node profile:  1 total_ms=4464.896 calls=43 avg_ms=103.835 FLASH_ATTN_EXT:__fattn__-5
+1.03.637.579 W sycl node profile detail:  1 node{FLASH_ATTN_EXT:__fattn__-5 type=f32 ne=[512,16,2,1] nb=[4,2048,32768,65536]} src0{PERMUTE:Qcur_pos-5 (view) (permuted) type=f32 ne=[512,2,16,1] nb=[4,32768,2048,65536]} src1{PERMUTE:cache_k_l5 (view) (permuted) type=f16 ne=[512,256,2,1] nb=[2,2048,1024,67108864]} src2{PERMUTE:cache_v_l5 (view) (permuted) type=f16 ne=[512,256,2,1] nb=[2,2048,1024,67108864]} src3{NONE:SYCL0#attn_inp_kq_mask#0 type=f16 ne=[256,2,1,1] nb=[2,512,1024,1024]}
+1.03.637.580 W sycl node profile:  2 total_ms=4460.041 calls=43 avg_ms=103.722 FLASH_ATTN_EXT:__fattn__-17
+1.03.637.581 W sycl node profile detail:  2 node{FLASH_ATTN_EXT:__fattn__-17 type=f32 ne=[512,16,2,1] nb=[4,2048,32768,65536]} src0{PERMUTE:Qcur_pos-17 (view) (permuted) type=f32 ne=[512,2,16,1] nb=[4,32768,2048,65536]} src1{PERMUTE:cache_k_l17 (view) (permuted) type=f16 ne=[512,256,2,1] nb=[2,2048,1024,67108864]} src2{PERMUTE:cache_v_l17 (view) (permuted) type=f16 ne=[512,256,2,1] nb=[2,2048,1024,67108864]} src3{NONE:SYCL0#attn_inp_kq_mask#0 type=f16 ne=[256,2,1,1] nb=[2,512,1024,1024]}
+1.03.637.581 W sycl node profile:  3 total_ms=4459.333 calls=43 avg_ms=103.705 FLASH_ATTN_EXT:__fattn__-11
+1.03.637.582 W sycl node profile detail:  3 node{FLASH_ATTN_EXT:__fattn__-11 type=f32 ne=[512,16,2,1] nb=[4,2048,32768,65536]} src0{PERMUTE:Qcur_pos-11 (view) (permuted) type=f32 ne=[512,2,16,1] nb=[4,32768,2048,65536]} src1{PERMUTE:cache_k_l11 (view) (permuted) type=f16 ne=[512,256,2,1] nb=[2,2048,1024,67108864]} src2{PERMUTE:cache_v_l11 (view) (permuted) type=f16 ne=[512,256,2,1] nb=[2,2048,1024,67108864]} src3{NONE:SYCL0#attn_inp_kq_mask#0 type=f16 ne=[256,2,1,1] nb=[2,512,1024,1024]}
+1.03.637.582 W sycl node profile:  4 total_ms=4452.609 calls=43 avg_ms=103.549 FLASH_ATTN_EXT:__fattn__-23
+1.03.637.583 W sycl node profile detail:  4 node{FLASH_ATTN_EXT:__fattn__-23 type=f32 ne=[512,16,2,1] nb=[4,2048,32768,65536]} src0{PERMUTE:Qcur_pos-23 (view) (permuted) type=f32 ne=[512,2,16,1] nb=[4,32768,2048,65536]} src1{PERMUTE:cache_k_l23 (view) (permuted) type=f16 ne=[512,256,2,1] nb=[2,2048,1024,67108864]} src2{PERMUTE:cache_v_l23 (view) (permuted) type=f16 ne=[512,256,2,1] nb=[2,2048,1024,67108864]} src3{NONE:SYCL0#attn_inp_kq_mask#0 type=f16 ne=[256,2,1,1] nb=[2,512,1024,1024]}
+1.03.637.583 W sycl node profile:  5 total_ms=4447.765 calls=43 avg_ms=103.436 FLASH_ATTN_EXT:__fattn__-29
+1.03.637.584 W sycl node profile detail:  5 node{FLASH_ATTN_EXT:__fattn__-29 type=f32 ne=[512,16,2,1] nb=[4,2048,32768,65536]} src0{PERMUTE:Qcur_pos-29 (view) (permuted) type=f32 ne=[512,2,16,1] nb=[4,32768,2048,65536]} src1{PERMUTE:cache_k_l29 (view) (permuted) type=f16 ne=[512,256,2,1] nb=[2,2048,1024,67108864]} src2{PERMUTE:cache_v_l29 (view) (permuted) type=f16 ne=[512,256,2,1] nb=[2,2048,1024,67108864]} src3{NONE:SYCL0#attn_inp_kq_mask#0 type=f16 ne=[256,2,1,1] nb=[2,512,1024,1024]}
+1.03.637.584 W sycl node profile:  6 total_ms=341.848 calls=96 avg_ms=3.561 FLASH_ATTN_EXT:__fattn__-3
+1.03.637.585 W sycl node profile detail:  6 node{FLASH_ATTN_EXT:__fattn__-3 type=f32 ne=[256,16,2,1] nb=[4,1024,16384,32768]} src0{PERMUTE:Qcur_pos-3 (view) (permuted) type=f32 ne=[256,2,16,1] nb=[4,16384,1024,32768]} src1{PERMUTE:cache_k_l3 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src2{PERMUTE:cache_v_l3 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src3{NONE:SYCL0#attn_inp_kq_mask#0 type=f16 ne=[256,2,1,1] nb=[2,512,1024,1024]}
+1.03.637.585 W sycl node profile:  7 total_ms=341.684 calls=96 avg_ms=3.559 FLASH_ATTN_EXT:__fattn__-0
+1.03.637.586 W sycl node profile detail:  7 node{FLASH_ATTN_EXT:__fattn__-0 type=f32 ne=[256,16,2,1] nb=[4,1024,16384,32768]} src0{PERMUTE:Qcur_pos-0 (view) (permuted) type=f32 ne=[256,2,16,1] nb=[4,16384,1024,32768]} src1{PERMUTE:cache_k_l0 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src2{PERMUTE:cache_v_l0 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src3{NONE:SYCL0#attn_inp_kq_mask#0 type=f16 ne=[256,2,1,1] nb=[2,512,1024,1024]}
+1.03.637.586 W sycl node profile:  8 total_ms=326.995 calls=96 avg_ms=3.406 FLASH_ATTN_EXT:__fattn__-1
+1.03.637.587 W sycl node profile detail:  8 node{FLASH_ATTN_EXT:__fattn__-1 type=f32 ne=[256,16,2,1] nb=[4,1024,16384,32768]} src0{PERMUTE:Qcur_pos-1 (view) (permuted) type=f32 ne=[256,2,16,1] nb=[4,16384,1024,32768]} src1{PERMUTE:cache_k_l1 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src2{PERMUTE:cache_v_l1 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src3{NONE:SYCL0#attn_inp_kq_mask#0 type=f16 ne=[256,2,1,1] nb=[2,512,1024,1024]}
+1.03.637.587 W sycl node profile:  9 total_ms=320.902 calls=96 avg_ms=3.343 FLASH_ATTN_EXT:__fattn__-2
+1.03.637.588 W sycl node profile detail:  9 node{FLASH_ATTN_EXT:__fattn__-2 type=f32 ne=[256,16,2,1] nb=[4,1024,16384,32768]} src0{PERMUTE:Qcur_pos-2 (view) (permuted) type=f32 ne=[256,2,16,1] nb=[4,16384,1024,32768]} src1{PERMUTE:cache_k_l2 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src2{PERMUTE:cache_v_l2 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src3{NONE:SYCL0#attn_inp_kq_mask#0 type=f16 ne=[256,2,1,1] nb=[2,512,1024,1024]}
+1.03.637.588 W sycl node profile: 10 total_ms=320.516 calls=43 avg_ms=7.454 FLASH_ATTN_EXT:__fattn__-4
+1.03.637.589 W sycl node profile detail: 10 node{FLASH_ATTN_EXT:__fattn__-4 type=f32 ne=[256,16,2,1] nb=[4,1024,16384,32768]} src0{PERMUTE:Qcur_pos-4 (view) (permuted) type=f32 ne=[256,2,16,1] nb=[4,16384,1024,32768]} src1{PERMUTE:cache_k_l4 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src2{PERMUTE:cache_v_l4 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src3{NONE:SYCL0#attn_inp_kq_mask#0 type=f16 ne=[256,2,1,1] nb=[2,512,1024,1024]}
+1.03.637.589 W sycl node profile: 11 total_ms=319.555 calls=43 avg_ms=7.432 FLASH_ATTN_EXT:__fattn__-20
+1.03.637.590 W sycl node profile detail: 11 node{FLASH_ATTN_EXT:__fattn__-20 type=f32 ne=[256,16,2,1] nb=[4,1024,16384,32768]} src0{PERMUTE:Qcur_pos-20 (view) (permuted) type=f32 ne=[256,2,16,1] nb=[4,16384,1024,32768]} src1{PERMUTE:cache_k_l20 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src2{PERMUTE:cache_v_l20 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src3{NONE:SYCL0#attn_inp_kq_mask#0 type=f16 ne=[256,2,1,1] nb=[2,512,1024,1024]}
+1.03.637.590 W sycl node profile: 12 total_ms=318.685 calls=43 avg_ms=7.411 FLASH_ATTN_EXT:__fattn__-27
+1.03.637.591 W sycl node profile detail: 12 node{FLASH_ATTN_EXT:__fattn__-27 type=f32 ne=[256,16,2,1] nb=[4,1024,16384,32768]} src0{PERMUTE:Qcur_pos-27 (view) (permuted) type=f32 ne=[256,2,16,1] nb=[4,16384,1024,32768]} src1{PERMUTE:cache_k_l27 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src2{PERMUTE:cache_v_l27 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src3{NONE:SYCL0#attn_inp_kq_mask#0 type=f16 ne=[256,2,1,1] nb=[2,512,1024,1024]}
+1.03.637.591 W sycl node profile: 13 total_ms=318.680 calls=43 avg_ms=7.411 FLASH_ATTN_EXT:__fattn__-19
+1.03.637.592 W sycl node profile detail: 13 node{FLASH_ATTN_EXT:__fattn__-19 type=f32 ne=[256,16,2,1] nb=[4,1024,16384,32768]} src0{PERMUTE:Qcur_pos-19 (view) (permuted) type=f32 ne=[256,2,16,1] nb=[4,16384,1024,32768]} src1{PERMUTE:cache_k_l19 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src2{PERMUTE:cache_v_l19 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src3{NONE:SYCL0#attn_inp_kq_mask#0 type=f16 ne=[256,2,1,1] nb=[2,512,1024,1024]}
+1.03.637.592 W sycl node profile: 14 total_ms=318.511 calls=43 avg_ms=7.407 FLASH_ATTN_EXT:__fattn__-15
+1.03.637.592 W sycl node profile detail: 14 node{FLASH_ATTN_EXT:__fattn__-15 type=f32 ne=[256,16,2,1] nb=[4,1024,16384,32768]} src0{PERMUTE:Qcur_pos-15 (view) (permuted) type=f32 ne=[256,2,16,1] nb=[4,16384,1024,32768]} src1{PERMUTE:cache_k_l15 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src2{PERMUTE:cache_v_l15 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src3{NONE:SYCL0#attn_inp_kq_mask#0 type=f16 ne=[256,2,1,1] nb=[2,512,1024,1024]}
+1.03.637.593 W sycl node profile: 15 total_ms=318.472 calls=43 avg_ms=7.406 FLASH_ATTN_EXT:__fattn__-12
+1.03.637.593 W sycl node profile detail: 15 node{FLASH_ATTN_EXT:__fattn__-12 type=f32 ne=[256,16,2,1] nb=[4,1024,16384,32768]} src0{PERMUTE:Qcur_pos-12 (view) (permuted) type=f32 ne=[256,2,16,1] nb=[4,16384,1024,32768]} src1{PERMUTE:cache_k_l12 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src2{PERMUTE:cache_v_l12 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src3{NONE:SYCL0#attn_inp_kq_mask#0 type=f16 ne=[256,2,1,1] nb=[2,512,1024,1024]}
+1.03.637.594 W sycl node profile: 16 total_ms=318.208 calls=43 avg_ms=7.400 FLASH_ATTN_EXT:__fattn__-13
+1.03.637.594 W sycl node profile detail: 16 node{FLASH_ATTN_EXT:__fattn__-13 type=f32 ne=[256,16,2,1] nb=[4,1024,16384,32768]} src0{PERMUTE:Qcur_pos-13 (view) (permuted) type=f32 ne=[256,2,16,1] nb=[4,16384,1024,32768]} src1{PERMUTE:cache_k_l13 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src2{PERMUTE:cache_v_l13 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src3{NONE:SYCL0#attn_inp_kq_mask#0 type=f16 ne=[256,2,1,1] nb=[2,512,1024,1024]}
+1.03.637.594 W sycl node profile: 17 total_ms=317.759 calls=43 avg_ms=7.390 FLASH_ATTN_EXT:__fattn__-14
+1.03.637.595 W sycl node profile detail: 17 node{FLASH_ATTN_EXT:__fattn__-14 type=f32 ne=[256,16,2,1] nb=[4,1024,16384,32768]} src0{PERMUTE:Qcur_pos-14 (view) (permuted) type=f32 ne=[256,2,16,1] nb=[4,16384,1024,32768]} src1{PERMUTE:cache_k_l14 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src2{PERMUTE:cache_v_l14 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src3{NONE:SYCL0#attn_inp_kq_mask#0 type=f16 ne=[256,2,1,1] nb=[2,512,1024,1024]}
+1.03.637.595 W sycl node profile: 18 total_ms=317.649 calls=43 avg_ms=7.387 FLASH_ATTN_EXT:__fattn__-7
+1.03.637.596 W sycl node profile detail: 18 node{FLASH_ATTN_EXT:__fattn__-7 type=f32 ne=[256,16,2,1] nb=[4,1024,16384,32768]} src0{PERMUTE:Qcur_pos-7 (view) (permuted) type=f32 ne=[256,2,16,1] nb=[4,16384,1024,32768]} src1{PERMUTE:cache_k_l7 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src2{PERMUTE:cache_v_l7 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src3{NONE:SYCL0#attn_inp_kq_mask#0 type=f16 ne=[256,2,1,1] nb=[2,512,1024,1024]}
+1.03.637.596 W sycl node profile: 19 total_ms=317.494 calls=43 avg_ms=7.384 FLASH_ATTN_EXT:__fattn__-8
+1.03.637.596 W sycl node profile detail: 19 node{FLASH_ATTN_EXT:__fattn__-8 type=f32 ne=[256,16,2,1] nb=[4,1024,16384,32768]} src0{PERMUTE:Qcur_pos-8 (view) (permuted) type=f32 ne=[256,2,16,1] nb=[4,16384,1024,32768]} src1{PERMUTE:cache_k_l8 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src2{PERMUTE:cache_v_l8 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src3{NONE:SYCL0#attn_inp_kq_mask#0 type=f16 ne=[256,2,1,1] nb=[2,512,1024,1024]}
+1.03.637.597 W sycl node profile: 20 total_ms=317.104 calls=43 avg_ms=7.375 FLASH_ATTN_EXT:__fattn__-25
+1.03.637.597 W sycl node profile detail: 20 node{FLASH_ATTN_EXT:__fattn__-25 type=f32 ne=[256,16,2,1] nb=[4,1024,16384,32768]} src0{PERMUTE:Qcur_pos-25 (view) (permuted) type=f32 ne=[256,2,16,1] nb=[4,16384,1024,32768]} src1{PERMUTE:cache_k_l25 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src2{PERMUTE:cache_v_l25 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src3{NONE:SYCL0#attn_inp_kq_mask#0 type=f16 ne=[256,2,1,1] nb=[2,512,1024,1024]}
+1.03.637.597 W sycl node profile: 21 total_ms=316.561 calls=43 avg_ms=7.362 FLASH_ATTN_EXT:__fattn__-24
+1.03.637.598 W sycl node profile detail: 21 node{FLASH_ATTN_EXT:__fattn__-24 type=f32 ne=[256,16,2,1] nb=[4,1024,16384,32768]} src0{PERMUTE:Qcur_pos-24 (view) (permuted) type=f32 ne=[256,2,16,1] nb=[4,16384,1024,32768]} src1{PERMUTE:cache_k_l24 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src2{PERMUTE:cache_v_l24 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src3{NONE:SYCL0#attn_inp_kq_mask#0 type=f16 ne=[256,2,1,1] nb=[2,512,1024,1024]}
+1.03.637.598 W sycl node profile: 22 total_ms=316.470 calls=43 avg_ms=7.360 FLASH_ATTN_EXT:__fattn__-28
+1.03.637.598 W sycl node profile detail: 22 node{FLASH_ATTN_EXT:__fattn__-28 type=f32 ne=[256,16,2,1] nb=[4,1024,16384,32768]} src0{PERMUTE:Qcur_pos-28 (view) (permuted) type=f32 ne=[256,2,16,1] nb=[4,16384,1024,32768]} src1{PERMUTE:cache_k_l28 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src2{PERMUTE:cache_v_l28 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src3{NONE:SYCL0#attn_inp_kq_mask#0 type=f16 ne=[256,2,1,1] nb=[2,512,1024,1024]}
+1.03.637.599 W sycl node profile: 23 total_ms=315.812 calls=43 avg_ms=7.344 FLASH_ATTN_EXT:__fattn__-26
+1.03.637.599 W sycl node profile detail: 23 node{FLASH_ATTN_EXT:__fattn__-26 type=f32 ne=[256,16,2,1] nb=[4,1024,16384,32768]} src0{PERMUTE:Qcur_pos-26 (view) (permuted) type=f32 ne=[256,2,16,1] nb=[4,16384,1024,32768]} src1{PERMUTE:cache_k_l26 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src2{PERMUTE:cache_v_l26 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src3{NONE:SYCL0#attn_inp_kq_mask#0 type=f16 ne=[256,2,1,1] nb=[2,512,1024,1024]}
+1.03.637.600 W sycl node profile: 24 total_ms=315.661 calls=43 avg_ms=7.341 FLASH_ATTN_EXT:__fattn__-6
+1.03.637.600 W sycl node profile detail: 24 node{FLASH_ATTN_EXT:__fattn__-6 type=f32 ne=[256,16,2,1] nb=[4,1024,16384,32768]} src0{PERMUTE:Qcur_pos-6 (view) (permuted) type=f32 ne=[256,2,16,1] nb=[4,16384,1024,32768]} src1{PERMUTE:cache_k_l6 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src2{PERMUTE:cache_v_l6 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src3{NONE:SYCL0#attn_inp_kq_mask#0 type=f16 ne=[256,2,1,1] nb=[2,512,1024,1024]}
+1.03.637.600 W sycl node profile: 25 total_ms=315.582 calls=43 avg_ms=7.339 FLASH_ATTN_EXT:__fattn__-18
+1.03.637.601 W sycl node profile detail: 25 node{FLASH_ATTN_EXT:__fattn__-18 type=f32 ne=[256,16,2,1] nb=[4,1024,16384,32768]} src0{PERMUTE:Qcur_pos-18 (view) (permuted) type=f32 ne=[256,2,16,1] nb=[4,16384,1024,32768]} src1{PERMUTE:cache_k_l18 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src2{PERMUTE:cache_v_l18 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src3{NONE:SYCL0#attn_inp_kq_mask#0 type=f16 ne=[256,2,1,1] nb=[2,512,1024,1024]}
+1.03.637.601 W sycl node profile: 26 total_ms=315.443 calls=43 avg_ms=7.336 FLASH_ATTN_EXT:__fattn__-9
+1.03.637.601 W sycl node profile detail: 26 node{FLASH_ATTN_EXT:__fattn__-9 type=f32 ne=[256,16,2,1] nb=[4,1024,16384,32768]} src0{PERMUTE:Qcur_pos-9 (view) (permuted) type=f32 ne=[256,2,16,1] nb=[4,16384,1024,32768]} src1{PERMUTE:cache_k_l9 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src2{PERMUTE:cache_v_l9 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src3{NONE:SYCL0#attn_inp_kq_mask#0 type=f16 ne=[256,2,1,1] nb=[2,512,1024,1024]}
+1.03.637.602 W sycl node profile: 27 total_ms=315.124 calls=43 avg_ms=7.328 FLASH_ATTN_EXT:__fattn__-10
+1.03.637.602 W sycl node profile detail: 27 node{FLASH_ATTN_EXT:__fattn__-10 type=f32 ne=[256,16,2,1] nb=[4,1024,16384,32768]} src0{PERMUTE:Qcur_pos-10 (view) (permuted) type=f32 ne=[256,2,16,1] nb=[4,16384,1024,32768]} src1{PERMUTE:cache_k_l10 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src2{PERMUTE:cache_v_l10 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src3{NONE:SYCL0#attn_inp_kq_mask#0 type=f16 ne=[256,2,1,1] nb=[2,512,1024,1024]}
+1.03.637.602 W sycl node profile: 28 total_ms=315.071 calls=43 avg_ms=7.327 FLASH_ATTN_EXT:__fattn__-16
+1.03.637.603 W sycl node profile detail: 28 node{FLASH_ATTN_EXT:__fattn__-16 type=f32 ne=[256,16,2,1] nb=[4,1024,16384,32768]} src0{PERMUTE:Qcur_pos-16 (view) (permuted) type=f32 ne=[256,2,16,1] nb=[4,16384,1024,32768]} src1{PERMUTE:cache_k_l16 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src2{PERMUTE:cache_v_l16 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src3{NONE:SYCL0#attn_inp_kq_mask#0 type=f16 ne=[256,2,1,1] nb=[2,512,1024,1024]}
+1.03.637.603 W sycl node profile: 29 total_ms=314.514 calls=43 avg_ms=7.314 FLASH_ATTN_EXT:__fattn__-22
+1.03.637.604 W sycl node profile detail: 29 node{FLASH_ATTN_EXT:__fattn__-22 type=f32 ne=[256,16,2,1] nb=[4,1024,16384,32768]} src0{PERMUTE:Qcur_pos-22 (view) (permuted) type=f32 ne=[256,2,16,1] nb=[4,16384,1024,32768]} src1{PERMUTE:cache_k_l22 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src2{PERMUTE:cache_v_l22 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src3{NONE:SYCL0#attn_inp_kq_mask#0 type=f16 ne=[256,2,1,1] nb=[2,512,1024,1024]}
+1.03.637.604 W sycl node profile: 30 total_ms=314.174 calls=43 avg_ms=7.306 FLASH_ATTN_EXT:__fattn__-21
+1.03.637.604 W sycl node profile detail: 30 node{FLASH_ATTN_EXT:__fattn__-21 type=f32 ne=[256,16,2,1] nb=[4,1024,16384,32768]} src0{PERMUTE:Qcur_pos-21 (view) (permuted) type=f32 ne=[256,2,16,1] nb=[4,16384,1024,32768]} src1{PERMUTE:cache_k_l21 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src2{PERMUTE:cache_v_l21 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src3{NONE:SYCL0#attn_inp_kq_mask#0 type=f16 ne=[256,2,1,1] nb=[2,512,1024,1024]}
+1.04.049.068 W sycl node profile: graphs=120, unique_nodes=1423, top=30
+1.04.049.073 W sycl node profile:  1 total_ms=4496.572 calls=49 avg_ms=91.767 FLASH_ATTN_EXT:__fattn__-5
+1.04.049.074 W sycl node profile detail:  1 node{FLASH_ATTN_EXT:__fattn__-5 type=f32 ne=[512,16,2,1] nb=[4,2048,32768,65536]} src0{PERMUTE:Qcur_pos-5 (view) (permuted) type=f32 ne=[512,2,16,1] nb=[4,32768,2048,65536]} src1{PERMUTE:cache_k_l5 (view) (permuted) type=f16 ne=[512,256,2,1] nb=[2,2048,1024,67108864]} src2{PERMUTE:cache_v_l5 (view) (permuted) type=f16 ne=[512,256,2,1] nb=[2,2048,1024,67108864]} src3{NONE:SYCL0#attn_inp_kq_mask#0 type=f16 ne=[256,2,1,1] nb=[2,512,1024,1024]}
+1.04.049.075 W sycl node profile:  2 total_ms=4491.733 calls=49 avg_ms=91.668 FLASH_ATTN_EXT:__fattn__-17
+1.04.049.076 W sycl node profile detail:  2 node{FLASH_ATTN_EXT:__fattn__-17 type=f32 ne=[512,16,2,1] nb=[4,2048,32768,65536]} src0{PERMUTE:Qcur_pos-17 (view) (permuted) type=f32 ne=[512,2,16,1] nb=[4,32768,2048,65536]} src1{PERMUTE:cache_k_l17 (view) (permuted) type=f16 ne=[512,256,2,1] nb=[2,2048,1024,67108864]} src2{PERMUTE:cache_v_l17 (view) (permuted) type=f16 ne=[512,256,2,1] nb=[2,2048,1024,67108864]} src3{NONE:SYCL0#attn_inp_kq_mask#0 type=f16 ne=[256,2,1,1] nb=[2,512,1024,1024]}
+1.04.049.076 W sycl node profile:  3 total_ms=4491.021 calls=49 avg_ms=91.653 FLASH_ATTN_EXT:__fattn__-11
+1.04.049.077 W sycl node profile detail:  3 node{FLASH_ATTN_EXT:__fattn__-11 type=f32 ne=[512,16,2,1] nb=[4,2048,32768,65536]} src0{PERMUTE:Qcur_pos-11 (view) (permuted) type=f32 ne=[512,2,16,1] nb=[4,32768,2048,65536]} src1{PERMUTE:cache_k_l11 (view) (permuted) type=f16 ne=[512,256,2,1] nb=[2,2048,1024,67108864]} src2{PERMUTE:cache_v_l11 (view) (permuted) type=f16 ne=[512,256,2,1] nb=[2,2048,1024,67108864]} src3{NONE:SYCL0#attn_inp_kq_mask#0 type=f16 ne=[256,2,1,1] nb=[2,512,1024,1024]}
+1.04.049.078 W sycl node profile:  4 total_ms=4484.306 calls=49 avg_ms=91.516 FLASH_ATTN_EXT:__fattn__-23
+1.04.049.078 W sycl node profile detail:  4 node{FLASH_ATTN_EXT:__fattn__-23 type=f32 ne=[512,16,2,1] nb=[4,2048,32768,65536]} src0{PERMUTE:Qcur_pos-23 (view) (permuted) type=f32 ne=[512,2,16,1] nb=[4,32768,2048,65536]} src1{PERMUTE:cache_k_l23 (view) (permuted) type=f16 ne=[512,256,2,1] nb=[2,2048,1024,67108864]} src2{PERMUTE:cache_v_l23 (view) (permuted) type=f16 ne=[512,256,2,1] nb=[2,2048,1024,67108864]} src3{NONE:SYCL0#attn_inp_kq_mask#0 type=f16 ne=[256,2,1,1] nb=[2,512,1024,1024]}
+1.04.049.078 W sycl node profile:  5 total_ms=4479.414 calls=49 avg_ms=91.417 FLASH_ATTN_EXT:__fattn__-29
+1.04.049.079 W sycl node profile detail:  5 node{FLASH_ATTN_EXT:__fattn__-29 type=f32 ne=[512,16,2,1] nb=[4,2048,32768,65536]} src0{PERMUTE:Qcur_pos-29 (view) (permuted) type=f32 ne=[512,2,16,1] nb=[4,32768,2048,65536]} src1{PERMUTE:cache_k_l29 (view) (permuted) type=f16 ne=[512,256,2,1] nb=[2,2048,1024,67108864]} src2{PERMUTE:cache_v_l29 (view) (permuted) type=f16 ne=[512,256,2,1] nb=[2,2048,1024,67108864]} src3{NONE:SYCL0#attn_inp_kq_mask#0 type=f16 ne=[256,2,1,1] nb=[2,512,1024,1024]}
+1.04.049.080 W sycl node profile:  6 total_ms=366.423 calls=120 avg_ms=3.054 FLASH_ATTN_EXT:__fattn__-3
+1.04.049.080 W sycl node profile detail:  6 node{FLASH_ATTN_EXT:__fattn__-3 type=f32 ne=[256,16,2,1] nb=[4,1024,16384,32768]} src0{PERMUTE:Qcur_pos-3 (view) (permuted) type=f32 ne=[256,2,16,1] nb=[4,16384,1024,32768]} src1{PERMUTE:cache_k_l3 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src2{PERMUTE:cache_v_l3 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src3{NONE:SYCL0#attn_inp_kq_mask#0 type=f16 ne=[256,2,1,1] nb=[2,512,1024,1024]}
+1.04.049.081 W sycl node profile:  7 total_ms=345.820 calls=120 avg_ms=2.882 FLASH_ATTN_EXT:__fattn__-0
+1.04.049.081 W sycl node profile detail:  7 node{FLASH_ATTN_EXT:__fattn__-0 type=f32 ne=[256,16,2,1] nb=[4,1024,16384,32768]} src0{PERMUTE:Qcur_pos-0 (view) (permuted) type=f32 ne=[256,2,16,1] nb=[4,16384,1024,32768]} src1{PERMUTE:cache_k_l0 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src2{PERMUTE:cache_v_l0 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src3{NONE:SYCL0#attn_inp_kq_mask#0 type=f16 ne=[256,2,1,1] nb=[2,512,1024,1024]}
+1.04.049.082 W sycl node profile:  8 total_ms=331.093 calls=120 avg_ms=2.759 FLASH_ATTN_EXT:__fattn__-1
+1.04.049.082 W sycl node profile detail:  8 node{FLASH_ATTN_EXT:__fattn__-1 type=f32 ne=[256,16,2,1] nb=[4,1024,16384,32768]} src0{PERMUTE:Qcur_pos-1 (view) (permuted) type=f32 ne=[256,2,16,1] nb=[4,16384,1024,32768]} src1{PERMUTE:cache_k_l1 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src2{PERMUTE:cache_v_l1 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src3{NONE:SYCL0#attn_inp_kq_mask#0 type=f16 ne=[256,2,1,1] nb=[2,512,1024,1024]}
+1.04.049.083 W sycl node profile:  9 total_ms=324.994 calls=120 avg_ms=2.708 FLASH_ATTN_EXT:__fattn__-2
+1.04.049.084 W sycl node profile detail:  9 node{FLASH_ATTN_EXT:__fattn__-2 type=f32 ne=[256,16,2,1] nb=[4,1024,16384,32768]} src0{PERMUTE:Qcur_pos-2 (view) (permuted) type=f32 ne=[256,2,16,1] nb=[4,16384,1024,32768]} src1{PERMUTE:cache_k_l2 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src2{PERMUTE:cache_v_l2 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src3{NONE:SYCL0#attn_inp_kq_mask#0 type=f16 ne=[256,2,1,1] nb=[2,512,1024,1024]}
+1.04.049.084 W sycl node profile: 10 total_ms=321.256 calls=49 avg_ms=6.556 FLASH_ATTN_EXT:__fattn__-4
+1.04.049.084 W sycl node profile detail: 10 node{FLASH_ATTN_EXT:__fattn__-4 type=f32 ne=[256,16,2,1] nb=[4,1024,16384,32768]} src0{PERMUTE:Qcur_pos-4 (view) (permuted) type=f32 ne=[256,2,16,1] nb=[4,16384,1024,32768]} src1{PERMUTE:cache_k_l4 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src2{PERMUTE:cache_v_l4 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src3{NONE:SYCL0#attn_inp_kq_mask#0 type=f16 ne=[256,2,1,1] nb=[2,512,1024,1024]}
+1.04.049.085 W sycl node profile: 11 total_ms=320.298 calls=49 avg_ms=6.537 FLASH_ATTN_EXT:__fattn__-20
+1.04.049.085 W sycl node profile detail: 11 node{FLASH_ATTN_EXT:__fattn__-20 type=f32 ne=[256,16,2,1] nb=[4,1024,16384,32768]} src0{PERMUTE:Qcur_pos-20 (view) (permuted) type=f32 ne=[256,2,16,1] nb=[4,16384,1024,32768]} src1{PERMUTE:cache_k_l20 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src2{PERMUTE:cache_v_l20 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src3{NONE:SYCL0#attn_inp_kq_mask#0 type=f16 ne=[256,2,1,1] nb=[2,512,1024,1024]}
+1.04.049.086 W sycl node profile: 12 total_ms=319.426 calls=49 avg_ms=6.519 FLASH_ATTN_EXT:__fattn__-27
+1.04.049.086 W sycl node profile detail: 12 node{FLASH_ATTN_EXT:__fattn__-27 type=f32 ne=[256,16,2,1] nb=[4,1024,16384,32768]} src0{PERMUTE:Qcur_pos-27 (view) (permuted) type=f32 ne=[256,2,16,1] nb=[4,16384,1024,32768]} src1{PERMUTE:cache_k_l27 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src2{PERMUTE:cache_v_l27 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src3{NONE:SYCL0#attn_inp_kq_mask#0 type=f16 ne=[256,2,1,1] nb=[2,512,1024,1024]}
+1.04.049.087 W sycl node profile: 13 total_ms=319.416 calls=49 avg_ms=6.519 FLASH_ATTN_EXT:__fattn__-19
+1.04.049.087 W sycl node profile detail: 13 node{FLASH_ATTN_EXT:__fattn__-19 type=f32 ne=[256,16,2,1] nb=[4,1024,16384,32768]} src0{PERMUTE:Qcur_pos-19 (view) (permuted) type=f32 ne=[256,2,16,1] nb=[4,16384,1024,32768]} src1{PERMUTE:cache_k_l19 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src2{PERMUTE:cache_v_l19 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src3{NONE:SYCL0#attn_inp_kq_mask#0 type=f16 ne=[256,2,1,1] nb=[2,512,1024,1024]}
+1.04.049.087 W sycl node profile: 14 total_ms=319.250 calls=49 avg_ms=6.515 FLASH_ATTN_EXT:__fattn__-15
+1.04.049.088 W sycl node profile detail: 14 node{FLASH_ATTN_EXT:__fattn__-15 type=f32 ne=[256,16,2,1] nb=[4,1024,16384,32768]} src0{PERMUTE:Qcur_pos-15 (view) (permuted) type=f32 ne=[256,2,16,1] nb=[4,16384,1024,32768]} src1{PERMUTE:cache_k_l15 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src2{PERMUTE:cache_v_l15 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src3{NONE:SYCL0#attn_inp_kq_mask#0 type=f16 ne=[256,2,1,1] nb=[2,512,1024,1024]}
+1.04.049.088 W sycl node profile: 15 total_ms=319.215 calls=49 avg_ms=6.515 FLASH_ATTN_EXT:__fattn__-12
+1.04.049.089 W sycl node profile detail: 15 node{FLASH_ATTN_EXT:__fattn__-12 type=f32 ne=[256,16,2,1] nb=[4,1024,16384,32768]} src0{PERMUTE:Qcur_pos-12 (view) (permuted) type=f32 ne=[256,2,16,1] nb=[4,16384,1024,32768]} src1{PERMUTE:cache_k_l12 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src2{PERMUTE:cache_v_l12 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src3{NONE:SYCL0#attn_inp_kq_mask#0 type=f16 ne=[256,2,1,1] nb=[2,512,1024,1024]}
+1.04.049.089 W sycl node profile: 16 total_ms=318.952 calls=49 avg_ms=6.509 FLASH_ATTN_EXT:__fattn__-13
+1.04.049.089 W sycl node profile detail: 16 node{FLASH_ATTN_EXT:__fattn__-13 type=f32 ne=[256,16,2,1] nb=[4,1024,16384,32768]} src0{PERMUTE:Qcur_pos-13 (view) (permuted) type=f32 ne=[256,2,16,1] nb=[4,16384,1024,32768]} src1{PERMUTE:cache_k_l13 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src2{PERMUTE:cache_v_l13 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src3{NONE:SYCL0#attn_inp_kq_mask#0 type=f16 ne=[256,2,1,1] nb=[2,512,1024,1024]}
+1.04.049.090 W sycl node profile: 17 total_ms=318.499 calls=49 avg_ms=6.500 FLASH_ATTN_EXT:__fattn__-14
+1.04.049.090 W sycl node profile detail: 17 node{FLASH_ATTN_EXT:__fattn__-14 type=f32 ne=[256,16,2,1] nb=[4,1024,16384,32768]} src0{PERMUTE:Qcur_pos-14 (view) (permuted) type=f32 ne=[256,2,16,1] nb=[4,16384,1024,32768]} src1{PERMUTE:cache_k_l14 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src2{PERMUTE:cache_v_l14 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src3{NONE:SYCL0#attn_inp_kq_mask#0 type=f16 ne=[256,2,1,1] nb=[2,512,1024,1024]}
+1.04.049.091 W sycl node profile: 18 total_ms=318.391 calls=49 avg_ms=6.498 FLASH_ATTN_EXT:__fattn__-7
+1.04.049.091 W sycl node profile detail: 18 node{FLASH_ATTN_EXT:__fattn__-7 type=f32 ne=[256,16,2,1] nb=[4,1024,16384,32768]} src0{PERMUTE:Qcur_pos-7 (view) (permuted) type=f32 ne=[256,2,16,1] nb=[4,16384,1024,32768]} src1{PERMUTE:cache_k_l7 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src2{PERMUTE:cache_v_l7 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src3{NONE:SYCL0#attn_inp_kq_mask#0 type=f16 ne=[256,2,1,1] nb=[2,512,1024,1024]}
+1.04.049.091 W sycl node profile: 19 total_ms=318.236 calls=49 avg_ms=6.495 FLASH_ATTN_EXT:__fattn__-8
+1.04.049.092 W sycl node profile detail: 19 node{FLASH_ATTN_EXT:__fattn__-8 type=f32 ne=[256,16,2,1] nb=[4,1024,16384,32768]} src0{PERMUTE:Qcur_pos-8 (view) (permuted) type=f32 ne=[256,2,16,1] nb=[4,16384,1024,32768]} src1{PERMUTE:cache_k_l8 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src2{PERMUTE:cache_v_l8 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src3{NONE:SYCL0#attn_inp_kq_mask#0 type=f16 ne=[256,2,1,1] nb=[2,512,1024,1024]}
+1.04.049.092 W sycl node profile: 20 total_ms=317.843 calls=49 avg_ms=6.487 FLASH_ATTN_EXT:__fattn__-25
+1.04.049.092 W sycl node profile detail: 20 node{FLASH_ATTN_EXT:__fattn__-25 type=f32 ne=[256,16,2,1] nb=[4,1024,16384,32768]} src0{PERMUTE:Qcur_pos-25 (view) (permuted) type=f32 ne=[256,2,16,1] nb=[4,16384,1024,32768]} src1{PERMUTE:cache_k_l25 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src2{PERMUTE:cache_v_l25 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src3{NONE:SYCL0#attn_inp_kq_mask#0 type=f16 ne=[256,2,1,1] nb=[2,512,1024,1024]}
+1.04.049.093 W sycl node profile: 21 total_ms=317.301 calls=49 avg_ms=6.476 FLASH_ATTN_EXT:__fattn__-24
+1.04.049.093 W sycl node profile detail: 21 node{FLASH_ATTN_EXT:__fattn__-24 type=f32 ne=[256,16,2,1] nb=[4,1024,16384,32768]} src0{PERMUTE:Qcur_pos-24 (view) (permuted) type=f32 ne=[256,2,16,1] nb=[4,16384,1024,32768]} src1{PERMUTE:cache_k_l24 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src2{PERMUTE:cache_v_l24 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src3{NONE:SYCL0#attn_inp_kq_mask#0 type=f16 ne=[256,2,1,1] nb=[2,512,1024,1024]}
+1.04.049.094 W sycl node profile: 22 total_ms=317.212 calls=49 avg_ms=6.474 FLASH_ATTN_EXT:__fattn__-28
+1.04.049.094 W sycl node profile detail: 22 node{FLASH_ATTN_EXT:__fattn__-28 type=f32 ne=[256,16,2,1] nb=[4,1024,16384,32768]} src0{PERMUTE:Qcur_pos-28 (view) (permuted) type=f32 ne=[256,2,16,1] nb=[4,16384,1024,32768]} src1{PERMUTE:cache_k_l28 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src2{PERMUTE:cache_v_l28 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src3{NONE:SYCL0#attn_inp_kq_mask#0 type=f16 ne=[256,2,1,1] nb=[2,512,1024,1024]}
+1.04.049.094 W sycl node profile: 23 total_ms=316.551 calls=49 avg_ms=6.460 FLASH_ATTN_EXT:__fattn__-26
+1.04.049.095 W sycl node profile detail: 23 node{FLASH_ATTN_EXT:__fattn__-26 type=f32 ne=[256,16,2,1] nb=[4,1024,16384,32768]} src0{PERMUTE:Qcur_pos-26 (view) (permuted) type=f32 ne=[256,2,16,1] nb=[4,16384,1024,32768]} src1{PERMUTE:cache_k_l26 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src2{PERMUTE:cache_v_l26 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src3{NONE:SYCL0#attn_inp_kq_mask#0 type=f16 ne=[256,2,1,1] nb=[2,512,1024,1024]}
+1.04.049.095 W sycl node profile: 24 total_ms=316.409 calls=49 avg_ms=6.457 FLASH_ATTN_EXT:__fattn__-6
+1.04.049.096 W sycl node profile detail: 24 node{FLASH_ATTN_EXT:__fattn__-6 type=f32 ne=[256,16,2,1] nb=[4,1024,16384,32768]} src0{PERMUTE:Qcur_pos-6 (view) (permuted) type=f32 ne=[256,2,16,1] nb=[4,16384,1024,32768]} src1{PERMUTE:cache_k_l6 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src2{PERMUTE:cache_v_l6 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src3{NONE:SYCL0#attn_inp_kq_mask#0 type=f16 ne=[256,2,1,1] nb=[2,512,1024,1024]}
+1.04.049.096 W sycl node profile: 25 total_ms=316.328 calls=49 avg_ms=6.456 FLASH_ATTN_EXT:__fattn__-18
+1.04.049.097 W sycl node profile detail: 25 node{FLASH_ATTN_EXT:__fattn__-18 type=f32 ne=[256,16,2,1] nb=[4,1024,16384,32768]} src0{PERMUTE:Qcur_pos-18 (view) (permuted) type=f32 ne=[256,2,16,1] nb=[4,16384,1024,32768]} src1{PERMUTE:cache_k_l18 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src2{PERMUTE:cache_v_l18 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src3{NONE:SYCL0#attn_inp_kq_mask#0 type=f16 ne=[256,2,1,1] nb=[2,512,1024,1024]}
+1.04.049.097 W sycl node profile: 26 total_ms=316.187 calls=49 avg_ms=6.453 FLASH_ATTN_EXT:__fattn__-9
+1.04.049.098 W sycl node profile detail: 26 node{FLASH_ATTN_EXT:__fattn__-9 type=f32 ne=[256,16,2,1] nb=[4,1024,16384,32768]} src0{PERMUTE:Qcur_pos-9 (view) (permuted) type=f32 ne=[256,2,16,1] nb=[4,16384,1024,32768]} src1{PERMUTE:cache_k_l9 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src2{PERMUTE:cache_v_l9 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src3{NONE:SYCL0#attn_inp_kq_mask#0 type=f16 ne=[256,2,1,1] nb=[2,512,1024,1024]}
+1.04.049.098 W sycl node profile: 27 total_ms=315.865 calls=49 avg_ms=6.446 FLASH_ATTN_EXT:__fattn__-10
+1.04.049.099 W sycl node profile detail: 27 node{FLASH_ATTN_EXT:__fattn__-10 type=f32 ne=[256,16,2,1] nb=[4,1024,16384,32768]} src0{PERMUTE:Qcur_pos-10 (view) (permuted) type=f32 ne=[256,2,16,1] nb=[4,16384,1024,32768]} src1{PERMUTE:cache_k_l10 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src2{PERMUTE:cache_v_l10 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src3{NONE:SYCL0#attn_inp_kq_mask#0 type=f16 ne=[256,2,1,1] nb=[2,512,1024,1024]}
+1.04.049.099 W sycl node profile: 28 total_ms=315.813 calls=49 avg_ms=6.445 FLASH_ATTN_EXT:__fattn__-16
+1.04.049.100 W sycl node profile detail: 28 node{FLASH_ATTN_EXT:__fattn__-16 type=f32 ne=[256,16,2,1] nb=[4,1024,16384,32768]} src0{PERMUTE:Qcur_pos-16 (view) (permuted) type=f32 ne=[256,2,16,1] nb=[4,16384,1024,32768]} src1{PERMUTE:cache_k_l16 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src2{PERMUTE:cache_v_l16 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src3{NONE:SYCL0#attn_inp_kq_mask#0 type=f16 ne=[256,2,1,1] nb=[2,512,1024,1024]}
+1.04.049.100 W sycl node profile: 29 total_ms=315.262 calls=49 avg_ms=6.434 FLASH_ATTN_EXT:__fattn__-22
+1.04.049.100 W sycl node profile detail: 29 node{FLASH_ATTN_EXT:__fattn__-22 type=f32 ne=[256,16,2,1] nb=[4,1024,16384,32768]} src0{PERMUTE:Qcur_pos-22 (view) (permuted) type=f32 ne=[256,2,16,1] nb=[4,16384,1024,32768]} src1{PERMUTE:cache_k_l22 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src2{PERMUTE:cache_v_l22 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src3{NONE:SYCL0#attn_inp_kq_mask#0 type=f16 ne=[256,2,1,1] nb=[2,512,1024,1024]}
+1.04.049.101 W sycl node profile: 30 total_ms=314.917 calls=49 avg_ms=6.427 FLASH_ATTN_EXT:__fattn__-21
+1.04.049.101 W sycl node profile detail: 30 node{FLASH_ATTN_EXT:__fattn__-21 type=f32 ne=[256,16,2,1] nb=[4,1024,16384,32768]} src0{PERMUTE:Qcur_pos-21 (view) (permuted) type=f32 ne=[256,2,16,1] nb=[4,16384,1024,32768]} src1{PERMUTE:cache_k_l21 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src2{PERMUTE:cache_v_l21 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src3{NONE:SYCL0#attn_inp_kq_mask#0 type=f16 ne=[256,2,1,1] nb=[2,512,1024,1024]}
+1.04.463.031 W sycl node profile: graphs=144, unique_nodes=1423, top=30
+1.04.463.035 W sycl node profile:  1 total_ms=4528.571 calls=55 avg_ms=82.338 FLASH_ATTN_EXT:__fattn__-5
+1.04.463.036 W sycl node profile detail:  1 node{FLASH_ATTN_EXT:__fattn__-5 type=f32 ne=[512,16,2,1] nb=[4,2048,32768,65536]} src0{PERMUTE:Qcur_pos-5 (view) (permuted) type=f32 ne=[512,2,16,1] nb=[4,32768,2048,65536]} src1{PERMUTE:cache_k_l5 (view) (permuted) type=f16 ne=[512,256,2,1] nb=[2,2048,1024,67108864]} src2{PERMUTE:cache_v_l5 (view) (permuted) type=f16 ne=[512,256,2,1] nb=[2,2048,1024,67108864]} src3{NONE:SYCL0#attn_inp_kq_mask#0 type=f16 ne=[256,2,1,1] nb=[2,512,1024,1024]}
+1.04.463.037 W sycl node profile:  2 total_ms=4523.490 calls=55 avg_ms=82.245 FLASH_ATTN_EXT:__fattn__-17
+1.04.463.038 W sycl node profile detail:  2 node{FLASH_ATTN_EXT:__fattn__-17 type=f32 ne=[512,16,2,1] nb=[4,2048,32768,65536]} src0{PERMUTE:Qcur_pos-17 (view) (permuted) type=f32 ne=[512,2,16,1] nb=[4,32768,2048,65536]} src1{PERMUTE:cache_k_l17 (view) (permuted) type=f16 ne=[512,256,2,1] nb=[2,2048,1024,67108864]} src2{PERMUTE:cache_v_l17 (view) (permuted) type=f16 ne=[512,256,2,1] nb=[2,2048,1024,67108864]} src3{NONE:SYCL0#attn_inp_kq_mask#0 type=f16 ne=[256,2,1,1] nb=[2,512,1024,1024]}
+1.04.463.039 W sycl node profile:  3 total_ms=4522.793 calls=55 avg_ms=82.233 FLASH_ATTN_EXT:__fattn__-11
+1.04.463.039 W sycl node profile detail:  3 node{FLASH_ATTN_EXT:__fattn__-11 type=f32 ne=[512,16,2,1] nb=[4,2048,32768,65536]} src0{PERMUTE:Qcur_pos-11 (view) (permuted) type=f32 ne=[512,2,16,1] nb=[4,32768,2048,65536]} src1{PERMUTE:cache_k_l11 (view) (permuted) type=f16 ne=[512,256,2,1] nb=[2,2048,1024,67108864]} src2{PERMUTE:cache_v_l11 (view) (permuted) type=f16 ne=[512,256,2,1] nb=[2,2048,1024,67108864]} src3{NONE:SYCL0#attn_inp_kq_mask#0 type=f16 ne=[256,2,1,1] nb=[2,512,1024,1024]}
+1.04.463.040 W sycl node profile:  4 total_ms=4516.103 calls=55 avg_ms=82.111 FLASH_ATTN_EXT:__fattn__-23
+1.04.463.040 W sycl node profile detail:  4 node{FLASH_ATTN_EXT:__fattn__-23 type=f32 ne=[512,16,2,1] nb=[4,2048,32768,65536]} src0{PERMUTE:Qcur_pos-23 (view) (permuted) type=f32 ne=[512,2,16,1] nb=[4,32768,2048,65536]} src1{PERMUTE:cache_k_l23 (view) (permuted) type=f16 ne=[512,256,2,1] nb=[2,2048,1024,67108864]} src2{PERMUTE:cache_v_l23 (view) (permuted) type=f16 ne=[512,256,2,1] nb=[2,2048,1024,67108864]} src3{NONE:SYCL0#attn_inp_kq_mask#0 type=f16 ne=[256,2,1,1] nb=[2,512,1024,1024]}
+1.04.463.041 W sycl node profile:  5 total_ms=4511.155 calls=55 avg_ms=82.021 FLASH_ATTN_EXT:__fattn__-29
+1.04.463.041 W sycl node profile detail:  5 node{FLASH_ATTN_EXT:__fattn__-29 type=f32 ne=[512,16,2,1] nb=[4,2048,32768,65536]} src0{PERMUTE:Qcur_pos-29 (view) (permuted) type=f32 ne=[512,2,16,1] nb=[4,32768,2048,65536]} src1{PERMUTE:cache_k_l29 (view) (permuted) type=f16 ne=[512,256,2,1] nb=[2,2048,1024,67108864]} src2{PERMUTE:cache_v_l29 (view) (permuted) type=f16 ne=[512,256,2,1] nb=[2,2048,1024,67108864]} src3{NONE:SYCL0#attn_inp_kq_mask#0 type=f16 ne=[256,2,1,1] nb=[2,512,1024,1024]}
+1.04.463.042 W sycl node profile:  6 total_ms=390.988 calls=144 avg_ms=2.715 FLASH_ATTN_EXT:__fattn__-3
+1.04.463.043 W sycl node profile detail:  6 node{FLASH_ATTN_EXT:__fattn__-3 type=f32 ne=[256,16,2,1] nb=[4,1024,16384,32768]} src0{PERMUTE:Qcur_pos-3 (view) (permuted) type=f32 ne=[256,2,16,1] nb=[4,16384,1024,32768]} src1{PERMUTE:cache_k_l3 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src2{PERMUTE:cache_v_l3 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src3{NONE:SYCL0#attn_inp_kq_mask#0 type=f16 ne=[256,2,1,1] nb=[2,512,1024,1024]}
+1.04.463.043 W sycl node profile:  7 total_ms=349.969 calls=144 avg_ms=2.430 FLASH_ATTN_EXT:__fattn__-0
+1.04.463.044 W sycl node profile detail:  7 node{FLASH_ATTN_EXT:__fattn__-0 type=f32 ne=[256,16,2,1] nb=[4,1024,16384,32768]} src0{PERMUTE:Qcur_pos-0 (view) (permuted) type=f32 ne=[256,2,16,1] nb=[4,16384,1024,32768]} src1{PERMUTE:cache_k_l0 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src2{PERMUTE:cache_v_l0 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src3{NONE:SYCL0#attn_inp_kq_mask#0 type=f16 ne=[256,2,1,1] nb=[2,512,1024,1024]}
+1.04.463.044 W sycl node profile:  8 total_ms=335.184 calls=144 avg_ms=2.328 FLASH_ATTN_EXT:__fattn__-1
+1.04.463.045 W sycl node profile detail:  8 node{FLASH_ATTN_EXT:__fattn__-1 type=f32 ne=[256,16,2,1] nb=[4,1024,16384,32768]} src0{PERMUTE:Qcur_pos-1 (view) (permuted) type=f32 ne=[256,2,16,1] nb=[4,16384,1024,32768]} src1{PERMUTE:cache_k_l1 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src2{PERMUTE:cache_v_l1 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src3{NONE:SYCL0#attn_inp_kq_mask#0 type=f16 ne=[256,2,1,1] nb=[2,512,1024,1024]}
+1.04.463.045 W sycl node profile:  9 total_ms=329.092 calls=144 avg_ms=2.285 FLASH_ATTN_EXT:__fattn__-2
+1.04.463.046 W sycl node profile detail:  9 node{FLASH_ATTN_EXT:__fattn__-2 type=f32 ne=[256,16,2,1] nb=[4,1024,16384,32768]} src0{PERMUTE:Qcur_pos-2 (view) (permuted) type=f32 ne=[256,2,16,1] nb=[4,16384,1024,32768]} src1{PERMUTE:cache_k_l2 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src2{PERMUTE:cache_v_l2 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src3{NONE:SYCL0#attn_inp_kq_mask#0 type=f16 ne=[256,2,1,1] nb=[2,512,1024,1024]}
+1.04.463.046 W sycl node profile: 10 total_ms=321.998 calls=55 avg_ms=5.855 FLASH_ATTN_EXT:__fattn__-4
+1.04.463.047 W sycl node profile detail: 10 node{FLASH_ATTN_EXT:__fattn__-4 type=f32 ne=[256,16,2,1] nb=[4,1024,16384,32768]} src0{PERMUTE:Qcur_pos-4 (view) (permuted) type=f32 ne=[256,2,16,1] nb=[4,16384,1024,32768]} src1{PERMUTE:cache_k_l4 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src2{PERMUTE:cache_v_l4 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src3{NONE:SYCL0#attn_inp_kq_mask#0 type=f16 ne=[256,2,1,1] nb=[2,512,1024,1024]}
+1.04.463.047 W sycl node profile: 11 total_ms=321.045 calls=55 avg_ms=5.837 FLASH_ATTN_EXT:__fattn__-20
+1.04.463.048 W sycl node profile detail: 11 node{FLASH_ATTN_EXT:__fattn__-20 type=f32 ne=[256,16,2,1] nb=[4,1024,16384,32768]} src0{PERMUTE:Qcur_pos-20 (view) (permuted) type=f32 ne=[256,2,16,1] nb=[4,16384,1024,32768]} src1{PERMUTE:cache_k_l20 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src2{PERMUTE:cache_v_l20 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src3{NONE:SYCL0#attn_inp_kq_mask#0 type=f16 ne=[256,2,1,1] nb=[2,512,1024,1024]}
+1.04.463.048 W sycl node profile: 12 total_ms=320.164 calls=55 avg_ms=5.821 FLASH_ATTN_EXT:__fattn__-27
+1.04.463.049 W sycl node profile detail: 12 node{FLASH_ATTN_EXT:__fattn__-27 type=f32 ne=[256,16,2,1] nb=[4,1024,16384,32768]} src0{PERMUTE:Qcur_pos-27 (view) (permuted) type=f32 ne=[256,2,16,1] nb=[4,16384,1024,32768]} src1{PERMUTE:cache_k_l27 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src2{PERMUTE:cache_v_l27 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src3{NONE:SYCL0#attn_inp_kq_mask#0 type=f16 ne=[256,2,1,1] nb=[2,512,1024,1024]}
+1.04.463.049 W sycl node profile: 13 total_ms=320.163 calls=55 avg_ms=5.821 FLASH_ATTN_EXT:__fattn__-19
+1.04.463.049 W sycl node profile detail: 13 node{FLASH_ATTN_EXT:__fattn__-19 type=f32 ne=[256,16,2,1] nb=[4,1024,16384,32768]} src0{PERMUTE:Qcur_pos-19 (view) (permuted) type=f32 ne=[256,2,16,1] nb=[4,16384,1024,32768]} src1{PERMUTE:cache_k_l19 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src2{PERMUTE:cache_v_l19 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src3{NONE:SYCL0#attn_inp_kq_mask#0 type=f16 ne=[256,2,1,1] nb=[2,512,1024,1024]}
+1.04.463.050 W sycl node profile: 14 total_ms=320.001 calls=55 avg_ms=5.818 FLASH_ATTN_EXT:__fattn__-15
+1.04.463.050 W sycl node profile detail: 14 node{FLASH_ATTN_EXT:__fattn__-15 type=f32 ne=[256,16,2,1] nb=[4,1024,16384,32768]} src0{PERMUTE:Qcur_pos-15 (view) (permuted) type=f32 ne=[256,2,16,1] nb=[4,16384,1024,32768]} src1{PERMUTE:cache_k_l15 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src2{PERMUTE:cache_v_l15 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src3{NONE:SYCL0#attn_inp_kq_mask#0 type=f16 ne=[256,2,1,1] nb=[2,512,1024,1024]}
+1.04.463.051 W sycl node profile: 15 total_ms=319.960 calls=55 avg_ms=5.817 FLASH_ATTN_EXT:__fattn__-12
+1.04.463.051 W sycl node profile detail: 15 node{FLASH_ATTN_EXT:__fattn__-12 type=f32 ne=[256,16,2,1] nb=[4,1024,16384,32768]} src0{PERMUTE:Qcur_pos-12 (view) (permuted) type=f32 ne=[256,2,16,1] nb=[4,16384,1024,32768]} src1{PERMUTE:cache_k_l12 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src2{PERMUTE:cache_v_l12 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src3{NONE:SYCL0#attn_inp_kq_mask#0 type=f16 ne=[256,2,1,1] nb=[2,512,1024,1024]}
+1.04.463.051 W sycl node profile: 16 total_ms=319.698 calls=55 avg_ms=5.813 FLASH_ATTN_EXT:__fattn__-13
+1.04.463.052 W sycl node profile detail: 16 node{FLASH_ATTN_EXT:__fattn__-13 type=f32 ne=[256,16,2,1] nb=[4,1024,16384,32768]} src0{PERMUTE:Qcur_pos-13 (view) (permuted) type=f32 ne=[256,2,16,1] nb=[4,16384,1024,32768]} src1{PERMUTE:cache_k_l13 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src2{PERMUTE:cache_v_l13 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src3{NONE:SYCL0#attn_inp_kq_mask#0 type=f16 ne=[256,2,1,1] nb=[2,512,1024,1024]}
+1.04.463.052 W sycl node profile: 17 total_ms=319.242 calls=55 avg_ms=5.804 FLASH_ATTN_EXT:__fattn__-14
+1.04.463.053 W sycl node profile detail: 17 node{FLASH_ATTN_EXT:__fattn__-14 type=f32 ne=[256,16,2,1] nb=[4,1024,16384,32768]} src0{PERMUTE:Qcur_pos-14 (view) (permuted) type=f32 ne=[256,2,16,1] nb=[4,16384,1024,32768]} src1{PERMUTE:cache_k_l14 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src2{PERMUTE:cache_v_l14 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src3{NONE:SYCL0#attn_inp_kq_mask#0 type=f16 ne=[256,2,1,1] nb=[2,512,1024,1024]}
+1.04.463.053 W sycl node profile: 18 total_ms=319.135 calls=55 avg_ms=5.802 FLASH_ATTN_EXT:__fattn__-7
+1.04.463.053 W sycl node profile detail: 18 node{FLASH_ATTN_EXT:__fattn__-7 type=f32 ne=[256,16,2,1] nb=[4,1024,16384,32768]} src0{PERMUTE:Qcur_pos-7 (view) (permuted) type=f32 ne=[256,2,16,1] nb=[4,16384,1024,32768]} src1{PERMUTE:cache_k_l7 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src2{PERMUTE:cache_v_l7 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src3{NONE:SYCL0#attn_inp_kq_mask#0 type=f16 ne=[256,2,1,1] nb=[2,512,1024,1024]}
+1.04.463.054 W sycl node profile: 19 total_ms=318.977 calls=55 avg_ms=5.800 FLASH_ATTN_EXT:__fattn__-8
+1.04.463.054 W sycl node profile detail: 19 node{FLASH_ATTN_EXT:__fattn__-8 type=f32 ne=[256,16,2,1] nb=[4,1024,16384,32768]} src0{PERMUTE:Qcur_pos-8 (view) (permuted) type=f32 ne=[256,2,16,1] nb=[4,16384,1024,32768]} src1{PERMUTE:cache_k_l8 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src2{PERMUTE:cache_v_l8 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src3{NONE:SYCL0#attn_inp_kq_mask#0 type=f16 ne=[256,2,1,1] nb=[2,512,1024,1024]}
+1.04.463.055 W sycl node profile: 20 total_ms=318.587 calls=55 avg_ms=5.792 FLASH_ATTN_EXT:__fattn__-25
+1.04.463.055 W sycl node profile detail: 20 node{FLASH_ATTN_EXT:__fattn__-25 type=f32 ne=[256,16,2,1] nb=[4,1024,16384,32768]} src0{PERMUTE:Qcur_pos-25 (view) (permuted) type=f32 ne=[256,2,16,1] nb=[4,16384,1024,32768]} src1{PERMUTE:cache_k_l25 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src2{PERMUTE:cache_v_l25 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src3{NONE:SYCL0#attn_inp_kq_mask#0 type=f16 ne=[256,2,1,1] nb=[2,512,1024,1024]}
+1.04.463.055 W sycl node profile: 21 total_ms=318.044 calls=55 avg_ms=5.783 FLASH_ATTN_EXT:__fattn__-24
+1.04.463.056 W sycl node profile detail: 21 node{FLASH_ATTN_EXT:__fattn__-24 type=f32 ne=[256,16,2,1] nb=[4,1024,16384,32768]} src0{PERMUTE:Qcur_pos-24 (view) (permuted) type=f32 ne=[256,2,16,1] nb=[4,16384,1024,32768]} src1{PERMUTE:cache_k_l24 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src2{PERMUTE:cache_v_l24 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src3{NONE:SYCL0#attn_inp_kq_mask#0 type=f16 ne=[256,2,1,1] nb=[2,512,1024,1024]}
+1.04.463.056 W sycl node profile: 22 total_ms=317.949 calls=55 avg_ms=5.781 FLASH_ATTN_EXT:__fattn__-28
+1.04.463.056 W sycl node profile detail: 22 node{FLASH_ATTN_EXT:__fattn__-28 type=f32 ne=[256,16,2,1] nb=[4,1024,16384,32768]} src0{PERMUTE:Qcur_pos-28 (view) (permuted) type=f32 ne=[256,2,16,1] nb=[4,16384,1024,32768]} src1{PERMUTE:cache_k_l28 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src2{PERMUTE:cache_v_l28 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src3{NONE:SYCL0#attn_inp_kq_mask#0 type=f16 ne=[256,2,1,1] nb=[2,512,1024,1024]}
+1.04.463.057 W sycl node profile: 23 total_ms=317.293 calls=55 avg_ms=5.769 FLASH_ATTN_EXT:__fattn__-26
+1.04.463.057 W sycl node profile detail: 23 node{FLASH_ATTN_EXT:__fattn__-26 type=f32 ne=[256,16,2,1] nb=[4,1024,16384,32768]} src0{PERMUTE:Qcur_pos-26 (view) (permuted) type=f32 ne=[256,2,16,1] nb=[4,16384,1024,32768]} src1{PERMUTE:cache_k_l26 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src2{PERMUTE:cache_v_l26 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src3{NONE:SYCL0#attn_inp_kq_mask#0 type=f16 ne=[256,2,1,1] nb=[2,512,1024,1024]}
+1.04.463.058 W sycl node profile: 24 total_ms=317.156 calls=55 avg_ms=5.766 FLASH_ATTN_EXT:__fattn__-6
+1.04.463.058 W sycl node profile detail: 24 node{FLASH_ATTN_EXT:__fattn__-6 type=f32 ne=[256,16,2,1] nb=[4,1024,16384,32768]} src0{PERMUTE:Qcur_pos-6 (view) (permuted) type=f32 ne=[256,2,16,1] nb=[4,16384,1024,32768]} src1{PERMUTE:cache_k_l6 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src2{PERMUTE:cache_v_l6 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src3{NONE:SYCL0#attn_inp_kq_mask#0 type=f16 ne=[256,2,1,1] nb=[2,512,1024,1024]}
+1.04.463.058 W sycl node profile: 25 total_ms=317.077 calls=55 avg_ms=5.765 FLASH_ATTN_EXT:__fattn__-18
+1.04.463.059 W sycl node profile detail: 25 node{FLASH_ATTN_EXT:__fattn__-18 type=f32 ne=[256,16,2,1] nb=[4,1024,16384,32768]} src0{PERMUTE:Qcur_pos-18 (view) (permuted) type=f32 ne=[256,2,16,1] nb=[4,16384,1024,32768]} src1{PERMUTE:cache_k_l18 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src2{PERMUTE:cache_v_l18 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src3{NONE:SYCL0#attn_inp_kq_mask#0 type=f16 ne=[256,2,1,1] nb=[2,512,1024,1024]}
+1.04.463.059 W sycl node profile: 26 total_ms=316.925 calls=55 avg_ms=5.762 FLASH_ATTN_EXT:__fattn__-9
+1.04.463.059 W sycl node profile detail: 26 node{FLASH_ATTN_EXT:__fattn__-9 type=f32 ne=[256,16,2,1] nb=[4,1024,16384,32768]} src0{PERMUTE:Qcur_pos-9 (view) (permuted) type=f32 ne=[256,2,16,1] nb=[4,16384,1024,32768]} src1{PERMUTE:cache_k_l9 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src2{PERMUTE:cache_v_l9 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src3{NONE:SYCL0#attn_inp_kq_mask#0 type=f16 ne=[256,2,1,1] nb=[2,512,1024,1024]}
+1.04.463.060 W sycl node profile: 27 total_ms=316.605 calls=55 avg_ms=5.756 FLASH_ATTN_EXT:__fattn__-10
+1.04.463.061 W sycl node profile detail: 27 node{FLASH_ATTN_EXT:__fattn__-10 type=f32 ne=[256,16,2,1] nb=[4,1024,16384,32768]} src0{PERMUTE:Qcur_pos-10 (view) (permuted) type=f32 ne=[256,2,16,1] nb=[4,16384,1024,32768]} src1{PERMUTE:cache_k_l10 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src2{PERMUTE:cache_v_l10 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src3{NONE:SYCL0#attn_inp_kq_mask#0 type=f16 ne=[256,2,1,1] nb=[2,512,1024,1024]}
+1.04.463.061 W sycl node profile: 28 total_ms=316.554 calls=55 avg_ms=5.756 FLASH_ATTN_EXT:__fattn__-16
+1.04.463.061 W sycl node profile detail: 28 node{FLASH_ATTN_EXT:__fattn__-16 type=f32 ne=[256,16,2,1] nb=[4,1024,16384,32768]} src0{PERMUTE:Qcur_pos-16 (view) (permuted) type=f32 ne=[256,2,16,1] nb=[4,16384,1024,32768]} src1{PERMUTE:cache_k_l16 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src2{PERMUTE:cache_v_l16 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src3{NONE:SYCL0#attn_inp_kq_mask#0 type=f16 ne=[256,2,1,1] nb=[2,512,1024,1024]}
+1.04.463.062 W sycl node profile: 29 total_ms=316.006 calls=55 avg_ms=5.746 FLASH_ATTN_EXT:__fattn__-22
+1.04.463.062 W sycl node profile detail: 29 node{FLASH_ATTN_EXT:__fattn__-22 type=f32 ne=[256,16,2,1] nb=[4,1024,16384,32768]} src0{PERMUTE:Qcur_pos-22 (view) (permuted) type=f32 ne=[256,2,16,1] nb=[4,16384,1024,32768]} src1{PERMUTE:cache_k_l22 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src2{PERMUTE:cache_v_l22 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src3{NONE:SYCL0#attn_inp_kq_mask#0 type=f16 ne=[256,2,1,1] nb=[2,512,1024,1024]}
+1.04.463.063 W sycl node profile: 30 total_ms=315.660 calls=55 avg_ms=5.739 FLASH_ATTN_EXT:__fattn__-21
+1.04.463.063 W sycl node profile detail: 30 node{FLASH_ATTN_EXT:__fattn__-21 type=f32 ne=[256,16,2,1] nb=[4,1024,16384,32768]} src0{PERMUTE:Qcur_pos-21 (view) (permuted) type=f32 ne=[256,2,16,1] nb=[4,16384,1024,32768]} src1{PERMUTE:cache_k_l21 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src2{PERMUTE:cache_v_l21 (view) (permuted) type=f16 ne=[256,256,8,1] nb=[2,4096,512,12582912]} src3{NONE:SYCL0#attn_inp_kq_mask#0 type=f16 ne=[256,2,1,1] nb=[2,512,1024,1024]}
+1.04.596.040 I slot print_timing: id  0 | task 23 | prompt eval time =   43193.83 ms / 30400 tokens (    1.42 ms per token,   703.80 tokens per second)
+1.04.596.042 I slot print_timing: id  0 | task 23 |        eval time =    1377.13 ms /    78 tokens (   17.66 ms per token,    56.64 tokens per second)
+1.04.596.043 I slot print_timing: id  0 | task 23 |       total time =   44570.96 ms / 30478 tokens
+1.04.596.044 I slot print_timing: id  0 | task 23 |    graphs reused =         26
+1.04.596.046 I slot print_timing: id  0 | task 23 | draft acceptance = 0.98333 (   59 accepted /    60 generated), mean acceptance length =  3.95, acceptance rate per position = (1.000, 1.000, 0.950)
+1.04.596.054 I statistics        draft-mtp: #calls(b,g,a) =    5     31     31, #gen drafts =     31, #acc drafts =    31, #gen tokens =     93, #acc tokens =    91, #mean acc len = 3.94, #acc rate/pos = (1.000, 1.000, 0.935), dur(b,g,a) = 0.005, 265.109, 0.308 ms
+1.04.596.055 I mtp profile        draft-mtp: process_ms=1.829, draft_decode_ms=264.966, fast_sync_ms=0.014, fast_logits_ms=0.000, fast_scan_ms=0.000, fast_prob_ms=0.000
+1.04.596.056 I mtp profile        draft-mtp: sampler_ms=0.000, hidden_get_ms=0.000, handoff_ms=0.000, accept_copy_ms=0.301
+1.04.596.057 I mtp profile        draft-mtp: counts process_calls=55, process_tokens=30679, verify_rows=30679, draft_decodes=31, draft_decode_tokens=31, fast_topk_calls=31, vocab_scanned=0, sampler_calls=0, hidden_rows=0, handoff_rows=0, device_h_rows=0, device_h_fallbacks=0, deferred_pending_h_skips=0
+1.04.596.057 I mtp profile        draft-mtp: stops gap=0, pmin=0, nmax=0, avg_top1_p=1.000000, avg_logit_gap=0.000000
+1.04.596.058 I mtp profile        draft-mtp: target decode phase profile follows
+1.04.596.059 W mtp decode phase profile: calls=55, tokens=30679, ubatches=55, total_ms=45340.093, per_call_ms=824.365, per_token_ms=1.478
+1.04.596.061 W mtp decode phase profile: balloc_ms=3.325, sched_reserve_ms=0.003, memory_update_ms=0.056, init_batch_ms=35.876, output_reserve_ms=9.345
+1.04.596.061 W mtp decode phase profile: process_ubatch_ms=45291.124, post_extract_ms=0.282, output_map_ms=0.008
+1.04.596.062 W mtp decode phase profile: logits_extract_ms=0.001, embd_extract_ms=0.000, h_nextn_extract_ms=0.005, sampled_extract_ms=0.262
+1.04.596.062 I mtp profile        draft-mtp: draft decode phase profile follows
+1.04.596.063 W mtp decode phase profile: calls=32, tokens=33, ubatches=32, total_ms=286.516, per_call_ms=8.954, per_token_ms=8.682
+1.04.596.064 W mtp decode phase profile: balloc_ms=0.100, sched_reserve_ms=0.956, memory_update_ms=0.017, init_batch_ms=3.751, output_reserve_ms=0.023
+1.04.596.064 W mtp decode phase profile: process_ubatch_ms=281.433, post_extract_ms=0.208, output_map_ms=0.007
+1.04.596.065 W mtp decode phase profile: logits_extract_ms=0.002, embd_extract_ms=0.000, h_nextn_extract_ms=0.048, sampled_extract_ms=0.153
+1.04.597.016 I slot      release: id  0 | task 23 | stop processing: n_tokens = 30479, truncated = 0
+1.04.597.028 I srv  print_spec_p: server spec profile: draft_ms=265.122 calls=55 draft_tokens=93 avg=4.820 ms
+1.04.597.029 I srv  print_spec_p: server spec profile: target_decode_ms=45340.179 calls=55 tokens=30679 avg=824.367 ms avg_token=1.478 ms
+1.04.597.030 I srv  print_spec_p: server spec profile: target_prompt_ms=43844.971 calls=24 tokens=30555 avg=1826.874 ms avg_token=1.435 ms
+1.04.597.031 I srv  print_spec_p: server spec profile: target_generation_ms=1495.208 calls=31 tokens=124 avg=48.233 ms avg_token=12.058 ms
+1.04.597.032 I srv  print_spec_p: server spec profile: process_ms=1.872 calls=55 avg=0.034 ms
+1.04.597.033 I srv  print_spec_p: server spec profile: sample_accept_ms=0.103 calls=31 avg=0.003 ms accepted_tokens=122
+1.04.597.033 I srv  print_spec_p: server spec profile: common_accept_ms=0.310 calls=31 avg=0.010 ms
+1.04.597.034 I srv  print_spec_p: server spec profile: emit_ms=0.120 calls=26 avg=0.005 ms
+1.04.597.034 I srv  print_spec_p: server spec profile: eog_trim calls=0 tokens=0
+1.04.597.034 I srv  print_spec_p: server spec profile: prefix2_tail head_ms=0.000 calls=0 tail_tokens=0 prefix_matches=0 avg=0.000 ms
+1.04.597.035 I srv  update_slots: all slots are idle
+1.04.635.604 I srv    operator(): operator(): cleaning up before exit...
+1.04.636.766 W mtp decode phase profile: calls=32, tokens=33, ubatches=32, total_ms=286.516, per_call_ms=8.954, per_token_ms=8.682
+1.04.636.770 W mtp decode phase profile: balloc_ms=0.100, sched_reserve_ms=0.956, memory_update_ms=0.017, init_batch_ms=3.751, output_reserve_ms=0.023
+1.04.636.771 W mtp decode phase profile: process_ubatch_ms=281.433, post_extract_ms=0.208, output_map_ms=0.007
+1.04.636.772 W mtp decode phase profile: logits_extract_ms=0.002, embd_extract_ms=0.000, h_nextn_extract_ms=0.048, sampled_extract_ms=0.153
+1.04.704.463 W mtp decode phase profile: calls=55, tokens=30679, ubatches=55, total_ms=45340.093, per_call_ms=824.365, per_token_ms=1.478
+1.04.704.470 W mtp decode phase profile: balloc_ms=3.325, sched_reserve_ms=0.003, memory_update_ms=0.056, init_batch_ms=35.876, output_reserve_ms=9.345
+1.04.704.471 W mtp decode phase profile: process_ubatch_ms=45291.124, post_extract_ms=0.282, output_map_ms=0.008
+1.04.704.471 W mtp decode phase profile: logits_extract_ms=0.001, embd_extract_ms=0.000, h_nextn_extract_ms=0.005, sampled_extract_ms=0.262

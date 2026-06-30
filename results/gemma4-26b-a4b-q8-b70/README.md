@@ -75,6 +75,14 @@ fixed short-suite guard passed and did not show a decode regression
 `123.67689864739785` short record. Evidence:
 [`../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-long-context-prefill-service-gate.md`](../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-long-context-prefill-service-gate.md).
 
+Follow-up heavy-context screens tested UB1792/2048/2304/2560 at `16213`,
+`22730`, and `30400` actual prompt tokens. UB2560 produced the best narrow
+prefill number, but UB2560 and UB2304 both lost enough short-suite throughput
+to remain diagnostics only. A profiled UB2048 near-32K row shows the prefill
+path is dominated by `FLASH_ATTN_EXT` / KV-cache attention work, so future
+prompt-processing work should target attention/prefill internals rather than
+another generic UBATCH sweep.
+
 The valid no-spec control is `74.29709476830473 tok/s` median:
 `data/gemma4-q8-gpu0-vdr4default-nospec-realistic-gate-v2-20260627T165335Z/summary.json`.
 Use it as the clean target-side baseline for new work; draft-MTP now has a

@@ -226,3 +226,161 @@ UB1024 retained as the strict record reproduction setting.
 
 No LocalMaxxing submission was made: these are service/prefill validation rows,
 and the short guard did not break the current record.
+
+## Follow-Up: Heavy-Context UBATCH Refinement
+
+After promoting UB2048 as the general service candidate, two four-GPU
+cross-over screens tested only the heavier fixed long-context cases:
+
+- `lc-12288-early` (`16213` actual prompt tokens);
+- `lc-16384-late` (`22730` actual prompt tokens);
+- `lc-22000-middle` (`30400` actual prompt tokens).
+
+Both screens used unique cold requests, exact JSON retrieval validation,
+`cached_tokens=0`, `MAX_TOKENS=96`, and `LONG_CONTEXT_MAX_TARGET_PROMPT_TOKENS=24000`.
+Every lane passed the long-context gate.
+
+Commands:
+
+```bash
+STAMP=20260630Tubatch-refineA \
+LONG_CONTEXT_CASE_IDS='lc-12288-early lc-16384-late lc-22000-middle' \
+LONG_CONTEXT_MAX_TARGET_PROMPT_TOKENS=24000 \
+LANE_SPECS='0:1792:1792:ub1792 1:2048:2048:ub2048 2:2304:2304:ub2304 3:2560:2560:ub2560' \
+CANARY_REPEATS=2 MAX_TOKENS=96 BASE_PORT=18520 \
+repro/gemma4-26b-a4b-q8-b70/run-vdr2-long-context-service-gate.sh
+
+STAMP=20260630Tubatch-refineB \
+LONG_CONTEXT_CASE_IDS='lc-12288-early lc-16384-late lc-22000-middle' \
+LONG_CONTEXT_MAX_TARGET_PROMPT_TOKENS=24000 \
+LANE_SPECS='0:2560:2560:ub2560-xover 1:2304:2304:ub2304-xover 2:2048:2048:ub2048-xover 3:1792:1792:ub1792-xover' \
+CANARY_REPEATS=2 MAX_TOKENS=96 BASE_PORT=18520 \
+repro/gemma4-26b-a4b-q8-b70/run-vdr2-long-context-service-gate.sh
+```
+
+Combined A/B readout:
+
+| Config | Avg median prefill tok/s | Avg decode tok/s | 16213-token prefill | 22730-token prefill | 30400-token prefill |
+|---|---:|---:|---:|---:|---:|
+| UB1792 | `816.264` | `78.377` | `931.816` | `816.264` | `708.444` |
+| UB2048 | `815.106` | `78.499` | `938.039` | `815.106` | `710.342` |
+| UB2304 | `827.853` | `77.408` | `939.178` | `827.853` | `708.743` |
+| UB2560 | `835.782` | `77.519` | `937.321` | `835.782` | `718.968` |
+
+Readout:
+
+- UB2560 is the fastest heavy-context prefill point in this narrow screen:
+  about `+2.5%` versus UB2048 on the combined heavy cases and about `+1.2%`
+  at `30400` actual prompt tokens.
+- UB2304 is close at `22730` actual prompt tokens, but does not win the
+  near-32K boundary.
+- Larger UBATCH sizes slightly reduce long-suite decode on these short JSON
+  outputs, so short-suite guards remain required before any service promotion.
+
+Artifacts:
+
+- `data/gemma4-long-context-service-gate-20260630Tubatch-refineA.json`
+- `data/gemma4-long-context-service-gate-20260630Tubatch-refineB.json`
+- `data/gemma4-q8-gpu*-longctx-*-20260630Tubatch-refineA*/`
+- `data/gemma4-q8-gpu*-longctx-*-20260630Tubatch-refineB*/`
+
+## Follow-Up Short Guards For Larger UBATCH
+
+UB2560 and UB2304 were then tested against the fixed short realistic suite with
+the current record stack and `MAX_TOKENS=512`.
+
+Commands:
+
+```bash
+STAMP=20260630Tshortguard-ub2560A \
+LANE_SPECS='0:1024:1024:ub1024-control 1:2048:2048:ub2048-service 2:2560:2560:ub2560-cand-a 3:2560:2560:ub2560-cand-b' \
+CANARY_REPEATS=32 MAX_TOKENS=512 BASE_PORT=18540 \
+repro/gemma4-26b-a4b-q8-b70/run-vdr2-short-decode-guard.sh
+
+STAMP=20260630Tshortguard-ub2304A \
+LANE_SPECS='0:1024:1024:ub1024-control 1:2048:2048:ub2048-service 2:2304:2304:ub2304-cand-a 3:2304:2304:ub2304-cand-b' \
+CANARY_REPEATS=32 MAX_TOKENS=512 BASE_PORT=18540 \
+repro/gemma4-26b-a4b-q8-b70/run-vdr2-short-decode-guard.sh
+```
+
+Both runs passed the strict cold gate, `cached_tokens=0`, and canaries on every
+lane, but neither larger UBATCH is service-safe under the "do not lower short
+decode" rule:
+
+| Run | Config | Median 1-100 tok/s after TTFT |
+|---|---|---:|
+| `20260630Tshortguard-ub2560A` | UB1024 control | `120.084` |
+| `20260630Tshortguard-ub2560A` | UB2048 service | `114.841` |
+| `20260630Tshortguard-ub2560A` | UB2560 avg | `113.252` |
+| `20260630Tshortguard-ub2304A` | UB1024 control | `121.925` |
+| `20260630Tshortguard-ub2304A` | UB2048 service | `119.560` |
+| `20260630Tshortguard-ub2304A` | UB2304 avg | `116.547` |
+
+Decision:
+
+- Keep UB2048 as the validated general long-context service/default candidate.
+- Keep UB1024 for the short-record reproduction lane.
+- UB2304 and UB2560 are valid prefill diagnostics only. Do not promote them to
+  default service settings unless a future source patch changes the short
+  decode tradeoff and they are re-guarded.
+
+Artifacts:
+
+- `data/gemma4-short-decode-guard-20260630Tshortguard-ub2560A.json`
+- `data/gemma4-short-decode-guard-20260630Tshortguard-ub2304A.json`
+- `data/gemma4-q8-gpu*-shortguard-*-20260630Tshortguard-ub2560A*/`
+- `data/gemma4-q8-gpu*-shortguard-*-20260630Tshortguard-ub2304A*/`
+
+## Profile: Near-32K UB2048 Prefill Is Attention-Bound
+
+A diagnostic profile run kept the validated UB2048 service shape and enabled
+SYCL node profiling plus server/MTP timing for the `lc-22000-middle` boundary
+case. This run is **diagnostic only** because profiling perturbs throughput.
+
+Command:
+
+```bash
+STAMP=20260630Tprefill-profile-ub2048 \
+GGML_SYCL_NODE_PROFILE=1 \
+GGML_SYCL_NODE_PROFILE_DETAIL=1 \
+GGML_SYCL_NODE_PROFILE_EVERY=24 \
+LLAMA_SERVER_SPEC_PROFILE=1 \
+LLAMA_MTP_DRAFT_PROFILE=1 \
+LONG_CONTEXT_CASE_IDS='lc-22000-middle' \
+LONG_CONTEXT_MAX_TARGET_PROMPT_TOKENS=24000 \
+LANE_SPECS='0:2048:2048:ub2048-profile' \
+CANARY_REPEATS=1 MAX_TOKENS=96 BASE_PORT=18520 \
+repro/gemma4-26b-a4b-q8-b70/run-vdr2-long-context-service-gate.sh
+```
+
+Result:
+
+- long-context gate passed;
+- exact JSON retrieval passed;
+- `cached_tokens=0`;
+- prompt tokens: `30400`;
+- prompt eval: `43193.83 ms / 30400 tokens = 703.80 tok/s`;
+- generated eval: `1377.13 ms / 78 tokens = 56.64 tok/s`;
+- server profile: `target_prompt_ms=43844.971`, `target_generation_ms=1495.208`;
+- MTP profile: `process_ubatch_ms=45291.124` dominates;
+- SYCL node profile: `graphs=144`, `unique_nodes=1423`; the top five nodes are
+  `FLASH_ATTN_EXT:__fattn__` layers `5`, `17`, `11`, `23`, and `29`, each
+  around `4511-4529 ms` total / `55` calls / `~82 ms` average.
+
+Decision:
+
+- The near-32K prompt-processing bottleneck is FlashAttention / KV-cache
+  attention work, not verifier LM-head rows or MoE selected-down work.
+- Next prefill source work should target the attention/prefill path:
+  flash-attention shape handling, KV/cache movement, or prefill graph/layout
+  behavior.
+- Keep short-decode verifier/MoE ideas separate; they are still relevant to
+  the short record, but this profile does not support them as the next
+  long-context prefill lever.
+
+Artifacts:
+
+- `data/gemma4-long-context-service-gate-20260630Tprefill-profile-ub2048.json`
+- `data/gemma4-q8-gpu0-longctx-ub2048-profile-ctx32768-o96-20260630Tprefill-profile-ub2048/`
+- copied profile log:
+  `data/gemma4-q8-gpu0-longctx-ub2048-profile-ctx32768-o96-20260630Tprefill-profile-ub2048/server.log`

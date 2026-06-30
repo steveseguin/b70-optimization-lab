@@ -249,8 +249,15 @@ Primary target:
   passed on all lanes and did not show a decode regression (`119.153` UB2048
   average vs `116.402` UB1024), but did not beat the short record. Decision:
   UB2048 is the validated long-context/prefill service candidate; keep UB1024
-  for short-record reproduction. The failed `MAX_TOKENS=64` near-32K attempt
-  is archived as a harness truncation, not a model/context failure. Evidence:
+  for short-record reproduction. Follow-up heavy-context UB1792/2048/2304/2560
+  cross-over screens at `16213`, `22730`, and `30400` actual prompt tokens
+  found UB2560 fastest for narrow near-32K prefill (`718.968` tok/s at 30400
+  vs UB2048 `710.342`), but UB2560 and UB2304 both lost short-suite speed in
+  their guards, so they are diagnostics only. A profiled UB2048 near-32K run
+  showed prompt processing is dominated by `FLASH_ATTN_EXT` / KV-cache
+  attention work; do not reopen generic UBATCH roulette without new evidence.
+  The failed `MAX_TOKENS=64` near-32K attempt is archived as a harness
+  truncation, not a model/context failure. Evidence:
   `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-long-context-prefill-service-gate.md`.
 - Current best non-duplicate Gemma code target is still verifier cost, but not
   by removing the bonus pipeline or by a naive candidate-threshold head scan.

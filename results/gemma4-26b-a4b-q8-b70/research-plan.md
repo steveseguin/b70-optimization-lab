@@ -129,6 +129,20 @@ validated long-context/prefill service candidate; keep UB1024 for short-record
 reproduction and LocalMaxxing record work. See
 `../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-long-context-prefill-service-gate.md`.
 
+Follow-up heavy-context refinement closed the obvious UBATCH-only lane:
+UB1792/2048/2304/2560 were cross-over tested on the `16213`, `22730`, and
+`30400` actual-token cases. UB2560 was the fastest narrow prefill point
+(`835.782` combined median prefill tok/s, `718.968` at 30400 actual tokens),
+but its paired short guard averaged only `113.252` median 1-100 tok/s after
+TTFT. UB2304 also stayed below the controls in its short guard (`116.547`
+average). Keep both as diagnostics only, not service defaults. A profiled
+UB2048 near-32K row (`20260630Tprefill-profile-ub2048`) showed
+`FLASH_ATTN_EXT` nodes dominate prompt processing, with the top five attention
+nodes around `4511-4529 ms` each and final prompt eval at `43193.83 ms / 30400
+tokens = 703.80 tok/s`. Next prefill source work should target
+FlashAttention/KV-cache attention shape, layout, or graph behavior rather than
+verifier LM-head/MoE work.
+
 2026-06-30 record-identity full512 repeat: four parallel lanes of the current
 FA-on 32K/VMM selected-down VDR2 recipe all passed the strict realistic final
 gate with `cached_tokens=0` and 128/128 canary, but did not beat the
