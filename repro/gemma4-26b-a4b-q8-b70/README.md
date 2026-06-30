@@ -39,6 +39,9 @@ Promoted service optimization:
 - best pure prefill seen: UB2304 median about `1075.98 tok/s`;
 - balanced general service default remains UB2048 unless the deployment is
   purely long-prefill oriented.
+- middle ubatches (`1280/1536/1792/1920`) were screened after the GQA8 win;
+  UB1280 was the best compromise but still dropped the fixed short-decode guard
+  to `118.73 tok/s`, below the `123.68 tok/s` record.
 
 Primary note:
 `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-sycl-fattn-dv512-gqa8-prefill-win.md`
@@ -55,5 +58,6 @@ Do not repeat these without a source/kernel change:
 See:
 
 - `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-sycl-fattn-scheduler-knobs-screen.md`;
+- `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-gqa8-midubatch-balance-screen.md`;
 - `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-sycl-fattn-dv512-gqa8-nbatchfa128-negative.md`;
 - `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-sycl-fattn-kv-max-scan-threshold-negative.md`.
