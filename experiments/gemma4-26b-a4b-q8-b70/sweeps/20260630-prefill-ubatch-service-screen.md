@@ -80,6 +80,11 @@ as a headline decode metric from this screen.
   UB2048 candidate (`118.70031578164084 tok/s`) did not beat the current
   `121.41411987308553 tok/s` headline. Treat UB2048 as a service/default
   candidate, not a new short-record recipe.
+- Follow-up UB2048 vs UB2560 repeat confirmation is also complete:
+  `20260630-prefill-ub2048-vs-ub2560-confirm.md`. UB2048 remains the best
+  general service/default candidate: it wins the 12K-requested shape and is an
+  effective prefill tie at the 16K-requested / ~21K actual-token shape while
+  preserving better decode-after-TTFT. Do not standardize on UB2560.
 
 ## Next Steps
 
@@ -87,5 +92,5 @@ as a headline decode metric from this screen.
    full512 strict run actually beats `121.41411987308553 tok/s`.
 2. For service / long-context deployment, use UB2048 as the best general
    candidate tested so far.
-3. For very long prompts (`>20K` actual tokens), retest UB2048 versus UB2560
-   with more than one unique prompt before making a service deployment choice.
+3. The very-long UB2048 versus UB2560 confirmation has been run. Keep UB2048
+   unless a future source patch changes the prefill memory/workgroup tradeoff.

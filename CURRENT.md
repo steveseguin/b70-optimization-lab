@@ -157,8 +157,14 @@ Current active optimization target:
   UB1024 controls at `116.46794311469674 tok/s`. It still did not beat the
   active `121.41411987308553 tok/s` record, so keep the promoted short-record
   reproduction on UB1024 and treat UB2048 as a validated service/default
-  candidate. See
-  `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-ub2048-short-suite-control.md`.
+  candidate. A repeat UB2048-vs-UB2560 confirmation at 12K- and
+  16K-requested long prompts kept that decision: UB2048 wins the
+  12K-requested shape and is an effective prefill tie at the 16K-requested /
+  ~21K actual-token shape while decoding faster, so do not standardize on
+  UB2560. See
+  `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-ub2048-short-suite-control.md`
+  and
+  `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-prefill-ub2048-vs-ub2560-confirm.md`.
 - Current diagnostic best, not a real-world headline:
   `176.21623213048554 tok/s` after TTFT on the first no-cache synthetic
   filled-long benchmark row, `176.40259133127742 tok/s` supporting repeat mean,

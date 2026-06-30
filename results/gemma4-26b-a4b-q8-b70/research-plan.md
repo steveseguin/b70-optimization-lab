@@ -96,10 +96,16 @@ no observed short-decode regression: UB2048 averaged
 `116.46794311469674 tok/s`, but the best UB2048 candidate was only
 `118.70031578164084 tok/s`, below the current `121.41411987308553 tok/s`
 record. Keep UB1024 for the promoted short-record reproduction; use UB2048 as
-the validated general service/default candidate. See
+the validated general service/default candidate. A repeat UB2048-vs-UB2560
+confirmation at the 12K- and 16K-requested long-prompt shapes kept the same
+decision: UB2048 wins the 12K-requested shape and is only an effective prefill
+tie at the 16K-requested / ~21K actual-token shape while decoding faster. Do
+not standardize on UB2560. See
 `../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-prefill-ubatch-service-screen.md`
 and
-`../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-ub2048-short-suite-control.md`.
+`../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-ub2048-short-suite-control.md`
+and
+`../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-prefill-ub2048-vs-ub2560-confirm.md`.
 
 2026-06-29 verifier LM-head candidate-threshold audit: shifted
 `t_inp_tokens[r + 1]` does provide the draft candidate ID for narrow standard

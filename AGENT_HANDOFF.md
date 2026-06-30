@@ -159,6 +159,11 @@ Primary target:
   (`118.70031578164084 tok/s`) did not beat the active
   `121.41411987308553 tok/s` record. Keep UB1024 for headline reproduction;
   UB2048 is validated as the best general service/default candidate so far.
+  Repeat UB2048-vs-UB2560 long-prefill confirmation is also complete:
+  `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-prefill-ub2048-vs-ub2560-confirm.md`.
+  UB2048 wins the 12K-requested shape and is an effective prefill tie at the
+  16K-requested / ~21K actual-token shape while decoding faster; do not
+  standardize on UB2560.
 - Current best non-duplicate Gemma code target is still verifier cost, but not
   by removing the bonus pipeline or by a naive candidate-threshold head scan.
   Work inside the existing target decode boundary only if it removes real
