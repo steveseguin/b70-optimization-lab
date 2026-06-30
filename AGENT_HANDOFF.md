@@ -168,6 +168,18 @@ Primary target:
   a possible service/full-output lane. Do not full512-confirm or submit for the
   short record. Evidence:
   `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-attn-postnorm-residual-fusion-negative.md`.
+- Latest source follow-up / inconclusive small result: per-layer embedding
+  post-norm residual fusion
+  (`LLAMA_GEMMA4_FUSED_PER_LAYER_POST_NORM_RESIDUAL=1`) was tested as the
+  next sibling of the final-postnorm win. The source was snapshotted before and
+  after, and harness metadata now passes/records the flag. Four strict128 lanes
+  all passed the cold gate, `cached_tokens=0`, and 512/512 canary. Controls
+  averaged `115.80942063480597 tok/s`; flag-on lanes averaged
+  `116.81238861292647 tok/s`; best flag-on was `119.96280008214512 tok/s`,
+  still below the `123.67689864739785` record. Treat as small/inconclusive,
+  keep default-off, and do not submit or full512-confirm for the short record.
+  Evidence:
+  `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-perlayer-postnorm-residual-fusion-inconclusive.md`.
 - Current context/service diagnostic split: the short-record recipe is now
   also the FA-on 32K/VMM service profile after a realistic-gate retest. The
   promoted row is `123.67689864739785 tok/s` with `FLASH_ATTN=on`,

@@ -194,6 +194,9 @@ def main() -> int:
         "llamaGemma4FusedAttnPostNormResidual": (
             launcher.get("llama_gemma4_fused_attn_post_norm_residual") == "1"
         ),
+        "llamaGemma4FusedPerLayerPostNormResidual": (
+            launcher.get("llama_gemma4_fused_per_layer_post_norm_residual") == "1"
+        ),
         "llamaGemma4MoeFusedBranchPostNormAdd": (
             launcher.get("llama_gemma4_moe_fused_branch_post_norm_add") == "1"
         ),

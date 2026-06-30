@@ -167,6 +167,17 @@ Current active optimization target:
   screen, so keep only as a possible service/full-output idea. Do not full512
   confirm or submit for the short record. See
   `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-attn-postnorm-residual-fusion-negative.md`.
+  The analogous per-layer embedding post-norm residual fusion
+  (`LLAMA_GEMMA4_FUSED_PER_LAYER_POST_NORM_RESIDUAL=1`) was tested next after
+  snapshotting the source and wiring the harness metadata. All four strict128
+  lanes passed the cold gate and 512/512 canary, but the effect was too small
+  and GPU-dependent for promotion: controls averaged `115.80942063480597 tok/s`,
+  flag-on lanes averaged `116.81238861292647 tok/s`, and the best flag-on lane
+  (`119.96280008214512`) stayed below the `123.67689864739785` record. Keep the
+  flag default-off, preserve the patch/results, and do not submit or full512
+  confirm for the short record unless a future service/full-output lane needs
+  it. See
+  `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-perlayer-postnorm-residual-fusion-inconclusive.md`.
 - Current context/service diagnostic split:
   with flash attention off, MTP remains useful through about `ctx24576` /
   `ctx25600`, degrades near `ctx26624`, and cliffs by `ctx27648`. With

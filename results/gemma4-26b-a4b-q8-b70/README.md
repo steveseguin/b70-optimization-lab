@@ -48,6 +48,15 @@ The earlier `86.47445652599384 tok/s` `p_min=0.075` observation did not repeat.
 Current record details and patch links:
 [`20260629-vdr2-selected-down-record.md`](20260629-vdr2-selected-down-record.md).
 
+Recent non-promoted source follow-ups after the final-postnorm record:
+attention post-norm residual fusion lost on the short metric, and per-layer
+embedding post-norm residual fusion was only a small/inconclusive strict128
+hint (`116.812` flag-on average versus `115.809` controls, best flag-on
+`119.963`, still below `123.677`). Both flags remain default-off and are not
+LocalMaxxing submission candidates for the current short-decode record. See the
+latest sweep notes under
+[`../../experiments/gemma4-26b-a4b-q8-b70/sweeps/`](../../experiments/gemma4-26b-a4b-q8-b70/sweeps/).
+
 The valid no-spec control is `74.29709476830473 tok/s` median:
 `data/gemma4-q8-gpu0-vdr4default-nospec-realistic-gate-v2-20260627T165335Z/summary.json`.
 Use it as the clean target-side baseline for new work; draft-MTP now has a

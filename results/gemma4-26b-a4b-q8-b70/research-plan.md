@@ -147,6 +147,20 @@ a possible service/full-output idea. Do not full512-confirm or submit for the
 current 1-100-token record. See
 `../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-attn-postnorm-residual-fusion-negative.md`.
 
+2026-06-30 per-layer post-norm residual fusion: implemented default-off
+`LLAMA_GEMMA4_FUSED_PER_LAYER_POST_NORM_RESIDUAL=1`, updated the harness and
+payload metadata, rebuilt the same AOT BMG-G31 llama-server, and ran a verified
+strict128 A/B. All four lanes passed the fixed cold gate, `cached_tokens=0`,
+and 512/512 canary. The result is valid but too small and GPU-dependent to
+promote: controls averaged `115.80942063480597 tok/s`, flag-on lanes averaged
+`116.81238861292647 tok/s`, and the best flag-on lane was
+`119.96280008214512 tok/s`, below the `123.67689864739785` headline. Keep the
+flag default-off and preserve the before/after source snapshots; do not submit
+or full512-confirm for the short record unless future service/full-output work
+needs this path. This closes the obvious sibling norm/residual fusion after the
+final-postnorm win. See
+`../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-perlayer-postnorm-residual-fusion-inconclusive.md`.
+
 2026-06-29 verifier LM-head candidate-threshold audit: shifted
 `t_inp_tokens[r + 1]` does provide the draft candidate ID for narrow standard
 MTP verifier rows, but this is not a good next record implementation. Exact
