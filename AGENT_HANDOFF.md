@@ -180,6 +180,20 @@ Primary target:
   keep default-off, and do not submit or full512-confirm for the short record.
   Evidence:
   `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-perlayer-postnorm-residual-fusion-inconclusive.md`.
+- Latest verifier-design follow-up / diagnostic proof: accept-prefix parity was
+  implemented as a default-off fail-fast check under
+  `LLAMA_SPEC_VERIFY_ACCEPT_PREFIX_PARITY=1`. It reconstructs the accepted
+  token vector from backend sampled verifier rows and compares it to the
+  existing sampler accept path on the standard full-bonus MTP verifier shape.
+  The initial `n_draft == 3` guard was too narrow and rejected valid short-tail
+  steps; the rebuilt helper accepts any full-bonus tail with `n_draft > 0`,
+  consecutive verifier rows, and `spec_i_batch.size() == n_draft + 1`. The
+  validated full512 diagnostic passed the fixed cold gate, `cached_tokens=0`,
+  and 128/128 canary at `117.60357286123875 tok/s`, below the active record.
+  This proves the sampled-row invariant needed for a future backend
+  accept-prefix verifier LM-head op, but it does not reduce work and is not a
+  LocalMaxxing candidate. Evidence:
+  `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-accept-prefix-parity-probe.md`.
 - Current context/service diagnostic split: the short-record recipe is now
   also the FA-on 32K/VMM service profile after a realistic-gate retest. The
   promoted row is `123.67689864739785 tok/s` with `FLASH_ATTN=on`,
@@ -245,12 +259,13 @@ Primary target:
   rows, repeated-output continuation learning, prefix/cache reuse, context
   checkpoints, or any prior generated continuation as a record claim.
 - Post-100 status: the reliable `>100 tok/s` barrier is broken. Do not spend
-  more time on configuration-only repeats for this Gemma lane. The next
-  plausible short-decode record attempt is a real source-level verifier-cost
-  reduction, specifically the guarded accept-prefix LM-head op described above
-  or a profile-backed verifier/MoE boundary reduction beyond selected-down
-  fusion. If not implementing that, move to a separate prefill/long-context
-  service lane and rerun the short fixed suite afterward to prove no regression.
+  more time on configuration-only repeats for this Gemma lane. The
+  accept-prefix parity check has validated the sampled-row invariant; the next
+  plausible short-decode record attempt is the real backend accept-prefix
+  verifier LM-head op or a profile-backed verifier/MoE boundary reduction beyond
+  selected-down fusion. If not implementing that, move to a separate
+  prefill/long-context service lane and rerun the short fixed suite afterward to
+  prove no regression.
 
 Historical / service targets:
 

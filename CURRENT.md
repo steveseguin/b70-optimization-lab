@@ -178,6 +178,17 @@ Current active optimization target:
   confirm for the short record unless a future service/full-output lane needs
   it. See
   `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-perlayer-postnorm-residual-fusion-inconclusive.md`.
+  An accept-prefix parity probe followed as design proof for a possible future
+  backend verifier LM-head op. `LLAMA_SPEC_VERIFY_ACCEPT_PREFIX_PARITY=1`
+  reconstructs the accepted token vector from backend sampled verifier rows and
+  checks it against the existing sampler accept path on the full-bonus MTP
+  shape. The first strict helper incorrectly required `n_draft == 3` and failed
+  valid short-tail steps; the rebuilt helper accepts any full-bonus tail with
+  `n_draft > 0`, consecutive verifier rows, and `spec_i_batch.size()` equal to
+  `n_draft + 1`. The validated full512 run passed the fixed cold gate,
+  `cached_tokens=0`, and 128/128 canary at `117.60357286123875 tok/s`, below
+  the record, so it is diagnostic only and not a LocalMaxxing candidate. See
+  `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-accept-prefix-parity-probe.md`.
 - Current context/service diagnostic split:
   with flash attention off, MTP remains useful through about `ctx24576` /
   `ctx25600`, degrades near `ctx26624`, and cliffs by `ctx27648`. With
@@ -239,11 +250,12 @@ throughput. They are diagnostic artifacts unless the fixed realistic prompt
 suite passes with `cached_tokens=0` on every prompt.
 
 Short-decode status: the reliable `>100 tok/s` target is already broken. Avoid
-more Gemma config roulette. The next short-record source lane is either a
-guarded accept-prefix verifier LM-head op with parity mode, or a distinct
-profile-backed verifier/MoE boundary reduction. Otherwise, work on a separate
-prefill / long-context service lane and rerun the short fixed suite afterward to
-prove no regression.
+more Gemma config roulette. The accept-prefix parity mode is now validated as a
+sampled-row invariant check; it is not itself a speed path. The next
+short-record source lane is the actual backend accept-prefix verifier LM-head
+op, or a distinct profile-backed verifier/MoE boundary reduction. Otherwise,
+work on a separate prefill / long-context service lane and rerun the short fixed
+suite afterward to prove no regression.
 
 ## Historical MiniMax M2.7
 

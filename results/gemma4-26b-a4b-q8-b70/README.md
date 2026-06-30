@@ -53,8 +53,12 @@ attention post-norm residual fusion lost on the short metric, and per-layer
 embedding post-norm residual fusion was only a small/inconclusive strict128
 hint (`116.812` flag-on average versus `115.809` controls, best flag-on
 `119.963`, still below `123.677`). Both flags remain default-off and are not
-LocalMaxxing submission candidates for the current short-decode record. See the
-latest sweep notes under
+LocalMaxxing submission candidates for the current short-decode record. An
+accept-prefix parity probe then validated the sampled-row invariant for a
+future backend verifier LM-head op: `LLAMA_SPEC_VERIFY_ACCEPT_PREFIX_PARITY=1`
+passed the fixed cold gate, `cached_tokens=0`, and 128/128 canary at
+`117.604 tok/s`, but it intentionally adds checking work and is diagnostic
+only. See the latest sweep notes under
 [`../../experiments/gemma4-26b-a4b-q8-b70/sweeps/`](../../experiments/gemma4-26b-a4b-q8-b70/sweeps/).
 
 The valid no-spec control is `74.29709476830473 tok/s` median:

@@ -372,6 +372,30 @@ accept-prefix op with parity mode or move to a separate service/prefill lane.
 See
 `../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-verifier-row-shape-and-accept-prefix-audit.md`.
 
+2026-06-30 accept-prefix parity probe: implemented the guarded parity mode
+needed before a real backend accept-prefix verifier LM-head op. The
+default-off `LLAMA_SPEC_VERIFY_ACCEPT_PREFIX_PARITY=1` helper reconstructs the
+accepted token vector from backend sampled verifier rows and compares it to
+`common_sampler_sample_and_accept_n(...)` on the existing full-bonus MTP path.
+The first version was deliberately fail-fast but too narrow: it required
+`n_draft == 3` and rejected valid short-tail steps (`n_draft=2`,
+`spec_i_batch.size()=3`). The rebuilt helper accepts any full-bonus tail with
+`n_draft > 0`, consecutive verifier rows, no null sampled IDs, and
+`spec_i_batch.size() == n_draft + 1`. A full512 diagnostic
+(`gemma4-q8-gpu0-acceptprefix-parity-full512-v2-20260630T043728Z`) passed the
+fixed cold gate, `cached_tokens=0`, and 128/128 canary at
+`117.60357286123875 tok/s` median 1-100 after TTFT, with p10
+`104.05553056029459`, mean `117.26191569638787`, full512 after-TTFT median
+`112.95266056446746`, wall full512 median `108.53028475372003`, and median
+TTFT `178.42455202480778 ms`. This is not a record path and was not submitted:
+it intentionally adds checking work and stays below the
+`123.67689864739785 tok/s` record. The value is design proof: sampled verifier
+rows can derive the same accept-prefix decision, including short-tail steps.
+Next verifier work should implement the real backend op or a different
+profile-backed verifier/MoE boundary reduction; do not spend more GPU time on
+parity-mode throughput. See
+`../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-accept-prefix-parity-probe.md`.
+
 2026-06-30 FA-on 32K/VMM p_min gap screen: a final small threshold-only screen
 tested `p_min=0.04625`, `0.04725`, `0.047625`, and `0.04875` under the current
 selected-down VDR2 strict128 identity. All lanes passed the fixed cold gate and
