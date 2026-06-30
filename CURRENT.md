@@ -90,6 +90,19 @@ Current active optimization target:
   lane idea, but not as the current 1-100-token record path. The active source
   hunk was reverted; patch/results are preserved in
   `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-vdr2-selecteddown-rowpack2-negative.md`.
+  A rebuilt record-identity spec profile was then captured under
+  `LLAMA_SERVER_SPEC_PROFILE=1` / `LLAMA_MTP_DRAFT_PROFILE=1`. It passed the
+  fixed cold gate with `cached_tokens=0`, but is diagnostic only. It confirms
+  target/verifier graph work dominates (`target_decode_ms=38529.540` vs
+  `draft_ms=2665.342`); `sampled_extract_ms=1665.262` is the sampled-token
+  backend read/sync boundary and should not be treated as a simple copy-size
+  issue. See
+  `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-record-refresh-specprofile.md`.
+  A follow-up default-off sync-profile wrapper measured the later accept-side
+  verifier `llama_synchronize(ctx)` at only `1.734 ms` over `896` calls
+  (`0.002 ms/call`), confirming that sampled extraction cost is not in the
+  sampler accept loop. Next useful work should reduce verifier graph work or
+  remove/overlap the backend sampled-output extraction boundary.
 - Current context/service diagnostic split:
   with flash attention off, MTP remains useful through about `ctx24576` /
   `ctx25600`, degrades near `ctx26624`, and cliffs by `ctx27648`. With

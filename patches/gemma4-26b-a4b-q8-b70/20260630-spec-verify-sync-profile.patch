@@ -1,0 +1,76 @@
+Default-off diagnostic patch for Gemma 4 26B Q8 speculative verifier sync
+timing. This is not a speed patch and should not be promoted as part of a
+record recipe. It exists to measure whether the backend-argmax verifier's later
+accept-side `llama_synchronize(ctx)` is responsible for sampled-ID extraction
+cost.
+
+Result: on `gemma4-q8-gpu0-syncprofile-strict128-20260630T004214Z`, the wrapper
+reported only `1.734 ms` total sync time across `896` calls / `3581` rows
+(`0.002 ms/call`). That rules out this accept-side sync as a meaningful record
+lever. See:
+`experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-record-refresh-specprofile.md`.
+
+Patch sketch against `common/sampling.cpp` in
+`/home/steve/src/llama.cpp-gemma-record-repro-c926`:
+
+```diff
+--- a/common/sampling.cpp
++++ b/common/sampling.cpp
+@@
+ #include <cmath>
++#include <cinttypes>
+ #include <cstdlib>
+ #include <cstring>
+@@
+ static bool common_sampler_spec_verify_skip_stateless_accept_from_env() {
+@@
+ }
++
++static bool common_sampler_spec_verify_sync_profile_from_env() {
++    const char * env = std::getenv("LLAMA_SPEC_VERIFY_SYNC_PROFILE");
++    if (env == nullptr || env[0] == '\0') {
++        return false;
++    }
++
++    return strcmp(env, "1") == 0 || strcmp(env, "true") == 0 ||
++        strcmp(env, "TRUE") == 0 || strcmp(env, "yes") == 0 ||
++        strcmp(env, "on") == 0;
++}
++
++static void common_sampler_spec_verify_synchronize(struct llama_context * ctx, size_t rows) {
++    static const bool profile = common_sampler_spec_verify_sync_profile_from_env();
++    static int64_t n_calls = 0;
++    static int64_t n_rows = 0;
++    static int64_t t_sync_us = 0;
++
++    if (!profile) {
++        llama_synchronize(ctx);
++        return;
++    }
++
++    const int64_t t0 = ggml_time_us();
++    llama_synchronize(ctx);
++    const int64_t dt = ggml_time_us() - t0;
++
++    n_calls++;
++    n_rows += (int64_t) rows;
++    t_sync_us += dt;
++
++    if ((n_calls & 127) == 0) {
++        LOG_WRN("spec verify sync profile: calls=%" PRId64 ", rows=%" PRId64
++                ", sync_ms=%.3f, avg_call_ms=%.3f, avg_row_ms=%.3f\n",
++                n_calls, n_rows,
++                (double) t_sync_us / 1000.0,
++                (double) t_sync_us / 1000.0 / (double) n_calls,
++                (double) t_sync_us / 1000.0 / (double) std::max<int64_t>(1, n_rows));
++    }
++}
+@@
+     if (common_sampler_spec_verify_backend_argmax_ids_from_env()) {
+-        llama_synchronize(ctx);
++        common_sampler_spec_verify_synchronize(ctx, idxs.size());
+@@
+     if (common_sampler_spec_verify_backend_argmax_ids_from_env()) {
+-        llama_synchronize(ctx);
++        common_sampler_spec_verify_synchronize(ctx, idxs.size());
+```

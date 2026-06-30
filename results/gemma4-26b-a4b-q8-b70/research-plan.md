@@ -220,6 +220,25 @@ against the same-screen control at `116.81887639329213 tok/s` and v1 at
 submit this route. See
 `../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260629-regular-mmvq-top1-partial-negative.md`.
 
+2026-06-30 profile refresh: after the rowpack2 experiment was reverted and the
+server rebuilt, a fresh `LLAMA_SERVER_SPEC_PROFILE=1` /
+`LLAMA_MTP_DRAFT_PROFILE=1` run of the FA-on 32K/VMM record identity passed
+the fixed cold suite but measured only `114.05619435553182 tok/s` because it
+was diagnostic (`MAX_TOKENS=128`, profiling enabled). The profile confirms the
+current bottleneck remains target/verifier graph work, not draft or sampler
+bookkeeping: `target_decode_ms=38529.540`, `draft_ms=2665.342`,
+`process_ubatch_ms=36833.360`, and `sampled_extract_ms=1665.262`. The sampled
+IDs are already compact and bulk-read, so a smaller host-vector patch is not a
+credible record lever unless it removes/overlaps the backend read/sync. See
+`../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-record-refresh-specprofile.md`.
+
+Follow-up sync timing with a default-off
+`LLAMA_SPEC_VERIFY_SYNC_PROFILE=1` wrapper measured the later accept-side
+`llama_synchronize(ctx)` at only `1.734 ms` total over `896` verifier calls
+(`0.002 ms/call`). This rules out sampler-side sync cleanup as a meaningful
+record path; if sampled-ID extraction is attacked again, the patch must remove
+or overlap the backend output-read boundary itself.
+
 Post-top1 profile check: skip the dense/shared FFN gate+up+GEGLU fusion for
 now. The activation-profile follow-up for the top1 experiment showed the new
 LM-head route active and still hot, then routed MoE gate/up

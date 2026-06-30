@@ -77,6 +77,20 @@ Primary target:
   full-output / wall throughput. Keep it as a possible service-lane idea, not
   a headline record path. Evidence:
   `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-vdr2-selecteddown-rowpack2-negative.md`.
+- Latest profile refresh: the rebuilt baseline/profile run
+  `gemma4-q8-gpu0-record-refresh-specprofile-strict128-20260630T002301Z`
+  passed the fixed cold gate and `cached_tokens=0`, but is diagnostic only
+  because profiling and `MAX_TOKENS=128` were enabled. It confirms the record
+  identity is target/verifier-bound: target decode `38529.540 ms` versus draft
+  `2665.342 ms`; target `process_ubatch_ms=36833.360`; sampled-ID extraction
+  `1665.262 ms` is a backend read/sync boundary, not an integer-copy loop.
+  Host sampler/accept bookkeeping remains negligible. Evidence:
+  `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-record-refresh-specprofile.md`.
+  Follow-up `LLAMA_SPEC_VERIFY_SYNC_PROFILE=1` timing showed the later
+  accept-side `llama_synchronize(ctx)` is only `1.734 ms` total over `896`
+  verifier calls (`0.002 ms/call`), so do not chase sampler-side sync cleanup
+  as a record lever. The remaining credible target is real verifier graph cost
+  or the backend sampled-output extraction boundary itself.
 - Current context/service diagnostic split: the short-record recipe is now
   also the FA-on 32K/VMM service profile after a realistic-gate retest. The
   promoted row is `121.41411987308553 tok/s` with `FLASH_ATTN=on`,
