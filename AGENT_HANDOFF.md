@@ -111,6 +111,18 @@ Primary target:
   `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-faon-vmm-ubatch-screen.md`.
   Treat `UBATCH_SIZE=768`, `896`, and `1152` as closed for the short-record
   lane unless a future source patch changes the memory/workgroup tradeoff.
+- Latest verifier-shape audit: the apparent one-column Q8 LM-head profile
+  detail is not enough evidence for a row-coalescing patch. A verbose
+  `LLAMA_BATCH_DEBUG=1` diagnostic showed the standard MTP verifier path already
+  forms full-bonus microbatches with `n_tokens=4`, `n_outputs=4`; the SYCL node
+  profiler preserves the first detail for a node name, which can be a one-output
+  prompt/decode graph. Two read-only audits agreed the only remaining exact
+  row-output reduction is a deeper accept-prefix verifier LM-head backend op:
+  compute row 0 target top-1, compare to draft on-device, then compute later
+  verifier/bonus rows only if prior rows matched. Expected upside is modest and
+  implementation risk is high. Evidence:
+  `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-verifier-row-shape-and-accept-prefix-audit.md`.
+  Do not reopen row-shape/config screens without new profile evidence.
 - Current context/service diagnostic split: the short-record recipe is now
   also the FA-on 32K/VMM service profile after a realistic-gate retest. The
   promoted row is `121.41411987308553 tok/s` with `FLASH_ATTN=on`,
@@ -148,10 +160,11 @@ Primary target:
   checkpoints, or any prior generated continuation as a record claim.
 - Post-100 status: the reliable `>100 tok/s` barrier is broken. Do not spend
   more time on configuration-only repeats for this Gemma lane. The next
-  plausible record attempt needs a real source-level verifier-cost reduction,
-  especially a row-adaptive verifier-output design that preserves exactness and
-  keeps the full-accept bonus pipeline, or additional verifier MoE boundary
-  reduction beyond selected-down fusion.
+  plausible short-decode record attempt is a real source-level verifier-cost
+  reduction, specifically the guarded accept-prefix LM-head op described above
+  or a profile-backed verifier/MoE boundary reduction beyond selected-down
+  fusion. If not implementing that, move to a separate prefill/long-context
+  service lane and rerun the short fixed suite afterward to prove no regression.
 
 Historical / service targets:
 

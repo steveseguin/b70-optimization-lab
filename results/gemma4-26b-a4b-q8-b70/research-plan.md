@@ -266,6 +266,24 @@ Decision: valid local positive versus same-window controls, but no recipe
 change and no LocalMaxxing submission. See
 `../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-faon-vmm-ubatch-screen.md`.
 
+2026-06-30 verifier row-shape / accept-prefix audit: two read-only source
+audits plus a tiny `LLAMA_BATCH_DEBUG=1` diagnostic clarified the next verifier
+lane. The profiler detail that shows the Q8 LM-head as `src1 ne=[2816,1,...]`
+is misleading because the SYCL node profiler keys by node name and keeps the
+first detail it observed. The actual MTP verifier split log shows standard
+full-bonus verifier microbatches with `n_tokens=4` and `n_outputs=4`, so a
+simple "coalesce LM-head output rows" patch is not a meaningful next step.
+The remaining exact row-output reduction would require a new backend
+accept-prefix verifier LM-head op that computes row 0 top-1, compares with the
+draft token on-device, and computes later verifier/bonus rows only as needed.
+Expected upside is modest (`+2` to `+6 tok/s` if implemented well), and the
+risk is high because losing the current Q8 multi-column path or adding serial
+kernel launches can erase the row savings. Do not reopen row-shape/config
+screens without new profile evidence; either implement the guarded
+accept-prefix op with parity mode or move to a separate service/prefill lane.
+See
+`../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-verifier-row-shape-and-accept-prefix-audit.md`.
+
 Post-top1 profile check: skip the dense/shared FFN gate+up+GEGLU fusion for
 now. The activation-profile follow-up for the top1 experiment showed the new
 LM-head route active and still hot, then routed MoE gate/up

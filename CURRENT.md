@@ -118,6 +118,14 @@ Current active optimization target:
   below the `121.41411987308553` headline. Do not change the recipe or submit
   it. See
   `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-faon-vmm-ubatch-screen.md`.
+  A verifier row-shape audit followed. The apparent one-column Q8 LM-head node
+  profile detail is not a simple row-coalescing opportunity: a verbose
+  `LLAMA_BATCH_DEBUG=1` diagnostic showed the standard full-bonus MTP verifier
+  path already uses `n_tokens=4`, `n_outputs=4` microbatches. The SYCL node
+  profiler keeps the first detail it saw for a node name, often a one-output
+  prompt/decode graph. The remaining exact row-output idea is a deeper
+  accept-prefix verifier LM-head backend op, not a config knob. See
+  `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-verifier-row-shape-and-accept-prefix-audit.md`.
 - Current context/service diagnostic split:
   with flash attention off, MTP remains useful through about `ctx24576` /
   `ctx25600`, degrades near `ctx26624`, and cliffs by `ctx27648`. With
@@ -147,6 +155,13 @@ Do not promote the earlier `ngram-mod` `245-280 tok/s` rows, the synthetic
 filled-long `170+ tok/s` rows, or any repeated-prompt average as real-world
 throughput. They are diagnostic artifacts unless the fixed realistic prompt
 suite passes with `cached_tokens=0` on every prompt.
+
+Short-decode status: the reliable `>100 tok/s` target is already broken. Avoid
+more Gemma config roulette. The next short-record source lane is either a
+guarded accept-prefix verifier LM-head op with parity mode, or a distinct
+profile-backed verifier/MoE boundary reduction. Otherwise, work on a separate
+prefill / long-context service lane and rerun the short fixed suite afterward to
+prove no regression.
 
 ## Historical MiniMax M2.7
 
