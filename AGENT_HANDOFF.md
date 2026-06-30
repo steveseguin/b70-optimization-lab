@@ -145,6 +145,14 @@ Primary target:
   Next service tests may screen larger batch/ubatch on representative long
   prompts, but must keep this separate from the short-decode record and rerun
   the short fixed suite before any recipe promotion.
+  Follow-up service UBATCH screen:
+  `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-prefill-ubatch-service-screen.md`.
+  `BATCH_SIZE=2048`, `UBATCH_SIZE=2048` is the best general long-prefill
+  candidate so far (`+10.8%`, `+9.2%`, `+7.4%`, `+6.1%` approximate prefill
+  over UB1024 at 8.1K, 12.1K, 16.2K, and 21.5K actual tokens). UB2560 is a
+  possible very-long-prompt follow-up; UB3072 fit but regressed. Before any
+  global recipe change, run the fixed realistic cold suite with UB2048 to prove
+  short-decode does not regress.
 - Current best non-duplicate Gemma code target is still verifier cost, but not
   by removing the bonus pipeline or by a naive candidate-threshold head scan.
   Work inside the existing target decode boundary only if it removes real

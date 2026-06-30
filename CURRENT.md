@@ -145,6 +145,14 @@ Current active optimization target:
   `955.9`, `887.7`, and `794.2 tok/s` at 12.1K, 16.2K, and 21.5K actual tokens.
   Treat this as the baseline for service-lane batch/ubatch screens; do not
   submit it or infer a short-decode record from it.
+  Follow-up service UBATCH screen:
+  `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-prefill-ubatch-service-screen.md`.
+  `BATCH_SIZE=2048`, `UBATCH_SIZE=2048` is the best general long-prefill
+  candidate tested so far, improving approximate prefill versus UB1024 by
+  `+10.8%`, `+9.2%`, `+7.4%`, and `+6.1%` at 8.1K, 12.1K, 16.2K, and 21.5K
+  actual prompt tokens. UB2560 is only a possible very-long-prompt follow-up;
+  UB3072 is a valid regression boundary. Do not promote UB2048 globally until
+  a fixed realistic cold-suite short-decode control proves no regression.
 - Current diagnostic best, not a real-world headline:
   `176.21623213048554 tok/s` after TTFT on the first no-cache synthetic
   filled-long benchmark row, `176.40259133127742 tok/s` supporting repeat mean,

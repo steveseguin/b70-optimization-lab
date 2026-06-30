@@ -84,6 +84,16 @@ the short-decode record recipe unchanged unless a service candidate later
 passes the fixed cold suite with no decode regression. See
 `../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-prefill-ladder-baseline.md`.
 
+2026-06-30 service UBATCH screen: `BATCH_SIZE=1536/2048/2560/3072` with matching
+`UBATCH_SIZE` was tested on the 8.1K, 12.1K, 16.2K, and 21.5K actual-token
+service shapes above. All rows were unique-prompt, canary-passing, and
+`cached_tokens=0`. `2048` is the best general candidate, improving approximate
+prefill over UB1024 by `+10.8%`, `+9.2%`, `+7.4%`, and `+6.1%`; `2560` is only
+a possible very-long-prompt follow-up; `3072` fits but regresses. This is not a
+short-decode recipe change until the fixed realistic cold suite proves no
+regression. See
+`../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-prefill-ubatch-service-screen.md`.
+
 2026-06-29 verifier LM-head candidate-threshold audit: shifted
 `t_inp_tokens[r + 1]` does provide the draft candidate ID for narrow standard
 MTP verifier rows, but this is not a good next record implementation. Exact
