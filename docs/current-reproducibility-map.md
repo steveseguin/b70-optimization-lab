@@ -192,7 +192,14 @@ Record identity:
   `../patches/gemma4-26b-a4b-q8-b70/20260630-sycl-fattn-dv512-gqa8-nbatchfa128-negative.patch`
   and documented as a negative/noise result in
   `../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-sycl-fattn-dv512-gqa8-nbatchfa128-negative.md`;
-  keep the current `nbatch_fa=64` tile config.
+  keep the current `nbatch_fa=64` tile config. Phase-specific prompt/decode
+  ubatch is preserved as a service candidate at
+  `../patches/gemma4-26b-a4b-q8-b70/20260630-llama-phase-prefill-ubatch-memory-sized-experiment.patch`
+  and documented in
+  `../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-phase-prefill-ubatch-service.md`;
+  use only as an experiment patch unless a future service recipe explicitly
+  wants `LLAMA_PREFILL_UBATCH_SIZE=2048` with `BATCH_SIZE=2048`,
+  `UBATCH_SIZE=1024`, and then reruns the full short fixed suite.
 - source patch snapshot:
   `../patches/gemma4-26b-a4b-q8-b70/20260626T2225-llamacpp-gemma4-current-record-stack.patch`
   with note

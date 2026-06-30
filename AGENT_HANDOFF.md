@@ -307,6 +307,22 @@ Primary target:
   `patches/gemma4-26b-a4b-q8-b70/20260630-sycl-fattn-dv512-gqa8-nbatchfa128-negative.patch`.
   Evidence:
   `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-sycl-fattn-dv512-gqa8-nbatchfa128-negative.md`.
+- Latest source service follow-up: phase-specific prompt/decode ubatch is a
+  valid service candidate, not a new short-record lane. v1 context-only
+  `LLAMA_PREFILL_UBATCH_SIZE=2048` with `BATCH_SIZE=2048`,
+  `UBATCH_SIZE=1024` passed validation but hit repeated KV retry fallback and
+  fell to `880.2510 tok/s` prefill. v2 additionally sizes SWA/ISWA attention
+  memory with `max(n_ubatch, n_ubatch_prefill)`, removed retries, and measured
+  `956.7217 tok/s` long-prefill, `112.9063 tok/s` long-context decode, and
+  `120.8849 tok/s` on the short fixed guard for `2048/1024 + prefill2048`.
+  It does not beat the `123.67689864739785 tok/s` short record, so do not
+  submit it. `prefill2304` and `prefill2560` were valid but not better
+  balanced. Patches:
+  `patches/gemma4-26b-a4b-q8-b70/20260630-llama-phase-prefill-ubatch-experiment.patch`
+  and
+  `patches/gemma4-26b-a4b-q8-b70/20260630-llama-phase-prefill-ubatch-memory-sized-experiment.patch`.
+  Evidence:
+  `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-phase-prefill-ubatch-service.md`.
 - Current best non-duplicate Gemma code target is still verifier cost, but not
   by removing the bonus pipeline or by a naive candidate-threshold head scan.
   Work inside the existing target decode boundary only if it removes real

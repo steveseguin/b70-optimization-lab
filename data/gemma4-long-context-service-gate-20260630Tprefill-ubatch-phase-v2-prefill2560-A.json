@@ -1,0 +1,162 @@
+{
+  "group_summaries": {
+    "batch2560_ubatch1024": {
+      "all_long_context_gates_passed": true,
+      "lanes": 2,
+      "median_decode_tok_s_avg": 110.80183246807722,
+      "median_decode_tok_s_by_lane": [
+        111.00861820483564,
+        110.5950467313188
+      ],
+      "median_prefill_tok_s_avg": 957.9546733304837,
+      "median_prefill_tok_s_by_lane": [
+        960.1970867375637,
+        955.7122599234036
+      ]
+    }
+  },
+  "kind": "gemma4_q8_long_context_service_gate",
+  "policy": "service/prefill validation only; not a short-decode LocalMaxxing headline",
+  "rows": [
+    {
+      "batch_size": "2560",
+      "cached_tokens_all_zero": true,
+      "canary_pass_all": true,
+      "canary_rows_completed": 4,
+      "case_rows": [
+        {
+          "actual_prompt_tokens": 30400,
+          "cached_tokens": 0,
+          "case_id": "lc-22000-middle",
+          "output_sha256": "a2c9ffd867b906c1f59e57e7b647e91bae0909b04f7f8de3883c6fae77dfdf72",
+          "prefill_tok_s_approx": 960.1970867375637,
+          "prompt_sha256": "8e815f7b73ac7b06c14a121d7efae927742863656057a8912e39d8cf798571a4",
+          "target_prompt_tokens": 22000,
+          "tok_s_after_ttft": 111.00861820483564,
+          "ttft_s": 31.66016687604133,
+          "validation_pass": true
+        }
+      ],
+      "ctx_size": "32768",
+      "flash_attn": "on",
+      "gpu_index": "2",
+      "label": "gemma4-q8-gpu2-longctx-batch2560-ub1024-prefill2560-a-ctx32768-o96-20260630Tprefill-ubatch-phase-v2-prefill2560-A",
+      "long_context_gate": {
+        "passed": true,
+        "required_policy": "fixed deterministic long-context suite; each prompt once; cached_tokens=0 every row; exact JSON retrieval fields pass"
+      },
+      "prefill_tok_s_approx": {
+        "count": 1,
+        "max": 960.1970867375637,
+        "mean": 960.1970867375637,
+        "median": 960.1970867375637,
+        "min": 960.1970867375637,
+        "p10": 960.1970867375637,
+        "stdev": 0.0
+      },
+      "prompts_unique": true,
+      "quality_pass_all": true,
+      "run_dir": "/home/steve/qwen36-results-main/data/gemma4-q8-gpu2-longctx-batch2560-ub1024-prefill2560-a-ctx32768-o96-20260630Tprefill-ubatch-phase-v2-prefill2560-A",
+      "status": "ok",
+      "tok_s_after_ttft": {
+        "count": 1,
+        "max": 111.00861820483564,
+        "mean": 111.00861820483564,
+        "median": 111.00861820483564,
+        "min": 111.00861820483564,
+        "p10": 111.00861820483564,
+        "stdev": 0.0
+      },
+      "tok_s_wall": {
+        "count": 1,
+        "max": 2.410173526064365,
+        "mean": 2.410173526064365,
+        "median": 2.410173526064365,
+        "min": 2.410173526064365,
+        "p10": 2.410173526064365,
+        "stdev": 0.0
+      },
+      "ttft_s": {
+        "count": 1,
+        "max": 31.66016687604133,
+        "mean": 31.66016687604133,
+        "median": 31.66016687604133,
+        "min": 31.66016687604133,
+        "p10": 31.66016687604133,
+        "stdev": 0.0
+      },
+      "ubatch_size": "1024",
+      "vmm": "1"
+    },
+    {
+      "batch_size": "2560",
+      "cached_tokens_all_zero": true,
+      "canary_pass_all": true,
+      "canary_rows_completed": 4,
+      "case_rows": [
+        {
+          "actual_prompt_tokens": 30400,
+          "cached_tokens": 0,
+          "case_id": "lc-22000-middle",
+          "output_sha256": "a2c9ffd867b906c1f59e57e7b647e91bae0909b04f7f8de3883c6fae77dfdf72",
+          "prefill_tok_s_approx": 955.7122599234036,
+          "prompt_sha256": "8e815f7b73ac7b06c14a121d7efae927742863656057a8912e39d8cf798571a4",
+          "target_prompt_tokens": 22000,
+          "tok_s_after_ttft": 110.5950467313188,
+          "ttft_s": 31.808737079962157,
+          "validation_pass": true
+        }
+      ],
+      "ctx_size": "32768",
+      "flash_attn": "on",
+      "gpu_index": "3",
+      "label": "gemma4-q8-gpu3-longctx-batch2560-ub1024-prefill2560-b-ctx32768-o96-20260630Tprefill-ubatch-phase-v2-prefill2560-A",
+      "long_context_gate": {
+        "passed": true,
+        "required_policy": "fixed deterministic long-context suite; each prompt once; cached_tokens=0 every row; exact JSON retrieval fields pass"
+      },
+      "prefill_tok_s_approx": {
+        "count": 1,
+        "max": 955.7122599234036,
+        "mean": 955.7122599234036,
+        "median": 955.7122599234036,
+        "min": 955.7122599234036,
+        "p10": 955.7122599234036,
+        "stdev": 0.0
+      },
+      "prompts_unique": true,
+      "quality_pass_all": true,
+      "run_dir": "/home/steve/qwen36-results-main/data/gemma4-q8-gpu3-longctx-batch2560-ub1024-prefill2560-b-ctx32768-o96-20260630Tprefill-ubatch-phase-v2-prefill2560-A",
+      "status": "ok",
+      "tok_s_after_ttft": {
+        "count": 1,
+        "max": 110.5950467313188,
+        "mean": 110.5950467313188,
+        "median": 110.5950467313188,
+        "min": 110.5950467313188,
+        "p10": 110.5950467313188,
+        "stdev": 0.0
+      },
+      "tok_s_wall": {
+        "count": 1,
+        "max": 2.3989656553982126,
+        "mean": 2.3989656553982126,
+        "median": 2.3989656553982126,
+        "min": 2.3989656553982126,
+        "p10": 2.3989656553982126,
+        "stdev": 0.0
+      },
+      "ttft_s": {
+        "count": 1,
+        "max": 31.808737079962157,
+        "mean": 31.808737079962157,
+        "median": 31.808737079962157,
+        "min": 31.808737079962157,
+        "p10": 31.808737079962157,
+        "stdev": 0.0
+      },
+      "ubatch_size": "1024",
+      "vmm": "1"
+    }
+  ]
+}

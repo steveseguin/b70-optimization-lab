@@ -285,6 +285,18 @@ Current active optimization target:
   `955.1166`, and `952.9311`, matching the same-case controls. Keep
   `GGML_SYCL_FATTN_TILE_CONFIG_CASE(576, 512, 16, 256, 2, 64, 64)`. Evidence:
   `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-sycl-fattn-dv512-gqa8-nbatchfa128-negative.md`.
+  Phase-specific prefill ubatch was then screened as a source/service patch.
+  The v1 context-only patch is closed negative because
+  `BATCH_SIZE=2048`, `UBATCH_SIZE=1024`,
+  `LLAMA_PREFILL_UBATCH_SIZE=2048` hit repeated KV retry fallback and dropped
+  to `880.2510 tok/s` prefill. The v2 patch also sizes SWA/ISWA attention
+  memory with `max(n_ubatch, n_ubatch_prefill)`, removed retries, and is valid:
+  `2048/1024 + prefill2048` measured `956.7217 tok/s` long-prefill,
+  `112.9063 tok/s` long-context decode, and `120.8849 tok/s` on the short
+  guard. It is useful service evidence but not a new LocalMaxxing candidate
+  because it does not beat the `123.67689864739785 tok/s` short record.
+  `prefill2304` and `prefill2560` were valid but not better balanced. Evidence:
+  `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-phase-prefill-ubatch-service.md`.
 - Current diagnostic best, not a real-world headline:
   `176.21623213048554 tok/s` after TTFT on the first no-cache synthetic
   filled-long benchmark row, `176.40259133127742 tok/s` supporting repeat mean,

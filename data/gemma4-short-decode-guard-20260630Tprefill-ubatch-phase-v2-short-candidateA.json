@@ -1,0 +1,61 @@
+{
+  "current_record_tok_s_1_100_after_ttft": 123.67689864739785,
+  "group_summaries": {
+    "batch2048_ubatch1024": {
+      "all_cached_tokens_zero": true,
+      "all_realistic_gates_passed": true,
+      "lanes": 2,
+      "median_tok_s_1_100_avg": 120.88494558572617,
+      "median_tok_s_1_100_by_lane": [
+        119.95526215876932,
+        121.81462901268301
+      ]
+    }
+  },
+  "kind": "gemma4_q8_short_decode_guard",
+  "policy": "fixed realistic suite regression guard for service/prefill candidate; submit only if it beats the current record independently",
+  "rows": [
+    {
+      "batch_size": "2048",
+      "cached_tokens_all_zero": true,
+      "canary_pass_all": true,
+      "canary_rows_completed": 128,
+      "ctx_size": "32768",
+      "flash_attn": "on",
+      "gpu_index": "2",
+      "label": "gemma4-q8-gpu2-shortguard-batch2048-ub1024-prefill2048-a-ctx32768-o512-20260630Tprefill-ubatch-phase-v2-short-candidateA",
+      "realistic_gate_passed": true,
+      "run_dir": "/home/steve/qwen36-results-main/data/gemma4-q8-gpu2-shortguard-batch2048-ub1024-prefill2048-a-ctx32768-o512-20260630Tprefill-ubatch-phase-v2-short-candidateA",
+      "status": "ok",
+      "tok_s_1_100_after_ttft_mean": 118.61360129757263,
+      "tok_s_1_100_after_ttft_median": 119.95526215876932,
+      "tok_s_1_100_after_ttft_p10": 107.75014620086671,
+      "tok_s_after_ttft_full_median": 111.94828796570015,
+      "tok_s_wall_full_median": 106.98998073678251,
+      "ttft_ms_median": 178.62884496571496,
+      "ubatch_size": "1024",
+      "vmm": "1"
+    },
+    {
+      "batch_size": "2048",
+      "cached_tokens_all_zero": true,
+      "canary_pass_all": true,
+      "canary_rows_completed": 128,
+      "ctx_size": "32768",
+      "flash_attn": "on",
+      "gpu_index": "3",
+      "label": "gemma4-q8-gpu3-shortguard-batch2048-ub1024-prefill2048-b-ctx32768-o512-20260630Tprefill-ubatch-phase-v2-short-candidateA",
+      "realistic_gate_passed": true,
+      "run_dir": "/home/steve/qwen36-results-main/data/gemma4-q8-gpu3-shortguard-batch2048-ub1024-prefill2048-b-ctx32768-o512-20260630Tprefill-ubatch-phase-v2-short-candidateA",
+      "status": "ok",
+      "tok_s_1_100_after_ttft_mean": 118.18090860324749,
+      "tok_s_1_100_after_ttft_median": 121.81462901268301,
+      "tok_s_1_100_after_ttft_p10": 105.5672243193056,
+      "tok_s_after_ttft_full_median": 110.75988765351576,
+      "tok_s_wall_full_median": 106.49063265139296,
+      "ttft_ms_median": 178.35812707198784,
+      "ubatch_size": "1024",
+      "vmm": "1"
+    }
+  ]
+}

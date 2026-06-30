@@ -133,3 +133,8 @@ archived at
 `../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-sycl-fattn-dv512-gqa8-nbatchfa128-negative.md`;
 it matched controls rather than improving them, so keep the current
 `nbatch_fa=64` tile config.
+The phase-specific prompt/decode ubatch source patch is archived at
+`../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-phase-prefill-ubatch-service.md`;
+the v2 patch is valid as a service candidate (`LLAMA_PREFILL_UBATCH_SIZE=2048`
+with `BATCH_SIZE=2048`, `UBATCH_SIZE=1024`), but it does not beat the current
+short-decode record and should not be submitted to LocalMaxxing.

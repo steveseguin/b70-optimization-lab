@@ -93,6 +93,17 @@ averaged `951.5273 tok/s` prefill (`953.3767`, `944.6846`, `955.1166`,
 `GGML_SYCL_FATTN_TILE_CONFIG_CASE(576, 512, 16, 256, 2, 64, 64)` setting.
 Evidence:
 [`../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-sycl-fattn-dv512-gqa8-nbatchfa128-negative.md`](../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-sycl-fattn-dv512-gqa8-nbatchfa128-negative.md).
+A phase-specific prompt/decode ubatch source patch was then screened. The v1
+context-only patch is closed negative: `BATCH_SIZE=2048`,
+`UBATCH_SIZE=1024`, `LLAMA_PREFILL_UBATCH_SIZE=2048` passed validation but hit
+KV retry churn and fell to `880.2510 tok/s` prefill. The v2 patch also sizes
+SWA/ISWA memory by `max(n_ubatch, n_ubatch_prefill)`, removing retries. It is
+valid and useful as a service-lane candidate (`2048/1024 + prefill2048`:
+`956.7217 tok/s` prefill, `112.9063 tok/s` long-context decode, short guard
+`120.8849 tok/s`), but it does not beat the current `123.67689864739785`
+short-decode record and is not a LocalMaxxing submission. `prefill2304` and
+`prefill2560` were valid but not better balanced in the paired screen. Evidence:
+[`../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-phase-prefill-ubatch-service.md`](../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-phase-prefill-ubatch-service.md).
 
 The earlier UBATCH-only service work remains useful background: UB2048 was the
 best unpatched long-prefill candidate, and the profile that followed correctly
