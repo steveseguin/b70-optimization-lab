@@ -1,6 +1,6 @@
 # Current Promoted Results
 
-Date: 2026-06-29
+Date: 2026-06-30
 
 ## Active Gemma 4 26B A4B Q8 Lane
 
@@ -109,6 +109,15 @@ Current active optimization target:
   removal as a record path and points only to a bonus-preserving row-output
   design or deeper verifier graph/MoE work. See
   `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-row-economics-profile.md`.
+  A final-record FA-on 32K/VMM UBATCH screen then tested `UBATCH_SIZE=768`,
+  `896`, `1024` control, and `1152`. The strict128 pass made `BATCH_SIZE=1152`,
+  `UBATCH_SIZE=1152` look promotion-worthy (`121.24708378127268 tok/s`), but
+  the paired full512 confirmation closed it: all lanes stayed valid, candidate
+  average was `117.36308529017367 tok/s` versus paired-control average
+  `114.3071667009025`, and the best candidate was `118.43353215490006`, still
+  below the `121.41411987308553` headline. Do not change the recipe or submit
+  it. See
+  `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-faon-vmm-ubatch-screen.md`.
 - Current context/service diagnostic split:
   with flash attention off, MTP remains useful through about `ctx24576` /
   `ctx25600`, degrades near `ctx26624`, and cliffs by `ctx27648`. With

@@ -1,6 +1,6 @@
 # Gemma 4 26B A4B Q8 B70 Research Plan
 
-Research snapshot: 2026-06-29. Goal: maximize valid single-session decode for
+Research snapshot: 2026-06-30. Goal: maximize valid single-session decode for
 one complete Q8/INT8-quality Gemma 4 26B A4B replica per B70, then run four
 replicas on four GPUs for parallel research and aggregate service capacity.
 
@@ -254,6 +254,17 @@ only if it preserves that bonus behavior and removes real LM-head/output work
 inside the verifier graph; otherwise continue with deeper routed-MoE or graph
 boundary reductions. See
 `../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-row-economics-profile.md`.
+
+2026-06-30 FA-on 32K/VMM UBATCH screen: final-record identity lanes tested
+`UBATCH_SIZE=768`, `896`, `1024` control, and `1152`. All lanes passed the
+fixed cold gate with `cached_tokens=0`. `BATCH_SIZE=1152`, `UBATCH_SIZE=1152`
+looked interesting in strict128 at `121.24708378127268 tok/s`, but the paired
+full512 confirmation did not beat the record: candidate average
+`117.36308529017367 tok/s`, paired-control average `114.3071667009025`, best
+candidate `118.43353215490006`, current headline `121.41411987308553`.
+Decision: valid local positive versus same-window controls, but no recipe
+change and no LocalMaxxing submission. See
+`../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-faon-vmm-ubatch-screen.md`.
 
 Post-top1 profile check: skip the dense/shared FFN gate+up+GEGLU fusion for
 now. The activation-profile follow-up for the top1 experiment showed the new

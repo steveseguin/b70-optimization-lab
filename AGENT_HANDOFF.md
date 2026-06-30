@@ -1,6 +1,6 @@
 # Codex Agent Handoff
 
-Last updated: 2026-06-29
+Last updated: 2026-06-30
 
 This file is the first thing a new Codex agent should read when continuing the
 Intel Arc Pro B70 LLM optimization work.
@@ -100,6 +100,17 @@ Primary target:
   This supports a bonus-preserving row-output design only; simple no-bonus,
   adaptive bonus skip, staged MTP3, late-head, and prefix-tail variants remain
   closed negatives.
+- Latest config follow-up: final-record FA-on 32K/VMM UBATCH screen tested
+  `UBATCH_SIZE=768`, `896`, `1024` control, and `1152`. The strict128 pass made
+  `BATCH_SIZE=1152`, `UBATCH_SIZE=1152` look promotion-worthy
+  (`121.24708378127268 tok/s`), but the paired full512 confirmation closed it:
+  all lanes stayed valid, candidate average was `117.36308529017367 tok/s`
+  versus paired-control average `114.3071667009025`, and the best candidate was
+  `118.43353215490006`, still below the `121.41411987308553` headline. Do not
+  change the recipe or submit it. Evidence:
+  `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-faon-vmm-ubatch-screen.md`.
+  Treat `UBATCH_SIZE=768`, `896`, and `1152` as closed for the short-record
+  lane unless a future source patch changes the memory/workgroup tradeoff.
 - Current context/service diagnostic split: the short-record recipe is now
   also the FA-on 32K/VMM service profile after a realistic-gate retest. The
   promoted row is `121.41411987308553 tok/s` with `FLASH_ATTN=on`,
