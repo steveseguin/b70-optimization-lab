@@ -1,0 +1,61 @@
+{
+  "current_record_tok_s_1_100_after_ttft": 123.67689864739785,
+  "group_summaries": {
+    "batch1024_ubatch1024": {
+      "all_cached_tokens_zero": true,
+      "all_realistic_gates_passed": true,
+      "lanes": 2,
+      "median_tok_s_1_100_avg": 118.72364266557628,
+      "median_tok_s_1_100_by_lane": [
+        118.99909963350804,
+        118.44818569764452
+      ]
+    }
+  },
+  "kind": "gemma4_q8_short_decode_guard",
+  "policy": "fixed realistic suite regression guard for service/prefill candidate; submit only if it beats the current record independently",
+  "rows": [
+    {
+      "batch_size": "1024",
+      "cached_tokens_all_zero": true,
+      "canary_pass_all": true,
+      "canary_rows_completed": 128,
+      "ctx_size": "32768",
+      "flash_attn": "on",
+      "gpu_index": "2",
+      "label": "gemma4-q8-gpu2-shortguard-ub1024-gqa8-a-ctx32768-o512-20260630Tfattn-gqa8-short-candidateB",
+      "realistic_gate_passed": true,
+      "run_dir": "/home/steve/qwen36-results-main/data/gemma4-q8-gpu2-shortguard-ub1024-gqa8-a-ctx32768-o512-20260630Tfattn-gqa8-short-candidateB",
+      "status": "ok",
+      "tok_s_1_100_after_ttft_mean": 119.63117612354544,
+      "tok_s_1_100_after_ttft_median": 118.99909963350804,
+      "tok_s_1_100_after_ttft_p10": 105.96701852128024,
+      "tok_s_after_ttft_full_median": 111.04387257843115,
+      "tok_s_wall_full_median": 105.46618364808725,
+      "ttft_ms_median": 178.89862100128084,
+      "ubatch_size": "1024",
+      "vmm": "1"
+    },
+    {
+      "batch_size": "1024",
+      "cached_tokens_all_zero": true,
+      "canary_pass_all": true,
+      "canary_rows_completed": 128,
+      "ctx_size": "32768",
+      "flash_attn": "on",
+      "gpu_index": "3",
+      "label": "gemma4-q8-gpu3-shortguard-ub1024-gqa8-b-ctx32768-o512-20260630Tfattn-gqa8-short-candidateB",
+      "realistic_gate_passed": true,
+      "run_dir": "/home/steve/qwen36-results-main/data/gemma4-q8-gpu3-shortguard-ub1024-gqa8-b-ctx32768-o512-20260630Tfattn-gqa8-short-candidateB",
+      "status": "ok",
+      "tok_s_1_100_after_ttft_mean": 117.15351325987156,
+      "tok_s_1_100_after_ttft_median": 118.44818569764452,
+      "tok_s_1_100_after_ttft_p10": 103.17921805940753,
+      "tok_s_after_ttft_full_median": 110.81695823342491,
+      "tok_s_wall_full_median": 106.02825376634624,
+      "ttft_ms_median": 177.84615949494764,
+      "ubatch_size": "1024",
+      "vmm": "1"
+    }
+  ]
+}

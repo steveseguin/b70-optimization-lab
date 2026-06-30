@@ -1,0 +1,44 @@
+diff --git a/ggml/src/ggml-sycl/fattn-tile.hpp b/ggml/src/ggml-sycl/fattn-tile.hpp
+index 9ba529696..d26b0ba17 100644
+--- a/ggml/src/ggml-sycl/fattn-tile.hpp
++++ b/ggml/src/ggml-sycl/fattn-tile.hpp
+@@ -5,6 +5,7 @@
+ #include "fattn-common.hpp"
+
+ #include <cmath>
++#include <cstdlib>
+ #include <float.h>
+
+ namespace syclex = sycl::ext::oneapi::experimental;
+@@ -190,6 +191,14 @@ static constexpr int ggml_sycl_fattn_tile_get_nbatch_K(const int DKQ, const int
+     return (ggml_sycl_fattn_tile_get_config(DKQ, DV, ncols) >> 23) & ((1 << 9) - 1);
+ }
+
++static int ggml_sycl_fattn_dv512_gqa_ncols2_override() {
++    static const int value = []() {
++        const char * env = std::getenv("GGML_SYCL_FATTN_DV512_GQA_NCOLS2");
++        return env ? std::atoi(env) : 0;
++    }();
++    return value;
++}
++
+ template <int warp_size, int nwarps, int I, int J, int J_padding, bool oob_check>
+ static __dpct_inline__ void flash_attn_tile_load_tile(const sycl::half2 * const __restrict__ KV,
+                                                       sycl::half2 * const __restrict__ tile_KV,
+@@ -1169,6 +1178,11 @@ static void launch_fattn_tile_switch_ncols2(ggml_backend_sycl_context & ctx, ggm
+     const bool use_gqa_opt = mask && max_bias == 0.0f && Q->ne[1] <= gqa_limit && K->ne[1] % FATTN_KQ_STRIDE == 0;
+
+     if constexpr (DV == 512) {
++        const int forced_ncols2 = ggml_sycl_fattn_dv512_gqa_ncols2_override();
++        if (use_gqa_opt && forced_ncols2 == 8 && gqa_ratio % 8 == 0) {
++            launch_fattn_tile_switch_ncols1<DKQ, DV, 8, use_logit_softcap>(ctx, dst);
++            return;
++        }
+         if (use_gqa_opt && gqa_ratio % 16 == 0) {
+             launch_fattn_tile_switch_ncols1<DKQ, DV, 16, use_logit_softcap>(ctx, dst);
+             return;
+@@ -1243,4 +1257,3 @@ extern DECL_FATTN_TILE_CASE(128, 128);
+ extern DECL_FATTN_TILE_CASE(256, 256);
+ extern DECL_FATTN_TILE_CASE(512, 512);
+ extern DECL_FATTN_TILE_CASE(576, 512);
+-

@@ -62,26 +62,25 @@ only. See the latest sweep notes under
 [`../../experiments/gemma4-26b-a4b-q8-b70/sweeps/`](../../experiments/gemma4-26b-a4b-q8-b70/sweeps/).
 
 Current service/prefill candidate: keep the promoted short-decode reproduction
-on `UBATCH_SIZE=1024`, but use `BATCH_SIZE=2048`, `UBATCH_SIZE=2048` as the
-validated long-context service candidate. The fixed long-context JSON retrieval
-gate passed through `22730` actual prompt tokens with `cached_tokens=0`,
-canaries, and exact output checks on all four lanes; UB2048 averaged
-`1013.884` median approximate prefill tok/s versus UB1024 at `936.865`
-(`+8.22%`). The corrected near-32K boundary case at `30400` actual prompt
-tokens also passed after increasing `MAX_TOKENS` from `64` to `96`; UB2048
-averaged `701.487` versus UB1024 at `661.905` (`+5.98%`). A paired full512
-fixed short-suite guard passed and did not show a decode regression
-(`119.153` UB2048 average versus `116.402` UB1024), but it did not beat the
-`123.67689864739785` short record. Evidence:
-[`../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-long-context-prefill-service-gate.md`](../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-long-context-prefill-service-gate.md).
+on `UBATCH_SIZE=1024`, but use the default-off SYCL FlashAttention tile patch
+with `GGML_SYCL_FATTN_DV512_GQA_NCOLS2=8` for long-context service lanes. The
+patched Gemma full-attention DV512/GQA8 selector improved the cold near-32K
+case (`30400` actual prompt tokens, exact JSON validation, `cached_tokens=0`)
+from `702.605` to `947.589` mean prefill tok/s in a GPU crossover, with
+identical output hashes. A broader three-case service gate passed at `16213`,
+`22730`, and `30400` actual prompt tokens; median prefill was `1039.603 tok/s`
+for UB2048, `1075.983` for UB2304, and `1066.029` for UB2560. UB2048 remains
+the balanced service default; UB2304 is the best pure-prefill setting seen so
+far. Fixed cold short-suite guards passed with `cached_tokens=0`, but did not
+beat the `123.67689864739785` short record, so no LocalMaxxing submission was
+made. Evidence:
+[`../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-sycl-fattn-dv512-gqa8-prefill-win.md`](../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-sycl-fattn-dv512-gqa8-prefill-win.md).
 
-Follow-up heavy-context screens tested UB1792/2048/2304/2560 at `16213`,
-`22730`, and `30400` actual prompt tokens. UB2560 produced the best narrow
-prefill number, but UB2560 and UB2304 both lost enough short-suite throughput
-to remain diagnostics only. A profiled UB2048 near-32K row shows the prefill
-path is dominated by `FLASH_ATTN_EXT` / KV-cache attention work, so future
-prompt-processing work should target attention/prefill internals rather than
-another generic UBATCH sweep.
+The earlier UBATCH-only service work remains useful background: UB2048 was the
+best unpatched long-prefill candidate, and the profile that followed correctly
+pointed at `FLASH_ATTN_EXT` / KV-cache attention rather than verifier LM-head
+or MoE selected-down kernels. Do not reopen generic UBATCH roulette without new
+profile evidence.
 
 The valid no-spec control is `74.29709476830473 tok/s` median:
 `data/gemma4-q8-gpu0-vdr4default-nospec-realistic-gate-v2-20260627T165335Z/summary.json`.

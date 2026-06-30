@@ -1,0 +1,90 @@
+{
+  "group_summaries": {
+    "batch2048_ubatch2048": {
+      "all_long_context_gates_passed": true,
+      "lanes": 1,
+      "median_decode_tok_s_avg": 113.13953257673502,
+      "median_decode_tok_s_by_lane": [
+        113.13953257673502
+      ],
+      "median_prefill_tok_s_avg": 939.9759237057569,
+      "median_prefill_tok_s_by_lane": [
+        939.9759237057569
+      ]
+    }
+  },
+  "kind": "gemma4_q8_long_context_service_gate",
+  "policy": "service/prefill validation only; not a short-decode LocalMaxxing headline",
+  "rows": [
+    {
+      "batch_size": "2048",
+      "cached_tokens_all_zero": true,
+      "canary_pass_all": true,
+      "canary_rows_completed": 4,
+      "case_rows": [
+        {
+          "actual_prompt_tokens": 30400,
+          "cached_tokens": 0,
+          "case_id": "lc-22000-middle",
+          "output_sha256": "a2c9ffd867b906c1f59e57e7b647e91bae0909b04f7f8de3883c6fae77dfdf72",
+          "prefill_tok_s_approx": 939.9759237057569,
+          "prompt_sha256": "8e815f7b73ac7b06c14a121d7efae927742863656057a8912e39d8cf798571a4",
+          "target_prompt_tokens": 22000,
+          "tok_s_after_ttft": 113.13953257673502,
+          "ttft_s": 32.34125389100518,
+          "validation_pass": true
+        }
+      ],
+      "ctx_size": "32768",
+      "flash_attn": "on",
+      "gpu_index": "1",
+      "label": "gemma4-q8-gpu1-longctx-ub2048-gqa8-ctx32768-o96-20260630Tfattn-gqa8-candidateA",
+      "long_context_gate": {
+        "passed": true,
+        "required_policy": "fixed deterministic long-context suite; each prompt once; cached_tokens=0 every row; exact JSON retrieval fields pass"
+      },
+      "prefill_tok_s_approx": {
+        "count": 1,
+        "max": 939.9759237057569,
+        "mean": 939.9759237057569,
+        "median": 939.9759237057569,
+        "min": 939.9759237057569,
+        "p10": 939.9759237057569,
+        "stdev": 0.0
+      },
+      "prompts_unique": true,
+      "quality_pass_all": true,
+      "run_dir": "/home/steve/qwen36-results-main/data/gemma4-q8-gpu1-longctx-ub2048-gqa8-ctx32768-o96-20260630Tfattn-gqa8-candidateA",
+      "status": "ok",
+      "tok_s_after_ttft": {
+        "count": 1,
+        "max": 113.13953257673502,
+        "mean": 113.13953257673502,
+        "median": 113.13953257673502,
+        "min": 113.13953257673502,
+        "p10": 113.13953257673502,
+        "stdev": 0.0
+      },
+      "tok_s_wall": {
+        "count": 1,
+        "max": 2.3614417907681458,
+        "mean": 2.3614417907681458,
+        "median": 2.3614417907681458,
+        "min": 2.3614417907681458,
+        "p10": 2.3614417907681458,
+        "stdev": 0.0
+      },
+      "ttft_s": {
+        "count": 1,
+        "max": 32.34125389100518,
+        "mean": 32.34125389100518,
+        "median": 32.34125389100518,
+        "min": 32.34125389100518,
+        "p10": 32.34125389100518,
+        "stdev": 0.0
+      },
+      "ubatch_size": "2048",
+      "vmm": "1"
+    }
+  ]
+}

@@ -259,6 +259,23 @@ Primary target:
   The failed `MAX_TOKENS=64` near-32K attempt is archived as a harness
   truncation, not a model/context failure. Evidence:
   `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-long-context-prefill-service-gate.md`.
+- Latest source service follow-up: a default-off SYCL FlashAttention tile
+  selector patch for Gemma full-attention `DV=512` / GQA8 layers adds
+  `GGML_SYCL_FATTN_DV512_GQA_NCOLS2=8`. It is the first large validated
+  prompt-processing win after the UBATCH/profile work. Same-build GPU
+  crossover on the cold `30400` actual-token JSON retrieval case improved mean
+  prefill from `702.605` to `947.589 tok/s` (`+34.87%`) with identical output
+  hash, exact validation, and `cached_tokens=0`. A broader gate over `16213`,
+  `22730`, and `30400` actual prompt tokens passed on all lanes; median prefill
+  was `1039.603 tok/s` for UB2048, `1075.983` for UB2304, and `1066.029` for
+  UB2560. Fixed cold short-suite guards passed but did not beat the active
+  `123.67689864739785 tok/s` short record, so do not submit it to
+  LocalMaxxing. Keep UB1024 for short-record reproduction; use the patch with
+  UB2048 as the balanced long-service recipe and UB2304 only for pure prefill.
+  Patch:
+  `patches/gemma4-26b-a4b-q8-b70/20260630-sycl-fattn-dv512-gqa8-ncols2.patch`.
+  Evidence:
+  `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-sycl-fattn-dv512-gqa8-prefill-win.md`.
 - Current best non-duplicate Gemma code target is still verifier cost, but not
   by removing the bonus pipeline or by a naive candidate-threshold head scan.
   Work inside the existing target decode boundary only if it removes real

@@ -167,12 +167,16 @@ Record identity:
   and
   `../repro/gemma4-26b-a4b-q8-b70/realistic-suite-v1.json`
 - long-context service artifacts:
+  `../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-sycl-fattn-dv512-gqa8-prefill-win.md`,
   `../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-long-context-prefill-service-gate.md`,
   `../repro/gemma4-26b-a4b-q8-b70/long-context-suite-v1.json`,
   `../scripts/bench-openai-long-context-suite.py`,
   `../repro/gemma4-26b-a4b-q8-b70/run-vdr2-long-context-service-gate.sh`, and
-  `../repro/gemma4-26b-a4b-q8-b70/run-vdr2-short-decode-guard.sh`. UB2048 is
-  the validated long-context/prefill service candidate; UB1024 remains the
+  `../repro/gemma4-26b-a4b-q8-b70/run-vdr2-short-decode-guard.sh`. The current
+  validated service/prefill patch is
+  `../patches/gemma4-26b-a4b-q8-b70/20260630-sycl-fattn-dv512-gqa8-ncols2.patch`
+  with `GGML_SYCL_FATTN_DV512_GQA_NCOLS2=8`. Use UB2048 as the balanced
+  long-service setting, UB2304 for pure prefill, and keep UB1024 as the
   short-record reproduction setting.
 - source patch snapshot:
   `../patches/gemma4-26b-a4b-q8-b70/20260626T2225-llamacpp-gemma4-current-record-stack.patch`

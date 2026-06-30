@@ -117,7 +117,7 @@ The older
 folder remains useful as a standalone prior recipe, but it is superseded by
 the current `123.67689864739785 tok/s` fixed realistic-suite record in the
 Gemma result packet. The current long-context service candidate is the
-separate UB2048 path documented in
-`../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-long-context-prefill-service-gate.md`;
+default-off SYCL FlashAttention DV512/GQA8 tile patch documented in
+`../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-sycl-fattn-dv512-gqa8-prefill-win.md`;
 it improves validated prefill/service shapes without replacing the UB1024
 short-record reproduction.

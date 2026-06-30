@@ -253,6 +253,20 @@ Current active optimization target:
   Next service work should target attention/prefill source behavior, while
   keeping the short-record recipe untouched. See
   `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-long-context-prefill-service-gate.md`.
+  Follow-up source work found the first large service-prefill win:
+  a default-off SYCL FlashAttention tile selector patch
+  (`GGML_SYCL_FATTN_DV512_GQA_NCOLS2=8`) for Gemma full-attention
+  `DV=512` / GQA8 layers. On the cold `30400` actual-token JSON retrieval
+  case, same-build GPU crossover improved mean prefill from `702.605` to
+  `947.589 tok/s` (`+34.87%`) with identical output hash and `cached_tokens=0`.
+  The broader three-case gate passed at `16213`, `22730`, and `30400` actual
+  prompt tokens; median prefill was `1039.603 tok/s` for UB2048, `1075.983`
+  for UB2304, and `1066.029` for UB2560. Short fixed-suite guards passed, but
+  did not beat the active `123.67689864739785 tok/s` short record, so this is
+  promoted only as a service/prefill patch. Keep UB1024 for short-record
+  reproduction; use UB2048 as the balanced long-service setting and UB2304
+  only for pure prefill. Evidence:
+  `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-sycl-fattn-dv512-gqa8-prefill-win.md`.
 - Current diagnostic best, not a real-world headline:
   `176.21623213048554 tok/s` after TTFT on the first no-cache synthetic
   filled-long benchmark row, `176.40259133127742 tok/s` supporting repeat mean,

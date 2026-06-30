@@ -1,0 +1,90 @@
+{
+  "group_summaries": {
+    "batch2048_ubatch2048": {
+      "all_long_context_gates_passed": true,
+      "lanes": 1,
+      "median_decode_tok_s_avg": 68.26917037538601,
+      "median_decode_tok_s_by_lane": [
+        68.26917037538601
+      ],
+      "median_prefill_tok_s_avg": 698.3096606147612,
+      "median_prefill_tok_s_by_lane": [
+        698.3096606147612
+      ]
+    }
+  },
+  "kind": "gemma4_q8_long_context_service_gate",
+  "policy": "service/prefill validation only; not a short-decode LocalMaxxing headline",
+  "rows": [
+    {
+      "batch_size": "2048",
+      "cached_tokens_all_zero": true,
+      "canary_pass_all": true,
+      "canary_rows_completed": 4,
+      "case_rows": [
+        {
+          "actual_prompt_tokens": 30400,
+          "cached_tokens": 0,
+          "case_id": "lc-22000-middle",
+          "output_sha256": "a2c9ffd867b906c1f59e57e7b647e91bae0909b04f7f8de3883c6fae77dfdf72",
+          "prefill_tok_s_approx": 698.3096606147612,
+          "prompt_sha256": "8e815f7b73ac7b06c14a121d7efae927742863656057a8912e39d8cf798571a4",
+          "target_prompt_tokens": 22000,
+          "tok_s_after_ttft": 68.26917037538601,
+          "ttft_s": 43.53369531396311,
+          "validation_pass": true
+        }
+      ],
+      "ctx_size": "32768",
+      "flash_attn": "on",
+      "gpu_index": "1",
+      "label": "gemma4-q8-gpu1-longctx-ub2048-control-xover-ctx32768-o96-20260630Tfattn-gqa8-controlB",
+      "long_context_gate": {
+        "passed": true,
+        "required_policy": "fixed deterministic long-context suite; each prompt once; cached_tokens=0 every row; exact JSON retrieval fields pass"
+      },
+      "prefill_tok_s_approx": {
+        "count": 1,
+        "max": 698.3096606147612,
+        "mean": 698.3096606147612,
+        "median": 698.3096606147612,
+        "min": 698.3096606147612,
+        "p10": 698.3096606147612,
+        "stdev": 0.0
+      },
+      "prompts_unique": true,
+      "quality_pass_all": true,
+      "run_dir": "/home/steve/qwen36-results-main/data/gemma4-q8-gpu1-longctx-ub2048-control-xover-ctx32768-o96-20260630Tfattn-gqa8-controlB",
+      "status": "ok",
+      "tok_s_after_ttft": {
+        "count": 1,
+        "max": 68.26917037538601,
+        "mean": 68.26917037538601,
+        "median": 68.26917037538601,
+        "min": 68.26917037538601,
+        "p10": 68.26917037538601,
+        "stdev": 0.0
+      },
+      "tok_s_wall": {
+        "count": 1,
+        "max": 1.7458947927872175,
+        "mean": 1.7458947927872175,
+        "median": 1.7458947927872175,
+        "min": 1.7458947927872175,
+        "p10": 1.7458947927872175,
+        "stdev": 0.0
+      },
+      "ttft_s": {
+        "count": 1,
+        "max": 43.53369531396311,
+        "mean": 43.53369531396311,
+        "median": 43.53369531396311,
+        "min": 43.53369531396311,
+        "p10": 43.53369531396311,
+        "stdev": 0.0
+      },
+      "ubatch_size": "2048",
+      "vmm": "1"
+    }
+  ]
+}

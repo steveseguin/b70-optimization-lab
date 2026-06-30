@@ -57,6 +57,11 @@ and VDR compile-knob patch:
   `../../patches/gemma4-26b-a4b-q8-b70/20260629-vdr2-selected-down-reordervdr2-source.patch`
   plus the harness identity patch
   `../../patches/gemma4-26b-a4b-q8-b70/20260629-vdr2-selected-down-reordervdr2-harness.patch`.
+- Optional service/prefill source patch:
+  `../../patches/gemma4-26b-a4b-q8-b70/20260630-sycl-fattn-dv512-gqa8-ncols2.patch`.
+  This adds `GGML_SYCL_FATTN_DV512_GQA_NCOLS2=8` for the Gemma DV512/GQA8
+  FlashAttention tile path. It is a validated long-context service/prefill
+  optimization, not a short-decode LocalMaxxing record change.
 
 The `20260626T2225` patch is intentionally cumulative and includes default-off
 rejected experiment paths. The RMS patch is the small incremental source change
@@ -71,6 +76,8 @@ To reconstruct the current local source snapshot from clean llama.cpp:
 cd /home/steve/src/llama.cpp-gemma-record-repro-c926
 git checkout c926ad098
 git apply /home/steve/qwen36-results-main/patches/gemma4-26b-a4b-q8-b70/20260629-vdr2-selected-down-reordervdr2-source.patch
+# Optional, for the current service/prefill lane:
+git apply /home/steve/qwen36-results-main/patches/gemma4-26b-a4b-q8-b70/20260630-sycl-fattn-dv512-gqa8-ncols2.patch
 ```
 
 This full-worktree patch is for recovery and review. It includes default-off
@@ -223,6 +230,49 @@ EXTRA_LLAMA_ARGS='--parallel 1 --cache-ram 0 --spec-type draft-mtp --spec-draft-
 LABEL=gemma4-q8-gpu1-finalpostnorm-repro-full512-$(date -u +%Y%m%dT%H%M%SZ) \
 scripts/run-gemma4-26b-first-baseline.sh
 ```
+
+## Service / Long-Prefill Reproduction
+
+This is separate from the short-decode LocalMaxxing record. Use it when the
+goal is prompt-processing / long-context service throughput with the same Q8
+target/verifier quality lane and `cached_tokens=0`.
+
+Balanced service candidate:
+
+```bash
+cd /home/steve/qwen36-results-main
+GGML_SYCL_FATTN_DV512_GQA_NCOLS2=8 \
+STAMP=$(date -u +%Y%m%dT%H%M%SZ)-gqa8-service \
+LONG_CONTEXT_CASE_IDS='lc-12288-early lc-16384-late lc-22000-middle' \
+LONG_CONTEXT_MAX_TARGET_PROMPT_TOKENS=24000 \
+LANE_SPECS='0:2048:2048:ub2048-gqa8' \
+CANARY_REPEATS=2 MAX_TOKENS=96 BASE_PORT=18520 \
+repro/gemma4-26b-a4b-q8-b70/run-vdr2-long-context-service-gate.sh
+```
+
+Pure prefill candidate:
+
+```bash
+cd /home/steve/qwen36-results-main
+GGML_SYCL_FATTN_DV512_GQA_NCOLS2=8 \
+STAMP=$(date -u +%Y%m%dT%H%M%SZ)-gqa8-prefill \
+LONG_CONTEXT_CASE_IDS='lc-12288-early lc-16384-late lc-22000-middle' \
+LONG_CONTEXT_MAX_TARGET_PROMPT_TOKENS=24000 \
+LANE_SPECS='0:2304:2304:ub2304-gqa8' \
+CANARY_REPEATS=2 MAX_TOKENS=96 BASE_PORT=18520 \
+repro/gemma4-26b-a4b-q8-b70/run-vdr2-long-context-service-gate.sh
+```
+
+Validated reference:
+
+- evidence:
+  `../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-sycl-fattn-dv512-gqa8-prefill-win.md`;
+- patch:
+  `../../patches/gemma4-26b-a4b-q8-b70/20260630-sycl-fattn-dv512-gqa8-ncols2.patch`;
+- broad gate: `data/gemma4-long-context-service-gate-20260630Tfattn-gqa8-broadA.json`;
+- same-build near-32K crossover improved mean prefill from `702.605` to
+  `947.589 tok/s` with identical output hash and `cached_tokens=0`;
+- broad median prefill: UB2048 `1039.603 tok/s`, UB2304 `1075.983 tok/s`.
 
 Use this no-spec control when testing target-side changes:
 

@@ -1,0 +1,61 @@
+{
+  "current_record_tok_s_1_100_after_ttft": 123.67689864739785,
+  "group_summaries": {
+    "batch1024_ubatch1024": {
+      "all_cached_tokens_zero": true,
+      "all_realistic_gates_passed": true,
+      "lanes": 2,
+      "median_tok_s_1_100_avg": 120.51513557352106,
+      "median_tok_s_1_100_by_lane": [
+        118.63148686753274,
+        122.3987842795094
+      ]
+    }
+  },
+  "kind": "gemma4_q8_short_decode_guard",
+  "policy": "fixed realistic suite regression guard for service/prefill candidate; submit only if it beats the current record independently",
+  "rows": [
+    {
+      "batch_size": "1024",
+      "cached_tokens_all_zero": true,
+      "canary_pass_all": true,
+      "canary_rows_completed": 128,
+      "ctx_size": "32768",
+      "flash_attn": "on",
+      "gpu_index": "0",
+      "label": "gemma4-q8-gpu0-shortguard-ub1024-control-a-ctx32768-o512-20260630Tfattn-gqa8-short-controlB",
+      "realistic_gate_passed": true,
+      "run_dir": "/home/steve/qwen36-results-main/data/gemma4-q8-gpu0-shortguard-ub1024-control-a-ctx32768-o512-20260630Tfattn-gqa8-short-controlB",
+      "status": "ok",
+      "tok_s_1_100_after_ttft_mean": 117.9782224474094,
+      "tok_s_1_100_after_ttft_median": 118.63148686753274,
+      "tok_s_1_100_after_ttft_p10": 107.96490485130829,
+      "tok_s_after_ttft_full_median": 113.35392849186147,
+      "tok_s_wall_full_median": 108.05038986126833,
+      "ttft_ms_median": 178.2298155594617,
+      "ubatch_size": "1024",
+      "vmm": "1"
+    },
+    {
+      "batch_size": "1024",
+      "cached_tokens_all_zero": true,
+      "canary_pass_all": true,
+      "canary_rows_completed": 128,
+      "ctx_size": "32768",
+      "flash_attn": "on",
+      "gpu_index": "1",
+      "label": "gemma4-q8-gpu1-shortguard-ub1024-control-b-ctx32768-o512-20260630Tfattn-gqa8-short-controlB",
+      "realistic_gate_passed": true,
+      "run_dir": "/home/steve/qwen36-results-main/data/gemma4-q8-gpu1-shortguard-ub1024-control-b-ctx32768-o512-20260630Tfattn-gqa8-short-controlB",
+      "status": "ok",
+      "tok_s_1_100_after_ttft_mean": 117.88601706970717,
+      "tok_s_1_100_after_ttft_median": 122.3987842795094,
+      "tok_s_1_100_after_ttft_p10": 104.58251509366795,
+      "tok_s_after_ttft_full_median": 110.7644514999998,
+      "tok_s_wall_full_median": 105.34963467194999,
+      "ttft_ms_median": 179.5400709961541,
+      "ubatch_size": "1024",
+      "vmm": "1"
+    }
+  ]
+}

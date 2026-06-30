@@ -1,0 +1,121 @@
+{
+  "current_record_tok_s_1_100_after_ttft": 123.67689864739785,
+  "group_summaries": {
+    "batch1024_ubatch1024": {
+      "all_cached_tokens_zero": true,
+      "all_realistic_gates_passed": true,
+      "lanes": 2,
+      "median_tok_s_1_100_avg": 116.84124764465244,
+      "median_tok_s_1_100_by_lane": [
+        114.10812166282871,
+        119.57437362647616
+      ]
+    },
+    "batch2048_ubatch2048": {
+      "all_cached_tokens_zero": true,
+      "all_realistic_gates_passed": true,
+      "lanes": 1,
+      "median_tok_s_1_100_avg": 122.13022715641813,
+      "median_tok_s_1_100_by_lane": [
+        122.13022715641813
+      ]
+    },
+    "batch2304_ubatch2304": {
+      "all_cached_tokens_zero": true,
+      "all_realistic_gates_passed": true,
+      "lanes": 1,
+      "median_tok_s_1_100_avg": 110.96860058045569,
+      "median_tok_s_1_100_by_lane": [
+        110.96860058045569
+      ]
+    }
+  },
+  "kind": "gemma4_q8_short_decode_guard",
+  "policy": "fixed realistic suite regression guard for service/prefill candidate; submit only if it beats the current record independently",
+  "rows": [
+    {
+      "batch_size": "1024",
+      "cached_tokens_all_zero": true,
+      "canary_pass_all": true,
+      "canary_rows_completed": 128,
+      "ctx_size": "32768",
+      "flash_attn": "on",
+      "gpu_index": "0",
+      "label": "gemma4-q8-gpu0-shortguard-ub1024-gqa8-a-ctx32768-o512-20260630Tfattn-gqa8-shortguardA",
+      "realistic_gate_passed": true,
+      "run_dir": "/home/steve/qwen36-results-main/data/gemma4-q8-gpu0-shortguard-ub1024-gqa8-a-ctx32768-o512-20260630Tfattn-gqa8-shortguardA",
+      "status": "ok",
+      "tok_s_1_100_after_ttft_mean": 115.58572084519142,
+      "tok_s_1_100_after_ttft_median": 114.10812166282871,
+      "tok_s_1_100_after_ttft_p10": 103.31030548478228,
+      "tok_s_after_ttft_full_median": 110.53316332807482,
+      "tok_s_wall_full_median": 105.8139545525184,
+      "ttft_ms_median": 178.5503969877027,
+      "ubatch_size": "1024",
+      "vmm": "1"
+    },
+    {
+      "batch_size": "1024",
+      "cached_tokens_all_zero": true,
+      "canary_pass_all": true,
+      "canary_rows_completed": 128,
+      "ctx_size": "32768",
+      "flash_attn": "on",
+      "gpu_index": "1",
+      "label": "gemma4-q8-gpu1-shortguard-ub1024-gqa8-b-ctx32768-o512-20260630Tfattn-gqa8-shortguardA",
+      "realistic_gate_passed": true,
+      "run_dir": "/home/steve/qwen36-results-main/data/gemma4-q8-gpu1-shortguard-ub1024-gqa8-b-ctx32768-o512-20260630Tfattn-gqa8-shortguardA",
+      "status": "ok",
+      "tok_s_1_100_after_ttft_mean": 115.70463392054982,
+      "tok_s_1_100_after_ttft_median": 119.57437362647616,
+      "tok_s_1_100_after_ttft_p10": 100.91428667982919,
+      "tok_s_after_ttft_full_median": 109.66965865877873,
+      "tok_s_wall_full_median": 105.61265426595138,
+      "ttft_ms_median": 178.57433197787032,
+      "ubatch_size": "1024",
+      "vmm": "1"
+    },
+    {
+      "batch_size": "2048",
+      "cached_tokens_all_zero": true,
+      "canary_pass_all": true,
+      "canary_rows_completed": 128,
+      "ctx_size": "32768",
+      "flash_attn": "on",
+      "gpu_index": "2",
+      "label": "gemma4-q8-gpu2-shortguard-ub2048-gqa8-ctx32768-o512-20260630Tfattn-gqa8-shortguardA",
+      "realistic_gate_passed": true,
+      "run_dir": "/home/steve/qwen36-results-main/data/gemma4-q8-gpu2-shortguard-ub2048-gqa8-ctx32768-o512-20260630Tfattn-gqa8-shortguardA",
+      "status": "ok",
+      "tok_s_1_100_after_ttft_mean": 121.83093937162714,
+      "tok_s_1_100_after_ttft_median": 122.13022715641813,
+      "tok_s_1_100_after_ttft_p10": 112.2283960582657,
+      "tok_s_after_ttft_full_median": 110.81194995122851,
+      "tok_s_wall_full_median": 106.40109145709846,
+      "ttft_ms_median": 177.95078549534082,
+      "ubatch_size": "2048",
+      "vmm": "1"
+    },
+    {
+      "batch_size": "2304",
+      "cached_tokens_all_zero": true,
+      "canary_pass_all": true,
+      "canary_rows_completed": 128,
+      "ctx_size": "32768",
+      "flash_attn": "on",
+      "gpu_index": "3",
+      "label": "gemma4-q8-gpu3-shortguard-ub2304-gqa8-ctx32768-o512-20260630Tfattn-gqa8-shortguardA",
+      "realistic_gate_passed": true,
+      "run_dir": "/home/steve/qwen36-results-main/data/gemma4-q8-gpu3-shortguard-ub2304-gqa8-ctx32768-o512-20260630Tfattn-gqa8-shortguardA",
+      "status": "ok",
+      "tok_s_1_100_after_ttft_mean": 113.209689743428,
+      "tok_s_1_100_after_ttft_median": 110.96860058045569,
+      "tok_s_1_100_after_ttft_p10": 104.53457731351465,
+      "tok_s_after_ttft_full_median": 109.9845131494445,
+      "tok_s_wall_full_median": 106.01578717813655,
+      "ttft_ms_median": 179.52229251386598,
+      "ubatch_size": "2304",
+      "vmm": "1"
+    }
+  ]
+}
