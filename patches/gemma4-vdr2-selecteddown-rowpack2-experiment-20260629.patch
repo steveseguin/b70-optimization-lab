@@ -1,0 +1,57 @@
+diff --git a/ggml/src/ggml-sycl/ggml-sycl.cpp b/ggml/src/ggml-sycl/ggml-sycl.cpp
+--- a/ggml/src/ggml-sycl/ggml-sycl.cpp
++++ b/ggml/src/ggml-sycl/ggml-sycl.cpp
+@@
+ static bool ggml_sycl_moe_selected_down_weighted_sum_reorder_vdr2_enabled() {
+ #if GGML_SYCL_REORDER_Q8_0_VDR_MMVQ == 2
+     const char * env = std::getenv("LLAMA_GEMMA4_MOE_FUSED_DOWN_WEIGHTED_SUM_REORDER_VDR2");
+     return env && (std::strcmp(env, "1") == 0 ||
+                    std::strcmp(env, "true") == 0 ||
+                    std::strcmp(env, "TRUE") == 0 ||
+                    std::strcmp(env, "yes") == 0 ||
+                    std::strcmp(env, "on") == 0);
+ #else
+     return false;
+ #endif
+ }
++static int ggml_sycl_moe_selected_down_weighted_sum_reorder_vdr2_rowpack() {
++#if GGML_SYCL_REORDER_Q8_0_VDR_MMVQ == 2
++    const char * env = std::getenv("LLAMA_GEMMA4_MOE_FUSED_DOWN_WEIGHTED_SUM_REORDER_VDR2_ROWPACK");
++    if (env && std::strcmp(env, "2") == 0) {
++        return 2;
++    }
++#endif
++    return GGML_SYCL_MMV_Y;
++}
++
+ static bool ggml_sycl_moe_geglu_down_matmul_epilogue_enabled() {
+@@
+         const int n_experts_total, const size_t weights_nb0,
+         const size_t weights_nb1,
+         const size_t weights_nb2, const size_t down_scales_nb0,
+         const int down_scales_type, const size_t dst_nb0,
+-        const size_t dst_nb1, dpct::queue_ptr stream) {
++        const size_t dst_nb1, const int rows_per_workgroup,
++        dpct::queue_ptr stream) {
+     constexpr int vdr = 2;
+     static_assert(vdr == GGML_SYCL_REORDER_Q8_0_VDR_MMVQ);
++    GGML_ASSERT(rows_per_workgroup > 0);
+-    const int block_num_y = (nrows + GGML_SYCL_MMV_Y - 1) / GGML_SYCL_MMV_Y;
++    const int block_num_y = (nrows + rows_per_workgroup - 1) / rows_per_workgroup;
+     const sycl::range<3> block_nums((unsigned) n_tokens, (unsigned) block_num_y, 1);
+-    const sycl::range<3> block_dims(1, GGML_SYCL_MMV_Y, WARP_SIZE);
++    const sycl::range<3> block_dims(1, (unsigned) rows_per_workgroup, WARP_SIZE);
+@@
+-                dst->nb[0], dst->nb[1], main_stream);
++                dst->nb[0], dst->nb[1], GGML_SYCL_MMV_Y, main_stream);
+             return;
+ #endif
+         }
+@@
+-                dst->nb[0], dst->nb[1], main_stream);
++                dst->nb[0], dst->nb[1],
++                ggml_sycl_moe_selected_down_weighted_sum_reorder_vdr2_rowpack(),
++                main_stream);
+             return;
+ #endif
+         }

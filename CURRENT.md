@@ -81,6 +81,15 @@ Current active optimization target:
   same-build controls at `119.83691077465154` and `121.35664372753011 tok/s`.
   The backend hunk was reverted and the patch/results are preserved. See
   `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260629-fused-down-selected-softmax-precompute-negative.md`.
+  VDR2 selected-down `ROWPACK=2` was then tested as a narrower source patch
+  that packs two output rows per workgroup. It is valid but rejected for the
+  short-context headline metric: the full512 cross-over primary medians were
+  `119.75026683034108` and `110.62392954093656 tok/s` with rowpack=2 versus
+  same-window controls at `120.62626200287556` and `117.70674646289913 tok/s`.
+  It improved full-output/window throughput, so keep it as a possible service
+  lane idea, but not as the current 1-100-token record path. The active source
+  hunk was reverted; patch/results are preserved in
+  `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-vdr2-selecteddown-rowpack2-negative.md`.
 - Current context/service diagnostic split:
   with flash attention off, MTP remains useful through about `ctx24576` /
   `ctx25600`, degrades near `ctx26624`, and cliffs by `ctx27648`. With

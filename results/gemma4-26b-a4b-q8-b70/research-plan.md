@@ -1547,6 +1547,17 @@ Text speed is first. After text baseline:
     `121.41411987308553` record. The active source hunk was reverted; patch
     and results are preserved in
     `../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260629-fused-down-selected-softmax-precompute-negative.md`.
+22. **VDR2 selected-down rowpack=2 is not a short-record win.** A default-off
+    source patch packed two output rows per selected-down VDR2 workgroup via
+    `LLAMA_GEMMA4_MOE_FUSED_DOWN_WEIGHTED_SUM_REORDER_VDR2_ROWPACK=2`. The
+    strict128 screen was mildly positive on average, but the full512
+    cross-over lost the primary 1-100 token metric: rowpack=2 medians
+    `119.75026683034108` and `110.62392954093656` versus same-window controls
+    `120.62626200287556` and `117.70674646289913`. It improved full-output /
+    wall throughput, so it can remain a service-lane idea, but reject it for
+    the current headline record. The active source hunk was reverted; patch and
+    results are preserved in
+    `../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-vdr2-selecteddown-rowpack2-negative.md`.
 
 ## Stop Conditions
 

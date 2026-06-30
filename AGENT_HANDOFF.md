@@ -70,6 +70,13 @@ Primary target:
   unless a future design actually removes verifier rows or proves a cheaper
   exact candidate path. Evidence:
   `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260629-candidate-threshold-lmhead-no-go.md`.
+- Latest selected-down rowpack follow-up: `ROWPACK=2` for the VDR2
+  selected-down weighted-sum path is valid but rejected for the short-record
+  metric. The strict128 screen looked mildly positive, but the full512
+  cross-over lost primary tokens 1-100 versus controls while improving only
+  full-output / wall throughput. Keep it as a possible service-lane idea, not
+  a headline record path. Evidence:
+  `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-vdr2-selecteddown-rowpack2-negative.md`.
 - Current context/service diagnostic split: the short-record recipe is now
   also the FA-on 32K/VMM service profile after a realistic-gate retest. The
   promoted row is `121.41411987308553 tok/s` with `FLASH_ATTN=on`,
