@@ -128,6 +128,25 @@ paired full512 finalpost lanes averaged `120.11414175477651` versus controls
 confirmation separate from effect-size claims. See
 `../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-final-postnorm-fusion-screen.md`.
 
+2026-06-30 final post-norm repeat2: four additional full512 lanes of the
+promoted final-postnorm recipe all passed the fixed cold gate, `cached_tokens=0`,
+and 512/512 canary, but did not beat the `123.67689864739785 tok/s` record.
+Medians were `118.78941183022032`, `115.48824790393866`,
+`112.71902407241845`, and `116.80124865921995 tok/s`. Treat as valid
+variance/no-new-record support and do not submit. See
+`../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-finalpost-repeat2-full512-variance.md`.
+
+2026-06-30 attention post-norm residual fusion: implemented default-off
+`LLAMA_GEMMA4_FUSED_ATTN_POST_NORM_RESIDUAL=1`, updated the harness to pass and
+record it, rebuilt the AOT BMG-G31 llama-server under oneAPI, and ran a verified
+strict128 A/B. All lanes passed the cold gate and 512/512 canary, but it lost
+on the short headline metric: controls averaged `119.3616057307415 tok/s`,
+flag-on lanes averaged `116.75359048324216 tok/s`. It improved full-output
+medians (`117.785` flag-on average versus `115.134` controls), so keep only as
+a possible service/full-output idea. Do not full512-confirm or submit for the
+current 1-100-token record. See
+`../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-attn-postnorm-residual-fusion-negative.md`.
+
 2026-06-29 verifier LM-head candidate-threshold audit: shifted
 `t_inp_tokens[r + 1]` does provide the draft candidate ID for narrow standard
 MTP verifier rows, but this is not a good next record implementation. Exact

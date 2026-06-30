@@ -152,6 +152,21 @@ Current active optimization target:
   repeat confirmations should continue before treating the GPU0 jump as the
   expected effect size. See
   `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-final-postnorm-fusion-screen.md`.
+  A four-lane full512 repeat of the promoted final-postnorm recipe then passed
+  the strict cold gate and 512/512 canary on every lane but did not beat the
+  record: medians were `118.78941183022032`, `115.48824790393866`,
+  `112.71902407241845`, and `116.80124865921995 tok/s`. This is valid
+  variance/no-new-record support; do not submit. See
+  `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-finalpost-repeat2-full512-variance.md`.
+  The analogous attention post-norm residual fusion
+  (`LLAMA_GEMMA4_FUSED_ATTN_POST_NORM_RESIDUAL=1`) was tested next as a
+  default-off source patch after fixing harness flag capture. All strict128
+  lanes passed the cold gate and 512/512 canary, but it lost on the primary
+  short metric: controls averaged `119.3616057307415 tok/s`, flag-on lanes
+  averaged `116.75359048324216 tok/s`. It improved full-output medians in that
+  screen, so keep only as a possible service/full-output idea. Do not full512
+  confirm or submit for the short record. See
+  `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-attn-postnorm-residual-fusion-negative.md`.
 - Current context/service diagnostic split:
   with flash attention off, MTP remains useful through about `ctx24576` /
   `ctx25600`, degrades near `ctx26624`, and cliffs by `ctx27648`. With
