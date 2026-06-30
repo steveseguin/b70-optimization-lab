@@ -89,10 +89,17 @@ passes the fixed cold suite with no decode regression. See
 service shapes above. All rows were unique-prompt, canary-passing, and
 `cached_tokens=0`. `2048` is the best general candidate, improving approximate
 prefill over UB1024 by `+10.8%`, `+9.2%`, `+7.4%`, and `+6.1%`; `2560` is only
-a possible very-long-prompt follow-up; `3072` fits but regresses. This is not a
-short-decode recipe change until the fixed realistic cold suite proves no
-regression. See
-`../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-prefill-ubatch-service-screen.md`.
+a possible very-long-prompt follow-up; `3072` fits but regresses. The follow-up
+fixed realistic cold-suite check passed for UB2048 with `cached_tokens=0` and
+no observed short-decode regression: UB2048 averaged
+`118.30159066915866 tok/s` versus UB1024 controls at
+`116.46794311469674 tok/s`, but the best UB2048 candidate was only
+`118.70031578164084 tok/s`, below the current `121.41411987308553 tok/s`
+record. Keep UB1024 for the promoted short-record reproduction; use UB2048 as
+the validated general service/default candidate. See
+`../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-prefill-ubatch-service-screen.md`
+and
+`../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-ub2048-short-suite-control.md`.
 
 2026-06-29 verifier LM-head candidate-threshold audit: shifted
 `t_inp_tokens[r + 1]` does provide the draft candidate ID for narrow standard

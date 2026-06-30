@@ -73,15 +73,19 @@ as a headline decode metric from this screen.
   21.5K actual-token row by a small margin and ties UB2048 at 12.1K.
 - Reject `UBATCH_SIZE=3072` for now. It fits and passes canary, but regresses
   versus UB2048/UB2560 on these shapes.
-- Do not change the promoted short-decode recipe from this screen alone. A
-  short fixed realistic-suite run is required before any global recipe change.
+- Follow-up short-suite control has now been completed:
+  `20260630-ub2048-short-suite-control.md`. UB2048 passed the fixed cold
+  short-decode gate with `cached_tokens=0` and averaged `118.30159066915866
+  tok/s` versus UB1024 controls at `116.46794311469674 tok/s`, but the best
+  UB2048 candidate (`118.70031578164084 tok/s`) did not beat the current
+  `121.41411987308553 tok/s` headline. Treat UB2048 as a service/default
+  candidate, not a new short-record recipe.
 
 ## Next Steps
 
-1. Run a fixed realistic cold-suite short-decode control with
-   `BATCH_SIZE=2048`, `UBATCH_SIZE=2048` to determine whether UB2048 is safe as
-   a global default or only as a long-prefill service recipe.
-2. If short decode regresses, keep UB1024 for short decode and document UB2048
-   as a service-only override for long context.
+1. Keep the promoted short-record reproduction on UB1024 unless a future
+   full512 strict run actually beats `121.41411987308553 tok/s`.
+2. For service / long-context deployment, use UB2048 as the best general
+   candidate tested so far.
 3. For very long prompts (`>20K` actual tokens), retest UB2048 versus UB2560
    with more than one unique prompt before making a service deployment choice.

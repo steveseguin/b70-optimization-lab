@@ -151,8 +151,14 @@ Current active optimization target:
   candidate tested so far, improving approximate prefill versus UB1024 by
   `+10.8%`, `+9.2%`, `+7.4%`, and `+6.1%` at 8.1K, 12.1K, 16.2K, and 21.5K
   actual prompt tokens. UB2560 is only a possible very-long-prompt follow-up;
-  UB3072 is a valid regression boundary. Do not promote UB2048 globally until
-  a fixed realistic cold-suite short-decode control proves no regression.
+  UB3072 is a valid regression boundary. The follow-up fixed realistic
+  cold-suite control passed for UB2048 with `cached_tokens=0` and no observed
+  short-decode regression: UB2048 averaged `118.30159066915866 tok/s` versus
+  UB1024 controls at `116.46794311469674 tok/s`. It still did not beat the
+  active `121.41411987308553 tok/s` record, so keep the promoted short-record
+  reproduction on UB1024 and treat UB2048 as a validated service/default
+  candidate. See
+  `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-ub2048-short-suite-control.md`.
 - Current diagnostic best, not a real-world headline:
   `176.21623213048554 tok/s` after TTFT on the first no-cache synthetic
   filled-long benchmark row, `176.40259133127742 tok/s` supporting repeat mean,
