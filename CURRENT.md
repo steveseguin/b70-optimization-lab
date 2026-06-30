@@ -126,6 +126,13 @@ Current active optimization target:
   prompt/decode graph. The remaining exact row-output idea is a deeper
   accept-prefix verifier LM-head backend op, not a config knob. See
   `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-verifier-row-shape-and-accept-prefix-audit.md`.
+  A final small FA-on 32K/VMM p_min gap screen tested `0.04625`, `0.04725`,
+  `0.047625`, and `0.04875` under the current selected-down VDR2 strict128
+  identity. All lanes passed, but the best candidate was `0.047625` at
+  `118.41776692242152 tok/s`, below matching-stack `0.0475` controls
+  (`119.79709987498046` / `119.51944277144372`). This closes the remaining
+  threshold-only gap; do not full512-confirm or submit. See
+  `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-faon-vmm-pmin-gap-screen-negative.md`.
 - Current context/service diagnostic split:
   with flash attention off, MTP remains useful through about `ctx24576` /
   `ctx25600`, degrades near `ctx26624`, and cliffs by `ctx27648`. With

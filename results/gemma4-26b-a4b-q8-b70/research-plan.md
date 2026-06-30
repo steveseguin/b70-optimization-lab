@@ -318,6 +318,16 @@ accept-prefix op with parity mode or move to a separate service/prefill lane.
 See
 `../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-verifier-row-shape-and-accept-prefix-audit.md`.
 
+2026-06-30 FA-on 32K/VMM p_min gap screen: a final small threshold-only screen
+tested `p_min=0.04625`, `0.04725`, `0.047625`, and `0.04875` under the current
+selected-down VDR2 strict128 identity. All lanes passed the fixed cold gate and
+canary with `cached_tokens=0`, but the best candidate was `0.047625` at
+`118.41776692242152 tok/s`, below the matching-stack `0.0475` controls from
+`20260629-faon-vmm-depthscreen-negative.md` (`119.79709987498046` and
+`119.51944277144372`). Decision: closed negative; do not full512-confirm,
+submit, or reopen isolated p_min screens without a new source mechanism. See
+`../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-faon-vmm-pmin-gap-screen-negative.md`.
+
 Post-top1 profile check: skip the dense/shared FFN gate+up+GEGLU fusion for
 now. The activation-profile follow-up for the top1 experiment showed the new
 LM-head route active and still hot, then routed MoE gate/up

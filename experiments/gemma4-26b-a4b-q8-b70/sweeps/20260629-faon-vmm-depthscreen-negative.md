@@ -41,3 +41,9 @@ Both candidates lost to same-window controls:
 This reinforces the current record shape: `n_max=3`, `n_min=2`,
 `p_min=0.0475`, `UBATCH_SIZE=1024`. Future work should return to source-level
 verifier cost reduction rather than MTP-depth or threshold tuning.
+
+Follow-up: `20260630-faon-vmm-pmin-gap-screen-negative.md` closed the remaining
+small p_min gaps (`0.04625`, `0.04725`, `0.047625`, `0.04875`) under the same
+FA-on 32K/VMM selected-down VDR2 identity. Best lane was `0.047625` at
+`118.41776692242152 tok/s` strict128, still below the `0.0475` controls above.
+Do not reopen isolated p_min screens without a new source mechanism.

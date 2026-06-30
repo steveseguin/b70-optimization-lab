@@ -123,6 +123,13 @@ Primary target:
   implementation risk is high. Evidence:
   `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-verifier-row-shape-and-accept-prefix-audit.md`.
   Do not reopen row-shape/config screens without new profile evidence.
+- Latest p_min gap follow-up: `0.04625`, `0.04725`, `0.047625`, and `0.04875`
+  were tested under the current FA-on 32K/VMM selected-down VDR2 strict128
+  identity. All passed, but best was only `118.41776692242152 tok/s`, below
+  matching-stack `0.0475` controls at `119.79709987498046` and
+  `119.51944277144372`. This is a closed negative; do not full512-confirm or
+  submit. Evidence:
+  `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-faon-vmm-pmin-gap-screen-negative.md`.
 - Current context/service diagnostic split: the short-record recipe is now
   also the FA-on 32K/VMM service profile after a realistic-gate retest. The
   promoted row is `121.41411987308553 tok/s` with `FLASH_ATTN=on`,
