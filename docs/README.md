@@ -120,4 +120,7 @@ Gemma result packet. The current long-context service candidate is the
 default-off SYCL FlashAttention DV512/GQA8 tile patch documented in
 `../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-sycl-fattn-dv512-gqa8-prefill-win.md`;
 it improves validated prefill/service shapes without replacing the UB1024
-short-record reproduction.
+short-record reproduction. A follow-up KV-max mask pre-scan threshold
+diagnostic is archived at
+`../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-sycl-fattn-kv-max-scan-threshold-negative.md`;
+it showed scan-off is slower, so keep the scan enabled.

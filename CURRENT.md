@@ -267,6 +267,12 @@ Current active optimization target:
   reproduction; use UB2048 as the balanced long-service setting and UB2304
   only for pure prefill. Evidence:
   `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-sycl-fattn-dv512-gqa8-prefill-win.md`.
+  Follow-up KV-max mask pre-scan testing is closed negative: disabling
+  `flash_attn_mask_to_KV_max` with
+  `GGML_SYCL_FATTN_KV_MAX_SCAN_MIN_Q=-1` passed exact validation and
+  `cached_tokens=0`, but regressed the same `30400` actual-token prefill from
+  `955.2365` to `862.9161 tok/s` (`-9.7%`). Keep the scan enabled. Evidence:
+  `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-sycl-fattn-kv-max-scan-threshold-negative.md`.
 - Current diagnostic best, not a real-world headline:
   `176.21623213048554 tok/s` after TTFT on the first no-cache synthetic
   filled-long benchmark row, `176.40259133127742 tok/s` supporting repeat mean,

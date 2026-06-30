@@ -276,6 +276,15 @@ Primary target:
   `patches/gemma4-26b-a4b-q8-b70/20260630-sycl-fattn-dv512-gqa8-ncols2.patch`.
   Evidence:
   `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-sycl-fattn-dv512-gqa8-prefill-win.md`.
+- Latest source service negative: the KV-max mask pre-scan threshold patch is
+  a useful diagnostic knob but not a win. With the GQA8 tile patch active,
+  disabling the scan via `GGML_SYCL_FATTN_KV_MAX_SCAN_MIN_Q=-1` passed exact
+  cold long-context validation and `cached_tokens=0`, but regressed the
+  `30400` actual-token case from `955.2365` to `862.9161 tok/s`. Keep the scan
+  enabled. Patch:
+  `patches/gemma4-26b-a4b-q8-b70/20260630-sycl-fattn-kv-max-scan-threshold.patch`.
+  Evidence:
+  `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-sycl-fattn-kv-max-scan-threshold-negative.md`.
 - Current best non-duplicate Gemma code target is still verifier cost, but not
   by removing the bonus pipeline or by a naive candidate-threshold head scan.
   Work inside the existing target decode boundary only if it removes real

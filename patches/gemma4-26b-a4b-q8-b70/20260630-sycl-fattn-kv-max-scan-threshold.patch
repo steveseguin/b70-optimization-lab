@@ -1,0 +1,20 @@
+diff --git a/ggml/src/ggml-sycl/fattn-common.hpp b/ggml/src/ggml-sycl/fattn-common.hpp
+index c6cc13cfb..6a3d7cda2 100644
+--- a/ggml/src/ggml-sycl/fattn-common.hpp
++++ b/ggml/src/ggml-sycl/fattn-common.hpp
+@@ -13,0 +14 @@
++#include <cstdlib>
+@@ -21,0 +23,8 @@
++static int ggml_sycl_fattn_kv_max_scan_min_q() {
++    static const int value = []() {
++        const char * env = std::getenv("GGML_SYCL_FATTN_KV_MAX_SCAN_MIN_Q");
++        return env ? std::atoi(env) : 1024;
++    }();
++    return value;
++}
++
+@@ -1013 +1022,3 @@ void launch_fattn(
+-    if (mask && K->ne[1] % FATTN_KQ_STRIDE == 0 && (Q->ne[1] >= 1024 || Q->ne[3] > 1)) {
++    const int kv_max_scan_min_q = ggml_sycl_fattn_kv_max_scan_min_q();
++    if (mask && K->ne[1] % FATTN_KQ_STRIDE == 0 && kv_max_scan_min_q >= 0
++            && (Q->ne[1] >= kv_max_scan_min_q || Q->ne[3] > 1)) {

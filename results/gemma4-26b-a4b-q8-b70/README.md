@@ -75,6 +75,11 @@ far. Fixed cold short-suite guards passed with `cached_tokens=0`, but did not
 beat the `123.67689864739785` short record, so no LocalMaxxing submission was
 made. Evidence:
 [`../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-sycl-fattn-dv512-gqa8-prefill-win.md`](../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-sycl-fattn-dv512-gqa8-prefill-win.md).
+Follow-up KV-max mask pre-scan testing showed the existing scan should stay
+enabled: disabling it with `GGML_SYCL_FATTN_KV_MAX_SCAN_MIN_Q=-1` passed exact
+validation but regressed the `30400` actual-token prefill from `955.2365` to
+`862.9161 tok/s`. Evidence:
+[`../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-sycl-fattn-kv-max-scan-threshold-negative.md`](../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-sycl-fattn-kv-max-scan-threshold-negative.md).
 
 The earlier UBATCH-only service work remains useful background: UB2048 was the
 best unpatched long-prefill candidate, and the profile that followed correctly

@@ -177,7 +177,12 @@ Record identity:
   `../patches/gemma4-26b-a4b-q8-b70/20260630-sycl-fattn-dv512-gqa8-ncols2.patch`
   with `GGML_SYCL_FATTN_DV512_GQA_NCOLS2=8`. Use UB2048 as the balanced
   long-service setting, UB2304 for pure prefill, and keep UB1024 as the
-  short-record reproduction setting.
+  short-record reproduction setting. The KV-max mask pre-scan threshold
+  diagnostic is preserved at
+  `../patches/gemma4-26b-a4b-q8-b70/20260630-sycl-fattn-kv-max-scan-threshold.patch`
+  and documented as a negative in
+  `../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-sycl-fattn-kv-max-scan-threshold-negative.md`;
+  do not disable the scan for this lane.
 - source patch snapshot:
   `../patches/gemma4-26b-a4b-q8-b70/20260626T2225-llamacpp-gemma4-current-record-stack.patch`
   with note
