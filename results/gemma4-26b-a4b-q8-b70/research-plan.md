@@ -9,18 +9,19 @@ replicas on four GPUs for parallel research and aggregate service capacity.
 Best one-B70 Q8 strict result under the promotion gate:
 
 - result:
-  `data/gemma4-q8-gpu3-q8lmhead-noreorder-control-full512-20260629T224927Z/`;
-- primary metric: **121.41411987308553 tok/s** median generated-token
+  `data/gemma4-q8-gpu0-finalpostnorm-on-full512-20260630T024027Z-finalpost-full512/`;
+- primary metric: **123.67689864739785 tok/s** median generated-token
   throughput for tokens 1-100 after TTFT across the fixed realistic suite; p10
-  `107.03214367227781`, mean `120.13610933675466`, median full-512
-  after-TTFT `110.39053979324245`, median wall full-512
-  `105.88057667302085`, median TTFT `179.117635008879 ms`;
+  `105.67252530778094`, mean `120.82536080117124`, median full-512
+  after-TTFT `110.68310696601407`, median wall full-512
+  `106.44076646173642`, median TTFT `179.12497598445043 ms`;
 - config: llama.cpp `c926ad098`, UD-Q8_K_XL target/verifier, Q4_0 MTP draft,
   reordered-Q8 VDR2, `FLASH_ATTN=on`, `CTX_SIZE=32768`,
   `GGML_SYCL_ENABLE_VMM=1`, `n_max=3`, `n_min=2`, `p_min=0.0475`,
   `UBATCH_SIZE=1024`, `LLAMA_SYCL_F16_P021_SMALL_NCOLS=1`,
   `LLAMA_SPEC_VERIFY_BULK_SAMPLED_IDS=1`,
   `LLAMA_GEMMA4_MOE_FUSED_DOWN_WEIGHTED_SUM_REORDER_VDR2=1`,
+  `LLAMA_GEMMA4_FUSED_FINAL_POST_NORM_RESIDUAL=1`,
   `--ctx-checkpoints 0`, no n-gram/history acceleration; LM-head experiment
   flags `LLAMA_SYCL_Q8_0_LM_HEAD_1COL_DMMV` and
   `LLAMA_SYCL_Q8_0_LM_HEAD_1COL_NO_REORDER` unset;
@@ -30,15 +31,14 @@ Best one-B70 Q8 strict result under the promotion gate:
 
 This is the policy-compliant VDR2 selected-down fused weighted-sum transfer of
 the strict `n_max=3`, `n_min=2`, `UBATCH_SIZE=1024` family, with FA-on
-32K/VMM. The previous LocalMaxxing ID was
-`cmqzq5zu402troe01t774uyox` for `117.91456485086059 tok/s`; the late
-`121.41411987308553 tok/s` row was accepted as LocalMaxxing
-`cmqztiqdn02vnoe01egox6q3f`. Same-family
-confirmation after the late run produced another record-beating baseline row at
-`119.94842631460949 tok/s` plus lower variance rows at `113.572`,
-`114.088`, and `111.988 tok/s`; earlier same-identity confirmations measured
+32K/VMM and final post-norm residual fusion. The current LocalMaxxing ID is
+`cmr01nnet000mld01x2tt6qds`. The previous LocalMaxxing ID was
+`cmqztiqdn02vnoe01egox6q3f` for `121.41411987308553 tok/s`, preceded by
+`cmqzq5zu402troe01t774uyox` for `117.91456485086059 tok/s`. Same-family
+support includes a `119.94842631460949 tok/s` row plus lower variance rows at
+`113.572`, `114.088`, and `111.988 tok/s`; earlier same-identity confirmations measured
 `116.45776605647993`, `117.41509141115063`, `115.08942949119734`, and
-`117.45737477243767 tok/s`. Treat this as a higher-variance `~120 tok/s`
+`117.45737477243767 tok/s`. Treat this as a higher-variance `~120-124 tok/s`
 baseline lane, not as a no-reorder flag win. It
 supersedes the prior selected-down rows (`115.8466634928202` /
 `cmqyrpox4021dqk01co5o4fcw` and `115.72789384447941` /
@@ -94,7 +94,7 @@ fixed realistic cold-suite check passed for UB2048 with `cached_tokens=0` and
 no observed short-decode regression: UB2048 averaged
 `118.30159066915866 tok/s` versus UB1024 controls at
 `116.46794311469674 tok/s`, but the best UB2048 candidate was only
-`118.70031578164084 tok/s`, below the current `121.41411987308553 tok/s`
+`118.70031578164084 tok/s`, below the current `123.67689864739785 tok/s`
 record. Keep UB1024 for the promoted short-record reproduction; use UB2048 as
 the validated general service/default candidate. A repeat UB2048-vs-UB2560
 confirmation at the 12K- and 16K-requested long-prompt shapes kept the same
@@ -110,11 +110,23 @@ and
 2026-06-30 record-identity full512 repeat: four parallel lanes of the current
 FA-on 32K/VMM selected-down VDR2 recipe all passed the strict realistic final
 gate with `cached_tokens=0` and 128/128 canary, but did not beat the
-`121.41411987308553 tok/s` record. Primary medians were `118.21311630972258`,
+then-current `121.41411987308553 tok/s` record. Primary medians were `118.21311630972258`,
 `117.71732552906994`, `114.87763475869593`, and
 `112.94544241316387 tok/s`. Treat as variance/no-new-record, not a
 LocalMaxxing submission candidate. See
 `../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-record-repeat-full512-variance.md`.
+
+2026-06-30 final post-norm fusion promotion: the default-off
+`LLAMA_GEMMA4_FUSED_FINAL_POST_NORM_RESIDUAL=1` path was retested after the
+FA-on 32K/VMM selected-down VDR2 record stack. Strict128, cross-over, and
+full512 A/B all passed the fixed cold gate. The best full512 flag-on lane
+reached the current valid record `123.67689864739785 tok/s` and was submitted
+as LocalMaxxing `cmr01nnet000mld01x2tt6qds`. The effect is noisy:
+paired full512 finalpost lanes averaged `120.11414175477651` versus controls
+`116.29133772533568`, but the second finalpost lane was only
+`116.55138486215519`. Keep the flag in the promoted recipe, and keep repeat
+confirmation separate from effect-size claims. See
+`../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-final-postnorm-fusion-screen.md`.
 
 2026-06-29 verifier LM-head candidate-threshold audit: shifted
 `t_inp_tokens[r + 1]` does provide the draft candidate ID for narrow standard
@@ -166,7 +178,7 @@ route under `LLAMA_SYCL_MUL_MAT_ARGMAX_REORDER_NCOLS=1` attempted to make
 LM-head weight loads across verifier rows. It passed the fixed cold gate and
 512/512 canary, but did not beat the regular verifier path:
 `109.94207305976514 tok/s` versus same-window control
-`110.18642209569018 tok/s`, both below the promoted `121.41411987308553`
+`110.18642209569018 tok/s`, both below the promoted `123.67689864739785`
 full512 record. Decision: negative, keep default-off; do not promote or submit.
 See
 `../../patches/gemma4-26b-a4b-q8-b70/20260629-compact-argmax-reorder-ncols-negative.md`.
@@ -217,7 +229,7 @@ default-off research artifact only. See
 one-column Q8_0 LM-head shape instead of suppressing it in favor of reordered
 MMVQ. It passed strict and full gates, but full512 candidates were only
 `115.04` and `115.49 tok/s`, below same-window controls and the
-`121.41411987308553 tok/s` record. Decision: closed negative. The next
+`123.67689864739785 tok/s` record. Decision: closed negative. The next
 credible LM-head variant is not DMMV; test regular MMVQ without Q8 reorder for
 the same one-column LM-head shape, because the current reordered-Q8 path has no
 multi-column reuse when `src1_ncols == 1`. See
@@ -246,7 +258,7 @@ fixed cold gate plus 256 canary rows, but lost the strict128 headline metric
 against the paired control: `111.89428679462038` vs
 `112.52074349461066 tok/s` median tokens 1-100 after TTFT. Full-output and wall
 medians were slightly better, but this is not the promotion metric and remains
-below the `121.41411987308553 tok/s` record. A follow-up node-profile run proved
+below the `123.67689864739785 tok/s` record. A follow-up node-profile run proved
 the new route was active:
 `MUL_MAT_ARGMAX:spec_verify_regular_mmvq_top1_epilogue_token_rows`, but it was
 still the hottest node at ~`1.325 ms/call`. Decision: closed negative for this
@@ -304,7 +316,7 @@ fixed cold gate with `cached_tokens=0`. `BATCH_SIZE=1152`, `UBATCH_SIZE=1152`
 looked interesting in strict128 at `121.24708378127268 tok/s`, but the paired
 full512 confirmation did not beat the record: candidate average
 `117.36308529017367 tok/s`, paired-control average `114.3071667009025`, best
-candidate `118.43353215490006`, current headline `121.41411987308553`.
+candidate `118.43353215490006`, current headline `123.67689864739785`.
 Decision: valid local positive versus same-window controls, but no recipe
 change and no LocalMaxxing submission. See
 `../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-faon-vmm-ubatch-screen.md`.
@@ -367,7 +379,7 @@ quantizer and fixing the SYCL support predicate for reordered down weights. The
 first candidate crashed because the backend-only op was assigned to CPU; after
 the placement fix it passed strict128 quality, but did not clearly beat paired
 controls (`115.164` / `113.306` tok/s versus controls `113.753` / `114.919`),
-and stayed below the `121.41411987308553` full512 record. Decision: closed
+and stayed below the `123.67689864739785` full512 record. Decision: closed
 negative/inconclusive; keep default-off and do not run full512 promotion as-is.
 See
 `../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260629-geglu-vdr2-selected-down-negative.md`.
@@ -377,7 +389,7 @@ were screened after the selected-down record. `LLAMA_SPEC_VERIFY_CLIP_DRAFT_AT_E
 is valid and real (`eog_trim calls=512 tokens=640` in the profiled strict128
 run), but it did not beat the full512 record under the primary fresh metric:
 best EOG full512 lane was `113.58569073629727 tok/s` versus the current
-`121.41411987308553`. It may remain useful as a default-off terminal cleanup,
+`123.67689864739785`. It may remain useful as a default-off terminal cleanup,
 but it is not a LocalMaxxing record. The late-head bonus plus dedicated
 SPEC_HEAD fused argmax branch (`LLAMA_SPEC_VERIFY_LATE_HEAD_BONUS=1` +
 `LLAMA_SPEC_HEAD_FUSED_OUTPUT_ARGMAX=1`) lost in both strict128 lanes
@@ -407,7 +419,7 @@ win: GPU1 flag-on `114.762` versus GPU0 control `113.943`, and GPU3 flag-on
 `115.554` versus GPU2 control `113.967`. This is a valid small positive in the
 intended verifier-MoE boundary, but **not promoted** because the best strict128
 candidate remained below the current full512 record
-`121.41411987308553 tok/s`. Keep the flag default-off and preserve the patch;
+`123.67689864739785 tok/s`. Keep the flag default-off and preserve the patch;
 the later full512 promotion screen was run and lost. Full512 results:
 
 - control GPU0:
@@ -571,7 +583,7 @@ strict record. The best Q8_0 screen,
 `88.94881774985208` and `89.89234269084307`; the best deeper row was
 `n_max=4`/`n_min=2` at `90.27678402019421`, still below both the old
 `UD-Q8_K_XL` record (`98.34046474459183`) and the current
-`121.41411987308553` record. Keep Q8_0 as a compatibility/control
+`123.67689864739785` record. Keep Q8_0 as a compatibility/control
 lane, not a promoted LocalMaxxing row. See
 `../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260627T2144-q80-target-strict-negative.md`.
 
@@ -1630,7 +1642,7 @@ Text speed is first. After text baseline:
     `n_min=2`, `p_min=0.0475`, `UBATCH_SIZE=1024`), official draft swaps to
     Q4_K_M, Q5_K_M, Q6_K, and Q8_0 all passed the fresh realistic gate but
     stayed below the then-current `98.34046474459183 tok/s` record and far below
-    the current `121.41411987308553 tok/s` record. Closest rows were Q8_0 at
+    the current `123.67689864739785 tok/s` record. Closest rows were Q8_0 at
     `88.245438 tok/s` and Q5_K_M at `88.109559 tok/s`; Q4_K_M and Q6_K
     were lower. A later Q2_K screen also lost (`85.779-88.903 tok/s`) versus a
     same-window Q4_0 control (`95.282 tok/s`). Keep Q4_0 as the promoted default
@@ -1648,7 +1660,7 @@ Text speed is first. After text baseline:
 20. **Preserve the current source stack before compact-argmax work.** The
     current llama.cpp Gemma record source tree contains the accumulated VDR2
     selected-down, sampled-ID, Q8 reorder, MTP, and profiling changes that led
-    to the `121.41411987308553 tok/s` valid record plus later negative screens.
+    to the `123.67689864739785 tok/s` valid record plus later negative screens.
     Before starting the next source lane (compact LM-head argmax / verifier
     cost reduction), snapshot the full source diff at
     `../../patches/gemma4-26b-a4b-q8-b70/20260629-current-source-stack-before-compact-argmax.patch`
@@ -1661,7 +1673,7 @@ Text speed is first. After text baseline:
     passed strict128 and full512 cold realistic gates, but full512 candidate
     medians (`114.99472751325114`, `119.55472070939985`) lost to same-build
     controls (`119.83691077465154`, `121.35664372753011`) and the
-    `121.41411987308553` record. The active source hunk was reverted; patch
+    `123.67689864739785` record. The active source hunk was reverted; patch
     and results are preserved in
     `../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260629-fused-down-selected-softmax-precompute-negative.md`.
 22. **VDR2 selected-down rowpack=2 is not a short-record win.** A default-off

@@ -165,3 +165,34 @@ Future short-decode source work should either:
 If neither is being actively implemented, pivot to a separate service lane
 (prefill / long-context ladder) and rerun the short fixed suite afterward to
 prove no regression.
+
+## Follow-up Audit: backend-only accept-prefix is not enough
+
+Two follow-up read-only code audits on 2026-06-30 tightened the implementation
+boundary:
+
+- Standard full-bonus MTP verification emits `n_draft + 1` rows:
+  row 0 verifies `spec_draft[0]` after feeding the last sampled token; later
+  rows verify each next draft token; the final row is the bonus token. The
+  sampler pushes the true target token before checking mismatch, and
+  `finish_speculative_accept()` treats `ids.back()` as the next real target
+  token while accepting only `accepted.size() - 1` draft tokens. Therefore, on
+  mismatch, any exact replacement must still return the true target top-1 for
+  the first failing row.
+- A compact backend op that only emits accept length / sampled IDs would not
+  remove the dominant full-vocab LM-head work. Exact greedy verification still
+  needs an argmax over the full vocabulary for the row being checked. Existing
+  `ggml_mul_mat_argmax` / top1-epilogue paths still iterate vocab rows and have
+  already lost in strict screens.
+- The only meaningful accept-prefix win is **row-adaptive verifier scheduling**:
+  compute row 0, stop after the first mismatch, and compute row 1/2/bonus only
+  if prior rows matched. Server-level staging already tried that shape and lost
+  because it adds decode calls. A useful version must fold the conditional work
+  into a graph/backend boundary or otherwise avoid extra decode launches.
+
+Practical implication: do **not** implement a backend-only
+`accept-prefix-result` op as a record attempt unless it also removes later
+token-position verifier work. Treat the minimal backend-output variant as a
+documentation/no-go: it mostly rearranges reduction/output extraction, while
+recent profiles show host accept/read overhead is tiny compared with target
+`process_ubatch`.

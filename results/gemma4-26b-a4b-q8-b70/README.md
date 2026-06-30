@@ -2,15 +2,16 @@
 
 Status: **active optimization with a realistic final gate required.** The best
 one-B70 Q8 strict result by the required primary metric is
-`121.41411987308553 tok/s` median generated-token throughput for tokens 1-100
+`123.67689864739785 tok/s` median generated-token throughput for tokens 1-100
 after TTFT across the fixed cold prompt suite:
-`data/gemma4-q8-gpu3-q8lmhead-noreorder-control-full512-20260629T224927Z/summary.json`.
+`data/gemma4-q8-gpu0-finalpostnorm-on-full512-20260630T024027Z-finalpost-full512/summary.json`.
 It uses llama.cpp `c926ad098`, UD-Q8_K_XL target/verifier, Q4_0 MTP draft,
 reordered-Q8 VDR2, `FLASH_ATTN=on`, `CTX_SIZE=32768`,
 `GGML_SYCL_ENABLE_VMM=1`, `n_max=3`, `n_min=2`, `p_min=0.0475`,
 `UBATCH_SIZE=1024`, `LLAMA_SYCL_F16_P021_SMALL_NCOLS=1`,
 `LLAMA_SPEC_VERIFY_BULK_SAMPLED_IDS=1`,
 `LLAMA_GEMMA4_MOE_FUSED_DOWN_WEIGHTED_SUM_REORDER_VDR2=1`,
+`LLAMA_GEMMA4_FUSED_FINAL_POST_NORM_RESIDUAL=1`,
 LM-head experiment flags unset,
 `cached_tokens=0` on every suite prompt, and
 `realistic_final_gate.passed=true`.
@@ -24,17 +25,18 @@ accepts that quantization change.
 
 Current repeat / confirmation status: the VDR2 selected-down fused weighted-sum
 path is the current policy-compliant LocalMaxxing submission:
-`cmqztiqdn02vnoe01egox6q3f`. The current row uses the same FA-on 32K/VMM
-selected-down baseline/control identity as the previous `117.914` row, with
-the default-off LM-head DMMV and no-reorder experiment flags unset. It measured
-p10 `107.03214367227781`, mean `120.13610933675466`, median full512
-after-TTFT `110.39053979324245`, median wall full512
-`105.88057667302085`, and median TTFT `179.117635008879 ms`. Same-family
-confirmation produced another record-beating baseline row at
-`119.94842631460949 tok/s` plus lower variance rows at `113.572`, `114.088`,
-and `111.988 tok/s`, all with `cached_tokens=0` and 512/512 canary rows
-passing. Treat this as a higher-variance `~120 tok/s` baseline lane, not as a
-source-flag win. The prior selected-down LocalMaxxing rows
+`cmr01nnet000mld01x2tt6qds`. The current row adds
+`LLAMA_GEMMA4_FUSED_FINAL_POST_NORM_RESIDUAL=1` to the same FA-on 32K/VMM
+selected-down baseline/control identity. It measured p10
+`105.67252530778094`, mean `120.82536080117124`, median full512 after-TTFT
+`110.68310696601407`, median wall full512 `106.44076646173642`, and median
+TTFT `179.12497598445043 ms`. Full512 paired controls were valid but lower
+(`117.87347663377679` and `114.70919881689457`); the second finalpost lane
+was `116.55138486215519`. Treat this as the current valid high with high
+variance, and keep repeat confirmations separate from promotion claims. The
+prior same-family `121.41411987308553 tok/s` LocalMaxxing row
+`cmqztiqdn02vnoe01egox6q3f`, the `119.94842631460949 tok/s` confirmation, and
+the prior selected-down LocalMaxxing rows
 `cmqzq5zu402troe01t774uyox`, `cmqyrpox4021dqk01co5o4fcw`, and
 `cmqyo0jyt08ippk01vhiobdnm` are superseded by the current repeat.
 The prior LocalMaxxing row `cmqxchyra03xmqr01b963gmi1` at
@@ -181,7 +183,8 @@ External references:
 
 | Date | Runtime | GPU Layout | Precision | Context | Status | Output tok/s | Evidence |
 | --- | --- | --- | --- | --- | --- | ---: | --- |
-| 2026-06-29 | llama.cpp `c926ad098` SYCL draft-MTP AOT BMG + Q8 MoE-ID reorder VDR2 + F16 p021 small-ncols path + bulk sampled-ID verifier host read + VDR2 selected-down fused weighted-sum + FA-on 32K/VMM | 1 replica on B70 GPU3; same-family four-GPU baseline confirmation batch | UD-Q8_K_XL GGUF target + Q4_0 MTP draft GGUF, f16 KV | 32K | **current strict realistic-suite record**: fixed realistic cold suite, each prompt once, `cached_tokens=0` every row, no cache/history/ngram reuse, `FLASH_ATTN=on`, `GGML_SYCL_ENABLE_VMM=1`, `n_max=3`, `n_min=2`, `p_min=0.0475`, `UBATCH_SIZE=1024`, `LLAMA_SYCL_F16_P021_SMALL_NCOLS=1`, `LLAMA_SPEC_VERIFY_BULK_SAMPLED_IDS=1`, `LLAMA_GEMMA4_MOE_FUSED_DOWN_WEIGHTED_SUM_REORDER_VDR2=1`, target-verifier accepted MTP tokens; LM-head experiment flags unset; LocalMaxxing `cmqztiqdn02vnoe01egox6q3f`; supporting same-family confirmation high `119.948` plus lower variance rows `113.572`, `114.088`, `111.988` | **121.414 median 1-100 after TTFT** / 110.391 full512 after TTFT / 105.881 wall full512 | [summary](../../data/gemma4-q8-gpu3-q8lmhead-noreorder-control-full512-20260629T224927Z/summary.json), [LocalMaxxing response](../../data/localmaxxing-responses/gemma4-26b-a4b-q8-b70-llamacpp-realistic-vdr2-selecteddown-faon-vmm-ctx32768-full512-121tok-20260629.submit.log), [record note](20260629-vdr2-selected-down-record.md) |
+| 2026-06-30 | llama.cpp `c926ad098` SYCL draft-MTP AOT BMG + Q8 MoE-ID reorder VDR2 + F16 p021 small-ncols path + bulk sampled-ID verifier host read + VDR2 selected-down fused weighted-sum + final post-norm residual fusion + FA-on 32K/VMM | 1 replica on B70 GPU0; paired full512 finalpost/control A/B across four GPUs | UD-Q8_K_XL GGUF target + Q4_0 MTP draft GGUF, f16 KV | 32K | **current strict realistic-suite record**: fixed realistic cold suite, each prompt once, `cached_tokens=0` every row, no cache/history/ngram reuse, `FLASH_ATTN=on`, `GGML_SYCL_ENABLE_VMM=1`, `n_max=3`, `n_min=2`, `p_min=0.0475`, `UBATCH_SIZE=1024`, `LLAMA_SYCL_F16_P021_SMALL_NCOLS=1`, `LLAMA_SPEC_VERIFY_BULK_SAMPLED_IDS=1`, `LLAMA_GEMMA4_MOE_FUSED_DOWN_WEIGHTED_SUM_REORDER_VDR2=1`, `LLAMA_GEMMA4_FUSED_FINAL_POST_NORM_RESIDUAL=1`, target-verifier accepted MTP tokens; LocalMaxxing `cmr01nnet000mld01x2tt6qds`; valid but high variance, with second finalpost `116.551` and controls `117.873` / `114.709` | **123.677 median 1-100 after TTFT** / 110.683 full512 after TTFT / 106.441 wall full512 | [summary](../../data/gemma4-q8-gpu0-finalpostnorm-on-full512-20260630T024027Z-finalpost-full512/summary.json), [LocalMaxxing response](../../data/localmaxxing-responses/gemma4-26b-a4b-q8-b70-llamacpp-realistic-finalpostnorm-faon-vmm-ctx32768-full512-123tok-20260630.submit.log), [sweep note](../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-final-postnorm-fusion-screen.md) |
+| 2026-06-29 | llama.cpp `c926ad098` SYCL draft-MTP AOT BMG + Q8 MoE-ID reorder VDR2 + F16 p021 small-ncols path + bulk sampled-ID verifier host read + VDR2 selected-down fused weighted-sum + FA-on 32K/VMM | 1 replica on B70 GPU3; same-family four-GPU baseline confirmation batch | UD-Q8_K_XL GGUF target + Q4_0 MTP draft GGUF, f16 KV | 32K | prior strict realistic-suite record, superseded by final post-norm fusion: fixed realistic cold suite, each prompt once, `cached_tokens=0` every row, no cache/history/ngram reuse, `FLASH_ATTN=on`, `GGML_SYCL_ENABLE_VMM=1`, `n_max=3`, `n_min=2`, `p_min=0.0475`, `UBATCH_SIZE=1024`, `LLAMA_SYCL_F16_P021_SMALL_NCOLS=1`, `LLAMA_SPEC_VERIFY_BULK_SAMPLED_IDS=1`, `LLAMA_GEMMA4_MOE_FUSED_DOWN_WEIGHTED_SUM_REORDER_VDR2=1`, target-verifier accepted MTP tokens; LM-head experiment flags unset; LocalMaxxing `cmqztiqdn02vnoe01egox6q3f`; supporting same-family confirmation high `119.948` plus lower variance rows `113.572`, `114.088`, `111.988` | **121.414 median 1-100 after TTFT** / 110.391 full512 after TTFT / 105.881 wall full512 | [summary](../../data/gemma4-q8-gpu3-q8lmhead-noreorder-control-full512-20260629T224927Z/summary.json), [LocalMaxxing response](../../data/localmaxxing-responses/gemma4-26b-a4b-q8-b70-llamacpp-realistic-vdr2-selecteddown-faon-vmm-ctx32768-full512-121tok-20260629.submit.log), [record note](20260629-vdr2-selected-down-record.md) |
 | 2026-06-29 | llama.cpp `c926ad098` SYCL draft-MTP AOT BMG + Q8 MoE-ID reorder VDR2 + F16 p021 small-ncols path + bulk sampled-ID verifier host read + VDR2 selected-down fused weighted-sum + FA-on 32K/VMM | 1 replica on B70 GPU3; same-identity four-GPU confirmation batch | UD-Q8_K_XL GGUF target + Q4_0 MTP draft GGUF, f16 KV | 32K | prior strict realistic-suite record, superseded by the later same-family `121.414` baseline row: fixed realistic cold suite, each prompt once, `cached_tokens=0` every row, no cache/history/ngram reuse, `FLASH_ATTN=on`, `GGML_SYCL_ENABLE_VMM=1`, `n_max=3`, `n_min=2`, `p_min=0.0475`, `UBATCH_SIZE=1024`, `LLAMA_SYCL_F16_P021_SMALL_NCOLS=1`, `LLAMA_SPEC_VERIFY_BULK_SAMPLED_IDS=1`, `LLAMA_GEMMA4_MOE_FUSED_DOWN_WEIGHTED_SUM_REORDER_VDR2=1`, target-verifier accepted MTP tokens; LocalMaxxing `cmqzq5zu402troe01t774uyox`; confirmations measured `116.458`, `117.415`, `115.089`, `117.457` | **117.915 median 1-100 after TTFT** / 110.958 full512 after TTFT / 106.807 wall full512 | [summary](../../data/gemma4-q8-gpu3-faon-vmm-ctx32768-full512-20260629T211437Z/summary.json), [LocalMaxxing response](../../data/localmaxxing-responses/gemma4-26b-a4b-q8-b70-llamacpp-realistic-vdr2-selecteddown-faon-vmm-ctx32768-full512-20260629.submit.log), [record note](20260629-vdr2-selected-down-record.md) |
 | 2026-06-29 | llama.cpp `c926ad098` SYCL draft-MTP AOT BMG + Q8 MoE-ID reorder VDR2 + F16 p021 small-ncols path + bulk sampled-ID verifier host read + VDR2 selected-down fused weighted-sum | 1 replica on B70 GPU1; same-recipe repeat beside BF16-direct retest controls | UD-Q8_K_XL GGUF target + Q4_0 MTP draft GGUF, f16 KV | 8K | prior strict realistic-suite record, superseded by the FA-on 32K/VMM row: fixed realistic cold suite, each prompt once, `cached_tokens=0` every row, no cache/history/ngram reuse, `n_max=3`, `n_min=2`, `p_min=0.0475`, `UBATCH_SIZE=1024`, `LLAMA_SYCL_F16_P021_SMALL_NCOLS=1`, `LLAMA_SPEC_VERIFY_BULK_SAMPLED_IDS=1`, `LLAMA_GEMMA4_MOE_FUSED_DOWN_WEIGHTED_SUM_REORDER_VDR2=1`, target-verifier accepted MTP tokens; LocalMaxxing `cmqyrpox4021dqk01co5o4fcw`; BF16-direct lanes did not beat controls | **115.847 median 1-100 after TTFT** / 104.661 full512 after TTFT / 100.640 wall full512 | [summary](../../data/gemma4-q8-gpu1-selecteddown-bf16retest-control-full512-20260629T051323Z/summary.json), [LocalMaxxing response](../../data/localmaxxing-responses/gemma4-26b-a4b-q8-b70-llamacpp-realistic-vdr2-selecteddown-reordervdr2-full512-repeat-20260629.submit.log), [record note](20260629-vdr2-selected-down-record.md) |
 | 2026-06-29 | llama.cpp `c926ad098` SYCL draft-MTP AOT BMG + Q8 MoE-ID reorder VDR2 + F16 p021 small-ncols path + bulk sampled-ID verifier host read + VDR2 selected-down fused weighted-sum | 1 replica on B70 GPU1; four parallel one-B70 confirmations | UD-Q8_K_XL GGUF target + Q4_0 MTP draft GGUF, f16 KV | 8K | initial selected-down strict realistic-suite record, superseded by the same-recipe `115.847` repeat: fixed realistic cold suite, each prompt once, `cached_tokens=0` every row, no cache/history/ngram reuse, `n_max=3`, `n_min=2`, `p_min=0.0475`, `UBATCH_SIZE=1024`, `LLAMA_SYCL_F16_P021_SMALL_NCOLS=1`, `LLAMA_SPEC_VERIFY_BULK_SAMPLED_IDS=1`, `LLAMA_GEMMA4_MOE_FUSED_DOWN_WEIGHTED_SUM_REORDER_VDR2=1`, target-verifier accepted MTP tokens; LocalMaxxing `cmqyo0jyt08ippk01vhiobdnm`; full512 confirmation lanes measured `113.471`, `115.728`, `113.815`, `114.811` | **115.728 median 1-100 after TTFT** / 104.602 full512 after TTFT / 100.228 wall full512 | [summary](../../data/gemma4-q8-gpu1-vdr2-selecteddown-reordervdr2-full512-20260629B/summary.json), [LocalMaxxing response](../../data/localmaxxing-responses/gemma4-26b-a4b-q8-b70-llamacpp-realistic-vdr2-selecteddown-reordervdr2-full512-20260629.submit.log), [record note](20260629-vdr2-selected-down-record.md) |

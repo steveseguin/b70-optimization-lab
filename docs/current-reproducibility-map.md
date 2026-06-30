@@ -116,22 +116,25 @@ Record identity:
 - draft: local `Q4_0` Gemma MTP draft only
 - hardware: headless Supermicro AMD Threadripper PRO 5955WX platform, 128 GB
   DDR4, one Intel Arc Pro B70 32 GB used for the measured replica
-- result: best strict result `121.41411987308553 tok/s` median
+- result: best strict result `123.67689864739785 tok/s` median
   generated-token throughput for tokens 1-100 after TTFT across the fixed
   realistic cold prompt suite, `cached_tokens=0` on every prompt,
   `realistic_final_gate.passed=true`.
   Evidence:
-  `../data/gemma4-q8-gpu3-q8lmhead-noreorder-control-full512-20260629T224927Z/summary.json`.
+  `../data/gemma4-q8-gpu0-finalpostnorm-on-full512-20260630T024027Z-finalpost-full512/summary.json`.
   Config: llama.cpp `c926ad098`, reordered-Q8 VDR2, `FLASH_ATTN=on`,
   `CTX_SIZE=32768`, `GGML_SYCL_ENABLE_VMM=1`, `n_max=3`, `n_min=2`,
   `p_min=0.0475`, `UBATCH_SIZE=1024`,
   `LLAMA_SYCL_F16_P021_SMALL_NCOLS=1`,
   `LLAMA_SPEC_VERIFY_BULK_SAMPLED_IDS=1`,
   `LLAMA_GEMMA4_MOE_FUSED_DOWN_WEIGHTED_SUM_REORDER_VDR2=1`,
+  `LLAMA_GEMMA4_FUSED_FINAL_POST_NORM_RESIDUAL=1`,
   `--ctx-checkpoints 0`, no n-gram/history acceleration.
   This is the current submitted VDR2 selected-down fused weighted-sum plus
-  FA-on 32K/VMM row, approved under the realistic-suite policy as
-  `cmqztiqdn02vnoe01egox6q3f`. Same-family confirmation includes
+  FA-on 32K/VMM plus final post-norm residual fusion row, approved under the
+  realistic-suite policy as `cmr01nnet000mld01x2tt6qds`. Same-family support
+  includes the prior `121.41411987308553 tok/s` row
+  (`cmqztiqdn02vnoe01egox6q3f`) and
   `../data/gemma4-q8-gpu2-baseline-recordconfirm-full512-20260629T225215Z/summary.json`
   at `119.94842631460949 tok/s`. Earlier selected-down rows
   `cmqyrpox4021dqk01co5o4fcw` and `cmqyo0jyt08ippk01vhiobdnm`, prior

@@ -8,25 +8,26 @@ promoted reproduction target is the fixed realistic cold prompt suite:
 Best strict cold-suite result:
 
 - draft-MTP VDR2 selected-down fused weighted-sum plus FA-on 32K/VMM:
-  `data/gemma4-q8-gpu3-q8lmhead-noreorder-control-full512-20260629T224927Z/summary.json`;
-- primary metric: `121.41411987308553 tok/s` median generated-token throughput
+  `data/gemma4-q8-gpu0-finalpostnorm-on-full512-20260630T024027Z-finalpost-full512/summary.json`;
+- primary metric: `123.67689864739785 tok/s` median generated-token throughput
   for tokens 1-100 after TTFT;
 - config: reordered-Q8 VDR2, `FLASH_ATTN=on`, `CTX_SIZE=32768`,
   `GGML_SYCL_ENABLE_VMM=1`, `n_max=3`, `n_min=2`, `p_min=0.0475`,
   `UBATCH_SIZE=1024`, `LLAMA_SYCL_F16_P021_SMALL_NCOLS=1`,
   `LLAMA_SPEC_VERIFY_BULK_SAMPLED_IDS=1`,
-  `LLAMA_GEMMA4_MOE_FUSED_DOWN_WEIGHTED_SUM_REORDER_VDR2=1`, LM-head
-  experiment flags unset, Q4_0 MTP draft verified by the Q8 target;
+  `LLAMA_GEMMA4_MOE_FUSED_DOWN_WEIGHTED_SUM_REORDER_VDR2=1`,
+  `LLAMA_GEMMA4_FUSED_FINAL_POST_NORM_RESIDUAL=1`, LM-head experiment flags
+  unset, Q4_0 MTP draft verified by the Q8 target;
 - gate: `realistic_final_gate.passed=true`, `cached_tokens=0` on every prompt.
 
 Representative status: the current payload uses the VDR2 selected-down fused
 weighted-sum transfer of the strict `n_max=3`, `n_min=2`,
-`UBATCH_SIZE=1024` family, with FA-on 32K/VMM. The current repeat measured
-`121.41411987308553 tok/s` and supersedes the previous selected-down high
-`117.91456485086059 tok/s`. Same-family confirmation produced another
-record-beating baseline row at `119.94842631460949 tok/s` plus lower variance
-rows at `113.572`, `114.088`, and `111.988 tok/s`; treat this as a
-higher-variance baseline lane, not as a default-off LM-head source-flag win.
+`UBATCH_SIZE=1024` family, with FA-on 32K/VMM and final post-norm residual
+fusion. The current repeat measured `123.67689864739785 tok/s` and supersedes
+the previous selected-down high `121.41411987308553 tok/s`. Same-family
+support includes `119.94842631460949 tok/s` plus lower variance rows at
+`113.572`, `114.088`, and `111.988 tok/s`; treat this as a higher-variance
+baseline lane, not as a default-off LM-head source-flag win.
 Prior LocalMaxxing row `cmqxchyra03xmqr01b963gmi1` at
 `98.34046474459183 tok/s`, F16-p021 row
 `95.82453787677183 tok/s`, VDR2 rows `90.98312252660529`,
@@ -182,8 +183,8 @@ GPU_INDEX=1 PORT=18421 \
 Use this command for the current representative draft-MTP realistic-suite
 candidate. It reproduces the VDR2 selected-down `n_max=3`, `n_min=2`,
 `p_min=0.0475`, `UBATCH_SIZE=1024` family, whose current strict row is
-`117.915 tok/s` on the fixed cold suite. The previous selected-down
-`115.728`, prior `98.340`, F16-p021
+`123.677 tok/s` on the fixed cold suite. The previous FA-on `121.414`,
+selected-down `117.915` / `115.728`, prior `98.340`, F16-p021
 `95.825`, VDR2 `90.983`, `90.322`, and VDR4 `87.611 tok/s` rows remain valid
 evidence but are no longer the promoted headline.
 
@@ -194,7 +195,7 @@ ONEAPI_DEVICE_SELECTOR=level_zero:1 \
 UR_L0_USE_IMMEDIATE_COMMANDLISTS=1 \
 GGML_SYCL_DISABLE_OPT=0 \
 GGML_SYCL_DISABLE_GRAPH=0 \
-GGML_SYCL_ENABLE_VMM=0 \
+GGML_SYCL_ENABLE_VMM=1 \
 LLAMA_SYCL_MUL_MAT_ID_MULTI_TOKEN_FAST=1 \
 LLAMA_SYCL_MUL_MAT_ID_Q8_0_REORDER=1 \
 LLAMA_SPEC_VERIFY_BACKEND_ARGMAX_IDS=1 \
@@ -210,15 +211,16 @@ LLAMA_GEMMA4_MOE_SELECTED_SOFTMAX_FUSED=1 \
 LLAMA_GEMMA4_MOE_WEIGHTED_SUM=1 \
 LLAMA_GEMMA4_MOE_REUSE_ATTN_RMS=1 \
 LLAMA_GEMMA4_MOE_FUSED_DOWN_WEIGHTED_SUM_REORDER_VDR2=1 \
+LLAMA_GEMMA4_FUSED_FINAL_POST_NORM_RESIDUAL=1 \
 LLAMA_SYCL_MUL_MAT_ID_ROUTE_CACHE=1 \
 LLAMA_SYCL_F16_P021_SMALL_NCOLS=1 \
 GPU_INDEX=1 PORT=18421 \
-CTX_SIZE=8192 BATCH_SIZE=1024 UBATCH_SIZE=1024 THREADS=8 POLL=100 \
-CACHE_TYPE_K=f16 CACHE_TYPE_V=f16 FLASH_ATTN=off REASONING=off \
+CTX_SIZE=32768 BATCH_SIZE=1024 UBATCH_SIZE=1024 THREADS=8 POLL=100 \
+CACHE_TYPE_K=f16 CACHE_TYPE_V=f16 FLASH_ATTN=on REASONING=off \
 CANARY_REPEATS=32 MAX_TOKENS=512 \
 REALISTIC_GATE=1 REALISTIC_METRIC_TOKENS=100 \
 EXTRA_LLAMA_ARGS='--parallel 1 --cache-ram 0 --spec-type draft-mtp --spec-draft-model /mnt/fast-ai/llm-models/gemma4-26b-a4b-it-q8-gguf/MTP/gemma-4-26B-A4B-it-Q4_0-MTP.gguf --spec-draft-n-max 3 --spec-draft-device SYCL0 --spec-draft-ngl all --spec-draft-type-k f16 --spec-draft-type-v f16 --spec-draft-n-min 2 --spec-draft-p-min 0.0475 --no-spec-draft-backend-sampling --spec-draft-threads 32 --spec-draft-threads-batch 32 --ctx-checkpoints 0' \
-LABEL=gemma4-q8-gpu1-strict-vdr2-recordconfirm-n3-nmin2-p00475-ub1024-$(date -u +%Y%m%dT%H%M%SZ) \
+LABEL=gemma4-q8-gpu1-finalpostnorm-repro-full512-$(date -u +%Y%m%dT%H%M%SZ) \
 scripts/run-gemma4-26b-first-baseline.sh
 ```
 

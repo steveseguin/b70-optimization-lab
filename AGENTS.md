@@ -151,22 +151,25 @@ The current Gemma 4 26B A4B Q8 one-B70 realistic-suite best is:
 - reproduction: `results/gemma4-26b-a4b-q8-b70/reproduce.md`;
 - realistic suite: `repro/gemma4-26b-a4b-q8-b70/realistic-suite-v1.json`;
 - best strict cold-suite result:
-  `121.41411987308553 tok/s` median generated-token throughput for tokens
+  `123.67689864739785 tok/s` median generated-token throughput for tokens
   1-100 after TTFT, `cached_tokens=0` on every prompt,
   `realistic_final_gate.passed=true`;
 - evidence:
-  `data/gemma4-q8-gpu3-q8lmhead-noreorder-control-full512-20260629T224927Z/summary.json`;
+  `data/gemma4-q8-gpu0-finalpostnorm-on-full512-20260630T024027Z-finalpost-full512/summary.json`;
 - config:
   llama.cpp `c926ad098`, reordered-Q8 VDR2, Q4_0 MTP draft,
   `FLASH_ATTN=on`, `CTX_SIZE=32768`, `GGML_SYCL_ENABLE_VMM=1`,
   `n_max=3`, `n_min=2`, `p_min=0.0475`, `UBATCH_SIZE=1024`,
   `LLAMA_SYCL_F16_P021_SMALL_NCOLS=1`,
   `LLAMA_SPEC_VERIFY_BULK_SAMPLED_IDS=1`,
-  `LLAMA_GEMMA4_MOE_FUSED_DOWN_WEIGHTED_SUM_REORDER_VDR2=1`;
+  `LLAMA_GEMMA4_MOE_FUSED_DOWN_WEIGHTED_SUM_REORDER_VDR2=1`,
+  `LLAMA_GEMMA4_FUSED_FINAL_POST_NORM_RESIDUAL=1`;
 - representative / submitted status:
-  the VDR2 selected-down fused weighted-sum path plus FA-on 32K/VMM is the
-  current policy-compliant LocalMaxxing submission, approved as
-  `cmqztiqdn02vnoe01egox6q3f`. Same-family confirmation includes
+  the VDR2 selected-down fused weighted-sum path plus FA-on 32K/VMM plus final
+  post-norm residual fusion is the current policy-compliant LocalMaxxing
+  submission, approved as `cmr01nnet000mld01x2tt6qds`. Same-family support
+  includes the prior `121.41411987308553 tok/s` row
+  (`cmqztiqdn02vnoe01egox6q3f`) and
   `data/gemma4-q8-gpu2-baseline-recordconfirm-full512-20260629T225215Z/summary.json`
   at `119.94842631460949 tok/s`. The prior selected-down repeat
   `cmqyrpox4021dqk01co5o4fcw`, initial selected-down confirmation

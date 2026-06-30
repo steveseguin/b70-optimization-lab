@@ -188,6 +188,12 @@ def main() -> int:
         "llamaCppCommit": launcher.get("llama_cpp_commit"),
         "llamaServer": launcher.get("llama_server"),
         "llamaGemma4MoeReuseAttnRms": launcher.get("llama_gemma4_moe_reuse_attn_rms") == "1",
+        "llamaGemma4FusedFinalPostNormResidual": (
+            launcher.get("llama_gemma4_fused_final_post_norm_residual") == "1"
+        ),
+        "llamaGemma4MoeFusedBranchPostNormAdd": (
+            launcher.get("llama_gemma4_moe_fused_branch_post_norm_add") == "1"
+        ),
         "llamaGemma4MoeFusedDownWeightedSumReorderVdr2": (
             launcher.get("llama_gemma4_moe_fused_down_weighted_sum_reorder_vdr2") == "1"
         ),
