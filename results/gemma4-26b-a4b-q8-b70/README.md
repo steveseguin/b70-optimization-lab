@@ -85,6 +85,14 @@ the current implicit `ncols1=2` path measured `953.0630` and `950.5813`
 prefill tok/s on paired controls, while forced `ncols1=1` fell to `821.6392`
 and forced `ncols1=4` fell to `856.8965`. Evidence:
 [`../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-sycl-fattn-dv512-gqa8-ncols1-negative.md`](../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-sycl-fattn-dv512-gqa8-ncols1-negative.md).
+The follow-up compile-time retune of the winning GQA8 FP16 tile from
+`nbatch_fa=64` to `128` is also closed negative/noise: four valid cold lanes
+averaged `951.5273 tok/s` prefill (`953.3767`, `944.6846`, `955.1166`,
+`952.9311`), which is indistinguishable from the same-case controls
+(`950.5813-955.2365`). Keep the existing
+`GGML_SYCL_FATTN_TILE_CONFIG_CASE(576, 512, 16, 256, 2, 64, 64)` setting.
+Evidence:
+[`../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-sycl-fattn-dv512-gqa8-nbatchfa128-negative.md`](../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-sycl-fattn-dv512-gqa8-nbatchfa128-negative.md).
 
 The earlier UBATCH-only service work remains useful background: UB2048 was the
 best unpatched long-prefill candidate, and the profile that followed correctly

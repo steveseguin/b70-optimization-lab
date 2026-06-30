@@ -128,3 +128,8 @@ The follow-up forced-`ncols1` tile-width diagnostic is archived at
 `../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-sycl-fattn-dv512-gqa8-ncols1-negative.md`;
 it showed forced `ncols1=1` and `ncols1=4` are both slower than the current
 implicit `ncols1=2` GQA8 path.
+The follow-up compile-time `nbatch_fa=128` retune for that selected tile is
+archived at
+`../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-sycl-fattn-dv512-gqa8-nbatchfa128-negative.md`;
+it matched controls rather than improving them, so keep the current
+`nbatch_fa=64` tile config.

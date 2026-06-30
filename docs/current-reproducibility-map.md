@@ -187,7 +187,12 @@ Record identity:
   `../patches/gemma4-26b-a4b-q8-b70/20260630-sycl-fattn-dv512-gqa8-ncols1-negative.patch`
   and documented as a negative in
   `../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-sycl-fattn-dv512-gqa8-ncols1-negative.md`;
-  keep the GQA8 selector's implicit `ncols1=2` path.
+  keep the GQA8 selector's implicit `ncols1=2` path. The `nbatch_fa=128`
+  retune for the selected GQA8 FP16 tile is preserved at
+  `../patches/gemma4-26b-a4b-q8-b70/20260630-sycl-fattn-dv512-gqa8-nbatchfa128-negative.patch`
+  and documented as a negative/noise result in
+  `../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-sycl-fattn-dv512-gqa8-nbatchfa128-negative.md`;
+  keep the current `nbatch_fa=64` tile config.
 - source patch snapshot:
   `../patches/gemma4-26b-a4b-q8-b70/20260626T2225-llamacpp-gemma4-current-record-stack.patch`
   with note

@@ -279,6 +279,12 @@ Current active optimization target:
   `821.6392` and forced `ncols1=4` measured `856.8965`. Keep the implicit
   `ncols1=2`; do not force `GGML_SYCL_FATTN_DV512_GQA8_NCOLS1`. Evidence:
   `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-sycl-fattn-dv512-gqa8-ncols1-negative.md`.
+  Follow-up compile-time retuning of the selected GQA8 FP16 tile from
+  `nbatch_fa=64` to `128` is also negative/noise: four valid lanes averaged
+  `951.5273 tok/s` prefill with per-lane results `953.3767`, `944.6846`,
+  `955.1166`, and `952.9311`, matching the same-case controls. Keep
+  `GGML_SYCL_FATTN_TILE_CONFIG_CASE(576, 512, 16, 256, 2, 64, 64)`. Evidence:
+  `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-sycl-fattn-dv512-gqa8-nbatchfa128-negative.md`.
 - Current diagnostic best, not a real-world headline:
   `176.21623213048554 tok/s` after TTFT on the first no-cache synthetic
   filled-long benchmark row, `176.40259133127742 tok/s` supporting repeat mean,

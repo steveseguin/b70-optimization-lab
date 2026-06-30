@@ -297,6 +297,16 @@ Primary target:
   `patches/gemma4-26b-a4b-q8-b70/20260630-sycl-fattn-dv512-gqa8-ncols1-negative.patch`.
   Evidence:
   `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-sycl-fattn-dv512-gqa8-ncols1-negative.md`.
+- Latest source service negative: retuning the selected GQA8 FP16 tile from
+  `nbatch_fa=64` to `128` is noise, not a win. With
+  `GGML_SYCL_FATTN_DV512_GQA_NCOLS2=8` active, four valid cold lanes on the
+  `30400` actual-token case averaged `951.5273 tok/s` prefill with per-lane
+  results `953.3767`, `944.6846`, `955.1166`, and `952.9311`, matching recent
+  controls (`950.5813-955.2365`). Keep
+  `GGML_SYCL_FATTN_TILE_CONFIG_CASE(576, 512, 16, 256, 2, 64, 64)`. Patch:
+  `patches/gemma4-26b-a4b-q8-b70/20260630-sycl-fattn-dv512-gqa8-nbatchfa128-negative.patch`.
+  Evidence:
+  `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-sycl-fattn-dv512-gqa8-nbatchfa128-negative.md`.
 - Current best non-duplicate Gemma code target is still verifier cost, but not
   by removing the bonus pipeline or by a naive candidate-threshold head scan.
   Work inside the existing target decode boundary only if it removes real
