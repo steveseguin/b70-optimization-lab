@@ -285,6 +285,18 @@ Primary target:
   `patches/gemma4-26b-a4b-q8-b70/20260630-sycl-fattn-kv-max-scan-threshold.patch`.
   Evidence:
   `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-sycl-fattn-kv-max-scan-threshold-negative.md`.
+- Latest source service negative: forcing the remaining GQA8 tile `ncols1`
+  value is slower than the current selector. With
+  `GGML_SYCL_FATTN_DV512_GQA_NCOLS2=8` active, paired controls at the implicit
+  `ncols1=2` path measured `953.0630` and `950.5813` prefill tok/s on the
+  cold `30400` actual-token case; forced `ncols1=1` measured `821.6392`, and
+  forced `ncols1=4` measured `856.8965`. All lanes passed exact validation,
+  canary, `cached_tokens=0`, and identical output hash. Keep implicit
+  `ncols1=2`; do not use `GGML_SYCL_FATTN_DV512_GQA8_NCOLS1` in promoted
+  recipes. Patch:
+  `patches/gemma4-26b-a4b-q8-b70/20260630-sycl-fattn-dv512-gqa8-ncols1-negative.patch`.
+  Evidence:
+  `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-sycl-fattn-dv512-gqa8-ncols1-negative.md`.
 - Current best non-duplicate Gemma code target is still verifier cost, but not
   by removing the bonus pipeline or by a naive candidate-threshold head scan.
   Work inside the existing target decode boundary only if it removes real

@@ -1,0 +1,41 @@
+diff --git a/ggml/src/ggml-sycl/fattn-tile.hpp b/ggml/src/ggml-sycl/fattn-tile.hpp
+index 000000000..000000000 100644
+--- a/ggml/src/ggml-sycl/fattn-tile.hpp
++++ b/ggml/src/ggml-sycl/fattn-tile.hpp
+@@ -203,0 +204,8 @@
++static int ggml_sycl_fattn_dv512_gqa8_ncols1_override() {
++    static const int value = []() {
++        const char * env = std::getenv("GGML_SYCL_FATTN_DV512_GQA8_NCOLS1");
++        return env ? std::atoi(env) : 0;
++    }();
++    return value;
++}
++
+@@ -1170,0 +1179,17 @@
++template <int DKQ, int DV, int ncols1, int ncols2, bool use_logit_softcap>
++static void launch_fattn_tile_forced_ncols(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
++    const int id        = ggml_sycl_get_device();
++    const int cc        = ggml_sycl_info().devices[id].cc;
++    const int warp_size = WARP_32_SIZE;
++
++    constexpr int cols_per_block = ncols1 * ncols2;
++    constexpr size_t nbytes_shared = 0;
++
++    const int nwarps    = ggml_sycl_fattn_tile_get_nthreads (DKQ, DV, cols_per_block, cc) / warp_size;
++    const int nbatch_fa = ggml_sycl_fattn_tile_get_nbatch_fa(DKQ, DV, cols_per_block, cc);
++
++    launch_fattn<DV, ncols1, ncols2,
++        flash_attn_tile<DKQ, DV, ncols1, ncols2, use_logit_softcap, warp_size>, warp_size>
++        (ctx, dst, nwarps, nbytes_shared, nbatch_fa, true, true, false);
++}
++
+@@ -1210,0 +1236,10 @@
++            const int forced_ncols1 = ggml_sycl_fattn_dv512_gqa8_ncols1_override();
++            if (forced_ncols1 == 1) {
++                launch_fattn_tile_forced_ncols<DKQ, DV, 1, 8, use_logit_softcap>(ctx, dst);
++                return;
++            }
++            if (forced_ncols1 == 4) {
++                launch_fattn_tile_forced_ncols<DKQ, DV, 4, 8, use_logit_softcap>(ctx, dst);
++                return;
++            }

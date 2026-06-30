@@ -124,3 +124,7 @@ short-record reproduction. A follow-up KV-max mask pre-scan threshold
 diagnostic is archived at
 `../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-sycl-fattn-kv-max-scan-threshold-negative.md`;
 it showed scan-off is slower, so keep the scan enabled.
+The follow-up forced-`ncols1` tile-width diagnostic is archived at
+`../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-sycl-fattn-dv512-gqa8-ncols1-negative.md`;
+it showed forced `ncols1=1` and `ncols1=4` are both slower than the current
+implicit `ncols1=2` GQA8 path.

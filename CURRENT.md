@@ -273,6 +273,12 @@ Current active optimization target:
   `cached_tokens=0`, but regressed the same `30400` actual-token prefill from
   `955.2365` to `862.9161 tok/s` (`-9.7%`). Keep the scan enabled. Evidence:
   `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-sycl-fattn-kv-max-scan-threshold-negative.md`.
+  Follow-up forced-`ncols1` testing inside the same GQA8 tile path is also
+  closed negative: paired controls at the implicit `ncols1=2` path measured
+  `953.0630` and `950.5813` prefill tok/s, while forced `ncols1=1` measured
+  `821.6392` and forced `ncols1=4` measured `856.8965`. Keep the implicit
+  `ncols1=2`; do not force `GGML_SYCL_FATTN_DV512_GQA8_NCOLS1`. Evidence:
+  `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-sycl-fattn-dv512-gqa8-ncols1-negative.md`.
 - Current diagnostic best, not a real-world headline:
   `176.21623213048554 tok/s` after TTFT on the first no-cache synthetic
   filled-long benchmark row, `176.40259133127742 tok/s` supporting repeat mean,

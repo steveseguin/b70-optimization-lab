@@ -182,7 +182,12 @@ Record identity:
   `../patches/gemma4-26b-a4b-q8-b70/20260630-sycl-fattn-kv-max-scan-threshold.patch`
   and documented as a negative in
   `../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-sycl-fattn-kv-max-scan-threshold-negative.md`;
-  do not disable the scan for this lane.
+  do not disable the scan for this lane. The forced-`ncols1` diagnostic is
+  preserved at
+  `../patches/gemma4-26b-a4b-q8-b70/20260630-sycl-fattn-dv512-gqa8-ncols1-negative.patch`
+  and documented as a negative in
+  `../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-sycl-fattn-dv512-gqa8-ncols1-negative.md`;
+  keep the GQA8 selector's implicit `ncols1=2` path.
 - source patch snapshot:
   `../patches/gemma4-26b-a4b-q8-b70/20260626T2225-llamacpp-gemma4-current-record-stack.patch`
   with note

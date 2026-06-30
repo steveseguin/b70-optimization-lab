@@ -80,6 +80,11 @@ enabled: disabling it with `GGML_SYCL_FATTN_KV_MAX_SCAN_MIN_Q=-1` passed exact
 validation but regressed the `30400` actual-token prefill from `955.2365` to
 `862.9161 tok/s`. Evidence:
 [`../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-sycl-fattn-kv-max-scan-threshold-negative.md`](../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-sycl-fattn-kv-max-scan-threshold-negative.md).
+Follow-up `ncols1` forcing inside the GQA8 tile path is also closed negative:
+the current implicit `ncols1=2` path measured `953.0630` and `950.5813`
+prefill tok/s on paired controls, while forced `ncols1=1` fell to `821.6392`
+and forced `ncols1=4` fell to `856.8965`. Evidence:
+[`../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-sycl-fattn-dv512-gqa8-ncols1-negative.md`](../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-sycl-fattn-dv512-gqa8-ncols1-negative.md).
 
 The earlier UBATCH-only service work remains useful background: UB2048 was the
 best unpatched long-prefill candidate, and the profile that followed correctly
