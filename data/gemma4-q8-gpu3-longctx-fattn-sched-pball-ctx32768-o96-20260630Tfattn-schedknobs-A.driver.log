@@ -1,0 +1,59 @@
+[gemma4-baseline] label=gemma4-q8-gpu3-longctx-fattn-sched-pball-ctx32768-o96-20260630Tfattn-schedknobs-A
+[gemma4-baseline] base_url=http://127.0.0.1:18603
+[gemma4-baseline] model=/mnt/fast-ai/llm-models/gemma4-26b-a4b-it-q8-gguf/gemma-4-26B-A4B-it-UD-Q8_K_XL.gguf
+[gemma4-baseline] llama_server=/home/steve/src/llama.cpp-gemma-record-repro-c926/build-sycl-b70-aot-bmg-g31-q8reorder-vdr2/bin/llama-server
+[gemma4-baseline] server_log=/mnt/fast-ai/bench-results/gemma4-26b-a4b-q8/servers/gemma4-q8-gpu3-longctx-fattn-sched-pball-ctx32768-o96-20260630Tfattn-schedknobs-A.server.log
+[gemma4-baseline] server ready
+{
+  "rows": [
+    {
+      "case": "json",
+      "elapsed_s": 0.2608384359627962,
+      "normalized": "{\"answer\":42,\"unit\":\"widgets\"}",
+      "ok": true,
+      "repeat": 0,
+      "text": "{\"answer\":42,\"unit\":\"widgets\"}"
+    },
+    {
+      "case": "sort",
+      "elapsed_s": 0.1824747211067006,
+      "normalized": "blue, green, orange, red",
+      "ok": true,
+      "repeat": 0,
+      "text": "blue, green, orange, red"
+    },
+    {
+      "case": "arithmetic",
+      "elapsed_s": 0.16129208903294057,
+      "normalized": "17",
+      "ok": true,
+      "repeat": 0,
+      "text": "17"
+    },
+    {
+      "case": "code",
+      "elapsed_s": 0.252978031989187,
+      "normalized": "python def add_one(x): return x + 1",
+      "ok": true,
+      "repeat": 0,
+      "text": "```python\ndef add_one(x):\n    return x + 1\n```"
+    }
+  ],
+  "summary": {
+    "failures": [],
+    "pass_all": true,
+    "repeats_requested": 1,
+    "rows_completed": 4,
+    "run_identity": {
+      "api_mode": "chat",
+      "base_url": "http://127.0.0.1:18603",
+      "created_at_utc": "2026-06-30T16:06:15.230449+00:00",
+      "model": "gemma4-26b-a4b-q8",
+      "seed": 1
+    }
+  }
+}
+Terminated
+Traceback (most recent call last):
+  File "<stdin>", line 23, in <module>
+StopIteration

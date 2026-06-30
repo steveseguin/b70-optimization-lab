@@ -1,0 +1,40 @@
+[gemma4-baseline] label=gemma4-q8-gpu1-longctx-fattn-sched-streamk-ctx32768-o96-20260630Tfattn-schedknobs-A
+[gemma4-baseline] base_url=http://127.0.0.1:18601
+[gemma4-baseline] model=/mnt/fast-ai/llm-models/gemma4-26b-a4b-it-q8-gguf/gemma-4-26B-A4B-it-UD-Q8_K_XL.gguf
+[gemma4-baseline] llama_server=/home/steve/src/llama.cpp-gemma-record-repro-c926/build-sycl-b70-aot-bmg-g31-q8reorder-vdr2/bin/llama-server
+[gemma4-baseline] server_log=/mnt/fast-ai/bench-results/gemma4-26b-a4b-q8/servers/gemma4-q8-gpu1-longctx-fattn-sched-streamk-ctx32768-o96-20260630Tfattn-schedknobs-A.server.log
+[gemma4-baseline] server ready
+{
+  "rows": [
+    {
+      "case": "json",
+      "elapsed_s": 0.34066726092714816,
+      "normalized": "",
+      "ok": false,
+      "repeat": 0,
+      "text": ""
+    }
+  ],
+  "summary": {
+    "failures": [
+      {
+        "case": "json",
+        "elapsed_s": 0.34066726092714816,
+        "normalized": "",
+        "ok": false,
+        "repeat": 0,
+        "text": ""
+      }
+    ],
+    "pass_all": false,
+    "repeats_requested": 1,
+    "rows_completed": 1,
+    "run_identity": {
+      "api_mode": "chat",
+      "base_url": "http://127.0.0.1:18601",
+      "created_at_utc": "2026-06-30T16:06:14.719149+00:00",
+      "model": "gemma4-26b-a4b-q8",
+      "seed": 1
+    }
+  }
+}
