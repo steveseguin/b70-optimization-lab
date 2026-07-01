@@ -1,6 +1,6 @@
 # Codex Agent Handoff
 
-Last updated: 2026-06-30
+Last updated: 2026-07-01
 
 This file is the first thing a new Codex agent should read when continuing the
 Intel Arc Pro B70 LLM optimization work.
@@ -14,9 +14,9 @@ Primary target:
   for parallel research screens rather than TP4 unless explicitly testing a
   multi-GPU serving shape.
 - Best strict realistic-suite one-B70 result is
-  `123.67689864739785 tok/s` median generated-token throughput for tokens
+  `124.97714084813418 tok/s` median generated-token throughput for tokens
   1-100 after TTFT across the fixed cold prompt suite. Evidence:
-  `data/gemma4-q8-gpu0-finalpostnorm-on-full512-20260630T024027Z-finalpost-full512/summary.json`.
+  `data/gemma4-q8-gpu0-finalpostnorm-reproexact-full512-20260701T084728Z/summary.json`.
   It uses llama.cpp `c926ad098`, UD-Q8_K_XL target/verifier, Q4_0 MTP draft,
   reordered-Q8 VDR2, `FLASH_ATTN=on`, `CTX_SIZE=32768`,
   `GGML_SYCL_ENABLE_VMM=1`, `n_max=3`, `n_min=2`, `p_min=0.0475`,
@@ -29,7 +29,8 @@ Primary target:
 - Representative / submitted status: this is the confirmed strict-gate VDR2
   selected-down fused weighted-sum family, now with FA-on 32K/VMM and final
   post-norm residual fusion. The current high is approved by LocalMaxxing as
-  `cmr01nnet000mld01x2tt6qds`. Same-family support includes the prior
+  `cmr1u77na01k2ld01kalwzs1e`. Same-family support includes the prior
+  `123.67689864739785 tok/s` high (`cmr01nnet000mld01x2tt6qds`), the prior
   `121.41411987308553 tok/s` high (`cmqztiqdn02vnoe01egox6q3f`) and
   `data/gemma4-q8-gpu2-baseline-recordconfirm-full512-20260629T225215Z/summary.json`
   at `119.94842631460949 tok/s`; the prior FA-on 32K/VMM row
@@ -48,7 +49,7 @@ Primary target:
 - Latest full512 follow-up: fused selected-softmax into selected-down VDR2
   (`LLAMA_GEMMA4_MOE_FUSED_DOWN_SELECTED_SOFTMAX=1`) and the EOG-clip
   interaction were valid but lost. Best candidate was `111.90908727268967
-  tok/s` with EOG clip, below controls and below the `123.67689864739785` record.
+  tok/s` with EOG clip, below controls and below the `124.97714084813418` record.
   Do not submit or retest this interaction as a record lane. Evidence:
   `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260629-fused-selected-softmax-full512-negative.md`.
 - Latest strict128 source follow-up: adaptive bonus-row skipping is a closed
@@ -108,7 +109,7 @@ Primary target:
   (`121.24708378127268 tok/s`), but the paired full512 confirmation closed it:
   all lanes stayed valid, candidate average was `117.36308529017367 tok/s`
   versus paired-control average `114.3071667009025`, and the best candidate was
-  `118.43353215490006`, still below the `123.67689864739785` headline. Do not
+  `118.43353215490006`, still below the `124.97714084813418` headline. Do not
   change the recipe or submit it. Evidence:
   `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-faon-vmm-ubatch-screen.md`.
   Treat `UBATCH_SIZE=768`, `896`, and `1152` as closed for the short-record
@@ -151,6 +152,18 @@ Primary target:
   controls `116.29133772533568`), so repeat confirmations remain useful before
   inferring a stable effect size. Evidence:
   `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-final-postnorm-fusion-screen.md`.
+- Latest exact reproduction / current record: after the LM-head/Q8 one-column
+  subgroup experiment, the exact full512 promoted recipe was rerun across all
+  four GPUs with `CANARY_REPEATS=128` (`512/512` canary rows), LM-head subgroup
+  unset, fixed realistic suite, and `cached_tokens=0`. GPU0 reproduced and
+  exceeded the previous high at `124.97714084813418 tok/s`, p10
+  `103.83610041293263`, mean `122.47435471668817`, full512 after-TTFT
+  `114.87107033590866`, wall full512 `108.58112847853889`, TTFT
+  `178.6938319564797 ms`. LocalMaxxing approved it as
+  `cmr1u77na01k2ld01kalwzs1e`. Same exact batch support rows were `121.591`,
+  `119.264`, and `113.633`, confirming the lane is valid but high-variance.
+  Evidence:
+  `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260701-finalpostnorm-reproduction-check.md`.
 - Latest repeat / variance check: four more full512 lanes of the promoted
   final-postnorm recipe all passed the strict cold gate, `cached_tokens=0`, and
   512/512 canary, but no lane beat the record. Medians were
@@ -176,7 +189,7 @@ Primary target:
   all passed the cold gate, `cached_tokens=0`, and 512/512 canary. Controls
   averaged `115.80942063480597 tok/s`; flag-on lanes averaged
   `116.81238861292647 tok/s`; best flag-on was `119.96280008214512 tok/s`,
-  still below the `123.67689864739785` record. Treat as small/inconclusive,
+  still below the `124.97714084813418` record. Treat as small/inconclusive,
   keep default-off, and do not submit or full512-confirm for the short record.
   Evidence:
   `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-perlayer-postnorm-residual-fusion-inconclusive.md`.
@@ -228,7 +241,7 @@ Primary target:
   `118.30159066915866 tok/s` versus UB1024 controls at
   `116.46794311469674 tok/s`, but the best candidate
   (`118.70031578164084 tok/s`) did not beat the active
-  `123.67689864739785 tok/s` record. Keep UB1024 for headline reproduction;
+  `124.97714084813418 tok/s` record. Keep UB1024 for headline reproduction;
   UB2048 is validated as the best general service/default candidate so far.
   Repeat UB2048-vs-UB2560 long-prefill confirmation is also complete:
   `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-prefill-ub2048-vs-ub2560-confirm.md`.
@@ -269,7 +282,7 @@ Primary target:
   `22730`, and `30400` actual prompt tokens passed on all lanes; median prefill
   was `1039.603 tok/s` for UB2048, `1075.983` for UB2304, and `1066.029` for
   UB2560. Fixed cold short-suite guards passed but did not beat the active
-  `123.67689864739785 tok/s` short record, so do not submit it to
+  `124.97714084813418 tok/s` short record, so do not submit it to
   LocalMaxxing. Keep UB1024 for short-record reproduction; use the patch with
   UB2048 as the balanced long-service recipe and UB2304 only for pure prefill.
   Patch:
@@ -315,7 +328,7 @@ Primary target:
   memory with `max(n_ubatch, n_ubatch_prefill)`, removed retries, and measured
   `956.7217 tok/s` long-prefill, `112.9063 tok/s` long-context decode, and
   `120.8849 tok/s` on the short fixed guard for `2048/1024 + prefill2048`.
-  It does not beat the `123.67689864739785 tok/s` short record, so do not
+  It does not beat the `124.97714084813418 tok/s` short record, so do not
   submit it. `prefill2304` and `prefill2560` were valid but not better
   balanced. Patches:
   `patches/gemma4-26b-a4b-q8-b70/20260630-llama-phase-prefill-ubatch-experiment.patch`

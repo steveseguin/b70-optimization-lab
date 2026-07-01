@@ -116,12 +116,12 @@ Record identity:
 - draft: local `Q4_0` Gemma MTP draft only
 - hardware: headless Supermicro AMD Threadripper PRO 5955WX platform, 128 GB
   DDR4, one Intel Arc Pro B70 32 GB used for the measured replica
-- result: best strict result `123.67689864739785 tok/s` median
+- result: best strict result `124.97714084813418 tok/s` median
   generated-token throughput for tokens 1-100 after TTFT across the fixed
   realistic cold prompt suite, `cached_tokens=0` on every prompt,
   `realistic_final_gate.passed=true`.
   Evidence:
-  `../data/gemma4-q8-gpu0-finalpostnorm-on-full512-20260630T024027Z-finalpost-full512/summary.json`.
+  `../data/gemma4-q8-gpu0-finalpostnorm-reproexact-full512-20260701T084728Z/summary.json`.
   Config: llama.cpp `c926ad098`, reordered-Q8 VDR2, `FLASH_ATTN=on`,
   `CTX_SIZE=32768`, `GGML_SYCL_ENABLE_VMM=1`, `n_max=3`, `n_min=2`,
   `p_min=0.0475`, `UBATCH_SIZE=1024`,
@@ -132,8 +132,9 @@ Record identity:
   `--ctx-checkpoints 0`, no n-gram/history acceleration.
   This is the current submitted VDR2 selected-down fused weighted-sum plus
   FA-on 32K/VMM plus final post-norm residual fusion row, approved under the
-  realistic-suite policy as `cmr01nnet000mld01x2tt6qds`. Same-family support
-  includes the prior `121.41411987308553 tok/s` row
+  realistic-suite policy as `cmr1u77na01k2ld01kalwzs1e`. Same-family support
+  includes the prior `123.67689864739785 tok/s` row
+  (`cmr01nnet000mld01x2tt6qds`), the prior `121.41411987308553 tok/s` row
   (`cmqztiqdn02vnoe01egox6q3f`) and
   `../data/gemma4-q8-gpu2-baseline-recordconfirm-full512-20260629T225215Z/summary.json`
   at `119.94842631460949 tok/s`. Earlier selected-down rows
@@ -143,6 +144,9 @@ Record identity:
   The old `176.216232 tok/s` synthetic filled-long row remains diagnostic only
   and is not representative real-world throughput.
 - primary artifacts:
+  `../data/gemma4-q8-gpu0-finalpostnorm-reproexact-full512-20260701T084728Z/summary.json`,
+  `../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260701-finalpostnorm-reproduction-check.md`,
+  `../data/localmaxxing-responses/gemma4-26b-a4b-q8-b70-llamacpp-realistic-finalpostnorm-faon-vmm-ctx32768-full512-124tok-20260701.submit.log`,
   `../data/gemma4-q8-gpu0-finalpostnorm-on-full512-20260630T024027Z-finalpost-full512/summary.json`,
   `../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-final-postnorm-fusion-screen.md`,
   `../data/localmaxxing-responses/gemma4-26b-a4b-q8-b70-llamacpp-realistic-finalpostnorm-faon-vmm-ctx32768-full512-123tok-20260630.submit.log`,

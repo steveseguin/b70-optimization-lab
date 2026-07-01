@@ -42,7 +42,7 @@ Interpretation for this lane:
 
 Current policy-compliant LocalMaxxing submission:
 
-- `gemma4-q8-gpu0-finalpostnorm-on-full512-20260630T024027Z-finalpost-full512`,
+- `gemma4-q8-gpu0-finalpostnorm-reproexact-full512-20260701T084728Z`,
   llama.cpp `c926ad098` on one B70, UD-Q8_K_XL target/verifier with Q4_0 MTP
   draft, f16 KV, 32K context, `FLASH_ATTN=on`, `GGML_SYCL_ENABLE_VMM=1`,
   reordered-Q8 VDR2, F16 p021 small-ncols, bulk sampled-ID verifier host read,
@@ -51,19 +51,19 @@ Current policy-compliant LocalMaxxing submission:
 - fixed suite:
   `repro/gemma4-26b-a4b-q8-b70/realistic-suite-v1.json`, each prompt once,
   `cached_tokens=0` every row;
-- primary metric: **123.67689864739785 tok/s** median generated-token
+- primary metric: **124.97714084813418 tok/s** median generated-token
   throughput for tokens 1-100 after TTFT;
-- p10 `105.67252530778094`, mean `120.82536080117124`, median TTFT
-  `179.12497598445043 ms`, median full-512 after-TTFT
-  `110.68310696601407`, median wall full-512 `106.44076646173642`;
-- caveat: valid but high-variance. The second finalpost full512 lane was
-  `116.55138486215519`; paired controls were `117.87347663377679` and
-  `114.70919881689457`. Use repeat confirmations for effect-size claims;
+- p10 `103.83610041293263`, mean `122.47435471668817`, median TTFT
+  `178.6938319564797 ms`, median full-512 after-TTFT
+  `114.87107033590866`, median wall full-512 `108.58112847853889`;
+- caveat: valid but high-variance. Same exact reproduction batch support lanes
+  were `121.59076340768573`, `119.26425148518223`, and
+  `113.63257982764395`. Use repeat confirmations for effect-size claims;
 - payload:
-  `data/localmaxxing-gemma4-26b-a4b-q8-b70-llamacpp-realistic-finalpostnorm-faon-vmm-ctx32768-full512-123tok-20260630.queue.json`;
-- LocalMaxxing: `cmr01nnet000mld01x2tt6qds`;
+  `data/localmaxxing-gemma4-26b-a4b-q8-b70-llamacpp-realistic-finalpostnorm-faon-vmm-ctx32768-full512-124tok-20260701.queue.json`;
+- LocalMaxxing: `cmr1u77na01k2ld01kalwzs1e`;
 - response:
-  `data/localmaxxing-responses/gemma4-26b-a4b-q8-b70-llamacpp-realistic-finalpostnorm-faon-vmm-ctx32768-full512-123tok-20260630.submit.log`.
+  `data/localmaxxing-responses/gemma4-26b-a4b-q8-b70-llamacpp-realistic-finalpostnorm-faon-vmm-ctx32768-full512-124tok-20260701.submit.log`.
 
 Previous policy-compliant LocalMaxxing submission, now superseded:
 

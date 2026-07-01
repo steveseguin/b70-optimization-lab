@@ -1,6 +1,6 @@
 # Gemma 4 26B A4B Q8 B70 Research Plan
 
-Research snapshot: 2026-06-30. Goal: maximize valid single-session decode for
+Research snapshot: 2026-07-01. Goal: maximize valid single-session decode for
 one complete Q8/INT8-quality Gemma 4 26B A4B replica per B70, then run four
 replicas on four GPUs for parallel research and aggregate service capacity.
 
@@ -9,12 +9,12 @@ replicas on four GPUs for parallel research and aggregate service capacity.
 Best one-B70 Q8 strict result under the promotion gate:
 
 - result:
-  `data/gemma4-q8-gpu0-finalpostnorm-on-full512-20260630T024027Z-finalpost-full512/`;
-- primary metric: **123.67689864739785 tok/s** median generated-token
+  `data/gemma4-q8-gpu0-finalpostnorm-reproexact-full512-20260701T084728Z/`;
+- primary metric: **124.97714084813418 tok/s** median generated-token
   throughput for tokens 1-100 after TTFT across the fixed realistic suite; p10
-  `105.67252530778094`, mean `120.82536080117124`, median full-512
-  after-TTFT `110.68310696601407`, median wall full-512
-  `106.44076646173642`, median TTFT `179.12497598445043 ms`;
+  `103.83610041293263`, mean `122.47435471668817`, median full-512
+  after-TTFT `114.87107033590866`, median wall full-512
+  `108.58112847853889`, median TTFT `178.6938319564797 ms`;
 - config: llama.cpp `c926ad098`, UD-Q8_K_XL target/verifier, Q4_0 MTP draft,
   reordered-Q8 VDR2, `FLASH_ATTN=on`, `CTX_SIZE=32768`,
   `GGML_SYCL_ENABLE_VMM=1`, `n_max=3`, `n_min=2`, `p_min=0.0475`,
@@ -32,10 +32,13 @@ Best one-B70 Q8 strict result under the promotion gate:
 This is the policy-compliant VDR2 selected-down fused weighted-sum transfer of
 the strict `n_max=3`, `n_min=2`, `UBATCH_SIZE=1024` family, with FA-on
 32K/VMM and final post-norm residual fusion. The current LocalMaxxing ID is
-`cmr01nnet000mld01x2tt6qds`. The previous LocalMaxxing ID was
+`cmr1u77na01k2ld01kalwzs1e`. The previous LocalMaxxing ID was
+`cmr01nnet000mld01x2tt6qds` for `123.67689864739785 tok/s`, preceded by
 `cmqztiqdn02vnoe01egox6q3f` for `121.41411987308553 tok/s`, preceded by
 `cmqzq5zu402troe01t774uyox` for `117.91456485086059 tok/s`. Same-family
-support includes a `119.94842631460949 tok/s` row plus lower variance rows at
+support includes exact reproduction rows at `121.59076340768573`,
+`119.26425148518223`, and `113.63257982764395`, plus an older
+`119.94842631460949 tok/s` row and lower variance rows at
 `113.572`, `114.088`, and `111.988 tok/s`; earlier same-identity confirmations measured
 `116.45776605647993`, `117.41509141115063`, `115.08942949119734`, and
 `117.45737477243767 tok/s`. Treat this as a higher-variance `~120-124 tok/s`

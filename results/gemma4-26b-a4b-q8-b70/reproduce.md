@@ -8,8 +8,8 @@ promoted reproduction target is the fixed realistic cold prompt suite:
 Best strict cold-suite result:
 
 - draft-MTP VDR2 selected-down fused weighted-sum plus FA-on 32K/VMM:
-  `data/gemma4-q8-gpu0-finalpostnorm-on-full512-20260630T024027Z-finalpost-full512/summary.json`;
-- primary metric: `123.67689864739785 tok/s` median generated-token throughput
+  `data/gemma4-q8-gpu0-finalpostnorm-reproexact-full512-20260701T084728Z/summary.json`;
+- primary metric: `124.97714084813418 tok/s` median generated-token throughput
   for tokens 1-100 after TTFT;
 - config: reordered-Q8 VDR2, `FLASH_ATTN=on`, `CTX_SIZE=32768`,
   `GGML_SYCL_ENABLE_VMM=1`, `n_max=3`, `n_min=2`, `p_min=0.0475`,
@@ -23,16 +23,20 @@ Best strict cold-suite result:
 Representative status: the current payload uses the VDR2 selected-down fused
 weighted-sum transfer of the strict `n_max=3`, `n_min=2`,
 `UBATCH_SIZE=1024` family, with FA-on 32K/VMM and final post-norm residual
-fusion. The current repeat measured `123.67689864739785 tok/s` and supersedes
-the previous selected-down high `121.41411987308553 tok/s`. Same-family
-support includes `119.94842631460949 tok/s` plus lower variance rows at
+fusion. The current exact reproduction measured `124.97714084813418 tok/s` and
+supersedes the previous final-postnorm high `123.67689864739785 tok/s` and the
+previous selected-down high `121.41411987308553 tok/s`. Same-family support
+includes exact-reproduction rows at `121.59076340768573`,
+`119.26425148518223`, and `113.63257982764395`, plus the older
+`119.94842631460949 tok/s` confirmation and lower variance rows at
 `113.572`, `114.088`, and `111.988 tok/s`; treat this as a higher-variance
 baseline lane, not as a default-off LM-head source-flag win.
 Prior LocalMaxxing row `cmqxchyra03xmqr01b963gmi1` at
 `98.34046474459183 tok/s`, F16-p021 row
 `95.82453787677183 tok/s`, VDR2 rows `90.98312252660529`,
 `90.32179401019857`, and `89.45543282863798 tok/s`, plus VDR4
-`87.61145306230438 tok/s`, remain valid but are superseded.
+`87.61145306230438 tok/s`, remain valid but are superseded. The current
+LocalMaxxing ID is `cmr1u77na01k2ld01kalwzs1e`.
 
 Current no-spec control:
 

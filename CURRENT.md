@@ -1,6 +1,6 @@
 # Current Promoted Results
 
-Date: 2026-06-30
+Date: 2026-07-01
 
 ## Active Gemma 4 26B A4B Q8 Lane
 
@@ -13,9 +13,9 @@ Current active optimization target:
   scores may guide optimization only; they are not headline throughput or
   LocalMaxxing evidence.
 - Best strict realistic-suite result so far:
-  `123.67689864739785 tok/s` median generated-token throughput for tokens
+  `124.97714084813418 tok/s` median generated-token throughput for tokens
   1-100 after TTFT across the fixed cold prompt suite. Evidence:
-  `data/gemma4-q8-gpu0-finalpostnorm-on-full512-20260630T024027Z-finalpost-full512/summary.json`.
+  `data/gemma4-q8-gpu0-finalpostnorm-reproexact-full512-20260701T084728Z/summary.json`.
   It uses llama.cpp `c926ad098`, UD-Q8_K_XL target/verifier, Q4_0 MTP draft,
   reordered-Q8 VDR2, `FLASH_ATTN=on`, `CTX_SIZE=32768`,
   `GGML_SYCL_ENABLE_VMM=1`, `n_max=3`, `n_min=2`, `p_min=0.0475`,
@@ -28,7 +28,8 @@ Current active optimization target:
   the VDR2 selected-down fused weighted-sum path plus FA-on 32K/VMM plus
   final post-norm residual fusion is the current policy-compliant Gemma 26B Q8
   LocalMaxxing submission. The current high is approved as
-  `cmr01nnet000mld01x2tt6qds`; the prior same-family high
+  `cmr1u77na01k2ld01kalwzs1e`; the prior same-family high
+  `123.67689864739785 tok/s` (`cmr01nnet000mld01x2tt6qds`), the prior
   `121.41411987308553 tok/s` (`cmqztiqdn02vnoe01egox6q3f`), the
   `119.94842631460949 tok/s` confirmation row, and the prior
   FA-on 32K/VMM row `cmqzq5zu402troe01t774uyox`, selected-down repeat
@@ -45,14 +46,14 @@ Current active optimization target:
 - Recent non-promoted follow-up:
   `LLAMA_SPEC_VERIFY_CLIP_DRAFT_AT_EOG=1` was valid and trimmed real terminal
   draft work, but four full512 lanes topped out at `113.58569073629727 tok/s`,
-  below the current `123.67689864739785` record. Late-head bonus plus
+  below the current `124.97714084813418` record. Late-head bonus plus
   `LLAMA_SPEC_HEAD_FUSED_OUTPUT_ARGMAX=1` lost strict128. See
   `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260629-eogclip-and-spechead-negative.md`.
   Fusing selected-softmax directly into selected-down VDR2 was a valid
   strict128 small positive (`115.554` best flag-on), but the full512 promotion
   screen lost: best flag-on primary median was `111.90908727268967 tok/s`
   with EOG clip and `111.89648891729823 tok/s` without it, below both same-day
-  controls and the current `123.67689864739785` record. It is preserved
+  controls and the current `124.97714084813418` record. It is preserved
   default-off and not submitted. See
   `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260629-fused-down-selected-softmax-strict128.md`
   and
@@ -118,7 +119,7 @@ Current active optimization target:
   the paired full512 confirmation closed it: all lanes stayed valid, candidate
   average was `117.36308529017367 tok/s` versus paired-control average
   `114.3071667009025`, and the best candidate was `118.43353215490006`, still
-  below the `123.67689864739785` headline. Do not change the recipe or submit
+  below the `124.97714084813418` headline. Do not change the recipe or submit
   it. See
   `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-faon-vmm-ubatch-screen.md`.
   A verifier row-shape audit followed. The apparent one-column Q8 LM-head node
@@ -152,6 +153,14 @@ Current active optimization target:
   repeat confirmations should continue before treating the GPU0 jump as the
   expected effect size. See
   `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-final-postnorm-fusion-screen.md`.
+  A later exact reproduction after the LM-head/Q8 subgroup experiment matched
+  the promoted full512 identity (`512/512` canary rows, `cached_tokens=0`,
+  LM-head subgroup unset) and reached the new valid high
+  `124.97714084813418 tok/s` on GPU0. Same-batch support lanes were
+  `121.59076340768573`, `119.26425148518223`, and
+  `113.63257982764395`. LocalMaxxing approved the new row as
+  `cmr1u77na01k2ld01kalwzs1e`. See
+  `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260701-finalpostnorm-reproduction-check.md`.
   A four-lane full512 repeat of the promoted final-postnorm recipe then passed
   the strict cold gate and 512/512 canary on every lane but did not beat the
   record: medians were `118.78941183022032`, `115.48824790393866`,
@@ -173,7 +182,7 @@ Current active optimization target:
   lanes passed the cold gate and 512/512 canary, but the effect was too small
   and GPU-dependent for promotion: controls averaged `115.80942063480597 tok/s`,
   flag-on lanes averaged `116.81238861292647 tok/s`, and the best flag-on lane
-  (`119.96280008214512`) stayed below the `123.67689864739785` record. Keep the
+  (`119.96280008214512`) stayed below the `124.97714084813418` record. Keep the
   flag default-off, preserve the patch/results, and do not submit or full512
   confirm for the short record unless a future service/full-output lane needs
   it. See
@@ -218,7 +227,7 @@ Current active optimization target:
   cold-suite control passed for UB2048 with `cached_tokens=0` and no observed
   short-decode regression: UB2048 averaged `118.30159066915866 tok/s` versus
   UB1024 controls at `116.46794311469674 tok/s`. It still did not beat the
-  active `123.67689864739785 tok/s` record, so keep the promoted short-record
+  active `124.97714084813418 tok/s` record, so keep the promoted short-record
   reproduction on UB1024 and treat UB2048 as a validated service/default
   candidate. A repeat UB2048-vs-UB2560 confirmation at 12K- and
   16K-requested long prompts kept that decision: UB2048 wins the
@@ -262,7 +271,7 @@ Current active optimization target:
   The broader three-case gate passed at `16213`, `22730`, and `30400` actual
   prompt tokens; median prefill was `1039.603 tok/s` for UB2048, `1075.983`
   for UB2304, and `1066.029` for UB2560. Short fixed-suite guards passed, but
-  did not beat the active `123.67689864739785 tok/s` short record, so this is
+  did not beat the active `124.97714084813418 tok/s` short record, so this is
   promoted only as a service/prefill patch. Keep UB1024 for short-record
   reproduction; use UB2048 as the balanced long-service setting and UB2304
   only for pure prefill. Evidence:
@@ -294,7 +303,7 @@ Current active optimization target:
   `2048/1024 + prefill2048` measured `956.7217 tok/s` long-prefill,
   `112.9063 tok/s` long-context decode, and `120.8849 tok/s` on the short
   guard. It is useful service evidence but not a new LocalMaxxing candidate
-  because it does not beat the `123.67689864739785 tok/s` short record.
+  because it does not beat the `124.97714084813418 tok/s` short record.
   `prefill2304` and `prefill2560` were valid but not better balanced. Evidence:
   `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-phase-prefill-ubatch-service.md`.
 - Current diagnostic best, not a real-world headline:

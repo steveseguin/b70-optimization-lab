@@ -151,11 +151,11 @@ The current Gemma 4 26B A4B Q8 one-B70 realistic-suite best is:
 - reproduction: `results/gemma4-26b-a4b-q8-b70/reproduce.md`;
 - realistic suite: `repro/gemma4-26b-a4b-q8-b70/realistic-suite-v1.json`;
 - best strict cold-suite result:
-  `123.67689864739785 tok/s` median generated-token throughput for tokens
+  `124.97714084813418 tok/s` median generated-token throughput for tokens
   1-100 after TTFT, `cached_tokens=0` on every prompt,
   `realistic_final_gate.passed=true`;
 - evidence:
-  `data/gemma4-q8-gpu0-finalpostnorm-on-full512-20260630T024027Z-finalpost-full512/summary.json`;
+  `data/gemma4-q8-gpu0-finalpostnorm-reproexact-full512-20260701T084728Z/summary.json`;
 - config:
   llama.cpp `c926ad098`, reordered-Q8 VDR2, Q4_0 MTP draft,
   `FLASH_ATTN=on`, `CTX_SIZE=32768`, `GGML_SYCL_ENABLE_VMM=1`,
@@ -167,8 +167,9 @@ The current Gemma 4 26B A4B Q8 one-B70 realistic-suite best is:
 - representative / submitted status:
   the VDR2 selected-down fused weighted-sum path plus FA-on 32K/VMM plus final
   post-norm residual fusion is the current policy-compliant LocalMaxxing
-  submission, approved as `cmr01nnet000mld01x2tt6qds`. Same-family support
-  includes the prior `121.41411987308553 tok/s` row
+  submission, approved as `cmr1u77na01k2ld01kalwzs1e`. Same-family support
+  includes the prior `123.67689864739785 tok/s` row
+  (`cmr01nnet000mld01x2tt6qds`), the prior `121.41411987308553 tok/s` row
   (`cmqztiqdn02vnoe01egox6q3f`) and
   `data/gemma4-q8-gpu2-baseline-recordconfirm-full512-20260629T225215Z/summary.json`
   at `119.94842631460949 tok/s`. The prior selected-down repeat
