@@ -87,9 +87,9 @@ To reconstruct the current local source snapshot from clean llama.cpp:
 ```bash
 cd /home/steve/src/llama.cpp-gemma-record-repro-c926
 git checkout c926ad098
-git apply /home/steve/qwen36-results-main/patches/gemma4-26b-a4b-q8-b70/20260629-vdr2-selected-down-reordervdr2-source.patch
+git apply /home/steve/llm-optimizations/patches/gemma4-26b-a4b-q8-b70/20260629-vdr2-selected-down-reordervdr2-source.patch
 # Optional, for the current service/prefill lane:
-git apply /home/steve/qwen36-results-main/patches/gemma4-26b-a4b-q8-b70/20260630-sycl-fattn-dv512-gqa8-ncols2.patch
+git apply /home/steve/llm-optimizations/patches/gemma4-26b-a4b-q8-b70/20260630-sycl-fattn-dv512-gqa8-ncols2.patch
 ```
 
 This full-worktree patch is for recovery and review. It includes default-off
@@ -97,7 +97,7 @@ negative experiments as well as promoted paths, so do not enable every flag
 blindly.
 
 ```bash
-cd /home/steve/qwen36-results-main
+cd /home/steve/llm-optimizations
 scripts/build-llama-cpp-sycl-b70.sh
 ```
 
@@ -131,7 +131,7 @@ cmake --build build-sycl-b70-aot-bmg-g31-q8reorder-vdr2 \
 ## 2. Download Q8 GGUF
 
 ```bash
-cd /home/steve/qwen36-results-main
+cd /home/steve/llm-optimizations
 scripts/download-gemma4-26b-q8-gguf.sh
 ```
 
@@ -148,7 +148,7 @@ Default output:
 ## 3. Launch One Replica
 
 ```bash
-cd /home/steve/qwen36-results-main
+cd /home/steve/llm-optimizations
 GPU_INDEX=0 PORT=18260 CTX_SIZE=8192 UBATCH_SIZE=64 \
   scripts/run-gemma4-26b-llamacpp-replica.sh
 ```
@@ -184,7 +184,7 @@ For the first local baseline, the wrapper below starts the server, waits for
 readiness, runs both gates, and stops the server:
 
 ```bash
-cd /home/steve/qwen36-results-main
+cd /home/steve/llm-optimizations
 scripts/run-gemma4-26b-first-baseline.sh
 ```
 
@@ -193,7 +193,7 @@ scripts/run-gemma4-26b-first-baseline.sh
 The promoted record can be reproduced with:
 
 ```bash
-cd /home/steve/qwen36-results-main
+cd /home/steve/llm-optimizations
 GPU_INDEX=1 PORT=18421 \
   FLASH_ATTN=on CTX_SIZE=32768 GGML_SYCL_ENABLE_VMM=1 \
   repro/gemma4-26b-a4b-q8-b70/run-vdr2-selecteddown-record.sh
@@ -208,7 +208,7 @@ selected-down `117.915` / `115.728`, prior `98.340`, F16-p021
 evidence but are no longer the promoted headline.
 
 ```bash
-cd /home/steve/qwen36-results-main
+cd /home/steve/llm-optimizations
 LLAMA_SERVER=/home/steve/src/llama.cpp-gemma-record-repro-c926/build-sycl-b70-aot-bmg-g31-q8reorder-vdr2/bin/llama-server \
 ONEAPI_DEVICE_SELECTOR=level_zero:1 \
 UR_L0_USE_IMMEDIATE_COMMANDLISTS=1 \
@@ -252,7 +252,7 @@ target/verifier quality lane and `cached_tokens=0`.
 Balanced service candidate:
 
 ```bash
-cd /home/steve/qwen36-results-main
+cd /home/steve/llm-optimizations
 GGML_SYCL_FATTN_DV512_GQA_NCOLS2=8 \
 STAMP=$(date -u +%Y%m%dT%H%M%SZ)-gqa8-service \
 LONG_CONTEXT_CASE_IDS='lc-12288-early lc-16384-late lc-22000-middle' \
@@ -265,7 +265,7 @@ repro/gemma4-26b-a4b-q8-b70/run-vdr2-long-context-service-gate.sh
 Pure prefill candidate:
 
 ```bash
-cd /home/steve/qwen36-results-main
+cd /home/steve/llm-optimizations
 GGML_SYCL_FATTN_DV512_GQA_NCOLS2=8 \
 STAMP=$(date -u +%Y%m%dT%H%M%SZ)-gqa8-prefill \
 LONG_CONTEXT_CASE_IDS='lc-12288-early lc-16384-late lc-22000-middle' \
@@ -289,7 +289,7 @@ Validated reference:
 Use this no-spec control when testing target-side changes:
 
 ```bash
-cd /home/steve/qwen36-results-main
+cd /home/steve/llm-optimizations
 LLAMA_SERVER=/home/steve/src/llama.cpp-gemma-record-repro-c926/build-sycl-b70-aot-bmg-g31/bin/llama-server \
 ONEAPI_DEVICE_SELECTOR=level_zero:0 \
 UR_L0_USE_IMMEDIATE_COMMANDLISTS=1 \
@@ -326,7 +326,7 @@ server log: /mnt/fast-ai/bench-results/gemma4-26b-a4b-q8/servers/gemma4-26b-q8-l
 Previous no-spec natural-stop best:
 
 ```bash
-cd /home/steve/qwen36-results-main
+cd /home/steve/llm-optimizations
 LABEL=gemma4-q8-gpu2-syclopt0-faoff-parallel1-cache0-deep-20260623T0915 \
 GPU_INDEX=2 PORT=18262 CTX_SIZE=8192 BATCH_SIZE=512 UBATCH_SIZE=64 THREADS=16 \
 CACHE_TYPE_K=f16 CACHE_TYPE_V=f16 POLL=50 FLASH_ATTN=off REASONING=off \
@@ -348,7 +348,7 @@ server log: /mnt/fast-ai/bench-results/gemma4-26b-a4b-q8/servers/gemma4-q8-gpu2-
 Current sustained-decode best:
 
 ```bash
-cd /home/steve/qwen36-results-main
+cd /home/steve/llm-optimizations
 LABEL=gemma4-q8-gpu0-currentbest-longprompt-deep-20260623T0945 \
 GPU_INDEX=0 PORT=18260 CTX_SIZE=8192 BATCH_SIZE=512 UBATCH_SIZE=64 THREADS=16 \
 CACHE_TYPE_K=f16 CACHE_TYPE_V=f16 POLL=50 FLASH_ATTN=off REASONING=off \
@@ -371,7 +371,7 @@ server log: /mnt/fast-ai/bench-results/gemma4-26b-a4b-q8/servers/gemma4-q8-gpu0-
 Previous draft-MTP `n=4` sustained-decode record:
 
 ```bash
-cd /home/steve/qwen36-results-main
+cd /home/steve/llm-optimizations
 LLAMA_SERVER=/home/steve/src/llama.cpp/build-sycl-b70/bin/llama-server \
 GPU_INDEX=1 PORT=18261 LABEL=gemma4-q8-gpu1-mtp-n4-long-deep-20260623T1140 \
 CTX_SIZE=8192 BATCH_SIZE=512 UBATCH_SIZE=64 THREADS=16 \
@@ -395,7 +395,7 @@ server log: /mnt/fast-ai/bench-results/gemma4-26b-a4b-q8/servers/gemma4-q8-gpu1-
 Current short-prompt draft-MTP sustained-decode best:
 
 ```bash
-cd /home/steve/qwen36-results-main
+cd /home/steve/llm-optimizations
 LLAMA_SERVER=/home/steve/src/llama.cpp/build-sycl-b70-aot-bmg-g31/bin/llama-server \
 GPU_INDEX=0 PORT=18260 LABEL=gemma4-q8-gpu0-mtp-n3-aot-repeat-long-deep-20260623T0353 \
 MTP_N_MAX=3 scripts/run-gemma4-26b-mtp-candidate.sh
@@ -414,7 +414,7 @@ server log: /mnt/fast-ai/bench-results/gemma4-26b-a4b-q8/servers/gemma4-q8-gpu0-
 Warmed/history draftless ngram-mod artifact:
 
 ```bash
-cd /home/steve/qwen36-results-main
+cd /home/steve/llm-optimizations
 LLAMA_SERVER=/home/steve/src/llama.cpp-latest-gemma/build-sycl-b70-aot-bmg-g31/bin/llama-server \
 GPU_INDEX=1 PORT=18261 LABEL=gemma4-q8-gpu1-ngram-mod-20-32-64-ctx4096ub512-poll100-ctxcp0-filled-long-deep-20260623T1855 \
 SPEC_TYPE=ngram-mod \
@@ -457,7 +457,7 @@ path plus reordered Q8_0 MMVQ VDR=2 compile knob that makes
 `LLAMA_SYCL_MUL_MAT_ID_MULTI_TOKEN_FAST=1` viable for the UD-Q8_K_XL target.
 
 ```bash
-cd /home/steve/qwen36-results-main
+cd /home/steve/llm-optimizations
 EXTRA='--parallel 1 --cache-ram 0 --spec-type draft-mtp --spec-draft-model /mnt/fast-ai/llm-models/gemma4-26b-a4b-it-q8-gguf/MTP/gemma-4-26B-A4B-it-Q4_0-MTP.gguf --spec-draft-n-max 7 --spec-draft-device SYCL0 --spec-draft-ngl all --spec-draft-type-k f16 --spec-draft-type-v f16 --spec-draft-n-min 3 --spec-draft-p-min 0.10 --no-spec-draft-backend-sampling --spec-draft-threads 32 --spec-draft-threads-batch 32 --ctx-checkpoints 0'
 ONEAPI_DEVICE_SELECTOR=level_zero:0 \
 UR_L0_USE_IMMEDIATE_COMMANDLISTS=1 \
@@ -526,7 +526,7 @@ cmake --build "$BUILD" -j 16 --target llama-server llama-cli llama-bench
 Short wrapper equivalent for future sweeps:
 
 ```bash
-cd /home/steve/qwen36-results-main
+cd /home/steve/llm-optimizations
 GPU_INDEX=1 PORT=18261 LABEL=gemma4-q8-gpu1-mtp-n3-long-deep-<stamp> \
 BENCH_PROMPT_MODE=filled-long PROMPT_TOKENS=512 MAX_TOKENS=512 \
 MTP_N_MAX=3 scripts/run-gemma4-26b-mtp-candidate.sh
@@ -561,7 +561,7 @@ Treat `long` and `filled-long` as separate benchmark identities.
 ## 4. Launch Four Replicas
 
 ```bash
-cd /home/steve/qwen36-results-main
+cd /home/steve/llm-optimizations
 scripts/run-gemma4-26b-llamacpp-quad.sh
 ```
 

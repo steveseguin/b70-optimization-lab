@@ -9,7 +9,7 @@ Intel Arc Pro B70 LLM optimization work.
 
 Use `/home/steve/llm-optimizations` as the single active workspace for new
 Gemma/Qwen/MiniMax work. It is the branch-attached `main` checkout and is
-current at `4b33bb2f` as of 2026-07-01.
+current at `46b4733d` as of the latest 2026-07-01 consolidation refresh.
 
 Do not start new experiments from `/home/steve/qwen36-results-main`; it is a
 detached linked worktree retained only for audit/back-reference. The detached

@@ -6,7 +6,7 @@ Date: 2026-07-01
 
 Use `/home/steve/llm-optimizations` as the only active workspace for new
 optimization work. It is the branch-attached `main` checkout and is current at
-`4b33bb2f` as of the 2026-07-01 consolidation.
+`46b4733d` as of the latest 2026-07-01 consolidation refresh.
 
 Do not run new experiments from `/home/steve/qwen36-results-main`; it is a
 detached linked worktree retained for audit/back-reference only. See

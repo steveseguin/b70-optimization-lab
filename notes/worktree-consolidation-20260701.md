@@ -17,13 +17,17 @@ across detached worktrees.
 - Checked the fast-forward from `7e57a90b` to `origin/main` for untracked path
   collisions in `/home/steve/llm-optimizations`; result: `0` collisions.
 - Fast-forwarded `/home/steve/llm-optimizations` to `4b33bb2f`.
+- Later same-day canonical Gemma documentation/result commits advanced
+  `/home/steve/llm-optimizations` to `46b4733d`, matching `origin/main`.
+  `/home/steve/qwen36-results-main` remains detached at `4b33bb2f` and is
+  still archive/back-reference only.
 
 ## Current Worktree Topology
 
 ```text
 /home/steve/llm-optimizations
   branch: main
-  HEAD:   4b33bb2fda02d2f85c7101f5c5b34f4286d0e0db
+  HEAD:   46b4733d83f3a1e10cb209d4aa225fc400570c3c
   role:   single active workspace
 
 /home/steve/qwen36-results-main

@@ -224,9 +224,9 @@ practical.
 Useful forms:
 
 ```bash
-codex --cd /home/steve/qwen36-results-main
-codex exec --cd /home/steve/qwen36-results-main "audit the Gemma docs and propose focused cleanup"
-codex review --cd /home/steve/qwen36-results-main
+codex --cd /home/steve/llm-optimizations
+codex exec --cd /home/steve/llm-optimizations "audit the Gemma docs and propose focused cleanup"
+codex review --cd /home/steve/llm-optimizations
 codex resume --last
 ```
 
