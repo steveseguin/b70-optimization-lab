@@ -66,3 +66,10 @@ Win / loss / inconclusive / follow-up.
 - Do not promote a sweep from this folder into `results/` until it passes the
   validity gate documented in
   [`../../../results/gemma4-26b-a4b-q8-b70/validity-gates.md`](../../../results/gemma4-26b-a4b-q8-b70/validity-gates.md).
+
+## Recent Entries
+
+- `20260701-sycl-fattn-kv-min-template-prefill-negative.md`: isolated
+  large-prefill-only KV-min FlashAttention tile retry. Four-lane long-context
+  A/B was valid but negative (`-0.75%` prefill), so the patch was archived and
+  not promoted.

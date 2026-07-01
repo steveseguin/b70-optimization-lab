@@ -1,0 +1,309 @@
+diff --git a/ggml/src/ggml-sycl/fattn-common.hpp b/ggml/src/ggml-sycl/fattn-common.hpp
+index c6cc13cfb..cfc540fa3 100644
+--- a/ggml/src/ggml-sycl/fattn-common.hpp
++++ b/ggml/src/ggml-sycl/fattn-common.hpp
+@@ -11,6 +11,7 @@
+
+ #include <cstdint>
+ #include <cmath>
++#include <cstdlib>
+ #include <float.h>
+
+
+@@ -19,6 +20,35 @@
+ #define SOFTMAX_FTZ_THRESHOLD -20.0f                   // Softmax exp. of values smaller than this are flushed to zero to avoid NaNs.
+ #define FATTN_KQ_MAX_OFFSET (3.0f*0.6931f)
+
++static int ggml_sycl_fattn_kv_max_scan_min_q() {
++    static const int value = []() {
++        const char * env = std::getenv("GGML_SYCL_FATTN_KV_MAX_SCAN_MIN_Q");
++        return env ? std::atoi(env) : 1024;
++    }();
++    return value;
++}
++
++static bool ggml_sycl_fattn_kv_min_scan_enabled() {
++    static const bool value = []() {
++        const char * env = std::getenv("GGML_SYCL_FATTN_KV_MIN_SCAN");
++        return env && std::atoi(env) != 0;
++    }();
++    return value;
++}
++
++static int ggml_sycl_fattn_kv_min_scan_min_q() {
++    static const int value = []() {
++        const char * env = std::getenv("GGML_SYCL_FATTN_KV_MIN_SCAN_MIN_Q");
++        return env ? std::atoi(env) : 2048;
++    }();
++    return value;
++}
++
++static bool ggml_sycl_fattn_kv_min_scan_should_use(const ggml_tensor * Q) {
++    return ggml_sycl_fattn_kv_min_scan_enabled() &&
++           Q->ne[1] >= ggml_sycl_fattn_kv_min_scan_min_q();
++}
++
+ typedef void (*fattn_kernel_t)(
+     const char* Q,
+     const char* K,
+@@ -614,12 +644,13 @@ constexpr dequantize_V_t get_dequantize_V() {
+     }
+ }
+
+-template <int ncols1, int warp_size>
++template <int ncols1, int warp_size, bool write_KV_min>
+ static void flash_attn_mask_to_KV_max(const sycl::half2 * __restrict__ mask,
+                                       int * __restrict__ KV_max,
+                                       const int ne30,
+                                       const int s31,
+                                       const int s33,
++                                      const int ne_KV_max,
+                                       int *     buf_iw) {
+     auto      item_ct1 = sycl::ext::oneapi::this_work_item::get_nd_item<3>();
+     const int ne31     = item_ct1.get_group_range(2);
+@@ -664,11 +695,49 @@ static void flash_attn_mask_to_KV_max(const sycl::half2 * __restrict__ mask,
+     // In either case, walk back the decrementation by FATTN_KQ_STRIDE.
+     KV_max_sj += FATTN_KQ_STRIDE;
+
++    int KV_min_sj = 0;
++    if constexpr (write_KV_min) {
++        for (; KV_min_sj < ne30 * FATTN_KQ_STRIDE; KV_min_sj += FATTN_KQ_STRIDE) {
++            int all_inf = 1;
++
++#pragma unroll
++            for (int j = 0; j < ncols1; ++j) {
++                const sycl::float2 tmp =
++                    mask[j * s31 + KV_min_sj / 2 + tid].template convert<float, sycl::rounding_mode::automatic>();
++                all_inf = all_inf && int(sycl::isinf((float) (tmp.x()))) && int(sycl::isinf((float) (tmp.y())));
++            }
++
++            all_inf = warp_reduce_all<warp_size>(all_inf);
++            if (tid % warp_size == 0) {
++                buf_iw[tid / warp_size] = all_inf;
++            }
++            item_ct1.barrier(sycl::access::fence_space::local_space);
++            all_inf = buf_iw[tid % warp_size];
++            item_ct1.barrier(sycl::access::fence_space::local_space);
++            all_inf = warp_reduce_all<warp_size>(all_inf);
++
++            if (!all_inf) {
++                break;
++            }
++        }
++        if (KV_min_sj >= ne30 * FATTN_KQ_STRIDE) {
++            // Degenerate all-masked tile: keep old behavior instead of skipping
++            // the whole range.
++            KV_min_sj = 0;
++        }
++    } else {
++        GGML_UNUSED(ne_KV_max);
++    }
++
+     if (item_ct1.get_local_id(2) != 0) {
+         return;
+     }
+
+-    KV_max[sequence*ne31 + jt] = KV_max_sj;
++    const int idx = sequence * ne31 + jt;
++    KV_max[idx] = KV_max_sj;
++    if constexpr (write_KV_min) {
++        KV_max[ne_KV_max + idx] = KV_min_sj;
++    }
+ }
+
+ template <int D, int ncols1, int ncols2>  // D == head size
+@@ -891,7 +960,7 @@ static void lauch_kernel(
+     });
+ }
+
+-template <int DV, int ncols1, int ncols2, fattn_kernel_t fattn_kernel, int warp_size>
++template <int DV, int ncols1, int ncols2, fattn_kernel_t fattn_kernel, int warp_size, bool use_KV_min = false>
+ void launch_fattn(
+     ggml_backend_sycl_context & ctx, ggml_tensor * dst, const int nwarps, const size_t nbytes_shared,
+     const int nbatch_fa, const bool need_f16_K, const bool need_f16_V, const bool stream_k) {
+@@ -1010,7 +1079,9 @@ void launch_fattn(
+     // Optional optimization where the mask is scanned to determine whether part of the calculation can be skipped.
+     // Only worth the overhead if there is at lease one FATTN_KQ_STRIDE x FATTN_KQ_STRIDE square to be skipped or
+     //     multiple sequences of possibly different lengths.
+-    if (mask && K->ne[1] % FATTN_KQ_STRIDE == 0 && (Q->ne[1] >= 1024 || Q->ne[3] > 1)) {
++    const int kv_max_scan_min_q = ggml_sycl_fattn_kv_max_scan_min_q();
++    if (mask && K->ne[1] % FATTN_KQ_STRIDE == 0 && kv_max_scan_min_q >= 0
++            && (Q->ne[1] >= kv_max_scan_min_q || Q->ne[3] > 1)) {
+         const int s31 = mask->nb[1] / sizeof(sycl::half2);
+         const int s33 = mask->nb[3] / sizeof(sycl::half2);
+
+@@ -1020,7 +1091,7 @@ void launch_fattn(
+         const int ne_KV_max = blocks_num_KV_max.x*blocks_num_KV_max.y;
+         const int iter_k = K->ne[1] / FATTN_KQ_STRIDE;
+
+-        KV_max.alloc(ne_KV_max);
++        KV_max.alloc(use_KV_min ? 2 * ne_KV_max : ne_KV_max);
+         {
+             dpct::has_capability_or_fail(main_stream->get_device(), { sycl::aspect::fp16 });
+
+@@ -1033,8 +1104,8 @@ void launch_fattn(
+                 cgh.parallel_for(sycl::nd_range<3>(blocks_num_KV_max * block_dim_KV_max, block_dim_KV_max),
+                                  [=](sycl::nd_item<3> item_ct1) [[sycl::reqd_sub_group_size(warp_size)]] {
+                                      GGML_UNUSED(item_ct1);
+-                                     flash_attn_mask_to_KV_max<ncols1, warp_size>(
+-                                         mask_data_ct0, KV_max_ptr_ct1, iter_k, s31, s33,
++                                     flash_attn_mask_to_KV_max<ncols1, warp_size, use_KV_min>(
++                                         mask_data_ct0, KV_max_ptr_ct1, iter_k, s31, s33, ne_KV_max,
+                                          buf_iw_acc_ct1.get_multi_ptr<sycl::access::decorated::no>().get());
+                                  });
+             });
+diff --git a/ggml/src/ggml-sycl/fattn-tile.hpp b/ggml/src/ggml-sycl/fattn-tile.hpp
+index 9ba529696..d56af3219 100644
+--- a/ggml/src/ggml-sycl/fattn-tile.hpp
++++ b/ggml/src/ggml-sycl/fattn-tile.hpp
+@@ -5,6 +5,7 @@
+ #include "fattn-common.hpp"
+
+ #include <cmath>
++#include <cstdlib>
+ #include <float.h>
+
+ namespace syclex = sycl::ext::oneapi::experimental;
+@@ -190,6 +191,14 @@ static constexpr int ggml_sycl_fattn_tile_get_nbatch_K(const int DKQ, const int
+     return (ggml_sycl_fattn_tile_get_config(DKQ, DV, ncols) >> 23) & ((1 << 9) - 1);
+ }
+
++static int ggml_sycl_fattn_dv512_gqa_ncols2_override() {
++    static const int value = []() {
++        const char * env = std::getenv("GGML_SYCL_FATTN_DV512_GQA_NCOLS2");
++        return env ? std::atoi(env) : 0;
++    }();
++    return value;
++}
++
+ template <int warp_size, int nwarps, int I, int J, int J_padding, bool oob_check>
+ static __dpct_inline__ void flash_attn_tile_load_tile(const sycl::half2 * const __restrict__ KV,
+                                                       sycl::half2 * const __restrict__ tile_KV,
+@@ -654,7 +663,7 @@ static __dpct_inline__ void flash_attn_tile_iter(T_vec_dot * const Q_tmp,
+     }
+ }
+
+-template <int DKQ, int DV, int ncols1, int ncols2, bool use_logit_softcap, int warp_size>  // D == head size
++template <int DKQ, int DV, int ncols1, int ncols2, bool use_logit_softcap, bool use_KV_min, int warp_size>  // D == head size
+ /*
+ The total declared local variable size in device function flash_attn_tile exceeds 128 bytes and may cause high register pressure. Consult with your hardware vendor to find the total register size available and adjust the code, or use smaller sub-group size to avoid high register pressure.
+ */
+@@ -860,10 +869,19 @@ static void flash_attn_tile(const char *  Q,
+     item_ct1.barrier(sycl::access::fence_space::local_space);
+
+     // Main loop over KV cache:
+-    const int k_VKQ_max = KV_max ? KV_max[sequence * item_ct1.get_group_range(2) + item_ct1.get_group(2)] : ne11;
++    const int kv_bound_idx = sequence * item_ct1.get_group_range(2) + item_ct1.get_group(2);
++    const int k_VKQ_max = KV_max ? KV_max[kv_bound_idx] : ne11;
++    int k_VKQ_min = 0;
++    if constexpr (use_KV_min) {
++        if (KV_max) {
++            const int k_VKQ_min_raw = KV_max[ne03 * item_ct1.get_group_range(2) + kv_bound_idx];
++            const int k_VKQ_min_nonneg = k_VKQ_min_raw < 0 ? 0 : k_VKQ_min_raw;
++            k_VKQ_min = k_VKQ_min_nonneg > k_VKQ_max ? k_VKQ_max : k_VKQ_min_nonneg;
++        }
++    }
+     if (ncols2 == 1) {
+         // Branch with out-of-bounds checks.
+-        int k_VKQ_0 = item_ct1.get_group(1) * nbatch_fa;
++        int k_VKQ_0 = k_VKQ_min + item_ct1.get_group(1) * nbatch_fa;
+         while (k_VKQ_0 < k_VKQ_max - nbatch_fa) {
+             constexpr bool oob_check = false;
+             flash_attn_tile_iter<warp_size, nwarps, ncols1, ncols2, DKQ, DV, nbatch_fa, nbatch_K, use_logit_softcap,
+@@ -881,7 +899,7 @@ static void flash_attn_tile(const char *  Q,
+         }
+     } else {
+         // Branch without out-of-bounds checks.
+-        for (int k_VKQ_0 = item_ct1.get_group(1) * nbatch_fa; k_VKQ_0 < k_VKQ_max;
++        for (int k_VKQ_0 = k_VKQ_min + item_ct1.get_group(1) * nbatch_fa; k_VKQ_0 < k_VKQ_max;
+              k_VKQ_0 += item_ct1.get_group_range(1) * nbatch_fa) {
+
+             constexpr bool oob_check = false;
+@@ -1068,7 +1086,7 @@ static void flash_attn_tile(const char *  Q,
+ #endif // SYCL_FLASH_ATTN
+ }
+
+-template <int DKQ, int DV, int ncols2, bool use_logit_softcap>
++template <int DKQ, int DV, int ncols2, bool use_logit_softcap, bool use_KV_min = false>
+ static void launch_fattn_tile_switch_ncols1(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+     const ggml_tensor * Q = dst->src[0];
+
+@@ -1085,7 +1103,7 @@ static void launch_fattn_tile_switch_ncols1(ggml_backend_sycl_context & ctx, ggm
+                 const int nwarps    = ggml_sycl_fattn_tile_get_nthreads (DKQ, DV, cols_per_block, cc) / warp_size;
+                 const int nbatch_fa = ggml_sycl_fattn_tile_get_nbatch_fa(DKQ, DV, cols_per_block, cc);
+                 launch_fattn<DV, cols_per_block/ncols2, ncols2,
+-                    flash_attn_tile<DKQ, DV, cols_per_block / ncols2, ncols2, use_logit_softcap, warp_size>, warp_size>
++                    flash_attn_tile<DKQ, DV, cols_per_block / ncols2, ncols2, use_logit_softcap, use_KV_min, warp_size>, warp_size, use_KV_min>
+                     (ctx, dst, nwarps, nbytes_shared, nbatch_fa, true, true, false);
+                 return;
+             }
+@@ -1096,7 +1114,7 @@ static void launch_fattn_tile_switch_ncols1(ggml_backend_sycl_context & ctx, ggm
+                 const int nwarps    = ggml_sycl_fattn_tile_get_nthreads (DKQ, DV, cols_per_block, cc) / warp_size;
+                 const int nbatch_fa = ggml_sycl_fattn_tile_get_nbatch_fa(DKQ, DV, cols_per_block, cc);
+                 launch_fattn<DV, cols_per_block/ncols2, ncols2,
+-                    flash_attn_tile<DKQ, DV, cols_per_block / ncols2, ncols2, use_logit_softcap, warp_size>, warp_size>
++                    flash_attn_tile<DKQ, DV, cols_per_block / ncols2, ncols2, use_logit_softcap, use_KV_min, warp_size>, warp_size, use_KV_min>
+                     (ctx, dst, nwarps, nbytes_shared, nbatch_fa, true, true, false);
+                 return;
+             }
+@@ -1107,7 +1125,7 @@ static void launch_fattn_tile_switch_ncols1(ggml_backend_sycl_context & ctx, ggm
+                 const int nwarps    = ggml_sycl_fattn_tile_get_nthreads (DKQ, DV, cols_per_block, cc) / warp_size;
+                 const int nbatch_fa = ggml_sycl_fattn_tile_get_nbatch_fa(DKQ, DV, cols_per_block, cc);
+                 launch_fattn<DV, cols_per_block/ncols2, ncols2,
+-                    flash_attn_tile<DKQ, DV, cols_per_block / ncols2, ncols2, use_logit_softcap, warp_size>, warp_size>
++                    flash_attn_tile<DKQ, DV, cols_per_block / ncols2, ncols2, use_logit_softcap, use_KV_min, warp_size>, warp_size, use_KV_min>
+                     (ctx, dst, nwarps, nbytes_shared, nbatch_fa, true, true, false);
+                 return;
+             }
+@@ -1120,7 +1138,7 @@ static void launch_fattn_tile_switch_ncols1(ggml_backend_sycl_context & ctx, ggm
+             const int nwarps    = ggml_sycl_fattn_tile_get_nthreads (DKQ, DV, cols_per_block, cc) / warp_size;
+             const int nbatch_fa = ggml_sycl_fattn_tile_get_nbatch_fa(DKQ, DV, cols_per_block, cc);
+             launch_fattn<DV, cols_per_block/ncols2, ncols2,
+-                flash_attn_tile<DKQ, DV, cols_per_block / ncols2, ncols2, use_logit_softcap, warp_size>, warp_size>
++                flash_attn_tile<DKQ, DV, cols_per_block / ncols2, ncols2, use_logit_softcap, use_KV_min, warp_size>, warp_size, use_KV_min>
+                 (ctx, dst, nwarps, nbytes_shared, nbatch_fa, true, true, false);
+             return;
+         }
+@@ -1131,7 +1149,7 @@ static void launch_fattn_tile_switch_ncols1(ggml_backend_sycl_context & ctx, ggm
+         const int nwarps    = ggml_sycl_fattn_tile_get_nthreads (DKQ, DV, cols_per_block, cc) / warp_size;
+         const int nbatch_fa = ggml_sycl_fattn_tile_get_nbatch_fa(DKQ, DV, cols_per_block, cc);
+         launch_fattn<DV, cols_per_block/ncols2, ncols2,
+-            flash_attn_tile<DKQ, DV, cols_per_block / ncols2, ncols2, use_logit_softcap, warp_size>, warp_size>
++            flash_attn_tile<DKQ, DV, cols_per_block / ncols2, ncols2, use_logit_softcap, use_KV_min, warp_size>, warp_size, use_KV_min>
+             (ctx, dst, nwarps, nbytes_shared, nbatch_fa, true, true, false);
+         return;
+     }
+@@ -1141,7 +1159,7 @@ static void launch_fattn_tile_switch_ncols1(ggml_backend_sycl_context & ctx, ggm
+         const int nwarps    = ggml_sycl_fattn_tile_get_nthreads (DKQ, DV, cols_per_block, cc) / warp_size;
+         const int nbatch_fa = ggml_sycl_fattn_tile_get_nbatch_fa(DKQ, DV, cols_per_block, cc);
+         launch_fattn<DV, cols_per_block/ncols2, ncols2,
+-            flash_attn_tile<DKQ, DV, cols_per_block / ncols2, ncols2, use_logit_softcap, warp_size>, warp_size>
++            flash_attn_tile<DKQ, DV, cols_per_block / ncols2, ncols2, use_logit_softcap, use_KV_min, warp_size>, warp_size, use_KV_min>
+             (ctx, dst, nwarps, nbytes_shared, nbatch_fa, true, true, false);
+         return;
+     }
+@@ -1167,8 +1185,19 @@ static void launch_fattn_tile_switch_ncols2(ggml_backend_sycl_context & ctx, ggm
+     //const bool nvidia = GGML_SYCL_CC_IS_NVIDIA(ggml_sycl_info().devices[ggml_sycl_get_device()].cc);
+     const int gqa_limit = gqa_ratio <= 4 && DV <= 256 ? 16 : INT_MAX;
+     const bool use_gqa_opt = mask && max_bias == 0.0f && Q->ne[1] <= gqa_limit && K->ne[1] % FATTN_KQ_STRIDE == 0;
++    const bool use_kv_min = mask && K->ne[1] % FATTN_KQ_STRIDE == 0 &&
++        ggml_sycl_fattn_kv_min_scan_should_use(Q);
+
+     if constexpr (DV == 512) {
++        const int forced_ncols2 = ggml_sycl_fattn_dv512_gqa_ncols2_override();
++        if (use_gqa_opt && forced_ncols2 == 8 && gqa_ratio % 8 == 0) {
++            if (use_kv_min) {
++                launch_fattn_tile_switch_ncols1<DKQ, DV, 8, use_logit_softcap, true>(ctx, dst);
++            } else {
++                launch_fattn_tile_switch_ncols1<DKQ, DV, 8, use_logit_softcap, false>(ctx, dst);
++            }
++            return;
++        }
+         if (use_gqa_opt && gqa_ratio % 16 == 0) {
+             launch_fattn_tile_switch_ncols1<DKQ, DV, 16, use_logit_softcap>(ctx, dst);
+             return;
+@@ -1243,4 +1272,3 @@ extern DECL_FATTN_TILE_CASE(128, 128);
+ extern DECL_FATTN_TILE_CASE(256, 256);
+ extern DECL_FATTN_TILE_CASE(512, 512);
+ extern DECL_FATTN_TILE_CASE(576, 512);
+-
