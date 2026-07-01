@@ -169,6 +169,13 @@ Current active optimization target:
   appeared, so current variance is not explained by simple temperature
   throttling. See
   `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260701-finalpostnorm-thermal-variance.md`.
+  The reliability method is now explicit:
+  `scripts/analyze-gemma-realistic-ab.py` compares prompt-paired A/B runs with
+  bootstrap CIs, and
+  `results/gemma4-26b-a4b-q8-b70/reliability-protocol.md` requires a paired
+  bootstrap lower bound above `+1.0%` before promoting micro-changes. Same
+  thermal repeats show `2.324%` run-median CV and `4.409%` p90 pairwise
+  absolute run-median delta, so `+1-4%` single-run spikes are not actionable.
   A four-lane full512 repeat of the promoted final-postnorm recipe then passed
   the strict cold gate and 512/512 canary on every lane but did not beat the
   record: medians were `118.78941183022032`, `115.48824790393866`,

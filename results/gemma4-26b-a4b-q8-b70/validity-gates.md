@@ -130,6 +130,31 @@ same-recipe repeats, or a same-window control lane. Small deltas near the
 frontier should be treated as variance until repeated under the fixed
 realistic gate with `cached_tokens=0` and the exact same canary scale.
 
+## Micro-Improvement / A/B Reliability Gate
+
+Near the current Gemma record, single-run medians are too noisy for
+micro-change decisions. The same-GPU thermal repeatability check measured
+`2.324%` run-median CV and `4.409%` p90 pairwise absolute run-median delta for
+the exact same recipe.
+
+For source or config changes expected to move the short metric by only a few
+percent, use paired same-window A/B blocks and analyze per-prompt ratios with:
+
+```bash
+scripts/analyze-gemma-realistic-ab.py \
+  --control data/<control-1>/summary.json \
+  --control data/<control-2>/summary.json \
+  --candidate data/<candidate-1>/summary.json \
+  --candidate data/<candidate-2>/summary.json
+```
+
+The candidate is a micro-win only if the paired bootstrap 95% lower bound of
+the median candidate/control prompt ratio is above `+1.0%`, all candidate runs
+pass the realistic final gate, and p10/full512/wall/TTFT/canary/telemetry do
+not materially regress. Positive raw medians with a CI crossing zero are
+`inconclusive_positive`, not promotable. See
+`results/gemma4-26b-a4b-q8-b70/reliability-protocol.md`.
+
 ## Long-Context Service Gate
 
 Prompt-processing and long-context service changes are useful only if they do

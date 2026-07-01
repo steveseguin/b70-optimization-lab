@@ -53,6 +53,12 @@ The earlier `86.47445652599384 tok/s` `p_min=0.075` observation did not repeat.
 
 Current record details and patch links:
 [`20260629-vdr2-selected-down-record.md`](20260629-vdr2-selected-down-record.md).
+Use the paired A/B reliability protocol for any proposed micro-change near the
+current record; single-run medians are too noisy to establish a `+1-4%` win.
+See
+[`reliability-protocol.md`](reliability-protocol.md)
+and the analyzer
+[`../../scripts/analyze-gemma-realistic-ab.py`](../../scripts/analyze-gemma-realistic-ab.py).
 
 Recent non-promoted source follow-ups after the final-postnorm record:
 attention post-norm residual fusion lost on the short metric, and per-layer

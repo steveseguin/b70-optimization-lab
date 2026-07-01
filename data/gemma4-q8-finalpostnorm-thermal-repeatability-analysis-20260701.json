@@ -1,0 +1,241 @@
+{
+  "metric": "tok_s_1_100_after_ttft",
+  "notes": [
+    "Uses per-prompt realistic-suite rows, not historical headline outliers.",
+    "All non-forensic inputs should pass realistic_final_gate and cached_tokens=0."
+  ],
+  "same_recipe_repeatability": {
+    "decision_note": "Single-run comparisons inside this same-recipe band are unreliable for deltas smaller than the p90 pairwise absolute run-median delta. Use paired A/B blocks and bootstrap CIs for micro-change decisions.",
+    "pairwise_abs_delta_pct": {
+      "count": 6,
+      "cv_pct": 56.57284050575255,
+      "max": 4.8415707264960615,
+      "mean": 2.9189140799733013,
+      "median": 3.42048493627844,
+      "min": 0.8654298980704548,
+      "p10": 0.9271932519967415,
+      "p90": 4.409064051644721,
+      "stdev": 1.6513126069632502,
+      "values": [
+        2.9878945289095395,
+        0.8654298980704548,
+        3.9765573767933806,
+        3.853075343647341,
+        0.9889566059230283,
+        4.8415707264960615
+      ]
+    },
+    "per_prompt_cv_pct": {
+      "count": 12,
+      "cv_pct": 55.99044426077144,
+      "max": 8.269980519417599,
+      "mean": 4.473592388420827,
+      "median": 4.133383738391936,
+      "min": 1.4439356137703423,
+      "p10": 1.732885743018306,
+      "p90": 7.576271099695159,
+      "stdev": 2.504784252692877
+    },
+    "prompt_count": 12,
+    "run_count": 4,
+    "run_median_stats": {
+      "count": 4,
+      "cv_pct": 2.323528081161001,
+      "max": 120.20174872688361,
+      "mean": 117.31382325177793,
+      "median": 117.26694837907537,
+      "min": 114.51964752207735,
+      "p10": 114.81826586895112,
+      "p90": 119.84688053276678,
+      "stdev": 2.7258196263386445
+    },
+    "run_medians": [
+      115.51504201165659,
+      119.01885474649416,
+      114.51964752207735,
+      120.20174872688361
+    ]
+  },
+  "same_recipe_runs": [
+    {
+      "cached_tokens_all_zero": true,
+      "full_summary": {
+        "count": 12,
+        "max": 117.47411010142571,
+        "mean": 109.50940139145979,
+        "median": 109.48697541288735,
+        "min": 100.21411828784942,
+        "p10": 105.00553873603573,
+        "stdev": 5.090729169200999
+      },
+      "gate_passed": true,
+      "input_path": "data/gemma4-q8-gpu0-finalpostnorm-thermal-full512-20260701T090544Z-r1/summary.json",
+      "label": "gemma4-q8-gpu0-finalpostnorm-thermal-full512-20260701T090544Z-r1",
+      "primary_median": 115.51504201165659,
+      "primary_summary": {
+        "count": 12,
+        "max": 130.78620673380038,
+        "mean": 114.15234512231181,
+        "median": 115.51504201165659,
+        "min": 98.25402305579067,
+        "p10": 102.41663267824927,
+        "stdev": 10.41891935712754
+      },
+      "prompt_count": 12,
+      "suite_path": "/home/steve/qwen36-results-main/data/gemma4-q8-gpu0-finalpostnorm-thermal-full512-20260701T090544Z-r1/realistic-suite.json",
+      "ttft_ms_summary": {
+        "count": 12,
+        "max": 281.35238005779684,
+        "mean": 189.74094164635366,
+        "median": 179.05648954911157,
+        "min": 166.423593997024,
+        "p10": 171.88686702866107,
+        "stdev": 30.863294719068797
+      },
+      "wall_summary": {
+        "count": 12,
+        "max": 113.01971848645655,
+        "mean": 105.00726459778468,
+        "median": 103.65062974072687,
+        "min": 96.93395138128874,
+        "p10": 100.93247493155617,
+        "stdev": 4.787949106960985
+      }
+    },
+    {
+      "cached_tokens_all_zero": true,
+      "full_summary": {
+        "count": 12,
+        "max": 117.75606955870366,
+        "mean": 110.51173694236502,
+        "median": 110.85382609633982,
+        "min": 102.94459376305579,
+        "p10": 105.2084359298841,
+        "stdev": 4.982753798264376
+      },
+      "gate_passed": true,
+      "input_path": "data/gemma4-q8-gpu0-finalpostnorm-thermal-full512-20260701T090544Z-r2/summary.json",
+      "label": "gemma4-q8-gpu0-finalpostnorm-thermal-full512-20260701T090544Z-r2",
+      "primary_median": 119.01885474649416,
+      "primary_summary": {
+        "count": 12,
+        "max": 134.9320130434929,
+        "mean": 119.73552941492056,
+        "median": 119.01885474649416,
+        "min": 107.4954673859422,
+        "p10": 111.10039520652896,
+        "stdev": 8.394763512672167
+      },
+      "prompt_count": 12,
+      "suite_path": "/home/steve/qwen36-results-main/data/gemma4-q8-gpu0-finalpostnorm-thermal-full512-20260701T090544Z-r2/realistic-suite.json",
+      "ttft_ms_summary": {
+        "count": 12,
+        "max": 279.50239600613713,
+        "mean": 189.2253708501812,
+        "median": 178.8115255185403,
+        "min": 166.12080310005695,
+        "p10": 171.40503778355196,
+        "stdev": 30.44486787159226
+      },
+      "wall_summary": {
+        "count": 12,
+        "max": 113.1883118139776,
+        "mean": 105.93249072545312,
+        "median": 105.47549474074407,
+        "min": 98.97090554969414,
+        "p10": 101.68473772160355,
+        "stdev": 4.514394903108881
+      }
+    },
+    {
+      "cached_tokens_all_zero": true,
+      "full_summary": {
+        "count": 12,
+        "max": 116.71131765629585,
+        "mean": 110.72658949963198,
+        "median": 111.11095170313592,
+        "min": 100.69154106659875,
+        "p10": 105.11852744904704,
+        "stdev": 4.658414241321911
+      },
+      "gate_passed": true,
+      "input_path": "data/gemma4-q8-gpu0-finalpostnorm-thermal-full512-20260701T090544Z-r3/summary.json",
+      "label": "gemma4-q8-gpu0-finalpostnorm-thermal-full512-20260701T090544Z-r3",
+      "primary_median": 114.51964752207735,
+      "primary_summary": {
+        "count": 12,
+        "max": 131.3408538821656,
+        "mean": 117.58752720152465,
+        "median": 114.51964752207735,
+        "min": 107.8213029762539,
+        "p10": 108.46325797820433,
+        "stdev": 8.724756899562143
+      },
+      "prompt_count": 12,
+      "suite_path": "/home/steve/qwen36-results-main/data/gemma4-q8-gpu0-finalpostnorm-thermal-full512-20260701T090544Z-r3/realistic-suite.json",
+      "ttft_ms_summary": {
+        "count": 12,
+        "max": 273.16785301081836,
+        "mean": 188.68734700178416,
+        "median": 178.66493453038856,
+        "min": 165.81175907049328,
+        "p10": 171.5904583921656,
+        "stdev": 28.744758403299357
+      },
+      "wall_summary": {
+        "count": 12,
+        "max": 112.21628655460972,
+        "mean": 106.10602030935644,
+        "median": 106.69126328539565,
+        "min": 97.37735437266592,
+        "p10": 101.58766323002445,
+        "stdev": 3.993601328736563
+      }
+    },
+    {
+      "cached_tokens_all_zero": true,
+      "full_summary": {
+        "count": 12,
+        "max": 119.52154149461575,
+        "mean": 111.19732724608123,
+        "median": 110.67333479824045,
+        "min": 103.2717642377836,
+        "p10": 106.37942406360622,
+        "stdev": 5.062417317848465
+      },
+      "gate_passed": true,
+      "input_path": "data/gemma4-q8-gpu0-finalpostnorm-thermal-full512-20260701T090544Z-r4/summary.json",
+      "label": "gemma4-q8-gpu0-finalpostnorm-thermal-full512-20260701T090544Z-r4",
+      "primary_median": 120.20174872688361,
+      "primary_summary": {
+        "count": 12,
+        "max": 134.8941694826115,
+        "mean": 119.59463580466458,
+        "median": 120.20174872688361,
+        "min": 103.47911948263975,
+        "p10": 106.4034709937698,
+        "stdev": 8.861288783218576
+      },
+      "prompt_count": 12,
+      "suite_path": "/home/steve/qwen36-results-main/data/gemma4-q8-gpu0-finalpostnorm-thermal-full512-20260701T090544Z-r4/realistic-suite.json",
+      "ttft_ms_summary": {
+        "count": 12,
+        "max": 278.4732619766146,
+        "mean": 188.96597907102355,
+        "median": 178.93739946885034,
+        "min": 165.53866700269282,
+        "p10": 171.62950212368742,
+        "stdev": 30.18508646169739
+      },
+      "wall_summary": {
+        "count": 12,
+        "max": 114.80582500885785,
+        "mean": 106.56835354613996,
+        "median": 106.29682835579385,
+        "min": 99.28733486329138,
+        "p10": 102.7225714851013,
+        "stdev": 4.458514448963848
+      }
+    }
+  ]
+}

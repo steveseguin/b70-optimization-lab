@@ -175,6 +175,15 @@ Primary target:
   avoid comparing hot/cold historical outliers without same-window controls.
   Evidence:
   `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260701-finalpostnorm-thermal-variance.md`.
+- Latest reliability-method update: use
+  `scripts/analyze-gemma-realistic-ab.py` and
+  `results/gemma4-26b-a4b-q8-b70/reliability-protocol.md` for micro-change
+  decisions. The thermal repeatability set measured `2.324%` run-median CV and
+  `4.409%` p90 pairwise absolute run-median delta. A fake A/B split of the
+  same exact recipe produced higher "candidate" raw medians but only
+  `-1.186% / +3.057% / +7.067%` median paired-ratio CI, so it is correctly
+  `inconclusive_positive`. Do not promote `+1-4%` one-off changes without a
+  paired bootstrap lower bound above `+1.0%` and clean quality/telemetry.
 - Latest repeat / variance check: four more full512 lanes of the promoted
   final-postnorm recipe all passed the strict cold gate, `cached_tokens=0`, and
   512/512 canary, but no lane beat the record. Medians were
