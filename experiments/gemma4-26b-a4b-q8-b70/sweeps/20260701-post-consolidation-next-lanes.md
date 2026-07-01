@@ -146,3 +146,18 @@ behavior only if it can be validated with same-window long-context A/B plus a
 short-decode guard. Headline short-context work should return to exact verifier
 economics.
 
+## Update: Post-consolidation record reproduction window
+
+A four-GPU full512 reproduction window was run as
+`20260701Trecord-repro-canon1` and recorded in
+`20260701-record-reproduction-canon1.md`.
+
+All lanes passed the fixed realistic gate, `cached_tokens=0`, and `512/512`
+canary rows, but the prior `124.977 tok/s` outlier did not reproduce in this
+window. Lane medians were `117.026`, `114.584`, `120.155`, and `113.383 tok/s`
+with a group average of `116.287 tok/s`.
+
+The `124.977` record remains valid, but future source patches should compare
+against this same-window variance range and must beat it clearly before any
+promotion.
+
