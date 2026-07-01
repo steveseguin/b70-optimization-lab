@@ -57,6 +57,9 @@ default-off source patch recorded at
 The phase-prefill recipe is also a service lane, not a LocalMaxxing headline.
 Its validation note is
 `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-phase-prefill-ubatch-service.md`.
+New phase-prefill runs should record `prefill_ubatch_size` in each server log
+header and `summary.json` launcher identity; use that field when comparing
+service artifacts.
 
 ## Negative Prompt-Processing Knobs
 

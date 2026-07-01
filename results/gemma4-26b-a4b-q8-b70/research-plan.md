@@ -245,6 +245,24 @@ scheduler or a larger graph change that removes verifier LM-head rows without
 sacrificing the existing multi-row Q8 reorder efficiency. See
 `../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260701-acceptprefix-argmax-negative.md`.
 
+2026-07-01 next-lane audit / phase-prefill identity hardening: a fresh audit
+kept the short-decode frontier unchanged at `123.67689864739785 tok/s` and
+closed the near-term "try another small flag" path. The remaining credible
+short-decode source lane is a non-serial, bonus-preserving accept-prefix
+verifier v2; otherwise effort should move to the separate service/prefill lane.
+For that service lane, the phase-prefill recipe
+`BATCH_SIZE=2048`, `UBATCH_SIZE=1024`, `LLAMA_PREFILL_UBATCH_SIZE=2048`,
+`GGML_SYCL_FATTN_DV512_GQA_NCOLS2=8` remains the practical hardening target.
+The launcher was updated to record `prefill_ubatch_size` in both the server log
+header and `summary.json` `launcher_identity`, so future phase-prefill artifacts
+can be compared without relying on wrapper memory. A four-GPU validation run
+passed the long-context gate on all lanes with `cached_tokens_all_zero=true`,
+recorded `prefill_ubatch_size=2048` in all summaries/log headers, and measured
+`1051.794789819953 tok/s` aggregate median prefill average plus
+`119.50639487463019 tok/s` aggregate median decode average. This is
+reproducibility/service evidence only, not a LocalMaxxing claim. See
+`../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260701-next-lane-audit-and-phase-prefill-identity.md`.
+
 2026-06-29 verifier LM-head candidate-threshold audit: shifted
 `t_inp_tokens[r + 1]` does provide the draft candidate ID for narrow standard
 MTP verifier rows, but this is not a good next record implementation. Exact

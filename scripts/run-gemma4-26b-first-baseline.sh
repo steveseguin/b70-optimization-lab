@@ -321,6 +321,7 @@ out = {
         "ctx_size": os.environ.get("CTX_SIZE"),
         "batch_size": os.environ.get("BATCH_SIZE"),
         "ubatch_size": os.environ.get("UBATCH_SIZE"),
+        "prefill_ubatch_size": env_or_log("LLAMA_PREFILL_UBATCH_SIZE", "prefill_ubatch_size"),
         "threads": os.environ.get("THREADS"),
         "cpu_affinity": os.environ.get("CPU_AFFINITY"),
         "cache_type_k": os.environ.get("CACHE_TYPE_K"),
