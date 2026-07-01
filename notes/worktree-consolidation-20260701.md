@@ -18,12 +18,14 @@ across detached worktrees.
   collisions in `/home/steve/llm-optimizations`; result: `0` collisions.
 - Fast-forwarded `/home/steve/llm-optimizations` to `4b33bb2f`.
 - Later same-day canonical Gemma documentation/result commits advanced
-  `/home/steve/llm-optimizations` through `46b4733d`, then the verifier-top2
-  diagnostic preservation commit advanced it to `261300e0`. Subsequent
-  workspace-policy commits keep the branch-attached checkout tracking
-  `origin/main`; use `git log -1 --oneline` for exact live state.
+  `/home/steve/llm-optimizations` through the verifier-top2 diagnostic and
+  candidate-proof diagnostic preservation commits. At this refresh the active
+  branch-attached checkout is `d3bee04a` and tracks `origin/main`; use
+  `git log -1 --oneline` for exact live state.
   `/home/steve/qwen36-results-main` remains detached at `4b33bb2f` and is
   still archive/back-reference only.
+- Removed the legacy detached `/home/steve/push-worktrees/b70-optimization-lab-pushable`
+  worktree after confirming its state had already been preserved/reachable.
 
 ## Current Worktree Topology
 
@@ -38,10 +40,9 @@ across detached worktrees.
   HEAD:   4b33bb2fda02d2f85c7101f5c5b34f4286d0e0db
   role:   audit/back-reference only; do not run new work here
 
-/home/steve/push-worktrees/b70-optimization-lab-pushable
-  branch: detached
-  HEAD:   0cb52e6999fadaf819440ad8b288b52ec0290cef
-  role:   legacy/unknown; audit before reuse
+No other linked worktree is active. Do not create another one unless the task
+explicitly requires isolation; if one is created, document why, how to merge it
+back, and when it should be removed.
 ```
 
 ## Untracked Backlog
@@ -54,12 +55,10 @@ Current untracked inventory:
 
 ```text
 /home/steve/llm-optimizations
-  visible_untracked_count_after_ignore_cleanup: 2035
-  visible_untracked_payload: ~0.041 GiB
-  top-level split:
-    data/: 2035
-  pre-ignore raw artifact payload was ~2.663 GiB, mostly Qwen JSONL traces
-  and local .safetensors checkpoints now ignored by default.
+  current visible untracked count: 0 after `d3bee04a`
+  role: clean active workspace for new work
+  historical note: pre-ignore raw artifact payload was ~2.663 GiB, mostly Qwen
+  JSONL traces and local .safetensors checkpoints now ignored by default.
 
 /home/steve/qwen36-results-main
   visible_untracked_count: 950
@@ -79,6 +78,8 @@ classification is recorded. See `notes/workspace-artifact-inventory-20260701.md`
 - Use `/home/steve/llm-optimizations` for all new optimization work.
 - Treat linked/detached worktrees as read-only unless a task explicitly
   designates one as active.
+- Do not create new worktrees as scratch space by default. Prefer branches,
+  patch snapshots, and standard result folders inside the active workspace.
 - Keep active experiment output in the standard repo folders:
   `notes/`, `patches/`, `data/`, `results/`, `scripts/`, `experiments/`, and
   `repro/`.
