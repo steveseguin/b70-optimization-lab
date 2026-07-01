@@ -46,6 +46,18 @@ Promoted service optimization:
 Primary note:
 `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-sycl-fattn-dv512-gqa8-prefill-win.md`
 
+Use `run-vdr2-gqa8-phase-prefill-service.sh` when the goal is an operational
+single-server service profile: prompt processing uses
+`LLAMA_PREFILL_UBATCH_SIZE=2048`, while decode remains at `UBATCH_SIZE=1024`.
+This preserves the short-decode-friendly physical decode size while getting
+UB2048-style prompt chunks for long-context prefill. It requires the
+default-off source patch recorded at
+`patches/gemma4-26b-a4b-q8-b70/20260630-llama-phase-prefill-ubatch-memory-sized-experiment.patch`.
+
+The phase-prefill recipe is also a service lane, not a LocalMaxxing headline.
+Its validation note is
+`experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-phase-prefill-ubatch-service.md`.
+
 ## Negative Prompt-Processing Knobs
 
 Do not repeat these without a source/kernel change:

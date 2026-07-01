@@ -197,9 +197,10 @@ Record identity:
   `../patches/gemma4-26b-a4b-q8-b70/20260630-llama-phase-prefill-ubatch-memory-sized-experiment.patch`
   and documented in
   `../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-phase-prefill-ubatch-service.md`;
-  use only as an experiment patch unless a future service recipe explicitly
-  wants `LLAMA_PREFILL_UBATCH_SIZE=2048` with `BATCH_SIZE=2048`,
-  `UBATCH_SIZE=1024`, and then reruns the full short fixed suite.
+  the reproducible service wrapper is
+  `../repro/gemma4-26b-a4b-q8-b70/run-vdr2-gqa8-phase-prefill-service.sh`.
+  Use it for service/prefill validation only; short-decode headline submissions
+  still use the fixed short record recipe and gate.
 - source patch snapshot:
   `../patches/gemma4-26b-a4b-q8-b70/20260626T2225-llamacpp-gemma4-current-record-stack.patch`
   with note
