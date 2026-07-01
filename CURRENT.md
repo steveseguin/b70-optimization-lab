@@ -67,6 +67,19 @@ Current active optimization target:
   TTFT. This confirms the active binary is back on the promoted lane, but it is
   a compact sanity check, not a full512 record claim. Evidence:
   `data/gemma4-q8-gpu0-post-top2v2-revert-sanity-20260701T201036Z/summary.json`.
+- Latest candidate-proof diagnostic:
+  `LLAMA_SPEC_VERIFY_CANDIDATE_PROOF_PROFILE=1` is a host-side profile only,
+  not a performance result. A compact cold gate (`MAX_TOKENS=64`) passed
+  canary and `cached_tokens=0`, with the final cumulative profile line:
+  `steps=452`, `verifier_rows=1802`, `draft_rows=1350`,
+  `draft_match_rows=1102` (`81.630%`), `full_draft_matches=277`
+  (`61.283%`), `missing_sampled_rows=0`, `nonconsecutive_steps=0`,
+  `first_mismatch_counts=(0:72, 1:48, 2:59, 3:273)`. This confirms the
+  default full-bonus verifier rows are inspectable and often candidate-matched,
+  but a draft-candidate-only shortcut is not exact enough because early
+  mismatches still require the true target top token. Use this only to guide a
+  deeper exact accept-prefix / verifier graph design. Evidence:
+  `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260701-candidate-proof-profile.md`.
 - Latest prompt-processing source follow-up: DV512 Gemma GQA `ncols2=16` is a
   closed negative. The default-off source branch rebuilt, but both candidate
   lanes failed the first JSON canary with empty text before long-context cases
