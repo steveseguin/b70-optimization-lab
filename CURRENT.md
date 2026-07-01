@@ -54,18 +54,19 @@ Current active optimization target:
   Treat it as the simplest target-side quality/control baseline for new work.
 - Latest verifier-top2 diagnostic:
   closed as an instrumentation failure, not a performance result.
-  `LLAMA_SPEC_VERIFY_TOP2_PROFILE=1` and
-  `LLAMA_SPEC_VERIFY_BACKEND_ARGMAX_SCORES=1` produced valid cold-gate short
-  runs, but recorded `top2 rows = 0`, so no LM-head margin conclusion should be
-  drawn. The active llama.cpp source was restored to the pre-diagnostic record
-  stack and rebuilt. Evidence:
-  `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260701-verifier-top2-margin-profile.md`.
-- Post-restore sanity after removing the failed top2 hooks and rebuilding passed
-  the fixed cold gate at `MAX_TOKENS=128`: `64/64` canary rows,
-  `cached_tokens=0`, median `122.23871192082832 tok/s` for tokens 1-100 after
+  The v2 patch built and made the host top2 profile path non-missing, but raw
+  records stayed at initialized `-1` values (`top1=-1`, `top2=-1`, NaN logits)
+  because the added side tensor was not produced by the active MTP verifier
+  graph path. Do not draw LM-head margin, candidate-vs-max, or row-adaptive
+  conclusions from this diagnostic. The active llama.cpp source was restored to
+  the pre-top2 record stack (`cmp_rc=0`) and rebuilt. Evidence:
+  `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260701-verifier-top2-v2-instrumentation-failure.md`.
+- Post-restore sanity after removing the v2 top2 hooks and rebuilding passed
+  the fixed cold gate at `MAX_TOKENS=64`: `16/16` canary rows,
+  `cached_tokens=0`, median `124.03008933114222 tok/s` for tokens 1-50 after
   TTFT. This confirms the active binary is back on the promoted lane, but it is
-  not a full512 record claim. Evidence:
-  `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260701-postrestore-record-sanity.md`.
+  a compact sanity check, not a full512 record claim. Evidence:
+  `data/gemma4-q8-gpu0-post-top2v2-revert-sanity-20260701T201036Z/summary.json`.
 - Latest prompt-processing source follow-up: DV512 Gemma GQA `ncols2=16` is a
   closed negative. The default-off source branch rebuilt, but both candidate
   lanes failed the first JSON canary with empty text before long-context cases
