@@ -112,3 +112,20 @@ the existing `q8reorder-vdr2` build directory is a oneAPI 2026.0 build and must
 be rebuilt with `/opt/intel/oneapi/setvars.sh --force` sourced so the SYCL/OpenMP
 link and AOT device build can find the proper runtime libraries.
 
+## Update: SWA left-bound phase-prefill ladder closed negative
+
+The targeted phase-prefill retest under host SWA left-bound was run as
+`20260701Tswalb-phase-ladder-canon1` and recorded in
+`20260701-swalb-phase-ladder-negative.md`.
+
+Larger phase-prefill sizes improved median long-context prefill throughput
+(`2560`: +4.58%, `2816`: +5.26%), but lowered long-context decode
+(`2560`: -2.31%, `2816`: -3.82%) in the same run. Because the service goal is
+prompt-processing improvement without decode regression, the candidates were
+not promoted and no short-decode guard was run.
+
+The balanced service recipe remains `2048/1024` with
+`LLAMA_PREFILL_UBATCH_SIZE=2048`, GQA8, and host SWA left-bound
+`MIN_Q=2048`. Next prompt-processing work should profile that balanced recipe
+before another source patch.
+
