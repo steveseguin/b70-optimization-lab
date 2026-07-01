@@ -172,6 +172,29 @@ Medians were `118.78941183022032`, `115.48824790393866`,
 variance/no-new-record support and do not submit. See
 `../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-finalpost-repeat2-full512-variance.md`.
 
+2026-07-01 current-record repeat3: four more full512 lanes of the promoted
+final-postnorm recipe all passed the fixed cold gate, `cached_tokens=0`, and
+512/512 canary, but again did not beat the `123.67689864739785 tok/s` record.
+Medians were `121.9720691923804`, `111.87547492588218`,
+`118.23096116340783`, and `113.12239033658872 tok/s`. Treat as valid
+variance/no-new-record support and do not submit. This strengthens the
+decision to stop repeat-only runs unless paired with a new source mechanism.
+See
+`../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260701-current-record-repeat3-plan.md`.
+
+2026-07-01 final-postnorm + UBATCH 1152 screen: retested the earlier
+`BATCH_SIZE=1152` / `UBATCH_SIZE=1152` local-positive after the current
+final-postnorm promotion. The strict128 A/B was valid on all four lanes
+(`cached_tokens=0`, canary complete), but `1152/1152` did not repeat as a win:
+same-window `1024/1024` controls measured `121.88626919341718` and
+`117.32450078824291 tok/s`, while `1152/1152` candidates measured
+`111.13257897167367` and `118.75276241034763 tok/s`. Candidate average
+`114.94267069101065` was below control average `119.60538499083004` and below
+the `123.67689864739785 tok/s` headline. Decision: close as valid no-change,
+no full512 confirmation, no LocalMaxxing submission, and do not renew this
+UBATCH interaction unless another source/runtime change alters the shape. See
+`../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260701-finalpost-ub1152-screen.md`.
+
 2026-06-30 attention post-norm residual fusion: implemented default-off
 `LLAMA_GEMMA4_FUSED_ATTN_POST_NORM_RESIDUAL=1`, updated the harness to pass and
 record it, rebuilt the AOT BMG-G31 llama-server under oneAPI, and ran a verified
