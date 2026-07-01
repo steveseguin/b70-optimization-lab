@@ -60,6 +60,12 @@ Current active optimization target:
   drawn. The active llama.cpp source was restored to the pre-diagnostic record
   stack and rebuilt. Evidence:
   `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260701-verifier-top2-margin-profile.md`.
+- Post-restore sanity after removing the failed top2 hooks and rebuilding passed
+  the fixed cold gate at `MAX_TOKENS=128`: `64/64` canary rows,
+  `cached_tokens=0`, median `122.23871192082832 tok/s` for tokens 1-100 after
+  TTFT. This confirms the active binary is back on the promoted lane, but it is
+  not a full512 record claim. Evidence:
+  `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260701-postrestore-record-sanity.md`.
 - Recent non-promoted follow-up:
   `LLAMA_SPEC_VERIFY_CLIP_DRAFT_AT_EOG=1` was valid and trimmed real terminal
   draft work, but four full512 lanes topped out at `113.58569073629727 tok/s`,

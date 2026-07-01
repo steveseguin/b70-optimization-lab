@@ -70,6 +70,12 @@ Primary target:
   summaries are preserved under
   `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260701-verifier-top2-margin-profile.md`
   and `patches/gemma4-26b-a4b-q8-b70/source-snapshots/`.
+- Post-restore sanity after removing the failed top2 hooks and rebuilding passed
+  the fixed cold gate at `MAX_TOKENS=128`: `64/64` canary rows,
+  `cached_tokens=0`, median `122.23871192082832 tok/s` for tokens 1-100 after
+  TTFT. This confirms the active binary is back on the promoted lane, but it is
+  not a full512 record claim. Evidence:
+  `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260701-postrestore-record-sanity.md`.
 - Latest full512 follow-up: fused selected-softmax into selected-down VDR2
   (`LLAMA_GEMMA4_MOE_FUSED_DOWN_SELECTED_SOFTMAX=1`) and the EOG-clip
   interaction were valid but lost. Best candidate was `111.90908727268967
