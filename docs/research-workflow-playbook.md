@@ -81,6 +81,22 @@ Use this ladder before promoting any speed result:
 Never promote from a smoke if the failure mode is intermittent. The Qwen36
 graph path passed several smokes and then failed full repeats.
 
+Add a calibration step when the question is a small target-side speed change,
+not an MTP/speculation change:
+
+```text
+If the candidate is expected to affect only target-side kernels/runtime and the
+normal MTP result is within the known same-recipe variance band, rerun control
+and candidate with MTP/speculation/cache/history disabled. Use the lower-variance
+no-spec calibration lane to decide whether the target-side delta is real, then
+return to the normal MTP realistic gate before promotion.
+```
+
+This is not a replacement for the headline benchmark. It removes pipeline parts
+that the patch cannot affect, reducing variance and preventing a `+1-4%` MTP
+movement from being mistaken for a source win. For the Gemma 26B Q8 lane, see
+`results/gemma4-26b-a4b-q8-b70/reliability-protocol.md`.
+
 ## Negative Result Discipline
 
 For every meaningful failed attempt, record:
@@ -143,6 +159,11 @@ Gemma-specific lessons from the Q8 run:
   LocalMaxxing submission require the fixed realistic prompt suite, one cold
   response per prompt, `cached_tokens=0` every row, no cache/history reuse, and
   `median_tok_s_1_100_after_ttft` as the primary metric.
+- For target-side Gemma changes that do not touch MTP/speculation, use the
+  no-spec calibration lane when the apparent MTP delta is inside the current
+  noise band. It keeps fresh prompts and `cached_tokens=0`, but disables
+  speculation, cache reuse, and history acceleration so target-kernel changes
+  can be measured with much lower variance.
 - Mine the existing result tree before new runs. The 103.299 tok/s record came
   from targeted source/runtime improvements plus narrow neighborhood checks;
   repeated flag roulette after acceptance was already saturated mostly found

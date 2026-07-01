@@ -155,6 +155,25 @@ not materially regress. Positive raw medians with a CI crossing zero are
 `inconclusive_positive`, not promotable. See
 `results/gemma4-26b-a4b-q8-b70/reliability-protocol.md`.
 
+When the patch or config should only affect the target-side runtime, and not
+MTP/speculation behavior, add the no-spec calibration check before deciding a
+small delta:
+
+- run the same fixed realistic suite with MTP/speculation disabled;
+- keep `cached_tokens=0`, one cold response per prompt, no context checkpoints,
+  no cache reuse, and no history/n-gram acceleration;
+- compare control and candidate with the paired analyzer;
+- use the result as diagnostic evidence for whether the target-side change is
+  real;
+- still rerun the normal MTP realistic final gate before promotion or
+  LocalMaxxing submission.
+
+The current no-spec calibration lane measured `0.330%` run-median CV and
+`0.577%` p90 pairwise same-recipe delta, much tighter than the `4.409%` MTP
+noise band. Use it to resolve target-side changes that are otherwise lost in
+MTP variance. Do not use it for draft quality, verifier, acceptance-policy,
+handoff, or p-min/n-min/n-max changes.
+
 ## Long-Context Service Gate
 
 Prompt-processing and long-context service changes are useful only if they do

@@ -209,6 +209,22 @@ This is materially tighter than the MTP repeatability example above (`2.324%`
 CV, `4.409%` p90 pairwise delta), so it is useful for deciding whether
 target-side kernel/runtime changes are directionally real.
 
+Use it as a required follow-up when all of these are true:
+
+1. The measured MTP/final-gate movement is inside the current non-confidence
+   band, roughly `<= 4.4%` unless newer repeatability data replaces it.
+2. The candidate should affect target-side runtime behavior rather than
+   speculation policy.
+3. The changed code or flag is still exercised when MTP/speculation is off.
+4. The normal quality/canary checks are clean enough that the question is
+   performance, not correctness.
+
+This keeps the comparison focused on pipeline stages the optimization can
+actually affect. If a patch changes only the verifier, draft path, accept/reject
+logic, p-min/n-min/n-max, MTP handoff, or any other speculation-specific stage,
+the no-spec result is expected to be neutral and should not be used as evidence
+for or against that patch.
+
 Use it for target-side work such as MoE kernels, Q8 layout/reorder,
 RMS/postnorm fusion, flash-attention, and prefill/runtime knobs. Do **not** use
 it to validate MTP-only changes such as draft quality, acceptance policy,
