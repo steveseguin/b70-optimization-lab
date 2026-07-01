@@ -12,12 +12,12 @@ thousands of current `main` files and reintroduce stale shared docs.
 
 | Branch | PR | Status | Decision |
 |---|---:|---|---|
-| `codex/qwen36-quark-int8-tracking` | #8 | open, not mergeable, stale shared-file edits | Do not merge. Salvage additive artifacts only. |
-| `codex/qwen36-quark-int8-tracking-pushable` | n/a | stale branch with a much larger raw-data dump | Do not merge. Salvage compact summaries only. |
-| `codex/minimax-json-quality-20260522` | #5 | merged | No branch merge needed. The only branch-only addition is a redundant monolithic compressed copy of a harness already represented by tracked part files. |
-| `codex/minimax-website-quality-followup` | #4 | merged | No missing additive files found. Safe deletion candidate after GitHub cleanup confirmation. |
-| `codex/minimax-rebuild-recovery-20260520` | #3 | merged | No missing additive files found. Safe deletion candidate after GitHub cleanup confirmation. |
-| `codex/minimax-89tps-repro` | #2 | merged | No missing additive files found. Safe deletion candidate after GitHub cleanup confirmation. |
+| `codex/qwen36-quark-int8-tracking-achieved` | #8, closed unmerged | preserved old Qwen tracking ref; stale shared-file edits | Do not merge. Additive artifacts were salvaged into `main`. |
+| `codex/qwen36-quark-int8-tracking-pushable-achieved` | n/a | preserved stale branch with a much larger raw-data dump | Do not merge. Compact summaries were salvaged into `main`. |
+| `codex/minimax-json-quality-20260522` | #5 | merged, remote branch deleted | No branch merge needed. The only branch-only addition was a redundant monolithic compressed copy of a harness already represented by tracked part files. |
+| `codex/minimax-website-quality-followup` | #4 | merged, remote branch deleted | No missing additive files found. |
+| `codex/minimax-rebuild-recovery-20260520` | #3 | merged, remote branch deleted | No missing additive files found. |
+| `codex/minimax-89tps-repro` | #2 | merged, remote branch deleted | No missing additive files found. |
 
 ## Salvaged Into Main
 
@@ -58,15 +58,23 @@ These were deliberately not brought into `main`:
 
 ## Cleanup Guidance
 
-After this salvage lands on `main`, the merged MiniMax branches are safe remote
-deletion candidates:
+After this salvage landed on `main`, the merged MiniMax branches were deleted
+from the remote:
 
 - `codex/minimax-json-quality-20260522`
 - `codex/minimax-website-quality-followup`
 - `codex/minimax-rebuild-recovery-20260520`
 - `codex/minimax-89tps-repro`
 
-Do not delete the two Qwen branches until the owner confirms that the excluded
-raw trace/corpus dumps are no longer needed or have been archived somewhere
-outside GitHub. The useful compact artifacts have been recovered, but branch
-deletion would make the large raw dump harder to revisit.
+PR #8 was closed unmerged because its useful additive artifacts were salvaged
+and the branch diff remains stale/destructive relative to current `main`.
+
+The two Qwen refs were renamed to end in `-achieved`:
+
+- `codex/qwen36-quark-int8-tracking-achieved`
+- `codex/qwen36-quark-int8-tracking-pushable-achieved`
+
+Keep these achieved refs only until the owner confirms that the excluded raw
+trace/corpus dumps are no longer needed or have been archived somewhere outside
+GitHub. The useful compact artifacts have been recovered, but deleting the
+achieved refs would make the large raw dump harder to revisit.
