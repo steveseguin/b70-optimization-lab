@@ -144,6 +144,7 @@ GGML_SYCL_FATTN_DV512_GQA_NCOLS2="${GGML_SYCL_FATTN_DV512_GQA_NCOLS2:-}" \
 LLAMA_SYCL_Q8_MMVQ_SMALL_NCOLS="${LLAMA_SYCL_Q8_MMVQ_SMALL_NCOLS:-}" \
 LLAMA_SYCL_Q8_0_LM_HEAD_1COL_DMMV="${LLAMA_SYCL_Q8_0_LM_HEAD_1COL_DMMV:-}" \
 LLAMA_SYCL_Q8_0_LM_HEAD_1COL_NO_REORDER="${LLAMA_SYCL_Q8_0_LM_HEAD_1COL_NO_REORDER:-}" \
+LLAMA_SYCL_Q8_0_LM_HEAD_1COL_SUBGROUPS="${LLAMA_SYCL_Q8_0_LM_HEAD_1COL_SUBGROUPS:-}" \
 LLAMA_SPEC_VERIFY_GREEDY_ARGMAX="${LLAMA_SPEC_VERIFY_GREEDY_ARGMAX:-}" \
 LLAMA_SPEC_VERIFY_BACKEND_ARGMAX_IDS="${LLAMA_SPEC_VERIFY_BACKEND_ARGMAX_IDS:-}" \
 LLAMA_SPEC_VERIFY_BULK_SAMPLED_IDS="${LLAMA_SPEC_VERIFY_BULK_SAMPLED_IDS:-}" \
@@ -416,6 +417,7 @@ out = {
         "llama_sycl_q8_mmvq_small_ncols": env_or_log("LLAMA_SYCL_Q8_MMVQ_SMALL_NCOLS"),
         "llama_sycl_q8_0_lm_head_1col_dmmv": env_or_log("LLAMA_SYCL_Q8_0_LM_HEAD_1COL_DMMV"),
         "llama_sycl_q8_0_lm_head_1col_no_reorder": env_or_log("LLAMA_SYCL_Q8_0_LM_HEAD_1COL_NO_REORDER"),
+        "llama_sycl_q8_0_lm_head_1col_subgroups": env_or_log("LLAMA_SYCL_Q8_0_LM_HEAD_1COL_SUBGROUPS"),
         "llama_spec_verify_greedy_argmax": env_or_log("LLAMA_SPEC_VERIFY_GREEDY_ARGMAX"),
         "llama_spec_verify_backend_argmax_ids": env_or_log("LLAMA_SPEC_VERIFY_BACKEND_ARGMAX_IDS"),
         "llama_spec_verify_bulk_sampled_ids": env_or_log("LLAMA_SPEC_VERIFY_BULK_SAMPLED_IDS"),

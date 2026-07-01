@@ -1,0 +1,52 @@
+diff --git a/ggml/src/ggml-sycl/mmvq.cpp b/ggml/src/ggml-sycl/mmvq.cpp
+--- a/ggml/src/ggml-sycl/mmvq.cpp
++++ b/ggml/src/ggml-sycl/mmvq.cpp
+@@
+ int ggml_sycl_mul_mat_vec_q_argmax_tile_subgroups() {
+     const char * env = std::getenv("LLAMA_SYCL_MUL_MAT_ARGMAX_TILE_SUBGROUPS");
+     if (env == nullptr || env[0] == '\0') {
+         return WARP_SIZE;
+     }
+@@
+         default:
+             return WARP_SIZE;
+     }
+ }
++
++static int ggml_sycl_q8_0_lm_head_1col_subgroups(const int nrows) {
++    const char * env = std::getenv("LLAMA_SYCL_Q8_0_LM_HEAD_1COL_SUBGROUPS");
++    if (env == nullptr || env[0] == '\0' || nrows < 65536) {
++        return WARP_SIZE;
++    }
++    const int value = std::atoi(env);
++    switch (value) {
++        case 1:
++        case 2:
++        case 4:
++        case 8:
++        case 16:
++        case 32:
++            return value <= WARP_SIZE ? value : WARP_SIZE;
++        default:
++            return WARP_SIZE;
++    }
++}
+ 
+ static bool ggml_sycl_mul_mat_argmax_reorder_ncols_enabled() {
+     const char * env = std::getenv("LLAMA_SYCL_MUL_MAT_ARGMAX_REORDER_NCOLS");
+     if (env == nullptr || env[0] == '\0') {
+         return false;
+@@
+ static void reorder_mul_mat_vec_q8_0_q8_1_sycl(const void * vx, const void * vy, float * dst, const int ncols,
+                                                const int nrows, dpct::queue_ptr stream) {
+     GGML_ASSERT(ncols % QK8_0 == 0);
+-    constexpr size_t num_subgroups = WARP_SIZE;
++    const int num_subgroups = ggml_sycl_q8_0_lm_head_1col_subgroups(nrows);
+     const int block_num_y = ceil_div(nrows, GGML_SYCL_MMV_Y * (int) num_subgroups);
+     const sycl::range<3> block_nums(1, 1, block_num_y);
+-    const sycl::range<3> block_dims(1, GGML_SYCL_MMV_Y, num_subgroups * WARP_SIZE);
++    const sycl::range<3> block_dims(1, GGML_SYCL_MMV_Y, (size_t) num_subgroups * WARP_SIZE);
+ 
+     stream->submit([&](sycl::handler & cgh) {
+         cgh.parallel_for(
+             sycl::nd_range<3>(block_nums * block_dims, block_dims),
