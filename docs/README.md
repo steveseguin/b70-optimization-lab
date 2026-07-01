@@ -12,7 +12,9 @@ This docs folder is the human entry point for the B70 optimization work. The exe
 - [Qwen3.6 35B Quark INT8 Result Packet](../results/qwen36-35b-quark-int8-b70/README.md): best valid 2x/4x results, invalid fast lanes, reproduction commands, and carryover lessons.
 - [Model Recipes](model-recipes.md): which recipe folder to use for each model/build target.
 - [FAQ](faq.md): practical answers for users new to B70s, vLLM, XPU, and local model deployment.
-- [GPU Comparison for Local AI](gpu-comparison-local-ai.md): rough pricing/spec/performance framing for B70s versus common alternatives.
+- [GPU Comparison for Local AI](gpu-comparison-local-ai.md): dated B70,
+  Radeon AI PRO R9700, RTX 5090, and common NVIDIA alternative pricing/spec
+  framing.
 - [Community Results And Build Notes](community-results.md): how to share records, build photos, reproducible logs, and discussion links.
 - [LocalMaxxing Submissions](localmaxxing.md): credential location, submit helper, and secret-handling rules.
 - [Local Operations](local-ops.md): sudo-password location, driver/runtime ops guidance, and Claude/OpenCode-to-Codex delegation.

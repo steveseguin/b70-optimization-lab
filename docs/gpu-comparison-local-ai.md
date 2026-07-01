@@ -1,12 +1,18 @@
 # GPU Comparison For Local AI
 
-This page gives a practical buying and deployment frame for B70-based local inference. Prices move quickly; treat MSRP and street price ranges as dated notes, not procurement quotes.
+This page gives a practical buying and deployment frame for B70-based local
+inference. Prices move quickly; treat MSRP and street price ranges as dated
+notes, not procurement quotes.
 
-Last updated: 2026-05-23.
+Last updated: 2026-07-01.
 
 ## Summary
 
-The B70 is interesting because it offers 32 GB of VRAM per card at a much lower price than traditional workstation GPUs. The tradeoff is software maturity: NVIDIA remains easier for most LLM tooling, while B70/XPU can require exact driver, compiler, PyTorch, and kernel combinations.
+The B70 is interesting because it offers 32 GB of VRAM per card at a much lower
+price than traditional workstation GPUs and far below current RTX 5090 street
+pricing. The tradeoff is software maturity: NVIDIA remains easier for most LLM
+tooling, while B70/XPU can require exact driver, compiler, PyTorch, and kernel
+combinations.
 
 For local LLMs, the first question is usually not raw TFLOPS. It is:
 
@@ -24,14 +30,55 @@ This is where future high-memory Intel cards, including Crescent Island-class
 speed chart. Host expansion is not the first blocker here; this lab has spare
 EPYC 9015 PCIe 5.0 x16 slot capacity ready for larger Intel devices.
 
-## Rough Comparison
+## 32 GB Card Snapshot
+
+This is a dated U.S. snapshot from public listings and vendor pages checked on
+2026-07-01. It uses the AMD Radeon AI PRO R9700 as the AMD comparison because
+that is AMD's current 32 GB AI/pro card. The older Radeon PRO W7800 is also a
+32 GB card, but it is a less direct current local-AI comparison unless the goal
+is older workstation/ISV positioning.
+
+| GPU | MSRP / launch price | Street snapshot checked 2026-07-01 | VRAM and bandwidth | Peak low-precision AI figure | Power | Local AI take |
+| --- | ---: | ---: | --- | --- | ---: | --- |
+| Intel Arc Pro B70 | `$949` starting/reference price | Newegg visible listing: `$999.99` after sale from `$1,099.99` | 32 GB GDDR6 ECC, 256-bit, `608 GB/s` | `367` INT8 dense TOPS | 230 W Intel-branded card; 160-290 W partner range | Best VRAM/$ in this set; useful 4x capacity; XPU/vLLM/llama.cpp stack still needs recipes and patches. |
+| AMD Radeon AI PRO R9700 | `$1,299` MSRP | NowInStock visible active range: about `$1,299.99-$1,469.99`; simple available-listing average about `$1,394` | 32 GB GDDR6, 256-bit, `640 GB/s`, ECC on Linux | `383` INT8 dense TOPS, `766` INT8 sparse TOPS, `1531` INT4 sparse TOPS | 300 W | Strong paper specs and ROCm positioning; practical LLM value depends on the exact ROCm/vLLM/llama.cpp support path. |
+| NVIDIA GeForce RTX 5090 | `$1,999` MSRP | Current new listings are around `$4.1K-$4.3K`; used tracker around `$4.0K` | 32 GB GDDR7, 512-bit, `1792 GB/s` | `3352` NVIDIA AI TOPS headline | 575 W | Fastest and easiest CUDA ecosystem path; current street pricing and power make it a very different value class. |
+
+Do not read the TOPS column as a clean speed ranking. Intel reports INT8 dense
+TOPS for XMX. AMD separates dense/sparse INT8 and INT4 matrix figures. NVIDIA's
+public GeForce table exposes a headline "AI TOPS" number. Local LLM tok/s
+depends more on model fit, backend kernels, memory movement, graph/capture
+behavior, and quantization support than on any one peak TOPS line.
+
+## Price And Capacity Math
+
+At the prices above:
+
+- One B70 is roughly `$30-$31` per GB of VRAM.
+- One R9700 is roughly `$41` per GB at MSRP and about `$44` per GB at the
+  visible July 2026 listing average.
+- One RTX 5090 is `$62` per GB at MSRP, but roughly `$128-$135` per GB at the
+  visible July 2026 new-card range.
+- Four B70s are about `$3.8K-$4.0K` for `128 GB` aggregate VRAM before host
+  platform cost.
+- Four R9700s are about `$5.2K` at MSRP and about `$5.6K` using the visible
+  July 2026 listing average.
+- Four RTX 5090s are about `$8.0K` at MSRP, but roughly `$16.4K-$17.3K` at the
+  visible July 2026 new-card range, before the harder power/cooling problem.
+
+The 5090 has far more single-card memory bandwidth. The B70 argument is not
+"faster than a 5090." It is that 32 GB cards near `$1K` make a very different
+local-inference lab possible: more VRAM, more parallel experiments, and more
+accessible multi-GPU capacity if the software path is made reproducible.
+
+## Other Reference Cards
 
 | GPU | VRAM | Bandwidth | Board Power | Price Anchor | Local AI Take |
 | --- | ---: | ---: | ---: | ---: | --- |
-| Intel Arc Pro B70 | 32 GB GDDR6 ECC | 608 GB/s | 160-290 W | $949 MSRP | Strong VRAM/$; promising for local inference; software path still young. |
 | NVIDIA RTX 3090 | 24 GB GDDR6X | 936 GB/s | 350 W | $1,499 launch MSRP; used market varies | Mature CUDA ecosystem; less VRAM per card than B70; used cards can be good value but condition varies. |
 | NVIDIA RTX 4090 | 24 GB GDDR6X | 1008 GB/s | 450 W | $1,599 launch MSRP; street price varies | Very fast single-card inference; 24 GB VRAM is the limiting factor for larger local models. |
 | NVIDIA RTX 6000 Ada | 48 GB GDDR6 ECC | 960 GB/s | 300 W | high workstation pricing | Much easier pro CUDA path and 48 GB VRAM, but cost is in another class. |
+| AMD Radeon PRO W7800 | 32 GB GDDR6 ECC | 576 GB/s | 260 W | $2,499 launch class; current price varies | Older 32 GB Radeon PRO option; less attractive than R9700 for current AI-focused buying unless certification/workstation constraints matter. |
 
 ## Interpreting Price
 
@@ -41,12 +88,17 @@ Use three different price concepts:
 - Street price: what new cards cost today from normal retailers.
 - Used price: useful for RTX 3090 comparisons, but risk depends on card history, cooler, memory health, seller, and return policy.
 
-As of public reporting in 2026:
+As of public reporting checked in 2026:
 
-- Intel positioned the Arc Pro B70 at about `$949` for the reference card.
-- RTX 3090 launched at `$1,499`; current used pricing is marketplace-dependent.
-- RTX 4090 launched at `$1,599`, but availability and current street price vary.
-- RTX 6000 Ada is a professional card with 48 GB VRAM and typically sits far above gaming-card pricing.
+- Intel positioned the Arc Pro B70 at about `$949` for the reference card, with
+  one visible Newegg listing at `$999.99` on 2026-07-01.
+- AMD positions the Radeon AI PRO R9700 at `$1,299` MSRP; visible July 2026
+  listings cluster around `$1.3K-$1.47K`.
+- RTX 5090 launched at `$1,999`, but July 2026 public trackers show new-card
+  listings around `$4.1K-$4.3K`.
+- RTX 3090 and RTX 4090 used/new pricing is marketplace-dependent.
+- RTX 6000 Ada is a professional card with 48 GB VRAM and typically sits far
+  above gaming-card pricing.
 
 ## Performance Caveats
 
@@ -158,8 +210,30 @@ or context compromises before the vLLM/XPU stack itself can be studied.
 
 ## Sources
 
-- Intel Arc Pro B-series quick reference guide: 32 Xe cores, 32 GB / 256-bit memory, 608 GB/s bandwidth, 160-290 W board power, 367 peak TOPS: https://www.intel.com/content/dam/www/central-libraries/us/en/documents/2026-03/intel-arc-pro-b-series-graphics-quick-reference-guide-v1-0.pdf
-- Intel Arc Pro B70 datasheet: https://www.intel.com/content/dam/www/central-libraries/us/en/documents/2026-03/datasheet-b70-gpu.pdf
+- Intel Arc Pro B70 datasheet: 32 GB VRAM, 367 INT8 dense TOPS, 608 GB/s
+  bandwidth, 256-bit memory, PCIe 5 x16, 160-290 W range, 230 W Intel-branded
+  card:
+  https://www.intel.com/content/dam/www/central-libraries/us/en/documents/2026-03/datasheet-b70-gpu.pdf
+- Intel Arc Pro B70 Newegg listing checked 2026-07-01:
+  https://www.newegg.com/intel-arc-pro-b70-32gb-graphics-card/p/N82E16814883008
+- AMD Radeon AI PRO R9700 product page: 32 GB GDDR6, 640 GB/s, 383 INT8 dense
+  TOPS, 766 INT8 sparse TOPS, 1531 INT4 sparse TOPS, 300 W:
+  https://www.amd.com/en/products/graphics/workstations/radeon-ai-pro/ai-9000-series/amd-radeon-ai-pro-r9700.html
+- AMD Radeon AI PRO R9700 page/footnotes: `$1299` MSRP note and retailer links:
+  https://www.amd.com/en/products/graphics/workstations/radeon-ai-pro.html
+- AMD Radeon PRO W7800 product page:
+  https://www.amd.com/en/products/graphics/workstations/radeon-pro/w7800.html
+- NowInStock Radeon AI PRO R9700 tracker checked 2026-07-01:
+  https://www.nowinstock.net/computers/videocards/amd/aipror9700/
+- NVIDIA RTX 5090 official specs/compare page: 32 GB GDDR7, 512-bit,
+  1792 GB/s memory bandwidth, 3352 AI TOPS, 575 W:
+  https://www.nvidia.com/en-us/geforce/graphics-cards/compare/
+- NVIDIA RTX 5090 product page:
+  https://www.nvidia.com/en-us/geforce/graphics-cards/50-series/rtx-5090/
+- Tom's Hardware GPU price tracker checked 2026-07-01:
+  https://www.tomshardware.com/pc-components/gpus/lowest-gpu-prices-tracking
+- Best Value GPU RTX 5090 price tracker checked 2026-07-01:
+  https://bestvaluegpu.com/history/new-and-used-rtx-5090-price-history-and-specs/
 - NVIDIA RTX 3090 product page, including 24 GB GDDR6X and $1,499 launch pricing: https://www.nvidia.com/en-us/geforce/graphics-cards/30-series/rtx-3090/
 - NVIDIA RTX 6000 Ada datasheet: https://www.nvidia.com/content/dam/en-zz/Solutions/design-visualization/proviz-print-rtx6000-datasheet-web-2504660.pdf
 - NVIDIA RTX 4090 public spec examples list 24 GB GDDR6X, 1008 GB/s bandwidth, 450 W TDP, and $1,599 launch price; verify current street price before buying.

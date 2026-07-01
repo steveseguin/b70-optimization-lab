@@ -29,6 +29,8 @@ parts later.
   [Model recipes](docs/model-recipes.md)
 - Find the full artifact map:
   [Current reproducibility map](docs/current-reproducibility-map.md)
+- Compare B70 pricing/specs against R9700 and RTX 5090:
+  [GPU comparison for local AI](docs/gpu-comparison-local-ai.md)
 - Inspect the top MiniMax structured result:
   [MiniMax structured `94.406 tok/s` recipe](repro/minimax-m27-b70-94tps-structured-20260522/README.md)
 - Inspect the Gemma 26B record identity:
