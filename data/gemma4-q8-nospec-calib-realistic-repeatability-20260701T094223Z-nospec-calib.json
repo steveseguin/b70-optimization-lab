@@ -1,0 +1,192 @@
+{
+  "metric": "tok_s_1_100_after_ttft",
+  "notes": [
+    "Uses per-prompt realistic-suite rows, not historical headline outliers.",
+    "All non-forensic inputs should pass realistic_final_gate and cached_tokens=0."
+  ],
+  "same_recipe_repeatability": {
+    "decision_note": "Single-run comparisons inside this same-recipe band are unreliable for deltas smaller than the p90 pairwise absolute run-median delta. Use paired A/B blocks and bootstrap CIs for micro-change decisions.",
+    "pairwise_abs_delta_pct": {
+      "count": 3,
+      "cv_pct": 82.40217755050914,
+      "max": 0.5808507980464708,
+      "mean": 0.38723391688904774,
+      "median": 0.561907118635131,
+      "min": 0.01894383398554137,
+      "p10": 0.1275364909154593,
+      "p90": 0.5770620621642029,
+      "stdev": 0.3190891797307041,
+      "values": [
+        0.561907118635131,
+        0.5808507980464708,
+        0.01894383398554137
+      ]
+    },
+    "per_prompt_cv_pct": {
+      "count": 12,
+      "cv_pct": 13.773700066659675,
+      "max": 0.45621651744115604,
+      "mean": 0.35465561559843434,
+      "median": 0.33724768781915554,
+      "min": 0.28624611650649456,
+      "p10": 0.31416407270238983,
+      "p90": 0.41799413065602303,
+      "stdev": 0.04884920076209383
+    },
+    "prompt_count": 12,
+    "run_count": 3,
+    "run_median_stats": {
+      "count": 3,
+      "cv_pct": 0.3297088056351586,
+      "max": 79.11472336636736,
+      "mean": 78.956992135449,
+      "median": 79.09973742397074,
+      "min": 78.65651561600889,
+      "p10": 78.74515997760126,
+      "p90": 79.11172617788803,
+      "stdev": 0.260328155735235
+    },
+    "run_medians": [
+      78.65651561600889,
+      79.09973742397074,
+      79.11472336636736
+    ]
+  },
+  "same_recipe_runs": [
+    {
+      "cached_tokens_all_zero": true,
+      "full_summary": {
+        "count": 12,
+        "max": 77.93923529903216,
+        "mean": 77.18383197773775,
+        "median": 77.16387297924221,
+        "min": 76.89416680727221,
+        "p10": 76.95614661098497,
+        "stdev": 0.2628820777824251
+      },
+      "gate_passed": true,
+      "input_path": "data/gemma4-q8-gpu0-nospec-calib-realistic-full512-20260701T094223Z-nospec-calib-r1/summary.json",
+      "label": "gemma4-q8-gpu0-nospec-calib-realistic-full512-20260701T094223Z-nospec-calib-r1",
+      "primary_median": 78.65651561600889,
+      "primary_summary": {
+        "count": 12,
+        "max": 78.6710894654155,
+        "mean": 78.60806740864798,
+        "median": 78.65651561600889,
+        "min": 78.47624200349429,
+        "p10": 78.48569856565344,
+        "stdev": 0.07771900210428592
+      },
+      "prompt_count": 12,
+      "suite_path": "/home/steve/qwen36-results-main/data/gemma4-q8-gpu0-nospec-calib-realistic-full512-20260701T094223Z-nospec-calib-r1/realistic-suite.json",
+      "ttft_ms_summary": {
+        "count": 12,
+        "max": 275.5039209732786,
+        "mean": 188.86769449454732,
+        "median": 178.44098451314494,
+        "min": 166.34123993571848,
+        "p10": 172.51936285756528,
+        "stdev": 29.307046976281864
+      },
+      "wall_summary": {
+        "count": 12,
+        "max": 75.34610208144173,
+        "mean": 74.93957937580755,
+        "median": 75.1193613599675,
+        "min": 73.89383669069426,
+        "p10": 74.50392160021266,
+        "stdev": 0.4171829635193947
+      }
+    },
+    {
+      "cached_tokens_all_zero": true,
+      "full_summary": {
+        "count": 12,
+        "max": 78.46811933100979,
+        "mean": 77.65442162258593,
+        "median": 77.61729241436333,
+        "min": 77.38734544360598,
+        "p10": 77.4498521874851,
+        "stdev": 0.2738318884412472
+      },
+      "gate_passed": true,
+      "input_path": "data/gemma4-q8-gpu0-nospec-calib-realistic-full512-20260701T094223Z-nospec-calib-r2/summary.json",
+      "label": "gemma4-q8-gpu0-nospec-calib-realistic-full512-20260701T094223Z-nospec-calib-r2",
+      "primary_median": 79.09973742397074,
+      "primary_summary": {
+        "count": 12,
+        "max": 79.11833864912008,
+        "mean": 79.09153105108827,
+        "median": 79.09973742397074,
+        "min": 79.0164019319858,
+        "p10": 79.0673672527362,
+        "stdev": 0.02884442132114988
+      },
+      "prompt_count": 12,
+      "suite_path": "/home/steve/qwen36-results-main/data/gemma4-q8-gpu0-nospec-calib-realistic-full512-20260701T094223Z-nospec-calib-r2/realistic-suite.json",
+      "ttft_ms_summary": {
+        "count": 12,
+        "max": 274.6742599410936,
+        "mean": 189.80509350270344,
+        "median": 179.65238651959226,
+        "min": 167.24041802808642,
+        "p10": 173.16655373433605,
+        "stdev": 28.822885433736175
+      },
+      "wall_summary": {
+        "count": 12,
+        "max": 75.76830546436648,
+        "mean": 75.33525168637262,
+        "median": 75.55032603574996,
+        "min": 74.3591214507032,
+        "p10": 74.56633351891581,
+        "stdev": 0.4594114769122613
+      }
+    },
+    {
+      "cached_tokens_all_zero": true,
+      "full_summary": {
+        "count": 12,
+        "max": 78.4941054895702,
+        "mean": 77.65411254231984,
+        "median": 77.6085752828676,
+        "min": 77.41686661262699,
+        "p10": 77.47039801327143,
+        "stdev": 0.2789091729925741
+      },
+      "gate_passed": true,
+      "input_path": "data/gemma4-q8-gpu0-nospec-calib-realistic-full512-20260701T094223Z-nospec-calib-r3/summary.json",
+      "label": "gemma4-q8-gpu0-nospec-calib-realistic-full512-20260701T094223Z-nospec-calib-r3",
+      "primary_median": 79.11472336636736,
+      "primary_summary": {
+        "count": 12,
+        "max": 79.13861498482206,
+        "mean": 79.08583736531077,
+        "median": 79.11472336636736,
+        "min": 78.94518695559029,
+        "p10": 78.95954990175646,
+        "stdev": 0.06925545548788638
+      },
+      "prompt_count": 12,
+      "suite_path": "/home/steve/qwen36-results-main/data/gemma4-q8-gpu0-nospec-calib-realistic-full512-20260701T094223Z-nospec-calib-r3/realistic-suite.json",
+      "ttft_ms_summary": {
+        "count": 12,
+        "max": 276.01626398973167,
+        "mean": 188.67793190293014,
+        "median": 178.142081014812,
+        "min": 166.27789405174553,
+        "p10": 171.5718463761732,
+        "stdev": 29.434792304720084
+      },
+      "wall_summary": {
+        "count": 12,
+        "max": 75.80142240032056,
+        "mean": 75.3405674256376,
+        "median": 75.5608346628538,
+        "min": 74.36413848686898,
+        "p10": 74.53521618633009,
+        "stdev": 0.4705147816684811
+      }
+    }
+  ]
+}

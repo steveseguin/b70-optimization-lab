@@ -172,3 +172,52 @@ decision: inconclusive_positive
 
 Even this cherry-picked same-recipe split is not a valid win because the lower
 bound crosses negative. That is the intended bar for future micro-changes.
+
+## No-Spec Calibration Lane
+
+When the normal MTP lane is too noisy to rank target-side micro changes, use the
+no-spec calibration wrapper after the candidate has passed the regular quality
+screen:
+
+```bash
+cd /home/steve/qwen36-results-main
+GPU_INDEX=0 PORT=18560 \
+  LABEL=gemma4-q8-gpu0-nospec-calib-realistic-full512-<stamp> \
+  repro/gemma4-26b-a4b-q8-b70/run-vdr2-nospec-calibration.sh
+```
+
+This disables speculative decoding and cache/history acceleration:
+
+```text
+EXTRA_LLAMA_ARGS='--parallel 1 --cache-ram 0 --ctx-checkpoints 0'
+```
+
+It still uses the fixed realistic suite, requires `cached_tokens=0`, runs each
+prompt once, and reports the same primary metric: median generated-token
+throughput for tokens 1-100 after TTFT.
+
+Measured current-stack no-spec repeatability on 2026-07-01:
+
+```text
+runs: 3
+run medians: 78.657, 79.100, 79.115
+run-median CV: 0.330%
+pairwise abs delta p90: 0.577%
+```
+
+This is materially tighter than the MTP repeatability example above (`2.324%`
+CV, `4.409%` p90 pairwise delta), so it is useful for deciding whether
+target-side kernel/runtime changes are directionally real.
+
+Use it for target-side work such as MoE kernels, Q8 layout/reorder,
+RMS/postnorm fusion, flash-attention, and prefill/runtime knobs. Do **not** use
+it to validate MTP-only changes such as draft quality, acceptance policy,
+verifier shortcuts, p-min/n-min/n-max tuning, or handoff logic. A no-spec win is
+diagnostic only; a record still needs the normal MTP realistic final gate before
+promotion or LocalMaxxing submission.
+
+Evidence:
+
+- `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260701-nospec-calibration-benchmark.md`
+- `data/gemma4-q8-nospec-calib-realistic-repeatability-20260701T094223Z-nospec-calib.json`
+- `data/gemma4-q8-nospec-calib-realistic-repeatability-20260701T094223Z-nospec-calib.md`
