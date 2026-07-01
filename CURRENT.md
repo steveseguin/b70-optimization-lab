@@ -89,10 +89,13 @@ Current active optimization target:
   because logits are not exported in backend-argmax mode. Backend-copy and
   pre-allocation `op_params` variants rebuilt and passed canaries, but still
   failed strict parity (`356` and `355` mismatches respectively: direct `-1`,
-  copied token valid). Do not enable skip-copy, and do not keep retesting
-  pointer-only `op_params` variants without a producer-side graph/output design.
-  Any future version must patch the actual sampled-row producer and prove
-  null-sensitive direct-vs-copied parity first. Evidence:
+  copied token valid). The failed source hooks were removed from the active
+  llama.cpp checkout, rebuilt, and sanity-checked with a compact cold gate
+  (`32/32` canary, `cached_tokens=0`, median tokens 1-50 `120.302963`). Do not
+  enable skip-copy, and do not keep retesting pointer-only `op_params` variants
+  without a producer-side graph/output design. Any future version must patch the
+  actual sampled-row producer and prove null-sensitive direct-vs-copied parity
+  first. Evidence:
   `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260701-direct-sampled-egress-negative.md`.
 - Latest prompt-processing source follow-up: DV512 Gemma GQA `ncols2=16` is a
   closed negative. The default-off source branch rebuilt, but both candidate

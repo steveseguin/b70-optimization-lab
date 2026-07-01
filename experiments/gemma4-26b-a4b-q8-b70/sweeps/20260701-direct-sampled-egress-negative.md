@@ -36,6 +36,10 @@ Snapshots preserved in this repo:
 - backend-copy v2 plus pre-allocation `op_params` patching before
   `ggml_backend_sched_alloc_graph()`:
   `patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260701-direct-sampled-egress-backendcopy-prealloc-source.patch`
+- post-rejection cleaned source state, with the failed direct sampled-ID egress
+  hooks removed from the active checkout while preserving the promoted record
+  stack:
+  `patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260701-post-directegress-cleanup-source.patch`
 
 Harness metadata/pass-through was added for:
 
@@ -56,6 +60,7 @@ diagnostic smokes only, not promoted headline results.
 | `gemma4-q8-gpu0-direct-egress-parity2-smoke-20260701A` | `DIRECT_SAMPLED_EGRESS=1`, strict parity | 32/32 | pass | 117.017049 | Strict parity logged repeated row-0 mismatches: direct `-1`, copied sampled token valid. |
 | `gemma4-q8-gpu0-direct-egress-backendcopy-parity-smoke-20260701A` | backend-copy v2, strict parity | 32/32 | pass | 120.434720 | Still failed parity: 356 row-0 mismatches, direct `-1`, copied sampled token valid. |
 | `gemma4-q8-gpu0-direct-egress-backendcopy-prealloc-parity-smoke-20260701A` | backend-copy v2 plus pre-allocation patching, strict parity | 32/32 | pass | 120.279020 | Still failed parity: 355 row-0 mismatches, direct `-1`, copied sampled token valid. No skip-copy run. |
+| `gemma4-q8-gpu0-post-directegress-cleanup-sanity-20260701A` | promoted recipe after removing failed direct-egress source hooks | 32/32 | pass | 120.302963 | Compact sanity only (`MAX_TOKENS=64`, metric tokens 1-50). Confirms cleaned binary remains on the valid cold-suite path; not a new record claim. |
 
 Result dirs:
 
@@ -64,6 +69,7 @@ Result dirs:
 - `data/gemma4-q8-gpu0-direct-egress-parity2-smoke-20260701A/`
 - `data/gemma4-q8-gpu0-direct-egress-backendcopy-parity-smoke-20260701A/`
 - `data/gemma4-q8-gpu0-direct-egress-backendcopy-prealloc-parity-smoke-20260701A/`
+- `data/gemma4-q8-gpu0-post-directegress-cleanup-sanity-20260701A/`
 
 External server logs:
 
@@ -71,6 +77,7 @@ External server logs:
 - `/mnt/fast-ai/bench-results/gemma4-26b-a4b-q8/servers/gemma4-q8-gpu0-direct-egress-parity2-smoke-20260701A.server.log`
 - `/mnt/fast-ai/bench-results/gemma4-26b-a4b-q8/servers/gemma4-q8-gpu0-direct-egress-backendcopy-parity-smoke-20260701A.server.log`
 - `/mnt/fast-ai/bench-results/gemma4-26b-a4b-q8/servers/gemma4-q8-gpu0-direct-egress-backendcopy-prealloc-parity-smoke-20260701A.server.log`
+- `/mnt/fast-ai/bench-results/gemma4-26b-a4b-q8/servers/gemma4-q8-gpu0-post-directegress-cleanup-sanity-20260701A.server.log`
 
 ## Crash Signature
 
@@ -138,6 +145,22 @@ pointer in `op_params`; it needs either a real graph output/side tensor for
 sampled IDs, a scheduler/backend-supported host egress binding for this op, or a
 direct change in the backend producer that already owns the valid sampled ID
 before the existing `ggml_backend_tensor_get_async()` extraction.
+
+## Source cleanup / restored active binary
+
+After the backend-copy and pre-allocation variants failed strict parity, the
+failed `LLAMA_SPEC_VERIFY_DIRECT_SAMPLED_EGRESS*` source hooks were removed from
+the active llama.cpp checkout. The source was rebuilt and a compact cold-suite
+sanity run passed:
+
+- run: `data/gemma4-q8-gpu0-post-directegress-cleanup-sanity-20260701A/summary.json`;
+- canary: `32/32`;
+- fixed realistic cold gate: pass, `cached_tokens=0` on every prompt;
+- median generated tok/s for tokens 1-50 after TTFT: `120.30296336945341`.
+
+This is not a new record claim because it is a `MAX_TOKENS=64` sanity run. It
+confirms the active binary is back on the promoted record-stack path with the
+failed direct-egress experiment removed.
 
 ## Decision
 
