@@ -418,6 +418,7 @@ out = {
         "llama_spec_verify_backend_argmax_ids": env_or_log("LLAMA_SPEC_VERIFY_BACKEND_ARGMAX_IDS"),
         "llama_spec_verify_bulk_sampled_ids": env_or_log("LLAMA_SPEC_VERIFY_BULK_SAMPLED_IDS"),
         "llama_spec_verify_accept_prefix_parity": env_or_log("LLAMA_SPEC_VERIFY_ACCEPT_PREFIX_PARITY"),
+        "llama_spec_verify_accept_prefix_argmax": env_or_log("LLAMA_SPEC_VERIFY_ACCEPT_PREFIX_ARGMAX"),
         "llama_spec_verify_skip_stateless_accept": env_or_log("LLAMA_SPEC_VERIFY_SKIP_STATELESS_ACCEPT"),
         "llama_spec_verify_no_bonus_row": env_or_log("LLAMA_SPEC_VERIFY_NO_BONUS_ROW"),
         "llama_spec_verify_stage_mtp3": env_or_log("LLAMA_SPEC_VERIFY_STAGE_MTP3"),

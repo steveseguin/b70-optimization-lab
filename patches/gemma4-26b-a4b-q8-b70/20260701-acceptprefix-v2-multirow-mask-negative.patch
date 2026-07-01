@@ -1,0 +1,93 @@
+diff --git a/ggml/src/ggml-sycl/mmvq.cpp b/ggml/src/ggml-sycl/mmvq.cpp
+--- a/ggml/src/ggml-sycl/mmvq.cpp
++++ b/ggml/src/ggml-sycl/mmvq.cpp
+@@
++static void mask_argmax_accept_prefix_sycl(
++        int32_t * dst,
++        const int32_t * tokens,
++        const int nvec,
++        dpct::queue_ptr stream) {
++    stream->parallel_for(sycl::range<1>(1), [=](sycl::id<1>) {
++        bool active = true;
++        for (int out_idx = 1; out_idx < nvec; ++out_idx) {
++            active = active && dst[out_idx - 1] == tokens[out_idx];
++            if (!active) {
++                dst[out_idx] = -1;
++            }
++        }
++    });
++}
++
+ bool ggml_sycl_mul_mat_vec_q8_0_reorder_argmax_accept_prefix(
+         const void * vx,
+         const void * vy,
+@@
+         int src1_padded_cols,
+         float * scratch_vals,
+         int32_t * scratch_idxs,
+-        int scratch_count,
++        int scratch_count_per_vec,
+         dpct::queue_ptr stream) {
+     const int needed_scratch = (int) ceil_div(nrows, WARP_SIZE);
+-    if (nvec < 1 || nvec > 4 || scratch_count < needed_scratch) {
++    if (nvec < 1 || nvec > 4 || scratch_count_per_vec < needed_scratch) {
+         return false;
+     }
+ 
+-    const int stride_col_y_bytes = src1_padded_cols * (int) sizeof(block_q8_1) / QK8_1;
+-
+-    stream->fill(dst, (int32_t) -1, (size_t) nvec);
+-    for (int out_idx = 0; out_idx < nvec; ++out_idx) {
+-        const void * vy_i = (const char *) vy + (int64_t) out_idx * stride_col_y_bytes;
+-        reorder_mul_mat_vec_q_argmax_accept_prefix_sycl<reorder_vec_dot_q_sycl<GGML_TYPE_Q8_0>>(
+-            vx, vy_i, scratch_vals, scratch_idxs, dst, tokens, ncols, nrows, out_idx, stream);
+-        reduce_argmax_tiles_sycl(
+-            scratch_vals, scratch_idxs, dst + out_idx, scratch_count, /*top2=*/ false, stream);
++    const bool ok = ggml_sycl_mul_mat_vec_q_argmax_multi(
++        GGML_TYPE_Q8_0, vx, vy, dst, ncols, nrows, nvec, src1_padded_cols,
++        /*reordered=*/ true, /*top2=*/ false,
++        scratch_vals, scratch_idxs, scratch_count_per_vec, stream);
++    if (!ok) {
++        return false;
+     }
++
++    mask_argmax_accept_prefix_sycl(dst, tokens, nvec, stream);
+     return true;
+ }
+diff --git a/ggml/src/ggml-sycl/ggml-sycl.cpp b/ggml/src/ggml-sycl/ggml-sycl.cpp
+--- a/ggml/src/ggml-sycl/ggml-sycl.cpp
++++ b/ggml/src/ggml-sycl/ggml-sycl.cpp
+@@
+-        const int scratch_count = ceil_div(
++        const int scratch_count_per_vec = ceil_div(
+             (int) nrows, ggml_sycl_mul_mat_vec_q_argmax_tile_subgroups());
+-        ggml_sycl_pool_alloc<float> scratch_vals_alloc(ctx.pool(), (size_t) scratch_count);
+-        ggml_sycl_pool_alloc<int32_t> scratch_idxs_alloc(ctx.pool(), (size_t) scratch_count);
++        ggml_sycl_pool_alloc<float> scratch_vals_alloc(
++            ctx.pool(), (size_t) scratch_count_per_vec * (size_t) nvec);
++        ggml_sycl_pool_alloc<int32_t> scratch_idxs_alloc(
++            ctx.pool(), (size_t) scratch_count_per_vec * (size_t) nvec);
+         const bool ok = ggml_sycl_mul_mat_vec_q8_0_reorder_argmax_accept_prefix(
+             src0->data, src1_ddq, (int32_t *) dst->data, (const int32_t *) src2->data,
+             (int) ne10, (int) nrows, (int) nvec, src1_padded_cols,
+-            scratch_vals_alloc.get(), scratch_idxs_alloc.get(), scratch_count, stream);
++            scratch_vals_alloc.get(), scratch_idxs_alloc.get(), scratch_count_per_vec, stream);
+         GGML_ASSERT(ok);
+         return;
+     }
+diff --git a/ggml/src/ggml-sycl/mmvq.hpp b/ggml/src/ggml-sycl/mmvq.hpp
+--- a/ggml/src/ggml-sycl/mmvq.hpp
++++ b/ggml/src/ggml-sycl/mmvq.hpp
+@@
+-// Reordered-Q8 accept-prefix verifier prototype. Computes exact top1 IDs for
+-// row 0 and then conditionally computes later rows only while the previously
+-// sampled ID matches the shifted draft token in inp_tokens.
++// Reordered-Q8 accept-prefix verifier prototype. Computes exact top1 IDs for
++// all small full-bonus verifier rows using the regular multi-row argmax backend,
++// then masks rows after the first mismatch to preserve the accept-prefix sampled
++// ID contract without serializing the Q8 output projection by verifier row.
+ bool ggml_sycl_mul_mat_vec_q8_0_reorder_argmax_accept_prefix(
+@@
+-    int             scratch_count,
++    int             scratch_count_per_vec,
+     dpct::queue_ptr stream);

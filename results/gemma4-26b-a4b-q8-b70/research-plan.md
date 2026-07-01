@@ -1859,6 +1859,21 @@ Text speed is first. After text baseline:
     the current headline record. The active source hunk was reverted; patch and
     results are preserved in
     `../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-vdr2-selecteddown-rowpack2-negative.md`.
+23. **Accept-prefix v2 and late-head fused bonus are closed negatives.** The
+    serial accept-prefix verifier was replaced experimentally with a multi-row
+    Q8 argmax plus tiny prefix-mask kernel. It passed the strict fresh-response
+    gate and `128/128` canary, but lost badly: `101.16402021483154 tok/s`
+    versus same-binary control `118.88709701458734`. The active source hunk was
+    reverted and preserved as
+    `../../patches/gemma4-26b-a4b-q8-b70/20260701-acceptprefix-v2-multirow-mask-negative.patch`.
+    The remaining small bonus-preserving flag pair,
+    `LLAMA_SPEC_VERIFY_LATE_HEAD_BONUS=1` +
+    `LLAMA_SPEC_HEAD_FUSED_OUTPUT_ARGMAX=1`, also passed validity but lost at
+    `112.1077339459869 tok/s`. Do not retry either as a short-decode record
+    lane. The next short-decode work needs a deeper verifier redesign that
+    actually avoids target rows before LM-head work, or a different
+    target-verified draft/verifier arrangement. Details:
+    `../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260701-verifier-acceptprefix-v2-and-latehead-negative.md`.
 
 ## Stop Conditions
 
