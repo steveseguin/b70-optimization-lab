@@ -76,6 +76,14 @@ Primary target:
   TTFT. This confirms the active binary is back on the promoted lane, but it is
   not a full512 record claim. Evidence:
   `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260701-postrestore-record-sanity.md`.
+- Latest prompt-processing source follow-up: DV512 Gemma GQA `ncols2=16` is a
+  closed negative. The candidate branch rebuilt, but both candidate lanes failed
+  the first JSON canary with empty text before long-context cases could run.
+  Keep `GGML_SYCL_FATTN_DV512_GQA_NCOLS2=8` for the validated service/prefill
+  lane. The active llama.cpp source was restored to the preedit record stack and
+  rebuilt; `llama-server --version` reports `c926ad098`, and the failed branch
+  is absent. Evidence:
+  `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260701-fattn-dv512-gqa-ncols16-negative.md`.
 - Latest full512 follow-up: fused selected-softmax into selected-down VDR2
   (`LLAMA_GEMMA4_MOE_FUSED_DOWN_SELECTED_SOFTMAX=1`) and the EOG-clip
   interaction were valid but lost. Best candidate was `111.90908727268967

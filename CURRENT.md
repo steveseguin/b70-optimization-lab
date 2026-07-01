@@ -66,6 +66,14 @@ Current active optimization target:
   TTFT. This confirms the active binary is back on the promoted lane, but it is
   not a full512 record claim. Evidence:
   `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260701-postrestore-record-sanity.md`.
+- Latest prompt-processing source follow-up: DV512 Gemma GQA `ncols2=16` is a
+  closed negative. The default-off source branch rebuilt, but both candidate
+  lanes failed the first JSON canary with empty text before long-context cases
+  could run. The validated `ncols2=8` service/prefill lane remains the current
+  safe path. The active llama.cpp source was restored to the preedit record
+  stack and rebuilt; `llama-server --version` reports `c926ad098`, and the
+  failed branch is absent. Evidence:
+  `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260701-fattn-dv512-gqa-ncols16-negative.md`.
 - Recent non-promoted follow-up:
   `LLAMA_SPEC_VERIFY_CLIP_DRAFT_AT_EOG=1` was valid and trimmed real terminal
   draft work, but four full512 lanes topped out at `113.58569073629727 tok/s`,
