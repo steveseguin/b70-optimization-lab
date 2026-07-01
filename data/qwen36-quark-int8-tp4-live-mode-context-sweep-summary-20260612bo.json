@@ -1,0 +1,84 @@
+{
+  "endpoint": "http://127.0.0.1:18080",
+  "model_root": "/mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118",
+  "rows": [
+    {
+      "name": "stream_p512_o512",
+      "path": "data/qwen36-quark-int8-tp4-live-stream-p512o512-c1-20260612bo.json",
+      "mode": "stream",
+      "prompt_tokens": 512,
+      "output_tokens": 512,
+      "repeats": 3,
+      "tok_s_stream_corrected": 99.58950917109154,
+      "tok_s_e2e": 98.32791379445887,
+      "decode_ms_per_token": 10.02276113285916,
+      "prefill_ms": 69.28430311381817,
+      "ttft_ms": 74.50342178344727,
+      "queue_ms": 0.007854076102375984,
+      "inter_token_ms": 10.042375146817788,
+      "iteration_tokens_per_step": 2.0,
+      "server_model_root": "/mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118"
+    },
+    {
+      "name": "nonstream_p512_o512",
+      "path": "data/qwen36-quark-int8-tp4-live-nonstream-p512o512-c1-20260612bo.json",
+      "mode": "nonstream",
+      "prompt_tokens": 512,
+      "output_tokens": 512,
+      "repeats": 3,
+      "tok_s_stream_corrected": null,
+      "tok_s_e2e": 98.66760701067639,
+      "decode_ms_per_token": 9.988651812363969,
+      "prefill_ms": 69.23465081490576,
+      "ttft_ms": 74.02968406677246,
+      "queue_ms": 0.007854076102375984,
+      "inter_token_ms": 10.008199076184642,
+      "iteration_tokens_per_step": 2.0,
+      "server_model_root": "/mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118"
+    },
+    {
+      "name": "stream_p512_o256",
+      "path": "data/qwen36-quark-int8-tp4-live-stream-p512o256-c1-20260612bo.json",
+      "mode": "stream",
+      "prompt_tokens": 512,
+      "output_tokens": 256,
+      "repeats": 2,
+      "tok_s_stream_corrected": 100.38408451056287,
+      "tok_s_e2e": 97.85967645844056,
+      "decode_ms_per_token": 9.925302816554904,
+      "prefill_ms": 69.14571940433234,
+      "ttft_ms": 74.20289516448975,
+      "queue_ms": 0.007724622264504433,
+      "inter_token_ms": 9.964225572698258,
+      "iteration_tokens_per_step": 3.0,
+      "server_model_root": "/mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118"
+    },
+    {
+      "name": "stream_p4096_o256",
+      "path": "data/qwen36-quark-int8-tp4-live-stream-p4096o256-c1-20260612bo.json",
+      "mode": "stream",
+      "prompt_tokens": 4096,
+      "output_tokens": 256,
+      "repeats": 2,
+      "tok_s_stream_corrected": 99.96365879758065,
+      "tok_s_e2e": 87.32562714601062,
+      "decode_ms_per_token": 9.980144826386095,
+      "prefill_ms": 358.14475594088435,
+      "ttft_ms": 375.5446672439575,
+      "queue_ms": 0.009217066690325737,
+      "inter_token_ms": 10.019282649234668,
+      "iteration_tokens_per_step": 17.0,
+      "server_model_root": "/mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118"
+    }
+  ],
+  "comparisons": [
+    "Non-stream p512/o512 decode median is `9.989` ms/token versus stream `10.023` ms/token (`-0.34`% delta); E2E tok/s delta is `0.35`%.",
+    "Stream p4096/o256 decode median is `9.980` ms/token versus p512/o256 `9.925` ms/token (`0.55`% delta), while TTFT grows from `74.2` ms to `375.5` ms."
+  ],
+  "interpretation": [
+    "SSE streaming is not a large c1 decode bottleneck for this endpoint; non-streaming did not materially improve decode ms/token.",
+    "Longer prompt context mainly increases TTFT/prefill. Steady decode ms/token stayed near 10 ms at p512 and p4096.",
+    "Queue time remained around 0.008-0.009 ms/request, so queueing/frontdoor work is not the first 2x target.",
+    "The next high-value optimization should focus on model execution, command submission/synchronization, TP/collective topology, or verifier-safe multi-token acceptance."
+  ]
+}

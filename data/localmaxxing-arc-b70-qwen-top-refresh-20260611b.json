@@ -1,0 +1,343 @@
+{
+  "queried_at": "2026-06-11T09:57:16-04:00",
+  "url": "https://localmaxxing.com/api/leaderboard?hardwareName=Arc%20Pro%20B70&modelFamily=qwen&limit=50",
+  "total": 73,
+  "rows": [
+    {
+      "rank": 1,
+      "id": "cmq9ifq0500b0r8012f27j1xl",
+      "tokSOut": 99.76969927367736,
+      "tokSTotal": null,
+      "ttftMs": 76.52664251509123,
+      "peakVramGb": 127.54716796875,
+      "contextLength": 32768,
+      "batchSize": 1,
+      "model": "Qwen/Qwen3.6-35B-A3B",
+      "baseModel": null,
+      "hardware": {
+        "gpuName": "Intel Arc Pro B70",
+        "gpuCount": 4,
+        "vramGb": 32
+      },
+      "engine": {
+        "engineName": "vllm",
+        "quantization": "Quark W8A8 INT8"
+      },
+      "flags": {
+        "tensorParallel": 4,
+        "flashAttn": null,
+        "specDecoding": false,
+        "mtpEnabled": false
+      },
+      "notes": "Qwen3.6-35B-A3B Quark W8A8 INT8 on 4x Intel Arc Pro B70 via vLLM XPU. Accepted production-candidate frontdoor run, not diagnostic route-capture. Mean of 4 measured streaming /v1/completions runs after warmup: corrected after-first output tok/s=99.77, e2e output tok/s=98.27, TTFT=76.53 ms. Prompt/output 512/512, batch/concurrency 1, temperature 0, top_k 1, top_p 1, prefix caching disabled. Quality gates for accepted runtime passed earlier same day: exact, repeat canary, structured/math/code prompts, and 8192-token needle. Peak VRAM is total xpu-smi allocation across 4 cards; observed about 31.89 GiB per B70 because gpu_memory_utilization=0.95 reserves nearly all visible memory."
+    },
+    {
+      "rank": 2,
+      "id": "cmq8yhxvo001ipb0149aoa79o",
+      "tokSOut": 99.42835812273452,
+      "tokSTotal": 196.3252731420561,
+      "ttftMs": 76.45406149094924,
+      "peakVramGb": null,
+      "contextLength": 32768,
+      "batchSize": 1,
+      "model": "nameistoken/Qwen3.6-35B-A3B-Quark-W8A8-INT8",
+      "baseModel": "Qwen/Qwen3.6-35B-A3B",
+      "hardware": {
+        "gpuName": "Intel Arc Pro B70",
+        "gpuCount": 4,
+        "vramGb": 32
+      },
+      "engine": {
+        "engineName": "vllm",
+        "quantization": "Quark W8A8 INT8"
+      },
+      "flags": {
+        "tensorParallel": 4,
+        "flashAttn": true,
+        "specDecoding": false,
+        "mtpEnabled": false
+      },
+      "notes": "Quality-gated Qwen3.6 35B Quark W8A8 INT8 run on 4x Intel Arc Pro B70. Metric is p512/n512 streaming /v1/completions, temperature 0, four repeats after warmup. tokSOut is corrected steady-state output throughput after first streamed text chunk; e2e output mean was 98.16 tok/s. Frontdoor quality rerun8 passed exact canaries, JSON schema/semantics, copy phrase, 8K long-context needle, repeat stability, and baseline hash parity. Peak VRAM was not submitted because this run used --skip-vram."
+    },
+    {
+      "rank": 3,
+      "id": "cmohirwjq0002l4042ghcjq51",
+      "tokSOut": 70.35,
+      "tokSTotal": null,
+      "ttftMs": 203,
+      "peakVramGb": 22,
+      "contextLength": 8192,
+      "batchSize": 1,
+      "model": "Qwen/Qwen3.6-35B-A3B",
+      "baseModel": null,
+      "hardware": {
+        "gpuName": "Intel Arc Pro B70",
+        "gpuCount": 1,
+        "vramGb": 32
+      },
+      "engine": {
+        "engineName": "llama.cpp",
+        "quantization": "Q4_K_M"
+      },
+      "flags": {
+        "tensorParallel": null,
+        "flashAttn": true,
+        "specDecoding": false,
+        "mtpEnabled": false
+      },
+      "notes": "Backend: SYCL level_zero (Intel oneAPI). Abliterated-Heretic finetune. Intel Arc Pro B70 BMG G31 32GB GDDR6, xe driver, kernel 6.17. Fused MoE MMVQ + xe GT freq pinning. Mean of 5 runs, warmup discarded."
+    },
+    {
+      "rank": 4,
+      "id": "cmq75ibe900biqi01oxrkargd",
+      "tokSOut": 68.8,
+      "tokSTotal": 575.7,
+      "ttftMs": null,
+      "peakVramGb": 87.2,
+      "contextLength": 32768,
+      "batchSize": 1,
+      "model": "Qwen/Qwen3.6-35B-A3B",
+      "baseModel": null,
+      "hardware": {
+        "gpuName": "Intel Arc Pro B70",
+        "gpuCount": 4,
+        "vramGb": 128
+      },
+      "engine": {
+        "engineName": "llama.cpp",
+        "quantization": "UD-Q4_K_M"
+      },
+      "flags": {
+        "tensorParallel": null,
+        "flashAttn": true,
+        "specDecoding": false,
+        "mtpEnabled": false
+      },
+      "notes": "b1 single-stream = 68.8 t/s (1x Intel Arc Pro B70, llama.cpp SYCL Q4). HIGHER-BATCH THROUGHPUT: b32 = 338 t/s aggregate (4-card single-instance mirror)."
+    },
+    {
+      "rank": 5,
+      "id": "cmq7ffjm400geqi01zlkk97s3",
+      "tokSOut": 68.8,
+      "tokSTotal": 437.2,
+      "ttftMs": null,
+      "peakVramGb": 60,
+      "contextLength": 262144,
+      "batchSize": 1,
+      "model": "Qwen/Qwen3.6-35B-A3B",
+      "baseModel": null,
+      "hardware": {
+        "gpuName": "Intel Arc Pro B70",
+        "gpuCount": 4,
+        "vramGb": 128
+      },
+      "engine": {
+        "engineName": "llama.cpp",
+        "quantization": "UD-Q4_K_M"
+      },
+      "flags": {
+        "tensorParallel": null,
+        "flashAttn": null,
+        "specDecoding": false,
+        "mtpEnabled": false
+      },
+      "notes": "b1 single-stream = 68.8 t/s @ 256K context (35B-A3B hybrid attention fits full 256K KV on ONE 32GB B70 card, no tensor-split). prefill 1622 t/s (ub8192). HIGHER-BATCH: b4 @ 256K = 255 t/s (4-instance mirror)."
+    },
+    {
+      "rank": 6,
+      "id": "cmq7md30t0008ti017dizp0iw",
+      "tokSOut": 54.2,
+      "tokSTotal": null,
+      "ttftMs": 79,
+      "peakVramGb": 17,
+      "contextLength": 262144,
+      "batchSize": 1,
+      "model": "Qwen/Qwen3.6-27B",
+      "baseModel": null,
+      "hardware": {
+        "gpuName": "Intel Arc Pro B70",
+        "gpuCount": 4,
+        "vramGb": 32
+      },
+      "engine": {
+        "engineName": "vllm",
+        "quantization": "fp16"
+      },
+      "flags": {
+        "tensorParallel": null,
+        "flashAttn": null,
+        "specDecoding": false,
+        "mtpEnabled": false
+      },
+      "notes": "b1 single-stream WITH MTP on B70 vLLM-XPU. Qwen3.6-27B BF16 (float16 runtime), TP=4 on 4x Intel Arc Pro B70 (Battlemage). Prefill ~2100 tok/s (3-8K prompts; conservative, measured under disk contention). MTP/spec-decode unblocked from userspace: vllm_xpu_kernels v0.1.9 wheel + qwen3_5.py spec-wiring patch (vLLM #43565) + Half-KV; num_speculative_tokens=5, mean accept length 4.04 (88.9% accept at spec=3). 2.9x faster than llama.cpp 27B Q8 (15.6 b1). 256K native context. intel/llm-scaler-vllm:0.14.0-b8.3."
+    },
+    {
+      "rank": 7,
+      "id": "cmouxjqao000npn01hxqn68td",
+      "tokSOut": 50.922114,
+      "tokSTotal": 81.24303502601869,
+      "ttftMs": null,
+      "peakVramGb": null,
+      "contextLength": 1024,
+      "batchSize": 1,
+      "model": "unsloth/Qwen3.6-27B",
+      "baseModel": "Qwen/Qwen3.6-27B",
+      "hardware": {
+        "gpuName": "Intel Arc Pro B70",
+        "gpuCount": 3,
+        "vramGb": 32
+      },
+      "engine": {
+        "engineName": "llama.cpp",
+        "quantization": "Q4_0"
+      },
+      "flags": {
+        "tensorParallel": null,
+        "flashAttn": null,
+        "specDecoding": false,
+        "mtpEnabled": false
+      },
+      "notes": "Quality-preserving Qwen3.6 27B Q4_0 GGUF on 3x Intel Arc Pro B70 using llama.cpp SYCL/Level Zero tensor split. Same Q4_0 weights, f16 KV, flash attention, Q8 activation cache, fused MMVQ2, fused MMVQ2+SwiGLU, fused RMS_NORM+MUL, fused allreduce+ADD, fused final GET_ROWS, single-kernel allreduce, root-residual fused add, no speculative decoding, no sampling change, no power-limit change. Refresh changes --poll from 50 to 25 versus prior 50.808572 tok/s TP3 best. Capped deterministic llama-completion byte-compare matched root-residual off/on stdout exactly. Detailed payload returned HTTP 500, reduced payload submitted."
+    },
+    {
+      "rank": 8,
+      "id": "cmouvurhh00nqld010dtr4xrl",
+      "tokSOut": 50.808572,
+      "tokSTotal": 80.5017335619557,
+      "ttftMs": null,
+      "peakVramGb": null,
+      "contextLength": 1024,
+      "batchSize": 1,
+      "model": "unsloth/Qwen3.6-27B",
+      "baseModel": "Qwen/Qwen3.6-27B",
+      "hardware": {
+        "gpuName": "Intel Arc Pro B70",
+        "gpuCount": 3,
+        "vramGb": 32
+      },
+      "engine": {
+        "engineName": "llama.cpp",
+        "quantization": "Q4_0"
+      },
+      "flags": {
+        "tensorParallel": null,
+        "flashAttn": null,
+        "specDecoding": false,
+        "mtpEnabled": false
+      },
+      "notes": "Q4_0 GGUF, 3x Arc Pro B70 tensor split. Adds GGML_SYCL_COMM_FUSEADD_ROOT_RESIDUAL=1 to the previous guard-fix stack; same Q4_0 weights, f16 KV, flash attention, Q8 activation cache, fused MMVQ2, fused SwiGLU, fused RMS_NORM+MUL, fused allreduce+ADD, fused final GET_ROWS, single-kernel allreduce. No speculative decode or power-limit changes. Full flags/artifacts in steveseguin/llm-optimizations. CLI text correctness smoke was inconclusive due llama-cli hang, but this flag only reuses the mirrored root residual in the fused allreduce-add helper."
+    },
+    {
+      "rank": 9,
+      "id": "cmov6p4r7007tqr01yi8ug4un",
+      "tokSOut": 50.1299,
+      "tokSTotal": 80.20473519933404,
+      "ttftMs": null,
+      "peakVramGb": null,
+      "contextLength": 1024,
+      "batchSize": 1,
+      "model": "unsloth/Qwen3.6-27B",
+      "baseModel": "Qwen/Qwen3.6-27B",
+      "hardware": {
+        "gpuName": "Intel Arc Pro B70",
+        "gpuCount": 3,
+        "vramGb": 32
+      },
+      "engine": {
+        "engineName": "llama.cpp",
+        "quantization": "Q4_0+fused-ssm_ba"
+      },
+      "flags": {
+        "tensorParallel": null,
+        "flashAttn": null,
+        "specDecoding": false,
+        "mtpEnabled": false
+      },
+      "notes": "Experimental augmented GGUF with added flat Qwen35 ssm_ba tensors generated from the same Q4_0 beta/alpha weights. TP3 no-root safe flags; token/logit probe matched original byte-for-byte. Root-residual + meta allreduce-add is intentionally disabled and marked unsafe pending an ordering fix. No speculative decoding or power changes. Full flags/artifacts in steveseguin/llm-optimizations."
+    },
+    {
+      "rank": 10,
+      "id": "cmotql1v60013qy01016jcs7r",
+      "tokSOut": 49.581893,
+      "tokSTotal": 99.163787,
+      "ttftMs": null,
+      "peakVramGb": null,
+      "contextLength": 1024,
+      "batchSize": 1,
+      "model": "vrfai/Qwen3.6-27B-FP8",
+      "baseModel": "Qwen/Qwen3.6-27B",
+      "hardware": {
+        "gpuName": "Intel Arc Pro B70",
+        "gpuCount": 4,
+        "vramGb": 32
+      },
+      "engine": {
+        "engineName": "vllm",
+        "quantization": "fp8"
+      },
+      "flags": {
+        "tensorParallel": null,
+        "flashAttn": null,
+        "specDecoding": false,
+        "mtpEnabled": false
+      },
+      "notes": "Qwen3.6-27B FP8 compressed-tensors on 4x Arc Pro B70 with vLLM/XPU. Post-reboot rerun after fixing runtime library ordering: venv lib path first, no oneAPI setvars for torch/vLLM. TP4/PP1, XPU FlashAttention2, CCL_ATL_TRANSPORT=ofi, default IPC/topology, n-gram speculative decoding num_speculative_tokens=4 lookup 2/4. Command shape: bench latency, 512 prompt, 512 output, 3 measured iters, 1 warmup, max_model_len=1024, gpu_memory_utilization=0.80."
+    },
+    {
+      "rank": 11,
+      "id": "cmous57ci00lqld01a8x5azdq",
+      "tokSOut": 49.552666,
+      "tokSTotal": 78.947383,
+      "ttftMs": null,
+      "peakVramGb": null,
+      "contextLength": 1024,
+      "batchSize": 1,
+      "model": "unsloth/Qwen3.6-27B",
+      "baseModel": "Qwen/Qwen3.6-27B",
+      "hardware": {
+        "gpuName": "Intel Arc Pro B70",
+        "gpuCount": 3,
+        "vramGb": 32
+      },
+      "engine": {
+        "engineName": "llama.cpp",
+        "quantization": "Q4_0"
+      },
+      "flags": {
+        "tensorParallel": null,
+        "flashAttn": null,
+        "specDecoding": false,
+        "mtpEnabled": false
+      },
+      "notes": "Q4_0 GGUF, 3x B70 tensor split, post-regression guard fix restored validated allreduce+ADD with Q8 activation cache. Same quality-preserving stack as prior Q4_0 best; no speculative decode or power changes. Full flags/artifacts in steveseguin/llm-optimizations."
+    },
+    {
+      "rank": 12,
+      "id": "cmoultsa900h0ld011f0r2hcs",
+      "tokSOut": 49.403656,
+      "tokSTotal": 79.016858,
+      "ttftMs": null,
+      "peakVramGb": null,
+      "contextLength": 512,
+      "batchSize": 1,
+      "model": "unsloth/Qwen3.6-27B",
+      "baseModel": "Qwen/Qwen3.6-27B",
+      "hardware": {
+        "gpuName": "Intel Arc Pro B70",
+        "gpuCount": 3,
+        "vramGb": 32
+      },
+      "engine": {
+        "engineName": "llama.cpp",
+        "quantization": "Q4_0"
+      },
+      "flags": {
+        "tensorParallel": null,
+        "flashAttn": null,
+        "specDecoding": false,
+        "mtpEnabled": false
+      },
+      "notes": "Qwen3.6-27B Q4_0 GGUF on 3x Intel Arc Pro B70. Quality-preserving software-only improvement: opt-in GGML_META_FUSE_ALLREDUCE_GET_ROWS=1 on top of Q8 cache, fused MMVQ2, fused MMVQ2+SwiGLU, fused RMS_NORM+scale-MUL, single-kernel allreduce, fused allreduce+ADD, f16 KV cache. Five-repeat 512/512 validation: GET_ROWS on 49.403656 tok/s vs same-build off-control 48.827917 tok/s. Greedy llama-completion output matched byte-for-byte. No speculative decode, no sampling change, no power-limit change. Command: llama-bench -p 512 -n 512 -r 5 -dev SYCL2/SYCL1/SYCL3 -sm tensor -ts 1/1/1 -ngl 99 -fa 1 -ub 128 -ctk f16 -ctv f16 -t 8. Env includes GGML_SYCL_DISABLE_DNN=1; GGML_SYCL_Q8_CACHE=1; GGML_SYCL_FUSE_MMVQ2=1; GGML_SYCL_FUSE_MMVQ2_SWIGLU=1; GGML_SYCL_FUSE_RMS_NORM_MUL=1; GGML_META_FUSE_ALLREDUCE_GET_ROWS=1; GGML_SYCL_COMM_ALLREDUCE=1; GGML_SYCL_COMM_SINGLE_KERNEL=1; GGML_SYCL_COMM_EVENT_BARRIER=1; GGML_SYCL_COMM_SYNC_AFTER=2; GGML_META_FUSE_ALLREDUCE_ADD=1."
+    }
+  ]
+}

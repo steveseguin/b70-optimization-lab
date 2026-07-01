@@ -1,0 +1,131 @@
+{
+  "label": "no-gdnfallback",
+  "stamp": "20260614be",
+  "return_codes": {
+    "metrics": 0,
+    "json_canary": 0,
+    "color_canary": 0
+  },
+  "artifacts": {
+    "metrics": "/home/steve/llm-optimizations/data/qwen36-ablation-no-gdnfallback-p512o512-20260614be.json",
+    "json_canary": "/home/steve/llm-optimizations/data/qwen36-ablation-no-gdnfallback-json-repeat96-20260614be.json",
+    "color_canary": "/home/steve/llm-optimizations/data/qwen36-ablation-no-gdnfallback-color-repeat96-20260614be.json",
+    "log": "/home/steve/llm-optimizations/data/qwen36-ablation-no-gdnfallback-20260614be.log"
+  },
+  "env": {
+    "VLLM_XPU_GDN_NATIVE_FALLBACK": "0",
+    "VLLM_XPU_GREEDY_SAMPLE_TOPK_FALLBACK": null,
+    "VLLM_XPU_DISABLE_PREFILL_CUDAGRAPH_REPLAY": null,
+    "VLLM_EXTRA_ARGS": null
+  },
+  "metrics_summary": {
+    "tok_s_out_client_after_first_chunk": {
+      "mean": 94.18207444016014,
+      "median": 94.18207444016014,
+      "min": 94.09379499033696,
+      "max": 94.27035388998333
+    },
+    "tok_s_out_client_after_first_chunk_corrected": {
+      "mean": 93.9981250760192,
+      "median": 93.9981250760192,
+      "min": 93.91001804699646,
+      "max": 94.08623210504196
+    },
+    "tok_s_out_client_e2e": {
+      "mean": 92.37573572457347,
+      "median": 92.37573572457347,
+      "min": 92.31628735295669,
+      "max": 92.43518409619026
+    },
+    "tok_s_total_client": {
+      "mean": 182.22557242542814,
+      "median": 182.22557242542814,
+      "min": 182.108301223606,
+      "max": 182.34284362725032
+    },
+    "ttft_ms_client": {
+      "mean": 106.29989951848984,
+      "median": 106.29989951848984,
+      "min": 104.77124899625778,
+      "max": 107.8285500407219
+    },
+    "ttft_ms_vllm_metrics": {
+      "mean": 93.98126602172852,
+      "median": 93.98126602172852,
+      "min": 92.5748348236084,
+      "max": 95.38769721984863
+    },
+    "tok_s_prefill_lower_bound_from_ttft": {
+      "mean": 4685.827644239791,
+      "median": 4685.827644239791,
+      "min": 4618.442887453539,
+      "max": 4753.212401026044
+    },
+    "e2e_ms_vllm_metrics": {
+      "mean": 5541.2949323654175,
+      "median": 5541.2949323654175,
+      "min": 5537.513017654419,
+      "max": 5545.076847076416
+    },
+    "queue_ms_vllm_histogram": {
+      "mean": 0.011802418157458305,
+      "median": 0.011802418157458305,
+      "min": 0.009317882359027863,
+      "max": 0.014286953955888748
+    },
+    "prefill_ms_vllm_histogram": {
+      "mean": 88.71475956402719,
+      "median": 88.71475956402719,
+      "min": 87.46371511369944,
+      "max": 89.96580401435494
+    },
+    "decode_ms_vllm_histogram": {
+      "mean": 5447.63738848269,
+      "median": 5447.63738848269,
+      "min": 5442.453759955242,
+      "max": 5452.821017010137
+    },
+    "decode_ms_per_generation_token_vllm_histogram": {
+      "mean": 10.639916774380254,
+      "median": 10.639916774380254,
+      "min": 10.629792499912583,
+      "max": 10.650041048847925
+    },
+    "inference_ms_vllm_histogram": {
+      "mean": 5536.352148046717,
+      "median": 5536.352148046717,
+      "min": 5532.419563969597,
+      "max": 5540.284732123837
+    },
+    "time_per_output_token_ms_vllm_histogram": {
+      "mean": 10.660738529320327,
+      "median": 10.660738529320327,
+      "min": 10.65059444218247,
+      "max": 10.670882616458183
+    },
+    "inter_token_ms_vllm_histogram": {
+      "mean": 10.660738529320334,
+      "median": 10.660738529320334,
+      "min": 10.65059444218247,
+      "max": 10.670882616458195
+    },
+    "iteration_tokens_per_step_vllm_histogram": {
+      "mean": 1.97265625,
+      "median": 1.97265625,
+      "min": 1.97265625,
+      "max": 1.97265625
+    }
+  },
+  "json_canary": {
+    "pass_all": true,
+    "repeats_completed": 96,
+    "mismatch_count": 0,
+    "first_mismatch": null
+  },
+  "color_canary": {
+    "pass_all": true,
+    "repeats_completed": 96,
+    "mismatch_count": 0,
+    "first_mismatch": null
+  }
+}

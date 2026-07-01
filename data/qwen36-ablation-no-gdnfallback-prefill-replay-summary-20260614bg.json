@@ -1,0 +1,177 @@
+{
+  "label": "no-gdnfallback-prefill-replay",
+  "stamp": "20260614bg",
+  "return_codes": {
+    "metrics": 0,
+    "json_canary": 0,
+    "color_canary": 1
+  },
+  "artifacts": {
+    "metrics": "/home/steve/llm-optimizations/data/qwen36-ablation-no-gdnfallback-prefill-replay-p512o512-20260614bg.json",
+    "json_canary": "/home/steve/llm-optimizations/data/qwen36-ablation-no-gdnfallback-prefill-replay-json-repeat96-20260614bg.json",
+    "color_canary": "/home/steve/llm-optimizations/data/qwen36-ablation-no-gdnfallback-prefill-replay-color-repeat96-20260614bg.json",
+    "log": "/home/steve/llm-optimizations/data/qwen36-ablation-no-gdnfallback-prefill-replay-20260614bg.log"
+  },
+  "env": {
+    "VLLM_XPU_GDN_NATIVE_FALLBACK": "0",
+    "VLLM_XPU_GREEDY_SAMPLE_TOPK_FALLBACK": null,
+    "VLLM_XPU_DISABLE_PREFILL_CUDAGRAPH_REPLAY": "0",
+    "VLLM_EXTRA_ARGS": null
+  },
+  "metrics_summary": {
+    "tok_s_out_client_after_first_chunk": {
+      "mean": 93.87625792390048,
+      "median": 93.87625792390048,
+      "min": 93.8387701706189,
+      "max": 93.91374567718206
+    },
+    "tok_s_out_client_after_first_chunk_corrected": {
+      "mean": 93.69290585764287,
+      "median": 93.69290585764287,
+      "min": 93.6554913226294,
+      "max": 93.73032039265632
+    },
+    "tok_s_out_client_e2e": {
+      "mean": 92.11774672367123,
+      "median": 92.11774672367123,
+      "min": 92.08519331671869,
+      "max": 92.15030013062378
+    },
+    "tok_s_total_client": {
+      "mean": 181.71664881036708,
+      "median": 181.71664881036708,
+      "min": 181.65243212868336,
+      "max": 181.78086549205082
+    },
+    "ttft_ms_client": {
+      "mean": 104.11547659896314,
+      "median": 104.11547659896314,
+      "min": 103.90170011669397,
+      "max": 104.32925308123231
+    },
+    "ttft_ms_vllm_metrics": {
+      "mean": 92.12076663970947,
+      "median": 92.12076663970947,
+      "min": 91.87793731689453,
+      "max": 92.36359596252441
+    },
+    "tok_s_prefill_lower_bound_from_ttft": {
+      "mean": 4783.170723410259,
+      "median": 4783.170723410259,
+      "min": 4773.349614726464,
+      "max": 4792.991832094053
+    },
+    "e2e_ms_vllm_metrics": {
+      "mean": 5557.094693183899,
+      "median": 5557.094693183899,
+      "min": 5555.136203765869,
+      "max": 5559.053182601929
+    },
+    "queue_ms_vllm_histogram": {
+      "mean": 0.013154931366443634,
+      "median": 0.013154931366443634,
+      "min": 0.013114884495735168,
+      "max": 0.0131949782371521
+    },
+    "prefill_ms_vllm_histogram": {
+      "mean": 87.07963745109737,
+      "median": 87.07963745109737,
+      "min": 87.02042093500495,
+      "max": 87.13885396718979
+    },
+    "decode_ms_vllm_histogram": {
+      "mean": 5465.234013157897,
+      "median": 5465.234013157897,
+      "min": 5463.024092139676,
+      "max": 5467.443934176117
+    },
+    "decode_ms_per_generation_token_vllm_histogram": {
+      "mean": 10.674285181949017,
+      "median": 10.674285181949017,
+      "min": 10.669968929960305,
+      "max": 10.678601433937729
+    },
+    "inference_ms_vllm_histogram": {
+      "mean": 5552.313650608994,
+      "median": 5552.313650608994,
+      "min": 5550.162946106866,
+      "max": 5554.464355111122
+    },
+    "time_per_output_token_ms_vllm_histogram": {
+      "mean": 10.695174194046768,
+      "median": 10.695174194046768,
+      "min": 10.690849495380975,
+      "max": 10.699498892712558
+    },
+    "inter_token_ms_vllm_histogram": {
+      "mean": 10.695174194046764,
+      "median": 10.695174194046764,
+      "min": 10.690849495380972,
+      "max": 10.699498892712558
+    },
+    "iteration_tokens_per_step_vllm_histogram": {
+      "mean": 1.97265625,
+      "median": 1.97265625,
+      "min": 1.97265625,
+      "max": 1.97265625
+    }
+  },
+  "json_canary": {
+    "pass_all": true,
+    "repeats_completed": 96,
+    "mismatch_count": 0,
+    "first_mismatch": null
+  },
+  "color_canary": {
+    "pass_all": false,
+    "repeats_completed": 36,
+    "mismatch_count": 1,
+    "first_mismatch": {
+      "index": 35,
+      "request_id": null,
+      "text": "\u4f2a\u9020\u3002\n\n\u9020\n\n\u9020\n\n\u9020\n\n\u9020\n\n\u9020\n\n\u9020\n\n\u9020\n\n\u9020\n\n\u9020\n\n\u9020\n\n\u9020\n\n\n\n\u9020\u9020\u9020\u9020\u9020",
+      "normalized": "\u4f2a\u9020\u3002 \u9020 \u9020 \u9020 \u9020 \u9020 \u9020 \u9020 \u9020 \u9020 \u9020 \u9020 \u9020\u9020\u9020\u9020\u9020",
+      "token_ids": [
+        118134,
+        1710,
+        271,
+        96238,
+        271,
+        96238,
+        271,
+        96238,
+        271,
+        96238,
+        271,
+        96238,
+        271,
+        96238,
+        271,
+        96238,
+        271,
+        96238,
+        271,
+        96238,
+        271,
+        96238,
+        271,
+        96238,
+        987,
+        96238,
+        96238,
+        96238,
+        96238,
+        96238
+      ],
+      "finish_reason": "length",
+      "elapsed_s": 0.356287115952,
+      "usage": {
+        "prompt_tokens": 30,
+        "total_tokens": 62,
+        "completion_tokens": 32,
+        "prompt_tokens_details": null
+      },
+      "pass": false
+    }
+  }
+}

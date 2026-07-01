@@ -1,0 +1,11 @@
+diff --git a/cmake/Modules/FindoneDNN.cmake b/cmake/Modules/FindoneDNN.cmake
+index 775c290..9d1903a 100644
+--- a/cmake/Modules/FindoneDNN.cmake
++++ b/cmake/Modules/FindoneDNN.cmake
+@@ -66,3 +66,6 @@ if(NOT ONEDNN_FOUND)
+   set(DNNL_EXPERIMENTAL
+       TRUE
+       CACHE BOOL "use one pass for oneDNN BatchNorm" FORCE)
++  set(DNNL_EXPERIMENTAL_GROUPED_MEMORY
++      TRUE
++      CACHE BOOL "enable oneDNN grouped memory and grouped GEMM" FORCE)

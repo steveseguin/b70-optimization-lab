@@ -1,0 +1,295 @@
+{
+  "label": "p0a-static810-layerlet-prefix-medium-gate",
+  "stamp": "20260615stacklayer1",
+  "return_codes": {
+    "metrics": 0,
+    "json_canary": 1,
+    "color_canary": 1,
+    "quality_suite": 0
+  },
+  "status": {
+    "metrics": "passed",
+    "json_canary": "failed",
+    "color_canary": "failed",
+    "quality_suite": "skipped"
+  },
+  "artifacts": {
+    "metrics": "/home/steve/llm-optimizations/data/qwen36-ablation-p0a-static810-layerlet-prefix-medium-gate-p512o512-20260615stacklayer1.json",
+    "json_canary": "/home/steve/llm-optimizations/data/qwen36-ablation-p0a-static810-layerlet-prefix-medium-gate-json-repeat64-20260615stacklayer1.json",
+    "color_canary": "/home/steve/llm-optimizations/data/qwen36-ablation-p0a-static810-layerlet-prefix-medium-gate-color-repeat128-20260615stacklayer1.json",
+    "quality_suite": "/home/steve/llm-optimizations/data/qwen36-ablation-p0a-static810-layerlet-prefix-medium-gate-quality-suite-20260615stacklayer1.json",
+    "log": "/home/steve/llm-optimizations/data/qwen36-ablation-p0a-static810-layerlet-prefix-medium-gate-20260615stacklayer1.log"
+  },
+  "artifact_exists": {
+    "metrics": true,
+    "json_canary": true,
+    "color_canary": true,
+    "quality_suite": false,
+    "log": true
+  },
+  "env": {
+    "VLLM_XPU_GDN_NATIVE_FALLBACK": "prefill",
+    "VLLM_XPU_GDN_NATIVE_PREFILL_FALLBACK": null,
+    "VLLM_XPU_GDN_PREFILL_RECURRENT_FALLBACK": "1",
+    "VLLM_XPU_GDN_NATIVE_FALLBACK_INITIAL_DECODE_STEPS": null,
+    "VLLM_XPU_GDN_NATIVE_FALLBACK_DECODE_LAYERS": null,
+    "VLLM_XPU_GDN_NATIVE_FALLBACK_DECODE_MAX_LAYER": null,
+    "VLLM_XPU_GDN_NATIVE_FALLBACK_DECODE_LAYER_REGEX": null,
+    "VLLM_XPU_GDN_SYNC_BEFORE_NATIVE_DECODE": null,
+    "VLLM_XPU_GDN_SYNC_BEFORE_NATIVE_DECODE_LAYERS": null,
+    "VLLM_XPU_GREEDY_SAMPLE_TOPK_FALLBACK": "1",
+    "VLLM_XPU_GREEDY_SAMPLE_XPU_FALLBACK": null,
+    "VLLM_XPU_ASYNC_CLONE_SAMPLED_TOKEN_IDS": null,
+    "VLLM_XPU_SANITIZE_LOGITS_NAN": null,
+    "VLLM_XPU_LOCAL_ARGMAX_DECODE": null,
+    "VLLM_XPU_LOCAL_ARGMAX_DIRECT_GATHER": null,
+    "VLLM_XPU_LOCAL_ARGMAX_DIRECT_GATHER_REUSE": null,
+    "VLLM_XPU_LOCAL_ARGMAX_PACKED_GATHER": null,
+    "VLLM_XPU_LOCAL_ARGMAX_SYNC_TOKENS": null,
+    "VLLM_XPU_ZERO_ALL_PREFILL_GDN_STATE": null,
+    "VLLM_XPU_ZERO_FRESH_GDN_STATE": null,
+    "VLLM_XPU_DISABLE_PREFILL_CUDAGRAPH_REPLAY": "1",
+    "VLLM_ENABLE_FLA_PACKED_RECURRENT_DECODE": null,
+    "XPU_GRAPH": "1",
+    "VLLM_XPU_ENABLE_XPU_GRAPH": "1",
+    "VLLM_XPU_FORCE_GRAPH_WITH_COMM": "1",
+    "VLLM_XPU_GRAPH_NOOP_COMM_CAPTURE": "1",
+    "VLLM_XPU_USE_CUSTOM_OP_COLLECTIVES": null,
+    "VLLM_XPU_COMPILE_ALLREDUCE_CUSTOM_OP": null,
+    "VLLM_XPU_CUSTOM_ALLREDUCE_GRAPH_CLONE_INPUT": null,
+    "VLLM_XPU_CUSTOM_ALLREDUCE_CLONE_INPUT": null,
+    "VLLM_XPU_CUDAGRAPH_REPLAY_MAX_PIECEWISE_INDEX": null,
+    "VLLM_XPU_CUDAGRAPH_DISABLE_SUBMOD_REGEX": null,
+    "VLLM_XPU_CUDAGRAPH_RECAPTURE_AFTER_N_REPLAYS": null,
+    "VLLM_XPU_CUDAGRAPH_RECAPTURE_REGEX": null,
+    "VLLM_XPU_CUDAGRAPH_STRONG_OUTPUT": null,
+    "VLLM_XPU_CUDAGRAPH_PER_WRAPPER_POOL": null,
+    "VLLM_XPU_CUDAGRAPH_NO_GLOBAL_POOL": null,
+    "VLLM_XPU_DECODE_CUDAGRAPH_REPLAY_EAGER_EVERY_N_REQUESTS": null,
+    "VLLM_XPU_CUDAGRAPH_ALLOW_RUNTIME_RECAPTURE": null,
+    "VLLM_XPU_SYNC_CUDAGRAPH_REPLAY": null,
+    "VLLM_XPU_CUDAGRAPH_SANITIZE_REPLAY_INPUTS": null,
+    "VLLM_XPU_CUDAGRAPH_REPLAY_TRACE_FILE": null,
+    "VLLM_XPU_CUDAGRAPH_REPLAY_TRACE_MAX_LINES": null,
+    "VLLM_XPU_CUDAGRAPH_REPLAY_TRACE_RANK": null,
+    "VLLM_XPU_CUDAGRAPH_REPLAY_TRACE_SUBMOD_REGEX": null,
+    "VLLM_XPU_CUDAGRAPH_REPLAY_TRACE_REQ_REGEX": null,
+    "VLLM_XPU_CUDAGRAPH_REPLAY_TRACE_INPUTS": null,
+    "VLLM_XPU_CUDAGRAPH_REPLAY_TRACE_DIGEST": null,
+    "VLLM_XPU_GDN_TRACE_FILE": null,
+    "VLLM_XPU_GDN_TRACE_MAX_LINES": null,
+    "VLLM_XPU_GDN_TRACE_RANK": null,
+    "VLLM_XPU_GDN_TRACE_LAYER_REGEX": null,
+    "VLLM_XPU_GDN_TRACE_REQ_REGEX": null,
+    "VLLM_XPU_GDN_TRACE_PREFILL_ONLY": null,
+    "VLLM_XPU_GDN_TRACE_DECODE_ONLY": null,
+    "VLLM_XPU_GDN_TRACE_TENSOR_LIMIT": null,
+    "VLLM_XPU_GDN_TRACE_STATE_LIMIT": null,
+    "VLLM_XPU_CUDAGRAPH_ZERO_REPLAY_OUTPUT_REGEX": null,
+    "VLLM_XPU_CUDAGRAPH_ZERO_REPLAY_OUTPUT_INDICES": null,
+    "VLLM_XPU_CUDAGRAPH_CLONE_REPLAY_OUTPUT_REGEX": null,
+    "VLLM_XPU_CUDAGRAPH_CLONE_REPLAY_OUTPUT_INDICES": null,
+    "VLLM_XPU_CUDAGRAPH_STATIC_INPUT_REGEX": "piecewise:1/41",
+    "VLLM_XPU_CUDAGRAPH_STATIC_INPUT_INDICES": "8,10",
+    "VLLM_XPU_CUDAGRAPH_STATIC_INPUT_MAX_NUMEL": null,
+    "VLLM_XPU_CUDAGRAPH_COMPARE_DIRECT_REGEX": null,
+    "VLLM_XPU_CUDAGRAPH_COMPARE_DIRECT_RETURN_DIRECT": null,
+    "VLLM_XPU_W8A8_EXPERIMENTAL_ALLOW": "1",
+    "VLLM_XPU_W8A8_USE_OFFSETS": "1",
+    "VLLM_XPU_W8A8_OFFSETS_PREFIX_OP": "1",
+    "VLLM_XPU_MOE_W8A8_MIDDLE_LAYERLET": "1",
+    "VLLM_XPU_INT8_MOE_MIXED_WORKSPACE": "1",
+    "VLLM_XPU_SHARED_EXPERTS_STREAM": null,
+    "VLLM_XPU_SHARED_EXPERT_FUSED_ACT_QUANT": null,
+    "VLLM_XPU_MOE_SHARED_ADD_ALLREDUCE_CUSTOM_OP": null,
+    "GPU_MEMORY_UTILIZATION": "0.90",
+    "COMPILATION_CONFIG": "{\"cudagraph_mode\":\"PIECEWISE\"}",
+    "ABLATION_FAST_GRAPH_AUTOCONFIG": "1",
+    "VLLM_EXTRA_ARGS": "--uvicorn-log-level warning",
+    "METRICS_PROMPT_KIND": null,
+    "METRICS_PROMPT_PRESET": null,
+    "METRICS_RANDOM_PREFIX_LEN": null,
+    "METRICS_PROMPT_TOKENS": null,
+    "METRICS_OUTPUT_TOKENS": "256",
+    "METRICS_WARMUP_OUTPUT_TOKENS": "64",
+    "JSON_LOGPROBS": null,
+    "COLOR_LOGPROBS": null
+  },
+  "metrics_summary": {
+    "tok_s_out_client_after_first_chunk": {
+      "mean": 89.81722950870036,
+      "median": 89.81722950870036,
+      "min": 89.81722950870036,
+      "max": 89.81722950870036
+    },
+    "tok_s_out_client_after_first_chunk_corrected": {
+      "mean": 89.466380955932,
+      "median": 89.466380955932,
+      "min": 89.466380955932,
+      "max": 89.466380955932
+    },
+    "tok_s_out_client_e2e": {
+      "mean": 84.2422801952045,
+      "median": 84.2422801952045,
+      "min": 84.2422801952045,
+      "max": 84.2422801952045
+    },
+    "tok_s_total_client": {
+      "mean": 248.11984088743824,
+      "median": 248.11984088743824,
+      "min": 248.11984088743824,
+      "max": 248.11984088743824
+    },
+    "ttft_ms_client": {
+      "mean": 188.621467910707,
+      "median": 188.621467910707,
+      "min": 188.621467910707,
+      "max": 188.621467910707
+    },
+    "ttft_ms_vllm_metrics": {
+      "mean": 176.32102966308594,
+      "median": 176.32102966308594,
+      "min": 176.32102966308594,
+      "max": 176.32102966308594
+    },
+    "tok_s_prefill_lower_bound_from_ttft": {
+      "mean": 2640.2084848356294,
+      "median": 2640.2084848356294,
+      "min": 2640.2084848356294,
+      "max": 2640.2084848356294
+    },
+    "e2e_ms_vllm_metrics": {
+      "mean": 3037.6436710357666,
+      "median": 3037.6436710357666,
+      "min": 3037.6436710357666,
+      "max": 3037.6436710357666
+    },
+    "queue_ms_vllm_histogram": {
+      "mean": 0.009707873687148094,
+      "median": 0.009707873687148094,
+      "min": 0.009707873687148094,
+      "max": 0.009707873687148094
+    },
+    "prefill_ms_vllm_histogram": {
+      "mean": 170.94915709458292,
+      "median": 170.94915709458292,
+      "min": 170.94915709458292,
+      "max": 170.94915709458292
+    },
+    "decode_ms_vllm_histogram": {
+      "mean": 2861.711428966373,
+      "median": 2861.711428966373,
+      "min": 2861.711428966373,
+      "max": 2861.711428966373
+    },
+    "decode_ms_per_generation_token_vllm_histogram": {
+      "mean": 11.178560269399895,
+      "median": 11.178560269399895,
+      "min": 11.178560269399895,
+      "max": 11.178560269399895
+    },
+    "inference_ms_vllm_histogram": {
+      "mean": 3032.660586060956,
+      "median": 3032.660586060956,
+      "min": 3032.660586060956,
+      "max": 3032.660586060956
+    },
+    "time_per_output_token_ms_vllm_histogram": {
+      "mean": 11.22239776065244,
+      "median": 11.22239776065244,
+      "min": 11.22239776065244,
+      "max": 11.22239776065244
+    },
+    "inter_token_ms_vllm_histogram": {
+      "mean": 11.222397760652443,
+      "median": 11.222397760652443,
+      "min": 11.222397760652443,
+      "max": 11.222397760652443
+    },
+    "iteration_tokens_per_step_vllm_histogram": {
+      "mean": 2.9453125,
+      "median": 2.9453125,
+      "min": 2.9453125,
+      "max": 2.9453125
+    }
+  },
+  "speed": {
+    "tok_s_out_corrected_mean": 89.466380955932,
+    "tok_s_out_after_first_chunk_mean": 89.81722950870036,
+    "tok_s_out_e2e_mean": 84.2422801952045,
+    "decode_ms_per_token_mean": 11.178560269399895,
+    "ttft_ms_client_mean": 188.621467910707
+  },
+  "json_canary": {
+    "pass_all": false,
+    "repeats_completed": 27,
+    "mismatch_count": 1,
+    "first_mismatch": {
+      "index": 26,
+      "request_id": null,
+      "text": "{\"answer\":\"12\",\"unit\":\"widgets\"}",
+      "normalized": "{\"answer\":\"12\",\"unit\":\"widgets\"}",
+      "token_ids": [
+        4754,
+        8944,
+        3147,
+        16,
+        17,
+        2129,
+        3715,
+        3147,
+        28844,
+        8934
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.21370567101985216,
+      "usage": {
+        "prompt_tokens": 36,
+        "total_tokens": 47,
+        "completion_tokens": 11,
+        "prompt_tokens_details": null
+      },
+      "json_parsed": {
+        "answer": "12",
+        "unit": "widgets"
+      },
+      "pass": false
+    }
+  },
+  "color_canary": {
+    "pass_all": false,
+    "repeats_completed": 91,
+    "mismatch_count": 1,
+    "first_mismatch": {
+      "index": 90,
+      "request_id": null,
+      "text": "blue, green, red, yellow",
+      "normalized": "blue, green, red, yellow",
+      "token_ids": [
+        11855,
+        11,
+        5983,
+        11,
+        2438,
+        11,
+        13358
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.181710469070822,
+      "usage": {
+        "prompt_tokens": 30,
+        "total_tokens": 38,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "pass": false
+    }
+  },
+  "decision": {
+    "accepted_by_requested_gates": false,
+    "gate_failures": [
+      "json_canary",
+      "color_canary"
+    ]
+  }
+}

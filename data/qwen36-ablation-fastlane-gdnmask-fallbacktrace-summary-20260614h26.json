@@ -1,0 +1,264 @@
+{
+  "label": "fastlane-gdnmask-fallbacktrace",
+  "stamp": "20260614h26",
+  "return_codes": {
+    "metrics": 0,
+    "json_canary": 1,
+    "color_canary": 1,
+    "quality_suite": 0
+  },
+  "status": {
+    "metrics": "passed",
+    "json_canary": "failed",
+    "color_canary": "failed",
+    "quality_suite": "skipped"
+  },
+  "artifacts": {
+    "metrics": "/home/steve/llm-optimizations/data/qwen36-ablation-fastlane-gdnmask-fallbacktrace-p512o512-20260614h26.json",
+    "json_canary": "/home/steve/llm-optimizations/data/qwen36-ablation-fastlane-gdnmask-fallbacktrace-json-repeat128-20260614h26.json",
+    "color_canary": "/home/steve/llm-optimizations/data/qwen36-ablation-fastlane-gdnmask-fallbacktrace-color-repeat160-20260614h26.json",
+    "quality_suite": "/home/steve/llm-optimizations/data/qwen36-ablation-fastlane-gdnmask-fallbacktrace-quality-suite-20260614h26.json",
+    "log": "/home/steve/llm-optimizations/data/qwen36-ablation-fastlane-gdnmask-fallbacktrace-20260614h26.log"
+  },
+  "artifact_exists": {
+    "metrics": true,
+    "json_canary": true,
+    "color_canary": true,
+    "quality_suite": false,
+    "log": true
+  },
+  "env": {
+    "VLLM_XPU_GDN_NATIVE_FALLBACK": "prefill",
+    "VLLM_XPU_GDN_NATIVE_PREFILL_FALLBACK": null,
+    "VLLM_XPU_GDN_PREFILL_RECURRENT_FALLBACK": "1",
+    "VLLM_XPU_GDN_NATIVE_FALLBACK_INITIAL_DECODE_STEPS": null,
+    "VLLM_XPU_GDN_NATIVE_FALLBACK_DECODE_LAYERS": null,
+    "VLLM_XPU_GDN_NATIVE_FALLBACK_DECODE_MAX_LAYER": null,
+    "VLLM_XPU_GDN_NATIVE_FALLBACK_DECODE_LAYER_REGEX": null,
+    "VLLM_XPU_GDN_SYNC_BEFORE_NATIVE_DECODE": null,
+    "VLLM_XPU_GDN_SYNC_BEFORE_NATIVE_DECODE_LAYERS": null,
+    "VLLM_XPU_GREEDY_SAMPLE_TOPK_FALLBACK": "1",
+    "VLLM_XPU_GREEDY_SAMPLE_XPU_FALLBACK": null,
+    "VLLM_XPU_ZERO_ALL_PREFILL_GDN_STATE": null,
+    "VLLM_XPU_ZERO_FRESH_GDN_STATE": null,
+    "VLLM_XPU_DISABLE_PREFILL_CUDAGRAPH_REPLAY": "1",
+    "VLLM_ENABLE_FLA_PACKED_RECURRENT_DECODE": null,
+    "XPU_GRAPH": "1",
+    "VLLM_XPU_ENABLE_XPU_GRAPH": "1",
+    "VLLM_XPU_FORCE_GRAPH_WITH_COMM": "1",
+    "VLLM_XPU_GRAPH_NOOP_COMM_CAPTURE": "1",
+    "VLLM_XPU_USE_CUSTOM_OP_COLLECTIVES": null,
+    "VLLM_XPU_COMPILE_ALLREDUCE_CUSTOM_OP": null,
+    "VLLM_XPU_CUSTOM_ALLREDUCE_GRAPH_CLONE_INPUT": null,
+    "VLLM_XPU_CUSTOM_ALLREDUCE_CLONE_INPUT": null,
+    "VLLM_XPU_CUDAGRAPH_REPLAY_MAX_PIECEWISE_INDEX": null,
+    "VLLM_XPU_CUDAGRAPH_DISABLE_SUBMOD_REGEX": null,
+    "VLLM_XPU_CUDAGRAPH_RECAPTURE_AFTER_N_REPLAYS": null,
+    "VLLM_XPU_CUDAGRAPH_RECAPTURE_REGEX": null,
+    "VLLM_XPU_DECODE_CUDAGRAPH_REPLAY_EAGER_EVERY_N_REQUESTS": null,
+    "VLLM_XPU_CUDAGRAPH_ALLOW_RUNTIME_RECAPTURE": null,
+    "VLLM_XPU_SYNC_CUDAGRAPH_REPLAY": null,
+    "VLLM_XPU_CUDAGRAPH_REPLAY_TRACE_FILE": null,
+    "VLLM_XPU_CUDAGRAPH_REPLAY_TRACE_MAX_LINES": null,
+    "VLLM_XPU_CUDAGRAPH_REPLAY_TRACE_RANK": null,
+    "VLLM_XPU_CUDAGRAPH_REPLAY_TRACE_SUBMOD_REGEX": null,
+    "VLLM_XPU_CUDAGRAPH_REPLAY_TRACE_REQ_REGEX": null,
+    "VLLM_XPU_CUDAGRAPH_REPLAY_TRACE_INPUTS": null,
+    "VLLM_XPU_CUDAGRAPH_REPLAY_TRACE_DIGEST": null,
+    "VLLM_XPU_CUDAGRAPH_ZERO_REPLAY_OUTPUT_REGEX": null,
+    "VLLM_XPU_CUDAGRAPH_ZERO_REPLAY_OUTPUT_INDICES": null,
+    "VLLM_XPU_CUDAGRAPH_CLONE_REPLAY_OUTPUT_REGEX": null,
+    "VLLM_XPU_CUDAGRAPH_CLONE_REPLAY_OUTPUT_INDICES": null,
+    "VLLM_XPU_CUDAGRAPH_COMPARE_DIRECT_REGEX": null,
+    "VLLM_XPU_CUDAGRAPH_COMPARE_DIRECT_RETURN_DIRECT": null,
+    "VLLM_XPU_W8A8_EXPERIMENTAL_ALLOW": null,
+    "VLLM_XPU_W8A8_USE_OFFSETS": null,
+    "VLLM_XPU_W8A8_OFFSETS_PREFIX_OP": null,
+    "VLLM_XPU_MOE_W8A8_MIDDLE_LAYERLET": null,
+    "VLLM_XPU_INT8_MOE_MIXED_WORKSPACE": null,
+    "GPU_MEMORY_UTILIZATION": "0.90",
+    "COMPILATION_CONFIG": "{\"cudagraph_mode\":\"PIECEWISE\"}",
+    "ABLATION_FAST_GRAPH_AUTOCONFIG": "1",
+    "VLLM_EXTRA_ARGS": null
+  },
+  "metrics_summary": {
+    "tok_s_out_client_after_first_chunk": {
+      "mean": 92.87194276401735,
+      "median": 92.83335609985787,
+      "min": 92.69555921246493,
+      "max": 93.12549964388874
+    },
+    "tok_s_out_client_after_first_chunk_corrected": {
+      "mean": 92.69055225080638,
+      "median": 92.65204095122533,
+      "min": 92.51451319837808,
+      "max": 92.94361390239678
+    },
+    "tok_s_out_client_e2e": {
+      "mean": 89.81302913322665,
+      "median": 89.78258710117136,
+      "min": 89.64982427008536,
+      "max": 90.03711806047853
+    },
+    "tok_s_total_client": {
+      "mean": 177.17023325109164,
+      "median": 177.11018158629508,
+      "min": 176.8482861577856,
+      "max": 177.61228367399085
+    },
+    "ttft_ms_client": {
+      "mean": 187.76238412829116,
+      "median": 187.56548210512847,
+      "min": 187.3320231679827,
+      "max": 188.586549134925
+    },
+    "ttft_ms_vllm_metrics": {
+      "mean": 175.6231188774109,
+      "median": 175.42123794555664,
+      "min": 175.1420497894287,
+      "max": 176.50794982910156
+    },
+    "tok_s_prefill_lower_bound_from_ttft": {
+      "mean": 2652.306389987079,
+      "median": 2655.073315712168,
+      "min": 2640.6973471034985,
+      "max": 2658.381581420481
+    },
+    "e2e_ms_vllm_metrics": {
+      "mean": 5699.706852436066,
+      "median": 5701.587438583374,
+      "min": 5685.584783554077,
+      "max": 5710.0677490234375
+    },
+    "queue_ms_vllm_histogram": {
+      "mean": 0.013760989531874657,
+      "median": 0.01421698834747076,
+      "min": 0.009868992492556572,
+      "max": 0.016740988940000534
+    },
+    "prefill_ms_vllm_histogram": {
+      "mean": 170.64529127674177,
+      "median": 170.4404765041545,
+      "min": 170.28386797755957,
+      "max": 171.41634412109852
+    },
+    "decode_ms_vllm_histogram": {
+      "mean": 5524.354337248951,
+      "median": 5526.679557049647,
+      "min": 5509.349305881187,
+      "max": 5534.7089290153235
+    },
+    "decode_ms_per_generation_token_vllm_histogram": {
+      "mean": 10.789754564939358,
+      "median": 10.794296009862592,
+      "min": 10.760447863049194,
+      "max": 10.809978376983054
+    },
+    "inference_ms_vllm_histogram": {
+      "mean": 5694.999628525693,
+      "median": 5697.1200335538015,
+      "min": 5680.765650002286,
+      "max": 5704.992796992883
+    },
+    "time_per_output_token_ms_vllm_histogram": {
+      "mean": 10.810869544518496,
+      "median": 10.815419876809486,
+      "min": 10.781505490961226,
+      "max": 10.83113293349379
+    },
+    "inter_token_ms_vllm_histogram": {
+      "mean": 10.810869544518496,
+      "median": 10.815419876809486,
+      "min": 10.781505490961226,
+      "max": 10.831132933493784
+    },
+    "iteration_tokens_per_step_vllm_histogram": {
+      "mean": 1.97265625,
+      "median": 1.97265625,
+      "min": 1.97265625,
+      "max": 1.97265625
+    }
+  },
+  "speed": {
+    "tok_s_out_corrected_mean": 92.69055225080638,
+    "tok_s_out_after_first_chunk_mean": 92.87194276401735,
+    "tok_s_out_e2e_mean": 89.81302913322665,
+    "decode_ms_per_token_mean": 10.789754564939358,
+    "ttft_ms_client_mean": 187.76238412829116
+  },
+  "json_canary": {
+    "pass_all": false,
+    "repeats_completed": 49,
+    "mismatch_count": 1,
+    "first_mismatch": {
+      "index": 48,
+      "request_id": "h26-json-000048",
+      "text": "{\"answer\": \"12\", \"unit\": \"widgets\"}",
+      "normalized": "{\"answer\": \"12\", \"unit\": \"widgets\"}",
+      "token_ids": [
+        4754,
+        8944,
+        763,
+        328,
+        16,
+        17,
+        487,
+        328,
+        3715,
+        763,
+        328,
+        28844,
+        8934
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.36204023100435734,
+      "usage": {
+        "prompt_tokens": 36,
+        "total_tokens": 50,
+        "completion_tokens": 14,
+        "prompt_tokens_details": null
+      },
+      "json_parsed": {
+        "answer": "12",
+        "unit": "widgets"
+      },
+      "pass": false
+    }
+  },
+  "color_canary": {
+    "pass_all": false,
+    "repeats_completed": 92,
+    "mismatch_count": 1,
+    "first_mismatch": {
+      "index": 91,
+      "request_id": "h26-color-000091",
+      "text": "blue, green, red, yellow",
+      "normalized": "blue, green, red, yellow",
+      "token_ids": [
+        11855,
+        11,
+        5983,
+        11,
+        2438,
+        11,
+        13358
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.17093812208622694,
+      "usage": {
+        "prompt_tokens": 30,
+        "total_tokens": 38,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "pass": false
+    }
+  },
+  "decision": {
+    "accepted_by_requested_gates": false,
+    "gate_failures": [
+      "json_canary",
+      "color_canary"
+    ]
+  }
+}

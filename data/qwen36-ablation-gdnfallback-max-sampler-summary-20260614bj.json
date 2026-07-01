@@ -1,0 +1,191 @@
+{
+  "label": "gdnfallback-max-sampler",
+  "stamp": "20260614bj",
+  "return_codes": {
+    "metrics": 0,
+    "json_canary": 1,
+    "color_canary": 1,
+    "quality_suite": 0
+  },
+  "artifacts": {
+    "metrics": "/home/steve/llm-optimizations/data/qwen36-ablation-gdnfallback-max-sampler-p512o512-20260614bj.json",
+    "json_canary": "/home/steve/llm-optimizations/data/qwen36-ablation-gdnfallback-max-sampler-json-repeat128-20260614bj.json",
+    "color_canary": "/home/steve/llm-optimizations/data/qwen36-ablation-gdnfallback-max-sampler-color-repeat128-20260614bj.json",
+    "quality_suite": "/home/steve/llm-optimizations/data/qwen36-ablation-gdnfallback-max-sampler-quality-suite-20260614bj.json",
+    "log": "/home/steve/llm-optimizations/data/qwen36-ablation-gdnfallback-max-sampler-20260614bj.log"
+  },
+  "env": {
+    "VLLM_XPU_GDN_NATIVE_FALLBACK": null,
+    "VLLM_XPU_GREEDY_SAMPLE_TOPK_FALLBACK": "0",
+    "VLLM_XPU_GREEDY_SAMPLE_XPU_FALLBACK": "max",
+    "VLLM_XPU_DISABLE_PREFILL_CUDAGRAPH_REPLAY": null,
+    "VLLM_EXTRA_ARGS": null
+  },
+  "metrics_summary": {
+    "tok_s_out_client_after_first_chunk": {
+      "mean": 93.74022750684985,
+      "median": 93.74022750684985,
+      "min": 93.58835706986333,
+      "max": 93.89209794383636
+    },
+    "tok_s_out_client_after_first_chunk_corrected": {
+      "mean": 93.55714112500053,
+      "median": 93.55714112500053,
+      "min": 93.40556730996126,
+      "max": 93.70871494003981
+    },
+    "tok_s_out_client_e2e": {
+      "mean": 91.96912203226276,
+      "median": 91.96912203226276,
+      "min": 91.8347968630652,
+      "max": 92.10344720146031
+    },
+    "tok_s_total_client": {
+      "mean": 181.42346338395583,
+      "median": 181.42346338395583,
+      "min": 181.15848599940594,
+      "max": 181.6884407685057
+    },
+    "ttft_ms_client": {
+      "mean": 105.18073046114296,
+      "median": 105.18073046114296,
+      "min": 104.46277284063399,
+      "max": 105.89868808165193
+    },
+    "ttft_ms_vllm_metrics": {
+      "mean": 92.43309497833252,
+      "median": 92.43309497833252,
+      "min": 91.8416976928711,
+      "max": 93.02449226379395
+    },
+    "tok_s_prefill_lower_bound_from_ttft": {
+      "mean": 4734.928179870762,
+      "median": 4734.928179870762,
+      "min": 4702.607832271001,
+      "max": 4767.248527470521
+    },
+    "e2e_ms_vllm_metrics": {
+      "mean": 5565.933704376221,
+      "median": 5565.933704376221,
+      "min": 5557.771444320679,
+      "max": 5574.095964431763
+    },
+    "queue_ms_vllm_histogram": {
+      "mean": 0.014387071132659912,
+      "median": 0.014387071132659912,
+      "min": 0.013325130566954613,
+      "max": 0.015449011698365211
+    },
+    "prefill_ms_vllm_histogram": {
+      "mean": 87.24430296570063,
+      "median": 87.24430296570063,
+      "min": 86.54716401360929,
+      "max": 87.94144191779196
+    },
+    "decode_ms_vllm_histogram": {
+      "mean": 5473.786283866502,
+      "median": 5473.786283866502,
+      "min": 5464.988146908581,
+      "max": 5482.584420824423
+    },
+    "decode_ms_per_generation_token_vllm_histogram": {
+      "mean": 10.690988835676762,
+      "median": 10.690988835676762,
+      "min": 10.673804974430823,
+      "max": 10.708172696922702
+    },
+    "inference_ms_vllm_histogram": {
+      "mean": 5561.030586832203,
+      "median": 5561.030586832203,
+      "min": 5552.929588826373,
+      "max": 5569.131584838033
+    },
+    "time_per_output_token_ms_vllm_histogram": {
+      "mean": 10.711910535942275,
+      "median": 10.711910535942275,
+      "min": 10.69469304678783,
+      "max": 10.72912802509672
+    },
+    "inter_token_ms_vllm_histogram": {
+      "mean": 10.711910535942273,
+      "median": 10.711910535942273,
+      "min": 10.69469304678783,
+      "max": 10.729128025096719
+    },
+    "iteration_tokens_per_step_vllm_histogram": {
+      "mean": 1.97265625,
+      "median": 1.97265625,
+      "min": 1.97265625,
+      "max": 1.97265625
+    }
+  },
+  "json_canary": {
+    "pass_all": false,
+    "repeats_completed": 39,
+    "mismatch_count": 1,
+    "first_mismatch": {
+      "index": 38,
+      "request_id": null,
+      "text": "{\"answer\": \"42 whiskey whiskey whiskey whiskey2\": \"widgets\"}",
+      "normalized": "{\"answer\": \"42 whiskey whiskey whiskey whiskey2\": \"widgets\"}",
+      "token_ids": [
+        4754,
+        8944,
+        763,
+        328,
+        19,
+        17,
+        62085,
+        62085,
+        62085,
+        62085,
+        17,
+        763,
+        328,
+        28844,
+        8934
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.23929791804403067,
+      "usage": {
+        "prompt_tokens": 36,
+        "total_tokens": 52,
+        "completion_tokens": 16,
+        "prompt_tokens_details": null
+      },
+      "json_parsed": null,
+      "pass": false
+    }
+  },
+  "color_canary": {
+    "pass_all": false,
+    "repeats_completed": 23,
+    "mismatch_count": 1,
+    "first_mismatch": {
+      "index": 22,
+      "request_id": null,
+      "text": "blue whiskey whiskey\ufffdellow\uff0cgreen\uff0cred",
+      "normalized": "blue whiskey whiskey\ufffdellow\uff0cgreen\uff0cred",
+      "token_ids": [
+        11855,
+        62085,
+        62085,
+        5513,
+        5131,
+        3709,
+        12865,
+        3709,
+        1114
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.17635046294890344,
+      "usage": {
+        "prompt_tokens": 30,
+        "total_tokens": 40,
+        "completion_tokens": 10,
+        "prompt_tokens_details": null
+      },
+      "pass": false
+    }
+  }
+}

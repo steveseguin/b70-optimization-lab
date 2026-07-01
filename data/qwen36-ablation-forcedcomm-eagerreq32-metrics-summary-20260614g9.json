@@ -1,0 +1,181 @@
+{
+  "label": "forcedcomm-eagerreq32-metrics",
+  "stamp": "20260614g9",
+  "return_codes": {
+    "metrics": 0,
+    "json_canary": 0,
+    "color_canary": 0,
+    "quality_suite": 0
+  },
+  "status": {
+    "metrics": "passed",
+    "json_canary": "skipped",
+    "color_canary": "skipped",
+    "quality_suite": "skipped"
+  },
+  "artifacts": {
+    "metrics": "/home/steve/llm-optimizations/data/qwen36-ablation-forcedcomm-eagerreq32-metrics-p512o512-20260614g9.json",
+    "json_canary": "/home/steve/llm-optimizations/data/qwen36-ablation-forcedcomm-eagerreq32-metrics-json-repeat96-20260614g9.json",
+    "color_canary": "/home/steve/llm-optimizations/data/qwen36-ablation-forcedcomm-eagerreq32-metrics-color-repeat96-20260614g9.json",
+    "quality_suite": "/home/steve/llm-optimizations/data/qwen36-ablation-forcedcomm-eagerreq32-metrics-quality-suite-20260614g9.json",
+    "log": "/home/steve/llm-optimizations/data/qwen36-ablation-forcedcomm-eagerreq32-metrics-20260614g9.log"
+  },
+  "artifact_exists": {
+    "metrics": true,
+    "json_canary": false,
+    "color_canary": false,
+    "quality_suite": false,
+    "log": true
+  },
+  "env": {
+    "VLLM_XPU_GDN_NATIVE_FALLBACK": "decode,prefill",
+    "VLLM_XPU_GDN_NATIVE_PREFILL_FALLBACK": null,
+    "VLLM_XPU_GDN_PREFILL_RECURRENT_FALLBACK": "1",
+    "VLLM_XPU_GDN_NATIVE_FALLBACK_INITIAL_DECODE_STEPS": null,
+    "VLLM_XPU_GDN_NATIVE_FALLBACK_DECODE_LAYERS": null,
+    "VLLM_XPU_GDN_NATIVE_FALLBACK_DECODE_MAX_LAYER": null,
+    "VLLM_XPU_GDN_NATIVE_FALLBACK_DECODE_LAYER_REGEX": null,
+    "VLLM_XPU_GDN_SYNC_BEFORE_NATIVE_DECODE": null,
+    "VLLM_XPU_GDN_SYNC_BEFORE_NATIVE_DECODE_LAYERS": null,
+    "VLLM_XPU_GREEDY_SAMPLE_TOPK_FALLBACK": null,
+    "VLLM_XPU_GREEDY_SAMPLE_XPU_FALLBACK": null,
+    "VLLM_XPU_ZERO_ALL_PREFILL_GDN_STATE": null,
+    "VLLM_XPU_DISABLE_PREFILL_CUDAGRAPH_REPLAY": "1",
+    "VLLM_ENABLE_FLA_PACKED_RECURRENT_DECODE": null,
+    "XPU_GRAPH": "1",
+    "VLLM_XPU_ENABLE_XPU_GRAPH": "1",
+    "VLLM_XPU_FORCE_GRAPH_WITH_COMM": "1",
+    "VLLM_XPU_GRAPH_NOOP_COMM_CAPTURE": "1",
+    "VLLM_XPU_USE_CUSTOM_OP_COLLECTIVES": null,
+    "VLLM_XPU_COMPILE_ALLREDUCE_CUSTOM_OP": null,
+    "VLLM_XPU_CUSTOM_ALLREDUCE_GRAPH_CLONE_INPUT": null,
+    "VLLM_XPU_CUSTOM_ALLREDUCE_CLONE_INPUT": null,
+    "VLLM_XPU_CUDAGRAPH_REPLAY_MAX_PIECEWISE_INDEX": null,
+    "VLLM_XPU_CUDAGRAPH_RECAPTURE_AFTER_N_REPLAYS": null,
+    "VLLM_XPU_CUDAGRAPH_RECAPTURE_REGEX": null,
+    "VLLM_XPU_DECODE_CUDAGRAPH_REPLAY_EAGER_EVERY_N_REQUESTS": "32",
+    "VLLM_XPU_CUDAGRAPH_ALLOW_RUNTIME_RECAPTURE": null,
+    "VLLM_XPU_SYNC_CUDAGRAPH_REPLAY": null,
+    "VLLM_XPU_CUDAGRAPH_ZERO_REPLAY_OUTPUT_REGEX": null,
+    "VLLM_XPU_CUDAGRAPH_ZERO_REPLAY_OUTPUT_INDICES": null,
+    "VLLM_XPU_CUDAGRAPH_COMPARE_DIRECT_REGEX": null,
+    "VLLM_XPU_CUDAGRAPH_COMPARE_DIRECT_RETURN_DIRECT": null,
+    "VLLM_XPU_W8A8_EXPERIMENTAL_ALLOW": null,
+    "VLLM_XPU_W8A8_USE_OFFSETS": null,
+    "VLLM_XPU_W8A8_OFFSETS_PREFIX_OP": null,
+    "VLLM_XPU_MOE_W8A8_MIDDLE_LAYERLET": null,
+    "VLLM_XPU_INT8_MOE_MIXED_WORKSPACE": null,
+    "GPU_MEMORY_UTILIZATION": null,
+    "COMPILATION_CONFIG": null,
+    "VLLM_EXTRA_ARGS": "--no-async-scheduling"
+  },
+  "metrics_summary": {
+    "tok_s_out_client_after_first_chunk": {
+      "mean": 14.780265895765645,
+      "median": 14.780265895765645,
+      "min": 14.768536245818696,
+      "max": 14.791995545712595
+    },
+    "tok_s_out_client_after_first_chunk_corrected": {
+      "mean": 14.751398188937978,
+      "median": 14.751398188937978,
+      "min": 14.739691448463581,
+      "max": 14.763104929412375
+    },
+    "tok_s_out_client_e2e": {
+      "mean": 14.665957025467112,
+      "median": 14.665957025467112,
+      "min": 14.653951246503606,
+      "max": 14.677962804430615
+    },
+    "tok_s_total_client": {
+      "mean": 28.930891788519105,
+      "median": 28.930891788519105,
+      "min": 28.90720851361063,
+      "max": 28.95457506342758
+    },
+    "ttft_ms_client": {
+      "mean": 269.99752095434815,
+      "median": 269.99752095434815,
+      "min": 268.91001407057047,
+      "max": 271.0850278381258
+    },
+    "ttft_ms_vllm_metrics": {
+      "mean": 200.93154907226562,
+      "median": 200.93154907226562,
+      "min": 199.8460292816162,
+      "max": 202.01706886291504
+    },
+    "tok_s_prefill_lower_bound_from_ttft": {
+      "mean": 1844.491303743669,
+      "median": 1844.491303743669,
+      "min": 1837.0619874195816,
+      "max": 1851.9206200677565
+    },
+    "e2e_ms_vllm_metrics": {
+      "mean": 34909.579038619995,
+      "median": 34909.579038619995,
+      "min": 34881.09874725342,
+      "max": 34938.05932998657
+    },
+    "queue_ms_vllm_histogram": {
+      "mean": 0.014221994206309319,
+      "median": 0.014221994206309319,
+      "min": 0.013135140761733055,
+      "max": 0.015308847650885582
+    },
+    "prefill_ms_vllm_histogram": {
+      "mean": 196.25393953174353,
+      "median": 196.25393953174353,
+      "min": 195.2219030354172,
+      "max": 197.28597602806985
+    },
+    "decode_ms_vllm_histogram": {
+      "mean": 34708.797915955074,
+      "median": 34708.797915955074,
+      "min": 34681.400218978524,
+      "max": 34736.195612931624
+    },
+    "decode_ms_per_generation_token_vllm_histogram": {
+      "mean": 67.79062092959975,
+      "median": 67.79062092959975,
+      "min": 67.73710980269243,
+      "max": 67.84413205650708
+    },
+    "inference_ms_vllm_histogram": {
+      "mean": 34905.05185548682,
+      "median": 34905.05185548682,
+      "min": 34876.62212201394,
+      "max": 34933.481588959694
+    },
+    "time_per_output_token_ms_vllm_histogram": {
+      "mean": 67.92328359286707,
+      "median": 67.92328359286707,
+      "min": 67.86966774751177,
+      "max": 67.97689943822236
+    },
+    "inter_token_ms_vllm_histogram": {
+      "mean": 67.92328359286708,
+      "median": 67.92328359286708,
+      "min": 67.86966774751178,
+      "max": 67.97689943822236
+    },
+    "iteration_tokens_per_step_vllm_histogram": {
+      "mean": 1.97265625,
+      "median": 1.97265625,
+      "min": 1.97265625,
+      "max": 1.97265625
+    }
+  },
+  "speed": {
+    "tok_s_out_corrected_mean": 14.751398188937978,
+    "tok_s_out_after_first_chunk_mean": 14.780265895765645,
+    "tok_s_out_e2e_mean": 14.665957025467112,
+    "decode_ms_per_token_mean": 67.79062092959975,
+    "ttft_ms_client_mean": 269.99752095434815
+  },
+  "decision": {
+    "accepted_by_requested_gates": true,
+    "gate_failures": []
+  }
+}

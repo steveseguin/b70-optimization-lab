@@ -1,0 +1,1998 @@
+{
+  "async_output_line_count": 24,
+  "async_output_summary": [
+    {
+      "event_count": 24,
+      "first_call_id": null,
+      "first_line": 288,
+      "group": {
+        "copy_mode": "reuse_buffer_nonblocking",
+        "event": "get_output",
+        "has_logprobs": false,
+        "list_mode": "fast_scalar",
+        "max_gen_len": 1,
+        "rank": "0"
+      },
+      "last_call_id": null,
+      "last_line": 656,
+      "metric_summaries": {
+        "assign_ms": {
+          "max": 0.001092,
+          "mean": 0.0005142500000000001,
+          "median": 0.000426,
+          "min": 0.000331,
+          "p90": 0.0008236999999999999,
+          "p99": 0.001069
+        },
+        "copy_after_default_sync_ms": {
+          "max": 0.078318,
+          "mean": 0.010715666666666667,
+          "median": 0.0022389999999999997,
+          "min": 0.001944,
+          "p90": 0.018155199999999996,
+          "p99": 0.07804844
+        },
+        "copy_end_to_get_output_ms": {
+          "max": 0.45603,
+          "mean": 0.12095858333333333,
+          "median": 0.101216,
+          "min": 0.085391,
+          "p90": 0.1304821,
+          "p99": 0.40279028999999994
+        },
+        "copy_end_to_sync_done_ms": {
+          "max": 6.859849,
+          "mean": 5.1898381250000005,
+          "median": 5.1577185,
+          "min": 3.759501,
+          "p90": 6.2906576,
+          "p99": 6.8088421299999995
+        },
+        "copy_start_to_get_output_ms": {
+          "max": 0.716672,
+          "mean": 0.4085085,
+          "median": 0.3850715,
+          "min": 0.33924,
+          "p90": 0.45334069999999993,
+          "p99": 0.6945041399999999
+        },
+        "copy_submit_ms": {
+          "max": 0.395737,
+          "mean": 0.2875499166666667,
+          "median": 0.2770825,
+          "min": 0.247196,
+          "p90": 0.32256029999999997,
+          "p99": 0.38151678999999994
+        },
+        "created_to_get_output_ms": {
+          "max": 0.723224,
+          "mean": 0.41598375000000004,
+          "median": 0.39266100000000004,
+          "min": 0.345322,
+          "p90": 0.46209009999999995,
+          "p99": 0.7022521399999999
+        },
+        "default_ready_sync_ms": {
+          "max": 0.013826,
+          "mean": 0.0024530416666666667,
+          "median": 0.0013525,
+          "min": 0.000651,
+          "p90": 0.003961,
+          "p99": 0.012074779999999997
+        },
+        "device_bookkeeping_to_pre_async_wrap_ms": {
+          "max": 0.0017159999999999999,
+          "mean": 0.0014798333333333332,
+          "median": 0.0014559999999999998,
+          "min": 0.001352,
+          "p90": 0.0015599999999999998,
+          "p99": 0.0016920799999999999
+        },
+        "device_copy_stream_entry_to_ready_ms": {
+          "max": 0.0068119999999999995,
+          "mean": 0.006545499999999999,
+          "median": 0.006552,
+          "min": 0.006188,
+          "p90": 0.0067599999999999995,
+          "p99": 0.006800039999999999
+        },
+        "device_default_before_copy_to_ready_ms": {
+          "max": 0.008112,
+          "mean": 0.007793499999999999,
+          "median": 0.0078,
+          "min": 0.007436,
+          "p90": 0.007956,
+          "p99": 0.00808808
+        },
+        "device_pre_async_wrap_to_copy_ready_ms": {
+          "max": 0.009568,
+          "mean": 0.009271166666666667,
+          "median": 0.009256,
+          "min": 0.008839999999999999,
+          "p90": 0.009516,
+          "p99": 0.009568
+        },
+        "device_pre_async_wrap_to_default_before_copy_ms": {
+          "max": 0.001664,
+          "mean": 0.0014776666666666664,
+          "median": 0.0014299999999999998,
+          "min": 0.001352,
+          "p90": 0.001612,
+          "p99": 0.00165204
+        },
+        "device_sample_end_to_copy_ready_ms": {
+          "max": 0.014143999999999999,
+          "mean": 0.013563333333333332,
+          "median": 0.013519999999999999,
+          "min": 0.013156,
+          "p90": 0.013941199999999997,
+          "p99": 0.01412008
+        },
+        "device_sample_end_to_state_update_end_ms": {
+          "max": 0.00156,
+          "mean": 0.0013346666666666665,
+          "median": 0.0013,
+          "min": 0.001248,
+          "p90": 0.0014403999999999997,
+          "p99": 0.0015480399999999999
+        },
+        "device_sample_ms": {
+          "max": 0.052676,
+          "mean": 0.05208016666666667,
+          "median": 0.052026,
+          "min": 0.051739999999999994,
+          "p90": 0.05239,
+          "p99": 0.052676
+        },
+        "device_sample_start_to_copy_ready_ms": {
+          "max": 0.06619599999999999,
+          "mean": 0.0656435,
+          "median": 0.06557199999999999,
+          "min": 0.06515599999999999,
+          "p90": 0.0661648,
+          "p99": 0.06619599999999999
+        },
+        "device_state_update_to_bookkeeping_end_ms": {
+          "max": 0.001664,
+          "mean": 0.0014776666666666664,
+          "median": 0.0014559999999999998,
+          "min": 0.0014039999999999999,
+          "p90": 0.001612,
+          "p99": 0.001664
+        },
+        "event_id": {
+          "max": 256.0,
+          "mean": 164.0,
+          "median": 164.0,
+          "min": 72.0,
+          "p90": 237.6,
+          "p99": 254.16
+        },
+        "invalid_clear_ms": {
+          "max": 0.000491,
+          "mean": 0.0002662916666666667,
+          "median": 0.000241,
+          "min": 0.00017,
+          "p90": 0.00036470000000000003,
+          "p99": 0.00047236999999999995
+        },
+        "invalid_req_count": {
+          "max": 0.0,
+          "mean": 0.0,
+          "median": 0.0,
+          "min": 0.0,
+          "p90": 0.0,
+          "p99": 0.0
+        },
+        "object_id": {
+          "max": 127826436855408.0,
+          "mean": 127824912279347.33,
+          "median": 127824407894960.0,
+          "min": 127824407565600.0,
+          "p90": 127826427585292.8,
+          "p99": 127826435003094.72
+        },
+        "release_ms": {
+          "max": 0.001203,
+          "mean": 0.0005372916666666667,
+          "median": 0.000481,
+          "min": 0.00037,
+          "p90": 0.000628,
+          "p99": 0.0011846
+        },
+        "stage_bookkeeping_sync_ms": {
+          "max": 0.076083,
+          "mean": 0.008752291666666667,
+          "median": 0.0041325,
+          "min": 0.001233,
+          "p90": 0.019652099999999992,
+          "p99": 0.06408205999999998
+        },
+        "stage_pre_async_wrap_sync_ms": {
+          "max": 0.016852,
+          "mean": 0.003325166666666667,
+          "median": 0.0022294999999999997,
+          "min": 0.000702,
+          "p90": 0.0058243999999999995,
+          "p99": 0.0156767
+        },
+        "stage_sample_end_sync_ms": {
+          "max": 6.742238,
+          "mean": 5.0066675,
+          "median": 5.037987,
+          "min": 3.523375,
+          "p90": 6.152021400000001,
+          "p99": 6.67335392
+        },
+        "stage_state_update_sync_ms": {
+          "max": 0.283906,
+          "mean": 0.02592883333333333,
+          "median": 0.012934500000000002,
+          "min": 0.004158,
+          "p90": 0.0291033,
+          "p99": 0.2297582499999999
+        },
+        "sync_ms": {
+          "max": 6.771883,
+          "mean": 5.066182375,
+          "median": 5.062203500000001,
+          "min": 3.648913,
+          "p90": 6.1952256000000006,
+          "p99": 6.719164009999999
+        },
+        "token_list_ms": {
+          "max": 0.036209,
+          "mean": 0.023132833333333335,
+          "median": 0.022202,
+          "min": 0.018535,
+          "p90": 0.026833700000000002,
+          "p99": 0.03435381999999999
+        },
+        "total_ms": {
+          "max": 6.814945,
+          "mean": 5.1136764999999995,
+          "median": 5.106642000000001,
+          "min": 3.695039,
+          "p90": 6.2387107,
+          "p99": 6.765965809999999
+        }
+      }
+    }
+  ],
+  "engine_step_line_count": 24,
+  "engine_step_summary": {
+    "accounted_region_ms": {
+      "max": 14.300802000000001,
+      "mean": 12.932686041666665,
+      "median": 12.719807,
+      "min": 12.113767000000001,
+      "p90": 13.694532200000001,
+      "p99": 14.16612251
+    },
+    "regions_by_mean_elapsed_ms": [
+      {
+        "count": 24,
+        "elapsed_ms": {
+          "max": 14.155469,
+          "mean": 12.774868541666669,
+          "median": 12.555081,
+          "min": 11.973985,
+          "p90": 13.5194258,
+          "p99": 14.01641583
+        },
+        "label": "future_result",
+        "start_offset_ms": {
+          "max": 0.200919,
+          "mean": 0.1705671666666667,
+          "median": 0.166279,
+          "min": 0.142319,
+          "p90": 0.1931134,
+          "p99": 0.19936604
+        }
+      },
+      {
+        "count": 24,
+        "elapsed_ms": {
+          "max": 0.080893,
+          "mean": 0.06755699999999999,
+          "median": 0.0644565,
+          "min": 0.055315,
+          "p90": 0.07826369999999999,
+          "p99": 0.08048498000000001
+        },
+        "label": "execute_model_submit",
+        "start_offset_ms": {
+          "max": 0.075823,
+          "mean": 0.058312499999999996,
+          "median": 0.056542,
+          "min": 0.046728,
+          "p90": 0.0679969,
+          "p99": 0.07512932
+        }
+      },
+      {
+        "count": 24,
+        "elapsed_ms": {
+          "max": 0.061255,
+          "mean": 0.044390708333333334,
+          "median": 0.043276499999999996,
+          "min": 0.034204,
+          "p90": 0.0526755,
+          "p99": 0.0599923
+        },
+        "label": "scheduler_schedule",
+        "start_offset_ms": {
+          "max": 0.003136,
+          "mean": 0.002118708333333333,
+          "median": 0.0020235,
+          "min": 0.001824,
+          "p90": 0.0025057,
+          "p99": 0.0030276699999999997
+        }
+      },
+      {
+        "count": 24,
+        "elapsed_ms": {
+          "max": 0.030037,
+          "mean": 0.02338245833333333,
+          "median": 0.023334,
+          "min": 0.018785,
+          "p90": 0.026911700000000004,
+          "p99": 0.02982494
+        },
+        "label": "sample_tokens_submit",
+        "start_offset_ms": {
+          "max": 0.161124,
+          "mean": 0.13176816666666666,
+          "median": 0.1286475,
+          "min": 0.110128,
+          "p90": 0.1529432,
+          "p99": 0.15984726999999999
+        }
+      },
+      {
+        "count": 24,
+        "elapsed_ms": {
+          "max": 0.025749,
+          "mean": 0.02008695833333333,
+          "median": 0.020644,
+          "min": 0.014637,
+          "p90": 0.024067,
+          "p99": 0.02550474
+        },
+        "label": "scheduler_update_from_output",
+        "start_offset_ms": {
+          "max": 14.313909,
+          "mean": 12.950430166666665,
+          "median": 12.7318845,
+          "min": 12.133395,
+          "p90": 13.709164699999999,
+          "p99": 14.18018999
+        }
+      },
+      {
+        "count": 24,
+        "elapsed_ms": {
+          "max": 0.001613,
+          "mean": 0.0010549583333333333,
+          "median": 0.001052,
+          "min": 0.000742,
+          "p90": 0.001282,
+          "p99": 0.0015877
+        },
+        "label": "process_aborts_queue",
+        "start_offset_ms": {
+          "max": 14.311585,
+          "mean": 12.948333666666665,
+          "median": 12.7296655,
+          "min": 12.131672,
+          "p90": 13.707086999999998,
+          "p99": 14.17792119
+        }
+      },
+      {
+        "count": 24,
+        "elapsed_ms": {
+          "max": 0.000982,
+          "mean": 0.0006587916666666666,
+          "median": 0.000646,
+          "min": 0.000371,
+          "p90": 0.0008632999999999999,
+          "p99": 0.0009589999999999999
+        },
+        "label": "get_grammar_bitmask_for_sample_submit",
+        "start_offset_ms": {
+          "max": 0.158259,
+          "mean": 0.12954895833333332,
+          "median": 0.12627349999999998,
+          "min": 0.108425,
+          "p90": 0.15026820000000002,
+          "p99": 0.1571481
+        }
+      },
+      {
+        "count": 24,
+        "elapsed_ms": {
+          "max": 0.000581,
+          "mean": 0.00036604166666666664,
+          "median": 0.000351,
+          "min": 0.00028,
+          "p90": 0.00045129999999999997,
+          "p99": 0.0005626
+        },
+        "label": "queue_pop",
+        "start_offset_ms": {
+          "max": 0.189177,
+          "mean": 0.15828820833333332,
+          "median": 0.1541415,
+          "min": 0.131658,
+          "p90": 0.17900509999999997,
+          "p99": 0.18731032
+        }
+      },
+      {
+        "count": 24,
+        "elapsed_ms": {
+          "max": 0.000411,
+          "mean": 0.00032058333333333336,
+          "median": 0.0003155,
+          "min": 0.00027,
+          "p90": 0.00035769999999999997,
+          "p99": 0.0004041
+        },
+        "label": "queue_appendleft",
+        "start_offset_ms": {
+          "max": 0.187053,
+          "mean": 0.15670316666666667,
+          "median": 0.1525735,
+          "min": 0.130216,
+          "p90": 0.1771371,
+          "p99": 0.18529004999999998
+        }
+      }
+    ],
+    "status_counts": {
+      "ok": 24
+    },
+    "step_count": 24,
+    "total_ms": {
+      "max": 14.340639,
+      "mean": 12.976371166666667,
+      "median": 12.7634345,
+      "min": 12.153683,
+      "p90": 13.737414000000001,
+      "p99": 14.20718265
+    },
+    "unaccounted_ms": {
+      "max": 0.052620000000001,
+      "mean": 0.04368512500000018,
+      "median": 0.044161999999999146,
+      "min": 0.03727199999999975,
+      "p90": 0.04856120000000086,
+      "p99": 0.052124580000000795
+    }
+  },
+  "engine_step_summary_by_bucket": [
+    {
+      "first_line": 280,
+      "first_step": 72,
+      "group": {
+        "batch_queue_len_end": 1,
+        "batch_queue_len_start": 1,
+        "decode_bucket": 1,
+        "is_pure_decode": true,
+        "label": "engine_core.step_with_batch_queue",
+        "num_reqs": 1,
+        "popped_num_reqs": 1,
+        "return_kind": "outputs",
+        "scheduled_num_reqs": 1,
+        "status": "ok",
+        "total_num_scheduled_tokens": 1
+      },
+      "last_line": 648,
+      "last_step": 256,
+      "max_total_ms": 14.340639,
+      "mean_total_ms": 12.976371166666667,
+      "mean_unaccounted_ms": 0.04368512500000018,
+      "median_total_ms": 12.7634345,
+      "p90_total_ms": 13.737414000000001,
+      "step_count": 24,
+      "top_regions_by_mean_elapsed_ms": [
+        {
+          "label": "future_result",
+          "max_elapsed_ms": 14.155469,
+          "mean_elapsed_ms": 12.774868541666669,
+          "median_elapsed_ms": 12.555081,
+          "p90_elapsed_ms": 13.5194258
+        },
+        {
+          "label": "execute_model_submit",
+          "max_elapsed_ms": 0.080893,
+          "mean_elapsed_ms": 0.06755699999999999,
+          "median_elapsed_ms": 0.0644565,
+          "p90_elapsed_ms": 0.07826369999999999
+        },
+        {
+          "label": "scheduler_schedule",
+          "max_elapsed_ms": 0.061255,
+          "mean_elapsed_ms": 0.044390708333333334,
+          "median_elapsed_ms": 0.043276499999999996,
+          "p90_elapsed_ms": 0.0526755
+        },
+        {
+          "label": "sample_tokens_submit",
+          "max_elapsed_ms": 0.030037,
+          "mean_elapsed_ms": 0.02338245833333333,
+          "median_elapsed_ms": 0.023334,
+          "p90_elapsed_ms": 0.026911700000000004
+        },
+        {
+          "label": "scheduler_update_from_output",
+          "max_elapsed_ms": 0.025749,
+          "mean_elapsed_ms": 0.02008695833333333,
+          "median_elapsed_ms": 0.020644,
+          "p90_elapsed_ms": 0.024067
+        },
+        {
+          "label": "process_aborts_queue",
+          "max_elapsed_ms": 0.001613,
+          "mean_elapsed_ms": 0.0010549583333333333,
+          "median_elapsed_ms": 0.001052,
+          "p90_elapsed_ms": 0.001282
+        },
+        {
+          "label": "get_grammar_bitmask_for_sample_submit",
+          "max_elapsed_ms": 0.000982,
+          "mean_elapsed_ms": 0.0006587916666666666,
+          "median_elapsed_ms": 0.000646,
+          "p90_elapsed_ms": 0.0008632999999999999
+        },
+        {
+          "label": "queue_pop",
+          "max_elapsed_ms": 0.000581,
+          "mean_elapsed_ms": 0.00036604166666666664,
+          "median_elapsed_ms": 0.000351,
+          "p90_elapsed_ms": 0.00045129999999999997
+        }
+      ]
+    }
+  ],
+  "executor_rpc_line_count": 112,
+  "executor_rpc_summary": [
+    {
+      "event_count": 56,
+      "first_call_id": 72,
+      "first_line": 215,
+      "group": {
+        "event": "enqueue",
+        "method": "sample_tokens",
+        "output_rank": 0
+      },
+      "last_call_id": 512,
+      "last_line": 649,
+      "metric_summaries": {
+        "enqueue_ms": {
+          "max": 0.025889,
+          "mean": 0.019532053571428572,
+          "median": 0.0196125,
+          "min": 0.013725,
+          "p90": 0.023194,
+          "p99": 0.025309850000000002
+        }
+      }
+    },
+    {
+      "event_count": 56,
+      "first_call_id": 72,
+      "first_line": 219,
+      "group": {
+        "event": "response_dequeue",
+        "method": "sample_tokens",
+        "output_rank": 0
+      },
+      "last_call_id": 512,
+      "last_line": 651,
+      "metric_summaries": {
+        "response_count": {
+          "max": 1.0,
+          "mean": 1.0,
+          "median": 1.0,
+          "min": 1.0,
+          "p90": 1.0,
+          "p99": 1.0
+        },
+        "response_wait_ms": {
+          "max": 7.921371,
+          "mean": 6.177924232142857,
+          "median": 6.373336,
+          "min": 3.682907,
+          "p90": 7.2414439999999995,
+          "p99": 7.767862150000001
+        }
+      }
+    }
+  ],
+  "line_count": 658,
+  "post_lines": [
+    213,
+    272
+  ],
+  "rpc_call_summary": {
+    "by_method": [
+      {
+        "call_count": 56,
+        "method": "sample_tokens",
+        "metric_summaries": {
+          "executor_enqueue_ms": {
+            "max": 0.025889,
+            "mean": 0.019532053571428572,
+            "median": 0.0196125,
+            "min": 0.013725,
+            "p90": 0.023194,
+            "p99": 0.025309850000000002
+          },
+          "executor_response_wait_ms": {
+            "max": 7.921371,
+            "mean": 6.177924232142857,
+            "median": 6.373336,
+            "min": 3.682907,
+            "p90": 7.2414439999999995,
+            "p99": 7.767862150000001
+          },
+          "max_driver_enqueue_to_worker_dequeue_ms": {
+            "max": 24.938788,
+            "mean": 21.45120980357143,
+            "median": 21.382231,
+            "min": 18.995438,
+            "p90": 22.782581999999998,
+            "p99": 24.6912946
+          },
+          "max_output_enqueue_ms": {
+            "max": 7.153893,
+            "mean": 5.302386053571429,
+            "median": 5.5675565,
+            "min": 2.864503,
+            "p90": 6.4382895,
+            "p99": 7.021373800000001
+          },
+          "max_worker_after_dequeue_ms": {
+            "max": 7.548068,
+            "mean": 6.093280339285714,
+            "median": 6.0221585,
+            "min": 4.629592,
+            "p90": 6.8147235,
+            "p99": 7.528015
+          },
+          "max_worker_func_ms": {
+            "max": 7.53899,
+            "mean": 6.08629425,
+            "median": 6.015586,
+            "min": 4.621647,
+            "p90": 6.8073145,
+            "p99": 7.5179899
+          },
+          "min_worker_func_ms": {
+            "max": 3.231746,
+            "mean": 1.0408446071428572,
+            "median": 0.9678,
+            "min": 0.81148,
+            "p90": 1.139499,
+            "p99": 2.848547250000002
+          },
+          "output_event_count": {
+            "max": 1.0,
+            "mean": 1.0,
+            "median": 1.0,
+            "min": 1.0,
+            "p90": 1.0,
+            "p99": 1.0
+          },
+          "response_wait_minus_max_worker_after_dequeue_ms": {
+            "max": 1.9307309999999998,
+            "mean": 0.0846438928571429,
+            "median": 0.3083554999999998,
+            "min": -2.7793329999999994,
+            "p90": 1.4671880000000002,
+            "p99": 1.8758476000000006
+          },
+          "response_wait_minus_max_worker_func_ms": {
+            "max": 1.9385759999999994,
+            "mean": 0.09162998214285714,
+            "median": 0.3153889999999997,
+            "min": -2.7702549999999997,
+            "p90": 1.474091,
+            "p99": 1.8836821499999998
+          },
+          "worker_count": {
+            "max": 4.0,
+            "mean": 4.0,
+            "median": 4.0,
+            "min": 4.0,
+            "p90": 4.0,
+            "p99": 4.0
+          },
+          "worker_func_skew_ms": {
+            "max": 6.603555,
+            "mean": 5.045449642857143,
+            "median": 4.95943,
+            "min": 2.960955,
+            "p90": 5.865628,
+            "p99": 6.5176483
+          }
+        }
+      }
+    ],
+    "call_count": 56,
+    "calls": [
+      {
+        "call_id": 72,
+        "executor_enqueue_ms": 0.024836,
+        "executor_response_wait_ms": 4.768735,
+        "max_driver_enqueue_to_worker_dequeue_ms": 22.13456,
+        "max_output_enqueue_ms": 3.830285,
+        "max_worker_after_dequeue_ms": 7.548068,
+        "max_worker_func_ms": 7.53899,
+        "method": "sample_tokens",
+        "min_worker_func_ms": 1.091629,
+        "output_event_count": 1,
+        "response_wait_minus_max_worker_after_dequeue_ms": -2.7793329999999994,
+        "response_wait_minus_max_worker_func_ms": -2.7702549999999997,
+        "scheduler": {},
+        "worker_count": 4,
+        "worker_func_skew_ms": 6.447361
+      },
+      {
+        "call_id": 80,
+        "executor_enqueue_ms": 0.018835,
+        "executor_response_wait_ms": 4.89381,
+        "max_driver_enqueue_to_worker_dequeue_ms": 21.923452,
+        "max_output_enqueue_ms": 4.12477,
+        "max_worker_after_dequeue_ms": 5.75265,
+        "max_worker_func_ms": 5.743744,
+        "method": "sample_tokens",
+        "min_worker_func_ms": 1.046955,
+        "output_event_count": 1,
+        "response_wait_minus_max_worker_after_dequeue_ms": -0.8588399999999998,
+        "response_wait_minus_max_worker_func_ms": -0.8499340000000002,
+        "scheduler": {},
+        "worker_count": 4,
+        "worker_func_skew_ms": 4.696789000000001
+      },
+      {
+        "call_id": 88,
+        "executor_enqueue_ms": 0.020218,
+        "executor_response_wait_ms": 6.839801,
+        "max_driver_enqueue_to_worker_dequeue_ms": 21.554656,
+        "max_output_enqueue_ms": 6.145321,
+        "max_worker_after_dequeue_ms": 6.024444,
+        "max_worker_func_ms": 6.017961,
+        "method": "sample_tokens",
+        "min_worker_func_ms": 0.814005,
+        "output_event_count": 1,
+        "response_wait_minus_max_worker_after_dequeue_ms": 0.8153569999999997,
+        "response_wait_minus_max_worker_func_ms": 0.8218399999999999,
+        "scheduler": {},
+        "worker_count": 4,
+        "worker_func_skew_ms": 5.203956
+      },
+      {
+        "call_id": 96,
+        "executor_enqueue_ms": 0.021341,
+        "executor_response_wait_ms": 7.642264,
+        "max_driver_enqueue_to_worker_dequeue_ms": 22.801018,
+        "max_output_enqueue_ms": 6.461388,
+        "max_worker_after_dequeue_ms": 6.02299,
+        "max_worker_func_ms": 6.016107,
+        "method": "sample_tokens",
+        "min_worker_func_ms": 1.323777,
+        "output_event_count": 1,
+        "response_wait_minus_max_worker_after_dequeue_ms": 1.6192739999999999,
+        "response_wait_minus_max_worker_func_ms": 1.626157,
+        "scheduler": {},
+        "worker_count": 4,
+        "worker_func_skew_ms": 4.69233
+      },
+      {
+        "call_id": 104,
+        "executor_enqueue_ms": 0.020469,
+        "executor_response_wait_ms": 5.190932,
+        "max_driver_enqueue_to_worker_dequeue_ms": 21.390477,
+        "max_output_enqueue_ms": 4.291355,
+        "max_worker_after_dequeue_ms": 6.339408,
+        "max_worker_func_ms": 6.333155,
+        "method": "sample_tokens",
+        "min_worker_func_ms": 1.047296,
+        "output_event_count": 1,
+        "response_wait_minus_max_worker_after_dequeue_ms": -1.1484759999999996,
+        "response_wait_minus_max_worker_func_ms": -1.1422229999999995,
+        "scheduler": {},
+        "worker_count": 4,
+        "worker_func_skew_ms": 5.285858999999999
+      },
+      {
+        "call_id": 112,
+        "executor_enqueue_ms": 0.02151,
+        "executor_response_wait_ms": 5.622205,
+        "max_driver_enqueue_to_worker_dequeue_ms": 20.771048,
+        "max_output_enqueue_ms": 4.671251,
+        "max_worker_after_dequeue_ms": 6.471888,
+        "max_worker_func_ms": 6.464213,
+        "method": "sample_tokens",
+        "min_worker_func_ms": 1.122527,
+        "output_event_count": 1,
+        "response_wait_minus_max_worker_after_dequeue_ms": -0.8496829999999997,
+        "response_wait_minus_max_worker_func_ms": -0.8420079999999999,
+        "scheduler": {},
+        "worker_count": 4,
+        "worker_func_skew_ms": 5.341686
+      },
+      {
+        "call_id": 120,
+        "executor_enqueue_ms": 0.020589,
+        "executor_response_wait_ms": 6.980627,
+        "max_driver_enqueue_to_worker_dequeue_ms": 22.875477,
+        "max_output_enqueue_ms": 6.159548,
+        "max_worker_after_dequeue_ms": 6.777383,
+        "max_worker_func_ms": 6.769528,
+        "method": "sample_tokens",
+        "min_worker_func_ms": 0.955542,
+        "output_event_count": 1,
+        "response_wait_minus_max_worker_after_dequeue_ms": 0.20324399999999976,
+        "response_wait_minus_max_worker_func_ms": 0.21109899999999993,
+        "scheduler": {},
+        "worker_count": 4,
+        "worker_func_skew_ms": 5.813986
+      },
+      {
+        "call_id": 128,
+        "executor_enqueue_ms": 0.019848,
+        "executor_response_wait_ms": 6.389191,
+        "max_driver_enqueue_to_worker_dequeue_ms": 21.85855,
+        "max_output_enqueue_ms": 5.566048,
+        "max_worker_after_dequeue_ms": 5.724908,
+        "max_worker_func_ms": 5.717675,
+        "method": "sample_tokens",
+        "min_worker_func_ms": 0.980089,
+        "output_event_count": 1,
+        "response_wait_minus_max_worker_after_dequeue_ms": 0.6642830000000002,
+        "response_wait_minus_max_worker_func_ms": 0.6715160000000004,
+        "scheduler": {},
+        "worker_count": 4,
+        "worker_func_skew_ms": 4.737586
+      },
+      {
+        "call_id": 136,
+        "executor_enqueue_ms": 0.019927,
+        "executor_response_wait_ms": 6.696661,
+        "max_driver_enqueue_to_worker_dequeue_ms": 20.36379,
+        "max_output_enqueue_ms": 5.956395,
+        "max_worker_after_dequeue_ms": 6.277461,
+        "max_worker_func_ms": 6.271539,
+        "method": "sample_tokens",
+        "min_worker_func_ms": 0.873267,
+        "output_event_count": 1,
+        "response_wait_minus_max_worker_after_dequeue_ms": 0.4192,
+        "response_wait_minus_max_worker_func_ms": 0.425122,
+        "scheduler": {},
+        "worker_count": 4,
+        "worker_func_skew_ms": 5.3982719999999995
+      },
+      {
+        "call_id": 144,
+        "executor_enqueue_ms": 0.016681,
+        "executor_response_wait_ms": 4.923326,
+        "max_driver_enqueue_to_worker_dequeue_ms": 20.662002,
+        "max_output_enqueue_ms": 4.131432,
+        "max_worker_after_dequeue_ms": 5.89576,
+        "max_worker_func_ms": 5.889678,
+        "method": "sample_tokens",
+        "min_worker_func_ms": 1.01298,
+        "output_event_count": 1,
+        "response_wait_minus_max_worker_after_dequeue_ms": -0.9724339999999998,
+        "response_wait_minus_max_worker_func_ms": -0.9663519999999997,
+        "scheduler": {},
+        "worker_count": 4,
+        "worker_func_skew_ms": 4.876698
+      },
+      {
+        "call_id": 152,
+        "executor_enqueue_ms": 0.016071,
+        "executor_response_wait_ms": 5.068229,
+        "max_driver_enqueue_to_worker_dequeue_ms": 20.104181,
+        "max_output_enqueue_ms": 4.319657,
+        "max_worker_after_dequeue_ms": 6.068306,
+        "max_worker_func_ms": 6.062295,
+        "method": "sample_tokens",
+        "min_worker_func_ms": 0.986962,
+        "output_event_count": 1,
+        "response_wait_minus_max_worker_after_dequeue_ms": -1.000077,
+        "response_wait_minus_max_worker_func_ms": -0.9940660000000001,
+        "scheduler": {},
+        "worker_count": 4,
+        "worker_func_skew_ms": 5.075333
+      },
+      {
+        "call_id": 160,
+        "executor_enqueue_ms": 0.023224,
+        "executor_response_wait_ms": 6.669479,
+        "max_driver_enqueue_to_worker_dequeue_ms": 20.933655,
+        "max_output_enqueue_ms": 6.003133,
+        "max_worker_after_dequeue_ms": 5.677569,
+        "max_worker_func_ms": 5.670927,
+        "method": "sample_tokens",
+        "min_worker_func_ms": 0.858049,
+        "output_event_count": 1,
+        "response_wait_minus_max_worker_after_dequeue_ms": 0.9919099999999998,
+        "response_wait_minus_max_worker_func_ms": 0.9985520000000001,
+        "scheduler": {},
+        "worker_count": 4,
+        "worker_func_skew_ms": 4.8128779999999995
+      },
+      {
+        "call_id": 168,
+        "executor_enqueue_ms": 0.017153,
+        "executor_response_wait_ms": 6.307768,
+        "max_driver_enqueue_to_worker_dequeue_ms": 20.345175,
+        "max_output_enqueue_ms": 5.569065,
+        "max_worker_after_dequeue_ms": 5.871495,
+        "max_worker_func_ms": 5.86391,
+        "method": "sample_tokens",
+        "min_worker_func_ms": 0.875521,
+        "output_event_count": 1,
+        "response_wait_minus_max_worker_after_dequeue_ms": 0.4362729999999999,
+        "response_wait_minus_max_worker_func_ms": 0.44385800000000053,
+        "scheduler": {},
+        "worker_count": 4,
+        "worker_func_skew_ms": 4.988389
+      },
+      {
+        "call_id": 176,
+        "executor_enqueue_ms": 0.019427,
+        "executor_response_wait_ms": 6.761483,
+        "max_driver_enqueue_to_worker_dequeue_ms": 20.690076,
+        "max_output_enqueue_ms": 5.798287,
+        "max_worker_after_dequeue_ms": 6.47316,
+        "max_worker_func_ms": 6.465585,
+        "method": "sample_tokens",
+        "min_worker_func_ms": 1.07615,
+        "output_event_count": 1,
+        "response_wait_minus_max_worker_after_dequeue_ms": 0.2883230000000001,
+        "response_wait_minus_max_worker_func_ms": 0.2958980000000002,
+        "scheduler": {},
+        "worker_count": 4,
+        "worker_func_skew_ms": 5.389435
+      },
+      {
+        "call_id": 184,
+        "executor_enqueue_ms": 0.020459,
+        "executor_response_wait_ms": 5.522667,
+        "max_driver_enqueue_to_worker_dequeue_ms": 20.387865,
+        "max_output_enqueue_ms": 4.909179,
+        "max_worker_after_dequeue_ms": 5.747872,
+        "max_worker_func_ms": 5.741951,
+        "method": "sample_tokens",
+        "min_worker_func_ms": 0.81148,
+        "output_event_count": 1,
+        "response_wait_minus_max_worker_after_dequeue_ms": -0.22520499999999988,
+        "response_wait_minus_max_worker_func_ms": -0.21928400000000003,
+        "scheduler": {},
+        "worker_count": 4,
+        "worker_func_skew_ms": 4.930471000000001
+      },
+      {
+        "call_id": 192,
+        "executor_enqueue_ms": 0.02171,
+        "executor_response_wait_ms": 6.811558,
+        "max_driver_enqueue_to_worker_dequeue_ms": 22.444534,
+        "max_output_enqueue_ms": 6.076431,
+        "max_worker_after_dequeue_ms": 5.440923,
+        "max_worker_func_ms": 5.433819,
+        "method": "sample_tokens",
+        "min_worker_func_ms": 0.868037,
+        "output_event_count": 1,
+        "response_wait_minus_max_worker_after_dequeue_ms": 1.370635,
+        "response_wait_minus_max_worker_func_ms": 1.377739,
+        "scheduler": {},
+        "worker_count": 4,
+        "worker_func_skew_ms": 4.565782
+      },
+      {
+        "call_id": 200,
+        "executor_enqueue_ms": 0.020018,
+        "executor_response_wait_ms": 5.251866,
+        "max_driver_enqueue_to_worker_dequeue_ms": 20.914369,
+        "max_output_enqueue_ms": 4.396503,
+        "max_worker_after_dequeue_ms": 5.950124,
+        "max_worker_func_ms": 5.943281,
+        "method": "sample_tokens",
+        "min_worker_func_ms": 1.0286,
+        "output_event_count": 1,
+        "response_wait_minus_max_worker_after_dequeue_ms": -0.698258,
+        "response_wait_minus_max_worker_func_ms": -0.6914150000000001,
+        "scheduler": {},
+        "worker_count": 4,
+        "worker_func_skew_ms": 4.914681
+      },
+      {
+        "call_id": 208,
+        "executor_enqueue_ms": 0.020278,
+        "executor_response_wait_ms": 6.110015,
+        "max_driver_enqueue_to_worker_dequeue_ms": 23.471752,
+        "max_output_enqueue_ms": 5.29604,
+        "max_worker_after_dequeue_ms": 5.426035,
+        "max_worker_func_ms": 5.416907,
+        "method": "sample_tokens",
+        "min_worker_func_ms": 0.989817,
+        "output_event_count": 1,
+        "response_wait_minus_max_worker_after_dequeue_ms": 0.68398,
+        "response_wait_minus_max_worker_func_ms": 0.6931079999999996,
+        "scheduler": {},
+        "worker_count": 4,
+        "worker_func_skew_ms": 4.42709
+      },
+      {
+        "call_id": 216,
+        "executor_enqueue_ms": 0.016992,
+        "executor_response_wait_ms": 5.9163,
+        "max_driver_enqueue_to_worker_dequeue_ms": 20.123026,
+        "max_output_enqueue_ms": 5.185881,
+        "max_worker_after_dequeue_ms": 5.532906,
+        "max_worker_func_ms": 5.526694,
+        "method": "sample_tokens",
+        "min_worker_func_ms": 0.936025,
+        "output_event_count": 1,
+        "response_wait_minus_max_worker_after_dequeue_ms": 0.383394,
+        "response_wait_minus_max_worker_func_ms": 0.3896059999999997,
+        "scheduler": {},
+        "worker_count": 4,
+        "worker_func_skew_ms": 4.590669
+      },
+      {
+        "call_id": 224,
+        "executor_enqueue_ms": 0.021841,
+        "executor_response_wait_ms": 6.065861,
+        "max_driver_enqueue_to_worker_dequeue_ms": 19.980667,
+        "max_output_enqueue_ms": 5.304445,
+        "max_worker_after_dequeue_ms": 5.754293,
+        "max_worker_func_ms": 5.748182,
+        "method": "sample_tokens",
+        "min_worker_func_ms": 0.897532,
+        "output_event_count": 1,
+        "response_wait_minus_max_worker_after_dequeue_ms": 0.3115680000000003,
+        "response_wait_minus_max_worker_func_ms": 0.31767900000000004,
+        "scheduler": {},
+        "worker_count": 4,
+        "worker_func_skew_ms": 4.85065
+      },
+      {
+        "call_id": 232,
+        "executor_enqueue_ms": 0.022272,
+        "executor_response_wait_ms": 7.462445,
+        "max_driver_enqueue_to_worker_dequeue_ms": 21.336274,
+        "max_output_enqueue_ms": 6.694307,
+        "max_worker_after_dequeue_ms": 7.511608,
+        "max_worker_func_ms": 7.500808,
+        "method": "sample_tokens",
+        "min_worker_func_ms": 0.897253,
+        "output_event_count": 1,
+        "response_wait_minus_max_worker_after_dequeue_ms": -0.04916300000000007,
+        "response_wait_minus_max_worker_func_ms": -0.03836300000000037,
+        "scheduler": {},
+        "worker_count": 4,
+        "worker_func_skew_ms": 6.603555
+      },
+      {
+        "call_id": 240,
+        "executor_enqueue_ms": 0.024105,
+        "executor_response_wait_ms": 3.682907,
+        "max_driver_enqueue_to_worker_dequeue_ms": 22.554892,
+        "max_output_enqueue_ms": 2.864503,
+        "max_worker_after_dequeue_ms": 6.333686,
+        "max_worker_func_ms": 6.327454,
+        "method": "sample_tokens",
+        "min_worker_func_ms": 1.043358,
+        "output_event_count": 1,
+        "response_wait_minus_max_worker_after_dequeue_ms": -2.650779,
+        "response_wait_minus_max_worker_func_ms": -2.644547,
+        "scheduler": {},
+        "worker_count": 4,
+        "worker_func_skew_ms": 5.284096
+      },
+      {
+        "call_id": 248,
+        "executor_enqueue_ms": 0.020439,
+        "executor_response_wait_ms": 6.357481,
+        "max_driver_enqueue_to_worker_dequeue_ms": 20.412412,
+        "max_output_enqueue_ms": 5.628556,
+        "max_worker_after_dequeue_ms": 5.90641,
+        "max_worker_func_ms": 5.900099,
+        "method": "sample_tokens",
+        "min_worker_func_ms": 0.872917,
+        "output_event_count": 1,
+        "response_wait_minus_max_worker_after_dequeue_ms": 0.4510709999999998,
+        "response_wait_minus_max_worker_func_ms": 0.45738199999999996,
+        "scheduler": {},
+        "worker_count": 4,
+        "worker_func_skew_ms": 5.027182
+      },
+      {
+        "call_id": 256,
+        "executor_enqueue_ms": 0.019226,
+        "executor_response_wait_ms": 5.208254,
+        "max_driver_enqueue_to_worker_dequeue_ms": 18.995438,
+        "max_output_enqueue_ms": 4.480371,
+        "max_worker_after_dequeue_ms": 5.530882,
+        "max_worker_func_ms": 5.525292,
+        "method": "sample_tokens",
+        "min_worker_func_ms": 0.967364,
+        "output_event_count": 1,
+        "response_wait_minus_max_worker_after_dequeue_ms": -0.3226279999999999,
+        "response_wait_minus_max_worker_func_ms": -0.31703800000000015,
+        "scheduler": {},
+        "worker_count": 4,
+        "worker_func_skew_ms": 4.557928
+      },
+      {
+        "call_id": 264,
+        "executor_enqueue_ms": 0.017844,
+        "executor_response_wait_ms": 5.855094,
+        "max_driver_enqueue_to_worker_dequeue_ms": 19.72238,
+        "max_output_enqueue_ms": 5.087356,
+        "max_worker_after_dequeue_ms": 5.864081,
+        "max_worker_func_ms": 5.857569,
+        "method": "sample_tokens",
+        "min_worker_func_ms": 0.977624,
+        "output_event_count": 1,
+        "response_wait_minus_max_worker_after_dequeue_ms": -0.008986999999999412,
+        "response_wait_minus_max_worker_func_ms": -0.002474999999999561,
+        "scheduler": {},
+        "worker_count": 4,
+        "worker_func_skew_ms": 4.879944999999999
+      },
+      {
+        "call_id": 272,
+        "executor_enqueue_ms": 0.01636,
+        "executor_response_wait_ms": 4.344094,
+        "max_driver_enqueue_to_worker_dequeue_ms": 20.392593,
+        "max_output_enqueue_ms": 3.476487,
+        "max_worker_after_dequeue_ms": 5.842911,
+        "max_worker_func_ms": 5.835667,
+        "method": "sample_tokens",
+        "min_worker_func_ms": 1.035313,
+        "output_event_count": 1,
+        "response_wait_minus_max_worker_after_dequeue_ms": -1.4988169999999998,
+        "response_wait_minus_max_worker_func_ms": -1.4915729999999998,
+        "scheduler": {},
+        "worker_count": 4,
+        "worker_func_skew_ms": 4.8003540000000005
+      },
+      {
+        "call_id": 280,
+        "executor_enqueue_ms": 0.025889,
+        "executor_response_wait_ms": 7.921371,
+        "max_driver_enqueue_to_worker_dequeue_ms": 24.4888,
+        "max_output_enqueue_ms": 7.153893,
+        "max_worker_after_dequeue_ms": 6.852064,
+        "max_worker_func_ms": 6.845101,
+        "method": "sample_tokens",
+        "min_worker_func_ms": 0.922109,
+        "output_event_count": 1,
+        "response_wait_minus_max_worker_after_dequeue_ms": 1.0693069999999993,
+        "response_wait_minus_max_worker_func_ms": 1.07627,
+        "scheduler": {},
+        "worker_count": 4,
+        "worker_func_skew_ms": 5.922992
+      },
+      {
+        "call_id": 288,
+        "executor_enqueue_ms": 0.022292,
+        "executor_response_wait_ms": 5.569746,
+        "max_driver_enqueue_to_worker_dequeue_ms": 20.277868,
+        "max_output_enqueue_ms": 4.72373,
+        "max_worker_after_dequeue_ms": 6.298931,
+        "max_worker_func_ms": 6.292528,
+        "method": "sample_tokens",
+        "min_worker_func_ms": 1.018411,
+        "output_event_count": 1,
+        "response_wait_minus_max_worker_after_dequeue_ms": -0.7291849999999993,
+        "response_wait_minus_max_worker_func_ms": -0.7227819999999996,
+        "scheduler": {},
+        "worker_count": 4,
+        "worker_func_skew_ms": 5.274117
+      },
+      {
+        "call_id": 296,
+        "executor_enqueue_ms": 0.019477,
+        "executor_response_wait_ms": 6.420891,
+        "max_driver_enqueue_to_worker_dequeue_ms": 20.038626,
+        "max_output_enqueue_ms": 5.72017,
+        "max_worker_after_dequeue_ms": 6.371528,
+        "max_worker_func_ms": 6.362011,
+        "method": "sample_tokens",
+        "min_worker_func_ms": 0.894888,
+        "output_event_count": 1,
+        "response_wait_minus_max_worker_after_dequeue_ms": 0.04936300000000049,
+        "response_wait_minus_max_worker_func_ms": 0.058880000000000265,
+        "scheduler": {},
+        "worker_count": 4,
+        "worker_func_skew_ms": 5.467123
+      },
+      {
+        "call_id": 304,
+        "executor_enqueue_ms": 0.014488,
+        "executor_response_wait_ms": 4.543379,
+        "max_driver_enqueue_to_worker_dequeue_ms": 20.069184,
+        "max_output_enqueue_ms": 3.675663,
+        "max_worker_after_dequeue_ms": 5.945384,
+        "max_worker_func_ms": 5.939383,
+        "method": "sample_tokens",
+        "min_worker_func_ms": 1.016307,
+        "output_event_count": 1,
+        "response_wait_minus_max_worker_after_dequeue_ms": -1.402005,
+        "response_wait_minus_max_worker_func_ms": -1.3960040000000005,
+        "scheduler": {},
+        "worker_count": 4,
+        "worker_func_skew_ms": 4.923076
+      },
+      {
+        "call_id": 312,
+        "executor_enqueue_ms": 0.016261,
+        "executor_response_wait_ms": 6.596432,
+        "max_driver_enqueue_to_worker_dequeue_ms": 20.051721,
+        "max_output_enqueue_ms": 5.840717,
+        "max_worker_after_dequeue_ms": 5.93258,
+        "max_worker_func_ms": 5.926709,
+        "method": "sample_tokens",
+        "min_worker_func_ms": 0.892964,
+        "output_event_count": 1,
+        "response_wait_minus_max_worker_after_dequeue_ms": 0.6638520000000003,
+        "response_wait_minus_max_worker_func_ms": 0.6697230000000003,
+        "scheduler": {},
+        "worker_count": 4,
+        "worker_func_skew_ms": 5.033745
+      },
+      {
+        "call_id": 320,
+        "executor_enqueue_ms": 0.016431,
+        "executor_response_wait_ms": 5.373926,
+        "max_driver_enqueue_to_worker_dequeue_ms": 20.995612,
+        "max_output_enqueue_ms": 3.994535,
+        "max_worker_after_dequeue_ms": 6.061483,
+        "max_worker_func_ms": 6.055472,
+        "method": "sample_tokens",
+        "min_worker_func_ms": 1.536999,
+        "output_event_count": 1,
+        "response_wait_minus_max_worker_after_dequeue_ms": -0.687557,
+        "response_wait_minus_max_worker_func_ms": -0.681546,
+        "scheduler": {},
+        "worker_count": 4,
+        "worker_func_skew_ms": 4.518473
+      },
+      {
+        "call_id": 328,
+        "executor_enqueue_ms": 0.017824,
+        "executor_response_wait_ms": 7.026513,
+        "max_driver_enqueue_to_worker_dequeue_ms": 22.394139,
+        "max_output_enqueue_ms": 6.292278,
+        "max_worker_after_dequeue_ms": 5.095782,
+        "max_worker_func_ms": 5.087937,
+        "method": "sample_tokens",
+        "min_worker_func_ms": 0.873667,
+        "output_event_count": 1,
+        "response_wait_minus_max_worker_after_dequeue_ms": 1.9307309999999998,
+        "response_wait_minus_max_worker_func_ms": 1.9385759999999994,
+        "scheduler": {},
+        "worker_count": 4,
+        "worker_func_skew_ms": 4.21427
+      },
+      {
+        "call_id": 336,
+        "executor_enqueue_ms": 0.02133,
+        "executor_response_wait_ms": 7.562494,
+        "max_driver_enqueue_to_worker_dequeue_ms": 22.764146,
+        "max_output_enqueue_ms": 6.912949,
+        "max_worker_after_dequeue_ms": 6.491273,
+        "max_worker_func_ms": 6.48382,
+        "method": "sample_tokens",
+        "min_worker_func_ms": 0.859371,
+        "output_event_count": 1,
+        "response_wait_minus_max_worker_after_dequeue_ms": 1.0712210000000004,
+        "response_wait_minus_max_worker_func_ms": 1.0786740000000004,
+        "scheduler": {},
+        "worker_count": 4,
+        "worker_func_skew_ms": 5.624448999999999
+      },
+      {
+        "call_id": 344,
+        "executor_enqueue_ms": 0.019167,
+        "executor_response_wait_ms": 6.983092,
+        "max_driver_enqueue_to_worker_dequeue_ms": 22.114742,
+        "max_output_enqueue_ms": 6.239468,
+        "max_worker_after_dequeue_ms": 5.90629,
+        "max_worker_func_ms": 5.899086,
+        "method": "sample_tokens",
+        "min_worker_func_ms": 0.875011,
+        "output_event_count": 1,
+        "response_wait_minus_max_worker_after_dequeue_ms": 1.0768019999999998,
+        "response_wait_minus_max_worker_func_ms": 1.0840060000000005,
+        "scheduler": {},
+        "worker_count": 4,
+        "worker_func_skew_ms": 5.024075
+      },
+      {
+        "call_id": 352,
+        "executor_enqueue_ms": 0.018034,
+        "executor_response_wait_ms": 7.151559,
+        "max_driver_enqueue_to_worker_dequeue_ms": 21.373985,
+        "max_output_enqueue_ms": 4.823758,
+        "max_worker_after_dequeue_ms": 6.715676,
+        "max_worker_func_ms": 6.708814,
+        "method": "sample_tokens",
+        "min_worker_func_ms": 2.535021,
+        "output_event_count": 1,
+        "response_wait_minus_max_worker_after_dequeue_ms": 0.4358829999999996,
+        "response_wait_minus_max_worker_func_ms": 0.4427449999999995,
+        "scheduler": {},
+        "worker_count": 4,
+        "worker_func_skew_ms": 4.173793
+      },
+      {
+        "call_id": 360,
+        "executor_enqueue_ms": 0.018255,
+        "executor_response_wait_ms": 6.257833,
+        "max_driver_enqueue_to_worker_dequeue_ms": 21.267855,
+        "max_output_enqueue_ms": 5.596586,
+        "max_worker_after_dequeue_ms": 5.606805,
+        "max_worker_func_ms": 5.59869,
+        "method": "sample_tokens",
+        "min_worker_func_ms": 0.893265,
+        "output_event_count": 1,
+        "response_wait_minus_max_worker_after_dequeue_ms": 0.6510280000000002,
+        "response_wait_minus_max_worker_func_ms": 0.6591429999999994,
+        "scheduler": {},
+        "worker_count": 4,
+        "worker_func_skew_ms": 4.705425
+      },
+      {
+        "call_id": 368,
+        "executor_enqueue_ms": 0.017122,
+        "executor_response_wait_ms": 6.081391,
+        "max_driver_enqueue_to_worker_dequeue_ms": 19.389231,
+        "max_output_enqueue_ms": 5.314885,
+        "max_worker_after_dequeue_ms": 5.778389,
+        "max_worker_func_ms": 5.771235,
+        "method": "sample_tokens",
+        "min_worker_func_ms": 0.903114,
+        "output_event_count": 1,
+        "response_wait_minus_max_worker_after_dequeue_ms": 0.3030020000000002,
+        "response_wait_minus_max_worker_func_ms": 0.3101560000000001,
+        "scheduler": {},
+        "worker_count": 4,
+        "worker_func_skew_ms": 4.868121
+      },
+      {
+        "call_id": 376,
+        "executor_enqueue_ms": 0.016431,
+        "executor_response_wait_ms": 6.724584,
+        "max_driver_enqueue_to_worker_dequeue_ms": 20.740791,
+        "max_output_enqueue_ms": 5.989357,
+        "max_worker_after_dequeue_ms": 6.040935,
+        "max_worker_func_ms": 6.034162,
+        "method": "sample_tokens",
+        "min_worker_func_ms": 0.92277,
+        "output_event_count": 1,
+        "response_wait_minus_max_worker_after_dequeue_ms": 0.683649,
+        "response_wait_minus_max_worker_func_ms": 0.6904219999999999,
+        "scheduler": {},
+        "worker_count": 4,
+        "worker_func_skew_ms": 5.111392
+      },
+      {
+        "call_id": 384,
+        "executor_enqueue_ms": 0.015238,
+        "executor_response_wait_ms": 6.645624,
+        "max_driver_enqueue_to_worker_dequeue_ms": 23.254642,
+        "max_output_enqueue_ms": 5.855655,
+        "max_worker_after_dequeue_ms": 6.334809,
+        "max_worker_func_ms": 6.328787,
+        "method": "sample_tokens",
+        "min_worker_func_ms": 0.911258,
+        "output_event_count": 1,
+        "response_wait_minus_max_worker_after_dequeue_ms": 0.31081499999999984,
+        "response_wait_minus_max_worker_func_ms": 0.3168369999999996,
+        "scheduler": {},
+        "worker_count": 4,
+        "worker_func_skew_ms": 5.417529
+      },
+      {
+        "call_id": 392,
+        "executor_enqueue_ms": 0.013725,
+        "executor_response_wait_ms": 6.395934,
+        "max_driver_enqueue_to_worker_dequeue_ms": 21.484343,
+        "max_output_enqueue_ms": 5.666698,
+        "max_worker_after_dequeue_ms": 4.629592,
+        "max_worker_func_ms": 4.621647,
+        "method": "sample_tokens",
+        "min_worker_func_ms": 0.867586,
+        "output_event_count": 1,
+        "response_wait_minus_max_worker_after_dequeue_ms": 1.7663419999999999,
+        "response_wait_minus_max_worker_func_ms": 1.7742869999999993,
+        "scheduler": {},
+        "worker_count": 4,
+        "worker_func_skew_ms": 3.754061
+      },
+      {
+        "call_id": 400,
+        "executor_enqueue_ms": 0.017113,
+        "executor_response_wait_ms": 4.440055,
+        "max_driver_enqueue_to_worker_dequeue_ms": 22.06062,
+        "max_output_enqueue_ms": 3.62136,
+        "max_worker_after_dequeue_ms": 6.638882,
+        "max_worker_func_ms": 6.63241,
+        "method": "sample_tokens",
+        "min_worker_func_ms": 0.979548,
+        "output_event_count": 1,
+        "response_wait_minus_max_worker_after_dequeue_ms": -2.1988269999999996,
+        "response_wait_minus_max_worker_func_ms": -2.192355,
+        "scheduler": {},
+        "worker_count": 4,
+        "worker_func_skew_ms": 5.652862
+      },
+      {
+        "call_id": 408,
+        "executor_enqueue_ms": 0.019356,
+        "executor_response_wait_ms": 6.782313,
+        "max_driver_enqueue_to_worker_dequeue_ms": 22.524515,
+        "max_output_enqueue_ms": 5.936127,
+        "max_worker_after_dequeue_ms": 7.115521,
+        "max_worker_func_ms": 7.109029,
+        "method": "sample_tokens",
+        "min_worker_func_ms": 0.998012,
+        "output_event_count": 1,
+        "response_wait_minus_max_worker_after_dequeue_ms": -0.33320799999999995,
+        "response_wait_minus_max_worker_func_ms": -0.32671599999999934,
+        "scheduler": {},
+        "worker_count": 4,
+        "worker_func_skew_ms": 6.1110169999999995
+      },
+      {
+        "call_id": 416,
+        "executor_enqueue_ms": 0.016771,
+        "executor_response_wait_ms": 6.200626,
+        "max_driver_enqueue_to_worker_dequeue_ms": 22.268581,
+        "max_output_enqueue_ms": 5.328981,
+        "max_worker_after_dequeue_ms": 5.478994,
+        "max_worker_func_ms": 5.472492,
+        "method": "sample_tokens",
+        "min_worker_func_ms": 1.021356,
+        "output_event_count": 1,
+        "response_wait_minus_max_worker_after_dequeue_ms": 0.7216319999999996,
+        "response_wait_minus_max_worker_func_ms": 0.7281339999999998,
+        "scheduler": {},
+        "worker_count": 4,
+        "worker_func_skew_ms": 4.451136
+      },
+      {
+        "call_id": 424,
+        "executor_enqueue_ms": 0.023164,
+        "executor_response_wait_ms": 6.99843,
+        "max_driver_enqueue_to_worker_dequeue_ms": 22.030283,
+        "max_output_enqueue_ms": 6.255709,
+        "max_worker_after_dequeue_ms": 6.601852,
+        "max_worker_func_ms": 6.59537,
+        "method": "sample_tokens",
+        "min_worker_func_ms": 0.875662,
+        "output_event_count": 1,
+        "response_wait_minus_max_worker_after_dequeue_ms": 0.3965779999999999,
+        "response_wait_minus_max_worker_func_ms": 0.40306,
+        "scheduler": {},
+        "worker_count": 4,
+        "worker_func_skew_ms": 5.719708
+      },
+      {
+        "call_id": 432,
+        "executor_enqueue_ms": 0.021381,
+        "executor_response_wait_ms": 7.323574,
+        "max_driver_enqueue_to_worker_dequeue_ms": 21.765213,
+        "max_output_enqueue_ms": 4.223346,
+        "max_worker_after_dequeue_ms": 6.199032,
+        "max_worker_func_ms": 6.192701,
+        "method": "sample_tokens",
+        "min_worker_func_ms": 3.231746,
+        "output_event_count": 1,
+        "response_wait_minus_max_worker_after_dequeue_ms": 1.124542,
+        "response_wait_minus_max_worker_func_ms": 1.1308730000000002,
+        "scheduler": {},
+        "worker_count": 4,
+        "worker_func_skew_ms": 2.960955
+      },
+      {
+        "call_id": 440,
+        "executor_enqueue_ms": 0.018916,
+        "executor_response_wait_ms": 6.104103,
+        "max_driver_enqueue_to_worker_dequeue_ms": 22.424145,
+        "max_output_enqueue_ms": 5.209306,
+        "max_worker_after_dequeue_ms": 6.749601,
+        "max_worker_func_ms": 6.743139,
+        "method": "sample_tokens",
+        "min_worker_func_ms": 1.04958,
+        "output_event_count": 1,
+        "response_wait_minus_max_worker_after_dequeue_ms": -0.6454979999999999,
+        "response_wait_minus_max_worker_func_ms": -0.6390359999999999,
+        "scheduler": {},
+        "worker_count": 4,
+        "worker_func_skew_ms": 5.6935590000000005
+      },
+      {
+        "call_id": 448,
+        "executor_enqueue_ms": 0.018796,
+        "executor_response_wait_ms": 5.894017,
+        "max_driver_enqueue_to_worker_dequeue_ms": 22.32583,
+        "max_output_enqueue_ms": 4.994922,
+        "max_worker_after_dequeue_ms": 6.926294,
+        "max_worker_func_ms": 6.920473,
+        "method": "sample_tokens",
+        "min_worker_func_ms": 1.003203,
+        "output_event_count": 1,
+        "response_wait_minus_max_worker_after_dequeue_ms": -1.0322770000000006,
+        "response_wait_minus_max_worker_func_ms": -1.0264560000000005,
+        "scheduler": {},
+        "worker_count": 4,
+        "worker_func_skew_ms": 5.91727
+      },
+      {
+        "call_id": 456,
+        "executor_enqueue_ms": 0.020078,
+        "executor_response_wait_ms": 4.231791,
+        "max_driver_enqueue_to_worker_dequeue_ms": 21.280759,
+        "max_output_enqueue_ms": 3.265348,
+        "max_worker_after_dequeue_ms": 6.021327,
+        "max_worker_func_ms": 6.015065,
+        "method": "sample_tokens",
+        "min_worker_func_ms": 1.161461,
+        "output_event_count": 1,
+        "response_wait_minus_max_worker_after_dequeue_ms": -1.789536,
+        "response_wait_minus_max_worker_func_ms": -1.7832739999999996,
+        "scheduler": {},
+        "worker_count": 4,
+        "worker_func_skew_ms": 4.853604
+      },
+      {
+        "call_id": 464,
+        "executor_enqueue_ms": 0.022072,
+        "executor_response_wait_ms": 6.893993,
+        "max_driver_enqueue_to_worker_dequeue_ms": 24.938788,
+        "max_output_enqueue_ms": 5.867406,
+        "max_worker_after_dequeue_ms": 5.06305,
+        "max_worker_func_ms": 5.055224,
+        "method": "sample_tokens",
+        "min_worker_func_ms": 1.156471,
+        "output_event_count": 1,
+        "response_wait_minus_max_worker_after_dequeue_ms": 1.8309430000000004,
+        "response_wait_minus_max_worker_func_ms": 1.838769,
+        "scheduler": {},
+        "worker_count": 4,
+        "worker_func_skew_ms": 3.898753
+      },
+      {
+        "call_id": 472,
+        "executor_enqueue_ms": 0.02145,
+        "executor_response_wait_ms": 7.282737,
+        "max_driver_enqueue_to_worker_dequeue_ms": 20.175964,
+        "max_output_enqueue_ms": 6.573719,
+        "max_worker_after_dequeue_ms": 5.718996,
+        "max_worker_func_ms": 5.712294,
+        "method": "sample_tokens",
+        "min_worker_func_ms": 0.906119,
+        "output_event_count": 1,
+        "response_wait_minus_max_worker_after_dequeue_ms": 1.5637410000000003,
+        "response_wait_minus_max_worker_func_ms": 1.570443,
+        "scheduler": {},
+        "worker_count": 4,
+        "worker_func_skew_ms": 4.806175
+      },
+      {
+        "call_id": 480,
+        "executor_enqueue_ms": 0.017403,
+        "executor_response_wait_ms": 7.178851,
+        "max_driver_enqueue_to_worker_dequeue_ms": 22.608944,
+        "max_output_enqueue_ms": 6.463712,
+        "max_worker_after_dequeue_ms": 5.436624,
+        "max_worker_func_ms": 5.42934,
+        "method": "sample_tokens",
+        "min_worker_func_ms": 0.854331,
+        "output_event_count": 1,
+        "response_wait_minus_max_worker_after_dequeue_ms": 1.7422269999999997,
+        "response_wait_minus_max_worker_func_ms": 1.749511,
+        "scheduler": {},
+        "worker_count": 4,
+        "worker_func_skew_ms": 4.575009
+      },
+      {
+        "call_id": 488,
+        "executor_enqueue_ms": 0.019748,
+        "executor_response_wait_ms": 6.651485,
+        "max_driver_enqueue_to_worker_dequeue_ms": 21.452603,
+        "max_output_enqueue_ms": 5.936096,
+        "max_worker_after_dequeue_ms": 6.345589,
+        "max_worker_func_ms": 6.337544,
+        "method": "sample_tokens",
+        "min_worker_func_ms": 0.867567,
+        "output_event_count": 1,
+        "response_wait_minus_max_worker_after_dequeue_ms": 0.3058959999999997,
+        "response_wait_minus_max_worker_func_ms": 0.3139409999999998,
+        "scheduler": {},
+        "worker_count": 4,
+        "worker_func_skew_ms": 5.469977
+      },
+      {
+        "call_id": 496,
+        "executor_enqueue_ms": 0.016962,
+        "executor_response_wait_ms": 5.150584,
+        "max_driver_enqueue_to_worker_dequeue_ms": 21.313942,
+        "max_output_enqueue_ms": 4.324517,
+        "max_worker_after_dequeue_ms": 5.494143,
+        "max_worker_func_ms": 5.486718,
+        "method": "sample_tokens",
+        "min_worker_func_ms": 0.991891,
+        "output_event_count": 1,
+        "response_wait_minus_max_worker_after_dequeue_ms": -0.34355899999999995,
+        "response_wait_minus_max_worker_func_ms": -0.3361339999999995,
+        "scheduler": {},
+        "worker_count": 4,
+        "worker_func_skew_ms": 4.494827
+      },
+      {
+        "call_id": 504,
+        "executor_enqueue_ms": 0.023474,
+        "executor_response_wait_ms": 7.033225,
+        "max_driver_enqueue_to_worker_dequeue_ms": 22.200484,
+        "max_output_enqueue_ms": 6.289543,
+        "max_worker_after_dequeue_ms": 6.353955,
+        "max_worker_func_ms": 6.347863,
+        "method": "sample_tokens",
+        "min_worker_func_ms": 0.909305,
+        "output_event_count": 1,
+        "response_wait_minus_max_worker_after_dequeue_ms": 0.6792699999999998,
+        "response_wait_minus_max_worker_func_ms": 0.6853619999999996,
+        "scheduler": {},
+        "worker_count": 4,
+        "worker_func_skew_ms": 5.4385580000000004
+      },
+      {
+        "call_id": 512,
+        "executor_enqueue_ms": 0.023474,
+        "executor_response_wait_ms": 7.200151,
+        "max_driver_enqueue_to_worker_dequeue_ms": 22.047074,
+        "max_output_enqueue_ms": 6.415191,
+        "max_worker_after_dequeue_ms": 7.251097,
+        "max_worker_func_ms": 7.244404,
+        "method": "sample_tokens",
+        "min_worker_func_ms": 0.968236,
+        "output_event_count": 1,
+        "response_wait_minus_max_worker_after_dequeue_ms": -0.050945999999999714,
+        "response_wait_minus_max_worker_func_ms": -0.04425300000000032,
+        "scheduler": {},
+        "worker_count": 4,
+        "worker_func_skew_ms": 6.276168
+      }
+    ]
+  },
+  "sample_end_line": 658,
+  "sample_line_count": 0,
+  "sample_start_line": 1,
+  "samples_by_last_ms": [],
+  "source_log": "data/qwen36-quark-int8-tp4-async-device-stagesplit-20260612cc.log",
+  "step_line_count": 0,
+  "step_summary_by_bucket": [],
+  "step_summary_by_mean_total_ms": [],
+  "step_summary_by_rank_label": [],
+  "summary_by_total_ms": [],
+  "summary_line_count": 0,
+  "summary_start_line": 1,
+  "worker_output_line_count": 56,
+  "worker_output_summary": [
+    {
+      "event_count": 56,
+      "first_call_id": 72,
+      "first_line": 220,
+      "group": {
+        "event": "response_enqueue",
+        "method": "sample_tokens",
+        "rank": 0,
+        "status": "success"
+      },
+      "last_call_id": 512,
+      "last_line": 653,
+      "metric_summaries": {
+        "async_copy_end_to_worker_output_ms": {
+          "max": 0.141046,
+          "mean": 0.07671335714285714,
+          "median": 0.07324800000000001,
+          "min": 0.057078,
+          "p90": 0.096136,
+          "p99": 0.13800945000000003
+        },
+        "async_created_to_worker_output_ms": {
+          "max": 1.989032,
+          "mean": 0.39455864285714287,
+          "median": 0.361186,
+          "min": 0.30716,
+          "p90": 0.4370145,
+          "p99": 1.1696915000000043
+        },
+        "async_get_output_ms": {
+          "max": 7.068412,
+          "mean": 5.228948857142858,
+          "median": 5.4835325,
+          "min": 2.736251,
+          "p90": 6.3655815,
+          "p99": 6.915630800000001
+        },
+        "enqueue_ms": {
+          "max": 7.153893,
+          "mean": 5.302386053571429,
+          "median": 5.5675565,
+          "min": 2.864503,
+          "p90": 6.4382895,
+          "p99": 7.021373800000001
+        },
+        "output_object_id": {
+          "max": 127826420610064.0,
+          "mean": 127824479630599.14,
+          "median": 127824407738824.0,
+          "min": 127824407560368.0,
+          "p90": 127824407901872.0,
+          "p99": 127826418807956.0
+        },
+        "response_mq_enqueue_ms": {
+          "max": 0.157537,
+          "mean": 0.06817380357142858,
+          "median": 0.057103,
+          "min": 0.034575,
+          "p90": 0.1186185,
+          "p99": 0.14943110000000004
+        },
+        "result_pack_ms": {
+          "max": 0.002084,
+          "mean": 0.0008025535714285714,
+          "median": 0.000732,
+          "min": 0.0005,
+          "p90": 0.0010265,
+          "p99": 0.001709450000000002
+        },
+        "worker_output_start_offset_ms": {
+          "max": 23.66721,
+          "mean": 20.601126767857142,
+          "median": 20.393065,
+          "min": 19.223619,
+          "p90": 22.32276,
+          "p99": 23.227756150000005
+        }
+      }
+    }
+  ],
+  "worker_rpc_line_count": 224,
+  "worker_rpc_summary": [
+    {
+      "event_count": 56,
+      "first_call_id": 72,
+      "first_line": 216,
+      "group": {
+        "method": "sample_tokens",
+        "output_rank": 0,
+        "rank": 0,
+        "status": "ok"
+      },
+      "last_call_id": 512,
+      "last_line": 650,
+      "metric_summaries": {
+        "dequeue_wait_ms": {
+          "max": 0.027962,
+          "mean": 0.02040055357142857,
+          "median": 0.0203085,
+          "min": 0.016692,
+          "p90": 0.024957,
+          "p99": 0.027885
+        },
+        "driver_enqueue_to_dequeue_ms": {
+          "max": 22.554892,
+          "mean": 19.502586696428573,
+          "median": 19.177643,
+          "min": 18.207814,
+          "p90": 21.1804555,
+          "p99": 22.04780355
+        },
+        "func_ms": {
+          "max": 3.231746,
+          "mean": 1.0408446071428572,
+          "median": 0.9678,
+          "min": 0.81148,
+          "p90": 1.139499,
+          "p99": 2.848547250000002
+        },
+        "handle_output_ms": {
+          "max": 0.014086,
+          "mean": 0.006433410714285714,
+          "median": 0.005946,
+          "min": 0.004699,
+          "p90": 0.008296000000000001,
+          "p99": 0.012560300000000007
+        },
+        "worker_after_dequeue_ms": {
+          "max": 3.244941,
+          "mean": 1.0544936428571428,
+          "median": 0.981792,
+          "min": 0.822281,
+          "p90": 1.157073,
+          "p99": 2.860987100000002
+        }
+      }
+    },
+    {
+      "event_count": 56,
+      "first_call_id": 72,
+      "first_line": 221,
+      "group": {
+        "method": "sample_tokens",
+        "output_rank": 0,
+        "rank": 1,
+        "status": "ok"
+      },
+      "last_call_id": 512,
+      "last_line": 652,
+      "metric_summaries": {
+        "dequeue_wait_ms": {
+          "max": 0.03695,
+          "mean": 0.021764660714285712,
+          "median": 0.0204385,
+          "min": 0.016912,
+          "p90": 0.028809,
+          "p99": 0.0368125
+        },
+        "driver_enqueue_to_dequeue_ms": {
+          "max": 24.938788,
+          "mean": 20.342819035714285,
+          "median": 20.226916000000003,
+          "min": 18.403312,
+          "p90": 21.9731405,
+          "p99": 23.694624750000006
+        },
+        "func_ms": {
+          "max": 7.53899,
+          "mean": 5.496107785714286,
+          "median": 5.440467,
+          "min": 3.321886,
+          "p90": 6.7941199999999995,
+          "p99": 7.376967700000002
+        },
+        "handle_output_ms": {
+          "max": 0.0,
+          "mean": 0.0,
+          "median": 0.0,
+          "min": 0.0,
+          "p90": 0.0,
+          "p99": 0.0
+        },
+        "worker_after_dequeue_ms": {
+          "max": 7.548068,
+          "mean": 5.504067535714285,
+          "median": 5.447274999999999,
+          "min": 3.331293,
+          "p90": 6.8008325,
+          "p99": 7.384733950000001
+        }
+      }
+    },
+    {
+      "event_count": 56,
+      "first_call_id": 72,
+      "first_line": 218,
+      "group": {
+        "method": "sample_tokens",
+        "output_rank": 0,
+        "rank": 2,
+        "status": "ok"
+      },
+      "last_call_id": 512,
+      "last_line": 654,
+      "metric_summaries": {
+        "dequeue_wait_ms": {
+          "max": 0.029626,
+          "mean": 0.020930910714285714,
+          "median": 0.020764,
+          "min": 0.016531,
+          "p90": 0.025232499999999998,
+          "p99": 0.028909350000000004
+        },
+        "driver_enqueue_to_dequeue_ms": {
+          "max": 24.4888,
+          "mean": 20.63004817857143,
+          "median": 20.1568845,
+          "min": 18.479616,
+          "p90": 22.50051,
+          "p99": 23.914203450000002
+        },
+        "func_ms": {
+          "max": 6.708814,
+          "mean": 5.180678678571428,
+          "median": 5.362049,
+          "min": 3.16483,
+          "p90": 6.2994965,
+          "p99": 6.673652500000001
+        },
+        "handle_output_ms": {
+          "max": 0.0,
+          "mean": 0.0,
+          "median": 0.0,
+          "min": 0.0,
+          "p90": 0.0,
+          "p99": 0.0
+        },
+        "worker_after_dequeue_ms": {
+          "max": 6.715676,
+          "mean": 5.188078607142857,
+          "median": 5.368942,
+          "min": 3.172323,
+          "p90": 6.3055734999999995,
+          "p99": 6.68069655
+        }
+      }
+    },
+    {
+      "event_count": 56,
+      "first_call_id": 72,
+      "first_line": 217,
+      "group": {
+        "method": "sample_tokens",
+        "output_rank": 0,
+        "rank": 3,
+        "status": "ok"
+      },
+      "last_call_id": 512,
+      "last_line": 655,
+      "metric_summaries": {
+        "dequeue_wait_ms": {
+          "max": 0.034715,
+          "mean": 0.020916410714285714,
+          "median": 0.019977500000000002,
+          "min": 0.016862,
+          "p90": 0.027617,
+          "p99": 0.03133195000000002
+        },
+        "driver_enqueue_to_dequeue_ms": {
+          "max": 23.471752,
+          "mean": 20.491456160714286,
+          "median": 20.393857,
+          "min": 18.556671,
+          "p90": 22.230195000000002,
+          "p99": 23.31260015
+        },
+        "func_ms": {
+          "max": 7.500808,
+          "mean": 5.338644910714286,
+          "median": 5.42666,
+          "min": 3.198513,
+          "p90": 6.343745,
+          "p99": 7.098604000000002
+        },
+        "handle_output_ms": {
+          "max": 0.0,
+          "mean": 0.0,
+          "median": 0.0,
+          "min": 0.0,
+          "p90": 0.0,
+          "p99": 0.0
+        },
+        "worker_after_dequeue_ms": {
+          "max": 7.511608,
+          "mean": 5.346230910714286,
+          "median": 5.4332025,
+          "min": 3.208662,
+          "p90": 6.3500075,
+          "p99": 7.107784250000002
+        }
+      }
+    }
+  ]
+}

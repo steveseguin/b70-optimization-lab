@@ -1,0 +1,47 @@
+{
+  "artifacts": {
+    "accepted_final_chat": "data/qwen36-accepted-restored-after-sidecar-capture-gate-mode123-chat-ok-nothink-20260613.json",
+    "accepted_final_log": "data/qwen36-accepted-restored-after-sidecar-capture-gate-mode123-20260613.log",
+    "accepted_final_provenance": "data/qwen36-accepted-restored-after-sidecar-capture-gate-mode123-provenance-20260613.json",
+    "accepted_final_provenance_rerun": "data/qwen36-accepted-restored-after-sidecar-capture-gate-mode123-provenance-rerun-20260613.json",
+    "capture_gate_patch": "patches/vllm-xpu-qwen36-onednn-sidecar-capture-gate-20260613.patch",
+    "mode123_chat": "data/qwen36-sidecar-capture-gate-mode123-chat-ok-nothink-20260613.json",
+    "mode123_log": "data/qwen36-sidecar-capture-gate-mode123-l9-r0-20260613.log",
+    "mode123_sidecar_log": "data/qwen36-onednn-sidecar-capture-gate-mode123-20260613-2175292.jsonl",
+    "mode133_log": "data/qwen36-sidecar-capture-gate-mode133-l9-r0-20260613.log",
+    "mode133_provenance": "data/qwen36-sidecar-capture-gate-provenance-20260613.json",
+    "mode133_sidecar_log": "data/qwen36-onednn-sidecar-capture-gate-20260613-2168129.jsonl",
+    "post_mode123_recovery": "data/qwen36-post-sidecar-capture-gate-mode123-recovery-20260613",
+    "post_mode133_devicelost_recovery": "data/qwen36-post-sidecar-capture-gate-devicelost-recovery-20260613",
+    "pre_mode123_recovery": "data/qwen36-pre-sidecar-capture-gate-mode123-recovery-20260613",
+    "pre_mode133_recovery": "data/qwen36-pre-sidecar-capture-gate-recovery-20260613"
+  },
+  "decision": "Do not promote either graph-capture sidecar mode. Mode 133 can be captured but device-lost on the first real request replay. Mode 123 avoids device-lost only by failing during capture with an illegal queue wait and disabling the sidecar.",
+  "implementation": {
+    "scope": "rank 0, layer 9 only",
+    "source_patch": "Allow stats-free execute modes 123/133 through _maybe_probe_onednn_sidecar during stream capture, disable parity/logging in capture, and return gemm2_output from fake registration for stats-free modes."
+  },
+  "mode123": {
+    "endpoint_health": true,
+    "first_request_status": 200,
+    "request_text": "OK.",
+    "sidecar_rows": 3,
+    "sidecar_error": "RuntimeError('wait cannot be called for a queue which is recording to a command graph.')",
+    "status": "rejected_capture_wait_illegal_sidecar_disabled"
+  },
+  "mode133": {
+    "endpoint_health_before_request": true,
+    "first_request_status": 500,
+    "sidecar_rows": 9,
+    "sidecar_execute_mode": 133,
+    "worker_error": "RuntimeError: level_zero backend failed with error: 20 (UR_RESULT_ERROR_DEVICE_LOST)",
+    "status": "rejected_graph_replay_device_lost"
+  },
+  "restored_accepted": {
+    "health": true,
+    "nothink_chat_text": "OK.",
+    "provenance_first_ok": false,
+    "provenance_rerun_ok": true
+  },
+  "timestamp": "2026-06-13T16:56:00-0400"
+}

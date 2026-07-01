@@ -1,0 +1,181 @@
+{
+  "label": "fastlane-eagerreq32-metrics",
+  "stamp": "20260614h2",
+  "return_codes": {
+    "metrics": 0,
+    "json_canary": 0,
+    "color_canary": 0,
+    "quality_suite": 0
+  },
+  "status": {
+    "metrics": "passed",
+    "json_canary": "skipped",
+    "color_canary": "skipped",
+    "quality_suite": "skipped"
+  },
+  "artifacts": {
+    "metrics": "/home/steve/llm-optimizations/data/qwen36-ablation-fastlane-eagerreq32-metrics-p512o512-20260614h2.json",
+    "json_canary": "/home/steve/llm-optimizations/data/qwen36-ablation-fastlane-eagerreq32-metrics-json-repeat96-20260614h2.json",
+    "color_canary": "/home/steve/llm-optimizations/data/qwen36-ablation-fastlane-eagerreq32-metrics-color-repeat96-20260614h2.json",
+    "quality_suite": "/home/steve/llm-optimizations/data/qwen36-ablation-fastlane-eagerreq32-metrics-quality-suite-20260614h2.json",
+    "log": "/home/steve/llm-optimizations/data/qwen36-ablation-fastlane-eagerreq32-metrics-20260614h2.log"
+  },
+  "artifact_exists": {
+    "metrics": true,
+    "json_canary": false,
+    "color_canary": false,
+    "quality_suite": false,
+    "log": true
+  },
+  "env": {
+    "VLLM_XPU_GDN_NATIVE_FALLBACK": "prefill",
+    "VLLM_XPU_GDN_NATIVE_PREFILL_FALLBACK": null,
+    "VLLM_XPU_GDN_PREFILL_RECURRENT_FALLBACK": "1",
+    "VLLM_XPU_GDN_NATIVE_FALLBACK_INITIAL_DECODE_STEPS": null,
+    "VLLM_XPU_GDN_NATIVE_FALLBACK_DECODE_LAYERS": null,
+    "VLLM_XPU_GDN_NATIVE_FALLBACK_DECODE_MAX_LAYER": null,
+    "VLLM_XPU_GDN_NATIVE_FALLBACK_DECODE_LAYER_REGEX": null,
+    "VLLM_XPU_GDN_SYNC_BEFORE_NATIVE_DECODE": null,
+    "VLLM_XPU_GDN_SYNC_BEFORE_NATIVE_DECODE_LAYERS": null,
+    "VLLM_XPU_GREEDY_SAMPLE_TOPK_FALLBACK": "1",
+    "VLLM_XPU_GREEDY_SAMPLE_XPU_FALLBACK": null,
+    "VLLM_XPU_ZERO_ALL_PREFILL_GDN_STATE": null,
+    "VLLM_XPU_DISABLE_PREFILL_CUDAGRAPH_REPLAY": "1",
+    "VLLM_ENABLE_FLA_PACKED_RECURRENT_DECODE": null,
+    "XPU_GRAPH": "1",
+    "VLLM_XPU_ENABLE_XPU_GRAPH": "1",
+    "VLLM_XPU_FORCE_GRAPH_WITH_COMM": "1",
+    "VLLM_XPU_GRAPH_NOOP_COMM_CAPTURE": "1",
+    "VLLM_XPU_USE_CUSTOM_OP_COLLECTIVES": null,
+    "VLLM_XPU_COMPILE_ALLREDUCE_CUSTOM_OP": null,
+    "VLLM_XPU_CUSTOM_ALLREDUCE_GRAPH_CLONE_INPUT": null,
+    "VLLM_XPU_CUSTOM_ALLREDUCE_CLONE_INPUT": null,
+    "VLLM_XPU_CUDAGRAPH_REPLAY_MAX_PIECEWISE_INDEX": null,
+    "VLLM_XPU_CUDAGRAPH_RECAPTURE_AFTER_N_REPLAYS": null,
+    "VLLM_XPU_CUDAGRAPH_RECAPTURE_REGEX": null,
+    "VLLM_XPU_DECODE_CUDAGRAPH_REPLAY_EAGER_EVERY_N_REQUESTS": "32",
+    "VLLM_XPU_CUDAGRAPH_ALLOW_RUNTIME_RECAPTURE": null,
+    "VLLM_XPU_SYNC_CUDAGRAPH_REPLAY": null,
+    "VLLM_XPU_CUDAGRAPH_ZERO_REPLAY_OUTPUT_REGEX": null,
+    "VLLM_XPU_CUDAGRAPH_ZERO_REPLAY_OUTPUT_INDICES": null,
+    "VLLM_XPU_CUDAGRAPH_COMPARE_DIRECT_REGEX": null,
+    "VLLM_XPU_CUDAGRAPH_COMPARE_DIRECT_RETURN_DIRECT": null,
+    "VLLM_XPU_W8A8_EXPERIMENTAL_ALLOW": null,
+    "VLLM_XPU_W8A8_USE_OFFSETS": null,
+    "VLLM_XPU_W8A8_OFFSETS_PREFIX_OP": null,
+    "VLLM_XPU_MOE_W8A8_MIDDLE_LAYERLET": null,
+    "VLLM_XPU_INT8_MOE_MIXED_WORKSPACE": null,
+    "GPU_MEMORY_UTILIZATION": null,
+    "COMPILATION_CONFIG": null,
+    "VLLM_EXTRA_ARGS": null
+  },
+  "metrics_summary": {
+    "tok_s_out_client_after_first_chunk": {
+      "mean": 15.760840390116698,
+      "median": 15.760840390116698,
+      "min": 15.696706649809466,
+      "max": 15.82497413042393
+    },
+    "tok_s_out_client_after_first_chunk_corrected": {
+      "mean": 15.730057498729753,
+      "median": 15.730057498729753,
+      "min": 15.666049019634057,
+      "max": 15.794065977825447
+    },
+    "tok_s_out_client_e2e": {
+      "mean": 15.633151809314882,
+      "median": 15.633151809314882,
+      "min": 15.569359199734551,
+      "max": 15.696944418895212
+    },
+    "tok_s_total_client": {
+      "mean": 30.83883462384381,
+      "median": 30.83883462384381,
+      "min": 30.71299373385136,
+      "max": 30.964675513836255
+    },
+    "ttft_ms_client": {
+      "mean": 265.3433959931135,
+      "median": 265.3433959931135,
+      "min": 263.8897967990488,
+      "max": 266.79699518717825
+    },
+    "ttft_ms_vllm_metrics": {
+      "mean": 200.38151741027832,
+      "median": 200.38151741027832,
+      "min": 200.16050338745117,
+      "max": 200.60253143310547
+    },
+    "tok_s_prefill_lower_bound_from_ttft": {
+      "mean": 1876.8695704601196,
+      "median": 1876.8695704601196,
+      "min": 1866.5877389309253,
+      "max": 1887.1514019893136
+    },
+    "e2e_ms_vllm_metrics": {
+      "mean": 32750.253200531006,
+      "median": 32750.253200531006,
+      "min": 32616.600036621094,
+      "max": 32883.90636444092
+    },
+    "queue_ms_vllm_histogram": {
+      "mean": 0.01463247463107109,
+      "median": 0.01463247463107109,
+      "min": 0.014266930520534515,
+      "max": 0.014998018741607666
+    },
+    "prefill_ms_vllm_histogram": {
+      "mean": 195.30147255863994,
+      "median": 195.30147255863994,
+      "min": 195.11384097859263,
+      "max": 195.48910413868725
+    },
+    "decode_ms_vllm_histogram": {
+      "mean": 32549.98649400659,
+      "median": 32549.98649400659,
+      "min": 32416.58947011456,
+      "max": 32683.38351789862
+    },
+    "decode_ms_per_generation_token_vllm_histogram": {
+      "mean": 63.57419237110662,
+      "median": 63.57419237110662,
+      "min": 63.3136513088175,
+      "max": 63.83473343339574
+    },
+    "inference_ms_vllm_histogram": {
+      "mean": 32745.28796656523,
+      "median": 32745.28796656523,
+      "min": 32611.70331109315,
+      "max": 32878.87262203731
+    },
+    "time_per_output_token_ms_vllm_histogram": {
+      "mean": 63.69860370647082,
+      "median": 63.69860370647082,
+      "min": 63.437552779089145,
+      "max": 63.9596546338525
+    },
+    "inter_token_ms_vllm_histogram": {
+      "mean": 63.69860370647082,
+      "median": 63.69860370647082,
+      "min": 63.43755277908916,
+      "max": 63.95965463385249
+    },
+    "iteration_tokens_per_step_vllm_histogram": {
+      "mean": 1.97265625,
+      "median": 1.97265625,
+      "min": 1.97265625,
+      "max": 1.97265625
+    }
+  },
+  "speed": {
+    "tok_s_out_corrected_mean": 15.730057498729753,
+    "tok_s_out_after_first_chunk_mean": 15.760840390116698,
+    "tok_s_out_e2e_mean": 15.633151809314882,
+    "decode_ms_per_token_mean": 63.57419237110662,
+    "ttft_ms_client_mean": 265.3433959931135
+  },
+  "decision": {
+    "accepted_by_requested_gates": true,
+    "gate_failures": []
+  }
+}

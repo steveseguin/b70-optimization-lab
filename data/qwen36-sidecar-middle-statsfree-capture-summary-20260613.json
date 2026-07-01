@@ -1,0 +1,31 @@
+{
+  "artifacts": {
+    "accepted_nothink_ok": "data/qwen36-quark-int8-tp4-accepted-restored-after-sidecar-capture-smoke-chat-ok-nothink-20260613.json",
+    "accepted_provenance_first": "data/qwen36-quark-int8-tp4-accepted-provenance-after-sidecar-capture-smoke-20260613.json",
+    "accepted_provenance_rerun": "data/qwen36-quark-int8-tp4-accepted-provenance-after-sidecar-capture-smoke-rerun-20260613.json",
+    "post_recovery": "data/qwen36-post-sidecar-capture-smoke-recovery-20260613",
+    "pre_recovery": "data/qwen36-pre-sidecar-capture-smoke-recovery-20260613",
+    "xpugraph_smoke": "data/qwen36-sidecar-middle-statsfree-xpugraph-smoke-20260613.json"
+  },
+  "implementation": {
+    "build_artifact": "/tmp/qwen36-sidecar-middle-capture-sycl8-20260613/vllm_xpu_kernels/_xpu_C.abi3.so",
+    "execute_modes": {
+      "123": "middle stats-free with final wait",
+      "133": "middle stats-free no final wait"
+    },
+    "patch": "patches/vllm-xpu-qwen36-onednn-sidecar-statsfree-capture-20260613.patch"
+  },
+  "interpretation": "Stats-free execute mode removes the CPU stats allocation blocker and the one-call middle sidecar can be captured/replayed in an isolated torch.xpu.XPUGraph. This proves capture feasibility for the native boundary, but it is not yet wired into the accepted vLLM graph MoE path and is not an endpoint speed win.",
+  "label": "qwen36-sidecar-middle-statsfree-capture-summary-20260613",
+  "results": {
+    "accepted_nothink_ok": true,
+    "accepted_provenance_first_ok": false,
+    "accepted_provenance_rerun_ok": true,
+    "capture_elapsed_s": 0.007206410868093371,
+    "sidecar_return_is_gemm2_output": true,
+    "sidecar_xpugraph_ok": true,
+    "simple_xpugraph_ok": true
+  },
+  "status": "isolated_xpugraph_capture_passed_not_endpoint_promoted",
+  "timestamp": "2026-06-13T16:36:00-0400"
+}

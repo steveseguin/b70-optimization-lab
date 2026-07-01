@@ -1,0 +1,39 @@
+{
+  "hfId": "Qwen/Qwen3.6-35B-A3B",
+  "modelRevision": "cced56592e8c8935f8220836b4baa04dfd389118",
+  "hardware": {
+    "hwClass": "DISCRETE_GPU",
+    "gpuName": "Intel Arc Pro B70",
+    "gpuCount": 4,
+    "vramGb": 32,
+    "cpu": "AMD Ryzen Threadripper PRO 5955WX 16-Cores",
+    "ramGb": 128,
+    "os": "Ubuntu 24.04.4 LTS, Linux 6.17.0-29-generic"
+  },
+  "engineName": "vllm",
+  "engineVersion": "0.20.2rc1.dev2+gc51df4300.d20260523",
+  "quantization": "Quark W8A8 INT8",
+  "promptTokens": 512,
+  "outputTokens": 512,
+  "contextLength": 32768,
+  "batchSize": 1,
+  "ttftMs": 76.52664251509123,
+  "tokSOut": 99.76969927367736,
+  "peakVramGb": 127.54716796875,
+  "notes": "Qwen3.6-35B-A3B Quark W8A8 INT8 on 4x Intel Arc Pro B70 via vLLM XPU. Accepted production-candidate frontdoor run, not diagnostic route-capture. Mean of 4 measured streaming /v1/completions runs after warmup: corrected after-first output tok/s=99.77, e2e output tok/s=98.27, TTFT=76.53 ms. Prompt/output 512/512, batch/concurrency 1, temperature 0, top_k 1, top_p 1, prefix caching disabled. Quality gates for accepted runtime passed earlier same day: exact, repeat canary, structured/math/code prompts, and 8192-token needle. Peak VRAM is total xpu-smi allocation across 4 cards; observed about 31.89 GiB per B70 because gpu_memory_utilization=0.95 reserves nearly all visible memory.",
+  "engineFlags": {
+    "commandSnippet": "vllm serve /mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118 --host 127.0.0.1 --port 18080 --trust-remote-code --served-model-name qwen36-35b-a3b-fp8 --dtype auto --quantization quark --tensor-parallel-size 4 --pipeline-parallel-size 1 --distributed-executor-backend mp --max-model-len 32768 --max-num-batched-tokens 8192 --max-num-seqs 48 --gpu-memory-utilization 0.95 --kv-cache-dtype auto --no-enable-prefix-caching --language-model-only --compilation-config '{\"cudagraph_mode\":\"PIECEWISE\"}' --generation-config vllm",
+    "tensorParallel": 4,
+    "pipelineParallel": 1,
+    "kvCacheDtype": "auto",
+    "gpuMemUtil": 0.95,
+    "prefixCaching": false,
+    "contBatching": true,
+    "gpuLayers": 999,
+    "engineQuant": "quark",
+    "temperature": 0,
+    "topP": 1,
+    "topK": 1,
+    "extraFlags": "--language-model-only --no-enable-prefix-caching --compilation-config PIECEWISE"
+  }
+}

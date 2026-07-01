@@ -1,0 +1,84 @@
+{
+  "date": "2026-06-12",
+  "model": "nameistoken/Qwen3.6-35B-A3B-Quark-W8A8-INT8",
+  "hardware": "4x Intel Arc Pro B70 32GB",
+  "purpose": "route-overlay diagnostic and backlog update; not a promoted speed result",
+  "diagnostic_sessions": {
+    "production_cache_attempt_1": {
+      "log": "data/qwen36-quark-int8-tp4-routeoverlay-20260612cn.log",
+      "result": "startup_failed",
+      "failure": "cross-device tensor mismatch after reusing production AOT cache"
+    },
+    "production_cache_attempt_2": {
+      "log": "data/qwen36-quark-int8-tp4-routeoverlay-20260612cn2.log",
+      "result": "startup_failed",
+      "failure": "cross-device tensor mismatch after reusing production AOT cache"
+    },
+    "fresh_cache_attempt": {
+      "log": "data/qwen36-quark-int8-tp4-routeoverlay-freshcache-20260612cn3.log",
+      "result": "started",
+      "cache_root": "/mnt/fast-ai/vllm-cache-exp/qwen36-routeoverlay-freshcache-20260612cn3"
+    }
+  },
+  "fresh_cache_metric": {
+    "metrics_json": "data/qwen36-quark-int8-tp4-routeoverlay-freshcache-p512o128-metrics-20260612cn3.json",
+    "prompt_tokens": 512,
+    "output_tokens": 128,
+    "corrected_decode_tok_s_after_first": 94.93771736375768,
+    "e2e_tok_s": 90.56752756999182,
+    "vllm_decode_ms_per_generation_token": 10.452624383106013,
+    "client_ttft_ms": 75.59096114709973
+  },
+  "forward_boundary_summary": {
+    "rows": 576,
+    "route_overlay_captures": 0,
+    "route_hashes": [],
+    "pure_decode_after_event_5_forward_end_after_start_sync_ms": {
+      "rank_0": {
+        "n": 138,
+        "mean": 4.019538,
+        "median": 4.20217,
+        "min": 1.887817,
+        "max": 5.269029
+      },
+      "rank_1": {
+        "n": 138,
+        "mean": 4.553814,
+        "median": 4.51601,
+        "min": 2.287497,
+        "max": 6.088479
+      },
+      "rank_2": {
+        "n": 138,
+        "mean": 4.427867,
+        "median": 4.392202,
+        "min": 1.604505,
+        "max": 5.874957
+      },
+      "rank_3": {
+        "n": 138,
+        "mean": 4.452993,
+        "median": 4.410632,
+        "min": 3.090135,
+        "max": 6.067609
+      }
+    }
+  },
+  "decisions": [
+    "Do not promote the fresh-cache route-overlay speed result.",
+    "Use isolated cache roots for rank-map, device-map, and route-overlay diagnostics.",
+    "Move route capture lower into the compiled MoE runner/custom-op path.",
+    "Restore the accepted endpoint only after checking cache hygiene."
+  ],
+  "accepted_restore_after_diagnostic": {
+    "session": "qwen36-tp4-accepted-restored-after-routeoverlay-20260612co",
+    "port": 18080,
+    "log": "data/qwen36-quark-int8-tp4-accepted-restored-after-routeoverlay-20260612co.log",
+    "provenance_json": "data/qwen36-quark-int8-tp4-accepted-provenance-after-routeoverlay-20260612co.json",
+    "quality_json": "data/qwen36-quark-int8-tp4-accepted-quality-after-routeoverlay-nothink-smoke-20260612co.json",
+    "provenance_ok": true,
+    "quality_smoke_ok": true,
+    "sentinels": [4752, 11436, 198],
+    "cache_quarantine_needed": false
+  }
+}

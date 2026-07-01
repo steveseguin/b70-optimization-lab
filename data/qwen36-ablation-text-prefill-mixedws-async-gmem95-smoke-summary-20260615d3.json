@@ -1,0 +1,234 @@
+{
+  "label": "text-prefill-mixedws-async-gmem95-smoke",
+  "stamp": "20260615d3",
+  "return_codes": {
+    "metrics": 0,
+    "json_canary": 0,
+    "color_canary": 0,
+    "quality_suite": 0
+  },
+  "status": {
+    "metrics": "passed",
+    "json_canary": "passed",
+    "color_canary": "passed",
+    "quality_suite": "skipped"
+  },
+  "artifacts": {
+    "metrics": "/home/steve/llm-optimizations/data/qwen36-ablation-text-prefill-mixedws-async-gmem95-smoke-p512o512-20260615d3.json",
+    "json_canary": "/home/steve/llm-optimizations/data/qwen36-ablation-text-prefill-mixedws-async-gmem95-smoke-json-repeat64-20260615d3.json",
+    "color_canary": "/home/steve/llm-optimizations/data/qwen36-ablation-text-prefill-mixedws-async-gmem95-smoke-color-repeat64-20260615d3.json",
+    "quality_suite": "/home/steve/llm-optimizations/data/qwen36-ablation-text-prefill-mixedws-async-gmem95-smoke-quality-suite-20260615d3.json",
+    "log": "/home/steve/llm-optimizations/data/qwen36-ablation-text-prefill-mixedws-async-gmem95-smoke-20260615d3.log"
+  },
+  "artifact_exists": {
+    "metrics": true,
+    "json_canary": true,
+    "color_canary": true,
+    "quality_suite": false,
+    "log": true
+  },
+  "env": {
+    "VLLM_XPU_GDN_NATIVE_FALLBACK": "prefill",
+    "VLLM_XPU_GDN_NATIVE_PREFILL_FALLBACK": null,
+    "VLLM_XPU_GDN_PREFILL_RECURRENT_FALLBACK": "1",
+    "VLLM_XPU_GDN_NATIVE_FALLBACK_INITIAL_DECODE_STEPS": null,
+    "VLLM_XPU_GDN_NATIVE_FALLBACK_DECODE_LAYERS": null,
+    "VLLM_XPU_GDN_NATIVE_FALLBACK_DECODE_MAX_LAYER": null,
+    "VLLM_XPU_GDN_NATIVE_FALLBACK_DECODE_LAYER_REGEX": null,
+    "VLLM_XPU_GDN_SYNC_BEFORE_NATIVE_DECODE": null,
+    "VLLM_XPU_GDN_SYNC_BEFORE_NATIVE_DECODE_LAYERS": null,
+    "VLLM_XPU_GREEDY_SAMPLE_TOPK_FALLBACK": null,
+    "VLLM_XPU_GREEDY_SAMPLE_XPU_FALLBACK": null,
+    "VLLM_XPU_SANITIZE_LOGITS_NAN": null,
+    "VLLM_XPU_LOCAL_ARGMAX_DECODE": null,
+    "VLLM_XPU_LOCAL_ARGMAX_DIRECT_GATHER": null,
+    "VLLM_XPU_LOCAL_ARGMAX_DIRECT_GATHER_REUSE": null,
+    "VLLM_XPU_LOCAL_ARGMAX_PACKED_GATHER": null,
+    "VLLM_XPU_LOCAL_ARGMAX_SYNC_TOKENS": null,
+    "VLLM_XPU_ZERO_ALL_PREFILL_GDN_STATE": null,
+    "VLLM_XPU_ZERO_FRESH_GDN_STATE": null,
+    "VLLM_XPU_DISABLE_PREFILL_CUDAGRAPH_REPLAY": null,
+    "VLLM_ENABLE_FLA_PACKED_RECURRENT_DECODE": null,
+    "XPU_GRAPH": "1",
+    "VLLM_XPU_ENABLE_XPU_GRAPH": "1",
+    "VLLM_XPU_FORCE_GRAPH_WITH_COMM": "1",
+    "VLLM_XPU_GRAPH_NOOP_COMM_CAPTURE": "1",
+    "VLLM_XPU_USE_CUSTOM_OP_COLLECTIVES": null,
+    "VLLM_XPU_COMPILE_ALLREDUCE_CUSTOM_OP": null,
+    "VLLM_XPU_CUSTOM_ALLREDUCE_GRAPH_CLONE_INPUT": null,
+    "VLLM_XPU_CUSTOM_ALLREDUCE_CLONE_INPUT": null,
+    "VLLM_XPU_CUDAGRAPH_REPLAY_MAX_PIECEWISE_INDEX": null,
+    "VLLM_XPU_CUDAGRAPH_DISABLE_SUBMOD_REGEX": null,
+    "VLLM_XPU_CUDAGRAPH_RECAPTURE_AFTER_N_REPLAYS": null,
+    "VLLM_XPU_CUDAGRAPH_RECAPTURE_REGEX": null,
+    "VLLM_XPU_CUDAGRAPH_STRONG_OUTPUT": null,
+    "VLLM_XPU_CUDAGRAPH_PER_WRAPPER_POOL": null,
+    "VLLM_XPU_CUDAGRAPH_NO_GLOBAL_POOL": null,
+    "VLLM_XPU_DECODE_CUDAGRAPH_REPLAY_EAGER_EVERY_N_REQUESTS": null,
+    "VLLM_XPU_CUDAGRAPH_ALLOW_RUNTIME_RECAPTURE": null,
+    "VLLM_XPU_SYNC_CUDAGRAPH_REPLAY": null,
+    "VLLM_XPU_CUDAGRAPH_REPLAY_TRACE_FILE": null,
+    "VLLM_XPU_CUDAGRAPH_REPLAY_TRACE_MAX_LINES": null,
+    "VLLM_XPU_CUDAGRAPH_REPLAY_TRACE_RANK": null,
+    "VLLM_XPU_CUDAGRAPH_REPLAY_TRACE_SUBMOD_REGEX": null,
+    "VLLM_XPU_CUDAGRAPH_REPLAY_TRACE_REQ_REGEX": null,
+    "VLLM_XPU_CUDAGRAPH_REPLAY_TRACE_INPUTS": null,
+    "VLLM_XPU_CUDAGRAPH_REPLAY_TRACE_DIGEST": null,
+    "VLLM_XPU_GDN_TRACE_FILE": null,
+    "VLLM_XPU_GDN_TRACE_MAX_LINES": null,
+    "VLLM_XPU_GDN_TRACE_RANK": null,
+    "VLLM_XPU_GDN_TRACE_LAYER_REGEX": null,
+    "VLLM_XPU_GDN_TRACE_REQ_REGEX": null,
+    "VLLM_XPU_GDN_TRACE_PREFILL_ONLY": null,
+    "VLLM_XPU_GDN_TRACE_DECODE_ONLY": null,
+    "VLLM_XPU_GDN_TRACE_TENSOR_LIMIT": null,
+    "VLLM_XPU_GDN_TRACE_STATE_LIMIT": null,
+    "VLLM_XPU_CUDAGRAPH_ZERO_REPLAY_OUTPUT_REGEX": null,
+    "VLLM_XPU_CUDAGRAPH_ZERO_REPLAY_OUTPUT_INDICES": null,
+    "VLLM_XPU_CUDAGRAPH_CLONE_REPLAY_OUTPUT_REGEX": null,
+    "VLLM_XPU_CUDAGRAPH_CLONE_REPLAY_OUTPUT_INDICES": null,
+    "VLLM_XPU_CUDAGRAPH_STATIC_INPUT_REGEX": null,
+    "VLLM_XPU_CUDAGRAPH_STATIC_INPUT_INDICES": null,
+    "VLLM_XPU_CUDAGRAPH_STATIC_INPUT_MAX_NUMEL": null,
+    "VLLM_XPU_CUDAGRAPH_COMPARE_DIRECT_REGEX": null,
+    "VLLM_XPU_CUDAGRAPH_COMPARE_DIRECT_RETURN_DIRECT": null,
+    "VLLM_XPU_W8A8_EXPERIMENTAL_ALLOW": null,
+    "VLLM_XPU_W8A8_USE_OFFSETS": null,
+    "VLLM_XPU_W8A8_OFFSETS_PREFIX_OP": null,
+    "VLLM_XPU_MOE_W8A8_MIDDLE_LAYERLET": null,
+    "VLLM_XPU_INT8_MOE_MIXED_WORKSPACE": "1",
+    "VLLM_XPU_SHARED_EXPERTS_STREAM": null,
+    "VLLM_XPU_SHARED_EXPERT_FUSED_ACT_QUANT": null,
+    "GPU_MEMORY_UTILIZATION": "0.95",
+    "COMPILATION_CONFIG": "{\"cudagraph_mode\":\"PIECEWISE\"}",
+    "ABLATION_FAST_GRAPH_AUTOCONFIG": "1",
+    "VLLM_EXTRA_ARGS": "--uvicorn-log-level warning",
+    "METRICS_PROMPT_KIND": "text",
+    "METRICS_PROMPT_PRESET": null,
+    "METRICS_RANDOM_PREFIX_LEN": null,
+    "METRICS_PROMPT_TOKENS": null,
+    "METRICS_OUTPUT_TOKENS": null,
+    "METRICS_WARMUP_OUTPUT_TOKENS": null
+  },
+  "metrics_summary": {
+    "tok_s_out_client_after_first_chunk": {
+      "mean": 92.34921045419489,
+      "median": 93.58762556891195,
+      "min": 88.04515306034511,
+      "max": 94.17643761861055
+    },
+    "tok_s_out_client_after_first_chunk_corrected": {
+      "mean": 92.16884090252654,
+      "median": 93.40483723772266,
+      "min": 87.87318987077413,
+      "max": 93.9924992638867
+    },
+    "tok_s_out_client_e2e": {
+      "mean": 89.46391562955814,
+      "median": 90.63277449121998,
+      "min": 85.40400242569906,
+      "max": 91.18611111009356
+    },
+    "tok_s_total_client": {
+      "mean": 178.9278312591163,
+      "median": 181.26554898243995,
+      "min": 170.80800485139812,
+      "max": 182.37222222018713
+    },
+    "ttft_ms_client": {
+      "mean": 178.71198756620288,
+      "median": 178.4831800032407,
+      "min": 178.04442206397653,
+      "max": 179.83716819435358
+    },
+    "ttft_ms_vllm_metrics": {
+      "mean": 177.49768495559692,
+      "median": 177.2933006286621,
+      "min": 176.72228813171387,
+      "max": 178.6818504333496
+    },
+    "tok_s_prefill_lower_bound_from_ttft": {
+      "mean": 2864.987259375999,
+      "median": 2868.6211434374786,
+      "min": 2847.0199188561037,
+      "max": 2875.6868317729354
+    },
+    "e2e_ms_vllm_metrics": {
+      "mean": 5725.961863994598,
+      "median": 5648.065686225891,
+      "min": 5613.749027252197,
+      "max": 5993.967056274414
+    },
+    "queue_ms_vllm_histogram": {
+      "mean": 0.011561787687242031,
+      "median": 0.012182979844510555,
+      "min": 0.008125090971589088,
+      "max": 0.013756100088357925
+    },
+    "prefill_ms_vllm_histogram": {
+      "mean": 172.69878927618265,
+      "median": 172.40927054081112,
+      "min": 172.01406904496253,
+      "max": 173.96254697814584
+    },
+    "decode_ms_vllm_histogram": {
+      "mean": 5548.670692194719,
+      "median": 5471.072759479284,
+      "min": 5436.990742804483,
+      "max": 5815.546507015824
+    },
+    "decode_ms_per_generation_token_vllm_histogram": {
+      "mean": 10.83724744569281,
+      "median": 10.685688983357977,
+      "min": 10.619122544540005,
+      "max": 11.358489271515282
+    },
+    "inference_ms_vllm_histogram": {
+      "mean": 5721.3694814709015,
+      "median": 5643.452940508723,
+      "min": 5609.062990872189,
+      "max": 5989.50905399397
+    },
+    "time_per_output_token_ms_vllm_histogram": {
+      "mean": 10.85845536633017,
+      "median": 10.70660031209253,
+      "min": 10.639903606271012,
+      "max": 11.380717234864612
+    },
+    "inter_token_ms_vllm_histogram": {
+      "mean": 10.858455366330174,
+      "median": 10.706600312092533,
+      "min": 10.639903606271004,
+      "max": 11.380717234864626
+    },
+    "iteration_tokens_per_step_vllm_histogram": {
+      "mean": 2.0,
+      "median": 2.0,
+      "min": 2.0,
+      "max": 2.0
+    }
+  },
+  "speed": {
+    "tok_s_out_corrected_mean": 92.16884090252654,
+    "tok_s_out_after_first_chunk_mean": 92.34921045419489,
+    "tok_s_out_e2e_mean": 89.46391562955814,
+    "decode_ms_per_token_mean": 10.83724744569281,
+    "ttft_ms_client_mean": 178.71198756620288
+  },
+  "json_canary": {
+    "pass_all": true,
+    "repeats_completed": 64,
+    "mismatch_count": 0,
+    "first_mismatch": null
+  },
+  "color_canary": {
+    "pass_all": true,
+    "repeats_completed": 64,
+    "mismatch_count": 0,
+    "first_mismatch": null
+  },
+  "decision": {
+    "accepted_by_requested_gates": true,
+    "gate_failures": []
+  }
+}

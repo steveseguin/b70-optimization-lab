@@ -1,0 +1,93 @@
+{
+  "comparisons": {
+    "backend_nonstream_e2e_vs_backend_stream_corrected_pct": -0.9797702424681703,
+    "backend_stream_client_vs_vllm_decode_pct": 0.00620187818515607,
+    "frontdoor_stream_vs_backend_stream_corrected_pct": -0.05331602883986443
+  },
+  "current_best_ms_per_token": 9.952201956972809,
+  "current_best_tok_s": 100.48027605583006,
+  "decision": "device_or_vllm_runtime_bound_not_http_or_frontdoor",
+  "decision_reasons": [
+    "backend client throughput matches vLLM decode histogram within 3%",
+    "vLLM queue time is effectively zero for c1",
+    "frontdoor path is within 2% of backend direct",
+    "non-streaming does not materially improve throughput"
+  ],
+  "ms_per_token_reduction_needed_pct": 49.75986197208497,
+  "next_optimization_focus": [
+    "Do not spend primary effort on HTTP, SSE, or frontdoor overhead for c1 decode.",
+    "The 200 tok/s target requires roughly 5 ms/token decode; current clean c1 is about 10 ms/token.",
+    "Focus on XPU/vLLM decode internals: MoE kernel path, graph replay, collectives, scheduler step shape, and topology."
+  ],
+  "scenarios": {
+    "backend_nonstream": {
+      "endpoint": "completions",
+      "ignore_eos": true,
+      "metrics": {
+        "client_after_first_corrected_tok_s": null,
+        "client_after_first_tok_s": null,
+        "client_e2e_tok_s": 99.04413942830534,
+        "client_ttft_ms": null,
+        "vllm_decode_ms": 5095.527401970078,
+        "vllm_decode_ms_per_generation_token": 9.952201956972809,
+        "vllm_decode_tok_s_from_histogram": 100.48027605583006,
+        "vllm_iteration_tokens_per_step": 1.97265625,
+        "vllm_prefill_ms": 68.14205964716773,
+        "vllm_queue_ms": 0.012998003512620926,
+        "vllm_time_per_output_token_ms": 9.971677890352407,
+        "vllm_ttft_ms": 72.52343495686848
+      },
+      "mode": "nonstream",
+      "output_tokens_requested": 512,
+      "path": "http://127.0.0.1:18080",
+      "prompt_tokens_actual": 498
+    },
+    "backend_stream": {
+      "endpoint": "completions",
+      "ignore_eos": true,
+      "metrics": {
+        "client_after_first_corrected_tok_s": 100.0241462485313,
+        "client_after_first_tok_s": 100.21988821770651,
+        "client_e2e_tok_s": 98.5208620885246,
+        "client_ttft_ms": 88.11138865227501,
+        "vllm_decode_ms": 5119.081470028807,
+        "vllm_decode_ms_per_generation_token": 9.998205996150014,
+        "vllm_decode_tok_s_from_histogram": 100.01794325752716,
+        "vllm_iteration_tokens_per_step": 1.97265625,
+        "vllm_prefill_ms": 72.43168641192217,
+        "vllm_queue_ms": 0.011558566863338152,
+        "vllm_time_per_output_token_ms": 10.017771957003532,
+        "vllm_ttft_ms": 77.04528172810872
+      },
+      "mode": "stream",
+      "output_tokens_requested": 512,
+      "path": "http://127.0.0.1:18080",
+      "prompt_tokens_actual": 498
+    },
+    "frontdoor_stream": {
+      "endpoint": "completions",
+      "ignore_eos": true,
+      "metrics": {
+        "client_after_first_corrected_tok_s": 99.9708173458706,
+        "client_after_first_tok_s": 100.16645495320107,
+        "client_e2e_tok_s": 98.52763056544796,
+        "client_ttft_ms": 85.02034105670948,
+        "vllm_decode_ms": 5122.180235960211,
+        "vllm_decode_ms_per_generation_token": 10.004258273359786,
+        "vllm_decode_tok_s_from_histogram": 99.95743539157594,
+        "vllm_iteration_tokens_per_step": 1.97265625,
+        "vllm_prefill_ms": 67.97237802917759,
+        "vllm_queue_ms": 0.011392015342911085,
+        "vllm_time_per_output_token_ms": 10.02383607820002,
+        "vllm_ttft_ms": 72.74055480957031
+      },
+      "mode": "stream",
+      "output_tokens_requested": 512,
+      "path": "http://127.0.0.1:8000",
+      "prompt_tokens_actual": 498
+    }
+  },
+  "status": "pass",
+  "target_ms_per_token": 5.0,
+  "target_tok_s": 200.0
+}

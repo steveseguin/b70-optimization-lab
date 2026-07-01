@@ -1,0 +1,84 @@
+{
+  "count": 8,
+  "pass_count": 6,
+  "runs": [
+    {
+      "path": "data/qwen36-quark-int8-tp4-seq1-mbt8192-postspeed-quality-nothink-smoke-20260613m-1.json",
+      "pass_all": false,
+      "baseline_match_all": false,
+      "failures": [
+        {
+          "name": "json_schema",
+          "normalized": "{\"answer\": whiskey whiskey whiskey whiskey\"42\", \"unit\": \"widgets\"}"
+        },
+        {
+          "name": "baseline",
+          "comparisons": {
+            "exact:json_schema:same_normalized": false,
+            "exact:json_schema:same_hash": false
+          }
+        }
+      ]
+    },
+    {
+      "path": "data/qwen36-quark-int8-tp4-seq1-mbt8192-postspeed-quality-nothink-smoke-20260613m-2.json",
+      "pass_all": true,
+      "baseline_match_all": true,
+      "failures": []
+    },
+    {
+      "path": "data/qwen36-quark-int8-tp4-seq1-mbt8192-postspeed-quality-nothink-smoke-20260613m-3.json",
+      "pass_all": true,
+      "baseline_match_all": true,
+      "failures": []
+    },
+    {
+      "path": "data/qwen36-quark-int8-tp4-seq1-mbt8192-postspeed-quality-nothink-smoke-20260613m-4.json",
+      "pass_all": true,
+      "baseline_match_all": true,
+      "failures": []
+    },
+    {
+      "path": "data/qwen36-quark-int8-tp4-seq1-mbt8192-postspeed-quality-nothink-smoke-20260613m-5.json",
+      "pass_all": true,
+      "baseline_match_all": true,
+      "failures": []
+    },
+    {
+      "path": "data/qwen36-quark-int8-tp4-seq1-mbt8192-postspeed-quality-nothink-smoke-20260613m-6.json",
+      "pass_all": true,
+      "baseline_match_all": true,
+      "failures": []
+    },
+    {
+      "path": "data/qwen36-quark-int8-tp4-seq1-mbt8192-postspeed-quality-nothink-smoke-20260613m-7.json",
+      "pass_all": false,
+      "baseline_match_all": true,
+      "failures": [
+        {
+          "name": "repeat_hash_stability",
+          "unique_hashes": [
+            "c40708bd7280e02bd9dc04ec775023d5be7b4870ea8096039af38576e60fc80b",
+            "f5ebed8f25045361fc1a0ee5758fbe7b4d421c295c5050bca2150ce4916e671d"
+          ],
+          "texts": [
+            "blue, green, orange, red",
+            "blue, green, orange, red",
+            "blue, green, orange, red",
+            "blue, green, orange, red",
+            "blue, green, orange, red",
+            "blue, green, orange, red",
+            "blue, green, orange, red",
+            "blue, green whiskey whiskey whiskey whiskey0000000000000000000000000"
+          ]
+        }
+      ]
+    },
+    {
+      "path": "data/qwen36-quark-int8-tp4-seq1-mbt8192-postspeed-quality-nothink-smoke-20260613m-8.json",
+      "pass_all": true,
+      "baseline_match_all": true,
+      "failures": []
+    }
+  ]
+}

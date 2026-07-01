@@ -1,0 +1,141 @@
+{
+  "label": "w8a8-safe-default-cache",
+  "stamp": "20260614c5",
+  "return_codes": {
+    "metrics": 0,
+    "json_canary": 0,
+    "color_canary": 0,
+    "quality_suite": 0
+  },
+  "artifacts": {
+    "metrics": "/home/steve/llm-optimizations/data/qwen36-ablation-w8a8-safe-default-cache-p512o512-20260614c5.json",
+    "json_canary": "/home/steve/llm-optimizations/data/qwen36-ablation-w8a8-safe-default-cache-json-repeat96-20260614c5.json",
+    "color_canary": "/home/steve/llm-optimizations/data/qwen36-ablation-w8a8-safe-default-cache-color-repeat96-20260614c5.json",
+    "quality_suite": "/home/steve/llm-optimizations/data/qwen36-ablation-w8a8-safe-default-cache-quality-suite-20260614c5.json",
+    "log": "/home/steve/llm-optimizations/data/qwen36-ablation-w8a8-safe-default-cache-20260614c5.log"
+  },
+  "env": {
+    "VLLM_XPU_GDN_NATIVE_FALLBACK": null,
+    "VLLM_XPU_GDN_NATIVE_FALLBACK_INITIAL_DECODE_STEPS": null,
+    "VLLM_XPU_GDN_NATIVE_FALLBACK_DECODE_LAYERS": null,
+    "VLLM_XPU_GDN_NATIVE_FALLBACK_DECODE_MAX_LAYER": null,
+    "VLLM_XPU_GDN_NATIVE_FALLBACK_DECODE_LAYER_REGEX": null,
+    "VLLM_XPU_GDN_SYNC_BEFORE_NATIVE_DECODE": null,
+    "VLLM_XPU_GDN_SYNC_BEFORE_NATIVE_DECODE_LAYERS": null,
+    "VLLM_XPU_GREEDY_SAMPLE_TOPK_FALLBACK": null,
+    "VLLM_XPU_GREEDY_SAMPLE_XPU_FALLBACK": null,
+    "VLLM_XPU_ZERO_ALL_PREFILL_GDN_STATE": null,
+    "VLLM_XPU_DISABLE_PREFILL_CUDAGRAPH_REPLAY": null,
+    "VLLM_EXTRA_ARGS": null
+  },
+  "metrics_summary": {
+    "tok_s_out_client_after_first_chunk": {
+      "mean": 87.07889487920158,
+      "median": 87.07889487920158,
+      "min": 87.06645887732303,
+      "max": 87.09133088108013
+    },
+    "tok_s_out_client_after_first_chunk_corrected": {
+      "mean": 86.90881891264064,
+      "median": 86.90881891264064,
+      "min": 86.89640719982826,
+      "max": 86.921230625453
+    },
+    "tok_s_out_client_e2e": {
+      "mean": 85.51680106860371,
+      "median": 85.51680106860371,
+      "min": 85.47167406893573,
+      "max": 85.5619280682717
+    },
+    "tok_s_total_client": {
+      "mean": 168.69525210798778,
+      "median": 168.69525210798778,
+      "min": 168.606232050049,
+      "max": 168.78427216592658
+    },
+    "ttft_ms_client": {
+      "mean": 107.40363341756165,
+      "median": 107.40363341756165,
+      "min": 105.08394194766879,
+      "max": 109.72332488745451
+    },
+    "ttft_ms_vllm_metrics": {
+      "mean": 94.45643424987793,
+      "median": 94.45643424987793,
+      "min": 92.08440780639648,
+      "max": 96.82846069335938
+    },
+    "tok_s_prefill_lower_bound_from_ttft": {
+      "mean": 4638.878536680842,
+      "median": 4638.878536680842,
+      "min": 4538.688565177996,
+      "max": 4739.068508183688
+    },
+    "e2e_ms_vllm_metrics": {
+      "mean": 5985.953569412231,
+      "median": 5985.953569412231,
+      "min": 5982.824325561523,
+      "max": 5989.082813262939
+    },
+    "queue_ms_vllm_histogram": {
+      "mean": 0.01201301347464323,
+      "median": 0.01201301347464323,
+      "min": 0.009868992492556572,
+      "max": 0.014157034456729889
+    },
+    "prefill_ms_vllm_histogram": {
+      "mean": 89.29600985720754,
+      "median": 89.29600985720754,
+      "min": 87.05616788938642,
+      "max": 91.53585182502866
+    },
+    "decode_ms_vllm_histogram": {
+      "mean": 5891.710971016437,
+      "median": 5891.710971016437,
+      "min": 5890.926223015413,
+      "max": 5892.495719017461
+    },
+    "decode_ms_per_generation_token_vllm_histogram": {
+      "mean": 11.507247990266478,
+      "median": 11.507247990266478,
+      "min": 11.505715279326978,
+      "max": 11.508780701205978
+    },
+    "inference_ms_vllm_histogram": {
+      "mean": 5981.006980873644,
+      "median": 5981.006980873644,
+      "min": 5977.982390904799,
+      "max": 5984.03157084249
+    },
+    "time_per_output_token_ms_vllm_histogram": {
+      "mean": 11.529767066568372,
+      "median": 11.529767066568372,
+      "min": 11.528231356194546,
+      "max": 11.531302776942198
+    },
+    "inter_token_ms_vllm_histogram": {
+      "mean": 11.529767066568368,
+      "median": 11.529767066568368,
+      "min": 11.528231356194546,
+      "max": 11.531302776942193
+    },
+    "iteration_tokens_per_step_vllm_histogram": {
+      "mean": 1.97265625,
+      "median": 1.97265625,
+      "min": 1.97265625,
+      "max": 1.97265625
+    }
+  },
+  "json_canary": {
+    "pass_all": true,
+    "repeats_completed": 96,
+    "mismatch_count": 0,
+    "first_mismatch": null
+  },
+  "color_canary": {
+    "pass_all": true,
+    "repeats_completed": 96,
+    "mismatch_count": 0,
+    "first_mismatch": null
+  }
+}

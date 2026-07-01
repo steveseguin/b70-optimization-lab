@@ -1,0 +1,269 @@
+{
+  "all": {
+    "forward_end_after_start_sync_ms": {
+      "count": 640,
+      "max": 6.019976,
+      "mean": 4.5359175531250004,
+      "median": 4.650987499999999,
+      "min": 0.39444,
+      "p90": 4.9293773000000005,
+      "p95": 5.18109765,
+      "p99": 5.78618122
+    },
+    "forward_start_sync_ms": {
+      "count": 640,
+      "max": 0.008556,
+      "mean": 0.0016209828125,
+      "median": 0.001513,
+      "min": 0.001263,
+      "p90": 0.001804,
+      "p95": 0.0019944499999999996,
+      "p99": 0.003251400000000002
+    },
+    "forward_sync_total_ms": {
+      "count": 640,
+      "max": 6.029645,
+      "mean": 4.546092553125,
+      "median": 4.6603905,
+      "min": 0.412875,
+      "p90": 4.939265300000001,
+      "p95": 5.190678650000001,
+      "p99": 5.7959064399999995
+    }
+  },
+  "interpretation": [
+    "All four TP ranks emit forward-boundary rows.",
+    "For pure decode after the first five decode events, forward_start sync is near-zero on every rank.",
+    "forward_end_after_start_sync carries the model-forward wait on every rank, with TP2/TP3 slower than TP0/TP1 in this unrotated mapping.",
+    "Next diagnostic should rotate rank-to-card mapping to separate physical-card/topology skew from TP-rank/model-shard skew."
+  ],
+  "metrics": "data/qwen36-quark-int8-tp4-allrank-forwardboundary-p512o128-metrics-20260612cj.json",
+  "physical_parse_error": null,
+  "pure_decode": {
+    "forward_end_after_start_sync_ms": {
+      "count": 632,
+      "max": 6.019976,
+      "mean": 4.569482943037975,
+      "median": 4.653442,
+      "min": 2.061128,
+      "p90": 4.927947700000001,
+      "p95": 5.18193485,
+      "p99": 5.78628538
+    },
+    "forward_start_sync_ms": {
+      "count": 632,
+      "max": 0.008556,
+      "mean": 0.0016005522151898734,
+      "median": 0.001503,
+      "min": 0.001263,
+      "p90": 0.001784,
+      "p95": 0.0019275000000000006,
+      "p99": 0.0025064000000000032
+    },
+    "forward_sync_total_ms": {
+      "count": 632,
+      "max": 6.029645,
+      "mean": 4.579561120253165,
+      "median": 4.663296000000001,
+      "min": 2.075915,
+      "p90": 4.9378417,
+      "p95": 5.19138785,
+      "p99": 5.79606676
+    }
+  },
+  "pure_decode_after_first5_each_rank": {
+    "forward_end_after_start_sync_ms": {
+      "count": 612,
+      "max": 6.019976,
+      "mean": 4.568658039215686,
+      "median": 4.653442,
+      "min": 2.061128,
+      "p90": 4.9201357,
+      "p95": 5.17796195,
+      "p99": 5.78654578
+    },
+    "forward_start_sync_ms": {
+      "count": 612,
+      "max": 0.008556,
+      "mean": 0.001594545751633987,
+      "median": 0.001503,
+      "min": 0.001263,
+      "p90": 0.001783,
+      "p95": 0.0019134500000000001,
+      "p99": 0.0024204899999999995
+    },
+    "forward_sync_total_ms": {
+      "count": 612,
+      "max": 6.029645,
+      "mean": 4.578704205882353,
+      "median": 4.663296000000001,
+      "min": 2.075915,
+      "p90": 4.9302407,
+      "p95": 5.1875485,
+      "p99": 5.79646756
+    }
+  },
+  "pure_decode_after_first5_each_rank_by_rank": {
+    "0": {
+      "forward_end_after_start_sync_ms": {
+        "count": 153,
+        "max": 5.540397,
+        "mean": 4.214303111111111,
+        "median": 4.318414,
+        "min": 2.12608,
+        "p90": 4.3656999999999995,
+        "p95": 4.3887934,
+        "p99": 4.817484479999997
+      },
+      "forward_start_sync_ms": {
+        "count": 153,
+        "max": 0.006583,
+        "mean": 0.0017997124183006536,
+        "median": 0.001723,
+        "min": 0.001392,
+        "p90": 0.001978,
+        "p95": 0.002164,
+        "p99": 0.0024441999999999997
+      },
+      "forward_sync_total_ms": {
+        "count": 153,
+        "max": 5.550426,
+        "mean": 4.225283732026144,
+        "median": 4.329304,
+        "min": 2.141338,
+        "p90": 4.3759438,
+        "p95": 4.398951,
+        "p99": 4.827683199999998
+      }
+    },
+    "1": {
+      "forward_end_after_start_sync_ms": {
+        "count": 153,
+        "max": 5.799483,
+        "mean": 4.470654934640523,
+        "median": 4.454459,
+        "min": 2.061128,
+        "p90": 4.8514158,
+        "p95": 5.157139600000001,
+        "p99": 5.612869639999996
+      },
+      "forward_start_sync_ms": {
+        "count": 153,
+        "max": 0.007253,
+        "mean": 0.0015621568627450981,
+        "median": 0.001443,
+        "min": 0.001263,
+        "p90": 0.0017220000000000002,
+        "p95": 0.001803,
+        "p99": 0.004698439999999954
+      },
+      "forward_sync_total_ms": {
+        "count": 153,
+        "max": 5.809292,
+        "mean": 4.480850052287582,
+        "median": 4.468005,
+        "min": 2.075915,
+        "p90": 4.8612944,
+        "p95": 5.1725404,
+        "p99": 5.622650239999996
+      }
+    },
+    "2": {
+      "forward_end_after_start_sync_ms": {
+        "count": 153,
+        "max": 5.98457,
+        "mean": 4.769201895424836,
+        "median": 4.682988,
+        "min": 4.508901,
+        "p90": 5.067673800000001,
+        "p95": 5.2659798,
+        "p99": 5.853314199999998
+      },
+      "forward_start_sync_ms": {
+        "count": 153,
+        "max": 0.008556,
+        "mean": 0.0014874444444444444,
+        "median": 0.001423,
+        "min": 0.001313,
+        "p90": 0.0015402,
+        "p95": 0.001571,
+        "p99": 0.0018178799999999996
+      },
+      "forward_sync_total_ms": {
+        "count": 153,
+        "max": 5.994088,
+        "mean": 4.778690163398693,
+        "median": 4.692516,
+        "min": 4.520503,
+        "p90": 5.076939,
+        "p95": 5.275098800000001,
+        "p99": 5.862578079999999
+      }
+    },
+    "3": {
+      "forward_end_after_start_sync_ms": {
+        "count": 153,
+        "max": 6.019976,
+        "mean": 4.820472215686275,
+        "median": 4.739163,
+        "min": 4.493523,
+        "p90": 5.1095078,
+        "p95": 5.318432200000001,
+        "p99": 5.921768359999998
+      },
+      "forward_start_sync_ms": {
+        "count": 153,
+        "max": 0.001804,
+        "mean": 0.0015288692810457517,
+        "median": 0.001513,
+        "min": 0.001382,
+        "p90": 0.001633,
+        "p95": 0.001693,
+        "p99": 0.0017726799999999996
+      },
+      "forward_sync_total_ms": {
+        "count": 153,
+        "max": 6.029645,
+        "mean": 4.829992875816994,
+        "median": 4.748681,
+        "min": 4.503592,
+        "p90": 5.1196206,
+        "p95": 5.327709200000001,
+        "p99": 5.931053439999999
+      }
+    }
+  },
+  "pure_rows_by_rank": {
+    "0": 158,
+    "1": 158,
+    "2": 158,
+    "3": 158
+  },
+  "rank_to_logical_device": {
+    "0": "xpu:0",
+    "1": "xpu:1",
+    "2": "xpu:2",
+    "3": "xpu:3"
+  },
+  "rank_to_physical_device_id": {
+    "0": 0,
+    "1": 1,
+    "2": 2,
+    "3": 3
+  },
+  "rank_to_pid": {
+    "0": 1853850,
+    "1": 1853851,
+    "2": 1853852,
+    "3": 1853853
+  },
+  "rows_by_rank": {
+    "0": 160,
+    "1": 160,
+    "2": 160,
+    "3": 160
+  },
+  "source_log": "data/qwen36-quark-int8-tp4-allrank-forwardboundary-20260612cj.log",
+  "total_rows": 640,
+  "xpusmi_ps": "data/qwen36-quark-int8-tp4-allrank-forwardboundary-xpusmi-ps-20260612cj.json"
+}

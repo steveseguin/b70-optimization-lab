@@ -1,0 +1,239 @@
+{
+  "label": "w8a8-layerlet-20260614",
+  "stamp": "20260615025705",
+  "return_codes": {
+    "metrics": 0,
+    "json_canary": 0,
+    "color_canary": 1,
+    "quality_suite": 0
+  },
+  "status": {
+    "metrics": "passed",
+    "json_canary": "passed",
+    "color_canary": "failed",
+    "quality_suite": "skipped"
+  },
+  "artifacts": {
+    "metrics": "/home/steve/llm-optimizations/data/qwen36-ablation-w8a8-layerlet-20260614-p512o512-20260615025705.json",
+    "json_canary": "/home/steve/llm-optimizations/data/qwen36-ablation-w8a8-layerlet-20260614-json-repeat12-20260615025705.json",
+    "color_canary": "/home/steve/llm-optimizations/data/qwen36-ablation-w8a8-layerlet-20260614-color-repeat12-20260615025705.json",
+    "quality_suite": "/home/steve/llm-optimizations/data/qwen36-ablation-w8a8-layerlet-20260614-quality-suite-20260615025705.json",
+    "log": "/home/steve/llm-optimizations/data/qwen36-ablation-w8a8-layerlet-20260614-20260615025705.log"
+  },
+  "artifact_exists": {
+    "metrics": true,
+    "json_canary": true,
+    "color_canary": true,
+    "quality_suite": false,
+    "log": true
+  },
+  "env": {
+    "VLLM_XPU_GDN_NATIVE_FALLBACK": "decode",
+    "VLLM_XPU_GDN_NATIVE_PREFILL_FALLBACK": null,
+    "VLLM_XPU_GDN_PREFILL_RECURRENT_FALLBACK": "1",
+    "VLLM_XPU_GDN_NATIVE_FALLBACK_INITIAL_DECODE_STEPS": null,
+    "VLLM_XPU_GDN_NATIVE_FALLBACK_DECODE_LAYERS": null,
+    "VLLM_XPU_GDN_NATIVE_FALLBACK_DECODE_MAX_LAYER": null,
+    "VLLM_XPU_GDN_NATIVE_FALLBACK_DECODE_LAYER_REGEX": null,
+    "VLLM_XPU_GDN_SYNC_BEFORE_NATIVE_DECODE": null,
+    "VLLM_XPU_GDN_SYNC_BEFORE_NATIVE_DECODE_LAYERS": null,
+    "VLLM_XPU_GREEDY_SAMPLE_TOPK_FALLBACK": "1",
+    "VLLM_XPU_GREEDY_SAMPLE_XPU_FALLBACK": null,
+    "VLLM_XPU_ZERO_ALL_PREFILL_GDN_STATE": null,
+    "VLLM_XPU_ZERO_FRESH_GDN_STATE": "1",
+    "VLLM_XPU_DISABLE_PREFILL_CUDAGRAPH_REPLAY": "1",
+    "VLLM_ENABLE_FLA_PACKED_RECURRENT_DECODE": null,
+    "XPU_GRAPH": "1",
+    "VLLM_XPU_ENABLE_XPU_GRAPH": "1",
+    "VLLM_XPU_FORCE_GRAPH_WITH_COMM": "1",
+    "VLLM_XPU_GRAPH_NOOP_COMM_CAPTURE": "1",
+    "VLLM_XPU_USE_CUSTOM_OP_COLLECTIVES": null,
+    "VLLM_XPU_COMPILE_ALLREDUCE_CUSTOM_OP": null,
+    "VLLM_XPU_CUSTOM_ALLREDUCE_GRAPH_CLONE_INPUT": null,
+    "VLLM_XPU_CUSTOM_ALLREDUCE_CLONE_INPUT": null,
+    "VLLM_XPU_CUDAGRAPH_REPLAY_MAX_PIECEWISE_INDEX": null,
+    "VLLM_XPU_CUDAGRAPH_DISABLE_SUBMOD_REGEX": null,
+    "VLLM_XPU_CUDAGRAPH_RECAPTURE_AFTER_N_REPLAYS": null,
+    "VLLM_XPU_CUDAGRAPH_RECAPTURE_REGEX": null,
+    "VLLM_XPU_DECODE_CUDAGRAPH_REPLAY_EAGER_EVERY_N_REQUESTS": null,
+    "VLLM_XPU_CUDAGRAPH_ALLOW_RUNTIME_RECAPTURE": null,
+    "VLLM_XPU_SYNC_CUDAGRAPH_REPLAY": null,
+    "VLLM_XPU_CUDAGRAPH_REPLAY_TRACE_FILE": null,
+    "VLLM_XPU_CUDAGRAPH_REPLAY_TRACE_MAX_LINES": null,
+    "VLLM_XPU_CUDAGRAPH_REPLAY_TRACE_RANK": null,
+    "VLLM_XPU_CUDAGRAPH_REPLAY_TRACE_SUBMOD_REGEX": null,
+    "VLLM_XPU_CUDAGRAPH_REPLAY_TRACE_REQ_REGEX": null,
+    "VLLM_XPU_CUDAGRAPH_REPLAY_TRACE_INPUTS": null,
+    "VLLM_XPU_CUDAGRAPH_REPLAY_TRACE_DIGEST": null,
+    "VLLM_XPU_GDN_TRACE_FILE": null,
+    "VLLM_XPU_GDN_TRACE_MAX_LINES": null,
+    "VLLM_XPU_GDN_TRACE_RANK": null,
+    "VLLM_XPU_GDN_TRACE_LAYER_REGEX": null,
+    "VLLM_XPU_GDN_TRACE_REQ_REGEX": null,
+    "VLLM_XPU_GDN_TRACE_PREFILL_ONLY": null,
+    "VLLM_XPU_GDN_TRACE_DECODE_ONLY": null,
+    "VLLM_XPU_GDN_TRACE_TENSOR_LIMIT": null,
+    "VLLM_XPU_GDN_TRACE_STATE_LIMIT": null,
+    "VLLM_XPU_CUDAGRAPH_ZERO_REPLAY_OUTPUT_REGEX": null,
+    "VLLM_XPU_CUDAGRAPH_ZERO_REPLAY_OUTPUT_INDICES": null,
+    "VLLM_XPU_CUDAGRAPH_CLONE_REPLAY_OUTPUT_REGEX": null,
+    "VLLM_XPU_CUDAGRAPH_CLONE_REPLAY_OUTPUT_INDICES": null,
+    "VLLM_XPU_CUDAGRAPH_COMPARE_DIRECT_REGEX": null,
+    "VLLM_XPU_CUDAGRAPH_COMPARE_DIRECT_RETURN_DIRECT": null,
+    "VLLM_XPU_W8A8_EXPERIMENTAL_ALLOW": "1",
+    "VLLM_XPU_W8A8_USE_OFFSETS": "1",
+    "VLLM_XPU_W8A8_OFFSETS_PREFIX_OP": "1",
+    "VLLM_XPU_MOE_W8A8_MIDDLE_LAYERLET": "1",
+    "VLLM_XPU_INT8_MOE_MIXED_WORKSPACE": "1",
+    "GPU_MEMORY_UTILIZATION": "0.90",
+    "COMPILATION_CONFIG": "{\"cudagraph_mode\":\"PIECEWISE\"}",
+    "ABLATION_FAST_GRAPH_AUTOCONFIG": "0",
+    "VLLM_EXTRA_ARGS": "--no-async-scheduling"
+  },
+  "metrics_summary": {
+    "tok_s_out_client_after_first_chunk": {
+      "mean": 72.70564359745765,
+      "median": 72.70564359745765,
+      "min": 69.38725969730666,
+      "max": 76.02402749760866
+    },
+    "tok_s_out_client_after_first_chunk_corrected": {
+      "mean": 72.56364038730638,
+      "median": 72.56364038730638,
+      "min": 69.25173770571035,
+      "max": 75.87554306890239
+    },
+    "tok_s_out_client_e2e": {
+      "mean": 71.4992201052701,
+      "median": 71.4992201052701,
+      "min": 68.29347848659977,
+      "max": 74.70496172394041
+    },
+    "tok_s_total_client": {
+      "mean": 141.0433834107867,
+      "median": 141.0433834107867,
+      "min": 134.71955717083156,
+      "max": 147.36720965074184
+    },
+    "ttft_ms_client": {
+      "mean": 118.54707985185087,
+      "median": 118.54707985185087,
+      "min": 118.17930988036096,
+      "max": 118.91484982334077
+    },
+    "ttft_ms_vllm_metrics": {
+      "mean": 103.41668128967285,
+      "median": 103.41668128967285,
+      "min": 103.20520401000977,
+      "max": 103.62815856933594
+    },
+    "tok_s_prefill_lower_bound_from_ttft": {
+      "mean": 4200.903080769256,
+      "median": 4200.903080769256,
+      "min": 4187.87057074727,
+      "max": 4213.935590791241
+    },
+    "e2e_ms_vllm_metrics": {
+      "mean": 7173.952102661133,
+      "median": 7173.952102661133,
+      "min": 6852.364063262939,
+      "max": 7495.540142059326
+    },
+    "queue_ms_vllm_histogram": {
+      "mean": 0.017573009245097637,
+      "median": 0.017573009245097637,
+      "min": 0.016591046005487442,
+      "max": 0.018554972484707832
+    },
+    "prefill_ms_vllm_histogram": {
+      "mean": 98.20747352205217,
+      "median": 98.20747352205217,
+      "min": 97.96646609902382,
+      "max": 98.44848094508052
+    },
+    "decode_ms_vllm_histogram": {
+      "mean": 7070.683412603103,
+      "median": 7070.683412603103,
+      "min": 6748.926289146766,
+      "max": 7392.440536059439
+    },
+    "decode_ms_per_generation_token_vllm_histogram": {
+      "mean": 13.809928540240435,
+      "median": 13.809928540240435,
+      "min": 13.181496658489777,
+      "max": 14.438360421991092
+    },
+    "inference_ms_vllm_histogram": {
+      "mean": 7168.890886125155,
+      "median": 7168.890886125155,
+      "min": 6847.374770091847,
+      "max": 7490.407002158463
+    },
+    "time_per_output_token_ms_vllm_histogram": {
+      "mean": 13.83695384071057,
+      "median": 13.83695384071057,
+      "min": 13.207292150972133,
+      "max": 14.466615530449006
+    },
+    "inter_token_ms_vllm_histogram": {
+      "mean": 13.836953840710574,
+      "median": 13.836953840710574,
+      "min": 13.207292150972146,
+      "max": 14.466615530449001
+    },
+    "iteration_tokens_per_step_vllm_histogram": {
+      "mean": 1.97265625,
+      "median": 1.97265625,
+      "min": 1.97265625,
+      "max": 1.97265625
+    }
+  },
+  "speed": {
+    "tok_s_out_corrected_mean": 72.56364038730638,
+    "tok_s_out_after_first_chunk_mean": 72.70564359745765,
+    "tok_s_out_e2e_mean": 71.4992201052701,
+    "decode_ms_per_token_mean": 13.809928540240435,
+    "ttft_ms_client_mean": 118.54707985185087
+  },
+  "json_canary": {
+    "pass_all": true,
+    "repeats_completed": 12,
+    "mismatch_count": 0,
+    "first_mismatch": null
+  },
+  "color_canary": {
+    "pass_all": false,
+    "repeats_completed": 1,
+    "mismatch_count": 1,
+    "first_mismatch": {
+      "index": 0,
+      "request_id": null,
+      "text": "blue, green, red, yellow",
+      "normalized": "blue, green, red, yellow",
+      "token_ids": [
+        11855,
+        11,
+        5983,
+        11,
+        2438,
+        11,
+        13358
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.18829006399028003,
+      "usage": {
+        "prompt_tokens": 30,
+        "total_tokens": 38,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "pass": false
+    }
+  },
+  "decision": {
+    "accepted_by_requested_gates": false,
+    "gate_failures": [
+      "color_canary"
+    ]
+  }
+}

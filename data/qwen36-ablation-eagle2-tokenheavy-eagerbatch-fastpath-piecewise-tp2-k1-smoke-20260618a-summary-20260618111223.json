@@ -1,0 +1,238 @@
+{
+  "label": "eagle2-tokenheavy-eagerbatch-fastpath-piecewise-tp2-k1-smoke-20260618a",
+  "stamp": "20260618111223",
+  "return_codes": {
+    "metrics": 0,
+    "json_canary": 0,
+    "color_canary": 0,
+    "quality_suite": 0
+  },
+  "status": {
+    "metrics": "passed",
+    "json_canary": "skipped",
+    "color_canary": "skipped",
+    "quality_suite": "skipped"
+  },
+  "artifacts": {
+    "metrics": "/home/steve/llm-optimizations/data/qwen36-ablation-eagle2-tokenheavy-eagerbatch-fastpath-piecewise-tp2-k1-smoke-20260618a-p512o512-20260618111223.json",
+    "json_canary": "/home/steve/llm-optimizations/data/qwen36-ablation-eagle2-tokenheavy-eagerbatch-fastpath-piecewise-tp2-k1-smoke-20260618a-json-repeat96-20260618111223.json",
+    "color_canary": "/home/steve/llm-optimizations/data/qwen36-ablation-eagle2-tokenheavy-eagerbatch-fastpath-piecewise-tp2-k1-smoke-20260618a-color-repeat96-20260618111223.json",
+    "quality_suite": "/home/steve/llm-optimizations/data/qwen36-ablation-eagle2-tokenheavy-eagerbatch-fastpath-piecewise-tp2-k1-smoke-20260618a-quality-suite-20260618111223.json",
+    "log": "/home/steve/llm-optimizations/data/qwen36-ablation-eagle2-tokenheavy-eagerbatch-fastpath-piecewise-tp2-k1-smoke-20260618a-20260618111223.log"
+  },
+  "artifact_exists": {
+    "metrics": true,
+    "json_canary": false,
+    "color_canary": false,
+    "quality_suite": false,
+    "log": true
+  },
+  "env": {
+    "VLLM_XPU_GDN_NATIVE_FALLBACK": "prefill",
+    "VLLM_XPU_GDN_NATIVE_PREFILL_FALLBACK": null,
+    "VLLM_XPU_GDN_PREFILL_RECURRENT_FALLBACK": "1",
+    "VLLM_XPU_GDN_NATIVE_FALLBACK_INITIAL_DECODE_STEPS": null,
+    "VLLM_XPU_GDN_NATIVE_FALLBACK_DECODE_LAYERS": null,
+    "VLLM_XPU_GDN_NATIVE_FALLBACK_DECODE_MAX_LAYER": null,
+    "VLLM_XPU_GDN_NATIVE_FALLBACK_DECODE_LAYER_REGEX": null,
+    "VLLM_XPU_GDN_SYNC_BEFORE_NATIVE_DECODE": null,
+    "VLLM_XPU_GDN_SYNC_BEFORE_NATIVE_DECODE_LAYERS": null,
+    "VLLM_XPU_GREEDY_SAMPLE_TOPK_FALLBACK": "1",
+    "VLLM_XPU_GREEDY_SAMPLE_XPU_FALLBACK": null,
+    "VLLM_XPU_GREEDY_SAMPLE_BF16_TOPK_FASTPATH": null,
+    "VLLM_XPU_ASYNC_CLONE_SAMPLED_TOKEN_IDS": null,
+    "VLLM_XPU_SANITIZE_LOGITS_NAN": null,
+    "VLLM_XPU_LOCAL_ARGMAX_DECODE": null,
+    "VLLM_XPU_LOCAL_ARGMAX_DIRECT_GATHER": null,
+    "VLLM_XPU_LOCAL_ARGMAX_DIRECT_GATHER_REUSE": null,
+    "VLLM_XPU_LOCAL_ARGMAX_PACKED_GATHER": null,
+    "VLLM_XPU_LOCAL_ARGMAX_SYNC_TOKENS": null,
+    "VLLM_XPU_DUMMY_LOGIT_INDICES_STATIC": null,
+    "VLLM_XPU_ZERO_ALL_PREFILL_GDN_STATE": null,
+    "VLLM_XPU_ZERO_FRESH_GDN_STATE": null,
+    "VLLM_XPU_DISABLE_PREFILL_CUDAGRAPH_REPLAY": "1",
+    "VLLM_ENABLE_FLA_PACKED_RECURRENT_DECODE": null,
+    "XPU_GRAPH": "1",
+    "VLLM_XPU_ENABLE_XPU_GRAPH": "1",
+    "VLLM_XPU_FORCE_GRAPH_WITH_COMM": "1",
+    "VLLM_XPU_GRAPH_NOOP_COMM_CAPTURE": "1",
+    "VLLM_XPU_USE_CUSTOM_OP_COLLECTIVES": null,
+    "VLLM_XPU_COMPILE_ALLREDUCE_CUSTOM_OP": null,
+    "VLLM_XPU_CUSTOM_ALLREDUCE_GRAPH_CLONE_INPUT": null,
+    "VLLM_XPU_CUSTOM_ALLREDUCE_CLONE_INPUT": null,
+    "VLLM_XPU_CUDAGRAPH_REPLAY_MAX_PIECEWISE_INDEX": null,
+    "VLLM_XPU_CUDAGRAPH_DISABLE_SUBMOD_REGEX": null,
+    "VLLM_XPU_CUDAGRAPH_RECAPTURE_AFTER_N_REPLAYS": null,
+    "VLLM_XPU_CUDAGRAPH_RECAPTURE_REGEX": null,
+    "VLLM_XPU_CUDAGRAPH_STRONG_OUTPUT": null,
+    "VLLM_XPU_CUDAGRAPH_PER_WRAPPER_POOL": null,
+    "VLLM_XPU_CUDAGRAPH_NO_GLOBAL_POOL": null,
+    "VLLM_XPU_DECODE_CUDAGRAPH_REPLAY_EAGER_EVERY_N_REQUESTS": null,
+    "VLLM_XPU_CUDAGRAPH_ALLOW_RUNTIME_RECAPTURE": null,
+    "VLLM_XPU_SYNC_CUDAGRAPH_REPLAY": null,
+    "VLLM_XPU_CUDAGRAPH_SANITIZE_REPLAY_INPUTS": null,
+    "VLLM_XPU_CUDAGRAPH_REPLAY_TRACE_FILE": null,
+    "VLLM_XPU_CUDAGRAPH_REPLAY_TRACE_MAX_LINES": null,
+    "VLLM_XPU_CUDAGRAPH_REPLAY_TRACE_RANK": null,
+    "VLLM_XPU_CUDAGRAPH_REPLAY_TRACE_SUBMOD_REGEX": null,
+    "VLLM_XPU_CUDAGRAPH_REPLAY_TRACE_REQ_REGEX": null,
+    "VLLM_XPU_CUDAGRAPH_REPLAY_TRACE_INPUTS": null,
+    "VLLM_XPU_CUDAGRAPH_REPLAY_TRACE_DIGEST": null,
+    "VLLM_XPU_GDN_TRACE_FILE": null,
+    "VLLM_XPU_GDN_TRACE_MAX_LINES": null,
+    "VLLM_XPU_GDN_TRACE_RANK": null,
+    "VLLM_XPU_GDN_TRACE_LAYER_REGEX": null,
+    "VLLM_XPU_GDN_TRACE_REQ_REGEX": null,
+    "VLLM_XPU_GDN_TRACE_PREFILL_ONLY": null,
+    "VLLM_XPU_GDN_TRACE_DECODE_ONLY": null,
+    "VLLM_XPU_GDN_TRACE_TENSOR_LIMIT": null,
+    "VLLM_XPU_GDN_TRACE_STATE_LIMIT": null,
+    "VLLM_XPU_CUDAGRAPH_ZERO_REPLAY_OUTPUT_REGEX": null,
+    "VLLM_XPU_CUDAGRAPH_ZERO_REPLAY_OUTPUT_INDICES": null,
+    "VLLM_XPU_CUDAGRAPH_CLONE_REPLAY_OUTPUT_REGEX": null,
+    "VLLM_XPU_CUDAGRAPH_CLONE_REPLAY_OUTPUT_INDICES": null,
+    "VLLM_XPU_CUDAGRAPH_STATIC_INPUT_REGEX": null,
+    "VLLM_XPU_CUDAGRAPH_STATIC_INPUT_INDICES": null,
+    "VLLM_XPU_CUDAGRAPH_STATIC_INPUT_MAX_NUMEL": null,
+    "VLLM_XPU_CUDAGRAPH_COMPARE_DIRECT_REGEX": null,
+    "VLLM_XPU_CUDAGRAPH_COMPARE_DIRECT_RETURN_DIRECT": null,
+    "VLLM_XPU_W8A8_EXPERIMENTAL_ALLOW": null,
+    "VLLM_XPU_W8A8_USE_OFFSETS": null,
+    "VLLM_XPU_W8A8_OFFSETS_PREFIX_OP": null,
+    "VLLM_XPU_MOE_W8A8_MIDDLE_LAYERLET": null,
+    "VLLM_XPU_INT8_MOE_MIXED_WORKSPACE": "1",
+    "VLLM_XPU_INT8_MOE_PERSISTENT_SCRATCH": null,
+    "VLLM_XPU_INT8_MOE_FUSED_PROLOGUE_OFFSET": null,
+    "VLLM_XPU_INT8_MOE_FUSED_PROLOGUE_OFFSET_ALLOW_CAPTURE": null,
+    "VLLM_XPU_INT8_MOE_FUSED_PROLOGUE_OFFSET_SKIP_LAYERS": null,
+    "VLLM_XPU_INT8_MOE_FUSED_PROLOGUE_OFFSET_LAYER_REGEX": null,
+    "VLLM_XPU_SHARED_EXPERTS_STREAM": null,
+    "VLLM_XPU_SHARED_EXPERT_FUSED_ACT_QUANT": null,
+    "VLLM_XPU_MOE_SHARED_ADD_ALLREDUCE_CUSTOM_OP": null,
+    "VLLM_XPU_METADATA_COPY_ALLOW": null,
+    "VLLM_XPU_BLOCK_TABLE_DIRTY_COMMIT": null,
+    "VLLM_XPU_BLOCK_TABLE_DIRTY_COMMIT_LOG_EVERY": null,
+    "GPU_MEMORY_UTILIZATION": "0.82",
+    "COMPILATION_CONFIG": "{\"cudagraph_mode\":\"PIECEWISE\",\"max_cudagraph_capture_size\":128}",
+    "SPEC_CONFIG": "{\"method\":\"eagle\",\"model\":\"/home/steve/llm-optimizations/data/qwen36-eagle2-corpus2-tokenheavy-trained-20260618a\",\"num_speculative_tokens\":1}",
+    "ABLATION_FAST_GRAPH_AUTOCONFIG": "1",
+    "VLLM_EXTRA_ARGS": null,
+    "METRICS_PROMPT_KIND": null,
+    "METRICS_PROMPT_PRESET": null,
+    "METRICS_RANDOM_PREFIX_LEN": null,
+    "METRICS_PROMPT_TOKENS": null,
+    "METRICS_OUTPUT_TOKENS": "128",
+    "METRICS_WARMUP_OUTPUT_TOKENS": "32",
+    "JSON_LOGPROBS": null,
+    "COLOR_LOGPROBS": null
+  },
+  "metrics_summary": {
+    "tok_s_out_client_after_first_chunk": {
+      "mean": 0.8567760062859742,
+      "median": 0.8567760062859742,
+      "min": 0.7933859394848668,
+      "max": 0.9201660730870815
+    },
+    "tok_s_out_client_after_first_chunk_corrected": {
+      "mean": 0.850082443736865,
+      "median": 0.850082443736865,
+      "min": 0.7871876118326413,
+      "max": 0.9129772756410887
+    },
+    "tok_s_out_client_e2e": {
+      "mean": 0.8465431433869783,
+      "median": 0.8465431433869783,
+      "min": 0.7846153396843396,
+      "max": 0.9084709470896171
+    },
+    "tok_s_total_client": {
+      "mean": 4.140125060626941,
+      "median": 4.140125060626941,
+      "min": 3.8372593956437235,
+      "max": 4.442990725610159
+    },
+    "ttft_ms_client": {
+      "mean": 1797.09273413755,
+      "median": 1797.09273413755,
+      "min": 1790.7609480898827,
+      "max": 1803.4245201852173
+    },
+    "ttft_ms_vllm_metrics": {
+      "mean": 336.336612701416,
+      "median": 336.336612701416,
+      "min": 331.42900466918945,
+      "max": 341.2442207336426
+    },
+    "tok_s_prefill_lower_bound_from_ttft": {
+      "mean": 277.1176872428473,
+      "median": 277.1176872428473,
+      "min": 276.14130473775185,
+      "max": 278.0940697479428
+    },
+    "e2e_ms_vllm_metrics": {
+      "mean": 152015.3613090515,
+      "median": 152015.3613090515,
+      "min": 140894.69265937805,
+      "max": 163136.02995872498
+    },
+    "queue_ms_vllm_histogram": {
+      "mean": 0.009778537787497044,
+      "median": 0.009778537787497044,
+      "min": 0.009658047929406166,
+      "max": 0.009899027645587921
+    },
+    "prefill_ms_vllm_histogram": {
+      "mean": 330.8349244762212,
+      "median": 330.8349244762212,
+      "min": 325.96521987579763,
+      "max": 335.7046290766448
+    },
+    "decode_ms_vllm_histogram": {
+      "mean": 151679.2005074676,
+      "median": 151679.2005074676,
+      "min": 140563.39668296278,
+      "max": 162795.00433197245
+    },
+    "decode_ms_per_generation_token_vllm_histogram": {
+      "mean": 1184.9937539645907,
+      "median": 1184.9937539645907,
+      "min": 1098.1515365856467,
+      "max": 1271.8359713435348
+    },
+    "inference_ms_vllm_histogram": {
+      "mean": 152010.03543194383,
+      "median": 152010.03543194383,
+      "min": 140889.36190283857,
+      "max": 163130.7089610491
+    },
+    "time_per_output_token_ms_vllm_histogram": {
+      "mean": 1194.324413444627,
+      "median": 1194.324413444627,
+      "min": 1106.7983990784473,
+      "max": 1281.8504278108067
+    },
+    "inter_token_ms_vllm_histogram": {
+      "mean": 1194.3244134446268,
+      "median": 1194.3244134446268,
+      "min": 1106.7983990784471,
+      "max": 1281.8504278108067
+    },
+    "iteration_tokens_per_step_vllm_histogram": {
+      "mean": 4.890625,
+      "median": 4.890625,
+      "min": 4.890625,
+      "max": 4.890625
+    }
+  },
+  "speed": {
+    "tok_s_out_corrected_mean": 0.850082443736865,
+    "tok_s_out_after_first_chunk_mean": 0.8567760062859742,
+    "tok_s_out_e2e_mean": 0.8465431433869783,
+    "decode_ms_per_token_mean": 1184.9937539645907,
+    "ttft_ms_client_mean": 1797.09273413755
+  },
+  "decision": {
+    "accepted_by_requested_gates": true,
+    "gate_failures": []
+  }
+}

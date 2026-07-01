@@ -1,0 +1,90 @@
+{
+  "label": "w8a8-safe-prefill-recurrent-gmem90-piecewise-prefix0-return-direct",
+  "stamp": "20260614e5",
+  "return_codes": {
+    "metrics": 0,
+    "json_canary": 1,
+    "color_canary": 0,
+    "quality_suite": 0
+  },
+  "artifacts": {
+    "metrics": "/home/steve/llm-optimizations/data/qwen36-ablation-w8a8-safe-prefill-recurrent-gmem90-piecewise-prefix0-return-direct-p512o512-20260614e5.json",
+    "json_canary": "/home/steve/llm-optimizations/data/qwen36-ablation-w8a8-safe-prefill-recurrent-gmem90-piecewise-prefix0-return-direct-json-repeat64-20260614e5.json",
+    "color_canary": "/home/steve/llm-optimizations/data/qwen36-ablation-w8a8-safe-prefill-recurrent-gmem90-piecewise-prefix0-return-direct-color-repeat64-20260614e5.json",
+    "quality_suite": "/home/steve/llm-optimizations/data/qwen36-ablation-w8a8-safe-prefill-recurrent-gmem90-piecewise-prefix0-return-direct-quality-suite-20260614e5.json",
+    "log": "/home/steve/llm-optimizations/data/qwen36-ablation-w8a8-safe-prefill-recurrent-gmem90-piecewise-prefix0-return-direct-20260614e5.log"
+  },
+  "env": {
+    "VLLM_XPU_GDN_NATIVE_FALLBACK": "decode,prefill",
+    "VLLM_XPU_GDN_NATIVE_PREFILL_FALLBACK": null,
+    "VLLM_XPU_GDN_PREFILL_RECURRENT_FALLBACK": "1",
+    "VLLM_XPU_GDN_NATIVE_FALLBACK_INITIAL_DECODE_STEPS": null,
+    "VLLM_XPU_GDN_NATIVE_FALLBACK_DECODE_LAYERS": null,
+    "VLLM_XPU_GDN_NATIVE_FALLBACK_DECODE_MAX_LAYER": null,
+    "VLLM_XPU_GDN_NATIVE_FALLBACK_DECODE_LAYER_REGEX": null,
+    "VLLM_XPU_GDN_SYNC_BEFORE_NATIVE_DECODE": null,
+    "VLLM_XPU_GDN_SYNC_BEFORE_NATIVE_DECODE_LAYERS": null,
+    "VLLM_XPU_GREEDY_SAMPLE_TOPK_FALLBACK": null,
+    "VLLM_XPU_GREEDY_SAMPLE_XPU_FALLBACK": null,
+    "VLLM_XPU_ZERO_ALL_PREFILL_GDN_STATE": null,
+    "VLLM_XPU_DISABLE_PREFILL_CUDAGRAPH_REPLAY": null,
+    "VLLM_ENABLE_FLA_PACKED_RECURRENT_DECODE": null,
+    "XPU_GRAPH": "1",
+    "VLLM_XPU_ENABLE_XPU_GRAPH": "1",
+    "VLLM_XPU_FORCE_GRAPH_WITH_COMM": "1",
+    "VLLM_XPU_GRAPH_NOOP_COMM_CAPTURE": "1",
+    "VLLM_XPU_CUDAGRAPH_REPLAY_MAX_PIECEWISE_INDEX": "0",
+    "VLLM_XPU_SYNC_CUDAGRAPH_REPLAY": null,
+    "VLLM_XPU_CUDAGRAPH_ZERO_REPLAY_OUTPUT_REGEX": null,
+    "VLLM_XPU_CUDAGRAPH_ZERO_REPLAY_OUTPUT_INDICES": null,
+    "VLLM_XPU_CUDAGRAPH_COMPARE_DIRECT_REGEX": "piecewise:0/",
+    "VLLM_XPU_CUDAGRAPH_COMPARE_DIRECT_RETURN_DIRECT": "1",
+    "GPU_MEMORY_UTILIZATION": "0.90",
+    "COMPILATION_CONFIG": "{\"cudagraph_mode\":\"PIECEWISE\"}",
+    "VLLM_EXTRA_ARGS": null
+  },
+  "json_canary": {
+    "pass_all": false,
+    "repeats_completed": 32,
+    "mismatch_count": 1,
+    "first_mismatch": {
+      "index": 31,
+      "request_id": null,
+      "text": "{\"{\"answer\": \"42\", \"unit\": \"widgets\"}\"}",
+      "normalized": "{\"{\"answer\": \"42\", \"unit\": \"widgets\"}\"}",
+      "token_ids": [
+        4754,
+        4754,
+        8944,
+        763,
+        328,
+        19,
+        17,
+        487,
+        328,
+        3715,
+        763,
+        328,
+        28844,
+        8934,
+        8934
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 1.2123475158587098,
+      "usage": {
+        "prompt_tokens": 36,
+        "total_tokens": 52,
+        "completion_tokens": 16,
+        "prompt_tokens_details": null
+      },
+      "json_parsed": null,
+      "pass": false
+    }
+  },
+  "color_canary": {
+    "pass_all": true,
+    "repeats_completed": 64,
+    "mismatch_count": 0,
+    "first_mismatch": null
+  }
+}

@@ -1,0 +1,186 @@
+{
+  "label": "middle-layerlet-prefix-offset-gate32-quality",
+  "stamp": "20260614174351",
+  "return_codes": {
+    "metrics": 0,
+    "json_canary": 0,
+    "color_canary": 0,
+    "quality_suite": 0
+  },
+  "status": {
+    "metrics": "passed",
+    "json_canary": "passed",
+    "color_canary": "passed",
+    "quality_suite": "passed"
+  },
+  "artifacts": {
+    "metrics": "/home/steve/llm-optimizations/data/qwen36-ablation-middle-layerlet-prefix-offset-gate32-quality-p512o512-20260614174351.json",
+    "json_canary": "/home/steve/llm-optimizations/data/qwen36-ablation-middle-layerlet-prefix-offset-gate32-quality-json-repeat32-20260614174351.json",
+    "color_canary": "/home/steve/llm-optimizations/data/qwen36-ablation-middle-layerlet-prefix-offset-gate32-quality-color-repeat32-20260614174351.json",
+    "quality_suite": "/home/steve/llm-optimizations/data/qwen36-ablation-middle-layerlet-prefix-offset-gate32-quality-quality-suite-20260614174351.json",
+    "log": "/home/steve/llm-optimizations/data/qwen36-ablation-middle-layerlet-prefix-offset-gate32-quality-20260614174351.log"
+  },
+  "artifact_exists": {
+    "metrics": true,
+    "json_canary": true,
+    "color_canary": true,
+    "quality_suite": true,
+    "log": true
+  },
+  "env": {
+    "VLLM_XPU_GDN_NATIVE_FALLBACK": "decode,prefill",
+    "VLLM_XPU_GDN_NATIVE_PREFILL_FALLBACK": null,
+    "VLLM_XPU_GDN_PREFILL_RECURRENT_FALLBACK": "1",
+    "VLLM_XPU_GDN_NATIVE_FALLBACK_INITIAL_DECODE_STEPS": null,
+    "VLLM_XPU_GDN_NATIVE_FALLBACK_DECODE_LAYERS": null,
+    "VLLM_XPU_GDN_NATIVE_FALLBACK_DECODE_MAX_LAYER": null,
+    "VLLM_XPU_GDN_NATIVE_FALLBACK_DECODE_LAYER_REGEX": null,
+    "VLLM_XPU_GDN_SYNC_BEFORE_NATIVE_DECODE": null,
+    "VLLM_XPU_GDN_SYNC_BEFORE_NATIVE_DECODE_LAYERS": null,
+    "VLLM_XPU_GREEDY_SAMPLE_TOPK_FALLBACK": null,
+    "VLLM_XPU_GREEDY_SAMPLE_XPU_FALLBACK": null,
+    "VLLM_XPU_ZERO_ALL_PREFILL_GDN_STATE": null,
+    "VLLM_XPU_DISABLE_PREFILL_CUDAGRAPH_REPLAY": null,
+    "VLLM_ENABLE_FLA_PACKED_RECURRENT_DECODE": null,
+    "XPU_GRAPH": null,
+    "VLLM_XPU_ENABLE_XPU_GRAPH": null,
+    "VLLM_XPU_FORCE_GRAPH_WITH_COMM": null,
+    "VLLM_XPU_GRAPH_NOOP_COMM_CAPTURE": null,
+    "VLLM_XPU_CUDAGRAPH_REPLAY_MAX_PIECEWISE_INDEX": null,
+    "VLLM_XPU_SYNC_CUDAGRAPH_REPLAY": null,
+    "VLLM_XPU_CUDAGRAPH_ZERO_REPLAY_OUTPUT_REGEX": null,
+    "VLLM_XPU_CUDAGRAPH_ZERO_REPLAY_OUTPUT_INDICES": null,
+    "VLLM_XPU_CUDAGRAPH_COMPARE_DIRECT_REGEX": null,
+    "VLLM_XPU_CUDAGRAPH_COMPARE_DIRECT_RETURN_DIRECT": null,
+    "VLLM_XPU_W8A8_EXPERIMENTAL_ALLOW": "1",
+    "VLLM_XPU_W8A8_USE_OFFSETS": "1",
+    "VLLM_XPU_W8A8_OFFSETS_PREFIX_OP": "1",
+    "VLLM_XPU_MOE_W8A8_MIDDLE_LAYERLET": "1",
+    "VLLM_XPU_INT8_MOE_MIXED_WORKSPACE": "1",
+    "GPU_MEMORY_UTILIZATION": null,
+    "COMPILATION_CONFIG": null,
+    "VLLM_EXTRA_ARGS": null
+  },
+  "metrics_summary": {
+    "tok_s_out_client_after_first_chunk": {
+      "mean": 14.21882219971135,
+      "median": 14.21882219971135,
+      "min": 14.189783497743099,
+      "max": 14.247860901679603
+    },
+    "tok_s_out_client_after_first_chunk_corrected": {
+      "mean": 14.19105106260254,
+      "median": 14.19105106260254,
+      "min": 14.162069076849068,
+      "max": 14.220033048356012
+    },
+    "tok_s_out_client_e2e": {
+      "mean": 14.108219560793316,
+      "median": 14.108219560793316,
+      "min": 14.078326308410272,
+      "max": 14.138112813176361
+    },
+    "tok_s_total_client": {
+      "mean": 27.83066749297119,
+      "median": 27.83066749297119,
+      "min": 27.77169838182495,
+      "max": 27.88963660411743
+    },
+    "ttft_ms_client": {
+      "mean": 282.30542212259024,
+      "median": 282.30542212259024,
+      "min": 278.9496472105384,
+      "max": 285.6611970346421
+    },
+    "ttft_ms_vllm_metrics": {
+      "mean": 210.54184436798096,
+      "median": 210.54184436798096,
+      "min": 206.85458183288574,
+      "max": 214.22910690307617
+    },
+    "tok_s_prefill_lower_bound_from_ttft": {
+      "mean": 1764.2961811257,
+      "median": 1764.2961811257,
+      "min": 1743.3239276792906,
+      "max": 1785.2684345721093
+    },
+    "e2e_ms_vllm_metrics": {
+      "mean": 36289.836168289185,
+      "median": 36289.836168289185,
+      "min": 36212.98670768738,
+      "max": 36366.68562889099
+    },
+    "queue_ms_vllm_histogram": {
+      "mean": 0.012794043868780136,
+      "median": 0.012794043868780136,
+      "min": 0.012263190001249313,
+      "max": 0.013324897736310959
+    },
+    "prefill_ms_vllm_histogram": {
+      "mean": 203.76671256963164,
+      "median": 203.76671256963164,
+      "min": 202.0578591618687,
+      "max": 205.47556597739458
+    },
+    "decode_ms_vllm_histogram": {
+      "mean": 36079.44978249725,
+      "median": 36079.44978249725,
+      "min": 36006.302535999566,
+      "max": 36152.59702899493
+    },
+    "decode_ms_per_generation_token_vllm_histogram": {
+      "mean": 70.46767535643994,
+      "median": 70.46767535643994,
+      "min": 70.32480964062415,
+      "max": 70.61054107225573
+    },
+    "inference_ms_vllm_histogram": {
+      "mean": 36283.21649506688,
+      "median": 36283.21649506688,
+      "min": 36208.360395161435,
+      "max": 36358.07259497233
+    },
+    "time_per_output_token_ms_vllm_histogram": {
+      "mean": 70.6055768737715,
+      "median": 70.6055768737715,
+      "min": 70.46243157729853,
+      "max": 70.74872217024448
+    },
+    "inter_token_ms_vllm_histogram": {
+      "mean": 70.60557687377153,
+      "median": 70.60557687377153,
+      "min": 70.46243157729856,
+      "max": 70.74872217024449
+    },
+    "iteration_tokens_per_step_vllm_histogram": {
+      "mean": 1.97265625,
+      "median": 1.97265625,
+      "min": 1.97265625,
+      "max": 1.97265625
+    }
+  },
+  "json_canary": {
+    "pass_all": true,
+    "repeats_completed": 32,
+    "mismatch_count": 0,
+    "first_mismatch": null
+  },
+  "color_canary": {
+    "pass_all": true,
+    "repeats_completed": 32,
+    "mismatch_count": 0,
+    "first_mismatch": null
+  },
+  "quality_suite": {
+    "pass_all": true,
+    "baseline_match_all": true,
+    "exact": {
+      "exact_ok": true,
+      "copy_phrase": true,
+      "arithmetic": true,
+      "json_schema": true
+    },
+    "repeat_pass": true,
+    "long_context_pass": true
+  }
+}

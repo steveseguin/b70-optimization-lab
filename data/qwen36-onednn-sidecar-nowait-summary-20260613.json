@@ -1,0 +1,127 @@
+{
+  "build_dir": "/home/steve/src/vllm-xpu-kernels/build/qwen36-sidecar-nowait-sycl8-20260613",
+  "cache_probe": {
+    "by_execute_mode": {
+      "11": 32,
+      "12": 32
+    },
+    "jsonl": "data/qwen36-onednn-sidecar-nowait-cache-live-20260613.jsonl",
+    "shape_summary": {
+      "(1, 8, 11)": {
+        "cache_hit_records": 28,
+        "cache_size_first_last": [
+          7,
+          8
+        ],
+        "calls": 29,
+        "median_construct_us": 0,
+        "median_execute_us": 27
+      },
+      "(1, 8, 12)": {
+        "cache_hit_records": 28,
+        "cache_size_first_last": [
+          8,
+          8
+        ],
+        "calls": 29,
+        "median_construct_us": 0,
+        "median_execute_us": 23
+      },
+      "(48, 384, 11)": {
+        "cache_hit_records": 0,
+        "cache_size_first_last": [
+          3,
+          3
+        ],
+        "calls": 1,
+        "median_construct_us": 10,
+        "median_execute_us": 35
+      },
+      "(48, 384, 12)": {
+        "cache_hit_records": 0,
+        "cache_size_first_last": [
+          4,
+          4
+        ],
+        "calls": 1,
+        "median_construct_us": 4,
+        "median_execute_us": 25
+      },
+      "(8192, 65536, 11)": {
+        "cache_hit_records": 0,
+        "cache_size_first_last": [
+          1,
+          1
+        ],
+        "calls": 1,
+        "median_construct_us": 10,
+        "median_execute_us": 94
+      },
+      "(8192, 65536, 12)": {
+        "cache_hit_records": 0,
+        "cache_size_first_last": [
+          2,
+          2
+        ],
+        "calls": 1,
+        "median_construct_us": 4,
+        "median_execute_us": 26
+      },
+      "(9, 72, 11)": {
+        "cache_hit_records": 0,
+        "cache_size_first_last": [
+          5,
+          5
+        ],
+        "calls": 1,
+        "median_construct_us": 20,
+        "median_execute_us": 109
+      },
+      "(9, 72, 12)": {
+        "cache_hit_records": 0,
+        "cache_size_first_last": [
+          6,
+          6
+        ],
+        "calls": 1,
+        "median_construct_us": 4,
+        "median_execute_us": 28
+      }
+    },
+    "stats_rows": 64,
+    "steady_decode_rows1_mode11_cache_hits": 28,
+    "steady_decode_rows1_mode12_cache_hits": 28
+  },
+  "candidate": "qwen36_onednn_sidecar_cached_nowait_modes_11_12",
+  "date": "2026-06-13",
+  "decision": "exact scoped substrate; not a speed promotion because Python sidecar is graph-capture guarded and current production speed requires a captured custom-op/layerlet boundary",
+  "model": "Qwen3.6-35B-A3B-Quark-W8A8-INT8",
+  "next": [
+    "Promote cached/no-wait semantics into a captured persistent MoE layerlet/custom op rather than broadening Python helper calls.",
+    "Add a staged all-rank/all-layer parity gate before any broad rollout.",
+    "Keep oracle k=1 KV/block-table parity repair as the parallel no-quality-loss 2x path."
+  ],
+  "parity": {
+    "all_zero_diff": true,
+    "jsonl": "data/qwen36-onednn-sidecar-nowait-parity-live-20260613.jsonl",
+    "max_abs_diff_by_target": {
+      "gathered_output": 0.0,
+      "gemm1_output": 0.0,
+      "gemm2_a": 0.0,
+      "gemm2_a_scales": 0.0,
+      "gemm2_output": 0.0
+    },
+    "records": 8,
+    "replace_both_all_records": true,
+    "sidecar_execute_records": 8,
+    "targets_seen": {
+      "gathered_output": 8,
+      "gemm1_output": 8,
+      "gemm2_a": 8,
+      "gemm2_a_scales": 8,
+      "gemm2_output": 8
+    }
+  },
+  "patch": "patches/vllm-xpu-qwen36-onednn-sidecar-cached-nowait-20260613.patch",
+  "scope": "rank0 layer9 isolated sidecar replacement substrate"
+}
