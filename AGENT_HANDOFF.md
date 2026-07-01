@@ -88,6 +88,15 @@ Primary target:
   mismatches still require the true target top token. Use this only to guide a
   deeper exact accept-prefix / verifier graph design. Evidence:
   `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260701-candidate-proof-profile.md`.
+- Latest no-spec target-side calibration batch:
+  Paired no-spec A/B closed packed GEGLU all as `no_win`
+  (`-1.046% / -0.858% / -0.570%`) and confirmed the LM-head subgroup closure.
+  Attention post-norm (`+0.431% / +0.804% / +1.119%`) and the final +
+  attention + per-layer post-norm combo (`+0.744% / +1.014% / +1.292%`) are
+  small target-side positives but below the `+1%` lower-bound promotion rule.
+  The post-norm combo is the only eligible bounded MTP same-window follow-up; do
+  not submit or promote no-spec-only results. Evidence:
+  `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260701-nospec-retest-candidates.md`.
 - Latest LM-head subgroup calibration:
   `LLAMA_SYCL_Q8_0_LM_HEAD_1COL_SUBGROUPS=2` is closed by the lower-variance
   no-spec calibration workflow. The candidate and controls all passed the fixed

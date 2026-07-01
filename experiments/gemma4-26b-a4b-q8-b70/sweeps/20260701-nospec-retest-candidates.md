@@ -59,3 +59,32 @@ disable the changed path or fail to answer the question.
 
 If a candidate shows a no-spec target-side win, it still must pass the normal
 MTP realistic final gate before promotion or LocalMaxxing submission.
+
+## Paired No-Spec Results
+
+Generated artifacts:
+
+- `data/gemma4-q8-nospec-attnpost-ab-20260701T140828Z.json`
+- `data/gemma4-q8-nospec-attnpost-ab-20260701T140828Z.md`
+- `data/gemma4-q8-nospec-packedgeglu-ab-20260701T140828Z.json`
+- `data/gemma4-q8-nospec-packedgeglu-ab-20260701T140828Z.md`
+- `data/gemma4-q8-nospec-postnormcombo-ab-20260701T140828Z.json`
+- `data/gemma4-q8-nospec-postnormcombo-ab-20260701T140828Z.md`
+- `data/gemma4-q8-nospec-lmheadsg2-ab-20260701T140828Z.json`
+- `data/gemma4-q8-nospec-lmheadsg2-ab-20260701T140828Z.md`
+
+All analyzed runs passed the fixed realistic final gate with `cached_tokens=0`.
+The no-spec calibration resolved the target-side candidates as follows:
+
+| Candidate | Median paired ratio 95% CI | Decision | Action |
+| --- | ---: | --- | --- |
+| Attention post-norm residual fusion | `+0.431% / +0.804% / +1.119%` | `inconclusive_positive` | Target-side positive but below the `+1%` lower-bound promotion rule. Do not submit. If revisited, use one MTP same-window A/B only, not config roulette. |
+| Final + attention + per-layer post-norm combo | `+0.744% / +1.014% / +1.292%` | `inconclusive_positive` | Strongest no-spec signal, still below the `+1%` lower-bound promotion rule. Eligible for one controlled MTP confirmation window because it may stack with the promoted final-postnorm path, but not a standalone claim. |
+| Packed GEGLU all | `-1.046% / -0.858% / -0.570%` | `no_win` | Closed negative. Do not retest for short decode. |
+| LM-head one-column `SUBGROUPS=2` | `-0.649% / -0.338% / -0.073%` | `no_win` | Closed negative. Do not retest the LM-head subgroup/DMMV/no-reorder family unless the kernel shape changes. |
+
+Interpretation: no-spec calibration is doing its job. It can detect sub-1%
+target-side changes with much lower variance than MTP full512, but the promotion
+rule remains conservative. The only candidate worth a bounded short-record
+follow-up is the post-norm combo, and even that must beat same-window MTP
+controls clearly before it can affect the promoted recipe.
