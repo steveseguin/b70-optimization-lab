@@ -94,9 +94,13 @@ Primary target:
   parity check ignored `LLAMA_TOKEN_NULL`; the stricter diagnostic showed
   direct sampled IDs stayed `-1` while copied sampled IDs were valid, and
   `LLAMA_SPEC_VERIFY_DIRECT_SAMPLED_EGRESS_SKIP_COPY=1` crashed the sampler
-  because logits are not exported in backend-argmax mode. Do not enable
-  skip-copy. Any future version must patch the actual sampled-row producer and
-  prove null-sensitive direct-vs-copied parity first. Evidence:
+  because logits are not exported in backend-argmax mode. Backend-copy and
+  pre-allocation `op_params` variants rebuilt and passed canaries, but still
+  failed strict parity (`356` and `355` mismatches respectively: direct `-1`,
+  copied token valid). Do not enable skip-copy, and do not keep retesting
+  pointer-only `op_params` variants without a producer-side graph/output design.
+  Any future version must patch the actual sampled-row producer and prove
+  null-sensitive direct-vs-copied parity first. Evidence:
   `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260701-direct-sampled-egress-negative.md`.
 - Latest prompt-processing source follow-up: DV512 Gemma GQA `ncols2=16` is a
   closed negative. The candidate branch rebuilt, but both candidate lanes failed

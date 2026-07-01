@@ -29,6 +29,13 @@ Snapshots preserved in this repo:
   `patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260701-direct-sampled-egress-parity-source.patch`
 - stricter parity diagnostic state:
   `patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260701-direct-sampled-egress-strictparity-source.patch`
+- backend-copy v2, which avoids writing a normal host pointer from the SYCL
+  kernel and instead tries to enqueue a backend memcpy from `dst->data` to the
+  direct egress buffer:
+  `patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260701-direct-sampled-egress-backendcopy-source.patch`
+- backend-copy v2 plus pre-allocation `op_params` patching before
+  `ggml_backend_sched_alloc_graph()`:
+  `patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260701-direct-sampled-egress-backendcopy-prealloc-source.patch`
 
 Harness metadata/pass-through was added for:
 
@@ -47,17 +54,23 @@ diagnostic smokes only, not promoted headline results.
 | `gemma4-q8-gpu0-direct-egress-parity-smoke-20260701A` | `DIRECT_SAMPLED_EGRESS=1`, original parity | 32/32 | pass | 117.394430 | False reassurance: original parity ignored `LLAMA_TOKEN_NULL` direct entries. |
 | `gemma4-q8-gpu0-direct-egress-skipcopy-smoke-20260701A` | `DIRECT_SAMPLED_EGRESS=1`, `SKIP_COPY=1` | crash | fail | n/a | Sampler crashed because backend argmax fast path returned no sampled ID and logits are not exported in this mode. |
 | `gemma4-q8-gpu0-direct-egress-parity2-smoke-20260701A` | `DIRECT_SAMPLED_EGRESS=1`, strict parity | 32/32 | pass | 117.017049 | Strict parity logged repeated row-0 mismatches: direct `-1`, copied sampled token valid. |
+| `gemma4-q8-gpu0-direct-egress-backendcopy-parity-smoke-20260701A` | backend-copy v2, strict parity | 32/32 | pass | 120.434720 | Still failed parity: 356 row-0 mismatches, direct `-1`, copied sampled token valid. |
+| `gemma4-q8-gpu0-direct-egress-backendcopy-prealloc-parity-smoke-20260701A` | backend-copy v2 plus pre-allocation patching, strict parity | 32/32 | pass | 120.279020 | Still failed parity: 355 row-0 mismatches, direct `-1`, copied sampled token valid. No skip-copy run. |
 
 Result dirs:
 
 - `data/gemma4-q8-gpu0-direct-egress-parity-smoke-20260701A/`
 - `data/gemma4-q8-gpu0-direct-egress-skipcopy-smoke-20260701A/`
 - `data/gemma4-q8-gpu0-direct-egress-parity2-smoke-20260701A/`
+- `data/gemma4-q8-gpu0-direct-egress-backendcopy-parity-smoke-20260701A/`
+- `data/gemma4-q8-gpu0-direct-egress-backendcopy-prealloc-parity-smoke-20260701A/`
 
 External server logs:
 
 - `/mnt/fast-ai/bench-results/gemma4-26b-a4b-q8/servers/gemma4-q8-gpu0-direct-egress-skipcopy-smoke-20260701A.server.log`
 - `/mnt/fast-ai/bench-results/gemma4-26b-a4b-q8/servers/gemma4-q8-gpu0-direct-egress-parity2-smoke-20260701A.server.log`
+- `/mnt/fast-ai/bench-results/gemma4-26b-a4b-q8/servers/gemma4-q8-gpu0-direct-egress-backendcopy-parity-smoke-20260701A.server.log`
+- `/mnt/fast-ai/bench-results/gemma4-26b-a4b-q8/servers/gemma4-q8-gpu0-direct-egress-backendcopy-prealloc-parity-smoke-20260701A.server.log`
 
 ## Crash Signature
 
@@ -89,6 +102,43 @@ That proves the direct egress pointer is not attached to the actual sampled-row
 producer. The direct buffer remains unset while the existing copied sampled path
 is correct.
 
+## Backend-copy / pre-allocation follow-up
+
+The first direct-egress code path probably failed for two separate reasons:
+
+1. it attempted to write the host `std::vector<llama_token>` data pointer from a
+   SYCL device kernel; and
+2. the `op_params` pointer patch may have happened after the scheduler had
+   already materialized backend executable graph state.
+
+Two follow-ups tested those hypotheses:
+
+- backend-copy v2 stopped passing the direct host pointer into the kernel and
+  instead tried to enqueue `stream->memcpy(direct_egress, dst->data, nvec *
+  sizeof(int32_t))` after the backend argmax finalizer.
+- pre-allocation v2 additionally patched `op_params` before
+  `ggml_backend_sched_alloc_graph()` in `process_ubatch`, while preserving the
+  later patch before graph execution for graph reuse / buffer offset changes.
+
+Both rebuilt cleanly and passed canaries plus the cold realistic smoke gate, but
+both failed strict parity with the same signature:
+
+```text
+get_sampled_tokens: direct sampled-ID egress parity mismatch at row 0: direct=-1 copied=<token>
+```
+
+Counts:
+
+- backend-copy v2: `356` mismatches;
+- backend-copy pre-allocation v2: `355` mismatches.
+
+Conclusion: the patch still does not reach the sampled-row producer used by the
+active executable graph. The correct future fix is likely not another post-hoc
+pointer in `op_params`; it needs either a real graph output/side tensor for
+sampled IDs, a scheduler/backend-supported host egress binding for this op, or a
+direct change in the backend producer that already owns the valid sampled ID
+before the existing `ggml_backend_tensor_get_async()` extraction.
+
 ## Decision
 
 Reject this lane as implemented. Do not enable
@@ -99,4 +149,5 @@ comparison.
 If this idea is revisited, patch the actual sampled-row producer at graph-build
 time or in the direct `GGML_OP_MUL_MAT_ARGMAX` tensor, not merely the
 `t_sampled_rows` output handle seen at execution. A safe implementation must
-prove strict direct-vs-copied parity before any copy can be skipped.
+prove strict direct-vs-copied parity before any copy can be skipped. Do not run
+skip-copy unless strict parity reports zero mismatches.
