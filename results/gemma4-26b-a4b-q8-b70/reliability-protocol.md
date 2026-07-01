@@ -33,7 +33,7 @@ Evidence:
 Use the paired analyzer:
 
 ```bash
-cd /home/steve/qwen36-results-main
+cd /home/steve/llm-optimizations
 scripts/analyze-gemma-realistic-ab.py --help
 ```
 
@@ -180,7 +180,7 @@ no-spec calibration wrapper after the candidate has passed the regular quality
 screen:
 
 ```bash
-cd /home/steve/qwen36-results-main
+cd /home/steve/llm-optimizations
 GPU_INDEX=0 PORT=18560 \
   LABEL=gemma4-q8-gpu0-nospec-calib-realistic-full512-<stamp> \
   repro/gemma4-26b-a4b-q8-b70/run-vdr2-nospec-calibration.sh

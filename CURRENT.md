@@ -6,7 +6,7 @@ Date: 2026-07-01
 
 Use `/home/steve/llm-optimizations` as the only active workspace for new
 optimization work. It is the branch-attached `main` checkout and is current at
-`46b4733d` as of the latest 2026-07-01 consolidation refresh.
+`261300e0` as of the latest 2026-07-01 verifier-top2 diagnostic preservation commit.
 
 Do not run new experiments from `/home/steve/qwen36-results-main`; it is a
 detached linked worktree retained for audit/back-reference only. See
@@ -53,6 +53,14 @@ Current active optimization target:
   `74.29709476830473 tok/s` median on the same realistic suite. Evidence:
   `data/gemma4-q8-gpu0-vdr4default-nospec-realistic-gate-v2-20260627T165335Z/summary.json`.
   Treat it as the simplest target-side quality/control baseline for new work.
+- Latest verifier-top2 diagnostic:
+  closed as an instrumentation failure, not a performance result.
+  `LLAMA_SPEC_VERIFY_TOP2_PROFILE=1` and
+  `LLAMA_SPEC_VERIFY_BACKEND_ARGMAX_SCORES=1` produced valid cold-gate short
+  runs, but recorded `top2 rows = 0`, so no LM-head margin conclusion should be
+  drawn. The active llama.cpp source was restored to the pre-diagnostic record
+  stack and rebuilt. Evidence:
+  `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260701-verifier-top2-margin-profile.md`.
 - Recent non-promoted follow-up:
   `LLAMA_SPEC_VERIFY_CLIP_DRAFT_AT_EOG=1` was valid and trimmed real terminal
   draft work, but four full512 lanes topped out at `113.58569073629727 tok/s`,

@@ -9,7 +9,7 @@ Intel Arc Pro B70 LLM optimization work.
 
 Use `/home/steve/llm-optimizations` as the single active workspace for new
 Gemma/Qwen/MiniMax work. It is the branch-attached `main` checkout and is
-current at `46b4733d` as of the latest 2026-07-01 consolidation refresh.
+current at `261300e0` as of the latest 2026-07-01 verifier-top2 diagnostic preservation commit.
 
 Do not start new experiments from `/home/steve/qwen36-results-main`; it is a
 detached linked worktree retained only for audit/back-reference. The detached
@@ -62,6 +62,15 @@ Primary target:
   suite:
   `data/gemma4-q8-gpu0-vdr4default-nospec-realistic-gate-v2-20260627T165335Z/summary.json`.
   This is the clean target-side baseline for continued optimization.
+- Latest verifier-top2 diagnostic is closed as an instrumentation failure, not
+  a performance result. `LLAMA_SPEC_VERIFY_TOP2_PROFILE=1` and
+  `LLAMA_SPEC_VERIFY_BACKEND_ARGMAX_SCORES=1` passed the cold gate in three
+  short runs, but recorded `top2 rows = 0`, so it did not collect the intended
+  LM-head margin evidence. The active llama.cpp source was restored to the
+  pre-diagnostic record stack and rebuilt; the failed patch/source snapshot and
+  summaries are preserved under
+  `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260701-verifier-top2-margin-profile.md`
+  and `patches/gemma4-26b-a4b-q8-b70/source-snapshots/`.
 - Latest full512 follow-up: fused selected-softmax into selected-down VDR2
   (`LLAMA_GEMMA4_MOE_FUSED_DOWN_SELECTED_SOFTMAX=1`) and the EOG-clip
   interaction were valid but lost. Best candidate was `111.90908727268967

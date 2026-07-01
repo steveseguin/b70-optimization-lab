@@ -6,6 +6,17 @@ experiments/**/scripts/__pycache__/
 # canonical server_log path captured in each summary.json.
 data/**/server.stdout.log
 
+# Raw benchmark traces/logs are local audit artifacts by default. Promote
+# compact summaries, ledgers, patches, and repro scripts explicitly; force-add
+# a raw log/trace only when it is intentionally part of a small evidence packet.
+data/*.log
+data/**/*.log
+data/*.jsonl
+data/**/*.jsonl
+data/**/checkpoints/
+data/**/checkpoint*/
+.pause-*
+
 # Model/checkpoint/tensor artifacts are local-only unless explicitly published
 # through a large-artifact channel. Commit summaries, manifests, patches, and
 # reproduction scripts instead.

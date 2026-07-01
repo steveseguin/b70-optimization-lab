@@ -18,7 +18,9 @@ across detached worktrees.
   collisions in `/home/steve/llm-optimizations`; result: `0` collisions.
 - Fast-forwarded `/home/steve/llm-optimizations` to `4b33bb2f`.
 - Later same-day canonical Gemma documentation/result commits advanced
-  `/home/steve/llm-optimizations` to `46b4733d`, matching `origin/main`.
+  `/home/steve/llm-optimizations` through `46b4733d`, then the verifier-top2
+  diagnostic preservation commit advanced it to `261300e0`, matching
+  `origin/main`.
   `/home/steve/qwen36-results-main` remains detached at `4b33bb2f` and is
   still archive/back-reference only.
 
@@ -27,7 +29,7 @@ across detached worktrees.
 ```text
 /home/steve/llm-optimizations
   branch: main
-  HEAD:   46b4733d83f3a1e10cb209d4aa225fc400570c3c
+  HEAD:   261300e0
   role:   single active workspace
 
 /home/steve/qwen36-results-main
@@ -51,23 +53,25 @@ Current untracked inventory:
 
 ```text
 /home/steve/llm-optimizations
-  untracked_count: 4181
+  visible_untracked_count_after_ignore_cleanup: 2035
+  visible_untracked_payload: ~0.041 GiB
   top-level split:
-    data/: 4179
-    .pause-minimax-production.disabled-20260603-084752: 1
-    .pause-vllm-model-slot: 1
+    data/: 2035
+  pre-ignore raw artifact payload was ~2.663 GiB, mostly Qwen JSONL traces
+  and local .safetensors checkpoints now ignored by default.
 
 /home/steve/qwen36-results-main
-  untracked_count: 2920
+  visible_untracked_count: 950
+  visible_untracked_payload: ~0.307 GiB
   top-level split:
-    data/: 2920
+    data/: 950
 ```
 
 These files may contain older useful benchmark evidence. Do not run
 `git clean`, delete the detached worktree, or bulk-stage this backlog. Future
 cleanup should classify the untracked `data/` files, promote valuable result
 packets explicitly, and then archive/remove stale artifacts only after the
-classification is recorded.
+classification is recorded. See `notes/workspace-artifact-inventory-20260701.md` for the current inventory and ignore policy.
 
 ## Policy Going Forward
 
