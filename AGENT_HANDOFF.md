@@ -88,6 +88,16 @@ Primary target:
   mismatches still require the true target top token. Use this only to guide a
   deeper exact accept-prefix / verifier graph design. Evidence:
   `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260701-candidate-proof-profile.md`.
+- Latest LM-head subgroup calibration:
+  `LLAMA_SYCL_Q8_0_LM_HEAD_1COL_SUBGROUPS=2` is closed by the lower-variance
+  no-spec calibration workflow. The candidate and controls all passed the fixed
+  realistic final gate with `cached_tokens=0`, but paired prompt analysis gave
+  a median-ratio 95% CI of `-0.649% / -0.338% / -0.073%`, decision `no_win`.
+  Do not retest the LM-head one-column subgroup family, DMMV, or no-reorder
+  variants unless a future source change materially alters the kernel shape.
+  Evidence:
+  `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260701-lmhead1col-subgroups.md`
+  and `data/gemma4-q8-nospec-lmheadsg2-ab-20260701T140828Z.md`.
 - Latest sampled-ID egress follow-up:
   `LLAMA_SPEC_VERIFY_DIRECT_SAMPLED_EGRESS=1` is a closed negative /
   incomplete implementation. The first parity smoke passed only because the

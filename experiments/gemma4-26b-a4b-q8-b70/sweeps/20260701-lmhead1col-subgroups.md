@@ -108,6 +108,37 @@ Decision: **reject as a performance patch**. Keep the default-off source
 fragment and harness metadata patch as durable research artifacts, but do not
 promote the knob into a record recipe and do not submit to LocalMaxxing.
 
+## No-Spec Calibration Follow-Up
+
+The only near-interesting MTP screen was `SUBGROUPS=2` on GPU2. Because this
+knob affects the target-side Q8 LM-head path and is still exercised when MTP is
+disabled, it was checked with the lower-variance no-spec calibration lane.
+
+Artifact:
+
+- `data/gemma4-q8-nospec-lmheadsg2-ab-20260701T140828Z.json`
+- `data/gemma4-q8-nospec-lmheadsg2-ab-20260701T140828Z.md`
+
+Runs:
+
+- controls:
+  - `data/gemma4-q8-gpu0-nospec-lmheadsg-control-full512-20260701T140828Z-nospec-retest/summary.json`
+  - `data/gemma4-q8-gpu2-nospec-lmheadsg-control-full512-20260701T140828Z-nospec-retest/summary.json`
+- candidate:
+  - `data/gemma4-q8-gpu3-nospec-lmheadsg2-full512-20260701T140828Z-nospec-retest/summary.json`
+
+All runs passed the fixed realistic final gate with `cached_tokens=0`. The
+paired no-spec result was:
+
+- control run medians: `77.047`, `76.605` tok/s;
+- `SUBGROUPS=2` candidate median: `76.548` tok/s;
+- median paired ratio 95% CI: `-0.649% / -0.338% / -0.073%`;
+- analyzer decision: `no_win`.
+
+This closes `LLAMA_SYCL_Q8_0_LM_HEAD_1COL_SUBGROUPS=2` as well. Do not retest
+the LM-head one-column subgroup family unless a future source change materially
+alters the Q8 LM-head kernel shape.
+
 Run directories:
 
 - `data/gemma4-q8-gpu0-lmheadsg-control-strict128-20260701TscreenA/`
