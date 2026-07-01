@@ -1,0 +1,515 @@
+0.00.192.302 I log_info: verbosity = 3 (adjust with the `-lv N` CLI arg)
+0.00.192.305 I device_info:
+0.00.192.687 I   - SYCL0   : Intel(R) Arc(TM) Pro B70 Graphics (32656 MiB, 32566 MiB free)
+0.00.192.695 I   - CPU     : AMD Ryzen Threadripper PRO 5955WX 16-Cores (128671 MiB, 128671 MiB free)
+0.00.192.740 I system_info: n_threads = 8 (n_threads_batch = 8) / 32 | CPU : SSE3 = 1 | SSSE3 = 1 | AVX = 1 | AVX2 = 1 | F16C = 1 | FMA = 1 | BMI2 = 1 | LLAMAFILE = 1 | OPENMP = 1 | REPACK = 1 | 
+0.00.192.795 I srv          init: running without SSL
+0.00.192.843 I srv          init: using 31 threads for HTTP server
+0.00.193.156 I srv         start: binding port with default address family
+0.00.194.313 I srv  llama_server: loading model
+0.00.194.384 I srv    load_model: loading model '/mnt/fast-ai/llm-models/gemma4-26b-a4b-it-q8-gguf/gemma-4-26B-A4B-it-UD-Q8_K_XL.gguf'
+0.00.646.699 E llama_init_from_model: failed to initialize the context: Gemma4Assistant requires ctx_other to be set (this warning is normal during memory fitting)
+0.00.731.884 W srv    load_model: [spec] failed to measure draft model memory: failed to create llama_context from model
+0.00.731.903 I common_init_result: fitting params to device memory ...
+0.00.731.903 I common_init_result: (for bugs during this step try to reproduce them with -fit off, or provide --verbose logs if the bug only occurs with -fit on)
+0.01.589.627 W load: control-looking token:    212 '</s>' was not control-type; this is probably a bug in the model. its type will be overridden
+0.01.590.060 W load: control-looking token:     50 '<|tool_response>' was not control-type; this is probably a bug in the model. its type will be overridden
+0.01.595.788 W load: control-looking token:      1 '<eos>' was not control-type; this is probably a bug in the model. its type will be overridden
+0.01.612.733 W load: special_eog_ids contains '<|tool_response>', removing '</s>' token from EOG list
+0.17.920.894 W llama_context: n_ctx_seq (32768) < n_ctx_train (262144) -- the full capacity of the model will not be utilized
+0.17.939.405 I common_init_from_params: warming up the model with an empty run - please wait ... (--no-warmup to disable)
+0.18.446.055 I srv    load_model: loading draft model '/mnt/fast-ai/llm-models/gemma4-26b-a4b-it-q8-gguf/MTP/gemma-4-26B-A4B-it-Q4_0-MTP.gguf'
+0.18.802.859 W load: control-looking token:    212 '</s>' was not control-type; this is probably a bug in the model. its type will be overridden
+0.18.803.145 W load: control-looking token:     50 '<|tool_response>' was not control-type; this is probably a bug in the model. its type will be overridden
+0.18.817.962 W load: special_eog_ids contains '<|tool_response>', removing '</s>' token from EOG list
+0.19.000.195 W llama_context: n_ctx_seq (32768) < n_ctx_train (262144) -- the full capacity of the model will not be utilized
+0.19.000.293 W llama_kv_cache: layer   3: sharing with layer 29. k = 0xffffd55d44a00000, v = 0xffffd55d48a00000
+0.19.000.314 W llama_kv_cache: layer   0: sharing with layer 28. k = 0xffffd55d70a00000, v = 0xffffd55d71600000
+0.19.000.318 W llama_kv_cache: layer   1: sharing with layer 28. k = 0xffffd55d70a00000, v = 0xffffd55d71600000
+0.19.000.318 W llama_kv_cache: layer   2: sharing with layer 28. k = 0xffffd55d70a00000, v = 0xffffd55d71600000
+0.19.001.043 I srv    load_model: initializing slots, n_slots = 1
+0.19.023.518 I common_speculative_impl_draft_mtp: adding speculative implementation 'draft-mtp'
+0.19.023.523 I common_speculative_impl_draft_mtp: - n_max=3, n_min=2, p_min=0.05, n_embd=2816, backend_sampling=0
+0.19.023.525 I common_speculative_impl_draft_mtp: - gpu_layers=-2, cache_k=f16, cache_v=f16, ctx_tgt=yes, ctx_dft=yes, devices=[SYCL0]
+0.19.023.568 I common_speculative_impl_draft_mtp: - draft_top_k=10 (LLAMA_MTP_DRAFT_TOP_K)
+0.19.023.569 I common_speculative_impl_draft_mtp: - draft_logit_gap_min=0.000 (LLAMA_MTP_DRAFT_LOGIT_GAP_MIN)
+0.19.023.570 I common_speculative_impl_draft_mtp: - draft_logit_gap_min_start_pos=1 (LLAMA_MTP_DRAFT_LOGIT_GAP_MIN_START_POS)
+0.19.023.571 I common_speculative_impl_draft_mtp: - draft_fast_topk=0 (LLAMA_MTP_DRAFT_FAST_TOPK)
+0.19.023.571 I common_speculative_impl_draft_mtp: - draft_fast_argmax=1 (LLAMA_MTP_DRAFT_FAST_ARGMAX)
+0.19.023.573 I common_speculative_impl_draft_mtp: - draft_f16_logits_extract=0 (LLAMA_MTP_DRAFT_F16_LOGITS_EXTRACT)
+0.19.023.573 I common_speculative_impl_draft_mtp: - draft_backend_argmax=0 (LLAMA_MTP_DRAFT_BACKEND_ARGMAX)
+0.19.023.574 I common_speculative_impl_draft_mtp: - draft_direct_argmax_ids=1 (LLAMA_MTP_DRAFT_DIRECT_ARGMAX_IDS)
+0.19.023.575 I common_speculative_impl_draft_mtp: - draft_direct_argmax_scores=0 (LLAMA_MTP_DRAFT_DIRECT_ARGMAX_SCORES, requires fused output argmax)
+0.19.023.575 I common_speculative_impl_draft_mtp: - mtp_profile=0 (LLAMA_MTP_DRAFT_PROFILE)
+0.19.023.592 I common_speculative_impl_draft_mtp: - defer_target_h_nextn=1 (LLAMA_MTP_DEFER_TARGET_H_NEXTN, requires shared memory + single seq)
+0.19.023.594 W set_mtp_defer_nextn_extract: deferring MTP target h_nextn host extraction
+0.19.023.595 I common_speculative_impl_draft_mtp: - defer_verifier_pending_h_copy=0 (LLAMA_MTP_DEFER_VERIFIER_PENDING_H_COPY, requires defer_target_h_nextn)
+0.19.023.596 I common_speculative_impl_draft_mtp: - draft_direct_argmax_unroll=3 (LLAMA_MTP_DRAFT_DIRECT_ARGMAX_UNROLL, requires direct argmax + shared memory + single seq)
+0.19.023.598 I common_speculative_impl_draft_mtp: - draft_device_h_handoff=0 (LLAMA_MTP_DRAFT_DEVICE_H_HANDOFF, requires shared memory + single seq)
+0.19.039.219 I srv    load_model: speculative decoding context initialized
+0.19.039.223 I slot   load_model: id  0 | task -1 | new slot, n_ctx = 32768
+0.19.039.268 I srv    load_model: prompt cache is disabled - use `--cache-ram N` to enable it
+0.19.039.269 I srv    load_model: for more info see https://github.com/ggml-org/llama.cpp/pull/16391
+0.19.039.270 I srv    load_model: context checkpoints disabled
+0.19.039.300 W srv          init: --cache-idle-slots requires --cache-ram, disabling
+0.19.045.384 I init: chat template, example_format: '<|turn>system
+You are a helpful assistant<turn|>
+<|turn>user
+Hello<turn|>
+<|turn>model
+Hi there<turn|>
+<|turn>user
+How are you?<turn|>
+<|turn>model
+<|channel>thought
+<channel|>'
+0.19.045.969 I srv          init: init: chat template, thinking = 0
+0.19.046.014 I srv  llama_server: model loaded
+0.19.046.019 I srv  llama_server: server is listening on http://127.0.0.1:18620
+0.19.046.026 I srv  update_slots: all slots are idle
+0.23.761.406 I srv    operator(): Chat format: peg-gemma4
+0.23.761.596 I slot get_availabl: id  0 | task -1 | selected slot by LRU, t_last = -1
+0.23.761.677 I slot launch_slot_: id  0 | task 0 | processing task, is_child = 0
+0.24.005.978 I slot print_timing: id  0 | task 0 | prompt eval time =     173.01 ms /    40 tokens (    4.33 ms per token,   231.20 tokens per second)
+0.24.005.981 I slot print_timing: id  0 | task 0 |        eval time =      71.25 ms /    11 tokens (    6.48 ms per token,   154.39 tokens per second)
+0.24.005.982 I slot print_timing: id  0 | task 0 |       total time =     244.26 ms /    51 tokens
+0.24.005.984 I slot print_timing: id  0 | task 0 |    graphs reused =          3
+0.24.005.986 I slot print_timing: id  0 | task 0 | draft acceptance = 0.88889 (    8 accepted /     9 generated), mean acceptance length =  3.67, acceptance rate per position = (1.000, 1.000, 0.667)
+0.24.006.002 I statistics        draft-mtp: #calls(b,g,a) =    1      3      3, #gen drafts =      3, #acc drafts =     3, #gen tokens =      9, #acc tokens =     8, #mean acc len = 3.67, #acc rate/pos = (1.000, 1.000, 0.667), dur(b,g,a) = 0.003, 8.928, 0.032 ms
+0.24.006.031 I slot      release: id  0 | task 0 | stop processing: n_tokens = 51, truncated = 0
+0.24.006.037 I srv  update_slots: all slots are idle
+0.24.008.811 I srv    operator(): Chat format: peg-gemma4
+0.24.008.944 I slot get_availabl: id  0 | task -1 | selected slot by LCP similarity, sim_best = 0.108 (> 0.100 thold), f_keep = 0.078
+0.24.009.000 I slot launch_slot_: id  0 | task 6 | processing task, is_child = 0
+0.24.009.008 W slot   operator(): id  0 | task 6 | forcing full prompt re-processing due to lack of cache data (likely due to SWA or hybrid/recurrent memory, see https://github.com/ggml-org/llama.cpp/pull/13194#issuecomment-2868343055)
+0.24.187.893 I slot print_timing: id  0 | task 6 | prompt eval time =     132.35 ms /    37 tokens (    3.58 ms per token,   279.57 tokens per second)
+0.24.187.896 I slot print_timing: id  0 | task 6 |        eval time =      46.52 ms /     8 tokens (    5.82 ms per token,   171.95 tokens per second)
+0.24.187.896 I slot print_timing: id  0 | task 6 |       total time =     178.87 ms /    45 tokens
+0.24.187.897 I slot print_timing: id  0 | task 6 |    graphs reused =          4
+0.24.187.899 I slot print_timing: id  0 | task 6 | draft acceptance = 1.00000 (    6 accepted /     6 generated), mean acceptance length =  4.00, acceptance rate per position = (1.000, 1.000, 1.000)
+0.24.187.906 I statistics        draft-mtp: #calls(b,g,a) =    2      5      5, #gen drafts =      5, #acc drafts =     5, #gen tokens =     15, #acc tokens =    14, #mean acc len = 3.80, #acc rate/pos = (1.000, 1.000, 0.800), dur(b,g,a) = 0.004, 14.734, 0.051 ms
+0.24.187.919 I slot      release: id  0 | task 6 | stop processing: n_tokens = 45, truncated = 0
+0.24.187.929 I srv  update_slots: all slots are idle
+0.24.190.217 I srv    operator(): Chat format: peg-gemma4
+0.24.190.336 I slot get_availabl: id  0 | task -1 | selected slot by LCP similarity, sim_best = 0.103 (> 0.100 thold), f_keep = 0.089
+0.24.190.398 I slot launch_slot_: id  0 | task 11 | processing task, is_child = 0
+0.24.190.405 W slot   operator(): id  0 | task 11 | forcing full prompt re-processing due to lack of cache data (likely due to SWA or hybrid/recurrent memory, see https://github.com/ggml-org/llama.cpp/pull/13194#issuecomment-2868343055)
+0.24.348.568 I slot print_timing: id  0 | task 11 | prompt eval time =     134.91 ms /    39 tokens (    3.46 ms per token,   289.09 tokens per second)
+0.24.348.572 I slot print_timing: id  0 | task 11 |        eval time =      23.24 ms /     3 tokens (    7.75 ms per token,   129.09 tokens per second)
+0.24.348.573 I slot print_timing: id  0 | task 11 |       total time =     158.15 ms /    42 tokens
+0.24.348.573 I slot print_timing: id  0 | task 11 |    graphs reused =          4
+0.24.348.575 I slot print_timing: id  0 | task 11 | draft acceptance = 1.00000 (    3 accepted /     3 generated), mean acceptance length =  4.00, acceptance rate per position = (1.000, 1.000, 1.000)
+0.24.348.582 I statistics        draft-mtp: #calls(b,g,a) =    3      6      6, #gen drafts =      6, #acc drafts =     6, #gen tokens =     18, #acc tokens =    17, #mean acc len = 3.83, #acc rate/pos = (1.000, 1.000, 0.833), dur(b,g,a) = 0.005, 17.634, 0.062 ms
+0.24.348.595 I slot      release: id  0 | task 11 | stop processing: n_tokens = 43, truncated = 0
+0.24.348.603 I srv  update_slots: all slots are idle
+0.24.350.909 I srv    operator(): Chat format: peg-gemma4
+0.24.351.031 I slot get_availabl: id  0 | task -1 | selected slot by LCP similarity, sim_best = 0.103 (> 0.100 thold), f_keep = 0.093
+0.24.351.080 I slot launch_slot_: id  0 | task 15 | processing task, is_child = 0
+0.24.351.085 W slot   operator(): id  0 | task 15 | forcing full prompt re-processing due to lack of cache data (likely due to SWA or hybrid/recurrent memory, see https://github.com/ggml-org/llama.cpp/pull/13194#issuecomment-2868343055)
+0.24.601.237 I slot print_timing: id  0 | task 15 | prompt eval time =     135.94 ms /    39 tokens (    3.49 ms per token,   286.89 tokens per second)
+0.24.601.240 I slot print_timing: id  0 | task 15 |        eval time =     114.19 ms /    20 tokens (    5.71 ms per token,   175.14 tokens per second)
+0.24.601.241 I slot print_timing: id  0 | task 15 |       total time =     250.13 ms /    59 tokens
+0.24.601.241 I slot print_timing: id  0 | task 15 |    graphs reused =          8
+0.24.601.243 I slot print_timing: id  0 | task 15 | draft acceptance = 1.00000 (   15 accepted /    15 generated), mean acceptance length =  4.00, acceptance rate per position = (1.000, 1.000, 1.000)
+0.24.601.250 I statistics        draft-mtp: #calls(b,g,a) =    4     11     11, #gen drafts =     11, #acc drafts =    11, #gen tokens =     33, #acc tokens =    32, #mean acc len = 3.91, #acc rate/pos = (1.000, 1.000, 0.909), dur(b,g,a) = 0.006, 32.070, 0.110 ms
+0.24.601.263 I slot      release: id  0 | task 15 | stop processing: n_tokens = 59, truncated = 0
+0.24.601.271 I srv  update_slots: all slots are idle
+0.24.603.543 I srv    operator(): Chat format: peg-gemma4
+0.24.603.677 I slot get_availabl: id  0 | task -1 | selected slot by LRU, t_last = 877926819889
+0.24.603.731 I slot launch_slot_: id  0 | task 23 | processing task, is_child = 0
+0.24.603.742 W slot   operator(): id  0 | task 23 | forcing full prompt re-processing due to lack of cache data (likely due to SWA or hybrid/recurrent memory, see https://github.com/ggml-org/llama.cpp/pull/13194#issuecomment-2868343055)
+0.24.812.526 I slot print_timing: id  0 | task 23 | prompt eval time =     138.77 ms /    40 tokens (    3.47 ms per token,   288.24 tokens per second)
+0.24.812.529 I slot print_timing: id  0 | task 23 |        eval time =      70.00 ms /    11 tokens (    6.36 ms per token,   157.14 tokens per second)
+0.24.812.530 I slot print_timing: id  0 | task 23 |       total time =     208.77 ms /    51 tokens
+0.24.812.531 I slot print_timing: id  0 | task 23 |    graphs reused =         10
+0.24.812.533 I slot print_timing: id  0 | task 23 | draft acceptance = 0.88889 (    8 accepted /     9 generated), mean acceptance length =  3.67, acceptance rate per position = (1.000, 1.000, 0.667)
+0.24.812.539 I statistics        draft-mtp: #calls(b,g,a) =    5     14     14, #gen drafts =     14, #acc drafts =    14, #gen tokens =     42, #acc tokens =    40, #mean acc len = 3.86, #acc rate/pos = (1.000, 1.000, 0.857), dur(b,g,a) = 0.007, 40.772, 0.140 ms
+0.24.812.553 I slot      release: id  0 | task 23 | stop processing: n_tokens = 51, truncated = 0
+0.24.812.561 I srv  update_slots: all slots are idle
+0.24.814.955 I srv    operator(): Chat format: peg-gemma4
+0.24.815.082 I slot get_availabl: id  0 | task -1 | selected slot by LCP similarity, sim_best = 0.108 (> 0.100 thold), f_keep = 0.078
+0.24.815.130 I slot launch_slot_: id  0 | task 29 | processing task, is_child = 0
+0.24.815.136 W slot   operator(): id  0 | task 29 | forcing full prompt re-processing due to lack of cache data (likely due to SWA or hybrid/recurrent memory, see https://github.com/ggml-org/llama.cpp/pull/13194#issuecomment-2868343055)
+0.24.992.986 I slot print_timing: id  0 | task 29 | prompt eval time =     131.37 ms /    37 tokens (    3.55 ms per token,   281.64 tokens per second)
+0.24.992.990 I slot print_timing: id  0 | task 29 |        eval time =      46.46 ms /     8 tokens (    5.81 ms per token,   172.18 tokens per second)
+0.24.992.990 I slot print_timing: id  0 | task 29 |       total time =     177.83 ms /    45 tokens
+0.24.992.991 I slot print_timing: id  0 | task 29 |    graphs reused =         11
+0.24.992.993 I slot print_timing: id  0 | task 29 | draft acceptance = 1.00000 (    6 accepted /     6 generated), mean acceptance length =  4.00, acceptance rate per position = (1.000, 1.000, 1.000)
+0.24.992.999 I statistics        draft-mtp: #calls(b,g,a) =    6     16     16, #gen drafts =     16, #acc drafts =    16, #gen tokens =     48, #acc tokens =    46, #mean acc len = 3.88, #acc rate/pos = (1.000, 1.000, 0.875), dur(b,g,a) = 0.007, 46.531, 0.159 ms
+0.24.993.011 I slot      release: id  0 | task 29 | stop processing: n_tokens = 45, truncated = 0
+0.24.993.019 I srv  update_slots: all slots are idle
+0.24.994.983 I srv    operator(): Chat format: peg-gemma4
+0.24.995.102 I slot get_availabl: id  0 | task -1 | selected slot by LCP similarity, sim_best = 0.103 (> 0.100 thold), f_keep = 0.089
+0.24.995.148 I slot launch_slot_: id  0 | task 34 | processing task, is_child = 0
+0.24.995.154 W slot   operator(): id  0 | task 34 | forcing full prompt re-processing due to lack of cache data (likely due to SWA or hybrid/recurrent memory, see https://github.com/ggml-org/llama.cpp/pull/13194#issuecomment-2868343055)
+0.25.153.153 I slot print_timing: id  0 | task 34 | prompt eval time =     134.79 ms /    39 tokens (    3.46 ms per token,   289.34 tokens per second)
+0.25.153.156 I slot print_timing: id  0 | task 34 |        eval time =      23.19 ms /     3 tokens (    7.73 ms per token,   129.35 tokens per second)
+0.25.153.157 I slot print_timing: id  0 | task 34 |       total time =     157.98 ms /    42 tokens
+0.25.153.157 I slot print_timing: id  0 | task 34 |    graphs reused =         11
+0.25.153.159 I slot print_timing: id  0 | task 34 | draft acceptance = 1.00000 (    3 accepted /     3 generated), mean acceptance length =  4.00, acceptance rate per position = (1.000, 1.000, 1.000)
+0.25.153.166 I statistics        draft-mtp: #calls(b,g,a) =    7     17     17, #gen drafts =     17, #acc drafts =    17, #gen tokens =     51, #acc tokens =    49, #mean acc len = 3.88, #acc rate/pos = (1.000, 1.000, 0.882), dur(b,g,a) = 0.007, 49.412, 0.169 ms
+0.25.153.178 I slot      release: id  0 | task 34 | stop processing: n_tokens = 43, truncated = 0
+0.25.153.186 I srv  update_slots: all slots are idle
+0.25.155.187 I srv    operator(): Chat format: peg-gemma4
+0.25.155.312 I slot get_availabl: id  0 | task -1 | selected slot by LCP similarity, sim_best = 0.103 (> 0.100 thold), f_keep = 0.093
+0.25.155.355 I slot launch_slot_: id  0 | task 38 | processing task, is_child = 0
+0.25.155.360 W slot   operator(): id  0 | task 38 | forcing full prompt re-processing due to lack of cache data (likely due to SWA or hybrid/recurrent memory, see https://github.com/ggml-org/llama.cpp/pull/13194#issuecomment-2868343055)
+0.25.405.090 I slot print_timing: id  0 | task 38 | prompt eval time =     135.58 ms /    39 tokens (    3.48 ms per token,   287.66 tokens per second)
+0.25.405.094 I slot print_timing: id  0 | task 38 |        eval time =     114.14 ms /    20 tokens (    5.71 ms per token,   175.23 tokens per second)
+0.25.405.094 I slot print_timing: id  0 | task 38 |       total time =     249.71 ms /    59 tokens
+0.25.405.095 I slot print_timing: id  0 | task 38 |    graphs reused =         15
+0.25.405.097 I slot print_timing: id  0 | task 38 | draft acceptance = 1.00000 (   15 accepted /    15 generated), mean acceptance length =  4.00, acceptance rate per position = (1.000, 1.000, 1.000)
+0.25.405.105 I statistics        draft-mtp: #calls(b,g,a) =    8     22     22, #gen drafts =     22, #acc drafts =    22, #gen tokens =     66, #acc tokens =    64, #mean acc len = 3.91, #acc rate/pos = (1.000, 1.000, 0.909), dur(b,g,a) = 0.008, 63.831, 0.219 ms
+0.25.405.117 I slot      release: id  0 | task 38 | stop processing: n_tokens = 59, truncated = 0
+0.25.405.127 I srv  update_slots: all slots are idle
+0.25.407.427 I srv    operator(): Chat format: peg-gemma4
+0.25.407.575 I slot get_availabl: id  0 | task -1 | selected slot by LRU, t_last = 877927623743
+0.25.407.618 I slot launch_slot_: id  0 | task 46 | processing task, is_child = 0
+0.25.407.624 W slot   operator(): id  0 | task 46 | forcing full prompt re-processing due to lack of cache data (likely due to SWA or hybrid/recurrent memory, see https://github.com/ggml-org/llama.cpp/pull/13194#issuecomment-2868343055)
+0.25.614.951 I slot print_timing: id  0 | task 46 | prompt eval time =     137.78 ms /    40 tokens (    3.44 ms per token,   290.31 tokens per second)
+0.25.614.955 I slot print_timing: id  0 | task 46 |        eval time =      69.53 ms /    11 tokens (    6.32 ms per token,   158.21 tokens per second)
+0.25.614.955 I slot print_timing: id  0 | task 46 |       total time =     207.31 ms /    51 tokens
+0.25.614.956 I slot print_timing: id  0 | task 46 |    graphs reused =         17
+0.25.614.960 I slot print_timing: id  0 | task 46 | draft acceptance = 0.88889 (    8 accepted /     9 generated), mean acceptance length =  3.67, acceptance rate per position = (1.000, 1.000, 0.667)
+0.25.614.971 I statistics        draft-mtp: #calls(b,g,a) =    9     25     25, #gen drafts =     25, #acc drafts =    25, #gen tokens =     75, #acc tokens =    72, #mean acc len = 3.88, #acc rate/pos = (1.000, 1.000, 0.880), dur(b,g,a) = 0.009, 72.499, 0.249 ms
+0.25.614.983 I slot      release: id  0 | task 46 | stop processing: n_tokens = 51, truncated = 0
+0.25.614.993 I srv  update_slots: all slots are idle
+0.25.616.918 I srv    operator(): Chat format: peg-gemma4
+0.25.617.062 I slot get_availabl: id  0 | task -1 | selected slot by LCP similarity, sim_best = 0.108 (> 0.100 thold), f_keep = 0.078
+0.25.617.105 I slot launch_slot_: id  0 | task 52 | processing task, is_child = 0
+0.25.617.111 W slot   operator(): id  0 | task 52 | forcing full prompt re-processing due to lack of cache data (likely due to SWA or hybrid/recurrent memory, see https://github.com/ggml-org/llama.cpp/pull/13194#issuecomment-2868343055)
+0.25.794.830 I slot print_timing: id  0 | task 52 | prompt eval time =     131.25 ms /    37 tokens (    3.55 ms per token,   281.92 tokens per second)
+0.25.794.833 I slot print_timing: id  0 | task 52 |        eval time =      46.46 ms /     8 tokens (    5.81 ms per token,   172.20 tokens per second)
+0.25.794.834 I slot print_timing: id  0 | task 52 |       total time =     177.70 ms /    45 tokens
+0.25.794.834 I slot print_timing: id  0 | task 52 |    graphs reused =         18
+0.25.794.836 I slot print_timing: id  0 | task 52 | draft acceptance = 1.00000 (    6 accepted /     6 generated), mean acceptance length =  4.00, acceptance rate per position = (1.000, 1.000, 1.000)
+0.25.794.843 I statistics        draft-mtp: #calls(b,g,a) =   10     27     27, #gen drafts =     27, #acc drafts =    27, #gen tokens =     81, #acc tokens =    78, #mean acc len = 3.89, #acc rate/pos = (1.000, 1.000, 0.889), dur(b,g,a) = 0.009, 78.277, 0.269 ms
+0.25.794.856 I slot      release: id  0 | task 52 | stop processing: n_tokens = 45, truncated = 0
+0.25.794.864 I srv  update_slots: all slots are idle
+0.25.797.230 I srv    operator(): Chat format: peg-gemma4
+0.25.797.350 I slot get_availabl: id  0 | task -1 | selected slot by LCP similarity, sim_best = 0.103 (> 0.100 thold), f_keep = 0.089
+0.25.797.402 I slot launch_slot_: id  0 | task 57 | processing task, is_child = 0
+0.25.797.407 W slot   operator(): id  0 | task 57 | forcing full prompt re-processing due to lack of cache data (likely due to SWA or hybrid/recurrent memory, see https://github.com/ggml-org/llama.cpp/pull/13194#issuecomment-2868343055)
+0.25.955.454 I slot print_timing: id  0 | task 57 | prompt eval time =     134.84 ms /    39 tokens (    3.46 ms per token,   289.24 tokens per second)
+0.25.955.458 I slot print_timing: id  0 | task 57 |        eval time =      23.20 ms /     3 tokens (    7.73 ms per token,   129.34 tokens per second)
+0.25.955.459 I slot print_timing: id  0 | task 57 |       total time =     158.03 ms /    42 tokens
+0.25.955.459 I slot print_timing: id  0 | task 57 |    graphs reused =         18
+0.25.955.461 I slot print_timing: id  0 | task 57 | draft acceptance = 1.00000 (    3 accepted /     3 generated), mean acceptance length =  4.00, acceptance rate per position = (1.000, 1.000, 1.000)
+0.25.955.468 I statistics        draft-mtp: #calls(b,g,a) =   11     28     28, #gen drafts =     28, #acc drafts =    28, #gen tokens =     84, #acc tokens =    81, #mean acc len = 3.89, #acc rate/pos = (1.000, 1.000, 0.893), dur(b,g,a) = 0.010, 81.156, 0.279 ms
+0.25.955.480 I slot      release: id  0 | task 57 | stop processing: n_tokens = 43, truncated = 0
+0.25.955.489 I srv  update_slots: all slots are idle
+0.25.957.442 I srv    operator(): Chat format: peg-gemma4
+0.25.957.567 I slot get_availabl: id  0 | task -1 | selected slot by LCP similarity, sim_best = 0.103 (> 0.100 thold), f_keep = 0.093
+0.25.957.605 I slot launch_slot_: id  0 | task 61 | processing task, is_child = 0
+0.25.957.611 W slot   operator(): id  0 | task 61 | forcing full prompt re-processing due to lack of cache data (likely due to SWA or hybrid/recurrent memory, see https://github.com/ggml-org/llama.cpp/pull/13194#issuecomment-2868343055)
+0.26.207.399 I slot print_timing: id  0 | task 61 | prompt eval time =     135.58 ms /    39 tokens (    3.48 ms per token,   287.66 tokens per second)
+0.26.207.403 I slot print_timing: id  0 | task 61 |        eval time =     114.19 ms /    20 tokens (    5.71 ms per token,   175.14 tokens per second)
+0.26.207.403 I slot print_timing: id  0 | task 61 |       total time =     249.77 ms /    59 tokens
+0.26.207.404 I slot print_timing: id  0 | task 61 |    graphs reused =         22
+0.26.207.406 I slot print_timing: id  0 | task 61 | draft acceptance = 1.00000 (   15 accepted /    15 generated), mean acceptance length =  4.00, acceptance rate per position = (1.000, 1.000, 1.000)
+0.26.207.413 I statistics        draft-mtp: #calls(b,g,a) =   12     33     33, #gen drafts =     33, #acc drafts =    33, #gen tokens =     99, #acc tokens =    96, #mean acc len = 3.91, #acc rate/pos = (1.000, 1.000, 0.909), dur(b,g,a) = 0.011, 95.573, 0.329 ms
+0.26.207.425 I slot      release: id  0 | task 61 | stop processing: n_tokens = 59, truncated = 0
+0.26.207.434 I srv  update_slots: all slots are idle
+0.26.209.598 I srv    operator(): Chat format: peg-gemma4
+0.26.209.724 I slot get_availabl: id  0 | task -1 | selected slot by LRU, t_last = 877928426051
+0.26.209.761 I slot launch_slot_: id  0 | task 69 | processing task, is_child = 0
+0.26.209.767 W slot   operator(): id  0 | task 69 | forcing full prompt re-processing due to lack of cache data (likely due to SWA or hybrid/recurrent memory, see https://github.com/ggml-org/llama.cpp/pull/13194#issuecomment-2868343055)
+0.26.417.079 I slot print_timing: id  0 | task 69 | prompt eval time =     137.82 ms /    40 tokens (    3.45 ms per token,   290.23 tokens per second)
+0.26.417.083 I slot print_timing: id  0 | task 69 |        eval time =      69.47 ms /    11 tokens (    6.32 ms per token,   158.34 tokens per second)
+0.26.417.084 I slot print_timing: id  0 | task 69 |       total time =     207.30 ms /    51 tokens
+0.26.417.084 I slot print_timing: id  0 | task 69 |    graphs reused =         24
+0.26.417.086 I slot print_timing: id  0 | task 69 | draft acceptance = 0.88889 (    8 accepted /     9 generated), mean acceptance length =  3.67, acceptance rate per position = (1.000, 1.000, 0.667)
+0.26.417.094 I statistics        draft-mtp: #calls(b,g,a) =   13     36     36, #gen drafts =     36, #acc drafts =    36, #gen tokens =    108, #acc tokens =   104, #mean acc len = 3.89, #acc rate/pos = (1.000, 1.000, 0.889), dur(b,g,a) = 0.011, 104.225, 0.359 ms
+0.26.417.106 I slot      release: id  0 | task 69 | stop processing: n_tokens = 51, truncated = 0
+0.26.417.115 I srv  update_slots: all slots are idle
+0.26.419.366 I srv    operator(): Chat format: peg-gemma4
+0.26.419.502 I slot get_availabl: id  0 | task -1 | selected slot by LCP similarity, sim_best = 0.108 (> 0.100 thold), f_keep = 0.078
+0.26.419.540 I slot launch_slot_: id  0 | task 75 | processing task, is_child = 0
+0.26.419.545 W slot   operator(): id  0 | task 75 | forcing full prompt re-processing due to lack of cache data (likely due to SWA or hybrid/recurrent memory, see https://github.com/ggml-org/llama.cpp/pull/13194#issuecomment-2868343055)
+0.26.597.242 I slot print_timing: id  0 | task 75 | prompt eval time =     131.19 ms /    37 tokens (    3.55 ms per token,   282.03 tokens per second)
+0.26.597.246 I slot print_timing: id  0 | task 75 |        eval time =      46.49 ms /     8 tokens (    5.81 ms per token,   172.09 tokens per second)
+0.26.597.247 I slot print_timing: id  0 | task 75 |       total time =     177.68 ms /    45 tokens
+0.26.597.247 I slot print_timing: id  0 | task 75 |    graphs reused =         25
+0.26.597.249 I slot print_timing: id  0 | task 75 | draft acceptance = 1.00000 (    6 accepted /     6 generated), mean acceptance length =  4.00, acceptance rate per position = (1.000, 1.000, 1.000)
+0.26.597.256 I statistics        draft-mtp: #calls(b,g,a) =   14     38     38, #gen drafts =     38, #acc drafts =    38, #gen tokens =    114, #acc tokens =   110, #mean acc len = 3.89, #acc rate/pos = (1.000, 1.000, 0.895), dur(b,g,a) = 0.012, 109.991, 0.380 ms
+0.26.597.267 I slot      release: id  0 | task 75 | stop processing: n_tokens = 45, truncated = 0
+0.26.597.276 I srv  update_slots: all slots are idle
+0.26.599.360 I srv    operator(): Chat format: peg-gemma4
+0.26.599.516 I slot get_availabl: id  0 | task -1 | selected slot by LCP similarity, sim_best = 0.103 (> 0.100 thold), f_keep = 0.089
+0.26.599.551 I slot launch_slot_: id  0 | task 80 | processing task, is_child = 0
+0.26.599.556 W slot   operator(): id  0 | task 80 | forcing full prompt re-processing due to lack of cache data (likely due to SWA or hybrid/recurrent memory, see https://github.com/ggml-org/llama.cpp/pull/13194#issuecomment-2868343055)
+0.26.757.625 I slot print_timing: id  0 | task 80 | prompt eval time =     134.85 ms /    39 tokens (    3.46 ms per token,   289.20 tokens per second)
+0.26.757.629 I slot print_timing: id  0 | task 80 |        eval time =      23.20 ms /     3 tokens (    7.73 ms per token,   129.32 tokens per second)
+0.26.757.630 I slot print_timing: id  0 | task 80 |       total time =     158.05 ms /    42 tokens
+0.26.757.630 I slot print_timing: id  0 | task 80 |    graphs reused =         25
+0.26.757.632 I slot print_timing: id  0 | task 80 | draft acceptance = 1.00000 (    3 accepted /     3 generated), mean acceptance length =  4.00, acceptance rate per position = (1.000, 1.000, 1.000)
+0.26.757.639 I statistics        draft-mtp: #calls(b,g,a) =   15     39     39, #gen drafts =     39, #acc drafts =    39, #gen tokens =    117, #acc tokens =   113, #mean acc len = 3.90, #acc rate/pos = (1.000, 1.000, 0.897), dur(b,g,a) = 0.012, 112.877, 0.390 ms
+0.26.757.651 I slot      release: id  0 | task 80 | stop processing: n_tokens = 43, truncated = 0
+0.26.757.659 I srv  update_slots: all slots are idle
+0.26.760.057 I srv    operator(): Chat format: peg-gemma4
+0.26.760.182 I slot get_availabl: id  0 | task -1 | selected slot by LCP similarity, sim_best = 0.103 (> 0.100 thold), f_keep = 0.093
+0.26.760.217 I slot launch_slot_: id  0 | task 84 | processing task, is_child = 0
+0.26.760.221 W slot   operator(): id  0 | task 84 | forcing full prompt re-processing due to lack of cache data (likely due to SWA or hybrid/recurrent memory, see https://github.com/ggml-org/llama.cpp/pull/13194#issuecomment-2868343055)
+0.27.009.951 I slot print_timing: id  0 | task 84 | prompt eval time =     135.55 ms /    39 tokens (    3.48 ms per token,   287.73 tokens per second)
+0.27.009.954 I slot print_timing: id  0 | task 84 |        eval time =     114.17 ms /    20 tokens (    5.71 ms per token,   175.18 tokens per second)
+0.27.009.955 I slot print_timing: id  0 | task 84 |       total time =     249.71 ms /    59 tokens
+0.27.009.955 I slot print_timing: id  0 | task 84 |    graphs reused =         29
+0.27.009.957 I slot print_timing: id  0 | task 84 | draft acceptance = 1.00000 (   15 accepted /    15 generated), mean acceptance length =  4.00, acceptance rate per position = (1.000, 1.000, 1.000)
+0.27.009.965 I statistics        draft-mtp: #calls(b,g,a) =   16     44     44, #gen drafts =     44, #acc drafts =    44, #gen tokens =    132, #acc tokens =   128, #mean acc len = 3.91, #acc rate/pos = (1.000, 1.000, 0.909), dur(b,g,a) = 0.013, 127.298, 0.440 ms
+0.27.009.976 I slot      release: id  0 | task 84 | stop processing: n_tokens = 59, truncated = 0
+0.27.009.985 I srv  update_slots: all slots are idle
+0.27.012.146 I srv    operator(): Chat format: peg-gemma4
+0.27.012.271 I slot get_availabl: id  0 | task -1 | selected slot by LRU, t_last = 877929228602
+0.27.012.308 I slot launch_slot_: id  0 | task 92 | processing task, is_child = 0
+0.27.012.313 W slot   operator(): id  0 | task 92 | forcing full prompt re-processing due to lack of cache data (likely due to SWA or hybrid/recurrent memory, see https://github.com/ggml-org/llama.cpp/pull/13194#issuecomment-2868343055)
+0.27.219.549 I slot print_timing: id  0 | task 92 | prompt eval time =     137.74 ms /    40 tokens (    3.44 ms per token,   290.40 tokens per second)
+0.27.219.552 I slot print_timing: id  0 | task 92 |        eval time =      69.48 ms /    11 tokens (    6.32 ms per token,   158.32 tokens per second)
+0.27.219.553 I slot print_timing: id  0 | task 92 |       total time =     207.22 ms /    51 tokens
+0.27.219.554 I slot print_timing: id  0 | task 92 |    graphs reused =         31
+0.27.219.556 I slot print_timing: id  0 | task 92 | draft acceptance = 0.88889 (    8 accepted /     9 generated), mean acceptance length =  3.67, acceptance rate per position = (1.000, 1.000, 0.667)
+0.27.219.563 I statistics        draft-mtp: #calls(b,g,a) =   17     47     47, #gen drafts =     47, #acc drafts =    47, #gen tokens =    141, #acc tokens =   136, #mean acc len = 3.89, #acc rate/pos = (1.000, 1.000, 0.894), dur(b,g,a) = 0.013, 135.952, 0.469 ms
+0.27.219.576 I slot      release: id  0 | task 92 | stop processing: n_tokens = 51, truncated = 0
+0.27.219.584 I srv  update_slots: all slots are idle
+0.27.222.285 I srv    operator(): Chat format: peg-gemma4
+0.27.222.469 I slot get_availabl: id  0 | task -1 | selected slot by LCP similarity, sim_best = 0.108 (> 0.100 thold), f_keep = 0.078
+0.27.222.505 I slot launch_slot_: id  0 | task 98 | processing task, is_child = 0
+0.27.222.512 W slot   operator(): id  0 | task 98 | forcing full prompt re-processing due to lack of cache data (likely due to SWA or hybrid/recurrent memory, see https://github.com/ggml-org/llama.cpp/pull/13194#issuecomment-2868343055)
+0.27.400.172 I slot print_timing: id  0 | task 98 | prompt eval time =     131.19 ms /    37 tokens (    3.55 ms per token,   282.04 tokens per second)
+0.27.400.176 I slot print_timing: id  0 | task 98 |        eval time =      46.46 ms /     8 tokens (    5.81 ms per token,   172.20 tokens per second)
+0.27.400.176 I slot print_timing: id  0 | task 98 |       total time =     177.64 ms /    45 tokens
+0.27.400.177 I slot print_timing: id  0 | task 98 |    graphs reused =         32
+0.27.400.179 I slot print_timing: id  0 | task 98 | draft acceptance = 1.00000 (    6 accepted /     6 generated), mean acceptance length =  4.00, acceptance rate per position = (1.000, 1.000, 1.000)
+0.27.400.185 I statistics        draft-mtp: #calls(b,g,a) =   18     49     49, #gen drafts =     49, #acc drafts =    49, #gen tokens =    147, #acc tokens =   142, #mean acc len = 3.90, #acc rate/pos = (1.000, 1.000, 0.898), dur(b,g,a) = 0.014, 141.714, 0.489 ms
+0.27.400.196 I slot      release: id  0 | task 98 | stop processing: n_tokens = 45, truncated = 0
+0.27.400.204 I srv  update_slots: all slots are idle
+0.27.402.281 I srv    operator(): Chat format: peg-gemma4
+0.27.402.405 I slot get_availabl: id  0 | task -1 | selected slot by LCP similarity, sim_best = 0.103 (> 0.100 thold), f_keep = 0.089
+0.27.402.441 I slot launch_slot_: id  0 | task 103 | processing task, is_child = 0
+0.27.402.447 W slot   operator(): id  0 | task 103 | forcing full prompt re-processing due to lack of cache data (likely due to SWA or hybrid/recurrent memory, see https://github.com/ggml-org/llama.cpp/pull/13194#issuecomment-2868343055)
+0.27.560.464 I slot print_timing: id  0 | task 103 | prompt eval time =     134.80 ms /    39 tokens (    3.46 ms per token,   289.32 tokens per second)
+0.27.560.468 I slot print_timing: id  0 | task 103 |        eval time =      23.20 ms /     3 tokens (    7.73 ms per token,   129.29 tokens per second)
+0.27.560.468 I slot print_timing: id  0 | task 103 |       total time =     158.00 ms /    42 tokens
+0.27.560.469 I slot print_timing: id  0 | task 103 |    graphs reused =         32
+0.27.560.471 I slot print_timing: id  0 | task 103 | draft acceptance = 1.00000 (    3 accepted /     3 generated), mean acceptance length =  4.00, acceptance rate per position = (1.000, 1.000, 1.000)
+0.27.560.478 I statistics        draft-mtp: #calls(b,g,a) =   19     50     50, #gen drafts =     50, #acc drafts =    50, #gen tokens =    150, #acc tokens =   145, #mean acc len = 3.90, #acc rate/pos = (1.000, 1.000, 0.900), dur(b,g,a) = 0.014, 144.591, 0.499 ms
+0.27.560.495 I slot      release: id  0 | task 103 | stop processing: n_tokens = 43, truncated = 0
+0.27.560.504 I srv  update_slots: all slots are idle
+0.27.562.356 I srv    operator(): Chat format: peg-gemma4
+0.27.562.500 I slot get_availabl: id  0 | task -1 | selected slot by LCP similarity, sim_best = 0.103 (> 0.100 thold), f_keep = 0.093
+0.27.562.537 I slot launch_slot_: id  0 | task 107 | processing task, is_child = 0
+0.27.562.544 W slot   operator(): id  0 | task 107 | forcing full prompt re-processing due to lack of cache data (likely due to SWA or hybrid/recurrent memory, see https://github.com/ggml-org/llama.cpp/pull/13194#issuecomment-2868343055)
+0.27.812.386 I slot print_timing: id  0 | task 107 | prompt eval time =     135.62 ms /    39 tokens (    3.48 ms per token,   287.57 tokens per second)
+0.27.812.389 I slot print_timing: id  0 | task 107 |        eval time =     114.20 ms /    20 tokens (    5.71 ms per token,   175.13 tokens per second)
+0.27.812.390 I slot print_timing: id  0 | task 107 |       total time =     249.82 ms /    59 tokens
+0.27.812.390 I slot print_timing: id  0 | task 107 |    graphs reused =         36
+0.27.812.392 I slot print_timing: id  0 | task 107 | draft acceptance = 1.00000 (   15 accepted /    15 generated), mean acceptance length =  4.00, acceptance rate per position = (1.000, 1.000, 1.000)
+0.27.812.400 I statistics        draft-mtp: #calls(b,g,a) =   20     55     55, #gen drafts =     55, #acc drafts =    55, #gen tokens =    165, #acc tokens =   160, #mean acc len = 3.91, #acc rate/pos = (1.000, 1.000, 0.909), dur(b,g,a) = 0.015, 159.017, 0.556 ms
+0.27.812.412 I slot      release: id  0 | task 107 | stop processing: n_tokens = 59, truncated = 0
+0.27.812.421 I srv  update_slots: all slots are idle
+0.27.814.610 I srv    operator(): Chat format: peg-gemma4
+0.27.814.731 I slot get_availabl: id  0 | task -1 | selected slot by LRU, t_last = 877930031038
+0.27.814.768 I slot launch_slot_: id  0 | task 115 | processing task, is_child = 0
+0.27.814.773 W slot   operator(): id  0 | task 115 | forcing full prompt re-processing due to lack of cache data (likely due to SWA or hybrid/recurrent memory, see https://github.com/ggml-org/llama.cpp/pull/13194#issuecomment-2868343055)
+0.28.022.039 I slot print_timing: id  0 | task 115 | prompt eval time =     137.80 ms /    40 tokens (    3.45 ms per token,   290.27 tokens per second)
+0.28.022.043 I slot print_timing: id  0 | task 115 |        eval time =      69.45 ms /    11 tokens (    6.31 ms per token,   158.39 tokens per second)
+0.28.022.044 I slot print_timing: id  0 | task 115 |       total time =     207.25 ms /    51 tokens
+0.28.022.044 I slot print_timing: id  0 | task 115 |    graphs reused =         38
+0.28.022.047 I slot print_timing: id  0 | task 115 | draft acceptance = 0.88889 (    8 accepted /     9 generated), mean acceptance length =  3.67, acceptance rate per position = (1.000, 1.000, 0.667)
+0.28.022.053 I statistics        draft-mtp: #calls(b,g,a) =   21     58     58, #gen drafts =     58, #acc drafts =    58, #gen tokens =    174, #acc tokens =   168, #mean acc len = 3.90, #acc rate/pos = (1.000, 1.000, 0.897), dur(b,g,a) = 0.016, 167.668, 0.586 ms
+0.28.022.065 I slot      release: id  0 | task 115 | stop processing: n_tokens = 51, truncated = 0
+0.28.022.073 I srv  update_slots: all slots are idle
+0.28.024.135 I srv    operator(): Chat format: peg-gemma4
+0.28.024.256 I slot get_availabl: id  0 | task -1 | selected slot by LCP similarity, sim_best = 0.108 (> 0.100 thold), f_keep = 0.078
+0.28.024.293 I slot launch_slot_: id  0 | task 121 | processing task, is_child = 0
+0.28.024.296 W slot   operator(): id  0 | task 121 | forcing full prompt re-processing due to lack of cache data (likely due to SWA or hybrid/recurrent memory, see https://github.com/ggml-org/llama.cpp/pull/13194#issuecomment-2868343055)
+0.28.201.981 I slot print_timing: id  0 | task 121 | prompt eval time =     131.21 ms /    37 tokens (    3.55 ms per token,   281.99 tokens per second)
+0.28.201.984 I slot print_timing: id  0 | task 121 |        eval time =      46.46 ms /     8 tokens (    5.81 ms per token,   172.20 tokens per second)
+0.28.201.985 I slot print_timing: id  0 | task 121 |       total time =     177.67 ms /    45 tokens
+0.28.201.985 I slot print_timing: id  0 | task 121 |    graphs reused =         39
+0.28.201.987 I slot print_timing: id  0 | task 121 | draft acceptance = 1.00000 (    6 accepted /     6 generated), mean acceptance length =  4.00, acceptance rate per position = (1.000, 1.000, 1.000)
+0.28.201.994 I statistics        draft-mtp: #calls(b,g,a) =   22     60     60, #gen drafts =     60, #acc drafts =    60, #gen tokens =    180, #acc tokens =   174, #mean acc len = 3.90, #acc rate/pos = (1.000, 1.000, 0.900), dur(b,g,a) = 0.016, 173.453, 0.606 ms
+0.28.202.006 I slot      release: id  0 | task 121 | stop processing: n_tokens = 45, truncated = 0
+0.28.202.014 I srv  update_slots: all slots are idle
+0.28.203.865 I srv    operator(): Chat format: peg-gemma4
+0.28.203.986 I slot get_availabl: id  0 | task -1 | selected slot by LCP similarity, sim_best = 0.103 (> 0.100 thold), f_keep = 0.089
+0.28.204.022 I slot launch_slot_: id  0 | task 126 | processing task, is_child = 0
+0.28.204.027 W slot   operator(): id  0 | task 126 | forcing full prompt re-processing due to lack of cache data (likely due to SWA or hybrid/recurrent memory, see https://github.com/ggml-org/llama.cpp/pull/13194#issuecomment-2868343055)
+0.28.362.060 I slot print_timing: id  0 | task 126 | prompt eval time =     134.83 ms /    39 tokens (    3.46 ms per token,   289.26 tokens per second)
+0.28.362.063 I slot print_timing: id  0 | task 126 |        eval time =      23.19 ms /     3 tokens (    7.73 ms per token,   129.37 tokens per second)
+0.28.362.064 I slot print_timing: id  0 | task 126 |       total time =     158.02 ms /    42 tokens
+0.28.362.064 I slot print_timing: id  0 | task 126 |    graphs reused =         39
+0.28.362.066 I slot print_timing: id  0 | task 126 | draft acceptance = 1.00000 (    3 accepted /     3 generated), mean acceptance length =  4.00, acceptance rate per position = (1.000, 1.000, 1.000)
+0.28.362.073 I statistics        draft-mtp: #calls(b,g,a) =   23     61     61, #gen drafts =     61, #acc drafts =    61, #gen tokens =    183, #acc tokens =   177, #mean acc len = 3.90, #acc rate/pos = (1.000, 1.000, 0.902), dur(b,g,a) = 0.016, 176.331, 0.617 ms
+0.28.362.084 I slot      release: id  0 | task 126 | stop processing: n_tokens = 43, truncated = 0
+0.28.362.092 I srv  update_slots: all slots are idle
+0.28.364.195 I srv    operator(): Chat format: peg-gemma4
+0.28.364.318 I slot get_availabl: id  0 | task -1 | selected slot by LCP similarity, sim_best = 0.103 (> 0.100 thold), f_keep = 0.093
+0.28.364.354 I slot launch_slot_: id  0 | task 130 | processing task, is_child = 0
+0.28.364.360 W slot   operator(): id  0 | task 130 | forcing full prompt re-processing due to lack of cache data (likely due to SWA or hybrid/recurrent memory, see https://github.com/ggml-org/llama.cpp/pull/13194#issuecomment-2868343055)
+0.28.614.165 I slot print_timing: id  0 | task 130 | prompt eval time =     135.63 ms /    39 tokens (    3.48 ms per token,   287.55 tokens per second)
+0.28.614.169 I slot print_timing: id  0 | task 130 |        eval time =     114.16 ms /    20 tokens (    5.71 ms per token,   175.19 tokens per second)
+0.28.614.169 I slot print_timing: id  0 | task 130 |       total time =     249.79 ms /    59 tokens
+0.28.614.170 I slot print_timing: id  0 | task 130 |    graphs reused =         43
+0.28.614.172 I slot print_timing: id  0 | task 130 | draft acceptance = 1.00000 (   15 accepted /    15 generated), mean acceptance length =  4.00, acceptance rate per position = (1.000, 1.000, 1.000)
+0.28.614.179 I statistics        draft-mtp: #calls(b,g,a) =   24     66     66, #gen drafts =     66, #acc drafts =    66, #gen tokens =    198, #acc tokens =   192, #mean acc len = 3.91, #acc rate/pos = (1.000, 1.000, 0.909), dur(b,g,a) = 0.016, 190.737, 0.668 ms
+0.28.614.190 I slot      release: id  0 | task 130 | stop processing: n_tokens = 59, truncated = 0
+0.28.614.199 I srv  update_slots: all slots are idle
+0.28.616.279 I srv    operator(): Chat format: peg-gemma4
+0.28.616.405 I slot get_availabl: id  0 | task -1 | selected slot by LRU, t_last = 877930832817
+0.28.616.440 I slot launch_slot_: id  0 | task 138 | processing task, is_child = 0
+0.28.616.446 W slot   operator(): id  0 | task 138 | forcing full prompt re-processing due to lack of cache data (likely due to SWA or hybrid/recurrent memory, see https://github.com/ggml-org/llama.cpp/pull/13194#issuecomment-2868343055)
+0.28.823.880 I slot print_timing: id  0 | task 138 | prompt eval time =     137.84 ms /    40 tokens (    3.45 ms per token,   290.19 tokens per second)
+0.28.823.884 I slot print_timing: id  0 | task 138 |        eval time =      69.57 ms /    11 tokens (    6.32 ms per token,   158.11 tokens per second)
+0.28.823.885 I slot print_timing: id  0 | task 138 |       total time =     207.41 ms /    51 tokens
+0.28.823.885 I slot print_timing: id  0 | task 138 |    graphs reused =         45
+0.28.823.888 I slot print_timing: id  0 | task 138 | draft acceptance = 0.88889 (    8 accepted /     9 generated), mean acceptance length =  3.67, acceptance rate per position = (1.000, 1.000, 0.667)
+0.28.823.900 I statistics        draft-mtp: #calls(b,g,a) =   25     69     69, #gen drafts =     69, #acc drafts =    69, #gen tokens =    207, #acc tokens =   200, #mean acc len = 3.90, #acc rate/pos = (1.000, 1.000, 0.899), dur(b,g,a) = 0.017, 199.415, 0.701 ms
+0.28.823.917 I slot      release: id  0 | task 138 | stop processing: n_tokens = 51, truncated = 0
+0.28.823.930 I srv  update_slots: all slots are idle
+0.28.826.052 I srv    operator(): Chat format: peg-gemma4
+0.28.826.217 I slot get_availabl: id  0 | task -1 | selected slot by LCP similarity, sim_best = 0.108 (> 0.100 thold), f_keep = 0.078
+0.28.826.288 I slot launch_slot_: id  0 | task 144 | processing task, is_child = 0
+0.28.826.298 W slot   operator(): id  0 | task 144 | forcing full prompt re-processing due to lack of cache data (likely due to SWA or hybrid/recurrent memory, see https://github.com/ggml-org/llama.cpp/pull/13194#issuecomment-2868343055)
+0.29.004.482 I slot print_timing: id  0 | task 144 | prompt eval time =     131.66 ms /    37 tokens (    3.56 ms per token,   281.04 tokens per second)
+0.29.004.486 I slot print_timing: id  0 | task 144 |        eval time =      46.51 ms /     8 tokens (    5.81 ms per token,   172.00 tokens per second)
+0.29.004.487 I slot print_timing: id  0 | task 144 |       total time =     178.17 ms /    45 tokens
+0.29.004.487 I slot print_timing: id  0 | task 144 |    graphs reused =         46
+0.29.004.490 I slot print_timing: id  0 | task 144 | draft acceptance = 1.00000 (    6 accepted /     6 generated), mean acceptance length =  4.00, acceptance rate per position = (1.000, 1.000, 1.000)
+0.29.004.500 I statistics        draft-mtp: #calls(b,g,a) =   26     71     71, #gen drafts =     71, #acc drafts =    71, #gen tokens =    213, #acc tokens =   206, #mean acc len = 3.90, #acc rate/pos = (1.000, 1.000, 0.901), dur(b,g,a) = 0.018, 205.206, 0.721 ms
+0.29.004.513 I slot      release: id  0 | task 144 | stop processing: n_tokens = 45, truncated = 0
+0.29.004.523 I srv  update_slots: all slots are idle
+0.29.006.490 I srv    operator(): Chat format: peg-gemma4
+0.29.006.609 I slot get_availabl: id  0 | task -1 | selected slot by LCP similarity, sim_best = 0.103 (> 0.100 thold), f_keep = 0.089
+0.29.006.661 I slot launch_slot_: id  0 | task 149 | processing task, is_child = 0
+0.29.006.667 W slot   operator(): id  0 | task 149 | forcing full prompt re-processing due to lack of cache data (likely due to SWA or hybrid/recurrent memory, see https://github.com/ggml-org/llama.cpp/pull/13194#issuecomment-2868343055)
+0.29.164.684 I slot print_timing: id  0 | task 149 | prompt eval time =     134.74 ms /    39 tokens (    3.45 ms per token,   289.44 tokens per second)
+0.29.164.688 I slot print_timing: id  0 | task 149 |        eval time =      23.26 ms /     3 tokens (    7.75 ms per token,   128.99 tokens per second)
+0.29.164.688 I slot print_timing: id  0 | task 149 |       total time =     158.00 ms /    42 tokens
+0.29.164.689 I slot print_timing: id  0 | task 149 |    graphs reused =         46
+0.29.164.691 I slot print_timing: id  0 | task 149 | draft acceptance = 1.00000 (    3 accepted /     3 generated), mean acceptance length =  4.00, acceptance rate per position = (1.000, 1.000, 1.000)
+0.29.164.700 I statistics        draft-mtp: #calls(b,g,a) =   27     72     72, #gen drafts =     72, #acc drafts =    72, #gen tokens =    216, #acc tokens =   209, #mean acc len = 3.90, #acc rate/pos = (1.000, 1.000, 0.903), dur(b,g,a) = 0.019, 208.115, 0.731 ms
+0.29.164.715 I slot      release: id  0 | task 149 | stop processing: n_tokens = 43, truncated = 0
+0.29.164.724 I srv  update_slots: all slots are idle
+0.29.166.559 I srv    operator(): Chat format: peg-gemma4
+0.29.166.680 I slot get_availabl: id  0 | task -1 | selected slot by LCP similarity, sim_best = 0.103 (> 0.100 thold), f_keep = 0.093
+0.29.166.732 I slot launch_slot_: id  0 | task 153 | processing task, is_child = 0
+0.29.166.737 W slot   operator(): id  0 | task 153 | forcing full prompt re-processing due to lack of cache data (likely due to SWA or hybrid/recurrent memory, see https://github.com/ggml-org/llama.cpp/pull/13194#issuecomment-2868343055)
+0.29.416.584 I slot print_timing: id  0 | task 153 | prompt eval time =     135.63 ms /    39 tokens (    3.48 ms per token,   287.55 tokens per second)
+0.29.416.587 I slot print_timing: id  0 | task 153 |        eval time =     114.20 ms /    20 tokens (    5.71 ms per token,   175.13 tokens per second)
+0.29.416.588 I slot print_timing: id  0 | task 153 |       total time =     249.83 ms /    59 tokens
+0.29.416.588 I slot print_timing: id  0 | task 153 |    graphs reused =         50
+0.29.416.590 I slot print_timing: id  0 | task 153 | draft acceptance = 1.00000 (   15 accepted /    15 generated), mean acceptance length =  4.00, acceptance rate per position = (1.000, 1.000, 1.000)
+0.29.416.599 I statistics        draft-mtp: #calls(b,g,a) =   28     77     77, #gen drafts =     77, #acc drafts =    77, #gen tokens =    231, #acc tokens =   224, #mean acc len = 3.91, #acc rate/pos = (1.000, 1.000, 0.909), dur(b,g,a) = 0.020, 222.568, 0.786 ms
+0.29.416.613 I slot      release: id  0 | task 153 | stop processing: n_tokens = 59, truncated = 0
+0.29.416.621 I srv  update_slots: all slots are idle
+0.29.418.580 I srv    operator(): Chat format: peg-gemma4
+0.29.418.697 I slot get_availabl: id  0 | task -1 | selected slot by LRU, t_last = 877931635239
+0.29.418.745 I slot launch_slot_: id  0 | task 161 | processing task, is_child = 0
+0.29.418.751 W slot   operator(): id  0 | task 161 | forcing full prompt re-processing due to lack of cache data (likely due to SWA or hybrid/recurrent memory, see https://github.com/ggml-org/llama.cpp/pull/13194#issuecomment-2868343055)
+0.29.626.120 I slot print_timing: id  0 | task 161 | prompt eval time =     137.81 ms /    40 tokens (    3.45 ms per token,   290.25 tokens per second)
+0.29.626.124 I slot print_timing: id  0 | task 161 |        eval time =      69.54 ms /    11 tokens (    6.32 ms per token,   158.19 tokens per second)
+0.29.626.124 I slot print_timing: id  0 | task 161 |       total time =     207.35 ms /    51 tokens
+0.29.626.125 I slot print_timing: id  0 | task 161 |    graphs reused =         52
+0.29.626.127 I slot print_timing: id  0 | task 161 | draft acceptance = 0.88889 (    8 accepted /     9 generated), mean acceptance length =  3.67, acceptance rate per position = (1.000, 1.000, 0.667)
+0.29.626.136 I statistics        draft-mtp: #calls(b,g,a) =   29     80     80, #gen drafts =     80, #acc drafts =    80, #gen tokens =    240, #acc tokens =   232, #mean acc len = 3.90, #acc rate/pos = (1.000, 1.000, 0.900), dur(b,g,a) = 0.020, 231.231, 0.817 ms
+0.29.626.150 I slot      release: id  0 | task 161 | stop processing: n_tokens = 51, truncated = 0
+0.29.626.159 I srv  update_slots: all slots are idle
+0.29.628.248 I srv    operator(): Chat format: peg-gemma4
+0.29.628.378 I slot get_availabl: id  0 | task -1 | selected slot by LCP similarity, sim_best = 0.108 (> 0.100 thold), f_keep = 0.078
+0.29.628.427 I slot launch_slot_: id  0 | task 167 | processing task, is_child = 0
+0.29.628.433 W slot   operator(): id  0 | task 167 | forcing full prompt re-processing due to lack of cache data (likely due to SWA or hybrid/recurrent memory, see https://github.com/ggml-org/llama.cpp/pull/13194#issuecomment-2868343055)
+0.29.806.202 I slot print_timing: id  0 | task 167 | prompt eval time =     131.27 ms /    37 tokens (    3.55 ms per token,   281.87 tokens per second)
+0.29.806.205 I slot print_timing: id  0 | task 167 |        eval time =      46.49 ms /     8 tokens (    5.81 ms per token,   172.09 tokens per second)
+0.29.806.205 I slot print_timing: id  0 | task 167 |       total time =     177.75 ms /    45 tokens
+0.29.806.206 I slot print_timing: id  0 | task 167 |    graphs reused =         53
+0.29.806.208 I slot print_timing: id  0 | task 167 | draft acceptance = 1.00000 (    6 accepted /     6 generated), mean acceptance length =  4.00, acceptance rate per position = (1.000, 1.000, 1.000)
+0.29.806.216 I statistics        draft-mtp: #calls(b,g,a) =   30     82     82, #gen drafts =     82, #acc drafts =    82, #gen tokens =    246, #acc tokens =   238, #mean acc len = 3.90, #acc rate/pos = (1.000, 1.000, 0.902), dur(b,g,a) = 0.020, 236.998, 0.836 ms
+0.29.806.228 I slot      release: id  0 | task 167 | stop processing: n_tokens = 45, truncated = 0
+0.29.806.237 I srv  update_slots: all slots are idle
+0.29.808.309 I srv    operator(): Chat format: peg-gemma4
+0.29.808.458 I slot get_availabl: id  0 | task -1 | selected slot by LCP similarity, sim_best = 0.103 (> 0.100 thold), f_keep = 0.089
+0.29.808.503 I slot launch_slot_: id  0 | task 172 | processing task, is_child = 0
+0.29.808.509 W slot   operator(): id  0 | task 172 | forcing full prompt re-processing due to lack of cache data (likely due to SWA or hybrid/recurrent memory, see https://github.com/ggml-org/llama.cpp/pull/13194#issuecomment-2868343055)
+0.29.966.518 I slot print_timing: id  0 | task 172 | prompt eval time =     134.80 ms /    39 tokens (    3.46 ms per token,   289.31 tokens per second)
+0.29.966.521 I slot print_timing: id  0 | task 172 |        eval time =      23.19 ms /     3 tokens (    7.73 ms per token,   129.38 tokens per second)
+0.29.966.522 I slot print_timing: id  0 | task 172 |       total time =     157.99 ms /    42 tokens
+0.29.966.522 I slot print_timing: id  0 | task 172 |    graphs reused =         53
+0.29.966.524 I slot print_timing: id  0 | task 172 | draft acceptance = 1.00000 (    3 accepted /     3 generated), mean acceptance length =  4.00, acceptance rate per position = (1.000, 1.000, 1.000)
+0.29.966.531 I statistics        draft-mtp: #calls(b,g,a) =   31     83     83, #gen drafts =     83, #acc drafts =    83, #gen tokens =    249, #acc tokens =   241, #mean acc len = 3.90, #acc rate/pos = (1.000, 1.000, 0.904), dur(b,g,a) = 0.021, 239.886, 0.846 ms
+0.29.966.543 I slot      release: id  0 | task 172 | stop processing: n_tokens = 43, truncated = 0
+0.29.966.551 I srv  update_slots: all slots are idle
+0.29.968.648 I srv    operator(): Chat format: peg-gemma4
+0.29.968.775 I slot get_availabl: id  0 | task -1 | selected slot by LCP similarity, sim_best = 0.103 (> 0.100 thold), f_keep = 0.093
+0.29.968.818 I slot launch_slot_: id  0 | task 176 | processing task, is_child = 0
+0.29.968.823 W slot   operator(): id  0 | task 176 | forcing full prompt re-processing due to lack of cache data (likely due to SWA or hybrid/recurrent memory, see https://github.com/ggml-org/llama.cpp/pull/13194#issuecomment-2868343055)
+0.30.218.653 I slot print_timing: id  0 | task 176 | prompt eval time =     135.62 ms /    39 tokens (    3.48 ms per token,   287.58 tokens per second)
+0.30.218.656 I slot print_timing: id  0 | task 176 |        eval time =     114.20 ms /    20 tokens (    5.71 ms per token,   175.13 tokens per second)
+0.30.218.657 I slot print_timing: id  0 | task 176 |       total time =     249.81 ms /    59 tokens
+0.30.218.657 I slot print_timing: id  0 | task 176 |    graphs reused =         57
+0.30.218.660 I slot print_timing: id  0 | task 176 | draft acceptance = 1.00000 (   15 accepted /    15 generated), mean acceptance length =  4.00, acceptance rate per position = (1.000, 1.000, 1.000)
+0.30.218.668 I statistics        draft-mtp: #calls(b,g,a) =   32     88     88, #gen drafts =     88, #acc drafts =    88, #gen tokens =    264, #acc tokens =   256, #mean acc len = 3.91, #acc rate/pos = (1.000, 1.000, 0.909), dur(b,g,a) = 0.021, 254.337, 0.896 ms
+0.30.218.681 I slot      release: id  0 | task 176 | stop processing: n_tokens = 59, truncated = 0
+0.30.218.690 I srv  update_slots: all slots are idle
+0.30.343.108 I srv    operator(): Chat format: peg-gemma4
+0.30.343.334 I slot get_availabl: id  0 | task -1 | selected slot by LRU, t_last = 877932437307
+0.30.343.403 I slot launch_slot_: id  0 | task 184 | processing task, is_child = 0
+0.30.343.414 W slot   operator(): id  0 | task 184 | forcing full prompt re-processing due to lack of cache data (likely due to SWA or hybrid/recurrent memory, see https://github.com/ggml-org/llama.cpp/pull/13194#issuecomment-2868343055)
+0.34.608.028 I slot print_timing: id  0 | task 184 | prompt processing, n_tokens =   6145, progress = 0.38, t =   4.26 s / 1440.93 tokens per second
+0.36.263.382 I slot print_timing: id  0 | task 184 | prompt processing, n_tokens =   8193, progress = 0.51, t =   5.92 s / 1383.96 tokens per second
+0.38.021.720 I slot print_timing: id  0 | task 184 | prompt processing, n_tokens =  10241, progress = 0.63, t =   7.68 s / 1333.76 tokens per second
+0.39.690.542 I slot print_timing: id  0 | task 184 | prompt processing, n_tokens =  12289, progress = 0.76, t =   9.35 s / 1314.74 tokens per second
+0.41.678.120 I slot print_timing: id  0 | task 184 | prompt processing, n_tokens =  14337, progress = 0.88, t =  11.33 s / 1264.88 tokens per second
+0.44.377.997 I slot print_timing: id  0 | task 184 | prompt eval time =   13420.22 ms / 16213 tokens (    0.83 ms per token,  1208.10 tokens per second)
+0.44.378.000 I slot print_timing: id  0 | task 184 |        eval time =     614.35 ms /    78 tokens (    7.88 ms per token,   126.96 tokens per second)
+0.44.378.001 I slot print_timing: id  0 | task 184 |       total time =   14034.57 ms / 16291 tokens
+0.44.378.001 I slot print_timing: id  0 | task 184 |    graphs reused =         76
+0.44.378.003 I slot print_timing: id  0 | task 184 | draft acceptance = 0.98333 (   59 accepted /    60 generated), mean acceptance length =  3.95, acceptance rate per position = (1.000, 1.000, 0.950)
+0.44.378.011 I statistics        draft-mtp: #calls(b,g,a) =   33    108    108, #gen drafts =    108, #acc drafts =   108, #gen tokens =    324, #acc tokens =   315, #mean acc len = 3.92, #acc rate/pos = (1.000, 1.000, 0.917), dur(b,g,a) = 0.024, 360.296, 1.097 ms
+0.44.378.401 I slot      release: id  0 | task 184 | stop processing: n_tokens = 16292, truncated = 0
+0.44.378.412 I srv  update_slots: all slots are idle
+0.44.446.596 I srv    operator(): Chat format: peg-gemma4
+0.44.446.838 I slot get_availabl: id  0 | task -1 | selected slot by LRU, t_last = 877946597028
+0.44.446.911 I slot launch_slot_: id  0 | task 214 | processing task, is_child = 0
+0.44.446.917 W slot   operator(): id  0 | task 214 | forcing full prompt re-processing due to lack of cache data (likely due to SWA or hybrid/recurrent memory, see https://github.com/ggml-org/llama.cpp/pull/13194#issuecomment-2868343055)
+0.48.353.074 I slot print_timing: id  0 | task 214 | prompt processing, n_tokens =   6145, progress = 0.27, t =   3.91 s / 1573.16 tokens per second
+0.50.016.583 I slot print_timing: id  0 | task 214 | prompt processing, n_tokens =   8193, progress = 0.36, t =   5.57 s / 1471.01 tokens per second
+0.51.786.454 I slot print_timing: id  0 | task 214 | prompt processing, n_tokens =  10241, progress = 0.45, t =   7.34 s / 1395.32 tokens per second
+0.53.476.719 I slot print_timing: id  0 | task 214 | prompt processing, n_tokens =  12289, progress = 0.54, t =   9.03 s / 1360.94 tokens per second
+0.55.481.155 I slot print_timing: id  0 | task 214 | prompt processing, n_tokens =  14337, progress = 0.63, t =  11.03 s / 1299.32 tokens per second
+0.57.593.118 I slot print_timing: id  0 | task 214 | prompt processing, n_tokens =  16385, progress = 0.72, t =  13.15 s / 1246.37 tokens per second
+0.59.625.956 I slot print_timing: id  0 | task 214 | prompt processing, n_tokens =  18433, progress = 0.81, t =  15.18 s / 1214.37 tokens per second
+1.01.982.848 I slot print_timing: id  0 | task 214 | prompt processing, n_tokens =  20481, progress = 0.90, t =  17.54 s / 1167.95 tokens per second
+1.04.452.003 I slot print_timing: id  0 | task 214 | prompt processing, n_tokens =  22529, progress = 0.99, t =  20.01 s / 1126.16 tokens per second
+1.05.577.891 I slot print_timing: id  0 | task 214 | prompt eval time =   20477.07 ms / 22730 tokens (    0.90 ms per token,  1110.02 tokens per second)
+1.05.577.894 I slot print_timing: id  0 | task 214 |        eval time =     653.88 ms /    78 tokens (    8.38 ms per token,   119.29 tokens per second)
+1.05.577.894 I slot print_timing: id  0 | task 214 |       total time =   21130.95 ms / 22808 tokens
+1.05.577.895 I slot print_timing: id  0 | task 214 |    graphs reused =         94
+1.05.577.897 I slot print_timing: id  0 | task 214 | draft acceptance = 0.98333 (   59 accepted /    60 generated), mean acceptance length =  3.95, acceptance rate per position = (1.000, 1.000, 0.950)
+1.05.577.908 I statistics        draft-mtp: #calls(b,g,a) =   34    128    128, #gen drafts =    128, #acc drafts =   128, #gen tokens =    384, #acc tokens =   374, #mean acc len = 3.92, #acc rate/pos = (1.000, 1.000, 0.922), dur(b,g,a) = 0.026, 476.581, 1.301 ms
+1.05.578.434 I slot      release: id  0 | task 214 | stop processing: n_tokens = 22809, truncated = 0
+1.05.578.447 I srv  update_slots: all slots are idle
+1.05.670.313 I srv    operator(): Chat format: peg-gemma4
+1.05.670.617 I slot get_availabl: id  0 | task -1 | selected slot by LRU, t_last = 877967797062
+1.05.670.692 I slot launch_slot_: id  0 | task 248 | processing task, is_child = 0
+1.05.670.700 W slot   operator(): id  0 | task 248 | forcing full prompt re-processing due to lack of cache data (likely due to SWA or hybrid/recurrent memory, see https://github.com/ggml-org/llama.cpp/pull/13194#issuecomment-2868343055)
+1.09.579.792 I slot print_timing: id  0 | task 248 | prompt processing, n_tokens =   6145, progress = 0.20, t =   3.91 s / 1571.98 tokens per second
+1.11.241.207 I slot print_timing: id  0 | task 248 | prompt processing, n_tokens =   8193, progress = 0.27, t =   5.57 s / 1470.78 tokens per second
+1.13.012.140 I slot print_timing: id  0 | task 248 | prompt processing, n_tokens =  10241, progress = 0.34, t =   7.34 s / 1394.96 tokens per second
+1.14.700.385 I slot print_timing: id  0 | task 248 | prompt processing, n_tokens =  12289, progress = 0.40, t =   9.03 s / 1360.96 tokens per second
+1.16.705.715 I slot print_timing: id  0 | task 248 | prompt processing, n_tokens =  14337, progress = 0.47, t =  11.04 s / 1299.23 tokens per second
+1.18.840.679 I slot print_timing: id  0 | task 248 | prompt processing, n_tokens =  16385, progress = 0.54, t =  13.17 s / 1244.12 tokens per second
+1.20.870.101 I slot print_timing: id  0 | task 248 | prompt processing, n_tokens =  18433, progress = 0.61, t =  15.20 s / 1212.75 tokens per second
+1.23.217.150 I slot print_timing: id  0 | task 248 | prompt processing, n_tokens =  20481, progress = 0.67, t =  17.55 s / 1167.24 tokens per second
+1.25.671.927 I slot print_timing: id  0 | task 248 | prompt processing, n_tokens =  22529, progress = 0.74, t =  20.00 s / 1126.38 tokens per second
+1.28.046.886 I slot print_timing: id  0 | task 248 | prompt processing, n_tokens =  24577, progress = 0.81, t =  22.38 s / 1098.36 tokens per second
+1.30.744.031 I slot print_timing: id  0 | task 248 | prompt processing, n_tokens =  26625, progress = 0.88, t =  25.07 s / 1061.89 tokens per second
+1.33.548.107 I slot print_timing: id  0 | task 248 | prompt processing, n_tokens =  28673, progress = 0.94, t =  27.88 s / 1028.54 tokens per second
+1.36.747.672 I slot print_timing: id  0 | task 248 | prompt eval time =   30382.91 ms / 30400 tokens (    1.00 ms per token,  1000.56 tokens per second)
+1.36.747.675 I slot print_timing: id  0 | task 248 |        eval time =     694.04 ms /    78 tokens (    8.90 ms per token,   112.38 tokens per second)
+1.36.747.676 I slot print_timing: id  0 | task 248 |       total time =   31076.95 ms / 30478 tokens
+1.36.747.676 I slot print_timing: id  0 | task 248 |    graphs reused =        112
+1.36.747.679 I slot print_timing: id  0 | task 248 | draft acceptance = 0.98333 (   59 accepted /    60 generated), mean acceptance length =  3.95, acceptance rate per position = (1.000, 1.000, 0.950)
+1.36.747.687 I statistics        draft-mtp: #calls(b,g,a) =   35    148    148, #gen drafts =    148, #acc drafts =   148, #gen tokens =    444, #acc tokens =   433, #mean acc len = 3.93, #acc rate/pos = (1.000, 1.000, 0.926), dur(b,g,a) = 0.029, 601.932, 1.499 ms
+1.36.748.368 I slot      release: id  0 | task 248 | stop processing: n_tokens = 30479, truncated = 0
+1.36.748.388 I srv  update_slots: all slots are idle
+1.36.787.421 I srv    operator(): operator(): cleaning up before exit...

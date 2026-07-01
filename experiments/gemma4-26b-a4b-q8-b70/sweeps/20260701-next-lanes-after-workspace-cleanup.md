@@ -57,6 +57,16 @@ Correctness risk: the mask may encode more than future-token causal masking
 (sequence boundaries, cache holes, non-contiguous cells, unusual positions).
 This is why the gate must stay conservative and default-off.
 
+## Closed follow-up: global causal fast-mask
+
+The global-attention causal fast-mask patch was built and tested after the
+workspace cleanup. It passed canaries and exact long-context gates, but a
+GPU-swapped crossover showed no real prefill improvement: control averaged
+`1096.304` median prefill tok/s and fast-mask averaged `1096.821` (`+0.047%`,
+noise), with AB signs flipping by GPU assignment. Do not promote or keep active.
+Evidence:
+`experiments/gemma4-26b-a4b-q8-b70/sweeps/20260701-global-fattn-causal-fastmask-negative.md`.
+
 ## Verifier / LM-head lane status
 
 The candidate-bound exact LM-head verifier is not currently a good record-lane

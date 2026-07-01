@@ -179,6 +179,8 @@ LLAMA_SPEC_ADAPTIVE_MTP_ALPHA="${LLAMA_SPEC_ADAPTIVE_MTP_ALPHA:-}" \
 LLAMA_EXPERIMENTAL_SWA_FATTN_LEFT_BOUND="${LLAMA_EXPERIMENTAL_SWA_FATTN_LEFT_BOUND:-}" \
 LLAMA_EXPERIMENTAL_SWA_FATTN_LEFT_BOUND_MIN_Q="${LLAMA_EXPERIMENTAL_SWA_FATTN_LEFT_BOUND_MIN_Q:-}" \
 LLAMA_EXPERIMENTAL_SWA_FATTN_LEFT_BOUND_FAST="${LLAMA_EXPERIMENTAL_SWA_FATTN_LEFT_BOUND_FAST:-}" \
+LLAMA_EXPERIMENTAL_GLOBAL_FATTN_CAUSAL_FAST_MASK="${LLAMA_EXPERIMENTAL_GLOBAL_FATTN_CAUSAL_FAST_MASK:-}" \
+LLAMA_EXPERIMENTAL_GLOBAL_FATTN_CAUSAL_FAST_MASK_MIN_Q="${LLAMA_EXPERIMENTAL_GLOBAL_FATTN_CAUSAL_FAST_MASK_MIN_Q:-}" \
 LOG="$SERVER_LOG" \
 scripts/run-gemma4-26b-llamacpp-replica.sh > "$RUN_DIR/server.stdout.log" 2>&1 &
 server_pid="$!"
@@ -455,6 +457,8 @@ out = {
         "llama_experimental_swa_fattn_left_bound": env_or_log("LLAMA_EXPERIMENTAL_SWA_FATTN_LEFT_BOUND"),
         "llama_experimental_swa_fattn_left_bound_min_q": env_or_log("LLAMA_EXPERIMENTAL_SWA_FATTN_LEFT_BOUND_MIN_Q"),
         "llama_experimental_swa_fattn_left_bound_fast": env_or_log("LLAMA_EXPERIMENTAL_SWA_FATTN_LEFT_BOUND_FAST"),
+        "llama_experimental_global_fattn_causal_fast_mask": env_or_log("LLAMA_EXPERIMENTAL_GLOBAL_FATTN_CAUSAL_FAST_MASK"),
+        "llama_experimental_global_fattn_causal_fast_mask_min_q": env_or_log("LLAMA_EXPERIMENTAL_GLOBAL_FATTN_CAUSAL_FAST_MASK_MIN_Q"),
         "oneapi_device_selector": env_or_log("ONEAPI_DEVICE_SELECTOR"),
         "ur_l0_use_immediate_commandlists": env_or_log("UR_L0_USE_IMMEDIATE_COMMANDLISTS"),
         "ur_l0_enable_relaxed_allocation_limits": env_or_log("UR_L0_ENABLE_RELAXED_ALLOCATION_LIMITS"),
