@@ -17,6 +17,12 @@ data/**/checkpoints/
 data/**/checkpoint*/
 .pause-*
 
+# Historical raw benchmark result backlogs are local audit artifacts by default.
+# Promote compact summaries/ledgers explicitly with `git add -f <path>` when a
+# run is intentionally part of a reproducibility packet.
+data/qwen36-*
+data/xpu-recovery-*/
+
 # Model/checkpoint/tensor artifacts are local-only unless explicitly published
 # through a large-artifact channel. Commit summaries, manifests, patches, and
 # reproduction scripts instead.

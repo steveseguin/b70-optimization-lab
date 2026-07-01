@@ -17,29 +17,43 @@ reported pushed to `origin/main`.
 
 ## Inventory Snapshot
 
-Measured after adding ignore rules for raw benchmark traces/logs/checkpoints.
-No files were moved or deleted.
+Measured again on 2026-07-01 after adding ignore rules for historical raw
+`data/qwen36-*` and `data/xpu-recovery-*` backlogs. No files were moved or
+deleted. The old artifacts remain on disk for audit, but they no longer swamp
+`git status` in the active workspace.
 
 ```text
 /home/steve/llm-optimizations
-  tracked dirty entries before this note commit: docs/.gitignore only
-  visible untracked status entries: 2035
-  visible untracked payload walked from those entries: ~0.041 GiB
-  root split: data/: 2035
+  tracked dirty entries before this update: .gitignore only
+  visible untracked status entries after ignore cleanup: 41
+  visible untracked payload walked from those entries: ~1.31 MiB
+  visible untracked class: recent Gemma compact evidence only
+  large/model artifacts visible to Git: 0
 
-  previous pre-ignore raw artifact payload: ~2.663 GiB
-  heavyweight class now ignored by default: .safetensors checkpoints, .jsonl
-  traces, raw .log files, data/**/checkpoints, .pause-* files
+  previous visible untracked count before this cleanup: 2094
+  previous split: data/gemma4* = 41, data/qwen36* = 2026, data/xpu-* = 27
 
 /home/steve/qwen36-results-main
   tracked dirty entries: 0
-  visible untracked status entries: 950
-  visible untracked payload: ~0.307 GiB
-  root split: data/: 950
+  detached at: 4b33bb2fda02d2f85c7101f5c5b34f4286d0e0db
+  visible untracked status entries: 2920
+  visible untracked payload: ~114.76 MiB
+  role: audit/back-reference only; do not run new work here
+
+/home/steve/push-worktrees/b70-optimization-lab-pushable
+  tracked dirty entries: 0
+  visible untracked status entries: 0
+  detached at: 0cb52e6999fadaf819440ad8b288b52ec0290cef
+  role: legacy/unknown; audit before reuse
 ```
 
-Largest active-repo heavyweight artifacts before ignore were ten Qwen EAGLE
-training checkpoints under
+The 41 active-workspace Gemma files are compact run evidence for the same-day
+record reproduction / long-context phase ladder / ncols8 control lanes. They
+should be committed explicitly with their corresponding ledgers, not hidden by
+broad ignore rules.
+
+Largest historical heavyweight artifacts before earlier ignore cleanup were ten
+Qwen EAGLE training checkpoints under
 `data/qwen36-eagle3-rollout5-residualextra-oldonly-ckpt-trained-20260618s/checkpoints/`
 (~214 MiB each). These are local audit artifacts, not Git payloads.
 
