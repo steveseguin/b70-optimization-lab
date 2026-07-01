@@ -1,0 +1,35 @@
+diff --git a/scripts/run-gemma4-26b-first-baseline.sh b/scripts/run-gemma4-26b-first-baseline.sh
+index 746e7fb0..438e0b19 100755
+--- a/scripts/run-gemma4-26b-first-baseline.sh
++++ b/scripts/run-gemma4-26b-first-baseline.sh
+@@ -175,6 +175,8 @@ LLAMA_SPEC_ADAPTIVE_MTP_LOW_N_MAX="${LLAMA_SPEC_ADAPTIVE_MTP_LOW_N_MAX:-}" \
+ LLAMA_SPEC_ADAPTIVE_MTP_LOW="${LLAMA_SPEC_ADAPTIVE_MTP_LOW:-}" \
+ LLAMA_SPEC_ADAPTIVE_MTP_HIGH="${LLAMA_SPEC_ADAPTIVE_MTP_HIGH:-}" \
+ LLAMA_SPEC_ADAPTIVE_MTP_ALPHA="${LLAMA_SPEC_ADAPTIVE_MTP_ALPHA:-}" \
++LLAMA_EXPERIMENTAL_SWA_FATTN_LEFT_BOUND="${LLAMA_EXPERIMENTAL_SWA_FATTN_LEFT_BOUND:-}" \
++LLAMA_EXPERIMENTAL_SWA_FATTN_LEFT_BOUND_MIN_Q="${LLAMA_EXPERIMENTAL_SWA_FATTN_LEFT_BOUND_MIN_Q:-}" \
+ LOG="$SERVER_LOG" \
+ scripts/run-gemma4-26b-llamacpp-replica.sh > "$RUN_DIR/server.stdout.log" 2>&1 &
+ server_pid="$!"
+@@ -445,6 +447,8 @@ out = {
+         "llama_spec_adaptive_mtp_low": env_or_log("LLAMA_SPEC_ADAPTIVE_MTP_LOW"),
+         "llama_spec_adaptive_mtp_high": env_or_log("LLAMA_SPEC_ADAPTIVE_MTP_HIGH"),
+         "llama_spec_adaptive_mtp_alpha": env_or_log("LLAMA_SPEC_ADAPTIVE_MTP_ALPHA"),
++        "llama_experimental_swa_fattn_left_bound": env_or_log("LLAMA_EXPERIMENTAL_SWA_FATTN_LEFT_BOUND"),
++        "llama_experimental_swa_fattn_left_bound_min_q": env_or_log("LLAMA_EXPERIMENTAL_SWA_FATTN_LEFT_BOUND_MIN_Q"),
+         "oneapi_device_selector": env_or_log("ONEAPI_DEVICE_SELECTOR"),
+         "ur_l0_use_immediate_commandlists": env_or_log("UR_L0_USE_IMMEDIATE_COMMANDLISTS"),
+         "ur_l0_enable_relaxed_allocation_limits": env_or_log("UR_L0_ENABLE_RELAXED_ALLOCATION_LIMITS"),
+diff --git a/scripts/run-gemma4-26b-llamacpp-replica.sh b/scripts/run-gemma4-26b-llamacpp-replica.sh
+index 0a966ae2..0ae70f45 100755
+--- a/scripts/run-gemma4-26b-llamacpp-replica.sh
++++ b/scripts/run-gemma4-26b-llamacpp-replica.sh
+@@ -187,6 +187,8 @@ mkdir -p "$OUT_DIR"
+   echo "LLAMA_SPEC_ADAPTIVE_MTP_LOW=${LLAMA_SPEC_ADAPTIVE_MTP_LOW:-<unset>}"
+   echo "LLAMA_SPEC_ADAPTIVE_MTP_HIGH=${LLAMA_SPEC_ADAPTIVE_MTP_HIGH:-<unset>}"
+   echo "LLAMA_SPEC_ADAPTIVE_MTP_ALPHA=${LLAMA_SPEC_ADAPTIVE_MTP_ALPHA:-<unset>}"
++  echo "LLAMA_EXPERIMENTAL_SWA_FATTN_LEFT_BOUND=${LLAMA_EXPERIMENTAL_SWA_FATTN_LEFT_BOUND:-<unset>}"
++  echo "LLAMA_EXPERIMENTAL_SWA_FATTN_LEFT_BOUND_MIN_Q=${LLAMA_EXPERIMENTAL_SWA_FATTN_LEFT_BOUND_MIN_Q:-<unset>}"
+   echo "ONEAPI_DEVICE_SELECTOR=$ONEAPI_DEVICE_SELECTOR"
+   echo "UR_L0_USE_IMMEDIATE_COMMANDLISTS=${UR_L0_USE_IMMEDIATE_COMMANDLISTS:-<unset>}"
+   echo "UR_L0_ENABLE_RELAXED_ALLOCATION_LIMITS=${UR_L0_ENABLE_RELAXED_ALLOCATION_LIMITS:-<unset>}"

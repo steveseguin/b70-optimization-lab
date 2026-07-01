@@ -1,0 +1,75 @@
+{
+  "kind": "gemma4_geglu_down_matmul_epilogue_current_negative",
+  "date": "2026-07-01",
+  "status": "closed_negative",
+  "localmaxxing_submission": false,
+  "reason_not_submitted": "Semantically valid strict fresh-response runs, but the candidate was much slower than paired controls.",
+  "source_worktree": "/home/steve/src/llama.cpp-gemma-record-repro-c926",
+  "source_identity": "llama.cpp c926ad098 dirty Gemma/B70 optimization stack",
+  "runtime": "/home/steve/src/llama.cpp-gemma-record-repro-c926/build-sycl-b70-aot-bmg-g31-q8reorder-vdr2/bin/llama-server",
+  "target_model": "/mnt/fast-ai/llm-models/gemma4-26b-a4b-it-q8-gguf/gemma-4-26B-A4B-it-UD-Q8_K_XL.gguf",
+  "draft_model": "/mnt/fast-ai/llm-models/gemma4-26b-a4b-it-q8-gguf/MTP/gemma-4-26B-A4B-it-Q4_0-MTP.gguf",
+  "quality_and_validity": {
+    "fixed_realistic_suite": true,
+    "each_prompt_once_cold": true,
+    "cached_tokens_all_zero": true,
+    "canary_repeats": 32,
+    "max_tokens": 128,
+    "primary_metric": "median generated-token tok/s for tokens 1-100 after TTFT"
+  },
+  "control_env": {
+    "FLASH_ATTN": "on",
+    "CTX_SIZE": "32768",
+    "GGML_SYCL_ENABLE_VMM": "1",
+    "BATCH_SIZE": "1024",
+    "UBATCH_SIZE": "1024",
+    "REALISTIC_GATE": "1",
+    "REALISTIC_METRIC_TOKENS": "100"
+  },
+  "candidate_env": {
+    "LLAMA_GEMMA4_MOE_GEGLU_DOWN_MATMUL_EPILOGUE": "1"
+  },
+  "rows": [
+    {
+      "label": "gemma4-q8-gpu0-gegludownmat-control-strict128-20260701T061422Z",
+      "gpu": 0,
+      "candidate": false,
+      "median_1_100_tok_s": 119.05514562919211,
+      "p10_1_100_tok_s": 108.34566452639842,
+      "mean_1_100_tok_s": 119.64069818966999,
+      "full128_median_tok_s": 120.51443228522186,
+      "ttft_median_ms": 179.57178800133988
+    },
+    {
+      "label": "gemma4-q8-gpu2-gegludownmat-control-strict128-20260701T061422Z",
+      "gpu": 2,
+      "candidate": false,
+      "median_1_100_tok_s": 116.97487828110022,
+      "p10_1_100_tok_s": 105.90600389251878,
+      "mean_1_100_tok_s": 116.5344675542113,
+      "full128_median_tok_s": 113.9073890041566,
+      "ttft_median_ms": 179.1530919726938
+    },
+    {
+      "label": "gemma4-q8-gpu1-gegludownmat-on-strict128-20260701T061422Z",
+      "gpu": 1,
+      "candidate": true,
+      "median_1_100_tok_s": 78.88908260591842,
+      "p10_1_100_tok_s": 69.96527099701746,
+      "mean_1_100_tok_s": 78.95909931116093,
+      "full128_median_tok_s": 77.62427191559408,
+      "ttft_median_ms": 194.15506394580007
+    },
+    {
+      "label": "gemma4-q8-gpu3-gegludownmat-on-strict128-20260701T061422Z",
+      "gpu": 3,
+      "candidate": true,
+      "median_1_100_tok_s": 76.56989021267371,
+      "p10_1_100_tok_s": 68.24174503126903,
+      "mean_1_100_tok_s": 76.66715824269423,
+      "full128_median_tok_s": 74.88630808257571,
+      "ttft_median_ms": 194.0963984816335
+    }
+  ],
+  "decision": "Do not promote, submit, or run full512 for this flag. It is roughly 38-42 tok/s slower than paired controls on the primary median metric."
+}
