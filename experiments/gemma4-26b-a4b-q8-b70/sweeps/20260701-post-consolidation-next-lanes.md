@@ -129,3 +129,20 @@ The balanced service recipe remains `2048/1024` with
 `MIN_Q=2048`. Next prompt-processing work should profile that balanced recipe
 before another source patch.
 
+## Update: Balanced service profile points at global attention
+
+The balanced service profile was run as
+`20260701Tprofile-swalb-service-canon1` and recorded in
+`20260701-swalb-service-profile.md`.
+
+With profiling enabled, the long-context gate still passed with
+`cached_tokens=0`, but the rates are diagnostic only. The profile shows TTFT is
+now dominated by global `FLASH_ATTN_EXT` layers (`__fattn__-5/-11/-17/-23/-29`,
+about `40 ms/call` each). Sampler/MTP overhead is negligible, and the easy SWA
+left-bound/phase-prefill knobs are no longer the main prompt-processing cost.
+
+Prompt-processing follow-up should target global-attention tile/scheduling
+behavior only if it can be validated with same-window long-context A/B plus a
+short-decode guard. Headline short-context work should return to exact verifier
+economics.
+
