@@ -207,6 +207,21 @@ controls (`119.184`) and below the `123.67689864739785` headline. Decision:
 closed negative; do not full512-confirm this exact combination. See
 `../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260701-finalpost-attnper-normcombo-negative.md`.
 
+2026-07-01 accept-prefix argmax verifier prototype: implemented default-off
+`LLAMA_SPEC_VERIFY_ACCEPT_PREFIX_ARGMAX=1` in the dirty llama.cpp Gemma stack,
+including GGML/SYCL plumbing for a reordered-Q8 LM-head op that stops computing
+later verifier rows after the first rejected draft token. The path was
+semantically valid: parity and non-parity strict128 runs both passed the fixed
+cold gate, had `cached_tokens=0`, and passed canaries. Performance was negative:
+the flag-on strict128 run measured `104.27951393842321 tok/s` versus
+`111.26833798937403 tok/s` for the same-build control, and far below the
+`123.67689864739785 tok/s` record. Decision: closed negative; preserve the
+patch, but do not full512-confirm, submit, or reuse this serial per-row design.
+Any future accept-prefix verifier work needs a single-kernel/global-row
+scheduler or a larger graph change that removes verifier LM-head rows without
+sacrificing the existing multi-row Q8 reorder efficiency. See
+`../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260701-acceptprefix-argmax-negative.md`.
+
 2026-06-29 verifier LM-head candidate-threshold audit: shifted
 `t_inp_tokens[r + 1]` does provide the draft candidate ID for narrow standard
 MTP verifier rows, but this is not a good next record implementation. Exact
