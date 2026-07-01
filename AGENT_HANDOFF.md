@@ -88,6 +88,16 @@ Primary target:
   mismatches still require the true target top token. Use this only to guide a
   deeper exact accept-prefix / verifier graph design. Evidence:
   `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260701-candidate-proof-profile.md`.
+- Latest sampled-ID egress follow-up:
+  `LLAMA_SPEC_VERIFY_DIRECT_SAMPLED_EGRESS=1` is a closed negative /
+  incomplete implementation. The first parity smoke passed only because the
+  parity check ignored `LLAMA_TOKEN_NULL`; the stricter diagnostic showed
+  direct sampled IDs stayed `-1` while copied sampled IDs were valid, and
+  `LLAMA_SPEC_VERIFY_DIRECT_SAMPLED_EGRESS_SKIP_COPY=1` crashed the sampler
+  because logits are not exported in backend-argmax mode. Do not enable
+  skip-copy. Any future version must patch the actual sampled-row producer and
+  prove null-sensitive direct-vs-copied parity first. Evidence:
+  `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260701-direct-sampled-egress-negative.md`.
 - Latest prompt-processing source follow-up: DV512 Gemma GQA `ncols2=16` is a
   closed negative. The candidate branch rebuilt, but both candidate lanes failed
   the first JSON canary with empty text before long-context cases could run.
