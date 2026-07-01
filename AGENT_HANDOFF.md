@@ -88,6 +88,23 @@ Primary target:
   mismatches still require the true target top token. Use this only to guide a
   deeper exact accept-prefix / verifier graph design. Evidence:
   `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260701-candidate-proof-profile.md`.
+- Latest verifier-lane audit:
+  Candidate-bound LM-head proof is not a credible exact shortcut unless it can
+  avoid full-vocab Q8 LM-head work; the current design cannot, and exact
+  verification still needs the target top token on the first mismatch. The next
+  source lane is exact accept-prefix row economics: preserve one target decode
+  boundary and the full-match bonus row, but make the existing row-gated backend
+  path cheaper than its earlier serialized prototype. Evidence:
+  `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260701-candidate-bound-lmhead-proof-design.md`
+  and `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-row-economics-profile.md`.
+- Latest post-norm combo MTP follow-up:
+  The only bounded follow-up from no-spec calibration was tested in a four-GPU
+  same-window MTP full512 run. All lanes passed the fixed realistic gate with
+  `cached_tokens=0`, but the combo remained inconclusive and below the current
+  record: controls `116.787` / `113.962`, combo-on `117.227` / `115.861`,
+  paired 95% CI `-2.754% / +0.395% / +3.346%`. Do not promote or submit.
+  Evidence:
+  `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260701-postnormcombo-mtp-followup.md`.
 - Latest no-spec target-side calibration batch:
   Paired no-spec A/B closed packed GEGLU all as `no_win`
   (`-1.046% / -0.858% / -0.570%`) and confirmed the LM-head subgroup closure.

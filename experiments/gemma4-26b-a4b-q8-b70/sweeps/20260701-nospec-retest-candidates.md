@@ -88,3 +88,18 @@ target-side changes with much lower variance than MTP full512, but the promotion
 rule remains conservative. The only candidate worth a bounded short-record
 follow-up is the post-norm combo, and even that must beat same-window MTP
 controls clearly before it can affect the promoted recipe.
+
+
+## MTP Follow-Up
+
+The only eligible bounded follow-up from this no-spec batch was the final +
+attention + per-layer post-norm combo. It was tested in a four-GPU same-window
+MTP full512 window and remained **not promotable**:
+
+- controls: `116.787`, `113.962` tok/s;
+- combo-on: `117.227`, `115.861` tok/s;
+- paired median-ratio 95% CI: `-2.754% / +0.395% / +3.346%`;
+- all lanes passed the fixed realistic final gate with `cached_tokens=0`;
+- absolute medians stayed below the current `124.97714084813418 tok/s` record.
+
+Evidence: `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260701-postnormcombo-mtp-followup.md`.
