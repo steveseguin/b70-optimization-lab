@@ -31,6 +31,14 @@ includes exact-reproduction rows at `121.59076340768573`,
 `119.94842631460949 tok/s` confirmation and lower variance rows at
 `113.572`, `114.088`, and `111.988 tok/s`; treat this as a higher-variance
 baseline lane, not as a default-off LM-head source-flag win.
+The 2026-07-01 GPU0 thermal sweep ran four exact same-GPU full512 repeats with
+privileged `xpu-smi` telemetry and found no thermal-throttle explanation for
+the variance: medians were `115.515`, `119.019`, `114.520`, and `120.202
+tok/s` while active core max stayed `77-78 C`, memory max `86-90 C`, and
+frequency stayed near max. Future close record comparisons should capture the
+same telemetry and avoid comparing hot/cold historical outliers without
+same-window controls. See
+`../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260701-finalpostnorm-thermal-variance.md`.
 Prior LocalMaxxing row `cmqxchyra03xmqr01b963gmi1` at
 `98.34046474459183 tok/s`, F16-p021 row
 `95.82453787677183 tok/s`, VDR2 rows `90.98312252660529`,

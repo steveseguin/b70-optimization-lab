@@ -33,7 +33,12 @@ selected-down baseline/control identity. It measured p10
 TTFT `178.6938319564797 ms`. Same exact reproduction batch support lanes were
 `121.59076340768573`, `119.26425148518223`, and `113.63257982764395`. Treat
 this as the current valid high with high variance, and keep repeat
-confirmations separate from promotion claims. The prior same-family
+confirmations separate from promotion claims. A same-GPU thermal sweep on
+2026-07-01 did not find temperature to be the main driver: exact GPU0 repeats
+spanned `114.520-120.202 tok/s` with active core max `77-78 C`, memory max
+`86-90 C`, near-max frequency, and no thermal-throttle samples. See
+[`../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260701-finalpostnorm-thermal-variance.md`](../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260701-finalpostnorm-thermal-variance.md).
+The prior same-family
 `123.67689864739785 tok/s` LocalMaxxing row `cmr01nnet000mld01x2tt6qds`,
 the prior `121.41411987308553 tok/s` row `cmqztiqdn02vnoe01egox6q3f`,
 the `119.94842631460949 tok/s` confirmation, and

@@ -164,6 +164,17 @@ Primary target:
   `119.264`, and `113.633`, confirming the lane is valid but high-variance.
   Evidence:
   `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260701-finalpostnorm-reproduction-check.md`.
+- Latest thermal / fairness check: the exact promoted final-postnorm recipe was
+  rerun four times sequentially on GPU0 with privileged `xpu-smi dump`
+  telemetry. All four repeats passed the fixed cold gate, `cached_tokens=0`,
+  and 512/512 canary; medians were `115.515`, `119.019`, `114.520`, and
+  `120.202 tok/s`. Active core max stayed `77-78 C`, memory max `86-90 C`,
+  frequency stayed near max, and no thermal-throttle samples appeared. Current
+  variance is therefore not explained by simple temperature throttling in this
+  band. Future close A/B and record-repeat work should capture telemetry and
+  avoid comparing hot/cold historical outliers without same-window controls.
+  Evidence:
+  `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260701-finalpostnorm-thermal-variance.md`.
 - Latest repeat / variance check: four more full512 lanes of the promoted
   final-postnorm recipe all passed the strict cold gate, `cached_tokens=0`, and
   512/512 canary, but no lane beat the record. Medians were

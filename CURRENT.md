@@ -161,6 +161,14 @@ Current active optimization target:
   `113.63257982764395`. LocalMaxxing approved the new row as
   `cmr1u77na01k2ld01kalwzs1e`. See
   `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260701-finalpostnorm-reproduction-check.md`.
+  A same-GPU thermal follow-up then ran four exact GPU0 full512 repeats with
+  privileged `xpu-smi dump` telemetry. All passed the fixed cold gate,
+  `cached_tokens=0`, and 512/512 canary; medians were `115.515`, `119.019`,
+  `114.520`, and `120.202 tok/s`. Active core max stayed `77-78 C`, memory max
+  `86-90 C`, frequency stayed near max, and no thermal-throttle samples
+  appeared, so current variance is not explained by simple temperature
+  throttling. See
+  `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260701-finalpostnorm-thermal-variance.md`.
   A four-lane full512 repeat of the promoted final-postnorm recipe then passed
   the strict cold gate and 512/512 canary on every lane but did not beat the
   record: medians were `118.78941183022032`, `115.48824790393866`,

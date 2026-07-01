@@ -97,6 +97,39 @@ if it passes the realistic final gate:
 Run it with the Gemma harness by setting `REALISTIC_GATE=1`; this writes
 `realistic-suite.json` and embeds `realistic_final_gate` in `summary.json`.
 
+## Thermal / Hardware Fairness
+
+The current Gemma 26B Q8 record family has several-percent run-to-run variance.
+For promoted record repeats and close A/B decisions, capture XPU telemetry
+alongside the benchmark so temperature and throttling are not guessed after the
+fact.
+
+Recommended telemetry on this host:
+
+```bash
+sudo -S -p '' xpu-smi dump -d <gpu> -m 0,1,2,3,4,5,17,18,35 -i 1 \
+  < /home/steve/SUDOPASSWORD.txt
+```
+
+Never print or copy the sudo password. Record only the resulting telemetry
+file and summarize active core temperature start/max/end, memory temperature
+start/max/end, power mean/max, frequency mean/min/max, and throttle reasons.
+Flag real thermal-throttle samples. `Burst Power Excursion` should still be
+recorded, but do not treat it as equivalent to sustained thermal throttling
+without supporting frequency/power evidence.
+
+The 2026-07-01 same-GPU thermal sweep did not find temperature to be the main
+driver of current final-postnorm variance: four exact GPU0 full512 repeats
+spanned `114.520-120.202 tok/s` while active core max stayed `77-78 C`, memory
+max stayed `86-90 C`, frequency remained near max, and no thermal-throttle
+samples appeared. See
+`experiments/gemma4-26b-a4b-q8-b70/sweeps/20260701-finalpostnorm-thermal-variance.md`.
+
+Do not compare a hot run against a cold historical outlier without telemetry,
+same-recipe repeats, or a same-window control lane. Small deltas near the
+frontier should be treated as variance until repeated under the fixed
+realistic gate with `cached_tokens=0` and the exact same canary scale.
+
 ## Long-Context Service Gate
 
 Prompt-processing and long-context service changes are useful only if they do
