@@ -197,6 +197,16 @@ needs this path. This closes the obvious sibling norm/residual fusion after the
 final-postnorm win. See
 `../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-perlayer-postnorm-residual-fusion-inconclusive.md`.
 
+2026-07-01 final/attention/per-layer norm fusion combination: the promoted
+final post-norm recipe was paired with both sibling fusions
+(`LLAMA_GEMMA4_FUSED_ATTN_POST_NORM_RESIDUAL=1` and
+`LLAMA_GEMMA4_FUSED_PER_LAYER_POST_NORM_RESIDUAL=1`) in a four-GPU strict128
+A/B. All lanes passed the fixed cold gate with `cached_tokens=0`, but the
+candidate average was flat/slightly worse (`119.145` tok/s) than the same-window
+controls (`119.184`) and below the `123.67689864739785` headline. Decision:
+closed negative; do not full512-confirm this exact combination. See
+`../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260701-finalpost-attnper-normcombo-negative.md`.
+
 2026-06-29 verifier LM-head candidate-threshold audit: shifted
 `t_inp_tokens[r + 1]` does provide the draft candidate ID for narrow standard
 MTP verifier rows, but this is not a good next record implementation. Exact
